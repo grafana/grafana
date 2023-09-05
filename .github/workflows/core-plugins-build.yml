@@ -14,7 +14,7 @@ concurrency:
 
 env:
     NODEJS_VERSION: 18.x
-    GO_VERSION: 1.21.0
+    GO_VERSION: 1.21
     GO_LINT_VERSION: 1.51.1
     GRABPL_VERSION: 3.0.41
     GCP_BUCKET: integration-artifacts
@@ -54,7 +54,7 @@ jobs:
             curl -fL -o ./bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v${{ env.GRABPL_VERSION }}/grabpl
             chmod 0755 ./bin/grabpl
         - name: Setup golang environment
-          uses: actions/setup-go@v3
+          uses: actions/setup-go@v4
           if: endsWith(inputs.plugin_id, '-datasource')
           with:
             go-version: ${{ env.GO_VERSION }}
