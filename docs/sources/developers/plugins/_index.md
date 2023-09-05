@@ -36,8 +36,8 @@ Learn more about specific areas of plugin development.
 If you're looking to build your first plugin, check out these introductory tutorials:
 
 - [Build a panel plugin](/docs/grafana/latest/developers/plugins/create-a-grafana-plugin/develop-a-plugin/build-a-panel-plugin/)
-- [Build a data source backend plugin]({{< relref "/tutorials/build-a-data-source-backend-plugin" >}})
 - [Build a data source plugin](/docs/grafana/latest/developers/plugins/create-a-grafana-plugin/develop-a-plugin/build-a-data-source-plugin/)
+- [Build a data source backend plugin](/docs/grafana/latest/developers/plugins/create-a-grafana-plugin/develop-a-plugin/build-a-data-source-backend-plugin/)
 
 Ready to learn more? Check out our other tutorials:
 
