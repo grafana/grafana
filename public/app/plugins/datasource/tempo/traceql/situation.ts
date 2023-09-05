@@ -210,10 +210,6 @@ const RESOLVERS: Resolver[] = [
     fun: resolveSpansetPipeline,
   },
   {
-    path: [ERROR_NODE_ID, SpansetPipeline, SpansetPipelineExpression],
-    fun: resolveSpansetPipeline,
-  },
-  {
     path: [ERROR_NODE_ID, Aggregate],
     fun: resolveAttributeForFunction,
   },
