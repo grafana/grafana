@@ -288,8 +288,8 @@ func (server *Server) Users(logins []string) (
 ) {
 	var users [][]*ldap.Entry
 	err := getUsersIteration(logins, func(previous, current int) error {
-		var err error
-		users, err = server.users(logins[previous:current])
+		iterationUsers, err := server.users(logins[previous:current])
+		users = append(users, iterationUsers...)
 		return err
 	})
 	if err != nil {
@@ -452,7 +452,7 @@ func (server *Server) buildGrafanaUser(user *ldap.Entry) (*login.ExternalUserInf
 
 	// Skipping org role sync
 	if server.cfg.LDAPSkipOrgRoleSync {
-		server.log.Debug("skipping organization role mapping.")
+		server.log.Debug("Skipping organization role mapping.")
 		return extUser, nil
 	}
 

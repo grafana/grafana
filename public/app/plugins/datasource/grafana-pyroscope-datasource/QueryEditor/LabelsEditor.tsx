@@ -49,8 +49,8 @@ export function LabelsEditor(props: Props) {
           scrollBeyondLastLine: false,
           wordWrap: 'on',
           padding: {
-            top: 5,
-            bottom: 6,
+            top: 4,
+            bottom: 5,
           },
         }}
         onBeforeEditorMount={ensurePhlareQL}
@@ -141,6 +141,7 @@ function ensurePhlareQL(monaco: Monaco) {
 const getStyles = () => {
   return {
     queryField: css`
+      label: LabelsEditorQueryField;
       flex: 1;
       // Not exactly sure but without this the editor does not shrink after resizing (so you can make it bigger but not
       // smaller). At the same time this does not actually make the editor 100px because it has flex 1 so I assume
@@ -148,6 +149,7 @@ const getStyles = () => {
       width: 100px;
     `,
     wrapper: css`
+      label: LabelsEditorWrapper;
       display: flex;
       flex: 1;
       border: 1px solid rgba(36, 41, 46, 0.3);

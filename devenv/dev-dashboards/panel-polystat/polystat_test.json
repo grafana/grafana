@@ -444,6 +444,10 @@
             {
               "text": "Turkish Lira (₺)",
               "value": "currencyTRY"
+            },
+            {
+              "text": "Malaysian Ringgit (RM)",
+              "value": "currencyMYR"
             }
           ],
           "text": "currency"
@@ -1599,6 +1603,10 @@
             {
               "text": "Vietnamese Dong (VND)",
               "value": "currencyVND"
+            },
+            {
+              "text": "Malaysian Ringgit (RM)",
+              "value": "currencyMYR"
             }
           ],
           "text": "currency"
@@ -2690,6 +2698,10 @@
             {
               "text": "Vietnamese Dong (VND)",
               "value": "currencyVND"
+            },
+            {
+              "text": "Malaysian Ringgit (RM)",
+              "value": "currencyMYR"
             }
           ],
           "text": "currency"
@@ -3371,7 +3383,6 @@
     }
   ],
   "schemaVersion": 16,
-  "style": "dark",
   "tags": ["panel-test", "gdev", "polystat"],
   "templating": {
     "list": []

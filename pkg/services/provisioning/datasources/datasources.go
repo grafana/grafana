@@ -97,6 +97,7 @@ func (dc *DatasourceProvisioner) apply(ctx context.Context, cfg *configs) error 
 			if len(ds.Correlations) > 0 {
 				if err := dc.correlationsStore.DeleteCorrelationsBySourceUID(ctx, correlations.DeleteCorrelationsBySourceUIDCommand{
 					SourceUID: dataSource.UID,
+					OrgId:     dataSource.OrgID,
 				}); err != nil {
 					return err
 				}
@@ -137,7 +138,7 @@ func (dc *DatasourceProvisioner) applyChanges(ctx context.Context, configPath st
 	return nil
 }
 
-func makeCreateCorrelationCommand(correlation map[string]interface{}, SourceUID string, OrgId int64) (correlations.CreateCorrelationCommand, error) {
+func makeCreateCorrelationCommand(correlation map[string]any, SourceUID string, OrgId int64) (correlations.CreateCorrelationCommand, error) {
 	var json = jsoniter.ConfigCompatibleWithStandardLibrary
 	createCommand := correlations.CreateCorrelationCommand{
 		SourceUID:         SourceUID,
@@ -197,12 +198,14 @@ func (dc *DatasourceProvisioner) deleteDatasources(ctx context.Context, dsToDele
 		if dataSource != nil {
 			if err := dc.correlationsStore.DeleteCorrelationsBySourceUID(ctx, correlations.DeleteCorrelationsBySourceUIDCommand{
 				SourceUID: dataSource.UID,
+				OrgId:     dataSource.OrgID,
 			}); err != nil {
 				return err
 			}
 
 			if err := dc.correlationsStore.DeleteCorrelationsByTargetUID(ctx, correlations.DeleteCorrelationsByTargetUIDCommand{
 				TargetUID: dataSource.UID,
+				OrgId:     dataSource.OrgID,
 			}); err != nil {
 				return err
 			}

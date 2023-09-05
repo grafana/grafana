@@ -80,7 +80,7 @@ func TestCallResource(t *testing.T) {
 		b, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
 
-		var body = make(map[string]interface{})
+		var body = make(map[string]any)
 		err = json.Unmarshal(b, &body)
 		require.NoError(t, err)
 

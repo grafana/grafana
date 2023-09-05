@@ -29,10 +29,10 @@ func NewCachingMiddleware(cachingService caching.CachingService) plugins.ClientM
 func NewCachingMiddlewareWithFeatureManager(cachingService caching.CachingService, features *featuremgmt.FeatureManager) plugins.ClientMiddleware {
 	log := log.New("caching_middleware")
 	if err := prometheus.Register(QueryCachingRequestHistogram); err != nil {
-		log.Error("error registering prometheus collector 'QueryRequestHistogram'", "error", err)
+		log.Error("Error registering prometheus collector 'QueryRequestHistogram'", "error", err)
 	}
 	if err := prometheus.Register(ResourceCachingRequestHistogram); err != nil {
-		log.Error("error registering prometheus collector 'ResourceRequestHistogram'", "error", err)
+		log.Error("Error registering prometheus collector 'ResourceRequestHistogram'", "error", err)
 	}
 	return plugins.ClientMiddlewareFunc(func(next plugins.Client) plugins.Client {
 		return &CachingMiddleware{

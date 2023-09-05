@@ -1,7 +1,7 @@
 import React from 'react';
 import { of } from 'rxjs';
 
-import { serializeStateToUrlParam } from '@grafana/data';
+import { EventBusSrv, serializeStateToUrlParam } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
 import { silenceConsoleOutput } from '../../../../test/core/utils/silenceConsoleOutput';
@@ -13,13 +13,13 @@ import {
   assertQueryHistoryComment,
   assertQueryHistoryElementsShown,
   assertQueryHistoryExists,
+  assertQueryHistoryIsEmpty,
   assertQueryHistoryIsStarred,
   assertQueryHistoryTabIsSelected,
-  assertQueryHistoryIsEmpty,
 } from './helper/assert';
 import {
-  commentQueryHistory,
   closeQueryHistory,
+  commentQueryHistory,
   deleteQueryHistory,
   inputQuery,
   loadMoreQueryHistory,
@@ -37,12 +37,15 @@ const fetchMock = jest.fn();
 const postMock = jest.fn();
 const getMock = jest.fn();
 const reportInteractionMock = jest.fn();
+const testEventBus = new EventBusSrv();
+
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: () => ({ fetch: fetchMock, post: postMock, get: getMock }),
   reportInteraction: (...args: object[]) => {
     reportInteractionMock(...args);
   },
+  getAppEvents: () => testEventBus,
 }));
 
 jest.mock('app/core/core', () => ({
@@ -50,6 +53,7 @@ jest.mock('app/core/core', () => ({
     hasPermission: () => true,
     hasAccess: () => true,
     isSignedIn: true,
+    getValidIntervals: (defaultIntervals: string[]) => defaultIntervals,
   },
 }));
 

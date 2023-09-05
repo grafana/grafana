@@ -56,6 +56,8 @@ type PublicDashboard struct {
 }
 
 type PublicDashboardDTO struct {
+	Uid                  string    `json:"uid"`
+	AccessToken          string    `json:"accessToken"`
 	TimeSelectionEnabled *bool     `json:"timeSelectionEnabled"`
 	IsEnabled            *bool     `json:"isEnabled"`
 	AnnotationsEnabled   *bool     `json:"annotationsEnabled"`

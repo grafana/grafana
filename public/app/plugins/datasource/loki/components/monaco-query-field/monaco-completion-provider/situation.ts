@@ -20,8 +20,10 @@ import {
   LiteralExpr,
   MetricExpr,
   UnwrapExpr,
-  DistinctFilter,
-  DistinctLabel,
+  DropLabelsExpr,
+  KeepLabelsExpr,
+  DropLabels,
+  KeepLabels,
 } from '@grafana/lezer-logql';
 
 import { getLogQueryFromMetricsQuery } from '../../../queryUtils';
@@ -129,7 +131,7 @@ export type Situation =
       logQuery: string;
     }
   | {
-      type: 'AFTER_DISTINCT';
+      type: 'AFTER_KEEP_AND_DROP';
       logQuery: string;
     };
 
@@ -198,12 +200,20 @@ const RESOLVERS: Resolver[] = [
     fun: resolveAfterUnwrap,
   },
   {
-    path: [ERROR_NODE_ID, DistinctFilter],
-    fun: resolveAfterDistinct,
+    path: [ERROR_NODE_ID, DropLabelsExpr],
+    fun: resolveAfterKeepAndDrop,
   },
   {
-    path: [ERROR_NODE_ID, DistinctLabel],
-    fun: resolveAfterDistinct,
+    path: [ERROR_NODE_ID, DropLabels],
+    fun: resolveAfterKeepAndDrop,
+  },
+  {
+    path: [ERROR_NODE_ID, KeepLabelsExpr],
+    fun: resolveAfterKeepAndDrop,
+  },
+  {
+    path: [ERROR_NODE_ID, KeepLabels],
+    fun: resolveAfterKeepAndDrop,
   },
 ];
 
@@ -509,25 +519,24 @@ function resolveSelector(node: SyntaxNode, text: string, pos: number): Situation
   };
 }
 
-function resolveAfterDistinct(node: SyntaxNode, text: string, pos: number): Situation | null {
+function resolveAfterKeepAndDrop(node: SyntaxNode, text: string, pos: number): Situation | null {
   let logQuery = getLogQueryFromMetricsQuery(text).trim();
-
-  let distinctFilterParent: SyntaxNode | null = null;
+  let keepAndDropParent: SyntaxNode | null = null;
   let parent = node.parent;
   while (parent !== null) {
     if (parent.type.id === PipelineStage) {
-      distinctFilterParent = parent;
+      keepAndDropParent = parent;
       break;
     }
     parent = parent.parent;
   }
 
-  if (distinctFilterParent?.type.id === PipelineStage) {
-    logQuery = logQuery.slice(0, distinctFilterParent.from);
+  if (keepAndDropParent?.type.id === PipelineStage) {
+    logQuery = logQuery.slice(0, keepAndDropParent.from);
   }
 
   return {
-    type: 'AFTER_DISTINCT',
+    type: 'AFTER_KEEP_AND_DROP',
     logQuery,
   };
 }

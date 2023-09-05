@@ -247,7 +247,7 @@ settings:
     {{ template "default.title" . }}
 ```
 
-##### Google Hangouts Chat
+##### Google Chat
 
 ```yaml
 type: googlechat

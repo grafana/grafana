@@ -71,6 +71,7 @@ Some features are enabled by default. You can disable these feature by setting t
 | `dataSourcePageHeader`           | Apply new pageHeader UI in data source edit page                                                                                                                                             |
 | `sqlDatasourceDatabaseSelection` | Enables previous SQL data source dataset dropdown behavior                                                                                                                                   |
 | `splitScopes`                    | Support faster dashboard and folder search by splitting permission scopes into parts                                                                                                         |
+| `reportingRetries`               | Enables rendering retries for the reporting feature                                                                                                                                          |
 
 ## Experimental feature toggles
 
@@ -85,7 +86,6 @@ Experimental features might be changed or removed without prior notice.
 | `storage`                                   | Configurable storage for dashboards, datasources, and resources                                                                                                                          |
 | `datasourceQueryMultiStatus`                | Introduce HTTP 207 Multi Status for api/ds/query                                                                                                                                         |
 | `traceToMetrics`                            | Enable trace to metrics links                                                                                                                                                            |
-| `prometheusWideSeries`                      | Enable wide series responses in the Prometheus datasource                                                                                                                                |
 | `canvasPanelNesting`                        | Allow elements nesting                                                                                                                                                                   |
 | `scenes`                                    | Experimental framework to build interactive dashboards                                                                                                                                   |
 | `disableSecretsCompatibility`               | Disable duplicated secret storage in legacy tables                                                                                                                                       |
@@ -123,6 +123,7 @@ Experimental features might be changed or removed without prior notice.
 | `toggleLabelsInLogsUI`                      | Enable toggleable filters in log details view                                                                                                                                            |
 | `mlExpressions`                             | Enable support for Machine Learning in server-side expressions                                                                                                                           |
 | `traceQLStreaming`                          | Enables response streaming of TraceQL queries of the Tempo data source                                                                                                                   |
+| `metricsSummary`                            | Enables metrics summary queries in the Tempo data source                                                                                                                                 |
 | `grafanaAPIServer`                          | Enable Kubernetes API Server for Grafana resources                                                                                                                                       |
 | `featureToggleAdminPage`                    | Enable admin page for managing feature toggles from the Grafana front-end                                                                                                                |
 | `awsAsyncQueryCaching`                      | Enable caching for async queries for Redshift and Athena. Requires that the `useCachingService` feature toggle is enabled and the datasource has caching and async query support enabled |
@@ -130,6 +131,8 @@ Experimental features might be changed or removed without prior notice.
 | `prometheusConfigOverhaulAuth`              | Update the Prometheus configuration page with the new auth component                                                                                                                     |
 | `influxdbSqlSupport`                        | Enable InfluxDB SQL query language support with new querying UI                                                                                                                          |
 | `noBasicRole`                               | Enables a new role that has no permissions by default                                                                                                                                    |
+| `angularDeprecationUI`                      | Display new Angular deprecation-related UI features                                                                                                                                      |
+| `dashgpt`                                   | Enable AI powered features in dashboards                                                                                                                                                 |
 
 ## Development feature toggles
 
