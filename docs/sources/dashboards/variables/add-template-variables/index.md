@@ -87,7 +87,7 @@ Query variables are generally only supported for strings. If your query returns 
 Query expressions can contain references to other variables and in effect create linked variables. Grafana detects this and automatically refreshes a variable when one of its linked variables change.
 
 {{% admonition type="note" %}}
-Query expressions are different for each data source. For more information, refer to the documentation for your [data source]({{< relref "../../../datasources/" >}}).
+The query should return two fields named `__text` and `__value`. The `__text` column value should be unique (if it is not unique then the first value is used). Query expressions are different for each data source. For more information, refer to the documentation for your [data source]({{< relref "../../../datasources/" >}}).
 {{% /admonition %}}
 
 1. [Enter general options](#enter-general-options).
@@ -97,6 +97,7 @@ Query expressions are different for each data source. For more information, refe
    - **On Time Range Change:** Queries the data source when the dashboard time range changes. Only use this option if your variable options query contains a time range filter or is dependent on the dashboard time range.
 1. In the **Query** field, enter a query.
    - The query field varies according to your data source. Some data sources have custom query editors.
+   - Make sure that the query returns values named `__text` and `__value` as appropriate in your query syntax. As a SQL-specific example, you can use a query such as `SELECT hostname AS __text, id AS __value FROM MyTable`; other query languages will vary depending on syntax.
    - If you need more room in a single input field query editor, then hover your cursor over the lines in the lower right corner of the field and drag downward to expand.
 1. (Optional) In the **Regex** field, type a regex expression to filter or capture specific parts of the names returned by your data source query. To see examples, refer to [Filter variables with regex]({{< relref "#filter-variables-with-regex" >}}).
 1. In the **Sort** list, select the sort order for values to be displayed in the dropdown list. The default option, **Disabled**, means that the order of options returned by your data source query will be used.
