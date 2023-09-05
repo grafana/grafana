@@ -56,9 +56,9 @@ export function getRepeatingPanelsDemo(): DashboardScene {
           width: 24,
           height: 8,
           itemHeight: 8,
+          //@ts-expect-error
           source: PanelBuilders.timeseries()
             .setTitle('server = $server')
-            .setIsDraggable(true)
             .setData(getQueryRunnerWithRandomWalkQuery({ alias: 'server = $server' }))
             .build(),
         }),

@@ -9,13 +9,13 @@ import {
   SceneVariable,
   SceneGridLayout,
   SceneVariableSet,
-  ConstantVariable,
   SceneComponentProps,
   SceneGridItemStateLike,
   SceneGridItemLike,
   sceneGraph,
   MultiValueVariable,
   VariableValueSingle,
+  LocalValueVariable,
 } from '@grafana/scenes';
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN } from 'app/core/constants';
 
@@ -117,7 +117,7 @@ export class PanelRepeaterGridItem extends SceneObjectBase<PanelRepeaterGridItem
       const clone = panelToRepeat.clone({
         $variables: new SceneVariableSet({
           variables: [
-            new ConstantVariable({ name: variable.state.name, value: values[index], text: String(texts[index]) }),
+            new LocalValueVariable({ name: variable.state.name, value: values[index], text: String(texts[index]) }),
           ],
         }),
         key: `${panelToRepeat.state.key}-clone-${index}`,
