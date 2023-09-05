@@ -24,6 +24,8 @@ import {
   SceneControlsSpacer,
   VizPanelMenu,
   behaviors,
+  VizPanelState,
+  SceneGridItemLike,
 } from '@grafana/scenes';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { DashboardDTO } from 'app/types';
@@ -31,6 +33,8 @@ import { DashboardDTO } from 'app/types';
 import { DashboardScene } from '../scene/DashboardScene';
 import { LibraryVizPanel } from '../scene/LibraryVizPanel';
 import { panelMenuBehavior } from '../scene/PanelMenuBehavior';
+import { PanelRepeaterGridItem } from '../scene/PanelRepeaterGridItem';
+import { PanelTimeRange } from '../scene/PanelTimeRange';
 import { createPanelDataProvider } from '../utils/createPanelDataProvider';
 import { getVizPanelKeyForPanelId } from '../utils/utils';
 
@@ -49,14 +53,14 @@ export function transformSaveModelToScene(rsp: DashboardDTO): DashboardScene {
   return createDashboardSceneFromDashboardModel(oldModel);
 }
 
-export function createSceneObjectsForPanels(oldPanels: PanelModel[]): Array<SceneGridItem | SceneGridRow> {
+export function createSceneObjectsForPanels(oldPanels: PanelModel[]): SceneGridItemLike[] {
   // collects all panels and rows
-  const panels: Array<SceneGridItem | SceneGridRow> = [];
+  const panels: SceneGridItemLike[] = [];
 
   // indicates expanded row that's currently processed
   let currentRow: PanelModel | null = null;
   // collects panels in the currently processed, expanded row
-  let currentRowPanels: SceneGridItem[] = [];
+  let currentRowPanels: SceneGridItemLike[] = [];
 
   for (const panel of oldPanels) {
     if (panel.type === 'row') {
@@ -68,7 +72,7 @@ export function createSceneObjectsForPanels(oldPanels: PanelModel[]): Array<Scen
               title: panel.title,
               isCollapsed: true,
               y: panel.gridPos.y,
-              children: panel.panels ? panel.panels.map(createVizPanelFromPanelModel) : [],
+              children: panel.panels ? panel.panels.map(buildGridItemForPanel) : [],
             })
           );
         } else {
@@ -104,7 +108,7 @@ export function createSceneObjectsForPanels(oldPanels: PanelModel[]): Array<Scen
       });
       panels.push(gridItem);
     } else {
-      const panelObject = createVizPanelFromPanelModel(panel);
+      const panelObject = buildGridItemForPanel(panel);
 
       // when processing an expanded row, collect its panels
       if (currentRow) {
@@ -244,28 +248,56 @@ export function createSceneVariableFromVariableModel(variable: VariableModel): S
   }
 }
 
-export function createVizPanelFromPanelModel(panel: PanelModel) {
+export function buildGridItemForPanel(panel: PanelModel): SceneGridItemLike {
+  const vizPanelState: VizPanelState = {
+    key: getVizPanelKeyForPanelId(panel.id),
+    title: panel.title,
+    pluginId: panel.type,
+    options: panel.options ?? {},
+    fieldConfig: panel.fieldConfig,
+    pluginVersion: panel.pluginVersion,
+    displayMode: panel.transparent ? 'transparent' : undefined,
+    // To be replaced with it's own option persited option instead derived
+    hoverHeader: !panel.title && !panel.timeFrom && !panel.timeShift,
+    $data: createPanelDataProvider(panel),
+    menu: new VizPanelMenu({
+      $behaviors: [panelMenuBehavior],
+    }),
+  };
+
+  if (panel.timeFrom || panel.timeShift) {
+    vizPanelState.$timeRange = new PanelTimeRange({
+      timeFrom: panel.timeFrom,
+      timeShift: panel.timeShift,
+      hideTimeOverride: panel.hideTimeOverride,
+    });
+  }
+
+  if (panel.repeat) {
+    const repeatDirection = panel.repeatDirection ?? 'h';
+
+    return new PanelRepeaterGridItem({
+      key: `grid-item-${panel.id}`,
+      x: panel.gridPos.x,
+      y: panel.gridPos.y,
+      width: repeatDirection === 'h' ? 24 : panel.gridPos.w,
+      height: panel.gridPos.h,
+      itemHeight: panel.gridPos.h,
+      source: new VizPanel(vizPanelState),
+      variableName: panel.repeat,
+      repeatedPanels: [],
+      repeatDirection: panel.repeatDirection,
+      maxPerRow: panel.maxPerRow,
+    });
+  }
+
   return new SceneGridItem({
     key: `grid-item-${panel.id}`,
     x: panel.gridPos.x,
     y: panel.gridPos.y,
     width: panel.gridPos.w,
     height: panel.gridPos.h,
-    body: new VizPanel({
-      key: getVizPanelKeyForPanelId(panel.id),
-      title: panel.title,
-      pluginId: panel.type,
-      options: panel.options ?? {},
-      fieldConfig: panel.fieldConfig,
-      pluginVersion: panel.pluginVersion,
-      displayMode: panel.transparent ? 'transparent' : undefined,
-      // To be replaced with it's own option persited option instead derived
-      hoverHeader: !panel.title && !panel.timeFrom && !panel.timeShift,
-      $data: createPanelDataProvider(panel),
-      menu: new VizPanelMenu({
-        $behaviors: [panelMenuBehavior],
-      }),
-    }),
+    body: new VizPanel(vizPanelState),
   });
 }
 

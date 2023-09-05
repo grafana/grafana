@@ -1,32 +1,50 @@
-import { SceneDeactivationHandler, SceneObject } from '@grafana/scenes';
+import { sceneGraph, SceneObject, VizPanel } from '@grafana/scenes';
 
 export function getVizPanelKeyForPanelId(panelId: number) {
   return `panel-${panelId}`;
 }
 
-export function getPanelIdForVizPanelKey(key: string) {
-  return parseInt(key.replace('panel-', ''), 10);
+export function getPanelIdForVizPanel(panel: VizPanel): number {
+  return parseInt(panel.state.key!.replace('panel-', ''), 10);
 }
 
 /**
- * Useful from tests to simulate mounting a full scene. Children are activated before parents to simulate the real order
- * of React mount order and useEffect ordering.
- *
+ * This will also  try lookup based on panelId
  */
-export function activateFullSceneTree(scene: SceneObject): SceneDeactivationHandler {
-  const deactivationHandlers: SceneDeactivationHandler[] = [];
+export function findVizPanelByKey(scene: SceneObject, key: string | undefined): VizPanel | null {
+  if (!key) {
+    return null;
+  }
 
-  scene.forEachChild((child) => {
-    deactivationHandlers.push(activateFullSceneTree(child));
-  });
+  const panel = findVizPanelInternal(scene, key);
+  if (panel) {
+    return panel;
+  }
 
-  deactivationHandlers.push(scene.activate());
+  // Also try to find by panel id
+  const id = parseInt(key, 10);
+  if (isNaN(id)) {
+    return null;
+  }
 
-  return () => {
-    for (const handler of deactivationHandlers) {
-      handler();
+  return findVizPanelInternal(scene, getVizPanelKeyForPanelId(id));
+}
+
+function findVizPanelInternal(scene: SceneObject, key: string | undefined): VizPanel | null {
+  if (!key) {
+    return null;
+  }
+
+  const panel = sceneGraph.findObject(scene, (obj) => obj.state.key === key);
+  if (panel) {
+    if (panel instanceof VizPanel) {
+      return panel;
+    } else {
+      throw new Error(`Found panel with key ${key} but it was not a VizPanel`);
     }
-  };
+  }
+
+  return null;
 }
 
 /**

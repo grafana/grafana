@@ -222,7 +222,7 @@ func (p *redisPeer) heartbeatLoop() {
 			reqDur := time.Since(startTime)
 			if cmd.Err() != nil {
 				p.nodePingFailures.Inc()
-				p.logger.Error("error setting the heartbeat key", "err", cmd.Err(), "peer", p.withPrefix(p.name))
+				p.logger.Error("Error setting the heartbeat key", "err", cmd.Err(), "peer", p.withPrefix(p.name))
 				continue
 			}
 			p.nodePingDuration.WithLabelValues(redisServerLabel).Observe(reqDur.Seconds())
@@ -250,7 +250,7 @@ func (p *redisPeer) membersSync() {
 	startTime := time.Now()
 	members, err := p.membersScan()
 	if err != nil {
-		p.logger.Error("error getting keys from redis", "err", err, "pattern", p.withPrefix(peerPattern))
+		p.logger.Error("Error getting keys from redis", "err", err, "pattern", p.withPrefix(peerPattern))
 		// To prevent a spike of duplicate messages, we return for the duration of
 		// membersValidFor the last known members and only empty the list if we do
 		// not eventually recover.
@@ -260,7 +260,7 @@ func (p *redisPeer) membersSync() {
 			p.membersMtx.Unlock()
 			return
 		}
-		p.logger.Warn("fetching members from redis failed, falling back to last known members", "last_known", p.members)
+		p.logger.Warn("Fetching members from redis failed, falling back to last known members", "last_known", p.members)
 		return
 	}
 	// This might happen on startup, when no value is in the store yet.
@@ -272,7 +272,7 @@ func (p *redisPeer) membersSync() {
 	}
 	values := p.redis.MGet(context.Background(), members...)
 	if values.Err() != nil {
-		p.logger.Error("error getting values from redis", "err", values.Err(), "keys", members)
+		p.logger.Error("Error getting values from redis", "err", values.Err(), "keys", members)
 	}
 	// After getting the list of possible members from redis, we filter
 	// those out that have failed to send a heartbeat during the heartbeatTimeout.
@@ -284,7 +284,7 @@ func (p *redisPeer) membersSync() {
 	peers = slices.Compact(peers)
 
 	dur := time.Since(startTime)
-	p.logger.Debug("membership sync done", "duration_ms", dur.Milliseconds())
+	p.logger.Debug("Membership sync done", "duration_ms", dur.Milliseconds())
 	p.membersMtx.Lock()
 	p.members = peers
 	p.membersMtx.Unlock()
@@ -317,7 +317,7 @@ func (p *redisPeer) membersScan() ([]string, error) {
 
 // filterUnhealthyMembers will filter out the members that have failed to send
 // a heartbeat since heartbeatTimeout.
-func (p *redisPeer) filterUnhealthyMembers(members []string, values []interface{}) []string {
+func (p *redisPeer) filterUnhealthyMembers(members []string, values []any) []string {
 	peers := []string{}
 	for i, peer := range members {
 		val := values[i]
@@ -326,7 +326,7 @@ func (p *redisPeer) filterUnhealthyMembers(members []string, values []interface{
 		}
 		ts, err := strconv.ParseInt(val.(string), 10, 64)
 		if err != nil {
-			p.logger.Error("error parsing timestamp value", "err", err, "peer", peer, "val", val)
+			p.logger.Error("Error parsing timestamp value", "err", err, "peer", peer, "val", val)
 			continue
 		}
 		tm := time.Unix(ts, 0)
@@ -341,11 +341,11 @@ func (p *redisPeer) filterUnhealthyMembers(members []string, values []interface{
 func (p *redisPeer) Position() int {
 	for i, peer := range p.Members() {
 		if peer == p.withPrefix(p.name) {
-			p.logger.Debug("cluster position found", "name", p.name, "position", i)
+			p.logger.Debug("Cluster position found", "name", p.name, "position", i)
 			return i
 		}
 	}
-	p.logger.Warn("failed to look up position, falling back to position 0")
+	p.logger.Warn("Failed to look up position, falling back to position 0")
 	return 0
 }
 
@@ -354,7 +354,7 @@ func (p *redisPeer) Position() int {
 func (p *redisPeer) ClusterSize() int {
 	members, err := p.membersScan()
 	if err != nil {
-		p.logger.Error("error getting keys from redis", "err", err, "pattern", p.withPrefix(peerPattern))
+		p.logger.Error("Error getting keys from redis", "err", err, "pattern", p.withPrefix(peerPattern))
 		return 0
 	}
 	return len(members)
@@ -400,7 +400,7 @@ func (p *redisPeer) Settle(ctx context.Context, interval time.Duration) {
 		select {
 		case <-ctx.Done():
 			elapsed := time.Since(start)
-			p.logger.Info("gossip not settled but continuing anyway", "polls", totalPolls, "elapsed", elapsed)
+			p.logger.Info("Gossip not settled but continuing anyway", "polls", totalPolls, "elapsed", elapsed)
 			close(p.readyc)
 			return
 		case <-time.After(interval):
@@ -408,15 +408,15 @@ func (p *redisPeer) Settle(ctx context.Context, interval time.Duration) {
 		elapsed := time.Since(start)
 		n := len(p.Members())
 		if nOkay >= NumOkayRequired {
-			p.logger.Info("gossip settled; proceeding", "elapsed", elapsed)
+			p.logger.Info("Gossip settled; proceeding", "elapsed", elapsed)
 			break
 		}
 		if n == nPeers {
 			nOkay++
-			p.logger.Debug("gossip looks settled", "elapsed", elapsed)
+			p.logger.Debug("Gossip looks settled", "elapsed", elapsed)
 		} else {
 			nOkay = 0
-			p.logger.Info("gossip not settled", "polls", totalPolls, "before", nPeers, "now", n, "elapsed", elapsed)
+			p.logger.Info("Gossip not settled", "polls", totalPolls, "before", nPeers, "now", n, "elapsed", elapsed)
 		}
 		nPeers = n
 		totalPolls++
@@ -455,7 +455,7 @@ func (p *redisPeer) mergePartialState(buf []byte) {
 
 	var part clusterpb.Part
 	if err := proto.Unmarshal(buf, &part); err != nil {
-		p.logger.Warn("error decoding the received broadcast message", "err", err)
+		p.logger.Warn("Error decoding the received broadcast message", "err", err)
 		return
 	}
 
@@ -467,10 +467,10 @@ func (p *redisPeer) mergePartialState(buf []byte) {
 		return
 	}
 	if err := s.Merge(part.Data); err != nil {
-		p.logger.Warn("error merging the received broadcast message", "err", err, "key", part.Key)
+		p.logger.Warn("Error merging the received broadcast message", "err", err, "key", part.Key)
 		return
 	}
-	p.logger.Debug("partial state was successfully merged", "key", part.Key)
+	p.logger.Debug("Partial state was successfully merged", "key", part.Key)
 }
 
 func (p *redisPeer) fullStateReqReceiveLoop() {
@@ -512,7 +512,7 @@ func (p *redisPeer) mergeFullState(buf []byte) {
 
 	var fs clusterpb.FullState
 	if err := proto.Unmarshal(buf, &fs); err != nil {
-		p.logger.Warn("error unmarshaling the received remote state", "err", err)
+		p.logger.Warn("Error unmarshaling the received remote state", "err", err)
 		return
 	}
 
@@ -521,22 +521,22 @@ func (p *redisPeer) mergeFullState(buf []byte) {
 	for _, part := range fs.Parts {
 		s, ok := p.states[part.Key]
 		if !ok {
-			p.logger.Warn("received", "unknown state key", "len", len(buf), "key", part.Key)
+			p.logger.Warn("Received", "unknown state key", "len", len(buf), "key", part.Key)
 			continue
 		}
 		if err := s.Merge(part.Data); err != nil {
-			p.logger.Warn("error merging the received remote state", "err", err, "key", part.Key)
+			p.logger.Warn("Error merging the received remote state", "err", err, "key", part.Key)
 			return
 		}
 	}
-	p.logger.Debug("full state was successfully merged")
+	p.logger.Debug("Full state was successfully merged")
 }
 
 func (p *redisPeer) fullStateSyncPublish() {
 	pub := p.redis.Publish(context.Background(), p.withPrefix(fullStateChannel), p.LocalState())
 	if pub.Err() != nil {
 		p.messagesPublishFailures.WithLabelValues(fullState, reasonRedisIssue).Inc()
-		p.logger.Error("error publishing a message to redis", "err", pub.Err(), "channel", p.withPrefix(fullStateChannel))
+		p.logger.Error("Error publishing a message to redis", "err", pub.Err(), "channel", p.withPrefix(fullStateChannel))
 	}
 }
 
@@ -557,7 +557,7 @@ func (p *redisPeer) requestFullState() {
 	pub := p.redis.Publish(context.Background(), p.withPrefix(fullStateChannelReq), p.name)
 	if pub.Err() != nil {
 		p.messagesPublishFailures.WithLabelValues(fullState, reasonRedisIssue).Inc()
-		p.logger.Error("error publishing a message to redis", "err", pub.Err(), "channel", p.withPrefix(fullStateChannelReq))
+		p.logger.Error("Error publishing a message to redis", "err", pub.Err(), "channel", p.withPrefix(fullStateChannelReq))
 	}
 }
 
@@ -571,13 +571,13 @@ func (p *redisPeer) LocalState() []byte {
 	for key, s := range p.states {
 		b, err := s.MarshalBinary()
 		if err != nil {
-			p.logger.Warn("error encoding the local state", "err", err, "key", key)
+			p.logger.Warn("Error encoding the local state", "err", err, "key", key)
 		}
 		all.Parts = append(all.Parts, clusterpb.Part{Key: key, Data: b})
 	}
 	b, err := proto.Marshal(all)
 	if err != nil {
-		p.logger.Warn("error encoding the local state to proto", "err", err)
+		p.logger.Warn("Error encoding the local state to proto", "err", err)
 	}
 	p.messagesSent.WithLabelValues(fullState).Inc()
 	p.messagesSentSize.WithLabelValues(fullState).Add(float64(len(b)))
@@ -592,6 +592,6 @@ func (p *redisPeer) Shutdown() {
 	defer cancel()
 	del := p.redis.Del(ctx, p.withPrefix(p.name))
 	if del.Err() != nil {
-		p.logger.Error("error deleting the redis key on shutdown", "err", del.Err(), "key", p.withPrefix(p.name))
+		p.logger.Error("Error deleting the redis key on shutdown", "err", del.Err(), "key", p.withPrefix(p.name))
 	}
 }

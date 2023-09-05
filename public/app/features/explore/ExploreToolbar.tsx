@@ -11,8 +11,8 @@ import { createAndCopyShortLink } from 'app/core/utils/shortLinks';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 import { StoreState, useDispatch, useSelector } from 'app/types/store';
 
+import { contextSrv } from '../../core/core';
 import { DashNavButton } from '../dashboard/components/DashNav/DashNavButton';
-import { getTimeSrv } from '../dashboard/services/TimeSrv';
 import { updateFiscalYearStartMonthForSession, updateTimeZoneForSession } from '../profile/state/reducers';
 import { getFiscalYearStartMonth, getTimeZone } from '../profile/state/selectors';
 
@@ -217,7 +217,7 @@ export function ExploreToolbar({ exploreId, topOfViewRef, onChangeTime }: Props)
             isLoading={loading}
             text={showSmallTimePicker ? undefined : loading ? 'Cancel' : 'Run query'}
             tooltip={showSmallTimePicker ? (loading ? 'Cancel' : 'Run query') : undefined}
-            intervals={getTimeSrv().getValidIntervals(defaultIntervals)}
+            intervals={contextSrv.getValidIntervals(defaultIntervals)}
             isLive={isLive}
             onRefresh={() => onRunQuery(loading)}
             noIntervalPicker={isLive}

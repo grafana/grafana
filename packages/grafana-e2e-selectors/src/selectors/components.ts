@@ -112,6 +112,7 @@ export const Components = {
       Table: {
         header: 'table header',
         footer: 'table-footer',
+        body: 'data-testid table body',
       },
     },
   },
@@ -424,5 +425,8 @@ export const Components = {
   Annotations: {
     annotationsTypeInput: 'annotations-type-input',
     annotationsChoosePanelInput: 'choose-panels-input',
+  },
+  Tooltip: {
+    container: 'data-testid tooltip',
   },
 };

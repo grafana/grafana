@@ -180,37 +180,33 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
    * TODO: In the future, we would like to return active filters based the query that produced the log line.
    * @alpha
    */
-  isFilterLabelActive = async (key: string, value: string) => {
+  isFilterLabelActive = async (key: string, value: string, refId?: string) => {
     if (!config.featureToggles.toggleLabelsInLogsUI) {
       return false;
     }
-    if (this.props.queries.length === 0) {
+    const query = this.props.queries.find((q) => q.refId === refId);
+    if (!query) {
       return false;
     }
-    for (const query of this.props.queries) {
-      const ds = await getDataSourceSrv().get(query.datasource);
-      if (!hasToggleableQueryFiltersSupport(ds)) {
-        return false;
-      }
-      if (!ds.queryHasFilter(query, { key, value })) {
-        return false;
-      }
+    const ds = await getDataSourceSrv().get(query.datasource);
+    if (hasToggleableQueryFiltersSupport(ds) && ds.queryHasFilter(query, { key, value })) {
+      return true;
     }
-    return true;
+    return false;
   };
 
   /**
    * Used by Logs details.
    */
-  onClickFilterLabel = (key: string, value: string) => {
-    this.onModifyQueries({ type: 'ADD_FILTER', options: { key, value } });
+  onClickFilterLabel = (key: string, value: string, refId?: string) => {
+    this.onModifyQueries({ type: 'ADD_FILTER', options: { key, value } }, refId);
   };
 
   /**
    * Used by Logs details.
    */
-  onClickFilterOutLabel = (key: string, value: string) => {
-    this.onModifyQueries({ type: 'ADD_FILTER_OUT', options: { key, value } });
+  onClickFilterOutLabel = (key: string, value: string, refId?: string) => {
+    this.onModifyQueries({ type: 'ADD_FILTER_OUT', options: { key, value } }, refId);
   };
 
   onClickAddQueryRowButton = () => {
@@ -221,8 +217,13 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
   /**
    * Used by Logs details.
    */
-  onModifyQueries = (action: QueryFixAction) => {
+  onModifyQueries = (action: QueryFixAction, refId?: string) => {
     const modifier = async (query: DataQuery, modification: QueryFixAction) => {
+      // This gives Logs Details support to modify the query that produced the log line.
+      // If not present, all queries are modified.
+      if (refId && refId !== query.refId) {
+        return query;
+      }
       const { datasource } = query;
       if (datasource == null) {
         return query;

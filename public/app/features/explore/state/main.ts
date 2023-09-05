@@ -1,7 +1,7 @@
 import { createAction } from '@reduxjs/toolkit';
 import { AnyAction } from 'redux';
 
-import { SplitOpenOptions } from '@grafana/data';
+import { SplitOpenOptions, TimeRange } from '@grafana/data';
 import { DataSourceSrv, locationService } from '@grafana/runtime';
 import { generateExploreId, GetExploreUrlArguments } from 'app/core/utils/explore';
 import { PanelModel } from 'app/features/dashboard/state';
@@ -10,7 +10,6 @@ import { CorrelationDetails, ExploreItemState, ExploreState } from 'app/types/ex
 import { RichHistoryResults } from '../../../core/history/RichHistoryStorage';
 import { RichHistorySearchFilters, RichHistorySettings } from '../../../core/utils/richHistoryTypes';
 import { createAsyncThunk, ThunkResult } from '../../../types';
-import { TimeSrv } from '../../dashboard/services/TimeSrv';
 import { withUniqueRefIds } from '../utils/queries';
 
 import { initializeExplore, InitializeExploreOptions, paneReducer } from './explorePane';
@@ -119,7 +118,7 @@ export const changeCorrelationDetails = createAction<CorrelationDetails>('explor
 
 export interface NavigateToExploreDependencies {
   getDataSourceSrv: () => DataSourceSrv;
-  getTimeSrv: () => TimeSrv;
+  timeRange: TimeRange;
   getExploreUrl: (args: GetExploreUrlArguments) => Promise<string | undefined>;
   openInNewWindow?: (url: string) => void;
 }
@@ -129,12 +128,12 @@ export const navigateToExplore = (
   dependencies: NavigateToExploreDependencies
 ): ThunkResult<void> => {
   return async (dispatch) => {
-    const { getDataSourceSrv, getTimeSrv, getExploreUrl, openInNewWindow } = dependencies;
+    const { getDataSourceSrv, timeRange, getExploreUrl, openInNewWindow } = dependencies;
     const datasourceSrv = getDataSourceSrv();
     const path = await getExploreUrl({
       panel,
       datasourceSrv,
-      timeSrv: getTimeSrv(),
+      timeRange,
     });
 
     if (openInNewWindow && path) {
