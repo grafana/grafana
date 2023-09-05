@@ -2,7 +2,7 @@
 title = "Heatmap"
 description = "Heatmap visualization documentation"
 keywords = ["grafana", "heatmap", "panel", "documentation"]
-aliases =["/docs/grafana/latest/features/panels/heatmap/"]
+aliases =["/docs/grafana/v8.3/features/panels/heatmap/"]
 weight = 600
 +++
 

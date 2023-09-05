@@ -8,7 +8,6 @@ weight = 10000
 Here you can find detailed release notes that list everything that is included in every release as well as notices
 about deprecations, breaking changes as well as changes that relate to plugin development.
 
-- [Release notes for 8.3.7]({{< relref "release-notes-8-3-7" >}})
 - [Release notes for 8.3.5]({{< relref "release-notes-8-3-5" >}})
 - [Release notes for 8.3.4]({{< relref "release-notes-8-3-4" >}})
 - [Release notes for 8.3.3]({{< relref "release-notes-8-3-3" >}})
@@ -17,7 +16,6 @@ about deprecations, breaking changes as well as changes that relate to plugin de
 - [Release notes for 8.3.0]({{< relref "release-notes-8-3-0" >}})
 - [Release notes for 8.3.0-beta2]({{< relref "release-notes-8-3-0-beta2" >}})
 - [Release notes for 8.3.0-beta1]({{< relref "release-notes-8-3-0-beta1" >}})
-- [Release notes for 8.2.7]({{< relref "release-notes-8-2-7" >}})
 - [Release notes for 8.2.6]({{< relref "release-notes-8-2-6" >}})
 - [Release notes for 8.2.5]({{< relref "release-notes-8-2-5" >}})
 - [Release notes for 8.2.4]({{< relref "release-notes-8-2-4" >}})
@@ -27,7 +25,6 @@ about deprecations, breaking changes as well as changes that relate to plugin de
 - [Release notes for 8.2.0]({{< relref "release-notes-8-2-0" >}})
 - [Release notes for 8.2.0-beta2]({{< relref "release-notes-8-2-0-beta2" >}})
 - [Release notes for 8.2.0-beta1]({{< relref "release-notes-8-2-0-beta1" >}})
-- [Release notes for 8.1.8]({{< relref "release-notes-8-1-8" >}})
 - [Release notes for 8.1.7]({{< relref "release-notes-8-1-7" >}})
 - [Release notes for 8.1.6]({{< relref "release-notes-8-1-6" >}})
 - [Release notes for 8.1.5]({{< relref "release-notes-8-1-5" >}})
@@ -39,7 +36,6 @@ about deprecations, breaking changes as well as changes that relate to plugin de
 - [Release notes for 8.1.0-beta3]({{< relref "release-notes-8-1-0-beta3" >}})
 - [Release notes for 8.1.0-beta2]({{< relref "release-notes-8-1-0-beta2" >}})
 - [Release notes for 8.1.0-beta1]({{< relref "release-notes-8-1-0-beta1" >}})
-- [Release notes for 8.0.7]({{< relref "release-notes-8-0-7" >}})
 - [Release notes for 8.0.6]({{< relref "release-notes-8-0-6" >}})
 - [Release notes for 8.0.5]({{< relref "release-notes-8-0-5" >}})
 - [Release notes for 8.0.4]({{< relref "release-notes-8-0-4" >}})
@@ -51,7 +47,6 @@ about deprecations, breaking changes as well as changes that relate to plugin de
 - [Release notes for 8.0.0-beta2]({{< relref "release-notes-8-0-0-beta2" >}})
 - [Release notes for 8.0.0-beta1]({{< relref "release-notes-8-0-0-beta1" >}})
 - [Release notes for 7.5.15]({{< relref "release-notes-7-5-15" >}})
-- [Release notes for 7.5.13]({{< relref "release-notes-7-5-13" >}})
 - [Release notes for 7.5.12]({{< relref "release-notes-7-5-12" >}})
 - [Release notes for 7.5.11]({{< relref "release-notes-7-5-11" >}})
 - [Release notes for 7.5.10]({{< relref "release-notes-7-5-10" >}})

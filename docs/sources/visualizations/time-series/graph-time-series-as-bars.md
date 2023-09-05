@@ -1,7 +1,7 @@
 +++
 title = "Graph time series as bars"
 keywords = ["grafana", "time series panel", "documentation", "guide", "graph"]
-aliases = ["/docs/grafana/latest/panels/visualizations/time-series/graph-time-series-as-bars/"]
+aliases = ["/docs/grafana/v8.3/panels/visualizations/time-series/graph-time-series-as-bars/"]
 weight = 200
 +++
 
@@ -133,9 +133,9 @@ Never show the points.
 
 ![Show points point never example](/static/img/docs/time-series-panel/bar-graph-show-points-never-7-4.png)
 
-{{< docs/shared "visualizations/stack-series-link.md" >}}
+{{< docs/shared lookup="visualizations/stack-series-link.md" source="grafana" version="<GRAFANA VERSION>" >}}
 
-{{< docs/shared "visualizations/change-axis-link.md" >}}
+{{< docs/shared lookup="visualizations/change-axis-link.md" source="grafana" version="<GRAFANA VERSION>" >}}
 
 ## Bar graph examples
 

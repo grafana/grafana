@@ -2,13 +2,11 @@
 title = "Panel links"
 description = ""
 keywords = ["grafana", "linking", "create links", "link panels", "link dashboards", "navigate"]
-aliases = ["/docs/grafana/latest/features/navigation-links/"]
+aliases = ["/docs/grafana/v8.3/features/navigation-links/"]
 weight = 300
 +++
 
 # Panel links
-
-{{< docs/shared "panels/panel-links-intro.md" >}}
 
 Click the icon on the top left corner of a panel to see available panel links.
 

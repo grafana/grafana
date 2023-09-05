@@ -2,7 +2,7 @@
 title = "Provision CloudWatch"
 description = "Guide for provisioning CloudWatch"
 weight = 400
-aliases = ["/docs/grafana/latest/datasources/cloudwatch"]
+aliases = ["/docs/grafana/v8.3/datasources/cloudwatch"]
 +++
 
 # Provision CloudWatch data source

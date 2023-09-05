@@ -1,7 +1,7 @@
 +++
 title = "Graph time series as points"
 keywords = ["grafana", "time series panel", "documentation", "guide", "graph"]
-aliases = ["/docs/grafana/latest/panels/visualizations/time-series/graph-time-series-as-points/"]
+aliases = ["/docs/grafana/v8.3/panels/visualizations/time-series/graph-time-series-as-points/"]
 weight = 300
 +++
 
@@ -37,6 +37,6 @@ Point size set to 35:
 
 ![Show points point size 35 example](/static/img/docs/time-series-panel/points-graph-show-points-35-7-4.png)
 
-{{< docs/shared "visualizations/stack-series-link.md" >}}
+{{< docs/shared lookup="visualizations/stack-series-link.md" source="grafana" version="<GRAFANA VERSION>" >}}
 
-{{< docs/shared "visualizations/change-axis-link.md" >}}
+{{< docs/shared lookup="visualizations/change-axis-link.md" source="grafana" version="<GRAFANA VERSION>" >}}

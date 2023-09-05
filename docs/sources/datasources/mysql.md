@@ -2,7 +2,7 @@
 title = "MySQL"
 description = "Guide for using MySQL in Grafana"
 keywords = ["grafana", "mysql", "guide"]
-aliases = ["/docs/grafana/latest/features/datasources/mysql/"]
+aliases = ["/docs/grafana/v8.3/features/datasources/mysql/"]
 weight = 1000
 +++
 

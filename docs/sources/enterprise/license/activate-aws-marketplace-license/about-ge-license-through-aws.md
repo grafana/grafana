@@ -2,7 +2,7 @@
 title = "About Grafana Enterprise licenses from AWS Marketplace"
 description = "About Grafana Enterprise licenses from AWS Marketplace"
 keywords = ["grafana", "about", "enterprise", "overview", "aws", "marketplace"]
-aliases = ["/docs/grafana/latest/enterprise/activate-aws-marketplace-license/about-ge-license-through-aws"]
+aliases = ["/docs/grafana/v8.3/enterprise/activate-aws-marketplace-license/about-ge-license-through-aws"]
 weight = 100
 +++
 

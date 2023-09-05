@@ -1,7 +1,7 @@
 +++
 title = "Time series"
 keywords = ["grafana", "graph panel", "time series panel", "documentation", "guide", "graph"]
-aliases = ["/docs/grafana/latest/panels/visualizations/time-series/"]
+aliases = ["/docs/grafana/v8.3/panels/visualizations/time-series/"]
 weight = 1200
 +++
 
@@ -17,9 +17,9 @@ Time series visualization is the default and primary way to visualize time serie
 
 These options are available whether you are graphing your time series as lines, bars, or points.
 
-{{< docs/shared "visualizations/tooltip-mode.md" >}}
+{{< docs/shared lookup="visualizations/tooltip-mode.md" source="grafana" version="<GRAFANA VERSION>" >}}
 
-{{< docs/shared "visualizations/legend-mode.md" >}}
+{{< docs/shared lookup="visualizations/legend-mode.md" source="grafana" version="<GRAFANA VERSION>" >}}
 
 ### Legend calculations
 

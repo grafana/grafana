@@ -2,7 +2,7 @@
 title = "Tempo"
 description = "High volume, minimal dependency trace storage. OSS tracing solution from Grafana Labs."
 keywords = ["grafana", "tempo", "guide", "tracing"]
-aliases = ["/docs/grafana/latest/features/datasources/tempo"]
+aliases = ["/docs/grafana/v8.3/features/datasources/tempo"]
 weight = 1400
 +++
 
@@ -130,7 +130,7 @@ To display the service graph:
 - Select the **Service Graph** query type and run the query
 - Optionally, filter by service name
 
-You can pan and zoom the view with buttons or you mouse. For details about the visualization, refer to [Node graph panel](https://grafana.com/docs/grafana/latest/panels/visualizations/node-graph/).
+You can pan and zoom the view with buttons or you mouse. For details about the visualization, refer to [Node graph panel](https://grafana.com/docs/grafana/v8.3/panels/visualizations/node-graph/).
 
 Each service in the graph is represented as a circle. Numbers on the inside shows average time per request and request per second.
 

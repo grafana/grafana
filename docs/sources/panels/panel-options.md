@@ -27,12 +27,8 @@ Toggle the transparent background option on your panel display.
 
 ## Panel links
 
-{{< docs/shared "panels/panel-links-intro.md" >}}
-
 For more information, refer to [Panel links]({{< relref "../linking/panel-links.md" >}}).
 
 ## Repeat options
-
-{{< docs/shared "panels/repeat-panels-intro.md" >}}
 
 For more information, refer to [Repeat panels or rows]({{< relref "./repeat-panels-or-rows.md" >}}).

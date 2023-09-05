@@ -2,13 +2,13 @@
 title = "InfluxDB data source"
 description = "Guide for using InfluxDB in Grafana"
 keywords = ["grafana", "influxdb", "guide", "flux"]
-aliases = ["/docs/grafana/latest/features/datasources/influxdb", "/docs/grafana/latest/datasources/influxdb"]
+aliases = ["/docs/grafana/v8.3/features/datasources/influxdb", "/docs/grafana/v8.3/datasources/influxdb"]
 weight = 700
 +++
 
 # InfluxDB data source
 
-{{< docs/shared "influxdb/intro.md" >}}
+{{< docs/shared lookup="influxdb/intro.md" source="grafana" version="<GRAFANA VERSION>" >}}
 
 This topic explains options, variables, querying, and other options specific to this data source. Refer to [Add a data source]({{< relref "../add-a-data-source.md" >}}) for instructions on how to add a data source to Grafana. Only users with the organization admin role can add data sources.
 

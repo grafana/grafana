@@ -2,7 +2,7 @@
 title = "Histogram"
 description = "Histogram visualization"
 keywords = ["grafana", "docs", "bar chart", "panel", "barchart"]
-aliases =["/docs/grafana/latest/features/panels/histogram/", "/docs/grafana/latest/panels/visualizations/histogram/"]
+aliases =["/docs/grafana/v8.3/features/panels/histogram/", "/docs/grafana/v8.3/panels/visualizations/histogram/"]
 weight = 605
 +++
 
@@ -58,9 +58,9 @@ Transparency of the gradient is calculated based on the values on the Y-axis. Th
 
 Gradient color is generated based on the hue of the line color.
 
-{{< docs/shared "visualizations/tooltip-mode.md" >}}
+{{< docs/shared lookup="visualizations/tooltip-mode.md" source="grafana" version="<GRAFANA VERSION>" >}}
 
-{{< docs/shared "visualizations/legend-mode.md" >}}
+{{< docs/shared lookup="visualizations/legend-mode.md" source="grafana" version="<GRAFANA VERSION>" >}}
 
 ### Legend calculations
 

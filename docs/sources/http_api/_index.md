@@ -2,7 +2,7 @@
 title = "HTTP API"
 description = "Grafana HTTP API"
 keywords = ["grafana", "http", "documentation", "api", "overview"]
-aliases = ["/docs/grafana/latest/overview"]
+aliases = ["/docs/grafana/v8.3/overview"]
 weight = 170
 +++
 
@@ -30,7 +30,6 @@ dashboards, creating users, and updating data sources.
 - [Other API]({{< relref "other.md" >}})
 - [Playlists API]({{< relref "playlist.md" >}})
 - [Preferences API]({{< relref "preferences.md" >}})
-- [Service account API]({{< relref "serviceaccount.md" >}})
 - [Short URL API]({{< relref "short_url.md" >}})
 - [Snapshot API]({{< relref "snapshot.md" >}})
 - [Team API]({{< relref "team.md" >}})
