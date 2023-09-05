@@ -33,7 +33,7 @@ import * as ruleId from '../../utils/rule-id';
 import { CloudEvaluationBehavior } from './CloudEvaluationBehavior';
 import { DetailsStep } from './DetailsStep';
 import { GrafanaEvaluationBehavior } from './GrafanaEvaluationBehavior';
-import { GrafanaRuleInspector } from './GrafanaRuleInspector';
+import { GrafanaRuleExporter } from './GrafanaRuleExporter';
 import { NotificationsStep } from './NotificationsStep';
 import { RuleEditorSection } from './RuleEditorSection';
 import { RuleInspector } from './RuleInspector';
@@ -288,7 +288,7 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
       ) : null}
       {showEditYaml ? (
         type === RuleFormType.grafana ? (
-          <GrafanaRuleInspector alertUid={uidFromParams} onClose={() => setShowEditYaml(false)} />
+          <GrafanaRuleExporter alertUid={uidFromParams} onClose={() => setShowEditYaml(false)} />
         ) : (
           <RuleInspector onClose={() => setShowEditYaml(false)} />
         )

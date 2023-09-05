@@ -28,7 +28,7 @@ import { createShareLink, createViewLink } from '../../utils/misc';
 import * as ruleId from '../../utils/rule-id';
 import { isFederatedRuleGroup, isGrafanaRulerRule } from '../../utils/rules';
 import { createUrl } from '../../utils/url';
-import { GrafanaRuleInspector } from '../rule-editor/GrafanaRuleInspector';
+import { GrafanaRuleExporter } from '../rule-editor/GrafanaRuleExporter';
 
 import { RedirectToCloneRule } from './CloneRule';
 
@@ -194,7 +194,7 @@ export const RuleActionsButtons = ({ rule, rulesSource }: Props) => {
           />
         )}
         {showExportDrawer && isGrafanaRulerRule(rule.rulerRule) && (
-          <GrafanaRuleInspector alertUid={rule.rulerRule.grafana_alert.uid} onClose={toggleShowExportDrawer} />
+          <GrafanaRuleExporter alertUid={rule.rulerRule.grafana_alert.uid} onClose={toggleShowExportDrawer} />
         )}
         {redirectToClone && (
           <RedirectToCloneRule
