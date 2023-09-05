@@ -47,7 +47,7 @@ export function getFieldDisplayValuesProxy(options: {
           return undefined;
         }
 
-        const displayProcessor = field.display ?? getDisplayProcessor({field});
+        const displayProcessor = field.display ?? getDisplayProcessor({ field });
         const raw = field.values[options.rowIndex];
         const disp = displayProcessor(raw);
         disp.toString = () => formattedValueToString(disp);

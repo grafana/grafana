@@ -101,7 +101,7 @@ describe('dataMacros', () => {
 
     const scopedVars = { __dataContext: dataContext };
 
-    expect(_templateSrv.replace('${__data.fields[1]}', scopedVars)).toBe('10000');
+    expect(_templateSrv.replace('${__data.fields[1]}', scopedVars)).toBe('1969-12-31 18:00:10.000');
     expect(_templateSrv.replace('${__data.fields[0]}', scopedVars)).toBe('10%');
     expect(_templateSrv.replace('${__data.fields[0].text}', scopedVars)).toBe('10');
     expect(_templateSrv.replace('${__data.fields["CoolNumber"].text}', scopedVars)).toBe('10');
