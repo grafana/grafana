@@ -59,7 +59,7 @@ func (srv AlertmanagerSrv) RouteGetAMStatus(c *contextmodel.ReqContext) response
 func (srv AlertmanagerSrv) RouteCreateSilence(c *contextmodel.ReqContext, postableSilence apimodels.PostableSilence) response.Response {
 	err := postableSilence.Validate(strfmt.Default)
 	if err != nil {
-		srv.log.Error("silence failed validation", "error", err)
+		srv.log.Error("Silence failed validation", "error", err)
 		return ErrResp(http.StatusBadRequest, err, "silence failed validation")
 	}
 
@@ -104,7 +104,7 @@ func (srv AlertmanagerSrv) RouteDeleteAlertingConfig(c *contextmodel.ReqContext)
 	}
 
 	if err := am.SaveAndApplyDefaultConfig(c.Req.Context()); err != nil {
-		srv.log.Error("unable to save and apply default alertmanager configuration", "error", err)
+		srv.log.Error("Unable to save and apply default alertmanager configuration", "error", err)
 		return ErrResp(http.StatusInternalServerError, err, "failed to save and apply default Alertmanager configuration")
 	}
 
@@ -479,6 +479,6 @@ func (srv AlertmanagerSrv) AlertmanagerFor(orgID int64) (notifier.Alertmanager, 
 		return am, response.Error(http.StatusConflict, err.Error(), err)
 	}
 
-	srv.log.Error("unable to obtain the org's Alertmanager", "error", err)
+	srv.log.Error("Unable to obtain the org's Alertmanager", "error", err)
 	return nil, response.Error(http.StatusInternalServerError, "unable to obtain org's Alertmanager", err)
 }

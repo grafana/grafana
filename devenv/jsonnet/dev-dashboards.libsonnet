@@ -548,6 +548,13 @@ local dashboard = grafana.dashboard;
         id: 0,
       }
     },
+    dashboard.new('relative_time_zone_support', import '../dev-dashboards/scenarios/relative_time_zone_support.json') +
+    resource.addMetadata('folder', 'dev-dashboards') +
+    {
+      spec+: {
+        id: 0,
+      }
+    },
     dashboard.new('reuse', import '../dev-dashboards/transforms/reuse.json') +
     resource.addMetadata('folder', 'dev-dashboards') +
     {
@@ -611,6 +618,13 @@ local dashboard = grafana.dashboard;
         id: 0,
       }
     },
+    dashboard.new('templating-repeating-panels', import '../dev-dashboards/feature-templating/templating-repeating-panels.json') +
+    resource.addMetadata('folder', 'dev-dashboards') +
+    {
+      spec+: {
+        id: 0,
+      }
+    },
     dashboard.new('templating-textbox-e2e-scenarios', import '../dev-dashboards/feature-templating/templating-textbox-e2e-scenarios.json') +
     resource.addMetadata('folder', 'dev-dashboards') +
     {
@@ -633,13 +647,6 @@ local dashboard = grafana.dashboard;
       }
     },
     dashboard.new('testdata-nested-variables-drilldown', import '../dev-dashboards/feature-templating/testdata-nested-variables-drilldown.json') +
-    resource.addMetadata('folder', 'dev-dashboards') +
-    {
-      spec+: {
-        id: 0,
-      }
-    },
-    dashboard.new('testdata-repeating', import '../dev-dashboards/feature-templating/testdata-repeating.json') +
     resource.addMetadata('folder', 'dev-dashboards') +
     {
       spec+: {

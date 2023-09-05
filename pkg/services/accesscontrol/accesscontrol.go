@@ -10,7 +10,6 @@ import (
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 type AccessControl interface {
@@ -19,8 +18,6 @@ type AccessControl interface {
 	// RegisterScopeAttributeResolver allows the caller to register a scope resolver for a
 	// specific scope prefix (ex: datasources:name:)
 	RegisterScopeAttributeResolver(prefix string, resolver ScopeAttributeResolver)
-	//IsDisabled returns if access control is enabled or not
-	IsDisabled() bool
 }
 
 type Service interface {
@@ -43,8 +40,6 @@ type Service interface {
 	SaveExternalServiceRole(ctx context.Context, cmd SaveExternalServiceRoleCommand) error
 	// DeleteExternalServiceRole removes an external service's role and its assignment.
 	DeleteExternalServiceRole(ctx context.Context, externalServiceID string) error
-	//IsDisabled returns if access control is enabled or not
-	IsDisabled() bool
 }
 
 type RoleRegistry interface {
@@ -116,7 +111,7 @@ func HasGlobalAccess(ac AccessControl, service Service, c *contextmodel.ReqConte
 		if userCopy.Permissions[GlobalOrgID] == nil {
 			permissions, err := service.GetUserPermissions(c.Req.Context(), &userCopy, Options{})
 			if err != nil {
-				c.Logger.Error("failed fetching permissions for user", "userID", userCopy.UserID, "error", err)
+				c.Logger.Error("Failed fetching permissions for user", "userID", userCopy.UserID, "error", err)
 			}
 			userCopy.Permissions[GlobalOrgID] = GroupScopesByAction(permissions)
 		}
@@ -369,10 +364,6 @@ func ManagedTeamRoleName(teamID int64) string {
 
 func ManagedBuiltInRoleName(builtInRole string) string {
 	return fmt.Sprintf("managed:builtins:%s:permissions", strings.ToLower(builtInRole))
-}
-
-func IsDisabled(cfg *setting.Cfg) bool {
-	return !cfg.RBACEnabled
 }
 
 // GetOrgRoles returns legacy org roles for a user

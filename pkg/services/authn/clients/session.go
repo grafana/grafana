@@ -78,14 +78,14 @@ func (s *Session) Authenticate(ctx context.Context, r *authn.Request) (*authn.Id
 		go func() {
 			defer func() {
 				if err := recover(); err != nil {
-					s.log.Warn("tag anon session panic", "err", err)
+					s.log.Warn("Tag anon session panic", "err", err)
 				}
 			}()
 
 			newCtx, cancel := context.WithTimeout(context.Background(), timeoutTag)
 			defer cancel()
 			if err := s.anonDeviceService.TagDevice(newCtx, httpReqCopy, anonymous.AuthedDevice); err != nil {
-				s.log.Warn("failed to tag anonymous session", "error", err)
+				s.log.Warn("Failed to tag anonymous session", "error", err)
 			}
 		}()
 	}
@@ -133,18 +133,18 @@ func (s *Session) Hook(ctx context.Context, identity *authn.Identity, r *authn.R
 		// addr := reqContext.RemoteAddr()
 		ip, err := network.GetIPFromAddress(addr)
 		if err != nil {
-			s.log.Debug("failed to get client IP address", "addr", addr, "err", err)
+			s.log.Debug("Failed to get client IP address", "addr", addr, "err", err)
 			ip = nil
 		}
 		rotated, newToken, err := s.sessionService.TryRotateToken(ctx, identity.SessionToken, ip, userAgent)
 		if err != nil {
-			s.log.Error("failed to rotate token", "error", err)
+			s.log.Error("Failed to rotate token", "error", err)
 			return
 		}
 
 		if rotated {
 			identity.SessionToken = newToken
-			s.log.Debug("rotated session token", "user", identity.ID)
+			s.log.Debug("Rotated session token", "user", identity.ID)
 
 			authn.WriteSessionCookie(w, s.cfg, identity.SessionToken)
 		}

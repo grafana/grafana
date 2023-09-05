@@ -15,7 +15,7 @@ func (am *alertmanager) GetStatus() (apimodels.GettableStatus, error) {
 	}
 
 	if err := json.Unmarshal(status, config); err != nil {
-		am.logger.Error("unable to unmarshall alertmanager config", "Err", err)
+		am.logger.Error("Unable to unmarshall alertmanager config", "Err", err)
 	}
 
 	return *apimodels.NewGettableStatus(&config.AlertmanagerConfig), nil

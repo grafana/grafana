@@ -1,7 +1,6 @@
 import React from 'react';
-import { of } from 'rxjs';
 
-import { EventBusSrv, serializeStateToUrlParam } from '@grafana/data';
+import { DataQuery, EventBusSrv, serializeStateToUrlParam } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
 import { silenceConsoleOutput } from '../../../../test/core/utils/silenceConsoleOutput';
@@ -33,15 +32,15 @@ import {
 import { makeLogsQueryResponse } from './helper/query';
 import { setupExplore, tearDown, waitForExplore } from './helper/setup';
 
-const fetchMock = jest.fn();
-const postMock = jest.fn();
-const getMock = jest.fn();
 const reportInteractionMock = jest.fn();
 const testEventBus = new EventBusSrv();
 
+interface MockQuery extends DataQuery {
+  expr: string;
+}
+
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
-  getBackendSrv: () => ({ fetch: fetchMock, post: postMock, get: getMock }),
   reportInteraction: (...args: object[]) => {
     reportInteractionMock(...args);
   },
@@ -53,6 +52,7 @@ jest.mock('app/core/core', () => ({
     hasPermission: () => true,
     hasAccess: () => true,
     isSignedIn: true,
+    getValidIntervals: (defaultIntervals: string[]) => defaultIntervals,
   },
 }));
 
@@ -78,12 +78,6 @@ jest.mock('react-virtualized-auto-sizer', () => {
   };
 });
 
-jest.mock('../../correlations/utils', () => {
-  return {
-    getCorrelationsBySourceUIDs: jest.fn().mockReturnValue({ correlations: [] }),
-  };
-});
-
 describe('Explore: Query History', () => {
   const USER_INPUT = 'my query';
   const RAW_QUERY = `{"expr":"${USER_INPUT}"}`;
@@ -92,9 +86,6 @@ describe('Explore: Query History', () => {
 
   afterEach(() => {
     config.queryHistoryEnabled = false;
-    fetchMock.mockClear();
-    postMock.mockClear();
-    getMock.mockClear();
     reportInteractionMock.mockClear();
     tearDown();
   });
@@ -115,6 +106,8 @@ describe('Explore: Query History', () => {
 
     // when Explore is opened again
     unmount();
+
+    tearDown({ clearLocalStorage: false });
     setupExplore({ clearLocalStorage: false });
     await waitForExplore();
 
@@ -264,13 +257,15 @@ describe('Explore: Query History', () => {
 
   it('pagination', async () => {
     config.queryHistoryEnabled = true;
-    const { datasources } = setupExplore();
+
+    const mockQuery: MockQuery = { refId: 'A', expr: 'query' };
+    const { datasources } = setupExplore({
+      queryHistory: {
+        queryHistory: [{ datasourceUid: 'loki', queries: [mockQuery] }],
+        totalCount: 2,
+      },
+    });
     jest.mocked(datasources.loki.query).mockReturnValueOnce(makeLogsQueryResponse());
-    fetchMock.mockReturnValue(
-      of({
-        data: { result: { queryHistory: [{ datasourceUid: 'loki', queries: [{ expr: 'query' }] }], totalCount: 2 } },
-      })
-    );
     await waitForExplore();
 
     await openQueryHistory();

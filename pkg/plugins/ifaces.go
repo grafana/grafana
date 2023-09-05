@@ -173,10 +173,10 @@ type SignatureCalculator interface {
 
 type KeyStore interface {
 	Get(ctx context.Context, key string) (string, bool, error)
-	Set(ctx context.Context, key string, value string) error
-	Del(ctx context.Context, key string) error
+	Set(ctx context.Context, key string, value any) error
+	Delete(ctx context.Context, key string) error
 	ListKeys(ctx context.Context) ([]string, error)
-	GetLastUpdated(ctx context.Context) (*time.Time, error)
+	GetLastUpdated(ctx context.Context) (time.Time, error)
 	SetLastUpdated(ctx context.Context) error
 }
 
