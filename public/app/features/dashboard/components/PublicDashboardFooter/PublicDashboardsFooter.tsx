@@ -33,7 +33,7 @@ export let useGetPublicDashboardFooterConfig = (): PublicDashboardFooterCfg => {
   return {
     hide: false,
     text: <span className={styles.text}>Powered by</span>,
-    logo: 'public/img/grafana_text_logo-dark.svg',
+    logo: 'public/img/grafana_text_logo.svg',
     link: 'https://grafana.com/',
   };
 };
@@ -51,11 +51,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
   text: css`
     color: ${theme.colors.text.secondary};
-    font-size: ${theme.typography.h5.fontSize};
+    font-size: ${theme.typography.body.fontSize};
   `,
   logoImg: css`
-    height: 25px;
-    padding: ${theme.spacing(0.25, 0, 0.5, 0)};
-    margin-left: ${theme.spacing(1)};
+    height: 16px;
+    margin-left: ${theme.spacing(0.5)};
   `,
 });
