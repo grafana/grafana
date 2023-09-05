@@ -21,7 +21,6 @@ These packages live in the `/packages` folder and contain packages like:
 
 - `@grafana/data`
 - `@grafana/runtime`
-- `@grafana/toolkit`
 - `@grafana/ui`
 - etc. ([They can be viewed here](https://github.com/grafana/grafana/tree/main/packages)
 

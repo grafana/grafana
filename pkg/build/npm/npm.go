@@ -21,7 +21,6 @@ const NpmArtifactDir = "./npm-artifacts"
 var packages = []string{
 	"@grafana/ui",
 	"@grafana/data",
-	"@grafana/toolkit",
 	"@grafana/runtime",
 	"@grafana/e2e",
 	"@grafana/e2e-selectors",
