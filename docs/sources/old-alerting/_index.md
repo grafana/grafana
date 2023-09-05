@@ -24,4 +24,4 @@ You can perform the following tasks for alerts:
 - [Test alert rules and troubleshoot]({{< relref "troubleshoot-alerts/" >}})
 - [Add or edit an alert contact point]({{< relref "notifications/" >}})
 
-{{< docs/shared "alerts/grafana-managed-alerts.md" >}}
+{{< docs/shared lookup="alerts/grafana-managed-alerts.md" source="grafana" version="<GRAFANA VERSION>" >}}
