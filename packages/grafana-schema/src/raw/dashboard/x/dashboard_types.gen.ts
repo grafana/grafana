@@ -694,6 +694,11 @@ export interface Panel {
    */
   maxDataPoints?: number;
   /**
+   * Option for repeated panels that controls max items per row
+   * Only relevant for horizontally repeated panels
+   */
+  maxPerRow?: number;
+  /**
    * It depends on the panel plugin. They are specified by the Options field in panel plugin schemas.
    */
   options: Record<string, unknown>;
@@ -710,10 +715,6 @@ export interface Panel {
    * `h` for horizontal, `v` for vertical.
    */
   repeatDirection?: ('h' | 'v');
-  /**
-   * Id of the repeating panel.
-   */
-  repeatPanelId?: number;
   /**
    * Tags for the panel.
    */
