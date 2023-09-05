@@ -9,7 +9,6 @@ import {
   SceneGridLayout,
   SceneControlsSpacer,
   SceneGridRow,
-  SceneGridItem,
 } from '@grafana/scenes';
 import { VariableRefresh } from '@grafana/schema';
 import { PanelRepeaterGridItem } from 'app/features/dashboard-scene/scene/PanelRepeaterGridItem';
@@ -81,27 +80,24 @@ export function getRepeatingPanelsDemo(): DashboardScene {
 function changeVariable(variable: TestVariable) {
   const sub = variable.subscribeToState((state, old) => {
     if (!state.loading && old.loading) {
-      setTimeout(() => {
-        if (variable.state.query === 'AB') {
-          variable.setState({
-            query: 'ABC',
-            optionsToReturn: [
-              { label: 'A', value: 'A' },
-              { label: 'B', value: 'B' },
-              { label: 'C', value: 'C' },
-            ],
-          });
-        } else {
-          variable.setState({
-            query: 'AB',
-            optionsToReturn: [
-              { label: 'A', value: 'A' },
-              { label: 'B', value: 'B' },
-            ],
-          });
-        }
-      });
-      return;
+      if (variable.state.optionsToReturn.length === 2) {
+        variable.setState({
+          query: 'ABC',
+          optionsToReturn: [
+            { label: 'A', value: 'A' },
+            { label: 'B', value: 'B' },
+            { label: 'C', value: 'C' },
+          ],
+        });
+      } else {
+        variable.setState({
+          query: 'AB',
+          optionsToReturn: [
+            { label: 'A', value: 'A' },
+            { label: 'B', value: 'B' },
+          ],
+        });
+      }
     }
   });
 
@@ -130,7 +126,23 @@ export function getRepeatingRowsDemo(): DashboardScene {
             { label: 'C', value: 'C' },
           ],
           options: [],
-          $behaviors: [changeVariable],
+          //$behaviors: [changeVariable],
+        }),
+        new TestVariable({
+          name: 'pod',
+          query: 'AB',
+          value: ['Mu', 'Ma', 'Mi'],
+          text: ['Mu', 'Ma', 'Mi'],
+          delayMs: 2000,
+          isMulti: true,
+          includeAll: true,
+          refresh: VariableRefresh.onTimeRangeChanged,
+          optionsToReturn: [
+            { label: 'Mu', value: 'Mu' },
+            { label: 'Ma', value: 'Ma' },
+            { label: 'Mi', value: 'Mi' },
+          ],
+          options: [],
         }),
       ],
     }),
@@ -148,28 +160,17 @@ export function getRepeatingRowsDemo(): DashboardScene {
             new RepeatedRowBehavior({
               variableName: 'server',
               sources: [
-                new SceneGridItem({
+                new PanelRepeaterGridItem({
+                  variableName: 'pod',
                   x: 0,
-                  y: 1,
-                  width: 12,
+                  y: 0,
+                  width: 24,
                   height: 5,
-                  isResizable: true,
-                  isDraggable: true,
-                  body: PanelBuilders.timeseries()
-                    .setTitle('server = $server')
-                    .setData(getQueryRunnerWithRandomWalkQuery({ alias: 'server = $server' }))
-                    .build(),
-                }),
-                new SceneGridItem({
-                  x: 12,
-                  y: 1,
-                  width: 12,
-                  height: 5,
-                  isResizable: true,
-                  isDraggable: true,
-                  body: PanelBuilders.stat()
-                    .setTitle('server = $server')
-                    .setData(getQueryRunnerWithRandomWalkQuery({ alias: 'server = $server' }))
+                  itemHeight: 5,
+                  //@ts-expect-error
+                  source: PanelBuilders.timeseries()
+                    .setTitle('server = $server, pod = $pod')
+                    .setData(getQueryRunnerWithRandomWalkQuery({ alias: 'server = $server, pod = $pod' }))
                     .build(),
                 }),
               ],

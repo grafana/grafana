@@ -140,6 +140,7 @@ export class RepeatedRowBehavior extends SceneObjectBase<RepeatedRowBehaviorStat
         }),
         children,
       });
+      // TODO how to deal with de-activation?
       rowToRepeat.state.$variables?.activate();
       return rowToRepeat;
     }
