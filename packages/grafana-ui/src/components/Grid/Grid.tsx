@@ -1,58 +1,45 @@
 import { css } from '@emotion/css';
 import React, { useCallback } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, ThemeSpacingTokens } from '@grafana/data';
 
 import { useStyles2 } from '../../themes';
 
 export type ItemsAlignment = 'start' | 'end' | 'center' | 'stretch';
 
 export type ContentAlignment = ItemsAlignment | 'space-around' | 'space-between' | 'space-evenly';
-
 export interface GridProps {
   children: NonNullable<React.ReactNode>;
   display?: 'grid' | 'inline-grid';
-  gap?: string;
+  gap?: ThemeSpacingTokens;
   templateColumns?: string;
   templateRows?: string;
   justifyContent?: ContentAlignment;
   alignContent?: ContentAlignment;
   justifyItems?: ItemsAlignment;
   alignItems?: ItemsAlignment;
-  autoColumns?: string;
-  autoRows?: string;
-  autoFlow?: string;
+  autoFlow?: 'row' | 'column' | 'row dense' | 'column dense';
 }
 
 export interface GridItemProps {
   children: NonNullable<React.ReactNode>;
   columnStart?: string;
-  columnEnd?: string;
+  columnEnd?: number | `span ${number}`;
   rowStart?: string;
-  rowEnd?: string;
-  justifySelf?: ItemsAlignment;
-  alignSelf?: ItemsAlignment;
+  rowEnd?: number | `span ${number}`;
 }
 
 export const Grid = ({
   children,
   display = 'grid',
-  gap,
+  gap = 1,
   templateColumns = 'none',
   templateRows = 'none',
-  justifyContent = 'center',
-  alignContent = 'center',
-  justifyItems = 'stretch',
-  alignItems = 'stretch',
-  autoColumns = 'auto',
-  autoRows = 'auto',
   autoFlow = 'row',
   columnStart,
   columnEnd,
   rowStart,
   rowEnd,
-  justifySelf,
-  alignSelf,
 }: GridProps & GridItemProps) => {
   const styles = useStyles2(
     useCallback(
@@ -63,44 +50,28 @@ export const Grid = ({
           gap,
           templateColumns,
           templateRows,
-          justifyContent,
-          alignContent,
-          justifyItems,
-          alignItems,
-          autoColumns,
-          autoRows,
           autoFlow,
           columnStart,
           columnEnd,
           rowStart,
           rowEnd,
-          justifySelf,
-          alignSelf
         ),
       [
         display,
         gap,
         templateColumns,
         templateRows,
-        justifyContent,
-        alignContent,
-        justifyItems,
-        alignItems,
-        autoColumns,
-        autoRows,
         autoFlow,
         columnStart,
         columnEnd,
         rowStart,
         rowEnd,
-        justifySelf,
-        alignSelf,
       ]
     )
   );
 
   const childrenWithProps = React.Children.map(children, (child) => {
-    return child && <div className={styles.gridItem}>{child}</div>;
+    return child && React.cloneElement(child as React.ReactElement, { className: styles.gridItem });
   });
 
   return <div className={styles.grid}>{childrenWithProps}</div>;
@@ -111,45 +82,32 @@ Grid.displayName = 'Grid';
 const getStyles = (
   theme: GrafanaTheme2,
   display: 'grid' | 'inline-grid',
-  gap: string = theme.spacing(1),
-  templateColumns: string,
-  templateRows: string,
-  justifyContent: ContentAlignment,
-  alignContent: ContentAlignment,
-  justifyItems: ItemsAlignment,
-  alignItems: ItemsAlignment,
-  autoColumns: string,
-  autoRows: string,
-  autoFlow: string,
-  columnStart?: string,
-  columnEnd?: string,
-  rowStart?: string,
-  rowEnd?: string,
-  justifySelf?: ItemsAlignment,
-  alignSelf?: ItemsAlignment
+  gap: ThemeSpacingTokens,
+  templateColumns: GridProps['templateColumns'],
+  templateRows: GridProps['templateRows'],
+  autoFlow: GridProps['autoFlow'],
+  columnStart?: GridItemProps['columnStart'],
+  columnEnd?: GridItemProps['columnEnd'],
+  rowStart?: GridItemProps['rowStart'],
+  rowEnd?: GridItemProps['rowEnd'],
 ) => {
   return {
     grid: css({
       display,
-      gap,
+      gap: theme.spacing(gap) ,
       gridTemplateColumns: templateColumns,
       gridTemplateRows: templateRows,
-      justifyContent,
-      alignContent,
-      justifyItems,
-      alignItems,
-      gridAutoColumns: autoColumns,
-      gridAutoRows: autoRows,
+      justifyContent: 'center',
+      alignContent: 'center',
+      justifyItems: 'stretch',
+      alignItems: 'stretch',
       gridAutoFlow: autoFlow,
     }),
     gridItem: css({
-      display: 'contents',
       gridColumnStart: columnStart,
       gridColumnEnd: columnEnd,
       gridRowStart: rowStart,
       gridRowEnd: rowEnd,
-      justifySelf,
-      alignSelf,
     }),
   };
 };
