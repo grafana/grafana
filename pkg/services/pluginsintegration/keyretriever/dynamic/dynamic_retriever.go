@@ -101,7 +101,7 @@ func (kr *KeyRetriever) updateKeys(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	if !kr.cfg.PluginForcePublicKeyDownload && time.Since(*lastUpdated) < publicKeySyncInterval {
+	if !kr.cfg.PluginForcePublicKeyDownload && time.Since(lastUpdated) < publicKeySyncInterval {
 		// Cache is still valid
 		return nil
 	}
@@ -170,15 +170,13 @@ func (kr *KeyRetriever) downloadKeys(ctx context.Context) error {
 	// Delete keys that are no longer in the API
 	for _, key := range cachedKeys {
 		if !shouldKeep[key] {
-			err = kr.kv.Del(ctx, key)
+			err = kr.kv.Delete(ctx, key)
 			if err != nil {
 				return err
 			}
 		}
 	}
-
-	// Update the last updated timestamp
-	return kr.kv.SetLastUpdated(ctx)
+	return nil
 }
 
 func (kr *KeyRetriever) ensureKeys(ctx context.Context) error {
