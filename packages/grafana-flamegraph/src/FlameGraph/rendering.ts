@@ -245,8 +245,8 @@ export function renderRect(
     (colorScheme === ColorSchemeDiff.Default || colorScheme === ColorSchemeDiff.DiffColorBlind)
       ? getBarColorByDiff(rect.ticks, rect.ticksRight, totalTicks, totalTicksRight!, colorScheme)
       : colorScheme === ColorScheme.ValueBased
-        ? getBarColorByValue(rect.ticks, totalTicks, rangeMin, rangeMax)
-        : getBarColorByPackage(rect.label, theme);
+      ? getBarColorByValue(rect.ticks, totalTicks, rangeMin, rangeMax)
+      : getBarColorByPackage(rect.label, theme);
 
   if (foundNames) {
     // Means we are searching, we use color for matches and gray the rest

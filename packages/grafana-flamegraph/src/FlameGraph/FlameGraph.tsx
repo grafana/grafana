@@ -108,7 +108,7 @@ const FlameGraph = ({
     totalColorTicks: data.isDiffFlamegraph() ? totalProfileTicks : totalViewTicks,
     totalTicksRight: totalProfileTicksRight,
     wrapperWidth,
-    getTheme
+    getTheme,
   });
 
   const onGraphClick = useCallback(

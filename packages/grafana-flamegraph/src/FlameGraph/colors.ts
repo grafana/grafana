@@ -99,7 +99,6 @@ export function getBarColorByDiff(
   return color(rgbString);
 }
 
-
 // const getColors = memoizeOne((theme) => getFilteredColors(colors, theme));
 
 // Different regexes to get the package name and function name from the label. We may at some point get an info about
