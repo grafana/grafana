@@ -31,7 +31,7 @@ const RuleViewer = (props: RuleViewerProps): JSX.Element => {
     sourceName === GRAFANA_RULES_SOURCE_NAME ? (
       <HorizontalGroup height="auto" justify="flex-end">
         <Button variant="secondary" type="button" onClick={() => setShowYaml(true)} size="sm">
-          View YAML
+          Export
         </Button>
       </HorizontalGroup>
     ) : null;
