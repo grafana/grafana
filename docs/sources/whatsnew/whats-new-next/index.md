@@ -24,6 +24,6 @@ Welcome to Grafana Cloud! Read on to learn about the newest changes to Grafana C
 
 _Generally available in Grafana Cloud_
 
-The Tempo data source now supports query-type template variables. With this, you can now create variables whose values are a list of attribute names or attribute values seen on spans received by Tempo. 
+The Tempo data source now supports query-type template variables. With this, you can now create variables whose values are a list of attribute names or attribute values seen on spans received by Tempo.
 
 For more information, please refer to the [Variables page](https://grafana.com/docs/grafana/latest/dashboards/variables/).
