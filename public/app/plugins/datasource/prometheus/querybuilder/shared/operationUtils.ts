@@ -120,7 +120,7 @@ export function getPromAndLokiOperationDisplayName(funcName: string) {
   return capitalize(funcName.replace(/_/g, ' '));
 }
 
-export function getOperationParamId(operationIndex: number, paramIndex: number) {
+export function getOperationParamId(operationIndex: string, paramIndex: number) {
   return `operations.${operationIndex}.param.${paramIndex}`;
 }
 
