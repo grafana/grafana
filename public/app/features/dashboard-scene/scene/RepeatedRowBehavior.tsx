@@ -1,5 +1,5 @@
 import {
-  ConstantVariable,
+  LocalValueVariable,
   MultiValueVariable,
   sceneGraph,
   SceneGridItemLike,
@@ -11,7 +11,6 @@ import {
   SceneVariableSet,
   VariableDependencyConfig,
   VariableValueSingle,
-  VizPanel,
 } from '@grafana/scenes';
 
 interface RepeatedRowBehaviorState extends SceneObjectState {
@@ -94,9 +93,10 @@ export class RepeatedRowBehavior extends SceneObjectBase<RepeatedRowBehaviorStat
       const children: SceneGridItemLike[] = [];
 
       for (const source of this.state.sources) {
+        const sourceItemY = source.state.y ?? 0;
         const itemClone = source.clone({
           key: `${source.state.key}-clone-${index}`,
-          y: source.state.y + rowContentHeight * index + index,
+          y: sourceItemY + rowContentHeight * index + index,
         });
 
         children.push(itemClone);
@@ -136,21 +136,24 @@ export class RepeatedRowBehavior extends SceneObjectBase<RepeatedRowBehaviorStat
       rowToRepeat.setState({
         // not activated
         $variables: new SceneVariableSet({
-          variables: [new ConstantVariable({ name: this.state.variableName, value, text: String(text) })],
+          variables: [new LocalValueVariable({ name: this.state.variableName, value, text: String(text) })],
         }),
         children,
       });
+      rowToRepeat.state.$variables?.activate();
       return rowToRepeat;
     }
+
+    const sourceRowY = rowToRepeat.state.y ?? 0;
 
     return rowToRepeat.clone({
       key: `${rowToRepeat.state.key}-clone-${index}`,
       $variables: new SceneVariableSet({
-        variables: [new ConstantVariable({ name: this.state.variableName, value, text: String(text) })],
+        variables: [new LocalValueVariable({ name: this.state.variableName, value, text: String(text) })],
       }),
       $behaviors: [],
       children,
-      y: rowToRepeat.state.y + rowContentHeight * index + index,
+      y: sourceRowY + rowContentHeight * index + index,
     });
   }
 
@@ -179,11 +182,11 @@ function getRowContentHeight(panels: SceneGridItemLike[]): number {
   let minY = Number.MAX_VALUE;
 
   for (const panel of panels) {
-    if (panel.state.y + panel.state.height > maxY) {
-      maxY = panel.state.y + panel.state.height;
+    if (panel.state.y! + panel.state.height! > maxY) {
+      maxY = panel.state.y! + panel.state.height!;
     }
-    if (panel.state.y < minY) {
-      minY = panel.state.y;
+    if (panel.state.y! < minY) {
+      minY = panel.state.y!;
     }
   }
 

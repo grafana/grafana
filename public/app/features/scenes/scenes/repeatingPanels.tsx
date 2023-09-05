@@ -157,7 +157,18 @@ export function getRepeatingRowsDemo(): DashboardScene {
                   isDraggable: true,
                   body: PanelBuilders.timeseries()
                     .setTitle('server = $server')
-                    .setIsDraggable(true)
+                    .setData(getQueryRunnerWithRandomWalkQuery({ alias: 'server = $server' }))
+                    .build(),
+                }),
+                new SceneGridItem({
+                  x: 12,
+                  y: 1,
+                  width: 12,
+                  height: 5,
+                  isResizable: true,
+                  isDraggable: true,
+                  body: PanelBuilders.stat()
+                    .setTitle('server = $server')
                     .setData(getQueryRunnerWithRandomWalkQuery({ alias: 'server = $server' }))
                     .build(),
                 }),
