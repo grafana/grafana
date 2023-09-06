@@ -3132,7 +3132,7 @@ steps:
   - name: docker
     path: /var/run/docker.sock
   - name: dist
-    path: dist
+    path: /src/dist
 trigger:
   branch: main
   event:
@@ -3191,7 +3191,7 @@ steps:
   - name: docker
     path: /var/run/docker.sock
   - name: dist
-    path: dist
+    path: /src/dist
 trigger:
   event:
     exclude:
@@ -3313,11 +3313,11 @@ steps:
   - name: docker
     path: /var/run/docker.sock
   - name: dist
-    path: dist
+    path: /src/dist
 - commands:
   - printenv GCP_KEY_BASE64 | base64 -d > /tmp/key.json
   - gcloud auth activate-service-account --key-file=/tmp/key.json
-  - gcloud storage cp -r dist/nightly-${DRONE_COMMIT_SHA:0:8} $${DESTINATION}/nightly/nightly-${DRONE_COMMIT_SHA:0:8}
+  - gcloud storage cp -r /src/dist/nightly-${DRONE_COMMIT_SHA:0:8} $${DESTINATION}/nightly/nightly-${DRONE_COMMIT_SHA:0:8}
   depends_on:
   - rgm-build
   environment:
@@ -3339,7 +3339,7 @@ steps:
   name: rgm-copy
   volumes:
   - name: dist
-    path: dist
+    path: /src/dist
 trigger:
   event:
     include:
@@ -4947,6 +4947,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: d3968b8c7b5d8b337cd93d47a8fd167d724b50d8de916234981ecdc56e62279e
+hmac: b66cab1a875be9e018b36b1ae63f8622ef20c66764c0643596245faf8706a0fa
 
 ...

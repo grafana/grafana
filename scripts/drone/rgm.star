@@ -105,7 +105,7 @@ def rgm_build(script = "drone_publish_main.sh"):
         # In the future we should find a way to use dagger without mounting the docker socket.
         "volumes": [
             {"name": "docker", "path": "/var/run/docker.sock"},
-            {"name": "dist", "path": "dist"},
+            {"name": "dist", "path": "/src/dist"},
         ],
     }
 
@@ -125,7 +125,7 @@ def rgm_copy(src, dst):
         "environment": rgm_env_secrets,
         "depends_on": ["rgm-build"],
         "volumes": [
-            {"name": "dist", "path": "dist"},
+            {"name": "dist", "path": "/src/dist"},
         ],
     }
 
@@ -163,7 +163,7 @@ def rgm_tag():
 def rgm_nightly():
     ver = "nightly-${DRONE_COMMIT_SHA:0:8}"
     dst = "$${{DESTINATION}}/nightly/{}".format(ver)
-    src = "dist/{}".format(ver)
+    src = "/src/dist/{}".format(ver)
     return pipeline(
         name = "rgm-nightly-prerelease",
         trigger = nightly_trigger,
