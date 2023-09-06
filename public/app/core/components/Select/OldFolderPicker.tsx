@@ -104,8 +104,8 @@ export function OldFolderPicker(props: Props) {
       });
 
       const hasAccess =
-        contextSrv.hasAccess(AccessControlAction.DashboardsWrite, contextSrv.isEditor) ||
-        contextSrv.hasAccess(AccessControlAction.DashboardsCreate, contextSrv.isEditor);
+        contextSrv.hasPermission(AccessControlAction.DashboardsWrite) ||
+        contextSrv.hasPermission(AccessControlAction.DashboardsCreate);
 
       if (hasAccess && rootName?.toLowerCase().startsWith(query.toLowerCase()) && showRoot) {
         options.unshift({ label: rootName, value: '' });
