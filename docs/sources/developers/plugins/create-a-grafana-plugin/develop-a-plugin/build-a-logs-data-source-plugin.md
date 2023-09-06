@@ -273,14 +273,14 @@ export class ExampleDatasource extends DataSourceApi<ExampleQuery, ExampleOption
       case 'ADD_FILTER':
         if (action.options?.key && action.options?.value) {
           // Be sure to adjust this example code based on your data source logic.
-          queryText = addLabelToQuery(queryText, action.options.key, '=', action.options.value);
+          queryText = addPositiveFilterToQuery(queryText, action.options.key, action.options.value);
         }
         break;
       case 'ADD_FILTER_OUT':
         {
           if (action.options?.key && action.options?.value) {
             // Be sure to adjust this example code based on your data source logic.
-            queryText = addLabelToQuery(queryText, action.options.key, '!=', action.options.value);
+            queryText = addNegativeFilterToQuery(queryText, action.options.key, action.options.value);
           }
         }
         break;
