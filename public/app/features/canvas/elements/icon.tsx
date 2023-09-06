@@ -60,6 +60,7 @@ export function IconDisplay(props: CanvasElementProps) {
       src={data.path}
       style={svgStyle}
       className={svgStyle.strokeWidth ? svgStrokePathClass : undefined}
+      cleanStyle={true}
     />
   );
 }
