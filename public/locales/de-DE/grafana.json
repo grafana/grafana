@@ -605,6 +605,12 @@
       "view": "Anzeigen"
     }
   },
+  "playlist-edit": {
+    "error": "",
+    "subTitle": "",
+    "text": "",
+    "value": ""
+  },
   "refresh-picker": {
     "aria-label": {
       "choose-interval": "Automatische Aktualisierung ausgeschaltet. Aktualisierungszeitintervall auswählen",

@@ -605,6 +605,12 @@
       "view": "View"
     }
   },
+  "playlist-edit": {
+    "error": "<0> Error loading playlist: {JSON.stringify(playlist.error)}</0>",
+    "subTitle": "A playlist rotates through a pre-selected list of dashboards. A playlist can be a great way to build situational awareness, or just show off your metrics to your team or visitors.",
+    "text": "Edit playlist",
+    "value": "<0></0>"
+  },
   "refresh-picker": {
     "aria-label": {
       "choose-interval": "Auto refresh turned off. Choose refresh time interval",
