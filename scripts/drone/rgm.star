@@ -120,6 +120,7 @@ def rgm_copy(src, dst):
             "gcloud storage cp -r {} {}".format(src, dst),
         ],
         "environment": rgm_env_secrets,
+        "depends_on": ["rgm-build"],
     }
 
     return [
