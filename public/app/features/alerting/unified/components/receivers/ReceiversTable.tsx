@@ -1,5 +1,6 @@
 import pluralize from 'pluralize';
 import React, { useMemo, useState } from 'react';
+import { useToggle } from 'react-use';
 
 import { dateTime, dateTimeFormat } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
@@ -23,7 +24,9 @@ import { extractNotifierTypeCounts } from '../../utils/receivers';
 import { createUrl } from '../../utils/url';
 import { DynamicTable, DynamicTableColumnProps, DynamicTableItemProps } from '../DynamicTable';
 import { ProvisioningBadge } from '../Provisioning';
+import { GrafanaReceiverExporter } from '../export/GrafanaReceiverExporter';
 import { ActionIcon } from '../rules/ActionIcon';
+
 
 import { ReceiversSection } from './ReceiversSection';
 import { GrafanaAppBadge } from './grafanaAppReceivers/GrafanaAppBadge';
@@ -91,22 +94,21 @@ function ViewAction({ permissions, alertManagerName, receiverName }: ActionProps
 
 function ExportAction({ permissions, receiverName }: ActionProps) {
   const canReadSecrets = contextSrv.hasAccess(permissions.provisioning.readSecrets, isOrgAdmin());
+  const [showExportDrawer, toggleShowExportDrawer] = useToggle(false);
   return (
     <Authorize actions={[permissions.provisioning.read, permissions.provisioning.readSecrets]}>
       <ActionIcon
         data-testid="export"
-        to={createUrl(`/api/v1/provisioning/contact-points/export/`, {
-          download: 'true',
-          format: 'yaml',
-          decrypt: canReadSecrets.toString(),
-          name: receiverName,
-        })}
         tooltip={
           canReadSecrets ? 'Export contact point with decrypted secrets' : 'Export contact point with redacted secrets'
         }
         icon="download-alt"
         target="_blank"
+        onClick={toggleShowExportDrawer}
       />
+      {showExportDrawer && (
+        <GrafanaReceiverExporter receiverName={receiverName} decrypt={canReadSecrets.toString()} onClose={toggleShowExportDrawer} />
+      )}
     </Authorize>
   );
 }
@@ -367,10 +369,10 @@ export const ReceiversTable = ({ config, alertManagerName }: Props) => {
       exportLink={
         showExport
           ? createUrl('/api/v1/provisioning/contact-points/export', {
-              download: 'true',
-              format: 'yaml',
-              decrypt: isOrgAdmin().toString(),
-            })
+            download: 'true',
+            format: 'yaml',
+            decrypt: isOrgAdmin().toString(),
+          })
           : undefined
       }
     >
@@ -381,8 +383,8 @@ export const ReceiversTable = ({ config, alertManagerName }: Props) => {
         renderExpandedContent={
           errorStateAvailable
             ? ({ data: { name } }) => (
-                <NotifiersTable notifiersState={contactPointsState?.receivers[name]?.notifiers ?? {}} />
-              )
+              <NotifiersTable notifiersState={contactPointsState?.receivers[name]?.notifiers ?? {}} />
+            )
             : undefined
         }
       />

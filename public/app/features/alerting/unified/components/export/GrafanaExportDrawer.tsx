@@ -4,16 +4,16 @@ import { Drawer } from '@grafana/ui';
 
 import { RuleInspectorTabs } from '../rule-editor/RuleInspector';
 
-import { grafanaRuleExportProviders, RuleExportFormats } from './providers';
+import { ExportFormats, grafanaExportProviders } from './providers';
 
-const grafanaRulesTabs = Object.values(grafanaRuleExportProviders).map((provider) => ({
+const grafanaRulesTabs = Object.values(grafanaExportProviders).map((provider) => ({
   label: provider.name,
   value: provider.exportFormat,
 }));
 
 interface GrafanaExportDrawerProps {
-  activeTab: RuleExportFormats;
-  onTabChange: (tab: RuleExportFormats) => void;
+  activeTab: ExportFormats;
+  onTabChange: (tab: ExportFormats) => void;
   children: React.ReactNode;
   onClose: () => void;
 }
@@ -24,7 +24,7 @@ export function GrafanaExportDrawer({ activeTab, onTabChange, children, onClose 
       title="Export"
       subtitle="Select the format and download the file or copy the contents to clipboard"
       tabs={
-        <RuleInspectorTabs<RuleExportFormats>
+        <RuleInspectorTabs<ExportFormats>
           tabs={grafanaRulesTabs}
           setActiveTab={onTabChange}
           activeTab={activeTab}

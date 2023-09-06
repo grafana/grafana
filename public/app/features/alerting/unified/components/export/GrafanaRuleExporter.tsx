@@ -6,26 +6,12 @@ import { alertRuleApi } from '../../api/alertRuleApi';
 
 import { FileExportPreview } from './FileExportPreview';
 import { GrafanaExportDrawer } from './GrafanaExportDrawer';
-import { RuleExportFormats } from './providers';
+import { ExportFormats } from './providers';
 
-interface GrafanaRuleExporterProps {
-  onClose: () => void;
-  alertUid: string;
-}
-
-export const GrafanaRuleExporter = ({ onClose, alertUid }: GrafanaRuleExporterProps) => {
-  const [activeTab, setActiveTab] = useState<RuleExportFormats>('yaml');
-
-  return (
-    <GrafanaExportDrawer activeTab={activeTab} onTabChange={setActiveTab} onClose={onClose}>
-      <GrafanaRuleExportPreview alertUid={alertUid} exportFormat={activeTab} onClose={onClose} />
-    </GrafanaExportDrawer>
-  );
-};
 
 interface GrafanaRuleExportPreviewProps {
   alertUid: string;
-  exportFormat: RuleExportFormats;
+  exportFormat: ExportFormats;
   onClose: () => void;
 }
 
@@ -50,3 +36,19 @@ const GrafanaRuleExportPreview = ({ alertUid, exportFormat, onClose }: GrafanaRu
     />
   );
 };
+
+interface GrafanaRulerExporterProps {
+  onClose: () => void;
+  alertUid: string
+}
+
+
+export const GrafanaRuleExporter = ({ onClose, alertUid }: GrafanaRulerExporterProps) => {
+  const [activeTab, setActiveTab] = useState<ExportFormats>('yaml');
+
+  return (
+    <GrafanaExportDrawer activeTab={activeTab} onTabChange={setActiveTab} onClose={onClose}>
+      <GrafanaRuleExportPreview alertUid={alertUid} exportFormat={activeTab} onClose={onClose} />
+    </GrafanaExportDrawer>
+  );
+}
