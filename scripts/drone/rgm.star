@@ -95,7 +95,7 @@ nightly_trigger = {
 def rgm_build(script = "drone_publish_main.sh"):
     rgm_build_step = {
         "name": "rgm-build",
-        "image": "grafana/grafana-build:dev-66149b8",
+        "image": "grafana/grafana-build:dev-521f407",
         "commands": [
             "export GRAFANA_DIR=$$(pwd)",
             "cd /src && ./scripts/{}".format(script),
@@ -155,9 +155,8 @@ def rgm_tag():
     )
 
 def rgm_nightly():
-    ver = "nightly-${DRONE_COMMIT_SHA:0:8}"
-    dst = "$${{DESTINATION}}/nightly/{}".format(ver)
-    src = "$${{DRONE_WORKSPACE}}/dist/{}".format(ver)
+    dst = "$${DESTINATION}/$${DRONE_BUILD_EVENT}"
+    src = "$${DRONE_WORKSPACE}/dist"
     return pipeline(
         name = "rgm-nightly-prerelease",
         trigger = nightly_trigger,

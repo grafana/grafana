@@ -3126,7 +3126,7 @@ steps:
       from_secret: packages_gpg_private_key
     GPG_PUBLIC_KEY:
       from_secret: packages_gpg_public_key
-  image: grafana/grafana-build:dev-66149b8
+  image: grafana/grafana-build:dev-521f407
   name: rgm-build
   volumes:
   - name: docker
@@ -3183,7 +3183,7 @@ steps:
       from_secret: packages_gpg_private_key
     GPG_PUBLIC_KEY:
       from_secret: packages_gpg_public_key
-  image: grafana/grafana-build:dev-66149b8
+  image: grafana/grafana-build:dev-521f407
   name: rgm-build
   volumes:
   - name: docker
@@ -3303,7 +3303,7 @@ steps:
       from_secret: packages_gpg_private_key
     GPG_PUBLIC_KEY:
       from_secret: packages_gpg_public_key
-  image: grafana/grafana-build:dev-66149b8
+  image: grafana/grafana-build:dev-521f407
   name: rgm-build
   volumes:
   - name: docker
@@ -3311,8 +3311,7 @@ steps:
 - commands:
   - printenv GCP_KEY_BASE64 | base64 -d > /tmp/key.json
   - gcloud auth activate-service-account --key-file=/tmp/key.json
-  - gcloud storage cp -r $${DRONE_WORKSPACE}/dist/nightly-${DRONE_COMMIT_SHA:0:8}
-    $${DESTINATION}/nightly/nightly-${DRONE_COMMIT_SHA:0:8}
+  - gcloud storage cp -r $${DRONE_WORKSPACE}/dist $${DESTINATION}/$${DRONE_BUILD_EVENT}
   depends_on:
   - rgm-build
   environment:
@@ -4939,6 +4938,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: b5a75db5d4786427d6d2e4cf9ee7d690a2fa5f4e16dc7f1b177383c188e5da51
+hmac: 63fe304831b14f94caa035c753ff7cb32dbff2f6d3cede9fa3a830310c452fb2
 
 ...
