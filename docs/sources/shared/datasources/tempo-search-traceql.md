@@ -87,7 +87,7 @@ You can either select **Run query** to execute the query or define tags and then
 
 ### Define tags
 
-You can add any tags to your query to further refine the results.
+You can add any tags to your query to further filter the results.
 Tags can be selected by scoped (span or resource) or unscoped.
 If you select unscoped, then all tags are searched for matches.
 
