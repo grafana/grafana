@@ -124,7 +124,6 @@ export const DataSourcehttpSettingsOverhaul = (props: Props) => {
         onChange={onOptionsChange}
         urlLabel="Prometheus server URL"
         urlTooltip={urlTooltip}
-        aria-label="Datasource HTTP settings url"
       />
       <hr className={`${styles.hrTopSpace} ${styles.hrBottomSpace}`} />
       <Auth

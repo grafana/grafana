@@ -53,6 +53,7 @@ export const Components = {
     },
     Prometheus: {
       configPage: {
+        connectionSettings: 'Prometheus server URL',
         exemplarsAddButton: 'Add exemplar config button',
         internalLinkSwitch: 'Internal link switch',
       },
