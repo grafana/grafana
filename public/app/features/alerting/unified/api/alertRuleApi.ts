@@ -8,10 +8,10 @@ import {
   Labels,
   PromRulesResponse,
   RulerRuleGroupDTO,
-  RulerRulesConfigDTO,
+  RulerRulesConfigDTO
 } from 'app/types/unified-alerting-dto';
 
-import { RuleExportFormats } from '../components/export/providers';
+import { ExportFormats } from '../components/export/providers';
 import { Folder } from '../components/rule-editor/RuleFolderPicker';
 import { getDatasourceAPIUid, GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 import { arrayKeyValuesToObject } from '../utils/labels';
@@ -22,7 +22,7 @@ import {
   FetchPromRulesFilter,
   groupRulesByFileName,
   paramsWithMatcherAndState,
-  prepareRulesFilterQueryParams,
+  prepareRulesFilterQueryParams
 } from './prometheus';
 import { FetchRulerRulesFilter, rulerUrlBuilder } from './ruler';
 
@@ -40,7 +40,7 @@ export interface Datasource {
 export const PREVIEW_URL = '/api/v1/rule/test/grafana';
 export const PROM_RULES_URL = 'api/prometheus/grafana/api/v1/rules';
 
-function getProvisioningUrl(ruleUid: string, format: 'yaml' | 'json' = 'yaml') {
+function getProvisioningExportUrl(ruleUid: string, format: 'yaml' | 'json' = 'yaml') {
   return `/api/v1/provisioning/alert-rules/${ruleUid}/export?format=${format}`;
 }
 
@@ -182,13 +182,20 @@ export const alertRuleApi = alertingApi.injectEndpoints({
       },
     }),
 
-    exportRule: build.query<string, { uid: string; format: RuleExportFormats }>({
-      query: ({ uid, format }) => ({ url: getProvisioningUrl(uid, format), responseType: 'text' }),
+    exportRule: build.query<string, { uid: string; format: ExportFormats }>({
+      query: ({ uid, format }) => ({ url: getProvisioningExportUrl(uid, format), responseType: 'text' }),
     }),
-    exportRuleGroup: build.query<string, { folderUid: string; groupName: string; format: RuleExportFormats }>({
+    exportRuleGroup: build.query<string, { folderUid: string; groupName: string; format: ExportFormats }>({
       query: ({ folderUid, groupName, format }) => ({
         url: `/api/v1/provisioning/folder/${folderUid}/rule-groups/${groupName}/export`,
         params: { format: format },
+        responseType: 'text',
+      }),
+    }),
+    exportReceiver: build.query<string, { receiverName: string; decrypt: string, format: ExportFormats }>({
+      query: ({ receiverName, decrypt, format }) => ({
+        url: `/api/v1/provisioning/contact-points/export/`,
+        params: { format: format, decrypt: decrypt ,name: receiverName},
         responseType: 'text',
       }),
     }),

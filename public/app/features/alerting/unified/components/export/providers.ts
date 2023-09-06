@@ -1,10 +1,10 @@
-interface RuleExportProvider<TFormat> {
+interface ExportProvider<TFormat> {
   name: string;
   exportFormat: TFormat;
   formatter?: (raw: string) => string;
 }
 
-const JsonRuleExportProvider: RuleExportProvider<'json'> = {
+const JsonExportProvider: ExportProvider<'json'> = {
   name: 'JSON',
   exportFormat: 'json',
   formatter: (raw: string) => {
@@ -16,7 +16,7 @@ const JsonRuleExportProvider: RuleExportProvider<'json'> = {
   },
 };
 
-const YamlRuleExportProvider: RuleExportProvider<'yaml'> = {
+const YamlExportProvider: ExportProvider<'yaml'> = {
   name: 'YAML',
   exportFormat: 'yaml',
 };
@@ -27,10 +27,10 @@ const YamlRuleExportProvider: RuleExportProvider<'yaml'> = {
 //   exportFormat: 'hcl',
 // };
 
-export const grafanaRuleExportProviders = {
-  [JsonRuleExportProvider.exportFormat]: JsonRuleExportProvider,
-  [YamlRuleExportProvider.exportFormat]: YamlRuleExportProvider,
+export const grafanaExportProviders = {
+  [JsonExportProvider.exportFormat]: JsonExportProvider,
+  [YamlExportProvider.exportFormat]: YamlExportProvider,
   // [HclRuleExportProvider.exportFormat]: HclRuleExportProvider,
 } as const;
 
-export type RuleExportFormats = keyof typeof grafanaRuleExportProviders;
+export type ExportFormats = keyof typeof grafanaExportProviders;
