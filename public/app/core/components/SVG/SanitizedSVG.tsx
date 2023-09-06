@@ -4,6 +4,8 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { textUtil } from '@grafana/data';
 
+import { getSvgId, getSvgStyle } from "./utils";
+
 type SanitizedSVGProps = Props & { cleanStyle?: boolean };
 let shouldCleanSvgStyle = false;
 
@@ -31,17 +33,16 @@ function getCleanSVG(code: string): string {
   return clean;
 }
 
-function svgStyleCleanup(elementCode: string) {
-  let svgId = elementCode.match(new RegExp('<svg.*id\\s*=\\s*([\'"])(.*?)\\1'))?.[2];
+export function svgStyleCleanup(elementCode: string) {
+  let svgId = getSvgId(elementCode);
   if (!svgId) {
     svgId = `x${uuidv4()}`;
     const pos = elementCode.indexOf('<svg') + 5;
     elementCode = elementCode.substring(0, pos) + `id="${svgId}" ` + elementCode.substring(pos);
   }
 
-  const matchStyle = elementCode.match(new RegExp('<style type="text/css">([\\s\\S]*?)<\\/style>'));
-  if (matchStyle) {
-    let svgStyle = matchStyle[0];
+  let svgStyle = getSvgStyle(elementCode);
+  if (svgStyle) {
     let replacedId = svgStyle.replace(/(#(.*?))?\./g, `#${svgId} .`);
     elementCode = elementCode.replace(svgStyle, replacedId);
   }
