@@ -286,11 +286,11 @@ func (s *Service) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (
 	var err error
 	namespaceID, userIDstr := user.GetNamespacedID()
 	if namespaceID != identity.NamespaceUser && namespaceID != identity.NamespaceServiceAccount {
-		s.log.Warn("User does not belong to a user or service account namespace, using 0 as user ID", "namespaceID", namespaceID, "userID", userIDstr)
+		s.log.Debug("User does not belong to a user or service account namespace, using 0 as user ID", "namespaceID", namespaceID, "userID", userIDstr)
 	} else {
 		userID, err = identity.IntIdentifier(namespaceID, userIDstr)
 		if err != nil {
-			s.log.Warn("failed to parse user ID", "namespaceID", namespaceID, "userID", userIDstr, "error", err)
+			s.log.Debug("failed to parse user ID", "namespaceID", namespaceID, "userID", userIDstr, "error", err)
 		}
 	}
 

@@ -209,13 +209,13 @@ func resolveUserID(user identity.Requester, log log.Logger) (int64, error) {
 	userID := int64(0)
 	namespaceID, identifier := user.GetNamespacedID()
 	if namespaceID != identity.NamespaceUser && namespaceID != identity.NamespaceServiceAccount {
-		log.Warn("User does not belong to a user or service account namespace", "namespaceID", namespaceID, "userID", identifier)
+		log.Debug("User does not belong to a user or service account namespace", "namespaceID", namespaceID, "userID", identifier)
 	}
 
 	userID, err := identity.IntIdentifier(namespaceID, identifier)
 
 	if err != nil {
-		log.Warn("failed to parse user ID", "namespaceID", namespaceID, "userID", identifier, "error", err)
+		log.Debug("failed to parse user ID", "namespaceID", namespaceID, "userID", identifier, "error", err)
 	}
 	return userID, nil
 }
