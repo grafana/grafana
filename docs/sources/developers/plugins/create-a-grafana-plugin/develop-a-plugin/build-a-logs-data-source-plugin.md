@@ -629,9 +629,10 @@ To implement toggleable filters support in your data source plugin, you can use 
 
 ```ts
 import { 
-  queryHasFilter,
-  removeFilterFromQuery,
-  addFilterToQuery,
+  queryHasPositiveFilter,
+  removePositiveFilterFromQuery,
+  addPositiveFilterToQuery,
+  addNegativeFilterToQuery,
 } from '../your/own/package/functions';
 import { 
   DataSourceWithToggleableQueryFiltersSupport,
@@ -651,7 +652,7 @@ export class ExampleDatasource
      * We only care about equality/positive filters as only those fields will be 
      * present in the log lines.
      */
-    return queryHasFilter(query, filter.key, '=', filter.value);
+    return queryHasPositiveFilter(query, filter.key, filter.value);
   }
 
   /**
@@ -661,22 +662,22 @@ export class ExampleDatasource
    */
   toggleQueryFilter(query: ExampleQuery, filter: ToggleFilterAction): LokiQuery {ç
     const expression = query.expr; // The current query expression.
-    // We currently support 2 types of filter: FILTER_FOR (=) and FILTER_OUT (!=).
+    // We currently support 2 types of filter: FILTER_FOR (positive) and FILTER_OUT (negative).
     switch (filter.type) {
       case 'FILTER_FOR': {
         // This gives the user the ability to toggle a filter on and off.
-          expression = queryHasFilter(expression, filter.options.key, '=', value)
-            ? removeFilterFromQuery(expression, filter.options.key, '=', value)
-            : addFilterToQuery(expression, filter.options.key, '=', value);
+          expression = queryHasPositiveFilter(expression, filter.options.key, value)
+            ? removePositiveFilterFromQuery(expression, filter.options.key, value)
+            : addPositiveFilterToQuery(expression, filter.options.key, value);
         break;
       }
       case 'FILTER_OUT': {
         // If there is a positive filter with the same key and value, remove it.
-        if (queryHasFilter(expression, filter.options.key, '=', value)) {
-          expression = removeLabelFromQuery(expression, filter.options.key, '=', value);
+        if (queryHasPositiveFilter(expression, filter.options.key, value)) {
+          expression = removePositiveLabelFromQuery(expression, filter.options.key, value);
         }
         // Add the inequality filter to the query.
-        expression = addLabelToQuery(expression, filter.options.key, '!=', value);
+        expression = addNegativeFilterToQuery(expression, filter.options.key, value);
         break;
       }
       default:
