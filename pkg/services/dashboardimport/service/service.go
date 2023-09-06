@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/dashboardimport"
 	"github.com/grafana/grafana/pkg/services/dashboardimport/api"
 	"github.com/grafana/grafana/pkg/services/dashboardimport/utils"
@@ -85,7 +86,7 @@ func (s *ImportDashboardService) ImportDashboard(ctx context.Context, req *dashb
 	// here we need to get FolderId from FolderUID if it present in the request, if both exist, FolderUID would overwrite FolderID
 	if req.FolderUid != "" {
 		folder, err := s.folderService.Get(ctx, &folder.GetFolderQuery{
-			OrgID:        req.User.OrgID,
+			OrgID:        req.User.GetOrgID(),
 			UID:          &req.FolderUid,
 			SignedInUser: req.User,
 		})
@@ -96,7 +97,7 @@ func (s *ImportDashboardService) ImportDashboard(ctx context.Context, req *dashb
 	} else {
 		folder, err := s.folderService.Get(ctx, &folder.GetFolderQuery{
 			ID:           &req.FolderId,
-			OrgID:        req.User.OrgID,
+			OrgID:        req.User.GetOrgID(),
 			SignedInUser: req.User,
 		})
 		if err != nil {
@@ -105,10 +106,18 @@ func (s *ImportDashboardService) ImportDashboard(ctx context.Context, req *dashb
 		req.FolderUid = folder.UID
 	}
 
+	namespaceID, identifier := req.User.GetNamespacedID()
+	userID := int64(0)
+
+	switch namespaceID {
+	case identity.NamespaceUser, identity.NamespaceServiceAccount:
+		userID, _ = identity.IntIdentifier(namespaceID, identifier)
+	}
+
 	saveCmd := dashboards.SaveDashboardCommand{
 		Dashboard: generatedDash,
-		OrgID:     req.User.OrgID,
-		UserID:    req.User.UserID,
+		OrgID:     req.User.GetOrgID(),
+		UserID:    userID,
 		Overwrite: req.Overwrite,
 		PluginID:  req.PluginId,
 		FolderID:  req.FolderId,

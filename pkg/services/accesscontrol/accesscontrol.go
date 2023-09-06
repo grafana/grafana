@@ -377,7 +377,7 @@ func GetOrgRoles(user identity.Requester) []string {
 	return roles
 }
 
-func BackgroundUser(name string, orgID int64, role org.RoleType, permissions []Permission) *user.SignedInUser {
+func BackgroundUser(name string, orgID int64, role org.RoleType, permissions []Permission) identity.Requester {
 	return &user.SignedInUser{
 		OrgID:   orgID,
 		OrgRole: role,
