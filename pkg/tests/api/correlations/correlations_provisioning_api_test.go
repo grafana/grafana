@@ -114,5 +114,4 @@ func TestIntegrationCreateOrUpdateCorrelation(t *testing.T) {
 
 		require.NoError(t, res.Body.Close())
 	})
-
 }

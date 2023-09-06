@@ -2,6 +2,7 @@ package correlations
 
 import (
 	"context"
+
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/events"
