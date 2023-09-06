@@ -33,7 +33,7 @@ func TestServiceStart(t *testing.T) {
 		name           string
 		config         *setting.Cfg
 		isMigrationRun bool
-		shouldPanic    bool
+		expectedErr    bool
 		expected       bool
 	}{
 		{
@@ -67,6 +67,7 @@ func TestServiceStart(t *testing.T) {
 			},
 			isMigrationRun: true,
 			expected:       true,
+			expectedErr:    true,
 		},
 		{
 			name: "when unified alerting enabled and migration is already run, then do nothing",
@@ -93,13 +94,6 @@ func TestServiceStart(t *testing.T) {
 	sqlStore := db.InitTestDB(t)
 	for _, tt := range tc {
 		t.Run(tt.name, func(t *testing.T) {
-			defer func() {
-				// if the code should panic, make sure it has
-				if r := recover(); r == nil && tt.shouldPanic {
-					t.Errorf("The code did not panic")
-				}
-			}()
-
 			ctx := context.Background()
 			service := NewMigrationService(t, sqlStore, tt.config)
 
@@ -107,7 +101,11 @@ func TestServiceStart(t *testing.T) {
 			require.NoError(t, err)
 
 			err = service.Run(ctx)
-			require.NoError(t, err)
+			if tt.expectedErr {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+			}
 
 			migrated, err := service.GetMigrated(ctx)
 			require.NoError(t, err)
