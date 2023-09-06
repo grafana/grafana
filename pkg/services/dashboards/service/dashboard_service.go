@@ -215,7 +215,11 @@ func resolveUserID(user identity.Requester, log log.Logger) (int64, error) {
 	userID, err := identity.IntIdentifier(namespaceID, identifier)
 
 	if err != nil {
-		log.Warn("failed to parse user ID", "namespaceID", namespaceID, "userID", identifier, "error", err)
+		// FIXME:
+		// set to debug log level
+		// due to the fact that provisioning dashboards and folders
+		// is done on startup and we can't resolve the user id
+		log.Debug("failed to parse user ID", "namespaceID", namespaceID, "userID", identifier, "error", err)
 	}
 	return userID, nil
 }
