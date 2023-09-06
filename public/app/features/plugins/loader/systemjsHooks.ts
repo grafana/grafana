@@ -3,12 +3,7 @@ import { config, SystemJS } from '@grafana/runtime';
 import { transformPluginSourceForCDN } from '../cdn/utils';
 
 import { resolveWithCache } from './cache';
-import {
-  LOAD_PLUGIN_CSS_REGEX,
-  JS_CONTENT_TYPE_REGEX,
-  IS_SYSTEM_MODULE_REGEX,
-  SHARED_DEPENDENCY_PREFIX,
-} from './constants';
+import { LOAD_PLUGIN_CSS_REGEX, JS_CONTENT_TYPE_REGEX, AMD_MODULE_REGEX, SHARED_DEPENDENCY_PREFIX } from './constants';
 import { SystemJSWithLoaderHooks } from './types';
 import { isHostedOnCDN } from './utils';
 
@@ -23,7 +18,8 @@ export async function decorateSystemJSFetch(
   if (JS_CONTENT_TYPE_REGEX.test(contentType)) {
     const source = await res.text();
     let transformedSrc = source;
-    if (!IS_SYSTEM_MODULE_REGEX.test(transformedSrc)) {
+
+    if (AMD_MODULE_REGEX.test(transformedSrc)) {
       transformedSrc = preventAMDLoaderCollision(source);
     }
 
