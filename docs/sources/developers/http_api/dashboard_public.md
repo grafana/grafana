@@ -24,7 +24,7 @@ title: Public Dashboard HTTP API
 
 `POST /api/dashboards/uid/:uid/public-dashboards/`
 
-Creates a new public dashboard
+Creates a new public dashboard.
 
 **Required permissions**
 
