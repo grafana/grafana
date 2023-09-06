@@ -19,7 +19,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/middleware/requestmeta"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/repo"
@@ -308,10 +307,6 @@ func (hs *HTTPServer) CollectPluginMetrics(c *contextmodel.ReqContext) response.
 	headers := make(http.Header)
 	headers.Set("Content-Type", "text/plain")
 
-	// treat response as downstream since it means we've got
-	// a proper response from the plugin.
-	requestmeta.WithDownstreamStatusSource(c.Req.Context())
-
 	return response.CreateNormalResponse(headers, resp.PrometheusMetrics, http.StatusOK)
 }
 
@@ -427,10 +422,6 @@ func (hs *HTTPServer) CheckHealth(c *contextmodel.ReqContext) response.Response 
 
 		payload["details"] = jsonDetails
 	}
-
-	// treat all check health responses as downstream since any response means
-	// that a plugin has been correctly or incorrectly configured by the end user.
-	requestmeta.WithDownstreamStatusSource(c.Req.Context())
 
 	if resp.Status != backend.HealthStatusOk {
 		return response.JSON(http.StatusBadRequest, payload)
