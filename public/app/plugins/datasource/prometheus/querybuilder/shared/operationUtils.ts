@@ -120,8 +120,8 @@ export function getPromAndLokiOperationDisplayName(funcName: string) {
   return capitalize(funcName.replace(/_/g, ' '));
 }
 
-export function getOperationParamId(operationIndex: string, paramIndex: number) {
-  return `operations.${operationIndex}.param.${paramIndex}`;
+export function getOperationParamId(operationId: string, paramIndex: number) {
+  return `operations.${operationId}.param.${paramIndex}`;
 }
 
 export function getRangeVectorParamDef(withRateInterval = false): QueryBuilderOperationParamDef {
