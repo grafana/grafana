@@ -52,9 +52,7 @@ Complete the following steps to install Grafana from the APT repository:
    wget -q -O - https://apt.grafana.com/gpg.key | gpg --dearmor | sudo tee /etc/apt/keyrings/grafana.gpg > /dev/null
    ```
 
-1. To install required packages and download the Grafana repository signing key, run the following commands:
 
-   ```bash
    sudo apt-get install -y apt-transport-https
    sudo apt-get install -y software-properties-common wget
    sudo wget -q -O /usr/share/keyrings/grafana.key https://apt.grafana.com/gpg.key
