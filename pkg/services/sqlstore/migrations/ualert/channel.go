@@ -43,7 +43,7 @@ type channelsPerOrg map[int64][]*notificationChannel
 type defaultChannelsPerOrg map[int64][]*notificationChannel
 
 // uidOrID for both uid and ID, primarily used for mapping legacy channel to migrated receiver.
-type uidOrID interface{}
+type uidOrID any
 
 // channelReceiver is a convenience struct that contains a notificationChannel and its corresponding migrated PostableApiReceiver.
 type channelReceiver struct {
@@ -76,7 +76,7 @@ func (m *migration) setupAlertmanagerConfigs(rulesPerOrg map[int64]map[*alertRul
 
 		// No need to create an Alertmanager configuration if there are no receivers left that aren't obsolete.
 		if len(receivers) == 0 {
-			m.mg.Logger.Warn("no available receivers", "orgId", orgID)
+			m.mg.Logger.Warn("No available receivers", "orgId", orgID)
 			continue
 		}
 
@@ -130,7 +130,7 @@ func (m *migration) setupAlertmanagerConfigs(rulesPerOrg map[int64]map[*alertRul
 }
 
 // contactListToString creates a sorted string representation of a given map (set) of receiver names. Each name will be comma-separated and double-quoted. Names should not contain double quotes.
-func contactListToString(m map[string]interface{}) string {
+func contactListToString(m map[string]any) string {
 	keys := make([]string, 0, len(m))
 	for k := range m {
 		keys = append(keys, quote(k))
@@ -177,7 +177,7 @@ func (m *migration) getNotificationChannelMap() (channelsPerOrg, defaultChannels
 	defaultChannelsMap := make(defaultChannelsPerOrg)
 	for i, c := range allChannels {
 		if c.Type == "hipchat" || c.Type == "sensu" {
-			m.mg.Logger.Error("alert migration error: discontinued notification channel found", "type", c.Type, "name", c.Name, "uid", c.Uid)
+			m.mg.Logger.Error("Alert migration error: discontinued notification channel found", "type", c.Type, "name", c.Name, "uid", c.Uid)
 			continue
 		}
 
@@ -230,7 +230,7 @@ func (m *migration) createReceivers(allChannels []*notificationChannel) (map[uid
 		// There can be name collisions after we sanitize. We check for this and attempt to make the name unique again using a short hash of the original name.
 		if _, ok := set[sanitizedName]; ok {
 			sanitizedName = sanitizedName + fmt.Sprintf("_%.3x", md5.Sum([]byte(c.Name)))
-			m.mg.Logger.Warn("alert contains duplicate contact name after sanitization, appending unique suffix", "type", c.Type, "name", c.Name, "new_name", sanitizedName, "uid", c.Uid)
+			m.mg.Logger.Warn("Alert contains duplicate contact name after sanitization, appending unique suffix", "type", c.Type, "name", c.Name, "new_name", sanitizedName, "uid", c.Uid)
 		}
 		notifier.Name = sanitizedName
 
@@ -338,24 +338,24 @@ func createRoute(cr channelReceiver) (*Route, error) {
 }
 
 // Filter receivers to select those that were associated to the given rule as channels.
-func (m *migration) filterReceiversForAlert(name string, channelIDs []uidOrID, receivers map[uidOrID]*PostableApiReceiver, defaultReceivers map[string]struct{}) map[string]interface{} {
+func (m *migration) filterReceiversForAlert(name string, channelIDs []uidOrID, receivers map[uidOrID]*PostableApiReceiver, defaultReceivers map[string]struct{}) map[string]any {
 	if len(channelIDs) == 0 {
 		// If there are no channels associated, we use the default route.
 		return nil
 	}
 
 	// Filter receiver names.
-	filteredReceiverNames := make(map[string]interface{})
+	filteredReceiverNames := make(map[string]any)
 	for _, uidOrId := range channelIDs {
 		recv, ok := receivers[uidOrId]
 		if ok {
 			filteredReceiverNames[recv.Name] = struct{}{} // Deduplicate on contact point name.
 		} else {
-			m.mg.Logger.Warn("alert linked to obsolete notification channel, ignoring", "alert", name, "uid", uidOrId)
+			m.mg.Logger.Warn("Alert linked to obsolete notification channel, ignoring", "alert", name, "uid", uidOrId)
 		}
 	}
 
-	coveredByDefault := func(names map[string]interface{}) bool {
+	coveredByDefault := func(names map[string]any) bool {
 		// Check if all receivers are also default ones and if so, just use the default route.
 		for n := range names {
 			if _, ok := defaultReceivers[n]; !ok {

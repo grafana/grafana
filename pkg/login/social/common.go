@@ -76,7 +76,7 @@ func (s *SocialBase) httpGet(ctx context.Context, client *http.Client, url strin
 	return response, nil
 }
 
-func (s *SocialBase) searchJSONForAttr(attributePath string, data []byte) (interface{}, error) {
+func (s *SocialBase) searchJSONForAttr(attributePath string, data []byte) (any, error) {
 	if attributePath == "" {
 		return "", errors.New("no attribute path specified")
 	}
@@ -85,7 +85,7 @@ func (s *SocialBase) searchJSONForAttr(attributePath string, data []byte) (inter
 		return "", errors.New("empty user info JSON response provided")
 	}
 
-	var buf interface{}
+	var buf any
 	if err := json.Unmarshal(data, &buf); err != nil {
 		return "", fmt.Errorf("%v: %w", "failed to unmarshal user info JSON response", err)
 	}
@@ -118,7 +118,7 @@ func (s *SocialBase) searchJSONForStringArrayAttr(attributePath string, data []b
 		return []string{}, err
 	}
 
-	ifArr, ok := val.([]interface{})
+	ifArr, ok := val.([]any)
 	if !ok {
 		return []string{}, nil
 	}

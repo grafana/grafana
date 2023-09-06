@@ -263,11 +263,9 @@ abstract class DataSourceApi<
   abstract testDatasource(): Promise<TestDataSourceResponse>;
 
   /**
-   * Override to skip executing a query
+   * This function is not called automatically unless running within the DataSourceWithBackend
    *
-   * @returns false if the query should be skipped
-   *
-   * @virtual
+   * @deprecated
    */
   filterQuery?(query: TQuery): boolean;
 
@@ -530,7 +528,6 @@ export interface DataQueryRequest<TQuery extends DataQuery = DataQuery> {
   timeInfo?: string; // The query time description (blue text in the upper right)
   panelId?: number;
   dashboardUID?: string;
-  publicDashboardAccessToken?: string;
 
   // Request Timing
   startTime: number;

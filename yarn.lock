@@ -13,9 +13,9 @@ __metadata:
   linkType: hard
 
 "@adobe/css-tools@npm:^4.0.1":
-  version: 4.0.1
-  resolution: "@adobe/css-tools@npm:4.0.1"
-  checksum: 80226e2229024c21da9ffa6b5cd4a34b931f071e06f45aba4777ade071d7a6c94605cf73b13718b0c4b34e8b124c65c607b82eaa53a326d3eb73d9682a04a593
+  version: 4.3.1
+  resolution: "@adobe/css-tools@npm:4.3.1"
+  checksum: ad43456379ff391132aff687ece190cb23ea69395e23c9b96690eeabe2468da89a4aaf266e4f8b6eaab53db3d1064107ce0f63c3a974e864f4a04affc768da3f
   languageName: node
   linkType: hard
 
@@ -3477,6 +3477,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@fingerprintjs/fingerprintjs@npm:^3.4.2":
+  version: 3.4.2
+  resolution: "@fingerprintjs/fingerprintjs@npm:3.4.2"
+  dependencies:
+    tslib: ^2.4.1
+  checksum: 3b9dc81e4186f1aaa39e208c17939f5747bf9a8eb1c8175264a352e46e263abd81bcf89439240bd1a4755d7e3dfb4a83164e294f940abc290e7f2076d3b603ce
+  languageName: node
+  linkType: hard
+
 "@floating-ui/core@npm:^1.0.1":
   version: 1.0.1
   resolution: "@floating-ui/core@npm:1.0.1"
@@ -3604,13 +3613,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/aws-sdk@npm:0.1.1":
-  version: 0.1.1
-  resolution: "@grafana/aws-sdk@npm:0.1.1"
+"@grafana/aws-sdk@npm:0.1.3":
+  version: 0.1.3
+  resolution: "@grafana/aws-sdk@npm:0.1.3"
   dependencies:
     "@grafana/async-query-data": 0.1.4
     "@grafana/experimental": 1.1.0
-  checksum: 12d1b27b0959a4d16ddf643b360ce067f6debd4141eb28652ff36fece98a99087f865aa2b9f6fda78df2b9e38870a6a7cfa48e0fd1a1ec03de63bc340b344f05
+  checksum: 9126354c52722c029ed3d597576577502e17566375e711aa64e8df39277092a3269aa45b1c66d0873736276535decdcbb4618b7afde21418dc0a60268f2e69c8
   languageName: node
   linkType: hard
 
@@ -3631,7 +3640,7 @@ __metadata:
     "@types/d3-interpolate": ^3.0.0
     "@types/dompurify": ^2
     "@types/history": 4.7.11
-    "@types/jest": 29.2.3
+    "@types/jest": 29.5.4
     "@types/jquery": 3.5.16
     "@types/lodash": 4.14.195
     "@types/marked": 5.0.1
@@ -3719,6 +3728,7 @@ __metadata:
     "@babel/preset-env": 7.22.9
     "@cypress/webpack-preprocessor": 5.17.1
     "@grafana/e2e-selectors": 10.2.0-pre
+    "@grafana/schema": 10.2.0-pre
     "@grafana/tsconfig": ^1.2.0-rc1
     "@mochajs/json-file-reporter": ^1.2.0
     "@rollup/plugin-node-resolve": 15.1.0
@@ -3755,9 +3765,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/eslint-config@npm:6.0.0":
-  version: 6.0.0
-  resolution: "@grafana/eslint-config@npm:6.0.0"
+"@grafana/eslint-config@npm:6.0.1":
+  version: 6.0.1
+  resolution: "@grafana/eslint-config@npm:6.0.1"
   dependencies:
     "@typescript-eslint/eslint-plugin": 5.59.9
     "@typescript-eslint/parser": 5.59.9
@@ -3767,7 +3777,7 @@ __metadata:
     eslint-plugin-react: 7.32.2
     eslint-plugin-react-hooks: 4.6.0
     typescript: 4.8.4
-  checksum: a22d21282ba88a3b27d7a68ca6cbd01fe18c39aa3227b23079a0303d3c4265937c8371f8a0ea87acb843c9cec9fc82c649e2a8f47698613af8259edc85fd027c
+  checksum: 6744cc4b48d7504f574798fc442e1c794f784bc408b435ed43cb1baef8d0ab83554c5ac2a6437af352ee5df241055050217d5a67e15491a6116555c92c349c31
   languageName: node
   linkType: hard
 
@@ -3804,21 +3814,22 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/experimental@npm:1.6.1":
-  version: 1.6.1
-  resolution: "@grafana/experimental@npm:1.6.1"
+"@grafana/experimental@npm:1.7.0":
+  version: 1.7.0
+  resolution: "@grafana/experimental@npm:1.7.0"
   dependencies:
     "@types/uuid": ^8.3.3
     uuid: ^8.3.2
   peerDependencies:
     "@emotion/css": 11.1.3
-    "@grafana/data": ^9.2.0
-    "@grafana/runtime": ^9.2.0
-    "@grafana/ui": ^9.2.0
+    "@grafana/data": ^10.0.0
+    "@grafana/runtime": ^10.0.0
+    "@grafana/ui": ^10.0.0
     react: 17.0.2
     react-dom: 17.0.2
     react-select: ^5.2.1
-  checksum: 64c32bc9e3bf96c88fbe9522c53e13e4cbc3848ff83df2b1b76735ad5cf9e1775b31094d1298c4bc6a8c75dbcac015eedb14dd9269f492f296c240c58c9916e7
+    rxjs: 7.8.0
+  checksum: f418072aab298bf5fa4b80d59593f10c62e77347e346cc5f669bdee1de2626fdd9f3d999da55a3079ccf6c6df979fc82e8e4d2e3d3bff2e66e49a0c38b8b80a0
   languageName: node
   linkType: hard
 
@@ -3857,14 +3868,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/lezer-logql@npm:0.1.8":
-  version: 0.1.8
-  resolution: "@grafana/lezer-logql@npm:0.1.8"
-  dependencies:
-    lodash: ^4.17.21
+"@grafana/lezer-logql@npm:0.1.11":
+  version: 0.1.11
+  resolution: "@grafana/lezer-logql@npm:0.1.11"
   peerDependencies:
     "@lezer/lr": ^1.0.0
-  checksum: f0f301b6d4fbd2d79563b5b4e34303257be0ea995b2b9fa1f012648654b4afaa9cea91642bc59eddb70e9fa24ec8804489c161f7065b41eef49db68d3a2ca561
+  checksum: 6a624b9a8d31ff854fcf9708c35e6a7498e78c4bda884639681d0b6d0fffe5527fbaeab1198e5a7694f913181657334345f31156a4a15ff64e3019b30ba6ca2a
   languageName: node
   linkType: hard
 
@@ -3902,11 +3911,11 @@ __metadata:
     "@testing-library/user-event": 14.4.3
     "@types/angular": 1.8.5
     "@types/history": 4.7.11
-    "@types/jest": 29.2.3
+    "@types/jest": 29.5.4
     "@types/lodash": 4.14.195
     "@types/react": 18.2.15
     "@types/react-dom": 18.2.7
-    "@types/systemjs": ^0.20.6
+    "@types/systemjs": 6.13.1
     esbuild: 0.18.12
     history: 4.10.1
     lodash: 4.17.21
@@ -3920,7 +3929,8 @@ __metadata:
     rollup-plugin-sourcemaps: 0.6.3
     rollup-plugin-terser: 7.0.2
     rxjs: 7.8.1
-    systemjs: 0.20.19
+    systemjs: 6.14.2
+    systemjs-cjs-extra: 0.1.0
     tslib: 2.6.0
     typescript: 4.8.4
   peerDependencies:
@@ -3929,9 +3939,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/scenes@npm:0.24.2":
-  version: 0.24.2
-  resolution: "@grafana/scenes@npm:0.24.2"
+"@grafana/scenes@npm:^0.29.0":
+  version: 0.29.0
+  resolution: "@grafana/scenes@npm:0.29.0"
   dependencies:
     "@grafana/e2e-selectors": 10.0.2
     react-grid-layout: 1.3.4
@@ -3943,7 +3953,7 @@ __metadata:
     "@grafana/runtime": 10.0.3
     "@grafana/schema": 10.0.3
     "@grafana/ui": 10.0.3
-  checksum: 26797a4c90ff3b6d2e80f3da1d3be9721a371d9d9569e443dad14c81eba8413ef3fff78ab85602f9bfe3e243d7555a834134ac0c1c8542c23b9cc572bd40ad0a
+  checksum: 8a91ea0290d54c5c081595e85f853b14af90468da3d85b5cd83e26d24d4fc84cceea9be930aa9239439ff3af7388ae3f5bebe1973214c686f4cf143a64752548
   languageName: node
   linkType: hard
 
@@ -3964,22 +3974,6 @@ __metadata:
     rollup-plugin-node-externals: ^5.0.0
     tslib: 2.6.0
     typescript: 4.8.4
-  languageName: unknown
-  linkType: soft
-
-"@grafana/toolkit@workspace:*, @grafana/toolkit@workspace:packages/grafana-toolkit":
-  version: 0.0.0-use.local
-  resolution: "@grafana/toolkit@workspace:packages/grafana-toolkit"
-  dependencies:
-    "@grafana/tsconfig": ^1.2.0-rc1
-    "@types/node": 16.11.26
-    chalk: ^4.1.2
-    commander: ^9.2.0
-    ts-node: ^9.1.0
-    tslib: 2.5.0
-    typescript: 4.8.2
-  bin:
-    grafana-toolkit: ./bin/grafana-toolkit.js
   languageName: unknown
   linkType: soft
 
@@ -4044,7 +4038,7 @@ __metadata:
     "@types/d3": 7.4.0
     "@types/hoist-non-react-statics": 3.3.1
     "@types/is-hotkey": 0.1.7
-    "@types/jest": 29.2.3
+    "@types/jest": 29.5.4
     "@types/jquery": 3.5.16
     "@types/lodash": 4.14.195
     "@types/mock-raf": 1.0.3
@@ -10064,13 +10058,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/jest@npm:29.2.3":
-  version: 29.2.3
-  resolution: "@types/jest@npm:29.2.3"
+"@types/jest@npm:29.5.4":
+  version: 29.5.4
+  resolution: "@types/jest@npm:29.5.4"
   dependencies:
     expect: ^29.0.0
     pretty-format: ^29.0.0
-  checksum: 55370906711b600a05b9e497c22aa74d80d8adcdbe4ac2f1bc9311f6f6ca0dd192862b6f38df6ac0d45e92396bcd796e377b1d8058c10bdfd584aeee580c3ce1
+  checksum: 38ed5942f44336452efd0f071eab60aaa57cd8d46530348d0a3aa5a691dcbf1366c4ca8f6ee8364efb45b4413bfefae443e5d4f469246a472a03b21ac11cd4ed
   languageName: node
   linkType: hard
 
@@ -10275,13 +10269,6 @@ __metadata:
   version: 16.11.6
   resolution: "@types/node@npm:16.11.6"
   checksum: 6e19634766ff589d3d2f361c2196b671f8f133cdadc5ad347a621c360d8994b6c4fbccfb2ad9c60c588c593831a96497c9c6b77d2b7e91be723384b94f6368e7
-  languageName: node
-  linkType: hard
-
-"@types/node@npm:16.11.26":
-  version: 16.11.26
-  resolution: "@types/node@npm:16.11.26"
-  checksum: 57757caaba3f0d95de82198cb276a1002c49b710108c932a1d02d7c91ff2fa57cfe2dd19fde60853b6dd90b0964b3cf35557981d2628e20aed6a909057aedfe6
   languageName: node
   linkType: hard
 
@@ -10783,10 +10770,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/systemjs@npm:^0.20.6":
-  version: 0.20.8
-  resolution: "@types/systemjs@npm:0.20.8"
-  checksum: 10bf85416521b89cd20c6eddd72f7414ab6eff31ff8c577152d6f5dd952daf7f9c5eed32d3c482ddbfbe2e9586ed5287838b6dc8a7d6b3963fdad8afbece717b
+"@types/systemjs@npm:6.13.1":
+  version: 6.13.1
+  resolution: "@types/systemjs@npm:6.13.1"
+  checksum: 61fad0cbdbc61e0b6c6fd82d9623d9e68ff587848e0c8198a6bb4a78985b4880962543e02aeb96dfdb4623439ef0d848fde61a82757308dd5067040deee9d1ee
   languageName: node
   linkType: hard
 
@@ -14341,13 +14328,6 @@ __metadata:
   version: 6.2.1
   resolution: "commander@npm:6.2.1"
   checksum: d7090410c0de6bc5c67d3ca41c41760d6d268f3c799e530aafb73b7437d1826bbf0d2a3edac33f8b57cc9887b4a986dce307fa5557e109be40eadb7c43b21742
-  languageName: node
-  linkType: hard
-
-"commander@npm:^9.2.0":
-  version: 9.2.0
-  resolution: "commander@npm:9.2.0"
-  checksum: 7c82e4cd969712aa6d7c055b8351807a7230f9f31ef7ec7881e11a1147511de85adf5d6ccfd200240a118eecf693b220caf6865b8efbcea558a70d35aa9ed711
   languageName: node
   linkType: hard
 
@@ -19233,24 +19213,24 @@ __metadata:
     "@emotion/css": 11.11.2
     "@emotion/eslint-plugin": 11.11.0
     "@emotion/react": 11.11.1
+    "@fingerprintjs/fingerprintjs": ^3.4.2
     "@glideapps/glide-data-grid": ^5.2.1
-    "@grafana/aws-sdk": 0.1.1
+    "@grafana/aws-sdk": 0.1.3
     "@grafana/data": "workspace:*"
     "@grafana/e2e": "workspace:*"
     "@grafana/e2e-selectors": "workspace:*"
-    "@grafana/eslint-config": 6.0.0
+    "@grafana/eslint-config": 6.0.1
     "@grafana/eslint-plugin": "link:./packages/grafana-eslint-rules"
-    "@grafana/experimental": 1.6.1
+    "@grafana/experimental": 1.7.0
     "@grafana/faro-core": 1.1.2
     "@grafana/faro-web-sdk": 1.1.2
     "@grafana/google-sdk": 0.1.1
-    "@grafana/lezer-logql": 0.1.8
+    "@grafana/lezer-logql": 0.1.11
     "@grafana/lezer-traceql": 0.0.4
     "@grafana/monaco-logql": ^0.0.7
     "@grafana/runtime": "workspace:*"
-    "@grafana/scenes": 0.24.2
+    "@grafana/scenes": ^0.29.0
     "@grafana/schema": "workspace:*"
-    "@grafana/toolkit": "workspace:*"
     "@grafana/tsconfig": ^1.3.0-rc1
     "@grafana/ui": "workspace:*"
     "@kusto/monaco-kusto": ^7.4.0
@@ -19306,7 +19286,7 @@ __metadata:
     "@types/gtag.js": ^0.0.12
     "@types/history": 4.7.11
     "@types/hoist-non-react-statics": 3.3.1
-    "@types/jest": 29.2.3
+    "@types/jest": 29.5.4
     "@types/jquery": 3.5.16
     "@types/js-yaml": ^4.0.5
     "@types/jsurl": ^1.2.28
@@ -19340,6 +19320,7 @@ __metadata:
     "@types/slate": 0.47.11
     "@types/slate-plain-serializer": 0.7.2
     "@types/slate-react": 0.22.9
+    "@types/systemjs": 6.13.1
     "@types/testing-library__jest-dom": 5.14.8
     "@types/tinycolor2": 1.4.3
     "@types/trusted-types": 2.0.3
@@ -29797,7 +29778,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"source-map-support@npm:^0.5.16, source-map-support@npm:^0.5.17":
+"source-map-support@npm:^0.5.16":
   version: 0.5.21
   resolution: "source-map-support@npm:0.5.21"
   dependencies:
@@ -30694,10 +30675,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"systemjs@npm:0.20.19":
-  version: 0.20.19
-  resolution: "systemjs@npm:0.20.19"
-  checksum: 4b5a404be790cd545d6994f617c24ef3a3ae52e029c6498f10206f715c6777c4c0733ab9d626723fdfa359f12707835f302986516e5835be26c202bc13e242df
+"systemjs-cjs-extra@npm:0.1.0":
+  version: 0.1.0
+  resolution: "systemjs-cjs-extra@npm:0.1.0"
+  checksum: 09169416c858e43671e988f05f2c14fe2fa923472619983fce44aa946493337bdda0a6c28ea8aeded0c2d3dfa62ad6d8479944144b451c0492f7a505e7b18813
+  languageName: node
+  linkType: hard
+
+"systemjs@npm:6.14.2":
+  version: 6.14.2
+  resolution: "systemjs@npm:6.14.2"
+  checksum: 1f58c7da8f7deb8e4a3eb357e67f5363eb97e44a456f8f81ece391f2e1ae54ac70fb62135043d4cf96c11c6b76d7963c295ea844ca25bcb3b55193f6727fd0b2
   languageName: node
   linkType: hard
 
@@ -31483,27 +31471,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ts-node@npm:^9.1.0":
-  version: 9.1.1
-  resolution: "ts-node@npm:9.1.1"
-  dependencies:
-    arg: ^4.1.0
-    create-require: ^1.1.0
-    diff: ^4.0.1
-    make-error: ^1.1.1
-    source-map-support: ^0.5.17
-    yn: 3.1.1
-  peerDependencies:
-    typescript: ">=2.7"
-  bin:
-    ts-node: dist/bin.js
-    ts-node-script: dist/bin-script.js
-    ts-node-transpile-only: dist/bin-transpile.js
-    ts-script: dist/bin-script-deprecated.js
-  checksum: 356e2647b8b1e6ab00380c0537fa569b63bd9b6f006cc40fd650f81fae1817bd8fecc075300036950d8f45c1d85b95be33cd1e48a1a424a7d86c3dbb42bf60e5
-  languageName: node
-  linkType: hard
-
 "ts-toolbelt@npm:^9.6.0":
   version: 9.6.0
   resolution: "ts-toolbelt@npm:9.6.0"
@@ -31733,16 +31700,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"typescript@npm:4.8.2":
-  version: 4.8.2
-  resolution: "typescript@npm:4.8.2"
-  bin:
-    tsc: bin/tsc
-    tsserver: bin/tsserver
-  checksum: 7f5b81d0d558c9067f952c7af52ab7f19c2e70a916817929e4a5b256c93990bf3178eccb1ac8a850bc75df35f6781b6f4cb3370ce20d8b1ded92ed462348f628
-  languageName: node
-  linkType: hard
-
 "typescript@npm:4.8.4, typescript@npm:^3 || ^4":
   version: 4.8.4
   resolution: "typescript@npm:4.8.4"
@@ -31770,16 +31727,6 @@ __metadata:
     tsc: bin/tsc
     tsserver: bin/tsserver
   checksum: 8286a5edcaf3d68e65c451aa1e7150ad1cf53ee0813c07ec35b7abdfdb10f355ecaa13c6a226a694ae7a67785fd7eeebf89f845da0b4f7e4a35561ddc459aba0
-  languageName: node
-  linkType: hard
-
-"typescript@patch:typescript@4.8.2#~builtin<compat/typescript>":
-  version: 4.8.2
-  resolution: "typescript@patch:typescript@npm%3A4.8.2#~builtin<compat/typescript>::version=4.8.2&hash=3b564f"
-  bin:
-    tsc: bin/tsc
-    tsserver: bin/tsserver
-  checksum: 28e130a49d9330b64b8229ad336247bf980e9a705c5850f30a859a68c051e8e68e367b3275f119da4a825dca71ad0fe315964a1315d4a381c0021bca5eeeb62e
   languageName: node
   linkType: hard
 

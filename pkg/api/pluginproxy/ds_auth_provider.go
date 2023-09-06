@@ -16,7 +16,7 @@ import (
 type DSInfo struct {
 	ID                      int64
 	Updated                 time.Time
-	JSONData                map[string]interface{}
+	JSONData                map[string]any
 	DecryptedSecureJSONData map[string]string
 }
 

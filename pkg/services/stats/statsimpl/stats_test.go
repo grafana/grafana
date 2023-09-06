@@ -92,7 +92,7 @@ func populateDB(t *testing.T, sqlStore *sqlstore.SQLStore) {
 			OrgId:     1,
 			Config: correlations.CorrelationConfig{
 				Field:  "field",
-				Target: map[string]interface{}{},
+				Target: map[string]any{},
 				Type:   correlations.ConfigTypeQuery,
 			},
 		}

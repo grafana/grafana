@@ -59,6 +59,9 @@
     transform: translate(0px, 0px) !important;
     margin-bottom: $space-md;
   }
+  .panel-repeater-grid-item {
+    height: auto !important;
+  }
 }
 
 .react-grid-item.react-grid-placeholder {
