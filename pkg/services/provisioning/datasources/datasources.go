@@ -23,6 +23,7 @@ type CorrelationsStore interface {
 	DeleteCorrelationsByTargetUID(ctx context.Context, cmd correlations.DeleteCorrelationsByTargetUIDCommand) error
 	DeleteCorrelationsBySourceUID(ctx context.Context, cmd correlations.DeleteCorrelationsBySourceUIDCommand) error
 	CreateCorrelation(ctx context.Context, cmd correlations.CreateCorrelationCommand) (correlations.Correlation, error)
+	CreateOrUpdateCorrelation(ctx context.Context, cmd correlations.CreateCorrelationCommand) error
 }
 
 var (
@@ -110,7 +111,15 @@ func (dc *DatasourceProvisioner) provisionCorrelations(ctx context.Context, cfg 
 				dc.log.Error("failed to parse correlation", "correlation", correlation)
 				return err
 			}
-			if _, err := dc.correlationsStore.CreateCorrelation(ctx, createCorrelationCmd); err != nil {
+			// "Provisioned" column was introduced in #71110. Any records that were created before this change
+			// are marked as "not provisioned". To avoid duplicates we ensure these records are updated instead
+			// of being inserted once again with Provisioned=true.
+			// This is required to help users upgrade with confidence. Post GA we do not expect this code to be
+			// needed at all as it should result in a no-op. This should be mentioned in what's new docs when
+			// feature becomes GA.
+			// This can be changed to dc.correlationsStore.CreateCorrelation in Grafana 11 and CreateOrUpdateCorrelation
+			// can be removed.
+			if err := dc.correlationsStore.CreateOrUpdateCorrelation(ctx, createCorrelationCmd); err != nil {
 				return fmt.Errorf("err=%s source=%s", err.Error(), createCorrelationCmd.SourceUID)
 			}
 		}

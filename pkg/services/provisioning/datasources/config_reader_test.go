@@ -398,6 +398,11 @@ func (m *mockCorrelationsStore) CreateCorrelation(c context.Context, cmd correla
 	return correlations.Correlation{}, nil
 }
 
+func (m *mockCorrelationsStore) CreateOrUpdateCorrelation(c context.Context, cmd correlations.CreateCorrelationCommand) error {
+	m.created = append(m.created, cmd)
+	return nil
+}
+
 func (m *mockCorrelationsStore) DeleteCorrelationsBySourceUID(c context.Context, cmd correlations.DeleteCorrelationsBySourceUIDCommand) error {
 	m.deletedBySourceUID = append(m.deletedBySourceUID, cmd)
 	return nil

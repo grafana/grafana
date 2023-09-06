@@ -290,3 +290,35 @@ func (s CorrelationsService) deleteCorrelationsByTargetUID(ctx context.Context, 
 		return err
 	})
 }
+
+// internal use: It's require only for correct migration of existing records. Can be removed in Grafana 11.
+func (s CorrelationsService) createOrUpdateCorrelation(ctx context.Context, cmd CreateCorrelationCommand) error {
+	correlation := Correlation{
+		SourceUID:   cmd.SourceUID,
+		OrgID:       cmd.OrgId,
+		TargetUID:   cmd.TargetUID,
+		Label:       cmd.Label,
+		Description: cmd.Description,
+		Config:      cmd.Config,
+		Provisioned: false,
+	}
+
+	found := false
+	var err error
+	s.SQLStore.WithDbSession(ctx, func(session *db.Session) error {
+		found, err = session.Get(&correlation)
+		return err
+	})
+
+	if found && cmd.Provisioned {
+		correlation.Provisioned = true
+		err := s.SQLStore.WithDbSession(ctx, func(session *db.Session) error {
+			_, err := session.Cols("provisioned").Update(&correlation)
+			return err
+		})
+		return err
+	} else {
+		_, err := s.createCorrelation(ctx, cmd)
+		return err
+	}
+}
