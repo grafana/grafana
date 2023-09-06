@@ -12,18 +12,45 @@ import { MIN_WIDTH_TO_SHOW_BOTH_TOPTABLE_AND_FLAMEGRAPH } from './constants';
 import { ClickedItemData, ColorScheme, ColorSchemeDiff, SelectedView, TextAlign } from './types';
 
 type Props = {
+  /**
+   * DataFrame with the profile data. The dataFrame needs to have the following fields:
+   * label: string - the label of the node
+   * level: number - the nesting level of the node
+   * value: number - the total value of the node
+   * self: number - the self value of the node
+   * Optionally if it represents diff of 2 different profiles it can also have fields:
+   * valueRight: number - the total value of the node in the right profile
+   * selfRight: number - the self value of the node in the right profile
+   */
   data?: DataFrame;
+
+  /**
+   * Whether the header should be sticky and be always visible on the top when scrolling.
+   */
   stickyHeader?: boolean;
 
+  /**
+   * Provides a theme for the visualization on which colors and some sizes are based.
+   */
   getTheme: () => GrafanaTheme2;
 
-  // for interaction reporting
+  /**
+   * Various interaction hooks that can be used to report on the interaction.
+   */
   onTableSymbolClick?: (symbol: string) => void;
   onViewSelected?: (view: string) => void;
   onTextAlignSelected?: (align: string) => void;
   onTableSort?: (sort: string) => void;
 
+  /**
+   * Elements that will be shown in the header on the right side of the header buttons. Useful for additional
+   * functionality.
+   */
   extraHeaderElements?: React.ReactNode;
+
+  /**
+   * If true the flamegraph will be rendered on top of the table.
+   */
   vertical?: boolean;
 };
 
