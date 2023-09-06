@@ -3,7 +3,7 @@ import React from 'react';
 import { useLocation } from 'react-router-dom';
 
 import { GrafanaTheme2, PageLayoutType } from '@grafana/data';
-import { SceneComponentProps } from '@grafana/scenes';
+import { SceneComponentProps, SceneDebugger } from '@grafana/scenes';
 import { CustomScrollbar, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 
@@ -11,7 +11,7 @@ import { DashboardScene } from './DashboardScene';
 import { NavToolbarActions } from './NavToolbarActions';
 
 export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardScene>) {
-  const { controls, viewPanelId, drawer } = model.useState();
+  const { controls, viewPanelKey: viewPanelId, drawer } = model.useState();
   const styles = useStyles2(getStyles);
   const location = useLocation();
   const pageNav = model.getPageNav(location);
@@ -27,6 +27,7 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
               {controls.map((control) => (
                 <control.Component key={control.state.key} model={control} />
               ))}
+              <SceneDebugger scene={model} key={'scene-debugger'} />
             </div>
           )}
           <div className={styles.body}>
