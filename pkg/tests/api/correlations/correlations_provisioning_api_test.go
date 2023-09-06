@@ -49,6 +49,22 @@ func TestIntegrationCreateOrUpdateCorrelation(t *testing.T) {
 		Provisioned: false,
 	})
 
+	ctx.createCorrelation(correlations.CreateCorrelationCommand{
+		SourceUID: dataSource.UID,
+		TargetUID: &dataSource.UID,
+		OrgId:     dataSource.OrgID,
+		Label:     "existing",
+		Config: correlations.CorrelationConfig{
+			Type:   correlations.ConfigTypeQuery,
+			Field:  "foo",
+			Target: map[string]any{},
+			Transformations: []correlations.Transformation{
+				{Type: "logfmt"},
+			},
+		},
+		Provisioned: false,
+	})
+
 	t.Run("Correctly marks existing correlations as provisioned", func(t *testing.T) {
 		// should be updated
 		ctx.createOrUpdateCorrelation(correlations.CreateCorrelationCommand{
@@ -85,11 +101,16 @@ func TestIntegrationCreateOrUpdateCorrelation(t *testing.T) {
 		err = json.Unmarshal(responseBody, &response)
 		require.NoError(t, err)
 
-		require.Len(t, response.Correlations, 2)
+		require.Len(t, response.Correlations, 3)
+		// existing correlation is updated
 		require.EqualValues(t, "needs migration", response.Correlations[0].Label)
 		require.EqualValues(t, true, response.Correlations[0].Provisioned)
-		require.EqualValues(t, "different", response.Correlations[1].Label)
-		require.EqualValues(t, true, response.Correlations[1].Provisioned)
+		// other existing correlations are not changed
+		require.EqualValues(t, "existing", response.Correlations[1].Label)
+		require.EqualValues(t, false, response.Correlations[1].Provisioned)
+		// new correlation is added
+		require.EqualValues(t, "different", response.Correlations[2].Label)
+		require.EqualValues(t, true, response.Correlations[2].Provisioned)
 
 		require.NoError(t, res.Body.Close())
 	})

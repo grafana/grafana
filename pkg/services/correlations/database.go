@@ -2,6 +2,7 @@ package correlations
 
 import (
 	"context"
+	"xorm.io/core"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -313,7 +314,7 @@ func (s CorrelationsService) createOrUpdateCorrelation(ctx context.Context, cmd 
 	if found && cmd.Provisioned {
 		correlation.Provisioned = true
 		err := s.SQLStore.WithDbSession(ctx, func(session *db.Session) error {
-			_, err := session.Cols("provisioned").Update(&correlation)
+			_, err := session.ID(core.NewPK(correlation.UID, correlation.SourceUID, correlation.OrgID)).Cols("provisioned").Update(&correlation)
 			return err
 		})
 		return err
