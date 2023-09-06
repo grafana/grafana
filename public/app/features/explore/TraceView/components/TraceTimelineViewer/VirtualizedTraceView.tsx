@@ -22,7 +22,6 @@ import { GrafanaTheme2, LinkModel, TimeZone } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
 import { stylesFactory, withTheme2, ToolbarButton } from '@grafana/ui';
 
-import { Accessors } from '../ScrollManager';
 import { PEER_SERVICE } from '../constants/tag-keys';
 import { SpanBarOptions, SpanLinkFunc, TNil } from '../types';
 import TTraceTimeline from '../types/TTraceTimeline';
@@ -83,7 +82,6 @@ type TVirtualizedTraceViewOwnProps = {
   currentViewRangeTime: [number, number];
   timeZone: TimeZone;
   findMatchesIDs: Set<string> | TNil;
-  registerAccessors: (accesors: Accessors) => void;
   trace: Trace;
   spanBarOptions: SpanBarOptions | undefined;
   linksGetter: (span: TraceSpan, items: TraceKeyValuePair[], itemIndex: number) => TraceLink[];
@@ -219,17 +217,7 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
   }
 
   componentDidUpdate(prevProps: Readonly<VirtualizedTraceViewProps>) {
-    const { registerAccessors } = prevProps;
-    const {
-      registerAccessors: nextRegisterAccessors,
-      headerHeight,
-      focusedSpanId,
-      focusedSpanIdForSearch,
-    } = this.props;
-
-    if (this.listView && registerAccessors !== nextRegisterAccessors) {
-      nextRegisterAccessors(this.getAccessors());
-    }
+    const { headerHeight, focusedSpanId, focusedSpanIdForSearch } = this.props;
 
     if (!this.hasScrolledToSpan) {
       this.scrollToSpan(headerHeight, focusedSpanId);
@@ -305,11 +293,7 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
   };
 
   setListView = (listView: ListView | TNil) => {
-    const isChanged = this.listView !== listView;
     this.listView = listView;
-    if (listView && isChanged) {
-      this.props.registerAccessors(this.getAccessors());
-    }
   };
 
   // use long form syntax to avert flow error

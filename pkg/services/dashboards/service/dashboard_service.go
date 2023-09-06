@@ -22,7 +22,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
-	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 var (
@@ -207,15 +206,16 @@ func (dr *DashboardServiceImpl) BuildSaveDashboardCommand(ctx context.Context, d
 }
 
 func resolveUserID(user identity.Requester, log log.Logger) (int64, error) {
+	userID := int64(0)
 	namespaceID, identifier := user.GetNamespacedID()
 	if namespaceID != identity.NamespaceUser && namespaceID != identity.NamespaceServiceAccount {
-		return 0, errutil.BadRequest("account doesn't belong to the user or service namespace")
+		log.Debug("User does not belong to a user or service account namespace", "namespaceID", namespaceID, "userID", identifier)
 	}
 
 	userID, err := identity.IntIdentifier(namespaceID, identifier)
 
 	if err != nil {
-		log.Warn("failed to parse user ID", "namespaceID", namespaceID, "userID", identifier, "error", err)
+		log.Debug("failed to parse user ID", "namespaceID", namespaceID, "userID", identifier, "error", err)
 	}
 	return userID, nil
 }

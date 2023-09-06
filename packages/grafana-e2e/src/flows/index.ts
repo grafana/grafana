@@ -11,6 +11,7 @@ export * from './openPanelMenuItem';
 export * from './revertAllChanges';
 export * from './saveDashboard';
 export * from './selectOption';
+export * from './setTimeRange';
 export * from './importDashboard';
 export * from './importDashboards';
 export * from './userPreferences';

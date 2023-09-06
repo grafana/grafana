@@ -5,8 +5,19 @@ import { DeepMap, FieldError, FormProvider, useForm, useFormContext, UseFormWatc
 import { Link, useParams } from 'react-router-dom';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Stack } from '@grafana/experimental';
 import { config, logInfo } from '@grafana/runtime';
-import { Button, ConfirmModal, CustomScrollbar, Field, HorizontalGroup, Input, Spinner, useStyles2 } from '@grafana/ui';
+import {
+  Button,
+  ConfirmModal,
+  CustomScrollbar,
+  Field,
+  HorizontalGroup,
+  Input,
+  Spinner,
+  Text,
+  useStyles2,
+} from '@grafana/ui';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { contextSrv } from 'app/core/core';
@@ -48,7 +59,6 @@ const recordingRuleNameValidationPattern = {
 };
 
 const AlertRuleNameInput = () => {
-  const styles = useStyles2(getStyles);
   const {
     register,
     watch,
@@ -56,22 +66,29 @@ const AlertRuleNameInput = () => {
   } = useFormContext<RuleFormValues & { location?: string }>();
 
   const ruleFormType = watch('type');
+  const entityName = ruleFormType === RuleFormType.cloudRecording ? 'recording rule' : 'alert rule';
+
   return (
-    <RuleEditorSection stepNo={1} title="Set alert rule name.">
-      <Field
-        className={styles.formInput}
-        label="Rule name"
-        description="Name for the alert rule."
-        error={errors?.name?.message}
-        invalid={!!errors.name?.message}
-      >
+    <RuleEditorSection
+      stepNo={1}
+      title={`Enter ${entityName} name`}
+      description={
+        <Text variant="bodySmall" color="secondary">
+          {/* sigh language rules – we should use translations ideally but for now we deal with "a" and "an" */}
+          Enter {entityName === 'alert rule' ? 'an' : 'a'} {entityName} name to identify your alert.
+        </Text>
+      }
+    >
+      <Field label="Name" error={errors?.name?.message} invalid={!!errors.name?.message}>
         <Input
           id="name"
+          width={35}
           {...register('name', {
-            required: { value: true, message: 'Must enter an alert name' },
+            required: { value: true, message: 'Must enter a name' },
             pattern: ruleFormType === RuleFormType.cloudRecording ? recordingRuleNameValidationPattern : undefined,
           })}
-          placeholder="Give your alert rule a name."
+          aria-label="name"
+          placeholder={`Give your ${entityName} a name`}
         />
       </Field>
     </RuleEditorSection>
@@ -254,7 +271,7 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
       <form onSubmit={(e) => e.preventDefault()} className={styles.form}>
         <div className={styles.contentOuter}>
           <CustomScrollbar autoHeightMin="100%" hideHorizontalTrack={true}>
-            <div className={styles.contentInner}>
+            <Stack direction="column" gap={3}>
               {/* Step 1 */}
               <AlertRuleNameInput />
               {/* Step 2 */}
@@ -282,7 +299,7 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
                   <NotificationsStep alertUid={uidFromParams} />
                 </>
               )}
-            </div>
+            </Stack>
           </CustomScrollbar>
         </div>
       </form>
@@ -369,29 +386,15 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: flex;
       flex-direction: column;
     `,
-    contentInner: css`
-      flex: 1;
-      padding: ${theme.spacing(2)};
-    `,
     contentOuter: css`
       background: ${theme.colors.background.primary};
-      border: 1px solid ${theme.colors.border.weak};
-      border-radius: ${theme.shape.radius.default};
       overflow: hidden;
       flex: 1;
-      margin-top: ${theme.spacing(1)};
     `,
     flexRow: css`
       display: flex;
       flex-direction: row;
       justify-content: flex-start;
-    `,
-    formInput: css`
-      width: 275px;
-
-      & + & {
-        margin-left: ${theme.spacing(3)};
-      }
     `,
   };
 };

@@ -102,7 +102,7 @@
     }
   ],
   "schemaVersion": 34,
-  "tags": [],
+  "tags": ["gdev", "templating"],
   "templating": {
     "list": [
       {
