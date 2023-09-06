@@ -417,7 +417,7 @@ func (hs *HTTPServer) CheckHealth(c *contextmodel.ReqContext) response.Response 
 		var jsonDetails map[string]any
 		err = json.Unmarshal(resp.JSONDetails, &jsonDetails)
 		if err != nil {
-			return response.Error(500, "Failed to unmarshal detailed response from backend plugin", err)
+			return response.Error(http.StatusInternalServerError, "Failed to unmarshal detailed response from backend plugin", err)
 		}
 
 		payload["details"] = jsonDetails
@@ -501,6 +501,10 @@ func translatePluginRequestErrorToAPIError(err error) response.Response {
 
 	if errors.Is(err, backendplugin.ErrHealthCheckFailed) {
 		return response.Error(http.StatusInternalServerError, "Plugin health check failed", err)
+	}
+
+	if errors.Is(err, backendplugin.ErrPluginUnavailable) {
+		return response.Error(http.StatusServiceUnavailable, "Plugin unavailable", err)
 	}
 
 	return response.ErrOrFallback(http.StatusInternalServerError, "Plugin request failed", err)
