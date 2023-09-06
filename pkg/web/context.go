@@ -40,7 +40,7 @@ type Context struct {
 	template *template.Template
 }
 
-var errMissingWrite = errutil.NewBase(errutil.StatusInternal, "web.missingWrite")
+var errMissingWrite = errutil.Internal("web.missingWrite")
 
 func (ctx *Context) run() {
 	h := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
@@ -102,7 +102,7 @@ const (
 )
 
 // HTML renders the HTML with default template set.
-func (ctx *Context) HTML(status int, name string, data interface{}) {
+func (ctx *Context) HTML(status int, name string, data any) {
 	ctx.Resp.Header().Set(headerContentType, contentTypeHTML)
 	ctx.Resp.WriteHeader(status)
 	if err := ctx.template.ExecuteTemplate(ctx.Resp, name, data); err != nil {
@@ -113,7 +113,7 @@ func (ctx *Context) HTML(status int, name string, data interface{}) {
 	}
 }
 
-func (ctx *Context) JSON(status int, data interface{}) {
+func (ctx *Context) JSON(status int, data any) {
 	ctx.Resp.Header().Set(headerContentType, contentTypeJSON)
 	ctx.Resp.WriteHeader(status)
 	enc := json.NewEncoder(ctx.Resp)

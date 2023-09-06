@@ -234,7 +234,7 @@ func (s dbFileStorage) Upsert(ctx context.Context, cmd *UpsertFileCommand) error
 		if len(cmd.Properties) != 0 {
 			if err = upsertProperties(s.db.GetDialect(), sess, now, cmd, pathHash); err != nil {
 				if rollbackErr := sess.Rollback(); rollbackErr != nil {
-					s.log.Error("failed while rolling back upsert", "path", cmd.Path)
+					s.log.Error("Failed while rolling back upsert", "path", cmd.Path)
 				}
 				return err
 			}
@@ -516,7 +516,7 @@ func (s dbFileStorage) DeleteFolder(ctx context.Context, folderPath string, opti
 	}
 
 	err := s.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		var rawHashes []interface{}
+		var rawHashes []any
 
 		// xorm does not support `.Delete()` with `.Join()`, so we first have to retrieve all path_hashes and then use them to filter `file_meta` table
 		err := sess.Table("file").
@@ -543,11 +543,11 @@ func (s dbFileStorage) DeleteFolder(ctx context.Context, folderPath string, opti
 		}
 
 		if int64(len(rawHashes)) != accessibleFilesCount {
-			s.log.Error("force folder delete: unauthorized access", "path", lowerFolderPath, "expectedAccessibleFilesCount", int64(len(rawHashes)), "actualAccessibleFilesCount", accessibleFilesCount)
+			s.log.Error("Force folder delete: unauthorized access", "path", lowerFolderPath, "expectedAccessibleFilesCount", int64(len(rawHashes)), "actualAccessibleFilesCount", accessibleFilesCount)
 			return fmt.Errorf("force folder delete: unauthorized access for path %s", lowerFolderPath)
 		}
 
-		var hashes []interface{}
+		var hashes []any
 		for _, hash := range rawHashes {
 			if hashString, ok := hash.(string); ok {
 				hashes = append(hashes, hashString)

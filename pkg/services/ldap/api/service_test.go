@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/auth/authtest"
+	"github.com/grafana/grafana/pkg/services/authn/authntest"
 	"github.com/grafana/grafana/pkg/services/ldap"
 	"github.com/grafana/grafana/pkg/services/ldap/multildap"
 	"github.com/grafana/grafana/pkg/services/ldap/service"
@@ -68,7 +69,7 @@ func setupAPITest(t *testing.T, opts ...func(a *Service)) (*Service, *webtest.Se
 		usertest.NewUserServiceFake(),
 		&logintest.AuthInfoServiceFake{},
 		ldap.ProvideGroupsService(),
-		&logintest.LoginServiceFake{},
+		&authntest.FakeService{},
 		&orgtest.FakeOrgService{},
 		service.NewLDAPFakeService(),
 		authtest.NewFakeUserAuthTokenService(),

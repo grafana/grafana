@@ -8,8 +8,9 @@ import {
   By,
   ConvOp,
   Decolorize,
-  DistinctFilter,
-  DistinctLabel,
+  DropLabel,
+  DropLabels,
+  DropLabelsExpr,
   Filter,
   FilterOp,
   Grouping,
@@ -21,6 +22,9 @@ import {
   Json,
   JsonExpression,
   JsonExpressionParser,
+  KeepLabel,
+  KeepLabels,
+  KeepLabelsExpr,
   LabelFilter,
   LabelFormatMatcher,
   LabelParser,
@@ -207,8 +211,13 @@ export function handleExpression(expr: string, node: SyntaxNode, context: Contex
       break;
     }
 
-    case DistinctFilter: {
-      visQuery.operations.push(handleDistinctFilter(expr, node, context));
+    case DropLabelsExpr: {
+      visQuery.operations.push(handleDropFilter(expr, node, context));
+      break;
+    }
+
+    case KeepLabelsExpr: {
+      visQuery.operations.push(handleKeepFilter(expr, node, context));
       break;
     }
 
@@ -644,19 +653,36 @@ function isEmptyQuery(query: LokiVisualQuery) {
   return false;
 }
 
-function handleDistinctFilter(expr: string, node: SyntaxNode, context: Context): QueryBuilderOperation {
+function handleDropFilter(expr: string, node: SyntaxNode, context: Context): QueryBuilderOperation {
   const labels: string[] = [];
-  let exploringNode = node.getChild(DistinctLabel);
+  let exploringNode = node.getChild(DropLabels);
   while (exploringNode) {
-    const label = getString(expr, exploringNode.getChild(Identifier));
+    const label = getString(expr, exploringNode.getChild(DropLabel));
     if (label) {
       labels.push(label);
     }
-    exploringNode = exploringNode?.getChild(DistinctLabel);
+    exploringNode = exploringNode?.getChild(DropLabels);
   }
   labels.reverse();
   return {
-    id: LokiOperationId.Distinct,
+    id: LokiOperationId.Drop,
+    params: labels,
+  };
+}
+
+function handleKeepFilter(expr: string, node: SyntaxNode, context: Context): QueryBuilderOperation {
+  const labels: string[] = [];
+  let exploringNode = node.getChild(KeepLabels);
+  while (exploringNode) {
+    const label = getString(expr, exploringNode.getChild(KeepLabel));
+    if (label) {
+      labels.push(label);
+    }
+    exploringNode = exploringNode?.getChild(KeepLabels);
+  }
+  labels.reverse();
+  return {
+    id: LokiOperationId.Keep,
     params: labels,
   };
 }

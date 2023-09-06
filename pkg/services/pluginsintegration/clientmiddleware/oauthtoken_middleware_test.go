@@ -28,7 +28,7 @@ func TestOAuthTokenMiddleware(t *testing.T) {
 			clienttest.WithMiddlewares(NewOAuthTokenMiddleware(oAuthTokenService)),
 		)
 
-		jsonDataMap := map[string]interface{}{}
+		jsonDataMap := map[string]any{}
 		jsonDataBytes, err := json.Marshal(&jsonDataMap)
 		require.NoError(t, err)
 
@@ -82,7 +82,7 @@ func TestOAuthTokenMiddleware(t *testing.T) {
 			TokenType:   "bearer",
 			AccessToken: "access-token",
 		}
-		token = token.WithExtra(map[string]interface{}{"id_token": "id-token"})
+		token = token.WithExtra(map[string]any{"id_token": "id-token"})
 		oAuthTokenService := &oauthtokentest.Service{
 			Token: token,
 		}
@@ -91,7 +91,7 @@ func TestOAuthTokenMiddleware(t *testing.T) {
 			clienttest.WithMiddlewares(NewOAuthTokenMiddleware(oAuthTokenService)),
 		)
 
-		jsonDataMap := map[string]interface{}{
+		jsonDataMap := map[string]any{
 			"oauthPassThru": true,
 		}
 		jsonDataBytes, err := json.Marshal(&jsonDataMap)

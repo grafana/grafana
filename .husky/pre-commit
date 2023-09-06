@@ -19,11 +19,11 @@ fi
 # Either setting up lefthook, or running the clean command will unset the hooksPath git config so this
 # hook is no longer ran when committing.
 
-echo "\n⚠️⚠️⚠️ \e[1mImportant: Pre-commit hooks are now opt-in.\e[0m ⚠️⚠️⚠️"
+echo "\n⚠️⚠️⚠️ Important: Pre-commit hooks are now opt-in. ⚠️⚠️⚠️"
 echo "To install the new pre-commit hooks:"
-echo "  $ \e[96mmake lefthook-install\e[0m"
+echo "  $ make lefthook-install"
 echo "Or, silence this message by cleaning up the old hooks"
-echo "  $ \e[96mmake cleanup-old-git-hooks\e[0m"
+echo "  $ make cleanup-old-git-hooks"
 echo "\nPre-commit hooks will not run on this commit and it will be committed even if it contains lint errors."
 echo "See https://github.com/grafana/grafana/blob/main/contribute/developer-guide.md#configure-precommit-hooks for more info\n"
 

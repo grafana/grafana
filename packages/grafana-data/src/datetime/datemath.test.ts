@@ -181,6 +181,12 @@ describe('DateMath', () => {
       const date = dateMath.parseDateMath(' - 2d', dateTime([2014, 1, 5]));
       expect(date!.valueOf()).toEqual(dateTime([2014, 1, 3]).valueOf());
     });
+
+    it('should not mutate dateTime passed in', () => {
+      const dateInput = dateTime([2014, 1, 5]);
+      dateMath.parseDateMath(' - 2d', dateInput);
+      expect(dateInput.valueOf()).toEqual(dateTime([2014, 1, 5]).valueOf());
+    });
   });
 
   describe('isMathString', () => {
