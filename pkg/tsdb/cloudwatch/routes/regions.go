@@ -19,7 +19,7 @@ func RegionsHandler(ctx context.Context, pluginCtx backend.PluginContext, reqCtx
 	service, err := newRegionsService(ctx, pluginCtx, reqCtxFactory, defaultRegion)
 
 	if err != nil {
-		return nil, models.NewHttpError("Unexpected error while fetching regions", http.StatusInternalServerError, err)
+		return nil, models.NewHttpError("Unexpected error connecting to aws to fetch regions", http.StatusInternalServerError, err)
 	}
 
 	regions, err := service.GetRegions()
@@ -29,7 +29,7 @@ func RegionsHandler(ctx context.Context, pluginCtx backend.PluginContext, reqCtx
 
 	regionsResponse, err := json.Marshal(regions)
 	if err != nil {
-		return nil, models.NewHttpError("Unexpected error while fetching regions", http.StatusInternalServerError, err)
+		return nil, models.NewHttpError("Unexpected error parsing regions", http.StatusInternalServerError, err)
 	}
 
 	return regionsResponse, nil
