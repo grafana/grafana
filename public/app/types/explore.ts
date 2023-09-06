@@ -16,6 +16,7 @@ import {
   ExplorePanelsState,
   SupplementaryQueryType,
   UrlQueryMap,
+  ExploreCorrelationHelperData,
 } from '@grafana/data';
 import { RichHistorySearchFilters, RichHistorySettings } from 'app/core/utils/richHistoryTypes';
 
@@ -23,7 +24,8 @@ import { CorrelationData } from '../features/correlations/useCorrelations';
 
 export type ExploreQueryParams = UrlQueryMap;
 
-export interface CorrelationDetails {
+export interface CorrelationEditorDetails {
+    editorMode?: boolean;
     canSave?: boolean;
     dirty?: boolean;
     label?: string;
@@ -58,14 +60,9 @@ export interface ExploreState {
   richHistoryLimitExceededWarningShown: boolean;
 
   /**
-   * True if Explore is in correlations editor mode, where every field shows a correlation data link and normal data links do not display
+   * Details on a correlation being created from explore
    */
-  correlationsEditorMode: boolean;
-
-  /**
-   * Details on the correlation if one is being created
-   */
-  correlationDetails?: CorrelationDetails;
+  correlationEditorDetails?: CorrelationEditorDetails;
 
   /**
    * On a split manual resize, we calculate which pane is larger, or if they are roughly the same size. If undefined, it is not split or they are roughly the same size
@@ -209,6 +206,8 @@ export interface ExploreItemState {
   supplementaryQueries: SupplementaryQueries;
 
   panelsState: ExplorePanelsState;
+
+  correlationEditorHelperData?: ExploreCorrelationHelperData;
 
   correlations?: CorrelationData[];
 }

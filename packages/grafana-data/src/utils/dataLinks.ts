@@ -1,6 +1,7 @@
 import {
   DataLink,
   DataQuery,
+  ExploreCorrelationHelperData,
   ExplorePanelsState,
   Field,
   InternalDataLink,
@@ -38,6 +39,7 @@ export type LinkToExploreOptions = {
   internalLink: InternalDataLink;
   onClickFn?: SplitOpen;
   replaceVariables: InterpolateFunction;
+  correlationHelperData?: ExploreCorrelationHelperData;
 };
 
 export function mapInternalLinkToExplore(options: LinkToExploreOptions): LinkModel<Field> {
@@ -62,6 +64,7 @@ export function mapInternalLinkToExplore(options: LinkToExploreOptions): LinkMod
             datasourceUid: internalLink.datasourceUid,
             queries: [interpolatedQuery],
             panelsState: interpolatedPanelsState,
+            correlationHelperData: internalLink.correlationData,
             range,
           });
         }

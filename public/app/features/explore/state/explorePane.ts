@@ -8,6 +8,7 @@ import {
   ExplorePanelsState,
   PreferredVisualisationType,
   RawTimeRange,
+  ExploreCorrelationHelperData,
 } from '@grafana/data';
 import { DataQuery, DataSourceRef } from '@grafana/schema';
 import { getQueryKeys } from 'app/core/utils/explore';
@@ -19,7 +20,7 @@ import { ExploreItemState } from 'app/types/explore';
 
 import { datasourceReducer } from './datasource';
 import { historyReducer } from './history';
-import { changeCorrelationsEditorMode, richHistorySearchFiltersUpdatedAction, richHistoryUpdatedAction } from './main';
+import { changeCorrelationEditorMode, richHistorySearchFiltersUpdatedAction, richHistoryUpdatedAction } from './main';
 import { queryReducer, runQueries } from './query';
 import { timeReducer, updateTime } from './time';
 import {
@@ -76,20 +77,47 @@ export function changePanelState(
   };
 }
 
-export function removeCorrelationData(exploreId: string): ThunkResult<void> {
+/**
+ * Tracks the state of correlation helper data in the panel
+ */
+interface ChangeCorrelationHelperData {
+  exploreId: string;
+  correlationEditorHelperData?: ExploreCorrelationHelperData;
+}
+const changeCorrelationHelperDataAction = createAction<ChangeCorrelationHelperData>(
+  'explore/changeCorrelationHelperData'
+);
+
+export function changeCorrelationHelperData(
+  exploreId: string,
+  correlationHelperData: ExploreCorrelationHelperData
+): ThunkResult<void> {
   return async (dispatch, getState) => {
     const exploreItem = getState().explore.panes[exploreId];
     if (exploreItem === undefined) {
       return;
     }
-    const { panelsState } = exploreItem;
+
+    const { correlationEditorHelperData } = exploreItem;
     dispatch(
-      changePanelsStateAction({
+      changeCorrelationHelperDataAction({
         exploreId,
-        panelsState: {
-          ...panelsState,
-          correlations: undefined,
-        },
+        correlationEditorHelperData: { ...correlationEditorHelperData, ...correlationHelperData },
+      })
+    );
+  };
+}
+
+export function removeCorrelationHelperData(exploreId: string): ThunkResult<void> {
+  return async (dispatch, getState) => {
+    const exploreItem = getState().explore.panes[exploreId];
+    if (exploreItem === undefined) {
+      return;
+    }
+    dispatch(
+      changeCorrelationHelperDataAction({
+        exploreId,
+        correlationEditorHelperData: undefined,
       })
     );
   };
@@ -133,6 +161,7 @@ export interface InitializeExploreOptions {
   queries: DataQuery[];
   range: RawTimeRange;
   panelsState?: ExplorePanelsState;
+  correlationHelperData?: ExploreCorrelationHelperData;
   position?: number;
 }
 /**
@@ -146,7 +175,7 @@ export interface InitializeExploreOptions {
 export const initializeExplore = createAsyncThunk(
   'explore/initializeExplore',
   async (
-    { exploreId, datasource, queries, range, panelsState }: InitializeExploreOptions,
+    { exploreId, datasource, queries, range, panelsState, correlationHelperData }: InitializeExploreOptions,
     { dispatch, getState, fulfillWithValue }
   ) => {
     let instance = undefined;
@@ -182,8 +211,14 @@ export const initializeExplore = createAsyncThunk(
       dispatch(runQueries({ exploreId }));
     }
 
-    if (panelsState?.correlations !== undefined && !getState().explore.correlationsEditorMode) {
-      dispatch(changeCorrelationsEditorMode({ correlationsEditorMode: true }));
+    // initialize new pane with helper data
+    if (correlationHelperData !== undefined && getState().explore.correlationEditorDetails?.editorMode) {
+      dispatch(
+        changeCorrelationHelperDataAction({
+          exploreId,
+          correlationEditorHelperData: correlationHelperData,
+        })
+      );
     }
 
     return fulfillWithValue({ exploreId, state: getState().explore.panes[exploreId]! });
@@ -229,6 +264,11 @@ export const paneReducer = (state: ExploreItemState = makeExplorePaneState(), ac
   if (changePanelsStateAction.match(action)) {
     const { panelsState } = action.payload;
     return { ...state, panelsState };
+  }
+
+  if (changeCorrelationHelperDataAction.match(action)) {
+    const { correlationEditorHelperData } = action.payload;
+    return { ...state, correlationEditorHelperData };
   }
 
   if (saveCorrelationsAction.match(action)) {

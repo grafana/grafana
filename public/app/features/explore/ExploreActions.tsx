@@ -5,7 +5,7 @@ import { config } from '@grafana/runtime';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 import { ExploreItemState, useDispatch, useSelector } from 'app/types';
 
-import { splitOpen, splitClose, changeCorrelationsEditorMode } from './state/main';
+import { splitOpen, splitClose, changeCorrelationEditorMode } from './state/main';
 import { runQueries } from './state/query';
 import { isSplit, selectPanes } from './state/selectors';
 
@@ -79,7 +79,7 @@ export const ExploreActions = () => {
           id: 'correlations-editor',
           name: 'Correlations editor',
           perform: () => {
-            dispatch(changeCorrelationsEditorMode({ correlationsEditorMode: true }));
+            dispatch(changeCorrelationEditorMode({ correlationEditorMode: true }));
             dispatch(runQueries({ exploreId: keys[0] }));
           },
         });

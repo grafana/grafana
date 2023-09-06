@@ -6,7 +6,7 @@ import { dispatch } from 'app/store/store';
 import { AccessControlAction } from 'app/types';
 
 import { createExtensionLinkConfig, logWarning } from '../../plugins/extensions/utils';
-import { changeCorrelationsEditorMode } from '../state/main';
+import { changeCorrelationEditorMode } from '../state/main';
 import { runQueries } from '../state/query';
 
 import { AddToDashboardForm } from './AddToDashboard/AddToDashboardForm';
@@ -51,7 +51,7 @@ export function getExploreExtensionConfigs(): PluginExtensionLinkConfig[] {
           return shouldShow ? {} : undefined;
         },
         onClick: (_, { context }) => {
-          dispatch(changeCorrelationsEditorMode({ correlationsEditorMode: true }));
+          dispatch(changeCorrelationEditorMode({ correlationEditorMode: true }));
           if (context?.exploreId) {
             dispatch(runQueries({ exploreId: context?.exploreId }));
           }

@@ -63,7 +63,7 @@ import {
 
 import { saveCorrelationsAction } from './explorePane';
 import { addHistoryItem, historyUpdatedAction, loadRichHistory } from './history';
-import { changeCorrelationsEditorMode, splitClose } from './main';
+import { changeCorrelationEditorMode, splitClose } from './main';
 import { updateTime } from './time';
 import { createCacheKey, filterLogRowsByIndex, getDatasourceUIDs, getResultsFromCache } from './utils';
 
@@ -515,7 +515,7 @@ export const runQueries = createAsyncThunk<void, RunQueriesOptions>(
       cache,
       supplementaryQueries,
     } = exploreItemState;
-    const isCorrelationsEditorMode = getState().explore.correlationsEditorMode;
+    const isCorrelationEditorMode = getState().explore.correlationEditorDetails?.editorMode || false;
     let newQuerySource: Observable<ExplorePanelData>;
     let newQuerySubscription: SubscriptionLike;
 
@@ -541,7 +541,7 @@ export const runQueries = createAsyncThunk<void, RunQueriesOptions>(
             refreshInterval,
             queries,
             correlations,
-            isCorrelationsEditorMode
+            isCorrelationEditorMode
           )
         )
       );
@@ -595,7 +595,7 @@ export const runQueries = createAsyncThunk<void, RunQueriesOptions>(
             refreshInterval,
             queries,
             correlations,
-            isCorrelationsEditorMode
+            isCorrelationEditorMode
           )
         )
       );
@@ -1265,20 +1265,20 @@ export function saveCurrentCorrelation(label?: string, description?: string): Th
     const sourcePane = getState().explore!.panes[keys[0]]!;
     const targetPane = getState().explore!.panes[keys[1]]!;
 
-    if (sourcePane.datasourceInstance?.uid && targetPane.datasourceInstance?.uid && targetPane.panelsState?.correlations?.resultField) {
+    if (sourcePane.datasourceInstance?.uid && targetPane.datasourceInstance?.uid && targetPane.correlationEditorHelperData?.resultField) {
       const correlation: CreateCorrelationParams = {
         sourceUID: sourcePane.datasourceInstance.uid,
         targetUID: targetPane.datasourceInstance.uid,
         label: label || `${sourcePane.datasourceInstance.name} to ${targetPane.datasourceInstance.name}`,
         description,
         config: {
-          field: targetPane.panelsState.correlations.resultField,
+          field: targetPane.correlationEditorHelperData.resultField,
           target: targetPane.queries[0],
           type: 'query',
         }
       }
   
-      await dispatch(changeCorrelationsEditorMode({ correlationsEditorMode: false }));
+      await dispatch(changeCorrelationEditorMode({ correlationEditorMode: false }));
       await createCorrelation(sourcePane.datasourceInstance.uid, correlation);
       await dispatch(splitClose(keys[1]));
       await dispatch(reloadCorrelations(keys[0]));

@@ -5,7 +5,7 @@ import { SplitOpenOptions, TimeRange } from '@grafana/data';
 import { DataSourceSrv, locationService } from '@grafana/runtime';
 import { generateExploreId, GetExploreUrlArguments } from 'app/core/utils/explore';
 import { PanelModel } from 'app/features/dashboard/state';
-import { CorrelationDetails, ExploreItemState, ExploreState } from 'app/types/explore';
+import { CorrelationEditorDetails, ExploreItemState, ExploreState } from 'app/types/explore';
 
 import { RichHistoryResults } from '../../../core/history/RichHistoryStorage';
 import { RichHistorySearchFilters, RichHistorySettings } from '../../../core/utils/richHistoryTypes';
@@ -83,6 +83,7 @@ export const splitOpen = createAsyncThunk(
         queries: withUniqueRefIds(queries),
         range: options?.range || originState?.range.raw || DEFAULT_RANGE,
         panelsState: options?.panelsState || originState?.panelsState,
+        correlationHelperData: options?.correlationHelperData,
       })
     );
   },
@@ -107,14 +108,14 @@ const createNewSplitOpenPane = createAsyncThunk(
 /**
  * Moves explore into and out of correlations editor mode
  */
-export const changeCorrelationsEditorMode = createAction<{
-  correlationsEditorMode: boolean;
-}>('explore/changeCorrelationsEditorMode');
+export const changeCorrelationEditorMode = createAction<{
+  correlationEditorMode: boolean;
+}>('explore/changeCorrelationEditorMode');
 
 /**
  * Moves explore into and out of correlations editor mode
  */
-export const changeCorrelationDetails = createAction<CorrelationDetails>('explore/changeCorrelationDetails');
+export const changeCorrelationDetails = createAction<CorrelationEditorDetails>('explore/changeCorrelationDetails');
 
 export interface NavigateToExploreDependencies {
   getDataSourceSrv: () => DataSourceSrv;
@@ -152,13 +153,12 @@ const initialExploreItemState = makeExplorePaneState();
 export const initialExploreState: ExploreState = {
   syncedTimes: false,
   panes: {},
-  correlationsEditorMode: false,
+  correlationEditorDetails: { editorMode: false },
   richHistoryStorageFull: false,
   richHistoryLimitExceededWarningShown: false,
   largerExploreId: undefined,
   maxedExploreId: undefined,
   evenSplitPanes: true,
-  correlationDetails: undefined
 };
 
 /**
@@ -266,23 +266,24 @@ export const exploreReducer = (state = initialExploreState, action: AnyAction): 
     };
   }
 
-  if (changeCorrelationsEditorMode.match(action)) {
-    const { correlationsEditorMode } = action.payload;
+  if (changeCorrelationEditorMode.match(action)) {
+    const { correlationEditorMode } = action.payload;
     return {
       ...state,
-      correlationsEditorMode,
+      correlationEditorDetails: {...state.correlationEditorDetails, editorMode: correlationEditorMode},
     };
   }
 
   if (changeCorrelationDetails.match(action)) {
-    const { label, description, canSave, dirty } = action.payload;
+    const { editorMode, label, description, canSave, dirty } = action.payload;
     return {
       ...state,
-      correlationDetails: {
-        canSave: canSave !== undefined ? canSave : (state.correlationDetails?.canSave || false),
-        label: label !== undefined ? label : state.correlationDetails?.label,
-        description: description !== undefined ? description : state.correlationDetails?.description,
-        dirty: dirty !== undefined ? dirty : (state.correlationDetails?.dirty || false)
+      correlationEditorDetails: {
+        editorMode: editorMode !== undefined ? editorMode : state.correlationEditorDetails?.editorMode || false,
+        canSave: canSave !== undefined ? canSave : state.correlationEditorDetails?.canSave || false,
+        label: label !== undefined ? label : state.correlationEditorDetails?.label,
+        description: description !== undefined ? description : state.correlationEditorDetails?.description,
+        dirty: dirty !== undefined ? dirty : state.correlationEditorDetails?.dirty || false,
       },
     };
   }

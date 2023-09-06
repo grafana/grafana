@@ -8,8 +8,8 @@ import { Button, HorizontalGroup, Icon, Tooltip, useStyles2 } from '@grafana/ui'
 import { ExploreItemState, useDispatch, useSelector } from 'app/types';
 
 import { CorrelationUnsavedChangesModal } from './CorrelationUnsavedChangesModal';
-import { removeCorrelationData } from './state/explorePane';
-import { changeCorrelationDetails, changeCorrelationsEditorMode } from './state/main';
+import { removeCorrelationHelperData } from './state/explorePane';
+import { changeCorrelationDetails, changeCorrelationEditorMode } from './state/main';
 import { runQueries, saveCurrentCorrelation } from './state/query';
 import { selectCorrelationDetails, selectCorrelationEditorMode } from './state/selectors';
 
@@ -32,11 +32,10 @@ export const CorrelationEditorModeBar = ({
 
   useEffect(() => {
     return () => {
-      dispatch(changeCorrelationsEditorMode({ correlationsEditorMode: false }));
       setShowSavePrompt(false);
-      dispatch(changeCorrelationDetails({ label: undefined, description: undefined, canSave: false }));
+      dispatch(changeCorrelationDetails({ editorMode: false, label: undefined, description: undefined, canSave: false }));
       panes.forEach((pane) => {
-        dispatch(removeCorrelationData(pane[0]));
+        dispatch(removeCorrelationHelperData(pane[0]));
         dispatch(runQueries({ exploreId: pane[0] }));
       });
     };
@@ -54,7 +53,7 @@ export const CorrelationEditorModeBar = ({
         setShowSavePrompt(false);
         dispatch(changeCorrelationDetails({ label: undefined, description: undefined, canSave: false }));
         panes.forEach((pane) => {
-          dispatch(removeCorrelationData(pane[0]));
+          dispatch(removeCorrelationHelperData(pane[0]));
           dispatch(runQueries({ exploreId: pane[0] }));
         });
       }
@@ -83,7 +82,7 @@ export const CorrelationEditorModeBar = ({
           }}
           onCancel={() => {
             // if we are cancelling the exit, set the editor mode back to true and hide the prompt
-            dispatch(changeCorrelationsEditorMode({ correlationsEditorMode: true }));
+            dispatch(changeCorrelationEditorMode({ correlationEditorMode: true }));
             setShowSavePrompt(false);
           }}
           onSave={() => {
@@ -113,7 +112,7 @@ export const CorrelationEditorModeBar = ({
               fill="outline"
               icon="times"
               onClick={() => {
-                dispatch(changeCorrelationsEditorMode({ correlationsEditorMode: false }));
+                dispatch(changeCorrelationEditorMode({ correlationEditorMode: false }));
               }}
               aria-label="exit correlations editor mode"
             >

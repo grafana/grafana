@@ -20,7 +20,7 @@ import { ExploreTimeControls } from './ExploreTimeControls';
 import { LiveTailButton } from './LiveTailButton';
 import { ToolbarExtensionPoint } from './extensions/ToolbarExtensionPoint';
 import { changeDatasource } from './state/datasource';
-import { removeCorrelationData } from './state/explorePane';
+import { removeCorrelationHelperData } from './state/explorePane';
 import {
   splitClose,
   splitOpen,
@@ -84,8 +84,7 @@ export function ExploreToolbar({ exploreId, topOfViewRef, onChangeTime }: Props)
 
     if (isCorrelationsEditorMode && isLeftPane) {
       panes.forEach((pane) => {
-        dispatch(removeCorrelationData(pane[0]));
-        console.log('change DS');
+        dispatch(removeCorrelationHelperData(pane[0]));
         dispatch(changeCorrelationDetails({label: undefined, description: undefined, canSave: false, dirty: false}));
       });
     }

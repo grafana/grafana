@@ -123,9 +123,7 @@ export const decorateWithCorrelations = ({
               datasourceUid: 'default',
               datasourceName: 'default',
               query: {},
-              panelsState: {
-                correlations: { resultField: field.name, vars: availableVars },
-              },
+              correlationData: { resultField: field.name, vars: availableVars },
             },
           });
         }

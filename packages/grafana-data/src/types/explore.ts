@@ -29,7 +29,6 @@ export interface ExploreUrlState<T extends DataQuery = AnyQuery> {
 export interface ExplorePanelsState extends Partial<Record<PreferredVisualisationType, {}>> {
   trace?: ExploreTracePanelState;
   logs?: ExploreLogsPanelState;
-  correlations?: ExploreCorrelationsPanelState;
 }
 
 export interface URLPanelsState extends Omit<ExplorePanelsState, 'correlations'>{}
@@ -37,7 +36,7 @@ export interface URLPanelsState extends Omit<ExplorePanelsState, 'correlations'>
 /**
  * Keep a list of vars the correlations editor in explore will use
  */
-export interface ExploreCorrelationsPanelState {
+export interface ExploreCorrelationHelperData {
   resultField: string;
   vars: Record<string, string>;
 }
@@ -57,6 +56,7 @@ export interface SplitOpenOptions<T extends AnyQuery = AnyQuery> {
   queries?: T[];
   range?: TimeRange;
   panelsState?: ExplorePanelsState;
+  correlationHelperData?: ExploreCorrelationHelperData;
 }
 
 /**

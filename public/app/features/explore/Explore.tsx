@@ -478,9 +478,8 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
       showFlameGraph,
       timeZone,
       showLogsSample,
-      panelsState,
-      isCorrelationsEditorMode,
-      correlationDetails
+      correlationEditorDetails,
+      correlationEditorHelperData
     } = this.props;
     const { openDrawer } = this.state;
     const styles = getStyles(theme);
@@ -502,9 +501,10 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
       ].every((e) => e.length === 0);
 
     let correlationsBox = undefined;
-    const showCorrelationHelper = isCorrelationsEditorMode || (!isCorrelationsEditorMode && correlationDetails?.dirty) || false;
-    if (showCorrelationHelper && panelsState && panelsState.correlations !== undefined) {
-      correlationsBox = <CorrelationHelper correlations={panelsState.correlations} />;
+    const isCorrelationsEditorMode = correlationEditorDetails?.editorMode;
+    const showCorrelationHelper = isCorrelationsEditorMode || (!isCorrelationsEditorMode && correlationEditorDetails?.dirty) || false;
+    if (showCorrelationHelper && correlationEditorHelperData !== undefined) {
+      correlationsBox = <CorrelationHelper correlations={correlationEditorHelperData} />;
     }
 
     return (
@@ -614,7 +614,7 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     showFlameGraph,
     showRawPrometheus,
     supplementaryQueries,
-    panelsState,
+    correlationEditorHelperData
   } = item;
 
   const loading = selectIsWaitingForData(exploreId)(state);
@@ -645,9 +645,8 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     loading,
     logsSample,
     showLogsSample,
-    panelsState,
-    isCorrelationsEditorMode: explore.correlationsEditorMode,
-    correlationDetails: explore.correlationDetails,
+    correlationEditorHelperData,
+    correlationEditorDetails: explore.correlationEditorDetails,
   };
 }
 

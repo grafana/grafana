@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 
-import { ExploreCorrelationsPanelState } from '@grafana/data';
+import { ExploreCorrelationHelperData } from '@grafana/data';
 import { Collapse, Alert, Field, Input } from '@grafana/ui';
 import { useDispatch, useSelector } from 'app/types';
 
 import { changeCorrelationDetails } from './state/main';
 import { selectCorrelationDetails } from './state/selectors';
 
-export const CorrelationHelper = ({ correlations }: { correlations: ExploreCorrelationsPanelState }) => {
+export const CorrelationHelper = ({ correlations }: { correlations: ExploreCorrelationHelperData }) => {
   const dispatch = useDispatch();
   const { register, watch } = useForm();
   const [isOpen, setIsOpen] = useState(false);

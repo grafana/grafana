@@ -19,7 +19,7 @@ import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { useSplitSizeUpdater } from './hooks/useSplitSizeUpdater';
 import { useStateSync } from './hooks/useStateSync';
 import { useTimeSrvFix } from './hooks/useTimeSrvFix';
-import { changeCorrelationsEditorMode } from './state/main';
+import { changeCorrelationEditorMode } from './state/main';
 import { isSplit, selectCorrelationDetails, selectCorrelationEditorMode, selectPanesEntries } from './state/selectors';
 
 const MIN_PANE_WIDTH = 200;
@@ -59,7 +59,7 @@ export default function ExplorePage(props: GrafanaRouteComponentProps<{}, Explor
       exploreNavItem.parentItem = navModel.node;
       exploreNavItem.parentItem.url = undefined;
       exploreNavItem.parentItem.onClick = () => {
-        dispatch(changeCorrelationsEditorMode({ correlationsEditorMode: false }));
+        dispatch(changeCorrelationEditorMode({ correlationEditorMode: false }));
       };
       navModel.node = exploreNavItem;
       chrome.update({ sectionNav: navModel });

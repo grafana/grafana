@@ -51,7 +51,6 @@ const makeEmptyQueryResponse = (loadingState: LoadingState) => {
 
 const dummyProps: Props = {
   logsResult: undefined,
-  panelsState: {},
   changeSize: jest.fn(),
   datasourceInstance: {
     meta: {
@@ -96,8 +95,8 @@ const dummyProps: Props = {
   showLogsSample: false,
   logsSample: { enabled: false },
   setSupplementaryQueryEnabled: jest.fn(),
-  isCorrelationsEditorMode: false,
-  correlationDetails: undefined,
+  correlationEditorDetails: undefined,
+  correlationEditorHelperData: undefined,
 };
 
 jest.mock('@grafana/runtime/src/services/dataSourceSrv', () => {
