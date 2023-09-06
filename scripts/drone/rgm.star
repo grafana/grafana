@@ -95,7 +95,7 @@ nightly_trigger = {
 def rgm_build(script = "drone_publish_main.sh"):
     rgm_build_step = {
         "name": "rgm-build",
-        "image": "grafana/grafana-build:dev-521f407",
+        "image": "grafana/grafana-build:dev-7355791",
         "commands": [
             "export GRAFANA_DIR=$$(pwd)",
             "cd /src && ./scripts/{}".format(script),
