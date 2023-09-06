@@ -61,13 +61,14 @@ const (
 var logger = plog.New("plugin.instrumentation")
 
 // instrumentPluginRequest instruments success rate and latency of `fn`
-func instrumentPluginRequest(ctx context.Context, cfg Cfg, pluginCtx *backend.PluginContext, endpoint string, fn func() error) error {
+func instrumentPluginRequest(ctx context.Context, cfg Cfg, pluginCtx *backend.PluginContext, endpoint string, fn func(ctx context.Context) error) error {
 	status := statusOK
 
 	start := time.Now()
 	timeBeforePluginRequest := log.TimeSinceStart(ctx, start)
 
-	err := fn()
+	ctx = instrumentContext(ctx, endpoint, *pluginCtx)
+	err := fn(ctx)
 	if err != nil {
 		status = statusError
 		if errors.Is(err, context.Canceled) {
@@ -129,23 +130,27 @@ func instrumentPluginRequest(ctx context.Context, cfg Cfg, pluginCtx *backend.Pl
 	return err
 }
 
+func instrumentContext(ctx context.Context, endpoint string, pCtx backend.PluginContext) context.Context {
+	return log.WithContextualAttributes(ctx, []any{"endpoint", endpoint, "dsName", pCtx.DataSourceInstanceSettings.Name, "dsUID", pCtx.DataSourceInstanceSettings.UID, "pluginId", pCtx.PluginID})
+}
+
 type Cfg struct {
 	LogDatasourceRequests bool
 	Target                backendplugin.Target
 }
 
 // InstrumentCollectMetrics instruments collectMetrics.
-func InstrumentCollectMetrics(ctx context.Context, req *backend.PluginContext, cfg Cfg, fn func() error) error {
+func InstrumentCollectMetrics(ctx context.Context, req *backend.PluginContext, cfg Cfg, fn func(ctx context.Context) error) error {
 	return instrumentPluginRequest(ctx, cfg, req, EndpointCollectMetrics, fn)
 }
 
 // InstrumentCheckHealthRequest instruments checkHealth.
-func InstrumentCheckHealthRequest(ctx context.Context, req *backend.PluginContext, cfg Cfg, fn func() error) error {
+func InstrumentCheckHealthRequest(ctx context.Context, req *backend.PluginContext, cfg Cfg, fn func(ctx context.Context) error) error {
 	return instrumentPluginRequest(ctx, cfg, req, EndpointCheckHealth, fn)
 }
 
 // InstrumentCallResourceRequest instruments callResource.
-func InstrumentCallResourceRequest(ctx context.Context, req *backend.PluginContext, cfg Cfg, requestSize float64, fn func() error) error {
+func InstrumentCallResourceRequest(ctx context.Context, req *backend.PluginContext, cfg Cfg, requestSize float64, fn func(ctx context.Context) error) error {
 	pluginRequestSizeHistogram.WithLabelValues("grafana-backend", req.PluginID, EndpointCallResource,
 		string(cfg.Target)).Observe(requestSize)
 	return instrumentPluginRequest(ctx, cfg, req, EndpointCallResource, fn)
@@ -153,7 +158,7 @@ func InstrumentCallResourceRequest(ctx context.Context, req *backend.PluginConte
 
 // InstrumentQueryDataRequest instruments success rate and latency of query data requests.
 func InstrumentQueryDataRequest(ctx context.Context, req *backend.PluginContext, cfg Cfg,
-	requestSize float64, fn func() error) error {
+	requestSize float64, fn func(ctx context.Context) error) error {
 	pluginRequestSizeHistogram.WithLabelValues("grafana-backend", req.PluginID, EndpointQueryData,
 		string(cfg.Target)).Observe(requestSize)
 	return instrumentPluginRequest(ctx, cfg, req, EndpointQueryData, fn)

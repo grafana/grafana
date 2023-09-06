@@ -1,11 +1,8 @@
 package pluginsintegration
 
 import (
-	"context"
-
 	"github.com/google/wire"
 
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
@@ -148,14 +145,6 @@ func NewClientDecorator(
 ) (*client.Decorator, error) {
 	c := client.ProvideService(pluginRegistry, pCfg)
 	middlewares := CreateMiddlewares(cfg, oAuthTokenService, tracer, cachingService, features)
-
-	log.RegisterContextualLogProvider(func(ctx context.Context) ([]any, bool) {
-		pFromCtx := ctx.Value(log.LogParamsContextKey{})
-		if pFromCtx != nil {
-			return pFromCtx.([]any), true
-		}
-		return nil, false
-	})
 
 	return client.NewDecorator(c, middlewares...)
 }
