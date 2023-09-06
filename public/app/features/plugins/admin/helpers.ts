@@ -291,7 +291,6 @@ export const hasInstallControlWarning = (
     (plugin.isEnterprise && !featureEnabled('enterprise.plugins')) ||
     plugin.isDev ||
     (!hasPermission && !isExternallyManaged) ||
-    !plugin.isPublished ||
     !isCompatible ||
     !isRemotePluginsAvailable
   );

@@ -110,6 +110,11 @@ export function InstallControlsButton({
     );
   }
 
+  if (!plugin.isPublished) {
+    // Cannot be updated or installed
+    return null;
+  }
+
   if (pluginStatus === PluginStatus.UPDATE) {
     return (
       <HorizontalGroup align="flex-start" width="auto" height="auto">

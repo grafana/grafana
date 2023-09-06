@@ -41,7 +41,7 @@ export const PluginActions = ({ plugin }: Props) => {
       <HorizontalGroup>
         {!isInstallControlsDisabled && (
           <>
-            {isExternallyManaged ? (
+            {isExternallyManaged && plugin.isPublished ? (
               <ExternallyManagedButton
                 pluginId={plugin.id}
                 pluginStatus={pluginStatus}
