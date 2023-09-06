@@ -98,14 +98,14 @@ var deletedHeaders = []string{
 // modifyResponse enforces certain constraints on http.Response.
 func modifyResponse(logger glog.Logger) func(resp *http.Response) error {
 	return func(resp *http.Response) error {
-		requestmeta.WithDownstreamStatusSource(resp.Request.Context())
-
 		for _, header := range deletedHeaders {
 			resp.Header.Del(header)
 		}
 
 		SetProxyResponseHeaders(resp.Header)
 		SetViaHeader(resp.Header, resp.ProtoMajor, resp.ProtoMinor)
+
+		requestmeta.WithStatusSource(resp.Request.Context(), resp.StatusCode)
 		return nil
 	}
 }
