@@ -90,7 +90,7 @@ Content-Length: 78
 Status Codes:
 
 - **200** – Created
-- **400** – Errors (invalid json, missing or invalid fields, dashboard is public, etc)
+- **400** – Errors (such as invalid json, missing or invalid fields, or dashboard is public)
 - **401** – Unauthorized
 - **403** – Access denied
 - **404** – Dashboard not found
