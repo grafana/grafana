@@ -107,9 +107,9 @@ export function getRulesPermissions(rulesSourceName: string) {
   };
 }
 
-export function evaluateAccess(actions: AccessControlAction[], fallBackUserRoles: string[]) {
+export function evaluateAccess(actions: AccessControlAction[]) {
   return () => {
-    return contextSrv.evaluatePermission(() => fallBackUserRoles, actions);
+    return contextSrv.evaluatePermission(actions);
   };
 }
 
