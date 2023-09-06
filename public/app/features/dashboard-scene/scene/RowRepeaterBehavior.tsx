@@ -13,7 +13,7 @@ import {
   VariableValueSingle,
 } from '@grafana/scenes';
 
-interface RepeatedRowBehaviorState extends SceneObjectState {
+interface RowRepeaterBehaviorState extends SceneObjectState {
   variableName: string;
   sources: SceneGridItemLike[];
 }
@@ -22,7 +22,7 @@ interface RepeatedRowBehaviorState extends SceneObjectState {
  * This behavior will run an effect function when specified variables change
  */
 
-export class RepeatedRowBehavior extends SceneObjectBase<RepeatedRowBehaviorState> {
+export class RowRepeaterBehavior extends SceneObjectBase<RowRepeaterBehaviorState> {
   protected _variableDependency = new VariableDependencyConfig(this, {
     variableNames: [this.state.variableName],
     onVariableUpdatesCompleted: this._onVariableChanged.bind(this),
@@ -30,7 +30,7 @@ export class RepeatedRowBehavior extends SceneObjectBase<RepeatedRowBehaviorStat
 
   private _isWaitingForVariables = false;
 
-  public constructor(state: RepeatedRowBehaviorState) {
+  public constructor(state: RowRepeaterBehaviorState) {
     super(state);
 
     this.addActivationHandler(() => this._activationHandler());

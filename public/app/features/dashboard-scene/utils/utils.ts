@@ -4,7 +4,7 @@ export function getVizPanelKeyForPanelId(panelId: number) {
   return `panel-${panelId}`;
 }
 
-export function getPanelIdForVizPanel(panel: VizPanel): number {
+export function getPanelIdForVizPanel(panel: SceneObject): number {
   return parseInt(panel.state.key!.replace('panel-', ''), 10);
 }
 

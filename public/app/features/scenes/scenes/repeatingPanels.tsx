@@ -12,7 +12,7 @@ import {
 } from '@grafana/scenes';
 import { VariableRefresh } from '@grafana/schema';
 import { PanelRepeaterGridItem } from 'app/features/dashboard-scene/scene/PanelRepeaterGridItem';
-import { RepeatedRowBehavior } from 'app/features/dashboard-scene/scene/RepeatedRowBehavior';
+import { RowRepeaterBehavior } from 'app/features/dashboard-scene/scene/RowRepeaterBehavior';
 
 import { DashboardScene } from '../../dashboard-scene/scene/DashboardScene';
 
@@ -157,7 +157,7 @@ export function getRepeatingRowsDemo(): DashboardScene {
           y: 0,
           x: 0,
           $behaviors: [
-            new RepeatedRowBehavior({
+            new RowRepeaterBehavior({
               variableName: 'server',
               sources: [
                 new PanelRepeaterGridItem({

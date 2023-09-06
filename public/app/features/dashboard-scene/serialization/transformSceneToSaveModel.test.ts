@@ -1,17 +1,30 @@
 import { SceneGridItemLike } from '@grafana/scenes';
-import { Panel } from '@grafana/schema';
+import { Panel, RowPanel } from '@grafana/schema';
 import { PanelModel } from 'app/features/dashboard/state';
 
 import dashboard_to_load1 from './testfiles/dashboard_to_load1.json';
+import repeatingRowsAndPanelsDashboardJson from './testfiles/repeating_rows_and_panels.json';
 import { buildGridItemForPanel, transformSaveModelToScene } from './transformSaveModelToScene';
 import { gridItemToPanel, transformSceneToSaveModel } from './transformSceneToSaveModel';
 
 describe('transformSceneToSaveModel', () => {
-  describe('Given a scene', () => {
+  describe('Given a simple scene', () => {
     it('Should transform back to peristed model', () => {
       const scene = transformSaveModelToScene({ dashboard: dashboard_to_load1 as any, meta: {} });
       const saveModel = transformSceneToSaveModel(scene);
 
+      expect(saveModel).toMatchSnapshot();
+    });
+  });
+
+  describe('Given a scene with rows', () => {
+    it('Should transform back to peristed model', () => {
+      const scene = transformSaveModelToScene({ dashboard: repeatingRowsAndPanelsDashboardJson as any, meta: {} });
+      const saveModel = transformSceneToSaveModel(scene);
+      const row2: RowPanel = saveModel.panels![2] as RowPanel;
+
+      expect(row2.type).toBe('row');
+      expect(row2.repeat).toBe('server');
       expect(saveModel).toMatchSnapshot();
     });
   });
