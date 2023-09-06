@@ -43,7 +43,7 @@ SHOW TAG VALUES WITH KEY = "hostname"
 
 ### Chain or nest variables
 
-You can also create nested variables, sometimes called [chained variables]({{< relref "../../../dashboards/variables/add-template-variables#chained-variables" >}}).
+You can also create nested variables, sometimes called [chained variables][add-template-variables-chained-variables].
 
 For example, if you had a variable called `region`, you could have the `hosts` variable show only hosts from the selected region with a query like:
 
@@ -90,6 +90,9 @@ When you enable the **Multi-value** or **Include all value** options, Grafana co
 To view an example templated dashboard, refer to [InfluxDB Templated Dashboard](https://play.grafana.org/dashboard/db/influxdb-templated).
 
 {{% docs/reference %}}
+[add-template-variables-chained-variables]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables/add-template-variables#chained-variables"
+[add-template-variables-chained-variables]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables/add-template-variables#chained-variables"
+
 [add-template-variables-add-ad-hoc-filters]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables/add-template-variables#add-ad-hoc-filters"
 [add-template-variables-add-ad-hoc-filters]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables/add-template-variables#add-ad-hoc-filters"
 

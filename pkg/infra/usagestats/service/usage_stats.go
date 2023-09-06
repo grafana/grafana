@@ -23,7 +23,7 @@ var usageStatsURL = "https://stats.grafana.org/grafana-usage-report"
 
 func (uss *UsageStats) GetUsageReport(ctx context.Context) (usagestats.Report, error) {
 	version := strings.ReplaceAll(uss.Cfg.BuildVersion, ".", "_")
-	metrics := map[string]interface{}{}
+	metrics := map[string]any{}
 	start := time.Now()
 
 	edition := "oss"
@@ -53,7 +53,7 @@ func (uss *UsageStats) GetUsageReport(ctx context.Context) (usagestats.Report, e
 	return report, nil
 }
 
-func (uss *UsageStats) gatherMetrics(ctx context.Context, metrics map[string]interface{}) {
+func (uss *UsageStats) gatherMetrics(ctx context.Context, metrics map[string]any) {
 	ctx, span := uss.tracer.Start(ctx, "UsageStats.GatherLoop")
 	defer span.End()
 	totC, errC := 0, 0
@@ -73,7 +73,7 @@ func (uss *UsageStats) gatherMetrics(ctx context.Context, metrics map[string]int
 	metrics["stats.usagestats.debug.collect.error.count"] = errC
 }
 
-func (uss *UsageStats) runMetricsFunc(ctx context.Context, fn usagestats.MetricsFunc) (map[string]interface{}, error) {
+func (uss *UsageStats) runMetricsFunc(ctx context.Context, fn usagestats.MetricsFunc) (map[string]any, error) {
 	start := time.Now()
 	ctx, span := uss.tracer.Start(ctx, "UsageStats.Gather")
 	fnName := runtime.FuncForPC(reflect.ValueOf(fn).Pointer()).Name()

@@ -37,7 +37,7 @@ func ProvideDiscoveryStage(cfg *config.Cfg, pf finder.Finder, pr registry.Servic
 func ProvideBootstrapStage(cfg *config.Cfg, sc plugins.SignatureCalculator, a *assetpath.Service) *bootstrap.Bootstrap {
 	return bootstrap.New(cfg, bootstrap.Opts{
 		ConstructFunc: bootstrap.DefaultConstructFunc(sc, a),
-		DecorateFuncs: bootstrap.DefaultDecorateFuncs,
+		DecorateFuncs: bootstrap.DefaultDecorateFuncs(cfg),
 	})
 }
 
@@ -57,10 +57,10 @@ func ProvideInitializationStage(cfg *config.Cfg, pr registry.Service, l plugins.
 	roleRegistry plugins.RoleRegistry) *initialization.Initialize {
 	return initialization.New(cfg, initialization.Opts{
 		InitializeFuncs: []initialization.InitializeFunc{
+			ExternalServiceRegistrationStep(cfg, externalServiceRegistry),
 			initialization.BackendClientInitStep(envvars.NewProvider(cfg, l), bp),
 			initialization.PluginRegistrationStep(pr),
 			initialization.BackendProcessStartStep(pm),
-			ExternalServiceRegistrationStep(cfg, externalServiceRegistry),
 			RegisterPluginRolesStep(roleRegistry),
 			ReportBuildMetrics,
 		},

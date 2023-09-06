@@ -82,7 +82,7 @@ func TestEmbeddedKeyService_GetJWK_OnlyPublicKeyShared(t *testing.T) {
 	jwkJson, err := jwk.MarshalJSON()
 	require.NoError(t, err)
 
-	kvs := make(map[string]interface{})
+	kvs := make(map[string]any)
 	err = json.Unmarshal(jwkJson, &kvs)
 	require.NoError(t, err)
 
@@ -113,7 +113,7 @@ func TestEmbeddedKeyService_GetJWKS_OnlyPublicKeyShared(t *testing.T) {
 	require.NoError(t, err)
 
 	type keys struct {
-		Keys []map[string]interface{} `json:"keys"`
+		Keys []map[string]any `json:"keys"`
 	}
 
 	var kvs keys

@@ -1253,7 +1253,6 @@
     }
   ],
   "schemaVersion": 27,
-  "style": "dark",
   "tags": ["Networking", "Cloud Monitoring", "GCP"],
   "templating": {
     "list": [

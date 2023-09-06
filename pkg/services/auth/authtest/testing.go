@@ -8,6 +8,7 @@ import (
 	"golang.org/x/oauth2"
 
 	"github.com/grafana/grafana/pkg/services/auth"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -122,7 +123,7 @@ type FakeOAuthTokenService struct {
 	ExpectedErrors   map[string]error
 }
 
-func (ts *FakeOAuthTokenService) GetCurrentOAuthToken(context.Context, *user.SignedInUser) *oauth2.Token {
+func (ts *FakeOAuthTokenService) GetCurrentOAuthToken(context.Context, identity.Requester) *oauth2.Token {
 	return &oauth2.Token{
 		AccessToken:  ts.ExpectedAuthUser.OAuthAccessToken,
 		RefreshToken: ts.ExpectedAuthUser.OAuthRefreshToken,
@@ -135,7 +136,7 @@ func (ts *FakeOAuthTokenService) IsOAuthPassThruEnabled(*datasources.DataSource)
 	return ts.passThruEnabled
 }
 
-func (ts *FakeOAuthTokenService) HasOAuthEntry(context.Context, *user.SignedInUser) (*login.UserAuth, bool, error) {
+func (ts *FakeOAuthTokenService) HasOAuthEntry(context.Context, identity.Requester) (*login.UserAuth, bool, error) {
 	if ts.ExpectedAuthUser != nil {
 		return ts.ExpectedAuthUser, true, nil
 	}

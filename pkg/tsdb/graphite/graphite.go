@@ -164,7 +164,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 	defer func() {
 		err := res.Body.Close()
 		if err != nil {
-			logger.Warn("failed to close response body", "error", err)
+			logger.Warn("Failed to close response body", "error", err)
 		}
 	}()
 
@@ -206,7 +206,7 @@ func (s *Service) processQueries(logger log.Logger, queries []backend.DataQuery)
 		if err != nil {
 			return nil, nil, nil, err
 		}
-		logger.Debug("graphite", "query", model)
+		logger.Debug("Graphite", "query", model)
 		currTarget := ""
 		if fullTarget, err := model.Get(TargetFullModelField).String(); err == nil {
 			currTarget = fullTarget
@@ -214,7 +214,7 @@ func (s *Service) processQueries(logger log.Logger, queries []backend.DataQuery)
 			currTarget = model.Get(TargetModelField).MustString()
 		}
 		if currTarget == "" {
-			logger.Debug("graphite", "empty query target", model)
+			logger.Debug("Graphite", "empty query target", model)
 			emptyQueries = append(emptyQueries, fmt.Sprintf("Query: %v has no target", model))
 			continue
 		}

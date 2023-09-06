@@ -236,7 +236,7 @@ func middlewareScenario(t *testing.T, desc string, fn scenarioFunc, cbs ...func(
 				}
 			} else {
 				t.Log("Returning JSON OK")
-				resp := make(map[string]interface{})
+				resp := make(map[string]any)
 				resp["message"] = "OK"
 				c.JSON(http.StatusOK, resp)
 			}
