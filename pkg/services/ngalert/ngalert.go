@@ -165,13 +165,14 @@ func (ng *AlertNG) init() error {
 	ng.store.Logger = ng.Log
 
 	// TODO(santiago): what if we have no external AM configured?
-	if ng.Cfg.UnifiedAlerting.DisableInternalAlertmanager {
+	fmt.Println("Remote enabled?", ng.Cfg.UnifiedAlerting)
+	if ng.Cfg.UnifiedAlerting.RemoteAlertmanager.Enable {
 		ng.Log.Info("Starting Grafana with a no-op internal Alertmanager")
 		amCfg := notifier.ExternalAlertmanagerConfig{
-			URL:               ng.Cfg.UnifiedAlerting.MainAlertmanagerURL,
-			TenantID:          ng.Cfg.UnifiedAlerting.MainAlertmanagerTenantID,
-			BasicAuthUser:     ng.Cfg.UnifiedAlerting.MainAlertmanagerBasicAuthUser,
-			BasicAuthPassword: ng.Cfg.UnifiedAlerting.MainAlertmanagerBasicAuthPassword,
+			URL:               ng.Cfg.UnifiedAlerting.RemoteAlertmanager.URL,
+			TenantID:          ng.Cfg.UnifiedAlerting.RemoteAlertmanager.TenantID,
+			BasicAuthUser:     ng.Cfg.UnifiedAlerting.RemoteAlertmanager.TenantID,
+			BasicAuthPassword: ng.Cfg.UnifiedAlerting.RemoteAlertmanager.Password,
 		}
 		fmt.Println("TenantID:", amCfg.TenantID)
 

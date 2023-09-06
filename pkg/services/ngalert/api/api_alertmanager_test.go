@@ -229,7 +229,7 @@ func TestAlertmanagerConfig(t *testing.T) {
 		r := sut.RoutePostAlertingConfig(&rc, request)
 		require.Equal(t, 202, r.Status())
 
-		am, err := sut.mam.AlertmanagerFor(1)
+		am, err := sut.moa.AlertmanagerFor(1)
 		require.NoError(t, err)
 		hash := am.ConfigHash()
 
@@ -241,7 +241,7 @@ func TestAlertmanagerConfig(t *testing.T) {
 		r = sut.RoutePostAlertingConfig(&rc, *postable)
 		require.Equal(t, 202, r.Status())
 
-		am, err = sut.mam.AlertmanagerFor(1)
+		am, err = sut.moa.AlertmanagerFor(1)
 		require.NoError(t, err)
 		newHash := am.ConfigHash()
 		require.Equal(t, hash, newHash)
@@ -281,7 +281,7 @@ func TestAlertmanagerConfig(t *testing.T) {
 		t.Run("route from GET config has expected provenance", func(t *testing.T) {
 			sut := createSut(t)
 			rc := createRequestCtxInOrg(1)
-			setRouteProvenance(t, 1, sut.mam.ProvStore)
+			setRouteProvenance(t, 1, sut.moa.ProvStore)
 
 			response := sut.RouteGetAlertingConfig(rc)
 
@@ -301,7 +301,7 @@ func TestAlertmanagerConfig(t *testing.T) {
 			cpUID := body.AlertmanagerConfig.Receivers[0].GrafanaManagedReceivers[0].UID
 			require.NotEmpty(t, cpUID)
 
-			setContactPointProvenance(t, 1, cpUID, sut.mam.ProvStore)
+			setContactPointProvenance(t, 1, cpUID, sut.moa.ProvStore)
 
 			response = sut.RouteGetAlertingConfig(rc)
 			body = asGettableUserConfig(t, response)
@@ -311,7 +311,7 @@ func TestAlertmanagerConfig(t *testing.T) {
 		t.Run("templates from GET config have expected provenance", func(t *testing.T) {
 			sut := createSut(t)
 			rc := createRequestCtxInOrg(1)
-			setTemplateProvenance(t, 1, "a", sut.mam.ProvStore)
+			setTemplateProvenance(t, 1, "a", sut.moa.ProvStore)
 
 			response := sut.RouteGetAlertingConfig(rc)
 
@@ -614,7 +614,7 @@ func TestRouteCreateSilence(t *testing.T) {
 			silence := tesCase.silence()
 
 			if silence.ID != "" {
-				alertmanagerFor, err := sut.mam.AlertmanagerFor(1)
+				alertmanagerFor, err := sut.moa.AlertmanagerFor(1)
 				require.NoError(t, err)
 				silence.ID = ""
 				newID, err := alertmanagerFor.CreateSilence(&silence)

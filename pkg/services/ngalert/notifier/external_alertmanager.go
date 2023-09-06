@@ -119,7 +119,12 @@ func (am *externalMultiOrgAlertmanager) ApplyAlertmanagerConfiguration(ctx conte
 	return am.alertmanager.client.SetAlertmanagerConfig(ctx, &config)
 }
 
-// YOLO
+// TODO(santiago): implement.
+func (am *externalAlertmanager) ApplyConfig(ctx context.Context, config *models.AlertConfiguration) error {
+	fmt.Println("externalAM.ApplyConfig() called")
+	return nil
+}
+
 // TODO(santiago): implement.
 func (am *externalAlertmanager) SaveAndApplyConfig(ctx context.Context, config *apimodels.PostableUserConfig) error {
 	fmt.Println("externalAM.SaveAndApplyConfig() called")
@@ -196,4 +201,34 @@ func (am *externalAlertmanager) TestReceivers(ctx context.Context, c apimodels.T
 func (am *externalAlertmanager) TestTemplate(ctx context.Context, c apimodels.TestTemplatesConfigBodyParams) (*TestTemplatesResults, error) {
 	fmt.Println("externalAM.TestTemplate() called")
 	return &alertingNotify.TestTemplatesResults{}, nil
+}
+
+// TODO(santiago): implement.
+func (am *externalAlertmanager) ConfigHash() [16]byte {
+	fmt.Println("externalAM.ConfigHash() called")
+	return [16]byte{}
+}
+
+// TODO(santiago): implement.
+func (am *externalAlertmanager) FileStore() *FileStore {
+	fmt.Println("externalAM.FileStore() called")
+	return &FileStore{}
+}
+
+// TODO(santiago): implement.
+func (am *externalAlertmanager) OrgID() int64 {
+	fmt.Println("externalAM.OrgID() called")
+	return 1
+}
+
+// TODO(santiago): implement.
+func (am *externalAlertmanager) Ready() bool {
+	fmt.Println("externalAM.Ready() called")
+	return false
+}
+
+// TODO(santiago): implement.
+func (am *externalAlertmanager) StopAndWait() {
+	fmt.Println("externalAM.StopAndWait() called")
+	return
 }
