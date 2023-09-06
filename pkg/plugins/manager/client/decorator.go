@@ -5,7 +5,9 @@ import (
 	"errors"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin/instrumentation"
 )
 
 // Decorator allows a plugins.Client to be decorated with middlewares.
@@ -32,6 +34,8 @@ func (d *Decorator) QueryData(ctx context.Context, req *backend.QueryDataRequest
 	}
 
 	client := clientFromMiddlewares(d.middlewares, d.client)
+
+	ctx = instrumentContext(ctx, instrumentation.EndpointQueryData, req.PluginContext)
 	return client.QueryData(ctx, req)
 }
 
@@ -44,6 +48,7 @@ func (d *Decorator) CallResource(ctx context.Context, req *backend.CallResourceR
 		return errors.New("sender cannot be nil")
 	}
 
+	ctx = instrumentContext(ctx, instrumentation.EndpointCallResource, req.PluginContext)
 	client := clientFromMiddlewares(d.middlewares, d.client)
 	return client.CallResource(ctx, req, sender)
 }
@@ -53,6 +58,7 @@ func (d *Decorator) CollectMetrics(ctx context.Context, req *backend.CollectMetr
 		return nil, errNilRequest
 	}
 
+	ctx = instrumentContext(ctx, instrumentation.EndpointCollectMetrics, req.PluginContext)
 	client := clientFromMiddlewares(d.middlewares, d.client)
 	return client.CollectMetrics(ctx, req)
 }
@@ -62,6 +68,7 @@ func (d *Decorator) CheckHealth(ctx context.Context, req *backend.CheckHealthReq
 		return nil, errNilRequest
 	}
 
+	ctx = instrumentContext(ctx, instrumentation.EndpointCheckHealth, req.PluginContext)
 	client := clientFromMiddlewares(d.middlewares, d.client)
 	return client.CheckHealth(ctx, req)
 }
@@ -121,6 +128,11 @@ func reverseMiddlewares(middlewares []plugins.ClientMiddleware) []plugins.Client
 	}
 
 	return reversed
+}
+
+func instrumentContext(ctx context.Context, endpoint string, pCtx backend.PluginContext) context.Context {
+	ctx = log.WithContextualAttributes(ctx, []any{"endpoint", endpoint, "dsName", pCtx.DataSourceInstanceSettings.Name, "dsUID", pCtx.DataSourceInstanceSettings.UID, "pluginId", pCtx.PluginID})
+	return ctx
 }
 
 var _ plugins.Client = &Decorator{}
