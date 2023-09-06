@@ -24,6 +24,9 @@ const KVNamespace = "ngalert.migration"
 const migratedKey = "migrated"
 const actionName = "alerting migration"
 
+//nolint:stylecheck
+var ForceMigrationError = fmt.Errorf("Grafana has already been migrated to Unified Alerting. Any alert rules created while using Unified Alerting will be deleted by rolling back. Set force_migration=true in your grafana.ini and restart Grafana to roll back and delete Unified Alerting configuration data.")
+
 type MigrationService struct {
 	lock  *serverlock.ServerLockService
 	store db.DB
@@ -73,7 +76,7 @@ func (ms *MigrationService) Run(ctx context.Context) error {
 
 				// Safeguard to prevent data loss when reverting from UA to LA.
 				if !ms.cfg.ForceMigration {
-					return fmt.Errorf("Grafana has already been migrated to Unified Alerting. Any alert rules created while using Unified Alerting will be deleted by rolling back. Set force_migration=true in your grafana.ini and restart Grafana to roll back and delete Unified Alerting configuration data.")
+					return ForceMigrationError
 				}
 
 				// Revert migration
