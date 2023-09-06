@@ -5,12 +5,14 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"time"
 
 	pb "github.com/prometheus/alertmanager/silence/silencepb"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/serverlock"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -20,8 +22,10 @@ const KVNamespace = "ngalert.migration"
 
 // migratedKey is the kvstore key used for the migration status.
 const migratedKey = "migrated"
+const actionName = "alerting migration"
 
 type MigrationService struct {
+	lock  *serverlock.ServerLockService
 	store db.DB
 	cfg   *setting.Cfg
 	log   log.Logger
@@ -29,11 +33,13 @@ type MigrationService struct {
 }
 
 func ProvideService(
+	lock *serverlock.ServerLockService,
 	cfg *setting.Cfg,
 	sqlStore db.DB,
 	kv kvstore.KVStore,
 ) (*MigrationService, error) {
 	return &MigrationService{
+		lock:  lock,
 		log:   log.New("ngalert.migration"),
 		cfg:   cfg,
 		store: sqlStore,
@@ -45,65 +51,72 @@ func ProvideService(
 // If the migration status in the kvstore is not set and unified alerting is enabled, the migration will be executed.
 // If the migration status in the kvstore is set and both unified alerting is disabled and ForceMigration is set to true, the migration will be reverted.
 func (ms *MigrationService) Run(ctx context.Context) error {
-	ms.log.Info("Starting")
-	err := ms.store.InTransaction(ctx, func(ctx context.Context) error {
-		migrated, err := ms.GetMigrated(ctx)
-		if err != nil {
-			return fmt.Errorf("getting migration status: %w", err)
-		}
-		if migrated == ms.cfg.UnifiedAlerting.IsEnabled() {
-			// Nothing to do.
-			ms.log.Info("No migrations to run")
-			return nil
-		}
-
-		if migrated {
-			// If legacy alerting is also disabled, there is nothing to do
-			if setting.AlertingEnabled != nil && !*setting.AlertingEnabled {
+	var errMigration error
+	errLock := ms.lock.LockExecuteAndRelease(ctx, actionName, time.Minute*10, func(context.Context) {
+		ms.log.Info("Starting")
+		errMigration = ms.store.InTransaction(ctx, func(ctx context.Context) error {
+			migrated, err := ms.GetMigrated(ctx)
+			if err != nil {
+				return fmt.Errorf("getting migration status: %w", err)
+			}
+			if migrated == ms.cfg.UnifiedAlerting.IsEnabled() {
+				// Nothing to do.
+				ms.log.Info("No migrations to run")
 				return nil
 			}
 
-			// Safeguard to prevent data loss when reverting from UA to LA.
-			if !ms.cfg.ForceMigration {
-				panic("Grafana has already been migrated to Unified Alerting.\nAny alert rules created while using Unified Alerting will be deleted by rolling back.\n\nSet force_migration=true in your grafana.ini and restart Grafana to roll back and delete Unified Alerting configuration data.")
+			if migrated {
+				// If legacy alerting is also disabled, there is nothing to do
+				if setting.AlertingEnabled != nil && !*setting.AlertingEnabled {
+					return nil
+				}
+
+				// Safeguard to prevent data loss when reverting from UA to LA.
+				if !ms.cfg.ForceMigration {
+					panic("Grafana has already been migrated to Unified Alerting.\nAny alert rules created while using Unified Alerting will be deleted by rolling back.\n\nSet force_migration=true in your grafana.ini and restart Grafana to roll back and delete Unified Alerting configuration data.")
+				}
+
+				// Revert migration
+				ms.log.Info("Reverting legacy migration")
+				err := ms.Revert(ctx)
+				if err != nil {
+					return fmt.Errorf("reverting migration: %w", err)
+				}
+				ms.log.Info("Legacy migration reverted")
+				return nil
 			}
 
-			// Revert migration
-			ms.log.Info("Reverting legacy migration")
-			err := ms.Revert(ctx)
+			ms.log.Info("Starting legacy migration")
+			mg := migration{
+				// We deduplicate for case-insensitive matching in MySQL-compatible backend flavours because they use case-insensitive collation.
+				seenUIDs: uidSet{set: make(map[string]struct{}), caseInsensitive: ms.store.GetDialect().SupportEngine()},
+				silences: make(map[int64][]*pb.MeshSilence),
+				log:      ms.log,
+				dialect:  ms.store.GetDialect(),
+				cfg:      ms.cfg,
+				store:    ms.store,
+			}
+
+			err = mg.Exec(ctx)
 			if err != nil {
-				return fmt.Errorf("reverting migration: %w", err)
+				return fmt.Errorf("executing migration: %w", err)
 			}
-			ms.log.Info("Legacy migration reverted")
+
+			err = ms.SetMigrated(ctx, true)
+			if err != nil {
+				return fmt.Errorf("setting migration status: %w", err)
+			}
+
+			ms.log.Info("Completed legacy migration")
 			return nil
-		}
-
-		ms.log.Info("Starting legacy migration")
-		mg := migration{
-			// We deduplicate for case-insensitive matching in MySQL-compatible backend flavours because they use case-insensitive collation.
-			seenUIDs: uidSet{set: make(map[string]struct{}), caseInsensitive: ms.store.GetDialect().SupportEngine()},
-			silences: make(map[int64][]*pb.MeshSilence),
-			log:      ms.log,
-			dialect:  ms.store.GetDialect(),
-			cfg:      ms.cfg,
-			store:    ms.store,
-		}
-
-		err = mg.Exec(ctx)
-		if err != nil {
-			return fmt.Errorf("executing migration: %w", err)
-		}
-
-		err = ms.SetMigrated(ctx, true)
-		if err != nil {
-			return fmt.Errorf("setting migration status: %w", err)
-		}
-
-		ms.log.Info("Completed legacy migration")
-		return nil
+		})
 	})
-	if err != nil {
-		return fmt.Errorf("migration failed: %w", err)
+	if errLock != nil {
+		ms.log.Warn("Server lock for alerting migration already exists")
+		return nil
+	}
+	if errMigration != nil {
+		return fmt.Errorf("migration failed: %w", errMigration)
 	}
 	return nil
 }
