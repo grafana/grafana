@@ -208,25 +208,20 @@ func (s *Service) AddDataSource(ctx context.Context, cmd *datasources.AddDataSou
 			return err
 		}
 
-		if !s.ac.IsDisabled() {
-			// This belongs in Data source permissions, and we probably want
-			// to do this with a hook in the store and rollback on fail.
-			// We can't use events, because there's no way to communicate
-			// failure, and we want "not being able to set default perms"
-			// to fail the creation.
-			permissions := []accesscontrol.SetResourcePermissionCommand{
-				{BuiltinRole: "Viewer", Permission: "Query"},
-				{BuiltinRole: "Editor", Permission: "Query"},
-			}
-			if cmd.UserID != 0 {
-				permissions = append(permissions, accesscontrol.SetResourcePermissionCommand{UserID: cmd.UserID, Permission: "Edit"})
-			}
-			if _, err := s.permissionsService.SetPermissions(ctx, cmd.OrgID, dataSource.UID, permissions...); err != nil {
-				return err
-			}
+		// This belongs in Data source permissions, and we probably want
+		// to do this with a hook in the store and rollback on fail.
+		// We can't use events, because there's no way to communicate
+		// failure, and we want "not being able to set default perms"
+		// to fail the creation.
+		permissions := []accesscontrol.SetResourcePermissionCommand{
+			{BuiltinRole: "Viewer", Permission: "Query"},
+			{BuiltinRole: "Editor", Permission: "Query"},
 		}
-
-		return nil
+		if cmd.UserID != 0 {
+			permissions = append(permissions, accesscontrol.SetResourcePermissionCommand{UserID: cmd.UserID, Permission: "Edit"})
+		}
+		_, err = s.permissionsService.SetPermissions(ctx, cmd.OrgID, dataSource.UID, permissions...)
+		return err
 	})
 }
 
@@ -365,7 +360,7 @@ func (s *Service) DecryptedValues(ctx context.Context, ds *datasources.DataSourc
 	if exist {
 		err = json.Unmarshal([]byte(secret), &decryptedValues)
 		if err != nil {
-			s.logger.Debug("failed to unmarshal secret value, using legacy secrets", "err", err)
+			s.logger.Debug("Failed to unmarshal secret value, using legacy secrets", "err", err)
 		}
 	}
 
@@ -455,7 +450,7 @@ func (s *Service) httpClientOptions(ctx context.Context, ds *datasources.DataSou
 	if ds.JsonData != nil {
 		opts.CustomOptions = ds.JsonData.MustMap()
 		// allow the plugin sdk to get the json data in JSONDataFromHTTPClientOptions
-		deepJsonDataCopy := make(map[string]interface{}, len(opts.CustomOptions))
+		deepJsonDataCopy := make(map[string]any, len(opts.CustomOptions))
 		for k, v := range opts.CustomOptions {
 			deepJsonDataCopy[k] = v
 		}

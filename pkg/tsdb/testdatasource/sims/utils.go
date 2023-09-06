@@ -8,7 +8,7 @@ import (
 )
 
 // updateConfigObjectFromJSON will use json serialization to update any properties
-func updateConfigObjectFromJSON(cfg interface{}, input interface{}) error {
+func updateConfigObjectFromJSON(cfg any, input any) error {
 	current, err := asStringMap(cfg)
 	if err != nil {
 		return err
@@ -33,12 +33,12 @@ func updateConfigObjectFromJSON(cfg interface{}, input interface{}) error {
 	return json.Unmarshal(b, cfg)
 }
 
-func asStringMap(input interface{}) (map[string]interface{}, error) {
-	v, ok := input.(map[string]interface{})
+func asStringMap(input any) (map[string]any, error) {
+	v, ok := input.(map[string]any)
 	if ok {
 		return v, nil
 	}
-	v = make(map[string]interface{})
+	v = make(map[string]any)
 	b, err := json.Marshal(input)
 	if err != nil {
 		return nil, err
@@ -47,7 +47,7 @@ func asStringMap(input interface{}) (map[string]interface{}, error) {
 	return v, err
 }
 
-func setFrameRow(frame *data.Frame, idx int, values map[string]interface{}) {
+func setFrameRow(frame *data.Frame, idx int, values map[string]any) {
 	for _, field := range frame.Fields {
 		v, ok := values[field.Name]
 		if ok {
@@ -56,7 +56,7 @@ func setFrameRow(frame *data.Frame, idx int, values map[string]interface{}) {
 	}
 }
 
-func appendFrameRow(frame *data.Frame, values map[string]interface{}) {
+func appendFrameRow(frame *data.Frame, values map[string]any) {
 	for _, field := range frame.Fields {
 		v, ok := values[field.Name]
 		if ok {
@@ -67,8 +67,8 @@ func appendFrameRow(frame *data.Frame, values map[string]interface{}) {
 	}
 }
 
-func getBodyFromRequest(req *http.Request) (map[string]interface{}, error) {
-	result := make(map[string]interface{}, 10)
+func getBodyFromRequest(req *http.Request) (map[string]any, error) {
+	result := make(map[string]any, 10)
 
 	err := json.NewDecoder(req.Body).Decode(&result)
 	// TODO? create the map based on form parameters not JSON post

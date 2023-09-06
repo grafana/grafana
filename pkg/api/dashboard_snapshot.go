@@ -51,7 +51,7 @@ type CreateExternalSnapshotResponse struct {
 
 func createExternalDashboardSnapshot(cmd dashboardsnapshots.CreateDashboardSnapshotCommand, externalSnapshotUrl string) (*CreateExternalSnapshotResponse, error) {
 	var createSnapshotResponse CreateExternalSnapshotResponse
-	message := map[string]interface{}{
+	message := map[string]any{
 		"name":      cmd.Name,
 		"expires":   cmd.Expires,
 		"dashboard": cmd.Dashboard,
@@ -259,7 +259,7 @@ func deleteExternalDashboardSnapshot(externalUrl string) error {
 	// Gracefully ignore "snapshot not found" errors as they could have already
 	// been removed either via the cleanup script or by request.
 	if resp.StatusCode == 500 {
-		var respJson map[string]interface{}
+		var respJson map[string]any
 		if err := json.NewDecoder(resp.Body).Decode(&respJson); err != nil {
 			return err
 		}

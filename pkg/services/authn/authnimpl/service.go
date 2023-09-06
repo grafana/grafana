@@ -43,12 +43,19 @@ const (
 )
 
 var (
-	errCantAuthenticateReq = errutil.NewBase(errutil.StatusUnauthorized, "auth.unauthorized")
-	errDisabledIdentity    = errutil.NewBase(errutil.StatusUnauthorized, "identity.disabled")
+	errCantAuthenticateReq = errutil.Unauthorized("auth.unauthorized")
+	errDisabledIdentity    = errutil.Unauthorized("identity.disabled")
 )
 
 // make sure service implements authn.Service interface
-var _ authn.Service = new(Service)
+func ProvideAuthnService(s *Service) authn.Service {
+	return s
+}
+
+// make sure service implements authn.IdentitySynchronizer interface
+func ProvideIdentitySynchronizer(s *Service) authn.IdentitySynchronizer {
+	return s
+}
 
 func ProvideService(
 	cfg *setting.Cfg, tracer tracing.Tracer,
@@ -65,7 +72,7 @@ func ProvideService(
 	socialService social.Service, cache *remotecache.RemoteCache,
 	ldapService service.LDAP, registerer prometheus.Registerer,
 	signingKeysService signingkeys.Service, oauthServer oauthserver.OAuth2Server,
-) authn.Service {
+) *Service {
 	s := &Service{
 		log:            log.New("authn.service"),
 		cfg:            cfg,
@@ -94,7 +101,7 @@ func ProvideService(
 	var proxyClients []authn.ProxyClient
 	var passwordClients []authn.PasswordClient
 	if s.cfg.LDAPAuthEnabled {
-		ldap := clients.ProvideLDAP(cfg, ldapService)
+		ldap := clients.ProvideLDAP(cfg, ldapService, userService, authInfoService)
 		proxyClients = append(proxyClients, ldap)
 		passwordClients = append(passwordClients, ldap)
 	}
@@ -228,11 +235,9 @@ func (s *Service) authenticate(ctx context.Context, c authn.Client, r *authn.Req
 		return nil, err
 	}
 
-	for _, hook := range s.postAuthHooks.items {
-		if err := hook.v(ctx, identity, r); err != nil {
-			s.log.FromContext(ctx).Warn("Failed to run post auth hook", "client", c.Name(), "id", identity.ID, "error", err)
-			return nil, err
-		}
+	if err := s.runPostAuthHooks(ctx, identity, r); err != nil {
+		s.log.FromContext(ctx).Warn("Failed to run post auth hook", "client", c.Name(), "id", identity.ID, "error", err)
+		return nil, err
 	}
 
 	if identity.IsDisabled {
@@ -247,6 +252,15 @@ func (s *Service) authenticate(ctx context.Context, c authn.Client, r *authn.Req
 	}
 
 	return identity, nil
+}
+
+func (s *Service) runPostAuthHooks(ctx context.Context, identity *authn.Identity, r *authn.Request) error {
+	for _, hook := range s.postAuthHooks.items {
+		if err := hook.v(ctx, identity, r); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (s *Service) RegisterPostAuthHook(hook authn.PostAuthHookFn, priority uint) {
@@ -330,6 +344,13 @@ func (s *Service) RegisterClient(c authn.Client) {
 	if cac, ok := c.(authn.ContextAwareClient); ok {
 		s.clientQueue.insert(cac, cac.Priority())
 	}
+}
+
+func (s *Service) SyncIdentity(ctx context.Context, identity *authn.Identity) error {
+	r := &authn.Request{OrgID: identity.OrgID}
+	// hack to not update last seen on external syncs
+	r.SetMeta(authn.MetaKeyIsLogin, "true")
+	return s.runPostAuthHooks(ctx, identity, r)
 }
 
 func orgIDFromRequest(r *authn.Request) int64 {

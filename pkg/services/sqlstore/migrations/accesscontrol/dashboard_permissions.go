@@ -345,7 +345,7 @@ func (m *managedFolderAlertActionsMigrator) SQL(dialect migrator.Dialect) string
 }
 
 func (m *managedFolderAlertActionsMigrator) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
-	var ids []interface{}
+	var ids []any
 	if err := sess.SQL("SELECT id FROM role WHERE name LIKE 'managed:%'").Find(&ids); err != nil {
 		return err
 	}
@@ -457,7 +457,7 @@ func (m *managedFolderAlertActionsRepeatMigrator) SQL(dialect migrator.Dialect) 
 }
 
 func (m *managedFolderAlertActionsRepeatMigrator) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
-	var ids []interface{}
+	var ids []any
 	if err := sess.SQL("SELECT id FROM role WHERE name LIKE 'managed:%'").Find(&ids); err != nil {
 		return err
 	}

@@ -1,7 +1,9 @@
 import { render, screen, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import React from 'react';
 
 import { Field, LogLevel, LogRowModel, MutableDataFrame, createTheme, FieldType } from '@grafana/data';
+import { config } from '@grafana/runtime';
 
 import { LogDetails, Props } from './LogDetails';
 import { createLogRow } from './__mocks__/logRow';
@@ -46,6 +48,63 @@ describe('LogDetails', () => {
       expect(screen.getByRole('cell', { name: 'label1' })).toBeInTheDocument();
       expect(screen.getByRole('cell', { name: 'key2' })).toBeInTheDocument();
       expect(screen.getByRole('cell', { name: 'label2' })).toBeInTheDocument();
+    });
+    it('should render filter controls when the callbacks are provided', () => {
+      setup(
+        {
+          onClickFilterLabel: () => {},
+          onClickFilterOutLabel: () => {},
+        },
+        { labels: { key1: 'label1' } }
+      );
+      expect(screen.getByLabelText('Filter for value')).toBeInTheDocument();
+      expect(screen.getByLabelText('Filter out value')).toBeInTheDocument();
+    });
+    describe('With toggleLabelsInLogsUI=true', () => {
+      beforeAll(() => {
+        config.featureToggles.toggleLabelsInLogsUI = true;
+      });
+      afterAll(() => {
+        config.featureToggles.toggleLabelsInLogsUI = false;
+      });
+      it('should provide the log row to Explore filter functions', async () => {
+        const onClickFilterLabelMock = jest.fn();
+        const onClickFilterOutLabelMock = jest.fn();
+        const isFilterLabelActiveMock = jest.fn().mockResolvedValue(true);
+        const mockRow = createLogRow({
+          logLevel: LogLevel.error,
+          timeEpochMs: 1546297200000,
+          labels: { key1: 'label1' },
+        });
+
+        setup({
+          onClickFilterLabel: onClickFilterLabelMock,
+          onClickFilterOutLabel: onClickFilterOutLabelMock,
+          isFilterLabelActive: isFilterLabelActiveMock,
+          row: mockRow,
+        });
+
+        expect(isFilterLabelActiveMock).toHaveBeenCalledWith('key1', 'label1', mockRow.dataFrame.refId);
+
+        await userEvent.click(screen.getByLabelText('Filter for value in query A'));
+        expect(onClickFilterLabelMock).toHaveBeenCalledTimes(1);
+        expect(onClickFilterLabelMock).toHaveBeenCalledWith('key1', 'label1', mockRow.dataFrame.refId);
+
+        await userEvent.click(screen.getByLabelText('Filter out value in query A'));
+        expect(onClickFilterOutLabelMock).toHaveBeenCalledTimes(1);
+        expect(onClickFilterOutLabelMock).toHaveBeenCalledWith('key1', 'label1', mockRow.dataFrame.refId);
+      });
+    });
+    it('should not render filter controls when the callbacks are not provided', () => {
+      setup(
+        {
+          onClickFilterLabel: undefined,
+          onClickFilterOutLabel: undefined,
+        },
+        { labels: { key1: 'label1' } }
+      );
+      expect(screen.queryByLabelText('Filter for value')).not.toBeInTheDocument();
+      expect(screen.queryByLabelText('Filter out value')).not.toBeInTheDocument();
     });
   });
   describe('when log row has error', () => {

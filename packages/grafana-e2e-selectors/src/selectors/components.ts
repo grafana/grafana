@@ -112,6 +112,7 @@ export const Components = {
       Table: {
         header: 'table header',
         footer: 'table-footer',
+        body: 'data-testid table body',
       },
     },
   },
@@ -183,8 +184,8 @@ export const Components = {
   QueryTab: {
     content: 'Query editor tab content',
     queryInspectorButton: 'Query inspector button',
-    queryHistoryButton: 'Rich history button',
-    addQuery: 'Query editor add query button',
+    queryHistoryButton: 'data-testid query-history-button',
+    addQuery: 'data-testid query-tab-add-query',
   },
   QueryHistory: {
     queryText: 'Query text',
@@ -424,5 +425,8 @@ export const Components = {
   Annotations: {
     annotationsTypeInput: 'annotations-type-input',
     annotationsChoosePanelInput: 'choose-panels-input',
+  },
+  Tooltip: {
+    container: 'data-testid tooltip',
   },
 };

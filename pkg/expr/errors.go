@@ -6,10 +6,7 @@ import (
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
-var ConversionError = errutil.NewBase(
-	errutil.StatusBadRequest,
-	"sse.readDataError",
-).MustTemplate(
+var ConversionError = errutil.BadRequest("sse.readDataError").MustTemplate(
 	"[{{ .Public.refId }}] got error: {{ .Error }}",
 	errutil.WithPublic(
 		"failed to read data from from query {{ .Public.refId }}: {{ .Public.error }}",
@@ -19,7 +16,7 @@ var ConversionError = errutil.NewBase(
 func MakeConversionError(refID string, err error) error {
 	data := errutil.TemplateData{
 		// Conversion errors should only have meta information in errors
-		Public: map[string]interface{}{
+		Public: map[string]any{
 			"refId": refID,
 			"error": err.Error(),
 		},
@@ -28,8 +25,7 @@ func MakeConversionError(refID string, err error) error {
 	return ConversionError.Build(data)
 }
 
-var QueryError = errutil.NewBase(
-	errutil.StatusBadRequest, "sse.dataQueryError").MustTemplate(
+var QueryError = errutil.BadRequest("sse.dataQueryError").MustTemplate(
 	"failed to execute query [{{ .Public.refId }}]: {{ .Error }}",
 	errutil.WithPublic(
 		"failed to execute query [{{ .Public.refId }}]: {{ .Public.error }}",
@@ -46,7 +42,7 @@ func MakeQueryError(refID, datasourceUID string, err error) error {
 	}
 
 	data := errutil.TemplateData{
-		Public: map[string]interface{}{
+		Public: map[string]any{
 			"refId":         refID,
 			"datasourceUID": datasourceUID,
 			"error":         pErr.Error(),

@@ -71,6 +71,18 @@ export default class TempoLanguageProvider extends LanguageProvider {
     return [];
   };
 
+  getMetricsSummaryTags = (scope?: TraceqlSearchScope) => {
+    if (this.tagsV2 && scope) {
+      if (scope === TraceqlSearchScope.Unscoped) {
+        return getUnscopedTags(this.tagsV2);
+      }
+      return getTagsByScope(this.tagsV2, scope);
+    } else if (this.tagsV1) {
+      return this.tagsV1;
+    }
+    return [];
+  };
+
   getTraceqlAutocompleteTags = (scope?: string) => {
     if (this.tagsV2) {
       if (!scope) {
@@ -117,15 +129,19 @@ export default class TempoLanguageProvider extends LanguageProvider {
     return options;
   }
 
-  async getOptionsV2(tag: string, query: string): Promise<Array<SelectableValue<string>>> {
+  async getOptionsV2(tag: string, query?: string): Promise<Array<SelectableValue<string>>> {
     const response = await this.request(`/api/v2/search/tag/${tag}/values`, query ? { q: query } : {});
     let options: Array<SelectableValue<string>> = [];
     if (response && response.tagValues) {
-      options = response.tagValues.map((v: { type: string; value: string }) => ({
-        type: v.type,
-        value: v.value,
-        label: v.value,
-      }));
+      response.tagValues.forEach((v: { type: string; value?: string }) => {
+        if (v.value) {
+          options.push({
+            type: v.type,
+            value: v.value,
+            label: v.value,
+          });
+        }
+      });
     }
     return options;
   }

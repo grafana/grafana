@@ -6,19 +6,19 @@ import (
 )
 
 type PluginSetting struct {
-	Name             string                 `json:"name"`
-	Type             string                 `json:"type"`
-	Id               string                 `json:"id"`
-	Enabled          bool                   `json:"enabled"`
-	Pinned           bool                   `json:"pinned"`
-	Module           string                 `json:"module"`
-	BaseUrl          string                 `json:"baseUrl"`
-	Info             plugins.Info           `json:"info"`
-	Includes         []*plugins.Includes    `json:"includes"`
-	Dependencies     plugins.Dependencies   `json:"dependencies"`
-	JsonData         map[string]interface{} `json:"jsonData"`
-	SecureJsonFields map[string]bool        `json:"secureJsonFields"`
-	DefaultNavUrl    string                 `json:"defaultNavUrl"`
+	Name             string               `json:"name"`
+	Type             string               `json:"type"`
+	Id               string               `json:"id"`
+	Enabled          bool                 `json:"enabled"`
+	Pinned           bool                 `json:"pinned"`
+	Module           string               `json:"module"`
+	BaseUrl          string               `json:"baseUrl"`
+	Info             plugins.Info         `json:"info"`
+	Includes         []*plugins.Includes  `json:"includes"`
+	Dependencies     plugins.Dependencies `json:"dependencies"`
+	JsonData         map[string]any       `json:"jsonData"`
+	SecureJsonFields map[string]bool      `json:"secureJsonFields"`
+	DefaultNavUrl    string               `json:"defaultNavUrl"`
 
 	LatestVersion   string                  `json:"latestVersion"`
 	HasUpdate       bool                    `json:"hasUpdate"`

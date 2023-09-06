@@ -22,6 +22,10 @@ export const timeZoneFormatUserFriendly = (timeZone: TimeZone | undefined) => {
   }
 };
 
+export const getZone = (timeZone: string) => {
+  return moment.tz.zone(timeZone);
+};
+
 export interface TimeZoneCountry {
   code: string;
   name: string;

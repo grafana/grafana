@@ -8,10 +8,10 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/libraryelements/model"
-	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -36,12 +36,12 @@ func ProvideService(cfg *setting.Cfg, sqlStore db.DB, routeRegister routing.Rout
 
 // Service is a service for operating on library elements.
 type Service interface {
-	CreateElement(c context.Context, signedInUser *user.SignedInUser, cmd model.CreateLibraryElementCommand) (model.LibraryElementDTO, error)
-	GetElement(c context.Context, signedInUser *user.SignedInUser, cmd model.GetLibraryElementCommand) (model.LibraryElementDTO, error)
+	CreateElement(c context.Context, signedInUser identity.Requester, cmd model.CreateLibraryElementCommand) (model.LibraryElementDTO, error)
+	GetElement(c context.Context, signedInUser identity.Requester, cmd model.GetLibraryElementCommand) (model.LibraryElementDTO, error)
 	GetElementsForDashboard(c context.Context, dashboardID int64) (map[string]model.LibraryElementDTO, error)
-	ConnectElementsToDashboard(c context.Context, signedInUser *user.SignedInUser, elementUIDs []string, dashboardID int64) error
+	ConnectElementsToDashboard(c context.Context, signedInUser identity.Requester, elementUIDs []string, dashboardID int64) error
 	DisconnectElementsFromDashboard(c context.Context, dashboardID int64) error
-	DeleteLibraryElementsInFolder(c context.Context, signedInUser *user.SignedInUser, folderUID string) error
+	DeleteLibraryElementsInFolder(c context.Context, signedInUser identity.Requester, folderUID string) error
 }
 
 // LibraryElementService is the service for the Library Element feature.
@@ -56,13 +56,15 @@ type LibraryElementService struct {
 	libraryElementPermissions accesscontrol.LibraryElementPermissionsService
 }
 
+var _ Service = (*LibraryElementService)(nil)
+
 // CreateElement creates a Library Element.
-func (l *LibraryElementService) CreateElement(c context.Context, signedInUser *user.SignedInUser, cmd model.CreateLibraryElementCommand) (model.LibraryElementDTO, error) {
+func (l *LibraryElementService) CreateElement(c context.Context, signedInUser identity.Requester, cmd model.CreateLibraryElementCommand) (model.LibraryElementDTO, error) {
 	return l.createLibraryElement(c, signedInUser, cmd)
 }
 
 // GetElement gets an element from a UID.
-func (l *LibraryElementService) GetElement(c context.Context, signedInUser *user.SignedInUser, cmd model.GetLibraryElementCommand) (model.LibraryElementDTO, error) {
+func (l *LibraryElementService) GetElement(c context.Context, signedInUser identity.Requester, cmd model.GetLibraryElementCommand) (model.LibraryElementDTO, error) {
 	return l.getLibraryElementByUid(c, signedInUser, cmd)
 }
 
@@ -72,7 +74,7 @@ func (l *LibraryElementService) GetElementsForDashboard(c context.Context, dashb
 }
 
 // ConnectElementsToDashboard connects elements to a specific dashboard.
-func (l *LibraryElementService) ConnectElementsToDashboard(c context.Context, signedInUser *user.SignedInUser, elementUIDs []string, dashboardID int64) error {
+func (l *LibraryElementService) ConnectElementsToDashboard(c context.Context, signedInUser identity.Requester, elementUIDs []string, dashboardID int64) error {
 	return l.connectElementsToDashboardID(c, signedInUser, elementUIDs, dashboardID)
 }
 
@@ -82,18 +84,18 @@ func (l *LibraryElementService) DisconnectElementsFromDashboard(c context.Contex
 }
 
 // DeleteLibraryElementsInFolder deletes all elements for a specific folder.
-func (l *LibraryElementService) DeleteLibraryElementsInFolder(c context.Context, signedInUser *user.SignedInUser, folderUID string) error {
+func (l *LibraryElementService) DeleteLibraryElementsInFolder(c context.Context, signedInUser identity.Requester, folderUID string) error {
 	return l.deleteLibraryElementsInFolderUID(c, signedInUser, folderUID)
 }
 
 func (l *LibraryElementService) addUidToLibraryPanel(model []byte, newUid string) (json.RawMessage, error) {
-	var modelMap map[string]interface{}
+	var modelMap map[string]any
 	err := json.Unmarshal(model, &modelMap)
 	if err != nil {
 		return nil, err
 	}
 
-	if libraryPanel, ok := modelMap["libraryPanel"].(map[string]interface{}); ok {
+	if libraryPanel, ok := modelMap["libraryPanel"].(map[string]any); ok {
 		if uid, ok := libraryPanel["uid"]; ok && uid == "" {
 			libraryPanel["uid"] = newUid
 		}

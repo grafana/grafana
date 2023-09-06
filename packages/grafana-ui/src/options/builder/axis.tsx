@@ -77,6 +77,12 @@ export function addAxisConfig(
           { value: AxisColorMode.Series, label: 'Series' },
         ],
       },
+    })
+    .addBooleanSwitch({
+      path: 'axisShow',
+      name: 'Show axis',
+      category,
+      defaultValue: false,
     });
 
   // options for scale range

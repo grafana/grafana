@@ -8,13 +8,13 @@ import (
 )
 
 func TestSimulationUtils(t *testing.T) {
-	a := map[string]interface{}{
+	a := map[string]any{
 		"hello":  "world",
 		"bool":   true,
 		"number": 10,
 	}
 
-	err := updateConfigObjectFromJSON(&a, map[string]interface{}{
+	err := updateConfigObjectFromJSON(&a, map[string]any{
 		"bool":   false,
 		"number": 5,
 	})

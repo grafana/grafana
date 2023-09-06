@@ -111,14 +111,14 @@ func (db *MySQLDialect) UpdateTableSQL(tableName string, columns []*Column) stri
 	return "ALTER TABLE " + db.Quote(tableName) + " " + strings.Join(statements, ", ") + ";"
 }
 
-func (db *MySQLDialect) IndexCheckSQL(tableName, indexName string) (string, []interface{}) {
-	args := []interface{}{tableName, indexName}
+func (db *MySQLDialect) IndexCheckSQL(tableName, indexName string) (string, []any) {
+	args := []any{tableName, indexName}
 	sql := "SELECT 1 FROM " + db.Quote("INFORMATION_SCHEMA") + "." + db.Quote("STATISTICS") + " WHERE " + db.Quote("TABLE_SCHEMA") + " = DATABASE() AND " + db.Quote("TABLE_NAME") + "=? AND " + db.Quote("INDEX_NAME") + "=?"
 	return sql, args
 }
 
-func (db *MySQLDialect) ColumnCheckSQL(tableName, columnName string) (string, []interface{}) {
-	args := []interface{}{tableName, columnName}
+func (db *MySQLDialect) ColumnCheckSQL(tableName, columnName string) (string, []any) {
+	args := []any{tableName, columnName}
 	sql := "SELECT 1 FROM " + db.Quote("INFORMATION_SCHEMA") + "." + db.Quote("COLUMNS") + " WHERE " + db.Quote("TABLE_SCHEMA") + " = DATABASE() AND " + db.Quote("TABLE_NAME") + "=? AND " + db.Quote("COLUMN_NAME") + "=?"
 	return sql, args
 }
