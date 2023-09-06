@@ -48,9 +48,7 @@ func (hs *HTTPServer) callPluginResource(c *contextmodel.ReqContext, pluginID st
 		handleCallResourceError(err, c)
 	}
 
-	// treat response as downstream since it means we've got
-	// a proper response from the plugin.
-	requestmeta.WithDownstreamStatusSource(c.Req.Context())
+	requestmeta.WithStatusSource(c.Req.Context(), c.Resp.Status())
 }
 
 func (hs *HTTPServer) callPluginResourceWithDataSource(c *contextmodel.ReqContext, pluginID string, ds *datasources.DataSource) {
@@ -84,6 +82,8 @@ func (hs *HTTPServer) callPluginResourceWithDataSource(c *contextmodel.ReqContex
 	if err = hs.makePluginResourceRequest(c.Resp, req, pCtx); err != nil {
 		handleCallResourceError(err, c)
 	}
+
+	requestmeta.WithStatusSource(c.Req.Context(), c.Resp.Status())
 }
 
 func (hs *HTTPServer) pluginResourceRequest(c *contextmodel.ReqContext) (*http.Request, error) {

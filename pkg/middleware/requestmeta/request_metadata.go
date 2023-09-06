@@ -77,6 +77,20 @@ func WithDownstreamStatusSource(ctx context.Context) {
 	v.StatusSource = StatusSourceDownstream
 }
 
+// WithStatusSource sets the StatusSource field of the [RequestMetaData] for the
+// context based on the provided statusCode.
+// If statusCode >= 500 then [StatusSourceDownstream].
+// If statusCode < 500 then [StatusSourceServer].
+func WithStatusSource(ctx context.Context, statusCode int) {
+	v := GetRequestMetaData(ctx)
+
+	if statusCode >= 500 {
+		v.StatusSource = StatusSourceDownstream
+	}
+
+	v.StatusSource = StatusSourceServer
+}
+
 func defaultRequestMetadata() RequestMetaData {
 	return RequestMetaData{
 		Team:         TeamCore,
