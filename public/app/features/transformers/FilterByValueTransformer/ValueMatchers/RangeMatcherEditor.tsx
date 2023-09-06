@@ -1,7 +1,9 @@
 import React, { useCallback, useState } from 'react';
 
-import { ValueMatcherID, RangeValueMatcherOptions } from '@grafana/data';
-import { Input } from '@grafana/ui';
+import { ValueMatcherID, RangeValueMatcherOptions, VariableOrigin } from '@grafana/data';
+import { getTemplateSrv } from '@grafana/runtime';
+
+import { SuggestionsInput } from '../../suggestionsInput/SuggestionsInput';
 
 import { ValueMatcherEditorConfig, ValueMatcherUIProps, ValueMatcherUIRegistryItem } from './types';
 
@@ -17,23 +19,26 @@ export function rangeMatcherEditor<T = any>(
       to: !validator(options.to),
     });
 
+    const templateSrv = getTemplateSrv();
+    const variables = templateSrv.getVariables().map((v) => {
+      return { value: v.name, label: v.label || v.name, origin: VariableOrigin.Template };
+    });
+
     const onChangeValue = useCallback(
-      (event: React.FormEvent<HTMLInputElement>, prop: PropNames) => {
+      (value: string, prop: PropNames) => {
         setInvalid({
           ...isInvalid,
-          [prop]: !validator(event.currentTarget.value),
+          [prop]: !validator(value),
         });
       },
       [setInvalid, validator, isInvalid]
     );
 
     const onChangeOptions = useCallback(
-      (event: React.FocusEvent<HTMLInputElement>, prop: PropNames) => {
+      (value: string, prop: PropNames) => {
         if (isInvalid[prop]) {
           return;
         }
-
-        const { value } = event.currentTarget;
 
         onChange({
           ...options,
@@ -45,22 +50,20 @@ export function rangeMatcherEditor<T = any>(
 
     return (
       <>
-        <Input
+        <SuggestionsInput
           className="flex-grow-1 gf-form-spacing"
-          invalid={isInvalid['from']}
-          defaultValue={String(options.from)}
+          value={String(options.from)}
           placeholder="From"
-          onChange={(event) => onChangeValue(event, 'from')}
-          onBlur={(event) => onChangeOptions(event, 'from')}
+          onChange={(val) => onChangeOptions(val, 'from')}
+          suggestions={variables}
         />
         <div className="gf-form-label">and</div>
-        <Input
+        <SuggestionsInput
           className="flex-grow-1"
-          invalid={isInvalid['to']}
-          defaultValue={String(options.to)}
+          value={String(options.to)}
           placeholder="To"
-          onChange={(event) => onChangeValue(event, 'to')}
-          onBlur={(event) => onChangeOptions(event, 'to')}
+          suggestions={variables}
+          onChange={(val) => onChangeOptions(val, 'to')}
         />
       </>
     );

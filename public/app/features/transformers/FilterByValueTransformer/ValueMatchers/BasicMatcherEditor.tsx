@@ -1,8 +1,9 @@
 import React, { useCallback, useState } from 'react';
 
-import { ValueMatcherID, BasicValueMatcherOptions, SelectableValue, VariableOrigin } from '@grafana/data';
+import { ValueMatcherID, BasicValueMatcherOptions, VariableOrigin } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
-import { DataLinkInput, Input, Select } from '@grafana/ui';
+
+import { SuggestionsInput } from '../../suggestionsInput/SuggestionsInput';
 
 import { ValueMatcherEditorConfig, ValueMatcherUIProps, ValueMatcherUIRegistryItem } from './types';
 
@@ -46,8 +47,16 @@ export function basicMatcherEditor<T = any>(
       [options, onChange, isInvalid]
     );
 */
+
+    //TODO: make regex matcher use a simple input, without suggestions.
+    //Also exclude from actual transformation operation
     return (
-      <DataLinkInput value={value} onChange={onChangeValue} placeholder="Value" suggestions={variables}></DataLinkInput>
+      <SuggestionsInput
+        value={value}
+        onChange={onChangeValue}
+        placeholder="Value or variable"
+        suggestions={variables}
+      ></SuggestionsInput>
     );
   };
 }

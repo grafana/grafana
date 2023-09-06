@@ -31,7 +31,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     item: css({
       background: 'none',
       padding: '2px 8px',
-      'user-select': 'none',
+      userSelect: 'none',
       color: theme.colors.text.primary,
       cursor: 'pointer',
       '&:hover': {

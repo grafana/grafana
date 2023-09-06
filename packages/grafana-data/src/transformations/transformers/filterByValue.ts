@@ -4,6 +4,7 @@ import { getFieldDisplayName } from '../../field/fieldState';
 import { DataFrame, Field } from '../../types/dataFrame';
 import { DataTransformerInfo, MatcherConfig } from '../../types/transformations';
 import { getValueMatcher } from '../matchers';
+import { ValueMatcherID } from '../matchers/ids';
 
 import { DataTransformerID } from './ids';
 import { noopTransformer } from './noop';
@@ -49,7 +50,25 @@ export const filterByValueTransformer: DataTransformerInfo<FilterByValueTransfor
     }
 
     const interpolatedFilters = filters.map((filter) => {
-      if (filter.config.options.value) {
+      // debugger;
+      if (filter.config.id === ValueMatcherID.between) {
+        const interpolatedFrom = ctx.interpolate(filter.config.options.from);
+        const interpolatedTo = ctx.interpolate(filter.config.options.to);
+
+        const newFilter = {
+          ...filter,
+          config: {
+            ...filter.config,
+            options: {
+              ...filter.config.options,
+              to: interpolatedTo,
+              from: interpolatedFrom,
+            },
+          },
+        };
+
+        return newFilter;
+      } else if (filter.config.options.value) {
         const interpolatedValue = ctx.interpolate(filter.config.options.value);
         const newFilter = {
           ...filter,
@@ -58,8 +77,11 @@ export const filterByValueTransformer: DataTransformerInfo<FilterByValueTransfor
         newFilter.config.options.value! = interpolatedValue;
         return newFilter;
       }
+
       return filter;
     });
+
+    console.log(interpolatedFilters);
 
     return source.pipe(
       map((data) => {
