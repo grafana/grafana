@@ -26,9 +26,8 @@ import { ProvisioningBadge } from '../Provisioning';
 import { ActionIcon } from '../rules/ActionIcon';
 
 import { ReceiversSection } from './ReceiversSection';
-import { GrafanaAppBadge } from './grafanaAppReceivers/GrafanaAppBadge';
-import { useGetReceiversWithGrafanaAppTypes } from './grafanaAppReceivers/grafanaApp';
-import { ReceiverWithTypes } from './grafanaAppReceivers/types';
+import { ReceiverMetadataBadge } from './grafanaAppReceivers/ReceiverMetadataBadge';
+import { ReceiverMetadata, useReceiversMetadata } from './grafanaAppReceivers/useReceiversMetadata';
 import { AlertmanagerConfigHealth, useAlertmanagerConfigHealth } from './useAlertmanagerConfigHealth';
 
 interface UpdateActionProps extends ActionProps {
@@ -183,6 +182,7 @@ interface ReceiverItem {
   types: string[];
   provisioned?: boolean;
   grafanaAppReceiverType?: SupportedPlugin;
+  metadata?: ReceiverMetadata;
 }
 
 interface NotifierStatus {
@@ -299,6 +299,7 @@ export const ReceiversTable = ({ config, alertManagerName }: Props) => {
 
   const configHealth = useAlertmanagerConfigHealth(config.alertmanager_config);
   const { contactPointsState, errorStateAvailable } = useContactPointsState(alertManagerName);
+  const receiversMetadata = useReceiversMetadata(config.alertmanager_config.receivers ?? []);
 
   // receiver name slated for deletion. If this is set, a confirmation modal is shown. If user approves, this receiver is deleted
   const [receiverToDelete, setReceiverToDelete] = useState<string>();
@@ -325,10 +326,11 @@ export const ReceiversTable = ({ config, alertManagerName }: Props) => {
     setReceiverToDelete(undefined);
   };
 
-  const receivers = useGetReceiversWithGrafanaAppTypes(config.alertmanager_config.receivers ?? []);
   const rows: RowItemTableProps[] = useMemo(() => {
+    const receivers = config.alertmanager_config.receivers ?? [];
+
     return (
-      receivers?.map((receiver: ReceiverWithTypes) => ({
+      receivers.map((receiver) => ({
         id: receiver.name,
         data: {
           name: receiver.name,
@@ -340,12 +342,12 @@ export const ReceiversTable = ({ config, alertManagerName }: Props) => {
               return type;
             }
           ),
-          grafanaAppReceiverType: receiver.grafanaAppReceiverType,
           provisioned: receiver.grafana_managed_receiver_configs?.some((receiver) => receiver.provenance),
+          metadata: receiversMetadata.get(receiver),
         },
       })) ?? []
     );
-  }, [grafanaNotifiers.result, receivers]);
+  }, [grafanaNotifiers.result, config.alertmanager_config, receiversMetadata]);
 
   const columns = useGetColumns(
     alertManagerName,
@@ -472,8 +474,8 @@ function useGetColumns(
     {
       id: 'type',
       label: 'Type',
-      renderCell: ({ data: { types, grafanaAppReceiverType } }) => (
-        <>{grafanaAppReceiverType ? <GrafanaAppBadge grafanaAppType={grafanaAppReceiverType} /> : types.join(', ')}</>
+      renderCell: ({ data: { types, metadata } }) => (
+        <>{metadata ? <ReceiverMetadataBadge metadata={metadata} /> : types.join(', ')}</>
       ),
       size: 2,
     },
