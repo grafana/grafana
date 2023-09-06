@@ -39,7 +39,7 @@ const ContentOutline = ({ visible }: ContentOutlineProps) => {
   const { outlineItems } = useContentOutlineContext();
 
   const scrollIntoView = (ref: HTMLElement | null) => {
-    ref?.scrollIntoView({ behavior: 'smooth' });
+    ref?.scrollIntoView({ behavior: 'smooth', inline: 'start' });
   };
 
   return (
