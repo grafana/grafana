@@ -53,7 +53,6 @@ export const heatmapTransformer: SynchronousDataTransformerInfo<HeatmapTransform
           optionsCopy.yBuckets.value = ctx.interpolate(optionsCopy.yBuckets.value);
         }
 
-        console.log(optionsCopy.xBuckets.value, optionsCopy.yBuckets.value);
         return heatmapTransformer.transformer(optionsCopy, ctx)(data);
       })
     ),
