@@ -3,7 +3,8 @@ import React, { useCallback } from 'react';
 
 import { GrafanaTheme2, ThemeSpacingTokens } from '@grafana/data';
 
-import { useStyles2 } from '../../themes';
+import { useStyles2 } from '../../../themes';
+import { ResponsiveProp, getResponsiveStyle } from '../ResponsiveTypes';
 
 export type AlignItems =
   | 'stretch'
@@ -33,11 +34,11 @@ export type Direction = 'row' | 'row-reverse' | 'column' | 'column-reverse';
 export type Wrap = 'nowrap' | 'wrap' | 'wrap-reverse';
 
 interface FlexProps {
-  gap?: ThemeSpacingTokens;
-  alignItems?: AlignItems;
-  justifyContent?: JustifyContent;
-  direction?: Direction;
-  wrap?: Wrap;
+  gap?: ResponsiveProp<ThemeSpacingTokens>;
+  alignItems?: ResponsiveProp<AlignItems>;
+  justifyContent?: ResponsiveProp<JustifyContent>;
+  direction?: ResponsiveProp<Direction>;
+  wrap?: ResponsiveProp<Wrap>;
   children?: React.ReactNode;
 }
 
@@ -56,20 +57,32 @@ Flex.displayName = 'Flex';
 
 const getStyles = (
   theme: GrafanaTheme2,
-  gap: ThemeSpacingTokens,
+  gap: FlexProps['gap'],
   alignItems: FlexProps['alignItems'],
   justifyContent: FlexProps['justifyContent'],
   direction: FlexProps['direction'],
   wrap: FlexProps['wrap']
 ) => {
   return {
-    flex: css({
-      display: 'flex',
-      flexDirection: direction,
-      flexWrap: wrap,
-      alignItems: alignItems,
-      justifyContent: justifyContent,
-      gap: theme.spacing(gap),
-    }),
+    flex: css([
+      {
+        display: 'flex',
+      },
+      getResponsiveStyle<Direction>(theme, direction, (val) => ({
+        flexDirection: val,
+      })),
+      getResponsiveStyle<Wrap>(theme, wrap, (val) => ({
+        flexWrap: val,
+      })),
+      getResponsiveStyle<AlignItems>(theme, alignItems, (val) => ({
+        alignItems: val,
+      })),
+      getResponsiveStyle<JustifyContent>(theme, justifyContent, (val) => ({
+        justifyContent: val,
+      })),
+      getResponsiveStyle<ThemeSpacingTokens>(theme, gap, (val) => ({
+        gap: theme.spacing(val),
+      })),
+    ]),
   };
 };

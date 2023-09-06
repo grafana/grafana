@@ -1,7 +1,7 @@
 import { Meta, StoryFn } from '@storybook/react';
 import React, { ReactNode } from 'react';
 
-import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
+import { withCenteredStory } from '../../../utils/storybook/withCenteredStory';
 
 import { Stack } from './Stack';
 import mdx from './Stack.mdx';

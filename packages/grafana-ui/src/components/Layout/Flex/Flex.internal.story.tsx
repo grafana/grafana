@@ -3,8 +3,8 @@ import React from 'react';
 
 import { ThemeSpacingTokens } from '@grafana/data';
 
-import { useTheme2 } from '../../themes';
-import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
+import { useTheme2 } from '../../../themes';
+import { withCenteredStory } from '../../../utils/storybook/withCenteredStory';
 
 import { Flex, JustifyContent, Wrap, Direction } from './Flex';
 import mdx from './Flex.mdx';

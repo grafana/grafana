@@ -26,7 +26,7 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
   return (
     <Flex alignItems="center" justifyContent="center">
       <div className={styles.wrapper}>
-        <Flex alignItems="center" justifyContent="center" gap={4} direction="column">
+        <Flex alignItems="stretch" justifyContent="center" gap={4} direction="column">
           <Box borderStyle="dashed" borderColor="info" padding={4}>
             <Flex direction="column" alignItems="center" gap={2}>
               <Text element="h1" textAlignment="center" weight="medium">
@@ -58,7 +58,7 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
               </Button>
             </Flex>
           </Box>
-          <Flex direction="row" wrap="wrap" gap={4}>
+          <Flex direction={{ base: 'column', md: 'row' }} wrap="wrap" gap={4}>
             {config.featureToggles.vizAndWidgetSplit && (
               <Box borderStyle="dashed" borderColor="info" padding={3} grow={1}>
                 <Flex direction="column" alignItems="center" gap={1}>
@@ -119,7 +119,8 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
                 <Box marginBottom={2}>
                   <Text element="p" textAlignment="center" color="secondary">
                     <Trans i18nKey="dashboard.empty.import-a-dashboard-body">
-                      Import dashboards from files or <a href="https://grafana.com/grafana/dashboards/">grafana.com</a>.
+                      Import dashboards from files or
+                      <a href="https://grafana.com/grafana/dashboards/">grafana.com</a>.
                     </Trans>
                   </Text>
                 </Box>
@@ -157,17 +158,6 @@ function getStyles(theme: GrafanaTheme2) {
 
       [theme.breakpoints.up('sm')]: {
         paddingTop: theme.spacing(12),
-      },
-    }),
-    others: css({
-      width: '100%',
-      label: 'others-wrapper',
-      alignItems: 'stretch',
-      flexDirection: 'row',
-      gap: theme.spacing.gridSize * 4,
-
-      [theme.breakpoints.down('md')]: {
-        flexDirection: 'column',
       },
     }),
   };
