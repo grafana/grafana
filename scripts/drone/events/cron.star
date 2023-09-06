@@ -24,6 +24,17 @@ def cronjobs():
         grafana_com_nightly_pipeline(),
     ]
 
+def authenticate_gcr_step():
+    return {
+        "name": "authenticate-gcr",
+        "image": "docker:dind",
+        "commands": ["echo $${GCR_CREDENTIALS} | docker login -u _json_key --password-stdin https://us.gcr.io"],
+        "environment": {
+            "GCR_CREDENTIALS": from_secret("gcr_credentials"),
+        },
+        "volumes": [{"name": "docker", "path": "/var/run/docker.sock"}, {"name": "config", "path": "/root/.docker/"}],
+    }
+
 def cron_job_pipeline(cronName, name, steps):
     return {
         "kind": "pipeline",
@@ -41,6 +52,18 @@ def cron_job_pipeline(cronName, name, steps):
             "retries": 3,
         },
         "steps": steps,
+        "volumes": [
+            {
+                "name": "docker",
+                "host": {
+                    "path": "/var/run/docker.sock",
+                },
+            },
+            {
+                "name": "config",
+                "temp": {},
+            },
+        ],
     }
 
 def scan_docker_image_pipeline(tag):
@@ -58,6 +81,7 @@ def scan_docker_image_pipeline(tag):
         cronName = "nightly",
         name = "scan-" + docker_image + "-image",
         steps = [
+            authenticate_gcr_step(),
             scan_docker_image_unknown_low_medium_vulnerabilities_step(docker_image),
             scan_docker_image_high_critical_vulnerabilities_step(docker_image),
             slack_job_failed_step("grafana-backend-ops", docker_image),
@@ -75,6 +99,7 @@ def scan_build_test_publish_docker_image_pipeline():
         cronName = "nightly",
         name = "scan-build-test-and-publish-docker-images",
         steps = [
+            authenticate_gcr_step(),
             scan_docker_image_unknown_low_medium_vulnerabilities_step("all"),
             scan_docker_image_high_critical_vulnerabilities_step("all"),
             slack_job_failed_step("grafana-backend-ops", "build-images"),
@@ -96,11 +121,13 @@ def scan_docker_image_unknown_low_medium_vulnerabilities_step(docker_image):
         for key in images:
             cmds = cmds + ["trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM " + images[key]]
     else:
-        cmds = ["trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM " + docker_image]
+        cmds = ["trivy image --exit-code 0 --severity UNKNOWN,LOW,MEDIUM " + docker_image]
     return {
         "name": "scan-unknown-low-medium-vulnerabilities",
         "image": aquasec_trivy_image,
         "commands": cmds,
+        "depends_on": ["authenticate-gcr"],
+        "volumes": [{"name": "docker", "path": "/var/run/docker.sock"}, {"name": "config", "path": "/root/.docker/"}],
     }
 
 def scan_docker_image_high_critical_vulnerabilities_step(docker_image):
@@ -118,11 +145,16 @@ def scan_docker_image_high_critical_vulnerabilities_step(docker_image):
         for key in images:
             cmds = cmds + ["trivy --exit-code 1 --severity HIGH,CRITICAL " + images[key]]
     else:
-        cmds = ["trivy --exit-code 1 --severity HIGH,CRITICAL " + docker_image]
+        cmds = ["trivy image --exit-code 1 --severity HIGH,CRITICAL " + docker_image]
     return {
         "name": "scan-high-critical-vulnerabilities",
         "image": aquasec_trivy_image,
         "commands": cmds,
+        "depends_on": ["authenticate-gcr"],
+        "environment": {
+            "GOOGLE_APPLICATION_CREDENTIALS": from_secret("gcr_credentials_json"),
+        },
+        "volumes": [{"name": "docker", "path": "/var/run/docker.sock"}, {"name": "config", "path": "/root/.docker/"}],
     }
 
 def slack_job_failed_step(channel, image):

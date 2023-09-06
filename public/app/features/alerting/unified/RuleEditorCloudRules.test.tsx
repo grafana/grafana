@@ -1,22 +1,27 @@
 import { screen, waitFor, waitForElementToBeRemoved, within } from '@testing-library/react';
-import userEvent, { PointerEventsCheckLevel } from '@testing-library/user-event';
+import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { renderRuleEditor, ui } from 'test/helpers/alertingRuleEditor';
 import { clickSelectOption } from 'test/helpers/selectOptionInTest';
 import { byRole } from 'testing-library-selector';
 
-import { setDataSourceSrv } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
-import { PromApplication } from 'app/types/unified-alerting-dto';
 
 import { searchFolders } from '../../manage-dashboards/state/actions';
 
-import { discoverFeatures } from './api/buildInfo';
 import { fetchRulerRules, fetchRulerRulesGroup, fetchRulerRulesNamespace, setRulerRuleGroup } from './api/ruler';
 import { ExpressionEditorProps } from './components/rule-editor/ExpressionEditor';
-import { disableRBAC, mockDataSource, MockDataSourceSrv } from './mocks';
+import { mockApi, mockFeatureDiscoveryApi, setupMswServer } from './mockApi';
+import { disableRBAC, mockDataSource } from './mocks';
+import {
+  defaultAlertmanagerChoiceResponse,
+  emptyExternalAlertmanagersResponse,
+  mockAlertmanagerChoiceResponse,
+  mockAlertmanagersResponse,
+} from './mocks/alertmanagerApi';
 import { fetchRulerRulesIfNotFetchedYet } from './state/actions';
-import * as config from './utils/config';
+import { setupDataSources } from './testSetup/datasources';
+import { buildInfoResponse } from './testSetup/featureDiscovery';
 
 jest.mock('./components/rule-editor/ExpressionEditor', () => ({
   // eslint-disable-next-line react/display-name
@@ -25,16 +30,8 @@ jest.mock('./components/rule-editor/ExpressionEditor', () => ({
   ),
 }));
 
-jest.mock('./api/buildInfo');
 jest.mock('./api/ruler');
 jest.mock('../../../../app/features/manage-dashboards/state/actions');
-
-// there's no angular scope in test and things go terribly wrong when trying to render the query editor row.
-// lets just skip it
-jest.mock('app/features/query/components/QueryEditorRow', () => ({
-  // eslint-disable-next-line react/display-name
-  QueryEditorRow: () => <p>hi</p>,
-}));
 
 jest.mock('./components/rule-editor/util', () => {
   const originalModule = jest.requireActual('./components/rule-editor/util');
@@ -45,29 +42,21 @@ jest.mock('./components/rule-editor/util', () => {
 });
 
 const dataSources = {
-  default: mockDataSource(
-    {
-      type: 'prometheus',
-      name: 'Prom',
-      isDefault: true,
-    },
-    { alerting: true }
-  ),
+  default: mockDataSource({ type: 'prometheus', name: 'Prom', isDefault: true }, { alerting: true }),
 };
-
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  getDataSourceSrv: jest.fn(() => ({
-    getInstanceSettings: () => dataSources.default,
-    get: () => dataSources.default,
-  })),
-}));
 
 jest.mock('app/core/components/AppChrome/AppChromeUpdate', () => ({
   AppChromeUpdate: ({ actions }: { actions: React.ReactNode }) => <div>{actions}</div>,
 }));
 
-jest.spyOn(config, 'getAllDataSources');
+setupDataSources(dataSources.default);
+
+const server = setupMswServer();
+
+mockFeatureDiscoveryApi(server).discoverDsFeatures(dataSources.default, buildInfoResponse.mimir);
+mockAlertmanagerChoiceResponse(server, defaultAlertmanagerChoiceResponse);
+mockAlertmanagersResponse(server, emptyExternalAlertmanagersResponse);
+mockApi(server).eval({ results: {} });
 
 // these tests are rather slow because we have to wait for various API calls and mocks to be called
 // and wait for the UI to be in particular states, drone seems to time out quite often so
@@ -76,10 +65,8 @@ jest.spyOn(config, 'getAllDataSources');
 jest.setTimeout(60 * 1000);
 
 const mocks = {
-  getAllDataSources: jest.mocked(config.getAllDataSources),
   searchFolders: jest.mocked(searchFolders),
   api: {
-    discoverFeatures: jest.mocked(discoverFeatures),
     fetchRulerRulesGroup: jest.mocked(fetchRulerRulesGroup),
     setRulerRuleGroup: jest.mocked(setRulerRuleGroup),
     fetchRulerRulesNamespace: jest.mocked(fetchRulerRulesNamespace),
@@ -100,8 +87,6 @@ describe('RuleEditor cloud', () => {
   disableRBAC();
 
   it('can create a new cloud alert', async () => {
-    setDataSourceSrv(new MockDataSourceSrv(dataSources));
-    mocks.getAllDataSources.mockReturnValue(Object.values(dataSources));
     mocks.api.setRulerRuleGroup.mockResolvedValue();
     mocks.api.fetchRulerRulesNamespace.mockResolvedValue([]);
     mocks.api.fetchRulerRulesGroup.mockResolvedValue({
@@ -124,12 +109,7 @@ describe('RuleEditor cloud', () => {
     });
     mocks.searchFolders.mockResolvedValue([]);
 
-    mocks.api.discoverFeatures.mockResolvedValue({
-      application: PromApplication.Cortex,
-      features: {
-        rulerApiEnabled: true,
-      },
-    });
+    const user = userEvent.setup();
 
     renderRuleEditor();
     await waitForElementToBeRemoved(screen.getAllByTestId('Spinner'));
@@ -137,10 +117,14 @@ describe('RuleEditor cloud', () => {
     const removeExpressionsButtons = screen.getAllByLabelText('Remove expression');
     expect(removeExpressionsButtons).toHaveLength(2);
 
-    const switchToCloudButton = screen.getByText('Switch to data source-managed alert rule');
-    expect(switchToCloudButton).toBeInTheDocument();
+    // Needs to wait for featrue discovery API call to finish - Check if ruler enabled
+    await waitFor(() => expect(screen.getByText('Data source-managed')).toBeInTheDocument());
 
-    await userEvent.click(switchToCloudButton);
+    const switchToCloudButton = screen.getByText('Data source-managed');
+    expect(switchToCloudButton).toBeInTheDocument();
+    expect(switchToCloudButton).not.toBeDisabled();
+
+    await user.click(switchToCloudButton);
 
     //expressions are removed after switching to data-source managed
     expect(screen.queryAllByLabelText('Remove expression')).toHaveLength(0);
@@ -148,30 +132,30 @@ describe('RuleEditor cloud', () => {
     expect(screen.getByTestId('datasource-picker')).toBeInTheDocument();
 
     const dataSourceSelect = ui.inputs.dataSource.get();
-    await userEvent.click(byRole('combobox').get(dataSourceSelect));
+    await user.click(byRole('combobox').get(dataSourceSelect));
     await clickSelectOption(dataSourceSelect, 'Prom (default)');
     await waitFor(() => expect(mocks.api.fetchRulerRules).toHaveBeenCalled());
 
-    await userEvent.type(await ui.inputs.expr.find(), 'up == 1');
+    await user.type(await ui.inputs.expr.find(), 'up == 1');
 
-    await userEvent.type(ui.inputs.name.get(), 'my great new rule');
+    await user.type(ui.inputs.name.get(), 'my great new rule');
     await clickSelectOption(ui.inputs.namespace.get(), 'namespace2');
     await clickSelectOption(ui.inputs.group.get(), 'group2');
 
-    await userEvent.type(ui.inputs.annotationValue(0).get(), 'some summary');
-    await userEvent.type(ui.inputs.annotationValue(1).get(), 'some description');
+    await user.type(ui.inputs.annotationValue(0).get(), 'some summary');
+    await user.type(ui.inputs.annotationValue(1).get(), 'some description');
 
     // TODO remove skipPointerEventsCheck once https://github.com/jsdom/jsdom/issues/3232 is fixed
-    await userEvent.click(ui.buttons.addLabel.get(), { pointerEventsCheck: PointerEventsCheckLevel.Never });
+    await user.click(ui.buttons.addLabel.get());
 
-    await userEvent.type(getLabelInput(ui.inputs.labelKey(0).get()), 'severity{enter}');
-    await userEvent.type(getLabelInput(ui.inputs.labelValue(0).get()), 'warn{enter}');
+    await user.type(getLabelInput(ui.inputs.labelKey(0).get()), 'severity{enter}');
+    await user.type(getLabelInput(ui.inputs.labelValue(0).get()), 'warn{enter}');
 
     // save and check what was sent to backend
-    await userEvent.click(ui.buttons.save.get());
+    await user.click(ui.buttons.save.get());
     await waitFor(() => expect(mocks.api.setRulerRuleGroup).toHaveBeenCalled());
     expect(mocks.api.setRulerRuleGroup).toHaveBeenCalledWith(
-      { dataSourceName: 'Prom', apiVersion: 'legacy' },
+      { dataSourceName: 'Prom', apiVersion: 'config' },
       'namespace2',
       {
         name: 'group2',

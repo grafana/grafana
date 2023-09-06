@@ -1,11 +1,12 @@
-// @ts-ignore
-import System from 'systemjs/dist/system.js';
+import 'systemjs/dist/system';
+// Add ability to load plugins bundled as AMD format
+import 'systemjs/dist/extras/amd';
+// Add ability to load plugins bundled as CJS format
+import 'systemjs-cjs-extra';
 
 import { PanelPlugin } from '@grafana/data';
 
 import { config } from '../config';
-
-// @ts-ignore
 
 /**
  * Option to specify a plugin css that should be applied for the dark
@@ -21,7 +22,7 @@ export interface PluginCssOptions {
 /**
  * @internal
  */
-export const SystemJS = System;
+export const SystemJS = window.System;
 
 /**
  * Use this to load css for a Grafana plugin by specifying a {@link PluginCssOptions}
@@ -30,9 +31,13 @@ export const SystemJS = System;
  * @param options - plugin styling for light and dark theme.
  * @public
  */
-export function loadPluginCss(options: PluginCssOptions): Promise<any> {
-  const theme = config.bootData.user.lightTheme ? options.light : options.dark;
-  return SystemJS.import(`${theme}!css`);
+export async function loadPluginCss(options: PluginCssOptions): Promise<any> {
+  try {
+    const cssPath = config.bootData.user.theme === 'light' ? options.light : options.dark;
+    return await SystemJS.import(cssPath);
+  } catch (err) {
+    console.error(err);
+  }
 }
 
 interface PluginImportUtils {
@@ -57,3 +62,11 @@ export function getPluginImportUtils(): PluginImportUtils {
 
   return pluginImportUtils;
 }
+
+// Grafana relies on RequireJS for Monaco Editor to load.
+// The SystemJS AMD extra creates a global define which causes RequireJS to silently bail.
+// Here we move and reset global define so Monaco Editor loader script continues to work.
+// @ts-ignore
+window.__grafana_amd_define = window.define;
+// @ts-ignore
+window.define = undefined;
