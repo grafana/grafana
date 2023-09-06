@@ -73,7 +73,7 @@ func (ms *MigrationService) Run(ctx context.Context) error {
 
 				// Safeguard to prevent data loss when reverting from UA to LA.
 				if !ms.cfg.ForceMigration {
-					panic("Grafana has already been migrated to Unified Alerting.\nAny alert rules created while using Unified Alerting will be deleted by rolling back.\n\nSet force_migration=true in your grafana.ini and restart Grafana to roll back and delete Unified Alerting configuration data.")
+					return fmt.Errorf("Grafana has already been migrated to Unified Alerting. Any alert rules created while using Unified Alerting will be deleted by rolling back. Set force_migration=true in your grafana.ini and restart Grafana to roll back and delete Unified Alerting configuration data.")
 				}
 
 				// Revert migration
