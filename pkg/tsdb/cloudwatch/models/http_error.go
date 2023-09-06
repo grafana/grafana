@@ -8,7 +8,6 @@ type HttpError struct {
 	StatusCode int
 }
 
-// Note: an HttpError is a user facing error. It should not contain any sensitive information.
 func NewHttpError(message string, statusCode int, err error) *HttpError {
 	httpError := &HttpError{
 		Message:    message,
