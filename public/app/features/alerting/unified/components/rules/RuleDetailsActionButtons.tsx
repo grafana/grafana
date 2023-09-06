@@ -291,7 +291,7 @@ function useCanSilence(rule: CombinedRule) {
     return false;
   }
 
-  const hasPermissions = contextSrv.hasAccess(AccessControlAction.AlertingInstanceCreate, contextSrv.isEditor);
+  const hasPermissions = contextSrv.hasPermission(AccessControlAction.AlertingInstanceCreate);
 
   const interactsOnlyWithExternalAMs = amConfigStatus?.alertmanagersChoice === AlertmanagerChoice.External;
   const interactsWithAll = amConfigStatus?.alertmanagersChoice === AlertmanagerChoice.All;

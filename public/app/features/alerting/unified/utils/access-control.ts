@@ -1,8 +1,7 @@
 import { contextSrv } from 'app/core/services/context_srv';
-import { isOrgAdmin } from 'app/features/plugins/admin/permissions';
 import { AccessControlAction } from 'app/types';
 
-import { GRAFANA_RULES_SOURCE_NAME, isGrafanaRulesSource } from './datasource';
+import { isGrafanaRulesSource } from './datasource';
 
 type RulesSourceType = 'grafana' | 'external';
 
@@ -116,18 +115,16 @@ export function evaluateAccess(actions: AccessControlAction[], fallBackUserRoles
 export function getRulesAccess() {
   return {
     canCreateGrafanaRules:
-      contextSrv.hasAccess(AccessControlAction.FoldersRead, contextSrv.hasEditPermissionInFolders) &&
-      contextSrv.hasAccess(rulesPermissions.create.grafana, contextSrv.hasEditPermissionInFolders),
+      contextSrv.hasPermission(AccessControlAction.FoldersRead) &&
+      contextSrv.hasPermission(rulesPermissions.create.grafana),
     canCreateCloudRules:
-      contextSrv.hasAccess(AccessControlAction.DataSourcesRead, contextSrv.isEditor) &&
-      contextSrv.hasAccess(rulesPermissions.create.external, contextSrv.isEditor),
+      contextSrv.hasPermission(AccessControlAction.DataSourcesRead) &&
+      contextSrv.hasPermission(rulesPermissions.create.external),
     canEditRules: (rulesSourceName: string) => {
-      const permissionFallback =
-        rulesSourceName === GRAFANA_RULES_SOURCE_NAME ? contextSrv.hasEditPermissionInFolders : contextSrv.isEditor;
-      return contextSrv.hasAccess(getRulesPermissions(rulesSourceName).update, permissionFallback);
+      return contextSrv.hasPermission(getRulesPermissions(rulesSourceName).update);
     },
     canReadProvisioning:
-      contextSrv.hasAccess(provisioningPermissions.read, isOrgAdmin()) ||
-      contextSrv.hasAccess(provisioningPermissions.readSecrets, isOrgAdmin()),
+      contextSrv.hasPermission(provisioningPermissions.read) ||
+      contextSrv.hasPermission(provisioningPermissions.readSecrets),
   };
 }
