@@ -321,12 +321,6 @@ abstract class DataSourceApi<
    */
   modifyQuery?(query: TQuery, action: QueryFixAction): TQuery;
 
-  /**
-   * @deprecated since version 8.2.0
-   * Not used anymore.
-   */
-  getHighlighterExpression?(query: TQuery): string[];
-
   /** Get an identifier object for this datasource instance */
   getRef(): DataSourceRef {
     return { type: this.type, uid: this.uid };
