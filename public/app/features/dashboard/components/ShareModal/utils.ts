@@ -1,7 +1,9 @@
-import { dateTime, locationUtil, PanelModel, TimeRange, urlUtil } from '@grafana/data';
+import { dateTime, locationUtil, TimeRange, urlUtil, rangeUtil } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { createShortLink } from 'app/core/utils/shortLinks';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
+
+import { PanelModel } from '../../state';
 
 export interface BuildParamsArgs {
   useCurrentTimeRange: boolean;
@@ -21,9 +23,15 @@ export function buildParams({
   orgId = config.bootData.user.orgId,
 }: BuildParamsArgs): URLSearchParams {
   const searchParams = new URLSearchParams(search);
-
-  searchParams.set('from', String(range.from.valueOf()));
-  searchParams.set('to', String(range.to.valueOf()));
+  const relative = panel?.timeFrom;
+  if (relative) {
+    const { from, to } = rangeUtil.relativeToTimeRange({ from: parseInt(relative, 10) * 60, to: 0 });
+    searchParams.set('from', String(from.valueOf()));
+    searchParams.set('to', String(to.valueOf()));
+  } else {
+    searchParams.set('from', String(range.from.valueOf()));
+    searchParams.set('to', String(range.to.valueOf()));
+  }
   searchParams.set('orgId', String(orgId));
 
   if (!useCurrentTimeRange) {
