@@ -49,6 +49,12 @@ const scrollIntoView = (ref: string) => {
 // at the level of each panel, e.g. TableContainer, NodeGraphContainer etc.
 
 const items = [
+  // Add Queries item here
+  {
+    title: 'Queries',
+    icon: 'arrow',
+    scrollRef: 'explore-queries',
+  },
   {
     title: 'Prometheus',
     icon: 'gf-prometheus',
@@ -76,8 +82,13 @@ const items = [
   },
   {
     title: 'Traces',
-    icon: 'gf-traces',
+    icon: 'file-alt',
     scrollRef: 'traces',
+  },
+  {
+    title: 'Custom',
+    icon: 'plug',
+    scrollRef: 'explore-custom',
   },
 ];
 
