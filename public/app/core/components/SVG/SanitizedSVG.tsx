@@ -34,12 +34,12 @@ function getCleanSVG(code: string): string {
 function svgStyleCleanup(elementCode: string) {
   let svgId = elementCode.match(new RegExp('<svg.*id\\s*=\\s*([\'"])(.*?)\\1'))?.[2];
   if (!svgId) {
-    const pos = elementCode.indexOf('<svg') + 5;
     svgId = `x${uuidv4()}`;
+    const pos = elementCode.indexOf('<svg') + 5;
     elementCode = elementCode.substring(0, pos) + `id="${svgId}" ` + elementCode.substring(pos);
   }
 
-  const matchStyle = elementCode.match(new RegExp('<style type="text\\/css"[^>]*>([^<]*)<\\/style>'));
+  const matchStyle = elementCode.match(new RegExp('<style type="text/css">([\\s\\S]*?)<\\/style>'));
   if (matchStyle) {
     let svgStyle = matchStyle[0];
     let replacedId = svgStyle.replace(/(#(.*?))?\./g, `#${svgId} .`);
