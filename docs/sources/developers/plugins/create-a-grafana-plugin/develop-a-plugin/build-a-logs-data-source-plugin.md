@@ -659,28 +659,29 @@ export class ExampleDatasource
    */
   toggleQueryFilter(query: ExampleQuery, filter: ToggleFilterAction): LokiQuery {
     const expression = query.query; // The current query expression.
+    const { key, value } = filter.options;
     // We currently support 2 types of filter: FILTER_FOR (positive) and FILTER_OUT (negative).
     switch (filter.type) {
       case 'FILTER_FOR': {
         // This gives the user the ability to toggle a filter on and off.
-        expression = queryHasPositiveFilter(expression, filter.options.key, value)
-          ? removePositiveFilterFromQuery(expression, filter.options.key, value)
-          : addPositiveFilterToQuery(expression, filter.options.key, value);
+        expression = queryHasPositiveFilter(expression, key, value)
+          ? removePositiveFilterFromQuery(expression, key, value)
+          : addPositiveFilterToQuery(expression, key, value);
         break;
       }
       case 'FILTER_OUT': {
         // If there is a positive filter with the same key and value, remove it.
-        if (queryHasPositiveFilter(expression, filter.options.key, value)) {
-          expression = removePositiveLabelFromQuery(expression, filter.options.key, value);
+        if (queryHasPositiveFilter(expression, key, value)) {
+          expression = removePositiveLabelFromQuery(expression, key, value);
         }
         // Add the inequality filter to the query.
-        expression = addNegativeFilterToQuery(expression, filter.options.key, value);
+        expression = addNegativeFilterToQuery(expression, key, value);
         break;
       }
       default:
         break;
     }
-    return { ...query, expr: expression };
+    return { ...query, query: expression };
   }
 }
 ```
