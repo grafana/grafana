@@ -300,15 +300,11 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 
 	g.websocketHandler = func(ctx *contextmodel.ReqContext) {
 		user := ctx.SignedInUser
-		namespaceID, userID := user.GetNamespacedID()
-
-		if namespaceID != identity.NamespaceUser {
-			return // Only users can connect to Live
-		}
+		_, identifier := user.GetNamespacedID()
 
 		// Centrifuge expects Credentials in context with a current user ID.
 		cred := &centrifuge.Credentials{
-			UserID: userID,
+			UserID: identifier,
 		}
 		newCtx := centrifuge.SetCredentials(ctx.Req.Context(), cred)
 		newCtx = livecontext.SetContextSignedUser(newCtx, user)
