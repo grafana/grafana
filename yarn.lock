@@ -3939,9 +3939,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/scenes@portal:/home/torkel/dev/scenes/packages/scenes::locator=grafana%40workspace%3A.":
-  version: 0.0.0-use.local
-  resolution: "@grafana/scenes@portal:/home/torkel/dev/scenes/packages/scenes::locator=grafana%40workspace%3A."
+"@grafana/scenes@npm:v0.29.2":
+  version: 0.29.2
+  resolution: "@grafana/scenes@npm:0.29.2"
   dependencies:
     "@grafana/e2e-selectors": 10.0.2
     react-grid-layout: 1.3.4
@@ -3953,8 +3953,9 @@ __metadata:
     "@grafana/runtime": 10.0.3
     "@grafana/schema": 10.0.3
     "@grafana/ui": 10.0.3
+  checksum: 046dab6890f346c2a42e682ebddffab819388faa2f37ad67e5ecb249695044e487f14480fbcd49db55a8da8ffa189b73c2f2d60b78b1b1941d096f0c21dc1160
   languageName: node
-  linkType: soft
+  linkType: hard
 
 "@grafana/schema@10.2.0-pre, @grafana/schema@workspace:*, @grafana/schema@workspace:packages/grafana-schema":
   version: 0.0.0-use.local
@@ -19228,7 +19229,7 @@ __metadata:
     "@grafana/lezer-traceql": 0.0.4
     "@grafana/monaco-logql": ^0.0.7
     "@grafana/runtime": "workspace:*"
-    "@grafana/scenes": "portal:/home/torkel/dev/scenes/packages/scenes"
+    "@grafana/scenes": v0.29.2
     "@grafana/schema": "workspace:*"
     "@grafana/tsconfig": ^1.3.0-rc1
     "@grafana/ui": "workspace:*"

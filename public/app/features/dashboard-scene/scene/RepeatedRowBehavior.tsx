@@ -107,15 +107,6 @@ export class RepeatedRowBehavior extends SceneObjectBase<RepeatedRowBehaviorStat
       rows.push(rowClone);
     }
 
-    // Maintain the first row instance as our parent / rowToRepeat
-    // if (rows.length > 0) {
-    //   rowToRepeat.setState({
-    //     children: rows[0].state.children,
-    //     $variables: rows[0].state.$variables,
-    //   });
-    //   rows[0] = rowToRepeat;
-    // }
-
     layout.setState({ children: rows });
 
     // In case we updated our height the grid layout needs to be update
@@ -140,8 +131,6 @@ export class RepeatedRowBehavior extends SceneObjectBase<RepeatedRowBehaviorStat
         }),
         children,
       });
-      // TODO how to deal with de-activation?
-      rowToRepeat.state.$variables?.activate();
       return rowToRepeat;
     }
 
