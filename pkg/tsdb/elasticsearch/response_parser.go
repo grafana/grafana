@@ -56,7 +56,7 @@ func parseResponse(ctx context.Context, responses []*es.SearchResponse, targets 
 		if res.Error != nil {
 			mt, _ := json.Marshal(target)
 			me, _ := json.Marshal(res.Error)
-			logger.Error("Error response from Elasticsearch", "err", string(me), "query", string(mt))
+			logger.Error("Error response from Elasticsearch", "error", string(me), "query", string(mt))
 			errResult := getErrorFromElasticResponse(res)
 			result.Responses[target.RefID] = backend.DataResponse{
 				Error: errors.New(errResult),
@@ -94,7 +94,7 @@ func parseResponse(ctx context.Context, responses []*es.SearchResponse, targets 
 			logger.Debug("Processed metric query response")
 			if err != nil {
 				mt, _ := json.Marshal(target)
-				logger.Error("Error processing buckets", "err", err, "query", string(mt), "aggregationsLength", len(res.Aggregations))
+				logger.Error("Error processing buckets", "error", err, "query", string(mt), "aggregationsLength", len(res.Aggregations))
 				return &backend.QueryDataResponse{}, err
 			}
 			nameFields(queryRes, target)
@@ -104,7 +104,7 @@ func parseResponse(ctx context.Context, responses []*es.SearchResponse, targets 
 		}
 	}
 
-	logger.Debug("Finished processing responses", "took", time.Since(start), "responsesLength", len(result.Responses))
+	logger.Info("Finished processing responses", "duration", time.Since(start), "responsesLength", len(result.Responses), "queriesLength", len(targets), "action", "parseResponse")
 	return &result, nil
 }
 

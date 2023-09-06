@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -49,7 +50,7 @@ var NewClient = func(ctx context.Context, ds *DatasourceInfo, timeRange backend.
 
 	ip, err := newIndexPattern(ds.Interval, ds.Database)
 	if err != nil {
-		logger.Error("Failed creating index pattern", "err", err, "interval", ds.Interval, "index", ds.Database)
+		logger.Error("Failed creating index pattern", "error", err, "interval", ds.Interval, "index", ds.Database)
 		return nil, err
 	}
 
@@ -120,7 +121,7 @@ func (c *baseClientImpl) encodeBatchRequests(requests []*multiRequest) ([]byte, 
 	}
 
 	elapsed := time.Since(start)
-	c.logger.Debug("Completed encoding of batch requests to json", "took", elapsed)
+	c.logger.Debug("Completed encoding of batch requests to json", "duration", elapsed)
 
 	return payload.Bytes(), nil
 }
@@ -160,28 +161,32 @@ func (c *baseClientImpl) ExecuteMultisearch(r *MultiSearchRequest) (*MultiSearch
 	start := time.Now()
 	clientRes, err := c.executeBatchRequest("_msearch", queryParams, multiRequests)
 	if err != nil {
-		c.logger.Error("Error received from Elasticsearch", "err", err, "status", clientRes.StatusCode, "took", time.Since(start))
+		status := "error"
+		if errors.Is(err, context.Canceled) {
+			status = "cancelled"
+		}
+		c.logger.Error("Error received from Elasticsearch", "error", err, "status", status, "statusCode", clientRes.StatusCode, "duration", time.Since(start), "action", "databaseRequest")
 		return nil, err
 	}
 	res := clientRes
 	defer func() {
 		if err := res.Body.Close(); err != nil {
-			c.logger.Warn("Failed to close response body", "err", err)
+			c.logger.Warn("Failed to close response body", "error", err)
 		}
 	}()
 
-	c.logger.Debug("Response received from Elasticsearch", "status", res.StatusCode, "contentLength", res.ContentLength, "took", time.Since(start))
+	c.logger.Info("Response received from Elasticsearch", "status", "ok", "statusCode", res.StatusCode, "contentLength", res.ContentLength, "duration", time.Since(start), "action", "databaseRequest")
 
 	start = time.Now()
 	var msr MultiSearchResponse
 	dec := json.NewDecoder(res.Body)
 	err = dec.Decode(&msr)
 	if err != nil {
-		c.logger.Error("Failed to decode response from Elasticsearch", "err", err, "took", time.Since(start))
+		c.logger.Error("Failed to decode response from Elasticsearch", "error", err, "duration", time.Since(start))
 		return nil, err
 	}
 
-	c.logger.Debug("Completed decoding of response from Elasticsearch", "took", time.Since(start))
+	c.logger.Debug("Completed decoding of response from Elasticsearch", "duration", time.Since(start))
 
 	msr.Status = res.StatusCode
 

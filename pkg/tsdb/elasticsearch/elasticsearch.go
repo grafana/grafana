@@ -40,10 +40,10 @@ func ProvideService(httpClientProvider httpclient.Provider) *Service {
 func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	dsInfo, err := s.getDSInfo(ctx, req.PluginContext)
 	_, fromAlert := req.Headers[ngalertmodels.FromAlertHeaderName]
-	logger := eslog.FromContext(ctx).New("api", "QueryData", "fromAlert", fromAlert)
+	logger := eslog.FromContext(ctx).New("endpoint", "queryData", "fromAlert", fromAlert, "dsName", req.PluginContext.DataSourceInstanceSettings.Name, "dsUID", req.PluginContext.DataSourceInstanceSettings.UID, "pluginId", req.PluginContext.PluginID)
 
 	if err != nil {
-		logger.Error("Failed to get data source info", "err", err)
+		logger.Error("Failed to get data source info", "error", err)
 		return &backend.QueryDataResponse{}, err
 	}
 
@@ -223,7 +223,7 @@ func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceReq
 
 	defer func() {
 		if err := response.Body.Close(); err != nil {
-			logger.Warn("Failed to close response body", "err", err)
+			logger.Warn("Failed to close response body", "error", err)
 		}
 	}()
 

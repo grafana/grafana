@@ -21,12 +21,12 @@ func parseQuery(tsdbQuery []backend.DataQuery, logger log.Logger) ([]*Query, err
 		rawQuery := model.Get("query").MustString()
 		bucketAggs, err := parseBucketAggs(model)
 		if err != nil {
-			logger.Error("Failed to parse bucket aggs in query", "err", err, "model", string(q.JSON))
+			logger.Error("Failed to parse bucket aggs in query", "error", err, "model", string(q.JSON))
 			return nil, err
 		}
 		metrics, err := parseMetrics(model)
 		if err != nil {
-			logger.Error("Failed to parse metrics in query", "err", err, "model", string(q.JSON))
+			logger.Error("Failed to parse metrics in query", "error", err, "model", string(q.JSON))
 			return nil, err
 		}
 		alias := model.Get("alias").MustString("")
