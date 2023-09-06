@@ -3,40 +3,25 @@ package commands
 import (
 	"context"
 	"fmt"
-	_ "net/http/pprof"
 	"os"
-	"os/signal"
 	"runtime/debug"
 	"strings"
-	"syscall"
-	"time"
 
 	"github.com/urfave/cli/v2"
 
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/infra/process"
 	"github.com/grafana/grafana/pkg/server"
-	_ "github.com/grafana/grafana/pkg/services/alerting/conditions"
-	_ "github.com/grafana/grafana/pkg/services/alerting/notifiers"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-type ServerOptions struct {
-	Version     string
-	Commit      string
-	BuildBranch string
-	BuildStamp  string
-	Context     *cli.Context
-}
-
-func ServerCommand(version, commit, buildBranch, buildstamp string) *cli.Command {
+func TargetCommand(version, commit, buildBranch, buildstamp string) *cli.Command {
 	return &cli.Command{
-		Name:  "server",
-		Usage: "run the grafana server",
+		Name:  "target",
+		Usage: "target specific grafana dskit services",
 		Flags: commonFlags,
 		Action: func(context *cli.Context) error {
-			return RunServer(ServerOptions{
+			return RunTargetServer(ServerOptions{
 				Version:     version,
 				Commit:      commit,
 				BuildBranch: buildBranch,
@@ -44,11 +29,10 @@ func ServerCommand(version, commit, buildBranch, buildstamp string) *cli.Command
 				Context:     context,
 			})
 		},
-		Subcommands: []*cli.Command{TargetCommand(version, commit, buildBranch, buildstamp)},
 	}
 }
 
-func RunServer(opts ServerOptions) error {
+func RunTargetServer(opts ServerOptions) error {
 	if Version || VerboseVersion {
 		fmt.Printf("Version %s (commit: %s, branch: %s)\n", opts.Version, opts.Commit, opts.BuildBranch)
 		if VerboseVersion {
@@ -104,7 +88,7 @@ func RunServer(opts ServerOptions) error {
 		return err
 	}
 
-	s, err := server.Initialize(
+	s, err := server.InitializeModuleServer(
 		cfg,
 		server.Options{
 			PidFile:     PidFile,
@@ -121,53 +105,4 @@ func RunServer(opts ServerOptions) error {
 	ctx := context.Background()
 	go listenToSystemSignals(ctx, s)
 	return s.Run()
-}
-
-func validPackaging(packaging string) string {
-	validTypes := []string{"dev", "deb", "rpm", "docker", "brew", "hosted", "unknown"}
-	for _, vt := range validTypes {
-		if packaging == vt {
-			return packaging
-		}
-	}
-	return "unknown"
-}
-
-// a small interface satisfied by the server and moduleserver
-type gserver interface {
-	Shutdown(context.Context, string) error
-}
-
-func listenToSystemSignals(ctx context.Context, s gserver) {
-	signalChan := make(chan os.Signal, 1)
-	sighupChan := make(chan os.Signal, 1)
-
-	signal.Notify(sighupChan, syscall.SIGHUP)
-	signal.Notify(signalChan, os.Interrupt, syscall.SIGTERM)
-
-	for {
-		select {
-		case <-sighupChan:
-			if err := log.Reload(); err != nil {
-				fmt.Fprintf(os.Stderr, "Failed to reload loggers: %s\n", err)
-			}
-		case sig := <-signalChan:
-			ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
-			defer cancel()
-			if err := s.Shutdown(ctx, fmt.Sprintf("System signal: %s", sig)); err != nil {
-				fmt.Fprintf(os.Stderr, "Timed out waiting for server to shut down\n")
-			}
-			return
-		}
-	}
-}
-
-func checkPrivileges() {
-	elevated, err := process.IsRunningWithElevatedPrivileges()
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error checking server process execution privilege. error: %s\n", err.Error())
-	}
-	if elevated {
-		fmt.Println("Grafana server is running with elevated privileges. This is not recommended")
-	}
 }
