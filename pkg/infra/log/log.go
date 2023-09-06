@@ -18,6 +18,7 @@ import (
 	gokitlog "github.com/go-kit/log"
 	"github.com/go-kit/log/level"
 	"github.com/go-stack/stack"
+	"github.com/google/uuid"
 	"github.com/mattn/go-isatty"
 	"gopkg.in/ini.v1"
 
@@ -32,7 +33,7 @@ var (
 	root            *logManager
 	now             = time.Now
 	logTimeFormat   = time.RFC3339Nano
-	ctxLogProviders = []ContextualLogProviderFunc{}
+	ctxLogProviders = []contextualLogProviderFuncStruct{}
 )
 
 const (
@@ -196,7 +197,7 @@ func (cl *ConcreteLogger) FromContext(ctx context.Context) Logger {
 	args := []any{}
 
 	for _, p := range ctxLogProviders {
-		if pArgs, exists := p(ctx); exists {
+		if pArgs, exists := p.fun(ctx); exists {
 			args = append(args, pArgs...)
 		}
 	}
@@ -264,10 +265,24 @@ func WithSuffix(ctxLogger *ConcreteLogger, ctx ...any) *ConcreteLogger {
 // ContextualLogProviderFunc contextual log provider function definition.
 type ContextualLogProviderFunc func(ctx context.Context) ([]any, bool)
 
+type contextualLogProviderFuncStruct struct {
+	fun func(ctx context.Context) ([]any, bool)
+	idx string
+}
+
 // RegisterContextualLogProvider registers a ContextualLogProviderFunc
 // that will be used to provide context when Logger.FromContext is called.
-func RegisterContextualLogProvider(mw ContextualLogProviderFunc) {
-	ctxLogProviders = append(ctxLogProviders, mw)
+func RegisterContextualLogProvider(mw ContextualLogProviderFunc) func() {
+	idx := uuid.NewString()
+	ctxLogProviders = append(ctxLogProviders, contextualLogProviderFuncStruct{fun: mw, idx: idx})
+	return func() {
+		for i, c := range ctxLogProviders {
+			if c.idx == idx {
+				ctxLogProviders = append(ctxLogProviders[:i], ctxLogProviders[i+1:]...)
+				return
+			}
+		}
+	}
 }
 
 var logLevels = map[string]level.Option{

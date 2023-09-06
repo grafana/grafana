@@ -67,6 +67,11 @@ func instrumentPluginRequest(ctx context.Context, cfg Cfg, pluginCtx *backend.Pl
 	start := time.Now()
 	timeBeforePluginRequest := log.TimeSinceStart(ctx, start)
 
+	unregisterContextLog := log.RegisterContextualLogProvider(func(ctx context.Context) ([]any, bool) {
+		return []any{"endpoint", endpoint, "dsName", pluginCtx.DataSourceInstanceSettings.Name, "dsUID", pluginCtx.DataSourceInstanceSettings.UID}, true
+	})
+	defer unregisterContextLog()
+
 	err := fn()
 	if err != nil {
 		status = statusError
