@@ -3111,6 +3111,7 @@ steps:
 - commands:
   - export GRAFANA_DIR=$$(pwd)
   - cd /src && ./scripts/drone_publish_main.sh
+  - mv dist ${DRONE_WORKSPACE}
   environment:
     _EXPERIMENTAL_DAGGER_CLOUD_TOKEN:
       from_secret: dagger_token
@@ -3131,8 +3132,6 @@ steps:
   volumes:
   - name: docker
     path: /var/run/docker.sock
-  - name: dist
-    path: /src/dist
 trigger:
   branch: main
   event:
@@ -3170,6 +3169,7 @@ steps:
 - commands:
   - export GRAFANA_DIR=$$(pwd)
   - cd /src && ./scripts/drone_publish_tag_grafana.sh
+  - mv dist ${DRONE_WORKSPACE}
   environment:
     _EXPERIMENTAL_DAGGER_CLOUD_TOKEN:
       from_secret: dagger_token
@@ -3190,8 +3190,6 @@ steps:
   volumes:
   - name: docker
     path: /var/run/docker.sock
-  - name: dist
-    path: /src/dist
 trigger:
   event:
     exclude:
@@ -3292,6 +3290,7 @@ steps:
 - commands:
   - export GRAFANA_DIR=$$(pwd)
   - cd /src && ./scripts/drone_build_nightly_grafana.sh
+  - mv dist ${DRONE_WORKSPACE}
   environment:
     _EXPERIMENTAL_DAGGER_CLOUD_TOKEN:
       from_secret: dagger_token
@@ -3312,12 +3311,11 @@ steps:
   volumes:
   - name: docker
     path: /var/run/docker.sock
-  - name: dist
-    path: /src/dist
 - commands:
   - printenv GCP_KEY_BASE64 | base64 -d > /tmp/key.json
   - gcloud auth activate-service-account --key-file=/tmp/key.json
-  - gcloud storage cp -r /src/dist/nightly-${DRONE_COMMIT_SHA:0:8} $${DESTINATION}/nightly/nightly-${DRONE_COMMIT_SHA:0:8}
+  - gcloud storage cp -r $${DRONE_WORKSPACE}/dist/nightly-${DRONE_COMMIT_SHA:0:8}
+    $${DESTINATION}/nightly/nightly-${DRONE_COMMIT_SHA:0:8}
   depends_on:
   - rgm-build
   environment:
@@ -3337,9 +3335,6 @@ steps:
       from_secret: packages_gpg_public_key
   image: google/cloud-sdk:alpine
   name: rgm-copy
-  volumes:
-  - name: dist
-    path: /src/dist
 trigger:
   event:
     include:
@@ -4947,6 +4942,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: b66cab1a875be9e018b36b1ae63f8622ef20c66764c0643596245faf8706a0fa
+hmac: e75cffc1c9f3a1a87a2037535c671b625c802b3f2a2f4fcbc90c804d71a9aad9
 
 ...

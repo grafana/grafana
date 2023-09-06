@@ -99,14 +99,12 @@ def rgm_build(script = "drone_publish_main.sh"):
         "commands": [
             "export GRAFANA_DIR=$$(pwd)",
             "cd /src && ./scripts/{}".format(script),
+            "mv dist ${DRONE_WORKSPACE}",
         ],
         "environment": rgm_env_secrets,
         # The docker socket is a requirement for running dagger programs
         # In the future we should find a way to use dagger without mounting the docker socket.
-        "volumes": [
-            {"name": "docker", "path": "/var/run/docker.sock"},
-            {"name": "dist", "path": "/src/dist"},
-        ],
+        "volumes": [{"name": "docker", "path": "/var/run/docker.sock"}],
     }
 
     return [
@@ -120,13 +118,10 @@ def rgm_copy(src, dst):
         "commands": [
             "printenv GCP_KEY_BASE64 | base64 -d > /tmp/key.json",
             "gcloud auth activate-service-account --key-file=/tmp/key.json",
-            "gcloud storage cp -r {} {}".format(src, dst),
+            "gcloud storage cp -r $${{DRONE_WORKSPACE}}/{} {}".format(src, dst),
         ],
         "environment": rgm_env_secrets,
         "depends_on": ["rgm-build"],
-        "volumes": [
-            {"name": "dist", "path": "/src/dist"},
-        ],
     }
 
     return [
@@ -163,7 +158,7 @@ def rgm_tag():
 def rgm_nightly():
     ver = "nightly-${DRONE_COMMIT_SHA:0:8}"
     dst = "$${{DESTINATION}}/nightly/{}".format(ver)
-    src = "/src/dist/{}".format(ver)
+    src = "dist/{}".format(ver)
     return pipeline(
         name = "rgm-nightly-prerelease",
         trigger = nightly_trigger,
