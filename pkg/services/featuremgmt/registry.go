@@ -602,8 +602,9 @@ var (
 		{
 			Name:         "toggleLabelsInLogsUI",
 			Description:  "Enable toggleable filters in log details view",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStageGeneralAvailability,
 			FrontendOnly: true,
+			Expression:   "true", // enabled by default
 			Owner:        grafanaObservabilityLogsSquad,
 		},
 		{
