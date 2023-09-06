@@ -5,6 +5,8 @@ import { useToggle } from 'react-use';
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2, ToolbarButton } from '@grafana/ui';
 
+import { useContentOutlineContext } from './ContentOutlineContext';
+
 const getStyles = (theme: GrafanaTheme2, expanded: boolean, visible: boolean) => {
   return {
     content: css({
@@ -28,75 +30,17 @@ const getStyles = (theme: GrafanaTheme2, expanded: boolean, visible: boolean) =>
 };
 
 interface ContentOutlineProps {
-  // items: ItemProps[],
   visible: boolean;
 }
-
-interface ItemProps {
-  title: string;
-  icon: string;
-  scrollRef: string;
-}
-
-const scrollIntoView = (ref: string) => {
-  const el = document.getElementById(ref);
-  if (el) {
-    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }
-};
-
-// TODO: haris - scrollRef should have paneId + panel title = this should be implemented
-// at the level of each panel, e.g. TableContainer, NodeGraphContainer etc.
-
-const items = [
-  // Add Queries item here
-  {
-    title: 'Queries',
-    icon: 'arrow',
-    scrollRef: 'explore-queries',
-  },
-  {
-    title: 'Prometheus',
-    icon: 'gf-prometheus',
-    scrollRef: 'prometheus',
-  },
-  {
-    title: 'Table',
-    icon: 'table',
-    scrollRef: 'table',
-  },
-  {
-    title: 'Logs',
-    icon: 'gf-logs',
-    scrollRef: 'explore-logs',
-  },
-  {
-    title: 'Node Graph',
-    icon: 'code-branch',
-    scrollRef: 'node-graph',
-  },
-  {
-    title: 'Graph',
-    icon: 'graph-bar',
-    scrollRef: 'explore-graph',
-  },
-  {
-    title: 'Traces',
-    icon: 'file-alt',
-    scrollRef: 'traces',
-  },
-  {
-    title: 'Custom',
-    icon: 'plug',
-    scrollRef: 'explore-custom',
-  },
-];
 
 const ContentOutline = ({ visible }: ContentOutlineProps) => {
   const [expanded, toggleExpanded] = useToggle(false);
   const style = useStyles2((theme) => getStyles(theme, expanded, visible));
+  const { outlineItems } = useContentOutlineContext();
 
-  console.log('contentOutlineVisible', visible);
+  const scrollIntoView = (ref: HTMLElement | null) => {
+    ref?.scrollIntoView({ behavior: 'smooth' });
+  };
 
   return (
     <div className={style.content}>
@@ -107,12 +51,12 @@ const ContentOutline = ({ visible }: ContentOutlineProps) => {
       >
         {expanded && 'Hide Content Outline'}
       </ToolbarButton>
-      {items.map((item: ItemProps) => (
+      {outlineItems.map((item) => (
         <ToolbarButton
-          key={item.title}
+          key={item.id}
           className={style.buttonStyles}
           icon={item.icon}
-          onClick={() => scrollIntoView(item.scrollRef)}
+          onClick={() => scrollIntoView(item.ref)}
         >
           {expanded && item.title}
         </ToolbarButton>
