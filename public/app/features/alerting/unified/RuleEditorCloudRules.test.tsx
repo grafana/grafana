@@ -13,6 +13,12 @@ import { fetchRulerRules, fetchRulerRulesGroup, fetchRulerRulesNamespace, setRul
 import { ExpressionEditorProps } from './components/rule-editor/ExpressionEditor';
 import { mockApi, mockFeatureDiscoveryApi, setupMswServer } from './mockApi';
 import { disableRBAC, mockDataSource } from './mocks';
+import {
+  defaultAlertmanagerChoiceResponse,
+  emptyExternalAlertmanagersResponse,
+  mockAlertmanagerChoiceResponse,
+  mockAlertmanagersResponse,
+} from './mocks/alertmanagerApi';
 import { fetchRulerRulesIfNotFetchedYet } from './state/actions';
 import { setupDataSources } from './testSetup/datasources';
 import { buildInfoResponse } from './testSetup/featureDiscovery';
@@ -48,6 +54,8 @@ setupDataSources(dataSources.default);
 const server = setupMswServer();
 
 mockFeatureDiscoveryApi(server).discoverDsFeatures(dataSources.default, buildInfoResponse.mimir);
+mockAlertmanagerChoiceResponse(server, defaultAlertmanagerChoiceResponse);
+mockAlertmanagersResponse(server, emptyExternalAlertmanagersResponse);
 mockApi(server).eval({ results: {} });
 
 // these tests are rather slow because we have to wait for various API calls and mocks to be called
@@ -110,10 +118,11 @@ describe('RuleEditor cloud', () => {
     expect(removeExpressionsButtons).toHaveLength(2);
 
     // Needs to wait for featrue discovery API call to finish - Check if ruler enabled
-    await waitFor(() => expect(screen.getByText('Switch to data source-managed alert rule')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText('Data source-managed')).toBeInTheDocument());
 
-    const switchToCloudButton = screen.getByText('Switch to data source-managed alert rule');
+    const switchToCloudButton = screen.getByText('Data source-managed');
     expect(switchToCloudButton).toBeInTheDocument();
+    expect(switchToCloudButton).not.toBeDisabled();
 
     await user.click(switchToCloudButton);
 
