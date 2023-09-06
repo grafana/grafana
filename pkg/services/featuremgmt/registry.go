@@ -237,7 +237,7 @@ var (
 		},
 		{
 			Name:         "nestedFolderPicker",
-			Description:  "Enables the new folder picker to work with nested folders. Requires the folderPicker feature flag",
+			Description:  "Enables the new folder picker to work with nested folders. Requires the nestedFolders feature flag",
 			Stage:        FeatureStageGeneralAvailability,
 			Owner:        grafanaFrontendPlatformSquad,
 			FrontendOnly: true,
@@ -729,6 +729,13 @@ var (
 			FrontendOnly:    false,
 			Owner:           grafanaSharingSquad,
 			RequiresRestart: true,
+		},
+		{
+			Name:         "newBrowseDashboards",
+			Description:  "New browse/manage dashboards UI",
+			Stage:        FeatureStagePublicPreview,
+			Owner:        grafanaFrontendPlatformSquad,
+			FrontendOnly: true,
 		},
 	}
 )

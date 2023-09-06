@@ -28,7 +28,7 @@ Some features are enabled by default. You can disable these feature by setting t
 | `redshiftAsyncQueryDataSupport`                  | Enable async query data support for Redshift                                                                                                                                                        | Yes                |
 | `athenaAsyncQueryDataSupport`                    | Enable async query data support for Athena                                                                                                                                                          | Yes                |
 | `newPanelChromeUI`                               | Show updated look and feel of grafana-ui PanelChrome: panel header, icons, and menu                                                                                                                 | Yes                |
-| `nestedFolderPicker`                             | Enables the new folder picker to work with nested folders. Requires the folderPicker feature flag                                                                                                   | Yes                |
+| `nestedFolderPicker`                             | Enables the new folder picker to work with nested folders. Requires the nestedFolders feature flag                                                                                                  | Yes                |
 | `accessTokenExpirationCheck`                     | Enable OAuth access_token expiration check and token refresh using the refresh_token                                                                                                                |                    |
 | `emptyDashboardPage`                             | Enable the redesigned user interface of a dashboard page that includes no panels                                                                                                                    | Yes                |
 | `disablePrometheusExemplarSampling`              | Disable Prometheus exemplar sampling                                                                                                                                                                |                    |
@@ -72,6 +72,7 @@ Some features are enabled by default. You can disable these feature by setting t
 | `sqlDatasourceDatabaseSelection` | Enables previous SQL data source dataset dropdown behavior                                                                                                                                   |
 | `splitScopes`                    | Support faster dashboard and folder search by splitting permission scopes into parts                                                                                                         |
 | `reportingRetries`               | Enables rendering retries for the reporting feature                                                                                                                                          |
+| `newBrowseDashboards`            | New browse/manage dashboards UI                                                                                                                                                              |
 
 ## Experimental feature toggles
 

@@ -91,6 +91,7 @@ async function fetchDashboard(
         // only the folder API has information about ancestors
         // get parent folder (if it exists) and put it in the store
         // this will be used to populate the full breadcrumb trail
+        // Doesn't use newBrowseDashboardsEnabled() because this is only for actually nested folders
         if (config.featureToggles.nestedFolders && dashDTO.meta.folderUid) {
           await dispatch(getFolderByUid(dashDTO.meta.folderUid));
         }
@@ -114,6 +115,7 @@ async function fetchDashboard(
         // only the folder API has information about ancestors
         // get parent folder (if it exists) and put it in the store
         // this will be used to populate the full breadcrumb trail
+        // Doesn't use newBrowseDashboardsEnabled() because this is only for actually nested folders
         if (config.featureToggles.nestedFolders && args.urlFolderUid) {
           await dispatch(getFolderByUid(args.urlFolderUid));
         }
