@@ -117,7 +117,7 @@ def rgm_copy(src, dst):
         "commands": [
             "printenv GCP_KEY_BASE64 | base64 -d > /tmp/key.json",
             "gcloud auth activate-service-account --key-file=/tmp/key.json",
-            "gcloud storage cp {} {}".format(src, dst),
+            "gcloud storage cp -r {} {}".format(src, dst),
         ],
         "environment": rgm_env_secrets,
     }
