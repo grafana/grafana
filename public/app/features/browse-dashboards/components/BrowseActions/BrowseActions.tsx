@@ -1,11 +1,11 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import React, { useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { reportInteraction } from '@grafana/runtime';
-import { Button, useStyles2 } from '@grafana/ui';
+import { config, reportInteraction } from '@grafana/runtime';
+import { Button, Tooltip, useStyles2 } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
-import { Trans } from 'app/core/internationalization';
+import { t, Trans } from 'app/core/internationalization';
 import { useSearchStateManager } from 'app/features/search/state/SearchStateManager';
 import { useDispatch } from 'app/types';
 import { ShowModalReactEvent } from 'app/types/events';
@@ -26,6 +26,12 @@ export function BrowseActions() {
   const [deleteItems] = useDeleteItemsMutation();
   const [moveItems] = useMoveItemsMutation();
   const [, stateManager] = useSearchStateManager();
+
+  // Folders can only be moved if nested folders is enabled
+  const moveIsInvalid = useMemo(
+    () => !config.featureToggles.nestedFolders && Object.values(selectedItems.folder).some((v) => v),
+    [selectedItems]
+  );
 
   const isSearching = stateManager.hasSearchFilters();
 
@@ -74,11 +80,21 @@ export function BrowseActions() {
     );
   };
 
+  const moveButton = (
+    <Button onClick={showMoveModal} variant="secondary" disabled={moveIsInvalid}>
+      <Trans i18nKey="browse-dashboards.action.move-button">Move</Trans>
+    </Button>
+  );
+
   return (
     <div className={styles.row} data-testid="manage-actions">
-      <Button onClick={showMoveModal} variant="secondary">
-        <Trans i18nKey="browse-dashboards.action.move-button">Move</Trans>
-      </Button>
+      {moveIsInvalid ? (
+        <Tooltip content={t('browse-dashboards.action.cannot-move-folders', 'Folders can not be moved')}>
+          {moveButton}
+        </Tooltip>
+      ) : (
+        moveButton
+      )}
 
       <Button onClick={showDeleteModal} variant="destructive">
         <Trans i18nKey="browse-dashboards.action.delete-button">Delete</Trans>
@@ -96,13 +112,12 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
 });
 
-type actionType = 'move' | 'delete';
-const actionMap: Record<actionType, string> = {
+const actionMap = {
   move: 'grafana_manage_dashboards_item_moved',
   delete: 'grafana_manage_dashboards_item_deleted',
-};
+} as const;
 
-function trackAction(action: actionType, selectedItems: Omit<DashboardTreeSelection, 'panel' | '$all'>) {
+function trackAction(action: keyof typeof actionMap, selectedItems: Omit<DashboardTreeSelection, 'panel' | '$all'>) {
   const selectedDashboards = Object.keys(selectedItems.dashboard).filter((uid) => selectedItems.dashboard[uid]);
   const selectedFolders = Object.keys(selectedItems.folder).filter((uid) => selectedItems.folder[uid]);
 

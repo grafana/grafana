@@ -160,7 +160,7 @@ export function getAppRoutes(): RouteDescriptor[] {
             () => import(/* webpackChunkName: "FolderPermissions"*/ 'app/features/folders/FolderPermissions')
           ),
     },
-    {
+    !newBrowseDashboardsEnabled() && {
       path: '/dashboards/f/:uid/:slug/settings',
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "FolderSettingsPage"*/ 'app/features/folders/FolderSettingsPage')
