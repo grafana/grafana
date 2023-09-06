@@ -1,6 +1,5 @@
 ---
 aliases:
-  - meta-monitoring/
   - alerting/meta-monitoring/
   - ../set-up/meta-monitoring/
 canonical: https://grafana.com/docs/grafana/latest/alerting/monitor/meta-monitoring/
