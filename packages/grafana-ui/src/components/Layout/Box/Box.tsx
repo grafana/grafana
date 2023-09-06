@@ -4,7 +4,7 @@ import React, { ElementType, useCallback } from 'react';
 import { GrafanaTheme2, ThemeSpacingTokens } from '@grafana/data';
 
 import { useStyles2 } from '../../../themes';
-import { ResponsiveProp, getResponsiveStyle } from '../ResponsiveTypes';
+import { ResponsiveProp, getResponsiveStyle } from '../utils/responsiveness';
 
 type Display = 'flex' | 'block' | 'inline' | 'none';
 type BackgroundColor = keyof GrafanaTheme2['colors']['background'];

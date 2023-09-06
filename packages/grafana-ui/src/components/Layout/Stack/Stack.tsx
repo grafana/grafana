@@ -3,7 +3,7 @@ import React from 'react';
 import { ThemeSpacingTokens } from '@grafana/data';
 
 import { Direction, Flex } from '../Flex/Flex';
-import { ResponsiveProp } from '../ResponsiveTypes';
+import { ResponsiveProp } from '../utils/responsiveness';
 
 interface StackProps {
   direction?: ResponsiveProp<Direction>;
