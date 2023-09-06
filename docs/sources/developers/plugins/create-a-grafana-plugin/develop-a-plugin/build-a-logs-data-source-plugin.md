@@ -628,16 +628,13 @@ The [logs details]({{< relref "../../../../explore/logs-integration/#log-details
 To implement toggleable filters support in your data source plugin, you can use the `DataSourceWithToggleableQueryFiltersSupport` API.
 
 ```ts
-import { 
+import {
   queryHasPositiveFilter,
   removePositiveFilterFromQuery,
   addPositiveFilterToQuery,
   addNegativeFilterToQuery,
 } from '../your/own/package/functions';
-import { 
-  DataSourceWithToggleableQueryFiltersSupport,
-  QueryFilterOptions,
-} from '@grafana/data';
+import { DataSourceWithToggleableQueryFiltersSupport, QueryFilterOptions } from '@grafana/data';
 
 export class ExampleDatasource
   extends DataSourceApi<ExampleQuery, ExampleOptions>
@@ -649,7 +646,7 @@ export class ExampleDatasource
   queryHasFilter(query: ExampleQuery, filter: QueryFilterOptions): boolean {
     /**
      * Pass the query and the key => value pair to your query-analyzing function.
-     * We only care about equality/positive filters as only those fields will be 
+     * We only care about equality/positive filters as only those fields will be
      * present in the log lines.
      */
     return queryHasPositiveFilter(query, filter.key, filter.value);
@@ -660,15 +657,16 @@ export class ExampleDatasource
    * If the filter is already present, it should be removed.
    * If the opposite filter is present, it should be replaced.
    */
-  toggleQueryFilter(query: ExampleQuery, filter: ToggleFilterAction): LokiQuery {ç
+  toggleQueryFilter(query: ExampleQuery, filter: ToggleFilterAction): LokiQuery {
+    ç;
     const expression = query.expr; // The current query expression.
     // We currently support 2 types of filter: FILTER_FOR (positive) and FILTER_OUT (negative).
     switch (filter.type) {
       case 'FILTER_FOR': {
         // This gives the user the ability to toggle a filter on and off.
-          expression = queryHasPositiveFilter(expression, filter.options.key, value)
-            ? removePositiveFilterFromQuery(expression, filter.options.key, value)
-            : addPositiveFilterToQuery(expression, filter.options.key, value);
+        expression = queryHasPositiveFilter(expression, filter.options.key, value)
+          ? removePositiveFilterFromQuery(expression, filter.options.key, value)
+          : addPositiveFilterToQuery(expression, filter.options.key, value);
         break;
       }
       case 'FILTER_OUT': {
