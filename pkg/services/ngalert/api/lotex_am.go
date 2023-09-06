@@ -60,7 +60,6 @@ func NewLotexAM(proxy *AlertingProxy, log log.Logger) *LotexAM {
 	}
 }
 
-// Note: redirects requests to external AMs but uses datasources...
 func (am *LotexAM) withAMReq(
 	ctx *contextmodel.ReqContext,
 	method string,
@@ -163,7 +162,6 @@ func (am *LotexAM) RouteDeleteSilence(ctx *contextmodel.ReqContext, silenceID st
 	)
 }
 
-// Note: Check how we pull config from external AMs.
 func (am *LotexAM) RouteGetAlertingConfig(ctx *contextmodel.ReqContext) response.Response {
 	return am.withAMReq(
 		ctx,
@@ -224,7 +222,6 @@ func (am *LotexAM) RouteGetSilences(ctx *contextmodel.ReqContext) response.Respo
 	)
 }
 
-// Note: Check how we update AM config.
 func (am *LotexAM) RoutePostAlertingConfig(ctx *contextmodel.ReqContext, config apimodels.PostableUserConfig) response.Response {
 	yml, err := yaml.Marshal(&config)
 	if err != nil {
