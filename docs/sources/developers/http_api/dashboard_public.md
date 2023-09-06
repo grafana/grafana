@@ -54,12 +54,12 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 
 JSON Body schema:
 
-- **uid** – Optional. Unique identifier when creating a public dashboard. If it is null it will generate a new uid.
-- **accessToken** – Optional. Unique access token. If it is null it will generate a new access token.
-- **timeSelectionEnabled** – Optional. Enable the time picker in the public dashboard. Default value is false.
-- **isEnabled** – Optional. Enable the public dashboard. Default value is false.
-- **annotationsEnabled** – Optional. Show annotations. Default value is false.
-- **share** – Optional. Share mode. Default value is public.
+- **uid** – Optional. Unique identifier when creating a public dashboard. If it's null, it will generate a new uid.
+- **accessToken** – Optional. Unique access token. If it's null, it will generate a new access token.
+- **timeSelectionEnabled** – Optional. Set to `true` to enable the time picker in the public dashboard. The default value is `false`.
+- **isEnabled** – Optional. Set to `true` to enable the public dashboard. The default value is `false`.
+- **annotationsEnabled** – Optional. Set to `true` to show annotations. The default value is `false`.
+- **share** – Optional. Set the share mode. The default value is `public`.
 
 **Example Response**:
 
