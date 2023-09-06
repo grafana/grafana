@@ -455,7 +455,7 @@ func (hs *HTTPServer) postDashboard(c *contextmodel.ReqContext, cmd dashboards.S
 	if newDashboard {
 		limitReached, err := hs.QuotaService.QuotaReached(c, dashboards.QuotaTargetSrv)
 		if err != nil {
-			return response.Error(http.StatusInternalServerError, "failed to get quota", err)
+			return response.Error(http.StatusInternalServerError, "Failed to get quota", err)
 		}
 		if limitReached {
 			return response.Error(http.StatusForbidden, "Quota reached", nil)
@@ -517,7 +517,7 @@ func (hs *HTTPServer) postDashboard(c *contextmodel.ReqContext, cmd dashboards.S
 		}
 
 		if liveerr != nil {
-			hs.log.Warn("unable to broadcast save event", "uid", dashboard.UID, "error", liveerr)
+			hs.log.Warn("Unable to broadcast save event", "uid", dashboard.UID, "error", liveerr)
 		}
 	}
 
@@ -867,7 +867,7 @@ func (hs *HTTPServer) ValidateDashboard(c *contextmodel.ReqContext) response.Res
 	cmd := dashboards.ValidateDashboardCommand{}
 
 	if err := web.Bind(c.Req, &cmd); err != nil {
-		return response.Error(http.StatusBadRequest, "bad request data", err)
+		return response.Error(http.StatusBadRequest, "Bad request data", err)
 	}
 
 	dk := hs.Kinds.Dashboard()
