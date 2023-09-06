@@ -38,7 +38,7 @@ export class PanelRepeaterGridItem extends SceneObjectBase<PanelRepeaterGridItem
 
   private _isWaitingForVariables = false;
 
-  constructor(state: PanelRepeaterGridItemState) {
+  public constructor(state: PanelRepeaterGridItemState) {
     super(state);
 
     this.addActivationHandler(() => this._activationHandler());
@@ -166,15 +166,15 @@ export class PanelRepeaterGridItem extends SceneObjectBase<PanelRepeaterGridItem
     return this.state.maxPerRow ?? 4;
   }
 
-  getRepeatDirection(): RepeatDirection {
+  public getRepeatDirection(): RepeatDirection {
     return this.state.repeatDirection === 'v' ? 'v' : 'h';
   }
 
-  getClassName() {
+  public getClassName() {
     return 'panel-repeater-grid-item';
   }
 
-  static Component = ({ model }: SceneComponentProps<PanelRepeaterGridItem>) => {
+  public static Component = ({ model }: SceneComponentProps<PanelRepeaterGridItem>) => {
     const { repeatedPanels, itemHeight } = model.useState();
     const itemCount = repeatedPanels?.length ?? 0;
     const layoutStyle = useLayoutStyle(model.getRepeatDirection(), itemCount, model.getMaxPerRow(), itemHeight ?? 10);

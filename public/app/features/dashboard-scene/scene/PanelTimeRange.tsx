@@ -20,9 +20,9 @@ interface PanelTimeRangeState extends SceneTimeRangeState {
 }
 
 export class PanelTimeRange extends SceneObjectBase<PanelTimeRangeState> implements SceneTimeRangeLike {
-  static Component = PanelTimeRangeRenderer;
+  public static Component = PanelTimeRangeRenderer;
 
-  constructor(state: Partial<PanelTimeRangeState> = {}) {
+  public constructor(state: Partial<PanelTimeRangeState> = {}) {
     super({
       ...state,
       // This time range is not valid until activation
@@ -100,20 +100,20 @@ export class PanelTimeRange extends SceneObjectBase<PanelTimeRangeState> impleme
     return sceneGraph.getTimeRange(this.parent.parent);
   }
 
-  onTimeRangeChange = (timeRange: TimeRange) => {
+  public onTimeRangeChange = (timeRange: TimeRange) => {
     const parentTimeRange = this.getParentTimeRange();
     parentTimeRange.onTimeRangeChange(timeRange);
   };
 
-  onRefresh(): void {
+  public onRefresh(): void {
     this.getParentTimeRange().onRefresh();
   }
 
-  onTimeZoneChange(timeZone: string): void {
+  public onTimeZoneChange(timeZone: string): void {
     this.getParentTimeRange().onTimeZoneChange(timeZone);
   }
 
-  getTimeZone(): string {
+  public getTimeZone(): string {
     return this.getParentTimeRange().getTimeZone();
   }
 }
