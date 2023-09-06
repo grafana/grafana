@@ -3131,6 +3131,8 @@ steps:
   volumes:
   - name: docker
     path: /var/run/docker.sock
+  - name: dist
+    path: dist
 trigger:
   branch: main
   event:
@@ -3188,6 +3190,8 @@ steps:
   volumes:
   - name: docker
     path: /var/run/docker.sock
+  - name: dist
+    path: dist
 trigger:
   event:
     exclude:
@@ -3308,6 +3312,8 @@ steps:
   volumes:
   - name: docker
     path: /var/run/docker.sock
+  - name: dist
+    path: dist
 - commands:
   - printenv GCP_KEY_BASE64 | base64 -d > /tmp/key.json
   - gcloud auth activate-service-account --key-file=/tmp/key.json
@@ -3331,6 +3337,9 @@ steps:
       from_secret: packages_gpg_public_key
   image: google/cloud-sdk:alpine
   name: rgm-copy
+  volumes:
+  - name: dist
+    path: dist
 trigger:
   event:
     include:
@@ -4938,6 +4947,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 879f249ec0988294dd85810828166fc69540533f798756218243895c4dcd632f
+hmac: d3968b8c7b5d8b337cd93d47a8fd167d724b50d8de916234981ecdc56e62279e
 
 ...

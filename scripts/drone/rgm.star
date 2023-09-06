@@ -103,7 +103,10 @@ def rgm_build(script = "drone_publish_main.sh"):
         "environment": rgm_env_secrets,
         # The docker socket is a requirement for running dagger programs
         # In the future we should find a way to use dagger without mounting the docker socket.
-        "volumes": [{"name": "docker", "path": "/var/run/docker.sock"}],
+        "volumes": [
+            {"name": "docker", "path": "/var/run/docker.sock"},
+            {"name": "dist", "path": "dist"},
+        ],
     }
 
     return [
@@ -121,6 +124,9 @@ def rgm_copy(src, dst):
         ],
         "environment": rgm_env_secrets,
         "depends_on": ["rgm-build"],
+        "volumes": [
+            {"name": "dist", "path": "dist"},
+        ],
     }
 
     return [
