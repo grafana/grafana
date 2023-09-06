@@ -24,10 +24,12 @@ export function buildParams({
 }: BuildParamsArgs): URLSearchParams {
   const searchParams = new URLSearchParams(search);
   const relative = panel?.timeFrom;
+
+  // Use panel's relative time if it's set
   if (relative) {
-    const { from, to } = rangeUtil.relativeToTimeRange({ from: parseInt(relative, 10) * 60, to: 0 });
-    searchParams.set('from', String(from.valueOf()));
-    searchParams.set('to', String(to.valueOf()));
+    const { from, to } = rangeUtil.describeTextRange(relative);
+    searchParams.set('from', from);
+    searchParams.set('to', to);
   } else {
     searchParams.set('from', String(range.from.valueOf()));
     searchParams.set('to', String(range.to.valueOf()));
