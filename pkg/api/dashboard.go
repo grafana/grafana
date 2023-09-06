@@ -422,14 +422,15 @@ func (hs *HTTPServer) postDashboard(c *contextmodel.ReqContext, cmd dashboards.S
 	ctx := c.Req.Context()
 	var err error
 
+	userID := int64(0)
 	namespaceID, userIDstr := c.SignedInUser.GetNamespacedID()
 	if namespaceID != identity.NamespaceUser && namespaceID != identity.NamespaceServiceAccount {
-		hs.log.Warn("User does not belong to a user or service account namespace", "namespaceID", namespaceID, "userID", userIDstr)
-		return response.Error(http.StatusBadRequest, "User does not belong to a user or service account namespace", nil)
-	}
-	userID, err := identity.IntIdentifier(namespaceID, userIDstr)
-	if err != nil {
-		hs.log.Warn("Error while parsing user ID", "namespaceID", namespaceID, "userID", userIDstr)
+		hs.log.Debug("User does not belong to a user or service account namespace", "namespaceID", namespaceID, "userID", userIDstr)
+	} else {
+		userID, err = identity.IntIdentifier(namespaceID, userIDstr)
+		if err != nil {
+			hs.log.Debug("Error while parsing user ID", "namespaceID", namespaceID, "userID", userIDstr)
+		}
 	}
 
 	cmd.OrgID = c.SignedInUser.GetOrgID()
@@ -454,7 +455,7 @@ func (hs *HTTPServer) postDashboard(c *contextmodel.ReqContext, cmd dashboards.S
 	if newDashboard {
 		limitReached, err := hs.QuotaService.QuotaReached(c, dashboards.QuotaTargetSrv)
 		if err != nil {
-			return response.Error(http.StatusInternalServerError, "failed to get quota", err)
+			return response.Error(http.StatusInternalServerError, "Failed to get quota", err)
 		}
 		if limitReached {
 			return response.Error(http.StatusForbidden, "Quota reached", nil)
@@ -516,7 +517,7 @@ func (hs *HTTPServer) postDashboard(c *contextmodel.ReqContext, cmd dashboards.S
 		}
 
 		if liveerr != nil {
-			hs.log.Warn("unable to broadcast save event", "uid", dashboard.UID, "error", liveerr)
+			hs.log.Warn("Unable to broadcast save event", "uid", dashboard.UID, "error", liveerr)
 		}
 	}
 
@@ -556,16 +557,18 @@ func (hs *HTTPServer) postDashboard(c *contextmodel.ReqContext, cmd dashboards.S
 // 401: unauthorisedError
 // 500: internalServerError
 func (hs *HTTPServer) GetHomeDashboard(c *contextmodel.ReqContext) response.Response {
+	userID := int64(0)
+	var err error
 	namespaceID, userIDstr := c.SignedInUser.GetNamespacedID()
-
-	if namespaceID != identity.NamespaceUser {
-		return response.Error(http.StatusBadRequest, "User does not belong to a user namespace", nil)
+	if namespaceID != identity.NamespaceUser && namespaceID != identity.NamespaceServiceAccount {
+		hs.log.Debug("User does not belong to a user or service account namespace", "namespaceID", namespaceID, "userID", userIDstr)
+	} else {
+		userID, err = identity.IntIdentifier(namespaceID, userIDstr)
+		if err != nil {
+			hs.log.Debug("Error while parsing user ID", "namespaceID", namespaceID, "userID", userIDstr)
+		}
 	}
 
-	userID, err := identity.IntIdentifier(namespaceID, userIDstr)
-	if err != nil {
-		hs.log.Warn("Error while parsing user ID", "namespaceID", namespaceID, "userID", userIDstr, "err", err)
-	}
 	prefsQuery := pref.GetPreferenceWithDefaultsQuery{OrgID: c.SignedInUser.GetOrgID(), UserID: userID, Teams: c.SignedInUser.GetTeams()}
 	homePage := hs.Cfg.HomePage
 
@@ -864,7 +867,7 @@ func (hs *HTTPServer) ValidateDashboard(c *contextmodel.ReqContext) response.Res
 	cmd := dashboards.ValidateDashboardCommand{}
 
 	if err := web.Bind(c.Req, &cmd); err != nil {
-		return response.Error(http.StatusBadRequest, "bad request data", err)
+		return response.Error(http.StatusBadRequest, "Bad request data", err)
 	}
 
 	dk := hs.Kinds.Dashboard()
@@ -1074,13 +1077,15 @@ func (hs *HTTPServer) RestoreDashboardVersion(c *contextmodel.ReqContext) respon
 		return response.Error(http.StatusNotFound, "Dashboard version not found", nil)
 	}
 
+	userID := int64(0)
 	namespaceID, userIDstr := c.SignedInUser.GetNamespacedID()
 	if namespaceID != identity.NamespaceUser && namespaceID != identity.NamespaceServiceAccount {
-		return response.Error(http.StatusBadRequest, "User does not belong to a user or service namespace", nil)
-	}
-	userID, err := identity.IntIdentifier(namespaceID, userIDstr)
-	if err != nil {
-		return response.Error(http.StatusInternalServerError, "failed to get user id", err)
+		hs.log.Warn("User does not belong to a user or service account namespace", "namespaceID", namespaceID, "userID", userIDstr)
+	} else {
+		userID, err = identity.IntIdentifier(namespaceID, userIDstr)
+		if err != nil {
+			hs.log.Warn("Error while parsing user ID", "namespaceID", namespaceID, "userID", userIDstr)
+		}
 	}
 
 	saveCmd := dashboards.SaveDashboardCommand{}

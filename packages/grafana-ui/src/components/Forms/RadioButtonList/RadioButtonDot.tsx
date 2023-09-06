@@ -5,17 +5,27 @@ import { GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../../themes';
 
-export interface RadioButtonDotProps {
+export interface RadioButtonDotProps<T> {
   id: string;
   name: string;
   checked?: boolean;
+  value?: T;
   disabled?: boolean;
   label: React.ReactNode;
   description?: string;
   onChange?: (id: string) => void;
 }
 
-export const RadioButtonDot = ({ id, name, label, checked, disabled, description, onChange }: RadioButtonDotProps) => {
+export const RadioButtonDot = <T extends string | number | readonly string[]>({
+  id,
+  name,
+  label,
+  checked,
+  value,
+  disabled,
+  description,
+  onChange,
+}: RadioButtonDotProps<T>) => {
   const styles = useStyles2(getStyles);
 
   return (
@@ -25,11 +35,15 @@ export const RadioButtonDot = ({ id, name, label, checked, disabled, description
         name={name}
         type="radio"
         checked={checked}
+        value={value}
         disabled={disabled}
         className={styles.input}
         onChange={() => onChange && onChange(id)}
       />
-      {label}
+      <div>
+        {label}
+        {description && <div className={styles.description}>{description}</div>}
+      </div>
     </label>
   );
 };
@@ -83,5 +97,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: 'grid',
     gridTemplateColumns: `${theme.spacing(2)} auto`,
     gap: theme.spacing(1),
+  }),
+  description: css({
+    fontSize: theme.typography.size.sm,
+    color: theme.colors.text.secondary,
   }),
 });

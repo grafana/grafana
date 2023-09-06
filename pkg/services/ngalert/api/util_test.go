@@ -60,7 +60,7 @@ func TestAlertingProxy_createProxyContext(t *testing.T) {
 
 	t.Run("should create a copy of request context", func(t *testing.T) {
 		for _, mock := range []*accesscontrolmock.Mock{
-			accesscontrolmock.New(), accesscontrolmock.New().WithDisabled(),
+			accesscontrolmock.New(), accesscontrolmock.New(),
 		} {
 			proxy := AlertingProxy{
 				DataProxy: nil,

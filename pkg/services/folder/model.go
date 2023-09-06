@@ -138,8 +138,7 @@ type GetFolderQuery struct {
 	Title *string
 	OrgID int64
 
-	SignedInUser *user.SignedInUser `json:"-"`
-	Requester    identity.Requester `json:"-"`
+	SignedInUser identity.Requester `json:"-"`
 }
 
 // GetParentsQuery captures the information required by the folder service to
