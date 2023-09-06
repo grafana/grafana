@@ -34,7 +34,7 @@ Returns a list of all library elements the authenticated user has permission to 
 
 Query parameters:
 
-- `searchString`:  Part of the name or description searched for.
+- `searchString`: Part of the name or description searched for.
 - `kind`: Kind of element to search for. Use `1` for library panels or `2` for library variables.
 - `sortDirection`: Sort order of elements. Use `alpha-asc` for ascending and `alpha-desc` for descending sort order.
 - `typeFilter`: A comma separated list of types to filter the elements by.
@@ -347,10 +347,10 @@ Content-Type: application/json
 
 Status Codes:
 
-- `200`:  Created
-- `400`:  Errors (for example, name or UID already exists, invalid JSON, missing or invalid fields, and so on).
-- `401`:  Unauthorized
-- `403`:  Access denied
+- `200`: Created
+- `400`: Errors (for example, name or UID already exists, invalid JSON, missing or invalid fields, and so on).
+- `401`: Unauthorized
+- `403`: Access denied
 
 ## Update library element
 
@@ -366,7 +366,7 @@ JSON Body schema:
 - `model`: The JSON model for the library element.
 - `kind`: Kind of element to create. Use `1` for library panels or `2` for library variables.
 - `version`: Version of the library element you are updating.
-- `uid`:  Optional, the [unique identifier](/http_api/library_element/#identifier-id-vs-unique-identifier-uid).
+- `uid`: Optional, the [unique identifier](/http_api/library_element/#identifier-id-vs-unique-identifier-uid).
 
 **Example Request**:
 
@@ -428,10 +428,10 @@ Content-Type: application/json
 
 Status Codes:
 
-- `200`:  Updated
-- `400`:  Errors (for example, name or UID already exists, invalid JSON, missing or invalid fields, and so on).
-- `401`:  Unauthorized
-- `403`:  Access denied
+- `200`: Updated
+- `400`: Errors (for example, name or UID already exists, invalid JSON, missing or invalid fields, and so on).
+- `401`: Unauthorized
+- `403`: Access denied
 - `404`: Library element not found
 - `412`: Version mismatch
 
@@ -469,8 +469,8 @@ Content-Type: application/json
 
 Status Codes:
 
-- `200`:  Deleted
-- `401`:  Unauthorized
-- `400`:  Bad request
-- `403`:  Access denied
+- `200`: Deleted
+- `401`: Unauthorized
+- `400`: Bad request
+- `403`: Access denied
 - `404`: Library element not found
