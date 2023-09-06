@@ -16,6 +16,8 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/serverlock"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/alerting/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -806,7 +808,12 @@ func getAlertRules(t *testing.T, x *xorm.Engine, orgId int64) []*ngModels.AlertR
 }
 
 func NewMigrationService(t *testing.T, sqlStore db.DB, cfg *setting.Cfg) *MigrationService {
-	ms, err := ProvideService(cfg, sqlStore, fakes.NewFakeKVStore(t))
+	ms, err := ProvideService(
+		serverlock.ProvideService(sqlStore, tracing.InitializeTracerForTest()),
+		cfg,
+		sqlStore,
+		fakes.NewFakeKVStore(t),
+	)
 	require.NoError(t, err)
 	return ms
 }
