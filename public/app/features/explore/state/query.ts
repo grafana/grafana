@@ -1,6 +1,6 @@
 import { AnyAction, createAction, PayloadAction } from '@reduxjs/toolkit';
 import deepEqual from 'fast-deep-equal';
-import { flatten, groupBy, head, map, mapValues, snakeCase, zipObject } from 'lodash';
+import { findLast, flatten, groupBy, head, map, mapValues, snakeCase, zipObject } from 'lodash';
 import { combineLatest, identity, Observable, of, SubscriptionLike, Unsubscribable } from 'rxjs';
 import { mergeMap, throttleTime } from 'rxjs/operators';
 
@@ -35,6 +35,7 @@ import {
 } from 'app/core/utils/explore';
 import { getShiftedTimeRange } from 'app/core/utils/timePicker';
 import { CorrelationData } from 'app/features/correlations/useCorrelations';
+import { getCorrelationsBySourceUIDs } from 'app/features/correlations/utils';
 import { getTimeZone } from 'app/features/profile/state/selectors';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 import { store } from 'app/store/store';
@@ -59,9 +60,10 @@ import {
   supplementaryQueryTypes,
 } from '../utils/supplementaryQueries';
 
+import { saveCorrelationsAction } from './explorePane';
 import { addHistoryItem, historyUpdatedAction, loadRichHistory } from './history';
 import { updateTime } from './time';
-import { createCacheKey, filterLogRowsByIndex, getResultsFromCache } from './utils';
+import { createCacheKey, filterLogRowsByIndex, getDatasourceUIDs, getResultsFromCache } from './utils';
 
 /**
  * Derives from explore state if a given Explore pane is waiting for more data to be received
@@ -247,26 +249,24 @@ export const clearCacheAction = createAction<ClearCachePayload>('explore/clearCa
 /**
  * Adds a query row after the row with the given index.
  */
-export function addQueryRow(exploreId: string, index: number): ThunkResult<void> {
+export function addQueryRow(exploreId: string, index: number): ThunkResult<Promise<void>> {
   return async (dispatch, getState) => {
-    const queries = getState().explore.panes[exploreId]!.queries;
+    const pane = getState().explore.panes[exploreId]!;
     let datasourceOverride = undefined;
 
-    // if this is the first query being added, check for a root datasource
-    // if it's not mixed, send it as an override. generateEmptyQuery doesn't have access to state
-    if (queries.length === 0) {
-      const rootDatasource = getState().explore.panes[exploreId]!.datasourceInstance;
-      if (!config.featureToggles.exploreMixedDatasource || !rootDatasource?.meta.mixed) {
-        datasourceOverride = rootDatasource;
-      }
+    // if we are not in mixed mode, use root datasource
+    if (!pane.datasourceInstance?.meta.mixed) {
+      datasourceOverride = pane.datasourceInstance?.getRef();
+    } else {
+      // else try to get the datasource from the last query that defines one, falling back to the default datasource
+      datasourceOverride = findLast(pane.queries, (query) => !!query.datasource)?.datasource || undefined;
     }
 
-    const query = await generateEmptyQuery(queries, index, datasourceOverride?.getRef());
+    const query = await generateEmptyQuery(pane.queries, index, datasourceOverride);
 
     dispatch(addQueryRowAction({ exploreId, index, query }));
   };
 }
-
 /**
  * Cancel running queries
  */
@@ -319,6 +319,7 @@ export const changeQueries = createAsyncThunk<void, ChangeQueriesPayload>(
   async ({ queries, exploreId }, { getState, dispatch }) => {
     let queriesImported = false;
     const oldQueries = getState().explore.panes[exploreId]!.queries;
+    const rootUID = getState().explore.panes[exploreId]!.datasourceInstance?.uid;
 
     for (const newQuery of queries) {
       for (const oldQuery of oldQueries) {
@@ -327,6 +328,16 @@ export const changeQueries = createAsyncThunk<void, ChangeQueriesPayload>(
           const targetDS = await getDataSourceSrv().get({ uid: newQuery.datasource?.uid });
           await dispatch(importQueries(exploreId, oldQueries, queryDatasource, targetDS, newQuery.refId));
           queriesImported = true;
+        }
+
+        if (
+          rootUID === MIXED_DATASOURCE_NAME &&
+          newQuery.refId === oldQuery.refId &&
+          newQuery.datasource?.uid !== oldQuery.datasource?.uid
+        ) {
+          const datasourceUIDs = getDatasourceUIDs(MIXED_DATASOURCE_NAME, queries);
+          const correlations = await getCorrelationsBySourceUIDs(datasourceUIDs);
+          dispatch(saveCorrelationsAction({ exploreId: exploreId, correlations: correlations.correlations || [] }));
         }
       }
     }
@@ -481,7 +492,7 @@ export const runQueries = createAsyncThunk<void, RunQueriesOptions>(
   async ({ exploreId, preserveCache }, { dispatch, getState }) => {
     dispatch(updateTime({ exploreId }));
 
-    const correlations$ = getCorrelations();
+    const correlations$ = getCorrelations(exploreId);
 
     // We always want to clear cache unless we explicitly pass preserveCache parameter
     if (preserveCache !== true) {
@@ -1134,15 +1145,15 @@ export const queryReducer = (state: ExploreItemState, action: AnyAction): Explor
 /**
  * Creates an observable that emits correlations once they are loaded
  */
-const getCorrelations = () => {
+const getCorrelations = (exploreId: string) => {
   return new Observable<CorrelationData[]>((subscriber) => {
-    const existingCorrelations = store.getState().explore.correlations;
+    const existingCorrelations = store.getState().explore.panes[exploreId]?.correlations;
     if (existingCorrelations) {
       subscriber.next(existingCorrelations);
       subscriber.complete();
     } else {
       const unsubscribe = store.subscribe(() => {
-        const { correlations } = store.getState().explore;
+        const correlations = store.getState().explore.panes[exploreId]?.correlations;
         if (correlations) {
           unsubscribe();
           subscriber.next(correlations);
@@ -1169,6 +1180,7 @@ export const processQueryResponse = (
     nodeGraphFrames,
     flameGraphFrames,
     rawPrometheusFrames,
+    customFrames,
   } = response;
 
   if (error) {
@@ -1211,6 +1223,7 @@ export const processQueryResponse = (
     showNodeGraph: !!nodeGraphFrames.length,
     showRawPrometheus: !!rawPrometheusFrames.length,
     showFlameGraph: !!flameGraphFrames.length,
+    showCustom: !!customFrames?.length,
     clearedAtIndex: state.isLive ? state.clearedAtIndex : null,
   };
 };

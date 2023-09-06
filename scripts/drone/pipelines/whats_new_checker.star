@@ -35,7 +35,6 @@ def whats_new_checker_pipeline(trigger):
     ]
     return pipeline(
         name = "release-whatsnew-checker",
-        edition = "oss",
         trigger = trigger,
         services = [],
         steps = steps,

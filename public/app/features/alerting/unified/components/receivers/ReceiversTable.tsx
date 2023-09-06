@@ -8,6 +8,7 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction, ContactPointsState, NotifiersState, ReceiversState, useDispatch } from 'app/types';
 
+import { isOrgAdmin } from '../../../../plugins/admin/permissions';
 import { useGetContactPointsState } from '../../api/receiversApi';
 import { Authorize } from '../../components/Authorize';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
@@ -16,17 +17,17 @@ import { getAlertTableStyles } from '../../styles/table';
 import { SupportedPlugin } from '../../types/pluginBridges';
 import { getNotificationsPermissions } from '../../utils/access-control';
 import { isReceiverUsed } from '../../utils/alertmanager';
-import { isVanillaPrometheusAlertManagerDataSource } from '../../utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME, isVanillaPrometheusAlertManagerDataSource } from '../../utils/datasource';
 import { makeAMLink } from '../../utils/misc';
 import { extractNotifierTypeCounts } from '../../utils/receivers';
+import { createUrl } from '../../utils/url';
 import { DynamicTable, DynamicTableColumnProps, DynamicTableItemProps } from '../DynamicTable';
 import { ProvisioningBadge } from '../Provisioning';
 import { ActionIcon } from '../rules/ActionIcon';
 
 import { ReceiversSection } from './ReceiversSection';
-import { GrafanaAppBadge } from './grafanaAppReceivers/GrafanaAppBadge';
-import { useGetReceiversWithGrafanaAppTypes } from './grafanaAppReceivers/grafanaApp';
-import { ReceiverWithTypes } from './grafanaAppReceivers/types';
+import { ReceiverMetadataBadge } from './grafanaAppReceivers/ReceiverMetadataBadge';
+import { ReceiverMetadata, useReceiversMetadata } from './grafanaAppReceivers/useReceiversMetadata';
 import { AlertmanagerConfigHealth, useAlertmanagerConfigHealth } from './useAlertmanagerConfigHealth';
 
 interface UpdateActionProps extends ActionProps {
@@ -65,6 +66,10 @@ interface ActionProps {
     create: AccessControlAction;
     update: AccessControlAction;
     delete: AccessControlAction;
+    provisioning: {
+      read: AccessControlAction;
+      readSecrets: AccessControlAction;
+    };
   };
   alertManagerName: string;
   receiverName: string;
@@ -78,6 +83,28 @@ function ViewAction({ permissions, alertManagerName, receiverName }: ActionProps
         to={makeAMLink(`/alerting/notifications/receivers/${encodeURIComponent(receiverName)}/edit`, alertManagerName)}
         tooltip="View contact point"
         icon="file-alt"
+      />
+    </Authorize>
+  );
+}
+
+function ExportAction({ permissions, receiverName }: ActionProps) {
+  const canReadSecrets = contextSrv.hasAccess(permissions.provisioning.readSecrets, isOrgAdmin());
+  return (
+    <Authorize actions={[permissions.provisioning.read, permissions.provisioning.readSecrets]}>
+      <ActionIcon
+        data-testid="export"
+        to={createUrl(`/api/v1/provisioning/contact-points/export/`, {
+          download: 'true',
+          format: 'yaml',
+          decrypt: canReadSecrets.toString(),
+          name: receiverName,
+        })}
+        tooltip={
+          canReadSecrets ? 'Export contact point with decrypted secrets' : 'Export contact point with redacted secrets'
+        }
+        icon="download-alt"
+        target="_blank"
       />
     </Authorize>
   );
@@ -155,6 +182,7 @@ interface ReceiverItem {
   types: string[];
   provisioned?: boolean;
   grafanaAppReceiverType?: SupportedPlugin;
+  metadata?: ReceiverMetadata;
 }
 
 interface NotifierStatus {
@@ -255,7 +283,7 @@ function NotifiersTable({ notifiersState }: NotifiersTableProps) {
     })
   );
 
-  return <DynamicTable items={notifierRows} cols={getNotifierColumns()} />;
+  return <DynamicTable items={notifierRows} cols={getNotifierColumns()} pagination={{ itemsPerPage: 25 }} />;
 }
 
 interface Props {
@@ -271,10 +299,17 @@ export const ReceiversTable = ({ config, alertManagerName }: Props) => {
 
   const configHealth = useAlertmanagerConfigHealth(config.alertmanager_config);
   const { contactPointsState, errorStateAvailable } = useContactPointsState(alertManagerName);
+  const receiversMetadata = useReceiversMetadata(config.alertmanager_config.receivers ?? []);
 
   // receiver name slated for deletion. If this is set, a confirmation modal is shown. If user approves, this receiver is deleted
   const [receiverToDelete, setReceiverToDelete] = useState<string>();
   const [showCannotDeleteReceiverModal, setShowCannotDeleteReceiverModal] = useState(false);
+
+  const isGrafanaAM = alertManagerName === GRAFANA_RULES_SOURCE_NAME;
+  const showExport =
+    isGrafanaAM &&
+    (contextSrv.hasAccess(permissions.provisioning.read, isOrgAdmin()) ||
+      contextSrv.hasAccess(permissions.provisioning.readSecrets, isOrgAdmin()));
 
   const onClickDeleteReceiver = (receiverName: string): void => {
     if (isReceiverUsed(receiverName, config)) {
@@ -291,10 +326,11 @@ export const ReceiversTable = ({ config, alertManagerName }: Props) => {
     setReceiverToDelete(undefined);
   };
 
-  const receivers = useGetReceiversWithGrafanaAppTypes(config.alertmanager_config.receivers ?? []);
   const rows: RowItemTableProps[] = useMemo(() => {
+    const receivers = config.alertmanager_config.receivers ?? [];
+
     return (
-      receivers?.map((receiver: ReceiverWithTypes) => ({
+      receivers.map((receiver) => ({
         id: receiver.name,
         data: {
           name: receiver.name,
@@ -306,12 +342,12 @@ export const ReceiversTable = ({ config, alertManagerName }: Props) => {
               return type;
             }
           ),
-          grafanaAppReceiverType: receiver.grafanaAppReceiverType,
           provisioned: receiver.grafana_managed_receiver_configs?.some((receiver) => receiver.provenance),
+          metadata: receiversMetadata.get(receiver),
         },
       })) ?? []
     );
-  }, [grafanaNotifiers.result, receivers]);
+  }, [grafanaNotifiers.result, config.alertmanager_config, receiversMetadata]);
 
   const columns = useGetColumns(
     alertManagerName,
@@ -330,8 +366,18 @@ export const ReceiversTable = ({ config, alertManagerName }: Props) => {
       showButton={!isVanillaAM && contextSrv.hasPermission(permissions.create)}
       addButtonLabel={'Add contact point'}
       addButtonTo={makeAMLink('/alerting/notifications/receivers/new', alertManagerName)}
+      exportLink={
+        showExport
+          ? createUrl('/api/v1/provisioning/contact-points/export', {
+              download: 'true',
+              format: 'yaml',
+              decrypt: isOrgAdmin().toString(),
+            })
+          : undefined
+      }
     >
       <DynamicTable
+        pagination={{ itemsPerPage: 25 }}
         items={rows}
         cols={columns}
         isExpandable={errorStateAvailable}
@@ -398,6 +444,10 @@ function useGetColumns(
     create: AccessControlAction;
     update: AccessControlAction;
     delete: AccessControlAction;
+    provisioning: {
+      read: AccessControlAction;
+      readSecrets: AccessControlAction;
+    };
   },
   isVanillaAM: boolean
 ): RowTableColumnProps[] {
@@ -405,6 +455,8 @@ function useGetColumns(
 
   const enableHealthColumn =
     errorStateAvailable || Object.values(configHealth.contactPoints).some((cp) => cp.matchingRoutes === 0);
+
+  const isGrafanaAlertManager = alertManagerName === GRAFANA_RULES_SOURCE_NAME;
 
   const baseColumns: RowTableColumnProps[] = [
     {
@@ -422,8 +474,8 @@ function useGetColumns(
     {
       id: 'type',
       label: 'Type',
-      renderCell: ({ data: { types, grafanaAppReceiverType } }) => (
-        <>{grafanaAppReceiverType ? <GrafanaAppBadge grafanaAppType={grafanaAppReceiverType} /> : types.join(', ')}</>
+      renderCell: ({ data: { types, metadata } }) => (
+        <>{metadata ? <ReceiverMetadataBadge metadata={metadata} /> : types.join(', ')}</>
       ),
       size: 2,
     },
@@ -456,7 +508,15 @@ function useGetColumns(
       id: 'actions',
       label: 'Actions',
       renderCell: ({ data: { provisioned, name } }) => (
-        <Authorize actions={[permissions.update, permissions.delete]}>
+        <Authorize
+          actions={[
+            permissions.update,
+            permissions.delete,
+            permissions.provisioning.read,
+            permissions.provisioning.readSecrets,
+          ]}
+          fallback={isOrgAdmin()}
+        >
           <div className={tableStyles.actionsCell}>
             {!isVanillaAM && !provisioned && (
               <UpdateActions
@@ -468,6 +528,9 @@ function useGetColumns(
             )}
             {(isVanillaAM || provisioned) && (
               <ViewAction permissions={permissions} alertManagerName={alertManagerName} receiverName={name} />
+            )}
+            {isGrafanaAlertManager && (
+              <ExportAction permissions={permissions} alertManagerName={alertManagerName} receiverName={name} />
             )}
           </div>
         </Authorize>

@@ -5,8 +5,9 @@ import { Select } from '@grafana/ui';
 
 import { getOperationParamId } from '../../../prometheus/querybuilder/shared/operationUtils';
 import { QueryBuilderOperationParamEditorProps } from '../../../prometheus/querybuilder/shared/types';
+import { placeHolderScopedVars } from '../../components/monaco-query-field/monaco-completion-provider/validation';
 import { LokiDatasource } from '../../datasource';
-import { getLogQueryFromMetricsQuery, isValidQuery } from '../../queryUtils';
+import { getLogQueryFromMetricsQuery, isQueryWithError } from '../../queryUtils';
 import { extractUnwrapLabelKeysFromDataFrame } from '../../responseUtils';
 import { lokiQueryModeller } from '../LokiQueryModeller';
 import { LokiVisualQuery } from '../types';
@@ -14,7 +15,7 @@ import { LokiVisualQuery } from '../types';
 export function UnwrapParamEditor({
   onChange,
   index,
-  operationIndex,
+  operationId,
   value,
   query,
   datasource,
@@ -26,7 +27,7 @@ export function UnwrapParamEditor({
 
   return (
     <Select
-      inputId={getOperationParamId(operationIndex, index)}
+      inputId={getOperationParamId(operationId, index)}
       onOpenMenu={async () => {
         // This check is always true, we do it to make typescript happy
         if (datasource instanceof LokiDatasource) {
@@ -56,7 +57,7 @@ async function loadUnwrapOptions(
 ): Promise<Array<SelectableValue<string>>> {
   const queryExpr = lokiQueryModeller.renderQuery(query);
   const logExpr = getLogQueryFromMetricsQuery(queryExpr);
-  if (!isValidQuery(logExpr)) {
+  if (isQueryWithError(datasource.interpolateString(logExpr, placeHolderScopedVars))) {
     return [];
   }
 

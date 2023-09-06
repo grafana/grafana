@@ -33,7 +33,18 @@
 
 ### Features and enhancements
 
-- **Chore:** Upgrade Go to 1.20.3. [#66264](https://github.com/grafana/grafana/pull/66264), [@sakjur](https://github.com/sakjur)
+- **Chore:** Upgrade Go to 1.20.3. [#66836](https://github.com/grafana/grafana/issues/66836), [@sakjur](https://github.com/sakjur)
+
+### Bug fixes
+
+- **Expressions/threshold:** Fix incorrect thresholds args length. [#66925](https://github.com/grafana/grafana/issues/66925), [@gillesdemey](https://github.com/gillesdemey)
+- **Alerting:** Fix share URL for Prometheus rules on subpath (#66752). [#66802](https://github.com/grafana/grafana/issues/66802), [@gillesdemey](https://github.com/gillesdemey)
+- **Trace View:** Update the queryType to traceql for checking if same trace when clicking span link. [#66670](https://github.com/grafana/grafana/issues/66670), [@ericmustin](https://github.com/ericmustin)
+- **Google Cloud Monitoring:** Fix project variable. [#66602](https://github.com/grafana/grafana/issues/66602), [@asimpson](https://github.com/asimpson)
+- **InfluxDB:** Fix querying with hardcoded retention policy. [#66587](https://github.com/grafana/grafana/issues/66587), [@itsmylife](https://github.com/itsmylife)
+- **Auth:** Remove the session cookie only if it's invalid or revoked. [#66430](https://github.com/grafana/grafana/issues/66430), [@mgyongyosi](https://github.com/mgyongyosi)
+- **AccessControl:** Allow editors to access GET /api/datasources. [#66375](https://github.com/grafana/grafana/issues/66375), [@mgyongyosi](https://github.com/mgyongyosi)
+- **CloudMonitoring:** Add project selector for MQL editor[fix]. [#65844](https://github.com/grafana/grafana/issues/65844), [@alyssabull](https://github.com/alyssabull)
 
 <!-- 9.4.9 END -->
 <!-- 9.4.7 START -->

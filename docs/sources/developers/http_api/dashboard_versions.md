@@ -11,6 +11,10 @@ keywords:
   - api
   - dashboard
   - versions
+labels:
+  products:
+    - enterprise
+    - oss
 title: 'Dashboard Versions HTTP API '
 ---
 
@@ -201,8 +205,7 @@ Content-Length: 1300
       }
     ],
     "schemaVersion": 14,
-    "style": "dark",
-    "tags": [
+      "tags": [
 
     ],
     "templating": {
@@ -313,8 +316,7 @@ Content-Length: 1300
       }
     ],
     "schemaVersion": 14,
-    "style": "dark",
-    "tags": [
+      "tags": [
 
     ],
     "templating": {

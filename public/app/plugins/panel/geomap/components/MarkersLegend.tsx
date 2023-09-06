@@ -159,7 +159,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
       float: left;
       margin-right: 8px;
       opacity: 0.7;
-      border-radius: 50%;
+      border-radius: ${theme.shape.radius.circle};
     }
   `,
   legendItem: css`

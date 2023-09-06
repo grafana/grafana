@@ -108,7 +108,7 @@ type Span interface {
 	// SetAttributes repeats the key value pair with [string] and [any]
 	// used for OpenTracing and [attribute.KeyValue] used for
 	// OpenTelemetry.
-	SetAttributes(key string, value interface{}, kv attribute.KeyValue)
+	SetAttributes(key string, value any, kv attribute.KeyValue)
 	// SetName renames the span.
 	SetName(name string)
 	// SetStatus can be used to indicate whether the span was
@@ -128,7 +128,7 @@ type Span interface {
 
 	// contextWithSpan returns a context.Context that holds the parent
 	// context plus a reference to this span.
-	contextWithSpan(ctx context.Context) context.Context
+	ContextWithSpan(ctx context.Context) context.Context
 }
 
 func ProvideService(cfg *setting.Cfg) (Tracer, error) {
@@ -137,9 +137,9 @@ func ProvideService(cfg *setting.Cfg) (Tracer, error) {
 		return nil, err
 	}
 
-	log.RegisterContextualLogProvider(func(ctx context.Context) ([]interface{}, bool) {
+	log.RegisterContextualLogProvider(func(ctx context.Context) ([]any, bool) {
 		if traceID := TraceIDFromContext(ctx, false); traceID != "" {
-			return []interface{}{"traceID", traceID}, true
+			return []any{"traceID", traceID}, true
 		}
 
 		return nil, false
@@ -188,7 +188,7 @@ func SpanFromContext(ctx context.Context) Span {
 // It is the equivalent of opentracing.ContextWithSpan and trace.ContextWithSpan.
 func ContextWithSpan(ctx context.Context, span Span) context.Context {
 	if span != nil {
-		return span.contextWithSpan(ctx)
+		return span.ContextWithSpan(ctx)
 	}
 	return ctx
 }
@@ -267,10 +267,14 @@ func splitCustomAttribs(s string) ([]attribute.KeyValue, error) {
 func (ots *Opentelemetry) initJaegerTracerProvider() (*tracesdk.TracerProvider, error) {
 	var ep jaeger.EndpointOption
 	// Create the Jaeger exporter: address can be either agent address (host:port) or collector URL
-	if host, port, err := net.SplitHostPort(ots.Address); err == nil {
-		ep = jaeger.WithAgentEndpoint(jaeger.WithAgentHost(host), jaeger.WithAgentPort(port))
-	} else {
+	if strings.HasPrefix(ots.Address, "http://") || strings.HasPrefix(ots.Address, "https://") {
+		ots.log.Debug("using jaeger collector", "address", ots.Address)
 		ep = jaeger.WithCollectorEndpoint(jaeger.WithEndpoint(ots.Address))
+	} else if host, port, err := net.SplitHostPort(ots.Address); err == nil {
+		ots.log.Debug("using jaeger agent", "host", host, "port", port)
+		ep = jaeger.WithAgentEndpoint(jaeger.WithAgentHost(host), jaeger.WithAgentPort(port), jaeger.WithMaxPacketSize(64000))
+	} else {
+		return nil, fmt.Errorf("invalid tracer address: %s", ots.Address)
 	}
 	exp, err := jaeger.New(ep)
 	if err != nil {
@@ -456,7 +460,7 @@ func (s OpentelemetrySpan) End() {
 	s.span.End()
 }
 
-func (s OpentelemetrySpan) SetAttributes(key string, value interface{}, kv attribute.KeyValue) {
+func (s OpentelemetrySpan) SetAttributes(key string, value any, kv attribute.KeyValue) {
 	s.span.SetAttributes(kv)
 }
 
@@ -483,7 +487,7 @@ func (s OpentelemetrySpan) AddEvents(keys []string, values []EventValue) {
 	}
 }
 
-func (s OpentelemetrySpan) contextWithSpan(ctx context.Context) context.Context {
+func (s OpentelemetrySpan) ContextWithSpan(ctx context.Context) context.Context {
 	if s.span != nil {
 		ctx = trace.ContextWithSpan(ctx, s.span)
 		// Grafana also manages its own separate traceID in the context in addition to what opentracing handles.

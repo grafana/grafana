@@ -71,6 +71,18 @@ describe('addLabelToQuery()', () => {
       }
     }
   );
+
+  it('should always add label as labelFilter if force flag is given', () => {
+    expect(addLabelToQuery('{foo="bar"}', 'forcedLabel', '=', 'value', true)).toEqual(
+      '{foo="bar"} | forcedLabel=`value`'
+    );
+  });
+
+  it('should always add label as labelFilter if force flag is given with a parser', () => {
+    expect(addLabelToQuery('{foo="bar"} | logfmt', 'forcedLabel', '=', 'value', true)).toEqual(
+      '{foo="bar"} | logfmt | forcedLabel=`value`'
+    );
+  });
 });
 
 describe('addParserToQuery', () => {
@@ -161,6 +173,7 @@ describe('removeCommentsFromQuery', () => {
     ${'{job="grafana", bar="baz"} |="test" | logfmt | label_format level=lvl #hello'} | ${'{job="grafana", bar="baz"} |="test" | logfmt | label_format level=lvl '}
     ${`#sum(rate(\n{host="containers"}\n#[1m]))`}                                     | ${`\n{host="containers"}\n`}
     ${`#sum(rate(\n{host="containers"}\n#| logfmt\n#[1m]))`}                          | ${`\n{host="containers"}\n\n`}
+    ${'{job="grafana"}\n#hello\n| logfmt'}                                            | ${'{job="grafana"}\n\n| logfmt'}
   `('strips comments in log query:  {$query}', ({ query, expectedResult }) => {
     expect(removeCommentsFromQuery(query)).toBe(expectedResult);
   });

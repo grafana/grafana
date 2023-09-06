@@ -1,12 +1,22 @@
 import { thunkTester } from 'test/core/thunk/thunkTester';
 
-import { DataSourceInstanceSettings } from '@grafana/data';
+import { DataSourceInstanceSettings, ThresholdsMode } from '@grafana/data';
 import { BackendSrv, setBackendSrv } from '@grafana/runtime';
+import { defaultDashboard, FieldColorModeId } from '@grafana/schema';
+import { getLibraryPanel } from 'app/features/library-panels/state/api';
 
+import { PanelModel } from '../../dashboard/state';
+import { LibraryElementDTO } from '../../library-panels/types';
+import { DashboardJson } from '../types';
 import { validateDashboardJson } from '../utils/validation';
 
-import { importDashboard } from './actions';
+import { getLibraryPanelInputs, importDashboard, processDashboard } from './actions';
 import { DataSourceInput, ImportDashboardDTO, initialImportDashboardState, InputType } from './reducers';
+
+jest.mock('app/features/library-panels/state/api');
+const mocks = {
+  getLibraryPanel: jest.mocked(getLibraryPanel),
+};
 
 describe('importDashboard', () => {
   it('Should send data source uid', async () => {
@@ -105,5 +115,645 @@ describe('validateDashboardJson', () => {
     const jsonImportInvalidJson = '{"schemaVersion": 36,"tags": {"tag", "nested tag"}, "title": "Nested lists"}';
     const validateDashboardJsonNotValid = await validateDashboardJson(jsonImportInvalidJson);
     expect(validateDashboardJsonNotValid).toBe('Not valid JSON');
+  });
+});
+
+describe('processDashboard', () => {
+  const panel = new PanelModel({
+    datasource: {
+      type: 'mysql',
+      uid: '${DS_GDEV-MYSQL}',
+    },
+  });
+
+  const panelWithLibPanel = {
+    gridPos: {
+      h: 8,
+      w: 12,
+      x: 0,
+      y: 8,
+    },
+    id: 3,
+    libraryPanel: {
+      uid: 'a0379b21-fa20-4313-bf12-d7fd7ceb6f90',
+      name: 'another prom lib panel',
+    },
+  };
+  const libPanel = {
+    'a0379b21-fa20-4313-bf12-d7fd7ceb6f90': {
+      name: 'another prom lib panel',
+      uid: 'a0379b21-fa20-4313-bf12-d7fd7ceb6f90',
+      kind: 1,
+      model: {
+        datasource: {
+          type: 'prometheus',
+          uid: '${DS_GDEV-PROMETHEUS-FOR-LIBRARY-PANEL}',
+        },
+        description: '',
+        fieldConfig: {
+          defaults: {
+            color: {
+              mode: 'palette-classic',
+            },
+            custom: {
+              axisCenteredZero: false,
+              axisColorMode: 'text',
+              axisLabel: '',
+              axisPlacement: 'auto',
+              barAlignment: 0,
+              drawStyle: 'line',
+              fillOpacity: 0,
+              gradientMode: 'none',
+              hideFrom: {
+                legend: false,
+                tooltip: false,
+                viz: false,
+              },
+              lineInterpolation: 'linear',
+              lineWidth: 1,
+              pointSize: 5,
+              scaleDistribution: {
+                type: 'linear',
+              },
+              showPoints: 'auto',
+              spanNulls: false,
+              stacking: {
+                group: 'A',
+                mode: 'none',
+              },
+              thresholdsStyle: {
+                mode: 'off',
+              },
+            },
+            mappings: [],
+            thresholds: {
+              mode: 'absolute',
+              steps: [
+                {
+                  color: 'green',
+                  value: null,
+                },
+                {
+                  color: 'red',
+                  value: 80,
+                },
+              ],
+            },
+          },
+          overrides: [],
+        },
+        libraryPanel: {
+          name: 'another prom lib panel',
+          uid: 'a0379b21-fa20-4313-bf12-d7fd7ceb6f90',
+        },
+        options: {
+          legend: {
+            calcs: [],
+            displayMode: 'list',
+            placement: 'bottom',
+            showLegend: true,
+          },
+          tooltip: {
+            mode: 'single',
+            sort: 'none',
+          },
+        },
+        targets: [
+          {
+            datasource: {
+              type: 'prometheus',
+              uid: 'gdev-prometheus',
+            },
+            editorMode: 'builder',
+            expr: 'access_evaluation_duration_bucket',
+            instant: false,
+            range: true,
+            refId: 'A',
+          },
+        ],
+        title: 'Panel Title',
+        type: 'timeseries',
+      },
+    },
+  };
+
+  const panelWithSecondLibPanel = {
+    gridPos: {
+      h: 8,
+      w: 12,
+      x: 0,
+      y: 16,
+    },
+    id: 1,
+    libraryPanel: {
+      uid: 'c46a6b49-de40-43b3-982c-1b5e1ec084a4',
+      name: 'Testing lib panel',
+    },
+  };
+  const secondLibPanel = {
+    'c46a6b49-de40-43b3-982c-1b5e1ec084a4': {
+      name: 'Testing lib panel',
+      uid: 'c46a6b49-de40-43b3-982c-1b5e1ec084a4',
+      kind: 1,
+      model: {
+        datasource: {
+          type: 'prometheus',
+          uid: '${DS_GDEV-PROMETHEUS-FOR-LIBRARY-PANEL}',
+        },
+        description: '',
+        fieldConfig: {
+          defaults: {
+            color: {
+              mode: 'palette-classic',
+            },
+            custom: {
+              axisCenteredZero: false,
+              axisColorMode: 'text',
+              axisLabel: '',
+              axisPlacement: 'auto',
+              barAlignment: 0,
+              drawStyle: 'line',
+              fillOpacity: 0,
+              gradientMode: 'none',
+              hideFrom: {
+                legend: false,
+                tooltip: false,
+                viz: false,
+              },
+              lineInterpolation: 'linear',
+              lineWidth: 1,
+              pointSize: 5,
+              scaleDistribution: {
+                type: 'linear',
+              },
+              showPoints: 'auto',
+              spanNulls: false,
+              stacking: {
+                group: 'A',
+                mode: 'none',
+              },
+              thresholdsStyle: {
+                mode: 'off',
+              },
+            },
+            mappings: [],
+            thresholds: {
+              mode: 'absolute',
+              steps: [
+                {
+                  color: 'green',
+                  value: null,
+                },
+                {
+                  color: 'red',
+                  value: 80,
+                },
+              ],
+            },
+          },
+          overrides: [],
+        },
+        libraryPanel: {
+          name: 'Testing lib panel',
+          uid: 'c46a6b49-de40-43b3-982c-1b5e1ec084a4',
+        },
+        options: {
+          legend: {
+            calcs: [],
+            displayMode: 'list',
+            placement: 'bottom',
+            showLegend: true,
+          },
+          tooltip: {
+            mode: 'single',
+            sort: 'none',
+          },
+        },
+        targets: [
+          {
+            datasource: {
+              type: 'prometheus',
+              uid: 'gdev-prometheus',
+            },
+            editorMode: 'builder',
+            expr: 'access_evaluation_duration_count',
+            instant: false,
+            range: true,
+            refId: 'A',
+          },
+        ],
+        title: 'Panel Title',
+        type: 'timeseries',
+      },
+    },
+  };
+
+  const importedJson: DashboardJson = {
+    ...defaultDashboard,
+    __inputs: [
+      {
+        name: 'DS_GDEV-MYSQL',
+        label: 'gdev-mysql',
+        description: '',
+        type: 'datasource',
+        value: '',
+      },
+      {
+        name: 'DS_GDEV-PROMETHEUS-FOR-LIBRARY-PANEL',
+        label: 'gdev-prometheus',
+        description: '',
+        type: 'datasource',
+        value: '',
+        usage: {
+          libraryPanels: [
+            {
+              name: 'another prom lib panel',
+              uid: 'a0379b21-fa20-4313-bf12-d7fd7ceb6f90',
+            },
+          ],
+        },
+      },
+    ],
+    __elements: {
+      ...libPanel,
+    },
+    __requires: [
+      {
+        type: 'grafana',
+        id: 'grafana',
+        name: 'Grafana',
+        version: '10.1.0-pre',
+      },
+      {
+        type: 'datasource',
+        id: 'mysql',
+        name: 'MySQL',
+        version: '1.0.0',
+      },
+      {
+        type: 'datasource',
+        id: 'prometheus',
+        name: 'Prometheus',
+        version: '1.0.0',
+      },
+      {
+        type: 'panel',
+        id: 'table',
+        name: 'Table',
+        version: '',
+      },
+    ],
+    panels: [],
+  };
+
+  it("Should return 2 inputs, 1 for library panel because it's used for 2 panels", async () => {
+    mocks.getLibraryPanel.mockImplementation(() => {
+      throw { status: 404 };
+    });
+    const importDashboardState = initialImportDashboardState;
+    const dashboardJson: DashboardJson = {
+      ...importedJson,
+      panels: [panel, panelWithLibPanel, panelWithLibPanel],
+    };
+    const libPanelInputs = await getLibraryPanelInputs(dashboardJson);
+    const newDashboardState = {
+      ...importDashboardState,
+      inputs: {
+        ...importDashboardState.inputs,
+        libraryPanels: libPanelInputs!,
+      },
+    };
+
+    const processedDashboard = processDashboard(dashboardJson, newDashboardState);
+    const dsInputsForLibPanels = processedDashboard.__inputs!.filter((input) => !!input.usage?.libraryPanels);
+    expect(processedDashboard.__inputs).toHaveLength(2);
+    expect(dsInputsForLibPanels).toHaveLength(1);
+  });
+  it('Should return 3 inputs, 2 for library panels', async () => {
+    mocks.getLibraryPanel.mockImplementation(() => {
+      throw { status: 404 };
+    });
+    const importDashboardState = initialImportDashboardState;
+    const dashboardJson: DashboardJson = {
+      ...importedJson,
+      __inputs: [
+        {
+          name: 'DS_GDEV-MYSQL',
+          label: 'gdev-mysql',
+          description: '',
+          type: 'datasource',
+          value: '',
+        },
+        {
+          name: 'DS_GDEV-PROMETHEUS-FOR-LIBRARY-PANEL',
+          label: 'gdev-prometheus',
+          description: '',
+          type: 'datasource',
+          value: '',
+          usage: {
+            libraryPanels: [
+              {
+                name: 'another prom lib panel',
+                uid: 'a0379b21-fa20-4313-bf12-d7fd7ceb6f90',
+              },
+            ],
+          },
+        },
+        {
+          name: 'DS_GDEV-MYSQL-FOR-LIBRARY-PANEL',
+          label: 'gdev-mysql-2',
+          description: '',
+          type: 'datasource',
+          value: '',
+          usage: {
+            libraryPanels: [
+              {
+                uid: 'c46a6b49-de40-43b3-982c-1b5e1ec084a4',
+                name: 'Testing lib panel',
+              },
+            ],
+          },
+        },
+      ],
+      __elements: {
+        ...libPanel,
+        ...secondLibPanel,
+      },
+      panels: [panel, panelWithLibPanel, panelWithSecondLibPanel],
+    };
+    const libPanelInputs = await getLibraryPanelInputs(dashboardJson);
+    const newDashboardState = {
+      ...importDashboardState,
+      inputs: {
+        ...importDashboardState.inputs,
+        libraryPanels: libPanelInputs!,
+      },
+    };
+
+    const processedDashboard = processDashboard(dashboardJson, newDashboardState);
+    const dsInputsForLibPanels = processedDashboard.__inputs!.filter((input) => !!input.usage?.libraryPanels);
+    expect(processedDashboard.__inputs).toHaveLength(3);
+    expect(dsInputsForLibPanels).toHaveLength(2);
+  });
+
+  it('Should return 1 input, since library panels already exist in the instance', async () => {
+    const getLibPanelFirstRS: LibraryElementDTO = {
+      folderUid: '',
+      uid: 'a0379b21-fa20-4313-bf12-d7fd7ceb6f90',
+      name: 'another prom lib panel',
+      type: 'timeseries',
+      description: '',
+      model: {
+        transparent: false,
+        transformations: [],
+        datasource: {
+          type: 'prometheus',
+          uid: 'gdev-prometheus',
+        },
+        description: '',
+        fieldConfig: {
+          defaults: {
+            color: {
+              mode: FieldColorModeId.PaletteClassic,
+            },
+            custom: {
+              axisCenteredZero: false,
+              axisColorMode: 'text',
+              axisLabel: '',
+              axisPlacement: 'auto',
+              barAlignment: 0,
+              drawStyle: 'line',
+              fillOpacity: 0,
+              gradientMode: 'none',
+              hideFrom: {
+                legend: false,
+                tooltip: false,
+                viz: false,
+              },
+              lineInterpolation: 'linear',
+              lineWidth: 1,
+              pointSize: 5,
+              scaleDistribution: {
+                type: 'linear',
+              },
+              showPoints: 'auto',
+              spanNulls: false,
+              stacking: {
+                group: 'A',
+                mode: 'none',
+              },
+              thresholdsStyle: {
+                mode: 'off',
+              },
+            },
+            mappings: [],
+            thresholds: {
+              mode: ThresholdsMode.Absolute,
+              steps: [
+                {
+                  color: 'green',
+                  value: null,
+                },
+                {
+                  color: 'red',
+                  value: 80,
+                },
+              ],
+            },
+          },
+          overrides: [],
+        },
+        options: {
+          legend: {
+            calcs: [],
+            displayMode: 'list',
+            placement: 'bottom',
+            showLegend: true,
+          },
+          tooltip: {
+            mode: 'single',
+            sort: 'none',
+          },
+        },
+        targets: [
+          {
+            datasource: {
+              type: 'prometheus',
+              uid: 'gdev-prometheus',
+            },
+            editorMode: 'builder',
+            expr: 'access_evaluation_duration_bucket',
+            instant: false,
+            range: true,
+            refId: 'A',
+          },
+        ],
+        title: 'Panel Title',
+        type: 'timeseries',
+      },
+      version: 1,
+    };
+
+    const getLibPanelSecondRS: LibraryElementDTO = {
+      folderUid: '',
+      uid: 'c46a6b49-de40-43b3-982c-1b5e1ec084a4',
+      name: 'Testing lib panel',
+      type: 'timeseries',
+      description: '',
+      model: {
+        transparent: false,
+        transformations: [],
+        datasource: {
+          type: 'prometheus',
+          uid: 'gdev-prometheus',
+        },
+        description: '',
+        fieldConfig: {
+          defaults: {
+            color: {
+              mode: FieldColorModeId.PaletteClassic,
+            },
+            custom: {
+              axisCenteredZero: false,
+              axisColorMode: 'text',
+              axisLabel: '',
+              axisPlacement: 'auto',
+              barAlignment: 0,
+              drawStyle: 'line',
+              fillOpacity: 0,
+              gradientMode: 'none',
+              hideFrom: {
+                legend: false,
+                tooltip: false,
+                viz: false,
+              },
+              lineInterpolation: 'linear',
+              lineWidth: 1,
+              pointSize: 5,
+              scaleDistribution: {
+                type: 'linear',
+              },
+              showPoints: 'auto',
+              spanNulls: false,
+              stacking: {
+                group: 'A',
+                mode: 'none',
+              },
+              thresholdsStyle: {
+                mode: 'off',
+              },
+            },
+            mappings: [],
+            thresholds: {
+              mode: ThresholdsMode.Absolute,
+              steps: [
+                {
+                  color: 'green',
+                  value: null,
+                },
+                {
+                  color: 'red',
+                  value: 80,
+                },
+              ],
+            },
+          },
+          overrides: [],
+        },
+        options: {
+          legend: {
+            calcs: [],
+            displayMode: 'list',
+            placement: 'bottom',
+            showLegend: true,
+          },
+          tooltip: {
+            mode: 'single',
+            sort: 'none',
+          },
+        },
+        targets: [
+          {
+            datasource: {
+              type: 'prometheus',
+              uid: 'gdev-prometheus',
+            },
+            editorMode: 'builder',
+            expr: 'access_evaluation_duration_count',
+            instant: false,
+            range: true,
+            refId: 'A',
+          },
+        ],
+        title: 'Panel Title',
+        type: 'timeseries',
+      },
+      version: 1,
+    };
+    mocks.getLibraryPanel
+      .mockReturnValueOnce(Promise.resolve(getLibPanelFirstRS))
+      .mockReturnValueOnce(Promise.resolve(getLibPanelSecondRS));
+
+    const importDashboardState = initialImportDashboardState;
+    const dashboardJson: DashboardJson = {
+      ...importedJson,
+      __inputs: [
+        {
+          name: 'DS_GDEV-MYSQL',
+          label: 'gdev-mysql',
+          description: '',
+          type: 'datasource',
+          value: '',
+        },
+        {
+          name: 'DS_GDEV-PROMETHEUS-FOR-LIBRARY-PANEL',
+          label: 'gdev-prometheus',
+          description: '',
+          type: 'datasource',
+          value: '',
+          usage: {
+            libraryPanels: [
+              {
+                name: 'another prom lib panel',
+                uid: 'a0379b21-fa20-4313-bf12-d7fd7ceb6f90',
+              },
+            ],
+          },
+        },
+        {
+          name: 'DS_GDEV-MYSQL-FOR-LIBRARY-PANEL',
+          label: 'gdev-mysql-2',
+          description: '',
+          type: 'datasource',
+          value: '',
+          usage: {
+            libraryPanels: [
+              {
+                uid: 'c46a6b49-de40-43b3-982c-1b5e1ec084a4',
+                name: 'Testing lib panel',
+              },
+            ],
+          },
+        },
+      ],
+      __elements: {
+        ...libPanel,
+        ...secondLibPanel,
+      },
+      panels: [panel, panelWithLibPanel, panelWithSecondLibPanel],
+    };
+    const libPanelInputs = await getLibraryPanelInputs(dashboardJson);
+    const newDashboardState = {
+      ...importDashboardState,
+      inputs: {
+        ...importDashboardState.inputs,
+        libraryPanels: libPanelInputs!,
+      },
+    };
+
+    const processedDashboard = processDashboard(dashboardJson, newDashboardState);
+    const dsInputsForLibPanels = processedDashboard.__inputs!.filter((input) => !!input.usage?.libraryPanels);
+    expect(processedDashboard.__inputs).toHaveLength(1);
+    expect(dsInputsForLibPanels).toHaveLength(0);
   });
 });

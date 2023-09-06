@@ -27,10 +27,6 @@ const (
 	// Search for dashboards using panel title
 	FlagPanelTitleSearch = "panelTitleSearch"
 
-	// FlagPrometheusAzureOverrideAudience
-	// Experimental. Allow override default AAD audience for Azure Prometheus endpoint
-	FlagPrometheusAzureOverrideAudience = "prometheusAzureOverrideAudience"
-
 	// FlagPublicDashboards
 	// Enables public access to dashboards
 	FlagPublicDashboards = "publicDashboards"
@@ -54,14 +50,6 @@ const (
 	// FlagStorage
 	// Configurable storage for dashboards, datasources, and resources
 	FlagStorage = "storage"
-
-	// FlagExploreMixedDatasource
-	// Enable mixed datasource in Explore
-	FlagExploreMixedDatasource = "exploreMixedDatasource"
-
-	// FlagNewTraceViewHeader
-	// Shows the new trace view header
-	FlagNewTraceViewHeader = "newTraceViewHeader"
 
 	// FlagCorrelations
 	// Correlations page
@@ -91,10 +79,6 @@ const (
 	// Dynamic flag to disable angular at runtime. The preferred method is to set `angular_support_enabled` to `false` in the [security] settings, which allows you to change the state at runtime.
 	FlagDisableAngular = "disableAngular"
 
-	// FlagPrometheusWideSeries
-	// Enable wide series responses in the Prometheus datasource
-	FlagPrometheusWideSeries = "prometheusWideSeries"
-
 	// FlagCanvasPanelNesting
 	// Allow elements nesting
 	FlagCanvasPanelNesting = "canvasPanelNesting"
@@ -116,7 +100,7 @@ const (
 	FlagDataConnectionsConsole = "dataConnectionsConsole"
 
 	// FlagTopnav
-	// Enables new top navigation and page layouts
+	// Enables topnav support in external plugins. The new Grafana navigation cannot be disabled.
 	FlagTopnav = "topnav"
 
 	// FlagGrpcServer
@@ -159,13 +143,13 @@ const (
 	// Enable folder nesting
 	FlagNestedFolders = "nestedFolders"
 
+	// FlagNestedFolderPicker
+	// Enables the new folder picker to work with nested folders. Requires the folderPicker feature flag
+	FlagNestedFolderPicker = "nestedFolderPicker"
+
 	// FlagAccessTokenExpirationCheck
 	// Enable OAuth access_token expiration check and token refresh using the refresh_token
 	FlagAccessTokenExpirationCheck = "accessTokenExpirationCheck"
-
-	// FlagShowTraceId
-	// Show trace ids for requests
-	FlagShowTraceId = "showTraceId"
 
 	// FlagEmptyDashboardPage
 	// Enable the redesigned user interface of a dashboard page that includes no panels
@@ -187,10 +171,6 @@ const (
 	// Stop maintaining state of alerts that are not firing
 	FlagAlertingNoNormalState = "alertingNoNormalState"
 
-	// FlagLogsSampleInExplore
-	// Enables access to the logs sample feature in Explore
-	FlagLogsSampleInExplore = "logsSampleInExplore"
-
 	// FlagLogsContextDatasourceUi
 	// Allow datasource to provide custom UI for context view
 	FlagLogsContextDatasourceUi = "logsContextDatasourceUi"
@@ -207,13 +187,9 @@ const (
 	// Support overriding cookie preferences per user
 	FlagIndividualCookiePreferences = "individualCookiePreferences"
 
-	// FlagOnlyExternalOrgRoleSync
-	// Prohibits a user from changing organization roles synced with external auth providers
-	FlagOnlyExternalOrgRoleSync = "onlyExternalOrgRoleSync"
-
-	// FlagTraceqlSearch
-	// Enables the &#39;TraceQL Search&#39; tab for the Tempo datasource which provides a UI to generate TraceQL queries
-	FlagTraceqlSearch = "traceqlSearch"
+	// FlagGcomOnlyExternalOrgRoleSync
+	// Prohibits a user from changing organization roles synced with Grafana Cloud auth provider
+	FlagGcomOnlyExternalOrgRoleSync = "gcomOnlyExternalOrgRoleSync"
 
 	// FlagPrometheusMetricEncyclopedia
 	// Adds the metrics explorer component to the Prometheus query builder as an option in metric select
@@ -242,6 +218,10 @@ const (
 	// FlagLokiMetricDataplane
 	// Changes metric responses from Loki to be compliant with the dataplane specification.
 	FlagLokiMetricDataplane = "lokiMetricDataplane"
+
+	// FlagLokiLogsDataplane
+	// Changes logs responses from Loki to be compliant with the dataplane specification.
+	FlagLokiLogsDataplane = "lokiLogsDataplane"
 
 	// FlagDataplaneFrontendFallback
 	// Support dataplane contract field name change for transformations and field name matchers where the name is different
@@ -274,10 +254,6 @@ const (
 	// FlagRenderAuthJWT
 	// Uses JWT-based auth for rendering instead of relying on remote cache
 	FlagRenderAuthJWT = "renderAuthJWT"
-
-	// FlagPyroscopeFlameGraph
-	// Changes flame graph to pyroscope one
-	FlagPyroscopeFlameGraph = "pyroscopeFlameGraph"
 
 	// FlagExternalServiceAuth
 	// Starts an OAuth2 authentication provider for external services
@@ -323,9 +299,21 @@ const (
 	// Enables the plugins frontend sandbox
 	FlagPluginsFrontendSandbox = "pluginsFrontendSandbox"
 
+	// FlagDashboardEmbed
+	// Allow embedding dashboard for external use in Code editors
+	FlagDashboardEmbed = "dashboardEmbed"
+
+	// FlagFrontendSandboxMonitorOnly
+	// Enables monitor only in the plugin frontend sandbox (if enabled)
+	FlagFrontendSandboxMonitorOnly = "frontendSandboxMonitorOnly"
+
 	// FlagSqlDatasourceDatabaseSelection
 	// Enables previous SQL data source dataset dropdown behavior
 	FlagSqlDatasourceDatabaseSelection = "sqlDatasourceDatabaseSelection"
+
+	// FlagLokiFormatQuery
+	// Enables the ability to format Loki queries
+	FlagLokiFormatQuery = "lokiFormatQuery"
 
 	// FlagCloudWatchLogsMonacoEditor
 	// Enables the Monaco editor for CloudWatch Logs queries
@@ -347,7 +335,95 @@ const (
 	// Rewrites eligible loki range queries to instant queries
 	FlagAlertingLokiRangeToInstant = "alertingLokiRangeToInstant"
 
-	// FlagFlameGraphV2
-	// New version of flame graph with new features
-	FlagFlameGraphV2 = "flameGraphV2"
+	// FlagVizAndWidgetSplit
+	// Split panels between vizualizations and widgets
+	FlagVizAndWidgetSplit = "vizAndWidgetSplit"
+
+	// FlagPrometheusIncrementalQueryInstrumentation
+	// Adds RudderStack events to incremental queries
+	FlagPrometheusIncrementalQueryInstrumentation = "prometheusIncrementalQueryInstrumentation"
+
+	// FlagLogsExploreTableVisualisation
+	// A table visualisation for logs in Explore
+	FlagLogsExploreTableVisualisation = "logsExploreTableVisualisation"
+
+	// FlagAwsDatasourcesTempCredentials
+	// Support temporary security credentials in AWS plugins for Grafana Cloud customers
+	FlagAwsDatasourcesTempCredentials = "awsDatasourcesTempCredentials"
+
+	// FlagTransformationsRedesign
+	// Enables the transformations redesign
+	FlagTransformationsRedesign = "transformationsRedesign"
+
+	// FlagToggleLabelsInLogsUI
+	// Enable toggleable filters in log details view
+	FlagToggleLabelsInLogsUI = "toggleLabelsInLogsUI"
+
+	// FlagMlExpressions
+	// Enable support for Machine Learning in server-side expressions
+	FlagMlExpressions = "mlExpressions"
+
+	// FlagTraceQLStreaming
+	// Enables response streaming of TraceQL queries of the Tempo data source
+	FlagTraceQLStreaming = "traceQLStreaming"
+
+	// FlagMetricsSummary
+	// Enables metrics summary queries in the Tempo data source
+	FlagMetricsSummary = "metricsSummary"
+
+	// FlagGrafanaAPIServer
+	// Enable Kubernetes API Server for Grafana resources
+	FlagGrafanaAPIServer = "grafanaAPIServer"
+
+	// FlagFeatureToggleAdminPage
+	// Enable admin page for managing feature toggles from the Grafana front-end
+	FlagFeatureToggleAdminPage = "featureToggleAdminPage"
+
+	// FlagAwsAsyncQueryCaching
+	// Enable caching for async queries for Redshift and Athena. Requires that the `useCachingService` feature toggle is enabled and the datasource has caching and async query support enabled
+	FlagAwsAsyncQueryCaching = "awsAsyncQueryCaching"
+
+	// FlagSplitScopes
+	// Support faster dashboard and folder search by splitting permission scopes into parts
+	FlagSplitScopes = "splitScopes"
+
+	// FlagAzureMonitorDataplane
+	// Adds dataplane compliant frame metadata in the Azure Monitor datasource
+	FlagAzureMonitorDataplane = "azureMonitorDataplane"
+
+	// FlagPermissionsFilterRemoveSubquery
+	// Alternative permission filter implementation that does not use subqueries for fetching the dashboard folder
+	FlagPermissionsFilterRemoveSubquery = "permissionsFilterRemoveSubquery"
+
+	// FlagPrometheusConfigOverhaulAuth
+	// Update the Prometheus configuration page with the new auth component
+	FlagPrometheusConfigOverhaulAuth = "prometheusConfigOverhaulAuth"
+
+	// FlagConfigurableSchedulerTick
+	// Enable changing the scheduler base interval via configuration option unified_alerting.scheduler_tick_interval
+	FlagConfigurableSchedulerTick = "configurableSchedulerTick"
+
+	// FlagInfluxdbSqlSupport
+	// Enable InfluxDB SQL query language support with new querying UI
+	FlagInfluxdbSqlSupport = "influxdbSqlSupport"
+
+	// FlagNoBasicRole
+	// Enables a new role that has no permissions by default
+	FlagNoBasicRole = "noBasicRole"
+
+	// FlagAlertingNoDataErrorExecution
+	// Changes how Alerting state manager handles execution of NoData/Error
+	FlagAlertingNoDataErrorExecution = "alertingNoDataErrorExecution"
+
+	// FlagAngularDeprecationUI
+	// Display new Angular deprecation-related UI features
+	FlagAngularDeprecationUI = "angularDeprecationUI"
+
+	// FlagDashgpt
+	// Enable AI powered features in dashboards
+	FlagDashgpt = "dashgpt"
+
+	// FlagReportingRetries
+	// Enables rendering retries for the reporting feature
+	FlagReportingRetries = "reportingRetries"
 )

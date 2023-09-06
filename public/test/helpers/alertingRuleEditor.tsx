@@ -11,7 +11,7 @@ import { TestProvider } from './TestProvider';
 
 export const ui = {
   inputs: {
-    name: byRole('textbox', { name: /rule name name for the alert rule\./i }),
+    name: byRole('textbox', { name: 'name' }),
     alertType: byTestId('alert-type-picker'),
     dataSource: byTestId('datasource-picker'),
     folder: byTestId('folder-picker'),
@@ -28,9 +28,6 @@ export const ui = {
     save: byRole('button', { name: 'Save rule' }),
     addAnnotation: byRole('button', { name: /Add info/ }),
     addLabel: byRole('button', { name: /Add label/ }),
-    // alert type buttons
-    grafanaManagedAlert: byRole('button', { name: /Grafana managed/ }),
-    lotexAlert: byRole('button', { name: /Mimir or Loki alert/ }),
   },
 };
 

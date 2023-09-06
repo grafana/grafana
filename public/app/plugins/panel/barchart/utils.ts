@@ -7,6 +7,7 @@ import {
   formattedValueToString,
   getDisplayProcessor,
   getFieldColorModeForField,
+  cacheFieldDisplayNames,
   getFieldSeriesColor,
   GrafanaTheme2,
   outerJoinDataFrames,
@@ -362,6 +363,8 @@ export function prepareBarChartDisplayValues(
     return { warn: 'No data in response' };
   }
 
+  cacheFieldDisplayNames(series);
+
   // Bar chart requires a single frame
   const frame =
     series.length === 1
@@ -475,7 +478,7 @@ export function prepareBarChartDisplayValues(
   let legendFields: Field[] = fields;
   if (options.stacking === StackingMode.Percent) {
     legendFields = fields.map((field) => {
-      const alignedFrameField = frame.fields.find((f) => f.name === field.name)!;
+      const alignedFrameField = frame.fields.find((f) => f.state?.displayName === field.state?.displayName)!;
 
       const copy = {
         ...field,

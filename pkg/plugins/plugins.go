@@ -10,6 +10,7 @@ import (
 	"path"
 	"runtime"
 	"strings"
+	"sync"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
@@ -18,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/secretsmanagerplugin"
 	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/plugins/oauth"
+	"github.com/grafana/grafana/pkg/plugins/plugindef"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -60,6 +62,8 @@ type Plugin struct {
 	SecretsManager secretsmanagerplugin.SecretsManagerPlugin
 	client         backendplugin.Plugin
 	log            log.Logger
+
+	mu sync.Mutex
 
 	// This will be moved to plugin.json when we have general support in gcom
 	Alias string `json:"alias,omitempty"`
@@ -155,7 +159,7 @@ type JSONData struct {
 	Executable string `json:"executable,omitempty"`
 
 	// Oauth App Service Registration
-	ExternalServiceRegistration *oauth.ExternalServiceRegistration `json:"externalServiceRegistration,omitempty"`
+	ExternalServiceRegistration *plugindef.ExternalServiceRegistration `json:"externalServiceRegistration,omitempty"`
 }
 
 func ReadPluginJSON(reader io.Reader) (JSONData, error) {
@@ -263,16 +267,24 @@ func (p *Plugin) SetLogger(l log.Logger) {
 }
 
 func (p *Plugin) Start(ctx context.Context) error {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
 	if p.client == nil {
 		return fmt.Errorf("could not start plugin %s as no plugin client exists", p.ID)
 	}
+
 	return p.client.Start(ctx)
 }
 
 func (p *Plugin) Stop(ctx context.Context) error {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
 	if p.client == nil {
 		return nil
 	}
+
 	return p.client.Stop(ctx)
 }
 
@@ -284,6 +296,9 @@ func (p *Plugin) IsManaged() bool {
 }
 
 func (p *Plugin) Decommission() error {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
 	if p.client != nil {
 		return p.client.Decommission()
 	}
@@ -485,7 +500,7 @@ func (p *Plugin) IsBundledPlugin() bool {
 }
 
 func (p *Plugin) IsExternalPlugin() bool {
-	return p.Class == ClassExternal
+	return !p.IsCorePlugin() && !p.IsBundledPlugin()
 }
 
 type Class string

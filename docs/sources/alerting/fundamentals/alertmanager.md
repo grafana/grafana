@@ -3,7 +3,14 @@ aliases:
   - ../fundamentals/alertmanager/
   - ../metrics/
   - ../unified-alerting/fundamentals/alertmanager/
+  - alerting/manage-notifications/alertmanager/
+canonical: https://grafana.com/docs/grafana/latest/alerting/fundamentals/alertmanager/
 description: Intro to the different Alertmanagers
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: Alertmanager
 weight: 103
 ---
@@ -44,4 +51,9 @@ If you are provisioning your data source, set the flag `handleGrafanaManagedAler
 
 [Prometheus Alertmanager documentation](https://prometheus.io/docs/alerting/latest/alertmanager/)
 
-[Add an external Alertmanager]({{< relref "../set-up/configure-alertmanager" >}})
+[Add an external Alertmanager][configure-alertmanager]
+
+{{% docs/reference %}}
+[configure-alertmanager]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting/set-up/configure-alertmanager"
+[configure-alertmanager]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/set-up/configure-alertmanager"
+{{% /docs/reference %}}

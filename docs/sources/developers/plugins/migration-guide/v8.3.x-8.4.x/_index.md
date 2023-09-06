@@ -6,8 +6,12 @@ keywords:
   - migration
   - plugin
   - documentation
+labels:
+  products:
+    - enterprise
+    - oss
+menuTitle: v8.3.x to v8.4.x
 title: Migrate plugins from Grafana version 8.3.x to 8.4.x
-menutitle: v8.3.x to v8.4.x
 weight: 2200
 ---
 

@@ -10,8 +10,6 @@
 
 import * as common from '@grafana/schema';
 
-export const PanelCfgModelVersion = Object.freeze([0, 0]);
-
 /**
  * Select the pie chart display style.
  */

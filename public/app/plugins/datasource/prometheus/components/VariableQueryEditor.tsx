@@ -67,7 +67,7 @@ export const PromVariableQueryEditor = ({ onChange, query, datasource }: Props) 
     setQryType(variableQuery.qryType);
     setLabel(variableQuery.label ?? '');
     setMetric(variableQuery.metric ?? '');
-    setLabelFilters(query.labelFilters ?? []);
+    setLabelFilters(variableQuery.labelFilters ?? []);
     setVarQuery(variableQuery.varQuery ?? '');
     setSeriesQuery(variableQuery.seriesQuery ?? '');
   }, [query]);
@@ -119,16 +119,15 @@ export const PromVariableQueryEditor = ({ onChange, query, datasource }: Props) 
       refId: 'PrometheusVariableQueryEditor-VariableQuery',
     };
 
-    const updatedVar = { ...queryVar, ...updateVar };
+    let updateLabelFilters = updLabelFilters ? { labelFilters: updLabelFilters } : { labelFilters: labelFilters };
+
+    const updatedVar = { ...queryVar, ...updateVar, ...updateLabelFilters };
 
     const queryString = migrateVariableEditorBackToVariableSupport(updatedVar);
-
-    let lblFltrs = updLabelFilters ? updLabelFilters : labelFilters;
 
     // setting query.query property allows for update of variable definition
     onChange({
       query: queryString,
-      labelFilters: lblFltrs,
       refId,
     });
   };
@@ -136,8 +135,8 @@ export const PromVariableQueryEditor = ({ onChange, query, datasource }: Props) 
   /** Call onchange for label names query type change */
   const onQueryTypeChange = (newType: SelectableValue<QueryType>) => {
     setQryType(newType.value);
-    if (newType.value === QueryType.LabelNames) {
-      onChangeWithVariableString({ qryType: newType.value });
+    if (newType.value !== QueryType.SeriesQuery) {
+      onChangeWithVariableString({ qryType: newType.value ?? 0 });
     }
   };
 

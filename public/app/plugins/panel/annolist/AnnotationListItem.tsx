@@ -148,7 +148,7 @@ function getStyles(theme: GrafanaTheme2) {
       margin: 0,
       padding: theme.spacing(0.5),
       img: {
-        borderRadius: '50%',
+        borderRadius: theme.shape.radius.circle,
         width: theme.spacing(2),
         height: theme.spacing(2),
       },

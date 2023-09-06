@@ -16,9 +16,14 @@ keywords:
   - format tables
   - table filter
   - filter columns
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 menuTitle: Table
 title: Table
-weight: 1000
+weight: 100
 ---
 
 # Table

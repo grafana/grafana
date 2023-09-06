@@ -8,8 +8,13 @@ keywords:
   - grafana
   - bar
   - bar gauge
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: Bar gauge
-weight: 200
+weight: 100
 ---
 
 # Bar gauge

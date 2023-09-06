@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -86,7 +87,7 @@ func (hs *HTTPServer) GetFolderByUID(c *contextmodel.ReqContext) response.Respon
 		return apierrors.ToFolderErrorResponse(err)
 	}
 
-	g, err := guardian.NewByUID(c.Req.Context(), folder.UID, c.OrgID, c.SignedInUser)
+	g, err := guardian.NewByFolder(c.Req.Context(), folder, c.OrgID, c.SignedInUser)
 	if err != nil {
 		return response.Err(err)
 	}
@@ -119,7 +120,7 @@ func (hs *HTTPServer) GetFolderByID(c *contextmodel.ReqContext) response.Respons
 		return apierrors.ToFolderErrorResponse(err)
 	}
 
-	g, err := guardian.NewByUID(c.Req.Context(), folder.UID, c.OrgID, c.SignedInUser)
+	g, err := guardian.NewByFolder(c.Req.Context(), folder, c.OrgID, c.SignedInUser)
 	if err != nil {
 		return response.Err(err)
 	}
@@ -158,11 +159,9 @@ func (hs *HTTPServer) CreateFolder(c *contextmodel.ReqContext) response.Response
 
 	// Clear permission cache for the user who's created the folder, so that new permissions are fetched for their next call
 	// Required for cases when caller wants to immediately interact with the newly created object
-	if !hs.AccessControl.IsDisabled() {
-		hs.accesscontrolService.ClearUserPermissionCache(c.SignedInUser)
-	}
+	hs.accesscontrolService.ClearUserPermissionCache(c.SignedInUser)
 
-	g, err := guardian.NewByUID(c.Req.Context(), folder.UID, c.OrgID, c.SignedInUser)
+	g, err := guardian.NewByFolder(c.Req.Context(), folder, c.OrgID, c.SignedInUser)
 	if err != nil {
 		return response.Err(err)
 	}
@@ -172,29 +171,23 @@ func (hs *HTTPServer) CreateFolder(c *contextmodel.ReqContext) response.Response
 }
 
 func (hs *HTTPServer) setDefaultFolderPermissions(ctx context.Context, orgID int64, user *user.SignedInUser, folder *folder.Folder) error {
-	isNested := folder.ParentUID != ""
-	var permissionErr error
-	if !accesscontrol.IsDisabled(hs.Cfg) {
-		var permissions []accesscontrol.SetResourcePermissionCommand
-		if user.IsRealUser() && !user.IsAnonymous {
-			permissions = append(permissions, accesscontrol.SetResourcePermissionCommand{
-				UserID: user.UserID, Permission: dashboards.PERMISSION_ADMIN.String(),
-			})
-		}
-
-		if !isNested || !hs.Features.IsEnabled(featuremgmt.FlagNestedFolders) {
-			permissions = append(permissions, []accesscontrol.SetResourcePermissionCommand{
-				{BuiltinRole: string(org.RoleEditor), Permission: dashboards.PERMISSION_EDIT.String()},
-				{BuiltinRole: string(org.RoleViewer), Permission: dashboards.PERMISSION_VIEW.String()},
-			}...)
-		}
-
-		_, permissionErr = hs.folderPermissionsService.SetPermissions(ctx, orgID, folder.UID, permissions...)
-		return permissionErr
-	} else if hs.Cfg.EditorsCanAdmin && user.IsRealUser() && !user.IsAnonymous {
-		return hs.folderService.MakeUserAdmin(ctx, orgID, user.UserID, folder.ID, !isNested)
+	var permissions []accesscontrol.SetResourcePermissionCommand
+	if user.IsRealUser() && !user.IsAnonymous {
+		permissions = append(permissions, accesscontrol.SetResourcePermissionCommand{
+			UserID: user.UserID, Permission: dashboards.PERMISSION_ADMIN.String(),
+		})
 	}
-	return nil
+
+	isNested := folder.ParentUID != ""
+	if !isNested || !hs.Features.IsEnabled(featuremgmt.FlagNestedFolders) {
+		permissions = append(permissions, []accesscontrol.SetResourcePermissionCommand{
+			{BuiltinRole: string(org.RoleEditor), Permission: dashboards.PERMISSION_EDIT.String()},
+			{BuiltinRole: string(org.RoleViewer), Permission: dashboards.PERMISSION_VIEW.String()},
+		}...)
+	}
+
+	_, err := hs.folderPermissionsService.SetPermissions(ctx, orgID, folder.UID, permissions...)
+	return err
 }
 
 // swagger:route POST /folders/{folder_uid}/move folders moveFolder
@@ -223,7 +216,7 @@ func (hs *HTTPServer) MoveFolder(c *contextmodel.ReqContext) response.Response {
 			return response.Error(http.StatusInternalServerError, "move folder failed", err)
 		}
 
-		g, err := guardian.NewByUID(c.Req.Context(), cmd.UID, c.OrgID, c.SignedInUser)
+		g, err := guardian.NewByFolder(c.Req.Context(), theFolder, c.OrgID, c.SignedInUser)
 		if err != nil {
 			return response.Err(err)
 		}
@@ -259,7 +252,7 @@ func (hs *HTTPServer) UpdateFolder(c *contextmodel.ReqContext) response.Response
 	if err != nil {
 		return apierrors.ToFolderErrorResponse(err)
 	}
-	g, err := guardian.NewByUID(c.Req.Context(), result.UID, c.OrgID, c.SignedInUser)
+	g, err := guardian.NewByFolder(c.Req.Context(), result, c.OrgID, c.SignedInUser)
 	if err != nil {
 		return response.Err(err)
 	}
@@ -289,6 +282,12 @@ func (hs *HTTPServer) DeleteFolder(c *contextmodel.ReqContext) response.Response
 		}
 		return apierrors.ToFolderErrorResponse(err)
 	}
+	/* TODO: after a decision regarding folder deletion permissions has been made
+	(https://github.com/grafana/grafana-enterprise/issues/5144),
+	remove the previous call to hs.LibraryElementService.DeleteLibraryElementsInFolder
+	and remove "user" from the signature of DeleteInFolder in the folder RegistryService.
+	Context: https://github.com/grafana/grafana/pull/69149#discussion_r1235057903
+	*/
 
 	uid := web.Params(c.Req)[":uid"]
 	err = hs.folderService.Delete(c.Req.Context(), &folder.DeleteFolderCommand{UID: uid, OrgID: c.OrgID, ForceDeleteRules: c.QueryBool("forceDeleteRules"), SignedInUser: c.SignedInUser})
@@ -296,7 +295,9 @@ func (hs *HTTPServer) DeleteFolder(c *contextmodel.ReqContext) response.Response
 		return apierrors.ToFolderErrorResponse(err)
 	}
 
-	return response.JSON(http.StatusOK, "")
+	return response.JSON(http.StatusOK, util.DynMap{
+		"message": "Folder deleted",
+	})
 }
 
 // swagger:route GET /folders/{folder_uid}/counts folders getFolderDescendantCounts
@@ -378,7 +379,7 @@ func (hs *HTTPServer) newToFolderDto(c *contextmodel.ReqContext, g guardian.Dash
 }
 
 func (hs *HTTPServer) getFolderACMetadata(c *contextmodel.ReqContext, f *folder.Folder) (accesscontrol.Metadata, error) {
-	if hs.AccessControl.IsDisabled() || !c.QueryBool("accesscontrol") {
+	if !c.QueryBool("accesscontrol") {
 		return nil, nil
 	}
 
@@ -392,7 +393,7 @@ func (hs *HTTPServer) getFolderACMetadata(c *contextmodel.ReqContext, f *folder.
 		folderIDs[p.UID] = true
 	}
 
-	allMetadata := hs.getMultiAccessControlMetadata(c, c.OrgID, dashboards.ScopeFoldersPrefix, folderIDs)
+	allMetadata := hs.getMultiAccessControlMetadata(c, dashboards.ScopeFoldersPrefix, folderIDs)
 	metadata := allMetadata[f.UID]
 
 	// Flatten metadata - if any parent has a permission, the child folder inherits it

@@ -5,8 +5,9 @@ import (
 	"net"
 	"net/http"
 	"sort"
+	"strings"
 
-	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 )
 
 // UserHeaderName name of the header used when forwarding the Grafana user login.
@@ -46,8 +47,23 @@ func ClearCookieHeader(req *http.Request, keepCookiesNames []string, skipCookies
 	keepCookies := map[string]*http.Cookie{}
 	for _, c := range req.Cookies() {
 		for _, v := range keepCookiesNames {
-			if c.Name == v {
+			// match all
+			if v == "[]" {
 				keepCookies[c.Name] = c
+				continue
+			}
+
+			if strings.HasSuffix(v, "[]") {
+				// match prefix
+				pattern := strings.TrimSuffix(v, "[]")
+				if strings.HasPrefix(c.Name, pattern) {
+					keepCookies[c.Name] = c
+				}
+			} else {
+				// exact match
+				if c.Name == v {
+					keepCookies[c.Name] = c
+				}
 			}
 		}
 	}
@@ -87,9 +103,16 @@ func SetViaHeader(header http.Header, major, minor int) {
 }
 
 // ApplyUserHeader Set the X-Grafana-User header if needed (and remove if not).
-func ApplyUserHeader(sendUserHeader bool, req *http.Request, user *user.SignedInUser) {
+func ApplyUserHeader(sendUserHeader bool, req *http.Request, user identity.Requester) {
 	req.Header.Del(UserHeaderName)
-	if sendUserHeader && user != nil && !user.IsAnonymous {
-		req.Header.Set(UserHeaderName, user.Login)
+
+	if !sendUserHeader || user == nil || user.IsNil() {
+		return
+	}
+
+	namespace, _ := user.GetNamespacedID()
+	switch namespace {
+	case identity.NamespaceUser, identity.NamespaceServiceAccount:
+		req.Header.Set(UserHeaderName, user.GetLogin())
 	}
 }

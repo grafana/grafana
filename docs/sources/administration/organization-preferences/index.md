@@ -6,6 +6,10 @@ aliases:
   - preferences/change-grafana-theme/
   - preferences/change-grafana-timezone/
   - preferences/change-home-dashboard/
+labels:
+  products:
+    - enterprise
+    - oss
 title: Organization preferences
 weight: 500
 ---

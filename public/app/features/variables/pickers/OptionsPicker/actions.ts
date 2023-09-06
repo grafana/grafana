@@ -1,6 +1,6 @@
 import { debounce, trim } from 'lodash';
 
-import { isEmptyObject } from '@grafana/data';
+import { isEmptyObject, containsSearchFilter } from '@grafana/data';
 import { StoreState, ThunkDispatch, ThunkResult } from 'app/types';
 
 import { variableAdapters } from '../../adapters';
@@ -10,7 +10,7 @@ import { getVariable, getVariablesState } from '../../state/selectors';
 import { changeVariableProp, setCurrentVariableValue } from '../../state/sharedReducer';
 import { KeyedVariableIdentifier } from '../../state/types';
 import { VariableOption, VariableWithOptions } from '../../types';
-import { containsSearchFilter, getCurrentValue, toVariablePayload } from '../../utils';
+import { getCurrentValue, toVariablePayload } from '../../utils';
 import { NavigationKey } from '../types';
 
 import {

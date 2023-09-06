@@ -16,6 +16,7 @@ import {
   standardTransformers,
   TransformerRegistryItem,
   TransformerUIProps,
+  TransformerCategory,
 } from '@grafana/data';
 import {
   BinaryOptions,
@@ -383,5 +384,6 @@ export const calculateFieldTransformRegistryItem: TransformerRegistryItem<Calcul
   editor: CalculateFieldTransformerEditor,
   transformation: standardTransformers.calculateFieldTransformer,
   name: 'Add field from calculation',
-  description: 'Use the row values to calculate a new field',
+  description: 'Use the row values to calculate a new field.',
+  categories: new Set([TransformerCategory.CalculateNewFields]),
 };

@@ -12,9 +12,31 @@ import { saveDashboard as saveDashboardApiCall } from 'app/features/manage-dashb
 import { useDispatch } from 'app/types';
 import { DashboardSavedEvent } from 'app/types/events';
 
+import { updateDashboardUidLastUsedDatasource } from '../../utils/dashboard';
+
 import { SaveDashboardOptions } from './types';
 
-const saveDashboard = async (saveModel: any, options: SaveDashboardOptions, dashboard: DashboardModel) => {
+const saveDashboard = async (
+  saveModel: any,
+  options: SaveDashboardOptions,
+  dashboard: DashboardModel,
+  saveDashboardRtkQuery: ReturnType<typeof useSaveDashboardMutation>[0]
+) => {
+  if (config.featureToggles.nestedFolders) {
+    const query = await saveDashboardRtkQuery({
+      dashboard: saveModel,
+      folderUid: options.folderUid ?? dashboard.meta.folderUid ?? saveModel.meta.folderUid,
+      message: options.message,
+      overwrite: options.overwrite,
+    });
+
+    if ('error' in query) {
+      throw query.error;
+    }
+
+    return query.data;
+  }
+
   let folderUid = options.folderUid;
   if (folderUid === undefined) {
     folderUid = dashboard.meta.folderUid ?? saveModel.folderUid;
@@ -33,21 +55,17 @@ export const useDashboardSave = (dashboard: DashboardModel, isCopy = false) => {
   const [state, onDashboardSave] = useAsyncFn(
     async (clone: DashboardModel, options: SaveDashboardOptions, dashboard: DashboardModel) => {
       try {
-        const queryResult = config.featureToggles.nestedFolders
-          ? await saveDashboardRtkQuery({
-              dashboard: clone,
-              folderUid: options.folderUid ?? dashboard.meta.folderUid ?? clone.meta.folderUid,
-              message: options.message,
-              overwrite: options.overwrite,
-            })
-          : await saveDashboard(clone, options, dashboard);
-        const result = config.featureToggles.nestedFolders ? queryResult.data : queryResult;
+        const result = await saveDashboard(clone, options, dashboard, saveDashboardRtkQuery);
         dashboard.version = result.version;
         dashboard.clearUnsavedChanges();
 
         // important that these happen before location redirect below
         appEvents.publish(new DashboardSavedEvent());
         notifyApp.success('Dashboard saved');
+
+        //Update local storage dashboard to handle things like last used datasource
+        updateDashboardUidLastUsedDatasource(result.uid);
+
         if (isCopy) {
           reportInteraction('grafana_dashboard_copied', {
             name: dashboard.title,

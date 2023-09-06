@@ -3,8 +3,12 @@ aliases:
   - ../installation/restart-grafana/
   - ./restart-grafana/
 description: How to start the Grafana server
-title: Start the Grafana server
+labels:
+  products:
+    - enterprise
+    - oss
 menuTitle: Start Grafana
+title: Start the Grafana server
 weight: 300
 ---
 
@@ -22,7 +26,7 @@ The following subsections describe three methods of starting and restarting the 
 
 ### Start the Grafana server with systemd
 
-Complete the following steps to start the Grafana server using systemd and verify that it is running:
+Complete the following steps to start the Grafana server using systemd and verify that it is running.
 
 1. To start the service, run the following commands:
 
@@ -48,7 +52,7 @@ sudo systemctl enable grafana-server.service
 
 #### Serve Grafana on a port < 1024
 
-{{< docs/shared "systemd/bind-net-capabilities.md" >}}
+{{< docs/shared lookup="systemd/bind-net-capabilities.md" source="grafana" version="<GRAFANA VERSION>" >}}
 
 ### Restart the Grafana server using systemd
 
@@ -176,6 +180,14 @@ To restart the Grafana server, complete the following steps:
 ## macOS
 
 Restart methods differ depending on whether you installed Grafana using Homebrew or as standalone macOS binaries.
+
+### Start Grafana using Homebrew
+
+To start Grafana using [Homebrew](http://brew.sh/), run the following start command:
+
+```bash
+brew services start grafana
+```
 
 ### Restart Grafana using Homebrew
 

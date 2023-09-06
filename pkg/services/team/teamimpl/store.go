@@ -9,9 +9,9 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/team"
-	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -37,14 +37,14 @@ type xormStore struct {
 	cfg *setting.Cfg
 }
 
-func getFilteredUsers(signedInUser *user.SignedInUser, hiddenUsers map[string]struct{}) []string {
+func getFilteredUsers(signedInUser identity.Requester, hiddenUsers map[string]struct{}) []string {
 	filteredUsers := make([]string, 0, len(hiddenUsers))
-	if signedInUser == nil || signedInUser.IsGrafanaAdmin {
+	if signedInUser == nil || signedInUser.IsNil() || signedInUser.GetIsGrafanaAdmin() {
 		return filteredUsers
 	}
 
 	for u := range hiddenUsers {
-		if u == signedInUser.Login {
+		if u == signedInUser.GetLogin() {
 			continue
 		}
 		filteredUsers = append(filteredUsers, u)
@@ -187,7 +187,7 @@ func (ss *xormStore) Search(ctx context.Context, query *team.SearchTeamsQuery) (
 		queryWithWildcards := "%" + query.Query + "%"
 
 		var sql bytes.Buffer
-		params := make([]interface{}, 0)
+		params := make([]any, 0)
 
 		filteredUsers := getFilteredUsers(query.SignedInUser, query.HiddenUsers)
 		for _, user := range filteredUsers {
@@ -256,7 +256,7 @@ func (ss *xormStore) GetByID(ctx context.Context, query *team.GetTeamByIDQuery) 
 	var queryResult *team.TeamDTO
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
 		var sql bytes.Buffer
-		params := make([]interface{}, 0)
+		params := make([]any, 0)
 
 		filteredUsers := getFilteredUsers(query.SignedInUser, query.HiddenUsers)
 		sql.WriteString(getTeamSelectSQLBase(ss.db, filteredUsers))
@@ -292,7 +292,7 @@ func (ss *xormStore) GetByUser(ctx context.Context, query *team.GetTeamsByUserQu
 	queryResult := make([]*team.TeamDTO, 0)
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
 		var sql bytes.Buffer
-		var params []interface{}
+		var params []any
 		params = append(params, query.OrgID, query.UserID)
 
 		sql.WriteString(getTeamSelectSQLBase(ss.db, []string{}))

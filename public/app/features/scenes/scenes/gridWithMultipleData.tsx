@@ -1,15 +1,15 @@
 import {
-  VizPanel,
   SceneGridRow,
   SceneTimePicker,
   SceneGridLayout,
   SceneTimeRange,
   SceneRefreshPicker,
   SceneGridItem,
+  PanelBuilders,
 } from '@grafana/scenes';
 import { TestDataQueryType } from 'app/plugins/datasource/testdata/dataquery.gen';
 
-import { DashboardScene } from '../dashboard/DashboardScene';
+import { DashboardScene } from '../../dashboard-scene/scene/DashboardScene';
 
 import { getQueryRunnerWithRandomWalkQuery } from './queries';
 
@@ -33,11 +33,7 @@ export function getGridWithMultipleData(): DashboardScene {
               height: 5,
               isResizable: true,
               isDraggable: true,
-              body: new VizPanel({
-                pluginId: 'timeseries',
-                title: 'Row A Child1',
-                key: 'Row A Child1',
-              }),
+              body: PanelBuilders.timeseries().setTitle('Row A Child1').build(),
             }),
             new SceneGridItem({
               x: 0,
@@ -46,11 +42,7 @@ export function getGridWithMultipleData(): DashboardScene {
               height: 5,
               isResizable: true,
               isDraggable: true,
-              body: new VizPanel({
-                pluginId: 'timeseries',
-                title: 'Row A Child2',
-                key: 'Row A Child2',
-              }),
+              body: PanelBuilders.timeseries().setTitle('Row A Child2').build(),
             }),
           ],
         }),
@@ -67,11 +59,7 @@ export function getGridWithMultipleData(): DashboardScene {
               height: 5,
               isResizable: false,
               isDraggable: true,
-              body: new VizPanel({
-                pluginId: 'timeseries',
-                title: 'Row B Child1',
-                key: 'Row B Child1',
-              }),
+              body: PanelBuilders.timeseries().setTitle('Row B Child1').build(),
             }),
             new SceneGridItem({
               x: 0,
@@ -80,12 +68,10 @@ export function getGridWithMultipleData(): DashboardScene {
               height: 5,
               isResizable: false,
               isDraggable: true,
-              body: new VizPanel({
-                $data: getQueryRunnerWithRandomWalkQuery({ seriesCount: 10 }),
-                pluginId: 'timeseries',
-                title: 'Row B Child2 with data',
-                key: 'Row B Child2',
-              }),
+              body: PanelBuilders.timeseries()
+                .setTitle('Row B Child2 with data')
+                .setData(getQueryRunnerWithRandomWalkQuery({ seriesCount: 10 }))
+                .build(),
             }),
           ],
         }),
@@ -96,12 +82,10 @@ export function getGridWithMultipleData(): DashboardScene {
           height: 10,
           isResizable: true,
           isDraggable: true,
-          body: new VizPanel({
-            $data: getQueryRunnerWithRandomWalkQuery({ seriesCount: 10 }),
-            pluginId: 'timeseries',
-            title: 'Outsider, has its own query',
-            key: 'Outsider-own-query',
-          }),
+          body: PanelBuilders.timeseries()
+            .setTitle('Outsider, has its own query')
+            .setData(getQueryRunnerWithRandomWalkQuery({ seriesCount: 10 }))
+            .build(),
         }),
         new SceneGridItem({
           x: 6,
@@ -110,11 +94,7 @@ export function getGridWithMultipleData(): DashboardScene {
           height: 10,
           isResizable: true,
           isDraggable: true,
-          body: new VizPanel({
-            pluginId: 'timeseries',
-            title: 'Outsider, uses global query',
-            key: 'Outsider-global-query',
-          }),
+          body: PanelBuilders.timeseries().setTitle('Outsider, uses global query').build(),
         }),
       ],
     }),

@@ -4,11 +4,11 @@ This module contains all the docker images that are used to build test and publi
 
 images = {
     "cloudsdk_image": "google/cloud-sdk:431.0.0",
-    "build_image": "grafana/build-container:1.7.4",
+    "build_image": "grafana/build-container:1.7.5",
     "publish_image": "grafana/grafana-ci-deploy:1.3.3",
     "alpine_image": "alpine:3.17.1",
     "curl_image": "byrnedo/alpine-curl:0.1.8",
-    "go_image": "golang:1.20.4",
+    "go_image": "golang:1.20.6",
     "plugins_slack_image": "plugins/slack",
     "postgres_alpine_image": "postgres:12.3-alpine",
     "mysql5_image": "mysql:5.7.39",
@@ -21,5 +21,4 @@ images = {
     "docker_puppeteer_image": "grafana/docker-puppeteer:1.1.0",
     "docs_image": "grafana/docs-base:dbd975af06",
     "cypress_image": "cypress/included:9.5.1-node16.14.0-slim-chrome99-ff97",
-    "cloud_datasources_e2e_image": "us-docker.pkg.dev/grafanalabs-dev/cloud-data-sources/e2e:latest",
 }

@@ -5,15 +5,14 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
 import { IconButton, LinkButton, Link, useStyles2, ConfirmModal } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
-import { AlertManagerCortexConfig, MuteTimeInterval } from 'app/plugins/datasource/alertmanager/types';
-import { useDispatch } from 'app/types';
+import { MuteTimeInterval } from 'app/plugins/datasource/alertmanager/types';
+import { useDispatch } from 'app/types/store';
 
 import { Authorize } from '../../components/Authorize';
-import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
+import { useAlertmanagerConfig } from '../../hooks/useAlertmanagerConfig';
 import { deleteMuteTimingAction } from '../../state/actions';
 import { getNotificationsPermissions } from '../../utils/access-control';
 import { makeAMLink } from '../../utils/misc';
-import { AsyncRequestState, initialAsyncRequestState } from '../../utils/redux';
 import { DynamicTable, DynamicTableItemProps, DynamicTableColumnProps } from '../DynamicTable';
 import { EmptyAreaWithCTA } from '../EmptyAreaWithCTA';
 import { ProvisioningBadge } from '../Provisioning';
@@ -31,14 +30,18 @@ export const MuteTimingsTable = ({ alertManagerSourceName, muteTimingNames, hide
   const styles = useStyles2(getStyles);
   const dispatch = useDispatch();
   const permissions = getNotificationsPermissions(alertManagerSourceName);
-  const amConfigs = useUnifiedAlertingSelector((state) => state.amConfigs);
+
+  const { currentData } = useAlertmanagerConfig(alertManagerSourceName, {
+    refetchOnFocus: true,
+    refetchOnReconnect: true,
+  });
+  const config = currentData?.alertmanager_config;
+
   const [muteTimingName, setMuteTimingName] = useState<string>('');
-  const { result }: AsyncRequestState<AlertManagerCortexConfig> =
-    (alertManagerSourceName && amConfigs[alertManagerSourceName]) || initialAsyncRequestState;
 
   const items = useMemo((): Array<DynamicTableItemProps<MuteTimeInterval>> => {
-    const muteTimings = result?.alertmanager_config?.mute_time_intervals ?? [];
-    const muteTimingsProvenances = result?.alertmanager_config?.muteTimeProvenances ?? {};
+    const muteTimings = config?.mute_time_intervals ?? [];
+    const muteTimingsProvenances = config?.muteTimeProvenances ?? {};
 
     return muteTimings
       .filter(({ name }) => (muteTimingNames ? muteTimingNames.includes(name) : true))
@@ -51,11 +54,7 @@ export const MuteTimingsTable = ({ alertManagerSourceName, muteTimingNames, hide
           },
         };
       });
-  }, [
-    result?.alertmanager_config?.mute_time_intervals,
-    result?.alertmanager_config?.muteTimeProvenances,
-    muteTimingNames,
-  ]);
+  }, [config?.mute_time_intervals, config?.muteTimeProvenances, muteTimingNames]);
 
   const columns = useColumns(alertManagerSourceName, hideActions, setMuteTimingName);
 
@@ -81,7 +80,7 @@ export const MuteTimingsTable = ({ alertManagerSourceName, muteTimingNames, hide
         )}
       </Stack>
       {items.length > 0 ? (
-        <DynamicTable items={items} cols={columns} />
+        <DynamicTable items={items} cols={columns} pagination={{ itemsPerPage: 25 }} />
       ) : !hideActions ? (
         <EmptyAreaWithCTA
           text="You haven't created any mute timings yet"
@@ -100,7 +99,10 @@ export const MuteTimingsTable = ({ alertManagerSourceName, muteTimingNames, hide
           title="Delete mute timing"
           body={`Are you sure you would like to delete "${muteTimingName}"`}
           confirmText="Delete"
-          onConfirm={() => dispatch(deleteMuteTimingAction(alertManagerSourceName, muteTimingName))}
+          onConfirm={() => {
+            dispatch(deleteMuteTimingAction(alertManagerSourceName, muteTimingName));
+            setMuteTimingName('');
+          }}
           onDismiss={() => setMuteTimingName('')}
         />
       )}

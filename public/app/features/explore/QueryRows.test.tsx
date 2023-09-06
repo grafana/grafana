@@ -56,10 +56,10 @@ function setup(queries: DataQuery[]) {
         richHistory: [],
         datasourceInstance: datasources['someDs-uid'],
         queries,
+        correlations: [],
       },
     },
     syncedTimes: false,
-    correlations: [],
     richHistoryStorageFull: false,
     richHistoryLimitExceededWarningShown: false,
   };

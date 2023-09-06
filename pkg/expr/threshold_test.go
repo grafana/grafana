@@ -149,7 +149,7 @@ func TestUnmarshalThresholdCommand(t *testing.T) {
 	for _, tc := range cases {
 		q := []byte(tc.query)
 
-		var qmap = make(map[string]interface{})
+		var qmap = make(map[string]any)
 		require.NoError(t, json.Unmarshal(q, &qmap))
 
 		cmd, err := UnmarshalThresholdCommand(&rawNode{

@@ -54,6 +54,53 @@ describe('DateMath', () => {
     expect(startOfDay).toBe(expected.getTime());
   });
 
+  describe('with fiscal quarters', () => {
+    beforeEach(() => {
+      const fixedTime = dateTime('2023-07-05T06:06:06.666Z').valueOf();
+      clock = sinon.useFakeTimers(fixedTime);
+    });
+
+    afterEach(() => {
+      clock.restore();
+    });
+
+    it('should parse current fiscal quarter correctly', () => {
+      const today = new Date();
+      const expected = new Date(Date.UTC(today.getUTCFullYear(), 6, 1, 0, 0, 0, 0));
+
+      const startOfDay = dateMath.parse('now/fQ', false, 'utc', 0)!.valueOf();
+      expect(startOfDay).toBe(expected.getTime());
+    });
+
+    it('should parse previous fiscal quarter correctly', () => {
+      const today = new Date();
+      const expected = new Date(Date.UTC(today.getUTCFullYear(), 3, 1, 0, 0, 0, 0));
+
+      const startOfDay = dateMath.parse('now-1Q/fQ', false, 'utc', 0)!.valueOf();
+      expect(startOfDay).toBe(expected.getTime());
+    });
+
+    describe('with a custom fiscal year start month', () => {
+      const FISCAL_YEAR_START_MONTH = 7; // August
+
+      it('should parse current fiscal quarter correctly', () => {
+        const today = new Date();
+        const expected = new Date(Date.UTC(today.getUTCFullYear(), 4, 1, 0, 0, 0, 0));
+
+        const startOfDay = dateMath.parse('now/fQ', false, 'utc', FISCAL_YEAR_START_MONTH)!.valueOf();
+        expect(startOfDay).toBe(expected.getTime());
+      });
+
+      it('should parse previous fiscal quarter correctly', () => {
+        const today = new Date();
+        const expected = new Date(Date.UTC(today.getUTCFullYear(), 1, 1, 0, 0, 0, 0));
+
+        const startOfDay = dateMath.parse('now-1Q/fQ', false, 'utc', FISCAL_YEAR_START_MONTH)!.valueOf();
+        expect(startOfDay).toBe(expected.getTime());
+      });
+    });
+  });
+
   describe('subtraction', () => {
     let now: DateTime;
     let anchored: DateTime;
@@ -134,6 +181,35 @@ describe('DateMath', () => {
       const date = dateMath.parseDateMath(' - 2d', dateTime([2014, 1, 5]));
       expect(date!.valueOf()).toEqual(dateTime([2014, 1, 3]).valueOf());
     });
+
+    it('should not mutate dateTime passed in', () => {
+      const dateInput = dateTime([2014, 1, 5]);
+      dateMath.parseDateMath(' - 2d', dateInput);
+      expect(dateInput.valueOf()).toEqual(dateTime([2014, 1, 5]).valueOf());
+    });
+  });
+
+  describe('isMathString', () => {
+    it('should return true when valid date text', () => {
+      expect(dateMath.isMathString('now-1h')).toBe(true);
+    });
+
+    it('should return false when an absolute date is inserted', () => {
+      const date = new Date();
+      const result = dateMath.isMathString(date);
+      expect(result).toBe(false);
+    });
+
+    it('should return false when invalid date text', () => {
+      expect(dateMath.isMathString('2 + 2')).toBe(false);
+    });
+
+    it('should return false if no text is passed', () => {
+      expect(dateMath.isMathString('')).toBe(false);
+    });
+    it('should return false if nothing is passed ', () => {
+      expect(dateMath.isMathString(' ')).toBe(false);
+    });
   });
 
   describe('Round to fiscal start/end', () => {
@@ -175,8 +251,8 @@ describe('DateMath', () => {
 
     //fq1 = 2021-02-01 - 2021-04-30
     //fq2 = 2021-05-01 - 2021-07-31
-    //fq4 = 2021-08-01 - 2021-10-31
-    //fq5 = 2021-11-01 - 2022-01-31
+    //fq3 = 2021-08-01 - 2021-10-31
+    //fq4 = 2021-11-01 - 2022-01-31
 
     it('Should round to start of q2 when one month into q2', () => {
       let date = dateMath.roundToFiscal(1, dateTime([2021, 6, 1]), 'Q', false);
@@ -199,6 +275,16 @@ describe('DateMath', () => {
     it('Should round to end of q4 when datetime is in next year from fiscal year start', () => {
       let date = dateMath.roundToFiscal(1, dateTime([2022, 0, 1]), 'Q', true);
       let expected = dateTime([2022, 0, 31]).endOf('M');
+      expect(date!.valueOf()).toEqual(expected.valueOf());
+    });
+
+    it('should handle fyStartMonths set later in the year correctly', () => {
+      // Use fyStartMonth to 10 (November)
+      // Fiscal quarters are then Nov-Jan, Feb-Apr, May-Jul, Aug-Oct
+      // Use 1st Jan as the date to round
+      let date = dateMath.roundToFiscal(10, dateTime([2022, 0, 1]), 'Q', false);
+      // This should round back to 1st Nov 2021
+      let expected = dateTime([2021, 10, 1]);
       expect(date!.valueOf()).toEqual(expected.valueOf());
     });
   });

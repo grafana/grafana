@@ -11,7 +11,6 @@ import (
 
 	"github.com/grafana/grafana-azure-sdk-go/azsettings"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana/pkg/plugins/manager/loader/angular/angularinspector"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -19,25 +18,14 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin/provider"
 	pluginClient "github.com/grafana/grafana/pkg/plugins/manager/client"
 	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
-	"github.com/grafana/grafana/pkg/plugins/manager/loader"
-	"github.com/grafana/grafana/pkg/plugins/manager/loader/assetpath"
-	"github.com/grafana/grafana/pkg/plugins/manager/loader/finder"
-	"github.com/grafana/grafana/pkg/plugins/manager/registry"
-	"github.com/grafana/grafana/pkg/plugins/manager/signature"
-	"github.com/grafana/grafana/pkg/plugins/manager/signature/statickey"
-	"github.com/grafana/grafana/pkg/plugins/manager/sources"
-	"github.com/grafana/grafana/pkg/plugins/manager/store"
-	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/caching"
 	datasources "github.com/grafana/grafana/pkg/services/datasources/fakes"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/oauthtoken/oauthtokentest"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/config"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	pluginSettings "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings/service"
@@ -63,29 +51,19 @@ func TestCallResource(t *testing.T) {
 	cfg.Azure = &azsettings.AzureSettings{}
 
 	coreRegistry := coreplugin.ProvideCoreRegistry(nil, &cloudwatch.CloudWatchService{}, nil, nil, nil, nil,
-		nil, nil, nil, nil, testdatasource.ProvideService(cfg), nil, nil, nil, nil, nil, nil)
-	pCfg, err := config.ProvideConfig(setting.ProvideProvider(cfg), cfg, featuremgmt.WithFeatures())
-	require.NoError(t, err)
-	reg := registry.ProvideService()
-	angularInspector, err := angularinspector.NewStaticInspector()
-	require.NoError(t, err)
-	l := loader.ProvideService(pCfg, fakes.NewFakeLicensingService(), signature.NewUnsignedAuthorizer(pCfg),
-		reg, provider.ProvideService(coreRegistry), finder.NewLocalFinder(pCfg), fakes.NewFakeRoleRegistry(),
-		assetpath.ProvideService(pluginscdn.ProvideService(pCfg)), signature.ProvideService(pCfg, statickey.New()),
-		angularInspector, &fakes.FakeOauthService{})
-	srcs := sources.ProvideService(cfg, pCfg)
-	ps, err := store.ProvideService(reg, srcs, l)
-	require.NoError(t, err)
+		nil, nil, nil, nil, testdatasource.ProvideService(), nil, nil, nil, nil, nil, nil)
 
-	pcp := plugincontext.ProvideService(localcache.ProvideService(), ps, &datasources.FakeDataSourceService{},
+	textCtx := pluginsintegration.CreateIntegrationTestCtx(t, cfg, coreRegistry)
+
+	pcp := plugincontext.ProvideService(localcache.ProvideService(), textCtx.PluginStore, &datasources.FakeDataSourceService{},
 		pluginSettings.ProvideService(db.InitTestDB(t), fakeSecrets.NewFakeSecretsService()))
 
 	srv := SetupAPITestServer(t, func(hs *HTTPServer) {
 		hs.Cfg = cfg
 		hs.pluginContextProvider = pcp
 		hs.QuotaService = quotatest.New(false, nil)
-		hs.pluginStore = ps
-		hs.pluginClient = pluginClient.ProvideService(reg, pCfg)
+		hs.pluginStore = textCtx.PluginStore
+		hs.pluginClient = textCtx.PluginClient
 		hs.log = log.New("test")
 	})
 
@@ -102,7 +80,7 @@ func TestCallResource(t *testing.T) {
 		b, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
 
-		var body = make(map[string]interface{})
+		var body = make(map[string]any)
 		err = json.Unmarshal(b, &body)
 		require.NoError(t, err)
 
@@ -123,7 +101,7 @@ func TestCallResource(t *testing.T) {
 		hs.Cfg = cfg
 		hs.pluginContextProvider = pcp
 		hs.QuotaService = quotatest.New(false, nil)
-		hs.pluginStore = ps
+		hs.pluginStore = textCtx.PluginStore
 		hs.pluginClient = pc
 		hs.log = log.New("test")
 	})

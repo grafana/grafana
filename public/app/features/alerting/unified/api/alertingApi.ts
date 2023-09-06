@@ -27,6 +27,6 @@ export const backendSrvBaseQuery = (): BaseQueryFn<BackendSrvRequest> => async (
 export const alertingApi = createApi({
   reducerPath: 'alertingApi',
   baseQuery: backendSrvBaseQuery(),
-  tagTypes: ['AlertmanagerChoice'],
+  tagTypes: ['AlertmanagerChoice', 'AlertmanagerConfiguration', 'OnCallIntegrations'],
   endpoints: () => ({}),
 });

@@ -13,12 +13,12 @@ import {
   CoreApp,
 } from '@grafana/data';
 import { CustomScrollbar, useStyles2, usePanelContext } from '@grafana/ui';
-import { dataFrameToLogsModel, dedupLogRows, COMMON_LABELS } from 'app/core/logsModel';
 import { getFieldLinksForExplore } from 'app/features/explore/utils/links';
 import { PanelDataErrorView } from 'app/features/panel/components/PanelDataErrorView';
 
 import { LogLabels } from '../../../features/logs/components/LogLabels';
 import { LogRows } from '../../../features/logs/components/LogRows';
+import { dataFrameToLogsModel, dedupLogRows, COMMON_LABELS } from '../../../features/logs/logsModel';
 
 import { Options } from './types';
 

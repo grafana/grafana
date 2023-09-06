@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { ReactElement, useEffect, useRef } from 'react';
+import React, { ReactElement } from 'react';
 import Highlighter from 'react-highlight-words';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -18,22 +18,14 @@ type ResultsTableProps = {
   onClose: () => void;
   query: PromVisualQuery;
   state: MetricsModalState;
-  selectedIdx: number;
   disableTextWrap: boolean;
-  onFocusRow: (idx: number) => void;
 };
 
 export function ResultsTable(props: ResultsTableProps) {
-  const { metrics, onChange, onClose, query, state, selectedIdx, disableTextWrap, onFocusRow } = props;
+  const { metrics, onChange, onClose, query, state, disableTextWrap } = props;
 
   const theme = useTheme2();
   const styles = getStyles(theme, disableTextWrap);
-
-  const tableRef = useRef<HTMLTableElement | null>(null);
-
-  function isSelectedRow(idx: number): boolean {
-    return idx === selectedIdx;
-  }
 
   function selectMetric(metric: MetricData) {
     if (metric.value) {
@@ -42,11 +34,6 @@ export function ResultsTable(props: ResultsTableProps) {
       onClose();
     }
   }
-
-  useEffect(() => {
-    const tr = tableRef.current?.getElementsByClassName('selected-row')[0];
-    tr?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
-  }, [selectedIdx]);
 
   function metaRows(metric: MetricData) {
     if (state.fullMetaSearch && metric) {
@@ -149,7 +136,7 @@ export function ResultsTable(props: ResultsTableProps) {
   }
 
   return (
-    <table className={styles.table} ref={tableRef}>
+    <table className={styles.table}>
       <thead className={styles.stickyHeader}>
         <tr>
           <th className={`${styles.nameWidth} ${styles.tableHeaderPadding}`}>Name</th>
@@ -167,16 +154,7 @@ export function ResultsTable(props: ResultsTableProps) {
           {metrics.length > 0 &&
             metrics.map((metric: MetricData, idx: number) => {
               return (
-                <tr
-                  key={metric?.value ?? idx}
-                  className={`${styles.row} ${isSelectedRow(idx) ? `${styles.selectedRow} selected-row` : ''}`}
-                  onFocus={() => onFocusRow(idx)}
-                  onKeyDown={(e) => {
-                    if (e.code === 'Enter' && e.currentTarget.classList.contains('selected-row')) {
-                      selectMetric(metric);
-                    }
-                  }}
-                >
+                <tr key={metric?.value ?? idx} className={styles.row}>
                   <td className={styles.nameOverflow}>
                     <Highlighter
                       textToHighlight={metric?.value ?? ''}
@@ -207,12 +185,10 @@ export function ResultsTable(props: ResultsTableProps) {
 }
 
 const getStyles = (theme: GrafanaTheme2, disableTextWrap: boolean) => {
-  const rowHoverBg = theme.colors.emphasize(theme.colors.background.primary, 0.03);
-
   return {
     table: css`
       ${disableTextWrap ? '' : 'table-layout: fixed;'}
-      border-radius: ${theme.shape.borderRadius()};
+      border-radius: ${theme.shape.radius.default};
       width: 100%;
       white-space: ${disableTextWrap ? 'nowrap' : 'normal'};
       td {
@@ -231,15 +207,9 @@ const getStyles = (theme: GrafanaTheme2, disableTextWrap: boolean) => {
       &:last-child {
         border-bottom: 0;
       }
-      :hover {
-        background-color: ${rowHoverBg};
-      }
     `,
     tableHeaderPadding: css`
       padding: 8px;
-    `,
-    selectedRow: css`
-      background-color: ${rowHoverBg};
     `,
     matchHighLight: css`
       background: inherit;

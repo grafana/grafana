@@ -43,6 +43,7 @@ export interface InitDashboardArgs {
   routeName?: string;
   fixUrl: boolean;
   keybindingSrv: KeybindingSrv;
+  dashboardDto?: DashboardDTO;
 }
 
 async function fetchDashboard(
@@ -78,6 +79,11 @@ async function fetchDashboard(
       }
       case DashboardRoutes.Public: {
         return await dashboardLoaderSrv.loadDashboard('public', args.urlSlug, args.accessToken);
+      }
+      case DashboardRoutes.Embedded: {
+        if (args.dashboardDto) {
+          return args.dashboardDto;
+        }
       }
       case DashboardRoutes.Normal: {
         const dashDTO: DashboardDTO = await dashboardLoaderSrv.loadDashboard(args.urlType, args.urlSlug, args.urlUid);

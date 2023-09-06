@@ -5,14 +5,18 @@ keywords:
   - configuration
   - documentation
   - upgrade
-title: Upgrade to Grafana v8.5
+labels:
+  products:
+    - enterprise
+    - oss
 menutitle: Upgrade to v8.5
+title: Upgrade to Grafana v8.5
 weight: 2400
 ---
 
 # Upgrade to Grafana v8.5
 
-{{< docs/shared "upgrade/upgrade-common-tasks.md" >}}
+{{< docs/shared lookup="upgrade/upgrade-common-tasks.md" source="grafana" version="<GRAFANA VERSION>" >}}
 
 ## Technical notes
 

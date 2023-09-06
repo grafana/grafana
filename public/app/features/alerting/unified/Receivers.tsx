@@ -7,18 +7,18 @@ const ContactPointsV2 = SafeDynamicImport(() => import('./components/contact-poi
 import { SafeDynamicImport } from 'app/core/components/DynamicImports/SafeDynamicImport';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 
-import { AlertingPageWrapper } from './components/AlertingPageWrapper';
+import { AlertmanagerPageWrapper } from './components/AlertingPageWrapper';
 import { AlertingFeature } from './features';
 // TODO add pagenav back in – what are we missing if we don't specify it?
 const ContactPoints = (props: GrafanaRouteComponentProps): JSX.Element => (
-  <AlertingPageWrapper pageId="receivers">
+  <AlertmanagerPageWrapper pageId="receivers" accessType="notification">
     <Enable feature={AlertingFeature.ContactPointsV2}>
       <ContactPointsV2 {...props} />
     </Enable>
     <Disable feature={AlertingFeature.ContactPointsV2}>
       <ContactPointsV1 {...props} />
     </Disable>
-  </AlertingPageWrapper>
+  </AlertmanagerPageWrapper>
 );
 
 export default withErrorBoundary(ContactPoints, { style: 'page' });

@@ -3,6 +3,10 @@ aliases:
   - ../administration/configuration/
   - ../installation/configuration/
 description: Configuration documentation
+labels:
+  products:
+    - enterprise
+    - oss
 title: Configure Grafana
 weight: 200
 ---
@@ -510,6 +514,11 @@ Sets a custom value for the `User-Agent` header for outgoing data proxy requests
 
 ## [analytics]
 
+### enabled
+
+This option is also known as _usage analytics_. When `false`, this option disables the writers that read/write from and to the Grafana databases. The default
+value is `true`.
+
 ### reporting_enabled
 
 When enabled Grafana will send anonymous usage statistics to
@@ -615,7 +624,7 @@ Define a whitelist of allowed IP addresses or domains, with ports, to be used in
 
 ### disable_brute_force_login_protection
 
-Set to `true` to disable [brute force login protection](https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html#account-lockout). Default is `false`.
+Set to `true` to disable [brute force login protection](https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html#account-lockout). Default is `false`. An existing user's account will be locked after 5 attempts in 5 minutes.
 
 ### cookie_secure
 
@@ -698,6 +707,11 @@ List of allowed headers to be set by the user. Suggested to use for if authentic
 ### csrf_always_check
 
 Set to `true` to execute the CSRF check even if the login cookie is not in a request (default `false`).
+
+### disable_frontend_sandbox_for_plugins
+
+Comma-separated list of plugins ids that won't be loaded inside the frontend sandbox. It is recommended to only use this
+option for plugins that are known to have problems running inside the frontend sandbox.
 
 ## [snapshots]
 
@@ -822,7 +836,9 @@ Sets the default UI theme: `dark`, `light`, or `system`. The default theme is `d
 
 ### default_language
 
-This setting configures the default UI language, which must be a supported IETF language tag, such as `en-US`.
+This option will set the default UI language if a supported IETF language tag like `en-US` is available.
+If set to `detect`, the default UI language will be determined by browser preference.
+The default is `en-US`.
 
 ### home_page
 
@@ -885,7 +901,11 @@ Set to `true` to disable the signout link in the side menu. This is useful if yo
 
 ### signout_redirect_url
 
-URL to redirect the user to after they sign out.
+The URL the user is redirected to upon signing out. To support [OpenID Connect RP-Initiated Logout](https://openid.net/specs/openid-connect-rpinitiated-1_0.html), the user must add `post_logout_redirect_uri` to the `signout_redirect_url`.
+
+Example:
+
+signout_redirect_url = http://localhost:8087/realms/grafana/protocol/openid-connect/logout?post_logout_redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Flogin
 
 ### oauth_auto_login
 
@@ -919,11 +939,13 @@ reset to the default organization role on every login. [See `auto_assign_org_rol
 
 `skip_org_role_sync` prevents the synchronization of organization roles for a specific OAuth integration, while the deprecated setting `oauth_skip_org_role_update_sync` affects all configured OAuth providers.
 
-`skip_org_role_sync` default value is `false`.
+The default value for `skip_org_role_sync` is `false`.
 
 With `skip_org_role_sync` set to `false`, the users' organization and role is reset on every new login, based on the external provider's role. See your provider in the tables below.
 
 With `skip_org_role_sync` set to `true`, when a user logs in for the first time, Grafana sets the organization role based on the value specified in `auto_assign_org_role` and forces the organization to `auto_assign_org_id` when specified, otherwise it falls back to OrgID `1`.
+
+> **Note**: Enabling `skip_org_role_sync` also disables the synchronization of Grafana Admins from the external provider, as such `allow_assign_grafana_admin` is ignored.
 
 Use this setting when you want to manage the organization roles of your users from within Grafana and be able to manually assign them to multiple organizations, or to prevent synchronization conflicts when they can be synchronized from another provider.
 
@@ -1664,6 +1686,14 @@ Enable or disable the Profile section. Default is `enabled`.
 
 Enables the news feed section. Default is `true`
 
+<hr>
+
+## [query]
+
+### concurrent_query_limit
+
+Set the number of queries that can be executed concurrently in a mixed data source panel. Default is the number of CPUs.
+
 ## [query_history]
 
 Configures Query history in Explore.
@@ -1671,6 +1701,8 @@ Configures Query history in Explore.
 ### enabled
 
 Enable or disable the Query history. Default is `enabled`.
+
+<hr>
 
 ## [metrics]
 
@@ -1687,6 +1719,10 @@ Flush/write interval when sending metrics to external TSDB. Defaults to `10`.
 ### disable_total_stats
 
 If set to `true`, then total stats generation (`stat_totals_*` metrics) is disabled. Default is `false`.
+
+### total_stats_collector_interval_seconds
+
+Sets the total stats collector interval. The default is 1800 seconds (30 minutes).
 
 ### basic_auth_username and basic_auth_password
 
@@ -2228,7 +2264,41 @@ For more information about Grafana Enterprise, refer to [Grafana Enterprise]({{<
 
 ### enable
 
-Keys of alpha features to enable, separated by space.
+Keys of features to enable, separated by space.
+
+### FEATURE_TOGGLE_NAME = false
+
+Some feature toggles for stable features are on by default. Use this setting to disable an on-by-default feature toggle with the name FEATURE_TOGGLE_NAME, for example, `exploreMixedDatasource = false`.
+
+<hr>
+
+## [feature_management]
+
+The options in this section configure the experimental Feature Toggle Admin Page feature, which is enabled using the `featureToggleAdminPage` feature toggle. Grafana Labs offers support on a best-effort basis, and breaking changes might occur prior to the feature being made generally available.
+
+Please see [Configure feature toggles]({{< relref "/feature-toggles" >}}) for more information.
+
+### allow_editing
+
+Lets you switch the feature toggle state in the feature management page. The default is `false`.
+
+### update_controller_url
+
+Set the URL of the controller that manages the feature toggle updates. If not set, feature toggles in the feature management page will be read-only.
+
+{{% admonition type="note" %}}
+The API for feature toggle updates has not been defined yet.
+{{% /admonition %}}
+
+### hidden_toggles
+
+Hide additional specific feature toggles from the feature management page. By default, feature toggles in the `unknown`, `experimental`, and `private preview` stages are hidden from the UI. Use this option to hide toggles in the `public preview`, `general availability`, and `deprecated` stages.
+
+### read_only_toggles
+
+Use to disable updates for additional specific feature toggles in the feature management page. By default, feature toggles can only be updated if they are in the `general availability` and `deprecated`stages. Use this option to disable updates for toggles in those stages.
+
+<hr>
 
 ## [date_formats]
 

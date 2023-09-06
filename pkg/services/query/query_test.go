@@ -6,7 +6,10 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/http/httptest"
+	"sync"
 	"testing"
+	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/stretchr/testify/assert"
@@ -21,6 +24,9 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models/roletype"
 	"github.com/grafana/grafana/pkg/plugins"
+	pluginFakes "github.com/grafana/grafana/pkg/plugins/manager/fakes"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
+	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -282,16 +288,29 @@ func TestQueryDataMultipleSources(t *testing.T) {
 		require.NoError(t, err)
 		queries := []*simplejson.Json{query1, query2}
 		reqDTO := dtos.MetricRequest{
-			From:                       "2022-01-01",
-			To:                         "2022-01-02",
-			Queries:                    queries,
-			Debug:                      false,
-			PublicDashboardAccessToken: "abc123",
+			From:    "2022-01-01",
+			To:      "2022-01-02",
+			Queries: queries,
+			Debug:   false,
 		}
 
-		_, err = tc.queryService.QueryData(context.Background(), tc.signedInUser, true, reqDTO)
-
+		req, err := http.NewRequest("POST", "http://localhost:3000", nil)
 		require.NoError(t, err)
+		reqCtx := &contextmodel.ReqContext{
+			SkipQueryCache: false,
+			Context: &web.Context{
+				Resp: web.NewResponseWriter(http.MethodGet, httptest.NewRecorder()),
+				Req:  req,
+			},
+		}
+		ctx := ctxkey.Set(context.Background(), reqCtx)
+
+		_, err = tc.queryService.QueryData(ctx, tc.signedInUser, true, reqDTO)
+		require.NoError(t, err)
+
+		// response headers should be merged
+		header := contexthandler.FromContext(ctx).Resp.Header()
+		assert.Len(t, header.Values("test"), 2)
 	})
 
 	t.Run("can query multiple datasources with an expression present", func(t *testing.T) {
@@ -332,11 +351,10 @@ func TestQueryDataMultipleSources(t *testing.T) {
 		require.NoError(t, err)
 		queries := []*simplejson.Json{query1, query2, query3}
 		reqDTO := dtos.MetricRequest{
-			From:                       "2022-01-01",
-			To:                         "2022-01-02",
-			Queries:                    queries,
-			Debug:                      false,
-			PublicDashboardAccessToken: "abc123",
+			From:    "2022-01-01",
+			To:      "2022-01-02",
+			Queries: queries,
+			Debug:   false,
 		}
 
 		// without query parameter
@@ -387,11 +405,10 @@ func TestQueryDataMultipleSources(t *testing.T) {
 		queries := []*simplejson.Json{query1, query2}
 
 		reqDTO := dtos.MetricRequest{
-			From:                       "2022-01-01",
-			To:                         "2022-01-02",
-			Queries:                    queries,
-			Debug:                      false,
-			PublicDashboardAccessToken: "abc123",
+			From:    "2022-01-01",
+			To:      "2022-01-02",
+			Queries: queries,
+			Debug:   false,
 		}
 
 		res, err := tc.queryService.QueryData(context.Background(), tc.signedInUser, true, reqDTO)
@@ -417,11 +434,10 @@ func TestQueryDataMultipleSources(t *testing.T) {
 		require.NoError(t, err)
 		queries := []*simplejson.Json{query1}
 		reqDTO := dtos.MetricRequest{
-			From:                       "2022-01-01",
-			To:                         "2022-01-02",
-			Queries:                    queries,
-			Debug:                      false,
-			PublicDashboardAccessToken: "abc123",
+			From:    "2022-01-01",
+			To:      "2022-01-02",
+			Queries: queries,
+			Debug:   false,
 		}
 
 		_, err = tc.queryService.QueryData(context.Background(), tc.signedInUser, true, reqDTO)
@@ -452,7 +468,7 @@ func setup(t *testing.T) *testContext {
 	}
 
 	pCtxProvider := plugincontext.ProvideService(
-		localcache.ProvideService(), &plugins.FakePluginStore{
+		localcache.ProvideService(), &pluginFakes.FakePluginStore{
 			PluginList: []plugins.PluginDTO{
 				{JSONData: plugins.JSONData{ID: "postgres"}},
 				{JSONData: plugins.JSONData{ID: "testdata"}},
@@ -509,12 +525,12 @@ type fakeDataSourceCache struct {
 	cache []*datasources.DataSource
 }
 
-func (c *fakeDataSourceCache) GetDatasource(ctx context.Context, datasourceID int64, user *user.SignedInUser, skipCache bool) (*datasources.DataSource, error) {
+func (c *fakeDataSourceCache) GetDatasource(ctx context.Context, datasourceID int64, user identity.Requester, skipCache bool) (*datasources.DataSource, error) {
 	// deprecated: fake an error to ensure we are using GetDatasourceByUID
 	return nil, fmt.Errorf("not found")
 }
 
-func (c *fakeDataSourceCache) GetDatasourceByUID(ctx context.Context, datasourceUID string, user *user.SignedInUser, skipCache bool) (*datasources.DataSource, error) {
+func (c *fakeDataSourceCache) GetDatasourceByUID(ctx context.Context, datasourceUID string, user identity.Requester, skipCache bool) (*datasources.DataSource, error) {
 	for _, ds := range c.cache {
 		if ds.UID == datasourceUID {
 			return ds, nil
@@ -527,9 +543,13 @@ func (c *fakeDataSourceCache) GetDatasourceByUID(ctx context.Context, datasource
 type fakePluginClient struct {
 	plugins.Client
 	req *backend.QueryDataRequest
+	mu  sync.Mutex
 }
 
 func (c *fakePluginClient) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
 	c.req = req
 
 	// If an expression query ends up getting directly queried, we want it to return an error in our test.
@@ -539,6 +559,10 @@ func (c *fakePluginClient) QueryData(ctx context.Context, req *backend.QueryData
 
 	if req.Queries[0].QueryType == "FAIL" {
 		return nil, errors.New("plugin client failed")
+	}
+
+	if reqCtx := contexthandler.FromContext(ctx); reqCtx != nil && reqCtx.Resp != nil {
+		reqCtx.Resp.Header().Add("test", fmt.Sprintf("header-%d", time.Now().Nanosecond()))
 	}
 
 	return &backend.QueryDataResponse{Responses: make(backend.Responses)}, nil

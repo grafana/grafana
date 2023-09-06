@@ -358,6 +358,7 @@ export interface AxisConfig {
   axisGridShow?: boolean;
   axisLabel?: string;
   axisPlacement?: AxisPlacement;
+  axisShow?: boolean;
   axisSoftMax?: number;
   axisSoftMin?: number;
   axisWidth?: number;
@@ -656,6 +657,7 @@ export enum TableCellDisplayMode {
   ColorBackground = 'color-background',
   ColorBackgroundSolid = 'color-background-solid',
   ColorText = 'color-text',
+  Custom = 'custom',
   Gauge = 'gauge',
   GradientGauge = 'gradient-gauge',
   Image = 'image',
@@ -883,6 +885,10 @@ export interface TableFieldOptions {
   displayMode?: TableCellDisplayMode;
   filterable?: boolean;
   hidden?: boolean; // ?? default is missing or false ??
+  /**
+   * Hides any header for a column, usefull for columns that show some static content or buttons.
+   */
+  hideHeader?: boolean;
   inspect: boolean;
   minWidth?: number;
   width?: number;

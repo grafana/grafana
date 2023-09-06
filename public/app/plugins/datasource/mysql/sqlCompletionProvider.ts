@@ -53,48 +53,47 @@ export const customStatementPlacementProvider: StatementPlacementProvider = () =
 ];
 
 export const customSuggestionKinds: (getMeta: CompletionProviderGetterArgs['getMeta']) => SuggestionKindProvider =
-  (getMeta) => () =>
-    [
-      {
-        id: SuggestionKind.Tables,
-        overrideDefault: true,
-        suggestionsResolver: async (ctx) => {
-          const databaseName = getDatabaseName(ctx.currentToken);
+  (getMeta) => () => [
+    {
+      id: SuggestionKind.Tables,
+      overrideDefault: true,
+      suggestionsResolver: async (ctx) => {
+        const databaseName = getDatabaseName(ctx.currentToken);
 
-          const suggestions = await getMeta({ schema: databaseName });
+        const suggestions = await getMeta({ schema: databaseName });
 
-          return suggestions.map(mapToSuggestion(ctx));
-        },
+        return suggestions.map(mapToSuggestion(ctx));
       },
-      {
-        id: SuggestionKind.Columns,
-        overrideDefault: true,
-        suggestionsResolver: async (ctx) => {
-          const databaseToken = getDatabaseToken(ctx.currentToken);
-          const databaseName = getDatabaseName(databaseToken);
-          const tableName = getTableName(databaseToken);
+    },
+    {
+      id: SuggestionKind.Columns,
+      overrideDefault: true,
+      suggestionsResolver: async (ctx) => {
+        const databaseToken = getDatabaseToken(ctx.currentToken);
+        const databaseName = getDatabaseName(databaseToken);
+        const tableName = getTableName(databaseToken);
 
-          if (!databaseName || !tableName) {
-            return [];
-          }
+        if (!databaseName || !tableName) {
+          return [];
+        }
 
-          const suggestions = await getMeta({ schema: databaseName, table: tableName });
+        const suggestions = await getMeta({ schema: databaseName, table: tableName });
 
-          return suggestions.map(mapToSuggestion(ctx));
-        },
+        return suggestions.map(mapToSuggestion(ctx));
       },
-      {
-        id: customSuggestionKind.tablesWithinDatabase,
-        applyTo: [customStatementPlacement.afterDatabase],
-        suggestionsResolver: async (ctx) => {
-          const databaseName = getDatabaseName(ctx.currentToken);
+    },
+    {
+      id: customSuggestionKind.tablesWithinDatabase,
+      applyTo: [customStatementPlacement.afterDatabase],
+      suggestionsResolver: async (ctx) => {
+        const databaseName = getDatabaseName(ctx.currentToken);
 
-          const suggestions = await getMeta({ schema: databaseName });
+        const suggestions = await getMeta({ schema: databaseName });
 
-          return suggestions.map(mapToSuggestion(ctx));
-        },
+        return suggestions.map(mapToSuggestion(ctx));
       },
-    ];
+    },
+  ];
 
 function mapToSuggestion(ctx: PositionContext) {
   return function (tableDefinition: TableDefinition) {

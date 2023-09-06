@@ -9,6 +9,10 @@ keywords:
   - documentation
   - api
   - shortUrl
+labels:
+  products:
+    - enterprise
+    - oss
 title: 'Short URL HTTP API '
 ---
 

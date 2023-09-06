@@ -9,6 +9,10 @@ keywords:
   - documentation
   - api
   - snapshot
+labels:
+  products:
+    - enterprise
+    - oss
 title: 'HTTP Snapshot API '
 ---
 

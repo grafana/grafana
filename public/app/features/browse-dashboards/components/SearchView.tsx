@@ -1,6 +1,7 @@
 import React, { useCallback } from 'react';
 
-import { Button, Card, Spinner } from '@grafana/ui';
+import { DataFrameView, toDataFrame } from '@grafana/data';
+import { Button, Card } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 import { useKeyNavigationListener } from 'app/features/search/hooks/useSearchKeyboardSelection';
 import { SearchResultsProps, SearchResultsTable } from 'app/features/search/page/components/SearchResultsTable';
@@ -16,6 +17,30 @@ interface SearchViewProps {
   canSelect: boolean;
 }
 
+const NUM_PLACEHOLDER_ROWS = 50;
+const initialLoadingView = {
+  view: new DataFrameView(
+    toDataFrame({
+      fields: [
+        { name: 'uid', display: true, values: Array(NUM_PLACEHOLDER_ROWS).fill(null) },
+        { name: 'kind', display: true, values: Array(NUM_PLACEHOLDER_ROWS).fill('dashboard') },
+        { name: 'name', display: true, values: Array(NUM_PLACEHOLDER_ROWS).fill('') },
+        { name: 'location', display: true, values: Array(NUM_PLACEHOLDER_ROWS).fill('') },
+        { name: 'tags', display: true, values: Array(NUM_PLACEHOLDER_ROWS).fill([]) },
+      ],
+      meta: {
+        custom: {
+          locationInfo: [],
+        },
+      },
+    })
+  ),
+  loadMoreItems: () => Promise.resolve(),
+  // this is key and controls whether to show the skeleton in generateColumns
+  isItemLoaded: () => false,
+  totalRows: NUM_PLACEHOLDER_ROWS,
+};
+
 export function SearchView({ width, height, canSelect }: SearchViewProps) {
   const dispatch = useDispatch();
   const selectedItems = useSelector((wholeState) => wholeState.browseDashboards.selectedItems);
@@ -24,7 +49,7 @@ export function SearchView({ width, height, canSelect }: SearchViewProps) {
   const { keyboardEvents } = useKeyNavigationListener();
   const [searchState, stateManager] = useSearchStateManager();
 
-  const value = searchState.result;
+  const value = searchState.result ?? initialLoadingView;
 
   const selectionChecker = useCallback(
     (kind: string | undefined, uid: string): boolean => {
@@ -60,14 +85,6 @@ export function SearchView({ width, height, canSelect }: SearchViewProps) {
     },
     [selectionChecker, dispatch]
   );
-
-  if (!value) {
-    return (
-      <div style={{ width }}>
-        <Spinner />
-      </div>
-    );
-  }
 
   if (value.totalRows === 0) {
     return (

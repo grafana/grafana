@@ -13,11 +13,11 @@ import (
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/plugins"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/supportbundles"
 	"github.com/grafana/grafana/pkg/services/supportbundles/bundleregistry"
-	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -109,7 +109,7 @@ func (s *Service) Run(ctx context.Context) error {
 	return ctx.Err()
 }
 
-func (s *Service) create(ctx context.Context, collectors []string, usr *user.SignedInUser) (*supportbundles.Bundle, error) {
+func (s *Service) create(ctx context.Context, collectors []string, usr identity.Requester) (*supportbundles.Bundle, error) {
 	bundle, err := s.store.Create(ctx, usr)
 	if err != nil {
 		return nil, err
@@ -119,7 +119,7 @@ func (s *Service) create(ctx context.Context, collectors []string, usr *user.Sig
 		ctx, cancel := context.WithTimeout(context.Background(), bundleCreationTimeout)
 		defer func() {
 			if err := recover(); err != nil {
-				s.log.Error("support bundle collection panic", "err", err)
+				s.log.Error("Support bundle collection panic", "err", err)
 			}
 			cancel()
 		}()
@@ -157,14 +157,14 @@ func (s *Service) remove(ctx context.Context, uid string) error {
 func (s *Service) cleanup(ctx context.Context) {
 	bundles, err := s.list(ctx)
 	if err != nil {
-		s.log.Error("failed to list bundles to clean up", "error", err)
+		s.log.Error("Failed to list bundles to clean up", "error", err)
 	}
 
 	if err == nil {
 		for _, b := range bundles {
 			if time.Now().Unix() >= b.ExpiresAt {
 				if err := s.remove(ctx, b.UID); err != nil {
-					s.log.Error("failed to cleanup bundle", "error", err)
+					s.log.Error("Failed to cleanup bundle", "error", err)
 				}
 			}
 		}
@@ -176,7 +176,7 @@ func (s *Service) getUsageStats(ctx context.Context) (map[string]interface{}, er
 
 	count, err := s.store.StatsCount(ctx)
 	if err != nil {
-		s.log.Warn("unable to get support bundle counter", "error", err)
+		s.log.Warn("Unable to get support bundle counter", "error", err)
 	}
 
 	m["stats.bundles.count"] = count

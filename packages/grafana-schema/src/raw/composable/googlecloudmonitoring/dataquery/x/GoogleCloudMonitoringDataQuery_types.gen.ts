@@ -11,6 +11,8 @@
 
 import * as common from '@grafana/schema';
 
+export const pluginVersion = "1.0.0";
+
 export interface CloudMonitoringQuery extends common.DataQuery {
   /**
    * Aliases can be set to modify the legend labels. e.g. {{metric.label.xxx}}. See docs for more detail.
@@ -21,6 +23,10 @@ export interface CloudMonitoringQuery extends common.DataQuery {
    */
   intervalMs?: number;
   /**
+   * PromQL sub-query properties.
+   */
+  promQLQuery?: PromQLQuery;
+  /**
    * SLO sub-query properties.
    */
   sloQuery?: SLOQuery;
@@ -29,7 +35,7 @@ export interface CloudMonitoringQuery extends common.DataQuery {
    * queryType: #QueryType
    * Time Series List sub-query properties.
    */
-  timeSeriesList?: (TimeSeriesList | AnnotationQuery);
+  timeSeriesList?: TimeSeriesList;
   /**
    * Time Series sub-query properties.
    */
@@ -41,6 +47,7 @@ export interface CloudMonitoringQuery extends common.DataQuery {
  */
 export enum QueryType {
   ANNOTATION = 'annotation',
+  PROMQL = 'promQL',
   SLO = 'slo',
   TIME_SERIES_LIST = 'timeSeriesList',
   TIME_SERIES_QUERY = 'timeSeriesQuery',
@@ -95,6 +102,14 @@ export interface TimeSeriesList {
    */
   secondaryPerSeriesAligner?: string;
   /**
+   * Annotation text.
+   */
+  text?: string;
+  /**
+   * Annotation title.
+   */
+  title?: string;
+  /**
    * Data view, defaults to FULL.
    */
   view?: string;
@@ -113,20 +128,6 @@ export enum PreprocessorType {
   Delta = 'delta',
   None = 'none',
   Rate = 'rate',
-}
-
-/**
- * Annotation sub-query properties.
- */
-export interface AnnotationQuery extends TimeSeriesList {
-  /**
-   * Annotation text.
-   */
-  text?: string;
-  /**
-   * Annotation title.
-   */
-  title?: string;
 }
 
 /**
@@ -191,6 +192,24 @@ export interface SLOQuery {
    * Name of the SLO.
    */
   sloName: string;
+}
+
+/**
+ * PromQL sub-query properties.
+ */
+export interface PromQLQuery {
+  /**
+   * PromQL expression/query to be executed.
+   */
+  expr: string;
+  /**
+   * GCP project to execute the query against.
+   */
+  projectName: string;
+  /**
+   * PromQL min step
+   */
+  step: string;
 }
 
 /**
@@ -289,7 +308,7 @@ export enum AlignmentTypes {
 }
 
 /**
- * @deprecated Use AnnotationQuery instead. Legacy annotation query properties for migration purposes.
+ * @deprecated Use TimeSeriesList instead. Legacy annotation query properties for migration purposes.
  */
 export interface LegacyCloudMonitoringAnnotationQuery {
   /**

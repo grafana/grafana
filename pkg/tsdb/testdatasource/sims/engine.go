@@ -10,9 +10,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/grafana/grafana/pkg/infra/log"
-
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
 
@@ -60,7 +59,7 @@ func NewSimulationEngine() (*SimulationEngine, error) {
 	s := &SimulationEngine{
 		registry: make(map[string]simulationInfo),
 		running:  make(map[string]Simulation),
-		logger:   log.New("tsdb.sims"),
+		logger:   backend.NewLoggerWith("logger", "tsdb.sims"),
 	}
 	// Initialize each type
 	initializers := []simulationInitializer{
@@ -215,7 +214,7 @@ func (s *SimulationEngine) getSimFromPath(path string) (Simulation, error) {
 }
 
 func (s *SimulationEngine) GetSimulationHandler(rw http.ResponseWriter, req *http.Request) {
-	var result interface{}
+	var result any
 	path := req.URL.Path
 	if path == "/sims" {
 		v := make([]simulationInfo, 0, len(s.registry))

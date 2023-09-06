@@ -12,7 +12,7 @@ import (
 )
 
 type subStruct struct {
-	Data interface{}
+	Data any
 }
 
 type testStruct struct {
@@ -92,6 +92,7 @@ func TestIsAddedDeleted_Collections(t *testing.T) {
 			t.Run("IsAddOperation=true, IsDeleted=false", func(t *testing.T) {
 				diff := testStructDiff(left, right)
 				require.Lenf(t, diff, 1, "diff was expected to have only one field %s but got %v", field, diff.String())
+				require.Len(t, diff.Paths(), 1)
 				d := diff[0]
 				require.Truef(t, d.IsAddOperation(), "diff %v should be treated as Add operation but it wasn't", d)
 				require.Falsef(t, d.IsDeleteOperation(), "diff %v should not be treated as Delete operation but it was", d)
@@ -99,6 +100,7 @@ func TestIsAddedDeleted_Collections(t *testing.T) {
 			t.Run("IsDeleted=true, IsAddOperation=false", func(t *testing.T) {
 				diff := testStructDiff(right, left)
 				require.Lenf(t, diff, 1, "diff was expected to have only one field %s but got %v", field, diff.String())
+				require.Len(t, diff.Paths(), 1)
 				d := diff[0]
 				require.Truef(t, d.IsDeleteOperation(), "diff %v should be treated as Delete operation but it wasn't", d)
 				require.Falsef(t, d.IsAddOperation(), "diff %v should not be treated as Delete operation but it was", d)
@@ -123,6 +125,7 @@ func TestIsAddedDeleted_Collections(t *testing.T) {
 
 		diff := testStructDiff(left, right)
 		require.Len(t, diff, 8)
+		require.Len(t, diff.Paths(), 8)
 		for _, d := range diff {
 			assert.Falsef(t, d.IsAddOperation(), "diff %v was not supposed to be Add operation", d.String())
 			assert.Falsef(t, d.IsDeleteOperation(), "diff %v was not supposed to be Delete operation", d.String())
@@ -143,6 +146,7 @@ func TestGetDiffsForField(t *testing.T) {
 
 		result := diff.GetDiffsForField("Property")
 		require.Len(t, result, 1)
+		require.Len(t, result.Paths(), 1)
 		require.Equal(t, "Property", result[0].Path)
 	})
 
@@ -158,6 +162,7 @@ func TestGetDiffsForField(t *testing.T) {
 
 		result := diff.GetDiffsForField("Property")
 		require.Len(t, result, 2)
+		require.Len(t, result.Paths(), 2)
 	})
 
 	t.Run("should return all elements of array", func(t *testing.T) {
@@ -175,6 +180,7 @@ func TestGetDiffsForField(t *testing.T) {
 
 		result := diff.GetDiffsForField("Property")
 		require.Len(t, result, 3)
+		require.Len(t, result.Paths(), 3)
 	})
 
 	t.Run("should find nothing if parent path does not exist", func(t *testing.T) {
@@ -192,5 +198,6 @@ func TestGetDiffsForField(t *testing.T) {
 
 		result := diff.GetDiffsForField("Proper")
 		require.Empty(t, result)
+		require.Empty(t, result.Paths())
 	})
 }

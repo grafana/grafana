@@ -196,6 +196,17 @@ export const DashNav = React.memo<Props>((props) => {
       );
     }
 
+    if (config.featureToggles.scenes) {
+      buttons.push(
+        <DashNavButton
+          key="button-scenes"
+          tooltip={'View as Scene'}
+          icon="apps"
+          onClick={() => locationService.push(`/scenes/dashboard/${dashboard.uid}`)}
+        />
+      );
+    }
+
     addCustomContent(customLeftActions, buttons);
     return buttons;
   };
@@ -310,16 +321,6 @@ export const DashNav = React.memo<Props>((props) => {
 
     buttons.push(renderTimeControls());
 
-    if (config.featureToggles.scenes) {
-      buttons.push(
-        <ToolbarButton
-          key="button-scenes"
-          tooltip={'View as Scene'}
-          icon="apps"
-          onClick={() => locationService.push(`/scenes/dashboard/${dashboard.uid}`)}
-        />
-      );
-    }
     return buttons;
   };
 

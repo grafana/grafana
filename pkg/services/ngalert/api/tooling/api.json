@@ -286,9 +286,21 @@
      "format": "int64",
      "type": "integer"
     },
+    "contactPoints": {
+     "items": {
+      "$ref": "#/definitions/ContactPointExport"
+     },
+     "type": "array"
+    },
     "groups": {
      "items": {
       "$ref": "#/definitions/AlertRuleGroupExport"
+     },
+     "type": "array"
+    },
+    "policies": {
+     "items": {
+      "$ref": "#/definitions/NotificationPolicyExport"
      },
      "type": "array"
     }
@@ -535,6 +547,25 @@
     }
    },
    "title": "Config is the top-level configuration for Alertmanager's config files.",
+   "type": "object"
+  },
+  "ContactPointExport": {
+   "properties": {
+    "name": {
+     "type": "string"
+    },
+    "orgId": {
+     "format": "int64",
+     "type": "integer"
+    },
+    "receivers": {
+     "items": {
+      "$ref": "#/definitions/ReceiverExport"
+     },
+     "type": "array"
+    }
+   },
+   "title": "ContactPointExport is the provisioned file export of alerting.ContactPointV1.",
    "type": "object"
   },
   "ContactPoints": {
@@ -1072,6 +1103,10 @@
      "description": "PathSeparator defines the separator pattern to decode a hierarchy. The default separator is '/'.",
      "type": "string"
     },
+    "preferredVisualisationPluginId": {
+     "description": "PreferredVisualizationPluginId sets the panel plugin id to use to render the data when using Explore. If\nthe plugin cannot be found will fall back to PreferredVisualization.",
+     "type": "string"
+    },
     "preferredVisualisationType": {
      "$ref": "#/definitions/VisType"
     },
@@ -1216,6 +1251,12 @@
     "sns_configs": {
      "items": {
       "$ref": "#/definitions/SNSConfig"
+     },
+     "type": "array"
+    },
+    "teams_configs": {
+     "items": {
+      "$ref": "#/definitions/MSTeamsConfig"
      },
      "type": "array"
     },
@@ -1777,6 +1818,26 @@
    },
    "type": "object"
   },
+  "MSTeamsConfig": {
+   "properties": {
+    "http_config": {
+     "$ref": "#/definitions/HTTPClientConfig"
+    },
+    "send_resolved": {
+     "type": "boolean"
+    },
+    "text": {
+     "type": "string"
+    },
+    "title": {
+     "type": "string"
+    },
+    "webhook_url": {
+     "$ref": "#/definitions/SecretURL"
+    }
+   },
+   "type": "object"
+  },
   "MatchRegexps": {
    "additionalProperties": {
     "$ref": "#/definitions/Regexp"
@@ -1871,6 +1932,19 @@
    "format": "int64",
    "title": "NoticeSeverity is a type for the Severity property of a Notice.",
    "type": "integer"
+  },
+  "NotificationPolicyExport": {
+   "properties": {
+    "Policy": {
+     "$ref": "#/definitions/RouteExport"
+    },
+    "orgId": {
+     "format": "int64",
+     "type": "integer"
+    }
+   },
+   "title": "NotificationPolicyExport is the provisioned file export of alerting.NotificiationPolicyV1.",
+   "type": "object"
   },
   "NotificationTemplate": {
    "properties": {
@@ -2243,6 +2317,12 @@
     "sns_configs": {
      "items": {
       "$ref": "#/definitions/SNSConfig"
+     },
+     "type": "array"
+    },
+    "teams_configs": {
+     "items": {
+      "$ref": "#/definitions/MSTeamsConfig"
      },
      "type": "array"
     },
@@ -2817,6 +2897,12 @@
      },
      "type": "array"
     },
+    "teams_configs": {
+     "items": {
+      "$ref": "#/definitions/MSTeamsConfig"
+     },
+     "type": "array"
+    },
     "telegram_configs": {
      "items": {
       "$ref": "#/definitions/TelegramConfig"
@@ -2849,6 +2935,24 @@
     }
    },
    "title": "Receiver configuration provides configuration on how to contact a receiver.",
+   "type": "object"
+  },
+  "ReceiverExport": {
+   "properties": {
+    "disableResolveMessage": {
+     "type": "boolean"
+    },
+    "settings": {
+     "$ref": "#/definitions/RawMessage"
+    },
+    "type": {
+     "type": "string"
+    },
+    "uid": {
+     "type": "string"
+    }
+   },
+   "title": "ReceiverExport is the provisioned file export of alerting.ReceiverV1.",
    "type": "object"
   },
   "Regexp": {
@@ -2936,6 +3040,61 @@
     "routes": {
      "items": {
       "$ref": "#/definitions/Route"
+     },
+     "type": "array"
+    }
+   },
+   "type": "object"
+  },
+  "RouteExport": {
+   "description": "RouteExport is the provisioned file export of definitions.Route. This is needed to hide fields that aren't useable in\nprovisioning file format. An alternative would be to define a custom MarshalJSON and MarshalYAML that excludes them.",
+   "properties": {
+    "continue": {
+     "type": "boolean"
+    },
+    "group_by": {
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    },
+    "group_interval": {
+     "type": "string"
+    },
+    "group_wait": {
+     "type": "string"
+    },
+    "match": {
+     "additionalProperties": {
+      "type": "string"
+     },
+     "description": "Deprecated. Remove before v1.0 release.",
+     "type": "object"
+    },
+    "match_re": {
+     "$ref": "#/definitions/MatchRegexps"
+    },
+    "matchers": {
+     "$ref": "#/definitions/Matchers"
+    },
+    "mute_time_intervals": {
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    },
+    "object_matchers": {
+     "$ref": "#/definitions/ObjectMatchers"
+    },
+    "receiver": {
+     "type": "string"
+    },
+    "repeat_interval": {
+     "type": "string"
+    },
+    "routes": {
+     "items": {
+      "$ref": "#/definitions/RouteExport"
      },
      "type": "array"
     }
@@ -3356,8 +3515,16 @@
   },
   "TLSConfig": {
    "properties": {
+    "ca": {
+     "description": "Text of the CA cert to use for the targets.",
+     "type": "string"
+    },
     "ca_file": {
      "description": "The CA cert to use for the targets.",
+     "type": "string"
+    },
+    "cert": {
+     "description": "Text of the client cert file for the targets.",
      "type": "string"
     },
     "cert_file": {
@@ -3367,6 +3534,9 @@
     "insecure_skip_verify": {
      "description": "Disable target certificate validation.",
      "type": "boolean"
+    },
+    "key": {
+     "$ref": "#/definitions/Secret"
     },
     "key_file": {
      "description": "The client key file for the targets.",
@@ -3896,6 +4066,7 @@
    "type": "object"
   },
   "alertGroup": {
+   "description": "AlertGroup alert group",
    "properties": {
     "alerts": {
      "description": "alerts",
@@ -3919,7 +4090,6 @@
    "type": "object"
   },
   "alertGroups": {
-   "description": "AlertGroups alert groups",
    "items": {
     "$ref": "#/definitions/alertGroup"
    },
@@ -4079,13 +4249,13 @@
    "type": "object"
   },
   "gettableAlerts": {
+   "description": "GettableAlerts gettable alerts",
    "items": {
     "$ref": "#/definitions/gettableAlert"
    },
    "type": "array"
   },
   "gettableSilence": {
-   "description": "GettableSilence gettable silence",
    "properties": {
     "comment": {
      "description": "comment",
@@ -4141,6 +4311,7 @@
    "type": "array"
   },
   "integration": {
+   "description": "Integration integration",
    "properties": {
     "lastNotifyAttempt": {
      "description": "A timestamp indicating the last attempt to deliver a notification regardless of the outcome.\nFormat: date-time",
@@ -4632,13 +4803,6 @@
     "operationId": "RouteGetAlertRuleExport",
     "parameters": [
      {
-      "description": "Alert rule UID",
-      "in": "path",
-      "name": "UID",
-      "required": true,
-      "type": "string"
-     },
-     {
       "default": false,
       "description": "Whether to initiate a download of the file or not.",
       "in": "query",
@@ -4650,6 +4814,13 @@
       "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
       "in": "query",
       "name": "format",
+      "type": "string"
+     },
+     {
+      "description": "Alert rule UID",
+      "in": "path",
+      "name": "UID",
+      "required": true,
       "type": "string"
      }
     ],
@@ -4728,6 +4899,58 @@
      }
     },
     "summary": "Create a contact point.",
+    "tags": [
+     "provisioning"
+    ]
+   }
+  },
+  "/api/v1/provisioning/contact-points/export": {
+   "get": {
+    "operationId": "RouteGetContactpointsExport",
+    "parameters": [
+     {
+      "default": false,
+      "description": "Whether to initiate a download of the file or not.",
+      "in": "query",
+      "name": "download",
+      "type": "boolean"
+     },
+     {
+      "default": "yaml",
+      "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
+      "in": "query",
+      "name": "format",
+      "type": "string"
+     },
+     {
+      "default": false,
+      "description": "Whether any contained secure settings should be decrypted or left redacted. Redacted settings will contain RedactedValue instead. Currently, only org admin can view decrypted secure settings.",
+      "in": "query",
+      "name": "decrypt",
+      "type": "boolean"
+     },
+     {
+      "description": "Filter by name",
+      "in": "query",
+      "name": "name",
+      "type": "string"
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "AlertingFileExport",
+      "schema": {
+       "$ref": "#/definitions/AlertingFileExport"
+      }
+     },
+     "403": {
+      "description": "PermissionDenied",
+      "schema": {
+       "$ref": "#/definitions/PermissionDenied"
+      }
+     }
+    },
+    "summary": "Export all contact points in provisioning file format.",
     "tags": [
      "provisioning"
     ]
@@ -4883,18 +5106,6 @@
     "operationId": "RouteGetAlertRuleGroupExport",
     "parameters": [
      {
-      "in": "path",
-      "name": "FolderUID",
-      "required": true,
-      "type": "string"
-     },
-     {
-      "in": "path",
-      "name": "Group",
-      "required": true,
-      "type": "string"
-     },
-     {
       "default": false,
       "description": "Whether to initiate a download of the file or not.",
       "in": "query",
@@ -4906,6 +5117,18 @@
       "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
       "in": "query",
       "name": "format",
+      "type": "string"
+     },
+     {
+      "in": "path",
+      "name": "FolderUID",
+      "required": true,
+      "type": "string"
+     },
+     {
+      "in": "path",
+      "name": "Group",
+      "required": true,
       "type": "string"
      }
     ],
@@ -5135,6 +5358,29 @@
      }
     },
     "summary": "Sets the notification policy tree.",
+    "tags": [
+     "provisioning"
+    ]
+   }
+  },
+  "/api/v1/provisioning/policies/export": {
+   "get": {
+    "operationId": "RouteGetPolicyTreeExport",
+    "responses": {
+     "200": {
+      "description": "AlertingFileExport",
+      "schema": {
+       "$ref": "#/definitions/AlertingFileExport"
+      }
+     },
+     "404": {
+      "description": "NotFound",
+      "schema": {
+       "$ref": "#/definitions/NotFound"
+      }
+     }
+    },
+    "summary": "Export the notification policy tree in provisioning file format.",
     "tags": [
      "provisioning"
     ]

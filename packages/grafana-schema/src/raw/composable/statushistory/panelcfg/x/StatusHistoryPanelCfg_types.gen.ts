@@ -11,6 +11,8 @@
 
 import * as ui from '@grafana/schema';
 
+export const pluginVersion = "10.2.0-pre";
+
 export interface Options extends ui.OptionsWithLegend, ui.OptionsWithTooltip, ui.OptionsWithTimezones {
   /**
    * Controls the column width

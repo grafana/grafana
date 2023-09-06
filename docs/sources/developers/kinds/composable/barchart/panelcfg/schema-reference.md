@@ -2,6 +2,11 @@
 keywords:
   - grafana
   - schema
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: BarChartPanelCfg kind
 ---
 > Both documentation generation and kinds schemas are in active development and subject to change without prior notice.
@@ -29,6 +34,7 @@ It extends [AxisConfig](#axisconfig) and [HideableFieldConfig](#hideablefieldcon
 | `axisGridShow`      | boolean                                                   | No       |         | *(Inherited from [AxisConfig](#axisconfig))*                                                                                                                                                                     |
 | `axisLabel`         | string                                                    | No       |         | *(Inherited from [AxisConfig](#axisconfig))*                                                                                                                                                                     |
 | `axisPlacement`     | string                                                    | No       |         | *(Inherited from [AxisConfig](#axisconfig))*<br/>TODO docs<br/>Possible values are: `auto`, `top`, `right`, `bottom`, `left`, `hidden`.                                                                          |
+| `axisShow`          | boolean                                                   | No       |         | *(Inherited from [AxisConfig](#axisconfig))*                                                                                                                                                                     |
 | `axisSoftMax`       | number                                                    | No       |         | *(Inherited from [AxisConfig](#axisconfig))*                                                                                                                                                                     |
 | `axisSoftMin`       | number                                                    | No       |         | *(Inherited from [AxisConfig](#axisconfig))*                                                                                                                                                                     |
 | `axisWidth`         | number                                                    | No       |         | *(Inherited from [AxisConfig](#axisconfig))*                                                                                                                                                                     |
@@ -50,6 +56,7 @@ TODO docs
 | `axisGridShow`      | boolean                                             | No       |         |                                                                                        |
 | `axisLabel`         | string                                              | No       |         |                                                                                        |
 | `axisPlacement`     | string                                              | No       |         | TODO docs<br/>Possible values are: `auto`, `top`, `right`, `bottom`, `left`, `hidden`. |
+| `axisShow`          | boolean                                             | No       |         |                                                                                        |
 | `axisSoftMax`       | number                                              | No       |         |                                                                                        |
 | `axisSoftMin`       | number                                              | No       |         |                                                                                        |
 | `axisWidth`         | number                                              | No       |         |                                                                                        |

@@ -122,6 +122,7 @@ function SilenceList({
   if (!!items.length) {
     return (
       <DynamicTable
+        pagination={{ itemsPerPage: 25 }}
         items={items}
         cols={columns}
         isExpandable
@@ -148,14 +149,15 @@ const useFilteredSilences = (silences: Silence[], expired = false) => {
       }
       if (queryString) {
         const matchers = parseMatchers(queryString);
-        const matchersMatch = matchers.every((matcher) =>
-          silence.matchers?.some(
-            ({ name, value, isEqual, isRegex }) =>
-              matcher.name === name &&
-              matcher.value === value &&
-              matcher.isEqual === isEqual &&
-              matcher.isRegex === isRegex
-          )
+        const matchersMatch = matchers.every(
+          (matcher) =>
+            silence.matchers?.some(
+              ({ name, value, isEqual, isRegex }) =>
+                matcher.name === name &&
+                matcher.value === value &&
+                matcher.isEqual === isEqual &&
+                matcher.isRegex === isRegex
+            )
         );
         if (!matchersMatch) {
           return false;
@@ -182,7 +184,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   callout: css`
     background-color: ${theme.colors.background.secondary};
     border-top: 3px solid ${theme.colors.info.border};
-    border-radius: ${theme.shape.borderRadius()};
+    border-radius: ${theme.shape.radius.default};
     height: 62px;
     display: flex;
     flex-direction: row;

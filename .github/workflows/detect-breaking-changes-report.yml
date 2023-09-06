@@ -5,6 +5,9 @@ on:
     workflows: ["Levitate / Detect breaking changes"]
     types: [completed]
 
+permissions:
+  pull-requests: write
+
 jobs:
   notify:
     name: Report
@@ -12,9 +15,13 @@ jobs:
     env:
       ARTIFACT_NAME: 'levitate' # The name of the artifact that we would like to download
       ARTIFACT_FOLDER: '${{ github.workspace }}/tmp' # The name of the folder where we will download the artifact to
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: write
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
     # Download artifact (as a .zip archive)
     - name: 'Download artifact'
@@ -35,7 +42,7 @@ jobs:
               run_id: runId,
           });
           const artifact = artifacts.data.artifacts.find(a => a.name === artifactName);
-        
+
           if (!artifact) {
               throw new Error(`Could not find artifact ${ artifactName } in workflow (${ runId })`);
           }
@@ -49,11 +56,11 @@ jobs:
 
           fs.mkdirSync(artifactFolder, { recursive: true });
           fs.writeFileSync(`${ artifactFolder }/${ artifactName }.zip`, Buffer.from(download.data));
-        
+
     # Unzip artifact
     - name: Unzip artifact
       run: unzip "${ARTIFACT_FOLDER}/${ARTIFACT_NAME}.zip" -d "${ARTIFACT_FOLDER}"
-    
+
      # Parse the artifact and register fields as step output variables
       # (All fields in the JSON will be available as ${{ steps.levitate-run.outputs.<field-name> }}
     - name: Parsing levitate result
@@ -116,7 +123,7 @@ jobs:
     # Posts a notification to Slack if a PR has a breaking change and it did not have a breaking change before
     - name: Post to Slack
       id: slack
-      if: steps.levitate-run.outputs.exit_code == 1 && steps.does-label-exist.outputs.result == 0 && steps.levitate-run.outputs.shouldSkip != 'true'
+      if: steps.levitate-run.outputs.exit_code == 1 && steps.does-label-exist.outputs.result == 0 && steps.levitate-run.outputs.shouldSkip != 'true' && env.HAS_SECRETS
       uses: slackapi/slack-github-action@v1.24.0
       with:
         payload: |
@@ -129,6 +136,7 @@ jobs:
           }
       env:
         SLACK_WEBHOOK_URL: ${{ secrets.SLACK_LEVITATE_WEBHOOK_URL }}
+        HAS_SECRETS: ${{ (github.repository == 'grafana/grafana' || secrets.SLACK_LEVITATE_WEBHOOK_URL != '') || '' }}
 
     # Add the label
     - name: Add "levitate breaking change" label
@@ -137,7 +145,7 @@ jobs:
       env:
         PR_NUMBER: ${{ steps.levitate-run.outputs.pr_number }}
       with:
-        github-token: ${{ secrets.GH_BOT_ACCESS_TOKEN }}
+        github-token: ${{ secrets.GITHUB_TOKEN }}
         script: |
           await github.rest.issues.addLabels({
             issue_number: process.env.PR_NUMBER,
@@ -153,7 +161,7 @@ jobs:
       env:
         PR_NUMBER: ${{ steps.levitate-run.outputs.pr_number }}
       with:
-        github-token: ${{ secrets.GH_BOT_ACCESS_TOKEN }}
+        github-token: ${{ secrets.GITHUB_TOKEN }}
         script: |
           await github.rest.issues.removeLabel({
             issue_number: process.env.PR_NUMBER,
@@ -171,7 +179,7 @@ jobs:
       env:
         PR_NUMBER: ${{ steps.levitate-run.outputs.pr_number }}
       with:
-        github-token: ${{ secrets.GH_BOT_ACCESS_TOKEN }}
+        github-token: ${{ secrets.GITHUB_TOKEN }}
         script: |
           await github.rest.pulls.requestReviewers({
             pull_number: process.env.PR_NUMBER,
@@ -188,7 +196,7 @@ jobs:
       env:
         PR_NUMBER: ${{ steps.levitate-run.outputs.pr_number }}
       with:
-        github-token: ${{ secrets.GH_BOT_ACCESS_TOKEN }}
+        github-token: ${{ secrets.GITHUB_TOKEN }}
         script: |
           await github.rest.pulls.removeRequestedReviewers({
             pull_number: process.env.PR_NUMBER,

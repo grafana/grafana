@@ -13,7 +13,7 @@ import { DashboardDTO, DescendantCount, DescendantCountDTO, FolderDTO, SaveDashb
 import { refetchChildren, refreshParents } from '../state';
 import { DashboardTreeSelection } from '../types';
 
-import { PAGE_SIZE, ROOT_PAGE_SIZE } from './services';
+import { PAGE_SIZE } from './services';
 
 interface RequestOptions extends BackendSrvRequest {
   manageError?: (err: unknown) => { error: unknown };
@@ -74,7 +74,7 @@ export const browseDashboardsAPI = createApi({
           dispatch(
             refetchChildren({
               parentUID: parentUid,
-              pageSize: parentUid ? PAGE_SIZE : ROOT_PAGE_SIZE,
+              pageSize: PAGE_SIZE,
             })
           );
           locationService.push(locationUtil.stripBaseFromUrl(folder.url));
@@ -100,7 +100,7 @@ export const browseDashboardsAPI = createApi({
           dispatch(
             refetchChildren({
               parentUID: parentUid,
-              pageSize: parentUid ? PAGE_SIZE : ROOT_PAGE_SIZE,
+              pageSize: PAGE_SIZE,
             })
           );
         });
@@ -120,13 +120,13 @@ export const browseDashboardsAPI = createApi({
           dispatch(
             refetchChildren({
               parentUID: parentUid,
-              pageSize: parentUid ? PAGE_SIZE : ROOT_PAGE_SIZE,
+              pageSize: PAGE_SIZE,
             })
           );
           dispatch(
             refetchChildren({
               parentUID: destinationUID,
-              pageSize: destinationUID ? PAGE_SIZE : ROOT_PAGE_SIZE,
+              pageSize: PAGE_SIZE,
             })
           );
         });
@@ -148,7 +148,7 @@ export const browseDashboardsAPI = createApi({
           dispatch(
             refetchChildren({
               parentUID: parentUid,
-              pageSize: parentUid ? PAGE_SIZE : ROOT_PAGE_SIZE,
+              pageSize: PAGE_SIZE,
             })
           );
         });
@@ -228,7 +228,7 @@ export const browseDashboardsAPI = createApi({
           dispatch(
             refetchChildren({
               parentUID: destinationUID,
-              pageSize: destinationUID ? PAGE_SIZE : ROOT_PAGE_SIZE,
+              pageSize: PAGE_SIZE,
             })
           );
           dispatch(refreshParents([...selectedFolders, ...selectedDashboards]));
@@ -291,7 +291,7 @@ export const browseDashboardsAPI = createApi({
           dispatch(
             refetchChildren({
               parentUID: folderUid,
-              pageSize: folderUid ? PAGE_SIZE : ROOT_PAGE_SIZE,
+              pageSize: PAGE_SIZE,
             })
           );
         });

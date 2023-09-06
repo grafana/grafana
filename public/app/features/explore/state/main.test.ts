@@ -1,15 +1,16 @@
 import { thunkTester } from 'test/core/thunk/thunkTester';
 
-import { ExploreUrlState } from '@grafana/data';
+import { dateTime, ExploreUrlState } from '@grafana/data';
 import { serializeStateToUrlParam } from '@grafana/data/src/utils/url';
 import { locationService } from '@grafana/runtime';
 import { PanelModel } from 'app/features/dashboard/state';
 
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
 import { MockDataSourceApi } from '../../../../test/mocks/datasource_srv';
-import { ExploreItemState, ExploreState } from '../../../types';
+import { configureStore } from '../../../store/configureStore';
+import { ExploreItemState, ExploreState, StoreState, ThunkDispatch } from '../../../types';
 
-import { exploreReducer, navigateToExplore, splitClose } from './main';
+import { exploreReducer, navigateToExplore, splitClose, splitOpen } from './main';
 
 const getNavigateToExploreContext = async (openInNewWindow?: (url: string) => void) => {
   const url = '/explore';
@@ -20,19 +21,19 @@ const getNavigateToExploreContext = async (openInNewWindow?: (url: string) => vo
   const datasource = new MockDataSourceApi(panel.datasource!.uid!);
   const get = jest.fn().mockResolvedValue(datasource);
   const getDataSourceSrv = jest.fn().mockReturnValue({ get });
-  const getTimeSrv = jest.fn();
   const getExploreUrl = jest.fn().mockResolvedValue(url);
+  const timeRange = { from: dateTime(), to: dateTime() };
 
   const dispatchedActions = await thunkTester({})
     .givenThunk(navigateToExplore)
-    .whenThunkIsDispatched(panel, { getDataSourceSrv, getTimeSrv, getExploreUrl, openInNewWindow });
+    .whenThunkIsDispatched(panel, { getDataSourceSrv, timeRange, getExploreUrl, openInNewWindow });
 
   return {
     url,
     panel,
     get,
     getDataSourceSrv,
-    getTimeSrv,
+    timeRange,
     getExploreUrl,
     dispatchedActions,
   };
@@ -52,20 +53,14 @@ describe('navigateToExplore', () => {
         expect(getDataSourceSrv).toHaveBeenCalledTimes(1);
       });
 
-      it('then getTimeSrv should have been called once', async () => {
-        const { getTimeSrv } = await getNavigateToExploreContext();
-
-        expect(getTimeSrv).toHaveBeenCalledTimes(1);
-      });
-
       it('then getExploreUrl should have been called with correct arguments', async () => {
-        const { getExploreUrl, panel, getDataSourceSrv, getTimeSrv } = await getNavigateToExploreContext();
+        const { getExploreUrl, panel, getDataSourceSrv, timeRange } = await getNavigateToExploreContext();
 
         expect(getExploreUrl).toHaveBeenCalledTimes(1);
         expect(getExploreUrl).toHaveBeenCalledWith({
           panel,
           datasourceSrv: getDataSourceSrv(),
-          timeSrv: getTimeSrv(),
+          timeRange,
         });
       });
     });
@@ -84,14 +79,8 @@ describe('navigateToExplore', () => {
         expect(getDataSourceSrv).toHaveBeenCalledTimes(1);
       });
 
-      it('then getTimeSrv should have been called once', async () => {
-        const { getTimeSrv } = await getNavigateToExploreContext(openInNewWindow);
-
-        expect(getTimeSrv).toHaveBeenCalledTimes(1);
-      });
-
       it('then getExploreUrl should have been called with correct arguments', async () => {
-        const { getExploreUrl, panel, getDataSourceSrv, getTimeSrv } = await getNavigateToExploreContext(
+        const { getExploreUrl, panel, getDataSourceSrv, timeRange } = await getNavigateToExploreContext(
           openInNewWindow
         );
 
@@ -99,7 +88,7 @@ describe('navigateToExplore', () => {
         expect(getExploreUrl).toHaveBeenCalledWith({
           panel,
           datasourceSrv: getDataSourceSrv(),
-          timeSrv: getTimeSrv(),
+          timeRange,
         });
       });
 
@@ -116,6 +105,35 @@ describe('navigateToExplore', () => {
 
 describe('Explore reducer', () => {
   describe('split view', () => {
+    describe('split open', () => {
+      it('it should create only ony new pane', async () => {
+        let dispatch: ThunkDispatch, getState: () => StoreState;
+
+        const store: { dispatch: ThunkDispatch; getState: () => StoreState } = configureStore({
+          explore: {
+            panes: {
+              one: { queries: [], range: {} },
+            },
+          },
+        } as unknown as Partial<StoreState>);
+
+        dispatch = store.dispatch;
+        getState = store.getState;
+
+        await dispatch(splitOpen());
+        let splitPanes = Object.keys(getState().explore.panes);
+        expect(splitPanes).toHaveLength(2);
+        let secondSplitPaneId = splitPanes[1];
+
+        await dispatch(splitOpen());
+        splitPanes = Object.keys(getState().explore.panes);
+        // only 2 panes exist...
+        expect(splitPanes).toHaveLength(2);
+        // ...and the second pane is replaced
+        expect(splitPanes[0]).toBe('one');
+        expect(splitPanes[1]).not.toBe(secondSplitPaneId);
+      });
+    });
     describe('split close', () => {
       it('should reset right pane when it is closed', () => {
         const leftItemMock = {

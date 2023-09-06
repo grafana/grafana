@@ -10,8 +10,13 @@ keywords:
   - OHLC
   - panel
   - documentation
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: Candlestick
-weight: 600
+weight: 100
 ---
 
 # Candlestick

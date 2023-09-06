@@ -3,6 +3,7 @@ import { Observable, of } from 'rxjs';
 
 import {
   AbstractQuery,
+  CoreApp,
   DataQueryRequest,
   DataQueryResponse,
   DataSourceInstanceSettings,
@@ -12,7 +13,8 @@ import { DataSourceWithBackend, getTemplateSrv, TemplateSrv } from '@grafana/run
 
 import { extractLabelMatchers, toPromLikeExpr } from '../prometheus/language_utils';
 
-import { normalizeQuery } from './QueryEditor/QueryEditor';
+import { VariableSupport } from './VariableSupport';
+import { defaultGrafanaPyroscope, defaultPhlareQueryType } from './dataquery.gen';
 import { PhlareDataSourceOptions, Query, ProfileTypeMessage, BackendType } from './types';
 
 export class PhlareDataSource extends DataSourceWithBackend<Query, PhlareDataSourceOptions> {
@@ -24,6 +26,7 @@ export class PhlareDataSource extends DataSourceWithBackend<Query, PhlareDataSou
   ) {
     super(instanceSettings);
     this.backendType = instanceSettings.jsonData.backendType ?? 'phlare';
+    this.variables = new VariableSupport(this);
   }
 
   query(request: DataQueryRequest<Query>): Observable<DataQueryResponse> {
@@ -49,15 +52,20 @@ export class PhlareDataSource extends DataSourceWithBackend<Query, PhlareDataSou
   }
 
   async getProfileTypes(): Promise<ProfileTypeMessage[]> {
-    return await super.getResource('profileTypes');
+    return await this.getResource('profileTypes');
   }
 
   async getLabelNames(query: string, start: number, end: number): Promise<string[]> {
-    return await super.getResource('labelNames', { query, start, end });
+    return await this.getResource('labelNames', { query: this.templateSrv.replace(query), start, end });
   }
 
   async getLabelValues(query: string, label: string, start: number, end: number): Promise<string[]> {
-    return await super.getResource('labelValues', { label, query, start, end });
+    return await this.getResource('labelValues', {
+      label: this.templateSrv.replace(label),
+      query: this.templateSrv.replace(query),
+      start,
+      end,
+    });
   }
 
   // We need the URL here because it may not be saved on the backend yet when used from config page.
@@ -69,6 +77,7 @@ export class PhlareDataSource extends DataSourceWithBackend<Query, PhlareDataSou
     return {
       ...query,
       labelSelector: this.templateSrv.replace(query.labelSelector ?? '', scopedVars),
+      profileTypeId: this.templateSrv.replace(query.profileTypeId ?? '', scopedVars),
     };
   }
 
@@ -101,6 +110,25 @@ export class PhlareDataSource extends DataSourceWithBackend<Query, PhlareDataSou
       labelMatchers: extractLabelMatchers(tokens),
     };
   }
+
+  getDefaultQuery(app: CoreApp): Partial<Query> {
+    return defaultQuery;
+  }
+}
+
+export const defaultQuery: Partial<Query> = {
+  ...defaultGrafanaPyroscope,
+  queryType: defaultPhlareQueryType,
+};
+
+export function normalizeQuery(query: Query, app?: CoreApp | string) {
+  let normalized = { ...defaultQuery, ...query };
+  if (app !== CoreApp.Explore && normalized.queryType === 'both') {
+    // In dashboards and other places, we can't show both types of graphs at the same time.
+    // This will also be a default when having 'both' query and adding it from explore to dashboard
+    normalized.queryType = 'profile';
+  }
+  return normalized;
 }
 
 const grammar: Grammar = {

@@ -102,7 +102,7 @@ export const Pagination = ({
       <ol>
         <li className={styles.item}>
           <Button
-            aria-label="previous"
+            aria-label={`previous page`}
             size="sm"
             variant="secondary"
             onClick={() => onNavigate(currentPage - 1)}
@@ -114,7 +114,7 @@ export const Pagination = ({
         {pageButtons}
         <li className={styles.item}>
           <Button
-            aria-label="next"
+            aria-label={`next page`}
             size="sm"
             variant="secondary"
             onClick={() => onNavigate(currentPage + 1)}
@@ -130,16 +130,16 @@ export const Pagination = ({
 
 const getStyles = () => {
   return {
-    container: css`
-      float: right;
-    `,
-    item: css`
-      display: inline-block;
-      padding-left: 10px;
-      margin-bottom: 5px;
-    `,
-    ellipsis: css`
-      transform: rotate(90deg);
-    `,
+    container: css({
+      float: 'right',
+    }),
+    item: css({
+      display: 'inline-block',
+      paddingLeft: '10px',
+      marginBottom: '5px',
+    }),
+    ellipsis: css({
+      transform: 'rotate(90deg)',
+    }),
   };
 };

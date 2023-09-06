@@ -64,6 +64,7 @@ describe('DashboardModel', () => {
           { type: 'filtering', enable: true },
           { type: 'annotations', enable: true, annotations: [{ name: 'old' }] },
         ],
+        style: 'dark',
         panels: [
           {
             type: 'graph',
@@ -130,6 +131,10 @@ describe('DashboardModel', () => {
 
     it('should have panel id', () => {
       expect(graph.id).toBe(1);
+    });
+
+    it('should not have style', () => {
+      expect(model.style).toBe(undefined);
     });
 
     it('should move time and filtering list', () => {
@@ -1162,7 +1167,6 @@ describe('DashboardModel', () => {
                   steps: [
                     {
                       color: 'green',
-                      // @ts-expect-error
                       value: null,
                     },
                     {

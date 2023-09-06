@@ -1,35 +1,30 @@
 import { css, cx } from '@emotion/css';
 import { pick } from 'lodash';
-import React, { lazy, RefObject, Suspense, useMemo } from 'react';
+import React, { RefObject, useMemo } from 'react';
 import { shallowEqual } from 'react-redux';
 
 import { DataSourceInstanceSettings, RawTimeRange } from '@grafana/data';
-import { config, reportInteraction } from '@grafana/runtime';
+import { reportInteraction } from '@grafana/runtime';
 import { defaultIntervals, PageToolbar, RefreshPicker, SetInterval, ToolbarButton, ButtonGroup } from '@grafana/ui';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
-import { contextSrv } from 'app/core/core';
 import { createAndCopyShortLink } from 'app/core/utils/shortLinks';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
-import { AccessControlAction } from 'app/types';
 import { StoreState, useDispatch, useSelector } from 'app/types/store';
 
+import { contextSrv } from '../../core/core';
 import { DashNavButton } from '../dashboard/components/DashNav/DashNavButton';
-import { getTimeSrv } from '../dashboard/services/TimeSrv';
 import { updateFiscalYearStartMonthForSession, updateTimeZoneForSession } from '../profile/state/reducers';
 import { getFiscalYearStartMonth, getTimeZone } from '../profile/state/selectors';
 
 import { ExploreTimeControls } from './ExploreTimeControls';
 import { LiveTailButton } from './LiveTailButton';
+import { ToolbarExtensionPoint } from './extensions/ToolbarExtensionPoint';
 import { changeDatasource } from './state/datasource';
 import { splitClose, splitOpen, maximizePaneAction, evenPaneResizeAction } from './state/main';
 import { cancelQueries, runQueries, selectIsWaitingForData } from './state/query';
 import { isSplit, selectPanesEntries } from './state/selectors';
 import { syncTimes, changeRefreshInterval } from './state/time';
 import { LiveTailControls } from './useLiveTailControls';
-
-const AddToDashboard = lazy(() =>
-  import('./AddToDashboard').then(({ AddToDashboard }) => ({ default: AddToDashboard }))
-);
 
 const rotateIcon = css({
   '> div > svg': {
@@ -118,13 +113,6 @@ export function ExploreToolbar({ exploreId, topOfViewRef, onChangeTime }: Props)
     dispatch(changeRefreshInterval({ exploreId, refreshInterval }));
   };
 
-  const showExploreToDashboard = useMemo(
-    () =>
-      contextSrv.hasAccess(AccessControlAction.DashboardsCreate, contextSrv.isEditor) ||
-      contextSrv.hasAccess(AccessControlAction.DashboardsWrite, contextSrv.isEditor),
-    []
-  );
-
   return (
     <div ref={topOfViewRef}>
       {refreshInterval && <SetInterval func={onRunQuery} interval={refreshInterval} loading={loading} />}
@@ -147,7 +135,7 @@ export function ExploreToolbar({ exploreId, topOfViewRef, onChangeTime }: Props)
         leftItems={[
           <DataSourcePicker
             key={`${exploreId}-ds-picker`}
-            mixed={config.featureToggles.exploreMixedDatasource === true}
+            mixed
             onChange={onChangeDatasource}
             current={datasourceInstance?.getRef()}
             hideTextValue={showSmallDataSourcePicker}
@@ -183,11 +171,12 @@ export function ExploreToolbar({ exploreId, topOfViewRef, onChangeTime }: Props)
               </ToolbarButton>
             </ButtonGroup>
           ),
-          showExploreToDashboard && (
-            <Suspense key="addToDashboard" fallback={null}>
-              <AddToDashboard exploreId={exploreId} />
-            </Suspense>
-          ),
+          <ToolbarExtensionPoint
+            splitted={splitted}
+            key="toolbar-extension-point"
+            exploreId={exploreId}
+            timeZone={timeZone}
+          />,
           !isLive && (
             <ExploreTimeControls
               key="timeControls"
@@ -211,7 +200,7 @@ export function ExploreToolbar({ exploreId, topOfViewRef, onChangeTime }: Props)
             isLoading={loading}
             text={showSmallTimePicker ? undefined : loading ? 'Cancel' : 'Run query'}
             tooltip={showSmallTimePicker ? (loading ? 'Cancel' : 'Run query') : undefined}
-            intervals={getTimeSrv().getValidIntervals(defaultIntervals)}
+            intervals={contextSrv.getValidIntervals(defaultIntervals)}
             isLive={isLive}
             onRefresh={() => onRunQuery(loading)}
             noIntervalPicker={isLive}

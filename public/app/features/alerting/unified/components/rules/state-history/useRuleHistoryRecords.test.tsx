@@ -1,11 +1,11 @@
 import { createTheme, FieldType } from '@grafana/data';
 
 import { LogRecord } from './common';
-import { logRecordsToDataFrame } from './useRuleHistoryRecords';
+import { logRecordsToDataFrame, logRecordsToDataFrameForPanel } from './useRuleHistoryRecords';
+
+const theme = createTheme();
 
 describe('logRecordsToDataFrame', () => {
-  const theme = createTheme();
-
   it('should convert instance history records into a data frame', () => {
     const instanceLabels = { foo: 'bar', severity: 'critical', cluster: 'dev-us' };
     const records: LogRecord[] = [
@@ -100,5 +100,69 @@ describe('logRecordsToDataFrame', () => {
     );
 
     expect(frame.fields[1].config.displayName).toBe('severity=critical');
+  });
+});
+
+describe('logRecordsToDataFrameForPanel', () => {
+  it('should return correct data frame records', () => {
+    const instanceLabels = { foo: 'bar', severity: 'critical', cluster: 'dev-us' };
+    const records: LogRecord[] = [
+      {
+        timestamp: 1000000,
+        line: { previous: 'Normal', current: 'Alerting', labels: instanceLabels, values: { A: 10, B: 90 } },
+      },
+      {
+        timestamp: 1000050,
+        line: { previous: 'Alerting', current: 'Normal', labels: instanceLabels },
+      },
+    ];
+
+    const frame = logRecordsToDataFrameForPanel(JSON.stringify(instanceLabels), records, theme);
+
+    expect(frame.fields).toHaveLength(6);
+    expect(frame).toHaveLength(2);
+    expect(frame.fields[0]).toMatchObject({
+      name: 'time',
+      type: FieldType.time,
+      values: [1000000, 1000050],
+    });
+    expect(frame.fields[1]).toMatchObject({
+      name: 'alertId',
+      type: FieldType.string,
+      values: [1, 1],
+    });
+    expect(frame.fields[2]).toMatchObject({
+      name: 'newState',
+      type: FieldType.string,
+      values: ['Alerting', 'Normal'],
+    });
+    expect(frame.fields[3]).toMatchObject({
+      name: 'prevState',
+      type: FieldType.string,
+      values: ['Normal', 'Alerting'],
+    });
+    expect(frame.fields[4]).toMatchObject({
+      name: 'color',
+      type: FieldType.string,
+      values: [theme.colors.error.main, theme.colors.success.main],
+    });
+    expect(frame.fields[5]).toMatchObject({
+      name: 'data',
+      type: FieldType.other,
+      values: [
+        [
+          { metric: 'foo', value: 'bar' },
+          { metric: 'severity', value: 'critical' },
+          { metric: 'cluster', value: 'dev-us' },
+          { metric: ' Values', value: '{A= 10, B= 90}' },
+        ],
+        [
+          { metric: 'foo', value: 'bar' },
+          { metric: 'severity', value: 'critical' },
+          { metric: 'cluster', value: 'dev-us' },
+          { metric: '', value: '' },
+        ],
+      ],
+    });
   });
 });

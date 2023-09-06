@@ -44,29 +44,6 @@ type AlertingStore interface {
 	store.ImageStore
 }
 
-type Alertmanager interface {
-	// Configuration
-	SaveAndApplyConfig(ctx context.Context, config *apimodels.PostableUserConfig) error
-	SaveAndApplyDefaultConfig(ctx context.Context) error
-	GetStatus() apimodels.GettableStatus
-
-	// Silences
-	CreateSilence(ps *apimodels.PostableSilence) (string, error)
-	DeleteSilence(silenceID string) error
-	GetSilence(silenceID string) (apimodels.GettableSilence, error)
-	ListSilences(filter []string) (apimodels.GettableSilences, error)
-
-	// Alerts
-	GetAlerts(active, silenced, inhibited bool, filter []string, receiver string) (apimodels.GettableAlerts, error)
-	GetAlertGroups(active, silenced, inhibited bool, filter []string, receiver string) (apimodels.AlertGroups, error)
-	PutAlerts(postableAlerts apimodels.PostableAlerts) error
-
-	// Receivers
-	GetReceivers(ctx context.Context) []apimodels.Receiver
-	TestReceivers(ctx context.Context, c apimodels.TestReceiversConfigBodyParams) (*TestReceiversResult, error)
-	TestTemplate(ctx context.Context, c apimodels.TestTemplatesConfigBodyParams) (*TestTemplatesResults, error)
-}
-
 type alertmanager struct {
 	Base   *alertingNotify.GrafanaAlertmanager
 	logger log.Logger
@@ -376,7 +353,6 @@ func (am *alertmanager) AppURL() string {
 }
 
 // buildReceiverIntegrations builds a list of integration notifiers off of a receiver config.
-// Note(santiago): to build the integrations it needs webhook and email senders.
 func (am *alertmanager) buildReceiverIntegrations(receiver *alertingNotify.APIReceiver, tmpl *alertingTemplates.Template) ([]*alertingNotify.Integration, error) {
 	receiverCfg, err := alertingNotify.BuildReceiverConfiguration(context.Background(), receiver, am.decryptFn)
 	if err != nil {
@@ -417,6 +393,18 @@ func (am *alertmanager) PutAlerts(postableAlerts apimodels.PostableAlerts) error
 	}
 
 	return am.Base.PutAlerts(alerts)
+}
+
+func (am *alertmanager) ConfigHash() [16]byte {
+	return am.Base.ConfigHash()
+}
+
+func (am *alertmanager) OrgID() int64 {
+	return am.orgID
+}
+
+func (am *alertmanager) FileStore() *FileStore {
+	return am.fileStore
 }
 
 // AlertValidationError is the error capturing the validation errors

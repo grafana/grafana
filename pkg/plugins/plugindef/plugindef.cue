@@ -125,7 +125,7 @@ schemas: [{
 
 			// Required Grafana version for this plugin. Validated using
 			// https://github.com/npm/node-semver.
-			grafanaDependency: =~"^(<=|>=|<|>|=|~|\\^)?([0-9]+)(\\.[0-9x\\*]+)(\\.[0-9x\\*]+)?(\\s(<=|>=|<|=>)?([0-9]+)(\\.[0-9x]+)(\\.[0-9x]+))?$"
+			grafanaDependency?: =~"^(<=|>=|<|>|=|~|\\^)?([0-9]+)(\\.[0-9x\\*]+)(\\.[0-9x\\*]+)?(\\s(<=|>=|<|=>)?([0-9]+)(\\.[0-9x]+)(\\.[0-9x]+))?$"
 
 			// An array of required plugins on which this plugin depends
 			plugins?: [...#Dependency]
@@ -404,6 +404,37 @@ schemas: [{
 
 			// Parameters for the JWT token authentication request.
 			params: [string]: string
+		}
+
+		// External service registration information
+		externalServiceRegistration: #ExternalServiceRegistration
+
+		#ExternalServiceRegistration: {
+			// Impersonation describes the permissions that the external service will have on behalf of the user
+			impersonation?: #Impersonation
+			// Self describes the permissions that the external service will have on behalf of itself
+			self?: 		#Self
+		}
+
+		#Impersonation: {
+			// Enabled allows the service to request access tokens to impersonate users using the jwtbearer grant
+			// Defaults to true.
+			enabled?: bool
+			// Groups allows the service to list the impersonated user's teams.
+			// Defaults to true.
+			groups?: bool
+			// Permissions are the permissions that the external service needs when impersonating a user.
+			// The intersection of this set with the impersonated user's permission guarantees that the client will not
+			// gain more privileges than the impersonated user has.
+			permissions?: [...#Permission]
+		}
+
+		#Self: {
+			// Enabled allows the service to request access tokens for itself using the client_credentials grant
+			// Defaults to true.
+			enabled?: bool
+			// Permissions are the permissions that the external service needs its associated service account to have.
+			permissions?: [...#Permission]
 		}
 	}
 }]

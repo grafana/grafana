@@ -38,20 +38,7 @@ export default class ResponseParser {
           // (while the newer versions—first).
 
           if (isValueFirst) {
-            // We want to know whether the given retention policy is the default one or not.
-            // If it is default policy then we should add it to the beginning.
-            // The index 4 gives us if that policy is default or not.
-            // https://docs.influxdata.com/influxdb/v1.8/query_language/explore-schema/#show-retention-policies
-            // Only difference is v0.9. In that version we don't receive shardGroupDuration value.
-            // https://archive.docs.influxdata.com/influxdb/v0.9/query_language/schema_exploration/#show-retention-policies
-            // Since it is always the last value we will check that last value always.
-            if (isRetentionPolicyQuery && value[value.length - 1] === true) {
-              const newSetValues = [value[0].toString(), ...Array.from(res)];
-              res.clear();
-              newSetValues.forEach((sv) => res.add(sv));
-            } else {
-              res.add(value[0].toString());
-            }
+            res.add(value[0].toString());
           } else if (value[1] !== undefined) {
             res.add(value[1].toString());
           } else {
@@ -258,7 +245,12 @@ export function getSelectedParams(target: InfluxQuery): string[] {
   target.select?.forEach((select) => {
     const selector = select.filter((x) => x.type !== 'field');
     if (selector.length > 0) {
-      allParams.push(selector[0].type);
+      const aliasIfExist = selector.find((s) => s.type === 'alias');
+      if (aliasIfExist) {
+        allParams.push(aliasIfExist.params?.[0].toString() ?? '');
+      } else {
+        allParams.push(selector[0].type);
+      }
     } else {
       if (select[0] && select[0].params && select[0].params[0]) {
         allParams.push(select[0].params[0].toString());

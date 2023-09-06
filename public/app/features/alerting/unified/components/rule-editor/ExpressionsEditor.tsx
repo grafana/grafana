@@ -1,7 +1,8 @@
+import { css } from '@emotion/css';
 import React, { useMemo } from 'react';
 
-import { PanelData } from '@grafana/data';
-import { Stack } from '@grafana/experimental';
+import { GrafanaTheme2, PanelData } from '@grafana/data';
+import { useStyles2 } from '@grafana/ui';
 import { isExpressionQuery } from 'app/features/expressions/guards';
 import { ExpressionQuery, ExpressionQueryType } from 'app/features/expressions/types';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
@@ -36,9 +37,10 @@ export const ExpressionsEditor = ({
       return isExpressionQuery(query.model) ? acc.concat(query.model) : acc;
     }, []);
   }, [queries]);
+  const styles = useStyles2(getStyles);
 
   return (
-    <Stack direction="row" alignItems="stretch">
+    <div className={styles.wrapper}>
       {expressionQueries.map((query) => {
         const data = panelData[query.refId];
 
@@ -63,6 +65,14 @@ export const ExpressionsEditor = ({
           />
         );
       })}
-    </Stack>
+    </div>
   );
 };
+const getStyles = (theme: GrafanaTheme2) => ({
+  wrapper: css`
+    display: flex;
+    gap: ${theme.spacing(2)};
+    align-content: stretch;
+    flex-wrap: wrap;
+  `,
+});

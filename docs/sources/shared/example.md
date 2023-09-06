@@ -1,4 +1,8 @@
 ---
+labels:
+  products:
+    - enterprise
+    - oss
 title: Shared Content
 ---
 
@@ -11,7 +15,7 @@ When you have a chunk of text or steps that stand alone, not part of an ordered 
 The syntax to invoke this file would be the following, minus the backslash:
 
 ```
-\{{< docs/shared "example.md" >}}
+\{{< docs/shared lookup="example.md" source="grafana" version="<GRAFANA VERSION>" >}}
 ```
 
 ## Part of a list
@@ -24,7 +28,7 @@ Below is an example from the docs, with backslashes added. The initial spaces ar
 
 ```
 \{{< docs/list >}}
-  \{{< docs/shared "manage-users/view-server-user-list.md" >}}
+  \{{< docs/shared lookup="manage-users/view-server-user-list.md" source="grafana" version="<GRAFANA VERSION>" >}}
   1. Click the user account that you want to edit. If necessary, use the search field to find the account.
 \{{< /docs/list >}}
 ```
@@ -36,7 +40,7 @@ You cannot use short codes in an ordered list with sublists. The shortcode break
 All unordered list steps included as part of a list will appear as second-level lists (with the hollow circle bullet) rather than first-level lists (solid circle bullet), even if the list is not indented in the shared file or the document file.
 
 {{< docs/list >}}
-{{< docs/shared "test.md" >}}
+{{< docs/shared lookup="test.md" source="grafana" version="<GRAFANA VERSION>" >}}
 
 - Bullet text
   {{< /docs/list >}}

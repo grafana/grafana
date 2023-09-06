@@ -1,14 +1,12 @@
 import { render, waitFor, within, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { setupServer } from 'msw/node';
 import React from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
 import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
 import { byLabelText, byPlaceholderText, byRole, byTestId, byText } from 'testing-library-selector';
 
-import { locationService, setBackendSrv, setDataSourceSrv } from '@grafana/runtime';
+import { locationService, setDataSourceSrv } from '@grafana/runtime';
 import { interceptLinkClicks } from 'app/core/navigation/patch/interceptLinkClicks';
-import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
 import store from 'app/core/store';
 import {
@@ -19,6 +17,7 @@ import {
 import { AccessControlAction, ContactPointsState } from 'app/types';
 
 import 'whatwg-fetch';
+import 'core-js/stable/structured-clone';
 
 import { fetchAlertManagerConfig, fetchStatus, testReceivers, updateAlertManagerConfig } from '../../api/alertmanager';
 import { AlertmanagersChoiceResponse } from '../../api/alertmanagerApi';
@@ -26,15 +25,18 @@ import { discoverAlertmanagerFeatures } from '../../api/buildInfo';
 import { fetchNotifiers } from '../../api/grafana';
 import * as receiversApi from '../../api/receiversApi';
 import * as grafanaApp from '../../components/receivers/grafanaAppReceivers/grafanaApp';
+import { mockApi, setupMswServer } from '../../mockApi';
 import {
   mockDataSource,
   MockDataSourceSrv,
+  onCallPluginMetaMock,
   someCloudAlertManagerConfig,
   someCloudAlertManagerStatus,
   someGrafanaAlertManagerConfig,
 } from '../../mocks';
 import { mockAlertmanagerChoiceResponse } from '../../mocks/alertmanagerApi';
 import { grafanaNotifiersMock } from '../../mocks/grafana-notifiers';
+import { AlertmanagerProvider } from '../../state/AlertmanagerContext';
 import { getAllDataSources } from '../../utils/config';
 import { ALERTMANAGER_NAME_LOCAL_STORAGE_KEY, ALERTMANAGER_NAME_QUERY_KEY } from '../../utils/constants';
 import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
@@ -69,19 +71,6 @@ const alertmanagerChoiceMockedResponse: AlertmanagersChoiceResponse = {
   numExternalAlertmanagers: 0,
 };
 
-const renderReceivers = (alertManagerSourceName?: string) => {
-  locationService.push(
-    '/alerting/notifications' +
-      (alertManagerSourceName ? `?${ALERTMANAGER_NAME_QUERY_KEY}=${alertManagerSourceName}` : '')
-  );
-
-  return render(
-    <TestProvider>
-      <Receivers />
-    </TestProvider>
-  );
-};
-
 const dataSources = {
   alertManager: mockDataSource({
     name: 'CloudManager',
@@ -94,6 +83,21 @@ const dataSources = {
       implementation: AlertManagerImplementation.prometheus,
     },
   }),
+};
+
+const renderReceivers = (alertManagerSourceName?: string) => {
+  locationService.push(
+    '/alerting/notifications' +
+      (alertManagerSourceName ? `?${ALERTMANAGER_NAME_QUERY_KEY}=${alertManagerSourceName}` : '')
+  );
+
+  return render(
+    <TestProvider>
+      <AlertmanagerProvider accessType="notification">
+        <Receivers />
+      </AlertmanagerProvider>
+    </TestProvider>
+  );
 };
 
 const ui = {
@@ -116,7 +120,6 @@ const ui = {
 
   channelFormContainer: byTestId('item-container'),
 
-  notificationError: byTestId('receivers-notification-error'),
   contactPointsCollapseToggle: byTestId('collapse-toggle'),
 
   inputs: {
@@ -148,21 +151,16 @@ const emptyContactPointsState: ContactPointsState = { receivers: {}, errorCount:
 
 const useGetGrafanaReceiverTypeCheckerMock = jest.spyOn(grafanaApp, 'useGetGrafanaReceiverTypeChecker');
 
+const server = setupMswServer();
+
 describe('Receivers', () => {
-  const server = setupServer();
-
-  beforeAll(() => {
-    setBackendSrv(backendSrv);
-    server.listen({ onUnhandledRequest: 'error' });
-  });
-
-  afterAll(() => {
-    server.close();
-  });
-
   beforeEach(() => {
     server.resetHandlers();
     jest.resetAllMocks();
+
+    mockApi(server).grafanaNotifiers(grafanaNotifiersMock);
+    mockApi(server).plugins.getPluginSettings(onCallPluginMetaMock);
+
     useGetGrafanaReceiverTypeCheckerMock.mockReturnValue(() => undefined);
     mocks.getAllDataSources.mockReturnValue(Object.values(dataSources));
     mocks.api.fetchNotifiers.mockResolvedValue(grafanaNotifiersMock);
@@ -181,6 +179,11 @@ describe('Receivers', () => {
         AccessControlAction.AlertingNotificationsExternalWrite,
       ];
       return permissions.includes(action as AccessControlAction);
+    });
+
+    // respond with "true" when asked if we are an administrator
+    mocks.contextSrv.hasRole.mockImplementation((role: string) => {
+      return role === 'Admin';
     });
 
     mocks.contextSrv.hasAccess.mockImplementation(() => true);
@@ -210,25 +213,6 @@ describe('Receivers', () => {
     expect(mocks.api.fetchConfig).toHaveBeenCalledWith(GRAFANA_RULES_SOURCE_NAME);
     expect(mocks.api.fetchNotifiers).toHaveBeenCalledTimes(1);
     expect(locationService.getSearchObject()[ALERTMANAGER_NAME_QUERY_KEY]).toEqual(undefined);
-
-    // select external cloud alertmanager, check that data is retrieved and contents are rendered as appropriate
-    await clickSelectOption(ui.alertManagerPicker.get(), 'CloudManager');
-    await byText('cloud-receiver').find();
-    expect(mocks.api.fetchConfig).toHaveBeenCalledTimes(2);
-    expect(mocks.api.fetchConfig).toHaveBeenLastCalledWith('CloudManager');
-
-    await ui.receiversTable.find();
-    templatesTable = await ui.templatesTable.find();
-    templateRows = templatesTable.querySelectorAll('tbody tr');
-    expect(templateRows[0]).toHaveTextContent('foo template');
-    expect(templateRows).toHaveLength(1);
-    receiverRows = within(screen.getByTestId('dynamic-table')).getAllByTestId('row');
-    expect(receiverRows[0]).toHaveTextContent('cloud-receiver');
-    expect(receiverRows).toHaveLength(1);
-    expect(locationService.getSearchObject()[ALERTMANAGER_NAME_QUERY_KEY]).toEqual('CloudManager');
-
-    //should not render any notification error
-    expect(ui.notificationError.query()).not.toBeInTheDocument();
   });
 
   it('Grafana receiver can be tested', async () => {
@@ -323,7 +307,7 @@ describe('Receivers', () => {
     // see that we're back to main page and proper api calls have been made
     await ui.receiversTable.find();
     expect(mocks.api.updateConfig).toHaveBeenCalledTimes(1);
-    expect(mocks.api.fetchConfig).toHaveBeenCalledTimes(3);
+    expect(mocks.api.fetchConfig).toHaveBeenCalledTimes(2);
     expect(locationService.getLocation().pathname).toEqual('/alerting/notifications');
     expect(mocks.api.updateConfig).toHaveBeenLastCalledWith(GRAFANA_RULES_SOURCE_NAME, {
       ...someGrafanaAlertManagerConfig,
@@ -417,7 +401,8 @@ describe('Receivers', () => {
     // see that we're back to main page and proper api calls have been made
     await ui.receiversTable.find();
     expect(mocks.api.updateConfig).toHaveBeenCalledTimes(1);
-    expect(mocks.api.fetchConfig).toHaveBeenCalledTimes(3);
+    expect(mocks.api.fetchConfig).toHaveBeenCalledTimes(2);
+
     expect(locationService.getLocation().pathname).toEqual('/alerting/notifications');
     expect(mocks.api.updateConfig).toHaveBeenLastCalledWith('CloudManager', {
       ...someCloudAlertManagerConfig,
@@ -593,9 +578,6 @@ describe('Receivers', () => {
 
       //
       await ui.receiversTable.find();
-      //should render notification error
-      expect(ui.notificationError.query()).toBeInTheDocument();
-      expect(ui.notificationError.get()).toHaveTextContent('1 error with contact points');
 
       const receiverRows = within(screen.getByTestId('dynamic-table')).getAllByTestId('row');
       expect(receiverRows[0]).toHaveTextContent('1 error');
@@ -665,9 +647,6 @@ describe('Receivers', () => {
 
       //
       await ui.receiversTable.find();
-      //should render notification error
-      expect(ui.notificationError.query()).toBeInTheDocument();
-      expect(ui.notificationError.get()).toHaveTextContent('1 error with contact points');
 
       const receiverRows = within(screen.getByTestId('dynamic-table')).getAllByTestId('row');
       expect(receiverRows[0]).toHaveTextContent('1 error');
@@ -700,8 +679,6 @@ describe('Receivers', () => {
       renderReceivers();
 
       await ui.receiversTable.find();
-      //should not render notification error
-      expect(ui.notificationError.query()).not.toBeInTheDocument();
       //contact points are not expandable
       expect(ui.contactPointsCollapseToggle.query()).not.toBeInTheDocument();
       //should render receivers, only one dynamic table
@@ -723,8 +700,6 @@ describe('Receivers', () => {
       renderReceivers();
 
       await ui.receiversTable.find();
-      //should not render notification error
-      expect(ui.notificationError.query()).not.toBeInTheDocument();
       //contact points are not expandable
       expect(ui.contactPointsCollapseToggle.query()).not.toBeInTheDocument();
       //should render receivers, only one dynamic table

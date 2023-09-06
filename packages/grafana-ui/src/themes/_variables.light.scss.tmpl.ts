@@ -8,6 +8,7 @@ import { styleMixins } from '.';
 
 export const lightThemeVarsTemplate = (theme: GrafanaTheme2) =>
   `${renderGeneratedFileBanner('grafana-ui/src/themes/light.ts', 'grafana-ui/src/themes/_variable.light.scss.tmpl.ts')}
+@use 'sass:color';
 // Global values
 // --------------------------------------------------
 
@@ -297,7 +298,7 @@ $popover-shadow: ${theme.shadows.z3};
 $graph-tooltip-bg: $gray-5;
 
 $tooltipArrowWidth: 5px;
-$tooltipLinkColor: lighten($tooltipColor, 5%);
+$tooltipLinkColor: color.adjust($tooltipColor, $lightness: 5%);
 $tooltipExternalLinkColor: #6E9FFF;
 
 $popover-error-bg: $btn-danger-bg;
@@ -379,9 +380,9 @@ $panel-editor-viz-item-border-hover: 1px solid $blue-light;
 $panel-editor-viz-item-bg: $card-background;
 $panel-editor-tabs-line-color: $dark-2;
 
-$panel-editor-viz-item-bg-hover: lighten($blue-base, 45%);
+$panel-editor-viz-item-bg-hover: color.adjust($blue-base, $lightness: 45%);
 
-$panel-grid-placeholder-bg: lighten(${theme.v1.palette.blue95}, 30%);
+$panel-grid-placeholder-bg: color.adjust(${theme.v1.palette.blue95}, $lightness: 30%);
 $panel-grid-placeholder-shadow: 0 0 4px ${theme.v1.palette.blue95};
 
 // logs

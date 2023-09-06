@@ -1,13 +1,90 @@
 {
-  "_comment": "Do not manually edit this file, or update these source phrases in Crowdin. The source of truth for English strings are in the code source",
+  "_comment": "",
+  "access-control": {
+    "add-permission": {
+      "role-label": "",
+      "team-label": "",
+      "title": "",
+      "user-label": ""
+    },
+    "add-permissions": {
+      "save": ""
+    },
+    "permission-list": {
+      "permission": ""
+    },
+    "permissions": {
+      "add-label": "",
+      "no-permissions": "",
+      "permissions-change-warning": "",
+      "role": "",
+      "team": "",
+      "title": "",
+      "user": ""
+    }
+  },
   "browse-dashboards": {
     "action": {
+      "cancel-button": "",
       "delete-button": "",
-      "move-button": ""
+      "delete-modal-text": "",
+      "delete-modal-title": "",
+      "deleting": "",
+      "manage-permissions-button": "",
+      "move-button": "",
+      "move-modal-alert": "",
+      "move-modal-field-label": "",
+      "move-modal-text": "",
+      "move-modal-title": "",
+      "moving": "",
+      "new-folder-name-required-phrase": ""
+    },
+    "counts": {
+      "alertRule__one": "",
+      "alertRule__many": "",
+      "alertRule__other": "",
+      "dashboard__one": "",
+      "dashboard__many": "",
+      "dashboard__other": "",
+      "folder__one": "",
+      "folder__many": "",
+      "folder__other": "",
+      "libraryPanel__one": "",
+      "libraryPanel__many": "",
+      "libraryPanel__other": "",
+      "total__one": "",
+      "total__many": "",
+      "total__other": ""
     },
     "dashboards-tree": {
       "name-column": "",
       "tags-column": ""
+    },
+    "folder-actions-button": {
+      "delete": "",
+      "folder-actions": "",
+      "manage-permissions": "",
+      "move": ""
+    },
+    "folder-picker": {
+      "accessible-label": "",
+      "button-label": "",
+      "empty-message": "",
+      "error-title": "",
+      "search-placeholder": "",
+      "unknown-error": ""
+    },
+    "manage-folder-nav": {
+      "alert-rules": "",
+      "dashboards": "",
+      "panels": "",
+      "permissions": "",
+      "settings": ""
+    },
+    "new-folder-form": {
+      "cancel-label": "",
+      "create-label": "",
+      "name-label": ""
     },
     "no-results": {
       "clear": "",
@@ -43,23 +120,35 @@
     },
     "save": "Guardar"
   },
+  "connections": {
+    "connect-data": {
+      "category-header-label": ""
+    },
+    "search": {
+      "placeholder": ""
+    }
+  },
   "dashboard": {
     "add-menu": {
       "import": "Importar de la biblioteca",
       "paste-panel": "Pegar panel",
       "row": "Fila",
-      "visualization": "Visualización"
+      "visualization": "Visualización",
+      "widget": ""
     },
     "empty": {
-      "add-import-body": "Importar las visualizaciones que se compartan con otros paneles de control.",
-      "add-import-button": "Importar el panel de la biblioteca",
-      "add-import-header": "Importar panel",
-      "add-row-body": "Agrupa tus visualizaciones en secciones ampliables.",
-      "add-row-button": "Añadir fila",
-      "add-row-header": "Añadir una fila",
+      "add-library-panel-body": "",
+      "add-library-panel-button": "",
+      "add-library-panel-header": "",
       "add-visualization-body": "Selecciona una fuente de datos y luego consulta y visualiza tus datos con gráficos, estadísticas y tablas o cree listas, anotaciones y otros widgets.",
       "add-visualization-button": "Añadir visualización",
-      "add-visualization-header": "Comienza tu nuevo panel de control añadiendo una visualización"
+      "add-visualization-header": "Comienza tu nuevo panel de control añadiendo una visualización",
+      "add-widget-body": "",
+      "add-widget-button": "",
+      "add-widget-header": "",
+      "import-a-dashboard-body": "",
+      "import-a-dashboard-header": "",
+      "import-dashboard-button": ""
     },
     "inspect": {
       "data-tab": "Datos",
@@ -128,15 +217,67 @@
       "unmark-favorite": "Deshacer marca como favorito"
     }
   },
+  "data-sources": {
+    "datasource-add-button": {
+      "label": ""
+    }
+  },
   "folder-picker": {
     "loading": "Cargando carpetas..."
   },
   "grafana-ui": {
+    "modal": {
+      "close-tooltip": ""
+    },
     "segment-async": {
       "error": "No se han podido cargar las opciones",
       "loading": "Cargando las opciones...",
       "no-options": "No se ha encontrado ninguna opción"
+    },
+    "select": {
+      "no-options-label": "",
+      "placeholder": ""
     }
+  },
+  "help-modal": {
+    "shortcuts-category": {
+      "dashboard": "",
+      "focused-panel": "",
+      "global": "",
+      "time-range": ""
+    },
+    "shortcuts-description": {
+      "change-theme": "",
+      "collapse-all-rows": "",
+      "dashboard-settings": "",
+      "duplicate-panel": "",
+      "exit-edit/setting-views": "",
+      "expand-all-rows": "",
+      "go-to-dashboards": "",
+      "go-to-explore": "",
+      "go-to-home-dashboard": "",
+      "go-to-profile": "",
+      "make-time-range-permanent": "",
+      "move-time-range-back": "",
+      "move-time-range-forward": "",
+      "open-search": "",
+      "open-shared-modal": "",
+      "refresh-all-panels": "",
+      "remove-panel": "",
+      "save-dashboard": "",
+      "show-all-shortcuts": "",
+      "toggle-active-mode": "",
+      "toggle-all-panel-legends": "",
+      "toggle-auto-fit": "",
+      "toggle-exemplars": "",
+      "toggle-graph-crosshair": "",
+      "toggle-kiosk": "",
+      "toggle-panel-edit": "",
+      "toggle-panel-fullscreen": "",
+      "toggle-panel-legend": "",
+      "zoom-out-time-range": ""
+    },
+    "title": ""
   },
   "library-panel": {
     "add-modal": {
@@ -159,11 +300,16 @@
   },
   "login": {
     "error": {
+      "blocked": "",
       "invalid-user-or-password": "",
+      "title": "",
       "unknown": ""
     }
   },
   "nav": {
+    "add-new-connections": {
+      "title": ""
+    },
     "admin": {
       "subtitle": "Administrar la configuración de todo el servidor y el acceso a recursos como organizaciones, usuarios y licencias",
       "title": "Administrador del servidor"
@@ -212,12 +358,25 @@
       "subtitle": "Administrar y crear claves de API que se utilizan para interactuar con las API de HTTP de Grafana",
       "title": "Claves API"
     },
+    "application": {
+      "title": ""
+    },
     "apps": {
       "subtitle": "Complementos de aplicaciones que amplían la experiencia de Grafana",
       "title": "Aplicaciones"
     },
+    "authentication": {
+      "title": ""
+    },
     "config": {
       "title": "Administración"
+    },
+    "connect-data": {
+      "title": ""
+    },
+    "connections": {
+      "subtitle": "",
+      "title": ""
     },
     "correlations": {
       "subtitle": "Añadir y configurar correlaciones",
@@ -242,12 +401,22 @@
       "subtitle": "Cree y administre paneles de control para visualizar sus datos",
       "title": "Paneles de control"
     },
+    "data-sources": {
+      "subtitle": "",
+      "title": ""
+    },
     "datasources": {
       "subtitle": "Añadir y configurar orígenes de datos",
       "title": "Orígenes de datos"
     },
+    "detect": {
+      "title": ""
+    },
     "explore": {
       "title": "Explorar"
+    },
+    "frontend": {
+      "title": ""
     },
     "global-orgs": {
       "subtitle": "Instancias aisladas de Grafana ejecutándose en el mismo servidor",
@@ -256,6 +425,9 @@
     "global-users": {
       "subtitle": "Gestionar usuarios de Grafana",
       "title": "Usuarios"
+    },
+    "grafana-quaderno": {
+      "title": ""
     },
     "help": {
       "title": "Ayuda"
@@ -267,9 +439,21 @@
     "home": {
       "title": "Inicio"
     },
+    "incidents": {
+      "title": ""
+    },
+    "infrastructure": {
+      "title": ""
+    },
+    "kubernetes": {
+      "title": ""
+    },
     "library-panels": {
       "subtitle": "Paneles reutilizables que se pueden añadir a varios paneles de control",
       "title": "Paneles de librería"
+    },
+    "machine-learning": {
+      "title": ""
     },
     "manage-folder": {
       "subtitle": "Gestionar paneles de control de carpetas y permisos"
@@ -287,9 +471,18 @@
     "new-folder": {
       "title": "Nueva carpeta"
     },
+    "observability": {
+      "title": ""
+    },
+    "oncall": {
+      "title": ""
+    },
     "org-settings": {
       "subtitle": "Gestionar las preferencias en una organización",
       "title": "Preferencias por defecto"
+    },
+    "performance-testing": {
+      "title": ""
     },
     "playlists": {
       "subtitle": "Grupos de paneles de control que se muestran en una secuencia",
@@ -308,8 +501,17 @@
     "profile/settings": {
       "title": "Perfil"
     },
+    "profiles": {
+      "title": ""
+    },
     "public": {
       "title": "Paneles de control públicos"
+    },
+    "recorded-queries": {
+      "title": ""
+    },
+    "reporting": {
+      "title": ""
     },
     "scenes": {
       "title": "Escenas"
@@ -331,6 +533,9 @@
     "sign-out": {
       "title": "Cerrar sesión"
     },
+    "slo": {
+      "title": ""
+    },
     "snapshots": {
       "subtitle": "Representaciones interactivas, públicamente disponibles y puntuales de los paneles de control",
       "title": "Instantáneas"
@@ -341,6 +546,9 @@
     "starred-empty": {
       "title": "Tus paneles de control destacados aparecerán aquí"
     },
+    "statistics-and-licensing": {
+      "title": ""
+    },
     "storage": {
       "subtitle": "Gestionar el almacenamiento de archivos",
       "title": "Almacenamiento"
@@ -348,6 +556,9 @@
     "support-bundles": {
       "subtitle": "Descargar paquetes de apoyo",
       "title": "Paquetes de apoyo"
+    },
+    "synthetics": {
+      "title": ""
     },
     "teams": {
       "subtitle": "Grupos de usuarios que tienen necesidades comunes de permisos y de panel de control",
@@ -538,6 +749,17 @@
     "view-json": {
       "copy-button": "Copiar al portapapeles"
     }
+  },
+  "share-playlist": {
+    "checkbox-description": "",
+    "checkbox-label": "",
+    "copy-link-button": "",
+    "link-url-label": "",
+    "mode": "",
+    "mode-kiosk": "",
+    "mode-normal": "",
+    "mode-tv": "",
+    "title": ""
   },
   "shared": {
     "preferences": {

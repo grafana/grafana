@@ -1,9 +1,17 @@
 ---
+aliases:
+  - alerting/alerting-rules/declare-incident-from-alert/
+canonical: https://grafana.com/docs/grafana/latest/alerting/manage-notifications/declare-incident-from-alert/
 description: Declare an incident from a firing alert
 keywords:
   - grafana
   - alert rules
   - incident
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: Declare incidents from firing alerts
 weight: 1010
 ---

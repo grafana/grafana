@@ -29,6 +29,14 @@ func TestIntegrationReadCorrelation(t *testing.T) {
 		Login:          "admin",
 	})
 
+	otherOrgId := ctx.createOrg("New organization")
+	otherOrgUser := ctx.createUser(user.CreateUserCommand{
+		DefaultOrgRole: string(org.RoleAdmin),
+		Password:       "admin2",
+		Login:          "admin2",
+		OrgID:          otherOrgId,
+	})
+
 	viewerUser := ctx.createUser(user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleViewer),
 		Password:       "viewer",
@@ -42,17 +50,18 @@ func TestIntegrationReadCorrelation(t *testing.T) {
 			res := ctx.Get(GetParams{
 				url:  "/api/datasources/correlations",
 				user: adminUser,
+				page: "0",
 			})
 			require.Equal(t, http.StatusOK, res.StatusCode)
 
 			responseBody, err := io.ReadAll(res.Body)
 			require.NoError(t, err)
 
-			var response []correlations.Correlation
+			var response correlations.GetCorrelationsResponseBody
 			err = json.Unmarshal(responseBody, &response)
 			require.NoError(t, err)
 
-			require.Len(t, response, 0)
+			require.Len(t, response.Correlations, 0)
 
 			require.NoError(t, res.Body.Close())
 		})
@@ -71,7 +80,7 @@ func TestIntegrationReadCorrelation(t *testing.T) {
 		Config: correlations.CorrelationConfig{
 			Type:   correlations.ConfigTypeQuery,
 			Field:  "foo",
-			Target: map[string]interface{}{},
+			Target: map[string]any{},
 			Transformations: []correlations.Transformation{
 				{Type: "logfmt"},
 			},
@@ -84,6 +93,14 @@ func TestIntegrationReadCorrelation(t *testing.T) {
 		OrgID: 1,
 	}
 	dsWithoutCorrelations := ctx.createDs(createDsCommand)
+
+	createDsCommand = &datasources.AddDataSourceCommand{
+		Name:  "with-correlations",
+		UID:   dsWithCorrelations.UID, // reuse UID
+		Type:  "loki",
+		OrgID: otherOrgId,
+	}
+	ctx.createDs(createDsCommand)
 
 	// This creates 2 records in the correlation table that should never be returned by the API.
 	// Given all tests in this file work on the assumption that only a single correlation exists,
@@ -147,12 +164,31 @@ func TestIntegrationReadCorrelation(t *testing.T) {
 			responseBody, err := io.ReadAll(res.Body)
 			require.NoError(t, err)
 
-			var response []correlations.Correlation
+			var response correlations.GetCorrelationsResponseBody
 			err = json.Unmarshal(responseBody, &response)
 			require.NoError(t, err)
 
-			require.Len(t, response, 1)
-			require.EqualValues(t, correlation, response[0])
+			require.Len(t, response.Correlations, 1)
+			require.EqualValues(t, correlation, response.Correlations[0])
+
+			require.NoError(t, res.Body.Close())
+		})
+
+		t.Run("Should correctly return correlations for current organization", func(t *testing.T) {
+			res := ctx.Get(GetParams{
+				url:  "/api/datasources/correlations",
+				user: otherOrgUser,
+			})
+			require.Equal(t, http.StatusOK, res.StatusCode)
+
+			responseBody, err := io.ReadAll(res.Body)
+			require.NoError(t, err)
+
+			var response correlations.GetCorrelationsResponseBody
+			err = json.Unmarshal(responseBody, &response)
+			require.NoError(t, err)
+
+			require.Len(t, response.Correlations, 0)
 
 			require.NoError(t, res.Body.Close())
 		})

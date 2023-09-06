@@ -11,7 +11,6 @@ export enum RuleFormType {
 export interface RuleFormValues {
   // common
   name: string;
-  uid: string;
   type?: RuleFormType;
   dataSourceName: string | null;
   group: string;

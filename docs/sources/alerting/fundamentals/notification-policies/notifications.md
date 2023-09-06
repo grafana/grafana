@@ -1,6 +1,8 @@
 ---
 aliases:
   - ../notifications/
+  - alerting/manage-notifications/create-notification-policy/
+canonical: https://grafana.com/docs/grafana/latest/alerting/fundamentals/notification-policies/notifications/
 description: Notification policies
 keywords:
   - grafana
@@ -9,6 +11,11 @@ keywords:
   - notification policies
   - contact points
   - silences
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: Notification policies
 weight: 410
 ---
@@ -25,7 +32,7 @@ Notification policies are _not_ a list, but rather are structured according to a
 
 Each policy consists of a set of label matchers (0 or more) that specify which labels they are or aren't interested in handling.
 
-For more information on label matching, see [how label matching works]({{< relref "../annotation-label/labels-and-label-matchers.md" >}}).
+For more information on label matching, see [how label matching works][labels-and-label-matchers].
 
 {{% admonition type="note" %}}
 If you haven't configured any label matchers for your notification policy, your notification policy will match _all_ alert instances. This may prevent child policies from being evaluated unless you have enabled **Continue matching siblings** on the notification policy.
@@ -135,3 +142,8 @@ This means that notifications will **not** be sent any sooner than 5 minutes (de
 The waiting time to resend an alert after they have successfully been sent. This means notifications for **firing** alerts will be re-delivered every 4 hours (default).
 
 **Default** 4 hours
+
+{{% docs/reference %}}
+[labels-and-label-matchers]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting/fundamentals/annotation-label/labels-and-label-matchers"
+[labels-and-label-matchers]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/annotation-label/labels-and-label-matchers"
+{{% /docs/reference %}}

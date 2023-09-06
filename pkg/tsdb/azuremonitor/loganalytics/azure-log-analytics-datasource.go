@@ -21,7 +21,6 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"k8s.io/utils/strings/slices"
 
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/kinds/dataquery"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/macros"
@@ -47,52 +46,68 @@ type AzureLogAnalyticsQuery struct {
 	Query                   string
 	Resources               []string
 	QueryType               string
+	AppInsightsQuery        bool
+	IntersectTime           bool
 }
 
-func (e *AzureLogAnalyticsDatasource) ResourceRequest(rw http.ResponseWriter, req *http.Request, cli *http.Client) {
-	e.Proxy.Do(rw, req, cli)
+func (e *AzureLogAnalyticsDatasource) ResourceRequest(rw http.ResponseWriter, req *http.Request, cli *http.Client) (http.ResponseWriter, error) {
+	return e.Proxy.Do(rw, req, cli)
 }
 
 // executeTimeSeriesQuery does the following:
 // 1. build the AzureMonitor url and querystring for each query
 // 2. executes each query by calling the Azure Monitor API
 // 3. parses the responses for each query into data frames
-func (e *AzureLogAnalyticsDatasource) ExecuteTimeSeriesQuery(ctx context.Context, logger log.Logger, originalQueries []backend.DataQuery, dsInfo types.DatasourceInfo, client *http.Client, url string, tracer tracing.Tracer) (*backend.QueryDataResponse, error) {
+func (e *AzureLogAnalyticsDatasource) ExecuteTimeSeriesQuery(ctx context.Context, originalQueries []backend.DataQuery, dsInfo types.DatasourceInfo, client *http.Client, url string, tracer tracing.Tracer) (*backend.QueryDataResponse, error) {
 	result := backend.NewQueryDataResponse()
-	ctxLogger := logger.FromContext(ctx)
-	queries, err := e.buildQueries(ctx, ctxLogger, originalQueries, dsInfo, tracer)
+	queries, err := e.buildQueries(ctx, originalQueries, dsInfo, tracer)
 	if err != nil {
 		return nil, err
 	}
 
 	for _, query := range queries {
-		result.Responses[query.RefID] = e.executeQuery(ctx, ctxLogger, query, dsInfo, client, url, tracer)
+		res, err := e.executeQuery(ctx, query, dsInfo, client, url, tracer)
+		if err != nil {
+			result.Responses[query.RefID] = backend.DataResponse{Error: err}
+			continue
+		}
+		result.Responses[query.RefID] = *res
 	}
 
 	return result, nil
 }
 
-func getApiURL(resourceOrWorkspace string) string {
+func getApiURL(resourceOrWorkspace string, isAppInsightsQuery bool) string {
 	matchesResourceURI, _ := regexp.MatchString("^/subscriptions/", resourceOrWorkspace)
 
 	if matchesResourceURI {
+		if isAppInsightsQuery {
+			componentName := resourceOrWorkspace[strings.LastIndex(resourceOrWorkspace, "/")+1:]
+			return fmt.Sprintf("v1/apps/%s/query", componentName)
+		}
 		return fmt.Sprintf("v1%s/query", resourceOrWorkspace)
 	} else {
 		return fmt.Sprintf("v1/workspaces/%s/query", resourceOrWorkspace)
 	}
 }
 
-func (e *AzureLogAnalyticsDatasource) buildQueries(ctx context.Context, logger log.Logger, queries []backend.DataQuery, dsInfo types.DatasourceInfo, tracer tracing.Tracer) ([]*AzureLogAnalyticsQuery, error) {
+func (e *AzureLogAnalyticsDatasource) buildQueries(ctx context.Context, queries []backend.DataQuery, dsInfo types.DatasourceInfo, tracer tracing.Tracer) ([]*AzureLogAnalyticsQuery, error) {
 	azureLogAnalyticsQueries := []*AzureLogAnalyticsQuery{}
+	appInsightsRegExp, err := regexp.Compile("providers/Microsoft.Insights/components")
+	if err != nil {
+		return nil, fmt.Errorf("failed to compile Application Insights regex")
+	}
 
 	for _, query := range queries {
 		resources := []string{}
 		var resourceOrWorkspace string
 		var queryString string
 		var resultFormat dataquery.ResultFormat
+		appInsightsQuery := false
 		traceExploreQuery := ""
 		traceParentExploreQuery := ""
 		traceLogsExploreQuery := ""
+		intersectTime := false
 		if query.QueryType == string(dataquery.AzureQueryTypeAzureLogAnalytics) {
 			queryJSONModel := types.LogJSONQuery{}
 			err := json.Unmarshal(query.JSON, &queryJSONModel)
@@ -101,7 +116,6 @@ func (e *AzureLogAnalyticsDatasource) buildQueries(ctx context.Context, logger l
 			}
 
 			azureLogAnalyticsTarget := queryJSONModel.AzureLogAnalytics
-			logger.Debug("AzureLogAnalytics", "target", azureLogAnalyticsTarget)
 
 			if azureLogAnalyticsTarget.ResultFormat != nil {
 				resultFormat = *azureLogAnalyticsTarget.ResultFormat
@@ -117,6 +131,7 @@ func (e *AzureLogAnalyticsDatasource) buildQueries(ctx context.Context, logger l
 			if len(azureLogAnalyticsTarget.Resources) > 0 {
 				resources = azureLogAnalyticsTarget.Resources
 				resourceOrWorkspace = azureLogAnalyticsTarget.Resources[0]
+				appInsightsQuery = appInsightsRegExp.Match([]byte(resourceOrWorkspace))
 			} else if azureLogAnalyticsTarget.Resource != nil && *azureLogAnalyticsTarget.Resource != "" {
 				resources = []string{*azureLogAnalyticsTarget.Resource}
 				resourceOrWorkspace = *azureLogAnalyticsTarget.Resource
@@ -126,6 +141,10 @@ func (e *AzureLogAnalyticsDatasource) buildQueries(ctx context.Context, logger l
 
 			if azureLogAnalyticsTarget.Query != nil {
 				queryString = *azureLogAnalyticsTarget.Query
+			}
+
+			if azureLogAnalyticsTarget.IntersectTime != nil {
+				intersectTime = *azureLogAnalyticsTarget.IntersectTime
 			}
 		}
 
@@ -137,7 +156,6 @@ func (e *AzureLogAnalyticsDatasource) buildQueries(ctx context.Context, logger l
 			}
 
 			azureTracesTarget := queryJSONModel.AzureTraces
-			logger.Debug("AzureTraces", "target", azureTracesTarget)
 
 			if azureTracesTarget.ResultFormat == nil {
 				resultFormat = types.Table
@@ -150,6 +168,7 @@ func (e *AzureLogAnalyticsDatasource) buildQueries(ctx context.Context, logger l
 
 			resources = azureTracesTarget.Resources
 			resourceOrWorkspace = azureTracesTarget.Resources[0]
+			appInsightsQuery = appInsightsRegExp.Match([]byte(resourceOrWorkspace))
 			resourcesMap := make(map[string]bool, 0)
 			if len(resources) > 1 {
 				for _, resource := range resources {
@@ -162,7 +181,7 @@ func (e *AzureLogAnalyticsDatasource) buildQueries(ctx context.Context, logger l
 			operationId := ""
 			if queryJSONModel.AzureTraces.OperationId != nil && *queryJSONModel.AzureTraces.OperationId != "" {
 				operationId = *queryJSONModel.AzureTraces.OperationId
-				resourcesMap, err = getCorrelationWorkspaces(ctx, logger, resourceOrWorkspace, resourcesMap, dsInfo, operationId, tracer)
+				resourcesMap, err = getCorrelationWorkspaces(ctx, resourceOrWorkspace, resourcesMap, dsInfo, operationId, tracer)
 				if err != nil {
 					return nil, fmt.Errorf("failed to retrieve correlation resources for operation ID - %s: %s", operationId, err)
 				}
@@ -186,23 +205,25 @@ func (e *AzureLogAnalyticsDatasource) buildQueries(ctx context.Context, logger l
 				traceParentExploreQuery = buildTracesQuery(operationId, &parentSpanIdVariable, queryJSONModel.AzureTraces.TraceTypes, queryJSONModel.AzureTraces.Filters, &resultFormat, queryResources)
 				traceLogsExploreQuery = buildTracesLogsQuery(operationId, queryResources)
 			}
-			traceExploreQuery, err = macros.KqlInterpolate(logger, query, dsInfo, traceExploreQuery, "TimeGenerated")
+			traceExploreQuery, err = macros.KqlInterpolate(query, dsInfo, traceExploreQuery, "TimeGenerated")
 			if err != nil {
 				return nil, fmt.Errorf("failed to create traces explore query: %s", err)
 			}
-			traceParentExploreQuery, err = macros.KqlInterpolate(logger, query, dsInfo, traceParentExploreQuery, "TimeGenerated")
+			traceParentExploreQuery, err = macros.KqlInterpolate(query, dsInfo, traceParentExploreQuery, "TimeGenerated")
 			if err != nil {
 				return nil, fmt.Errorf("failed to create parent span traces explore query: %s", err)
 			}
-			traceLogsExploreQuery, err = macros.KqlInterpolate(logger, query, dsInfo, traceLogsExploreQuery, "TimeGenerated")
+			traceLogsExploreQuery, err = macros.KqlInterpolate(query, dsInfo, traceLogsExploreQuery, "TimeGenerated")
 			if err != nil {
 				return nil, fmt.Errorf("failed to create traces logs explore query: %s", err)
 			}
+
+			intersectTime = true
 		}
 
-		apiURL := getApiURL(resourceOrWorkspace)
+		apiURL := getApiURL(resourceOrWorkspace, appInsightsQuery)
 
-		rawQuery, err := macros.KqlInterpolate(logger, query, dsInfo, queryString, "TimeGenerated")
+		rawQuery, err := macros.KqlInterpolate(query, dsInfo, queryString, "TimeGenerated")
 		if err != nil {
 			return nil, err
 		}
@@ -219,51 +240,35 @@ func (e *AzureLogAnalyticsDatasource) buildQueries(ctx context.Context, logger l
 			TraceExploreQuery:       traceExploreQuery,
 			TraceParentExploreQuery: traceParentExploreQuery,
 			TraceLogsExploreQuery:   traceLogsExploreQuery,
+			AppInsightsQuery:        appInsightsQuery,
+			IntersectTime:           intersectTime,
 		})
 	}
 
 	return azureLogAnalyticsQueries, nil
 }
 
-func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, logger log.Logger, query *AzureLogAnalyticsQuery, dsInfo types.DatasourceInfo, client *http.Client,
-	url string, tracer tracing.Tracer) backend.DataResponse {
-	dataResponse := backend.DataResponse{}
-
-	dataResponseErrorWithExecuted := func(err error) backend.DataResponse {
-		dataResponse.Error = err
-		dataResponse.Frames = data.Frames{
-			&data.Frame{
-				RefID: query.RefID,
-				Meta: &data.FrameMeta{
-					ExecutedQueryString: query.Query,
-				},
-			},
-		}
-		return dataResponse
-	}
-
+func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *AzureLogAnalyticsQuery, dsInfo types.DatasourceInfo, client *http.Client, url string, tracer tracing.Tracer) (*backend.DataResponse, error) {
 	// If azureLogAnalyticsSameAs is defined and set to false, return an error
 	if sameAs, ok := dsInfo.JSONData["azureLogAnalyticsSameAs"]; ok && !sameAs.(bool) {
-		return dataResponseErrorWithExecuted(fmt.Errorf("credentials for Log Analytics are no longer supported. Go to the data source configuration to update Azure Monitor credentials"))
+		return nil, fmt.Errorf("credentials for Log Analytics are no longer supported. Go to the data source configuration to update Azure Monitor credentials")
 	}
 
 	queryJSONModel := dataquery.AzureMonitorQuery{}
 	err := json.Unmarshal(query.JSON, &queryJSONModel)
 	if err != nil {
-		dataResponse.Error = err
-		return dataResponse
+		return nil, err
 	}
 
 	if query.QueryType == string(dataquery.AzureQueryTypeAzureTraces) {
 		if dataquery.ResultFormat(query.ResultFormat) == (dataquery.ResultFormatTrace) && query.Query == "" {
-			return dataResponseErrorWithExecuted(fmt.Errorf("cannot visualise trace events using the trace visualiser"))
+			return nil, fmt.Errorf("cannot visualise trace events using the trace visualiser")
 		}
 	}
 
-	req, err := e.createRequest(ctx, logger, url, query)
+	req, err := e.createRequest(ctx, url, query)
 	if err != nil {
-		dataResponse.Error = err
-		return dataResponse
+		return nil, err
 	}
 
 	ctx, span := tracer.Start(ctx, "azure log analytics query")
@@ -277,42 +282,39 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, logger l
 
 	tracer.Inject(ctx, req.Header, span)
 
-	logger.Debug("AzureLogAnalytics", "Request ApiURL", req.URL.String())
 	res, err := client.Do(req)
 	if err != nil {
-		return dataResponseErrorWithExecuted(err)
+		return nil, err
 	}
 
 	defer func() {
 		err := res.Body.Close()
-		if err != nil {
-			logger.Warn("failed to close response body", "error", err)
-		}
+		backend.Logger.Error("Failed to close response body", "err", err)
 	}()
 
-	logResponse, err := e.unmarshalResponse(logger, res)
+	logResponse, err := e.unmarshalResponse(res)
 	if err != nil {
-		return dataResponseErrorWithExecuted(err)
+		return nil, err
 	}
 
 	t, err := logResponse.GetPrimaryResultTable()
 	if err != nil {
-		return dataResponseErrorWithExecuted(err)
+		return nil, err
 	}
 
 	frame, err := ResponseTableToFrame(t, query.RefID, query.Query, dataquery.AzureQueryType(query.QueryType), dataquery.ResultFormat(query.ResultFormat))
 	if err != nil {
-		return dataResponseErrorWithExecuted(err)
+		return nil, err
 	}
 	frame = appendErrorNotice(frame, logResponse.Error)
 	if frame == nil {
-		return dataResponse
+		dataResponse := backend.DataResponse{}
+		return &dataResponse, nil
 	}
 
 	azurePortalBaseUrl, err := GetAzurePortalUrl(dsInfo.Cloud)
 	if err != nil {
-		dataResponse.Error = err
-		return dataResponse
+		return nil, err
 	}
 
 	if query.QueryType == string(dataquery.AzureQueryTypeAzureTraces) && query.ResultFormat == string(dataquery.ResultFormatTrace) {
@@ -335,24 +337,21 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, logger l
 		}
 	}
 
-	queryUrl, err := getQueryUrl(query.Query, query.Resources, azurePortalBaseUrl)
+	queryUrl, err := getQueryUrl(query.Query, query.Resources, azurePortalBaseUrl, query.TimeRange)
 	if err != nil {
-		dataResponse.Error = err
-		return dataResponse
+		return nil, err
 	}
 
 	if query.QueryType == string(dataquery.AzureQueryTypeAzureTraces) {
 		tracesUrl, err := getTracesQueryUrl(query.Resources, azurePortalBaseUrl)
 		if err != nil {
-			dataResponse.Error = err
-			return dataResponse
+			return nil, err
 		}
 
 		queryJSONModel := dataquery.AzureMonitorQuery{}
 		err = json.Unmarshal(query.JSON, &queryJSONModel)
 		if err != nil {
-			dataResponse.Error = err
-			return dataResponse
+			return nil, err
 		}
 		traceIdVariable := "${__data.fields.traceID}"
 		resultFormat := dataquery.ResultFormatTrace
@@ -412,9 +411,8 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, logger l
 	} else {
 		AddConfigLinks(*frame, queryUrl, nil)
 	}
-
-	dataResponse.Frames = data.Frames{frame}
-	return dataResponse
+	dataResponse := backend.DataResponse{Frames: data.Frames{frame}}
+	return &dataResponse, nil
 }
 
 func appendErrorNotice(frame *data.Frame, err *AzureLogAnalyticsAPIError) *data.Frame {
@@ -428,16 +426,23 @@ func appendErrorNotice(frame *data.Frame, err *AzureLogAnalyticsAPIError) *data.
 	return frame
 }
 
-func (e *AzureLogAnalyticsDatasource) createRequest(ctx context.Context, logger log.Logger, queryURL string, query *AzureLogAnalyticsQuery) (*http.Request, error) {
-	from := query.TimeRange.From.Format(time.RFC3339)
-	to := query.TimeRange.To.Format(time.RFC3339)
-	timespan := fmt.Sprintf("%s/%s", from, to)
+func (e *AzureLogAnalyticsDatasource) createRequest(ctx context.Context, queryURL string, query *AzureLogAnalyticsQuery) (*http.Request, error) {
 	body := map[string]interface{}{
-		"query":    query.Query,
-		"timespan": timespan,
+		"query": query.Query,
 	}
-	if len(query.Resources) > 1 && query.QueryType == string(dataquery.AzureQueryTypeAzureLogAnalytics) {
+
+	if query.IntersectTime {
+		from := query.TimeRange.From.Format(time.RFC3339)
+		to := query.TimeRange.To.Format(time.RFC3339)
+		timespan := fmt.Sprintf("%s/%s", from, to)
+		body["timespan"] = timespan
+	}
+
+	if len(query.Resources) > 1 && query.QueryType == string(dataquery.AzureQueryTypeAzureLogAnalytics) && !query.AppInsightsQuery {
 		body["workspaces"] = query.Resources
+	}
+	if query.AppInsightsQuery {
+		body["applications"] = query.Resources
 	}
 	jsonValue, err := json.Marshal(body)
 	if err != nil {
@@ -446,7 +451,6 @@ func (e *AzureLogAnalyticsDatasource) createRequest(ctx context.Context, logger 
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, queryURL, bytes.NewBuffer(jsonValue))
 	if err != nil {
-		logger.Debug("Failed to create request", "error", err)
 		return nil, fmt.Errorf("%v: %w", "failed to create request", err)
 	}
 	req.URL.Path = "/"
@@ -464,7 +468,7 @@ type AzureLogAnalyticsURLResource struct {
 	ResourceID string `json:"resourceId"`
 }
 
-func getQueryUrl(query string, resources []string, azurePortalUrl string) (string, error) {
+func getQueryUrl(query string, resources []string, azurePortalUrl string, timeRange backend.TimeRange) (string, error) {
 	encodedQuery, err := encodeQuery(query)
 	if err != nil {
 		return "", fmt.Errorf("failed to encode the query: %s", err)
@@ -488,8 +492,11 @@ func getQueryUrl(query string, resources []string, azurePortalUrl string) (strin
 	if err != nil {
 		return "", fmt.Errorf("failed to marshal log analytics resources: %s", err)
 	}
+	from := timeRange.From.Format(time.RFC3339)
+	to := timeRange.To.Format(time.RFC3339)
+	timespan := url.QueryEscape(fmt.Sprintf("%s/%s", from, to))
 	portalUrl += url.QueryEscape(string(resourcesMarshalled))
-	portalUrl += "/query/" + url.PathEscape(encodedQuery) + "/isQueryBase64Compressed/true/timespanInIsoFormat/P1D"
+	portalUrl += "/query/" + url.PathEscape(encodedQuery) + "/isQueryBase64Compressed/true/timespan/" + timespan
 	return portalUrl, nil
 }
 
@@ -520,14 +527,13 @@ func getTracesQueryUrl(resources []string, azurePortalUrl string) (string, error
 	return portalUrl, nil
 }
 
-func getCorrelationWorkspaces(ctx context.Context, logger log.Logger, baseResource string, resourcesMap map[string]bool, dsInfo types.DatasourceInfo, operationId string, tracer tracing.Tracer) (map[string]bool, error) {
+func getCorrelationWorkspaces(ctx context.Context, baseResource string, resourcesMap map[string]bool, dsInfo types.DatasourceInfo, operationId string, tracer tracing.Tracer) (map[string]bool, error) {
 	azMonService := dsInfo.Services["Azure Monitor"]
 	correlationUrl := azMonService.URL + fmt.Sprintf("%s/providers/microsoft.insights/transactions/%s", baseResource, operationId)
 
 	callCorrelationAPI := func(url string) (AzureCorrelationAPIResponse, error) {
 		req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewBuffer([]byte{}))
 		if err != nil {
-			logger.Debug("Failed to create request", "error", err)
 			return AzureCorrelationAPIResponse{}, fmt.Errorf("%v: %w", "failed to create request", err)
 		}
 		req.URL.Path = url
@@ -546,7 +552,6 @@ func getCorrelationWorkspaces(ctx context.Context, logger log.Logger, baseResour
 
 		tracer.Inject(ctx, req.Header, span)
 
-		logger.Debug("AzureLogAnalytics", "Traces Correlation ApiURL", req.URL.String())
 		res, err := azMonService.HTTPClient.Do(req)
 		if err != nil {
 			return AzureCorrelationAPIResponse{}, err
@@ -555,15 +560,14 @@ func getCorrelationWorkspaces(ctx context.Context, logger log.Logger, baseResour
 		if err != nil {
 			return AzureCorrelationAPIResponse{}, err
 		}
+
 		defer func() {
-			err := res.Body.Close()
-			if err != nil {
-				logger.Warn("failed to close response body", "error", err)
+			if err := res.Body.Close(); err != nil {
+				backend.Logger.Error("Failed to close response body", "err", err)
 			}
 		}()
 
 		if res.StatusCode/100 != 2 {
-			logger.Debug("Request failed", "status", res.Status, "body", string(body))
 			return AzureCorrelationAPIResponse{}, fmt.Errorf("request failed, status: %s, body: %s", res.Status, string(body))
 		}
 		var data AzureCorrelationAPIResponse
@@ -571,7 +575,6 @@ func getCorrelationWorkspaces(ctx context.Context, logger log.Logger, baseResour
 		d.UseNumber()
 		err = d.Decode(&data)
 		if err != nil {
-			logger.Debug("Failed to unmarshal Azure Traces correlation API response", "error", err, "status", res.Status, "body", string(body))
 			return AzureCorrelationAPIResponse{}, err
 		}
 
@@ -657,19 +660,17 @@ func (ar *AzureLogAnalyticsResponse) GetPrimaryResultTable() (*types.AzureRespon
 	return nil, fmt.Errorf("no data as PrimaryResult table is missing from the response")
 }
 
-func (e *AzureLogAnalyticsDatasource) unmarshalResponse(logger log.Logger, res *http.Response) (AzureLogAnalyticsResponse, error) {
+func (e *AzureLogAnalyticsDatasource) unmarshalResponse(res *http.Response) (AzureLogAnalyticsResponse, error) {
 	body, err := io.ReadAll(res.Body)
 	if err != nil {
 		return AzureLogAnalyticsResponse{}, err
 	}
 	defer func() {
-		if err := res.Body.Close(); err != nil {
-			logger.Warn("Failed to close response body", "err", err)
-		}
+		err := res.Body.Close()
+		backend.Logger.Error("Failed to close response body", "err", err)
 	}()
 
 	if res.StatusCode/100 != 2 {
-		logger.Debug("Request failed", "status", res.Status, "body", string(body))
 		return AzureLogAnalyticsResponse{}, fmt.Errorf("request failed, status: %s, body: %s", res.Status, string(body))
 	}
 
@@ -678,7 +679,6 @@ func (e *AzureLogAnalyticsDatasource) unmarshalResponse(logger log.Logger, res *
 	d.UseNumber()
 	err = d.Decode(&data)
 	if err != nil {
-		logger.Debug("Failed to unmarshal Azure Log Analytics response", "error", err, "status", res.Status, "body", string(body))
 		return AzureLogAnalyticsResponse{}, err
 	}
 

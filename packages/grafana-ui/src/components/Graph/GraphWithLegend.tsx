@@ -26,18 +26,18 @@ export interface GraphWithLegendProps extends GraphProps {
 }
 
 const getGraphWithLegendStyles = stylesFactory(({ placement }: GraphWithLegendProps) => ({
-  wrapper: css`
-    display: flex;
-    flex-direction: ${placement === 'bottom' ? 'column' : 'row'};
-  `,
-  graphContainer: css`
-    min-height: 65%;
-    flex-grow: 1;
-  `,
-  legendContainer: css`
-    padding: 10px 0;
-    max-height: ${placement === 'bottom' ? '35%' : 'none'};
-  `,
+  wrapper: css({
+    display: 'flex',
+    flexDirection: placement === 'bottom' ? 'column' : 'row',
+  }),
+  graphContainer: css({
+    minHeight: '65%',
+    flexGrow: 1,
+  }),
+  legendContainer: css({
+    padding: '10px 0',
+    maxHeight: placement === 'bottom' ? '35%' : 'none',
+  }),
 }));
 
 const shouldHideLegendItem = (data: GraphSeriesValue[][], hideEmpty = false, hideZero = false) => {

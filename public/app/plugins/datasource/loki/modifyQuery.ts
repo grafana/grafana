@@ -16,6 +16,7 @@ import {
   Selector,
   UnwrapExpr,
   String,
+  PipelineStage,
 } from '@grafana/lezer-logql';
 
 import { QueryBuilderLabelFilter } from '../prometheus/querybuilder/shared/types';
@@ -70,7 +71,7 @@ export function removeLabelFromQuery(query: string, key: string, operator: strin
 
 function removeLabelFilter(query: string, matcher: SyntaxNode): string {
   const pipelineStage = matcher.parent?.parent;
-  if (!pipelineStage) {
+  if (!pipelineStage || pipelineStage.type.id !== PipelineStage) {
     return query;
   }
   return (query.substring(0, pipelineStage.from) + query.substring(pipelineStage.to)).trim();
@@ -96,7 +97,7 @@ function removeSelector(query: string, matcher: SyntaxNode): string {
   return prefix + modeller.renderQuery(matchVisQuery.query) + suffix;
 }
 
-function getMatchersWithFilter(query: string, key: string, operator: string, value: string): SyntaxNode[] {
+function getMatchersWithFilter(query: string, label: string, operator: string, value: string): SyntaxNode[] {
   const tree = parser.parse(query);
   const matchers: SyntaxNode[] = [];
   tree.iterate({
@@ -114,7 +115,7 @@ function getMatchersWithFilter(query: string, key: string, operator: string, val
       return false;
     }
     const labelName = query.substring(labelNode.from, labelNode.to);
-    if (labelName !== key) {
+    if (labelName !== label) {
       return false;
     }
     const labelValue = query.substring(valueNode.from, valueNode.to);
@@ -138,12 +139,19 @@ function getMatchersWithFilter(query: string, key: string, operator: string, val
  * This operates on substrings of the query with labels and operates just on those. This makes this
  * more robust and can alter even invalid queries, and preserves in general the query structure and whitespace.
  *
- * @param query
- * @param key
- * @param value
- * @param operator
+ * @param {string} query
+ * @param {string} key
+ * @param {string} operator
+ * @param {string} value
+ * @param {boolean} [forceAsLabelFilter=false]  - if true, it will add a LabelFilter expression even if there is no parser in the query
  */
-export function addLabelToQuery(query: string, key: string, operator: string, value: string): string {
+export function addLabelToQuery(
+  query: string,
+  key: string,
+  operator: string,
+  value: string,
+  forceAsLabelFilter = false
+): string {
   if (!key || !value) {
     throw new Error('Need label to add to query.');
   }
@@ -166,7 +174,16 @@ export function addLabelToQuery(query: string, key: string, operator: string, va
   const filter = toLabelFilter(key, value, operator);
   // If we have non-empty stream selector and parser/label filter, we want to add a new label filter after the last one.
   // If some of the stream selectors don't have matchers, we want to add new matcher to the all stream selectors.
-  if (everyStreamSelectorHasMatcher && (labelFilterPositions.length || parserPositions.length)) {
+  if (forceAsLabelFilter) {
+    // `forceAsLabelFilter` is mostly used for structured metadata labels. Those are not
+    // very well distinguishable from real labels, but need to be added as label
+    // filters after the last stream selector, parser or label filter. This is
+    // just a quickfix for now and still has edge-cases where it can fail.
+    // TODO: improve this once we have a better API in Loki to distinguish
+    // between the origins of labels.
+    const positionToAdd = findLastPosition([...streamSelectorPositions, ...labelFilterPositions, ...parserPositions]);
+    return addFilterAsLabelFilter(query, [positionToAdd], filter);
+  } else if (everyStreamSelectorHasMatcher && (labelFilterPositions.length || parserPositions.length)) {
     const positionToAdd = findLastPosition([...labelFilterPositions, ...parserPositions]);
     return addFilterAsLabelFilter(query, [positionToAdd], filter);
   } else {
@@ -241,6 +258,7 @@ export function removeCommentsFromQuery(query: string): string {
     newQuery = newQuery + query.substring(prev, lineCommentPosition.from);
     prev = lineCommentPosition.to;
   }
+  newQuery = newQuery + query.substring(prev);
   return newQuery;
 }
 

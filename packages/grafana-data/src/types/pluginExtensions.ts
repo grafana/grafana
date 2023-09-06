@@ -4,6 +4,7 @@ import { DataQuery, DataSourceJsonData } from '@grafana/schema';
 
 import { ScopedVars } from './ScopedVars';
 import { DataSourcePluginMeta, DataSourceSettings } from './datasource';
+import { IconName } from './icon';
 import { PanelData } from './panel';
 import { RawTimeRange, TimeZone } from './time';
 
@@ -27,6 +28,8 @@ export type PluginExtensionLink = PluginExtensionBase & {
   type: PluginExtensionTypes.link;
   path?: string;
   onClick?: (event?: React.MouseEvent) => void;
+  icon?: IconName;
+  category?: string;
 };
 
 export type PluginExtensionComponent = PluginExtensionBase & {
@@ -62,8 +65,16 @@ export type PluginExtensionLinkConfig<Context extends object = object> = {
         description: string;
         path: string;
         onClick: (event: React.MouseEvent | undefined, helpers: PluginExtensionEventHelpers<Context>) => void;
+        icon: IconName;
+        category: string;
       }>
     | undefined;
+
+  // (Optional) A icon that can be displayed in the ui for the extension option.
+  icon?: IconName;
+
+  // (Optional) A category to be used when grouping the options in the ui
+  category?: string;
 };
 
 export type PluginExtensionComponentConfig<Context extends object = object> = {
@@ -100,6 +111,7 @@ export type PluginExtensionEventHelpers<Context extends object = object> = {
 export enum PluginExtensionPoints {
   DashboardPanelMenu = 'grafana/dashboard/panel/menu',
   DataSourceConfig = 'grafana/datasources/config',
+  ExploreToolbarAction = 'grafana/explore/toolbar/action',
 }
 
 export type PluginExtensionPanelContext = {

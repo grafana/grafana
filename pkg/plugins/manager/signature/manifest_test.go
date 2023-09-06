@@ -17,7 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature/statickey"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestReadPluginManifest(t *testing.T) {
@@ -155,14 +154,8 @@ func TestCalculate(t *testing.T) {
 		}
 
 		for _, tc := range tcs {
-			origAppURL := setting.AppUrl
-			t.Cleanup(func() {
-				setting.AppUrl = origAppURL
-			})
-			setting.AppUrl = tc.appURL
-
 			basePath := filepath.Join(parentDir, "testdata/non-pvt-with-root-url/plugin")
-			s := ProvideService(&config.Cfg{}, statickey.New())
+			s := ProvideService(&config.Cfg{GrafanaAppURL: tc.appURL}, statickey.New())
 			sig, err := s.Calculate(context.Background(), &fakes.FakePluginSource{
 				PluginClassFunc: func(ctx context.Context) plugins.Class {
 					return plugins.ClassExternal

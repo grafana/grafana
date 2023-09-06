@@ -76,13 +76,27 @@ func instrumentPluginRequest(ctx context.Context, cfg Cfg, pluginCtx *backend.Pl
 	}
 
 	elapsed := time.Since(start)
-	pluginRequestDuration.WithLabelValues(pluginCtx.PluginID, endpoint, string(cfg.Target)).Observe(float64(elapsed / time.Millisecond))
-	pluginRequestCounter.WithLabelValues(pluginCtx.PluginID, endpoint, status, string(cfg.Target)).Inc()
 
-	PluginRequestDurationSeconds.WithLabelValues("grafana-backend", pluginCtx.PluginID, endpoint, string(cfg.Target), status).Observe(elapsed.Seconds())
+	pluginRequestDurationWithLabels := pluginRequestDuration.WithLabelValues(pluginCtx.PluginID, endpoint, string(cfg.Target))
+	pluginRequestCounterWithLabels := pluginRequestCounter.WithLabelValues(pluginCtx.PluginID, endpoint, status, string(cfg.Target))
+	pluginRequestDurationSecondsWithLabels := PluginRequestDurationSeconds.WithLabelValues("grafana-backend", pluginCtx.PluginID, endpoint, status, string(cfg.Target))
+
+	if traceID := tracing.TraceIDFromContext(ctx, true); traceID != "" {
+		pluginRequestDurationWithLabels.(prometheus.ExemplarObserver).ObserveWithExemplar(
+			float64(elapsed/time.Millisecond), prometheus.Labels{"traceID": traceID},
+		)
+		pluginRequestCounterWithLabels.(prometheus.ExemplarAdder).AddWithExemplar(1, prometheus.Labels{"traceID": traceID})
+		pluginRequestDurationSecondsWithLabels.(prometheus.ExemplarObserver).ObserveWithExemplar(
+			elapsed.Seconds(), prometheus.Labels{"traceID": traceID},
+		)
+	} else {
+		pluginRequestDurationWithLabels.Observe(float64(elapsed / time.Millisecond))
+		pluginRequestCounterWithLabels.Inc()
+		pluginRequestDurationSecondsWithLabels.Observe(elapsed.Seconds())
+	}
 
 	if cfg.LogDatasourceRequests {
-		logParams := []interface{}{
+		logParams := []any{
 			"status", status,
 			"duration", elapsed,
 			"pluginId", pluginCtx.PluginID,

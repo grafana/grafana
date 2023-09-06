@@ -1,22 +1,23 @@
 import { String } from '@grafana/lezer-logql';
 
+import { createLokiDatasource } from './mocks';
 import {
   getHighlighterExpressionsFromQuery,
   getLokiQueryType,
   isLogsQuery,
   isQueryWithLabelFormat,
   isQueryWithParser,
-  isValidQuery,
+  isQueryWithError,
   parseToNodeNamesArray,
   getParserFromQuery,
   obfuscate,
   requestSupportsSplitting,
-  isQueryWithDistinct,
   isQueryWithRangeVariable,
   isQueryPipelineErrorFiltering,
   getLogQueryFromMetricsQuery,
   getNormalizedLokiQuery,
   getNodePositionsFromQuery,
+  formatLogqlQuery,
 } from './queryUtils';
 import { LokiQuery, LokiQueryType } from './types';
 
@@ -188,12 +189,12 @@ describe('getLokiQueryType', () => {
   });
 });
 
-describe('isValidQuery', () => {
+describe('isQueryWithError', () => {
   it('returns false if invalid query', () => {
-    expect(isValidQuery('{job="grafana')).toBe(false);
+    expect(isQueryWithError('{job="grafana')).toBe(true);
   });
   it('returns true if valid query', () => {
-    expect(isValidQuery('{job="grafana"}')).toBe(true);
+    expect(isQueryWithError('{job="grafana"}')).toBe(false);
   });
 });
 
@@ -305,18 +306,6 @@ describe('isQueryWithLabelFormat', () => {
 
   it('returns false if metrics query without label format', () => {
     expect(isQueryWithLabelFormat('rate({job="grafana"} [5m])')).toBe(false);
-  });
-});
-
-describe('isQueryWithDistinct', () => {
-  it('identifies queries using distinct', () => {
-    expect(isQueryWithDistinct('{job="grafana"} | distinct id')).toBe(true);
-    expect(isQueryWithDistinct('count_over_time({job="grafana"} | distinct id [1m])')).toBe(true);
-  });
-
-  it('does not return false positives', () => {
-    expect(isQueryWithDistinct('{label="distinct"} | logfmt')).toBe(false);
-    expect(isQueryWithDistinct('count_over_time({job="distinct"} | json [1m])')).toBe(false);
   });
 });
 
@@ -438,5 +427,29 @@ describe('getNodePositionsFromQuery', () => {
     // LogQL, Expr, LogExpr, Selector, Matchers, Matcher, Identifier, Eq, String
     const nodePositions = getNodePositionsFromQuery('not loql', [String]);
     expect(nodePositions.length).toBe(0);
+  });
+});
+
+describe('formatLogqlQuery', () => {
+  const ds = createLokiDatasource();
+
+  it('formats a logs query', () => {
+    expect(formatLogqlQuery('{job="grafana"}', ds)).toBe('{job="grafana"}');
+  });
+
+  it('formats a metrics query', () => {
+    expect(formatLogqlQuery('count_over_time({job="grafana"}[1m])', ds)).toBe(
+      'count_over_time(\n  {job="grafana"}\n  [1m]\n)'
+    );
+  });
+
+  it('formats a metrics query with variables', () => {
+    // mock the interpolateString return value so it passes the isValid check
+    ds.interpolateString = jest.fn(() => 'rate({job="grafana"}[1s])');
+
+    expect(formatLogqlQuery('rate({job="grafana"}[$__range])', ds)).toBe('rate(\n  {job="grafana"}\n  [$__range]\n)');
+    expect(formatLogqlQuery('rate({job="grafana"}[$__interval])', ds)).toBe(
+      'rate(\n  {job="grafana"}\n  [$__interval]\n)'
+    );
   });
 });

@@ -1,54 +1,52 @@
-import { defaults } from 'lodash';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import deepEqual from 'fast-deep-equal';
+import React, { useCallback, useEffect } from 'react';
 import { useAsync } from 'react-use';
 
 import { CoreApp, QueryEditorProps, TimeRange } from '@grafana/data';
-import { ButtonCascader, CascaderOption } from '@grafana/ui';
+import { LoadingPlaceholder } from '@grafana/ui';
 
-import { defaultGrafanaPyroscope, defaultPhlareQueryType, GrafanaPyroscope } from '../dataquery.gen';
-import { PhlareDataSource } from '../datasource';
-import { BackendType, PhlareDataSourceOptions, ProfileTypeMessage, Query } from '../types';
+import { normalizeQuery, PhlareDataSource } from '../datasource';
+import { PhlareDataSourceOptions, ProfileTypeMessage, Query } from '../types';
 
 import { EditorRow } from './EditorRow';
 import { EditorRows } from './EditorRows';
 import { LabelsEditor } from './LabelsEditor';
+import { ProfileTypesCascader, useProfileTypes } from './ProfileTypesCascader';
 import { QueryOptions } from './QueryOptions';
 
 export type Props = QueryEditorProps<PhlareDataSource, Query, PhlareDataSourceOptions>;
 
-export const defaultQuery: Partial<GrafanaPyroscope> = {
-  ...defaultGrafanaPyroscope,
-  queryType: defaultPhlareQueryType,
-};
-
 export function QueryEditor(props: Props) {
-  let query = normalizeQuery(props.query, props.app);
+  const { onChange, onRunQuery, datasource, query, range, app } = props;
 
   function handleRunQuery(value: string) {
-    props.onChange({ ...props.query, labelSelector: value });
-    props.onRunQuery();
+    onChange({ ...query, labelSelector: value });
+    onRunQuery();
   }
 
-  const { profileTypes, onProfileTypeChange, selectedProfileName } = useProfileTypes(
-    props.datasource,
-    props.query,
-    props.onChange,
-    props.datasource.backendType
-  );
-  const { labels, getLabelValues, onLabelSelectorChange } = useLabels(
-    props.range,
-    props.datasource,
-    props.query,
-    props.onChange
-  );
-  const cascaderOptions = useCascaderOptions(profileTypes);
+  const profileTypes = useProfileTypes(datasource);
+  const { labels, getLabelValues, onLabelSelectorChange } = useLabels(range, datasource, query, onChange);
+  useNormalizeQuery(query, profileTypes, onChange, app);
 
   return (
     <EditorRows>
       <EditorRow stackProps={{ wrap: false, gap: 1 }}>
-        <ButtonCascader onChange={onProfileTypeChange} options={cascaderOptions} buttonProps={{ variant: 'secondary' }}>
-          {selectedProfileName}
-        </ButtonCascader>
+        {/*
+            The cascader is uncontrolled component so if we want to set some default value we can do it only on initial
+            render, so we are waiting until we have the profileTypes and know what the default value should be before
+            rendering.
+         */}
+        {profileTypes && query.profileTypeId ? (
+          <ProfileTypesCascader
+            profileTypes={profileTypes}
+            initialProfileTypeId={query.profileTypeId}
+            onChange={(val) => {
+              onChange({ ...query, profileTypeId: val });
+            }}
+          />
+        ) : (
+          <LoadingPlaceholder text={'Loading'} />
+        )}
         <LabelsEditor
           value={query.labelSelector}
           onChange={onLabelSelectorChange}
@@ -62,6 +60,45 @@ export function QueryEditor(props: Props) {
       </EditorRow>
     </EditorRows>
   );
+}
+
+function useNormalizeQuery(
+  query: Query,
+  profileTypes: ProfileTypeMessage[] | undefined,
+  onChange: (value: Query) => void,
+  app?: CoreApp
+) {
+  useEffect(() => {
+    if (!profileTypes) {
+      return;
+    }
+    const normalizedQuery = normalizeQuery(query, app);
+    // We just check if profileTypeId is filled but don't check if it's one of the existing cause it can be template
+    // variable
+    if (!query.profileTypeId) {
+      normalizedQuery.profileTypeId = defaultProfileType(profileTypes);
+    }
+    // Makes sure we don't have an infinite loop updates because the normalization creates a new object
+    if (!deepEqual(query, normalizedQuery)) {
+      onChange(normalizedQuery);
+    }
+  }, [app, query, profileTypes, onChange]);
+}
+
+function defaultProfileType(profileTypes: ProfileTypeMessage[]): string {
+  const cpuProfiles = profileTypes.filter((p) => p.id.indexOf('cpu') >= 0);
+  if (cpuProfiles.length) {
+    // Prefer cpu time profile if available instead of samples
+    const cpuTimeProfile = cpuProfiles.find((p) => p.id.indexOf('samples') === -1);
+    if (cpuTimeProfile) {
+      return cpuTimeProfile.id;
+    }
+    // Fallback to first cpu profile type
+    return cpuProfiles[0].id;
+  }
+
+  // Fallback to first profile type from response data
+  return profileTypes[0].id;
 }
 
 function useLabels(
@@ -102,103 +139,4 @@ function useLabels(
   );
 
   return { labels: labelsResult.value, getLabelValues, onLabelSelectorChange };
-}
-
-// Turn profileTypes into cascader options
-function useCascaderOptions(profileTypes: ProfileTypeMessage[]) {
-  return useMemo(() => {
-    let mainTypes = new Map<string, CascaderOption>();
-    // Classify profile types by name then sample type.
-    for (let profileType of profileTypes) {
-      let parts: string[];
-      // Phlare uses : as delimiter while Pyro uses .
-      if (profileType.id.indexOf(':') > -1) {
-        parts = profileType.id.split(':');
-      } else {
-        parts = profileType.id.split('.');
-        const last = parts.pop()!;
-        parts = [parts.join('.'), last];
-      }
-
-      const [name, type] = parts;
-
-      if (!mainTypes.has(name)) {
-        mainTypes.set(name, {
-          label: name,
-          value: profileType.id,
-          children: [],
-        });
-      }
-      mainTypes.get(name)?.children?.push({
-        label: type,
-        value: profileType.id,
-      });
-    }
-    return Array.from(mainTypes.values());
-  }, [profileTypes]);
-}
-
-function useProfileTypes(
-  datasource: PhlareDataSource,
-  query: Query,
-  onChange: (value: Query) => void,
-  backendType: BackendType = 'phlare'
-) {
-  const [profileTypes, setProfileTypes] = useState<ProfileTypeMessage[]>([]);
-
-  useEffect(() => {
-    (async () => {
-      const profileTypes = await datasource.getProfileTypes();
-      setProfileTypes(profileTypes);
-    })();
-  }, [datasource]);
-
-  const onProfileTypeChange = useCallback(
-    (value: string[], selectedOptions: CascaderOption[]) => {
-      if (selectedOptions.length === 0) {
-        return;
-      }
-
-      const id = selectedOptions[selectedOptions.length - 1].value;
-
-      // Probably cannot happen but makes TS happy
-      if (typeof id !== 'string') {
-        throw new Error('id is not string');
-      }
-
-      onChange({ ...query, profileTypeId: id });
-    },
-    [onChange, query]
-  );
-
-  const selectedProfileName = useProfileName(profileTypes, query.profileTypeId, backendType);
-
-  return { profileTypes, onProfileTypeChange, selectedProfileName };
-}
-
-function useProfileName(profileTypes: ProfileTypeMessage[], profileTypeId: string, backendType: BackendType) {
-  return useMemo(() => {
-    if (!profileTypes) {
-      return 'Loading';
-    }
-    const profile = profileTypes.find((type) => type.id === profileTypeId);
-    if (!profile) {
-      if (backendType === 'pyroscope') {
-        return 'Select application';
-      }
-      return 'Select a profile type';
-    }
-
-    return profile.label;
-  }, [profileTypeId, profileTypes, backendType]);
-}
-
-export function normalizeQuery(query: Query, app?: CoreApp | string) {
-  let normalized = defaults(query, defaultQuery);
-  if (app !== CoreApp.Explore && normalized.queryType === 'both') {
-    // In dashboards and other places, we can't show both types of graphs at the same time.
-    // This will also be a default when having 'both' query and adding it from explore to dashboard
-    normalized.queryType = 'profile';
-  }
-  return normalized;
 }

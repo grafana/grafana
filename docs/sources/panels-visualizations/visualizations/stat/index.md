@@ -10,8 +10,13 @@ keywords:
   - grafana
   - docs
   - stat panel
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: Stat
-weight: 900
+weight: 100
 ---
 
 # Stat

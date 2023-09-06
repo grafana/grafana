@@ -7,8 +7,13 @@ keywords:
   - documentation
   - panels
   - traces
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: Traces
-weight: 850
+weight: 100
 ---
 
 # Traces panel
@@ -36,7 +41,7 @@ For more information about dashboard variables, refer to the [Variables document
 To use this procedure, you need:
 
 - A Grafana instance
-- A Tempo data source connected to your Grafana instance (see [documentation](/docs/grafana/datasources/tempo/))
+- A Tempo data source connected to your Grafana instance (refer to [documentation]({{< relref "../../../datasources/tempo" >}}))
 
 ### Add the Traces panel query
 

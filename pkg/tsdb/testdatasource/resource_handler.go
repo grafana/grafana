@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 )
 
 func (s *Service) registerRoutes() *http.ServeMux {
@@ -40,7 +40,7 @@ func (s *Service) testGetHandler(rw http.ResponseWriter, req *http.Request) {
 }
 
 func (s *Service) getScenariosHandler(rw http.ResponseWriter, req *http.Request) {
-	result := make([]interface{}, 0)
+	result := make([]any, 0)
 
 	scenarioIds := make([]string, 0)
 	for id := range s.scenarios {
@@ -50,7 +50,7 @@ func (s *Service) getScenariosHandler(rw http.ResponseWriter, req *http.Request)
 
 	for _, scenarioID := range scenarioIds {
 		scenario := s.scenarios[scenarioID]
-		result = append(result, map[string]interface{}{
+		result = append(result, map[string]any{
 			"id":          scenario.ID,
 			"name":        scenario.Name,
 			"description": scenario.Description,
@@ -108,7 +108,7 @@ func createJSONHandler(logger log.Logger) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		logger.Debug("Received resource call", "url", req.URL.String(), "method", req.Method)
 
-		var reqData map[string]interface{}
+		var reqData map[string]any
 		if req.Body != nil {
 			defer func() {
 				if err := req.Body.Close(); err != nil {
@@ -128,9 +128,9 @@ func createJSONHandler(logger log.Logger) http.Handler {
 			}
 		}
 
-		data := map[string]interface{}{
+		data := map[string]any{
 			"message": "Hello world from test datasource!",
-			"request": map[string]interface{}{
+			"request": map[string]any{
 				"method":  req.Method,
 				"url":     req.URL,
 				"headers": req.Header,

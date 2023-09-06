@@ -39,14 +39,14 @@ export function Form<T extends FieldValues>({
 
   return (
     <form
-      className={css`
-        max-width: ${maxWidth !== 'none' ? maxWidth + 'px' : maxWidth};
-        width: 100%;
-      `}
+      className={css({
+        maxWidth: maxWidth !== 'none' ? maxWidth + 'px' : maxWidth,
+        width: '100%',
+      })}
       onSubmit={handleSubmit(onSubmit)}
       {...htmlProps}
     >
-      {children({ errors: formState.errors, formState, ...rest })}
+      {children({ errors: formState.errors, formState, trigger, ...rest })}
     </form>
   );
 }

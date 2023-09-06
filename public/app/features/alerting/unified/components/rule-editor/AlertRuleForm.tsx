@@ -5,8 +5,20 @@ import { DeepMap, FieldError, FormProvider, useForm, useFormContext, UseFormWatc
 import { Link, useParams } from 'react-router-dom';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Stack } from '@grafana/experimental';
 import { config, logInfo } from '@grafana/runtime';
-import { Button, ConfirmModal, CustomScrollbar, Field, HorizontalGroup, Input, Spinner, useStyles2 } from '@grafana/ui';
+import {
+  Button,
+  ConfirmModal,
+  CustomScrollbar,
+  Field,
+  HorizontalGroup,
+  Input,
+  Spinner,
+  Text,
+  useStyles2,
+} from '@grafana/ui';
+import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { contextSrv } from 'app/core/core';
 import { useCleanup } from 'app/core/hooks/useCleanup';
@@ -20,13 +32,21 @@ import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelect
 import { deleteRuleAction, saveRuleFormAction } from '../../state/actions';
 import { RuleFormType, RuleFormValues } from '../../types/rule-form';
 import { initialAsyncRequestState } from '../../utils/redux';
-import { getDefaultFormValues, getDefaultQueries, MINUTE, rulerRuleToFormValues } from '../../utils/rule-form';
+import {
+  getDefaultFormValues,
+  getDefaultQueries,
+  MINUTE,
+  normalizeDefaultAnnotations,
+  rulerRuleToFormValues,
+} from '../../utils/rule-form';
 import * as ruleId from '../../utils/rule-id';
 
+import AnnotationsStep from './AnnotationsStep';
 import { CloudEvaluationBehavior } from './CloudEvaluationBehavior';
-import { DetailsStep } from './DetailsStep';
 import { GrafanaEvaluationBehavior } from './GrafanaEvaluationBehavior';
+import { GrafanaRuleInspector } from './GrafanaRuleInspector';
 import { NotificationsStep } from './NotificationsStep';
+import { RecordingRulesNameSpaceAndGroupStep } from './RecordingRulesNameSpaceAndGroupStep';
 import { RuleEditorSection } from './RuleEditorSection';
 import { RuleInspector } from './RuleInspector';
 import { QueryAndExpressionsStep } from './query-and-alert-condition/QueryAndExpressionsStep';
@@ -39,7 +59,6 @@ const recordingRuleNameValidationPattern = {
 };
 
 const AlertRuleNameInput = () => {
-  const styles = useStyles2(getStyles);
   const {
     register,
     watch,
@@ -47,22 +66,29 @@ const AlertRuleNameInput = () => {
   } = useFormContext<RuleFormValues & { location?: string }>();
 
   const ruleFormType = watch('type');
+  const entityName = ruleFormType === RuleFormType.cloudRecording ? 'recording rule' : 'alert rule';
+
   return (
-    <RuleEditorSection stepNo={1} title="Set an alert rule name">
-      <Field
-        className={styles.formInput}
-        label="Rule name"
-        description="Name for the alert rule."
-        error={errors?.name?.message}
-        invalid={!!errors.name?.message}
-      >
+    <RuleEditorSection
+      stepNo={1}
+      title={`Enter ${entityName} name`}
+      description={
+        <Text variant="bodySmall" color="secondary">
+          {/* sigh language rules – we should use translations ideally but for now we deal with "a" and "an" */}
+          Enter {entityName === 'alert rule' ? 'an' : 'a'} {entityName} name to identify your alert.
+        </Text>
+      }
+    >
+      <Field label="Name" error={errors?.name?.message} invalid={!!errors.name?.message}>
         <Input
           id="name"
+          width={35}
           {...register('name', {
-            required: { value: true, message: 'Must enter an alert name' },
+            required: { value: true, message: 'Must enter a name' },
             pattern: ruleFormType === RuleFormType.cloudRecording ? recordingRuleNameValidationPattern : undefined,
           })}
-          placeholder="Give your alert rule a name."
+          aria-label="name"
+          placeholder={`Give your ${entityName} a name`}
         />
       </Field>
     </RuleEditorSection>
@@ -72,10 +98,9 @@ const AlertRuleNameInput = () => {
 type Props = {
   existing?: RuleWithLocation;
   prefill?: Partial<RuleFormValues>; // Existing implies we modify existing rule. Prefill only provides default form values
-  id?: string;
 };
 
-export const AlertRuleForm = ({ existing, prefill, id }: Props) => {
+export const AlertRuleForm = ({ existing, prefill }: Props) => {
   const styles = useStyles2(getStyles);
   const dispatch = useDispatch();
   const notifyApp = useAppNotification();
@@ -83,8 +108,9 @@ export const AlertRuleForm = ({ existing, prefill, id }: Props) => {
   const [showEditYaml, setShowEditYaml] = useState(false);
   const [evaluateEvery, setEvaluateEvery] = useState(existing?.group.interval ?? MINUTE);
 
-  const routeParams = useParams<{ type: string }>();
+  const routeParams = useParams<{ type: string; id: string }>();
   const ruleType = translateRouteParamToRuleType(routeParams.type);
+  const uidFromParams = routeParams.id;
 
   const returnTo: string = (queryParams['returnTo'] as string | undefined) ?? '/alerting/list';
   const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
@@ -122,7 +148,7 @@ export const AlertRuleForm = ({ existing, prefill, id }: Props) => {
   const type = watch('type');
   const dataSourceName = watch('dataSourceName');
 
-  const showStep2 = Boolean(type && (type === RuleFormType.grafana || !!dataSourceName));
+  const showDataSourceDependantStep = Boolean(type && (type === RuleFormType.grafana || !!dataSourceName));
 
   const submitState = useUnifiedAlertingSelector((state) => state.ruleForm.saveRule) || initialAsyncRequestState;
   useCleanup((state) => (state.unifiedAlerting.ruleForm.saveRule = initialAsyncRequestState));
@@ -192,70 +218,88 @@ export const AlertRuleForm = ({ existing, prefill, id }: Props) => {
   const evaluateEveryInForm = watch('evaluateEvery');
   useEffect(() => setEvaluateEvery(evaluateEveryInForm), [evaluateEveryInForm]);
 
+  const actionButtons = (
+    <HorizontalGroup height="auto" justify="flex-end">
+      <Button
+        variant="primary"
+        type="button"
+        size="sm"
+        onClick={handleSubmit((values) => submit(values, false), onInvalid)}
+        disabled={submitState.loading}
+      >
+        {submitState.loading && <Spinner className={styles.buttonSpinner} inline={true} />}
+        Save rule
+      </Button>
+      <Button
+        variant="primary"
+        type="button"
+        size="sm"
+        onClick={handleSubmit((values) => submit(values, true), onInvalid)}
+        disabled={submitState.loading}
+      >
+        {submitState.loading && <Spinner className={styles.buttonSpinner} inline={true} />}
+        Save rule and exit
+      </Button>
+      <Link to={returnTo}>
+        <Button variant="secondary" disabled={submitState.loading} type="button" onClick={cancelRuleCreation} size="sm">
+          Cancel
+        </Button>
+      </Link>
+      {existing ? (
+        <Button fill="outline" variant="destructive" type="button" onClick={() => setShowDeleteModal(true)} size="sm">
+          Delete
+        </Button>
+      ) : null}
+
+      {existing ? (
+        <Button
+          variant="secondary"
+          type="button"
+          onClick={() => setShowEditYaml(true)}
+          disabled={submitState.loading}
+          size="sm"
+        >
+          {isCortexLokiOrRecordingRule(watch) ? 'Edit YAML' : 'View YAML'}
+        </Button>
+      ) : null}
+    </HorizontalGroup>
+  );
+
   return (
     <FormProvider {...formAPI}>
+      <AppChromeUpdate actions={actionButtons} />
       <form onSubmit={(e) => e.preventDefault()} className={styles.form}>
-        <HorizontalGroup height="auto" justify="flex-end">
-          <Button
-            variant="primary"
-            type="button"
-            onClick={handleSubmit((values) => submit(values, false), onInvalid)}
-            disabled={submitState.loading}
-          >
-            {submitState.loading && <Spinner className={styles.buttonSpinner} inline={true} />}
-            Save rule
-          </Button>
-          <Button
-            variant="primary"
-            type="button"
-            onClick={handleSubmit((values) => submit(values, true), onInvalid)}
-            disabled={submitState.loading}
-          >
-            {submitState.loading && <Spinner className={styles.buttonSpinner} inline={true} />}
-            Save rule and exit
-          </Button>
-          <Link to={returnTo}>
-            <Button variant="secondary" disabled={submitState.loading} type="button" onClick={cancelRuleCreation}>
-              Cancel
-            </Button>
-          </Link>
-          {existing ? (
-            <Button variant="destructive" type="button" onClick={() => setShowDeleteModal(true)}>
-              Delete
-            </Button>
-          ) : null}
-          {isCortexLokiOrRecordingRule(watch) && (
-            <Button
-              variant="secondary"
-              type="button"
-              onClick={() => setShowEditYaml(true)}
-              disabled={submitState.loading}
-            >
-              Edit YAML
-            </Button>
-          )}
-        </HorizontalGroup>
         <div className={styles.contentOuter}>
           <CustomScrollbar autoHeightMin="100%" hideHorizontalTrack={true}>
-            <div className={styles.contentInner}>
+            <Stack direction="column" gap={3}>
+              {/* Step 1 */}
               <AlertRuleNameInput />
+              {/* Step 2 */}
               <QueryAndExpressionsStep editingExistingRule={!!existing} onDataChange={checkAlertCondition} />
-              {showStep2 && (
+              {/* Step 3-4-5 */}
+              {showDataSourceDependantStep && (
                 <>
-                  {type === RuleFormType.grafana ? (
+                  {/* Step 3 */}
+                  {type === RuleFormType.grafana && (
                     <GrafanaEvaluationBehavior
                       evaluateEvery={evaluateEvery}
                       setEvaluateEvery={setEvaluateEvery}
                       existing={Boolean(existing)}
                     />
-                  ) : (
-                    <CloudEvaluationBehavior />
                   )}
-                  <DetailsStep />
-                  <NotificationsStep alertUid={id} />
+
+                  {type === RuleFormType.cloudAlerting && <CloudEvaluationBehavior />}
+
+                  {type === RuleFormType.cloudRecording && <RecordingRulesNameSpaceAndGroupStep />}
+
+                  {/* Step 4 & 5 */}
+                  {/* Annotations only for cloud and Grafana */}
+                  {type !== RuleFormType.cloudRecording && <AnnotationsStep />}
+                  {/* Notifications step*/}
+                  <NotificationsStep alertUid={uidFromParams} />
                 </>
               )}
-            </div>
+            </Stack>
           </CustomScrollbar>
         </div>
       </form>
@@ -270,7 +314,13 @@ export const AlertRuleForm = ({ existing, prefill, id }: Props) => {
           onDismiss={() => setShowDeleteModal(false)}
         />
       ) : null}
-      {showEditYaml ? <RuleInspector onClose={() => setShowEditYaml(false)} /> : null}
+      {showEditYaml ? (
+        type === RuleFormType.grafana ? (
+          <GrafanaRuleInspector alertUid={uidFromParams} onClose={() => setShowEditYaml(false)} />
+        ) : (
+          <RuleInspector onClose={() => setShowEditYaml(false)} />
+        )
+      ) : null}
     </FormProvider>
   );
 };
@@ -307,6 +357,7 @@ function formValuesFromQueryParams(ruleDefinition: string, type: RuleFormType): 
   return ignoreHiddenQueries({
     ...getDefaultFormValues(),
     ...ruleFromQueryParams,
+    annotations: normalizeDefaultAnnotations(ruleFromQueryParams.annotations ?? []),
     queries: ruleFromQueryParams.queries ?? getDefaultQueries(),
     type: type || RuleFormType.grafana,
     evaluateEvery: MINUTE,
@@ -335,29 +386,15 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: flex;
       flex-direction: column;
     `,
-    contentInner: css`
-      flex: 1;
-      padding: ${theme.spacing(2)};
-    `,
     contentOuter: css`
       background: ${theme.colors.background.primary};
-      border: 1px solid ${theme.colors.border.weak};
-      border-radius: ${theme.shape.borderRadius()};
       overflow: hidden;
       flex: 1;
-      margin-top: ${theme.spacing(1)};
     `,
     flexRow: css`
       display: flex;
       flex-direction: row;
       justify-content: flex-start;
-    `,
-    formInput: css`
-      width: 275px;
-
-      & + & {
-        margin-left: ${theme.spacing(3)};
-      }
     `,
   };
 };

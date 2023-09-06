@@ -1,12 +1,19 @@
 ---
 aliases:
   - alerting-limitations/
+  - alerting/performance-limitations/
+canonical: https://grafana.com/docs/grafana/latest/alerting/set-up/performance-limitations/
 description: Performance considerations and limitations
 keywords:
   - grafana
   - alerting
   - performance
   - limitations
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: Performance considerations and limitations
 weight: 600
 ---

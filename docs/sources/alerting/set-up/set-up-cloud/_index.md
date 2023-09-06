@@ -8,10 +8,11 @@ aliases:
   - /docs/grafana-cloud/alerts/grafana-cloud-alerting/
   - /docs/grafana-cloud/how-do-i/grafana-cloud-alerting/
   - /docs/grafana-cloud/legacy-alerting/grafana-cloud-alerting/
+canonical: https://grafana.com/docs/grafana/latest/alerting/set-up/set-up-cloud/
+description: How to configure Alerting for Cloud
 labels:
   products:
     - cloud
-description: How to configure Alerting for Cloud
 title: Set up Alerting for Cloud
 weight: 100
 ---
@@ -30,7 +31,7 @@ Grafana Cloud Alerting's Prometheus-style alerts are built by querying directly 
 
 These are set up instructions for Grafana Alerting Cloud.
 
-To set up Grafana Alerting for Open Source, see [Set up]({{< relref "../_index.md" >}}).
+To set up Grafana Alerting for Open Source, see [Set up][set-up].
 
 To set up Alerting, you need to:
 
@@ -248,4 +249,12 @@ After you upload a working Alertmanager configuration file, you can access the A
 
 ### Provision alert rules using Terraform
 
-For information on how to provision alert rule using Terraform, see [Provision alert rules using Terraform]({{< relref "../provision-alerting-resources/terraform-provisioning" >}}).
+For information on how to provision alert rule using Terraform, see [Provision alert rules using Terraform][terraform-provisioning].
+
+{{% docs/reference %}}
+[set-up]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting/set-up"
+[set-up]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/set-up"
+
+[terraform-provisioning]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting/set-up/provision-alerting-resources/terraform-provisioning"
+[terraform-provisioning]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/set-up/provision-alerting-resources/terraform-provisioning"
+{{% /docs/reference %}}

@@ -6,6 +6,7 @@ import { Subscription } from 'rxjs';
 
 import { config } from '@grafana/runtime';
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT } from 'app/core/constants';
+import { contextSrv } from 'app/core/services/context_srv';
 import { DashboardPanelsChangedEvent } from 'app/types/events';
 
 import { AddLibraryPanelWidget } from '../components/AddLibraryPanelWidget';
@@ -93,6 +94,7 @@ export class DashboardGrid extends PureComponent<Props> {
     }
 
     this.props.dashboard.sortPanelsByGridPos();
+    this.forceUpdate();
   };
 
   triggerForceUpdate = () => {
@@ -206,7 +208,7 @@ export class DashboardGrid extends PureComponent<Props> {
    * This can be quite distracting and make the dashboard appear to less snappy.
    */
   onGetWrapperDivRef = (ref: HTMLDivElement | null) => {
-    if (ref) {
+    if (ref && contextSrv.user.authenticatedBy !== 'render') {
       setTimeout(() => {
         ref.classList.add('react-grid-layout--enable-move-animations');
       }, 50);

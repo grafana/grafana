@@ -98,7 +98,7 @@ type BuildInfo struct {
 type Dependencies struct {
 	// Required Grafana version for this plugin. Validated using
 	// https://github.com/npm/node-semver.
-	GrafanaDependency string `json:"grafanaDependency"`
+	GrafanaDependency *string `json:"grafanaDependency,omitempty"`
 
 	// (Deprecated) Required Grafana version for this plugin, e.g.
 	// `6.x.x 7.x.x` to denote plugin requires Grafana v6.x.x or
@@ -122,11 +122,33 @@ type Dependency struct {
 // DependencyType defines model for Dependency.Type.
 type DependencyType string
 
+// ExternalServiceRegistration defines model for ExternalServiceRegistration.
+type ExternalServiceRegistration struct {
+	Impersonation *Impersonation `json:"impersonation,omitempty"`
+	Self          *Self          `json:"self,omitempty"`
+}
+
 // Header describes an HTTP header that is forwarded with a proxied request for
 // a plugin route.
 type Header struct {
 	Content string `json:"content"`
 	Name    string `json:"name"`
+}
+
+// Impersonation defines model for Impersonation.
+type Impersonation struct {
+	// Enabled allows the service to request access tokens to impersonate users using the jwtbearer grant
+	// Defaults to true.
+	Enabled *bool `json:"enabled,omitempty"`
+
+	// Groups allows the service to list the impersonated user's teams.
+	// Defaults to true.
+	Groups *bool `json:"groups,omitempty"`
+
+	// Permissions are the permissions that the external service needs when impersonating a user.
+	// The intersection of this set with the impersonated user's permission guarantees that the client will not
+	// gain more privileges than the impersonated user has.
+	Permissions []Permission `json:"permissions,omitempty"`
 }
 
 // A resource to be included in a plugin.
@@ -288,7 +310,8 @@ type PluginDef struct {
 	// $GOARCH><.exe for Windows>`, e.g. `plugin_linux_amd64`.
 	// Combination of $GOOS and $GOARCH can be found here:
 	// https://golang.org/doc/install/source#environment.
-	Executable *string `json:"executable,omitempty"`
+	Executable                  *string                     `json:"executable,omitempty"`
+	ExternalServiceRegistration ExternalServiceRegistration `json:"externalServiceRegistration"`
 
 	// [internal only] Excludes the plugin from listings in Grafana's UI. Only
 	// allowed for `builtIn` plugins.
@@ -443,6 +466,16 @@ type Route struct {
 	// proxied to.
 	Url       *string    `json:"url,omitempty"`
 	UrlParams []URLParam `json:"urlParams,omitempty"`
+}
+
+// Self defines model for Self.
+type Self struct {
+	// Enabled allows the service to request access tokens for itself using the client_credentials grant
+	// Defaults to true.
+	Enabled *bool `json:"enabled,omitempty"`
+
+	// Permissions are the permissions that the external service needs its associated service account to have.
+	Permissions []Permission `json:"permissions,omitempty"`
 }
 
 // TODO docs

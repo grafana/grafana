@@ -10,8 +10,6 @@
 
 import * as common from '@grafana/schema';
 
-export const DataQueryModelVersion = Object.freeze([0, 0]);
-
 export enum TestDataQueryType {
   Annotations = 'annotations',
   Arrow = 'arrow',
@@ -118,6 +116,7 @@ export interface TestData extends common.DataQuery {
    */
   dropPercent?: number;
   errorType?: ('server_panic' | 'frontend_exception' | 'frontend_observable');
+  flamegraphDiff?: boolean;
   labels?: string;
   levelColumn?: boolean;
   lines?: number;

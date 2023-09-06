@@ -9,4 +9,6 @@
  * be subject to the standard policies
  */
 
-export * from './components/Text/TextElements';
+export * from './components/Flex/Flex';
+
+export { Stack } from './components/Stack/Stack';

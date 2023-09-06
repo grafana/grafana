@@ -5,6 +5,10 @@ aliases:
   - ../plugins/installation/
   - ../plugins/plugin-signature-verification/
   - ../plugins/plugin-signatures/
+labels:
+  products:
+    - enterprise
+    - oss
 title: Plugin management
 weight: 600
 ---
@@ -19,7 +23,7 @@ Grafana supports three types of plugins: [panels](/grafana/plugins?type=panel), 
 
 ## Panel plugins
 
-Add new visualizations to your dashboard with panel plugins, such as the [Worldmap Panel](/grafana/plugins/grafana-worldmap-panel), [Clock](/grafana/plugins/grafana-clock-panel), and [Pie Chart](/grafana/plugins/grafana-piechart-panel).
+Add new visualizations to your dashboard with panel plugins, such as the [Clock](/grafana/plugins/grafana-clock-panel), [Mosaic](/grafana/plugins/boazreicher-mosaicplot-panel) and [Variable](/grafana/plugins/volkovlabs-variable-panel) panels.
 
 Use panel plugins when you want to:
 
@@ -41,7 +45,7 @@ Applications, or _app plugins_, bundle data sources and panels to provide a cohe
 
 Apps can also add custom pages for things like control panels.
 
-Use app plugins when you want to create an custom out-of-the-box monitoring experience.
+Use app plugins when you want an out-of-the-box monitoring experience.
 
 ### Managing app plugins access
 
@@ -167,7 +171,7 @@ Grafana also writes an error message to the server log:
 WARN[05-26|12:00:00] Some plugin scanning errors were found   errors="plugin '<plugin id>' is unsigned, plugin '<plugin id>' has an invalid signature"
 ```
 
-If you are a plugin developer and want to know how to sign your plugin, refer to [Sign a plugin]({{< relref "../../developers/plugins/sign-a-plugin/" >}}).
+If you are a plugin developer and want to know how to sign your plugin, refer to [Sign a plugin]({{< relref "../../developers/plugins/publish-a-plugin/sign-a-plugin.md" >}}).
 
 | Signature status   | Description                                                                     |
 | ------------------ | ------------------------------------------------------------------------------- |

@@ -1,8 +1,9 @@
-import { AbstractLabelOperator, DataSourceInstanceSettings, PluginMetaInfo, PluginType } from '@grafana/data';
+import { AbstractLabelOperator, CoreApp, DataSourceInstanceSettings, PluginMetaInfo, PluginType } from '@grafana/data';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 
 import { defaultPhlareQueryType } from './dataquery.gen';
-import { PhlareDataSource } from './datasource';
+import { normalizeQuery, PhlareDataSource } from './datasource';
+import { Query } from './types';
 
 describe('Phlare data source', () => {
   let ds: PhlareDataSource;
@@ -49,43 +50,75 @@ describe('Phlare data source', () => {
   });
 
   describe('applyTemplateVariables', () => {
-    const interpolationVar = '$interpolationVar';
-    const interpolationText = 'interpolationText';
-    const noInterpolation = 'noInterpolation';
+    const templateSrv = new TemplateSrv();
+    templateSrv.replace = jest.fn((query: string): string => {
+      return query.replace(/\$var/g, 'interpolated');
+    });
 
     it('should not update labelSelector if there are no template variables', () => {
-      const templateSrv = new TemplateSrv();
-      templateSrv.replace = jest.fn((query: string): string => {
-        return query.replace(/\$interpolationVar/g, interpolationText);
-      });
       ds = new PhlareDataSource(defaultSettings, templateSrv);
-      const query = ds.applyTemplateVariables(defaultQuery(`{${noInterpolation}}`), {});
-      expect(templateSrv.replace).toBeCalledTimes(1);
-      expect(query.labelSelector).toBe(`{${noInterpolation}}`);
+      const query = ds.applyTemplateVariables(defaultQuery({ labelSelector: `no var`, profileTypeId: 'no var' }), {});
+      expect(query).toMatchObject({
+        labelSelector: `no var`,
+        profileTypeId: 'no var',
+      });
     });
 
     it('should update labelSelector if there are template variables', () => {
-      const templateSrv = new TemplateSrv();
-      templateSrv.replace = jest.fn((query: string): string => {
-        return query.replace(/\$interpolationVar/g, interpolationText);
-      });
       ds = new PhlareDataSource(defaultSettings, templateSrv);
-      const query = ds.applyTemplateVariables(defaultQuery(`{${interpolationVar}="${interpolationVar}"}`), {
-        interpolationVar: { text: interpolationText, value: interpolationText },
-      });
-      expect(templateSrv.replace).toBeCalledTimes(1);
-      expect(query.labelSelector).toBe(`{${interpolationText}="${interpolationText}"}`);
+      const query = ds.applyTemplateVariables(
+        defaultQuery({ labelSelector: `{$var="$var"}`, profileTypeId: '$var' }),
+        {}
+      );
+      expect(query).toMatchObject({ labelSelector: `{interpolated="interpolated"}`, profileTypeId: 'interpolated' });
     });
   });
 });
 
-const defaultQuery = (query: string) => {
+describe('normalizeQuery', () => {
+  it('correctly normalizes the query', () => {
+    // We need the type assertion here because the query types are inherently wrong in explore.
+    let normalized = normalizeQuery({} as Query);
+    expect(normalized).toMatchObject({
+      labelSelector: '{}',
+      groupBy: [],
+      queryType: 'profile',
+    });
+
+    normalized = normalizeQuery({
+      labelSelector: '{app="myapp"}',
+      groupBy: ['app'],
+      queryType: 'metrics',
+      profileTypeId: 'cpu',
+      refId: '',
+    });
+    expect(normalized).toMatchObject({
+      labelSelector: '{app="myapp"}',
+      groupBy: ['app'],
+      queryType: 'metrics',
+      profileTypeId: 'cpu',
+    });
+  });
+
+  it('correctly normalizes the query when in explore', () => {
+    // We need the type assertion here because the query types are inherently wrong in explore.
+    const normalized = normalizeQuery({} as Query, CoreApp.Explore);
+    expect(normalized).toMatchObject({
+      labelSelector: '{}',
+      groupBy: [],
+      queryType: 'both',
+    });
+  });
+});
+
+const defaultQuery = (query: Partial<Query>): Query => {
   return {
     refId: 'x',
     groupBy: [],
-    labelSelector: query,
+    labelSelector: '',
     profileTypeId: '',
     queryType: defaultPhlareQueryType,
+    ...query,
   };
 };
 

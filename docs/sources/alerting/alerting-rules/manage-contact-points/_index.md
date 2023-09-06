@@ -5,6 +5,8 @@ aliases:
   - ../../contact-points/edit-contact-point/
   - ../../contact-points/test-contact-point/
   - ../create-contact-point/
+  - alerting/manage-notifications/manage-contact-points/
+canonical: https://grafana.com/docs/grafana/latest/alerting/alerting-rules/manage-contact-points/
 description: How to manage your contact points
 keywords:
   - grafana
@@ -12,6 +14,11 @@ keywords:
   - guide
   - contact point
   - templating
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: Configure contact points
 weight: 410
 ---

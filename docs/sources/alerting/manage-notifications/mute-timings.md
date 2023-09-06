@@ -2,6 +2,7 @@
 aliases:
   - ../notifications/mute-timings/
   - ../unified-alerting/notifications/mute-timings/
+canonical: https://grafana.com/docs/grafana/latest/alerting/manage-notifications/mute-timings/
 description: Mute timings
 keywords:
   - grafana
@@ -10,6 +11,11 @@ keywords:
   - mute
   - mute timings
   - mute time interval
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: Create mute timings
 weight: 420
 ---
@@ -20,7 +26,7 @@ A mute timing is a recurring interval of time when no new notifications for a po
 
 Similar to silences, mute timings do not prevent alert rules from being evaluated, nor do they stop alert instances from being shown in the user interface. They only prevent notifications from being created.
 
-You can configure Grafana managed mute timings as well as mute timings for an [external Alertmanager data source]({{< relref "../../datasources/alertmanager" >}}). For more information, refer to [Alertmanager documentation]({{< relref "../fundamentals/alertmanager" >}}).
+You can configure Grafana managed mute timings as well as mute timings for an [external Alertmanager data source][datasources/alertmanager]. For more information, refer to [Alertmanager documentation][fundamentals/alertmanager].
 
 ## Mute timings vs silences
 
@@ -57,7 +63,11 @@ A time interval is a definition for a moment in time. If an alert fires during t
 
 Supported time interval options are:
 
-- Time range: The time inclusive of the starting time and exclusive of the end time in UTC. - Days of the week: The day or range of days of the week. Example: `monday:thursday`. - Days of the month: The date 1-31 of a month. Negative values can also be used to represent days that begin at the end of the month. For example: `-1` for the last day of the month. - Months: The months of the year in either numerical or the full calendar month. For example: `1, may:august`. - Years: The year or years for the interval. For example: `2021:2024`.
+- Time range: The time inclusive of the starting time and exclusive of the end time in UTC.
+- Days of the week: The day or range of days of the week. Example: `monday:thursday`.
+- Days of the month: The date 1-31 of a month. Negative values can also be used to represent days that begin at the end of the month. For example: `-1` for the last day of the month.
+- Months: The months of the year in either numerical or the full calendar month. For example: `1, may:august`.
+- Years: The year or years for the interval. For example: `2021:2024`.
 
 If a field is left blank, any moment of time will match the field. For an instant of time to match a complete time interval, all fields must match. A mute timing can contain multiple time intervals.
 
@@ -69,3 +79,11 @@ If you want to specify an exact duration, specify all the options. For example, 
 - Days of the week: `monday`
 - Months: `3, 6, 9, 12`
 - Days of the month: `1:7`
+
+{{% docs/reference %}}
+[datasources/alertmanager]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/datasources/alertmanager"
+[datasources/alertmanager]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/datasources/alertmanager"
+
+[fundamentals/alertmanager]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting/fundamentals/alertmanager"
+[fundamentals/alertmanager]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alertmanager"
+{{% /docs/reference %}}

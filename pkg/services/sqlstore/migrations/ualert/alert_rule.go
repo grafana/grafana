@@ -111,7 +111,7 @@ func (m *migration) makeAlertRule(l log.Logger, cond condition, da dashAlert, fo
 	annotations["message"] = da.Message
 	var err error
 
-	data, err := migrateAlertRuleQueries(cond.Data)
+	data, err := migrateAlertRuleQueries(l, cond.Data)
 	if err != nil {
 		return nil, fmt.Errorf("failed to migrate alert rule queries: %w", err)
 	}
@@ -152,23 +152,19 @@ func (m *migration) makeAlertRule(l log.Logger, cond condition, da dashAlert, fo
 	n, v := getLabelForSilenceMatching(ar.UID)
 	ar.Labels[n] = v
 
-	if err := m.addSilence(da, ar); err != nil {
-		m.mg.Logger.Error("alert migration error: failed to create silence", "rule_name", ar.Title, "err", err)
-	}
-
 	if err := m.addErrorSilence(da, ar); err != nil {
-		m.mg.Logger.Error("alert migration error: failed to create silence for Error", "rule_name", ar.Title, "err", err)
+		m.mg.Logger.Error("Alert migration error: failed to create silence for Error", "rule_name", ar.Title, "err", err)
 	}
 
 	if err := m.addNoDataSilence(da, ar); err != nil {
-		m.mg.Logger.Error("alert migration error: failed to create silence for NoData", "rule_name", ar.Title, "err", err)
+		m.mg.Logger.Error("Alert migration error: failed to create silence for NoData", "rule_name", ar.Title, "err", err)
 	}
 
 	return ar, nil
 }
 
 // migrateAlertRuleQueries attempts to fix alert rule queries so they can work in unified alerting. Queries of some data sources are not compatible with unified alerting.
-func migrateAlertRuleQueries(data []alertQuery) ([]alertQuery, error) {
+func migrateAlertRuleQueries(l log.Logger, data []alertQuery) ([]alertQuery, error) {
 	result := make([]alertQuery, 0, len(data))
 	for _, d := range data {
 		// queries that are expression are not relevant, skip them.
@@ -184,6 +180,7 @@ func migrateAlertRuleQueries(data []alertQuery) ([]alertQuery, error) {
 		// remove hidden tag from the query (if exists)
 		delete(fixedData, "hide")
 		fixedData = fixGraphiteReferencedSubQueries(fixedData)
+		fixedData = fixPrometheusBothTypeQuery(l, fixedData)
 		updatedModel, err := json.Marshal(fixedData)
 		if err != nil {
 			return nil, err
@@ -204,6 +201,76 @@ func fixGraphiteReferencedSubQueries(queryData map[string]json.RawMessage) map[s
 	}
 
 	return queryData
+}
+
+// fixPrometheusBothTypeQuery converts Prometheus 'Both' type queries to range queries.
+func fixPrometheusBothTypeQuery(l log.Logger, queryData map[string]json.RawMessage) map[string]json.RawMessage {
+	// There is the possibility to support this functionality by:
+	//	- Splitting the query into two: one for instant and one for range.
+	//  - Splitting the condition into two: one for each query, separated by OR.
+	// However, relying on a 'Both' query instead of multiple conditions to do this in legacy is likely
+	// to be unintentional. In addition, this would require more robust operator precedence in classic conditions.
+	// Given these reasons, we opt to convert them to range queries and log a warning.
+
+	var instant bool
+	if instantRaw, ok := queryData["instant"]; ok {
+		if err := json.Unmarshal(instantRaw, &instant); err != nil {
+			// Nothing to do here, we can't parse the instant field.
+			if isPrometheus, _ := isPrometheusQuery(queryData); isPrometheus {
+				l.Info("Failed to parse instant field on Prometheus query", "instant", string(instantRaw), "err", err)
+			}
+			return queryData
+		}
+	}
+	var rng bool
+	if rangeRaw, ok := queryData["range"]; ok {
+		if err := json.Unmarshal(rangeRaw, &rng); err != nil {
+			// Nothing to do here, we can't parse the range field.
+			if isPrometheus, _ := isPrometheusQuery(queryData); isPrometheus {
+				l.Info("Failed to parse range field on Prometheus query", "range", string(rangeRaw), "err", err)
+			}
+			return queryData
+		}
+	}
+
+	if !instant || !rng {
+		// Only apply this fix to 'Both' type queries.
+		return queryData
+	}
+
+	isPrometheus, err := isPrometheusQuery(queryData)
+	if err != nil {
+		l.Info("Unable to convert alert rule that resembles a Prometheus 'Both' type query to 'Range'", "err", err)
+		return queryData
+	}
+	if !isPrometheus {
+		// Only apply this fix to Prometheus.
+		return queryData
+	}
+
+	// Convert 'Both' type queries to `Range` queries by disabling the `Instant` portion.
+	l.Warn("Prometheus 'Both' type queries are not supported in unified alerting. Converting to range query.")
+	queryData["instant"] = []byte("false")
+
+	return queryData
+}
+
+// isPrometheusQuery checks if the query is for Prometheus.
+func isPrometheusQuery(queryData map[string]json.RawMessage) (bool, error) {
+	ds, ok := queryData["datasource"]
+	if !ok {
+		return false, fmt.Errorf("missing datasource field")
+	}
+	var datasource struct {
+		Type string `json:"type"`
+	}
+	if err := json.Unmarshal(ds, &datasource); err != nil {
+		return false, fmt.Errorf("failed to parse datasource '%s': %w", string(ds), err)
+	}
+	if datasource.Type == "" {
+		return false, fmt.Errorf("missing type field '%s'", string(ds))
+	}
+	return datasource.Type == "prometheus", nil
 }
 
 type alertQuery struct {
@@ -242,7 +309,7 @@ func (d duration) MarshalJSON() ([]byte, error) {
 }
 
 func (d *duration) UnmarshalJSON(b []byte) error {
-	var v interface{}
+	var v any
 	if err := json.Unmarshal(b, &v); err != nil {
 		return err
 	}

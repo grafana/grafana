@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 
 import { Space } from '@grafana/experimental';
-import { Alert, Button, Field, Modal } from '@grafana/ui';
-import { P } from '@grafana/ui/src/unstable';
+import { Alert, Button, Field, Modal, Text } from '@grafana/ui';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
+import { t, Trans } from 'app/core/internationalization';
 
 import { DashboardTreeSelection } from '../../types';
 
@@ -35,25 +35,34 @@ export const MoveModal = ({ onConfirm, onDismiss, selectedItems, ...props }: Pro
   };
 
   return (
-    <Modal title="Move" onDismiss={onDismiss} {...props}>
-      {selectedFolders.length > 0 && <Alert severity="info" title="Moving this item may change its permissions." />}
+    <Modal title={t('browse-dashboards.action.move-modal-title', 'Move')} onDismiss={onDismiss} {...props}>
+      {selectedFolders.length > 0 && (
+        <Alert
+          severity="info"
+          title={t('browse-dashboards.action.move-modal-alert', 'Moving this item may change its permissions.')}
+        />
+      )}
 
-      <P>This action will move the following content:</P>
+      <Text element="p">
+        <Trans i18nKey="browse-dashboards.action.move-modal-text">This action will move the following content:</Trans>
+      </Text>
 
       <DescendantCount selectedItems={selectedItems} />
 
       <Space v={3} />
 
-      <Field label="Folder name">
-        <FolderPicker allowEmpty onChange={({ uid }) => setMoveTarget(uid)} />
+      <Field label={t('browse-dashboards.action.move-modal-field-label', 'Folder name')}>
+        <FolderPicker value={moveTarget} excludeUIDs={selectedFolders} onChange={setMoveTarget} />
       </Field>
 
       <Modal.ButtonRow>
         <Button onClick={onDismiss} variant="secondary" fill="outline">
-          Cancel
+          <Trans i18nKey="browse-dashboards.action.cancel-button">Cancel</Trans>
         </Button>
         <Button disabled={moveTarget === undefined || isMoving} onClick={onMove} variant="primary">
-          {isMoving ? 'Moving...' : 'Move'}
+          {isMoving
+            ? t('browse-dashboards.action.moving', 'Moving...')
+            : t('browse-dashboards.action.move-button', 'Move')}
         </Button>
       </Modal.ButtonRow>
     </Modal>

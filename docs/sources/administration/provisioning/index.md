@@ -5,6 +5,10 @@ description: Describes provisioning settings for Grafana using configuration fil
 keywords:
   - grafana
   - provisioning
+labels:
+  products:
+    - enterprise
+    - oss
 title: Provision Grafana
 weight: 600
 ---
@@ -222,6 +226,7 @@ Data sources tagged with _HTTP\*_ communicate using the HTTP protocol, which inc
 | cacheLevel                    | string  | Prometheus                                                       | Determines the duration of the browser cache. Valid values include: `Low`, `Medium`, `High`, and `None`. This field is configurable when you enable the `prometheusResourceBrowserCache` feature flag.                                                                                        |
 | incrementalQuerying           | string  | Prometheus                                                       | Experimental: Turn on incremental querying to enhance dashboard reload performance with slow data sources                                                                                                                                                                                     |
 | incrementalQueryOverlapWindow | string  | Prometheus                                                       | Experimental: Configure incremental query overlap window. Requires a valid duration string, i.e. `180s` or `15m` Default value is `10m` (10 minutes).                                                                                                                                         |
+| disableRecordingRules         | boolean | Prometheus                                                       | Experimental: Turn off Prometheus recording rules                                                                                                                                                                                                                                             |
 | implementation                | string  | AlertManager                                                     | The implementation of the AlertManager data source, such as `prometheus`, `cortex` or `mimir`                                                                                                                                                                                                 |
 | handleGrafanaManagedAlerts    | boolean | AlertManager                                                     | When enabled, Grafana-managed alerts are sent to this Alertmanager                                                                                                                                                                                                                            |
 

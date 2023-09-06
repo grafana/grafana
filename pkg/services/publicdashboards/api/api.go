@@ -149,10 +149,22 @@ func (api *Api) CreatePublicDashboard(c *contextmodel.ReqContext) response.Respo
 		return response.Err(ErrBadRequest.Errorf("CreatePublicDashboard: bad request data %v", err))
 	}
 
+	//validate uid
+	uid := pdDTO.Uid
+	if uid != "" && !validation.IsValidShortUID(uid) {
+		return response.Err(ErrInvalidUid.Errorf("CreatePublicDashboard: invalid Uid %s", uid))
+	}
+
+	//validate accessToken
+	accessToken := pdDTO.AccessToken
+	if accessToken != "" && !validation.IsValidAccessToken(accessToken) {
+		return response.Err(ErrInvalidAccessToken.Errorf("CreatePublicDashboard: invalid Access Token %s", accessToken))
+	}
+
 	// Always set the orgID and userID from the session
-	pdDTO.OrgId = c.OrgID
 	dto := &SavePublicDashboardDTO{
 		UserId:          c.UserID,
+		OrgID:           c.OrgID,
 		DashboardUid:    dashboardUid,
 		PublicDashboard: pdDTO,
 	}
@@ -167,7 +179,7 @@ func (api *Api) CreatePublicDashboard(c *contextmodel.ReqContext) response.Respo
 }
 
 // UpdatePublicDashboard Sets public dashboard for dashboard
-// PUT /api/dashboards/uid/:dashboardUid/public-dashboards/:uid
+// PATCH /api/dashboards/uid/:dashboardUid/public-dashboards/:uid
 func (api *Api) UpdatePublicDashboard(c *contextmodel.ReqContext) response.Response {
 	// exit if we don't have a valid dashboardUid
 	dashboardUid := web.Params(c.Req)[":dashboardUid"]
@@ -186,10 +198,10 @@ func (api *Api) UpdatePublicDashboard(c *contextmodel.ReqContext) response.Respo
 	}
 
 	// Always set the orgID and userID from the session
-	pdDTO.OrgId = c.OrgID
-	pdDTO.Uid = uid
 	dto := SavePublicDashboardDTO{
+		Uid:             uid,
 		UserId:          c.UserID,
+		OrgID:           c.OrgID,
 		DashboardUid:    dashboardUid,
 		PublicDashboard: pdDTO,
 	}

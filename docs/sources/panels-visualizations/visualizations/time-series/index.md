@@ -24,8 +24,13 @@ keywords:
   - documentation
   - guide
   - graph
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: Time series
-weight: 90
+weight: 10
 ---
 
 # Time series
@@ -42,13 +47,13 @@ You can migrate from the old Graph visualization to the new Time series visualiz
 
 Tooltip options control the information overlay that appears when you hover over data points in the graph.
 
-{{< docs/shared "visualizations/tooltip-mode.md" >}}
+{{< docs/shared lookup="visualizations/tooltip-mode.md" source="grafana" version="<GRAFANA VERSION>" >}}
 
 ## Legend options
 
 Legend options control the series names and statistics that appear under or to the right of the graph.
 
-{{< docs/shared "visualizations/legend-mode.md" >}}
+{{< docs/shared lookup="visualizations/legend-mode.md" source="grafana" version="<GRAFANA VERSION>" >}}
 
 ## Graph styles
 
@@ -131,15 +136,9 @@ Set the style of the line. To change the color, use the standard [color scheme](
 
 ![Line styles examples](/static/img/docs/time-series-panel/line-styles-examples-v9.png)
 
-### Connect null values
+{{< docs/shared lookup="visualizations/connect-null-values.md" source="grafana" version="<GRAFANA VERSION>" >}}
 
-Choose how null values, which are gaps in the data, appear on the graph. Null values can be connected to form a continuous line or set to a threshold above which gaps in the data are no longer connected.
-
-![Connect null values option](/static/img/docs/time-series-panel/connect-null-values-option-v9.png)
-
-- **Never:** Time series data points with gaps in the the data are never connected.
-- **Always:** Time series data points with gaps in the the data are always connected.
-- **Threshold:** Specify a threshold above which gaps in the data are no longer connected. This can be useful when the connected gaps in the data are of a known size and/or within a known range, and gaps outside this range should no longer be connected.
+{{< docs/shared lookup="visualizations/disconnect-values.md" source="grafana" version="<GRAFANA VERSION>" >}}
 
 ### Stack series
 

@@ -8,6 +8,10 @@ keywords:
   - alerting
   - guide
   - rules
+labels:
+  products:
+    - enterprise
+    - oss
 title: Create alerts
 weight: 200
 ---

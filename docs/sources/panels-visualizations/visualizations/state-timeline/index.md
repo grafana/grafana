@@ -8,8 +8,13 @@ keywords:
   - docs
   - state timeline
   - panel
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: State timeline
-weight: 900
+weight: 100
 ---
 
 # State timeline
@@ -46,6 +51,10 @@ Controls line width of state regions.
 
 Controls the opacity of state regions.
 
+{{< docs/shared lookup="visualizations/connect-null-values.md" source="grafana" version="<GRAFANA VERSION>" >}}
+
+{{< docs/shared lookup="visualizations/disconnect-values.md" source="grafana" version="<GRAFANA VERSION>" >}}
+
 ## Value mappings
 
 To assign colors to boolean or string values, you can use [Value mappings]({{< relref "../../configure-value-mappings/" >}}).
@@ -62,4 +71,4 @@ The panel can be used with time series data as well. In this case, the threshold
 
 When the legend option is enabled it can show either the value mappings or the threshold brackets. To show the value mappings in the legend, it's important that the `Color scheme` as referenced in [Color scheme]({{< relref "../../configure-standard-options/#color-scheme" >}}) is set to `Single color` or `Classic palette`. To see the threshold brackets in the legend set the `Color scheme` to `From thresholds`.
 
-{{< docs/shared "visualizations/legend-mode.md" >}}
+{{< docs/shared lookup="visualizations/legend-mode.md" source="grafana" version="<GRAFANA VERSION>" >}}

@@ -10,8 +10,6 @@
 
 import * as ui from '@grafana/schema';
 
-export const PanelCfgModelVersion = Object.freeze([0, 0]);
-
 export interface Options {
   basemap: ui.MapLayerOptions;
   controls: ControlsOptions;

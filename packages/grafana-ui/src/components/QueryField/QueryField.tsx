@@ -250,10 +250,8 @@ QueryField.defaultProps = {
 const getStyles = (theme: GrafanaTheme2) => {
   const focusStyles = getFocusStyles(theme);
   return {
-    wrapper: css`
-      &:focus-within {
-        ${focusStyles}
-      }
-    `,
+    wrapper: css({
+      '&:focus-within': focusStyles,
+    }),
   };
 };

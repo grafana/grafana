@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/middleware"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/auth"
+	"github.com/grafana/grafana/pkg/services/authn"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/ldap"
 	"github.com/grafana/grafana/pkg/services/ldap/multildap"
@@ -28,31 +29,33 @@ import (
 )
 
 type Service struct {
-	cfg               *setting.Cfg
-	userService       user.Service
-	authInfoService   login.AuthInfoService
-	ldapGroupsService ldap.Groups
-	loginService      login.Service
-	orgService        org.Service
-	sessionService    auth.UserTokenService
-	log               log.Logger
-	ldapService       service.LDAP
+	cfg                  *setting.Cfg
+	userService          user.Service
+	authInfoService      login.AuthInfoService
+	ldapGroupsService    ldap.Groups
+	orgService           org.Service
+	sessionService       auth.UserTokenService
+	log                  log.Logger
+	ldapService          service.LDAP
+	identitySynchronizer authn.IdentitySynchronizer
 }
 
-func ProvideService(cfg *setting.Cfg, router routing.RouteRegister, accessControl ac.AccessControl,
+func ProvideService(
+	cfg *setting.Cfg, router routing.RouteRegister, accessControl ac.AccessControl,
 	userService user.Service, authInfoService login.AuthInfoService, ldapGroupsService ldap.Groups,
-	loginService login.Service, orgService org.Service, ldapService service.LDAP,
-	sessionService auth.UserTokenService, bundleRegistry supportbundles.Service) *Service {
+	identitySynchronizer authn.IdentitySynchronizer, orgService org.Service, ldapService service.LDAP,
+	sessionService auth.UserTokenService, bundleRegistry supportbundles.Service,
+) *Service {
 	s := &Service{
-		cfg:               cfg,
-		userService:       userService,
-		authInfoService:   authInfoService,
-		ldapGroupsService: ldapGroupsService,
-		loginService:      loginService,
-		orgService:        orgService,
-		sessionService:    sessionService,
-		ldapService:       ldapService,
-		log:               log.New("ldap.api"),
+		cfg:                  cfg,
+		userService:          userService,
+		authInfoService:      authInfoService,
+		ldapGroupsService:    ldapGroupsService,
+		orgService:           orgService,
+		sessionService:       sessionService,
+		ldapService:          ldapService,
+		log:                  log.New("ldap.api"),
+		identitySynchronizer: identitySynchronizer,
 	}
 
 	authorize := ac.Middleware(accessControl)
@@ -209,14 +212,11 @@ func (s *Service) PostSyncUserWithLDAP(c *contextmodel.ReqContext) response.Resp
 				return response.Error(http.StatusBadRequest, errMsg, err)
 			}
 
-			// Since the user was not in the LDAP server. Let's disable it.
-			err := s.loginService.DisableExternalUser(c.Req.Context(), usr.Login)
-			if err != nil {
+			if err := s.userService.Disable(c.Req.Context(), &user.DisableUserCommand{IsDisabled: true, UserID: usr.ID}); err != nil {
 				return response.Error(http.StatusInternalServerError, "Failed to disable the user", err)
 			}
 
-			err = s.sessionService.RevokeAllUserTokens(c.Req.Context(), userId)
-			if err != nil {
+			if err = s.sessionService.RevokeAllUserTokens(c.Req.Context(), userId); err != nil {
 				return response.Error(http.StatusInternalServerError, "Failed to remove session tokens for the user", err)
 			}
 
@@ -227,19 +227,7 @@ func (s *Service) PostSyncUserWithLDAP(c *contextmodel.ReqContext) response.Resp
 		return response.Error(http.StatusBadRequest, "Something went wrong while finding the user in LDAP", err)
 	}
 
-	upsertCmd := &login.UpsertUserCommand{
-		ReqContext:    c,
-		ExternalUser:  userInfo,
-		SignupAllowed: s.cfg.LDAPAllowSignup,
-		UserLookupParams: login.UserLookupParams{
-			UserID: &usr.ID, // Upsert by ID only
-			Email:  nil,
-			Login:  nil,
-		},
-	}
-
-	_, err = s.loginService.UpsertUser(c.Req.Context(), upsertCmd)
-	if err != nil {
+	if err := s.identitySynchronizer.SyncIdentity(c.Req.Context(), s.identityFromLDAPUser(userInfo)); err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to update the user", err)
 	}
 
@@ -276,8 +264,6 @@ func (s *Service) GetUserFromLDAP(c *contextmodel.ReqContext) response.Response 
 	if user == nil || err != nil {
 		return response.Error(http.StatusNotFound, "No user was found in the LDAP server(s) with that username", err)
 	}
-
-	s.log.Debug("user found", "user", user)
 
 	name, surname := splitName(user.Name)
 
@@ -316,7 +302,7 @@ func (s *Service) GetUserFromLDAP(c *contextmodel.ReqContext) response.Response 
 		u.OrgRoles = append(u.OrgRoles, LDAPRoleDTO{GroupDN: userGroup})
 	}
 
-	s.log.Debug("mapping org roles", "orgsRoles", u.OrgRoles)
+	s.log.Debug("Mapping org roles", "orgsRoles", u.OrgRoles)
 	if err := u.fetchOrgs(c.Req.Context(), s.orgService); err != nil {
 		return response.Error(http.StatusBadRequest, "An organization was not found - Please verify your LDAP configuration", err)
 	}
@@ -327,6 +313,29 @@ func (s *Service) GetUserFromLDAP(c *contextmodel.ReqContext) response.Response 
 	}
 
 	return response.JSON(http.StatusOK, u)
+}
+
+func (s *Service) identityFromLDAPUser(user *login.ExternalUserInfo) *authn.Identity {
+	return &authn.Identity{
+		OrgRoles:        user.OrgRoles,
+		Login:           user.Login,
+		Name:            user.Name,
+		Email:           user.Email,
+		IsGrafanaAdmin:  user.IsGrafanaAdmin,
+		AuthenticatedBy: user.AuthModule,
+		AuthID:          user.AuthId,
+		Groups:          user.Groups,
+		ClientParams: authn.ClientParams{
+			SyncUser:            true,
+			SyncTeams:           true,
+			EnableDisabledUsers: true,
+			SyncOrgRoles:        !s.cfg.LDAPSkipOrgRoleSync,
+			AllowSignUp:         s.cfg.LDAPAllowSignup,
+			LookUpParams: login.UserLookupParams{
+				UserID: &user.UserId,
+			},
+		},
+	}
 }
 
 // splitName receives the full name of a user and splits it into two parts: A name and a surname.

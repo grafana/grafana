@@ -23,7 +23,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
@@ -82,6 +82,7 @@ func TestProcessTicks(t *testing.T) {
 		Clock:                   mockedClock,
 		Historian:               &state.FakeHistorian{},
 		MaxStateSaveConcurrency: 1,
+		Tracer:                  testTracer,
 	}
 	st := state.NewManager(managerCfg)
 
@@ -453,22 +454,21 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 			t.Run("it reports metrics", func(t *testing.T) {
 				// duration metric has 0 values because of mocked clock that do not advance
 				expectedMetric := fmt.Sprintf(
-					`# HELP grafana_alerting_rule_evaluation_duration_seconds The duration for a rule to execute.
+					`# HELP grafana_alerting_rule_evaluation_duration_seconds The time to evaluate a rule.
         	            	# TYPE grafana_alerting_rule_evaluation_duration_seconds histogram
-        	            	grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="0.005"} 1
         	            	grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="0.01"} 1
-        	            	grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="0.025"} 1
-        	            	grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="0.05"} 1
         	            	grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="0.1"} 1
-        	            	grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="0.25"} 1
         	            	grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="0.5"} 1
         	            	grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="1"} 1
-        	            	grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="2.5"} 1
         	            	grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="5"} 1
         	            	grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="10"} 1
-        	            	grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="25"} 1
-        	            	grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="50"} 1
-        	            	grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="100"} 1
+        	            	grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="15"} 1
+        	            	grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="30"} 1
+							grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="60"} 1
+							grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="120"} 1
+							grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="180"} 1
+							grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="240"} 1
+							grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="300"} 1
         	            	grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="+Inf"} 1
         	            	grafana_alerting_rule_evaluation_duration_seconds_sum{org="%[1]d"} 0
         	            	grafana_alerting_rule_evaluation_duration_seconds_count{org="%[1]d"} 1
@@ -478,9 +478,45 @@ func TestSchedule_ruleRoutine(t *testing.T) {
         	            	# HELP grafana_alerting_rule_evaluations_total The total number of rule evaluations.
         	            	# TYPE grafana_alerting_rule_evaluations_total counter
         	            	grafana_alerting_rule_evaluations_total{org="%[1]d"} 1
+							# HELP grafana_alerting_rule_process_evaluation_duration_seconds The time to process the evaluation results for a rule.
+							# TYPE grafana_alerting_rule_process_evaluation_duration_seconds histogram
+							grafana_alerting_rule_process_evaluation_duration_seconds_bucket{org="%[1]d",le="0.01"} 1
+							grafana_alerting_rule_process_evaluation_duration_seconds_bucket{org="%[1]d",le="0.1"} 1
+							grafana_alerting_rule_process_evaluation_duration_seconds_bucket{org="%[1]d",le="0.5"} 1
+							grafana_alerting_rule_process_evaluation_duration_seconds_bucket{org="%[1]d",le="1"} 1
+							grafana_alerting_rule_process_evaluation_duration_seconds_bucket{org="%[1]d",le="5"} 1
+							grafana_alerting_rule_process_evaluation_duration_seconds_bucket{org="%[1]d",le="10"} 1
+							grafana_alerting_rule_process_evaluation_duration_seconds_bucket{org="%[1]d",le="15"} 1
+							grafana_alerting_rule_process_evaluation_duration_seconds_bucket{org="%[1]d",le="30"} 1
+							grafana_alerting_rule_process_evaluation_duration_seconds_bucket{org="%[1]d",le="60"} 1
+							grafana_alerting_rule_process_evaluation_duration_seconds_bucket{org="%[1]d",le="120"} 1
+							grafana_alerting_rule_process_evaluation_duration_seconds_bucket{org="%[1]d",le="180"} 1
+							grafana_alerting_rule_process_evaluation_duration_seconds_bucket{org="%[1]d",le="240"} 1
+							grafana_alerting_rule_process_evaluation_duration_seconds_bucket{org="%[1]d",le="300"} 1
+							grafana_alerting_rule_process_evaluation_duration_seconds_bucket{org="%[1]d",le="+Inf"} 1
+							grafana_alerting_rule_process_evaluation_duration_seconds_sum{org="%[1]d"} 0
+							grafana_alerting_rule_process_evaluation_duration_seconds_count{org="%[1]d"} 1
+							# HELP grafana_alerting_rule_send_alerts_duration_seconds The time to send the alerts to Alertmanager.
+							# TYPE grafana_alerting_rule_send_alerts_duration_seconds histogram
+							grafana_alerting_rule_send_alerts_duration_seconds_bucket{org="%[1]d",le="0.01"} 1
+							grafana_alerting_rule_send_alerts_duration_seconds_bucket{org="%[1]d",le="0.1"} 1
+							grafana_alerting_rule_send_alerts_duration_seconds_bucket{org="%[1]d",le="0.5"} 1
+							grafana_alerting_rule_send_alerts_duration_seconds_bucket{org="%[1]d",le="1"} 1
+							grafana_alerting_rule_send_alerts_duration_seconds_bucket{org="%[1]d",le="5"} 1
+							grafana_alerting_rule_send_alerts_duration_seconds_bucket{org="%[1]d",le="10"} 1
+							grafana_alerting_rule_send_alerts_duration_seconds_bucket{org="%[1]d",le="15"} 1
+							grafana_alerting_rule_send_alerts_duration_seconds_bucket{org="%[1]d",le="30"} 1
+							grafana_alerting_rule_send_alerts_duration_seconds_bucket{org="%[1]d",le="60"} 1
+							grafana_alerting_rule_send_alerts_duration_seconds_bucket{org="%[1]d",le="120"} 1
+							grafana_alerting_rule_send_alerts_duration_seconds_bucket{org="%[1]d",le="180"} 1
+							grafana_alerting_rule_send_alerts_duration_seconds_bucket{org="%[1]d",le="240"} 1
+							grafana_alerting_rule_send_alerts_duration_seconds_bucket{org="%[1]d",le="300"} 1
+							grafana_alerting_rule_send_alerts_duration_seconds_bucket{org="%[1]d",le="+Inf"} 1
+							grafana_alerting_rule_send_alerts_duration_seconds_sum{org="%[1]d"} 0
+							grafana_alerting_rule_send_alerts_duration_seconds_count{org="%[1]d"} 1
 				`, rule.OrgID)
 
-				err := testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedMetric), "grafana_alerting_rule_evaluation_duration_seconds", "grafana_alerting_rule_evaluations_total", "grafana_alerting_rule_evaluation_failures_total")
+				err := testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedMetric), "grafana_alerting_rule_evaluation_duration_seconds", "grafana_alerting_rule_evaluations_total", "grafana_alerting_rule_evaluation_failures_total", "grafana_alerting_rule_process_evaluation_duration_seconds", "grafana_alerting_rule_send_alerts_duration_seconds")
 				require.NoError(t, err)
 			})
 		})
@@ -641,34 +677,69 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 		t.Run("it should increase failure counter", func(t *testing.T) {
 			// duration metric has 0 values because of mocked clock that do not advance
 			expectedMetric := fmt.Sprintf(
-				`# HELP grafana_alerting_rule_evaluation_duration_seconds The duration for a rule to execute.
-        	            	# TYPE grafana_alerting_rule_evaluation_duration_seconds histogram
-        	            	grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="0.005"} 1
-        	            	grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="0.01"} 1
-        	            	grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="0.025"} 1
-        	            	grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="0.05"} 1
-        	            	grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="0.1"} 1
-        	            	grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="0.25"} 1
-        	            	grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="0.5"} 1
-        	            	grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="1"} 1
-        	            	grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="2.5"} 1
-        	            	grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="5"} 1
-        	            	grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="10"} 1
-        	            	grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="25"} 1
-        	            	grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="50"} 1
-        	            	grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="100"} 1
-        	            	grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="+Inf"} 1
-        	            	grafana_alerting_rule_evaluation_duration_seconds_sum{org="%[1]d"} 0
-        	            	grafana_alerting_rule_evaluation_duration_seconds_count{org="%[1]d"} 1
-							# HELP grafana_alerting_rule_evaluation_failures_total The total number of rule evaluation failures.
-        	            	# TYPE grafana_alerting_rule_evaluation_failures_total counter
-        	            	grafana_alerting_rule_evaluation_failures_total{org="%[1]d"} 1
-        	            	# HELP grafana_alerting_rule_evaluations_total The total number of rule evaluations.
-        	            	# TYPE grafana_alerting_rule_evaluations_total counter
-        	            	grafana_alerting_rule_evaluations_total{org="%[1]d"} 1
+				`# HELP grafana_alerting_rule_evaluation_duration_seconds The time to evaluate a rule.
+        	            # TYPE grafana_alerting_rule_evaluation_duration_seconds histogram
+        	            grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="0.01"} 1
+        	            grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="0.1"} 1
+        	            grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="0.5"} 1
+        	            grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="1"} 1
+        	            grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="5"} 1
+        	            grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="10"} 1
+        	            grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="15"} 1
+        	            grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="30"} 1
+						grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="60"} 1
+						grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="120"} 1
+						grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="180"} 1
+						grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="240"} 1
+						grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="300"} 1
+        	            grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="+Inf"} 1
+        	            grafana_alerting_rule_evaluation_duration_seconds_sum{org="%[1]d"} 0
+        	            grafana_alerting_rule_evaluation_duration_seconds_count{org="%[1]d"} 1
+						# HELP grafana_alerting_rule_evaluation_failures_total The total number of rule evaluation failures.
+        	            # TYPE grafana_alerting_rule_evaluation_failures_total counter
+        	            grafana_alerting_rule_evaluation_failures_total{org="%[1]d"} 1
+        	            # HELP grafana_alerting_rule_evaluations_total The total number of rule evaluations.
+        	            # TYPE grafana_alerting_rule_evaluations_total counter
+        	            grafana_alerting_rule_evaluations_total{org="%[1]d"} 1
+						# HELP grafana_alerting_rule_process_evaluation_duration_seconds The time to process the evaluation results for a rule.
+						# TYPE grafana_alerting_rule_process_evaluation_duration_seconds histogram
+						grafana_alerting_rule_process_evaluation_duration_seconds_bucket{org="%[1]d",le="0.01"} 1
+						grafana_alerting_rule_process_evaluation_duration_seconds_bucket{org="%[1]d",le="0.1"} 1
+						grafana_alerting_rule_process_evaluation_duration_seconds_bucket{org="%[1]d",le="0.5"} 1
+						grafana_alerting_rule_process_evaluation_duration_seconds_bucket{org="%[1]d",le="1"} 1
+						grafana_alerting_rule_process_evaluation_duration_seconds_bucket{org="%[1]d",le="5"} 1
+						grafana_alerting_rule_process_evaluation_duration_seconds_bucket{org="%[1]d",le="10"} 1
+						grafana_alerting_rule_process_evaluation_duration_seconds_bucket{org="%[1]d",le="15"} 1
+						grafana_alerting_rule_process_evaluation_duration_seconds_bucket{org="%[1]d",le="30"} 1
+						grafana_alerting_rule_process_evaluation_duration_seconds_bucket{org="%[1]d",le="60"} 1
+						grafana_alerting_rule_process_evaluation_duration_seconds_bucket{org="%[1]d",le="120"} 1
+						grafana_alerting_rule_process_evaluation_duration_seconds_bucket{org="%[1]d",le="180"} 1
+						grafana_alerting_rule_process_evaluation_duration_seconds_bucket{org="%[1]d",le="240"} 1
+						grafana_alerting_rule_process_evaluation_duration_seconds_bucket{org="%[1]d",le="300"} 1
+						grafana_alerting_rule_process_evaluation_duration_seconds_bucket{org="%[1]d",le="+Inf"} 1
+						grafana_alerting_rule_process_evaluation_duration_seconds_sum{org="%[1]d"} 0
+						grafana_alerting_rule_process_evaluation_duration_seconds_count{org="%[1]d"} 1
+						# HELP grafana_alerting_rule_send_alerts_duration_seconds The time to send the alerts to Alertmanager.
+						# TYPE grafana_alerting_rule_send_alerts_duration_seconds histogram
+						grafana_alerting_rule_send_alerts_duration_seconds_bucket{org="%[1]d",le="0.01"} 1
+						grafana_alerting_rule_send_alerts_duration_seconds_bucket{org="%[1]d",le="0.1"} 1
+						grafana_alerting_rule_send_alerts_duration_seconds_bucket{org="%[1]d",le="0.5"} 1
+						grafana_alerting_rule_send_alerts_duration_seconds_bucket{org="%[1]d",le="1"} 1
+						grafana_alerting_rule_send_alerts_duration_seconds_bucket{org="%[1]d",le="5"} 1
+						grafana_alerting_rule_send_alerts_duration_seconds_bucket{org="%[1]d",le="10"} 1
+						grafana_alerting_rule_send_alerts_duration_seconds_bucket{org="%[1]d",le="15"} 1
+						grafana_alerting_rule_send_alerts_duration_seconds_bucket{org="%[1]d",le="30"} 1
+						grafana_alerting_rule_send_alerts_duration_seconds_bucket{org="%[1]d",le="60"} 1
+						grafana_alerting_rule_send_alerts_duration_seconds_bucket{org="%[1]d",le="120"} 1
+						grafana_alerting_rule_send_alerts_duration_seconds_bucket{org="%[1]d",le="180"} 1
+						grafana_alerting_rule_send_alerts_duration_seconds_bucket{org="%[1]d",le="240"} 1
+						grafana_alerting_rule_send_alerts_duration_seconds_bucket{org="%[1]d",le="300"} 1
+						grafana_alerting_rule_send_alerts_duration_seconds_bucket{org="%[1]d",le="+Inf"} 1
+						grafana_alerting_rule_send_alerts_duration_seconds_sum{org="%[1]d"} 0
+						grafana_alerting_rule_send_alerts_duration_seconds_count{org="%[1]d"} 1
 				`, rule.OrgID)
 
-			err := testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedMetric), "grafana_alerting_rule_evaluation_duration_seconds", "grafana_alerting_rule_evaluations_total", "grafana_alerting_rule_evaluation_failures_total")
+			err := testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedMetric), "grafana_alerting_rule_evaluation_duration_seconds", "grafana_alerting_rule_evaluations_total", "grafana_alerting_rule_evaluation_failures_total", "grafana_alerting_rule_process_evaluation_duration_seconds", "grafana_alerting_rule_send_alerts_duration_seconds")
 			require.NoError(t, err)
 		})
 
@@ -784,7 +855,7 @@ func setupScheduler(t *testing.T, rs *fakeRulesStore, is *state.FakeInstanceStor
 
 	var evaluator = evalMock
 	if evalMock == nil {
-		evaluator = eval.NewEvaluatorFactory(setting.UnifiedAlertingSettings{}, nil, expr.ProvideService(&setting.Cfg{ExpressionsEnabled: true}, nil, nil, &featuremgmt.FeatureManager{}, nil, tracing.InitializeTracerForTest()), &plugins.FakePluginStore{})
+		evaluator = eval.NewEvaluatorFactory(setting.UnifiedAlertingSettings{}, nil, expr.ProvideService(&setting.Cfg{ExpressionsEnabled: true}, nil, nil, &featuremgmt.FeatureManager{}, nil, tracing.InitializeTracerForTest()), &fakes.FakePluginStore{})
 	}
 
 	if registry == nil {
@@ -826,6 +897,7 @@ func setupScheduler(t *testing.T, rs *fakeRulesStore, is *state.FakeInstanceStor
 		Clock:                   mockedClock,
 		Historian:               &state.FakeHistorian{},
 		MaxStateSaveConcurrency: 1,
+		Tracer:                  testTracer,
 	}
 	st := state.NewManager(managerCfg)
 

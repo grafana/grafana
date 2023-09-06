@@ -20,7 +20,7 @@ type K8sResource = kinds.GrafanaResource[Spec, Status]
 func NewK8sResource(name string, s *Spec) K8sResource {
 	return K8sResource{
 		Kind:       "RoleBinding",
-		APIVersion: "v0.0-alpha",
+		APIVersion: "v0-0-alpha",
 		Metadata: kinds.GrafanaResourceMetadata{
 			Name:        name,
 			Annotations: make(map[string]string),
@@ -30,11 +30,10 @@ func NewK8sResource(name string, s *Spec) K8sResource {
 	}
 }
 
-
 // Resource is the wire representation of RoleBinding.
 // It currently will soon be merged into the k8s flavor (TODO be better)
 type Resource struct {
 	Metadata Metadata `json:"metadata"`
-	Spec Spec `json:"spec"`
-	Status Status `json:"status"`
+	Spec     Spec     `json:"spec"`
+	Status   Status   `json:"status"`
 }
