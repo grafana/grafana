@@ -5,7 +5,7 @@ import { DataTransformerInfo } from '../../types';
 import { DataTransformerID } from './ids';
 
 export interface LimitTransformerOptions {
-  limitField?: number;
+  limitField?: number | string;
 }
 
 const DEFAULT_LIMIT_FIELD = 10;
@@ -18,21 +18,28 @@ export const limitTransformer: DataTransformerInfo<LimitTransformerOptions> = {
     limitField: DEFAULT_LIMIT_FIELD,
   },
 
-  operator: (options) => (source) =>
+  operator: (options, ctx) => (source) =>
     source.pipe(
       map((data) => {
-        const limitFieldMatch = options.limitField || DEFAULT_LIMIT_FIELD;
+        let limit = DEFAULT_LIMIT_FIELD;
+        if (options.limitField !== undefined) {
+          if (typeof options.limitField === 'string') {
+            limit = parseInt(ctx.interpolate(options.limitField), 10);
+          } else {
+            limit = options.limitField;
+          }
+        }
         return data.map((frame) => {
-          if (frame.length > limitFieldMatch) {
+          if (frame.length > limit) {
             return {
               ...frame,
               fields: frame.fields.map((f) => {
                 return {
                   ...f,
-                  values: f.values.slice(0, limitFieldMatch),
+                  values: f.values.slice(0, limit),
                 };
               }),
-              length: limitFieldMatch,
+              length: limit,
             };
           }
 

@@ -15,7 +15,7 @@ export const LimitTransformerEditor = ({ options, onChange }: TransformerUIProps
     (value: FormEvent<HTMLInputElement>) => {
       onChange({
         ...options,
-        limitField: Number(value.currentTarget.value),
+        limitField: value.currentTarget.value,
       });
     },
     [onChange, options]
@@ -25,13 +25,7 @@ export const LimitTransformerEditor = ({ options, onChange }: TransformerUIProps
     <>
       <InlineFieldRow>
         <InlineField label="Limit" labelWidth={8}>
-          <Input
-            placeholder="Limit count"
-            pattern="[0-9]*"
-            value={options.limitField}
-            onChange={onSetLimit}
-            width={25}
-          />
+          <Input placeholder="Limit count" value={options.limitField} onChange={onSetLimit} width={25} />
         </InlineField>
       </InlineFieldRow>
     </>
