@@ -70,7 +70,6 @@ type JsonData struct {
 	Timezone                string `json:"timezone"`
 	Encrypt                 string `json:"encrypt"`
 	Servername              string `json:"servername"`
-	TimeInterval            string `json:"timeInterval"`
 	Database                string `json:"database"`
 	SecureDSProxy           bool   `json:"enableSecureSocksProxy"`
 	AllowCleartextPasswords bool   `json:"allowCleartextPasswords"`
@@ -270,7 +269,7 @@ func (e *DataSourceHandler) executeQuery(query backend.DataQuery, wg *sync.WaitG
 	}
 
 	// global substitutions
-	interpolatedQuery, err := Interpolate(query, timeRange, e.dsInfo.JsonData.TimeInterval, queryJson.RawSql)
+	interpolatedQuery, err := Interpolate(query, timeRange, "", queryJson.RawSql)
 	if err != nil {
 		errAppendDebug("interpolation failed", e.TransformQueryError(logger, err), interpolatedQuery)
 		return
