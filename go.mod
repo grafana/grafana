@@ -511,4 +511,4 @@ replace google.golang.org/grpc => google.golang.org/grpc v1.45.0
 
 exclude github.com/mattn/go-sqlite3 v2.0.3+incompatible
 
-replace github.com/grafana/grafana/pkg/util/converter => /home/kbrandt/go/github.com/grafana/grafana/pkg/util/converter
+replace github.com/grafana/grafana/pkg/util/converter => ./pkg/util/converter
