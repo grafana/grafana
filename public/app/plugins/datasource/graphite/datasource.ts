@@ -9,7 +9,6 @@ import {
   DataFrame,
   DataQueryRequest,
   DataQueryResponse,
-  DataSourceApi,
   DataSourceWithQueryExportSupport,
   dateMath,
   dateTime,
@@ -21,7 +20,7 @@ import {
   toDataFrame,
   getSearchFilterScopedVar,
 } from '@grafana/data';
-import { getBackendSrv } from '@grafana/runtime';
+import { DataSourceWithBackend, getBackendSrv } from '@grafana/runtime';
 import { isVersionGtOrEq, SemVersion } from 'app/core/utils/version';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 import { getRollupNotice, getRuntimeConsolidationNotice } from 'app/plugins/datasource/graphite/meta';
@@ -65,7 +64,7 @@ function convertGlobToRegEx(text: string): string {
 }
 
 export class GraphiteDatasource
-  extends DataSourceApi<GraphiteQuery, GraphiteOptions, GraphiteQueryImportConfiguration>
+  extends DataSourceWithBackend<GraphiteQuery, GraphiteOptions>
   implements DataSourceWithQueryExportSupport<GraphiteQuery>
 {
   basicAuth: string;
