@@ -378,7 +378,7 @@ var NamespaceMetricsMap = map[string][]string{
 	"AWS/Robomaker":            {"RealTimeFactor", "vCPU", "Memory", "SimulationUnit"},
 	"AWS/Route53":              {"ChildHealthCheckHealthyCount", "ConnectionTime", "DNSQueries", "HealthCheckPercentageHealthy", "HealthCheckStatus", "SSLHandshakeTime", "TimeToFirstByte"},
 	"AWS/Route53Resolver":      {"InboundQueryVolume", "OutboundQueryVolume", "OutboundQueryAggregatedVolume"},
-	"AWS/S3":                   {"4xxErrors", "5xxErrors", "AllRequests", "BucketSizeBytes", "BytesDownloaded", "BytesPendingReplication", "BytesUploaded", "DeleteRequests", "FirstByteLatency", "GetRequests", "HeadRequests", "ListRequests", "NumberOfObjects", "PostRequests", "PutRequests", "OperationsFailedReplication", "OperationsPendingReplication", "ReplicationLatency", "SelectRequests", "SelectReturnedBytes", "SelectScannedBytes", "TotalRequestLatency"},
+	"AWS/S3":                   {"4xxErrors", "5xxErrors", "AllRequests", "BucketSizeBytes", "BytesDownloaded", "BytesPendingReplication", "BytesUploaded", "DeleteRequests", "FirstByteLatency", "GetRequests", "HeadRequests", "ListRequests", "NumberOfObjects", "OperationsFailedReplication", "OperationsPendingReplication", "PostRequests", "PutRequests", "ReplicationLatency", "SelectRequests", "SelectReturnedBytes", "SelectScannedBytes", "TotalRequestLatency"},
 	"AWS/SDKMetrics":           {"CallCount", "ClientErrorCount", "EndToEndLatency", "ConnectionErrorCount", "ServerErrorCount", "ThrottleCount"},
 	"AWS/ServiceCatalog":       {"ProvisionedProductLaunch"},
 	"AWS/SES":                  {"Bounce", "Clicks", "Complaint", "Delivery", "Opens", "Reject", "Rendering Failures", "Reputation.BounceRate", "Reputation.ComplaintRate", "Send"},
