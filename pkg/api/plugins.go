@@ -433,7 +433,7 @@ func (hs *HTTPServer) CheckHealth(c *contextmodel.ReqContext) response.Response 
 	requestmeta.WithDownstreamStatusSource(c.Req.Context())
 
 	if resp.Status != backend.HealthStatusOk {
-		return response.JSON(http.StatusServiceUnavailable, payload)
+		return response.JSON(http.StatusBadRequest, payload)
 	}
 
 	return response.JSON(http.StatusOK, payload)
