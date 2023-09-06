@@ -4,7 +4,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { textUtil } from '@grafana/data';
 
-import { getSvgId, getSvgStyle } from "./utils";
+import { getSvgId, getSvgStyle } from './utils';
 
 type SanitizedSVGProps = Props & { cleanStyle?: boolean };
 let shouldCleanSvgStyle = false;
