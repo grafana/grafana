@@ -1,6 +1,7 @@
 package migration
 
 import (
+	"context"
 	"crypto/md5"
 	"encoding/base64"
 	"encoding/json"
@@ -14,6 +15,7 @@ import (
 	"github.com/prometheus/common/model"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/db"
 	ngModels "github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
@@ -52,9 +54,9 @@ type channelReceiver struct {
 }
 
 // setupAlertmanagerConfigs creates Alertmanager configs with migrated receivers and routes.
-func (m *migration) setupAlertmanagerConfigs(rulesPerOrg map[int64]map[*alertRule][]uidOrID) (amConfigsPerOrg, error) {
+func (m *migration) setupAlertmanagerConfigs(ctx context.Context, rulesPerOrg map[int64]map[*alertRule][]uidOrID) (amConfigsPerOrg, error) {
 	// allChannels: channelUID -> channelConfig
-	allChannelsPerOrg, defaultChannelsPerOrg, err := m.getNotificationChannelMap()
+	allChannelsPerOrg, defaultChannelsPerOrg, err := m.getNotificationChannelMap(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load notification channels: %w", err)
 	}
@@ -147,7 +149,7 @@ func quote(s string) string {
 
 // getNotificationChannelMap returns a map of all channelUIDs to channel config as well as a separate map for just those channels that are default.
 // For any given Organization, all channels in defaultChannelsPerOrg should also exist in channelsPerOrg.
-func (m *migration) getNotificationChannelMap() (channelsPerOrg, defaultChannelsPerOrg, error) {
+func (m *migration) getNotificationChannelMap(ctx context.Context) (channelsPerOrg, defaultChannelsPerOrg, error) {
 	q := `
 	SELECT id,
 		org_id,
@@ -164,7 +166,9 @@ func (m *migration) getNotificationChannelMap() (channelsPerOrg, defaultChannels
 		alert_notification
 	`
 	allChannels := []notificationChannel{}
-	err := m.sess.SQL(q).Find(&allChannels)
+	err := m.store.WithDbSession(ctx, func(sess *db.Session) error {
+		return sess.SQL(q).Find(&allChannels)
+	})
 	if err != nil {
 		return nil, nil, err
 	}

@@ -12,11 +12,13 @@ import (
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
+// KVNamespace is the kvstore namespace used for the migration status.
 const KVNamespace = "ngalert.migration"
+
+// migratedKey is the kvstore key used for the migration status.
 const migratedKey = "migrated"
 
 type MigrationService struct {
@@ -39,43 +41,45 @@ func ProvideService(
 	}, nil
 }
 
-// Run starts the migration.
+// Run starts the migration. This will either migrate from legacy alerting to unified alerting or revert the migration.
+// If the migration status in the kvstore is not set and unified alerting is enabled, the migration will be executed.
+// If the migration status in the kvstore is set and both unified alerting is disabled and ForceMigration is set to true, the migration will be reverted.
 func (ms *MigrationService) Run(ctx context.Context) error {
 	ms.log.Info("Starting")
-	migrated, err := ms.GetMigrated(ctx)
-	if err != nil {
-		return fmt.Errorf("getting migration status: %w", err)
-	}
-	if migrated == ms.cfg.UnifiedAlerting.IsEnabled() {
-		// Nothing to do.
-		ms.log.Info("Nothing to do")
-		return nil
-	}
-
-	if migrated {
-		// If legacy alerting is also disabled, there is nothing to do
-		if setting.AlertingEnabled != nil && !*setting.AlertingEnabled {
+	err := ms.store.InTransaction(ctx, func(ctx context.Context) error {
+		migrated, err := ms.GetMigrated(ctx)
+		if err != nil {
+			return fmt.Errorf("getting migration status: %w", err)
+		}
+		if migrated == ms.cfg.UnifiedAlerting.IsEnabled() {
+			// Nothing to do.
+			ms.log.Info("No migrations to run")
 			return nil
 		}
 
-		// Safeguard to prevent data loss when migrating from UA to LA
-		if !ms.cfg.ForceMigration {
-			panic("Grafana has already been migrated to Unified Alerting.\nAny alert rules created while using Unified Alerting will be deleted by rolling back.\n\nSet force_migration=true in your grafana.ini and restart Grafana to roll back and delete Unified Alerting configuration data.")
+		if migrated {
+			// If legacy alerting is also disabled, there is nothing to do
+			if setting.AlertingEnabled != nil && !*setting.AlertingEnabled {
+				return nil
+			}
+
+			// Safeguard to prevent data loss when reverting from UA to LA.
+			if !ms.cfg.ForceMigration {
+				panic("Grafana has already been migrated to Unified Alerting.\nAny alert rules created while using Unified Alerting will be deleted by rolling back.\n\nSet force_migration=true in your grafana.ini and restart Grafana to roll back and delete Unified Alerting configuration data.")
+			}
+
+			// Revert migration
+			ms.log.Info("Reverting legacy migration")
+			err := ms.Revert(ctx)
+			if err != nil {
+				return fmt.Errorf("reverting migration: %w", err)
+			}
+			ms.log.Info("Legacy migration reverted")
+			return nil
 		}
 
-		// Revert migration
-		ms.log.Info("Reverting legacy migration")
-		err := ms.Revert(ctx)
-		if err != nil {
-			return fmt.Errorf("reverting migration: %w", err)
-		}
-		ms.log.Info("Legacy migration reverted")
-		return nil
-	}
-
-	ms.log.Info("Starting legacy migration")
-	err = ms.store.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		mg := &migration{
+		ms.log.Info("Starting legacy migration")
+		mg := migration{
 			// We deduplicate for case-insensitive matching in MySQL-compatible backend flavours because they use case-insensitive collation.
 			seenUIDs: uidSet{set: make(map[string]struct{}), caseInsensitive: ms.store.GetDialect().SupportEngine()},
 			silences: make(map[int64][]*pb.MeshSilence),
@@ -83,10 +87,9 @@ func (ms *MigrationService) Run(ctx context.Context) error {
 			dialect:  ms.store.GetDialect(),
 			cfg:      ms.cfg,
 			store:    ms.store,
-			sess:     sess.Session,
 		}
 
-		err := mg.Exec()
+		err = mg.Exec(ctx)
 		if err != nil {
 			return fmt.Errorf("executing migration: %w", err)
 		}
@@ -96,13 +99,12 @@ func (ms *MigrationService) Run(ctx context.Context) error {
 			return fmt.Errorf("setting migration status: %w", err)
 		}
 
+		ms.log.Info("Completed legacy migration")
 		return nil
 	})
-
 	if err != nil {
 		return fmt.Errorf("migration failed: %w", err)
 	}
-
 	return nil
 }
 
@@ -111,6 +113,7 @@ func (ms *MigrationService) IsDisabled() bool {
 	return ms.cfg == nil
 }
 
+// GetMigrated returns the migration status from the kvstore.
 func (ms *MigrationService) GetMigrated(ctx context.Context) (bool, error) {
 	content, exists, err := ms.kv.Get(ctx, migratedKey)
 	if err != nil {
@@ -124,13 +127,15 @@ func (ms *MigrationService) GetMigrated(ctx context.Context) (bool, error) {
 	return strconv.ParseBool(content)
 }
 
+// SetMigrated sets the migration status in the kvstore.
 func (ms *MigrationService) SetMigrated(ctx context.Context, migrated bool) error {
 	return ms.kv.Set(ctx, migratedKey, strconv.FormatBool(migrated))
 }
 
+// Revert reverts the migration, deleting all unified alerting resources such as alert rules, alertmanager configurations, and silence files.
+// In addition, it will delete all folder and permissions originally created by this migration, these are marked by the FOLDER_CREATED_BY constant.
 func (ms *MigrationService) Revert(ctx context.Context) error {
-	return ms.store.WithTransactionalDbSession(ctx, func(dbSess *db.Session) error {
-		sess := dbSess.Session
+	return ms.store.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		_, err := sess.Exec("delete from alert_rule")
 		if err != nil {
 			return err
@@ -188,9 +193,7 @@ func (ms *MigrationService) Revert(ctx context.Context) error {
 			}
 		}
 
-		// Since both revert and this modifies kv_store, we use the same transaction in both writes to prevent Lock Wait Timeout.
-		withTransaction := context.WithValue(ctx, sqlstore.ContextSessionKey{}, dbSess)
-		err = ms.SetMigrated(withTransaction, false)
+		err = ms.SetMigrated(ctx, false)
 		if err != nil {
 			return fmt.Errorf("setting migration status: %w", err)
 		}
