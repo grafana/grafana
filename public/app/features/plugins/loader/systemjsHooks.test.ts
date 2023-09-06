@@ -69,10 +69,44 @@ describe('SystemJS Loader Hooks', () => {
       expect(result).toBe('http://localhost/public/plugins/my-datasource/styles.css');
     });
     it('adds default js extension to resolved url', () => {
+      // test against missing extension
       const id = '/public/plugins/my-plugin/traffic_light';
       const result = decorateSystemJSResolve.bind(systemJSPrototype)(originalResolve, id);
 
       expect(result).toBe('http://localhost/public/plugins/my-plugin/traffic_light.js');
+
+      // test against missing extension with periods in filename
+      const id2 = '/public/plugins/my-plugin/lib/flot/jquery.flot.gauge';
+      const result2 = decorateSystemJSResolve.bind(systemJSPrototype)(originalResolve, id2);
+
+      expect(result2).toBe('http://localhost/public/plugins/my-plugin/lib/flot/jquery.flot.gauge.js');
+
+      // test against bare specifiers
+      const id3 = 'package:lodash';
+      const result3 = decorateSystemJSResolve.bind(systemJSPrototype)(originalResolve, id3);
+
+      expect(result3).toBe('package:lodash');
+
+      // test against file extensions systemjs can load
+      const id4 = '/public/plugins/my-plugin/traffic_light.js';
+      const result4 = decorateSystemJSResolve.bind(systemJSPrototype)(originalResolve, id4);
+
+      expect(result4).toBe('http://localhost/public/plugins/my-plugin/traffic_light.js');
+
+      const id5 = '/public/plugins/my-plugin/traffic_light.css';
+      const result5 = decorateSystemJSResolve.bind(systemJSPrototype)(originalResolve, id5);
+
+      expect(result5).toBe('http://localhost/public/plugins/my-plugin/traffic_light.css');
+
+      const id6 = '/public/plugins/my-plugin/traffic_light.json';
+      const result6 = decorateSystemJSResolve.bind(systemJSPrototype)(originalResolve, id6);
+
+      expect(result6).toBe('http://localhost/public/plugins/my-plugin/traffic_light.json');
+
+      const id7 = '/public/plugins/my-plugin/traffic_light.wasm';
+      const result7 = decorateSystemJSResolve.bind(systemJSPrototype)(originalResolve, id7);
+
+      expect(result7).toBe('http://localhost/public/plugins/my-plugin/traffic_light.wasm');
     });
     it('resolves loadPluginCSS urls correctly', () => {
       const id = 'plugins/my-plugin/dark.css';

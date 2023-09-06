@@ -8,7 +8,6 @@ import {
   JS_CONTENT_TYPE_REGEX,
   IS_SYSTEM_MODULE_REGEX,
   SHARED_DEPENDENCY_PREFIX,
-  ENDS_WITH_FILE_EXTENSION_REGEX,
 } from './constants';
 import { SystemJSWithLoaderHooks } from './types';
 import { isHostedOnCDN } from './utils';
@@ -78,13 +77,16 @@ export function decorateSystemJsOnload(err: unknown, id: string) {
 // - strips legacy loader wildcard from urls
 // - support config.defaultExtension for System.register deps that lack an extension (e.g. './my_ctrl')
 function getBackWardsCompatibleUrl(url: string) {
+  if (url.startsWith(`${SHARED_DEPENDENCY_PREFIX}:`)) {
+    return url;
+  }
   if (url.endsWith('!')) {
     url = url.slice(0, -1);
   }
-  const shouldAddDefaultExtension =
-    !url.startsWith(`${SHARED_DEPENDENCY_PREFIX}:`) && !ENDS_WITH_FILE_EXTENSION_REGEX.test(url);
+  const systemJSFileExtensions = ['css', 'js', 'json', 'wasm'];
+  const hasValidFileExtension = systemJSFileExtensions.some((extensionName) => url.endsWith(extensionName));
 
-  return shouldAddDefaultExtension ? url + '.js' : url;
+  return hasValidFileExtension ? url : url + '.js';
 }
 
 // This transform prevents a conflict between systemjs and requirejs which Monaco Editor
