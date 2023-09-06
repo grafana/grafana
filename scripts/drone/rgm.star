@@ -155,7 +155,7 @@ def rgm_tag():
 
 def rgm_nightly():
     ver = "nightly-${DRONE_COMMIT_SHA:0:8}"
-    dst = "${{DESTINATION}}/nightly/{}".format(ver)
+    dst = "$${{DESTINATION}}/nightly/{}".format(ver)
     src = "dist/{}".format(ver)
     return pipeline(
         name = "rgm-nightly-prerelease",
