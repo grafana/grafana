@@ -92,7 +92,7 @@ func TestDynamicAngularDetectorsProvider(t *testing.T) {
 
 	t.Run("fetch", func(t *testing.T) {
 		t.Run("returns value from gcom api", func(t *testing.T) {
-			r, err := svc.fetch(context.Background())
+			r, err := svc.fetch(context.Background(), "")
 			require.NoError(t, err)
 
 			require.True(t, gcom.httpCalls.calledOnce(), "gcom api should be called")
@@ -103,7 +103,7 @@ func TestDynamicAngularDetectorsProvider(t *testing.T) {
 			// ctx that expired in the past
 			ctx, canc := context.WithDeadline(context.Background(), time.Now().Add(time.Second*-30))
 			defer canc()
-			_, err := svc.fetch(ctx)
+			_, err := svc.fetch(ctx, "")
 			require.ErrorIs(t, err, context.DeadlineExceeded)
 			require.False(t, gcom.httpCalls.called(), "gcom api should not be called")
 			require.Empty(t, svc.ProvideDetectors(context.Background()))
@@ -119,8 +119,44 @@ func TestDynamicAngularDetectorsProvider(t *testing.T) {
 			errSrv := errScenario.newHTTPTestServer()
 			t.Cleanup(errSrv.Close)
 			svc := provideDynamic(t, errSrv.URL)
-			_, err := svc.fetch(context.Background())
+			_, err := svc.fetch(context.Background(), "")
 			require.Error(t, err)
+		})
+
+		t.Run("etag", func(t *testing.T) {
+			for _, tc := range []struct {
+				name string
+				etag string
+			}{
+				{name: "no etag", etag: ""},
+				{name: "with etag", etag: `"abcdef"`},
+			} {
+				t.Run(tc.name, func(t *testing.T) {
+					callback := make(chan struct{})
+					gcom := newDefaultGCOMScenario(func(writer http.ResponseWriter, request *http.Request) {
+						const headerIfNoneMatch = "If-None-Match"
+						if tc.etag == "" {
+							require.Empty(t, request.Header.Values(headerIfNoneMatch))
+						} else {
+							require.Equal(t, tc.etag, request.Header.Get(headerIfNoneMatch))
+						}
+						close(callback)
+					})
+					srv := gcom.newHTTPTestServer()
+					t.Cleanup(srv.Close)
+					svc := provideDynamic(t, srv.URL)
+
+					_, err := svc.fetch(context.Background(), tc.etag)
+					require.NoError(t, err)
+					select {
+					case <-callback:
+						break
+					case <-time.After(time.Second * 10):
+						t.Fatal("timeout")
+					}
+					require.True(t, gcom.httpCalls.calledOnce(), "gcom api should be called")
+				})
+			}
 		})
 	})
 
@@ -141,7 +177,7 @@ func TestDynamicAngularDetectorsProvider(t *testing.T) {
 			require.Empty(t, svc.ProvideDetectors(context.Background()))
 
 			// Fetch and store value
-			err = svc.updateDetectors(context.Background())
+			err = svc.updateDetectors(context.Background(), "")
 			require.NoError(t, err)
 			checkMockDetectors(t, svc)
 
@@ -178,7 +214,7 @@ func TestDynamicAngularDetectorsProvider(t *testing.T) {
 			require.NoError(t, err)
 
 			// Try to update from GCOM, but it returns an error
-			err = svc.updateDetectors(context.Background())
+			err = svc.updateDetectors(context.Background(), "")
 			require.Error(t, err)
 			require.True(t, scenario.httpCalls.calledOnce(), "gcom api should be called once")
 
@@ -194,6 +230,10 @@ func TestDynamicAngularDetectorsProvider(t *testing.T) {
 
 			// Same for in-memory detectors
 			checkMockDetectors(t, svc)
+		})
+
+		t.Run("etag", func(t *testing.T) {
+			t.Fatalf("TODO")
 		})
 	})
 
