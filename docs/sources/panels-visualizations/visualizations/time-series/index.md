@@ -95,7 +95,7 @@ Gradient mode specifies the gradient fill, which is based on the series color. T
 - **None:** No gradient fill. This is the default setting.
 - **Opacity:** An opacity gradient where the opacity of the fill increases as Y-axis values increase.
 - **Hue:** A subtle gradient that is based on the hue of the series color.
-- **Scheme:** A color gradient defined by your [Color scheme]({{< relref "../../configure-standard-options/#color-scheme" >}}). This setting is used for the fill area and line.
+- **Scheme:** A color gradient defined by your [Color scheme]({{< relref "../../configure-standard-options/#color-scheme" >}}). This setting is used for the fill area and line. For more information about scheme, refer to [Scheme gradient mode]({{< relref "#scheme-gradient-mode"  >}}).
 
 Gradient appearance is influenced by the **Fill opacity** setting. The following image show, the **Fill opacity** is set to 50.
 
