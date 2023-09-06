@@ -89,7 +89,7 @@ export function BrowseActions() {
   return (
     <div className={styles.row} data-testid="manage-actions">
       {moveIsInvalid ? (
-        <Tooltip content={t('browse-dashboards.action.cannot-move-folders', 'Folders can not be moved')}>
+        <Tooltip content={t('browse-dashboards.action.cannot-move-folders', 'Folders cannot be moved')}>
           {moveButton}
         </Tooltip>
       ) : (
