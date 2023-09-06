@@ -45,14 +45,14 @@ var (
 			Name:        "publicDashboards",
 			Description: "Enables public access to dashboards",
 			Stage:       FeatureStagePublicPreview,
-			Owner:       grafanaDashboardsSquad,
+			Owner:       grafanaSharingSquad,
 		},
 		{
 			Name:            "publicDashboardsEmailSharing",
 			Description:     "Enables public dashboard sharing to be restricted to only allowed emails",
 			Stage:           FeatureStagePublicPreview,
 			RequiresLicense: true,
-			Owner:           grafanaDashboardsSquad,
+			Owner:           grafanaSharingSquad,
 			HideFromDocs:    true,
 		},
 		{
@@ -602,8 +602,9 @@ var (
 		{
 			Name:         "toggleLabelsInLogsUI",
 			Description:  "Enable toggleable filters in log details view",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStageGeneralAvailability,
 			FrontendOnly: true,
+			Expression:   "true", // enabled by default
 			Owner:        grafanaObservabilityLogsSquad,
 		},
 		{
@@ -714,6 +715,21 @@ var (
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
 			Owner:        grafanaPluginsPlatformSquad,
+		},
+		{
+			Name:         "dashgpt",
+			Description:  "Enable AI powered features in dashboards",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaDashboardsSquad,
+		},
+		{
+			Name:            "reportingRetries",
+			Description:     "Enables rendering retries for the reporting feature",
+			Stage:           FeatureStagePublicPreview,
+			FrontendOnly:    false,
+			Owner:           grafanaSharingSquad,
+			RequiresRestart: true,
 		},
 	}
 )

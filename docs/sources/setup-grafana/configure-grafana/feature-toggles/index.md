@@ -44,6 +44,7 @@ Some features are enabled by default. You can disable these feature by setting t
 | `enableElasticsearchBackendQuerying`             | Enable the processing of queries and responses in the Elasticsearch data source through backend                                                                                                     | Yes                |
 | `advancedDataSourcePicker`                       | Enable a new data source picker with contextual information, recently used order and advanced mode                                                                                                  | Yes                |
 | `transformationsRedesign`                        | Enables the transformations redesign                                                                                                                                                                | Yes                |
+| `toggleLabelsInLogsUI`                           | Enable toggleable filters in log details view                                                                                                                                                       | Yes                |
 | `azureMonitorDataplane`                          | Adds dataplane compliant frame metadata in the Azure Monitor datasource                                                                                                                             | Yes                |
 
 ## Preview feature toggles
@@ -71,6 +72,7 @@ Some features are enabled by default. You can disable these feature by setting t
 | `dataSourcePageHeader`           | Apply new pageHeader UI in data source edit page                                                                                                                                             |
 | `sqlDatasourceDatabaseSelection` | Enables previous SQL data source dataset dropdown behavior                                                                                                                                   |
 | `splitScopes`                    | Support faster dashboard and folder search by splitting permission scopes into parts                                                                                                         |
+| `reportingRetries`               | Enables rendering retries for the reporting feature                                                                                                                                          |
 
 ## Experimental feature toggles
 
@@ -119,7 +121,6 @@ Experimental features might be changed or removed without prior notice.
 | `prometheusIncrementalQueryInstrumentation` | Adds RudderStack events to incremental queries                                                                                                                                           |
 | `logsExploreTableVisualisation`             | A table visualisation for logs in Explore                                                                                                                                                |
 | `awsDatasourcesTempCredentials`             | Support temporary security credentials in AWS plugins for Grafana Cloud customers                                                                                                        |
-| `toggleLabelsInLogsUI`                      | Enable toggleable filters in log details view                                                                                                                                            |
 | `mlExpressions`                             | Enable support for Machine Learning in server-side expressions                                                                                                                           |
 | `traceQLStreaming`                          | Enables response streaming of TraceQL queries of the Tempo data source                                                                                                                   |
 | `metricsSummary`                            | Enables metrics summary queries in the Tempo data source                                                                                                                                 |
@@ -131,6 +132,7 @@ Experimental features might be changed or removed without prior notice.
 | `influxdbSqlSupport`                        | Enable InfluxDB SQL query language support with new querying UI                                                                                                                          |
 | `noBasicRole`                               | Enables a new role that has no permissions by default                                                                                                                                    |
 | `angularDeprecationUI`                      | Display new Angular deprecation-related UI features                                                                                                                                      |
+| `dashgpt`                                   | Enable AI powered features in dashboards                                                                                                                                                 |
 
 ## Development feature toggles
 

@@ -29,7 +29,7 @@ var (
 
 // TestTemplate tests the given template string against the given alerts. Existing templates are used to provide context for the test.
 // If an existing template of the same filename as the one being tested is found, it will not be used as context.
-func (am *Alertmanager) TestTemplate(ctx context.Context, c apimodels.TestTemplatesConfigBodyParams) (*TestTemplatesResults, error) {
+func (am *alertmanager) TestTemplate(ctx context.Context, c apimodels.TestTemplatesConfigBodyParams) (*TestTemplatesResults, error) {
 	for _, alert := range c.Alerts {
 		addDefaultLabelsAndAnnotations(alert)
 	}

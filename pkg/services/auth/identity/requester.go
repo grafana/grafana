@@ -60,6 +60,8 @@ type Requester interface {
 	GetCacheKey() (string, error)
 	// HasUniqueId returns true if the entity has a unique id
 	HasUniqueId() bool
+	// AuthenticatedBy returns the authentication method used to authenticate the entity.
+	GetAuthenticatedBy() string
 }
 
 // IntIdentifier converts a string identifier to an int64.

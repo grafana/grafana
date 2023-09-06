@@ -33,6 +33,7 @@ import (
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/annotations/annotationstest"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/database"
@@ -45,6 +46,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/libraryelements/model"
+	"github.com/grafana/grafana/pkg/services/librarypanels"
 	"github.com/grafana/grafana/pkg/services/live"
 	"github.com/grafana/grafana/pkg/services/org"
 	pref "github.com/grafana/grafana/pkg/services/preference"
@@ -79,6 +81,7 @@ func TestGetHomeDashboard(t *testing.T) {
 		preferenceService:       prefService,
 		dashboardVersionService: dashboardVersionService,
 		Kinds:                   corekind.NewBase(nil),
+		log:                     log.New("test-logger"),
 	}
 
 	tests := []struct {
@@ -396,7 +399,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 			cmd := dashboards.SaveDashboardCommand{
 				OrgID:  1,
 				UserID: 5,
-				Dashboard: simplejson.NewFromAny(map[string]interface{}{
+				Dashboard: simplejson.NewFromAny(map[string]any{
 					"title": "Dash",
 				}),
 				Overwrite: true,
@@ -428,7 +431,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 			cmd := dashboards.SaveDashboardCommand{
 				OrgID:  1,
 				UserID: 5,
-				Dashboard: simplejson.NewFromAny(map[string]interface{}{
+				Dashboard: simplejson.NewFromAny(map[string]any{
 					"title": "Dash",
 				}),
 				Overwrite: true,
@@ -461,7 +464,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 			cmd := dashboards.SaveDashboardCommand{
 				OrgID:  1,
 				UserID: 5,
-				Dashboard: simplejson.NewFromAny(map[string]interface{}{
+				Dashboard: simplejson.NewFromAny(map[string]any{
 					"title": "Dash",
 				}),
 				Overwrite: true,
@@ -478,7 +481,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 
 			postDashboardScenario(t, "When calling POST on", "/api/dashboards", "/api/dashboards", cmd, dashboardService, mockFolder, func(sc *scenarioContext) {
 				callPostDashboard(sc)
-				assert.Equal(t, 500, sc.resp.Code)
+				assert.Equal(t, http.StatusInternalServerError, sc.resp.Code)
 			})
 		})
 
@@ -488,28 +491,28 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				SaveError          error
 				ExpectedStatusCode int
 			}{
-				{SaveError: dashboards.ErrDashboardNotFound, ExpectedStatusCode: 404},
-				{SaveError: dashboards.ErrFolderNotFound, ExpectedStatusCode: 400},
-				{SaveError: dashboards.ErrDashboardWithSameUIDExists, ExpectedStatusCode: 400},
-				{SaveError: dashboards.ErrDashboardWithSameNameInFolderExists, ExpectedStatusCode: 412},
-				{SaveError: dashboards.ErrDashboardVersionMismatch, ExpectedStatusCode: 412},
-				{SaveError: dashboards.ErrDashboardTitleEmpty, ExpectedStatusCode: 400},
-				{SaveError: dashboards.ErrDashboardFolderCannotHaveParent, ExpectedStatusCode: 400},
-				{SaveError: alerting.ValidationError{Reason: "Mu"}, ExpectedStatusCode: 422},
-				{SaveError: dashboards.ErrDashboardTypeMismatch, ExpectedStatusCode: 400},
-				{SaveError: dashboards.ErrDashboardFolderWithSameNameAsDashboard, ExpectedStatusCode: 400},
-				{SaveError: dashboards.ErrDashboardWithSameNameAsFolder, ExpectedStatusCode: 400},
-				{SaveError: dashboards.ErrDashboardFolderNameExists, ExpectedStatusCode: 400},
-				{SaveError: dashboards.ErrDashboardUpdateAccessDenied, ExpectedStatusCode: 403},
-				{SaveError: dashboards.ErrDashboardInvalidUid, ExpectedStatusCode: 400},
-				{SaveError: dashboards.ErrDashboardUidTooLong, ExpectedStatusCode: 400},
-				{SaveError: dashboards.ErrDashboardCannotSaveProvisionedDashboard, ExpectedStatusCode: 400},
-				{SaveError: dashboards.UpdatePluginDashboardError{PluginId: "plug"}, ExpectedStatusCode: 412},
+				{SaveError: dashboards.ErrDashboardNotFound, ExpectedStatusCode: http.StatusNotFound},
+				{SaveError: dashboards.ErrFolderNotFound, ExpectedStatusCode: http.StatusBadRequest},
+				{SaveError: dashboards.ErrDashboardWithSameUIDExists, ExpectedStatusCode: http.StatusBadRequest},
+				{SaveError: dashboards.ErrDashboardWithSameNameInFolderExists, ExpectedStatusCode: http.StatusPreconditionFailed},
+				{SaveError: dashboards.ErrDashboardVersionMismatch, ExpectedStatusCode: http.StatusPreconditionFailed},
+				{SaveError: dashboards.ErrDashboardTitleEmpty, ExpectedStatusCode: http.StatusBadRequest},
+				{SaveError: dashboards.ErrDashboardFolderCannotHaveParent, ExpectedStatusCode: http.StatusBadRequest},
+				{SaveError: alerting.ValidationError{Reason: "Mu"}, ExpectedStatusCode: http.StatusUnprocessableEntity},
+				{SaveError: dashboards.ErrDashboardTypeMismatch, ExpectedStatusCode: http.StatusBadRequest},
+				{SaveError: dashboards.ErrDashboardFolderWithSameNameAsDashboard, ExpectedStatusCode: http.StatusBadRequest},
+				{SaveError: dashboards.ErrDashboardWithSameNameAsFolder, ExpectedStatusCode: http.StatusBadRequest},
+				{SaveError: dashboards.ErrDashboardFolderNameExists, ExpectedStatusCode: http.StatusBadRequest},
+				{SaveError: dashboards.ErrDashboardUpdateAccessDenied, ExpectedStatusCode: http.StatusForbidden},
+				{SaveError: dashboards.ErrDashboardInvalidUid, ExpectedStatusCode: http.StatusBadRequest},
+				{SaveError: dashboards.ErrDashboardUidTooLong, ExpectedStatusCode: http.StatusBadRequest},
+				{SaveError: dashboards.ErrDashboardCannotSaveProvisionedDashboard, ExpectedStatusCode: http.StatusBadRequest},
+				{SaveError: dashboards.UpdatePluginDashboardError{PluginId: "plug"}, ExpectedStatusCode: http.StatusPreconditionFailed},
 			}
 
 			cmd := dashboards.SaveDashboardCommand{
 				OrgID: 1,
-				Dashboard: simplejson.NewFromAny(map[string]interface{}{
+				Dashboard: simplejson.NewFromAny(map[string]any{
 					"title": "",
 				}),
 			}
@@ -521,7 +524,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				postDashboardScenario(t, fmt.Sprintf("Expect '%s' error when calling POST on", tc.SaveError.Error()),
 					"/api/dashboards", "/api/dashboards", cmd, dashboardService, nil, func(sc *scenarioContext) {
 						callPostDashboard(sc)
-						assert.Equal(t, tc.ExpectedStatusCode, sc.resp.Code)
+						assert.Equal(t, tc.ExpectedStatusCode, sc.resp.Code, sc.resp.Body.String())
 					})
 			}
 		})
@@ -540,7 +543,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				callPostDashboard(sc)
 
 				result := sc.ToJSON()
-				assert.Equal(t, 422, sc.resp.Code)
+				assert.Equal(t, http.StatusUnprocessableEntity, sc.resp.Code)
 				assert.False(t, result.Get("isValid").MustBool())
 				assert.NotEmpty(t, result.Get("message").MustString())
 			}, sqlmock)
@@ -556,7 +559,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				callPostDashboard(sc)
 
 				result := sc.ToJSON()
-				assert.Equal(t, 412, sc.resp.Code)
+				assert.Equal(t, http.StatusPreconditionFailed, sc.resp.Code)
 				assert.False(t, result.Get("isValid").MustBool())
 				assert.Equal(t, "invalid schema version", result.Get("message").MustString())
 			}, sqlmock)
@@ -575,7 +578,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				callPostDashboard(sc)
 
 				result := sc.ToJSON()
-				assert.Equal(t, 200, sc.resp.Code)
+				assert.Equal(t, http.StatusOK, sc.resp.Code)
 				assert.True(t, result.Get("isValid").MustBool())
 			}, sqlmock)
 		})
@@ -587,14 +590,14 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 			{
 				DashboardID: 1,
 				Version:     1,
-				Data: simplejson.NewFromAny(map[string]interface{}{
+				Data: simplejson.NewFromAny(map[string]any{
 					"title": "Dash1",
 				}),
 			},
 			{
 				DashboardID: 2,
 				Version:     2,
-				Data: simplejson.NewFromAny(map[string]interface{}{
+				Data: simplejson.NewFromAny(map[string]any{
 					"title": "Dash2",
 				}),
 			},
@@ -618,7 +621,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanSaveValue: false})
 
 				callPostDashboard(sc)
-				assert.Equal(t, 403, sc.resp.Code)
+				assert.Equal(t, http.StatusForbidden, sc.resp.Code)
 			}, sqlmock, fakeDashboardVersionService)
 		})
 
@@ -629,7 +632,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				// This test shouldn't hit GetDashboardACLInfoList, so no setup needed
 				sc.dashboardVersionService = fakeDashboardVersionService
 				callPostDashboard(sc)
-				assert.Equal(t, 200, sc.resp.Code)
+				assert.Equal(t, http.StatusOK, sc.resp.Code)
 			}, sqlmock, fakeDashboardVersionService)
 		})
 	})
@@ -666,7 +669,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				sc.dashboardVersionService = fakeDashboardVersionService
 
 				callRestoreDashboardVersion(sc)
-				assert.Equal(t, 200, sc.resp.Code)
+				assert.Equal(t, http.StatusOK, sc.resp.Code)
 			}, mockSQLStore)
 	})
 
@@ -699,7 +702,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 		restoreDashboardVersionScenario(t, "When calling POST on", "/api/dashboards/id/1/restore",
 			"/api/dashboards/id/:dashboardId/restore", dashboardService, fakeDashboardVersionService, cmd, func(sc *scenarioContext) {
 				callRestoreDashboardVersion(sc)
-				assert.Equal(t, 200, sc.resp.Code)
+				assert.Equal(t, http.StatusOK, sc.resp.Code)
 			}, mockSQLStore)
 	})
 
@@ -752,7 +755,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 			}
 			hs.callGetDashboard(sc)
 
-			assert.Equal(t, 200, sc.resp.Code)
+			assert.Equal(t, http.StatusOK, sc.resp.Code)
 
 			dash := dtos.DashboardFullWithMeta{}
 			err := json.NewDecoder(sc.resp.Body).Decode(&dash)
@@ -814,7 +817,7 @@ func TestDashboardVersionsAPIEndpoint(t *testing.T) {
 				ExpectedUser: &user.User{ID: 1, Login: "test-user"},
 			}).callGetDashboardVersions(sc)
 
-			assert.Equal(t, 200, sc.resp.Code)
+			assert.Equal(t, http.StatusOK, sc.resp.Code)
 			var versions []dashver.DashboardVersionMeta
 			err := json.NewDecoder(sc.resp.Body).Decode(&versions)
 			require.NoError(t, err)
@@ -840,7 +843,7 @@ func TestDashboardVersionsAPIEndpoint(t *testing.T) {
 				ExpectedError: user.ErrUserNotFound,
 			}).callGetDashboardVersions(sc)
 
-			assert.Equal(t, 200, sc.resp.Code)
+			assert.Equal(t, http.StatusOK, sc.resp.Code)
 			var versions []dashver.DashboardVersionMeta
 			err := json.NewDecoder(sc.resp.Body).Decode(&versions)
 			require.NoError(t, err)
@@ -866,7 +869,7 @@ func TestDashboardVersionsAPIEndpoint(t *testing.T) {
 				ExpectedError: fmt.Errorf("some error"),
 			}).callGetDashboardVersions(sc)
 
-			assert.Equal(t, 200, sc.resp.Code)
+			assert.Equal(t, http.StatusOK, sc.resp.Code)
 			var versions []dashver.DashboardVersionMeta
 			err := json.NewDecoder(sc.resp.Body).Decode(&versions)
 			require.NoError(t, err)
@@ -981,6 +984,7 @@ func postDashboardScenario(t *testing.T, desc string, url string, routePattern s
 			Features:              featuremgmt.WithFeatures(),
 			Kinds:                 corekind.NewBase(nil),
 			accesscontrolService:  actest.FakeService{},
+			log:                   log.New("test-logger"),
 		}
 
 		sc := setupScenarioContext(t, url)
@@ -1136,23 +1140,25 @@ func (s mockDashboardProvisioningService) GetProvisionedDashboardDataByDashboard
 type mockLibraryPanelService struct {
 }
 
-func (m *mockLibraryPanelService) ConnectLibraryPanelsForDashboard(c context.Context, signedInUser *user.SignedInUser, dash *dashboards.Dashboard) error {
+var _ librarypanels.Service = (*mockLibraryPanelService)(nil)
+
+func (m *mockLibraryPanelService) ConnectLibraryPanelsForDashboard(c context.Context, signedInUser identity.Requester, dash *dashboards.Dashboard) error {
 	return nil
 }
 
-func (m *mockLibraryPanelService) ImportLibraryPanelsForDashboard(c context.Context, signedInUser *user.SignedInUser, libraryPanels *simplejson.Json, panels []interface{}, folderID int64) error {
+func (m *mockLibraryPanelService) ImportLibraryPanelsForDashboard(c context.Context, signedInUser identity.Requester, libraryPanels *simplejson.Json, panels []any, folderID int64) error {
 	return nil
 }
 
 type mockLibraryElementService struct {
 }
 
-func (l *mockLibraryElementService) CreateElement(c context.Context, signedInUser *user.SignedInUser, cmd model.CreateLibraryElementCommand) (model.LibraryElementDTO, error) {
+func (l *mockLibraryElementService) CreateElement(c context.Context, signedInUser identity.Requester, cmd model.CreateLibraryElementCommand) (model.LibraryElementDTO, error) {
 	return model.LibraryElementDTO{}, nil
 }
 
 // GetElement gets an element from a UID.
-func (l *mockLibraryElementService) GetElement(c context.Context, signedInUser *user.SignedInUser, cmd model.GetLibraryElementCommand) (model.LibraryElementDTO, error) {
+func (l *mockLibraryElementService) GetElement(c context.Context, signedInUser identity.Requester, cmd model.GetLibraryElementCommand) (model.LibraryElementDTO, error) {
 	return model.LibraryElementDTO{}, nil
 }
 
@@ -1162,7 +1168,7 @@ func (l *mockLibraryElementService) GetElementsForDashboard(c context.Context, d
 }
 
 // ConnectElementsToDashboard connects elements to a specific dashboard.
-func (l *mockLibraryElementService) ConnectElementsToDashboard(c context.Context, signedInUser *user.SignedInUser, elementUIDs []string, dashboardID int64) error {
+func (l *mockLibraryElementService) ConnectElementsToDashboard(c context.Context, signedInUser identity.Requester, elementUIDs []string, dashboardID int64) error {
 	return nil
 }
 
@@ -1172,6 +1178,6 @@ func (l *mockLibraryElementService) DisconnectElementsFromDashboard(c context.Co
 }
 
 // DeleteLibraryElementsInFolder deletes all elements for a specific folder.
-func (l *mockLibraryElementService) DeleteLibraryElementsInFolder(c context.Context, signedInUser *user.SignedInUser, folderUID string) error {
+func (l *mockLibraryElementService) DeleteLibraryElementsInFolder(c context.Context, signedInUser identity.Requester, folderUID string) error {
 	return nil
 }

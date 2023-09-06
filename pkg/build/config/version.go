@@ -94,7 +94,7 @@ func GetPackageJSONVersion(grafanaDir string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("failed to read %q: %w", pkgJSONPath, err)
 	}
-	pkgObj := map[string]interface{}{}
+	pkgObj := map[string]any{}
 	if err := json.Unmarshal(pkgJSONB, &pkgObj); err != nil {
 		return "", fmt.Errorf("failed decoding %q: %w", pkgJSONPath, err)
 	}

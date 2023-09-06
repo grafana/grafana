@@ -48,10 +48,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
 });
 
-function noop(): {} {
-  return {};
-}
-
 type Props = {
   dataFrames: DataFrame[];
   splitOpenFn?: SplitOpen;
@@ -165,7 +161,6 @@ export function TraceView(props: Props) {
             updateViewRangeTime={updateViewRangeTime}
           />
           <TraceTimelineViewer
-            registerAccessors={noop}
             findMatchesIDs={spanFilterMatches}
             trace={traceProp}
             datasourceType={datasourceType}

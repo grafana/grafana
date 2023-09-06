@@ -11,10 +11,10 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/adapters"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
-	"github.com/grafana/grafana/pkg/services/user"
 )
 
 var ErrPluginNotFound = errors.New("plugin not found")
@@ -39,8 +39,8 @@ type Provider struct {
 // Get allows getting plugin context by its ID. If datasourceUID is not empty string
 // then PluginContext.DataSourceInstanceSettings will be resolved and appended to
 // returned context.
-// Note: *user.SignedInUser can be nil.
-func (p *Provider) Get(ctx context.Context, pluginID string, user *user.SignedInUser, orgID int64) (backend.PluginContext, error) {
+// Note: identity.Requester can be nil.
+func (p *Provider) Get(ctx context.Context, pluginID string, user identity.Requester, orgID int64) (backend.PluginContext, error) {
 	plugin, exists := p.pluginStore.Plugin(ctx, pluginID)
 	if !exists {
 		return backend.PluginContext{}, ErrPluginNotFound
@@ -49,8 +49,8 @@ func (p *Provider) Get(ctx context.Context, pluginID string, user *user.SignedIn
 	pCtx := backend.PluginContext{
 		PluginID: pluginID,
 	}
-	if user != nil {
-		pCtx.OrgID = user.OrgID
+	if user != nil && !user.IsNil() {
+		pCtx.OrgID = user.GetOrgID()
 		pCtx.User = adapters.BackendUserFromSignedInUser(user)
 	}
 
@@ -68,7 +68,7 @@ func (p *Provider) Get(ctx context.Context, pluginID string, user *user.SignedIn
 // GetWithDataSource allows getting plugin context by its ID and PluginContext.DataSourceInstanceSettings will be
 // resolved and appended to the returned context.
 // Note: *user.SignedInUser can be nil.
-func (p *Provider) GetWithDataSource(ctx context.Context, pluginID string, user *user.SignedInUser, ds *datasources.DataSource) (backend.PluginContext, error) {
+func (p *Provider) GetWithDataSource(ctx context.Context, pluginID string, user identity.Requester, ds *datasources.DataSource) (backend.PluginContext, error) {
 	_, exists := p.pluginStore.Plugin(ctx, pluginID)
 	if !exists {
 		return backend.PluginContext{}, ErrPluginNotFound
@@ -77,8 +77,8 @@ func (p *Provider) GetWithDataSource(ctx context.Context, pluginID string, user 
 	pCtx := backend.PluginContext{
 		PluginID: pluginID,
 	}
-	if user != nil {
-		pCtx.OrgID = user.OrgID
+	if user != nil && !user.IsNil() {
+		pCtx.OrgID = user.GetOrgID()
 		pCtx.User = adapters.BackendUserFromSignedInUser(user)
 	}
 

@@ -71,7 +71,7 @@ func match(scope, target string) bool {
 	//Prefix match
 	if last == '*' {
 		if strings.HasPrefix(target, prefix) {
-			logger.Debug("matched scope", "user scope", scope, "target scope", target)
+			logger.Debug("Matched scope", "user scope", scope, "target scope", target)
 			return true
 		}
 	}
