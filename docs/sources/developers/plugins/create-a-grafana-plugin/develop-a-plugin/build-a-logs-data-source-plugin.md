@@ -658,7 +658,6 @@ export class ExampleDatasource
    * If the opposite filter is present, it should be replaced.
    */
   toggleQueryFilter(query: ExampleQuery, filter: ToggleFilterAction): LokiQuery {
-    ç;
     const expression = query.expr; // The current query expression.
     // We currently support 2 types of filter: FILTER_FOR (positive) and FILTER_OUT (negative).
     switch (filter.type) {
