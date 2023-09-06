@@ -37,7 +37,26 @@ export const heatmapTransformer: SynchronousDataTransformerInfo<HeatmapTransform
   defaultOptions: {},
 
   operator: (options, ctx) => (source) =>
-    source.pipe(map((data) => heatmapTransformer.transformer(options, ctx)(data))),
+    source.pipe(
+      map((data) => {
+        const optionsCopy = {
+          ...options,
+          xBuckets: { ...options.xBuckets } ?? undefined,
+          yBuckets: { ...options.yBuckets } ?? undefined,
+        };
+
+        if (optionsCopy.xBuckets?.value) {
+          optionsCopy.xBuckets.value = ctx.interpolate(optionsCopy.xBuckets.value);
+        }
+
+        if (optionsCopy.yBuckets?.value) {
+          optionsCopy.yBuckets.value = ctx.interpolate(optionsCopy.yBuckets.value);
+        }
+
+        console.log(optionsCopy.xBuckets.value, optionsCopy.yBuckets.value);
+        return heatmapTransformer.transformer(optionsCopy, ctx)(data);
+      })
+    ),
 
   transformer: (options: HeatmapTransformerOptions) => {
     return (data: DataFrame[]) => {
