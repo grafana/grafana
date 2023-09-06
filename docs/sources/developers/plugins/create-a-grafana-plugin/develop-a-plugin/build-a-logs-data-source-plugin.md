@@ -649,7 +649,7 @@ export class ExampleDatasource
      * We only care about equality/positive filters as only those fields will be
      * present in the log lines.
      */
-    return queryHasPositiveFilter(query, filter.key, filter.value);
+    return queryHasPositiveFilter(query.query, filter.key, filter.value);
   }
 
   /**
@@ -658,30 +658,30 @@ export class ExampleDatasource
    * If the opposite filter is present, it should be replaced.
    */
   toggleQueryFilter(query: ExampleQuery, filter: ToggleFilterAction): LokiQuery {
-    const expression = query.query; // The current query expression.
+    const queryText = query.query; // The current query.
     const { key, value } = filter.options;
     // We currently support 2 types of filter: FILTER_FOR (positive) and FILTER_OUT (negative).
     switch (filter.type) {
       case 'FILTER_FOR': {
         // This gives the user the ability to toggle a filter on and off.
-        expression = queryHasPositiveFilter(expression, key, value)
-          ? removePositiveFilterFromQuery(expression, key, value)
-          : addPositiveFilterToQuery(expression, key, value);
+        queryText = queryHasPositiveFilter(queryText, key, value)
+          ? removePositiveFilterFromQuery(queryText, key, value)
+          : addPositiveFilterToQuery(queryText, key, value);
         break;
       }
       case 'FILTER_OUT': {
         // If there is a positive filter with the same key and value, remove it.
-        if (queryHasPositiveFilter(expression, key, value)) {
-          expression = removePositiveLabelFromQuery(expression, key, value);
+        if (queryHasPositiveFilter(queryText, key, value)) {
+          queryText = removePositiveLabelFromQuery(queryText, key, value);
         }
         // Add the inequality filter to the query.
-        expression = addNegativeFilterToQuery(expression, key, value);
+        queryText = addNegativeFilterToQuery(queryText, key, value);
         break;
       }
       default:
         break;
     }
-    return { ...query, query: expression };
+    return { ...query, query: queryText };
   }
 }
 ```
