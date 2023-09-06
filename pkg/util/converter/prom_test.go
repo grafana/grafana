@@ -2,6 +2,7 @@ package converter
 
 import (
 	"fmt"
+	"net/http"
 	"os"
 	"path"
 	"strings"
@@ -9,7 +10,6 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/experimental"
-	"github.com/grafana/grafana/pkg/infra/httpclient"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -55,7 +55,7 @@ func TestReadLimited(t *testing.T) {
 				//nolint:gosec
 				f, err := os.Open(p)
 				require.NoError(t, err)
-				mbr := httpclient.MaxBytesReader(f, i)
+				mbr := http.MaxBytesReader(f, i)
 
 				iter := jsoniter.Parse(jsoniter.ConfigDefault, mbr, 1024)
 				rsp := ReadPrometheusStyleResult(iter, Options{})

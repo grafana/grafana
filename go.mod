@@ -66,6 +66,7 @@ require (
 	github.com/gorilla/websocket v1.5.0 // @grafana/grafana-app-platform-squad
 	github.com/grafana/alerting v0.0.0-20230831092459-f7dba8ede9b0 // @grafana/alerting-squad-backend
 	github.com/grafana/cuetsy v0.1.10 // @grafana/grafana-as-code
+	github.com/grafana/grafana/pkg/util/converter v0.0.0
 	github.com/grafana/grafana-aws-sdk v0.19.1 // @grafana/aws-datasources
 	github.com/grafana/grafana-azure-sdk-go v1.7.0 // @grafana/backend-platform
 	github.com/grafana/grafana-plugin-sdk-go v0.174.0 // @grafana/plugins-platform-backend
@@ -509,3 +510,5 @@ replace github.com/prometheus/alertmanager => github.com/grafana/prometheus-aler
 replace google.golang.org/grpc => google.golang.org/grpc v1.45.0
 
 exclude github.com/mattn/go-sqlite3 v2.0.3+incompatible
+
+replace github.com/grafana/grafana/pkg/util/converter => /home/kbrandt/go/github.com/grafana/grafana/pkg/util/converter
