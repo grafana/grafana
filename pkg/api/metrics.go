@@ -66,10 +66,6 @@ func (hs *HTTPServer) QueryMetricsV2(c *contextmodel.ReqContext) response.Respon
 }
 
 func (hs *HTTPServer) toJsonStreamingResponse(ctx context.Context, qdr *backend.QueryDataResponse) response.Response {
-	// treat response as downstream since it means we've got
-	// a proper response from the plugin.
-	requestmeta.WithDownstreamStatusSource(ctx)
-
 	statusWhenError := http.StatusBadRequest
 	if hs.Features.IsEnabled(featuremgmt.FlagDatasourceQueryMultiStatus) {
 		statusWhenError = http.StatusMultiStatus
@@ -80,6 +76,11 @@ func (hs *HTTPServer) toJsonStreamingResponse(ctx context.Context, qdr *backend.
 		if res.Error != nil {
 			statusCode = statusWhenError
 		}
+	}
+
+	if statusCode == statusWhenError {
+		// an error in the response we treat as downstream.
+		requestmeta.WithDownstreamStatusSource(ctx)
 	}
 
 	return response.JSONStreaming(statusCode, qdr)
