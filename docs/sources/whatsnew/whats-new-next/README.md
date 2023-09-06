@@ -55,7 +55,7 @@ Or if all three:
 ## _`DESCRIPTION`_
 
 Include an overview of the feature and problem it solves, and where to learn more.
-Link to any appropriate documentation.
+Link to any appropriate documentation and optionally embed a video or image to illustrate the feature. 
 You must use relative path references when linking to documentation within the Grafana repository.
 Use the Hugo `relref` shortcode for build time link checking.
 For more information about the `relref` shortcode, refer to [Links and references](https://grafana.com/docs/writers-toolkit/writing-guide/references/).
