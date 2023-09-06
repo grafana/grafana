@@ -1,12 +1,12 @@
 package migration
 
 import (
+	"context"
 	"fmt"
 	"time"
 
-	"xorm.io/xorm"
-
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
@@ -47,44 +47,60 @@ type dashboardACL struct {
 func (p dashboardACL) TableName() string { return "dashboard_acl" }
 
 type folderHelper struct {
-	sess    *xorm.Session
+	store   db.DB
 	dialect migrator.Dialect
 }
 
 // getOrCreateGeneralFolder returns the general folder under the specific organisation
 // If the general folder does not exist it creates it.
-func (m *folderHelper) getOrCreateGeneralFolder(orgID int64) (*dashboard, error) {
+func (m *folderHelper) getOrCreateGeneralFolder(ctx context.Context, orgID int64) (*dashboard, error) {
 	// there is a unique constraint on org_id, folder_id, title
 	// there are no nested folders so the parent folder id is always 0
 	dashboard := dashboard{OrgId: orgID, FolderId: 0, Title: GENERAL_FOLDER}
-	has, err := m.sess.Get(&dashboard)
+	err := m.store.WithDbSession(ctx, func(sess *db.Session) error {
+		has, err := sess.Get(&dashboard)
+		if err != nil {
+			return err
+		} else if !has {
+			// create folder
+			d, err := m.createGeneralFolder(ctx, orgID)
+			if err != nil {
+				return err
+			}
+			dashboard = *d
+		}
+		return nil
+	})
 	if err != nil {
 		return nil, err
-	} else if !has {
-		// create folder
-		return m.createGeneralFolder(orgID)
 	}
 	return &dashboard, nil
 }
 
-func (m *folderHelper) createGeneralFolder(orgID int64) (*dashboard, error) {
-	return m.createFolder(orgID, GENERAL_FOLDER)
+func (m *folderHelper) createGeneralFolder(ctx context.Context, orgID int64) (*dashboard, error) {
+	return m.createFolder(ctx, orgID, GENERAL_FOLDER)
 }
 
 // returns the folder of the given dashboard (if exists)
-func (m *folderHelper) getFolder(dash dashboard, da dashAlert) (dashboard, error) {
+func (m *folderHelper) getFolder(ctx context.Context, dash dashboard) (dashboard, error) {
 	// get folder if exists
 	folder := dashboard{}
 	if dash.FolderId > 0 {
-		exists, err := m.sess.Where("id=?", dash.FolderId).Get(&folder)
+		err := m.store.WithDbSession(ctx, func(sess *db.Session) error {
+			exists, err := sess.Where("id=?", dash.FolderId).Get(&folder)
+			if err != nil {
+				return fmt.Errorf("failed to get folder %d: %w", dash.FolderId, err)
+			}
+			if !exists {
+				return fmt.Errorf("folder with id %v not found", dash.FolderId)
+			}
+			if !folder.IsFolder {
+				return fmt.Errorf("id %v is a dashboard not a folder", dash.FolderId)
+			}
+			return nil
+		})
 		if err != nil {
-			return folder, fmt.Errorf("failed to get folder %d: %w", dash.FolderId, err)
-		}
-		if !exists {
-			return folder, fmt.Errorf("folder with id %v not found", dash.FolderId)
-		}
-		if !folder.IsFolder {
-			return folder, fmt.Errorf("id %v is a dashboard not a folder", dash.FolderId)
+			return folder, err
 		}
 	}
 	return folder, nil
@@ -92,150 +108,160 @@ func (m *folderHelper) getFolder(dash dashboard, da dashAlert) (dashboard, error
 
 // based on sqlstore.saveDashboard()
 // it should be called from inside a transaction
-func (m *folderHelper) createFolder(orgID int64, title string) (*dashboard, error) {
-	cmd := saveFolderCommand{
-		OrgId:    orgID,
-		FolderId: 0,
-		IsFolder: true,
-		Dashboard: simplejson.NewFromAny(map[string]any{
-			"title": title,
-		}),
-	}
-	dash := cmd.getDashboardModel()
-	dash.setUid(util.GenerateShortUID())
+func (m *folderHelper) createFolder(ctx context.Context, orgID int64, title string) (*dashboard, error) {
+	var dash *dashboard
+	err := m.store.WithDbSession(ctx, func(sess *db.Session) error {
+		cmd := saveFolderCommand{
+			OrgId:    orgID,
+			FolderId: 0,
+			IsFolder: true,
+			Dashboard: simplejson.NewFromAny(map[string]any{
+				"title": title,
+			}),
+		}
+		dash = cmd.getDashboardModel()
+		dash.setUid(util.GenerateShortUID())
 
-	parentVersion := dash.Version
-	dash.setVersion(1)
-	dash.Created = time.Now()
-	dash.CreatedBy = FOLDER_CREATED_BY
-	dash.Updated = time.Now()
-	dash.UpdatedBy = FOLDER_CREATED_BY
-	metrics.MApiDashboardInsert.Inc()
+		parentVersion := dash.Version
+		dash.setVersion(1)
+		dash.Created = time.Now()
+		dash.CreatedBy = FOLDER_CREATED_BY
+		dash.Updated = time.Now()
+		dash.UpdatedBy = FOLDER_CREATED_BY
+		metrics.MApiDashboardInsert.Inc()
 
-	if _, err := m.sess.Insert(dash); err != nil {
+		if _, err := sess.Insert(dash); err != nil {
+			return err
+		}
+
+		dashVersion := &dashver.DashboardVersion{
+			DashboardID:   dash.Id,
+			ParentVersion: parentVersion,
+			RestoredFrom:  cmd.RestoredFrom,
+			Version:       dash.Version,
+			Created:       time.Now(),
+			CreatedBy:     dash.UpdatedBy,
+			Message:       cmd.Message,
+			Data:          dash.Data,
+		}
+
+		// insert version entry
+		if _, err := sess.Insert(dashVersion); err != nil {
+			return err
+		}
+		return nil
+	})
+	if err != nil {
 		return nil, err
 	}
 
-	dashVersion := &dashver.DashboardVersion{
-		DashboardID:   dash.Id,
-		ParentVersion: parentVersion,
-		RestoredFrom:  cmd.RestoredFrom,
-		Version:       dash.Version,
-		Created:       time.Now(),
-		CreatedBy:     dash.UpdatedBy,
-		Message:       cmd.Message,
-		Data:          dash.Data,
-	}
-
-	// insert version entry
-	if _, err := m.sess.Insert(dashVersion); err != nil {
-		return nil, err
-	}
 	return dash, nil
 }
 
 // based on SQLStore.UpdateDashboardACL()
 // it should be called from inside a transaction
-func (m *folderHelper) setACL(orgID int64, dashboardID int64, items []*dashboardACL) error {
+func (m *folderHelper) setACL(ctx context.Context, orgID int64, dashboardID int64, items []*dashboardACL) error {
 	if dashboardID <= 0 {
 		return fmt.Errorf("folder id must be greater than zero for a folder permission")
 	}
-
-	// userPermissionsMap is a map keeping the highest permission per user
-	// for handling conficting inherited (folder) and non-inherited (dashboard) user permissions
-	userPermissionsMap := make(map[int64]*dashboardACL, len(items))
-	// teamPermissionsMap is a map keeping the highest permission per team
-	// for handling conficting inherited (folder) and non-inherited (dashboard) team permissions
-	teamPermissionsMap := make(map[int64]*dashboardACL, len(items))
-	for _, item := range items {
-		if item.UserID != 0 {
-			acl, ok := userPermissionsMap[item.UserID]
-			if !ok {
-				userPermissionsMap[item.UserID] = item
-			} else {
-				if item.Permission > acl.Permission {
-					// the higher permission wins
+	return m.store.WithDbSession(ctx, func(sess *db.Session) error {
+		// userPermissionsMap is a map keeping the highest permission per user
+		// for handling conficting inherited (folder) and non-inherited (dashboard) user permissions
+		userPermissionsMap := make(map[int64]*dashboardACL, len(items))
+		// teamPermissionsMap is a map keeping the highest permission per team
+		// for handling conficting inherited (folder) and non-inherited (dashboard) team permissions
+		teamPermissionsMap := make(map[int64]*dashboardACL, len(items))
+		for _, item := range items {
+			if item.UserID != 0 {
+				acl, ok := userPermissionsMap[item.UserID]
+				if !ok {
 					userPermissionsMap[item.UserID] = item
+				} else {
+					if item.Permission > acl.Permission {
+						// the higher permission wins
+						userPermissionsMap[item.UserID] = item
+					}
 				}
 			}
-		}
 
-		if item.TeamID != 0 {
-			acl, ok := teamPermissionsMap[item.TeamID]
-			if !ok {
-				teamPermissionsMap[item.TeamID] = item
-			} else {
-				if item.Permission > acl.Permission {
-					// the higher permission wins
+			if item.TeamID != 0 {
+				acl, ok := teamPermissionsMap[item.TeamID]
+				if !ok {
 					teamPermissionsMap[item.TeamID] = item
-				}
-			}
-		}
-	}
-
-	type keyType struct {
-		UserID     int64 `xorm:"user_id"`
-		TeamID     int64 `xorm:"team_id"`
-		Role       roleType
-		Permission permissionType
-	}
-	// seen keeps track of inserted perrmissions to avoid duplicates (due to inheritance)
-	seen := make(map[keyType]struct{}, len(items))
-	for _, item := range items {
-		if item.UserID == 0 && item.TeamID == 0 && (item.Role == nil || !item.Role.IsValid()) {
-			return dashboards.ErrDashboardACLInfoMissing
-		}
-
-		// ignore duplicate user permissions
-		if item.UserID != 0 {
-			acl, ok := userPermissionsMap[item.UserID]
-			if ok {
-				if acl.Id != item.Id {
-					continue
+				} else {
+					if item.Permission > acl.Permission {
+						// the higher permission wins
+						teamPermissionsMap[item.TeamID] = item
+					}
 				}
 			}
 		}
 
-		// ignore duplicate team permissions
-		if item.TeamID != 0 {
-			acl, ok := teamPermissionsMap[item.TeamID]
-			if ok {
-				if acl.Id != item.Id {
-					continue
+		type keyType struct {
+			UserID     int64 `xorm:"user_id"`
+			TeamID     int64 `xorm:"team_id"`
+			Role       roleType
+			Permission permissionType
+		}
+		// seen keeps track of inserted perrmissions to avoid duplicates (due to inheritance)
+		seen := make(map[keyType]struct{}, len(items))
+		for _, item := range items {
+			if item.UserID == 0 && item.TeamID == 0 && (item.Role == nil || !item.Role.IsValid()) {
+				return dashboards.ErrDashboardACLInfoMissing
+			}
+
+			// ignore duplicate user permissions
+			if item.UserID != 0 {
+				acl, ok := userPermissionsMap[item.UserID]
+				if ok {
+					if acl.Id != item.Id {
+						continue
+					}
 				}
 			}
+
+			// ignore duplicate team permissions
+			if item.TeamID != 0 {
+				acl, ok := teamPermissionsMap[item.TeamID]
+				if ok {
+					if acl.Id != item.Id {
+						continue
+					}
+				}
+			}
+
+			key := keyType{UserID: item.UserID, TeamID: item.TeamID, Role: "", Permission: item.Permission}
+			if item.Role != nil {
+				key.Role = *item.Role
+			}
+			if _, ok := seen[key]; ok {
+				continue
+			}
+
+			// unset Id so that the new record will get a different one
+			item.Id = 0
+			item.OrgID = orgID
+			item.DashboardID = dashboardID
+			item.Created = time.Now()
+			item.Updated = time.Now()
+
+			sess.Nullable("user_id", "team_id")
+			if _, err := sess.Insert(item); err != nil {
+				return err
+			}
+			seen[key] = struct{}{}
 		}
 
-		key := keyType{UserID: item.UserID, TeamID: item.TeamID, Role: "", Permission: item.Permission}
-		if item.Role != nil {
-			key.Role = *item.Role
-		}
-		if _, ok := seen[key]; ok {
-			continue
-		}
+		// Update dashboard HasACL flag
+		dashboard := dashboards.Dashboard{HasACL: true}
+		_, err := sess.Cols("has_acl").Where("id=?", dashboardID).Update(&dashboard)
 
-		// unset Id so that the new record will get a different one
-		item.Id = 0
-		item.OrgID = orgID
-		item.DashboardID = dashboardID
-		item.Created = time.Now()
-		item.Updated = time.Now()
-
-		m.sess.Nullable("user_id", "team_id")
-		if _, err := m.sess.Insert(item); err != nil {
-			return err
-		}
-		seen[key] = struct{}{}
-	}
-
-	// Update dashboard HasACL flag
-	dashboard := dashboards.Dashboard{HasACL: true}
-	_, err := m.sess.Cols("has_acl").Where("id=?", dashboardID).Update(&dashboard)
-	return err
+		return err
+	})
 }
 
 // based on SQLStore.GetDashboardACLInfoList()
-func (m *folderHelper) getACL(orgID, dashboardID int64) ([]*dashboardACL, error) {
+func (m *folderHelper) getACL(ctx context.Context, orgID, dashboardID int64) ([]*dashboardACL, error) {
 	var err error
 
 	falseStr := m.dialect.BooleanStr(false)
@@ -264,6 +290,11 @@ func (m *folderHelper) getACL(orgID, dashboardID int64) ([]*dashboardACL, error)
 			WHERE d.org_id = ? AND d.id = ? AND da.id IS NOT NULL
 			ORDER BY da.id ASC
 			`
-	err = m.sess.SQL(rawSQL, orgID, dashboardID).Find(&result)
+	err = m.store.WithDbSession(ctx, func(sess *db.Session) error {
+		return sess.SQL(rawSQL, orgID, dashboardID).Find(&result)
+	})
+	if err != nil {
+		return nil, err
+	}
 	return result, err
 }

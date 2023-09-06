@@ -10,7 +10,6 @@ import (
 
 	alertingNotify "github.com/grafana/alerting/notify"
 	pb "github.com/prometheus/alertmanager/silence/silencepb"
-	"xorm.io/xorm"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -44,7 +43,6 @@ func (e MigrationError) Error() string {
 func (e *MigrationError) Unwrap() error { return e.Err }
 
 type migration struct {
-	sess    *xorm.Session
 	log     log.Logger
 	store   db.DB
 	dialect migrator.Dialect
@@ -59,21 +57,21 @@ func getSilenceFileNamesForAllOrgs(dataPath string) ([]string, error) {
 }
 
 //nolint:gocyclo
-func (m *migration) Exec() error {
-	dashAlerts, err := m.slurpDashAlerts()
+func (m *migration) Exec(ctx context.Context) error {
+	dashAlerts, err := m.slurpDashAlerts(ctx)
 	if err != nil {
 		return err
 	}
 	m.log.Info("alerts found to migrate", "alerts", len(dashAlerts))
 
 	// [orgID, dataSourceId] -> UID
-	dsIDMap, err := m.slurpDSIDs()
+	dsIDMap, err := m.slurpDSIDs(ctx)
 	if err != nil {
 		return err
 	}
 
 	// [orgID, dashboardId] -> dashUID
-	dashIDMap, err := m.slurpDashUIDs()
+	dashIDMap, err := m.slurpDashUIDs(ctx)
 	if err != nil {
 		return err
 	}
@@ -84,7 +82,7 @@ func (m *migration) Exec() error {
 	generalFolderCache := make(map[int64]*dashboard)
 
 	folderHelper := folderHelper{
-		sess:    m.sess,
+		store:   m.store,
 		dialect: m.dialect,
 	}
 
@@ -92,7 +90,7 @@ func (m *migration) Exec() error {
 		f, ok := generalFolderCache[dash.OrgId]
 		if !ok {
 			// get or create general folder
-			f, err = folderHelper.getOrCreateGeneralFolder(dash.OrgId)
+			f, err = folderHelper.getOrCreateGeneralFolder(ctx, dash.OrgId)
 			if err != nil {
 				return nil, MigrationError{
 					Err:     fmt.Errorf("failed to get or create general folder under organisation %d: %w", dash.OrgId, err),
@@ -122,18 +120,24 @@ func (m *migration) Exec() error {
 
 		// get dashboard
 		dash := dashboard{}
-		exists, err := m.sess.Where("org_id=? AND uid=?", da.OrgId, da.DashboardUID).Get(&dash)
+		err = m.store.WithDbSession(ctx, func(sess *db.Session) error {
+			exists, err := sess.Where("org_id=? AND uid=?", da.OrgId, da.DashboardUID).Get(&dash)
+			if err != nil {
+				return MigrationError{
+					Err:     fmt.Errorf("failed to get dashboard %s under organisation %d: %w", da.DashboardUID, da.OrgId, err),
+					AlertId: da.Id,
+				}
+			}
+			if !exists {
+				return MigrationError{
+					Err:     fmt.Errorf("dashboard with UID %v under organisation %d not found: %w", da.DashboardUID, da.OrgId, err),
+					AlertId: da.Id,
+				}
+			}
+			return nil
+		})
 		if err != nil {
-			return MigrationError{
-				Err:     fmt.Errorf("failed to get dashboard %s under organisation %d: %w", da.DashboardUID, da.OrgId, err),
-				AlertId: da.Id,
-			}
-		}
-		if !exists {
-			return MigrationError{
-				Err:     fmt.Errorf("dashboard with UID %v under organisation %d not found: %w", da.DashboardUID, da.OrgId, err),
-				AlertId: da.Id,
-			}
+			return err
 		}
 
 		var folder *dashboard
@@ -144,21 +148,21 @@ func (m *migration) Exec() error {
 			if !ok {
 				l.Info("create a new folder for alerts that belongs to dashboard because it has custom permissions", "folder", folderName)
 				// create folder and assign the permissions of the dashboard (included default and inherited)
-				f, err = folderHelper.createFolder(dash.OrgId, folderName)
+				f, err = folderHelper.createFolder(ctx, dash.OrgId, folderName)
 				if err != nil {
 					return MigrationError{
 						Err:     fmt.Errorf("failed to create folder: %w", err),
 						AlertId: da.Id,
 					}
 				}
-				permissions, err := folderHelper.getACL(dash.OrgId, dash.Id)
+				permissions, err := folderHelper.getACL(ctx, dash.OrgId, dash.Id)
 				if err != nil {
 					return MigrationError{
 						Err:     fmt.Errorf("failed to get dashboard %d under organisation %d permissions: %w", dash.Id, dash.OrgId, err),
 						AlertId: da.Id,
 					}
 				}
-				err = folderHelper.setACL(f.OrgId, f.Id, permissions)
+				err = folderHelper.setACL(ctx, f.OrgId, f.Id, permissions)
 				if err != nil {
 					return MigrationError{
 						Err:     fmt.Errorf("failed to set folder %d under organisation %d permissions: %w", f.Id, f.OrgId, err),
@@ -170,7 +174,7 @@ func (m *migration) Exec() error {
 			folder = f
 		case dash.FolderId > 0:
 			// get folder if exists
-			f, err := folderHelper.getFolder(dash, da)
+			f, err := folderHelper.getFolder(ctx, dash)
 			if err != nil {
 				// If folder does not exist then the dashboard is an orphan and we migrate the alert to the general folder.
 				l.Warn("Failed to find folder for dashboard. Migrate rule to the default folder", "rule_name", da.Name, "dashboard_uid", da.DashboardUID, "missing_folder_id", dash.FolderId)
@@ -218,18 +222,18 @@ func (m *migration) Exec() error {
 		}
 	}
 
-	amConfigPerOrg, err := m.setupAlertmanagerConfigs(rulesPerOrg)
+	amConfigPerOrg, err := m.setupAlertmanagerConfigs(ctx, rulesPerOrg)
 	if err != nil {
 		return err
 	}
 
-	err = m.insertRules(m.store, rulesPerOrg)
+	err = m.insertRules(ctx, rulesPerOrg)
 	if err != nil {
 		return err
 	}
 
 	for orgID, amConfig := range amConfigPerOrg {
-		if err := m.writeAlertmanagerConfig(orgID, amConfig); err != nil {
+		if err := m.writeAlertmanagerConfig(ctx, orgID, amConfig); err != nil {
 			return err
 		}
 	}
@@ -237,55 +241,63 @@ func (m *migration) Exec() error {
 	return nil
 }
 
-func (m *migration) insertRules(store db.DB, rulesPerOrg map[int64]map[*alertRule][]uidOrID) error {
-	for _, rules := range rulesPerOrg {
-		for rule := range rules {
-			var err error
-			if strings.HasPrefix(m.dialect.DriverName(), migrator.Postgres) {
-				err = store.WithTransactionalDbSession(context.Background(), func(sess *db.Session) error {
-					_, err := sess.Insert(rule)
-					return err
-				})
-			} else {
-				_, err = m.sess.Insert(rule)
-			}
-			if err != nil {
-				// TODO better error handling, if constraint
-				rule.Title += fmt.Sprintf(" %v", rule.UID)
-				rule.RuleGroup += fmt.Sprintf(" %v", rule.UID)
+func (m *migration) insertRules(ctx context.Context, rulesPerOrg map[int64]map[*alertRule][]uidOrID) error {
+	err := m.store.WithDbSession(ctx, func(sess *db.Session) error {
+		for _, rules := range rulesPerOrg {
+			for rule := range rules {
+				var err error
+				if strings.HasPrefix(m.dialect.DriverName(), migrator.Postgres) {
+					err = m.store.WithTransactionalDbSession(context.Background(), func(nestedSess *db.Session) error {
+						_, err := nestedSess.Insert(rule)
+						return err
+					})
+				} else {
+					_, err = sess.Insert(rule)
+				}
+				if err != nil {
+					// TODO better error handling, if constraint
+					rule.Title += fmt.Sprintf(" %v", rule.UID)
+					rule.RuleGroup += fmt.Sprintf(" %v", rule.UID)
 
-				_, err = m.sess.Insert(rule)
+					_, err = sess.Insert(rule)
+					if err != nil {
+						return err
+					}
+				}
+
+				// create entry in alert_rule_version
+				_, err = sess.Insert(rule.makeVersion())
 				if err != nil {
 					return err
 				}
 			}
-
-			// create entry in alert_rule_version
-			_, err = m.sess.Insert(rule.makeVersion())
-			if err != nil {
-				return err
-			}
 		}
+		return nil
+	})
+	if err != nil {
+		return err
 	}
 	return nil
 }
 
-func (m *migration) writeAlertmanagerConfig(orgID int64, amConfig *PostableUserConfig) error {
+func (m *migration) writeAlertmanagerConfig(ctx context.Context, orgID int64, amConfig *PostableUserConfig) error {
 	rawAmConfig, err := json.Marshal(amConfig)
 	if err != nil {
 		return err
 	}
+	err = m.store.WithDbSession(ctx, func(sess *db.Session) error {
+		// remove an existing configuration, which could have been left during switching back to legacy alerting
+		_, _ = sess.Delete(AlertConfiguration{OrgID: orgID})
 
-	// remove an existing configuration, which could have been left during switching back to legacy alerting
-	_, _ = m.sess.Delete(AlertConfiguration{OrgID: orgID})
-
-	// We don't need to apply the configuration, given the multi org alertmanager will do an initial sync before the server is ready.
-	_, err = m.sess.Insert(AlertConfiguration{
-		AlertmanagerConfiguration: string(rawAmConfig),
-		// Since we are migration for a snapshot of the code, it is always going to migrate to
-		// the v1 config.
-		ConfigurationVersion: "v1",
-		OrgID:                orgID,
+		// We don't need to apply the configuration, given the multi org alertmanager will do an initial sync before the server is ready.
+		_, err = sess.Insert(AlertConfiguration{
+			AlertmanagerConfiguration: string(rawAmConfig),
+			// Since we are migration for a snapshot of the code, it is always going to migrate to
+			// the v1 config.
+			ConfigurationVersion: "v1",
+			OrgID:                orgID,
+		})
+		return err
 	})
 	if err != nil {
 		return err

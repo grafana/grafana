@@ -1,9 +1,12 @@
 package migration
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"time"
+
+	"github.com/grafana/grafana/pkg/infra/db"
 )
 
 type dashAlert struct {
@@ -44,20 +47,25 @@ WHERE org_id IN (SELECT id from org)
 // the dashAlert type. If there are alerts that belong to either organization or dashboard that does not exist, those alerts will not be returned/
 // Additionally it unmarshals the json settings for the alert into the
 // ParsedSettings property of the dash alert.
-func (m *migration) slurpDashAlerts() ([]dashAlert, error) {
-	dashAlerts := []dashAlert{}
-	err := m.sess.SQL(fmt.Sprintf(slurpDashSQL, m.dialect.Quote("for"))).Find(&dashAlerts)
+func (m *migration) slurpDashAlerts(ctx context.Context) ([]dashAlert, error) {
+	var dashAlerts []dashAlert
+	err := m.store.WithDbSession(ctx, func(sess *db.Session) error {
+		err := sess.SQL(fmt.Sprintf(slurpDashSQL, m.dialect.Quote("for"))).Find(&dashAlerts)
+		if err != nil {
+			return err
+		}
 
+		for i := range dashAlerts {
+			err = json.Unmarshal(dashAlerts[i].Settings, &dashAlerts[i].ParsedSettings)
+			if err != nil {
+				da := dashAlerts[i]
+				return fmt.Errorf("failed to parse alert rule ID:%d, name:'%s', orgID:%d: %w", da.Id, da.Name, da.OrgId, err)
+			}
+		}
+		return nil
+	})
 	if err != nil {
 		return nil, err
-	}
-
-	for i := range dashAlerts {
-		err = json.Unmarshal(dashAlerts[i].Settings, &dashAlerts[i].ParsedSettings)
-		if err != nil {
-			da := dashAlerts[i]
-			return nil, fmt.Errorf("failed to parse alert rule ID:%d, name:'%s', orgID:%d: %w", da.Id, da.Name, da.OrgId, err)
-		}
 	}
 
 	return dashAlerts, nil
@@ -107,15 +115,16 @@ type conditionEvalJSON struct {
 }
 
 // slurpDashUIDs returns a map of [orgID, dashboardId] -> dashUID.
-func (m *migration) slurpDashUIDs() (map[[2]int64]string, error) {
+func (m *migration) slurpDashUIDs(ctx context.Context) (map[[2]int64]string, error) {
 	dashIDs := []struct {
 		OrgID int64  `xorm:"org_id"`
 		ID    int64  `xorm:"id"`
 		UID   string `xorm:"uid"`
 	}{}
 
-	err := m.sess.SQL(`SELECT org_id, id, uid FROM dashboard`).Find(&dashIDs)
-
+	err := m.store.WithDbSession(ctx, func(sess *db.Session) error {
+		return sess.SQL(`SELECT org_id, id, uid FROM dashboard`).Find(&dashIDs)
+	})
 	if err != nil {
 		return nil, err
 	}
