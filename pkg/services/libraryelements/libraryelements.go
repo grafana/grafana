@@ -15,17 +15,22 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func ProvideService(cfg *setting.Cfg, sqlStore db.DB, routeRegister routing.RouteRegister, folderService folder.Service, features featuremgmt.FeatureToggles, ac accesscontrol.AccessControl) *LibraryElementService {
+func ProvideService(cfg *setting.Cfg, sqlStore db.DB, routeRegister routing.RouteRegister, folderService folder.Service, features featuremgmt.FeatureToggles, ac accesscontrol.AccessControl, libraryElementPermissionsService accesscontrol.LibraryElementPermissionsService) *LibraryElementService {
 	l := &LibraryElementService{
-		Cfg:           cfg,
-		SQLStore:      sqlStore,
-		RouteRegister: routeRegister,
-		folderService: folderService,
-		log:           log.New("library-elements"),
-		features:      features,
-		AccessControl: ac,
+		Cfg:                       cfg,
+		SQLStore:                  sqlStore,
+		RouteRegister:             routeRegister,
+		folderService:             folderService,
+		log:                       log.New("library-elements"),
+		features:                  features,
+		AccessControl:             ac,
+		libraryElementPermissions: libraryElementPermissionsService,
 	}
+
 	l.registerAPIEndpoints()
+	ac.RegisterScopeAttributeResolver(LibraryPanelNameScopeResolver(l, l.folderService))
+	ac.RegisterScopeAttributeResolver(LibraryPanelUIDScopeResolver(l, l.folderService))
+
 	return l
 }
 
@@ -41,13 +46,14 @@ type Service interface {
 
 // LibraryElementService is the service for the Library Element feature.
 type LibraryElementService struct {
-	Cfg           *setting.Cfg
-	SQLStore      db.DB
-	RouteRegister routing.RouteRegister
-	folderService folder.Service
-	log           log.Logger
-	features      featuremgmt.FeatureToggles
-	AccessControl accesscontrol.AccessControl
+	Cfg                       *setting.Cfg
+	SQLStore                  db.DB
+	RouteRegister             routing.RouteRegister
+	folderService             folder.Service
+	log                       log.Logger
+	features                  featuremgmt.FeatureToggles
+	AccessControl             accesscontrol.AccessControl
+	libraryElementPermissions accesscontrol.LibraryElementPermissionsService
 }
 
 // CreateElement creates a Library Element.

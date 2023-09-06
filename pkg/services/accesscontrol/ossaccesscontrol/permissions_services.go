@@ -7,15 +7,19 @@ import (
 	"strconv"
 
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/libraryelements"
+	"github.com/grafana/grafana/pkg/services/libraryelements/model"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/retriever"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/team/teamimpl"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -185,6 +189,83 @@ func ProvideDashboardPermissions(
 	return &DashboardPermissionsService{srv}, nil
 }
 
+type LibraryElementPermissionsService struct {
+	*resourcepermissions.Service
+}
+
+var LibraryElementViewActions = []string{libraryelements.ActionLibraryPanelsRead}
+var LibraryElementEditActions = append(LibraryElementViewActions, []string{libraryelements.ActionLibraryPanelsWrite, libraryelements.ActionLibraryPanelsDelete}...)
+var LibraryElementAdminActions = LibraryElementEditActions
+
+func ProvideLibraryElementPermissions(
+	features featuremgmt.FeatureToggles, router routing.RouteRegister, sql db.DB, ac accesscontrol.AccessControl,
+	license licensing.Licensing, folderService folder.Service, service accesscontrol.Service,
+	teamService team.Service, userService user.Service,
+) (*LibraryElementPermissionsService, error) {
+	options := resourcepermissions.Options{
+		Resource:          "library.panels",
+		ResourceAttribute: "uid",
+		ResourceValidator: func(ctx context.Context, orgID int64, resourceID string) error {
+			user, err := appcontext.User(ctx)
+			if err != nil {
+				return err
+			}
+
+			err = sql.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+				_, err := libraryelements.GetLibraryElement(sql.GetDialect(), sess, resourceID, user.OrgID)
+				return err
+			})
+			return err
+		},
+		InheritedScopesSolver: func(ctx context.Context, orgID int64, resourceID string) ([]string, error) {
+			user, err := appcontext.User(ctx)
+			if err != nil {
+				return nil, err
+			}
+
+			var el model.LibraryElementWithMeta
+			err = sql.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+				libEl, err := libraryelements.GetLibraryElement(sql.GetDialect(), sess, resourceID, user.OrgID)
+				el = libEl
+				return err
+			})
+			if err != nil {
+				return nil, err
+			}
+
+			if el.FolderID > 0 {
+				parentScope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(el.FolderUID)
+
+				nestedScopes, err := dashboards.GetInheritedScopes(ctx, orgID, el.FolderUID, folderService)
+				if err != nil {
+					return nil, err
+				}
+				return append([]string{parentScope}, nestedScopes...), nil
+			}
+			return []string{}, nil
+		},
+		Assignments: resourcepermissions.Assignments{
+			Users:        true,
+			Teams:        true,
+			BuiltInRoles: true,
+		},
+		PermissionsToActions: map[string][]string{
+			"View":  LibraryElementViewActions,
+			"Edit":  LibraryElementEditActions,
+			"Admin": LibraryElementAdminActions,
+		},
+		ReaderRoleName: "Library element permission reader",
+		WriterRoleName: "Library element permission writer",
+		RoleGroup:      "Library panels",
+	}
+
+	srv, err := resourcepermissions.New(options, features, router, license, ac, service, sql, teamService, userService)
+	if err != nil {
+		return nil, err
+	}
+	return &LibraryElementPermissionsService{srv}, nil
+}
+
 type FolderPermissionsService struct {
 	*resourcepermissions.Service
 }
@@ -230,9 +311,9 @@ func ProvideFolderPermissions(
 			BuiltInRoles: true,
 		},
 		PermissionsToActions: map[string][]string{
-			"View":  append(DashboardViewActions, FolderViewActions...),
-			"Edit":  append(DashboardEditActions, FolderEditActions...),
-			"Admin": append(DashboardAdminActions, FolderAdminActions...),
+			"View":  append(DashboardViewActions, append(LibraryElementViewActions, FolderViewActions...)...),
+			"Edit":  append(DashboardEditActions, append(LibraryElementEditActions, FolderEditActions...)...),
+			"Admin": append(DashboardAdminActions, append(LibraryElementAdminActions, FolderAdminActions...)...),
 		},
 		ReaderRoleName: "Folder permission reader",
 		WriterRoleName: "Folder permission writer",

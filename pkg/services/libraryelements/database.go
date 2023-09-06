@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/kinds/librarypanel"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/libraryelements/model"
@@ -82,7 +83,7 @@ func syncFieldsWithModel(libraryElement *model.LibraryElement) error {
 	return nil
 }
 
-func getLibraryElement(dialect migrator.Dialect, session *db.Session, uid string, orgID int64) (model.LibraryElementWithMeta, error) {
+func GetLibraryElement(dialect migrator.Dialect, session *db.Session, uid string, orgID int64) (model.LibraryElementWithMeta, error) {
 	elements := make([]model.LibraryElementWithMeta, 0)
 	sql := selectLibraryElementDTOWithMeta +
 		", coalesce(dashboard.title, 'General') AS folder_name" +
@@ -191,14 +192,44 @@ func (l *LibraryElementService) createLibraryElement(c context.Context, signedIn
 		},
 	}
 
+	if err := l.updatePermissions(c, &dto, signedInUser); err != nil {
+		l.log.Error(err.Error())
+	}
+
 	return dto, err
+}
+
+func (l *LibraryElementService) updatePermissions(c context.Context, model *model.LibraryElementDTO, signedInUser *user.SignedInUser) error {
+	inFolder := model.FolderID > 0
+	if !accesscontrol.IsDisabled(l.Cfg) {
+		var permissions []accesscontrol.SetResourcePermissionCommand
+		if signedInUser.IsRealUser() && !signedInUser.IsAnonymous {
+			permissions = append(permissions, accesscontrol.SetResourcePermissionCommand{
+				UserID: signedInUser.UserID, Permission: dashboards.PERMISSION_ADMIN.String(),
+			})
+		}
+
+		if !inFolder {
+			permissions = append(permissions, []accesscontrol.SetResourcePermissionCommand{
+				{BuiltinRole: string(org.RoleEditor), Permission: dashboards.PERMISSION_EDIT.String()},
+				{BuiltinRole: string(org.RoleViewer), Permission: dashboards.PERMISSION_VIEW.String()},
+			}...)
+		}
+
+		_, err := l.libraryElementPermissions.SetPermissions(c, model.OrgID, model.UID, permissions...)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 // deleteLibraryElement deletes a library element.
 func (l *LibraryElementService) deleteLibraryElement(c context.Context, signedInUser *user.SignedInUser, uid string) (int64, error) {
 	var elementID int64
 	err := l.SQLStore.WithTransactionalDbSession(c, func(session *db.Session) error {
-		element, err := getLibraryElement(l.SQLStore.GetDialect(), session, uid, signedInUser.OrgID)
+		element, err := GetLibraryElement(l.SQLStore.GetDialect(), session, uid, signedInUser.OrgID)
 		if err != nil {
 			return err
 		}
@@ -509,7 +540,7 @@ func (l *LibraryElementService) patchLibraryElement(c context.Context, signedInU
 		return model.LibraryElementDTO{}, err
 	}
 	err := l.SQLStore.WithTransactionalDbSession(c, func(session *db.Session) error {
-		elementInDB, err := getLibraryElement(l.SQLStore.GetDialect(), session, uid, signedInUser.OrgID)
+		elementInDB, err := GetLibraryElement(l.SQLStore.GetDialect(), session, uid, signedInUser.OrgID)
 		if err != nil {
 			return err
 		}
@@ -526,7 +557,7 @@ func (l *LibraryElementService) patchLibraryElement(c context.Context, signedInU
 				return model.ErrLibraryElementUIDTooLong
 			}
 
-			_, err := getLibraryElement(l.SQLStore.GetDialect(), session, updateUID, signedInUser.OrgID)
+			_, err := GetLibraryElement(l.SQLStore.GetDialect(), session, updateUID, signedInUser.OrgID)
 			if !errors.Is(err, model.ErrLibraryElementNotFound) {
 				return model.ErrLibraryElementAlreadyExists
 			}
@@ -612,7 +643,7 @@ func (l *LibraryElementService) getConnections(c context.Context, signedInUser *
 	}
 
 	err = l.SQLStore.WithDbSession(c, func(session *db.Session) error {
-		element, err := getLibraryElement(l.SQLStore.GetDialect(), session, uid, signedInUser.OrgID)
+		element, err := GetLibraryElement(l.SQLStore.GetDialect(), session, uid, signedInUser.OrgID)
 		if err != nil {
 			return err
 		}
@@ -715,7 +746,7 @@ func (l *LibraryElementService) connectElementsToDashboardID(c context.Context, 
 			return err
 		}
 		for _, elementUID := range elementUIDs {
-			element, err := getLibraryElement(l.SQLStore.GetDialect(), session, elementUID, signedInUser.OrgID)
+			element, err := GetLibraryElement(l.SQLStore.GetDialect(), session, elementUID, signedInUser.OrgID)
 			if err != nil {
 				return err
 			}
