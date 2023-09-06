@@ -95,11 +95,10 @@ nightly_trigger = {
 def rgm_build(script = "drone_publish_main.sh"):
     rgm_build_step = {
         "name": "rgm-build",
-        "image": "grafana/grafana-build:dev-d88be0f",
+        "image": "grafana/grafana-build:dev-aad2b77",
         "commands": [
             "export GRAFANA_DIR=$$(pwd)",
             "cd /src && ./scripts/{}".format(script),
-            "mv dist ${DRONE_WORKSPACE}",
         ],
         "environment": rgm_env_secrets,
         # The docker socket is a requirement for running dagger programs
@@ -118,7 +117,7 @@ def rgm_copy(src, dst):
         "commands": [
             "printenv GCP_KEY_BASE64 | base64 -d > /tmp/key.json",
             "gcloud auth activate-service-account --key-file=/tmp/key.json",
-            "gcloud storage cp -r $${{DRONE_WORKSPACE}}/{} {}".format(src, dst),
+            "gcloud storage cp -r {} {}".format(src, dst),
         ],
         "environment": rgm_env_secrets,
         "depends_on": ["rgm-build"],
@@ -158,7 +157,7 @@ def rgm_tag():
 def rgm_nightly():
     ver = "nightly-${DRONE_COMMIT_SHA:0:8}"
     dst = "$${{DESTINATION}}/nightly/{}".format(ver)
-    src = "dist/{}".format(ver)
+    src = "$${{DRONE_WORKSPACE}}/dist/{}".format(ver)
     return pipeline(
         name = "rgm-nightly-prerelease",
         trigger = nightly_trigger,

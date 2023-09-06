@@ -3111,7 +3111,6 @@ steps:
 - commands:
   - export GRAFANA_DIR=$$(pwd)
   - cd /src && ./scripts/drone_publish_main.sh
-  - mv dist ${DRONE_WORKSPACE}
   environment:
     _EXPERIMENTAL_DAGGER_CLOUD_TOKEN:
       from_secret: dagger_token
@@ -3127,7 +3126,7 @@ steps:
       from_secret: packages_gpg_private_key
     GPG_PUBLIC_KEY:
       from_secret: packages_gpg_public_key
-  image: grafana/grafana-build:dev-d88be0f
+  image: grafana/grafana-build:dev-aad2b77
   name: rgm-build
   volumes:
   - name: docker
@@ -3169,7 +3168,6 @@ steps:
 - commands:
   - export GRAFANA_DIR=$$(pwd)
   - cd /src && ./scripts/drone_publish_tag_grafana.sh
-  - mv dist ${DRONE_WORKSPACE}
   environment:
     _EXPERIMENTAL_DAGGER_CLOUD_TOKEN:
       from_secret: dagger_token
@@ -3185,7 +3183,7 @@ steps:
       from_secret: packages_gpg_private_key
     GPG_PUBLIC_KEY:
       from_secret: packages_gpg_public_key
-  image: grafana/grafana-build:dev-d88be0f
+  image: grafana/grafana-build:dev-aad2b77
   name: rgm-build
   volumes:
   - name: docker
@@ -3290,7 +3288,6 @@ steps:
 - commands:
   - export GRAFANA_DIR=$$(pwd)
   - cd /src && ./scripts/drone_build_nightly_grafana.sh
-  - mv dist ${DRONE_WORKSPACE}
   environment:
     _EXPERIMENTAL_DAGGER_CLOUD_TOKEN:
       from_secret: dagger_token
@@ -3306,7 +3303,7 @@ steps:
       from_secret: packages_gpg_private_key
     GPG_PUBLIC_KEY:
       from_secret: packages_gpg_public_key
-  image: grafana/grafana-build:dev-d88be0f
+  image: grafana/grafana-build:dev-aad2b77
   name: rgm-build
   volumes:
   - name: docker
@@ -4942,6 +4939,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: e75cffc1c9f3a1a87a2037535c671b625c802b3f2a2f4fcbc90c804d71a9aad9
+hmac: 925c5d6fd6adddc5f36df8718be338da3e1dcc6c74bdbd8a7ad13dbebe2f4f96
 
 ...
