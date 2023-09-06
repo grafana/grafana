@@ -43,8 +43,10 @@ type IDAssertions struct {
 }
 
 // ProvideIDSigningService returns a new instance of the AssertID service.
-func ProvideIDSigningService(remoteCache remotecache.CacheStorage, cfg *setting.Cfg,
-	signingKeyService signingkeys.Service, teams team.Service) *Service {
+func ProvideIDSigningService(
+	remoteCache remotecache.CacheStorage, cfg *setting.Cfg,
+	signingKeyService signingkeys.Service, teams team.Service,
+) *Service {
 	service := &Service{
 		logger:            log.New("auth.assertid"),
 		remoteCache:       remoteCache,
@@ -113,17 +115,19 @@ func (s *Service) ActiveUserAssertion(ctx context.Context, id identity.Requester
 		return "", fmt.Errorf("signer unavailable")
 	}
 
-	cacheKey, err := id.GetCacheKey()
-	if err == nil {
-		val, err := s.remoteCache.Get(ctx, fmt.Sprintf("%s-%s", cacheKeyPrefix, cacheKey))
-		if err == nil {
-			return string(val), nil
-		}
-	} else {
-		return "", err
+	namespace, identifier := id.GetNamespacedID()
+	if !canGenerateToken(namespace) {
+		// skip for namespaces we cannot generate a token for e.g. anonymous
+		return "", nil
 	}
 
-	namespace, identifier := id.GetNamespacedID()
+	// safe to ignore error because of check above
+	cacheKey, _ := id.GetCacheKey()
+	val, err := s.remoteCache.Get(ctx, getCacheKey(cacheKey))
+	if err == nil {
+		return string(val), nil
+	}
+
 	// Set the JWT claims.
 	claims := &jwt.Claims{
 		Issuer:   fmt.Sprintf("grn:%d:instance/%s", id.GetOrgID(), s.cfg.AppURL),
@@ -139,17 +143,25 @@ func (s *Service) ActiveUserAssertion(ctx context.Context, id identity.Requester
 		return "", err
 	}
 
-	// Create a new JWT builder.
+	// sign the claims and assetion
 	token, err := s.Signer.SignToken(claims, assertions)
 	if err != nil {
 		return "", err
 	}
 
-	if err := s.remoteCache.Set(ctx,
-		fmt.Sprintf("%s-%s", cacheKeyPrefix, cacheKey),
-		[]byte(token), time.Minute*4); err != nil {
+	if err := s.remoteCache.Set(ctx, getCacheKey(cacheKey), []byte(token), time.Minute*4); err != nil {
 		s.logger.Error("failed to set cache", "error", err)
 	}
 
 	return token, nil
+}
+
+func canGenerateToken(namespace string) bool {
+	return namespace == identity.NamespaceUser ||
+		namespace == identity.NamespaceAPIKey ||
+		namespace == identity.NamespaceServiceAccount
+}
+
+func getCacheKey(key string) string {
+	return fmt.Sprintf("%s-%s", cacheKeyPrefix, key)
 }
