@@ -152,7 +152,7 @@ func TestIntegrationUpdateCorrelation(t *testing.T) {
 		err = json.Unmarshal(responseBody, &response)
 		require.NoError(t, err)
 
-		require.Equal(t, "Correlation is read only", response.Message)
+		require.Equal(t, "Correlation can only be edited via provisioning", response.Message)
 		require.Equal(t, correlations.ErrCorrelationReadOnly.Error(), response.Error)
 
 		require.NoError(t, res.Body.Close())

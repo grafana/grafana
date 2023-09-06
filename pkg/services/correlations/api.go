@@ -105,7 +105,7 @@ func (s *CorrelationsService) deleteHandler(c *contextmodel.ReqContext) response
 		}
 
 		if errors.Is(err, ErrCorrelationReadOnly) {
-			return response.Error(http.StatusForbidden, "Correlation is read only", err)
+			return response.Error(http.StatusForbidden, "Correlation can only be edited via provisioning", err)
 		}
 
 		return response.Error(http.StatusInternalServerError, "Failed to delete correlation", err)
@@ -166,7 +166,7 @@ func (s *CorrelationsService) updateHandler(c *contextmodel.ReqContext) response
 		}
 
 		if errors.Is(err, ErrCorrelationReadOnly) {
-			return response.Error(http.StatusForbidden, "Correlation is read only", err)
+			return response.Error(http.StatusForbidden, "Correlation can only be edited via provisioning", err)
 		}
 
 		return response.Error(http.StatusInternalServerError, "Failed to update correlation", err)
