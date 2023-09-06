@@ -165,7 +165,7 @@ Content-Length: 78
 Status Codes:
 
 - **200** – Updated
-- **400** – Errors (invalid json, missing or invalid fields, etc)
+- **400** – Errors (such as invalid json, missing or invalid fields)
 - **401** – Unauthorized
 - **403** – Access denied
 - **404** – Public dashboard not found
