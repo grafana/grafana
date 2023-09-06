@@ -8,8 +8,10 @@ import (
 
 	"github.com/go-jose/go-jose/v3"
 
+	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/signingkeys"
+	"github.com/grafana/grafana/pkg/services/signingkeys/api"
 )
 
 const (
@@ -18,7 +20,7 @@ const (
 
 var _ signingkeys.Service = new(Service)
 
-func ProvideEmbeddedSigningKeysService() (*Service, error) {
+func ProvideEmbeddedSigningKeysService(routeRegister routing.RouteRegister) (*Service, error) {
 	s := &Service{
 		log:  log.New("auth.key_service"),
 		keys: map[string]crypto.Signer{},
@@ -33,6 +35,9 @@ func ProvideEmbeddedSigningKeysService() (*Service, error) {
 	if err := s.AddPrivateKey(serverPrivateKeyID, privateKey); err != nil {
 		return nil, err
 	}
+
+	signingKeysApi := api.NewSigningKeysAPI(s, routeRegister)
+	signingKeysApi.RegisterAPIEndpoints()
 
 	return s, nil
 }
@@ -68,8 +73,9 @@ func (s *Service) GetJWK(keyID string) (jose.JSONWebKey, error) {
 	}
 
 	result := jose.JSONWebKey{
-		Key: privateKey.Public(),
-		Use: "sig",
+		Key:   privateKey.Public(),
+		KeyID: keyID,
+		Use:   "sig",
 	}
 
 	return result, nil
