@@ -38,7 +38,9 @@ func (a *AccessControl) Evaluate(ctx context.Context, user identity.Requester, e
 		return false, nil
 	}
 
+	namespace, identifier := user.GetNamespacedID()
 	if len(user.GetPermissions()) == 0 {
+		a.log.Debug("No permissions set for entity", "namespace", namespace, "id", identifier, "orgID", user.GetOrgID(), "login", user.GetLogin())
 		return false, nil
 	}
 
