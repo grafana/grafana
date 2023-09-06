@@ -49,7 +49,7 @@ var NewCWLogsClient = func(sess *session.Session) cloudwatchlogsiface.CloudWatch
 	return cloudwatchlogs.New(sess)
 }
 
-// EC2 client factory.
+// NewEC2Client is a client factory.
 //
 // Stubbable by tests.
 var NewEC2Client = func(provider client.ConfigProvider) models.EC2APIProvider {

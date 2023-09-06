@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"sync"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -109,11 +108,10 @@ func NewInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 
 // cloudWatchExecutor executes CloudWatch requests.
 type cloudWatchExecutor struct {
-	im          instancemgmt.InstanceManager
-	cfg         *setting.Cfg
-	sessions    SessionCache
-	features    featuremgmt.FeatureToggles
-	regionCache sync.Map
+	im       instancemgmt.InstanceManager
+	cfg      *setting.Cfg
+	sessions SessionCache
+	features featuremgmt.FeatureToggles
 
 	resourceHandler backend.CallResourceHandler
 }
@@ -240,7 +238,7 @@ func (e *cloudWatchExecutor) newSession(ctx context.Context, pluginCtx backend.P
 
 	if region == defaultRegion {
 		if len(instance.Settings.Region) == 0 {
-			return nil, fmt.Errorf("Unable to start new auth session without a selected or default region")
+			return nil, fmt.Errorf("unable to start new auth session without a selected or default region")
 		}
 		region = instance.Settings.Region
 	}
