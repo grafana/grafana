@@ -42,7 +42,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/annotations/annotationsimpl"
 	"github.com/grafana/grafana/pkg/services/apikey/apikeyimpl"
 	"github.com/grafana/grafana/pkg/services/auth/jwt"
-	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/authn/authnimpl"
 	"github.com/grafana/grafana/pkg/services/cleanup"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
@@ -348,8 +347,8 @@ var wireBasicSet = wire.NewSet(
 	tagimpl.ProvideService,
 	wire.Bind(new(tag.Service), new(*tagimpl.Service)),
 	authnimpl.ProvideService,
-	wire.Bind(new(authn.Service), new(*authnimpl.Service)),
-	wire.Bind(new(authn.IdentitySynchronizer), new(*authnimpl.Service)),
+	authnimpl.ProvideIdentitySynchronizer,
+	authnimpl.ProvideAuthnService,
 	supportbundlesimpl.ProvideService,
 	oasimpl.ProvideService,
 	wire.Bind(new(oauthserver.OAuth2Server), new(*oasimpl.OAuth2ServiceImpl)),
