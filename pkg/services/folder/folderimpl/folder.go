@@ -281,14 +281,17 @@ func (s *Service) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (
 	dashFolder.SetUID(trimmedUID)
 
 	user := cmd.SignedInUser
+
+	userID := int64(0)
+	var err error
 	namespaceID, userIDstr := user.GetNamespacedID()
-	if namespaceID == identity.NamespaceAPIKey {
-		s.log.Warn("namespace API key detected, using 0 as user ID", "namespaceID", namespaceID, "userID", userIDstr)
-		userIDstr = "0"
-	}
-	userID, err := identity.IntIdentifier(namespaceID, userIDstr)
-	if err != nil {
-		s.log.Warn("failed to parse user ID", "namespaceID", namespaceID, "userID", userIDstr, "error", err)
+	if namespaceID != identity.NamespaceUser && namespaceID != identity.NamespaceServiceAccount {
+		s.log.Debug("User does not belong to a user or service account namespace, using 0 as user ID", "namespaceID", namespaceID, "userID", userIDstr)
+	} else {
+		userID, err = identity.IntIdentifier(namespaceID, userIDstr)
+		if err != nil {
+			s.log.Debug("failed to parse user ID", "namespaceID", namespaceID, "userID", userIDstr, "error", err)
+		}
 	}
 
 	if userID == 0 {
@@ -773,14 +776,15 @@ func (s *Service) BuildSaveDashboardCommand(ctx context.Context, dto *dashboards
 		}
 	}
 
+	userID := int64(0)
 	namespaceID, userIDstr := dto.User.GetNamespacedID()
-	if namespaceID == identity.NamespaceAPIKey {
-		s.log.Warn("namespace API key detected, using 0 as user ID", "namespaceID", namespaceID, "userID", userIDstr)
-		userIDstr = "0"
-	}
-	userID, err := identity.IntIdentifier(namespaceID, userIDstr)
-	if err != nil {
-		s.log.Warn("failed to parse user ID", "namespaceID", namespaceID, "userID", userIDstr, "error", err)
+	if namespaceID != identity.NamespaceUser && namespaceID != identity.NamespaceServiceAccount {
+		s.log.Warn("User does not belong to a user or service account namespace, using 0 as user ID", "namespaceID", namespaceID, "userID", userIDstr)
+	} else {
+		userID, err = identity.IntIdentifier(namespaceID, userIDstr)
+		if err != nil {
+			s.log.Warn("failed to parse user ID", "namespaceID", namespaceID, "userID", userIDstr, "error", err)
+		}
 	}
 
 	cmd := &dashboards.SaveDashboardCommand{

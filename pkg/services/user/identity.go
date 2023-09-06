@@ -59,11 +59,12 @@ func (u *SignedInUser) ToUserDisplayDTO() *UserDisplayDTO {
 
 // Static function to parse a requester into a UserDisplayDTO
 func NewUserDisplayDTOFromRequester(requester identity.Requester) (*UserDisplayDTO, error) {
+	userID := int64(0)
 	namespaceID, identifier := requester.GetNamespacedID()
-	if namespaceID != identity.NamespaceUser && namespaceID != identity.NamespaceServiceAccount {
-		identifier = "0"
+	if namespaceID == identity.NamespaceUser || namespaceID == identity.NamespaceServiceAccount {
+		userID, _ = identity.IntIdentifier(namespaceID, identifier)
 	}
-	userID, _ := identity.IntIdentifier(namespaceID, identifier)
+
 	return &UserDisplayDTO{
 		ID:    userID,
 		Login: requester.GetLogin(),
