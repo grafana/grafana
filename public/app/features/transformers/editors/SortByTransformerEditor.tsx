@@ -8,12 +8,15 @@ import {
   TransformerCategory,
 } from '@grafana/data';
 import { SortByField, SortByTransformerOptions } from '@grafana/data/src/transformations/transformers/sortBy';
+import { getTemplateSrv } from '@grafana/runtime';
 import { InlineField, InlineSwitch, InlineFieldRow, Select } from '@grafana/ui';
 
 import { useAllFieldNamesFromDataFrames } from '../utils';
 
 export const SortByTransformerEditor = ({ input, options, onChange }: TransformerUIProps<SortByTransformerOptions>) => {
   const fieldNames = useAllFieldNamesFromDataFrames(input).map((item: string) => ({ label: item, value: item }));
+  const templateSrv = getTemplateSrv();
+  const variables = templateSrv.getVariables().map((v) => ({ label: '$' + v.name, value: '$' + v.name }));
 
   // Only supports single sort for now
   const onSortChange = useCallback(
@@ -32,7 +35,7 @@ export const SortByTransformerEditor = ({ input, options, onChange }: Transforme
           <InlineFieldRow key={`${s.field}/${index}`}>
             <InlineField label="Field" labelWidth={10} grow={true}>
               <Select
-                options={fieldNames}
+                options={[...fieldNames, ...variables]}
                 value={s.field}
                 placeholder="Select field"
                 onChange={(v) => {
