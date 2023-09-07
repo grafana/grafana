@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -228,15 +229,19 @@ func makeRawRequest(ctx context.Context, lokiDsUrl string, resourcePath string) 
 
 func (api *LokiAPI) RawQuery(ctx context.Context, resourcePath string) (RawLokiResponse, error) {
 	api.log.Debug("Sending raw query to loki", "resourcePath", resourcePath)
-	start := time.Now()
 	req, err := makeRawRequest(ctx, api.url, resourcePath)
 	if err != nil {
-		api.log.Error("Failed to prepare request to loki", "err", err, "resourcePath", resourcePath)
+		api.log.Error("Failed to prepare request to loki", "error", err, "resourcePath", resourcePath)
 		return RawLokiResponse{}, err
 	}
-
+	start := time.Now()
 	resp, err := api.client.Do(req)
 	if err != nil {
+		status := "error"
+		if errors.Is(err, context.Canceled) {
+			status = "cancelled"
+		}
+		api.log.Error("Error received from Loki", "error", err, "resourcePath", resourcePath, "status", status, "statusCode", resp.StatusCode, "duration", time.Since(start), "action", "databaseRequest")
 		return RawLokiResponse{}, err
 	}
 
@@ -246,7 +251,7 @@ func (api *LokiAPI) RawQuery(ctx context.Context, resourcePath string) (RawLokiR
 		}
 	}()
 
-	api.log.Debug("Response received from loki", "status", resp.StatusCode, "length", resp.Header.Get("Content-Length"), "took", time.Since(start), "encoding", resp.Header.Get("Content-Encoding"))
+	api.log.Info("Response received from loki", "status", "ok", "statusCode", resp.StatusCode, "contentLength", resp.Header.Get("Content-Length"), "duration", time.Since(start), "contentEncoding", resp.Header.Get("Content-Encoding"))
 
 	// server errors are handled by the plugin-proxy to hide the error message
 	if resp.StatusCode/100 == 5 {
@@ -255,6 +260,7 @@ func (api *LokiAPI) RawQuery(ctx context.Context, resourcePath string) (RawLokiR
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
+		logger.Error("Error reading response body bytes", "error", err)
 		return RawLokiResponse{}, err
 	}
 

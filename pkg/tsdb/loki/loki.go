@@ -102,9 +102,9 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 
 func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
 	dsInfo, err := s.getDSInfo(ctx, req.PluginContext)
-	logger := logger.FromContext(ctx)
+	logger := s.logger.FromContext(ctx)
 	if err != nil {
-		logger.Error("Failed to get data source info", "err", err)
+		logger.Error("Failed to get data source info", "error", err)
 		return err
 	}
 	return callResource(ctx, req, sender, dsInfo, logger, s.tracer)
