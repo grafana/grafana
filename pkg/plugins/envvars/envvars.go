@@ -7,12 +7,20 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/grafana/grafana-plugin-sdk-go/experimental/featuretoggles"
+	"github.com/grafana/grafana-plugin-sdk-go/experimental/oauthtokenretriever"
+
 	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
 	"github.com/grafana/grafana-azure-sdk-go/azsettings"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
 
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
+)
+
+const (
+	customConfigPrefix = "GF_PLUGIN"
 )
 
 type Provider interface {
@@ -62,8 +70,103 @@ func (s *Service) Get(ctx context.Context, p *plugins.Plugin) []string {
 	hostEnv = append(hostEnv, azsettings.WriteToEnvStr(s.cfg.Azure)...)
 	hostEnv = append(hostEnv, s.tracingEnvVars(p)...)
 
-	ev := getPluginSettings(p.ID, s.cfg).asEnvVar("GF_PLUGIN", hostEnv)
+	ev := getPluginSettings(p.ID, s.cfg).asEnvVar(customConfigPrefix, hostEnv...)
 	return ev
+}
+
+// GetConfigMap returns a map of configuration that should be passed in a plugin request.
+// Note: Licensing is not included as part of this resulting config map.
+func (s *Service) GetConfigMap(ctx context.Context, p plugins.PluginDTO) map[string]string {
+	m := map[string]string{
+		backend.GrafanaVersion: s.cfg.BuildVersion,
+	}
+
+	if p.ExternalService != nil {
+		m[oauthtokenretriever.AppURL] = s.cfg.GrafanaAppURL
+		m[oauthtokenretriever.AppClientID] = p.ExternalService.ClientID
+		m[oauthtokenretriever.AppClientSecret] = p.ExternalService.ClientSecret
+		m[oauthtokenretriever.AppPrivateKey] = p.ExternalService.PrivateKey
+	}
+
+	if s.cfg.Features != nil {
+		enabledFeatures := s.cfg.Features.GetEnabled(ctx)
+		if len(enabledFeatures) > 0 {
+			features := make([]string, 0, len(enabledFeatures))
+			for feat := range enabledFeatures {
+				features = append(features, feat)
+			}
+			m[featuretoggles.EnabledFeatures] = strings.Join(features, ",")
+		}
+	}
+
+	if s.cfg.AWSAssumeRoleEnabled {
+		m[awsds.AssumeRoleEnabledEnvVarKeyName] = "true"
+	}
+	if len(s.cfg.AWSAllowedAuthProviders) > 0 {
+		m[awsds.AllowedAuthProvidersEnvVarKeyName] = strings.Join(s.cfg.AWSAllowedAuthProviders, ",")
+	}
+	if s.cfg.AWSExternalId != "" {
+		m[awsds.GrafanaAssumeRoleExternalIdKeyName] = s.cfg.AWSExternalId
+	}
+
+	if s.cfg.ProxySettings.Enabled {
+		m[proxy.PluginSecureSocksProxyEnabled] = "true"
+		m[proxy.PluginSecureSocksProxyClientCert] = s.cfg.ProxySettings.ClientCert
+		m[proxy.PluginSecureSocksProxyClientKey] = s.cfg.ProxySettings.ClientKey
+		m[proxy.PluginSecureSocksProxyRootCACert] = s.cfg.ProxySettings.RootCA
+		m[proxy.PluginSecureSocksProxyProxyAddress] = s.cfg.ProxySettings.ProxyAddress
+		m[proxy.PluginSecureSocksProxyServerName] = s.cfg.ProxySettings.ServerName
+	}
+
+	azureSettings := s.cfg.Azure
+	if azureSettings != nil {
+		if azureSettings.Cloud != "" {
+			m[azsettings.AzureCloud] = azureSettings.Cloud
+		}
+
+		if azureSettings.ManagedIdentityEnabled {
+			m[azsettings.ManagedIdentityEnabled] = "true"
+
+			if azureSettings.ManagedIdentityClientId != "" {
+				m[azsettings.ManagedIdentityClientID] = azureSettings.ManagedIdentityClientId
+			}
+		}
+
+		if azureSettings.UserIdentityEnabled {
+			m[azsettings.UserIdentityEnabled] = "true"
+
+			if azureSettings.UserIdentityTokenEndpoint != nil {
+				if azureSettings.UserIdentityTokenEndpoint.TokenUrl != "" {
+					m[azsettings.UserIdentityTokenURL] = azureSettings.UserIdentityTokenEndpoint.TokenUrl
+				}
+				if azureSettings.UserIdentityTokenEndpoint.ClientId != "" {
+					m[azsettings.UserIdentityClientID] = azureSettings.UserIdentityTokenEndpoint.ClientId
+				}
+				if azureSettings.UserIdentityTokenEndpoint.ClientSecret != "" {
+					m[azsettings.UserIdentityClientSecret] = azureSettings.UserIdentityTokenEndpoint.ClientSecret
+				}
+				if azureSettings.UserIdentityTokenEndpoint.UsernameAssertion {
+					m[azsettings.UserIdentityAssertion] = "username"
+				}
+			}
+		}
+	}
+
+	if v, exists := s.cfg.PluginSettings[p.ID]["tracing"]; exists && v == "true" && s.cfg.Tracing.IsEnabled() {
+		m["GF_INSTANCE_OTLP_ADDRESS"] = s.cfg.Tracing.OpenTelemetry.Address
+		m["GF_INSTANCE_OTLP_PROPAGATION"] = s.cfg.Tracing.OpenTelemetry.Propagation
+
+		if p.Info.Version != "" {
+			m["GF_PLUGIN_VERSION"] = p.Info.Version
+		}
+	}
+
+	ps := getPluginSettings(p.ID, s.cfg)
+	for k, v := range ps {
+		m[fmt.Sprintf("%s_%s", customConfigPrefix, strings.ToUpper(k))] = v
+	}
+
+	return m
 }
 
 func (s *Service) tracingEnvVars(plugin *plugins.Plugin) []string {
@@ -146,7 +249,7 @@ func getPluginSettings(pluginID string, cfg *config.Cfg) pluginSettings {
 	return ps
 }
 
-func (ps pluginSettings) asEnvVar(prefix string, hostEnv []string) []string {
+func (ps pluginSettings) asEnvVar(prefix string, hostEnv ...string) []string {
 	env := make([]string, 0, len(ps))
 	for k, v := range ps {
 		key := fmt.Sprintf("%s_%s", prefix, strings.ToUpper(k))

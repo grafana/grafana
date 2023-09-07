@@ -11,25 +11,35 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/config"
+	"github.com/grafana/grafana/pkg/plugins/envvars"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/adapters"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 )
 
+const (
+	pluginSettingsCacheTTL    = 5 * time.Second
+	pluginSettingsCachePrefix = "plugin-setting-"
+)
+
 var ErrPluginNotFound = errors.New("plugin not found")
 
 func ProvideService(cacheService *localcache.CacheService, pluginStore plugins.Store,
-	dataSourceService datasources.DataSourceService, pluginSettingsService pluginsettings.Service) *Provider {
+	dataSourceService datasources.DataSourceService, pluginSettingsService pluginsettings.Service,
+	licensing plugins.Licensing, pCfg *config.Cfg) *Provider {
 	return &Provider{
 		cacheService:          cacheService,
 		pluginStore:           pluginStore,
 		dataSourceService:     dataSourceService,
 		pluginSettingsService: pluginSettingsService,
+		pluginEnvVars:         envvars.NewProvider(pCfg, licensing),
 	}
 }
 
 type Provider struct {
+	pluginEnvVars         *envvars.Service
 	cacheService          *localcache.CacheService
 	pluginStore           plugins.Store
 	dataSourceService     datasources.DataSourceService
@@ -55,7 +65,7 @@ func (p *Provider) Get(ctx context.Context, pluginID string, user identity.Reque
 	}
 
 	if plugin.IsApp() {
-		appSettings, err := p.appInstanceSettings(ctx, pluginID, orgID)
+		appSettings, err := p.appInstanceSettings(ctx, plugin, orgID)
 		if err != nil {
 			return backend.PluginContext{}, err
 		}
@@ -69,7 +79,7 @@ func (p *Provider) Get(ctx context.Context, pluginID string, user identity.Reque
 // resolved and appended to the returned context.
 // Note: *user.SignedInUser can be nil.
 func (p *Provider) GetWithDataSource(ctx context.Context, pluginID string, user identity.Requester, ds *datasources.DataSource) (backend.PluginContext, error) {
-	_, exists := p.pluginStore.Plugin(ctx, pluginID)
+	plugin, exists := p.pluginStore.Plugin(ctx, pluginID)
 	if !exists {
 		return backend.PluginContext{}, ErrPluginNotFound
 	}
@@ -82,24 +92,32 @@ func (p *Provider) GetWithDataSource(ctx context.Context, pluginID string, user 
 		pCtx.User = adapters.BackendUserFromSignedInUser(user)
 	}
 
-	datasourceSettings, err := adapters.ModelToInstanceSettings(ds, p.decryptSecureJsonDataFn(ctx))
+	datasourceSettings, err := p.datasourceInstanceSettings(ctx, ds, plugin)
 	if err != nil {
 		return pCtx, err
 	}
 	pCtx.DataSourceInstanceSettings = datasourceSettings
 
+	settings := p.pluginEnvVars.GetConfigMap(ctx, plugin)
+	pCtx.Config = backend.NewCfg(settings)
+
 	return pCtx, nil
 }
 
-const pluginSettingsCacheTTL = 5 * time.Second
-const pluginSettingsCachePrefix = "plugin-setting-"
+func (p *Provider) datasourceInstanceSettings(ctx context.Context, ds *datasources.DataSource, plugin plugins.PluginDTO) (*backend.DataSourceInstanceSettings, error) {
+	datasourceSettings, err := adapters.ModelToInstanceSettings(ds, p.decryptSecureJsonDataFn(ctx))
+	if err != nil {
+		return nil, err
+	}
+	return datasourceSettings, nil
+}
 
-func (p *Provider) appInstanceSettings(ctx context.Context, pluginID string, orgID int64) (*backend.AppInstanceSettings, error) {
+func (p *Provider) appInstanceSettings(ctx context.Context, plugin plugins.PluginDTO, orgID int64) (*backend.AppInstanceSettings, error) {
 	jsonData := json.RawMessage{}
 	decryptedSecureJSONData := map[string]string{}
 	var updated time.Time
 
-	ps, err := p.getCachedPluginSettings(ctx, pluginID, orgID)
+	ps, err := p.getCachedPluginSettings(ctx, plugin.ID, orgID)
 	if err != nil {
 		// pluginsettings.ErrPluginSettingNotFound is expected if there's no row found for plugin setting in database (if non-app plugin).
 		// Otherwise, something is wrong with cache or database, and we return the error to the client.

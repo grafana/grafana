@@ -97,6 +97,8 @@ type PluginDTO struct {
 
 	// This will be moved to plugin.json when we have general support in gcom
 	Alias string `json:"alias,omitempty"`
+
+	ExternalService *oauth.ExternalService `json:"-"`
 }
 
 func (p PluginDTO) SupportsStreaming() bool {
@@ -464,6 +466,7 @@ func (p *Plugin) ToDTO() PluginDTO {
 		BaseURL:           p.BaseURL,
 		AngularDetected:   p.AngularDetected,
 		Alias:             p.Alias,
+		ExternalService:   p.ExternalService,
 	}
 }
 
