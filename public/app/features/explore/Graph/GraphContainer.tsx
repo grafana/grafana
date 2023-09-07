@@ -63,7 +63,6 @@ export const GraphContainer = ({
       loadingState={loadingState}
       statusMessage={statusMessage}
       actions={<ExploreGraphLabel graphStyle={graphStyle} onChangeGraphStyle={onGraphStyleChange} />}
-      scrollId="explore-graph"
     >
       {(innerWidth, innerHeight) => (
         <ExploreGraph

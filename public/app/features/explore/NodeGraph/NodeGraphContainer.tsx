@@ -94,7 +94,6 @@ export function UnconnectedNodeGraphContainer(props: Props) {
     >
       <div
         ref={containerRef}
-        id="node-graph"
         style={
           withTraceView
             ? { height: 500 }
