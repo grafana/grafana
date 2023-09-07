@@ -2,11 +2,12 @@ import React, { useCallback } from 'react';
 
 import { AppEvents, StandardEditorProps, StandardEditorsRegistryItem, StringFieldConfigSettings } from '@grafana/data';
 import { config, getBackendSrv } from '@grafana/runtime';
-import { Button, InlineField, InlineFieldRow, JSONFormatter } from '@grafana/ui';
+import { Button, InlineField, InlineFieldRow, JSONFormatter, RadioButtonGroup } from '@grafana/ui';
 import { StringValueEditor } from 'app/core/components/OptionsUI/string';
 import { appEvents } from 'app/core/core';
 
 export interface APIEditorConfig {
+  method: string;
   endpoint: string;
   data?: string;
 }
@@ -19,9 +20,9 @@ export const callApi = (api: APIEditorConfig, isTest = false) => {
   if (api) {
     getBackendSrv()
       .fetch({
-        url: api.endpoint!,
-        method: 'POST',
-        data: api.data ?? {},
+        url: api.endpoint,
+        method: api.method,
+        data: api.method === 'GET' ? undefined : api.data ?? '{}',
       })
       .subscribe({
         error: (error) => {
@@ -41,8 +42,14 @@ export const callApi = (api: APIEditorConfig, isTest = false) => {
 
 type Props = StandardEditorProps<APIEditorConfig>;
 
+// @TODO Extract as type, support other methods?
+const httpMethodOptions = [
+  { label: 'GET', value: 'GET' },
+  { label: 'POST', value: 'POST' },
+];
+
 export function APIEditor({ value, context, onChange }: Props) {
-  const labelWidth = 9;
+  const LABEL_WIDTH = 9;
 
   const onEndpointChange = useCallback(
     (endpoint = '') => {
@@ -59,6 +66,16 @@ export function APIEditor({ value, context, onChange }: Props) {
       onChange({
         ...value,
         data,
+      });
+    },
+    [onChange, value]
+  );
+
+  const onMethodChange = useCallback(
+    (method: any) => {
+      onChange({
+        ...value,
+        method,
       });
     },
     [onChange, value]
@@ -89,10 +106,17 @@ export function APIEditor({ value, context, onChange }: Props) {
     return;
   };
 
+  const httpMethod = value.method ?? 'GET';
+
   return config.disableSanitizeHtml ? (
     <>
       <InlineFieldRow>
-        <InlineField label={'Endpoint'} labelWidth={labelWidth} grow={true}>
+        <InlineField label="Method" labelWidth={LABEL_WIDTH} grow={true}>
+          <RadioButtonGroup value={httpMethod} options={httpMethodOptions} onChange={onMethodChange} fullWidth />
+        </InlineField>
+      </InlineFieldRow>
+      <InlineFieldRow>
+        <InlineField label={'Endpoint'} labelWidth={LABEL_WIDTH} grow={true} required>
           <StringValueEditor
             context={context}
             value={value?.endpoint}
@@ -101,8 +125,8 @@ export function APIEditor({ value, context, onChange }: Props) {
           />
         </InlineField>
       </InlineFieldRow>
-      <InlineFieldRow>
-        <InlineField label={'Data'} labelWidth={labelWidth} grow={true}>
+      { httpMethod === 'POST' && <InlineFieldRow>
+        <InlineField label={'Data'} labelWidth={LABEL_WIDTH} grow={true}>
           <StringValueEditor
             context={context}
             value={value?.data ?? '{}'}
@@ -110,10 +134,10 @@ export function APIEditor({ value, context, onChange }: Props) {
             item={dummyStringSettings}
           />
         </InlineField>
-      </InlineFieldRow>
+      </InlineFieldRow>}
       {renderTestAPIButton(value)}
       <br />
-      {renderJSON(value?.data ?? '{}')}
+      { httpMethod === 'POST' && renderJSON(value?.data ?? '{}')}
     </>
   ) : (
     <>Must enable disableSanitizeHtml feature flag to access</>
