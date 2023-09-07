@@ -26,7 +26,7 @@ export const PlaylistEditPage = ({ match }: Props) => {
   };
 
   const pageNav: NavModelItem = {
-    text: t('playlist-edit.text', 'Edit playlist'),
+    text: t('playlist-edit.title', 'Edit playlist'),
     subTitle: t(
       'playlist-edit.subTitle',
       'A playlist rotates through a pre-selected list of dashboards. A playlist can be a great way to build situational awareness, or just show off your metrics to your team or visitors.'
