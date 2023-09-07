@@ -19,7 +19,7 @@ function ContentOutlineItem({ title, icon, children, className }: ContentOutline
 
     // When the component unmounts, unregister it using its unique ID.
     return () => unregister(id);
-  }, [title, icon]);
+  }, [title, icon, register, unregister]);
 
   return (
     <div className={className} ref={ref}>

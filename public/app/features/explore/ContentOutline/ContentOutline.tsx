@@ -26,7 +26,7 @@ const getStyles = (theme: GrafanaTheme2, expanded: boolean, visible: boolean) =>
       label: 'content',
       position: 'sticky',
       top: 0,
-      height: '55vh',
+      height: '85vh',
     }),
     buttonStyles: css({
       textAlign: 'left',

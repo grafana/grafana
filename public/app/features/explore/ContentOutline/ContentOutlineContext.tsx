@@ -1,5 +1,5 @@
 import { uniqueId } from 'lodash';
-import React, { useState, useContext, createContext, ReactNode, MutableRefObject } from 'react';
+import React, { useState, useContext, createContext, ReactNode, useCallback } from 'react';
 
 interface OutlineItem {
   id: string;
@@ -20,17 +20,15 @@ export const ContentOutlineContextProvider = ({ children }: { children: ReactNod
   const [outlineItems, setOutlineItems] = useState<OutlineItem[]>([]);
   console.log('outlineItems', outlineItems);
 
-  // TODO: implement solution for two panes
-
-  const register = (title: string, icon: string, ref: HTMLElement | null): string => {
-    const id = `${title}-${icon}`;
+  const register = useCallback((title: string, icon: string, ref: HTMLElement | null): string => {
+    const id = uniqueId(`${title}-${icon}_`);
     setOutlineItems((prevItems) => [...prevItems, { id, title, icon, ref }]);
     return id;
-  };
+  }, []);
 
-  const unregister = (id: string) => {
+  const unregister = useCallback((id: string) => {
     setOutlineItems((prevItems) => prevItems.filter((item) => item.id !== id));
-  };
+  }, []);
 
   return (
     <ContentOutlineContext.Provider value={{ outlineItems, register, unregister }}>
