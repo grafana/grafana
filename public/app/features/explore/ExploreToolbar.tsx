@@ -122,10 +122,10 @@ export function ExploreToolbar({ exploreId, topOfViewRef, onChangeTime }: Props)
           actions={[
             <DashNavButton
               key="share"
-              tooltip={t('explore.copy-shortened-link', 'Copy shortened link')}
+              tooltip={t('explore.toolbar.copy-shortened-link', 'Copy shortened link')}
               icon="share-alt"
               onClick={onCopyShortLink}
-              aria-label={t('explore.copy-shortened-link', 'Copy shortened link')}
+              aria-label={t('explore.toolbar.copy-shortened-link', 'Copy shortened link')}
             />,
             <div style={{ flex: 1 }} key="spacer" />,
           ]}
@@ -150,12 +150,12 @@ export function ExploreToolbar({ exploreId, topOfViewRef, onChangeTime }: Props)
             <ToolbarButton
               variant="canvas"
               key="split"
-              tooltip={t('explore.toolbar.split.tooltip', 'Split the pane')}
+              tooltip={t('explore.toolbar.split-tooltip', 'Split the pane')}
               onClick={onOpenSplitView}
               icon="columns"
               disabled={isLive}
             >
-              <Trans i18nKey="explore.toolbar.split.title"> Split </Trans>
+              <Trans i18nKey="explore.toolbar.split-title"> Split </Trans>
             </ToolbarButton>
           ) : (
             <ButtonGroup key="split-controls">
@@ -163,8 +163,8 @@ export function ExploreToolbar({ exploreId, topOfViewRef, onChangeTime }: Props)
                 variant="canvas"
                 tooltip={
                   isLargerPane
-                    ? t('explore.toolbar.split.narrow', 'Narrow pane')
-                    : t('explore.toolbar.split.widen', 'Widen pane')
+                    ? t('explore.toolbar.split-narrow', 'Narrow pane')
+                    : t('explore.toolbar.split-widen', 'Widen pane')
                 }
                 onClick={onClickResize}
                 icon={isLargerPane ? 'gf-movepane-left' : 'gf-movepane-right'}
@@ -172,12 +172,12 @@ export function ExploreToolbar({ exploreId, topOfViewRef, onChangeTime }: Props)
                 className={cx(shouldRotateSplitIcon && rotateIcon)}
               />
               <ToolbarButton
-                tooltip={t('explore.toolbar.split.close-tooltip', 'Close split pane')}
+                tooltip={t('explore.toolbar.split-close-tooltip', 'Close split pane')}
                 onClick={onCloseSplitView}
                 icon="times"
                 variant="canvas"
               >
-                <Trans i18nKey="explore.toolbar.split.close"> Close </Trans>
+                <Trans i18nKey="explore.toolbar.split-close"> Close </Trans>
               </ToolbarButton>
             </ButtonGroup>
           ),

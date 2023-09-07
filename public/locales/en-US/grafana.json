@@ -220,17 +220,15 @@
   },
   "explore": {
     "add-to-dashboard": "Add to dashboard",
-    "copy-shortened-link": "Copy shortened link",
     "toolbar": {
       "aria-label": "Explore toolbar",
-      "split": {
-        "close": "Close",
-        "close-tooltip": "Close split pane",
-        "narrow": "Narrow pane",
-        "title": "Split",
-        "tooltip": "Split the pane",
-        "widen": "Widen pane"
-      }
+      "copy-shortened-link": "Copy shortened link",
+      "split-close": "Close",
+      "split-close-tooltip": "Close split pane",
+      "split-title": "Split",
+      "split-tooltip": "Split the pane",
+      "split-narrow": "Narrow pane",
+      "split-widen": "Widen pane"
     }
   },
   "folder-picker": {
