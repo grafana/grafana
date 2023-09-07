@@ -22,8 +22,9 @@ import {
 import config from 'app/core/config';
 import { PluginStateInfo } from 'app/features/plugins/components/PluginStateInfo';
 
-import { CalculateFieldHelper } from './HelperContent/CalculateFieldHelper';
+// import { CalculateFieldHelper } from './HelperContent/CalculateFieldHelper';
 import { TransformationEditor } from './TransformationEditor';
+import { TransformationEditorHelperModal } from './TransformationEditorHelperModal';
 import { TransformationFilter } from './TransformationFilter';
 import { TransformationsEditorTransformation } from './types';
 
@@ -76,7 +77,7 @@ export const TransformationOperationRow = ({
   //   return undefined;
   // }, [showHelp]);
 
-  const getHelpContent = () => CalculateFieldHelper();
+  // const getHelpContent = () => CalculateFieldHelper();
 
   // Adds or removes the frame filter
   const toggleFilter = useCallback(() => {
@@ -163,14 +164,15 @@ export const TransformationOperationRow = ({
             onDismiss={() => setShowDeleteModal(false)}
           />
         )}
-        <Modal
+        <TransformationEditorHelperModal contentType="" isOpen={showHelp} onCloseClick={toggleShowHelp} />
+        {/* <Modal
           title="Transformation help"
           isOpen={showHelp}
           onClickBackdrop={toggleShowHelp}
           onDismiss={toggleShowHelp}
         >
           {getHelpContent()}
-        </Modal>
+        </Modal> */}
       </HorizontalGroup>
     );
   };
