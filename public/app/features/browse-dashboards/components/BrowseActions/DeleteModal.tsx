@@ -43,6 +43,10 @@ export const DeleteModal = ({ onConfirm, onDismiss, selectedItems, ...props }: P
           </Text>
           <DescendantCount selectedItems={selectedItems} />
           <Space v={2} />
+        </>
+      }
+      description={
+        <>
           {deleteIsInvalid ? (
             <Alert
               severity="warning"
