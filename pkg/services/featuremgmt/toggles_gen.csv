@@ -103,3 +103,4 @@ alertingNoDataErrorExecution,privatePreview,@grafana/alerting-squad,false,false,
 angularDeprecationUI,experimental,@grafana/plugins-platform-backend,false,false,false,true
 dashgpt,experimental,@grafana/dashboards-squad,false,false,false,true
 reportingRetries,preview,@grafana/sharing-squad,false,false,true,false
+newBrowseDashboards,preview,@grafana/grafana-frontend-platform,false,false,false,true
