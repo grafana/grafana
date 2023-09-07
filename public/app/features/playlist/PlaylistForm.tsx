@@ -40,26 +40,26 @@ export const PlaylistForm = ({ onSubmit, playlist }: Props) => {
           return (
             <>
               <Field
-                label={t('playlist-form.label.name', 'Name')}
+                label={t('playlist-form.name-label', 'Name')}
                 invalid={!!errors.name}
                 error={errors?.name?.message}
               >
                 <Input
                   type="text"
-                  {...register('name', { required: t('playlist-form.required.name', 'Name is required') })}
-                  placeholder={t('playlist-form.placeholder.name', 'Name')}
+                  {...register('name', { required: t('playlist-form.name-required', 'Name is required') })}
+                  placeholder={t('playlist-form.name-placeholder', 'Name')}
                   defaultValue={name}
                   aria-label={selectors.pages.PlaylistForm.name}
                 />
               </Field>
               <Field
-                label={t('playlist-form.label.interval', 'Interval')}
+                label={t('playlist-form.interval-label', 'Interval')}
                 invalid={!!errors.interval}
                 error={errors?.interval?.message}
               >
                 <Input
                   type="text"
-                  {...register('interval', { required: t('playlist-form.required.interval', 'Interval is required') })}
+                  {...register('interval', { required: t('playlist-form.interval-required', 'Interval is required') })}
                   placeholder={t('playlist-form.placeholder.interval', '5m')}
                   defaultValue={interval ?? '5m'}
                   aria-label={selectors.pages.PlaylistForm.interval}
@@ -73,18 +73,18 @@ export const PlaylistForm = ({ onSubmit, playlist }: Props) => {
                   <Trans i18nKey="playlist-form.heading">Add dashboards</Trans>
                 </h3>
 
-                <Field label={t('playlist-form.label.title', 'Add by title')}>
+                <Field label={t('playlist-form.addTitle-label', 'Add by title')}>
                   <DashboardPicker id="dashboard-picker" onChange={addByUID} key={items.length} />
                 </Field>
 
-                <Field label={t('playlist-form.label.tag', 'Add by tag')}>
+                <Field label={t('playlist-form.addTag-label', 'Add by tag')}>
                   <TagFilter
                     isClearable
                     tags={[]}
                     hideValues
                     tagOptions={tagOptions}
                     onChange={addByTag}
-                    placeholder={t('playlist-form.placeholder.tag', 'Select a tag')}
+                    placeholder={t('playlist-form.addTag-placeholder', 'Select a tag')}
                   />
                 </Field>
               </div>
