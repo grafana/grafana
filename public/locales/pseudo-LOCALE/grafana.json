@@ -622,8 +622,9 @@
       "aria-label": "Ŧūřŉ őƒƒ äūŧő řęƒřęşĥ",
       "label": "Øƒƒ"
     },
-    "select-button": {
-      "auto-refresh": "Ŝęŧ äūŧő řęƒřęşĥ įŉŧęřväľ"
+    "tooltip": {
+      "interval-selected": "",
+      "turned-off": "Åūŧő řęƒřęşĥ őƒƒ"
     }
   },
   "search": {

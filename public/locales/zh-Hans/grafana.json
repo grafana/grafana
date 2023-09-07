@@ -617,8 +617,9 @@
       "aria-label": "关闭自动刷新",
       "label": "关"
     },
-    "select-button": {
-      "auto-refresh": "设置自动刷新间隔"
+    "tooltip": {
+      "interval-selected": "",
+      "turned-off": ""
     }
   },
   "search": {

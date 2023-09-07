@@ -627,8 +627,9 @@
       "aria-label": "Désactiver l'actualisation automatique",
       "label": "Désactivé"
     },
-    "select-button": {
-      "auto-refresh": "Définir l'intervalle d'actualisation automatique"
+    "tooltip": {
+      "interval-selected": "",
+      "turned-off": ""
     }
   },
   "search": {

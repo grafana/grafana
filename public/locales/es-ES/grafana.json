@@ -627,8 +627,9 @@
       "aria-label": "Desactivar actualización automática",
       "label": "Apagado"
     },
-    "select-button": {
-      "auto-refresh": "Establecer intervalo de actualización automática"
+    "tooltip": {
+      "interval-selected": "",
+      "turned-off": ""
     }
   },
   "search": {

@@ -622,8 +622,9 @@
       "aria-label": "Automatische Aktualisierung ausschalten",
       "label": "Aus"
     },
-    "select-button": {
-      "auto-refresh": "Automatisches Aktualisierungsintervall festlegen"
+    "tooltip": {
+      "interval-selected": "",
+      "turned-off": ""
     }
   },
   "search": {
