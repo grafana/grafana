@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { Prompt } from 'react-router-dom';
 import { useBeforeUnload } from 'react-use';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, colorManipulator } from '@grafana/data';
 import { Button, HorizontalGroup, Icon, Tooltip, useStyles2 } from '@grafana/ui';
 import { ExploreItemState, useDispatch, useSelector } from 'app/types';
 
@@ -33,7 +33,9 @@ export const CorrelationEditorModeBar = ({
   useEffect(() => {
     return () => {
       setShowSavePrompt(false);
-      dispatch(changeCorrelationDetails({ editorMode: false, label: undefined, description: undefined, canSave: false }));
+      dispatch(
+        changeCorrelationDetails({ editorMode: false, label: undefined, description: undefined, canSave: false })
+      );
       panes.forEach((pane) => {
         dispatch(removeCorrelationHelperData(pane[0]));
         dispatch(runQueries({ exploreId: pane[0] }));
@@ -67,7 +69,7 @@ export const CorrelationEditorModeBar = ({
       <Prompt
         message={(location, action) => {
           if (location.pathname !== '/explore' && correlationsEditorMode && (correlationDetails?.dirty || false)) {
-            return 'You have unsaved correlation data. Continue?'
+            return 'You have unsaved correlation data. Continue?';
           } else {
             return true;
           }
@@ -95,12 +97,13 @@ export const CorrelationEditorModeBar = ({
         <div className={styles.correlationEditorTop}>
           <HorizontalGroup spacing="md" justify="flex-end">
             <Tooltip content="Correlations editor in Explore is an experimental feature.">
-              <Icon name="info-circle" size="xl" />
+              <Icon className={styles.iconColor} name="info-circle" size="xl" />
             </Tooltip>
             <Button
               variant="secondary"
               disabled={!correlationDetails?.canSave}
               fill="outline"
+              className={correlationDetails?.canSave ? styles.buttonColor : styles.disabledButtonColor}
               onClick={() => {
                 dispatch(saveCurrentCorrelation(correlationDetails?.label, correlationDetails?.description));
               }}
@@ -110,6 +113,7 @@ export const CorrelationEditorModeBar = ({
             <Button
               variant="secondary"
               fill="outline"
+              className={styles.buttonColor}
               icon="times"
               onClick={() => {
                 dispatch(changeCorrelationEditorMode({ correlationEditorMode: false }));
@@ -126,11 +130,37 @@ export const CorrelationEditorModeBar = ({
 };
 
 const getStyles = (theme: GrafanaTheme2) => {
+  const contrastColor = theme.colors.getContrastText(theme.colors.primary.main);
+  const darkerBackgroundColor = colorManipulator.darken(theme.colors.primary.main, 0.2);
+
+  const disabledColor = colorManipulator.darken(contrastColor, 0.2);
+
   return {
     correlationEditorTop: css`
       background-color: ${theme.colors.primary.main};
       margin-top: 3px;
       padding: ${theme.spacing(1)};
+    `,
+    iconColor: css`
+      color: ${contrastColor};
+    `,
+    buttonColor: css`
+      color: ${contrastColor};
+      border-color: ${contrastColor};
+      &:hover {
+        color: ${contrastColor};
+        border-color: ${contrastColor};
+        background-color: ${darkerBackgroundColor};
+      }
+    `,
+    // disabled needed to override disabled state
+    disabledButtonColor: css`
+      color: ${disabledColor} !important;
+      border-color: ${disabledColor} !important;
+      &:hover {
+        color: ${disabledColor} !important;
+        border-color: ${disabledColor} !important;
+      }
     `,
   };
 };

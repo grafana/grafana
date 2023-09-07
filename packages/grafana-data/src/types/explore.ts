@@ -23,7 +23,7 @@ export interface ExploreUrlState<T extends DataQuery = AnyQuery> {
   datasource: string | null;
   queries: T[];
   range: URLRange;
-  panelsState?: URLPanelsState;
+  panelsState?: ExplorePanelsState;
 }
 
 export interface ExplorePanelsState extends Partial<Record<PreferredVisualisationType, {}>> {
@@ -31,10 +31,8 @@ export interface ExplorePanelsState extends Partial<Record<PreferredVisualisatio
   logs?: ExploreLogsPanelState;
 }
 
-export interface URLPanelsState extends Omit<ExplorePanelsState, 'correlations'>{}
-
 /**
- * Keep a list of vars the correlations editor in explore will use
+ * Keep a list of vars the correlations editor / helper in explore will use
  */
 export interface ExploreCorrelationHelperData {
   resultField: string;
