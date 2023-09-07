@@ -10,7 +10,7 @@ interface OutlineItem {
 
 interface ContentOutlineContextProps {
   outlineItems: OutlineItem[];
-  register: (title: string, icon: string, ref: HTMLElement | null) => string;
+  register: (item: Omit<OutlineItem, 'id'>) => string;
   unregister: (id: string) => void;
 }
 
@@ -20,7 +20,7 @@ export const ContentOutlineContextProvider = ({ children }: { children: ReactNod
   const [outlineItems, setOutlineItems] = useState<OutlineItem[]>([]);
   console.log('outlineItems', outlineItems);
 
-  const register = useCallback((title: string, icon: string, ref: HTMLElement | null): string => {
+  const register = useCallback(({ title, icon, ref }: Omit<OutlineItem, 'id'>): string => {
     const id = uniqueId(`${title}-${icon}_`);
     setOutlineItems((prevItems) => [...prevItems, { id, title, icon, ref }]);
     return id;
@@ -38,9 +38,10 @@ export const ContentOutlineContextProvider = ({ children }: { children: ReactNod
 };
 
 export function useContentOutlineContext() {
-  const context = useContext(ContentOutlineContext);
-  if (!context) {
+  const ctx = useContext(ContentOutlineContext);
+
+  if (!ctx) {
     throw new Error('useContentOutlineContext must be used within a ContentOutlineContextProvider');
   }
-  return context;
+  return ctx;
 }
