@@ -104,3 +104,4 @@ angularDeprecationUI,experimental,@grafana/plugins-platform-backend,false,false,
 dashgpt,experimental,@grafana/dashboards-squad,false,false,false,true
 reportingRetries,preview,@grafana/sharing-squad,false,false,true,false
 newBrowseDashboards,preview,@grafana/grafana-frontend-platform,false,false,false,true
+sseGroupByDatasource,experimental,@grafana/observability-metrics,false,false,false,false
