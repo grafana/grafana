@@ -246,8 +246,8 @@ func TestDataSourceQueryError(t *testing.T) {
 		{
 			request:        reqValid,
 			clientErr:      errors.New("surprise surprise"),
-			expectedStatus: errutil.StatusBadGateway.HTTPStatus(),
-			expectedBody:   `{"message":"An error occurred within the plugin","messageId":"plugin.downstreamError","statusCode":502,"traceID":""}`,
+			expectedStatus: errutil.StatusInternal.HTTPStatus(),
+			expectedBody:   `{"message":"An error occurred within the plugin","messageId":"plugin.downstreamError","statusCode":500,"traceID":""}`,
 		},
 		{
 			request:        reqNoQueries,
