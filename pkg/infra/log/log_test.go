@@ -325,7 +325,6 @@ func TestWithContextualAttributes_appendsContext(t *testing.T) {
 	t.Run("Appends arguments set previously", func(t *testing.T) {
 		scenario := newLoggerScenario(t, false)
 
-		// logs `"k1", "v1"` with the first context
 		ctx := context.Background()
 		ctx = WithContextualAttributes(ctx, []any{"k1", "v1"})
 		ctx = WithContextualAttributes(ctx, []any{"k2", "v2"})
