@@ -263,11 +263,9 @@ abstract class DataSourceApi<
   abstract testDatasource(): Promise<TestDataSourceResponse>;
 
   /**
-   * Override to skip executing a query
+   * This function is not called automatically unless running within the DataSourceWithBackend
    *
-   * @returns false if the query should be skipped
-   *
-   * @virtual
+   * @deprecated
    */
   filterQuery?(query: TQuery): boolean;
 

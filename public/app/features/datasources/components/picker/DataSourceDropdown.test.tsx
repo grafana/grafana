@@ -281,7 +281,7 @@ describe('DataSourceDropdown', () => {
 
       await user.keyboard('foobarbaz'); //Search for a DS that should not exist
 
-      expect(await screen.findByText('Connect data')).toBeInTheDocument();
+      expect(await screen.findByText('Configure a new data source')).toBeInTheDocument();
     });
 
     it('should call onChange with the default query when add csv is clicked', async () => {
