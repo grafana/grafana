@@ -59,7 +59,7 @@ export const PlaylistPage = () => {
             searchQuery={searchQuery}
             linkButton={
               contextSrv.isEditor
-                ? { title: t('playlist-page.action.title', 'New playlist'), href: '/playlists/new' }
+                ? { title: t('playlist-page.create-button.title', 'New playlist'), href: '/playlists/new' }
                 : undefined
             }
             setSearchQuery={setSearchQuery}
