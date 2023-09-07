@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 
 import { PluginState } from '@grafana/data/src';
-import { TextDimensionConfig } from '@grafana/schema';
+import { TextDimensionConfig, TextDimensionMode } from '@grafana/schema';
 import { Button } from '@grafana/ui';
 import { DimensionContext } from 'app/features/dimensions/context';
 import { TextDimensionEditor } from 'app/features/dimensions/editors/TextDimensionEditor';
@@ -18,6 +18,12 @@ interface ButtonData {
 interface ButtonConfig {
   text?: TextDimensionConfig;
   api?: APIEditorConfig;
+}
+
+const defaultApiConfig: APIEditorConfig = {
+  endpoint: '',
+  method: HttpRequestMethod.GET,
+  data: undefined,
 }
 
 class ButtonDisplay extends PureComponent<CanvasElementProps<ButtonConfig, ButtonData>> {
@@ -46,41 +52,35 @@ export const buttonItem: CanvasElementItem<ButtonConfig, ButtonData> = {
   display: ButtonDisplay,
 
   defaultSize: {
-    width: 32,
+    width: 78,
     height: 32,
   },
 
   getNewOptions: (options) => ({
     ...options,
+    config: {
+      text: {
+        mode: TextDimensionMode.Fixed,
+        fixed: 'Button',
+      },
+      api: defaultApiConfig,
+    },
     background: {
       color: {
         fixed: 'transparent',
       },
     },
     placement: {
-      width: 32,
-      height: 32,
-      top: 0,
-      left: 0,
+      top: 100,
+      left: 100,
     },
   }),
 
   // Called when data changes
   prepareData: (ctx: DimensionContext, cfg: ButtonConfig) => {
-    // @TODO revisit
-    const getApi = () => {
-      if (cfg?.api) {
-        cfg.api.method = cfg?.api.method ?? HttpRequestMethod.GET;
-
-        return cfg.api;
-      }
-
-      return undefined;
-    };
-
     const data: ButtonData = {
       text: cfg?.text ? ctx.getText(cfg.text).value() : '',
-      api: getApi(),
+      api: cfg?.api ?? undefined,
     };
 
     return data;
