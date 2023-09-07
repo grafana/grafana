@@ -267,6 +267,85 @@ func TestGetFilters(t *testing.T) {
 	})
 }
 
+func TestWithContextualAttributes_appendsContext(t *testing.T) {
+	t.Run("Logs arguments from context", func(t *testing.T) {
+		scenario := newLoggerScenario(t, false)
+
+		// logs `"k1", "v1"` with the first context
+		ctx := context.Background()
+		ctx = WithContextualAttributes(ctx, []any{"k1", "v1"})
+		ls := New("test").FromContext(ctx)
+
+		ls.Info("hello", "k2", "v2")
+
+		require.Len(t, scenario.loggedArgs, 1)
+		scenario.ValidateLineEquality(t, 0, []any{
+			"logger", "test",
+			"k1", "v1",
+			"t", scenario.mockedTime,
+			level.Key(), level.InfoValue(),
+			"msg", "hello",
+			"k2", "v2",
+		})
+	})
+	t.Run("Does not log arguments from different context", func(t *testing.T) {
+		scenario := newLoggerScenario(t, false)
+
+		// logs `"k1", "v1"` with the first context
+		ctx := context.Background()
+		ctx = WithContextualAttributes(ctx, []any{"k1", "v1"})
+		ls := New("test").FromContext(ctx)
+
+		ls.Info("hello", "k2", "v2")
+
+		require.Len(t, scenario.loggedArgs, 1)
+		scenario.ValidateLineEquality(t, 0, []any{
+			"logger", "test",
+			"k1", "v1",
+			"t", scenario.mockedTime,
+			level.Key(), level.InfoValue(),
+			"msg", "hello",
+			"k2", "v2",
+		})
+		// does not log `"k1", "v1"` with the new context
+		ctx = context.Background()
+		ls = New("test").FromContext(ctx)
+
+		ls.Info("hello", "k2", "v2")
+
+		require.Len(t, scenario.loggedArgs, 2)
+		scenario.ValidateLineEquality(t, 1, []any{
+			"logger", "test",
+			"t", scenario.mockedTime,
+			level.Key(), level.InfoValue(),
+			"msg", "hello",
+			"k2", "v2",
+		})
+	})
+	t.Run("Appends arguments set in previously", func(t *testing.T) {
+		scenario := newLoggerScenario(t, false)
+
+		// logs `"k1", "v1"` with the first context
+		ctx := context.Background()
+		ctx = WithContextualAttributes(ctx, []any{"k1", "v1"})
+		ctx = WithContextualAttributes(ctx, []any{"k2", "v2"})
+		ls := New("test").FromContext(ctx)
+
+		ls.Info("hello", "k3", "v3")
+
+		require.Len(t, scenario.loggedArgs, 1)
+		scenario.ValidateLineEquality(t, 0, []any{
+			"logger", "test",
+			"k1", "v1",
+			"k2", "v2",
+			"t", scenario.mockedTime,
+			level.Key(), level.InfoValue(),
+			"msg", "hello",
+			"k3", "v3",
+		})
+	})
+}
+
 type scenarioContext struct {
 	loggedArgs [][]any
 	mockedTime time.Time
@@ -287,7 +366,12 @@ func (s *scenarioContext) ValidateLineEquality(t testing.TB, n int, expected []a
 	}
 }
 
-func newLoggerScenario(t testing.TB) *scenarioContext {
+func newLoggerScenario(t testing.TB, resetCtxLogProviders ...bool) *scenarioContext {
+	clearProviders := true
+	if len(resetCtxLogProviders) > 0 {
+		clearProviders = resetCtxLogProviders[0]
+	}
+
 	t.Helper()
 
 	scenario := &scenarioContext{
@@ -308,11 +392,13 @@ func newLoggerScenario(t testing.TB) *scenarioContext {
 		now = origNow
 	})
 
-	origContextHandlers := ctxLogProviders
-	ctxLogProviders = []ContextualLogProviderFunc{}
-	t.Cleanup(func() {
-		ctxLogProviders = origContextHandlers
-	})
+	if clearProviders {
+		origContextHandlers := ctxLogProviders
+		ctxLogProviders = []ContextualLogProviderFunc{}
+		t.Cleanup(func() {
+			ctxLogProviders = origContextHandlers
+		})
+	}
 
 	root = newManager(l)
 	return scenario
