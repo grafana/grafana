@@ -1,8 +1,5 @@
 ---
-aliases:
-  - ../data-sources/tempo/
-  - ../features/datasources/tempo/
-description: Guide for using Tempo in Grafana
+description: Use span filters to filter spans in the timeline viewer
 keywords:
   - grafana
   - tempo
@@ -13,22 +10,27 @@ labels:
     - cloud
     - enterprise
     - oss
-menuTitle: Tempo
-title: Tempo data source
-weight: 1400
+menuTitle: Span filters
+title: Span filters
+weight: 600
 ---
 
-# Tempo data source
+# Span Filters
 
-Grafana ships with built-in support for [Tempo](https://grafana.com/docs/tempo/latest/), a high-volume, minimal-dependency trace storage, open-source tracing solution from Grafana Labs. This topic explains configuration and queries specific to the Tempo data source.
+Using span filters, you can filter your spans in the trace timeline viewer. The more filters you add, the more specific are the filtered spans.
 
-For instructions on how to add a data source to Grafana, refer to the [administration documentation][data-source-management].
-Only users with the organization administrator role can add data sources.
-Administrators can also [configure the data source via YAML](#provision-the-data-source) with Grafana's provisioning system.
+![Screenshot of span filtering](/media/docs/tempo/screenshot-grafana-tempo-span-filters-v10-1.png)
 
-Once you've added the data source, you can [configure it](<{{ relref "./configure-tempo-data-source" }}>) so that your Grafana instance's users can create queries in its [query editor]({{< relref "./query-editor/" >}}) when they [build dashboards][build-dashboards] and use [Explore][explore].
+You can add one or more of the following filters:
 
-{{< section withDescriptions="true">}}
+- Service name
+- Span name
+- Duration
+- Tags (which include tags, process tags, and log fields)
+
+To only show the spans you have matched, select the `Show matches only` toggle.
+
+<!-- Adding these in case they are needed. -->
 
 {{% docs/reference %}}
 [build-dashboards]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/build-dashboards"

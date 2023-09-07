@@ -20,6 +20,7 @@ import {
   updateConfigWithReceiver,
 } from '../../../utils/receiver-form';
 import { ProvisionedResource, ProvisioningAlert } from '../../Provisioning';
+import { ReceiverTypes } from '../grafanaAppReceivers/onCall/onCall';
 import { useOnCallIntegration } from '../grafanaAppReceivers/onCall/useOnCallIntegration';
 
 import { GrafanaCommonChannelSettings } from './GrafanaCommonChannelSettings';
@@ -167,7 +168,7 @@ export const GrafanaReceiverForm = ({ existing, alertManagerSourceName, config }
         defaultItem={{ ...defaultChannelValues }}
         takenReceiverNames={takenReceiverNames}
         commonSettingsComponent={GrafanaCommonChannelSettings}
-        customValidators={onCallFormValidators}
+        customValidators={{ [ReceiverTypes.OnCall]: onCallFormValidators }}
       />
       <TestContactPointModal
         onDismiss={() => setTestChannelValues(undefined)}
