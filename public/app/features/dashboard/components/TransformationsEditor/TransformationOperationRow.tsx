@@ -6,7 +6,7 @@ import {
   DataTransformerConfig,
   TransformerRegistryItem,
   FrameMatcherID,
-  renderMarkdown,
+  // renderMarkdown,
 } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import { ConfirmModal, HorizontalGroup, Modal } from '@grafana/ui';
@@ -22,6 +22,7 @@ import {
 import config from 'app/core/config';
 import { PluginStateInfo } from 'app/features/plugins/components/PluginStateInfo';
 
+import { CalculateFieldHelper } from './HelperContent/CalculateFieldHelper';
 import { TransformationEditor } from './TransformationEditor';
 import { TransformationFilter } from './TransformationFilter';
 import { TransformationsEditorTransformation } from './types';
@@ -75,7 +76,7 @@ export const TransformationOperationRow = ({
   //   return undefined;
   // }, [showHelp]);
 
-  const getDisplayContent = () => markdownHelper(prepMarkdown(uiConfig));
+  const getHelpContent = () => CalculateFieldHelper();
 
   // Adds or removes the frame filter
   const toggleFilter = useCallback(() => {
@@ -168,7 +169,7 @@ export const TransformationOperationRow = ({
           onClickBackdrop={toggleShowHelp}
           onDismiss={toggleShowHelp}
         >
-          {getDisplayContent()}
+          {getHelpContent()}
         </Modal>
       </HorizontalGroup>
     );
@@ -202,10 +203,10 @@ export const TransformationOperationRow = ({
   );
 };
 
-function markdownHelper(markdown: string) {
-  const helpHtml = renderMarkdown(markdown);
-  return <div className="markdown-html" dangerouslySetInnerHTML={{ __html: helpHtml }} />;
-}
+// function markdownHelper(markdown: string) {
+//   const helpHtml = renderMarkdown(markdown);
+//   return <div className="markdown-html" dangerouslySetInnerHTML={{ __html: helpHtml }} />;
+// }
 
 // function prepMarkdown(uiConfig: TransformerRegistryItem<null>) {
 //   let helpMarkdown = uiConfig.help ?? uiConfig.description;
@@ -219,25 +220,25 @@ function markdownHelper(markdown: string) {
 // `;
 // }
 
-function prepMarkdown(uiConfig: TransformerRegistryItem<null>) {
-  let helpMarkdown = uiConfig.help ?? uiConfig.description;
-  // JEV: does help exist on most of these??? If not, we should build them out...
+// function prepMarkdown(uiConfig: TransformerRegistryItem<null>) {
+//   let helpMarkdown = uiConfig.help ?? uiConfig.description;
+//   // JEV: does help exist on most of these??? If not, we should build them out...
 
-  return `
-${helpMarkdown}
+//   return `
+// ${helpMarkdown}
 
-<ul>
-  <li><strong>Field</strong> - Select from available fields</li>
-  <li><strong>as</strong> - Select the FieldType to convert to</li>
-    <ul>
-      <li><strong>Numeric</strong> - attempts to make the values numbers</li>
-      <li><strong>String</strong> - will make the values strings</li>
-      <li><strong>Boolean</strong> - will make the values booleans</li>
-      <li><strong>Time</strong> - attempts to parse the values as time</li>
-        <ul>
-          <li>Will show an option to specify a DateFormat as input by a string like yyyy-mm-dd or DD MM YYYY hh:mm:ss</li>
-        </ul>
-    </ul>
-</ul>
-`;
-}
+// <ul>
+//   <li><strong>Field</strong> - Select from available fields</li>
+//   <li><strong>as</strong> - Select the FieldType to convert to</li>
+//     <ul>
+//       <li><strong>Numeric</strong> - attempts to make the values numbers</li>
+//       <li><strong>String</strong> - will make the values strings</li>
+//       <li><strong>Boolean</strong> - will make the values booleans</li>
+//       <li><strong>Time</strong> - attempts to parse the values as time</li>
+//         <ul>
+//           <li>Will show an option to specify a DateFormat as input by a string like yyyy-mm-dd or DD MM YYYY hh:mm:ss</li>
+//         </ul>
+//     </ul>
+// </ul>
+// `;
+// }
