@@ -89,7 +89,7 @@ This metric is a histogram that shows you the number of seconds taken to send no
 This metric is available in OSS, on-premise, and Grafana Cloud.
 {{% /admonition %}}
 
-To meta monitor in Alertmanager, you need a Prometheus/Mimir server, or another metrics database to collect and store metrics exported by the Mimir ruler.
+To meta monitor Grafana Mimir-managed alerts, open source and on-premise users need a Prometheus/Mimir server, or another metrics database to collect and store metrics exported by the Mimir ruler.
 
 #### rule_evaluation_failures_total
 
