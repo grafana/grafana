@@ -1,3 +1,4 @@
+import { config } from '@grafana/runtime';
 import { contextSrv } from 'app/core/core';
 import { AccessControlAction, FolderDTO } from 'app/types';
 
@@ -12,7 +13,13 @@ export function getFolderPermissions(folderDTO?: FolderDTO) {
   const canEditInFolderFallback = folderDTO ? folderDTO.canSave : contextSrv.hasEditPermissionInFolders;
 
   const canEditInFolder = checkFolderPermission(AccessControlAction.FoldersWrite, canEditInFolderFallback, folderDTO);
-  const canCreateFolder = checkFolderPermission(AccessControlAction.FoldersCreate, contextSrv.isEditor);
+  // Can only create a folder if at root or nestedFolders is enabled and we have permission
+  const canCreateFolder =
+    !folderDTO ||
+    Boolean(
+      config.featureToggles.nestedFolders &&
+        checkFolderPermission(AccessControlAction.FoldersCreate, contextSrv.isEditor)
+    );
   const canCreateDashboards = checkFolderPermission(
     AccessControlAction.DashboardsCreate,
     canEditInFolderFallback || !!folderDTO?.canSave

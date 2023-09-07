@@ -122,4 +122,5 @@ export interface FeatureToggles {
   angularDeprecationUI?: boolean;
   dashgpt?: boolean;
   reportingRetries?: boolean;
+  newBrowseDashboards?: boolean;
 }
