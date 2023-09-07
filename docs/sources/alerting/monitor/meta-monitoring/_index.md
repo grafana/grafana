@@ -103,7 +103,7 @@ These metrics are available for OSS, on-premise, and some are available in Grafa
 Use the data source and Metrics browser in Grafana Cloud called `grafanacloud-usage` that is provisioned for all Grafana Cloud customers to view all available meta monitoring and usage metrics that are available in Grafana Cloud.
 {{% /admonition %}}
 
-To meta monitor in Alertmanager, you need a Prometheus/Mimir server, or another metrics database to collect and store metrics exported by Alertmanager.
+To meta monitor the Alertmanager, you need a Prometheus/Mimir server, or another metrics database to collect and store metrics exported by Alertmanager.
 
 For example, if you are using Prometheus you should add a `scrape_config` to Prometheus to scrape metrics from your Alertmanager.
 
