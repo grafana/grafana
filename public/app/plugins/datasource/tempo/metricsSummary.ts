@@ -113,12 +113,12 @@ export const transformToMetricsData = (data: MetricsSummary) => {
 
   const metricsData: MetricsData = {
     kind: 'server', // so the user knows all results are of kind = server
-    spanCount: getNumerForMetric(data.spanCount),
+    spanCount: getNumberForMetric(data.spanCount),
     errorPercentage,
-    p50: getNumerForMetric(data.p50),
-    p90: getNumerForMetric(data.p90),
-    p95: getNumerForMetric(data.p95),
-    p99: getNumerForMetric(data.p99),
+    p50: getNumberForMetric(data.p50),
+    p90: getNumberForMetric(data.p90),
+    p95: getNumberForMetric(data.p95),
+    p99: getNumberForMetric(data.p99),
   };
 
   data.series.forEach((series: Series) => {
@@ -262,7 +262,7 @@ const getPercentileRow = (name: string) => {
   };
 };
 
-const getNumerForMetric = (metric: string) => {
+const getNumberForMetric = (metric: string) => {
   const number = parseInt(metric, 10);
   return isNaN(number) ? 0 : number;
 };
