@@ -1,10 +1,8 @@
-import { css, cx } from '@emotion/css';
 import React from 'react';
 import { useLocation } from 'react-router-dom';
 
-import { GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { useStyles2 } from '@grafana/ui';
+import { Grid } from '@grafana/ui/src/unstable';
 
 import { CatalogPlugin, PluginListDisplayMode } from '../types';
 
@@ -17,28 +15,19 @@ interface Props {
 
 export const PluginList = ({ plugins, displayMode }: Props) => {
   const isList = displayMode === PluginListDisplayMode.List;
-  const styles = useStyles2(getStyles);
   const { pathname } = useLocation();
   const pathName = config.appSubUrl + (pathname.endsWith('/') ? pathname.slice(0, -1) : pathname);
-
+  const gridItemsList = () => {
+    const list: React.JSX.Element[] = [];
+    plugins.map((plugin) => {
+      list.push(<PluginListItem key={plugin.id} plugin={plugin} pathName={pathName} displayMode={displayMode} />)
+    });
+    return list;
+  };
   return (
-    <div className={cx(styles.container, { [styles.list]: isList })} data-testid="plugin-list">
-      {plugins.map((plugin) => (
-        <PluginListItem key={plugin.id} plugin={plugin} pathName={pathName} displayMode={displayMode} />
-      ))}
-    </div>
+    <Grid display='grid' gap={3} templateColumns={isList ? '1fr' : 'repeat(auto-fill, minmax(288px, 1fr))'} data-testid="plugin-list">
+      {gridItemsList()}
+    </Grid>
   );
 };
 
-const getStyles = (theme: GrafanaTheme2) => {
-  return {
-    container: css`
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(288px, 1fr));
-      gap: ${theme.spacing(3)};
-    `,
-    list: css`
-      grid-template-columns: 1fr;
-    `,
-  };
-};
