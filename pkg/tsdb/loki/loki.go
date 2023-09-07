@@ -8,6 +8,7 @@ import (
 	"regexp"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
@@ -101,7 +102,7 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 
 func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
 	dsInfo, err := s.getDSInfo(ctx, req.PluginContext)
-	logger := logger.FromContext(ctx).New("api", "CallResource")
+	logger := logger.FromContext(ctx)
 	if err != nil {
 		logger.Error("Failed to get data source info", "err", err)
 		return err
@@ -154,7 +155,7 @@ func callResource(ctx context.Context, req *backend.CallResourceRequest, sender 
 func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	dsInfo, err := s.getDSInfo(ctx, req.PluginContext)
 	_, fromAlert := req.Headers[ngalertmodels.FromAlertHeaderName]
-	logger := logger.FromContext(ctx).New("api", "QueryData", "fromAlert", fromAlert)
+	logger := logger.FromContext(ctx).New("fromAlert", fromAlert)
 	if err != nil {
 		logger.Error("Failed to get data source info", "err", err)
 		result := backend.NewQueryDataResponse()
@@ -174,11 +175,13 @@ func queryData(ctx context.Context, req *backend.QueryDataRequest, dsInfo *datas
 
 	api := newLokiAPI(dsInfo.HTTPClient, dsInfo.URL, plog, tracer)
 
+	start := time.Now()
 	queries, err := parseQuery(req)
 	if err != nil {
-		plog.Error("Failed to parse queries", "err", err)
+		plog.Debug("Failed to prepare request to Loki", "error", err, "duration", time.Since(start), "queriesLength", len(queries), "action", "prepareRequest")
 		return result, err
 	}
+	plog.Debug("Prepared request to Loki", "duration", time.Since(start), "queriesLength", len(queries), "action", "prepareRequest")
 
 	for _, query := range queries {
 		ctx, span := tracer.Start(ctx, "datasource.loki.queryData.runQuery")
@@ -216,14 +219,16 @@ func runQuery(ctx context.Context, api *LokiAPI, query *lokiQuery, responseOpts 
 		return data.Frames{}, err
 	}
 
+	start := time.Now()
 	for _, frame := range frames {
 		err = adjustFrame(frame, query, !responseOpts.metricDataplane, responseOpts.logsDataplane)
 
 		if err != nil {
-			logger.Error("Error adjusting frame", "err", err)
+			logger.Error("Error adjusting frame", "err", err, "duration", time.Since(start), "action", "parseResponse")
 			return data.Frames{}, err
 		}
 	}
+	logger.Debug("Parsed response from Loki", "duration", time.Since(start), "action", "parseResponse")
 
 	return frames, nil
 }
