@@ -270,7 +270,7 @@ func (api *LokiAPI) RawQuery(ctx context.Context, resourcePath string) (RawLokiR
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		logger.Error("Error reading response body bytes", "error", err)
+		api.log.Error("Error reading response body bytes", "error", err)
 		return RawLokiResponse{}, err
 	}
 
