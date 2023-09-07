@@ -134,9 +134,15 @@ const getStyles = (theme: GrafanaTheme2) => {
       background: ${theme.components.tooltip.background};
       border-radius: ${theme.shape.borderRadius(2)};
     `,
+    header: css`
+      background: ${theme.colors.background.secondary};
+      align-items: center;
+      align-content: center;
+      display: flex;
+      padding-bottom: ${theme.spacing(1)};
+    `,
     title: css`
       font-weight: ${theme.typography.fontWeightMedium};
-      padding-right: ${theme.spacing(2)};
       overflow: hidden;
       display: inline-block;
       white-space: nowrap;
