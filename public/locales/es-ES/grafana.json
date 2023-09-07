@@ -610,6 +610,19 @@
       "view": "Vista"
     }
   },
+  "playlist-page": {
+    "action": {
+      "title": ""
+    },
+    "confirmBody": "",
+    "confirmText": "",
+    "empty": {
+      "button": "",
+      "proTip": "",
+      "proTipLinkTitle": "",
+      "title": ""
+    }
+  },
   "refresh-picker": {
     "aria-label": {
       "choose-interval": "Actualización automática desactivada. Elija un intervalo de tiempo de actualización",

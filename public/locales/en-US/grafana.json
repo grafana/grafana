@@ -605,6 +605,19 @@
       "view": "View"
     }
   },
+  "playlist-page": {
+    "action": {
+      "title": "New playlist"
+    },
+    "confirmBody": "Are you sure you want to delete {{name}} playlist?",
+    "confirmText": "Delete",
+    "empty": {
+      "button": "Create Playlist",
+      "proTip": "You can use playlists to cycle dashboards on TVs without user control",
+      "proTipLinkTitle": "Learn more",
+      "title": "There are no playlists created yet"
+    }
+  },
   "refresh-picker": {
     "aria-label": {
       "choose-interval": "Auto refresh turned off. Choose refresh time interval",

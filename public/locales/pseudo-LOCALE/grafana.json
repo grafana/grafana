@@ -605,6 +605,19 @@
       "view": "Vįęŵ"
     }
   },
+  "playlist-page": {
+    "action": {
+      "title": "Ńęŵ pľäyľįşŧ"
+    },
+    "confirmBody": "Åřę yőū şūřę yőū ŵäŉŧ ŧő đęľęŧę {{name}} pľäyľįşŧ?",
+    "confirmText": "Đęľęŧę",
+    "empty": {
+      "button": "Cřęäŧę Pľäyľįşŧ",
+      "proTip": "Ÿőū čäŉ ūşę pľäyľįşŧş ŧő čyčľę đäşĥþőäřđş őŉ ŦVş ŵįŧĥőūŧ ūşęř čőŉŧřőľ",
+      "proTipLinkTitle": "Ŀęäřŉ mőřę",
+      "title": "Ŧĥęřę äřę ŉő pľäyľįşŧş čřęäŧęđ yęŧ"
+    }
+  },
   "refresh-picker": {
     "aria-label": {
       "choose-interval": "Åūŧő řęƒřęşĥ ŧūřŉęđ őƒƒ. Cĥőőşę řęƒřęşĥ ŧįmę įŉŧęřväľ",
