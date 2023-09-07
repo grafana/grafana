@@ -116,7 +116,7 @@ export function APIEditor({ value, context, onChange }: Props) {
         </InlineField>
       </InlineFieldRow>
       <InlineFieldRow>
-        <InlineField label={'Endpoint'} labelWidth={LABEL_WIDTH} grow={true} required>
+        <InlineField label={'Endpoint'} labelWidth={LABEL_WIDTH} grow={true}>
           <StringValueEditor
             context={context}
             value={value?.endpoint}
