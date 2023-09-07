@@ -102,15 +102,18 @@ func TestIntegrationCreateOrUpdateCorrelation(t *testing.T) {
 		require.NoError(t, err)
 
 		require.Len(t, response.Correlations, 3)
+
+		unordered := make(map[string]correlations.Correlation)
+		for _, v := range response.Correlations {
+			unordered[v.Label] = v
+		}
+
 		// existing correlation is updated
-		require.EqualValues(t, "needs migration", response.Correlations[0].Label)
-		require.EqualValues(t, true, response.Correlations[0].Provisioned)
+		require.EqualValues(t, true, unordered["needs migration"].Provisioned)
 		// other existing correlations are not changed
-		require.EqualValues(t, "existing", response.Correlations[1].Label)
-		require.EqualValues(t, false, response.Correlations[1].Provisioned)
+		require.EqualValues(t, false, unordered["existing"].Provisioned)
 		// new correlation is added
-		require.EqualValues(t, "different", response.Correlations[2].Label)
-		require.EqualValues(t, true, response.Correlations[2].Provisioned)
+		require.EqualValues(t, true, unordered["different"].Provisioned)
 
 		require.NoError(t, res.Body.Close())
 	})
