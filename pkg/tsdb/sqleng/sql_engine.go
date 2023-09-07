@@ -31,7 +31,7 @@ var XormDriverMu sync.RWMutex
 // MetaKeyExecutedQueryString is the key where the executed query should get stored
 const MetaKeyExecutedQueryString = "executedQueryString"
 
-var ErrConnectionFailed = errutil.NewBase(errutil.StatusInternal, "sqleng.connectionError")
+var ErrConnectionFailed = errutil.Internal("sqleng.connectionError")
 
 // SQLMacroEngine interpolates macros into sql. It takes in the Query to have access to query context and
 // timeRange to be able to generate queries that use from and to.
@@ -74,6 +74,7 @@ type JsonData struct {
 	Database                string `json:"database"`
 	SecureDSProxy           bool   `json:"enableSecureSocksProxy"`
 	AllowCleartextPasswords bool   `json:"allowCleartextPasswords"`
+	AuthenticationType      string `json:"authenticationType"`
 }
 
 type DataSourceInfo struct {
@@ -983,7 +984,7 @@ func convertSQLValueColumnToFloat(frame *data.Frame, Index int) (*data.Frame, er
 }
 
 func SetupFillmode(query *backend.DataQuery, interval time.Duration, fillmode string) error {
-	rawQueryProp := make(map[string]interface{})
+	rawQueryProp := make(map[string]any)
 	queryBytes, err := query.JSON.MarshalJSON()
 	if err != nil {
 		return err

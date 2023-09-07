@@ -5,6 +5,8 @@ aliases:
   - ../silences/linking-to-silence-form/
   - ../silences/remove-silence/
   - ../unified-alerting/silences/
+  - ../silences/
+canonical: https://grafana.com/docs/grafana/latest/alerting/manage-notifications/create-silence/
 description: Add silence alert notification
 keywords:
   - grafana
@@ -69,4 +71,4 @@ To remove a silence, complete the following steps.
 
 ## Useful links
 
-[Aggregation operators](/docs/prometheus/latest/querying/operators/#aggregation-operators)
+[Aggregation operators](https://prometheus.io/docs/prometheus/latest/querying/operators/#aggregation-operators)

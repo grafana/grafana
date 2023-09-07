@@ -11,7 +11,7 @@ import {
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Stack } from '@grafana/experimental';
-import { DataSourcePicker, getDataSourceSrv, locationService } from '@grafana/runtime';
+import { getDataSourceSrv, locationService } from '@grafana/runtime';
 import { AnnotationPanelFilter } from '@grafana/schema/src/raw/dashboard/x/dashboard_types.gen';
 import {
   Button,
@@ -27,6 +27,7 @@ import {
 import { ColorValueEditor } from 'app/core/components/OptionsUI/color';
 import config from 'app/core/config';
 import StandardAnnotationQueryEditor from 'app/features/annotations/components/StandardAnnotationQueryEditor';
+import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 
 import { DashboardModel } from '../../state/DashboardModel';
 

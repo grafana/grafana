@@ -91,7 +91,7 @@ export const RuleDetailsActionButtons = ({ rule, rulesSource, isViewMode }: Prop
         variant="primary"
         icon="chart-line"
         target="__blank"
-        href={createExploreLink(rulesSource.name, rule.query)}
+        href={createExploreLink(rulesSource, rule.query)}
       >
         See graph
       </LinkButton>
@@ -291,7 +291,7 @@ function useCanSilence(rule: CombinedRule) {
     return false;
   }
 
-  const hasPermissions = contextSrv.hasAccess(AccessControlAction.AlertingInstanceCreate, contextSrv.isEditor);
+  const hasPermissions = contextSrv.hasPermission(AccessControlAction.AlertingInstanceCreate);
 
   const interactsOnlyWithExternalAMs = amConfigStatus?.alertmanagersChoice === AlertmanagerChoice.External;
   const interactsWithAll = amConfigStatus?.alertmanagersChoice === AlertmanagerChoice.All;

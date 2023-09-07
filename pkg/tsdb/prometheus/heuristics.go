@@ -97,7 +97,7 @@ func getHeuristics(ctx context.Context, i *instance) (*Heuristics, error) {
 	}
 	buildInfo, err := getBuildInfo(ctx, i)
 	if err != nil {
-		logger.Warn("failed to get prometheus buildinfo", "err", err.Error())
+		logger.Warn("Failed to get prometheus buildinfo", "err", err.Error())
 		return nil, fmt.Errorf("failed to get buildinfo: %w", err)
 	}
 	if len(buildInfo.Data.Features) == 0 {

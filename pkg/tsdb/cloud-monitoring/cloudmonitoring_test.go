@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
+	"github.com/grafana/grafana/pkg/tsdb/cloud-monitoring/kinds/dataquery"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -139,7 +140,7 @@ func TestCloudMonitoring(t *testing.T) {
 					"start":     "2018-03-15T13:00:00Z",
 					"end":       "2018-03-15T13:34:00Z",
 				}
-				expectedTimeSeriesFilter := map[string]interface{}{
+				expectedTimeSeriesFilter := map[string]any{
 					"perSeriesAligner": "ALIGN_MEAN",
 					"filter":           "resource.type=\"a/resource/type\" metric.type=\"a/metric/type\"",
 				}
@@ -173,7 +174,7 @@ func TestCloudMonitoring(t *testing.T) {
 				"start":     "2018-03-15T13:00:00Z",
 				"end":       "2018-03-15T13:34:00Z",
 			}
-			expectedTimeSeriesFilter := map[string]interface{}{
+			expectedTimeSeriesFilter := map[string]any{
 				"filter": `key="value" key2="value2" resource.type="another/resource/type" metric.type="a/metric/type"`,
 			}
 			verifyDeepLink(t, dl, expectedTimeSelection, expectedTimeSeriesFilter)
@@ -205,7 +206,7 @@ func TestCloudMonitoring(t *testing.T) {
 					"start":     "2018-03-15T13:00:00Z",
 					"end":       "2018-03-15T13:34:00Z",
 				}
-				expectedTimeSeriesFilter := map[string]interface{}{
+				expectedTimeSeriesFilter := map[string]any{
 					"minAlignmentPeriod": `1000s`,
 				}
 				verifyDeepLink(t, dl, expectedTimeSelection, expectedTimeSeriesFilter)
@@ -235,7 +236,7 @@ func TestCloudMonitoring(t *testing.T) {
 					"start":     "2018-03-15T13:00:00Z",
 					"end":       "2018-03-15T13:34:00Z",
 				}
-				expectedTimeSeriesFilter := map[string]interface{}{
+				expectedTimeSeriesFilter := map[string]any{
 					"minAlignmentPeriod": `60s`,
 				}
 				verifyDeepLink(t, dl, expectedTimeSelection, expectedTimeSeriesFilter)
@@ -343,7 +344,7 @@ func TestCloudMonitoring(t *testing.T) {
 					"start":     req.Queries[0].TimeRange.From.Format(time.RFC3339),
 					"end":       req.Queries[0].TimeRange.To.Format(time.RFC3339),
 				}
-				expectedTimeSeriesFilter := map[string]interface{}{
+				expectedTimeSeriesFilter := map[string]any{
 					"minAlignmentPeriod": `60s`,
 				}
 				verifyDeepLink(t, dl, expectedTimeSelection, expectedTimeSeriesFilter)
@@ -375,7 +376,7 @@ func TestCloudMonitoring(t *testing.T) {
 					"start":     req.Queries[0].TimeRange.From.Format(time.RFC3339),
 					"end":       req.Queries[0].TimeRange.To.Format(time.RFC3339),
 				}
-				expectedTimeSeriesFilter := map[string]interface{}{
+				expectedTimeSeriesFilter := map[string]any{
 					"minAlignmentPeriod": `60s`,
 				}
 				verifyDeepLink(t, dl, expectedTimeSelection, expectedTimeSeriesFilter)
@@ -407,7 +408,7 @@ func TestCloudMonitoring(t *testing.T) {
 					"start":     req.Queries[0].TimeRange.From.Format(time.RFC3339),
 					"end":       req.Queries[0].TimeRange.To.Format(time.RFC3339),
 				}
-				expectedTimeSeriesFilter := map[string]interface{}{
+				expectedTimeSeriesFilter := map[string]any{
 					"minAlignmentPeriod": `300s`,
 				}
 				verifyDeepLink(t, dl, expectedTimeSelection, expectedTimeSeriesFilter)
@@ -439,7 +440,7 @@ func TestCloudMonitoring(t *testing.T) {
 					"start":     req.Queries[0].TimeRange.From.Format(time.RFC3339),
 					"end":       req.Queries[0].TimeRange.To.Format(time.RFC3339),
 				}
-				expectedTimeSeriesFilter := map[string]interface{}{
+				expectedTimeSeriesFilter := map[string]any{
 					"minAlignmentPeriod": `3600s`,
 				}
 				verifyDeepLink(t, dl, expectedTimeSelection, expectedTimeSeriesFilter)
@@ -471,7 +472,7 @@ func TestCloudMonitoring(t *testing.T) {
 					"start":     "2018-03-15T13:00:00Z",
 					"end":       "2018-03-15T13:34:00Z",
 				}
-				expectedTimeSeriesFilter := map[string]interface{}{
+				expectedTimeSeriesFilter := map[string]any{
 					"minAlignmentPeriod": `600s`,
 				}
 				verifyDeepLink(t, dl, expectedTimeSelection, expectedTimeSeriesFilter)
@@ -514,7 +515,7 @@ func TestCloudMonitoring(t *testing.T) {
 				"start":     "2018-03-15T13:00:00Z",
 				"end":       "2018-03-15T13:34:00Z",
 			}
-			expectedTimeSeriesFilter := map[string]interface{}{
+			expectedTimeSeriesFilter := map[string]any{
 				"minAlignmentPeriod": `60s`,
 				"crossSeriesReducer": "REDUCE_SUM",
 				"perSeriesAligner":   "ALIGN_MEAN",
@@ -560,11 +561,11 @@ func TestCloudMonitoring(t *testing.T) {
 				"start":     "2018-03-15T13:00:00Z",
 				"end":       "2018-03-15T13:34:00Z",
 			}
-			expectedTimeSeriesFilter := map[string]interface{}{
+			expectedTimeSeriesFilter := map[string]any{
 				"minAlignmentPeriod": `60s`,
 				"perSeriesAligner":   "ALIGN_MEAN",
 				"filter":             "resource.type=\"a/resource/type\" metric.type=\"a/metric/type\"",
-				"groupByFields":      []interface{}{"metric.label.group1", "metric.label.group2"},
+				"groupByFields":      []any{"metric.label.group1", "metric.label.group2"},
 			}
 			verifyDeepLink(t, dl, expectedTimeSelection, expectedTimeSeriesFilter)
 		})
@@ -625,11 +626,11 @@ func TestCloudMonitoring(t *testing.T) {
 				"start":     "2018-03-15T13:00:00Z",
 				"end":       "2018-03-15T13:34:00Z",
 			}
-			expectedTimeSeriesFilter := map[string]interface{}{
+			expectedTimeSeriesFilter := map[string]any{
 				"minAlignmentPeriod": `60s`,
 				"perSeriesAligner":   "ALIGN_MEAN",
 				"filter":             "resource.type=\"a/resource/type\" metric.type=\"a/metric/type\"",
-				"groupByFields":      []interface{}{"metric.label.group1", "metric.label.group2"},
+				"groupByFields":      []any{"metric.label.group1", "metric.label.group2"},
 			}
 			verifyDeepLink(t, dl, expectedTimeSelection, expectedTimeSeriesFilter)
 
@@ -1011,7 +1012,7 @@ func getCloudMonitoringQueryFromInterface(t *testing.T, qes []cloudMonitoringQue
 }
 
 func verifyDeepLink(t *testing.T, dl string, expectedTimeSelection map[string]string,
-	expectedTimeSeriesFilter map[string]interface{}) {
+	expectedTimeSeriesFilter map[string]any) {
 	t.Helper()
 
 	u, err := url.Parse(dl)
@@ -1038,7 +1039,7 @@ func verifyDeepLink(t *testing.T, dl string, expectedTimeSelection map[string]st
 	pageStateStr := params.Get("pageState")
 	assert.NotEmpty(t, pageStateStr)
 
-	var pageState map[string]map[string]interface{}
+	var pageState map[string]map[string]any
 	err = json.Unmarshal([]byte(pageStateStr), &pageState)
 	require.NoError(t, err)
 
@@ -1050,14 +1051,14 @@ func verifyDeepLink(t *testing.T, dl string, expectedTimeSelection map[string]st
 		assert.Equal(t, v, s)
 	}
 
-	dataSets, ok := pageState["xyChart"]["dataSets"].([]interface{})
+	dataSets, ok := pageState["xyChart"]["dataSets"].([]any)
 	assert.True(t, ok)
 	assert.Equal(t, 1, len(dataSets))
-	dataSet, ok := dataSets[0].(map[string]interface{})
+	dataSet, ok := dataSets[0].(map[string]any)
 	assert.True(t, ok)
 	i, ok := dataSet["timeSeriesFilter"]
 	assert.True(t, ok)
-	timeSeriesFilter := i.(map[string]interface{})
+	timeSeriesFilter := i.(map[string]any)
 	for k, v := range expectedTimeSeriesFilter {
 		s, ok := timeSeriesFilter[k]
 		assert.True(t, ok)
@@ -1103,7 +1104,7 @@ func baseTimeSeriesList() *backend.QueryDataRequest {
 					From: fromStart,
 					To:   fromStart.Add(34 * time.Minute),
 				},
-				QueryType: timeSeriesListQueryType,
+				QueryType: string(dataquery.QueryTypeTimeSeriesList),
 				JSON: json.RawMessage(`{
 					"timeSeriesList": {
 						"filters": ["metric.type=\"a/metric/type\""],
@@ -1127,7 +1128,7 @@ func baseTimeSeriesQuery() *backend.QueryDataRequest {
 					From: fromStart,
 					To:   fromStart.Add(34 * time.Minute),
 				},
-				QueryType: timeSeriesQueryQueryType,
+				QueryType: string(dataquery.QueryTypeTimeSeriesQuery),
 				JSON: json.RawMessage(`{
 					"queryType": "metrics",
 					"timeSeriesQuery": {

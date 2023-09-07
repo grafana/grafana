@@ -1,4 +1,5 @@
 ---
+canonical: https://grafana.com/docs/grafana/latest/alerting/set-up/configure-alert-state-history/
 description: Configure Alert State History
 keywords:
   - grafana

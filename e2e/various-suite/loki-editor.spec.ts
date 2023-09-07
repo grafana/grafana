@@ -4,11 +4,10 @@ const dataSourceName = 'LokiEditor';
 const addDataSource = () => {
   e2e.flows.addDataSource({
     type: 'Loki',
-    expectedAlertMessage:
-      'Unable to connect with Loki (Failed to call resource). Please check the server logs for more details.',
+    expectedAlertMessage: 'Unable to connect with Loki. Please check the server logs for more details.',
     name: dataSourceName,
     form: () => {
-      e2e.components.DataSource.DataSourceHttpSettings.urlInput().type('http://loki-url:3100');
+      e2e().get('#connection-url').type('http://loki-url:3100');
     },
   });
 };

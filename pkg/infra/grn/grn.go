@@ -6,32 +6,10 @@ import (
 	"strings"
 )
 
-// Grafana resource name.  See also:
-// https://github.com/grafana/grafana/blob/main/pkg/services/store/entity/entity.proto#L6
-// NOTE: This structure/format is still under active development and is subject to change
-type GRN struct {
-	// TenantID contains the ID of the tenant (in hosted grafana) or
-	// organization (in other environments) the resource belongs to. This field
-	// may be omitted for global Grafana resources which are not associated with
-	// an organization.
-	TenantID int64
-
-	// The kind of resource being identified, for e.g. "dashboard" or "user".
-	// The caller is responsible for validating the value.
-	ResourceKind string
-
-	// ResourceIdentifier is used by the underlying service to identify the
-	// resource.
-	ResourceIdentifier string
-
-	// GRN can not be extended
-	_ interface{}
-}
-
 // ParseStr attempts to parse a string into a GRN. It returns an error if the
 // given string does not match the GRN format, but does not validate the values.
-func ParseStr(str string) (GRN, error) {
-	ret := GRN{}
+func ParseStr(str string) (*GRN, error) {
+	ret := &GRN{}
 	parts := strings.Split(str, ":")
 
 	if len(parts) != 3 {
@@ -65,7 +43,7 @@ func ParseStr(str string) (GRN, error) {
 
 // MustParseStr is a wrapper around ParseStr that panics if the given input is
 // not a valid GRN. This is intended for use in tests.
-func MustParseStr(str string) GRN {
+func MustParseStr(str string) *GRN {
 	grn, err := ParseStr(str)
 	if err != nil {
 		panic("bad grn!")
@@ -73,8 +51,19 @@ func MustParseStr(str string) GRN {
 	return grn
 }
 
-// String returns a string representation of a grn in the format
+// ToGRNString returns a string representation of a grn in the format
 // grn:tenantID:kind/resourceIdentifier
-func (g *GRN) String() string {
+func (g *GRN) ToGRNString() string {
 	return fmt.Sprintf("grn:%d:%s/%s", g.TenantID, g.ResourceKind, g.ResourceIdentifier)
+}
+
+// Check if the two GRNs reference to the same object
+// we can not use simple `*x == *b` because of the internal settings
+func (g *GRN) Equal(b *GRN) bool {
+	if b == nil {
+		return false
+	}
+	return g == b || (g.TenantID == b.TenantID &&
+		g.ResourceKind == b.ResourceKind &&
+		g.ResourceIdentifier == b.ResourceIdentifier)
 }

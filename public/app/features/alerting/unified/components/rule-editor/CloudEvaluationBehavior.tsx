@@ -8,6 +8,7 @@ import { Field, Input, InputControl, Select, useStyles2 } from '@grafana/ui';
 import { RuleFormType, RuleFormValues } from '../../types/rule-form';
 import { timeOptions } from '../../utils/time';
 
+import { GroupAndNamespaceFields } from './GroupAndNamespaceFields';
 import { PreviewRule } from './PreviewRule';
 import { RuleEditorSection } from './RuleEditorSection';
 
@@ -21,15 +22,14 @@ export const CloudEvaluationBehavior = () => {
   } = useFormContext<RuleFormValues>();
 
   const type = watch('type');
-
-  // cloud recording rules do not have alert conditions
-  if (type === RuleFormType.cloudRecording) {
-    return null;
-  }
+  const dataSourceName = watch('dataSourceName');
 
   return (
-    <RuleEditorSection stepNo={3} title="Alert evaluation behavior">
-      <Field label="For" description="Expression has to be true for this long for the alert to be fired.">
+    <RuleEditorSection stepNo={3} title="Set evaluation behavior">
+      <Field
+        label="Pending period"
+        description="Period in which an alert rule can be in breach of the condition until the alert rule fires."
+      >
         <div className={styles.flexRow}>
           <Field invalid={!!errors.forTime?.message} error={errors.forTime?.message} className={styles.inlineField}>
             <Input
@@ -52,6 +52,10 @@ export const CloudEvaluationBehavior = () => {
           />
         </div>
       </Field>
+      {type === RuleFormType.cloudAlerting && dataSourceName && (
+        <GroupAndNamespaceFields rulesSourceName={dataSourceName} />
+      )}
+
       <PreviewRule />
     </RuleEditorSection>
   );

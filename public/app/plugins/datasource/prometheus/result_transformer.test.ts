@@ -91,7 +91,6 @@ describe('Prometheus Result Transformer', () => {
         fields: [
           { name: 'Time', type: FieldType.time, values: [1, 2, 3] },
           {
-            name: 'Value',
             type: FieldType.number,
             values: [4, 5, 6],
             config: {
@@ -108,7 +107,6 @@ describe('Prometheus Result Transformer', () => {
         fields: [
           { name: 'Time', type: FieldType.time, values: [1, 2, 3] },
           {
-            name: 'Value',
             type: FieldType.number,
             values: [7, 8, 9],
             config: {
@@ -362,7 +360,8 @@ describe('Prometheus Result Transformer', () => {
       expect(series.data[1].meta?.preferredVisualisationType).toEqual('rawPrometheus' as PreferredVisualisationType);
     });
 
-    it('results with heatmap format should be correctly transformed', () => {
+    // Heatmap frames can either have a name of the metric, or if there is no metric, a name of "Value"
+    it('results with heatmap format (no metric name) should be correctly transformed', () => {
       const options = {
         targets: [
           {
@@ -422,8 +421,68 @@ describe('Prometheus Result Transformer', () => {
       expect(series.data[0].fields[2].name).toEqual('2');
       expect(series.data[0].fields[3].name).toEqual('+Inf');
     });
+    it('results with heatmap format (with metric name) should be correctly transformed', () => {
+      const options = {
+        targets: [
+          {
+            format: 'heatmap',
+            refId: 'A',
+          },
+        ],
+      } as unknown as DataQueryRequest<PromQuery>;
+      const response = {
+        state: 'Done',
+        data: [
+          createDataFrame({
+            refId: 'A',
+            fields: [
+              { name: 'Time', type: FieldType.time, values: [6, 5, 4] },
+              {
+                name: 'metric_name',
+                type: FieldType.number,
+                values: [10, 10, 0],
+                labels: { le: '1', __name__: 'metric_name' },
+              },
+            ],
+          }),
+          createDataFrame({
+            refId: 'A',
+            fields: [
+              { name: 'Time', type: FieldType.time, values: [6, 5, 4] },
+              {
+                name: 'metric_name',
+                type: FieldType.number,
+                values: [30, 10, 40],
+                labels: { le: '+Inf', __name__: 'metric_name' },
+              },
+            ],
+          }),
+          createDataFrame({
+            refId: 'A',
+            fields: [
+              { name: 'Time', type: FieldType.time, values: [6, 5, 4] },
+              {
+                name: 'metric_name',
+                type: FieldType.number,
+                values: [20, 10, 30],
+                labels: { le: '2', __name__: 'metric_name' },
+              },
+            ],
+          }),
+        ],
+      } as unknown as DataQueryResponse;
 
-    it('results with heatmap format from multiple queries should be correctly transformed', () => {
+      const series = transformV2(response, options, {});
+      expect(series.data[0].fields.length).toEqual(4);
+      expect(series.data[0].fields[1].values).toEqual([10, 10, 0]);
+      expect(series.data[0].fields[2].values).toEqual([10, 0, 30]);
+      expect(series.data[0].fields[3].values).toEqual([10, 0, 10]);
+      expect(series.data[0].fields[1].name).toEqual('1');
+      expect(series.data[0].fields[2].name).toEqual('2');
+      expect(series.data[0].fields[3].name).toEqual('+Inf');
+    });
+
+    it('results with heatmap format (no metric name) from multiple queries should be correctly transformed', () => {
       const options = {
         targets: [
           {
@@ -508,6 +567,103 @@ describe('Prometheus Result Transformer', () => {
                 type: FieldType.number,
                 values: [30, 10, 40],
                 labels: { le: '+Inf' },
+              },
+            ],
+          }),
+        ],
+      } as unknown as DataQueryResponse;
+
+      const series = transformV2(response, options, {});
+      expect(series.data[0].fields.length).toEqual(4);
+      expect(series.data[0].fields[1].values).toEqual([10, 10, 0]);
+      expect(series.data[0].fields[2].values).toEqual([10, 0, 30]);
+      expect(series.data[0].fields[3].values).toEqual([10, 0, 10]);
+    });
+    it('results with heatmap format (with metric name) from multiple queries should be correctly transformed', () => {
+      const options = {
+        targets: [
+          {
+            format: 'heatmap',
+            refId: 'A',
+          },
+          {
+            format: 'heatmap',
+            refId: 'B',
+          },
+        ],
+      } as unknown as DataQueryRequest<PromQuery>;
+      const response = {
+        state: 'Done',
+        data: [
+          createDataFrame({
+            refId: 'A',
+            fields: [
+              { name: 'Time', type: FieldType.time, values: [6, 5, 4] },
+              {
+                name: 'metric_name',
+                type: FieldType.number,
+                values: [10, 10, 0],
+                labels: { le: '1', __name__: 'metric_name' },
+              },
+            ],
+          }),
+          createDataFrame({
+            refId: 'A',
+            fields: [
+              { name: 'Time', type: FieldType.time, values: [6, 5, 4] },
+              {
+                name: 'metric_name',
+                type: FieldType.number,
+                values: [20, 10, 30],
+                labels: { le: '2', __name__: 'metric_name' },
+              },
+            ],
+          }),
+          createDataFrame({
+            refId: 'A',
+            fields: [
+              { name: 'Time', type: FieldType.time, values: [6, 5, 4] },
+              {
+                name: 'metric_name',
+                type: FieldType.number,
+                values: [30, 10, 40],
+                labels: { le: '+Inf', __name__: 'metric_name' },
+              },
+            ],
+          }),
+          createDataFrame({
+            refId: 'B',
+            fields: [
+              { name: 'Time', type: FieldType.time, values: [6, 5, 4] },
+              {
+                name: 'metric_name',
+                type: FieldType.number,
+                values: [10, 10, 0],
+                labels: { le: '1', __name__: 'metric_name' },
+              },
+            ],
+          }),
+          createDataFrame({
+            refId: 'B',
+            fields: [
+              { name: 'Time', type: FieldType.time, values: [6, 5, 4] },
+              {
+                name: 'metric_name',
+                type: FieldType.number,
+                values: [20, 10, 30],
+                labels: { le: '2', __name__: 'metric_name' },
+              },
+            ],
+          }),
+          createDataFrame({
+            refId: 'B',
+            fields: [
+              { name: 'Time', type: FieldType.time, values: [6, 5, 4] },
+              {
+                name: 'metric_name',
+                type: FieldType.number,
+                values: [30, 10, 40],
+                labels: { le: '+Inf', __name__: 'metric_name' },
               },
             ],
           }),

@@ -4,6 +4,7 @@ aliases:
   - ../metrics/
   - ../unified-alerting/fundamentals/alertmanager/
   - alerting/manage-notifications/alertmanager/
+canonical: https://grafana.com/docs/grafana/latest/alerting/fundamentals/alertmanager/
 description: Intro to the different Alertmanagers
 labels:
   products:

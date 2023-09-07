@@ -176,7 +176,7 @@ func levelsToTree(levels []*Level, names []string) *ProfileTree {
 
 		// If we still have levels to go, this should not happen. Something is probably wrong with the flamebearer data.
 		if len(parentsStack) == 0 {
-			logger.Error("parentsStack is empty but we are not at the the last level", "currentLevel", currentLevel)
+			logger.Error("ParentsStack is empty but we are not at the the last level", "currentLevel", currentLevel)
 			break
 		}
 
@@ -220,7 +220,7 @@ func levelsToTree(levels []*Level, names []string) *ProfileTree {
 				// We went out of parents bounds so lets move to next parent. We will evaluate the same item again, but
 				// we will check if it is a child of the next parent item in line.
 				if len(parentsStack) == 0 {
-					logger.Error("parentsStack is empty but there are still items in current level", "currentLevel", currentLevel, "itemIndex", itemIndex)
+					logger.Error("ParentsStack is empty but there are still items in current level", "currentLevel", currentLevel, "itemIndex", itemIndex)
 					break
 				}
 				currentParent = parentsStack[:1][0]
@@ -312,14 +312,14 @@ func treeToNestedSetDataFrame(tree *ProfileTree, unit string) *data.Frame {
 
 type EnumField struct {
 	field     *data.Field
-	valuesMap map[string]int64
-	counter   int64
+	valuesMap map[string]data.EnumItemIndex
+	counter   data.EnumItemIndex
 }
 
 func NewEnumField(name string, labels data.Labels) *EnumField {
 	return &EnumField{
-		field:     data.NewField(name, labels, []int64{}),
-		valuesMap: make(map[string]int64),
+		field:     data.NewField(name, labels, []data.EnumItemIndex{}),
+		valuesMap: make(map[string]data.EnumItemIndex),
 	}
 }
 

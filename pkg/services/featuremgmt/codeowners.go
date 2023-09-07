@@ -22,7 +22,8 @@ const (
 	hostedGrafanaTeam                           codeowner = "@grafana/hosted-grafana-team"
 	awsDatasourcesSquad                         codeowner = "@grafana/aws-datasources"
 	appO11ySquad                                codeowner = "@grafana/app-o11y"
-	grafanaPartnerPluginsSquad                  codeowner = "@grafana/partner-plugins"
+	grafanaPartnerPluginsSquad                  codeowner = "@grafana/partner-datasources"
 	grafanaOperatorExperienceSquad              codeowner = "@grafana/grafana-operator-experience-squad"
 	enterpriseDatasourcesSquad                  codeowner = "@grafana/enterprise-datasources"
+	grafanaSharingSquad                         codeowner = "@grafana/sharing-squad"
 )

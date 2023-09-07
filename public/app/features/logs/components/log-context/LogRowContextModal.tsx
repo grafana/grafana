@@ -17,7 +17,7 @@ import {
 } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
 import { DataQuery, LoadingState, TimeZone } from '@grafana/schema';
-import { Icon, Button, Modal, useTheme2 } from '@grafana/ui';
+import { Button, Modal, useTheme2 } from '@grafana/ui';
 import store from 'app/core/store';
 import { SETTINGS_KEYS } from 'app/features/explore/Logs/utils/logs';
 import { splitOpen } from 'app/features/explore/state/main';
@@ -279,6 +279,7 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
   const updateResults = async () => {
     await updateContextQuery();
     setContext(makeEmptyContext());
+    loadCountRef.current = { above: 0, below: 0 };
     generationRef.current += 1; // results from currently running loadMore calls will be ignored
   };
 
@@ -363,16 +364,33 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
       const newBelow = logsSortOrder === LogsSortOrder.Ascending ? older : newer;
 
       if (currentGen === generationRef.current) {
-        setContext((c) => ({
-          above: {
-            rows: sortLogRows([...newAbove, ...c.above.rows], logsSortOrder),
-            loadingState: newRows.length === 0 ? LoadingState.Done : LoadingState.NotStarted,
-          },
-          below: {
-            rows: sortLogRows([...c.below.rows, ...newBelow], logsSortOrder),
-            loadingState: newRows.length === 0 ? LoadingState.Done : LoadingState.NotStarted,
-          },
-        }));
+        setContext((c) => {
+          // we should only modify the row-arrays if necessary
+          const sortedNewAbove =
+            newAbove.length > 0 ? sortLogRows([...newAbove, ...c.above.rows], logsSortOrder) : c.above.rows;
+          const sortedNewBelow =
+            newBelow.length > 0 ? sortLogRows([...c.below.rows, ...newBelow], logsSortOrder) : c.below.rows;
+          return {
+            above: {
+              rows: sortedNewAbove,
+              loadingState:
+                place === 'above'
+                  ? newRows.length === 0
+                    ? LoadingState.Done
+                    : LoadingState.NotStarted
+                  : c.above.loadingState,
+            },
+            below: {
+              rows: sortedNewBelow,
+              loadingState:
+                place === 'below'
+                  ? newRows.length === 0
+                    ? LoadingState.Done
+                    : LoadingState.NotStarted
+                  : c.below.loadingState,
+            },
+          };
+        });
       }
     } catch {
       setSection(place, (section) => ({
@@ -440,6 +458,13 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
     prevClientHeightRef.current = currentClientHeight;
     if (prevClientHeight !== currentClientHeight) {
       // height has changed, we scroll to the center
+      scrollToCenter();
+      return;
+    }
+
+    // if the newly loaded content is part of the initial load of `above` and `below`,
+    // we scroll to center, to keep the chosen log-row centered
+    if (loadCountRef.current.above <= 1 && loadCountRef.current.below <= 1) {
       scrollToCenter();
       return;
     }
@@ -565,21 +590,6 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
       </div>
 
       <Modal.ButtonRow>
-        <a
-          href="https://forms.gle/Tsk4pN7vD95aBRbb7"
-          className={styles.link}
-          title="We recently reworked the Log Context UI, please let us know how we can further improve it."
-          target="_blank"
-          rel="noreferrer noopener"
-          onClick={() => {
-            reportInteraction('grafana_explore_logs_log_context_give_feedback_clicked', {
-              datasourceType: row.datasourceType,
-              logRowUid: row.uid,
-            });
-          }}
-        >
-          <Icon name="comment-alt-message" /> Give feedback
-        </a>
         {contextQuery?.datasource?.uid && (
           <Button
             variant="secondary"

@@ -13,7 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
-var ErrInternal = errutil.NewBase(errutil.StatusInternal, "accesscontrol.internal")
+var ErrInternal = errutil.Internal("accesscontrol.internal")
 
 // RoleRegistration stores a role and its assignments to built-in roles
 // (Viewer, Editor, Admin, Grafana Admin)
@@ -182,6 +182,10 @@ type Permission struct {
 	Action string `json:"action"`
 	Scope  string `json:"scope"`
 
+	Kind       string `json:"-"`
+	Attribute  string `json:"-"`
+	Identifier string `json:"-"`
+
 	Updated time.Time `json:"updated"`
 	Created time.Time `json:"created"`
 }
@@ -190,6 +194,23 @@ func (p Permission) OSSPermission() Permission {
 	return Permission{
 		Action: p.Action,
 		Scope:  p.Scope,
+	}
+}
+
+// SplitScope returns kind, attribute and Identifier
+func (p Permission) SplitScope() (string, string, string) {
+	if p.Scope == "" {
+		return "", "", ""
+	}
+
+	fragments := strings.Split(p.Scope, ":")
+	switch l := len(fragments); l {
+	case 1: // Splitting a wildcard scope "*" -> kind: "*"; attribute: "*"; identifier: "*"
+		return fragments[0], fragments[0], fragments[0]
+	case 2: // Splitting a wildcard scope with specified kind "dashboards:*" -> kind: "dashboards"; attribute: "*"; identifier: "*"
+		return fragments[0], fragments[1], fragments[1]
+	default: // Splitting a scope with all fields specified "dashboards:uid:my_dash" -> kind: "dashboards"; attribute: "uid"; identifier: "my_dash"
+		return fragments[0], fragments[1], strings.Join(fragments[2:], ":")
 	}
 }
 
@@ -434,8 +455,13 @@ const (
 	ActionAlertingNotificationsExternalRead  = "alert.notifications.external:read"
 
 	// Alerting provisioning actions
-	ActionAlertingProvisioningRead  = "alert.provisioning:read"
-	ActionAlertingProvisioningWrite = "alert.provisioning:write"
+	ActionAlertingProvisioningRead        = "alert.provisioning:read"
+	ActionAlertingProvisioningReadSecrets = "alert.provisioning.secrets:read"
+	ActionAlertingProvisioningWrite       = "alert.provisioning:write"
+
+	// Feature Management actions
+	ActionFeatureManagementRead  = "featuremgmt.read"
+	ActionFeatureManagementWrite = "featuremgmt.write"
 )
 
 var (

@@ -181,6 +181,35 @@ describe('DateMath', () => {
       const date = dateMath.parseDateMath(' - 2d', dateTime([2014, 1, 5]));
       expect(date!.valueOf()).toEqual(dateTime([2014, 1, 3]).valueOf());
     });
+
+    it('should not mutate dateTime passed in', () => {
+      const dateInput = dateTime([2014, 1, 5]);
+      dateMath.parseDateMath(' - 2d', dateInput);
+      expect(dateInput.valueOf()).toEqual(dateTime([2014, 1, 5]).valueOf());
+    });
+  });
+
+  describe('isMathString', () => {
+    it('should return true when valid date text', () => {
+      expect(dateMath.isMathString('now-1h')).toBe(true);
+    });
+
+    it('should return false when an absolute date is inserted', () => {
+      const date = new Date();
+      const result = dateMath.isMathString(date);
+      expect(result).toBe(false);
+    });
+
+    it('should return false when invalid date text', () => {
+      expect(dateMath.isMathString('2 + 2')).toBe(false);
+    });
+
+    it('should return false if no text is passed', () => {
+      expect(dateMath.isMathString('')).toBe(false);
+    });
+    it('should return false if nothing is passed ', () => {
+      expect(dateMath.isMathString(' ')).toBe(false);
+    });
   });
 
   describe('Round to fiscal start/end', () => {

@@ -6,16 +6,19 @@ import (
 	"encoding/json"
 	"fmt"
 	"sort"
+	"strings"
 
 	alertingNotify "github.com/grafana/alerting/notify"
 	"github.com/prometheus/alertmanager/config"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels_config"
 	"github.com/grafana/grafana/pkg/services/secrets"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -25,16 +28,18 @@ type ContactPointService struct {
 	provenanceStore   ProvisioningStore
 	xact              TransactionManager
 	log               log.Logger
+	ac                accesscontrol.AccessControl
 }
 
 func NewContactPointService(store AMConfigStore, encryptionService secrets.Service,
-	provenanceStore ProvisioningStore, xact TransactionManager, log log.Logger) *ContactPointService {
+	provenanceStore ProvisioningStore, xact TransactionManager, log log.Logger, ac accesscontrol.AccessControl) *ContactPointService {
 	return &ContactPointService{
 		amStore:           store,
 		encryptionService: encryptionService,
 		provenanceStore:   provenanceStore,
 		xact:              xact,
 		log:               log,
+		ac:                ac,
 	}
 }
 
@@ -42,9 +47,27 @@ type ContactPointQuery struct {
 	// Optionally filter by name.
 	Name  string
 	OrgID int64
+	// Optionally decrypt secure settings, requires OrgAdmin.
+	Decrypt bool
 }
 
-func (ecp *ContactPointService) GetContactPoints(ctx context.Context, q ContactPointQuery) ([]apimodels.EmbeddedContactPoint, error) {
+func (ecp *ContactPointService) canDecryptSecrets(ctx context.Context, u *user.SignedInUser) bool {
+	if u == nil {
+		return false
+	}
+	permitted, err := ecp.ac.Evaluate(ctx, u, accesscontrol.EvalPermission(accesscontrol.ActionAlertingProvisioningReadSecrets))
+	if err != nil {
+		ecp.log.Error("Failed to evaluate user permissions", "error", err)
+		permitted = false
+	}
+	return permitted
+}
+
+// GetContactPoints returns contact points. If q.Decrypt is true and the user is an OrgAdmin, decrypted secure settings are included instead of redacted ones.
+func (ecp *ContactPointService) GetContactPoints(ctx context.Context, q ContactPointQuery, u *user.SignedInUser) ([]apimodels.EmbeddedContactPoint, error) {
+	if q.Decrypt && !ecp.canDecryptSecrets(ctx, u) {
+		return nil, fmt.Errorf("%w: user requires Admin role or alert.provisioning.secrets:read permission to view decrypted secure settings", ErrPermissionDenied)
+	}
 	revision, err := getLastConfiguration(ctx, q.OrgID, ecp.amStore)
 	if err != nil {
 		return nil, err
@@ -76,19 +99,29 @@ func (ecp *ContactPointService) GetContactPoints(ctx context.Context, q ContactP
 		for k, v := range contactPoint.SecureSettings {
 			decryptedValue, err := ecp.decryptValue(v)
 			if err != nil {
-				ecp.log.Warn("decrypting value failed", "error", err.Error())
+				ecp.log.Warn("Decrypting value failed", "error", err.Error())
 				continue
 			}
 			if decryptedValue == "" {
 				continue
 			}
-			embeddedContactPoint.Settings.Set(k, apimodels.RedactedValue)
+			if q.Decrypt {
+				embeddedContactPoint.Settings.Set(k, decryptedValue)
+			} else {
+				embeddedContactPoint.Settings.Set(k, apimodels.RedactedValue)
+			}
 		}
 
 		contactPoints = append(contactPoints, embeddedContactPoint)
 	}
 	sort.SliceStable(contactPoints, func(i, j int) bool {
-		return contactPoints[i].Name < contactPoints[j].Name
+		switch strings.Compare(contactPoints[i].Name, contactPoints[j].Name) {
+		case -1:
+			return true
+		case 1:
+			return false
+		}
+		return contactPoints[i].UID < contactPoints[j].UID
 	})
 	return contactPoints, nil
 }
@@ -118,7 +151,7 @@ func (ecp *ContactPointService) getContactPointDecrypted(ctx context.Context, or
 		for k, v := range receiver.SecureSettings {
 			decryptedValue, err := ecp.decryptValue(v)
 			if err != nil {
-				ecp.log.Warn("decrypting value failed", "error", err.Error())
+				ecp.log.Warn("Decrypting value failed", "error", err.Error())
 				continue
 			}
 			if decryptedValue == "" {
@@ -421,7 +454,7 @@ func stitchReceiver(cfg *apimodels.PostableUserConfig, target *apimodels.Postabl
 	// All receivers in a given receiver group have the same name. We must maintain this across renames.
 	configModified := false
 groupLoop:
-	for _, receiverGroup := range cfg.AlertmanagerConfig.Receivers {
+	for groupIdx, receiverGroup := range cfg.AlertmanagerConfig.Receivers {
 		// Does the current group contain the grafana receiver we're interested in?
 		for i, grafanaReceiver := range receiverGroup.GrafanaManagedReceivers {
 			if grafanaReceiver.UID == target.UID {
@@ -444,8 +477,6 @@ groupLoop:
 					replaceReferences(receiverGroup.Name, target.Name, cfg.AlertmanagerConfig.Route)
 					receiverGroup.Name = target.Name
 					receiverGroup.GrafanaManagedReceivers[i] = target
-					configModified = true
-					break groupLoop
 				}
 
 				// Otherwise, we only want to rename the receiver we are touching... NOT all of them.
@@ -458,6 +489,11 @@ groupLoop:
 						// Add the modified receiver to the new group...
 						candidateExistingGroup.GrafanaManagedReceivers = append(candidateExistingGroup.GrafanaManagedReceivers, target)
 						configModified = true
+
+						// if the old receiver group turns out to be empty. Remove it.
+						if len(receiverGroup.GrafanaManagedReceivers) == 0 {
+							cfg.AlertmanagerConfig.Receivers = append(cfg.AlertmanagerConfig.Receivers[:groupIdx], cfg.AlertmanagerConfig.Receivers[groupIdx+1:]...)
+						}
 						break groupLoop
 					}
 				}

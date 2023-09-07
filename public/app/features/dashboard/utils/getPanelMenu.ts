@@ -1,11 +1,15 @@
-import { PanelMenuItem, PluginExtensionPoints, type PluginExtensionPanelContext } from '@grafana/data';
 import {
-  isPluginExtensionLink,
+  PanelMenuItem,
+  PluginExtensionLink,
+  PluginExtensionPoints,
+  type PluginExtensionPanelContext,
+} from '@grafana/data';
+import {
   AngularComponent,
   getDataSourceSrv,
-  getPluginExtensions,
   locationService,
   reportInteraction,
+  getPluginLinkExtensions,
 } from '@grafana/runtime';
 import { PanelCtrl } from 'app/angular/panel/panel_ctrl';
 import config from 'app/core/config';
@@ -106,7 +110,14 @@ export function getPanelMenu(
     event.preventDefault();
     const openInNewWindow =
       event.ctrlKey || event.metaKey ? (url: string) => window.open(`${config.appSubUrl}${url}`) : undefined;
-    store.dispatch(navigateToExplore(panel, { getDataSourceSrv, getTimeSrv, getExploreUrl, openInNewWindow }) as any);
+    store.dispatch(
+      navigateToExplore(panel, {
+        getDataSourceSrv,
+        timeRange: getTimeSrv().timeRange(),
+        getExploreUrl,
+        openInNewWindow,
+      }) as any
+    );
     reportInteraction('dashboards_panelheader_menu', { item: 'explore' });
   };
 
@@ -152,7 +163,7 @@ export function getPanelMenu(
       text: t('panel.header-menu.explore', `Explore`),
       iconClassName: 'compass',
       onClick: onNavigateToExplore,
-      shortcut: 'x',
+      shortcut: 'p x',
     });
   }
 
@@ -184,10 +195,12 @@ export function getPanelMenu(
     iconClassName: 'info-circle',
     onClick: (e: React.MouseEvent<HTMLElement>) => {
       const currentTarget = e.currentTarget;
-      const target = e.target as HTMLElement;
-      const closestMenuItem = target.closest('[role="menuitem"]');
+      const target = e.target;
 
-      if (target === currentTarget || closestMenuItem === currentTarget) {
+      if (
+        target === currentTarget ||
+        (target instanceof HTMLElement && target.closest('[role="menuitem"]') === currentTarget)
+      ) {
         onInspectPanel();
       }
     },
@@ -275,31 +288,18 @@ export function getPanelMenu(
     });
   }
 
-  const { extensions } = getPluginExtensions({
+  const { extensions } = getPluginLinkExtensions({
     extensionPointId: PluginExtensionPoints.DashboardPanelMenu,
     context: createExtensionContext(panel, dashboard),
-    limitPerPlugin: 2,
+    limitPerPlugin: 3,
   });
 
   if (extensions.length > 0 && !panel.isEditing) {
-    const extensionsMenu: PanelMenuItem[] = [];
-
-    for (const extension of extensions) {
-      if (isPluginExtensionLink(extension)) {
-        extensionsMenu.push({
-          text: truncateTitle(extension.title, 25),
-          href: extension.path,
-          onClick: extension.onClick,
-        });
-        continue;
-      }
-    }
-
     menu.push({
       text: 'Extensions',
       iconClassName: 'plug',
       type: 'submenu',
-      subMenu: extensionsMenu,
+      subMenu: createExtensionSubMenu(extensions),
     });
   }
 
@@ -343,4 +343,54 @@ function createExtensionContext(panel: PanelModel, dashboard: DashboardModel): P
     scopedVars: panel.scopedVars,
     data: panel.getQueryRunner().getLastResult(),
   };
+}
+
+function createExtensionSubMenu(extensions: PluginExtensionLink[]): PanelMenuItem[] {
+  const categorized: Record<string, PanelMenuItem[]> = {};
+  const uncategorized: PanelMenuItem[] = [];
+
+  for (const extension of extensions) {
+    const category = extension.category;
+
+    if (!category) {
+      uncategorized.push({
+        text: truncateTitle(extension.title, 25),
+        href: extension.path,
+        onClick: extension.onClick,
+      });
+      continue;
+    }
+
+    if (!Array.isArray(categorized[category])) {
+      categorized[category] = [];
+    }
+
+    categorized[category].push({
+      text: truncateTitle(extension.title, 25),
+      href: extension.path,
+      onClick: extension.onClick,
+    });
+  }
+
+  const subMenu = Object.keys(categorized).reduce((subMenu: PanelMenuItem[], category) => {
+    subMenu.push({
+      text: truncateTitle(category, 25),
+      type: 'group',
+      subMenu: categorized[category],
+    });
+    return subMenu;
+  }, []);
+
+  if (uncategorized.length > 0) {
+    if (subMenu.length > 0) {
+      subMenu.push({
+        text: 'divider',
+        type: 'divider',
+      });
+    }
+
+    Array.prototype.push.apply(subMenu, uncategorized);
+  }
+
+  return subMenu;
 }

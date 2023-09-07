@@ -1,3 +1,4 @@
+@use 'sass:color';
 $font-size-heatmap-tick: 11px;
 
 .heatmap-canvas-wrapper {
@@ -44,7 +45,7 @@ $font-size-heatmap-tick: 11px;
 
 .heatmap-crosshair {
   line {
-    stroke: darken($red, 15%);
+    stroke: color.adjust($red, $lightness: -15%);
     stroke-width: 1;
   }
 }

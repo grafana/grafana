@@ -20,6 +20,7 @@ interface APIQuery {
   // DashboardIds []int64
   dashboardUID?: string[];
   folderIds?: number[];
+  folderUIDs?: string[];
   sort?: string;
   starred?: boolean;
 }
@@ -54,13 +55,7 @@ export class SQLSearcher implements GrafanaSearcher {
     if (query.uid) {
       apiQuery.dashboardUID = query.uid;
     } else if (query.location?.length) {
-      let info = this.locationInfo[query.location];
-      if (!info) {
-        // This will load all folder folders
-        await this.doAPIQuery({ type: DashboardSearchItemType.DashFolder, limit: 999 });
-        info = this.locationInfo[query.location];
-      }
-      apiQuery.folderIds = [info?.folderId ?? 0];
+      apiQuery.folderUIDs = [query.location];
     }
 
     return apiQuery;

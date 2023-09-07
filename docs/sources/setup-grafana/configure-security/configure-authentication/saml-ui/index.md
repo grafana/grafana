@@ -4,7 +4,6 @@ labels:
   products:
     - cloud
     - enterprise
-    - oss
 menuTitle: SAML user interface
 title: Configure SAML authentication using the Grafana user interface
 weight: 600

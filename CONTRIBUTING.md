@@ -44,7 +44,7 @@ If you believe you've found a security vulnerability, please read our [security 
 
 ### Suggest enhancements
 
-If you have an idea of how to improve Grafana, submit an [enhancement request](https://github.com/grafana/grafana/discussions/new).
+If you have an idea of how to improve Grafana, submit a [feature request](https://github.com/grafana/grafana/issues/new?assignees=&labels=type%2Ffeature-request&projects=&template=1-feature_requests.md).
 
 We want to make Grafana accessible to even more people. Submit an [accessibility issue](https://github.com/grafana/grafana/issues/new?labels=type%3A+accessibility&template=3-accessibility.md) to help us understand what we can improve.
 
@@ -73,7 +73,7 @@ Unsure where to begin contributing to Grafana? Start by browsing issues labeled 
 
 If you're looking to make a code change, see how to set up your environment for [local development](contribute/developer-guide.md).
 
-When you're ready to contribute, it's time to [Create a pull request](/contribute/create-pull-request.md).
+When you're ready to contribute, it's time to [create a pull request](/contribute/create-pull-request.md).
 
 #### Contributor License Agreement (CLA)
 
@@ -82,6 +82,6 @@ Before we can accept your pull request, you need to [sign our CLA](https://grafa
 ## Where do I go from here?
 
 - Set up your [development environment](contribute/developer-guide.md).
-- Learn how to [contribute documentation](contribute/README.md).
+- Learn how to [contribute to our documentation](contribute/documentation/README.md).
 - Get started [developing plugins](https://grafana.com/docs/grafana/latest/developers/plugins/) for Grafana.
 - Look through the resources in the [contribute](contribute) folder.

@@ -13,60 +13,88 @@ labels:
     - enterprise
     - oss
 title: Flame graph
-weight: 850
+weight: 100
 ---
 
-# Flame graph panel
+# Flame graph
 
-The flame graph takes advantage of the hierarchical nature of profiling data. It condenses data into a format that allows you to easily see which code paths are consuming the most system resources.
+Flame graph panel is a visualization that allows you to visualize profiling data. It can represent the profile as a flame graph, table, or both
 
-These resources are measured through profiles which aggregate that information into a format which is then sent to the flame graph visualization. For example, allocated objects or space when measuring memory.
+![<Flame graph panel>](/media/docs/grafana/panels-visualizations/flamegraph/screenshot-flamegraph-10.1.png)
 
-![Figure 1 - Flame graph](/static/img/docs/flame-graph-panel/flame-graph.png 'Figure 1 - Flame graph')
+## Flame graph mode
 
-Figure 1 illustrates what this data looks like when rendered. The top block is the root or parent of the other blocks, and represents the total of all of the profiles being measured. There may be one or more blocks for each row that is rendered below the total. Each of these blocks represents a child in the stack of function calls that originated from the original call to the root at the top of the flame graph.
+The flame graph takes advantage of the hierarchical nature of profiling data. It condenses data into a format that allows you to easily see which code paths are consuming the most system resources, such as CPU time, allocated objects, or space when measuring memory. Each block in the flame graph represents a function call in a stack and its width represents its value.
 
-Each block can have zero or more siblings but can only have one parent.
+![<Flame graph>](/media/docs/grafana/panels-visualizations/flamegraph/screenshot-flamegraph-10.1-flamegraph.png)
 
-In figure 1 displays many rows of colored blocks as well as grayed-out sections which are a set of blocks that represent a relatively short execution time and were collapsed together into one section for performance reasons.
+Grayed-out sections are a set of functions that represent a relatively small value and they are collapsed together into one section for performance reasons.
 
-![Figure 2 - Hovering over flame graph](/static/img/docs/flame-graph-panel/flame-graph-hovering.png 'Figure 2 - Hovering over flame graph')
+{{< figure src="/media/docs/grafana/panels-visualizations/flamegraph/screenshot-flamegraph-10.1-tooltip.png" max-width="500px" caption="Hover tooltip" >}}
 
-You can hover a specific block to view a tooltip that shows you what the profile is measuring, in this case total time, along with other information such as this block's % of total time, the amount of time it took, and the samples that were measured.
+You can hover over a specific function to view a tooltip that shows you additional data about that function, like the function's value, percentage of total value, and the number of samples with that function.
 
-![Figure 3 - Clicking on a block](/static/img/docs/flame-graph-panel/flame-graph-clicking.png 'Figure 3 - Clicking on a block')
+### Drop-down actions
 
-You can click on a block to drill down to the stack of function calls for that block and its child blocks. The clicked block is set to 100% of the flame graph's width and all its children blocks are shown with their widths updated relative to the width of the parent block.
+You can click a function to show a drop-down menu with additional actions:
 
-This process can be repeated to focus on finding the amount of resources that particular blocks and their children are consuming.
+- Focus block
+- Copy function name
+- Sandwich view
 
-![Figure 4 - Search](/static/img/docs/flame-graph-panel/flame-graph-search.png 'Figure 4 - Search')
+{{< figure src="/media/docs/grafana/panels-visualizations/flamegraph/screenshot-flamegraph-10.1-dropdown.png" max-width="500px" caption="Dropdown actions" >}}
 
-You can use the search field to find blocks with particular labels. When you search by a label name, all of the blocks in the table with labels that include the search text remain colored, while the rest of the blocks are grayed-out.
+#### Focus block
 
-You can also click on any block or hover over it to narrow your search.
+When you click **Focus block**, the block, or function, is set to 100% of the flame graph's width and all its child functions are shown with their widths updated relative to the width of the parent function. This makes it easier to drill down into smaller parts of the flame graph.
 
-## Top table
+{{< figure src="/media/docs/grafana/panels-visualizations/flamegraph/screenshot-flamegraph-10.1-focus.png" max-width="500px" caption="Focus block" >}}
 
-The top table allows you to visualize which symbols take up the most resources in your profile.
+#### Copy function name
 
-The table has three columns: symbols, self, and total. The table is sorted by self time by default, but can be reordered by total time or symbol name by clicking the column headers.
+When you click **Copy function name**, the full name of the function that the block represents is copied.
 
-![Figure 5 - Top table](/static/img/docs/flame-graph-panel/top-table.png 'Figure 5 - Top table')
+#### Sandwich view
 
-Clicking on a row of the top table will add or remove that row's symbol to the search input for the flame graph.
+The sandwich view allows you to show the context of the clicked function. It shows all the function's callers on the top and all the callees at the bottom. This shows the aggregated context of the function so if the function exists in multiple places in the flame graph, all the contexts are shown and aggregated in the sandwich view.
 
-Clicking on the same row again will remove its symbol from the search input.
+{{< figure src="/media/docs/grafana/panels-visualizations/flamegraph/screenshot-flamegraph-10.1-sandwich.png" max-width="500px" caption="Sandwich view">}}
 
-![Figure 6 - Clicking on a top table row](/static/img/docs/flame-graph-panel/top-table-clicking.png 'Figure 6 - Clicking on a top table row')
+### Status bar
 
-You can choose from three table view options:
+The status bar shows metadata about the flame graph and currently applied modifications, like what part of the graph is in focus or what function is shown in sandwich view. Click the **X** in the status bar pill to remove that modification.
 
-- Top Table: Only show the top table
-- Flame Graph: Only show the flame graph
-- Both: Show both the top table and flame graph
+![<Status bar>](/media/docs/grafana/panels-visualizations/flamegraph/screenshot-flamegraph-10.1-status.png)
 
-![Figure 7 - Show the top table / flame graph / both](/static/img/docs/flame-graph-panel/selected-view.png 'Figure 7 - Show the top table / flame graph / both')
+## Toolbar
+
+### Search
+
+You can use the search field to find functions with a particular name. All the functions in the flame graph that match the search will remain colored while the rest of the functions are grayed-out.
+
+![<Searching for function name>](/media/docs/grafana/panels-visualizations/flamegraph/screenshot-flamegraph-10.1-search.png)
+
+### Color schema picker
+
+You can switch between coloring functions by their value or by their package name to visually tie functions from the same package together.
+
+![<Different color scheme>](/media/docs/grafana/panels-visualizations/flamegraph/screenshot-flamegraph-10.1-color.png)
+
+### Text align
+
+Align text either to the left or to the right to show more important parts of the function name when it does not fit into the block.
+
+### Visualization picker
+
+You can choose to show only the flame graph, only table, or both at the same time
+
+## Top table mode
+
+The top table shows the functions from the profile in table format. The table has three columns: symbols, self, and total. The table is sorted by self time by default, but can be reordered by total time or symbol name by clicking the column headers. Each row represents aggregated values for the given function if the function appears in multiple places in the profile.
+
+![Table view](/media/docs/grafana/panels-visualizations/flamegraph/screenshot-flamegraph-10.1-table.png)
+
+There are also action buttons on the left for each row. The first button searches for the function name while second button shows the sandwich view of the function.
 
 ## Data API
 

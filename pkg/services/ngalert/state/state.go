@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/screenshot"
+	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 type State struct {
@@ -297,10 +298,11 @@ func resultError(state *State, rule *models.AlertRule, result eval.Result, logge
 				state.Annotations["Error"] = result.Error.Error()
 				// If the evaluation failed because a query returned an error then add the Ref ID and
 				// Datasource UID as labels
-				var queryError expr.QueryError
-				if errors.As(state.Error, &queryError) {
+				var utilError errutil.Error
+				if errors.As(state.Error, &utilError) &&
+					(errors.Is(state.Error, expr.QueryError) || errors.Is(state.Error, expr.ConversionError)) {
 					for _, next := range rule.Data {
-						if next.RefID == queryError.RefID {
+						if next.RefID == utilError.PublicPayload["refId"].(string) {
 							state.Labels["ref_id"] = next.RefID
 							state.Labels["datasource_uid"] = next.DatasourceUID
 							break

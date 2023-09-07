@@ -1,4 +1,5 @@
 ---
+canonical: https://grafana.com/docs/grafana/latest/alerting/manage-notifications/images-in-notifications/
 description: How to use images in notifications
 keywords:
   - grafana
@@ -93,7 +94,7 @@ Grafana supports a wide range of contact points with varied support for images i
 | DingDing                | No                                                         | No                                                       |
 | Discord                 | Yes (Maximum of 10 per notification)                       | Yes (Maximum of 10 per notification)                     |
 | Email                   | Yes (Embedded in the email)                                | Yes                                                      |
-| Google Hangouts Chat    | No                                                         | Yes                                                      |
+| Google Chat             | No                                                         | Yes                                                      |
 | Kafka                   | No                                                         | No                                                       |
 | Line                    | No                                                         | No                                                       |
 | Microsoft Teams         | No                                                         | Yes                                                      |

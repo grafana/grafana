@@ -249,18 +249,21 @@ type JSONModel struct {
 	Alias              string    `json:"alias"`
 	// Cannot specify a type for csvWave since legacy queries
 	// does not follow the same format as the new ones (and there is no migration).
-	CSVWave interface{} `json:"csvWave"`
+	CSVWave     any     `json:"csvWave"`
+	CSVContent  string  `json:"csvContent"`
+	CSVFileName string  `json:"csvFileName"`
+	DropPercent float64 `json:"dropPercent"`
 }
 
 type pulseWave struct {
-	TimeStep int64       `json:"timeStep"`
-	OnCount  int64       `json:"onCount"`
-	OffCount int64       `json:"offCount"`
-	OnValue  interface{} `json:"onValue"`
-	OffValue interface{} `json:"offValue"`
+	TimeStep int64 `json:"timeStep"`
+	OnCount  int64 `json:"onCount"`
+	OffCount int64 `json:"offCount"`
+	OnValue  any   `json:"onValue"`
+	OffValue any   `json:"offValue"`
 }
 
-func getModel(j json.RawMessage) (JSONModel, error) {
+func GetJSONModel(j json.RawMessage) (JSONModel, error) {
 	model := JSONModel{
 		// Default values
 		ScenarioID:  string(randomWalkQuery),
@@ -269,9 +272,11 @@ func getModel(j json.RawMessage) (JSONModel, error) {
 		StartValue:  rand.Float64() * 100,
 		Spread:      1,
 	}
-	err := json.Unmarshal(j, &model)
-	if err != nil {
-		return JSONModel{}, err
+	if len(j) > 0 {
+		err := json.Unmarshal(j, &model)
+		if err != nil {
+			return JSONModel{}, err
+		}
 	}
 	return model, nil
 }
@@ -281,7 +286,7 @@ func (s *Service) handleFallbackScenario(ctx context.Context, req *backend.Query
 	scenarioQueries := map[string][]backend.DataQuery{}
 
 	for _, q := range req.Queries {
-		model, err := getModel(q.JSON)
+		model, err := GetJSONModel(q.JSON)
 		if err != nil {
 			s.logger.Error("Failed to unmarshal query model to JSON", "error", err)
 			continue
@@ -324,7 +329,7 @@ func (s *Service) handleRandomWalkScenario(ctx context.Context, req *backend.Que
 	resp := backend.NewQueryDataResponse()
 
 	for _, q := range req.Queries {
-		model, err := getModel(q.JSON)
+		model, err := GetJSONModel(q.JSON)
 		if err != nil {
 			continue
 		}
@@ -344,7 +349,7 @@ func (s *Service) handleDatapointsOutsideRangeScenario(ctx context.Context, req 
 	resp := backend.NewQueryDataResponse()
 
 	for _, q := range req.Queries {
-		model, err := getModel(q.JSON)
+		model, err := GetJSONModel(q.JSON)
 		if err != nil {
 			continue
 		}
@@ -368,7 +373,7 @@ func (s *Service) handleCSVMetricValuesScenario(ctx context.Context, req *backen
 	resp := backend.NewQueryDataResponse()
 
 	for _, q := range req.Queries {
-		model, err := getModel(q.JSON)
+		model, err := GetJSONModel(q.JSON)
 		if err != nil {
 			continue
 		}
@@ -418,7 +423,7 @@ func (s *Service) handleRandomWalkWithErrorScenario(ctx context.Context, req *ba
 	resp := backend.NewQueryDataResponse()
 
 	for _, q := range req.Queries {
-		model, err := getModel(q.JSON)
+		model, err := GetJSONModel(q.JSON)
 		if err != nil {
 			continue
 		}
@@ -436,7 +441,7 @@ func (s *Service) handleRandomWalkSlowScenario(ctx context.Context, req *backend
 	resp := backend.NewQueryDataResponse()
 
 	for _, q := range req.Queries {
-		model, err := getModel(q.JSON)
+		model, err := GetJSONModel(q.JSON)
 		if err != nil {
 			continue
 		}
@@ -457,7 +462,7 @@ func (s *Service) handleRandomWalkTableScenario(ctx context.Context, req *backen
 	resp := backend.NewQueryDataResponse()
 
 	for _, q := range req.Queries {
-		model, err := getModel(q.JSON)
+		model, err := GetJSONModel(q.JSON)
 		if err != nil {
 			continue
 		}
@@ -474,7 +479,7 @@ func (s *Service) handlePredictableCSVWaveScenario(ctx context.Context, req *bac
 	resp := backend.NewQueryDataResponse()
 
 	for _, q := range req.Queries {
-		model, err := getModel(q.JSON)
+		model, err := GetJSONModel(q.JSON)
 		if err != nil {
 			return nil, err
 		}
@@ -495,7 +500,7 @@ func (s *Service) handlePredictablePulseScenario(ctx context.Context, req *backe
 	resp := backend.NewQueryDataResponse()
 
 	for _, q := range req.Queries {
-		model, err := getModel(q.JSON)
+		model, err := GetJSONModel(q.JSON)
 		if err != nil {
 			continue
 		}
@@ -514,7 +519,7 @@ func (s *Service) handlePredictablePulseScenario(ctx context.Context, req *backe
 
 func (s *Service) handleServerError500Scenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	for _, q := range req.Queries {
-		model, err := getModel(q.JSON)
+		model, err := GetJSONModel(q.JSON)
 		if err != nil {
 			continue
 		}
@@ -536,7 +541,7 @@ func (s *Service) handleArrowScenario(ctx context.Context, req *backend.QueryDat
 	resp := backend.NewQueryDataResponse()
 
 	for _, q := range req.Queries {
-		model, err := getModel(q.JSON)
+		model, err := GetJSONModel(q.JSON)
 		if err != nil {
 			return nil, err
 		}
@@ -622,7 +627,7 @@ func (s *Service) handleLogsScenario(ctx context.Context, req *backend.QueryData
 		from := q.TimeRange.From.UnixNano() / int64(time.Millisecond)
 		to := q.TimeRange.To.UnixNano() / int64(time.Millisecond)
 
-		model, err := getModel(q.JSON)
+		model, err := GetJSONModel(q.JSON)
 		if err != nil {
 			continue
 		}
@@ -996,7 +1001,7 @@ func randomHeatmapData(query backend.DataQuery, fnBucketGen func(index int) floa
 
 	for j := int64(0); j < 100 && timeWalkerMs < to; j++ {
 		t := time.Unix(timeWalkerMs/int64(1e+3), (timeWalkerMs%int64(1e+3))*int64(1e+6))
-		vals := []interface{}{&t}
+		vals := []any{&t}
 		for n := 1; n < len(frame.Fields); n++ {
 			v := float64(rand.Int63n(100))
 			vals = append(vals, &v)
@@ -1099,7 +1104,7 @@ func frameNameForQuery(query backend.DataQuery, model JSONModel, index int) stri
 	return name
 }
 
-func fromStringOrNumber(val interface{}) (*float64, error) {
+func fromStringOrNumber(val any) (*float64, error) {
 	switch v := val.(type) {
 	case float64:
 		fV := val.(float64)

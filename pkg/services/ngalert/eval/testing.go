@@ -67,6 +67,13 @@ func WithState(state State) ResultMutator {
 	}
 }
 
+func WithError(err error) ResultMutator {
+	return func(r *Result) {
+		r.State = Error
+		r.Error = err
+	}
+}
+
 func WithLabels(labels data.Labels) ResultMutator {
 	return func(r *Result) {
 		r.Instance = labels

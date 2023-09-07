@@ -15,6 +15,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -39,6 +40,7 @@ type TestingApiSrv struct {
 	backtesting     *backtesting.Engine
 	featureManager  featuremgmt.FeatureToggles
 	appUrl          *url.URL
+	tracer          tracing.Tracer
 }
 
 // RouteTestGrafanaRuleConfig returns a list of potential alerts for a given rule configuration. This is intended to be
@@ -86,6 +88,7 @@ func (srv TestingApiSrv) RouteTestGrafanaRuleConfig(c *contextmodel.ReqContext, 
 		Clock:                   clock.New(),
 		Historian:               nil,
 		MaxStateSaveConcurrency: 1,
+		Tracer:                  srv.tracer,
 	}
 	manager := state.NewManager(cfg)
 	includeFolder := !srv.cfg.ReservedLabels.IsReservedLabelDisabled(models.FolderTitleLabel)

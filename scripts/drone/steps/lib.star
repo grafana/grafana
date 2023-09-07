@@ -5,6 +5,10 @@ This module is a library of Drone steps and other pipeline components.
 load(
     "scripts/drone/vault.star",
     "from_secret",
+    "gcp_grafanauploads",
+    "gcp_grafanauploads_base64",
+    "gcp_upload_artifacts_key",
+    "npm_token",
     "prerelease_bucket",
 )
 load(
@@ -16,7 +20,7 @@ load(
     "windows_images",
 )
 
-grabpl_version = "v3.0.40"
+grabpl_version = "v3.0.41"
 
 trigger_oss = {
     "repo": [
@@ -258,7 +262,6 @@ def validate_modfile_step():
     return {
         "name": "validate-modfile",
         "image": images["go_image"],
-        "failure": "ignore",
         "commands": [
             "go run scripts/modowners/modowners.go check go.mod",
         ],
@@ -330,7 +333,7 @@ def store_storybook_step(ver_mode, trigger = None):
                       ] +
                       end_to_end_tests_deps(),
         "environment": {
-            "GCP_KEY": from_secret("gcp_key"),
+            "GCP_KEY": from_secret(gcp_grafanauploads),
             "PRERELEASE_BUCKET": from_secret(prerelease_bucket),
         },
         "commands": commands,
@@ -369,7 +372,7 @@ def e2e_tests_artifacts():
             ],
         },
         "environment": {
-            "GCP_GRAFANA_UPLOAD_ARTIFACTS_KEY": from_secret("gcp_upload_artifacts_key"),
+            "GCP_GRAFANA_UPLOAD_ARTIFACTS_KEY": from_secret(gcp_upload_artifacts_key),
             "E2E_TEST_ARTIFACTS_BUCKET": "releng-pipeline-artifacts-dev",
             "GITHUB_TOKEN": from_secret("github_token"),
         },
@@ -407,7 +410,7 @@ def upload_cdn_step(ver_mode, trigger = None):
             "grafana-server",
         ],
         "environment": {
-            "GCP_KEY": from_secret("gcp_key"),
+            "GCP_KEY": from_secret(gcp_grafanauploads),
             "PRERELEASE_BUCKET": from_secret(prerelease_bucket),
         },
         "commands": [
@@ -744,10 +747,7 @@ def codespell_step():
         "name": "codespell",
         "image": images["build_image"],
         "commands": [
-            # Important: all words have to be in lowercase, and separated by "\n".
-            'echo -e "unknwon\nreferer\nerrorstring\neror\niam\nwan" > words_to_ignore.txt',
-            "codespell -I words_to_ignore.txt docs/",
-            "rm words_to_ignore.txt",
+            "codespell -I .codespellignore docs/",
         ],
     }
 
@@ -892,7 +892,7 @@ def cloud_plugins_e2e_tests_step(suite, cloud, trigger = None):
     branch = "${DRONE_SOURCE_BRANCH}".replace("/", "-")
     step = {
         "name": "end-to-end-tests-{}-{}".format(suite, cloud),
-        "image": images["cloud_datasources_e2e_image"],
+        "image": "us-docker.pkg.dev/grafanalabs-dev/cloud-data-sources/e2e:latest",
         "depends_on": [
             "grafana-server",
         ],
@@ -954,7 +954,7 @@ def build_docker_images_step(archs = None, ubuntu = False, publish = False):
         cmd += " -archs {}".format(",".join(archs))
 
     environment = {
-        "GCP_KEY": from_secret("gcp_key"),
+        "GCP_KEY": from_secret(gcp_grafanauploads),
     }
 
     return {
@@ -974,7 +974,7 @@ def fetch_images_step():
         "name": "fetch-images",
         "image": images["cloudsdk_image"],
         "environment": {
-            "GCP_KEY": from_secret("gcp_key"),
+            "GCP_KEY": from_secret(gcp_grafanauploads),
             "DOCKER_USER": from_secret("docker_username"),
             "DOCKER_PASSWORD": from_secret("docker_password"),
         },
@@ -1001,7 +1001,7 @@ def publish_images_step(ver_mode, docker_repo, trigger = None):
     docker_repo = "grafana/{}".format(docker_repo)
 
     environment = {
-        "GCP_KEY": from_secret("gcp_key"),
+        "GCP_KEY": from_secret(gcp_grafanauploads),
         "DOCKER_USER": from_secret("docker_username"),
         "DOCKER_PASSWORD": from_secret("docker_password"),
         "GITHUB_APP_ID": from_secret("delivery-bot-app-id"),
@@ -1140,7 +1140,7 @@ def release_canary_npm_packages_step(trigger = None):
         "image": images["build_image"],
         "depends_on": end_to_end_tests_deps(),
         "environment": {
-            "NPM_TOKEN": from_secret("npm_token"),
+            "NPM_TOKEN": from_secret(npm_token),
         },
         "commands": [
             "./scripts/publish-npm-packages.sh --dist-tag 'canary' --registry 'https://registry.npmjs.org'",
@@ -1177,7 +1177,7 @@ def upload_packages_step(ver_mode, trigger = None):
         "image": images["publish_image"],
         "depends_on": end_to_end_tests_deps(),
         "environment": {
-            "GCP_KEY": from_secret("gcp_key"),
+            "GCP_KEY": from_secret(gcp_grafanauploads_base64),
             "PRERELEASE_BUCKET": from_secret("prerelease_bucket"),
         },
         "commands": [
@@ -1219,7 +1219,7 @@ def publish_grafanacom_step(ver_mode):
         ],
         "environment": {
             "GRAFANA_COM_API_KEY": from_secret("grafana_api_key"),
-            "GCP_KEY": from_secret("gcp_key"),
+            "GCP_KEY": from_secret(gcp_grafanauploads_base64),
         },
         "commands": [
             cmd,
@@ -1242,7 +1242,7 @@ def publish_linux_packages_step(package_manager = "deb"):
             "gpg_passphrase": from_secret("packages_gpg_passphrase"),
             "gpg_public_key": from_secret("packages_gpg_public_key"),
             "gpg_private_key": from_secret("packages_gpg_private_key"),
-            "package_path": "gs://grafana-prerelease/artifacts/downloads/*$${{DRONE_TAG}}/oss/**.{}".format(
+            "package_path": "gs://grafana-prerelease/artifacts/downloads/*${{DRONE_TAG}}/oss/**.{}".format(
                 package_manager,
             ),
         },
@@ -1359,7 +1359,7 @@ def get_windows_steps(ver_mode, bucket = "%PRERELEASE_BUCKET%"):
                     "windows-init",
                 ],
                 "environment": {
-                    "GCP_KEY": from_secret("gcp_key"),
+                    "GCP_KEY": from_secret(gcp_grafanauploads_base64),
                     "PRERELEASE_BUCKET": from_secret(prerelease_bucket),
                     "GITHUB_TOKEN": from_secret("github_token"),
                 },

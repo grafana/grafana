@@ -38,7 +38,7 @@ func (hs *HTTPServer) AddOrgUserToCurrentOrg(c *contextmodel.ReqContext) respons
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	cmd.OrgID = c.OrgID
+	cmd.OrgID = c.SignedInUser.GetOrgID()
 	return hs.addOrgUserHelper(c, cmd)
 }
 
@@ -72,28 +72,28 @@ func (hs *HTTPServer) AddOrgUser(c *contextmodel.ReqContext) response.Response {
 
 func (hs *HTTPServer) addOrgUserHelper(c *contextmodel.ReqContext, cmd org.AddOrgUserCommand) response.Response {
 	if !cmd.Role.IsValid() {
-		return response.Error(400, "Invalid role specified", nil)
+		return response.Error(http.StatusBadRequest, "Invalid role specified", nil)
 	}
-	if !c.OrgRole.Includes(cmd.Role) && !c.IsGrafanaAdmin {
+	if !c.SignedInUser.GetOrgRole().Includes(cmd.Role) && !c.SignedInUser.GetIsGrafanaAdmin() {
 		return response.Error(http.StatusForbidden, "Cannot assign a role higher than user's role", nil)
 	}
 
 	userQuery := user.GetUserByLoginQuery{LoginOrEmail: cmd.LoginOrEmail}
 	userToAdd, err := hs.userService.GetByLogin(c.Req.Context(), &userQuery)
 	if err != nil {
-		return response.Error(404, "User not found", nil)
+		return response.Error(http.StatusNotFound, "User not found", nil)
 	}
 
 	cmd.UserID = userToAdd.ID
 
 	if err := hs.orgService.AddOrgUser(c.Req.Context(), &cmd); err != nil {
 		if errors.Is(err, org.ErrOrgUserAlreadyAdded) {
-			return response.JSON(409, util.DynMap{
+			return response.JSON(http.StatusConflict, util.DynMap{
 				"message": "User is already member of this organization",
 				"userId":  cmd.UserID,
 			})
 		}
-		return response.Error(500, "Could not add user to organization", err)
+		return response.Error(http.StatusInternalServerError, "Could not add user to organization", err)
 	}
 
 	return response.JSON(http.StatusOK, util.DynMap{
@@ -117,7 +117,7 @@ func (hs *HTTPServer) addOrgUserHelper(c *contextmodel.ReqContext, cmd org.AddOr
 // 500: internalServerError
 func (hs *HTTPServer) GetOrgUsersForCurrentOrg(c *contextmodel.ReqContext) response.Response {
 	result, err := hs.searchOrgUsersHelper(c, &org.SearchOrgUsersQuery{
-		OrgID: c.OrgID,
+		OrgID: c.SignedInUser.GetOrgID(),
 		Query: c.Query("query"),
 		Limit: c.QueryInt("limit"),
 		User:  c.SignedInUser,
@@ -146,7 +146,7 @@ func (hs *HTTPServer) GetOrgUsersForCurrentOrg(c *contextmodel.ReqContext) respo
 
 func (hs *HTTPServer) GetOrgUsersForCurrentOrgLookup(c *contextmodel.ReqContext) response.Response {
 	orgUsersResult, err := hs.searchOrgUsersHelper(c, &org.SearchOrgUsersQuery{
-		OrgID:                    c.OrgID,
+		OrgID:                    c.SignedInUser.GetOrgID(),
 		Query:                    c.Query("query"),
 		Limit:                    c.QueryInt("limit"),
 		User:                     c.SignedInUser,
@@ -265,7 +265,7 @@ func (hs *HTTPServer) SearchOrgUsersWithPaging(c *contextmodel.ReqContext) respo
 	}
 
 	query := &org.SearchOrgUsersQuery{
-		OrgID: c.OrgID,
+		OrgID: c.SignedInUser.GetOrgID(),
 		Query: c.Query("query"),
 		Page:  page,
 		Limit: perPage,
@@ -310,7 +310,15 @@ func (hs *HTTPServer) searchOrgUsersHelper(c *contextmodel.ReqContext, query *or
 	}
 
 	// Get accesscontrol metadata and IPD labels for users in the target org
-	accessControlMetadata := hs.getMultiAccessControlMetadata(c, query.OrgID, "users:id:", userIDs)
+	accessControlMetadata := map[string]accesscontrol.Metadata{}
+	if c.QueryBool("accesscontrol") && c.SignedInUser.Permissions != nil {
+		// TODO https://github.com/grafana/grafana-authnz-team/issues/268 - user access control service for fetching permissions from another organization
+		permissions, ok := c.SignedInUser.Permissions[query.OrgID]
+		if ok {
+			accessControlMetadata = accesscontrol.GetResourcesMetadata(c.Req.Context(), permissions, "users:id:", userIDs)
+		}
+	}
+
 	for i := range filteredUsers {
 		filteredUsers[i].AccessControl = accessControlMetadata[fmt.Sprint(filteredUsers[i].UserID)]
 		if module, ok := modules[filteredUsers[i].UserID]; ok {
@@ -343,7 +351,7 @@ func (hs *HTTPServer) UpdateOrgUserForCurrentOrg(c *contextmodel.ReqContext) res
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	cmd.OrgID = c.OrgID
+	cmd.OrgID = c.SignedInUser.GetOrgID()
 	var err error
 	cmd.UserID, err = strconv.ParseInt(web.Params(c.Req)[":userId"], 10, 64)
 	if err != nil {
@@ -386,25 +394,29 @@ func (hs *HTTPServer) updateOrgUserHelper(c *contextmodel.ReqContext, cmd org.Up
 	if !cmd.Role.IsValid() {
 		return response.Error(http.StatusBadRequest, "Invalid role specified", nil)
 	}
-	if !c.OrgRole.Includes(cmd.Role) && !c.IsGrafanaAdmin {
+	if !c.SignedInUser.GetOrgRole().Includes(cmd.Role) && !c.SignedInUser.GetIsGrafanaAdmin() {
 		return response.Error(http.StatusForbidden, "Cannot assign a role higher than user's role", nil)
 	}
-	if hs.Features.IsEnabled(featuremgmt.FlagOnlyExternalOrgRoleSync) {
-		// we do not allow to change role for external synced users
-		qAuth := login.GetAuthInfoQuery{UserId: cmd.UserID}
-		authInfo, err := hs.authInfoService.GetAuthInfo(c.Req.Context(), &qAuth)
-		if err != nil {
-			if errors.Is(err, user.ErrUserNotFound) {
-				hs.log.Debug("Failed to get user auth info for basic auth user", cmd.UserID, nil)
-			} else {
-				hs.log.Error("Failed to get user auth info for external sync check", cmd.UserID, err)
-				return response.Error(http.StatusInternalServerError, "Failed to get user auth info", nil)
-			}
+
+	// we do not allow to change role for external synced users
+	qAuth := login.GetAuthInfoQuery{UserId: cmd.UserID}
+	authInfo, err := hs.authInfoService.GetAuthInfo(c.Req.Context(), &qAuth)
+	if err != nil {
+		if errors.Is(err, user.ErrUserNotFound) {
+			hs.log.Debug("Failed to get user auth info for basic auth user", cmd.UserID, nil)
+		} else {
+			hs.log.Error("Failed to get user auth info for external sync check", cmd.UserID, err)
+			return response.Error(http.StatusInternalServerError, "Failed to get user auth info", nil)
 		}
-		if authInfo != nil && authInfo.AuthModule != "" && login.IsExternallySynced(hs.Cfg, authInfo.AuthModule) {
+	}
+	if authInfo != nil && authInfo.AuthModule != "" && login.IsExternallySynced(hs.Cfg, authInfo.AuthModule) {
+		// A GCom specific feature toggle for role locking has been introduced, as the previous implementation had a bug with locking down external users synced through GCom (https://github.com/grafana/grafana/pull/72044)
+		// Remove this conditional once FlagGcomOnlyExternalOrgRoleSync feature toggle has been removed
+		if authInfo.AuthModule != login.GrafanaComAuthModule || hs.Features.IsEnabled(featuremgmt.FlagGcomOnlyExternalOrgRoleSync) {
 			return response.Err(org.ErrCannotChangeRoleForExternallySyncedUser.Errorf("Cannot change role for externally synced user"))
 		}
 	}
+
 	if err := hs.orgService.UpdateOrgUser(c.Req.Context(), &cmd); err != nil {
 		if errors.Is(err, org.ErrLastOrgAdmin) {
 			return response.Error(http.StatusBadRequest, "Cannot change role so that there is no organization admin left", nil)
@@ -441,7 +453,7 @@ func (hs *HTTPServer) RemoveOrgUserForCurrentOrg(c *contextmodel.ReqContext) res
 
 	return hs.removeOrgUserHelper(c.Req.Context(), &org.RemoveOrgUserCommand{
 		UserID:                   userId,
-		OrgID:                    c.OrgID,
+		OrgID:                    c.SignedInUser.GetOrgID(),
 		ShouldDeleteOrphanedUser: true,
 	})
 }

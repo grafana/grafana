@@ -3,11 +3,10 @@ import { ProxyTarget } from '@locker/near-membrane-shared';
 
 import { PluginMeta } from '@grafana/data';
 
-import { extractPluginIdVersionFromUrl, getPluginCdnResourceUrl, transformPluginSourceForCDN } from '../cdn/utils';
-import { PLUGIN_CDN_URL_KEY } from '../constants';
 import { getPluginSettings } from '../pluginSettings';
 
-import { getGeneralSandboxDistortionMap } from './distortion_map';
+import { getPluginCode } from './code_loader';
+import { getGeneralSandboxDistortionMap, distortLiveApis } from './distortion_map';
 import {
   getSafeSandboxDomElement,
   isDomElement,
@@ -17,7 +16,7 @@ import {
 } from './document_sandbox';
 import { sandboxPluginDependencies } from './plugin_dependencies';
 import { sandboxPluginComponents } from './sandbox_components';
-import { CompartmentDependencyModule, PluginFactoryFunction } from './types';
+import { CompartmentDependencyModule, PluginFactoryFunction, SandboxEnvironment } from './types';
 import { logError } from './utils';
 
 // Loads near membrane custom formatter for near membrane proxy objects.
@@ -25,15 +24,15 @@ if (process.env.NODE_ENV !== 'production') {
   require('@locker/near-membrane-dom/custom-devtools-formatter');
 }
 
-const pluginImportCache = new Map<string, Promise<unknown>>();
+const pluginImportCache = new Map<string, Promise<System.Module>>();
 
-export async function importPluginModuleInSandbox({ pluginId }: { pluginId: string }): Promise<unknown> {
+export async function importPluginModuleInSandbox({ pluginId }: { pluginId: string }): Promise<System.Module> {
   try {
     const pluginMeta = await getPluginSettings(pluginId);
     if (!pluginImportCache.has(pluginId)) {
       pluginImportCache.set(pluginId, doImportPluginModuleInSandbox(pluginMeta));
     }
-    return pluginImportCache.get(pluginId);
+    return pluginImportCache.get(pluginId)!;
   } catch (e) {
     const error = new Error(`Could not import plugin ${pluginId} inside sandbox: ` + e);
     logError(error, {
@@ -44,38 +43,43 @@ export async function importPluginModuleInSandbox({ pluginId }: { pluginId: stri
   }
 }
 
-async function doImportPluginModuleInSandbox(meta: PluginMeta): Promise<unknown> {
-  const generalDistortionMap = getGeneralSandboxDistortionMap();
-
-  /*
-   * this function is executed every time a plugin calls any DOM API
-   * it must be kept as lean and performant as possible and sync
-   */
-  function distortionCallback(originalValue: ProxyTarget): ProxyTarget {
-    if (isDomElement(originalValue)) {
-      const element = getSafeSandboxDomElement(originalValue, meta.id);
-      // the element.style attribute should be a live target to work in chrome
-      markDomElementStyleAsALiveTarget(element);
-      return element;
-    } else {
-      patchObjectAsLiveTarget(originalValue);
-    }
-    const distortion = generalDistortionMap.get(originalValue);
-    if (distortion) {
-      return distortion(originalValue, meta.id) as ProxyTarget;
-    }
-    return originalValue;
-  }
-
+async function doImportPluginModuleInSandbox(meta: PluginMeta): Promise<System.Module> {
   return new Promise(async (resolve, reject) => {
+    const generalDistortionMap = getGeneralSandboxDistortionMap();
+    let sandboxEnvironment: SandboxEnvironment;
+    /*
+     * this function is executed every time a plugin calls any DOM API
+     * it must be kept as lean and performant as possible and sync
+     */
+    function distortionCallback(originalValue: ProxyTarget): ProxyTarget {
+      if (isDomElement(originalValue)) {
+        const element = getSafeSandboxDomElement(originalValue, meta.id);
+        // the element.style attribute should be a live target to work in chrome
+        markDomElementStyleAsALiveTarget(element);
+        return element;
+      } else {
+        patchObjectAsLiveTarget(originalValue);
+      }
+      distortLiveApis();
+      const distortion = generalDistortionMap.get(originalValue);
+      if (distortion) {
+        return distortion(originalValue, meta, sandboxEnvironment) as ProxyTarget;
+      }
+      return originalValue;
+    }
     // each plugin has its own sandbox
-    const sandboxEnvironment = createVirtualEnvironment(window, {
+    sandboxEnvironment = createVirtualEnvironment(window, {
       // distortions are interceptors to modify the behavior of objects when
       // the code inside the sandbox tries to access them
       distortionCallback,
       liveTargetCallback: isLiveTarget,
       // endowments are custom variables we make available to plugins in their window object
       endowments: Object.getOwnPropertyDescriptors({
+        // window.location is unforgeable, we make the location available via endowments
+        // when the plugin code is loaded, the sandbox replaces the window.location with
+        // window.locationSandbox. In the future `window.location` could be a proxy if we
+        // want to intercept calls to it.
+        locationSandbox: window.location,
         // Plugins builds use the AMD module system. Their code consists
         // of a single function call to `define()` that internally contains all the plugin code.
         // This is that `define` function the plugin will call.
@@ -158,28 +162,6 @@ async function doImportPluginModuleInSandbox(meta: PluginMeta): Promise<unknown>
   });
 }
 
-async function getPluginCode(meta: PluginMeta): Promise<string> {
-  if (meta.module.includes(`${PLUGIN_CDN_URL_KEY}/`)) {
-    // should load plugin from a CDN
-    const pluginUrl = getPluginCdnResourceUrl(`/public/${meta.module}`) + '.js';
-    const response = await fetch(pluginUrl);
-    let pluginCode = await response.text();
-    const { version } = extractPluginIdVersionFromUrl(pluginUrl);
-    pluginCode = transformPluginSourceForCDN({
-      pluginId: meta.id,
-      version,
-      source: pluginCode,
-    });
-    return pluginCode;
-  } else {
-    //local plugin loading
-    const response = await fetch('public/' + meta.module + '.js');
-    let pluginCode = await response.text();
-    pluginCode = patchPluginSourceMap(meta, pluginCode);
-    return pluginCode;
-  }
-}
-
 function getActivityErrorHandler(pluginId: string) {
   return async function error(proxyError?: Error & { sandboxError?: boolean }) {
     if (!proxyError) {
@@ -203,36 +185,15 @@ function getActivityErrorHandler(pluginId: string) {
   };
 }
 
-/**
- * Patches the plugin's module.js source code references to sourcemaps to include the full url
- * of the module.js file instead of the regular relative reference.
- *
- * Because the plugin module.js code is loaded via fetch and then "eval" as a string
- * it can't find the references to the module.js.map directly and we need to patch it
- * to point to the correct location
- */
-function patchPluginSourceMap(meta: PluginMeta, pluginCode: string): string {
-  // skips inlined and files without source maps
-  if (pluginCode.includes('//# sourceMappingURL=module.js.map')) {
-    let replaceWith = '';
-    // make sure we don't add the sourceURL twice
-    if (!pluginCode.includes('//# sourceURL') || !pluginCode.includes('//@ sourceUrl')) {
-      replaceWith += `//# sourceURL=module.js\n`;
-    }
-    // modify the source map url to point to the correct location
-    const sourceCodeMapUrl = `/public/${meta.module}.js.map`;
-    replaceWith += `//# sourceMappingURL=${sourceCodeMapUrl}`;
-
-    return pluginCode.replace('//# sourceMappingURL=module.js.map', replaceWith);
-  }
-  return pluginCode;
-}
-
 function resolvePluginDependencies(deps: string[]) {
   // resolve dependencies
   const resolvedDeps: CompartmentDependencyModule[] = [];
   for (const dep of deps) {
-    const resolvedDep = sandboxPluginDependencies.get(dep);
+    let resolvedDep = sandboxPluginDependencies.get(dep);
+    if (resolvedDep?.__useDefault) {
+      resolvedDep = resolvedDep.default;
+    }
+
     if (!resolvedDep) {
       throw new Error(`[sandbox] Could not resolve dependency ${dep}`);
     }

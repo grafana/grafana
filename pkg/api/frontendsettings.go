@@ -120,7 +120,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		VerifyEmailEnabled:                  setting.VerifyEmailEnabled,
 		SigV4AuthEnabled:                    setting.SigV4AuthEnabled,
 		AzureAuthEnabled:                    setting.AzureAuthEnabled,
-		RbacEnabled:                         hs.Cfg.RBACEnabled,
+		RbacEnabled:                         true,
 		ExploreEnabled:                      setting.ExploreEnabled,
 		HelpEnabled:                         setting.HelpEnabled,
 		ProfileEnabled:                      setting.ProfileEnabled,
@@ -152,6 +152,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		DateFormats:                         hs.Cfg.DateFormats,
 		SecureSocksDSProxyEnabled:           hs.Cfg.SecureSocksDSProxy.Enabled && hs.Cfg.SecureSocksDSProxy.ShowUI,
 		DisableFrontendSandboxForPlugins:    hs.Cfg.DisableFrontendSandboxForPlugins,
+		PublicDashboardAccessToken:          c.PublicDashboardAccessToken,
 
 		Auth: dtos.FrontendSettingsAuthDTO{
 			OAuthSkipOrgRoleUpdateSync:  hs.Cfg.OAuthSkipOrgRoleUpdateSync,
@@ -165,7 +166,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 			GithubSkipOrgRoleSync:       hs.Cfg.GitHubSkipOrgRoleSync,
 			GitLabSkipOrgRoleSync:       hs.Cfg.GitLabSkipOrgRoleSync,
 			OktaSkipOrgRoleSync:         hs.Cfg.OktaSkipOrgRoleSync,
-			DisableSyncLock:             hs.Cfg.DisableSyncLock,
+			AuthProxyEnableLoginToken:   hs.Cfg.AuthProxyEnableLoginToken,
 		},
 
 		BuildInfo: dtos.FrontendSettingsBuildInfoDTO{
@@ -282,11 +283,11 @@ func (hs *HTTPServer) getFSDataSources(c *contextmodel.ReqContext, availablePlug
 			return nil, err
 		}
 
-		if c.IsPublicDashboardView {
+		if c.IsPublicDashboardView() {
 			// If RBAC is enabled, it will filter out all datasources for a public user, so we need to skip it
 			orgDataSources = dataSources
 		} else {
-			filtered, err := hs.filterDatasourcesByQueryPermission(c.Req.Context(), c.SignedInUser, dataSources)
+			filtered, err := hs.dsGuardian.New(c.SignedInUser.OrgID, c.SignedInUser).FilterDatasourcesByQueryPermissions(dataSources)
 			if err != nil {
 				return nil, err
 			}
@@ -332,7 +333,7 @@ func (hs *HTTPServer) getFSDataSources(c *contextmodel.ReqContext, availablePlug
 		dsDTO.AngularDetected = plugin.AngularDetected
 
 		if ds.JsonData == nil {
-			dsDTO.JSONData = make(map[string]interface{})
+			dsDTO.JSONData = make(map[string]any)
 		} else {
 			dsDTO.JSONData = ds.JsonData.MustMap()
 		}
@@ -405,7 +406,7 @@ func (hs *HTTPServer) getFSDataSources(c *contextmodel.ReqContext, availablePlug
 			dto := plugins.DataSourceDTO{
 				Type:     string(ds.Type),
 				Name:     ds.Name,
-				JSONData: make(map[string]interface{}),
+				JSONData: make(map[string]any),
 				PluginMeta: &plugins.PluginMetaDTO{
 					JSONData:  ds.JSONData,
 					Signature: ds.Signature,
@@ -610,8 +611,8 @@ func (hs *HTTPServer) pluginSettings(ctx context.Context, orgID int64) (map[stri
 	return pluginSettings, nil
 }
 
-func (hs *HTTPServer) getEnabledOAuthProviders() map[string]interface{} {
-	providers := make(map[string]interface{})
+func (hs *HTTPServer) getEnabledOAuthProviders() map[string]any {
+	providers := make(map[string]any)
 	for key, oauth := range hs.SocialService.GetOAuthInfoProviders() {
 		providers[key] = map[string]string{
 			"name": oauth.Name,

@@ -95,7 +95,7 @@ func (s *ServiceImpl) GetNavTree(c *contextmodel.ReqContext, prefs *pref.Prefere
 		})
 	}
 
-	if c.IsPublicDashboardView || hasAccess(ac.EvalAny(
+	if c.IsPublicDashboardView() || hasAccess(ac.EvalAny(
 		ac.EvalPermission(dashboards.ActionFoldersRead), ac.EvalPermission(dashboards.ActionFoldersCreate),
 		ac.EvalPermission(dashboards.ActionDashboardsRead), ac.EvalPermission(dashboards.ActionDashboardsCreate)),
 	) {
@@ -142,10 +142,8 @@ func (s *ServiceImpl) GetNavTree(c *contextmodel.ReqContext, prefs *pref.Prefere
 		}
 	}
 
-	if s.features.IsEnabled(featuremgmt.FlagDataConnectionsConsole) {
-		if connectionsSection := s.buildDataConnectionsNavLink(c); connectionsSection != nil {
-			treeRoot.AddSection(connectionsSection)
-		}
+	if connectionsSection := s.buildDataConnectionsNavLink(c); connectionsSection != nil {
+		treeRoot.AddSection(connectionsSection)
 	}
 
 	orgAdminNode, err := s.getAdminNode(c)

@@ -1,6 +1,7 @@
 ---
 aliases:
   - alerting/manage-notifications/manage-contact-points/configure-integrations/
+canonical: https://grafana.com/docs/grafana/latest/alerting/alerting-rules/manage-contact-points/configure-integrations/
 description: Configure integrations
 keywords:
   - Grafana
@@ -31,7 +32,7 @@ Once configured, you can use integrations as part of your contact points to rece
 | DingDing                | `dingding`                |
 | Discord                 | `discord`                 |
 | Email                   | `email`                   |
-| Google Hangouts Chat    | `googlechat`              |
+| Google Chat             | `googlechat`              |
 | Hipchat                 | `hipchat`                 |
 | Kafka                   | `kafka`                   |
 | Line                    | `line`                    |

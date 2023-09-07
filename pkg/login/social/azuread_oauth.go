@@ -108,6 +108,10 @@ func (s *SocialAzureAD) UserInfo(ctx context.Context, client *http.Client, token
 		isGrafanaAdmin = &grafanaAdmin
 	}
 
+	if s.allowAssignGrafanaAdmin && s.skipOrgRoleSync {
+		s.log.Debug("AllowAssignGrafanaAdmin and skipOrgRoleSync are both set, Grafana Admin role will not be synced, consider setting one or the other")
+	}
+
 	return &BasicUserInfo{
 		Id:             claims.ID,
 		Name:           claims.Name,
@@ -256,7 +260,7 @@ type getAzureGroupResponse struct {
 // See https://docs.microsoft.com/en-us/azure/active-directory/develop/id-tokens#groups-overage-claim
 func (s *SocialAzureAD) extractGroups(ctx context.Context, client *http.Client, claims *azureClaims, token *oauth2.Token) ([]string, error) {
 	if !s.forceUseGraphAPI {
-		s.log.Debug("checking the claim for groups")
+		s.log.Debug("Checking the claim for groups")
 		if len(claims.Groups) > 0 {
 			return claims.Groups, nil
 		}

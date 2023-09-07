@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -36,8 +37,6 @@ type ConfiguredFields struct {
 	LogLevelField   string
 }
 
-const loggerName = "tsdb.elasticsearch.client"
-
 // Client represents a client which can interact with elasticsearch api
 type Client interface {
 	GetConfiguredFields() ConfiguredFields
@@ -46,9 +45,12 @@ type Client interface {
 }
 
 // NewClient creates a new elasticsearch client
-var NewClient = func(ctx context.Context, ds *DatasourceInfo, timeRange backend.TimeRange) (Client, error) {
+var NewClient = func(ctx context.Context, ds *DatasourceInfo, timeRange backend.TimeRange, logger log.Logger) (Client, error) {
+	logger = logger.New("entity", "client")
+
 	ip, err := newIndexPattern(ds.Interval, ds.Database)
 	if err != nil {
+		logger.Error("Failed creating index pattern", "error", err, "interval", ds.Interval, "index", ds.Database)
 		return nil, err
 	}
 
@@ -56,9 +58,7 @@ var NewClient = func(ctx context.Context, ds *DatasourceInfo, timeRange backend.
 	if err != nil {
 		return nil, err
 	}
-
-	logger := log.New(loggerName).FromContext(ctx)
-	logger.Debug("Creating new client", "configuredFields", fmt.Sprintf("%#v", ds.ConfiguredFields), "indices", strings.Join(indices, ", "))
+	logger.Debug("Creating new client", "configuredFields", fmt.Sprintf("%#v", ds.ConfiguredFields), "indices", strings.Join(indices, ", "), "interval", ds.Interval, "index", ds.Database)
 
 	return &baseClientImpl{
 		logger:           logger,
@@ -84,8 +84,8 @@ func (c *baseClientImpl) GetConfiguredFields() ConfiguredFields {
 }
 
 type multiRequest struct {
-	header   map[string]interface{}
-	body     interface{}
+	header   map[string]any
+	body     any
 	interval time.Duration
 }
 
@@ -98,7 +98,6 @@ func (c *baseClientImpl) executeBatchRequest(uriPath, uriQuery string, requests 
 }
 
 func (c *baseClientImpl) encodeBatchRequests(requests []*multiRequest) ([]byte, error) {
-	c.logger.Debug("Encoding batch requests to json", "batch requests", len(requests))
 	start := time.Now()
 
 	payload := bytes.Buffer{}
@@ -122,12 +121,13 @@ func (c *baseClientImpl) encodeBatchRequests(requests []*multiRequest) ([]byte, 
 	}
 
 	elapsed := time.Since(start)
-	c.logger.Debug("Encoded batch requests to json", "took", elapsed)
+	c.logger.Debug("Completed encoding of batch requests to json", "duration", elapsed)
 
 	return payload.Bytes(), nil
 }
 
 func (c *baseClientImpl) executeRequest(method, uriPath, uriQuery string, body []byte) (*http.Response, error) {
+	c.logger.Debug("Sending request to Elasticsearch", "url", c.ds.URL)
 	u, err := url.Parse(c.ds.URL)
 	if err != nil {
 		return nil, err
@@ -145,54 +145,48 @@ func (c *baseClientImpl) executeRequest(method, uriPath, uriQuery string, body [
 		return nil, err
 	}
 
-	c.logger.Debug("Executing request", "url", req.URL.String(), "method", method)
-
 	req.Header.Set("Content-Type", "application/x-ndjson")
 
-	start := time.Now()
-	defer func() {
-		elapsed := time.Since(start)
-		c.logger.Debug("Executed request", "took", elapsed)
-	}()
 	//nolint:bodyclose
 	resp, err := c.ds.HTTPClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
-
 	return resp, nil
 }
 
 func (c *baseClientImpl) ExecuteMultisearch(r *MultiSearchRequest) (*MultiSearchResponse, error) {
-	c.logger.Debug("Executing multisearch", "search requests", len(r.Requests))
-
 	multiRequests := c.createMultiSearchRequests(r.Requests)
 	queryParams := c.getMultiSearchQueryParameters()
+	start := time.Now()
 	clientRes, err := c.executeBatchRequest("_msearch", queryParams, multiRequests)
 	if err != nil {
+		status := "error"
+		if errors.Is(err, context.Canceled) {
+			status = "cancelled"
+		}
+		c.logger.Error("Error received from Elasticsearch", "error", err, "status", status, "statusCode", clientRes.StatusCode, "duration", time.Since(start), "action", "databaseRequest")
 		return nil, err
 	}
 	res := clientRes
 	defer func() {
 		if err := res.Body.Close(); err != nil {
-			c.logger.Warn("Failed to close response body", "err", err)
+			c.logger.Warn("Failed to close response body", "error", err)
 		}
 	}()
 
-	c.logger.Debug("Received multisearch response", "code", res.StatusCode, "status", res.Status, "content-length", res.ContentLength)
+	c.logger.Info("Response received from Elasticsearch", "status", "ok", "statusCode", res.StatusCode, "contentLength", res.ContentLength, "duration", time.Since(start), "action", "databaseRequest")
 
-	start := time.Now()
-	c.logger.Debug("Decoding multisearch json response")
-
+	start = time.Now()
 	var msr MultiSearchResponse
 	dec := json.NewDecoder(res.Body)
 	err = dec.Decode(&msr)
 	if err != nil {
+		c.logger.Error("Failed to decode response from Elasticsearch", "error", err, "duration", time.Since(start))
 		return nil, err
 	}
 
-	elapsed := time.Since(start)
-	c.logger.Debug("Decoded multisearch json response", "took", elapsed)
+	c.logger.Debug("Completed decoding of response from Elasticsearch", "duration", time.Since(start))
 
 	msr.Status = res.StatusCode
 
@@ -204,7 +198,7 @@ func (c *baseClientImpl) createMultiSearchRequests(searchRequests []*SearchReque
 
 	for _, searchReq := range searchRequests {
 		mr := multiRequest{
-			header: map[string]interface{}{
+			header: map[string]any{
 				"search_type":        "query_then_fetch",
 				"ignore_unavailable": true,
 				"index":              strings.Join(c.indices, ","),

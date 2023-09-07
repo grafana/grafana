@@ -1,4 +1,10 @@
+import { isNumber } from 'lodash';
+import { FeatureLike } from 'ol/Feature';
+import Map from 'ol/Map';
+import VectorLayer from 'ol/layer/Vector';
 import React, { ReactNode } from 'react';
+import { ReplaySubject } from 'rxjs';
+
 import {
   MapLayerRegistryItem,
   MapLayerOptions,
@@ -7,18 +13,14 @@ import {
   FrameGeometrySourceMode,
   EventBus,
 } from '@grafana/data';
-import Map from 'ol/Map';
-import { FeatureLike } from 'ol/Feature';
-import { getLocationMatchers } from 'app/features/geo/utils/location';
-import { ObservablePropsWrapper } from '../../components/ObservablePropsWrapper';
-import { MarkersLegend, MarkersLegendProps } from '../../components/MarkersLegend';
-import { ReplaySubject } from 'rxjs';
-import { defaultStyleConfig, StyleConfig } from '../../style/types';
-import { StyleEditor } from '../../editor/StyleEditor';
-import { getStyleConfigState } from '../../style/utils';
-import VectorLayer from 'ol/layer/Vector';
-import { isNumber } from 'lodash';
 import { FrameVectorSource } from 'app/features/geo/utils/frameVectorSource';
+import { getLocationMatchers } from 'app/features/geo/utils/location';
+
+import { MarkersLegend, MarkersLegendProps } from '../../components/MarkersLegend';
+import { ObservablePropsWrapper } from '../../components/ObservablePropsWrapper';
+import { StyleEditor } from '../../editor/StyleEditor';
+import { defaultStyleConfig, StyleConfig } from '../../style/types';
+import { getStyleConfigState } from '../../style/utils';
 import { getStyleDimension} from '../../utils/utils';
 
 // Configuration options for Circle overlays

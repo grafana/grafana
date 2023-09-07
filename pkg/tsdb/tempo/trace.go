@@ -10,7 +10,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/tsdb/tempo/kinds/dataquery"
-	"go.opentelemetry.io/collector/model/otlp"
+	"go.opentelemetry.io/collector/pdata/ptrace"
 )
 
 func (s *Service) getTrace(ctx context.Context, pCtx backend.PluginContext, query backend.DataQuery) (*backend.DataResponse, error) {
@@ -40,7 +40,7 @@ func (s *Service) getTrace(ctx context.Context, pCtx backend.PluginContext, quer
 
 	defer func() {
 		if err := resp.Body.Close(); err != nil {
-			s.logger.FromContext(ctx).Warn("failed to close response body", "err", err)
+			s.logger.FromContext(ctx).Warn("Failed to close response body", "err", err)
 		}
 	}()
 
@@ -54,7 +54,8 @@ func (s *Service) getTrace(ctx context.Context, pCtx backend.PluginContext, quer
 		return result, nil
 	}
 
-	otTrace, err := otlp.NewProtobufTracesUnmarshaler().UnmarshalTraces(body)
+	pbUnmarshaler := ptrace.ProtoUnmarshaler{}
+	otTrace, err := pbUnmarshaler.UnmarshalTraces(body)
 
 	if err != nil {
 		return &backend.DataResponse{}, fmt.Errorf("failed to convert tempo response to Otlp: %w", err)

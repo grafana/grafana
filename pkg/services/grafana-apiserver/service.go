@@ -6,16 +6,14 @@ import (
 	"net"
 	"os"
 	"path"
-	"strconv"
 
-	"cuelang.org/go/pkg/strings"
 	"github.com/go-logr/logr"
 	"github.com/grafana/dskit/services"
 	grafanaapiserveroptions "github.com/grafana/grafana-apiserver/pkg/cmd/server/options"
+	"github.com/grafana/grafana/pkg/modules"
 	"k8s.io/apiserver/pkg/authentication/authenticator"
 	"k8s.io/apiserver/pkg/authentication/request/headerrequest"
 	"k8s.io/apiserver/pkg/authentication/user"
-	"k8s.io/apiserver/pkg/endpoints/responsewriter"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/apiserver/pkg/server/options"
 	"k8s.io/client-go/rest"
@@ -24,13 +22,6 @@ import (
 	"k8s.io/klog/v2"
 
 	"github.com/grafana/grafana-apiserver/pkg/certgenerator"
-	"github.com/grafana/grafana/pkg/api/routing"
-	"github.com/grafana/grafana/pkg/infra/appcontext"
-	"github.com/grafana/grafana/pkg/middleware"
-	"github.com/grafana/grafana/pkg/modules"
-	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
-	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/web"
 )
 
 const (
@@ -54,39 +45,19 @@ type service struct {
 	*services.BasicService
 
 	restConfig *rest.Config
-	rr         routing.RouteRegister
 
-	handler   web.Handler
 	dataPath  string
 	stopCh    chan struct{}
 	stoppedCh chan error
 }
 
-func ProvideService(cfg *setting.Cfg, rr routing.RouteRegister) (*service, error) {
+func New(dataPath string) (*service, error) {
 	s := &service{
-		rr:       rr,
-		dataPath: path.Join(cfg.DataPath, "k8s"),
+		dataPath: dataPath,
 		stopCh:   make(chan struct{}),
 	}
 
 	s.BasicService = services.NewBasicService(s.start, s.running, nil).WithName(modules.GrafanaAPIServer)
-
-	s.rr.Group("/k8s", func(k8sRoute routing.RouteRegister) {
-		handler := func(c *contextmodel.ReqContext) {
-			if s.handler == nil {
-				c.Resp.WriteHeader(404)
-				_, _ = c.Resp.Write([]byte("Not found"))
-				return
-			}
-
-			if handle, ok := s.handler.(func(c *contextmodel.ReqContext)); ok {
-				handle(c)
-				return
-			}
-		}
-		k8sRoute.Any("/", middleware.ReqSignedIn, handler)
-		k8sRoute.Any("/*", middleware.ReqSignedIn, handler)
-	})
 
 	return s, nil
 }
@@ -107,12 +78,19 @@ func (s *service) start(ctx context.Context) error {
 	o.RecommendedOptions.Authorization.AlwaysAllowPaths = []string{"*"}
 	o.RecommendedOptions.Authorization.AlwaysAllowGroups = []string{user.SystemPrivilegedGroup, "grafana"}
 	o.RecommendedOptions.Etcd = nil
-	// TODO: setting CoreAPI to nil currently segfaults in grafana-apiserver
 	o.RecommendedOptions.CoreAPI = nil
 
 	// Get the util to get the paths to pre-generated certs
 	certUtil := certgenerator.CertUtil{
 		K8sDataPath: s.dataPath,
+	}
+
+	if err := certUtil.InitializeCACertPKI(); err != nil {
+		return err
+	}
+
+	if err := certUtil.EnsureApiServerPKI(certgenerator.DefaultAPIServerIp); err != nil {
+		return err
 	}
 
 	o.RecommendedOptions.SecureServing.BindAddress = net.ParseIP(certgenerator.DefaultAPIServerIp)
@@ -159,7 +137,10 @@ func (s *service) start(ctx context.Context) error {
 
 	prepared := server.GenericAPIServer.PrepareRun()
 
-	s.handler = func(c *contextmodel.ReqContext) {
+	// TODO: not sure if we can still inject RouteRegister with the new module server setup
+	// Disabling the /k8s endpoint until we have a solution
+
+	/* handler := func(c *contextmodel.ReqContext) {
 		req := c.Req
 		req.URL.Path = strings.TrimPrefix(req.URL.Path, "/k8s")
 		if req.URL.Path == "" {
@@ -178,6 +159,10 @@ func (s *service) start(ctx context.Context) error {
 		resp := responsewriter.WrapForHTTP1Or2(c.Resp)
 		prepared.GenericAPIServer.Handler.ServeHTTP(resp, req)
 	}
+	/* s.rr.Group("/k8s", func(k8sRoute routing.RouteRegister) {
+		k8sRoute.Any("/", middleware.ReqSignedIn, handler)
+		k8sRoute.Any("/*", middleware.ReqSignedIn, handler)
+	}) */
 
 	go func() {
 		s.stoppedCh <- prepared.Run(s.stopCh)

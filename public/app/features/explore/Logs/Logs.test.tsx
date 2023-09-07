@@ -159,6 +159,7 @@ describe('Logs', () => {
           return [];
         }}
         eventBus={new EventBusSrv()}
+        isFilterLabelActive={jest.fn()}
         logsFrames={[testDataFrame]}
         {...partialProps}
       />
@@ -167,6 +168,79 @@ describe('Logs', () => {
   const setup = (partialProps?: Partial<ComponentProps<typeof Logs>>, logs?: LogRowModel[]) => {
     return render(getComponent(partialProps, logs));
   };
+
+  describe('scrolling behavior', () => {
+    let originalInnerHeight: number;
+    beforeEach(() => {
+      originalInnerHeight = window.innerHeight;
+      window.innerHeight = 1000;
+      window.HTMLElement.prototype.scrollIntoView = jest.fn();
+      window.HTMLElement.prototype.scroll = jest.fn();
+    });
+    afterEach(() => {
+      window.innerHeight = originalInnerHeight;
+    });
+
+    describe('when `exploreScrollableLogsContainer` is set', () => {
+      let featureToggle: boolean | undefined;
+      beforeEach(() => {
+        featureToggle = config.featureToggles.exploreScrollableLogsContainer;
+        config.featureToggles.exploreScrollableLogsContainer = true;
+      });
+      afterEach(() => {
+        config.featureToggles.exploreScrollableLogsContainer = featureToggle;
+        jest.clearAllMocks();
+      });
+
+      it('should call `this.state.logsContainer.scroll`', () => {
+        const scrollIntoViewSpy = jest.spyOn(window.HTMLElement.prototype, 'scrollIntoView');
+        jest.spyOn(window.HTMLElement.prototype, 'scrollTop', 'get').mockReturnValue(920);
+        const scrollSpy = jest.spyOn(window.HTMLElement.prototype, 'scroll');
+
+        const logs = [];
+        for (let i = 0; i < 50; i++) {
+          logs.push(makeLog({ uid: `uid${i}`, rowId: `id${i}`, timeEpochMs: i }));
+        }
+
+        setup({ panelState: { logs: { id: 'uid47' } } }, logs);
+
+        expect(scrollIntoViewSpy).toBeCalledTimes(1);
+        // element.getBoundingClientRect().top will always be 0 for jsdom
+        // calc will be `this.state.logsContainer.scrollTop - window.innerHeight / 2` -> 920 - 500 = 420
+        expect(scrollSpy).toBeCalledWith({ behavior: 'smooth', top: 420 });
+      });
+    });
+
+    describe('when `exploreScrollableLogsContainer` is not set', () => {
+      let featureToggle: boolean | undefined;
+      beforeEach(() => {
+        featureToggle = config.featureToggles.exploreScrollableLogsContainer;
+        config.featureToggles.exploreScrollableLogsContainer = false;
+      });
+      afterEach(() => {
+        config.featureToggles.exploreScrollableLogsContainer = featureToggle;
+      });
+
+      it('should call `scrollElement.scroll`', () => {
+        const logs = [];
+        for (let i = 0; i < 50; i++) {
+          logs.push(makeLog({ uid: `uid${i}`, rowId: `id${i}`, timeEpochMs: i }));
+        }
+        const scrollElementMock = {
+          scroll: jest.fn(),
+          scrollTop: 920,
+        };
+        setup(
+          { scrollElement: scrollElementMock as unknown as HTMLDivElement, panelState: { logs: { id: 'uid47' } } },
+          logs
+        );
+
+        // element.getBoundingClientRect().top will always be 0 for jsdom
+        // calc will be `scrollElement.scrollTop - window.innerHeight / 2` -> 920 - 500 = 420
+        expect(scrollElementMock.scroll).toBeCalledWith({ behavior: 'smooth', top: 420 });
+      });
+    });
+  });
 
   it('should render logs', () => {
     setup();
@@ -222,6 +296,7 @@ describe('Logs', () => {
           return [];
         }}
         eventBus={new EventBusSrv()}
+        isFilterLabelActive={jest.fn()}
       />
     );
     const button = screen.getByRole('button', {
@@ -264,6 +339,7 @@ describe('Logs', () => {
           return [];
         }}
         eventBus={new EventBusSrv()}
+        isFilterLabelActive={jest.fn()}
       />
     );
 
@@ -310,6 +386,7 @@ describe('Logs', () => {
           return [];
         }}
         eventBus={new EventBusSrv()}
+        isFilterLabelActive={jest.fn()}
       />
     );
 

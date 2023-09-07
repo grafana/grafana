@@ -263,11 +263,9 @@ abstract class DataSourceApi<
   abstract testDatasource(): Promise<TestDataSourceResponse>;
 
   /**
-   * Override to skip executing a query
+   * This function is not called automatically unless running within the DataSourceWithBackend
    *
-   * @returns false if the query should be skipped
-   *
-   * @virtual
+   * @deprecated
    */
   filterQuery?(query: TQuery): boolean;
 
@@ -381,6 +379,13 @@ export interface MetadataInspectorProps<
 
   // All Data from this DataSource
   data: DataFrame[];
+}
+
+export interface LegacyMetricFindQueryOptions {
+  searchFilter?: string;
+  scopedVars?: ScopedVars;
+  range?: TimeRange;
+  variable?: { name: string };
 }
 
 export interface QueryEditorProps<
@@ -523,7 +528,6 @@ export interface DataQueryRequest<TQuery extends DataQuery = DataQuery> {
   timeInfo?: string; // The query time description (blue text in the upper right)
   panelId?: number;
   dashboardUID?: string;
-  publicDashboardAccessToken?: string;
 
   // Request Timing
   startTime: number;
@@ -644,6 +648,8 @@ export interface DataSourceInstanceSettings<T extends DataSourceJsonData = DataS
 
   /** When the name+uid are based on template variables, maintain access to the real values */
   rawRef?: DataSourceRef;
+
+  angularDetected?: boolean;
 }
 
 /**
