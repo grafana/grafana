@@ -29,19 +29,21 @@ var eslog = log.New("tsdb.elasticsearch")
 type Service struct {
 	httpClientProvider httpclient.Provider
 	im                 instancemgmt.InstanceManager
+	logger             *log.ConcreteLogger
 }
 
 func ProvideService(httpClientProvider httpclient.Provider) *Service {
 	return &Service{
 		im:                 datasource.NewInstanceManager(newInstanceSettings(httpClientProvider)),
 		httpClientProvider: httpClientProvider,
+		logger:             eslog,
 	}
 }
 
 func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	dsInfo, err := s.getDSInfo(ctx, req.PluginContext)
 	_, fromAlert := req.Headers[ngalertmodels.FromAlertHeaderName]
-	logger := eslog.FromContext(ctx).New("fromAlert", fromAlert)
+	logger := s.logger.FromContext(ctx).New("fromAlert", fromAlert)
 
 	if err != nil {
 		logger.Error("Failed to get data source info", "error", err)
@@ -184,7 +186,7 @@ func (s *Service) getDSInfo(ctx context.Context, pluginCtx backend.PluginContext
 }
 
 func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
-	logger := eslog.FromContext(ctx)
+	logger := s.logger.FromContext(ctx)
 	// allowed paths for resource calls:
 	// - empty string for fetching db version
 	// - ?/_mapping for fetching index mapping
@@ -229,10 +231,10 @@ func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceReq
 		if errors.Is(err, context.Canceled) {
 			status = "cancelled"
 		}
-		logger.Error("Error received from Elasticsearch", "error", err, "status", status, "statusCode", response.StatusCode, "duration", time.Since(start), "action", "databaseRequest")
+		logger.Error("Error received from Elasticsearch", "error", err, "status", status, "statusCode", response.StatusCode, "duration", time.Since(start), "stage", es.StageDatabaseRequest)
 		return err
 	}
-	logger.Info("Response received from Elasticsearch", "statusCode", response.StatusCode, "status", "ok", "duration", time.Since(start), "action", "databaseRequest", "contentLength", response.Header.Get("Content-Length"))
+	logger.Info("Response received from Elasticsearch", "statusCode", response.StatusCode, "status", "ok", "duration", time.Since(start), "stage", es.StageDatabaseRequest, "contentLength", response.Header.Get("Content-Length"))
 
 	defer func() {
 		if err := response.Body.Close(); err != nil {

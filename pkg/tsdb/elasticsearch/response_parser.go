@@ -104,7 +104,7 @@ func parseResponse(ctx context.Context, responses []*es.SearchResponse, targets 
 		}
 	}
 
-	logger.Info("Finished processing responses", "duration", time.Since(start), "responsesLength", len(result.Responses), "queriesLength", len(targets), "action", "parseResponse")
+	logger.Info("Finished processing responses", "duration", time.Since(start), "responsesLength", len(result.Responses), "queriesLength", len(targets), "stage", es.StageParseResponse)
 	return &result, nil
 }
 
