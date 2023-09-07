@@ -87,32 +87,64 @@ export class RowRepeaterBehavior extends SceneObjectBase<RowRepeaterBehaviorStat
     const { values, texts } = this.getVariableValues(variable);
     const rows: SceneGridRow[] = [];
     const rowContentHeight = getRowContentHeight(this.state.sources);
+    let maxYOfRows = 0;
 
     // Loop through variable values and create repeates
     for (let index = 0; index < values.length; index++) {
       const children: SceneGridItemLike[] = [];
 
+      // Loop through panels inside row
       for (const source of this.state.sources) {
         const sourceItemY = source.state.y ?? 0;
+        const itemY = sourceItemY + (rowContentHeight + 1) * index;
+
+        // TODO this clone should not result in same keys deeper in the tree
         const itemClone = source.clone({
           key: `${source.state.key}-clone-${index}`,
-          y: sourceItemY + rowContentHeight * index + index,
+          y: itemY,
         });
 
         children.push(itemClone);
+
+        if (maxYOfRows < itemY + itemClone.state.height!) {
+          maxYOfRows = itemY + itemClone.state.height!;
+        }
       }
 
       const rowClone = this.getRowClone(rowToRepeat, index, values[index], texts[index], rowContentHeight, children);
-
       rows.push(rowClone);
     }
 
-    layout.setState({ children: rows });
+    this.updateLayout(layout, rows, maxYOfRows);
+  }
 
-    // In case we updated our height the grid layout needs to be update
-    if (this.parent instanceof SceneGridLayout) {
-      this.parent!.forceRender();
+  updateLayout(layout: SceneGridLayout, rows: SceneGridRow[], maxYOfRows: number) {
+    const allChildren = layout.state.children;
+    const index = allChildren.indexOf(this.parent!);
+
+    if (index === -1) {
+      throw new Error('RowRepeaterBehavior: Parent row not found in layout children');
     }
+
+    const newChildren = [...allChildren.slice(0, index), ...rows, ...allChildren.slice(index + 1)];
+
+    // Is there grid items after rows?
+    if (allChildren.length > index + 1) {
+      const childrenAfter = allChildren.slice(index + 1);
+      const firstChildAfterY = childrenAfter[0].state.y!;
+      const diff = maxYOfRows - firstChildAfterY;
+
+      console.log('maxYOfRows', maxYOfRows);
+      console.log('Children after diff', diff);
+
+      for (const child of childrenAfter) {
+        if (child.state.y! < maxYOfRows) {
+          child.setState({ y: child.state.y! + diff });
+        }
+      }
+    }
+
+    layout.setState({ children: newChildren });
   }
 
   getRowClone(

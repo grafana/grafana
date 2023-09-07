@@ -1911,7 +1911,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"]
     ],
-    "public/app/features/dashboard-scene/scene/RowRepeaterBehavior.tsx:5381": [
+    "public/app/features/dashboard-scene/scene/RowRepeaterBehavior.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
     "public/app/features/dashboard-scene/serialization/transformSaveModelToScene.test.ts:5381": [
