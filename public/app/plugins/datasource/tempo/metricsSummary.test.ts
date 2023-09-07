@@ -118,7 +118,7 @@ describe('MetricsSummary', () => {
                   "displayNameFromDS": "Span count",
                 },
                 "name": "spanCount",
-                "type": "string",
+                "type": "number",
                 "values": [
                   "10",
                 ],
@@ -132,7 +132,7 @@ describe('MetricsSummary', () => {
                   "unit": "percent",
                 },
                 "name": "errorPercentage",
-                "type": "string",
+                "type": "number",
                 "values": [
                   "10",
                 ],

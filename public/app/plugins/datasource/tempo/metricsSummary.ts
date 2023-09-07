@@ -76,12 +76,12 @@ export function createTableFrameFromMetricsSummaryQuery(
       },
       {
         name: 'spanCount',
-        type: FieldType.string,
+        type: FieldType.number,
         config: { displayNameFromDS: 'Span count', custom: { width: 150 } },
       },
       {
         name: 'errorPercentage',
-        type: FieldType.string,
+        type: FieldType.number,
         config: { displayNameFromDS: 'Error', unit: 'percent', custom: { width: 150 } },
       },
       getPercentileRow('p50'),
