@@ -2,11 +2,6 @@ module github.com/grafana/grafana
 
 go 1.20
 
-// Override xorm's outdated go-mssqldb dependency, since we can't upgrade to current xorm (due to breaking changes).
-// We need a more current go-mssqldb so we get rid of a version of apache/thrift with vulnerabilities.
-// Also, use our fork with fixes for unimplemented methods (required for Go 1.16).
-replace github.com/denisenkom/go-mssqldb => github.com/grafana/go-mssqldb v0.9.2
-
 // Override docker/docker to avoid:
 // go: github.com/drone-runners/drone-runner-docker@v1.8.2 requires
 // github.com/docker/docker@v0.0.0-00010101000000-000000000000: invalid version: unknown revision 000000000000
@@ -67,7 +62,7 @@ require (
 	github.com/grafana/alerting v0.0.0-20230831092459-f7dba8ede9b0 // @grafana/alerting-squad-backend
 	github.com/grafana/cuetsy v0.1.10 // @grafana/grafana-as-code
 	github.com/grafana/grafana-aws-sdk v0.19.1 // @grafana/aws-datasources
-	github.com/grafana/grafana-azure-sdk-go v1.7.0 // @grafana/backend-platform
+	github.com/grafana/grafana-azure-sdk-go v1.8.1 // @grafana/backend-platform
 	github.com/grafana/grafana-plugin-sdk-go v0.174.0 // @grafana/plugins-platform-backend
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0 // @grafana/backend-platform
 	github.com/hashicorp/go-hclog v1.5.0 // @grafana/plugins-platform-backend
@@ -228,8 +223,8 @@ require (
 )
 
 require (
-	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.3.0 // @grafana/backend-platform
 	cloud.google.com/go/kms v1.15.0 // @grafana/backend-platform
+	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.3.0 // @grafana/backend-platform
 	github.com/Azure/azure-sdk-for-go/sdk/keyvault/azkeys v0.9.0 // @grafana/backend-platform
 	github.com/Azure/azure-storage-blob-go v0.15.0 // @grafana/backend-platform
 	github.com/Azure/go-autorest/autorest/adal v0.9.22 // @grafana/backend-platform
@@ -265,10 +260,10 @@ require (
 	github.com/go-jose/go-jose/v3 v3.0.0 // @grafana/backend-platform
 	github.com/grafana/dataplane/examples v0.0.1 // @grafana/observability-metrics
 	github.com/grafana/dataplane/sdata v0.0.6 // @grafana/observability-metrics
-	github.com/microsoft/go-mssqldb v1.5.0 // @grafana/grafana-bi-squad
 	github.com/grafana/kindsys v0.0.0-20230508162304-452481b63482 //  @grafana/grafana-as-code
 	github.com/grafana/tempo v1.5.1-0.20230524121406-1dc1bfe7085b // @grafana/observability-traces-and-profiling
 	github.com/grafana/thema v0.0.0-20230712153715-375c1b45f3ed // @grafana/grafana-as-code
+	github.com/microsoft/go-mssqldb v1.5.0 // @grafana/grafana-bi-squad
 	github.com/ory/fosite v0.44.1-0.20230317114349-45a6785cc54f // @grafana/grafana-authnz-team
 	github.com/redis/go-redis/v9 v9.0.2 // @grafana/alerting-squad-backend
 	github.com/weaveworks/common v0.0.0-20230511094633-334485600903 // @grafana/alerting-squad-backend
@@ -329,10 +324,10 @@ require (
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
 	github.com/getsentry/sentry-go v0.12.0 // indirect
 	github.com/go-asn1-ber/asn1-ber v1.5.4 // indirect
-	github.com/golang-sql/sqlexp v0.1.0 // indirect
 	github.com/goccy/go-json v0.9.11 // indirect
 	github.com/gogo/googleapis v1.4.1 // indirect
 	github.com/gogo/status v1.1.1 // indirect
+	github.com/golang-sql/sqlexp v0.1.0 // indirect
 	github.com/google/cel-go v0.12.6 // indirect
 	github.com/google/gnostic v0.6.9 // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
@@ -436,7 +431,7 @@ require (
 	cloud.google.com/go/compute v1.23.0 // indirect
 	cloud.google.com/go/iam v1.1.1 // indirect
 	filippo.io/age v1.1.1 // @grafana/grafana-authnz-team
-	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.6.0 // indirect
+	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.6.1 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/keyvault/internal v0.7.0 // indirect
 	github.com/AzureAD/microsoft-authentication-library-for-go v1.0.0 // indirect
 	github.com/Masterminds/sprig/v3 v3.2.2 // @grafana/backend-platform
