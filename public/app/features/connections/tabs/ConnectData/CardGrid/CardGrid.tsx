@@ -7,8 +7,9 @@ import { Grid } from '@grafana/ui/src/unstable';
 import { PluginAngularBadge } from 'app/features/plugins/admin/components/Badges';
 
 const getStyles = (theme: GrafanaTheme2) => ({
+  //TODO is this needed? Should we add this style? With Grid it's not applied
   sourcesList: css`
-  margin-bottom: 80px;
+    margin-bottom: 80px;
   `,
   heading: css({
     fontSize: theme.typography.h5.fontSize,
@@ -35,6 +36,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
         "Figure Description Actions"
         "Figure    Meta     Actions"
         "Figure     -       Actions"`,
+    marginBottom: '0px !important',
   }),
   logo: css({
     marginRight: theme.spacing(3),
@@ -59,9 +61,11 @@ export interface CardGridProps {
 
 export const CardGrid = ({ items, onClickItem }: CardGridProps) => {
   const styles = useStyles2(getStyles);
-  const cardItems = (array: CardGridItem[]) => {
-    const cardList = React.Children.toArray(
-      array.map((item) => (
+
+  const cardGridItemList = () => {
+    const list: React.ReactElement[] = [];
+    items.map((item) => {
+      list.push(
         <Card
           key={item.id}
           className={styles.card}
@@ -84,10 +88,14 @@ export const CardGrid = ({ items, onClickItem }: CardGridProps) => {
             </Card.Meta>
           ) : null}
         </Card>
-      ))
-    );
-    return cardList;
+      );
+    });
+    return list;
   };
 
-  return <Grid display='grid' templateColumns='repeat(auto-fill, minmax(380px, 1fr))' gap='12px'> {cardItems(items)}</Grid>;
+  return (
+    <Grid display="grid" templateColumns="repeat(auto-fill, minmax(380px, 1fr))" gap={1.5}>
+      {cardGridItemList()}
+    </Grid>
+  );
 };
