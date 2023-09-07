@@ -40,6 +40,26 @@ func (s *PermissionsSync) SyncPermissionsHook(ctx context.Context, identity *aut
 	if identity.Permissions == nil {
 		identity.Permissions = make(map[int64]map[string][]string)
 	}
-	identity.Permissions[identity.OrgID] = accesscontrol.GroupScopesByAction(permissions)
+
+	permissionsByAction := map[string][]string{}
+
+	if len(identity.ClientParams.RestrictPermissions) > 0 {
+		permissionsByAction = accesscontrol.Intersect(permissions, ungroupPermissions(identity.ClientParams.RestrictPermissions))
+	} else {
+		permissionsByAction = accesscontrol.GroupScopesByAction(permissions)
+	}
+
+	identity.Permissions[identity.OrgID] = permissionsByAction
+
 	return nil
+}
+
+func ungroupPermissions(groupedPermissions map[string][]string) []accesscontrol.Permission {
+	restrictSet := []accesscontrol.Permission{}
+	for action, scopes := range groupedPermissions {
+		for i := range scopes {
+			restrictSet = append(restrictSet, accesscontrol.Permission{Action: action, Scope: scopes[i]})
+		}
+	}
+	return restrictSet
 }

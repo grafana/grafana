@@ -62,6 +62,8 @@ type ClientParams struct {
 	LookUpParams login.UserLookupParams
 	// SyncPermissions ensure that permissions are loaded from DB and added to the identity
 	SyncPermissions bool
+	// RestrictPermissions ensure that permissions are loaded from DB but restricted to a certain set of permissions
+	RestrictPermissions map[string][]string // TODO: I used the grouped permissions otherwise there is a cycle import with accesscontrol
 }
 
 type PostAuthHookFn func(ctx context.Context, identity *Identity, r *Request) error

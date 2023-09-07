@@ -9,11 +9,12 @@ import (
 )
 
 const (
-	NamespaceUser           = "user"
-	NamespaceAPIKey         = "api-key"
-	NamespaceServiceAccount = "service-account"
-	NamespaceAnonymous      = "anonymous"
-	NamespaceRenderService  = "render"
+	NamespaceUser            = "user"
+	NamespaceAPIKey          = "api-key"
+	NamespaceServiceAccount  = "service-account"
+	NamespaceExternalService = "external-service"
+	NamespaceAnonymous       = "anonymous"
+	NamespaceRenderService   = "render"
 )
 
 var ErrNotIntIdentifier = errors.New("identifier is not an int64")

@@ -15,6 +15,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models/roletype"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/oauthserver"
@@ -34,6 +35,10 @@ var (
 const (
 	rfc9068ShortMediaType = "at+jwt"
 	rfc9068MediaType      = "application/at+jwt"
+
+	subAttrEmail = "email"
+	subAttrLogin = "login"
+	subAttrID    = "id"
 )
 
 func ProvideExtendedJWT(userService user.Service, cfg *setting.Cfg, signingKeys signingkeys.Service, oauthServer oauthserver.OAuth2Server) *ExtendedJWT {
@@ -56,7 +61,7 @@ type ExtendedJWT struct {
 
 type ExtendedJWTClaims struct {
 	jwt.Claims
-	ClientID     string              `json:"client_id"`
+	Actor        string              `json:"actor"`
 	Groups       []string            `json:"groups"`
 	Email        string              `json:"email"`
 	Name         string              `json:"name"`
@@ -74,19 +79,6 @@ func (s *ExtendedJWT) Authenticate(ctx context.Context, r *authn.Request) (*auth
 		return nil, errJWTInvalid.Errorf("Failed to verify JWT: %w", err)
 	}
 
-	// user:id:18
-	parts := strings.Split(claims.Subject, ":")
-	if len(parts) != 3 {
-		s.log.Error("Odd subject found. It should be of three parts", "subject", claims.Subject)
-		return nil, errJWTInvalid.Errorf("sub is not composed of three parts: '%s", claims.Subject)
-	}
-	namespace := parts[0]
-	id, errParse := strconv.ParseInt(parts[2], 10, 64)
-	if errParse != nil {
-		s.log.Error("Could not parse ID", "subject", claims.Subject)
-		return nil, errJWTInvalid.Errorf("could not parse id; %w", errParse)
-	}
-
 	// FIXME: support multiple organizations
 	defaultOrgID := s.getDefaultOrgID()
 	if r.OrgID != defaultOrgID {
@@ -94,28 +86,133 @@ func (s *ExtendedJWT) Authenticate(ctx context.Context, r *authn.Request) (*auth
 		return nil, errJWTInvalid.Errorf("Failed to verify the Organization. Only the default org is supported")
 	}
 
+	// user:id:18
+	parts := strings.Split(claims.Subject, ":")
+	if len(parts) != 3 {
+		s.log.Error("Odd subject found. It should be of three parts", "subject", claims.Subject)
+		return nil, errJWTInvalid.Errorf("sub is not composed of three parts: '%s", claims.Subject)
+	}
+	namespace := parts[0]
+	switch namespace {
+	case identity.NamespaceUser:
+		return s.AuthenticateImpersonatedUser(ctx, claims, r.OrgID, parts[1], parts[2])
+	case identity.NamespaceExternalService:
+		return s.AuthenticateExternalService(ctx, claims, r.OrgID, parts[1], parts[2])
+	default:
+		return nil, errJWTInvalid.Errorf("subject namespace is incorrect: %v", namespace)
+	}
+}
+
+func (s *ExtendedJWT) AuthenticateExternalService(ctx context.Context, claims *ExtendedJWTClaims, orgID int64, subjAttr, subjID string) (*authn.Identity, error) {
+	lookup := &user.GetSignedInUserQuery{}
+	switch subjAttr {
+	case subAttrID:
+		id, errParse := strconv.ParseInt(subjID, 10, 64)
+		if errParse != nil {
+			s.log.Error("Could not parse ID", "subject", claims.Subject)
+			return nil, errJWTInvalid.Errorf("could not parse id; %w", errParse)
+		}
+		lookup.UserID = id
+	case subAttrLogin:
+		lookup.Login = subjID
+	case subAttrEmail:
+		lookup.Email = subjID
+	default:
+		s.log.Error("Unknown subject attribute", "subjAttr", subjAttr)
+		return nil, errJWTInvalid.Errorf("unknown subject attribute: %v", subjAttr)
+	}
+
+	dbUser, errGet := s.userService.GetSignedInUserWithCacheCtx(ctx, lookup)
+	if errGet != nil {
+		return nil, errGet // TODO wrap?
+	}
+
 	if len(claims.Entitlements) == 0 {
 		s.log.Error("Entitlements claim is missing")
 		return nil, errJWTInvalid.Errorf("Entitlements claim is missing")
 	}
 
+	// TODO populate teams?
+	// if slices.Contains(claims.Scopes, "groups") {
+	// }
+
 	identity := authn.Identity{
-		OrgID:           defaultOrgID,
-		OrgName:         "",                                                           // TODO
-		OrgRoles:        map[int64]roletype.RoleType{defaultOrgID: roletype.RoleNone}, // With external auth: Role None => use permissions only
-		ID:              authn.NamespacedID(namespace, id),
-		Login:           claims.Login,
-		Name:            claims.Name,
-		Email:           claims.Email,
+		OrgID:           orgID,
+		OrgName:         "",                                                    // TODO?
+		OrgRoles:        map[int64]roletype.RoleType{orgID: roletype.RoleNone}, // With external auth: Role None => use permissions only
+		ID:              authn.NamespacedID(identity.NamespaceUser, dbUser.UserID),
+		Login:           dbUser.Login,
+		Name:            dbUser.Name,
+		Email:           dbUser.Email,
 		IsGrafanaAdmin:  new(bool),
 		AuthenticatedBy: login.ExtendedJWTModule,
 		LastSeenAt:      timeNow(),
-		Teams:           []int64{},  // TODO
-		Groups:          []string{}, // TODO
-		ClientParams:    authn.ClientParams{SyncPermissions: false},
-		Permissions: map[int64]map[string][]string{
-			defaultOrgID: claims.Entitlements,
+		Teams:           []int64{}, // TODO?
+		Groups:          []string{},
+		ClientParams: authn.ClientParams{
+			SyncPermissions:     true,
+			RestrictPermissions: claims.Entitlements,
 		},
+		Permissions: map[int64]map[string][]string{},
+	}
+
+	return &identity, nil
+}
+
+func (s *ExtendedJWT) AuthenticateImpersonatedUser(ctx context.Context, claims *ExtendedJWTClaims, orgID int64, subjAttr, subjID string) (*authn.Identity, error) {
+	lookup := &user.GetSignedInUserQuery{}
+	switch subjAttr {
+	case subAttrID:
+		id, errParse := strconv.ParseInt(subjID, 10, 64)
+		if errParse != nil {
+			s.log.Error("Could not parse ID", "subject", claims.Subject)
+			return nil, errJWTInvalid.Errorf("could not parse id; %w", errParse)
+		}
+		lookup.UserID = id
+	case subAttrLogin:
+		lookup.Login = subjID
+	case subAttrEmail:
+		lookup.Email = subjID
+	default:
+		s.log.Error("Unknown subject attribute", "subjAttr", subjAttr)
+		return nil, errJWTInvalid.Errorf("unknown subject attribute: %v", subjAttr)
+	}
+
+	dbUser, errGet := s.userService.GetSignedInUserWithCacheCtx(ctx, lookup)
+	if errGet != nil {
+		return nil, errGet // TODO wrap?
+	}
+
+	if len(claims.Entitlements) == 0 {
+		s.log.Error("Entitlements claim is missing")
+		return nil, errJWTInvalid.Errorf("Entitlements claim is missing")
+	}
+
+	// TODO populate teams?
+	// if slices.Contains(claims.Scopes, "groups") {
+	// }
+
+	// TODO Track the actor for auditing purposes?
+	s.log.Info("Authenticated impersonated user", "login", dbUser.Login, "name", dbUser.Name, "email", dbUser.Email, "actor", claims.Actor)
+
+	identity := authn.Identity{
+		OrgID:           orgID,
+		OrgName:         "",                                                    // TODO?
+		OrgRoles:        map[int64]roletype.RoleType{orgID: roletype.RoleNone}, // With external auth: Role None => use permissions only
+		ID:              authn.NamespacedID(identity.NamespaceUser, dbUser.UserID),
+		Login:           dbUser.Login,
+		Name:            dbUser.Name,
+		Email:           dbUser.Email,
+		IsGrafanaAdmin:  new(bool),
+		AuthenticatedBy: login.ExtendedJWTModule,
+		LastSeenAt:      timeNow(),
+		Teams:           []int64{}, // TODO?
+		Groups:          []string{},
+		ClientParams: authn.ClientParams{
+			SyncPermissions:     true,
+			RestrictPermissions: claims.Entitlements,
+		},
+		Permissions: map[int64]map[string][]string{},
 	}
 
 	return &identity, nil
@@ -259,8 +356,8 @@ func (s *ExtendedJWT) signingPublicKey() (crypto.PublicKey, error) {
 }
 
 func (s *ExtendedJWT) validateClientIdClaim(ctx context.Context, claims ExtendedJWTClaims) error {
-	if claims.ClientID == "" {
-		return fmt.Errorf("missing 'client_id' claim")
+	if claims.Actor == "" {
+		return fmt.Errorf("missing 'actor' claim")
 	}
 
 	// With MESA, we trust the client ID is legit
