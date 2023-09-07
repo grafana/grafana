@@ -178,10 +178,10 @@ func queryData(ctx context.Context, req *backend.QueryDataRequest, dsInfo *datas
 	start := time.Now()
 	queries, err := parseQuery(req)
 	if err != nil {
-		plog.Debug("Failed to prepare request to Loki", "error", err, "duration", time.Since(start), "queriesLength", len(queries), "action", "prepareRequest")
+		plog.Error("Failed to prepare request to Loki", "error", err, "duration", time.Since(start), "queriesLength", len(queries), "action", "prepareRequest")
 		return result, err
 	}
-	plog.Debug("Prepared request to Loki", "duration", time.Since(start), "queriesLength", len(queries), "action", "prepareRequest")
+	plog.Info("Prepared request to Loki", "duration", time.Since(start), "queriesLength", len(queries), "action", "prepareRequest")
 
 	for _, query := range queries {
 		ctx, span := tracer.Start(ctx, "datasource.loki.queryData.runQuery")
@@ -215,7 +215,7 @@ func queryData(ctx context.Context, req *backend.QueryDataRequest, dsInfo *datas
 func runQuery(ctx context.Context, api *LokiAPI, query *lokiQuery, responseOpts ResponseOpts) (data.Frames, error) {
 	frames, err := api.DataQuery(ctx, *query, responseOpts)
 	if err != nil {
-		logger.Error("Error querying loki", "err", err)
+		logger.Error("Error querying loki", "error", err)
 		return data.Frames{}, err
 	}
 
@@ -224,7 +224,7 @@ func runQuery(ctx context.Context, api *LokiAPI, query *lokiQuery, responseOpts 
 		err = adjustFrame(frame, query, !responseOpts.metricDataplane, responseOpts.logsDataplane)
 
 		if err != nil {
-			logger.Error("Error adjusting frame", "err", err, "duration", time.Since(start), "action", "parseResponse")
+			logger.Error("Error adjusting frame", "error", err, "duration", time.Since(start), "action", "parseResponse")
 			return data.Frames{}, err
 		}
 	}

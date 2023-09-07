@@ -96,7 +96,7 @@ func (s *Service) RunStream(ctx context.Context, req *backend.RunStreamRequest, 
 	logger.Info("Connecting to websocket", "url", wsurl)
 	c, r, err := websocket.DefaultDialer.Dial(wsurl.String(), nil)
 	if err != nil {
-		logger.Error("Error connecting to websocket", "error", err)
+		logger.Error("Error connecting to websocket", "err", err)
 		return fmt.Errorf("error connecting to websocket")
 	}
 

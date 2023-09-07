@@ -161,24 +161,27 @@ func (api *LokiAPI) DataQuery(ctx context.Context, query lokiQuery, responseOpts
 
 	api.log.Debug("Sending query to loki", "start", query.Start, "end", query.End, "step", query.Step, "query", query.Expr, "queryType", query.QueryType, "direction", query.Direction, "maxLines", query.MaxLines, "supportingQueryType", query.SupportingQueryType, "lokiHost", req.URL.Host, "lokiPath", req.URL.Path)
 	start := time.Now()
-
 	resp, err := api.client.Do(req)
 	if err != nil {
+		status := "error"
+		if errors.Is(err, context.Canceled) {
+			status = "cancelled"
+		}
+		api.log.Error("Error received from Loki", "error", err, "status", status, "statusCode", resp.StatusCode, "duration", time.Since(start), "action", "databaseRequest")
 		return nil, err
 	}
 
-	took := time.Since(start)
-	api.log.Debug("Response received from loki", "took", took, "status", resp.StatusCode, "length", resp.Header.Get("Content-Length"))
+	api.log.Info("Response received from loki", "duration", time.Since(start), "statusCode", resp.StatusCode, "contentLength", resp.Header.Get("Content-Length"), "action", "databaseRequest", "status", "ok")
 
 	defer func() {
 		if err := resp.Body.Close(); err != nil {
-			api.log.Warn("Failed to close response body", "err", err)
+			api.log.Warn("Failed to close response body", "error", err)
 		}
 	}()
 
 	if resp.StatusCode/100 != 2 {
 		err := readLokiError(resp.Body)
-		api.log.Error("Error received from loki", "err", err, "status", resp.StatusCode)
+		api.log.Error("Error received from loki", "error", err, "status", resp.StatusCode)
 		return nil, err
 	}
 
@@ -189,16 +192,16 @@ func (api *LokiAPI) DataQuery(ctx context.Context, query lokiQuery, responseOpts
 
 	iter := jsoniter.Parse(jsoniter.ConfigDefault, resp.Body, 1024)
 	res := converter.ReadPrometheusStyleResult(iter, converter.Options{Dataplane: responseOpts.metricDataplane})
-	took = time.Since(start)
 
 	if res.Error != nil {
 		span.RecordError(res.Error)
 		span.SetStatus(codes.Error, err.Error())
-		logger.Error("Error parsing response from loki", "err", res.Error, "metricDataplane", responseOpts.metricDataplane, "took", took)
+		// TODO: queriesLength, responsesLength
+		logger.Error("Error parsing response from loki", "error", res.Error, "metricDataplane", responseOpts.metricDataplane, "duration", time.Since(start), "action", "parseResponse")
 		return nil, res.Error
 	}
 
-	logger.Debug("Response parsed from loki", "took", took, "metricDataplane", responseOpts.metricDataplane, "framesLength", len(res.Frames))
+	logger.Info("Response parsed from loki", "duration", time.Since(start), "metricDataplane", responseOpts.metricDataplane, "framesLength", len(res.Frames), "action", "parseResponse")
 
 	return res.Frames, nil
 }
@@ -247,11 +250,11 @@ func (api *LokiAPI) RawQuery(ctx context.Context, resourcePath string) (RawLokiR
 
 	defer func() {
 		if err := resp.Body.Close(); err != nil {
-			api.log.Warn("Failed to close response body", "err", err)
+			api.log.Warn("Failed to close response body", "error", err)
 		}
 	}()
 
-	api.log.Info("Response received from loki", "status", "ok", "statusCode", resp.StatusCode, "contentLength", resp.Header.Get("Content-Length"), "duration", time.Since(start), "contentEncoding", resp.Header.Get("Content-Encoding"))
+	api.log.Info("Response received from loki", "status", "ok", "statusCode", resp.StatusCode, "contentLength", resp.Header.Get("Content-Length"), "duration", time.Since(start), "contentEncoding", resp.Header.Get("Content-Encoding"), "action", "databaseRequest")
 
 	// server errors are handled by the plugin-proxy to hide the error message
 	if resp.StatusCode/100 == 5 {
@@ -267,7 +270,7 @@ func (api *LokiAPI) RawQuery(ctx context.Context, resourcePath string) (RawLokiR
 	// client errors are passed as a json struct to the client
 	if resp.StatusCode/100 != 2 {
 		lokiResponseErr := lokiResponseError{Message: makeLokiError(body).Error()}
-		api.log.Warn("Non 200 HTTP status received from loki", "err", lokiResponseErr.Message, "status", resp.StatusCode, "resourcePath", resourcePath)
+		api.log.Warn("Non 200 HTTP status received from loki", "error", lokiResponseErr.Message, "status", resp.StatusCode, "resourcePath", resourcePath)
 		traceID := tracing.TraceIDFromContext(ctx, false)
 		if traceID != "" {
 			lokiResponseErr.TraceID = traceID
