@@ -12,6 +12,7 @@ import (
 	"path"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
@@ -186,37 +187,49 @@ func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceReq
 	// - ?/_mapping for fetching index mapping
 	// - _msearch for executing getTerms queries
 	if req.Path != "" && !strings.HasSuffix(req.Path, "/_mapping") && req.Path != "_msearch" {
+		logger.Error("Invalid resource path", "path", req.Path)
 		return fmt.Errorf("invalid resource URL: %s", req.Path)
 	}
 
 	ds, err := s.getDSInfo(ctx, req.PluginContext)
 	if err != nil {
+		logger.Error("Failed to get data source info", "error", err)
 		return err
 	}
 
 	esUrl, err := url.Parse(ds.URL)
 	if err != nil {
+		logger.Error("Failed to parse data source URL", "error", err, "url", ds.URL)
 		return err
 	}
 
 	resourcePath, err := url.Parse(req.Path)
 	if err != nil {
+		logger.Error("Failed to parse data source path", "error", err, "url", req.Path)
 		return err
 	}
 
 	// We take the path and the query-string only
 	esUrl.RawQuery = resourcePath.RawQuery
 	esUrl.Path = path.Join(esUrl.Path, resourcePath.Path)
-
 	request, err := http.NewRequestWithContext(ctx, req.Method, esUrl.String(), bytes.NewBuffer(req.Body))
 	if err != nil {
+		logger.Error("Failed to create request", "error", err, "url", esUrl.String())
 		return err
 	}
 
+	logger.Debug("Sending request to Elasticsearch", "resourcePath", req.Path)
+	start := time.Now()
 	response, err := ds.HTTPClient.Do(request)
 	if err != nil {
+		status := "error"
+		if errors.Is(err, context.Canceled) {
+			status = "cancelled"
+		}
+		logger.Error("Error received from Elasticsearch", "error", err, "status", status, "statusCode", response.StatusCode, "duration", time.Since(start), "action", "databaseRequest")
 		return err
 	}
+	logger.Info("Response received from Elasticsearch", "statusCode", response.StatusCode, "status", "ok", "duration", time.Since(start), "action", "databaseRequest", "contentLength", response.Header.Get("Content-Length"))
 
 	defer func() {
 		if err := response.Body.Close(); err != nil {
@@ -226,6 +239,7 @@ func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceReq
 
 	body, err := io.ReadAll(response.Body)
 	if err != nil {
+		logger.Error("Error reading response body bytes", "error", err)
 		return err
 	}
 
