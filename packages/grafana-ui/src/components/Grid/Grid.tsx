@@ -12,6 +12,8 @@ export interface GridProps {
   children: NonNullable<React.ReactNode>;
   display?: 'grid' | 'inline-grid';
   gap?: ThemeSpacingTokens;
+  columnGap?: ThemeSpacingTokens;
+  rowGap?: ThemeSpacingTokens;
   templateColumns?: string;
   templateRows?: string;
   justifyContent?: ContentAlignment;
@@ -34,6 +36,8 @@ export const Grid = ({
   children,
   display = 'grid',
   gap = 1,
+  columnGap = 1,
+  rowGap = 1,
   templateColumns = 'none',
   templateRows = 'none',
   autoFlow = 'row',
@@ -50,6 +54,8 @@ export const Grid = ({
           theme,
           display,
           gap,
+          columnGap,
+          rowGap,
           templateColumns,
           templateRows,
           autoFlow,
@@ -61,6 +67,8 @@ export const Grid = ({
         ),
       [
         display,
+        columnGap,
+        rowGap,
         gap,
         templateColumns,
         templateRows,
@@ -87,6 +95,8 @@ const getStyles = (
   theme: GrafanaTheme2,
   display: 'grid' | 'inline-grid',
   gap: ThemeSpacingTokens,
+  columnGap: ThemeSpacingTokens,
+  rowGap: ThemeSpacingTokens,
   templateColumns: GridProps['templateColumns'],
   templateRows: GridProps['templateRows'],
   autoFlow: GridProps['autoFlow'],
@@ -99,7 +109,9 @@ const getStyles = (
   return {
     grid: css({
       display,
-      gap: theme.spacing(gap) ,
+      gap: theme.spacing(gap),
+      columnGap: theme.spacing(columnGap),
+      rowGap: theme.spacing(rowGap),
       gridTemplateColumns: templateColumns,
       gridTemplateRows: templateRows,
       justifyContent: 'center',
