@@ -24,7 +24,7 @@ const defaultApiConfig: APIEditorConfig = {
   endpoint: '',
   method: HttpRequestMethod.GET,
   data: undefined,
-}
+};
 
 class ButtonDisplay extends PureComponent<CanvasElementProps<ButtonConfig, ButtonData>> {
   render() {
