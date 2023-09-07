@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { uniqueId, groupBy, upperFirst, sumBy, isArray } from 'lodash';
+import { uniqueId, groupBy, upperFirst, sumBy, isArray, defaults } from 'lodash';
 import pluralize from 'pluralize';
 import React, { FC, Fragment, ReactNode } from 'react';
 import { Link } from 'react-router-dom';
@@ -294,7 +294,7 @@ const Policy: FC<PolicyComponentProps> = ({
                 {timingOptions && (
                   // for the default policy we will also merge the default timings, that way a user can observe what the timing options would be
                   <TimingOptionsMeta
-                    timingOptions={isDefaultPolicy ? { ...timingOptions, ...TIMING_OPTIONS_DEFAULTS } : timingOptions}
+                    timingOptions={isDefaultPolicy ? defaults(timingOptions, TIMING_OPTIONS_DEFAULTS) : timingOptions}
                   />
                 )}
                 {hasInheritedProperties && (
