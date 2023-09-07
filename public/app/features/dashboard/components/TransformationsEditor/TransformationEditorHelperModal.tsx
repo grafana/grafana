@@ -2,6 +2,8 @@ import React from 'react';
 
 import { Modal } from '@grafana/ui';
 
+import { getHelperContent } from './HelperContent/getHelperContent';
+
 interface TransformationEditorHelperModalProps {
   contentType: string;
   isOpen: boolean;
@@ -13,18 +15,20 @@ export const TransformationEditorHelperModal = ({
   isOpen,
   onCloseClick,
 }: TransformationEditorHelperModalProps) => {
-  const getHelperContent = (contentType: string) => {
-    return <></>;
-  };
+  // JEV: get content and title both here
+  const { title, content } = getHelperContent(contentType);
+
+  const helpTitle = `${title} - Transformation help`;
 
   return (
     <Modal
-      title="Transformation help"
+      title={helpTitle}
       isOpen={isOpen}
       onClickBackdrop={() => onCloseClick(false)}
       onDismiss={() => onCloseClick(false)}
     >
-      {getHelperContent(contentType)}
+      {/* JEV: figure out how to remove this */}
+      {content}
     </Modal>
   );
 };
