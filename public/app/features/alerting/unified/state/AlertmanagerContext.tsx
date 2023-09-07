@@ -22,7 +22,6 @@ interface Context {
 }
 
 const AlertmanagerContext = React.createContext<Context | undefined>(undefined);
-const CONFIG_API_ENABLED_ALERTMANAGER_FLAVORS = [AlertManagerImplementation.mimir, AlertManagerImplementation.cortex];
 
 interface Props extends React.PropsWithChildren {
   accessType: 'instance' | 'notification';
@@ -65,9 +64,9 @@ const AlertmanagerProvider = ({ children, accessType, alertmanagerSourceName }: 
 
   // determine if we're dealing with an Alertmanager data source that supports the ruler API
   const isGrafanaAlertmanager = selectedAlertmanager === GRAFANA_RULES_SOURCE_NAME;
-  const isAlertmanagerWithConfigAPI = CONFIG_API_ENABLED_ALERTMANAGER_FLAVORS.includes(
-    selectedAlertmanagerConfig?.implementation!
-  );
+  const isAlertmanagerWithConfigAPI = selectedAlertmanagerConfig
+    ? isAlertManagerWithConfigAPI(selectedAlertmanagerConfig)
+    : false;
 
   const hasConfigurationAPI = isGrafanaAlertmanager || isAlertmanagerWithConfigAPI;
 
@@ -98,4 +97,16 @@ export { AlertmanagerProvider, useAlertmanager };
 function isAlertManagerAvailable(availableAlertManagers: AlertManagerDataSource[], alertManagerName: string) {
   const availableAlertManagersNames = availableAlertManagers.map((am) => am.name);
   return availableAlertManagersNames.includes(alertManagerName);
+}
+
+// when the `implementation` is set to `undefined` we assume we're dealing with an AlertManager with config API. The reason for this is because
+// our Hosted Grafana stacks provision Alertmanager data sources without `jsonData: { implementation: "mimir" }`.
+const CONFIG_API_ENABLED_ALERTMANAGER_FLAVORS = [
+  AlertManagerImplementation.mimir,
+  AlertManagerImplementation.cortex,
+  undefined,
+];
+
+export function isAlertManagerWithConfigAPI(dataSourceConfig: AlertManagerDataSourceJsonData): boolean {
+  return CONFIG_API_ENABLED_ALERTMANAGER_FLAVORS.includes(dataSourceConfig.implementation!);
 }
