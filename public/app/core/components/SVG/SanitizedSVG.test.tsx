@@ -1,5 +1,4 @@
-import { svgStyleCleanup } from './SanitizedSVG';
-import { getSvgId, getSvgStyle } from './utils';
+import { getSvgId, getSvgStyle, svgStyleCleanup } from './utils';
 
 const svgNoId =
   '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><style type="text/css">.st0{fill:purple;}</style><circle cx="12" cy="12" r="10" class="st0"/></svg>';
