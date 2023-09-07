@@ -38,7 +38,6 @@ export const PlaylistEditPage = ({ match }: Props) => {
       <Page.Contents isLoading={playlist.loading}>
         {playlist.error && (
           <div>
-            {' '}
             <Trans i18nKey="playlist-edit.errorPrefix">Error loading playlist:</Trans>
             {JSON.stringify(playlist.error)}
           </div>
