@@ -24,9 +24,17 @@ export const ContentOutlineContextProvider = ({ children }: { children: ReactNod
   const register: RegisterFunction = useCallback(({ title, icon, ref, displayOrderId }) => {
     const id = uniqueId(`${title}-${icon}_`);
 
-    setOutlineItems((prevItems) =>
-      [...prevItems, { id, title, icon, ref, displayOrderId }].sort((a, b) => a.displayOrderId - b.displayOrderId)
-    );
+    setOutlineItems((prevItems) => {
+      const updatedItems = [...prevItems, { id, title, icon, ref, displayOrderId }];
+
+      const shouldSort = updatedItems.every((item) => item.displayOrderId !== undefined);
+
+      if (shouldSort) {
+        return updatedItems.sort((a, b) => a.displayOrderId! - b.displayOrderId!);
+      }
+
+      return updatedItems;
+    });
 
     return id;
   }, []);

@@ -5,9 +5,10 @@ import { useContentOutlineContext } from './ContentOutlineContext';
 export interface ContentOutlineItemBaseProps {
   title: string;
   icon: string;
-  // used to sort the outline items
-  // TODO - make it optional
-  displayOrderId: number;
+  /**
+   * used to sort the outline items
+   */
+  displayOrderId?: number;
 }
 
 interface ContentOutlineItemProps extends ContentOutlineItemBaseProps {
