@@ -1,8 +1,5 @@
 ---
-aliases:
-  - ../data-sources/tempo/
-  - ../features/datasources/tempo/
-description: Guide for using Tempo in Grafana
+description: Link to trace IDs from logs and metrics
 keywords:
   - grafana
   - tempo
@@ -13,22 +10,26 @@ labels:
     - cloud
     - enterprise
     - oss
-menuTitle: Tempo
-title: Tempo data source
-weight: 1400
+menuTitle: Link to a trace ID
+title: Link to a trace ID
+weight: 700
 ---
 
-# Tempo data source
+# Link to a trace ID
 
-Grafana ships with built-in support for [Tempo](https://grafana.com/docs/tempo/latest/), a high-volume, minimal-dependency trace storage, open-source tracing solution from Grafana Labs. This topic explains configuration and queries specific to the Tempo data source.
+You can link to Tempo traces from logs or metrics.
 
-For instructions on how to add a data source to Grafana, refer to the [administration documentation][data-source-management].
-Only users with the organization administrator role can add data sources.
-Administrators can also [configure the data source via YAML](#provision-the-data-source) with Grafana's provisioning system.
+## Link to a trace ID from logs
 
-Once you've added the data source, you can [configure it](<{{ relref "./configure-tempo-data-source" }}>) so that your Grafana instance's users can create queries in its [query editor]({{< relref "./query-editor/" >}}) when they [build dashboards][build-dashboards] and use [Explore][explore].
+You can link to Tempo traces from logs in Loki, Elasticsearch, Splunk, and other logs data sources by configuring an internal link.
 
-{{< section withDescriptions="true">}}
+To configure this feature, see the [Derived fields]({{< relref "../loki#configure-derived-fields" >}}) section of the Loki data source docs or the [Data links]({{< relref "../elasticsearch#data-links" >}}) section of the Elasticsearch or Splunk data source docs.
+
+## Link to a trace ID from metrics
+
+You can link to Tempo traces from metrics in Prometheus data sources by configuring an exemplar.
+
+To configure this feature, see the [introduction to exemplars][exemplars] documentation.
 
 {{% docs/reference %}}
 [build-dashboards]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/build-dashboards"
