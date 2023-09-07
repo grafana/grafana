@@ -41,7 +41,7 @@ func (e *elasticsearchDataQuery) execute() (*backend.QueryDataResponse, error) {
 	queries, err := parseQuery(e.dataQueries, e.logger)
 	if err != nil {
 		mq, _ := json.Marshal(e.dataQueries)
-		e.logger.Error("Failed to parse queries", "error", err, "queries", string(mq), "queriesLength", len(queries), "duration", time.Since(start), "action", "prepareRequest")
+		e.logger.Error("Failed to parse queries", "error", err, "queries", string(mq), "queriesLength", len(queries), "duration", time.Since(start), "stage", es.StagePrepareRequest)
 		return &backend.QueryDataResponse{}, err
 	}
 
@@ -52,7 +52,7 @@ func (e *elasticsearchDataQuery) execute() (*backend.QueryDataResponse, error) {
 	for _, q := range queries {
 		if err := e.processQuery(q, ms, from, to); err != nil {
 			mq, _ := json.Marshal(q)
-			e.logger.Error("Failed to process query to multisearch request builder", "error", err, "query", string(mq), "queriesLength", len(queries), "duration", time.Since(start), "action", "prepareRequest")
+			e.logger.Error("Failed to process query to multisearch request builder", "error", err, "query", string(mq), "queriesLength", len(queries), "duration", time.Since(start), "stage", es.StagePrepareRequest)
 			return &backend.QueryDataResponse{}, err
 		}
 	}
@@ -60,11 +60,11 @@ func (e *elasticsearchDataQuery) execute() (*backend.QueryDataResponse, error) {
 	req, err := ms.Build()
 	if err != nil {
 		mqs, _ := json.Marshal(e.dataQueries)
-		e.logger.Error("Failed to build multisearch request", "error", err, "queriesLength", len(queries), "queries", string(mqs), "duration", time.Since(start), "action", "prepareRequest")
+		e.logger.Error("Failed to build multisearch request", "error", err, "queriesLength", len(queries), "queries", string(mqs), "duration", time.Since(start), "stage", es.StagePrepareRequest)
 		return &backend.QueryDataResponse{}, err
 	}
 
-	e.logger.Info("Prepared request", "queriesLength", len(queries), "duration", time.Since(start), "action", "prepareRequest")
+	e.logger.Info("Prepared request", "queriesLength", len(queries), "duration", time.Since(start), "stage", es.StagePrepareRequest)
 	res, err := e.client.ExecuteMultisearch(req)
 	if err != nil {
 		return &backend.QueryDataResponse{}, err
