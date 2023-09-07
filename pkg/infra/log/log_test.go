@@ -322,7 +322,7 @@ func TestWithContextualAttributes_appendsContext(t *testing.T) {
 			"k2", "v2",
 		})
 	})
-	t.Run("Appends arguments set in previously", func(t *testing.T) {
+	t.Run("Appends arguments set previously", func(t *testing.T) {
 		scenario := newLoggerScenario(t, false)
 
 		// logs `"k1", "v1"` with the first context
