@@ -95,7 +95,11 @@ export function useAlertSourceAbilities(): Abilities<AlertSourceAction> {
 }
 
 export function useAlertmanagerAbilities(): Abilities<AlertmanagerAction> {
-  const { selectedAlertmanager, hasConfigurationAPI, isGrafanaFlavoredAlertmanager } = useAlertmanager();
+  const {
+    selectedAlertmanager,
+    hasConfigurationAPI,
+    isGrafanaAlertmanager: isGrafanaFlavoredAlertmanager,
+  } = useAlertmanager();
 
   // These are used for interacting with Alertmanager resources where we apply alert.notifications:<name> permissions.
   // There are different permissions based on wether the built-in alertmanager is selected (grafana) or an external one.

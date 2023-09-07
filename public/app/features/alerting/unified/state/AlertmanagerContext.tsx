@@ -15,7 +15,7 @@ import {
 interface Context {
   selectedAlertmanager: string | undefined;
   hasConfigurationAPI: boolean; // returns true when a configuration API is available
-  isGrafanaFlavoredAlertmanager: boolean; // returns true if we are dealing with the built-in Alertmanager
+  isGrafanaAlertmanager: boolean; // returns true if we are dealing with the built-in Alertmanager
   selectedAlertmanagerConfig: AlertManagerDataSourceJsonData | undefined;
   availableAlertManagers: AlertManagerDataSource[];
   setSelectedAlertmanager: (name: string) => void;
@@ -74,7 +74,7 @@ const AlertmanagerProvider = ({ children, accessType, alertmanagerSourceName }: 
   const value: Context = {
     selectedAlertmanager,
     hasConfigurationAPI,
-    isGrafanaFlavoredAlertmanager: isGrafanaAlertmanager,
+    isGrafanaAlertmanager,
     selectedAlertmanagerConfig,
     availableAlertManagers,
     setSelectedAlertmanager: updateSelectedAlertmanager,
