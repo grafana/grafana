@@ -732,11 +732,10 @@ var (
 			FrontendOnly: true,
 		},
 		{
-			Name:         "sseGroupByDatasource",
-			Description:  "Send query to the same datasource in a single request when using server side expressions",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaObservabilityMetricsSquad,
-			FrontendOnly: true,
+			Name:        "sseGroupByDatasource",
+			Description: "Send query to the same datasource in a single request when using server side expressions",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaObservabilityMetricsSquad,
 		},
 	}
 )
