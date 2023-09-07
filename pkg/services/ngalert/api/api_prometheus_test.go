@@ -502,7 +502,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 				log:     log.NewNopLogger(),
 				manager: fakeAIM,
 				store:   ruleStore,
-				ac:      acmock.New().WithDisabled(),
+				ac:      acmock.New(),
 			}
 
 			response := api.RouteGetRuleStatuses(c)

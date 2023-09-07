@@ -5,7 +5,6 @@ import { contextSrv } from 'app/core/core';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { AccessControlAction } from 'app/types';
 
-import { isGrafanaAdmin } from './permissions';
 import { CatalogPlugin, LocalPlugin, RemotePlugin, Version } from './types';
 
 export function mergeLocalsAndRemotes(
@@ -283,7 +282,7 @@ export const hasInstallControlWarning = (
   latestCompatibleVersion?: Version
 ) => {
   const isExternallyManaged = config.pluginAdminExternalManageEnabled;
-  const hasPermission = contextSrv.hasAccess(AccessControlAction.PluginsInstall, isGrafanaAdmin());
+  const hasPermission = contextSrv.hasPermission(AccessControlAction.PluginsInstall);
   const isCompatible = Boolean(latestCompatibleVersion);
   return (
     plugin.type === PluginType.renderer ||

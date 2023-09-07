@@ -56,7 +56,7 @@ func (srv RulerSrv) RouteDeleteAlertRules(c *contextmodel.ReqContext, namespaceT
 	if err != nil {
 		return toNamespaceErrorResponse(err)
 	}
-	var loggerCtx = []interface{}{
+	var loggerCtx = []any{
 		"namespace",
 		namespace.Title,
 	}
@@ -90,7 +90,7 @@ func (srv RulerSrv) RouteDeleteAlertRules(c *contextmodel.ReqContext, namespaceT
 		}
 
 		if len(ruleList) == 0 {
-			logger.Debug("no alert rules to delete from namespace/group")
+			logger.Debug("No alert rules to delete from namespace/group")
 			return nil
 		}
 
@@ -235,7 +235,7 @@ func (srv RulerSrv) RouteGetRulesConfig(c *contextmodel.ReqContext) response.Res
 	result := apimodels.NamespaceConfigResponse{}
 
 	if len(namespaceMap) == 0 {
-		srv.log.Debug("user has no access to any namespaces")
+		srv.log.Debug("User has no access to any namespaces")
 		return response.JSON(http.StatusOK, result)
 	}
 
@@ -285,7 +285,7 @@ func (srv RulerSrv) RouteGetRulesConfig(c *contextmodel.ReqContext) response.Res
 	for groupKey, rules := range configs {
 		folder, ok := namespaceMap[groupKey.NamespaceUID]
 		if !ok {
-			srv.log.Error("namespace not visible to the user", "user", c.SignedInUser.UserID, "namespace", groupKey.NamespaceUID)
+			srv.log.Error("Namespace not visible to the user", "user", c.SignedInUser.UserID, "namespace", groupKey.NamespaceUID)
 			continue
 		}
 		if !authorizeAccessToRuleGroup(rules, hasAccess) {
@@ -331,7 +331,7 @@ func (srv RulerSrv) updateAlertRulesInGroup(c *contextmodel.ReqContext, groupKey
 
 		if groupChanges.IsEmpty() {
 			finalChanges = groupChanges
-			logger.Info("no changes detected in the request. Do nothing")
+			logger.Info("No changes detected in the request. Do nothing")
 			return nil
 		}
 
@@ -351,7 +351,7 @@ func (srv RulerSrv) updateAlertRulesInGroup(c *contextmodel.ReqContext, groupKey
 		}
 
 		finalChanges = store.UpdateCalculatedRuleFields(groupChanges)
-		logger.Debug("updating database with the authorized changes", "add", len(finalChanges.New), "update", len(finalChanges.New), "delete", len(finalChanges.Delete))
+		logger.Debug("Updating database with the authorized changes", "add", len(finalChanges.New), "update", len(finalChanges.New), "delete", len(finalChanges.Delete))
 
 		// Delete first as this could prevent future unique constraint violations.
 		if len(finalChanges.Delete) > 0 {
@@ -368,7 +368,7 @@ func (srv RulerSrv) updateAlertRulesInGroup(c *contextmodel.ReqContext, groupKey
 		if len(finalChanges.Update) > 0 {
 			updates := make([]ngmodels.UpdateRule, 0, len(finalChanges.Update))
 			for _, update := range finalChanges.Update {
-				logger.Debug("updating rule", "rule_uid", update.New.UID, "diff", update.Diff.String())
+				logger.Debug("Updating rule", "rule_uid", update.New.UID, "diff", update.Diff.String())
 				updates = append(updates, ngmodels.UpdateRule{
 					Existing: update.Existing,
 					New:      *update.New,

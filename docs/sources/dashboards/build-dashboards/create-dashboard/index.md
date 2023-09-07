@@ -32,13 +32,13 @@ Dashboards and panels allow you to show your data in visual form. Each panel nee
 1. Click **New** and select **New Dashboard**.
 1. On the empty dashboard, click **+ Add visualization**.
 
-   ![Empty dashboard state](/media/docs/grafana/dashboards/empty-dashboard-9.5.png)
+   ![Empty dashboard state](/media/docs/grafana/dashboards/empty-dashboard-10.2.png)
 
 1. In the modal that opens, do one of the following:
 
    - Select one of your existing data sources.
    - Select one of the Grafana's [built-in special data sources]({{< relref "../../../datasources/#special-data-sources" >}}).
-   - Click **Connect data** to set up a new one (Admins only).
+   - Click **Configure a new data source** to set up a new one (Admins only).
 
    {{< figure class="float-right"  src="/media/docs/grafana/dashboards/screenshot-data-source-selector-10.0.png" max-width="800px" alt="Select data source modal" >}}
 
