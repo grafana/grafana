@@ -108,7 +108,7 @@ export function createTableFrameFromMetricsSummaryQuery(
 
 export const transformToMetricsData = (data: MetricsSummary) => {
   const errorPercentage = data.errorSpanCount
-    ? (parseInt(data.errorSpanCount, 10) / parseInt(data.spanCount, 10)) * 100
+    ? (getNumberForMetric(data.errorSpanCount) / getNumberForMetric(data.spanCount)) * 100
     : '0%';
 
   const metricsData: MetricsData = {
