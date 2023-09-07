@@ -34,7 +34,7 @@ interface Props<R extends ChannelValues> {
   initialValues?: ReceiverFormValues<R>;
   isEditable: boolean;
   isTestable?: boolean;
-  customValidators?: React.ComponentProps<typeof ChannelSubForm>['customValidators'];
+  customValidators?: Record<string, React.ComponentProps<typeof ChannelSubForm>['customValidators']>;
 }
 
 export function ReceiverForm<R extends ChannelValues>({
@@ -167,7 +167,7 @@ export function ReceiverForm<R extends ChannelValues>({
               commonSettingsComponent={commonSettingsComponent}
               isEditable={isEditable}
               isTestable={isTestable}
-              customValidators={customValidators}
+              customValidators={customValidators ? customValidators[field.type] : undefined}
             />
           );
         })}
