@@ -23,7 +23,7 @@ labels:
     - oss
 menuTitle: Table
 title: Table
-weight: 1000
+weight: 100
 ---
 
 # Table

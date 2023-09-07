@@ -96,7 +96,7 @@ func instrumentPluginRequest(ctx context.Context, cfg Cfg, pluginCtx *backend.Pl
 	}
 
 	if cfg.LogDatasourceRequests {
-		logParams := []interface{}{
+		logParams := []any{
 			"status", status,
 			"duration", elapsed,
 			"pluginId", pluginCtx.PluginID,

@@ -12,7 +12,7 @@ import (
 	"xorm.io/core"
 )
 
-func setColumnInt(bean interface{}, col *core.Column, t int64) {
+func setColumnInt(bean any, col *core.Column, t int64) {
 	v, err := col.ValueOf(bean)
 	if err != nil {
 		return
@@ -27,7 +27,7 @@ func setColumnInt(bean interface{}, col *core.Column, t int64) {
 	}
 }
 
-func setColumnTime(bean interface{}, col *core.Column, t time.Time) {
+func setColumnTime(bean any, col *core.Column, t time.Time) {
 	v, err := col.ValueOf(bean)
 	if err != nil {
 		return

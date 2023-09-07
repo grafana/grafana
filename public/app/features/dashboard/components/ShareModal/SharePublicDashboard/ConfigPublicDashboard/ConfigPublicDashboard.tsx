@@ -21,7 +21,6 @@ import { getTimeRange } from 'app/features/dashboard/utils/timeRange';
 import { contextSrv } from '../../../../../../core/services/context_srv';
 import { AccessControlAction, useSelector } from '../../../../../../types';
 import { DeletePublicDashboardButton } from '../../../../../manage-dashboards/components/PublicDashboardListTable/DeletePublicDashboardButton';
-import { isOrgAdmin } from '../../../../../plugins/admin/permissions';
 import { useGetPublicDashboardQuery, useUpdatePublicDashboardMutation } from '../../../../api/publicDashboardApi';
 import { useIsDesktop } from '../../../../utils/screen';
 import { ShareModal } from '../../ShareModal';
@@ -55,7 +54,7 @@ const ConfigPublicDashboard = () => {
   const isDesktop = useIsDesktop();
   const { showModal, hideModal } = useContext(ModalsContext);
 
-  const hasWritePermissions = contextSrv.hasAccess(AccessControlAction.DashboardsPublicWrite, isOrgAdmin());
+  const hasWritePermissions = contextSrv.hasPermission(AccessControlAction.DashboardsPublicWrite);
   const hasEmailSharingEnabled =
     !!config.featureToggles.publicDashboardsEmailSharing && featureEnabled('publicDashboardsEmailSharing');
   const dashboardState = useSelector((store) => store.dashboard);

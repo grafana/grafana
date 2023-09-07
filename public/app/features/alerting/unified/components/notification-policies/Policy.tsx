@@ -12,7 +12,6 @@ import ConditionalWrap from 'app/features/alerting/components/ConditionalWrap';
 import { RouteWithID, Receiver, ObjectMatcher, AlertmanagerGroup } from 'app/plugins/datasource/alertmanager/types';
 import { ReceiversState } from 'app/types';
 
-import { isOrgAdmin } from '../../../../plugins/admin/permissions';
 import { AlertmanagerAction, useAlertmanagerAbility } from '../../hooks/useAbilities';
 import { INTEGRATION_ICONS } from '../../types/contact-points';
 import { getNotificationsPermissions } from '../../utils/access-control';
@@ -86,7 +85,7 @@ const Policy: FC<PolicyComponentProps> = ({
   const canEditRoutes = updateTreeSupported && updateTreeAllowed;
 
   const canReadProvisioning =
-    contextSrv.hasAccess(permissions.provisioning.read, isOrgAdmin()) ||
+    contextSrv.hasPermission(permissions.provisioning.read) ||
     contextSrv.hasPermission(permissions.provisioning.readSecrets);
 
   const contactPoint = currentRoute.receiver;

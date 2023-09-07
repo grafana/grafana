@@ -35,7 +35,7 @@ func (promQLQ *cloudMonitoringProm) run(ctx context.Context, req *backend.QueryD
 	span := traceReq(ctx, tracer, req, dsInfo, r, "")
 	defer span.End()
 
-	requestBody := map[string]interface{}{
+	requestBody := map[string]any{
 		"query": promQLQ.parameters.Expr,
 		"end":   formatTime(promQLQ.timeRange.To),
 		"start": formatTime(promQLQ.timeRange.From),
@@ -56,7 +56,7 @@ func (promQLQ *cloudMonitoringProm) run(ctx context.Context, req *backend.QueryD
 	return dr, parseProm(res), r.URL.RawQuery, nil
 }
 
-func doRequestProm(r *http.Request, dsInfo datasourceInfo, body map[string]interface{}) (*http.Response, error) {
+func doRequestProm(r *http.Request, dsInfo datasourceInfo, body map[string]any) (*http.Response, error) {
 	if body != nil {
 		buf, err := json.Marshal(body)
 		if err != nil {

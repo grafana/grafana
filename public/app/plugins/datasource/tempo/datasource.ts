@@ -1,6 +1,7 @@
 import { identity, pick, pickBy, groupBy, startCase } from 'lodash';
 import { EMPTY, from, lastValueFrom, merge, Observable, of, throwError } from 'rxjs';
 import { catchError, concatMap, map, mergeMap, toArray } from 'rxjs/operators';
+import semver from 'semver';
 
 import {
   CoreApp,
@@ -39,6 +40,7 @@ import { PrometheusDatasource } from '../prometheus/datasource';
 import { PromQuery } from '../prometheus/types';
 
 import { generateQueryFromFilters } from './SearchTraceQLEditor/utils';
+import { TempoVariableQuery, TempoVariableQueryType } from './VariableQueryEditor';
 import { TraceqlFilter, TraceqlSearchScope } from './dataquery.gen';
 import {
   failedMetric,
@@ -63,8 +65,25 @@ import {
 import { doTempoChannelStream } from './streaming';
 import { SearchQueryParams, TempoQuery, TempoJsonData } from './types';
 import { getErrorMessage } from './utils';
+import { TempoVariableSupport } from './variables';
 
 export const DEFAULT_LIMIT = 20;
+
+enum FeatureName {
+  streaming = 'streaming',
+}
+
+/* Map, for each feature (e.g., streaming), the minimum Tempo version required to have that
+ ** feature available. If the running Tempo instance on the user's backend is older than the
+ ** target version, the feature is disabled in Grafana (frontend).
+ */
+const featuresToTempoVersion = {
+  [FeatureName.streaming]: '2.2.0',
+};
+
+// The version that we use as default in case we cannot retrieve it from the backend.
+// This is the last minor version of Tempo that does not expose the endpoint for build information.
+const defaultTempoVersion = '2.1.0';
 
 export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJsonData> {
   tracesToLogs?: TraceToLogsOptions;
@@ -87,6 +106,9 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
   uploadedJson?: string | ArrayBuffer | null = null;
   spanBar?: SpanBarOptions;
   languageProvider: TempoLanguageProvider;
+
+  // The version of Tempo running on the backend. `null` if we cannot retrieve it for whatever reason
+  tempoVersion?: string | null;
 
   constructor(
     private instanceSettings: DataSourceInstanceSettings<TempoJsonData>,
@@ -114,6 +136,108 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
           { id: 'span-name', tag: 'name', operator: '=', scope: TraceqlSearchScope.Span },
         ],
       };
+    }
+
+    this.variables = new TempoVariableSupport(this);
+  }
+
+  async executeVariableQuery(query: TempoVariableQuery) {
+    // Avoid failing if the user did not select the query type (label names, label values, etc.)
+    if (query.type === undefined) {
+      return new Promise<Array<{ text: string }>>(() => []);
+    }
+
+    switch (query.type) {
+      case TempoVariableQueryType.LabelNames: {
+        return await this.labelNamesQuery();
+      }
+      case TempoVariableQueryType.LabelValues: {
+        return this.labelValuesQuery(query.label);
+      }
+      default: {
+        throw Error('Invalid query type', query.type);
+      }
+    }
+  }
+
+  async labelNamesQuery(): Promise<Array<{ text: string }>> {
+    await this.languageProvider.fetchTags();
+    const tags = this.languageProvider.getAutocompleteTags();
+    return tags.filter((tag) => tag !== undefined).map((tag) => ({ text: tag })) as Array<{ text: string }>;
+  }
+
+  async labelValuesQuery(labelName?: string): Promise<Array<{ text: string }>> {
+    if (!labelName) {
+      return [];
+    }
+
+    let options;
+    try {
+      // Retrieve the scope of the tag
+      // Example: given `http.status_code`, we want scope `span`
+      // Note that we ignore possible name clashes, e.g., `http.status_code` in both `span` and `resource`
+      const scope: string | undefined = (this.languageProvider.tagsV2 || [])
+        // flatten the Scope objects
+        .flatMap((tagV2) => tagV2.tags.map((tag) => ({ scope: tagV2.name, name: tag })))
+        // find associated scope
+        .find((tag) => tag.name === labelName)?.scope;
+      if (!scope) {
+        throw Error(`Scope for tag ${labelName} not found`);
+      }
+
+      // For V2, we need to send scope and tag name, e.g. `span.http.status_code`,
+      // unless the tag has intrinsic scope
+      const scopeAndTag = scope === 'intrinsic' ? labelName : `${scope}.${labelName}`;
+      options = await this.languageProvider.getOptionsV2(scopeAndTag);
+    } catch {
+      // For V1, the tag name (e.g. `http.status_code`) is enough
+      options = await this.languageProvider.getOptionsV1(labelName);
+    }
+
+    return options.filter((option) => option.value !== undefined).map((option) => ({ text: option.value })) as Array<{
+      text: string;
+    }>;
+  }
+
+  init = async () => {
+    const response = await lastValueFrom(
+      this._request('/api/status/buildinfo').pipe(
+        map((response) => response),
+        catchError((error) => {
+          console.error('Failure in retrieving build information', error.data.message);
+          return of({ error, data: { version: null } }); // unknown version
+        })
+      )
+    );
+    this.tempoVersion = response.data.version;
+  };
+
+  /**
+   * Check, for the given feature, whether it is available in Grafana.
+   *
+   * The check is done based on the version of the Tempo instance running on the backend and
+   * the minimum version required by the given feature to work.
+   *
+   * @param featureName - the name of the feature to consider
+   * @return true if the feature is available, false otherwise
+   */
+  private isFeatureAvailable(featureName: FeatureName) {
+    // We know for old Tempo instances we don't know their version, so resort to default
+    const actualVersion = this.tempoVersion ?? defaultTempoVersion;
+
+    try {
+      return semver.gte(actualVersion, featuresToTempoVersion[featureName]);
+    } catch {
+      // An error could happen if Tempo is running locally. In that case, the version is not a semantic version
+      // and instead it is in the form `<branch>-<revision>`, possibly with a `-WIP` suffix (e.g., `main-12bdeff-WIP`).
+      // Thus, if the version is in the form `<branch>-<revision>`, assume that we are on the most updated
+      // Tempo version and thus any feature should be considered enabled
+      if (/^.*-[a-zA-Z0-9_]{7}(-WIP)?$/.test(actualVersion)) {
+        return true;
+      }
+
+      console.error(`Cannot compare ${actualVersion} and ${featuresToTempoVersion[featureName]}`);
+      return false;
     }
   }
 
@@ -229,7 +353,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
             streaming: config.featureToggles.traceQLStreaming,
           });
 
-          if (config.featureToggles.traceQLStreaming) {
+          if (config.featureToggles.traceQLStreaming && this.isFeatureAvailable(FeatureName.streaming)) {
             subQueries.push(this.handleStreamingSearch(options, targets.traceql, queryValue));
           } else {
             subQueries.push(
@@ -282,7 +406,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
             streaming: config.featureToggles.traceQLStreaming,
           });
 
-          if (config.featureToggles.traceQLStreaming) {
+          if (config.featureToggles.traceQLStreaming && this.isFeatureAvailable(FeatureName.streaming)) {
             subQueries.push(this.handleStreamingSearch(options, traceqlSearchTargets, queryValue));
           } else {
             subQueries.push(

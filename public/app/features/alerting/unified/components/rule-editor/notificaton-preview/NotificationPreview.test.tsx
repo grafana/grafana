@@ -135,7 +135,7 @@ describe('NotificationPreview', () => {
     mockOneAlertManager();
     mockPreviewApiResponse(server, [{ labels: [{ tomato: 'red', avocate: 'green' }] }]);
 
-    render(<NotificationPreview alertQueries={[alertQuery]} customLabels={[]} condition="" folder={folder} />, {
+    render(<NotificationPreview alertQueries={[alertQuery]} customLabels={[]} condition="A" folder={folder} />, {
       wrapper: TestProvider,
     });
 
@@ -143,20 +143,25 @@ describe('NotificationPreview', () => {
     await waitFor(() => {
       expect(ui.loadingIndicator.query()).not.toBeInTheDocument();
     });
-    // we expect the alert manager label to be missing as there is only one alert manager configured to receive alerts
-    expect(ui.grafanaAlertManagerLabel.query()).not.toBeInTheDocument();
-    expect(ui.otherAlertManagerLabel.query()).not.toBeInTheDocument();
 
-    const matchingPoliciesElements = ui.route.queryAll();
-    expect(matchingPoliciesElements).toHaveLength(1);
-    expect(matchingPoliciesElements[0]).toHaveTextContent(/tomato = red/);
+    // we expect the alert manager label to be missing as there is only one alert manager configured to receive alerts
+    await waitFor(() => {
+      expect(ui.grafanaAlertManagerLabel.query()).not.toBeInTheDocument();
+      expect(ui.otherAlertManagerLabel.query()).not.toBeInTheDocument();
+    });
+
+    await waitFor(() => {
+      const matchingPoliciesElements = ui.route.queryAll();
+      expect(matchingPoliciesElements).toHaveLength(1);
+      expect(matchingPoliciesElements[0]).toHaveTextContent(/tomato = red/);
+    });
   });
   it('should render notification preview with alert manager sections, when having more than one alert manager configured to receive alerts', async () => {
     // two alert managers configured  to receive alerts
     mockTwoAlertManagers();
     mockPreviewApiResponse(server, [{ labels: [{ tomato: 'red', avocate: 'green' }] }]);
 
-    render(<NotificationPreview alertQueries={[alertQuery]} customLabels={[]} condition="" folder={folder} />, {
+    render(<NotificationPreview alertQueries={[alertQuery]} customLabels={[]} condition="A" folder={folder} />, {
       wrapper: TestProvider,
     });
     await waitFor(() => {
@@ -167,14 +172,12 @@ describe('NotificationPreview', () => {
     await waitFor(() => {
       expect(ui.loadingIndicator.query()).not.toBeInTheDocument();
     });
-    await waitFor(() => {
-      expect(ui.loadingIndicator.query()).not.toBeInTheDocument();
-    });
 
     // we expect the alert manager label to be present as there is more than one alert manager configured to receive alerts
-    expect(ui.grafanaAlertManagerLabel.query()).toBeInTheDocument();
-
-    expect(ui.otherAlertManagerLabel.query()).toBeInTheDocument();
+    await waitFor(() => {
+      expect(ui.grafanaAlertManagerLabel.query()).toBeInTheDocument();
+      expect(ui.otherAlertManagerLabel.query()).toBeInTheDocument();
+    });
 
     const matchingPoliciesElements = ui.route.queryAll();
     expect(matchingPoliciesElements).toHaveLength(2);
@@ -187,7 +190,7 @@ describe('NotificationPreview', () => {
     mockPreviewApiResponse(server, [{ labels: [{ tomato: 'red', avocate: 'green' }] }]);
     mockHasEditPermission(true);
 
-    render(<NotificationPreview alertQueries={[alertQuery]} customLabels={[]} condition="" folder={folder} />, {
+    render(<NotificationPreview alertQueries={[alertQuery]} customLabels={[]} condition="A" folder={folder} />, {
       wrapper: TestProvider,
     });
     await waitFor(() => {
@@ -218,7 +221,7 @@ describe('NotificationPreview', () => {
     mockPreviewApiResponse(server, [{ labels: [{ tomato: 'red', avocate: 'green' }] }]);
     mockHasEditPermission(false);
 
-    render(<NotificationPreview alertQueries={[alertQuery]} customLabels={[]} condition="" folder={folder} />, {
+    render(<NotificationPreview alertQueries={[alertQuery]} customLabels={[]} condition="A" folder={folder} />, {
       wrapper: TestProvider,
     });
     await waitFor(() => {

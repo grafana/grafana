@@ -1,4 +1,4 @@
-import { SceneGridItem, SceneGridLayout, VizPanel } from '@grafana/scenes';
+import { sceneGraph, SceneGridItem, SceneGridLayout, VizPanel } from '@grafana/scenes';
 
 import { DashboardScene } from './DashboardScene';
 
@@ -6,8 +6,8 @@ describe('DashboardScene', () => {
   describe('Given a standard scene', () => {
     it('Should set inspectPanelKey when url has inspect key', () => {
       const scene = buildTestScene();
-      scene.urlSync?.updateFromUrl({ inspect: 'panel-2' });
-      expect(scene.state.inspectPanelKey).toBe('panel-2');
+      scene.urlSync?.updateFromUrl({ inspect: '2' });
+      expect(scene.state.inspectPanelKey).toBe('2');
     });
 
     it('Should handle inspect key that is not found', () => {
@@ -18,8 +18,36 @@ describe('DashboardScene', () => {
 
     it('Should set viewPanelKey when url has viewPanel', () => {
       const scene = buildTestScene();
-      scene.urlSync?.updateFromUrl({ viewPanel: 'panel-2' });
-      expect(scene.state.viewPanelKey).toBe('panel-2');
+      scene.urlSync?.updateFromUrl({ viewPanel: '2' });
+      expect(scene.state.viewPanelKey).toBe('2');
+    });
+  });
+
+  describe('Editing and discarding', () => {
+    describe('Given scene in edit mode', () => {
+      let scene: DashboardScene;
+
+      beforeEach(() => {
+        scene = buildTestScene();
+        scene.onEnterEditMode();
+      });
+
+      it('Should set isEditing to true', () => {
+        expect(scene.state.isEditing).toBe(true);
+      });
+
+      it('A change to griditem pos should set isDirty true', () => {
+        const gridItem = sceneGraph.findObject(scene, (p) => p.state.key === 'griditem-1') as SceneGridItem;
+        gridItem.setState({ x: 10, y: 0, width: 10, height: 10 });
+
+        expect(scene.state.isDirty).toBe(true);
+
+        // verify can discard change
+        scene.onDiscard();
+
+        const gridItem2 = sceneGraph.findObject(scene, (p) => p.state.key === 'griditem-1') as SceneGridItem;
+        expect(gridItem2.state.x).toBe(0);
+      });
     });
   });
 });
@@ -30,6 +58,8 @@ function buildTestScene() {
     body: new SceneGridLayout({
       children: [
         new SceneGridItem({
+          key: 'griditem-1',
+          x: 0,
           body: new VizPanel({
             title: 'Panel A',
             key: 'panel-1',

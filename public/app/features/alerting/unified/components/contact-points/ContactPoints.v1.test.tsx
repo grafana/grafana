@@ -1,14 +1,12 @@
 import { render, waitFor, within, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { setupServer } from 'msw/node';
 import React from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
 import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
 import { byLabelText, byPlaceholderText, byRole, byTestId, byText } from 'testing-library-selector';
 
-import { locationService, setBackendSrv, setDataSourceSrv } from '@grafana/runtime';
+import { locationService, setDataSourceSrv } from '@grafana/runtime';
 import { interceptLinkClicks } from 'app/core/navigation/patch/interceptLinkClicks';
-import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
 import store from 'app/core/store';
 import {
@@ -19,6 +17,7 @@ import {
 import { AccessControlAction, ContactPointsState } from 'app/types';
 
 import 'whatwg-fetch';
+import 'core-js/stable/structured-clone';
 
 import { fetchAlertManagerConfig, fetchStatus, testReceivers, updateAlertManagerConfig } from '../../api/alertmanager';
 import { AlertmanagersChoiceResponse } from '../../api/alertmanagerApi';
@@ -26,10 +25,12 @@ import { discoverAlertmanagerFeatures } from '../../api/buildInfo';
 import { fetchNotifiers } from '../../api/grafana';
 import * as receiversApi from '../../api/receiversApi';
 import * as grafanaApp from '../../components/receivers/grafanaAppReceivers/grafanaApp';
+import { mockApi, setupMswServer } from '../../mockApi';
 import {
   grantUserPermissions,
   mockDataSource,
   MockDataSourceSrv,
+  onCallPluginMetaMock,
   someCloudAlertManagerConfig,
   someCloudAlertManagerStatus,
   someGrafanaAlertManagerConfig,
@@ -148,21 +149,16 @@ const emptyContactPointsState: ContactPointsState = { receivers: {}, errorCount:
 
 const useGetGrafanaReceiverTypeCheckerMock = jest.spyOn(grafanaApp, 'useGetGrafanaReceiverTypeChecker');
 
+const server = setupMswServer();
+
 describe('Receivers', () => {
-  const server = setupServer();
-
-  beforeAll(() => {
-    setBackendSrv(backendSrv);
-    server.listen({ onUnhandledRequest: 'error' });
-  });
-
-  afterAll(() => {
-    server.close();
-  });
-
   beforeEach(() => {
     server.resetHandlers();
     jest.resetAllMocks();
+
+    mockApi(server).grafanaNotifiers(grafanaNotifiersMock);
+    mockApi(server).plugins.getPluginSettings(onCallPluginMetaMock);
+
     useGetGrafanaReceiverTypeCheckerMock.mockReturnValue(() => undefined);
     mocks.getAllDataSources.mockReturnValue(Object.values(dataSources));
     mocks.api.fetchNotifiers.mockResolvedValue(grafanaNotifiersMock);

@@ -79,7 +79,7 @@ export const MuteTimingsTable = ({ alertManagerSourceName, muteTimingNames, hide
         )}
       </Stack>
       {items.length > 0 ? (
-        <DynamicTable items={items} cols={columns} />
+        <DynamicTable items={items} cols={columns} pagination={{ itemsPerPage: 25 }} />
       ) : !hideActions ? (
         <EmptyAreaWithCTA
           text="You haven't created any mute timings yet"

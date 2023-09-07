@@ -37,7 +37,6 @@ let props = {
   detailTagsToggle: jest.fn(),
   detailToggle: jest.fn(),
   findMatchesIDs: null,
-  registerAccessors: jest.fn(),
   setSpanNameColumnWidth: jest.fn(),
   spanNameColumnWidth: 0.5,
   trace,
