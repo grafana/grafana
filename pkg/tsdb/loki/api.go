@@ -167,11 +167,11 @@ func (api *LokiAPI) DataQuery(ctx context.Context, query lokiQuery, responseOpts
 		if errors.Is(err, context.Canceled) {
 			status = "cancelled"
 		}
-		api.log.Error("Error received from Loki", "error", err, "status", status, "statusCode", resp.StatusCode, "duration", time.Since(start), "action", "databaseRequest")
+		api.log.Error("Error received from Loki", "error", err, "status", status, "statusCode", resp.StatusCode, "duration", time.Since(start), "stage", stageDatabaseRequest)
 		return nil, err
 	}
 
-	api.log.Info("Response received from loki", "duration", time.Since(start), "statusCode", resp.StatusCode, "contentLength", resp.Header.Get("Content-Length"), "action", "databaseRequest", "status", "ok")
+	api.log.Info("Response received from loki", "duration", time.Since(start), "statusCode", resp.StatusCode, "contentLength", resp.Header.Get("Content-Length"), "stage", stageDatabaseRequest, "status", "ok")
 
 	defer func() {
 		if err := resp.Body.Close(); err != nil {
@@ -196,11 +196,11 @@ func (api *LokiAPI) DataQuery(ctx context.Context, query lokiQuery, responseOpts
 	if res.Error != nil {
 		span.RecordError(res.Error)
 		span.SetStatus(codes.Error, err.Error())
-		logger.Error("Error parsing response from loki", "error", res.Error, "metricDataplane", responseOpts.metricDataplane, "duration", time.Since(start), "action", "parseResponse")
+		logger.Error("Error parsing response from loki", "error", res.Error, "metricDataplane", responseOpts.metricDataplane, "duration", time.Since(start), "stage", stageParseResponse)
 		return nil, res.Error
 	}
 
-	logger.Info("Response parsed from loki", "duration", time.Since(start), "metricDataplane", responseOpts.metricDataplane, "framesLength", len(res.Frames), "action", "parseResponse")
+	logger.Info("Response parsed from loki", "duration", time.Since(start), "metricDataplane", responseOpts.metricDataplane, "framesLength", len(res.Frames), "stage", stageParseResponse)
 
 	return res.Frames, nil
 }
@@ -243,7 +243,7 @@ func (api *LokiAPI) RawQuery(ctx context.Context, resourcePath string) (RawLokiR
 		if errors.Is(err, context.Canceled) {
 			status = "cancelled"
 		}
-		api.log.Error("Error received from Loki", "error", err, "resourcePath", resourcePath, "status", status, "statusCode", resp.StatusCode, "duration", time.Since(start), "action", "databaseRequest")
+		api.log.Error("Error received from Loki", "error", err, "resourcePath", resourcePath, "status", status, "statusCode", resp.StatusCode, "duration", time.Since(start), "stage", stageDatabaseRequest)
 		return RawLokiResponse{}, err
 	}
 
@@ -253,7 +253,7 @@ func (api *LokiAPI) RawQuery(ctx context.Context, resourcePath string) (RawLokiR
 		}
 	}()
 
-	api.log.Info("Response received from loki", "status", "ok", "statusCode", resp.StatusCode, "contentLength", resp.Header.Get("Content-Length"), "duration", time.Since(start), "contentEncoding", resp.Header.Get("Content-Encoding"), "action", "databaseRequest")
+	api.log.Info("Response received from loki", "status", "ok", "statusCode", resp.StatusCode, "contentLength", resp.Header.Get("Content-Length"), "duration", time.Since(start), "contentEncoding", resp.Header.Get("Content-Encoding"), "stage", stageDatabaseRequest)
 
 	// server errors are handled by the plugin-proxy to hide the error message
 	if resp.StatusCode/100 == 5 {

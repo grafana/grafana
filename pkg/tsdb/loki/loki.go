@@ -53,6 +53,13 @@ var (
 	legendFormat = regexp.MustCompile(`\{\{\s*(.+?)\s*\}\}`)
 )
 
+// Used in logging to mark a stage
+var (
+	stagePrepareRequest  = "prepareRequest"
+	stageDatabaseRequest = "databaseRequest"
+	stageParseResponse   = "parseResponse"
+)
+
 type datasourceInfo struct {
 	HTTPClient *http.Client
 	URL        string
@@ -178,10 +185,10 @@ func queryData(ctx context.Context, req *backend.QueryDataRequest, dsInfo *datas
 	start := time.Now()
 	queries, err := parseQuery(req)
 	if err != nil {
-		plog.Error("Failed to prepare request to Loki", "error", err, "duration", time.Since(start), "queriesLength", len(queries), "action", "prepareRequest")
+		plog.Error("Failed to prepare request to Loki", "error", err, "duration", time.Since(start), "queriesLength", len(queries), "stage", stagePrepareRequest)
 		return result, err
 	}
-	plog.Info("Prepared request to Loki", "duration", time.Since(start), "queriesLength", len(queries), "action", "prepareRequest")
+	plog.Info("Prepared request to Loki", "duration", time.Since(start), "queriesLength", len(queries), "stage", stagePrepareRequest)
 
 	for _, query := range queries {
 		ctx, span := tracer.Start(ctx, "datasource.loki.queryData.runQuery")
