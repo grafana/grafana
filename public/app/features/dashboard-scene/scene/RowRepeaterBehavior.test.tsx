@@ -39,6 +39,15 @@ describe('RowRepeaterBehavior', () => {
 
     // Panel at the top is 10, each row is (1+5)*5 = 30, so the grid item below it should be 40
     expect(rowAtTheBottom.state.y).toBe(40);
+
+    // trigger another repeat cycle by changing the variable
+    const variable = scene.state.$variables!.state.variables[0] as TestVariable;
+    variable.changeValueTo(['2', '3']);
+
+    await new Promise((r) => setTimeout(r, 1));
+
+    // should now only have 2 repeated rows (and the panel above + the row at the bottom)
+    expect(grid.state.children.length).toBe(4);
   });
 });
 

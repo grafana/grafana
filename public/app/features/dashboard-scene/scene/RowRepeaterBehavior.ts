@@ -115,36 +115,7 @@ export class RowRepeaterBehavior extends SceneObjectBase<RowRepeaterBehaviorStat
       rows.push(rowClone);
     }
 
-    this.updateLayout(layout, rows, maxYOfRows);
-  }
-
-  updateLayout(layout: SceneGridLayout, rows: SceneGridRow[], maxYOfRows: number) {
-    const allChildren = layout.state.children;
-    const index = allChildren.indexOf(this.parent!);
-
-    if (index === -1) {
-      throw new Error('RowRepeaterBehavior: Parent row not found in layout children');
-    }
-
-    const newChildren = [...allChildren.slice(0, index), ...rows, ...allChildren.slice(index + 1)];
-
-    // Is there grid items after rows?
-    if (allChildren.length > index + 1) {
-      const childrenAfter = allChildren.slice(index + 1);
-      const firstChildAfterY = childrenAfter[0].state.y!;
-      const diff = maxYOfRows - firstChildAfterY;
-
-      console.log('maxYOfRows', maxYOfRows);
-      console.log('Children after diff', diff);
-
-      for (const child of childrenAfter) {
-        if (child.state.y! < maxYOfRows) {
-          child.setState({ y: child.state.y! + diff });
-        }
-      }
-    }
-
-    layout.setState({ children: newChildren });
+    updateLayout(layout, rows, maxYOfRows, rowToRepeat);
   }
 
   getRowClone(
@@ -213,4 +184,43 @@ function getRowContentHeight(panels: SceneGridItemLike[]): number {
   }
 
   return maxY - minY;
+}
+
+function updateLayout(layout: SceneGridLayout, rows: SceneGridRow[], maxYOfRows: number, rowToRepeat: SceneGridRow) {
+  const allChildren = getLayoutChildrenFilterOutRepeatClones(layout, rowToRepeat);
+  const index = allChildren.indexOf(rowToRepeat);
+
+  if (index === -1) {
+    throw new Error('RowRepeaterBehavior: Parent row not found in layout children');
+  }
+
+  const newChildren = [...allChildren.slice(0, index), ...rows, ...allChildren.slice(index + 1)];
+
+  // Is there grid items after rows?
+  if (allChildren.length > index + 1) {
+    const childrenAfter = allChildren.slice(index + 1);
+    const firstChildAfterY = childrenAfter[0].state.y!;
+    const diff = maxYOfRows - firstChildAfterY;
+
+    console.log('maxYOfRows', maxYOfRows);
+    console.log('Children after diff', diff);
+
+    for (const child of childrenAfter) {
+      if (child.state.y! < maxYOfRows) {
+        child.setState({ y: child.state.y! + diff });
+      }
+    }
+  }
+
+  layout.setState({ children: newChildren });
+}
+
+function getLayoutChildrenFilterOutRepeatClones(layout: SceneGridLayout, rowToRepeat: SceneGridRow) {
+  return layout.state.children.filter((child) => {
+    if (child.state.key?.startsWith(`${rowToRepeat.state.key}-clone-`)) {
+      return false;
+    }
+
+    return true;
+  });
 }
