@@ -14,7 +14,6 @@ correlations,preview,@grafana/explore-squad,false,false,false,false
 datasourceQueryMultiStatus,experimental,@grafana/plugins-platform-backend,false,false,false,false
 traceToMetrics,experimental,@grafana/observability-traces-and-profiling,false,false,false,true
 newDBLibrary,preview,@grafana/backend-platform,false,false,false,false
-validateDashboardsOnSave,preview,@grafana/grafana-as-code,false,false,true,false
 autoMigrateOldPanels,preview,@grafana/dataviz-squad,false,false,false,true
 disableAngular,preview,@grafana/dataviz-squad,false,false,false,true
 canvasPanelNesting,experimental,@grafana/dataviz-squad,false,false,false,true
@@ -104,4 +103,5 @@ alertingNoDataErrorExecution,privatePreview,@grafana/alerting-squad,false,false,
 angularDeprecationUI,experimental,@grafana/plugins-platform-backend,false,false,false,true
 dashgpt,experimental,@grafana/dashboards-squad,false,false,false,true
 reportingRetries,preview,@grafana/sharing-squad,false,false,true,false
+newBrowseDashboards,preview,@grafana/grafana-frontend-platform,false,false,false,true
 requestInstrumentationStatusSource,experimental,@grafana/plugins-platform-backend,false,false,false,false
