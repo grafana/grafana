@@ -83,7 +83,7 @@ This metric is a histogram that shows you the number of seconds taken to send no
 
 > These metrics are not available at present in Grafana Cloud.
 
-## Metrics for Grafana Mimir
+## Metrics for Mimir-managed alerts
 
 {{% admonition type="note" %}}
 This metric is available in OSS, on-premise, and Grafana Cloud.
