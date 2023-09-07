@@ -40,7 +40,7 @@ interface ContentOutlineProps {
 
 const ContentOutline = ({ visible }: ContentOutlineProps) => {
   const [expanded, toggleExpanded] = useToggle(false);
-  const style = useStyles2((theme) => getStyles(theme, expanded, visible));
+  const styles = useStyles2((theme) => getStyles(theme, expanded, visible));
   const { outlineItems } = useContentOutlineContext();
 
   const scrollIntoView = (ref: HTMLElement | null) => {
@@ -48,10 +48,10 @@ const ContentOutline = ({ visible }: ContentOutlineProps) => {
   };
 
   return (
-    <div className={style.wrapper}>
-      <div className={style.content}>
+    <div className={styles.wrapper}>
+      <div className={styles.content}>
         <ToolbarButton
-          className={style.buttonStyles}
+          className={styles.buttonStyles}
           icon={expanded ? 'angle-left' : 'angle-right'}
           onClick={toggleExpanded}
         >
@@ -60,7 +60,7 @@ const ContentOutline = ({ visible }: ContentOutlineProps) => {
         {outlineItems.map((item) => (
           <ToolbarButton
             key={item.id}
-            className={style.buttonStyles}
+            className={styles.buttonStyles}
             icon={item.icon}
             onClick={() => scrollIntoView(item.ref)}
           >

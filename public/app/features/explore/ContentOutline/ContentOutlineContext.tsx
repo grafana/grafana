@@ -1,28 +1,33 @@
 import { uniqueId } from 'lodash';
 import React, { useState, useContext, createContext, ReactNode, useCallback } from 'react';
 
-interface OutlineItem {
+import { ContentOutlineItemBaseProps } from './ContentOutlineItem';
+
+export interface ContentOutlineItemContextProps extends ContentOutlineItemBaseProps {
   id: string;
-  title: string;
-  icon: string;
   ref: HTMLElement | null;
 }
 
+type RegisterFunction = ({ title, icon, ref, displayOrderId }: Omit<ContentOutlineItemContextProps, 'id'>) => string;
+
 interface ContentOutlineContextProps {
-  outlineItems: OutlineItem[];
-  register: (item: Omit<OutlineItem, 'id'>) => string;
+  outlineItems: ContentOutlineItemContextProps[];
+  register: RegisterFunction;
   unregister: (id: string) => void;
 }
 
 const ContentOutlineContext = createContext<ContentOutlineContextProps | undefined>(undefined);
 
 export const ContentOutlineContextProvider = ({ children }: { children: ReactNode }) => {
-  const [outlineItems, setOutlineItems] = useState<OutlineItem[]>([]);
-  console.log('outlineItems', outlineItems);
+  const [outlineItems, setOutlineItems] = useState<ContentOutlineItemContextProps[]>([]);
 
-  const register = useCallback(({ title, icon, ref }: Omit<OutlineItem, 'id'>): string => {
+  const register: RegisterFunction = useCallback(({ title, icon, ref, displayOrderId }) => {
     const id = uniqueId(`${title}-${icon}_`);
-    setOutlineItems((prevItems) => [...prevItems, { id, title, icon, ref }]);
+
+    setOutlineItems((prevItems) =>
+      [...prevItems, { id, title, icon, ref, displayOrderId }].sort((a, b) => a.displayOrderId - b.displayOrderId)
+    );
+
     return id;
   }, []);
 
