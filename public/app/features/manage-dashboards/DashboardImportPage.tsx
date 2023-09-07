@@ -22,6 +22,7 @@ import {
   FileDropzoneDefaultChildren,
   LinkButton,
   TextLink,
+  Label,
 } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { Page } from 'app/core/components/Page/Page';
@@ -145,12 +146,14 @@ class UnthemedDashboardImport extends PureComponent<Props> {
             {({ register, errors }) => (
               <Field
                 label={
-                  <p>
-                    Find and import dashboards for common applications at{' '}
-                    <TextLink href="https://grafana.com/grafana/dashboards/" external>
-                      grafana.com/dashboards
-                    </TextLink>
-                  </p>
+                  <Label className={styles.labelWithLink} htmlFor="url-input">
+                    <span>
+                      Find and import dashboards for common applications at{' '}
+                      <TextLink variant="bodySmall" href="https://grafana.com/grafana/dashboards/" external>
+                        grafana.com/dashboards
+                      </TextLink>
+                    </span>
+                  </Label>
                 }
                 invalid={!!errors.gcomDashboard}
                 error={errors.gcomDashboard && errors.gcomDashboard.message}
@@ -241,6 +244,12 @@ const importStyles = stylesFactory((theme: GrafanaTheme2) => {
     option: css`
       margin-bottom: ${theme.spacing(4)};
       max-width: 600px;
+    `,
+    labelWithLink: css`
+      max-width: 100%;
+    `,
+    linkWithinLabel: css`
+      font-size: inherit;
     `,
   };
 });
