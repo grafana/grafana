@@ -2,6 +2,8 @@ name: Auto-milestone
 on:
   pull_request:
     types:
+      - opened
+      - reopened
       - closed
 
 jobs:
