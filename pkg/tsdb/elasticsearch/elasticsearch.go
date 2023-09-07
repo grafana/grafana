@@ -229,14 +229,14 @@ func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceReq
 		if errors.Is(err, context.Canceled) {
 			status = "cancelled"
 		}
-		lp := []any{"error", err, "status", status, "duration", time.Since(start), "stage", es.StageDatabaseRequest}
+		lp := []any{"error", err, "status", status, "duration", time.Since(start), "stage", es.StageDatabaseRequest, "resourcePath", req.Path}
 		if response != nil {
 			lp = append(lp, "statusCode", response.StatusCode)
 		}
 		logger.Error("Error received from Elasticsearch", lp...)
 		return err
 	}
-	logger.Info("Response received from Elasticsearch", "statusCode", response.StatusCode, "status", "ok", "duration", time.Since(start), "stage", es.StageDatabaseRequest, "contentLength", response.Header.Get("Content-Length"))
+	logger.Info("Response received from Elasticsearch", "statusCode", response.StatusCode, "status", "ok", "duration", time.Since(start), "stage", es.StageDatabaseRequest, "contentLength", response.Header.Get("Content-Length"), "resourcePath", req.Path)
 
 	defer func() {
 		if err := response.Body.Close(); err != nil {
