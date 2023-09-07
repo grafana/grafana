@@ -303,9 +303,12 @@ func (e *cloudWatchExecutor) getCWLogsClient(ctx context.Context, pluginCtx back
 
 func (e *cloudWatchExecutor) getEC2Client(ctx context.Context, pluginCtx backend.PluginContext, region string) (models.EC2APIProvider, error) {
 	sess, err := e.newSession(ctx, pluginCtx, region)
+	fmt.Println("yoooooooo")
 	if err != nil {
+		fmt.Println("ERRRRRRRRRRRR")
 		return nil, err
 	}
+	fmt.Println("yes")
 
 	return NewEC2Client(sess), nil
 }

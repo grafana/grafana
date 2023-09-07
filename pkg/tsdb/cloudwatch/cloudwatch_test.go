@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/aws/aws-sdk-go/aws"
+	awsclient "github.com/aws/aws-sdk-go/aws/client"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
@@ -94,6 +95,7 @@ func Test_CheckHealth(t *testing.T) {
 	origNewMetricsAPI := NewMetricsAPI
 	origNewCWLogsClient := NewCWLogsClient
 	origNewLogsAPI := NewLogsAPI
+
 	t.Cleanup(func() {
 		NewMetricsAPI = origNewMetricsAPI
 		NewCWLogsClient = origNewCWLogsClient
@@ -111,7 +113,11 @@ func Test_CheckHealth(t *testing.T) {
 	t.Run("successfully query metrics and logs", func(t *testing.T) {
 		client = fakeCheckHealthClient{}
 		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-			return DataSource{Settings: models.CloudWatchSettings{}}, nil
+			return DataSource{Settings: models.CloudWatchSettings{
+				AWSDatasourceSettings: awsds.AWSDatasourceSettings{
+					Region: "us-east-1",
+				},
+			}}, nil
 		})
 		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
 
@@ -132,7 +138,11 @@ func Test_CheckHealth(t *testing.T) {
 				return nil, fmt.Errorf("some logs query error")
 			}}
 		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-			return DataSource{Settings: models.CloudWatchSettings{}}, nil
+			return DataSource{Settings: models.CloudWatchSettings{
+				AWSDatasourceSettings: awsds.AWSDatasourceSettings{
+					Region: "us-east-1",
+				},
+			}}, nil
 		})
 		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
 
@@ -153,7 +163,11 @@ func Test_CheckHealth(t *testing.T) {
 				return fmt.Errorf("some list metrics error")
 			}}
 		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-			return DataSource{Settings: models.CloudWatchSettings{}}, nil
+			return DataSource{Settings: models.CloudWatchSettings{
+				AWSDatasourceSettings: awsds.AWSDatasourceSettings{
+					Region: "us-east-1",
+				},
+			}}, nil
 		})
 		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
 
@@ -171,7 +185,11 @@ func Test_CheckHealth(t *testing.T) {
 	t.Run("fail to get clients", func(t *testing.T) {
 		client = fakeCheckHealthClient{}
 		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-			return DataSource{Settings: models.CloudWatchSettings{}}, nil
+			return DataSource{Settings: models.CloudWatchSettings{
+				AWSDatasourceSettings: awsds.AWSDatasourceSettings{
+					Region: "us-east-1",
+				},
+			}}, nil
 		})
 		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{getSession: func(c awsds.SessionConfig) (*session.Session, error) {
 			return nil, fmt.Errorf("some sessions error")
@@ -194,12 +212,17 @@ func TestQuery_ResourceRequest_DescribeLogGroups_with_CrossAccountQuerying(t *te
 	origNewMetricsAPI := NewMetricsAPI
 	origNewOAMAPI := NewOAMAPI
 	origNewLogsAPI := NewLogsAPI
+	origNewEC2Client := NewEC2Client
 	NewMetricsAPI = func(sess *session.Session) models.CloudWatchMetricsAPIProvider { return nil }
 	NewOAMAPI = func(sess *session.Session) models.OAMAPIProvider { return nil }
+	NewEC2Client = func(provider awsclient.ConfigProvider) models.EC2APIProvider {
+		return fakeEC2Client{}
+	}
 	t.Cleanup(func() {
 		NewOAMAPI = origNewOAMAPI
 		NewMetricsAPI = origNewMetricsAPI
 		NewLogsAPI = origNewLogsAPI
+		NewEC2Client = origNewEC2Client
 	})
 
 	var logsApi mocks.LogsAPI
@@ -208,7 +231,11 @@ func TestQuery_ResourceRequest_DescribeLogGroups_with_CrossAccountQuerying(t *te
 	}
 
 	im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-		return DataSource{Settings: models.CloudWatchSettings{}}, nil
+		return DataSource{Settings: models.CloudWatchSettings{
+			AWSDatasourceSettings: awsds.AWSDatasourceSettings{
+				Region: "us-east-1",
+			},
+		}}, nil
 	})
 
 	t.Run("maps log group api response to resource response of log-groups", func(t *testing.T) {
