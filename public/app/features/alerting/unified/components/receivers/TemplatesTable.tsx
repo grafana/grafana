@@ -26,7 +26,7 @@ export const TemplatesTable = ({ config, alertManagerName }: Props) => {
   const dispatch = useDispatch();
   const [expandedTemplates, setExpandedTemplates] = useState<Record<string, boolean>>({});
   const tableStyles = useStyles2(getAlertTableStyles);
-  const [_, allowedToCreateNotificationTemplate] = useAlertmanagerAbility(
+  const [createNotificationTemplateSupported, createNotificationTemplateAllowed] = useAlertmanagerAbility(
     AlertmanagerAction.CreateNotificationTemplate
   );
 
@@ -54,7 +54,7 @@ export const TemplatesTable = ({ config, alertManagerName }: Props) => {
       description="Create notification templates to customize your notifications."
       addButtonLabel="Add template"
       addButtonTo={makeAMLink('/alerting/notifications/templates/new', alertManagerName)}
-      showButton={allowedToCreateNotificationTemplate}
+      showButton={createNotificationTemplateSupported && createNotificationTemplateAllowed}
     >
       <table className={tableStyles.table} data-testid="templates-table">
         <colgroup>
@@ -67,7 +67,11 @@ export const TemplatesTable = ({ config, alertManagerName }: Props) => {
             <th></th>
             <th>Template</th>
             <Authorize
-              actions={[AlertmanagerAction.UpdateNotificationTemplate, AlertmanagerAction.DeleteNotificationTemplate]}
+              actions={[
+                AlertmanagerAction.CreateNotificationTemplate,
+                AlertmanagerAction.UpdateNotificationTemplate,
+                AlertmanagerAction.DeleteNotificationTemplate,
+              ]}
             >
               <th>Actions</th>
             </Authorize>
@@ -116,7 +120,7 @@ export const TemplatesTable = ({ config, alertManagerName }: Props) => {
                         />
                       </Authorize>
                     )}
-                    {allowedToCreateNotificationTemplate && (
+                    <Authorize actions={[AlertmanagerAction.CreateContactPoint]}>
                       <ActionIcon
                         to={makeAMLink(
                           `/alerting/notifications/templates/${encodeURIComponent(name)}/duplicate`,
@@ -125,8 +129,7 @@ export const TemplatesTable = ({ config, alertManagerName }: Props) => {
                         tooltip="Copy template"
                         icon="copy"
                       />
-                    )}
-
+                    </Authorize>
                     {!provenance && (
                       <Authorize actions={[AlertmanagerAction.DeleteNotificationTemplate]}>
                         <ActionIcon
