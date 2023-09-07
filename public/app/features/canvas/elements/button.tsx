@@ -6,6 +6,7 @@ import { Button } from '@grafana/ui';
 import { DimensionContext } from 'app/features/dimensions/context';
 import { TextDimensionEditor } from 'app/features/dimensions/editors/TextDimensionEditor';
 import { APIEditor, APIEditorConfig, callApi } from 'app/plugins/panel/canvas/editor/element/APIEditor';
+import { HttpRequestMethod } from "app/plugins/panel/canvas/panelcfg.gen";
 
 import { CanvasElementItem, CanvasElementProps, defaultBgColor } from '../element';
 
@@ -66,9 +67,20 @@ export const buttonItem: CanvasElementItem<ButtonConfig, ButtonData> = {
 
   // Called when data changes
   prepareData: (ctx: DimensionContext, cfg: ButtonConfig) => {
+    // @TODO revisit
+    const getApi = () => {
+      if (cfg?.api) {
+        cfg.api.method = cfg?.api.method ?? HttpRequestMethod.GET;
+
+        return cfg.api;
+      }
+
+      return undefined;
+    }
+
     const data: ButtonData = {
       text: cfg?.text ? ctx.getText(cfg.text).value() : '',
-      api: cfg?.api ?? undefined,
+      api: getApi(),
     };
 
     return data;

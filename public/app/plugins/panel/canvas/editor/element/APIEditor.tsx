@@ -82,7 +82,7 @@ export function APIEditor({ value, context, onChange }: Props) {
   );
 
   const onMethodChange = useCallback(
-    (method: any) => {
+    (method: string) => {
       onChange({
         ...value,
         method,
@@ -116,7 +116,7 @@ export function APIEditor({ value, context, onChange }: Props) {
     return;
   };
 
-  const httpMethod = value.method ?? HttpRequestMethod.GET;
+  const httpMethod = value?.method ?? HttpRequestMethod.GET;
 
   return config.disableSanitizeHtml ? (
     <>
