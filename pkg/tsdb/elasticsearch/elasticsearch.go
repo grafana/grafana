@@ -40,7 +40,7 @@ func ProvideService(httpClientProvider httpclient.Provider) *Service {
 func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	dsInfo, err := s.getDSInfo(ctx, req.PluginContext)
 	_, fromAlert := req.Headers[ngalertmodels.FromAlertHeaderName]
-	logger := eslog.FromContext(ctx).New("endpoint", "queryData", "fromAlert", fromAlert)
+	logger := eslog.FromContext(ctx).New("fromAlert", fromAlert)
 
 	if err != nil {
 		logger.Error("Failed to get data source info", "error", err)
