@@ -172,7 +172,11 @@ func (c *baseClientImpl) ExecuteMultisearch(r *MultiSearchRequest) (*MultiSearch
 		if errors.Is(err, context.Canceled) {
 			status = "cancelled"
 		}
-		c.logger.Error("Error received from Elasticsearch", "error", err, "status", status, "statusCode", clientRes.StatusCode, "duration", time.Since(start), "stage", StageDatabaseRequest)
+		lp := []any{"error", err, "status", status, "duration", time.Since(start), "stage", StageDatabaseRequest}
+		if clientRes != nil {
+			lp = append(lp, "statusCode", clientRes.StatusCode)
+		}
+		c.logger.Error("Error received from Elasticsearch", lp...)
 		return nil, err
 	}
 	res := clientRes
