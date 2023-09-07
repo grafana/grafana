@@ -1,8 +1,5 @@
-import { css } from '@emotion/css';
 import React from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import { useStyles2 } from '@grafana/ui';
 import { Flex, Grid } from '@grafana/ui/src/unstable';
 import { Page } from 'app/core/components/Page/Page';
 import { useNavModel } from 'app/core/hooks/useNavModel';
@@ -16,7 +13,6 @@ interface Props {
 
 export function NavLandingPage({ navId, header }: Props) {
   const { node } = useNavModel(navId);
-  const styles = useStyles2(getStyles);
   const children = node.children?.filter((child) => !child.hideFromTabs);
   const gridChildren = () => {
     const list: React.JSX.Element[] = [];
@@ -42,10 +38,3 @@ export function NavLandingPage({ navId, header }: Props) {
     </Page>
   );
 }
-
-const getStyles = (theme: GrafanaTheme2) => ({
-  //TODO is this needed?
-  grid: css({
-    padding: theme.spacing(2, 0),
-  }),
-});
