@@ -159,7 +159,8 @@ func (api *LokiAPI) DataQuery(ctx context.Context, query lokiQuery, responseOpts
 		return nil, err
 	}
 
-	api.log.Debug("Sending query to loki", "start", query.Start, "end", query.End, "step", query.Step, "query", query.Expr, "queryType", query.QueryType, "direction", query.Direction, "maxLines", query.MaxLines, "supportingQueryType", query.SupportingQueryType, "lokiHost", req.URL.Host, "lokiPath", req.URL.Path)
+	queryAttrs := []any{"start", query.Start, "end", query.End, "step", query.Step, "query", query.Expr, "queryType", query.QueryType, "direction", query.Direction, "maxLines", query.MaxLines, "supportingQueryType", query.SupportingQueryType, "lokiHost", req.URL.Host, "lokiPath", req.URL.Path}
+	api.log.Debug("Sending query to loki", queryAttrs...)
 	start := time.Now()
 	resp, err := api.client.Do(req)
 	if err != nil {
@@ -168,6 +169,7 @@ func (api *LokiAPI) DataQuery(ctx context.Context, query lokiQuery, responseOpts
 			status = "cancelled"
 		}
 		lp := []any{"error", err, "status", status, "duration", time.Since(start), "stage", stageDatabaseRequest}
+		lp = append(lp, queryAttrs...)
 		if resp != nil {
 			lp = append(lp, "statusCode", resp.StatusCode)
 		}
