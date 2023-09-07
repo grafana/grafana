@@ -17,10 +17,7 @@ export function PluginsErrorsInfo({ filterByPluginType }: PluginsErrorInfoProps)
   const styles = useStyles2(getStyles);
   if (filterByPluginType) {
     errors = errors.filter((pluginError) => {
-      const pluginIdParts = pluginError.pluginId.split('-');
-      const pluginType = pluginIdParts[pluginIdParts.length - 1];
-
-      return pluginType === filterByPluginType;
+      return pluginError.pluginType === filterByPluginType;
     });
   }
 

@@ -70,6 +70,7 @@ export const selectPluginErrors = createSelector(selectAll, (plugins) => {
       pluginErrors.push({
         pluginId: plugin.id,
         errorCode: plugin.error,
+        pluginType: plugin.type,
       });
     }
   }

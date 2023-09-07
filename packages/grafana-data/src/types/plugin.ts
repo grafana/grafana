@@ -49,6 +49,7 @@ export enum PluginErrorCode {
 export interface PluginError {
   errorCode: PluginErrorCode;
   pluginId: string;
+  pluginType?: PluginType;
 }
 
 export interface PluginMeta<T extends KeyValue = {}> {
