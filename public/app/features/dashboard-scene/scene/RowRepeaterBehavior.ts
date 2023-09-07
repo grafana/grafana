@@ -98,11 +98,13 @@ export class RowRepeaterBehavior extends SceneObjectBase<RowRepeaterBehaviorStat
         const sourceItemY = source.state.y ?? 0;
         const itemY = sourceItemY + (rowContentHeight + 1) * index;
 
-        // TODO this clone should not result in same keys deeper in the tree
         const itemClone = source.clone({
           key: `${source.state.key}-clone-${index}`,
           y: itemY,
         });
+
+        //Make sure all the child scene objects have unique keys
+        ensureUniqueKeys(itemClone, index);
 
         children.push(itemClone);
 
@@ -202,9 +204,6 @@ function updateLayout(layout: SceneGridLayout, rows: SceneGridRow[], maxYOfRows:
     const firstChildAfterY = childrenAfter[0].state.y!;
     const diff = maxYOfRows - firstChildAfterY;
 
-    console.log('maxYOfRows', maxYOfRows);
-    console.log('Children after diff', diff);
-
     for (const child of childrenAfter) {
       if (child.state.y! < maxYOfRows) {
         child.setState({ y: child.state.y! + diff });
@@ -222,5 +221,12 @@ function getLayoutChildrenFilterOutRepeatClones(layout: SceneGridLayout, rowToRe
     }
 
     return true;
+  });
+}
+
+function ensureUniqueKeys(item: SceneGridItemLike, rowIndex: number) {
+  item.forEachChild((child) => {
+    child.setState({ key: `${child.state.key}-row-${rowIndex}` });
+    ensureUniqueKeys(child, rowIndex);
   });
 }
