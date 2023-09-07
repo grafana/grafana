@@ -12,7 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 	"github.com/grafana/grafana/pkg/tsdb/legacydata/interval"
 	"github.com/grafana/grafana/pkg/util"
@@ -21,7 +20,7 @@ import (
 //nolint:gocyclo
 func transConditions(ctx context.Context, set dashAlertSettings, orgID int64, dsCacheService datasources.CacheService) (*condition, error) {
 	// TODO: needs a significant refactor to reduce complexity.
-	var usr *user.SignedInUser
+	usr := getBackgroundUser(orgID)
 
 	refIDtoCondIdx := make(map[string][]int) // a map of original refIds to their corresponding condition index
 	for i, cond := range set.Conditions {
