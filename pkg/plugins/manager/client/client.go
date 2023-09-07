@@ -60,7 +60,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 	err := instrumentation.InstrumentQueryDataRequest(ctx, &req.PluginContext, instrumentation.Cfg{
 		LogDatasourceRequests: s.cfg.LogDatasourceRequests,
 		Target:                p.Target(),
-	}, totalBytes, func() (innerErr error) {
+	}, totalBytes, func(ctx context.Context) (innerErr error) {
 		resp, innerErr = p.QueryData(ctx, req)
 		return
 	})
@@ -107,7 +107,7 @@ func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceReq
 	err := instrumentation.InstrumentCallResourceRequest(ctx, &req.PluginContext, instrumentation.Cfg{
 		LogDatasourceRequests: s.cfg.LogDatasourceRequests,
 		Target:                p.Target(),
-	}, totalBytes, func() (innerErr error) {
+	}, totalBytes, func(ctx context.Context) (innerErr error) {
 		removeConnectionHeaders(req.Headers)
 		removeHopByHopHeaders(req.Headers)
 		removeNonAllowedHeaders(req.Headers)
@@ -154,7 +154,7 @@ func (s *Service) CollectMetrics(ctx context.Context, req *backend.CollectMetric
 	err := instrumentation.InstrumentCollectMetrics(ctx, &req.PluginContext, instrumentation.Cfg{
 		LogDatasourceRequests: s.cfg.LogDatasourceRequests,
 		Target:                p.Target(),
-	}, func() (innerErr error) {
+	}, func(ctx context.Context) (innerErr error) {
 		resp, innerErr = p.CollectMetrics(ctx, req)
 		return
 	})
@@ -179,7 +179,7 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 	err := instrumentation.InstrumentCheckHealthRequest(ctx, &req.PluginContext, instrumentation.Cfg{
 		LogDatasourceRequests: s.cfg.LogDatasourceRequests,
 		Target:                p.Target(),
-	}, func() (innerErr error) {
+	}, func(ctx context.Context) (innerErr error) {
 		resp, innerErr = p.CheckHealth(ctx, req)
 		return
 	})
