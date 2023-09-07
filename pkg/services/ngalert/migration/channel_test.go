@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
-	"fmt"
 	"testing"
 	"time"
 
@@ -405,7 +404,7 @@ func TestMigrateNotificationChannelSecureSettings(t *testing.T) {
 				nType := notifier.Type
 				secureSettings, err := channels_config.GetSecretKeysForContactPointType(nType)
 				require.NoError(t, err)
-				t.Run(fmt.Sprintf(nType), func(t *testing.T) {
+				t.Run(nType, func(t *testing.T) {
 					m := newTestMigration(t)
 					channel := gen(nType, func(channel *legacymodels.AlertNotification) {
 						for _, key := range secureSettings {
@@ -436,7 +435,7 @@ func TestMigrateNotificationChannelSecureSettings(t *testing.T) {
 				if !ok {
 					continue
 				}
-				t.Run(fmt.Sprintf(nType), func(t *testing.T) {
+				t.Run(nType, func(t *testing.T) {
 					m := newTestMigration(t)
 
 					channel := gen(nType, func(channel *legacymodels.AlertNotification) {

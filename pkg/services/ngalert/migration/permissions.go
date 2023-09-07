@@ -62,7 +62,7 @@ type dashboardACL struct {
 func (p dashboardACL) TableName() string { return "dashboard_acl" }
 
 type folderHelper struct {
-	store   db.DB
+	store         db.DB
 	dialect       migrator.Dialect
 	folderService folder.Service
 }

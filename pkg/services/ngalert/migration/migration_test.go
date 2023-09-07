@@ -719,7 +719,6 @@ func TestDashAlertQueryMigration(t *testing.T) {
 
 		expectedFolder *dashboards.Dashboard
 		expected       map[int64][]*ngModels.AlertRule
-		expErr         error
 	}
 
 	tc := []testcase{
