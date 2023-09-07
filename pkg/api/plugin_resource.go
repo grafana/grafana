@@ -46,6 +46,7 @@ func (hs *HTTPServer) callPluginResource(c *contextmodel.ReqContext, pluginID st
 
 	if err = hs.makePluginResourceRequest(c.Resp, req, pCtx); err != nil {
 		handleCallResourceError(err, c)
+		return
 	}
 
 	requestmeta.WithStatusSource(c.Req.Context(), c.Resp.Status())
@@ -81,6 +82,7 @@ func (hs *HTTPServer) callPluginResourceWithDataSource(c *contextmodel.ReqContex
 
 	if err = hs.makePluginResourceRequest(c.Resp, req, pCtx); err != nil {
 		handleCallResourceError(err, c)
+		return
 	}
 
 	requestmeta.WithStatusSource(c.Req.Context(), c.Resp.Status())
