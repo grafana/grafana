@@ -13,6 +13,7 @@ import (
 	"github.com/go-jose/go-jose/v3/jwt"
 
 	"github.com/grafana/grafana/pkg/models/roletype"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/oauthserver"
@@ -40,15 +41,11 @@ var (
 		Email:  "johndoe@example.org",
 		Actor:  "grafana",
 		Scopes: []string{"profile", "groups"},
-		Entitlements: map[string][]string{
-			"dashboards:create": {
-				"folders:uid:general",
-			},
-			"folders:read": {
-				"folders:uid:general",
-			},
-			"datasources:explore":       nil,
-			"datasources.insights:read": {},
+		Entitlements: []accesscontrol.Permission{
+			{Action: "dashboards:create", Scope: "folders:uid:general"},
+			{Action: "folders:read", Scope: "folders:uid:general"},
+			{Action: "datasources:explore"},
+			{Action: "datasources.insights:read"},
 		},
 	}
 	pk, _ = rsa.GenerateKey(rand.Reader, 4096)

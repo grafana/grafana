@@ -3,6 +3,8 @@ package clients
 import (
 	"context"
 	"crypto"
+	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -10,16 +12,17 @@ import (
 	"strings"
 	"time"
 
+	"github.com/go-jose/go-jose/v3"
 	"github.com/go-jose/go-jose/v3/jwt"
 	"golang.org/x/exp/slices"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models/roletype"
+	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/oauthserver"
-	"github.com/grafana/grafana/pkg/services/oauthserver/utils"
 	"github.com/grafana/grafana/pkg/services/signingkeys"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -61,13 +64,18 @@ type ExtendedJWT struct {
 
 type ExtendedJWTClaims struct {
 	jwt.Claims
-	Actor        string              `json:"actor"`
-	Groups       []string            `json:"groups"`
-	Email        string              `json:"email"`
-	Name         string              `json:"name"`
-	Login        string              `json:"login"`
-	Scopes       []string            `json:"scope"`
-	Entitlements map[string][]string `json:"entitlements"`
+	Actor        string          `json:"actor"`
+	Groups       []string        `json:"groups"`
+	Email        string          `json:"email"`
+	Name         string          `json:"name"`
+	Login        string          `json:"login"`
+	Scopes       []string        `json:"scope"`
+	Entitlements []ac.Permission `json:"entitlements"`
+}
+
+type AuthApiResponse struct {
+	Status string             `json:"status"`
+	Data   jose.JSONWebKeySet `json:"data"`
 }
 
 func (s *ExtendedJWT) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identity, error) {
@@ -104,56 +112,24 @@ func (s *ExtendedJWT) Authenticate(ctx context.Context, r *authn.Request) (*auth
 }
 
 func (s *ExtendedJWT) AuthenticateExternalService(ctx context.Context, claims *ExtendedJWTClaims, orgID int64, subjAttr, subjID string) (*authn.Identity, error) {
-	lookup := &user.GetSignedInUserQuery{}
-	switch subjAttr {
-	case subAttrID:
-		id, errParse := strconv.ParseInt(subjID, 10, 64)
-		if errParse != nil {
-			s.log.Error("Could not parse ID", "subject", claims.Subject)
-			return nil, errJWTInvalid.Errorf("could not parse id; %w", errParse)
-		}
-		lookup.UserID = id
-	case subAttrLogin:
-		lookup.Login = subjID
-	case subAttrEmail:
-		lookup.Email = subjID
-	default:
-		s.log.Error("Unknown subject attribute", "subjAttr", subjAttr)
-		return nil, errJWTInvalid.Errorf("unknown subject attribute: %v", subjAttr)
-	}
-
-	dbUser, errGet := s.userService.GetSignedInUserWithCacheCtx(ctx, lookup)
-	if errGet != nil {
-		return nil, errGet // TODO wrap?
-	}
-
 	if len(claims.Entitlements) == 0 {
 		s.log.Error("Entitlements claim is missing")
 		return nil, errJWTInvalid.Errorf("Entitlements claim is missing")
 	}
 
-	// TODO populate teams?
-	// if slices.Contains(claims.Scopes, "groups") {
-	// }
-
 	identity := authn.Identity{
 		OrgID:           orgID,
 		OrgName:         "",                                                    // TODO?
 		OrgRoles:        map[int64]roletype.RoleType{orgID: roletype.RoleNone}, // With external auth: Role None => use permissions only
-		ID:              authn.NamespacedID(identity.NamespaceUser, dbUser.UserID),
-		Login:           dbUser.Login,
-		Name:            dbUser.Name,
-		Email:           dbUser.Email,
+		Login:           claims.Login,
+		Name:            claims.Name,
 		IsGrafanaAdmin:  new(bool),
 		AuthenticatedBy: login.ExtendedJWTModule,
 		LastSeenAt:      timeNow(),
-		Teams:           []int64{}, // TODO?
+		Teams:           []int64{},
 		Groups:          []string{},
-		ClientParams: authn.ClientParams{
-			SyncPermissions:     true,
-			RestrictPermissions: claims.Entitlements,
-		},
-		Permissions: map[int64]map[string][]string{},
+		ClientParams:    authn.ClientParams{SyncPermissions: false},
+		Permissions:     map[int64]map[string][]string{orgID: ac.GroupScopesByAction(claims.Entitlements)},
 	}
 
 	return &identity, nil
@@ -197,8 +173,8 @@ func (s *ExtendedJWT) AuthenticateImpersonatedUser(ctx context.Context, claims *
 
 	identity := authn.Identity{
 		OrgID:           orgID,
-		OrgName:         "",                                                    // TODO?
-		OrgRoles:        map[int64]roletype.RoleType{orgID: roletype.RoleNone}, // With external auth: Role None => use permissions only
+		OrgName:         "",                                                 // TODO?
+		OrgRoles:        map[int64]roletype.RoleType{orgID: dbUser.OrgRole}, // Otherwise GetUserPermission will just return directly assigned permissions in the SyncUserHook
 		ID:              authn.NamespacedID(identity.NamespaceUser, dbUser.UserID),
 		Login:           dbUser.Login,
 		Name:            dbUser.Name,
@@ -206,11 +182,11 @@ func (s *ExtendedJWT) AuthenticateImpersonatedUser(ctx context.Context, claims *
 		IsGrafanaAdmin:  new(bool),
 		AuthenticatedBy: login.ExtendedJWTModule,
 		LastSeenAt:      timeNow(),
-		Teams:           []int64{}, // TODO?
+		Teams:           []int64{}, // TODO: Yes otherwise GetUserPermission will just return directly assigned permissions in the SyncUserHook
 		Groups:          []string{},
 		ClientParams: authn.ClientParams{
 			SyncPermissions:     true,
-			RestrictPermissions: claims.Entitlements,
+			RestrictPermissions: ac.GroupScopesByAction(claims.Entitlements),
 		},
 		Permissions: map[int64]map[string][]string{},
 	}
@@ -238,7 +214,17 @@ func (s *ExtendedJWT) Test(ctx context.Context, r *authn.Request) bool {
 		return false
 	}
 
-	return claims.Issuer == s.cfg.ExtendedJWTExpectIssuer
+	if claims.Issuer == "" {
+		s.log.Debug("no issuer found in token")
+		return false
+	}
+
+	correctIssuer := claims.Issuer == s.cfg.ExtendedJWTExpectIssuer
+	if !correctIssuer {
+		s.log.Debug("wrong issuer", "issuer", claims.Issuer)
+	}
+
+	return correctIssuer
 }
 
 func (s *ExtendedJWT) Name() string {
@@ -293,7 +279,7 @@ func (s *ExtendedJWT) verifyRFC9068Token(ctx context.Context, rawToken string) (
 	var claims ExtendedJWTClaims
 	err = parsedToken.Claims(key, &claims)
 	if err != nil {
-		return nil, fmt.Errorf("failed to verify the signature: %w", err)
+		return nil, fmt.Errorf("failed to parse claims: %w", err)
 	}
 
 	if claims.Expiry == nil {
@@ -319,10 +305,13 @@ func (s *ExtendedJWT) verifyRFC9068Token(ctx context.Context, rawToken string) (
 	}, 0)
 
 	if err != nil {
+		if errors.Is(err, jwt.ErrExpired) {
+			s.log.Error("token expired", "exp", claims.Expiry.Time().String(), "now", timeNow().String())
+		}
 		return nil, fmt.Errorf("failed to validate JWT: %w", err)
 	}
 
-	if err := s.validateClientIdClaim(ctx, claims); err != nil {
+	if err := s.validateActorClaim(ctx, claims); err != nil {
 		return nil, err
 	}
 
@@ -346,16 +335,25 @@ func (s *ExtendedJWT) signingPublicKey() (crypto.PublicKey, error) {
 		if errReadBody != nil {
 			return nil, fmt.Errorf("could not read response from '%s': %w", s.cfg.ExtendedJWTPublicKeyURL, errReadBody)
 		}
-		remoteKey, errParse := utils.ParsePublicKeyPem(body)
+		authApiResp := &AuthApiResponse{}
+		errParse := json.Unmarshal(body, authApiResp)
 		if errParse != nil {
-			return nil, fmt.Errorf("could not read key returned by '%s': %w", s.cfg.ExtendedJWTPublicKeyURL, errParse)
+			return nil, fmt.Errorf("expected a AuthApiResponse with a JWKS: %w", errParse)
 		}
-		return remoteKey, nil
+		if authApiResp.Status != "success" {
+			return nil, fmt.Errorf("could not fetch JWKS from auth API status: %s", authApiResp.Status)
+		}
+
+		remoteKey := authApiResp.Data.Key("default")
+		if len(remoteKey) == 0 {
+			return nil, errors.New("could not find 'default' remote key in fetched keyset")
+		}
+		return remoteKey[0], nil
 	}
 	return s.signingKeys.GetServerPublicKey(), nil
 }
 
-func (s *ExtendedJWT) validateClientIdClaim(ctx context.Context, claims ExtendedJWTClaims) error {
+func (s *ExtendedJWT) validateActorClaim(ctx context.Context, claims ExtendedJWTClaims) error {
 	if claims.Actor == "" {
 		return fmt.Errorf("missing 'actor' claim")
 	}
