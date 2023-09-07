@@ -31,7 +31,7 @@ Identify which metrics are critical to your monitoring system (i.e. Grafana) and
 
 {{% admonition type="note" %}}
 These metrics are not available for Grafana Cloud.
-There are no metrics in the `grafanacloud-usage` data source that can be used to meta monitor Grafana-managed alerts.
+There are no metrics in the `grafanacloud-usage` data source at this time that can be used to meta monitor Grafana-managed alerts.
 {{% /admonition %}}
 
 To meta monitor Grafana-managed alerts, you need a Prometheus server, or other metrics database to collect and store metrics exported by Grafana.
