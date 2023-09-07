@@ -499,10 +499,6 @@ func translatePluginRequestErrorToAPIError(err error) response.Response {
 		return response.Error(http.StatusNotFound, "Not found", err)
 	}
 
-	if errors.Is(err, backendplugin.ErrHealthCheckFailed) {
-		return response.Error(http.StatusInternalServerError, "Plugin health check failed", err)
-	}
-
 	if errors.Is(err, backendplugin.ErrPluginUnavailable) {
 		return response.Error(http.StatusServiceUnavailable, "Plugin unavailable", err)
 	}

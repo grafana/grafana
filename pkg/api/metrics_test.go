@@ -246,8 +246,8 @@ func TestDataSourceQueryError(t *testing.T) {
 		{
 			request:        reqValid,
 			clientErr:      errors.New("surprise surprise"),
-			expectedStatus: errutil.StatusInternal.HTTPStatus(),
-			expectedBody:   `{"message":"An error occurred within the plugin","messageId":"plugin.downstreamError","statusCode":500,"traceID":""}`,
+			expectedStatus: errutil.StatusBadGateway.HTTPStatus(),
+			expectedBody:   `{"message":"An error occurred within the plugin","messageId":"plugin.downstreamError","statusCode":502,"traceID":""}`,
 		},
 		{
 			request:        reqNoQueries,
@@ -308,7 +308,6 @@ func TestDataSourceQueryError(t *testing.T) {
 			resp, err := srv.SendJSON(req)
 			require.NoError(t, err)
 
-			require.Equal(t, tc.expectedStatus, resp.StatusCode)
 			require.Equal(t, tc.expectedStatus, resp.StatusCode)
 			body, err := io.ReadAll(resp.Body)
 			require.NoError(t, err)
