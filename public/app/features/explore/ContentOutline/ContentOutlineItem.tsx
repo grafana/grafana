@@ -2,7 +2,14 @@ import React, { useEffect, useRef, ReactNode } from 'react';
 
 import { useContentOutlineContext } from './ContentOutlineContext';
 
-function ContentOutlineItem({ title, icon, children }: { title: string; icon: string; children: ReactNode }) {
+interface ContentOutlineItemProps {
+  title: string;
+  icon: string;
+  children: ReactNode;
+  className?: string;
+}
+
+function ContentOutlineItem({ title, icon, children, className }: ContentOutlineItemProps) {
   const { register, unregister } = useContentOutlineContext();
   const ref = useRef(null);
 
@@ -14,7 +21,11 @@ function ContentOutlineItem({ title, icon, children }: { title: string; icon: st
     return () => unregister(id);
   }, [title, icon]);
 
-  return <div ref={ref}>{children}</div>;
+  return (
+    <div className={className} ref={ref}>
+      {children}
+    </div>
+  );
 }
 
 export default ContentOutlineItem;

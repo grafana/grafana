@@ -398,8 +398,14 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
   renderLogsPanel(width: number) {
     const { exploreId, syncedTimes, theme, queryResponse } = this.props;
     const spacing = parseInt(theme.spacing(2).slice(0, -2), 10);
+    // Need to make ContenOutlineItem a flex container so the gap works
+    const logsContentOutlineWrapper = css`
+      display: flex;
+      flex-direction: column;
+      gap: ${theme.spacing(1)};
+    `;
     return (
-      <ContentOutlineItem title="Logs" icon="gf-logs">
+      <ContentOutlineItem title="Logs" icon="gf-logs" className={logsContentOutlineWrapper}>
         <LogsContainer
           exploreId={exploreId}
           loadingState={queryResponse.state}
