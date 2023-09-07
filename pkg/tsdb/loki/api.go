@@ -167,7 +167,11 @@ func (api *LokiAPI) DataQuery(ctx context.Context, query lokiQuery, responseOpts
 		if errors.Is(err, context.Canceled) {
 			status = "cancelled"
 		}
-		api.log.Error("Error received from Loki", "error", err, "status", status, "statusCode", resp.StatusCode, "duration", time.Since(start), "stage", stageDatabaseRequest)
+		lp := []any{"error", err, "status", status, "duration", time.Since(start), "stage", stageDatabaseRequest}
+		if resp != nil {
+			lp = append(lp, "statusCode", resp.StatusCode)
+		}
+		api.log.Error("Error received from Loki", lp...)
 		return nil, err
 	}
 
