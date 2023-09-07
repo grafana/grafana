@@ -209,7 +209,10 @@ The data source name should be similar to `grafanacloud-<yourstackname>-usage-in
 To look at a particular stack, you can filter by **instance_id** instead of **org_id**.
 
 The following is an example query that would surface insights logs:
+
+```
 {org_id="<your-org-id>"} | logfmt | component = `ruler` | msg = `Evaluating rule failed`
+```
 
 1. Click **Run query**.
 
