@@ -455,12 +455,13 @@ func (service *AlertRuleService) GetAlertRuleGroupWithFolderTitle(ctx context.Co
 }
 
 // GetAlertGroupsWithFolderTitle returns all groups with folder title in the folder identified by folderUID that have at least one alert. If argument folderUID is an empty string - returns groups in all folders.
-func (service *AlertRuleService) GetAlertGroupsWithFolderTitle(ctx context.Context, orgID int64, folderUID string) ([]models.AlertRuleGroupWithFolderTitle, error) {
+func (service *AlertRuleService) GetAlertGroupsWithFolderTitle(ctx context.Context, orgID int64, folderUIDs []string) ([]models.AlertRuleGroupWithFolderTitle, error) {
 	q := models.ListAlertRulesQuery{
 		OrgID: orgID,
 	}
-	if folderUID != "" {
-		q.NamespaceUIDs = []string{folderUID}
+
+	if len(folderUIDs) > 0 {
+		q.NamespaceUIDs = folderUIDs
 	}
 
 	ruleList, err := service.ruleStore.ListAlertRules(ctx, &q)

@@ -65,7 +65,7 @@ type AlertRuleService interface {
 	ReplaceRuleGroup(ctx context.Context, orgID int64, group alerting_models.AlertRuleGroup, userID int64, provenance alerting_models.Provenance) error
 	GetAlertRuleWithFolderTitle(ctx context.Context, orgID int64, ruleUID string) (provisioning.AlertRuleWithFolderTitle, error)
 	GetAlertRuleGroupWithFolderTitle(ctx context.Context, orgID int64, folder, group string) (alerting_models.AlertRuleGroupWithFolderTitle, error)
-	GetAlertGroupsWithFolderTitle(ctx context.Context, orgID int64, folderUID string) ([]alerting_models.AlertRuleGroupWithFolderTitle, error)
+	GetAlertGroupsWithFolderTitle(ctx context.Context, orgID int64, folderUIDs []string) ([]alerting_models.AlertRuleGroupWithFolderTitle, error)
 }
 
 func (srv *ProvisioningSrv) RouteGetPolicyTree(c *contextmodel.ReqContext) response.Response {
@@ -390,18 +390,31 @@ func (srv *ProvisioningSrv) RouteGetAlertRuleGroup(c *contextmodel.ReqContext, f
 
 // RouteGetAlertRulesExport retrieves all alert rules in a format compatible with file provisioning.
 func (srv *ProvisioningSrv) RouteGetAlertRulesExport(c *contextmodel.ReqContext) response.Response {
-	folderUID := c.Query("folderUid")
+	folderUIDs := c.QueryStrings("folderUid")
 	group := c.Query("group")
-	if group != "" {
-		if folderUID == "" {
-			return ErrResp(http.StatusBadRequest, nil, "group name must be specified together with folder_uid parameter")
+	uid := c.Query("ruleUid")
+	if uid != "" {
+		if group != "" || len(folderUIDs) > 0 {
+			return ErrResp(http.StatusBadRequest, errors.New("group and folder should not be specified when a single rule is requested"), "")
 		}
-		return srv.RouteGetAlertRuleGroupExport(c, folderUID, group)
+		return srv.RouteGetAlertRuleExport(c, uid)
+	}
+	if group != "" {
+		if len(folderUIDs) != 1 || folderUIDs[0] == "" {
+			return ErrResp(http.StatusBadRequest,
+				fmt.Errorf("group name must be specified together with a single folder_uid parameter. Got %d", len(folderUIDs)),
+				"",
+			)
+		}
+		return srv.RouteGetAlertRuleGroupExport(c, folderUIDs[0], group)
 	}
 
-	groupsWithTitle, err := srv.alertRules.GetAlertGroupsWithFolderTitle(c.Req.Context(), c.OrgID, folderUID)
+	groupsWithTitle, err := srv.alertRules.GetAlertGroupsWithFolderTitle(c.Req.Context(), c.OrgID, folderUIDs)
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "failed to get alert rules")
+	}
+	if len(groupsWithTitle) == 0 {
+		return response.Empty(http.StatusNotFound)
 	}
 
 	e, err := AlertingFileExportFromAlertRuleGroupWithFolderTitle(groupsWithTitle)
