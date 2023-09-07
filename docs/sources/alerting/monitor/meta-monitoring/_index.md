@@ -86,7 +86,7 @@ This metric is a histogram that shows you the number of seconds taken to send no
 ## Metrics for Mimir-managed alerts
 
 {{% admonition type="note" %}}
-This metric is available in OSS, on-premise, and Grafana Cloud.
+These metrics are available in OSS, on-premise, and Grafana Cloud.
 {{% /admonition %}}
 
 To meta monitor Grafana Mimir-managed alerts, open source and on-premise users need a Prometheus/Mimir server, or another metrics database to collect and store metrics exported by the Mimir ruler.
