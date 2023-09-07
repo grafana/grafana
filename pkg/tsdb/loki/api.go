@@ -200,11 +200,11 @@ func (api *LokiAPI) DataQuery(ctx context.Context, query lokiQuery, responseOpts
 	if res.Error != nil {
 		span.RecordError(res.Error)
 		span.SetStatus(codes.Error, err.Error())
-		logger.Error("Error parsing response from loki", "error", res.Error, "metricDataplane", responseOpts.metricDataplane, "duration", time.Since(start), "stage", stageParseResponse)
+		api.log.Error("Error parsing response from loki", "error", res.Error, "metricDataplane", responseOpts.metricDataplane, "duration", time.Since(start), "stage", stageParseResponse)
 		return nil, res.Error
 	}
 
-	logger.Info("Response parsed from loki", "duration", time.Since(start), "metricDataplane", responseOpts.metricDataplane, "framesLength", len(res.Frames), "stage", stageParseResponse)
+	api.log.Info("Response parsed from loki", "duration", time.Since(start), "metricDataplane", responseOpts.metricDataplane, "framesLength", len(res.Frames), "stage", stageParseResponse)
 
 	return res.Frames, nil
 }
