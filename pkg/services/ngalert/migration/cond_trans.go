@@ -12,13 +12,16 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 	"github.com/grafana/grafana/pkg/tsdb/legacydata/interval"
 	"github.com/grafana/grafana/pkg/util"
 )
 
+//nolint:gocyclo
 func transConditions(ctx context.Context, set dashAlertSettings, orgID int64, dsCacheService datasources.CacheService) (*condition, error) {
-	usr := getBackgroundUser(orgID)
+	// TODO: needs a significant refactor to reduce complexity.
+	var usr *user.SignedInUser
 
 	refIDtoCondIdx := make(map[string][]int) // a map of original refIds to their corresponding condition index
 	for i, cond := range set.Conditions {
@@ -128,12 +131,10 @@ func transConditions(ctx context.Context, set dashAlertSettings, orgID int64, ds
 				}
 			}
 
+			// Could have an alert saved but datasource deleted, so can not require match.
 			ds, err := dsCacheService.GetDatasource(ctx, set.Conditions[condIdx].Query.DatasourceID, usr, false)
-			if err != nil {
-				// one could have an alert saved but datasource deleted, so can not require match.
-				if !errors.Is(err, datasources.ErrDataSourceNotFound) {
-					return nil, err
-				}
+			if err != nil && !errors.Is(err, datasources.ErrDataSourceNotFound) {
+				return nil, err
 			}
 
 			queryObj["refId"] = refID
