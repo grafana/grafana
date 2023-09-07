@@ -103,7 +103,7 @@ export const annotationEventNames: AnnotationFieldInfo[] = [
     field: (frame: DataFrame) => frame.fields.find((f) => f.type === FieldType.time),
     placeholder: 'time, or the first time field',
   },
-  { key: 'timeEnd', label: 'end time',  help: 'When this field is defined, the annotation will be treated as a range' },
+  { key: 'timeEnd', label: 'end time', help: 'When this field is defined, the annotation will be treated as a range' },
   {
     key: 'title',
   },
