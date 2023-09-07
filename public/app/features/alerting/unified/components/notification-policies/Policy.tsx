@@ -1,15 +1,16 @@
 import { css } from '@emotion/css';
-import { uniqueId, groupBy, upperFirst, sumBy, isArray } from 'lodash';
+import { groupBy, isArray, sumBy, uniqueId, upperFirst } from 'lodash';
 import pluralize from 'pluralize';
 import React, { FC, Fragment, ReactNode } from 'react';
 import { Link } from 'react-router-dom';
+import { useToggle } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
-import { Badge, Button, Dropdown, getTagColorsFromName, Icon, Menu, Tooltip, useStyles2, Text } from '@grafana/ui';
+import { Badge, Button, Dropdown, getTagColorsFromName, Icon, Menu, Text, Tooltip, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 import ConditionalWrap from 'app/features/alerting/components/ConditionalWrap';
-import { RouteWithID, Receiver, ObjectMatcher, AlertmanagerGroup } from 'app/plugins/datasource/alertmanager/types';
+import { AlertmanagerGroup, ObjectMatcher, Receiver, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
 import { ReceiversState } from 'app/types';
 
 import { INTEGRATION_ICONS } from '../../types/contact-points';
@@ -18,13 +19,13 @@ import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { normalizeMatchers } from '../../utils/matchers';
 import { createContactPointLink, createMuteTimingLink } from '../../utils/misc';
 import { getInheritedProperties, InhertitableProperties } from '../../utils/notification-policies';
-import { createUrl } from '../../utils/url';
 import { HoverCard } from '../HoverCard';
 import { Label } from '../Label';
 import { MetaText } from '../MetaText';
 import { ProvisioningBadge } from '../Provisioning';
 import { Spacer } from '../Spacer';
 import { Strong } from '../Strong';
+import { GrafanaPoliciesExporter } from '../export/GrafanaPoliciesExporter';
 
 import { Matchers } from './Matchers';
 import { TimingOptions, TIMING_OPTIONS_DEFAULTS } from './timingOptions';
@@ -127,7 +128,8 @@ const Policy: FC<PolicyComponentProps> = ({
     : undefined;
 
   const isGrafanaAM = alertManagerSourceName === GRAFANA_RULES_SOURCE_NAME;
-  const showExport = isGrafanaAM && isDefaultPolicy && canReadProvisioning;
+  const showExportOption = isGrafanaAM && isDefaultPolicy && canReadProvisioning;
+  const [showExportDrawer, toggleShowExportDrawer] = useToggle(false)
 
   // TODO dead branch detection, warnings for all sort of configs that won't work or will never be activated
   return (
@@ -155,7 +157,7 @@ const Policy: FC<PolicyComponentProps> = ({
                 {/* TODO maybe we should move errors to the gutter instead? */}
                 {errors.length > 0 && <Errors errors={errors} />}
                 {provisioned && <ProvisioningBadge />}
-                {readOnly && !showExport ? null : (
+                {readOnly && !showExportOption ? null : (
                   <Stack direction="row" gap={0.5}>
                     {!readOnly && (
                       <ConditionalWrap shouldWrap={provisioned} wrap={ProvisionedTooltip}>
@@ -185,15 +187,11 @@ const Policy: FC<PolicyComponentProps> = ({
                               />
                             </ConditionalWrap>
                           )}
-                          {showExport && (
+                          {showExportOption && (
                             <Menu.Item
                               icon="download-alt"
                               label="Export"
-                              url={createUrl('/api/v1/provisioning/policies/export', {
-                                download: 'true',
-                                format: 'yaml',
-                              })}
-                              target="_blank"
+                              onClick={toggleShowExportDrawer}
                             />
                           )}
                           {!readOnly && isDeletable && (
@@ -323,6 +321,9 @@ const Policy: FC<PolicyComponentProps> = ({
           );
         })}
       </div>
+      {showExportDrawer &&
+        <GrafanaPoliciesExporter onClose={toggleShowExportDrawer} />
+      }
     </Stack>
   );
 };
