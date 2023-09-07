@@ -6,7 +6,7 @@ import { Button, InlineField, InlineFieldRow, JSONFormatter, RadioButtonGroup } 
 import { StringValueEditor } from 'app/core/components/OptionsUI/string';
 import { appEvents } from 'app/core/core';
 
-import { HttpRequestMethod } from "../../panelcfg.gen";
+import { HttpRequestMethod } from '../../panelcfg.gen';
 
 export interface APIEditorConfig {
   method: string;
@@ -49,7 +49,7 @@ const getData = (api: APIEditorConfig) => {
   }
 
   return data;
-}
+};
 
 type Props = StandardEditorProps<APIEditorConfig>;
 
@@ -135,19 +135,21 @@ export function APIEditor({ value, context, onChange }: Props) {
           />
         </InlineField>
       </InlineFieldRow>
-      { httpMethod === HttpRequestMethod.POST && <InlineFieldRow>
-        <InlineField label={'Data'} labelWidth={LABEL_WIDTH} grow={true}>
-          <StringValueEditor
-            context={context}
-            value={value?.data ?? '{}'}
-            onChange={onDataChange}
-            item={dummyStringSettings}
-          />
-        </InlineField>
-      </InlineFieldRow>}
+      {httpMethod === HttpRequestMethod.POST && (
+        <InlineFieldRow>
+          <InlineField label={'Data'} labelWidth={LABEL_WIDTH} grow={true}>
+            <StringValueEditor
+              context={context}
+              value={value?.data ?? '{}'}
+              onChange={onDataChange}
+              item={dummyStringSettings}
+            />
+          </InlineField>
+        </InlineFieldRow>
+      )}
       {renderTestAPIButton(value)}
       <br />
-      { httpMethod === HttpRequestMethod.POST && renderJSON(value?.data ?? '{}')}
+      {httpMethod === HttpRequestMethod.POST && renderJSON(value?.data ?? '{}')}
     </>
   ) : (
     <>Must enable disableSanitizeHtml feature flag to access</>
