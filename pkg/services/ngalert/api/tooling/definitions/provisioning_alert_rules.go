@@ -77,7 +77,7 @@ type AlertRulesExportParameters struct {
 	// UID of folder from which export rules
 	// in:query
 	// required:false
-	FolderUID string `json:"folder_uid"`
+	FolderUID string `json:"folderUid"`
 
 	// Name of group of rules to export. Must be specified only together with folder UID
 	// in:query
