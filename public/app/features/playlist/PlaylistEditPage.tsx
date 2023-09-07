@@ -37,15 +37,13 @@ export const PlaylistEditPage = ({ match }: Props) => {
     <Page navId="dashboards/playlists" pageNav={pageNav}>
       <Page.Contents isLoading={playlist.loading}>
         {playlist.error && (
-          <Trans i18nKey="playlist-edit.errorPrefix">
-            <div> Error loading playlist: {JSON.stringify(playlist.error)}</div>
-          </Trans>
+          <div>
+            {' '}
+            <Trans i18nKey="playlist-edit.errorPrefix">Error loading playlist:</Trans>
+            {JSON.stringify(playlist.error)}
+          </div>
         )}
-        {playlist.value && (
-          <Trans i18nKey="playlist-edit.value">
-            <PlaylistForm onSubmit={onSubmit} playlist={playlist.value} />
-          </Trans>
-        )}
+        {playlist.value && <PlaylistForm onSubmit={onSubmit} playlist={playlist.value} />}
       </Page.Contents>
     </Page>
   );

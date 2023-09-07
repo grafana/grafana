@@ -601,10 +601,29 @@
     }
   },
   "playlist-edit": {
-    "error": "",
+    "errorPrefix": "",
     "subTitle": "",
-    "text": "",
-    "value": ""
+    "title": ""
+  },
+  "playlist-form": {
+    "cancel": "",
+    "heading": "",
+    "label": {
+      "interval": "",
+      "name": "",
+      "tag": "",
+      "title": ""
+    },
+    "placeholder": {
+      "interval": "",
+      "name": "",
+      "tag": ""
+    },
+    "required": {
+      "interval": "",
+      "name": ""
+    },
+    "save": ""
   },
   "refresh-picker": {
     "aria-label": {
