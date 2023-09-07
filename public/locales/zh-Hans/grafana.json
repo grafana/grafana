@@ -215,17 +215,15 @@
   },
   "explore": {
     "add-to-dashboard": "",
-    "copy-shortened-link": "",
     "toolbar": {
       "aria-label": "",
-      "split": {
-        "close": "",
-        "close-tooltip": "",
-        "narrow": "",
-        "title": "",
-        "tooltip": "",
-        "widen": ""
-      }
+      "copy-shortened-link": "",
+      "split-close": "",
+      "split-close-tooltip": "",
+      "split-narrow": "",
+      "split-title": "",
+      "split-tooltip": "",
+      "split-widen": ""
     }
   },
   "folder-picker": {

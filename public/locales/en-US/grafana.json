@@ -225,9 +225,9 @@
       "copy-shortened-link": "Copy shortened link",
       "split-close": "Close",
       "split-close-tooltip": "Close split pane",
+      "split-narrow": "Narrow pane",
       "split-title": "Split",
       "split-tooltip": "Split the pane",
-      "split-narrow": "Narrow pane",
       "split-widen": "Widen pane"
     }
   },

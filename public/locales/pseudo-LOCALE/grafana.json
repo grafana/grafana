@@ -220,17 +220,15 @@
   },
   "explore": {
     "add-to-dashboard": "Åđđ ŧő đäşĥþőäřđ",
-    "copy-shortened-link": "Cőpy şĥőřŧęŉęđ ľįŉĸ",
     "toolbar": {
       "aria-label": "Ēχpľőřę ŧőőľþäř",
-      "split": {
-        "close": "Cľőşę",
-        "close-tooltip": "Cľőşę şpľįŧ päŉę",
-        "narrow": "Ńäřřőŵ päŉę",
-        "title": "Ŝpľįŧ",
-        "tooltip": "Ŝpľįŧ ŧĥę päŉę",
-        "widen": "Ŵįđęŉ päŉę"
-      }
+      "copy-shortened-link": "Cőpy şĥőřŧęŉęđ ľįŉĸ",
+      "split-close": "Cľőşę",
+      "split-close-tooltip": "Cľőşę şpľįŧ päŉę",
+      "split-narrow": "Ńäřřőŵ päŉę",
+      "split-title": "Ŝpľįŧ",
+      "split-tooltip": "Ŝpľįŧ ŧĥę päŉę",
+      "split-widen": "Ŵįđęŉ päŉę"
     }
   },
   "folder-picker": {
