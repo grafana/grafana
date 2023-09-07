@@ -17,7 +17,7 @@ const dummyStringSettings = {
 } as StandardEditorsRegistryItem<string, StringFieldConfigSettings>;
 
 export const callApi = (api: APIEditorConfig, isTest = false) => {
-  if (api) {
+  if (api && api.endpoint) {
     getBackendSrv()
       .fetch({
         url: api.endpoint,
