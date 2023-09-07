@@ -247,7 +247,11 @@ func (api *LokiAPI) RawQuery(ctx context.Context, resourcePath string) (RawLokiR
 		if errors.Is(err, context.Canceled) {
 			status = "cancelled"
 		}
-		api.log.Error("Error received from Loki", "error", err, "resourcePath", resourcePath, "status", status, "statusCode", resp.StatusCode, "duration", time.Since(start), "stage", stageDatabaseRequest)
+		lp := []any{"error", err, "resourcePath", resourcePath, "status", status, "duration", time.Since(start), "stage", stageDatabaseRequest}
+		if resp != nil {
+			lp = append(lp, "statusCode", resp.StatusCode)
+		}
+		api.log.Error("Error received from Loki", lp...)
 		return RawLokiResponse{}, err
 	}
 
