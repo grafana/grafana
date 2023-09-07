@@ -21,15 +21,16 @@ const YamlRuleExportProvider: RuleExportProvider<'yaml'> = {
   exportFormat: 'yaml',
 };
 
-const HclRuleExportProvider: RuleExportProvider<'hcl'> = {
-  name: 'HCL',
-  exportFormat: 'hcl',
-};
+// TODO Waiting for BE changes
+// const HclRuleExportProvider: RuleExportProvider<'hcl'> = {
+//   name: 'HCL',
+//   exportFormat: 'hcl',
+// };
 
 export const grafanaRuleExportProviders = {
   [JsonRuleExportProvider.exportFormat]: JsonRuleExportProvider,
   [YamlRuleExportProvider.exportFormat]: YamlRuleExportProvider,
-  [HclRuleExportProvider.exportFormat]: HclRuleExportProvider,
+  // [HclRuleExportProvider.exportFormat]: HclRuleExportProvider,
 } as const;
 
 export type RuleExportFormats = keyof typeof grafanaRuleExportProviders;
