@@ -131,7 +131,12 @@ func instrumentPluginRequest(ctx context.Context, cfg Cfg, pluginCtx *backend.Pl
 }
 
 func instrumentContext(ctx context.Context, endpoint string, pCtx backend.PluginContext) context.Context {
-	return log.WithContextualAttributes(ctx, []any{"endpoint", endpoint, "dsName", pCtx.DataSourceInstanceSettings.Name, "dsUID", pCtx.DataSourceInstanceSettings.UID, "pluginId", pCtx.PluginID})
+	p := []any{"endpoint", endpoint, "pluginId", pCtx.PluginID}
+	if pCtx.DataSourceInstanceSettings != nil {
+		p = append(p, "dsName", pCtx.DataSourceInstanceSettings.Name)
+		p = append(p, "dsUID", pCtx.DataSourceInstanceSettings.UID)
+	}
+	return log.WithContextualAttributes(ctx, p)
 }
 
 type Cfg struct {
