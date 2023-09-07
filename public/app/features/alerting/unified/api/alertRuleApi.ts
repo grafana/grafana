@@ -199,5 +199,12 @@ export const alertRuleApi = alertingApi.injectEndpoints({
         responseType: 'text',
       }),
     }),
+    exportPolicies: build.query<string, { format: ExportFormats }>({
+      query: ({ format }) => ({
+        url: `/api/v1/provisioning/policies/export/`,
+        params: { format: format},
+        responseType: 'text',
+      }),
+    }),
   }),
 });
