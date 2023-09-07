@@ -24,4 +24,4 @@ export const svgStyleCleanup = (svgCode: string) => {
   }
 
   return svgCode;
-}
+};
