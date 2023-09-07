@@ -194,16 +194,16 @@ Use insights logs to help you determine which alerting and recording rules are f
 
 To view your insights logs, you must have the following:
 
- - A Grafana Cloud account
- - Admin or Editor user permissions for the managed Grafana Cloud instance
+- A Grafana Cloud account
+- Admin or Editor user permissions for the managed Grafana Cloud instance
 
 ### Procedure
 
 To explore logs pertaining to failing alerting and recording rules, complete the following steps.
 
-1. Log on to your instance and click the      **Explore** (compass) icon in the menu sidebar.
+1. Log on to your instance and click the **Explore** (compass) icon in the menu sidebar.
 1. Use the data sources dropdown located at the top of the page to select the data source.
-The data source name should be similar to `grafanacloud-<yourstackname>-usage-insights`.
+   The data source name should be similar to `grafanacloud-<yourstackname>-usage-insights`.
 1. To find the logs you want to see, use the **Label filters** and **Line contains** options in the query editor.
 
 To look at a particular stack, you can filter by **instance_id** instead of **org_id**.
@@ -219,4 +219,3 @@ The following is an example query that would surface insights logs:
 1. In the **Logs** section, view specific information on which alert rule is failing and why.
 
 1. You can see the rule contents (in the `rule` field), the rule name (in the `name` field), the name of the group it’s in (in the `group` field), and the error message (in the `err` field).
-
