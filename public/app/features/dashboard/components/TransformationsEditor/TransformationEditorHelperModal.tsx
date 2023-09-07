@@ -1,10 +1,9 @@
 import React from 'react';
 
-import { DataTransformerID } from '@grafana/data';
 import { Modal } from '@grafana/ui';
 
 interface TransformationEditorHelperModalProps {
-  contentType: DataTransformerID;
+  contentType: string;
   isOpen: boolean;
   onCloseClick: (value: boolean) => void;
 }
@@ -14,7 +13,7 @@ export const TransformationEditorHelperModal = ({
   isOpen,
   onCloseClick,
 }: TransformationEditorHelperModalProps) => {
-  const getHelperContent = (contentType: DataTransformerID) => {
+  const getHelperContent = (contentType: string) => {
     return <></>;
   };
 

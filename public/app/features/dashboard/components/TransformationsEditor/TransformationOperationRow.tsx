@@ -9,7 +9,7 @@ import {
   // renderMarkdown,
 } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
-import { ConfirmModal, HorizontalGroup, Modal } from '@grafana/ui';
+import { ConfirmModal, HorizontalGroup } from '@grafana/ui';
 // import { OperationRowHelp } from 'app/core/components/QueryOperationRow/OperationRowHelp';
 import {
   QueryOperationAction,
@@ -30,6 +30,7 @@ import { TransformationsEditorTransformation } from './types';
 
 interface TransformationOperationRowProps {
   id: string;
+  // JEV: shouldn't this be a `DataTransformerID`?
   index: number;
   data: DataFrame[];
   uiConfig: TransformerRegistryItem<null>;
@@ -164,7 +165,6 @@ export const TransformationOperationRow = ({
             onDismiss={() => setShowDeleteModal(false)}
           />
         )}
-        <TransformationEditorHelperModal contentType="" isOpen={showHelp} onCloseClick={toggleShowHelp} />
         {/* <Modal
           title="Transformation help"
           isOpen={showHelp}
@@ -178,30 +178,34 @@ export const TransformationOperationRow = ({
   };
 
   return (
-    <QueryOperationRow
-      id={id}
-      index={index}
-      title={uiConfig.name}
-      draggable
-      actions={renderActions}
-      disabled={disabled}
-      // isOpen={toggleExpand()}
-      // Assure that showHelp is untoggled when the row becomes collapsed.
-      // onClose={() => toggleShowHelp(false)}
-    >
-      {/* {showHelp && <OperationRowHelp markdown={prepMarkdown(uiConfig)} />} */}
-      {filter && (
-        <TransformationFilter index={index} config={configs[index].transformation} data={data} onChange={onChange} />
-      )}
-      <TransformationEditor
-        debugMode={showDebug}
+    <>
+      <QueryOperationRow
+        id={id}
         index={index}
-        data={data}
-        configs={configs}
-        uiConfig={uiConfig}
-        onChange={onChange}
-      />
-    </QueryOperationRow>
+        title={uiConfig.name}
+        draggable
+        actions={renderActions}
+        disabled={disabled}
+        // isOpen={toggleExpand()}
+        // Assure that showHelp is untoggled when the row becomes collapsed.
+        // onClose={() => toggleShowHelp(false)}
+      >
+        {/* {showHelp && <OperationRowHelp markdown={prepMarkdown(uiConfig)} />} */}
+        {filter && (
+          <TransformationFilter index={index} config={configs[index].transformation} data={data} onChange={onChange} />
+        )}
+        <TransformationEditor
+          debugMode={showDebug}
+          index={index}
+          data={data}
+          configs={configs}
+          uiConfig={uiConfig}
+          onChange={onChange}
+        />
+      </QueryOperationRow>
+      <TransformationEditorHelperModal contentType={id} isOpen={showHelp} onCloseClick={toggleShowHelp} />
+      {/* JEV: is this the correct place for this??? */}
+    </>
   );
 };
 
