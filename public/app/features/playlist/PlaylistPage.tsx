@@ -5,7 +5,7 @@ import { ConfirmModal } from '@grafana/ui';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { Page } from 'app/core/components/Page/Page';
 import PageActionBar from 'app/core/components/PageActionBar/PageActionBar';
-import { t, Trans } from 'app/core/internationalization';
+import { t } from 'app/core/internationalization';
 import { contextSrv } from 'app/core/services/context_srv';
 
 import { EmptyQueryListBanner } from './EmptyQueryListBanner';
