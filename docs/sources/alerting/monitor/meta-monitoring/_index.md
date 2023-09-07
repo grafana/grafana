@@ -174,21 +174,21 @@ This metric is a gauge. It has a constant value `1`, and contains a label called
 
 This metric is a counter that shows you the number of failed peer connection attempts. In most cases you will want to use the `rate` function to understand how often reconnections fail as this may be indicative of an issue or instability in your network.
 
-## Monitor your metrics
+## Interact with your meta-monitoring metrics
 
-To monitor your metrics, you can:
+You can use meta-monitoring metrics to understand the health of your alerting system in the following ways:
 
 1. [Optional] Create a dashboard in Grafana that uses this metric in a panel (just like you would for any other kind of metric).
 1. [Optional] Create an alert rule in Grafana that checks this metric regularly (just like you would do for any other kind of alert rule).
 1. [Optional] Use the Explore module in Grafana.
 
-## Use insights logs
+## Logs for Mimir-managed alerts
 
 {{% admonition type="note" %}}
 For Grafana Cloud only.
 {{% /admonition %}}
 
-Use insights logs to help you determine which alerting and recording rules are failing to evaluate and why. These logs contain helpful information on specific alert rules that are failing, provide you with the actual error message, and help you evaluate what is going wrong.
+Use insights logs to help you determine which Mimir-managed alerting and recording rules are failing to evaluate and why. These logs contain helpful information on specific alert rules that are failing, provide you with the actual error message, and help you evaluate what is going wrong.
 
 ### Before you begin
 
