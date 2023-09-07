@@ -19,6 +19,7 @@ export interface GridProps {
   justifyItems?: ItemsAlignment;
   alignItems?: ItemsAlignment;
   autoFlow?: 'row' | 'column' | 'row dense' | 'column dense';
+  autoRows?: string;
 }
 
 export interface GridItemProps {
@@ -36,6 +37,7 @@ export const Grid = ({
   templateColumns = 'none',
   templateRows = 'none',
   autoFlow = 'row',
+  autoRows = 'auto',
   columnStart,
   columnEnd,
   rowStart,
@@ -51,6 +53,7 @@ export const Grid = ({
           templateColumns,
           templateRows,
           autoFlow,
+          autoRows,
           columnStart,
           columnEnd,
           rowStart,
@@ -61,6 +64,7 @@ export const Grid = ({
         gap,
         templateColumns,
         templateRows,
+        autoRows,
         autoFlow,
         columnStart,
         columnEnd,
@@ -86,6 +90,7 @@ const getStyles = (
   templateColumns: GridProps['templateColumns'],
   templateRows: GridProps['templateRows'],
   autoFlow: GridProps['autoFlow'],
+  autoRows: GridProps['autoRows'],
   columnStart?: GridItemProps['columnStart'],
   columnEnd?: GridItemProps['columnEnd'],
   rowStart?: GridItemProps['rowStart'],
@@ -102,6 +107,7 @@ const getStyles = (
       justifyItems: 'stretch',
       alignItems: 'stretch',
       gridAutoFlow: autoFlow,
+      gridAutoRows: autoRows,
     }),
     gridItem: css({
       gridColumnStart: columnStart,
