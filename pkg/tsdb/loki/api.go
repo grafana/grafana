@@ -277,7 +277,7 @@ func (api *LokiAPI) RawQuery(ctx context.Context, resourcePath string) (RawLokiR
 	// client errors are passed as a json struct to the client
 	if resp.StatusCode/100 != 2 {
 		lokiResponseErr := lokiResponseError{Message: makeLokiError(body).Error()}
-		api.log.Warn("Non 200 HTTP status received from loki", "error", lokiResponseErr.Message, "status", resp.StatusCode, "resourcePath", resourcePath)
+		api.log.Warn("Non 200 HTTP status received from loki", "error", lokiResponseErr.Message, "statusCode", resp.StatusCode, "resourcePath", resourcePath)
 		traceID := tracing.TraceIDFromContext(ctx, false)
 		if traceID != "" {
 			lokiResponseErr.TraceID = traceID
