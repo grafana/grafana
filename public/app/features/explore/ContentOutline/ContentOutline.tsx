@@ -9,19 +9,26 @@ import { useContentOutlineContext } from './ContentOutlineContext';
 
 const getStyles = (theme: GrafanaTheme2, expanded: boolean, visible: boolean) => {
   return {
+    wrapper: css({
+      label: 'wrapper',
+      position: 'relative',
+      display: 'flex',
+      height: '100%',
+      backgroundColor: theme.colors.background.primary,
+      marginRight: expanded ? theme.spacing(-3) : theme.spacing(1),
+      width: expanded ? 'auto' : '3em',
+      zIndex: 2,
+    }),
     content: css({
       label: 'content',
       display: 'flex',
       flexDirection: 'column',
-      marginRight: expanded ? theme.spacing(-3) : theme.spacing(1),
-      width: expanded ? 'auto' : '3em',
+      alignItems: 'center',
       position: 'sticky',
       top: 0,
-      height: '99vh',
-      backgroundColor: theme.colors.background.primary,
+      height: '55vh',
       transition: 'width 0.5s, visibility 0.5s',
       visibility: visible ? 'visible' : 'hidden',
-      zIndex: 2,
     }),
     buttonStyles: css({
       textAlign: 'left',
@@ -43,24 +50,26 @@ const ContentOutline = ({ visible }: ContentOutlineProps) => {
   };
 
   return (
-    <div className={style.content}>
-      <ToolbarButton
-        className={style.buttonStyles}
-        icon={expanded ? 'angle-left' : 'angle-right'}
-        onClick={toggleExpanded}
-      >
-        {expanded && 'Hide Content Outline'}
-      </ToolbarButton>
-      {outlineItems.map((item) => (
+    <div className={style.wrapper}>
+      <div className={style.content}>
         <ToolbarButton
-          key={item.id}
           className={style.buttonStyles}
-          icon={item.icon}
-          onClick={() => scrollIntoView(item.ref)}
+          icon={expanded ? 'angle-left' : 'angle-right'}
+          onClick={toggleExpanded}
         >
-          {expanded && item.title}
+          {expanded && 'Hide Content Outline'}
         </ToolbarButton>
-      ))}
+        {outlineItems.map((item) => (
+          <ToolbarButton
+            key={item.id}
+            className={style.buttonStyles}
+            icon={item.icon}
+            onClick={() => scrollIntoView(item.ref)}
+          >
+            {expanded && item.title}
+          </ToolbarButton>
+        ))}
+      </div>
     </div>
   );
 };
