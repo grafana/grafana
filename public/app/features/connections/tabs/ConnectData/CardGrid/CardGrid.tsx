@@ -7,10 +7,6 @@ import { Grid } from '@grafana/ui/src/unstable';
 import { PluginAngularBadge } from 'app/features/plugins/admin/components/Badges';
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  //TODO is this needed? Should we add this style? With Grid it's not applied
-  sourcesList: css`
-    margin-bottom: 80px;
-  `,
   heading: css({
     fontSize: theme.typography.h5.fontSize,
     fontWeight: 'inherit',
