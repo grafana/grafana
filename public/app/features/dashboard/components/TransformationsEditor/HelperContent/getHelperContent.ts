@@ -4,6 +4,7 @@ import { CalculateFieldHelper } from './CalculateFieldHelper';
 
 interface HelperContent {
   title: string;
+  // JEV: should this be FC?
   content: ReactElement;
 }
 
