@@ -101,16 +101,12 @@ export class RefreshPicker extends PureComponent<Props> {
     );
     const ariaLabel = selectedValue.value === '' ? ariaLabelChooseIntervalMessage : ariaLabelDurationSelectedMessage;
 
-    const tooltipText = () => {
-      const tooltipIntervalSelected = t(
-        'refresh-picker.tooltip.interval-selected',
-        `Auto refresh after ${durationAriaLabel}`
-      );
-
-      const tooltipAutoRefreshOff = t('refresh-picker.tooltip.turned-off', 'Auto refresh off');
-
-      return selectedValue.value === '' ? tooltipAutoRefreshOff : tooltipIntervalSelected;
-    };
+    const tooltipIntervalSelected = t(
+      'refresh-picker.tooltip.interval-selected',
+      `Auto refresh after ${durationAriaLabel}`
+    );
+    const tooltipAutoRefreshOff = t('refresh-picker.tooltip.turned-off', 'Auto refresh off');
+    const tooltipAutoRefresh = selectedValue.value === '' ? tooltipAutoRefreshOff : tooltipIntervalSelected;
 
     return (
       <ButtonGroup className="refresh-picker">
@@ -133,7 +129,7 @@ export class RefreshPicker extends PureComponent<Props> {
             variant={variant}
             data-testid={selectors.components.RefreshPicker.intervalButtonV2}
             aria-label={ariaLabel}
-            tooltip={tooltipText}
+            tooltip={tooltipAutoRefresh}
           />
         )}
       </ButtonGroup>

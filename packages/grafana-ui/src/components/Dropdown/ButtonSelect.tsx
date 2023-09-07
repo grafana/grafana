@@ -23,6 +23,7 @@ export interface Props<T> extends HTMLAttributes<HTMLButtonElement> {
   tooltipContent?: PopoverContent;
   narrow?: boolean;
   variant?: ToolbarButtonVariant;
+  tooltip?: string;
 }
 
 /**
