@@ -28,6 +28,7 @@ export interface AngularModel {
 }
 
 export async function dashlistMigrationHandler(panel: PanelModel<Options> & AngularModel) {
+  // Convert old angular model to new react model
   const newOptions: Options = {
     ...panel.options,
     showStarred: panel.options.showStarred ?? panel.starred,
@@ -40,12 +41,14 @@ export async function dashlistMigrationHandler(panel: PanelModel<Options> & Angu
     tags: panel.options.tags ?? panel.tags,
   };
 
+  // Delete old angular properties
   const previousVersion = parseFloat(panel.pluginVersion || '6.1');
   if (previousVersion < 6.3) {
     const oldProps = ['starred', 'recent', 'search', 'headings', 'limit', 'query', 'folderId'] as const;
     oldProps.forEach((prop) => delete panel[prop]);
   }
 
+  // Convert the folderId to folderUID. Uses the API to do the conversion.
   if (newOptions.folderId !== undefined) {
     const folderId = newOptions.folderId;
     const folderResp = await getFolderByID(folderId);
