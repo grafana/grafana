@@ -233,7 +233,10 @@ func (c *ClientV2) RunStream(ctx context.Context, req *backend.RunStreamRequest,
 	protoReq := backend.ToProto().RunStreamRequest(req)
 	protoStream, err := c.StreamClient.RunStream(ctx, protoReq)
 	if err != nil {
-		return err
+		if status.Code(err) == codes.Unimplemented {
+			return backendplugin.ErrMethodNotImplemented
+		}
+		return fmt.Errorf("%v: %w", "Failed to call resource", err)
 	}
 
 	for {
@@ -245,7 +248,6 @@ func (c *ClientV2) RunStream(ctx context.Context, req *backend.RunStreamRequest,
 			if errors.Is(err, io.EOF) {
 				return nil
 			}
-
 			return fmt.Errorf("error running stream: %w", err)
 		}
 		// From GRPC connection we receive already prepared JSON.
