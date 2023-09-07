@@ -306,11 +306,15 @@ func (s CorrelationsService) createOrUpdateCorrelation(ctx context.Context, cmd 
 	}
 
 	found := false
-	var err error
-	s.SQLStore.WithDbSession(ctx, func(session *db.Session) error {
-		found, err = session.Get(&correlation)
+	err := s.SQLStore.WithDbSession(ctx, func(session *db.Session) error {
+		has, err := session.Get(&correlation)
+		found = has
 		return err
 	})
+
+	if err != nil {
+		return err
+	}
 
 	if found && cmd.Provisioned {
 		correlation.Provisioned = true

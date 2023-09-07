@@ -57,8 +57,8 @@ func newDatasourceProvisioner(log log.Logger, store Store, correlationsStore Cor
 	}
 }
 
-func (dc *DatasourceProvisioner) provisionDataSources(ctx context.Context, cfg *configs, ultimatelyDeleted map[DataSourceMapKey]bool) error {
-	if err := dc.deleteDatasources(ctx, cfg.DeleteDatasources, ultimatelyDeleted); err != nil {
+func (dc *DatasourceProvisioner) provisionDataSources(ctx context.Context, cfg *configs, willExistAfterProvisioning map[DataSourceMapKey]bool) error {
+	if err := dc.deleteDatasources(ctx, cfg.DeleteDatasources, willExistAfterProvisioning); err != nil {
 		return err
 	}
 
@@ -139,18 +139,18 @@ func (dc *DatasourceProvisioner) applyChanges(ctx context.Context, configPath st
 	}
 
 	// Creates a list of data sources that will be ultimately deleted after provisioning finishes
-	ultimatelyDeletedMap := map[DataSourceMapKey]bool{}
+	willExistAfterProvisioning := map[DataSourceMapKey]bool{}
 	for _, cfg := range configs {
 		for _, ds := range cfg.DeleteDatasources {
-			ultimatelyDeletedMap[DataSourceMapKey{Name: ds.Name, OrgId: ds.OrgID}] = true
+			willExistAfterProvisioning[DataSourceMapKey{Name: ds.Name, OrgId: ds.OrgID}] = false
 		}
 		for _, ds := range cfg.Datasources {
-			ultimatelyDeletedMap[DataSourceMapKey{Name: ds.Name, OrgId: ds.OrgID}] = false
+			willExistAfterProvisioning[DataSourceMapKey{Name: ds.Name, OrgId: ds.OrgID}] = true
 		}
 	}
 
 	for _, cfg := range configs {
-		if err := dc.provisionDataSources(ctx, cfg, ultimatelyDeletedMap); err != nil {
+		if err := dc.provisionDataSources(ctx, cfg, willExistAfterProvisioning); err != nil {
 			return err
 		}
 	}
@@ -208,7 +208,7 @@ func makeCreateCorrelationCommand(correlation map[string]any, SourceUID string, 
 	return createCommand, nil
 }
 
-func (dc *DatasourceProvisioner) deleteDatasources(ctx context.Context, dsToDelete []*deleteDatasourceConfig, ultimatelyDeleted map[DataSourceMapKey]bool) error {
+func (dc *DatasourceProvisioner) deleteDatasources(ctx context.Context, dsToDelete []*deleteDatasourceConfig, willExistAfterProvisioning map[DataSourceMapKey]bool) error {
 	for _, ds := range dsToDelete {
 		getDsQuery := &datasources.GetDataSourceQuery{Name: ds.Name, OrgID: ds.OrgID}
 		_, err := dc.store.GetDataSource(ctx, getDsQuery)
@@ -218,9 +218,9 @@ func (dc *DatasourceProvisioner) deleteDatasources(ctx context.Context, dsToDele
 		}
 
 		// Skip publishing the event as the data source is not really deleted, it will be re-created during provisioning
-		// This is to avoid cleaning up correlations related to the data source
-		isUltimatelyDeleted := ultimatelyDeleted[DataSourceMapKey{Name: ds.Name, OrgId: ds.OrgID}]
-		cmd := &datasources.DeleteDataSourceCommand{OrgID: ds.OrgID, Name: ds.Name, SkipPublish: !isUltimatelyDeleted}
+		// This is to avoid cleaning up any resources related to the data source (e.g. correlations)
+		skipPublish := willExistAfterProvisioning[DataSourceMapKey{Name: ds.Name, OrgId: ds.OrgID}]
+		cmd := &datasources.DeleteDataSourceCommand{OrgID: ds.OrgID, Name: ds.Name, SkipPublish: skipPublish}
 		if err := dc.store.DeleteDataSource(ctx, cmd); err != nil {
 			return err
 		}
