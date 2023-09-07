@@ -79,8 +79,8 @@ export const PlaylistPage = () => {
         {playlistToDelete && (
           <ConfirmModal
             title={playlistToDelete.name}
-            confirmText={t('playlist-page.confirmText', 'Delete')}
-            body={t('playlist-page.confirmBody', 'Are you sure you want to delete {{name}} playlist?', {
+            confirmText={t('playlist-page.delete-modal.confirm-text', 'Delete')}
+            body={t('playlist-page.delete-modal.body', 'Are you sure you want to delete {{name}} playlist?', {
               name: playlistToDelete.name,
             })}
             onConfirm={onDeletePlaylist}
