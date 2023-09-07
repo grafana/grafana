@@ -2,17 +2,18 @@ import { injectGlobal } from '@emotion/css';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Builder, Config, ImmutableTree, Query, Utils } from 'react-awesome-query-builder';
 
-import { SQLExpression } from '../../types';
+import { QueryFormat, SQLExpression } from '../../types';
 
-import { emptyInitTree, raqbConfig } from './AwesomeQueryBuilder';
+import { emptyInitTree, raqbConfig, treeWithTimeFilterMacro } from './AwesomeQueryBuilder';
 
 interface SQLBuilderWhereRowProps {
   sql: SQLExpression;
+  format: QueryFormat;
   onSqlChange: (sql: SQLExpression) => void;
   config?: Partial<Config>;
 }
 
-export function WhereRow({ sql, config, onSqlChange }: SQLBuilderWhereRowProps) {
+export function WhereRow({ sql, config, onSqlChange, format }: SQLBuilderWhereRowProps) {
   const [tree, setTree] = useState<ImmutableTree>();
   const configWithDefaults = useMemo(() => ({ ...raqbConfig, ...config }), [config]);
 
@@ -26,9 +27,13 @@ export function WhereRow({ sql, config, onSqlChange }: SQLBuilderWhereRowProps) 
 
   useEffect(() => {
     if (!sql.whereJsonTree) {
-      setTree(Utils.checkTree(Utils.loadTree(emptyInitTree), configWithDefaults));
+      if (format === QueryFormat.Timeseries) {
+        setTree(Utils.checkTree(Utils.loadTree(treeWithTimeFilterMacro), configWithDefaults));
+      } else {
+        setTree(Utils.checkTree(Utils.loadTree(emptyInitTree), configWithDefaults));
+      }
     }
-  }, [configWithDefaults, sql.whereJsonTree]);
+  }, [configWithDefaults, format, sql.whereJsonTree]);
 
   const onTreeChange = useCallback(
     (changedTree: ImmutableTree, config: Config) => {

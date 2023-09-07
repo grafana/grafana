@@ -2,9 +2,9 @@ import { List } from 'immutable';
 import { isString } from 'lodash';
 import React from 'react';
 import {
+  BaseOperator,
   BasicConfig,
   Config,
-  JsonItem,
   JsonTree,
   Operator,
   Settings,
@@ -22,17 +22,18 @@ const buttonLabels = {
   remove: 'Remove',
 };
 
-export const emptyInitValue: JsonItem = {
+export const treeWithTimeFilterMacro: JsonTree = {
   id: Utils.uuid(),
   type: 'group' as const,
   children1: {
     [Utils.uuid()]: {
       type: 'rule',
       properties: {
-        field: null,
-        operator: null,
-        value: [],
-        valueSrc: [],
+        field: 'time',
+        operator: 'macros',
+        value: ['timeFilter'],
+        valueSrc: ['value'],
+        valueType: ['datetime'],
       },
     },
   },
@@ -54,6 +55,7 @@ export const emptyInitTree: JsonTree = {
   },
 };
 
+const TIME_FILTER = 'timeFilter';
 export const widgets: Widgets = {
   ...BasicConfig.widgets,
   text: {
@@ -84,6 +86,17 @@ export const widgets: Widgets = {
   datetime: {
     ...BasicConfig.widgets.datetime,
     factory: function DateTimeInput(props) {
+      if (props?.operator === Op.MACROS) {
+        return (
+          <Select
+            id={props.id}
+            menuShouldPortal
+            options={[TIME_FILTER].map(toOption)}
+            value={props?.value}
+            onChange={(val) => props.setValue(val.value)}
+          />
+        );
+      }
       return (
         <DateTimePicker
           onChange={(e) => {
@@ -91,6 +104,21 @@ export const widgets: Widgets = {
           }}
           date={dateTime(props?.value).utc()}
         />
+      );
+    },
+    sqlFormatValue: (val, field, widget, operator, operatorDefinition, rightFieldDef) => {
+      if (val === TIME_FILTER) {
+        return val;
+      }
+      return (
+        BasicConfig.widgets.datetime.sqlFormatValue?.(
+          val,
+          field,
+          widget,
+          operator,
+          operatorDefinition,
+          rightFieldDef
+        ) || ''
       );
     },
   },
@@ -171,6 +199,7 @@ export const settings: Settings = {
 const enum Op {
   IN = 'select_any_in',
   NOT_IN = 'select_not_any_in',
+  MACROS = 'macros',
 }
 // eslint-ignore
 const customOperators = getCustomOperators(BasicConfig) as typeof BasicConfig.operators;
@@ -188,6 +217,16 @@ const customTypes = {
     widgets: {
       ...BasicConfig.types.text.widgets,
       text: customTextWidget,
+    },
+  },
+  datetime: {
+    ...BasicConfig.types.datetime,
+    widgets: {
+      ...BasicConfig.types.datetime.widgets,
+      datetime: {
+        ...BasicConfig.types.datetime.widgets.datetime,
+        operators: [Op.MACROS, ...(BasicConfig.types.datetime.widgets.datetime.operators || [])],
+      },
     },
   },
 };
@@ -244,6 +283,15 @@ function getCustomOperators(config: BasicConfig) {
       ...supportedOperators[Op.NOT_IN],
       sqlFormatOp: customSqlNotInFormatter,
     },
+    [Op.MACROS]: {
+      label: 'Macros',
+      sqlFormatOp: (field, _operator, value) => {
+        if (value === TIME_FILTER) {
+          return `$__timeFilter(${field})`;
+        }
+        return value;
+      },
+    } as BaseOperator,
   };
 
   return customOperators;
