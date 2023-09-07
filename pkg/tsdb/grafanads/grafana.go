@@ -12,12 +12,12 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 
-	"github.com/grafana/grafana-testdata-datasource/pkg/plugin/testdatasource"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/searchV2"
 	"github.com/grafana/grafana/pkg/services/store"
+	"github.com/grafana/grafana/public/plugins/grafana-testdata-datasource/pkg/plugin/testdatasource"
 )
 
 // DatasourceName is the string constant used as the datasource name in requests

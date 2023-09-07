@@ -2,6 +2,7 @@ package grpcplugin
 
 import (
 	"os/exec"
+	"strings"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/grpcplugin"
 	grpc_opentracing "github.com/grpc-ecosystem/go-grpc-middleware/tracing/opentracing"
@@ -33,7 +34,10 @@ func newClientConfig(executablePath string, env []string, logger log.Logger,
 	// nolint:gosec
 	cmd := exec.Command(executablePath)
 	cmd.Env = env
-
+	// TODO: Inspect if we can detect it's a Grafana binary
+	if strings.Contains(executablePath, "grafana-testdata-datasource") {
+		cmd.Args = append(cmd.Args, "cli", "plugins", "run", "testdatasource", "--standalone")
+	}
 	return &goplugin.ClientConfig{
 		Cmd:              cmd,
 		HandshakeConfig:  handshake,

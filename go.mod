@@ -509,3 +509,5 @@ replace github.com/prometheus/alertmanager => github.com/grafana/prometheus-aler
 replace google.golang.org/grpc => google.golang.org/grpc v1.45.0
 
 exclude github.com/mattn/go-sqlite3 v2.0.3+incompatible
+
+replace github.com/grafana/grafana-plugin-sdk-go => ../grafana-plugin-sdk-go

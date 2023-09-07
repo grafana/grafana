@@ -10,7 +10,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/resource/httpadapter"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
-	"github.com/grafana/grafana-testdata-datasource/pkg/plugin/testdatasource/sims"
+	"github.com/grafana/grafana/public/plugins/grafana-testdata-datasource/pkg/plugin/testdatasource/sims"
 )
 
 func ProvideService() *Service {

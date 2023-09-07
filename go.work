@@ -1,6 +1,0 @@
-go 1.20
-
-use (
-	.
-	./public/plugins/grafana-testdata-datasource
-)
