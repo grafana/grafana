@@ -224,11 +224,11 @@ func runQuery(ctx context.Context, api *LokiAPI, query *lokiQuery, responseOpts 
 		err = adjustFrame(frame, query, !responseOpts.metricDataplane, responseOpts.logsDataplane)
 
 		if err != nil {
-			logger.Error("Error adjusting frame", "error", err, "duration", time.Since(start), "action", "parseResponse")
+			logger.Error("Error adjusting frame", "error", err, "duration", time.Since(start))
 			return data.Frames{}, err
 		}
 	}
-	logger.Debug("Parsed response from Loki", "duration", time.Since(start), "action", "parseResponse")
+	logger.Debug("Frames adjusted", "duration", time.Since(start))
 
 	return frames, nil
 }
