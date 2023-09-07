@@ -67,10 +67,6 @@ const (
 	// Use jmoiron/sqlx rather than xorm for a few backend services
 	FlagNewDBLibrary = "newDBLibrary"
 
-	// FlagValidateDashboardsOnSave
-	// Validate dashboard JSON POSTed to api/dashboards/db
-	FlagValidateDashboardsOnSave = "validateDashboardsOnSave"
-
 	// FlagAutoMigrateOldPanels
 	// Migrate old angular panels to supported versions (graph, table-old, worldmap, etc)
 	FlagAutoMigrateOldPanels = "autoMigrateOldPanels"
@@ -144,7 +140,7 @@ const (
 	FlagNestedFolders = "nestedFolders"
 
 	// FlagNestedFolderPicker
-	// Enables the new folder picker to work with nested folders. Requires the folderPicker feature flag
+	// Enables the new folder picker to work with nested folders. Requires the nestedFolders feature flag
 	FlagNestedFolderPicker = "nestedFolderPicker"
 
 	// FlagAccessTokenExpirationCheck
@@ -426,4 +422,8 @@ const (
 	// FlagReportingRetries
 	// Enables rendering retries for the reporting feature
 	FlagReportingRetries = "reportingRetries"
+
+	// FlagNewBrowseDashboards
+	// New browse/manage dashboards UI
+	FlagNewBrowseDashboards = "newBrowseDashboards"
 )
