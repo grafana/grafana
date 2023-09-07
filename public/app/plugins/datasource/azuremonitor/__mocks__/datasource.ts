@@ -1,7 +1,7 @@
 import { DataSourceInstanceSettings } from '@grafana/data';
+import { getTemplateSrv, TemplateSrv } from '@grafana/runtime';
 import { ContextSrv } from 'app/core/services/context_srv';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
-import { TemplateSrv } from 'app/features/templating/template_srv';
 
 import Datasource from '../datasource';
 import { AzureDataSourceJsonData } from '../types';
@@ -20,7 +20,7 @@ export function createContext(overrides?: DeepPartial<Context>): Context {
   const instanceSettings = createMockInstanceSetttings(overrides?.instanceSettings);
   return {
     instanceSettings,
-    templateSrv: new TemplateSrv(),
+    templateSrv: getTemplateSrv(),
     datasource: new Datasource(instanceSettings),
     getResource: jest.fn(),
   };

@@ -1,7 +1,7 @@
 import { get, set } from 'lodash';
 
 import { DataSourceInstanceSettings } from '@grafana/data';
-import { TemplateSrv } from 'app/features/templating/template_srv';
+import { TemplateSrv } from '@grafana/runtime';
 
 import createMockQuery from '../__mocks__/query';
 import { createTemplateVariables } from '../__mocks__/utils';
