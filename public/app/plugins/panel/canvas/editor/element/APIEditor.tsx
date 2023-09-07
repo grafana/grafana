@@ -6,6 +6,8 @@ import { Button, InlineField, InlineFieldRow, JSONFormatter, RadioButtonGroup } 
 import { StringValueEditor } from 'app/core/components/OptionsUI/string';
 import { appEvents } from 'app/core/core';
 
+import { HttpRequestMethod } from "../../panelcfg.gen";
+
 export interface APIEditorConfig {
   method: string;
   endpoint: string;
@@ -42,7 +44,7 @@ export const callApi = (api: APIEditorConfig, isTest = false) => {
 
 const getData = (api: APIEditorConfig) => {
   let data: string | undefined = api.data ?? '{}';
-  if (api.method === 'GET') {
+  if (api.method === HttpRequestMethod.GET) {
     data = undefined;
   }
 
@@ -51,10 +53,9 @@ const getData = (api: APIEditorConfig) => {
 
 type Props = StandardEditorProps<APIEditorConfig>;
 
-// @TODO Extract as type, support other methods?
 const httpMethodOptions = [
-  { label: 'GET', value: 'GET' },
-  { label: 'POST', value: 'POST' },
+  { label: HttpRequestMethod.GET, value: HttpRequestMethod.GET },
+  { label: HttpRequestMethod.POST, value: HttpRequestMethod.POST },
 ];
 
 export function APIEditor({ value, context, onChange }: Props) {
@@ -115,7 +116,7 @@ export function APIEditor({ value, context, onChange }: Props) {
     return;
   };
 
-  const httpMethod = value.method ?? 'GET';
+  const httpMethod = value.method ?? HttpRequestMethod.GET;
 
   return config.disableSanitizeHtml ? (
     <>
@@ -134,7 +135,7 @@ export function APIEditor({ value, context, onChange }: Props) {
           />
         </InlineField>
       </InlineFieldRow>
-      { httpMethod === 'POST' && <InlineFieldRow>
+      { httpMethod === HttpRequestMethod.POST && <InlineFieldRow>
         <InlineField label={'Data'} labelWidth={LABEL_WIDTH} grow={true}>
           <StringValueEditor
             context={context}
@@ -146,7 +147,7 @@ export function APIEditor({ value, context, onChange }: Props) {
       </InlineFieldRow>}
       {renderTestAPIButton(value)}
       <br />
-      { httpMethod === 'POST' && renderJSON(value?.data ?? '{}')}
+      { httpMethod === HttpRequestMethod.POST && renderJSON(value?.data ?? '{}')}
     </>
   ) : (
     <>Must enable disableSanitizeHtml feature flag to access</>
