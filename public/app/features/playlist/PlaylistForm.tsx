@@ -40,27 +40,27 @@ export const PlaylistForm = ({ onSubmit, playlist }: Props) => {
           return (
             <>
               <Field
-                label={t('playlist-form.name-label', 'Name')}
+                label={t('playlist-edit.form.name-label', 'Name')}
                 invalid={!!errors.name}
                 error={errors?.name?.message}
               >
                 <Input
                   type="text"
-                  {...register('name', { required: t('playlist-form.name-required', 'Name is required') })}
-                  placeholder={t('playlist-form.name-placeholder', 'Name')}
+                  {...register('name', { required: t('playlist-edit.form.name-required', 'Name is required') })}
+                  placeholder={t('playlist-edit.form.name-placeholder', 'Name')}
                   defaultValue={name}
                   aria-label={selectors.pages.PlaylistForm.name}
                 />
               </Field>
               <Field
-                label={t('playlist-form.interval-label', 'Interval')}
+                label={t('playlist-edit.form.interval-label', 'Interval')}
                 invalid={!!errors.interval}
                 error={errors?.interval?.message}
               >
                 <Input
                   type="text"
-                  {...register('interval', { required: t('playlist-form.interval-required', 'Interval is required') })}
-                  placeholder={t('playlist-form.interval-placeholder', '5m')}
+                  {...register('interval', { required: t('playlist-edit.form.interval-required', 'Interval is required') })}
+                  placeholder={t('playlist-edit.form.interval-placeholder', '5m')}
                   defaultValue={interval ?? '5m'}
                   aria-label={selectors.pages.PlaylistForm.interval}
                 />
@@ -70,21 +70,21 @@ export const PlaylistForm = ({ onSubmit, playlist }: Props) => {
 
               <div className="gf-form-group">
                 <h3 className="page-headering">
-                  <Trans i18nKey="playlist-form.heading">Add dashboards</Trans>
+                  <Trans i18nKey="playlist-edit.form.heading">Add dashboards</Trans>
                 </h3>
 
-                <Field label={t('playlist-form.addTitle-label', 'Add by title')}>
+                <Field label={t('playlist-edit.form.addTitle-label', 'Add by title')}>
                   <DashboardPicker id="dashboard-picker" onChange={addByUID} key={items.length} />
                 </Field>
 
-                <Field label={t('playlist-form.addTag-label', 'Add by tag')}>
+                <Field label={t('playlist-edit.form.addTag-label', 'Add by tag')}>
                   <TagFilter
                     isClearable
                     tags={[]}
                     hideValues
                     tagOptions={tagOptions}
                     onChange={addByTag}
-                    placeholder={t('playlist-form.addTag-placeholder', 'Select a tag')}
+                    placeholder={t('playlist-edit.form.addTag-placeholder', 'Select a tag')}
                   />
                 </Field>
               </div>
@@ -96,10 +96,10 @@ export const PlaylistForm = ({ onSubmit, playlist }: Props) => {
                   disabled={isDisabled}
                   icon={saving ? 'fa fa-spinner' : undefined}
                 >
-                  <Trans i18nKey="playlist-form.save">Save</Trans>
+                  <Trans i18nKey="playlist-edit.form.save">Save</Trans>
                 </Button>
                 <LinkButton variant="secondary" href={`${config.appSubUrl}/playlists`}>
-                  <Trans i18nKey="playlist-form.cancel">Cancel</Trans>
+                  <Trans i18nKey="playlist-edit.form.cancel">Cancel</Trans>
                 </LinkButton>
               </HorizontalGroup>
             </>
