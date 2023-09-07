@@ -215,5 +215,5 @@ The following is an example query that would surface insights logs:
 
    In the **Logs** section, view specific information on which alert rule is failing and why.
 
-   You can see the rule contents ("rule"), the rule name ("name"), the name of the group it’s in ("group"), and the error message ("err").
+   You can see the rule contents (in the `rule` field), the rule name (in the `name` field), the name of the group it’s in (in the `group` field), and the error message (in the `err` field).
 
