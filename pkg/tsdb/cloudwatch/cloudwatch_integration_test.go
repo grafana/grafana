@@ -7,9 +7,11 @@ import (
 	"testing"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/client"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
+	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
@@ -28,17 +30,21 @@ func Test_CloudWatch_CallResource_Integration_Test(t *testing.T) {
 	origNewMetricsAPI := NewMetricsAPI
 	origNewOAMAPI := NewOAMAPI
 	origNewLogsAPI := NewLogsAPI
+	origNewEC2Client := NewEC2Client
 	NewOAMAPI = func(sess *session.Session) models.OAMAPIProvider { return nil }
 
 	var logApi mocks.LogsAPI
 	NewLogsAPI = func(sess *session.Session) models.CloudWatchLogsAPIProvider {
 		return &logApi
 	}
-
+	NewEC2Client = func(provider client.ConfigProvider) models.EC2APIProvider {
+		return fakeEC2Client{}
+	}
 	t.Cleanup(func() {
 		NewOAMAPI = origNewOAMAPI
 		NewMetricsAPI = origNewMetricsAPI
 		NewLogsAPI = origNewLogsAPI
+		NewEC2Client = origNewEC2Client
 	})
 
 	var api mocks.FakeMetricsAPI
@@ -47,7 +53,11 @@ func Test_CloudWatch_CallResource_Integration_Test(t *testing.T) {
 	}
 
 	im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-		return DataSource{Settings: models.CloudWatchSettings{}}, nil
+		return DataSource{Settings: models.CloudWatchSettings{
+			AWSDatasourceSettings: awsds.AWSDatasourceSettings{
+				Region: "us-east-1",
+			},
+		}}, nil
 	})
 
 	t.Run("Should handle dimension value request and return values from the api", func(t *testing.T) {
