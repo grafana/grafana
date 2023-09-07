@@ -60,7 +60,7 @@ export const PlaylistForm = ({ onSubmit, playlist }: Props) => {
                 <Input
                   type="text"
                   {...register('interval', { required: t('playlist-form.interval-required', 'Interval is required') })}
-                  placeholder={t('playlist-form.placeholder.interval', '5m')}
+                  placeholder={t('playlist-form.interval-placeholder', '5m')}
                   defaultValue={interval ?? '5m'}
                   aria-label={selectors.pages.PlaylistForm.interval}
                 />

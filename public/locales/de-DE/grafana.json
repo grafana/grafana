@@ -611,23 +611,17 @@
     "title": ""
   },
   "playlist-form": {
+    "addTag-label": "",
+    "addTag-placeholder": "",
+    "addTitle-label": "",
     "cancel": "",
     "heading": "",
-    "label": {
-      "interval": "",
-      "name": "",
-      "tag": "",
-      "title": ""
-    },
-    "placeholder": {
-      "interval": "",
-      "name": "",
-      "tag": ""
-    },
-    "required": {
-      "interval": "",
-      "name": ""
-    },
+    "interval-label": "",
+    "interval-placeholder": "",
+    "interval-required": "",
+    "name-label": "",
+    "name-placeholder": "",
+    "name-required": "",
     "save": ""
   },
   "refresh-picker": {

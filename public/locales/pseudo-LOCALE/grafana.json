@@ -611,23 +611,17 @@
     "title": "Ēđįŧ pľäyľįşŧ"
   },
   "playlist-form": {
+    "addTag-label": "Åđđ þy ŧäģ",
+    "addTag-placeholder": "Ŝęľęčŧ ä ŧäģ",
+    "addTitle-label": "Åđđ þy ŧįŧľę",
     "cancel": "Cäŉčęľ",
     "heading": "Åđđ đäşĥþőäřđş",
-    "label": {
-      "interval": "Ĩŉŧęřväľ",
-      "name": "Ńämę",
-      "tag": "Åđđ þy ŧäģ",
-      "title": "Åđđ þy ŧįŧľę"
-    },
-    "placeholder": {
-      "interval": "5m",
-      "name": "Ńämę",
-      "tag": "Ŝęľęčŧ ä ŧäģ"
-    },
-    "required": {
-      "interval": "Ĩŉŧęřväľ įş řęqūįřęđ",
-      "name": "Ńämę įş řęqūįřęđ"
-    },
+    "interval-label": "Ĩŉŧęřväľ",
+    "interval-placeholder": "5m",
+    "interval-required": "Ĩŉŧęřväľ įş řęqūįřęđ",
+    "name-label": "Ńämę",
+    "name-placeholder": "Ńämę",
+    "name-required": "Ńämę įş řęqūįřęđ",
     "save": "Ŝävę"
   },
   "refresh-picker": {
