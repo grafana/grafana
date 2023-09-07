@@ -22,7 +22,7 @@ export const callApi = (api: APIEditorConfig, isTest = false) => {
       .fetch({
         url: api.endpoint,
         method: api.method,
-        data: api.method === 'GET' ? undefined : api.data ?? '{}',
+        data: getData(api),
       })
       .subscribe({
         error: (error) => {
@@ -39,6 +39,15 @@ export const callApi = (api: APIEditorConfig, isTest = false) => {
       });
   }
 };
+
+const getData = (api: APIEditorConfig) => {
+  let data: string | undefined = api.data ?? '{}';
+  if (api.method === 'GET') {
+    data = undefined;
+  }
+
+  return data;
+}
 
 type Props = StandardEditorProps<APIEditorConfig>;
 
