@@ -66,49 +66,6 @@ func ProvideIDSigningService(
 	return service
 }
 
-func (s *Service) GenerateUserAssertion(ctx context.Context, id identity.Requester, req *http.Request) (*IDAssertions, error) {
-	idAssertions := &IDAssertions{
-		Teams:     []string{},
-		IPAddress: "",
-	}
-
-	var userID int64
-	namespace, identifier := id.GetNamespacedID()
-	if namespace == identity.NamespaceUser || namespace == identity.NamespaceServiceAccount {
-		var err error
-		userID, err = identity.IntIdentifier(namespace, identifier)
-		if err != nil {
-			return nil, err
-		}
-
-		// Get the user's teams.
-		query := team.GetTeamsByUserQuery{OrgID: id.GetOrgID(), UserID: userID, SignedInUser: id}
-		teams, err := s.teams.GetTeamsByUser(ctx, &query)
-		if err != nil {
-			return nil, err
-		}
-
-		for _, team := range teams {
-			idAssertions.Teams = append(idAssertions.Teams, team.Name)
-		}
-	}
-
-	addr := web.RemoteAddr(req)
-	ip, err := network.GetIPFromAddress(addr)
-	if err != nil {
-		s.logger.Debug("failed to parse ip from address", "addr", addr)
-	}
-
-	clientIPStr := ip.String()
-	if len(ip) == 0 {
-		clientIPStr = ""
-	}
-
-	idAssertions.IPAddress = clientIPStr
-
-	return idAssertions, nil
-}
-
 // ActiveUserAssertion returns the active user assertion.
 func (s *Service) ActiveUserAssertion(ctx context.Context, id identity.Requester, req *http.Request) (string, error) {
 	if s.Signer == nil {
@@ -138,7 +95,7 @@ func (s *Service) ActiveUserAssertion(ctx context.Context, id identity.Requester
 		ID:       identifier,
 	}
 
-	assertions, err := s.GenerateUserAssertion(ctx, id, req)
+	assertions, err := s.generateUserAssertion(ctx, id, req)
 	if err != nil {
 		return "", err
 	}
@@ -156,10 +113,45 @@ func (s *Service) ActiveUserAssertion(ctx context.Context, id identity.Requester
 	return token, nil
 }
 
+func (s *Service) generateUserAssertion(ctx context.Context, id identity.Requester, req *http.Request) (*IDAssertions, error) {
+	idAssertions := &IDAssertions{
+		IPAddress: getIPString(req),
+		Teams:     []string{},
+	}
+
+	namespace, identifier := id.GetNamespacedID()
+	if namespace == identity.NamespaceUser {
+		userID, err := identity.IntIdentifier(namespace, identifier)
+		if err != nil {
+			return nil, err
+		}
+
+		// Get the user's teams.
+		query := team.GetTeamsByUserQuery{OrgID: id.GetOrgID(), UserID: userID, SignedInUser: id}
+		teams, err := s.teams.GetTeamsByUser(ctx, &query)
+		if err != nil {
+			return nil, err
+		}
+
+		for _, team := range teams {
+			idAssertions.Teams = append(idAssertions.Teams, team.Name)
+		}
+	}
+
+	return idAssertions, nil
+}
+
+func getIPString(req *http.Request) string {
+	ip, _ := network.GetIPFromAddress(web.RemoteAddr(req))
+	if len(ip) == 0 {
+		return ""
+	}
+
+	return ip.String()
+}
+
 func canGenerateToken(namespace string) bool {
-	return namespace == identity.NamespaceUser ||
-		namespace == identity.NamespaceAPIKey ||
-		namespace == identity.NamespaceServiceAccount
+	return namespace == identity.NamespaceUser || namespace == identity.NamespaceServiceAccount
 }
 
 func getCacheKey(key string) string {
