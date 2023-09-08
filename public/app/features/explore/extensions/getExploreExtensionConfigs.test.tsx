@@ -23,6 +23,15 @@ describe('getExploreExtensionConfigs', () => {
           onClick: expect.any(Function),
           category: 'Dashboards',
         },
+        {
+          type: 'link',
+          title: 'Add Correlation',
+          description: 'Create a correlation from this query',
+          extensionPointId: PluginExtensionPoints.ExploreToolbarAction,
+          icon: 'link',
+          configure: expect.any(Function),
+          onClick: expect.any(Function),
+        },
       ]);
     });
   });
