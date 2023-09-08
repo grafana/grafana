@@ -3,8 +3,6 @@ import React from 'react';
 import { TransformerRegistryItem } from '@grafana/data';
 import { Modal } from '@grafana/ui';
 
-import { getHelperContent } from './HelperContent/getHelperContent';
-
 interface TransformationEditorHelperModalProps {
   isOpen: boolean;
   onCloseClick: (value: boolean) => void;
@@ -16,11 +14,8 @@ export const TransformationEditorHelperModal = ({
   onCloseClick,
   transformer,
 }: TransformationEditorHelperModalProps) => {
-  // JEV: get content and title both here
-  // const { title, content } = getHelperContent(transformation);
-
   const {
-    transformation: { id, name, description },
+    transformation: { name },
     help,
   } = transformer;
 
@@ -33,7 +28,7 @@ export const TransformationEditorHelperModal = ({
       onClickBackdrop={() => onCloseClick(false)}
       onDismiss={() => onCloseClick(false)}
     >
-      {"content"}
+      {help}
     </Modal>
   );
 };
