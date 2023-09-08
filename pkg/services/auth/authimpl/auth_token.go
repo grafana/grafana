@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/models/usertoken"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/quota"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -550,6 +551,57 @@ func (s *UserAuthTokenService) GetUserRevokedTokens(ctx context.Context, userId 
 	})
 
 	return result, err
+}
+
+func (s *UserAuthTokenService) GetUserRevokedTokensInLastHours(ctx context.Context, userId int64, duration time.Duration) ([]*auth.UserToken, error) {
+	hours := int(duration.Hours())
+	if hours < 1 {
+		s.log.Warn("GetUserRevokedTokensInLastHours called with duration less than 1 hour", "duration", duration)
+		hours = 1
+	}
+	result := []*auth.UserToken{}
+	err := s.sqlStore.WithDbSession(ctx, func(dbSession *db.Session) error {
+		var tokens []*userAuthToken
+		// get the database, mysql, postgres or sqlite
+		dialect := s.sqlStore.GetDialect()
+		var query string
+
+		if dialect.DriverName() == migrator.Postgres {
+			// postgres
+			query = fmt.Sprintf("user_id = ? AND revoked_at > 0 AND revoked_at <= NOW() - INTERVAL '%d hours'", hours)
+		} else if dialect.DriverName() == migrator.MySQL {
+			// mysql
+			query = fmt.Sprintf("user_id = ? AND revoked_at > 0 AND revoked_at <= NOW() - INTERVAL %d HOUR", hours)
+		} else if dialect.DriverName() == migrator.SQLite {
+			// sqlite doesn't have a direct equivalent but you can use date functions
+			query = fmt.Sprintf("user_id = ? AND revoked_at > 0 AND revoked_at <= datetime('now', '-%d hours')", hours)
+		} else if dialect.DriverName() == migrator.MSSQL {
+			// mssql
+			// FIXME: not tested
+			query = fmt.Sprintf("user_id = ? AND revoked_at > 0 AND revoked_at <= DATEADD(hour, -%d, GETDATE())", hours)
+		} else {
+			// unknown database
+			return errors.New("unknown database")
+		}
+		err := dbSession.Where(query, userId).Find(&tokens)
+		if err != nil {
+			return err
+		}
+
+		for _, token := range tokens {
+			var userToken auth.UserToken
+			if err := token.toUserToken(&userToken); err != nil {
+				return err
+			}
+			result = append(result, &userToken)
+		}
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
 }
 
 func (s *UserAuthTokenService) reportActiveTokenCount(ctx context.Context, _ *quota.ScopeParameters) (*quota.Map, error) {
