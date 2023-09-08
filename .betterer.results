@@ -1696,6 +1696,9 @@ exports[`better eslint`] = {
     "public/app/features/alerting/unified/components/silences/SilencesEditor.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
+    "public/app/features/alerting/unified/components/silences/SilencesFilter.tsx:5381": [
+      [0, 0, 0, "Do not use any type assertions.", "0"]
+    ],
     "public/app/features/alerting/unified/hooks/useAlertmanagerConfig.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
