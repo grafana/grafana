@@ -26,7 +26,11 @@ import {
   behaviors,
   VizPanelState,
   SceneGridItemLike,
+  SceneDataLayers,
+  dataLayers,
+  SceneDataLayerProvider,
 } from '@grafana/scenes';
+import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { DashboardDTO } from 'app/types';
 
@@ -49,6 +53,9 @@ export function transformSaveModelToScene(rsp: DashboardDTO): DashboardScene {
   const oldModel = new DashboardModel(rsp.dashboard, rsp.meta, {
     autoMigrateOldPanels: true,
   });
+
+  // Setting for built-in annotations query to run
+  getDashboardSrv().setCurrent(oldModel);
 
   return createDashboardSceneFromDashboardModel(oldModel);
 }
@@ -135,6 +142,7 @@ export function createSceneObjectsForPanels(oldPanels: PanelModel[]): SceneGridI
 
 export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel) {
   let variables: SceneVariableSet | undefined = undefined;
+  const layers: SceneDataLayerProvider[] = [];
 
   if (oldModel.templating?.list?.length) {
     const variableObjects = oldModel.templating.list
@@ -153,6 +161,14 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
     variables = new SceneVariableSet({
       variables: variableObjects,
     });
+  }
+
+  if (oldModel.annotations?.list?.length) {
+    layers.push(
+      new dataLayers.AnnotationsDataLayer({
+        queries: oldModel.annotations.list,
+      })
+    );
   }
 
   const controls: SceneObject[] = [
@@ -179,6 +195,12 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
         sync: oldModel.graphTooltip,
       }),
     ],
+    $data:
+      layers.length > 0
+        ? new SceneDataLayers({
+            layers,
+          })
+        : undefined,
     controls: controls,
   });
 }
