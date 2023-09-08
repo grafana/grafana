@@ -33,15 +33,14 @@ export const PluginActions = ({ plugin }: Props) => {
       ? PluginStatus.UPDATE
       : PluginStatus.UNINSTALL
     : PluginStatus.INSTALL;
-  const isInstallControlsDisabled =
-    plugin.isCore || plugin.isDisabled || !isInstallControlsEnabled() || hasInstallWarning;
+  const isInstallControlsDisabled = plugin.isCore || plugin.isDisabled || !isInstallControlsEnabled();
 
   return (
     <VerticalGroup>
       <HorizontalGroup>
         {!isInstallControlsDisabled && (
           <>
-            {isExternallyManaged && plugin.isPublished ? (
+            {isExternallyManaged && !hasInstallWarning ? (
               <ExternallyManagedButton
                 pluginId={plugin.id}
                 pluginStatus={pluginStatus}
