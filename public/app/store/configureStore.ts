@@ -1,4 +1,4 @@
-import { configureStore as reduxConfigureStore, createListenerMiddleware, ReducersMapObject } from '@reduxjs/toolkit';
+import { configureStore as reduxConfigureStore, createListenerMiddleware } from '@reduxjs/toolkit';
 import { setupListeners } from '@reduxjs/toolkit/query';
 
 import { togglesApi } from 'app/features/admin/AdminFeatureTogglesAPI';
@@ -12,7 +12,7 @@ import { alertingApi } from '../features/alerting/unified/api/alertingApi';
 
 import { setStore } from './store';
 
-export function addRootReducer(reducers: ReducersMapObject) {
+export function addRootReducer(reducers: any) {
   // this is ok now because we add reducers before configureStore is called
   // in the future if we want to add reducers during runtime
   // we'll have to solve this in a more dynamic way
