@@ -2,7 +2,10 @@ package commands
 
 import (
 	"fmt"
+	"os"
+	"os/signal"
 	"strings"
+	"syscall"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
@@ -87,7 +90,7 @@ func serveBackendPluginCommand(context *cli.Context) error {
 			QueryDataHandler:    s,
 			//StreamHandler:       s,
 		}
-	case "testdatasource":
+	case "testdata":
 		s := testdatasource.ProvideService()
 		opts = &backend.ServeOpts{
 			//	CheckHealthHandler:  s,
@@ -121,7 +124,28 @@ func serveBackendPluginCommand(context *cli.Context) error {
 			//StreamHandler:       s,
 		}
 	default:
-		return fmt.Errorf("missing <pluginid> (only core work now!)")
+		return fmt.Errorf("missing <pluginid> (only some plugins work now, not: %s)", pluginID)
 	}
-	return backend.Serve(*opts)
+
+	addr := context.Args().Get(1)
+	if addr == "" {
+		return backend.Serve(*opts)
+	}
+
+	// // Start the server running on an explicit port (note empty directory will not do the fake hashicorp loops)
+	// return backend.GracefulStandaloneServe(*opts,
+	// 	standalone.NewServerSettings("127.0.0.1:50051", ""))
+	// standalone is internal...
+
+	sss, err := backend.TestStandaloneServe(*opts, addr)
+	fmt.Printf("Running SERVER: %s\n", addr)
+	for k, v := range sss.GetServiceInfo() {
+		fmt.Printf("[%s] %v\n", k, v.Metadata)
+	}
+
+	exitSignal := make(chan os.Signal, 1)
+	signal.Notify(exitSignal, syscall.SIGINT, syscall.SIGTERM)
+	<-exitSignal
+
+	return err
 }

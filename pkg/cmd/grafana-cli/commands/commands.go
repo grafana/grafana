@@ -110,7 +110,7 @@ var pluginCommands = []*cli.Command{
 		Action: runPluginCommand(lsCommand),
 	}, {
 		Name:   "run",
-		Usage:  "run <plugin id>",
+		Usage:  "run <pluginId> <address>",
 		Action: serveBackendPluginCommand,
 	}, {
 		Name:    "uninstall",
