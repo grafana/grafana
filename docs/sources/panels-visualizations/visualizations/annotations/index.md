@@ -14,13 +14,13 @@ labels:
     - cloud
     - enterprise
     - oss
-title: Annotations
+title: Annotations list
 weight: 100
 ---
 
-# Annotations
+# Annotations list
 
-The Annotations panel shows a list of available annotations you can use to view annotated data. Various options are available to filter the list based on tags and on the current dashboard.
+The annotations list shows a list of available annotations you can use to view annotated data. Various options are available to filter the list based on tags and on the current dashboard.
 
 ## Annotation query
 
@@ -38,7 +38,7 @@ Use the query filter to create a list of annotations from all dashboards in your
 Use the time range option to specify whether the list should be limited to the current time range. It has the following options:
 
 - None - no time range limit for the annotations query.
-- This dashboard - Limit the list to the time range of the dashboard where the annotation list panel is available.
+- This dashboard - Limit the list to the time range of the dashboard where the annotations list is available.
 
 ### Tags
 
@@ -54,7 +54,7 @@ Use the limit option to limit the number of results returned.
 
 ## Display
 
-These options control additional meta-data included in the annotations panel display.
+These options control additional meta-data included in the annotations list display.
 
 ### Show user
 
@@ -66,7 +66,7 @@ Use this option to show or hide the time the annotation creation time.
 
 ### Show Tags
 
-Use this option to show or hide the tags associated with an annotation. _NB_: You can use the tags to live-filter the annotation list on the panel itself.
+Use this option to show or hide the tags associated with an annotation. _NB_: You can use the tags to live-filter the annotations list on the panel itself.
 
 ## Link behavior
 

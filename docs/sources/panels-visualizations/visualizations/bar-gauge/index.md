@@ -19,7 +19,7 @@ weight: 100
 
 # Bar gauge
 
-The bar gauge simplifies your data by reducing every field to a single value. You choose how Grafana calculates the reduction.
+Bar gauges simplify your data by reducing every field to a single value. You choose how Grafana calculates the reduction.
 
 This panel can show one or more bar gauges depending on how many series, rows, or columns your query returns.
 

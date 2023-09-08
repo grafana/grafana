@@ -25,11 +25,11 @@ weight: 100
 
 {{% admonition type="note" %}}
 
-The Grafana Datagrid panel is experimental. This feature is supported by the engineering team on a best-effort basis, and breaking changes may occur without notice prior to general availability.
+The Grafana datagrid is experimental. This feature is supported by the engineering team on a best-effort basis, and breaking changes may occur without notice prior to general availability.
 
 {{% /admonition %}}
 
-The Datagrid panel offers you the ability to create, edit, and fine-tune data within Grafana. As such, this panel can act as a data source for other panels
+Datagrids offer you the ability to create, edit, and fine-tune data within Grafana. As such, this panel can act as a data source for other panels
 inside a dashboard.
 
 ![Datagrid panel](/media/docs/datagrid/screenshot-grafana-datagrid-panel.png)
@@ -45,7 +45,7 @@ Learn more about the inbuilt `-- Grafana --` and `-- Dashboard --` data sources 
 
 ## Context menu
 
-To provide a more streamlined experience, the Datagrid panel has a context menu that can be accessed by right-clicking on a cell, column header, or row selector. Depending on the state of your datagrid, the context menu offers different options including:
+To provide a more streamlined experience, the datagrid has a context menu that can be accessed by right-clicking on a cell, column header, or row selector. Depending on the state of your datagrid, the context menu offers different options including:
 
 - Delete or clear rows and columns.
 - Remove all existing data (rendering your datagrid blank).
@@ -63,11 +63,11 @@ You can also access a header menu by clicking the dropdown icon next to the head
 
 ## Selecting series
 
-If there are multiple series, you can set the Datagrid panel to display the preferred dataset using the **Select series** dropdown in the panel options.
+If there are multiple series, you can set the datagrid to display the preferred dataset using the **Select series** dropdown in the panel options.
 
-## Using Datagrid
+## Using datagrids
 
-Datagrid offers various ways of interacting with your data. You can add, edit, move, clear, and remove rows and columns; use the inbuilt search functionality to find specific data; and convert field types or freeze horizontal scroll on a specific column.
+Datagrids offer various ways of interacting with your data. You can add, edit, move, clear, and remove rows and columns; use the inbuilt search functionality to find specific data; and convert field types or freeze horizontal scroll on a specific column.
 
 ### Add data
 

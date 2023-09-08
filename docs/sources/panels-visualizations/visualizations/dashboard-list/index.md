@@ -21,7 +21,7 @@ weight: 100
 
 # Dashboard list
 
-The dashboard list visualization allows you to display dynamic links to other dashboards. The list can be configured to use starred dashboards, recently viewed dashboards, a search query, and dashboard tags.
+Dashboard lists allow you to display dynamic links to other dashboards. The list can be configured to use starred dashboards, recently viewed dashboards, a search query, and dashboard tags.
 
 {{< figure src="/static/img/docs/v45/dashboard-list-panels.png" max-width="850px">}}
 
