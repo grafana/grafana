@@ -25,6 +25,7 @@ import {
   KeepLabelsExpr,
   DropLabels,
   KeepLabels,
+  ParserFlag,
 } from '../../../lezer/index.es';
 import { getLogQueryFromMetricsQuery } from '../../../queryUtils';
 
@@ -101,7 +102,8 @@ export type Situation =
       type: 'AT_ROOT';
     }
   | {
-    type: 'IN_LOGFMT'
+    type: 'IN_LOGFMT',
+    logQuery: string;
   }
   | {
       type: 'IN_RANGE';
@@ -438,9 +440,13 @@ function resolveLogfmtParser(_: SyntaxNode, text: string, cursorPosition: number
   const cursor = tree.cursorAt(position);
   do {
     const { node } = cursor;
-    if (cursor.from <= position && cursor.to >= position && node.type.id === Logfmt) {
+    if (node.type.id !== Logfmt && node.type.id !== ParserFlag) {
+      continue;
+    }
+    if (cursor.from <= position && cursor.to >= position) {
       return {
         type: 'IN_LOGFMT',
+        logQuery: getLogQueryFromMetricsQuery(text).trim(),
       }
     }
   } while (cursor.next());

@@ -95,15 +95,31 @@ describe('situation', () => {
   it('identifies AFTER_LOGFMT autocomplete situations', () => {
     assertSituation('{level="info"} | logfmt ^', {
       type: 'IN_LOGFMT',
+      logQuery: '{level="info"} | logfmt',
+    });
+    assertSituation('{level="info"} | logfmt --strict ^', {
+      type: 'IN_LOGFMT',
+      logQuery: '{level="info"} | logfmt --strict',
     });
     assertSituation('count_over_time({level="info"} | logfmt ^', {
       type: 'IN_LOGFMT',
+      logQuery: '{level="info"} | logfmt',
     });
     assertSituation('count_over_time({level="info"} | logfmt ^)', {
       type: 'IN_LOGFMT',
+      logQuery: '{level="info"} | logfmt',
+    });
+    assertSituation('count_over_time({level="info"} | logfmt --keep-empty^)', {
+      type: 'IN_LOGFMT',
+      logQuery: '{level="info"} | logfmt --keep-empty',
     });
     assertSituation('sum by (test) (count_over_time({level="info"} | logfmt ^))', {
       type: 'IN_LOGFMT',
+      logQuery: '{level="info"} | logfmt',
+    });
+    assertSituation('sum by (test) (count_over_time({level="info"} | logfmt --strict ^))', {
+      type: 'IN_LOGFMT',
+      logQuery: '{level="info"} | logfmt --strict',
     });
   });
 
