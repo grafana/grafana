@@ -154,6 +154,7 @@ func readPrometheusData(iter *jsonitere.Iterator, opt Options) backend.DataRespo
 	}
 
 	resultType := ""
+	resultTypeFound := false
 	var resultBytes []byte
 
 l1Fields:
@@ -167,6 +168,8 @@ l1Fields:
 			if err != nil {
 				return rspErr(err)
 			}
+			resultTypeFound = true
+
 			// if we have saved resultBytes we will parse them here
 			// we saved them because when we had them we don't know the resultType
 			if len(resultBytes) > 0 {
@@ -177,7 +180,7 @@ l1Fields:
 			// for some rare cases resultType is coming after the result.
 			// when that happens we save the bytes and parse them after reading resultType
 			// see: https://github.com/grafana/grafana/issues/64693
-			if resultType != "" {
+			if resultTypeFound {
 				rsp = readResult(resultType, rsp, iter, opt)
 			} else {
 				resultBytes = iter.SkipAndReturnBytes()
@@ -202,6 +205,9 @@ l1Fields:
 		case "":
 			if err != nil {
 				return rspErr(err)
+			}
+			if resultTypeFound == false {
+				return rspErr(fmt.Errorf("no resultType found"))
 			}
 			break l1Fields
 

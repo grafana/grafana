@@ -37,7 +37,7 @@ func TestQueryData_parseResponse(t *testing.T) {
 		res := &http.Response{Body: io.NopCloser(bytes.NewBufferString(resBody))}
 		result := qd.parseResponse(context.Background(), &models.Query{}, res)
 		assert.Error(t, result.Error)
-		assert.Equal(t, result.Error.Error(), "unknown result type: ")
+		assert.Equal(t, result.Error.Error(), "no resultType found")
 	})
 
 	t.Run("resultType is set as empty string before result", func(t *testing.T) {
