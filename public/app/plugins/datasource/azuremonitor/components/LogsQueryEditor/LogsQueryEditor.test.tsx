@@ -185,7 +185,7 @@ describe('LogsQueryEditor', () => {
     );
   });
 
-  it('should update the intersectTime prop', async () => {
+  it('should update the dashboardTime prop', async () => {
     const mockDatasource = createMockDatasource({ resourcePickerData: createMockResourcePickerData() });
     const query = createMockQuery();
     const onChange = jest.fn();
@@ -200,13 +200,13 @@ describe('LogsQueryEditor', () => {
       />
     );
 
-    const intersectionOption = await screen.findByLabelText('Intersection');
-    await userEvent.click(intersectionOption);
+    const dashboardTimeOption = await screen.findByLabelText('Dashboard');
+    await userEvent.click(dashboardTimeOption);
 
     expect(onChange).toBeCalledWith(
       expect.objectContaining({
         azureLogAnalytics: expect.objectContaining({
-          intersectTime: true,
+          dashboardTime: true,
         }),
       })
     );

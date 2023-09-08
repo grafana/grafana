@@ -9,6 +9,7 @@ import { AzureLogsQuery, AzureMonitorQuery, AzureQueryType, AzureTracesQuery } f
 
 import FakeSchemaData from './__mocks__/schema';
 import AzureLogAnalyticsDatasource from './azure_log_analytics_datasource';
+import { ExtendedTable } from '../components/LogsQueryEditor/TimeManagement';
 
 const templateSrv = new TemplateSrv();
 
@@ -42,13 +43,13 @@ describe('AzureLogAnalyticsDatasource', () => {
     it('should return a schema to use with monaco-kusto', async () => {
       const result = await ctx.datasource.azureLogAnalyticsDatasource.getKustoSchema('myWorkspace');
 
-      expect(result.database.tables).toHaveLength(2);
-      expect(result.database.tables[0].name).toBe('Alert');
-      expect(result.database.tables[0].timespanColumn).toBe('TimeGenerated');
-      expect(result.database.tables[1].name).toBe('AzureActivity');
-      expect(result.database.tables[0].columns).toHaveLength(69);
+      expect(result.database?.tables).toHaveLength(2);
+      expect(result.database?.tables[0].name).toBe('Alert');
+      expect((result.database?.tables[0] as ExtendedTable).timespanColumn).toBe('TimeGenerated');
+      expect(result.database?.tables[1].name).toBe('AzureActivity');
+      expect(result.database?.tables[0].columns).toHaveLength(69);
 
-      expect(result.database.functions[1].inputParameters).toEqual([
+      expect(result.database?.functions[1].inputParameters).toEqual([
         {
           name: 'RangeStart',
           type: 'datetime',
@@ -77,7 +78,7 @@ describe('AzureLogAnalyticsDatasource', () => {
 
     it('should include macros as suggested functions', async () => {
       const result = await ctx.datasource.azureLogAnalyticsDatasource.getKustoSchema('myWorkspace');
-      expect(result.database.functions.map((f: { name: string }) => f.name)).toEqual([
+      expect(result.database?.functions.map((f: { name: string }) => f.name)).toEqual([
         'Func1',
         '_AzureBackup_GetVaults',
         '$__timeFilter',
@@ -90,7 +91,7 @@ describe('AzureLogAnalyticsDatasource', () => {
 
     it('should include template variables as global parameters', async () => {
       const result = await ctx.datasource.azureLogAnalyticsDatasource.getKustoSchema('myWorkspace');
-      expect(result.globalParameters.map((f: { name: string }) => f.name)).toEqual([`$${singleVariable.name}`]);
+      expect(result.globalScalarParameters?.map((f: { name: string }) => f.name)).toEqual([`$${singleVariable.name}`]);
     });
   });
 

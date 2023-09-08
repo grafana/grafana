@@ -6,7 +6,8 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { AzureQueryEditorFieldProps } from '../../types';
 import { setDashboardTime, setTimeColumn } from './setQueryValue';
 
-interface ExtendedTable extends Table {
+// Extending the schema definition as this property doesn't exist but is returned from Azure
+export interface ExtendedTable extends Table {
   timespanColumn?: string;
 }
 
