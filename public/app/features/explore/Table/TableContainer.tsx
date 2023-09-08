@@ -88,7 +88,13 @@ export class TableContainer extends PureComponent<Props> {
           frames.map((data, i) => (
             <PanelChrome
               key={data.refId || `table-${i}`}
-              title={dataFrames && dataFrames.length > 1 ? `Table - ${data.name || data.refId || i}` : 'Table'}
+              title={
+                dataFrames && dataFrames.length > 1
+                  ? `Table - ${data.name || data.refId || i}`
+                  : data.name
+                  ? `Table - ${data.name}`
+                  : 'Table'
+              }
               width={width}
               height={this.getTableHeight(data.length, this.hasSubFrames(data))}
               loadingState={loading ? LoadingState.Loading : undefined}
