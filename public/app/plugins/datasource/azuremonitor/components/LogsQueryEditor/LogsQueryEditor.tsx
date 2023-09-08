@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 
 import { EditorFieldGroup, EditorRow, EditorRows } from '@grafana/experimental';
 import { Alert, InlineField, RadioButtonGroup } from '@grafana/ui';
@@ -15,6 +15,7 @@ import AdvancedResourcePicker from './AdvancedResourcePicker';
 import QueryField from './QueryField';
 import { setFormatAs, setIntersectTime } from './setQueryValue';
 import useMigrations from './useMigrations';
+import { EngineSchema } from '@kusto/monaco-kusto';
 
 interface LogsQueryEditorProps {
   query: AzureMonitorQuery;
@@ -49,6 +50,15 @@ const LogsQueryEditor = ({
     // Only resources with the same metricNamespace can be selected
     return rowResourceNS !== selectedRowSampleNs;
   };
+  const [schema, setSchema] = useState<EngineSchema | undefined>();
+
+  useEffect(() => {
+    if (query.azureLogAnalytics?.resources && query.azureLogAnalytics.resources.length) {
+      datasource.azureLogAnalyticsDatasource.getKustoSchema(query.azureLogAnalytics.resources[0]).then((schema) => {
+        setSchema(schema);
+      });
+    }
+  }, [query.azureLogAnalytics?.resources]);
 
   return (
     <span data-testid={selectors.components.queryEditor.logsQueryEditor.container.input}>
@@ -106,6 +116,7 @@ const LogsQueryEditor = ({
           variableOptionGroup={variableOptionGroup}
           onQueryChange={onChange}
           setError={setError}
+          schema={schema}
         />
         <EditorRow>
           <EditorFieldGroup>

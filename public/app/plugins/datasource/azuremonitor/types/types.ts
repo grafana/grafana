@@ -5,6 +5,7 @@ import {
   PanelData,
   SelectableValue,
 } from '@grafana/data';
+import { EngineSchema } from '@kusto/monaco-kusto';
 
 import Datasource from '../datasource';
 
@@ -131,6 +132,7 @@ export interface AzureQueryEditorFieldProps {
   datasource: Datasource;
   subscriptionId?: string;
   variableOptionGroup: VariableOptionGroup;
+  schema?: EngineSchema;
 
   onQueryChange: (newQuery: AzureMonitorQuery) => void;
   setError: (source: string, error: AzureMonitorErrorish | undefined) => void;

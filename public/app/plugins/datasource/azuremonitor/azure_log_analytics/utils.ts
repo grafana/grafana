@@ -1,4 +1,5 @@
 import { VariableModel } from '@grafana/data';
+import { EngineSchema } from '@kusto/monaco-kusto';
 
 import { AzureLogAnalyticsMetadata } from '../types/logAnalyticsMetadata';
 
@@ -48,7 +49,7 @@ export function transformMetadataToKustoSchema(
   sourceSchema: AzureLogAnalyticsMetadata,
   nameOrIdOrSomething: string,
   templateVariables: VariableModel[]
-) {
+): EngineSchema {
   const database = {
     name: nameOrIdOrSomething,
     tables: sourceSchema.tables,
@@ -114,7 +115,7 @@ export function transformMetadataToKustoSchema(
   );
 
   // Adding macros as global parameters
-  const globalParameters = templateVariables.map((v) => {
+  const globalScalarParameters = templateVariables.map((v) => {
     return {
       name: `$${v.name}`,
       type: 'dynamic',
@@ -128,6 +129,6 @@ export function transformMetadataToKustoSchema(
       databases: [database],
     },
     database: database,
-    globalParameters,
+    globalScalarParameters,
   };
 }
