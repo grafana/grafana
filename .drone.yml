@@ -576,7 +576,7 @@ steps:
     token:
       from_secret: drone_token
 - commands:
-  - apk add --update jq
+  - apk add --update jq bash
   - yarn packages:build
   - yarn packages:pack
   - ./scripts/validate-npm-packages.sh
@@ -922,7 +922,9 @@ steps:
   - go test -p=1 -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find
     ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+'
     | grep -o '\(.*\)/' | sort -u)
-  depends_on: null
+  depends_on:
+  - wire-install
+  - wait-for-postgres
   environment:
     GRAFANA_TEST_DB: postgres
     PGPASSWORD: grafanatest
@@ -941,7 +943,9 @@ steps:
   - go test -p=1 -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find
     ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+'
     | grep -o '\(.*\)/' | sort -u)
-  depends_on: null
+  depends_on:
+  - wire-install
+  - wait-for-mysql-5.7
   environment:
     GRAFANA_TEST_DB: mysql
     MYSQL_HOST: mysql57
@@ -959,7 +963,9 @@ steps:
   - go test -p=1 -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find
     ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+'
     | grep -o '\(.*\)/' | sort -u)
-  depends_on: null
+  depends_on:
+  - wire-install
+  - wait-for-mysql-8.0
   environment:
     GRAFANA_TEST_DB: mysql
     MYSQL_HOST: mysql80
@@ -972,7 +978,9 @@ steps:
 - commands:
   - go clean -testcache
   - go test -run IntegrationRedis -covermode=atomic -timeout=2m ./pkg/...
-  depends_on: null
+  depends_on:
+  - wire-install
+  - wait-for-redis
   environment:
     REDIS_URL: redis://redis:6379/0
   image: golang:1.21.1-alpine
@@ -984,7 +992,9 @@ steps:
 - commands:
   - go clean -testcache
   - go test -run IntegrationMemcached -covermode=atomic -timeout=2m ./pkg/...
-  depends_on: null
+  depends_on:
+  - wire-install
+  - wait-for-memcached
   environment:
     MEMCACHED_HOSTS: memcached:11211
   image: golang:1.21.1-alpine
@@ -1718,7 +1728,7 @@ steps:
   image: node:18.12.0-alpine
   name: yarn-install
 - commands:
-  - apk add --update jq
+  - apk add --update jq bash
   - yarn packages:build
   - yarn packages:pack
   - ./scripts/validate-npm-packages.sh
@@ -2160,7 +2170,9 @@ steps:
   - go test -p=1 -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find
     ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+'
     | grep -o '\(.*\)/' | sort -u)
-  depends_on: null
+  depends_on:
+  - wire-install
+  - wait-for-postgres
   environment:
     GRAFANA_TEST_DB: postgres
     PGPASSWORD: grafanatest
@@ -2179,7 +2191,9 @@ steps:
   - go test -p=1 -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find
     ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+'
     | grep -o '\(.*\)/' | sort -u)
-  depends_on: null
+  depends_on:
+  - wire-install
+  - wait-for-mysql-5.7
   environment:
     GRAFANA_TEST_DB: mysql
     MYSQL_HOST: mysql57
@@ -2197,7 +2211,9 @@ steps:
   - go test -p=1 -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find
     ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+'
     | grep -o '\(.*\)/' | sort -u)
-  depends_on: null
+  depends_on:
+  - wire-install
+  - wait-for-mysql-8.0
   environment:
     GRAFANA_TEST_DB: mysql
     MYSQL_HOST: mysql80
@@ -2210,7 +2226,9 @@ steps:
 - commands:
   - go clean -testcache
   - go test -run IntegrationRedis -covermode=atomic -timeout=2m ./pkg/...
-  depends_on: null
+  depends_on:
+  - wire-install
+  - wait-for-redis
   environment:
     REDIS_URL: redis://redis:6379/0
   image: golang:1.21.1-alpine
@@ -2222,7 +2240,9 @@ steps:
 - commands:
   - go clean -testcache
   - go test -run IntegrationMemcached -covermode=atomic -timeout=2m ./pkg/...
-  depends_on: null
+  depends_on:
+  - wire-install
+  - wait-for-memcached
   environment:
     MEMCACHED_HOSTS: memcached:11211
   image: golang:1.21.1-alpine
@@ -3393,7 +3413,9 @@ steps:
   - go test -p=1 -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find
     ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+'
     | grep -o '\(.*\)/' | sort -u)
-  depends_on: null
+  depends_on:
+  - wire-install
+  - wait-for-postgres
   environment:
     GRAFANA_TEST_DB: postgres
     PGPASSWORD: grafanatest
@@ -3412,7 +3434,9 @@ steps:
   - go test -p=1 -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find
     ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+'
     | grep -o '\(.*\)/' | sort -u)
-  depends_on: null
+  depends_on:
+  - wire-install
+  - wait-for-mysql-5.7
   environment:
     GRAFANA_TEST_DB: mysql
     MYSQL_HOST: mysql57
@@ -3430,7 +3454,9 @@ steps:
   - go test -p=1 -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find
     ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+'
     | grep -o '\(.*\)/' | sort -u)
-  depends_on: null
+  depends_on:
+  - wire-install
+  - wait-for-mysql-8.0
   environment:
     GRAFANA_TEST_DB: mysql
     MYSQL_HOST: mysql80
@@ -3443,7 +3469,9 @@ steps:
 - commands:
   - go clean -testcache
   - go test -run IntegrationRedis -covermode=atomic -timeout=2m ./pkg/...
-  depends_on: null
+  depends_on:
+  - wire-install
+  - wait-for-redis
   environment:
     REDIS_URL: redis://redis:6379/0
   image: golang:1.21.1-alpine
@@ -3455,7 +3483,9 @@ steps:
 - commands:
   - go clean -testcache
   - go test -run IntegrationMemcached -covermode=atomic -timeout=2m ./pkg/...
-  depends_on: null
+  depends_on:
+  - wire-install
+  - wait-for-memcached
   environment:
     MEMCACHED_HOSTS: memcached:11211
   image: golang:1.21.1-alpine
@@ -4167,6 +4197,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 39cadfdf7cecb88849cdb04ea10c11f633ec8fb31823ecf15762e57f5830f640
+hmac: 039a8fe9014cddee1671e0f40a3f266b21376da3563559588d4848b15a4ff3c5
 
 ...
