@@ -19,7 +19,7 @@ export const TransformationEditorHelperModal = ({
     help,
   } = transformer;
 
-  const helpTitle = `${name} - Transformation help`;
+  const helpTitle = `Transformation help - ${name}`;
 
   return (
     <Modal
