@@ -111,6 +111,12 @@ describe('situation', () => {
       flag: true,
       logQuery: '{level="info"} | logfmt --strict label, label1="expression"',
     });
+    assertSituation('{level="info"} | logfmt --strict label, label1="expression",^', {
+      type: 'IN_LOGFMT',
+      otherLabels: ['label', 'label1'],
+      flag: true,
+      logQuery: '{level="info"} | logfmt --strict label, label1="expression",',
+    });
     assertSituation('count_over_time({level="info"} | logfmt ^', {
       type: 'IN_LOGFMT',
       otherLabels: [],

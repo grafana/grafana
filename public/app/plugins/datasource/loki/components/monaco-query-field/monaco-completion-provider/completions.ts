@@ -338,9 +338,28 @@ export async function getAfterSelectorCompletions(
 }
 
 export async function getLogfmtCompletions(
+  logQuery: string,
+  flag: boolean,
+  otherLabels: string[],
   dataProvider: CompletionDataProvider
 ): Promise<Completion[]> {
-  const completions: Completion[] = LOGFMT_ARGUMENT_COMPLETIONS;
+  let completions: Completion[] = [];
+
+  if (!flag) {
+    completions = [...completions, ...LOGFMT_ARGUMENT_COMPLETIONS]
+  }
+
+  const { extractedLabelKeys } = await dataProvider.getParserAndLabelKeys(logQuery);
+
+  const labelPrefix = otherLabels.length === 0 || logQuery.trimEnd().endsWith(',') ? '' : ', ';
+  const labels = extractedLabelKeys.filter(label => !otherLabels.includes(label));
+  const labelCompletions: Completion[] = labels.map((label) => ({
+    type: 'LABEL_NAME',
+    label,
+    insertText: labelPrefix + label,
+    triggerOnInsert: false,
+  }));
+  completions = [...completions, ...labelCompletions]
 
   return completions;
 }
@@ -424,7 +443,7 @@ export async function getCompletions(
     case 'AFTER_KEEP_AND_DROP':
       return getAfterKeepAndDropCompletions(situation.logQuery, dataProvider);
     case 'IN_LOGFMT':
-      return getLogfmtCompletions(dataProvider);
+      return getLogfmtCompletions(situation.logQuery, situation.flag, situation.otherLabels, dataProvider);
     default:
       throw new NeverCaseError(situation);
   }

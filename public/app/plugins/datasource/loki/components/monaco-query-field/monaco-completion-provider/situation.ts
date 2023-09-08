@@ -27,7 +27,8 @@ import {
   KeepLabels,
   ParserFlag,
   LabelExtractionExpression,
-  LogfmtParserFlags
+  LogfmtParserFlags,
+  LabelExtractionExpressionList
 } from '../../../lezer/index.es';
 import { getLogQueryFromMetricsQuery, getNodesFromQuery, isQueryWithNode } from '../../../queryUtils';
 
@@ -107,6 +108,7 @@ export type Situation =
     type: 'IN_LOGFMT',
     otherLabels: string[],
     flag: boolean,
+    logQuery: string;
   }
   | {
       type: 'IN_RANGE';
@@ -173,6 +175,10 @@ const RESOLVERS: Resolver[] = [
   },
   {
     path: [ERROR_NODE_ID, LogRangeExpr, RangeAggregationExpr],
+    fun: resolveLogfmtParser,
+  },
+  {
+    path: [ERROR_NODE_ID, LabelExtractionExpressionList],
     fun: resolveLogfmtParser,
   },
   {
@@ -438,10 +444,13 @@ function resolveLogfmtParser(_: SyntaxNode, text: string, cursorPosition: number
   // E.g. `{x="y"} | logfmt ^`
 
   const tree = parser.parse(text);
+
   const trimRightTextLen = text.substring(0, cursorPosition).trimEnd().length;
   const position = trimRightTextLen < cursorPosition ? trimRightTextLen : cursorPosition;
+  
   const cursor = tree.cursorAt(position);
-  const expectedNodes = [Logfmt, ParserFlag, LabelExtractionExpression]
+
+  const expectedNodes = [Logfmt, ParserFlag, LabelExtractionExpression, LabelExtractionExpressionList]
   let inLogfmt = false;
   do {
     const { node } = cursor;
@@ -469,6 +478,7 @@ function resolveLogfmtParser(_: SyntaxNode, text: string, cursorPosition: number
     type: 'IN_LOGFMT',
     otherLabels,
     flag,
+    logQuery: getLogQueryFromMetricsQuery(text).trim(),
   }
 }
 
