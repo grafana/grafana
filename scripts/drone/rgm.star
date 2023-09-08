@@ -141,7 +141,7 @@ def rgm_tag_windows():
 
 def rgm_version_branch():
     return pipeline(
-        name = "rgm-v-branch-prerelease",
+        name = "rgm-version-branch-prerelease",
         trigger = version_branch_trigger,
         steps = rgm_build(script = "drone_publish_tag_grafana.sh", canFail = False),
         depends_on = ["release-test-backend", "release-test-frontend"],

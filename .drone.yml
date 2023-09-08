@@ -589,7 +589,8 @@ steps:
 - commands:
   - apk add --update tar
   - tar --strip-components=1 -xvf $(cat packages.txt | grep amd64 | grep tar.gz)
-  - ./bin/grafana server                   --pidfile=./scripts/grafana-server/tmp/pid                   cfg:server.http_port=3001                   cfg:server.router_logging=1                   cfg:app_mode=development
+  - ./bin/grafana server --pidfile=./scripts/grafana-server/tmp/pid --cfg:server.http_port=3001
+    --cfg:server.router_logging=1 --cfg:app_mode=development
   depends_on:
   - rgm-package
   detach: true
@@ -1726,7 +1727,8 @@ steps:
 - commands:
   - apk add --update tar
   - tar --strip-components=1 -xvf $(cat packages.txt | grep amd64 | grep tar.gz)
-  - ./bin/grafana server --pidfile=./scripts/grafana-server/tmp/pid --cfg:server.http_port=3001 --cfg:server.router_logging=1 --cfg:app_mode=development
+  - ./bin/grafana server --pidfile=./scripts/grafana-server/tmp/pid --cfg:server.http_port=3001
+    --cfg:server.router_logging=1 --cfg:app_mode=development
   depends_on:
   - rgm-package
   detach: true
@@ -3101,7 +3103,7 @@ depends_on:
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
-name: rgm-v-branch-prerelease
+name: rgm-version-branch-prerelease
 node:
   type: no-parallel
 platform:
@@ -4147,6 +4149,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 18b2121415524901c12528e87a31850e88a44f6d90402bbfb1ce832f636f738e
+hmac: c880a08abe6249a5c09e0dd4905766fa984fe1a2922680b8a8c38df367a115be
 
 ...
