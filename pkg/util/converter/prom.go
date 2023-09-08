@@ -206,7 +206,7 @@ l1Fields:
 			if err != nil {
 				return rspErr(err)
 			}
-			if resultTypeFound == false {
+			if !resultTypeFound {
 				return rspErr(fmt.Errorf("no resultType found"))
 			}
 			break l1Fields
