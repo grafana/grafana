@@ -124,4 +124,5 @@ export interface FeatureToggles {
   reportingRetries?: boolean;
   newBrowseDashboards?: boolean;
   sseGroupByDatasource?: boolean;
+  sagaNewTab?: boolean;
 }

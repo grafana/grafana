@@ -737,5 +737,12 @@ var (
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaObservabilityMetricsSquad,
 		},
+		{
+			Name:         "sagaNewTab",
+			Description:  "Enables new tab design",
+			FrontendOnly: true,
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaBiSquad,
+		},
 	}
 )

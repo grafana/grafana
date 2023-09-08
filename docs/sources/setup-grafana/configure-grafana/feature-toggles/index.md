@@ -134,6 +134,7 @@ Experimental features might be changed or removed without prior notice.
 | `angularDeprecationUI`                      | Display new Angular deprecation-related UI features                                                                                                                                      |
 | `dashgpt`                                   | Enable AI powered features in dashboards                                                                                                                                                 |
 | `sseGroupByDatasource`                      | Send query to the same datasource in a single request when using server side expressions                                                                                                 |
+| `sagaNewTab`                                | Enables new tab design                                                                                                                                                                   |
 
 ## Development feature toggles
 

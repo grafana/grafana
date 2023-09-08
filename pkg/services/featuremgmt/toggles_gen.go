@@ -430,4 +430,8 @@ const (
 	// FlagSseGroupByDatasource
 	// Send query to the same datasource in a single request when using server side expressions
 	FlagSseGroupByDatasource = "sseGroupByDatasource"
+
+	// FlagSagaNewTab
+	// Enables new tab design
+	FlagSagaNewTab = "sagaNewTab"
 )
