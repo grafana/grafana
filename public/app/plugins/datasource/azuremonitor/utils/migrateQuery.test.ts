@@ -57,7 +57,7 @@ const modernMetricsQuery: AzureMonitorQuery = {
       '//change this example to create your own time series query\n<table name>                                                              //the table to query (e.g. Usage, Heartbeat, Perf)\n| where $__timeFilter(TimeGenerated)                                      //this is a macro used to show the full chart’s time range, choose the datetime column here\n| summarize count() by <group by column>, bin(TimeGenerated, $__interval) //change “group by column” to a column in your table, such as “Computer”. The $__interval macro is used to auto-select the time grain. Can also use 1h, 5m etc.\n| order by TimeGenerated asc',
     resultFormat: ResultFormat.TimeSeries,
     workspace: 'mock-workspace-id',
-    intersectTime: false,
+    dashboardTime: false,
   },
   azureMonitor: {
     aggregation: 'Average',
@@ -202,12 +202,12 @@ describe('AzureMonitor: migrateQuery', () => {
       );
     });
 
-    it('correctly adds the intersectTime property', () => {
+    it('correctly adds the dashboardTime property', () => {
       const result = migrateQuery({ ...azureMonitorQueryV8 });
       expect(result).toMatchObject(
         expect.objectContaining({
           azureLogAnalytics: expect.objectContaining({
-            intersectTime: false,
+            dashboardTime: false,
           }),
         })
       );
@@ -242,12 +242,12 @@ describe('AzureMonitor: migrateQuery', () => {
       expect(result.azureMonitor).not.toHaveProperty('resourceName');
     });
 
-    it('correctly adds the intersectTime property', () => {
+    it('correctly adds the dashboardTime property', () => {
       const result = migrateQuery({ ...azureMonitorQueryV9_0 });
       expect(result).toMatchObject(
         expect.objectContaining({
           azureLogAnalytics: expect.objectContaining({
-            intersectTime: false,
+            dashboardTime: false,
           }),
         })
       );
@@ -264,5 +264,21 @@ describe('AzureMonitor: migrateQuery', () => {
     };
     const result = migrateQuery(q);
     expect(result.azureLogAnalytics?.resources).toEqual(['foo']);
+  });
+
+  it('correctly migrates intersectTime to dashboardTime', () => {
+    const query = modernMetricsQuery;
+    delete query.azureLogAnalytics?.dashboardTime;
+    const result = migrateQuery({
+      ...query,
+      azureLogAnalytics: { ...query.azureLogAnalytics, intersectTime: true },
+    });
+    expect(result).toMatchObject(
+      expect.objectContaining({
+        azureLogAnalytics: expect.objectContaining({
+          dashboardTime: true,
+        }),
+      })
+    );
   });
 });
