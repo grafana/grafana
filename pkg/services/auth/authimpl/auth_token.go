@@ -529,7 +529,8 @@ func (s *UserAuthTokenService) GetUserTokens(ctx context.Context, userId int64) 
 	return result, err
 }
 
-func (s *UserAuthTokenService) ActiveTokenCount(ctx context.Context, userId int64) (int64, error) {
+// ActiveTokenCount returns the number of active tokens. If userID is nil, the count is for all users.
+func (s *UserAuthTokenService) ActiveTokenCount(ctx context.Context, userID *int64) (int64, error) {
 	var count int64
 	err := s.sqlStore.WithDbSession(ctx, func(dbSession *db.Session) error {
 		_, err := dbSession.SQL(`SELECT COUNT(*) FROM user_auth_token WHERE user_id = ? AND created_at > ? AND rotated_at > ? AND revoked_at = 0`,
@@ -566,6 +567,7 @@ func (s *UserAuthTokenService) GetUserRevokedTokens(ctx context.Context, userId 
 func (s *UserAuthTokenService) reportActiveTokenCount(ctx context.Context, _ *quota.ScopeParameters) (*quota.Map, error) {
 	var count int64
 	var err error
+	s.ActiveTokenCount(ctx, nil)
 	err = s.sqlStore.WithDbSession(ctx, func(dbSession *db.Session) error {
 		var model userAuthToken
 		count, err = dbSession.Where(`created_at > ? AND rotated_at > ? AND revoked_at = 0`,

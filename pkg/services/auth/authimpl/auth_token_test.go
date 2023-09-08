@@ -674,3 +674,13 @@ func (c *testContext) updateRotatedAt(id, rotatedAt int64) (bool, error) {
 	})
 	return hasRowsAffected, err
 }
+
+func TestIntegrationTokenCount(t *testing.T) {
+	ctx := createTestContext(t)
+	user := &user.User{ID: int64(10)}
+	// userID := user.Id
+
+	now := time.Date(2018, 12, 13, 13, 45, 0, 0, time.UTC)
+	getTime = func() time.Time { return now }
+	defer func() { getTime = time.Now }()
+}
