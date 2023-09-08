@@ -4,18 +4,8 @@ This module returns all the pipelines used in the event of a release along with 
 
 load(
     "scripts/drone/steps/lib.star",
-    "build_backend_step",
-    "build_docker_images_step",
-    "build_frontend_package_step",
-    "build_frontend_step",
-    "build_plugins_step",
-    "build_storybook_step",
     "compile_build_cmd",
-    "copy_packages_for_docker_step",
     "download_grabpl_step",
-    "e2e_tests_artifacts",
-    "e2e_tests_step",
-    "grafana_server_step",
     "identify_runner_step",
     "memcached_integration_tests_steps",
     "mysql_integration_tests_steps",
@@ -23,18 +13,10 @@ load(
     "publish_grafanacom_step",
     "publish_linux_packages_step",
     "redis_integration_tests_steps",
-    "store_storybook_step",
-    "trigger_oss",
-    "upload_cdn_step",
-    "upload_packages_step",
     "verify_gen_cue_step",
     "verify_gen_jsonnet_step",
     "wire_install_step",
     "yarn_install_step",
-)
-load(
-    "scripts/drone/steps/lib_windows.star",
-    "get_windows_steps",
 )
 load(
     "scripts/drone/services/services.star",
@@ -44,10 +26,6 @@ load(
 load(
     "scripts/drone/utils/utils.star",
     "pipeline",
-)
-load(
-    "scripts/drone/pipelines/test_frontend.star",
-    "test_frontend",
 )
 load(
     "scripts/drone/pipelines/test_backend.star",
@@ -64,10 +42,6 @@ load(
 load(
     "scripts/drone/utils/images.star",
     "images",
-)
-load(
-    "scripts/drone/pipelines/whats_new_checker.star",
-    "whats_new_checker_pipeline",
 )
 
 ver_mode = "release"

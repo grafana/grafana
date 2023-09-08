@@ -424,7 +424,7 @@ def build_frontend_package_step():
     """
 
     cmds = [
-        "apk add --update jq bash", # bash is needed for the validate-npm-packages.sh script since it has a 'bash'
+        "apk add --update jq bash",  # bash is needed for the validate-npm-packages.sh script since it has a 'bash'
         # shebang.
         "yarn packages:build",
         "yarn packages:pack",
@@ -665,7 +665,11 @@ def grafana_server_step(port = 3001):
     Returns:
       Drone step.
     """
-    environment = {"PORT": port, "ARCH": "linux-amd64"}
+    environment = {
+        "GF_SERVER_HTTP_PORT": "3001",
+        "GF_SERVER_ROUTER_LOGGING": "1",
+        "GF_APP_MODE": "development",
+    }
 
     return {
         "name": "grafana-server",
@@ -679,7 +683,7 @@ def grafana_server_step(port = 3001):
             "apk add --update tar",
             "cat packages.txt",
             "tar --strip-components=1 -xvf ./dist/*.tar.gz",
-            """./bin/grafana server --pidfile=./scripts/grafana-server/tmp/pid --cfg:server.http_port=3001 --cfg:server.router_logging=1 --cfg:app_mode=development""",
+            "./bin/grafana server --pidfile=./scripts/grafana-server/tmp/pid",
         ],
     }
 

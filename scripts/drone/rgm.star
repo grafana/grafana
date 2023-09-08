@@ -5,8 +5,16 @@ rgm uses 'github.com/grafana/grafana-build' to build Grafana on the following ev
 """
 
 load(
-    "scripts/drone/steps/lib_windows.star",
-    "get_windows_steps",
+    "scripts/drone/vault.star",
+    "from_secret",
+    "rgm_dagger_token",
+    "rgm_destination",
+    "rgm_gcp_key_base64",
+    "rgm_github_token",
+)
+load(
+    "scripts/drone/variables.star",
+    "golang_version",
 )
 load(
     "scripts/drone/utils/utils.star",
@@ -18,28 +26,20 @@ load(
     "verify_release_pipeline",
 )
 load(
-    "scripts/drone/pipelines/test_frontend.star",
-    "test_frontend",
+    "scripts/drone/steps/lib_windows.star",
+    "get_windows_steps",
 )
 load(
     "scripts/drone/pipelines/test_backend.star",
     "test_backend",
 )
 load(
+    "scripts/drone/pipelines/test_frontend.star",
+    "test_frontend",
+)
+load(
     "scripts/drone/pipelines/whats_new_checker.star",
     "whats_new_checker_pipeline",
-)
-load(
-    "scripts/drone/vault.star",
-    "from_secret",
-    "rgm_dagger_token",
-    "rgm_destination",
-    "rgm_gcp_key_base64",
-    "rgm_github_token",
-)
-load(
-    "scripts/drone/variables.star",
-    "golang_version",
 )
 
 def rgm_env_secrets(env):
