@@ -486,7 +486,10 @@ function resolveDurations(node: SyntaxNode, text: string, pos: number): Situatio
 }
 
 function resolveLogRange(node: SyntaxNode, text: string, pos: number): Situation | null {
-  return resolveLogOrLogRange(node, text, pos, false);
+  const partialQuery = text.substring(0, pos).trimEnd();
+  const afterPipe = partialQuery.endsWith('|');
+
+  return resolveLogOrLogRange(node, text, pos, afterPipe);
 }
 
 function resolveLogRangeFromError(node: SyntaxNode, text: string, pos: number): Situation | null {
@@ -495,7 +498,10 @@ function resolveLogRangeFromError(node: SyntaxNode, text: string, pos: number): 
     return null;
   }
 
-  return resolveLogOrLogRange(parent, text, pos, false);
+  const partialQuery = text.substring(0, pos).trimEnd();
+  const afterPipe = partialQuery.endsWith('|');
+
+  return resolveLogOrLogRange(parent, text, pos, afterPipe);
 }
 
 function resolveLogOrLogRange(node: SyntaxNode, text: string, pos: number, afterPipe: boolean): Situation | null {
@@ -511,7 +517,7 @@ function resolveLogOrLogRange(node: SyntaxNode, text: string, pos: number, after
   return {
     type: 'AFTER_SELECTOR',
     afterPipe,
-    hasSpace: text.endsWith(' '),
+    hasSpace: text.substring(0, pos).endsWith(' '),
     logQuery: getLogQueryFromMetricsQuery(text).trim(),
   };
 }
