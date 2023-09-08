@@ -22,7 +22,7 @@ export interface TransformerRegistryItem<TOptions> extends RegistryItem {
   transformation: DataTransformerInfo<TOptions>;
 
   /** Markdown with more detailed description and help */
-  help?: string;
+  help?: string | JSX.Element;
 
   /**
    * React component used as UI for the transformer
