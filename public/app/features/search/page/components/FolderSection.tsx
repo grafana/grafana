@@ -60,7 +60,7 @@ export const FolderSection = ({
   const editable = selectionToggle != null;
 
   const styles = useStyles2(useCallback((theme: GrafanaTheme2) => getSectionHeaderStyles(theme, editable), [editable]));
-  const [expandedFolder, setExpandedFolder] = useLocalStorage<string>(SEARCH_EXPANDED_FOLDER_STORAGE_KEY, undefined);
+  const [expandedFolder, setExpandedFolder] = useLocalStorage<string | null>(SEARCH_EXPANDED_FOLDER_STORAGE_KEY, null);
   const [sectionExpanded, setSectionExpanded] = useState(uid === expandedFolder);
   // const sectionExpanded = uid === expandedFolder;
 
@@ -75,7 +75,10 @@ export const FolderSection = ({
   }, [sectionExpanded, tags]);
 
   const onSectionExpand = () => {
-    setExpandedFolder(sectionExpanded ? undefined : uid);
+    // useLocalStorage will bail out on updating if you set the value to undefined,
+    // so we must set to null instead
+    setExpandedFolder(sectionExpanded ? null : uid);
+
     setSectionExpanded(!sectionExpanded);
   };
 
