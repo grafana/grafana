@@ -61,6 +61,7 @@ export async function dashlistMigrationHandler(panel: PanelModel<Options> & Angu
   if (newOptions.folderId !== undefined) {
     const folderId = newOptions.folderId;
 
+    // If converting ID to UID fails, the panel will not be migrated and will show incorrectly
     try {
       const folderUID = await getFolderUID(folderId);
       newOptions.folderUID = folderUID;
