@@ -25,7 +25,7 @@ Loki stores your logs and only indexes labels for each log stream. Using Loki wi
 In this tutorial, you'll:
 
 * Create a conditional alert using Loki.
-* Create a custom alert message template
+* Create a custom alert message template.
 * Configure an email notification that includes part of the log message.
 
 ## Before you begin
@@ -99,21 +99,21 @@ In these steps you'll create an alert and define an expression to evaluate. Thes
 
 1. Add an annotation that refers to labels and values from the query result in your alert notification.
   
-    * Choose **+Add new** in the drop down and type the annotation name **AlertValues** into the blank box
+    * Choose **+Add new** in the drop down and type the annotation name **AlertValues** into the blank box.
     * In the blank `text` box paste ```{{ $labels.message }}  has returned an error status {{$values.B}} times.```
 
-1. Click the **Save and exit** button at the top of the alert definition page
+1. Click the **Save and exit** button at the top of the alert definition page.
 
 ### Create a Loki managed alert
 
 [Loki managed alerts](https://grafana.com/docs/loki/latest/rules/#alerting-and-recording-rules) are stored and evaluated by Loki. They use LogQL for their expressions.
 
-1. Choose  Mimir or Loki managed alert to create an alert using Loki
-1. Select your Loki data source from the drop-down
+1. Choose  Mimir or Loki managed alert to create an alert using Loki.
+1. Select your Loki data source from the drop-down.
 1. The optional script will output a sample log line similar to this:
 
     ```
-    2023-04-22T02:49:32.562825+00:00 level=info method=GET url=/ status=200 duration=171ms
+    2023-04-22T02:49:32.562825+00:00 level=info method=GET url=test.com status=200 duration=171ms
     ```
 
 1. Enter the alert query below if you’re using the sample logs or modify it for your own file path and condition.
@@ -130,7 +130,7 @@ In these steps you'll create an alert and define an expression to evaluate. Thes
 
 1. Add an annotation that refers to labels and values from the query result in your alert notification.
   
-    * Choose **+Add new** in the drop down and type the annotation name **AlertValues** into the blank box
+    * Choose **+Add new** in the drop down and type the annotation name **AlertValues** into the blank box.
     * In the blank `text` box, paste the following:
 
        ```
@@ -169,11 +169,11 @@ In these steps you'll create an alert and define an expression to evaluate. Thes
         * There are two sections to the notification template:
             1. The `myalert` template creates a single alert notification based on a specific alert.
             1. The `mymessage` template will find all of the grouped alerts that are firing and send them in a single notification.
-        * Save the template
+        * Save the template.
 
 1. Add the template to your contact point
     1. Navigate to **Alerts > Contact point** and edit the email contact point. If you're using Grafana Cloud, SMTP is already enabled. Otherwise, for local installations you'll need to [configure SMTP](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/#smtp).
-    1. Add an email address in the to field for the recipient
+    1. Add an email address in the to field for the recipient.
     1. Expand Optional Email Settings and refer to the template by adding this to the body field:
 
         ```
@@ -383,8 +383,8 @@ that generates the sample logs used in this tutorial to create alerts.
 
 1. Verify that the logs are showing up in Grafana’s Explore view:
 
-    * Navigate to explore in Grafana
-    * Select the Loki datasource from the drop-down
+    * Navigate to explore in Grafana.
+    * Select the Loki datasource from the drop-down.
     * Check the toggle for **builder | code** in the top right corner of the query box and switch the query mode to builder if it’s not already selected.
     * Select the filename label from the drop-down and choose your `web_requests.log` file from the value drop-down.
     * Click **Run Query**.
