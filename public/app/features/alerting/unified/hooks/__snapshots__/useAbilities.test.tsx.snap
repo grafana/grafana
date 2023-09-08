@@ -50,6 +50,10 @@ exports[`alertmanager abilities should report Create / Update / Delete actions a
     false,
     false,
   ],
+  "export-notification-policies": [
+    false,
+    false,
+  ],
   "update-external-configuration": [
     false,
     false,
@@ -143,6 +147,10 @@ exports[`alertmanager abilities should report everything except exporting for Mi
     false,
     false,
   ],
+  "export-notification-policies": [
+    false,
+    false,
+  ],
   "update-external-configuration": [
     true,
     true,
@@ -233,6 +241,10 @@ exports[`alertmanager abilities should report everything is supported for builti
     false,
   ],
   "export-contact-point": [
+    true,
+    false,
+  ],
+  "export-notification-policies": [
     true,
     false,
   ],
