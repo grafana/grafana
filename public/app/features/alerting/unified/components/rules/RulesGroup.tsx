@@ -10,10 +10,12 @@ import { Badge, ConfirmModal, HorizontalGroup, Icon, Spinner, Tooltip, useStyles
 import { useDispatch } from 'app/types';
 import { CombinedRuleGroup, CombinedRuleNamespace } from 'app/types/unified-alerting';
 
+import { contextSrv } from '../../../../../core/services/context_srv';
 import { LogMessages } from '../../Analytics';
 import { useFolder } from '../../hooks/useFolder';
 import { useHasRuler } from '../../hooks/useHasRuler';
 import { deleteRulesGroupAction } from '../../state/actions';
+import { provisioningPermissions } from '../../utils/access-control';
 import { useRulesAccess } from '../../utils/accessControlHooks';
 import { GRAFANA_RULES_SOURCE_NAME, isCloudRulesSource } from '../../utils/datasource';
 import { makeFolderLink, makeFolderSettingsLink } from '../../utils/misc';
@@ -64,6 +66,7 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
     hasRuler(rulesSource) && rulerRulesLoaded(rulesSource) && !group.rules.find((rule) => !!rule.rulerRule);
   const isFederated = isFederatedRuleGroup(group);
 
+  const canReadProvisioning = contextSrv.hasPermission(provisioningPermissions.read);
   // check if group has provisioned items
   const isProvisioned = group.rules.some((rule) => {
     return isGrafanaRulerRule(rule.rulerRule) && rule.rulerRule.grafana_alert.provenance;
@@ -115,7 +118,7 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
             />
           );
         }
-        if (isGroupView) {
+        if (isGroupView && canReadProvisioning) {
           actionIcons.push(
             <ActionIcon
               aria-label="xport rule group"
