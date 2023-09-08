@@ -20,10 +20,10 @@ interface ButtonConfig {
   api?: APIEditorConfig;
 }
 
-const defaultApiConfig: APIEditorConfig = {
+export const defaultApiConfig: APIEditorConfig = {
   endpoint: '',
-  method: HttpRequestMethod.GET,
-  data: undefined,
+  method: HttpRequestMethod.POST,
+  data: '{}',
 };
 
 class ButtonDisplay extends PureComponent<CanvasElementProps<ButtonConfig, ButtonData>> {
@@ -78,9 +78,18 @@ export const buttonItem: CanvasElementItem<ButtonConfig, ButtonData> = {
 
   // Called when data changes
   prepareData: (ctx: DimensionContext, cfg: ButtonConfig) => {
+    const getCfgApi = () => {
+      if (cfg?.api) {
+        cfg.api = {...cfg.api, method: cfg.api.method ?? HttpRequestMethod.POST};
+        return cfg.api;
+      }
+
+      return undefined;
+    }
+
     const data: ButtonData = {
       text: cfg?.text ? ctx.getText(cfg.text).value() : '',
-      api: cfg?.api ?? undefined,
+      api: getCfgApi(),
     };
 
     return data;
