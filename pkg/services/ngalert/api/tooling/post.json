@@ -764,6 +764,9 @@
     "uid": {
      "description": "UID is the unique identifier of the contact point. The UID can be\nset by the user.",
      "example": "my_external_reference",
+     "maxLength": 40,
+     "minLength": 1,
+     "pattern": "^[a-zA-Z0-9\\-\\_]+$",
      "type": "string"
     }
    },
@@ -2663,6 +2666,9 @@
      "type": "string"
     },
     "uid": {
+     "maxLength": 40,
+     "minLength": 1,
+     "pattern": "^[a-zA-Z0-9-_]+$",
      "type": "string"
     },
     "updated": {

@@ -33,6 +33,7 @@ import (
 	secrets_fakes "github.com/grafana/grafana/pkg/services/secrets/fakes"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -283,7 +284,7 @@ func TestProvisioningApi(t *testing.T) {
 
 			t.Run("PUT sets expected fields with no provenance", func(t *testing.T) {
 				sut := createProvisioningSrvSut(t)
-				uid := t.Name()
+				uid := util.GenerateShortUID()
 				rule := createTestAlertRule("rule", 1)
 				rule.UID = uid
 				insertRuleInOrg(t, sut, rule, 3)
