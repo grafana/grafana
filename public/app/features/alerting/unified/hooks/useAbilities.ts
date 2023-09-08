@@ -60,6 +60,7 @@ export enum AlertSourceAction {
   DeleteExternalAlertRule = 'delete-external-alert-rule',
 }
 
+const AlwaysSupported = true; // this just makes it easier to understand the code
 export type Action = AlertmanagerAction | AlertSourceAction;
 
 export type Ability = [actionSupported: boolean, actionPermitted: boolean];
@@ -70,23 +71,26 @@ export function useAlertSourceAbilities(): Abilities<AlertSourceAction> {
 
   const abilities: Abilities<AlertSourceAction> = {
     // -- Grafana managed alert rules --
-    [AlertSourceAction.CreateAlertRule]: [true, ctx.hasPermission(AccessControlAction.AlertingRuleCreate)],
-    [AlertSourceAction.ViewAlertRule]: [true, ctx.hasPermission(AccessControlAction.AlertingRuleRead)],
-    [AlertSourceAction.UpdateAlertRule]: [true, ctx.hasPermission(AccessControlAction.AlertingRuleUpdate)],
-    [AlertSourceAction.DeleteAlertRule]: [true, ctx.hasPermission(AccessControlAction.AlertingRuleDelete)],
+    [AlertSourceAction.CreateAlertRule]: [AlwaysSupported, ctx.hasPermission(AccessControlAction.AlertingRuleCreate)],
+    [AlertSourceAction.ViewAlertRule]: [AlwaysSupported, ctx.hasPermission(AccessControlAction.AlertingRuleRead)],
+    [AlertSourceAction.UpdateAlertRule]: [AlwaysSupported, ctx.hasPermission(AccessControlAction.AlertingRuleUpdate)],
+    [AlertSourceAction.DeleteAlertRule]: [AlwaysSupported, ctx.hasPermission(AccessControlAction.AlertingRuleDelete)],
     // -- External alert rules (Mimir / Loki / etc) --
     // for these we only have "read" and "write" permissions
     [AlertSourceAction.CreateExternalAlertRule]: [
-      true,
+      AlwaysSupported,
       ctx.hasPermission(AccessControlAction.AlertingRuleExternalWrite),
     ],
-    [AlertSourceAction.ViewExternalAlertRule]: [true, ctx.hasPermission(AccessControlAction.AlertingRuleExternalRead)],
+    [AlertSourceAction.ViewExternalAlertRule]: [
+      AlwaysSupported,
+      ctx.hasPermission(AccessControlAction.AlertingRuleExternalRead),
+    ],
     [AlertSourceAction.UpdateExternalAlertRule]: [
-      true,
+      AlwaysSupported,
       ctx.hasPermission(AccessControlAction.AlertingRuleExternalWrite),
     ],
     [AlertSourceAction.DeleteExternalAlertRule]: [
-      true,
+      AlwaysSupported,
       ctx.hasPermission(AccessControlAction.AlertingRuleExternalWrite),
     ],
   };
@@ -110,7 +114,7 @@ export function useAlertmanagerAbilities(): Abilities<AlertmanagerAction> {
   const abilities: Abilities<AlertmanagerAction> = {
     // -- configuration --
     [AlertmanagerAction.ViewExternalConfiguration]: [
-      true,
+      AlwaysSupported,
       ctx.hasPermission(AccessControlAction.AlertingNotificationsExternalRead),
     ],
     [AlertmanagerAction.UpdateExternalConfiguration]: [
@@ -119,7 +123,7 @@ export function useAlertmanagerAbilities(): Abilities<AlertmanagerAction> {
     ],
     // -- contact points --
     [AlertmanagerAction.CreateContactPoint]: [hasConfigurationAPI, ctx.hasPermission(notificationsPermissions.create)],
-    [AlertmanagerAction.ViewContactPoint]: [true, ctx.hasPermission(notificationsPermissions.read)],
+    [AlertmanagerAction.ViewContactPoint]: [AlwaysSupported, ctx.hasPermission(notificationsPermissions.read)],
     [AlertmanagerAction.UpdateContactPoint]: [hasConfigurationAPI, ctx.hasPermission(notificationsPermissions.update)],
     [AlertmanagerAction.DeleteContactPoint]: [hasConfigurationAPI, ctx.hasPermission(notificationsPermissions.delete)],
     // only Grafana flavored alertmanager supports exporting
@@ -133,7 +137,7 @@ export function useAlertmanagerAbilities(): Abilities<AlertmanagerAction> {
       hasConfigurationAPI,
       ctx.hasPermission(notificationsPermissions.create),
     ],
-    [AlertmanagerAction.ViewNotificationTemplate]: [true, ctx.hasPermission(notificationsPermissions.read)],
+    [AlertmanagerAction.ViewNotificationTemplate]: [AlwaysSupported, ctx.hasPermission(notificationsPermissions.read)],
     [AlertmanagerAction.UpdateNotificationTemplate]: [
       hasConfigurationAPI,
       ctx.hasPermission(notificationsPermissions.update),
@@ -147,7 +151,10 @@ export function useAlertmanagerAbilities(): Abilities<AlertmanagerAction> {
       hasConfigurationAPI,
       ctx.hasPermission(notificationsPermissions.create),
     ],
-    [AlertmanagerAction.ViewNotificationPolicyTree]: [true, ctx.hasPermission(notificationsPermissions.read)],
+    [AlertmanagerAction.ViewNotificationPolicyTree]: [
+      AlwaysSupported,
+      ctx.hasPermission(notificationsPermissions.read),
+    ],
     [AlertmanagerAction.UpdateNotificationPolicyTree]: [
       hasConfigurationAPI,
       ctx.hasPermission(notificationsPermissions.update),
@@ -158,11 +165,11 @@ export function useAlertmanagerAbilities(): Abilities<AlertmanagerAction> {
     ],
     // -- silences --
     [AlertmanagerAction.CreateSilence]: [hasConfigurationAPI, ctx.hasPermission(instancePermissions.create)],
-    [AlertmanagerAction.ViewSilence]: [true, ctx.hasPermission(instancePermissions.read)],
+    [AlertmanagerAction.ViewSilence]: [AlwaysSupported, ctx.hasPermission(instancePermissions.read)],
     [AlertmanagerAction.UpdateSilence]: [hasConfigurationAPI, ctx.hasPermission(instancePermissions.update)],
     // -- mute timtings --
     [AlertmanagerAction.CreateMuteTiming]: [hasConfigurationAPI, ctx.hasPermission(notificationsPermissions.create)],
-    [AlertmanagerAction.ViewMuteTiming]: [true, ctx.hasPermission(notificationsPermissions.read)],
+    [AlertmanagerAction.ViewMuteTiming]: [AlwaysSupported, ctx.hasPermission(notificationsPermissions.read)],
     [AlertmanagerAction.UpdateMuteTiming]: [hasConfigurationAPI, ctx.hasPermission(notificationsPermissions.update)],
     [AlertmanagerAction.DeleteMuteTiming]: [hasConfigurationAPI, ctx.hasPermission(notificationsPermissions.delete)],
   };
