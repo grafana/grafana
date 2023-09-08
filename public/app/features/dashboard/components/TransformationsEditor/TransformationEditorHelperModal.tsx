@@ -34,7 +34,7 @@ export const TransformationEditorHelperModal = ({
       onDismiss={() => onCloseClick(false)}
     >
       {/* JEV: figure out how to remove this */}
-      {content}
+      {"content"}
     </Modal>
   );
 };
