@@ -25,7 +25,6 @@ import {
 import { FolderDTO, NotifierDTO } from '../../../types';
 
 import { CreateIntegrationDTO, NewOnCallIntegrationDTO, OnCallIntegrationDTO } from './api/onCallApi';
-import { RuleExportFormats } from './components/export/providers';
 import { AlertingQueryResponse } from './state/AlertingQueryRunner';
 
 type Configurator<T> = (builder: T) => T;
