@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Redirect } from 'react-router-dom';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { ConfirmModal, LinkButton, useStyles2 } from '@grafana/ui';
+import { Button, ConfirmModal, useStyles2 } from '@grafana/ui';
 import { RuleIdentifier } from 'app/types/unified-alerting';
 
 import * as ruleId from '../../utils/rule-id';
@@ -55,13 +55,13 @@ interface CloneRuleButtonProps {
   className?: string;
 }
 
-export const CloneRule = React.forwardRef<HTMLAnchorElement, CloneRuleButtonProps>(
+export const CloneRuleButton = React.forwardRef<HTMLButtonElement, CloneRuleButtonProps>(
   ({ text, ruleIdentifier, isProvisioned, className }, ref) => {
     const [redirectToClone, setRedirectToClone] = useState(false);
 
     return (
       <>
-        <LinkButton
+        <Button
           title="Copy"
           className={className}
           size="sm"
@@ -72,7 +72,7 @@ export const CloneRule = React.forwardRef<HTMLAnchorElement, CloneRuleButtonProp
           ref={ref}
         >
           {text}
-        </LinkButton>
+        </Button>
 
         {redirectToClone && (
           <RedirectToCloneRule
@@ -86,7 +86,7 @@ export const CloneRule = React.forwardRef<HTMLAnchorElement, CloneRuleButtonProp
   }
 );
 
-CloneRule.displayName = 'CloneRuleButton';
+CloneRuleButton.displayName = 'CloneRuleButton';
 
 const getStyles = (theme: GrafanaTheme2) => ({
   bold: css`

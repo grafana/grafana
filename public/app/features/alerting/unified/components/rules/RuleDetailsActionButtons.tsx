@@ -26,7 +26,7 @@ import * as ruleId from '../../utils/rule-id';
 import { isAlertingRule, isFederatedRuleGroup, isGrafanaRulerRule } from '../../utils/rules';
 import { DeclareIncident } from '../bridges/DeclareIncidentButton';
 
-import { CloneRule } from './CloneRule';
+import { CloneRuleButton } from './CloneRule';
 
 interface Props {
   rule: CombinedRule;
@@ -218,7 +218,7 @@ export const RuleDetailsActionButtons = ({ rule, rulesSource, isViewMode }: Prop
 
     if (hasCreateRulePermission && !isFederated) {
       rightButtons.push(
-        <CloneRule key="clone" text="Copy" ruleIdentifier={identifier} isProvisioned={isProvisioned} />
+        <CloneRuleButton key="clone" text="Copy" ruleIdentifier={identifier} isProvisioned={isProvisioned} />
       );
     }
 
