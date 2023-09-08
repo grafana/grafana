@@ -108,5 +108,5 @@ const CONFIG_API_ENABLED_ALERTMANAGER_FLAVORS = [
 ];
 
 export function isAlertManagerWithConfigAPI(dataSourceConfig: AlertManagerDataSourceJsonData): boolean {
-  return CONFIG_API_ENABLED_ALERTMANAGER_FLAVORS.includes(dataSourceConfig.implementation!);
+  return CONFIG_API_ENABLED_ALERTMANAGER_FLAVORS.includes(dataSourceConfig.implementation);
 }
