@@ -22,7 +22,7 @@ export const TransformationOperationRows = ({
     <>
       {configs.map((t, i) => {
         const uiConfig = standardTransformersRegistry.getIfExists(t.transformation.id);
-        // JEV: what is the standardTransformersRegistry?
+        // JEV: standard transformers can be found: public/app/features/transformers/standardTransformers.ts
         if (!uiConfig) {
           return null;
         }
