@@ -107,7 +107,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 							"resource":     "/subscriptions/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/resourceGroups/cloud-datasources/providers/Microsoft.OperationalInsights/workspaces/AppInsightsTestDataWorkspace",
 							"query":        "Perf | where $__timeFilter() | where $__contains(Computer, 'comp1','comp2') | summarize avg(CounterValue) by bin(TimeGenerated, $__interval), Computer",
 							"resultFormat": "%s",
-							"intersectTime": false
+							"dashboardTime": false
 						}
 					}`, types.TimeSeries)),
 					RefID:     "A",
@@ -126,7 +126,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 							"resource":     "/subscriptions/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/resourceGroups/cloud-datasources/providers/Microsoft.OperationalInsights/workspaces/AppInsightsTestDataWorkspace",
 							"query":        "Perf | where $__timeFilter() | where $__contains(Computer, 'comp1','comp2') | summarize avg(CounterValue) by bin(TimeGenerated, $__interval), Computer",
 							"resultFormat": "%s",
-							"intersectTime": false
+							"dashboardTime": false
 						}
 					}`, types.TimeSeries)),
 					Query:            "Perf | where ['TimeGenerated'] >= datetime('2018-03-15T13:00:00Z') and ['TimeGenerated'] <= datetime('2018-03-15T13:34:00Z') | where ['Computer'] in ('comp1','comp2') | summarize avg(CounterValue) by bin(TimeGenerated, 34000ms), Computer",
@@ -134,7 +134,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 					TimeRange:        timeRange,
 					QueryType:        string(dataquery.AzureQueryTypeAzureLogAnalytics),
 					AppInsightsQuery: false,
-					IntersectTime:    false,
+					DashboardTime:    false,
 				},
 			},
 			Err: require.NoError,
@@ -172,7 +172,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 					Resources:        []string{},
 					QueryType:        string(dataquery.AzureQueryTypeAzureLogAnalytics),
 					AppInsightsQuery: false,
-					IntersectTime:    false,
+					DashboardTime:    false,
 				},
 			},
 			Err: require.NoError,
@@ -210,7 +210,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 					Resources:        []string{},
 					QueryType:        string(dataquery.AzureQueryTypeAzureLogAnalytics),
 					AppInsightsQuery: false,
-					IntersectTime:    false,
+					DashboardTime:    false,
 				},
 			},
 			Err: require.NoError,
@@ -225,7 +225,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 							"resource":     "/subscriptions/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/resourceGroups/cloud-datasources/providers/Microsoft.OperationalInsights/workspaces/AppInsightsTestDataWorkspace",
 							"query":        "Perf",
 							"resultFormat": "%s",
-							"intersectTime": false
+							"dashboardTime": false
 						}
 					}`, types.TimeSeries)),
 					RefID:     "A",
@@ -243,14 +243,14 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 							"resource":     "/subscriptions/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/resourceGroups/cloud-datasources/providers/Microsoft.OperationalInsights/workspaces/AppInsightsTestDataWorkspace",
 							"query":        "Perf",
 							"resultFormat": "%s",
-							"intersectTime": false
+							"dashboardTime": false
 						}
 					}`, types.TimeSeries)),
 					Query:            "Perf",
 					Resources:        []string{"/subscriptions/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/resourceGroups/cloud-datasources/providers/Microsoft.OperationalInsights/workspaces/AppInsightsTestDataWorkspace"},
 					QueryType:        string(dataquery.AzureQueryTypeAzureLogAnalytics),
 					AppInsightsQuery: false,
-					IntersectTime:    false,
+					DashboardTime:    false,
 				},
 			},
 			Err: require.NoError,
@@ -265,7 +265,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 							"resources":     ["/subscriptions/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/resourceGroups/cloud-datasources/providers/Microsoft.OperationalInsights/workspaces/AppInsightsTestDataWorkspace",  "/subscriptions/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/resourceGroups/cloud-datasources/providers/Microsoft.OperationalInsights/workspaces/AppInsightsTestDataWorkspace2"],
 							"query":        "Perf",
 							"resultFormat": "%s",
-							"intersectTime": false
+							"dashboardTime": false
 						}
 					}`, types.TimeSeries)),
 					RefID:     "A",
@@ -284,7 +284,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 							"resources":     ["/subscriptions/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/resourceGroups/cloud-datasources/providers/Microsoft.OperationalInsights/workspaces/AppInsightsTestDataWorkspace",  "/subscriptions/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/resourceGroups/cloud-datasources/providers/Microsoft.OperationalInsights/workspaces/AppInsightsTestDataWorkspace2"],
 							"query":        "Perf",
 							"resultFormat": "%s",
-							"intersectTime": false
+							"dashboardTime": false
 						}
 					}`, types.TimeSeries)),
 					Query:            "Perf",
@@ -292,7 +292,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 					TimeRange:        timeRange,
 					QueryType:        string(dataquery.AzureQueryTypeAzureLogAnalytics),
 					AppInsightsQuery: false,
-					IntersectTime:    false,
+					DashboardTime:    false,
 				},
 			},
 			Err: require.NoError,
@@ -373,7 +373,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 					TraceLogsExploreQuery: "union availabilityResults,\n" + "customEvents,\n" + "dependencies,\n" + "exceptions,\n" + "pageViews,\n" + "requests,\n" + "traces\n" +
 						"| where operation_Id == \"test-op-id\"",
 					AppInsightsQuery: true,
-					IntersectTime:    true,
+					DashboardTime:    true,
 				},
 			},
 			Err: require.NoError,
@@ -451,7 +451,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 					TraceLogsExploreQuery: "union availabilityResults,\n" + "customEvents,\n" + "dependencies,\n" + "exceptions,\n" + "pageViews,\n" + "requests,\n" + "traces\n" +
 						"| where operation_Id == \"test-op-id\"",
 					AppInsightsQuery: true,
-					IntersectTime:    true,
+					DashboardTime:    true,
 				},
 			},
 			Err: require.NoError,
@@ -526,7 +526,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 					TraceLogsExploreQuery: "union availabilityResults,\n" + "customEvents,\n" + "dependencies,\n" + "exceptions,\n" + "pageViews,\n" + "requests,\n" + "traces\n" +
 						"| where operation_Id == \"${__data.fields.traceID}\"",
 					AppInsightsQuery: true,
-					IntersectTime:    true,
+					DashboardTime:    true,
 				},
 			},
 			Err: require.NoError,
@@ -604,7 +604,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 					TraceLogsExploreQuery: "union availabilityResults,\n" + "customEvents,\n" + "dependencies,\n" + "exceptions,\n" + "pageViews,\n" + "requests,\n" + "traces\n" +
 						"| where operation_Id == \"test-op-id\"",
 					AppInsightsQuery: true,
-					IntersectTime:    true,
+					DashboardTime:    true,
 				},
 			},
 			Err: require.NoError,
@@ -687,7 +687,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 					TraceLogsExploreQuery: "union availabilityResults,\n" + "customEvents,\n" + "dependencies,\n" + "exceptions,\n" + "pageViews,\n" + "requests,\n" + "traces\n" +
 						"| where operation_Id == \"test-op-id\"",
 					AppInsightsQuery: true,
-					IntersectTime:    true,
+					DashboardTime:    true,
 				},
 			},
 			Err: require.NoError,
@@ -770,7 +770,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 					TraceLogsExploreQuery: "union availabilityResults,\n" + "customEvents,\n" + "dependencies,\n" + "exceptions,\n" + "pageViews,\n" + "requests,\n" + "traces\n" +
 						"| where operation_Id == \"test-op-id\"",
 					AppInsightsQuery: true,
-					IntersectTime:    true,
+					DashboardTime:    true,
 				},
 			},
 			Err: require.NoError,
@@ -853,7 +853,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 					TraceLogsExploreQuery: "union availabilityResults,\n" + "customEvents,\n" + "dependencies,\n" + "exceptions,\n" + "pageViews,\n" + "requests,\n" + "traces\n" +
 						"| where operation_Id == \"test-op-id\"",
 					AppInsightsQuery: true,
-					IntersectTime:    true,
+					DashboardTime:    true,
 				},
 			},
 			Err: require.NoError,
@@ -928,7 +928,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 					TraceLogsExploreQuery: "union availabilityResults,\n" + "customEvents,\n" + "dependencies,\n" + "exceptions,\n" + "pageViews,\n" + "requests,\n" + "traces\n" +
 						"| where operation_Id == \"${__data.fields.traceID}\"",
 					AppInsightsQuery: true,
-					IntersectTime:    true,
+					DashboardTime:    true,
 				},
 			},
 			Err: require.NoError,
@@ -1006,7 +1006,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 					TraceLogsExploreQuery: "union availabilityResults,\n" + "customEvents,\n" + "dependencies,\n" + "exceptions,\n" + "pageViews,\n" + "requests,\n" + "traces\n" +
 						"| where operation_Id == \"test-op-id\"",
 					AppInsightsQuery: true,
-					IntersectTime:    true,
+					DashboardTime:    true,
 				},
 			},
 			Err: require.NoError,
@@ -1052,7 +1052,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 					TraceLogsExploreQuery: "union availabilityResults,\n" + "customEvents,\n" + "dependencies,\n" + "exceptions,\n" + "pageViews,\n" + "requests,\n" + "traces\n" +
 						"| where operation_Id == \"test-op-id\"",
 					AppInsightsQuery: true,
-					IntersectTime:    true,
+					DashboardTime:    true,
 				},
 			},
 			Err: require.NoError,
@@ -1134,7 +1134,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 						"app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').traces\n" +
 						"| where operation_Id == \"op-id-multi\"",
 					AppInsightsQuery: true,
-					IntersectTime:    true,
+					DashboardTime:    true,
 				},
 			},
 			Err: require.NoError,
@@ -1213,7 +1213,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 						"app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').traces\n" +
 						"| where operation_Id == \"${__data.fields.traceID}\"",
 					AppInsightsQuery: true,
-					IntersectTime:    true,
+					DashboardTime:    true,
 				},
 			},
 			Err: require.NoError,
@@ -1295,7 +1295,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 						"app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r2').traces\n" +
 						"| where operation_Id == \"op-id-multi\"",
 					AppInsightsQuery: true,
-					IntersectTime:    true,
+					DashboardTime:    true,
 				},
 			},
 			Err: require.NoError,
@@ -1384,7 +1384,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 						"app('/subscriptions/test-sub/resourcegroups/test-rg/providers/microsoft.insights/components/r3').traces\n" +
 						"| where operation_Id == \"op-id-non-overlapping\"",
 					AppInsightsQuery: true,
-					IntersectTime:    true,
+					DashboardTime:    true,
 				},
 			},
 			Err: require.NoError,
@@ -1411,7 +1411,7 @@ func TestLogAnalyticsCreateRequest(t *testing.T) {
 		req, err := ds.createRequest(ctx, url, &AzureLogAnalyticsQuery{
 			Resources:        []string{"r"},
 			Query:            "Perf",
-			IntersectTime:    false,
+			DashboardTime:    false,
 			AppInsightsQuery: false,
 		})
 		require.NoError(t, err)
@@ -1435,7 +1435,7 @@ func TestLogAnalyticsCreateRequest(t *testing.T) {
 		req, err := ds.createRequest(ctx, url, &AzureLogAnalyticsQuery{
 			Resources:        []string{"r"},
 			Query:            "Perf",
-			IntersectTime:    true,
+			DashboardTime:    true,
 			AppInsightsQuery: false,
 		})
 		require.NoError(t, err)
@@ -1461,7 +1461,7 @@ func TestLogAnalyticsCreateRequest(t *testing.T) {
 			Query:            "Perf",
 			QueryType:        string(dataquery.AzureQueryTypeAzureLogAnalytics),
 			AppInsightsQuery: false,
-			IntersectTime:    false,
+			DashboardTime:    false,
 		})
 		require.NoError(t, err)
 		expectedBody := `{"query":"Perf","workspaces":["/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.OperationalInsights/workspaces/r1","/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.OperationalInsights/workspaces/r2"]}`
@@ -1485,7 +1485,7 @@ func TestLogAnalyticsCreateRequest(t *testing.T) {
 				To:   to,
 			},
 			AppInsightsQuery: false,
-			IntersectTime:    true,
+			DashboardTime:    true,
 		})
 		require.NoError(t, err)
 		expectedBody := fmt.Sprintf(`{"query":"Perf","timespan":"%s/%s","workspaces":["/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.OperationalInsights/workspaces/r1","/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.OperationalInsights/workspaces/r2"]}`, from.Format(time.RFC3339), to.Format(time.RFC3339))
@@ -1508,7 +1508,7 @@ func TestLogAnalyticsCreateRequest(t *testing.T) {
 				To:   to,
 			},
 			AppInsightsQuery: true,
-			IntersectTime:    true,
+			DashboardTime:    true,
 		})
 		require.NoError(t, err)
 		expectedBody := fmt.Sprintf(`{"applications":["/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r1","/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r2"],"query":"","timespan":"%s/%s"}`, from.Format(time.RFC3339), to.Format(time.RFC3339))

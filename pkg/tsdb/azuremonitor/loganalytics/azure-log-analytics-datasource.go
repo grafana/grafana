@@ -47,7 +47,8 @@ type AzureLogAnalyticsQuery struct {
 	Resources               []string
 	QueryType               string
 	AppInsightsQuery        bool
-	IntersectTime           bool
+	DashboardTime           bool
+	TimeColumn              string
 }
 
 func (e *AzureLogAnalyticsDatasource) ResourceRequest(rw http.ResponseWriter, req *http.Request, cli *http.Client) (http.ResponseWriter, error) {
@@ -107,7 +108,8 @@ func (e *AzureLogAnalyticsDatasource) buildQueries(ctx context.Context, queries 
 		traceExploreQuery := ""
 		traceParentExploreQuery := ""
 		traceLogsExploreQuery := ""
-		intersectTime := false
+		dashboardTime := false
+		timeColumn := ""
 		if query.QueryType == string(dataquery.AzureQueryTypeAzureLogAnalytics) {
 			queryJSONModel := types.LogJSONQuery{}
 			err := json.Unmarshal(query.JSON, &queryJSONModel)
@@ -143,8 +145,9 @@ func (e *AzureLogAnalyticsDatasource) buildQueries(ctx context.Context, queries 
 				queryString = *azureLogAnalyticsTarget.Query
 			}
 
-			if azureLogAnalyticsTarget.IntersectTime != nil {
-				intersectTime = *azureLogAnalyticsTarget.IntersectTime
+			if azureLogAnalyticsTarget.DashboardTime != nil {
+				dashboardTime = *azureLogAnalyticsTarget.DashboardTime
+				timeColumn = *azureLogAnalyticsTarget.TimeColumn
 			}
 		}
 
@@ -218,7 +221,7 @@ func (e *AzureLogAnalyticsDatasource) buildQueries(ctx context.Context, queries 
 				return nil, fmt.Errorf("failed to create traces logs explore query: %s", err)
 			}
 
-			intersectTime = true
+			dashboardTime = true
 		}
 
 		apiURL := getApiURL(resourceOrWorkspace, appInsightsQuery)
@@ -241,7 +244,8 @@ func (e *AzureLogAnalyticsDatasource) buildQueries(ctx context.Context, queries 
 			TraceParentExploreQuery: traceParentExploreQuery,
 			TraceLogsExploreQuery:   traceLogsExploreQuery,
 			AppInsightsQuery:        appInsightsQuery,
-			IntersectTime:           intersectTime,
+			DashboardTime:           dashboardTime,
+			TimeColumn:              timeColumn,
 		})
 	}
 
@@ -431,11 +435,14 @@ func (e *AzureLogAnalyticsDatasource) createRequest(ctx context.Context, queryUR
 		"query": query.Query,
 	}
 
-	if query.IntersectTime {
+	if query.DashboardTime {
 		from := query.TimeRange.From.Format(time.RFC3339)
 		to := query.TimeRange.To.Format(time.RFC3339)
 		timespan := fmt.Sprintf("%s/%s", from, to)
 		body["timespan"] = timespan
+		body["query_datetimescope_from"] = from
+		body["query_datetimescope_to"] = to
+		body["query_datetimescope_column"] = query.TimeColumn
 	}
 
 	if len(query.Resources) > 1 && query.QueryType == string(dataquery.AzureQueryTypeAzureLogAnalytics) && !query.AppInsightsQuery {
