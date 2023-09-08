@@ -1,6 +1,5 @@
-import { e2e } from '@grafana/e2e';
-
 import testDashboard from '../dashboards/TestDashboard.json';
+import { e2e } from '../utils';
 
 e2e.scenario({
   describeName: 'Import Dashboards Test',

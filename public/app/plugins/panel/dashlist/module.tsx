@@ -52,9 +52,9 @@ export const plugin = new PanelPlugin<Options>(DashList)
         defaultValue: defaultOptions.query,
       })
       .addCustomEditor({
-        path: 'folderUid',
+        path: 'folderUID',
         name: 'Folder',
-        id: 'folderUid',
+        id: 'folderUID',
         defaultValue: undefined,
         editor: function RenderFolderPicker({ value, onChange }) {
           return <FolderPicker value={value} onChange={(folderUID) => onChange(folderUID)} />;
