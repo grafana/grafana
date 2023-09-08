@@ -10,9 +10,14 @@ import { useDispatch, useSelector } from 'app/types';
 import { getDatasourceSrv } from '../plugins/datasource_srv';
 import { QueryEditorRows } from '../query/components/QueryEditorRows';
 
-import { changeCorrelationDetails } from './state/main';
+import { changeCorrelationEditorDetails } from './state/main';
 import { changeQueries, runQueries } from './state/query';
-import { getExploreItemSelector, selectCorrelationDetails, selectCorrelationEditorMode, isLeftPaneSelector } from './state/selectors';
+import {
+  getExploreItemSelector,
+  selectCorrelationDetails,
+  selectCorrelationEditorMode,
+  isLeftPaneSelector,
+} from './state/selectors';
 
 interface Props {
   exploreId: string;
@@ -57,7 +62,7 @@ export const QueryRows = ({ exploreId }: Props) => {
       dispatch(changeQueries({ exploreId, queries: newQueries }));
 
       if (isCorrelationsEditorMode && !correlationDetails?.dirty && !isLeftPane) {
-        dispatch(changeCorrelationDetails({ dirty: true }));
+        dispatch(changeCorrelationEditorDetails({ dirty: true }));
       }
     },
     [correlationDetails?.dirty, dispatch, exploreId, isCorrelationsEditorMode, isLeftPane]

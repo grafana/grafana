@@ -12,9 +12,15 @@ export const selectPanesEntries = createSelector<
 
 export const isSplit = createSelector(selectPanesEntries, (panes) => panes.length > 1);
 
-export const isLeftPaneSelector = (exploreId: string) => createSelector(selectPanes, (panes) => {return Object.entries(panes)[0][0] === exploreId});
+export const isLeftPaneSelector = (exploreId: string) =>
+  createSelector(selectPanes, (panes) => {
+    return Object.entries(panes)[0][0] === exploreId;
+  });
 
 export const getExploreItemSelector = (exploreId: string) => createSelector(selectPanes, (panes) => panes[exploreId]);
 
-export const selectCorrelationEditorMode = createSelector(selectExploreRoot, (state) => state.correlationEditorDetails?.editorMode);
+export const selectCorrelationEditorMode = createSelector(
+  selectExploreRoot,
+  (state) => state.correlationEditorDetails?.editorMode
+);
 export const selectCorrelationDetails = createSelector(selectExploreRoot, (state) => state.correlationEditorDetails);

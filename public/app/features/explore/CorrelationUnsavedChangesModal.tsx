@@ -9,11 +9,7 @@ interface UnsavedChangesModalProps {
   onSave: () => void;
 }
 
-export const CorrelationUnsavedChangesModal = ({
-  onSave,
-  onDiscard,
-  onCancel,
-}: UnsavedChangesModalProps) => {
+export const CorrelationUnsavedChangesModal = ({ onSave, onDiscard, onCancel }: UnsavedChangesModalProps) => {
   return (
     <Modal
       isOpen={true}

@@ -47,7 +47,8 @@ export function getExploreExtensionConfigs(): PluginExtensionLinkConfig[] {
         extensionPointId: PluginExtensionPoints.ExploreToolbarAction,
         icon: 'link',
         configure: (context) => {
-          const shouldShow = context?.shouldShowAddCorrelation !== undefined ? context?.shouldShowAddCorrelation : false;
+          const shouldShow =
+            context?.shouldShowAddCorrelation !== undefined ? context?.shouldShowAddCorrelation : false;
           return shouldShow ? {} : undefined;
         },
         onClick: (_, { context }) => {
@@ -55,7 +56,7 @@ export function getExploreExtensionConfigs(): PluginExtensionLinkConfig[] {
           if (context?.exploreId) {
             dispatch(runQueries({ exploreId: context?.exploreId }));
           }
-        }
+        },
       }),
     ];
   } catch (error) {

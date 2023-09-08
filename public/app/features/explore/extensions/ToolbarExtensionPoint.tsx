@@ -90,7 +90,7 @@ function useExtensionPointContext(props: Props): PluginExtensionExploreContext {
   const { queries, queryResponse, range } = useSelector(getExploreItemSelector(exploreId))!;
   const isLeftPane = useSelector(isLeftPaneSelector(exploreId));
 
-  const queryUids = queries.map(query => query?.datasource?.uid).filter(uid => uid !== undefined);
+  const queryUids = queries.map((query) => query?.datasource?.uid).filter((uid) => uid !== undefined);
   const numUniqueIds = [...new Set(queryUids)].length;
 
   return useMemo(() => {

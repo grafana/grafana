@@ -26,7 +26,7 @@ import {
   splitOpen,
   maximizePaneAction,
   evenPaneResizeAction,
-  changeCorrelationDetails
+  changeCorrelationEditorDetails,
 } from './state/main';
 import { cancelQueries, runQueries, selectIsWaitingForData } from './state/query';
 import { isLeftPaneSelector, isSplit, selectCorrelationEditorMode, selectPanesEntries } from './state/selectors';
@@ -85,7 +85,9 @@ export function ExploreToolbar({ exploreId, topOfViewRef, onChangeTime }: Props)
     if (isCorrelationsEditorMode && isLeftPane) {
       panes.forEach((pane) => {
         dispatch(removeCorrelationHelperData(pane[0]));
-        dispatch(changeCorrelationDetails({label: undefined, description: undefined, canSave: false, dirty: false}));
+        dispatch(
+          changeCorrelationEditorDetails({ label: undefined, description: undefined, canSave: false, dirty: false })
+        );
       });
     }
   };

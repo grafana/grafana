@@ -5,7 +5,7 @@ import { ExploreCorrelationHelperData } from '@grafana/data';
 import { Collapse, Alert, Field, Input } from '@grafana/ui';
 import { useDispatch, useSelector } from 'app/types';
 
-import { changeCorrelationDetails } from './state/main';
+import { changeCorrelationEditorDetails } from './state/main';
 import { selectCorrelationDetails } from './state/selectors';
 
 export const CorrelationHelper = ({ correlations }: { correlations: ExploreCorrelationHelperData }) => {
@@ -15,34 +15,33 @@ export const CorrelationHelper = ({ correlations }: { correlations: ExploreCorre
   const correlationDetails = useSelector(selectCorrelationDetails);
 
   useEffect(() => {
-    const subscription = watch((value, { name, type }) =>
-    {
+    const subscription = watch((value, { name, type }) => {
       let dirty = false;
 
       if (!correlationDetails?.dirty && (value.label !== '' || value.description !== '')) {
         dirty = true;
-      } else if (correlationDetails?.dirty && value.label.trim() === '' && value.description.trim() === '' ) {
+      } else if (correlationDetails?.dirty && value.label.trim() === '' && value.description.trim() === '') {
         dirty = false;
       }
-      dispatch(changeCorrelationDetails({label: value.label, description: value.description, dirty: dirty}));
-    }
-    )
-    return () => subscription.unsubscribe()
-  }, [correlationDetails?.dirty, dispatch, watch])
+      dispatch(changeCorrelationEditorDetails({ label: value.label, description: value.description, dirty: dirty }));
+    });
+    return () => subscription.unsubscribe();
+  }, [correlationDetails?.dirty, dispatch, watch]);
 
-  // only fire once on mount to allow save button to enable
+  // only fire once on mount to allow save button to enable / disable when unmounted
   useEffect(() => {
-    dispatch(changeCorrelationDetails({canSave: true}));
+    dispatch(changeCorrelationEditorDetails({ canSave: true }));
 
     return () => {
-      dispatch(changeCorrelationDetails({canSave: false}));
-    }
-  }, [dispatch]);
+      dispatch(changeCorrelationEditorDetails({ canSave: false }));
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <Alert title="Correlation Details" severity="info">
-      The selected field is <code>{correlations.resultField}</code>.
-      You can use following variables to set up your correlations:
+      The selected field is <code>{correlations.resultField}</code>. You can use following variables to set up your
+      correlations:
       <pre>
         {Object.entries(correlations.vars).map((entry, index) => {
           return `\$\{${entry[0]}\} = ${entry[1]}\n`;

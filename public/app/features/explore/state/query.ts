@@ -63,7 +63,7 @@ import {
 
 import { saveCorrelationsAction } from './explorePane';
 import { addHistoryItem, historyUpdatedAction, loadRichHistory } from './history';
-import { changeCorrelationEditorMode, splitClose } from './main';
+import { splitClose } from './main';
 import { updateTime } from './time';
 import { createCacheKey, filterLogRowsByIndex, getDatasourceUIDs, getResultsFromCache } from './utils';
 
@@ -1248,24 +1248,27 @@ export const processQueryResponse = (
 };
 
 export function reloadCorrelations(exploreId: string): ThunkResult<void> {
-  return async(dispatch, getState) => {
+  return async (dispatch, getState) => {
     const pane = getState().explore!.panes[exploreId]!;
 
     if (pane.datasourceInstance?.uid !== undefined) {
       const correlations = await getCorrelationsBySourceUIDs([pane.datasourceInstance.uid]);
       dispatch(saveCorrelationsAction({ exploreId, correlations: correlations.correlations || [] }));
     }
-  }
+  };
 }
 
 export function saveCurrentCorrelation(label?: string, description?: string): ThunkResult<void> {
   return async (dispatch, getState) => {
-
     const keys = Object.keys(getState().explore!.panes);
     const sourcePane = getState().explore!.panes[keys[0]]!;
     const targetPane = getState().explore!.panes[keys[1]]!;
 
-    if (sourcePane.datasourceInstance?.uid && targetPane.datasourceInstance?.uid && targetPane.correlationEditorHelperData?.resultField) {
+    if (
+      sourcePane.datasourceInstance?.uid &&
+      targetPane.datasourceInstance?.uid &&
+      targetPane.correlationEditorHelperData?.resultField
+    ) {
       const correlation: CreateCorrelationParams = {
         sourceUID: sourcePane.datasourceInstance.uid,
         targetUID: targetPane.datasourceInstance.uid,
@@ -1275,14 +1278,15 @@ export function saveCurrentCorrelation(label?: string, description?: string): Th
           field: targetPane.correlationEditorHelperData.resultField,
           target: targetPane.queries[0],
           type: 'query',
+        },
+      };
+      await createCorrelation(sourcePane.datasourceInstance.uid, correlation).then(async (onFulfilled) => {
+        if (onFulfilled) {
+          await dispatch(splitClose(keys[1]));
+          await dispatch(reloadCorrelations(keys[0]));
+          dispatch(runQueries({ exploreId: keys[0] }));
         }
-      }
-  
-      await dispatch(changeCorrelationEditorMode({ correlationEditorMode: false }));
-      await createCorrelation(sourcePane.datasourceInstance.uid, correlation);
-      await dispatch(splitClose(keys[1]));
-      await dispatch(reloadCorrelations(keys[0]));
-      dispatch(runQueries({ exploreId: keys[0] }));
+      });
     }
-  }
+  };
 }

@@ -115,7 +115,9 @@ export const changeCorrelationEditorMode = createAction<{
 /**
  * Moves explore into and out of correlations editor mode
  */
-export const changeCorrelationDetails = createAction<CorrelationEditorDetails>('explore/changeCorrelationDetails');
+export const changeCorrelationEditorDetails = createAction<CorrelationEditorDetails>(
+  'explore/changeCorrelationEditorDetails'
+);
 
 export interface NavigateToExploreDependencies {
   getDataSourceSrv: () => DataSourceSrv;
@@ -270,11 +272,11 @@ export const exploreReducer = (state = initialExploreState, action: AnyAction): 
     const { correlationEditorMode } = action.payload;
     return {
       ...state,
-      correlationEditorDetails: {...state.correlationEditorDetails, editorMode: correlationEditorMode},
+      correlationEditorDetails: { ...state.correlationEditorDetails, editorMode: correlationEditorMode },
     };
   }
 
-  if (changeCorrelationDetails.match(action)) {
+  if (changeCorrelationEditorDetails.match(action)) {
     const { editorMode, label, description, canSave, dirty } = action.payload;
     return {
       ...state,

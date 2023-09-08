@@ -44,7 +44,8 @@ export default function ExplorePage(props: GrafanaRouteComponentProps<{}, Explor
   const isCorrelationsEditorMode = useSelector(selectCorrelationEditorMode);
   const correlationDetails = useSelector(selectCorrelationDetails);
   // show correlation editor mode UX elements if we are in the editor mode or if we are trying to exit in a dirty state
-  const showCorrelationEditorMode = isCorrelationsEditorMode || (!isCorrelationsEditorMode && correlationDetails?.dirty) || false;
+  const showCorrelationEditorMode =
+    isCorrelationsEditorMode || (!isCorrelationsEditorMode && correlationDetails?.dirty) || false;
 
   useEffect(() => {
     //This is needed for breadcrumbs and topnav.
@@ -75,7 +76,9 @@ export default function ExplorePage(props: GrafanaRouteComponentProps<{}, Explor
       })}
     >
       <ExploreActions />
-      {config.featureToggles.correlations  && <CorrelationEditorModeBar panes={panes} toShow={showCorrelationEditorMode}/>}
+      {config.featureToggles.correlations && (
+        <CorrelationEditorModeBar panes={panes} toShow={showCorrelationEditorMode} />
+      )}
       <SplitPaneWrapper
         splitOrientation="vertical"
         paneSize={widthCalc}

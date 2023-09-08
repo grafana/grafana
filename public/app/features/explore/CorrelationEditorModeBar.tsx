@@ -9,7 +9,7 @@ import { ExploreItemState, useDispatch, useSelector } from 'app/types';
 
 import { CorrelationUnsavedChangesModal } from './CorrelationUnsavedChangesModal';
 import { removeCorrelationHelperData } from './state/explorePane';
-import { changeCorrelationDetails, changeCorrelationEditorMode } from './state/main';
+import { changeCorrelationEditorDetails, changeCorrelationEditorMode } from './state/main';
 import { runQueries, saveCurrentCorrelation } from './state/query';
 import { selectCorrelationDetails, selectCorrelationEditorMode } from './state/selectors';
 
@@ -30,11 +30,12 @@ export const CorrelationEditorModeBar = ({
   // handle refreshing and closing the tab
   useBeforeUnload(correlationDetails?.dirty || false, 'Save correlation?');
 
+  // clear data when unmounted
   useEffect(() => {
     return () => {
       setShowSavePrompt(false);
       dispatch(
-        changeCorrelationDetails({ editorMode: false, label: undefined, description: undefined, canSave: false })
+        changeCorrelationEditorDetails({ editorMode: false, label: undefined, description: undefined, canSave: false })
       );
       panes.forEach((pane) => {
         dispatch(removeCorrelationHelperData(pane[0]));
@@ -46,28 +47,17 @@ export const CorrelationEditorModeBar = ({
 
   // handle exiting (staying within explore)
   useEffect(() => {
-    if (!correlationsEditorMode) {
-      if (correlationDetails?.dirty) {
-        // if we are trying to exit in a dirty state, show prompt
-        setShowSavePrompt(true);
-      } else if (correlationDetails?.dirty === false) {
-        // otherwise, if we are exiting in a not dirty state, reset everything
-        setShowSavePrompt(false);
-        dispatch(changeCorrelationDetails({ label: undefined, description: undefined, canSave: false }));
-        panes.forEach((pane) => {
-          dispatch(removeCorrelationHelperData(pane[0]));
-          dispatch(runQueries({ exploreId: pane[0] }));
-        });
-      }
+    if (!correlationsEditorMode && correlationDetails?.dirty) {
+      // if we are trying to exit in a dirty state, show prompt
+      setShowSavePrompt(true);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [correlationsEditorMode, correlationDetails?.dirty]);
 
   return (
     <>
       {/* Handle navigating outside of Explore */}
       <Prompt
-        message={(location, action) => {
+        message={(location) => {
           if (location.pathname !== '/explore' && correlationsEditorMode && (correlationDetails?.dirty || false)) {
             return 'You have unsaved correlation data. Continue?';
           } else {
@@ -80,7 +70,8 @@ export const CorrelationEditorModeBar = ({
         <CorrelationUnsavedChangesModal
           onDiscard={() => {
             // if we are discarding the in progress correlation, reset everything
-            dispatch(changeCorrelationDetails({ dirty: false }));
+            // this modal only shows if the editorMode is false, so we just need to update the dirty state
+            dispatch(changeCorrelationEditorDetails({ dirty: false }));
           }}
           onCancel={() => {
             // if we are cancelling the exit, set the editor mode back to true and hide the prompt
@@ -88,8 +79,8 @@ export const CorrelationEditorModeBar = ({
             setShowSavePrompt(false);
           }}
           onSave={() => {
+            dispatch(changeCorrelationEditorDetails({ dirty: false }));
             dispatch(saveCurrentCorrelation(correlationDetails?.label, correlationDetails?.description));
-            dispatch(changeCorrelationDetails({ dirty: false }));
           }}
         />
       )}
@@ -105,6 +96,7 @@ export const CorrelationEditorModeBar = ({
               fill="outline"
               className={correlationDetails?.canSave ? styles.buttonColor : styles.disabledButtonColor}
               onClick={() => {
+                dispatch(changeCorrelationEditorDetails({ dirty: false }));
                 dispatch(saveCurrentCorrelation(correlationDetails?.label, correlationDetails?.description));
               }}
             >
@@ -154,7 +146,7 @@ const getStyles = (theme: GrafanaTheme2) => {
         background-color: ${lighterBackgroundColor};
       }
     `,
-    // important needed to override disabled state
+    // important needed to override disabled state styling
     disabledButtonColor: css`
       color: ${disabledColor} !important;
       background-color: ${darkerBackgroundColor} !important;
