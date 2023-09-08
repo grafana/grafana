@@ -32,7 +32,7 @@ describe('situation', () => {
     });
   });
 
-  it('identifies EMPTY autocomplete situations', () => {
+  it('identifies AT_ROOT autocomplete situations', () => {
     assertSituation('s^', {
       type: 'AT_ROOT',
     });
@@ -94,6 +94,15 @@ describe('situation', () => {
 
   it('identifies AFTER_LOGFMT autocomplete situations', () => {
     assertSituation('{level="info"} | logfmt ^', {
+      type: 'IN_LOGFMT',
+    });
+    assertSituation('count_over_time({level="info"} | logfmt ^', {
+      type: 'IN_LOGFMT',
+    });
+    assertSituation('count_over_time({level="info"} | logfmt ^)', {
+      type: 'IN_LOGFMT',
+    });
+    assertSituation('sum by (test) (count_over_time({level="info"} | logfmt ^))', {
       type: 'IN_LOGFMT',
     });
   });

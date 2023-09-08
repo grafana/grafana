@@ -163,6 +163,14 @@ const RESOLVERS: Resolver[] = [
     fun: resolveLogfmtParser,
   },
   {
+    path: [RangeAggregationExpr],
+    fun: resolveLogfmtParser,
+  },
+  {
+    path: [ERROR_NODE_ID, LogRangeExpr, RangeAggregationExpr],
+    fun: resolveLogfmtParser,
+  },
+  {
     path: [LogQL],
     fun: resolveTopLevel,
   },
@@ -425,7 +433,7 @@ function resolveLogfmtParser(_: SyntaxNode, text: string, cursorPosition: number
   // E.g. `{x="y"} | logfmt ^`
 
   const tree = parser.parse(text);
-  const trimRightTextLen = text.trimEnd().length;
+  const trimRightTextLen = text.substring(0, cursorPosition).trimEnd().length;
   const position = trimRightTextLen < cursorPosition ? trimRightTextLen : cursorPosition;
   const cursor = tree.cursorAt(position);
   do {
