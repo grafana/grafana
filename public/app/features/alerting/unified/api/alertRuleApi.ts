@@ -185,5 +185,12 @@ export const alertRuleApi = alertingApi.injectEndpoints({
     exportRule: build.query<string, { uid: string; format: RuleExportFormats }>({
       query: ({ uid, format }) => ({ url: getProvisioningUrl(uid, format), responseType: 'text' }),
     }),
+    exportRuleGroup: build.query<string, { folderUid: string; groupName: string; format: RuleExportFormats }>({
+      query: ({ folderUid, groupName, format }) => ({
+        url: `/api/v1/provisioning/folder/${folderUid}/rule-groups/${groupName}/export`,
+        params: { format: format },
+        responseType: 'text',
+      }),
+    }),
   }),
 });

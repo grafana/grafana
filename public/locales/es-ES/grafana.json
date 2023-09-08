@@ -26,7 +26,10 @@
   "browse-dashboards": {
     "action": {
       "cancel-button": "",
+      "cannot-move-folders": "",
       "delete-button": "",
+      "delete-modal-invalid-text": "",
+      "delete-modal-invalid-title": "",
       "delete-modal-text": "",
       "delete-modal-title": "",
       "deleting": "",
@@ -137,18 +140,18 @@
       "widget": ""
     },
     "empty": {
-      "add-import-body": "Importar las visualizaciones que se compartan con otros paneles de control.",
-      "add-import-button": "Importar el panel de la biblioteca",
-      "add-import-header": "Importar panel",
-      "add-row-body": "Agrupa tus visualizaciones en secciones ampliables.",
-      "add-row-button": "Añadir fila",
-      "add-row-header": "Añadir una fila",
+      "add-library-panel-body": "",
+      "add-library-panel-button": "",
+      "add-library-panel-header": "",
       "add-visualization-body": "Selecciona una fuente de datos y luego consulta y visualiza tus datos con gráficos, estadísticas y tablas o cree listas, anotaciones y otros widgets.",
       "add-visualization-button": "Añadir visualización",
       "add-visualization-header": "Comienza tu nuevo panel de control añadiendo una visualización",
       "add-widget-body": "",
       "add-widget-button": "",
-      "add-widget-header": ""
+      "add-widget-header": "",
+      "import-a-dashboard-body": "",
+      "import-a-dashboard-header": "",
+      "import-dashboard-button": ""
     },
     "inspect": {
       "data-tab": "Datos",
@@ -226,6 +229,9 @@
     "loading": "Cargando carpetas..."
   },
   "grafana-ui": {
+    "modal": {
+      "close-tooltip": ""
+    },
     "segment-async": {
       "error": "No se han podido cargar las opciones",
       "loading": "Cargando las opciones...",
@@ -235,6 +241,46 @@
       "no-options-label": "",
       "placeholder": ""
     }
+  },
+  "help-modal": {
+    "shortcuts-category": {
+      "dashboard": "",
+      "focused-panel": "",
+      "global": "",
+      "time-range": ""
+    },
+    "shortcuts-description": {
+      "change-theme": "",
+      "collapse-all-rows": "",
+      "dashboard-settings": "",
+      "duplicate-panel": "",
+      "exit-edit/setting-views": "",
+      "expand-all-rows": "",
+      "go-to-dashboards": "",
+      "go-to-explore": "",
+      "go-to-home-dashboard": "",
+      "go-to-profile": "",
+      "make-time-range-permanent": "",
+      "move-time-range-back": "",
+      "move-time-range-forward": "",
+      "open-search": "",
+      "open-shared-modal": "",
+      "refresh-all-panels": "",
+      "remove-panel": "",
+      "save-dashboard": "",
+      "show-all-shortcuts": "",
+      "toggle-active-mode": "",
+      "toggle-all-panel-legends": "",
+      "toggle-auto-fit": "",
+      "toggle-exemplars": "",
+      "toggle-graph-crosshair": "",
+      "toggle-kiosk": "",
+      "toggle-panel-edit": "",
+      "toggle-panel-fullscreen": "",
+      "toggle-panel-legend": "",
+      "zoom-out-time-range": ""
+    },
+    "title": ""
   },
   "library-panel": {
     "add-modal": {
@@ -706,6 +752,17 @@
     "view-json": {
       "copy-button": "Copiar al portapapeles"
     }
+  },
+  "share-playlist": {
+    "checkbox-description": "",
+    "checkbox-label": "",
+    "copy-link-button": "",
+    "link-url-label": "",
+    "mode": "",
+    "mode-kiosk": "",
+    "mode-normal": "",
+    "mode-tv": "",
+    "title": ""
   },
   "shared": {
     "preferences": {

@@ -1,6 +1,8 @@
 package elasticsearch
 
 import (
+	"context"
+	"encoding/json"
 	"fmt"
 	"regexp"
 	"strconv"
@@ -9,6 +11,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/log"
 	es "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client"
 )
 
@@ -19,18 +22,26 @@ const (
 type elasticsearchDataQuery struct {
 	client      es.Client
 	dataQueries []backend.DataQuery
+	logger      log.Logger
+	ctx         context.Context
 }
 
-var newElasticsearchDataQuery = func(client es.Client, dataQuery []backend.DataQuery) *elasticsearchDataQuery {
+var newElasticsearchDataQuery = func(ctx context.Context, client es.Client, dataQuery []backend.DataQuery, logger log.Logger) *elasticsearchDataQuery {
 	return &elasticsearchDataQuery{
 		client:      client,
 		dataQueries: dataQuery,
+		logger:      logger,
+		ctx:         ctx,
 	}
 }
 
 func (e *elasticsearchDataQuery) execute() (*backend.QueryDataResponse, error) {
-	queries, err := parseQuery(e.dataQueries)
+	start := time.Now()
+	e.logger.Debug("Parsing queries", "queriesLength", len(e.dataQueries))
+	queries, err := parseQuery(e.dataQueries, e.logger)
 	if err != nil {
+		mq, _ := json.Marshal(e.dataQueries)
+		e.logger.Error("Failed to parse queries", "error", err, "queries", string(mq), "queriesLength", len(queries), "duration", time.Since(start), "stage", es.StagePrepareRequest)
 		return &backend.QueryDataResponse{}, err
 	}
 
@@ -40,26 +51,32 @@ func (e *elasticsearchDataQuery) execute() (*backend.QueryDataResponse, error) {
 	to := e.dataQueries[0].TimeRange.To.UnixNano() / int64(time.Millisecond)
 	for _, q := range queries {
 		if err := e.processQuery(q, ms, from, to); err != nil {
+			mq, _ := json.Marshal(q)
+			e.logger.Error("Failed to process query to multisearch request builder", "error", err, "query", string(mq), "queriesLength", len(queries), "duration", time.Since(start), "stage", es.StagePrepareRequest)
 			return &backend.QueryDataResponse{}, err
 		}
 	}
 
 	req, err := ms.Build()
 	if err != nil {
+		mqs, _ := json.Marshal(e.dataQueries)
+		e.logger.Error("Failed to build multisearch request", "error", err, "queriesLength", len(queries), "queries", string(mqs), "duration", time.Since(start), "stage", es.StagePrepareRequest)
 		return &backend.QueryDataResponse{}, err
 	}
 
+	e.logger.Info("Prepared request", "queriesLength", len(queries), "duration", time.Since(start), "stage", es.StagePrepareRequest)
 	res, err := e.client.ExecuteMultisearch(req)
 	if err != nil {
 		return &backend.QueryDataResponse{}, err
 	}
 
-	return parseResponse(res.Responses, queries, e.client.GetConfiguredFields())
+	return parseResponse(e.ctx, res.Responses, queries, e.client.GetConfiguredFields(), e.logger)
 }
 
 func (e *elasticsearchDataQuery) processQuery(q *Query, ms *es.MultiSearchRequestBuilder, from, to int64) error {
 	err := isQueryWithError(q)
 	if err != nil {
+		err = fmt.Errorf("received invalid query. %w", err)
 		return err
 	}
 
@@ -99,7 +116,7 @@ func setIntPath(settings *simplejson.Json, path ...string) {
 }
 
 // Casts values to float when required by Elastic's query DSL
-func (metricAggregation MetricAgg) generateSettingsForDSL() map[string]interface{} {
+func (metricAggregation MetricAgg) generateSettingsForDSL() map[string]any {
 	switch metricAggregation.Type {
 	case "moving_avg":
 		setFloatPath(metricAggregation.Settings, "window")
@@ -127,7 +144,7 @@ func (metricAggregation MetricAgg) generateSettingsForDSL() map[string]interface
 	return metricAggregation.Settings.MustMap()
 }
 
-func (bucketAgg BucketAgg) generateSettingsForDSL() map[string]interface{} {
+func (bucketAgg BucketAgg) generateSettingsForDSL() map[string]any {
 	setIntPath(bucketAgg.Settings, "min_doc_count")
 
 	return bucketAgg.Settings.MustMap()
@@ -246,7 +263,7 @@ func addNestedAgg(aggBuilder es.AggBuilder, bucketAgg *BucketAgg) es.AggBuilder 
 }
 
 func addFiltersAgg(aggBuilder es.AggBuilder, bucketAgg *BucketAgg) es.AggBuilder {
-	filters := make(map[string]interface{})
+	filters := make(map[string]any)
 	for _, filter := range bucketAgg.Settings.Get("filters").MustArray() {
 		json := simplejson.NewFromAny(filter)
 		query := json.Get("query").MustString()
@@ -344,7 +361,7 @@ func processLogsQuery(q *Query, b *es.SearchRequestBuilder, from, to int64, defa
 		Type:  dateHistType,
 		Field: defaultTimeField,
 		ID:    "1",
-		Settings: simplejson.NewFromAny(map[string]interface{}{
+		Settings: simplejson.NewFromAny(map[string]any{
 			"interval": "auto",
 		}),
 	})
@@ -398,7 +415,7 @@ func processTimeSeriesQuery(q *Query, b *es.SearchRequestBuilder, from, to int64
 		if isPipelineAgg(m.Type) {
 			if isPipelineAggWithMultipleBucketPaths(m.Type) {
 				if len(m.PipelineVariables) > 0 {
-					bucketPaths := map[string]interface{}{}
+					bucketPaths := map[string]any{}
 					for name, pipelineAgg := range m.PipelineVariables {
 						if _, err := strconv.Atoi(pipelineAgg); err == nil {
 							var appliedAgg *MetricAgg

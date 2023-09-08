@@ -3,57 +3,59 @@ package grn
 import (
 	"fmt"
 	"testing"
+
+	"github.com/google/go-cmp/cmp"
 )
 
 func TestParseGRNStr(t *testing.T) {
 	tests := []struct {
 		input     string
-		expect    GRN
+		expect    *GRN
 		expectErr bool
 	}{
 		{ // empty
 			"",
-			GRN{},
+			&GRN{},
 			true,
 		},
 		{ // too few parts
 			"grn:dashboards",
-			GRN{},
+			&GRN{},
 			true,
 		},
 		{ // too many parts
 			"grn::dashboards:user:orgs:otherthings:hello:stillgoing",
-			GRN{},
+			&GRN{},
 			true,
 		},
 		{ // Does not look like a GRN
 			"hrn:grafana::123:dashboards/foo",
-			GRN{},
+			&GRN{},
 			true,
 		},
 		{ // Missing Kind
 			"grn::foo",
-			GRN{},
+			&GRN{},
 			true,
 		},
 		{ // good!
 			"grn::roles/Admin",
-			GRN{TenantID: 0, ResourceKind: "roles", ResourceIdentifier: "Admin"},
+			&GRN{TenantID: 0, ResourceKind: "roles", ResourceIdentifier: "Admin"},
 			false,
 		},
 		{ // good!
 			"grn::roles/Admin/with/some/slashes",
-			GRN{TenantID: 0, ResourceKind: "roles", ResourceIdentifier: "Admin/with/some/slashes"},
+			&GRN{TenantID: 0, ResourceKind: "roles", ResourceIdentifier: "Admin/with/some/slashes"},
 			false,
 		},
 		{ // good!
 			"grn:123456789:roles/Admin/with/some/slashes",
-			GRN{TenantID: 123456789, ResourceKind: "roles", ResourceIdentifier: "Admin/with/some/slashes"},
+			&GRN{TenantID: 123456789, ResourceKind: "roles", ResourceIdentifier: "Admin/with/some/slashes"},
 			false,
 		},
 		{ // Weird, but valid.
 			"grn::roles///Admin/with/leading/slashes",
-			GRN{TenantID: 0, ResourceKind: "roles", ResourceIdentifier: "//Admin/with/leading/slashes"},
+			&GRN{TenantID: 0, ResourceKind: "roles", ResourceIdentifier: "//Admin/with/leading/slashes"},
 			false,
 		},
 	}
@@ -69,7 +71,7 @@ func TestParseGRNStr(t *testing.T) {
 				t.Fatalf("wrong result. Expected success, got error %s", err.Error())
 			}
 
-			if got != test.expect {
+			if !cmp.Equal(test.expect, got) {
 				t.Fatalf("wrong result. Wanted %s, got %s\n", test.expect.String(), got.String())
 			}
 		})

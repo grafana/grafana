@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -253,7 +254,7 @@ func (s *Service) getFolderByTitle(ctx context.Context, orgID int64, title strin
 func (s *Service) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (*folder.Folder, error) {
 	logger := s.log.FromContext(ctx)
 
-	if cmd.SignedInUser == nil {
+	if cmd.SignedInUser == nil || cmd.SignedInUser.IsNil() {
 		return nil, folder.ErrBadRequest.Errorf("missing signed in user")
 	}
 
@@ -280,7 +281,19 @@ func (s *Service) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (
 	dashFolder.SetUID(trimmedUID)
 
 	user := cmd.SignedInUser
-	userID := user.UserID
+
+	userID := int64(0)
+	var err error
+	namespaceID, userIDstr := user.GetNamespacedID()
+	if namespaceID != identity.NamespaceUser && namespaceID != identity.NamespaceServiceAccount {
+		s.log.Debug("User does not belong to a user or service account namespace, using 0 as user ID", "namespaceID", namespaceID, "userID", userIDstr)
+	} else {
+		userID, err = identity.IntIdentifier(namespaceID, userIDstr)
+		if err != nil {
+			s.log.Debug("failed to parse user ID", "namespaceID", namespaceID, "userID", userIDstr, "error", err)
+		}
+	}
+
 	if userID == 0 {
 		userID = -1
 	}
@@ -763,12 +776,23 @@ func (s *Service) BuildSaveDashboardCommand(ctx context.Context, dto *dashboards
 		}
 	}
 
+	userID := int64(0)
+	namespaceID, userIDstr := dto.User.GetNamespacedID()
+	if namespaceID != identity.NamespaceUser && namespaceID != identity.NamespaceServiceAccount {
+		s.log.Warn("User does not belong to a user or service account namespace, using 0 as user ID", "namespaceID", namespaceID, "userID", userIDstr)
+	} else {
+		userID, err = identity.IntIdentifier(namespaceID, userIDstr)
+		if err != nil {
+			s.log.Warn("failed to parse user ID", "namespaceID", namespaceID, "userID", userIDstr, "error", err)
+		}
+	}
+
 	cmd := &dashboards.SaveDashboardCommand{
 		Dashboard: dash.Data,
 		Message:   dto.Message,
 		OrgID:     dto.OrgID,
 		Overwrite: dto.Overwrite,
-		UserID:    dto.User.UserID,
+		UserID:    userID,
 		FolderID:  dash.FolderID,
 		IsFolder:  dash.IsFolder,
 		PluginID:  dash.PluginID,
@@ -783,7 +807,7 @@ func (s *Service) BuildSaveDashboardCommand(ctx context.Context, dto *dashboards
 
 // getGuardianForSavePermissionCheck returns the guardian to be used for checking permission of dashboard
 // It replaces deleted Dashboard.GetDashboardIdForSavePermissionCheck()
-func getGuardianForSavePermissionCheck(ctx context.Context, d *dashboards.Dashboard, user *user.SignedInUser) (guardian.DashboardGuardian, error) {
+func getGuardianForSavePermissionCheck(ctx context.Context, d *dashboards.Dashboard, user identity.Requester) (guardian.DashboardGuardian, error) {
 	newDashboard := d.ID == 0
 
 	if newDashboard {

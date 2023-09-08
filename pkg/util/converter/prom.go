@@ -8,12 +8,13 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana/pkg/util/converter/jsonitere"
 	jsoniter "github.com/json-iterator/go"
+
+	"github.com/grafana/grafana/pkg/util/converter/jsonitere"
 )
 
 // helpful while debugging all the options that may appear
-func logf(format string, a ...interface{}) {
+func logf(format string, a ...any) {
 	//fmt.Printf(format, a...)
 }
 
@@ -153,6 +154,8 @@ func readPrometheusData(iter *jsonitere.Iterator, opt Options) backend.DataRespo
 	}
 
 	resultType := ""
+	resultTypeFound := false
+	var resultBytes []byte
 
 l1Fields:
 	for l1Field, err := iter.ReadObject(); ; l1Field, err = iter.ReadObject() {
@@ -165,35 +168,22 @@ l1Fields:
 			if err != nil {
 				return rspErr(err)
 			}
+			resultTypeFound = true
+
+			// if we have saved resultBytes we will parse them here
+			// we saved them because when we had them we don't know the resultType
+			if len(resultBytes) > 0 {
+				ji := jsonitere.NewIterator(jsoniter.ParseBytes(jsoniter.ConfigDefault, resultBytes))
+				rsp = readResult(resultType, rsp, ji, opt)
+			}
 		case "result":
-			switch resultType {
-			case "matrix", "vector":
-				rsp = readMatrixOrVectorMulti(iter, resultType, opt)
-				if rsp.Error != nil {
-					return rsp
-				}
-			case "streams":
-				rsp = readStream(iter)
-				if rsp.Error != nil {
-					return rsp
-				}
-			case "string":
-				rsp = readString(iter)
-				if rsp.Error != nil {
-					return rsp
-				}
-			case "scalar":
-				rsp = readScalar(iter)
-				if rsp.Error != nil {
-					return rsp
-				}
-			default:
-				if err = iter.Skip(); err != nil {
-					return rspErr(err)
-				}
-				rsp = backend.DataResponse{
-					Error: fmt.Errorf("unknown result type: %s", resultType),
-				}
+			// for some rare cases resultType is coming after the result.
+			// when that happens we save the bytes and parse them after reading resultType
+			// see: https://github.com/grafana/grafana/issues/64693
+			if resultTypeFound {
+				rsp = readResult(resultType, rsp, iter, opt)
+			} else {
+				resultBytes = iter.SkipAndReturnBytes()
 			}
 
 		case "stats":
@@ -207,7 +197,7 @@ l1Fields:
 					meta = &data.FrameMeta{}
 					rsp.Frames[0].Meta = meta
 				}
-				meta.Custom = map[string]interface{}{
+				meta.Custom = map[string]any{
 					"stats": v,
 				}
 			}
@@ -215,6 +205,9 @@ l1Fields:
 		case "":
 			if err != nil {
 				return rspErr(err)
+			}
+			if !resultTypeFound {
+				return rspErr(fmt.Errorf("no resultType found"))
 			}
 			break l1Fields
 
@@ -227,6 +220,40 @@ l1Fields:
 		}
 	}
 
+	return rsp
+}
+
+// will read the result object based on the resultType and return a DataResponse
+func readResult(resultType string, rsp backend.DataResponse, iter *jsonitere.Iterator, opt Options) backend.DataResponse {
+	switch resultType {
+	case "matrix", "vector":
+		rsp = readMatrixOrVectorMulti(iter, resultType, opt)
+		if rsp.Error != nil {
+			return rsp
+		}
+	case "streams":
+		rsp = readStream(iter)
+		if rsp.Error != nil {
+			return rsp
+		}
+	case "string":
+		rsp = readString(iter)
+		if rsp.Error != nil {
+			return rsp
+		}
+	case "scalar":
+		rsp = readScalar(iter)
+		if rsp.Error != nil {
+			return rsp
+		}
+	default:
+		if err := iter.Skip(); err != nil {
+			return rspErr(err)
+		}
+		rsp = backend.DataResponse{
+			Error: fmt.Errorf("unknown result type: %s", resultType),
+		}
+	}
 	return rsp
 }
 

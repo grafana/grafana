@@ -23,7 +23,7 @@ type ResourceOriginInfo struct {
 	Timestamp *time.Time `json:"time,omitempty"`
 
 	// Avoid extending
-	_ interface{}
+	_ any
 }
 
 // GrafanaResourceMetadata is standard k8s object metadata with helper functions
@@ -31,7 +31,7 @@ type GrafanaResourceMetadata v1.ObjectMeta
 
 // GrafanaResource is a generic kubernetes resource with a helper for the common grafana metadata
 // This is a temporary solution until this object (or similar) can be moved to the app-sdk or kindsys
-type GrafanaResource[Spec interface{}, Status interface{}] struct {
+type GrafanaResource[Spec any, Status any] struct {
 	APIVersion string `json:"apiVersion"`
 	Kind       string `json:"kind"`
 
@@ -40,7 +40,7 @@ type GrafanaResource[Spec interface{}, Status interface{}] struct {
 	Status   *Status                 `json:"status,omitempty"`
 
 	// Avoid extending
-	_ interface{}
+	_ any
 }
 
 // Annotation keys

@@ -14,7 +14,7 @@ import {
   withLoadingIndicator,
   preProcessPanelData,
 } from '@grafana/data';
-import { FetchResponse, getDataSourceSrv, toDataQueryError } from '@grafana/runtime';
+import { FetchResponse, getDataSourceSrv, toDataQueryError, DataSourceWithBackend } from '@grafana/runtime';
 import { BackendSrv, getBackendSrv } from 'app/core/services/backend_srv';
 import { isExpressionQuery } from 'app/features/expressions/guards';
 import { cancelNetworkRequestsOnUnsubscribe } from 'app/features/query/state/processing/canceler';
@@ -61,7 +61,10 @@ export class AlertingQueryRunner {
       }
 
       const dataSourceInstance = await this.dataSourceSrv.get(query.datasourceUid);
-      const skipRunningQuery = dataSourceInstance.filterQuery && !dataSourceInstance.filterQuery(query.model);
+      const skipRunningQuery =
+        dataSourceInstance instanceof DataSourceWithBackend &&
+        dataSourceInstance.filterQuery &&
+        !dataSourceInstance.filterQuery(query.model);
 
       if (skipRunningQuery) {
         queriesToExclude.push(refId);

@@ -38,6 +38,7 @@ export const defaultGraphConfig: GraphFieldConfig = {
   },
   axisGridShow: true,
   axisCenteredZero: false,
+  axisShow: false,
 };
 
 const categoryStyles = ['Graph styles'];

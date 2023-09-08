@@ -202,7 +202,7 @@ func AlertRuleExportFromAlertRule(rule models.AlertRule) (definitions.AlertRuleE
 // AlertQueryExportFromAlertQuery creates a definitions.AlertQueryExport DTO from models.AlertQuery.
 func AlertQueryExportFromAlertQuery(query models.AlertQuery) (definitions.AlertQueryExport, error) {
 	// We unmarshal the json.RawMessage model into a map in order to facilitate yaml marshalling.
-	var mdl map[string]interface{}
+	var mdl map[string]any
 	err := json.Unmarshal(query.Model, &mdl)
 	if err != nil {
 		return definitions.AlertQueryExport{}, err
