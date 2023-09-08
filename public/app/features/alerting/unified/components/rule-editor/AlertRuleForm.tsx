@@ -40,11 +40,11 @@ import {
   rulerRuleToFormValues,
 } from '../../utils/rule-form';
 import * as ruleId from '../../utils/rule-id';
+import { GrafanaRuleExporter } from '../export/GrafanaRuleExporter';
 
 import AnnotationsStep from './AnnotationsStep';
 import { CloudEvaluationBehavior } from './CloudEvaluationBehavior';
 import { GrafanaEvaluationBehavior } from './GrafanaEvaluationBehavior';
-import { GrafanaRuleInspector } from './GrafanaRuleInspector';
 import { NotificationsStep } from './NotificationsStep';
 import { RecordingRulesNameSpaceAndGroupStep } from './RecordingRulesNameSpaceAndGroupStep';
 import { RuleEditorSection } from './RuleEditorSection';
@@ -259,7 +259,7 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
           disabled={submitState.loading}
           size="sm"
         >
-          {isCortexLokiOrRecordingRule(watch) ? 'Edit YAML' : 'View YAML'}
+          {isCortexLokiOrRecordingRule(watch) ? 'Edit YAML' : 'Export'}
         </Button>
       ) : null}
     </HorizontalGroup>
@@ -316,7 +316,7 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
       ) : null}
       {showEditYaml ? (
         type === RuleFormType.grafana ? (
-          <GrafanaRuleInspector alertUid={uidFromParams} onClose={() => setShowEditYaml(false)} />
+          <GrafanaRuleExporter alertUid={uidFromParams} onClose={() => setShowEditYaml(false)} />
         ) : (
           <RuleInspector onClose={() => setShowEditYaml(false)} />
         )

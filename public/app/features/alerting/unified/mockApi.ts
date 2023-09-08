@@ -22,7 +22,7 @@ import {
   MatcherOperator,
   Route,
 } from '../../../plugins/datasource/alertmanager/types';
-import { NotifierDTO } from '../../../types';
+import { FolderDTO, NotifierDTO } from '../../../types';
 
 import { CreateIntegrationDTO, NewOnCallIntegrationDTO, OnCallIntegrationDTO } from './api/onCallApi';
 import { AlertingQueryResponse } from './state/AlertingQueryRunner';
@@ -60,9 +60,11 @@ class AlertmanagerRouteBuilder {
     this.route.receiver = receiver;
     return this;
   }
+
   withoutReceiver(): AlertmanagerRouteBuilder {
     return this;
   }
+
   withEmptyReceiver(): AlertmanagerRouteBuilder {
     this.route.receiver = '';
     return this;
@@ -312,6 +314,26 @@ export function mockFeatureDiscoveryApi(server: SetupServer) {
       server.use(
         rest.get(`${dsSettings.url}/api/v1/status/buildinfo`, (_, res, ctx) => res(ctx.status(200), ctx.json(response)))
       );
+    },
+  };
+}
+
+export function mockProvisioningApi(server: SetupServer) {
+  return {
+    exportRuleGroup: (folderUid: string, groupName: string, response: Record<string, string>) => {
+      server.use(
+        rest.get(`/api/v1/provisioning/folder/${folderUid}/rule-groups/${groupName}/export`, (req, res, ctx) =>
+          res(ctx.status(200), ctx.text(response[req.url.searchParams.get('format') ?? 'yaml']))
+        )
+      );
+    },
+  };
+}
+
+export function mockFolderApi(server: SetupServer) {
+  return {
+    folder: (folderUid: string, response: FolderDTO) => {
+      server.use(rest.get(`/api/folders/${folderUid}`, (_, res, ctx) => res(ctx.status(200), ctx.json(response))));
     },
   };
 }
