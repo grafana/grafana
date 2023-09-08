@@ -80,12 +80,12 @@ export const buttonItem: CanvasElementItem<ButtonConfig, ButtonData> = {
   prepareData: (ctx: DimensionContext, cfg: ButtonConfig) => {
     const getCfgApi = () => {
       if (cfg?.api) {
-        cfg.api = {...cfg.api, method: cfg.api.method ?? HttpRequestMethod.POST};
+        cfg.api = { ...cfg.api, method: cfg.api.method ?? HttpRequestMethod.POST };
         return cfg.api;
       }
 
       return undefined;
-    }
+    };
 
     const data: ButtonData = {
       text: cfg?.text ? ctx.getText(cfg.text).value() : '',
