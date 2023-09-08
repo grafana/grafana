@@ -51,6 +51,11 @@ interface PolicyComponentProps {
   onShowAlertInstances: (alertGroups: AlertmanagerGroup[], matchers?: ObjectMatcher[]) => void;
 }
 
+export function shouldShowExportOption(alertManagerSourceName: string, isDefaultPolicy: boolean, canReadProvisioning: boolean) {
+  const isGrafanaAM = alertManagerSourceName === GRAFANA_RULES_SOURCE_NAME;
+  return isGrafanaAM && isDefaultPolicy && canReadProvisioning;
+}
+
 const Policy: FC<PolicyComponentProps> = ({
   receivers = [],
   contactPointsState,
@@ -127,8 +132,7 @@ const Policy: FC<PolicyComponentProps> = ({
     ? sumBy(matchingAlertGroups, (group) => group.alerts.length)
     : undefined;
 
-  const isGrafanaAM = alertManagerSourceName === GRAFANA_RULES_SOURCE_NAME;
-  const showExportOption = isGrafanaAM && isDefaultPolicy && canReadProvisioning;
+  const showExportOption = shouldShowExportOption(alertManagerSourceName, isDefaultPolicy, canReadProvisioning);
   const [showExportDrawer, toggleShowExportDrawer] = useToggle(false)
 
   // TODO dead branch detection, warnings for all sort of configs that won't work or will never be activated

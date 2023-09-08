@@ -1,4 +1,4 @@
-import { screen, render, within } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { noop } from 'lodash';
 import React from 'react';
@@ -10,14 +10,14 @@ import {
   AlertmanagerGroup,
   MatcherOperator,
   ObjectMatcher,
-  RouteWithID,
+  RouteWithID
 } from 'app/plugins/datasource/alertmanager/types';
 import { ReceiversState } from 'app/types/alerting';
 
 import { mockAlertGroup, mockAlertmanagerAlert, mockReceiversState } from '../../mocks';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 
-import { Policy } from './Policy';
+import { Policy, shouldShowExportOption } from './Policy';
 
 beforeAll(() => {
   userEvent.setup();
@@ -33,7 +33,7 @@ describe('Policy', () => {
     const onAddPolicy = jest.fn();
     const onDeletePolicy = jest.fn();
     const onShowAlertInstances = jest.fn(
-      (alertGroups: AlertmanagerGroup[], matchers?: ObjectMatcher[] | undefined) => {}
+      (alertGroups: AlertmanagerGroup[], matchers?: ObjectMatcher[] | undefined) => { }
     );
 
     const routeTree = mockRoutes;
@@ -217,6 +217,47 @@ describe('Policy', () => {
 
     const customPolicy = screen.getByTestId('am-route-container');
     expect(within(customPolicy).getByTestId('matches-all')).toBeInTheDocument();
+  });
+});
+
+describe('shouldShowExportOption function', () => {
+  it('returns true when alertManagerSourceName is GRAFANA_RULES_SOURCE_NAME and canReadProvisioning is true', () => {
+    const alertManagerSourceName = GRAFANA_RULES_SOURCE_NAME;
+    const isDefaultPolicy = true;
+    const canReadProvisioning = true;
+    const result = shouldShowExportOption(alertManagerSourceName, isDefaultPolicy, canReadProvisioning);
+    expect(result).toBe(true);
+  });
+
+  it('returns false when alertManagerSourceName is not GRAFANA_RULES_SOURCE_NAME', () => {
+    const alertManagerSourceName = 'test';
+    const isDefaultPolicy = true;
+    const canReadProvisioning = true;
+    const result = shouldShowExportOption(alertManagerSourceName, isDefaultPolicy, canReadProvisioning);
+    expect(result).toBe(false);
+  });
+
+  it('returns false when isDefaultPolicy is false', () => {
+    const alertManagerSourceName = GRAFANA_RULES_SOURCE_NAME;
+    const isDefaultPolicy = false;
+    const canReadProvisioning = true;
+    const result = shouldShowExportOption(alertManagerSourceName, isDefaultPolicy, canReadProvisioning);
+    expect(result).toBe(false);
+  });
+
+  it('returns false when canReadProvisioning is false', () => {
+    const alertManagerSourceName = GRAFANA_RULES_SOURCE_NAME;
+    const isDefaultPolicy = true;
+    const canReadProvisioning = false;
+    const result = shouldShowExportOption(alertManagerSourceName, isDefaultPolicy, canReadProvisioning);
+    expect(result).toBe(false);
+  });
+  it('returns true when alertManagerSourceName is GRAFANA_RULES_SOURCE_NAME, isDefaultPolicy is true, and canReadProvisioning is true', () => {
+    const alertManagerSourceName = GRAFANA_RULES_SOURCE_NAME;
+    const isDefaultPolicy = true;
+    const canReadProvisioning = true;
+    const result = shouldShowExportOption(alertManagerSourceName, isDefaultPolicy, canReadProvisioning);
+    expect(result).toBe(true);
   });
 });
 
