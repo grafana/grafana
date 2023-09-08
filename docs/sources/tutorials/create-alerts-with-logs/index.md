@@ -34,8 +34,8 @@ In this tutorial, you'll:
 * Ensure you’ve [configured a Loki datasource](https://grafana.com/docs/grafana/latest/datasources/loki/#configure-the-data-source) in Grafana.
 * If you already have logs to work with, you can skip the optional sections and go straight to [create an alert](#create-an-alert).
 * If you want to use a log-generating sample script to create the logs demonstrated in this tutorial, refer to the optional steps:
-    * [Use promtail and log-generating script](#optional-use-promtail-and-a-python-script-to-create-sample-logs-and-send-them-to-loki)
-    * [Use docker with promtail and the log-generating script](#optional-running-the-tutorial-using-grafana-loki-and-promtail-with-docker-compose)
+  * [Use promtail and log-generating script](#optional-use-promtail-and-a-python-script-to-create-sample-logs-and-send-them-to-loki)
+  * [Use docker with promtail and the log-generating script](#optional-running-the-tutorial-using-grafana-loki-and-promtail-with-docker-compose)
 
 ## Create an alert
 
@@ -55,13 +55,13 @@ In these steps you'll create an alert and define an expression to evaluate. Thes
     This query will count the number of log lines with a status code that is not 200 (OK), then sum the result set by message type using an **instant query** and the time interval indicated in brackets. It uses the logql pattern parser to add a new label called `message` that contains the level, method, url, and status from the log line.
 
     You can use the **explain query** toggle button for a full explanation of the query syntax. The optional log-generating script creates a sample log line similar to the one below:
-    **`2023-04-22T02:49:32.562825+00:00 level=info method=GET url=/ status=200 duration=171ms`**
 
-{{% admonition type="note" %}}
-If you're using your own logs, modify the logql query to match your own log message. Refer to the Loki docs to understand the [pattern parser](https://grafana.com/docs/loki/latest/logql/log_queries/#pattern).
+    ```
+    2023-04-22T02:49:32.562825+00:00 level=info method=GET url=test.com status=200 duration=171ms
+    ```
 
-{{% / admonition %}}
-
+    {{% admonition type="note" %}}If you're using your own logs, modify the logql query to match your own log message. Refer to the Loki docs to understand the [pattern parser](https://grafana.com/docs/loki/latest/logql/log_queries/#pattern).
+    {{% / admonition %}}
 1. Update the default expressions to match the values shown in the tables below:
 
     **Box B - reduce expression**
@@ -79,17 +79,17 @@ If you're using your own logs, modify the logql query to match your own log mess
     | Expression value | Is above 5                |
     | Alert condition  |This is the alert condition|
 
-1. Expand **Options** and select **Range** as the type.
+1. Expand **Options** and select **Instant** as the query type.
 
-1. Click **preview** to see a preview of the query result and alert evaluation. If you see **No Data**, verify that you changed the query type to **Range**.
+1. Click **preview** to see a preview of the query result and alert evaluation.
 
 1. Expression B shows a table of labels and values returned. The message label captured the message string from the log line
  and the value shows the number of times that string occurred during the evaluation interval.
 
     |   labels         |       values              |
     | ---------------- | --------------------------|
-    |  message=level=info method=GET url=/ status=500 | 27 |
-    |  message=level=info method=POST url=/ status=500 | 1 |
+    |  message=level=info method=GET url=test.com status=500 | 27 |
+    |  message=level=info method=POST url=test.com status=500 | 1 |
 
 1. Configure your alert evaluation behavior.
     * Choose a folder or use **+add new** to add a new folder for this alert.
@@ -106,18 +106,22 @@ If you're using your own logs, modify the logql query to match your own log mess
 
 ### Create a Loki managed alert
 
-[Loki managed alerts](https://grafana.com/docs/loki/latest/rules/#alerting-and-recording-rules) are stored and evaluated by Loki. They use LogQL for their expressions. 
+[Loki managed alerts](https://grafana.com/docs/loki/latest/rules/#alerting-and-recording-rules) are stored and evaluated by Loki. They use LogQL for their expressions.
 
 1. Choose  Mimir or Loki managed alert to create an alert using Loki
 1. Select your Loki data source from the drop-down
 1. The optional script will output a sample log line similar to this:
+
     ```
     2023-04-22T02:49:32.562825+00:00 level=info method=GET url=/ status=200 duration=171ms
     ```
+
 1. Enter the alert query below if you’re using the sample logs or modify it for your own file path and condition.
+
     ```
     sum by (message)(count_over_time({filename="/var/log/web_requests.log"} != `status=200` | pattern `<_> <message> duration<_>` [5m])) > 5
     ```
+
     This query will search the interval period and count the number of log lines with a status code that is not 200 (OK), then sum the result set by message type. It uses the logql pattern parser to add a new label called `message` that captured the level, method, url, and status from the log line.
 
     For loki alerts, the interval needs to be specified in brackets instead of a variable and the alert threshold is added to the query. For this example, the interval is 5m and the alert will fire if there are more than 5 non-200 status messages.
@@ -128,6 +132,7 @@ If you're using your own logs, modify the logql query to match your own log mess
   
     * Choose **+Add new** in the drop down and type the annotation name **AlertValues** into the blank box
     * In the blank `text` box, paste the following:
+
        ```
        {{ $labels.message }}  has returned an error status {{$values.B}} times
        ```
@@ -144,23 +149,24 @@ If you're using your own logs, modify the logql query to match your own log mess
         * Name the template `mynotification`
         * Add the snippet below to your alert template in the **Content** field. Notice that you will reference the annotation from your alert by name `(.Annotations.AlertValues)` to insert the annotation string into the alert notification:
 
-        ```
-        {{ define "myalert" }}
-        [{{.Status}}] {{ .Labels.alertname }}
-        {{ .Annotations.AlertValues }}
-        {{ end }}
-        {{ define "mymessage" }}
-        {{ if gt (len .Alerts.Firing) 0 }}
-            {{ len .Alerts.Firing }} firing:
-            {{ range .Alerts.Firing }} {{ template "myalert" .}} {{ end }}
-        {{ end }}
-        {{ if gt (len .Alerts.Resolved) 0 }}
-            {{ len .Alerts.Resolved }} resolved:
-            {{ range .Alerts.Resolved }} {{ template "myalert" .}} {{ end }}
-        {{ end }}
-        {{ end }}
-        ```
-        * There are two sections to the notification template: 
+            ```
+            {{ define "myalert" }}
+            [{{.Status}}] {{ .Labels.alertname }}
+            {{ .Annotations.AlertValues }}
+            {{ end }}
+            {{ define "mymessage" }}
+            {{ if gt (len .Alerts.Firing) 0 }}
+                {{ len .Alerts.Firing }} firing:
+                {{ range .Alerts.Firing }} {{ template "myalert" .}} {{ end }}
+            {{ end }}
+            {{ if gt (len .Alerts.Resolved) 0 }}
+                {{ len .Alerts.Resolved }} resolved:
+                {{ range .Alerts.Resolved }} {{ template "myalert" .}} {{ end }}
+            {{ end }}
+            {{ end }}
+            ```
+
+        * There are two sections to the notification template:
             1. The `myalert` template creates a single alert notification based on a specific alert.
             1. The `mymessage` template will find all of the grouped alerts that are firing and send them in a single notification.
         * Save the template
@@ -169,17 +175,16 @@ If you're using your own logs, modify the logql query to match your own log mess
     1. Navigate to **Alerts > Contact point** and edit the email contact point. If you're using Grafana Cloud, SMTP is already enabled. Otherwise, for local installations you'll need to [configure SMTP](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/#smtp).
     1. Add an email address in the to field for the recipient
     1. Expand Optional Email Settings and refer to the template by adding this to the body field:
-    ```
-    {{ template "mynotification" . }}
-    ```
+
+        ```
+        {{ template "mynotification" . }}
+        ```
 
 **Tada! You're finished!** Grafana will email an alert with a message that looks similar to the one below. The format varies slightly depending on which type of alert you created - Loki or Grafana managed. The contents should be the same:  
 
 ```
-1 firing: [firing] LokiAlertTest1 Error message level=info method=GET url=/ status=500 has occurred 12 times.
+1 firing: [firing] LokiAlertTest1 Error message level=info method=GET url=test.com status=500 has occurred 12 times.
 ```
-
-
 
 ## Optional: Use promtail with a sample log-generating script
 
@@ -255,7 +260,7 @@ This optional step uses a python script to generate the sample logs used in this
     * Click **Run Query**.
     * You should see logs and a graph of log volume.
 
-#### Troubleshooting the script
+### Troubleshooting the script
 
 If you don't see the sample logs in Explore:
 
@@ -264,22 +269,20 @@ If you don't see the sample logs in Explore:
 * If the file exists, verify that promtail is running and check that it is configured correctly.
 * In Grafana Explore, check that the time range is only for the last 5 minutes.
 
-## Optional: Use Docker compose to create the tutorial environment 
+## Optional: Use Docker compose to create the tutorial environment
 
 These optional steps walk you through installing Grafana, Loki and Promtail with Docker compose. You'll also configure a log-generating script
 that generates the sample logs used in this tutorial to create alerts.
 
-#### Pre-requisites
+### Pre-requisites
 
 * [Docker Compose](https://docs.docker.com/compose/install/)
 * Python 3
-
 
 1. Start a command line from a directory of your choice.
 1. From that directory, get a `docker-compose.yaml` file to run Grafana, Loki, and Promtail:
 
     **Bash**
-
 
     ```
     wget https://raw.githubusercontent.com/grafana/loki/v2.8.0/production/docker-compose.yaml -O docker-compose.yaml
@@ -371,7 +374,7 @@ that generates the sample logs used in this tutorial to create alerts.
     ```
 
     **Running on Windows**
-    
+
     Run Powershell as administrator
 
     ```
@@ -387,11 +390,11 @@ that generates the sample logs used in this tutorial to create alerts.
     * Click **Run Query**.
     * You should see logs and a graph of log volume.
 
-**Troubleshooting the script**
-    
-    If you don't see the logs in Explore, check these things:
+### Troubleshooting the script
 
-    * Does the output file exist, check /var/log/web_requests.log to see if it contains logs.
-    * If the file is empty, check that you followed the steps above to create the file and change the permissions.
-    * If the file exists, verify that promtail is running and check that it is configured correctly.
-    * In Grafana Explore, check that the time range is only for the last 5 minutes.
+If you don't see the logs in Explore, check these things:
+
+* Does the output file exist, check /var/log/web_requests.log to see if it contains logs.
+* If the file is empty, check that you followed the steps above to create the file and change the permissions.
+* If the file exists, verify that promtail is running and check that it is configured correctly.
+* In Grafana Explore, check that the time range is only for the last 5 minutes.
