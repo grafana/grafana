@@ -230,13 +230,3 @@ type failingRoundTripper struct{}
 func (failingRoundTripper) RoundTrip(*http.Request) (*http.Response, error) {
 	return nil, errors.New("some error")
 }
-
-type statusCodeRoundTripper struct {
-	statusCode int
-}
-
-func (rt statusCodeRoundTripper) RoundTrip(*http.Request) (*http.Response, error) {
-	return &http.Response{
-		StatusCode: rt.statusCode,
-	}, nil
-}
