@@ -36,8 +36,7 @@ func TestQueryData_parseResponse(t *testing.T) {
 		resBody := `{"data":{"result":[{"metric":{"__name__":"some_name","environment":"some_env","id":"some_id","instance":"some_instance:1234","job":"some_job","name":"another_name","region":"some_region"},"value":[1.1,"2"]}]},"status":"success"}`
 		res := &http.Response{Body: io.NopCloser(bytes.NewBufferString(resBody))}
 		result := qd.parseResponse(context.Background(), &models.Query{}, res)
-		assert.Error(t, result.Error)
-		assert.Equal(t, result.Error.Error(), "no resultType found")
+		assert.Nil(t, result.Frames[0].Fields)
 	})
 
 	t.Run("resultType is set as empty string before result", func(t *testing.T) {
