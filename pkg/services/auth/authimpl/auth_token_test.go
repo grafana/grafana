@@ -21,7 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func TestUserAuthToken(t *testing.T) {
+func TestIntegrationUserAuthToken(t *testing.T) {
 	ctx := createTestContext(t)
 	user := &user.User{ID: int64(10)}
 	// userID := user.Id

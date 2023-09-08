@@ -76,6 +76,7 @@ type UserTokenService interface {
 	RevokeAllUserTokens(ctx context.Context, userId int64) error
 	GetUserToken(ctx context.Context, userId, userTokenId int64) (*UserToken, error)
 	GetUserTokens(ctx context.Context, userId int64) ([]*UserToken, error)
+	ActiveTokenCount(ctx context.Context, userId int64) (int64, error)
 	GetUserRevokedTokens(ctx context.Context, userId int64) ([]*UserToken, error)
 }
 

@@ -529,6 +529,17 @@ func (s *UserAuthTokenService) GetUserTokens(ctx context.Context, userId int64) 
 	return result, err
 }
 
+func (s *UserAuthTokenService) ActiveTokenCount(ctx context.Context, userId int64) (int64, error) {
+	var count int64
+	err := s.sqlStore.WithDbSession(ctx, func(dbSession *db.Session) error {
+		_, err := dbSession.SQL(`SELECT COUNT(*) FROM user_auth_token WHERE user_id = ? AND created_at > ? AND rotated_at > ? AND revoked_at = 0`,
+			userId, s.createdAfterParam(), s.rotatedAfterParam()).Get(&count)
+		return err
+	})
+
+	return count, err
+}
+
 func (s *UserAuthTokenService) GetUserRevokedTokens(ctx context.Context, userId int64) ([]*auth.UserToken, error) {
 	result := []*auth.UserToken{}
 	err := s.sqlStore.WithDbSession(ctx, func(dbSession *db.Session) error {
