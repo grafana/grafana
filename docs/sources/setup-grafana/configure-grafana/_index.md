@@ -1867,8 +1867,8 @@ Depending on the value of `sampler_type`, the sampler configuration parameter ca
 - For `const` sampler, `0` or `1` to always `false`/`true` respectively
 - For the `probabilistic` sampler, you can use a decimal value between `0.0` and `1.0`
 - For the `rateLimiting` sampler, enter the number of spans per second
-- For `remote` sampler, param is the same as for `probabilistic`
-  and indicates the initial sampling rate before the actual one
+- For the `remote` sampler, use a decimal value between `0.0` and `1.0`
+  to specify the initial sampling rate used before the first update
   is received from the sampling server
 
 ### sampling_server_url
