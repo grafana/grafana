@@ -11,6 +11,7 @@ load(
     "test_frontend_step",
     "yarn_install_step",
 )
+
 load(
     "scripts/drone/utils/utils.star",
     "pipeline",
@@ -30,7 +31,6 @@ def test_frontend(trigger, ver_mode):
 
     steps = [
         identify_runner_step(),
-        download_grabpl_step(),
         yarn_install_step(),
         betterer_frontend_step(),
     ]

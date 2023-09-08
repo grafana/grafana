@@ -5,14 +5,16 @@ rgm uses 'github.com/grafana/grafana-build' to build Grafana on the following ev
 """
 
 load(
-    "scripts/drone/steps/lib.star",
+    "scripts/drone/steps/lib_windows.star",
     "get_windows_steps",
 )
+
 load(
     "scripts/drone/utils/utils.star",
     "ignore_failure",
     "pipeline",
 )
+
 load(
     "scripts/drone/events/release.star",
     "verify_release_pipeline",
@@ -73,6 +75,8 @@ tag_trigger = {
     },
 }
 
+version_branch_trigger = {"ref": ["refs/heads/v[0-9]*"]}
+
 def rgm_build(script = "drone_publish_main.sh", canFail = True):
     rgm_build_step = {
         "name": "rgm-build",
@@ -86,6 +90,7 @@ def rgm_build(script = "drone_publish_main.sh", canFail = True):
         # In the future we should find a way to use dagger without mounting the docker socket.
         "volumes": [{"name": "docker", "path": "/var/run/docker.sock"}],
     }
+
     if canFail:
         rgm_build_step["failure"] = "ignore"
 
@@ -120,7 +125,7 @@ def rgm_tag():
         depends_on = ["release-test-backend", "release-test-frontend"],
     )
 
-def rgm_windows():
+def rgm_tag_windows():
     return pipeline(
         name = "rgm-tag-prerelease-windows",
         trigger = tag_trigger,
@@ -134,14 +139,23 @@ def rgm_windows():
         platform = "windows",
     )
 
+def rgm_version_branch():
+    return pipeline(
+        name = "rgm-v-branch-prerelease",
+        trigger = version_branch_trigger,
+        steps = rgm_build(script = "drone_publish_tag_grafana.sh", canFail = False),
+        depends_on = ["release-test-backend", "release-test-frontend"],
+    )
+
 def rgm():
     return [
         whats_new_checker_pipeline(tag_trigger),
         test_frontend(tag_trigger, "release"),
         test_backend(tag_trigger, "release"),
-        rgm_main(),
-        rgm_tag(),
-        rgm_windows(),
+        rgm_main(), # Runs a package / build process (with some distros) when commits are merged to main
+        rgm_tag(), # Runs a package / build process (with all distros) when a tag is made
+        rgm_tag_windows(),
+        rgm_version_branch(), # Runs a package / build proces (with all distros) when a commit lands on a version branch
         verify_release_pipeline(
             trigger = tag_trigger,
             name = "rgm-tag-verify-prerelease-assets",
@@ -149,6 +163,14 @@ def rgm():
             depends_on = [
                 "rgm-tag-prerelease",
                 "rgm-tag-prerelease-windows",
+            ],
+        ),
+        verify_release_pipeline(
+            trigger = version_branch_trigger,
+            name = "rgm-prerelease-verify-prerelease-assets",
+            bucket = "grafana-prerelease",
+            depends_on = [
+                "rgm-version-branch-prerelease",
             ],
         ),
     ]

@@ -29,12 +29,9 @@ trigger = {
 def shellcheck_step():
     return {
         "name": "shellcheck",
-        "image": images["build_image"],
-        "depends_on": [
-            "compile-build-cmd",
-        ],
+        "image": images["shellcheck"],
         "commands": [
-            "./bin/build shellcheck",
+            "shellcheck -e SC1071 -e SC2162 scripts/**/*.sh",
         ],
     }
 

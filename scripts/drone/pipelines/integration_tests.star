@@ -8,10 +8,10 @@ load(
     "download_grabpl_step",
     "enterprise_setup_step",
     "identify_runner_step",
-    "memcached_integration_tests_step",
-    "mysql_integration_tests_step",
-    "postgres_integration_tests_step",
-    "redis_integration_tests_step",
+    "memcached_integration_tests_steps",
+    "mysql_integration_tests_steps",
+    "postgres_integration_tests_steps",
+    "redis_integration_tests_steps",
     "verify_gen_cue_step",
     "verify_gen_jsonnet_step",
     "wire_install_step",
@@ -60,13 +60,12 @@ def integration_tests(trigger, prefix, ver_mode = "pr"):
         wire_install_step(),
     ]
 
-    test_steps = [
-        postgres_integration_tests_step(),
-        mysql_integration_tests_step("mysql57", "5.7"),
-        mysql_integration_tests_step("mysql80", "8.0"),
-        redis_integration_tests_step(),
-        memcached_integration_tests_step(),
-    ]
+    # test_steps = [a, b] + [c, d] + [e, f]...
+    test_steps = postgres_integration_tests_steps() + \
+        mysql_integration_tests_steps("mysql57", "5.7") + \
+        mysql_integration_tests_steps("mysql80", "8.0") + \
+        redis_integration_tests_steps() + \
+        memcached_integration_tests_steps()
 
     return pipeline(
         name = "{}-integration-tests".format(prefix),

@@ -18,7 +18,7 @@ load(
 def whats_new_checker_step():
     return {
         "name": "whats-new-checker",
-        "image": images["go_image"],
+        "image": images["go"],
         "depends_on": [
             "compile-build-cmd",
         ],

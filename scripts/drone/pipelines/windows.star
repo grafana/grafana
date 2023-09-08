@@ -7,11 +7,11 @@ load(
     "pipeline",
 )
 load(
-    "scripts/drone/steps/lib.star",
+    "scripts/drone/steps/lib_windows.star",
     "get_windows_steps",
-    "windows_clone_step",
-    "windows_test_backend_step",
-    "windows_wire_install_step",
+    "clone_step_windows",
+    "test_backend_step_windows",
+    "wire_install_step_windows",
 )
 load(
     "scripts/drone/utils/windows_images.star",
@@ -30,19 +30,19 @@ def windows_test_backend(trigger, edition, ver_mode):
     """
     environment = {"EDITION": edition}
     steps = [
-        windows_clone_step(),
+        clone_step_windows(),
     ]
 
     steps.extend([{
         "name": "windows-init",
-        "image": windows_images["windows_go_image"],
+        "image": windows_images["go"],
         "depends_on": ["clone"],
         "commands": [],
     }])
 
     steps.extend([
-        windows_wire_install_step(edition),
-        windows_test_backend_step(),
+        wire_install_step_windows(edition),
+        test_backend_step_windows(),
     ])
     pl = pipeline(
         name = "{}-test-backend-windows".format(ver_mode),

@@ -18,7 +18,6 @@ load(
     "frontend_metrics_step",
     "grafana_server_step",
     "identify_runner_step",
-    "package_step",
     "publish_images_step",
     "release_canary_npm_packages_step",
     "store_storybook_step",
@@ -32,6 +31,12 @@ load(
     "wire_install_step",
     "yarn_install_step",
 )
+
+load(
+    "scripts/drone/steps/rgm.star",
+    "rgm_package_step",
+)
+
 load(
     "scripts/drone/utils/utils.star",
     "pipeline",
@@ -72,11 +77,8 @@ def build_e2e(trigger, ver_mode):
 
     build_steps.extend(
         [
-            build_backend_step(ver_mode = ver_mode),
-            build_frontend_step(ver_mode = ver_mode),
-            build_frontend_package_step(ver_mode = ver_mode),
-            build_plugins_step(ver_mode = ver_mode),
-            package_step(ver_mode = ver_mode),
+            build_frontend_package_step(),
+            rgm_package_step(distros="linux/amd64"),
             grafana_server_step(),
             e2e_tests_step("dashboards-suite"),
             e2e_tests_step("smoke-tests-suite"),

@@ -33,7 +33,6 @@ load(
     "scripts/drone/pipelines/windows.star",
     "windows_test_backend",
 )
-load("scripts/drone/version.star", "version_branch_pipelines")
 load("scripts/drone/events/cron.star", "cronjobs")
 load("scripts/drone/vault.star", "secrets")
 
@@ -50,7 +49,6 @@ def main(_ctx):
             "event": ["promote"],
             "target": ["test-windows"],
         }, "oss", "testing")] +
-        version_branch_pipelines() +
         integration_test_pipelines() +
         publish_ci_windows_test_image_pipeline() +
         publish_ci_build_container_image_pipeline() +
