@@ -4,8 +4,17 @@ import { FolderDTO } from 'app/types';
 
 import { Options } from './panelcfg.gen';
 
-function getFolderByID(folderID: number) {
-  return getBackendSrv().get<FolderDTO>(`/api/folders/id/${folderID}`);
+async function getFolderUID(folderID: number): Promise<string> {
+  // folderID 0 is always the fake General/Dashboards folder, which always has a UID of empty string
+  if (folderID === 0) {
+    return '';
+  }
+
+  const folderDTO = await getBackendSrv().get<FolderDTO>(`/api/folders/id/${folderID}`, undefined, undefined, {
+    showErrorAlert: false,
+  });
+
+  return folderDTO.uid;
 }
 
 export interface AngularModel {
@@ -51,9 +60,15 @@ export async function dashlistMigrationHandler(panel: PanelModel<Options> & Angu
   // Convert the folderId to folderUID. Uses the API to do the conversion.
   if (newOptions.folderId !== undefined) {
     const folderId = newOptions.folderId;
-    const folderResp = await getFolderByID(folderId);
-    newOptions.folderUID = folderResp.uid;
-    delete newOptions.folderId;
+
+    // If converting ID to UID fails, the panel will not be migrated and will show incorrectly
+    try {
+      const folderUID = await getFolderUID(folderId);
+      newOptions.folderUID = folderUID;
+      delete newOptions.folderId;
+    } catch (err) {
+      console.warn('Dashlist: Error migrating folder ID to UID', err);
+    }
   }
 
   return newOptions;
