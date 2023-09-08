@@ -424,7 +424,8 @@ def build_frontend_package_step():
     """
 
     cmds = [
-        "apk add --update jq",
+        "apk add --update jq bash", # bash is needed for the validate-npm-packages.sh script since it has a 'bash'
+        # shebang.
         "yarn packages:build",
         "yarn packages:pack",
         "./scripts/validate-npm-packages.sh",
@@ -888,12 +889,10 @@ def publish_images_step(ver_mode, docker_repo, trigger = None):
 
 def integration_tests_steps(name, cmds, hostname = None, port = None, environment = None):
     dockerize_name = "wait-for-{}".format(name)
+
     depends = [
         "wire-install",
     ]
-
-    if hostname != None:
-        depends = depends.append(dockerize_name)
 
     step = {
         "name": "{}-integration-tests".format(name),
@@ -907,6 +906,8 @@ def integration_tests_steps(name, cmds, hostname = None, port = None, environmen
 
     if hostname == None:
         return [step]
+
+    depends = depends.append(dockerize_name)
 
     return [
         dockerize_step(dockerize_name, hostname, port),
