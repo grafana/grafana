@@ -26,8 +26,10 @@ import {
   DropLabels,
   KeepLabels,
   ParserFlag,
+  LabelExtractionExpression,
+  LogfmtParserFlags
 } from '../../../lezer/index.es';
-import { getLogQueryFromMetricsQuery } from '../../../queryUtils';
+import { getLogQueryFromMetricsQuery, getNodesFromQuery, isQueryWithNode } from '../../../queryUtils';
 
 type Direction = 'parent' | 'firstChild' | 'lastChild' | 'nextSibling';
 type NodeType = number;
@@ -103,7 +105,8 @@ export type Situation =
     }
   | {
     type: 'IN_LOGFMT',
-    logQuery: string;
+    otherLabels: string[],
+    flag: boolean,
   }
   | {
       type: 'IN_RANGE';
@@ -438,20 +441,35 @@ function resolveLogfmtParser(_: SyntaxNode, text: string, cursorPosition: number
   const trimRightTextLen = text.substring(0, cursorPosition).trimEnd().length;
   const position = trimRightTextLen < cursorPosition ? trimRightTextLen : cursorPosition;
   const cursor = tree.cursorAt(position);
+  const expectedNodes = [Logfmt, ParserFlag, LabelExtractionExpression]
+  let inLogfmt = false;
   do {
     const { node } = cursor;
-    if (node.type.id !== Logfmt && node.type.id !== ParserFlag) {
+    if (!expectedNodes.includes(node.type.id)) {
       continue;
     }
     if (cursor.from <= position && cursor.to >= position) {
-      return {
-        type: 'IN_LOGFMT',
-        logQuery: getLogQueryFromMetricsQuery(text).trim(),
-      }
+      inLogfmt = true;
+      break;
     }
   } while (cursor.next());
 
-  return null;
+  if (!inLogfmt) {
+    return null;
+  }
+
+  const flag = isQueryWithNode(text, LogfmtParserFlags);
+  const labelNodes = getNodesFromQuery(text, [LabelExtractionExpression]);
+  const otherLabels = labelNodes
+    .map((label: SyntaxNode) => label.getChild(Identifier))
+    .filter((label: SyntaxNode | null): label is SyntaxNode => label !== null)
+    .map((label: SyntaxNode) => getNodeText(label, text));
+
+  return {
+    type: 'IN_LOGFMT',
+    otherLabels,
+    flag,
+  }
 }
 
 function resolveTopLevel(node: SyntaxNode, text: string, pos: number): Situation | null {

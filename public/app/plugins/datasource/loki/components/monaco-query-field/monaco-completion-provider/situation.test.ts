@@ -95,31 +95,53 @@ describe('situation', () => {
   it('identifies AFTER_LOGFMT autocomplete situations', () => {
     assertSituation('{level="info"} | logfmt ^', {
       type: 'IN_LOGFMT',
-      logQuery: '{level="info"} | logfmt',
+      otherLabels: [],
+      flag: false,
     });
     assertSituation('{level="info"} | logfmt --strict ^', {
       type: 'IN_LOGFMT',
-      logQuery: '{level="info"} | logfmt --strict',
+      otherLabels: [],
+      flag: true,
+    });
+    assertSituation('{level="info"} | logfmt --strict label, label1="expression"^', {
+      type: 'IN_LOGFMT',
+      otherLabels: ['label', 'label1'],
+      flag: true,
     });
     assertSituation('count_over_time({level="info"} | logfmt ^', {
       type: 'IN_LOGFMT',
-      logQuery: '{level="info"} | logfmt',
+      otherLabels: [],
+      flag: false,
     });
     assertSituation('count_over_time({level="info"} | logfmt ^)', {
       type: 'IN_LOGFMT',
-      logQuery: '{level="info"} | logfmt',
+      otherLabels: [],
+      flag: false,
     });
     assertSituation('count_over_time({level="info"} | logfmt --keep-empty^)', {
       type: 'IN_LOGFMT',
-      logQuery: '{level="info"} | logfmt --keep-empty',
+      otherLabels: [],
+      flag: true,
+    });
+    assertSituation('count_over_time({level="info"} | logfmt --keep-empty label1, label2^)', {
+      type: 'IN_LOGFMT',
+      otherLabels: ['label1', 'label2'],
+      flag: true,
     });
     assertSituation('sum by (test) (count_over_time({level="info"} | logfmt ^))', {
       type: 'IN_LOGFMT',
-      logQuery: '{level="info"} | logfmt',
+      otherLabels: [],
+      flag: false,
+    });
+    assertSituation('sum by (test) (count_over_time({level="info"} | logfmt label ^))', {
+      type: 'IN_LOGFMT',
+      otherLabels: ['label'],
+      flag: false,
     });
     assertSituation('sum by (test) (count_over_time({level="info"} | logfmt --strict ^))', {
       type: 'IN_LOGFMT',
-      logQuery: '{level="info"} | logfmt --strict',
+      otherLabels: [],
+      flag: true,
     });
   });
 
