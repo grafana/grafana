@@ -1726,7 +1726,7 @@ steps:
 - commands:
   - apk add --update tar
   - tar --strip-components=1 -xvf $(cat packages.txt | grep amd64 | grep tar.gz)
-  - ./bin/grafana server                   --pidfile=./scripts/grafana-server/tmp/pid                   cfg:server.http_port=3001                   cfg:server.router_logging=1                   cfg:app_mode=development
+  - ./bin/grafana server --pidfile=./scripts/grafana-server/tmp/pid --cfg:server.http_port=3001 --cfg:server.router_logging=1 --cfg:app_mode=development
   depends_on:
   - rgm-package
   detach: true
