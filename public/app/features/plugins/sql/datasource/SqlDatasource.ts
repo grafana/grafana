@@ -9,10 +9,8 @@ import {
   DataQueryResponse,
   DataSourceInstanceSettings,
   DataSourceRef,
-  MetricFindValue,
   ScopedVars,
   CoreApp,
-  getSearchFilterScopedVar,
   LegacyMetricFindQueryOptions,
   VariableWithMultiSupport,
 } from '@grafana/data';
@@ -29,17 +27,16 @@ import {
 } from '@grafana/runtime';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
-import { ResponseParser } from '../ResponseParser';
 import { SqlQueryEditor } from '../components/QueryEditor';
 import { MACRO_NAMES } from '../constants';
 import { DB, SQLQuery, SQLOptions, SqlQueryModel, QueryFormat } from '../types';
 import migrateAnnotation from '../utils/migration';
 
 import { isSqlDatasourceDatabaseSelectionFeatureFlagEnabled } from './../components/QueryEditorFeatureFlag.utils';
+import { VariableSupport } from './VariableSupport';
 
 export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLOptions> {
   id: number;
-  responseParser: ResponseParser;
   name: string;
   interval: string;
   db: DB;
@@ -50,8 +47,8 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
     protected readonly templateSrv: TemplateSrv = getTemplateSrv()
   ) {
     super(instanceSettings);
+    this.variables = new VariableSupport(this);
     this.name = instanceSettings.name;
-    this.responseParser = new ResponseParser();
     this.id = instanceSettings.id;
     const settingsData = instanceSettings.jsonData || {};
     this.interval = settingsData.timeInterval || '1m';
@@ -70,10 +67,6 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
   abstract getDB(dsID?: number): DB;
 
   abstract getQueryModel(target?: SQLQuery, templateSrv?: TemplateSrv, scopedVars?: ScopedVars): SqlQueryModel;
-
-  getResponseParser() {
-    return this.responseParser;
-  }
 
   interpolateVariable = (value: string | string[] | number, variable: VariableWithMultiSupport) => {
     if (typeof value === 'string') {
@@ -179,30 +172,6 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
     }
 
     return;
-  }
-
-  async metricFindQuery(query: string, options?: LegacyMetricFindQueryOptions): Promise<MetricFindValue[]> {
-    let refId = 'tempvar';
-    if (options && options.variable && options.variable.name) {
-      refId = options.variable.name;
-    }
-
-    const scopedVars = {
-      ...options?.scopedVars,
-      ...getSearchFilterScopedVar({ query, wildcardChar: '%', options }),
-    };
-
-    const rawSql = this.templateSrv.replace(query, scopedVars, this.interpolateVariable);
-
-    const interpolatedQuery: SQLQuery = {
-      refId: refId,
-      datasource: this.getRef(),
-      rawSql,
-      format: QueryFormat.Table,
-    };
-
-    const response = await this.runMetaQuery(interpolatedQuery, options);
-    return this.getResponseParser().transformMetricFindResponse(response);
   }
 
   async runSql<T>(query: string, options?: RunSQLOptions) {
