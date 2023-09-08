@@ -102,7 +102,6 @@ function ExportAction({ permissions, receiverName }: ActionProps) {
           canReadSecrets ? 'Export contact point with decrypted secrets' : 'Export contact point with redacted secrets'
         }
         icon="download-alt"
-        target="_blank"
         onClick={toggleShowExportDrawer}
       />
       {showExportDrawer && (
