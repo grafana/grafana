@@ -16,6 +16,7 @@ import { CatalogPlugin, PluginStatus, PluginTabIds, Version } from '../../types'
 type InstallControlsButtonProps = {
   plugin: CatalogPlugin;
   pluginStatus: PluginStatus;
+  hasInstallWarning: boolean;
   latestCompatibleVersion?: Version;
   setNeedReload?: (needReload: boolean) => void;
 };
@@ -24,6 +25,7 @@ export function InstallControlsButton({
   plugin,
   pluginStatus,
   latestCompatibleVersion,
+  hasInstallWarning,
   setNeedReload,
 }: InstallControlsButtonProps) {
   const dispatch = useDispatch();
@@ -110,7 +112,7 @@ export function InstallControlsButton({
     );
   }
 
-  if (!plugin.isPublished) {
+  if (!plugin.isPublished || hasInstallWarning) {
     // Cannot be updated or installed
     return null;
   }

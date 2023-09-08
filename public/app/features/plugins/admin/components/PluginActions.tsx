@@ -52,6 +52,7 @@ export const PluginActions = ({ plugin }: Props) => {
                 latestCompatibleVersion={latestCompatibleVersion}
                 pluginStatus={pluginStatus}
                 setNeedReload={setNeedReload}
+                hasInstallWarning={hasInstallWarning}
               />
             )}
           </>
