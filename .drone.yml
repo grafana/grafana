@@ -541,7 +541,7 @@ steps:
     $${TEST_TAG}
   environment:
     GITHUB_TOKEN:
-      from_secret: github_token_pr
+      from_secret: github_token
     TEST_TAG: v0.0.0-test
   failure: ignore
   image: grafana/build-container:1.7.5
@@ -672,7 +672,7 @@ steps:
       from_secret: azure_tenant
     CYPRESS_CI: "true"
     GITHUB_TOKEN:
-      from_secret: github_token_pr
+      from_secret: github_token
     HOST: grafana-server
   image: us-docker.pkg.dev/grafanalabs-dev/cloud-data-sources/e2e:2.0.0
   name: end-to-end-tests-cloud-plugins-suite-azure
@@ -782,9 +782,9 @@ steps:
   - build-docker-images-ubuntu
   environment:
     DOCKER_PASSWORD:
-      from_secret: docker_password_pr
+      from_secret: docker_password
     DOCKER_USER:
-      from_secret: docker_username_pr
+      from_secret: docker_username
     GITHUB_APP_ID:
       from_secret: delivery-bot-app-id
     GITHUB_APP_INSTALLATION_ID:
@@ -1827,7 +1827,7 @@ steps:
       from_secret: azure_tenant
     CYPRESS_CI: "true"
     GITHUB_TOKEN:
-      from_secret: github_token_pr
+      from_secret: github_token
     HOST: grafana-server
   image: us-docker.pkg.dev/grafanalabs-dev/cloud-data-sources/e2e:2.0.0
   name: end-to-end-tests-cloud-plugins-suite-azure
@@ -4585,6 +4585,18 @@ kind: secret
 name: prerelease_bucket
 ---
 get:
+  name: username
+  path: infra/data/ci/grafanaci-docker-hub
+kind: secret
+name: docker_username
+---
+get:
+  name: password
+  path: infra/data/ci/grafanaci-docker-hub
+kind: secret
+name: docker_password
+---
+get:
   name: credentials.json
   path: infra/data/ci/grafana/releng/artifacts-uploader-service-account
 kind: secret
@@ -4687,12 +4699,6 @@ kind: secret
 name: dagger_token
 ---
 get:
-  name: pat
-  path: infra/data/ci/github/grafanabot
-kind: secret
-name: github_token
----
-get:
   name: app-id
   path: infra/data/ci/grafana-release-eng/grafana-delivery-bot
 kind: secret
@@ -4717,6 +4723,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 5527186dcdc48fe7f47b90794e408ab9f743f1dd56357f3d6f03d9aa17816181
+hmac: e7a7b8ebee80baceff6c915e84e76f8f5e54565741f923e9e1e17f3f8880dce9
 
 ...

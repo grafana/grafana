@@ -14,7 +14,6 @@ correlations,preview,@grafana/explore-squad,false,false,false,false
 datasourceQueryMultiStatus,experimental,@grafana/plugins-platform-backend,false,false,false,false
 traceToMetrics,experimental,@grafana/observability-traces-and-profiling,false,false,false,true
 newDBLibrary,preview,@grafana/backend-platform,false,false,false,false
-validateDashboardsOnSave,preview,@grafana/grafana-as-code,false,false,true,false
 autoMigrateOldPanels,preview,@grafana/dataviz-squad,false,false,false,true
 disableAngular,preview,@grafana/dataviz-squad,false,false,false,true
 canvasPanelNesting,experimental,@grafana/dataviz-squad,false,false,false,true
@@ -86,7 +85,7 @@ prometheusIncrementalQueryInstrumentation,experimental,@grafana/observability-me
 logsExploreTableVisualisation,experimental,@grafana/observability-logs,false,false,false,true
 awsDatasourcesTempCredentials,experimental,@grafana/aws-datasources,false,false,false,false
 transformationsRedesign,GA,@grafana/observability-metrics,false,false,false,true
-toggleLabelsInLogsUI,experimental,@grafana/observability-logs,false,false,false,true
+toggleLabelsInLogsUI,GA,@grafana/observability-logs,false,false,false,true
 mlExpressions,experimental,@grafana/alerting-squad,false,false,false,false
 traceQLStreaming,experimental,@grafana/observability-traces-and-profiling,false,false,false,true
 metricsSummary,experimental,@grafana/observability-traces-and-profiling,false,false,false,true
@@ -104,3 +103,5 @@ alertingNoDataErrorExecution,privatePreview,@grafana/alerting-squad,false,false,
 angularDeprecationUI,experimental,@grafana/plugins-platform-backend,false,false,false,true
 dashgpt,experimental,@grafana/dashboards-squad,false,false,false,true
 reportingRetries,preview,@grafana/sharing-squad,false,false,true,false
+newBrowseDashboards,preview,@grafana/grafana-frontend-platform,false,false,false,true
+sseGroupByDatasource,experimental,@grafana/observability-metrics,false,false,false,false
