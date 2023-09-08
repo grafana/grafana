@@ -1,4 +1,4 @@
-import { e2e } from '@grafana/e2e';
+import { e2e } from '../utils';
 const PAGE_UNDER_TEST = 'dtpl2Ctnk/repeating-an-empty-row';
 
 describe('Repeating empty rows', () => {

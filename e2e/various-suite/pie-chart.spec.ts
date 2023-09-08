@@ -1,5 +1,6 @@
-import { e2e } from '@grafana/e2e';
 import { selectors } from '@grafana/e2e-selectors';
+
+import { e2e } from '../utils';
 
 e2e.scenario({
   describeName: 'Pie Chart Panel',

@@ -1,5 +1,6 @@
-import { e2e } from '@grafana/e2e';
 import { GrafanaBootConfig } from '@grafana/runtime';
+
+import { e2e } from '../utils';
 
 e2e.scenario({
   describeName: 'Panels smokescreen',

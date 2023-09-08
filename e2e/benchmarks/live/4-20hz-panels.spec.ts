@@ -1,4 +1,4 @@
-import { e2e } from '@grafana/e2e';
+import { e2e } from '../../utils';
 
 type WithGrafanaRuntime<T> = T & {
   grafanaRuntime: {

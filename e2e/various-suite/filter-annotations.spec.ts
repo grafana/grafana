@@ -1,4 +1,4 @@
-import { e2e } from '@grafana/e2e';
+import { e2e } from '../utils';
 const DASHBOARD_ID = 'ed155665';
 
 e2e.scenario({

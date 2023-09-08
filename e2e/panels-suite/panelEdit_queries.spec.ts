@@ -1,4 +1,4 @@
-import { e2e } from '@grafana/e2e';
+import { e2e } from '../utils';
 
 const flakyTimeout = 10000;
 
@@ -39,12 +39,11 @@ e2e.scenario({
     e2e.components.QueryEditorRow.actionButton('Duplicate query').eq(0).should('be.visible').click();
 
     // We expect row with refId Band and A to exist and be visible
-    e2e.components.QueryEditorRows.rows().within((rows) => {
-      expect(rows.length).equals(2);
-    });
+    e2e.components.QueryEditorRows.rows().should('have.length', 2);
 
     // Change to CSV Metric Values scenario for A
     e2e.components.DataSource.TestData.QueryTab.scenarioSelectContainer()
+      .first()
       .should('be.visible')
       .within(() => {
         e2e().get('input[id*="test-data-scenario-select-"]').eq(0).should('be.visible').click();
@@ -95,7 +94,7 @@ const expectInspectorResultAndClose = (expectCallBack: (keys: JQuery<HTMLElement
 
   e2e.components.PanelInspector.Query.jsonObjectKeys({ timeout: flakyTimeout })
     .should('be.visible')
-    .within((keys) => expectCallBack(keys));
+    .should((keys) => expectCallBack(keys));
 
   e2e.components.Drawer.General.close().should('be.visible').click();
 };
