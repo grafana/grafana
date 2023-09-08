@@ -86,6 +86,7 @@ func WithStatusSource(ctx context.Context, statusCode int) {
 
 	if statusCode >= 500 {
 		v.StatusSource = StatusSourceDownstream
+		return
 	}
 
 	v.StatusSource = StatusSourceServer
