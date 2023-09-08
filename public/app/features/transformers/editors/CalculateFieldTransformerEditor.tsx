@@ -386,4 +386,5 @@ export const calculateFieldTransformRegistryItem: TransformerRegistryItem<Calcul
   name: 'Add field from calculation',
   description: 'Use the row values to calculate a new field.',
   categories: new Set([TransformerCategory.CalculateNewFields]),
+  // JEV: add help here? If so, update the typing.
 };

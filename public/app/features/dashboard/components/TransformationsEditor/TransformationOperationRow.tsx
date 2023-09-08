@@ -203,7 +203,7 @@ export const TransformationOperationRow = ({
           onChange={onChange}
         />
       </QueryOperationRow>
-      <TransformationEditorHelperModal contentType={id} isOpen={showHelp} onCloseClick={toggleShowHelp} />
+      <TransformationEditorHelperModal transformer={uiConfig} isOpen={showHelp} onCloseClick={toggleShowHelp} />
       {/* JEV: is this the correct place for this??? */}
     </>
   );
