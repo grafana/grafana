@@ -1862,7 +1862,7 @@ Specifies the type of sampler: `const`, `probabilistic`, `ratelimiting`, or `rem
 
 Default value is `1`.
 
-Sampler configuration parameter. Depending on the value of `sampler_type`, it can be `0`, `1`, or a decimal value in between.
+Depending on the value of `sampler_type`, the sampler configuration parameter can be `0`, `1`, or any decimal value between `0` and `1`.
 
 - For `const` sampler, `0` or `1` to always `false`/`true` respectively
 - For `probabilistic` sampler, a probability between `0.0` and `1.0`
