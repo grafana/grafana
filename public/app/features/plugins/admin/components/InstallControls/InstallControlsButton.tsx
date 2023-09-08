@@ -16,8 +16,8 @@ import { CatalogPlugin, PluginStatus, PluginTabIds, Version } from '../../types'
 type InstallControlsButtonProps = {
   plugin: CatalogPlugin;
   pluginStatus: PluginStatus;
-  hasInstallWarning: boolean;
   latestCompatibleVersion?: Version;
+  hasInstallWarning?: boolean;
   setNeedReload?: (needReload: boolean) => void;
 };
 
