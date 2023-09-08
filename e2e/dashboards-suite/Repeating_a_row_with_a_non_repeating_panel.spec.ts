@@ -1,4 +1,4 @@
-import { e2e } from '@grafana/e2e';
+import { e2e } from '../utils';
 const PAGE_UNDER_TEST = 'k3PEoCpnk/repeating-a-row-with-a-non-repeating-panel-and-horizontal-repeating-panel';
 const DASHBOARD_NAME = 'Repeating a row with a non-repeating panel and horizontal repeating panel';
 
