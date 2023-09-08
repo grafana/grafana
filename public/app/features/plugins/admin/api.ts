@@ -3,7 +3,7 @@ import { getBackendSrv, isFetchError } from '@grafana/runtime';
 import { accessControlQueryParam } from 'app/core/utils/accessControl';
 
 import { API_ROOT, GCOM_API_ROOT } from './constants';
-import { isLocalPluginVisible, isRemotePluginVisible } from './helpers';
+import { isLocalPluginVisibleByConfig, isRemotePluginVisibleByConfig } from './helpers';
 import { LocalPlugin, RemotePlugin, CatalogPluginDetails, Version, PluginVersion } from './types';
 
 export async function getPluginDetails(id: string): Promise<CatalogPluginDetails> {
@@ -39,7 +39,7 @@ export async function getRemotePlugins(): Promise<RemotePlugin[]> {
     includeDeprecated: true,
   });
 
-  return remotePlugins.filter(isRemotePluginVisible);
+  return remotePlugins.filter(isRemotePluginVisibleByConfig);
 }
 
 export async function getPluginErrors(): Promise<PluginError[]> {
@@ -105,7 +105,7 @@ export async function getLocalPlugins(): Promise<LocalPlugin[]> {
     accessControlQueryParam({ embedded: 0 })
   );
 
-  return localPlugins.filter(isLocalPluginVisible);
+  return localPlugins.filter(isLocalPluginVisibleByConfig);
 }
 
 export async function installPlugin(id: string) {

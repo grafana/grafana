@@ -10,8 +10,8 @@ import {
   mergeLocalsAndRemotes,
   sortPlugins,
   Sorters,
-  isLocalPluginVisible,
-  isRemotePluginVisible,
+  isLocalPluginVisibleByConfig,
+  isRemotePluginVisibleByConfig,
 } from './helpers';
 import { RemotePlugin, LocalPlugin } from './types';
 
@@ -65,6 +65,29 @@ describe('Plugins/Helpers', () => {
       // Only remote
       expect(findMerged('plugin-4')).toEqual(mergeLocalAndRemote(undefined, getRemotePluginMock({ slug: 'plugin-4' })));
     });
+
+    test('skips deprecated plugins unless they have a local - installed - counterpart', () => {
+      const merged = mergeLocalsAndRemotes(localPlugins, [
+        ...remotePlugins,
+        getRemotePluginMock({ slug: 'plugin-5', status: 'deprecated' }),
+      ]);
+      const findMerged = (mergedId: string) => merged.find(({ id }) => id === mergedId);
+
+      expect(merged).toHaveLength(4);
+      expect(findMerged('plugin-5')).toBeUndefined();
+    });
+
+    test('keeps deprecated plugins in case they have a local counterpart', () => {
+      const merged = mergeLocalsAndRemotes(
+        [...localPlugins, getLocalPluginMock({ id: 'plugin-5' })],
+        [...remotePlugins, getRemotePluginMock({ slug: 'plugin-5', status: 'deprecated' })]
+      );
+      const findMerged = (mergedId: string) => merged.find(({ id }) => id === mergedId);
+
+      expect(merged).toHaveLength(5);
+      expect(findMerged('plugin-5')).not.toBeUndefined();
+      expect(findMerged('plugin-5')?.isDeprecated).toBe(true);
+    });
   });
 
   describe('mergeLocalAndRemote()', () => {
@@ -100,6 +123,7 @@ describe('Plugins/Helpers', () => {
         isDisabled: false,
         isEnterprise: false,
         isInstalled: false,
+        isDeprecated: false,
         isPublished: true,
         name: 'Zabbix',
         orgName: 'Alexander Zobnin',
@@ -175,6 +199,7 @@ describe('Plugins/Helpers', () => {
         isEnterprise: false,
         isInstalled: true,
         isPublished: false,
+        isDeprecated: false,
         name: 'Zabbix',
         orgName: 'Alexander Zobnin',
         popularity: 0,
@@ -223,6 +248,7 @@ describe('Plugins/Helpers', () => {
         isEnterprise: false,
         isInstalled: true,
         isPublished: true,
+        isDeprecated: false,
         name: 'Zabbix',
         orgName: 'Alexander Zobnin',
         popularity: 0.2111,
@@ -336,6 +362,30 @@ describe('Plugins/Helpers', () => {
 
       // No local or remote
       expect(mapToCatalogPlugin()).toMatchObject({ isEnterprise: false });
+    });
+
+    test('`.isDeprecated` - comes from the remote', () => {
+      // Local & Remote
+      expect(mapToCatalogPlugin(localPlugin, { ...remotePlugin, status: 'deprecated' })).toMatchObject({
+        isDeprecated: true,
+      });
+      expect(mapToCatalogPlugin(localPlugin, { ...remotePlugin, status: 'enterprise' })).toMatchObject({
+        isDeprecated: false,
+      });
+
+      // Remote only
+      expect(mapToCatalogPlugin(undefined, { ...remotePlugin, status: 'deprecated' })).toMatchObject({
+        isDeprecated: true,
+      });
+      expect(mapToCatalogPlugin(undefined, { ...remotePlugin, status: 'enterprise' })).toMatchObject({
+        isDeprecated: false,
+      });
+
+      // Local only
+      expect(mapToCatalogPlugin(localPlugin)).toMatchObject({ isDeprecated: false });
+
+      // No local or remote
+      expect(mapToCatalogPlugin()).toMatchObject({ isDeprecated: false });
     });
 
     test('`.isInstalled` - prefers the local', () => {
@@ -671,7 +721,7 @@ describe('Plugins/Helpers', () => {
         id: 'barchart',
       });
 
-      expect(isLocalPluginVisible(plugin)).toBe(true);
+      expect(isLocalPluginVisibleByConfig(plugin)).toBe(true);
     });
 
     test('should return FALSE if the plugin is listed as hidden in the main Grafana configuration', () => {
@@ -680,7 +730,7 @@ describe('Plugins/Helpers', () => {
         id: 'akumuli-datasource',
       });
 
-      expect(isLocalPluginVisible(plugin)).toBe(false);
+      expect(isLocalPluginVisibleByConfig(plugin)).toBe(false);
     });
   });
 
@@ -691,7 +741,7 @@ describe('Plugins/Helpers', () => {
         slug: 'barchart',
       });
 
-      expect(isRemotePluginVisible(plugin)).toBe(true);
+      expect(isRemotePluginVisibleByConfig(plugin)).toBe(true);
     });
 
     test('should return FALSE if the plugin is listed as hidden in the main Grafana configuration', () => {
@@ -700,7 +750,7 @@ describe('Plugins/Helpers', () => {
         slug: 'akumuli-datasource',
       });
 
-      expect(isRemotePluginVisible(plugin)).toBe(false);
+      expect(isRemotePluginVisibleByConfig(plugin)).toBe(false);
     });
   });
 });

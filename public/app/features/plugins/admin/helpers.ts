@@ -302,11 +302,11 @@ export const hasInstallControlWarning = (
   );
 };
 
-export const isLocalPluginVisible = (p: LocalPlugin) => isPluginVisible(p.id);
+export const isLocalPluginVisibleByConfig = (p: LocalPlugin) => isNotHiddenByConfig(p.id);
 
-export const isRemotePluginVisible = (p: RemotePlugin) => isPluginVisible(p.slug);
+export const isRemotePluginVisibleByConfig = (p: RemotePlugin) => isNotHiddenByConfig(p.slug);
 
-function isPluginVisible(id: string) {
+function isNotHiddenByConfig(id: string) {
   const { pluginCatalogHiddenPlugins }: { pluginCatalogHiddenPlugins: string[] } = config;
 
   return !pluginCatalogHiddenPlugins.includes(id);
