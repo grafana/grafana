@@ -599,6 +599,7 @@ steps:
 - commands:
   - apk add --update tar
   - cat packages.txt
+  - mkdir grafana
   - tar --strip-components=1 -xvf ./dist/*.tar.gz -C grafana
   - RUNDIR=grafana ./scripts/grafana-server/start_server
   depends_on:
@@ -1760,6 +1761,7 @@ steps:
 - commands:
   - apk add --update tar
   - cat packages.txt
+  - mkdir grafana
   - tar --strip-components=1 -xvf ./dist/*.tar.gz -C grafana
   - RUNDIR=grafana ./scripts/grafana-server/start_server
   depends_on:
@@ -4221,6 +4223,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: ac8a69ab5bf825a9077d57bfc94376b3e753ceb880925a9ebfa5a3c97aae7f3e
+hmac: 09910c203e95625317b3595681a4794cf452f6c52efeb386db5525aee6c8d4e2
 
 ...
