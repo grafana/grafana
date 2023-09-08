@@ -147,7 +147,14 @@ func (e *AzureLogAnalyticsDatasource) buildQueries(ctx context.Context, queries 
 
 			if azureLogAnalyticsTarget.DashboardTime != nil {
 				dashboardTime = *azureLogAnalyticsTarget.DashboardTime
-				timeColumn = *azureLogAnalyticsTarget.TimeColumn
+				if dashboardTime {
+					if azureLogAnalyticsTarget.TimeColumn != nil {
+						timeColumn = *azureLogAnalyticsTarget.TimeColumn
+					} else {
+						// Final fallback to TimeGenerated if no column is provided
+						timeColumn = "TimeGenerated"
+					}
+				}
 			}
 		}
 
