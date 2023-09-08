@@ -9,6 +9,8 @@ import { withCenteredStory } from '../../../utils/storybook/withCenteredStory';
 import { Flex, JustifyContent, Wrap, Direction } from './Flex';
 import mdx from './Flex.mdx';
 
+const themeTokenControl = { control: 'select', options: [0, 0.25, 0.5, 1, 1.5, 2, 3, 4, 5, 6, 8, 10] };
+
 const Item = ({ color, text, height }: { color: string; text?: string | number; height?: string }) => {
   return (
     <div
@@ -48,6 +50,31 @@ export const Basic: StoryFn<typeof Flex> = ({ direction, wrap, alignItems, justi
       </Flex>
     </div>
   );
+};
+
+Basic.argTypes = {
+  gap: themeTokenControl,
+  direction: { control: 'select', options: ['row', 'row-reverse', 'column', 'column-reverse'] },
+  wrap: { control: 'select', options: ['nowrap', 'wrap', 'wrap-reverse'] },
+  alignItems: {
+    control: 'select',
+    options: ['stretch', 'flex-start', 'flex-end', 'center', 'baseline', 'start', 'end', 'self-start', 'self-end'],
+  },
+  justifyContent: {
+    control: 'select',
+    options: [
+      'flex-start',
+      'flex-end',
+      'center',
+      'space-between',
+      'space-around',
+      'space-evenly',
+      'start',
+      'end',
+      'left',
+      'right',
+    ],
+  },
 };
 
 export const AlignItemsExamples: StoryFn<typeof Flex> = () => {

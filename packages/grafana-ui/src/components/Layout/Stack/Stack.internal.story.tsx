@@ -6,6 +6,8 @@ import { withCenteredStory } from '../../../utils/storybook/withCenteredStory';
 import { Stack } from './Stack';
 import mdx from './Stack.mdx';
 
+const themeTokenControl = { control: 'select', options: [0, 0.25, 0.5, 1, 1.5, 2, 3, 4, 5, 6, 8, 10] };
+
 const meta: Meta<typeof Stack> = {
   title: 'General/Layout/Stack',
   component: Stack,
@@ -14,6 +16,10 @@ const meta: Meta<typeof Stack> = {
     docs: {
       page: mdx,
     },
+  },
+  argTypes: {
+    gap: themeTokenControl,
+    direction: { control: 'select', options: ['row', 'row-reverse', 'column', 'column-reverse'] },
   },
 };
 
