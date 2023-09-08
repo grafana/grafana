@@ -577,7 +577,7 @@ steps:
       from_secret: drone_token
 - commands:
   - apk add --update jq
-  - yarn packages build
+  - yarn packages:build
   - yarn packages:pack
   - ./scripts/validate-npm-packages.sh
   depends_on:
@@ -1244,6 +1244,7 @@ steps:
   name: wire-install
 - commands:
   - if [ -z ${GO_PACKAGES} ]; then echo 'missing GO_PACKAGES'; false; fi
+  - apk add --update build-base
   - go test -v -run=^$ -benchmem -timeout=1h -count=8 -bench=. ${GO_PACKAGES}
   depends_on:
   - wire-install
@@ -1251,6 +1252,7 @@ steps:
   name: sqlite-benchmark-integration-tests
 - commands:
   - if [ -z ${GO_PACKAGES} ]; then echo 'missing GO_PACKAGES'; false; fi
+  - apk add --update build-base
   - go test -v -run=^$ -benchmem -timeout=1h -count=8 -bench=. ${GO_PACKAGES}
   depends_on:
   - wire-install
@@ -1262,6 +1264,7 @@ steps:
   name: postgres-benchmark-integration-tests
 - commands:
   - if [ -z ${GO_PACKAGES} ]; then echo 'missing GO_PACKAGES'; false; fi
+  - apk add --update build-base
   - go test -v -run=^$ -benchmem -timeout=1h -count=8 -bench=. ${GO_PACKAGES}
   depends_on:
   - wire-install
@@ -1272,6 +1275,7 @@ steps:
   name: mysql-5.7-benchmark-integration-tests
 - commands:
   - if [ -z ${GO_PACKAGES} ]; then echo 'missing GO_PACKAGES'; false; fi
+  - apk add --update build-base
   - go test -v -run=^$ -benchmem -timeout=1h -count=8 -bench=. ${GO_PACKAGES}
   depends_on:
   - wire-install
@@ -1715,7 +1719,7 @@ steps:
   name: yarn-install
 - commands:
   - apk add --update jq
-  - yarn packages build
+  - yarn packages:build
   - yarn packages:pack
   - ./scripts/validate-npm-packages.sh
   depends_on:
@@ -4163,6 +4167,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: e3cd3f7b4e8dbc8c4ff839da2521a03b7264560cc69a084ef971abafbb79170a
+hmac: 39cadfdf7cecb88849cdb04ea10c11f633ec8fb31823ecf15762e57f5830f640
 
 ...
