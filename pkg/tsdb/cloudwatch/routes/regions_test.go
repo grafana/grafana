@@ -35,11 +35,12 @@ func TestRegionsRoute(t *testing.T) {
 	t.Cleanup(func() {
 		newRegionsService = origNewRegionsService
 	})
-	mockRegionService := RegionsService{}
-	newRegionsService = func(_ context.Context, pluginCtx backend.PluginContext, reqCtxFactory models.RequestContextFactoryFunc, region string) (models.RegionsAPIProvider, error) {
-		return &mockRegionService, nil
-	}
+
 	t.Run("returns 200 and regions", func(t *testing.T) {
+		mockRegionService := RegionsService{}
+		newRegionsService = func(_ context.Context, pluginCtx backend.PluginContext, reqCtxFactory models.RequestContextFactoryFunc, region string) (models.RegionsAPIProvider, error) {
+			return &mockRegionService, nil
+		}
 		mockRegionService.On("GetRegions", mock.Anything).Return([]resources.ResourceResponse[resources.Region]{{
 			Value: resources.Region{
 				Name: "us-east-1",
@@ -82,6 +83,10 @@ func TestRegionsRoute(t *testing.T) {
 	})
 
 	t.Run("returns 500 when get regions returns an error", func(t *testing.T) {
+		mockRegionService := RegionsService{}
+		newRegionsService = func(_ context.Context, pluginCtx backend.PluginContext, reqCtxFactory models.RequestContextFactoryFunc, region string) (models.RegionsAPIProvider, error) {
+			return &mockRegionService, nil
+		}
 		mockRegionService.On("GetRegions", mock.Anything).Return(nil, errors.New("aws is having some kind of outage")).Once()
 		rr := httptest.NewRecorder()
 		handler := http.HandlerFunc(ResourceRequestMiddleware(RegionsHandler, logger, reqCtxFunc))
