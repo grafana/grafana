@@ -12,6 +12,7 @@ export interface APIEditorConfig {
   method: string;
   endpoint: string;
   data?: string;
+  paramsType: string;
 }
 
 const dummyStringSettings = {
@@ -58,6 +59,19 @@ const httpMethodOptions = [
   { label: HttpRequestMethod.POST, value: HttpRequestMethod.POST },
 ];
 
+const httpParamsType = [
+  {
+    label: 'Header',
+    value: 'header',
+    // description: 'Send the parameters as request HTTP headers',
+  },
+  {
+    label: 'Query',
+    value: 'query',
+    // description: 'Send the parameters as `key=value` query parameter',
+  }
+];
+
 export function APIEditor({ value, context, onChange }: Props) {
   const LABEL_WIDTH = 9;
 
@@ -86,6 +100,16 @@ export function APIEditor({ value, context, onChange }: Props) {
       onChange({
         ...value,
         method,
+      });
+    },
+    [onChange, value]
+  );
+
+  const onParamsTypeChange = useCallback(
+    (paramsType: string) => {
+      onChange({
+        ...value,
+        paramsType,
       });
     },
     [onChange, value]
@@ -121,11 +145,6 @@ export function APIEditor({ value, context, onChange }: Props) {
   return config.disableSanitizeHtml ? (
     <>
       <InlineFieldRow>
-        <InlineField label="Method" labelWidth={LABEL_WIDTH} grow={true}>
-          <RadioButtonGroup value={httpMethod} options={httpMethodOptions} onChange={onMethodChange} fullWidth />
-        </InlineField>
-      </InlineFieldRow>
-      <InlineFieldRow>
         <InlineField label={'Endpoint'} labelWidth={LABEL_WIDTH} grow={true}>
           <StringValueEditor
             context={context}
@@ -135,9 +154,24 @@ export function APIEditor({ value, context, onChange }: Props) {
           />
         </InlineField>
       </InlineFieldRow>
+      <InlineFieldRow>
+        <InlineField label="Method" labelWidth={LABEL_WIDTH} grow={true}>
+          <RadioButtonGroup value={httpMethod} options={httpMethodOptions} onChange={onMethodChange} fullWidth />
+        </InlineField>
+      </InlineFieldRow>
+      <InlineFieldRow>
+        <InlineField label="Type" labelWidth={LABEL_WIDTH} grow={true}>
+          <RadioButtonGroup
+            value={value?.paramsType}
+            options={httpParamsType}
+            onChange={onParamsTypeChange}
+            fullWidth
+          />
+        </InlineField>
+      </InlineFieldRow>
       {httpMethod === HttpRequestMethod.POST && (
         <InlineFieldRow>
-          <InlineField label={'Data'} labelWidth={LABEL_WIDTH} grow={true}>
+          <InlineField label="Payload" labelWidth={LABEL_WIDTH} grow={true}>
             <StringValueEditor
               context={context}
               value={value?.data ?? '{}'}
