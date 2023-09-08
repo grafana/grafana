@@ -1801,7 +1801,7 @@ Refer to https://www.jaegertracing.io/docs/1.16/sampling/#client-sampling-config
 
 Can be set with the environment variable `JAEGER_SAMPLER_TYPE`.
 
-_Setting `sampler_type` in the `tracing.opentelemetry` section will override this setting._
+_To override this setting, enter `sampler_type` in the `tracing.opentelemetry` section._
 
 ### sampler_param
 
