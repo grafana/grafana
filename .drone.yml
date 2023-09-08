@@ -340,12 +340,14 @@ steps:
   image: golang:1.21.1-alpine
   name: wire-install
 - commands:
+  - apk add --update build-base
   - go test -tags requires_buildifer -short -covermode=atomic -timeout=5m ./pkg/...
   depends_on:
   - wire-install
   image: golang:1.21.1-alpine
   name: test-backend
 - commands:
+  - apk add --update build-base
   - go test -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find
     ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+'
     | grep -o '\(.*\)/' | sort -u)
@@ -585,7 +587,7 @@ steps:
   image: node:18.12.0-alpine
   name: build-frontend-packages
 - commands:
-  - ./grafana-build package --distro=linux/amd64 --grafana-dir=$$PWD > packages.txt
+  - /src/grafana-build package --distro=linux/amd64 --grafana-dir=$$PWD > packages.txt
   image: grafana/grafana-build:main
   name: rgm-package
   volumes:
@@ -1546,12 +1548,14 @@ steps:
   image: golang:1.21.1-alpine
   name: wire-install
 - commands:
+  - apk add --update build-base
   - go test -tags requires_buildifer -short -covermode=atomic -timeout=5m ./pkg/...
   depends_on:
   - wire-install
   image: golang:1.21.1-alpine
   name: test-backend
 - commands:
+  - apk add --update build-base
   - go test -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find
     ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+'
     | grep -o '\(.*\)/' | sort -u)
@@ -1721,7 +1725,7 @@ steps:
   image: node:18.12.0-alpine
   name: build-frontend-packages
 - commands:
-  - ./grafana-build package --distro=linux/amd64 --grafana-dir=$$PWD > packages.txt
+  - /src/grafana-build package --distro=linux/amd64 --grafana-dir=$$PWD > packages.txt
   image: grafana/grafana-build:main
   name: rgm-package
   volumes:
@@ -2888,12 +2892,14 @@ steps:
   image: golang:1.21.1-alpine
   name: wire-install
 - commands:
+  - apk add --update build-base
   - go test -tags requires_buildifer -short -covermode=atomic -timeout=5m ./pkg/...
   depends_on:
   - wire-install
   image: golang:1.21.1-alpine
   name: test-backend
 - commands:
+  - apk add --update build-base
   - go test -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find
     ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+'
     | grep -o '\(.*\)/' | sort -u)
@@ -4157,6 +4163,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 0b06ab0adcfad857eec64ef08214716d97a7cd1aae9f4218d9f0b775398e01a0
+hmac: e3cd3f7b4e8dbc8c4ff839da2521a03b7264560cc69a084ef971abafbb79170a
 
 ...
