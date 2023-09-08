@@ -14,7 +14,6 @@ Grafana Pyroscope is an open source continuous profiling platform. It will help 
 
 ## [Live Demo](https://demo.pyroscope.io/)
 
-[![Pyroscope GIF Demo](https://user-images.githubusercontent.com/23323466/143324845-16ff72df-231e-412d-bd0a-38ef2e09cba8.gif)](https://demo.pyroscope.io/)
 
 ## Features
 
