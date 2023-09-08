@@ -5,6 +5,7 @@ import { config, getBackendSrv } from '@grafana/runtime';
 import { Button, InlineField, InlineFieldRow, JSONFormatter, RadioButtonGroup } from '@grafana/ui';
 import { StringValueEditor } from 'app/core/components/OptionsUI/string';
 import { appEvents } from 'app/core/core';
+import { defaultApiConfig } from 'app/features/canvas/elements/button';
 
 import { HttpRequestMethod } from '../../panelcfg.gen';
 
@@ -69,11 +70,15 @@ const httpParamsType = [
     label: 'Query',
     value: 'query',
     // description: 'Send the parameters as `key=value` query parameter',
-  }
+  },
 ];
 
 export function APIEditor({ value, context, onChange }: Props) {
   const LABEL_WIDTH = 9;
+
+  if (!value) {
+    value = defaultApiConfig;
+  }
 
   const onEndpointChange = useCallback(
     (endpoint = '') => {
@@ -140,8 +145,6 @@ export function APIEditor({ value, context, onChange }: Props) {
     return;
   };
 
-  const httpMethod = value?.method ?? HttpRequestMethod.GET;
-
   return config.disableSanitizeHtml ? (
     <>
       <InlineFieldRow>
@@ -156,7 +159,7 @@ export function APIEditor({ value, context, onChange }: Props) {
       </InlineFieldRow>
       <InlineFieldRow>
         <InlineField label="Method" labelWidth={LABEL_WIDTH} grow={true}>
-          <RadioButtonGroup value={httpMethod} options={httpMethodOptions} onChange={onMethodChange} fullWidth />
+          <RadioButtonGroup value={value?.method} options={httpMethodOptions} onChange={onMethodChange} fullWidth />
         </InlineField>
       </InlineFieldRow>
       <InlineFieldRow>
@@ -169,7 +172,7 @@ export function APIEditor({ value, context, onChange }: Props) {
           />
         </InlineField>
       </InlineFieldRow>
-      {httpMethod === HttpRequestMethod.POST && (
+      {value?.method === HttpRequestMethod.POST && (
         <InlineFieldRow>
           <InlineField label="Payload" labelWidth={LABEL_WIDTH} grow={true}>
             <StringValueEditor
@@ -183,7 +186,7 @@ export function APIEditor({ value, context, onChange }: Props) {
       )}
       {renderTestAPIButton(value)}
       <br />
-      {httpMethod === HttpRequestMethod.POST && renderJSON(value?.data ?? '{}')}
+      {value?.method === HttpRequestMethod.POST && renderJSON(value?.data ?? '{}')}
     </>
   ) : (
     <>Must enable disableSanitizeHtml feature flag to access</>

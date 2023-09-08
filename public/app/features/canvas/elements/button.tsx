@@ -20,7 +20,7 @@ interface ButtonConfig {
   api?: APIEditorConfig;
 }
 
-const defaultApiConfig: APIEditorConfig = {
+export const defaultApiConfig: APIEditorConfig = {
   endpoint: '',
   method: HttpRequestMethod.GET,
   data: undefined,
