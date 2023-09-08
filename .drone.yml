@@ -601,7 +601,7 @@ steps:
   - cat packages.txt
   - mkdir grafana
   - tar --strip-components=1 -xvf ./dist/*.tar.gz -C grafana
-  - RUNDIR=grafana ./scripts/grafana-server/start_server
+  - RUNDIR=grafana ./scripts/grafana-server/start-server
   depends_on:
   - rgm-package
   detach: true
@@ -1763,7 +1763,7 @@ steps:
   - cat packages.txt
   - mkdir grafana
   - tar --strip-components=1 -xvf ./dist/*.tar.gz -C grafana
-  - RUNDIR=grafana ./scripts/grafana-server/start_server
+  - RUNDIR=grafana ./scripts/grafana-server/start-server
   depends_on:
   - rgm-package
   detach: true
@@ -4223,6 +4223,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 09910c203e95625317b3595681a4794cf452f6c52efeb386db5525aee6c8d4e2
+hmac: 5a46ad6aba6a3ba86c92639fe0f542e81ff79938510df856aa01a5844e15c0c4
 
 ...

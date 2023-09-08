@@ -684,7 +684,7 @@ def grafana_server_step(port = 3001):
             "cat packages.txt",
             "mkdir grafana",
             "tar --strip-components=1 -xvf ./dist/*.tar.gz -C grafana",
-            "RUNDIR=grafana ./scripts/grafana-server/start_server",
+            "RUNDIR=grafana ./scripts/grafana-server/start-server",
         ],
     }
 
