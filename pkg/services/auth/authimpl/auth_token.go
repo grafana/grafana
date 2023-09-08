@@ -533,8 +533,13 @@ func (s *UserAuthTokenService) GetUserTokens(ctx context.Context, userId int64) 
 func (s *UserAuthTokenService) ActiveTokenCount(ctx context.Context, userID *int64) (int64, error) {
 	var count int64
 	err := s.sqlStore.WithDbSession(ctx, func(dbSession *db.Session) error {
-		_, err := dbSession.SQL(`SELECT COUNT(*) FROM user_auth_token WHERE user_id = ? AND created_at > ? AND rotated_at > ? AND revoked_at = 0`,
-			userId, s.createdAfterParam(), s.rotatedAfterParam()).Get(&count)
+		query := `SELECT COUNT(*) FROM user_auth_token WHERE created_at > ? AND rotated_at > ? AND revoked_at = 0`
+		args := []interface{}{s.createdAfterParam(), s.rotatedAfterParam()}
+		if userID != nil {
+			query += " AND user_id = ?"
+			args = append(args, *userID)
+		}
+		_, err := dbSession.SQL(query, args...).Get(&count)
 		return err
 	})
 
@@ -565,23 +570,16 @@ func (s *UserAuthTokenService) GetUserRevokedTokens(ctx context.Context, userId 
 }
 
 func (s *UserAuthTokenService) reportActiveTokenCount(ctx context.Context, _ *quota.ScopeParameters) (*quota.Map, error) {
-	var count int64
-	var err error
-	s.ActiveTokenCount(ctx, nil)
-	err = s.sqlStore.WithDbSession(ctx, func(dbSession *db.Session) error {
-		var model userAuthToken
-		count, err = dbSession.Where(`created_at > ? AND rotated_at > ? AND revoked_at = 0`,
-			getTime().Add(-s.cfg.LoginMaxLifetime).Unix(),
-			getTime().Add(-s.cfg.LoginMaxInactiveLifetime).Unix()).
-			Count(&model)
-
-		return err
-	})
+	count, err := s.ActiveTokenCount(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
 
 	tag, err := quota.NewTag(auth.QuotaTargetSrv, auth.QuotaTarget, quota.GlobalScope)
 	if err != nil {
 		return nil, err
 	}
+
 	u := &quota.Map{}
 	u.Set(tag, count)
 

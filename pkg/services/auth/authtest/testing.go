@@ -21,7 +21,7 @@ type FakeUserAuthTokenService struct {
 	LookupTokenProvider          func(ctx context.Context, unhashedToken string) (*auth.UserToken, error)
 	RevokeTokenProvider          func(ctx context.Context, token *auth.UserToken, soft bool) error
 	RevokeAllUserTokensProvider  func(ctx context.Context, userID int64) error
-	ActiveTokenCountProvider     func(ctx context.Context, userID int64) (int64, error)
+	ActiveTokenCountProvider     func(ctx context.Context, userID *int64) (int64, error)
 	GetUserTokenProvider         func(ctx context.Context, userID, userTokenId int64) (*auth.UserToken, error)
 	GetUserTokensProvider        func(ctx context.Context, userID int64) ([]*auth.UserToken, error)
 	GetUserRevokedTokensProvider func(ctx context.Context, userID int64) ([]*auth.UserToken, error)
@@ -54,7 +54,7 @@ func NewFakeUserAuthTokenService() *FakeUserAuthTokenService {
 		BatchRevokedTokenProvider: func(ctx context.Context, userIds []int64) error {
 			return nil
 		},
-		ActiveTokenCountProvider: func(ctx context.Context, userID int64) (int64, error) {
+		ActiveTokenCountProvider: func(ctx context.Context, userID *int64) (int64, error) {
 			return 10, nil
 		},
 		GetUserTokenProvider: func(ctx context.Context, userId, userTokenId int64) (*auth.UserToken, error) {
@@ -97,7 +97,7 @@ func (s *FakeUserAuthTokenService) RevokeAllUserTokens(ctx context.Context, user
 	return s.RevokeAllUserTokensProvider(context.Background(), userId)
 }
 
-func (s *FakeUserAuthTokenService) ActiveTokenCount(ctx context.Context, userID int64) (int64, error) {
+func (s *FakeUserAuthTokenService) ActiveTokenCount(ctx context.Context, userID *int64) (int64, error) {
 	return s.ActiveTokenCountProvider(context.Background(), userID)
 }
 
@@ -158,8 +158,4 @@ func (ts *FakeOAuthTokenService) TryTokenRefresh(ctx context.Context, usr *login
 		return err
 	}
 	return nil
-}
-
-func (ts *FakeOAuthTokenService) ActiveTokenCount(ctx context.Context, userId int64) (int64, error) {
-	return 0, nil
 }

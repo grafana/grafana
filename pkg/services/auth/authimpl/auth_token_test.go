@@ -678,9 +678,33 @@ func (c *testContext) updateRotatedAt(id, rotatedAt int64) (bool, error) {
 func TestIntegrationTokenCount(t *testing.T) {
 	ctx := createTestContext(t)
 	user := &user.User{ID: int64(10)}
-	// userID := user.Id
+
+	createToken := func() *auth.UserToken {
+		userToken, err := ctx.tokenService.CreateToken(context.Background(), user,
+			net.ParseIP("192.168.10.11"), "some user agent")
+		require.Nil(t, err)
+		require.NotNil(t, userToken)
+		require.False(t, userToken.AuthTokenSeen)
+		return userToken
+	}
+
+	createToken()
 
 	now := time.Date(2018, 12, 13, 13, 45, 0, 0, time.UTC)
 	getTime = func() time.Time { return now }
 	defer func() { getTime = time.Now }()
+
+	count, err := ctx.tokenService.ActiveTokenCount(context.Background(), nil)
+	require.Nil(t, err)
+	require.Equal(t, int64(1), count)
+
+	var userID int64 = 10
+	count, err = ctx.tokenService.ActiveTokenCount(context.Background(), &userID)
+	require.Nil(t, err)
+	require.Equal(t, int64(1), count)
+
+	userID = 11
+	count, err = ctx.tokenService.ActiveTokenCount(context.Background(), &userID)
+	require.Nil(t, err)
+	require.Equal(t, int64(0), count)
 }
