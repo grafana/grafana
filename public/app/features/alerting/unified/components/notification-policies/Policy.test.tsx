@@ -17,11 +17,11 @@ import { ReceiversState } from 'app/types/alerting';
 import { mockAlertGroup, mockAlertmanagerAlert, mockReceiversState } from '../../mocks';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 
-import { Policy, shouldShowExportOption } from './Policy';
+import { Policy } from './Policy';
+import { shouldShowExportOption } from './shouldShowExportOption';
 
-beforeAll(() => {
-  userEvent.setup();
-});
+jest.mock('./shouldShowExportOption');
+jest.mocked(shouldShowExportOption).mockReturnValue(true);
 
 describe('Policy', () => {
   beforeAll(() => {
@@ -37,6 +37,7 @@ describe('Policy', () => {
     );
 
     const routeTree = mockRoutes;
+    const user = userEvent.setup();
 
     renderPolicy(
       <Policy
@@ -57,13 +58,13 @@ describe('Policy', () => {
 
     // click "more actions" and check if we can edit and delete
     expect(within(defaultPolicy).getByTestId('more-actions')).toBeInTheDocument();
-    await userEvent.click(within(defaultPolicy).getByTestId('more-actions'));
+    await user.click(within(defaultPolicy).getByTestId('more-actions'));
 
     // should be editable
     const editDefaultPolicy = screen.getByRole('menuitem', { name: 'Edit' });
     expect(editDefaultPolicy).toBeInTheDocument();
     expect(editDefaultPolicy).not.toBeDisabled();
-    await userEvent.click(editDefaultPolicy);
+    await user.click(editDefaultPolicy);
     expect(onEditPolicy).toHaveBeenCalledWith(routeTree, true);
 
     // should not be deletable
@@ -101,11 +102,11 @@ describe('Policy', () => {
       const policy = within(container);
 
       // click "more actions" and check if we can delete
-      await userEvent.click(policy.getByTestId('more-actions'));
+      await user.click(policy.getByTestId('more-actions'));
       expect(screen.queryByRole('menuitem', { name: 'Edit' })).not.toBeDisabled();
       expect(screen.queryByRole('menuitem', { name: 'Delete' })).not.toBeDisabled();
 
-      await userEvent.click(screen.getByRole('menuitem', { name: 'Delete' }));
+      await user.click(screen.getByRole('menuitem', { name: 'Delete' }));
       expect(onDeletePolicy).toHaveBeenCalled();
     }
 
@@ -130,6 +131,70 @@ describe('Policy', () => {
     expect(within(thirdPolicy).getByTestId('label-matchers')).toHaveTextContent(
       /^foo = barbar = bazbaz = quxasdf = asdftype = diskand 1 more$/
     );
+  });
+
+  it('should show export option when shouldShowExportOption returns true', async () => {
+    const onEditPolicy = jest.fn();
+    const onAddPolicy = jest.fn();
+    const onDeletePolicy = jest.fn();
+    const onShowAlertInstances = jest.fn(
+      (alertGroups: AlertmanagerGroup[], matchers?: ObjectMatcher[] | undefined) => { }
+    );
+
+    const routeTree = mockRoutes;
+    jest.mocked(shouldShowExportOption).mockReturnValue(true);
+
+    const user = userEvent.setup();
+
+    renderPolicy(
+      <Policy
+        routeTree={routeTree}
+        currentRoute={routeTree}
+        alertManagerSourceName={GRAFANA_RULES_SOURCE_NAME}
+        onEditPolicy={onEditPolicy}
+        onAddPolicy={onAddPolicy}
+        onDeletePolicy={onDeletePolicy}
+        onShowAlertInstances={onShowAlertInstances}
+      />
+    );
+    // should have default policy
+    const defaultPolicy = screen.getByTestId('am-root-route-container');
+    // click "more actions" 
+    expect(within(defaultPolicy).getByTestId('more-actions')).toBeInTheDocument();
+    await user.click(within(defaultPolicy).getByTestId('more-actions'));
+    expect(screen.getByRole('menuitem', { name: 'Export' })).toBeInTheDocument();
+  });
+
+  it('should not show export option when shouldShowExportOption returns false', async () => {
+    const onEditPolicy = jest.fn();
+    const onAddPolicy = jest.fn();
+    const onDeletePolicy = jest.fn();
+    const onShowAlertInstances = jest.fn(
+      (alertGroups: AlertmanagerGroup[], matchers?: ObjectMatcher[] | undefined) => { }
+    );
+
+    const routeTree = mockRoutes;
+    jest.mocked(shouldShowExportOption).mockReturnValue(false);
+
+    const user = userEvent.setup();
+
+    renderPolicy(
+      <Policy
+        routeTree={routeTree}
+        currentRoute={routeTree}
+        alertManagerSourceName={GRAFANA_RULES_SOURCE_NAME}
+        onEditPolicy={onEditPolicy}
+        onAddPolicy={onAddPolicy}
+        onDeletePolicy={onDeletePolicy}
+        onShowAlertInstances={onShowAlertInstances}
+      />
+    );
+    // should have default policy
+    const defaultPolicy = screen.getByTestId('am-root-route-container');
+    // click "more actions" 
+    expect(within(defaultPolicy).getByTestId('more-actions')).toBeInTheDocument();
+    await user.click(within(defaultPolicy).getByTestId('more-actions'));
+    expect(screen.queryByRole('menuitem', { name: 'Export' })).not.toBeInTheDocument();
   });
 
   it('should not allow editing readOnly policy tree', () => {
@@ -220,46 +285,6 @@ describe('Policy', () => {
   });
 });
 
-describe('shouldShowExportOption function', () => {
-  it('returns true when alertManagerSourceName is GRAFANA_RULES_SOURCE_NAME and canReadProvisioning is true', () => {
-    const alertManagerSourceName = GRAFANA_RULES_SOURCE_NAME;
-    const isDefaultPolicy = true;
-    const canReadProvisioning = true;
-    const result = shouldShowExportOption(alertManagerSourceName, isDefaultPolicy, canReadProvisioning);
-    expect(result).toBe(true);
-  });
-
-  it('returns false when alertManagerSourceName is not GRAFANA_RULES_SOURCE_NAME', () => {
-    const alertManagerSourceName = 'test';
-    const isDefaultPolicy = true;
-    const canReadProvisioning = true;
-    const result = shouldShowExportOption(alertManagerSourceName, isDefaultPolicy, canReadProvisioning);
-    expect(result).toBe(false);
-  });
-
-  it('returns false when isDefaultPolicy is false', () => {
-    const alertManagerSourceName = GRAFANA_RULES_SOURCE_NAME;
-    const isDefaultPolicy = false;
-    const canReadProvisioning = true;
-    const result = shouldShowExportOption(alertManagerSourceName, isDefaultPolicy, canReadProvisioning);
-    expect(result).toBe(false);
-  });
-
-  it('returns false when canReadProvisioning is false', () => {
-    const alertManagerSourceName = GRAFANA_RULES_SOURCE_NAME;
-    const isDefaultPolicy = true;
-    const canReadProvisioning = false;
-    const result = shouldShowExportOption(alertManagerSourceName, isDefaultPolicy, canReadProvisioning);
-    expect(result).toBe(false);
-  });
-  it('returns true when alertManagerSourceName is GRAFANA_RULES_SOURCE_NAME, isDefaultPolicy is true, and canReadProvisioning is true', () => {
-    const alertManagerSourceName = GRAFANA_RULES_SOURCE_NAME;
-    const isDefaultPolicy = true;
-    const canReadProvisioning = true;
-    const result = shouldShowExportOption(alertManagerSourceName, isDefaultPolicy, canReadProvisioning);
-    expect(result).toBe(true);
-  });
-});
 
 const renderPolicy = (element: JSX.Element) =>
   render(<Router history={locationService.getHistory()}>{element}</Router>);

@@ -15,7 +15,6 @@ import { ReceiversState } from 'app/types';
 
 import { INTEGRATION_ICONS } from '../../types/contact-points';
 import { getNotificationsPermissions } from '../../utils/access-control';
-import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { normalizeMatchers } from '../../utils/matchers';
 import { createContactPointLink, createMuteTimingLink } from '../../utils/misc';
 import { getInheritedProperties, InhertitableProperties } from '../../utils/notification-policies';
@@ -28,6 +27,7 @@ import { Strong } from '../Strong';
 import { GrafanaPoliciesExporter } from '../export/GrafanaPoliciesExporter';
 
 import { Matchers } from './Matchers';
+import { shouldShowExportOption } from './shouldShowExportOption';
 import { TimingOptions, TIMING_OPTIONS_DEFAULTS } from './timingOptions';
 
 interface PolicyComponentProps {
@@ -51,10 +51,6 @@ interface PolicyComponentProps {
   onShowAlertInstances: (alertGroups: AlertmanagerGroup[], matchers?: ObjectMatcher[]) => void;
 }
 
-export function shouldShowExportOption(alertManagerSourceName: string, isDefaultPolicy: boolean, canReadProvisioning: boolean) {
-  const isGrafanaAM = alertManagerSourceName === GRAFANA_RULES_SOURCE_NAME;
-  return isGrafanaAM && isDefaultPolicy && canReadProvisioning;
-}
 
 const Policy: FC<PolicyComponentProps> = ({
   receivers = [],
