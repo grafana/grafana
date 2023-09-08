@@ -10,6 +10,8 @@ import (
 
 // RuleStore is the interface for persisting alert rules and instances
 type RuleStore interface {
+	// TODO after deprecating namespace_id field in GettableGrafanaRule we can simplify this interface
+	// by returning map[string]struct{} instead of map[string]*folder.Folder
 	GetUserVisibleNamespaces(context.Context, int64, *user.SignedInUser) (map[string]*folder.Folder, error)
 	GetNamespaceByUID(context.Context, string, int64, *user.SignedInUser) (*folder.Folder, error)
 	GetAlertRulesGroupByRuleUID(ctx context.Context, query *ngmodels.GetAlertRulesGroupByRuleUIDQuery) ([]*ngmodels.AlertRule, error)
