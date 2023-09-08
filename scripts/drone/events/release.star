@@ -20,9 +20,9 @@ load(
     "memcached_integration_tests_steps",
     "mysql_integration_tests_steps",
     "postgres_integration_tests_steps",
-    "redis_integration_tests_steps",
     "publish_grafanacom_step",
     "publish_linux_packages_step",
+    "redis_integration_tests_steps",
     "store_storybook_step",
     "trigger_oss",
     "upload_cdn_step",
@@ -40,7 +40,6 @@ load(
     "scripts/drone/steps/lib_windows.star",
     "get_windows_steps",
 )
-
 load(
     "scripts/drone/services/services.star",
     "integration_test_services",
@@ -269,10 +268,10 @@ def integration_test_pipelines():
     pipelines = []
     volumes = integration_test_services_volumes()
     integration_test_steps = postgres_integration_tests_steps() + \
-        mysql_integration_tests_steps("mysql57", "5.7") + \
-        mysql_integration_tests_steps("mysql80", "8.0") + \
-        redis_integration_tests_steps() + \
-        memcached_integration_tests_steps()
+                             mysql_integration_tests_steps("mysql57", "5.7") + \
+                             mysql_integration_tests_steps("mysql80", "8.0") + \
+                             redis_integration_tests_steps() + \
+                             memcached_integration_tests_steps()
 
     pipelines.append(pipeline(
         name = "integration-tests",

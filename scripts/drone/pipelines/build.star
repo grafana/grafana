@@ -31,12 +31,10 @@ load(
     "wire_install_step",
     "yarn_install_step",
 )
-
 load(
     "scripts/drone/steps/rgm.star",
     "rgm_package_step",
 )
-
 load(
     "scripts/drone/utils/utils.star",
     "pipeline",
@@ -78,7 +76,7 @@ def build_e2e(trigger, ver_mode):
     build_steps.extend(
         [
             build_frontend_package_step(),
-            rgm_package_step(distros="linux/amd64"),
+            rgm_package_step(distros = "linux/amd64"),
             grafana_server_step(),
             e2e_tests_step("dashboards-suite"),
             e2e_tests_step("smoke-tests-suite"),

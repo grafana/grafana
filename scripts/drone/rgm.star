@@ -8,13 +8,11 @@ load(
     "scripts/drone/steps/lib_windows.star",
     "get_windows_steps",
 )
-
 load(
     "scripts/drone/utils/utils.star",
     "ignore_failure",
     "pipeline",
 )
-
 load(
     "scripts/drone/events/release.star",
     "verify_release_pipeline",
@@ -88,7 +86,6 @@ def rgm_build(script = "drone_publish_main.sh", canFail = True):
     rgm_build_step = {
         "name": "rgm-build",
         "image": "grafana/grafana-build:main",
-
         "commands": [
             "export GRAFANA_DIR=$$(pwd)",
             "cd /src && ./scripts/{}".format(script),
@@ -160,10 +157,10 @@ def rgm():
         whats_new_checker_pipeline(tag_trigger),
         test_frontend(tag_trigger, "release"),
         test_backend(tag_trigger, "release"),
-        rgm_main(), # Runs a package / build process (with some distros) when commits are merged to main
-        rgm_tag(), # Runs a package / build process (with all distros) when a tag is made
+        rgm_main(),  # Runs a package / build process (with some distros) when commits are merged to main
+        rgm_tag(),  # Runs a package / build process (with all distros) when a tag is made
         rgm_tag_windows(),
-        rgm_version_branch(), # Runs a package / build proces (with all distros) when a commit lands on a version branch
+        rgm_version_branch(),  # Runs a package / build proces (with all distros) when a commit lands on a version branch
         verify_release_pipeline(
             trigger = tag_trigger,
             name = "rgm-tag-verify-prerelease-assets",

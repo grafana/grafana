@@ -2,7 +2,6 @@ load(
     "scripts/drone/utils/windows_images.star",
     "windows_images",
 )
-
 load(
     "scripts/drone/variables.star",
     "grabpl_version",
@@ -156,7 +155,6 @@ def test_backend_step_windows():
             "go test -tags requires_buildifer -short -covermode=atomic -timeout=5m ./pkg/...",
         ],
     }
-
 
 def clone_step_windows():
     return {

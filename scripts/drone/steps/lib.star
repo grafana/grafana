@@ -11,17 +11,14 @@ load(
     "npm_token",
     "prerelease_bucket",
 )
-
 load(
     "scripts/drone/variables.star",
     "grabpl_version",
 )
-
 load(
     "scripts/drone/utils/images.star",
     "images",
 )
-
 load(
     "scripts/drone/steps/rgm.star",
     "rgm_build_backend_step",
@@ -114,7 +111,7 @@ def clone_enterprise_step_pr(source = "${DRONE_COMMIT}", target = "main", canFai
             "GITHUB_TOKEN": from_secret("github_token"),
         },
         "commands": [
-            "apk add --update curl jq",
+            "apk add --update curl jq bash",
         ] + check + [
             'git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git" ' + location,
             "cd {}".format(location),
@@ -215,7 +212,7 @@ def lint_backend_step():
             "wire-install",
         ],
         "commands": [
-            "apk add --update make gcc",
+            "apk add --update make build-base",
             # Don't use Make since it will re-download the linters
             "make lint-go",
         ],
@@ -235,8 +232,8 @@ def dockerize_step(name, hostname, port):
         "name": name,
         "image": images["dockerize"],
         "commands": [
-            "dockerize -wait tcp://{}:{} -timeout 120s".format(hostname, port)
-        ]
+            "dockerize -wait tcp://{}:{} -timeout 120s".format(hostname, port),
+        ],
     }
 
 def build_storybook_step(ver_mode):
@@ -460,7 +457,7 @@ def build_plugins_step(ver_mode):
             "yarn-install",
         ],
         "commands": [
-            "apk add --update findutils", # Replaces the busybox 'find' with the GNU one.
+            "apk add --update findutils",  # Replaces the busybox 'find' with the GNU one.
             "yarn plugins:build",
         ],
     }
@@ -676,11 +673,7 @@ def grafana_server_step(port = 3001):
         "commands": [
             "apk add --update tar",
             "tar --strip-components=1 -xvf $(cat packages.txt | grep amd64 | grep tar.gz)",
-            '''./bin/grafana server \
---pidfile=./scripts/grafana-server/tmp/pid \
---cfg:server.http_port=3001 \
---cfg:server.router_logging=1 \
---cfg:app_mode=development'''
+            """./bin/grafana server --pidfile=./scripts/grafana-server/tmp/pid --cfg:server.http_port=3001 --cfg:server.router_logging=1 --cfg:app_mode=development""",
         ],
     }
 
@@ -924,7 +917,7 @@ def integration_benchmarks_step(name, environment = None):
         "go test -v -run=^$ -benchmem -timeout=1h -count=8 -bench=. ${GO_PACKAGES}",
     ]
 
-    return integration_tests_steps("{}-benchmark".format(name), cmds, environment=environment)
+    return integration_tests_steps("{}-benchmark".format(name), cmds, environment = environment)
 
 def postgres_integration_tests_steps():
     cmds = [
@@ -968,8 +961,7 @@ def redis_integration_tests_steps():
         "REDIS_URL": "redis://redis:6379/0",
     }
 
-
-    return integration_tests_steps("redis", cmds, "redis", "6379", environment=environment)
+    return integration_tests_steps("redis", cmds, "redis", "6379", environment = environment)
 
 def memcached_integration_tests_steps():
     cmds = [
@@ -996,7 +988,7 @@ def release_canary_npm_packages_step(trigger = None):
     step = {
         "name": "release-canary-npm-packages",
         "image": images["node"],
-        "depends_on": end_to_end_tests_deps() + [ "build-frontend-packages" ],
+        "depends_on": end_to_end_tests_deps() + ["build-frontend-packages"],
         "environment": {
             "NPM_TOKEN": from_secret(npm_token),
         },
@@ -1106,7 +1098,6 @@ def publish_linux_packages_step(package_manager = "deb"):
         },
     }
 
-
 def verify_gen_cue_step():
     return {
         "name": "verify-gen-cue",
@@ -1211,7 +1202,6 @@ def get_trigger_storybook(ver_mode):
             },
         }
     return trigger_storybook
-
 
 def slack_step(channel, template, secret):
     return {

@@ -11,7 +11,6 @@ load(
     "test_frontend_step",
     "yarn_install_step",
 )
-
 load(
     "scripts/drone/utils/utils.star",
     "pipeline",

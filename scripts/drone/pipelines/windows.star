@@ -8,8 +8,8 @@ load(
 )
 load(
     "scripts/drone/steps/lib_windows.star",
-    "get_windows_steps",
     "clone_step_windows",
+    "get_windows_steps",
     "test_backend_step_windows",
     "wire_install_step_windows",
 )
