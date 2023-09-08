@@ -70,6 +70,8 @@ Some features are enabled by default. You can disable these feature by setting t
 | `enableDatagridEditing`          | Enables the edit functionality in the datagrid panel                                                                                                                                         |
 | `dataSourcePageHeader`           | Apply new pageHeader UI in data source edit page                                                                                                                                             |
 | `sqlDatasourceDatabaseSelection` | Enables previous SQL data source dataset dropdown behavior                                                                                                                                   |
+| `cloudWatchLogsMonacoEditor`     | Enables the Monaco editor for CloudWatch Logs queries                                                                                                                                        |
+| `awsAsyncQueryCaching`           | Enable caching for async queries for Redshift and Athena. Requires that the `useCachingService` feature toggle is enabled and the datasource has caching and async query support enabled     |
 | `splitScopes`                    | Support faster dashboard and folder search by splitting permission scopes into parts                                                                                                         |
 | `reportingRetries`               | Enables rendering retries for the reporting feature                                                                                                                                          |
 | `newBrowseDashboards`            | New browse/manage dashboards UI                                                                                                                                                              |
@@ -79,60 +81,59 @@ Some features are enabled by default. You can disable these feature by setting t
 These features are early in their development lifecycle and so are not yet supported in Grafana Cloud.
 Experimental features might be changed or removed without prior notice.
 
-| Feature toggle name                         | Description                                                                                                                                                                              |
-| ------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `live-service-web-worker`                   | This will use a webworker thread to processes events rather than the main thread                                                                                                         |
-| `queryOverLive`                             | Use Grafana Live WebSocket to execute backend queries                                                                                                                                    |
-| `lokiExperimentalStreaming`                 | Support new streaming approach for loki (prototype, needs special loki build)                                                                                                            |
-| `storage`                                   | Configurable storage for dashboards, datasources, and resources                                                                                                                          |
-| `datasourceQueryMultiStatus`                | Introduce HTTP 207 Multi Status for api/ds/query                                                                                                                                         |
-| `traceToMetrics`                            | Enable trace to metrics links                                                                                                                                                            |
-| `canvasPanelNesting`                        | Allow elements nesting                                                                                                                                                                   |
-| `scenes`                                    | Experimental framework to build interactive dashboards                                                                                                                                   |
-| `disableSecretsCompatibility`               | Disable duplicated secret storage in legacy tables                                                                                                                                       |
-| `logRequestsInstrumentedAsUnknown`          | Logs the path for requests that are instrumented as unknown                                                                                                                              |
-| `showDashboardValidationWarnings`           | Show warnings when dashboards do not validate against the schema                                                                                                                         |
-| `mysqlAnsiQuotes`                           | Use double quotes to escape keyword in a MySQL query                                                                                                                                     |
-| `alertingBacktesting`                       | Rule backtesting API for alerting                                                                                                                                                        |
-| `editPanelCSVDragAndDrop`                   | Enables drag and drop for CSV and Excel files                                                                                                                                            |
-| `lokiQuerySplitting`                        | Split large interval queries into subqueries with smaller time intervals                                                                                                                 |
-| `lokiQuerySplittingConfig`                  | Give users the option to configure split durations for Loki queries                                                                                                                      |
-| `individualCookiePreferences`               | Support overriding cookie preferences per user                                                                                                                                           |
-| `timeSeriesTable`                           | Enable time series table transformer & sparkline cell type                                                                                                                               |
-| `clientTokenRotation`                       | Replaces the current in-request token rotation so that the client initiates the rotation                                                                                                 |
-| `lokiLogsDataplane`                         | Changes logs responses from Loki to be compliant with the dataplane specification.                                                                                                       |
-| `disableSSEDataplane`                       | Disables dataplane specific processing in server side expressions.                                                                                                                       |
-| `alertStateHistoryLokiSecondary`            | Enable Grafana to write alert state history to an external Loki instance in addition to Grafana annotations.                                                                             |
-| `alertStateHistoryLokiPrimary`              | Enable a remote Loki instance as the primary source for state history reads.                                                                                                             |
-| `alertStateHistoryLokiOnly`                 | Disable Grafana alerts from emitting annotations when a remote Loki instance is available.                                                                                               |
-| `unifiedRequestLog`                         | Writes error logs to the request logger                                                                                                                                                  |
-| `extraThemes`                               | Enables extra themes                                                                                                                                                                     |
-| `lokiPredefinedOperations`                  | Adds predefined query operations to Loki query editor                                                                                                                                    |
-| `pluginsFrontendSandbox`                    | Enables the plugins frontend sandbox                                                                                                                                                     |
-| `dashboardEmbed`                            | Allow embedding dashboard for external use in Code editors                                                                                                                               |
-| `frontendSandboxMonitorOnly`                | Enables monitor only in the plugin frontend sandbox (if enabled)                                                                                                                         |
-| `lokiFormatQuery`                           | Enables the ability to format Loki queries                                                                                                                                               |
-| `cloudWatchLogsMonacoEditor`                | Enables the Monaco editor for CloudWatch Logs queries                                                                                                                                    |
-| `exploreScrollableLogsContainer`            | Improves the scrolling behavior of logs in Explore                                                                                                                                       |
-| `recordedQueriesMulti`                      | Enables writing multiple items from a single query within Recorded Queries                                                                                                               |
-| `pluginsDynamicAngularDetectionPatterns`    | Enables fetching Angular detection patterns for plugins from GCOM and fallback to hardcoded ones                                                                                         |
-| `alertingLokiRangeToInstant`                | Rewrites eligible loki range queries to instant queries                                                                                                                                  |
-| `vizAndWidgetSplit`                         | Split panels between vizualizations and widgets                                                                                                                                          |
-| `prometheusIncrementalQueryInstrumentation` | Adds RudderStack events to incremental queries                                                                                                                                           |
-| `logsExploreTableVisualisation`             | A table visualisation for logs in Explore                                                                                                                                                |
-| `awsDatasourcesTempCredentials`             | Support temporary security credentials in AWS plugins for Grafana Cloud customers                                                                                                        |
-| `mlExpressions`                             | Enable support for Machine Learning in server-side expressions                                                                                                                           |
-| `traceQLStreaming`                          | Enables response streaming of TraceQL queries of the Tempo data source                                                                                                                   |
-| `metricsSummary`                            | Enables metrics summary queries in the Tempo data source                                                                                                                                 |
-| `grafanaAPIServer`                          | Enable Kubernetes API Server for Grafana resources                                                                                                                                       |
-| `featureToggleAdminPage`                    | Enable admin page for managing feature toggles from the Grafana front-end                                                                                                                |
-| `awsAsyncQueryCaching`                      | Enable caching for async queries for Redshift and Athena. Requires that the `useCachingService` feature toggle is enabled and the datasource has caching and async query support enabled |
-| `permissionsFilterRemoveSubquery`           | Alternative permission filter implementation that does not use subqueries for fetching the dashboard folder                                                                              |
-| `prometheusConfigOverhaulAuth`              | Update the Prometheus configuration page with the new auth component                                                                                                                     |
-| `influxdbSqlSupport`                        | Enable InfluxDB SQL query language support with new querying UI                                                                                                                          |
-| `noBasicRole`                               | Enables a new role that has no permissions by default                                                                                                                                    |
-| `angularDeprecationUI`                      | Display new Angular deprecation-related UI features                                                                                                                                      |
-| `dashgpt`                                   | Enable AI powered features in dashboards                                                                                                                                                 |
+| Feature toggle name                         | Description                                                                                                  |
+| ------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `live-service-web-worker`                   | This will use a webworker thread to processes events rather than the main thread                             |
+| `queryOverLive`                             | Use Grafana Live WebSocket to execute backend queries                                                        |
+| `lokiExperimentalStreaming`                 | Support new streaming approach for loki (prototype, needs special loki build)                                |
+| `storage`                                   | Configurable storage for dashboards, datasources, and resources                                              |
+| `datasourceQueryMultiStatus`                | Introduce HTTP 207 Multi Status for api/ds/query                                                             |
+| `traceToMetrics`                            | Enable trace to metrics links                                                                                |
+| `canvasPanelNesting`                        | Allow elements nesting                                                                                       |
+| `scenes`                                    | Experimental framework to build interactive dashboards                                                       |
+| `disableSecretsCompatibility`               | Disable duplicated secret storage in legacy tables                                                           |
+| `logRequestsInstrumentedAsUnknown`          | Logs the path for requests that are instrumented as unknown                                                  |
+| `showDashboardValidationWarnings`           | Show warnings when dashboards do not validate against the schema                                             |
+| `mysqlAnsiQuotes`                           | Use double quotes to escape keyword in a MySQL query                                                         |
+| `alertingBacktesting`                       | Rule backtesting API for alerting                                                                            |
+| `editPanelCSVDragAndDrop`                   | Enables drag and drop for CSV and Excel files                                                                |
+| `lokiQuerySplitting`                        | Split large interval queries into subqueries with smaller time intervals                                     |
+| `lokiQuerySplittingConfig`                  | Give users the option to configure split durations for Loki queries                                          |
+| `individualCookiePreferences`               | Support overriding cookie preferences per user                                                               |
+| `timeSeriesTable`                           | Enable time series table transformer & sparkline cell type                                                   |
+| `clientTokenRotation`                       | Replaces the current in-request token rotation so that the client initiates the rotation                     |
+| `lokiLogsDataplane`                         | Changes logs responses from Loki to be compliant with the dataplane specification.                           |
+| `disableSSEDataplane`                       | Disables dataplane specific processing in server side expressions.                                           |
+| `alertStateHistoryLokiSecondary`            | Enable Grafana to write alert state history to an external Loki instance in addition to Grafana annotations. |
+| `alertStateHistoryLokiPrimary`              | Enable a remote Loki instance as the primary source for state history reads.                                 |
+| `alertStateHistoryLokiOnly`                 | Disable Grafana alerts from emitting annotations when a remote Loki instance is available.                   |
+| `unifiedRequestLog`                         | Writes error logs to the request logger                                                                      |
+| `extraThemes`                               | Enables extra themes                                                                                         |
+| `lokiPredefinedOperations`                  | Adds predefined query operations to Loki query editor                                                        |
+| `pluginsFrontendSandbox`                    | Enables the plugins frontend sandbox                                                                         |
+| `dashboardEmbed`                            | Allow embedding dashboard for external use in Code editors                                                   |
+| `frontendSandboxMonitorOnly`                | Enables monitor only in the plugin frontend sandbox (if enabled)                                             |
+| `lokiFormatQuery`                           | Enables the ability to format Loki queries                                                                   |
+| `exploreScrollableLogsContainer`            | Improves the scrolling behavior of logs in Explore                                                           |
+| `recordedQueriesMulti`                      | Enables writing multiple items from a single query within Recorded Queries                                   |
+| `pluginsDynamicAngularDetectionPatterns`    | Enables fetching Angular detection patterns for plugins from GCOM and fallback to hardcoded ones             |
+| `alertingLokiRangeToInstant`                | Rewrites eligible loki range queries to instant queries                                                      |
+| `vizAndWidgetSplit`                         | Split panels between vizualizations and widgets                                                              |
+| `prometheusIncrementalQueryInstrumentation` | Adds RudderStack events to incremental queries                                                               |
+| `logsExploreTableVisualisation`             | A table visualisation for logs in Explore                                                                    |
+| `awsDatasourcesTempCredentials`             | Support temporary security credentials in AWS plugins for Grafana Cloud customers                            |
+| `mlExpressions`                             | Enable support for Machine Learning in server-side expressions                                               |
+| `traceQLStreaming`                          | Enables response streaming of TraceQL queries of the Tempo data source                                       |
+| `metricsSummary`                            | Enables metrics summary queries in the Tempo data source                                                     |
+| `grafanaAPIServer`                          | Enable Kubernetes API Server for Grafana resources                                                           |
+| `featureToggleAdminPage`                    | Enable admin page for managing feature toggles from the Grafana front-end                                    |
+| `permissionsFilterRemoveSubquery`           | Alternative permission filter implementation that does not use subqueries for fetching the dashboard folder  |
+| `prometheusConfigOverhaulAuth`              | Update the Prometheus configuration page with the new auth component                                         |
+| `influxdbSqlSupport`                        | Enable InfluxDB SQL query language support with new querying UI                                              |
+| `noBasicRole`                               | Enables a new role that has no permissions by default                                                        |
+| `angularDeprecationUI`                      | Display new Angular deprecation-related UI features                                                          |
+| `dashgpt`                                   | Enable AI powered features in dashboards                                                                     |
+| `sseGroupByDatasource`                      | Send query to the same datasource in a single request when using server side expressions                     |
 
 ## Development feature toggles
 

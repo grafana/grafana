@@ -42,7 +42,6 @@ const (
 var searchWordsRegex = regexp.MustCompile(regexp.QuoteMeta(es.HighlightPreTagsString) + `(.*?)` + regexp.QuoteMeta(es.HighlightPostTagsString))
 
 func parseResponse(ctx context.Context, responses []*es.SearchResponse, targets []*Query, configuredFields es.ConfiguredFields, logger log.Logger) (*backend.QueryDataResponse, error) {
-	start := time.Now()
 	result := backend.QueryDataResponse{
 		Responses: backend.Responses{},
 	}
@@ -51,12 +50,13 @@ func parseResponse(ctx context.Context, responses []*es.SearchResponse, targets 
 	}
 
 	for i, res := range responses {
+		start := time.Now()
 		target := targets[i]
 
 		if res.Error != nil {
 			mt, _ := json.Marshal(target)
 			me, _ := json.Marshal(res.Error)
-			logger.Error("Error response from Elasticsearch", "error", string(me), "query", string(mt))
+			logger.Error("Processing error response from Elasticsearch", "error", string(me), "query", string(mt))
 			errResult := getErrorFromElasticResponse(res)
 			result.Responses[target.RefID] = backend.DataResponse{
 				Error: errors.New(errResult),
@@ -102,9 +102,9 @@ func parseResponse(ctx context.Context, responses []*es.SearchResponse, targets 
 
 			result.Responses[target.RefID] = queryRes
 		}
+		logger.Info("Finished processing of response", "duration", time.Since(start), "stage", es.StageParseResponse)
 	}
 
-	logger.Info("Finished processing responses", "duration", time.Since(start), "responsesLength", len(result.Responses), "queriesLength", len(targets), "action", "parseResponse")
 	return &result, nil
 }
 

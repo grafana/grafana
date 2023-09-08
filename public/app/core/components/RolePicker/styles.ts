@@ -6,6 +6,16 @@ import { ROLE_PICKER_SUBMENU_MIN_WIDTH } from './constants';
 
 export const getStyles = (theme: GrafanaTheme2) => {
   return {
+    hideScrollBar: css`
+      .scrollbar-view {
+        /* Hide scrollbar for Chrome, Safari, and Opera */
+        &::-webkit-scrollbar {
+          display: none;
+        }
+        /* Hide scrollbar for Firefox */
+        scrollbar-width: none;
+      }
+    `,
     menuWrapper: css`
       display: flex;
       max-height: 650px;

@@ -28,7 +28,7 @@ images = {
     "drone_downstream": "grafana/drone-downstream",
     "docker_puppeteer": "grafana/docker-puppeteer:1.1.0",
     "docs": "grafana/docs-base:dbd975af06",
-    "cypress": "cypress/included:9.5.1-node16.14.0-slim-chrome99-ff97",
+    "cypress": "cypress/included:12.15.0",
     "dockerize": "jwilder/dockerize:0.6.1",
     "shellcheck": "koalaman/shellcheck:stable",
 }

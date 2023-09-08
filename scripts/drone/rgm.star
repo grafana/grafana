@@ -39,16 +39,20 @@ load(
     "rgm_gcp_key_base64",
     "rgm_github_token",
 )
+load(
+    "scripts/drone/variables.star",
+    "golang_version",
+)
 
-rgm_env_secrets = {
-    "GCP_KEY_BASE64": from_secret(rgm_gcp_key_base64),
-    "DESTINATION": from_secret(rgm_destination),
-    "GITHUB_TOKEN": from_secret(rgm_github_token),
-    "_EXPERIMENTAL_DAGGER_CLOUD_TOKEN": from_secret(rgm_dagger_token),
-    "GPG_PRIVATE_KEY": from_secret("packages_gpg_private_key"),
-    "GPG_PUBLIC_KEY": from_secret("packages_gpg_public_key"),
-    "GPG_PASSPHRASE": from_secret("packages_gpg_passphrase"),
-}
+def rgm_env_secrets(env):
+    env["GCP_KEY_BASE64"] = from_secret(rgm_gcp_key_base64)
+    env["DESTINATION"] = from_secret(rgm_destination)
+    env["GITHUB_TOKEN"] = from_secret(rgm_github_token)
+    env["_EXPERIMENTAL_DAGGER_CLOUD_TOKEN"] = from_secret(rgm_dagger_token)
+    env["GPG_PRIVATE_KEY"] = from_secret("packages_gpg_private_key")
+    env["GPG_PUBLIC_KEY"] = from_secret("packages_gpg_public_key")
+    env["GPG_PASSPHRASE"] = from_secret("packages_gpg_passphrase")
+    return env
 
 docs_paths = {
     "exclude": [
@@ -78,14 +82,18 @@ tag_trigger = {
 version_branch_trigger = {"ref": ["refs/heads/v[0-9]*"]}
 
 def rgm_build(script = "drone_publish_main.sh", canFail = True):
+    env = {
+        "GO_VERSION": golang_version,
+    }
     rgm_build_step = {
         "name": "rgm-build",
         "image": "grafana/grafana-build:main",
+
         "commands": [
             "export GRAFANA_DIR=$$(pwd)",
             "cd /src && ./scripts/{}".format(script),
         ],
-        "environment": rgm_env_secrets,
+        "environment": rgm_env_secrets(env),
         # The docker socket is a requirement for running dagger programs
         # In the future we should find a way to use dagger without mounting the docker socket.
         "volumes": [{"name": "docker", "path": "/var/run/docker.sock"}],
