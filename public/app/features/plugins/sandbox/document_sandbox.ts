@@ -137,7 +137,11 @@ export function isLiveTarget(el: ProxyTarget) {
  *
  */
 export function isDomElementInsideSandbox(el: Element, pluginId: string): boolean {
-  return !document.contains(el) || el.closest(`[data-plugin-sandbox=${pluginId}]`) !== null;
+  return (
+    !document.contains(el) ||
+    el.closest(`[data-plugin-sandbox=${pluginId}]`) !== null ||
+    el.closest('[data-plugin-sandbox=panel-options]') !== null
+  );
 }
 
 let sandboxBody: HTMLDivElement;

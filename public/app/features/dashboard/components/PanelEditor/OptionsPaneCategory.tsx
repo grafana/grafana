@@ -112,6 +112,7 @@ export const OptionsPaneCategory = React.memo(
       <div
         className={boxStyles}
         data-testid="options-category"
+        data-plugin-sandbox={'panel-options'}
         aria-label={selectors.components.OptionsGroup.group(id)}
         ref={ref}
       >
