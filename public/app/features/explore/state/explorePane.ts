@@ -20,7 +20,7 @@ import { ExploreItemState } from 'app/types/explore';
 
 import { datasourceReducer } from './datasource';
 import { historyReducer } from './history';
-import { changeCorrelationEditorMode, richHistorySearchFiltersUpdatedAction, richHistoryUpdatedAction } from './main';
+import { richHistorySearchFiltersUpdatedAction, richHistoryUpdatedAction } from './main';
 import { queryReducer, runQueries } from './query';
 import { timeReducer, updateTime } from './time';
 import {

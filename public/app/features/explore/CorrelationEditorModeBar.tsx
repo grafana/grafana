@@ -131,6 +131,7 @@ export const CorrelationEditorModeBar = ({
 
 const getStyles = (theme: GrafanaTheme2) => {
   const contrastColor = theme.colors.getContrastText(theme.colors.primary.main);
+  const lighterBackgroundColor = colorManipulator.lighten(theme.colors.primary.main, 0.1);
   const darkerBackgroundColor = colorManipulator.darken(theme.colors.primary.main, 0.2);
 
   const disabledColor = colorManipulator.darken(contrastColor, 0.2);
@@ -150,17 +151,13 @@ const getStyles = (theme: GrafanaTheme2) => {
       &:hover {
         color: ${contrastColor};
         border-color: ${contrastColor};
-        background-color: ${darkerBackgroundColor};
+        background-color: ${lighterBackgroundColor};
       }
     `,
-    // disabled needed to override disabled state
+    // important needed to override disabled state
     disabledButtonColor: css`
       color: ${disabledColor} !important;
-      border-color: ${disabledColor} !important;
-      &:hover {
-        color: ${disabledColor} !important;
-        border-color: ${disabledColor} !important;
-      }
+      background-color: ${darkerBackgroundColor} !important;
     `,
   };
 };
