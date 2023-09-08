@@ -606,23 +606,23 @@
     }
   },
   "playlist-edit": {
-    "errorPrefix": "Error loading playlist:",
-    "subTitle": "A playlist rotates through a pre-selected list of dashboards. A playlist can be a great way to build situational awareness, or just show off your metrics to your team or visitors.",
+    "error-prefix": "Error loading playlist:",
+    "form": {
+      "add-tag-label": "Add by tag",
+      "add-tag-placeholder": "Select a tag",
+      "add-title-label": "Add by title",
+      "cancel": "Cancel",
+      "heading": "Add dashboards",
+      "interval-label": "Interval",
+      "interval-placeholder": "5m",
+      "interval-required": "Interval is required",
+      "name-label": "Name",
+      "name-placeholder": "Name",
+      "name-required": "Name is required",
+      "save": "Save"
+    },
+    "sub-title": "A playlist rotates through a pre-selected list of dashboards. A playlist can be a great way to build situational awareness, or just show off your metrics to your team or visitors.",
     "title": "Edit playlist"
-  },
-  "playlist-form": {
-    "addTag-label": "Add by tag",
-    "addTag-placeholder": "Select a tag",
-    "addTitle-label": "Add by title",
-    "cancel": "Cancel",
-    "heading": "Add dashboards",
-    "interval-label": "Interval",
-    "interval-placeholder": "5m",
-    "interval-required": "Interval is required",
-    "name-label": "Name",
-    "name-placeholder": "Name",
-    "name-required": "Name is required",
-    "save": "Save"
   },
   "refresh-picker": {
     "aria-label": {

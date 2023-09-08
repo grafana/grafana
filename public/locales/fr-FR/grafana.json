@@ -611,23 +611,23 @@
     }
   },
   "playlist-edit": {
-    "errorPrefix": "",
-    "subTitle": "",
+    "error-prefix": "",
+    "form": {
+      "add-tag-label": "",
+      "add-tag-placeholder": "",
+      "add-title-label": "",
+      "cancel": "",
+      "heading": "",
+      "interval-label": "",
+      "interval-placeholder": "",
+      "interval-required": "",
+      "name-label": "",
+      "name-placeholder": "",
+      "name-required": "",
+      "save": ""
+    },
+    "sub-title": "",
     "title": ""
-  },
-  "playlist-form": {
-    "addTag-label": "",
-    "addTag-placeholder": "",
-    "addTitle-label": "",
-    "cancel": "",
-    "heading": "",
-    "interval-label": "",
-    "interval-placeholder": "",
-    "interval-required": "",
-    "name-label": "",
-    "name-placeholder": "",
-    "name-required": "",
-    "save": ""
   },
   "refresh-picker": {
     "aria-label": {
