@@ -166,6 +166,10 @@ export interface AzureLogsQuery {
    */
   dashboardTime?: boolean;
   /**
+   * @deprecated Use dashboardTime instead
+   */
+  intersectTime?: boolean;
+  /**
    * KQL query to be executed.
    */
   query?: string;

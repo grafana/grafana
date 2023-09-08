@@ -120,6 +120,8 @@ composableKinds: DataQuery: {
 
 					// @deprecated Use resources instead 
 					resource?: string
+					// @deprecated Use dashboardTime instead
+					intersectTime?: bool
 				} @cuetsy(kind="interface")
 
 				// Application Insights Traces sub-query properties

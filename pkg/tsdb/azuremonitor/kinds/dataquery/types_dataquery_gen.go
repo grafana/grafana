@@ -121,6 +121,9 @@ type AzureLogsQuery struct {
 	// If set to true the dashboard time range will be used as a filter for the query. Otherwise the query time ranges will be used. Defaults to false.
 	DashboardTime *bool `json:"dashboardTime,omitempty"`
 
+	// @deprecated Use dashboardTime instead
+	IntersectTime *bool `json:"intersectTime,omitempty"`
+
 	// KQL query to be executed.
 	Query *string `json:"query,omitempty"`
 
