@@ -3,6 +3,7 @@ package routes
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/url"
 
@@ -17,19 +18,21 @@ const (
 
 func RegionsHandler(ctx context.Context, pluginCtx backend.PluginContext, reqCtxFactory models.RequestContextFactoryFunc, parameters url.Values) ([]byte, *models.HttpError) {
 	service, err := newRegionsService(ctx, pluginCtx, reqCtxFactory, defaultRegion)
-
 	if err != nil {
-		return nil, models.NewHttpError("Unexpected error connecting to aws to fetch regions", http.StatusInternalServerError, err)
+		if errors.Is(err, &models.MissingRegion{}) {
+			return nil, models.NewHttpError("Error in Regions Handler when connecting to aws without a default region selection", http.StatusBadRequest, err)
+		}
+		return nil, models.NewHttpError("Error in Regions Handler when connecting to aws", http.StatusInternalServerError, err)
 	}
 
 	regions, err := service.GetRegions()
 	if err != nil {
-		return nil, models.NewHttpError("Unexpected error while fetching regions", http.StatusInternalServerError, err)
+		return nil, models.NewHttpError("Error in Regions Handler while fetching regions", http.StatusInternalServerError, err)
 	}
 
 	regionsResponse, err := json.Marshal(regions)
 	if err != nil {
-		return nil, models.NewHttpError("Unexpected error parsing regions", http.StatusInternalServerError, err)
+		return nil, models.NewHttpError("Error in Regions Handler while parsing regions", http.StatusInternalServerError, err)
 	}
 
 	return regionsResponse, nil

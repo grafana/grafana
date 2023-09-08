@@ -249,4 +249,23 @@ func Test_CloudWatch_CallResource_Integration_Test(t *testing.T) {
 		require.Nil(t, err)
 		assert.JSONEq(t, `[{"value":{"name":"field1","percent":50}},{"value":{"name":"field2","percent":50}}]`, string(sent.Body))
 	})
+
+	t.Run("Should handle region requests and return regions from the api", func(t *testing.T) {
+		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
+		req := &backend.CallResourceRequest{
+			Method: "GET",
+			Path:   `/regions`,
+			PluginContext: backend.PluginContext{
+				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{ID: 0},
+				PluginID:                   "cloudwatch",
+			},
+		}
+		err := executor.CallResource(context.Background(), req, sender)
+		require.NoError(t, err)
+		sent := sender.Response
+		require.NotNil(t, sent)
+		require.Equal(t, http.StatusOK, sent.Status)
+		require.Nil(t, err)
+		assert.Contains(t, string(sent.Body), "us-east-1")
+	})
 }

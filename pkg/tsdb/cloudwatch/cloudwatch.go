@@ -238,7 +238,7 @@ func (e *cloudWatchExecutor) newSession(ctx context.Context, pluginCtx backend.P
 
 	if region == defaultRegion {
 		if len(instance.Settings.Region) == 0 {
-			return nil, fmt.Errorf("unable to start new auth session without a selected or default region")
+			return nil, &models.MissingRegion{}
 		}
 		region = instance.Settings.Region
 	}
