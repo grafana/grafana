@@ -1864,7 +1864,7 @@ Default value is `1`.
 
 Depending on the value of `sampler_type`, the sampler configuration parameter can be `0`, `1`, or any decimal value between `0` and `1`.
 
-- For `const` sampler, `0` or `1` to always `false`/`true` respectively
+- For the `const` sampler, use `0` to never sample or `1` to always sample
 - For the `probabilistic` sampler, you can use a decimal value between `0.0` and `1.0`
 - For the `rateLimiting` sampler, enter the number of spans per second
 - For the `remote` sampler, use a decimal value between `0.0` and `1.0`
