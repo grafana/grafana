@@ -103,7 +103,8 @@ export class RefreshPicker extends PureComponent<Props> {
 
     const tooltipIntervalSelected = t(
       'refresh-picker.tooltip.interval-selected',
-      `Auto refresh after ${durationAriaLabel}`
+      'Auto refresh after {{durationAriaLabel}}',
+      { durationAriaLabel }
     );
     const tooltipAutoRefreshOff = t('refresh-picker.tooltip.turned-off', 'Auto refresh off');
     const tooltipAutoRefresh = selectedValue.value === '' ? tooltipAutoRefreshOff : tooltipIntervalSelected;
