@@ -32,7 +32,7 @@ func TestCreateLibraryElement(t *testing.T) {
 					Kind:        int64(model.PanelElement),
 					Type:        "text",
 					Description: "A description",
-					Model: map[string]interface{}{
+					Model: map[string]any{
 						"datasource":  "${DS_GDEV-TESTDATA}",
 						"description": "A description",
 						"id":          float64(1),
@@ -81,7 +81,7 @@ func TestCreateLibraryElement(t *testing.T) {
 					Kind:        int64(model.PanelElement),
 					Type:        "text",
 					Description: "A description",
-					Model: map[string]interface{}{
+					Model: map[string]any{
 						"datasource":  "${DS_GDEV-TESTDATA}",
 						"description": "A description",
 						"id":          float64(1),
@@ -156,7 +156,7 @@ func TestCreateLibraryElement(t *testing.T) {
 					Kind:        int64(model.PanelElement),
 					Type:        "text",
 					Description: "A description",
-					Model: map[string]interface{}{
+					Model: map[string]any{
 						"datasource":  "${DS_GDEV-TESTDATA}",
 						"description": "A description",
 						"id":          float64(1),

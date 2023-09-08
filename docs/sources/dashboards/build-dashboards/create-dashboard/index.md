@@ -32,13 +32,13 @@ Dashboards and panels allow you to show your data in visual form. Each panel nee
 1. Click **New** and select **New Dashboard**.
 1. On the empty dashboard, click **+ Add visualization**.
 
-   ![Empty dashboard state](/media/docs/grafana/dashboards/empty-dashboard-9.5.png)
+   ![Empty dashboard state](/media/docs/grafana/dashboards/empty-dashboard-10.2.png)
 
 1. In the modal that opens, do one of the following:
 
    - Select one of your existing data sources.
    - Select one of the Grafana's [built-in special data sources]({{< relref "../../../datasources/#special-data-sources" >}}).
-   - Click **Connect data** to set up a new one (Admins only).
+   - Click **Configure a new data source** to set up a new one (Admins only).
 
    {{< figure class="float-right"  src="/media/docs/grafana/dashboards/screenshot-data-source-selector-10.0.png" max-width="800px" alt="Select data source modal" >}}
 
@@ -105,9 +105,18 @@ To see an example of repeating rows, refer to [Dashboard with repeating rows](ht
 1. In the **Row Options** dialog box, add a title and select the variable for which you want to add repeating rows.
 1. Click **Update**.
 
-{{% admonition type="note" %}}
 To provide context to dashboard users, add the variable to the row title.
-{{% /admonition %}}
+
+### Repeating rows and the Dashboard special data source
+
+If a row includes panels using the special [Dashboard]({{< relref "../../../datasources/#special-data-sources" >}}) data source&mdash;the data source that uses a result set from another panel in the same dashboard&mdash;then corresponding panels in repeated rows will reference the panel in the original row, not the ones in the repeated rows.
+
+For example, in a dashboard:
+
+- `Row 1` includes `Panel 1A` and `Panel 1B`
+- `Panel 1B` uses the results from `Panel 1A` by way of the `-- Dashboard --` data source
+- Repeating row, `Row 2`, includes `Panel 2A` and `Panel 2B`
+- `Panel 2B` references `Panel 1A`, not `Panel 2A`
 
 ## Move a panel
 

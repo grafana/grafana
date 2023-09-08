@@ -110,7 +110,14 @@ export function getPanelMenu(
     event.preventDefault();
     const openInNewWindow =
       event.ctrlKey || event.metaKey ? (url: string) => window.open(`${config.appSubUrl}${url}`) : undefined;
-    store.dispatch(navigateToExplore(panel, { getDataSourceSrv, getTimeSrv, getExploreUrl, openInNewWindow }) as any);
+    store.dispatch(
+      navigateToExplore(panel, {
+        getDataSourceSrv,
+        timeRange: getTimeSrv().timeRange(),
+        getExploreUrl,
+        openInNewWindow,
+      }) as any
+    );
     reportInteraction('dashboards_panelheader_menu', { item: 'explore' });
   };
 
@@ -188,10 +195,12 @@ export function getPanelMenu(
     iconClassName: 'info-circle',
     onClick: (e: React.MouseEvent<HTMLElement>) => {
       const currentTarget = e.currentTarget;
-      const target = e.target as HTMLElement;
-      const closestMenuItem = target.closest('[role="menuitem"]');
+      const target = e.target;
 
-      if (target === currentTarget || closestMenuItem === currentTarget) {
+      if (
+        target === currentTarget ||
+        (target instanceof HTMLElement && target.closest('[role="menuitem"]') === currentTarget)
+      ) {
         onInspectPanel();
       }
     },

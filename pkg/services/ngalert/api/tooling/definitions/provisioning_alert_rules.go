@@ -71,6 +71,20 @@ import (
 //     Responses:
 //       204: description: The alert rule was deleted successfully.
 
+// swagger:parameters RouteGetAlertRulesExport
+type AlertRulesExportParameters struct {
+	ExportQueryParams
+	// UID of folder from which export rules
+	// in:query
+	// required:false
+	FolderUID string `json:"folderUid"`
+
+	// Name of group of rules to export. Must be specified only together with folder UID
+	// in:query
+	// required: false
+	GroupName string `json:"group"`
+}
+
 // swagger:parameters RouteGetAlertRule RoutePutAlertRule RouteDeleteAlertRule RouteGetAlertRuleExport
 type AlertRuleUIDReference struct {
 	// Alert rule UID
@@ -225,9 +239,9 @@ type AlertRuleExport struct {
 
 // AlertQueryExport is the provisioned export of models.AlertQuery.
 type AlertQueryExport struct {
-	RefID             string                 `json:"refId" yaml:"refId"`
-	QueryType         string                 `json:"queryType,omitempty" yaml:"queryType,omitempty"`
-	RelativeTimeRange RelativeTimeRange      `json:"relativeTimeRange,omitempty" yaml:"relativeTimeRange,omitempty"`
-	DatasourceUID     string                 `json:"datasourceUid" yaml:"datasourceUid"`
-	Model             map[string]interface{} `json:"model" yaml:"model"`
+	RefID             string            `json:"refId" yaml:"refId"`
+	QueryType         string            `json:"queryType,omitempty" yaml:"queryType,omitempty"`
+	RelativeTimeRange RelativeTimeRange `json:"relativeTimeRange,omitempty" yaml:"relativeTimeRange,omitempty"`
+	DatasourceUID     string            `json:"datasourceUid" yaml:"datasourceUid"`
+	Model             map[string]any    `json:"model" yaml:"model"`
 }

@@ -20,3 +20,23 @@ export interface PhlareDataSourceOptions extends DataSourceJsonData {
 }
 
 export type BackendType = 'phlare' | 'pyroscope';
+
+export type ProfileTypeQuery = {
+  type: 'profileType';
+  refId: string;
+};
+
+export type LabelQuery = {
+  type: 'label';
+  profileTypeId?: string;
+  refId: string;
+};
+
+export type LabelValueQuery = {
+  type: 'labelValue';
+  profileTypeId?: string;
+  labelName?: string;
+  refId: string;
+};
+
+export type VariableQuery = ProfileTypeQuery | LabelQuery | LabelValueQuery;

@@ -153,7 +153,7 @@ func (s *ScreenshotImageService) NewImage(ctx context.Context, r *models.AlertRu
 
 	logger.Debug("Requesting screenshot")
 
-	result, err, _ := s.singleflight.Do(optsHash, func() (interface{}, error) {
+	result, err, _ := s.singleflight.Do(optsHash, func() (any, error) {
 		// We create both a context with timeout and set a timeout in ScreenshotOptions. The timeout
 		// in the context is used for both database queries and the request to the rendering service,
 		// while the timeout in ScreenshotOptions is passed to the rendering service where it is used as

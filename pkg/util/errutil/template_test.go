@@ -13,7 +13,7 @@ import (
 func TestTemplate(t *testing.T) {
 	tmpl := errutil.Internal("template.sampleError").MustTemplate("[{{ .Public.user }}] got error: {{ .Error }}")
 	err := tmpl.Build(errutil.TemplateData{
-		Public: map[string]interface{}{
+		Public: map[string]any{
 			"user": "grot the bot",
 		},
 		Error: errors.New("oh noes"),
@@ -35,7 +35,7 @@ func ExampleTemplate() {
 
 	// Construct an error based on the template.
 	err := tmpl.Build(errutil.TemplateData{
-		Public: map[string]interface{}{
+		Public: map[string]any{
 			"user": "grot the bot",
 		},
 		Error: errors.New("oh noes"),
@@ -58,7 +58,7 @@ func ExampleTemplate_public() {
 	// Construct an error based on the template.
 	//nolint:errorlint
 	err := tmpl.Build(errutil.TemplateData{
-		Public: map[string]interface{}{
+		Public: map[string]any{
 			"user": "grot the bot",
 		},
 		Error: errors.New("oh noes"),

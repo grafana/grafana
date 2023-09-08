@@ -65,7 +65,6 @@ func Test_PluginsInstallAndUninstall(t *testing.T) {
 	for _, tc := range tcs {
 		server := SetupAPITestServer(t, func(hs *HTTPServer) {
 			hs.Cfg = &setting.Cfg{
-				RBACEnabled:                      true,
 				PluginAdminEnabled:               tc.pluginAdminEnabled,
 				PluginAdminExternalManageEnabled: tc.pluginAdminExternalManageEnabled}
 			hs.orgService = &orgtest.FakeOrgService{ExpectedOrg: &org.Org{}}
@@ -272,7 +271,7 @@ func Test_GetPluginAssets(t *testing.T) {
 			setting.NewCfg(), service, func(sc *scenarioContext) {
 				callGetPluginAsset(sc)
 
-				var respJson map[string]interface{}
+				var respJson map[string]any
 				err := json.NewDecoder(sc.resp.Body).Decode(&respJson)
 				require.NoError(t, err)
 				require.Equal(t, 404, sc.resp.Code)
@@ -287,7 +286,7 @@ func Test_GetPluginAssets(t *testing.T) {
 			setting.NewCfg(), fakes.NewFakePluginRegistry(), func(sc *scenarioContext) {
 				callGetPluginAsset(sc)
 
-				var respJson map[string]interface{}
+				var respJson map[string]any
 				err := json.NewDecoder(sc.resp.Body).Decode(&respJson)
 				require.NoError(t, err)
 				require.Equal(t, 404, sc.resp.Code)
@@ -520,7 +519,7 @@ type fakePluginClient struct {
 
 func (c *fakePluginClient) CallResource(_ context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
 	c.req = req
-	bytes, err := json.Marshal(map[string]interface{}{
+	bytes, err := json.Marshal(map[string]any{
 		"message": "hello",
 	})
 	if err != nil {
