@@ -14,6 +14,7 @@ import {
   LogQL,
   LogRangeExpr,
   LogExpr,
+  Logfmt,
   Identifier,
   Grouping,
   Expr,
@@ -24,8 +25,7 @@ import {
   KeepLabelsExpr,
   DropLabels,
   KeepLabels,
-} from '@grafana/lezer-logql';
-
+} from '../../../lezer/index.es';
 import { getLogQueryFromMetricsQuery } from '../../../queryUtils';
 
 type Direction = 'parent' | 'firstChild' | 'lastChild' | 'nextSibling';
@@ -101,6 +101,9 @@ export type Situation =
       type: 'AT_ROOT';
     }
   | {
+    type: 'IN_LOGFMT'
+  }
+  | {
       type: 'IN_RANGE';
     }
   | {
@@ -154,6 +157,10 @@ const RESOLVERS: Resolver[] = [
   {
     path: [ERROR_NODE_ID, Matchers, Selector],
     fun: resolveSelector,
+  },
+  {
+    path: [LogQL],
+    fun: resolveLogfmtParser,
   },
   {
     path: [LogQL],
@@ -413,6 +420,26 @@ function resolveMatcher(node: SyntaxNode, text: string, pos: number): Situation 
   };
 }
 
+function resolveLogfmtParser(_: SyntaxNode, text: string, cursorPosition: number): Situation | null {
+  // We want to know if the cursor if after a log query with logfmt parser.
+  // E.g. `{x="y"} | logfmt ^`
+
+  const tree = parser.parse(text);
+  const trimRightTextLen = text.trimEnd().length;
+  const position = trimRightTextLen < cursorPosition ? trimRightTextLen : cursorPosition;
+  const cursor = tree.cursorAt(position);
+  do {
+    const { node } = cursor;
+    if (cursor.from <= position && cursor.to >= position && node.type.id === Logfmt) {
+      return {
+        type: 'IN_LOGFMT',
+      }
+    }
+  } while (cursor.next());
+
+  return null;
+}
+
 function resolveTopLevel(node: SyntaxNode, text: string, pos: number): Situation | null {
   // we try a couply specific paths here.
   // `{x="y"}` situation, with the cursor at the end
@@ -595,7 +622,10 @@ export function getSituation(text: string, pos: number): Situation | null {
 
   for (let resolver of RESOLVERS) {
     if (isPathMatch(resolver.path, ids)) {
-      return resolver.fun(currentNode, text, pos);
+      const situation = resolver.fun(currentNode, text, pos);
+      if (situation) {
+        return situation;
+      }
     }
   }
 

@@ -84,18 +84,17 @@ describe('situation', () => {
       logQuery: '{level="info"}',
     });
 
-    assertSituation('{level="info"} |= "a" | logfmt ^', {
-      type: 'AFTER_SELECTOR',
-      afterPipe: false,
-      hasSpace: true,
-      logQuery: '{level="info"} |= "a" | logfmt',
-    });
-
     assertSituation('sum(count_over_time({place="luna"} | logfmt |^)) by (place)', {
       type: 'AFTER_SELECTOR',
       afterPipe: true,
       hasSpace: false,
       logQuery: '{place="luna"} | logfmt |',
+    });
+  });
+
+  it('identifies AFTER_LOGFMT autocomplete situations', () => {
+    assertSituation('{level="info"} | logfmt ^', {
+      type: 'IN_LOGFMT',
     });
   });
 
