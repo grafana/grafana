@@ -163,6 +163,7 @@ export const joinByLabelsTransformRegistryItem: TransformerRegistryItem<JoinByLa
   description: joinByLabelsTransformer.description,
   state: PluginState.beta,
   categories: new Set([TransformerCategory.Combine]),
+  // JEV: rebuild this help to a react component
   //   help: `
   // ### Use cases
 

@@ -33,7 +33,6 @@ export const TransformationEditorHelperModal = ({
       onClickBackdrop={() => onCloseClick(false)}
       onDismiss={() => onCloseClick(false)}
     >
-      {/* JEV: figure out how to remove this */}
       {"content"}
     </Modal>
   );

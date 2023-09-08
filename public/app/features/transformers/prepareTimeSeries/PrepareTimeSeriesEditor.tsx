@@ -118,6 +118,7 @@ export const prepareTimeseriesTransformerRegistryItem: TransformerRegistryItem<P
   transformation: prepareTimeSeriesTransformer,
   name: prepareTimeSeriesTransformer.name,
   description: prepareTimeSeriesTransformer.description,
+  // JEV: rebuild this help to a react component
   help: `
   ### Use cases
 

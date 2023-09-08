@@ -95,6 +95,7 @@ export const configFromQueryTransformRegistryItem: TransformerRegistryItem<Confi
   description: configFromDataTransformer.description,
   state: PluginState.beta,
   categories: new Set([TransformerCategory.CalculateNewFields]),
+  // JEV: rebuild this help to a react component
   help: `
 ### Use cases
 

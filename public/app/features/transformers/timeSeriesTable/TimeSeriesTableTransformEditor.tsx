@@ -21,5 +21,6 @@ export const timeSeriesTableTransformRegistryItem: TransformerRegistryItem<TimeS
   name: timeSeriesTableTransformer.name,
   description: timeSeriesTableTransformer.description,
   state: PluginState.beta,
+  // JEV: rebuild this help to a react component
   help: ``,
 };

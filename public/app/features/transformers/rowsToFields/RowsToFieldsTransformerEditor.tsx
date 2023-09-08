@@ -33,6 +33,7 @@ export const rowsToFieldsTransformRegistryItem: TransformerRegistryItem<RowToFie
   description: rowsToFieldsTransformer.description,
   state: PluginState.beta,
   categories: new Set([TransformerCategory.Reformat]),
+  // JEV: rebuild this help to a react component
   help: `
 ### Use cases 
 
