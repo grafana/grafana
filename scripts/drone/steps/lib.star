@@ -919,7 +919,6 @@ def integration_tests_steps(name, cmds, hostname = None, port = None, environmen
 def integration_benchmarks_step(name, environment = None):
     cmds = [
         "if [ -z ${GO_PACKAGES} ]; then echo 'missing GO_PACKAGES'; false; fi",
-        "apk add --update build-base",
         "go test -v -run=^$ -benchmem -timeout=1h -count=8 -bench=. ${GO_PACKAGES}",
     ]
 

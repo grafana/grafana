@@ -1260,7 +1260,6 @@ steps:
 - commands:
   - apk add --update build-base
   - if [ -z ${GO_PACKAGES} ]; then echo 'missing GO_PACKAGES'; false; fi
-  - apk add --update build-base
   - go test -v -run=^$ -benchmem -timeout=1h -count=8 -bench=. ${GO_PACKAGES}
   depends_on:
   - wire-install
@@ -1269,7 +1268,6 @@ steps:
 - commands:
   - apk add --update build-base
   - if [ -z ${GO_PACKAGES} ]; then echo 'missing GO_PACKAGES'; false; fi
-  - apk add --update build-base
   - go test -v -run=^$ -benchmem -timeout=1h -count=8 -bench=. ${GO_PACKAGES}
   depends_on:
   - wire-install
@@ -1282,7 +1280,6 @@ steps:
 - commands:
   - apk add --update build-base
   - if [ -z ${GO_PACKAGES} ]; then echo 'missing GO_PACKAGES'; false; fi
-  - apk add --update build-base
   - go test -v -run=^$ -benchmem -timeout=1h -count=8 -bench=. ${GO_PACKAGES}
   depends_on:
   - wire-install
@@ -1294,7 +1291,6 @@ steps:
 - commands:
   - apk add --update build-base
   - if [ -z ${GO_PACKAGES} ]; then echo 'missing GO_PACKAGES'; false; fi
-  - apk add --update build-base
   - go test -v -run=^$ -benchmem -timeout=1h -count=8 -bench=. ${GO_PACKAGES}
   depends_on:
   - wire-install
@@ -4216,6 +4212,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: bea89e1a7d56b9945e3224ba5523e7d2dc346f22c08aac168b597f9db7879c28
+hmac: 5be1c712fc3884c192d291d0fa821b5c99822d4b1ed298c656bbb77d1fd81bac
 
 ...
