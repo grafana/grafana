@@ -12,11 +12,6 @@ const (
 	SourceDownstream Source = "downstream"
 )
 
-// IsServer checks if Source is SourceServer.
-func (s Source) IsServer() bool {
-	return s == SourceServer
-}
-
 // IsDownstream checks if Source is SourceDownstream.
 func (s Source) IsDownstream() bool {
 	return s == SourceDownstream
