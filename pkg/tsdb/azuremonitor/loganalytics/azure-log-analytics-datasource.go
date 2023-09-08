@@ -222,6 +222,7 @@ func (e *AzureLogAnalyticsDatasource) buildQueries(ctx context.Context, queries 
 			}
 
 			dashboardTime = true
+			timeColumn = "timestamp"
 		}
 
 		apiURL := getApiURL(resourceOrWorkspace, appInsightsQuery)
