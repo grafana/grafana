@@ -33,10 +33,6 @@ load(
     "yarn_install_step",
 )
 load(
-    "scripts/drone/steps/rgm.star",
-    "rgm_package_step",
-)
-load(
     "scripts/drone/steps/lib_windows.star",
     "get_windows_steps",
 )

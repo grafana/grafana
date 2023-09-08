@@ -503,6 +503,7 @@ def betterer_frontend_step():
             "yarn-install",
         ],
         "commands": [
+            "apk add --update git bash",
             "yarn betterer ci",
         ],
     }
@@ -555,6 +556,7 @@ def verify_i18n_step():
             "yarn-install",
         ],
         "commands": [
+            "apk add --update git",
             "yarn run i18n:extract || (echo \"{}\" && false)".format(extract_error_message),
             # Verify that translation extraction has been committed
             '''
@@ -676,7 +678,7 @@ def grafana_server_step(port = 3001):
         "commands": [
             "apk add --update tar",
             "cat packages.txt",
-            "tar --strip-components=1 -xvf $(cat packages.txt)",
+            "tar --strip-components=1 -xvf ./dist/*.tar.gz",
             """./bin/grafana server --pidfile=./scripts/grafana-server/tmp/pid --cfg:server.http_port=3001 --cfg:server.router_logging=1 --cfg:app_mode=development""",
         ],
     }
@@ -955,7 +957,7 @@ def mysql_integration_tests_steps(hostname, version):
         "MYSQL_HOST": hostname,
     }
 
-    return integration_tests_steps("mysql-{}".format(version), cmds, "mysql", "3306", environment)
+    return integration_tests_steps("mysql-{}".format(version), cmds, hostname, "3306", environment)
 
 def redis_integration_tests_steps():
     cmds = [

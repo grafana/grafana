@@ -589,7 +589,8 @@ steps:
   image: node:18.12.0-alpine
   name: build-frontend-packages
 - commands:
-  - /src/grafana-build package --distro=linux/amd64 --grafana-dir=$$PWD > packages.txt
+  - /src/grafana-build package --distro=linux/amd64/dynamic --grafana-dir=$$PWD >
+    packages.txt
   image: grafana/grafana-build:main
   name: rgm-package
   volumes:
@@ -598,7 +599,7 @@ steps:
 - commands:
   - apk add --update tar
   - cat packages.txt
-  - tar --strip-components=1 -xvf $(cat packages.txt)
+  - tar --strip-components=1 -xvf ./dist/*.tar.gz
   - ./bin/grafana server --pidfile=./scripts/grafana-server/tmp/pid --cfg:server.http_port=3001
     --cfg:server.router_logging=1 --cfg:app_mode=development
   depends_on:
@@ -936,7 +937,7 @@ steps:
   image: golang:1.21.1-alpine
   name: postgres-integration-tests
 - commands:
-  - dockerize -wait tcp://mysql:3306 -timeout 120s
+  - dockerize -wait tcp://mysql57:3306 -timeout 120s
   image: jwilder/dockerize:0.6.1
   name: wait-for-mysql-5.7
 - commands:
@@ -957,7 +958,7 @@ steps:
   image: golang:1.21.1-alpine
   name: mysql-5.7-integration-tests
 - commands:
-  - dockerize -wait tcp://mysql:3306 -timeout 120s
+  - dockerize -wait tcp://mysql80:3306 -timeout 120s
   image: jwilder/dockerize:0.6.1
   name: wait-for-mysql-8.0
 - commands:
@@ -1749,7 +1750,8 @@ steps:
   image: node:18.12.0-alpine
   name: build-frontend-packages
 - commands:
-  - /src/grafana-build package --distro=linux/amd64 --grafana-dir=$$PWD > packages.txt
+  - /src/grafana-build package --distro=linux/amd64/dynamic --grafana-dir=$$PWD >
+    packages.txt
   image: grafana/grafana-build:main
   name: rgm-package
   volumes:
@@ -1758,7 +1760,7 @@ steps:
 - commands:
   - apk add --update tar
   - cat packages.txt
-  - tar --strip-components=1 -xvf $(cat packages.txt)
+  - tar --strip-components=1 -xvf ./dist/*.tar.gz
   - ./bin/grafana server --pidfile=./scripts/grafana-server/tmp/pid --cfg:server.http_port=3001
     --cfg:server.router_logging=1 --cfg:app_mode=development
   depends_on:
@@ -2192,7 +2194,7 @@ steps:
   image: golang:1.21.1-alpine
   name: postgres-integration-tests
 - commands:
-  - dockerize -wait tcp://mysql:3306 -timeout 120s
+  - dockerize -wait tcp://mysql57:3306 -timeout 120s
   image: jwilder/dockerize:0.6.1
   name: wait-for-mysql-5.7
 - commands:
@@ -2213,7 +2215,7 @@ steps:
   image: golang:1.21.1-alpine
   name: mysql-5.7-integration-tests
 - commands:
-  - dockerize -wait tcp://mysql:3306 -timeout 120s
+  - dockerize -wait tcp://mysql80:3306 -timeout 120s
   image: jwilder/dockerize:0.6.1
   name: wait-for-mysql-8.0
 - commands:
@@ -3441,7 +3443,7 @@ steps:
   image: golang:1.21.1-alpine
   name: postgres-integration-tests
 - commands:
-  - dockerize -wait tcp://mysql:3306 -timeout 120s
+  - dockerize -wait tcp://mysql57:3306 -timeout 120s
   image: jwilder/dockerize:0.6.1
   name: wait-for-mysql-5.7
 - commands:
@@ -3462,7 +3464,7 @@ steps:
   image: golang:1.21.1-alpine
   name: mysql-5.7-integration-tests
 - commands:
-  - dockerize -wait tcp://mysql:3306 -timeout 120s
+  - dockerize -wait tcp://mysql80:3306 -timeout 120s
   image: jwilder/dockerize:0.6.1
   name: wait-for-mysql-8.0
 - commands:
@@ -4219,6 +4221,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: e5761d84220305285cd2bf28cdd3f2e9946146c2c7dd9f3da066489ace3a9650
+hmac: c5af93ad0979f8866d626134449ccd9d3761d843cb872053946ef28196e2d458
 
 ...
