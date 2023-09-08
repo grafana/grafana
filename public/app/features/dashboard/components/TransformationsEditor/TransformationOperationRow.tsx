@@ -1,16 +1,9 @@
 import React, { useCallback } from 'react';
 import { useToggle } from 'react-use';
 
-import {
-  DataFrame,
-  DataTransformerConfig,
-  TransformerRegistryItem,
-  FrameMatcherID,
-  // renderMarkdown,
-} from '@grafana/data';
+import { DataFrame, DataTransformerConfig, TransformerRegistryItem, FrameMatcherID } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import { ConfirmModal, HorizontalGroup } from '@grafana/ui';
-// import { OperationRowHelp } from 'app/core/components/QueryOperationRow/OperationRowHelp';
 import {
   QueryOperationAction,
   QueryOperationToggleAction,
@@ -22,7 +15,6 @@ import {
 import config from 'app/core/config';
 import { PluginStateInfo } from 'app/features/plugins/components/PluginStateInfo';
 
-// import { CalculateFieldHelper } from './HelperContent/CalculateFieldHelper';
 import { TransformationEditor } from './TransformationEditor';
 import { TransformationEditorHelperModal } from './TransformationEditorHelperModal';
 import { TransformationFilter } from './TransformationFilter';
@@ -52,7 +44,6 @@ export const TransformationOperationRow = ({
   const [showDeleteModal, setShowDeleteModal] = useToggle(false);
   const [showDebug, toggleShowDebug] = useToggle(false);
   const [showHelp, toggleShowHelp] = useToggle(false);
-  // const [showInfoModal, toggleShowModal] = useToggle(true);
   const disabled = !!configs[index].transformation.disabled;
   const filter = configs[index].transformation.filter != null;
   const showFilter = filter || data.length > 1;
@@ -67,18 +58,6 @@ export const TransformationOperationRow = ({
     },
     [onChange, configs]
   );
-
-  // const toggleExpand = useCallback(() => {
-  //   if (showHelp) {
-  //     return true;
-  //   }
-
-  //   // We return `undefined` here since the QueryOperationRow component ignores an `undefined` value for the `isOpen` prop.
-  //   // If we rlapsed when the user toggles off `showHelp`, which is not what we want.
-  //   return undefined;
-  // }, [showHelp]);
-
-  // const getHelpContent = () => CalculateFieldHelper();
 
   // Adds or removes the frame filter
   const toggleFilter = useCallback(() => {
@@ -165,14 +144,6 @@ export const TransformationOperationRow = ({
             onDismiss={() => setShowDeleteModal(false)}
           />
         )}
-        {/* <Modal
-          title="Transformation help"
-          isOpen={showHelp}
-          onClickBackdrop={toggleShowHelp}
-          onDismiss={toggleShowHelp}
-        >
-          {getHelpContent()}
-        </Modal> */}
       </HorizontalGroup>
     );
   };
@@ -186,10 +157,7 @@ export const TransformationOperationRow = ({
         draggable
         actions={renderActions}
         disabled={disabled}
-        // isOpen={toggleExpand()}
-        // onClose={() => toggleShowHelp(false)}
       >
-        {/* {showHelp && <OperationRowHelp markdown={prepMarkdown(uiConfig)} />} */}
         {filter && (
           <TransformationFilter index={index} config={configs[index].transformation} data={data} onChange={onChange} />
         )}
@@ -203,47 +171,6 @@ export const TransformationOperationRow = ({
         />
       </QueryOperationRow>
       <TransformationEditorHelperModal transformer={uiConfig} isOpen={showHelp} onCloseClick={toggleShowHelp} />
-      {/* JEV: is this the correct place for this??? */}
     </>
   );
 };
-
-// function markdownHelper(markdown: string) {
-//   const helpHtml = renderMarkdown(markdown);
-//   return <div className="markdown-html" dangerouslySetInnerHTML={{ __html: helpHtml }} />;
-// }
-
-// function prepMarkdown(uiConfig: TransformerRegistryItem<null>) {
-//   let helpMarkdown = uiConfig.help ?? uiConfig.description;
-
-//   return `
-// ${helpMarkdown}
-
-// Go the <a href="https://grafana.com/docs/grafana/latest/panels/transformations/?utm_source=grafana" target="_blank" rel="noreferrer">
-// transformation documentation
-// </a> for more.
-// `;
-// }
-
-// function prepMarkdown(uiConfig: TransformerRegistryItem<null>) {
-//   let helpMarkdown = uiConfig.help ?? uiConfig.description;
-//   // JEV: does help exist on most of these??? If not, we should build them out...
-
-//   return `
-// ${helpMarkdown}
-
-// <ul>
-//   <li><strong>Field</strong> - Select from available fields</li>
-//   <li><strong>as</strong> - Select the FieldType to convert to</li>
-//     <ul>
-//       <li><strong>Numeric</strong> - attempts to make the values numbers</li>
-//       <li><strong>String</strong> - will make the values strings</li>
-//       <li><strong>Boolean</strong> - will make the values booleans</li>
-//       <li><strong>Time</strong> - attempts to parse the values as time</li>
-//         <ul>
-//           <li>Will show an option to specify a DateFormat as input by a string like yyyy-mm-dd or DD MM YYYY hh:mm:ss</li>
-//         </ul>
-//     </ul>
-// </ul>
-// `;
-// }

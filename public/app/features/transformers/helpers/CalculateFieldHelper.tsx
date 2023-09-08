@@ -1,19 +1,10 @@
 import { css } from '@emotion/css';
 import React from 'react';
 
-// import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 
 export const CalculateFieldHelper = () => {
-  const getStyles = (theme) => {
-    return {
-      ulPadding: css({
-        margin: theme.spacing(1, 0),
-        paddingLeft: theme.spacing(5),
-      }),
-    };
-  };
-
   const styles = useStyles2(getStyles);
 
   return (
@@ -41,3 +32,12 @@ export const CalculateFieldHelper = () => {
     </div>
   );
 };
+
+function getStyles(theme: GrafanaTheme2) {
+  return {
+    ulPadding: css({
+      margin: theme.spacing(1, 0),
+      paddingLeft: theme.spacing(5),
+    }),
+  };
+}
