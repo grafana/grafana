@@ -33,7 +33,7 @@ export const TransformationEditorHelperModal = ({
       onClickBackdrop={() => onCloseClick(false)}
       onDismiss={() => onCloseClick(false)}
     >
-      {"content"}
+      {"conte nt"}
     </Modal>
   );
 };
