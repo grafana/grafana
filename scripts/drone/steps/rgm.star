@@ -21,3 +21,13 @@ def rgm_build_backend_step(distros = "linux/amd64,linux/arm64"):
         ],
         "volumes": [{"name": "docker", "path": "/var/run/docker.sock"}],
     }
+
+def rgm_build_docker():
+    return {
+        "name": "rgm-build-docker",
+        "image": "grafana/grafana-build:main",
+        "commands": [
+            "echo 'do nothing for now'",
+        ],
+        "volumes": [{"name": "docker", "path": "/var/run/docker.sock"}],
+    }

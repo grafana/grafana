@@ -599,8 +599,8 @@ steps:
 - commands:
   - apk add --update tar
   - cat packages.txt
-  - tar --strip-components=1 -xvf ./dist/*.tar.gz
-  - ./bin/grafana server --pidfile=./scripts/grafana-server/tmp/pid
+  - tar --strip-components=1 -xvf ./dist/*.tar.gz -C grafana
+  - RUNDIR=grafana ./scripts/grafana-server/start_server
   depends_on:
   - rgm-package
   detach: true
@@ -1760,8 +1760,8 @@ steps:
 - commands:
   - apk add --update tar
   - cat packages.txt
-  - tar --strip-components=1 -xvf ./dist/*.tar.gz
-  - ./bin/grafana server --pidfile=./scripts/grafana-server/tmp/pid
+  - tar --strip-components=1 -xvf ./dist/*.tar.gz -C grafana
+  - RUNDIR=grafana ./scripts/grafana-server/start_server
   depends_on:
   - rgm-package
   detach: true
@@ -4221,6 +4221,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: b584a35828fda16d1c99311954f340e9c7ef66e82183f9c22f5c466117037112
+hmac: ac8a69ab5bf825a9077d57bfc94376b3e753ceb880925a9ebfa5a3c97aae7f3e
 
 ...

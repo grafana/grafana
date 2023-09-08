@@ -682,8 +682,8 @@ def grafana_server_step(port = 3001):
         "commands": [
             "apk add --update tar",
             "cat packages.txt",
-            "tar --strip-components=1 -xvf ./dist/*.tar.gz",
-            "./bin/grafana server --pidfile=./scripts/grafana-server/tmp/pid",
+            "tar --strip-components=1 -xvf ./dist/*.tar.gz -C grafana",
+            "RUNDIR=grafana ./scripts/grafana-server/start_server",
         ],
     }
 
