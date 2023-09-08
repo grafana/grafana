@@ -16,8 +16,6 @@ export interface GridProps {
   rowGap?: ThemeSpacingTokens;
   templateColumns?: string;
   templateRows?: string;
-  justifyContent?: ContentAlignment;
-  alignContent?: ContentAlignment;
   justifyItems?: ItemsAlignment;
   alignItems?: ItemsAlignment;
   autoFlow?: 'row' | 'column' | 'row dense' | 'column dense';
@@ -36,10 +34,12 @@ export const Grid = ({
   children,
   display = 'grid',
   gap = 1,
-  columnGap = 1,
-  rowGap = 1,
+  columnGap = 0,
+  rowGap = 0,
   templateColumns = 'none',
   templateRows = 'none',
+  alignItems = 'stretch',
+  justifyItems = 'stretch',
   autoFlow = 'row',
   autoRows = 'auto',
   columnStart,
@@ -58,6 +58,8 @@ export const Grid = ({
           rowGap,
           templateColumns,
           templateRows,
+          alignItems,
+          justifyItems,
           autoFlow,
           autoRows,
           columnStart,
@@ -72,6 +74,8 @@ export const Grid = ({
         gap,
         templateColumns,
         templateRows,
+        alignItems,
+        justifyItems,
         autoRows,
         autoFlow,
         columnStart,
@@ -99,6 +103,8 @@ const getStyles = (
   rowGap: ThemeSpacingTokens,
   templateColumns: GridProps['templateColumns'],
   templateRows: GridProps['templateRows'],
+  alignItems: GridProps['alignItems'],
+  justifyItems: GridProps['justifyItems'],
   autoFlow: GridProps['autoFlow'],
   autoRows: GridProps['autoRows'],
   columnStart?: GridItemProps['columnStart'],
@@ -109,15 +115,15 @@ const getStyles = (
   return {
     grid: css({
       display,
-      gap: theme.spacing(gap),
-      columnGap: theme.spacing(columnGap),
-      rowGap: theme.spacing(rowGap),
+      gap: rowGap || columnGap ? undefined : theme.spacing(gap),
+      columnGap: columnGap ? theme.spacing(columnGap) : undefined,
+      rowGap: rowGap ? theme.spacing(rowGap) : undefined,
       gridTemplateColumns: templateColumns,
       gridTemplateRows: templateRows,
-      justifyContent: 'center',
-      alignContent: 'center',
-      justifyItems: 'stretch',
-      alignItems: 'stretch',
+      justifyContent: 'stretch',
+      alignContent: 'stretch',
+      justifyItems,
+      alignItems,
       gridAutoFlow: autoFlow,
       gridAutoRows: autoRows,
     }),
