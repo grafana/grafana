@@ -5,7 +5,9 @@ import { FolderDTO } from 'app/types';
 import { Options } from './panelcfg.gen';
 
 function getFolderByID(folderID: number) {
-  return getBackendSrv().get<FolderDTO>(`/api/folders/id/${folderID}`);
+  return getBackendSrv().get<FolderDTO>(`/api/folders/id/${folderID}`, undefined, undefined, {
+    showErrorAlert: false,
+  });
 }
 
 export interface AngularModel {
@@ -51,9 +53,14 @@ export async function dashlistMigrationHandler(panel: PanelModel<Options> & Angu
   // Convert the folderId to folderUID. Uses the API to do the conversion.
   if (newOptions.folderId !== undefined) {
     const folderId = newOptions.folderId;
-    const folderResp = await getFolderByID(folderId);
-    newOptions.folderUID = folderResp.uid;
-    delete newOptions.folderId;
+
+    try {
+      const folderResp = await getFolderByID(folderId);
+      newOptions.folderUID = folderResp.uid;
+      delete newOptions.folderId;
+    } catch (err) {
+      console.warn('Dashlist: Error migrating folder ID to UID', err);
+    }
   }
 
   return newOptions;
