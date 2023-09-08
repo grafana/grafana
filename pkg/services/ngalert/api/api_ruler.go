@@ -291,7 +291,7 @@ func (srv RulerSrv) RouteGetRulesConfig(c *contextmodel.ReqContext) response.Res
 		if !authorizeAccessToRuleGroup(rules, hasAccess) {
 			continue
 		}
-		namespace := folder.Title
+		namespace := folder.UID
 		result[namespace] = append(result[namespace], toGettableRuleGroupConfig(groupKey.RuleGroup, rules, folder.ID, provenanceRecords))
 	}
 	return response.JSON(http.StatusOK, result)
