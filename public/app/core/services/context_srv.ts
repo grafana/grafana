@@ -200,11 +200,8 @@ export class ContextSrv {
     return this.hasPermissionInMetadata(action, object);
   }
 
-  // evaluates access control permissions, granting access if the user has any of them; uses fallback if access control is disabled
-  evaluatePermission(fallback: () => string[], actions: string[]) {
-    if (!this.accessControlEnabled()) {
-      return fallback();
-    }
+  // evaluates access control permissions, granting access if the user has any of them
+  evaluatePermission(actions: string[]) {
     if (actions.some((action) => this.hasPermission(action))) {
       return [];
     }

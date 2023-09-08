@@ -1,4 +1,4 @@
-import { e2e } from '@grafana/e2e';
+import { e2e } from '../utils';
 
 const DASHBOARD_ID = 'c01bf42b-b783-4447-a304-8554cee1843b';
 const DATAGRID_CANVAS = 'data-grid-canvas';

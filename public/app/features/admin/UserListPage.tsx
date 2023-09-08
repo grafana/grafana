@@ -40,7 +40,7 @@ const TAB_PAGE_MAP: Record<TabView, React.ReactElement> = {
 export default function UserListPage() {
   const styles = useStyles2(getStyles);
 
-  const hasAccessToAdminUsers = contextSrv.hasAccess(AccessControlAction.UsersRead, contextSrv.isGrafanaAdmin);
+  const hasAccessToAdminUsers = contextSrv.hasPermission(AccessControlAction.UsersRead);
   const hasAccessToOrgUsers = contextSrv.hasPermission(AccessControlAction.OrgUsersRead);
   const hasEmailSharingEnabled =
     Boolean(config.featureToggles.publicDashboards) &&
