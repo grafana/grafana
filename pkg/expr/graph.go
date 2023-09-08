@@ -137,12 +137,12 @@ func (s *Service) buildPipeline(req *Request) (DataPipeline, error) {
 
 	graph, err := s.buildDependencyGraph(req)
 	if err != nil {
-		return DataPipeline{}, err
+		return nil, err
 	}
 
 	nodes, err := buildExecutionOrder(graph)
 	if err != nil {
-		return DataPipeline{}, err
+		return nil, err
 	}
 
 	return nodes, nil
