@@ -675,7 +675,8 @@ def grafana_server_step(port = 3001):
         "environment": environment,
         "commands": [
             "apk add --update tar",
-            "tar --strip-components=1 -xvf $(cat packages.txt | grep amd64 | grep tar.gz)",
+            "cat packages.txt",
+            "tar --strip-components=1 -xvf $(cat packages.txt)",
             """./bin/grafana server --pidfile=./scripts/grafana-server/tmp/pid --cfg:server.http_port=3001 --cfg:server.router_logging=1 --cfg:app_mode=development""",
         ],
     }

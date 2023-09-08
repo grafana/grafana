@@ -125,6 +125,7 @@ steps:
   image: node:18.12.0-alpine
   name: yarn-install
 - commands:
+  - apk add --update git bash
   - yarn betterer ci
   depends_on:
   - yarn-install
@@ -234,6 +235,7 @@ steps:
   image: node:18.12.0-alpine
   name: lint-frontend
 - commands:
+  - apk add --update git
   - |-
     yarn run i18n:extract || (echo "
     Extraction failed. Make sure that you have no dynamic translation phrases, such as 't(\`preferences.theme.\$${themeID}\`, themeName)' and that no translation key is used twice. Search the output for '[warning]' to find the offending file." && false)
@@ -595,7 +597,8 @@ steps:
     path: /var/run/docker.sock
 - commands:
   - apk add --update tar
-  - tar --strip-components=1 -xvf $(cat packages.txt | grep amd64 | grep tar.gz)
+  - cat packages.txt
+  - tar --strip-components=1 -xvf $(cat packages.txt)
   - ./bin/grafana server --pidfile=./scripts/grafana-server/tmp/pid --cfg:server.http_port=3001
     --cfg:server.router_logging=1 --cfg:app_mode=development
   depends_on:
@@ -1417,6 +1420,7 @@ steps:
   image: node:18.12.0-alpine
   name: yarn-install
 - commands:
+  - apk add --update git bash
   - yarn betterer ci
   depends_on:
   - yarn-install
@@ -1483,6 +1487,7 @@ steps:
   image: node:18.12.0-alpine
   name: lint-frontend
 - commands:
+  - apk add --update git
   - |-
     yarn run i18n:extract || (echo "
     Extraction failed. Make sure that you have no dynamic translation phrases, such as 't(\`preferences.theme.\$${themeID}\`, themeName)' and that no translation key is used twice. Search the output for '[warning]' to find the offending file." && false)
@@ -1752,7 +1757,8 @@ steps:
     path: /var/run/docker.sock
 - commands:
   - apk add --update tar
-  - tar --strip-components=1 -xvf $(cat packages.txt | grep amd64 | grep tar.gz)
+  - cat packages.txt
+  - tar --strip-components=1 -xvf $(cat packages.txt)
   - ./bin/grafana server --pidfile=./scripts/grafana-server/tmp/pid --cfg:server.http_port=3001
     --cfg:server.router_logging=1 --cfg:app_mode=development
   depends_on:
@@ -2844,6 +2850,7 @@ steps:
   image: node:18.12.0-alpine
   name: yarn-install
 - commands:
+  - apk add --update git bash
   - yarn betterer ci
   depends_on:
   - yarn-install
@@ -4212,6 +4219,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 5be1c712fc3884c192d291d0fa821b5c99822d4b1ed298c656bbb77d1fd81bac
+hmac: e5761d84220305285cd2bf28cdd3f2e9946146c2c7dd9f3da066489ace3a9650
 
 ...
