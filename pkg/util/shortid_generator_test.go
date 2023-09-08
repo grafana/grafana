@@ -86,7 +86,7 @@ func TestIsShortUIDTooLong(t *testing.T) {
 	}
 }
 
-func TestValidate(t *testing.T) {
+func TestValidateUID(t *testing.T) {
 	var tests = []struct {
 		name     string
 		uid      string
