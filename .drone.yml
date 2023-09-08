@@ -77,6 +77,7 @@ steps:
   image: golang:1.21.1-alpine
   name: compile-build-cmd
 - commands:
+  - go install github.com/bazelbuild/buildtools/buildifier@latest
   - ./bin/build verify-starlark .
   depends_on:
   - compile-build-cmd
@@ -130,6 +131,7 @@ steps:
   image: node:18.12.0-alpine
   name: betterer-frontend
 - commands:
+  - apk add --update curl jq
   - is_fork=$(curl "https://$GITHUB_TOKEN@api.github.com/repos/grafana/grafana/pulls/$DRONE_PULL_REQUEST"
     | jq .head.repo.fork)
   - if [ "$is_fork" != false ]; then return 1; fi
@@ -192,6 +194,7 @@ platform:
 services: []
 steps:
 - commands:
+  - apk add --update curl jq
   - is_fork=$(curl "https://$GITHUB_TOKEN@api.github.com/repos/grafana/grafana/pulls/$DRONE_PULL_REQUEST"
     | jq .head.repo.fork)
   - if [ "$is_fork" != false ]; then return 1; fi
@@ -279,6 +282,7 @@ platform:
 services: []
 steps:
 - commands:
+  - apk add --update curl jq
   - is_fork=$(curl "https://$GITHUB_TOKEN@api.github.com/repos/grafana/grafana/pulls/$DRONE_PULL_REQUEST"
     | jq .head.repo.fork)
   - if [ "$is_fork" != false ]; then return 1; fi
@@ -399,6 +403,7 @@ steps:
   image: golang:1.21.1-alpine
   name: compile-build-cmd
 - commands:
+  - apk add --update curl jq
   - is_fork=$(curl "https://$GITHUB_TOKEN@api.github.com/repos/grafana/grafana/pulls/$DRONE_PULL_REQUEST"
     | jq .head.repo.fork)
   - if [ "$is_fork" != false ]; then return 1; fi
@@ -425,7 +430,7 @@ steps:
   image: golang:1.21.1-alpine
   name: wire-install
 - commands:
-  - apk add --update make
+  - apk add --update make gcc
   - make lint-go
   depends_on:
   - wire-install
@@ -841,6 +846,7 @@ services:
   name: memcached
 steps:
 - commands:
+  - apk add --update curl jq
   - is_fork=$(curl "https://$GITHUB_TOKEN@api.github.com/repos/grafana/grafana/pulls/$DRONE_PULL_REQUEST"
     | jq .head.repo.fork)
   - if [ "$is_fork" != false ]; then return 1; fi
@@ -1182,6 +1188,7 @@ services:
   name: memcached
 steps:
 - commands:
+  - apk add --update curl jq
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
     ../grafana-enterprise
   - cd ../grafana-enterprise
@@ -1603,7 +1610,7 @@ steps:
   image: golang:1.21.1-alpine
   name: wire-install
 - commands:
-  - apk add --update make
+  - apk add --update make gcc
   - make lint-go
   depends_on:
   - wire-install
@@ -4150,6 +4157,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 905e8d0cc4c5dbb67530ca363edb8f0b93cd72adcb19f184f019b615326054da
+hmac: 8f4d46fafe6827603e4c05766bc5bcdfde0c65271f9d48cd56c70839d8269ff1
 
 ...
