@@ -34,6 +34,7 @@ export enum AlertmanagerAction {
   ViewNotificationPolicyTree = 'view-notification-policy-tree',
   UpdateNotificationPolicyTree = 'update-notification-policy-tree',
   DeleteNotificationPolicy = 'delete-notification-policy',
+  ExportNotificationPolicies = 'export-notification-policies',
 
   // silences – these cannot be deleted only "expired" (updated)
   CreateSilence = 'create-silence',
@@ -162,6 +163,11 @@ export function useAlertmanagerAbilities(): Abilities<AlertmanagerAction> {
     [AlertmanagerAction.DeleteNotificationPolicy]: [
       hasConfigurationAPI,
       ctx.hasPermission(notificationsPermissions.delete),
+    ],
+    [AlertmanagerAction.ExportNotificationPolicies]: [
+      isGrafanaFlavoredAlertmanager,
+      ctx.hasPermission(notificationsPermissions.provisioning.read) ||
+        ctx.hasPermission(notificationsPermissions.provisioning.readSecrets),
     ],
     // -- silences --
     [AlertmanagerAction.CreateSilence]: [hasConfigurationAPI, ctx.hasPermission(instancePermissions.create)],
