@@ -30,10 +30,7 @@ jest.mock('react-virtualized-auto-sizer', () => {
 });
 jest.mock('@grafana/ui', () => ({
   ...jest.requireActual('@grafana/ui'),
-  CodeEditor: function CodeEditor({ value }: { value: string; onBlur: (newValue: string) => void }) {
-    console.log('CodeEditor', value);
-    return <textarea data-testid="code-editor" value={value} readOnly />;
-  },
+  CodeEditor: ({ value }: { value: string }) => <textarea data-testid="code-editor" value={value} readOnly />,
 }));
 
 const mocks = {
