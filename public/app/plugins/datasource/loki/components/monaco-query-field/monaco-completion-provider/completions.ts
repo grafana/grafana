@@ -98,6 +98,21 @@ const UNWRAP_FUNCTION_COMPLETIONS: Completion[] = [
   },
 ];
 
+const LOGFMT_ARGUMENT_COMPLETIONS: Completion[] = [
+  {
+    type: 'FUNCTION',
+    label: 'strict',
+    documentation: 'Strict parsing. The logfmt parser stops scanning the log line and returns early with an error when it encounters any poorly formatted key/value pair.',
+    insertText: '--strict',
+  },
+  {
+    type: 'FUNCTION',
+    label: 'keep empty',
+    documentation: 'Retain standalone keys with empty value. The logfmt parser retains standalone keys (keys without a value) as labels with value set to empty string.',
+    insertText: '--keep-empty',
+  },
+];
+
 const LINE_FILTER_COMPLETIONS = [
   {
     operator: '|=',
@@ -322,6 +337,14 @@ export async function getAfterSelectorCompletions(
   return [...lineFilters, ...completions];
 }
 
+export async function getLogfmtCompletions(
+  dataProvider: CompletionDataProvider
+): Promise<Completion[]> {
+  const completions: Completion[] = LOGFMT_ARGUMENT_COMPLETIONS;
+
+  return completions;
+}
+
 async function getLabelValuesForMetricCompletions(
   labelName: string,
   betweenQuotes: boolean,
@@ -400,6 +423,8 @@ export async function getCompletions(
       return [...FUNCTION_COMPLETIONS, ...AGGREGATION_COMPLETIONS];
     case 'AFTER_KEEP_AND_DROP':
       return getAfterKeepAndDropCompletions(situation.logQuery, dataProvider);
+    case 'IN_LOGFMT':
+      return getLogfmtCompletions(dataProvider);
     default:
       throw new NeverCaseError(situation);
   }
