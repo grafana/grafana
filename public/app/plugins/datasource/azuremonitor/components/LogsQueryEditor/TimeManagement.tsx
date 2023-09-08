@@ -1,15 +1,9 @@
 import { SelectableValue } from '@grafana/data';
 import { InlineField, RadioButtonGroup, Select } from '@grafana/ui';
-import { Table } from '@kusto/monaco-kusto';
 import React, { useCallback, useEffect, useState } from 'react';
 
-import { AzureQueryEditorFieldProps } from '../../types';
+import { AzureLogAnalyticsMetadataTable, AzureQueryEditorFieldProps } from '../../types';
 import { setDashboardTime, setTimeColumn } from './setQueryValue';
-
-// Extending the schema definition as this property doesn't exist but is returned from Azure
-export interface ExtendedTable extends Table {
-  timespanColumn?: string;
-}
 
 export function TimeManagement({ query, onQueryChange: onChange, schema }: AzureQueryEditorFieldProps) {
   const [defaultTimeColumns, setDefaultTimeColumns] = useState<SelectableValue[] | undefined>();
@@ -21,7 +15,7 @@ export function TimeManagement({ query, onQueryChange: onChange, schema }: Azure
       let defaultColumnsMap: Map<string, SelectableValue> = new Map();
       const db = schema.database;
       if (db) {
-        for (const table of db.tables as ExtendedTable[]) {
+        for (const table of db.tables as AzureLogAnalyticsMetadataTable[]) {
           const cols = table.columns.reduce<SelectableValue[]>((prev, curr, i) => {
             if (curr.type === 'datetime' && table.timespanColumn && table.timespanColumn !== curr.name) {
               prev.push({ value: curr.name, label: `${table.name} > ${curr.name}` });

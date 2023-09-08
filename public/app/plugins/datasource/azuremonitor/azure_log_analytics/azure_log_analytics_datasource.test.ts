@@ -5,11 +5,16 @@ import createMockQuery from '../__mocks__/query';
 import { createTemplateVariables } from '../__mocks__/utils';
 import { singleVariable } from '../__mocks__/variables';
 import AzureMonitorDatasource from '../datasource';
-import { AzureLogsQuery, AzureMonitorQuery, AzureQueryType, AzureTracesQuery } from '../types';
+import {
+  AzureLogAnalyticsMetadataTable,
+  AzureLogsQuery,
+  AzureMonitorQuery,
+  AzureQueryType,
+  AzureTracesQuery,
+} from '../types';
 
 import FakeSchemaData from './__mocks__/schema';
 import AzureLogAnalyticsDatasource from './azure_log_analytics_datasource';
-import { ExtendedTable } from '../components/LogsQueryEditor/TimeManagement';
 
 const templateSrv = new TemplateSrv();
 
@@ -45,7 +50,7 @@ describe('AzureLogAnalyticsDatasource', () => {
 
       expect(result.database?.tables).toHaveLength(2);
       expect(result.database?.tables[0].name).toBe('Alert');
-      expect((result.database?.tables[0] as ExtendedTable).timespanColumn).toBe('TimeGenerated');
+      expect((result.database?.tables[0] as AzureLogAnalyticsMetadataTable).timespanColumn).toBe('TimeGenerated');
       expect(result.database?.tables[1].name).toBe('AzureActivity');
       expect(result.database?.tables[0].columns).toHaveLength(69);
 
