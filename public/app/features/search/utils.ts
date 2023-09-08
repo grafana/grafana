@@ -14,6 +14,19 @@ export const hasFilters = (query: SearchState) => {
   return Boolean(query.query || query.tag?.length > 0 || query.starred || query.sort);
 };
 
+/** Cleans up old local storage values that remembered many open folders */
+export const cleanupOldExpandedFolders = () => {
+  const keyPrefix = SECTION_STORAGE_KEY + '.';
+
+  for (let index = 0; index < window.localStorage.length; index++) {
+    const lsKey = window.localStorage.key(index);
+    if (lsKey?.startsWith(keyPrefix)) {
+      console.log('removing', lsKey);
+      window.localStorage.removeItem(lsKey);
+    }
+  }
+};
+
 /**
  * Get storage key for a dashboard folder by its title
  * @param title
