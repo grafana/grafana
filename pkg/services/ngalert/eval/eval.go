@@ -326,6 +326,7 @@ type NumberValueCapture struct {
 	Value *float64
 }
 
+//nolint:gocyclo
 func queryDataResponseToExecutionResults(c models.Condition, execResp *backend.QueryDataResponse) ExecutionResults {
 	// captures contains the values of all instant queries and expressions for each dimension
 	captures := make(map[string]map[data.Fingerprint]NumberValueCapture)
