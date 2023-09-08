@@ -61,19 +61,22 @@ type DataPipeline []Node
 func (dp *DataPipeline) execute(c context.Context, now time.Time, s *Service) (mathexp.Vars, error) {
 	vars := make(mathexp.Vars)
 
-	// Execute datasource nodes first, and group queries by datasource to execute in a single call per datasource.
-	dsNodes := []*DSNode{}
-	for _, node := range *dp {
-		if node.NodeType() != TypeDatasourceNode {
-			continue
+	groupByDSFlag := s.features.IsEnabled(featuremgmt.FlagSseGroupByDatasource)
+	// Execute datasource nodes first, and grouped by datasource.
+	if groupByDSFlag {
+		dsNodes := []*DSNode{}
+		for _, node := range *dp {
+			if node.NodeType() != TypeDatasourceNode {
+				continue
+			}
+			dsNodes = append(dsNodes, node.(*DSNode))
 		}
-		dsNodes = append(dsNodes, node.(*DSNode))
+
+		executeDSNodesGrouped(c, now, vars, s, dsNodes)
 	}
 
-	executeDSNodesGrouped(c, now, vars, s, dsNodes)
-
 	for _, node := range *dp {
-		if node.NodeType() == TypeDatasourceNode {
+		if groupByDSFlag && node.NodeType() == TypeDatasourceNode {
 			continue // already executed via executeDSNodesGrouped
 		}
 
