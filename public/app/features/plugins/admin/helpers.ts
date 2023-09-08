@@ -16,21 +16,24 @@ export function mergeLocalsAndRemotes(
   const errorByPluginId = groupErrorsByPluginId(errors);
 
   // add locals
-  local.forEach((l) => {
-    const remotePlugin = remote.find((r) => r.slug === l.id);
-    const error = errorByPluginId[l.id];
+  local.forEach((localPlugin) => {
+    const remoteCounterpart = remote.find((r) => r.slug === localPlugin.id);
+    const error = errorByPluginId[localPlugin.id];
 
-    if (!remotePlugin) {
-      catalogPlugins.push(mergeLocalAndRemote(l, undefined, error));
+    if (!remoteCounterpart) {
+      catalogPlugins.push(mergeLocalAndRemote(localPlugin, undefined, error));
     }
   });
 
   // add remote
-  remote.forEach((r) => {
-    const localPlugin = local.find((l) => l.id === r.slug);
-    const error = errorByPluginId[r.slug];
+  remote.forEach((remotePlugin) => {
+    const localCounterpart = local.find((l) => l.id === remotePlugin.slug);
+    const error = errorByPluginId[remotePlugin.slug];
+    const shouldSkip = remotePlugin.status === 'deprecated' && !localCounterpart; // We are only listing deprecated plugins in case they are installed.
 
-    catalogPlugins.push(mergeLocalAndRemote(localPlugin, r, error));
+    if (!shouldSkip) {
+      catalogPlugins.push(mergeLocalAndRemote(localCounterpart, remotePlugin, error));
+    }
   });
 
   return catalogPlugins;
@@ -85,6 +88,7 @@ export function mapRemoteToCatalog(plugin: RemotePlugin, error?: PluginError): C
     isPublished: true,
     isInstalled: isDisabled,
     isDisabled: isDisabled,
+    isDeprecated: status === 'deprecated',
     isCore: plugin.internal,
     isDev: false,
     isEnterprise: status === 'enterprise',
@@ -129,6 +133,7 @@ export function mapLocalToCatalog(plugin: LocalPlugin, error?: PluginError): Cat
     isDisabled: isDisabled,
     isCore: signature === 'internal',
     isPublished: false,
+    isDeprecated: false,
     isDev: Boolean(dev),
     isEnterprise: false,
     type,
@@ -172,6 +177,7 @@ export function mapToCatalogPlugin(local?: LocalPlugin, remote?: RemotePlugin, e
     isEnterprise: remote?.status === 'enterprise',
     isInstalled: Boolean(local) || isDisabled,
     isDisabled: isDisabled,
+    isDeprecated: remote?.status === 'deprecated',
     isPublished: true,
     // TODO<check if we would like to keep preferring the remote version>
     name: remote?.name || local?.name || '',

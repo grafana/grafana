@@ -43,6 +43,7 @@ export interface CatalogPlugin extends WithAccessControlMetadata {
   isEnterprise: boolean;
   isInstalled: boolean;
   isDisabled: boolean;
+  isDeprecated: boolean;
   // `isPublished` is TRUE if the plugin is published to grafana.com
   isPublished: boolean;
   name: string;
@@ -69,6 +70,7 @@ export interface CatalogPluginDetails {
   }>;
   grafanaDependency?: string;
   pluginDependencies?: PluginDependencies['plugins'];
+  isDeprecated?: boolean;
 }
 
 export interface CatalogPluginInfo {

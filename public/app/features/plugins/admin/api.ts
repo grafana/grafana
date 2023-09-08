@@ -19,17 +19,25 @@ export async function getPluginDetails(id: string): Promise<CatalogPluginDetails
   const local = localPlugins.find((p) => p.id === id);
   const dependencies = local?.dependencies || remote?.json?.dependencies;
 
-  return {
+  const a = {
+    isDeprecated: remote?.status === 'deprecated',
     grafanaDependency: dependencies?.grafanaDependency ?? dependencies?.grafanaVersion ?? '',
     pluginDependencies: dependencies?.plugins || [],
     links: local?.info.links || remote?.json?.info.links || [],
     readme: localReadme || remote?.readme,
     versions,
   };
+
+  console.log('***', a);
+  return a;
 }
 
 export async function getRemotePlugins(): Promise<RemotePlugin[]> {
-  const { items: remotePlugins }: { items: RemotePlugin[] } = await getBackendSrv().get(`${GCOM_API_ROOT}/plugins`);
+  // We are also fetching deprecated plugins, because we would like to be able to label plugins in the list that are both installed and deprecated.
+  // (We won't show not installed deprecated plugins in the list)
+  const { items: remotePlugins }: { items: RemotePlugin[] } = await getBackendSrv().get(`${GCOM_API_ROOT}/plugins`, {
+    includeDeprecated: true,
+  });
 
   return remotePlugins.filter(isRemotePluginVisible);
 }
