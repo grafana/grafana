@@ -2,6 +2,7 @@ package queryhistory
 
 import (
 	"context"
+	"fmt"
 	"strconv"
 
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -63,6 +64,8 @@ func (s QueryHistoryService) searchQueries(ctx context.Context, user *user.Signe
 		query.Sort = "time-desc"
 	}
 
+	s.log.Info(fmt.Sprintf("SSSSSSSSSSSSSSSSSEARCHING FOR QUERIES WITH QUERY %+v and USER %d\n", query, user.UserID))
+
 	err := s.store.WithDbSession(ctx, func(session *db.Session) error {
 		dtosBuilder := db.SQLBuilder{}
 		dtosBuilder.Write(`SELECT
@@ -89,6 +92,70 @@ func (s QueryHistoryService) searchQueries(ctx context.Context, user *user.Signe
 		`)
 		writeStarredSQL(query, s.store, &countBuilder)
 		writeFiltersSQL(query, user, s.store, &countBuilder)
+		err = session.SQL(countBuilder.GetSQLString(), countBuilder.GetParams()...).Find(&allQueries)
+		return err
+	})
+
+	if err != nil {
+		return QueryHistorySearchResult{}, err
+	}
+
+	response := QueryHistorySearchResult{
+		QueryHistory: dtos,
+		TotalCount:   len(allQueries),
+		Page:         query.Page,
+		PerPage:      query.Limit,
+	}
+
+	return response, nil
+}
+
+func (s QueryHistoryService) searchQueriesAll(ctx context.Context, query SearchInQueryHistoryQuery) (QueryHistorySearchResult, error) {
+	var dtos []QueryHistoryDTO
+	var allQueries []interface{}
+
+	if query.To <= 0 {
+		query.To = s.now().Unix()
+	}
+
+	if query.Page <= 0 {
+		query.Page = 1
+	}
+
+	if query.Limit <= 0 {
+		query.Limit = 100
+	}
+
+	if query.Sort == "" {
+		query.Sort = "time-desc"
+	}
+
+	s.log.Info(fmt.Sprintf("SSSSSSSSSSSSSSSSSEARCHING FOR QUERIES WITH QUERY %+v and no user\n", query))
+
+	err := s.store.WithDbSession(ctx, func(session *db.Session) error {
+		dtosBuilder := db.SQLBuilder{}
+		dtosBuilder.Write(`SELECT
+			query_history.uid,
+			query_history.datasource_uid,
+			query_history.created_by,
+			query_history.created_at AS created_at,
+			query_history.comment,
+			query_history.queries,
+		`)
+		writeStarredSQL(query, s.store, &dtosBuilder)
+		writeSortSQL(query, s.store, &dtosBuilder)
+		writeLimitSQL(query, s.store, &dtosBuilder)
+		writeOffsetSQL(query, s.store, &dtosBuilder)
+
+		err := session.SQL(dtosBuilder.GetSQLString(), dtosBuilder.GetParams()...).Find(&dtos)
+		if err != nil {
+			return err
+		}
+
+		countBuilder := db.SQLBuilder{}
+		countBuilder.Write(`SELECT
+		`)
+		writeStarredSQL(query, s.store, &countBuilder)
 		err = session.SQL(countBuilder.GetSQLString(), countBuilder.GetParams()...).Find(&allQueries)
 		return err
 	})

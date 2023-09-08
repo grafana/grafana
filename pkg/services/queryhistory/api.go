@@ -16,6 +16,7 @@ func (s *QueryHistoryService) registerAPIEndpoints() {
 	s.RouteRegister.Group("/api/query-history", func(entities routing.RouteRegister) {
 		entities.Post("/", middleware.ReqSignedIn, routing.Wrap(s.createHandler))
 		entities.Get("/", middleware.ReqSignedIn, routing.Wrap(s.searchHandler))
+		entities.Get("/all/", middleware.ReqSignedIn, routing.Wrap(s.searchAllHandler))
 		entities.Delete("/:uid", middleware.ReqSignedIn, routing.Wrap(s.deleteHandler))
 		entities.Post("/star/:uid", middleware.ReqSignedIn, routing.Wrap(s.starHandler))
 		entities.Delete("/star/:uid", middleware.ReqSignedIn, routing.Wrap(s.unstarHandler))
@@ -75,6 +76,28 @@ func (s *QueryHistoryService) searchHandler(c *contextmodel.ReqContext) response
 	}
 
 	result, err := s.SearchInQueryHistory(c.Req.Context(), c.SignedInUser, query)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to get query history", err)
+	}
+
+	return response.JSON(http.StatusOK, QueryHistorySearchResponse{Result: result})
+}
+
+func (s *QueryHistoryService) searchAllHandler(c *contextmodel.ReqContext) response.Response {
+	timeRange := legacydata.NewDataTimeRange(c.Query("from"), c.Query("to"))
+
+	query := SearchInQueryHistoryQuery{
+		DatasourceUIDs: c.QueryStrings("datasourceUid"),
+		SearchString:   c.Query("searchString"),
+		OnlyStarred:    c.QueryBoolWithDefault("onlyStarred", false),
+		Sort:           c.Query("sort"),
+		Page:           c.QueryInt("page"),
+		Limit:          c.QueryInt("limit"),
+		From:           timeRange.GetFromAsSecondsEpoch(),
+		To:             timeRange.GetToAsSecondsEpoch(),
+	}
+
+	result, err := s.SearchInQueryHistoryAll(c.Req.Context(), query)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to get query history", err)
 	}

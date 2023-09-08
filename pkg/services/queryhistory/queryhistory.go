@@ -55,6 +55,10 @@ func (s QueryHistoryService) SearchInQueryHistory(ctx context.Context, user *use
 	return s.searchQueries(ctx, user, query)
 }
 
+func (s QueryHistoryService) SearchInQueryHistoryAll(ctx context.Context, query SearchInQueryHistoryQuery) (QueryHistorySearchResult, error) {
+	return s.searchQueriesAll(ctx, query)
+}
+
 func (s QueryHistoryService) DeleteQueryFromQueryHistory(ctx context.Context, user *user.SignedInUser, UID string) (int64, error) {
 	return s.deleteQuery(ctx, user, UID)
 }
