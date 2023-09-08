@@ -7,9 +7,9 @@ import { useStyles2 } from '../../../themes';
 import { ResponsiveProp, getResponsiveStyle } from '../utils/responsiveness';
 
 type Display = 'flex' | 'block' | 'inline' | 'none';
-type BackgroundColor = keyof GrafanaTheme2['colors']['background'];
-type BorderStyle = 'solid' | 'dashed';
-type BorderColor = keyof GrafanaTheme2['colors']['border'] | 'error' | 'success' | 'warning' | 'info';
+export type BackgroundColor = keyof GrafanaTheme2['colors']['background'];
+export type BorderStyle = 'solid' | 'dashed';
+export type BorderColor = keyof GrafanaTheme2['colors']['border'] | 'error' | 'success' | 'warning' | 'info';
 
 interface BoxProps {
   margin?: ResponsiveProp<ThemeSpacingTokens>;
