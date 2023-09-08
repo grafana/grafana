@@ -5835,6 +5835,7 @@
     "operationId": "RouteDeleteNamespaceGrafanaRulesConfig",
     "parameters": [
      {
+      "description": "The UID of the rule folder",
       "in": "path",
       "name": "Namespace",
       "required": true,
@@ -5858,6 +5859,7 @@
     "operationId": "RouteGetNamespaceGrafanaRulesConfig",
     "parameters": [
      {
+      "description": "The UID of the rule folder",
       "in": "path",
       "name": "Namespace",
       "required": true,
@@ -5888,6 +5890,7 @@
     "operationId": "RoutePostNameGrafanaRulesConfig",
     "parameters": [
      {
+      "description": "The UID of the rule folder",
       "in": "path",
       "name": "Namespace",
       "required": true,
@@ -5920,6 +5923,7 @@
     "operationId": "RouteDeleteGrafanaRuleGroupConfig",
     "parameters": [
      {
+      "description": "The UID of the rule folder",
       "in": "path",
       "name": "Namespace",
       "required": true,
@@ -5949,6 +5953,7 @@
     "operationId": "RouteGetGrafanaRuleGroupConfig",
     "parameters": [
      {
+      "description": "The UID of the rule folder",
       "in": "path",
       "name": "Namespace",
       "required": true,
@@ -6036,6 +6041,7 @@
       "type": "string"
      },
      {
+      "description": "The UID of the rule folder",
       "in": "path",
       "name": "Namespace",
       "required": true,
@@ -6072,6 +6078,7 @@
       "type": "string"
      },
      {
+      "description": "The UID of the rule folder",
       "in": "path",
       "name": "Namespace",
       "required": true,
@@ -6115,6 +6122,7 @@
       "type": "string"
      },
      {
+      "description": "The UID of the rule folder",
       "in": "path",
       "name": "Namespace",
       "required": true,
@@ -6160,6 +6168,7 @@
       "type": "string"
      },
      {
+      "description": "The UID of the rule folder",
       "in": "path",
       "name": "Namespace",
       "required": true,
@@ -6202,6 +6211,7 @@
       "type": "string"
      },
      {
+      "description": "The UID of the rule folder",
       "in": "path",
       "name": "Namespace",
       "required": true,

@@ -128,6 +128,7 @@ import (
 
 // swagger:parameters RoutePostNameRulesConfig RoutePostNameGrafanaRulesConfig
 type NamespaceConfig struct {
+	// The UID of the rule folder
 	// in:path
 	Namespace string
 	// in:body
@@ -136,12 +137,14 @@ type NamespaceConfig struct {
 
 // swagger:parameters RouteGetNamespaceRulesConfig RouteDeleteNamespaceRulesConfig RouteGetNamespaceGrafanaRulesConfig RouteDeleteNamespaceGrafanaRulesConfig
 type PathNamespaceConfig struct {
+	// The UID of the rule folder
 	// in: path
 	Namespace string
 }
 
 // swagger:parameters RouteGetRulegGroupConfig RouteDeleteRuleGroupConfig RouteGetGrafanaRuleGroupConfig RouteDeleteGrafanaRuleGroupConfig
 type PathRouleGroupConfig struct {
+	// The UID of the rule folder
 	// in: path
 	Namespace string
 	// in: path
