@@ -1,10 +1,7 @@
 import { Meta, StoryFn } from '@storybook/react';
 import React from 'react';
 
-import { ThemeSpacingTokens } from '@grafana/data';
-
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
-import { Flex } from '../Flex/Flex';
 
 import { Grid } from './Grid';
 import mdx from './Grid.mdx';
