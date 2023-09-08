@@ -291,7 +291,6 @@ func executeDSNodesGrouped(ctx context.Context, now time.Time, vars mathexp.Vars
 			}
 		}()
 	}
-	return
 }
 
 // Execute runs the node and adds the results to vars. If the node requires
