@@ -11,7 +11,7 @@ import (
 // RuleStore is the interface for persisting alert rules and instances
 type RuleStore interface {
 	GetUserVisibleNamespaces(context.Context, int64, *user.SignedInUser) (map[string]*folder.Folder, error)
-	GetNamespaceByTitle(context.Context, string, int64, *user.SignedInUser) (*folder.Folder, error)
+	GetNamespaceByUID(context.Context, string, int64, *user.SignedInUser) (*folder.Folder, error)
 	GetAlertRulesGroupByRuleUID(ctx context.Context, query *ngmodels.GetAlertRulesGroupByRuleUIDQuery) ([]*ngmodels.AlertRule, error)
 	ListAlertRules(ctx context.Context, query *ngmodels.ListAlertRulesQuery) (ngmodels.RulesGroup, error)
 
