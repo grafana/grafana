@@ -84,7 +84,7 @@ If you're using your own logs, modify the logql query to match your own log mess
 1. Click **preview** to see a preview of the query result and alert evaluation. If you see **No Data**, verify that you changed the query type to **Range**.
 
 1. Expression B shows a table of labels and values returned. The message label captured the message string from the log line
- and the value shows the number of times that string occured during the evaluation interval.
+ and the value shows the number of times that string occurred during the evaluation interval.
 
     |   labels         |       values              |
     | ---------------- | --------------------------|
