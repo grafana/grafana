@@ -114,6 +114,7 @@ def clone_enterprise_step_pr(source = "${DRONE_COMMIT}", target = "main", canFai
             "GITHUB_TOKEN": from_secret("github_token"),
         },
         "commands": [
+            "apk add --update curl jq",
         ] + check + [
             'git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git" ' + location,
             "cd {}".format(location),
@@ -156,6 +157,7 @@ def lint_starlark_step():
         "name": "lint-starlark",
         "image": images["go"],
         "commands": [
+            "go install github.com/bazelbuild/buildtools/buildifier@latest",
             "./bin/build verify-starlark .",
         ],
         "depends_on": [
@@ -213,7 +215,7 @@ def lint_backend_step():
             "wire-install",
         ],
         "commands": [
-            "apk add --update make",
+            "apk add --update make gcc",
             # Don't use Make since it will re-download the linters
             "make lint-go",
         ],

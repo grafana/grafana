@@ -17,7 +17,7 @@ def rgm_build_backend_step(distros="linux/amd64,linux/arm64"):
         "name": "rgm-package",
         "image": "grafana/grafana-build:main",
         "commands": [
-            "./grafana-build build --distro={} --grafana-dir=$$PWD".format(distros)
+            "/src/grafana-build build --distro={} --grafana-dir=$$PWD".format(distros)
         ],
         "volumes": [{"name": "docker", "path": "/var/run/docker.sock"}],
     }
