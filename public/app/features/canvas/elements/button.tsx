@@ -25,6 +25,7 @@ export const defaultApiConfig: APIEditorConfig = {
   method: HttpRequestMethod.POST,
   data: '{}',
   paramsType: 'header',
+  params: [],
 };
 
 class ButtonDisplay extends PureComponent<CanvasElementProps<ButtonConfig, ButtonData>> {

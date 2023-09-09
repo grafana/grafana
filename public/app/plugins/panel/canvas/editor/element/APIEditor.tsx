@@ -2,18 +2,21 @@ import React, { useCallback } from 'react';
 
 import { AppEvents, StandardEditorProps, StandardEditorsRegistryItem, StringFieldConfigSettings } from '@grafana/data';
 import { config, getBackendSrv } from '@grafana/runtime';
-import { Button, InlineField, InlineFieldRow, JSONFormatter, RadioButtonGroup } from '@grafana/ui';
+import { Button, Field, InlineField, InlineFieldRow, JSONFormatter, RadioButtonGroup } from '@grafana/ui';
 import { StringValueEditor } from 'app/core/components/OptionsUI/string';
 import { appEvents } from 'app/core/core';
 import { defaultApiConfig } from 'app/features/canvas/elements/button';
 
 import { HttpRequestMethod } from '../../panelcfg.gen';
 
+import { QueryParamsEditor } from './QueryParamsEditor';
+
 export interface APIEditorConfig {
   method: string;
   endpoint: string;
   data?: string;
   paramsType: string;
+  params?: Array<[string, string]>;
 }
 
 const dummyStringSettings = {
@@ -120,6 +123,16 @@ export function APIEditor({ value, context, onChange }: Props) {
     [onChange, value]
   );
 
+  const onParamsChange = useCallback(
+    (params: Array<[string, string]>) => {
+      onChange({
+        ...value,
+        params,
+      });
+    },
+    [onChange, value]
+  );
+
   const renderJSON = (data: string) => {
     try {
       const json = JSON.parse(data);
@@ -148,7 +161,7 @@ export function APIEditor({ value, context, onChange }: Props) {
   return config.disableSanitizeHtml ? (
     <>
       <InlineFieldRow>
-        <InlineField label={'Endpoint'} labelWidth={LABEL_WIDTH} grow={true}>
+        <InlineField label="Endpoint" labelWidth={LABEL_WIDTH} grow={true}>
           <StringValueEditor
             context={context}
             value={value?.endpoint}
@@ -163,7 +176,7 @@ export function APIEditor({ value, context, onChange }: Props) {
         </InlineField>
       </InlineFieldRow>
       <InlineFieldRow>
-        <InlineField label="Type" labelWidth={LABEL_WIDTH} grow={true}>
+        <InlineField label="Type" labelWidth={LABEL_WIDTH} tooltip="How the parameters are sent" grow={true}>
           <RadioButtonGroup
             value={value?.paramsType}
             options={httpParamsType}
@@ -172,6 +185,9 @@ export function APIEditor({ value, context, onChange }: Props) {
           />
         </InlineField>
       </InlineFieldRow>
+      <Field label="Parameters" description="Query parameters">
+        <QueryParamsEditor value={value?.params ?? []} onChange={onParamsChange} />
+      </Field>
       {value?.method === HttpRequestMethod.POST && (
         <InlineFieldRow>
           <InlineField label="Payload" labelWidth={LABEL_WIDTH} grow={true}>
