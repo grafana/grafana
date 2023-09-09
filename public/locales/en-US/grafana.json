@@ -213,9 +213,11 @@
     }
   },
   "data-sources": {
-    "advanced-datasource-picker": "Open advanced data source picker",
     "datasource-add-button": {
       "label": "Add new data source"
+    },
+    "picker": {
+      "open-advanced-button": "Open advanced data source picker"
     }
   },
   "explore": {
@@ -223,6 +225,8 @@
     "toolbar": {
       "aria-label": "Explore toolbar",
       "copy-shortened-link": "Copy shortened link",
+      "refresh-picker-cancel": "Cancel",
+      "refresh-picker-run": "Run query",
       "split-close": "Close",
       "split-close-tooltip": "Close split pane",
       "split-narrow": "Narrow pane",
@@ -237,10 +241,6 @@
   "grafana-ui": {
     "modal": {
       "close-tooltip": "Close"
-    },
-    "refresh-picker": {
-      "cancel": "Cancel",
-      "run-query": "Run query"
     },
     "segment-async": {
       "error": "Failed to load options",

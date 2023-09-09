@@ -66,6 +66,10 @@ export function ExploreToolbar({ exploreId, topOfViewRef, onChangeTime }: Props)
     [isLargerPane, exploreId, panes]
   );
 
+  const refreshPickerLabel = loading
+    ? t('explore.toolbar.refresh-picker-cancel', 'Cancel')
+    : t('explore.toolbar.refresh-picker-run', 'Run query');
+
   const onCopyShortLink = () => {
     createAndCopyShortLink(global.location.href);
     reportInteraction('grafana_explore_shortened_link_clicked');
@@ -208,20 +212,8 @@ export function ExploreToolbar({ exploreId, topOfViewRef, onChangeTime }: Props)
             onIntervalChanged={onChangeRefreshInterval}
             value={refreshInterval}
             isLoading={loading}
-            text={
-              showSmallTimePicker
-                ? undefined
-                : loading
-                ? t('grafana-ui.refresh-picker.cancel', 'Cancel')
-                : t('grafana-ui.refresh-picker.run-query', 'Run query')
-            }
-            tooltip={
-              showSmallTimePicker
-                ? loading
-                  ? t('grafana-ui.refresh-picker.cancel', 'Cancel')
-                  : t('grafana-ui.refresh-picker.run-query', 'Run query')
-                : undefined
-            }
+            text={showSmallTimePicker ? undefined : refreshPickerLabel}
+            tooltip={showSmallTimePicker ? refreshPickerLabel : undefined}
             intervals={contextSrv.getValidIntervals(defaultIntervals)}
             isLive={isLive}
             onRefresh={() => onRunQuery(loading)}
