@@ -21,6 +21,10 @@ export function transformSceneToSaveModel(scene: DashboardScene): Dashboard {
       }
 
       if (child instanceof SceneGridRow) {
+        // Skip repeat clones
+        if (child.state.key!.indexOf('-clone-') > 0) {
+          continue;
+        }
         gridRowToSaveModel(child, panels);
       }
     }

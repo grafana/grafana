@@ -1,4 +1,4 @@
-import { sceneGraph, SceneObject, VizPanel } from '@grafana/scenes';
+import { MultiValueVariable, sceneGraph, SceneObject, VizPanel } from '@grafana/scenes';
 
 export function getVizPanelKeyForPanelId(panelId: number) {
   return `panel-${panelId}`;
@@ -65,4 +65,20 @@ export function forceRenderChildren(model: SceneObject, recursive?: boolean) {
     child.forceRender();
     forceRenderChildren(child, recursive);
   });
+}
+
+export function getMultiVariableValues(variable: MultiValueVariable) {
+  const { value, text, options } = variable.state;
+
+  if (variable.hasAllValue()) {
+    return {
+      values: options.map((o) => o.value),
+      texts: options.map((o) => o.label),
+    };
+  }
+
+  return {
+    values: Array.isArray(value) ? value : [value],
+    texts: Array.isArray(text) ? text : [text],
+  };
 }

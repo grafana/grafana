@@ -13,6 +13,8 @@ import {
   VariableValueSingle,
 } from '@grafana/scenes';
 
+import { getMultiVariableValues } from '../utils/utils';
+
 interface RowRepeaterBehaviorState extends SceneObjectState {
   variableName: string;
   sources: SceneGridItemLike[];
@@ -84,7 +86,7 @@ export class RowRepeaterBehavior extends SceneObjectBase<RowRepeaterBehaviorStat
     }
 
     const rowToRepeat = this.parent as SceneGridRow;
-    const { values, texts } = this.getVariableValues(variable);
+    const { values, texts } = getMultiVariableValues(variable);
     const rows: SceneGridRow[] = [];
     const rowContentHeight = getRowContentHeight(this.state.sources);
     let maxYOfRows = 0;
@@ -150,25 +152,6 @@ export class RowRepeaterBehavior extends SceneObjectBase<RowRepeaterBehaviorStat
       children,
       y: sourceRowY + rowContentHeight * index + index,
     });
-  }
-
-  private getVariableValues(variable: MultiValueVariable): {
-    values: VariableValueSingle[];
-    texts: VariableValueSingle[];
-  } {
-    const { value, text, options } = variable.state;
-
-    if (variable.hasAllValue()) {
-      return {
-        values: options.map((o) => o.value),
-        texts: options.map((o) => o.label),
-      };
-    }
-
-    return {
-      values: Array.isArray(value) ? value : [value],
-      texts: Array.isArray(text) ? text : [text],
-    };
   }
 }
 
