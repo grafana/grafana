@@ -95,16 +95,16 @@ export const decorateWithFrameTypeMetadata = (data: PanelData): ExplorePanelData
 };
 
 export const decorateWithCorrelations = ({
-  isCorrelationsEditorMode,
+  showCorrelationEditorLinks,
   queries,
   correlations,
 }: {
-  isCorrelationsEditorMode: boolean;
+  showCorrelationEditorLinks: boolean;
   queries: DataQuery[] | undefined;
   correlations: CorrelationData[] | undefined;
 }) => {
   return (data: PanelData): PanelData => {
-    if (isCorrelationsEditorMode) {
+    if (showCorrelationEditorLinks) {
       for (const frame of data.series) {
         for (const field of frame.fields) {
           field.config.links = []; // hide all previous links, we only want to show fake correlations in this view
@@ -284,11 +284,11 @@ export function decorateData(
   refreshInterval: string | undefined,
   queries: DataQuery[] | undefined,
   correlations: CorrelationData[] | undefined,
-  isCorrelationsEditorMode: boolean
+  showCorrelationEditorLinks: boolean
 ): Observable<ExplorePanelData> {
   return of(data).pipe(
     map((data: PanelData) => preProcessPanelData(data, queryResponse)),
-    map(decorateWithCorrelations({ isCorrelationsEditorMode, queries, correlations })),
+    map(decorateWithCorrelations({ showCorrelationEditorLinks, queries, correlations })),
     map(decorateWithFrameTypeMetadata),
     map(decorateWithGraphResult),
     map(decorateWithLogsResult({ absoluteRange, refreshInterval, queries })),

@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import React, { useEffect, useState } from 'react';
 import { Prompt } from 'react-router-dom';
-import { useBeforeUnload } from 'react-use';
+import { useBeforeUnload, usePrevious } from 'react-use';
 
 import { GrafanaTheme2, colorManipulator } from '@grafana/data';
 import { Button, HorizontalGroup, Icon, Tooltip, useStyles2 } from '@grafana/ui';
@@ -26,13 +26,14 @@ export const CorrelationEditorModeBar = ({
   const correlationDetails = useSelector(selectCorrelationDetails);
   const correlationsEditorMode = useSelector(selectCorrelationEditorMode);
   const [showSavePrompt, setShowSavePrompt] = useState(false);
+  const prevShow = usePrevious(toShow);
 
   // handle refreshing and closing the tab
   useBeforeUnload(correlationDetails?.dirty || false, 'Save correlation?');
 
-  // clear data when unmounted
+  // clear data when being hidden
   useEffect(() => {
-    return () => {
+    if (prevShow && !toShow) {
       setShowSavePrompt(false);
       dispatch(
         changeCorrelationEditorDetails({ editorMode: false, label: undefined, description: undefined, canSave: false })
@@ -41,9 +42,9 @@ export const CorrelationEditorModeBar = ({
         dispatch(removeCorrelationHelperData(pane[0]));
         dispatch(runQueries({ exploreId: pane[0] }));
       });
-    };
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [toShow, prevShow]);
 
   // handle exiting (staying within explore)
   useEffect(() => {

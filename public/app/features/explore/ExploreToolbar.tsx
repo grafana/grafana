@@ -108,6 +108,24 @@ export function ExploreToolbar({ exploreId, topOfViewRef, onChangeTime }: Props)
   };
 
   const onCloseSplitView = () => {
+    if (isCorrelationsEditorMode) {
+      dispatch(
+        changeCorrelationEditorDetails({
+          label: undefined,
+          description: undefined,
+          canSave: false,
+          dirty: false,
+        })
+      );
+
+      panes.forEach((pane) => {
+        dispatch(removeCorrelationHelperData(pane[0]));
+        if (pane[0] !== exploreId) {
+          dispatch(runQueries({ exploreId: pane[0] }));
+        }
+      });
+    }
+
     dispatch(splitClose(exploreId));
     reportInteraction('grafana_explore_split_view_closed');
   };

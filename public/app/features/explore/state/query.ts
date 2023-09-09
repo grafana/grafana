@@ -502,6 +502,7 @@ export const runQueries = createAsyncThunk<void, RunQueriesOptions>(
     }
 
     const exploreItemState = getState().explore.panes[exploreId]!;
+
     const {
       datasourceInstance,
       containerWidth,
@@ -516,6 +517,7 @@ export const runQueries = createAsyncThunk<void, RunQueriesOptions>(
       supplementaryQueries,
     } = exploreItemState;
     const isCorrelationEditorMode = getState().explore.correlationEditorDetails?.editorMode || false;
+    const isLeftPane = Object.entries(getState().explore.panes)[0][0] === exploreId;
     let newQuerySource: Observable<ExplorePanelData>;
     let newQuerySubscription: SubscriptionLike;
 
@@ -541,7 +543,7 @@ export const runQueries = createAsyncThunk<void, RunQueriesOptions>(
             refreshInterval,
             queries,
             correlations,
-            isCorrelationEditorMode
+            isCorrelationEditorMode && isLeftPane
           )
         )
       );
@@ -595,7 +597,7 @@ export const runQueries = createAsyncThunk<void, RunQueriesOptions>(
             refreshInterval,
             queries,
             correlations,
-            isCorrelationEditorMode
+            isCorrelationEditorMode && isLeftPane
           )
         )
       );
