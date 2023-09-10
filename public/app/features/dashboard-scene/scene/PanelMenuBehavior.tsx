@@ -53,7 +53,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
     text: t('panel.header-menu.inspect', `Inspect`),
     iconClassName: 'info-circle',
     shortcut: 'i',
-    href: locationUtil.getUrlForPartial(location, { inspect: getPanelIdForVizPanel(panel) }),
+    href: locationUtil.getUrlForPartial(location, { inspect: panel.state.key }),
   });
 
   menu.setState({ items });

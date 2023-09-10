@@ -5,7 +5,18 @@ import { FieldArrayMethodProps, useFieldArray, useFormContext } from 'react-hook
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
-import { Button, Field, InlineLabel, Label, useStyles2, Tooltip, Icon, Input, LoadingPlaceholder } from '@grafana/ui';
+import {
+  Button,
+  Field,
+  InlineLabel,
+  Label,
+  useStyles2,
+  Text,
+  Tooltip,
+  Icon,
+  Input,
+  LoadingPlaceholder,
+} from '@grafana/ui';
 import { useDispatch } from 'app/types';
 import { RulerRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
@@ -129,7 +140,7 @@ const LabelsWithSuggestions: FC<{ dataSourceName: string }> = ({ dataSourceName 
     <>
       {loading && <LoadingPlaceholder text="Loading" />}
       {!loading && (
-        <>
+        <Stack direction="column" gap={0.5}>
           {fields.map((field, index) => {
             return (
               <div key={field.id}>
@@ -182,7 +193,7 @@ const LabelsWithSuggestions: FC<{ dataSourceName: string }> = ({ dataSourceName 
             );
           })}
           <AddButton className={styles.addLabelButton} append={append} />
-        </>
+        </Stack>
       )}
     </>
   );
@@ -245,14 +256,16 @@ const LabelsWithoutSuggestions: FC = () => {
   );
 };
 
-const LabelsField: FC<Props> = ({ className, dataSourceName }) => {
+const LabelsField: FC<Props> = ({ dataSourceName }) => {
   const styles = useStyles2(getStyles);
 
   return (
-    <div className={cx(className, styles.wrapper)}>
-      <Label>
-        <Stack gap={0.5}>
-          <span>Custom Labels</span>
+    <div>
+      <Label description="A set of default labels is automatically added. Add additional labels as required.">
+        <Stack gap={0.5} alignItems="center">
+          <Text variant="bodySmall" color="primary">
+            Labels
+          </Text>
           <Tooltip
             content={
               <div>
@@ -265,15 +278,7 @@ const LabelsField: FC<Props> = ({ className, dataSourceName }) => {
           </Tooltip>
         </Stack>
       </Label>
-      <>
-        <div className={styles.flexRow}>
-          <InlineLabel width={18}>Labels</InlineLabel>
-          <div className={styles.flexColumn}>
-            {dataSourceName && <LabelsWithSuggestions dataSourceName={dataSourceName} />}
-            {!dataSourceName && <LabelsWithoutSuggestions />}
-          </div>
-        </div>
-      </>
+      {dataSourceName ? <LabelsWithSuggestions dataSourceName={dataSourceName} /> : <LabelsWithoutSuggestions />}
     </div>
   );
 };
@@ -282,9 +287,6 @@ const getStyles = (theme: GrafanaTheme2) => {
   return {
     icon: css`
       margin-right: ${theme.spacing(0.5)};
-    `,
-    wrapper: css`
-      margin-bottom: ${theme.spacing(4)};
     `,
     flexColumn: css`
       display: flex;
@@ -318,7 +320,8 @@ const getStyles = (theme: GrafanaTheme2) => {
     `,
     labelInput: css`
       width: 175px;
-      margin-bottom: ${theme.spacing(1)};
+      margin-bottom: -${theme.spacing(1)};
+
       & + & {
         margin-left: ${theme.spacing(1)};
       }

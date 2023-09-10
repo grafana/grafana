@@ -13,9 +13,9 @@ __metadata:
   linkType: hard
 
 "@adobe/css-tools@npm:^4.0.1":
-  version: 4.0.1
-  resolution: "@adobe/css-tools@npm:4.0.1"
-  checksum: 80226e2229024c21da9ffa6b5cd4a34b931f071e06f45aba4777ade071d7a6c94605cf73b13718b0c4b34e8b124c65c607b82eaa53a326d3eb73d9682a04a593
+  version: 4.3.1
+  resolution: "@adobe/css-tools@npm:4.3.1"
+  checksum: ad43456379ff391132aff687ece190cb23ea69395e23c9b96690eeabe2468da89a4aaf266e4f8b6eaab53db3d1064107ce0f63c3a974e864f4a04affc768da3f
   languageName: node
   linkType: hard
 
@@ -3613,13 +3613,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/aws-sdk@npm:0.1.2":
-  version: 0.1.2
-  resolution: "@grafana/aws-sdk@npm:0.1.2"
+"@grafana/aws-sdk@npm:0.1.3":
+  version: 0.1.3
+  resolution: "@grafana/aws-sdk@npm:0.1.3"
   dependencies:
     "@grafana/async-query-data": 0.1.4
     "@grafana/experimental": 1.1.0
-  checksum: ea0248c8458caeccfb5326db60fba36692868bf71ed17cb9aa9c6797e6acb9a90687cceaa274416841935b2f2ba362f80dec22f603351f180724f56bf2ed0450
+  checksum: 9126354c52722c029ed3d597576577502e17566375e711aa64e8df39277092a3269aa45b1c66d0873736276535decdcbb4618b7afde21418dc0a60268f2e69c8
   languageName: node
   linkType: hard
 
@@ -3720,7 +3720,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/e2e@workspace:*, @grafana/e2e@workspace:packages/grafana-e2e":
+"@grafana/e2e@workspace:packages/grafana-e2e":
   version: 0.0.0-use.local
   resolution: "@grafana/e2e@workspace:packages/grafana-e2e"
   dependencies:
@@ -3877,12 +3877,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/lezer-traceql@npm:0.0.4":
-  version: 0.0.4
-  resolution: "@grafana/lezer-traceql@npm:0.0.4"
+"@grafana/lezer-traceql@npm:0.0.5":
+  version: 0.0.5
+  resolution: "@grafana/lezer-traceql@npm:0.0.5"
   peerDependencies:
     "@lezer/lr": ^1.3.0
-  checksum: 69acea33476d3cdabfb99f3eb62bb34289bc205da69920e0eccc82f40407f9d584fa03f9662706ab667ee97d3ea84b964b22a11925e6699deef5afe1ca9e1906
+  checksum: 6fcf48acde1e444c155a4b4009f4c7211843b07960713821a2649b1db0e0ef819fd1062eec101173c2e6b8249b253faf0b6052e96f551663618fd2fe0d17e3c9
   languageName: node
   linkType: hard
 
@@ -3930,7 +3930,7 @@ __metadata:
     rollup-plugin-terser: 7.0.2
     rxjs: 7.8.1
     systemjs: 6.14.2
-    systemjs-cjs-extra: 0.1.0
+    systemjs-cjs-extra: 0.1.1
     tslib: 2.6.0
     typescript: 4.8.4
   peerDependencies:
@@ -3974,22 +3974,6 @@ __metadata:
     rollup-plugin-node-externals: ^5.0.0
     tslib: 2.6.0
     typescript: 4.8.4
-  languageName: unknown
-  linkType: soft
-
-"@grafana/toolkit@workspace:*, @grafana/toolkit@workspace:packages/grafana-toolkit":
-  version: 0.0.0-use.local
-  resolution: "@grafana/toolkit@workspace:packages/grafana-toolkit"
-  dependencies:
-    "@grafana/tsconfig": ^1.2.0-rc1
-    "@types/node": 16.11.26
-    chalk: ^4.1.2
-    commander: ^9.2.0
-    ts-node: ^9.1.0
-    tslib: 2.5.0
-    typescript: 4.8.2
-  bin:
-    grafana-toolkit: ./bin/grafana-toolkit.js
   languageName: unknown
   linkType: soft
 
@@ -10288,13 +10272,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/node@npm:16.11.26":
-  version: 16.11.26
-  resolution: "@types/node@npm:16.11.26"
-  checksum: 57757caaba3f0d95de82198cb276a1002c49b710108c932a1d02d7c91ff2fa57cfe2dd19fde60853b6dd90b0964b3cf35557981d2628e20aed6a909057aedfe6
-  languageName: node
-  linkType: hard
-
 "@types/node@npm:18.16.16":
   version: 18.16.16
   resolution: "@types/node@npm:18.16.16"
@@ -14354,13 +14331,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"commander@npm:^9.2.0":
-  version: 9.2.0
-  resolution: "commander@npm:9.2.0"
-  checksum: 7c82e4cd969712aa6d7c055b8351807a7230f9f31ef7ec7881e11a1147511de85adf5d6ccfd200240a118eecf693b220caf6865b8efbcea558a70d35aa9ed711
-  languageName: node
-  linkType: hard
-
 "commander@npm:^9.4.0":
   version: 9.4.0
   resolution: "commander@npm:9.4.0"
@@ -15235,6 +15205,58 @@ __metadata:
   peerDependencies:
     cypress: ">3.0.0"
   checksum: 9c70ca7e0bb137d0ec0b8d38987219ce15b26ac3a40e3ed4e78e6ad4690392eab905586848eec6ad8edd42ee480e68ccc63007b2ebd0a02f4b3eca116ff017e3
+  languageName: node
+  linkType: hard
+
+"cypress@npm:12.15.0":
+  version: 12.15.0
+  resolution: "cypress@npm:12.15.0"
+  dependencies:
+    "@cypress/request": ^2.88.10
+    "@cypress/xvfb": ^1.2.4
+    "@types/node": ^14.14.31
+    "@types/sinonjs__fake-timers": 8.1.1
+    "@types/sizzle": ^2.3.2
+    arch: ^2.2.0
+    blob-util: ^2.0.2
+    bluebird: ^3.7.2
+    buffer: ^5.6.0
+    cachedir: ^2.3.0
+    chalk: ^4.1.0
+    check-more-types: ^2.24.0
+    cli-cursor: ^3.1.0
+    cli-table3: ~0.6.1
+    commander: ^6.2.1
+    common-tags: ^1.8.0
+    dayjs: ^1.10.4
+    debug: ^4.3.4
+    enquirer: ^2.3.6
+    eventemitter2: 6.4.7
+    execa: 4.1.0
+    executable: ^4.1.1
+    extract-zip: 2.0.1
+    figures: ^3.2.0
+    fs-extra: ^9.1.0
+    getos: ^3.2.1
+    is-ci: ^3.0.0
+    is-installed-globally: ~0.4.0
+    lazy-ass: ^1.6.0
+    listr2: ^3.8.3
+    lodash: ^4.17.21
+    log-symbols: ^4.0.0
+    minimist: ^1.2.8
+    ospath: ^1.2.2
+    pretty-bytes: ^5.6.0
+    proxy-from-env: 1.0.0
+    request-progress: ^3.0.0
+    semver: ^7.3.2
+    supports-color: ^8.1.1
+    tmp: ~0.2.1
+    untildify: ^4.0.0
+    yauzl: ^2.10.0
+  bin:
+    cypress: bin/cypress
+  checksum: a1989386bc0843377526c71d60a7c2d64593fbf3209cd5986cb684653d1092007add9d83910906b85e1801637206dd5fa5ce9627c6ada3a20a3a82ec5c2f4d7a
   languageName: node
   linkType: hard
 
@@ -17657,6 +17679,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"eventemitter2@npm:6.4.7":
+  version: 6.4.7
+  resolution: "eventemitter2@npm:6.4.7"
+  checksum: 1b36a77e139d6965ebf3a36c01fa00c089ae6b80faa1911e52888f40b3a7057b36a2cc45dcd1ad87cda3798fe7b97a0aabcbb8175a8b96092a23bb7d0f039e66
+  languageName: node
+  linkType: hard
+
 "eventemitter2@npm:^6.4.3":
   version: 6.4.9
   resolution: "eventemitter2@npm:6.4.9"
@@ -19239,15 +19268,15 @@ __metadata:
     "@betterer/cli": 5.4.0
     "@betterer/eslint": 5.4.0
     "@betterer/regexp": 5.4.0
+    "@cypress/webpack-preprocessor": 5.17.1
     "@daybrush/utils": 1.13.0
     "@emotion/css": 11.11.2
     "@emotion/eslint-plugin": 11.11.0
     "@emotion/react": 11.11.1
     "@fingerprintjs/fingerprintjs": ^3.4.2
     "@glideapps/glide-data-grid": ^5.2.1
-    "@grafana/aws-sdk": 0.1.2
+    "@grafana/aws-sdk": 0.1.3
     "@grafana/data": "workspace:*"
-    "@grafana/e2e": "workspace:*"
     "@grafana/e2e-selectors": "workspace:*"
     "@grafana/eslint-config": 6.0.1
     "@grafana/eslint-plugin": "link:./packages/grafana-eslint-rules"
@@ -19256,12 +19285,11 @@ __metadata:
     "@grafana/faro-web-sdk": 1.1.2
     "@grafana/google-sdk": 0.1.1
     "@grafana/lezer-logql": 0.1.11
-    "@grafana/lezer-traceql": 0.0.4
+    "@grafana/lezer-traceql": 0.0.5
     "@grafana/monaco-logql": ^0.0.7
     "@grafana/runtime": "workspace:*"
     "@grafana/scenes": ^1.1.1
     "@grafana/schema": "workspace:*"
-    "@grafana/toolkit": "workspace:*"
     "@grafana/tsconfig": ^1.3.0-rc1
     "@grafana/ui": "workspace:*"
     "@kusto/monaco-kusto": ^7.4.0
@@ -19379,12 +19407,14 @@ __metadata:
     babel-plugin-angularjs-annotate: 0.10.0
     babel-plugin-macros: 3.1.0
     baron: 3.0.3
+    blink-diff: 1.0.13
     blob-polyfill: 7.0.20220408
     brace: 0.11.1
     browserslist: ^4.21.4
     calculate-size: 1.1.1
     centrifuge: 4.0.1
     chance: ^1.0.10
+    chrome-remote-interface: 0.32.2
     classnames: 2.3.2
     codeowners: ^5.1.1
     combokeys: ^3.0.0
@@ -19394,7 +19424,8 @@ __metadata:
     core-js: 3.31.1
     css-loader: 6.8.1
     css-minimizer-webpack-plugin: 5.0.1
-    cypress: 9.5.1
+    cypress: 12.15.0
+    cypress-file-upload: 5.0.8
     d3: 7.8.5
     d3-force: 3.0.0
     d3-scale-chromatic: 3.0.0
@@ -19548,6 +19579,7 @@ __metadata:
     testing-library-selector: 0.2.1
     tether-drop: "https://github.com/torkelo/drop"
     tinycolor2: 1.6.0
+    tracelib: 1.0.1
     ts-jest: 29.1.1
     ts-loader: 9.3.1
     ts-node: 10.9.1
@@ -19567,6 +19599,7 @@ __metadata:
     webpack-merge: 5.9.0
     whatwg-fetch: 3.6.2
     xlsx: "https://cdn.sheetjs.com/xlsx-0.19.1/xlsx-0.19.1.tgz"
+    yaml: ^2.0.0
     yargs: ^17.5.1
   dependenciesMeta:
     prettier@3.0.0:
@@ -23703,7 +23736,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"minimist@npm:^1.2.7":
+"minimist@npm:^1.2.7, minimist@npm:^1.2.8":
   version: 1.2.8
   resolution: "minimist@npm:1.2.8"
   checksum: 75a6d645fb122dad29c06a7597bddea977258957ed88d7a6df59b5cd3fe4a527e253e9bbf2e783e4b73657f9098b96a5fe96ab8a113655d4109108577ecf85b0
@@ -29809,7 +29842,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"source-map-support@npm:^0.5.16, source-map-support@npm:^0.5.17":
+"source-map-support@npm:^0.5.16":
   version: 0.5.21
   resolution: "source-map-support@npm:0.5.21"
   dependencies:
@@ -30706,10 +30739,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"systemjs-cjs-extra@npm:0.1.0":
-  version: 0.1.0
-  resolution: "systemjs-cjs-extra@npm:0.1.0"
-  checksum: 09169416c858e43671e988f05f2c14fe2fa923472619983fce44aa946493337bdda0a6c28ea8aeded0c2d3dfa62ad6d8479944144b451c0492f7a505e7b18813
+"systemjs-cjs-extra@npm:0.1.1":
+  version: 0.1.1
+  resolution: "systemjs-cjs-extra@npm:0.1.1"
+  checksum: 5b2880a5ec95b995ab3e1396c8c7fb2e089ad768a4843e915ff97e75bd255ef8d1f9cd79869eb1b42d9ee7bdd64d9f8d0385d25d82992d5c11e8cacc3b896417
   languageName: node
   linkType: hard
 
@@ -31502,27 +31535,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ts-node@npm:^9.1.0":
-  version: 9.1.1
-  resolution: "ts-node@npm:9.1.1"
-  dependencies:
-    arg: ^4.1.0
-    create-require: ^1.1.0
-    diff: ^4.0.1
-    make-error: ^1.1.1
-    source-map-support: ^0.5.17
-    yn: 3.1.1
-  peerDependencies:
-    typescript: ">=2.7"
-  bin:
-    ts-node: dist/bin.js
-    ts-node-script: dist/bin-script.js
-    ts-node-transpile-only: dist/bin-transpile.js
-    ts-script: dist/bin-script-deprecated.js
-  checksum: 356e2647b8b1e6ab00380c0537fa569b63bd9b6f006cc40fd650f81fae1817bd8fecc075300036950d8f45c1d85b95be33cd1e48a1a424a7d86c3dbb42bf60e5
-  languageName: node
-  linkType: hard
-
 "ts-toolbelt@npm:^9.6.0":
   version: 9.6.0
   resolution: "ts-toolbelt@npm:9.6.0"
@@ -31752,16 +31764,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"typescript@npm:4.8.2":
-  version: 4.8.2
-  resolution: "typescript@npm:4.8.2"
-  bin:
-    tsc: bin/tsc
-    tsserver: bin/tsserver
-  checksum: 7f5b81d0d558c9067f952c7af52ab7f19c2e70a916817929e4a5b256c93990bf3178eccb1ac8a850bc75df35f6781b6f4cb3370ce20d8b1ded92ed462348f628
-  languageName: node
-  linkType: hard
-
 "typescript@npm:4.8.4, typescript@npm:^3 || ^4":
   version: 4.8.4
   resolution: "typescript@npm:4.8.4"
@@ -31789,16 +31791,6 @@ __metadata:
     tsc: bin/tsc
     tsserver: bin/tsserver
   checksum: 8286a5edcaf3d68e65c451aa1e7150ad1cf53ee0813c07ec35b7abdfdb10f355ecaa13c6a226a694ae7a67785fd7eeebf89f845da0b4f7e4a35561ddc459aba0
-  languageName: node
-  linkType: hard
-
-"typescript@patch:typescript@4.8.2#~builtin<compat/typescript>":
-  version: 4.8.2
-  resolution: "typescript@patch:typescript@npm%3A4.8.2#~builtin<compat/typescript>::version=4.8.2&hash=3b564f"
-  bin:
-    tsc: bin/tsc
-    tsserver: bin/tsserver
-  checksum: 28e130a49d9330b64b8229ad336247bf980e9a705c5850f30a859a68c051e8e68e367b3275f119da4a825dca71ad0fe315964a1315d4a381c0021bca5eeeb62e
   languageName: node
   linkType: hard
 

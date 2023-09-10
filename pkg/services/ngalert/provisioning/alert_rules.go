@@ -112,6 +112,8 @@ func (service *AlertRuleService) GetAlertRuleWithFolderTitle(ctx context.Context
 func (service *AlertRuleService) CreateAlertRule(ctx context.Context, rule models.AlertRule, provenance models.Provenance, userID int64) (models.AlertRule, error) {
 	if rule.UID == "" {
 		rule.UID = util.GenerateShortUID()
+	} else if err := util.ValidateUID(rule.UID); err != nil {
+		return models.AlertRule{}, errors.Join(models.ErrAlertRuleFailedValidation, fmt.Errorf("cannot create rule with UID '%s': %w", rule.UID, err))
 	}
 	interval, err := service.ruleStore.GetRuleGroupInterval(ctx, rule.OrgID, rule.NamespaceUID, rule.RuleGroup)
 	// if the alert group does not exists we just use the default interval
@@ -404,7 +406,7 @@ func (service *AlertRuleService) deleteRules(ctx context.Context, orgID int64, t
 	for _, uid := range uids {
 		if err := service.provenanceStore.DeleteProvenance(ctx, &models.AlertRule{UID: uid}, orgID); err != nil {
 			// We failed to clean up the record, but this doesn't break things. Log it and move on.
-			service.log.Warn("failed to delete provenance record for rule: %w", err)
+			service.log.Warn("Failed to delete provenance record for rule: %w", err)
 		}
 	}
 	return nil
@@ -452,10 +454,13 @@ func (service *AlertRuleService) GetAlertRuleGroupWithFolderTitle(ctx context.Co
 	return res, nil
 }
 
-// GetAlertGroupsWithFolderTitle returns all groups with folder title that have at least one alert.
-func (service *AlertRuleService) GetAlertGroupsWithFolderTitle(ctx context.Context, orgID int64) ([]models.AlertRuleGroupWithFolderTitle, error) {
+// GetAlertGroupsWithFolderTitle returns all groups with folder title in the folder identified by folderUID that have at least one alert. If argument folderUID is an empty string - returns groups in all folders.
+func (service *AlertRuleService) GetAlertGroupsWithFolderTitle(ctx context.Context, orgID int64, folderUID string) ([]models.AlertRuleGroupWithFolderTitle, error) {
 	q := models.ListAlertRulesQuery{
 		OrgID: orgID,
+	}
+	if folderUID != "" {
+		q.NamespaceUIDs = []string{folderUID}
 	}
 
 	ruleList, err := service.ruleStore.ListAlertRules(ctx, &q)
