@@ -844,6 +844,18 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					PropertyName: "parse_mode",
 				},
 				{
+					Label:        "Disable Web Page Preview",
+					Description:  "Sends the message without showing the web page preview.",
+					Element:      ElementTypeCheckbox,
+					PropertyName: "disable_web_page_preview",
+				},
+				{
+					Label:        "Protect Content",
+					Description:  "Messages will be protected from forwarding and saving.",
+					Element:      ElementTypeCheckbox,
+					PropertyName: "protect_content",
+				},
+				{
 					Label:        "Disable Notification",
 					Description:  "Sends the message silently. Users will receive a notification with no sound.",
 					Element:      ElementTypeCheckbox,

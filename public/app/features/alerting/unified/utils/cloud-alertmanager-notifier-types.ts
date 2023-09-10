@@ -377,6 +377,12 @@ export const cloudNotifierTypes: Array<NotifierDTO<CloudNotifierType>> = [
       option('message', 'Message', 'Message template', {
         placeholder: '{{ template "webex.default.message" .}}',
       }),
+      option('disable_web_page_preview', 'Disable web page preview', 'Disable web page preview in telegram messages', {
+        element: 'checkbox',
+      }),
+      option('protect_content', 'Protect content', 'Disable forward and save messages on telegram', {
+        element: 'checkbox',
+      }),
       option('disable_notifications', 'Disable notifications', 'Disable telegram notifications', {
         element: 'checkbox',
       }),
