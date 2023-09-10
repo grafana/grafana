@@ -39,9 +39,7 @@ const getRequest = (api: APIEditorConfig) => {
       requestHeaders.push([param[0], param[1]]);
     });
   } else if (api.paramsType === 'query') {
-    requestOptions.endpoint = api.endpoint + '?'
-      + api.params?.map((param) => param[0]
-      + '=' + param[1]).join('&');
+    requestOptions.endpoint = api.endpoint + '?' + api.params?.map((param) => param[0] + '=' + param[1]).join('&');
   }
 
   if (api.method === HttpRequestMethod.POST) {
@@ -51,7 +49,7 @@ const getRequest = (api: APIEditorConfig) => {
   requestOptions.headers = requestHeaders;
 
   return requestOptions;
-}
+};
 
 export const callApi = (api: APIEditorConfig, isTest = false) => {
   if (api && api.endpoint) {
