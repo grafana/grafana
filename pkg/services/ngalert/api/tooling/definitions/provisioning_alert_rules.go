@@ -108,7 +108,11 @@ type AlertRuleHeaders struct {
 type ProvisionedAlertRules []ProvisionedAlertRule
 
 type ProvisionedAlertRule struct {
-	ID  int64  `json:"id"`
+	ID int64 `json:"id"`
+	// required: false
+	// minLength: 1
+	// maxLength: 40
+	// pattern: ^[a-zA-Z0-9-_]+$
 	UID string `json:"uid"`
 	// required: true
 	OrgID int64 `json:"orgID"`
