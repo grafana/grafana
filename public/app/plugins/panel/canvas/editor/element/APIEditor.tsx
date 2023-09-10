@@ -23,14 +23,40 @@ const dummyStringSettings = {
   settings: {},
 } as StandardEditorsRegistryItem<string, StringFieldConfigSettings>;
 
+const getRequest = (api: APIEditorConfig) => {
+  const requestHeaders: HeadersInit = [];
+
+  let requestOptions: any = {
+    endpoint: api.endpoint,
+    method: api.method,
+    url: api.endpoint,
+    data: getData(api),
+    headers: requestHeaders,
+  };
+
+  if (api.paramsType === 'header') {
+    api.params?.forEach((param) => {
+      requestHeaders.push([param[0], param[1]]);
+    });
+  } else if (api.paramsType === 'query') {
+    requestOptions.endpoint = api.endpoint + '?'
+      + api.params?.map((param) => param[0]
+      + '=' + param[1]).join('&');
+  }
+
+  if (api.method === HttpRequestMethod.POST) {
+    requestHeaders.push(['Content-Type', 'application/json']);
+  }
+
+  requestOptions.headers = requestHeaders;
+
+  return requestOptions;
+}
+
 export const callApi = (api: APIEditorConfig, isTest = false) => {
   if (api && api.endpoint) {
     getBackendSrv()
-      .fetch({
-        url: api.endpoint,
-        method: api.method,
-        data: getData(api),
-      })
+      .fetch(getRequest(api))
       .subscribe({
         error: (error) => {
           if (isTest) {
