@@ -818,7 +818,8 @@
       "select-time": "Select a time range"
     },
     "content": {
-      "empty-recent-list": "<0><0>It looks like you haven't used this time picker before. As soon as you enter some time intervals, recently used intervals will appear here.</0></0><1><0>Read the documentation</0><1> to find out more about how to enter custom time ranges.</1></1>",
+      "empty-recent-list1": "It looks like you haven't used this time picker before. As soon as you enter some time intervals, recently used intervals will appear here.",
+      "empty-recent-list2": "<0><0>Read the documentation</0><1> to find out more about how to enter custom time ranges.</1></0>",
       "filter-placeholder": "Search quick ranges"
     },
     "footer": {
