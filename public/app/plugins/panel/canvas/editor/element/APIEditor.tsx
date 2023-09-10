@@ -212,16 +212,14 @@ export function APIEditor({ value, context, onChange }: Props) {
         <QueryParamsEditor value={value?.params ?? []} onChange={onParamsChange} />
       </Field>
       {value?.method === HttpRequestMethod.POST && (
-        <InlineFieldRow>
-          <InlineField label="Payload" labelWidth={LABEL_WIDTH} grow={true}>
-            <StringValueEditor
-              context={context}
-              value={value?.data ?? '{}'}
-              onChange={onDataChange}
-              item={dummyStringSettings}
-            />
-          </InlineField>
-        </InlineFieldRow>
+        <Field label="Payload">
+          <StringValueEditor
+            context={context}
+            value={value?.data ?? '{}'}
+            onChange={onDataChange}
+            item={{...dummyStringSettings, settings: {useTextarea: true}}}
+          />
+        </Field>
       )}
       {renderTestAPIButton(value)}
       <br />
