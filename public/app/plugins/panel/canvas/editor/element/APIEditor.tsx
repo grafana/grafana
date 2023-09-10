@@ -1,7 +1,7 @@
 import React, { useCallback } from 'react';
 
 import { AppEvents, StandardEditorProps, StandardEditorsRegistryItem, StringFieldConfigSettings } from '@grafana/data';
-import { config, getBackendSrv } from '@grafana/runtime';
+import { BackendSrvRequest, config, getBackendSrv } from '@grafana/runtime';
 import { Button, Field, InlineField, InlineFieldRow, JSONFormatter, RadioButtonGroup } from '@grafana/ui';
 import { StringValueEditor } from 'app/core/components/OptionsUI/string';
 import { appEvents } from 'app/core/core';
@@ -26,10 +26,9 @@ const dummyStringSettings = {
 const getRequest = (api: APIEditorConfig) => {
   const requestHeaders: HeadersInit = [];
 
-  let requestOptions: any = {
-    endpoint: api.endpoint,
-    method: api.method,
+  let request: BackendSrvRequest = {
     url: api.endpoint,
+    method: api.method,
     data: getData(api),
     headers: requestHeaders,
   };
@@ -39,16 +38,16 @@ const getRequest = (api: APIEditorConfig) => {
       requestHeaders.push([param[0], param[1]]);
     });
   } else if (api.paramsType === 'query') {
-    requestOptions.endpoint = api.endpoint + '?' + api.params?.map((param) => param[0] + '=' + param[1]).join('&');
+    request.url = api.endpoint + '?' + api.params?.map((param) => param[0] + '=' + param[1]).join('&');
   }
 
   if (api.method === HttpRequestMethod.POST) {
     requestHeaders.push(['Content-Type', 'application/json']);
   }
 
-  requestOptions.headers = requestHeaders;
+  request.headers = requestHeaders;
 
-  return requestOptions;
+  return request;
 };
 
 export const callApi = (api: APIEditorConfig, isTest = false) => {
