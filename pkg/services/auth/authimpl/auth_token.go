@@ -26,6 +26,7 @@ import (
 var (
 	getTime            = time.Now
 	errTokenNotRotated = errors.New("token was not rotated")
+	errUserIDInvalid   = errors.New("invalid user ID")
 )
 
 func ProvideUserAuthTokenService(sqlStore db.DB,
@@ -529,6 +530,27 @@ func (s *UserAuthTokenService) GetUserTokens(ctx context.Context, userId int64) 
 	return result, err
 }
 
+// ActiveTokenCount returns the number of active tokens. If userID is nil, the count is for all users.
+func (s *UserAuthTokenService) ActiveTokenCount(ctx context.Context, userID *int64) (int64, error) {
+	if userID != nil && *userID < 1 {
+		return 0, errUserIDInvalid
+	}
+
+	var count int64
+	err := s.sqlStore.WithDbSession(ctx, func(dbSession *db.Session) error {
+		query := `SELECT COUNT(*) FROM user_auth_token WHERE created_at > ? AND rotated_at > ? AND revoked_at = 0`
+		args := []interface{}{s.createdAfterParam(), s.rotatedAfterParam()}
+		if userID != nil {
+			query += " AND user_id = ?"
+			args = append(args, *userID)
+		}
+		_, err := dbSession.SQL(query, args...).Get(&count)
+		return err
+	})
+
+	return count, err
+}
+
 func (s *UserAuthTokenService) GetUserRevokedTokens(ctx context.Context, userId int64) ([]*auth.UserToken, error) {
 	result := []*auth.UserToken{}
 	err := s.sqlStore.WithDbSession(ctx, func(dbSession *db.Session) error {
@@ -553,22 +575,16 @@ func (s *UserAuthTokenService) GetUserRevokedTokens(ctx context.Context, userId 
 }
 
 func (s *UserAuthTokenService) reportActiveTokenCount(ctx context.Context, _ *quota.ScopeParameters) (*quota.Map, error) {
-	var count int64
-	var err error
-	err = s.sqlStore.WithDbSession(ctx, func(dbSession *db.Session) error {
-		var model userAuthToken
-		count, err = dbSession.Where(`created_at > ? AND rotated_at > ? AND revoked_at = 0`,
-			getTime().Add(-s.cfg.LoginMaxLifetime).Unix(),
-			getTime().Add(-s.cfg.LoginMaxInactiveLifetime).Unix()).
-			Count(&model)
-
-		return err
-	})
+	count, err := s.ActiveTokenCount(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
 
 	tag, err := quota.NewTag(auth.QuotaTargetSrv, auth.QuotaTarget, quota.GlobalScope)
 	if err != nil {
 		return nil, err
 	}
+
 	u := &quota.Map{}
 	u.Set(tag, count)
 

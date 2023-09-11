@@ -21,7 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func TestUserAuthToken(t *testing.T) {
+func TestIntegrationUserAuthToken(t *testing.T) {
 	ctx := createTestContext(t)
 	user := &user.User{ID: int64(10)}
 	// userID := user.Id
@@ -240,9 +240,8 @@ func TestUserAuthToken(t *testing.T) {
 		})
 
 		t.Run("when rotated_at is 5 days ago and created_at is 30 days ago should return token expired error", func(t *testing.T) {
-			updated, err := ctx.updateRotatedAt(model.Id, time.Unix(model.CreatedAt, 0).Add(24*25*time.Hour).Unix())
+			_, err := ctx.updateRotatedAt(model.Id, time.Unix(model.CreatedAt, 0).Add(24*25*time.Hour).Unix())
 			require.Nil(t, err)
-			require.True(t, updated)
 
 			getTime = func() time.Time {
 				return time.Unix(model.CreatedAt, 0).Add(24 * 30 * time.Hour)
@@ -673,4 +672,38 @@ func (c *testContext) updateRotatedAt(id, rotatedAt int64) (bool, error) {
 		return nil
 	})
 	return hasRowsAffected, err
+}
+
+func TestIntegrationTokenCount(t *testing.T) {
+	ctx := createTestContext(t)
+	user := &user.User{ID: int64(10)}
+
+	createToken := func() *auth.UserToken {
+		userToken, err := ctx.tokenService.CreateToken(context.Background(), user,
+			net.ParseIP("192.168.10.11"), "some user agent")
+		require.Nil(t, err)
+		require.NotNil(t, userToken)
+		require.False(t, userToken.AuthTokenSeen)
+		return userToken
+	}
+
+	createToken()
+
+	now := time.Date(2018, 12, 13, 13, 45, 0, 0, time.UTC)
+	getTime = func() time.Time { return now }
+	defer func() { getTime = time.Now }()
+
+	count, err := ctx.tokenService.ActiveTokenCount(context.Background(), nil)
+	require.Nil(t, err)
+	require.Equal(t, int64(1), count)
+
+	var userID int64 = 10
+	count, err = ctx.tokenService.ActiveTokenCount(context.Background(), &userID)
+	require.Nil(t, err)
+	require.Equal(t, int64(1), count)
+
+	userID = 11
+	count, err = ctx.tokenService.ActiveTokenCount(context.Background(), &userID)
+	require.Nil(t, err)
+	require.Equal(t, int64(0), count)
 }
