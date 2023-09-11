@@ -552,6 +552,31 @@ func (s *UserAuthTokenService) ActiveTokenCount(ctx context.Context, userID *int
 	return count, err
 }
 
+func (s *UserAuthTokenService) DeleteUserRevokedTokens(ctx context.Context, userID int64, window time.Duration) error {
+	hours := int(window.Hours())
+	if hours < 1 {
+		hours = 1
+		s.log.Debug("DeleteUserRevokedTokens called with duration less than 1 hour", "duration", window)
+	}
+
+	query := strings.Builder{}
+	query.WriteString("DELETE FROM user_auth_token WHERE user_id = ? AND revoked_at > 0 AND ")
+
+	switch s.sqlStore.GetDialect().DriverName() {
+	case migrator.MySQL:
+		query.WriteString("revoked_at <= UNIX_TIMESTAMP(NOW() - INTERVAL ? HOUR)")
+	case migrator.Postgres:
+		query.WriteString("revoked_at <= EXTRACT(EPOCH FROM (NOW() - (? * INTERVAL '1 hour')))::INTEGER")
+	default:
+		query.WriteString("revoked_at <= (strftime('%%s','now') - ?*3600)")
+	}
+
+	return s.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
+		_, err := sess.Exec(query.String(), userID, hours)
+		return err
+	})
+}
+
 func (s *UserAuthTokenService) GetUserRevokedTokens(ctx context.Context, userId int64) ([]*auth.UserToken, error) {
 	result := []*auth.UserToken{}
 	err := s.sqlStore.WithDbSession(ctx, func(dbSession *db.Session) error {
@@ -573,59 +598,6 @@ func (s *UserAuthTokenService) GetUserRevokedTokens(ctx context.Context, userId 
 	})
 
 	return result, err
-}
-
-func (s *UserAuthTokenService) GetUserRevokedTokensInLastHours(ctx context.Context, userId int64, duration time.Duration) ([]*auth.UserToken, error) {
-	hours := int(duration.Hours())
-	if hours < 1 {
-		s.log.Warn("GetUserRevokedTokensInLastHours called with duration less than 1 hour", "duration", duration)
-		hours = 1
-	}
-	result := []*auth.UserToken{}
-	err := s.sqlStore.WithDbSession(ctx, func(dbSession *db.Session) error {
-		var tokens []*userAuthToken
-		// get the database, mysql, postgres or sqlite
-		dialect := s.sqlStore.GetDialect()
-		var query string
-
-		if dialect.DriverName() == migrator.Postgres {
-			// postgres
-			query = fmt.Sprintf("user_id = ? AND revoked_at > 0 AND revoked_at <= EXTRACT(EPOCH FROM (NOW() - INTERVAL '%d hours'))::INTEGER", hours)
-		} else if dialect.DriverName() == migrator.MySQL {
-			// mysql
-			// example: select UNIX_TIMESTAMP(NOW() - INTERVAL 20 HOUR) # 1694362241
-			query = fmt.Sprintf("user_id = ? AND revoked_at > 0 AND revoked_at <= UNIX_TIMESTAMP(NOW() - INTERVAL %d HOUR)", hours)
-		} else if dialect.DriverName() == migrator.SQLite {
-			// SQLite does not have native support for date arithmetic like other SQL dialects,
-			// strftime gets the Unix timestamp
-			query = fmt.Sprintf("user_id = ? AND revoked_at > 0 AND revoked_at <= (strftime('%%s','now') - %d*3600)", hours)
-		} else if dialect.DriverName() == migrator.MSSQL {
-			// mssql
-			// FIXME: not tested
-			query = fmt.Sprintf("user_id = ? AND revoked_at > 0 AND revoked_at <= DATEADD(hour, -%d, GETDATE())", hours)
-		} else {
-			// unknown database
-			return errors.New("unknown database")
-		}
-		err := dbSession.Where(query, userId).Find(&tokens)
-		if err != nil {
-			return err
-		}
-
-		for _, token := range tokens {
-			var userToken auth.UserToken
-			if err := token.toUserToken(&userToken); err != nil {
-				return err
-			}
-			result = append(result, &userToken)
-		}
-		return nil
-	})
-
-	if err != nil {
-		return nil, err
-	}
-	return result, nil
 }
 
 func (s *UserAuthTokenService) reportActiveTokenCount(ctx context.Context, _ *quota.ScopeParameters) (*quota.Map, error) {
