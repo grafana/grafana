@@ -32,6 +32,7 @@ func (d *Decorator) QueryData(ctx context.Context, req *backend.QueryDataRequest
 	}
 
 	client := clientFromMiddlewares(d.middlewares, d.client)
+
 	return client.QueryData(ctx, req)
 }
 

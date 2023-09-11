@@ -26,18 +26,18 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature/statickey"
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
-	"github.com/grafana/grafana/pkg/plugins/manager/store"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/config"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pipeline"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginerrs"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 type IntegrationTestCtx struct {
 	PluginClient   plugins.Client
-	PluginStore    *store.Service
+	PluginStore    *pluginstore.Service
 	PluginRegistry registry.Service
 }
 
@@ -66,7 +66,7 @@ func CreateIntegrationTestCtx(t *testing.T, cfg *setting.Cfg, coreRegistry *core
 		Terminator:   term,
 	})
 
-	ps, err := store.ProvideService(reg, sources.ProvideService(cfg, pCfg), l)
+	ps, err := pluginstore.ProvideService(reg, sources.ProvideService(cfg, pCfg), l)
 	require.NoError(t, err)
 
 	return &IntegrationTestCtx{

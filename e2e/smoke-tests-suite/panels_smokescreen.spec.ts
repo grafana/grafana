@@ -1,5 +1,6 @@
-import { e2e } from '@grafana/e2e';
 import { GrafanaBootConfig } from '@grafana/runtime';
+
+import { e2e } from '../utils';
 
 e2e.scenario({
   describeName: 'Panels smokescreen',
@@ -22,24 +23,22 @@ e2e.scenario({
     e2e.pages.AddDashboard.itemButton('Add new visualization menu item').should('be.visible');
     e2e.pages.AddDashboard.itemButton('Add new visualization menu item').click();
 
-    e2e()
-      .window()
-      .then((win: Cypress.AUTWindow & { grafanaBootData: GrafanaBootConfig['bootData'] }) => {
-        // Loop through every panel type and ensure no crash
-        Object.entries(win.grafanaBootData.settings.panels).forEach(([_, panel]) => {
-          // TODO: Remove Flame Graph check as part of addressing #66803
-          if (!panel.hideFromList && panel.state !== 'deprecated') {
-            e2e.components.PanelEditor.toggleVizPicker().click();
-            e2e.components.PluginVisualization.item(panel.name).scrollIntoView().should('be.visible').click();
+    cy.window().then((win: Cypress.AUTWindow & { grafanaBootData: GrafanaBootConfig['bootData'] }) => {
+      // Loop through every panel type and ensure no crash
+      Object.entries(win.grafanaBootData.settings.panels).forEach(([_, panel]) => {
+        // TODO: Remove Flame Graph check as part of addressing #66803
+        if (!panel.hideFromList && panel.state !== 'deprecated') {
+          e2e.components.PanelEditor.toggleVizPicker().click();
+          e2e.components.PluginVisualization.item(panel.name).scrollIntoView().should('be.visible').click();
 
-            // Wait for panel to load (TODO: Better way to do this?)
-            cy.wait(500);
+          // Wait for panel to load (TODO: Better way to do this?)
+          cy.wait(500);
 
-            e2e.components.PanelEditor.toggleVizPicker().should((e) => expect(e).to.contain(panel.name));
-            // TODO: Come up with better check / better failure messaging to clearly indicate which panel failed
-            cy.contains('An unexpected error happened').should('not.exist');
-          }
-        });
+          e2e.components.PanelEditor.toggleVizPicker().should((e) => expect(e).to.contain(panel.name));
+          // TODO: Come up with better check / better failure messaging to clearly indicate which panel failed
+          cy.contains('An unexpected error happened').should('not.exist');
+        }
       });
+    });
   },
 });
