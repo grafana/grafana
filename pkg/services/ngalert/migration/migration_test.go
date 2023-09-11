@@ -905,6 +905,23 @@ func TestDashAlertQueryMigration(t *testing.T) {
 			},
 		},
 		{
+			name: "alerts with unknown datasource id migrates with empty datasource uid",
+			alerts: []*models.Alert{
+				createAlertWithCond(t, 1, 1, 1, "alert1", nil,
+					[]dashAlertCondition{createCondition("A", "max", "gt", 42, 123, "5m", "now")}), // Unknown datasource id.
+			},
+			expected: map[int64][]*ngModels.AlertRule{
+				int64(1): {
+					genAlert(func(rule *ngModels.AlertRule) {
+						rule.Data = append(rule.Data, createAlertQuery("A", "", "5m", "now")) // Empty datasource UID.
+						rule.Data = append(rule.Data, createClassicConditionQuery("B", []classicConditionJSON{
+							cond("A", "max", "gt", 42),
+						}))
+					}),
+				},
+			},
+		},
+		{
 			name: "alerts with unknown dashboard do not migrate",
 			alerts: []*models.Alert{
 				createAlertWithCond(t, 1, 22, 1, "alert1", nil,
