@@ -158,6 +158,10 @@ func (d *Dynamic) updateDetectors(ctx context.Context, etag string) error {
 	case err == nil:
 		break
 	case errors.Is(err, errNotModified):
+		d.log.Debug("Not modified, skipping update")
+		if err := d.store.SetLastUpdated(ctx); err != nil {
+			return fmt.Errorf("set last updated: %w", err)
+		}
 		return nil
 	default:
 		return fmt.Errorf("fetch: %w", err)

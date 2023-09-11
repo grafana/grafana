@@ -13,6 +13,7 @@ type Service interface {
 
 	Get(ctx context.Context) (string, bool, error)
 	Set(ctx context.Context, value any) error
+	SetLastUpdated(ctx context.Context) error
 
 	GetETag(ctx context.Context) (string, bool, error)
 	SetETag(ctx context.Context, etag string) error
