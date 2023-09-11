@@ -541,7 +541,7 @@ steps:
     $${TEST_TAG}
   environment:
     GITHUB_TOKEN:
-      from_secret: github_token_pr
+      from_secret: github_token
     TEST_TAG: v0.0.0-test
   failure: ignore
   image: grafana/build-container:1.7.5
@@ -627,40 +627,36 @@ steps:
   image: grafana/build-container:1.7.5
   name: grafana-server
 - commands:
-  - apt-get install -y netcat
   - ./bin/build e2e-tests --port 3001 --suite dashboards-suite
   depends_on:
   - grafana-server
   environment:
     HOST: grafana-server
-  image: cypress/included:9.5.1-node16.14.0-slim-chrome99-ff97
+  image: cypress/included:12.15.0
   name: end-to-end-tests-dashboards-suite
 - commands:
-  - apt-get install -y netcat
   - ./bin/build e2e-tests --port 3001 --suite smoke-tests-suite
   depends_on:
   - grafana-server
   environment:
     HOST: grafana-server
-  image: cypress/included:9.5.1-node16.14.0-slim-chrome99-ff97
+  image: cypress/included:12.15.0
   name: end-to-end-tests-smoke-tests-suite
 - commands:
-  - apt-get install -y netcat
   - ./bin/build e2e-tests --port 3001 --suite panels-suite
   depends_on:
   - grafana-server
   environment:
     HOST: grafana-server
-  image: cypress/included:9.5.1-node16.14.0-slim-chrome99-ff97
+  image: cypress/included:12.15.0
   name: end-to-end-tests-panels-suite
 - commands:
-  - apt-get install -y netcat
   - ./bin/build e2e-tests --port 3001 --suite various-suite
   depends_on:
   - grafana-server
   environment:
     HOST: grafana-server
-  image: cypress/included:9.5.1-node16.14.0-slim-chrome99-ff97
+  image: cypress/included:12.15.0
   name: end-to-end-tests-various-suite
 - commands:
   - cd /
@@ -676,9 +672,9 @@ steps:
       from_secret: azure_tenant
     CYPRESS_CI: "true"
     GITHUB_TOKEN:
-      from_secret: github_token_pr
+      from_secret: github_token
     HOST: grafana-server
-  image: us-docker.pkg.dev/grafanalabs-dev/cloud-data-sources/e2e:latest
+  image: us-docker.pkg.dev/grafanalabs-dev/cloud-data-sources/e2e:2.0.0
   name: end-to-end-tests-cloud-plugins-suite-azure
   when:
     paths:
@@ -786,9 +782,9 @@ steps:
   - build-docker-images-ubuntu
   environment:
     DOCKER_PASSWORD:
-      from_secret: docker_password_pr
+      from_secret: docker_password
     DOCKER_USER:
-      from_secret: docker_username_pr
+      from_secret: docker_username
     GITHUB_APP_ID:
       from_secret: delivery-bot-app-id
     GITHUB_APP_INSTALLATION_ID:
@@ -1786,40 +1782,36 @@ steps:
   image: grafana/build-container:1.7.5
   name: grafana-server
 - commands:
-  - apt-get install -y netcat
   - ./bin/build e2e-tests --port 3001 --suite dashboards-suite
   depends_on:
   - grafana-server
   environment:
     HOST: grafana-server
-  image: cypress/included:9.5.1-node16.14.0-slim-chrome99-ff97
+  image: cypress/included:12.15.0
   name: end-to-end-tests-dashboards-suite
 - commands:
-  - apt-get install -y netcat
   - ./bin/build e2e-tests --port 3001 --suite smoke-tests-suite
   depends_on:
   - grafana-server
   environment:
     HOST: grafana-server
-  image: cypress/included:9.5.1-node16.14.0-slim-chrome99-ff97
+  image: cypress/included:12.15.0
   name: end-to-end-tests-smoke-tests-suite
 - commands:
-  - apt-get install -y netcat
   - ./bin/build e2e-tests --port 3001 --suite panels-suite
   depends_on:
   - grafana-server
   environment:
     HOST: grafana-server
-  image: cypress/included:9.5.1-node16.14.0-slim-chrome99-ff97
+  image: cypress/included:12.15.0
   name: end-to-end-tests-panels-suite
 - commands:
-  - apt-get install -y netcat
   - ./bin/build e2e-tests --port 3001 --suite various-suite
   depends_on:
   - grafana-server
   environment:
     HOST: grafana-server
-  image: cypress/included:9.5.1-node16.14.0-slim-chrome99-ff97
+  image: cypress/included:12.15.0
   name: end-to-end-tests-various-suite
 - commands:
   - cd /
@@ -1835,9 +1827,9 @@ steps:
       from_secret: azure_tenant
     CYPRESS_CI: "true"
     GITHUB_TOKEN:
-      from_secret: github_token_pr
+      from_secret: github_token
     HOST: grafana-server
-  image: us-docker.pkg.dev/grafanalabs-dev/cloud-data-sources/e2e:latest
+  image: us-docker.pkg.dev/grafanalabs-dev/cloud-data-sources/e2e:2.0.0
   name: end-to-end-tests-cloud-plugins-suite-azure
   when:
     paths:
@@ -3387,40 +3379,36 @@ steps:
   image: grafana/build-container:1.7.5
   name: grafana-server
 - commands:
-  - apt-get install -y netcat
   - ./bin/build e2e-tests --port 3001 --suite dashboards-suite --tries 3
   depends_on:
   - grafana-server
   environment:
     HOST: grafana-server
-  image: cypress/included:9.5.1-node16.14.0-slim-chrome99-ff97
+  image: cypress/included:12.15.0
   name: end-to-end-tests-dashboards-suite
 - commands:
-  - apt-get install -y netcat
   - ./bin/build e2e-tests --port 3001 --suite smoke-tests-suite --tries 3
   depends_on:
   - grafana-server
   environment:
     HOST: grafana-server
-  image: cypress/included:9.5.1-node16.14.0-slim-chrome99-ff97
+  image: cypress/included:12.15.0
   name: end-to-end-tests-smoke-tests-suite
 - commands:
-  - apt-get install -y netcat
   - ./bin/build e2e-tests --port 3001 --suite panels-suite --tries 3
   depends_on:
   - grafana-server
   environment:
     HOST: grafana-server
-  image: cypress/included:9.5.1-node16.14.0-slim-chrome99-ff97
+  image: cypress/included:12.15.0
   name: end-to-end-tests-panels-suite
 - commands:
-  - apt-get install -y netcat
   - ./bin/build e2e-tests --port 3001 --suite various-suite --tries 3
   depends_on:
   - grafana-server
   environment:
     HOST: grafana-server
-  image: cypress/included:9.5.1-node16.14.0-slim-chrome99-ff97
+  image: cypress/included:12.15.0
   name: end-to-end-tests-various-suite
 - commands:
   - apt-get update
@@ -4456,7 +4444,7 @@ steps:
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/drone-downstream
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/docker-puppeteer:1.1.0
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/docs-base:dbd975af06
-  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM cypress/included:9.5.1-node16.14.0-slim-chrome99-ff97
+  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM cypress/included:12.15.0
   depends_on:
   - authenticate-gcr
   image: aquasec/trivy:0.21.0
@@ -4484,7 +4472,7 @@ steps:
   - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/drone-downstream
   - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/docker-puppeteer:1.1.0
   - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/docs-base:dbd975af06
-  - trivy --exit-code 1 --severity HIGH,CRITICAL cypress/included:9.5.1-node16.14.0-slim-chrome99-ff97
+  - trivy --exit-code 1 --severity HIGH,CRITICAL cypress/included:12.15.0
   depends_on:
   - authenticate-gcr
   environment:
@@ -4597,6 +4585,18 @@ kind: secret
 name: prerelease_bucket
 ---
 get:
+  name: username
+  path: infra/data/ci/grafanaci-docker-hub
+kind: secret
+name: docker_username
+---
+get:
+  name: password
+  path: infra/data/ci/grafanaci-docker-hub
+kind: secret
+name: docker_password
+---
+get:
   name: credentials.json
   path: infra/data/ci/grafana/releng/artifacts-uploader-service-account
 kind: secret
@@ -4699,12 +4699,6 @@ kind: secret
 name: dagger_token
 ---
 get:
-  name: pat
-  path: infra/data/ci/github/grafanabot
-kind: secret
-name: github_token
----
-get:
   name: app-id
   path: infra/data/ci/grafana-release-eng/grafana-delivery-bot
 kind: secret
@@ -4729,6 +4723,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 883d9f0e14f52a0b773040eeb476f3081b8122b34d5c14ad4f81219ceb754299
+hmac: e7a7b8ebee80baceff6c915e84e76f8f5e54565741f923e9e1e17f3f8880dce9
 
 ...

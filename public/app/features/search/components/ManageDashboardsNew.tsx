@@ -30,11 +30,11 @@ export const ManageDashboardsNew = React.memo(({ folder }: Props) => {
   const canSave = folder?.canSave;
   const { isEditor } = contextSrv;
   const hasEditPermissionInFolders = folder ? canSave : contextSrv.hasEditPermissionInFolders;
-  const canCreateFolders = contextSrv.hasAccess(AccessControlAction.FoldersCreate, isEditor);
+  const canCreateFolders = contextSrv.hasPermission(AccessControlAction.FoldersCreate);
   const canCreateDashboardsFallback = hasEditPermissionInFolders || !!canSave;
   const canCreateDashboards = folderUid
     ? contextSrv.hasAccessInMetadata(AccessControlAction.DashboardsCreate, folder, canCreateDashboardsFallback)
-    : contextSrv.hasAccess(AccessControlAction.DashboardsCreate, canCreateDashboardsFallback);
+    : contextSrv.hasPermission(AccessControlAction.DashboardsCreate);
   const viewActions = (folder === undefined && canCreateFolders) || canCreateDashboards;
 
   useEffect(() => stateManager.initStateFromUrl(folder?.uid), [folder?.uid, stateManager]);
