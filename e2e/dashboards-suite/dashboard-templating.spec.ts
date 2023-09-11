@@ -40,8 +40,7 @@ e2e.scenario({
       `Example: from=now-6h&to=now`,
     ];
 
-    e2e()
-      .get('.markdown-html li')
+    cy.get('.markdown-html li')
       .should('have.length', 26)
       .each((element) => {
         items.push(element.text());
@@ -53,8 +52,10 @@ e2e.scenario({
       });
 
     // Check link interpolation is working correctly
-    e2e()
-      .contains('a', 'Example: from=now-6h&to=now')
-      .should('have.attr', 'href', 'https://example.com/?from=now-6h&to=now');
+    cy.contains('a', 'Example: from=now-6h&to=now').should(
+      'have.attr',
+      'href',
+      'https://example.com/?from=now-6h&to=now'
+    );
   },
 });
