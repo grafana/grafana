@@ -3,7 +3,7 @@ import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Card, useStyles2 } from '@grafana/ui';
-import { Grid } from '@grafana/ui/src/unstable';
+import { Grid, GridItem } from '@grafana/ui/src/unstable';
 import { PluginAngularBadge } from 'app/features/plugins/admin/components/Badges';
 
 const getStyles = (theme: GrafanaTheme2) => ({
@@ -58,40 +58,34 @@ export interface CardGridProps {
 export const CardGrid = ({ items, onClickItem }: CardGridProps) => {
   const styles = useStyles2(getStyles);
 
-  const cardGridItemList = () => {
-    const list: React.ReactElement[] = [];
-    items.map((item) => {
-      list.push(
-        <Card
-          key={item.id}
-          className={styles.card}
-          href={item.url}
-          onClick={(e) => {
-            if (onClickItem) {
-              onClickItem(e, item);
-            }
-          }}
-        >
-          <Card.Heading className={styles.heading}>{item.name}</Card.Heading>
-
-          <Card.Figure align="center" className={styles.figure}>
-            <img className={styles.logo} src={item.logo} alt="" />
-          </Card.Figure>
-
-          {item.angularDetected ? (
-            <Card.Meta className={styles.meta}>
-              <PluginAngularBadge />
-            </Card.Meta>
-          ) : null}
-        </Card>
-      );
-    });
-    return list;
-  };
-
   return (
     <Grid display="grid" templateColumns="repeat(auto-fill, minmax(380px, 1fr))" gap={1.5}>
-      {cardGridItemList()}
+      {items.map((item) => (
+        <GridItem key={item.id} displayContents>
+          <Card
+            key={item.id}
+            className={styles.card}
+            href={item.url}
+            onClick={(e) => {
+              if (onClickItem) {
+                onClickItem(e, item);
+              }
+            }}
+          >
+            <Card.Heading className={styles.heading}>{item.name}</Card.Heading>
+
+            <Card.Figure align="center" className={styles.figure}>
+              <img className={styles.logo} src={item.logo} alt="" />
+            </Card.Figure>
+
+            {item.angularDetected ? (
+              <Card.Meta className={styles.meta}>
+                <PluginAngularBadge />
+              </Card.Meta>
+            ) : null}
+          </Card>
+        </GridItem>
+      ))}
     </Grid>
   );
 };
