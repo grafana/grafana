@@ -1,3 +1,5 @@
+import { isString } from 'lodash';
+
 import {
   type PluginExtension,
   PluginExtensionTypes,
@@ -80,7 +82,7 @@ export const getPluginExtensions: GetExtensions = ({ context, extensionPointId, 
           icon: overrides?.icon || extensionConfig.icon,
           title: overrides?.title || extensionConfig.title,
           description: overrides?.description || extensionConfig.description,
-          path: getLinkExtensionPathWithTracking(pluginId, path, extensionConfig),
+          path: isString(path) ? getLinkExtensionPathWithTracking(pluginId, path, extensionConfig) : undefined,
           category: overrides?.category || extensionConfig.category,
         };
 
@@ -204,15 +206,7 @@ function getLinkExtensionOnClick(
   };
 }
 
-function getLinkExtensionPathWithTracking(
-  pluginId: string,
-  path: string | undefined,
-  config: PluginExtensionLinkConfig
-): string | undefined {
-  if (!path) {
-    return path;
-  }
-
+function getLinkExtensionPathWithTracking(pluginId: string, path: string, config: PluginExtensionLinkConfig): string {
   return urlUtil.appendQueryToUrl(
     path,
     urlUtil.toUrlParams({
