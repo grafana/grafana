@@ -10,14 +10,13 @@ describe('Trace view', () => {
     e2e.pages.Explore.visit();
 
     e2e.components.DataSourcePicker.container().should('be.visible').type('gdev-jaeger{enter}');
+    // Wait for the query editor to be set correctly
+    e2e.components.QueryEditorRows.rows().within(() => {
+      cy.contains('gdev-jaeger').should('be.visible');
+    });
 
-    cy.wait(500);
-
-    e2e.components.QueryField.container().should('be.visible').type('trace', { delay: 100 });
-
-    cy.wait(500);
-
-    e2e.components.RefreshPicker.runButtonV2().should('be.visible').click();
+    // Use shift+enter to execute the query as it's more stable than clicking the execute button
+    e2e.components.QueryField.container().should('be.visible').type('trace{shift+enter}');
 
     cy.wait('@longTrace');
 
