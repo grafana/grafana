@@ -686,7 +686,10 @@ def grafana_server_step(port = 3001):
             "cat packages.txt",
             "mkdir grafana",
             "tar --strip-components=1 -xvf ./dist/*.tar.gz -C grafana",
-            "RUNDIR=grafana ./scripts/grafana-server/start-server",
+            "cp ./scripts/grafana-server/custom.ini ./grafana/conf/custom.ini",
+            "cp devenv/datasources.yaml ./grafana/conf/datasources",
+            "cp devenv/dashboards.yaml ./grafana/conf/dashboards",
+            "./bin/grafana server --homepath=$PWD/grafana --pidfile=grafana/pid",
         ],
     }
 

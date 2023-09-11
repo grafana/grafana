@@ -601,7 +601,10 @@ steps:
   - cat packages.txt
   - mkdir grafana
   - tar --strip-components=1 -xvf ./dist/*.tar.gz -C grafana
-  - RUNDIR=grafana ./scripts/grafana-server/start-server
+  - cp ./scripts/grafana-server/custom.ini ./grafana/conf/custom.ini
+  - cp devenv/datasources.yaml ./grafana/conf/datasources
+  - cp devenv/dashboards.yaml ./grafana/conf/dashboards
+  - ./bin/grafana server --homepath=$PWD/grafana --pidfile=grafana/pid
   depends_on:
   - rgm-package
   detach: true
@@ -1763,7 +1766,10 @@ steps:
   - cat packages.txt
   - mkdir grafana
   - tar --strip-components=1 -xvf ./dist/*.tar.gz -C grafana
-  - RUNDIR=grafana ./scripts/grafana-server/start-server
+  - cp ./scripts/grafana-server/custom.ini ./grafana/conf/custom.ini
+  - cp devenv/datasources.yaml ./grafana/conf/datasources
+  - cp devenv/dashboards.yaml ./grafana/conf/dashboards
+  - ./bin/grafana server --homepath=$PWD/grafana --pidfile=grafana/pid
   depends_on:
   - rgm-package
   detach: true
@@ -4223,6 +4229,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: e5c53b819be7358c51357db0e4a17c21564f10b70d83d3705648c6f3960d6c1a
+hmac: e50cece601a619e1921f3cbe98fd1f7f5cbcf94e4250e960a859d88274cefad0
 
 ...
