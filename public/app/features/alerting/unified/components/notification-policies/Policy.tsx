@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { uniqueId, groupBy, upperFirst, sumBy, isArray } from 'lodash';
+import { uniqueId, groupBy, upperFirst, sumBy, isArray, defaults } from 'lodash';
 import pluralize from 'pluralize';
 import React, { FC, Fragment, ReactNode } from 'react';
 import { Link } from 'react-router-dom';
@@ -12,7 +12,6 @@ import ConditionalWrap from 'app/features/alerting/components/ConditionalWrap';
 import { RouteWithID, Receiver, ObjectMatcher, AlertmanagerGroup } from 'app/plugins/datasource/alertmanager/types';
 import { ReceiversState } from 'app/types';
 
-import { isOrgAdmin } from '../../../../plugins/admin/permissions';
 import { INTEGRATION_ICONS } from '../../types/contact-points';
 import { getNotificationsPermissions } from '../../utils/access-control';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
@@ -75,7 +74,7 @@ const Policy: FC<PolicyComponentProps> = ({
   const canEditRoutes = contextSrv.hasPermission(permissions.update);
   const canDeleteRoutes = contextSrv.hasPermission(permissions.delete);
   const canReadProvisioning =
-    contextSrv.hasAccess(permissions.provisioning.read, isOrgAdmin()) ||
+    contextSrv.hasPermission(permissions.provisioning.read) ||
     contextSrv.hasPermission(permissions.provisioning.readSecrets);
 
   const contactPoint = currentRoute.receiver;
@@ -282,7 +281,7 @@ const Policy: FC<PolicyComponentProps> = ({
                 {timingOptions && (
                   // for the default policy we will also merge the default timings, that way a user can observe what the timing options would be
                   <TimingOptionsMeta
-                    timingOptions={isDefaultPolicy ? { ...timingOptions, ...TIMING_OPTIONS_DEFAULTS } : timingOptions}
+                    timingOptions={isDefaultPolicy ? defaults(timingOptions, TIMING_OPTIONS_DEFAULTS) : timingOptions}
                   />
                 )}
                 {hasInheritedProperties && (

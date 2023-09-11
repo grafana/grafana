@@ -44,6 +44,7 @@ func ServerCommand(version, commit, buildBranch, buildstamp string) *cli.Command
 				Context:     context,
 			})
 		},
+		Subcommands: []*cli.Command{TargetCommand(version, commit, buildBranch, buildstamp)},
 	}
 }
 
@@ -132,7 +133,12 @@ func validPackaging(packaging string) string {
 	return "unknown"
 }
 
-func listenToSystemSignals(ctx context.Context, s *server.Server) {
+// a small interface satisfied by the server and moduleserver
+type gserver interface {
+	Shutdown(context.Context, string) error
+}
+
+func listenToSystemSignals(ctx context.Context, s gserver) {
 	signalChan := make(chan os.Signal, 1)
 	sighupChan := make(chan os.Signal, 1)
 

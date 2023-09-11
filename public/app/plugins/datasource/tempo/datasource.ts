@@ -1,6 +1,7 @@
 import { identity, pick, pickBy, groupBy, startCase } from 'lodash';
 import { EMPTY, from, lastValueFrom, merge, Observable, of, throwError } from 'rxjs';
 import { catchError, concatMap, map, mergeMap, toArray } from 'rxjs/operators';
+import semver from 'semver';
 
 import {
   CoreApp,
@@ -68,6 +69,22 @@ import { TempoVariableSupport } from './variables';
 
 export const DEFAULT_LIMIT = 20;
 
+enum FeatureName {
+  streaming = 'streaming',
+}
+
+/* Map, for each feature (e.g., streaming), the minimum Tempo version required to have that
+ ** feature available. If the running Tempo instance on the user's backend is older than the
+ ** target version, the feature is disabled in Grafana (frontend).
+ */
+const featuresToTempoVersion = {
+  [FeatureName.streaming]: '2.2.0',
+};
+
+// The version that we use as default in case we cannot retrieve it from the backend.
+// This is the last minor version of Tempo that does not expose the endpoint for build information.
+const defaultTempoVersion = '2.1.0';
+
 export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJsonData> {
   tracesToLogs?: TraceToLogsOptions;
   serviceMap?: {
@@ -89,6 +106,9 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
   uploadedJson?: string | ArrayBuffer | null = null;
   spanBar?: SpanBarOptions;
   languageProvider: TempoLanguageProvider;
+
+  // The version of Tempo running on the backend. `null` if we cannot retrieve it for whatever reason
+  tempoVersion?: string | null;
 
   constructor(
     private instanceSettings: DataSourceInstanceSettings<TempoJsonData>,
@@ -177,6 +197,40 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     return options.filter((option) => option.value !== undefined).map((option) => ({ text: option.value })) as Array<{
       text: string;
     }>;
+  }
+
+  init = async () => {
+    const response = await lastValueFrom(
+      this._request('/api/status/buildinfo').pipe(
+        map((response) => response),
+        catchError((error) => {
+          console.error('Failure in retrieving build information', error.data.message);
+          return of({ error, data: { version: null } }); // unknown version
+        })
+      )
+    );
+    this.tempoVersion = response.data.version;
+  };
+
+  /**
+   * Check, for the given feature, whether it is available in Grafana.
+   *
+   * The check is done based on the version of the Tempo instance running on the backend and
+   * the minimum version required by the given feature to work.
+   *
+   * @param featureName - the name of the feature to consider
+   * @return true if the feature is available, false otherwise
+   */
+  private isFeatureAvailable(featureName: FeatureName) {
+    // We know for old Tempo instances we don't know their version, so resort to default
+    const actualVersion = this.tempoVersion ?? defaultTempoVersion;
+
+    try {
+      return semver.gte(actualVersion, featuresToTempoVersion[featureName]);
+    } catch {
+      // We assume we are on a development and recent branch, thus we enable all features
+      return true;
+    }
   }
 
   query(options: DataQueryRequest<TempoQuery>): Observable<DataQueryResponse> {
@@ -291,7 +345,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
             streaming: config.featureToggles.traceQLStreaming,
           });
 
-          if (config.featureToggles.traceQLStreaming) {
+          if (config.featureToggles.traceQLStreaming && this.isFeatureAvailable(FeatureName.streaming)) {
             subQueries.push(this.handleStreamingSearch(options, targets.traceql, queryValue));
           } else {
             subQueries.push(
@@ -344,7 +398,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
             streaming: config.featureToggles.traceQLStreaming,
           });
 
-          if (config.featureToggles.traceQLStreaming) {
+          if (config.featureToggles.traceQLStreaming && this.isFeatureAvailable(FeatureName.streaming)) {
             subQueries.push(this.handleStreamingSearch(options, traceqlSearchTargets, queryValue));
           } else {
             subQueries.push(

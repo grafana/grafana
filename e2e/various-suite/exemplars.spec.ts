@@ -1,4 +1,4 @@
-import { e2e } from '@grafana/e2e';
+import { e2e } from '../utils';
 
 const dataSourceName = 'PromExemplar';
 const addDataSource = () => {
@@ -12,7 +12,7 @@ const addDataSource = () => {
       e2e.components.DataSource.Prometheus.configPage.connectionSettings().type('http://prom-url:9090');
       e2e.components.DataSourcePicker.inputV2().click({ force: true }).should('have.focus');
 
-      e2e().contains('gdev-tempo').scrollIntoView().should('be.visible').click();
+      cy.contains('gdev-tempo').scrollIntoView().should('be.visible').click();
     },
   });
 };
@@ -21,18 +21,18 @@ describe('Exemplars', () => {
   beforeEach(() => {
     e2e.flows.login('admin', 'admin');
 
-    e2e()
-      .request({ url: `${e2e.env('BASE_URL')}/api/datasources/name/${dataSourceName}`, failOnStatusCode: false })
-      .then((response) => {
+    cy.request({ url: `${e2e.env('BASE_URL')}/api/datasources/name/${dataSourceName}`, failOnStatusCode: false }).then(
+      (response) => {
         if (response.isOkStatusCode) {
           return;
         }
         addDataSource();
-      });
+      }
+    );
   });
 
   it('should be able to navigate to configured data source', () => {
-    e2e().intercept(
+    cy.intercept(
       {
         pathname: '/api/ds/query',
       },
@@ -51,7 +51,7 @@ describe('Exemplars', () => {
     e2e.pages.Explore.visit();
 
     e2e.components.DataSourcePicker.container().should('be.visible').click();
-    e2e().contains(dataSourceName).scrollIntoView().should('be.visible').click();
+    cy.contains(dataSourceName).scrollIntoView().should('be.visible').click();
 
     // Switch to code editor
     cy.contains('label', 'Code').click();
@@ -78,7 +78,7 @@ describe('Exemplars', () => {
     });
 
     e2e.components.DataSource.Prometheus.exemplarMarker().first().trigger('mouseover');
-    e2e().contains('Query with gdev-tempo').click();
+    cy.contains('Query with gdev-tempo').click();
     e2e.components.TraceViewer.spanBar().should('have.length', 11);
   });
 });

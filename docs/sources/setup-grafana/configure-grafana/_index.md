@@ -1801,6 +1801,8 @@ Refer to https://www.jaegertracing.io/docs/1.16/sampling/#client-sampling-config
 
 Can be set with the environment variable `JAEGER_SAMPLER_TYPE`.
 
+_To override this setting, enter `sampler_type` in the `tracing.opentelemetry` section._
+
 ### sampler_param
 
 Default value is `1`.
@@ -1816,9 +1818,13 @@ This is the sampler configuration parameter. Depending on the value of `sampler_
 
 May be set with the environment variable `JAEGER_SAMPLER_PARAM`.
 
+_Setting `sampler_param` in the `tracing.opentelemetry` section will override this setting._
+
 ### sampling_server_url
 
 sampling_server_url is the URL of a sampling manager providing a sampling strategy.
+
+_Setting `sampling_server_url` in the `tracing.opentelemetry` section will override this setting._
 
 ### zipkin_propagation
 
@@ -1845,6 +1851,31 @@ Configure general parameters shared between OpenTelemetry providers.
 Comma-separated list of attributes to include in all new spans, such as `key1:value1,key2:value2`.
 
 Can be set with the environment variable `OTEL_RESOURCE_ATTRIBUTES` (use `=` instead of `:` with the environment variable).
+
+### sampler_type
+
+Default value is `const`.
+
+Specifies the type of sampler: `const`, `probabilistic`, `ratelimiting`, or `remote`.
+
+### sampler_param
+
+Default value is `1`.
+
+Depending on the value of `sampler_type`, the sampler configuration parameter can be `0`, `1`, or any decimal value between `0` and `1`.
+
+- For the `const` sampler, use `0` to never sample or `1` to always sample
+- For the `probabilistic` sampler, you can use a decimal value between `0.0` and `1.0`
+- For the `rateLimiting` sampler, enter the number of spans per second
+- For the `remote` sampler, use a decimal value between `0.0` and `1.0`
+  to specify the initial sampling rate used before the first update
+  is received from the sampling server
+
+### sampling_server_url
+
+When `sampler_type` is `remote`, this specifies the URL of the sampling server. This can be used by all tracing providers.
+
+Use a sampling server that supports the Jaeger remote sampling API, such as jaeger-agent, jaeger-collector, opentelemetry-collector-contrib, or [Grafana Agent](/oss/agent/).
 
 <hr>
 
@@ -2276,7 +2307,7 @@ Some feature toggles for stable features are on by default. Use this setting to 
 
 The options in this section configure the experimental Feature Toggle Admin Page feature, which is enabled using the `featureToggleAdminPage` feature toggle. Grafana Labs offers support on a best-effort basis, and breaking changes might occur prior to the feature being made generally available.
 
-Please see [Configure feature toggles]({{< relref "/feature-toggles" >}}) for more information.
+Please see [Configure feature toggles]({{< relref "./feature-toggles" >}}) for more information.
 
 ### allow_editing
 
