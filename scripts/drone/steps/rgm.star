@@ -3,8 +3,11 @@ def rgm_package_step(distros = "linux/amd64,linux/arm64", file = "packages.txt")
     return {
         "name": "rgm-package",
         "image": "grafana/grafana-build:main",
+        "depends_on": ["yarn-install"],
         "commands": [
-            "/src/grafana-build package --distro={} --grafana-dir=$$PWD > {}".format(distros, file),
+            "/src/grafana-build package --distro={} ".format(distros) +
+            "--yarn-cache=$$YARN_CACHE_FOLDER " +
+            "--grafana-dir=$$PWD > {}".format(file),
         ],
         "volumes": [{"name": "docker", "path": "/var/run/docker.sock"}],
     }

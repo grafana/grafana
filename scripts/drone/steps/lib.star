@@ -62,6 +62,16 @@ def identify_runner_step():
         ],
     }
 
+def get_latest_version_step():
+    return {
+        "name": "get-latest-version",
+        "image": images["curl"],
+        "commands": [
+            "apk add --update jq",
+            "curl https://grafana.com/api/grafana/versions/stable | jq .version > latest_stable_version",
+        ],
+    }
+
 def enterprise_setup_step(source = "${DRONE_SOURCE_BRANCH}", canFail = True, isPromote = False):
     """Setup the enterprise source into the ./grafana-enterprise directory.
 
