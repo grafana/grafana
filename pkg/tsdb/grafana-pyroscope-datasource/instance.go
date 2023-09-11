@@ -22,10 +22,18 @@ var (
 	_ backend.StreamHandler       = (*PhlareDatasource)(nil)
 )
 
+type ProfilingClient interface {
+	ProfileTypes(context.Context) ([]*ProfileType, error)
+	LabelNames(ctx context.Context) ([]string, error)
+	LabelValues(ctx context.Context, label string) ([]string, error)
+	GetSeries(ctx context.Context, profileTypeID string, labelSelector string, start int64, end int64, groupBy []string, step float64) (*SeriesResponse, error)
+	GetProfile(ctx context.Context, profileTypeID string, labelSelector string, start int64, end int64, maxNodes *int64) (*ProfileResponse, error)
+}
+
 // PhlareDatasource is a datasource for querying application performance profiles.
 type PhlareDatasource struct {
 	httpClient *http.Client
-	client     *PhlareClient
+	client     ProfilingClient
 	settings   backend.DataSourceInstanceSettings
 	ac         accesscontrol.AccessControl
 }

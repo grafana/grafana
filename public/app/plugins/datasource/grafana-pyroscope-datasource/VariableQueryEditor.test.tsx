@@ -70,9 +70,7 @@ describe('VariableQueryEditor', () => {
 
 function getMockDatasource() {
   const ds = new PhlareDataSource(
-    {
-      jsonData: { backendType: 'phlare' },
-    } as DataSourceInstanceSettings<PhlareDataSourceOptions>,
+    {} as DataSourceInstanceSettings<PhlareDataSourceOptions>,
     new TemplateSrv()
   );
   ds.getResource = jest.fn();

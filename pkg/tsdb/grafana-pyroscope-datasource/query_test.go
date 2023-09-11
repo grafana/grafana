@@ -288,11 +288,11 @@ func (f *FakeClient) ProfileTypes(ctx context.Context) ([]*ProfileType, error) {
 	}, nil
 }
 
-func (f *FakeClient) LabelValues(ctx context.Context, query string, label string, start int64, end int64) ([]string, error) {
+func (f *FakeClient) LabelValues(ctx context.Context, label string) ([]string, error) {
 	panic("implement me")
 }
 
-func (f *FakeClient) LabelNames(ctx context.Context, query string, start int64, end int64) ([]string, error) {
+func (f *FakeClient) LabelNames(ctx context.Context) ([]string, error) {
 	panic("implement me")
 }
 
