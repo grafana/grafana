@@ -666,8 +666,9 @@ var (
 		{
 			Name:        "prometheusConfigOverhaulAuth",
 			Description: "Update the Prometheus configuration page with the new auth component",
-			Stage:       FeatureStageExperimental,
 			Owner:       grafanaObservabilityMetricsSquad,
+			Stage:       FeatureStageGeneralAvailability,
+			Expression:  "true", // on by default
 		},
 		{
 			Name:            "configurableSchedulerTick",
