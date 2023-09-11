@@ -30,41 +30,29 @@ type GrafanaIDMiddleware struct {
 	next   plugins.Client
 }
 
-func (m *GrafanaIDMiddleware) applyToken(ctx context.Context, pCtx backend.PluginContext, req interface{}) error {
+type requestWithHeader interface {
+	SetHTTPHeader(key, value string)
+}
+
+func (m *GrafanaIDMiddleware) applyToken(ctx context.Context, pCtx backend.PluginContext, req requestWithHeader) error {
 	reqCtx := contexthandler.FromContext(ctx)
 	// if request not for a datasource or no HTTP request context skip middleware
 	if req == nil || pCtx.DataSourceInstanceSettings == nil || reqCtx == nil || reqCtx.Req == nil {
 		return nil
 	}
 
-	settings := pCtx.DataSourceInstanceSettings
-	jsonDataBytes, err := simplejson.NewJson(settings.JSONData)
+	jsonDataBytes, err := simplejson.NewJson(pCtx.DataSourceInstanceSettings.JSONData)
 	if err != nil {
 		return err
 	}
 
-	ds := &datasources.DataSource{
-		ID:       settings.ID,
-		OrgID:    pCtx.OrgID,
-		JsonData: jsonDataBytes,
-		Updated:  settings.Updated,
-	}
-
-	if assertid.IsIDSignerEnabledForDatasource(ds) {
-		requester := reqCtx.SignedInUser
-		token, err := m.signer.ActiveUserAssertion(ctx, requester, reqCtx.Req)
+	if assertid.IsIDSignerEnabledForDatasource(&datasources.DataSource{JsonData: jsonDataBytes}) {
+		token, err := m.signer.ActiveUserAssertion(ctx, reqCtx.SignedInUser, reqCtx.Req)
 		if err != nil {
 			return err
 		}
 
-		switch t := req.(type) {
-		case *backend.QueryDataRequest:
-			t.SetHTTPHeader(grafanaIdHeaderName, token)
-		case *backend.CheckHealthRequest:
-			t.SetHTTPHeader(grafanaIdHeaderName, token)
-		case *backend.CallResourceRequest:
-			t.SetHTTPHeader(grafanaIdHeaderName, token)
-		}
+		req.SetHTTPHeader(grafanaIdHeaderName, token)
 	}
 
 	return nil
