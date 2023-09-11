@@ -46,7 +46,7 @@ e2e.scenario({
       .first()
       .should('be.visible')
       .within(() => {
-        e2e().get('input[id*="test-data-scenario-select-"]').eq(0).should('be.visible').click();
+        cy.get('input[id*="test-data-scenario-select-"]').eq(0).should('be.visible').click();
       });
 
     cy.contains('CSV Metric Values').scrollIntoView().should('be.visible').eq(0).click();

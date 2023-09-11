@@ -3,25 +3,23 @@ import { e2e } from '../utils';
 describe('Trace view', () => {
   it('Can lazy load big traces', () => {
     e2e.flows.login('admin', 'admin');
-    e2e()
-      .intercept('GET', '**/api/traces/trace', {
-        fixture: 'long-trace-response.json',
-      })
-      .as('longTrace');
+    cy.intercept('GET', '**/api/traces/trace', {
+      fixture: 'long-trace-response.json',
+    }).as('longTrace');
 
     e2e.pages.Explore.visit();
 
     e2e.components.DataSourcePicker.container().should('be.visible').type('gdev-jaeger{enter}');
 
-    e2e().wait(500);
+    cy.wait(500);
 
     e2e.components.QueryField.container().should('be.visible').type('trace', { delay: 100 });
 
-    e2e().wait(500);
+    cy.wait(500);
 
     e2e.components.RefreshPicker.runButtonV2().should('be.visible').click();
 
-    e2e().wait('@longTrace');
+    cy.wait('@longTrace');
 
     e2e.components.TraceViewer.spanBar().should('be.visible');
 

@@ -9,7 +9,7 @@ describe('Repeating a row with repeated panels and a non-repeating panel', () =>
 
   it('should be able to collapse and expand a repeated row without losing panels', () => {
     e2e.flows.openDashboard({ uid: PAGE_UNDER_TEST });
-    e2e().contains(DASHBOARD_NAME).should('be.visible');
+    cy.contains(DASHBOARD_NAME).should('be.visible');
 
     const panelsToCheck = [
       'Row 2 non-repeating panel',
