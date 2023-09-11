@@ -19,7 +19,9 @@ export interface PhlareDataSourceOptions extends DataSourceJsonData {
   backendType?: BackendType; // if not set we assume it's phlare
 }
 
-export type BackendType = 'phlare' | 'pyroscope';
+export type OldBackendType = 'phlare' | 'pyroscope';
+export type NewBackendType = 'grafana-pyroscope' | 'legacy-pyroscope';
+export type BackendType = OldBackendType | NewBackendType;
 
 export type ProfileTypeQuery = {
   type: 'profileType';

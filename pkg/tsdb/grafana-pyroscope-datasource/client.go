@@ -19,7 +19,7 @@ type ProfileType struct {
 }
 
 func getClient(backendType string, httpClient *http.Client, url string) ProfilingClient {
-	if backendType == "pyroscope" {
+	if backendType == "legacy-pyroscope" || backendType == "pyroscope" {
 		return NewPyroscopeClient(httpClient, url)
 	}
 

@@ -7,7 +7,7 @@ import { Alert, DataSourceHttpSettings, EventsWithValidation, LegacyForms, regex
 import { config } from 'app/core/config';
 
 import { PhlareDataSource } from './datasource';
-import { BackendType, PhlareDataSourceOptions } from './types';
+import { BackendType, NewBackendType, PhlareDataSourceOptions } from './types';
 
 interface Props extends DataSourcePluginOptionsEditorProps<PhlareDataSourceOptions> {}
 
@@ -35,7 +35,7 @@ export const ConfigEditor = (props: Props) => {
 
     // If user already has something selected don't overwrite but show warning.
     if (options.jsonData.backendType) {
-      if (backendType !== options.jsonData.backendType) {
+      if (backendType !== getNormalizedBackendType(options.jsonData.backendType)) {
         setMismatchedBackendType(backendType);
       } else {
         setMismatchedBackendType(undefined);
@@ -103,7 +103,11 @@ export const ConfigEditor = (props: Props) => {
               inputEl={
                 <LegacyForms.Select<BackendType>
                   allowCustomValue={false}
-                  value={options.jsonData.backendType ? backendTypeOptions[options.jsonData.backendType] : undefined}
+                  value={
+                    options.jsonData.backendType
+                      ? backendTypeOptions[getNormalizedBackendType(options.jsonData.backendType)]
+                      : undefined
+                  }
                   options={Object.values(backendTypeOptions)}
                   onChange={(option) => {
                     onOptionsChange({
@@ -122,7 +126,7 @@ export const ConfigEditor = (props: Props) => {
         </div>
         {mismatchedBackendType && (
           <Alert
-            title={`"${options.jsonData.backendType}" option is selected but it seems like you are using "${mismatchedBackendType}" backend.`}
+            title={`"${getNormalizedBackendType(options.jsonData.backendType!)}" option is selected but it seems like you are using "${mismatchedBackendType}" backend.`}
             severity="warning"
           />
         )}
@@ -131,13 +135,23 @@ export const ConfigEditor = (props: Props) => {
   );
 };
 
-const backendTypeOptions: Record<BackendType, SelectableValue<BackendType>> = {
-  phlare: {
-    label: 'Phlare',
-    value: 'phlare',
+function getNormalizedBackendType(backendType: BackendType): NewBackendType {
+  if (backendType === 'phlare') {
+    return 'grafana-pyroscope';
+  }
+  if (backendType === 'pyroscope') {
+    return 'legacy-pyroscope';
+  }
+  return backendType;
+}
+
+const backendTypeOptions: Record<NewBackendType, SelectableValue<BackendType>> = {
+  'grafana-pyroscope': {
+    label: 'Grafana Pyroscope',
+    value: 'grafana-pyroscope',
   },
-  pyroscope: {
-    label: 'Pyroscope',
-    value: 'pyroscope',
+  'legacy-pyroscope': {
+    label: 'Legacy Pyroscope',
+    value: 'legacy-pyroscope',
   },
 };

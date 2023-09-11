@@ -192,16 +192,16 @@ func (d *PhlareDatasource) backendType(ctx context.Context, req *backend.CallRes
 	// to test with (like when filling in the confgi page for the first time)
 	url := query["url"][0]
 
-	pyroClient := getClient("pyroscope", d.httpClient, url)
+	pyroClient := getClient("legacy-pyroscope", d.httpClient, url)
 	_, err = pyroClient.ProfileTypes(ctx)
 
 	if err == nil {
-		body.BackendType = "pyroscope"
+		body.BackendType = "legacy-pyroscope"
 	} else {
-		phlareClient := getClient("phlare", d.httpClient, url)
+		phlareClient := getClient("grafana-pyroscope", d.httpClient, url)
 		_, err := phlareClient.ProfileTypes(ctx)
 		if err == nil {
-			body.BackendType = "phlare"
+			body.BackendType = "grafana-pyroscope"
 		}
 	}
 
