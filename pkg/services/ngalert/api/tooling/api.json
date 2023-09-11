@@ -764,6 +764,9 @@
     "uid": {
      "description": "UID is the unique identifier of the contact point. The UID can be\nset by the user.",
      "example": "my_external_reference",
+     "maxLength": 40,
+     "minLength": 1,
+     "pattern": "^[a-zA-Z0-9\\-\\_]+$",
      "type": "string"
     }
    },
@@ -3854,7 +3857,6 @@
    "type": "object"
   },
   "URL": {
-   "description": "The general form represented is:\n\n[scheme:][//[userinfo@]host][/]path[?query][#fragment]\n\nURLs that do not start with a slash after the scheme are interpreted as:\n\nscheme:opaque[?query][#fragment]\n\nNote that the Path field is stored in decoded form: /%47%6f%2f becomes /Go/.\nA consequence is that it is impossible to tell which slashes in the Path were\nslashes in the raw URL and which were %2f. This distinction is rarely important,\nbut when it is, the code should use the EscapedPath method, which preserves\nthe original encoding of Path.\n\nThe RawPath field is an optional field which is only set when the default\nencoding of Path is different from the escaped path. See the EscapedPath method\nfor more details.\n\nURL's String method uses the EscapedPath method to obtain the path.",
    "properties": {
     "ForceQuery": {
      "type": "boolean"
@@ -3890,7 +3892,7 @@
      "$ref": "#/definitions/Userinfo"
     }
    },
-   "title": "A URL represents a parsed URL (technically, a URI reference).",
+   "title": "URL is a custom URL type that allows validation at configuration load time.",
    "type": "object"
   },
   "Userinfo": {
@@ -4070,6 +4072,7 @@
    "type": "object"
   },
   "alertGroup": {
+   "description": "AlertGroup alert group",
    "properties": {
     "alerts": {
      "description": "alerts",
@@ -4093,7 +4096,6 @@
    "type": "object"
   },
   "alertGroups": {
-   "description": "AlertGroups alert groups",
    "items": {
     "$ref": "#/definitions/alertGroup"
    },
@@ -4198,6 +4200,7 @@
    "type": "object"
   },
   "gettableAlert": {
+   "description": "GettableAlert gettable alert",
    "properties": {
     "annotations": {
      "$ref": "#/definitions/labelSet"
@@ -4253,6 +4256,7 @@
    "type": "object"
   },
   "gettableAlerts": {
+   "description": "GettableAlerts gettable alerts",
    "items": {
     "$ref": "#/definitions/gettableAlert"
    },
@@ -4308,14 +4312,12 @@
    "type": "object"
   },
   "gettableSilences": {
-   "description": "GettableSilences gettable silences",
    "items": {
     "$ref": "#/definitions/gettableSilence"
    },
    "type": "array"
   },
   "integration": {
-   "description": "Integration integration",
    "properties": {
     "lastNotifyAttempt": {
      "description": "A timestamp indicating the last attempt to deliver a notification regardless of the outcome.\nFormat: date-time",
@@ -4497,7 +4499,6 @@
    "type": "object"
   },
   "receiver": {
-   "description": "Receiver receiver",
    "properties": {
     "active": {
      "description": "active",
@@ -4691,15 +4692,24 @@
       "type": "string"
      },
      {
-      "description": "UID of folder from which export rules",
+      "description": "UIDs of folders from which to export rules",
       "in": "query",
+      "items": {
+       "type": "string"
+      },
       "name": "folderUid",
+      "type": "array"
+     },
+     {
+      "description": "Name of group of rules to export. Must be specified only together with a single folder UID",
+      "in": "query",
+      "name": "group",
       "type": "string"
      },
      {
-      "description": "Name of group of rules to export. Must be specified only together with folder UID",
+      "description": "UID of alert rule to export. If specified, parameters folderUid and group must be empty.",
       "in": "query",
-      "name": "group",
+      "name": "ruleUid",
       "type": "string"
      }
     ],
