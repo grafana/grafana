@@ -601,7 +601,7 @@ steps:
 - commands:
   - apk add --update tar bash
   - mkdir grafana
-  - tar --strip-components=1 -xvf ./dist/*.tar.gz -C grafana
+  - tar --strip-components=1 -xvf ./dist/*amd64.tar.gz -C grafana
   - cp -r devenv scripts tools grafana && cd grafana && ./scripts/grafana-server/start-server
   depends_on:
   - rgm-package
@@ -1750,7 +1750,7 @@ steps:
 - commands:
   - apk add --update tar bash
   - mkdir grafana
-  - tar --strip-components=1 -xvf ./dist/*.tar.gz -C grafana
+  - tar --strip-components=1 -xvf ./dist/*amd64.tar.gz -C grafana
   - cp -r devenv scripts tools grafana && cd grafana && ./scripts/grafana-server/start-server
   depends_on:
   - rgm-package
@@ -4198,6 +4198,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: a9b4c54e3c576da7bdd6ffac94b97dc5c44c1bc092318b657c2a5f3ccdc7d042
+hmac: a8ea3f78e959589b0214c352d3559f77785d9fc99dd6442bcf22981f87d7b269
 
 ...
