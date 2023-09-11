@@ -26,6 +26,7 @@ import (
 var (
 	getTime            = time.Now
 	errTokenNotRotated = errors.New("token was not rotated")
+	errUserIDInvalid   = errors.New("invalid user ID")
 )
 
 func ProvideUserAuthTokenService(sqlStore db.DB,
@@ -531,6 +532,10 @@ func (s *UserAuthTokenService) GetUserTokens(ctx context.Context, userId int64) 
 
 // ActiveTokenCount returns the number of active tokens. If userID is nil, the count is for all users.
 func (s *UserAuthTokenService) ActiveTokenCount(ctx context.Context, userID *int64) (int64, error) {
+	if userID != nil && *userID < 1 {
+		return 0, errUserIDInvalid
+	}
+
 	var count int64
 	err := s.sqlStore.WithDbSession(ctx, func(dbSession *db.Session) error {
 		query := `SELECT COUNT(*) FROM user_auth_token WHERE created_at > ? AND rotated_at > ? AND revoked_at = 0`
