@@ -5,10 +5,11 @@ import { useLocation, useRouteMatch } from 'react-router-dom';
 
 import { AppEvents, AppPlugin, AppPluginMeta, NavModel, NavModelItem, PluginType } from '@grafana/data';
 import { config, locationSearchToObject } from '@grafana/runtime';
+import { Alert } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { useGrafana } from 'app/core/context/GrafanaContext';
-import { appEvents } from 'app/core/core';
+import { appEvents, contextSrv } from 'app/core/core';
 import { getNotFoundNav, getWarningNav, getExceptionNav } from 'app/core/navigation/errorModels';
 
 import { getPluginSettings } from '../pluginSettings';
@@ -81,16 +82,53 @@ export function AppRootPage({ pluginId, pluginNavSection }: Props) {
     />
   );
 
+  // Because of the fallback at plugin routes, we need to check
+  // if the user has permissions to see the plugin page.
+  const userHasPermissionsToPluginPage = (path: string) => {
+    let rolesMap = new Map();
+    plugin.meta?.includes?.map((include) => {
+      rolesMap.set(include.path, include.role);
+    });
+    if (contextSrv.isGrafanaAdmin) {
+      return true;
+    }
+    if (contextSrv.isEditor && rolesMap.get(path) === 'Viewer') {
+      return true;
+    }
+    return contextSrv.hasRole(rolesMap.get(path));
+  };
+
+  const AccessDenied = () => {
+    return (
+      <Alert severity="warning" title="Access denied">
+        You do not have permission to see this plugin.
+      </Alert>
+    );
+  };
   if (!pluginNav) {
-    return <PluginPageContext.Provider value={context}>{pluginRoot}</PluginPageContext.Provider>;
+    return (
+      <>
+        {userHasPermissionsToPluginPage(pluginRoot.props.path) ? (
+          <PluginPageContext.Provider value={context}>{pluginRoot}</PluginPageContext.Provider>
+        ) : (
+          <AccessDenied />
+        )}
+      </>
+    );
   }
 
   return (
     <>
       {navModel ? (
-        <Page navModel={navModel} pageNav={pluginNav?.node}>
-          <Page.Contents isLoading={loading}>{pluginRoot}</Page.Contents>
-        </Page>
+        <>
+          {userHasPermissionsToPluginPage(pluginRoot.props.path) ? (
+            <Page navModel={navModel} pageNav={pluginNav?.node}>
+              <Page.Contents isLoading={loading}>{pluginRoot}</Page.Contents>
+            </Page>
+          ) : (
+            <AccessDenied />
+          )}
+        </>
       ) : (
         <Page>{pluginRoot}</Page>
       )}
