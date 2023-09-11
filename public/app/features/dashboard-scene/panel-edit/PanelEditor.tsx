@@ -83,10 +83,6 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     const sourcePanel = this.state.sourcePanelRef.resolve();
     const panel = this.state.panelRef.resolve();
 
-    if (!dashboard.state.isEditing) {
-      dashboard.setState({ isEditing: true });
-    }
-
     const newState = sceneUtils.cloneSceneObjectState(panel.state);
 
     sourcePanel.setState(newState);
@@ -95,6 +91,8 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     dashboard.setState({
       $timeRange: this.state.$timeRange?.clone(),
       $variables: this.state.$variables?.clone(),
+      isEditing: true,
+      isDirty: true,
     });
   }
 
