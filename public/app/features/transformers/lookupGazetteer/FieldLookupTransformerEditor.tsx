@@ -14,6 +14,8 @@ import { InlineField, InlineFieldRow } from '@grafana/ui';
 import { FieldNamePicker } from '@grafana/ui/src/components/MatchersUI/FieldNamePicker';
 import { GazetteerPathEditor, GazetteerPathEditorConfigSettings } from 'app/features/geo/editor/GazetteerPathEditor';
 
+import { getHelperContent } from '../helpers/getHelperContent';
+
 import { FieldLookupOptions, fieldLookupTransformer } from './fieldLookup';
 
 const fieldNamePickerSettings: StandardEditorsRegistryItem<string, FieldNamePickerConfigSettings> = {
@@ -86,4 +88,5 @@ export const fieldLookupTransformRegistryItem: TransformerRegistryItem<FieldLook
   description: `Use a field value to lookup additional fields from an external source. This currently supports spatial data, but will eventually support more formats.`,
   state: PluginState.alpha,
   categories: new Set([TransformerCategory.PerformSpatialOperations]),
+  help: getHelperContent(DataTransformerID.fieldLookup),
 };
