@@ -290,7 +290,7 @@ func NewFakeBackendProcessProvider() *FakeBackendProcessProvider {
 	}
 	f.BackendFactoryFunc = func(ctx context.Context, p *plugins.Plugin) backendplugin.PluginFactoryFunc {
 		f.Requested[p.ID]++
-		return func(pluginID string, _ log.Logger, _ []string) (backendplugin.Plugin, error) {
+		return func(pluginID string, _ log.Logger, _ func() []string) (backendplugin.Plugin, error) {
 			f.Invoked[pluginID]++
 			return &FakePluginClient{}, nil
 		}
