@@ -2663,6 +2663,9 @@
      "type": "string"
     },
     "uid": {
+     "maxLength": 40,
+     "minLength": 1,
+     "pattern": "^[a-zA-Z0-9-_]+$",
      "type": "string"
     },
     "updated": {
