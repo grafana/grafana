@@ -12,7 +12,6 @@ var (
 	ErrCorrelationReadOnly                = errors.New("correlation can only be edited via provisioning")
 	ErrSourceDataSourceDoesNotExists      = errors.New("source data source does not exist")
 	ErrTargetDataSourceDoesNotExists      = errors.New("target data source does not exist")
-	ErrCorrelationFailedGenerateUniqueUid = errors.New("failed to generate unique correlation UID")
 	ErrCorrelationNotFound                = errors.New("correlation not found")
 	ErrUpdateCorrelationEmptyParams       = errors.New("not enough parameters to edit correlation")
 	ErrInvalidConfigType                  = errors.New("invalid correlation config type")
