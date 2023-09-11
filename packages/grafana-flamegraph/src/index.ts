@@ -1,1 +1,1 @@
-export { default as FlameGraph } from './FlameGraphContainer';
+export { default as FlameGraph, type Props } from './FlameGraphContainer';

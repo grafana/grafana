@@ -11,7 +11,7 @@ import FlameGraphTopTableContainer from './TopTable/FlameGraphTopTableContainer'
 import { MIN_WIDTH_TO_SHOW_BOTH_TOPTABLE_AND_FLAMEGRAPH } from './constants';
 import { ClickedItemData, ColorScheme, ColorSchemeDiff, SelectedView, TextAlign } from './types';
 
-type Props = {
+export type Props = {
   /**
    * DataFrame with the profile data. The dataFrame needs to have the following fields:
    * label: string - the label of the node
