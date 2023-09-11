@@ -189,6 +189,10 @@ describe('Azure monitor datasource', () => {
     e2e.setScenarioContext({ addedDataSources: [] });
   });
 
+  beforeEach(() => {
+    e2e.flows.login(e2e.env('USERNAME'), e2e.env('PASSWORD'));
+  });
+
   after(() => {
     e2e.flows.revertAllChanges();
   });
