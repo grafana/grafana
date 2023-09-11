@@ -85,8 +85,11 @@ export function AppRootPage({ pluginId, pluginNavSection }: Props) {
   // Because of the fallback at plugin routes, we need to check
   // if the user has permissions to see the plugin page.
   const userHasPermissionsToPluginPage = (path: string) => {
+    if (!plugin.meta?.includes) {
+      return true;
+    }
     let rolesMap = new Map();
-    plugin.meta?.includes?.map((include) => {
+    plugin.meta?.includes.map((include) => {
       rolesMap.set(include.path, include.role);
     });
     if (contextSrv.isGrafanaAdmin) {
