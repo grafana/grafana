@@ -75,11 +75,14 @@ const getStyles = memoizeOne((theme: GrafanaTheme2) => {
       align-items: center;
       line-height: 22px;
 
-      div > button:first-of-type {
+      .log-details-value-copy {
         visibility: hidden;
+        &:hover {
+          visibility: visible;
+        }
       }
       &:hover {
-        div > button:first-of-type {
+        .log-details-value-copy {
           visibility: visible;
         }
       }
@@ -205,7 +208,7 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
     const styles = getStyles(theme);
 
     return (
-      <div className={styles.copyButton}>
+      <div className={`log-details-value-copy ${styles.copyButton}`}>
         <ClipboardButton
           getText={() => val}
           title="Copy value to clipboard"
@@ -253,7 +256,7 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
     } = this.props;
     const { showFieldsStats, fieldStats, fieldCount } = this.state;
     const styles = getStyles(theme);
-    const style = getLogRowStyles(theme);
+    const rowStyles = getLogRowStyles(theme);
     const singleKey = parsedKeys == null ? false : parsedKeys.length === 1;
     const singleVal = parsedValues == null ? false : parsedValues.length === 1;
     const hasFilteringFunctionality = !disableActions && onClickFilterLabel && onClickFilterOutLabel;
@@ -272,8 +275,8 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
 
     return (
       <>
-        <tr className={cx(style.logDetailsValue)}>
-          <td className={style.logsDetailsIcon}>
+        <tr className={cx(rowStyles.logDetailsValue)}>
+          <td className={rowStyles.logsDetailsIcon}>
             <div className={styles.buttonRow}>
               {hasFilteringFunctionality && (
                 <>
@@ -310,7 +313,7 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
           </td>
 
           {/* Key - value columns */}
-          <td className={style.logDetailsLabel}>{singleKey ? parsedKeys[0] : this.generateMultiVal(parsedKeys)}</td>
+          <td className={rowStyles.logDetailsLabel}>{singleKey ? parsedKeys[0] : this.generateMultiVal(parsedKeys)}</td>
           <td className={cx(styles.wordBreakAll, wrapLogMessage && styles.wrapLine)}>
             <div className={styles.logDetailsValue}>
               {singleVal ? parsedValues[0] : this.generateMultiVal(parsedValues, true)}
