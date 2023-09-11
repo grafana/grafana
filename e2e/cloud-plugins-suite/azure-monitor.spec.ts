@@ -2,16 +2,15 @@ import { Interception } from 'cypress/types/net-stubbing';
 import { load } from 'js-yaml';
 import { v4 as uuidv4 } from 'uuid';
 
-import { e2e } from '@grafana/e2e';
-
 import { selectors } from '../../public/app/plugins/datasource/azuremonitor/e2e/selectors';
 import {
   AzureDataSourceJsonData,
   AzureDataSourceSecureJsonData,
   AzureQueryType,
 } from '../../public/app/plugins/datasource/azuremonitor/types';
+import { e2e } from '../utils';
 
-const provisioningPath = `../../provisioning/datasources/azmonitor-ds.yaml`;
+const provisioningPath = `provisioning/datasources/azmonitor-ds.yaml`;
 const e2eSelectors = e2e.getSelectors(selectors.components);
 
 type AzureMonitorConfig = {
@@ -166,7 +165,7 @@ e2e.scenario({
     const CI = e2e.env('CI');
     if (CI) {
       e2e()
-        .readFile('../../outputs.json')
+        .readFile('outputs.json')
         .then((outputs) => {
           provisionAzureMonitorDatasources([
             {

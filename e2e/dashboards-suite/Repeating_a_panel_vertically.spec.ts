@@ -1,4 +1,4 @@
-import { e2e } from '@grafana/e2e';
+import { e2e } from '../utils';
 const PAGE_UNDER_TEST = 'OY8Ghjt7k/repeating-a-panel-vertically';
 
 describe('Repeating a panel vertically', () => {
@@ -10,7 +10,7 @@ describe('Repeating a panel vertically', () => {
     e2e.flows.openDashboard({ uid: PAGE_UNDER_TEST });
 
     let prevTop = Number.NEGATIVE_INFINITY;
-    let prevLeft = null;
+    let prevLeft: number | null = null;
     const panelTitles = ['Panel Title 1', 'Panel Title 2', 'Panel Title 3'];
     panelTitles.forEach((title) => {
       e2e.components.Panels.Panel.title(title)
@@ -31,7 +31,7 @@ describe('Repeating a panel vertically', () => {
     e2e.flows.openDashboard({ uid: PAGE_UNDER_TEST });
 
     let prevTop = Number.NEGATIVE_INFINITY;
-    let prevLeft = null;
+    let prevLeft: number | null = null;
     const panelTitles = ['Panel Title 1', 'Panel Title 2', 'Panel Title 3'];
     panelTitles.forEach((title) => {
       e2e.components.Panels.Panel.title(title).should('be.visible');
@@ -69,7 +69,7 @@ describe('Repeating a panel vertically', () => {
     e2e.flows.openDashboard({ uid: `${PAGE_UNDER_TEST}?var-vertical=1&var-vertical=3` });
 
     let prevTop = Number.NEGATIVE_INFINITY;
-    let prevLeft = null;
+    let prevLeft: number | null = null;
     const panelsShown = ['Panel Title 1', 'Panel Title 3'];
     const panelsNotShown = ['Panel Title 2'];
     panelsShown.forEach((title) => {
