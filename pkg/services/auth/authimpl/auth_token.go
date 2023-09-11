@@ -567,12 +567,18 @@ func (s *UserAuthTokenService) DeleteUserRevokedTokens(ctx context.Context, user
 		query.WriteString("revoked_at <= UNIX_TIMESTAMP(NOW() - INTERVAL ? HOUR)")
 	case migrator.Postgres:
 		query.WriteString("revoked_at <= EXTRACT(EPOCH FROM (NOW() - (? * INTERVAL '1 hour')))::INTEGER")
-	default:
-		query.WriteString("revoked_at <= (strftime('%%s','now') - ?*3600)")
+	case migrator.SQLite:
+		query.WriteString("revoked_at <= (strftime('%s','now') - ?*3600)")
 	}
 
 	return s.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
-		_, err := sess.Exec(query.String(), userID, hours)
+		res, err := sess.Exec(query.String(), userID, hours)
+		if err != nil {
+			return err
+		}
+		ctxLogger := s.log.FromContext(ctx)
+		rows, err := res.RowsAffected()
+		ctxLogger.Debug("Deleted user revoked tokens", "userId", userID, "count", rows)
 		return err
 	})
 }
