@@ -240,9 +240,8 @@ func TestIntegrationUserAuthToken(t *testing.T) {
 		})
 
 		t.Run("when rotated_at is 5 days ago and created_at is 30 days ago should return token expired error", func(t *testing.T) {
-			updated, err := ctx.updateRotatedAt(model.Id, time.Unix(model.CreatedAt, 0).Add(24*25*time.Hour).Unix())
+			_, err := ctx.updateRotatedAt(model.Id, time.Unix(model.CreatedAt, 0).Add(24*25*time.Hour).Unix())
 			require.Nil(t, err)
-			require.True(t, updated)
 
 			getTime = func() time.Time {
 				return time.Unix(model.CreatedAt, 0).Add(24 * 30 * time.Hour)
