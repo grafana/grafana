@@ -32,5 +32,5 @@ export const openDashboard = (config?: PartialOpenDashboardConfig) =>
     }
 
     // @todo remove `wrap` when possible
-    return e2e().wrap({ config: fullConfig }, { log: false });
+    return cy.wrap({ config: fullConfig }, { log: false });
   });

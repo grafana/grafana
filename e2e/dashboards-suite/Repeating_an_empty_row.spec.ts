@@ -37,7 +37,7 @@ describe('Repeating empty rows', () => {
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('1').click();
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('3').click();
     // blur the dropdown
-    e2e().get('body').click();
+    cy.get('body').click();
 
     const rowsShown = ['Row title 1', 'Row title 3'];
     const rowsNotShown = ['Row title 2'];

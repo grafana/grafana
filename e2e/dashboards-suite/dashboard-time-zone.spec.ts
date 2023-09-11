@@ -95,7 +95,7 @@ e2e.scenario({
       uid: 'd41dbaa2-a39e-4536-ab2b-caca52f1a9c8',
     });
 
-    e2e().intercept('/api/ds/query*').as('dataQuery');
+    cy.intercept('/api/ds/query*').as('dataQuery');
 
     // Switch to Browser timezone
     e2e.flows.setTimeRange({
@@ -104,12 +104,12 @@ e2e.scenario({
       zone: 'Browser',
     });
     // Need to wait for 2 calls as there's 2 panels
-    e2e().wait(['@dataQuery', '@dataQuery']);
+    cy.wait(['@dataQuery', '@dataQuery']);
 
     e2e.components.Panels.Panel.title('Panel with relative time override')
       .should('be.visible')
       .within(() => {
-        e2e().contains('[role="row"]', '00:00:00').should('be.visible');
+        cy.contains('[role="row"]', '00:00:00').should('be.visible');
       });
 
     // Today so far, still in Browser timezone
@@ -118,18 +118,18 @@ e2e.scenario({
       to: 'now',
     });
     // Need to wait for 2 calls as there's 2 panels
-    e2e().wait(['@dataQuery', '@dataQuery']);
+    cy.wait(['@dataQuery', '@dataQuery']);
 
     e2e.components.Panels.Panel.title('Panel with relative time override')
       .should('be.visible')
       .within(() => {
-        e2e().contains('[role="row"]', '00:00:00').should('be.visible');
+        cy.contains('[role="row"]', '00:00:00').should('be.visible');
       });
 
     e2e.components.Panels.Panel.title('Panel in timezone')
       .should('be.visible')
       .within(() => {
-        e2e().contains('[role="row"]', '00:00:00').should('be.visible');
+        cy.contains('[role="row"]', '00:00:00').should('be.visible');
       });
 
     // Test Tokyo timezone
@@ -139,12 +139,12 @@ e2e.scenario({
       zone: 'Asia/Tokyo',
     });
     // Need to wait for 2 calls as there's 2 panels
-    e2e().wait(['@dataQuery', '@dataQuery']);
+    cy.wait(['@dataQuery', '@dataQuery']);
 
     e2e.components.Panels.Panel.title('Panel with relative time override')
       .should('be.visible')
       .within(() => {
-        e2e().contains('[role="row"]', '00:00:00').should('be.visible');
+        cy.contains('[role="row"]', '00:00:00').should('be.visible');
       });
 
     // Today so far, still in Tokyo timezone
@@ -153,18 +153,18 @@ e2e.scenario({
       to: 'now',
     });
     // Need to wait for 2 calls as there's 2 panels
-    e2e().wait(['@dataQuery', '@dataQuery']);
+    cy.wait(['@dataQuery', '@dataQuery']);
 
     e2e.components.Panels.Panel.title('Panel with relative time override')
       .should('be.visible')
       .within(() => {
-        e2e().contains('[role="row"]', '00:00:00').should('be.visible');
+        cy.contains('[role="row"]', '00:00:00').should('be.visible');
       });
 
     e2e.components.Panels.Panel.title('Panel in timezone')
       .should('be.visible')
       .within(() => {
-        e2e().contains('[role="row"]', '00:00:00').should('be.visible');
+        cy.contains('[role="row"]', '00:00:00').should('be.visible');
       });
 
     // Test LA timezone
@@ -174,12 +174,12 @@ e2e.scenario({
       zone: 'America/Los_Angeles',
     });
     // Need to wait for 2 calls as there's 2 panels
-    e2e().wait(['@dataQuery', '@dataQuery']);
+    cy.wait(['@dataQuery', '@dataQuery']);
 
     e2e.components.Panels.Panel.title('Panel with relative time override')
       .should('be.visible')
       .within(() => {
-        e2e().contains('[role="row"]', '00:00:00').should('be.visible');
+        cy.contains('[role="row"]', '00:00:00').should('be.visible');
       });
 
     // Today so far, still in LA timezone
@@ -188,18 +188,18 @@ e2e.scenario({
       to: 'now',
     });
     // Need to wait for 2 calls as there's 2 panels
-    e2e().wait(['@dataQuery', '@dataQuery']);
+    cy.wait(['@dataQuery', '@dataQuery']);
 
     e2e.components.Panels.Panel.title('Panel with relative time override')
       .should('be.visible')
       .within(() => {
-        e2e().contains('[role="row"]', '00:00:00').should('be.visible');
+        cy.contains('[role="row"]', '00:00:00').should('be.visible');
       });
 
     e2e.components.Panels.Panel.title('Panel in timezone')
       .should('be.visible')
       .within(() => {
-        e2e().contains('[role="row"]', '00:00:00').should('be.visible');
+        cy.contains('[role="row"]', '00:00:00').should('be.visible');
       });
   },
 });

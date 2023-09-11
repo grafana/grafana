@@ -7,23 +7,19 @@ e2e.scenario({
   addScenarioDashBoard: false,
   skipScenario: false,
   scenario: () => {
-    e2e()
-      .intercept({
-        method: 'GET',
-        url: '/api/search?tag=templating&limit=100',
-      })
-      .as('tagsTemplatingSearch');
-    e2e()
-      .intercept({
-        method: 'GET',
-        url: '/api/search?tag=demo&limit=100',
-      })
-      .as('tagsDemoSearch');
+    cy.intercept({
+      method: 'GET',
+      url: '/api/search?tag=templating&limit=100',
+    }).as('tagsTemplatingSearch');
+    cy.intercept({
+      method: 'GET',
+      url: '/api/search?tag=demo&limit=100',
+    }).as('tagsDemoSearch');
 
     e2e.flows.openDashboard({ uid: 'yBCC3aKGk' });
 
     // waiting for network requests first
-    e2e().wait(['@tagsTemplatingSearch', '@tagsDemoSearch']);
+    cy.wait(['@tagsTemplatingSearch', '@tagsDemoSearch']);
 
     const verifyLinks = (variableValue: string) => {
       e2e.components.DashboardLinks.link()

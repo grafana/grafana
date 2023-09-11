@@ -45,12 +45,10 @@ export const addDataSource = (config?: Partial<AddDataSourceConfig>) => {
   } = fullConfig;
 
   if (awaitHealth) {
-    e2e()
-      .intercept(/health/)
-      .as('health');
+    cy.intercept(/health/).as('health');
   }
 
-  e2e().logToConsole('Adding data source with name:', name);
+  cy.logToConsole('Adding data source with name:', name);
   e2e.pages.AddDataSource.visit();
   e2e.pages.AddDataSource.dataSourcePluginsV2(type)
     .scrollIntoView()
@@ -61,23 +59,22 @@ export const addDataSource = (config?: Partial<AddDataSourceConfig>) => {
   e2e.pages.DataSource.name().type(name);
 
   if (basicAuth) {
-    e2e().contains('label', 'Basic auth').scrollIntoView().click();
-    e2e()
-      .contains('.gf-form-group', 'Basic Auth Details')
+    cy.contains('label', 'Basic auth').scrollIntoView().click();
+    cy.contains('.gf-form-group', 'Basic Auth Details')
       .should('be.visible')
       .scrollIntoView()
       .within(() => {
         if (basicAuthUser) {
-          e2e().get('[placeholder=user]').type(basicAuthUser);
+          cy.get('[placeholder=user]').type(basicAuthUser);
         }
         if (basicAuthPassword) {
-          e2e().get('[placeholder=Password]').type(basicAuthPassword);
+          cy.get('[placeholder=Password]').type(basicAuthPassword);
         }
       });
   }
 
   if (skipTlsVerify) {
-    e2e().contains('label', 'Skip TLS Verify').scrollIntoView().click();
+    cy.contains('label', 'Skip TLS Verify').scrollIntoView().click();
   }
 
   form();
@@ -85,7 +82,7 @@ export const addDataSource = (config?: Partial<AddDataSourceConfig>) => {
   e2e.pages.DataSource.saveAndTest().click();
 
   if (awaitHealth) {
-    e2e().wait('@health', { timeout: timeout ?? e2e.config().defaultCommandTimeout });
+    cy.wait('@health', { timeout: timeout ?? e2e.config().defaultCommandTimeout });
   }
 
   // use the timeout passed in if it exists, otherwise, continue to use the default
@@ -94,23 +91,21 @@ export const addDataSource = (config?: Partial<AddDataSourceConfig>) => {
     .contains(expectedAlertMessage, {
       timeout: timeout ?? e2e.config().defaultCommandTimeout,
     });
-  e2e().logToConsole('Added data source with name:', name);
+  cy.logToConsole('Added data source with name:', name);
 
-  return e2e()
-    .url()
-    .then(() => {
-      e2e.getScenarioContext().then(({ addedDataSources }: any) => {
-        e2e.setScenarioContext({
-          addedDataSources: [...addedDataSources, { name } as DeleteDataSourceConfig],
-        });
+  return cy.url().then(() => {
+    e2e.getScenarioContext().then(({ addedDataSources }: any) => {
+      e2e.setScenarioContext({
+        addedDataSources: [...addedDataSources, { name } as DeleteDataSourceConfig],
       });
-
-      // @todo remove `wrap` when possible
-      return e2e().wrap(
-        {
-          config: fullConfig,
-        },
-        { log: false }
-      );
     });
+
+    // @todo remove `wrap` when possible
+    return cy.wrap(
+      {
+        config: fullConfig,
+      },
+      { log: false }
+    );
+  });
 };

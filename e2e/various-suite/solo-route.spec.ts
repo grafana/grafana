@@ -10,6 +10,6 @@ e2e.scenario({
     // open Panel Tests - Bar Gauge
     e2e.pages.SoloPanel.visit('ZqZnVvFZz/datasource-tests-shared-queries?orgId=1&panelId=4');
 
-    e2e().get('canvas').should('have.length', 6);
+    cy.get('canvas').should('have.length', 6);
   },
 });

@@ -109,14 +109,14 @@ export const configurePanel = (config: PartialAddPanelConfig | PartialEditPanelC
 
     // @todo alias '/**/*.js*' as '@pluginModule' when possible: https://github.com/cypress-io/cypress/issues/1296
 
-    e2e().intercept(chartData.method, chartData.route).as('chartData');
+    cy.intercept(chartData.method, chartData.route).as('chartData');
 
     if (dataSourceName) {
       e2e.components.DataSourcePicker.container().click().type(`${dataSourceName}{downArrow}{enter}`);
     }
 
     // @todo instead wait for '@pluginModule' if not already loaded
-    e2e().wait(2000);
+    cy.wait(2000);
 
     // `panelTitle` is needed to edit the panel, and unlikely to have its value changed at that point
     const changeTitle = panelTitle && !isEdit;
@@ -130,7 +130,7 @@ export const configurePanel = (config: PartialAddPanelConfig | PartialEditPanelC
         e2e.components.PluginVisualization.item(visualizationName).scrollIntoView().click();
 
         // @todo wait for '@pluginModule' if not a core visualization and not already loaded
-        e2e().wait(2000);
+        cy.wait(2000);
       }
     } else {
       // Consistently closed
@@ -142,21 +142,21 @@ export const configurePanel = (config: PartialAddPanelConfig | PartialEditPanelC
 
       // Wait for a possible complex visualization to render (or something related, as this isn't necessary on the dashboard page)
       // Can't assert that its HTML changed because a new query could produce the same results
-      e2e().wait(1000);
+      cy.wait(1000);
     }
 
     // @todo enable when plugins have this implemented
     //e2e.components.QueryEditorRow.actionButton('Disable/enable query').click();
-    //e2e().wait('@chartData');
+    //cy.wait('@chartData');
     //e2e.components.Panels.Panel.containerByTitle(panelTitle).find('.panel-content').contains('No data');
     //e2e.components.QueryEditorRow.actionButton('Disable/enable query').click();
-    //e2e().wait('@chartData');
+    //cy.wait('@chartData');
 
     // Avoid annotations flakiness
     e2e.components.RefreshPicker.runButtonV2().first().click({ force: true });
 
     // Wait for RxJS
-    e2e().wait(timeout ?? e2e.config().defaultCommandTimeout);
+    cy.wait(timeout ?? e2e.config().defaultCommandTimeout);
 
     if (matchScreenshot) {
       let visualization;
@@ -164,11 +164,11 @@ export const configurePanel = (config: PartialAddPanelConfig | PartialEditPanelC
       visualization = e2e.components.Panels.Panel.containerByTitle(panelTitle).find('.panel-content');
 
       visualization.scrollIntoView().screenshot(screenshotName);
-      e2e().compareScreenshots(screenshotName);
+      cy.compareScreenshots(screenshotName);
     }
 
     // @todo remove `wrap` when possible
-    return e2e().wrap({ config: fullConfig }, { log: false });
+    return cy.wrap({ config: fullConfig }, { log: false });
   });
 
 // @todo this actually returns type `Cypress.Chainable`

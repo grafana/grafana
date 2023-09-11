@@ -8,7 +8,7 @@ export interface DeleteDataSourceConfig {
 }
 
 export const deleteDataSource = ({ id, name, quick = false }: DeleteDataSourceConfig) => {
-  e2e().logToConsole('Deleting data source with name:', name);
+  cy.logToConsole('Deleting data source with name:', name);
 
   if (quick) {
     quickDelete(name);
@@ -16,7 +16,7 @@ export const deleteDataSource = ({ id, name, quick = false }: DeleteDataSourceCo
     uiDelete(name);
   }
 
-  e2e().logToConsole('Deleted data source with name:', name);
+  cy.logToConsole('Deleted data source with name:', name);
 
   e2e.getScenarioContext().then(({ addedDataSources }: any) => {
     e2e.setScenarioContext({
@@ -28,7 +28,7 @@ export const deleteDataSource = ({ id, name, quick = false }: DeleteDataSourceCo
 };
 
 const quickDelete = (name: string) => {
-  e2e().request('DELETE', fromBaseUrl(`/api/datasources/name/${name}`));
+  cy.request('DELETE', fromBaseUrl(`/api/datasources/name/${name}`));
 };
 
 const uiDelete = (name: string) => {
@@ -40,7 +40,5 @@ const uiDelete = (name: string) => {
   e2e.pages.DataSources.visit();
 
   // @todo replace `e2e.pages.DataSources.dataSources` with this when argument is empty
-  e2e()
-    .get('[aria-label^="Data source list item "]')
-    .each((item) => e2e().wrap(item).should('not.contain', name));
+  cy.get('[aria-label^="Data source list item "]').each((item) => cy.wrap(item).should('not.contain', name));
 };
