@@ -109,7 +109,7 @@ export function TimeManagement({ query, onQueryChange: onChange, schema }: Azure
               },
               {
                 label: 'Other time columns',
-                options: timeColumns,
+                options: timeColumns ?? [],
               },
             ]}
             onChange={handleTimeColumnChange}

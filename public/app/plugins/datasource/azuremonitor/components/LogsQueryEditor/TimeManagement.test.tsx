@@ -16,7 +16,7 @@ const variableOptionGroup = {
 describe('LogsQueryEditor.TimeManagement', () => {
   it('should render the column picker if Dashboard is chosen', async () => {
     const mockDatasource = createMockDatasource();
-    const query = createMockQuery();
+    const query = createMockQuery({ azureLogAnalytics: { timeColumn: undefined } });
     const onChange = jest.fn();
 
     const { rerender } = render(
@@ -68,7 +68,10 @@ describe('LogsQueryEditor.TimeManagement', () => {
 
     render(
       <TimeManagement
-        query={{ ...query, azureLogAnalytics: { ...query.azureLogAnalytics, dashboardTime: true } }}
+        query={{
+          ...query,
+          azureLogAnalytics: { ...query.azureLogAnalytics, dashboardTime: true, timeColumn: undefined },
+        }}
         datasource={mockDatasource}
         variableOptionGroup={variableOptionGroup}
         onQueryChange={onChange}
@@ -103,7 +106,10 @@ describe('LogsQueryEditor.TimeManagement', () => {
 
     render(
       <TimeManagement
-        query={{ ...query, azureLogAnalytics: { ...query.azureLogAnalytics, dashboardTime: true } }}
+        query={{
+          ...query,
+          azureLogAnalytics: { ...query.azureLogAnalytics, dashboardTime: true, timeColumn: undefined },
+        }}
         datasource={mockDatasource}
         variableOptionGroup={variableOptionGroup}
         onQueryChange={onChange}
@@ -129,5 +135,38 @@ describe('LogsQueryEditor.TimeManagement', () => {
         }),
       })
     );
+  });
+
+  it('should render the query time column if it exists', async () => {
+    const mockDatasource = createMockDatasource();
+    const query = createMockQuery();
+    const onChange = jest.fn();
+
+    render(
+      <TimeManagement
+        query={{
+          ...query,
+          azureLogAnalytics: { ...query.azureLogAnalytics, dashboardTime: true, timeColumn: 'TestTimeColumn' },
+        }}
+        datasource={mockDatasource}
+        variableOptionGroup={variableOptionGroup}
+        onQueryChange={onChange}
+        setError={() => {}}
+        schema={FakeSchemaData.getLogAnalyticsFakeEngineSchema([
+          {
+            id: 't/Alert',
+            name: 'Alert',
+            timespanColumn: '',
+            columns: [{ name: 'TestTimeColumn', type: 'datetime' }],
+            related: {
+              solutions: [],
+            },
+          },
+        ])}
+      />
+    );
+
+    expect(onChange).not.toBeCalled();
+    expect(screen.getByText('Alert > TestTimeColumn')).toBeInTheDocument();
   });
 });
