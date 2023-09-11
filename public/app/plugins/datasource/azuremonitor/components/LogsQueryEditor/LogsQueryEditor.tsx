@@ -58,7 +58,7 @@ const LogsQueryEditor = ({
         setSchema(schema);
       });
     }
-  }, [query.azureLogAnalytics?.resources]);
+  }, [query.azureLogAnalytics?.resources, datasource.azureLogAnalyticsDatasource]);
 
   return (
     <span data-testid={selectors.components.queryEditor.logsQueryEditor.container.input}>

@@ -44,18 +44,20 @@ export function TimeManagement({ query, onQueryChange: onChange, schema }: Azure
       setDefaultTimeColumns(defaultColumns);
 
       // Set default value
-      if (defaultColumns && defaultColumns.length) {
-        onChange(setTimeColumn(query, defaultColumns[0].value));
-        return;
-      } else if (timeColumns && timeColumns.length) {
-        onChange(setTimeColumn(query, timeColumns[0].value));
-        return;
-      } else {
-        onChange(setTimeColumn(query, 'TimeGenerated'));
-        return;
+      if (!query.azureLogAnalytics.timeColumn) {
+        if (defaultColumns && defaultColumns.length) {
+          onChange(setTimeColumn(query, defaultColumns[0].value));
+          return;
+        } else if (timeColumns && timeColumns.length) {
+          onChange(setTimeColumn(query, timeColumns[0].value));
+          return;
+        } else {
+          onChange(setTimeColumn(query, 'TimeGenerated'));
+          return;
+        }
       }
     }
-  }, [schema, query.azureLogAnalytics?.dashboardTime]);
+  }, [schema, query.azureLogAnalytics?.dashboardTime, onChange, query]);
 
   const handleTimeColumnChange = useCallback(
     (change: SelectableValue<string>) => {

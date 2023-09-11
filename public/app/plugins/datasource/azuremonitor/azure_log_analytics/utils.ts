@@ -1,6 +1,6 @@
 import { VariableModel } from '@grafana/data';
-import { EngineSchema } from '../types';
 
+import { EngineSchema } from '../types';
 import { AzureLogAnalyticsMetadata } from '../types/logAnalyticsMetadata';
 
 // matches (name):(type) = (defaultValue)

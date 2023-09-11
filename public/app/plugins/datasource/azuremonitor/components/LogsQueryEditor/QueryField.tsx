@@ -45,7 +45,7 @@ const QueryField = ({ query, onQueryChange, schema }: AzureQueryEditorFieldProps
     };
 
     setupEditor(monaco, schema).catch((err) => console.error(err));
-  }, [schema]);
+  }, [schema, monaco]);
 
   const handleEditorMount = useCallback((editor: MonacoEditor, monaco: Monaco) => {
     setMonaco({ monaco, editor });
