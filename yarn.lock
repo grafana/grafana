@@ -3720,7 +3720,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/e2e@workspace:*, @grafana/e2e@workspace:packages/grafana-e2e":
+"@grafana/e2e@workspace:packages/grafana-e2e":
   version: 0.0.0-use.local
   resolution: "@grafana/e2e@workspace:packages/grafana-e2e"
   dependencies:
@@ -3939,9 +3939,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/scenes@npm:^0.29.0":
-  version: 0.29.0
-  resolution: "@grafana/scenes@npm:0.29.0"
+"@grafana/scenes@npm:^1.1.1":
+  version: 1.1.1
+  resolution: "@grafana/scenes@npm:1.1.1"
   dependencies:
     "@grafana/e2e-selectors": 10.0.2
     react-grid-layout: 1.3.4
@@ -3953,7 +3953,7 @@ __metadata:
     "@grafana/runtime": 10.0.3
     "@grafana/schema": 10.0.3
     "@grafana/ui": 10.0.3
-  checksum: 8a91ea0290d54c5c081595e85f853b14af90468da3d85b5cd83e26d24d4fc84cceea9be930aa9239439ff3af7388ae3f5bebe1973214c686f4cf143a64752548
+  checksum: 6405998a40e38f088443f5d4b1f5ea1f73e5bc0d08216e4aaccf8ff0b68ec4c3d691430857f357d3eed335dee0dc2e24c41c5c2f286fc7fdd32375382ad3eafe
   languageName: node
   linkType: hard
 
@@ -15208,6 +15208,58 @@ __metadata:
   languageName: node
   linkType: hard
 
+"cypress@npm:12.15.0":
+  version: 12.15.0
+  resolution: "cypress@npm:12.15.0"
+  dependencies:
+    "@cypress/request": ^2.88.10
+    "@cypress/xvfb": ^1.2.4
+    "@types/node": ^14.14.31
+    "@types/sinonjs__fake-timers": 8.1.1
+    "@types/sizzle": ^2.3.2
+    arch: ^2.2.0
+    blob-util: ^2.0.2
+    bluebird: ^3.7.2
+    buffer: ^5.6.0
+    cachedir: ^2.3.0
+    chalk: ^4.1.0
+    check-more-types: ^2.24.0
+    cli-cursor: ^3.1.0
+    cli-table3: ~0.6.1
+    commander: ^6.2.1
+    common-tags: ^1.8.0
+    dayjs: ^1.10.4
+    debug: ^4.3.4
+    enquirer: ^2.3.6
+    eventemitter2: 6.4.7
+    execa: 4.1.0
+    executable: ^4.1.1
+    extract-zip: 2.0.1
+    figures: ^3.2.0
+    fs-extra: ^9.1.0
+    getos: ^3.2.1
+    is-ci: ^3.0.0
+    is-installed-globally: ~0.4.0
+    lazy-ass: ^1.6.0
+    listr2: ^3.8.3
+    lodash: ^4.17.21
+    log-symbols: ^4.0.0
+    minimist: ^1.2.8
+    ospath: ^1.2.2
+    pretty-bytes: ^5.6.0
+    proxy-from-env: 1.0.0
+    request-progress: ^3.0.0
+    semver: ^7.3.2
+    supports-color: ^8.1.1
+    tmp: ~0.2.1
+    untildify: ^4.0.0
+    yauzl: ^2.10.0
+  bin:
+    cypress: bin/cypress
+  checksum: a1989386bc0843377526c71d60a7c2d64593fbf3209cd5986cb684653d1092007add9d83910906b85e1801637206dd5fa5ce9627c6ada3a20a3a82ec5c2f4d7a
+  languageName: node
+  linkType: hard
+
 "cypress@npm:9.5.1":
   version: 9.5.1
   resolution: "cypress@npm:9.5.1"
@@ -17627,6 +17679,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"eventemitter2@npm:6.4.7":
+  version: 6.4.7
+  resolution: "eventemitter2@npm:6.4.7"
+  checksum: 1b36a77e139d6965ebf3a36c01fa00c089ae6b80faa1911e52888f40b3a7057b36a2cc45dcd1ad87cda3798fe7b97a0aabcbb8175a8b96092a23bb7d0f039e66
+  languageName: node
+  linkType: hard
+
 "eventemitter2@npm:^6.4.3":
   version: 6.4.9
   resolution: "eventemitter2@npm:6.4.9"
@@ -19209,6 +19268,7 @@ __metadata:
     "@betterer/cli": 5.4.0
     "@betterer/eslint": 5.4.0
     "@betterer/regexp": 5.4.0
+    "@cypress/webpack-preprocessor": 5.17.1
     "@daybrush/utils": 1.13.0
     "@emotion/css": 11.11.2
     "@emotion/eslint-plugin": 11.11.0
@@ -19217,7 +19277,6 @@ __metadata:
     "@glideapps/glide-data-grid": ^5.2.1
     "@grafana/aws-sdk": 0.1.3
     "@grafana/data": "workspace:*"
-    "@grafana/e2e": "workspace:*"
     "@grafana/e2e-selectors": "workspace:*"
     "@grafana/eslint-config": 6.0.1
     "@grafana/eslint-plugin": "link:./packages/grafana-eslint-rules"
@@ -19229,7 +19288,7 @@ __metadata:
     "@grafana/lezer-traceql": 0.0.5
     "@grafana/monaco-logql": ^0.0.7
     "@grafana/runtime": "workspace:*"
-    "@grafana/scenes": ^0.29.0
+    "@grafana/scenes": ^1.1.1
     "@grafana/schema": "workspace:*"
     "@grafana/tsconfig": ^1.3.0-rc1
     "@grafana/ui": "workspace:*"
@@ -19348,12 +19407,14 @@ __metadata:
     babel-plugin-angularjs-annotate: 0.10.0
     babel-plugin-macros: 3.1.0
     baron: 3.0.3
+    blink-diff: 1.0.13
     blob-polyfill: 7.0.20220408
     brace: 0.11.1
     browserslist: ^4.21.4
     calculate-size: 1.1.1
     centrifuge: 4.0.1
     chance: ^1.0.10
+    chrome-remote-interface: 0.32.2
     classnames: 2.3.2
     codeowners: ^5.1.1
     combokeys: ^3.0.0
@@ -19363,7 +19424,8 @@ __metadata:
     core-js: 3.31.1
     css-loader: 6.8.1
     css-minimizer-webpack-plugin: 5.0.1
-    cypress: 9.5.1
+    cypress: 12.15.0
+    cypress-file-upload: 5.0.8
     d3: 7.8.5
     d3-force: 3.0.0
     d3-scale-chromatic: 3.0.0
@@ -19517,6 +19579,7 @@ __metadata:
     testing-library-selector: 0.2.1
     tether-drop: "https://github.com/torkelo/drop"
     tinycolor2: 1.6.0
+    tracelib: 1.0.1
     ts-jest: 29.1.1
     ts-loader: 9.3.1
     ts-node: 10.9.1
@@ -19536,6 +19599,7 @@ __metadata:
     webpack-merge: 5.9.0
     whatwg-fetch: 3.6.2
     xlsx: "https://cdn.sheetjs.com/xlsx-0.19.1/xlsx-0.19.1.tgz"
+    yaml: ^2.0.0
     yargs: ^17.5.1
   dependenciesMeta:
     prettier@3.0.0:
@@ -23672,7 +23736,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"minimist@npm:^1.2.7":
+"minimist@npm:^1.2.7, minimist@npm:^1.2.8":
   version: 1.2.8
   resolution: "minimist@npm:1.2.8"
   checksum: 75a6d645fb122dad29c06a7597bddea977258957ed88d7a6df59b5cd3fe4a527e253e9bbf2e783e4b73657f9098b96a5fe96ab8a113655d4109108577ecf85b0

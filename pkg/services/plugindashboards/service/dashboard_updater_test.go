@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/plugindashboards"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings/service"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 )
 
 func TestDashboardUpdater(t *testing.T) {
@@ -83,7 +84,7 @@ func TestDashboardUpdater(t *testing.T) {
 						PluginVersion: "1.0.0",
 					},
 				},
-				installedPlugins: []plugins.PluginDTO{
+				installedPlugins: []pluginstore.Plugin{
 					{
 						JSONData: plugins.JSONData{
 							Info: plugins.Info{
@@ -115,7 +116,7 @@ func TestDashboardUpdater(t *testing.T) {
 						PluginVersion: "1.0.0",
 					},
 				},
-				installedPlugins: []plugins.PluginDTO{
+				installedPlugins: []pluginstore.Plugin{
 					{
 						JSONData: plugins.JSONData{
 							Info: plugins.Info{
@@ -151,7 +152,7 @@ func TestDashboardUpdater(t *testing.T) {
 						OrgID:         2,
 					},
 				},
-				installedPlugins: []plugins.PluginDTO{
+				installedPlugins: []pluginstore.Plugin{
 					{
 						JSONData: plugins.JSONData{
 							ID: "test",
@@ -225,7 +226,7 @@ func TestDashboardUpdater(t *testing.T) {
 					OrgID:    2,
 				},
 			},
-			installedPlugins: []plugins.PluginDTO{
+			installedPlugins: []pluginstore.Plugin{
 				{
 					JSONData: plugins.JSONData{
 						ID: "test",
@@ -273,7 +274,7 @@ func TestDashboardUpdater(t *testing.T) {
 					PluginVersion: "1.0.0",
 				},
 			},
-			installedPlugins: []plugins.PluginDTO{
+			installedPlugins: []pluginstore.Plugin{
 				{
 					JSONData: plugins.JSONData{
 						ID: "test",
@@ -341,16 +342,16 @@ func TestDashboardUpdater(t *testing.T) {
 }
 
 type pluginStoreMock struct {
-	plugins.Store
-	pluginFunc func(ctx context.Context, pluginID string) (plugins.PluginDTO, bool)
+	pluginstore.Store
+	pluginFunc func(ctx context.Context, pluginID string) (pluginstore.Plugin, bool)
 }
 
-func (m *pluginStoreMock) Plugin(ctx context.Context, pluginID string) (plugins.PluginDTO, bool) {
+func (m *pluginStoreMock) Plugin(ctx context.Context, pluginID string) (pluginstore.Plugin, bool) {
 	if m.pluginFunc != nil {
 		return m.pluginFunc(ctx, pluginID)
 	}
 
-	return plugins.PluginDTO{}, false
+	return pluginstore.Plugin{}, false
 }
 
 type pluginDashboardServiceMock struct {
@@ -464,7 +465,7 @@ func (s *dashboardServiceMock) GetDashboardByPublicUid(ctx context.Context, dash
 
 type scenarioInput struct {
 	storedPluginSettings []*pluginsettings.DTO
-	installedPlugins     []plugins.PluginDTO
+	installedPlugins     []pluginstore.Plugin
 	pluginDashboards     []*plugindashboards.PluginDashboard
 }
 
@@ -472,7 +473,7 @@ type scenarioContext struct {
 	t                              *testing.T
 	bus                            bus.Bus
 	pluginSettingsService          *pluginsSettingsServiceMock
-	pluginStore                    plugins.Store
+	pluginStore                    pluginstore.Store
 	pluginDashboardService         plugindashboards.Service
 	importDashboardService         dashboardimport.Service
 	dashboardPluginService         *dashboardPluginServiceMock
@@ -496,14 +497,14 @@ func scenario(t *testing.T, desc string, input scenarioInput, f func(ctx *scenar
 		updatePluginSettingVersionArgs: []*pluginsettings.UpdatePluginSettingVersionCmd{},
 	}
 
-	getPlugin := func(ctx context.Context, pluginID string) (plugins.PluginDTO, bool) {
+	getPlugin := func(ctx context.Context, pluginID string) (pluginstore.Plugin, bool) {
 		for _, p := range input.installedPlugins {
 			if p.ID == pluginID {
 				return p, true
 			}
 		}
 
-		return plugins.PluginDTO{}, false
+		return pluginstore.Plugin{}, false
 	}
 
 	sCtx.pluginSettingsService = &pluginsSettingsServiceMock{

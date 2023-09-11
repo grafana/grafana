@@ -95,7 +95,7 @@ export const TransformationOperationRow = ({
 
   const renderActions = ({ isOpen }: QueryOperationRowRenderProps) => {
     return (
-      <HorizontalGroup align="center" width="auto">
+      <>
         {uiConfig.state && <PluginStateInfo state={uiConfig.state} />}
         <QueryOperationToggleAction
           title="Show transform help"
@@ -144,7 +144,7 @@ export const TransformationOperationRow = ({
             onDismiss={() => setShowDeleteModal(false)}
           />
         )}
-      </HorizontalGroup>
+      </>
     );
   };
 
