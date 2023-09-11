@@ -217,7 +217,7 @@ export function APIEditor({ value, context, onChange }: Props) {
             context={context}
             value={value?.data ?? '{}'}
             onChange={onDataChange}
-            item={{...dummyStringSettings, settings: {useTextarea: true}}}
+            item={{ ...dummyStringSettings, settings: { useTextarea: true } }}
           />
         </Field>
       )}

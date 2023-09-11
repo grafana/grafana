@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { FormEvent, useState } from 'react';
 
 import { HorizontalGroup, IconButton, Input, VerticalGroup } from '@grafana/ui';
 
@@ -11,20 +11,18 @@ export const QueryParamsEditor = ({ value, onChange }: Props) => {
   const [paramName, setParamName] = useState('');
   const [paramValue, setParamValue] = useState('');
 
-  const changeParamValue = ({ target }: any) => {
-    setParamValue(target.value);
+  const changeParamValue = ({ target }: FormEvent) => {
+    setParamValue((target as HTMLButtonElement).value);
   };
 
-  const changeParamName = ({ target }: any) => {
-    setParamName(target.value);
+  const changeParamName = ({ target }: FormEvent) => {
+    setParamName((target as HTMLButtonElement).value);
   };
 
-  const removeParam =
-    (key: string) =>
-    ({ target }: any) => {
-      const updatedParams = value.filter((param) => param[0] !== key);
-      onChange(updatedParams);
-    };
+  const removeParam = (key: string) => () => {
+    const updatedParams = value.filter((param) => param[0] !== key);
+    onChange(updatedParams);
+  };
 
   const addParam = () => {
     const key = paramName;
