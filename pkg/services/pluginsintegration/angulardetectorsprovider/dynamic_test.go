@@ -249,7 +249,42 @@ func TestDynamicAngularDetectorsProvider(t *testing.T) {
 		})
 
 		t.Run("etag", func(t *testing.T) {
-			t.Fatalf("TODO")
+			const serverEtag = "hit"
+			gcom := newEtagGCOMScenario(serverEtag)
+			srv := gcom.newHTTPTestServer()
+			t.Cleanup(srv.Close)
+
+			t.Run("etag is saved in underlying store", func(t *testing.T) {
+				svc := provideDynamic(t, srv.URL)
+
+				err := svc.updateDetectors(context.Background(), "old")
+				require.NoError(t, err)
+
+				etag, ok, err := svc.store.GetETag(context.Background())
+				require.NoError(t, err)
+				require.True(t, ok)
+				require.Equal(t, serverEtag, etag)
+
+				lastUpdate, err := svc.store.GetLastUpdated(context.Background())
+				require.NoError(t, err)
+				require.WithinDuration(t, lastUpdate, time.Now(), time.Second*10)
+			})
+
+			t.Run("same etag does not modify underlying store", func(t *testing.T) {
+				svc := provideDynamic(t, srv.URL)
+				require.NoError(t, svc.updateDetectors(context.Background(), serverEtag))
+				_, ok, err := svc.store.Get(context.Background())
+				require.NoError(t, err)
+				require.False(t, ok)
+			})
+
+			t.Run("different etag modified underlying store", func(t *testing.T) {
+				svc := provideDynamic(t, srv.URL)
+				require.NoError(t, svc.updateDetectors(context.Background(), "old"))
+				_, ok, err := svc.store.Get(context.Background())
+				require.NoError(t, err)
+				require.True(t, ok)
+			})
 		})
 	})
 
@@ -498,6 +533,17 @@ func (s *gcomScenario) newHTTPTestServer() *httptest.Server {
 		s.httpCalls.inc()
 		s.httpHandlerFunc(w, r)
 	}))
+}
+
+func newEtagGCOMScenario(etag string) *gcomScenario {
+	return &gcomScenario{httpHandlerFunc: func(w http.ResponseWriter, req *http.Request) {
+		if req.Header.Get("If-None-Match") == etag {
+			w.WriteHeader(http.StatusNotModified)
+			return
+		}
+		w.Header().Add("ETag", etag)
+		mockGCOMHTTPHandlerFunc(w, req)
+	}}
 }
 
 func newDefaultGCOMScenario(middlewares ...http.HandlerFunc) *gcomScenario {
