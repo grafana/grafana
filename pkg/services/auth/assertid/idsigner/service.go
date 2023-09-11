@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/go-jose/go-jose/v3/jwt"
@@ -72,24 +73,22 @@ func (s *Service) ActiveUserAssertion(ctx context.Context, id identity.Requester
 		return "", fmt.Errorf("signer unavailable")
 	}
 
-	namespace, identifier := id.GetNamespacedID()
-	if !canGenerateToken(namespace) {
-		// skip for namespaces we cannot generate a token for e.g. anonymous
-		return "", nil
+	cacheKey, err := id.GetCacheKey()
+	if err != nil {
+		return "", err
 	}
 
-	// safe to ignore error because of check above
-	cacheKey, _ := id.GetCacheKey()
 	val, err := s.remoteCache.Get(ctx, getCacheKey(cacheKey))
 	if err == nil {
 		return string(val), nil
 	}
 
+	namespace, identifier := id.GetNamespacedID()
 	// Set the JWT claims.
 	claims := &jwt.Claims{
-		Issuer:   fmt.Sprintf("grn:%d:instance/%s", id.GetOrgID(), s.cfg.AppURL),
+		Issuer:   s.cfg.AppURL,
+		Audience: jwt.Audience{strconv.FormatInt(id.GetOrgID(), 10)},
 		Subject:  fmt.Sprintf("%s:%s", namespace, identifier),
-		Audience: jwt.Audience{fmt.Sprintf("grn:%d:instance/%s", id.GetOrgID(), s.cfg.AppURL)},
 		Expiry:   jwt.NewNumericDate(time.Now().Add(time.Minute * 5)),
 		IssuedAt: jwt.NewNumericDate(time.Now()),
 		ID:       identifier,
@@ -148,10 +147,6 @@ func getIPString(req *http.Request) string {
 	}
 
 	return ip.String()
-}
-
-func canGenerateToken(namespace string) bool {
-	return namespace == identity.NamespaceUser || namespace == identity.NamespaceServiceAccount
 }
 
 func getCacheKey(key string) string {
