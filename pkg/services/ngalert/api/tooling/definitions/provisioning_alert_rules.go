@@ -74,15 +74,20 @@ import (
 // swagger:parameters RouteGetAlertRulesExport
 type AlertRulesExportParameters struct {
 	ExportQueryParams
-	// UID of folder from which export rules
+	// UIDs of folders from which to export rules
 	// in:query
 	// required:false
-	FolderUID string `json:"folderUid"`
+	FolderUID []string `json:"folderUid"`
 
-	// Name of group of rules to export. Must be specified only together with folder UID
+	// Name of group of rules to export. Must be specified only together with a single folder UID
 	// in:query
 	// required: false
 	GroupName string `json:"group"`
+
+	// UID of alert rule to export. If specified, parameters folderUid and group must be empty.
+	// in:query
+	// required: false
+	RuleUID string `json:"ruleUid"`
 }
 
 // swagger:parameters RouteGetAlertRule RoutePutAlertRule RouteDeleteAlertRule RouteGetAlertRuleExport
