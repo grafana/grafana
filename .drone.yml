@@ -598,13 +598,9 @@ steps:
     path: /var/run/docker.sock
 - commands:
   - apk add --update tar bash
-  - cat packages.txt
   - mkdir grafana
   - tar --strip-components=1 -xvf ./dist/*.tar.gz -C grafana
-  - cp ./scripts/grafana-server/custom.ini ./grafana/conf/custom.ini
-  - cp devenv/datasources.yaml ./grafana/conf/datasources
-  - cp devenv/dashboards.yaml ./grafana/conf/dashboards
-  - ./grafana/bin/grafana server --homepath=$PWD/grafana --pidfile=grafana/pid
+  - cp -r devenv scripts tools grafana && cd grafana && ./scripts/grafana-server/start-server
   depends_on:
   - rgm-package
   detach: true
@@ -1763,13 +1759,9 @@ steps:
     path: /var/run/docker.sock
 - commands:
   - apk add --update tar bash
-  - cat packages.txt
   - mkdir grafana
   - tar --strip-components=1 -xvf ./dist/*.tar.gz -C grafana
-  - cp ./scripts/grafana-server/custom.ini ./grafana/conf/custom.ini
-  - cp devenv/datasources.yaml ./grafana/conf/datasources
-  - cp devenv/dashboards.yaml ./grafana/conf/dashboards
-  - ./grafana/bin/grafana server --homepath=$PWD/grafana --pidfile=grafana/pid
+  - cp -r devenv scripts tools grafana && cd grafana && ./scripts/grafana-server/start-server
   depends_on:
   - rgm-package
   detach: true
@@ -4229,6 +4221,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 3bf2963bad70df8e1281fab13476c5a8266702b65053fb99182a7520917ceab8
+hmac: 337d5385ba8574985333a82d7ed3690bc272c0b7ed4a1d5d7ea72b4092258ff6
 
 ...

@@ -683,13 +683,9 @@ def grafana_server_step(port = 3001):
         "environment": environment,
         "commands": [
             "apk add --update tar bash",
-            "cat packages.txt",
             "mkdir grafana",
             "tar --strip-components=1 -xvf ./dist/*.tar.gz -C grafana",
-            "cp ./scripts/grafana-server/custom.ini ./grafana/conf/custom.ini",
-            "cp devenv/datasources.yaml ./grafana/conf/datasources",
-            "cp devenv/dashboards.yaml ./grafana/conf/dashboards",
-            "./grafana/bin/grafana server --homepath=$PWD/grafana --pidfile=grafana/pid",
+            "cp -r devenv scripts tools grafana && cd grafana && ./scripts/grafana-server/start-server",
         ],
     }
 
