@@ -1,7 +1,7 @@
 import * as H from 'history';
 import { Unsubscribable } from 'rxjs';
 
-import { locationUtil, NavModelItem, UrlQueryMap } from '@grafana/data';
+import { NavModelItem, UrlQueryMap } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import {
   getUrlSyncManager,
@@ -9,6 +9,7 @@ import {
   SceneGridLayout,
   SceneObject,
   SceneObjectBase,
+  SceneObjectRef,
   SceneObjectState,
   SceneObjectStateChangedEvent,
   sceneUtils,
@@ -16,7 +17,7 @@ import {
 
 import { DashboardSceneRenderer } from '../scene/DashboardSceneRenderer';
 import { SaveDashboardDrawer } from '../serialization/SaveDashboardDrawer';
-import { findVizPanelByKey, forceRenderChildren } from '../utils/utils';
+import { findVizPanelByKey, forceRenderChildren, getDashboardUrl } from '../utils/utils';
 
 import { DashboardSceneUrlSync } from './DashboardSceneUrlSync';
 
@@ -59,10 +60,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   public constructor(state: DashboardSceneState) {
     super(state);
 
-    this.addActivationHandler(() => this.onActivate());
+    this.addActivationHandler(() => this._activationHandler());
   }
 
-  private onActivate() {
+  private _activationHandler() {
     if (this.state.isEditing) {
       this.startTrackingChanges();
     }
@@ -119,13 +120,17 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   };
 
   public onSave = () => {
-    this.setState({ drawer: new SaveDashboardDrawer(this) });
+    this.setState({ drawer: new SaveDashboardDrawer({ dashboardRef: new SceneObjectRef(this) }) });
   };
 
   public getPageNav(location: H.Location) {
     let pageNav: NavModelItem = {
       text: this.state.title,
-      url: locationUtil.getUrlForPartial(location, { viewPanel: null, inspect: null }),
+      url: getDashboardUrl({
+        uid: this.state.uid,
+        currentQueryParams: location.search,
+        updateQuery: { viewPanel: null, inspect: null },
+      }),
     };
 
     if (this.state.viewPanelKey) {

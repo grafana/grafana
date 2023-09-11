@@ -1,11 +1,14 @@
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
 import { dashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
 
+import { buildPanelEditScene, PanelEditor } from '../panel-edit/PanelEditor';
 import { DashboardScene } from '../scene/DashboardScene';
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
+import { getVizPanelKeyForPanelId, findVizPanelByKey } from '../utils/utils';
 
 export interface DashboardScenePageState {
   dashboard?: DashboardScene;
+  panelEditor?: PanelEditor;
   isLoading?: boolean;
   loadError?: string;
 }
@@ -13,13 +16,31 @@ export interface DashboardScenePageState {
 export class DashboardScenePageStateManager extends StateManagerBase<DashboardScenePageState> {
   private cache: Record<string, DashboardScene> = {};
 
-  async loadAndInit(uid: string) {
+  public async loadDashboard(uid: string) {
     try {
-      const scene = await this.loadScene(uid);
-      scene.startUrlSync();
+      const dashboard = await this.loadScene(uid);
+      dashboard.startUrlSync();
 
-      this.cache[uid] = scene;
-      this.setState({ dashboard: scene, isLoading: false });
+      this.setState({ dashboard: dashboard, isLoading: false });
+    } catch (err) {
+      this.setState({ isLoading: false, loadError: String(err) });
+    }
+  }
+
+  public async loadPanelEdit(uid: string, panelId: string) {
+    try {
+      const dashboard = await this.loadScene(uid);
+      const panel = findVizPanelByKey(dashboard, getVizPanelKeyForPanelId(parseInt(panelId, 10)));
+
+      if (!panel) {
+        this.setState({ isLoading: false, loadError: 'Panel not found' });
+        return;
+      }
+
+      const panelEditor = buildPanelEditScene(dashboard, panel);
+      panelEditor.startUrlSync();
+
+      this.setState({ isLoading: false, panelEditor });
     } catch (err) {
       this.setState({ isLoading: false, loadError: String(err) });
     }
@@ -36,14 +57,16 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
     const rsp = await dashboardLoaderSrv.loadDashboard('db', '', uid);
 
     if (rsp.dashboard) {
-      return transformSaveModelToScene(rsp);
+      const scene = transformSaveModelToScene(rsp);
+      this.cache[uid] = scene;
+      return scene;
     }
 
     throw new Error('Dashboard not found');
   }
 
   public clearState() {
-    this.setState({ dashboard: undefined, loadError: undefined, isLoading: false });
+    this.setState({ dashboard: undefined, loadError: undefined, isLoading: false, panelEditor: undefined });
   }
 }
 
