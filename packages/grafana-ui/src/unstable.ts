@@ -12,4 +12,4 @@
 export * from './components/Flex/Flex';
 
 export { Stack } from './components/Stack/Stack';
-export { Grid } from './components/Grid/Grid';
+export {Grid, GridItem} from './components/Grid/Grid';
