@@ -3,15 +3,17 @@ import { e2e } from '../utils';
 const PAGE_UNDER_TEST = 'AejrN1AMz';
 
 describe('TextBox - load options scenarios', function () {
+  beforeEach(() => {
+    e2e.flows.login(e2e.env('USERNAME'), e2e.env('PASSWORD'));
+  });
+
   it('default options should be correct', function () {
-    e2e.flows.login('admin', 'admin');
     e2e.flows.openDashboard({ uid: `${PAGE_UNDER_TEST}/templating-textbox-e2e-scenarios?orgId=1` });
 
     validateTextboxAndMarkup('default value');
   });
 
   it('loading variable from url should be correct', function () {
-    e2e.flows.login('admin', 'admin');
     e2e.flows.openDashboard({
       uid: `${PAGE_UNDER_TEST}/templating-textbox-e2e-scenarios?orgId=1&var-text=not default value`,
     });
@@ -21,6 +23,10 @@ describe('TextBox - load options scenarios', function () {
 });
 
 describe.skip('TextBox - change query scenarios', function () {
+  beforeEach(() => {
+    e2e.flows.login(e2e.env('USERNAME'), e2e.env('PASSWORD'));
+  });
+
   it('when changing the query value and not saving current as default should revert query value', function () {
     copyExistingDashboard();
 
@@ -71,6 +77,10 @@ describe.skip('TextBox - change query scenarios', function () {
 });
 
 describe.skip('TextBox - change picker value scenarios', function () {
+  beforeEach(() => {
+    e2e.flows.login(e2e.env('USERNAME'), e2e.env('PASSWORD'));
+  });
+
   it('when changing the input value and not saving current as default should revert query value', function () {
     copyExistingDashboard();
 
