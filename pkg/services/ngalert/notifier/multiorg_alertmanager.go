@@ -241,19 +241,24 @@ func (moa *MultiOrgAlertmanager) SyncAlertmanagersForOrgs(ctx context.Context, o
 		alertmanager, found := moa.alertmanagers[orgID]
 
 		if !found {
-			// These metrics are not exported by Grafana and are mostly a placeholder.
-			// To export them, we need to translate the metrics from each individual registry and,
-			// then aggregate them on the main registry.
 			var am Alertmanager
 			var err error
-			// TODO: change depending on which AM we're using.
-			if true {
+
+			remoteAmCfg := moa.settings.UnifiedAlerting.RemoteAlertmanager
+			if remoteAmCfg.Enable {
+				// TODO(santiago): remove.
+				cfg := ExternalAlertmanagerConfig{
+					URL:               remoteAmCfg.URL,
+					TenantID:          remoteAmCfg.TenantID,
+					BasicAuthPassword: remoteAmCfg.Password,
+				}
+				am, err = newExternalAlertmanager(cfg, moa.configStore, orgID)
+			} else {
+				// These metrics are not exported by Grafana and are mostly a placeholder.
+				// To export them, we need to translate the metrics from each individual registry and,
+				// then aggregate them on the main registry.
 				m := metrics.NewAlertmanagerMetrics(moa.metrics.GetOrCreateOrgRegistry(orgID))
 				am, err = newAlertmanager(ctx, orgID, moa.settings, moa.configStore, moa.kvStore, moa.peer, moa.decryptFn, moa.ns, m)
-			} else {
-				// TODO: configure
-				cfg := ExternalAlertmanagerConfig{}
-				am, err = newExternalAlertmanager(cfg, moa.configStore, orgID)
 			}
 			if err != nil {
 				moa.logger.Error("Unable to create Alertmanager for org", "org", orgID, "error", err)

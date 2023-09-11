@@ -39,22 +39,20 @@ type externalAlertmanager struct {
 
 type ExternalAlertmanagerConfig struct {
 	URL               string
-	BasicAuthUser     string
 	BasicAuthPassword string
 	TenantID          string
 }
 
 type roundTripper struct {
 	tenantID          string
-	basicAuthUser     string
 	basicAuthPassword string
 	next              http.RoundTripper
 }
 
 func (r *roundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
 	req.Header.Set("X-Scope-OrgID", r.tenantID)
-	if r.basicAuthUser != "" && r.basicAuthPassword != "" {
-		req.SetBasicAuth(r.basicAuthUser, r.basicAuthPassword)
+	if r.tenantID != "" && r.basicAuthPassword != "" {
+		req.SetBasicAuth(r.tenantID, r.basicAuthPassword)
 	}
 
 	return r.next.RoundTrip(req)
@@ -62,20 +60,18 @@ func (r *roundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
 
 func newExternalAlertmanager(cfg ExternalAlertmanagerConfig, store configStore, orgID int64) (*externalAlertmanager, error) {
 	l := log.New("ngalert.notifier.external.alertmanager")
-
 	client := http.Client{
 		Transport: &roundTripper{
 			tenantID:          cfg.TenantID,
 			next:              http.DefaultTransport,
-			basicAuthUser:     cfg.BasicAuthUser,
 			basicAuthPassword: cfg.BasicAuthPassword,
 		},
 	}
-	// TODO host, path, schemes.
-	transport := httptransport.NewWithClient(am_client.DefaultHost, am_client.DefaultBasePath, am_client.DefaultSchemes, &client)
+
+	// TODO: schemes.
+	transport := httptransport.NewWithClient(cfg.URL, am_client.DefaultBasePath, am_client.DefaultSchemes, &client)
 	// TODO: transport.
 	c := am_client.New(transport, nil)
-
 	return &externalAlertmanager{
 		amClient: c,
 		log:      l,
@@ -275,14 +271,20 @@ func (am *externalAlertmanager) StopAndWait() {
 }
 
 // TODO: implement!
-func (am *externalAlertmanager) Ready() bool
+func (am *externalAlertmanager) Ready() bool {
+	return false
+}
 
 // TODO: implement!
-func (am *externalAlertmanager) FileStore() *FileStore
+func (am *externalAlertmanager) FileStore() *FileStore {
+	return &FileStore{}
+}
 
 func (am *externalAlertmanager) OrgID() int64 {
 	return am.orgID
 }
 
 // TODO: implement!
-func (am *externalAlertmanager) ConfigHash() [16]byte
+func (am *externalAlertmanager) ConfigHash() [16]byte {
+	return [16]byte{}
+}
