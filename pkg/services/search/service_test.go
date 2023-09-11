@@ -70,10 +70,10 @@ func TestSearch_StarredResults(t *testing.T) {
 	ds := dashboards.NewFakeDashboardService(t)
 	ds.On("SearchDashboards", mock.Anything, mock.AnythingOfType("*dashboards.FindPersistedDashboardsQuery")).Run(func(args mock.Arguments) {
 		q := args.Get(1).(*dashboards.FindPersistedDashboardsQuery)
-		q.Result = model.HitList{
-			&model.Hit{ID: 1, Title: "A", Type: "dash-db"},
-			&model.Hit{ID: 2, Title: "B", Type: "dash-db"},
-			&model.Hit{ID: 3, Title: "C", Type: "dash-db"},
+		q.Result = models.HitList{
+			&models.Hit{ID: 1, Title: "A", Type: "dash-db"},
+			&models.Hit{ID: 2, Title: "B", Type: "dash-db"},
+			&models.Hit{ID: 3, Title: "C", Type: "dash-db"},
 		}
 	}).Return(nil)
 	us.ExpectedSignedInUser = &user.SignedInUser{}
