@@ -25,15 +25,15 @@ class EllipseDisplay extends PureComponent<CanvasElementProps<EllipseConfig, Ell
 
 const getStyles = stylesFactory((theme: GrafanaTheme2, data) => ({
   container: css`
-    border: ${data?.width}px solid ${data?.borderColor};
-    border-radius: 50%;
-    position: absolute;
-    width: 100%;
     display: table;
-    height: 100%;
-    background-color: ${data?.backgroundColor};
+    position: absolute;
     top: 50%;
     transform: translateY(-50%);
+    width: 100%;
+    height: 100%;
+    background-color: ${data?.backgroundColor};
+    border: ${data?.width}px solid ${data?.borderColor};
+    border-radius: 50%;
   `,
   span: css`
     display: table-cell;
@@ -103,7 +103,7 @@ export const ellipseItem: CanvasElementItem<EllipseConfig, EllipseData> = {
 
   // Heatmap overlay options
   registerOptionsUI: (builder) => {
-    const category = ['Rectangle'];
+    const category = ['Ellipse'];
     builder
       .addCustomEditor({
         category,
