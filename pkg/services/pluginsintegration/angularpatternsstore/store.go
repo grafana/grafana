@@ -54,5 +54,5 @@ func (s *KVStoreService) Set(ctx context.Context, value any) error {
 
 // SetETag stores the given etag in the underlying cachekvstore.
 func (s *KVStoreService) SetETag(ctx context.Context, etag string) error {
-	return s.CacheKvStore.Set(ctx, keyPatterns, etag)
+	return s.CacheKvStore.Set(ctx, keyEtag, etag)
 }
