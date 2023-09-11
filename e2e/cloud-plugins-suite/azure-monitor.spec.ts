@@ -376,8 +376,4 @@ describe('Azure monitor datasource', () => {
       },
     });
   });
-
-  after(() => {
-    e2e.flows.revertAllChanges();
-  });
 });
