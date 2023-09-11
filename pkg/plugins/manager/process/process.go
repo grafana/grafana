@@ -67,7 +67,7 @@ func restartKilledProcess(ctx context.Context, p *plugins.Plugin) error {
 			if err := ctx.Err(); err != nil && !errors.Is(err, context.Canceled) {
 				return err
 			}
-			return p.Stop(ctx)
+			return nil
 		case <-ticker.C:
 			if p.IsDecommissioned() {
 				p.Logger().Debug("Plugin decommissioned")
