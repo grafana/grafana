@@ -55,7 +55,7 @@ func ToGrafanaDTO(p *plugins.Plugin) Plugin {
 	supportsStreaming := false
 	pc, exists := p.Client()
 	if exists && pc != nil && pc.(backend.StreamHandler) != nil {
-		supportsStreaming = false
+		supportsStreaming = true
 	}
 
 	return Plugin{
