@@ -83,15 +83,17 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     const sourcePanel = this.state.sourcePanelRef.resolve();
     const panel = this.state.panelRef.resolve();
 
-    const newState = sceneUtils.cloneSceneObjectState(panel.state);
+    if (!dashboard.state.isEditing) {
+      dashboard.onEnterEditMode();
+    }
 
+    const newState = sceneUtils.cloneSceneObjectState(panel.state);
     sourcePanel.setState(newState);
 
     // preserve time range and variables state
     dashboard.setState({
       $timeRange: this.state.$timeRange?.clone(),
       $variables: this.state.$variables?.clone(),
-      isEditing: true,
       isDirty: true,
     });
   }
