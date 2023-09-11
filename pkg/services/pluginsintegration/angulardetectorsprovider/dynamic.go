@@ -63,11 +63,13 @@ func ProvideDynamic(cfg *config.Cfg, store angularpatternsstore.Service, feature
 	// Perform the initial restore from db
 	st := time.Now()
 	d.log.Debug("Restoring cache")
+	d.mux.Lock()
 	if err := d.setDetectorsFromCache(context.Background()); err != nil {
 		d.log.Warn("Cache restore failed", "error", err)
 	} else {
 		d.log.Info("Restored cache from database", "duration", time.Since(st))
 	}
+	d.mux.Unlock()
 	return d, nil
 }
 
@@ -173,7 +175,6 @@ func (d *Dynamic) updateDetectors(ctx context.Context, etag string) error {
 	default:
 		return fmt.Errorf("fetch: %w", err)
 	}
-
 	// Convert the patterns to detectors
 	newDetectors, err := d.patternsToDetectors(resp.Patterns)
 	if err != nil {
@@ -196,9 +197,6 @@ func (d *Dynamic) updateDetectors(ctx context.Context, etag string) error {
 // setDetectorsFromCache sets the in-memory detectors from the patterns in the store.
 // The caller must Lock d.mux before calling this function.
 func (d *Dynamic) setDetectorsFromCache(ctx context.Context) error {
-	d.mux.Lock()
-	defer d.mux.Unlock()
-
 	var cachedPatterns GCOMPatterns
 	rawCached, ok, err := d.store.Get(ctx)
 	if !ok {
