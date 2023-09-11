@@ -131,9 +131,13 @@ func transConditions(ctx context.Context, set dashAlertSettings, orgID int64, ds
 			}
 
 			// Could have an alert saved but datasource deleted, so can not require match.
-			ds, err := dsCacheService.GetDatasource(ctx, set.Conditions[condIdx].Query.DatasourceID, usr, false)
-			if err != nil && !errors.Is(err, datasources.ErrDataSourceNotFound) {
-				return nil, err
+			dsUid := ""
+			if ds, err := dsCacheService.GetDatasource(ctx, set.Conditions[condIdx].Query.DatasourceID, usr, false); err == nil {
+				dsUid = ds.UID
+			} else {
+				if !errors.Is(err, datasources.ErrDataSourceNotFound) {
+					return nil, err
+				}
 			}
 
 			queryObj["refId"] = refID
@@ -168,7 +172,7 @@ func transConditions(ctx context.Context, set dashAlertSettings, orgID int64, ds
 				RefID:             refID,
 				Model:             encodedObj,
 				RelativeTimeRange: *rTR,
-				DatasourceUID:     ds.UID,
+				DatasourceUID:     dsUid,
 				QueryType:         queryType,
 			}
 			newCond.Data = append(newCond.Data, alertQuery)
