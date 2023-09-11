@@ -22,7 +22,7 @@ type FakeUserAuthTokenService struct {
 	RevokeTokenProvider          func(ctx context.Context, token *auth.UserToken, soft bool) error
 	RevokeAllUserTokensProvider  func(ctx context.Context, userID int64) error
 	ActiveTokenCountProvider     func(ctx context.Context, userID *int64) (int64, error)
-	GetUserTokenProvider         func(ctx context.Context, userID, userTokenId int64) (*auth.UserToken, error)
+	GetUserTokenProvider         func(ctx context.Context, userID, userTokenID int64) (*auth.UserToken, error)
 	GetUserTokensProvider        func(ctx context.Context, userID int64) ([]*auth.UserToken, error)
 	GetUserRevokedTokensProvider func(ctx context.Context, userID int64) ([]*auth.UserToken, error)
 	BatchRevokedTokenProvider    func(ctx context.Context, userIDs []int64) error
