@@ -129,6 +129,12 @@ describe('situation', () => {
       flag: false,
       logQuery: '{level="info"} | logfmt',
     });
+    assertSituation('count_over_time({level="info"} | logfmt ^ [$__auto])', {
+      type: 'IN_LOGFMT',
+      otherLabels: [],
+      flag: false,
+      logQuery: '{level="info"} | logfmt',
+    });
     assertSituation('count_over_time({level="info"} | logfmt --keep-empty^)', {
       type: 'IN_LOGFMT',
       otherLabels: [],

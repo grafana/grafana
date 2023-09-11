@@ -182,6 +182,10 @@ const RESOLVERS: Resolver[] = [
     fun: resolveLogfmtParser,
   },
   {
+    path: [LogRangeExpr],
+    fun: resolveLogfmtParser,
+  },
+  {
     path: [LogQL],
     fun: resolveTopLevel,
   },
