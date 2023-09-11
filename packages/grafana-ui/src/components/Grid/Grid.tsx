@@ -64,7 +64,6 @@ export const Grid = ({
       [display, columnGap, rowGap, gap, templateColumns, templateRows, alignItems, justifyItems, autoRows, autoFlow]
     )
   );
-  // @ts-ignore
   return React.createElement('div', { className: styles.grid }, children);
 };
 
