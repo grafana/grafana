@@ -5,6 +5,7 @@ import { ConcatenateHelper } from './ConcatenateHelper';
 import { ConfigFromQueryHelper } from './ConfigFromQueryHelper';
 import { ConvertFieldTypeHelper } from './ConvertFieldTypeHelper';
 import { CreateHeatmapHelp } from './CreateHeatmapHelp';
+import { ExtractFieldsHelper } from './ExtractFieldsHelper';
 
 interface Helper {
   [key: string]: JSX.Element;
@@ -17,6 +18,7 @@ const helperContent: Helper = {
   configFromData: ConfigFromQueryHelper(),
   convertFieldType: ConvertFieldTypeHelper(),
   heatmap: CreateHeatmapHelp(),
+  extractFields: ExtractFieldsHelper(),
 };
 
 // JEV: add logic for no helper/string content
