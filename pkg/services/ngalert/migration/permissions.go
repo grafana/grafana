@@ -68,7 +68,7 @@ type folderHelper struct {
 }
 
 func getBackgroundUser(orgID int64) *user.SignedInUser {
-	backgroundUser := accesscontrol.BackgroundUser("ngalert_migration", orgID, org.RoleAdmin, migratorPermissions)
+	backgroundUser := accesscontrol.BackgroundUser("ngalert_migration", orgID, org.RoleAdmin, migratorPermissions).(*user.SignedInUser)
 	backgroundUser.UserID = FOLDER_CREATED_BY
 	return backgroundUser
 }
