@@ -1,18 +1,21 @@
-import { css, cx } from '@emotion/css';
-import React, { ComponentType, useEffect, useMemo, memo } from 'react';
+import { css } from '@emotion/css';
+import React, { ComponentType, useEffect, useMemo } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
+import { Row } from 'react-table';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
+import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import {
   Icon,
   IconName,
   LinkButton,
-  Pagination,
+  SortByFn,
   RadioButtonGroup,
   Tooltip,
   useStyles2,
   FilterInput,
+  CellProps,
+  InteractiveTable,
 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
@@ -79,6 +82,143 @@ const UserListAdminPageUnConnected = ({
 
   const showLicensedRole = useMemo(() => users.some((user) => user.licensedRole), [users]);
 
+  type Cell<T extends keyof UserDTO> = CellProps<UserDTO, UserDTO[T]>;
+  const createSortFn =
+    (key: keyof UserDTO): SortByFn<UserDTO> =>
+    (a, b) => {
+      const aValue = a.original[key];
+      const bValue = b.original[key];
+      if (typeof aValue === 'number' && typeof bValue === 'number') {
+        return aValue - bValue;
+      } else if (
+        typeof aValue === 'string' &&
+        typeof bValue === 'string' &&
+        !isNaN(Date.parse(aValue)) &&
+        !isNaN(Date.parse(bValue))
+      ) {
+        return new Date(aValue).getTime() - new Date(bValue).getTime();
+      } else if (typeof aValue === 'boolean' && typeof bValue === 'boolean') {
+        return aValue === bValue ? 0 : aValue ? -1 : 1;
+      }
+      return a.original.login.localeCompare(b.original.login);
+    };
+
+  const columns = [
+    {
+      id: 'avatarUrl',
+      header: '',
+      cell: ({ cell: { value } }: Cell<'avatarUrl'>) => (
+        <img style={{ width: '25px', height: '25px', borderRadius: '50%' }} src={value} alt="User avatar" />
+      ),
+    },
+    {
+      id: 'login',
+      header: 'Login',
+      cell: ({ cell: { value } }: Cell<'login'>) => <div>{value}</div>,
+      sortType: createSortFn('login'),
+    },
+    {
+      id: 'email',
+      header: 'Email',
+      cell: ({ cell: { value } }: Cell<'email'>) => <div>{value}</div>,
+      sortType: createSortFn('email'),
+    },
+    {
+      id: 'name',
+      header: 'Name',
+      cell: ({ cell: { value } }: Cell<'name'>) => <div>{value}</div>,
+      sortType: createSortFn('name'),
+    },
+    {
+      id: 'orgs',
+      header: 'Belongs to',
+      cell: ({ cell: { value, row } }: Cell<'orgs'>) => {
+        return (
+          <div style={{ display: 'flex', alignItems: 'center' }}>
+            <OrgUnits units={value} icon={'building'} />
+            {row.original.isAdmin && (
+              <a href={`admin/users/edit/${row.original.id}`} aria-label={getUsersAriaLabel(row.original.name)}>
+                <Tooltip placement="top" content="Grafana Admin">
+                  <Icon name="shield" />
+                </Tooltip>
+              </a>
+            )}
+          </div>
+        );
+      },
+      sortType: (a: Row<UserDTO>, b: Row<UserDTO>) => (a.original.orgs?.length || 0) - (b.original.orgs?.length || 0),
+    },
+    ...(showLicensedRole
+      ? [
+          {
+            id: 'licensedRole',
+            header: 'Licensed role',
+            cell: ({ cell: { value, row } }: Cell<'licensedRole'>) => (
+              <div>
+                <a
+                  className="ellipsis"
+                  href={`admin/users/edit/${row.original.id}`}
+                  title={row.original.name}
+                  aria-label={getUsersAriaLabel(row.original.name)}
+                >
+                  {value === 'None' ? (
+                    <span className={styles.disabled}>
+                      Not assigned{' '}
+                      <Tooltip placement="top" content="A licensed role will be assigned when this user signs in">
+                        <Icon name="question-circle" />
+                      </Tooltip>
+                    </span>
+                  ) : (
+                    value
+                  )}
+                </a>
+              </div>
+            ),
+            sortType: createSortFn('licensedRole'),
+          },
+        ]
+      : []),
+    {
+      id: 'lastSeenAtAge',
+      header: 'Last active',
+      headerTooltip: {
+        content: 'Time since user was seen using Grafana',
+        iconName: 'question-circle',
+      },
+      cell: ({ cell: { value, row } }: Cell<'lastSeenAtAge'>) => {
+        const { name, id } = row.original;
+        return (
+          <div>
+            {value && (
+              <a
+                href={`admin/users/edit/${id}`}
+                aria-label={`Last seen at ${value}. Follow to edit user's ${name} details.`}
+              >
+                {value === '10 years' ? <span className={styles.disabled}>Never</span> : value}
+              </a>
+            )}
+          </div>
+        );
+      },
+      sortType: createSortFn('lastSeenAt'),
+    },
+    {
+      id: 'authLabels',
+      header: 'Origin',
+      cell: ({ cell: { value } }: Cell<'authLabels'>) => (
+        <>{Array.isArray(value) && value.length > 0 && <TagBadge label={value[0]} removeIcon={false} count={0} />}</>
+      ),
+    },
+    {
+      id: 'isDisabled',
+      header: 'Status',
+      cell: ({ cell: { value } }: Cell<'isDisabled'>) => (
+        <>{value && <span className="label label-tag label-tag--gray">Disabled</span>}</>
+      ),
+      sortType: createSortFn('isDisabled'),
+    },
+  ];
+
   return (
     <Page.Contents>
       <div className="page-action-bar" data-testid={selectors.container}>
@@ -108,64 +248,7 @@ const UserListAdminPageUnConnected = ({
           </LinkButton>
         )}
       </div>
-      {isLoading ? (
-        <PageLoader />
-      ) : (
-        <>
-          <div className={cx(styles.table, 'admin-list-table')}>
-            <table className="filter-table form-inline filter-table--hover">
-              <thead>
-                <tr>
-                  <th></th>
-                  <th>Login</th>
-                  <th>Email</th>
-                  <th>Name</th>
-                  <th>Belongs to</th>
-                  {showLicensedRole && (
-                    <th>
-                      Licensed role{' '}
-                      <Tooltip
-                        placement="top"
-                        content={
-                          <>
-                            Licensed role is based on a user&apos;s Org role (i.e. Viewer, Editor, Admin) and their
-                            dashboard/folder permissions.{' '}
-                            <a
-                              className={styles.link}
-                              target="_blank"
-                              rel="noreferrer noopener"
-                              href={
-                                'https://grafana.com/docs/grafana/next/enterprise/license/license-restrictions/#active-users-limit'
-                              }
-                            >
-                              Learn more
-                            </a>
-                          </>
-                        }
-                      >
-                        <Icon name="question-circle" />
-                      </Tooltip>
-                    </th>
-                  )}
-                  <th>
-                    Last active&nbsp;
-                    <Tooltip placement="top" content="Time since user was seen using Grafana">
-                      <Icon name="question-circle" />
-                    </Tooltip>
-                  </th>
-                  <th style={{ width: '1%' }}>Origin</th>
-                </tr>
-              </thead>
-              <tbody>
-                {users.map((user) => (
-                  <UserListItem user={user} showLicensedRole={showLicensedRole} key={user.id} />
-                ))}
-              </tbody>
-            </table>
-          </div>
-          {showPaging && <Pagination numberOfPages={totalPages} currentPage={page} onNavigate={changePage} />}
-        </>
-      )}
+      {isLoading ? <PageLoader /> : <InteractiveTable columns={columns} data={users} getRowId={(user) => user.name} />}
     </Page.Contents>
   );
 };
@@ -182,95 +265,6 @@ export function UserListAdminPage() {
 const getUsersAriaLabel = (name: string) => {
   return `Edit user's ${name} details`;
 };
-
-type UserListItemProps = {
-  user: UserDTO;
-  showLicensedRole: boolean;
-};
-
-const UserListItem = memo(({ user, showLicensedRole }: UserListItemProps) => {
-  const styles = useStyles2(getStyles);
-  const editUrl = `admin/users/edit/${user.id}`;
-
-  return (
-    <tr key={user.id}>
-      <td className="width-4 text-center link-td">
-        <a href={editUrl} aria-label={`Edit user's ${user.name} details`}>
-          <img className="filter-table__avatar" src={user.avatarUrl} alt={`Avatar for user ${user.name}`} />
-        </a>
-      </td>
-      <td className="link-td max-width-10">
-        <a className="ellipsis" href={editUrl} title={user.login} aria-label={getUsersAriaLabel(user.name)}>
-          {user.login}
-        </a>
-      </td>
-      <td className="link-td max-width-10">
-        <a className="ellipsis" href={editUrl} title={user.email} aria-label={getUsersAriaLabel(user.name)}>
-          {user.email}
-        </a>
-      </td>
-      <td className="link-td max-width-10">
-        <a className="ellipsis" href={editUrl} title={user.name} aria-label={getUsersAriaLabel(user.name)}>
-          {user.name}
-        </a>
-      </td>
-
-      <td
-        className={styles.row}
-        title={
-          user.orgs?.length
-            ? `The user is a member of the following organizations: ${user.orgs.map((org) => org.name).join(',')}`
-            : undefined
-        }
-      >
-        <OrgUnits units={user.orgs} icon={'building'} />
-        {user.isAdmin && (
-          <a href={editUrl} aria-label={getUsersAriaLabel(user.name)}>
-            <Tooltip placement="top" content="Grafana Admin">
-              <Icon name="shield" />
-            </Tooltip>
-          </a>
-        )}
-      </td>
-      {showLicensedRole && (
-        <td className={cx('link-td', styles.iconRow)}>
-          <a className="ellipsis" href={editUrl} title={user.name} aria-label={getUsersAriaLabel(user.name)}>
-            {user.licensedRole === 'None' ? (
-              <span className={styles.disabled}>
-                Not assigned{' '}
-                <Tooltip placement="top" content="A licensed role will be assigned when this user signs in">
-                  <Icon name="question-circle" />
-                </Tooltip>
-              </span>
-            ) : (
-              user.licensedRole
-            )}
-          </a>
-        </td>
-      )}
-      <td className="link-td">
-        {user.lastSeenAtAge && (
-          <a
-            href={editUrl}
-            aria-label={`Last seen at ${user.lastSeenAtAge}. Follow to edit user's ${user.name} details.`}
-          >
-            {user.lastSeenAtAge === '10 years' ? <span className={styles.disabled}>Never</span> : user.lastSeenAtAge}
-          </a>
-        )}
-      </td>
-      <td className="text-right">
-        {Array.isArray(user.authLabels) && user.authLabels.length > 0 && (
-          <TagBadge label={user.authLabels[0]} removeIcon={false} count={0} />
-        )}
-      </td>
-      <td className="text-right">
-        {user.isDisabled && <span className="label label-tag label-tag--gray">Disabled</span>}
-      </td>
-    </tr>
-  );
-});
-
-UserListItem.displayName = 'UserListItem';
 
 type OrgUnitProps = { units?: Unit[]; icon: IconName };
 
