@@ -19,12 +19,10 @@ export const selectOption = (config: SelectOptionConfig): any => {
 
   container.within(() => {
     if (clickToOpen) {
-      e2e()
-        .get('[class$="-input-suffix"]', { timeout: 1000 })
-        .then((element) => {
-          expect(Cypress.dom.isAttached(element)).to.eq(true);
-          e2e().get('[class$="-input-suffix"]', { timeout: 1000 }).click({ force: true });
-        });
+      cy.get('[class$="-input-suffix"]', { timeout: 1000 }).then((element) => {
+        expect(Cypress.dom.isAttached(element)).to.eq(true);
+        cy.get('[class$="-input-suffix"]', { timeout: 1000 }).click({ force: true });
+      });
     }
   });
 

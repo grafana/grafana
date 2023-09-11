@@ -50,7 +50,7 @@ e2e.scenario({
         e2e.pages.Dashboard.SubMenu.Annotations.annotationToggle('Red, only panel 1').should('be.checked');
       });
 
-    e2e().wait(3000);
+    cy.wait(3000);
 
     e2e.components.Panels.Panel.title('Panel one')
       .should('exist')
