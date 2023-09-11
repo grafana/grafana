@@ -12,8 +12,10 @@ import {
   VizPanel,
   SceneObjectRef,
 } from '@grafana/scenes';
-import { Drawer, Tab, TabsBar } from '@grafana/ui';
+import { Alert, Drawer, Tab, TabsBar } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 import { supportsDataQuery } from 'app/features/dashboard/components/PanelEditor/utils';
+import { InspectTab } from 'app/features/inspector/types';
 
 import { InspectDataTab } from './InspectDataTab';
 import { InspectJsonTab } from './InspectJsonTab';
@@ -23,6 +25,7 @@ import { InspectTabState } from './types';
 interface PanelInspectDrawerState extends SceneObjectState {
   tabs?: Array<SceneObject<InspectTabState>>;
   panelRef: SceneObjectRef<VizPanel>;
+  pluginNotLoaded?: boolean;
 }
 
 export class PanelInspectDrawer extends SceneObjectBase<PanelInspectDrawerState> {
@@ -31,22 +34,35 @@ export class PanelInspectDrawer extends SceneObjectBase<PanelInspectDrawerState>
   constructor(state: PanelInspectDrawerState) {
     super(state);
 
-    this.buildTabs();
+    this.buildTabs(0);
   }
 
-  buildTabs() {
-    const panel = this.state.panelRef.resolve();
+  /**
+   * We currently have no async await to get the panel plugin from the VizPanel.
+   * That is why there is a retry argument here and a setTimeout, to try again a bit later.
+   */
+  buildTabs(retry: number) {
+    const panelRef = this.state.panelRef;
+    const panel = panelRef.resolve();
     const plugin = panel.getPlugin();
     const tabs: Array<SceneObject<InspectTabState>> = [];
 
     if (plugin) {
       if (supportsDataQuery(plugin)) {
-        tabs.push(new InspectDataTab(panel));
-        tabs.push(new InspectStatsTab(panel));
+        tabs.push(
+          new InspectDataTab({ panelRef, label: t('dashboard.inspect.data-tab', 'Data'), value: InspectTab.Data })
+        );
+        tabs.push(
+          new InspectStatsTab({ panelRef, label: t('dashboard.inspect.stats-tab', 'Stats'), value: InspectTab.Stats })
+        );
       }
+    } else if (retry < 2000) {
+      setTimeout(() => this.buildTabs(retry + 100), 100);
+    } else {
+      this.setState({ pluginNotLoaded: true });
     }
 
-    tabs.push(new InspectJsonTab(panel));
+    tabs.push(new InspectJsonTab({ panelRef, label: t('dashboard.inspect.json-tab', 'JSON'), value: InspectTab.JSON }));
 
     this.setState({ tabs });
   }
@@ -62,7 +78,7 @@ export class PanelInspectDrawer extends SceneObjectBase<PanelInspectDrawerState>
 }
 
 function PanelInspectRenderer({ model }: SceneComponentProps<PanelInspectDrawer>) {
-  const { tabs } = model.useState();
+  const { tabs, pluginNotLoaded } = model.useState();
   const location = useLocation();
   const queryParams = new URLSearchParams(location.search);
 
@@ -78,7 +94,7 @@ function PanelInspectRenderer({ model }: SceneComponentProps<PanelInspectDrawer>
       title={model.getDrawerTitle()}
       scrollableContent
       onClose={model.onClose}
-      size="md"
+      size="lg"
       tabs={
         <TabsBar>
           {tabs.map((tab) => {
@@ -94,6 +110,11 @@ function PanelInspectRenderer({ model }: SceneComponentProps<PanelInspectDrawer>
         </TabsBar>
       }
     >
+      {pluginNotLoaded && (
+        <Alert title="Panel plugin not loaded">
+          Make sure the panel you want to inspect is visible and has been displayed before opening inspect.
+        </Alert>
+      )}
       {currentTab.Component && <currentTab.Component model={currentTab} />}
     </Drawer>
   );
