@@ -263,7 +263,7 @@ func (d *Dynamic) Run(ctx context.Context) error {
 		case <-tick:
 			st := time.Now()
 			d.log.Debug("Updating patterns")
-			etag, ok, err := d.store.GetETag(ctx)
+			etag, ok, err := d.store.GetETag(context.Background())
 			if err != nil {
 				d.log.Error("Error while getting etag", "error", err)
 			}
