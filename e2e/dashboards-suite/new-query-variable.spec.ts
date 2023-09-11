@@ -1,4 +1,4 @@
-import { e2e } from '@grafana/e2e';
+import { e2e } from '../utils';
 
 const PAGE_UNDER_TEST = '-Y-tnEDWk/templating-nested-template-variables';
 const DASHBOARD_NAME = 'Templating - Nested Template Variables';
@@ -7,7 +7,7 @@ describe('Variables - Query - Add variable', () => {
   it('query variable should be default and default fields should be correct', () => {
     e2e.flows.login('admin', 'admin');
     e2e.flows.openDashboard({ uid: `${PAGE_UNDER_TEST}?orgId=1&editview=templating` });
-    e2e().contains(DASHBOARD_NAME).should('be.visible');
+    cy.contains(DASHBOARD_NAME).should('be.visible');
 
     e2e.pages.Dashboard.Settings.Variables.List.newButton().should('be.visible').click();
 
@@ -28,22 +28,21 @@ describe('Variables - Query - Add variable', () => {
         expect(input.attr('placeholder')).equals('Label name');
         expect(input.val()).equals('');
       });
-    e2e()
-      .get('[placeholder="Descriptive text"]')
+    cy.get('[placeholder="Descriptive text"]')
       .should('be.visible')
       .within((input) => {
         expect(input.attr('placeholder')).equals('Descriptive text');
         expect(input.val()).equals('');
       });
-    e2e().get('label').contains('Show on dashboard').should('be.visible');
+    cy.get('label').contains('Show on dashboard').should('be.visible');
 
     e2e.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsDataSourceSelect()
       .get('input[placeholder="gdev-testdata"]')
       .scrollIntoView()
       .should('be.visible');
 
-    e2e().get('label').contains('Refresh').scrollIntoView().should('be.visible');
-    e2e().get('label').contains('On dashboard load').scrollIntoView().should('be.visible');
+    cy.get('label').contains('Refresh').scrollIntoView().should('be.visible');
+    cy.get('label').contains('On dashboard load').scrollIntoView().should('be.visible');
 
     e2e.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsRegExInputV2()
       .should('be.visible')
@@ -58,17 +57,13 @@ describe('Variables - Query - Add variable', () => {
         e2e.components.Select.singleValue().should('have.text', 'Disabled');
       });
 
-    e2e()
-      .contains('label', 'Multi-value')
-      .within(() => {
-        e2e().get('input[type="checkbox"]').should('not.be.checked');
-      });
+    cy.contains('label', 'Multi-value').within(() => {
+      cy.get('input[type="checkbox"]').should('not.be.checked');
+    });
 
-    e2e()
-      .contains('label', 'Include All option')
-      .within(() => {
-        e2e().get('input[type="checkbox"]').should('not.be.checked');
-      });
+    cy.contains('label', 'Include All option').within(() => {
+      cy.get('input[type="checkbox"]').should('not.be.checked');
+    });
 
     e2e.pages.Dashboard.Settings.Variables.Edit.General.previewOfValuesOption().should('not.exist');
     e2e.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsCustomAllInputV2().should('not.exist');
@@ -77,7 +72,7 @@ describe('Variables - Query - Add variable', () => {
   it('adding a single value query variable', () => {
     e2e.flows.login('admin', 'admin');
     e2e.flows.openDashboard({ uid: `${PAGE_UNDER_TEST}?orgId=1&editview=templating` });
-    e2e().contains(DASHBOARD_NAME).should('be.visible');
+    cy.contains(DASHBOARD_NAME).should('be.visible');
 
     e2e.pages.Dashboard.Settings.Variables.List.newButton().should('be.visible').click();
 
@@ -86,7 +81,7 @@ describe('Variables - Query - Add variable', () => {
       .clear()
       .type('a label');
 
-    e2e().get('[placeholder="Descriptive text"]').should('be.visible').clear().type('a description');
+    cy.get('[placeholder="Descriptive text"]').should('be.visible').clear().type('a description');
 
     e2e.components.DataSourcePicker.container().should('be.visible').type('gdev-testdata{enter}');
 
@@ -111,7 +106,7 @@ describe('Variables - Query - Add variable', () => {
       .should('have.length', 4)
       .eq(3)
       .within(() => {
-        e2e().get('.variable-link-wrapper').should('be.visible').click();
+        cy.get('.variable-link-wrapper').should('be.visible').click();
         e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownDropDown()
           .should('be.visible')
           .within(() => {
@@ -125,7 +120,7 @@ describe('Variables - Query - Add variable', () => {
   it('adding a multi value query variable', () => {
     e2e.flows.login('admin', 'admin');
     e2e.flows.openDashboard({ uid: `${PAGE_UNDER_TEST}?orgId=1&editview=templating` });
-    e2e().contains(DASHBOARD_NAME).should('be.visible');
+    cy.contains(DASHBOARD_NAME).should('be.visible');
 
     e2e.pages.Dashboard.Settings.Variables.List.newButton().should('be.visible').click();
 
@@ -134,7 +129,7 @@ describe('Variables - Query - Add variable', () => {
       .clear()
       .type('a label');
 
-    e2e().get('[placeholder="Descriptive text"]').should('be.visible').clear().type('a description');
+    cy.get('[placeholder="Descriptive text"]').should('be.visible').clear().type('a description');
 
     e2e.components.DataSourcePicker.container().type('gdev-testdata{enter}');
 
@@ -148,17 +143,13 @@ describe('Variables - Query - Add variable', () => {
       .type('/.*C.*/')
       .blur();
 
-    e2e()
-      .contains('label', 'Multi-value')
-      .within(() => {
-        e2e().get('input[type="checkbox"]').click({ force: true }).should('be.checked');
-      });
+    cy.contains('label', 'Multi-value').within(() => {
+      cy.get('input[type="checkbox"]').click({ force: true }).should('be.checked');
+    });
 
-    e2e()
-      .contains('label', 'Include All option')
-      .within(() => {
-        e2e().get('input[type="checkbox"]').click({ force: true }).should('be.checked');
-      });
+    cy.contains('label', 'Include All option').within(() => {
+      cy.get('input[type="checkbox"]').click({ force: true }).should('be.checked');
+    });
 
     e2e.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsCustomAllInputV2().within((input) => {
       expect(input.attr('placeholder')).equals('blank = auto');
@@ -176,7 +167,7 @@ describe('Variables - Query - Add variable', () => {
       .should('have.length', 4)
       .eq(3)
       .within(() => {
-        e2e().get('.variable-link-wrapper').should('be.visible').click();
+        cy.get('.variable-link-wrapper').should('be.visible').click();
         e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownDropDown()
           .should('be.visible')
           .within(() => {

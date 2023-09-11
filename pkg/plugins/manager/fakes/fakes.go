@@ -290,7 +290,7 @@ func NewFakeBackendProcessProvider() *FakeBackendProcessProvider {
 	}
 	f.BackendFactoryFunc = func(ctx context.Context, p *plugins.Plugin) backendplugin.PluginFactoryFunc {
 		f.Requested[p.ID]++
-		return func(pluginID string, _ log.Logger, _ []string) (backendplugin.Plugin, error) {
+		return func(pluginID string, _ log.Logger, _ func() []string) (backendplugin.Plugin, error) {
 			f.Invoked[pluginID]++
 			return &FakePluginClient{}, nil
 		}
@@ -431,37 +431,6 @@ type FakeOauthService struct {
 
 func (f *FakeOauthService) RegisterExternalService(ctx context.Context, name string, svc *plugindef.ExternalServiceRegistration) (*oauth.ExternalService, error) {
 	return f.Result, nil
-}
-
-type FakePluginStore struct {
-	PluginList []plugins.PluginDTO
-}
-
-func (pr *FakePluginStore) Plugin(_ context.Context, pluginID string) (plugins.PluginDTO, bool) {
-	for _, v := range pr.PluginList {
-		if v.ID == pluginID {
-			return v, true
-		}
-	}
-
-	return plugins.PluginDTO{}, false
-}
-
-func (pr *FakePluginStore) Plugins(_ context.Context, pluginTypes ...plugins.Type) []plugins.PluginDTO {
-	var result []plugins.PluginDTO
-	if len(pluginTypes) == 0 {
-		pluginTypes = plugins.PluginTypes
-	}
-
-	for _, v := range pr.PluginList {
-		for _, t := range pluginTypes {
-			if v.Type == t {
-				result = append(result, v)
-			}
-		}
-	}
-
-	return result
 }
 
 type FakeDiscoverer struct {
