@@ -590,7 +590,7 @@ func (s *UserAuthTokenService) GetUserRevokedTokensInLastHours(ctx context.Conte
 
 		if dialect.DriverName() == migrator.Postgres {
 			// postgres
-			query = fmt.Sprintf("user_id = ? AND revoked_at > 0 AND revoked_at <= NOW() - INTERVAL '%d hours'", hours)
+			query = fmt.Sprintf("user_id = ? AND revoked_at > 0 AND revoked_at <= EXTRACT(EPOCH FROM (NOW() - INTERVAL '%d hours'))::INTEGER", hours)
 		} else if dialect.DriverName() == migrator.MySQL {
 			// mysql
 			query = fmt.Sprintf("user_id = ? AND revoked_at > 0 AND revoked_at <= NOW() - INTERVAL %d HOUR", hours)
