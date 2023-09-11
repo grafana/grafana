@@ -12,13 +12,13 @@ import (
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
-	pluginFakes "github.com/grafana/grafana/pkg/plugins/manager/fakes"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	datasourceservice "github.com/grafana/grafana/pkg/services/datasources/service"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	pluginSettings "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings/service"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretskvs "github.com/grafana/grafana/pkg/services/secrets/kvstore"
@@ -43,8 +43,8 @@ func TestHandleRequest(t *testing.T) {
 		dsService, err := datasourceservice.ProvideService(nil, secretsService, secretsStore, sqlStore.Cfg, featuremgmt.WithFeatures(), acmock.New(), datasourcePermissions, quotaService)
 		require.NoError(t, err)
 
-		pCtxProvider := plugincontext.ProvideService(localcache.ProvideService(), &pluginFakes.FakePluginStore{
-			PluginList: []plugins.PluginDTO{{JSONData: plugins.JSONData{ID: "test"}}},
+		pCtxProvider := plugincontext.ProvideService(localcache.ProvideService(), &pluginstore.FakePluginStore{
+			PluginList: []pluginstore.Plugin{{JSONData: plugins.JSONData{ID: "test"}}},
 		}, dsService, pluginSettings.ProvideService(sqlStore, secretsService))
 		s := ProvideService(client, nil, dsService, pCtxProvider)
 
