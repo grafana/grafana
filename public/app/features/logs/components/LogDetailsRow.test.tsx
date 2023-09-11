@@ -119,8 +119,12 @@ describe('LogDetailsRow', () => {
     expect(screen.getByTestId('logLabelStats')).toHaveTextContent('another value');
   });
 
-  it('should render copy button on hover', async () => {
-    setup({ parsedValues: ['test value'] });
-    expect(screen.getByTitle('Copy value to clipboard')).toHaveStyle('visibility: hidden;');
-  });
+  describe('copy button', () => {
+    it('should be invisible unless mouse is over', async () => {
+      setup({ parsedValues: ['test value'] });
+      // This tests a regression where the button was always visible.
+      expect(screen.getByTitle('Copy value to clipboard')).toHaveStyle('visibility: hidden;');
+      // Asserting visibility on mouse-over is currently not possible.
+    });
+  })
 });

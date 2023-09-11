@@ -77,9 +77,6 @@ const getStyles = memoizeOne((theme: GrafanaTheme2) => {
 
       .log-details-value-copy {
         visibility: hidden;
-        &:hover {
-          visibility: visible;
-        }
       }
       &:hover {
         .log-details-value-copy {
