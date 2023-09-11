@@ -7,14 +7,14 @@ import (
 	"net/http"
 
 	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/util"
 )
 
 // ToDashboardErrorResponse returns a different response status according to the dashboard error type
-func ToDashboardErrorResponse(ctx context.Context, pluginStore plugins.Store, err error) response.Response {
+func ToDashboardErrorResponse(ctx context.Context, pluginStore pluginstore.Store, err error) response.Response {
 	var dashboardErr dashboards.DashboardErr
 	if ok := errors.As(err, &dashboardErr); ok {
 		if body := dashboardErr.Body(); body != nil {
