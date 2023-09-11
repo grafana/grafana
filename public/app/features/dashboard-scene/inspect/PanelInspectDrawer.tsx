@@ -13,7 +13,9 @@ import {
   SceneObjectRef,
 } from '@grafana/scenes';
 import { Drawer, Tab, TabsBar } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 import { supportsDataQuery } from 'app/features/dashboard/components/PanelEditor/utils';
+import { InspectTab } from 'app/features/inspector/types';
 
 import { InspectDataTab } from './InspectDataTab';
 import { InspectJsonTab } from './InspectJsonTab';
@@ -35,18 +37,23 @@ export class PanelInspectDrawer extends SceneObjectBase<PanelInspectDrawerState>
   }
 
   buildTabs() {
-    const panel = this.state.panelRef.resolve();
+    const panelRef = this.state.panelRef;
+    const panel = panelRef.resolve();
     const plugin = panel.getPlugin();
     const tabs: Array<SceneObject<InspectTabState>> = [];
 
     if (plugin) {
       if (supportsDataQuery(plugin)) {
-        tabs.push(new InspectDataTab(panel));
-        tabs.push(new InspectStatsTab(panel));
+        tabs.push(
+          new InspectDataTab({ panelRef, label: t('dashboard.inspect.data-tab', 'Data'), value: InspectTab.Data })
+        );
+        tabs.push(
+          new InspectStatsTab({ panelRef, label: t('dashboard.inspect.stats-tab', 'Stats'), value: InspectTab.Stats })
+        );
       }
     }
 
-    tabs.push(new InspectJsonTab(panel));
+    tabs.push(new InspectJsonTab({ panelRef, label: t('dashboard.inspect.json-tab', 'JSON'), value: InspectTab.JSON }));
 
     this.setState({ tabs });
   }
@@ -78,7 +85,7 @@ function PanelInspectRenderer({ model }: SceneComponentProps<PanelInspectDrawer>
       title={model.getDrawerTitle()}
       scrollableContent
       onClose={model.onClose}
-      size="md"
+      size="lg"
       tabs={
         <TabsBar>
           {tabs.map((tab) => {
