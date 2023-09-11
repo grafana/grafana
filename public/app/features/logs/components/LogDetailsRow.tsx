@@ -75,12 +75,12 @@ const getStyles = memoizeOne((theme: GrafanaTheme2) => {
       align-items: center;
       line-height: 22px;
 
-      .show-on-hover {
+      .log-details-copy-button-show-on-hover {
         display: inline;
         visibility: hidden;
       }
       &:hover {
-        .show-on-hover {
+        .log-details-copy-button-show-on-hover {
           visibility: visible;
         }
       }
@@ -206,7 +206,7 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
     const styles = getStyles(theme);
 
     return (
-      <div className={cx('show-on-hover', styles.copyButton)}>
+      <div className={cx('log-details-copy-button-show-on-hover', styles.copyButton)}>
         <ClipboardButton
           getText={() => val}
           title="Copy value to clipboard"
