@@ -4,7 +4,7 @@ import { dashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoa
 import { buildPanelEditScene, PanelEditor } from '../panel-edit/PanelEditor';
 import { DashboardScene } from '../scene/DashboardScene';
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
-import { findVizPanelById } from '../utils/utils';
+import { getVizPanelKeyForPanelId, findVizPanelByKey } from '../utils/utils';
 
 export interface DashboardScenePageState {
   dashboard?: DashboardScene;
@@ -30,7 +30,7 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
   public async loadPanelEdit(uid: string, panelId: string) {
     try {
       const dashboard = await this.loadScene(uid);
-      const panel = findVizPanelById(dashboard, panelId);
+      const panel = findVizPanelByKey(dashboard, getVizPanelKeyForPanelId(parseInt(panelId, 10)));
 
       if (!panel) {
         this.setState({ isLoading: false, loadError: 'Panel not found' });
