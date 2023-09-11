@@ -12,11 +12,11 @@ const helperContent: Helper = {
 
 // JEV: add logic for no helper content
 export function getHelperContent(id: string): JSX.Element | string {
-  const defaultMessage = 'nope';
+  const defaultMessage = 'u broke it, u buy it';
 
-  if (!(id in helperContent)) {
-    return defaultMessage;
+  if (id in helperContent) {
+    return helperContent[id];
   }
 
-  return helperContent[id];
+  return defaultMessage;
 }

@@ -14,10 +14,13 @@ export const TransformationEditorHelperModal = ({
   onCloseClick,
   transformer,
 }: TransformationEditorHelperModalProps) => {
+  console.log(transformer, 'transformer');
   const {
     transformation: { name },
     help,
   } = transformer;
+
+  console.log(help, 'help');
 
   const helpTitle = `Transformation help - ${name}`;
 
