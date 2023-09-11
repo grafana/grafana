@@ -39,8 +39,8 @@ const QueryField = ({ query, onQueryChange, schema }: AzureQueryEditorFieldProps
           const kustoWorker = await (await languages.kusto.getKustoWorker())(model?.uri);
           await kustoWorker.setSchema(schema);
         }
-      } catch (err: any) {
-        throw new Error(err);
+      } catch (err) {
+        console.error(err);
       }
     };
 
