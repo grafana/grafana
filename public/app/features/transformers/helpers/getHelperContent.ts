@@ -10,7 +10,7 @@ import { FieldLookupHelper } from "./FieldLookupHelper";
 import { FilterFieldsByNameHelper } from "./FilterFieldsByNameHelper";
 
 interface Helper {
-  [key: string]: JSX.Element;
+  [key: string]: JSX.Element | string;
 }
 
 // JEV: what about "field lookup" transform?

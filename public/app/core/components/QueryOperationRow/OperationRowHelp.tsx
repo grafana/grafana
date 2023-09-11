@@ -8,11 +8,12 @@ export interface Props extends React.HTMLAttributes<HTMLDivElement> {
   children?: React.ReactNode;
   markdown?: string;
   onRemove?: () => void;
+  styleOverrides?: Record<string, any>;
 }
 
 export const OperationRowHelp = React.memo(
-  React.forwardRef<HTMLDivElement, Props>(({ className, children, markdown, onRemove, ...otherProps }, ref) => {
-    const styles = useStyles2(getStyles);
+  React.forwardRef<HTMLDivElement, Props>(({ className, children, markdown, styleOverrides, onRemove, ...otherProps }, ref) => {
+    const styles = useStyles2((theme) => getStyles(theme, styleOverrides?.borderTop));
 
     return (
       <div className={cx(styles.wrapper, className)} {...otherProps} ref={ref}>
@@ -30,14 +31,15 @@ function markdownHelper(markdown: string) {
 
 OperationRowHelp.displayName = 'OperationRowHelp';
 
-const getStyles = (theme: GrafanaTheme2) => {
+const getStyles = (theme: GrafanaTheme2, borderTop?: boolean) => {
   const borderRadius = theme.shape.radius.default;
+  const borderSettings = `2px solid ${theme.colors.background.secondary}`;
 
   return {
     wrapper: css`
       padding: ${theme.spacing(2)};
-      border: 2px solid ${theme.colors.background.secondary};
-      border-top: none;
+      border: ${borderSettings};
+      border-top: ${borderTop ? borderSettings : 'none'};
       border-radius: 0 0 ${borderRadius} ${borderRadius};
       position: relative;
       top: -4px;

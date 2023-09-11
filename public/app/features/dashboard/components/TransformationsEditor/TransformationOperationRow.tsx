@@ -3,7 +3,7 @@ import { useToggle } from 'react-use';
 
 import { DataFrame, DataTransformerConfig, TransformerRegistryItem, FrameMatcherID } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
-import { ConfirmModal, HorizontalGroup } from '@grafana/ui';
+import { ConfirmModal } from '@grafana/ui';
 import {
   QueryOperationAction,
   QueryOperationToggleAction,
