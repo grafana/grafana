@@ -206,6 +206,7 @@ export function MaxDataPointsOption({
 
   return (
     <InlineField
+      labelWidth={24}
       label="Max data points"
       tooltip="The maximum data points per series. Used directly by some data sources and used in calculation of auto interval. With streaming data this value is used for the rolling buffer."
     >
@@ -243,6 +244,7 @@ export function MinIntervalOption({
   return (
     <InlineField
       label="Min interval"
+      labelWidth={24}
       tooltip={
         <>
           A lower limit for the interval. Recommended to be set to write frequency, for example <code>1m</code> if your
