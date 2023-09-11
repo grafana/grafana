@@ -13,13 +13,11 @@ export function getFolderPermissions(folderDTO?: FolderDTO) {
   const canEditInFolderFallback = folderDTO ? folderDTO.canSave : contextSrv.hasEditPermissionInFolders;
 
   const canEditInFolder = checkFolderPermission(AccessControlAction.FoldersWrite, canEditInFolderFallback, folderDTO);
-  // Can only create a folder if at root or nestedFolders is enabled and we have permission
-  const canCreateFolder =
-    !folderDTO ||
-    Boolean(
-      config.featureToggles.nestedFolders &&
-        checkFolderPermission(AccessControlAction.FoldersCreate, contextSrv.isEditor)
-    );
+  // Can only create a folder if we have permissions and either we're at root or nestedFolders is enabled
+  const canCreateFolder = Boolean(
+    (!folderDTO || config.featureToggles.nestedFolders) &&
+      checkFolderPermission(AccessControlAction.FoldersCreate, contextSrv.isEditor)
+  );
   const canCreateDashboards = checkFolderPermission(
     AccessControlAction.DashboardsCreate,
     canEditInFolderFallback || !!folderDTO?.canSave

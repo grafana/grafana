@@ -526,7 +526,7 @@ var (
 		{
 			Name:         "cloudWatchLogsMonacoEditor",
 			Description:  "Enables the Monaco editor for CloudWatch Logs queries",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStagePublicPreview,
 			FrontendOnly: true,
 			Owner:        awsDatasourcesSquad,
 		},
@@ -639,7 +639,7 @@ var (
 		{
 			Name:        "awsAsyncQueryCaching",
 			Description: "Enable caching for async queries for Redshift and Athena. Requires that the `useCachingService` feature toggle is enabled and the datasource has caching and async query support enabled",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStagePublicPreview,
 			Owner:       awsDatasourcesSquad,
 		},
 		{
@@ -730,6 +730,12 @@ var (
 			Stage:        FeatureStagePublicPreview,
 			Owner:        grafanaFrontendPlatformSquad,
 			FrontendOnly: true,
+		},
+		{
+			Name:        "sseGroupByDatasource",
+			Description: "Send query to the same datasource in a single request when using server side expressions",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaObservabilityMetricsSquad,
 		},
 	}
 )

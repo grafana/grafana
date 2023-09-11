@@ -1,4 +1,4 @@
-import { e2e } from '@grafana/e2e';
+import { e2e } from '../utils';
 
 import datasetResponse from './datasets-response.json';
 import fieldsResponse from './fields-response.json';
