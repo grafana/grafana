@@ -68,12 +68,12 @@ type databaseQueryWrapper struct {
 type databaseQueryWrapperKey struct{}
 
 // Before hook will print the query with its args and return the context with the timestamp
-func (h *databaseQueryWrapper) Before(ctx context.Context, query string, args ...interface{}) (context.Context, error) {
+func (h *databaseQueryWrapper) Before(ctx context.Context, query string, args ...any) (context.Context, error) {
 	return context.WithValue(ctx, databaseQueryWrapperKey{}, time.Now()), nil
 }
 
 // After hook will get the timestamp registered on the Before hook and print the elapsed time
-func (h *databaseQueryWrapper) After(ctx context.Context, query string, args ...interface{}) (context.Context, error) {
+func (h *databaseQueryWrapper) After(ctx context.Context, query string, args ...any) (context.Context, error) {
 	h.instrument(ctx, "success", query, nil)
 
 	return ctx, nil
@@ -111,7 +111,7 @@ func (h *databaseQueryWrapper) instrument(ctx context.Context, status string, qu
 }
 
 // OnError will be called if any error happens
-func (h *databaseQueryWrapper) OnError(ctx context.Context, err error, query string, args ...interface{}) error {
+func (h *databaseQueryWrapper) OnError(ctx context.Context, err error, query string, args ...any) error {
 	// Not a user error: driver is telling sql package that an
 	// optional interface method is not implemented. There is
 	// nothing to instrument here.

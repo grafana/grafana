@@ -44,7 +44,7 @@ func (m *MockRateLimiter) Do(arg0 context.Context, arg1 ScreenshotOptions, arg2 
 }
 
 // Do indicates an expected call of Do.
-func (mr *MockRateLimiterMockRecorder) Do(arg0, arg1, arg2 interface{}) *gomock.Call {
+func (mr *MockRateLimiterMockRecorder) Do(arg0, arg1, arg2 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Do", reflect.TypeOf((*MockRateLimiter)(nil).Do), arg0, arg1, arg2)
 }

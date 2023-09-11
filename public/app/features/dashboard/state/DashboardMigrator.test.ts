@@ -49,6 +49,7 @@ describe('DashboardModel', () => {
     let singlestat: any;
     let table: any;
     let singlestatGauge: any;
+    const panelIdWithRepeatId = 500;
 
     config.panels = {
       stat: getPanelPlugin({ id: 'stat' }).meta,
@@ -64,6 +65,7 @@ describe('DashboardModel', () => {
           { type: 'filtering', enable: true },
           { type: 'annotations', enable: true, annotations: [{ name: 'old' }] },
         ],
+        style: 'dark',
         panels: [
           {
             type: 'graph',
@@ -115,6 +117,31 @@ describe('DashboardModel', () => {
             styles: [{ thresholds: ['10', '20', '30'] }, { thresholds: ['100', '200', '300'] }],
             targets: [{ refId: 'A' }, {}],
           },
+          // Old left-over repeated panel
+          {
+            type: 'table',
+            id: panelIdWithRepeatId,
+            // @ts-expect-error
+            repeatPanelId: 1,
+          },
+          // Collapsed row with left-over repeated panels
+          {
+            type: 'row',
+            panels: [
+              // @ts-expect-error
+              {
+                id: 501,
+                type: 'table',
+                repeat: 'server',
+              },
+              // Old left-over repeated panel
+              {
+                id: 502,
+                // @ts-expect-error
+                repeatedPanelId: 501,
+              },
+            ],
+          },
         ],
       });
 
@@ -129,7 +156,11 @@ describe('DashboardModel', () => {
     });
 
     it('should have panel id', () => {
-      expect(graph.id).toBe(1);
+      expect(graph.id).toBe(503);
+    });
+
+    it('should not have style', () => {
+      expect(model.style).toBe(undefined);
     });
 
     it('should move time and filtering list', () => {
@@ -230,6 +261,10 @@ describe('DashboardModel', () => {
       expect(graph.thresholds[0].value).toBe(100);
       expect(graph.thresholds[1].value).toBe(200);
       expect(graph.thresholds[2].value).toBe(400);
+    });
+
+    it('Shoud ignore repeated panels', () => {
+      expect(model.getPanelById(panelIdWithRepeatId)).toBe(null);
     });
   });
 

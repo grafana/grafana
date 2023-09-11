@@ -290,7 +290,7 @@ func NewFakeBackendProcessProvider() *FakeBackendProcessProvider {
 	}
 	f.BackendFactoryFunc = func(ctx context.Context, p *plugins.Plugin) backendplugin.PluginFactoryFunc {
 		f.Requested[p.ID]++
-		return func(pluginID string, _ log.Logger, _ []string) (backendplugin.Plugin, error) {
+		return func(pluginID string, _ log.Logger, _ func() []string) (backendplugin.Plugin, error) {
 			f.Invoked[pluginID]++
 			return &FakePluginClient{}, nil
 		}
@@ -433,37 +433,6 @@ func (f *FakeOauthService) RegisterExternalService(ctx context.Context, name str
 	return f.Result, nil
 }
 
-type FakePluginStore struct {
-	PluginList []plugins.PluginDTO
-}
-
-func (pr *FakePluginStore) Plugin(_ context.Context, pluginID string) (plugins.PluginDTO, bool) {
-	for _, v := range pr.PluginList {
-		if v.ID == pluginID {
-			return v, true
-		}
-	}
-
-	return plugins.PluginDTO{}, false
-}
-
-func (pr *FakePluginStore) Plugins(_ context.Context, pluginTypes ...plugins.Type) []plugins.PluginDTO {
-	var result []plugins.PluginDTO
-	if len(pluginTypes) == 0 {
-		pluginTypes = plugins.PluginTypes
-	}
-
-	for _, v := range pr.PluginList {
-		for _, t := range pluginTypes {
-			if v.Type == t {
-				result = append(result, v)
-			}
-		}
-	}
-
-	return result
-}
-
 type FakeDiscoverer struct {
 	DiscoverFunc func(ctx context.Context, src plugins.PluginSource) ([]*plugins.FoundBundle, error)
 }
@@ -582,4 +551,27 @@ func (p *FakeBackendPlugin) Kill() {
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
 	p.Running = false
+}
+
+type FakeFeatureToggles struct {
+	features map[string]bool
+}
+
+func NewFakeFeatureToggles(features ...string) *FakeFeatureToggles {
+	m := make(map[string]bool)
+	for _, f := range features {
+		m[f] = true
+	}
+
+	return &FakeFeatureToggles{
+		features: m,
+	}
+}
+
+func (f *FakeFeatureToggles) GetEnabled(_ context.Context) map[string]bool {
+	return f.features
+}
+
+func (f *FakeFeatureToggles) IsEnabled(feature string) bool {
+	return f.features[feature]
 }

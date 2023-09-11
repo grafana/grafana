@@ -3,7 +3,7 @@ import React, { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { applyFieldOverrides, DataFrame, SelectableValue, SplitOpen, TimeZone } from '@grafana/data';
-import { reportInteraction } from '@grafana/runtime/src';
+import { getTemplateSrv, reportInteraction } from '@grafana/runtime';
 import { Collapse, RadioButtonGroup, Table, AdHocFilterItem } from '@grafana/ui';
 import { config } from 'app/core/config';
 import { PANEL_BORDER } from 'app/core/constants';
@@ -120,7 +120,7 @@ export class RawPrometheusContainer extends PureComponent<Props, PrometheusConta
         data: dataFrames,
         timeZone,
         theme: config.theme2,
-        replaceVariables: (v: string) => v,
+        replaceVariables: getTemplateSrv().replace.bind(getTemplateSrv()),
         fieldConfig: {
           defaults: {},
           overrides: [],
