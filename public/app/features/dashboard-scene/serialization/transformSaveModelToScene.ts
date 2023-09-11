@@ -35,6 +35,7 @@ import { LibraryVizPanel } from '../scene/LibraryVizPanel';
 import { panelMenuBehavior } from '../scene/PanelMenuBehavior';
 import { PanelRepeaterGridItem } from '../scene/PanelRepeaterGridItem';
 import { PanelTimeRange } from '../scene/PanelTimeRange';
+import { RowRepeaterBehavior } from '../scene/RowRepeaterBehavior';
 import { createPanelDataProvider } from '../utils/createPanelDataProvider';
 import { getVizPanelKeyForPanelId } from '../utils/utils';
 
@@ -67,14 +68,7 @@ export function createSceneObjectsForPanels(oldPanels: PanelModel[]): SceneGridI
       if (!currentRow) {
         if (Boolean(panel.collapsed)) {
           // collapsed rows contain their panels within the row model
-          panels.push(
-            new SceneGridRow({
-              title: panel.title,
-              isCollapsed: true,
-              y: panel.gridPos.y,
-              children: panel.panels ? panel.panels.map(buildGridItemForPanel) : [],
-            })
-          );
+          panels.push(createRowFromPanelModel(panel, []));
         } else {
           // indicate new row to be processed
           currentRow = panel;
@@ -83,13 +77,7 @@ export function createSceneObjectsForPanels(oldPanels: PanelModel[]): SceneGridI
         // when a row has been processed, and we hit a next one for processing
         if (currentRow.id !== panel.id) {
           // commit previous row panels
-          panels.push(
-            new SceneGridRow({
-              title: currentRow!.title,
-              y: currentRow.gridPos.y,
-              children: currentRowPanels,
-            })
-          );
+          panels.push(createRowFromPanelModel(currentRow, currentRowPanels));
 
           currentRow = panel;
           currentRowPanels = [];
@@ -121,16 +109,41 @@ export function createSceneObjectsForPanels(oldPanels: PanelModel[]): SceneGridI
 
   // commit a row if it's the last one
   if (currentRow) {
-    panels.push(
-      new SceneGridRow({
-        title: currentRow!.title,
-        y: currentRow.gridPos.y,
-        children: currentRowPanels,
-      })
-    );
+    panels.push(createRowFromPanelModel(currentRow, currentRowPanels));
   }
 
   return panels;
+}
+
+function createRowFromPanelModel(row: PanelModel, content: SceneGridItemLike[]): SceneGridItemLike {
+  if (Boolean(row.collapsed)) {
+    if (row.panels) {
+      content = row.panels.map(buildGridItemForPanel);
+    }
+  }
+
+  let behaviors: SceneObject[] | undefined;
+  let children = content;
+
+  if (row.repeat) {
+    // For repeated rows the children are stored in the behavior
+    children = [];
+    behaviors = [
+      new RowRepeaterBehavior({
+        variableName: row.repeat,
+        sources: content,
+      }),
+    ];
+  }
+
+  return new SceneGridRow({
+    key: getVizPanelKeyForPanelId(row.id),
+    title: row.title,
+    y: row.gridPos.y,
+    isCollapsed: row.collapsed,
+    children: children,
+    $behaviors: behaviors,
+  });
 }
 
 export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel) {
