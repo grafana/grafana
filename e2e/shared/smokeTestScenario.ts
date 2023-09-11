@@ -1,4 +1,4 @@
-import { e2e } from '@grafana/e2e';
+import { e2e } from '../utils';
 
 export const smokeTestScenario = {
   describeName: 'Smoke tests',
@@ -9,14 +9,14 @@ export const smokeTestScenario = {
   loginViaApi: false,
   scenario: () => {
     // wait for time to be set to account for any layout shift
-    e2e().contains('2020-01-01 00:00:00 to 2020-01-01 06:00:00').should('be.visible');
+    cy.contains('2020-01-01 00:00:00 to 2020-01-01 06:00:00').should('be.visible');
     e2e.components.PageToolbar.itemButton('Add button').click();
     e2e.components.PageToolbar.itemButton('Add new visualization menu item').click();
 
     e2e.components.DataSource.TestData.QueryTab.scenarioSelectContainer()
       .should('be.visible')
       .within(() => {
-        e2e().get('input[id*="test-data-scenario-select-"]').should('be.visible').click();
+        cy.get('input[id*="test-data-scenario-select-"]').should('be.visible').click();
       });
 
     cy.contains('CSV Metric Values').scrollIntoView().should('be.visible').click();
