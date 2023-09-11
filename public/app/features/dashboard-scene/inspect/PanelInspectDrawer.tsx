@@ -37,6 +37,10 @@ export class PanelInspectDrawer extends SceneObjectBase<PanelInspectDrawerState>
     this.buildTabs(0);
   }
 
+  /**
+   * We currently have no async await to get the panel plugin from the VizPanel.
+   * That is why there is a retry argument here and a setTimeout, to try again a bit later.
+   */
   buildTabs(retry: number) {
     const panelRef = this.state.panelRef;
     const panel = panelRef.resolve();
