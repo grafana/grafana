@@ -3,6 +3,7 @@
 import { CalculateFieldHelper } from './CalculateFieldHelper';
 import { ConcatenateHelper } from './ConcatenateHelper';
 import { ConfigFromQueryHelper } from './ConfigFromQueryHelper';
+import { ConvertFieldTypeHelper } from './ConvertFieldTypeHelper';
 
 interface Helper {
   [key: string]: JSX.Element;
@@ -13,6 +14,7 @@ const helperContent: Helper = {
   concatenate: ConcatenateHelper(),
   // There is a discrepancy between the name of the id and the name of the transformer
   configFromData: ConfigFromQueryHelper(),
+  convertFieldType: ConvertFieldTypeHelper(),
 };
 
 // JEV: add logic for no helper content
