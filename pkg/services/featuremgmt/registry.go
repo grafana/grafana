@@ -737,5 +737,12 @@ var (
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaObservabilityMetricsSquad,
 		},
+		{
+			Name:         "requestInstrumentationStatusSource",
+			Description:  "Include a status source label for request metrics and logs",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: false,
+			Owner:        grafanaPluginsPlatformSquad,
+		},
 	}
 )

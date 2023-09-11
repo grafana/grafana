@@ -395,9 +395,9 @@ func (hs *HTTPServer) CheckHealth(c *contextmodel.ReqContext) response.Response 
 	pCtx, err := hs.pluginContextProvider.Get(c.Req.Context(), pluginID, c.SignedInUser, c.OrgID)
 	if err != nil {
 		if errors.Is(err, plugincontext.ErrPluginNotFound) {
-			return response.Error(404, "Plugin not found", nil)
+			return response.Error(http.StatusNotFound, "Plugin not found", nil)
 		}
-		return response.Error(500, "Failed to get plugin settings", err)
+		return response.Error(http.StatusInternalServerError, "Failed to get plugin settings", err)
 	}
 	resp, err := hs.pluginClient.CheckHealth(c.Req.Context(), &backend.CheckHealthRequest{
 		PluginContext: pCtx,
@@ -417,14 +417,14 @@ func (hs *HTTPServer) CheckHealth(c *contextmodel.ReqContext) response.Response 
 		var jsonDetails map[string]any
 		err = json.Unmarshal(resp.JSONDetails, &jsonDetails)
 		if err != nil {
-			return response.Error(500, "Failed to unmarshal detailed response from backend plugin", err)
+			return response.Error(http.StatusInternalServerError, "Failed to unmarshal detailed response from backend plugin", err)
 		}
 
 		payload["details"] = jsonDetails
 	}
 
 	if resp.Status != backend.HealthStatusOk {
-		return response.JSON(503, payload)
+		return response.JSON(http.StatusBadRequest, payload)
 	}
 
 	return response.JSON(http.StatusOK, payload)
@@ -492,22 +492,18 @@ func (hs *HTTPServer) UninstallPlugin(c *contextmodel.ReqContext) response.Respo
 
 func translatePluginRequestErrorToAPIError(err error) response.Response {
 	if errors.Is(err, backendplugin.ErrPluginNotRegistered) {
-		return response.Error(404, "Plugin not found", err)
+		return response.Error(http.StatusNotFound, "Plugin not found", err)
 	}
 
 	if errors.Is(err, backendplugin.ErrMethodNotImplemented) {
-		return response.Error(404, "Not found", err)
-	}
-
-	if errors.Is(err, backendplugin.ErrHealthCheckFailed) {
-		return response.Error(500, "Plugin health check failed", err)
+		return response.Error(http.StatusNotFound, "Not found", err)
 	}
 
 	if errors.Is(err, backendplugin.ErrPluginUnavailable) {
-		return response.Error(503, "Plugin unavailable", err)
+		return response.Error(http.StatusServiceUnavailable, "Plugin unavailable", err)
 	}
 
-	return response.Error(500, "Plugin request failed", err)
+	return response.ErrOrFallback(http.StatusInternalServerError, "Plugin request failed", err)
 }
 
 func (hs *HTTPServer) pluginMarkdown(ctx context.Context, pluginID string, name string) ([]byte, error) {
