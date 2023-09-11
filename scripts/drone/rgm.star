@@ -98,7 +98,7 @@ nightly_trigger = {
 def rgm_run(name, script):
     rgm_run_step = {
         "name": name,
-        "image": "grafana/grafana-build:dev-185c7cc",
+        "image": "grafana/grafana-build:dev-36ec1e2",
         "commands": [
             "export GRAFANA_DIR=$$(pwd)",
             "cd /src && ./scripts/{}".format(script),
