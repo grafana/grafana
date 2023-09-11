@@ -1,6 +1,13 @@
 import { SyntaxNode } from '@lezer/common';
 import { escapeRegExp } from 'lodash';
 
+import { reportInteraction } from '@grafana/runtime';
+import { DataQuery } from '@grafana/schema';
+
+import { ErrorId, replaceVariables, returnVariables } from '../prometheus/querybuilder/shared/parsingUtils';
+
+import { placeHolderScopedVars } from './components/monaco-query-field/monaco-completion-provider/validation';
+import { LokiDatasource } from './datasource';
 import {
   parser,
   LineFilter,
@@ -19,14 +26,8 @@ import {
   Identifier,
   Range,
   formatLokiQuery,
-} from '@grafana/lezer-logql';
-import { reportInteraction } from '@grafana/runtime';
-import { DataQuery } from '@grafana/schema';
-
-import { ErrorId, replaceVariables, returnVariables } from '../prometheus/querybuilder/shared/parsingUtils';
-
-import { placeHolderScopedVars } from './components/monaco-query-field/monaco-completion-provider/validation';
-import { LokiDatasource } from './datasource';
+  Logfmt,
+} from './lezer/index.es';
 import { getStreamSelectorPositions, NodePosition } from './modifyQuery';
 import { LokiQuery, LokiQueryType } from './types';
 
@@ -193,7 +194,7 @@ export function isLogsQuery(query: string): boolean {
 }
 
 export function isQueryWithParser(query: string): { queryWithParser: boolean; parserCount: number } {
-  const nodes = getNodesFromQuery(query, [LabelParser, JsonExpressionParser]);
+  const nodes = getNodesFromQuery(query, [LabelParser, JsonExpressionParser, Logfmt]);
   const parserCount = nodes.length;
   return { queryWithParser: parserCount > 0, parserCount };
 }

@@ -469,7 +469,7 @@ describe('getAfterSelectorCompletions', () => {
     expect(parsersInSuggestions).toStrictEqual(['unpack (detected)', 'json', 'logfmt', 'pattern', 'regexp']);
   });
 
-  it('should not show detected parser if query already has parser', async () => {
+  it('should not show the detected parser if query already has parser', async () => {
     const suggestions = await getAfterSelectorCompletions(
       `{job="grafana"} | logfmt | `,
       true,
