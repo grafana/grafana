@@ -104,38 +104,30 @@ func readPrometheusData(iter *jsoniter.Iterator, opt Options) backend.DataRespon
 	}
 
 	resultType := ""
+	resultTypeFound := false
+	var resultBytes []byte
 	var rsp backend.DataResponse
 
 	for l1Field := iter.ReadObject(); l1Field != ""; l1Field = iter.ReadObject() {
 		switch l1Field {
 		case "resultType":
 			resultType = iter.ReadString()
+			resultTypeFound = true
 
+			// if we have saved resultBytes we will parse them here
+			// we saved them because when we had them we don't know the resultType
+			if len(resultBytes) > 0 {
+				ji := jsoniter.ParseBytes(jsoniter.ConfigDefault, resultBytes)
+				rsp = readResult(resultType, rsp, ji, opt)
+			}
 		case "result":
-			switch resultType {
-			case "matrix":
-				if opt.MatrixWideSeries {
-					rsp = readMatrixOrVectorWide(iter, resultType)
-				} else {
-					rsp = readMatrixOrVectorMulti(iter, resultType)
-				}
-			case "vector":
-				if opt.VectorWideSeries {
-					rsp = readMatrixOrVectorWide(iter, resultType)
-				} else {
-					rsp = readMatrixOrVectorMulti(iter, resultType)
-				}
-			case "streams":
-				rsp = readStream(iter)
-			case "string":
-				rsp = readString(iter)
-			case "scalar":
-				rsp = readScalar(iter)
-			default:
-				iter.Skip()
-				rsp = backend.DataResponse{
-					Error: fmt.Errorf("unknown result type: %s", resultType),
-				}
+			// for some rare cases resultType is coming after the result.
+			// when that happens we save the bytes and parse them after reading resultType
+			// see: https://github.com/grafana/grafana/issues/64693
+			if resultTypeFound {
+				rsp = readResult(resultType, rsp, iter, opt)
+			} else {
+				resultBytes = iter.SkipAndReturnBytes()
 			}
 
 		case "stats":
@@ -156,7 +148,36 @@ func readPrometheusData(iter *jsoniter.Iterator, opt Options) backend.DataRespon
 			logf("[data] TODO, support key: %s / %v\n", l1Field, v)
 		}
 	}
+	return rsp
+}
 
+// will read the result object based on the resultType and return a DataResponse
+func readResult(resultType string, rsp backend.DataResponse, iter *jsoniter.Iterator, opt Options) backend.DataResponse {
+	switch resultType {
+	case "matrix":
+		if opt.MatrixWideSeries {
+			rsp = readMatrixOrVectorWide(iter, resultType)
+		} else {
+			rsp = readMatrixOrVectorMulti(iter, resultType)
+		}
+	case "vector":
+		if opt.VectorWideSeries {
+			rsp = readMatrixOrVectorWide(iter, resultType)
+		} else {
+			rsp = readMatrixOrVectorMulti(iter, resultType)
+		}
+	case "streams":
+		rsp = readStream(iter)
+	case "string":
+		rsp = readString(iter)
+	case "scalar":
+		rsp = readScalar(iter)
+	default:
+		iter.Skip()
+		rsp = backend.DataResponse{
+			Error: fmt.Errorf("unknown result type: %s", resultType),
+		}
+	}
 	return rsp
 }
 
