@@ -1883,7 +1883,7 @@
             "items": {
               "type": "string"
             },
-            "description": "One or many UID of folder from which export rules",
+            "description": "UIDs of folders from which to export rules",
             "name": "folderUid",
             "in": "query"
           },
@@ -6941,6 +6941,7 @@
       }
     },
     "alertGroup": {
+      "description": "AlertGroup alert group",
       "type": "object",
       "required": [
         "alerts",
@@ -6965,6 +6966,7 @@
       "$ref": "#/definitions/alertGroup"
     },
     "alertGroups": {
+      "description": "AlertGroups alert groups",
       "type": "array",
       "items": {
         "$ref": "#/definitions/alertGroup"
@@ -7183,7 +7185,6 @@
       "$ref": "#/definitions/gettableSilence"
     },
     "gettableSilences": {
-      "description": "GettableSilences gettable silences",
       "type": "array",
       "items": {
         "$ref": "#/definitions/gettableSilence"

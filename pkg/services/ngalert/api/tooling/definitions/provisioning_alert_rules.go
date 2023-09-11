@@ -74,7 +74,7 @@ import (
 // swagger:parameters RouteGetAlertRulesExport
 type AlertRulesExportParameters struct {
 	ExportQueryParams
-	// One or many UID of folder from which export rules
+	// UIDs of folders from which to export rules
 	// in:query
 	// required:false
 	FolderUID []string `json:"folderUid"`
