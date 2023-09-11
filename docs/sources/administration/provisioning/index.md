@@ -343,7 +343,7 @@ providers:
 
 When Grafana starts, it will update/insert all dashboards available in the configured path. Then later on poll that path every **updateIntervalSeconds** and look for updated json files and update/insert those into the database.
 
-> **Note:** Dashboards are provisioned to the General folder if the `folder` option is missing or empty.
+> **Note:** Dashboards are provisioned to the root level if the `folder` option is missing or empty.
 
 #### Making changes to a provisioned dashboard
 
@@ -413,7 +413,7 @@ providers:
 {{% /admonition %}}
 
 {{% admonition type="note" %}}
-To provision dashboards to the General folder, store them in the root of your `path`.
+To provision dashboards to the root level, store them in the root of your `path`.
 {{% /admonition %}}
 
 ## Alerting
