@@ -3358,6 +3358,7 @@ steps:
   - name: docker
     path: /var/run/docker.sock
 - commands:
+  - mkdir -p $${DESTINATION}/$${DRONE_BUILD_EVENT}
   - printenv GCP_KEY_BASE64 | base64 -d > /tmp/key.json
   - gcloud auth activate-service-account --key-file=/tmp/key.json
   - gcloud storage cp -r $${DRONE_WORKSPACE}/dist $${DESTINATION}/$${DRONE_BUILD_EVENT}
@@ -3413,6 +3414,7 @@ platform:
 services: []
 steps:
 - commands:
+  - mkdir -p $${DRONE_WORKSPACE}/dist
   - printenv GCP_KEY_BASE64 | base64 -d > /tmp/key.json
   - gcloud auth activate-service-account --key-file=/tmp/key.json
   - gcloud storage cp -r $${DESTINATION}/$${DRONE_BUILD_EVENT}/*$${DRONE_BUILD_ID}*
@@ -5031,6 +5033,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 4e20ab2a7ee25deb7da6814d9a30727af599dd18f0451775ad4489db0b5919bf
+hmac: 408089a349b92a6ca44b403e94ada43df937fd5e6fe239ee7e6e128884e59888
 
 ...

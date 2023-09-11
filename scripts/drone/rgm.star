@@ -114,14 +114,28 @@ def rgm_run(name, script):
     ]
 
 def rgm_copy(src, dst):
+    """Copies file from/to GCS.
+
+    Args:
+      src: source of the files.
+      dst: destination of the files.
+
+    Returns:
+      Drone steps.
+    """
+    commands = [
+        "printenv GCP_KEY_BASE64 | base64 -d > /tmp/key.json",
+        "gcloud auth activate-service-account --key-file=/tmp/key.json",
+        "gcloud storage cp -r {} {}".format(src, dst),
+    ]
+
+    if not dst.startswith("gs://"):
+        commands.insert(0, "mkdir -p {}".format(dst))
+
     rgm_copy_step = {
         "name": "rgm-copy",
         "image": "google/cloud-sdk:alpine",
-        "commands": [
-            "printenv GCP_KEY_BASE64 | base64 -d > /tmp/key.json",
-            "gcloud auth activate-service-account --key-file=/tmp/key.json",
-            "gcloud storage cp -r {} {}".format(src, dst),
-        ],
+        "commands": commands,
         "environment": rgm_env_secrets,
     }
 
