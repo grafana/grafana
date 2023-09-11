@@ -60,7 +60,7 @@ func (a *Anonymous) Authenticate(ctx context.Context, r *authn.Request) (*authn.
 
 		newCtx, cancel := context.WithTimeout(context.Background(), timeoutTag)
 		defer cancel()
-		if err := a.anonDeviceService.TagDevice(newCtx, httpReqCopy, anonymous.AnonDevice); err != nil {
+		if err := a.anonDeviceService.TagDevice(newCtx, httpReqCopy, anonymous.AnonDeviceUI); err != nil {
 			a.log.Warn("Failed to tag anonymous session", "error", err)
 		}
 	}()
