@@ -1,6 +1,5 @@
-import { EngineSchema } from '@kusto/monaco-kusto';
-
 import { VariableModel } from '@grafana/data';
+import { EngineSchema } from '../types';
 
 import { AzureLogAnalyticsMetadata } from '../types/logAnalyticsMetadata';
 

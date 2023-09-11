@@ -1,4 +1,4 @@
-import { ScalarParameter, TabularParameter } from '@kusto/monaco-kusto';
+import { ScalarParameter, TabularParameter, Function } from '@kusto/monaco-kusto';
 
 import {
   DataSourceInstanceSettings,
