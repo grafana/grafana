@@ -1,4 +1,4 @@
-package store
+package pluginstore
 
 import (
 	"context"
@@ -65,11 +65,11 @@ func TestStore_Plugin(t *testing.T) {
 
 		p, exists := ps.Plugin(context.Background(), p1.ID)
 		require.False(t, exists)
-		require.Equal(t, plugins.PluginDTO{}, p)
+		require.Equal(t, Plugin{}, p)
 
 		p, exists = ps.Plugin(context.Background(), p2.ID)
 		require.True(t, exists)
-		require.Equal(t, p, p2.ToDTO())
+		require.Equal(t, p, ToGrafanaDTO(p2))
 	})
 }
 
@@ -92,20 +92,27 @@ func TestStore_Plugins(t *testing.T) {
 			},
 		}, &fakes.FakeLoader{})
 
+		ToGrafanaDTO(p1)
 		pss := ps.Plugins(context.Background())
-		require.Equal(t, pss, []plugins.PluginDTO{p1.ToDTO(), p2.ToDTO(), p3.ToDTO(), p4.ToDTO()})
+		require.Equal(t, pss, []Plugin{
+			ToGrafanaDTO(p1), ToGrafanaDTO(p2),
+			ToGrafanaDTO(p3), ToGrafanaDTO(p4),
+		})
 
 		pss = ps.Plugins(context.Background(), plugins.TypeApp)
-		require.Equal(t, pss, []plugins.PluginDTO{p4.ToDTO()})
+		require.Equal(t, pss, []Plugin{ToGrafanaDTO(p4)})
 
 		pss = ps.Plugins(context.Background(), plugins.TypePanel)
-		require.Equal(t, pss, []plugins.PluginDTO{p2.ToDTO(), p3.ToDTO()})
+		require.Equal(t, pss, []Plugin{ToGrafanaDTO(p2), ToGrafanaDTO(p3)})
 
 		pss = ps.Plugins(context.Background(), plugins.TypeDataSource)
-		require.Equal(t, pss, []plugins.PluginDTO{p1.ToDTO()})
+		require.Equal(t, pss, []Plugin{ToGrafanaDTO(p1)})
 
 		pss = ps.Plugins(context.Background(), plugins.TypeDataSource, plugins.TypeApp, plugins.TypePanel)
-		require.Equal(t, pss, []plugins.PluginDTO{p1.ToDTO(), p2.ToDTO(), p3.ToDTO(), p4.ToDTO()})
+		require.Equal(t, pss, []Plugin{
+			ToGrafanaDTO(p1), ToGrafanaDTO(p2),
+			ToGrafanaDTO(p3), ToGrafanaDTO(p4),
+		})
 	})
 }
 
