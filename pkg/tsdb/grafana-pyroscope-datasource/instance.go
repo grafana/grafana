@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
-	"strconv"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -14,8 +13,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/contexthandler"
-	"github.com/grafana/grafana/pkg/services/datasources"
 )
 
 var (
@@ -28,13 +25,9 @@ var (
 // PhlareDatasource is a datasource for querying application performance profiles.
 type PhlareDatasource struct {
 	httpClient *http.Client
-	client     ProfilingClient
+	client     *PhlareClient
 	settings   backend.DataSourceInstanceSettings
 	ac         accesscontrol.AccessControl
-}
-
-type JsonData struct {
-	BackendType string `json:"backendType"`
 }
 
 // NewPhlareDatasource creates a new datasource instance.
@@ -48,15 +41,9 @@ func NewPhlareDatasource(httpClientProvider httpclient.Provider, settings backen
 		return nil, err
 	}
 
-	var jsonData *JsonData
-	err = json.Unmarshal(settings.JSONData, &jsonData)
-	if err != nil {
-		return nil, err
-	}
-
 	return &PhlareDatasource{
 		httpClient: httpClient,
-		client:     getClient(jsonData.BackendType, httpClient, settings.URL),
+		client:     NewPhlareClient(httpClient, settings.URL),
 		settings:   settings,
 		ac:         ac,
 	}, nil
@@ -72,9 +59,6 @@ func (d *PhlareDatasource) CallResource(ctx context.Context, req *backend.CallRe
 	}
 	if req.Path == "labelValues" {
 		return d.labelValues(ctx, req, sender)
-	}
-	if req.Path == "backendType" {
-		return d.backendType(ctx, req, sender)
 	}
 	return sender.Send(&backend.CallResourceResponse{
 		Status: 404,
@@ -98,21 +82,7 @@ func (d *PhlareDatasource) profileTypes(ctx context.Context, req *backend.CallRe
 }
 
 func (d *PhlareDatasource) labelNames(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
-	u, err := url.Parse(req.URL)
-	if err != nil {
-		return err
-	}
-	query := u.Query()
-	start, err := strconv.ParseInt(query["start"][0], 10, 64)
-	if err != nil {
-		return err
-	}
-	end, err := strconv.ParseInt(query["end"][0], 10, 64)
-	if err != nil {
-		return err
-	}
-
-	res, err := d.client.LabelNames(ctx, query["query"][0], start, end)
+	res, err := d.client.LabelNames(ctx)
 	if err != nil {
 		return fmt.Errorf("error calling LabelNames: %v", err)
 	}
@@ -140,16 +110,8 @@ func (d *PhlareDatasource) labelValues(ctx context.Context, req *backend.CallRes
 		return err
 	}
 	query := u.Query()
-	start, err := strconv.ParseInt(query["start"][0], 10, 64)
-	if err != nil {
-		return err
-	}
-	end, err := strconv.ParseInt(query["end"][0], 10, 64)
-	if err != nil {
-		return err
-	}
 
-	res, err := d.client.LabelValues(ctx, query["query"][0], query["label"][0], start, end)
+	res, err := d.client.LabelValues(ctx, query["label"][0])
 	if err != nil {
 		return fmt.Errorf("error calling LabelValues: %v", err)
 	}
@@ -162,74 +124,6 @@ func (d *PhlareDatasource) labelValues(ctx context.Context, req *backend.CallRes
 		return err
 	}
 	return nil
-}
-
-type BackendTypeRespBody struct {
-	BackendType string `json:"backendType"` // "phlare" or "pyroscope"
-}
-
-// backendType is a simplistic test to figure out if we are speaking to phlare or pyroscope backend
-func (d *PhlareDatasource) backendType(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
-	// To prevent any user sending arbitrary URL for us to test with we allow this only for users who can edit the datasource
-	// as config page is where this is meant to be used.
-	ok, err := d.isUserAllowedToEditDatasource(ctx)
-	if err != nil {
-		return err
-	}
-
-	if !ok {
-		return sender.Send(&backend.CallResourceResponse{Headers: req.Headers, Status: 401})
-	}
-
-	u, err := url.Parse(req.URL)
-	if err != nil {
-		return err
-	}
-	query := u.Query()
-	body := &BackendTypeRespBody{BackendType: "unknown"}
-
-	// We take the url from the request query because the data source may not yet be saved in DB with the URL we want
-	// to test with (like when filling in the confgi page for the first time)
-	url := query["url"][0]
-
-	pyroClient := getClient("pyroscope", d.httpClient, url)
-	_, err = pyroClient.ProfileTypes(ctx)
-
-	if err == nil {
-		body.BackendType = "pyroscope"
-	} else {
-		phlareClient := getClient("phlare", d.httpClient, url)
-		_, err := phlareClient.ProfileTypes(ctx)
-		if err == nil {
-			body.BackendType = "phlare"
-		}
-	}
-
-	data, err := json.Marshal(body)
-	if err != nil {
-		return err
-	}
-
-	return sender.Send(&backend.CallResourceResponse{Body: data, Headers: req.Headers, Status: 200})
-}
-
-func (d *PhlareDatasource) isUserAllowedToEditDatasource(ctx context.Context) (bool, error) {
-	reqCtx := contexthandler.FromContext(ctx)
-	uidScope := datasources.ScopeProvider.GetResourceScopeUID(accesscontrol.Parameter(":uid"))
-
-	if reqCtx == nil || reqCtx.SignedInUser == nil {
-		return false, nil
-	}
-
-	ok, err := d.ac.Evaluate(ctx, reqCtx.SignedInUser, accesscontrol.EvalPermission(datasources.ActionWrite, uidScope))
-	if err != nil {
-		return false, err
-	}
-	if !ok {
-		return false, nil
-	}
-
-	return true, nil
 }
 
 // QueryData handles multiple queries and returns multiple responses.

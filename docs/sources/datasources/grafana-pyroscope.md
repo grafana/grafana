@@ -98,11 +98,10 @@ apiVersion: 1
 
 datasources:
   - name: Grafana Pyroscope
-    type: phlare
-    url: http://localhost:4100
+    type: grafana-pyroscope-datasource
+    url: http://localhost:4040
     jsonData:
       minStep: '15s'
-      backendType: 'pyroscope'
 ```
 
 {{% docs/reference %}}
