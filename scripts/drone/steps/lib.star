@@ -471,7 +471,9 @@ def test_backend_step():
             "wire-install",
         ],
         "commands": [
-            "apk add --update build-base",
+            # shared-mime-info and shared-mime-info-lang is used for exactly 1 test for the
+            # mime.TypeByExtension function.
+            "apk add --update build-base shared-mime-info shared-mime-info-lang",
             "go test -tags requires_buildifer -short -covermode=atomic -timeout=5m ./pkg/...",
         ],
     }
@@ -680,7 +682,7 @@ def grafana_server_step(port = 3001):
         ],
         "environment": environment,
         "commands": [
-            "apk add --update tar",
+            "apk add --update tar bash",
             "cat packages.txt",
             "mkdir grafana",
             "tar --strip-components=1 -xvf ./dist/*.tar.gz -C grafana",

@@ -342,7 +342,7 @@ steps:
   image: golang:1.21.1-alpine
   name: wire-install
 - commands:
-  - apk add --update build-base
+  - apk add --update build-base shared-mime-info shared-mime-info-lang
   - go test -tags requires_buildifer -short -covermode=atomic -timeout=5m ./pkg/...
   depends_on:
   - wire-install
@@ -597,7 +597,7 @@ steps:
   - name: docker
     path: /var/run/docker.sock
 - commands:
-  - apk add --update tar
+  - apk add --update tar bash
   - cat packages.txt
   - mkdir grafana
   - tar --strip-components=1 -xvf ./dist/*.tar.gz -C grafana
@@ -1574,7 +1574,7 @@ steps:
   image: golang:1.21.1-alpine
   name: wire-install
 - commands:
-  - apk add --update build-base
+  - apk add --update build-base shared-mime-info shared-mime-info-lang
   - go test -tags requires_buildifer -short -covermode=atomic -timeout=5m ./pkg/...
   depends_on:
   - wire-install
@@ -1759,7 +1759,7 @@ steps:
   - name: docker
     path: /var/run/docker.sock
 - commands:
-  - apk add --update tar
+  - apk add --update tar bash
   - cat packages.txt
   - mkdir grafana
   - tar --strip-components=1 -xvf ./dist/*.tar.gz -C grafana
@@ -2937,7 +2937,7 @@ steps:
   image: golang:1.21.1-alpine
   name: wire-install
 - commands:
-  - apk add --update build-base
+  - apk add --update build-base shared-mime-info shared-mime-info-lang
   - go test -tags requires_buildifer -short -covermode=atomic -timeout=5m ./pkg/...
   depends_on:
   - wire-install
@@ -4221,8 +4221,3 @@ get:
   path: secret/data/common/gcr
 kind: secret
 name: gcr_credentials
----
-kind: signature
-hmac: 5a46ad6aba6a3ba86c92639fe0f542e81ff79938510df856aa01a5844e15c0c4
-
-...
