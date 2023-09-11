@@ -16,7 +16,10 @@ export function PluginDetailsDeprecatedWarning(props: Props): React.ReactElement
 
   return isWarningVisible ? (
     <Alert severity="warning" title="Deprecated" className={className} onRemove={() => setDismissed(true)}>
-      <p>This {plugin.type} plugin is deprecated and removed from the catalog. No further updates will be made to the plugin.</p>
+      <p>
+        This {plugin.type} plugin is deprecated and removed from the catalog. No further updates will be made to the
+        plugin.
+      </p>
     </Alert>
   ) : null;
 }
