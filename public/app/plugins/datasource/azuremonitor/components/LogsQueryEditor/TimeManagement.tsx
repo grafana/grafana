@@ -2,7 +2,7 @@ import { SelectableValue } from '@grafana/data';
 import { InlineField, RadioButtonGroup, Select } from '@grafana/ui';
 import React, { useCallback, useEffect, useState } from 'react';
 
-import { AzureLogAnalyticsMetadataTable, AzureQueryEditorFieldProps } from '../../types';
+import { AzureQueryEditorFieldProps } from '../../types';
 import { setDashboardTime, setTimeColumn } from './setQueryValue';
 
 export function TimeManagement({ query, onQueryChange: onChange, schema }: AzureQueryEditorFieldProps) {
@@ -15,7 +15,7 @@ export function TimeManagement({ query, onQueryChange: onChange, schema }: Azure
       let defaultColumnsMap: Map<string, SelectableValue> = new Map();
       const db = schema.database;
       if (db) {
-        for (const table of db.tables as AzureLogAnalyticsMetadataTable[]) {
+        for (const table of db.tables) {
           const cols = table.columns.reduce<SelectableValue[]>((prev, curr, i) => {
             if (curr.type === 'datetime') {
               if (!table.timespanColumn) {

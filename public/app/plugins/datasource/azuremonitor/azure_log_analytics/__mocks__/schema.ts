@@ -1,5 +1,4 @@
-import { ClusterType, EngineSchema } from '@kusto/monaco-kusto';
-import { AzureLogAnalyticsMetadataTable } from '../../types';
+import { AzureLogAnalyticsMetadataTable, EngineSchema } from '../../types';
 
 export default class FakeSchemaData {
   static getLogAnalyticsFakeSchema() {
@@ -367,6 +366,7 @@ export default class FakeSchemaData {
             { name: 'TimeResolved', type: 'datetime' },
             { name: 'TimeLastModified', type: 'datetime' },
           ],
+          related: { solutions: [] },
         },
       ],
       functions: [],

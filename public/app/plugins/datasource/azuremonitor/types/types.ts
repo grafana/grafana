@@ -5,9 +5,10 @@ import {
   PanelData,
   SelectableValue,
 } from '@grafana/data';
-import { EngineSchema } from '@kusto/monaco-kusto';
+import { ScalarParameter, TabularParameter } from '@kusto/monaco-kusto';
 
 import Datasource from '../datasource';
+import { AzureLogAnalyticsMetadataTable } from './logAnalyticsMetadata';
 
 import { AzureMonitorQuery, ResultFormat } from './query';
 
@@ -136,6 +137,26 @@ export interface AzureQueryEditorFieldProps {
 
   onQueryChange: (newQuery: AzureMonitorQuery) => void;
   setError: (source: string, error: AzureMonitorErrorish | undefined) => void;
+}
+
+// To avoid a better issue we redeclare the EngineSchema type from @kusto/monaco-kusto
+export interface EngineSchema {
+  clusterType: 'Engine';
+  cluster: {
+    connectionString: string;
+    databases: Database[];
+  };
+  database: Database | undefined;
+  globalScalarParameters?: ScalarParameter[];
+  globalTabularParameters?: TabularParameter[];
+}
+
+export interface Database {
+  name: string;
+  tables: AzureLogAnalyticsMetadataTable[];
+  functions: Function[];
+  majorVersion: number;
+  minorVersion: number;
 }
 
 export interface FormatAsFieldProps extends AzureQueryEditorFieldProps {
