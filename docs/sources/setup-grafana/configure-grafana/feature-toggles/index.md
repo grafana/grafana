@@ -46,6 +46,7 @@ Some features are enabled by default. You can disable these feature by setting t
 | `transformationsRedesign`                        | Enables the transformations redesign                                                                                                                                                                | Yes                |
 | `toggleLabelsInLogsUI`                           | Enable toggleable filters in log details view                                                                                                                                                       | Yes                |
 | `azureMonitorDataplane`                          | Adds dataplane compliant frame metadata in the Azure Monitor datasource                                                                                                                             | Yes                |
+| `prometheusConfigOverhaulAuth`                   | Update the Prometheus configuration page with the new auth component                                                                                                                                | Yes                |
 
 ## Preview feature toggles
 
@@ -128,7 +129,6 @@ Experimental features might be changed or removed without prior notice.
 | `grafanaAPIServer`                          | Enable Kubernetes API Server for Grafana resources                                                           |
 | `featureToggleAdminPage`                    | Enable admin page for managing feature toggles from the Grafana front-end                                    |
 | `permissionsFilterRemoveSubquery`           | Alternative permission filter implementation that does not use subqueries for fetching the dashboard folder  |
-| `prometheusConfigOverhaulAuth`              | Update the Prometheus configuration page with the new auth component                                         |
 | `influxdbSqlSupport`                        | Enable InfluxDB SQL query language support with new querying UI                                              |
 | `noBasicRole`                               | Enables a new role that has no permissions by default                                                        |
 | `angularDeprecationUI`                      | Display new Angular deprecation-related UI features                                                          |
