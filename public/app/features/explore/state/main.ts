@@ -5,7 +5,7 @@ import { SplitOpenOptions, TimeRange } from '@grafana/data';
 import { DataSourceSrv, locationService } from '@grafana/runtime';
 import { generateExploreId, GetExploreUrlArguments } from 'app/core/utils/explore';
 import { PanelModel } from 'app/features/dashboard/state';
-import { CorrelationEditorDetails, ExploreItemState, ExploreState } from 'app/types/explore';
+import { CorrelationEditorDetailsUpdate, ExploreItemState, ExploreState } from 'app/types/explore';
 
 import { RichHistoryResults } from '../../../core/history/RichHistoryStorage';
 import { RichHistorySearchFilters, RichHistorySettings } from '../../../core/utils/richHistoryTypes';
@@ -108,14 +108,7 @@ const createNewSplitOpenPane = createAsyncThunk(
 /**
  * Moves explore into and out of correlations editor mode
  */
-export const changeCorrelationEditorMode = createAction<{
-  correlationEditorMode: boolean;
-}>('explore/changeCorrelationEditorMode');
-
-/**
- * Moves explore into and out of correlations editor mode
- */
-export const changeCorrelationEditorDetails = createAction<CorrelationEditorDetails>(
+export const changeCorrelationEditorDetails = createAction<CorrelationEditorDetailsUpdate>(
   'explore/changeCorrelationEditorDetails'
 );
 
@@ -155,7 +148,7 @@ const initialExploreItemState = makeExplorePaneState();
 export const initialExploreState: ExploreState = {
   syncedTimes: false,
   panes: {},
-  correlationEditorDetails: { editorMode: false },
+  correlationEditorDetails: { editorMode: false, dirty: false, isExiting: false },
   richHistoryStorageFull: false,
   richHistoryLimitExceededWarningShown: false,
   largerExploreId: undefined,
@@ -268,16 +261,8 @@ export const exploreReducer = (state = initialExploreState, action: AnyAction): 
     };
   }
 
-  if (changeCorrelationEditorMode.match(action)) {
-    const { correlationEditorMode } = action.payload;
-    return {
-      ...state,
-      correlationEditorDetails: { ...state.correlationEditorDetails, editorMode: correlationEditorMode },
-    };
-  }
-
   if (changeCorrelationEditorDetails.match(action)) {
-    const { editorMode, label, description, canSave, dirty } = action.payload;
+    const { editorMode, label, description, canSave, dirty, isExiting } = action.payload;
     return {
       ...state,
       correlationEditorDetails: {
@@ -286,6 +271,7 @@ export const exploreReducer = (state = initialExploreState, action: AnyAction): 
         label: label !== undefined ? label : state.correlationEditorDetails?.label,
         description: description !== undefined ? description : state.correlationEditorDetails?.description,
         dirty: dirty !== undefined ? dirty : state.correlationEditorDetails?.dirty || false,
+        isExiting: isExiting !== undefined ? isExiting : state.correlationEditorDetails?.isExiting || false,
       },
     };
   }

@@ -45,7 +45,11 @@ export function mapInternalLinkToExplore(options: LinkToExploreOptions): LinkMod
 
   const interpolatedQuery = interpolateObject(link.internal?.query, scopedVars, replaceVariables);
   const interpolatedPanelsState = interpolateObject(link.internal?.panelsState, scopedVars, replaceVariables);
-  const interpolatedCorrelationData = interpolateObject(link.internal?.correlationData, scopedVars, replaceVariables);
+  const interpolatedCorrelationData = interpolateObject(
+    link.internal?.meta?.correlationData,
+    scopedVars,
+    replaceVariables
+  );
   const title = link.title ? link.title : internalLink.datasourceName;
 
   return {

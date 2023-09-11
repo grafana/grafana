@@ -59,7 +59,7 @@ function setup(queries: DataQuery[]) {
         correlations: [],
       },
     },
-    correlationEditorDetails: { editorMode: false },
+    correlationEditorDetails: { editorMode: false, dirty: false, isExiting: false },
     syncedTimes: false,
     richHistoryStorageFull: false,
     richHistoryLimitExceededWarningShown: false,

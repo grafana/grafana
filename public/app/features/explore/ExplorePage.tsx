@@ -19,8 +19,8 @@ import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { useSplitSizeUpdater } from './hooks/useSplitSizeUpdater';
 import { useStateSync } from './hooks/useStateSync';
 import { useTimeSrvFix } from './hooks/useTimeSrvFix';
-import { changeCorrelationEditorMode } from './state/main';
-import { isSplit, selectCorrelationDetails, selectCorrelationEditorMode, selectPanesEntries } from './state/selectors';
+import { changeCorrelationEditorDetails } from './state/main';
+import { isSplit, selectCorrelationEditorMode, selectPanesEntries } from './state/selectors';
 
 const MIN_PANE_WIDTH = 200;
 
@@ -42,10 +42,6 @@ export default function ExplorePage(props: GrafanaRouteComponentProps<{}, Explor
   const panes = useSelector(selectPanesEntries);
   const hasSplit = useSelector(isSplit);
   const isCorrelationsEditorMode = useSelector(selectCorrelationEditorMode);
-  const correlationDetails = useSelector(selectCorrelationDetails);
-  // show correlation editor mode UX elements if we are in the editor mode or if we are trying to exit in a dirty state
-  const showCorrelationEditorMode =
-    isCorrelationsEditorMode || (!isCorrelationsEditorMode && correlationDetails?.dirty) || false;
 
   useEffect(() => {
     //This is needed for breadcrumbs and topnav.
@@ -54,31 +50,29 @@ export default function ExplorePage(props: GrafanaRouteComponentProps<{}, Explor
   }, [chrome, navModel]);
 
   useEffect(() => {
-    if (showCorrelationEditorMode) {
+    if (isCorrelationsEditorMode) {
       const exploreNavItem = { ...navModel.node };
       exploreNavItem.text = 'Correlations Editor';
       exploreNavItem.parentItem = navModel.node;
       exploreNavItem.parentItem.url = undefined;
       exploreNavItem.parentItem.onClick = () => {
-        dispatch(changeCorrelationEditorMode({ correlationEditorMode: false }));
+        dispatch(changeCorrelationEditorDetails({ isExiting: true }));
       };
       navModel.node = exploreNavItem;
       chrome.update({ sectionNav: navModel });
     }
-  }, [chrome, showCorrelationEditorMode, navModel, dispatch, panes]);
+  }, [chrome, isCorrelationsEditorMode, navModel, dispatch, panes]);
 
   useKeyboardShortcuts();
 
   return (
     <div
       className={cx(styles.pageScrollbarWrapper, {
-        [styles.correlationsEditorIndicator]: showCorrelationEditorMode,
+        [styles.correlationsEditorIndicator]: isCorrelationsEditorMode,
       })}
     >
       <ExploreActions />
-      {config.featureToggles.correlations && (
-        <CorrelationEditorModeBar panes={panes} toShow={showCorrelationEditorMode} />
-      )}
+      {config.featureToggles.correlations && isCorrelationsEditorMode && <CorrelationEditorModeBar panes={panes} />}
       <SplitPaneWrapper
         splitOrientation="vertical"
         paneSize={widthCalc}

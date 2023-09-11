@@ -92,6 +92,7 @@ function useExtensionPointContext(props: Props): PluginExtensionExploreContext {
 
   const queryUids = queries.map((query) => query?.datasource?.uid).filter((uid) => uid !== undefined);
   const numUniqueIds = [...new Set(queryUids)].length;
+  const canWriteCorrelations = contextSrv.hasPermission(AccessControlAction.DataSourcesWrite);
 
   return useMemo(() => {
     return {
@@ -101,9 +102,23 @@ function useExtensionPointContext(props: Props): PluginExtensionExploreContext {
       timeRange: range.raw,
       timeZone: timeZone,
       shouldShowAddCorrelation:
-        config.featureToggles.correlations === true && !isCorrelationsEditorMode && isLeftPane && numUniqueIds === 1,
+        config.featureToggles.correlations === true &&
+        canWriteCorrelations &&
+        !isCorrelationsEditorMode &&
+        isLeftPane &&
+        numUniqueIds === 1,
     };
-  }, [exploreId, queries, queryResponse, range.raw, timeZone, isCorrelationsEditorMode, isLeftPane, numUniqueIds]);
+  }, [
+    exploreId,
+    queries,
+    queryResponse,
+    range.raw,
+    timeZone,
+    canWriteCorrelations,
+    isCorrelationsEditorMode,
+    isLeftPane,
+    numUniqueIds,
+  ]);
 }
 
 function useExtensionLinks(context: PluginExtensionExploreContext): PluginExtensionLink[] {

@@ -25,12 +25,16 @@ import { CorrelationData } from '../features/correlations/useCorrelations';
 export type ExploreQueryParams = UrlQueryMap;
 
 export interface CorrelationEditorDetails {
-  editorMode?: boolean;
+  editorMode: boolean;
+  dirty: boolean;
+  isExiting: boolean;
   canSave?: boolean;
-  dirty?: boolean;
   label?: string;
   description?: string;
 }
+
+// updates can have any properties
+export interface CorrelationEditorDetailsUpdate extends Partial<CorrelationEditorDetails> {}
 
 /**
  * Global Explore state

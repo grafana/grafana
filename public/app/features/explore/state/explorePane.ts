@@ -93,27 +93,20 @@ export function changeCorrelationHelperData(
   correlationHelperData: ExploreCorrelationHelperData
 ): ThunkResult<void> {
   return async (dispatch, getState) => {
-    const exploreItem = getState().explore.panes[exploreId];
-    if (exploreItem === undefined) {
-      return;
-    }
-
-    const { correlationEditorHelperData } = exploreItem;
     dispatch(
       changeCorrelationHelperDataAction({
         exploreId,
-        correlationEditorHelperData: { ...correlationEditorHelperData, ...correlationHelperData },
+        correlationEditorHelperData: {
+          ...getState().explore.panes[exploreId]?.correlationEditorHelperData,
+          ...correlationHelperData,
+        },
       })
     );
   };
 }
 
 export function removeCorrelationHelperData(exploreId: string): ThunkResult<void> {
-  return async (dispatch, getState) => {
-    const exploreItem = getState().explore.panes[exploreId];
-    if (exploreItem === undefined) {
-      return;
-    }
+  return async (dispatch) => {
     dispatch(
       changeCorrelationHelperDataAction({
         exploreId,

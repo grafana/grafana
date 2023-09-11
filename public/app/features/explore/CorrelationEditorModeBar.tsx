@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import React, { useEffect, useState } from 'react';
 import { Prompt } from 'react-router-dom';
-import { useBeforeUnload, usePrevious } from 'react-use';
+import { useBeforeUnload } from 'react-use';
 
 import { GrafanaTheme2, colorManipulator } from '@grafana/data';
 import { Button, HorizontalGroup, Icon, Tooltip, useStyles2 } from '@grafana/ui';
@@ -9,50 +9,51 @@ import { ExploreItemState, useDispatch, useSelector } from 'app/types';
 
 import { CorrelationUnsavedChangesModal } from './CorrelationUnsavedChangesModal';
 import { removeCorrelationHelperData } from './state/explorePane';
-import { changeCorrelationEditorDetails, changeCorrelationEditorMode } from './state/main';
+import { changeCorrelationEditorDetails } from './state/main';
 import { runQueries, saveCurrentCorrelation } from './state/query';
 import { selectCorrelationDetails, selectCorrelationEditorMode } from './state/selectors';
 
 // we keep component rendered and hidden to avoid race conditions with the prompt
-export const CorrelationEditorModeBar = ({
-  panes,
-  toShow,
-}: {
-  panes: Array<[string, ExploreItemState]>;
-  toShow: boolean;
-}) => {
+export const CorrelationEditorModeBar = ({ panes }: { panes: Array<[string, ExploreItemState]> }) => {
   const dispatch = useDispatch();
   const styles = useStyles2(getStyles);
   const correlationDetails = useSelector(selectCorrelationDetails);
   const correlationsEditorMode = useSelector(selectCorrelationEditorMode);
   const [showSavePrompt, setShowSavePrompt] = useState(false);
-  const prevShow = usePrevious(toShow);
 
   // handle refreshing and closing the tab
   useBeforeUnload(correlationDetails?.dirty || false, 'Save correlation?');
 
-  // clear data when being hidden
+  // handle exiting (staying within explore)
   useEffect(() => {
-    if (prevShow && !toShow) {
-      setShowSavePrompt(false);
+    if (correlationDetails?.isExiting && correlationDetails?.dirty) {
+      setShowSavePrompt(true);
+    } else if (correlationDetails?.isExiting && !correlationDetails?.dirty) {
+      dispatch(changeCorrelationEditorDetails({ editorMode: false, dirty: false, isExiting: false }));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [correlationDetails?.dirty, correlationDetails?.isExiting]);
+
+  // clear data when unmounted
+  useEffect(() => {
+    return () => {
       dispatch(
-        changeCorrelationEditorDetails({ editorMode: false, label: undefined, description: undefined, canSave: false })
+        changeCorrelationEditorDetails({
+          editorMode: false,
+          isExiting: false,
+          dirty: false,
+          label: undefined,
+          description: undefined,
+          canSave: false,
+        })
       );
       panes.forEach((pane) => {
         dispatch(removeCorrelationHelperData(pane[0]));
         dispatch(runQueries({ exploreId: pane[0] }));
       });
-    }
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [toShow, prevShow]);
-
-  // handle exiting (staying within explore)
-  useEffect(() => {
-    if (!correlationsEditorMode && correlationDetails?.dirty) {
-      // if we are trying to exit in a dirty state, show prompt
-      setShowSavePrompt(true);
-    }
-  }, [correlationsEditorMode, correlationDetails?.dirty]);
+  }, []);
 
   return (
     <>
@@ -72,52 +73,50 @@ export const CorrelationEditorModeBar = ({
           onDiscard={() => {
             // if we are discarding the in progress correlation, reset everything
             // this modal only shows if the editorMode is false, so we just need to update the dirty state
-            dispatch(changeCorrelationEditorDetails({ dirty: false }));
+            dispatch(changeCorrelationEditorDetails({ editorMode: false, dirty: false, isExiting: false }));
           }}
           onCancel={() => {
             // if we are cancelling the exit, set the editor mode back to true and hide the prompt
-            dispatch(changeCorrelationEditorMode({ correlationEditorMode: true }));
+            dispatch(changeCorrelationEditorDetails({ isExiting: false }));
             setShowSavePrompt(false);
           }}
           onSave={() => {
-            dispatch(changeCorrelationEditorDetails({ dirty: false }));
+            dispatch(changeCorrelationEditorDetails({ editorMode: false, dirty: false, isExiting: false }));
             dispatch(saveCurrentCorrelation(correlationDetails?.label, correlationDetails?.description));
           }}
         />
       )}
-      {toShow && (
-        <div className={styles.correlationEditorTop}>
-          <HorizontalGroup spacing="md" justify="flex-end">
-            <Tooltip content="Correlations editor in Explore is an experimental feature.">
-              <Icon className={styles.iconColor} name="info-circle" size="xl" />
-            </Tooltip>
-            <Button
-              variant="secondary"
-              disabled={!correlationDetails?.canSave}
-              fill="outline"
-              className={correlationDetails?.canSave ? styles.buttonColor : styles.disabledButtonColor}
-              onClick={() => {
-                dispatch(changeCorrelationEditorDetails({ dirty: false }));
-                dispatch(saveCurrentCorrelation(correlationDetails?.label, correlationDetails?.description));
-              }}
-            >
-              Save
-            </Button>
-            <Button
-              variant="secondary"
-              fill="outline"
-              className={styles.buttonColor}
-              icon="times"
-              onClick={() => {
-                dispatch(changeCorrelationEditorMode({ correlationEditorMode: false }));
-              }}
-              aria-label="exit correlations editor mode"
-            >
-              Exit Correlation Editor
-            </Button>
-          </HorizontalGroup>
-        </div>
-      )}
+      <div className={styles.correlationEditorTop}>
+        <HorizontalGroup spacing="md" justify="flex-end">
+          <Tooltip content="Correlations editor in Explore is an experimental feature.">
+            <Icon className={styles.iconColor} name="info-circle" size="xl" />
+          </Tooltip>
+          <Button
+            variant="secondary"
+            disabled={!correlationDetails?.canSave}
+            fill="outline"
+            className={correlationDetails?.canSave ? styles.buttonColor : styles.disabledButtonColor}
+            onClick={() => {
+              dispatch(changeCorrelationEditorDetails({ dirty: false }));
+              dispatch(saveCurrentCorrelation(correlationDetails?.label, correlationDetails?.description));
+            }}
+          >
+            Save
+          </Button>
+          <Button
+            variant="secondary"
+            fill="outline"
+            className={styles.buttonColor}
+            icon="times"
+            onClick={() => {
+              dispatch(changeCorrelationEditorDetails({ isExiting: true }));
+            }}
+            aria-label="exit correlations editor mode"
+          >
+            Exit Correlation Editor
+          </Button>
+        </HorizontalGroup>
+      </div>
     </>
   );
 };

@@ -78,7 +78,9 @@ export interface InternalDataLink<T extends DataQuery = any> {
   datasourceUid: string;
   datasourceName: string; // used as a title if `DataLink.title` is empty
   panelsState?: ExplorePanelsState;
-  correlationData?: ExploreCorrelationHelperData;
+  meta?: {
+    correlationData?: ExploreCorrelationHelperData;
+  };
   transformations?: DataLinkTransformationConfig[];
   range?: TimeRange;
 }
