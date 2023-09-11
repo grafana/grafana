@@ -12,6 +12,7 @@ load(
     "scripts/drone/utils/utils.star",
     "ignore_failure",
     "pipeline",
+    "with_deps",
 )
 load(
     "scripts/drone/events/release.star",
@@ -28,10 +29,6 @@ load(
 load(
     "scripts/drone/pipelines/whats_new_checker.star",
     "whats_new_checker_pipeline",
-)
-load(
-    "scripts/drone/utils/utils.star",
-    "with_deps",
 )
 load(
     "scripts/drone/vault.star",
