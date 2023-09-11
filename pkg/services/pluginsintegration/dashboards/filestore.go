@@ -6,17 +6,18 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/util"
 )
 
 var _ FileStore = (*FileStoreManager)(nil)
 
 type FileStoreManager struct {
-	pluginStore     plugins.Store
+	pluginStore     pluginstore.Store
 	pluginFileStore plugins.FileStore
 }
 
-func ProvideFileStoreManager(pluginStore plugins.Store, pluginFileStore plugins.FileStore) *FileStoreManager {
+func ProvideFileStoreManager(pluginStore pluginstore.Store, pluginFileStore plugins.FileStore) *FileStoreManager {
 	return &FileStoreManager{
 		pluginStore:     pluginStore,
 		pluginFileStore: pluginFileStore,

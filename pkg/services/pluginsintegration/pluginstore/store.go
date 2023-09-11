@@ -1,4 +1,4 @@
-package store
+package pluginstore
 
 import (
 	"context"
@@ -11,7 +11,15 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
 )
 
-var _ plugins.Store = (*Service)(nil)
+var _ Store = (*Service)(nil)
+
+// Store is the publicly accessible storage for plugins.
+type Store interface {
+	// Plugin finds a plugin by its ID.
+	Plugin(ctx context.Context, pluginID string) (Plugin, bool)
+	// Plugins returns plugins by their requested type.
+	Plugins(ctx context.Context, pluginTypes ...plugins.Type) []Plugin
+}
 
 type Service struct {
 	pluginRegistry registry.Service
@@ -42,16 +50,16 @@ func New(pluginRegistry registry.Service, pluginLoader loader.Service) *Service 
 	}
 }
 
-func (s *Service) Plugin(ctx context.Context, pluginID string) (plugins.PluginDTO, bool) {
+func (s *Service) Plugin(ctx context.Context, pluginID string) (Plugin, bool) {
 	p, exists := s.plugin(ctx, pluginID)
 	if !exists {
-		return plugins.PluginDTO{}, false
+		return Plugin{}, false
 	}
 
-	return p.ToDTO(), true
+	return ToGrafanaDTO(p), true
 }
 
-func (s *Service) Plugins(ctx context.Context, pluginTypes ...plugins.Type) []plugins.PluginDTO {
+func (s *Service) Plugins(ctx context.Context, pluginTypes ...plugins.Type) []Plugin {
 	// if no types passed, assume all
 	if len(pluginTypes) == 0 {
 		pluginTypes = plugins.PluginTypes
@@ -62,10 +70,10 @@ func (s *Service) Plugins(ctx context.Context, pluginTypes ...plugins.Type) []pl
 		requestedTypes[pt] = struct{}{}
 	}
 
-	pluginsList := make([]plugins.PluginDTO, 0)
+	pluginsList := make([]Plugin, 0)
 	for _, p := range s.availablePlugins(ctx) {
 		if _, exists := requestedTypes[p.Type]; exists {
-			pluginsList = append(pluginsList, p.ToDTO())
+			pluginsList = append(pluginsList, ToGrafanaDTO(p))
 		}
 	}
 	return pluginsList

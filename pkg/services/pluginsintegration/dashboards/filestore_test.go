@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 )
 
 func TestDashboardFileStore(t *testing.T) {
@@ -221,8 +221,8 @@ func setupPluginDashboardsForTest(t *testing.T) *FileStoreManager {
 	}
 
 	return &FileStoreManager{
-		pluginStore: &fakes.FakePluginStore{
-			PluginList: []plugins.PluginDTO{p1.ToDTO(), p2.ToDTO()},
+		pluginStore: &pluginstore.FakePluginStore{
+			PluginList: []pluginstore.Plugin{pluginstore.ToGrafanaDTO(p1), pluginstore.ToGrafanaDTO(p2)},
 		},
 	}
 }
