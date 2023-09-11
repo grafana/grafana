@@ -123,7 +123,7 @@ describe('LogDetailsRow', () => {
     it('should be invisible unless mouse is over', async () => {
       setup({ parsedValues: ['test value'] });
       // This tests a regression where the button was always visible.
-      expect(screen.getByTitle('Copy value to clipboard')).toHaveStyle('visibility: hidden;');
+      expect(screen.getByTitle('Copy value to clipboard')).not.toBeVisible();
       // Asserting visibility on mouse-over is currently not possible.
     });
   })
