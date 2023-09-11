@@ -76,7 +76,7 @@ export const Components = {
       menu: (title: string) => `data-testid Panel menu ${title}`,
       containerByTitle: (title: string) => `${title} panel`,
       headerCornerInfo: (mode: string) => `Panel header ${mode}`,
-      status: 'data-testid Panel status',
+      status: (status: string) => `data-testid Panel status ${status}`,
       loadingBar: () => `Panel loading bar`,
       HoverWidget: {
         container: 'data-testid hover-header-container',

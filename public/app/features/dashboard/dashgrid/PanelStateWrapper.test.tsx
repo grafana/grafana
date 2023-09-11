@@ -64,7 +64,7 @@ function setupTestContext(options: Partial<Props>) {
     isInView: false,
     width: 100,
     height: 100,
-    onInstanceStateChange: () => {},
+    onInstanceStateChange: () => { },
   };
 
   const props = { ...defaults, ...options };
@@ -128,7 +128,7 @@ describe('PanelStateWrapper', () => {
           </Provider>
         );
 
-        const button = screen.getByTestId(selectors.components.Panels.Panel.status);
+        const button = screen.getByTestId(selectors.components.Panels.Panel.status('error'));
         expect(button).toBeInTheDocument();
         await act(async () => {
           fireEvent.focus(button);

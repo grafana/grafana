@@ -25,7 +25,7 @@ export function PanelStatus({ message, onClick, ariaLabel = 'status' }: Props) {
       iconSize="md"
       tooltip={message || ''}
       aria-label={ariaLabel}
-      data-testid={selectors.components.Panels.Panel.status}
+      data-testid={selectors.components.Panels.Panel.status('error')}
     />
   );
 }
