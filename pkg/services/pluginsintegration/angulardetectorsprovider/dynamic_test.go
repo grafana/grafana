@@ -96,7 +96,8 @@ func TestDynamicAngularDetectorsProvider(t *testing.T) {
 			require.NoError(t, err)
 
 			require.True(t, gcom.httpCalls.calledOnce(), "gcom api should be called")
-			require.Equal(t, mockGCOMPatterns, r)
+			require.Equal(t, mockGCOMPatterns, r.Patterns)
+			require.Empty(t, r.ETag)
 		})
 
 		t.Run("handles timeout", func(t *testing.T) {
@@ -125,20 +126,31 @@ func TestDynamicAngularDetectorsProvider(t *testing.T) {
 
 		t.Run("etag", func(t *testing.T) {
 			for _, tc := range []struct {
-				name string
-				etag string
+				name       string
+				clientEtag string
+
+				serverEtag string
+				expError   error
 			}{
-				{name: "no etag", etag: ""},
-				{name: "with etag", etag: `"abcdef"`},
+				{name: "no client etag", clientEtag: "", serverEtag: "etag", expError: nil},
+				{name: "no server etag", clientEtag: `"abcdef"`, serverEtag: "", expError: nil},
+				{name: "client different etag than server", clientEtag: `"abcdef"`, serverEtag: "etag", expError: nil},
+				{name: "same client and server etag returns errNotModified", clientEtag: `"etag"`, serverEtag: `"etag"`, expError: errNotModified},
 			} {
 				t.Run(tc.name, func(t *testing.T) {
 					callback := make(chan struct{})
 					gcom := newDefaultGCOMScenario(func(writer http.ResponseWriter, request *http.Request) {
 						const headerIfNoneMatch = "If-None-Match"
-						if tc.etag == "" {
+						if tc.clientEtag == "" {
 							require.Empty(t, request.Header.Values(headerIfNoneMatch))
 						} else {
-							require.Equal(t, tc.etag, request.Header.Get(headerIfNoneMatch))
+							require.Equal(t, tc.clientEtag, request.Header.Get(headerIfNoneMatch))
+						}
+						if tc.serverEtag != "" {
+							writer.Header().Add("ETag", tc.serverEtag)
+							if tc.serverEtag == tc.clientEtag {
+								writer.WriteHeader(http.StatusNotModified)
+							}
 						}
 						close(callback)
 					})
@@ -146,8 +158,12 @@ func TestDynamicAngularDetectorsProvider(t *testing.T) {
 					t.Cleanup(srv.Close)
 					svc := provideDynamic(t, srv.URL)
 
-					_, err := svc.fetch(context.Background(), tc.etag)
-					require.NoError(t, err)
+					_, err := svc.fetch(context.Background(), tc.clientEtag)
+					if tc.expError != nil {
+						require.ErrorIs(t, err, tc.expError)
+					} else {
+						require.NoError(t, err)
+					}
 					select {
 					case <-callback:
 						break
@@ -486,10 +502,10 @@ func (s *gcomScenario) newHTTPTestServer() *httptest.Server {
 
 func newDefaultGCOMScenario(middlewares ...http.HandlerFunc) *gcomScenario {
 	return &gcomScenario{httpHandlerFunc: func(w http.ResponseWriter, req *http.Request) {
-		mockGCOMHTTPHandlerFunc(w, req)
 		for _, f := range middlewares {
 			f(w, req)
 		}
+		mockGCOMHTTPHandlerFunc(w, req)
 	}}
 }
 
