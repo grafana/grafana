@@ -14,7 +14,7 @@ import {
   VizPanel,
 } from '@grafana/scenes';
 
-import { DashboardScene } from '../scene/DashboardScene';
+import { DashboardScene, DashboardSceneState } from '../scene/DashboardScene';
 import { getDashboardUrl } from '../utils/utils';
 
 import { PanelEditorRenderer } from './PanelEditorRenderer';
@@ -83,7 +83,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     const sourcePanel = this.state.sourcePanelRef.resolve();
     const panel = this.state.panelRef.resolve();
 
-    if (dashboard.state.isEditing) {
+    if (!dashboard.state.isEditing) {
       dashboard.setState({ isEditing: true });
     }
 

@@ -59,6 +59,18 @@ func StartGrafanaEnv(t *testing.T, grafDir, cfgPath string) (string, *server.Tes
 	require.NoError(t, err)
 	assert.Greater(t, dbSec.Key("query_retries").MustInt(), 0)
 
+	env.Server.HTTPServer.AddMiddleware(func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if env.RequestMiddleware != nil {
+				h := env.RequestMiddleware(next)
+				h.ServeHTTP(w, r)
+				return
+			}
+
+			next.ServeHTTP(w, r)
+		})
+	})
+
 	go func() {
 		// When the server runs, it will also build and initialize the service graph
 		if err := env.Server.Run(); err != nil {
