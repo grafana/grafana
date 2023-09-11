@@ -5,12 +5,13 @@ Grafana ships with **built in** support for Grafana Pyroscope, an open source co
 ## What is Grafana Pyroscope?
 
 Grafana Pyroscope is an open source continuous profiling platform. It will help you:
-* Find performance issues and bottlenecks in your code
-* Use high-cardinality tags/labels to analyze your application
-* Resolve issues with high CPU utilization
-* Track down memory leaks
-* Understand the call tree of your application
-* Auto-instrument your code to link profiling data to traces
+
+- Find performance issues and bottlenecks in your code
+- Use high-cardinality tags/labels to analyze your application
+- Resolve issues with high CPU utilization
+- Track down memory leaks
+- Understand the call tree of your application
+- Auto-instrument your code to link profiling data to traces
 
 ## [Live Demo](https://demo.pyroscope.io/)
 
@@ -18,11 +19,11 @@ Grafana Pyroscope is an open source continuous profiling platform. It will help 
 
 ## Features
 
-* Minimal CPU overhead
-* Horizontally scalable
-* Efficient compression, low disk space requirements
-* Can handle high-cardinality tags/labels
-* Calculate the performance "diff" between various tags/labels and time periods
-* Advanced analysis UI
+- Minimal CPU overhead
+- Horizontally scalable
+- Efficient compression, low disk space requirements
+- Can handle high-cardinality tags/labels
+- Calculate the performance "diff" between various tags/labels and time periods
+- Advanced analysis UI
 
 Read more [here](https://grafana.com/docs/grafana/latest/datasources/grafana-pyroscope/).
