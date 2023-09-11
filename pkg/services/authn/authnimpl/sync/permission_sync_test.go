@@ -7,8 +7,8 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/authn"
-	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -51,7 +51,7 @@ func TestPermissionsSync_SyncPermission(t *testing.T) {
 
 func setupTestEnv() *PermissionsSync {
 	acMock := &acmock.Mock{
-		GetUserPermissionsFunc: func(ctx context.Context, siu *user.SignedInUser, o accesscontrol.Options) ([]accesscontrol.Permission, error) {
+		GetUserPermissionsFunc: func(ctx context.Context, siu identity.Requester, o accesscontrol.Options) ([]accesscontrol.Permission, error) {
 			return []accesscontrol.Permission{
 				{Action: accesscontrol.ActionUsersRead},
 			}, nil
