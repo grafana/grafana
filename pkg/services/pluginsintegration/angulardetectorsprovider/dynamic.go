@@ -158,9 +158,16 @@ func (d *Dynamic) updateDetectors(ctx context.Context, etag string) error {
 	case err == nil:
 		break
 	case errors.Is(err, errNotModified):
+		// If patterns did not change, update the last updated anyways,
+		// so we don't keep trying to fetch them, but update the in-memory
+		// detectors from the previously stored value.
 		d.log.Debug("Not modified, skipping update")
 		if err := d.store.SetLastUpdated(ctx); err != nil {
 			return fmt.Errorf("set last updated: %w", err)
+		}
+		// Update in-memory detectors, by reading current value in the kvstore
+		if err := d.setDetectorsFromCache(ctx); err != nil {
+			return fmt.Errorf("set detectors from cache: %w", err)
 		}
 		return nil
 	default:
@@ -174,7 +181,7 @@ func (d *Dynamic) updateDetectors(ctx context.Context, etag string) error {
 	}
 
 	// Update store only if the patterns can be converted to detectors
-	if err := d.store.Set(ctx, &resp.Patterns); err != nil {
+	if err := d.store.Set(ctx, resp.Patterns); err != nil {
 		return fmt.Errorf("store set: %w", err)
 	}
 	if err := d.store.SetETag(ctx, resp.ETag); err != nil {

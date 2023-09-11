@@ -38,7 +38,7 @@ func ProvideService(kv kvstore.KVStore) Service {
 	}
 }
 
-// Get returns the stored angular patterns and etag from the underlying cachekvstore.
+// Get returns the stored angular patterns from the underlying cachekvstore.
 func (s *KVStoreService) Get(ctx context.Context) (string, bool, error) {
 	return s.CacheKvStore.Get(ctx, keyPatterns)
 }
@@ -48,7 +48,7 @@ func (s *KVStoreService) GetETag(ctx context.Context) (string, bool, error) {
 	return s.CacheKvStore.Get(ctx, keyEtag)
 }
 
-// Set stores the given angular patterns and etag in the underlying cachekvstore.
+// Set stores the given angular patterns in the underlying cachekvstore.
 func (s *KVStoreService) Set(ctx context.Context, value any) error {
 	return s.CacheKvStore.Set(ctx, keyPatterns, value)
 }
