@@ -2,6 +2,7 @@
 
 import { CalculateFieldHelper } from './CalculateFieldHelper';
 import { ConcatenateHelper } from './ConcatenateHelper';
+import { ConfigFromQueryHelper } from './ConfigFromQueryHelper';
 
 interface Helper {
   [key: string]: JSX.Element;
@@ -10,6 +11,8 @@ interface Helper {
 const helperContent: Helper = {
   calculateField: CalculateFieldHelper(),
   concatenate: ConcatenateHelper(),
+  // There is a discrepancy between the name of the id and the name of the transformer
+  configFromData: ConfigFromQueryHelper(),
 };
 
 // JEV: add logic for no helper content
