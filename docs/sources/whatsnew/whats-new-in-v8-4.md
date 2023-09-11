@@ -84,7 +84,7 @@ Traditionally alerts in the Alert Panel were grouped by the alert rule that crea
 
 #### WeCom contact point
 
-Starting with Grafana 8.4, you can configure a [WeCom contact point](/docs/grafana/latest/alerting/contact-points) , to send alert notifications to WeCom.
+Starting with Grafana 8.4, you can configure a [WeCom contact point](https://grafana.com/docs/grafana/latest/alerting/alerting-rules/manage-contact-points/) , to send alert notifications to WeCom.
 
 ### New panel options
 
