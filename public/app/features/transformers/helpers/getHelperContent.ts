@@ -6,11 +6,13 @@ import { ConfigFromQueryHelper } from './ConfigFromQueryHelper';
 import { ConvertFieldTypeHelper } from './ConvertFieldTypeHelper';
 import { CreateHeatmapHelp } from './CreateHeatmapHelp';
 import { ExtractFieldsHelper } from './ExtractFieldsHelper';
+import { FilterFieldsByNameHelper } from './FilterFieldsByNameHelper';
 
 interface Helper {
   [key: string]: JSX.Element;
 }
 
+// JEV: what about "field lookup" transform?
 const helperContent: Helper = {
   calculateField: CalculateFieldHelper(),
   concatenate: ConcatenateHelper(),
@@ -19,6 +21,7 @@ const helperContent: Helper = {
   convertFieldType: ConvertFieldTypeHelper(),
   heatmap: CreateHeatmapHelp(),
   extractFields: ExtractFieldsHelper(),
+  filterFieldsByName: FilterFieldsByNameHelper(),
 };
 
 // JEV: add logic for no helper/string content
