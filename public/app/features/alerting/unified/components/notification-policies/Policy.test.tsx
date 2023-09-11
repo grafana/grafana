@@ -257,4 +257,6 @@ const mockRoutes: RouteWithID = {
     },
   ],
   group_wait: '30s',
+  group_interval: undefined,
+  repeat_interval: undefined,
 };
