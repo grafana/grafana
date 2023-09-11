@@ -1,6 +1,7 @@
 // import React from 'react';
 
 import { CalculateFieldHelper } from './CalculateFieldHelper';
+import { ConcatenateHelper } from './ConcatenateHelper';
 
 interface Helper {
   [key: string]: JSX.Element;
@@ -8,6 +9,7 @@ interface Helper {
 
 const helperContent: Helper = {
   calculateField: CalculateFieldHelper(),
+  concatenate: ConcatenateHelper(),
 };
 
 // JEV: add logic for no helper content
