@@ -522,10 +522,11 @@ func (f *FakeTerminator) Terminate(ctx context.Context, p *plugins.Plugin) (*plu
 type FakeBackendPlugin struct {
 	Managed bool
 
-	StartCount     int
-	StopCount      int
-	Decommissioned bool
-	Running        bool
+	StartCount      int
+	StopCount       int
+	Decommissioned  bool
+	Running         bool
+	ExitedCheckDone chan struct{}
 
 	mutex sync.RWMutex
 	backendplugin.Plugin
@@ -533,7 +534,8 @@ type FakeBackendPlugin struct {
 
 func NewFakeBackendPlugin(managed bool) *FakeBackendPlugin {
 	return &FakeBackendPlugin{
-		Managed: managed,
+		Managed:         managed,
+		ExitedCheckDone: make(chan struct{}),
 	}
 }
 
@@ -550,6 +552,7 @@ func (p *FakeBackendPlugin) Stop(_ context.Context) error {
 	defer p.mutex.Unlock()
 	p.Running = false
 	p.StopCount++
+	go func() { p.ExitedCheckDone <- struct{}{} }()
 	return nil
 }
 
@@ -575,6 +578,7 @@ func (p *FakeBackendPlugin) IsManaged() bool {
 func (p *FakeBackendPlugin) Exited() bool {
 	p.mutex.RLock()
 	defer p.mutex.RUnlock()
+	go func() { p.ExitedCheckDone <- struct{}{} }()
 	return !p.Running
 }
 

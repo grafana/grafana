@@ -2,10 +2,13 @@ package process
 
 import (
 	"context"
-	"errors"
 	"time"
 
 	"github.com/grafana/grafana/pkg/plugins"
+)
+
+var (
+	keepPluginAliveTickerDuration = time.Second * 1
 )
 
 type Service struct{}
@@ -19,7 +22,7 @@ func (*Service) Start(ctx context.Context, p *plugins.Plugin) error {
 		return nil
 	}
 
-	if err := startPluginAndRestartKilledProcesses(ctx, p); err != nil {
+	if err := startPluginAndKeepItAlive(ctx, p); err != nil {
 		return err
 	}
 
@@ -40,7 +43,7 @@ func (*Service) Stop(ctx context.Context, p *plugins.Plugin) error {
 	return nil
 }
 
-func startPluginAndRestartKilledProcesses(ctx context.Context, p *plugins.Plugin) error {
+func startPluginAndKeepItAlive(ctx context.Context, p *plugins.Plugin) error {
 	if err := p.Start(ctx); err != nil {
 		return err
 	}
@@ -50,7 +53,7 @@ func startPluginAndRestartKilledProcesses(ctx context.Context, p *plugins.Plugin
 	}
 
 	go func(ctx context.Context, p *plugins.Plugin) {
-		if err := restartKilledProcess(ctx, p); err != nil {
+		if err := keepPluginAlive(p); err != nil {
 			p.Logger().Error("Attempt to restart killed plugin process failed", "error", err)
 		}
 	}(ctx, p)
@@ -58,32 +61,26 @@ func startPluginAndRestartKilledProcesses(ctx context.Context, p *plugins.Plugin
 	return nil
 }
 
-func restartKilledProcess(ctx context.Context, p *plugins.Plugin) error {
-	ticker := time.NewTicker(time.Second * 1)
+// keepPluginAlive will restart the plugin if the process is killed or exits
+func keepPluginAlive(p *plugins.Plugin) error {
+	ticker := time.NewTicker(keepPluginAliveTickerDuration)
 
 	for {
-		select {
-		case <-ctx.Done():
-			if err := ctx.Err(); err != nil && !errors.Is(err, context.Canceled) {
-				return err
-			}
+		<-ticker.C
+		if p.IsDecommissioned() {
+			p.Logger().Debug("Plugin decommissioned")
 			return nil
-		case <-ticker.C:
-			if p.IsDecommissioned() {
-				p.Logger().Debug("Plugin decommissioned")
-				return nil
-			}
-
-			if !p.Exited() {
-				continue
-			}
-
-			p.Logger().Debug("Restarting plugin")
-			if err := p.Start(ctx); err != nil {
-				p.Logger().Error("Failed to restart plugin", "error", err)
-				continue
-			}
-			p.Logger().Debug("Plugin restarted")
 		}
+
+		if !p.Exited() {
+			continue
+		}
+
+		p.Logger().Debug("Restarting plugin")
+		if err := p.Start(context.Background()); err != nil {
+			p.Logger().Error("Failed to restart plugin", "error", err)
+			continue
+		}
+		p.Logger().Debug("Plugin restarted")
 	}
 }
