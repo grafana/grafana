@@ -3,7 +3,6 @@
 load(
     "scripts/drone/steps/lib.star",
     "build_backend_step",
-    "build_docker_images_step",
     "build_frontend_package_step",
     "build_frontend_step",
     "build_plugins_step",
@@ -34,10 +33,15 @@ load(
 load(
     "scripts/drone/steps/rgm.star",
     "rgm_package_step",
+    "rgm_build_docker_step",
 )
 load(
     "scripts/drone/utils/utils.star",
     "pipeline",
+)
+load(
+    "scripts/drone/utils/images.star",
+    "images",
 )
 
 # @unused
@@ -76,7 +80,7 @@ def build_e2e(trigger, ver_mode):
     build_steps.extend(
         [
             build_frontend_package_step(),
-            rgm_package_step(distros = "linux/amd64/dynamic"),
+            rgm_package_step(distros = "linux/amd64", file = "packages.txt"),
             grafana_server_step(),
             e2e_tests_step("dashboards-suite"),
             e2e_tests_step("smoke-tests-suite"),
@@ -99,13 +103,7 @@ def build_e2e(trigger, ver_mode):
             [
                 store_storybook_step(trigger = trigger_oss, ver_mode = ver_mode),
                 frontend_metrics_step(trigger = trigger_oss),
-                build_docker_images_step(
-                    publish = False,
-                ),
-                build_docker_images_step(
-                    publish = False,
-                    ubuntu = True,
-                ),
+                rgm_build_docker_step("packages.txt", images["ubuntu"], images["alpine"]),
                 publish_images_step(
                     docker_repo = "grafana",
                     trigger = trigger_oss,
@@ -130,17 +128,7 @@ def build_e2e(trigger, ver_mode):
     elif ver_mode == "pr":
         build_steps.extend(
             [
-                build_docker_images_step(
-                    archs = [
-                        "amd64",
-                    ],
-                ),
-                build_docker_images_step(
-                    archs = [
-                        "amd64",
-                    ],
-                    ubuntu = True,
-                ),
+                rgm_build_docker_step("packages.txt", images["ubuntu"], images["alpine"]),
                 publish_images_step(
                     docker_repo = "grafana",
                     trigger = trigger_oss,

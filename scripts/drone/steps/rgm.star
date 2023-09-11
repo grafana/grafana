@@ -1,10 +1,10 @@
 # rgm_package_step will create a tar.gz for use in e2e tests or other PR testing related activities..
-def rgm_package_step(distros = "linux/amd64,linux/arm64"):
+def rgm_package_step(distros = "linux/amd64,linux/arm64", file = "packages.txt"):
     return {
         "name": "rgm-package",
         "image": "grafana/grafana-build:main",
         "commands": [
-            "/src/grafana-build package --distro={} --grafana-dir=$$PWD > packages.txt".format(distros),
+            "/src/grafana-build package --distro={} --grafana-dir=$$PWD > {}".format(distros, file),
         ],
         "volumes": [{"name": "docker", "path": "/var/run/docker.sock"}],
     }
@@ -22,12 +22,12 @@ def rgm_build_backend_step(distros = "linux/amd64,linux/arm64"):
         "volumes": [{"name": "docker", "path": "/var/run/docker.sock"}],
     }
 
-def rgm_build_docker():
+def rgm_build_docker_step(packages, ubuntu, alpine):
     return {
         "name": "rgm-build-docker",
         "image": "grafana/grafana-build:main",
         "commands": [
-            "echo 'do nothing for now'",
+            "/src/grafana-build docker --package=$(cat {} | grep tar.gz | grep -v docker | grep -v sha256) --ubuntu-base={} --alpine-base={}".format(packages, ubuntu, alpine),
         ],
         "volumes": [{"name": "docker", "path": "/var/run/docker.sock"}],
     }

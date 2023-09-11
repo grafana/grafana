@@ -781,48 +781,6 @@ def copy_packages_for_docker_step():
         ],
     }
 
-def build_docker_images_step(archs = None, ubuntu = False, publish = False):
-    """Build Docker images using the Grafana build tool.
-
-    Args:
-      archs: a list of architectures to build the image for.
-        Defaults to None.
-      ubuntu: controls whether the final image is built from an Ubuntu base image.
-        Defaults to False.
-      publish: controls whether the built image is saved to a pre-release repository.
-        Defaults to False.
-
-    Returns:
-      Drone step.
-    """
-    cmd = "./bin/build build-docker --edition oss"
-    if publish:
-        cmd += " --shouldSave"
-
-    ubuntu_sfx = ""
-    if ubuntu:
-        ubuntu_sfx = "-ubuntu"
-        cmd += " --ubuntu"
-
-    if archs:
-        cmd += " -archs {}".format(",".join(archs))
-
-    environment = {
-        "GCP_KEY": from_secret(gcp_grafanauploads),
-    }
-
-    return {
-        "name": "build-docker-images" + ubuntu_sfx,
-        "image": images["cloudsdk"],
-        "depends_on": [
-            "copy-packages-for-docker",
-            "compile-build-cmd",
-        ],
-        "commands": [cmd],
-        "volumes": [{"name": "docker", "path": "/var/run/docker.sock"}],
-        "environment": environment,
-    }
-
 def fetch_images_step():
     return {
         "name": "fetch-images",
@@ -867,7 +825,7 @@ def publish_images_step(ver_mode, docker_repo, trigger = None):
         docker_repo,
     )
 
-    deps = ["build-docker-images", "build-docker-images-ubuntu"]
+    deps = ["rgm-build-docker"]
     if ver_mode == "release":
         deps = ["fetch-images"]
         cmd += " --version-tag ${DRONE_TAG}"
