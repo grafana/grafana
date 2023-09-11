@@ -15,8 +15,12 @@ describe('Trace view', () => {
       cy.contains('gdev-jaeger').should('be.visible');
     });
 
+    // type this with 0 delay to prevent flaky tests due to cursor position changing between rerenders
+    e2e.components.QueryField.container().should('be.visible').type('trace', {
+      delay: 0,
+    });
     // Use shift+enter to execute the query as it's more stable than clicking the execute button
-    e2e.components.QueryField.container().should('be.visible').type('trace{shift+enter}');
+    e2e.components.QueryField.container().type('{shift+enter}');
 
     cy.wait('@longTrace');
 
