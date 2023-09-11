@@ -130,6 +130,10 @@ export interface FilterValueRange {
  */
 export interface HeatmapTooltip {
   /**
+   * Controls the exemplar labels to be shown on exemplar tooltip and in which order
+   */
+  exemplarLabels?: Array<string>;
+  /**
    * Controls if the tooltip is shown
    */
   show: boolean;
@@ -138,6 +142,10 @@ export interface HeatmapTooltip {
    */
   yHistogram?: boolean;
 }
+
+export const defaultHeatmapTooltip: Partial<HeatmapTooltip> = {
+  exemplarLabels: [],
+};
 
 /**
  * Controls legend options
@@ -157,12 +165,7 @@ export interface ExemplarConfig {
    * Sets the color of the exemplar markers
    */
   color: string;
-  labels: Array<string>;
 }
-
-export const defaultExemplarConfig: Partial<ExemplarConfig> = {
-  labels: [],
-};
 
 /**
  * Controls frame rows options
@@ -258,7 +261,6 @@ export const defaultOptions: Partial<Options> = {
   },
   exemplars: {
     color: 'rgba(255,0,255,0.7)',
-    labels: [],
   },
   filterValues: {
     le: 1e-09,
@@ -270,6 +272,7 @@ export const defaultOptions: Partial<Options> = {
   tooltip: {
     show: true,
     yHistogram: false,
+    exemplarLabels: [],
   },
 };
 

@@ -399,6 +399,14 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(HeatmapPanel)
       showIf: (opts) => opts.tooltip.show,
     });
 
+    builder.addCustomEditor({
+      id: 'exemplar labels',
+      path: 'tooltip.exemplarLabels',
+      name: 'Exemplar Labels',
+      editor: ExemplarLabelEditor,
+      category,
+    });
+
     category = ['Legend'];
     builder.addBooleanSwitch({
       path: 'legend.show',
@@ -412,14 +420,6 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(HeatmapPanel)
       path: 'exemplars.color',
       name: 'Color',
       defaultValue: defaultOptions.exemplars.color,
-      category,
-    });
-
-    builder.addCustomEditor({
-      id: 'exemplar labels',
-      path: 'exemplars.labels',
-      name: 'Labels',
-      editor: ExemplarLabelEditor,
       category,
     });
   })

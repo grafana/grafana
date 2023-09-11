@@ -356,9 +356,7 @@ export function graphToTimeseriesOptions(angular: any): {
     tooltip: {
       mode: TooltipDisplayMode.Single,
       sort: SortOrder.None,
-    },
-    exemplars: {
-      labels: [],
+      exemplarLabels: [],
     },
   };
 

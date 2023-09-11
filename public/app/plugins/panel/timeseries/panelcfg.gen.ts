@@ -11,17 +11,16 @@
 import * as common from '@grafana/schema';
 
 export interface Options extends common.OptionsWithTimezones {
-  exemplars: ExemplarConfig;
   legend: common.VizLegendOptions;
-  tooltip: common.VizTooltipOptions;
+  tooltip: TooltipOptions;
 }
 
-export interface ExemplarConfig {
-  labels: Array<string>;
+export interface TooltipOptions extends common.VizTooltipOptions {
+  exemplarLabels?: Array<string>;
 }
 
-export const defaultExemplarConfig: Partial<ExemplarConfig> = {
-  labels: [],
+export const defaultTooltipOptions: Partial<TooltipOptions> = {
+  exemplarLabels: [],
 };
 
 export interface FieldConfig extends common.GraphFieldConfig {}

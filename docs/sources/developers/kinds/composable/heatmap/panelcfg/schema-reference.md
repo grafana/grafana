@@ -46,10 +46,9 @@ Controls cell value options
 
 Controls exemplar options
 
-| Property | Type     | Required | Default | Description                            |
-|----------|----------|----------|---------|----------------------------------------|
-| `color`  | string   | **Yes**  |         | Sets the color of the exemplar markers |
-| `labels` | string[] | **Yes**  |         |                                        |
+| Property | Type   | Required | Default | Description                            |
+|----------|--------|----------|---------|----------------------------------------|
+| `color`  | string | **Yes**  |         | Sets the color of the exemplar markers |
 
 ### FieldConfig
 
@@ -125,10 +124,11 @@ Controls legend options
 
 Controls tooltip options
 
-| Property     | Type    | Required | Default | Description                                                    |
-|--------------|---------|----------|---------|----------------------------------------------------------------|
-| `show`       | boolean | **Yes**  |         | Controls if the tooltip is shown                               |
-| `yHistogram` | boolean | No       |         | Controls if the tooltip shows a histogram of the y-axis values |
+| Property         | Type     | Required | Default | Description                                                                     |
+|------------------|----------|----------|---------|---------------------------------------------------------------------------------|
+| `show`           | boolean  | **Yes**  |         | Controls if the tooltip is shown                                                |
+| `exemplarLabels` | string[] | No       |         | Controls the exemplar labels to be shown on exemplar tooltip and in which order |
+| `yHistogram`     | boolean  | No       |         | Controls if the tooltip shows a histogram of the y-axis values                  |
 
 ### Options
 

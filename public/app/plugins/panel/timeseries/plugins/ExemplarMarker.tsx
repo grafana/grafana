@@ -126,7 +126,7 @@ export const ExemplarMarker = ({
 
   const renderMarker = useCallback(() => {
     // Show only configured labels and in the same order
-    const exemplarLabels = options?.exemplars?.labels;
+    const exemplarLabels = options?.tooltip?.exemplarLabels;
     let orderedDataFrameFields = [];
     if (!exemplarLabels || exemplarLabels?.length === 0) {
       const fieldsWithLinks =

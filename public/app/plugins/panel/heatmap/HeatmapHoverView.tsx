@@ -28,7 +28,7 @@ type Props = {
   timeRange: TimeRange;
   replaceVars: InterpolateFunction;
   scopedVars: ScopedVars[];
-  exemplarLabels: string[];
+  exemplarLabels?: string[];
 };
 
 export const HeatmapHoverView = (props: Props) => {

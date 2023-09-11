@@ -28,10 +28,10 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TimeSeriesPanel)
 
     builder.addCustomEditor({
       id: 'exemplar labels',
-      path: 'exemplars.labels',
-      name: 'Labels',
+      path: 'tooltip.exemplarLabels',
+      name: 'Exemplar Labels',
       editor: ExemplarLabelEditor,
-      category: ['Exemplars'],
+      category: ['Tooltip'],
     });
   })
   .setSuggestionsSupplier(new TimeSeriesSuggestionsSupplier())

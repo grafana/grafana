@@ -20,15 +20,9 @@ title: TimeSeriesPanelCfg kind
 
 | Property         | Type                                  | Required | Default | Description |
 |------------------|---------------------------------------|----------|---------|-------------|
-| `ExemplarConfig` | [object](#exemplarconfig)             | **Yes**  |         |             |
 | `FieldConfig`    | [GraphFieldConfig](#graphfieldconfig) | **Yes**  |         | TODO docs   |
 | `Options`        | [object](#options)                    | **Yes**  |         |             |
-
-### ExemplarConfig
-
-| Property | Type     | Required | Default | Description |
-|----------|----------|----------|---------|-------------|
-| `labels` | string[] | **Yes**  |         |             |
+| `TooltipOptions` | [object](#tooltipoptions)             | **Yes**  |         |             |
 
 ### GraphFieldConfig
 
@@ -196,12 +190,11 @@ TODO docs
 
 It extends [OptionsWithTimezones](#optionswithtimezones).
 
-| Property    | Type                                    | Required | Default | Description                                                      |
-|-------------|-----------------------------------------|----------|---------|------------------------------------------------------------------|
-| `exemplars` | [ExemplarConfig](#exemplarconfig)       | **Yes**  |         |                                                                  |
-| `legend`    | [VizLegendOptions](#vizlegendoptions)   | **Yes**  |         | TODO docs                                                        |
-| `tooltip`   | [VizTooltipOptions](#viztooltipoptions) | **Yes**  |         | TODO docs                                                        |
-| `timezone`  | string[]                                | No       |         | *(Inherited from [OptionsWithTimezones](#optionswithtimezones))* |
+| Property   | Type                                  | Required | Default | Description                                                      |
+|------------|---------------------------------------|----------|---------|------------------------------------------------------------------|
+| `legend`   | [VizLegendOptions](#vizlegendoptions) | **Yes**  |         | TODO docs                                                        |
+| `tooltip`  | [TooltipOptions](#tooltipoptions)     | **Yes**  |         |                                                                  |
+| `timezone` | string[]                              | No       |         | *(Inherited from [OptionsWithTimezones](#optionswithtimezones))* |
 
 ### OptionsWithTimezones
 
@@ -210,6 +203,25 @@ TODO docs
 | Property   | Type     | Required | Default | Description |
 |------------|----------|----------|---------|-------------|
 | `timezone` | string[] | No       |         |             |
+
+### TooltipOptions
+
+It extends [VizTooltipOptions](#viztooltipoptions).
+
+| Property         | Type     | Required | Default | Description                                                                                                                  |
+|------------------|----------|----------|---------|------------------------------------------------------------------------------------------------------------------------------|
+| `mode`           | string   | **Yes**  |         | *(Inherited from [VizTooltipOptions](#viztooltipoptions))*<br/>TODO docs<br/>Possible values are: `single`, `multi`, `none`. |
+| `sort`           | string   | **Yes**  |         | *(Inherited from [VizTooltipOptions](#viztooltipoptions))*<br/>TODO docs<br/>Possible values are: `asc`, `desc`, `none`.     |
+| `exemplarLabels` | string[] | No       |         |                                                                                                                              |
+
+### VizTooltipOptions
+
+TODO docs
+
+| Property | Type   | Required | Default | Description                                                   |
+|----------|--------|----------|---------|---------------------------------------------------------------|
+| `mode`   | string | **Yes**  |         | TODO docs<br/>Possible values are: `single`, `multi`, `none`. |
+| `sort`   | string | **Yes**  |         | TODO docs<br/>Possible values are: `asc`, `desc`, `none`.     |
 
 ### VizLegendOptions
 
@@ -226,14 +238,5 @@ TODO docs
 | `sortBy`      | string   | No       |         |                                                                                                                                         |
 | `sortDesc`    | boolean  | No       |         |                                                                                                                                         |
 | `width`       | number   | No       |         |                                                                                                                                         |
-
-### VizTooltipOptions
-
-TODO docs
-
-| Property | Type   | Required | Default | Description                                                   |
-|----------|--------|----------|---------|---------------------------------------------------------------|
-| `mode`   | string | **Yes**  |         | TODO docs<br/>Possible values are: `single`, `multi`, `none`. |
-| `sort`   | string | **Yes**  |         | TODO docs<br/>Possible values are: `asc`, `desc`, `none`.     |
 
 

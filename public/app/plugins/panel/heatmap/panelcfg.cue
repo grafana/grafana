@@ -82,6 +82,8 @@ composableKinds: PanelCfg: lineage: {
 				show: bool
 				// Controls if the tooltip shows a histogram of the y-axis values
 				yHistogram?: bool
+				// Controls the exemplar labels to be shown on exemplar tooltip and in which order
+				exemplarLabels?: [...string]
 			} @cuetsy(kind="interface")
 			// Controls legend options
 			HeatmapLegend: {
@@ -92,7 +94,6 @@ composableKinds: PanelCfg: lineage: {
 			ExemplarConfig: {
 				// Sets the color of the exemplar markers
 				color: string
-				labels: [...string]
 			} @cuetsy(kind="interface")
 			// Controls frame rows options
 			RowsHeatmapOptions: {
@@ -146,11 +147,11 @@ composableKinds: PanelCfg: lineage: {
 				tooltip: HeatmapTooltip | *{
 					show:       true
 					yHistogram: false
+					exemplarLabels: []
 				}
 				// Controls exemplar options
 				exemplars: ExemplarConfig | *{
 					color: "rgba(255,0,255,0.7)"
-					labels: []
 				}
 			} @cuetsy(kind="interface")
 			FieldConfig: {
