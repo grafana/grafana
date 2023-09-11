@@ -743,6 +743,26 @@ describe('Plugin details page', () => {
 
       await waitFor(() => expect(queryByText(/angular plugin/i)).not.toBeInTheDocument);
     });
+    
+    it('should display a deprecation warning if the plugin is deprecated', async () => {
+      const { queryByText } = renderPluginDetails({
+        id,
+        isInstalled: true,
+        isDeprecated: true,
+      });
+
+      await waitFor(() => expect(queryByText(/plugin is deprecated and removed from the catalog/i)).toBeInTheDocument());
+    });
+
+    it('should not display a deprecation warning in the plugin is not deprecated', async () => {
+      const { queryByText } = renderPluginDetails({
+        id,
+        isInstalled: true,
+        isDeprecated: false,
+      });
+
+      await waitFor(() => expect(queryByText(/plugin is deprecated and removed from the catalog/i)).not.toBeInTheDocument());
+    });
   });
 
   describe('viewed as user without grafana admin permissions', () => {
