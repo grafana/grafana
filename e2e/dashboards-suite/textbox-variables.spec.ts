@@ -125,7 +125,6 @@ describe.skip('TextBox - change picker value scenarios', function () {
 });
 
 function copyExistingDashboard() {
-  e2e.flows.login('admin', 'admin');
   cy.intercept({
     method: 'GET',
     url: '/api/search?query=&type=dash-folder&permission=Edit',

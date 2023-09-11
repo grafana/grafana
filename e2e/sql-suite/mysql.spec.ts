@@ -9,7 +9,7 @@ const normalTableName = tablesResponse.results.tables.frames[0].data.values[0][0
 
 describe('MySQL datasource', () => {
   beforeEach(() => {
-    e2e.flows.login('admin', 'admin');
+    e2e.flows.login(e2e.env('USERNAME'), e2e.env('PASSWORD'));
   });
 
   it('code editor autocomplete should handle table name escaping/quoting', () => {
