@@ -20,10 +20,12 @@ interface Props {
   data?: DataFrame[];
   hasTransformations?: boolean;
   onOptionsChange?: (options: GetDataOptions) => void;
+  actions?: React.ReactNode;
 }
 
 export const InspectDataOptions = ({
   options,
+  actions,
   onOptionsChange,
   hasTransformations,
   data,
@@ -93,6 +95,7 @@ export const InspectDataOptions = ({
         title={t('dashboard.inspect-data.data-options', 'Data options')}
         headerElement={<DetailText>{getActiveString()}</DetailText>}
         isOpen={false}
+        actions={actions}
       >
         <div className={styles.options} data-testid="dataOptions">
           <VerticalGroup spacing="none">
