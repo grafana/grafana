@@ -1,7 +1,13 @@
 import React from 'react';
 
 import { LoadingState } from '@grafana/data';
-import { SceneComponentProps, sceneGraph, SceneObjectBase } from '@grafana/scenes';
+import {
+  SceneComponentProps,
+  SceneDataProvider,
+  SceneDataTransformer,
+  sceneGraph,
+  SceneObjectBase,
+} from '@grafana/scenes';
 import { GetDataOptions } from 'app/features/query/state/PanelQueryRunner';
 
 import { InspectDataTab as InspectDataTabOld } from '../../inspector/InspectDataTab';
@@ -9,11 +15,11 @@ import { InspectDataTab as InspectDataTabOld } from '../../inspector/InspectData
 import { InspectTabState } from './types';
 
 export interface InspectDataTabState extends InspectTabState {
-  options?: GetDataOptions;
+  options: GetDataOptions;
 }
 
 export class InspectDataTab extends SceneObjectBase<InspectDataTabState> {
-  constructor(state: InspectDataTabState) {
+  public constructor(state: Omit<InspectDataTabState, 'options'>) {
     super({
       ...state,
       options: {
@@ -23,10 +29,15 @@ export class InspectDataTab extends SceneObjectBase<InspectDataTabState> {
     });
   }
 
+  public onOptionsChange = (options: GetDataOptions) => {
+    this.setState({ options });
+  };
+
   static Component = ({ model }: SceneComponentProps<InspectDataTab>) => {
     const { options } = model.useState();
     const panel = model.state.panelRef.resolve();
-    const data = sceneGraph.getData(panel).useState();
+    const dataProvider = sceneGraph.getData(panel);
+    const { data } = getDataProviderToSubscribeTo(dataProvider, options.withTransforms).useState();
     const timeRange = sceneGraph.getTimeRange(panel);
 
     if (!data) {
@@ -35,12 +46,32 @@ export class InspectDataTab extends SceneObjectBase<InspectDataTabState> {
 
     return (
       <InspectDataTabOld
-        isLoading={data.data?.state === LoadingState.Loading}
-        data={data.data?.series}
-        options={options!}
+        isLoading={data?.state === LoadingState.Loading}
+        data={data?.series}
+        options={options}
+        hasTransformations={hasTransformations(dataProvider)}
         timeZone={timeRange.getTimeZone()}
+        panelPluginId={panel.state.pluginId}
         dataName={panel.state.title}
+        fieldConfig={panel.state.fieldConfig}
+        onOptionsChange={model.onOptionsChange}
       />
     );
   };
+}
+
+function hasTransformations(dataProvider: SceneDataProvider) {
+  if (dataProvider instanceof SceneDataTransformer) {
+    return dataProvider.state.transformations.length > 0;
+  }
+
+  return false;
+}
+
+function getDataProviderToSubscribeTo(dataProvider: SceneDataProvider, withTransforms: boolean) {
+  if (withTransforms && dataProvider instanceof SceneDataTransformer) {
+    return dataProvider.state.$data!;
+  }
+
+  return dataProvider;
 }
