@@ -209,7 +209,9 @@ export function APIEditor({ value, context, onChange }: Props) {
       )}
       {renderTestAPIButton(value)}
       <br />
-      {value?.method === HttpRequestMethod.POST && value?.contentType === defaultApiConfig.contentType && renderJSON(value?.data ?? '{}')}
+      {value?.method === HttpRequestMethod.POST &&
+        value?.contentType === defaultApiConfig.contentType &&
+        renderJSON(value?.data ?? '{}')}
     </>
   ) : (
     <>Must enable disableSanitizeHtml feature flag to access</>
