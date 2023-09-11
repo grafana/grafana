@@ -10,23 +10,41 @@ export type ItemsAlignment = 'start' | 'end' | 'center' | 'stretch';
 export type ContentAlignment = ItemsAlignment | 'space-around' | 'space-between' | 'space-evenly';
 export interface GridProps {
   children: NonNullable<React.ReactNode>;
+  /** Defines whether the element is a block-lever or a inline-level grid */
   display?: 'grid' | 'inline-grid';
+  /** Specifies the gutters between columns and between rows. It is overwritten when column or row gap has value */
   gap?: ThemeSpacingTokens;
+  /** Specifies the gutters between columns */
   columnGap?: ThemeSpacingTokens;
+  /** Specifies the gutters between rows */
   rowGap?: ThemeSpacingTokens;
+  /** Defines the columns of the grid */
   templateColumns?: string;
+  /** Defines the rows of the grid */
   templateRows?: string;
+  /** Defines the horizontal alignment of the grid items in each cell */
   justifyItems?: ItemsAlignment;
+  /** Defines the vertical alignment of the grid items in each cell */
   alignItems?: ItemsAlignment;
+  /** Determines how grid items are automatically placed, with options to arrange them in rows, columns, or a "dense" manner to minimize empty cells */
   autoFlow?: 'row' | 'column' | 'row dense' | 'column dense';
+  /** Specifies the height of rows automatically created to accommodate grid items not explicitly placed within the grid */
   autoRows?: string;
 }
 
 export interface GridItemProps {
   children: NonNullable<React.ReactNode>;
-  columnStart?: string;
+  /** If false will the grid item inherits the display of the parent. 
+  If true, the display with 'contents' as value. See info: https://developer.mozilla.org/en-US/docs/Web/CSS/display#display_contents*/
+  displayContents?: boolean;
+  /** Specifies the column where the grid item starts within the grid */
+  columnStart?: number;
+  /** Specifies the  column where the grid item starts. 
+  If its value is span <number> the item spans across the provider number of columns*/
   columnEnd?: number | `span ${number}`;
-  rowStart?: string;
+  /** Specifies the row where the grid item starts within the grid */
+  rowStart?: number;
+  /** Specifies the row where the grid item ends.*/
   rowEnd?: number | `span ${number}`;
 }
 
@@ -42,15 +60,11 @@ export const Grid = ({
   justifyItems = 'stretch',
   autoFlow = 'row',
   autoRows = 'auto',
-  columnStart,
-  columnEnd,
-  rowStart,
-  rowEnd,
-}: GridProps & GridItemProps) => {
+}: GridProps) => {
   const styles = useStyles2(
     useCallback(
       (theme) =>
-        getStyles(
+        getGridStyles(
           theme,
           display,
           gap,
@@ -61,41 +75,18 @@ export const Grid = ({
           alignItems,
           justifyItems,
           autoFlow,
-          autoRows,
-          columnStart,
-          columnEnd,
-          rowStart,
-          rowEnd,
+          autoRows
         ),
-      [
-        display,
-        columnGap,
-        rowGap,
-        gap,
-        templateColumns,
-        templateRows,
-        alignItems,
-        justifyItems,
-        autoRows,
-        autoFlow,
-        columnStart,
-        columnEnd,
-        rowStart,
-        rowEnd,
-      ]
+      [display, columnGap, rowGap, gap, templateColumns, templateRows, alignItems, justifyItems, autoRows, autoFlow]
     )
   );
-
-  const childrenWithProps = React.Children.map(children, (child) => {
-    return child && React.cloneElement(child as React.ReactElement, { className: styles.gridItem });
-  });
-
-  return <div className={styles.grid}>{childrenWithProps}</div>;
+  // @ts-ignore
+  return React.createElement('div', { className: styles.grid }, children);
 };
 
 Grid.displayName = 'Grid';
 
-const getStyles = (
+const getGridStyles = (
   theme: GrafanaTheme2,
   display: 'grid' | 'inline-grid',
   gap: ThemeSpacingTokens,
@@ -106,11 +97,7 @@ const getStyles = (
   alignItems: GridProps['alignItems'],
   justifyItems: GridProps['justifyItems'],
   autoFlow: GridProps['autoFlow'],
-  autoRows: GridProps['autoRows'],
-  columnStart?: GridItemProps['columnStart'],
-  columnEnd?: GridItemProps['columnEnd'],
-  rowStart?: GridItemProps['rowStart'],
-  rowEnd?: GridItemProps['rowEnd'],
+  autoRows: GridProps['autoRows']
 ) => {
   return {
     grid: css({
@@ -127,7 +114,39 @@ const getStyles = (
       gridAutoFlow: autoFlow,
       gridAutoRows: autoRows,
     }),
+  };
+};
+
+export const GridItem = ({
+  children,
+  displayContents = false,
+  columnStart,
+  columnEnd,
+  rowStart,
+  rowEnd,
+}: GridItemProps) => {
+  const styles = useStyles2(
+    useCallback(
+      () => getGridItemStyles(displayContents, columnStart, columnEnd, rowStart, rowEnd),
+      [displayContents, columnStart, columnEnd, rowStart, rowEnd]
+    )
+  );
+
+  return React.createElement('div', { className: styles.gridItem }, children);
+};
+
+GridItem.displayName = 'GridItem';
+
+const getGridItemStyles = (
+  displayContents: GridItemProps['displayContents'],
+  columnStart: GridItemProps['columnStart'],
+  columnEnd: GridItemProps['columnEnd'],
+  rowStart: GridItemProps['rowStart'],
+  rowEnd: GridItemProps['rowEnd']
+) => {
+  return {
     gridItem: css({
+      display: displayContents ? 'contents' : 'inherit',
       gridColumnStart: columnStart,
       gridColumnEnd: columnEnd,
       gridRowStart: rowStart,
