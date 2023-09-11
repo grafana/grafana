@@ -44,8 +44,8 @@ def secrets():
         vault_secret("github_token", "infra/data/ci/github/grafanabot", "pat"),
         vault_secret(drone_token, "infra/data/ci/drone", "machine-user-token"),
         vault_secret(prerelease_bucket, "infra/data/ci/grafana/prerelease", "bucket"),
-        vault_secret(docker_username, "infra/data/ci/grafanaci-docker-hub", "username"),
-        vault_secret(docker_password, "infra/data/ci/grafanaci-docker-hub", "password"),
+        vault_secret(docker_username, "secret/data/grafanaci-dockerhub", "username"),
+        vault_secret(docker_password, "secret/data/grafanaci-dockerhub", "password"),
         vault_secret(
             gcp_upload_artifacts_key,
             "infra/data/ci/grafana/releng/artifacts-uploader-service-account",
