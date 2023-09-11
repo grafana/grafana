@@ -22,7 +22,6 @@ load(
 load(
     "scripts/drone/steps/rgm.star",
     "rgm_build_backend_step",
-    "rgm_package_step",
 )
 
 trigger_oss = {

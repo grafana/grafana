@@ -2,10 +2,7 @@
 
 load(
     "scripts/drone/steps/lib.star",
-    "build_backend_step",
     "build_frontend_package_step",
-    "build_frontend_step",
-    "build_plugins_step",
     "build_storybook_step",
     "cloud_plugins_e2e_tests_step",
     "compile_build_cmd",

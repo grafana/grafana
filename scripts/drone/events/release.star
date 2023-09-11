@@ -28,10 +28,6 @@ load(
     "pipeline",
 )
 load(
-    "scripts/drone/pipelines/test_backend.star",
-    "test_backend",
-)
-load(
     "scripts/drone/vault.star",
     "from_secret",
     "gcp_grafanauploads_base64",

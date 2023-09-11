@@ -733,10 +733,10 @@ steps:
   image: grafana/docker-puppeteer:1.1.0
   name: test-a11y-frontend
 - commands:
-  - /src/grafana-build docker --package=$(cat {} | grep tar.gz | grep -v docker |
-    grep -v sha256) --ubuntu-base=packages.txt --alpine-base=ubuntu:22.10 --tag-format=alpine:3.17.1
-    --ubuntu-tag-format={{ .version }}-{{ .buildID }}-{{ .arch }} > {{ .version }}-{{
-    .buildID }}-{{ .arch }}
+  - /src/grafana-build docker --package=$(cat packages.txt | grep tar.gz | grep -v
+    docker | grep -v sha256) --ubuntu-base=ubuntu:22.10 --alpine-base=alpine:3.17.1
+    --tag-format='{{ .version }}-{{ .buildID }}-{{ .arch }}' --ubuntu-tag-format='{{
+    .version }}-{{ .buildID }}-{{ .arch }}' > docker.txt
   - find ./dist -name '*docker*.tar.gz' -type f | xargs -n1 docker load -i
   depends_on:
   - rgm-package
@@ -1913,10 +1913,10 @@ steps:
     repo:
     - grafana/grafana
 - commands:
-  - /src/grafana-build docker --package=$(cat {} | grep tar.gz | grep -v docker |
-    grep -v sha256) --ubuntu-base=packages.txt --alpine-base=ubuntu:22.10 --tag-format=alpine:3.17.1
-    --ubuntu-tag-format={{ .version }}-{{ .arch }} > {{ .version }}-ubuntu-{{ .arch
-    }}
+  - /src/grafana-build docker --package=$(cat packages.txt | grep tar.gz | grep -v
+    docker | grep -v sha256) --ubuntu-base=ubuntu:22.10 --alpine-base=alpine:3.17.1
+    --tag-format='{{ .version }}-{{ .arch }}' --ubuntu-tag-format='{{ .version }}-ubuntu-{{
+    .arch }}' > docker.txt
   - find ./dist -name '*docker*.tar.gz' -type f | xargs -n1 docker load -i
   depends_on:
   - rgm-package
@@ -4192,6 +4192,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: c3a972ddcd19ec6af6e60b73349afd8431215969d4abe421530ceb62cb8e58e2
+hmac: 05498fa6e842efb9462effae1e483c8765e5fe6771c7a7bdae5da12228220970
 
 ...

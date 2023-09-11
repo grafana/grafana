@@ -5,7 +5,6 @@ This module returns the pipeline used for testing backend code.
 load(
     "scripts/drone/steps/lib.star",
     "betterer_frontend_step",
-    "download_grabpl_step",
     "enterprise_setup_step",
     "identify_runner_step",
     "test_frontend_step",
