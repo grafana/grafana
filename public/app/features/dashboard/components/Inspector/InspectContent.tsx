@@ -88,7 +88,10 @@ export const InspectContent = ({
     >
       {activeTab === InspectTab.Data && (
         <InspectDataTab
-          panel={panel}
+          dataName={panel.getDisplayTitle()}
+          panelPluginId={panel.type}
+          fieldConfig={panel.fieldConfig}
+          hasTransformations={Boolean(panel.transformations?.length)}
           data={data && data.series}
           isLoading={isDataLoading}
           options={dataOptions}
