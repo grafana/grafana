@@ -30,7 +30,7 @@ require (
 	cuelang.org/go v0.6.0-0.dev // @grafana/grafana-as-code
 	github.com/Azure/azure-sdk-for-go v65.0.0+incompatible // @grafana/backend-platform
 	github.com/Azure/go-autorest/autorest v0.11.28 // @grafana/backend-platform
-	github.com/BurntSushi/toml v1.2.1 // @grafana/grafana-authnz-team
+	github.com/BurntSushi/toml v1.3.2 // @grafana/grafana-authnz-team
 	github.com/Masterminds/semver v1.5.0 // @grafana/backend-platform
 	github.com/VividCortex/mysqlerr v0.0.0-20170204212430-6c6b55f8796f // @grafana/backend-platform
 	github.com/apache/arrow/go/v12 v12.0.1 // @grafana/observability-metrics
@@ -96,7 +96,7 @@ require (
 	github.com/teris-io/shortid v0.0.0-20171029131806-771a37caa5cf // @grafana/backend-platform
 	github.com/ua-parser/uap-go v0.0.0-20211112212520-00c877edfe0f // @grafana/backend-platform
 	github.com/uber/jaeger-client-go v2.30.0+incompatible // indirect
-	github.com/urfave/cli/v2 v2.25.0 // @grafana/backend-platform
+	github.com/urfave/cli/v2 v2.25.7 // @grafana/backend-platform
 	github.com/vectordotdev/go-datemath v0.1.1-0.20220323213446-f3954d0b18ae // @grafana/backend-platform
 	github.com/yalue/merged_fs v1.2.2 // @grafana/grafana-as-code
 	github.com/yudai/gojsondiff v1.0.0 // @grafana/backend-platform
