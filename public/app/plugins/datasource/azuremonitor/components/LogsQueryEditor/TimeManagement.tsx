@@ -16,18 +16,16 @@ export function TimeManagement({ query, onQueryChange: onChange, schema }: Azure
   useEffect(() => {
     if (schema && query.azureLogAnalytics?.dashboardTime) {
       let timeColumns: SelectableValue[] = [];
-      let defaultColumnsMap: Map<string, SelectableValue> = new Map();
+      let timeColumnsSet: Set<string> = new Set();
+      const defaultColumnsMap: Map<string, SelectableValue> = new Map();
       const db = schema.database;
       if (db) {
         for (const table of db.tables) {
           const cols = table.columns.reduce<SelectableValue[]>((prev, curr, i) => {
             if (curr.type === 'datetime') {
-              if (!table.timespanColumn) {
+              if (!table.timespanColumn || table.timespanColumn !== curr.name) {
                 prev.push({ value: curr.name, label: `${table.name} > ${curr.name}` });
-              } else {
-                if (table.timespanColumn !== curr.name) {
-                  prev.push({ value: curr.name, label: `${table.name} > ${curr.name}` });
-                }
+                timeColumnsSet.add(curr.name);
               }
             }
             return prev;
@@ -46,19 +44,26 @@ export function TimeManagement({ query, onQueryChange: onChange, schema }: Azure
       setDefaultTimeColumns(defaultColumns);
 
       // Set default value
-      if (defaultColumns && defaultColumns.length) {
-        setDefaultColumn(defaultColumns[0].value);
-        setDefaultColumn(defaultColumns[0].value);
-        return;
-      } else if (timeColumns && timeColumns.length) {
-        setDefaultColumn(timeColumns[0].value);
-        return;
-      } else {
-        setDefaultColumn('TimeGenerated');
-        return;
+      if (
+        !query.azureLogAnalytics.timeColumn ||
+        (query.azureLogAnalytics.timeColumn &&
+          !timeColumnsSet.has(query.azureLogAnalytics.timeColumn) &&
+          !defaultColumnsMap.has(query.azureLogAnalytics.timeColumn))
+      ) {
+        if (defaultColumns && defaultColumns.length) {
+          setDefaultColumn(defaultColumns[0].value);
+          setDefaultColumn(defaultColumns[0].value);
+          return;
+        } else if (timeColumns && timeColumns.length) {
+          setDefaultColumn(timeColumns[0].value);
+          return;
+        } else {
+          setDefaultColumn('TimeGenerated');
+          return;
+        }
       }
     }
-  }, [schema, query.azureLogAnalytics?.dashboardTime, setDefaultColumn]);
+  }, [schema, query.azureLogAnalytics?.dashboardTime, query.azureLogAnalytics?.timeColumn, setDefaultColumn]);
 
   const handleTimeColumnChange = useCallback(
     (change: SelectableValue<string>) => {
