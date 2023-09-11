@@ -1,12 +1,33 @@
 import {Meta, ArgTypes, Props} from '@storybook/blocks'
-import {Grid, GridItem} from './Grid';
+import {Grid} from './Grid';
+import {GridItem} from './GridItem';
 
 <Meta title="MDX|Grid" component={Grid}/>
 
 # Grid
 
+The `Grid` component allows for the organized layout and alignment of content into a grid-based structure.
+
+### Usage
+
+#### When to use
+
+Use the Grid component when you want to create structured and organized layouts where content or elements need to be aligned in rows and columns for clarity and consistency.
+
+#### When not to use
+
+Use the `Stack` component instead for these use cases:
+
+- **Simple layourts:** When you need to arrange elements in a linear format, either vertically or horizontally. 
+- **Dynamic content:** When your content or elements have varying heights or widths and you want them to adapt to each item's size without predefined rows or columns.
+
+Use the `Flex` component instead for these use cases:
+
+- **Centering:** Perfect for centering elements both vertically and horizontally.
+- **Dynamic Order:** Easily reorder elements for responsive layouts without changing code.
+
 ### Props of Grid
 <ArgTypes of={Grid}/>
 
 ### Props of GridItem
-<Props of={GridItem}/>
+<ArgTypes of={GridItem}/>
