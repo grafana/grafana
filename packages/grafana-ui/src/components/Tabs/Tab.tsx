@@ -66,23 +66,53 @@ const getStyles = (theme: GrafanaTheme2) => {
     item: css({
       listStyle: 'none',
       position: 'relative',
-      display: 'flex',
       whiteSpace: 'nowrap',
       // backgroundColor: `${theme.colors.background.secondary}`,
       marginBottom: '0px',
+
+      '&::before': {
+        display: 'block',
+        content: '" "',
+        height: '4px',
+        borderRadius: `${theme.shape.radius.default} ${theme.shape.radius.default} 0 0`,
+      },
+
+      '&:hover': {
+        a: {
+          backgroundColor: theme.colors.background.primary,
+          borderBottom: `1px solid ${theme.components.panel.borderColor}`,
+        }
+      },
+
+      'a:hover, &:hover, &:focus': {
+        color: theme.colors.text.primary,
+
+        '&::before': {
+          borderRadius: '3px 3px 0 0',
+          backgroundColor: theme.colors.action.hover,
+        },
+      },
     }),
     itemActive: css({
       backgroundColor: `${theme.colors.background.primary}`,
-      borderLeft: `1px solid ${theme.components.panel.borderColor}`,
-      borderRight: `1px solid ${theme.components.panel.borderColor}`,
-      borderBottom: 0,
+
+      '&:hover': {
+        a: {
+          backgroundColor: theme.colors.background.primary,
+          borderBottom: 0,
+        }
+      },
+
+      '&::before': {
+        backgroundImage: theme.colors.gradients.brandHorizontal,
+      },
     }),
     link: css({
       color: theme.colors.text.secondary,
-      padding: theme.spacing(1.5, 2, 1),
+      padding: theme.spacing(1, 2),
       display: 'block',
-      height: '100%',
-      borderBottom: `1px solid ${theme.components.panel.borderColor}`,
+      height: 'calc(100% - 4px)',
+      // borderBottom: `1px solid ${theme.components.panel.borderColor}`,
 
       svg: {
         marginRight: theme.spacing(1),
@@ -90,38 +120,21 @@ const getStyles = (theme: GrafanaTheme2) => {
 
       '&:focus-visible': getFocusStyles(theme),
 
-      '&::before': {
-        display: 'block',
-        content: '" "',
-        position: 'absolute',
-        left: 0,
-        right: 0,
-        height: '4px',
-        // borderRadius: theme.shape.radius.default,
-        top: 0,
-      },
+      
     }),
     notActive: css({
-      'a:hover, &:hover, &:focus': {
-        color: theme.colors.text.primary,
-
-        '&::before': {
-          backgroundColor: theme.colors.action.hover,
-        },
-      },
+      
     }),
     activeStyle: css({
       label: 'activeTabStyle',
       color: theme.colors.text.primary,
       overflow: 'hidden',
       border: 0,
+      borderLeft: `1px solid ${theme.components.panel.borderColor}`,
+      borderRight: `1px solid ${theme.components.panel.borderColor}`,
 
       a: {
         color: theme.colors.text.primary,
-      },
-
-      '&::before': {
-        backgroundImage: theme.colors.gradients.brandHorizontal,
       },
     }),
     suffix: css({
