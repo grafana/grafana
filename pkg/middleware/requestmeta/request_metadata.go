@@ -13,10 +13,18 @@ const (
 	TeamCore     = "core"
 )
 
+type StatusSource string
+
+const (
+	StatusSourceServer     StatusSource = "server"
+	StatusSourceDownstream StatusSource = "downstream"
+)
+
 type rMDContextKey struct{}
 
 type RequestMetaData struct {
-	Team string
+	Team         string
+	StatusSource StatusSource
 }
 
 var requestMetaDataContextKey = rMDContextKey{}
@@ -27,8 +35,7 @@ func SetupRequestMetadata() web.Middleware {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			rmd := defaultRequestMetadata()
-
-			ctx := context.WithValue(r.Context(), requestMetaDataContextKey, rmd)
+			ctx := SetRequestMetaData(r.Context(), rmd)
 			*r = *r.WithContext(ctx)
 
 			next.ServeHTTP(w, r)
@@ -46,7 +53,13 @@ func GetRequestMetaData(ctx context.Context) *RequestMetaData {
 		return value
 	}
 
-	return defaultRequestMetadata()
+	rmd := defaultRequestMetadata()
+	return &rmd
+}
+
+// SetRequestMetaData sets the request metadata for the context.
+func SetRequestMetaData(ctx context.Context, rmd RequestMetaData) context.Context {
+	return context.WithValue(ctx, requestMetaDataContextKey, &rmd)
 }
 
 // SetOwner returns an `web.Handler` that sets the team name for an request.
@@ -57,8 +70,31 @@ func SetOwner(team string) web.Handler {
 	}
 }
 
-func defaultRequestMetadata() *RequestMetaData {
-	return &RequestMetaData{
-		Team: TeamCore,
+// WithDownstreamStatusSource sets the StatusSource field of the [RequestMetaData] for the
+// context to [StatusSourceDownstream].
+func WithDownstreamStatusSource(ctx context.Context) {
+	v := GetRequestMetaData(ctx)
+	v.StatusSource = StatusSourceDownstream
+}
+
+// WithStatusSource sets the StatusSource field of the [RequestMetaData] for the
+// context based on the provided statusCode.
+// If statusCode >= 500 then [StatusSourceDownstream].
+// If statusCode < 500 then [StatusSourceServer].
+func WithStatusSource(ctx context.Context, statusCode int) {
+	v := GetRequestMetaData(ctx)
+
+	if statusCode >= 500 {
+		v.StatusSource = StatusSourceDownstream
+		return
+	}
+
+	v.StatusSource = StatusSourceServer
+}
+
+func defaultRequestMetadata() RequestMetaData {
+	return RequestMetaData{
+		Team:         TeamCore,
+		StatusSource: StatusSourceServer,
 	}
 }

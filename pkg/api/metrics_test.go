@@ -309,7 +309,6 @@ func TestDataSourceQueryError(t *testing.T) {
 			require.NoError(t, err)
 
 			require.Equal(t, tc.expectedStatus, resp.StatusCode)
-			require.Equal(t, tc.expectedStatus, resp.StatusCode)
 			body, err := io.ReadAll(resp.Body)
 			require.NoError(t, err)
 			require.Equal(t, tc.expectedBody, string(body))
