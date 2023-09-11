@@ -122,6 +122,5 @@ describe('LogDetailsRow', () => {
   it('should render copy button on hover', async () => {
     setup({ parsedValues: ['test value'] });
     expect(screen.getByTitle('Copy value to clipboard')).toHaveStyle('visibility: hidden;');
-    
   });
 });
