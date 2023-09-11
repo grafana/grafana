@@ -1,3 +1,8 @@
+"""
+Individual steps that use 'grafana-build' to replace existing individual steps.
+These aren't used in releases.
+"""
+
 # rgm_package_step will create a tar.gz for use in e2e tests or other PR testing related activities..
 def rgm_package_step(distros = "linux/amd64,linux/arm64", file = "packages.txt"):
     return {

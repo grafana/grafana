@@ -6,7 +6,6 @@ load(
     "build_storybook_step",
     "cloud_plugins_e2e_tests_step",
     "compile_build_cmd",
-    "copy_packages_for_docker_step",
     "download_grabpl_step",
     "e2e_tests_artifacts",
     "e2e_tests_step",
@@ -90,7 +89,6 @@ def build_e2e(trigger, ver_mode):
             ),
             e2e_tests_artifacts(),
             build_storybook_step(ver_mode = ver_mode),
-            copy_packages_for_docker_step(),
             test_a11y_frontend_step(ver_mode = ver_mode),
         ],
     )

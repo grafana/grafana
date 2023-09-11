@@ -716,13 +716,6 @@ steps:
       include:
       - packages/grafana-ui/**
 - commands:
-  - ls dist/*.tar.gz*
-  - cp dist/*.tar.gz* packaging/docker/
-  depends_on:
-  - rgm-package
-  image: alpine:3.17.1
-  name: copy-packages-for-docker
-- commands:
   - yarn wait-on http://$HOST:$PORT
   - pa11y-ci --config .pa11yci-pr.conf.js
   depends_on:
@@ -1864,13 +1857,6 @@ steps:
     paths:
       include:
       - packages/grafana-ui/**
-- commands:
-  - ls dist/*.tar.gz*
-  - cp dist/*.tar.gz* packaging/docker/
-  depends_on:
-  - rgm-package
-  image: alpine:3.17.1
-  name: copy-packages-for-docker
 - commands:
   - yarn wait-on http://$HOST:$PORT
   - pa11y-ci --config .pa11yci.conf.js --json > pa11y-ci-results.json
@@ -4198,6 +4184,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: a8ea3f78e959589b0214c352d3559f77785d9fc99dd6442bcf22981f87d7b269
+hmac: 6be1074ff59b3181c051ab97990f531309bf71387631ea5867fc2c3af4f67ce8
 
 ...

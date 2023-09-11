@@ -43,6 +43,13 @@ load(
 )
 
 def rgm_env_secrets(env):
+    """Adds the rgm secret ENV variables to the given env arg
+
+    Args:
+      env: A map of environment varables. This function will adds the necessary secrets to it (and potentially overwrite them).
+    Returns:
+        Drone step.
+    """
     env["GCP_KEY_BASE64"] = from_secret(rgm_gcp_key_base64)
     env["DESTINATION"] = from_secret(rgm_destination)
     env["GITHUB_TOKEN"] = from_secret(rgm_github_token)
@@ -80,6 +87,14 @@ tag_trigger = {
 version_branch_trigger = {"ref": ["refs/heads/v[0-9]*"]}
 
 def rgm_build(script = "drone_publish_main.sh", canFail = True):
+    """Returns a pipeline that does a full build & package of Grafana.
+
+    Args:
+      script: The script in the container to run.
+      canFail: if true, then this pipeline can fail while the entire build will still succeed.
+    Returns:
+        Drone step.
+    """
     env = {
         "GO_VERSION": golang_version,
     }

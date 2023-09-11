@@ -380,9 +380,7 @@ def build_backend_step(distros = "linux/amd64,linux/arm64"):
     """Build the backend code using the Grafana build tool.
 
     Args:
-      variants: a list of variants be passed to the build-backend subcommand
-        using the --variants option.
-        Defaults to None.
+      distros: a list of distributes to be built. For a full list, see `go tool dist list`.
 
     Returns:
       Drone step.
@@ -392,10 +390,6 @@ def build_backend_step(distros = "linux/amd64,linux/arm64"):
 
 def build_frontend_step():
     """Build the frontend code to ensure it's compilable
-
-    Args:
-      ver_mode: if ver_mode != 'release', use the DRONE_BUILD_NUMBER environment
-        variable as a build identifier.
 
     Returns:
       Drone step.
@@ -767,19 +761,6 @@ def build_docs_website_step():
         ],
     }
 
-def copy_packages_for_docker_step():
-    return {
-        "name": "copy-packages-for-docker",
-        "image": images["alpine"],
-        "depends_on": [
-            "rgm-package",
-        ],
-        "commands": [
-            "ls dist/*.tar.gz*",
-            "cp dist/*.tar.gz* packaging/docker/",
-        ],
-    }
-
 def fetch_images_step():
     return {
         "name": "fetch-images",
@@ -854,6 +835,19 @@ def publish_images_step(ver_mode, docker_repo, trigger = None):
     return step
 
 def integration_tests_steps(name, cmds, hostname = None, port = None, environment = None):
+    """Integration test steps
+
+    Args:
+      name: the name of the step.
+      cmds: the commands to run to perform the integration tests.
+      hostname: the hostname where the remote server is available.
+      port: the port where the remote server is available.
+      environment: Any extra environment variables needed to run the integration tests.
+
+    Returns:
+      A list of drone steps. If a hostname / port were provided, then a step to wait for the remove server to be
+      available is also returned.
+    """
     dockerize_name = "wait-for-{}".format(name)
 
     depends = [

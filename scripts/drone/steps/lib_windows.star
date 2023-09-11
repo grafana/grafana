@@ -1,3 +1,7 @@
+"""
+This module is a library of Drone steps that exclusively run on windows machines.
+"""
+
 load(
     "scripts/drone/utils/windows_images.star",
     "windows_images",

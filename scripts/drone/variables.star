@@ -1,3 +1,7 @@
+"""
+global variables
+"""
+
 grabpl_version = "v3.0.41"
 golang_version = "1.21.1"
 
