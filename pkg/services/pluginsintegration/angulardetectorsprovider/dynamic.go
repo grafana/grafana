@@ -97,7 +97,7 @@ func (d *Dynamic) patternsToDetectors(patterns GCOMPatterns) ([]angulardetector.
 }
 
 type GCOMResponse struct {
-	Patterns []GCOMPattern
+	Patterns GCOMPatterns
 	ETag     string
 }
 
@@ -170,7 +170,7 @@ func (d *Dynamic) updateDetectors(ctx context.Context, etag string) error {
 	}
 
 	// Update store only if the patterns can be converted to detectors
-	if err := d.store.Set(ctx, &resp); err != nil {
+	if err := d.store.Set(ctx, &resp.Patterns); err != nil {
 		return fmt.Errorf("store set: %w", err)
 	}
 	if err := d.store.SetETag(ctx, resp.ETag); err != nil {
