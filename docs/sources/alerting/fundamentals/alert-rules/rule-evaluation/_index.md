@@ -45,7 +45,7 @@ Evaluation will occur as follows:
 [00:30] First evaluation - condition not met.
 
 [01:00] Second evaluation - condition breached.
-Pending counter starts. **Alert stars pending.**
+Pending counter starts. **Alert starts pending.**
 
 [01:30] Third evaluation - condition breached. Pending counter = 30s. **Pending state.**
 

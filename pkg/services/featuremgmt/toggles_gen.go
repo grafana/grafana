@@ -140,7 +140,7 @@ const (
 	FlagNestedFolders = "nestedFolders"
 
 	// FlagNestedFolderPicker
-	// Enables the new folder picker to work with nested folders. Requires the folderPicker feature flag
+	// Enables the new folder picker to work with nested folders. Requires the nestedFolders feature flag
 	FlagNestedFolderPicker = "nestedFolderPicker"
 
 	// FlagAccessTokenExpirationCheck
@@ -422,4 +422,16 @@ const (
 	// FlagReportingRetries
 	// Enables rendering retries for the reporting feature
 	FlagReportingRetries = "reportingRetries"
+
+	// FlagNewBrowseDashboards
+	// New browse/manage dashboards UI
+	FlagNewBrowseDashboards = "newBrowseDashboards"
+
+	// FlagSseGroupByDatasource
+	// Send query to the same datasource in a single request when using server side expressions
+	FlagSseGroupByDatasource = "sseGroupByDatasource"
+
+	// FlagRequestInstrumentationStatusSource
+	// Include a status source label for request metrics and logs
+	FlagRequestInstrumentationStatusSource = "requestInstrumentationStatusSource"
 )
