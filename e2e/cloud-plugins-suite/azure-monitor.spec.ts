@@ -157,7 +157,7 @@ const applicationInsightsName = 'az-mon-test-ai-a';
 
 describe('Azure monitor datasource', () => {
   before(() => {
-    e2e.flows.login(e2e.env('USERNAME'), e2e.env('PASSWORD'), false);
+    e2e.flows.login(e2e.env('USERNAME'), e2e.env('PASSWORD'));
 
     // Add datasource
     // This variable will be set in CI
@@ -194,6 +194,7 @@ describe('Azure monitor datasource', () => {
   });
 
   after(() => {
+    e2e.flows.login(e2e.env('USERNAME'), e2e.env('PASSWORD'));
     e2e.flows.revertAllChanges();
   });
 
