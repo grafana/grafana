@@ -736,19 +736,13 @@ steps:
   image: grafana/docker-puppeteer:1.1.0
   name: test-a11y-frontend
 - commands:
-  - apk add --update jq
-  - curl https://grafana.com/api/grafana/versions/stable | jq .version > latest_stable_version
-  image: byrnedo/alpine-curl:0.1.8
-  name: get-latest-version
-- commands:
   - /src/grafana-build docker --package=$(cat packages.txt | grep tar.gz | grep -v
     docker | grep -v sha256) --ubuntu-base=ubuntu:22.10 --alpine-base=alpine:3.17.1
-    --tag-format='$(cat latest_stable_version)-{{ .buildID }}-{{ .arch }}' --ubuntu-tag-format='$(cat
-    latest_stable_version)-{{ .buildID }}-ubuntu-{{ .arch }}' > docker.txt
+    --tag-format='{{ .version_base }}-{{ .buildID }}-{{ .arch }}' --ubuntu-tag-format='{{
+    .version_base }}-{{ .buildID }}-ubuntu-{{ .arch }}' > docker.txt
   - find ./dist -name '*docker*.tar.gz' -type f | xargs -n1 docker load -i
   depends_on:
   - rgm-package
-  - get-latest-version
   image: grafana/grafana-build:main
   name: rgm-build-docker
   volumes:
@@ -4204,6 +4198,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 87560798f0bb87d2ae4113fc3d55fe0649c2b1f9d02da21e10fa490445d86b4b
+hmac: ee45dc762973c1ac1e2dc2b84afad8eae822dfffb2e0b34b93eac455d0b64a34
 
 ...

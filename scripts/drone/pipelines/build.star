@@ -12,7 +12,6 @@ load(
     "e2e_tests_step",
     "enterprise_downstream_step",
     "frontend_metrics_step",
-    "get_latest_version_step",
     "grafana_server_step",
     "identify_runner_step",
     "publish_images_step",
@@ -126,14 +125,12 @@ def build_e2e(trigger, ver_mode):
     elif ver_mode == "pr":
         build_steps.extend(
             [
-                get_latest_version_step(),
                 rgm_build_docker_step(
                     "packages.txt",
                     images["ubuntu"],
                     images["alpine"],
-                    tag_format = "$(cat latest_stable_version)-{{ .buildID }}-{{ .arch }}",
-                    ubuntu_tag_format = "$(cat latest_stable_version)-{{ .buildID }}-ubuntu-{{ .arch }}",
-                    depends_on = ["rgm-package", "get-latest-version"],
+                    tag_format = "{{ .version_base }}-{{ .buildID }}-{{ .arch }}",
+                    ubuntu_tag_format = "{{ .version_base }}-{{ .buildID }}-ubuntu-{{ .arch }}",
                 ),
                 publish_images_step(
                     docker_repo = "grafana",
