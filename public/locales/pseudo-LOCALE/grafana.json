@@ -213,9 +213,11 @@
     }
   },
   "data-sources": {
-    "advanced-datasource-picker": "Øpęŉ äđväŉčęđ đäŧä şőūřčę pįčĸęř",
     "datasource-add-button": {
       "label": "Åđđ ŉęŵ đäŧä şőūřčę"
+    },
+    "picker": {
+      "open-advanced-button": "Øpęŉ äđväŉčęđ đäŧä şőūřčę pįčĸęř"
     }
   },
   "explore": {
@@ -223,6 +225,8 @@
     "toolbar": {
       "aria-label": "Ēχpľőřę ŧőőľþäř",
       "copy-shortened-link": "Cőpy şĥőřŧęŉęđ ľįŉĸ",
+      "refresh-picker-cancel": "Cäŉčęľ",
+      "refresh-picker-run": "Ŗūŉ qūęřy",
       "split-close": "Cľőşę",
       "split-close-tooltip": "Cľőşę şpľįŧ päŉę",
       "split-narrow": "Ńäřřőŵ päŉę",
@@ -237,10 +241,6 @@
   "grafana-ui": {
     "modal": {
       "close-tooltip": "Cľőşę"
-    },
-    "refresh-picker": {
-      "cancel": "Cäŉčęľ",
-      "run-query": "Ŗūŉ qūęřy"
     },
     "segment-async": {
       "error": "Fäįľęđ ŧő ľőäđ őpŧįőŉş",
@@ -818,7 +818,8 @@
       "select-time": "Ŝęľęčŧ ä ŧįmę řäŉģę"
     },
     "content": {
-      "empty-recent-list": "<0><0>Ĩŧ ľőőĸş ľįĸę yőū ĥävęŉ'ŧ ūşęđ ŧĥįş ŧįmę pįčĸęř þęƒőřę. Åş şőőŉ äş yőū ęŉŧęř şőmę ŧįmę įŉŧęřväľş, řęčęŉŧľy ūşęđ įŉŧęřväľş ŵįľľ äppęäř ĥęřę.</0></0><1><0>Ŗęäđ ŧĥę đőčūmęŉŧäŧįőŉ</0><1> ŧő ƒįŉđ őūŧ mőřę äþőūŧ ĥőŵ ŧő ęŉŧęř čūşŧőm ŧįmę řäŉģęş.</1></1>",
+      "empty-recent-list-text1": "",
+      "empty-recent-list-text2": "",
       "filter-placeholder": "Ŝęäřčĥ qūįčĸ řäŉģęş"
     },
     "footer": {

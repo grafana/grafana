@@ -213,9 +213,11 @@
     }
   },
   "data-sources": {
-    "advanced-datasource-picker": "",
     "datasource-add-button": {
       "label": ""
+    },
+    "picker": {
+      "open-advanced-button": ""
     }
   },
   "explore": {
@@ -223,6 +225,8 @@
     "toolbar": {
       "aria-label": "",
       "copy-shortened-link": "",
+      "refresh-picker-cancel": "",
+      "refresh-picker-run": "",
       "split-close": "",
       "split-close-tooltip": "",
       "split-narrow": "",
@@ -237,10 +241,6 @@
   "grafana-ui": {
     "modal": {
       "close-tooltip": ""
-    },
-    "refresh-picker": {
-      "cancel": "",
-      "run-query": ""
     },
     "segment-async": {
       "error": "Fehler beim Laden der Optionen",
@@ -818,7 +818,8 @@
       "select-time": "Einen Zeitbereich auswählen"
     },
     "content": {
-      "empty-recent-list": "<0><0>Es sieht so aus, als hätten Sie diesen Zeit-Auswähler noch nie benutzt. Sobald Sie einige Zeitintervalle eingeben, werden hier die zuletzt verwendeten Intervalle angezeigt.</0></0><1><0>Lesen Sie die Dokumentation</0><1>, um mehr darüber zu erfahren, wie Sie benutzerdefinierte Zeitbereiche eingeben können.</1></1>",
+      "empty-recent-list-text1": "",
+      "empty-recent-list-text2": "",
       "filter-placeholder": "Schnellbereiche suchen"
     },
     "footer": {

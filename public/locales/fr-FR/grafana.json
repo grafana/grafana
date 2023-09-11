@@ -218,9 +218,11 @@
     }
   },
   "data-sources": {
-    "advanced-datasource-picker": "",
     "datasource-add-button": {
       "label": ""
+    },
+    "picker": {
+      "open-advanced-button": ""
     }
   },
   "explore": {
@@ -228,6 +230,8 @@
     "toolbar": {
       "aria-label": "",
       "copy-shortened-link": "",
+      "refresh-picker-cancel": "",
+      "refresh-picker-run": "",
       "split-close": "",
       "split-close-tooltip": "",
       "split-narrow": "",
@@ -242,10 +246,6 @@
   "grafana-ui": {
     "modal": {
       "close-tooltip": ""
-    },
-    "refresh-picker": {
-      "cancel": "",
-      "run-query": ""
     },
     "segment-async": {
       "error": "Échec du chargement des options",
@@ -823,7 +823,8 @@
       "select-time": "Sélectionner une plage de temps"
     },
     "content": {
-      "empty-recent-list": "<0><0>Il semble que vous n'ayez jamais utilisé ce sélecteur de temps dans le passé. Lorsque vous commencerez à utiliser des plages de temps, celles récemment utilisées apparaîtront ici. /0></0><1><0>Lisez la documentation</0><1> pour savoir comment entrer des plages de temps personnalisées.</1></1>",
+      "empty-recent-list-text1": "",
+      "empty-recent-list-text2": "",
       "filter-placeholder": "Rechercher dans les plages rapides"
     },
     "footer": {
