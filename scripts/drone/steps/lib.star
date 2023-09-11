@@ -689,7 +689,7 @@ def grafana_server_step(port = 3001):
             "cp ./scripts/grafana-server/custom.ini ./grafana/conf/custom.ini",
             "cp devenv/datasources.yaml ./grafana/conf/datasources",
             "cp devenv/dashboards.yaml ./grafana/conf/dashboards",
-            "./bin/grafana server --homepath=$PWD/grafana --pidfile=grafana/pid",
+            "./grafana/bin/grafana server --homepath=$PWD/grafana --pidfile=grafana/pid",
         ],
     }
 

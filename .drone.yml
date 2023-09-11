@@ -604,7 +604,7 @@ steps:
   - cp ./scripts/grafana-server/custom.ini ./grafana/conf/custom.ini
   - cp devenv/datasources.yaml ./grafana/conf/datasources
   - cp devenv/dashboards.yaml ./grafana/conf/dashboards
-  - ./bin/grafana server --homepath=$PWD/grafana --pidfile=grafana/pid
+  - ./grafana/bin/grafana server --homepath=$PWD/grafana --pidfile=grafana/pid
   depends_on:
   - rgm-package
   detach: true
@@ -1769,7 +1769,7 @@ steps:
   - cp ./scripts/grafana-server/custom.ini ./grafana/conf/custom.ini
   - cp devenv/datasources.yaml ./grafana/conf/datasources
   - cp devenv/dashboards.yaml ./grafana/conf/dashboards
-  - ./bin/grafana server --homepath=$PWD/grafana --pidfile=grafana/pid
+  - ./grafana/bin/grafana server --homepath=$PWD/grafana --pidfile=grafana/pid
   depends_on:
   - rgm-package
   detach: true
@@ -4229,6 +4229,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: e50cece601a619e1921f3cbe98fd1f7f5cbcf94e4250e960a859d88274cefad0
+hmac: 3bf2963bad70df8e1281fab13476c5a8266702b65053fb99182a7520917ceab8
 
 ...
