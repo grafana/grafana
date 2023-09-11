@@ -149,6 +149,7 @@ describe('PromVariableQueryEditor', () => {
     await waitFor(() => expect(screen.getByText('Metrics')).toBeInTheDocument());
     await waitFor(() => expect(screen.getByText('Query result')).toBeInTheDocument());
     await waitFor(() => expect(screen.getByText('Series query')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText('Classic query')).toBeInTheDocument());
   });
 
   test('Calls onChange for label_names(match) query', async () => {
