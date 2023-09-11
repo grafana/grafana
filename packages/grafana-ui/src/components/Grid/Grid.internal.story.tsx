@@ -3,8 +3,9 @@ import React from 'react';
 
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 
-import { Grid, GridItem } from './Grid';
+import { Grid } from './Grid';
 import mdx from './Grid.mdx';
+import { GridItem } from './GridItem';
 
 const gridItem = (index: number, color: string, width?: string, height?: string) => {
   const itemOrder = index + 1;
