@@ -4728,34 +4728,34 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@kusto/language-service-next@npm:0.0.121":
-  version: 0.0.121
-  resolution: "@kusto/language-service-next@npm:0.0.121"
-  checksum: 783eb817557ac70c3956f41a530d2a76e466cf2e1472ad06caf12869d48cac388932cffea71b10b1696e46f26b42e5c7c346ddabb16a3d69a0ec995ac1fbf8b4
+"@kusto/language-service-next@npm:0.0.185":
+  version: 0.0.185
+  resolution: "@kusto/language-service-next@npm:0.0.185"
+  checksum: 661365b58f5b9954a2e15706b4aa993e482e4d36c2ea5bd2633b62d1e40c34667ab902aa4e4c821187b4a9531be42f469342a55c2c5bb6796a959a98545fc15b
   languageName: node
   linkType: hard
 
-"@kusto/language-service@npm:0.0.98":
-  version: 0.0.98
-  resolution: "@kusto/language-service@npm:0.0.98"
-  checksum: b3b8226eb686c73a4cc5fa618c40323f56a7b1973e991a543625eb190bb314d3987bde92332f1fc84e6d7b475f287526da85bd293d1b038f5a977a920939b40d
+"@kusto/language-service@npm:0.0.162":
+  version: 0.0.162
+  resolution: "@kusto/language-service@npm:0.0.162"
+  checksum: f08caa5a76cfe48f637145253783413b87263d1e576b928455569794573a2dd574fcfbc4b9e6fce311ce8c31f1a2cb0f2b61de24fa77aec554390192a63be398
   languageName: node
   linkType: hard
 
 "@kusto/monaco-kusto@npm:^7.4.0":
-  version: 7.7.0
-  resolution: "@kusto/monaco-kusto@npm:7.7.0"
+  version: 7.10.0
+  resolution: "@kusto/monaco-kusto@npm:7.10.0"
   dependencies:
-    "@kusto/language-service": 0.0.98
-    "@kusto/language-service-next": 0.0.121
+    "@kusto/language-service": 0.0.162
+    "@kusto/language-service-next": 0.0.185
     lodash-es: ^4.17.21
-    vscode-languageserver-types: 3.16.0
+    vscode-languageserver-types: 3.17.3
     xregexp: ^5.1.1
   peerDependencies:
     monaco-editor: ~0.40.0
   bin:
     copyMonacoFilesAMD: copyMonacoFilesAMD.js
-  checksum: 7cf2f9f86f60c3b2a4c140d3ef376ccb20f89b14971b0f1b65721a77754d2531d7650f6ea3dd22a9eed378bce2427664ed69fd229974919df51758f57f0d8768
+  checksum: 209a801d9122b887fc45bb902f945eeac37df1424a2423643bce7425ff77fcb7789e26dd9a3ec63b0621d280f82af78b5ac0b046ad41bdd837ba19a666ad1697
   languageName: node
   linkType: hard
 
@@ -32424,10 +32424,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"vscode-languageserver-types@npm:3.16.0":
-  version: 3.16.0
-  resolution: "vscode-languageserver-types@npm:3.16.0"
-  checksum: 7a44fb10b9fbeb9529f832337b7f0430fc6275d62945b86851d425a950e22da3917ef5f6c552688191769dd1eae047c6ee9ec3d9f2280498353007c2dfe0725c
+"vscode-languageserver-types@npm:3.17.3":
+  version: 3.17.3
+  resolution: "vscode-languageserver-types@npm:3.17.3"
+  checksum: fbc8221297261f659a6482875ff2a419dc9d55965dc53745797da569ff9f819cd832e6f2699017baadd946548bbfe212e3f6971f3d960f12dc0ee9c629dacc07
   languageName: node
   linkType: hard
 
