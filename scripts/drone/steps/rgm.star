@@ -22,7 +22,7 @@ def rgm_build_backend_step(distros = "linux/amd64,linux/arm64"):
         "volumes": [{"name": "docker", "path": "/var/run/docker.sock"}],
     }
 
-def rgm_build_docker_step(packages, ubuntu, alpine):
+def rgm_build_docker_step(packages, ubuntu, alpine, depends_on=["rgm-package"]):
     return {
         "name": "rgm-build-docker",
         "image": "grafana/grafana-build:main",
@@ -30,4 +30,5 @@ def rgm_build_docker_step(packages, ubuntu, alpine):
             "/src/grafana-build docker --package=$(cat {} | grep tar.gz | grep -v docker | grep -v sha256) --ubuntu-base={} --alpine-base={}".format(packages, ubuntu, alpine),
         ],
         "volumes": [{"name": "docker", "path": "/var/run/docker.sock"}],
+        "depends_on": depends_on,
     }

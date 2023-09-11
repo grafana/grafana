@@ -735,6 +735,8 @@ steps:
 - commands:
   - /src/grafana-build docker --package=$(cat packages.txt | grep tar.gz | grep -v
     docker | grep -v sha256) --ubuntu-base=ubuntu:22.10 --alpine-base=alpine:3.17.1
+  depends_on:
+  - rgm-package
   image: grafana/grafana-build:main
   name: rgm-build-docker
   volumes:
@@ -1910,6 +1912,8 @@ steps:
 - commands:
   - /src/grafana-build docker --package=$(cat packages.txt | grep tar.gz | grep -v
     docker | grep -v sha256) --ubuntu-base=ubuntu:22.10 --alpine-base=alpine:3.17.1
+  depends_on:
+  - rgm-package
   image: grafana/grafana-build:main
   name: rgm-build-docker
   volumes:
@@ -4182,6 +4186,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 0a0dd96063d16d45174a75e22f405fea13f57dfac9f981004a6e0a24033689a9
+hmac: f2e900f593fe3019f0fd099ea369746e5f8eaf5056a824da66d3afcbd11738e9
 
 ...
