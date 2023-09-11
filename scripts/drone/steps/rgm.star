@@ -22,12 +22,14 @@ def rgm_build_backend_step(distros = "linux/amd64,linux/arm64"):
         "volumes": [{"name": "docker", "path": "/var/run/docker.sock"}],
     }
 
-def rgm_build_docker_step(packages, ubuntu, alpine, depends_on=["rgm-package"]):
+def rgm_build_docker_step(packages, ubuntu, alpine, depends_on = ["rgm-package"], file = "docker.txt", tag_format = "{{ .version }}-{{ .arch }}", ubuntu_tag_format = "{{ .version }}-ubuntu-{{ .arch }}"):
     return {
         "name": "rgm-build-docker",
         "image": "grafana/grafana-build:main",
         "commands": [
-            "/src/grafana-build docker --package=$(cat {} | grep tar.gz | grep -v docker | grep -v sha256) --ubuntu-base={} --alpine-base={}".format(packages, ubuntu, alpine),
+            "/src/grafana-build docker --package=$(cat {} | grep tar.gz | grep -v docker | grep -v sha256)" +
+            " --ubuntu-base={} --alpine-base={} --tag-format={} --ubuntu-tag-format={} > {}".format(packages, ubuntu, alpine, tag_format, ubuntu_tag_format, file),
+            "find ./dist -name '*docker*.tar.gz' -type f | xargs -n1 docker load -i",
         ],
         "volumes": [{"name": "docker", "path": "/var/run/docker.sock"}],
         "depends_on": depends_on,

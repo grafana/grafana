@@ -32,8 +32,8 @@ load(
 )
 load(
     "scripts/drone/steps/rgm.star",
-    "rgm_package_step",
     "rgm_build_docker_step",
+    "rgm_package_step",
 )
 load(
     "scripts/drone/utils/utils.star",
@@ -128,7 +128,13 @@ def build_e2e(trigger, ver_mode):
     elif ver_mode == "pr":
         build_steps.extend(
             [
-                rgm_build_docker_step("packages.txt", images["ubuntu"], images["alpine"]),
+                rgm_build_docker_step(
+                    "packages.txt",
+                    images["ubuntu"],
+                    images["alpine"],
+                    tag_format = "{{ .version }}-{{ .buildID }}-{{ .arch }}",
+                    ubuntu_tag_format = "{{ .version }}-{{ .buildID }}-{{ .arch }}",
+                ),
                 publish_images_step(
                     docker_repo = "grafana",
                     trigger = trigger_oss,
