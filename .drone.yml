@@ -590,7 +590,7 @@ steps:
   name: build-frontend-packages
 - commands:
   - /src/grafana-build package --distro=linux/amd64 --yarn-cache=$$YARN_CACHE_FOLDER
-    --grafana-dir=$$PWD > packages.txt
+    --build-id=$$DRONE_BUILD_NUMBER --grafana-dir=$$PWD > packages.txt
   depends_on:
   - yarn-install
   image: grafana/grafana-build:main
@@ -1739,7 +1739,7 @@ steps:
   name: build-frontend-packages
 - commands:
   - /src/grafana-build package --distro=linux/amd64 --yarn-cache=$$YARN_CACHE_FOLDER
-    --grafana-dir=$$PWD > packages.txt
+    --build-id=$$DRONE_BUILD_NUMBER --grafana-dir=$$PWD > packages.txt
   depends_on:
   - yarn-install
   image: grafana/grafana-build:main
@@ -4198,6 +4198,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: ee45dc762973c1ac1e2dc2b84afad8eae822dfffb2e0b34b93eac455d0b64a34
+hmac: 438a450a11f678eafc8badfc9234ed37daab1b69da669bdb46b3ad539d0c1e3b
 
 ...

@@ -7,6 +7,7 @@ def rgm_package_step(distros = "linux/amd64,linux/arm64", file = "packages.txt")
         "commands": [
             "/src/grafana-build package --distro={} ".format(distros) +
             "--yarn-cache=$$YARN_CACHE_FOLDER " +
+            "--build-id=$$DRONE_BUILD_NUMBER " +
             "--grafana-dir=$$PWD > {}".format(file),
         ],
         "volumes": [{"name": "docker", "path": "/var/run/docker.sock"}],
