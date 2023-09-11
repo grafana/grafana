@@ -65,7 +65,7 @@ groups:
     interval: 60s
     # <list, required> list of rules that are part of the rule group
     rules:
-      # <string, required> unique identifier for the rule
+      # <string, required> unique identifier for the rule. Should not exceed 40 symbols. Only letters, numbers, - (hyphen), and _ (underscore) allowed.
       - uid: my_id_1
         # <string, required> title of the rule that will be displayed in the UI
         title: my_first_rule
@@ -158,7 +158,7 @@ contactPoints:
     # <string, required> name of the contact point
     name: cp_1
     receivers:
-      # <string, required> unique identifier for the receiver
+      # <string, required> unique identifier for the receiver. Should not exceed 40 symbols. Only letters, numbers, - (hyphen), and _ (underscore) allowed.
       - uid: first_uid
         # <string, required> type of the receiver
         type: prometheus-alertmanager
@@ -247,7 +247,7 @@ settings:
     {{ template "default.title" . }}
 ```
 
-##### Google Hangouts Chat
+##### Google Chat
 
 ```yaml
 type: googlechat

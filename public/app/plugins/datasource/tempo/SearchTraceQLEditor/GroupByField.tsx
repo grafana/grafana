@@ -78,44 +78,45 @@ export const GroupByField = (props: Props) => {
           <div key={f.id}>
             <HorizontalGroup spacing={'none'} width={'auto'}>
               <Select
-                options={scopeOptions}
-                value={f.scope}
-                onChange={(v) => {
-                  updateFilter({ ...f, scope: v?.value });
-                }}
-                placeholder="Select scope"
                 aria-label={`Select scope for filter ${i + 1}`}
+                onChange={(v) => {
+                  updateFilter({ ...f, scope: v?.value, tag: '' });
+                }}
+                options={scopeOptions}
+                placeholder="Select scope"
+                value={f.scope}
               />
               <Select
+                aria-label={`Select tag for filter ${i + 1}`}
+                isClearable
+                isLoading={isTagsLoading}
+                key={f.tag}
+                onChange={(v) => {
+                  updateFilter({ ...f, tag: v?.value });
+                }}
                 options={getTags(f)?.map((t) => ({
                   label: t,
                   value: t,
                 }))}
-                value={f.tag || ''}
-                onChange={(v) => {
-                  updateFilter({ ...f, tag: v?.value });
-                }}
                 placeholder="Select tag"
-                aria-label={`Select tag for filter ${i + 1}`}
-                isLoading={isTagsLoading}
-                isClearable
+                value={f.tag || ''}
               />
               <AccessoryButton
-                variant="secondary"
+                aria-label={`Remove tag for filter ${i + 1}`}
                 icon="times"
                 onClick={() => removeFilter(f)}
                 tooltip="Remove tag"
-                aria-label={`Remove tag for filter ${i + 1}`}
+                variant="secondary"
               />
 
               {i === (query.groupBy?.length ?? 0) - 1 && (
                 <span className={styles.addFilter}>
                   <AccessoryButton
-                    variant="secondary"
+                    aria-label="Add tag"
                     icon="plus"
                     onClick={() => addFilter()}
                     tooltip="Add tag"
-                    aria-label="Add tag"
+                    variant="secondary"
                   />
                 </span>
               )}

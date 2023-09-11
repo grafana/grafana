@@ -253,7 +253,7 @@ func (engine *Engine) Ping() error {
 //	engine.SQL("select * from user").Find(&users)
 //
 // This    code will execute "select * from user" and set the records to users
-func (engine *Engine) SQL(query interface{}, args ...interface{}) *Session {
+func (engine *Engine) SQL(query any, args ...any) *Session {
 	session := engine.NewSession()
 	session.isAutoClose = true
 	return session.SQL(query, args...)
@@ -301,28 +301,28 @@ func (engine *Engine) DBMetas() ([]*core.Table, error) {
 }
 
 // Where method provide a condition query
-func (engine *Engine) Where(query interface{}, args ...interface{}) *Session {
+func (engine *Engine) Where(query any, args ...any) *Session {
 	session := engine.NewSession()
 	session.isAutoClose = true
 	return session.Where(query, args...)
 }
 
 // ID method provoide a condition as (id) = ?
-func (engine *Engine) ID(id interface{}) *Session {
+func (engine *Engine) ID(id any) *Session {
 	session := engine.NewSession()
 	session.isAutoClose = true
 	return session.ID(id)
 }
 
 // Before apply before Processor, affected bean is passed to closure arg
-func (engine *Engine) Before(closures func(interface{})) *Session {
+func (engine *Engine) Before(closures func(any)) *Session {
 	session := engine.NewSession()
 	session.isAutoClose = true
 	return session.Before(closures)
 }
 
 // After apply after insert Processor, affected bean is passed to closure arg
-func (engine *Engine) After(closures func(interface{})) *Session {
+func (engine *Engine) After(closures func(any)) *Session {
 	session := engine.NewSession()
 	session.isAutoClose = true
 	return session.After(closures)
@@ -343,7 +343,7 @@ func (engine *Engine) StoreEngine(storeEngine string) *Session {
 }
 
 // Table temporarily change the Get, Find, Update's table
-func (engine *Engine) Table(tableNameOrBean interface{}) *Session {
+func (engine *Engine) Table(tableNameOrBean any) *Session {
 	session := engine.NewSession()
 	session.isAutoClose = true
 	return session.Table(tableNameOrBean)
@@ -374,7 +374,7 @@ func (engine *Engine) autoMapType(v reflect.Value) (*core.Table, error) {
 }
 
 // GobRegister register one struct to gob for cache use
-func (engine *Engine) GobRegister(v interface{}) *Engine {
+func (engine *Engine) GobRegister(v any) *Engine {
 	gob.Register(v)
 	return engine
 }
@@ -573,7 +573,7 @@ func (engine *Engine) mapType(v reflect.Value) (*core.Table, error) {
 }
 
 // IsTableExist if a table is exist
-func (engine *Engine) IsTableExist(beanOrTableName interface{}) (bool, error) {
+func (engine *Engine) IsTableExist(beanOrTableName any) (bool, error) {
 	session := engine.NewSession()
 	defer session.Close()
 	return session.IsTableExist(beanOrTableName)
@@ -582,7 +582,7 @@ func (engine *Engine) IsTableExist(beanOrTableName interface{}) (bool, error) {
 // Sync the new struct changes to database, this method will automatically add
 // table, column, index, unique. but will not delete or change anything.
 // If you change some field, you should change the database manually.
-func (engine *Engine) Sync(beans ...interface{}) error {
+func (engine *Engine) Sync(beans ...any) error {
 	session := engine.NewSession()
 	defer session.Close()
 
@@ -676,21 +676,21 @@ func (engine *Engine) Sync(beans ...interface{}) error {
 }
 
 // Sync2 synchronize structs to database tables
-func (engine *Engine) Sync2(beans ...interface{}) error {
+func (engine *Engine) Sync2(beans ...any) error {
 	s := engine.NewSession()
 	defer s.Close()
 	return s.Sync2(beans...)
 }
 
 // Exec raw sql
-func (engine *Engine) Exec(sqlOrArgs ...interface{}) (sql.Result, error) {
+func (engine *Engine) Exec(sqlOrArgs ...any) (sql.Result, error) {
 	session := engine.NewSession()
 	defer session.Close()
 	return session.Exec(sqlOrArgs...)
 }
 
 // Insert one or more records
-func (engine *Engine) Insert(beans ...interface{}) (int64, error) {
+func (engine *Engine) Insert(beans ...any) (int64, error) {
 	session := engine.NewSession()
 	defer session.Close()
 	return session.Insert(beans...)
@@ -699,14 +699,14 @@ func (engine *Engine) Insert(beans ...interface{}) (int64, error) {
 // Find retrieve records from table, condiBeans's non-empty fields
 // are conditions. beans could be []Struct, []*Struct, map[int64]Struct
 // map[int64]*Struct
-func (engine *Engine) Find(beans interface{}, condiBeans ...interface{}) error {
+func (engine *Engine) Find(beans any, condiBeans ...any) error {
 	session := engine.NewSession()
 	defer session.Close()
 	return session.Find(beans, condiBeans...)
 }
 
 // nowTime return current time
-func (engine *Engine) nowTime(col *core.Column) (interface{}, time.Time) {
+func (engine *Engine) nowTime(col *core.Column) (any, time.Time) {
 	t := time.Now()
 	var tz = engine.DatabaseTZ
 	if !col.DisableTimeZone && col.TimeZone != nil {
@@ -715,7 +715,7 @@ func (engine *Engine) nowTime(col *core.Column) (interface{}, time.Time) {
 	return engine.formatTime(col.SQLType.Name, t.In(tz)), t.In(engine.TZLocation)
 }
 
-func (engine *Engine) formatColTime(col *core.Column, t time.Time) (v interface{}) {
+func (engine *Engine) formatColTime(col *core.Column, t time.Time) (v any) {
 	if t.IsZero() {
 		if col.Nullable {
 			return nil
@@ -730,7 +730,7 @@ func (engine *Engine) formatColTime(col *core.Column, t time.Time) (v interface{
 }
 
 // formatTime format time as column type
-func (engine *Engine) formatTime(sqlTypeName string, t time.Time) (v interface{}) {
+func (engine *Engine) formatTime(sqlTypeName string, t time.Time) (v any) {
 	switch sqlTypeName {
 	case core.Time:
 		s := t.Format("2006-01-02 15:04:05") // time.RFC3339

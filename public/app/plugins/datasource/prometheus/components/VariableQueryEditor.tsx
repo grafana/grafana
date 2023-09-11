@@ -135,8 +135,8 @@ export const PromVariableQueryEditor = ({ onChange, query, datasource }: Props) 
   /** Call onchange for label names query type change */
   const onQueryTypeChange = (newType: SelectableValue<QueryType>) => {
     setQryType(newType.value);
-    if (newType.value === QueryType.LabelNames) {
-      onChangeWithVariableString({ qryType: newType.value });
+    if (newType.value !== QueryType.SeriesQuery) {
+      onChangeWithVariableString({ qryType: newType.value ?? 0 });
     }
   };
 

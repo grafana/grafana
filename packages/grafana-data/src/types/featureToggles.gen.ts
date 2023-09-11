@@ -33,7 +33,6 @@ export interface FeatureToggles {
   datasourceQueryMultiStatus?: boolean;
   traceToMetrics?: boolean;
   newDBLibrary?: boolean;
-  validateDashboardsOnSave?: boolean;
   autoMigrateOldPanels?: boolean;
   disableAngular?: boolean;
   canvasPanelNesting?: boolean;
@@ -119,4 +118,9 @@ export interface FeatureToggles {
   influxdbSqlSupport?: boolean;
   noBasicRole?: boolean;
   alertingNoDataErrorExecution?: boolean;
+  angularDeprecationUI?: boolean;
+  dashgpt?: boolean;
+  reportingRetries?: boolean;
+  newBrowseDashboards?: boolean;
+  sseGroupByDatasource?: boolean;
 }
