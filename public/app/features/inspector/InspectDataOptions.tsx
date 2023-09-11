@@ -36,10 +36,6 @@ export const InspectDataOptions = ({
 }: Props) => {
   const styles = useStyles2(getPanelInspectorStyles2);
 
-  // const panelTransformations = panel?.getTransformations();
-  // const showPanelTransformationsOption = Boolean(panelTransformations?.length);
-  // const showFieldConfigsOption = panel && !panel.plugin?.fieldConfigRegistry.isEmpty();
-
   let dataSelect = dataFrames;
   if (selectedDataFrame === DataTransformerID.joinByField) {
     dataSelect = data!;
