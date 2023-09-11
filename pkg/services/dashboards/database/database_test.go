@@ -23,8 +23,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
-	"github.com/grafana/grafana/pkg/services/star"
-	"github.com/grafana/grafana/pkg/services/star/starimpl"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -39,12 +37,10 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 	var cfg *setting.Cfg
 	var savedFolder, savedDash, savedDash2 *dashboards.Dashboard
 	var dashboardStore *DashboardStore
-	var starService star.Service
 	var publicDashboardStore *database.PublicDashboardStoreImpl
 
 	setup := func() {
 		sqlStore, cfg = db.InitTestDBwithCfg(t)
-		starService = starimpl.ProvideService(sqlStore, cfg)
 		quotaService := quotatest.New(false, nil)
 		var err error
 		dashboardStore, err = ProvideDashboardStore(sqlStore, cfg, testFeatureToggles, tagimpl.ProvideService(sqlStore, cfg), quotaService)
@@ -556,39 +552,6 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 
 		hit2 := query.Result[1]
 		require.Equal(t, len(hit2.Tags), 1)
-	})
-
-	t.Run("Should be able to find starred dashboards", func(t *testing.T) {
-		setup()
-		starredDash := insertTestDashboard(t, dashboardStore, "starred dash", 1, 0, false)
-		err := starService.Add(context.Background(), &star.StarDashboardCommand{
-			DashboardID: starredDash.ID,
-			UserID:      10,
-		})
-		require.NoError(t, err)
-
-		err = starService.Add(context.Background(), &star.StarDashboardCommand{
-			DashboardID: savedDash.ID,
-			UserID:      1,
-		})
-		require.NoError(t, err)
-
-		query := dashboards.FindPersistedDashboardsQuery{
-			SignedInUser: &user.SignedInUser{
-				UserID:  10,
-				OrgID:   1,
-				OrgRole: org.RoleEditor,
-				Permissions: map[int64]map[string][]string{
-					1: {dashboards.ActionDashboardsRead: []string{dashboards.ScopeDashboardsAll}},
-				},
-			},
-			IsStarred: true,
-		}
-		res, err := dashboardStore.FindDashboards(context.Background(), &query)
-
-		require.NoError(t, err)
-		require.Equal(t, len(res), 1)
-		require.Equal(t, res[0].Title, "starred dash")
 	})
 
 	t.Run("Can count dashboards by parent folder", func(t *testing.T) {
