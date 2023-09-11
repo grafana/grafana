@@ -150,6 +150,7 @@ The Azure documentation includes resources to help you learn KQL:
 > Specifying `Dashboard` will only make use of the Grafana time-range.
 > If there are no time-ranges specified within the query, the default Log Analytics time-range will apply.
 > For more details on this change, refer to the [Azure Monitor Logs API documentation](https://learn.microsoft.com/en-us/rest/api/loganalytics/dataaccess/query/get?tabs=HTTP#uri-parameters).
+> If the `Intersection` option was previously chosen it will be migrated by default to `Dashboard`.
 
 This example query returns a virtual machine's CPU performance, averaged over 5ms time grains:
 
