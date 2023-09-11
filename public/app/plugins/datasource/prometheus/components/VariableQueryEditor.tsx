@@ -396,7 +396,7 @@ export const PromVariableQueryEditor = ({ onChange, query, datasource }: Props) 
             labelWidth={20}
             tooltip={
               <div>
-                The original implenetation of the Prometheus variable query editor. Enter a string with the correct
+                The original implemetation of the Prometheus variable query editor. Enter a string with the correct
                 query type and parameters as described in these docs. For example, label_values(label, metric).
               </div>
             }
