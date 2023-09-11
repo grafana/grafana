@@ -595,8 +595,9 @@ func (s *UserAuthTokenService) GetUserRevokedTokensInLastHours(ctx context.Conte
 			// mysql
 			query = fmt.Sprintf("user_id = ? AND revoked_at > 0 AND revoked_at <= NOW() - INTERVAL %d HOUR", hours)
 		} else if dialect.DriverName() == migrator.SQLite {
-			// sqlite doesn't have a direct equivalent but you can use date functions
-			query = fmt.Sprintf("user_id = ? AND revoked_at > 0 AND revoked_at <= datetime('now', '-%d hours')", hours)
+			// SQLite does not have native support for date arithmetic like other SQL dialects,
+			// strftime gets the Unix timestamp
+			query = fmt.Sprintf("user_id = ? AND revoked_at > 0 AND revoked_at <= (strftime('%%s','now') - %d*3600)", hours)
 		} else if dialect.DriverName() == migrator.MSSQL {
 			// mssql
 			// FIXME: not tested
