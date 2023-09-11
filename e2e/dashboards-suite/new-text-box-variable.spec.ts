@@ -7,13 +7,13 @@ describe('Variables - Text box', () => {
   it('can add a new text box variable', () => {
     e2e.flows.login('admin', 'admin');
     e2e.flows.openDashboard({ uid: `${PAGE_UNDER_TEST}?orgId=1&editview=templating` });
-    e2e().contains(DASHBOARD_NAME).should('be.visible');
+    cy.contains(DASHBOARD_NAME).should('be.visible');
 
     // Create a new "text box" variable
     e2e.components.CallToActionCard.buttonV2('Add variable').click();
 
     e2e.pages.Dashboard.Settings.Variables.Edit.General.generalTypeSelectV2().within(() => {
-      e2e().get('input').type('Text box{enter}');
+      cy.get('input').type('Text box{enter}');
     });
     e2e.pages.Dashboard.Settings.Variables.Edit.General.generalNameInputV2().clear().type('VariableUnderTest').blur();
     e2e.pages.Dashboard.Settings.Variables.Edit.General.generalLabelInputV2().type('Variable under test').blur();
@@ -24,9 +24,9 @@ describe('Variables - Text box', () => {
     // Navigate back to the homepage and change the selected variable value
     e2e.pages.Dashboard.Settings.Variables.Edit.General.submitButton().click();
     e2e.pages.Dashboard.Settings.Actions.close().click();
-    e2e().get('#var-VariableUnderTest').clear().type('dog-cat').blur();
+    cy.get('#var-VariableUnderTest').clear().type('dog-cat').blur();
 
     // Assert it was rendered
-    e2e().get('.markdown-html').should('include.text', 'VariableUnderTest: dog-cat');
+    cy.get('.markdown-html').should('include.text', 'VariableUnderTest: dog-cat');
   });
 });
