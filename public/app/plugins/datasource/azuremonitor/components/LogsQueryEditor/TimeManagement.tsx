@@ -1,8 +1,10 @@
-import { SelectableValue } from '@grafana/data';
-import { InlineField, RadioButtonGroup, Select } from '@grafana/ui';
 import React, { useCallback, useEffect, useState } from 'react';
 
+import { SelectableValue } from '@grafana/data';
+import { InlineField, RadioButtonGroup, Select } from '@grafana/ui';
+
 import { AzureQueryEditorFieldProps } from '../../types';
+
 import { setDashboardTime, setTimeColumn } from './setQueryValue';
 
 export function TimeManagement({ query, onQueryChange: onChange, schema }: AzureQueryEditorFieldProps) {

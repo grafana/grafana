@@ -1,3 +1,4 @@
+import { EngineSchema, Schema } from '@kusto/monaco-kusto';
 import { Uri } from 'monaco-editor';
 import React, { useCallback, useEffect, useState } from 'react';
 
@@ -6,7 +7,6 @@ import { CodeEditor, Monaco, MonacoEditor } from '@grafana/ui';
 import { AzureQueryEditorFieldProps } from '../../types';
 
 import { setKustoQuery } from './setQueryValue';
-import { EngineSchema, Schema } from '@kusto/monaco-kusto';
 
 interface MonacoEditorValues {
   editor: MonacoEditor;

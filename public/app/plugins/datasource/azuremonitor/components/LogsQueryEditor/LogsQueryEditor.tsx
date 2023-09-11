@@ -1,3 +1,4 @@
+import { EngineSchema } from '@kusto/monaco-kusto';
 import React, { useEffect, useState } from 'react';
 
 import { EditorFieldGroup, EditorRow, EditorRows } from '@grafana/experimental';
@@ -13,10 +14,9 @@ import { parseResourceDetails } from '../ResourcePicker/utils';
 
 import AdvancedResourcePicker from './AdvancedResourcePicker';
 import QueryField from './QueryField';
+import { TimeManagement } from './TimeManagement';
 import { setFormatAs } from './setQueryValue';
 import useMigrations from './useMigrations';
-import { EngineSchema } from '@kusto/monaco-kusto';
-import { TimeManagement } from './TimeManagement';
 
 interface LogsQueryEditorProps {
   query: AzureMonitorQuery;

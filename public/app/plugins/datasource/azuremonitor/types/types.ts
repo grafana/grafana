@@ -1,3 +1,5 @@
+import { ScalarParameter, TabularParameter } from '@kusto/monaco-kusto';
+
 import {
   DataSourceInstanceSettings,
   DataSourceJsonData,
@@ -5,11 +7,10 @@ import {
   PanelData,
   SelectableValue,
 } from '@grafana/data';
-import { ScalarParameter, TabularParameter } from '@kusto/monaco-kusto';
 
 import Datasource from '../datasource';
-import { AzureLogAnalyticsMetadataTable } from './logAnalyticsMetadata';
 
+import { AzureLogAnalyticsMetadataTable } from './logAnalyticsMetadata';
 import { AzureMonitorQuery, ResultFormat } from './query';
 
 export type AzureDataSourceSettings = DataSourceSettings<AzureDataSourceJsonData, AzureDataSourceSecureJsonData>;
