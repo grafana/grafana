@@ -8,21 +8,20 @@ import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 
 import { getDashboardScenePageStateManager } from './DashboardScenePageStateManager';
 
-export interface Props extends GrafanaRouteComponentProps<{ uid: string }> {}
+export interface Props extends GrafanaRouteComponentProps<{ uid: string; panelId: string }> {}
 
-export function DashboardScenePage({ match }: Props) {
+export function PanelEditPage({ match }: Props) {
   const stateManager = getDashboardScenePageStateManager();
-  const { dashboard, isLoading, loadError } = stateManager.useState();
+  const { panelEditor, isLoading, loadError } = stateManager.useState();
 
   useEffect(() => {
-    stateManager.loadDashboard(match.params.uid);
-
+    stateManager.loadPanelEdit(match.params.uid, match.params.panelId);
     return () => {
       stateManager.clearState();
     };
-  }, [stateManager, match.params.uid]);
+  }, [stateManager, match.params.uid, match.params.panelId]);
 
-  if (!dashboard) {
+  if (!panelEditor) {
     return (
       <Page layout={PageLayoutType.Canvas}>
         {isLoading && <PageLoader />}
@@ -31,7 +30,7 @@ export function DashboardScenePage({ match }: Props) {
     );
   }
 
-  return <dashboard.Component model={dashboard} />;
+  return <panelEditor.Component model={panelEditor} />;
 }
 
-export default DashboardScenePage;
+export default PanelEditPage;
