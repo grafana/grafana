@@ -24,7 +24,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
-	"github.com/grafana/grafana/pkg/plugins/manager/store"
 	"github.com/grafana/grafana/pkg/plugins/oauth"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	"github.com/grafana/grafana/pkg/plugins/repo"
@@ -46,6 +45,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginerrs"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	pluginSettings "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings/service"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/serviceregistration"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -53,11 +53,11 @@ import (
 // WireSet provides a wire.ProviderSet of plugin providers.
 var WireSet = wire.NewSet(
 	config.ProvideConfig,
-	store.ProvideService,
-	wire.Bind(new(plugins.Store), new(*store.Service)),
-	wire.Bind(new(plugins.RendererManager), new(*store.Service)),
-	wire.Bind(new(plugins.SecretsPluginManager), new(*store.Service)),
-	wire.Bind(new(plugins.StaticRouteResolver), new(*store.Service)),
+	pluginstore.ProvideService,
+	wire.Bind(new(pluginstore.Store), new(*pluginstore.Service)),
+	wire.Bind(new(plugins.RendererManager), new(*pluginstore.Service)),
+	wire.Bind(new(plugins.SecretsPluginManager), new(*pluginstore.Service)),
+	wire.Bind(new(plugins.StaticRouteResolver), new(*pluginstore.Service)),
 	ProvideClientDecorator,
 	wire.Bind(new(plugins.Client), new(*client.Decorator)),
 	process.ProvideService,

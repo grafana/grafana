@@ -10,14 +10,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 )
 
-// Store is the publicly accessible storage for plugins.
-type Store interface {
-	// Plugin finds a plugin by its ID.
-	Plugin(ctx context.Context, pluginID string) (PluginDTO, bool)
-	// Plugins returns plugins by their requested type.
-	Plugins(ctx context.Context, pluginTypes ...Type) []PluginDTO
-}
-
 type Installer interface {
 	// Add adds a new plugin.
 	Add(ctx context.Context, pluginID, version string, opts CompatOpts) error

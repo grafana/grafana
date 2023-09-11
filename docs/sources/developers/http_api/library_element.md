@@ -282,7 +282,7 @@ Creates a new library element.
 JSON Body schema:
 
 - `folderId`: ID of the folder where the library element is stored. It is deprecated since Grafana v9
-- `folderUid`: Optional, the UID of the folder where the library element is stored, empty string when it is General folder
+- `folderUid`: Optional, the UID of the folder where the library element is stored, empty string when it is at the root level.
 - `name`: Optional, the name of the library element.
 - `model`: The JSON model for the library element.
 - `kind`: Kind of element to create, Use `1` for library panels or `2` for library variables.
@@ -361,7 +361,7 @@ Updates an existing library element identified by uid.
 JSON Body schema:
 
 - `folderId`: ID of the folder where the library element is stored. It is deprecated since Grafana v9
-- `folderUid`: UID of the folder where the library element is stored, empty string when it is General folder.
+- `folderUid`: UID of the folder where the library element is stored, empty string when it is at the root level.
 - `name`: Name of the library element.
 - `model`: The JSON model for the library element.
 - `kind`: Kind of element to create. Use `1` for library panels or `2` for library variables.

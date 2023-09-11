@@ -123,4 +123,6 @@ export interface FeatureToggles {
   dashgpt?: boolean;
   reportingRetries?: boolean;
   newBrowseDashboards?: boolean;
+  sseGroupByDatasource?: boolean;
+  requestInstrumentationStatusSource?: boolean;
 }

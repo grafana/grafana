@@ -3,7 +3,6 @@ package client
 import (
 	"context"
 	"errors"
-	"fmt"
 	"net/http"
 	"net/textproto"
 	"strings"
@@ -75,7 +74,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 			return nil, plugins.ErrPluginUnavailable.Errorf("%w", backendplugin.ErrPluginUnavailable)
 		}
 
-		return nil, plugins.ErrPluginDownstreamError.Errorf("%v: %w", "failed to query data", err)
+		return nil, plugins.ErrPluginDownstreamError.Errorf("client: failed to query data: %w", err)
 	}
 
 	for refID, res := range resp.Responses {
@@ -108,7 +107,7 @@ func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceReq
 	err := instrumentation.InstrumentCallResourceRequest(ctx, &req.PluginContext, instrumentation.Cfg{
 		LogDatasourceRequests: s.cfg.LogDatasourceRequests,
 		Target:                p.Target(),
-	}, totalBytes, func(ctx context.Context) error {
+	}, totalBytes, func(ctx context.Context) (innerErr error) {
 		removeConnectionHeaders(req.Headers)
 		removeHopByHopHeaders(req.Headers)
 		removeNonAllowedHeaders(req.Headers)
@@ -130,14 +129,12 @@ func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceReq
 			return sender.Send(res)
 		})
 
-		if err := p.CallResource(ctx, req, wrappedSender); err != nil {
-			return err
-		}
-		return nil
+		innerErr = p.CallResource(ctx, req, wrappedSender)
+		return
 	})
 
 	if err != nil {
-		return err
+		return plugins.ErrPluginDownstreamError.Errorf("client: failed to call resources: %w", err)
 	}
 
 	return nil
@@ -162,7 +159,7 @@ func (s *Service) CollectMetrics(ctx context.Context, req *backend.CollectMetric
 		return
 	})
 	if err != nil {
-		return nil, err
+		return nil, plugins.ErrPluginDownstreamError.Errorf("client: failed to collect metrics: %w", err)
 	}
 
 	return resp, nil
@@ -196,7 +193,7 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 			return nil, err
 		}
 
-		return nil, fmt.Errorf("%w: %w", backendplugin.ErrHealthCheckFailed, err)
+		return nil, plugins.ErrPluginDownstreamError.Errorf("client: failed to check health: %w", err)
 	}
 
 	return resp, nil
