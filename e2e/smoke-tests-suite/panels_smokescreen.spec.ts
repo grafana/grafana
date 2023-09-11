@@ -1,5 +1,6 @@
-import { e2e } from '@grafana/e2e';
 import { GrafanaBootConfig } from '@grafana/runtime';
+
+import { e2e } from '../utils';
 
 e2e.scenario({
   describeName: 'Panels smokescreen',
@@ -28,7 +29,7 @@ e2e.scenario({
         // Loop through every panel type and ensure no crash
         Object.entries(win.grafanaBootData.settings.panels).forEach(([_, panel]) => {
           // TODO: Remove Flame Graph check as part of addressing #66803
-          if (!panel.hideFromList && panel.state !== 'deprecated' && panel.name !== 'Flame Graph') {
+          if (!panel.hideFromList && panel.state !== 'deprecated') {
             e2e.components.PanelEditor.toggleVizPicker().click();
             e2e.components.PluginVisualization.item(panel.name).scrollIntoView().should('be.visible').click();
 

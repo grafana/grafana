@@ -67,6 +67,7 @@ const (
 // Defines values for QueryType.
 const (
 	QueryTypeAnnotation      QueryType = "annotation"
+	QueryTypePromQL          QueryType = "promQL"
 	QueryTypeSlo             QueryType = "slo"
 	QueryTypeTimeSeriesList  QueryType = "timeSeriesList"
 	QueryTypeTimeSeriesQuery QueryType = "timeSeriesQuery"
@@ -86,18 +87,6 @@ const (
 // AlignmentTypes defines model for AlignmentTypes.
 type AlignmentTypes string
 
-// Annotation sub-query properties.
-type AnnotationQuery struct {
-	// TimeSeriesList Time Series List sub-query properties.
-	TimeSeriesList
-
-	// Annotation text.
-	Text *string `json:"text,omitempty"`
-
-	// Annotation title.
-	Title *string `json:"title,omitempty"`
-}
-
 // CloudMonitoringQuery defines model for CloudMonitoringQuery.
 type CloudMonitoringQuery struct {
 	// DataQuery These are the common properties available to all queries in all datasources.
@@ -111,13 +100,14 @@ type CloudMonitoringQuery struct {
 	// Time interval in milliseconds.
 	IntervalMs *float32 `json:"intervalMs,omitempty"`
 
+	// PromQL sub-query properties.
+	PromQLQuery *PromQLQuery `json:"promQLQuery,omitempty"`
+
 	// SLO sub-query properties.
 	SloQuery *SLOQuery `json:"sloQuery,omitempty"`
 
-	// GCM query type.
-	// queryType: #QueryType
 	// Time Series List sub-query properties.
-	TimeSeriesList *any `json:"timeSeriesList,omitempty"`
+	TimeSeriesList *TimeSeriesList `json:"timeSeriesList,omitempty"`
 
 	// Time Series sub-query properties.
 	TimeSeriesQuery *TimeSeriesQuery `json:"timeSeriesQuery,omitempty"`
@@ -166,7 +156,7 @@ type Filter struct {
 // GoogleCloudMonitoringDataQuery defines model for GoogleCloudMonitoringDataQuery.
 type GoogleCloudMonitoringDataQuery = map[string]any
 
-// @deprecated Use AnnotationQuery instead. Legacy annotation query properties for migration purposes.
+// @deprecated Use TimeSeriesList instead. Legacy annotation query properties for migration purposes.
 type LegacyCloudMonitoringAnnotationQuery struct {
 	// Array of filters to query data by. Labels that can be filtered on are defined by the metric.
 	Filters    []string   `json:"filters"`
@@ -233,6 +223,18 @@ type MetricQuery struct {
 
 // Types of pre-processor available. Defined by the metric.
 type PreprocessorType string
+
+// PromQL sub-query properties.
+type PromQLQuery struct {
+	// PromQL expression/query to be executed.
+	Expr string `json:"expr"`
+
+	// GCP project to execute the query against.
+	ProjectName string `json:"projectName"`
+
+	// PromQL min step
+	Step string `json:"step"`
+}
 
 // Defines the supported queryTypes.
 type QueryType string
@@ -304,6 +306,12 @@ type TimeSeriesList struct {
 
 	// Only present if a preprocessor is selected. Alignment function to be used. Defaults to ALIGN_MEAN.
 	SecondaryPerSeriesAligner *string `json:"secondaryPerSeriesAligner,omitempty"`
+
+	// Annotation text.
+	Text *string `json:"text,omitempty"`
+
+	// Annotation title.
+	Title *string `json:"title,omitempty"`
 
 	// Data view, defaults to FULL.
 	View *string `json:"view,omitempty"`

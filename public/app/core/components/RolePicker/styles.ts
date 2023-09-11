@@ -6,6 +6,16 @@ import { ROLE_PICKER_SUBMENU_MIN_WIDTH } from './constants';
 
 export const getStyles = (theme: GrafanaTheme2) => {
   return {
+    hideScrollBar: css`
+      .scrollbar-view {
+        /* Hide scrollbar for Chrome, Safari, and Opera */
+        &::-webkit-scrollbar {
+          display: none;
+        }
+        /* Hide scrollbar for Firefox */
+        scrollbar-width: none;
+      }
+    `,
     menuWrapper: css`
       display: flex;
       max-height: 650px;
@@ -50,7 +60,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
     container: css`
       padding: ${theme.spacing(1)};
       border: 1px ${theme.colors.border.weak} solid;
-      border-radius: ${theme.shape.borderRadius(1)};
+      border-radius: ${theme.shape.radius.default};
       background-color: ${theme.colors.background.primary};
       z-index: ${theme.zIndex.modal};
     `,
@@ -86,7 +96,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
       color: ${theme.colors.text.disabled};
     `,
     basicRoleSelector: css`
-      margin: ${theme.spacing(1, 1.25, 1, 1)};
+      margin: ${theme.spacing(1, 1.25, 1, 1.5)};
     `,
     subMenuPortal: css`
       height: 100%;

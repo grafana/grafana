@@ -266,10 +266,10 @@ function legacyCreateSpanLinkFactory(
           range: getTimeRangeFromSpan(span, {
             startMs: traceToMetricsOptions.spanStartTimeShift
               ? rangeUtil.intervalToMs(traceToMetricsOptions.spanStartTimeShift)
-              : 0,
+              : -120000,
             endMs: traceToMetricsOptions.spanEndTimeShift
               ? rangeUtil.intervalToMs(traceToMetricsOptions.spanEndTimeShift)
-              : 0,
+              : 120000,
           }),
           field: {} as Field,
           onClickFn: splitOpenFn,

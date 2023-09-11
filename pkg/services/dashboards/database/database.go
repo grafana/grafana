@@ -233,7 +233,7 @@ func (d *dashboardStore) DeleteOrphanedProvisionedDashboards(ctx context.Context
 	return d.store.WithDbSession(ctx, func(sess *db.Session) error {
 		var result []*dashboards.DashboardProvisioning
 
-		convertedReaderNames := make([]interface{}, len(cmd.ReaderNames))
+		convertedReaderNames := make([]any, len(cmd.ReaderNames))
 		for index, readerName := range cmd.ReaderNames {
 			convertedReaderNames[index] = readerName
 		}
@@ -965,7 +965,7 @@ func (d *dashboardStore) FindDashboards(ctx context.Context, query *dashboards.F
 		return nil, err
 	}
 
-	filters := []interface{}{
+	filters := []any{
 		permissions.NewAccessControlDashboardPermissionFilter(query.SignedInUser, query.Permission, query.Type, d.features, recursiveQueriesAreSupported),
 	}
 
@@ -975,10 +975,13 @@ func (d *dashboardStore) FindDashboards(ctx context.Context, query *dashboards.F
 
 	filters = append(filters, query.Filters...)
 
+	var orgID int64
 	if query.OrgId != 0 {
-		filters = append(filters, searchstore.OrgFilter{OrgId: query.OrgId})
+		orgID = query.OrgId
+		filters = append(filters, searchstore.OrgFilter{OrgId: orgID})
 	} else if query.SignedInUser.OrgID != 0 {
-		filters = append(filters, searchstore.OrgFilter{OrgId: query.SignedInUser.OrgID})
+		orgID = query.SignedInUser.OrgID
+		filters = append(filters, searchstore.OrgFilter{OrgId: orgID})
 	}
 
 	if len(query.Tags) > 0 {
@@ -1001,6 +1004,10 @@ func (d *dashboardStore) FindDashboards(ctx context.Context, query *dashboards.F
 
 	if len(query.FolderIds) > 0 {
 		filters = append(filters, searchstore.FolderFilter{IDs: query.FolderIds})
+	}
+
+	if len(query.FolderUIDs) > 0 {
+		filters = append(filters, searchstore.FolderUIDFilter{Dialect: d.store.GetDialect(), OrgID: orgID, UIDs: query.FolderUIDs})
 	}
 
 	var res []dashboards.DashboardSearchProjection

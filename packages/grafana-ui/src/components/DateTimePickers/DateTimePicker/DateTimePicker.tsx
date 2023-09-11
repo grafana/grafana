@@ -183,7 +183,7 @@ type InputState = {
 };
 
 const DateTimeInput = React.forwardRef<HTMLInputElement, InputProps>(
-  ({ date, label, onChange, isFullscreen, onOpen, showSeconds = true }, ref) => {
+  ({ date, label, onChange, onOpen, showSeconds = true }, ref) => {
     const format = showSeconds ? 'YYYY-MM-DD HH:mm:ss' : 'YYYY-MM-DD HH:mm';
     const [internalDate, setInternalDate] = useState<InputState>(() => {
       return { value: date ? dateTimeFormat(date) : dateTimeFormat(dateTime()), invalid: false };
@@ -207,10 +207,11 @@ const DateTimeInput = React.forwardRef<HTMLInputElement, InputProps>(
     }, []);
 
     const onBlur = useCallback(() => {
-      if (isDateTime(internalDate.value)) {
-        onChange(dateTime(internalDate.value));
+      if (!internalDate.invalid) {
+        const date = dateTime(internalDate.value);
+        onChange(date);
       }
-    }, [internalDate.value, onChange]);
+    }, [internalDate, onChange]);
 
     const icon = <Button aria-label="Time picker" icon="calendar-alt" variant="secondary" onClick={onOpen} />;
     return (
@@ -328,7 +329,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   container: css({
     padding: theme.spacing(1),
     border: `1px ${theme.colors.border.weak} solid`,
-    borderRadius: theme.shape.borderRadius(1),
+    borderRadius: theme.shape.radius.default,
     backgroundColor: theme.colors.background.primary,
     zIndex: theme.zIndex.modal,
   }),

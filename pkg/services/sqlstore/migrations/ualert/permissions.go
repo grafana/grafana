@@ -97,7 +97,7 @@ func (m *folderHelper) createFolder(orgID int64, title string) (*dashboard, erro
 		OrgId:    orgID,
 		FolderId: 0,
 		IsFolder: true,
-		Dashboard: simplejson.NewFromAny(map[string]interface{}{
+		Dashboard: simplejson.NewFromAny(map[string]any{
 			"title": title,
 		}),
 	}

@@ -55,7 +55,7 @@ type conditionEvaluator struct {
 func (r *conditionEvaluator) EvaluateRaw(ctx context.Context, now time.Time) (resp *backend.QueryDataResponse, err error) {
 	defer func() {
 		if e := recover(); e != nil {
-			logger.FromContext(ctx).Error("alert rule panic", "error", e, "stack", string(debug.Stack()))
+			logger.FromContext(ctx).Error("Alert rule panic", "error", e, "stack", string(debug.Stack()))
 			panicErr := fmt.Errorf("alert rule panic; please check the logs for the full stack")
 			if err != nil {
 				err = fmt.Errorf("queries and expressions execution failed: %w; %v", err, panicErr.Error())
@@ -142,6 +142,7 @@ type ExecutionResults struct {
 // Results is a slice of evaluated alert instances states.
 type Results []Result
 
+// HasErrors returns true when Results contains at least one element with error
 func (evalResults Results) HasErrors() bool {
 	for _, r := range evalResults {
 		if r.State == Error {
@@ -149,6 +150,26 @@ func (evalResults Results) HasErrors() bool {
 		}
 	}
 	return false
+}
+
+// HasErrors returns true when Results contains at least one element and all elements are errors
+func (evalResults Results) IsError() bool {
+	for _, r := range evalResults {
+		if r.State != Error {
+			return false
+		}
+	}
+	return len(evalResults) > 0
+}
+
+// IsNoData returns true when all items are NoData or Results is empty
+func (evalResults Results) IsNoData() bool {
+	for _, result := range evalResults {
+		if result.State != NoData {
+			return false
+		}
+	}
+	return true
 }
 
 // Result contains the evaluated State of an alert instance

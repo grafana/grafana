@@ -1,20 +1,19 @@
-import { e2e } from '@grafana/e2e';
+import { e2e } from '../utils';
 
 const MISSING_LABEL_FILTER_ERROR_MESSAGE = 'Select at least 1 label filter (label and value)';
 const dataSourceName = 'LokiBuilder';
 const addDataSource = () => {
   e2e.flows.addDataSource({
     type: 'Loki',
-    expectedAlertMessage:
-      'Unable to connect with Loki (Failed to call resource). Please check the server logs for more details.',
+    expectedAlertMessage: 'Unable to connect with Loki. Please check the server logs for more details.',
     name: dataSourceName,
     form: () => {
-      e2e.components.DataSource.DataSourceHttpSettings.urlInput().type('http://loki-url:3100');
+      e2e().get('#connection-url').type('http://loki-url:3100');
     },
   });
 };
 
-const finalQuery = 'rate({instance=~"instance1|instance2"} | logfmt | __error__=`` [$__interval]';
+const finalQuery = 'rate({instance=~"instance1|instance2"} | logfmt | __error__=`` [$__auto]';
 
 describe('Loki query builder', () => {
   beforeEach(() => {
@@ -64,7 +63,7 @@ describe('Loki query builder', () => {
     e2e().contains('Operations').should('be.visible').click();
     e2e().contains('Range functions').should('be.visible').click();
     e2e().contains('Rate').should('be.visible').click();
-    e2e().contains('rate({} | logfmt | __error__=`` [$__interval]').should('be.visible');
+    e2e().contains('rate({} | logfmt | __error__=`` [$__auto]').should('be.visible');
 
     // Check for expected error
     e2e().contains(MISSING_LABEL_FILTER_ERROR_MESSAGE).should('be.visible');
@@ -90,7 +89,7 @@ describe('Loki query builder', () => {
     e2e().contains('instance1|instance2').should('be.visible');
     e2e().contains('logfmt').should('be.visible');
     e2e().contains('__error__').should('be.visible');
-    e2e().contains('$__interval').should('be.visible');
+    e2e().contains('$__auto').should('be.visible');
 
     // Checks the explain mode toggle
     e2e().contains('label', 'Explain').click();

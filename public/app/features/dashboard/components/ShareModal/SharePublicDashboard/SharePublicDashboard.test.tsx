@@ -6,13 +6,16 @@ import { setupServer } from 'msw/node';
 import 'whatwg-fetch';
 import { BootData, DataQuery } from '@grafana/data/src';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
-import { reportInteraction, setEchoSrv } from '@grafana/runtime';
+import { setEchoSrv } from '@grafana/runtime';
 import { Panel } from '@grafana/schema';
 import config from 'app/core/config';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
 import { Echo } from 'app/core/services/echo/Echo';
 import { createDashboardModelFixture } from 'app/features/dashboard/state/__fixtures__/dashboardFixtures';
+
+import { trackDashboardSharingTypeOpen, trackDashboardSharingActionPerType } from '../analytics';
+import { shareDashboardType } from '../utils';
 
 import * as sharePublicDashboardUtils from './SharePublicDashboardUtils';
 import {
@@ -27,7 +30,12 @@ const server = setupServer();
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: () => backendSrv,
-  reportInteraction: jest.fn(),
+}));
+
+jest.mock('../analytics', () => ({
+  ...jest.requireActual('../analytics'),
+  trackDashboardSharingTypeOpen: jest.fn(),
+  trackDashboardSharingActionPerType: jest.fn(),
 }));
 
 const selectors = e2eSelectors.pages.ShareDashboardModal.PublicDashboard;
@@ -61,7 +69,6 @@ beforeAll(() => {
 beforeEach(() => {
   config.featureToggles.publicDashboards = true;
 
-  jest.spyOn(contextSrv, 'hasAccess').mockReturnValue(true);
   jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
   jest.spyOn(contextSrv, 'hasRole').mockReturnValue(true);
 });
@@ -95,7 +102,7 @@ const getErrorPublicDashboardResponse = () =>
 
 const alertTests = () => {
   it('when user has no write permissions, warning is shown', async () => {
-    jest.spyOn(contextSrv, 'hasAccess').mockReturnValue(false);
+    jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
 
     await renderSharePublicDashboard();
     expect(screen.queryByTestId(selectors.NoUpsertPermissionsWarningAlert)).toBeInTheDocument();
@@ -243,7 +250,7 @@ describe('SharePublic - Already persisted', () => {
     expect(screen.getByTestId(selectors.DeleteButton)).toBeEnabled();
   });
   it('inputs and delete button are disabled because of lack of permissions', async () => {
-    jest.spyOn(contextSrv, 'hasAccess').mockReturnValue(false);
+    jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
     await renderSharePublicDashboard();
     await userEvent.click(screen.getByText('Settings'));
 
@@ -334,6 +341,15 @@ describe('SharePublic - Report interactions', () => {
     );
   });
 
+  it('reports interaction when public dashboard tab is clicked', async () => {
+    await renderSharePublicDashboard();
+
+    await waitFor(() => {
+      expect(trackDashboardSharingTypeOpen).toHaveBeenCalledTimes(1);
+      expect(trackDashboardSharingTypeOpen).lastCalledWith(shareDashboardType.publicDashboard);
+    });
+  });
+
   it('reports interaction when time range is clicked', async () => {
     await renderSharePublicDashboard();
     await userEvent.click(screen.getByText('Settings'));
@@ -344,11 +360,15 @@ describe('SharePublic - Report interactions', () => {
     await userEvent.click(screen.getByTestId(selectors.EnableTimeRangeSwitch));
 
     await waitFor(() => {
-      expect(reportInteraction).toHaveBeenCalledWith('grafana_dashboards_public_time_selection_clicked', {
-        action: pubdashResponse.timeSelectionEnabled ? 'disable' : 'enable',
-      });
+      expect(trackDashboardSharingActionPerType).toHaveBeenCalledTimes(1);
+      // if time range was enabled, then the item is now disable_time
+      expect(trackDashboardSharingActionPerType).toHaveBeenLastCalledWith(
+        pubdashResponse.timeSelectionEnabled ? 'disable_time' : 'enable_time',
+        shareDashboardType.publicDashboard
+      );
     });
   });
+
   it('reports interaction when show annotations is clicked', async () => {
     await renderSharePublicDashboard();
     await userEvent.click(screen.getByText('Settings'));
@@ -359,9 +379,12 @@ describe('SharePublic - Report interactions', () => {
     await userEvent.click(screen.getByTestId(selectors.EnableAnnotationsSwitch));
 
     await waitFor(() => {
-      expect(reportInteraction).toHaveBeenCalledWith('grafana_dashboards_public_annotations_clicked', {
-        action: pubdashResponse.annotationsEnabled ? 'disable' : 'enable',
-      });
+      expect(trackDashboardSharingActionPerType).toHaveBeenCalledTimes(1);
+      // if annotations was enabled, then the item is now disable_annotations
+      expect(trackDashboardSharingActionPerType).toHaveBeenCalledWith(
+        pubdashResponse.annotationsEnabled ? 'disable_annotations' : 'enable_annotations',
+        shareDashboardType.publicDashboard
+      );
     });
   });
   it('reports interaction when pause is clicked', async () => {
@@ -372,9 +395,12 @@ describe('SharePublic - Report interactions', () => {
     await userEvent.click(screen.getByTestId(selectors.PauseSwitch));
 
     await waitFor(() => {
-      expect(reportInteraction).toHaveBeenCalledWith('grafana_dashboards_public_enable_clicked', {
-        action: pubdashResponse.isEnabled ? 'disable' : 'enable',
-      });
+      expect(trackDashboardSharingActionPerType).toHaveBeenCalledTimes(1);
+      // if sharing was enabled, then the item is now disable_sharing
+      expect(trackDashboardSharingActionPerType).toHaveBeenLastCalledWith(
+        pubdashResponse.isEnabled ? 'disable_sharing' : 'enable_sharing',
+        shareDashboardType.publicDashboard
+      );
     });
   });
 });

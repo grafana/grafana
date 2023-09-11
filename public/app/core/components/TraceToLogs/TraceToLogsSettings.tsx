@@ -133,7 +133,7 @@ export function TraceToLogsSettings({ options, onOptionsChange }: Props) {
       <InlineFieldRow>
         <IntervalInput
           label={getTimeShiftLabel('start')}
-          tooltip={getTimeShiftTooltip('start')}
+          tooltip={getTimeShiftTooltip('start', '0')}
           value={traceToLogs.spanStartTimeShift || ''}
           onChange={(val) => {
             updateTracesToLogs({ spanStartTimeShift: val });
@@ -145,7 +145,7 @@ export function TraceToLogsSettings({ options, onOptionsChange }: Props) {
       <InlineFieldRow>
         <IntervalInput
           label={getTimeShiftLabel('end')}
-          tooltip={getTimeShiftTooltip('end')}
+          tooltip={getTimeShiftTooltip('end', '0')}
           value={traceToLogs.spanEndTimeShift || ''}
           onChange={(val) => {
             updateTracesToLogs({ spanEndTimeShift: val });
@@ -246,8 +246,8 @@ export const getTimeShiftLabel = (type: 'start' | 'end') => {
   return `Span ${type} time shift`;
 };
 
-export const getTimeShiftTooltip = (type: 'start' | 'end') => {
-  return `Shifts the ${type} time of the span. Default: 0 (Time units can be used here, for example: 5s, -1m, 3h)`;
+export const getTimeShiftTooltip = (type: 'start' | 'end', defaultVal: string) => {
+  return `Shifts the ${type} time of the span. Default: ${defaultVal} (Time units can be used here, for example: 5s, -1m, 3h)`;
 };
 
 export const invalidTimeShiftError = 'Invalid time shift. See tooltip for examples.';

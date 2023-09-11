@@ -86,11 +86,11 @@ describe('getExploreUrl', () => {
       },
       getDataSourceById: jest.fn(),
     },
-    timeSrv: {
-      timeRangeForUrl: () => '1',
-    },
+    timeRange: { from: dateTime(), to: dateTime(), raw: { from: 'now-1h', to: 'now' } },
   } as unknown as GetExploreUrlArguments;
-
+  it('should use raw range in explore url', async () => {
+    expect(getExploreUrl(args).then((data) => expect(data).toMatch(/from%22:%22now-1h%22,%22to%22:%22now/g)));
+  });
   it('should omit legendFormat in explore url', () => {
     expect(getExploreUrl(args).then((data) => expect(data).not.toMatch(/legendFormat1/g)));
   });

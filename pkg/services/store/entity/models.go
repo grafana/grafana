@@ -108,7 +108,7 @@ type EntitySummary struct {
 	Error *EntityErrorInfo `json:"error,omitempty"`
 
 	// Optional field values.  The schema will define and document possible values for a given kind
-	Fields map[string]interface{} `json:"fields,omitempty"`
+	Fields map[string]any `json:"fields,omitempty"`
 
 	// eg: panels within dashboard
 	Nested []*EntitySummary `json:"nested,omitempty"`
@@ -117,7 +117,7 @@ type EntitySummary struct {
 	References []*EntityExternalReference `json:"references,omitempty"`
 
 	// The summary can not be extended
-	_ interface{}
+	_ any
 }
 
 // Reference to another object outside itself

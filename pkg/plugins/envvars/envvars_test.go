@@ -40,8 +40,7 @@ func TestInitializer_envVars(t *testing.T) {
 			},
 		}, licensing)
 
-		envVars, err := envVarsProvider.Get(context.Background(), p)
-		require.NoError(t, err)
+		envVars := envVarsProvider.Get(context.Background(), p)
 		assert.Len(t, envVars, 6)
 		assert.Equal(t, "GF_PLUGIN_CUSTOM_ENV_VAR=customVal", envVars[0])
 		assert.Equal(t, "GF_VERSION=", envVars[1])
@@ -301,8 +300,7 @@ func TestInitializer_tracingEnvironmentVariables(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			envVarsProvider := NewProvider(tc.cfg, nil)
-			envVars, err := envVarsProvider.Get(context.Background(), tc.plugin)
-			require.NoError(t, err)
+			envVars := envVarsProvider.Get(context.Background(), tc.plugin)
 			tc.exp(t, envVars)
 		})
 	}
@@ -326,14 +324,58 @@ func TestInitializer_oauthEnvVars(t *testing.T) {
 			GrafanaAppURL: "https://myorg.com/",
 			Features:      featuremgmt.WithFeatures(featuremgmt.FlagExternalServiceAuth),
 		}, nil)
-		envVars, err := envVarsProvider.Get(context.Background(), p)
-
-		require.NoError(t, err)
-		assert.Len(t, envVars, 5)
+		envVars := envVarsProvider.Get(context.Background(), p)
 		assert.Equal(t, "GF_VERSION=", envVars[0])
 		assert.Equal(t, "GF_APP_URL=https://myorg.com/", envVars[1])
 		assert.Equal(t, "GF_PLUGIN_APP_CLIENT_ID=clientID", envVars[2])
 		assert.Equal(t, "GF_PLUGIN_APP_CLIENT_SECRET=clientSecret", envVars[3])
 		assert.Equal(t, "GF_PLUGIN_APP_PRIVATE_KEY=privatePem", envVars[4])
+	})
+}
+
+func TestInitalizer_awsEnvVars(t *testing.T) {
+	t.Run("backend datasource with aws settings", func(t *testing.T) {
+		p := &plugins.Plugin{}
+		envVarsProvider := NewProvider(&config.Cfg{
+			AWSAssumeRoleEnabled:    true,
+			AWSAllowedAuthProviders: []string{"grafana_assume_role", "keys"},
+			AWSExternalId:           "mock_external_id",
+		}, nil)
+		envVars := envVarsProvider.Get(context.Background(), p)
+		assert.ElementsMatch(t, []string{"GF_VERSION=", "AWS_AUTH_AssumeRoleEnabled=true", "AWS_AUTH_AllowedAuthProviders=grafana_assume_role,keys", "AWS_AUTH_EXTERNAL_ID=mock_external_id"}, envVars)
+	})
+}
+
+func TestInitializer_featureToggleEnvVar(t *testing.T) {
+	t.Run("backend datasource with feature toggle", func(t *testing.T) {
+		expectedFeatures := []string{"feat-1", "feat-2"}
+		featuresLookup := map[string]bool{
+			expectedFeatures[0]: true,
+			expectedFeatures[1]: true,
+		}
+
+		p := &plugins.Plugin{}
+		envVarsProvider := NewProvider(&config.Cfg{
+			Features: featuremgmt.WithFeatures(expectedFeatures[0], true, expectedFeatures[1], true),
+		}, nil)
+		envVars := envVarsProvider.Get(context.Background(), p)
+
+		assert.Equal(t, 2, len(envVars))
+
+		toggleExpression := strings.Split(envVars[1], "=")
+		assert.Equal(t, 2, len(toggleExpression))
+
+		assert.Equal(t, "GF_INSTANCE_FEATURE_TOGGLES_ENABLE", toggleExpression[0])
+
+		toggleArgs := toggleExpression[1]
+		features := strings.Split(toggleArgs, ",")
+
+		assert.Equal(t, len(expectedFeatures), len(features))
+
+		// this is necessary because the features are not returned in the order they are provided
+		for _, f := range features {
+			_, ok := featuresLookup[f]
+			assert.True(t, ok)
+		}
 	})
 }

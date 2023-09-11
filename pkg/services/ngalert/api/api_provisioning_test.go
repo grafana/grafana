@@ -20,6 +20,8 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/log/logtest"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -27,11 +29,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
-	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	secrets_fakes "github.com/grafana/grafana/pkg/services/secrets/fakes"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -282,7 +284,7 @@ func TestProvisioningApi(t *testing.T) {
 
 			t.Run("PUT sets expected fields with no provenance", func(t *testing.T) {
 				sut := createProvisioningSrvSut(t)
-				uid := t.Name()
+				uid := util.GenerateShortUID()
 				rule := createTestAlertRule("rule", 1)
 				rule.UID = uid
 				insertRuleInOrg(t, sut, rule, 3)
@@ -812,6 +814,51 @@ func TestProvisioningApi(t *testing.T) {
 				require.Equal(t, 200, response.Status())
 				require.Equal(t, expectedResponse, string(response.Body()))
 			})
+
+			t.Run("accept query parameter folder_uid", func(t *testing.T) {
+				sut := createProvisioningSrvSut(t)
+				rc := createTestRequestCtx()
+				insertRule(t, sut, createTestAlertRuleWithFolderAndGroup("rule1", 1, "folder-uid", "groupa"))
+				insertRule(t, sut, createTestAlertRuleWithFolderAndGroup("rule2", 1, "folder-uid", "groupb"))
+				insertRule(t, sut, createTestAlertRuleWithFolderAndGroup("rule3", 1, "folder-uid2", "groupb"))
+
+				rc.Context.Req.Header.Add("Accept", "application/json")
+				rc.Context.Req.Form.Set("folderUid", "folder-uid")
+				expectedResponse := `{"apiVersion":1,"groups":[{"orgId":1,"name":"groupa","folder":"Folder Title","interval":"1m","rules":[{"uid":"rule1","title":"rule1","condition":"A","data":[{"refId":"A","relativeTimeRange":{"from":0,"to":0},"datasourceUid":"","model":{"conditions":[{"evaluator":{"params":[3],"type":"gt"},"operator":{"type":"and"},"query":{"params":["A"]},"reducer":{"type":"last"},"type":"query"}],"datasource":{"type":"__expr__","uid":"__expr__"},"expression":"1==0","intervalMs":1000,"maxDataPoints":43200,"refId":"A","type":"math"}}],"noDataState":"OK","execErrState":"OK","for":"0s","isPaused":false}]},{"orgId":1,"name":"groupb","folder":"Folder Title","interval":"1m","rules":[{"uid":"rule2","title":"rule2","condition":"A","data":[{"refId":"A","relativeTimeRange":{"from":0,"to":0},"datasourceUid":"","model":{"conditions":[{"evaluator":{"params":[3],"type":"gt"},"operator":{"type":"and"},"query":{"params":["A"]},"reducer":{"type":"last"},"type":"query"}],"datasource":{"type":"__expr__","uid":"__expr__"},"expression":"1==0","intervalMs":1000,"maxDataPoints":43200,"refId":"A","type":"math"}}],"noDataState":"OK","execErrState":"OK","for":"0s","isPaused":false}]}]}`
+
+				response := sut.RouteGetAlertRulesExport(&rc)
+
+				require.Equal(t, 200, response.Status())
+				require.Equal(t, expectedResponse, string(response.Body()))
+			})
+
+			t.Run("accepts parameter group", func(t *testing.T) {
+				sut := createProvisioningSrvSut(t)
+				insertRule(t, sut, createTestAlertRuleWithFolderAndGroup("rule1", 1, "folder-uid", "groupa"))
+				insertRule(t, sut, createTestAlertRuleWithFolderAndGroup("rule2", 1, "folder-uid", "groupb"))
+				insertRule(t, sut, createTestAlertRuleWithFolderAndGroup("rule3", 1, "folder-uid2", "groupb"))
+
+				rc := createTestRequestCtx()
+				rc.Context.Req.Header.Add("Accept", "application/json")
+				rc.Context.Req.Form.Set("folderUid", "folder-uid")
+				rc.Context.Req.Form.Set("group", "groupa")
+
+				expectedResponse := `{"apiVersion":1,"groups":[{"orgId":1,"name":"groupa","folder":"Folder Title","interval":"1m","rules":[{"uid":"rule1","title":"rule1","condition":"A","data":[{"refId":"A","relativeTimeRange":{"from":0,"to":0},"datasourceUid":"","model":{"conditions":[{"evaluator":{"params":[3],"type":"gt"},"operator":{"type":"and"},"query":{"params":["A"]},"reducer":{"type":"last"},"type":"query"}],"datasource":{"type":"__expr__","uid":"__expr__"},"expression":"1==0","intervalMs":1000,"maxDataPoints":43200,"refId":"A","type":"math"}}],"noDataState":"OK","execErrState":"OK","for":"0s","isPaused":false}]}]}`
+
+				response := sut.RouteGetAlertRulesExport(&rc)
+
+				require.Equal(t, 200, response.Status())
+				require.Equal(t, expectedResponse, string(response.Body()))
+
+				t.Run("and fails if folderUID is empty", func(t *testing.T) {
+					rc := createTestRequestCtx()
+					rc.Context.Req.Header.Add("Accept", "application/json")
+					rc.Context.Req.Form.Set("group", "groupa")
+					response := sut.RouteGetAlertRulesExport(&rc)
+
+					require.Equal(t, 400, response.Status())
+				})
+			})
 		})
 
 		t.Run("notification policies", func(t *testing.T) {
@@ -1008,8 +1055,15 @@ func TestProvisioningApiContactPointExport(t *testing.T) {
 			require.Equal(t, "", rc.Context.Resp.Header().Get("Content-Disposition"))
 		})
 
-		t.Run("decrypt true without admin returns 403", func(t *testing.T) {
-			sut := createProvisioningSrvSut(t)
+		t.Run("decrypt true without alert.provisioning.secrets:read permissions returns 403", func(t *testing.T) {
+			env := createTestEnv(t, testConfig)
+			env.ac = &recordingAccessControlFake{
+				Callback: func(user *user.SignedInUser, evaluator accesscontrol.Evaluator) (bool, error) {
+					return false, nil
+				},
+			}
+
+			sut := createProvisioningSrvSutFromEnv(t, &env)
 			rc := createTestRequestCtx()
 
 			rc.Context.Req.Form.Set("decrypt", "true")
@@ -1017,19 +1071,30 @@ func TestProvisioningApiContactPointExport(t *testing.T) {
 			response := sut.RouteGetContactPointsExport(&rc)
 
 			require.Equal(t, 403, response.Status())
+			require.Len(t, env.ac.EvaluateRecordings, 1)
+			require.Equal(t, accesscontrol.ActionAlertingProvisioningReadSecrets, env.ac.EvaluateRecordings[0].Evaluator.String())
 		})
 
 		t.Run("decrypt true with admin returns 200", func(t *testing.T) {
-			sut := createProvisioningSrvSut(t)
+			env := createTestEnv(t, testConfig)
+			env.ac = &recordingAccessControlFake{
+				Callback: func(user *user.SignedInUser, evaluator accesscontrol.Evaluator) (bool, error) {
+					require.Equal(t, accesscontrol.ActionAlertingProvisioningReadSecrets, evaluator.String())
+					return true, nil
+				},
+			}
+
+			sut := createProvisioningSrvSutFromEnv(t, &env)
 			rc := createTestRequestCtx()
 
-			rc.SignedInUser.OrgRole = org.RoleAdmin
 			rc.Context.Req.Form.Set("decrypt", "true")
 
 			response := sut.RouteGetContactPointsExport(&rc)
 			response.WriteTo(&rc)
 
 			require.Equal(t, 200, response.Status())
+			require.Len(t, env.ac.EvaluateRecordings, 1)
+			require.Equal(t, accesscontrol.ActionAlertingProvisioningReadSecrets, env.ac.EvaluateRecordings[0].Evaluator.String())
 		})
 
 		t.Run("json body content is as expected", func(t *testing.T) {
@@ -1061,10 +1126,12 @@ func TestProvisioningApiContactPointExport(t *testing.T) {
 			})
 			t.Run("decrypt true", func(t *testing.T) {
 				env := createTestEnv(t, testContactPointConfig)
+				env.ac.Callback = func(user *user.SignedInUser, evaluator accesscontrol.Evaluator) (bool, error) {
+					return true, nil
+				}
 				sut := createProvisioningSrvSutFromEnv(t, &env)
 				rc := createTestRequestCtx()
 
-				rc.SignedInUser.OrgRole = org.RoleAdmin
 				rc.Context.Req.Header.Add("Accept", "application/json")
 				rc.Context.Req.Form.Set("decrypt", "true")
 
@@ -1119,10 +1186,12 @@ func TestProvisioningApiContactPointExport(t *testing.T) {
 			})
 			t.Run("decrypt true", func(t *testing.T) {
 				env := createTestEnv(t, testContactPointConfig)
+				env.ac.Callback = func(user *user.SignedInUser, evaluator accesscontrol.Evaluator) (bool, error) {
+					return true, nil
+				}
 				sut := createProvisioningSrvSutFromEnv(t, &env)
 				rc := createTestRequestCtx()
 
-				rc.SignedInUser.OrgRole = org.RoleAdmin
 				rc.Context.Req.Header.Add("Accept", "application/yaml")
 				rc.Context.Req.Form.Set("decrypt", "true")
 
@@ -1160,6 +1229,7 @@ type testEnvironment struct {
 	xact             provisioning.TransactionManager
 	quotas           provisioning.QuotaChecker
 	prov             provisioning.ProvisioningStore
+	ac               *recordingAccessControlFake
 }
 
 func createTestEnv(t *testing.T, testConfig string) testEnvironment {
@@ -1212,6 +1282,8 @@ func createTestEnv(t *testing.T, testConfig string) testEnvironment {
 			Title: "Folder Title2",
 		}}, nil).Maybe()
 
+	ac := &recordingAccessControlFake{}
+
 	return testEnvironment{
 		secrets:          secretsService,
 		log:              log,
@@ -1221,6 +1293,7 @@ func createTestEnv(t *testing.T, testConfig string) testEnvironment {
 		xact:             xact,
 		prov:             prov,
 		quotas:           quotas,
+		ac:               ac,
 	}
 }
 
@@ -1237,7 +1310,7 @@ func createProvisioningSrvSutFromEnv(t *testing.T, env *testEnvironment) Provisi
 	return ProvisioningSrv{
 		log:                 env.log,
 		policies:            newFakeNotificationPolicyService(),
-		contactPointService: provisioning.NewContactPointService(env.configs, env.secrets, env.prov, env.xact, env.log),
+		contactPointService: provisioning.NewContactPointService(env.configs, env.secrets, env.prov, env.xact, env.log, env.ac),
 		templates:           provisioning.NewTemplateService(env.configs, env.prov, env.xact, env.log),
 		muteTimings:         provisioning.NewMuteTimingService(env.configs, env.prov, env.xact, env.log),
 		alertRules:          provisioning.NewAlertRuleService(env.store, env.prov, env.dashboardService, env.quotas, env.xact, 60, 10, env.log),
@@ -1256,6 +1329,7 @@ func createTestRequestCtx() contextmodel.ReqContext {
 		SignedInUser: &user.SignedInUser{
 			OrgID: 1,
 		},
+		Logger: &logtest.Fake{},
 	}
 }
 

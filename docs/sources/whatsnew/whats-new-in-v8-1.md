@@ -60,7 +60,7 @@ You can also create annotations in the new Time series panel bringing it closer 
 
 ### Transformations improvements
 
-Grafana 8.1 includes some significant enhancements to transformations, including two new transformations designed around providing dynamic configuration to your panels and visulizations.
+Grafana 8.1 includes some significant enhancements to transformations, including two new transformations designed around providing dynamic configuration to your panels and visualizations.
 
 #### Config from query (Beta)
 

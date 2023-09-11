@@ -19,12 +19,12 @@ import {
   RawTimeRange,
   TimeRange,
   TimeZone,
+  toURLRange,
   urlUtil,
 } from '@grafana/data';
 import { DataSourceSrv, getDataSourceSrv } from '@grafana/runtime';
 import { RefreshPicker } from '@grafana/ui';
 import store from 'app/core/store';
-import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { PanelModel } from 'app/features/dashboard/state';
 import { ExpressionDatasourceUID } from 'app/features/expressions/types';
 import { QueryOptions, QueryTransaction } from 'app/types/explore';
@@ -50,8 +50,7 @@ export interface GetExploreUrlArguments {
   panel: PanelModel;
   /** Datasource service to query other datasources in case the panel datasource is mixed */
   datasourceSrv: DataSourceSrv;
-  /** Time service to get the current dashboard range from */
-  timeSrv: TimeSrv;
+  timeRange: TimeRange;
 }
 
 export function generateExploreId() {
@@ -62,7 +61,7 @@ export function generateExploreId() {
  * Returns an Explore-URL that contains a panel's queries and the dashboard time range.
  */
 export async function getExploreUrl(args: GetExploreUrlArguments): Promise<string | undefined> {
-  const { panel, datasourceSrv, timeSrv } = args;
+  const { panel, datasourceSrv, timeRange } = args;
   let exploreDatasource = await datasourceSrv.get(panel.datasource);
 
   /** In Explore, we don't have legend formatter and we don't want to keep
@@ -76,8 +75,7 @@ export async function getExploreUrl(args: GetExploreUrlArguments): Promise<strin
   let url: string | undefined;
 
   if (exploreDatasource) {
-    const range = timeSrv.timeRangeForUrl();
-    let state: Partial<ExploreUrlState> = { range };
+    let state: Partial<ExploreUrlState> = { range: toURLRange(timeRange.raw) };
     if (exploreDatasource.interpolateVariablesInQueries) {
       const scopedVars = panel.scopedVars || {};
       state = {

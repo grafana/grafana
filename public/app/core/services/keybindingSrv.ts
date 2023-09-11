@@ -45,7 +45,6 @@ export class KeybindingSrv {
       this.bind('g e', this.goToExplore);
       this.bind('g a', this.openAlerting);
       this.bind('g p', this.goToProfile);
-      this.bind('t a', this.makeAbsoluteTime);
       this.bind('esc', this.exit);
       this.bindGlobalEsc();
     }
@@ -106,10 +105,6 @@ export class KeybindingSrv {
 
   private goToExplore() {
     this.locationService.push('/explore');
-  }
-
-  private makeAbsoluteTime() {
-    appEvents.publish(new AbsoluteTimeEvent());
   }
 
   private showHelpModal() {
@@ -190,6 +185,10 @@ export class KeybindingSrv {
   }
 
   setupTimeRangeBindings(updateUrl = true) {
+    this.bind('t a', () => {
+      appEvents.publish(new AbsoluteTimeEvent({ updateUrl }));
+    });
+
     this.bind('t z', () => {
       appEvents.publish(new ZoomOutEvent({ scale: 2, updateUrl }));
     });
@@ -264,7 +263,7 @@ export class KeybindingSrv {
         const url = await getExploreUrl({
           panel,
           datasourceSrv: getDatasourceSrv(),
-          timeSrv: getTimeSrv(),
+          timeRange: getTimeSrv().timeRange(),
         });
 
         if (url) {

@@ -66,10 +66,10 @@ func TestOrgUsersAPIEndpoint_userLoggedIn(t *testing.T) {
 	orgService := orgtest.NewOrgServiceFake()
 	orgService.ExpectedSearchOrgUsersResult = &org.SearchOrgUsersQueryResult{}
 	hs.orgService = orgService
+	setUpGetOrgUsersDB(t, sqlStore)
 	mock := dbtest.NewFakeDB()
 
 	loggedInUserScenario(t, "When calling GET on", "api/org/users", "api/org/users", func(sc *scenarioContext) {
-		setUpGetOrgUsersDB(t, sqlStore)
 		orgService.ExpectedSearchOrgUsersResult = &org.SearchOrgUsersQueryResult{
 			OrgUsers: []*org.OrgUserDTO{
 				{Login: testUserLogin, Email: "testUser@grafana.com"},
@@ -89,8 +89,6 @@ func TestOrgUsersAPIEndpoint_userLoggedIn(t *testing.T) {
 	}, mock)
 
 	loggedInUserScenario(t, "When calling GET on", "api/org/users/search", "api/org/users/search", func(sc *scenarioContext) {
-		setUpGetOrgUsersDB(t, sqlStore)
-
 		orgService.ExpectedSearchOrgUsersResult = &org.SearchOrgUsersQueryResult{
 			OrgUsers: []*org.OrgUserDTO{
 				{
@@ -123,8 +121,6 @@ func TestOrgUsersAPIEndpoint_userLoggedIn(t *testing.T) {
 	}, mock)
 
 	loggedInUserScenario(t, "When calling GET with page and limit query parameters on", "api/org/users/search", "api/org/users/search", func(sc *scenarioContext) {
-		setUpGetOrgUsersDB(t, sqlStore)
-
 		orgService.ExpectedSearchOrgUsersResult = &org.SearchOrgUsersQueryResult{
 			OrgUsers: []*org.OrgUserDTO{
 				{
@@ -159,7 +155,6 @@ func TestOrgUsersAPIEndpoint_userLoggedIn(t *testing.T) {
 		t.Cleanup(func() { settings.HiddenUsers = make(map[string]struct{}) })
 
 		loggedInUserScenario(t, "When calling GET on", "api/org/users", "api/org/users", func(sc *scenarioContext) {
-			setUpGetOrgUsersDB(t, sqlStore)
 			orgService.ExpectedSearchOrgUsersResult = &org.SearchOrgUsersQueryResult{
 				OrgUsers: []*org.OrgUserDTO{
 					{Login: testUserLogin, Email: "testUser@grafana.com"},
@@ -183,8 +178,6 @@ func TestOrgUsersAPIEndpoint_userLoggedIn(t *testing.T) {
 
 		loggedInUserScenarioWithRole(t, "When calling GET as an admin on", "GET", "api/org/users/lookup",
 			"api/org/users/lookup", org.RoleAdmin, func(sc *scenarioContext) {
-				setUpGetOrgUsersDB(t, sqlStore)
-
 				sc.handlerFunc = hs.GetOrgUsersForCurrentOrgLookup
 				sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
 
