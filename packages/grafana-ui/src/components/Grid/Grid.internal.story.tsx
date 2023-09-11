@@ -1,6 +1,7 @@
 import { Meta, StoryFn } from '@storybook/react';
 import React from 'react';
 
+import { Stack } from '../../unstable';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 
 import { Grid } from './Grid';
@@ -260,16 +261,16 @@ JustifyItemsExamples.parameters = {
 
 export const GridItemsPosition: StoryFn<typeof Grid> = (args) => {
   return (
-    <Grid display="grid" templateRows="2 1fr" rowGap={4}>
-      <GridItem>
+    <Stack direction='column' gap={4}>
+      <div>
         <p>Basic grid</p>
         <Grid {...args} display="grid" templateColumns="repeat(3, 1fr)" templateRows="repeat(2, 1fr)">
           {Array.from({ length: 6 }).map((_, i) => (
             <GridItem key={i}>{gridItem(i, colorList[i], undefined, undefined)}</GridItem>
           ))}
         </Grid>
-      </GridItem>
-      <GridItem>
+      </div>
+      <div>
         <p>First GridItem with `grid-row-start: 3` </p>
         <Grid {...args} display="grid" templateColumns="repeat(3, 1fr)" templateRows="repeat(2, 1fr)">
           {Array.from({ length: 6 }).map((_, i) => (
@@ -278,8 +279,8 @@ export const GridItemsPosition: StoryFn<typeof Grid> = (args) => {
             </GridItem>
           ))}
         </Grid>
-      </GridItem>
-      <GridItem>
+      </div>
+      <div>
         <p>Third GridItem with `grid-column-start: 1` </p>
         <Grid {...args} display="grid" templateColumns="repeat(3, 1fr)" templateRows="repeat(2, 1fr)">
           {Array.from({ length: 6 }).map((_, i) => (
@@ -288,8 +289,8 @@ export const GridItemsPosition: StoryFn<typeof Grid> = (args) => {
             </GridItem>
           ))}
         </Grid>
-      </GridItem>
-      <GridItem>
+      </div>
+      <div>
         <p>Second GridItem with `grid-row-end: span 2` </p>
         <Grid {...args} display="grid" templateColumns="repeat(3, 1fr)" templateRows="repeat(2, 1fr)">
           {Array.from({ length: 6 }).map((_, i) => (
@@ -298,8 +299,8 @@ export const GridItemsPosition: StoryFn<typeof Grid> = (args) => {
             </GridItem>
           ))}
         </Grid>
-      </GridItem>
-      <GridItem>
+      </div>
+      <div>
         <p>Forth GridItem with `grid-column-end: span 3` </p>
         <Grid {...args} display="grid" templateColumns="repeat(3, 1fr)" templateRows="repeat(2, 1fr)">
           {Array.from({ length: 6 }).map((_, i) => (
@@ -308,8 +309,8 @@ export const GridItemsPosition: StoryFn<typeof Grid> = (args) => {
             </GridItem>
           ))}
         </Grid>
-      </GridItem>
-    </Grid>
+      </div>
+    </Stack>
   );
 };
 GridItemsPosition.parameters = {
