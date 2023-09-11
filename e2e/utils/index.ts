@@ -7,7 +7,7 @@ import { e2eScenario, ScenarioArguments } from './support/scenario';
 import { getScenarioContext, setScenarioContext } from './support/scenarioContext';
 import * as typings from './typings';
 
-const e2eObject = {
+export const e2e = {
   env: (args: string) => Cypress.env(args),
   config: () => Cypress.config(),
   blobToBase64String: (blob: Blob) => Cypress.Blob.blobToBase64String(blob),
@@ -22,5 +22,3 @@ const e2eObject = {
   setScenarioContext,
   getSelectors: <T extends Selectors>(selectors: E2ESelectors<T>) => e2eFactory({ selectors }),
 };
-
-export const e2e: (() => Cypress.cy) & typeof e2eObject = Object.assign(() => cy, e2eObject);

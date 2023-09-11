@@ -8,7 +8,7 @@ export interface DeleteDashboardConfig {
 }
 
 export const deleteDashboard = ({ quick = false, title, uid }: DeleteDashboardConfig) => {
-  e2e().logToConsole('Deleting dashboard with uid:', uid);
+  cy.logToConsole('Deleting dashboard with uid:', uid);
 
   if (quick) {
     quickDelete(uid);
@@ -16,7 +16,7 @@ export const deleteDashboard = ({ quick = false, title, uid }: DeleteDashboardCo
     uiDelete(uid, title);
   }
 
-  e2e().logToConsole('Deleted dashboard with uid:', uid);
+  cy.logToConsole('Deleted dashboard with uid:', uid);
 
   e2e.getScenarioContext().then(({ addedDashboards }: any) => {
     e2e.setScenarioContext({
@@ -28,7 +28,7 @@ export const deleteDashboard = ({ quick = false, title, uid }: DeleteDashboardCo
 };
 
 const quickDelete = (uid: string) => {
-  e2e().request('DELETE', fromBaseUrl(`/api/dashboards/uid/${uid}`));
+  cy.request('DELETE', fromBaseUrl(`/api/dashboards/uid/${uid}`));
 };
 
 const uiDelete = (uid: string, title: string) => {
@@ -42,10 +42,8 @@ const uiDelete = (uid: string, title: string) => {
 
   // @todo replace `e2e.pages.Dashboards.dashboards` with this when argument is empty
   if (e2e.components.Search.dashboardItems) {
-    e2e.components.Search.dashboardItems().each((item) => e2e().wrap(item).should('not.contain', title));
+    e2e.components.Search.dashboardItems().each((item) => cy.wrap(item).should('not.contain', title));
   } else {
-    e2e()
-      .get('[aria-label^="Dashboard search item "]')
-      .each((item) => e2e().wrap(item).should('not.contain', title));
+    cy.get('[aria-label^="Dashboard search item "]').each((item) => cy.wrap(item).should('not.contain', title));
   }
 };

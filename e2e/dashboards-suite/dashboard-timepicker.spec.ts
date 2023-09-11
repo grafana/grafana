@@ -25,7 +25,7 @@ e2e.scenario({
     // Assert that the calendar shows 08 and 09 and 10 as selected days
     e2e.components.TimePicker.openButton().click();
     e2e.components.TimePicker.calendar.openButton().first().click();
-    e2e().get('.react-calendar__tile--active, .react-calendar__tile--hasActive').should('have.length', 3);
+    cy.get('.react-calendar__tile--active, .react-calendar__tile--hasActive').should('have.length', 3);
   },
 });
 
@@ -49,6 +49,6 @@ e2e.scenario({
     // Assert that the calendar shows 08 and 09 and 10 as selected days
     e2e.components.TimePicker.openButton().click();
     e2e.components.TimePicker.calendar.openButton().first().click();
-    e2e().get('.react-calendar__tile--active, .react-calendar__tile--hasActive').should('have.length', 3);
+    cy.get('.react-calendar__tile--active, .react-calendar__tile--hasActive').should('have.length', 3);
   },
 });
