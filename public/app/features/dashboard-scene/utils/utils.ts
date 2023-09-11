@@ -2,6 +2,8 @@ import { UrlQueryMap, urlUtil } from '@grafana/data';
 import { locationSearchToObject } from '@grafana/runtime';
 import { MultiValueVariable, sceneGraph, SceneObject, VizPanel } from '@grafana/scenes';
 
+import { DashboardScene } from '../scene/DashboardScene';
+
 export function getVizPanelKeyForPanelId(panelId: number) {
   return `panel-${panelId}`;
 }
@@ -112,4 +114,13 @@ export function getMultiVariableValues(variable: MultiValueVariable) {
     values: Array.isArray(value) ? value : [value],
     texts: Array.isArray(text) ? text : [text],
   };
+}
+
+export function getDashboardSceneFor(sceneObject: SceneObject): DashboardScene {
+  const root = sceneObject.getRoot();
+  if (root instanceof DashboardScene) {
+    return root;
+  }
+
+  throw new Error('SceneObject root is not a DashboardScene');
 }

@@ -26,6 +26,7 @@ interface PanelInspectDrawerState extends SceneObjectState {
   tabs?: Array<SceneObject<InspectTabState>>;
   panelRef: SceneObjectRef<VizPanel>;
   pluginNotLoaded?: boolean;
+  canEdit?: boolean;
 }
 
 export class PanelInspectDrawer extends SceneObjectBase<PanelInspectDrawerState> {
@@ -56,13 +57,20 @@ export class PanelInspectDrawer extends SceneObjectBase<PanelInspectDrawerState>
           new InspectStatsTab({ panelRef, label: t('dashboard.inspect.stats-tab', 'Stats'), value: InspectTab.Stats })
         );
       }
+
+      tabs.push(
+        new InspectJsonTab({
+          panelRef,
+          label: t('dashboard.inspect.json-tab', 'JSON'),
+          value: InspectTab.JSON,
+          canEdit: this.state.canEdit,
+        })
+      );
     } else if (retry < 2000) {
       setTimeout(() => this.buildTabs(retry + 100), 100);
     } else {
       this.setState({ pluginNotLoaded: true });
     }
-
-    tabs.push(new InspectJsonTab({ panelRef, label: t('dashboard.inspect.json-tab', 'JSON'), value: InspectTab.JSON }));
 
     this.setState({ tabs });
   }
@@ -94,7 +102,7 @@ function PanelInspectRenderer({ model }: SceneComponentProps<PanelInspectDrawer>
       title={model.getDrawerTitle()}
       scrollableContent
       onClose={model.onClose}
-      size="lg"
+      size="md"
       tabs={
         <TabsBar>
           {tabs.map((tab) => {
@@ -115,7 +123,7 @@ function PanelInspectRenderer({ model }: SceneComponentProps<PanelInspectDrawer>
           Make sure the panel you want to inspect is visible and has been displayed before opening inspect.
         </Alert>
       )}
-      {currentTab.Component && <currentTab.Component model={currentTab} />}
+      {currentTab && currentTab.Component && <currentTab.Component model={currentTab} />}
     </Drawer>
   );
 }
