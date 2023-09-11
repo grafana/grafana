@@ -14,7 +14,7 @@ import {
   VizPanel,
 } from '@grafana/scenes';
 
-import { DashboardScene, DashboardSceneState } from '../scene/DashboardScene';
+import { DashboardScene } from '../scene/DashboardScene';
 import { getDashboardUrl } from '../utils/utils';
 
 import { PanelEditorRenderer } from './PanelEditorRenderer';
