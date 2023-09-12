@@ -33,6 +33,7 @@ OperationRowHelp.displayName = 'OperationRowHelp';
 
 const getStyles = (theme: GrafanaTheme2, borderTop?: boolean) => {
   const borderRadius = theme.shape.radius.default;
+  // This wrapper is also being used in the TransformationEditorHelperModal.tsx, which requires a border-top.
   const borderSettings = `2px solid ${theme.colors.background.secondary}`;
 
   return {

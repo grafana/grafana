@@ -744,7 +744,6 @@ const getTransformationsRedesignDescriptions = (id: string): string => {
     [DataTransformerID.renameByRegex]: 'Reduce all rows or data points to a single value (ex. max, mean).',
     [DataTransformerID.seriesToRows]: 'Merge multiple series. Return time, metric and values as a row.',
   };
-  // JEV: add examples to these descriptions for display?
 
   return overrides[id] || standardTransformersRegistry.getIfExists(id)?.description || '';
 };
