@@ -1878,6 +1878,7 @@ steps:
     repo:
     - grafana/grafana
 - commands:
+  - apk add --update bash
   - ./scripts/ci-frontend-metrics.sh | ./bin/build publish-metrics $${GRAFANA_MISC_STATS_API_KEY}
   depends_on:
   - test-a11y-frontend
@@ -1893,8 +1894,8 @@ steps:
 - commands:
   - /src/grafana-build docker --package=$(cat packages.txt | grep tar.gz | grep -v
     docker | grep -v sha256) --ubuntu-base=ubuntu:22.10 --alpine-base=alpine:3.17.1
-    --tag-format='{{ .version }}-{{ .arch }}' --ubuntu-tag-format='{{ .version }}-ubuntu-{{
-    .arch }}' > docker.txt
+    --tag-format='{{ .version_base }}-{{ .buildID }}-{{ .arch }}' --ubuntu-tag-format='{{
+    .version_base }}-{{ .buildID }}-ubuntu-{{ .arch }}' > docker.txt
   - find ./dist -name '*docker*.tar.gz' -type f | xargs -n1 docker load -i
   depends_on:
   - rgm-package
@@ -4163,6 +4164,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 5ccdc60b94e3d992613fc1e978057a285d1858ea7db4f9daf87213f91212f1f3
+hmac: d3a519d45aa8abd7424ede359c024e5212341bcbc1a51e27cda1922a4e42877a
 
 ...
