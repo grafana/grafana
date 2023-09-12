@@ -15,8 +15,6 @@ export const PublicDashboardFooter = function () {
   const styles = useStyles2(getStyles);
   const conf = useGetPublicDashboardFooterConfig();
 
-  console.log(conf);
-
   return conf.hide ? null : (
     <div className={styles.footer}>
       <a className={styles.link} href={conf.link} target="_blank" rel="noreferrer noopener">
