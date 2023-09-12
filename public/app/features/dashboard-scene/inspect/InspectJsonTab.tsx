@@ -5,7 +5,6 @@ import { SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import {
   SceneComponentProps,
-  SceneDataProvider,
   SceneDataTransformer,
   sceneGraph,
   SceneGridItem,
@@ -24,6 +23,8 @@ import { getPrettyJSON } from 'app/features/inspector/utils/utils';
 import { updatePanelFromSaveModel } from '../serialization/transformSaveModelToScene';
 import { gridItemToPanel } from '../serialization/transformSceneToSaveModel';
 import { getDashboardSceneFor } from '../utils/utils';
+
+import { PanelInspectDrawer } from './PanelInspectDrawer';
 
 export type ShowContent = 'panel-json' | 'panel-data' | 'data-frames';
 
@@ -50,10 +51,11 @@ export class InspectJsonTab extends SceneObjectBase<InspectJsonTabState> {
     return InspectTab.JSON;
   }
 
-  public getOptions(dataProvider: SceneDataProvider): Array<SelectableValue<ShowContent>> {
-    console.log('getOptions', dataProvider);
+  public getOptions(): Array<SelectableValue<ShowContent>> {
+    const panel = this.state.panelRef.resolve();
+    const dataProvider = panel.state.$data;
 
-    return [
+    const options: Array<SelectableValue<ShowContent>> = [
       {
         label: t('dashboard.inspect-json.panel-json-label', 'Panel JSON'),
         description: t(
@@ -62,23 +64,28 @@ export class InspectJsonTab extends SceneObjectBase<InspectJsonTabState> {
         ),
         value: 'panel-json',
       },
-      {
+    ];
+
+    if (dataProvider) {
+      options.push({
         label: t('dashboard.inspect-json.panel-data-label', 'Panel data'),
         description: t(
           'dashboard.inspect-json.panel-data-description',
           'The raw model passed to the panel visualization'
         ),
         value: 'panel-data',
-      },
-      {
+      });
+      options.push({
         label: t('dashboard.inspect-json.dataframe-label', 'DataFrame JSON (from Query)'),
         description: t(
           'dashboard.inspect-json.dataframe-description',
           'Raw data without transformations and field config applied. '
         ),
         value: 'data-frames',
-      },
-    ];
+      });
+    }
+
+    return options;
   }
 
   public onChangeShow = (value: SelectableValue<ShowContent>) => {
@@ -91,7 +98,17 @@ export class InspectJsonTab extends SceneObjectBase<InspectJsonTabState> {
       return;
     }
 
+    const dashboard = getDashboardSceneFor(this.state.panelRef.resolve());
+
+    if (!dashboard.state.isEditing) {
+      dashboard.onEnterEditMode();
+    }
+
     updatePanelFromSaveModel(panel, this.state.jsonText);
+
+    if (this.parent instanceof PanelInspectDrawer) {
+      this.parent.onClose();
+    }
   };
 
   public onCodeEditorBlur = (value: string) => {
@@ -104,17 +121,13 @@ export class InspectJsonTab extends SceneObjectBase<InspectJsonTabState> {
     }
 
     const dashboard = getDashboardSceneFor(this.state.panelRef.resolve());
-
-    // TOOD check that we are not a repeated clone
     return dashboard.state.meta.canEdit;
   }
 
   static Component = ({ model }: SceneComponentProps<InspectJsonTab>) => {
     const { show, jsonText } = model.useState();
     const styles = useStyles2(getPanelInspectorStyles2);
-    const panel = model.state.panelRef.resolve();
-    const dataProvider = sceneGraph.getData(panel);
-    const options = model.getOptions(dataProvider);
+    const options = model.getOptions();
 
     return (
       <div className={styles.wrap}>

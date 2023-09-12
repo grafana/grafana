@@ -9,6 +9,8 @@ const getStyles = (theme: GrafanaTheme2) => css`
   margin-left: ${theme.spacing(2)};
   font-size: ${theme.typography.bodySmall.fontSize};
   color: ${theme.colors.text.secondary};
+  overflow: hidden;
+  text-overflow: ellipsis;
 `;
 
 export const DetailText = ({ children }: React.PropsWithChildren<{}>) => {
