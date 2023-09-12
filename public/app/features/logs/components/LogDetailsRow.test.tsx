@@ -125,5 +125,5 @@ describe('LogDetailsRow', () => {
       expect(screen.getByTitle('Copy value to clipboard')).not.toBeVisible();
       // Asserting visibility on mouse-over is currently not possible.
     });
-  })
+  });
 });
