@@ -13,7 +13,6 @@ import { getGrafanaEvalSuccessVsFailuresScene } from '../insights/grafana/EvalSu
 import { getFiringGrafanaAlertsScene } from '../insights/grafana/Firing';
 import { getGrafanaInstancesByStateScene } from '../insights/grafana/InstancesByState';
 import { getGrafanaInstancesPercentageByStateScene } from '../insights/grafana/InstancesPercentageByState';
-import { getGrafanaMissedIterationsScene } from '../insights/grafana/MissedIterationsScene';
 import { getMostFiredInstancesScene } from '../insights/grafana/MostFiredInstancesTable';
 import { getPausedGrafanaAlertsScene } from '../insights/grafana/Paused';
 import { getAlertsByStateScene } from '../insights/mimir/AlertsByState';
