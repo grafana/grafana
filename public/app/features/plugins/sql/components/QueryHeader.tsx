@@ -152,7 +152,7 @@ export function QueryHeader({
             />
 
             <InlineSwitch
-              id="sql-group"
+              id={`sql-group-${uuidv4()}}`}
               label="Group"
               transparent={true}
               showLabel={true}
@@ -172,7 +172,7 @@ export function QueryHeader({
             />
 
             <InlineSwitch
-              id="sql-order"
+              id={`sql-order-${uuidv4()}}`}
               label="Order"
               transparent={true}
               showLabel={true}
@@ -192,7 +192,7 @@ export function QueryHeader({
             />
 
             <InlineSwitch
-              id="sql-preview"
+              id={`sql-preview-${uuidv4()}}`}
               label="Preview"
               transparent={true}
               showLabel={true}
