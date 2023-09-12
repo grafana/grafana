@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	legacymodels "github.com/grafana/grafana/pkg/services/alerting/models"
+	migrationStore "github.com/grafana/grafana/pkg/services/ngalert/migration/store"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/tsdb/graphite"
@@ -20,7 +21,7 @@ const (
 	ContactLabel = "__contacts__"
 )
 
-func addMigrationInfo(da *dashAlert, dashboardUID string) (map[string]string, map[string]string) {
+func addMigrationInfo(da *migrationStore.DashAlert, dashboardUID string) (map[string]string, map[string]string) {
 	tagsMap := simplejson.NewFromAny(da.ParsedSettings.AlertRuleTags).MustMap()
 	lbls := make(map[string]string, len(tagsMap))
 
@@ -36,7 +37,7 @@ func addMigrationInfo(da *dashAlert, dashboardUID string) (map[string]string, ma
 	return lbls, annotations
 }
 
-func (m *migration) makeAlertRule(l log.Logger, cond condition, da dashAlert, dashboardUID string, folderUID string) (*ngmodels.AlertRule, error) {
+func (m *migration) makeAlertRule(l log.Logger, cond condition, da migrationStore.DashAlert, dashboardUID string, folderUID string) (*ngmodels.AlertRule, error) {
 	lbls, annotations := addMigrationInfo(&da, dashboardUID)
 
 	message := MigrateTmpl(l.New("field", "message"), da.Message)
@@ -258,7 +259,7 @@ func normalizeRuleName(daName string, uid string) string {
 	return daName
 }
 
-func extractChannelIDs(d dashAlert) (channelUids []uidOrID) {
+func extractChannelIDs(d migrationStore.DashAlert) (channelUids []migrationStore.UidOrID) {
 	// Extracting channel UID/ID.
 	for _, ui := range d.ParsedSettings.Notifications {
 		if ui.UID != "" {

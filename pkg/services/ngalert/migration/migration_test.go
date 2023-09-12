@@ -16,26 +16,15 @@ import (
 	"github.com/stretchr/testify/require"
 	"xorm.io/xorm"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/infra/localcache"
-	"github.com/grafana/grafana/pkg/infra/serverlock"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/alerting/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/services/datasources/guardian"
-	datasourceService "github.com/grafana/grafana/pkg/services/datasources/service"
-	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	migrationStore "github.com/grafana/grafana/pkg/services/ngalert/migration/store"
 	ngModels "github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/ngalert/store"
-	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
-	"github.com/grafana/grafana/pkg/services/ngalert/testutil"
 	"github.com/grafana/grafana/pkg/services/org"
-	fake_secrets "github.com/grafana/grafana/pkg/services/secrets/fakes"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 )
@@ -108,9 +97,9 @@ func TestServiceStart(t *testing.T) {
 	for _, tt := range tc {
 		t.Run(tt.name, func(t *testing.T) {
 			ctx := context.Background()
-			service := NewMigrationService(t, sqlStore, tt.config)
+			service := NewTestMigrationService(t, sqlStore, tt.config)
 
-			err := service.SetMigrated(ctx, tt.isMigrationRun)
+			err := service.migrationStore.SetMigrated(ctx, tt.isMigrationRun)
 			require.NoError(t, err)
 
 			err = service.Run(ctx)
@@ -120,7 +109,7 @@ func TestServiceStart(t *testing.T) {
 				require.NoError(t, err)
 			}
 
-			migrated, err := service.GetMigrated(ctx)
+			migrated, err := service.migrationStore.IsMigrated(ctx)
 			require.NoError(t, err)
 			require.Equal(t, tt.expected, migrated)
 		})
@@ -131,7 +120,7 @@ func TestServiceStart(t *testing.T) {
 func TestAMConfigMigration(t *testing.T) {
 	sqlStore := db.InitTestDB(t)
 	x := sqlStore.GetEngine()
-	service := NewMigrationService(t, sqlStore, &setting.Cfg{})
+	service := NewTestMigrationService(t, sqlStore, &setting.Cfg{})
 	tc := []struct {
 		name           string
 		legacyChannels []*models.AlertNotification
@@ -514,7 +503,7 @@ func TestAMConfigMigration(t *testing.T) {
 func TestDashAlertMigration(t *testing.T) {
 	sqlStore := db.InitTestDB(t)
 	x := sqlStore.GetEngine()
-	service := NewMigrationService(t, sqlStore, &setting.Cfg{})
+	service := NewTestMigrationService(t, sqlStore, &setting.Cfg{})
 
 	t.Run("when DashAlertMigration create ContactLabel on migrated AlertRules", func(t *testing.T) {
 		defer teardown(t, x, service)
@@ -628,7 +617,7 @@ func TestDashAlertMigration(t *testing.T) {
 func TestDashAlertQueryMigration(t *testing.T) {
 	sqlStore := db.InitTestDB(t)
 	x := sqlStore.GetEngine()
-	service := NewMigrationService(t, sqlStore, &setting.Cfg{})
+	service := NewTestMigrationService(t, sqlStore, &setting.Cfg{})
 
 	createAlertQuery := func(refId string, ds string, from string, to string) ngModels.AlertQuery {
 		dur, _ := calculateInterval(legacydata.NewDataTimeRange(from, to), simplejson.New(), nil)
@@ -667,7 +656,7 @@ func TestDashAlertQueryMigration(t *testing.T) {
 
 	cond := func(refId string, reducer string, evalType string, thresh float64) classicConditionJSON {
 		return classicConditionJSON{
-			Evaluator: conditionEvalJSON{Params: []float64{thresh}, Type: evalType},
+			Evaluator: migrationStore.ConditionEvalJSON{Params: []float64{thresh}, Type: evalType},
 			Operator: struct {
 				Type string `json:"type"`
 			}{Type: "and"},
@@ -726,9 +715,9 @@ func TestDashAlertQueryMigration(t *testing.T) {
 			name: "simple query and condition",
 			alerts: []*models.Alert{
 				createAlertWithCond(t, 1, 1, 1, "alert1", nil,
-					[]dashAlertCondition{createCondition("A", "max", "gt", 42, 1, "5m", "now")}),
+					[]migrationStore.DashAlertCondition{createCondition("A", "max", "gt", 42, 1, "5m", "now")}),
 				createAlertWithCond(t, 2, 3, 1, "alert1", nil,
-					[]dashAlertCondition{createCondition("A", "max", "gt", 42, 3, "5m", "now")}),
+					[]migrationStore.DashAlertCondition{createCondition("A", "max", "gt", 42, 3, "5m", "now")}),
 			},
 			expected: map[int64][]*ngModels.AlertRule{
 				int64(1): {
@@ -756,7 +745,7 @@ func TestDashAlertQueryMigration(t *testing.T) {
 			name: "multiple conditions",
 			alerts: []*models.Alert{
 				createAlertWithCond(t, 1, 1, 1, "alert1", nil,
-					[]dashAlertCondition{
+					[]migrationStore.DashAlertCondition{
 						createCondition("A", "avg", "gt", 42, 1, "5m", "now"),
 						createCondition("B", "max", "gt", 43, 2, "3m", "now"),
 						createCondition("C", "min", "lt", 20, 2, "3m", "now"),
@@ -782,7 +771,7 @@ func TestDashAlertQueryMigration(t *testing.T) {
 			name: "multiple conditions on same query with same timerange should not create multiple queries",
 			alerts: []*models.Alert{
 				createAlertWithCond(t, 1, 1, 1, "alert1", nil,
-					[]dashAlertCondition{
+					[]migrationStore.DashAlertCondition{
 						createCondition("A", "max", "gt", 42, 1, "5m", "now"),
 						createCondition("A", "avg", "gt", 20, 1, "5m", "now"),
 					}),
@@ -804,7 +793,7 @@ func TestDashAlertQueryMigration(t *testing.T) {
 			name: "multiple conditions on same query with different timeranges should create multiple queries",
 			alerts: []*models.Alert{
 				createAlertWithCond(t, 1, 1, 1, "alert1", nil,
-					[]dashAlertCondition{
+					[]migrationStore.DashAlertCondition{
 						createCondition("A", "max", "gt", 42, 1, "5m", "now"),
 						createCondition("A", "avg", "gt", 20, 1, "3m", "now"),
 					}),
@@ -827,7 +816,7 @@ func TestDashAlertQueryMigration(t *testing.T) {
 			name: "multiple conditions custom refIds",
 			alerts: []*models.Alert{
 				createAlertWithCond(t, 1, 1, 1, "alert1", nil,
-					[]dashAlertCondition{
+					[]migrationStore.DashAlertCondition{
 						createCondition("Q1", "avg", "gt", 42, 1, "5m", "now"),
 						createCondition("Q2", "max", "gt", 43, 2, "3m", "now"),
 						createCondition("Q3", "min", "lt", 20, 2, "3m", "now"),
@@ -853,7 +842,7 @@ func TestDashAlertQueryMigration(t *testing.T) {
 			name: "multiple conditions out of order refIds, queries should be sorted by refId and conditions should be in original order",
 			alerts: []*models.Alert{
 				createAlertWithCond(t, 1, 1, 1, "alert1", nil,
-					[]dashAlertCondition{
+					[]migrationStore.DashAlertCondition{
 						createCondition("B", "avg", "gt", 42, 1, "5m", "now"),
 						createCondition("C", "max", "gt", 43, 2, "3m", "now"),
 						createCondition("A", "min", "lt", 20, 2, "3m", "now"),
@@ -879,7 +868,7 @@ func TestDashAlertQueryMigration(t *testing.T) {
 			name: "multiple conditions out of order with duplicate refIds",
 			alerts: []*models.Alert{
 				createAlertWithCond(t, 1, 1, 1, "alert1", nil,
-					[]dashAlertCondition{
+					[]migrationStore.DashAlertCondition{
 						createCondition("C", "avg", "gt", 42, 1, "5m", "now"),
 						createCondition("C", "max", "gt", 43, 1, "3m", "now"),
 						createCondition("B", "min", "lt", 20, 2, "5m", "now"),
@@ -908,7 +897,7 @@ func TestDashAlertQueryMigration(t *testing.T) {
 			name: "alerts with unknown datasource id migrates with empty datasource uid",
 			alerts: []*models.Alert{
 				createAlertWithCond(t, 1, 1, 1, "alert1", nil,
-					[]dashAlertCondition{createCondition("A", "max", "gt", 42, 123, "5m", "now")}), // Unknown datasource id.
+					[]migrationStore.DashAlertCondition{createCondition("A", "max", "gt", 42, 123, "5m", "now")}), // Unknown datasource id.
 			},
 			expected: map[int64][]*ngModels.AlertRule{
 				int64(1): {
@@ -925,7 +914,7 @@ func TestDashAlertQueryMigration(t *testing.T) {
 			name: "alerts with unknown dashboard do not migrate",
 			alerts: []*models.Alert{
 				createAlertWithCond(t, 1, 22, 1, "alert1", nil,
-					[]dashAlertCondition{
+					[]migrationStore.DashAlertCondition{
 						createCondition("A", "avg", "gt", 42, 1, "5m", "now"),
 					}),
 			},
@@ -937,7 +926,7 @@ func TestDashAlertQueryMigration(t *testing.T) {
 			name: "alerts with unknown org do not migrate",
 			alerts: []*models.Alert{
 				createAlertWithCond(t, 22, 1, 1, "alert1", nil,
-					[]dashAlertCondition{
+					[]migrationStore.DashAlertCondition{
 						createCondition("A", "avg", "gt", 42, 1, "5m", "now"),
 					}),
 			},
@@ -949,7 +938,7 @@ func TestDashAlertQueryMigration(t *testing.T) {
 			name: "alerts in general folder migrate to existing general alerting",
 			alerts: []*models.Alert{
 				createAlertWithCond(t, 1, 8, 1, "alert1", nil,
-					[]dashAlertCondition{
+					[]migrationStore.DashAlertCondition{
 						createCondition("A", "avg", "gt", 42, 1, "5m", "now"),
 					}),
 			},
@@ -970,7 +959,7 @@ func TestDashAlertQueryMigration(t *testing.T) {
 			name: "alerts in general folder migrate to newly created general alerting if one doesn't exist",
 			alerts: []*models.Alert{
 				createAlertWithCond(t, 2, 9, 1, "alert1", nil, // Org 2 doesn't have general alerting folder.
-					[]dashAlertCondition{
+					[]migrationStore.DashAlertCondition{
 						createCondition("A", "avg", "gt", 42, 3, "5m", "now"),
 					}),
 			},
@@ -997,7 +986,7 @@ func TestDashAlertQueryMigration(t *testing.T) {
 			name: "alerts in dashboard with custom ACL migrate to newly created folder",
 			alerts: []*models.Alert{
 				createAlertWithCond(t, 1, 10, 1, "alert1", nil,
-					[]dashAlertCondition{
+					[]migrationStore.DashAlertCondition{
 						createCondition("A", "avg", "gt", 42, 1, "5m", "now"),
 					}),
 			},
@@ -1109,9 +1098,9 @@ func createAlertNotification(t *testing.T, orgId int64, uid string, channelType 
 
 var queryModel = `{"datasource":{"type":"prometheus","uid":"gdev-prometheus"},"expr":"up{job=\"fake-data-gen\"}","instant":false,"refId":"%s"}`
 
-func createCondition(refId string, reducer string, evalType string, thresh float64, datasourceId int64, from string, to string) dashAlertCondition {
-	return dashAlertCondition{
-		Evaluator: conditionEvalJSON{
+func createCondition(refId string, reducer string, evalType string, thresh float64, datasourceId int64, from string, to string) migrationStore.DashAlertCondition {
+	return migrationStore.DashAlertCondition{
+		Evaluator: migrationStore.ConditionEvalJSON{
 			Params: []float64{thresh},
 			Type:   evalType,
 		},
@@ -1139,11 +1128,11 @@ func createCondition(refId string, reducer string, evalType string, thresh float
 
 // createAlert creates a legacy alert rule for inserting into the test database.
 func createAlert(t *testing.T, orgId int, dashboardId int, panelsId int, name string, notifierUids []string) *models.Alert {
-	return createAlertWithCond(t, orgId, dashboardId, panelsId, name, notifierUids, []dashAlertCondition{})
+	return createAlertWithCond(t, orgId, dashboardId, panelsId, name, notifierUids, []migrationStore.DashAlertCondition{})
 }
 
 // createAlert creates a legacy alert rule for inserting into the test database.
-func createAlertWithCond(t *testing.T, orgId int, dashboardId int, panelsId int, name string, notifierUids []string, cond []dashAlertCondition) *models.Alert {
+func createAlertWithCond(t *testing.T, orgId int, dashboardId int, panelsId int, name string, notifierUids []string, cond []migrationStore.DashAlertCondition) *models.Alert {
 	t.Helper()
 
 	var settings = simplejson.New()
@@ -1236,7 +1225,7 @@ func teardown(t *testing.T, x *xorm.Engine, service *MigrationService) {
 	require.NoError(t, err)
 	_, err = x.Exec("DELETE from data_source")
 	require.NoError(t, err)
-	err = service.Revert(context.Background())
+	err = service.migrationStore.RevertAllOrgs(context.Background())
 	require.NoError(t, err)
 }
 
@@ -1322,36 +1311,6 @@ func getDashboard(t *testing.T, x *xorm.Engine, orgId int64, uid string) *dashbo
 	require.Len(t, dashes, 1)
 
 	return dashes[0]
-}
-
-func NewMigrationService(t *testing.T, sqlStore *sqlstore.SQLStore, cfg *setting.Cfg) *MigrationService {
-	if cfg.UnifiedAlerting.BaseInterval == 0 {
-		cfg.UnifiedAlerting.BaseInterval = time.Second * 10
-	}
-	alertingStore := store.DBstore{
-		SQLStore: sqlStore,
-		Cfg:      cfg.UnifiedAlerting,
-	}
-	tracer := tracing.InitializeTracerForTest()
-	bus := bus.ProvideBus(tracer)
-	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
-	dashboardService, dashboardStore := testutil.SetupDashboardService(t, sqlStore, folderStore, cfg)
-	folderService := testutil.SetupFolderService(t, cfg, sqlStore, dashboardStore, folderStore, bus)
-
-	cache := localcache.ProvideService()
-	ms, err := ProvideService(
-		serverlock.ProvideService(sqlStore, tracer),
-		cfg,
-		sqlStore,
-		fakes.NewFakeKVStore(t),
-		&alertingStore,
-		fake_secrets.NewFakeSecretsService(),
-		dashboardService,
-		folderService,
-		datasourceService.ProvideCacheService(cache, sqlStore, guardian.ProvideGuardian()),
-	)
-	require.NoError(t, err)
-	return ms
 }
 
 func pointer[T any](b T) *T {

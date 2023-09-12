@@ -16,6 +16,7 @@ import (
 	pb "github.com/prometheus/alertmanager/silence/silencepb"
 	"github.com/prometheus/common/model"
 
+	migrationStore "github.com/grafana/grafana/pkg/services/ngalert/migration/store"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
@@ -26,7 +27,7 @@ const (
 	ErrorAlertName = "DatasourceError"
 )
 
-func (m *migration) addErrorSilence(da dashAlert, rule *models.AlertRule) error {
+func (m *migration) addErrorSilence(da migrationStore.DashAlert, rule *models.AlertRule) error {
 	if da.ParsedSettings.ExecutionErrorState != "keep_state" {
 		return nil
 	}
@@ -65,7 +66,7 @@ func (m *migration) addErrorSilence(da dashAlert, rule *models.AlertRule) error 
 	return nil
 }
 
-func (m *migration) addNoDataSilence(da dashAlert, rule *models.AlertRule) error {
+func (m *migration) addNoDataSilence(da migrationStore.DashAlert, rule *models.AlertRule) error {
 	if da.ParsedSettings.NoDataState != "keep_state" {
 		return nil
 	}

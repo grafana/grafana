@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	legacymodels "github.com/grafana/grafana/pkg/services/alerting/models"
+	migrationStore "github.com/grafana/grafana/pkg/services/ngalert/migration/store"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 )
@@ -92,21 +93,21 @@ func TestMigrateAlertRuleQueries(t *testing.T) {
 func TestAddMigrationInfo(t *testing.T) {
 	tt := []struct {
 		name                string
-		alert               *dashAlert
+		alert               *migrationStore.DashAlert
 		dashboard           string
 		expectedLabels      map[string]string
 		expectedAnnotations map[string]string
 	}{
 		{
 			name:                "when alert rule tags are a JSON array, they're ignored.",
-			alert:               &dashAlert{Alert: &legacymodels.Alert{ID: 43, PanelID: 42}, ParsedSettings: &dashAlertSettings{AlertRuleTags: []string{"one", "two", "three", "four"}}},
+			alert:               &migrationStore.DashAlert{Alert: &legacymodels.Alert{ID: 43, PanelID: 42}, ParsedSettings: &migrationStore.DashAlertSettings{AlertRuleTags: []string{"one", "two", "three", "four"}}},
 			dashboard:           "dashboard",
 			expectedLabels:      map[string]string{},
 			expectedAnnotations: map[string]string{"__alertId__": "43", "__dashboardUid__": "dashboard", "__panelId__": "42"},
 		},
 		{
 			name:                "when alert rule tags are a JSON object",
-			alert:               &dashAlert{Alert: &legacymodels.Alert{ID: 43, PanelID: 42}, ParsedSettings: &dashAlertSettings{AlertRuleTags: map[string]any{"key": "value", "key2": "value2"}}},
+			alert:               &migrationStore.DashAlert{Alert: &legacymodels.Alert{ID: 43, PanelID: 42}, ParsedSettings: &migrationStore.DashAlertSettings{AlertRuleTags: map[string]any{"key": "value", "key2": "value2"}}},
 			dashboard:           "dashboard",
 			expectedLabels:      map[string]string{"key": "value", "key2": "value2"},
 			expectedAnnotations: map[string]string{"__alertId__": "43", "__dashboardUid__": "dashboard", "__panelId__": "42"},
@@ -212,13 +213,13 @@ func TestMakeAlertRule(t *testing.T) {
 	})
 }
 
-func createTestDashAlert() dashAlert {
-	return dashAlert{
+func createTestDashAlert() migrationStore.DashAlert {
+	return migrationStore.DashAlert{
 		Alert: &legacymodels.Alert{
 			ID:   1,
 			Name: "test",
 		},
-		ParsedSettings: &dashAlertSettings{},
+		ParsedSettings: &migrationStore.DashAlertSettings{},
 	}
 }
 

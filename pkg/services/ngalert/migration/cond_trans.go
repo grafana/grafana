@@ -11,6 +11,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	migrationStore "github.com/grafana/grafana/pkg/services/ngalert/migration/store"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 	"github.com/grafana/grafana/pkg/tsdb/legacydata/interval"
@@ -18,7 +19,7 @@ import (
 )
 
 //nolint:gocyclo
-func transConditions(ctx context.Context, set dashAlertSettings, orgID int64, dsCacheService datasources.CacheService) (*condition, error) {
+func transConditions(ctx context.Context, set migrationStore.DashAlertSettings, orgID int64, store migrationStore.Store) (*condition, error) {
 	// TODO: needs a significant refactor to reduce complexity.
 	usr := getBackgroundUser(orgID)
 
@@ -132,7 +133,7 @@ func transConditions(ctx context.Context, set dashAlertSettings, orgID int64, ds
 
 			// Could have an alert saved but datasource deleted, so can not require match.
 			dsUid := ""
-			if ds, err := dsCacheService.GetDatasource(ctx, set.Conditions[condIdx].Query.DatasourceID, usr, false); err == nil {
+			if ds, err := store.GetDatasource(ctx, set.Conditions[condIdx].Query.DatasourceID, usr); err == nil {
 				dsUid = ds.UID
 			} else {
 				if !errors.Is(err, datasources.ErrDataSourceNotFound) {
@@ -183,7 +184,7 @@ func transConditions(ctx context.Context, set dashAlertSettings, orgID int64, ds
 	conditions := make([]classicConditionJSON, len(set.Conditions))
 	for i, cond := range set.Conditions {
 		newCond := classicConditionJSON{}
-		newCond.Evaluator = conditionEvalJSON{
+		newCond.Evaluator = migrationStore.ConditionEvalJSON{
 			Type:   cond.Evaluator.Type,
 			Params: cond.Evaluator.Params,
 		}
@@ -312,7 +313,7 @@ func getTo(to string) (time.Duration, error) {
 }
 
 type classicConditionJSON struct {
-	Evaluator conditionEvalJSON `json:"evaluator"`
+	Evaluator migrationStore.ConditionEvalJSON `json:"evaluator"`
 
 	Operator struct {
 		Type string `json:"type"`
