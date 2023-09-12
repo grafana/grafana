@@ -1,4 +1,5 @@
 import { css, cx } from '@emotion/css';
+import { noop } from 'lodash';
 import React, { CSSProperties, useCallback, useMemo, useState } from 'react';
 import { useDebounce } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
@@ -131,28 +132,28 @@ export const DashboardPicker = ({ dashboardUid, panelId, isOpen, onChange, onDis
     const panelTitle = panel.title || '<No title>';
     const isSelected = panel.id && selectedPanelId === panel.id?.toString();
     const isAlertingCompatible = panel.type === 'graph' || panel.type === 'timeseries';
-    const hasIdentifier = isValidPanelIdentifier(panel);
+    const disabled = !isValidPanelIdentifier(panel);
 
     return (
       <button
         type="button"
         style={style}
+        disabled={disabled}
         className={cx(styles.rowButton, styles.panelButton, {
           [styles.rowOdd]: index % 2 === 1,
           [styles.rowSelected]: isSelected,
-          [styles.disabled]: !hasIdentifier,
         })}
-        onClick={() => setSelectedPanelId(panel.id?.toString())}
+        onClick={() => (disabled ? noop : setSelectedPanelId(panel.id?.toString()))}
       >
         <div className={styles.rowButtonTitle} title={panelTitle}>
           {panelTitle}
         </div>
-        {!isAlertingCompatible && hasIdentifier && (
+        {!isAlertingCompatible && !disabled && (
           <Tooltip content="Alert tab will be disabled for this panel. It is only supported on graph and timeseries panels">
             <Icon name="exclamation-triangle" className={styles.warnIcon} data-testid="warning-icon" />
           </Tooltip>
         )}
-        {!hasIdentifier && (
+        {disabled && (
           <Tooltip content="This panel does not have a valid identifier.">
             <Icon name="info-circle" data-testid="info-icon" />
           </Tooltip>
@@ -349,10 +350,6 @@ const getPickerStyles = (theme: GrafanaTheme2) => {
     `,
     warnIcon: css`
       fill: ${theme.colors.warning.main};
-    `,
-    disabled: css`
-      cursor: auto;
-      color: ${theme.colors.secondary.shade};
     `,
   };
 };
