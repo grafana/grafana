@@ -53,6 +53,8 @@ Folders help you organize and group dashboards, which is useful when you have ma
 1. On the Dashboards page, click **New** and select **New folder** in the dropdown.
 1. Enter a unique name and click **Create**.
 
+   Do not use the name of a folder that has already been provisioned (such as "General") and avoid special characters (except underscores and hyphens).
+
 When you save a dashboard, you can either select a folder for the dashboard to be saved in or create a new folder.
 
 ## Manage dashboards
