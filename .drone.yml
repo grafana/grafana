@@ -582,7 +582,7 @@ steps:
   image: node:18.12.0-alpine
   name: build-frontend-packages
 - commands:
-  - /src/grafana-build package --distro=linux/amd64,linux/arm64 --yarn-cache=$$YARN_CACHE_FOLDER
+  - /src/grafana-build package --distro=linux/amd64,linux/arm64,linux/arm/v7 --yarn-cache=$$YARN_CACHE_FOLDER
     --build-id=$$DRONE_BUILD_NUMBER --grafana-dir=$$PWD > packages.txt
   depends_on:
   - yarn-install
@@ -1720,7 +1720,7 @@ steps:
   image: node:18.12.0-alpine
   name: build-frontend-packages
 - commands:
-  - /src/grafana-build package --distro=linux/amd64,linux/arm64 --yarn-cache=$$YARN_CACHE_FOLDER
+  - /src/grafana-build package --distro=linux/amd64,linux/arm64,linux/arm/v7 --yarn-cache=$$YARN_CACHE_FOLDER
     --build-id=$$DRONE_BUILD_NUMBER --grafana-dir=$$PWD > packages.txt
   depends_on:
   - yarn-install
@@ -1882,8 +1882,8 @@ steps:
     repo:
     - grafana/grafana
 - commands:
-  - apk add --update bash
-  - ./scripts/ci-frontend-metrics.sh | ./bin/build publish-metrics $${GRAFANA_MISC_STATS_API_KEY}
+  - apk add --update bash grep
+  - ./scripts/ci-frontend-metrics.sh | ./bin/build publish-metrics $$GRAFANA_MISC_STATS_API_KEY
   depends_on:
   - test-a11y-frontend
   environment:
@@ -4173,6 +4173,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 3f0b291de7bb76eea4fe7ca2416f95bf54c18a0e4b87f707b883524f223efa21
+hmac: e6c37ab3aab25cc5dd52e6f231a7334eeb75e0ccb8ab29087ac26d41d50f5bb1
 
 ...
