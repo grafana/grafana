@@ -32,7 +32,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
         "Figure Description Actions"
         "Figure    Meta     Actions"
         "Figure     -       Actions"`,
-    marginBottom: '0px !important',
   }),
   logo: css({
     marginRight: theme.spacing(3),
