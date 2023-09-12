@@ -2314,6 +2314,25 @@ steps:
     -OutFile grabpl.exe
   image: grafana/ci-wix:0.1.1
   name: windows-init
+- commands:
+  - $$gcpKey = $$env:GCP_KEY
+  - '[System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($$gcpKey))
+    > gcpkey.json'
+  - dos2unix gcpkey.json
+  - gcloud auth activate-service-account --key-file=gcpkey.json
+  - rm gcpkey.json
+  - cp C:\App\nssm-2.24.zip .
+  depends_on:
+  - windows-init
+  environment:
+    GCP_KEY:
+      from_secret: gcp_key
+    GITHUB_TOKEN:
+      from_secret: github_token
+    PRERELEASE_BUCKET:
+      from_secret: prerelease_bucket
+  image: grafana/ci-wix:0.1.1
+  name: build-windows-installer
 trigger:
   branch: main
   event:
@@ -4692,6 +4711,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: a49e733d21712d98fc2fbbf3accbe63e64d489144004c3f5e2fde9fee23e6e77
+hmac: 5a1f875a8dc0bc6d3a520f724350c2f2d7ad30674b9c8175a2ad2e507ffcdc6d
 
 ...
