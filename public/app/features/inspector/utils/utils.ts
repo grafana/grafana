@@ -22,7 +22,7 @@ function getCircularReplacer() {
   const seen = new WeakSet();
 
   return (key: string, value: unknown) => {
-    if (key === '__dataContext') {
+    if (key === '__dataContext' || key === '__sceneObject') {
       return 'Filtered out in JSON serialization';
     }
 

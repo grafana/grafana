@@ -14,6 +14,7 @@ import {
 } from '@grafana/scenes';
 import { Button, CodeEditor, Field, Select, useStyles2 } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
+import { getPanelDataFrames } from 'app/features/dashboard/components/HelpWizard/utils';
 import { getPanelInspectorStyles2 } from 'app/features/inspector/styles';
 import { getPrettyJSON } from 'app/features/inspector/utils/utils';
 
@@ -21,11 +22,7 @@ import { gridItemToPanel } from '../serialization/transformSceneToSaveModel';
 
 import { InspectTabState } from './types';
 
-enum ShowContent {
-  PanelJSON = 'panel',
-  PanelData = 'data',
-  DataFrames = 'frames',
-}
+export type ShowContent = 'panel-json' | 'panel-data' | 'data-frames';
 
 export interface InspectJsonTabState extends InspectTabState {
   show: ShowContent;
@@ -37,8 +34,8 @@ export class InspectJsonTab extends SceneObjectBase<InspectJsonTabState> {
   public constructor(state: Omit<InspectJsonTabState, 'show' | 'jsonText'>) {
     super({
       ...state,
-      show: ShowContent.PanelJSON,
-      jsonText: getJsonText(ShowContent.PanelJSON, state.panelRef.resolve()),
+      show: 'panel-json',
+      jsonText: getJsonText('panel-json', state.panelRef.resolve()),
     });
   }
 
@@ -52,7 +49,7 @@ export class InspectJsonTab extends SceneObjectBase<InspectJsonTabState> {
           'dashboard.inspect-json.panel-json-description',
           'The model saved in the dashboard JSON that configures how everything works.'
         ),
-        value: ShowContent.PanelJSON,
+        value: 'panel-json',
       },
       {
         label: t('dashboard.inspect-json.panel-data-label', 'Panel data'),
@@ -60,7 +57,7 @@ export class InspectJsonTab extends SceneObjectBase<InspectJsonTabState> {
           'dashboard.inspect-json.panel-data-description',
           'The raw model passed to the panel visualization'
         ),
-        value: ShowContent.PanelData,
+        value: 'panel-data',
       },
       {
         label: t('dashboard.inspect-json.dataframe-label', 'DataFrame JSON (from Query)'),
@@ -68,7 +65,7 @@ export class InspectJsonTab extends SceneObjectBase<InspectJsonTabState> {
           'dashboard.inspect-json.dataframe-description',
           'Raw data without transformations and field config applied. '
         ),
-        value: ShowContent.DataFrames,
+        value: 'data-frames',
       },
     ];
   }
@@ -84,6 +81,10 @@ export class InspectJsonTab extends SceneObjectBase<InspectJsonTabState> {
   public onCodeEditorBlur = (value: string) => {
     this.setState({ jsonText: value });
   };
+
+  public isReadOnly() {
+    return this.state.show !== 'panel-json' || !this.state.canEdit;
+  }
 
   static Component = ({ model }: SceneComponentProps<InspectJsonTab>) => {
     const { show, canEdit, jsonText } = model.useState();
@@ -120,7 +121,7 @@ export class InspectJsonTab extends SceneObjectBase<InspectJsonTabState> {
                 showLineNumbers={true}
                 showMiniMap={jsonText.length > 100}
                 value={jsonText}
-                readOnly={!canEdit || show !== ShowContent.PanelJSON}
+                readOnly={!model.isReadOnly()}
                 onBlur={model.onCodeEditorBlur}
               />
             )}
@@ -135,14 +136,14 @@ function getJsonText(show: ShowContent, panel: VizPanel): string {
   let objToStringify: object = {};
 
   switch (show) {
-    case ShowContent.PanelJSON: {
+    case 'panel-json': {
       if (panel.parent instanceof SceneGridItem) {
         objToStringify = gridItemToPanel(panel.parent);
       }
       break;
     }
 
-    case ShowContent.PanelData: {
+    case 'panel-data': {
       const dataProvider = sceneGraph.getData(panel);
       if (dataProvider.state.data) {
         objToStringify = panel.applyFieldConfig(dataProvider.state.data);
@@ -150,15 +151,15 @@ function getJsonText(show: ShowContent, panel: VizPanel): string {
       break;
     }
 
-    case ShowContent.DataFrames: {
+    case 'data-frames': {
       const dataProvider = sceneGraph.getData(panel);
 
       if (dataProvider.state.data) {
         // Get raw untransformed data
         if (dataProvider instanceof SceneDataTransformer && dataProvider.state.$data?.state.data) {
-          objToStringify = dataProvider.state.$data!.state.data;
+          objToStringify = getPanelDataFrames(dataProvider.state.$data!.state.data);
         } else {
-          objToStringify = dataProvider.state.data;
+          objToStringify = getPanelDataFrames(dataProvider.state.data);
         }
       }
     }
