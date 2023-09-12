@@ -8,7 +8,7 @@ import {
   Labels,
   PromRulesResponse,
   RulerRuleGroupDTO,
-  RulerRulesConfigDTO,
+  RulerRulesConfigDTO
 } from 'app/types/unified-alerting-dto';
 
 import { ExportFormats } from '../components/export/providers';
@@ -22,7 +22,7 @@ import {
   FetchPromRulesFilter,
   groupRulesByFileName,
   paramsWithMatcherAndState,
-  prepareRulesFilterQueryParams,
+  prepareRulesFilterQueryParams
 } from './prometheus';
 import { FetchRulerRulesFilter, rulerUrlBuilder } from './ruler';
 
@@ -40,7 +40,7 @@ export interface Datasource {
 export const PREVIEW_URL = '/api/v1/rule/test/grafana';
 export const PROM_RULES_URL = 'api/prometheus/grafana/api/v1/rules';
 
-function getProvisioningExportUrl(ruleUid: string, format: 'yaml' | 'json' = 'yaml') {
+function getProvisioningExportUrl(ruleUid: string, format: 'yaml' | 'json' | "hcl"= 'yaml') {
   return `/api/v1/provisioning/alert-rules/${ruleUid}/export?format=${format}`;
 }
 

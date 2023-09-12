@@ -45,7 +45,7 @@ export const GrafanaRuleExporter = ({ onClose, alertUid }: GrafanaRulerExporterP
   const [activeTab, setActiveTab] = useState<ExportFormats>('yaml');
 
   return (
-    <GrafanaExportDrawer activeTab={activeTab} onTabChange={setActiveTab} onClose={onClose}>
+    <GrafanaExportDrawer activeTab={activeTab} onTabChange={setActiveTab} onClose={onClose} allowHcl>
       <GrafanaRuleExportPreview alertUid={alertUid} exportFormat={activeTab} onClose={onClose} />
     </GrafanaExportDrawer>
   );

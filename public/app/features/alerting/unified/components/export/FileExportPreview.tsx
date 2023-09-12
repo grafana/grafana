@@ -6,10 +6,10 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Button, ClipboardButton, CodeEditor, useStyles2 } from '@grafana/ui';
 
-import { ExportFormats, grafanaExportProviders } from './providers';
+import { ExportFormats, ExportFormatsWithoutHCL, grafanaExportProviders } from './providers';
 
 interface FileExportPreviewProps {
-  format: ExportFormats;
+  format: ExportFormats | ExportFormatsWithoutHCL;
   textDefinition: string;
 
   /*** Filename without extension ***/

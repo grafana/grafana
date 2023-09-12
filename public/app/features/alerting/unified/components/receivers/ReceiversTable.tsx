@@ -14,8 +14,8 @@ import { useGetContactPointsState } from '../../api/receiversApi';
 import { Authorize } from '../../components/Authorize';
 import { AlertmanagerAction, useAlertmanagerAbility } from '../../hooks/useAbilities';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
-import { deleteReceiverAction } from '../../state/actions';
 import { useAlertmanager } from '../../state/AlertmanagerContext';
+import { deleteReceiverAction } from '../../state/actions';
 import { getAlertTableStyles } from '../../styles/table';
 import { SupportedPlugin } from '../../types/pluginBridges';
 import { getNotificationsPermissions } from '../../utils/access-control';
@@ -25,13 +25,13 @@ import { makeAMLink } from '../../utils/misc';
 import { extractNotifierTypeCounts } from '../../utils/receivers';
 import { createUrl } from '../../utils/url';
 import { DynamicTable, DynamicTableColumnProps, DynamicTableItemProps } from '../DynamicTable';
-import { GrafanaReceiverExporter } from '../export/GrafanaReceiverExporter';
 import { ProvisioningBadge } from '../Provisioning';
+import { GrafanaReceiverExporter } from '../export/GrafanaReceiverExporter';
 import { ActionIcon } from '../rules/ActionIcon';
 
+import { ReceiversSection } from './ReceiversSection';
 import { ReceiverMetadataBadge } from './grafanaAppReceivers/ReceiverMetadataBadge';
 import { ReceiverMetadata, useReceiversMetadata } from './grafanaAppReceivers/useReceiversMetadata';
-import { ReceiversSection } from './ReceiversSection';
 import { AlertmanagerConfigHealth, useAlertmanagerConfigHealth } from './useAlertmanagerConfigHealth';
 
 interface UpdateActionProps extends ActionProps {

@@ -4,21 +4,26 @@ import { Drawer } from '@grafana/ui';
 
 import { RuleInspectorTabs } from '../rule-editor/RuleInspector';
 
-import { ExportFormats, grafanaExportProviders } from './providers';
-
-const grafanaRulesTabs = Object.values(grafanaExportProviders).map((provider) => ({
-  label: provider.name,
-  value: provider.exportFormat,
-}));
+import { ExportFormats, ExportFormatsWithoutHCL, grafanaExportProviders, grafanaExportProvidersWithoutHCL } from './providers';
 
 interface GrafanaExportDrawerProps {
-  activeTab: ExportFormats;
-  onTabChange: (tab: ExportFormats) => void;
+  activeTab: ExportFormats | ExportFormatsWithoutHCL;
+  onTabChange: (tab: ExportFormats | ExportFormatsWithoutHCL) => void;
   children: React.ReactNode;
   onClose: () => void;
+  allowHcl?: boolean;
 }
 
-export function GrafanaExportDrawer({ activeTab, onTabChange, children, onClose }: GrafanaExportDrawerProps) {
+export function GrafanaExportDrawer({ activeTab, onTabChange, children, onClose, allowHcl = false }: GrafanaExportDrawerProps) {
+
+  const grafanaRulesTabs = allowHcl ? Object.values(grafanaExportProviders).map((provider) => ({
+    label: provider.name,
+    value: provider.exportFormat,
+  })) : Object.values(grafanaExportProvidersWithoutHCL).map((provider) => ({
+    label: provider.name,
+    value: provider.exportFormat,
+  }))
+
   return (
     <Drawer
       title="Export"

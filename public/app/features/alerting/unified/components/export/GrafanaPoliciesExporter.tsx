@@ -6,9 +6,9 @@ import { alertRuleApi } from '../../api/alertRuleApi';
 
 import { FileExportPreview } from './FileExportPreview';
 import { GrafanaExportDrawer } from './GrafanaExportDrawer';
-import { ExportFormats } from './providers';
+import { ExportFormats, ExportFormatsWithoutHCL } from './providers';
 interface GrafanaPoliciesPreviewProps {
-  exportFormat: ExportFormats;
+  exportFormat: ExportFormatsWithoutHCL | ExportFormats;
   onClose: () => void;
 }
 
@@ -38,7 +38,7 @@ interface GrafanaPoliciesExporterProps {
 }
 
 export const GrafanaPoliciesExporter = ({ onClose }: GrafanaPoliciesExporterProps) => {
-  const [activeTab, setActiveTab] = useState<ExportFormats>('yaml');
+  const [activeTab, setActiveTab] = useState<ExportFormatsWithoutHCL | ExportFormats>('yaml');
 
   return (
     <GrafanaExportDrawer activeTab={activeTab} onTabChange={setActiveTab} onClose={onClose}>
