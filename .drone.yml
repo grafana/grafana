@@ -588,7 +588,6 @@ steps:
   - yarn-install
   image: grafana/grafana-build:main
   name: rgm-package
-  pull: always
   volumes:
   - name: docker
     path: /var/run/docker.sock
@@ -723,7 +722,6 @@ steps:
   image: grafana/docker-puppeteer:1.1.0
   name: test-a11y-frontend
 - commands:
-  - docker run --privileged --rm tonistiigi/binfmt --install all
   - /src/grafana-build docker --package=$(cat packages.txt | grep tar.gz | grep -v
     docker | grep -v sha256) --ubuntu-base=ubuntu:22.04 --alpine-base=alpine:3.17.1
     --tag-format='{{ .version_base }}-{{ .buildID }}-{{ .arch }}' --ubuntu-tag-format='{{
@@ -733,7 +731,6 @@ steps:
   - rgm-package
   image: grafana/grafana-build:main
   name: rgm-build-docker
-  pull: always
   volumes:
   - name: docker
     path: /var/run/docker.sock
@@ -1726,7 +1723,6 @@ steps:
   - yarn-install
   image: grafana/grafana-build:main
   name: rgm-package
-  pull: always
   volumes:
   - name: docker
     path: /var/run/docker.sock
@@ -1882,7 +1878,6 @@ steps:
     repo:
     - grafana/grafana
 - commands:
-  - apk add --update bash
   - ./scripts/ci-frontend-metrics.sh | ./bin/build publish-metrics $${GRAFANA_MISC_STATS_API_KEY}
   depends_on:
   - test-a11y-frontend
@@ -1896,17 +1891,15 @@ steps:
     repo:
     - grafana/grafana
 - commands:
-  - docker run --privileged --rm tonistiigi/binfmt --install all
   - /src/grafana-build docker --package=$(cat packages.txt | grep tar.gz | grep -v
     docker | grep -v sha256) --ubuntu-base=ubuntu:22.04 --alpine-base=alpine:3.17.1
-    --tag-format='{{ .version_base }}-{{ .buildID }}-{{ .arch }}' --ubuntu-tag-format='{{
-    .version_base }}-{{ .buildID }}-ubuntu-{{ .arch }}' > docker.txt
+    --tag-format='{{ .version }}-{{ .arch }}' --ubuntu-tag-format='{{ .version }}-ubuntu-{{
+    .arch }}' > docker.txt
   - find ./dist -name '*docker*.tar.gz' -type f | xargs -n1 docker load -i
   depends_on:
   - rgm-package
   image: grafana/grafana-build:main
   name: rgm-build-docker
-  pull: always
   volumes:
   - name: docker
     path: /var/run/docker.sock
@@ -2950,7 +2943,6 @@ steps:
   failure: ignore
   image: grafana/grafana-build:main
   name: rgm-build
-  pull: always
   volumes:
   - name: docker
     path: /var/run/docker.sock
@@ -3009,7 +3001,6 @@ steps:
       from_secret: packages_gpg_public_key
   image: grafana/grafana-build:main
   name: rgm-build
-  pull: always
   volumes:
   - name: docker
     path: /var/run/docker.sock
@@ -3131,7 +3122,6 @@ steps:
       from_secret: packages_gpg_public_key
   image: grafana/grafana-build:main
   name: rgm-build
-  pull: always
   volumes:
   - name: docker
     path: /var/run/docker.sock
@@ -4173,6 +4163,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 949da38eb5870264a09e11ba9f82401c5ddf14666325502f915a8e9b5e2b857c
+hmac: f0447a5e08c336a03690b06002671248c5f2756167aa32a3eadd799d4e57b0f5
 
 ...
