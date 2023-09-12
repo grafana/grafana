@@ -11,11 +11,11 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	datafakes "github.com/grafana/grafana/pkg/services/datasources/fakes"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -53,8 +53,8 @@ func framesPassThroughService(t *testing.T, frames data.Frames) (data.Frames, er
 		cfg:         cfg,
 		dataService: me,
 		features:    &featuremgmt.FeatureManager{},
-		pCtxProvider: plugincontext.ProvideService(nil, &fakes.FakePluginStore{
-			PluginList: []plugins.PluginDTO{
+		pCtxProvider: plugincontext.ProvideService(nil, &pluginstore.FakePluginStore{
+			PluginList: []pluginstore.Plugin{
 				{JSONData: plugins.JSONData{ID: "test"}},
 			}},
 			&datafakes.FakeDataSourceService{}, nil),

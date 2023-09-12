@@ -26,7 +26,10 @@
   "browse-dashboards": {
     "action": {
       "cancel-button": "Cancel",
+      "cannot-move-folders": "Folders can not be moved",
       "delete-button": "Delete",
+      "delete-modal-invalid-text": "One or more folders contain library panels or alert rules. Delete these first in order to proceed.",
+      "delete-modal-invalid-title": "Cannot delete folder",
       "delete-modal-text": "This action will delete the following content:",
       "delete-modal-title": "Delete",
       "deleting": "Deleting...",
@@ -744,6 +747,17 @@
     "view-json": {
       "copy-button": "Copy to Clipboard"
     }
+  },
+  "share-playlist": {
+    "checkbox-description": "Panel heights will be adjusted to fit screen size",
+    "checkbox-label": "Autofit",
+    "copy-link-button": "Copy",
+    "link-url-label": "Link URL",
+    "mode": "Mode",
+    "mode-kiosk": "Kiosk",
+    "mode-normal": "Normal",
+    "mode-tv": "TV",
+    "title": "Share playlist"
   },
   "shared": {
     "preferences": {

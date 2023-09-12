@@ -26,7 +26,10 @@
   "browse-dashboards": {
     "action": {
       "cancel-button": "Cäŉčęľ",
+      "cannot-move-folders": "Főľđęřş čäŉ ŉőŧ þę mővęđ",
       "delete-button": "Đęľęŧę",
+      "delete-modal-invalid-text": "Øŉę őř mőřę ƒőľđęřş čőŉŧäįŉ ľįþřäřy päŉęľş őř äľęřŧ řūľęş. Đęľęŧę ŧĥęşę ƒįřşŧ įŉ őřđęř ŧő přőčęęđ.",
+      "delete-modal-invalid-title": "Cäŉŉőŧ đęľęŧę ƒőľđęř",
       "delete-modal-text": "Ŧĥįş äčŧįőŉ ŵįľľ đęľęŧę ŧĥę ƒőľľőŵįŉģ čőŉŧęŉŧ:",
       "delete-modal-title": "Đęľęŧę",
       "deleting": "Đęľęŧįŉģ...",
@@ -744,6 +747,17 @@
     "view-json": {
       "copy-button": "Cőpy ŧő Cľįpþőäřđ"
     }
+  },
+  "share-playlist": {
+    "checkbox-description": "Päŉęľ ĥęįģĥŧş ŵįľľ þę äđĵūşŧęđ ŧő ƒįŧ şčřęęŉ şįžę",
+    "checkbox-label": "Åūŧőƒįŧ",
+    "copy-link-button": "Cőpy",
+    "link-url-label": "Ŀįŉĸ ŮŖĿ",
+    "mode": "Mőđę",
+    "mode-kiosk": "Ķįőşĸ",
+    "mode-normal": "Ńőřmäľ",
+    "mode-tv": "ŦV",
+    "title": "Ŝĥäřę pľäyľįşŧ"
   },
   "shared": {
     "preferences": {

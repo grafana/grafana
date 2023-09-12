@@ -14,6 +14,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/log"
 )
 
 func TestClient_ExecuteMultisearch(t *testing.T) {
@@ -66,7 +67,7 @@ func TestClient_ExecuteMultisearch(t *testing.T) {
 			To:   to,
 		}
 
-		c, err := NewClient(context.Background(), &ds, timeRange)
+		c, err := NewClient(context.Background(), &ds, timeRange, log.New("test", "test"))
 		require.NoError(t, err)
 		require.NotNil(t, c)
 
@@ -188,7 +189,7 @@ func TestClient_Index(t *testing.T) {
 				To:   to,
 			}
 
-			c, err := NewClient(context.Background(), &ds, timeRange)
+			c, err := NewClient(context.Background(), &ds, timeRange, log.New("test", "test"))
 			require.NoError(t, err)
 			require.NotNil(t, c)
 

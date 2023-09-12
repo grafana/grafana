@@ -26,7 +26,10 @@
   "browse-dashboards": {
     "action": {
       "cancel-button": "",
+      "cannot-move-folders": "",
       "delete-button": "",
+      "delete-modal-invalid-text": "",
+      "delete-modal-invalid-title": "",
       "delete-modal-text": "",
       "delete-modal-title": "",
       "deleting": "",
@@ -739,6 +742,17 @@
     "view-json": {
       "copy-button": "复制到剪贴板"
     }
+  },
+  "share-playlist": {
+    "checkbox-description": "",
+    "checkbox-label": "",
+    "copy-link-button": "",
+    "link-url-label": "",
+    "mode": "",
+    "mode-kiosk": "",
+    "mode-normal": "",
+    "mode-tv": "",
+    "title": ""
   },
   "shared": {
     "preferences": {

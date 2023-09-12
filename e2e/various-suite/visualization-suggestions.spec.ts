@@ -1,4 +1,4 @@
-import { e2e } from '@grafana/e2e';
+import { e2e } from '../utils';
 
 e2e.scenario({
   describeName: 'Visualization suggestions',
@@ -11,14 +11,14 @@ e2e.scenario({
 
     // Try visualization suggestions
     e2e.components.PanelEditor.toggleVizPicker().click();
-    e2e().contains('Suggestions').click();
+    cy.contains('Suggestions').click();
     cy.wait(3000);
 
     // Verify we see suggestions
     e2e.components.VisualizationPreview.card('Line chart').should('be.visible');
 
     // Verify search works
-    e2e().get('[placeholder="Search for..."]').type('Table');
+    cy.get('[placeholder="Search for..."]').type('Table');
     // Should no longer see line chart
     e2e.components.VisualizationPreview.card('Line chart').should('not.exist');
 
