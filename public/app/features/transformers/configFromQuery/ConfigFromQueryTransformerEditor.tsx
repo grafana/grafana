@@ -96,11 +96,9 @@ export const configFromQueryTransformRegistryItem: TransformerRegistryItem<Confi
   description: configFromDataTransformer.description,
   state: PluginState.beta,
   categories: new Set([TransformerCategory.CalculateNewFields]),
-  // JEV: rebuild this help to a react component?
   help: getHelperContent(configFromDataTransformer.id),
 };
 
-// JEV: pass these styles???
 const getStyles = (theme: GrafanaTheme2) => ({
   matcherOptions: css`
     min-width: 404px;
