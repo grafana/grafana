@@ -42,9 +42,9 @@ export const PlaylistPage = () => {
       buttonLink="playlists/new"
       buttonTitle={t('playlist-page.empty.button', 'Create Playlist')}
       buttonDisabled={!contextSrv.isEditor}
-      proTip={t('playlist-page.empty.proTip', 'You can use playlists to cycle dashboards on TVs without user control')}
+      proTip={t('playlist-page.empty.pro-tip', 'You can use playlists to cycle dashboards on TVs without user control')}
       proTipLink="http://docs.grafana.org/reference/playlist/"
-      proTipLinkTitle={t('playlist-page.empty.proTipLinkTitle', 'Learn more')}
+      proTipLinkTitle={t('playlist-page.empty.pro-tip-link-title', 'Learn more')}
       proTipTarget="_blank"
     />
   );
@@ -59,7 +59,7 @@ export const PlaylistPage = () => {
             searchQuery={searchQuery}
             linkButton={
               contextSrv.isEditor
-                ? { title: t('playlist-page.action.title', 'New playlist'), href: '/playlists/new' }
+                ? { title: t('playlist-page.create-button.title', 'New playlist'), href: '/playlists/new' }
                 : undefined
             }
             setSearchQuery={setSearchQuery}
@@ -79,8 +79,8 @@ export const PlaylistPage = () => {
         {playlistToDelete && (
           <ConfirmModal
             title={playlistToDelete.name}
-            confirmText={t('playlist-page.confirmText', 'Delete')}
-            body={t('playlist-page.confirmBody', 'Are you sure you want to delete {{name}} playlist?', {
+            confirmText={t('playlist-page.delete-modal.confirm-text', 'Delete')}
+            body={t('playlist-page.delete-modal.body', 'Are you sure you want to delete {{name}} playlist?', {
               name: playlistToDelete.name,
             })}
             onConfirm={onDeletePlaylist}
