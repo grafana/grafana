@@ -588,6 +588,7 @@ steps:
   - yarn-install
   image: grafana/grafana-build:main
   name: rgm-package
+  pull: always
   volumes:
   - name: docker
     path: /var/run/docker.sock
@@ -731,6 +732,7 @@ steps:
   - rgm-package
   image: grafana/grafana-build:main
   name: rgm-build-docker
+  pull: always
   volumes:
   - name: docker
     path: /var/run/docker.sock
@@ -1723,6 +1725,7 @@ steps:
   - yarn-install
   image: grafana/grafana-build:main
   name: rgm-package
+  pull: always
   volumes:
   - name: docker
     path: /var/run/docker.sock
@@ -1901,6 +1904,7 @@ steps:
   - rgm-package
   image: grafana/grafana-build:main
   name: rgm-build-docker
+  pull: always
   volumes:
   - name: docker
     path: /var/run/docker.sock
@@ -2944,6 +2948,7 @@ steps:
   failure: ignore
   image: grafana/grafana-build:main
   name: rgm-build
+  pull: always
   volumes:
   - name: docker
     path: /var/run/docker.sock
@@ -3002,6 +3007,7 @@ steps:
       from_secret: packages_gpg_public_key
   image: grafana/grafana-build:main
   name: rgm-build
+  pull: always
   volumes:
   - name: docker
     path: /var/run/docker.sock
@@ -3123,6 +3129,7 @@ steps:
       from_secret: packages_gpg_public_key
   image: grafana/grafana-build:main
   name: rgm-build
+  pull: always
   volumes:
   - name: docker
     path: /var/run/docker.sock
@@ -4164,6 +4171,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 47c5f12ff99f8ca32b3620971712cd9abea7d42c6013fd1881a981d33224e82a
+hmac: 17aadee78c9a8bb6250346acb61477801d47b1591d8fd7b61d8d192b2d2ccd90
 
 ...
