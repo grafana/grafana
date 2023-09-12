@@ -1,5 +1,4 @@
 import { SortByFn } from '@grafana/ui';
-import { UserDTO } from 'app/types';
 
 /**
  * Create a function that sorts by a given key, with the following rules:
@@ -9,7 +8,7 @@ import { UserDTO } from 'app/types';
  * - Otherwise, sorts by string
  */
 export const createSortFn =
-  (key: keyof UserDTO): SortByFn<UserDTO> =>
+  <T extends object>(key: keyof T): SortByFn<T> =>
   (a, b) => {
     const aValue = a.original[key];
     const bValue = b.original[key];
@@ -25,5 +24,5 @@ export const createSortFn =
     } else if (typeof aValue === 'boolean' && typeof bValue === 'boolean') {
       return aValue === bValue ? 0 : aValue ? -1 : 1;
     }
-    return a.original.login.localeCompare(b.original.login);
+    return String(aValue).localeCompare(String(bValue));
   };

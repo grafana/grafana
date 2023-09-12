@@ -8,12 +8,12 @@ import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/core';
 import { OrgUser, OrgRole, StoreState } from 'app/types';
 
+import { OrgUsersTable } from '../admin/Users/OrgUsersTable';
 import InviteesTable from '../invites/InviteesTable';
 import { fetchInvitees } from '../invites/state/actions';
 import { selectInvitesMatchingQuery } from '../invites/state/selectors';
 
 import { UsersActionBar } from './UsersActionBar';
-import { UsersTable } from './UsersTable';
 import { loadUsers, removeUser, updateUser, changePage } from './state/actions';
 import { getUsers, getUsersSearchQuery } from './state/selectors';
 
@@ -84,7 +84,7 @@ export const UsersListPageUnconnected = ({
     } else {
       return (
         <VerticalGroup spacing="md" data-testid={selectors.container}>
-          <UsersTable
+          <OrgUsersTable
             users={users}
             orgId={contextSrv.user.orgId}
             onRoleChange={(role, user) => onRoleChange(role, user)}

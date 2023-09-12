@@ -3,7 +3,7 @@ import React, { useMemo } from 'react';
 import { Row } from 'react-table';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { InteractiveTable, CellProps, Tooltip, Icon, useStyles2 } from '@grafana/ui';
+import { InteractiveTable, CellProps, Tooltip, Icon, useStyles2, Tag } from '@grafana/ui';
 import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
 import { UserDTO } from 'app/types';
 
@@ -35,19 +35,19 @@ export const UsersTable = ({ users, showPaging, perPage }: UsersTableProps) => {
         id: 'login',
         header: 'Login',
         cell: UserCell,
-        sortType: createSortFn('login'),
+        sortType: createSortFn<UserDTO>('login'),
       },
       {
         id: 'email',
         header: 'Email',
         cell: UserCell,
-        sortType: createSortFn('email'),
+        sortType: createSortFn<UserDTO>('email'),
       },
       {
         id: 'name',
         header: 'Name',
         cell: UserCell,
-        sortType: createSortFn('name'),
+        sortType: createSortFn<UserDTO>('name'),
       },
       {
         id: 'orgs',
@@ -87,7 +87,7 @@ export const UsersTable = ({ users, showPaging, perPage }: UsersTableProps) => {
                   )}
                 </CellWrapper>
               ),
-              sortType: createSortFn('licensedRole'),
+              sortType: createSortFn<UserDTO>('licensedRole'),
             },
           ]
         : []),
@@ -109,7 +109,7 @@ export const UsersTable = ({ users, showPaging, perPage }: UsersTableProps) => {
             </>
           );
         },
-        sortType: createSortFn('lastSeenAt'),
+        sortType: createSortFn<UserDTO>('lastSeenAt'),
       },
       {
         id: 'authLabels',
@@ -121,10 +121,8 @@ export const UsersTable = ({ users, showPaging, perPage }: UsersTableProps) => {
       {
         id: 'isDisabled',
         header: 'Status',
-        cell: ({ cell: { value } }: Cell<'isDisabled'>) => (
-          <>{value && <span className="label label-tag label-tag--gray">Disabled</span>}</>
-        ),
-        sortType: createSortFn('isDisabled'),
+        cell: ({ cell: { value } }: Cell<'isDisabled'>) => <>{value && <Tag colorIndex={9} name={'Disabled'} />}</>,
+        sortType: createSortFn<UserDTO>('isDisabled'),
       },
     ],
     [showLicensedRole, styles]
