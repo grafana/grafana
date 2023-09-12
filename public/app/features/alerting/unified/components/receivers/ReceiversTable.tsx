@@ -362,6 +362,7 @@ export const ReceiversTable = ({ config, alertManagerName }: Props) => {
 
   return (
     <ReceiversSection
+      canReadSecrets={contextSrv.hasPermission(permissions.provisioning.readSecrets)}
       title="Contact points"
       description="Define where notifications are sent, for example, email or Slack."
       showButton={!isVanillaAM && contextSrv.hasPermission(permissions.create)}

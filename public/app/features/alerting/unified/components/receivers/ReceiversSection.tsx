@@ -1,10 +1,13 @@
 import { css, cx } from '@emotion/css';
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { useToggle } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
 import { Button, Dropdown, Icon, Menu, MenuItem, useStyles2 } from '@grafana/ui';
+
+import { GrafanaReceiversExporter } from '../export/GrafanaReceiversExporter';
 
 interface Props {
   title: string;
@@ -14,6 +17,7 @@ interface Props {
   className?: string;
   showButton?: boolean;
   exportLink?: string;
+  canReadSecrets?: boolean;
 }
 
 export const ReceiversSection = ({
@@ -25,10 +29,18 @@ export const ReceiversSection = ({
   children,
   showButton = true,
   exportLink,
+  canReadSecrets = false
 }: React.PropsWithChildren<Props>) => {
   const styles = useStyles2(getStyles);
   const showMore = Boolean(exportLink);
-  const newMenu = <Menu>{exportLink && <MenuItem url={exportLink} label="Export all" target="_blank" />}</Menu>;
+  const [showExportDrawer, toggleShowExportDrawer] = useToggle(false);
+
+  const newMenu = <Menu>{exportLink &&
+    <MenuItem
+      onClick={toggleShowExportDrawer}
+      label="Export all"
+    />}</Menu>;
+
   return (
     <Stack direction="column" gap={2}>
       <div className={cx(styles.heading, className)}>
@@ -55,6 +67,9 @@ export const ReceiversSection = ({
         </Stack>
       </div>
       {children}
+      {showExportDrawer && (
+        <GrafanaReceiversExporter decrypt={canReadSecrets.toString()} onClose={toggleShowExportDrawer} />
+      )}
     </Stack>
   );
 };
