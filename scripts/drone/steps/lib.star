@@ -633,8 +633,8 @@ def frontend_metrics_step(trigger = None):
         },
         "failure": "ignore",
         "commands": [
-            "apk add --update bash",
-            "./scripts/ci-frontend-metrics.sh | ./bin/build publish-metrics $${GRAFANA_MISC_STATS_API_KEY}",
+            "apk add --update bash grep",
+            "./scripts/ci-frontend-metrics.sh | ./bin/build publish-metrics $$GRAFANA_MISC_STATS_API_KEY",
         ],
     }
     if trigger:
