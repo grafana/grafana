@@ -248,6 +248,7 @@
     "@grafana/experimental": "1.7.0",
     "@grafana/faro-core": "1.1.2",
     "@grafana/faro-web-sdk": "1.1.2",
+    "@grafana/flamegraph": "workspace:*",
     "@grafana/google-sdk": "0.1.1",
     "@grafana/lezer-logql": "0.1.11",
     "@grafana/lezer-traceql": "0.0.5",

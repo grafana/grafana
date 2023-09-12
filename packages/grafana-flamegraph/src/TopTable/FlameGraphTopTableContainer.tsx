@@ -1,9 +1,16 @@
 import { css } from '@emotion/css';
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
-import { applyFieldOverrides, CoreApp, DataFrame, DataLinkClickEvent, Field, FieldType } from '@grafana/data';
-import { config, reportInteraction } from '@grafana/runtime';
+import {
+  applyFieldOverrides,
+  DataFrame,
+  DataLinkClickEvent,
+  Field,
+  FieldType,
+  GrafanaTheme2,
+  MappingType,
+} from '@grafana/data';
 import {
   IconButton,
   Table,
@@ -11,27 +18,62 @@ import {
   TableCustomCellOptions,
   TableFieldOptions,
   TableSortByFieldState,
-  useStyles2,
 } from '@grafana/ui';
 
-import { TOP_TABLE_COLUMN_WIDTH } from '../../constants';
 import { FlameGraphDataContainer } from '../FlameGraph/dataTransform';
+import { TOP_TABLE_COLUMN_WIDTH } from '../constants';
 import { TableData } from '../types';
 
 type Props = {
   data: FlameGraphDataContainer;
-  app: CoreApp;
   onSymbolClick: (symbol: string) => void;
   height?: number;
   search?: string;
   sandwichItem?: string;
   onSearch: (str: string) => void;
   onSandwich: (str?: string) => void;
+  onTableSort?: (sort: string) => void;
+  getTheme: () => GrafanaTheme2;
+  vertical?: boolean;
 };
 
 const FlameGraphTopTableContainer = React.memo(
-  ({ data, app, onSymbolClick, height, search, onSearch, sandwichItem, onSandwich }: Props) => {
-    const styles = useStyles2(getStyles);
+  ({
+    data,
+    onSymbolClick,
+    height,
+    search,
+    onSearch,
+    sandwichItem,
+    onSandwich,
+    onTableSort,
+    getTheme,
+    vertical,
+  }: Props) => {
+    const table = useMemo(() => {
+      // Group the data by label, we show only one row per label and sum the values
+      // TODO: should be by filename + funcName + linenumber?
+      let table: { [key: string]: TableData } = {};
+      for (let i = 0; i < data.data.length; i++) {
+        const value = data.getValue(i);
+        const valueRight = data.getValueRight(i);
+        const self = data.getSelf(i);
+        const label = data.getLabel(i);
+        table[label] = table[label] || {};
+        table[label].self = table[label].self ? table[label].self + self : self;
+        table[label].total = table[label].total ? table[label].total + value : value;
+        table[label].totalRight = table[label].totalRight ? table[label].totalRight + valueRight : valueRight;
+      }
+      return table;
+    }, [data]);
+
+    const rowHeight = 35;
+    // When we use normal layout we size the table to have the same height as the flamegraph to look good side by side.
+    // In vertical layout we don't need that so this is a bit arbitrary. We want some max limit
+    // so we don't show potentially thousands of rows at once which can hinder performance (the table is virtualized
+    // so with some max height it handles it fine)
+    const tableHeight = vertical ? Math.min(Object.keys(table).length * rowHeight, 800) : 0;
+    const styles = getStyles(tableHeight);
 
     const [sort, setSort] = useState<TableSortByFieldState[]>([{ displayName: 'Self', desc: true }]);
 
@@ -43,17 +85,23 @@ const FlameGraphTopTableContainer = React.memo(
               return null;
             }
 
-            const frame = buildTableDataFrame(data, width, onSymbolClick, onSearch, onSandwich, search, sandwichItem);
+            const frame = buildTableDataFrame(
+              data,
+              table,
+              width,
+              onSymbolClick,
+              onSearch,
+              onSandwich,
+              getTheme,
+              search,
+              sandwichItem
+            );
             return (
               <Table
                 initialSortBy={sort}
                 onSortByChange={(s) => {
                   if (s && s.length) {
-                    reportInteraction('grafana_flamegraph_table_sort_selected', {
-                      app,
-                      grafana_version: config.buildInfo.version,
-                      sort: s[0].displayName + '_' + (s[0].desc ? 'desc' : 'asc'),
-                    });
+                    onTableSort?.(s[0].displayName + '_' + (s[0].desc ? 'desc' : 'asc'));
                   }
                   setSort(s);
                 }}
@@ -73,27 +121,15 @@ FlameGraphTopTableContainer.displayName = 'FlameGraphTopTableContainer';
 
 function buildTableDataFrame(
   data: FlameGraphDataContainer,
+  table: { [key: string]: TableData },
   width: number,
   onSymbolClick: (str: string) => void,
   onSearch: (str: string) => void,
   onSandwich: (str?: string) => void,
+  getTheme: () => GrafanaTheme2,
   search?: string,
   sandwichItem?: string
 ): DataFrame {
-  // Group the data by label
-  // TODO: should be by filename + funcName + linenumber?
-  let table: { [key: string]: TableData } = {};
-  for (let i = 0; i < data.data.length; i++) {
-    const value = data.getValue(i);
-    const valueRight = data.getValueRight(i);
-    const self = data.getSelf(i);
-    const label = data.getLabel(i);
-    table[label] = table[label] || {};
-    table[label].self = table[label].self ? table[label].self + self : self;
-    table[label].total = table[label].total ? table[label].total + value : value;
-    table[label].totalRight = table[label].totalRight ? table[label].totalRight + valueRight : valueRight;
-  }
-
   const actionField: Field = createActionField(onSandwich, onSearch, search, sandwichItem);
 
   const symbolField: Field = {
@@ -124,6 +160,13 @@ function buildTableDataFrame(
     const baselineField = createNumberField('Baseline', 'percent');
     const comparisonField = createNumberField('Comparison', 'percent');
     const diffField = createNumberField('Diff', 'percent');
+    diffField.config.custom.cellOptions.type = TableCellDisplayMode.ColorText;
+    diffField.config.mappings = [
+      { type: MappingType.ValueToText, options: { [Infinity]: { text: 'new', color: 'red' } } },
+      { type: MappingType.ValueToText, options: { [-100]: { text: 'removed', color: 'green' } } },
+      { type: MappingType.RangeToText, options: { from: 0, to: Infinity, result: { color: 'red' } } },
+      { type: MappingType.RangeToText, options: { from: -Infinity, to: 0, result: { color: 'green' } } },
+    ];
 
     // For this we don't really consider sandwich view even though you can switch it on.
     const levels = data.getLevels();
@@ -145,9 +188,9 @@ function buildTableDataFrame(
 
       const diff = ((percentageRight - percentageLeft) / percentageLeft) * 100;
 
+      diffField.values.push(diff);
       baselineField.values.push(percentageLeft);
       comparisonField.values.push(percentageRight);
-      diffField.values.push(diff);
     }
 
     frame = {
@@ -175,18 +218,28 @@ function buildTableDataFrame(
       overrides: [],
     },
     replaceVariables: (value: string) => value,
-    theme: config.theme2,
+    theme: getTheme(),
   });
 
   return dataFrames[0];
 }
 
 function createNumberField(name: string, unit?: string): Field {
+  const tableFieldOptions: TableFieldOptions = {
+    width: TOP_TABLE_COLUMN_WIDTH,
+    align: 'auto',
+    inspect: false,
+    cellOptions: { type: TableCellDisplayMode.Auto },
+  };
+
   return {
     type: FieldType.number,
     name,
     values: [],
-    config: { unit, custom: { width: TOP_TABLE_COLUMN_WIDTH } },
+    config: {
+      unit,
+      custom: tableFieldOptions,
+    },
   };
 }
 
@@ -243,7 +296,7 @@ type ActionCellProps = {
 };
 
 function ActionCell(props: ActionCellProps) {
-  const styles = useStyles2(getStyles);
+  const styles = getStylesActionCell();
   const symbol = props.frame.fields.find((f: Field) => f.name === 'Symbol')?.values[props.rowIndex];
   const isSearched = props.search === symbol;
   const isSandwiched = props.sandwichItem === symbol;
@@ -274,15 +327,24 @@ function ActionCell(props: ActionCellProps) {
   );
 }
 
-const getStyles = () => {
+const getStyles = (height: number) => {
   return {
     topTableContainer: css`
       label: topTableContainer;
       flex-grow: 1;
       flex-basis: 50%;
       overflow: hidden;
+      ${height
+        ? css`
+            min-height: ${height}px;
+          `
+        : ''}
     `,
+  };
+};
 
+const getStylesActionCell = () => {
+  return {
     actionCellWrapper: css`
       label: actionCellWrapper;
       display: flex;
