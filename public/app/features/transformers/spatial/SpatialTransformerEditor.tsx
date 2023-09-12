@@ -15,6 +15,8 @@ import { FrameGeometrySourceMode } from '@grafana/schema';
 import { useTheme2 } from '@grafana/ui';
 import { addLocationFields } from 'app/features/geo/editor/locationEditor';
 
+import { getHelperContent } from '../helpers/getHelperContent';
+
 import { SpatialCalculation, SpatialOperation, SpatialAction, SpatialTransformOptions } from './models.gen';
 import { getDefaultOptions, getTransformerOptionPane } from './optionsHelper';
 import { isLineBuilderOption, spatialTransformer } from './spatialTransformer';
@@ -165,4 +167,5 @@ export const spatialTransformRegistryItem: TransformerRegistryItem<SpatialTransf
   description: spatialTransformer.description,
   state: PluginState.alpha,
   categories: new Set([TransformerCategory.PerformSpatialOperations]),
+  help: getHelperContent(DataTransformerID.spatial),
 };
