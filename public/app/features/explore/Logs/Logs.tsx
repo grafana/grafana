@@ -721,6 +721,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
                   scrollIntoView={this.scrollIntoView}
                   isFilterLabelActive={this.props.isFilterLabelActive}
                   containerRendered={!!this.state.logsContainer}
+                  containContent={true}
                 />
               </div>
             )}

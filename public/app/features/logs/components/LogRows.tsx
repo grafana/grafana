@@ -1,3 +1,4 @@
+import { cx } from '@emotion/css';
 import memoizeOne from 'memoize-one';
 import React, { PureComponent } from 'react';
 
@@ -53,6 +54,7 @@ export interface Props extends Themeable2 {
   isFilterLabelActive?: (key: string, value: string) => Promise<boolean>;
   pinnedRowId?: string;
   containerRendered?: boolean;
+  containContent?: boolean;
 }
 
 interface State {
@@ -128,7 +130,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
     const keyMaker = new UniqueKeyMaker();
 
     return (
-      <table className={styles.logsRowsTable}>
+      <table className={cx(styles.logsRowsTable, this.props.containContent ? styles.logsRowsTableContain : '')}>
         <tbody>
           {hasData &&
             firstRows.map((row) => (

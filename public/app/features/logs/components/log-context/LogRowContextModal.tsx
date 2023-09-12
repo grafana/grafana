@@ -531,6 +531,7 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
                   displayedFields={displayedFields}
                   onClickShowField={showField}
                   onClickHideField={hideField}
+                  containContent={true}
                 />
               </td>
             </tr>

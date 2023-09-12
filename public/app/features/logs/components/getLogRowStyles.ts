@@ -72,8 +72,10 @@ export const getLogRowStyles = memoizeOne((theme: GrafanaTheme2) => {
       font-family: ${theme.typography.fontFamilyMonospace};
       font-size: ${theme.typography.bodySmall.fontSize};
       width: 100%;
-      contain: strict;
       ${!scrollableLogsContainer && `margin-bottom: ${theme.spacing(2.25)};`}
+    `,
+    logsRowsTableContain: css`
+      contain: strict;
     `,
     highlightBackground: css`
       background-color: ${tinycolor(theme.colors.info.transparent).setAlpha(0.25).toString()};
