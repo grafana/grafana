@@ -23,10 +23,9 @@ export const TransformationEditorHelperModal = ({
 
   // Some help content is rendered more suitably as markdown - small illustrative tables, for example.
   // But some is more suitably handled as jsx. The help content will never be both.
-  // This quick check is to determine which it is.
+  // This will determine which it is.
   // If it's a string, it's markdown. If it's not, it's jsx.
-  const markdown = typeof help === 'string' ? help : undefined;
-  const jsx = typeof help !== 'string' ? help : undefined;
+  const { markdown, jsx } = determineContentDisplay(help);
 
   // console.log(help, 'help');
 
@@ -45,3 +44,11 @@ export const TransformationEditorHelperModal = ({
     </Modal>
   );
 };
+
+// JEV: why undefined?
+function determineContentDisplay(help: string | JSX.Element | undefined) {
+  return {
+    markdown: typeof help === 'string' ? help : undefined,
+    jsx: typeof help !== 'string' ? help : undefined,
+  };
+}
