@@ -41,7 +41,6 @@ def test_backend(trigger, ver_mode):
 
     steps += [
         identify_runner_step(),
-        compile_build_cmd(),
         verify_step,
         verify_jsonnet_step,
         wire_install_step(),
