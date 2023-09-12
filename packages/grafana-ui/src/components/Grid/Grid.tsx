@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import React, { useCallback } from 'react';
 
-import { ThemeSpacingTokens } from '@grafana/data';
+import { GrafanaTheme2, ThemeSpacingTokens } from '@grafana/data';
 
 import { useStyles2 } from '../../themes';
 
@@ -47,8 +47,9 @@ export const Grid = ({
 }: GridProps) => {
   const styles = useStyles2(
     useCallback(
-      () =>
+      (theme) =>
         getGridStyles(
+          theme,
           display,
           gap,
           columnGap,
@@ -69,6 +70,7 @@ export const Grid = ({
 Grid.displayName = 'Grid';
 
 const getGridStyles = (
+  theme: GrafanaTheme2,
   display: 'grid' | 'inline-grid',
   gap?: ThemeSpacingTokens,
   columnGap?: ThemeSpacingTokens,
@@ -83,9 +85,9 @@ const getGridStyles = (
   return {
     grid: css({
       display,
-      gap: gap,
-      columnGap: columnGap,
-      rowGap: rowGap,
+      gap: gap ? theme.spacing(gap) : undefined,
+      columnGap: columnGap ? theme.spacing(columnGap) : undefined,
+      rowGap: rowGap ? theme.spacing(rowGap) : undefined,
       gridTemplateColumns: templateColumns,
       gridTemplateRows: templateRows,
       justifyContent: 'stretch',
