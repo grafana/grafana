@@ -266,6 +266,7 @@ func Test_executeTimeSeriesQuery_getCWClient_is_called_once_per_region_and_GetMe
 
 type queryDimensions struct {
 	InstanceID []string `json:"InstanceId,omitempty"`
+	Resource   []string `json:"Resource,omitempty"`
 }
 
 type queryParameters struct {
@@ -293,6 +294,7 @@ func newTestQuery(t testing.TB, p queryParameters) json.RawMessage {
 		MetricName       string                     `json:"metricName"`
 		Dimensions       struct {
 			InstanceID []string `json:"InstanceId,omitempty"`
+			Resource   []string `json:"Resource,omitempty"`
 		} `json:"dimensions"`
 		Expression string  `json:"expression"`
 		Region     string  `json:"region"`
@@ -415,7 +417,10 @@ func Test_QueryData_response_data_frame_name_is_always_response_label(t *testing
 	t.Cleanup(func() {
 		NewCWClient = origNewCWClient
 	})
-	var api mocks.MetricsAPI
+
+	api := mocks.MetricsAPI{Metrics: []*cloudwatch.Metric{
+		{MetricName: aws.String(""), Dimensions: []*cloudwatch.Dimension{{Name: aws.String("InstanceId"), Value: aws.String("i-00645d91ed77d87ac")}}},
+	}}
 
 	NewCWClient = func(sess *session.Session) cloudwatchiface.CloudWatchAPI {
 		return &api
@@ -501,9 +506,9 @@ func Test_QueryData_response_data_frame_name_is_always_response_label(t *testing
 
 	// where query is inferred search expression and not multivalued dimension expression
 	testCasesReturningLabel := map[string]queryParameters{
-		"with specific dimensions, matchExact false": {Dimensions: queryDimensions{[]string{"some-instance"}}, MatchExact: false},
-		"with wildcard dimensions, matchExact false": {Dimensions: queryDimensions{[]string{"*"}}, MatchExact: false},
-		"with wildcard dimensions, matchExact true":  {Dimensions: queryDimensions{[]string{"*"}}, MatchExact: true},
+		"with specific dimensions, matchExact false": {Dimensions: queryDimensions{InstanceID: []string{"some-instance"}}, MatchExact: false},
+		"with wildcard dimensions, matchExact false": {Dimensions: queryDimensions{InstanceID: []string{"*"}}, MatchExact: false},
+		"with wildcard dimensions, matchExact true":  {Dimensions: queryDimensions{InstanceID: []string{"*"}}, MatchExact: true},
 		"no dimension, matchExact false":             {Dimensions: queryDimensions{}, MatchExact: false},
 	}
 	for name, parameters := range testCasesReturningLabel {
@@ -529,7 +534,7 @@ func Test_QueryData_response_data_frame_name_is_always_response_label(t *testing
 	// complementary test cases to above
 	testCasesReturningMetricStat := map[string]queryParameters{
 		"with specific dimensions, matchExact true": {
-			Dimensions: queryDimensions{[]string{"some-instance"}},
+			Dimensions: queryDimensions{InstanceID: []string{"some-instance"}},
 			MatchExact: true,
 			MetricName: "CPUUtilization",
 			Statistic:  "Maximum",
@@ -541,13 +546,13 @@ func Test_QueryData_response_data_frame_name_is_always_response_label(t *testing
 			Statistic:  "Maximum",
 		},
 		"multivalued dimensions, matchExact true": {
-			Dimensions: queryDimensions{[]string{"some-instance", "another-instance"}},
+			Dimensions: queryDimensions{InstanceID: []string{"some-instance", "another-instance"}},
 			MatchExact: true,
 			MetricName: "CPUUtilization",
 			Statistic:  "Maximum",
 		},
 		"multivalued dimensions, matchExact false": {
-			Dimensions: queryDimensions{[]string{"some-instance", "another-instance"}},
+			Dimensions: queryDimensions{InstanceID: []string{"some-instance", "another-instance"}},
 			MatchExact: false,
 			MetricName: "CPUUtilization",
 			Statistic:  "Maximum",

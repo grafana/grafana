@@ -52,10 +52,32 @@ func chunkSlice(slice []*cloudwatch.Metric, chunkSize int) [][]*cloudwatch.Metri
 type MetricsAPI struct {
 	cloudwatchiface.CloudWatchAPI
 	mock.Mock
+
+	Metrics        []*cloudwatch.Metric
+	OwningAccounts []*string
+	MetricsPerPage int
 }
 
 func (m *MetricsAPI) GetMetricDataWithContext(ctx aws.Context, input *cloudwatch.GetMetricDataInput, opts ...request.Option) (*cloudwatch.GetMetricDataOutput, error) {
 	args := m.Called(ctx, input, opts)
 
 	return args.Get(0).(*cloudwatch.GetMetricDataOutput), args.Error(1)
+}
+
+func (c *MetricsAPI) ListMetricsPages(input *cloudwatch.ListMetricsInput, fn func(*cloudwatch.ListMetricsOutput, bool) bool) error {
+	if c.MetricsPerPage == 0 {
+		c.MetricsPerPage = 1000
+	}
+	chunks := chunkSlice(c.Metrics, c.MetricsPerPage)
+
+	for i, metrics := range chunks {
+		response := fn(&cloudwatch.ListMetricsOutput{
+			Metrics:        metrics,
+			OwningAccounts: c.OwningAccounts,
+		}, i+1 == len(chunks))
+		if !response {
+			break
+		}
+	}
+	return nil
 }
