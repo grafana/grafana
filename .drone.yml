@@ -17,7 +17,7 @@ services: []
 steps:
 - commands:
   - echo $DRONE_RUNNER_NAME
-  - docker rmi grafana/grafana-build:main ? 0
+  - docker rmi grafana/grafana-build:main || 0
   image: docker:latest
   name: identify-runner
   volumes:
@@ -71,7 +71,7 @@ services: []
 steps:
 - commands:
   - echo $DRONE_RUNNER_NAME
-  - docker rmi grafana/grafana-build:main ? 0
+  - docker rmi grafana/grafana-build:main || 0
   image: docker:latest
   name: identify-runner
   volumes:
@@ -125,7 +125,7 @@ services: []
 steps:
 - commands:
   - echo $DRONE_RUNNER_NAME
-  - docker rmi grafana/grafana-build:main ? 0
+  - docker rmi grafana/grafana-build:main || 0
   image: docker:latest
   name: identify-runner
   volumes:
@@ -229,7 +229,7 @@ steps:
   name: clone-enterprise
 - commands:
   - echo $DRONE_RUNNER_NAME
-  - docker rmi grafana/grafana-build:main ? 0
+  - docker rmi grafana/grafana-build:main || 0
   image: docker:latest
   name: identify-runner
   volumes:
@@ -322,7 +322,7 @@ steps:
   name: clone-enterprise
 - commands:
   - echo $DRONE_RUNNER_NAME
-  - docker rmi grafana/grafana-build:main ? 0
+  - docker rmi grafana/grafana-build:main || 0
   image: docker:latest
   name: identify-runner
   volumes:
@@ -410,7 +410,7 @@ services: []
 steps:
 - commands:
   - echo $DRONE_RUNNER_NAME
-  - docker rmi grafana/grafana-build:main ? 0
+  - docker rmi grafana/grafana-build:main || 0
   image: docker:latest
   name: identify-runner
   volumes:
@@ -504,7 +504,7 @@ services: []
 steps:
 - commands:
   - echo $DRONE_RUNNER_NAME
-  - docker rmi grafana/grafana-build:main ? 0
+  - docker rmi grafana/grafana-build:main || 0
   image: docker:latest
   name: identify-runner
   volumes:
@@ -892,7 +892,7 @@ steps:
   name: compile-build-cmd
 - commands:
   - echo $DRONE_RUNNER_NAME
-  - docker rmi grafana/grafana-build:main ? 0
+  - docker rmi grafana/grafana-build:main || 0
   image: docker:latest
   name: identify-runner
   volumes:
@@ -1065,7 +1065,7 @@ services: []
 steps:
 - commands:
   - echo $DRONE_RUNNER_NAME
-  - docker rmi grafana/grafana-build:main ? 0
+  - docker rmi grafana/grafana-build:main || 0
   image: docker:latest
   name: identify-runner
   volumes:
@@ -1354,7 +1354,7 @@ services: []
 steps:
 - commands:
   - echo $DRONE_RUNNER_NAME
-  - docker rmi grafana/grafana-build:main ? 0
+  - docker rmi grafana/grafana-build:main || 0
   image: docker:latest
   name: identify-runner
   volumes:
@@ -1430,7 +1430,7 @@ services: []
 steps:
 - commands:
   - echo $DRONE_RUNNER_NAME
-  - docker rmi grafana/grafana-build:main ? 0
+  - docker rmi grafana/grafana-build:main || 0
   image: docker:latest
   name: identify-runner
   volumes:
@@ -1491,7 +1491,7 @@ services: []
 steps:
 - commands:
   - echo $DRONE_RUNNER_NAME
-  - docker rmi grafana/grafana-build:main ? 0
+  - docker rmi grafana/grafana-build:main || 0
   image: docker:latest
   name: identify-runner
   volumes:
@@ -1562,7 +1562,7 @@ services: []
 steps:
 - commands:
   - echo $DRONE_RUNNER_NAME
-  - docker rmi grafana/grafana-build:main ? 0
+  - docker rmi grafana/grafana-build:main || 0
   image: docker:latest
   name: identify-runner
   volumes:
@@ -1645,7 +1645,7 @@ services: []
 steps:
 - commands:
   - echo $DRONE_RUNNER_NAME
-  - docker rmi grafana/grafana-build:main ? 0
+  - docker rmi grafana/grafana-build:main || 0
   image: docker:latest
   name: identify-runner
   volumes:
@@ -1718,7 +1718,7 @@ services: []
 steps:
 - commands:
   - echo $DRONE_RUNNER_NAME
-  - docker rmi grafana/grafana-build:main ? 0
+  - docker rmi grafana/grafana-build:main || 0
   image: docker:latest
   name: identify-runner
   volumes:
@@ -2158,7 +2158,7 @@ steps:
   name: compile-build-cmd
 - commands:
   - echo $DRONE_RUNNER_NAME
-  - docker rmi grafana/grafana-build:main ? 0
+  - docker rmi grafana/grafana-build:main || 0
   image: docker:latest
   name: identify-runner
   volumes:
@@ -2490,7 +2490,7 @@ services: []
 steps:
 - commands:
   - echo $DRONE_RUNNER_NAME
-  - docker rmi grafana/grafana-build:main ? 0
+  - docker rmi grafana/grafana-build:main || 0
   image: docker:latest
   name: identify-runner
   volumes:
@@ -2866,7 +2866,7 @@ services: []
 steps:
 - commands:
   - echo $DRONE_RUNNER_NAME
-  - docker rmi grafana/grafana-build:main ? 0
+  - docker rmi grafana/grafana-build:main || 0
   image: docker:latest
   name: identify-runner
   volumes:
@@ -2925,7 +2925,7 @@ services: []
 steps:
 - commands:
   - echo $DRONE_RUNNER_NAME
-  - docker rmi grafana/grafana-build:main ? 0
+  - docker rmi grafana/grafana-build:main || 0
   image: docker:latest
   name: identify-runner
   volumes:
@@ -3419,7 +3419,7 @@ steps:
   name: grabpl
 - commands:
   - echo $DRONE_RUNNER_NAME
-  - docker rmi grafana/grafana-build:main ? 0
+  - docker rmi grafana/grafana-build:main || 0
   image: docker:latest
   name: identify-runner
   volumes:
@@ -4255,6 +4255,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 400fe91c9cb038d62cf2b9646d21b444a0aa6fb3ad94dac60894cbe57c8d3da1
+hmac: 81f2ed9683a22cd7a1cc69e30639880212e2a5b7ff82e4b497754a159aced370
 
 ...

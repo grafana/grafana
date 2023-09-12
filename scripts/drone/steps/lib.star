@@ -59,7 +59,7 @@ def identify_runner_step():
         "image": images["docker"],
         "commands": [
             "echo $DRONE_RUNNER_NAME",
-            "docker rmi grafana/grafana-build:main",
+            "docker rmi grafana/grafana-build:main || 0",
         ],
         "volumes": [{"name": "docker", "path": "/var/run/docker.sock"}],
     }
