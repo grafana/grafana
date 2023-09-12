@@ -1177,7 +1177,6 @@ func TestUpdatePublicDashboard(t *testing.T) {
 		assert.True(t, ok)
 		assert.Equal(t, "publicdashboards.dashboardNotFound", grafanaErr.MessageID)
 		assert.Empty(t, updatedPubdash)
-
 	})
 
 	trueBooleanField := true
