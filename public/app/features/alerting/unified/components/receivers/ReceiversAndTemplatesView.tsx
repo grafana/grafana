@@ -3,8 +3,8 @@ import React from 'react';
 import { Stack } from '@grafana/experimental';
 import { Alert, LinkButton } from '@grafana/ui';
 import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
-import { AccessControlAction } from 'app/types';
 
+import { AlertmanagerAction } from '../../hooks/useAbilities';
 import { GRAFANA_RULES_SOURCE_NAME, isVanillaPrometheusAlertManagerDataSource } from '../../utils/datasource';
 import { makeAMLink } from '../../utils/misc';
 import { Authorize } from '../Authorize';
@@ -26,7 +26,7 @@ export const ReceiversAndTemplatesView = ({ config, alertManagerName }: Props) =
       <ReceiversTable config={config} alertManagerName={alertManagerName} />
       {!isVanillaAM && <TemplatesTable config={config} alertManagerName={alertManagerName} />}
       {isCloud && (
-        <Authorize actions={[AccessControlAction.AlertingNotificationsExternalWrite]}>
+        <Authorize actions={[AlertmanagerAction.UpdateExternalConfiguration]}>
           <Alert severity="info" title="Global config for contact points">
             <p>
               For each external Alertmanager you can define global settings, like server addresses, usernames and
