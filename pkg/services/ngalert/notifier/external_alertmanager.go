@@ -32,36 +32,37 @@ type externalAlertmanager struct {
 	tenantID      string
 	orgID         int64
 	amClient      *amclient.AlertmanagerAPI
+	httpClient    *http.Client
 	defaultConfig string
 }
 
 type ExternalAlertmanagerConfig struct {
 	URL               string
-	BasicAuthPassword string
 	TenantID          string
+	BasicAuthPassword string
 	DefaultConfig     string
 }
 
 func newExternalAlertmanager(cfg ExternalAlertmanagerConfig, orgID int64) (*externalAlertmanager, error) {
-	l := log.New("ngalert.notifier.external.alertmanager")
 	client := http.Client{
 		Transport: &roundTripper{
 			tenantID:          cfg.TenantID,
-			next:              http.DefaultTransport,
 			basicAuthPassword: cfg.BasicAuthPassword,
+			next:              http.DefaultTransport,
 		},
 	}
+
 	u, err := url.Parse(cfg.URL)
 	if err != nil {
 		return nil, err
 	}
 
 	transport := httptransport.NewWithClient(u.Host, amclient.DefaultBasePath, []string{u.Scheme}, &client)
-	c := amclient.New(transport, nil)
 
 	return &externalAlertmanager{
-		amClient:      c,
-		log:           l,
+		amClient:      amclient.New(transport, nil),
+		httpClient:    &client,
+		log:           log.New("ngalert.notifier.external.alertmanager"),
 		url:           cfg.URL,
 		tenantID:      cfg.TenantID,
 		orgID:         orgID,
@@ -70,23 +71,17 @@ func newExternalAlertmanager(cfg ExternalAlertmanagerConfig, orgID int64) (*exte
 }
 
 func (am *externalAlertmanager) SaveAndApplyConfig(ctx context.Context, config *apimodels.PostableUserConfig) error {
-	// TODO(santiago): do we really need type assertion?
-	transport, ok := am.amClient.Transport.(*httptransport.Runtime)
-	if !ok {
-		return fmt.Errorf("transport is not of type *httptransport.Runtime, type: %T", am.amClient.Transport)
-	}
-
 	data, err := yaml.Marshal(config)
 	if err != nil {
 		return err
 	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, transport.Host, bytes.NewReader(data))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, am.url, bytes.NewReader(data))
 	if err != nil {
 		return fmt.Errorf("error creating request: %v", err)
 	}
 
-	res, err := transport.Transport.RoundTrip(req)
+	res, err := am.httpClient.Do(req)
 	if err != nil {
 		return err
 	}
@@ -109,7 +104,6 @@ func (am *externalAlertmanager) SaveAndApplyConfig(ctx context.Context, config *
 	if res.StatusCode != http.StatusCreated {
 		return fmt.Errorf("setting config failed with status code %d and error %v", res.StatusCode, string(resBody))
 	}
-
 	return nil
 }
 

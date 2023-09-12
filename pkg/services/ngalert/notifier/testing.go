@@ -5,14 +5,20 @@ import (
 	"crypto/md5"
 	"errors"
 	"fmt"
+	"io"
+	"net/http"
+	"net/http/httptest"
 	"strings"
 	"sync"
 	"testing"
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/kvstore"
+	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	"github.com/stretchr/testify/require"
+	"gopkg.in/yaml.v3"
 
 	alertingImages "github.com/grafana/alerting/images"
 )
@@ -293,4 +299,54 @@ type fakeState struct {
 
 func (fs *fakeState) MarshalBinary() ([]byte, error) {
 	return []byte(fs.data), nil
+}
+
+type FakeExternalAlertmanager struct {
+	t        *testing.T
+	mtx      sync.Mutex
+	tenantID string
+	password string
+	Server   *httptest.Server
+
+	// TODO: change to Cloud AM config once we support Grafana AM config there.
+	config definitions.PostableUserConfig
+}
+
+func NewFakeExternalAlertmanager(t *testing.T, tenantID, password string) *FakeExternalAlertmanager {
+	t.Helper()
+
+	am := &FakeExternalAlertmanager{
+		t:        t,
+		config:   definitions.PostableUserConfig{},
+		tenantID: tenantID,
+		password: password,
+	}
+	am.Server = httptest.NewServer(http.HandlerFunc(am.Handler()))
+
+	return am
+}
+
+func (am *FakeExternalAlertmanager) Handler() func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		username, password, ok := r.BasicAuth()
+		require.True(am.t, ok)
+		require.Equal(am.t, am.tenantID, username)
+		require.Equal(am.t, am.password, password)
+		require.Equal(am.t, am.tenantID, r.Header.Get("X-Scope-OrgID"))
+
+		b, err := io.ReadAll(r.Body)
+		require.NoError(am.t, err)
+
+		var config definitions.PostableUserConfig
+		require.NoError(am.t, yaml.Unmarshal(b, &config))
+		am.mtx.Lock()
+		am.config = config
+		am.mtx.Unlock()
+
+		w.WriteHeader(http.StatusCreated)
+	}
+}
+
+func (am *FakeExternalAlertmanager) Close() {
+	am.Server.Close()
 }
