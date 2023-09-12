@@ -16,7 +16,7 @@ const grafanaIdHeaderName = "X-Grafana-Id"
 // NewGrafanaIDMiddleware creates a new plugins.ClientMiddleware that will
 // set OAuth token headers on outgoing plugins.Client requests if the
 // datasource has enabled Forward Grafana ID.
-func NewGrafanaIDMiddleware(signer auth.IDService) plugins.ClientMiddleware {
+func NewGrafanaIDMiddleware(signer auth.IDSignerService) plugins.ClientMiddleware {
 	return plugins.ClientMiddlewareFunc(func(next plugins.Client) plugins.Client {
 		return &GrafanaIDMiddleware{
 			signer: signer,
@@ -26,7 +26,7 @@ func NewGrafanaIDMiddleware(signer auth.IDService) plugins.ClientMiddleware {
 }
 
 type GrafanaIDMiddleware struct {
-	signer auth.IDService
+	signer auth.IDSignerService
 	next   plugins.Client
 }
 

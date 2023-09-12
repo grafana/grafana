@@ -10,7 +10,7 @@ import (
 
 const datasourceKey = "grafanaId"
 
-type IDService interface {
+type IDSignerService interface {
 	// SignIdentity will create a new id token for provided identity
 	SignIdentity(ctx context.Context, id identity.Requester, req *http.Request) (string, error)
 }

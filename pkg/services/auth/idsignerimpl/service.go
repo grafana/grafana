@@ -20,7 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
-var _ auth.IDService = new(Service)
+var _ auth.IDSignerService = new(Service)
 
 const cacheKeyPrefix = "assertid"
 
@@ -38,7 +38,7 @@ type Service struct {
 	teams             team.Service
 }
 
-// ProvideIDSigningService returns a new instance of the auth.IDService.
+// ProvideIDSigningService returns a new instance of the auth.IDSignerService.
 func ProvideIDSigningService(
 	remoteCache remotecache.CacheStorage, cfg *setting.Cfg,
 	signingKeyService signingkeys.Service, teams team.Service,

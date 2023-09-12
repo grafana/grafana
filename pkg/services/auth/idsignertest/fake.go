@@ -8,7 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 )
 
-var _ auth.IDService = new(FakeService)
+var _ auth.IDSignerService = new(FakeService)
 
 type FakeService struct {
 	ExpectedToken string

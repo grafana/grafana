@@ -41,7 +41,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/annotations/annotationsimpl"
 	"github.com/grafana/grafana/pkg/services/apikey/apikeyimpl"
-	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/auth/idsignerimpl"
 	"github.com/grafana/grafana/pkg/services/auth/jwt"
 	"github.com/grafana/grafana/pkg/services/authn/authnimpl"
@@ -220,7 +219,6 @@ var wireBasicSet = wire.NewSet(
 	authinfodatabase.ProvideAuthInfoStore,
 	datasourceproxy.ProvideService,
 	idsignerimpl.ProvideIDSigningService,
-	wire.Bind(new(auth.IDService), new(*idsignerimpl.Service)),
 	search.ProvideService,
 	searchV2.ProvideService,
 	searchV2.ProvideSearchHTTPService,

@@ -42,7 +42,7 @@ type DataSourceProxy struct {
 	cfg                *setting.Cfg
 	clientProvider     httpclient.Provider
 	oAuthTokenService  oauthtoken.OAuthTokenService
-	idSigner           auth.IDService
+	idSigner           auth.IDSignerService
 	dataSourcesService datasources.DataSourceService
 	tracer             tracing.Tracer
 }
@@ -55,7 +55,7 @@ type httpClient interface {
 func NewDataSourceProxy(ds *datasources.DataSource, pluginRoutes []*plugins.Route, ctx *contextmodel.ReqContext,
 	proxyPath string, cfg *setting.Cfg, clientProvider httpclient.Provider,
 	oAuthTokenService oauthtoken.OAuthTokenService, dsService datasources.DataSourceService,
-	tracer tracing.Tracer) (*DataSourceProxy, error) {
+	tracer tracing.Tracer, idsigner auth.IDSignerService) (*DataSourceProxy, error) {
 	targetURL, err := datasource.ValidateURL(ds.Type, ds.URL)
 	if err != nil {
 		return nil, err
@@ -72,6 +72,7 @@ func NewDataSourceProxy(ds *datasources.DataSource, pluginRoutes []*plugins.Rout
 		oAuthTokenService:  oAuthTokenService,
 		dataSourcesService: dsService,
 		tracer:             tracer,
+		idSigner:           idsigner,
 	}, nil
 }
 
