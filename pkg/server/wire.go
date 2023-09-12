@@ -8,6 +8,7 @@ package server
 
 import (
 	"github.com/google/wire"
+
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 
 	"github.com/grafana/grafana/pkg/api"
@@ -39,6 +40,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/annotations/annotationsimpl"
+	"github.com/grafana/grafana/pkg/services/anonymous/anonimpl/anonstore"
 	"github.com/grafana/grafana/pkg/services/apikey/apikeyimpl"
 	"github.com/grafana/grafana/pkg/services/auth/jwt"
 	"github.com/grafana/grafana/pkg/services/authn/authnimpl"
@@ -351,6 +353,8 @@ var wireBasicSet = wire.NewSet(
 	authnimpl.ProvideAuthnService,
 	supportbundlesimpl.ProvideService,
 	oasimpl.ProvideService,
+	anonstore.ProvideAnonDBStore,
+	wire.Bind(new(anonstore.AnonStore), new(*anonstore.AnonDBStore)),
 	wire.Bind(new(oauthserver.OAuth2Server), new(*oasimpl.OAuth2ServiceImpl)),
 	loggermw.Provide,
 	signingkeysimpl.ProvideEmbeddedSigningKeysService,

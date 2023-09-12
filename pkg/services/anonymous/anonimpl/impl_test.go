@@ -2,7 +2,6 @@ package anonimpl
 
 import (
 	"context"
-	"encoding/json"
 	"net/http"
 	"testing"
 	"time"
@@ -10,9 +9,10 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/infra/remotecache"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/services/anonymous"
+	"github.com/grafana/grafana/pkg/services/anonymous/anonimpl/anonstore"
 )
 
 func TestIntegrationDeviceService_tag(t *testing.T) {
@@ -25,7 +25,7 @@ func TestIntegrationDeviceService_tag(t *testing.T) {
 		req                 []tagReq
 		expectedAnonUICount int64
 		expectedKey         string
-		expectedDevice      *Device
+		expectedDevice      *anonstore.Device
 	}{
 		{
 			name: "no requests",
@@ -55,9 +55,9 @@ func TestIntegrationDeviceService_tag(t *testing.T) {
 			},
 			expectedAnonUICount: 1,
 			expectedKey:         "ui-anon-session:32mdo31deeqwes",
-			expectedDevice: &Device{
-				Kind:      anonymous.AnonDeviceUI,
-				IP:        "10.30.30.1",
+			expectedDevice: &anonstore.Device{
+				DeviceID:  "32mdo31deeqwes",
+				ClientIP:  "10.30.30.1",
 				UserAgent: "test"},
 		},
 		{
@@ -107,43 +107,44 @@ func TestIntegrationDeviceService_tag(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			fakeStore := remotecache.NewFakeStore(t)
-
-			anonService := ProvideAnonymousDeviceService(fakeStore, &usagestats.UsageStatsMock{})
+			store := db.InitTestDB(t)
+			anonDBStore := anonstore.ProvideAnonDBStore(store)
+			anonService := ProvideAnonymousDeviceService(&usagestats.UsageStatsMock{}, anonDBStore)
 
 			for _, req := range tc.req {
 				err := anonService.TagDevice(context.Background(), req.httpReq, req.kind)
 				require.NoError(t, err)
 			}
 
+			devices, err := anonDBStore.ListDevices(context.Background(), nil, nil)
+			require.NoError(t, err)
+			require.Len(t, devices, int(tc.expectedAnonUICount))
+			if tc.expectedDevice != nil {
+				device := devices[0]
+				assert.NotZero(t, device.ID)
+				assert.NotZero(t, device.CreatedAt)
+				assert.NotZero(t, device.UpdatedAt)
+
+				tc.expectedDevice.ID = device.ID
+				tc.expectedDevice.CreatedAt = device.CreatedAt
+				tc.expectedDevice.UpdatedAt = device.UpdatedAt
+
+				assert.Equal(t, tc.expectedDevice, devices[0])
+			}
+
 			stats, err := anonService.usageStatFn(context.Background())
 			require.NoError(t, err)
 
-			assert.Equal(t, tc.expectedAnonUICount, stats["stats.anonymous.device.ui.count"].(int64))
-
-			if tc.expectedDevice != nil {
-				key := tc.expectedKey
-
-				k, err := fakeStore.Get(context.Background(), key)
-				require.NoError(t, err)
-
-				gotDevice := &Device{}
-				err = json.Unmarshal(k, gotDevice)
-				require.NoError(t, err)
-
-				assert.NotNil(t, gotDevice.LastSeen)
-				gotDevice.LastSeen = time.Time{}
-
-				assert.Equal(t, tc.expectedDevice, gotDevice)
-			}
+			assert.Equal(t, tc.expectedAnonUICount, stats["stats.anonymous.device.ui.count"].(int64), stats)
 		})
 	}
 }
 
 // Ensure that the local cache prevents request from being tagged
 func TestIntegrationAnonDeviceService_localCacheSafety(t *testing.T) {
-	fakeStore := remotecache.NewFakeStore(t)
-	anonService := ProvideAnonymousDeviceService(fakeStore, &usagestats.UsageStatsMock{})
+	store := db.InitTestDB(t)
+	anonDBStore := anonstore.ProvideAnonDBStore(store)
+	anonService := ProvideAnonymousDeviceService(&usagestats.UsageStatsMock{}, anonDBStore)
 
 	req := &http.Request{
 		Header: http.Header{
@@ -153,19 +154,17 @@ func TestIntegrationAnonDeviceService_localCacheSafety(t *testing.T) {
 		},
 	}
 
-	anonDevice := &Device{
-		Kind:      anonymous.AnonDeviceUI,
-		IP:        "10.30.30.2",
+	anonDevice := &anonstore.Device{
+		DeviceID:  "32mdo31deeqwes",
+		ClientIP:  "10.30.30.2",
 		UserAgent: "test",
-		LastSeen:  time.Now().UTC(),
+		UpdatedAt: time.Now().UTC(),
 	}
 
-	key, err := anonDevice.UIKey("32mdo31deeqwes")
-	require.NoError(t, err)
-
+	key := anonDevice.CacheKey()
 	anonService.localCache.SetDefault(key, true)
 
-	err = anonService.TagDevice(context.Background(), req, anonymous.AnonDeviceUI)
+	err := anonService.TagDevice(context.Background(), req, anonymous.AnonDeviceUI)
 	require.NoError(t, err)
 
 	stats, err := anonService.usageStatFn(context.Background())
