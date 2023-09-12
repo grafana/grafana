@@ -1,6 +1,9 @@
 import { Meta, StoryFn } from '@storybook/react';
 import React from 'react';
 
+import { GrafanaTheme2 } from '@grafana/data';
+
+import { useTheme2 } from '../../themes';
 import { Stack } from '../../unstable';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 
@@ -8,9 +11,20 @@ import { Grid } from './Grid';
 import mdx from './Grid.mdx';
 import { GridItem } from './GridItem';
 
-const gridItem = (index: number, color: string, width?: string, height?: string) => {
+const gridItem = (index: number, theme: GrafanaTheme2, width?: string, height?: string) => {
+  const colorOrder = index >= 6 ? index - 6 : index;
   const itemOrder = index + 1;
-  return <div style={{ backgroundColor: color, width, height, fontSize: '12px' }}>Grid item nº{itemOrder}</div>;
+  const colorList = [
+    theme.visualization.getColorByName('red'),
+    theme.visualization.getColorByName('orange'),
+    theme.visualization.getColorByName('purple'),
+    theme.visualization.getColorByName('blue'),
+    theme.visualization.getColorByName('yellow'),
+    theme.visualization.getColorByName('green')  
+  ];
+  return (
+    <div style={{ backgroundColor: colorList[colorOrder], width, height, fontSize: theme.typography.bodySmall.fontSize, color: theme.colors.text.maxContrast }}>Grid item {itemOrder}</div>
+  );
 };
 
 const meta: Meta<typeof Grid> = {
@@ -36,9 +50,8 @@ const meta: Meta<typeof Grid> = {
   },
 };
 
-const colorList: string[] = ['red', 'DarkOrange', 'olive', 'green', 'blue', 'purple', 'brown', 'PaleVioletRed', 'teal'];
-
 export const Basic: StoryFn<typeof Grid> = (args) => {
+  const theme = useTheme2();
   return (
     <Grid
       display={args.display}
@@ -51,7 +64,7 @@ export const Basic: StoryFn<typeof Grid> = (args) => {
       autoRows={args.autoRows}
     >
       {Array.from({ length: 9 }).map((_, i) => (
-        <GridItem key={i}>{gridItem(i, colorList[i], undefined, undefined)}</GridItem>
+        <GridItem key={i}>{gridItem(i, theme, undefined, undefined)}</GridItem>
       ))}
     </Grid>
   );
@@ -69,6 +82,7 @@ Basic.parameters = {
 };
 
 export const AlignItemsExamples: StoryFn<typeof Grid> = (args) => {
+  const theme = useTheme2();
   return (
     <Grid templateColumns="repeat(3,1fr)" templateRows="repeat(2, 1fr)" gap={4}>
       <span>
@@ -81,7 +95,7 @@ export const AlignItemsExamples: StoryFn<typeof Grid> = (args) => {
           alignItems="stretch"
           gap={2}
         >
-          {Array.from({ length: 6 }).map((_, i) => gridItem(i, colorList[i], undefined, undefined))}
+          {Array.from({ length: 6 }).map((_, i) => gridItem(i, theme, undefined, undefined))}
         </Grid>
       </span>
 
@@ -95,7 +109,7 @@ export const AlignItemsExamples: StoryFn<typeof Grid> = (args) => {
           templateRows="repeat(3, 50px)"
           alignItems="start"
         >
-          {Array.from({ length: 6 }).map((_, i) => gridItem(i, colorList[i], undefined, '50%'))}
+          {Array.from({ length: 6 }).map((_, i) => gridItem(i, theme, undefined, '50%'))}
         </Grid>
       </span>
 
@@ -109,7 +123,7 @@ export const AlignItemsExamples: StoryFn<typeof Grid> = (args) => {
           alignItems="center"
           gap={2}
         >
-          {Array.from({ length: 6 }).map((_, i) => gridItem(i, colorList[i], undefined, '50%'))}
+          {Array.from({ length: 6 }).map((_, i) => gridItem(i, theme, undefined, '50%'))}
         </Grid>
       </span>
       <span>
@@ -122,7 +136,7 @@ export const AlignItemsExamples: StoryFn<typeof Grid> = (args) => {
           alignItems="stretch"
           gap={2}
         >
-          {Array.from({ length: 6 }).map((_, i) => gridItem(i, colorList[i], undefined, undefined))}
+          {Array.from({ length: 6 }).map((_, i) => gridItem(i, theme, undefined, undefined))}
         </Grid>
       </span>
       <span>
@@ -135,7 +149,7 @@ export const AlignItemsExamples: StoryFn<typeof Grid> = (args) => {
           alignItems="end"
           gap={2}
         >
-          {Array.from({ length: 6 }).map((_, i) => gridItem(i, colorList[i], undefined, '50%'))}
+          {Array.from({ length: 6 }).map((_, i) => gridItem(i, theme, undefined, '50%'))}
         </Grid>
       </span>
     </Grid>
@@ -166,6 +180,7 @@ AlignItemsExamples.parameters = {
 };
 
 export const JustifyItemsExamples: StoryFn<typeof Grid> = (args) => {
+  const theme = useTheme2();
   return (
     <Grid templateColumns="repeat(2,1fr)" templateRows="repeat(3, 1fr)" gap={4}>
       <span>
@@ -178,7 +193,7 @@ export const JustifyItemsExamples: StoryFn<typeof Grid> = (args) => {
           justifyItems="stretch"
           gap={2}
         >
-          {Array.from({ length: 6 }).map((_, i) => gridItem(i, colorList[i], undefined, undefined))}
+          {Array.from({ length: 6 }).map((_, i) => gridItem(i, theme, undefined, undefined))}
         </Grid>
       </span>
       <span>
@@ -191,7 +206,7 @@ export const JustifyItemsExamples: StoryFn<typeof Grid> = (args) => {
           justifyItems="stretch"
           gap={2}
         >
-          {Array.from({ length: 6 }).map((_, i) => gridItem(i, colorList[i], undefined, undefined))}
+          {Array.from({ length: 6 }).map((_, i) => gridItem(i, theme, undefined, undefined))}
         </Grid>
       </span>
       <span>
@@ -204,7 +219,7 @@ export const JustifyItemsExamples: StoryFn<typeof Grid> = (args) => {
           templateRows="repeat(2, 50px)"
           justifyItems="start"
         >
-          {Array.from({ length: 6 }).map((_, i) => gridItem(i, colorList[i], '70%', undefined))}
+          {Array.from({ length: 6 }).map((_, i) => gridItem(i, theme, '70%', undefined))}
         </Grid>
       </span>
 
@@ -218,7 +233,7 @@ export const JustifyItemsExamples: StoryFn<typeof Grid> = (args) => {
           justifyItems="center"
           gap={2}
         >
-          {Array.from({ length: 6 }).map((_, i) => gridItem(i, colorList[i], '70%', undefined))}
+          {Array.from({ length: 6 }).map((_, i) => gridItem(i, theme, '70%', undefined))}
         </Grid>
       </span>
       <span>
@@ -231,7 +246,7 @@ export const JustifyItemsExamples: StoryFn<typeof Grid> = (args) => {
           justifyItems="end"
           gap={2}
         >
-          {Array.from({ length: 6 }).map((_, i) => gridItem(i, colorList[i], '70%', undefined))}
+          {Array.from({ length: 6 }).map((_, i) => gridItem(i, theme, '70%', undefined))}
         </Grid>
       </span>
     </Grid>
@@ -260,13 +275,14 @@ JustifyItemsExamples.parameters = {
 };
 
 export const GridItemsPosition: StoryFn<typeof Grid> = (args) => {
+  const theme = useTheme2();
   return (
-    <Stack direction='column' gap={4}>
+    <Stack direction="column" gap={4}>
       <div>
         <p>Basic grid</p>
         <Grid {...args} display="grid" templateColumns="repeat(3, 1fr)" templateRows="repeat(2, 1fr)">
           {Array.from({ length: 6 }).map((_, i) => (
-            <GridItem key={i}>{gridItem(i, colorList[i], undefined, undefined)}</GridItem>
+            <GridItem key={i}>{gridItem(i, theme, undefined, undefined)}</GridItem>
           ))}
         </Grid>
       </div>
@@ -275,7 +291,7 @@ export const GridItemsPosition: StoryFn<typeof Grid> = (args) => {
         <Grid {...args} display="grid" templateColumns="repeat(3, 1fr)" templateRows="repeat(2, 1fr)">
           {Array.from({ length: 6 }).map((_, i) => (
             <GridItem key={i} rowStart={i === 0 ? 3 : undefined}>
-              {gridItem(i, colorList[i], undefined, undefined)}
+              {gridItem(i, theme, undefined, undefined)}
             </GridItem>
           ))}
         </Grid>
@@ -285,7 +301,7 @@ export const GridItemsPosition: StoryFn<typeof Grid> = (args) => {
         <Grid {...args} display="grid" templateColumns="repeat(3, 1fr)" templateRows="repeat(2, 1fr)">
           {Array.from({ length: 6 }).map((_, i) => (
             <GridItem key={i} columnStart={i === 2 ? 1 : undefined}>
-              {gridItem(i, colorList[i], undefined, undefined)}
+              {gridItem(i, theme, undefined, undefined)}
             </GridItem>
           ))}
         </Grid>
@@ -295,7 +311,7 @@ export const GridItemsPosition: StoryFn<typeof Grid> = (args) => {
         <Grid {...args} display="grid" templateColumns="repeat(3, 1fr)" templateRows="repeat(2, 1fr)">
           {Array.from({ length: 6 }).map((_, i) => (
             <GridItem key={i} rowEnd={i === 1 ? 'span 2' : undefined}>
-              {gridItem(i, colorList[i], undefined, undefined)}
+              {gridItem(i, theme, undefined, undefined)}
             </GridItem>
           ))}
         </Grid>
@@ -305,7 +321,7 @@ export const GridItemsPosition: StoryFn<typeof Grid> = (args) => {
         <Grid {...args} display="grid" templateColumns="repeat(3, 1fr)" templateRows="repeat(2, 1fr)">
           {Array.from({ length: 6 }).map((_, i) => (
             <GridItem key={i} columnEnd={i === 3 ? 'span 3' : undefined}>
-              {gridItem(i, colorList[i], undefined, undefined)}
+              {gridItem(i, theme, undefined, undefined)}
             </GridItem>
           ))}
         </Grid>
