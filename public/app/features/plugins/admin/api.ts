@@ -19,7 +19,7 @@ export async function getPluginDetails(id: string): Promise<CatalogPluginDetails
   const local = localPlugins.find((p) => p.id === id);
   const dependencies = local?.dependencies || remote?.json?.dependencies;
 
-  const a = {
+  return {
     isDeprecated: remote?.status === 'deprecated',
     grafanaDependency: dependencies?.grafanaDependency ?? dependencies?.grafanaVersion ?? '',
     pluginDependencies: dependencies?.plugins || [],
@@ -27,9 +27,6 @@ export async function getPluginDetails(id: string): Promise<CatalogPluginDetails
     readme: localReadme || remote?.readme,
     versions,
   };
-
-  console.log('***', a);
-  return a;
 }
 
 export async function getRemotePlugins(): Promise<RemotePlugin[]> {
