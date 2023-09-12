@@ -98,7 +98,13 @@ def build_e2e(trigger, ver_mode):
             [
                 store_storybook_step(trigger = trigger_oss, ver_mode = ver_mode),
                 frontend_metrics_step(trigger = trigger_oss),
-                rgm_build_docker_step("packages.txt", images["ubuntu"], images["alpine"]),
+                rgm_build_docker_step(
+                    "packages.txt",
+                    images["ubuntu"],
+                    images["alpine"],
+                    tag_format = "{{ .version_base }}-{{ .buildID }}-{{ .arch }}",
+                    ubuntu_tag_format = "{{ .version_base }}-{{ .buildID }}-ubuntu-{{ .arch }}",
+                ),
                 publish_images_step(
                     docker_repo = "grafana",
                     trigger = trigger_oss,
