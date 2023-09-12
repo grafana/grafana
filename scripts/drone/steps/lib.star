@@ -1227,6 +1227,7 @@ def get_windows_steps(ver_mode, bucket = "%PRERELEASE_BUCKET%"):
     if ver_mode in (
         "release",
         "release-branch",
+        "main",
     ):
         gcp_bucket = "{}/artifacts/downloads".format(bucket)
         if ver_mode == "release":
