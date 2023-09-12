@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import React, { useCallback } from 'react';
 
-import { GrafanaTheme2, ThemeSpacingTokens } from '@grafana/data';
+import { ThemeSpacingTokens } from '@grafana/data';
 
 import { useStyles2 } from '../../themes';
 
@@ -35,21 +35,20 @@ export interface GridProps {
 export const Grid = ({
   children,
   display = 'grid',
-  gap = 1,
-  columnGap = 0,
-  rowGap = 0,
-  templateColumns = 'none',
-  templateRows = 'none',
-  alignItems = 'stretch',
-  justifyItems = 'stretch',
-  autoFlow = 'row',
-  autoRows = 'auto',
+  gap,
+  columnGap,
+  rowGap,
+  templateColumns,
+  templateRows,
+  alignItems,
+  justifyItems,
+  autoFlow,
+  autoRows,
 }: GridProps) => {
   const styles = useStyles2(
     useCallback(
-      (theme) =>
+      () =>
         getGridStyles(
-          theme,
           display,
           gap,
           columnGap,
@@ -70,24 +69,23 @@ export const Grid = ({
 Grid.displayName = 'Grid';
 
 const getGridStyles = (
-  theme: GrafanaTheme2,
   display: 'grid' | 'inline-grid',
-  gap: ThemeSpacingTokens,
-  columnGap: ThemeSpacingTokens,
-  rowGap: ThemeSpacingTokens,
-  templateColumns: GridProps['templateColumns'],
-  templateRows: GridProps['templateRows'],
-  alignItems: GridProps['alignItems'],
-  justifyItems: GridProps['justifyItems'],
-  autoFlow: GridProps['autoFlow'],
-  autoRows: GridProps['autoRows']
+  gap?: ThemeSpacingTokens,
+  columnGap?: ThemeSpacingTokens,
+  rowGap?: ThemeSpacingTokens,
+  templateColumns?: GridProps['templateColumns'],
+  templateRows?: GridProps['templateRows'],
+  alignItems?: GridProps['alignItems'],
+  justifyItems?: GridProps['justifyItems'],
+  autoFlow?: GridProps['autoFlow'],
+  autoRows?: GridProps['autoRows']
 ) => {
   return {
     grid: css({
       display,
-      gap: rowGap || columnGap ? undefined : theme.spacing(gap),
-      columnGap: columnGap ? theme.spacing(columnGap) : undefined,
-      rowGap: rowGap ? theme.spacing(rowGap) : undefined,
+      gap: gap,
+      columnGap: columnGap,
+      rowGap: rowGap,
       gridTemplateColumns: templateColumns,
       gridTemplateRows: templateRows,
       justifyContent: 'stretch',
