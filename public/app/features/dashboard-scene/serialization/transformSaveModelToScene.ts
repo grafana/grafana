@@ -26,7 +26,6 @@ import {
   behaviors,
   VizPanelState,
   SceneGridItemLike,
-  sceneUtils,
 } from '@grafana/scenes';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { DashboardDTO } from 'app/types';
