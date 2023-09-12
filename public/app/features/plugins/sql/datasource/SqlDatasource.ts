@@ -211,7 +211,7 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
   }
 
   private runMetaQuery(request: Partial<SQLQuery>, options?: LegacyMetricFindQueryOptions): Promise<DataFrame> {
-    const range = getCurrentTimeRange(this.templateSrv);
+    const range = options?.range ?? getCurrentTimeRange(this.templateSrv);
     const refId = request.refId || 'meta';
     const queries: DataQuery[] = [{ ...request, datasource: request.datasource || this.getRef(), refId }];
 
@@ -222,8 +222,8 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
           method: 'POST',
           headers: this.getRequestHeaders(),
           data: {
-            from: options?.range?.from.valueOf().toString() || range.from.valueOf().toString(),
-            to: options?.range?.to.valueOf().toString() || range.to.valueOf().toString(),
+            from: range.from.valueOf().toString(),
+            to: range.to.valueOf().toString(),
             queries,
           },
           requestId: refId,
