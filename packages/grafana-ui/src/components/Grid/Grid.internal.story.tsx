@@ -20,10 +20,20 @@ const gridItem = (index: number, theme: GrafanaTheme2, width?: string, height?: 
     theme.visualization.getColorByName('purple'),
     theme.visualization.getColorByName('blue'),
     theme.visualization.getColorByName('yellow'),
-    theme.visualization.getColorByName('green')  
+    theme.visualization.getColorByName('green'),
   ];
   return (
-    <div style={{ backgroundColor: colorList[colorOrder], width, height, fontSize: theme.typography.bodySmall.fontSize, color: theme.colors.text.maxContrast }}>Item {itemOrder}</div>
+    <div
+      style={{
+        backgroundColor: colorList[colorOrder],
+        width,
+        height,
+        fontSize: theme.typography.bodySmall.fontSize,
+        color: theme.colors.text.maxContrast,
+      }}
+    >
+      Item {itemOrder}
+    </div>
   );
 };
 
@@ -61,9 +71,7 @@ export const Basic: StoryFn<typeof Grid> = (args) => {
       templateRows={args.templateRows}
       autoFlow={args.autoFlow}
     >
-      {Array.from({ length: 9 }).map((_, i) => (
-        <GridItem key={i}>{gridItem(i, theme, undefined, undefined)}</GridItem>
-      ))}
+      {Array.from({ length: 9 }).map((_, i) => gridItem(i, theme, undefined, undefined))}
     </Grid>
   );
 };
@@ -279,9 +287,7 @@ export const GridItemsPosition: StoryFn<typeof Grid> = (args) => {
       <div>
         <p>Basic grid</p>
         <Grid {...args} display="grid" templateColumns="repeat(3, 1fr)" templateRows="repeat(2, 1fr)">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <GridItem key={i}>{gridItem(i, theme, undefined, undefined)}</GridItem>
-          ))}
+          {Array.from({ length: 6 }).map((_, i) => gridItem(i, theme, undefined, undefined))}
         </Grid>
       </div>
       <div>
