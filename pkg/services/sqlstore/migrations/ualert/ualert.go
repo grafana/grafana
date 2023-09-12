@@ -57,7 +57,7 @@ func (e *MigrationError) Unwrap() error { return e.Err }
 func AddDashAlertMigration(mg *migrator.Migrator) {
 	logs, err := mg.GetMigrationLog()
 	if err != nil {
-		mg.Logger.Error("alert migration failure: could not get migration log", "error", err)
+		mg.Logger.Error("Alert migration failure: could not get migration log", "error", err)
 		os.Exit(1)
 	}
 
@@ -72,7 +72,7 @@ func AddDashAlertMigration(mg *migrator.Migrator) {
 			migrationID: rmMigTitle,
 		})
 		if err != nil {
-			mg.Logger.Error("alert migration error: could not clear alert migration for removing data", "error", err)
+			mg.Logger.Error("Alert migration error: could not clear alert migration for removing data", "error", err)
 		}
 		mg.AddMigration(migTitle, &migration{
 			// We deduplicate for case-insensitive matching in MySQL-compatible backend flavours because they use case-insensitive collation.
@@ -96,7 +96,7 @@ func AddDashAlertMigration(mg *migrator.Migrator) {
 			migrationID: migTitle,
 		})
 		if err != nil {
-			mg.Logger.Error("alert migration error: could not clear dashboard alert migration", "error", err)
+			mg.Logger.Error("Alert migration error: could not clear dashboard alert migration", "error", err)
 		}
 		mg.AddMigration(rmMigTitle, &rmMigration{})
 	}
@@ -107,7 +107,7 @@ func AddDashAlertMigration(mg *migrator.Migrator) {
 func RerunDashAlertMigration(mg *migrator.Migrator) {
 	logs, err := mg.GetMigrationLog()
 	if err != nil {
-		mg.Logger.Error("alert migration failure: could not get migration log", "error", err)
+		mg.Logger.Error("Alert migration failure: could not get migration log", "error", err)
 		os.Exit(1)
 	}
 
@@ -128,7 +128,7 @@ func RerunDashAlertMigration(mg *migrator.Migrator) {
 func AddDashboardUIDPanelIDMigration(mg *migrator.Migrator) {
 	logs, err := mg.GetMigrationLog()
 	if err != nil {
-		mg.Logger.Error("alert migration failure: could not get migration log", "error", err)
+		mg.Logger.Error("Alert migration failure: could not get migration log", "error", err)
 		os.Exit(1)
 	}
 
@@ -245,7 +245,7 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 	if err != nil {
 		return err
 	}
-	mg.Logger.Info("alerts found to migrate", "alerts", len(dashAlerts))
+	mg.Logger.Info("Alerts found to migrate", "alerts", len(dashAlerts))
 
 	// [orgID, dataSourceId] -> UID
 	dsIDMap, err := m.slurpDSIDs()
@@ -293,7 +293,7 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 
 	for _, da := range dashAlerts {
 		l := mg.Logger.New("ruleID", da.Id, "ruleName", da.Name, "dashboardUID", da.DashboardUID, "orgID", da.OrgId)
-		l.Debug("migrating alert rule to Unified Alerting")
+		l.Debug("Migrating alert rule to Unified Alerting")
 		newCond, err := transConditions(*da.ParsedSettings, da.OrgId, dsIDMap)
 		if err != nil {
 			return err
@@ -323,7 +323,7 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 			folderName := getAlertFolderNameFromDashboard(&dash)
 			f, ok := folderCache[folderName]
 			if !ok {
-				l.Info("create a new folder for alerts that belongs to dashboard because it has custom permissions", "folder", folderName)
+				l.Info("Create a new folder for alerts that belongs to dashboard because it has custom permissions", "folder", folderName)
 				// create folder and assign the permissions of the dashboard (included default and inherited)
 				f, err = folderHelper.createFolder(dash.OrgId, folderName)
 				if err != nil {
@@ -395,7 +395,7 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 
 	for orgID := range rulesPerOrg {
 		if err := m.writeSilencesFile(orgID); err != nil {
-			m.mg.Logger.Error("alert migration error: failed to write silence file", "err", err)
+			m.mg.Logger.Error("Alert migration error: failed to write silence file", "err", err)
 		}
 	}
 
@@ -500,7 +500,7 @@ func (m *migration) validateAlertmanagerConfig(config *PostableUserConfig) error
 				if value, ok := sjd[key]; ok {
 					decryptedData, err := util.Decrypt(value, setting.SecretKey)
 					if err != nil {
-						m.mg.Logger.Warn("unable to decrypt key '%s' for %s receiver with uid %s, returning fallback.", key, gr.Type, gr.UID)
+						m.mg.Logger.Warn("Unable to decrypt key '%s' for %s receiver with uid %s, returning fallback.", key, gr.Type, gr.UID)
 						return fallback
 					}
 					return string(decryptedData)
@@ -591,7 +591,7 @@ func (m *rmMigration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 	}
 	for _, f := range files {
 		if err := os.Remove(f); err != nil {
-			mg.Logger.Error("alert migration error: failed to remove silence file", "file", f, "err", err)
+			mg.Logger.Error("Alert migration error: failed to remove silence file", "file", f, "err", err)
 		}
 	}
 
@@ -682,7 +682,7 @@ func (u *upgradeNgAlerting) updateAlertConfigurations(sess *xorm.Session, migrat
 // Otherwise, it deletes those files.
 // pre-8.2 version put all configuration files into the root of alerting directory. Since 8.2 configuration files are put in organization specific directory
 func (u *upgradeNgAlerting) updateAlertmanagerFiles(orgId int64, migrator *migrator.Migrator) {
-	knownFiles := map[string]interface{}{"__default__.tmpl": nil, "silences": nil, "notifications": nil}
+	knownFiles := map[string]any{"__default__.tmpl": nil, "silences": nil, "notifications": nil}
 	alertingDir := filepath.Join(migrator.Cfg.DataPath, "alerting")
 
 	// do not fail if something goes wrong because these files are not used anymore. the worst that can happen is that we leave some leftovers behind
@@ -793,7 +793,7 @@ func (c createDefaultFoldersForAlertingMigration) Exec(sess *xorm.Session, migra
 		if err != nil {
 			return fmt.Errorf("failed to create the default alerting folder for organization %s (ID: %d): %w", row.Name, row.Id, err)
 		}
-		migrator.Logger.Info("created the default folder for alerting", "org_id", row.Id, "folder_name", folder.Title, "folder_uid", folder.Uid)
+		migrator.Logger.Info("Created the default folder for alerting", "org_id", row.Id, "folder_name", folder.Title, "folder_uid", folder.Uid)
 	}
 	return nil
 }
@@ -858,7 +858,7 @@ func (c updateRulesOrderInGroup) Exec(sess *xorm.Session, migrator *migrator.Mig
 	}
 
 	updated := time.Now()
-	versions := make([]interface{}, 0, len(toUpdate))
+	versions := make([]any, 0, len(toUpdate))
 
 	for _, rule := range toUpdate {
 		rule.Updated = updated
@@ -868,15 +868,15 @@ func (c updateRulesOrderInGroup) Exec(sess *xorm.Session, migrator *migrator.Mig
 		rule.Version++
 		_, err := sess.ID(rule.ID).Cols("version", "updated", "rule_group_idx").Update(rule)
 		if err != nil {
-			migrator.Logger.Error("failed to update alert rule", "uid", rule.UID, "err", err)
+			migrator.Logger.Error("Failed to update alert rule", "uid", rule.UID, "err", err)
 			return fmt.Errorf("unable to update alert rules with group index: %w", err)
 		}
-		migrator.Logger.Debug("updated group index for alert rule", "rule_uid", rule.UID)
+		migrator.Logger.Debug("Updated group index for alert rule", "rule_uid", rule.UID)
 		versions = append(versions, version)
 	}
 	_, err := sess.Insert(versions...)
 	if err != nil {
-		migrator.Logger.Error("failed to insert changes to alert_rule_version", "err", err)
+		migrator.Logger.Error("Failed to insert changes to alert_rule_version", "err", err)
 		return fmt.Errorf("unable to update alert rules with group index: %w", err)
 	}
 	return nil

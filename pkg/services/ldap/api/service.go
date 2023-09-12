@@ -302,7 +302,7 @@ func (s *Service) GetUserFromLDAP(c *contextmodel.ReqContext) response.Response 
 		u.OrgRoles = append(u.OrgRoles, LDAPRoleDTO{GroupDN: userGroup})
 	}
 
-	s.log.Debug("mapping org roles", "orgsRoles", u.OrgRoles)
+	s.log.Debug("Mapping org roles", "orgsRoles", u.OrgRoles)
 	if err := u.fetchOrgs(c.Req.Context(), s.orgService); err != nil {
 		return response.Error(http.StatusBadRequest, "An organization was not found - Please verify your LDAP configuration", err)
 	}

@@ -20,7 +20,7 @@ func TestFilterReceiversForAlert(t *testing.T) {
 		channelIds       []uidOrID
 		receivers        map[uidOrID]*PostableApiReceiver
 		defaultReceivers map[string]struct{}
-		expected         map[string]interface{}
+		expected         map[string]any
 	}{
 		{
 			name:       "when an alert has multiple channels, each should filter for the correct receiver",
@@ -40,7 +40,7 @@ func TestFilterReceiversForAlert(t *testing.T) {
 				},
 			},
 			defaultReceivers: map[string]struct{}{},
-			expected: map[string]interface{}{
+			expected: map[string]any{
 				"recv1": struct{}{},
 				"recv2": struct{}{},
 			},
@@ -65,7 +65,7 @@ func TestFilterReceiversForAlert(t *testing.T) {
 			defaultReceivers: map[string]struct{}{
 				"recv2": {},
 			},
-			expected: map[string]interface{}{
+			expected: map[string]any{
 				"recv1": struct{}{}, // From alert
 				"recv2": struct{}{}, // From default
 			},
@@ -80,7 +80,7 @@ func TestFilterReceiversForAlert(t *testing.T) {
 				},
 			},
 			defaultReceivers: map[string]struct{}{},
-			expected: map[string]interface{}{
+			expected: map[string]any{
 				"recv1": struct{}{},
 			},
 		},

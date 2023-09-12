@@ -579,7 +579,7 @@ func (ss *sqlStore) BatchDisableUsers(ctx context.Context, cmd *user.BatchDisabl
 		user_id_params := strings.Repeat(",?", len(userIds)-1)
 		disableSQL := "UPDATE " + ss.dialect.Quote("user") + " SET is_disabled=? WHERE Id IN (?" + user_id_params + ")"
 
-		disableParams := []interface{}{disableSQL, cmd.IsDisabled}
+		disableParams := []any{disableSQL, cmd.IsDisabled}
 		for _, v := range userIds {
 			disableParams = append(disableParams, v)
 		}
@@ -616,7 +616,7 @@ func (ss *sqlStore) Search(ctx context.Context, query *user.SearchUsersQuery) (*
 		queryWithWildcards := "%" + query.Query + "%"
 
 		whereConditions := make([]string, 0)
-		whereParams := make([]interface{}, 0)
+		whereParams := make([]any, 0)
 		sess := dbSess.Table("user").Alias("u")
 
 		whereConditions = append(whereConditions, "u.is_service_account = ?")
@@ -635,14 +635,12 @@ func (ss *sqlStore) Search(ctx context.Context, query *user.SearchUsersQuery) (*
 		}
 
 		// user only sees the users for which it has read permissions
-		if !accesscontrol.IsDisabled(ss.cfg) {
-			acFilter, err := accesscontrol.Filter(query.SignedInUser, "u.id", "global.users:id:", accesscontrol.ActionUsersRead)
-			if err != nil {
-				return err
-			}
-			whereConditions = append(whereConditions, acFilter.Where)
-			whereParams = append(whereParams, acFilter.Args...)
+		acFilter, err := accesscontrol.Filter(query.SignedInUser, "u.id", "global.users:id:", accesscontrol.ActionUsersRead)
+		if err != nil {
+			return err
 		}
+		whereConditions = append(whereConditions, acFilter.Where)
+		whereParams = append(whereParams, acFilter.Args...)
 
 		if query.Query != "" {
 			whereConditions = append(whereConditions, "(email "+ss.dialect.LikeStr()+" ? OR name "+ss.dialect.LikeStr()+" ? OR login "+ss.dialect.LikeStr()+" ?)")

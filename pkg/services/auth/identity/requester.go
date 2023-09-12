@@ -33,7 +33,7 @@ type Requester interface {
 	GetLogin() string
 	// GetNamespacedID returns the namespace and ID of the active entity.
 	// The namespace is one of the constants defined in pkg/services/auth/identity.
-	GetNamespacedID() (string, string)
+	GetNamespacedID() (namespace string, identifier string)
 	// GetOrgID returns the ID of the active organization
 	GetOrgID() int64
 	// GetOrgRole returns the role of the active entity in the active organization.
@@ -60,6 +60,8 @@ type Requester interface {
 	GetCacheKey() (string, error)
 	// HasUniqueId returns true if the entity has a unique id
 	HasUniqueId() bool
+	// AuthenticatedBy returns the authentication method used to authenticate the entity.
+	GetAuthenticatedBy() string
 }
 
 // IntIdentifier converts a string identifier to an int64.

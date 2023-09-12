@@ -91,10 +91,7 @@ export class TimeSrv {
   }
 
   getValidIntervals(intervals: string[]): string[] {
-    if (this.contextSrv.minRefreshInterval) {
-      return intervals.filter((str) => str !== '').filter(this.contextSrv.isAllowedInterval);
-    }
-    return intervals;
+    return this.contextSrv.getValidIntervals(intervals);
   }
 
   private parseTime() {
@@ -149,7 +146,7 @@ export class TimeSrv {
   }
 
   private initTimeFromUrl() {
-    if (config.isPublicDashboardView && this.timeModel?.timepicker?.hidden) {
+    if (config.publicDashboardAccessToken && this.timeModel?.timepicker?.hidden) {
       return;
     }
 

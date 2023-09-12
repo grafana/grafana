@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/slugify"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
@@ -89,10 +90,6 @@ type CreateFolderCommand struct {
 type UpdateFolderCommand struct {
 	UID   string `json:"-"`
 	OrgID int64  `json:"-"`
-	// NewUID it's an optional parameter used for overriding the existing folder UID
-	// Starting with 10.0, this is deprecated. It will be removed in a future release.
-	// Please avoid using it because it can result in folder loosing its permissions.
-	NewUID *string `json:"uid"` // keep same json tag with the legacy command for not breaking the existing APIs
 	// NewTitle it's an optional parameter used for overriding the existing folder title
 	NewTitle *string `json:"title"` // keep same json tag with the legacy command for not breaking the existing APIs
 	// NewDescription it's an optional parameter used for overriding the existing folder description
@@ -137,7 +134,7 @@ type GetFolderQuery struct {
 	Title *string
 	OrgID int64
 
-	SignedInUser *user.SignedInUser `json:"-"`
+	SignedInUser identity.Requester `json:"-"`
 }
 
 // GetParentsQuery captures the information required by the folder service to
