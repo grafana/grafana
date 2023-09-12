@@ -3,7 +3,11 @@ import { DataSourceRef, GraphDrawStyle } from '@grafana/schema';
 
 const QUERY = 'sum by (state) (grafanacloud_grafana_instance_alerting_rule_group_rules)';
 
-export function getGrafanaInstancesByStateScene(timeRange: SceneTimeRange, datasource: DataSourceRef, panelTitle: string) {
+export function getGrafanaInstancesByStateScene(
+  timeRange: SceneTimeRange,
+  datasource: DataSourceRef,
+  panelTitle: string
+) {
   const query = new SceneQueryRunner({
     datasource,
     queries: [
