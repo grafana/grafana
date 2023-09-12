@@ -13,9 +13,12 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	es "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client"
 )
 
@@ -41,21 +44,27 @@ const (
 
 var searchWordsRegex = regexp.MustCompile(regexp.QuoteMeta(es.HighlightPreTagsString) + `(.*?)` + regexp.QuoteMeta(es.HighlightPostTagsString))
 
-func parseResponse(ctx context.Context, responses []*es.SearchResponse, targets []*Query, configuredFields es.ConfiguredFields, logger log.Logger) (*backend.QueryDataResponse, error) {
+func parseResponse(ctx context.Context, responses []*es.SearchResponse, targets []*Query, configuredFields es.ConfiguredFields, logger log.Logger, tracer tracing.Tracer) (*backend.QueryDataResponse, error) {
 	result := backend.QueryDataResponse{
 		Responses: backend.Responses{},
 	}
 	if responses == nil {
 		return &result, nil
 	}
+	ctx, span := tracer.Start(ctx, "datasource.elastic.parseResponse")
+	span.SetAttributes("responseLength", len(responses), attribute.Key("responseLength").Int(len(responses)))
 
 	for i, res := range responses {
+		_, span := tracer.Start(ctx, "datasource.elastic.parseResponse.response")
+		span.SetAttributes("queryMetricType", targets[i].Metrics[0].Type, attribute.Key("queryMetricType").String(targets[i].Metrics[0].Type))
 		start := time.Now()
 		target := targets[i]
 
 		if res.Error != nil {
 			mt, _ := json.Marshal(target)
 			me, _ := json.Marshal(res.Error)
+			span.RecordError(errors.New(string(me)))
+			span.SetStatus(codes.Error, string(me))
 			logger.Error("Processing error response from Elasticsearch", "error", string(me), "query", string(mt))
 			errResult := getErrorFromElasticResponse(res)
 			result.Responses[target.RefID] = backend.DataResponse{
@@ -101,10 +110,11 @@ func parseResponse(ctx context.Context, responses []*es.SearchResponse, targets 
 			trimDatapoints(queryRes, target)
 
 			result.Responses[target.RefID] = queryRes
+			span.End()
 		}
 		logger.Info("Finished processing of response", "duration", time.Since(start), "stage", es.StageParseResponse)
 	}
-
+	span.End()
 	return &result, nil
 }
 
