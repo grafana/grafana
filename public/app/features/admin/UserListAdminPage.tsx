@@ -49,8 +49,7 @@ const mapStateToProps = (state: StoreState) => ({
   users: state.userListAdmin.users,
   query: state.userListAdmin.query,
   showPaging: state.userListAdmin.showPaging,
-  totalPages: state.userListAdmin.totalPages,
-  page: state.userListAdmin.page,
+  perPage: state.userListAdmin.perPage,
   filters: state.userListAdmin.filters,
   isLoading: state.userListAdmin.isLoading,
 });
@@ -67,9 +66,7 @@ const UserListAdminPageUnConnected = ({
   changeQuery,
   users,
   showPaging,
-  totalPages,
-  page,
-  changePage,
+  perPage,
   changeFilter,
   filters,
   isLoading,
@@ -248,7 +245,16 @@ const UserListAdminPageUnConnected = ({
           </LinkButton>
         )}
       </div>
-      {isLoading ? <PageLoader /> : <InteractiveTable columns={columns} data={users} getRowId={(user) => user.name} />}
+      {isLoading ? (
+        <PageLoader />
+      ) : (
+        <InteractiveTable
+          columns={columns}
+          data={users}
+          getRowId={(user) => String(user.id)}
+          pageSize={showPaging ? perPage : 0}
+        />
+      )}
     </Page.Contents>
   );
 };
