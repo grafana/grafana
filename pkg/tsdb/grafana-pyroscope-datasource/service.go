@@ -49,7 +49,7 @@ func ProvideService(httpClientProvider httpclient.Provider, ac accesscontrol.Acc
 }
 
 func newInstanceSettings(httpClientProvider httpclient.Provider, ac accesscontrol.AccessControl) datasource.InstanceFactoryFunc {
-	return func(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+	return func(_ context.Context, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 		return NewPhlareDatasource(httpClientProvider, settings, ac)
 	}
 }

@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
 	"github.com/grafana/grafana/pkg/infra/localcache"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/envvars"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
@@ -65,7 +66,7 @@ func (p *Provider) Get(ctx context.Context, pluginID string, user identity.Reque
 	}
 
 	if plugin.IsApp() {
-		appSettings, err := p.appInstanceSettings(ctx, plugin, orgID)
+		appSettings, err := p.appInstanceSettings(ctx, plugin.ID, orgID)
 		if err != nil {
 			return backend.PluginContext{}, err
 		}
@@ -92,19 +93,19 @@ func (p *Provider) GetWithDataSource(ctx context.Context, pluginID string, user 
 		pCtx.User = adapters.BackendUserFromSignedInUser(user)
 	}
 
-	datasourceSettings, err := p.datasourceInstanceSettings(ctx, ds, plugin)
+	datasourceSettings, err := p.datasourceInstanceSettings(ctx, ds)
 	if err != nil {
 		return pCtx, err
 	}
 	pCtx.DataSourceInstanceSettings = datasourceSettings
 
-	settings := p.pluginEnvVars.GetConfigMap(ctx, plugin)
-	pCtx.Config = backend.NewCfg(settings)
+	settings := p.pluginEnvVars.GetConfigMap(ctx, plugin.ID, plugin.ExternalService)
+	pCtx.GrafanaConfig = backend.NewGrafanaCfg(settings)
 
 	return pCtx, nil
 }
 
-func (p *Provider) datasourceInstanceSettings(ctx context.Context, ds *datasources.DataSource, plugin plugins.PluginDTO) (*backend.DataSourceInstanceSettings, error) {
+func (p *Provider) datasourceInstanceSettings(ctx context.Context, ds *datasources.DataSource) (*backend.DataSourceInstanceSettings, error) {
 	datasourceSettings, err := adapters.ModelToInstanceSettings(ds, p.decryptSecureJsonDataFn(ctx))
 	if err != nil {
 		return nil, err
@@ -112,12 +113,12 @@ func (p *Provider) datasourceInstanceSettings(ctx context.Context, ds *datasourc
 	return datasourceSettings, nil
 }
 
-func (p *Provider) appInstanceSettings(ctx context.Context, plugin pluginsintegration.Plugin, orgID int64) (*backend.AppInstanceSettings, error) {
+func (p *Provider) appInstanceSettings(ctx context.Context, pluginID string, orgID int64) (*backend.AppInstanceSettings, error) {
 	jsonData := json.RawMessage{}
 	decryptedSecureJSONData := map[string]string{}
 	var updated time.Time
 
-	ps, err := p.getCachedPluginSettings(ctx, plugin.ID, orgID)
+	ps, err := p.getCachedPluginSettings(ctx, pluginID, orgID)
 	if err != nil {
 		// pluginsettings.ErrPluginSettingNotFound is expected if there's no row found for plugin setting in database (if non-app plugin).
 		// Otherwise, something is wrong with cache or database, and we return the error to the client.

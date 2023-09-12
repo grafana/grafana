@@ -84,7 +84,7 @@ func newExecutor(im instancemgmt.InstanceManager, cfg *setting.Cfg, sessions Ses
 }
 
 func NewInstanceSettings(httpClientProvider httpclient.Provider) datasource.InstanceFactoryFunc {
-	return func(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+	return func(_ context.Context, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 		instanceSettings, err := models.LoadCloudWatchSettings(settings)
 		if err != nil {
 			return nil, fmt.Errorf("error reading settings: %w", err)

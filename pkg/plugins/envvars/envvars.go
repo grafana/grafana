@@ -12,11 +12,11 @@ import (
 
 	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
 	"github.com/grafana/grafana-azure-sdk-go/azsettings"
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
 
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
+	"github.com/grafana/grafana/pkg/plugins/oauth"
 )
 
 const (
@@ -76,20 +76,21 @@ func (s *Service) Get(ctx context.Context, p *plugins.Plugin) []string {
 
 // GetConfigMap returns a map of configuration that should be passed in a plugin request.
 // Note: Licensing is not included as part of this resulting config map.
-func (s *Service) GetConfigMap(ctx context.Context, p plugins.PluginDTO) map[string]string {
+func (s *Service) GetConfigMap(ctx context.Context, pluginID string, externalService *oauth.ExternalService) map[string]string {
 	m := map[string]string{
-		backend.GrafanaVersion: s.cfg.BuildVersion,
+		//backend.GrafanaVersion: s.cfg.BuildVersion,
 	}
 
-	if p.ExternalService != nil {
+	if externalService != nil {
 		m[oauthtokenretriever.AppURL] = s.cfg.GrafanaAppURL
-		m[oauthtokenretriever.AppClientID] = p.ExternalService.ClientID
-		m[oauthtokenretriever.AppClientSecret] = p.ExternalService.ClientSecret
-		m[oauthtokenretriever.AppPrivateKey] = p.ExternalService.PrivateKey
+		m[oauthtokenretriever.AppClientID] = externalService.ClientID
+		m[oauthtokenretriever.AppClientSecret] = externalService.ClientSecret
+		m[oauthtokenretriever.AppPrivateKey] = externalService.PrivateKey
 	}
 
 	if s.cfg.Features != nil {
 		enabledFeatures := s.cfg.Features.GetEnabled(ctx)
+		enabledFeatures["FOO"] = true
 		if len(enabledFeatures) > 0 {
 			features := make([]string, 0, len(enabledFeatures))
 			for feat := range enabledFeatures {
@@ -152,16 +153,7 @@ func (s *Service) GetConfigMap(ctx context.Context, p plugins.PluginDTO) map[str
 		}
 	}
 
-	if v, exists := s.cfg.PluginSettings[p.ID]["tracing"]; exists && v == "true" && s.cfg.Tracing.IsEnabled() {
-		m["GF_INSTANCE_OTLP_ADDRESS"] = s.cfg.Tracing.OpenTelemetry.Address
-		m["GF_INSTANCE_OTLP_PROPAGATION"] = s.cfg.Tracing.OpenTelemetry.Propagation
-
-		if p.Info.Version != "" {
-			m["GF_PLUGIN_VERSION"] = p.Info.Version
-		}
-	}
-
-	ps := getPluginSettings(p.ID, s.cfg)
+	ps := getPluginSettings(pluginID, s.cfg)
 	for k, v := range ps {
 		m[fmt.Sprintf("%s_%s", customConfigPrefix, strings.ToUpper(k))] = v
 	}

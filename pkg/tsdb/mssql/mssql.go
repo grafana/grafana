@@ -64,7 +64,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 }
 
 func newInstanceSettings(cfg *setting.Cfg) datasource.InstanceFactoryFunc {
-	return func(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+	return func(_ context.Context, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 		jsonData := sqleng.JsonData{
 			MaxOpenConns:      cfg.SqlDatasourceMaxOpenConnsDefault,
 			MaxIdleConns:      cfg.SqlDatasourceMaxIdleConnsDefault,
