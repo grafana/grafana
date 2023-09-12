@@ -3,6 +3,11 @@ This module returns the pipeline used for integration tests.
 """
 
 load(
+    "scripts/drone/services/services.star",
+    "integration_test_services",
+    "integration_test_services_volumes",
+)
+load(
     "scripts/drone/steps/lib.star",
     "compile_build_cmd",
     "download_grabpl_step",
@@ -15,11 +20,6 @@ load(
     "verify_gen_cue_step",
     "verify_gen_jsonnet_step",
     "wire_install_step",
-)
-load(
-    "scripts/drone/services/services.star",
-    "integration_test_services",
-    "integration_test_services_volumes",
 )
 load(
     "scripts/drone/utils/utils.star",

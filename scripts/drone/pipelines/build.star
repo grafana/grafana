@@ -32,12 +32,12 @@ load(
     "rgm_package_step",
 )
 load(
-    "scripts/drone/utils/utils.star",
-    "pipeline",
-)
-load(
     "scripts/drone/utils/images.star",
     "images",
+)
+load(
+    "scripts/drone/utils/utils.star",
+    "pipeline",
 )
 
 # @unused

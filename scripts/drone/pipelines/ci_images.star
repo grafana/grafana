@@ -3,21 +3,21 @@ This module contains steps and pipelines relating to creating CI Docker images.
 """
 
 load(
-    "scripts/drone/utils/utils.star",
-    "pipeline",
+    "scripts/drone/utils/images.star",
+    "images",
 )
 load(
-    "scripts/drone/vault.star",
-    "from_secret",
-    "gcp_download_build_container_assets_key",
+    "scripts/drone/utils/utils.star",
+    "pipeline",
 )
 load(
     "scripts/drone/utils/windows_images.star",
     "windows_images",
 )
 load(
-    "scripts/drone/utils/images.star",
-    "images",
+    "scripts/drone/vault.star",
+    "from_secret",
+    "gcp_download_build_container_assets_key",
 )
 
 def publish_ci_windows_test_image_pipeline():

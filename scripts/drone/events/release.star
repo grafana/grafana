@@ -3,6 +3,11 @@ This module returns all the pipelines used in the event of a release along with 
 """
 
 load(
+    "scripts/drone/services/services.star",
+    "integration_test_services",
+    "integration_test_services_volumes",
+)
+load(
     "scripts/drone/steps/lib.star",
     "compile_build_cmd",
     "download_grabpl_step",
@@ -19,9 +24,8 @@ load(
     "yarn_install_step",
 )
 load(
-    "scripts/drone/services/services.star",
-    "integration_test_services",
-    "integration_test_services_volumes",
+    "scripts/drone/utils/images.star",
+    "images",
 )
 load(
     "scripts/drone/utils/utils.star",
@@ -34,10 +38,6 @@ load(
     "npm_token",
     "prerelease_bucket",
     "rgm_gcp_key_base64",
-)
-load(
-    "scripts/drone/utils/images.star",
-    "images",
 )
 
 ver_mode = "release"

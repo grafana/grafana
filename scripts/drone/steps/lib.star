@@ -3,6 +3,18 @@ This module is a library of Drone steps and other pipeline components.
 """
 
 load(
+    "scripts/drone/steps/rgm.star",
+    "rgm_build_backend_step",
+)
+load(
+    "scripts/drone/utils/images.star",
+    "images",
+)
+load(
+    "scripts/drone/variables.star",
+    "grabpl_version",
+)
+load(
     "scripts/drone/vault.star",
     "from_secret",
     "gcp_grafanauploads",
@@ -10,18 +22,6 @@ load(
     "gcp_upload_artifacts_key",
     "npm_token",
     "prerelease_bucket",
-)
-load(
-    "scripts/drone/variables.star",
-    "grabpl_version",
-)
-load(
-    "scripts/drone/utils/images.star",
-    "images",
-)
-load(
-    "scripts/drone/steps/rgm.star",
-    "rgm_build_backend_step",
 )
 
 trigger_oss = {
@@ -650,12 +650,8 @@ def codespell_step():
         ],
     }
 
-def grafana_server_step(port = 3001):
+def grafana_server_step():
     """Runs the grafana-server binary as a service.
-
-    Args:
-      port: port to listen on.
-        Defaults to 3001.
 
     Returns:
       Drone step.

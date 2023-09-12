@@ -3,15 +3,15 @@ This module returns the pipeline used for building Grafana on Windows.
 """
 
 load(
-    "scripts/drone/utils/utils.star",
-    "pipeline",
-)
-load(
     "scripts/drone/steps/lib_windows.star",
     "clone_step_windows",
     "get_windows_steps",
     "test_backend_step_windows",
     "wire_install_step_windows",
+)
+load(
+    "scripts/drone/utils/utils.star",
+    "pipeline",
 )
 load(
     "scripts/drone/utils/windows_images.star",

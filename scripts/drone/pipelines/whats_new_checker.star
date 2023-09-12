@@ -3,12 +3,12 @@ This module contains logic for checking if the package.json whats new url matche
 """
 
 load(
-    "scripts/drone/utils/images.star",
-    "images",
-)
-load(
     "scripts/drone/steps/lib.star",
     "compile_build_cmd",
+)
+load(
+    "scripts/drone/utils/images.star",
+    "images",
 )
 load(
     "scripts/drone/utils/utils.star",

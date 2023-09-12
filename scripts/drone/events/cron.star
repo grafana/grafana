@@ -2,7 +2,6 @@
 This module provides functions for cronjob pipelines and steps used within.
 """
 
-load("scripts/drone/vault.star", "from_secret")
 load(
     "scripts/drone/steps/lib.star",
     "compile_build_cmd",
@@ -11,6 +10,7 @@ load(
     "scripts/drone/utils/images.star",
     "images",
 )
+load("scripts/drone/vault.star", "from_secret")
 
 aquasec_trivy_image = "aquasec/trivy:0.21.0"
 

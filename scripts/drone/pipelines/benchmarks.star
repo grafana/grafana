@@ -3,6 +3,11 @@ This module returns the pipeline used for integration benchmarks.
 """
 
 load(
+    "scripts/drone/services/services.star",
+    "integration_test_services",
+    "integration_test_services_volumes",
+)
+load(
     "scripts/drone/steps/lib.star",
     "compile_build_cmd",
     "enterprise_setup_step",
@@ -10,11 +15,6 @@ load(
     "verify_gen_cue_step",
     "verify_gen_jsonnet_step",
     "wire_install_step",
-)
-load(
-    "scripts/drone/services/services.star",
-    "integration_test_services",
-    "integration_test_services_volumes",
 )
 load(
     "scripts/drone/utils/utils.star",

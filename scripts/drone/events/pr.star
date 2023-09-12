@@ -4,28 +4,12 @@ It also includes a function generating a PR trigger from a list of included and 
 """
 
 load(
-    "scripts/drone/pipelines/test_frontend.star",
-    "test_frontend",
-)
-load(
-    "scripts/drone/pipelines/test_backend.star",
-    "test_backend",
-)
-load(
-    "scripts/drone/pipelines/integration_tests.star",
-    "integration_tests",
+    "scripts/drone/pipelines/benchmarks.star",
+    "integration_benchmarks",
 )
 load(
     "scripts/drone/pipelines/build.star",
     "build_e2e",
-)
-load(
-    "scripts/drone/pipelines/verify_drone.star",
-    "verify_drone",
-)
-load(
-    "scripts/drone/pipelines/verify_starlark.star",
-    "verify_starlark",
 )
 load(
     "scripts/drone/pipelines/docs.star",
@@ -33,8 +17,8 @@ load(
     "trigger_docs_pr",
 )
 load(
-    "scripts/drone/pipelines/shellcheck.star",
-    "shellcheck_pipeline",
+    "scripts/drone/pipelines/integration_tests.star",
+    "integration_tests",
 )
 load(
     "scripts/drone/pipelines/lint_backend.star",
@@ -45,8 +29,24 @@ load(
     "lint_frontend_pipeline",
 )
 load(
-    "scripts/drone/pipelines/benchmarks.star",
-    "integration_benchmarks",
+    "scripts/drone/pipelines/shellcheck.star",
+    "shellcheck_pipeline",
+)
+load(
+    "scripts/drone/pipelines/test_backend.star",
+    "test_backend",
+)
+load(
+    "scripts/drone/pipelines/test_frontend.star",
+    "test_frontend",
+)
+load(
+    "scripts/drone/pipelines/verify_drone.star",
+    "verify_drone",
+)
+load(
+    "scripts/drone/pipelines/verify_starlark.star",
+    "verify_starlark",
 )
 
 ver_mode = "pr"

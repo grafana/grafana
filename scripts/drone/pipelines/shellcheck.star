@@ -4,12 +4,12 @@ This module returns a Drone step and pipeline for linting with shellcheck.
 
 load("scripts/drone/steps/lib.star", "compile_build_cmd")
 load(
-    "scripts/drone/utils/utils.star",
-    "pipeline",
-)
-load(
     "scripts/drone/utils/images.star",
     "images",
+)
+load(
+    "scripts/drone/utils/utils.star",
+    "pipeline",
 )
 
 trigger = {
