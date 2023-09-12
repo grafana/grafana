@@ -2775,7 +2775,7 @@ steps:
       from_secret: packages_gpg_private_key
     GPG_PUBLIC_KEY:
       from_secret: packages_gpg_public_key
-  image: grafana/grafana-build:dev-7a93728
+  image: grafana/grafana-build:dev-5e36725
   name: rgm-build
   pull: always
   volumes:
@@ -3014,7 +3014,7 @@ steps:
       from_secret: packages_gpg_private_key
     GPG_PUBLIC_KEY:
       from_secret: packages_gpg_public_key
-  image: grafana/grafana-build:dev-7a93728
+  image: grafana/grafana-build:dev-5e36725
   name: rgm-build
   pull: always
   volumes:
@@ -3185,7 +3185,7 @@ steps:
       from_secret: packages_gpg_private_key
     GPG_PUBLIC_KEY:
       from_secret: packages_gpg_public_key
-  image: grafana/grafana-build:dev-7a93728
+  image: grafana/grafana-build:dev-5e36725
   name: rgm-build
   pull: always
   volumes:
@@ -3405,7 +3405,7 @@ steps:
       from_secret: packages_gpg_private_key
     GPG_PUBLIC_KEY:
       from_secret: packages_gpg_public_key
-  image: grafana/grafana-build:dev-7a93728
+  image: grafana/grafana-build:dev-5e36725
   name: rgm-build
   pull: always
   volumes:
@@ -3519,7 +3519,7 @@ steps:
       from_secret: packages_gpg_private_key
     GPG_PUBLIC_KEY:
       from_secret: packages_gpg_public_key
-  image: grafana/grafana-build:dev-7a93728
+  image: grafana/grafana-build:dev-5e36725
   name: rgm-publish
   pull: always
   volumes:
@@ -4484,6 +4484,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: b645fde2bb75464097aa6d91074c0e579e2510dc7a3acee6d76c813edce3e497
+hmac: 1d561b8b2fab39199baf2422026ad49f78f02998249d4256c2335bd8950ff696
 
 ...
