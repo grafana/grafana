@@ -41,7 +41,7 @@ def rgm_build_docker_step(packages, ubuntu, alpine, depends_on = ["rgm-package"]
         "commands": [
             "docker run --privileged --rm tonistiigi/binfmt --install all",
             "/src/grafana-build docker " +
-            "--package=$(cat {} | grep tar.gz | grep -v docker | grep -v sha256) ".format(packages) +
+            "$(cat {} | grep tar.gz | grep -v docker | grep -v sha256 | awk '{{print \"--package=\" $0}}') ".format(packages) +
             "--ubuntu-base={} ".format(ubuntu) +
             "--alpine-base={} ".format(alpine) +
             "--tag-format='{}' ".format(tag_format) +
