@@ -12,6 +12,7 @@ import {
 } from '@grafana/data';
 import { InlineField, InlineFieldRow, Select } from '@grafana/ui';
 
+import { getHelperContent } from '../helpers/getHelperContent';
 import { useAllFieldNamesFromDataFrames } from '../utils';
 
 export const GroupingToMatrixTransformerEditor = ({
@@ -95,4 +96,5 @@ export const groupingToMatrixTransformRegistryItem: TransformerRegistryItem<Grou
   name: 'Grouping to matrix',
   description: 'Takes a three fields combination and produces a Matrix.',
   categories: new Set([TransformerCategory.Combine, TransformerCategory.Reformat]),
+  help: getHelperContent(DataTransformerID.groupingToMatrix),
 };

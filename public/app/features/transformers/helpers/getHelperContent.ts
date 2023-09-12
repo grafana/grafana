@@ -1,3 +1,4 @@
+// JEV: create index.ts file in helpers folder
 import { CalculateFieldHelper } from './CalculateFieldHelper';
 import { ConcatenateHelper } from './ConcatenateHelper';
 import { ConfigFromQueryHelper } from './ConfigFromQueryHelper';
@@ -10,6 +11,8 @@ import { FilterByValueHelper } from './FilterByValueHelper';
 import { FilterFieldsByNameHelper } from './FilterFieldsByNameHelper';
 import { FormatTimeHelper } from './FormatTimeHelper';
 import { GroupByHelper } from './GroupByHelper';
+import { GroupingToMatrixHelper } from './GroupingToMatrixHelper';
+import { HistogramHelper } from './HistogramHelper';
 
 interface Helper {
   [key: string]: JSX.Element | string;
@@ -30,11 +33,14 @@ const helperContent: Helper = {
   filterFieldsByName: FilterFieldsByNameHelper(),
   formatTime: FormatTimeHelper(),
   groupBy: GroupByHelper(),
+  groupingToMatrix: GroupingToMatrixHelper(),
   heatmap: CreateHeatmapHelp(),
+  histogram: HistogramHelper(),
 };
 
 // JEV: add logic for no helper/string content
 export function getHelperContent(id: string): JSX.Element | string {
+  // JEV: why is this never being displayed?
   const defaultMessage = 'u broke it, u buy it';
 
   if (id in helperContent) {
