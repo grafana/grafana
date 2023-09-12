@@ -1,5 +1,6 @@
 import React, { useCallback, useState } from 'react';
 import { useCopyToClipboard } from 'react-use';
+import { v4 as uuidv4 } from 'uuid';
 
 import { SelectableValue } from '@grafana/data';
 import { EditorField, EditorHeader, EditorMode, EditorRow, FlexItem, InlineSelect, Space } from '@grafana/experimental';
@@ -131,7 +132,7 @@ export function QueryHeader({
         {editorMode === EditorMode.Builder && (
           <>
             <InlineSwitch
-              id="sql-filter"
+              id={`sql-filter-${uuidv4()}}`}
               label="Filter"
               transparent={true}
               showLabel={true}
