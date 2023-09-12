@@ -18,7 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/models/usertoken"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/quota"
-	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -553,32 +552,19 @@ func (s *UserAuthTokenService) ActiveTokenCount(ctx context.Context, userID *int
 }
 
 func (s *UserAuthTokenService) DeleteUserRevokedTokens(ctx context.Context, userID int64, window time.Duration) error {
-	hours := int(window.Hours())
-	if hours < 1 {
-		hours = 1
-		s.log.Debug("DeleteUserRevokedTokens called with duration less than 1 hour", "duration", window)
-	}
-
-	query := strings.Builder{}
-	query.WriteString("DELETE FROM user_auth_token WHERE user_id = ? AND revoked_at > 0 AND ")
-
-	switch s.sqlStore.GetDialect().DriverName() {
-	case migrator.MySQL:
-		query.WriteString("revoked_at <= UNIX_TIMESTAMP(NOW() - INTERVAL ? HOUR)")
-	case migrator.Postgres:
-		query.WriteString("revoked_at <= EXTRACT(EPOCH FROM (NOW() - (? * INTERVAL '1 hour')))::INTEGER")
-	case migrator.SQLite:
-		query.WriteString("revoked_at <= (strftime('%s','now') - ?*3600)")
-	}
-
 	return s.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
-		res, err := sess.Exec(query.String(), userID, hours)
+		query := "DELETE FROM user_auth_token WHERE user_id = ? AND revoked_at > 0 AND revoked_at <= ?"
+		res, err := sess.Exec(query, userID, time.Now().Add(-window).Unix())
 		if err != nil {
 			return err
 		}
-		ctxLogger := s.log.FromContext(ctx)
+
 		rows, err := res.RowsAffected()
-		ctxLogger.Debug("Deleted user revoked tokens", "userId", userID, "count", rows)
+		if err != nil {
+			return err
+		}
+
+		s.log.FromContext(ctx).Debug("Deleted user revoked tokens", "userId", userID, "count", rows)
 		return err
 	})
 }
