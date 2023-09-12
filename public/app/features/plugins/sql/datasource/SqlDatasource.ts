@@ -27,13 +27,13 @@ import {
   TemplateSrv,
   reportInteraction,
 } from '@grafana/runtime';
-import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 import { ResponseParser } from '../ResponseParser';
 import { SqlQueryEditor } from '../components/QueryEditor';
 import { MACRO_NAMES } from '../constants';
 import { DB, SQLQuery, SQLOptions, SqlQueryModel, QueryFormat } from '../types';
 import migrateAnnotation from '../utils/migration';
+import { getCurrentTimeRange } from '../utils/time';
 
 import { isSqlDatasourceDatabaseSelectionFeatureFlagEnabled } from './../components/QueryEditorFeatureFlag.utils';
 
@@ -211,7 +211,7 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
   }
 
   private runMetaQuery(request: Partial<SQLQuery>, options?: LegacyMetricFindQueryOptions): Promise<DataFrame> {
-    const range = getTimeSrv().timeRange();
+    const range = getCurrentTimeRange(this.templateSrv);
     const refId = request.refId || 'meta';
     const queries: DataQuery[] = [{ ...request, datasource: request.datasource || this.getRef(), refId }];
 
