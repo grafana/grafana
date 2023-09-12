@@ -10,6 +10,8 @@ import {
 import { MergeTransformerOptions } from '@grafana/data/src/transformations/transformers/merge';
 import { FieldValidationMessage } from '@grafana/ui';
 
+import { getHelperContent } from '../helpers/getHelperContent';
+
 export const MergeTransformerEditor = ({ input, options, onChange }: TransformerUIProps<MergeTransformerOptions>) => {
   if (input.length <= 1) {
     // Show warning that merge is useless only apply on a single frame
@@ -26,4 +28,5 @@ export const mergeTransformerRegistryItem: TransformerRegistryItem<MergeTransfor
   description: `Merge many series/tables and return a single table where mergeable values will be combined into the same row.
                 Useful for showing multiple series, tables or a combination of both visualized in a table.`,
   categories: new Set([TransformerCategory.Combine]),
+  help: getHelperContent(DataTransformerID.merge),
 };
