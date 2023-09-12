@@ -352,26 +352,33 @@ export async function getLogfmtCompletions(
   otherLabels: string[],
   dataProvider: CompletionDataProvider
 ): Promise<Completion[]> {
+  const trailingComma = logQuery.trimEnd().endsWith(',');
+  if (trailingComma) {
+    // The user is typing a new label, so we remove the last comma
+    logQuery = trimEnd(logQuery, ', '); 
+  }
   const { extractedLabelKeys, hasJSON, hasLogfmt, hasPack } = await dataProvider.getParserAndLabelKeys(logQuery);
   const hasQueryParser = isQueryWithParser(logQuery).queryWithParser;
 
   let completions: Completion[] = [];
 
-  if (!flag) {
-    const parserCompletions = await getParserCompletions(
-      '| ',
-      hasJSON,
-      hasLogfmt,
-      hasPack,
-      extractedLabelKeys,
-      hasQueryParser
-    );
-    const pipeOperations = getPipeOperationsCompletions('| ');
+  const parserCompletions = await getParserCompletions(
+    '| ',
+    hasJSON,
+    hasLogfmt,
+    hasPack,
+    extractedLabelKeys,
+    hasQueryParser
+  );
+  const pipeOperations = getPipeOperationsCompletions('| ');
 
+  if (!flag) {
     completions = [...completions, ...LOGFMT_ARGUMENT_COMPLETIONS, ...parserCompletions, ...pipeOperations]
+  } else if (!trailingComma) {
+    completions = [...completions, ...parserCompletions, ...pipeOperations];
   }
 
-  const labelPrefix = otherLabels.length === 0 || logQuery.trimEnd().endsWith(',') ? '' : ', ';
+  const labelPrefix = otherLabels.length === 0 || trailingComma ? '' : ', ';
   const labels = extractedLabelKeys.filter(label => !otherLabels.includes(label));
   const labelCompletions: Completion[] = labels.map((label) => ({
     type: 'LABEL_NAME',
@@ -379,7 +386,7 @@ export async function getLogfmtCompletions(
     insertText: labelPrefix + label,
     triggerOnInsert: false,
   }));
-  completions = [...completions, ...labelCompletions]
+  completions = [...completions, ...labelCompletions];
 
   return completions;
 }
