@@ -1315,42 +1315,28 @@ def get_windows_steps(ver_mode, bucket = "%PRERELEASE_BUCKET%"):
             "cp C:\\App\\nssm-2.24.zip .",
         ]
 
-        if ver_mode in ("release",):
+        if ver_mode == "release":
             version = "${DRONE_TAG:1}"
             installer_commands.extend(
                 [
-                    ".\\grabpl.exe windows-installer --target {} --edition oss {}".format(
-                        "gs://{}/{}/oss/{}/grafana-{}.windows-amd64.zip".format(gcp_bucket, ver_part, ver_mode, version),
-                        ver_part,
-                    ),
+                    ".\\grabpl.exe windows-installer --target {} --edition oss {}".format("gs://{}/{}/oss/{}/grafana-{}.windows-amd64.zip".format(gcp_bucket, ver_part, ver_mode, version), ver_part),
                     '$$fname = ((Get-Childitem grafana*.msi -name) -split "`n")[0]',
+                    'gsutil cp "$$fname" gs://{}/{}/oss/{}/'.format(gcp_bucket, ver_part, dir),
+                    'gsutil cp "$$fname.sha256" gs://{}/{}/oss/{}/'.format(gcp_bucket, ver_part, dir),
                 ],
             )
-            if ver_mode == "main":
-                installer_commands.extend(
-                    [
-                        "gsutil cp $$fname gs://{}/oss/{}/".format(gcp_bucket, dir),
-                        'gsutil cp "$$fname.sha256" gs://{}/oss/{}/'.format(
-                            gcp_bucket,
-                            dir,
-                        ),
-                    ],
-                )
-            else:
-                installer_commands.extend(
-                    [
-                        "gsutil cp $$fname gs://{}/{}/oss/{}/".format(
-                            gcp_bucket,
-                            ver_part,
-                            dir,
-                        ),
-                        'gsutil cp "$$fname.sha256" gs://{}/{}/oss/{}/'.format(
-                            gcp_bucket,
-                            ver_part,
-                            dir,
-                        ),
-                    ],
-                )
+        if ver_mode in ("main"):
+            installer_commands.extend(
+                [
+                    ".\\grabpl.exe windows-installer --edition oss --build-id $$env:DRONE_BUILD_NUMBER",
+                    '$$fname = ((Get-Childitem grafana*.msi -name) -split "`n")[0]',
+                    'gsutil cp "$$fname" gs://{}/oss/{}/'.format(gcp_bucket, dir),
+                    'gsutil cp "$$fname.sha256" gs://{}/oss/{}/'.format(
+                        gcp_bucket,
+                        dir,
+                    ),
+                ],
+            )
         steps.append(
             {
                 "name": "build-windows-installer",
