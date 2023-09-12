@@ -159,6 +159,12 @@ describe('situation', () => {
       flag: false,
       logQuery: '{level="info"} | logfmt label',
     });
+    assertSituation('sum by (test) (count_over_time({level="info"} | logfmt label,^))', {
+      type: 'IN_LOGFMT',
+      otherLabels: ['label'],
+      flag: false,
+      logQuery: '{level="info"} | logfmt label,',
+    });
     assertSituation('sum by (test) (count_over_time({level="info"} | logfmt --strict ^))', {
       type: 'IN_LOGFMT',
       otherLabels: [],
