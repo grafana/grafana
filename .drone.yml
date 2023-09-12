@@ -723,7 +723,7 @@ steps:
   name: test-a11y-frontend
 - commands:
   - /src/grafana-build docker --package=$(cat packages.txt | grep tar.gz | grep -v
-    docker | grep -v sha256) --ubuntu-base=ubuntu:22.10 --alpine-base=alpine:3.17.1
+    docker | grep -v sha256) --ubuntu-base=ubuntu:22.04 --alpine-base=alpine:3.17.1
     --tag-format='{{ .version_base }}-{{ .buildID }}-{{ .arch }}' --ubuntu-tag-format='{{
     .version_base }}-{{ .buildID }}-ubuntu-{{ .arch }}' > docker.txt
   - find ./dist -name '*docker*.tar.gz' -type f | xargs -n1 docker load -i
@@ -1892,7 +1892,7 @@ steps:
     - grafana/grafana
 - commands:
   - /src/grafana-build docker --package=$(cat packages.txt | grep tar.gz | grep -v
-    docker | grep -v sha256) --ubuntu-base=ubuntu:22.10 --alpine-base=alpine:3.17.1
+    docker | grep -v sha256) --ubuntu-base=ubuntu:22.04 --alpine-base=alpine:3.17.1
     --tag-format='{{ .version }}-{{ .arch }}' --ubuntu-tag-format='{{ .version }}-ubuntu-{{
     .arch }}' > docker.txt
   - find ./dist -name '*docker*.tar.gz' -type f | xargs -n1 docker load -i
@@ -3863,7 +3863,7 @@ steps:
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM google/cloud-sdk:431.0.0
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/grafana-ci-deploy:1.3.3
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM alpine:3.17.1
-  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM ubuntu:22.10
+  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM ubuntu:22.04
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM byrnedo/alpine-curl:0.1.8
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM plugins/slack
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM python:3.8
@@ -3896,7 +3896,7 @@ steps:
   - trivy --exit-code 1 --severity HIGH,CRITICAL google/cloud-sdk:431.0.0
   - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/grafana-ci-deploy:1.3.3
   - trivy --exit-code 1 --severity HIGH,CRITICAL alpine:3.17.1
-  - trivy --exit-code 1 --severity HIGH,CRITICAL ubuntu:22.10
+  - trivy --exit-code 1 --severity HIGH,CRITICAL ubuntu:22.04
   - trivy --exit-code 1 --severity HIGH,CRITICAL byrnedo/alpine-curl:0.1.8
   - trivy --exit-code 1 --severity HIGH,CRITICAL plugins/slack
   - trivy --exit-code 1 --severity HIGH,CRITICAL python:3.8
@@ -4163,6 +4163,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 5ccdc60b94e3d992613fc1e978057a285d1858ea7db4f9daf87213f91212f1f3
+hmac: f0447a5e08c336a03690b06002671248c5f2756167aa32a3eadd799d4e57b0f5
 
 ...
