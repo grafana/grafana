@@ -12,6 +12,7 @@ import (
 	"path"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
@@ -19,6 +20,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
+	ngalertmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	es "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client"
 )
 
@@ -30,8 +32,6 @@ type Service struct {
 }
 
 func ProvideService(httpClientProvider httpclient.Provider) *Service {
-	eslog.Debug("Initializing")
-
 	return &Service{
 		im:                 datasource.NewInstanceManager(newInstanceSettings(httpClientProvider)),
 		httpClientProvider: httpClientProvider,
@@ -40,30 +40,34 @@ func ProvideService(httpClientProvider httpclient.Provider) *Service {
 
 func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	dsInfo, err := s.getDSInfo(ctx, req.PluginContext)
+	_, fromAlert := req.Headers[ngalertmodels.FromAlertHeaderName]
+	logger := eslog.FromContext(ctx).New("fromAlert", fromAlert)
+
 	if err != nil {
+		logger.Error("Failed to get data source info", "error", err)
 		return &backend.QueryDataResponse{}, err
 	}
 
-	return queryData(ctx, req.Queries, dsInfo)
+	return queryData(ctx, req.Queries, dsInfo, logger)
 }
 
 // separate function to allow testing the whole transformation and query flow
-func queryData(ctx context.Context, queries []backend.DataQuery, dsInfo *es.DatasourceInfo) (*backend.QueryDataResponse, error) {
+func queryData(ctx context.Context, queries []backend.DataQuery, dsInfo *es.DatasourceInfo, logger log.Logger) (*backend.QueryDataResponse, error) {
 	if len(queries) == 0 {
 		return &backend.QueryDataResponse{}, fmt.Errorf("query contains no queries")
 	}
 
-	client, err := es.NewClient(ctx, dsInfo, queries[0].TimeRange)
+	client, err := es.NewClient(ctx, dsInfo, queries[0].TimeRange, logger)
 	if err != nil {
 		return &backend.QueryDataResponse{}, err
 	}
-	query := newElasticsearchDataQuery(client, queries)
+	query := newElasticsearchDataQuery(ctx, client, queries, logger)
 	return query.execute()
 }
 
 func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.InstanceFactoryFunc {
 	return func(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-		jsonData := map[string]interface{}{}
+		jsonData := map[string]any{}
 		err := json.Unmarshal(settings.JSONData, &jsonData)
 		if err != nil {
 			return nil, fmt.Errorf("error reading settings: %w", err)
@@ -186,46 +190,63 @@ func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceReq
 	// - ?/_mapping for fetching index mapping
 	// - _msearch for executing getTerms queries
 	if req.Path != "" && !strings.HasSuffix(req.Path, "/_mapping") && req.Path != "_msearch" {
+		logger.Error("Invalid resource path", "path", req.Path)
 		return fmt.Errorf("invalid resource URL: %s", req.Path)
 	}
 
 	ds, err := s.getDSInfo(ctx, req.PluginContext)
 	if err != nil {
+		logger.Error("Failed to get data source info", "error", err)
 		return err
 	}
 
 	esUrl, err := url.Parse(ds.URL)
 	if err != nil {
+		logger.Error("Failed to parse data source URL", "error", err, "url", ds.URL)
 		return err
 	}
 
 	resourcePath, err := url.Parse(req.Path)
 	if err != nil {
+		logger.Error("Failed to parse data source path", "error", err, "url", req.Path)
 		return err
 	}
 
 	// We take the path and the query-string only
 	esUrl.RawQuery = resourcePath.RawQuery
 	esUrl.Path = path.Join(esUrl.Path, resourcePath.Path)
-
 	request, err := http.NewRequestWithContext(ctx, req.Method, esUrl.String(), bytes.NewBuffer(req.Body))
 	if err != nil {
+		logger.Error("Failed to create request", "error", err, "url", esUrl.String())
 		return err
 	}
 
+	logger.Debug("Sending request to Elasticsearch", "resourcePath", req.Path)
+	start := time.Now()
 	response, err := ds.HTTPClient.Do(request)
 	if err != nil {
+		status := "error"
+		if errors.Is(err, context.Canceled) {
+			status = "cancelled"
+		}
+		lp := []any{"error", err, "status", status, "duration", time.Since(start), "stage", es.StageDatabaseRequest, "resourcePath", req.Path}
+		if response != nil {
+			lp = append(lp, "statusCode", response.StatusCode)
+		}
+		logger.Error("Error received from Elasticsearch", lp...)
 		return err
 	}
+	logger.Info("Response received from Elasticsearch", "statusCode", response.StatusCode, "status", "ok", "duration", time.Since(start), "stage", es.StageDatabaseRequest, "contentLength", response.Header.Get("Content-Length"), "resourcePath", req.Path)
 
 	defer func() {
 		if err := response.Body.Close(); err != nil {
-			logger.Warn("Failed to close response body", "err", err)
+			logger.Warn("Failed to close response body", "error", err)
 		}
 	}()
 
 	body, err := io.ReadAll(response.Body)
 	if err != nil {
+		logger.Error("Error reading response body bytes", "error", err)
 		return err
 	}
 

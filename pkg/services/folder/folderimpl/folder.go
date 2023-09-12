@@ -6,18 +6,17 @@ import (
 	"fmt"
 	"strings"
 	"sync"
-	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/guardian"
-	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/store/entity"
@@ -255,7 +254,7 @@ func (s *Service) getFolderByTitle(ctx context.Context, orgID int64, title strin
 func (s *Service) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (*folder.Folder, error) {
 	logger := s.log.FromContext(ctx)
 
-	if cmd.SignedInUser == nil {
+	if cmd.SignedInUser == nil || cmd.SignedInUser.IsNil() {
 		return nil, folder.ErrBadRequest.Errorf("missing signed in user")
 	}
 
@@ -282,7 +281,19 @@ func (s *Service) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (
 	dashFolder.SetUID(trimmedUID)
 
 	user := cmd.SignedInUser
-	userID := user.UserID
+
+	userID := int64(0)
+	var err error
+	namespaceID, userIDstr := user.GetNamespacedID()
+	if namespaceID != identity.NamespaceUser && namespaceID != identity.NamespaceServiceAccount {
+		s.log.Debug("User does not belong to a user or service account namespace, using 0 as user ID", "namespaceID", namespaceID, "userID", userIDstr)
+	} else {
+		userID, err = identity.IntIdentifier(namespaceID, userIDstr)
+		if err != nil {
+			s.log.Debug("failed to parse user ID", "namespaceID", namespaceID, "userID", userIDstr, "error", err)
+		}
+	}
+
 	if userID == 0 {
 		userID = -1
 	}
@@ -362,18 +373,9 @@ func (s *Service) Update(ctx context.Context, cmd *folder.UpdateFolderCommand) (
 		return dashFolder, nil
 	}
 
-	if cmd.NewUID != nil && *cmd.NewUID != "" {
-		if !util.IsValidShortUID(*cmd.NewUID) {
-			return nil, dashboards.ErrDashboardInvalidUid
-		} else if util.IsShortUIDTooLong(*cmd.NewUID) {
-			return nil, dashboards.ErrDashboardUidTooLong
-		}
-	}
-
 	foldr, err := s.store.Update(ctx, folder.UpdateFolderCommand{
 		UID:            cmd.UID,
 		OrgID:          cmd.OrgID,
-		NewUID:         cmd.NewUID,
 		NewTitle:       cmd.NewTitle,
 		NewDescription: cmd.NewDescription,
 		SignedInUser:   user,
@@ -459,10 +461,6 @@ func prepareForUpdate(dashFolder *dashboards.Dashboard, orgId int64, userId int6
 	}
 	dashFolder.Title = strings.TrimSpace(title)
 	dashFolder.Data.Set("title", dashFolder.Title)
-
-	if cmd.NewUID != nil && *cmd.NewUID != "" {
-		dashFolder.SetUID(*cmd.NewUID)
-	}
 
 	dashFolder.SetVersion(cmd.Version)
 	dashFolder.IsFolder = true
@@ -711,50 +709,6 @@ func (s *Service) getNestedFolders(ctx context.Context, orgID int64, uid string)
 	return result, nil
 }
 
-// MakeUserAdmin is copy of DashboardServiceImpl.MakeUserAdmin
-func (s *Service) MakeUserAdmin(ctx context.Context, orgID int64, userID, folderID int64, setViewAndEditPermissions bool) error {
-	rtEditor := org.RoleEditor
-	rtViewer := org.RoleViewer
-
-	items := []*dashboards.DashboardACL{
-		{
-			OrgID:       orgID,
-			DashboardID: folderID,
-			UserID:      userID,
-			Permission:  dashboards.PERMISSION_ADMIN,
-			Created:     time.Now(),
-			Updated:     time.Now(),
-		},
-	}
-
-	if setViewAndEditPermissions {
-		items = append(items,
-			&dashboards.DashboardACL{
-				OrgID:       orgID,
-				DashboardID: folderID,
-				Role:        &rtEditor,
-				Permission:  dashboards.PERMISSION_EDIT,
-				Created:     time.Now(),
-				Updated:     time.Now(),
-			},
-			&dashboards.DashboardACL{
-				OrgID:       orgID,
-				DashboardID: folderID,
-				Role:        &rtViewer,
-				Permission:  dashboards.PERMISSION_VIEW,
-				Created:     time.Now(),
-				Updated:     time.Now(),
-			},
-		)
-	}
-
-	if err := s.dashboardStore.UpdateDashboardACL(ctx, folderID, items); err != nil {
-		return err
-	}
-
-	return nil
-}
-
 // BuildSaveDashboardCommand is a simplified version on DashboardServiceImpl.BuildSaveDashboardCommand
 // keeping only the meaningful functionality for folders
 func (s *Service) BuildSaveDashboardCommand(ctx context.Context, dto *dashboards.SaveDashboardDTO) (*dashboards.SaveDashboardCommand, error) {
@@ -809,12 +763,23 @@ func (s *Service) BuildSaveDashboardCommand(ctx context.Context, dto *dashboards
 		}
 	}
 
+	userID := int64(0)
+	namespaceID, userIDstr := dto.User.GetNamespacedID()
+	if namespaceID != identity.NamespaceUser && namespaceID != identity.NamespaceServiceAccount {
+		s.log.Warn("User does not belong to a user or service account namespace, using 0 as user ID", "namespaceID", namespaceID, "userID", userIDstr)
+	} else {
+		userID, err = identity.IntIdentifier(namespaceID, userIDstr)
+		if err != nil {
+			s.log.Warn("failed to parse user ID", "namespaceID", namespaceID, "userID", userIDstr, "error", err)
+		}
+	}
+
 	cmd := &dashboards.SaveDashboardCommand{
 		Dashboard: dash.Data,
 		Message:   dto.Message,
 		OrgID:     dto.OrgID,
 		Overwrite: dto.Overwrite,
-		UserID:    dto.User.UserID,
+		UserID:    userID,
 		FolderID:  dash.FolderID,
 		IsFolder:  dash.IsFolder,
 		PluginID:  dash.PluginID,
@@ -829,7 +794,7 @@ func (s *Service) BuildSaveDashboardCommand(ctx context.Context, dto *dashboards
 
 // getGuardianForSavePermissionCheck returns the guardian to be used for checking permission of dashboard
 // It replaces deleted Dashboard.GetDashboardIdForSavePermissionCheck()
-func getGuardianForSavePermissionCheck(ctx context.Context, d *dashboards.Dashboard, user *user.SignedInUser) (guardian.DashboardGuardian, error) {
+func getGuardianForSavePermissionCheck(ctx context.Context, d *dashboards.Dashboard, user identity.Requester) (guardian.DashboardGuardian, error) {
 	newDashboard := d.ID == 0
 
 	if newDashboard {

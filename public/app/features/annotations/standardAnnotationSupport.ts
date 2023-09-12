@@ -133,7 +133,7 @@ export const publicDashboardEventNames: AnnotationFieldInfo[] = [
 // Given legacy infrastructure, alert events are passed though the same annotation
 // pipeline, but include fields that should not be exposed generally
 const alertEventAndAnnotationFields: AnnotationFieldInfo[] = [
-  ...(config.isPublicDashboardView ? publicDashboardEventNames : []),
+  ...(config.publicDashboardAccessToken ? publicDashboardEventNames : []),
   ...annotationEventNames,
   { key: 'userId' },
   { key: 'login' },

@@ -28,7 +28,8 @@ var (
 	withoutDefaults                 = "testdata/appliedDefaults"
 	invalidAccess                   = "testdata/invalid-access"
 
-	oneDatasourceWithTwoCorrelations = "testdata/one-datasource-two-correlations"
+	oneDatasourceWithTwoCorrelations   = "testdata/one-datasource-two-correlations"
+	correlationsDifferentOrganizations = "testdata/correlations-different-organizations"
 )
 
 func TestDatasourceAsConfig(t *testing.T) {
@@ -282,6 +283,26 @@ func TestDatasourceAsConfig(t *testing.T) {
 			require.Equal(t, 1, len(correlationsStore.deletedBySourceUID))
 			require.Equal(t, 1, len(correlationsStore.deletedByTargetUID))
 		})
+
+		t.Run("Using correct organization id", func(t *testing.T) {
+			store := &spyStore{items: []*datasources.DataSource{{Name: "Foo", OrgID: 2, ID: 1}}}
+			orgFake := &orgtest.FakeOrgService{}
+			correlationsStore := &mockCorrelationsStore{}
+			dc := newDatasourceProvisioner(logger, store, correlationsStore, orgFake)
+			err := dc.applyChanges(context.Background(), correlationsDifferentOrganizations)
+			if err != nil {
+				t.Fatalf("applyChanges return an error %v", err)
+			}
+
+			require.Equal(t, 2, len(correlationsStore.created))
+			// triggered twice - clean up on delete + update (because of the store setup above)
+			require.Equal(t, 2, len(correlationsStore.deletedBySourceUID))
+			require.Equal(t, int64(2), correlationsStore.deletedBySourceUID[0].OrgId)
+			require.Equal(t, int64(2), correlationsStore.deletedBySourceUID[1].OrgId)
+			// triggered once - just the  clean up
+			require.Equal(t, 1, len(correlationsStore.deletedByTargetUID))
+			require.Equal(t, int64(2), correlationsStore.deletedByTargetUID[0].OrgId)
+		})
 	})
 }
 
@@ -323,13 +344,13 @@ func validateDatasourceV1(t *testing.T, dsCfg *configs) {
 	validateDatasourceV0(t, dsCfg)
 	ds := dsCfg.Datasources[0]
 	require.Equal(t, ds.UID, "test_uid")
-	require.Equal(t, []map[string]interface{}{{
+	require.Equal(t, []map[string]any{{
 		"targetUID":   "a target",
 		"label":       "a label",
 		"description": "a description",
-		"config": map[string]interface{}{
+		"config": map[string]any{
 			"field": "fieldName",
-			"target": map[string]interface{}{
+			"target": map[string]any{
 				"target": "test.query",
 			},
 		},

@@ -11,10 +11,10 @@ import (
 )
 
 type datasourceInfo struct {
-	TimeField                  interface{} `json:"timeField"`
-	MaxConcurrentShardRequests int64       `json:"maxConcurrentShardRequests"`
-	Interval                   string      `json:"interval"`
-	TimeInterval               string      `json:"timeInterval"`
+	TimeField                  any    `json:"timeField"`
+	MaxConcurrentShardRequests int64  `json:"maxConcurrentShardRequests"`
+	Interval                   string `json:"interval"`
+	TimeInterval               string `json:"timeInterval"`
 }
 
 func TestNewInstanceSettings(t *testing.T) {
