@@ -725,7 +725,7 @@ steps:
 - commands:
   - docker run --privileged --rm tonistiigi/binfmt --install all
   - /src/grafana-build docker $(cat packages.txt | grep tar.gz | grep -v docker |
-    grep -v sha256 | awk '{print "--package=" $$0}') --ubuntu-base=ubuntu:22.04 --alpine-base=alpine:3.17.1
+    grep -v sha256 | awk '{print "--package=" $0}') --ubuntu-base=ubuntu:22.04 --alpine-base=alpine:3.17.1
     --tag-format='{{ .version_base }}-{{ .buildID }}-{{ .arch }}' --ubuntu-tag-format='{{
     .version_base }}-{{ .buildID }}-ubuntu-{{ .arch }}' > docker.txt
   - find ./dist -name '*docker*.tar.gz' -type f | xargs -n1 docker load -i
@@ -1898,7 +1898,7 @@ steps:
 - commands:
   - docker run --privileged --rm tonistiigi/binfmt --install all
   - /src/grafana-build docker $(cat packages.txt | grep tar.gz | grep -v docker |
-    grep -v sha256 | awk '{print "--package=" $$0}') --ubuntu-base=ubuntu:22.04 --alpine-base=alpine:3.17.1
+    grep -v sha256 | awk '{print "--package=" $0}') --ubuntu-base=ubuntu:22.04 --alpine-base=alpine:3.17.1
     --tag-format='{{ .version_base }}-{{ .buildID }}-{{ .arch }}' --ubuntu-tag-format='{{
     .version_base }}-{{ .buildID }}-ubuntu-{{ .arch }}' > docker.txt
   - find ./dist -name '*docker*.tar.gz' -type f | xargs -n1 docker load -i
@@ -4173,6 +4173,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 6ee69185d62cd58e2dbb6faa4635f1e9642f913c1ad393d3dfec6a5e20965353
+hmac: 3f0b291de7bb76eea4fe7ca2416f95bf54c18a0e4b87f707b883524f223efa21
 
 ...
