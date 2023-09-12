@@ -655,8 +655,6 @@ export function getSituation(text: string, pos: number): Situation | null {
     ids.push(cur.type.id);
   }
 
-  console.log(currentNode.type.name, names, pos);
-
   for (let resolver of RESOLVERS) {
     for (let path of resolver.paths) {
       if (isPathMatch(path, ids)) {
