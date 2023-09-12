@@ -1,29 +1,17 @@
 import { css } from '@emotion/css';
-import React, { ComponentType, useEffect, useMemo } from 'react';
+import React, { ComponentType, useEffect } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
-import { Row } from 'react-table';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
-import {
-  Icon,
-  IconName,
-  LinkButton,
-  SortByFn,
-  RadioButtonGroup,
-  Tooltip,
-  useStyles2,
-  FilterInput,
-  CellProps,
-  InteractiveTable,
-} from '@grafana/ui';
+import { LinkButton, RadioButtonGroup, useStyles2, FilterInput } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
-import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
 import { contextSrv } from 'app/core/core';
 
 import PageLoader from '../../core/components/PageLoader/PageLoader';
-import { AccessControlAction, StoreState, Unit, UserDTO, UserFilter } from '../../types';
+import { AccessControlAction, StoreState, UserFilter } from '../../types';
 
+import { UsersTable } from './Users/UsersTable';
 import { changeFilter, changePage, changeQuery, fetchUsers } from './state/actions';
 
 export interface FilterProps {
@@ -77,141 +65,10 @@ const UserListAdminPageUnConnected = ({
     fetchUsers();
   }, [fetchUsers]);
 
-  const showLicensedRole = useMemo(() => users.some((user) => user.licensedRole), [users]);
-
-  type Cell<T extends keyof UserDTO> = CellProps<UserDTO, UserDTO[T]>;
-  const createSortFn =
-    (key: keyof UserDTO): SortByFn<UserDTO> =>
-    (a, b) => {
-      const aValue = a.original[key];
-      const bValue = b.original[key];
-      if (typeof aValue === 'number' && typeof bValue === 'number') {
-        return aValue - bValue;
-      } else if (
-        typeof aValue === 'string' &&
-        typeof bValue === 'string' &&
-        !Number.isNaN(Date.parse(aValue)) &&
-        !Number.isNaN(Date.parse(bValue))
-      ) {
-        return new Date(aValue).getTime() - new Date(bValue).getTime();
-      } else if (typeof aValue === 'boolean' && typeof bValue === 'boolean') {
-        return aValue === bValue ? 0 : aValue ? -1 : 1;
-      }
-      return a.original.login.localeCompare(b.original.login);
-    };
-
-  const columns = useMemo(
-    () => [
-      {
-        id: 'avatarUrl',
-        header: '',
-        cell: ({ cell: { value } }: Cell<'avatarUrl'>) => (
-          <img style={{ width: '25px', height: '25px', borderRadius: '50%' }} src={value} alt="User avatar" />
-        ),
-      },
-      {
-        id: 'login',
-        header: 'Login',
-        cell: Cell,
-        sortType: createSortFn('login'),
-      },
-      {
-        id: 'email',
-        header: 'Email',
-        cell: Cell,
-        sortType: createSortFn('email'),
-      },
-      {
-        id: 'name',
-        header: 'Name',
-        cell: Cell,
-        sortType: createSortFn('name'),
-      },
-      {
-        id: 'orgs',
-        header: 'Belongs to',
-        cell: ({ cell: { value, row } }: Cell<'orgs'>) => {
-          return (
-            <>
-              <OrgUnits units={value} icon={'building'} />
-              {row.original.isAdmin && (
-                <CellWrapper original={row.original}>
-                  <Tooltip placement="top" content="Grafana Admin">
-                    <Icon name="shield" />
-                  </Tooltip>
-                </CellWrapper>
-              )}
-            </>
-          );
-        },
-        sortType: (a: Row<UserDTO>, b: Row<UserDTO>) => (a.original.orgs?.length || 0) - (b.original.orgs?.length || 0),
-      },
-      ...(showLicensedRole
-        ? [
-            {
-              id: 'licensedRole',
-              header: 'Licensed role',
-              cell: ({ cell: { value, row } }: Cell<'licensedRole'>) => (
-                <CellWrapper original={row.original}>
-                  {value === 'None' ? (
-                    <span className={styles.disabled}>
-                      Not assigned{' '}
-                      <Tooltip placement="top" content="A licensed role will be assigned when this user signs in">
-                        <Icon name="question-circle" />
-                      </Tooltip>
-                    </span>
-                  ) : (
-                    value
-                  )}
-                </CellWrapper>
-              ),
-              sortType: createSortFn('licensedRole'),
-            },
-          ]
-        : []),
-      {
-        id: 'lastSeenAtAge',
-        header: 'Last active',
-        headerTooltip: {
-          content: 'Time since user was seen using Grafana',
-          iconName: 'question-circle',
-        },
-        cell: ({ cell: { value, row } }: Cell<'lastSeenAtAge'>) => {
-          return (
-            <>
-              {value && (
-                <CellWrapper original={row.original}>
-                  {value === '10 years' ? <span className={styles.disabled}>Never</span> : value}
-                </CellWrapper>
-              )}
-            </>
-          );
-        },
-        sortType: createSortFn('lastSeenAt'),
-      },
-      {
-        id: 'authLabels',
-        header: 'Origin',
-        cell: ({ cell: { value } }: Cell<'authLabels'>) => (
-          <>{Array.isArray(value) && value.length > 0 && <TagBadge label={value[0]} removeIcon={false} count={0} />}</>
-        ),
-      },
-      {
-        id: 'isDisabled',
-        header: 'Status',
-        cell: ({ cell: { value } }: Cell<'isDisabled'>) => (
-          <>{value && <span className="label label-tag label-tag--gray">Disabled</span>}</>
-        ),
-        sortType: createSortFn('isDisabled'),
-      },
-    ],
-    [showLicensedRole, styles]
-  );
-
   return (
     <Page.Contents>
-      <div className="page-action-bar" data-testid={selectors.container}>
-        <div className="gf-form gf-form--grow">
+      <div className={styles.actionBar} data-testid={selectors.container}>
+        <div className={styles.row}>
           <FilterInput
             placeholder="Search user by login, email, or name."
             autoFocus={true}
@@ -237,16 +94,7 @@ const UserListAdminPageUnConnected = ({
           </LinkButton>
         )}
       </div>
-      {isLoading ? (
-        <PageLoader />
-      ) : (
-        <InteractiveTable
-          columns={columns}
-          data={users}
-          getRowId={(user) => String(user.id)}
-          pageSize={showPaging ? perPage : 0}
-        />
-      )}
+      {isLoading ? <PageLoader /> : <UsersTable users={users} showPaging={showPaging} perPage={perPage} />}
     </Page.Contents>
   );
 };
@@ -261,116 +109,34 @@ export function UserListAdminPage() {
   );
 }
 
-const getUsersAriaLabel = (name: string) => {
-  return `Edit user's ${name} details`;
-};
-
-type OrgUnitProps = { units?: Unit[]; icon: IconName };
-
-const OrgUnits = ({ units, icon }: OrgUnitProps) => {
-  const styles = useStyles2(getStyles);
-
-  if (!units?.length) {
-    return null;
-  }
-
-  return units.length > 1 ? (
-    <Tooltip
-      placement={'top'}
-      content={
-        <div className={styles.unitTooltip}>
-          {units?.map((unit) => (
-            <a
-              href={unit.url}
-              className={styles.link}
-              title={unit.name}
-              key={unit.name}
-              aria-label={`Edit ${unit.name}`}
-            >
-              {unit.name}
-            </a>
-          ))}
-        </div>
-      }
-    >
-      <div className={styles.unitItem}>
-        <Icon name={icon} /> <span>{units.length}</span>
-      </div>
-    </Tooltip>
-  ) : (
-    <a
-      href={units[0].url}
-      className={styles.unitItem}
-      title={units[0].name}
-      key={units[0].name}
-      aria-label={`Edit ${units[0].name}`}
-    >
-      <Icon name={icon} /> {units[0].name}
-    </a>
-  );
-};
-
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    table: css`
-      margin-top: ${theme.spacing(3)};
-    `,
     filter: css`
       margin: 0 ${theme.spacing(1)};
     `,
-    iconRow: css`
-      svg {
-        margin-left: ${theme.spacing(0.5)};
+    actionBar: css`
+      margin-bottom: ${theme.spacing(2)};
+      display: flex;
+      align-items: flex-start;
+      gap: ${theme.spacing(2)};
+
+      ${theme.breakpoints.down('sm')} {
+        flex-wrap: wrap;
       }
     `,
     row: css`
       display: flex;
-      align-items: center;
-      height: 100% !important;
+      align-items: flex-start;
+      text-align: left;
+      margin-bottom: ${theme.spacing(0.5)};
+      flex-grow: 1;
 
-      a {
-        padding: ${theme.spacing(0.5)} 0 !important;
+      ${theme.breakpoints.down('sm')} {
+        flex-wrap: wrap;
+        gap: ${theme.spacing(2)};
       }
     `,
-    unitTooltip: css`
-      display: flex;
-      flex-direction: column;
-    `,
-    unitItem: css`
-      cursor: pointer;
-      padding: ${theme.spacing(0.5)} 0;
-      margin-right: ${theme.spacing(1)};
-    `,
-    disabled: css`
-      color: ${theme.colors.text.disabled};
-    `,
-    link: css`
-      color: inherit;
-      cursor: pointer;
-      text-decoration: underline;
-    `,
   };
-};
-
-const Cell = ({ cell: { value }, row }: CellProps<UserDTO, string | boolean | number>) => (
-  <CellWrapper original={row.original}>{value}</CellWrapper>
-);
-
-interface CellWrapperProps {
-  original: UserDTO;
-  children: React.ReactNode;
-}
-const CellWrapper = ({ original, children }: CellWrapperProps) => {
-  return (
-    <a
-      className="ellipsis"
-      href={`admin/users/edit/${original.id}`}
-      title={original.name}
-      aria-label={getUsersAriaLabel(original.name)}
-    >
-      {children}
-    </a>
-  );
 };
 
 export default UserListAdminPage;
