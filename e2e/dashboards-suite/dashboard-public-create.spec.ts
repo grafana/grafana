@@ -1,4 +1,4 @@
-import { e2e } from '@grafana/e2e';
+import { e2e } from '../utils';
 
 e2e.scenario({
   describeName: 'Create a public dashboard',
@@ -8,13 +8,11 @@ e2e.scenario({
   skipScenario: false,
   scenario: () => {
     // Opening a dashboard without template variables
-    e2e()
-      .intercept({
-        pathname: '/api/ds/query',
-      })
-      .as('query');
+    cy.intercept({
+      pathname: '/api/ds/query',
+    }).as('query');
     e2e.flows.openDashboard({ uid: 'ZqZnVvFZz' });
-    e2e().wait('@query');
+    cy.wait('@query');
 
     // Open sharing modal
     e2e.pages.ShareDashboardModal.shareButton().click();
@@ -41,9 +39,9 @@ e2e.scenario({
     e2e.pages.ShareDashboardModal.PublicDashboard.CreateButton().should('be.enabled');
 
     // Create public dashboard
-    e2e().intercept('POST', '/api/dashboards/uid/ZqZnVvFZz/public-dashboards').as('save');
+    cy.intercept('POST', '/api/dashboards/uid/ZqZnVvFZz/public-dashboards').as('save');
     e2e.pages.ShareDashboardModal.PublicDashboard.CreateButton().click();
-    e2e().wait('@save');
+    cy.wait('@save');
 
     // These elements shouldn't be rendered after creating public dashboard
     e2e.pages.ShareDashboardModal.PublicDashboard.WillBePublicCheckbox().should('not.exist');
@@ -73,14 +71,12 @@ e2e.scenario({
   skipScenario: false,
   scenario: () => {
     // Opening a dashboard without template variables
-    e2e()
-      .intercept({
-        method: 'POST',
-        pathname: '/api/ds/query',
-      })
-      .as('query');
+    cy.intercept({
+      method: 'POST',
+      pathname: '/api/ds/query',
+    }).as('query');
     e2e.flows.openDashboard({ uid: 'ZqZnVvFZz' });
-    e2e().wait('@query');
+    cy.wait('@query');
 
     // Tag indicating a dashboard is public
     e2e.pages.Dashboard.DashNav.publicDashboardTag().should('exist');
@@ -89,9 +85,9 @@ e2e.scenario({
     e2e.pages.ShareDashboardModal.shareButton().click();
 
     // Select public dashboards tab
-    e2e().intercept('GET', '/api/dashboards/uid/ZqZnVvFZz/public-dashboards').as('query-public-dashboard');
+    cy.intercept('GET', '/api/dashboards/uid/ZqZnVvFZz/public-dashboards').as('query-public-dashboard');
     e2e.pages.ShareDashboardModal.PublicDashboard.Tab().click();
-    e2e().wait('@query-public-dashboard');
+    cy.wait('@query-public-dashboard');
 
     e2e.pages.ShareDashboardModal.PublicDashboard.CopyUrlInput().should('exist');
     e2e.pages.ShareDashboardModal.PublicDashboard.CopyUrlButton().should('exist');
@@ -108,8 +104,7 @@ e2e.scenario({
     e2e.pages.ShareDashboardModal.PublicDashboard.CopyUrlInput()
       .invoke('val')
       .then((url) => {
-        e2e()
-          .clearCookies()
+        cy.clearCookies()
           .request(getPublicDashboardAPIUrl(String(url)))
           .then((resp) => {
             expect(resp.status).to.eq(200);
@@ -126,49 +121,44 @@ e2e.scenario({
   skipScenario: false,
   scenario: () => {
     // Opening a dashboard without template variables
-    e2e()
-      .intercept({
-        method: 'POST',
-        pathname: '/api/ds/query',
-      })
-      .as('query');
+    cy.intercept({
+      method: 'POST',
+      pathname: '/api/ds/query',
+    }).as('query');
     e2e.flows.openDashboard({ uid: 'ZqZnVvFZz' });
-    e2e().wait('@query');
+    cy.wait('@query');
 
     // Open sharing modal
     e2e.pages.ShareDashboardModal.shareButton().click();
 
     // Select public dashboards tab
-    e2e().intercept('GET', '/api/dashboards/uid/ZqZnVvFZz/public-dashboards').as('query-public-dashboard');
+    cy.intercept('GET', '/api/dashboards/uid/ZqZnVvFZz/public-dashboards').as('query-public-dashboard');
     e2e.pages.ShareDashboardModal.PublicDashboard.Tab().click();
-    e2e().wait('@query-public-dashboard');
+    cy.wait('@query-public-dashboard');
 
     // save url before disabling public dashboard
     e2e.pages.ShareDashboardModal.PublicDashboard.CopyUrlInput()
       .invoke('val')
-      .then((text) => e2e().wrap(text).as('url'));
+      .then((text) => cy.wrap(text).as('url'));
 
     // Save public dashboard
-    e2e().intercept('PATCH', '/api/dashboards/uid/ZqZnVvFZz/public-dashboards/*').as('update');
+    cy.intercept('PATCH', '/api/dashboards/uid/ZqZnVvFZz/public-dashboards/*').as('update');
     // Switch off enabling toggle
     e2e.pages.ShareDashboardModal.PublicDashboard.PauseSwitch().should('be.enabled').click({ force: true });
-    e2e().wait('@update');
+    cy.wait('@update');
 
     // Url should be hidden
     e2e.pages.ShareDashboardModal.PublicDashboard.CopyUrlInput().should('be.disabled');
     e2e.pages.ShareDashboardModal.PublicDashboard.CopyUrlButton().should('be.disabled');
 
     // Make a request to public dashboards api endpoint without authentication
-    e2e()
-      .get('@url')
-      .then((url) => {
-        e2e()
-          .clearCookies()
-          .request({ url: getPublicDashboardAPIUrl(String(url)), failOnStatusCode: false })
-          .then((resp) => {
-            expect(resp.status).to.eq(403);
-          });
-      });
+    cy.get('@url').then((url) => {
+      cy.clearCookies()
+        .request({ url: getPublicDashboardAPIUrl(String(url)), failOnStatusCode: false })
+        .then((resp) => {
+          expect(resp.status).to.eq(403);
+        });
+    });
   },
 });
 
