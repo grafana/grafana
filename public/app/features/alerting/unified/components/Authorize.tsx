@@ -2,6 +2,7 @@ import { chain, filter } from 'lodash';
 import React, { PropsWithChildren } from 'react';
 
 import {
+  Abilities,
   Action,
   AlertmanagerAction,
   AlertSourceAction,
@@ -34,9 +35,7 @@ interface ActionsProps<T extends Action> extends PropsWithChildren {
 
 const AuthorizeAlertmanager = ({ actions, children }: ActionsProps<AlertmanagerAction>) => {
   const alertmanagerAbilties = useAlertmanagerAbilities();
-
-  const abilities = chain(alertmanagerAbilties).pick(actions).values().value();
-  const allowed = abilities.some(([_supported, allowed]) => allowed === true);
+  const allowed = actionsAllowed(alertmanagerAbilties, actions);
 
   if (allowed) {
     return <>{children}</>;
@@ -47,9 +46,7 @@ const AuthorizeAlertmanager = ({ actions, children }: ActionsProps<AlertmanagerA
 
 const AuthorizeAlertsource = ({ actions, children }: ActionsProps<AlertSourceAction>) => {
   const alertSourceAbilities = useAlertSourceAbilities();
-
-  const abilities = chain(alertSourceAbilities).pick(actions).values().value();
-  const allowed = abilities.some(([_supported, allowed]) => allowed === true);
+  const allowed = actionsAllowed(alertSourceAbilities, actions);
 
   if (allowed) {
     return <>{children}</>;
@@ -57,6 +54,15 @@ const AuthorizeAlertsource = ({ actions, children }: ActionsProps<AlertSourceAct
     return null;
   }
 };
+
+// check if some action is allowed from the abilities
+function actionsAllowed<T extends Action>(abilities: Abilities<T>, actions: T[]) {
+  return chain(abilities)
+    .pick(actions)
+    .values()
+    .value()
+    .some(([_supported, allowed]) => allowed === true);
+}
 
 function isAlertmanagerAction(action: AlertmanagerAction) {
   return Object.values(AlertmanagerAction).includes(action);
