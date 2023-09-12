@@ -5,13 +5,14 @@ import { withCenteredStory } from '../../../utils/storybook/withCenteredStory';
 import { Text } from '../../Text/Text';
 import { Flex } from '../Flex/Flex';
 
-import { Box, BackgroundColor, BorderColor, BorderStyle } from './Box';
+import { Box, BackgroundColor, BorderColor, BorderStyle, BorderRadius } from './Box';
 import mdx from './Box.mdx';
 
 const themeTokenControl = { control: 'select', options: [0, 0.25, 0.5, 1, 1.5, 2, 3, 4, 5, 6, 8, 10] };
-const backgroundOptions: BackgroundColor[] = ['primary', 'secondary', 'canvas'];
+const backgroundOptions: BackgroundColor[] = ['primary', 'secondary', 'canvas', 'error', 'success', 'warning', 'info'];
 const borderColorOptions: BorderColor[] = ['weak', 'medium', 'strong', 'error', 'success', 'warning', 'info'];
 const borderStyleOptions: BorderStyle[] = ['dashed', 'solid'];
+const borderRadiusOptions: BorderRadius[] = ['default', 'pill', 'circle'];
 
 const meta: Meta<typeof Box> = {
   title: 'General/Layout/Box',
@@ -68,11 +69,12 @@ Basic.argTypes = {
   backgroundColor: { control: 'select', options: backgroundOptions },
   borderStyle: { control: 'select', options: borderStyleOptions },
   borderColor: { control: 'select', options: borderColorOptions },
+  borderRadius: { control: 'select', options: borderRadiusOptions },
 };
 
 export const Background: StoryFn<typeof Box> = () => {
   return (
-    <Flex gap={4} direction="column">
+    <Flex gap={4}>
       {backgroundOptions.map((background) => (
         <Flex key={background} direction="column" alignItems="flex-start">
           {background}

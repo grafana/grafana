@@ -1,17 +1,20 @@
 import { css } from '@emotion/css';
 import React, { ElementType, useCallback } from 'react';
 
-import { GrafanaTheme2, ThemeSpacingTokens } from '@grafana/data';
+import { GrafanaTheme2, ThemeSpacingTokens, ThemeShape } from '@grafana/data';
 
 import { useStyles2 } from '../../../themes';
+import { AlignItems, JustifyContent } from '../Flex/Flex';
 import { ResponsiveProp, getResponsiveStyle } from '../utils/responsiveness';
 
 type Display = 'flex' | 'block' | 'inline' | 'none';
-export type BackgroundColor = keyof GrafanaTheme2['colors']['background'];
+export type BackgroundColor = keyof GrafanaTheme2['colors']['background'] | 'error' | 'success' | 'warning' | 'info';
 export type BorderStyle = 'solid' | 'dashed';
 export type BorderColor = keyof GrafanaTheme2['colors']['border'] | 'error' | 'success' | 'warning' | 'info';
+export type BorderRadius = keyof ThemeShape['radius'];
 
 interface BoxProps {
+  // Margin props
   margin?: ResponsiveProp<ThemeSpacingTokens>;
   marginX?: ResponsiveProp<ThemeSpacingTokens>;
   marginY?: ResponsiveProp<ThemeSpacingTokens>;
@@ -20,6 +23,7 @@ interface BoxProps {
   marginLeft?: ResponsiveProp<ThemeSpacingTokens>;
   marginRight?: ResponsiveProp<ThemeSpacingTokens>;
 
+  // Padding props
   padding?: ResponsiveProp<ThemeSpacingTokens>;
   paddingX?: ResponsiveProp<ThemeSpacingTokens>;
   paddingY?: ResponsiveProp<ThemeSpacingTokens>;
@@ -28,12 +32,19 @@ interface BoxProps {
   paddingLeft?: ResponsiveProp<ThemeSpacingTokens>;
   paddingRight?: ResponsiveProp<ThemeSpacingTokens>;
 
-  backgroundColor?: ResponsiveProp<BackgroundColor>;
-  display?: ResponsiveProp<Display>;
-  grow?: ResponsiveProp<number>;
-  shrink?: ResponsiveProp<number>;
+  // Border Props
   borderStyle?: ResponsiveProp<BorderStyle>;
   borderColor?: ResponsiveProp<BorderColor>;
+  borderRadius?: ResponsiveProp<BorderRadius>;
+
+  // Flex Props
+  grow?: ResponsiveProp<number>;
+  shrink?: ResponsiveProp<number>;
+  alignItems?: ResponsiveProp<AlignItems>;
+  justifyContent?: ResponsiveProp<JustifyContent>;
+
+  backgroundColor?: ResponsiveProp<BackgroundColor>;
+  display?: ResponsiveProp<Display>;
   element?: ElementType;
 }
 
@@ -46,18 +57,27 @@ export const Box = ({ children, ...props }: React.PropsWithChildren<BoxProps>) =
 
 Box.displayName = 'Box';
 
-const customColor = (color: BorderColor, theme: GrafanaTheme2): string | undefined => {
+const customBorderColor = (color: BorderColor, theme: GrafanaTheme2): string | undefined => {
   switch (color) {
     case 'error':
-      return theme.colors.error.border;
     case 'success':
-      return theme.colors.success.border;
     case 'info':
-      return theme.colors.info.border;
     case 'warning':
-      return theme.colors.warning.border;
+      return theme.colors[color].border;
     default:
       return color ? theme.colors.border[color] : undefined;
+  }
+};
+
+const customBackgroundColor = (color: BackgroundColor, theme: GrafanaTheme2): string | undefined => {
+  switch (color) {
+    case 'error':
+    case 'success':
+    case 'info':
+    case 'warning':
+      return theme.colors[color].transparent;
+    default:
+      return color ? theme.colors.background[color] : undefined;
   }
 };
 
@@ -83,6 +103,9 @@ const getStyles = (theme: GrafanaTheme2, props: BoxProps) => {
     shrink,
     borderColor,
     borderStyle,
+    borderRadius,
+    justifyContent,
+    alignItems,
   } = props;
   return {
     root: css([
@@ -136,7 +159,7 @@ const getStyles = (theme: GrafanaTheme2, props: BoxProps) => {
         display: val,
       })),
       getResponsiveStyle<BackgroundColor>(theme, backgroundColor, (val) => ({
-        backgroundColor: theme.colors.background[val],
+        backgroundColor: customBackgroundColor(val, theme),
       })),
       getResponsiveStyle<number>(theme, grow, (val) => ({
         flex: val,
@@ -148,11 +171,20 @@ const getStyles = (theme: GrafanaTheme2, props: BoxProps) => {
         borderStyle: val,
       })),
       getResponsiveStyle<BorderColor>(theme, borderColor, (val) => ({
-        borderColor: customColor(val, theme),
+        borderColor: customBorderColor(val, theme),
       })),
       (borderStyle || borderColor) && {
         borderWidth: '1px',
       },
+      getResponsiveStyle<JustifyContent>(theme, justifyContent, (val) => ({
+        justifyContent: val,
+      })),
+      getResponsiveStyle<AlignItems>(theme, alignItems, (val) => ({
+        alignItems: val,
+      })),
+      getResponsiveStyle<BorderRadius>(theme, borderRadius, (val) => ({
+        borderRadius: theme.shape.radius[val],
+      })),
     ]),
   };
 };
