@@ -100,9 +100,7 @@ Grafana dashboards can easily be exported and imported. For more information, re
 
 You can generate and save PDF files of any dashboard.
 
-{{% admonition type="note" %}}
-Available in [Grafana Enterprise][] and [Grafana Cloud](/docs/grafana-cloud/).
-{{% /admonition %}}
+> **Note:** Available in [Grafana Enterprise][] and [Grafana Cloud](/docs/grafana-cloud/).
 
 1. Click **Dashboards** in the left-side menu.
 1. Click the dashboard you want to share.

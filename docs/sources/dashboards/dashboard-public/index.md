@@ -19,12 +19,8 @@ This feature is in [public preview](/docs/release-life-cycle/).
 
 {{% /admonition %}}
 
-{{% admonition type="caution" %}}
-
-Making your dashboard public could result in a large number of queries to the data sources used by your dashboard.
-This can be mitigated by utilizing the enterprise [caching][] and/or rate limiting features.
-
-{{% /admonition %}}
+> **Caution:** Making your dashboard public could result in a large number of queries to the data sources used by your dashboard.
+> This can be mitigated by utilizing the enterprise [caching][] and/or rate limiting features.
 
 Public dashboards allow you to share your Grafana dashboard with anyone. This is useful when you want to make your dashboard available to the world without requiring access to your Grafana organization. This differs from [dashboard sharing][], which either requires recipients to be users in the same Grafana organization or provides limited information, as with a snapshot.
 

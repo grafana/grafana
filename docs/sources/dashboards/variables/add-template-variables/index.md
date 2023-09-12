@@ -49,8 +49,8 @@ weight: 100
 
 The following table lists the types of variables shipped with Grafana.
 
-| Variable type     | Description                                                                                                                                                                                              |
-| :---------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Variable type     | Description                                                                                                                                                                             |
+| :---------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Query             | Query-generated list of values such as metric names, server names, sensor IDs, data centers, and so on. [Add a query variable](#add-a-query-variable).                                  |
 | Custom            | Define the variable options manually using a comma-separated list. [Add a custom variable](#add-a-custom-variable).                                                                     |
 | Text box          | Display a free text input field with an optional default value. [Add a text box variable](#add-a-text-box-variable).                                                                    |
@@ -86,9 +86,7 @@ Query variables are generally only supported for strings. If your query returns 
 
 Query expressions can contain references to other variables and in effect create linked variables. Grafana detects this and automatically refreshes a variable when one of its linked variables change.
 
-{{% admonition type="note" %}}
-Query expressions are different for each data source. For more information, refer to the documentation for your [data source][].
-{{% /admonition %}}
+> **Note:** Query expressions are different for each data source. For more information, refer to the documentation for your [data source][].
 
 1. [Enter general options](#enter-general-options).
 1. In the **Data source** list, select the target data source for the query. For more information about data sources, refer to [Add a data source][].
@@ -642,8 +640,8 @@ enp216s0f0np3         0000:d7:00_0_0000:d8:00_3
 [data source]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/datasources"
 [data source]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/datasources"
 
-[Prometheus query variables]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/datasources/prometheus/template-variables#use-__rate_interval"
-[Prometheus query variables]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/datasources/prometheus/template-variables#use-__rate_interval"
+[Prometheus query variables]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/datasources/prometheus/template-variables#use-**rate_interval"
+[Prometheus query variables]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/datasources/prometheus/template-variables#use-**rate_interval"
 
 [Add a data source]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/administration/data-source-management#add-a-data-source"
 [Add a data source]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/administration/data-source-management#add-a-data-source"

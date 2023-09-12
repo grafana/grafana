@@ -149,9 +149,8 @@ If you have a field value that is an image URL or a base64 encoded image you can
 
 ### Sparkline
 
-{{% admonition type="note" %}}
-This cell type is available in Grafana 9.5+ as an opt-in beta feature. Modify Grafana [configuration file][] to enable the `timeSeriesTable` [feature toggle][] to use it.
-{{% /admonition %}}
+> **Note:** This cell type is available in Grafana 9.5+ as an opt-in beta feature.
+> Modify Grafana [configuration file][] to enable the `timeSeriesTable` [feature toggle][] to use it.
 
 Shows value rendered as a sparkline. Requires [time series to table][] data transform.
 

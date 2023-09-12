@@ -970,9 +970,8 @@ Here is the result after adding a Limit transformation with a value of '3':
 
 ### Time series to table transform
 
-{{% admonition type="note" %}}
-This transformation is available in Grafana 9.5+ as an opt-in beta feature. Modify Grafana [configuration file][] to enable the `timeSeriesTable` [feature toggle][] to use it.
-{{% /admonition %}}
+> **Note:** This transformation is available in Grafana 9.5+ as an opt-in beta feature.
+> Modify Grafana [configuration file][] to enable the `timeSeriesTable` [feature toggle][] to use it.
 
 Use this transformation to convert time series result into a table, converting time series data frame into a "Trend" field. "Trend" field can then be rendered using [sparkline cell type][], producing an inline sparkline for each table row. If there are multiple time series queries, each will result in a separate table data frame. These can be joined using join or merge transforms to produce a single table with multiple sparklines per row.
 
