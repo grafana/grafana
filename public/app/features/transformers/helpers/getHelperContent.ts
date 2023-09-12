@@ -32,12 +32,9 @@ interface Helper {
   [key: string]: string;
 }
 
-// JEV: what about "field lookup" transform?
-// JEV: add link to docs at the end of each helper?
 const helperContent: Helper = {
   calculateField: CalculateFieldHelper(),
   concatenate: ConcatenateHelper(),
-  // There is a discrepancy between the name of the id and the name of the transformer
   configFromData: ConfigFromQueryHelper(),
   convertFieldType: ConvertFieldTypeHelper(),
   extractFields: ExtractFieldsHelper(),
