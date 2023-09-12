@@ -277,7 +277,7 @@ func executeDSNodesGrouped(ctx context.Context, now time.Time, vars mathexp.Vars
 				for _, dn := range nodeGroup {
 					vars[dn.refID] = mathexp.Results{Error: MakeQueryError(firstNode.refID, firstNode.datasource.UID, err)}
 				}
-				instrument(err, "unknown")
+				instrument(err, "")
 				return
 			}
 
@@ -285,7 +285,7 @@ func executeDSNodesGrouped(ctx context.Context, now time.Time, vars mathexp.Vars
 				dataFrames, err := getResponseFrame(resp, dn.refID)
 				if err != nil {
 					vars[dn.refID] = mathexp.Results{Error: MakeQueryError(dn.refID, dn.datasource.UID, err)}
-					instrument(err, "unknown")
+					instrument(err, "")
 					return
 				}
 
