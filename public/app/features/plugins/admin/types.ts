@@ -70,7 +70,6 @@ export interface CatalogPluginDetails {
   }>;
   grafanaDependency?: string;
   pluginDependencies?: PluginDependencies['plugins'];
-  isDeprecated?: boolean;
 }
 
 export interface CatalogPluginInfo {

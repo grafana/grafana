@@ -20,7 +20,6 @@ export async function getPluginDetails(id: string): Promise<CatalogPluginDetails
   const dependencies = local?.dependencies || remote?.json?.dependencies;
 
   return {
-    isDeprecated: remote?.status === 'deprecated',
     grafanaDependency: dependencies?.grafanaDependency ?? dependencies?.grafanaVersion ?? '',
     pluginDependencies: dependencies?.plugins || [],
     links: local?.info.links || remote?.json?.info.links || [],
