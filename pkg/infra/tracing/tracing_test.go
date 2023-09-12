@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel/attribute"
 
 	"github.com/grafana/grafana/pkg/setting"
@@ -63,6 +64,10 @@ func TestTracingConfig(t *testing.T) {
 		ExpectedAddress    string
 		ExpectedPropagator string
 		ExpectedAttrs      []attribute.KeyValue
+
+		ExpectedSampler           string
+		ExpectedSamplerParam      float64
+		ExpectedSamplingServerURL string
 	}{
 		{
 			Name:             "default config uses noop exporter",
@@ -126,14 +131,34 @@ func TestTracingConfig(t *testing.T) {
 			[tracing.jaeger]
 			address = foo.com:6831
 			custom_tags = a:b
+			sampler_param = 0
 			[tracing.opentelemetry]
 			custom_attributes = c:d
+			sampler_param = 1
 			[tracing.opentelemetry.jaeger]
 			address = bar.com:6831
 			`,
-			ExpectedExporter: jaegerExporter,
-			ExpectedAddress:  "bar.com:6831",
-			ExpectedAttrs:    []attribute.KeyValue{attribute.String("c", "d")},
+			ExpectedExporter:     jaegerExporter,
+			ExpectedAddress:      "bar.com:6831",
+			ExpectedAttrs:        []attribute.KeyValue{attribute.String("c", "d")},
+			ExpectedSamplerParam: 1.0,
+		},
+		{
+			Name: "remote sampler config is parsed from otel config",
+			Cfg: `
+			[tracing.opentelemetry]
+			sampler_type = remote
+			sampler_param = 0.5
+			sampling_server_url = http://example.com:5778/sampling
+			[tracing.opentelemetry.otlp]
+			address = otlp.example.com:4317
+			`,
+			ExpectedExporter:          otlpExporter,
+			ExpectedAddress:           "otlp.example.com:4317",
+			ExpectedAttrs:             []attribute.KeyValue{},
+			ExpectedSampler:           "remote",
+			ExpectedSamplerParam:      0.5,
+			ExpectedSamplingServerURL: "http://example.com:5778/sampling",
 		},
 	} {
 		t.Run(test.Name, func(t *testing.T) {
@@ -156,6 +181,46 @@ func TestTracingConfig(t *testing.T) {
 			assert.Equal(t, test.ExpectedAddress, otel.Address)
 			assert.Equal(t, test.ExpectedPropagator, otel.Propagation)
 			assert.Equal(t, test.ExpectedAttrs, otel.customAttribs)
+
+			if test.ExpectedSampler != "" {
+				assert.Equal(t, test.ExpectedSampler, otel.sampler)
+				assert.Equal(t, test.ExpectedSamplerParam, otel.samplerParam)
+				assert.Equal(t, test.ExpectedSamplingServerURL, otel.samplerRemoteURL)
+			}
 		})
 	}
+}
+
+func TestInitSampler(t *testing.T) {
+	otel := &Opentelemetry{}
+	sampler, err := otel.initSampler()
+	require.NoError(t, err)
+	assert.Equal(t, "AlwaysOffSampler", sampler.Description())
+
+	otel.sampler = "bogus"
+	_, err = otel.initSampler()
+	require.Error(t, err)
+
+	otel.sampler = "const"
+	otel.samplerParam = 0.5
+	_, err = otel.initSampler()
+	require.Error(t, err)
+
+	otel.sampler = "const"
+	otel.samplerParam = 1.0
+	sampler, err = otel.initSampler()
+	require.NoError(t, err)
+	assert.Equal(t, "AlwaysOnSampler", sampler.Description())
+
+	otel.sampler = "probabilistic"
+	otel.samplerParam = 0.5
+	sampler, err = otel.initSampler()
+	require.NoError(t, err)
+	assert.Equal(t, "TraceIDRatioBased{0.5}", sampler.Description())
+
+	otel.sampler = "rateLimiting"
+	otel.samplerParam = 100.25
+	sampler, err = otel.initSampler()
+	require.NoError(t, err)
+	assert.Equal(t, "RateLimitingSampler{100.25}", sampler.Description())
 }
