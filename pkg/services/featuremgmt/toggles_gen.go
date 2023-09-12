@@ -119,6 +119,10 @@ const (
 	// Enable async query data support for Athena
 	FlagAthenaAsyncQueryDataSupport = "athenaAsyncQueryDataSupport"
 
+	// FlagCloudwatchNewRegionsHandler
+	// Refactor of /regions endpoint, no user-facing changes
+	FlagCloudwatchNewRegionsHandler = "cloudwatchNewRegionsHandler"
+
 	// FlagNewPanelChromeUI
 	// Show updated look and feel of grafana-ui PanelChrome: panel header, icons, and menu
 	FlagNewPanelChromeUI = "newPanelChromeUI"

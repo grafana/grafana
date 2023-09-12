@@ -66,7 +66,7 @@ func TestRegionsRoute(t *testing.T) {
 		handler.ServeHTTP(rr, req)
 
 		assert.Equal(t, http.StatusBadRequest, rr.Code)
-		assert.Contains(t, rr.Body.String(), "Error in Regions Handler when connecting to aws without a default region selection: missing default or selected region")
+		assert.Contains(t, rr.Body.String(), "Error in Regions Handler when connecting to aws without a default region selection: missing default region")
 	})
 
 	t.Run("returns 500 when the service returns an unexpected error", func(t *testing.T) {

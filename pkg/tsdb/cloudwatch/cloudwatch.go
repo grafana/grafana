@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"sync"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -108,20 +109,16 @@ func NewInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 
 // cloudWatchExecutor executes CloudWatch requests.
 type cloudWatchExecutor struct {
-	im       instancemgmt.InstanceManager
-	cfg      *setting.Cfg
-	sessions SessionCache
-	features featuremgmt.FeatureToggles
+	im          instancemgmt.InstanceManager
+	cfg         *setting.Cfg
+	sessions    SessionCache
+	features    featuremgmt.FeatureToggles
+	regionCache sync.Map
 
 	resourceHandler backend.CallResourceHandler
 }
 
 func (e *cloudWatchExecutor) getRequestContext(ctx context.Context, pluginCtx backend.PluginContext, region string) (models.RequestContext, error) {
-	ec2Client, err := e.getEC2Client(ctx, pluginCtx, defaultRegion)
-	if err != nil {
-		return models.RequestContext{}, err
-	}
-
 	r := region
 	instance, err := e.getInstance(ctx, pluginCtx)
 	if region == defaultRegion {
@@ -131,10 +128,16 @@ func (e *cloudWatchExecutor) getRequestContext(ctx context.Context, pluginCtx ba
 		r = instance.Settings.Region
 	}
 
+	ec2Client, err := e.getEC2Client(ctx, pluginCtx, defaultRegion)
+	if err != nil {
+		return models.RequestContext{}, err
+	}
+
 	sess, err := e.newSession(ctx, pluginCtx, r)
 	if err != nil {
 		return models.RequestContext{}, err
 	}
+
 	return models.RequestContext{
 		OAMAPIProvider:        NewOAMAPI(sess),
 		MetricsClientProvider: clients.NewMetricsClient(NewMetricsAPI(sess), e.cfg),

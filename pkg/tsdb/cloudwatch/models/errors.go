@@ -5,5 +5,5 @@ package models
 type MissingRegion struct{}
 
 func (e *MissingRegion) Error() string {
-	return "missing default or selected region"
+	return "missing default region"
 }

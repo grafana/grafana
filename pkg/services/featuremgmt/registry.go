@@ -197,6 +197,13 @@ var (
 			Owner:        awsDatasourcesSquad,
 		},
 		{
+			Name:        "cloudwatchNewRegionsHandler",
+			Description: "Refactor of /regions endpoint, no user-facing changes",
+			Stage:       FeatureStageGeneralAvailability,
+			Expression:  "true", // enabled by default
+			Owner:       awsDatasourcesSquad,
+		},
+		{
 			Name:         "newPanelChromeUI",
 			Description:  "Show updated look and feel of grafana-ui PanelChrome: panel header, icons, and menu",
 			Stage:        FeatureStageGeneralAvailability,

@@ -1,6 +1,8 @@
 package services
 
 import (
+	"sort"
+
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/constants"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
@@ -12,7 +14,9 @@ type RegionsService struct {
 }
 
 func NewRegionsService(ec2client models.EC2APIProvider) models.RegionsAPIProvider {
-	return &RegionsService{ec2client}
+	return &RegionsService{
+		ec2client,
+	}
 }
 
 func mergeEC2RegionsAndConstantRegions(regions map[string]struct{}, ec2Regions []*ec2.Region) {
@@ -42,6 +46,10 @@ func (r *RegionsService) GetRegions() ([]resources.ResourceResponse[resources.Re
 			},
 		})
 	}
+
+	sort.Slice(result, func(i, j int) bool {
+		return result[i].Value.Name < result[j].Value.Name
+	})
 
 	return result, nil
 }
