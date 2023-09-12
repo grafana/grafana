@@ -1,3 +1,5 @@
+import { getLinkToDocs } from './getLinkToDocs';
+
 export const HistogramHelper = () => {
   return `
   Use this transformation to generate a histogram based on the input data.
@@ -41,5 +43,6 @@ export const HistogramHelper = () => {
   | 7    | 8    | 0   | 1   | 1   | 1   |
   | 8    | 9    | 0   | 0   | 1   | 1   |
   | 9    | 10   | 0   | 0   | 1   | 1   |
+  ${getLinkToDocs()}
   `;
 };

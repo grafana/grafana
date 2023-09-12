@@ -1,3 +1,5 @@
+import { getLinkToDocs } from './getLinkToDocs';
+
 export const RowsToFieldsHelper = () => {
   return `
   The rows to fields transformation converts rows into separate fields. This can be useful as fields can be styled and configured individually. It can also use additional fields as sources for dynamic field configuration or map them to field labels. The additional labels can then be used to define better display names for the resulting fields.
@@ -58,5 +60,6 @@ export const RowsToFieldsHelper = () => {
   | 10                        | 20                        | 30                        |
 
   As you can see each row in the source data becomes a separate field. Each field now also has a max config option set. Options like **Min**, **Max**, **Unit** and **Thresholds** are all part of field configuration and if set like this will be used by the visualization instead of any options manually configured in the panel editor options pane.
+  ${getLinkToDocs()}
   `;
 };

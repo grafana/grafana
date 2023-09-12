@@ -1,3 +1,5 @@
+import { getLinkToDocs } from './getLinkToDocs';
+
 export const ReduceHelper = () => {
   return `
   The _Reduce_ transformation applies a calculation to each field in the frame and return a single value. Time fields are removed when applying this transformation.
@@ -47,5 +49,6 @@ export const ReduceHelper = () => {
   | AQI | Errors |
   | --- | ------ |
   | 3.2 | 5      |
+  ${getLinkToDocs()}
   `;
 };

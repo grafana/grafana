@@ -1,3 +1,5 @@
+import { getLinkToDocs } from './getLinkToDocs';
+
 export const FieldLookupHelper = () => {
   return `
   Use this transformation on a field value to look up additional fields from an external source.
@@ -35,5 +37,6 @@ export const FieldLookupHelper = () => {
   | Arizona   |    |           |            |            | 5      |
   | Arkansas  |    |           |            |            | 1      |
   | Somewhere |    |           |            |            | 5      |
+  ${getLinkToDocs()}
   `;
 };

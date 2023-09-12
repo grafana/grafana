@@ -1,3 +1,5 @@
+import { getLinkToDocs } from './getLinkToDocs';
+
 export const JoinByFieldHelper = () => {
   return `
   Use this transformation to join multiple results into a single table. This is especially useful for converting multiple
@@ -65,5 +67,6 @@ export const JoinByFieldHelper = () => {
   | 2020-07-07 11:14:20 | postgre | 345001233 |          |        |
   | 2020-07-07 11:34:20 | node    | 25260122  | server 1 | 15     |
   | 2020-07-07 11:24:20 | postgre | 123001233 | server 2 | 5      |
+  ${getLinkToDocs()}
   `;
 };

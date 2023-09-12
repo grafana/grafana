@@ -1,3 +1,3 @@
-export const SpatialHelper = () => {
-  return `what is this???`;
-};
+import { getLinkToDocs } from './getLinkToDocs';
+
+export const SpatialHelper = () => getLinkToDocs();

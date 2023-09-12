@@ -1,3 +1,5 @@
+import { getLinkToDocs } from './getLinkToDocs';
+
 export const JoinByLabelsHelper = () => {
   return `
   Use this transformation to join multiple results into a single table. This is especially useful for converting multiple
@@ -43,5 +45,6 @@ export const JoinByLabelsHelper = () => {
   | A       | J1  | 200  |       |
   | B       | J1  | 10   | 22    |
   | B       | J1  | 200  | 77    |
+  ${getLinkToDocs()}
   `;
 };

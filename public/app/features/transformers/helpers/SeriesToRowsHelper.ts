@@ -1,3 +1,5 @@
+import { getLinkToDocs } from './getLinkToDocs';
+
 export const SeriesToRowsHelper = () => {
   return `
   > Note: This transformation is available in Grafana 7.1+.
@@ -34,5 +36,6 @@ export const SeriesToRowsHelper = () => {
   | 2020-07-07 10:31:22 | Temperature | 22    |
   | 2020-07-07 09:30:57 | Humidity    | 33    |
   | 2020-07-07 09:30:05 | Temperature | 19    |
+  ${getLinkToDocs()}
   `;
 };

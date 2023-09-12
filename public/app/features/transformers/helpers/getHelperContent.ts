@@ -29,7 +29,7 @@ import { SortByHelper } from './SortByHelper';
 import { SpatialHelper } from './SpatialHelper';
 
 interface Helper {
-  [key: string]: JSX.Element | string;
+  [key: string]: string;
 }
 
 // JEV: what about "field lookup" transform?
@@ -67,7 +67,7 @@ const helperContent: Helper = {
 };
 
 // JEV: add logic for no helper/string content
-export function getHelperContent(id: string): JSX.Element | string {
+export function getHelperContent(id: string): string {
   // JEV: why is this never being displayed?
   const defaultMessage = 'u broke it, u buy it';
 
