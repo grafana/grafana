@@ -24,11 +24,7 @@ export function GrafanaExportDrawer({ activeTab, onTabChange, children, onClose 
       title="Export"
       subtitle="Select the format and download the file or copy the contents to clipboard"
       tabs={
-        <RuleInspectorTabs<ExportFormats>
-          tabs={grafanaRulesTabs}
-          setActiveTab={onTabChange}
-          activeTab={activeTab}
-        />
+        <RuleInspectorTabs<ExportFormats> tabs={grafanaRulesTabs} setActiveTab={onTabChange} activeTab={activeTab} />
       }
       onClose={onClose}
       size="md"

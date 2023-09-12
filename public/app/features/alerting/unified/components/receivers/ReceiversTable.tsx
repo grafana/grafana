@@ -27,7 +27,6 @@ import { ProvisioningBadge } from '../Provisioning';
 import { GrafanaReceiverExporter } from '../export/GrafanaReceiverExporter';
 import { ActionIcon } from '../rules/ActionIcon';
 
-
 import { ReceiversSection } from './ReceiversSection';
 import { ReceiverMetadataBadge } from './grafanaAppReceivers/ReceiverMetadataBadge';
 import { ReceiverMetadata, useReceiversMetadata } from './grafanaAppReceivers/useReceiversMetadata';
@@ -105,7 +104,11 @@ function ExportAction({ permissions, receiverName }: ActionProps) {
         onClick={toggleShowExportDrawer}
       />
       {showExportDrawer && (
-        <GrafanaReceiverExporter receiverName={receiverName} decrypt={canReadSecrets.toString()} onClose={toggleShowExportDrawer} />
+        <GrafanaReceiverExporter
+          receiverName={receiverName}
+          decrypt={canReadSecrets.toString()}
+          onClose={toggleShowExportDrawer}
+        />
       )}
     </Authorize>
   );
@@ -371,10 +374,10 @@ export const ReceiversTable = ({ config, alertManagerName }: Props) => {
       exportLink={
         showExport
           ? createUrl('/api/v1/provisioning/contact-points/export', {
-            download: 'true',
-            format: 'yaml',
-            decrypt: isOrgAdmin().toString(),
-          })
+              download: 'true',
+              format: 'yaml',
+              decrypt: isOrgAdmin().toString(),
+            })
           : undefined
       }
     >
@@ -386,8 +389,8 @@ export const ReceiversTable = ({ config, alertManagerName }: Props) => {
         renderExpandedContent={
           errorStateAvailable
             ? ({ data: { name } }) => (
-              <NotifiersTable notifiersState={contactPointsState?.receivers[name]?.notifiers ?? {}} />
-            )
+                <NotifiersTable notifiersState={contactPointsState?.receivers[name]?.notifiers ?? {}} />
+              )
             : undefined
         }
       />

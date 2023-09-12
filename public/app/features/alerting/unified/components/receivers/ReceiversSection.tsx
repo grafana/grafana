@@ -29,17 +29,13 @@ export const ReceiversSection = ({
   children,
   showButton = true,
   exportLink,
-  canReadSecrets = false
+  canReadSecrets = false,
 }: React.PropsWithChildren<Props>) => {
   const styles = useStyles2(getStyles);
   const showMore = Boolean(exportLink);
   const [showExportDrawer, toggleShowExportDrawer] = useToggle(false);
 
-  const newMenu = <Menu>{exportLink &&
-    <MenuItem
-      onClick={toggleShowExportDrawer}
-      label="Export all"
-    />}</Menu>;
+  const newMenu = <Menu>{exportLink && <MenuItem onClick={toggleShowExportDrawer} label="Export all" />}</Menu>;
 
   return (
     <Stack direction="column" gap={2}>

@@ -8,42 +8,41 @@ import { FileExportPreview } from './FileExportPreview';
 import { GrafanaExportDrawer } from './GrafanaExportDrawer';
 import { ExportFormats } from './providers';
 interface GrafanaPoliciesPreviewProps {
-    exportFormat: ExportFormats;
-    onClose: () => void;
+  exportFormat: ExportFormats;
+  onClose: () => void;
 }
 
 const GrafanaPoliciesExporterPreview = ({ exportFormat, onClose }: GrafanaPoliciesPreviewProps) => {
-    const { currentData: policiesDefinition = '', isFetching } = alertRuleApi.useExportPoliciesQuery({
-        format: exportFormat,
-    });
+  const { currentData: policiesDefinition = '', isFetching } = alertRuleApi.useExportPoliciesQuery({
+    format: exportFormat,
+  });
 
-    const downloadFileName = `policies-${new Date().getTime()}`;
+  const downloadFileName = `policies-${new Date().getTime()}`;
 
-    if (isFetching) {
-        return <LoadingPlaceholder text="Loading...." />;
-    }
+  if (isFetching) {
+    return <LoadingPlaceholder text="Loading...." />;
+  }
 
-    return (
-        <FileExportPreview
-            format={exportFormat}
-            textDefinition={policiesDefinition}
-            downloadFileName={downloadFileName}
-            onClose={onClose}
-        />
-    );
+  return (
+    <FileExportPreview
+      format={exportFormat}
+      textDefinition={policiesDefinition}
+      downloadFileName={downloadFileName}
+      onClose={onClose}
+    />
+  );
 };
 
-
 interface GrafanaPoliciesExporterProps {
-    onClose: () => void;
+  onClose: () => void;
 }
 
 export const GrafanaPoliciesExporter = ({ onClose }: GrafanaPoliciesExporterProps) => {
-    const [activeTab, setActiveTab] = useState<ExportFormats>('yaml');
+  const [activeTab, setActiveTab] = useState<ExportFormats>('yaml');
 
-    return (
-        <GrafanaExportDrawer activeTab={activeTab} onTabChange={setActiveTab} onClose={onClose}>
-            <GrafanaPoliciesExporterPreview exportFormat={activeTab} onClose={onClose} />
-        </GrafanaExportDrawer>
-    );
-}
+  return (
+    <GrafanaExportDrawer activeTab={activeTab} onTabChange={setActiveTab} onClose={onClose}>
+      <GrafanaPoliciesExporterPreview exportFormat={activeTab} onClose={onClose} />
+    </GrafanaExportDrawer>
+  );
+};

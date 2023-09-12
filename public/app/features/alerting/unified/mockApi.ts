@@ -9,7 +9,7 @@ import {
   PromBuildInfoResponse,
   PromRulesResponse,
   RulerRuleGroupDTO,
-  RulerRulesConfigDTO
+  RulerRulesConfigDTO,
 } from 'app/types/unified-alerting-dto';
 
 import { backendSrv } from '../../../core/services/backend_srv';
@@ -20,7 +20,7 @@ import {
   EmailConfig,
   GrafanaManagedReceiverConfig,
   MatcherOperator,
-  Route
+  Route,
 } from '../../../plugins/datasource/alertmanager/types';
 import { FolderDTO, NotifierDTO } from '../../../types';
 

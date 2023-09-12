@@ -51,7 +51,6 @@ interface PolicyComponentProps {
   onShowAlertInstances: (alertGroups: AlertmanagerGroup[], matchers?: ObjectMatcher[]) => void;
 }
 
-
 const Policy: FC<PolicyComponentProps> = ({
   receivers = [],
   contactPointsState,
@@ -129,7 +128,7 @@ const Policy: FC<PolicyComponentProps> = ({
     : undefined;
 
   const showExportOption = shouldShowExportOption(alertManagerSourceName, isDefaultPolicy, canReadProvisioning);
-  const [showExportDrawer, toggleShowExportDrawer] = useToggle(false)
+  const [showExportDrawer, toggleShowExportDrawer] = useToggle(false);
 
   // TODO dead branch detection, warnings for all sort of configs that won't work or will never be activated
   return (
@@ -188,11 +187,7 @@ const Policy: FC<PolicyComponentProps> = ({
                             </ConditionalWrap>
                           )}
                           {showExportOption && (
-                            <Menu.Item
-                              icon="download-alt"
-                              label="Export"
-                              onClick={toggleShowExportDrawer}
-                            />
+                            <Menu.Item icon="download-alt" label="Export" onClick={toggleShowExportDrawer} />
                           )}
                           {!readOnly && isDeletable && (
                             <>
@@ -321,9 +316,7 @@ const Policy: FC<PolicyComponentProps> = ({
           );
         })}
       </div>
-      {showExportDrawer &&
-        <GrafanaPoliciesExporter onClose={toggleShowExportDrawer} />
-      }
+      {showExportDrawer && <GrafanaPoliciesExporter onClose={toggleShowExportDrawer} />}
     </Stack>
   );
 };

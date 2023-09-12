@@ -9,7 +9,7 @@ import { setBackendSrv } from '@grafana/runtime';
 import {
   AlertManagerCortexConfig,
   GrafanaManagedReceiverConfig,
-  Receiver
+  Receiver,
 } from 'app/plugins/datasource/alertmanager/types';
 import { configureStore } from 'app/store/configureStore';
 import { AccessControlAction, ContactPointsState, NotifierDTO, NotifierType } from 'app/types';
@@ -20,8 +20,6 @@ import { mockProvisioningApi, setupMswServer } from '../../mockApi';
 import { enableRBAC, grantUserPermissions } from '../../mocks';
 import { fetchGrafanaNotifiersAction } from '../../state/actions';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
-
-
 
 import { ReceiversTable } from './ReceiversTable';
 import * as receiversMeta from './grafanaAppReceivers/useReceiversMetadata';

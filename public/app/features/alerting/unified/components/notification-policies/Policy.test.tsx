@@ -10,7 +10,7 @@ import {
   AlertmanagerGroup,
   MatcherOperator,
   ObjectMatcher,
-  RouteWithID
+  RouteWithID,
 } from 'app/plugins/datasource/alertmanager/types';
 import { ReceiversState } from 'app/types/alerting';
 
@@ -33,7 +33,7 @@ describe('Policy', () => {
     const onAddPolicy = jest.fn();
     const onDeletePolicy = jest.fn();
     const onShowAlertInstances = jest.fn(
-      (alertGroups: AlertmanagerGroup[], matchers?: ObjectMatcher[] | undefined) => { }
+      (alertGroups: AlertmanagerGroup[], matchers?: ObjectMatcher[] | undefined) => {}
     );
 
     const routeTree = mockRoutes;
@@ -138,7 +138,7 @@ describe('Policy', () => {
     const onAddPolicy = jest.fn();
     const onDeletePolicy = jest.fn();
     const onShowAlertInstances = jest.fn(
-      (alertGroups: AlertmanagerGroup[], matchers?: ObjectMatcher[] | undefined) => { }
+      (alertGroups: AlertmanagerGroup[], matchers?: ObjectMatcher[] | undefined) => {}
     );
 
     const routeTree = mockRoutes;
@@ -159,7 +159,7 @@ describe('Policy', () => {
     );
     // should have default policy
     const defaultPolicy = screen.getByTestId('am-root-route-container');
-    // click "more actions" 
+    // click "more actions"
     expect(within(defaultPolicy).getByTestId('more-actions')).toBeInTheDocument();
     await user.click(within(defaultPolicy).getByTestId('more-actions'));
     expect(screen.getByRole('menuitem', { name: 'Export' })).toBeInTheDocument();
@@ -170,7 +170,7 @@ describe('Policy', () => {
     const onAddPolicy = jest.fn();
     const onDeletePolicy = jest.fn();
     const onShowAlertInstances = jest.fn(
-      (alertGroups: AlertmanagerGroup[], matchers?: ObjectMatcher[] | undefined) => { }
+      (alertGroups: AlertmanagerGroup[], matchers?: ObjectMatcher[] | undefined) => {}
     );
 
     const routeTree = mockRoutes;
@@ -191,7 +191,7 @@ describe('Policy', () => {
     );
     // should have default policy
     const defaultPolicy = screen.getByTestId('am-root-route-container');
-    // click "more actions" 
+    // click "more actions"
     expect(within(defaultPolicy).getByTestId('more-actions')).toBeInTheDocument();
     await user.click(within(defaultPolicy).getByTestId('more-actions'));
     expect(screen.queryByRole('menuitem', { name: 'Export' })).not.toBeInTheDocument();
@@ -284,7 +284,6 @@ describe('Policy', () => {
     expect(within(customPolicy).getByTestId('matches-all')).toBeInTheDocument();
   });
 });
-
 
 const renderPolicy = (element: JSX.Element) =>
   render(<Router history={locationService.getHistory()}>{element}</Router>);

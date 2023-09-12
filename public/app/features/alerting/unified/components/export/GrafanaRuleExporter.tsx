@@ -8,7 +8,6 @@ import { FileExportPreview } from './FileExportPreview';
 import { GrafanaExportDrawer } from './GrafanaExportDrawer';
 import { ExportFormats } from './providers';
 
-
 interface GrafanaRuleExportPreviewProps {
   alertUid: string;
   exportFormat: ExportFormats;
@@ -39,9 +38,8 @@ const GrafanaRuleExportPreview = ({ alertUid, exportFormat, onClose }: GrafanaRu
 
 interface GrafanaRulerExporterProps {
   onClose: () => void;
-  alertUid: string
+  alertUid: string;
 }
-
 
 export const GrafanaRuleExporter = ({ onClose, alertUid }: GrafanaRulerExporterProps) => {
   const [activeTab, setActiveTab] = useState<ExportFormats>('yaml');
@@ -51,4 +49,4 @@ export const GrafanaRuleExporter = ({ onClose, alertUid }: GrafanaRulerExporterP
       <GrafanaRuleExportPreview alertUid={alertUid} exportFormat={activeTab} onClose={onClose} />
     </GrafanaExportDrawer>
   );
-}
+};
