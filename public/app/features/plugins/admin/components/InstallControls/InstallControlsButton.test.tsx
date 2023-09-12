@@ -69,4 +69,24 @@ describe('InstallControlsButton', () => {
       });
     }
   );
+
+  it("should allow to uninstall a plugin even if it's unpublished", () => {
+    render(
+      <TestProvider>
+        <InstallControlsButton plugin={{ ...plugin, isPublished: false }} pluginStatus={PluginStatus.UNINSTALL} />
+      </TestProvider>
+    );
+    const el = screen.getByRole('button');
+    expect(el).toHaveTextContent(/uninstall/i);
+    expect(el).toBeVisible();
+  });
+
+  it('should not render install or upgrade buttons if the plugin is unpublished', () => {
+    render(
+      <TestProvider>
+        <InstallControlsButton plugin={{ ...plugin, isPublished: false }} pluginStatus={PluginStatus.INSTALL} />
+      </TestProvider>
+    );
+    expect(screen.queryByRole('button')).not.toBeInTheDocument();
+  });
 });
