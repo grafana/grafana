@@ -1,5 +1,3 @@
-// import React from 'react';
-
 import { CalculateFieldHelper } from './CalculateFieldHelper';
 import { ConcatenateHelper } from './ConcatenateHelper';
 import { ConfigFromQueryHelper } from './ConfigFromQueryHelper';
@@ -7,6 +5,7 @@ import { ConvertFieldTypeHelper } from './ConvertFieldTypeHelper';
 import { CreateHeatmapHelp } from './CreateHeatmapHelp';
 import { ExtractFieldsHelper } from './ExtractFieldsHelper';
 import { FieldLookupHelper } from "./FieldLookupHelper";
+import { FilterByRefIdHelper } from "./FilterByRefIdHelper";
 import { FilterFieldsByNameHelper } from "./FilterFieldsByNameHelper";
 
 interface Helper {
@@ -21,10 +20,11 @@ const helperContent: Helper = {
   // There is a discrepancy between the name of the id and the name of the transformer
   configFromData: ConfigFromQueryHelper(),
   convertFieldType: ConvertFieldTypeHelper(),
-  heatmap: CreateHeatmapHelp(),
   extractFields: ExtractFieldsHelper(),
   fieldLookup: FieldLookupHelper(),
+  filterByRefId: FilterByRefIdHelper(),
   filterFieldsByName: FilterFieldsByNameHelper(),
+  heatmap: CreateHeatmapHelp(),
 };
 
 // JEV: add logic for no helper/string content
