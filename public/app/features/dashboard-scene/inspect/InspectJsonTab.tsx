@@ -1,3 +1,4 @@
+import { isEqual } from 'lodash';
 import React from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
@@ -5,12 +6,15 @@ import { SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import {
   SceneComponentProps,
+  SceneDataProvider,
   SceneDataTransformer,
   sceneGraph,
   SceneGridItem,
+  SceneGridItemStateLike,
   SceneObjectBase,
   SceneObjectRef,
   SceneObjectState,
+  SceneQueryRunner,
   sceneUtils,
   VizPanel,
 } from '@grafana/scenes';
@@ -21,11 +25,12 @@ import { PanelModel } from 'app/features/dashboard/state';
 import { getPanelInspectorStyles2 } from 'app/features/inspector/styles';
 import { InspectTab } from 'app/features/inspector/types';
 import { getPrettyJSON } from 'app/features/inspector/utils/utils';
+import { reportPanelInspectInteraction } from 'app/features/search/page/reporting';
 
 import { PanelRepeaterGridItem } from '../scene/PanelRepeaterGridItem';
 import { buildGridItemForPanel } from '../serialization/transformSaveModelToScene';
 import { gridItemToPanel } from '../serialization/transformSceneToSaveModel';
-import { getDashboardSceneFor } from '../utils/utils';
+import { getDashboardSceneFor, getPanelIdForVizPanel } from '../utils/utils';
 
 export type ShowContent = 'panel-json' | 'panel-data' | 'data-frames';
 
@@ -114,6 +119,14 @@ export class InspectJsonTab extends SceneObjectBase<InspectJsonTabState> {
     }
 
     panel.parent.setState(newState);
+
+    //Report relevant updates
+    reportPanelInspectInteraction(InspectTab.JSON, 'apply', {
+      panel_type_changed: panel.state.pluginId !== panelModel.type,
+      panel_id_changed: getPanelIdForVizPanel(panel) !== panelModel.id,
+      panel_grid_pos_changed: hasGridPosChanged(panel.parent.state, newState),
+      panel_targets_changed: hasQueriesChanged(getQueryRunner(panel.state.$data), getQueryRunner(newState.$data)),
+    });
   };
 
   public onCodeEditorBlur = (value: string) => {
@@ -185,6 +198,8 @@ function getJsonText(show: ShowContent, panel: VizPanel): string {
 
   switch (show) {
     case 'panel-json': {
+      reportPanelInspectInteraction(InspectTab.JSON, 'panelData');
+
       if (panel.parent instanceof SceneGridItem || panel.parent instanceof PanelRepeaterGridItem) {
         objToStringify = gridItemToPanel(panel.parent);
       }
@@ -192,6 +207,8 @@ function getJsonText(show: ShowContent, panel: VizPanel): string {
     }
 
     case 'panel-data': {
+      reportPanelInspectInteraction(InspectTab.JSON, 'panelJSON');
+
       const dataProvider = sceneGraph.getData(panel);
       if (dataProvider.state.data) {
         objToStringify = panel.applyFieldConfig(dataProvider.state.data);
@@ -200,6 +217,8 @@ function getJsonText(show: ShowContent, panel: VizPanel): string {
     }
 
     case 'data-frames': {
+      reportPanelInspectInteraction(InspectTab.JSON, 'dataFrame');
+
       const dataProvider = sceneGraph.getData(panel);
 
       if (dataProvider.state.data) {
@@ -214,4 +233,32 @@ function getJsonText(show: ShowContent, panel: VizPanel): string {
   }
 
   return getPrettyJSON(objToStringify);
+}
+
+function hasGridPosChanged(a: SceneGridItemStateLike, b: SceneGridItemStateLike) {
+  return a.x !== b.x || a.y !== b.y || a.width !== b.width || a.height !== b.height;
+}
+
+function hasQueriesChanged(a: SceneQueryRunner | undefined, b: SceneQueryRunner | undefined) {
+  if (a === undefined || b === undefined) {
+    return false;
+  }
+
+  return !isEqual(a.state.queries, b.state.queries);
+}
+
+function getQueryRunner(dataProvider: SceneDataProvider | undefined): SceneQueryRunner | undefined {
+  if (!dataProvider) {
+    return undefined;
+  }
+
+  if (dataProvider instanceof SceneDataTransformer) {
+    return getQueryRunner(dataProvider.state.$data);
+  }
+
+  if (dataProvider instanceof SceneQueryRunner) {
+    return dataProvider;
+  }
+
+  return undefined;
 }
