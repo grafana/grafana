@@ -189,7 +189,11 @@ function resolvePluginDependencies(deps: string[]) {
   // resolve dependencies
   const resolvedDeps: CompartmentDependencyModule[] = [];
   for (const dep of deps) {
-    const resolvedDep = sandboxPluginDependencies.get(dep);
+    let resolvedDep = sandboxPluginDependencies.get(dep);
+    if (resolvedDep?.__useDefault) {
+      resolvedDep = resolvedDep.default;
+    }
+
     if (!resolvedDep) {
       throw new Error(`[sandbox] Could not resolve dependency ${dep}`);
     }

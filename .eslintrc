@@ -35,6 +35,10 @@
             "name": "react-i18next",
             "importNames": ["Trans", "t"],
             "message": "Please import from app/core/internationalization instead"
+          },
+          {
+            "name": "@grafana/e2e",
+            "message": "@grafana/e2e is deprecated. Please import from ./e2e/utils instead"
           }
         ]
       }

@@ -427,6 +427,19 @@ Starting with 10.0, changing the folder UID is deprecated. It will be removed in
 - **Grafana/ui:** Fix margin in RadioButtonGroup option when only icon is present. [#68899](https://github.com/grafana/grafana/issues/68899), [@aocenas](https://github.com/aocenas)
 
 <!-- 10.1.0 END -->
+<!-- 10.0.5 START -->
+
+# 10.0.5 (2023-09-05)
+
+### Features and enhancements
+
+- **SSE:** DSNode to update result with names to make each value identifiable by labels (only Graphite and TestData. [#73646](https://github.com/grafana/grafana/issues/73646), [@yuri-tceretian](https://github.com/yuri-tceretian)
+
+### Bug fixes
+
+- **LDAP:** Fix user disabling. [#74107](https://github.com/grafana/grafana/issues/74107), [@gamab](https://github.com/gamab)
+
+<!-- 10.0.5 END -->
 <!-- 10.0.4 START -->
 
 # 10.0.4 (2023-08-22)
@@ -896,6 +909,21 @@ The `database` field has been deprecated in the Elasticsearch datasource provisi
 - **InteractiveTable:** Updated design and minor tweak to Correlactions page. [#66443](https://github.com/grafana/grafana/issues/66443), [@torkelo](https://github.com/torkelo)
 
 <!-- 10.0.0-preview END -->
+<!-- 9.5.9 START -->
+
+# 9.5.9 (2023-09-05)
+
+### Features and enhancements
+
+- **SSE:** DSNode to update result with names to make each value identifiable by labels (only Graphite and TestData). [#73642](https://github.com/grafana/grafana/issues/73642), [@yuri-tceretian](https://github.com/yuri-tceretian)
+- **Prometheus:** Add present_over_time syntax highlighting. [#72367](https://github.com/grafana/grafana/issues/72367), [@arnaudlemaignen](https://github.com/arnaudlemaignen)
+- **Alerting:** Improve performance of matching captures. [#71998](https://github.com/grafana/grafana/issues/71998), [@grobinson-grafana](https://github.com/grobinson-grafana)
+
+### Bug fixes
+
+- **LDAP:** Fix user disabling. [#74096](https://github.com/grafana/grafana/issues/74096), [@gamab](https://github.com/gamab)
+
+<!-- 9.5.9 END -->
 <!-- 9.5.8 START -->
 
 # 9.5.8 (2023-08-16)

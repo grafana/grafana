@@ -1,4 +1,4 @@
-import { e2e } from '@grafana/e2e';
+import { e2e } from '../utils';
 
 const PAGE_UNDER_TEST = '-Y-tnEDWk/templating-nested-template-variables';
 
@@ -52,20 +52,18 @@ describe('Variables - Set options from ui', () => {
   it('adding a value that is not part of dependents options should add the new values dependant options', () => {
     e2e.flows.login('admin', 'admin');
     e2e.flows.openDashboard({ uid: `${PAGE_UNDER_TEST}?orgId=1&var-datacenter=A&var-server=AA&var-pod=AAA` });
-    e2e()
-      .intercept({
-        pathname: '/api/ds/query',
-      })
-      .as('query');
+    cy.intercept({
+      pathname: '/api/ds/query',
+    }).as('query');
 
-    e2e().wait('@query');
+    cy.wait('@query');
 
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('A').should('be.visible').click();
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('B').should('be.visible').click();
 
     e2e.components.NavToolbar.container().click();
 
-    e2e().wait('@query');
+    cy.wait('@query');
 
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('A + B').scrollIntoView().should('be.visible');
 
@@ -106,16 +104,16 @@ describe('Variables - Set options from ui', () => {
     e2e.flows.openDashboard({
       uid: `${PAGE_UNDER_TEST}?orgId=1&var-datacenter=A&var-datacenter=B&var-server=AA&var-server=BB&var-pod=AAA&var-pod=BBB`,
     });
-    e2e().intercept({ pathname: '/api/ds/query' }).as('query');
+    cy.intercept({ pathname: '/api/ds/query' }).as('query');
 
-    e2e().wait('@query');
+    cy.wait('@query');
 
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('A + B').should('be.visible').click();
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('A').should('be.visible').click();
 
     e2e.components.NavToolbar.container().click();
 
-    e2e().wait('@query');
+    cy.wait('@query');
 
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('B').scrollIntoView().should('be.visible');
 

@@ -848,7 +848,6 @@ def e2e_tests_step(suite, port = 3001, tries = None):
             "HOST": "grafana-server",
         },
         "commands": [
-            "apt-get install -y netcat",
             cmd,
         ],
     }
@@ -874,7 +873,7 @@ def cloud_plugins_e2e_tests_step(suite, cloud, trigger = None):
         environment = {
             "CYPRESS_CI": "true",
             "HOST": "grafana-server",
-            "GITHUB_TOKEN": from_secret("github_token_pr"),
+            "GITHUB_TOKEN": from_secret("github_token"),
             "AZURE_SP_APP_ID": from_secret("azure_sp_app_id"),
             "AZURE_SP_PASSWORD": from_secret("azure_sp_app_pw"),
             "AZURE_TENANT": from_secret("azure_tenant"),
@@ -892,7 +891,7 @@ def cloud_plugins_e2e_tests_step(suite, cloud, trigger = None):
     branch = "${DRONE_SOURCE_BRANCH}".replace("/", "-")
     step = {
         "name": "end-to-end-tests-{}-{}".format(suite, cloud),
-        "image": "us-docker.pkg.dev/grafanalabs-dev/cloud-data-sources/e2e:latest",
+        "image": "us-docker.pkg.dev/grafanalabs-dev/cloud-data-sources/e2e:2.0.0",
         "depends_on": [
             "grafana-server",
         ],
@@ -1020,8 +1019,8 @@ def publish_images_step(ver_mode, docker_repo, trigger = None):
 
     if ver_mode == "pr":
         environment = {
-            "DOCKER_USER": from_secret("docker_username_pr"),
-            "DOCKER_PASSWORD": from_secret("docker_password_pr"),
+            "DOCKER_USER": from_secret("docker_username"),
+            "DOCKER_PASSWORD": from_secret("docker_password"),
             "GITHUB_APP_ID": from_secret("delivery-bot-app-id"),
             "GITHUB_APP_INSTALLATION_ID": from_secret("delivery-bot-app-installation-id"),
             "GITHUB_APP_PRIVATE_KEY": from_secret("delivery-bot-app-private-key"),
@@ -1295,6 +1294,7 @@ def get_windows_steps(ver_mode, bucket = "%PRERELEASE_BUCKET%"):
     if ver_mode in (
         "release",
         "release-branch",
+        "main",
     ):
         gcp_bucket = "{}/artifacts/downloads".format(bucket)
         if ver_mode == "release":
@@ -1315,42 +1315,28 @@ def get_windows_steps(ver_mode, bucket = "%PRERELEASE_BUCKET%"):
             "cp C:\\App\\nssm-2.24.zip .",
         ]
 
-        if ver_mode in ("release",):
+        if ver_mode == "release":
             version = "${DRONE_TAG:1}"
             installer_commands.extend(
                 [
-                    ".\\grabpl.exe windows-installer --target {} --edition oss {}".format(
-                        "gs://{}/{}/oss/{}/grafana-{}.windows-amd64.zip".format(gcp_bucket, ver_part, ver_mode, version),
-                        ver_part,
-                    ),
+                    ".\\grabpl.exe windows-installer --target {} --edition oss {}".format("gs://{}/{}/oss/{}/grafana-{}.windows-amd64.zip".format(gcp_bucket, ver_part, ver_mode, version), ver_part),
                     '$$fname = ((Get-Childitem grafana*.msi -name) -split "`n")[0]',
+                    'gsutil cp "$$fname" gs://{}/{}/oss/{}/'.format(gcp_bucket, ver_part, dir),
+                    'gsutil cp "$$fname.sha256" gs://{}/{}/oss/{}/'.format(gcp_bucket, ver_part, dir),
                 ],
             )
-            if ver_mode == "main":
-                installer_commands.extend(
-                    [
-                        "gsutil cp $$fname gs://{}/oss/{}/".format(gcp_bucket, dir),
-                        'gsutil cp "$$fname.sha256" gs://{}/oss/{}/'.format(
-                            gcp_bucket,
-                            dir,
-                        ),
-                    ],
-                )
-            else:
-                installer_commands.extend(
-                    [
-                        "gsutil cp $$fname gs://{}/{}/oss/{}/".format(
-                            gcp_bucket,
-                            ver_part,
-                            dir,
-                        ),
-                        'gsutil cp "$$fname.sha256" gs://{}/{}/oss/{}/'.format(
-                            gcp_bucket,
-                            ver_part,
-                            dir,
-                        ),
-                    ],
-                )
+        if ver_mode in ("main"):
+            installer_commands.extend(
+                [
+                    ".\\grabpl.exe windows-installer --edition oss --build-id $$env:DRONE_BUILD_NUMBER",
+                    '$$fname = ((Get-Childitem grafana*.msi -name) -split "`n")[0]',
+                    'gsutil cp "$$fname" gs://{}/oss/{}/'.format(gcp_bucket, dir),
+                    'gsutil cp "$$fname.sha256" gs://{}/oss/{}/'.format(
+                        gcp_bucket,
+                        dir,
+                    ),
+                ],
+            )
         steps.append(
             {
                 "name": "build-windows-installer",
@@ -1398,7 +1384,7 @@ def trigger_test_release():
         "name": "trigger-test-release",
         "image": images["build_image"],
         "environment": {
-            "GITHUB_TOKEN": from_secret("github_token_pr"),
+            "GITHUB_TOKEN": from_secret("github_token"),
             "TEST_TAG": "v0.0.0-test",
         },
         "commands": [

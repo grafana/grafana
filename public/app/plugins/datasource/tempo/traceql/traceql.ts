@@ -28,8 +28,9 @@ export const stringOperators = ['=', '!=', '=~'];
 export const numberOperators = ['=', '!=', '>', '<', '>=', '<='];
 
 export const intrinsics = ['duration', 'kind', 'name', 'status'];
-
 export const scopes: string[] = ['resource', 'span'];
+
+export const functions = ['avg', 'min', 'max', 'sum', 'count', 'by'];
 
 const keywords = intrinsics.concat(scopes);
 
@@ -43,8 +44,8 @@ export const language: languages.IMonarchLanguage = {
   keywords,
   operators,
   statusValues,
+  functions,
 
-  // we include these common regular expressions
   symbols: /[=><!~?:&|+\-*\/^%]+/,
   escapes: /\\(?:[abfnrtv\\"']|x[0-9A-Fa-f]{1,4}|u[0-9A-Fa-f]{4}|U[0-9A-Fa-f]{8})/,
   digits: /\d+(_+\d+)*/,
@@ -53,24 +54,21 @@ export const language: languages.IMonarchLanguage = {
 
   tokenizer: {
     root: [
-      // labels
-      [/[a-z_.][\w./_-]*(?=\s*(=|!=|>|<|>=|<=|=~|!~))/, 'tag'],
-      [/[a-z_.][\w./_-]*/, 'tag'],
-
       // durations
-      [/[0-9.]+(s|ms|ns|m)/, 'number'],
+      [/[0-9]+(.[0-9]+)?(us|µs|ns|ms|s|m|h)/, 'number'],
 
       // trace ID
       [/^\s*[0-9A-Fa-f]+\s*$/, 'tag'],
 
-      // all keywords have the same color
+      // functions, keywords, predefined values
       [
         /[a-zA-Z_.]\w*/,
         {
           cases: {
-            '@keywords': 'type',
-            '@statusValues': 'type.identifier',
-            '@default': 'identifier',
+            '@functions': 'predefined',
+            '@keywords': 'keyword',
+            '@statusValues': 'type',
+            '@default': 'tag',
           },
         },
       ],
@@ -81,12 +79,8 @@ export const language: languages.IMonarchLanguage = {
       [/"/, 'string', '@string_double'],
       [/'/, 'string', '@string_single'],
 
-      // whitespace
-      { include: '@whitespace' },
-
       // delimiters and operators
-      [/[{}()\[\]]/, '@brackets'],
-      [/[<>](?!@symbols)/, '@brackets'],
+      [/[{}()\[\]]/, 'delimiter.bracket'],
       [
         /@symbols/,
         {
@@ -119,13 +113,6 @@ export const language: languages.IMonarchLanguage = {
       [/\\./, 'string.escape.invalid'],
       [/'/, 'string', '@pop'],
     ],
-
-    clauses: [
-      [/[^(,)]/, 'tag'],
-      [/\)/, 'identifier', '@pop'],
-    ],
-
-    whitespace: [[/[ \t\r\n]+/, 'white']],
   },
 };
 
