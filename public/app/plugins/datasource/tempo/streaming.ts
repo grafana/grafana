@@ -45,6 +45,7 @@ export function doTempoChannelStream(
           path: `search/${key}`,
           data: {
             ...query,
+            SpansPerSpanSet: query.spss,
             timeRange: {
               from: range.from.toISOString(),
               to: range.to.toISOString(),

@@ -68,6 +68,7 @@ import { getErrorMessage } from './utils';
 import { TempoVariableSupport } from './variables';
 
 export const DEFAULT_LIMIT = 20;
+export const DEFAULT_SPSS = 3; // spans per span set
 
 enum FeatureName {
   streaming = 'streaming',
@@ -352,6 +353,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
               this._request('/api/search', {
                 q: queryValue,
                 limit: options.targets[0].limit ?? DEFAULT_LIMIT,
+                spss: options.targets[0].spss,
                 start: options.range.from.unix(),
                 end: options.range.to.unix(),
               }).pipe(
@@ -405,6 +407,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
               this._request('/api/search', {
                 q: queryValue,
                 limit: options.targets[0].limit ?? DEFAULT_LIMIT,
+                spss: options.targets[0].spss,
                 start: options.range.from.unix(),
                 end: options.range.to.unix(),
               }).pipe(
