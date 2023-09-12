@@ -325,12 +325,13 @@ describe('Plugin details page', () => {
       expect(await queryByRole('button', { name: /install/i })).toBeInTheDocument();
     });
 
-    it('should not display install button for enterprise plugins if license is invalid', async () => {
+    it('should not display install button for enterprise plugins if license is invalid (but allow uninstall)', async () => {
       config.licenseInfo.enabledFeatures = {};
 
       const { queryByRole, queryByText } = renderPluginDetails({ id, isInstalled: true, isEnterprise: true });
 
-      expect(await queryByRole('button', { name: /install/i })).not.toBeInTheDocument();
+      expect(await queryByRole('button', { name: /Install/ })).not.toBeInTheDocument();
+      expect(await queryByRole('button', { name: /Uninstall/ })).toBeInTheDocument();
       expect(queryByText(/no valid Grafana Enterprise license detected/i)).toBeInTheDocument();
       expect(queryByRole('link', { name: /learn more/i })).toBeInTheDocument();
     });
