@@ -12,7 +12,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/expr/mathexp"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 // NodeType is the type of a DPNode. Currently either a expression command or datasource query.
@@ -46,6 +45,7 @@ type Node interface {
 	NodeType() NodeType
 	RefID() string
 	String() string
+	NeedsVars() []string
 }
 
 type ExecutableNode interface {
@@ -82,17 +82,15 @@ func (dp *DataPipeline) execute(c context.Context, now time.Time, s *Service) (m
 
 		// Don't execute nodes that have dependent nodes that have failed
 		var hasDepError bool
-		if cmd, ok := node.(*CMDNode); ok {
-			for _, neededVar := range cmd.Command.NeedsVars() {
-				if res, ok := vars[neededVar]; ok {
-					if res.Error != nil {
-						errResult := mathexp.Results{
-							Error: MakeDependencyError(node.RefID(), neededVar),
-						}
-						vars[node.RefID()] = errResult
-						hasDepError = true
-						break
+		for _, neededVar := range node.NeedsVars() {
+			if res, ok := vars[neededVar]; ok {
+				if res.Error != nil {
+					errResult := mathexp.Results{
+						Error: makeDependencyError(node.RefID(), neededVar),
 					}
+					vars[node.RefID()] = errResult
+					hasDepError = true
+					break
 				}
 			}
 		}
@@ -102,20 +100,15 @@ func (dp *DataPipeline) execute(c context.Context, now time.Time, s *Service) (m
 
 		c, span := s.tracer.Start(c, "SSE.ExecuteNode")
 		span.SetAttributes("node.refId", node.RefID(), attribute.Key("node.refId").String(node.RefID()))
-		if node.NodeType() == TypeCMDNode {
-			cmdNode := node.(*CMDNode)
-			inputRefIDs := cmdNode.Command.NeedsVars()
+		if len(node.NeedsVars()) > 0 {
+			inputRefIDs := node.NeedsVars()
 			span.SetAttributes("node.inputRefIDs", inputRefIDs, attribute.Key("node.inputRefIDs").StringSlice(inputRefIDs))
 		}
 		defer span.End()
 
 		execNode, ok := node.(ExecutableNode)
 		if !ok {
-			return vars, errutil.PublicError{
-				StatusCode: 500,
-				MessageID:  "SSE.unexpectedNodeType",
-				Message:    fmt.Sprintf("expected executable node type but got node type %s", node.NodeType()),
-			}
+			return vars, makeUnexpectedNodeTypeError(node.RefID(), node.NodeType().String())
 		}
 
 		res, err := execNode.Execute(c, now, vars, s)

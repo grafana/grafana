@@ -85,6 +85,10 @@ func (gn *CMDNode) NodeType() NodeType {
 	return TypeCMDNode
 }
 
+func (gn *CMDNode) NeedsVars() []string {
+	return gn.Command.NeedsVars()
+}
+
 // Execute runs the node and adds the results to vars. If the node requires
 // other nodes they must have already been executed and their results must
 // already by in vars.
@@ -149,6 +153,11 @@ type DSNode struct {
 // NodeType returns the data pipeline node type.
 func (dn *DSNode) NodeType() NodeType {
 	return TypeDatasourceNode
+}
+
+// NodeType returns the data pipeline node type.
+func (dn *DSNode) NeedsVars() []string {
+	return []string{}
 }
 
 func (s *Service) buildDSNode(dp *simple.DirectedGraph, rn *rawNode, req *Request) (*DSNode, error) {
@@ -216,7 +225,7 @@ func executeDSNodesGrouped(ctx context.Context, now time.Time, vars mathexp.Vars
 			pCtx, err := s.pCtxProvider.GetWithDataSource(ctx, firstNode.datasource.Type, firstNode.request.User, firstNode.datasource)
 			if err != nil {
 				for _, dn := range nodeGroup {
-					vars[dn.refID] = mathexp.Results{Error: fmt.Errorf("could not get datasource: %w", err)} // TODO errutil public
+					vars[dn.refID] = mathexp.Results{Error: datasources.ErrDataSourceNotFound}
 				}
 				return
 			}
@@ -284,7 +293,7 @@ func executeDSNodesGrouped(ctx context.Context, now time.Time, vars mathexp.Vars
 				var result mathexp.Results
 				responseType, result, err = convertDataFramesToResults(ctx, dataFrames, dn.datasource.Type, s, logger)
 				if err != nil {
-					result.Error = MakeConversionError(dn.RefID(), err)
+					result.Error = makeConversionError(dn.RefID(), err)
 				}
 				instrument(err, responseType)
 				vars[dn.refID] = result
@@ -353,7 +362,7 @@ func (dn *DSNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s 
 	var result mathexp.Results
 	responseType, result, err = convertDataFramesToResults(ctx, dataFrames, dn.datasource.Type, s, logger)
 	if err != nil {
-		err = MakeConversionError(dn.refID, err)
+		err = makeConversionError(dn.refID, err)
 	}
 	return result, err
 }
