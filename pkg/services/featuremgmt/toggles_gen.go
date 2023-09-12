@@ -119,10 +119,6 @@ const (
 	// Enable async query data support for Athena
 	FlagAthenaAsyncQueryDataSupport = "athenaAsyncQueryDataSupport"
 
-	// FlagNewPanelChromeUI
-	// Show updated look and feel of grafana-ui PanelChrome: panel header, icons, and menu
-	FlagNewPanelChromeUI = "newPanelChromeUI"
-
 	// FlagShowDashboardValidationWarnings
 	// Show warnings when dashboards do not validate against the schema
 	FlagShowDashboardValidationWarnings = "showDashboardValidationWarnings"
