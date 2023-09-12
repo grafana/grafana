@@ -113,14 +113,29 @@ describe('Plugins/Helpers', () => {
 
     test('adds the correct signature enum', () => {
       const pluginWithoutSignature = { ...remotePlugin, signatureType: '', versionSignatureType: '' } as RemotePlugin;
-      // With only "signatureType" -> valid
-      const pluginWithSignature1 = { ...remotePlugin, signatureType: PluginSignatureType.commercial } as RemotePlugin;
-      // With only "versionSignatureType" -> valid
-      const pluginWithSignature2 = { ...remotePlugin, versionSignatureType: PluginSignatureType.core } as RemotePlugin;
+      // With only "signatureType" -> invalid
+      const pluginWithSignature1 = {
+        ...remotePlugin,
+        signatureType: PluginSignatureType.commercial,
+        versionSignatureType: '',
+      } as RemotePlugin;
+      // With only "versionSignatureType" -> invalid
+      const pluginWithSignature2 = {
+        ...remotePlugin,
+        signatureType: '',
+        versionSignatureType: PluginSignatureType.core,
+      } as RemotePlugin;
+      // With signatureType and versionSignatureType -> valid
+      const pluginWithSignature3 = {
+        ...remotePlugin,
+        signatureType: PluginSignatureType.commercial,
+        versionSignatureType: PluginSignatureType.commercial,
+      } as RemotePlugin;
 
       expect(mapRemoteToCatalog(pluginWithoutSignature).signature).toBe(PluginSignatureStatus.missing);
-      expect(mapRemoteToCatalog(pluginWithSignature1).signature).toBe(PluginSignatureStatus.valid);
-      expect(mapRemoteToCatalog(pluginWithSignature2).signature).toBe(PluginSignatureStatus.valid);
+      expect(mapRemoteToCatalog(pluginWithSignature1).signature).toBe(PluginSignatureStatus.missing);
+      expect(mapRemoteToCatalog(pluginWithSignature2).signature).toBe(PluginSignatureStatus.missing);
+      expect(mapRemoteToCatalog(pluginWithSignature3).signature).toBe(PluginSignatureStatus.valid);
     });
 
     test('adds an "isEnterprise" field', () => {
