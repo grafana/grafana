@@ -15,6 +15,7 @@ import { GroupingToMatrixHelper } from './GroupingToMatrixHelper';
 import { HistogramHelper } from './HistogramHelper';
 import { JoinByFieldHelper } from './JoinByFieldHelper';
 import { JoinByLabelsHelper } from './JoinByLabelsHelper';
+import { LabelsToFieldsHelper } from './LabelsToFieldsHelper';
 
 interface Helper {
   [key: string]: JSX.Element | string;
@@ -40,6 +41,7 @@ const helperContent: Helper = {
   histogram: HistogramHelper(),
   joinByField: JoinByFieldHelper(),
   joinByLabels: JoinByLabelsHelper(),
+  labelsToFields: LabelsToFieldsHelper(),
 };
 
 // JEV: add logic for no helper/string content
