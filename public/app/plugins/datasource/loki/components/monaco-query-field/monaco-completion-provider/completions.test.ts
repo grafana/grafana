@@ -814,7 +814,27 @@ describe('IN_LOGFMT completions', () => {
     `);
   });
 
-  it('autocompleting logfmt should only offer labels when the user has a trailing comma', async () => {
+  it('autocompleting logfmt without flags should only offer labels when the user has a trailing comma', async () => {
+    const situation: Situation = {
+      type: 'IN_LOGFMT',
+      logQuery: `{job="grafana"} | logfmt --strict label3,`,
+      flags: false,
+      otherLabels: ['label1'],
+    };
+    
+    expect(await getCompletions(situation, completionProvider)).toMatchInlineSnapshot(`
+      [
+        {
+          "insertText": "label2",
+          "label": "label2",
+          "triggerOnInsert": false,
+          "type": "LABEL_NAME",
+        },
+      ]
+    `);
+  });
+
+  it('autocompleting logfmt with flags should only offer labels when the user has a trailing comma', async () => {
     const situation: Situation = {
       type: 'IN_LOGFMT',
       logQuery: `{job="grafana"} | logfmt --strict label3,`,

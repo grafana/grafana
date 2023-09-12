@@ -372,7 +372,7 @@ export async function getLogfmtCompletions(
   );
   const pipeOperations = getPipeOperationsCompletions('| ');
 
-  if (!flags) {
+  if (!flags && !trailingComma) {
     completions = [...completions, ...LOGFMT_ARGUMENT_COMPLETIONS, ...parserCompletions, ...pipeOperations]
   } else if (!trailingComma) {
     completions = [...completions, ...parserCompletions, ...pipeOperations];
