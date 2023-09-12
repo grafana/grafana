@@ -1,5 +1,7 @@
 import React from 'react';
 
+const ulPadding = { paddingLeft: 30 };
+
 export const CreateHeatmapHelp = () => {
   return (
     <div>
@@ -9,7 +11,7 @@ export const CreateHeatmapHelp = () => {
       </p>
       <h4>X Bucket</h4>
       <p>This setting determines how the x-axis is split into buckets.</p>
-      <ul style={{ paddingLeft: 15 }}>
+      <ul style={ulPadding}>
         <li>
           <strong>Size</strong> - Specify a time interval in the input field. For example, a time range of{' '}
           <code>1h</code> makes the cells one hour wide on the x-axis.
@@ -22,7 +24,7 @@ export const CreateHeatmapHelp = () => {
       <br />
       <h4>Y Bucket</h4>
       <p>This setting determines how the y-axis is split into buckets.</p>
-      <ul style={{ paddingLeft: 15 }}>
+      <ul style={ulPadding}>
         <li>
           <strong>Linear</strong>
         </li>

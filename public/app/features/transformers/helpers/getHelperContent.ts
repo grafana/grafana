@@ -18,6 +18,8 @@ import { JoinByLabelsHelper } from './JoinByLabelsHelper';
 import { LabelsToFieldsHelper } from './LabelsToFieldsHelper';
 import { LimitHelper } from './LimitHelper';
 import { MergeHelper } from './MergeHelper';
+import { OrganizeFieldsHelper } from './OrganizeFieldsHelper';
+import { PartitionByValuesHelper } from './PartitionByValuesHelper';
 
 interface Helper {
   [key: string]: JSX.Element | string;
@@ -46,6 +48,8 @@ const helperContent: Helper = {
   labelsToFields: LabelsToFieldsHelper(),
   limit: LimitHelper(),
   merge: MergeHelper(),
+  organize: OrganizeFieldsHelper(),
+  partitionByValues: PartitionByValuesHelper(),
 };
 
 // JEV: add logic for no helper/string content
