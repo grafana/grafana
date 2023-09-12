@@ -582,8 +582,9 @@ steps:
   image: node:18.12.0-alpine
   name: build-frontend-packages
 - commands:
-  - /src/grafana-build package --distro=linux/amd64,linux/arm64,linux/arm/v7 --yarn-cache=$$YARN_CACHE_FOLDER
-    --build-id=$$DRONE_BUILD_NUMBER --grafana-dir=$$PWD > packages.txt
+  - /src/grafana-build package --distro=linux/amd64,linux/arm64,linux/arm/v7 --go-version=1.20.8
+    --yarn-cache=$$YARN_CACHE_FOLDER --build-id=$$DRONE_BUILD_NUMBER --grafana-dir=$$PWD
+    > packages.txt
   depends_on:
   - yarn-install
   image: grafana/grafana-build:main
@@ -1721,8 +1722,9 @@ steps:
   image: node:18.12.0-alpine
   name: build-frontend-packages
 - commands:
-  - /src/grafana-build package --distro=linux/amd64,linux/arm64,linux/arm/v7 --yarn-cache=$$YARN_CACHE_FOLDER
-    --build-id=$$DRONE_BUILD_NUMBER --grafana-dir=$$PWD > packages.txt
+  - /src/grafana-build package --distro=linux/amd64,linux/arm64,linux/arm/v7 --go-version=1.20.8
+    --yarn-cache=$$YARN_CACHE_FOLDER --build-id=$$DRONE_BUILD_NUMBER --grafana-dir=$$PWD
+    > packages.txt
   depends_on:
   - yarn-install
   image: grafana/grafana-build:main
@@ -4174,6 +4176,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: c1077589ed4ee5c0ff2f5b91d06765121f2d4e6b8f15b8e7e479343810acc391
+hmac: 2377fe24974b84795a81cb799a5b597c3150ac8a6d1d408f42eb054628a0a9b4
 
 ...
