@@ -10,6 +10,7 @@ import {
 import { SortByField, SortByTransformerOptions } from '@grafana/data/src/transformations/transformers/sortBy';
 import { InlineField, InlineSwitch, InlineFieldRow, Select } from '@grafana/ui';
 
+import { getHelperContent } from '../helpers/getHelperContent';
 import { useAllFieldNamesFromDataFrames } from '../utils';
 
 export const SortByTransformerEditor = ({ input, options, onChange }: TransformerUIProps<SortByTransformerOptions>) => {
@@ -62,4 +63,5 @@ export const sortByTransformRegistryItem: TransformerRegistryItem<SortByTransfor
   name: standardTransformers.sortByTransformer.name,
   description: standardTransformers.sortByTransformer.description,
   categories: new Set([TransformerCategory.ReorderAndRename]),
+  help: getHelperContent(DataTransformerID.sortBy),
 };

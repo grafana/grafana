@@ -25,6 +25,7 @@ import { ReduceHelper } from './ReduceHelper';
 import { RenameByRegexHelper } from './RenameByRegexHelper';
 import { RowsToFieldsHelper } from './RowsToFieldsHelper';
 import { SeriesToRowsHelper } from './SeriesToRowsHelper';
+import { SortByHelper } from './SortByHelper';
 
 interface Helper {
   [key: string]: JSX.Element | string;
@@ -60,6 +61,7 @@ const helperContent: Helper = {
   renameByRegex: RenameByRegexHelper(),
   rowsToFields: RowsToFieldsHelper(),
   seriesToRows: SeriesToRowsHelper(),
+  sortBy: SortByHelper(),
 };
 
 // JEV: add logic for no helper/string content
