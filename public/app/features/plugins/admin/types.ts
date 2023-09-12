@@ -112,7 +112,7 @@ export type RemotePlugin = {
   readme?: string;
   signatureType: PluginSignatureType | '';
   slug: string;
-  status: string;
+  status: RemotePluginStatus;
   typeCode: PluginType;
   typeId: number;
   typeName: string;
@@ -127,6 +127,16 @@ export type RemotePlugin = {
   versionStatus: string;
   angularDetected?: boolean;
 };
+
+// The available status codes on GCOM are available here:
+// https://github.com/grafana/grafana-com/blob/main/packages/grafana-com-plugins-api/src/plugins/plugin.model.js#L74
+export enum RemotePluginStatus {
+  Deleted = 'deleted',
+  Active = 'active',
+  Pending = 'pending',
+  Deprecated = 'deprecated',
+  Enterprise = 'enterprise',
+}
 
 export type LocalPlugin = WithAccessControlMetadata & {
   category: string;

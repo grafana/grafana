@@ -743,7 +743,7 @@ describe('Plugin details page', () => {
 
       await waitFor(() => expect(queryByText(/angular plugin/i)).not.toBeInTheDocument);
     });
-    
+
     it('should display a deprecation warning if the plugin is deprecated', async () => {
       const { queryByText } = renderPluginDetails({
         id,

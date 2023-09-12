@@ -13,7 +13,7 @@ import {
   isLocalPluginVisibleByConfig,
   isRemotePluginVisibleByConfig,
 } from './helpers';
-import { RemotePlugin, LocalPlugin } from './types';
+import { RemotePlugin, LocalPlugin, RemotePluginStatus } from './types';
 
 describe('Plugins/Helpers', () => {
   let remotePlugin: RemotePlugin;
@@ -69,7 +69,7 @@ describe('Plugins/Helpers', () => {
     test('skips deprecated plugins unless they have a local - installed - counterpart', () => {
       const merged = mergeLocalsAndRemotes(localPlugins, [
         ...remotePlugins,
-        getRemotePluginMock({ slug: 'plugin-5', status: 'deprecated' }),
+        getRemotePluginMock({ slug: 'plugin-5', status: RemotePluginStatus.Deprecated }),
       ]);
       const findMerged = (mergedId: string) => merged.find(({ id }) => id === mergedId);
 
@@ -80,7 +80,7 @@ describe('Plugins/Helpers', () => {
     test('keeps deprecated plugins in case they have a local counterpart', () => {
       const merged = mergeLocalsAndRemotes(
         [...localPlugins, getLocalPluginMock({ id: 'plugin-5' })],
-        [...remotePlugins, getRemotePluginMock({ slug: 'plugin-5', status: 'deprecated' })]
+        [...remotePlugins, getRemotePluginMock({ slug: 'plugin-5', status: RemotePluginStatus.Deprecated })]
       );
       const findMerged = (mergedId: string) => merged.find(({ id }) => id === mergedId);
 
@@ -163,8 +163,8 @@ describe('Plugins/Helpers', () => {
     });
 
     test('adds an "isEnterprise" field', () => {
-      const enterprisePlugin = { ...remotePlugin, status: 'enterprise' } as RemotePlugin;
-      const notEnterprisePlugin = { ...remotePlugin, status: 'unknown' } as RemotePlugin;
+      const enterprisePlugin = { ...remotePlugin, status: RemotePluginStatus.Enterprise } as RemotePlugin;
+      const notEnterprisePlugin = { ...remotePlugin, status: RemotePluginStatus.Active } as RemotePlugin;
 
       expect(mapRemoteToCatalog(enterprisePlugin).isEnterprise).toBe(true);
       expect(mapRemoteToCatalog(notEnterprisePlugin).isEnterprise).toBe(false);
@@ -345,15 +345,17 @@ describe('Plugins/Helpers', () => {
 
     test('`.isEnterprise` - prefers the remote', () => {
       // Local & Remote
-      expect(mapToCatalogPlugin(localPlugin, { ...remotePlugin, status: 'enterprise' })).toMatchObject({
-        isEnterprise: true,
-      });
-      expect(mapToCatalogPlugin(localPlugin, { ...remotePlugin, status: 'unknown' })).toMatchObject({
+      expect(mapToCatalogPlugin(localPlugin, { ...remotePlugin, status: RemotePluginStatus.Enterprise })).toMatchObject(
+        {
+          isEnterprise: true,
+        }
+      );
+      expect(mapToCatalogPlugin(localPlugin, { ...remotePlugin, status: RemotePluginStatus.Active })).toMatchObject({
         isEnterprise: false,
       });
 
       // Remote only
-      expect(mapToCatalogPlugin(undefined, { ...remotePlugin, status: 'enterprise' })).toMatchObject({
+      expect(mapToCatalogPlugin(undefined, { ...remotePlugin, status: RemotePluginStatus.Enterprise })).toMatchObject({
         isEnterprise: true,
       });
 
@@ -366,18 +368,22 @@ describe('Plugins/Helpers', () => {
 
     test('`.isDeprecated` - comes from the remote', () => {
       // Local & Remote
-      expect(mapToCatalogPlugin(localPlugin, { ...remotePlugin, status: 'deprecated' })).toMatchObject({
-        isDeprecated: true,
-      });
-      expect(mapToCatalogPlugin(localPlugin, { ...remotePlugin, status: 'enterprise' })).toMatchObject({
-        isDeprecated: false,
-      });
+      expect(mapToCatalogPlugin(localPlugin, { ...remotePlugin, status: RemotePluginStatus.Deprecated })).toMatchObject(
+        {
+          isDeprecated: true,
+        }
+      );
+      expect(mapToCatalogPlugin(localPlugin, { ...remotePlugin, status: RemotePluginStatus.Enterprise })).toMatchObject(
+        {
+          isDeprecated: false,
+        }
+      );
 
       // Remote only
-      expect(mapToCatalogPlugin(undefined, { ...remotePlugin, status: 'deprecated' })).toMatchObject({
+      expect(mapToCatalogPlugin(undefined, { ...remotePlugin, status: RemotePluginStatus.Deprecated })).toMatchObject({
         isDeprecated: true,
       });
-      expect(mapToCatalogPlugin(undefined, { ...remotePlugin, status: 'enterprise' })).toMatchObject({
+      expect(mapToCatalogPlugin(undefined, { ...remotePlugin, status: RemotePluginStatus.Enterprise })).toMatchObject({
         isDeprecated: false,
       });
 

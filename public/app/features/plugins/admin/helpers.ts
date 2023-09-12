@@ -5,7 +5,7 @@ import { contextSrv } from 'app/core/core';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { AccessControlAction } from 'app/types';
 
-import { CatalogPlugin, LocalPlugin, RemotePlugin, Version } from './types';
+import { CatalogPlugin, LocalPlugin, RemotePlugin, RemotePluginStatus, Version } from './types';
 
 export function mergeLocalsAndRemotes(
   local: LocalPlugin[] = [],
@@ -29,7 +29,7 @@ export function mergeLocalsAndRemotes(
   remote.forEach((remotePlugin) => {
     const localCounterpart = local.find((l) => l.id === remotePlugin.slug);
     const error = errorByPluginId[remotePlugin.slug];
-    const shouldSkip = remotePlugin.status === 'deprecated' && !localCounterpart; // We are only listing deprecated plugins in case they are installed.
+    const shouldSkip = remotePlugin.status === RemotePluginStatus.Deprecated && !localCounterpart; // We are only listing deprecated plugins in case they are installed.
 
     if (!shouldSkip) {
       catalogPlugins.push(mergeLocalAndRemote(localCounterpart, remotePlugin, error));
@@ -88,10 +88,10 @@ export function mapRemoteToCatalog(plugin: RemotePlugin, error?: PluginError): C
     isPublished: true,
     isInstalled: isDisabled,
     isDisabled: isDisabled,
-    isDeprecated: status === 'deprecated',
+    isDeprecated: status === RemotePluginStatus.Deprecated,
     isCore: plugin.internal,
     isDev: false,
-    isEnterprise: status === 'enterprise',
+    isEnterprise: status === RemotePluginStatus.Enterprise,
     type: typeCode,
     error: error?.errorCode,
     angularDetected,
@@ -174,10 +174,10 @@ export function mapToCatalogPlugin(local?: LocalPlugin, remote?: RemotePlugin, e
     },
     isCore: Boolean(remote?.internal || local?.signature === PluginSignatureStatus.internal),
     isDev: Boolean(local?.dev),
-    isEnterprise: remote?.status === 'enterprise',
+    isEnterprise: remote?.status === RemotePluginStatus.Enterprise,
     isInstalled: Boolean(local) || isDisabled,
     isDisabled: isDisabled,
-    isDeprecated: remote?.status === 'deprecated',
+    isDeprecated: remote?.status === RemotePluginStatus.Deprecated,
     isPublished: true,
     // TODO<check if we would like to keep preferring the remote version>
     name: remote?.name || local?.name || '',
