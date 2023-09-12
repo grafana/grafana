@@ -3,7 +3,11 @@ import { DataSourceRef, GraphDrawStyle } from '@grafana/schema';
 
 const QUERY_A = 'sum(grafanacloud_instance_rule_group_iterations_missed_total:rate5m)';
 
-export function getGrafanaMissedIterationsScene(timeRange: SceneTimeRange, datasource: DataSourceRef, panelTitle: string) {
+export function getGrafanaMissedIterationsScene(
+  timeRange: SceneTimeRange,
+  datasource: DataSourceRef,
+  panelTitle: string
+) {
   const query = new SceneQueryRunner({
     datasource,
     queries: [
