@@ -4,8 +4,8 @@ import { config } from '@grafana/runtime';
 import { DataLinksInlineEditor, Input, RadioButtonGroup, Select, Switch, TextArea } from '@grafana/ui';
 import { getPanelLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
 
-import { GenAIPanelDescription } from '../GenAI/GenAIPanelDescription';
-import { GenAIPanelTitle } from '../GenAI/GenAIPanelTitle';
+import { GenAIPanelDescriptionButton } from '../GenAI/GenAIPanelDescriptionButton';
+import { GenAIPanelTitleButton } from '../GenAI/GenAIPanelTitleButton';
 import { RepeatRowSelect } from '../RepeatRowSelect/RepeatRowSelect';
 
 import { OptionsPaneCategoryDescriptor } from './OptionsPaneCategoryDescriptor';
@@ -21,17 +21,19 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
   });
 
   const setPanelTitle = (title: string) => {
-    // TODO: Fix type casting / magic ID string
-    const input = document.getElementById('PanelFrameTitle') as HTMLInputElement;
-    input.value = title;
-    onPanelConfigChange('title', title);
+    const input = document.getElementById('PanelFrameTitle');
+    if (input instanceof HTMLInputElement) {
+      input.value = title;
+      onPanelConfigChange('title', title);
+    }
   };
 
   const setPanelDescription = (description: string) => {
-    // TODO: Fix type casting / magic ID string
-    const input = document.getElementById('description-text-area') as HTMLInputElement;
-    input.value = description;
-    onPanelConfigChange('description', description);
+    const input = document.getElementById('description-text-area') as HTMLTextAreaElement;
+    if (input instanceof HTMLTextAreaElement) {
+      input.value = description;
+      onPanelConfigChange('description', description);
+    }
   };
 
   return descriptor
@@ -49,7 +51,7 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
             />
           );
         },
-        addon: config.featureToggles.dashgpt && <GenAIPanelTitle setPanelTitle={setPanelTitle} panel={panel} />,
+        addon: config.featureToggles.dashgpt && <GenAIPanelTitleButton onGenerate={setPanelTitle} panel={panel} />,
       })
     )
     .addItem(
@@ -67,7 +69,7 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
           );
         },
         addon: config.featureToggles.dashgpt && (
-          <GenAIPanelDescription setPanelDescription={setPanelDescription} panel={panel} />
+          <GenAIPanelDescriptionButton onGenerate={setPanelDescription} panel={panel} />
         ),
       })
     )
