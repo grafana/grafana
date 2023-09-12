@@ -12,6 +12,7 @@ images = {
     "git": "alpine/git:2.40.1",
     "go": "golang:{}-alpine".format(golang_version),
     "node": "node:{}-alpine".format(nodejs_version),
+    "docker": "docker:latest",
     "cloudsdk": "google/cloud-sdk:431.0.0",
     "publish": "grafana/grafana-ci-deploy:1.3.3",
     "alpine": "alpine:3.17.1",

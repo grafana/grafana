@@ -56,10 +56,12 @@ def wire_install_step():
 def identify_runner_step():
     return {
         "name": "identify-runner",
-        "image": images["alpine"],
+        "image": images["docker"],
         "commands": [
             "echo $DRONE_RUNNER_NAME",
+            "docker rmi grafana/grafana-build:main",
         ],
+        "volumes": [{"name": "docker", "path": "/var/run/docker.sock"}],
     }
 
 def enterprise_setup_step(source = "${DRONE_SOURCE_BRANCH}", canFail = True, isPromote = False):

@@ -17,8 +17,12 @@ services: []
 steps:
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.17.1
+  - docker rmi grafana/grafana-build:main
+  image: docker:latest
   name: identify-runner
+  volumes:
+  - name: docker
+    path: /var/run/docker.sock
 - commands:
   - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
   depends_on: []
@@ -67,8 +71,12 @@ services: []
 steps:
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.17.1
+  - docker rmi grafana/grafana-build:main
+  image: docker:latest
   name: identify-runner
+  volumes:
+  - name: docker
+    path: /var/run/docker.sock
 - commands:
   - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
   depends_on: []
@@ -117,8 +125,12 @@ services: []
 steps:
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.17.1
+  - docker rmi grafana/grafana-build:main
+  image: docker:latest
   name: identify-runner
+  volumes:
+  - name: docker
+    path: /var/run/docker.sock
 - commands:
   - yarn install --immutable
   depends_on: []
@@ -217,8 +229,12 @@ steps:
   name: clone-enterprise
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.17.1
+  - docker rmi grafana/grafana-build:main
+  image: docker:latest
   name: identify-runner
+  volumes:
+  - name: docker
+    path: /var/run/docker.sock
 - commands:
   - yarn install --immutable
   depends_on: []
@@ -306,8 +322,12 @@ steps:
   name: clone-enterprise
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.17.1
+  - docker rmi grafana/grafana-build:main
+  image: docker:latest
   name: identify-runner
+  volumes:
+  - name: docker
+    path: /var/run/docker.sock
 - commands:
   - '# It is required that code generated from Thema/CUE be committed and in sync
     with its inputs.'
@@ -390,8 +410,12 @@ services: []
 steps:
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.17.1
+  - docker rmi grafana/grafana-build:main
+  image: docker:latest
   name: identify-runner
+  volumes:
+  - name: docker
+    path: /var/run/docker.sock
 - commands:
   - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
   depends_on: []
@@ -480,8 +504,12 @@ services: []
 steps:
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.17.1
+  - docker rmi grafana/grafana-build:main
+  image: docker:latest
   name: identify-runner
+  volumes:
+  - name: docker
+    path: /var/run/docker.sock
 - commands:
   - mkdir -p bin
   - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.41/grabpl
@@ -864,8 +892,12 @@ steps:
   name: compile-build-cmd
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.17.1
+  - docker rmi grafana/grafana-build:main
+  image: docker:latest
   name: identify-runner
+  volumes:
+  - name: docker
+    path: /var/run/docker.sock
 - commands:
   - '# It is required that code generated from Thema/CUE be committed and in sync
     with its inputs.'
@@ -1033,8 +1065,12 @@ services: []
 steps:
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.17.1
+  - docker rmi grafana/grafana-build:main
+  image: docker:latest
   name: identify-runner
+  volumes:
+  - name: docker
+    path: /var/run/docker.sock
 - commands:
   - yarn install --immutable
   depends_on: []
@@ -1318,8 +1354,12 @@ services: []
 steps:
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.17.1
+  - docker rmi grafana/grafana-build:main
+  image: docker:latest
   name: identify-runner
+  volumes:
+  - name: docker
+    path: /var/run/docker.sock
 - commands:
   - yarn install --immutable
   depends_on: []
@@ -1390,8 +1430,12 @@ services: []
 steps:
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.17.1
+  - docker rmi grafana/grafana-build:main
+  image: docker:latest
   name: identify-runner
+  volumes:
+  - name: docker
+    path: /var/run/docker.sock
 - commands:
   - yarn install --immutable
   depends_on: []
@@ -1447,8 +1491,12 @@ services: []
 steps:
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.17.1
+  - docker rmi grafana/grafana-build:main
+  image: docker:latest
   name: identify-runner
+  volumes:
+  - name: docker
+    path: /var/run/docker.sock
 - commands:
   - yarn install --immutable
   depends_on: []
@@ -1514,8 +1562,12 @@ services: []
 steps:
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.17.1
+  - docker rmi grafana/grafana-build:main
+  image: docker:latest
   name: identify-runner
+  volumes:
+  - name: docker
+    path: /var/run/docker.sock
 - commands:
   - '# It is required that code generated from Thema/CUE be committed and in sync
     with its inputs.'
@@ -1593,8 +1645,12 @@ services: []
 steps:
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.17.1
+  - docker rmi grafana/grafana-build:main
+  image: docker:latest
   name: identify-runner
+  volumes:
+  - name: docker
+    path: /var/run/docker.sock
 - commands:
   - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
   depends_on: []
@@ -1662,8 +1718,12 @@ services: []
 steps:
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.17.1
+  - docker rmi grafana/grafana-build:main
+  image: docker:latest
   name: identify-runner
+  volumes:
+  - name: docker
+    path: /var/run/docker.sock
 - commands:
   - mkdir -p bin
   - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.41/grabpl
@@ -2098,8 +2158,12 @@ steps:
   name: compile-build-cmd
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.17.1
+  - docker rmi grafana/grafana-build:main
+  image: docker:latest
   name: identify-runner
+  volumes:
+  - name: docker
+    path: /var/run/docker.sock
 - commands:
   - '# It is required that code generated from Thema/CUE be committed and in sync
     with its inputs.'
@@ -2426,8 +2490,12 @@ services: []
 steps:
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.17.1
+  - docker rmi grafana/grafana-build:main
+  image: docker:latest
   name: identify-runner
+  volumes:
+  - name: docker
+    path: /var/run/docker.sock
 - commands:
   - mkdir -p bin
   - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.41/grabpl
@@ -2798,8 +2866,12 @@ services: []
 steps:
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.17.1
+  - docker rmi grafana/grafana-build:main
+  image: docker:latest
   name: identify-runner
+  volumes:
+  - name: docker
+    path: /var/run/docker.sock
 - commands:
   - yarn install --immutable
   depends_on: []
@@ -2853,8 +2925,12 @@ services: []
 steps:
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.17.1
+  - docker rmi grafana/grafana-build:main
+  image: docker:latest
   name: identify-runner
+  volumes:
+  - name: docker
+    path: /var/run/docker.sock
 - commands:
   - '# It is required that code generated from Thema/CUE be committed and in sync
     with its inputs.'
@@ -3343,8 +3419,12 @@ steps:
   name: grabpl
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.17.1
+  - docker rmi grafana/grafana-build:main
+  image: docker:latest
   name: identify-runner
+  volumes:
+  - name: docker
+    path: /var/run/docker.sock
 - commands:
   - '# It is required that code generated from Thema/CUE be committed and in sync
     with its inputs.'
@@ -3870,6 +3950,7 @@ steps:
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM alpine/git:2.40.1
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM golang:1.21.1-alpine
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM node:18.12.0-alpine
+  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM docker:latest
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM google/cloud-sdk:431.0.0
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/grafana-ci-deploy:1.3.3
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM alpine:3.17.1
@@ -3903,6 +3984,7 @@ steps:
   - trivy --exit-code 1 --severity HIGH,CRITICAL alpine/git:2.40.1
   - trivy --exit-code 1 --severity HIGH,CRITICAL golang:1.21.1-alpine
   - trivy --exit-code 1 --severity HIGH,CRITICAL node:18.12.0-alpine
+  - trivy --exit-code 1 --severity HIGH,CRITICAL docker:latest
   - trivy --exit-code 1 --severity HIGH,CRITICAL google/cloud-sdk:431.0.0
   - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/grafana-ci-deploy:1.3.3
   - trivy --exit-code 1 --severity HIGH,CRITICAL alpine:3.17.1
@@ -4173,6 +4255,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 949da38eb5870264a09e11ba9f82401c5ddf14666325502f915a8e9b5e2b857c
+hmac: abc797f6715b77f06163e160ded9cec6c713dc172c726da81bbe2b451548652a
 
 ...
