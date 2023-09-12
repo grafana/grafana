@@ -241,18 +241,18 @@ func (moa *MultiOrgAlertmanager) SyncAlertmanagersForOrgs(ctx context.Context, o
 		alertmanager, found := moa.alertmanagers[orgID]
 
 		if !found {
+			remoteAmCfg := moa.settings.UnifiedAlerting.RemoteAlertmanager
+			// If the remote Alertmanager option is enabled use only the external Alertmanager.
 			var am Alertmanager
 			var err error
-
-			remoteAmCfg := moa.settings.UnifiedAlerting.RemoteAlertmanager
 			if remoteAmCfg.Enable {
-				// TODO(santiago): remove.
 				cfg := ExternalAlertmanagerConfig{
 					URL:               remoteAmCfg.URL,
 					TenantID:          remoteAmCfg.TenantID,
 					BasicAuthPassword: remoteAmCfg.Password,
+					DefaultConfig:     moa.settings.UnifiedAlerting.DefaultConfiguration,
 				}
-				am, err = newExternalAlertmanager(cfg, moa.configStore, orgID)
+				am, err = newExternalAlertmanager(cfg, orgID)
 			} else {
 				// These metrics are not exported by Grafana and are mostly a placeholder.
 				// To export them, we need to translate the metrics from each individual registry and,

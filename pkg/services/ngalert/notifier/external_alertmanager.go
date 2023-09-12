@@ -6,19 +6,19 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 
 	httptransport "github.com/go-openapi/runtime/client"
 	"github.com/go-openapi/strfmt"
 	"github.com/grafana/grafana/pkg/infra/log"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
-	am_client "github.com/prometheus/alertmanager/api/v2/client"
+	amclient "github.com/prometheus/alertmanager/api/v2/client"
 	"github.com/prometheus/alertmanager/api/v2/client/alert"
 	"github.com/prometheus/alertmanager/api/v2/client/alertgroup"
 	"github.com/prometheus/alertmanager/api/v2/client/general"
 	"github.com/prometheus/alertmanager/api/v2/client/receiver"
 	"github.com/prometheus/alertmanager/api/v2/client/silence"
-	promapi "github.com/prometheus/client_golang/api"
 	"gopkg.in/yaml.v2"
 )
 
@@ -31,9 +31,7 @@ type externalAlertmanager struct {
 	url           string
 	tenantID      string
 	orgID         int64
-	store         configStore
-	amClient      *am_client.AlertmanagerAPI
-	promClient    promapi.Client
+	amClient      *amclient.AlertmanagerAPI
 	defaultConfig string
 }
 
@@ -41,24 +39,10 @@ type ExternalAlertmanagerConfig struct {
 	URL               string
 	BasicAuthPassword string
 	TenantID          string
+	DefaultConfig     string
 }
 
-type roundTripper struct {
-	tenantID          string
-	basicAuthPassword string
-	next              http.RoundTripper
-}
-
-func (r *roundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
-	req.Header.Set("X-Scope-OrgID", r.tenantID)
-	if r.tenantID != "" && r.basicAuthPassword != "" {
-		req.SetBasicAuth(r.tenantID, r.basicAuthPassword)
-	}
-
-	return r.next.RoundTrip(req)
-}
-
-func newExternalAlertmanager(cfg ExternalAlertmanagerConfig, store configStore, orgID int64) (*externalAlertmanager, error) {
+func newExternalAlertmanager(cfg ExternalAlertmanagerConfig, orgID int64) (*externalAlertmanager, error) {
 	l := log.New("ngalert.notifier.external.alertmanager")
 	client := http.Client{
 		Transport: &roundTripper{
@@ -67,22 +51,26 @@ func newExternalAlertmanager(cfg ExternalAlertmanagerConfig, store configStore, 
 			basicAuthPassword: cfg.BasicAuthPassword,
 		},
 	}
+	u, err := url.Parse(cfg.URL)
+	if err != nil {
+		return nil, err
+	}
 
-	// TODO: schemes.
-	transport := httptransport.NewWithClient(cfg.URL, am_client.DefaultBasePath, am_client.DefaultSchemes, &client)
-	// TODO: transport.
-	c := am_client.New(transport, nil)
+	transport := httptransport.NewWithClient(u.Host, amclient.DefaultBasePath, []string{u.Scheme}, &client)
+	c := amclient.New(transport, nil)
+
 	return &externalAlertmanager{
-		amClient: c,
-		log:      l,
-		url:      cfg.URL,
-		tenantID: cfg.TenantID,
-		orgID:    orgID,
+		amClient:      c,
+		log:           l,
+		url:           cfg.URL,
+		tenantID:      cfg.TenantID,
+		orgID:         orgID,
+		defaultConfig: cfg.DefaultConfig,
 	}, nil
 }
 
-// Configuration
 func (am *externalAlertmanager) SaveAndApplyConfig(ctx context.Context, config *apimodels.PostableUserConfig) error {
+	// TODO(santiago): do we really need type assertion?
 	transport, ok := am.amClient.Transport.(*httptransport.Runtime)
 	if !ok {
 		return fmt.Errorf("transport is not of type *httptransport.Runtime, type: %T", am.amClient.Transport)
@@ -262,7 +250,7 @@ func (am *externalAlertmanager) TestTemplate(ctx context.Context, c apimodels.Te
 
 // TODO: implement!
 func (am *externalAlertmanager) ApplyConfig(context.Context, *models.AlertConfiguration) error {
-	return fmt.Errorf("Getting configuration not implemented")
+	return fmt.Errorf("Applying configuration not implemented")
 }
 
 // State
@@ -287,4 +275,21 @@ func (am *externalAlertmanager) OrgID() int64 {
 // TODO: implement!
 func (am *externalAlertmanager) ConfigHash() [16]byte {
 	return [16]byte{}
+}
+
+type roundTripper struct {
+	tenantID          string
+	basicAuthPassword string
+	next              http.RoundTripper
+}
+
+// RoundTrip implements the http.RoundTripper interface
+// while adding the `X-Scope-OrgID` header and basic auth credentials.
+func (r *roundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
+	req.Header.Set("X-Scope-OrgID", r.tenantID)
+	if r.tenantID != "" && r.basicAuthPassword != "" {
+		req.SetBasicAuth(r.tenantID, r.basicAuthPassword)
+	}
+
+	return r.next.RoundTrip(req)
 }
