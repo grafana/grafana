@@ -17,6 +17,7 @@ type InstallControlsButtonProps = {
   plugin: CatalogPlugin;
   pluginStatus: PluginStatus;
   latestCompatibleVersion?: Version;
+  hasInstallWarning?: boolean;
   setNeedReload?: (needReload: boolean) => void;
 };
 
@@ -24,6 +25,7 @@ export function InstallControlsButton({
   plugin,
   pluginStatus,
   latestCompatibleVersion,
+  hasInstallWarning,
   setNeedReload,
 }: InstallControlsButtonProps) {
   const dispatch = useDispatch();
@@ -108,6 +110,11 @@ export function InstallControlsButton({
         </HorizontalGroup>
       </>
     );
+  }
+
+  if (!plugin.isPublished || hasInstallWarning) {
+    // Cannot be updated or installed
+    return null;
   }
 
   if (pluginStatus === PluginStatus.UPDATE) {
