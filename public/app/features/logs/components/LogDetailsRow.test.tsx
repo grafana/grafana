@@ -119,7 +119,7 @@ describe('LogDetailsRow', () => {
   });
 
   describe('copy button', () => {
-    it('should be invisible unless mouse is over', async () => {
+    it('should be invisible unless mouse is over', () => {
       setup({ parsedValues: ['test value'] });
       // This tests a regression where the button was always visible.
       expect(screen.getByTitle('Copy value to clipboard')).not.toBeVisible();
