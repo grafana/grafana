@@ -1,8 +1,10 @@
 import { css } from '@emotion/css';
-import type { languages } from 'monaco-editor';
+import { SyntaxNode } from '@lezer/common';
+import { languages } from 'monaco-editor';
 import React, { useEffect, useRef } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { parser } from '@grafana/lezer-traceql';
 import { reportInteraction } from '@grafana/runtime';
 import { CodeEditor, Monaco, monacoTypes, useTheme2 } from '@grafana/ui';
 
@@ -22,6 +24,11 @@ interface Props {
   datasource: TempoDatasource;
   readOnly?: boolean;
 }
+
+type ErrorBoudary = {
+  start: number;
+  end: number;
+};
 
 export function TraceQLEditor(props: Props) {
   const { onChange, onRunQuery, placeholder } = props;
@@ -64,6 +71,30 @@ export function TraceQLEditor(props: Props) {
           setupPlaceholder(editor, monaco, styles);
         }
         setupAutoSize(editor);
+
+        // Attach callback for query changes
+        editor.onDidChangeModelContent(() => {
+          const model = editor.getModel();
+          if (!model) {
+            return;
+          }
+          monaco.editor.setModelMarkers(
+            model,
+            'owner',
+            computeErrorBoundaries(model.getValue()).map((errorNode) => ({
+              message: 'This part of the query appears to be incorrect and could make the entire query fail.',
+              severity: monaco.MarkerSeverity.Error,
+
+              // As of now, we support only single-line queries
+              startLineNumber: 0,
+              endLineNumber: 0,
+
+              // `+ 1` because squiggles seem shifted by one
+              startColumn: errorNode.start + 1,
+              endColumn: errorNode.end + 1,
+            }))
+          );
+        });
       }}
     />
   );
@@ -219,4 +250,26 @@ const getStyles = (theme: GrafanaTheme2, placeholder: string): EditorStyles => {
       }
     `,
   };
+};
+
+/**
+ * Find the boudaries (start and end) of errors in the query.
+ *
+ * @param query the TraceQL query of the user
+ * @returns the error bounaries
+ */
+export const computeErrorBoundaries = (query: string): ErrorBoudary[] => {
+  const tree = parser.parse(query);
+
+  // Find all error nodes and compute the associated erro boundaries
+  const errorNodes: SyntaxNode[] = [];
+  tree.iterate({
+    enter: (nodeRef) => {
+      if (nodeRef.type.id === 0) {
+        errorNodes.push(nodeRef.node);
+      }
+    },
+  });
+
+  return errorNodes.map((errorNode) => ({ start: errorNode.from, end: errorNode.to }));
 };
