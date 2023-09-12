@@ -272,7 +272,7 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
 
     return (
       <>
-        <tr className={cx(rowStyles.logDetailsValue)}>
+        <tr className={rowStyles.logDetailsValue}>
           <td className={rowStyles.logsDetailsIcon}>
             <div className={styles.buttonRow}>
               {hasFilteringFunctionality && (
