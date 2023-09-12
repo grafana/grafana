@@ -90,7 +90,6 @@ func (s *Service) GetConfigMap(ctx context.Context, pluginID string, externalSer
 
 	if s.cfg.Features != nil {
 		enabledFeatures := s.cfg.Features.GetEnabled(ctx)
-		enabledFeatures["FOO"] = true
 		if len(enabledFeatures) > 0 {
 			features := make([]string, 0, len(enabledFeatures))
 			for feat := range enabledFeatures {
