@@ -15,9 +15,9 @@ import (
 	"github.com/prometheus/common/model"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/infra/db"
 	legacymodels "github.com/grafana/grafana/pkg/services/alerting/models"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	migrationStore "github.com/grafana/grafana/pkg/services/ngalert/migration/store"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/secrets"
 )
@@ -30,15 +30,6 @@ const (
 // amConfigsPerOrg maps alertmanager configurations per organisation
 type amConfigsPerOrg map[int64]*apimodels.PostableUserConfig
 
-// channelsPerOrg maps notification channels per organisation
-type channelsPerOrg map[int64][]*legacymodels.AlertNotification
-
-// channelMap maps notification channels per organisation
-type defaultChannelsPerOrg map[int64][]*legacymodels.AlertNotification
-
-// uidOrID for both uid and ID, primarily used for mapping legacy channel to migrated receiver.
-type uidOrID any
-
 // channelReceiver is a convenience struct that contains a notificationChannel and its corresponding migrated PostableApiReceiver.
 type channelReceiver struct {
 	channel  *legacymodels.AlertNotification
@@ -46,9 +37,9 @@ type channelReceiver struct {
 }
 
 // setupAlertmanagerConfigs creates Alertmanager configs with migrated receivers and routes.
-func (m *migration) setupAlertmanagerConfigs(ctx context.Context, rulesPerOrg map[int64]map[*ngmodels.AlertRule][]uidOrID) (amConfigsPerOrg, error) {
+func (m *migration) setupAlertmanagerConfigs(ctx context.Context, rulesPerOrg map[int64]map[*ngmodels.AlertRule][]migrationStore.UidOrID) (amConfigsPerOrg, error) {
 	// allChannels: channelUID -> channelConfig
-	allChannelsPerOrg, defaultChannelsPerOrg, err := m.getNotificationChannelMap(ctx)
+	allChannelsPerOrg, defaultChannelsPerOrg, err := m.migrationStore.GetNotificationChannels(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load notification channels: %w", err)
 	}
@@ -139,54 +130,6 @@ func quote(s string) string {
 	return `"` + s + `"`
 }
 
-// getNotificationChannelMap returns a map of all channelUIDs to channel config as well as a separate map for just those channels that are default.
-// For any given Organization, all channels in defaultChannelsPerOrg should also exist in channelsPerOrg.
-func (m *migration) getNotificationChannelMap(ctx context.Context) (channelsPerOrg, defaultChannelsPerOrg, error) {
-	q := `
-	SELECT id,
-		org_id,
-		uid,
-		name,
-		type,
-		disable_resolve_message,
-		is_default,
-		settings,
-		secure_settings,
-        send_reminder,
-		frequency
-	FROM
-		alert_notification
-	`
-	allChannels := []legacymodels.AlertNotification{}
-	err := m.store.WithDbSession(ctx, func(sess *db.Session) error {
-		return sess.SQL(q).Find(&allChannels)
-	})
-	if err != nil {
-		return nil, nil, err
-	}
-
-	if len(allChannels) == 0 {
-		return nil, nil, nil
-	}
-
-	allChannelsMap := make(channelsPerOrg)
-	defaultChannelsMap := make(defaultChannelsPerOrg)
-	for i, c := range allChannels {
-		if c.Type == "hipchat" || c.Type == "sensu" {
-			m.log.Error("Alert migration error: discontinued notification channel found", "type", c.Type, "name", c.Name, "uid", c.UID)
-			continue
-		}
-
-		allChannelsMap[c.OrgID] = append(allChannelsMap[c.OrgID], &allChannels[i])
-
-		if c.IsDefault {
-			defaultChannelsMap[c.OrgID] = append(defaultChannelsMap[c.OrgID], &allChannels[i])
-		}
-	}
-
-	return allChannelsMap, defaultChannelsMap, nil
-}
-
 // Create a notifier (PostableGrafanaReceiver) from a legacy notification channel
 func (m *migration) createNotifier(c *legacymodels.AlertNotification) (*apimodels.PostableGrafanaReceiver, error) {
 	uid, err := m.determineChannelUid(c)
@@ -215,9 +158,9 @@ func (m *migration) createNotifier(c *legacymodels.AlertNotification) (*apimodel
 }
 
 // Create one receiver for every unique notification channel.
-func (m *migration) createReceivers(allChannels []*legacymodels.AlertNotification) (map[uidOrID]*apimodels.PostableApiReceiver, []channelReceiver, error) {
+func (m *migration) createReceivers(allChannels []*legacymodels.AlertNotification) (map[migrationStore.UidOrID]*apimodels.PostableApiReceiver, []channelReceiver, error) {
 	receivers := make([]channelReceiver, 0, len(allChannels))
-	receiversMap := make(map[uidOrID]*apimodels.PostableApiReceiver)
+	receiversMap := make(map[migrationStore.UidOrID]*apimodels.PostableApiReceiver)
 
 	set := make(map[string]struct{}) // Used to deduplicate sanitized names.
 	for _, c := range allChannels {
@@ -347,7 +290,7 @@ func createRoute(cr channelReceiver) (*apimodels.Route, error) {
 }
 
 // Filter receivers to select those that were associated to the given rule as channels.
-func (m *migration) filterReceiversForAlert(name string, channelIDs []uidOrID, receivers map[uidOrID]*apimodels.PostableApiReceiver, defaultReceivers map[string]struct{}) map[string]any {
+func (m *migration) filterReceiversForAlert(name string, channelIDs []migrationStore.UidOrID, receivers map[migrationStore.UidOrID]*apimodels.PostableApiReceiver, defaultReceivers map[string]struct{}) map[string]any {
 	if len(channelIDs) == 0 {
 		// If there are no channels associated, we use the default route.
 		return nil

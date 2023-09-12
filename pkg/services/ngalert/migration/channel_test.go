@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	legacymodels "github.com/grafana/grafana/pkg/services/alerting/models"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	migrationStore "github.com/grafana/grafana/pkg/services/ngalert/migration/store"
 	ngModels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels_config"
 	"github.com/grafana/grafana/pkg/setting"
@@ -26,15 +27,15 @@ import (
 func TestFilterReceiversForAlert(t *testing.T) {
 	tc := []struct {
 		name             string
-		channelIds       []uidOrID
-		receivers        map[uidOrID]*apimodels.PostableApiReceiver
+		channelIds       []migrationStore.UidOrID
+		receivers        map[migrationStore.UidOrID]*apimodels.PostableApiReceiver
 		defaultReceivers map[string]struct{}
 		expected         map[string]any
 	}{
 		{
 			name:       "when an alert has multiple channels, each should filter for the correct receiver",
-			channelIds: []uidOrID{"uid1", "uid2"},
-			receivers: map[uidOrID]*apimodels.PostableApiReceiver{
+			channelIds: []migrationStore.UidOrID{"uid1", "uid2"},
+			receivers: map[migrationStore.UidOrID]*apimodels.PostableApiReceiver{
 				"uid1": createPostableApiReceiver("recv1", nil),
 				"uid2": createPostableApiReceiver("recv2", nil),
 				"uid3": createPostableApiReceiver("recv3", nil),
@@ -47,8 +48,8 @@ func TestFilterReceiversForAlert(t *testing.T) {
 		},
 		{
 			name:       "when default receivers exist, they should be added to an alert's filtered receivers",
-			channelIds: []uidOrID{"uid1"},
-			receivers: map[uidOrID]*apimodels.PostableApiReceiver{
+			channelIds: []migrationStore.UidOrID{"uid1"},
+			receivers: map[migrationStore.UidOrID]*apimodels.PostableApiReceiver{
 				"uid1": createPostableApiReceiver("recv1", nil),
 				"uid2": createPostableApiReceiver("recv2", nil),
 				"uid3": createPostableApiReceiver("recv3", nil),
@@ -63,8 +64,8 @@ func TestFilterReceiversForAlert(t *testing.T) {
 		},
 		{
 			name:       "when an alert has a channels associated by ID instead of UID, it should be included",
-			channelIds: []uidOrID{int64(42)},
-			receivers: map[uidOrID]*apimodels.PostableApiReceiver{
+			channelIds: []migrationStore.UidOrID{int64(42)},
+			receivers: map[migrationStore.UidOrID]*apimodels.PostableApiReceiver{
 				int64(42): createPostableApiReceiver("recv1", nil),
 			},
 			defaultReceivers: map[string]struct{}{},
@@ -74,8 +75,8 @@ func TestFilterReceiversForAlert(t *testing.T) {
 		},
 		{
 			name:       "when an alert's receivers are covered by the defaults, return nil to use default receiver downstream",
-			channelIds: []uidOrID{"uid1"},
-			receivers: map[uidOrID]*apimodels.PostableApiReceiver{
+			channelIds: []migrationStore.UidOrID{"uid1"},
+			receivers: map[migrationStore.UidOrID]*apimodels.PostableApiReceiver{
 				"uid1": createPostableApiReceiver("recv1", nil),
 				"uid2": createPostableApiReceiver("recv2", nil),
 				"uid3": createPostableApiReceiver("recv3", nil),
@@ -200,14 +201,14 @@ func TestCreateReceivers(t *testing.T) {
 		name            string
 		allChannels     []*legacymodels.AlertNotification
 		defaultChannels []*legacymodels.AlertNotification
-		expRecvMap      map[uidOrID]*apimodels.PostableApiReceiver
+		expRecvMap      map[migrationStore.UidOrID]*apimodels.PostableApiReceiver
 		expRecv         []channelReceiver
 		expErr          error
 	}{
 		{
 			name:        "when given notification channels migrate them to receivers",
 			allChannels: []*legacymodels.AlertNotification{createNotChannel(t, "uid1", int64(1), "name1"), createNotChannel(t, "uid2", int64(2), "name2")},
-			expRecvMap: map[uidOrID]*apimodels.PostableApiReceiver{
+			expRecvMap: map[migrationStore.UidOrID]*apimodels.PostableApiReceiver{
 				"uid1":   createPostableApiReceiver("name1", []string{"name1"}),
 				"uid2":   createPostableApiReceiver("name2", []string{"name2"}),
 				int64(1): createPostableApiReceiver("name1", []string{"name1"}),
@@ -227,7 +228,7 @@ func TestCreateReceivers(t *testing.T) {
 		{
 			name:        "when given notification channel contains double quote sanitize with underscore",
 			allChannels: []*legacymodels.AlertNotification{createNotChannel(t, "uid1", int64(1), "name\"1")},
-			expRecvMap: map[uidOrID]*apimodels.PostableApiReceiver{
+			expRecvMap: map[migrationStore.UidOrID]*apimodels.PostableApiReceiver{
 				"uid1":   createPostableApiReceiver("name_1", []string{"name_1"}),
 				int64(1): createPostableApiReceiver("name_1", []string{"name_1"}),
 			},
@@ -241,7 +242,7 @@ func TestCreateReceivers(t *testing.T) {
 		{
 			name:        "when given notification channels collide after sanitization add short hash to end",
 			allChannels: []*legacymodels.AlertNotification{createNotChannel(t, "uid1", int64(1), "name\"1"), createNotChannel(t, "uid2", int64(2), "name_1")},
-			expRecvMap: map[uidOrID]*apimodels.PostableApiReceiver{
+			expRecvMap: map[migrationStore.UidOrID]*apimodels.PostableApiReceiver{
 				"uid1":   createPostableApiReceiver("name_1", []string{"name_1"}),
 				"uid2":   createPostableApiReceiver("name_1_dba13d", []string{"name_1_dba13d"}),
 				int64(1): createPostableApiReceiver("name_1", []string{"name_1"}),
