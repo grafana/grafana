@@ -270,8 +270,8 @@ filters = report:debug
 ```
 
 {{% docs/reference %}}
-[time range controls]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>"
-[time range controls]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>"
+[time range controls]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/manage-dashboards"
+[time range controls]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/manage-dashboards"
 
 [image rendering]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/image-rendering"
 [image rendering]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/image-rendering"
