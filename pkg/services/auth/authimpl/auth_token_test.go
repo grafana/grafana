@@ -618,7 +618,6 @@ func TestIntegrationUserAuthToken(t *testing.T) {
 
 		require.True(t, reflect.DeepEqual(utMap, uatMap))
 	})
-
 }
 
 func createTestContext(t *testing.T) *testContext {
