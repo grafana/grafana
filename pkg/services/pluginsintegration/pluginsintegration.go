@@ -28,7 +28,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/oauth"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	"github.com/grafana/grafana/pkg/plugins/repo"
-	"github.com/grafana/grafana/pkg/services/auth/assertid"
+	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/caching"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
@@ -134,7 +134,7 @@ func ProvideClientDecorator(
 	pluginRegistry registry.Service,
 	oAuthTokenService oauthtoken.OAuthTokenService,
 	tracer tracing.Tracer,
-	idSigner assertid.Service,
+	idSigner auth.IDService,
 	cachingService caching.CachingService,
 	features *featuremgmt.FeatureManager,
 ) (*client.Decorator, error) {
@@ -144,7 +144,7 @@ func ProvideClientDecorator(
 func NewClientDecorator(
 	cfg *setting.Cfg, pCfg *pCfg.Cfg,
 	pluginRegistry registry.Service, oAuthTokenService oauthtoken.OAuthTokenService,
-	tracer tracing.Tracer, idSigner assertid.Service, cachingService caching.CachingService, features *featuremgmt.FeatureManager,
+	tracer tracing.Tracer, idSigner auth.IDService, cachingService caching.CachingService, features *featuremgmt.FeatureManager,
 ) (*client.Decorator, error) {
 	c := client.ProvideService(pluginRegistry, pCfg)
 	middlewares := CreateMiddlewares(cfg, oAuthTokenService, tracer, idSigner, cachingService, features)
@@ -153,7 +153,7 @@ func NewClientDecorator(
 }
 
 func CreateMiddlewares(cfg *setting.Cfg, oAuthTokenService oauthtoken.OAuthTokenService,
-	tracer tracing.Tracer, idSigner assertid.Service,
+	tracer tracing.Tracer, idSigner auth.IDService,
 	cachingService caching.CachingService, features *featuremgmt.FeatureManager) []plugins.ClientMiddleware {
 	skipCookiesNames := []string{cfg.LoginCookieName}
 	middlewares := []plugins.ClientMiddleware{

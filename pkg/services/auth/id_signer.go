@@ -1,4 +1,4 @@
-package assertid
+package auth
 
 import (
 	"context"
@@ -10,10 +10,16 @@ import (
 
 const datasourceKey = "grafanaId"
 
-type Service interface {
-	ActiveUserAssertion(ctx context.Context, id identity.Requester, req *http.Request) (string, error)
+type IDService interface {
+	// SignIdentity will create a new id token for provided identity
+	SignIdentity(ctx context.Context, id identity.Requester, req *http.Request) (string, error)
 }
 
 func IsIDSignerEnabledForDatasource(ds *datasources.DataSource) bool {
 	return ds.JsonData != nil && ds.JsonData.Get(datasourceKey).MustBool()
+}
+
+type IDAssertions struct {
+	Teams     []string `json:"groups"`
+	IPAddress string   `json:"ip"`
 }

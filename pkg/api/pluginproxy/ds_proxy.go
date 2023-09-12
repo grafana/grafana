@@ -18,7 +18,7 @@ import (
 	glog "github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/services/auth/assertid"
+	"github.com/grafana/grafana/pkg/services/auth"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
@@ -42,7 +42,7 @@ type DataSourceProxy struct {
 	cfg                *setting.Cfg
 	clientProvider     httpclient.Provider
 	oAuthTokenService  oauthtoken.OAuthTokenService
-	idSigner           assertid.Service
+	idSigner           auth.IDService
 	dataSourcesService datasources.DataSourceService
 	tracer             tracing.Tracer
 }
@@ -265,9 +265,9 @@ func (proxy *DataSourceProxy) director(req *http.Request) {
 		}
 	}
 
-	if assertid.IsIDSignerEnabledForDatasource(proxy.ds) {
+	if auth.IsIDSignerEnabledForDatasource(proxy.ds) {
 		requester := proxy.ctx.SignedInUser
-		token, err := proxy.idSigner.ActiveUserAssertion(req.Context(), requester, req)
+		token, err := proxy.idSigner.SignIdentity(req.Context(), requester, req)
 		if err != nil {
 			ctxLogger.Error("Error creating ID token", "error", err)
 			return

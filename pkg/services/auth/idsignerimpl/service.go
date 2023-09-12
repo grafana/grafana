@@ -1,4 +1,4 @@
-package idsigner
+package idsignerimpl
 
 import (
 	"context"
@@ -12,7 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/network"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
-	"github.com/grafana/grafana/pkg/services/auth/assertid"
+	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/signingkeys"
 	"github.com/grafana/grafana/pkg/services/team"
@@ -20,15 +20,15 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
-var _ assertid.Service = &Service{}
+var _ auth.IDService = new(Service)
 
 const cacheKeyPrefix = "assertid"
 
 type TokenSigner interface {
-	SignToken(claims *jwt.Claims, assertions *IDAssertions) (string, error)
+	SignToken(claims *jwt.Claims, assertions *auth.IDAssertions) (string, error)
 }
 
-// Service implements the AssertID service.
+// Service implements the auth.IDSingerService
 type Service struct {
 	Signer            TokenSigner
 	logger            log.Logger
@@ -38,16 +38,11 @@ type Service struct {
 	teams             team.Service
 }
 
-type IDAssertions struct {
-	Teams     []string `json:"groups"`
-	IPAddress string   `json:"ip"`
-}
-
-// ProvideIDSigningService returns a new instance of the AssertID service.
+// ProvideIDSigningService returns a new instance of the auth.IDService.
 func ProvideIDSigningService(
 	remoteCache remotecache.CacheStorage, cfg *setting.Cfg,
 	signingKeyService signingkeys.Service, teams team.Service,
-) *Service {
+) (*Service, error) {
 	service := &Service{
 		logger:            log.New("auth.assertid"),
 		remoteCache:       remoteCache,
@@ -59,16 +54,15 @@ func ProvideIDSigningService(
 
 	signer, err := newLocalSigner(signingKeyService)
 	if err != nil {
-		service.logger.Error("Unable to create signer", "error", err)
-	} else {
-		service.Signer = signer
-	}
+		return nil, err
 
-	return service
+	}
+	service.Signer = signer
+
+	return service, nil
 }
 
-// ActiveUserAssertion returns the active user assertion.
-func (s *Service) ActiveUserAssertion(ctx context.Context, id identity.Requester, req *http.Request) (string, error) {
+func (s *Service) SignIdentity(ctx context.Context, id identity.Requester, req *http.Request) (string, error) {
 	if s.Signer == nil {
 		return "", fmt.Errorf("signer unavailable")
 	}
@@ -112,8 +106,8 @@ func (s *Service) ActiveUserAssertion(ctx context.Context, id identity.Requester
 	return token, nil
 }
 
-func (s *Service) generateUserAssertion(ctx context.Context, id identity.Requester, req *http.Request) (*IDAssertions, error) {
-	idAssertions := &IDAssertions{
+func (s *Service) generateUserAssertion(ctx context.Context, id identity.Requester, req *http.Request) (*auth.IDAssertions, error) {
+	idAssertions := &auth.IDAssertions{
 		IPAddress: getIPString(req),
 		Teams:     []string{},
 	}
@@ -132,8 +126,8 @@ func (s *Service) generateUserAssertion(ctx context.Context, id identity.Request
 			return nil, err
 		}
 
-		for _, team := range teams {
-			idAssertions.Teams = append(idAssertions.Teams, team.Name)
+		for _, t := range teams {
+			idAssertions.Teams = append(idAssertions.Teams, t.Name)
 		}
 	}
 

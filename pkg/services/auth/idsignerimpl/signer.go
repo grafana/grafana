@@ -1,9 +1,10 @@
-package idsigner
+package idsignerimpl
 
 import (
 	"github.com/go-jose/go-jose/v3"
 	"github.com/go-jose/go-jose/v3/jwt"
 
+	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/signingkeys"
 )
 
@@ -24,7 +25,7 @@ func newLocalSigner(signingKeyService signingkeys.Service) (*localSigner, error)
 	}, nil
 }
 
-func (t *localSigner) SignToken(claims *jwt.Claims, assertions *IDAssertions) (string, error) {
+func (t *localSigner) SignToken(claims *jwt.Claims, assertions *auth.IDAssertions) (string, error) {
 	builder := jwt.Signed(t.signer).Claims(claims).Claims(assertions)
 
 	// Build the JWT.

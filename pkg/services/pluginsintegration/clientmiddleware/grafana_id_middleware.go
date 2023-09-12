@@ -6,7 +6,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/services/auth/assertid"
+	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/datasources"
 )
@@ -16,7 +16,7 @@ const grafanaIdHeaderName = "X-Grafana-Id"
 // NewGrafanaIDMiddleware creates a new plugins.ClientMiddleware that will
 // set OAuth token headers on outgoing plugins.Client requests if the
 // datasource has enabled Forward Grafana ID.
-func NewGrafanaIDMiddleware(signer assertid.Service) plugins.ClientMiddleware {
+func NewGrafanaIDMiddleware(signer auth.IDService) plugins.ClientMiddleware {
 	return plugins.ClientMiddlewareFunc(func(next plugins.Client) plugins.Client {
 		return &GrafanaIDMiddleware{
 			signer: signer,
@@ -26,7 +26,7 @@ func NewGrafanaIDMiddleware(signer assertid.Service) plugins.ClientMiddleware {
 }
 
 type GrafanaIDMiddleware struct {
-	signer assertid.Service
+	signer auth.IDService
 	next   plugins.Client
 }
 
@@ -46,8 +46,8 @@ func (m *GrafanaIDMiddleware) applyToken(ctx context.Context, pCtx backend.Plugi
 		return err
 	}
 
-	if assertid.IsIDSignerEnabledForDatasource(&datasources.DataSource{JsonData: jsonDataBytes}) {
-		token, err := m.signer.ActiveUserAssertion(ctx, reqCtx.SignedInUser, reqCtx.Req)
+	if auth.IsIDSignerEnabledForDatasource(&datasources.DataSource{JsonData: jsonDataBytes}) {
+		token, err := m.signer.SignIdentity(ctx, reqCtx.SignedInUser, reqCtx.Req)
 		if err != nil {
 			return err
 		}

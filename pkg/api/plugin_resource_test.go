@@ -22,7 +22,7 @@ import (
 	pluginClient "github.com/grafana/grafana/pkg/plugins/manager/client"
 	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/auth/assertid/idsignertest"
+	"github.com/grafana/grafana/pkg/services/auth/idsignertest"
 	"github.com/grafana/grafana/pkg/services/caching"
 	datasources "github.com/grafana/grafana/pkg/services/datasources/fakes"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
