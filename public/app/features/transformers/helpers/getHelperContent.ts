@@ -20,6 +20,8 @@ import { LimitHelper } from './LimitHelper';
 import { MergeHelper } from './MergeHelper';
 import { OrganizeFieldsHelper } from './OrganizeFieldsHelper';
 import { PartitionByValuesHelper } from './PartitionByValuesHelper';
+import { PrepareTimeSeriesHelper } from './PrepareTimeSeriesHelper';
+import { ReduceHelper } from './ReduceHelper';
 
 interface Helper {
   [key: string]: JSX.Element | string;
@@ -50,6 +52,8 @@ const helperContent: Helper = {
   merge: MergeHelper(),
   organize: OrganizeFieldsHelper(),
   partitionByValues: PartitionByValuesHelper(),
+  prepareTimeSeries: PrepareTimeSeriesHelper(),
+  reduce: ReduceHelper(),
 };
 
 // JEV: add logic for no helper/string content

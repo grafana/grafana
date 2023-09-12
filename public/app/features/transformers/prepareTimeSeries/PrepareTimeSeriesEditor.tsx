@@ -10,6 +10,8 @@ import {
 } from '@grafana/data';
 import { InlineField, InlineFieldRow, Select, useStyles2 } from '@grafana/ui';
 
+import { getHelperContent } from '../helpers/getHelperContent';
+
 import { prepareTimeSeriesTransformer, PrepareTimeSeriesOptions, timeSeriesFormat } from './prepareTimeSeries';
 
 const wideInfo = {
@@ -118,13 +120,6 @@ export const prepareTimeseriesTransformerRegistryItem: TransformerRegistryItem<P
   transformation: prepareTimeSeriesTransformer,
   name: prepareTimeSeriesTransformer.name,
   description: prepareTimeSeriesTransformer.description,
-  // JEV: rebuild this help to a react component
-  help: `
-  ### Use cases
-
-  This takes query results and transforms them into a predictable timeseries format.
-  This transformer may be especially useful when using old panels that only expect the
-  many-frame timeseries format.
-  `,
   categories: new Set([TransformerCategory.Reformat]),
+  help: getHelperContent(prepareTimeSeriesTransformer.id),
 };
