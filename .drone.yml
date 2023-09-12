@@ -1417,7 +1417,7 @@ steps:
   image: node:18.12.0-alpine
   name: test-frontend
 trigger:
-  branch: main
+  branch: km/update-pr-pipeline
   event:
   - push
   paths:
@@ -1484,7 +1484,7 @@ steps:
   image: node:18.12.0-alpine
   name: verify-i18n
 trigger:
-  branch: main
+  branch: km/update-pr-pipeline
   event:
   - push
   paths:
@@ -1570,7 +1570,7 @@ steps:
   image: golang:1.21.1-alpine
   name: test-backend-integration
 trigger:
-  branch: main
+  branch: km/update-pr-pipeline
   event:
   - push
   paths:
@@ -1639,7 +1639,7 @@ steps:
   image: byrnedo/alpine-curl:0.1.8
   name: lint-drone
 trigger:
-  branch: main
+  branch: km/update-pr-pipeline
   event:
   - push
   paths:
@@ -2018,7 +2018,7 @@ steps:
     repo:
     - grafana/grafana
 trigger:
-  branch: main
+  branch: km/update-pr-pipeline
   event:
   - push
   paths:
@@ -2227,7 +2227,7 @@ steps:
   image: golang:1.21.1-alpine
   name: memcached-integration-tests
 trigger:
-  branch: main
+  branch: km/update-pr-pipeline
   event:
   - push
   paths:
@@ -2282,7 +2282,7 @@ steps:
   image: grafana/ci-wix:0.1.1
   name: windows-init
 trigger:
-  branch: main
+  branch: km/update-pr-pipeline
   event:
   - push
   paths:
@@ -2401,7 +2401,7 @@ steps:
     webhook:
       from_secret: slack_webhook
 trigger:
-  branch: main
+  branch: km/update-pr-pipeline
   event:
   - push
   paths:
@@ -4184,6 +4184,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 77b7191bd352c1dc33e2e72664710a356410ee898f8c75cdf5f750f7fb788a57
+hmac: ecb8494d72ca4965957c8b2f74d3dd7f8a63fffcf47658b39ed98350cf33908c
 
 ...
