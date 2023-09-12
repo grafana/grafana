@@ -244,6 +244,14 @@ const unifiedRoutes: RouteDescriptor[] = [
     ),
   },
   {
+    path: '/alerting/:id/design',
+    pageClass: 'page-alerting',
+    roles: evaluateAccess([AccessControlAction.AlertingRuleUpdate]),
+    component: SafeDynamicImport(
+      () => import(/* webpackChunkName: "AlertingRuleForm"*/ 'app/features/alerting/unified/RuleDesigner')
+    ),
+  },
+  {
     path: '/alerting/:sourceName/:id/view',
     pageClass: 'page-alerting',
     roles: evaluateAccess([AccessControlAction.AlertingRuleRead, AccessControlAction.AlertingRuleExternalRead]),

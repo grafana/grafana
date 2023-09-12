@@ -1,23 +1,13 @@
 import { css } from '@emotion/css';
 import { omit } from 'lodash';
 import React, { useEffect, useMemo, useState } from 'react';
-import { DeepMap, FieldError, FormProvider, useForm, useFormContext, UseFormWatch } from 'react-hook-form';
+import { DeepMap, FieldError, FormProvider, useForm, UseFormWatch } from 'react-hook-form';
 import { Link, useParams } from 'react-router-dom';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
 import { config, logInfo } from '@grafana/runtime';
-import {
-  Button,
-  ConfirmModal,
-  CustomScrollbar,
-  Field,
-  HorizontalGroup,
-  Input,
-  Spinner,
-  Text,
-  useStyles2,
-} from '@grafana/ui';
+import { Button, ConfirmModal, CustomScrollbar, HorizontalGroup, Spinner, useStyles2 } from '@grafana/ui';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { contextSrv } from 'app/core/core';
@@ -42,58 +32,15 @@ import {
 import * as ruleId from '../../utils/rule-id';
 import { GrafanaRuleExporter } from '../export/GrafanaRuleExporter';
 
+import { AlertRuleNameInput } from './AlertRuleNameInput';
 import AnnotationsStep from './AnnotationsStep';
 import { CloudEvaluationBehavior } from './CloudEvaluationBehavior';
 import { GrafanaEvaluationBehavior } from './GrafanaEvaluationBehavior';
 import { NotificationsStep } from './NotificationsStep';
 import { RecordingRulesNameSpaceAndGroupStep } from './RecordingRulesNameSpaceAndGroupStep';
-import { RuleEditorSection } from './RuleEditorSection';
 import { RuleInspector } from './RuleInspector';
 import { QueryAndExpressionsStep } from './query-and-alert-condition/QueryAndExpressionsStep';
 import { translateRouteParamToRuleType } from './util';
-
-const recordingRuleNameValidationPattern = {
-  message:
-    'Recording rule name must be valid metric name. It may only contain letters, numbers, and colons. It may not contain whitespace.',
-  value: /^[a-zA-Z_:][a-zA-Z0-9_:]*$/,
-};
-
-const AlertRuleNameInput = () => {
-  const {
-    register,
-    watch,
-    formState: { errors },
-  } = useFormContext<RuleFormValues & { location?: string }>();
-
-  const ruleFormType = watch('type');
-  const entityName = ruleFormType === RuleFormType.cloudRecording ? 'recording rule' : 'alert rule';
-
-  return (
-    <RuleEditorSection
-      stepNo={1}
-      title={`Enter ${entityName} name`}
-      description={
-        <Text variant="bodySmall" color="secondary">
-          {/* sigh language rules – we should use translations ideally but for now we deal with "a" and "an" */}
-          Enter {entityName === 'alert rule' ? 'an' : 'a'} {entityName} name to identify your alert.
-        </Text>
-      }
-    >
-      <Field label="Name" error={errors?.name?.message} invalid={!!errors.name?.message}>
-        <Input
-          id="name"
-          width={35}
-          {...register('name', {
-            required: { value: true, message: 'Must enter a name' },
-            pattern: ruleFormType === RuleFormType.cloudRecording ? recordingRuleNameValidationPattern : undefined,
-          })}
-          aria-label="name"
-          placeholder={`Give your ${entityName} a name`}
-        />
-      </Field>
-    </RuleEditorSection>
-  );
-};
 
 type Props = {
   existing?: RuleWithLocation;
