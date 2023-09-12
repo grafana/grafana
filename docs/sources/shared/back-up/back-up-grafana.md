@@ -50,7 +50,7 @@ The SQLite database file is located in one of the following directories:
 
 - Default location for SQLite data in a binary or source installation: `$WORKING_DIR/data/grafana.db`
 - Default location for SQLite data in a `deb` or `rpm` package: `/var/lib/grafana/grafana.db`. This path is specified in the Grafana
-init.d script using `--config` file parameter.
+  init.d script using `--config` file parameter.
 
 ### MySQL
 
