@@ -60,10 +60,12 @@ The Grafana OnCall integration is only available for Grafana Alertmanager.
    This redirects you to the Grafana OnCall integration page in the Grafana OnCall application. From there, you can add [routes and escalation chains][escalation-chain].
 
 {{% docs/reference %}}
-[create-notification-policy]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>alerting/alerting-rules/create-notification-policy/"
-[create-notification-policy]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/create-notification-policy/"
+[create-notification-policy]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>alerting/alerting-rules/create-notification-policy"
+[create-notification-policy]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/create-notification-policy"
 
-[oncall-integration]: "/ -> /docs/oncall/latest/integrations/grafana-alerting"
+[oncall-integration]: "/docs/grafana/ -> /docs/oncall/latest/integrations/grafana-alerting"
+[oncall-integration]: "/docs/grafana-cloud/ -> /docs/oncall/latest/integrations/grafana-alerting"
 
-[escalation-chain] "/ -> /docs/oncall/latest/escalation-chains-and-routes"
+[escalation-chain] "/docs/grafana/ -> /docs/oncall/latest/escalation-chains-and-routes"
+[escalation-chain] "/docs/grafana-cloud/ -> /docs/oncall/latest/escalation-chains-and-routes"
 {{% /docs/reference %}}
