@@ -154,7 +154,7 @@ def lint_starlark_step():
         "image": images["go"],
         "commands": [
             "go install github.com/bazelbuild/buildtools/buildifier@latest",
-            "./bin/build verify-starlark .",
+            "buildifier --lint=warn -mode=check -r .",
         ],
         "depends_on": [
             "compile-build-cmd",

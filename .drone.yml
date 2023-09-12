@@ -78,7 +78,7 @@ steps:
   name: compile-build-cmd
 - commands:
   - go install github.com/bazelbuild/buildtools/buildifier@latest
-  - ./bin/build verify-starlark .
+  - buildifier --lint=warn -mode=check -r .
   depends_on:
   - compile-build-cmd
   image: golang:1.21.1-alpine
@@ -4184,6 +4184,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 6be1074ff59b3181c051ab97990f531309bf71387631ea5867fc2c3af4f67ce8
+hmac: 77b7191bd352c1dc33e2e72664710a356410ee898f8c75cdf5f750f7fb788a57
 
 ...
