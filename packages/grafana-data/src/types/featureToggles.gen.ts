@@ -130,4 +130,5 @@ export interface FeatureToggles {
   externalCorePlugins?: boolean;
   pluginsAPIMetrics?: boolean;
   httpSLOLevels?: boolean;
+  idToken?: boolean;
 }

@@ -454,4 +454,8 @@ const (
 	// FlagHttpSLOLevels
 	// Adds SLO level to http request metrics
 	FlagHttpSLOLevels = "httpSLOLevels"
+
+	// FlagIdToken
+	// Generate id token for identity that can be forwarded to plugins and external services
+	FlagIdToken = "idToken"
 )
