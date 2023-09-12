@@ -8,7 +8,7 @@ export interface ContentOutlineItemContextProps extends ContentOutlineItemBasePr
   ref: HTMLElement | null;
 }
 
-type RegisterFunction = ({ title, icon, ref, displayOrderId }: Omit<ContentOutlineItemContextProps, 'id'>) => string;
+type RegisterFunction = ({ title, icon, ref }: Omit<ContentOutlineItemContextProps, 'id'>) => string;
 
 interface ContentOutlineContextProps {
   outlineItems: ContentOutlineItemContextProps[];
@@ -21,19 +21,23 @@ const ContentOutlineContext = createContext<ContentOutlineContextProps | undefin
 export const ContentOutlineContextProvider = ({ children }: { children: ReactNode }) => {
   const [outlineItems, setOutlineItems] = useState<ContentOutlineItemContextProps[]>([]);
 
-  const register: RegisterFunction = useCallback(({ title, icon, ref, displayOrderId }) => {
+  const register: RegisterFunction = useCallback(({ title, icon, ref }) => {
     const id = uniqueId(`${title}-${icon}_`);
 
     setOutlineItems((prevItems) => {
-      const updatedItems = [...prevItems, { id, title, icon, ref, displayOrderId }];
+      const updatedItems = [...prevItems, { id, title, icon, ref }];
 
-      const shouldSort = updatedItems.every((item) => item.displayOrderId !== undefined);
-
-      if (shouldSort) {
-        return updatedItems.sort((a, b) => a.displayOrderId! - b.displayOrderId!);
-      }
-
-      return updatedItems;
+      return updatedItems.sort((a, b) => {
+        if (a.ref && b.ref) {
+          const diff = a.ref.compareDocumentPosition(b.ref);
+          if (diff === Node.DOCUMENT_POSITION_PRECEDING) {
+            return 1;
+          } else if (diff === Node.DOCUMENT_POSITION_FOLLOWING) {
+            return -1;
+          }
+        }
+        return 0;
+      });
     });
 
     return id;

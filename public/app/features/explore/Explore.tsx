@@ -316,14 +316,14 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
     return <NoData />;
   }
 
-  renderCustom(width: number, contentOutlineOrderId: number) {
+  renderCustom(width: number) {
     const { timeZone, queryResponse, absoluteRange, eventBus } = this.props;
 
     const groupedByPlugin = groupBy(queryResponse?.customFrames, 'meta.preferredVisualisationPluginId');
 
     return Object.entries(groupedByPlugin).map(([pluginId, frames], index) => {
       return (
-        <ContentOutlineItem title="Custom" icon="plug" key={index} displayOrderId={contentOutlineOrderId}>
+        <ContentOutlineItem title="Custom" icon="plug" key={index}>
           <CustomContainer
             key={index}
             timeZone={timeZone}
@@ -341,11 +341,11 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
     });
   }
 
-  renderGraphPanel(width: number, contentOutlineOrderId: number) {
+  renderGraphPanel(width: number) {
     const { graphResult, absoluteRange, timeZone, queryResponse, showFlameGraph } = this.props;
 
     return (
-      <ContentOutlineItem title="Graph" icon="graph-bar" displayOrderId={contentOutlineOrderId}>
+      <ContentOutlineItem title="Graph" icon="graph-bar">
         <GraphContainer
           data={graphResult!}
           height={showFlameGraph ? 180 : 400}
@@ -362,10 +362,10 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
     );
   }
 
-  renderTablePanel(width: number, contentOutlineOrderId: number) {
+  renderTablePanel(width: number) {
     const { exploreId, timeZone } = this.props;
     return (
-      <ContentOutlineItem title="Table" icon="table" displayOrderId={contentOutlineOrderId}>
+      <ContentOutlineItem title="Table" icon="table">
         <TableContainer
           ariaLabel={selectors.pages.Explore.General.table}
           width={width}
@@ -378,10 +378,10 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
     );
   }
 
-  renderRawPrometheus(width: number, contentOutlineOrderId: number) {
+  renderRawPrometheus(width: number) {
     const { exploreId, datasourceInstance, timeZone } = this.props;
     return (
-      <ContentOutlineItem title="Raw Prometheus" icon="gf-prometheus" displayOrderId={contentOutlineOrderId}>
+      <ContentOutlineItem title="Raw Prometheus" icon="gf-prometheus">
         <RawPrometheusContainer
           showRawPrometheus={true}
           ariaLabel={selectors.pages.Explore.General.table}
@@ -395,7 +395,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
     );
   }
 
-  renderLogsPanel(width: number, contentOutlineOrderId: number) {
+  renderLogsPanel(width: number) {
     const { exploreId, syncedTimes, theme, queryResponse } = this.props;
     const spacing = parseInt(theme.spacing(2).slice(0, -2), 10);
     // Need to make ContenOutlineItem a flex container so the gap works
@@ -405,12 +405,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
       gap: ${theme.spacing(1)};
     `;
     return (
-      <ContentOutlineItem
-        title="Logs"
-        icon="gf-logs"
-        className={logsContentOutlineWrapper}
-        displayOrderId={contentOutlineOrderId}
-      >
+      <ContentOutlineItem title="Logs" icon="gf-logs" className={logsContentOutlineWrapper}>
         <LogsContainer
           exploreId={exploreId}
           loadingState={queryResponse.state}
@@ -429,11 +424,11 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
     );
   }
 
-  renderLogsSamplePanel(contentOutlineOrderId: number) {
+  renderLogsSamplePanel() {
     const { logsSample, timeZone, setSupplementaryQueryEnabled, exploreId, datasourceInstance, queries } = this.props;
 
     return (
-      <ContentOutlineItem title="Logs Sample" icon="gf-logs" displayOrderId={contentOutlineOrderId}>
+      <ContentOutlineItem title="Logs Sample" icon="gf-logs">
         <LogsSamplePanel
           queryResponse={logsSample.data}
           timeZone={timeZone}
@@ -449,12 +444,12 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
     );
   }
 
-  renderNodeGraphPanel(contentOutlineOrderId: number) {
+  renderNodeGraphPanel() {
     const { exploreId, showTrace, queryResponse, datasourceInstance } = this.props;
     const datasourceType = datasourceInstance ? datasourceInstance?.type : 'unknown';
 
     return (
-      <ContentOutlineItem title="Node Graph" icon="code-branch" displayOrderId={contentOutlineOrderId}>
+      <ContentOutlineItem title="Node Graph" icon="code-branch">
         <NodeGraphContainer
           dataFrames={this.memoizedGetNodeGraphDataFrames(queryResponse.series)}
           exploreId={exploreId}
@@ -466,23 +461,23 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
     );
   }
 
-  renderFlameGraphPanel(contentOutlineOrderId: number) {
+  renderFlameGraphPanel() {
     const { queryResponse } = this.props;
     return (
-      <ContentOutlineItem title="Flame Graph" icon="fire" displayOrderId={contentOutlineOrderId}>
+      <ContentOutlineItem title="Flame Graph" icon="fire">
         <FlameGraphExploreContainer dataFrames={queryResponse.flameGraphFrames} />
       </ContentOutlineItem>
     );
   }
 
-  renderTraceViewPanel(contentOutlineOrderId: number) {
+  renderTraceViewPanel() {
     const { queryResponse, exploreId } = this.props;
     const dataFrames = queryResponse.series.filter((series) => series.meta?.preferredVisualisationType === 'trace');
 
     return (
       // If there is no data (like 404) we show a separate error so no need to show anything here
       dataFrames.length && (
-        <ContentOutlineItem title="Traces" icon="file-alt" displayOrderId={contentOutlineOrderId}>
+        <ContentOutlineItem title="Traces" icon="file-alt">
           <TraceViewContainer
             exploreId={exploreId}
             dataFrames={dataFrames}
@@ -548,7 +543,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
               {contentOutlineVisible && <ContentOutline visible={contentOutlineVisible} />}
               <div className={styles.columnWrapper}>
                 <PanelContainer className={styles.queryContainer}>
-                  <ContentOutlineItem title="Queries" icon="arrow" displayOrderId={1}>
+                  <ContentOutlineItem title="Queries" icon="arrow">
                     <QueryRows exploreId={exploreId} />
                   </ContentOutlineItem>
                   <SecondaryActions
@@ -577,22 +572,22 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
                           {showPanels && (
                             <>
                               {showMetrics && graphResult && (
-                                <ErrorBoundaryAlert>{this.renderGraphPanel(width, 2)}</ErrorBoundaryAlert>
+                                <ErrorBoundaryAlert>{this.renderGraphPanel(width)}</ErrorBoundaryAlert>
                               )}
                               {showRawPrometheus && (
-                                <ErrorBoundaryAlert>{this.renderRawPrometheus(width, 3)}</ErrorBoundaryAlert>
+                                <ErrorBoundaryAlert>{this.renderRawPrometheus(width)}</ErrorBoundaryAlert>
                               )}
-                              {showTable && <ErrorBoundaryAlert>{this.renderTablePanel(width, 4)}</ErrorBoundaryAlert>}
-                              {showLogs && <ErrorBoundaryAlert>{this.renderLogsPanel(width, 5)}</ErrorBoundaryAlert>}
-                              {showNodeGraph && <ErrorBoundaryAlert>{this.renderNodeGraphPanel(6)}</ErrorBoundaryAlert>}
+                              {showTable && <ErrorBoundaryAlert>{this.renderTablePanel(width)}</ErrorBoundaryAlert>}
+                              {showLogs && <ErrorBoundaryAlert>{this.renderLogsPanel(width)}</ErrorBoundaryAlert>}
+                              {showNodeGraph && <ErrorBoundaryAlert>{this.renderNodeGraphPanel()}</ErrorBoundaryAlert>}
                               {showFlameGraph && (
-                                <ErrorBoundaryAlert>{this.renderFlameGraphPanel(7)}</ErrorBoundaryAlert>
+                                <ErrorBoundaryAlert>{this.renderFlameGraphPanel()}</ErrorBoundaryAlert>
                               )}
-                              {showTrace && <ErrorBoundaryAlert>{this.renderTraceViewPanel(8)}</ErrorBoundaryAlert>}
+                              {showTrace && <ErrorBoundaryAlert>{this.renderTraceViewPanel()}</ErrorBoundaryAlert>}
                               {showLogsSample && (
-                                <ErrorBoundaryAlert>{this.renderLogsSamplePanel(9)}</ErrorBoundaryAlert>
+                                <ErrorBoundaryAlert>{this.renderLogsSamplePanel()}</ErrorBoundaryAlert>
                               )}
-                              {showCustom && <ErrorBoundaryAlert>{this.renderCustom(width, 10)}</ErrorBoundaryAlert>}
+                              {showCustom && <ErrorBoundaryAlert>{this.renderCustom(width)}</ErrorBoundaryAlert>}
                               {showNoData && <ErrorBoundaryAlert>{this.renderNoData()}</ErrorBoundaryAlert>}
                             </>
                           )}

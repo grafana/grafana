@@ -63,6 +63,7 @@ const ContentOutline = ({ visible }: ContentOutlineProps) => {
             className={styles.buttonStyles}
             icon={item.icon}
             onClick={() => scrollIntoView(item.ref)}
+            tooltip={!expanded ? item.title : undefined}
           >
             {expanded && item.title}
           </ToolbarButton>
