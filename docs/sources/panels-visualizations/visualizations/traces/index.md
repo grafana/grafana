@@ -16,10 +16,10 @@ title: Traces
 weight: 100
 ---
 
-# Traces panel
+# Traces
 
-Traces let you follow a request as it traverses the services in your infrastructure.
-The Traces panel visualizes traces data into a diagram that allows you to easily interpret it.
+Traces visualizations let you follow a request as it traverses the services in your infrastructure.
+The traces visualization displays traces data in a diagram that allows you to easily interpret it.
 
 For more information about traces and how to use them, refer to the following documentation:
 
@@ -43,19 +43,19 @@ To use this procedure, you need:
 - A Grafana instance
 - A Tempo data source connected to your Grafana instance (refer to [documentation]({{< relref "../../../datasources/tempo" >}}))
 
-### Add the Traces panel query
+### Add the traces visualization query {#add-the-traces-panel-query}
 
-To view and analyze traces data in a dashboard, you need to add the tracing panel to your dashboard and define a query using the panel editor.
-The query determines the data that is displayed in the panel.
+To view and analyze traces data in a dashboard, you need to add the traces visualization to your dashboard and define a query using the panel editor.
+The query determines the data that is displayed in the visualization.
 For more information on the panel editor, refer to the [Panel editor documentation]({{< relref "../../panel-editor-overview" >}}).
 
 This procedure uses dashboard variables and templates to allow you to enter trace IDs which can then be visualized. You'll use a variable called `traceId` and add it as a template query.
 
-1. From your Grafana stack, create a new dashboard or go to an existing dashboard where you'd like to add tracing panels.
+1. From your Grafana stack, create a new dashboard or go to an existing dashboard where you'd like to add traces visualizations.
 1. Select **Add visualization** from a new dashboard or select **Add Panel** on an existing dashboard.
 1. Search for and select the appropriate tracing data source.
 1. In the top-right of the panel editor, select the **Visualizations** tab, search for, and select **Traces**.
-1. Under the **Panel options**, enter a **Title** for your trace panel. For more information on the panel editor, refer to the [Configure panel options documentation]({{< relref "../../configure-panel-options" >}}).
+1. Under the **Panel options**, enter a **Title** for the panel. For more information on the panel editor, refer to the [Configure panel options documentation]({{< relref "../../configure-panel-options" >}}).
 1. In the query editor, select the **TraceQL** query type tab.
 1. Enter `${traceId}` in the TraceQL query field to create a dashboard variable. This variable is used as the template query.
 
@@ -68,11 +68,11 @@ This procedure uses dashboard variables and templates to allow you to enter trac
 
 1. Verify that the panel works by using a valid trace ID for the data source used for the trace panel and editing the ID in the dashboard variable.
 
-   {{< figure src="/static/img/docs/panels/traces/screenshot-traces-traceid-panel.png" caption="Results of query in Trace panel" >}}
+   {{< figure src="/static/img/docs/panels/traces/screenshot-traces-traceid-panel.png" caption="Results of query in trace panel" >}}
 
 ## Add TraceQL with table visualizations
 
-While you can add a trace panel visualization to a dashboard, having to manually add trace IDs as a dashboard variable is cumbersome.
+While you can add a trace visualization to a dashboard, having to manually add trace IDs as a dashboard variable is cumbersome.
 It’s more useful to instead be able to use TraceQL queries to search for specific types of traces and then select appropriate traces from matching results.
 
 1. In the same dashboard where you added the trace visualization, select **Add panel** to add a new visualization panel.
@@ -90,7 +90,7 @@ When results are returned from a query, the results are rendered in the panel’
 
 ### Use a variable to add other links to traces
 
-The results in the Traces panel include links to the **Explore** page that renders the trace. You can add other links to traces in the table that fill in the `traceId` dashboard variable when selected, so that the trace is visualized in the same dashboard.
+The results in the traces visualization include links to the **Explore** page that renders the trace. You can add other links to traces in the table that fill in the `traceId` dashboard variable when selected, so that the trace is visualized in the same dashboard.
 
 To create a set of data links in the panel, use the following steps:
 
@@ -109,7 +109,7 @@ To create a set of data links in the panel, use the following steps:
 1. Select **Apply** from the panel editor to apply the panel to the dashboard.
 1. Save the dashboard.
 
-You should now see a list of matching traces in the Table visualization. While selecting the **TraceID** or **SpanID** fields will give you the option to either open the **Explore** page to visualize the trace or following the data link, selecting any other field (such as **Start time**, **Name** or **Duration**) automatically follows the data link, filling in the `traceId` dashboard variable, and then shows the relevant trace in the trace panel.
+You should now see a list of matching traces in the table visualization. While selecting the **TraceID** or **SpanID** fields will give you the option to either open the **Explore** page to visualize the trace or following the data link, selecting any other field (such as **Start time**, **Name** or **Duration**) automatically follows the data link, filling in the `traceId` dashboard variable, and then shows the relevant trace in the trace panel.
 
 {{< figure src="/static/img/docs/panels/traces/screenshot-traces-trace-link.png" caption="Selecting the trace link" >}}
 
