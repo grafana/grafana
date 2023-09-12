@@ -319,16 +319,10 @@ export function buildGridItemForPanel(panel: PanelModel): SceneGridItemLike {
 /**
  * Used from inspect json tab to raw update a panel
  */
-export function updatePanelFromSaveModel(panel: VizPanel, jsonText: string) {
-  const panelContainer = panel.parent;
+export function updatePanelFromSaveModel(panel: VizPanel, model: unknown) {
+  const panelContainer = panel.parent!;
 
-  if (!(panelContainer instanceof SceneGridItem)) {
-    console.error('Parent is not a SceneGridItem');
-    return;
-  }
-
-  const json = JSON.parse(jsonText);
-  const panelModel = new PanelModel(json);
+  const panelModel = new PanelModel(model);
   const gridItem = buildGridItemForPanel(panelModel);
   const newState = sceneUtils.cloneSceneObjectState(gridItem.state);
 

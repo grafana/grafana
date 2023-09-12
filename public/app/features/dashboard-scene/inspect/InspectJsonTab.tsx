@@ -11,20 +11,21 @@ import {
   SceneObjectBase,
   SceneObjectRef,
   SceneObjectState,
+  sceneUtils,
   VizPanel,
 } from '@grafana/scenes';
 import { Button, CodeEditor, Field, Select, useStyles2 } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 import { getPanelDataFrames } from 'app/features/dashboard/components/HelpWizard/utils';
+import { PanelModel } from 'app/features/dashboard/state';
 import { getPanelInspectorStyles2 } from 'app/features/inspector/styles';
 import { InspectTab } from 'app/features/inspector/types';
 import { getPrettyJSON } from 'app/features/inspector/utils/utils';
 
-import { updatePanelFromSaveModel } from '../serialization/transformSaveModelToScene';
+import { PanelRepeaterGridItem } from '../scene/PanelRepeaterGridItem';
+import { buildGridItemForPanel } from '../serialization/transformSaveModelToScene';
 import { gridItemToPanel } from '../serialization/transformSceneToSaveModel';
 import { getDashboardSceneFor } from '../utils/utils';
-
-import { PanelInspectDrawer } from './PanelInspectDrawer';
 
 export type ShowContent = 'panel-json' | 'panel-data' | 'data-frames';
 
@@ -32,6 +33,7 @@ export interface InspectJsonTabState extends SceneObjectState {
   panelRef: SceneObjectRef<VizPanel>;
   show: ShowContent;
   jsonText: string;
+  onClose: () => void;
 }
 
 export class InspectJsonTab extends SceneObjectBase<InspectJsonTabState> {
@@ -94,21 +96,24 @@ export class InspectJsonTab extends SceneObjectBase<InspectJsonTabState> {
 
   public onApplyChange = () => {
     const panel = this.state.panelRef.resolve();
-    if (!panel) {
+    const dashboard = getDashboardSceneFor(panel);
+    const jsonObj = JSON.parse(this.state.jsonText);
+
+    const panelModel = new PanelModel(jsonObj);
+    const gridItem = buildGridItemForPanel(panelModel);
+    const newState = sceneUtils.cloneSceneObjectState(gridItem.state);
+
+    if (!(panel.parent instanceof SceneGridItem)) {
       return;
     }
 
-    const dashboard = getDashboardSceneFor(this.state.panelRef.resolve());
+    this.state.onClose();
 
     if (!dashboard.state.isEditing) {
       dashboard.onEnterEditMode();
     }
 
-    updatePanelFromSaveModel(panel, this.state.jsonText);
-
-    if (this.parent instanceof PanelInspectDrawer) {
-      this.parent.onClose();
-    }
+    panel.parent.setState(newState);
   };
 
   public onCodeEditorBlur = (value: string) => {
@@ -120,7 +125,14 @@ export class InspectJsonTab extends SceneObjectBase<InspectJsonTabState> {
       return false;
     }
 
-    const dashboard = getDashboardSceneFor(this.state.panelRef.resolve());
+    const panel = this.state.panelRef.resolve();
+
+    // Only support normal grid items for now and not repeated items
+    if (!(panel.parent instanceof SceneGridItem)) {
+      return false;
+    }
+
+    const dashboard = getDashboardSceneFor(panel);
     return dashboard.state.meta.canEdit;
   }
 
@@ -173,7 +185,7 @@ function getJsonText(show: ShowContent, panel: VizPanel): string {
 
   switch (show) {
     case 'panel-json': {
-      if (panel.parent instanceof SceneGridItem) {
+      if (panel.parent instanceof SceneGridItem || panel.parent instanceof PanelRepeaterGridItem) {
         objToStringify = gridItemToPanel(panel.parent);
       }
       break;

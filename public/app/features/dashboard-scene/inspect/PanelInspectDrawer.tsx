@@ -58,7 +58,7 @@ export class PanelInspectDrawer extends SceneObjectBase<PanelInspectDrawerState>
       tabs.push(new InspectStatsTab({ panelRef }));
     }
 
-    tabs.push(new InspectJsonTab({ panelRef }));
+    tabs.push(new InspectJsonTab({ panelRef, onClose: this.onClose }));
 
     this.setState({ tabs });
   }
