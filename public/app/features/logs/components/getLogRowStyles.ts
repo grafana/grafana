@@ -276,7 +276,7 @@ export const getLogRowStyles = memoizeOne((theme: GrafanaTheme2) => {
       text-align: left;
       padding: 0;
       user-select: text;
-      pointer-events: none; // This somehow fixes a bug in safari when attempting to select text
+      -webkit-user-select: text;
     `,
     // Log details
     logsRowLevelDetails: css`

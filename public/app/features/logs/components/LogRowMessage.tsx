@@ -89,9 +89,9 @@ export const LogRowMessage = React.memo((props: Props) => {
       }
       <td className={styles.logsRowMessage}>
         <div className={wrapLogMessage ? styles.positionRelative : styles.horizontalScroll}>
-          <button className={`${styles.logLine} ${styles.positionRelative}`}>
+          <span className={`${styles.logLine} ${styles.positionRelative}`}>
             <LogMessage hasAnsi={hasAnsi} entry={restructuredEntry} highlights={row.searchWords} styles={styles} />
-          </button>
+          </span>
         </div>
       </td>
       <td className={`log-row-menu-cell ${styles.logRowMenuCell}`}>
