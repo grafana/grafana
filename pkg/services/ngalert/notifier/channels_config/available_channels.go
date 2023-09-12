@@ -851,7 +851,7 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 				},
 				{
 					Label:        "Protect Content",
-					Description:  "Messages will be protected from forwarding and saving.",
+					Description:  "Protects the contents of the sent message from forwarding and saving",
 					Element:      ElementTypeCheckbox,
 					PropertyName: "protect_content",
 				},
