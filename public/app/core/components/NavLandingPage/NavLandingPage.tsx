@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { Flex, Grid, GridItem } from '@grafana/ui/src/unstable';
+import { Flex, Grid } from '@grafana/ui/src/unstable';
 import { Page } from 'app/core/components/Page/Page';
 import { useNavModel } from 'app/core/hooks/useNavModel';
 
@@ -22,9 +22,12 @@ export function NavLandingPage({ navId, header }: Props) {
           {children && children.length > 0 && (
             <Grid display="grid" gap={3} templateColumns="repeat(auto-fill, minmax(300px,1fr))" autoRows="138px">
               {children?.map((child) => (
-                <GridItem key={child.id} displayContents>
-                  <NavLandingPageCard description={child.subTitle} text={child.text} url={child.url ?? ''} />
-                </GridItem>
+                <NavLandingPageCard
+                  key={child.id}
+                  description={child.subTitle}
+                  text={child.text}
+                  url={child.url ?? ''}
+                />
               ))}
             </Grid>
           )}
