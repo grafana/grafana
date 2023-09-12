@@ -118,7 +118,7 @@ func readPrometheusData(iter *jsoniter.Iterator, opt Options) backend.DataRespon
 			// if we have saved resultBytes we will parse them here
 			// we saved them because when we had them we don't know the resultType
 			if len(resultBytes) > 0 {
-				ji := jsoniter.NewIterator(jsoniter.ParseBytes(jsoniter.ConfigDefault, resultBytes))
+				ji := jsoniter.ParseBytes(jsoniter.ConfigDefault, resultBytes)
 				rsp = readResult(resultType, rsp, ji, opt)
 			}
 		case "result":
