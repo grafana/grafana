@@ -316,19 +316,6 @@ export function buildGridItemForPanel(panel: PanelModel): SceneGridItemLike {
   });
 }
 
-/**
- * Used from inspect json tab to raw update a panel
- */
-export function updatePanelFromSaveModel(panel: VizPanel, model: unknown) {
-  const panelContainer = panel.parent!;
-
-  const panelModel = new PanelModel(model);
-  const gridItem = buildGridItemForPanel(panelModel);
-  const newState = sceneUtils.cloneSceneObjectState(gridItem.state);
-
-  panelContainer.setState(newState);
-}
-
 const isCustomVariable = (v: VariableModel): v is CustomVariableModel => v.type === 'custom';
 const isQueryVariable = (v: VariableModel): v is QueryVariableModel => v.type === 'query';
 const isDataSourceVariable = (v: VariableModel): v is DataSourceVariableModel => v.type === 'datasource';
