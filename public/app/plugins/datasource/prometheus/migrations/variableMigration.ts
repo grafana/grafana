@@ -123,7 +123,9 @@ export function migrateVariableEditorBackToVariableSupport(QueryVariable: PromVa
       const varQuery = removeLineBreaks(QueryVariable.varQuery);
       return `query_result(${varQuery})`;
     case QueryType.SeriesQuery:
-      return '' + QueryVariable.seriesQuery;
+      return QueryVariable.seriesQuery ?? '';
+    case QueryType.ClassicQuery:
+      return QueryVariable.classicQuery ?? '';
   }
 
   return '';

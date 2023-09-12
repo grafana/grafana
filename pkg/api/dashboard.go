@@ -392,29 +392,6 @@ func (hs *HTTPServer) PostDashboard(c *contextmodel.ReqContext) response.Respons
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-
-	if hs.Features.IsEnabled(featuremgmt.FlagValidateDashboardsOnSave) {
-		kind := hs.Kinds.Dashboard()
-
-		dashbytes, err := cmd.Dashboard.Bytes()
-		if err != nil {
-			return response.Error(http.StatusBadRequest, "unable to parse dashboard", err)
-		}
-		// Ideally, coremodel validation calls would be integrated into the web
-		// framework. But this does the job for now.
-		schv, err := cmd.Dashboard.Get("schemaVersion").Int()
-
-		// Only try to validate if the schemaVersion is at least the handoff version
-		// (the minimum schemaVersion against which the dashboard schema is known to
-		// work), or if schemaVersion is absent (which will happen once the kind schema
-		// becomes canonical).
-		if err != nil || schv >= dashboard.HandoffSchemaVersion {
-			if _, _, err := kind.JSONValueMux(dashbytes); err != nil {
-				return response.Error(http.StatusBadRequest, "invalid dashboard json", err)
-			}
-		}
-	}
-
 	return hs.postDashboard(c, cmd)
 }
 

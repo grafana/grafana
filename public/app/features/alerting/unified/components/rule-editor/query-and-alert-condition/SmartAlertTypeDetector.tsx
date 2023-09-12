@@ -14,11 +14,8 @@ import { RuleFormType, RuleFormValues } from '../../../types/rule-form';
 import { NeedHelpInfo } from '../NeedHelpInfo';
 
 function getAvailableRuleTypes() {
-  const canCreateGrafanaRules = contextSrv.hasAccess(
-    AccessControlAction.AlertingRuleCreate,
-    contextSrv.hasEditPermissionInFolders
-  );
-  const canCreateCloudRules = contextSrv.hasAccess(AccessControlAction.AlertingRuleExternalWrite, contextSrv.isEditor);
+  const canCreateGrafanaRules = contextSrv.hasPermission(AccessControlAction.AlertingRuleCreate);
+  const canCreateCloudRules = contextSrv.hasPermission(AccessControlAction.AlertingRuleExternalWrite);
   const defaultRuleType = canCreateGrafanaRules ? RuleFormType.grafana : RuleFormType.cloudAlerting;
 
   const enabledRuleTypes: RuleFormType[] = [];
