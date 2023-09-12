@@ -3191,6 +3191,12 @@
             "example": "My Label",
             "type": "string"
           },
+          "orgId": {
+            "description": "OrgID of the data source the correlation originates from",
+            "example": 1,
+            "format": "int64",
+            "type": "integer"
+          },
           "sourceUID": {
             "description": "UID of the data source the correlation originates from",
             "example": "d0oxYRg4z",
@@ -3856,9 +3862,6 @@
             "type": "boolean"
           },
           "provisionedExternalId": {
-            "type": "string"
-          },
-          "publicDashboardAccessToken": {
             "type": "string"
           },
           "publicDashboardEnabled": {
@@ -5095,6 +5098,12 @@
             },
             "type": "array"
           },
+          "teams_configs": {
+            "items": {
+              "$ref": "#/components/schemas/MSTeamsConfig"
+            },
+            "type": "array"
+          },
           "telegram_configs": {
             "items": {
               "$ref": "#/components/schemas/TelegramConfig"
@@ -6176,6 +6185,26 @@
         },
         "type": "object"
       },
+      "MSTeamsConfig": {
+        "properties": {
+          "http_config": {
+            "$ref": "#/components/schemas/HTTPClientConfig"
+          },
+          "send_resolved": {
+            "type": "boolean"
+          },
+          "text": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "webhook_url": {
+            "$ref": "#/components/schemas/SecretURL"
+          }
+        },
+        "type": "object"
+      },
       "MassDeleteAnnotationsCmd": {
         "properties": {
           "annotationId": {
@@ -6245,9 +6274,6 @@
           "from": {
             "description": "From Start time in epoch timestamps in milliseconds or relative using Grafana time units.",
             "example": "now-1h",
-            "type": "string"
-          },
-          "publicDashboardAccessToken": {
             "type": "string"
           },
           "queries": {
@@ -7172,6 +7198,12 @@
             },
             "type": "array"
           },
+          "teams_configs": {
+            "items": {
+              "$ref": "#/components/schemas/MSTeamsConfig"
+            },
+            "type": "array"
+          },
           "telegram_configs": {
             "items": {
               "$ref": "#/components/schemas/TelegramConfig"
@@ -7523,6 +7555,9 @@
             "type": "string"
           },
           "uid": {
+            "maxLength": 40,
+            "minLength": 1,
+            "pattern": "^[a-zA-Z0-9-_]+$",
             "type": "string"
           },
           "updated": {
@@ -7877,6 +7912,12 @@
           "sns_configs": {
             "items": {
               "$ref": "#/components/schemas/SNSConfig"
+            },
+            "type": "array"
+          },
+          "teams_configs": {
+            "items": {
+              "$ref": "#/components/schemas/MSTeamsConfig"
             },
             "type": "array"
           },
@@ -9136,8 +9177,16 @@
       },
       "TLSConfig": {
         "properties": {
+          "ca": {
+            "description": "Text of the CA cert to use for the targets.",
+            "type": "string"
+          },
           "ca_file": {
             "description": "The CA cert to use for the targets.",
+            "type": "string"
+          },
+          "cert": {
+            "description": "Text of the client cert file for the targets.",
             "type": "string"
           },
           "cert_file": {
@@ -9147,6 +9196,9 @@
           "insecure_skip_verify": {
             "description": "Disable target certificate validation.",
             "type": "boolean"
+          },
+          "key": {
+            "$ref": "#/components/schemas/Secret"
           },
           "key_file": {
             "description": "The client key file for the targets.",
@@ -9836,6 +9888,7 @@
         "type": "string"
       },
       "URL": {
+        "description": "The general form represented is:\n\n[scheme:][//[userinfo@]host][/]path[?query][#fragment]\n\nURLs that do not start with a slash after the scheme are interpreted as:\n\nscheme:opaque[?query][#fragment]\n\nNote that the Path field is stored in decoded form: /%47%6f%2f becomes /Go/.\nA consequence is that it is impossible to tell which slashes in the Path were\nslashes in the raw URL and which were %2f. This distinction is rarely important,\nbut when it is, the code should use the EscapedPath method, which preserves\nthe original encoding of Path.\n\nThe RawPath field is an optional field which is only set when the default\nencoding of Path is different from the escaped path. See the EscapedPath method\nfor more details.\n\nURL's String method uses the EscapedPath method to obtain the path.",
         "properties": {
           "ForceQuery": {
             "type": "boolean"
@@ -9871,7 +9924,7 @@
             "$ref": "#/components/schemas/Userinfo"
           }
         },
-        "title": "URL is a custom URL type that allows validation at configuration load time.",
+        "title": "A URL represents a parsed URL (technically, a URI reference).",
         "type": "object"
       },
       "UpdateAlertNotificationCommand": {
@@ -10084,10 +10137,6 @@
           },
           "title": {
             "description": "NewTitle it's an optional parameter used for overriding the existing folder title",
-            "type": "string"
-          },
-          "uid": {
-            "description": "NewUID it's an optional parameter used for overriding the existing folder UID\nStarting with 10.0, this is deprecated. It will be removed in a future release.\nPlease avoid using it because it can result in folder loosing its permissions.",
             "type": "string"
           },
           "version": {
@@ -10390,6 +10439,9 @@
             "type": "boolean"
           },
           "isGrafanaAdmin": {
+            "type": "boolean"
+          },
+          "isGrafanaAdminExternallySynced": {
             "type": "boolean"
           },
           "login": {
@@ -10809,7 +10861,6 @@
         "type": "object"
       },
       "gettableAlert": {
-        "description": "GettableAlert gettable alert",
         "properties": {
           "annotations": {
             "$ref": "#/components/schemas/labelSet"
@@ -10927,6 +10978,7 @@
         "type": "array"
       },
       "integration": {
+        "description": "Integration integration",
         "properties": {
           "lastNotifyAttempt": {
             "description": "A timestamp indicating the last attempt to deliver a notification regardless of the outcome.\nFormat: date-time",
@@ -11070,6 +11122,7 @@
         "type": "array"
       },
       "postableSilence": {
+        "description": "PostableSilence postable silence",
         "properties": {
           "comment": {
             "description": "comment",
@@ -13956,6 +14009,22 @@
             "name": "format",
             "schema": {
               "default": "yaml",
+              "type": "string"
+            }
+          },
+          {
+            "description": "UID of folder from which export rules",
+            "in": "query",
+            "name": "folderUid",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Name of group of rules to export. Must be specified only together with folder UID",
+            "in": "query",
+            "name": "group",
+            "schema": {
               "type": "string"
             }
           }
@@ -20689,7 +20758,7 @@
             "$ref": "#/components/responses/internalServerError"
           }
         },
-        "summary": "It performs assertion Consumer Service (ACS).",
+        "summary": "It performs Assertion Consumer Service (ACS).",
         "tags": [
           "saml",
           "enterprise"
