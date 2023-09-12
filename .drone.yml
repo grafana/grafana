@@ -724,8 +724,8 @@ steps:
   name: test-a11y-frontend
 - commands:
   - docker run --privileged --rm tonistiigi/binfmt --install all
-  - /src/grafana-build docker --package=$(cat packages.txt | grep tar.gz | grep -v
-    docker | grep -v sha256) --ubuntu-base=ubuntu:22.04 --alpine-base=alpine:3.17.1
+  - /src/grafana-build docker $(cat packages.txt | grep tar.gz | grep -v docker |
+    grep -v sha256 | awk '{print "--package=" $0}') --ubuntu-base=ubuntu:22.04 --alpine-base=alpine:3.17.1
     --tag-format='{{ .version_base }}-{{ .buildID }}-{{ .arch }}' --ubuntu-tag-format='{{
     .version_base }}-{{ .buildID }}-ubuntu-{{ .arch }}' > docker.txt
   - find ./dist -name '*docker*.tar.gz' -type f | xargs -n1 docker load -i
@@ -1897,8 +1897,8 @@ steps:
     - grafana/grafana
 - commands:
   - docker run --privileged --rm tonistiigi/binfmt --install all
-  - /src/grafana-build docker --package=$(cat packages.txt | grep tar.gz | grep -v
-    docker | grep -v sha256) --ubuntu-base=ubuntu:22.04 --alpine-base=alpine:3.17.1
+  - /src/grafana-build docker $(cat packages.txt | grep tar.gz | grep -v docker |
+    grep -v sha256 | awk '{print "--package=" $0}') --ubuntu-base=ubuntu:22.04 --alpine-base=alpine:3.17.1
     --tag-format='{{ .version_base }}-{{ .buildID }}-{{ .arch }}' --ubuntu-tag-format='{{
     .version_base }}-{{ .buildID }}-ubuntu-{{ .arch }}' > docker.txt
   - find ./dist -name '*docker*.tar.gz' -type f | xargs -n1 docker load -i
@@ -4484,6 +4484,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 1d561b8b2fab39199baf2422026ad49f78f02998249d4256c2335bd8950ff696
+hmac: 77b03ae5c1d004b846f82a9976de88e58fb47d0415bc7afaf07f5242eda1c382
 
 ...
