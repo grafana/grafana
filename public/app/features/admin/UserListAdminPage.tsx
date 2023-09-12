@@ -90,8 +90,8 @@ const UserListAdminPageUnConnected = ({
       } else if (
         typeof aValue === 'string' &&
         typeof bValue === 'string' &&
-        !isNaN(Date.parse(aValue)) &&
-        !isNaN(Date.parse(bValue))
+        !Number.isNaN(Date.parse(aValue)) &&
+        !Number.isNaN(Date.parse(bValue))
       ) {
         return new Date(aValue).getTime() - new Date(bValue).getTime();
       } else if (typeof aValue === 'boolean' && typeof bValue === 'boolean') {
@@ -100,64 +100,59 @@ const UserListAdminPageUnConnected = ({
       return a.original.login.localeCompare(b.original.login);
     };
 
-  const columns = [
-    {
-      id: 'avatarUrl',
-      header: '',
-      cell: ({ cell: { value } }: Cell<'avatarUrl'>) => (
-        <img style={{ width: '25px', height: '25px', borderRadius: '50%' }} src={value} alt="User avatar" />
-      ),
-    },
-    {
-      id: 'login',
-      header: 'Login',
-      cell: ({ cell: { value } }: Cell<'login'>) => <div>{value}</div>,
-      sortType: createSortFn('login'),
-    },
-    {
-      id: 'email',
-      header: 'Email',
-      cell: ({ cell: { value } }: Cell<'email'>) => <div>{value}</div>,
-      sortType: createSortFn('email'),
-    },
-    {
-      id: 'name',
-      header: 'Name',
-      cell: ({ cell: { value } }: Cell<'name'>) => <div>{value}</div>,
-      sortType: createSortFn('name'),
-    },
-    {
-      id: 'orgs',
-      header: 'Belongs to',
-      cell: ({ cell: { value, row } }: Cell<'orgs'>) => {
-        return (
-          <div style={{ display: 'flex', alignItems: 'center' }}>
-            <OrgUnits units={value} icon={'building'} />
-            {row.original.isAdmin && (
-              <a href={`admin/users/edit/${row.original.id}`} aria-label={getUsersAriaLabel(row.original.name)}>
-                <Tooltip placement="top" content="Grafana Admin">
-                  <Icon name="shield" />
-                </Tooltip>
-              </a>
-            )}
-          </div>
-        );
+  const columns = useMemo(
+    () => [
+      {
+        id: 'avatarUrl',
+        header: '',
+        cell: ({ cell: { value } }: Cell<'avatarUrl'>) => (
+          <img style={{ width: '25px', height: '25px', borderRadius: '50%' }} src={value} alt="User avatar" />
+        ),
       },
-      sortType: (a: Row<UserDTO>, b: Row<UserDTO>) => (a.original.orgs?.length || 0) - (b.original.orgs?.length || 0),
-    },
-    ...(showLicensedRole
-      ? [
-          {
-            id: 'licensedRole',
-            header: 'Licensed role',
-            cell: ({ cell: { value, row } }: Cell<'licensedRole'>) => (
-              <div>
-                <a
-                  className="ellipsis"
-                  href={`admin/users/edit/${row.original.id}`}
-                  title={row.original.name}
-                  aria-label={getUsersAriaLabel(row.original.name)}
-                >
+      {
+        id: 'login',
+        header: 'Login',
+        cell: Cell,
+        sortType: createSortFn('login'),
+      },
+      {
+        id: 'email',
+        header: 'Email',
+        cell: Cell,
+        sortType: createSortFn('email'),
+      },
+      {
+        id: 'name',
+        header: 'Name',
+        cell: Cell,
+        sortType: createSortFn('name'),
+      },
+      {
+        id: 'orgs',
+        header: 'Belongs to',
+        cell: ({ cell: { value, row } }: Cell<'orgs'>) => {
+          return (
+            <>
+              <OrgUnits units={value} icon={'building'} />
+              {row.original.isAdmin && (
+                <CellWrapper original={row.original}>
+                  <Tooltip placement="top" content="Grafana Admin">
+                    <Icon name="shield" />
+                  </Tooltip>
+                </CellWrapper>
+              )}
+            </>
+          );
+        },
+        sortType: (a: Row<UserDTO>, b: Row<UserDTO>) => (a.original.orgs?.length || 0) - (b.original.orgs?.length || 0),
+      },
+      ...(showLicensedRole
+        ? [
+            {
+              id: 'licensedRole',
+              header: 'Licensed role',
+              cell: ({ cell: { value, row } }: Cell<'licensedRole'>) => (
+                <CellWrapper original={row.original}>
                   {value === 'None' ? (
                     <span className={styles.disabled}>
                       Not assigned{' '}
@@ -168,53 +163,50 @@ const UserListAdminPageUnConnected = ({
                   ) : (
                     value
                   )}
-                </a>
-              </div>
-            ),
-            sortType: createSortFn('licensedRole'),
-          },
-        ]
-      : []),
-    {
-      id: 'lastSeenAtAge',
-      header: 'Last active',
-      headerTooltip: {
-        content: 'Time since user was seen using Grafana',
-        iconName: 'question-circle',
+                </CellWrapper>
+              ),
+              sortType: createSortFn('licensedRole'),
+            },
+          ]
+        : []),
+      {
+        id: 'lastSeenAtAge',
+        header: 'Last active',
+        headerTooltip: {
+          content: 'Time since user was seen using Grafana',
+          iconName: 'question-circle',
+        },
+        cell: ({ cell: { value, row } }: Cell<'lastSeenAtAge'>) => {
+          return (
+            <>
+              {value && (
+                <CellWrapper original={row.original}>
+                  {value === '10 years' ? <span className={styles.disabled}>Never</span> : value}
+                </CellWrapper>
+              )}
+            </>
+          );
+        },
+        sortType: createSortFn('lastSeenAt'),
       },
-      cell: ({ cell: { value, row } }: Cell<'lastSeenAtAge'>) => {
-        const { name, id } = row.original;
-        return (
-          <div>
-            {value && (
-              <a
-                href={`admin/users/edit/${id}`}
-                aria-label={`Last seen at ${value}. Follow to edit user's ${name} details.`}
-              >
-                {value === '10 years' ? <span className={styles.disabled}>Never</span> : value}
-              </a>
-            )}
-          </div>
-        );
+      {
+        id: 'authLabels',
+        header: 'Origin',
+        cell: ({ cell: { value } }: Cell<'authLabels'>) => (
+          <>{Array.isArray(value) && value.length > 0 && <TagBadge label={value[0]} removeIcon={false} count={0} />}</>
+        ),
       },
-      sortType: createSortFn('lastSeenAt'),
-    },
-    {
-      id: 'authLabels',
-      header: 'Origin',
-      cell: ({ cell: { value } }: Cell<'authLabels'>) => (
-        <>{Array.isArray(value) && value.length > 0 && <TagBadge label={value[0]} removeIcon={false} count={0} />}</>
-      ),
-    },
-    {
-      id: 'isDisabled',
-      header: 'Status',
-      cell: ({ cell: { value } }: Cell<'isDisabled'>) => (
-        <>{value && <span className="label label-tag label-tag--gray">Disabled</span>}</>
-      ),
-      sortType: createSortFn('isDisabled'),
-    },
-  ];
+      {
+        id: 'isDisabled',
+        header: 'Status',
+        cell: ({ cell: { value } }: Cell<'isDisabled'>) => (
+          <>{value && <span className="label label-tag label-tag--gray">Disabled</span>}</>
+        ),
+        sortType: createSortFn('isDisabled'),
+      },
+    ],
+    [showLicensedRole, styles]
+  );
 
   return (
     <Page.Contents>
@@ -260,6 +252,7 @@ const UserListAdminPageUnConnected = ({
 };
 
 export const UserListAdminPageContent = connector(UserListAdminPageUnConnected);
+
 export function UserListAdminPage() {
   return (
     <Page navId="global-users">
@@ -357,6 +350,27 @@ const getStyles = (theme: GrafanaTheme2) => {
       text-decoration: underline;
     `,
   };
+};
+
+const Cell = ({ cell: { value }, row }: CellProps<UserDTO, string | boolean | number>) => (
+  <CellWrapper original={row.original}>{value}</CellWrapper>
+);
+
+interface CellWrapperProps {
+  original: UserDTO;
+  children: React.ReactNode;
+}
+const CellWrapper = ({ original, children }: CellWrapperProps) => {
+  return (
+    <a
+      className="ellipsis"
+      href={`admin/users/edit/${original.id}`}
+      title={original.name}
+      aria-label={getUsersAriaLabel(original.name)}
+    >
+      {children}
+    </a>
+  );
 };
 
 export default UserListAdminPage;
