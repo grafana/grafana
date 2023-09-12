@@ -23,44 +23,7 @@ When available, we list all changes with links to pull requests or issues in the
 When possible, we recommend that you test the Grafana upgrade process in a test or development environment.
 {{% /admonition %}}
 
-## Back up the Grafana database
-
-Although Grafana automatically upgrades the database on startup, we recommend that you back up your Grafana database so that you can roll back to a previous version, if required.
-
-### SQLite
-
-If you use SQLite, you only need to back up the `grafana.db` file. On Unix systems, the database file is usually located in `/var/lib/grafana/`.
-
-If you are unsure which database you use and where it is stored, check the Grafana configuration file. If you
-installed Grafana to a custom location using a binary tar/zip, the database is usually located in `<grafana_install_dir>/data`.
-
-### MySQL
-
-To back up or restore a MySQL Grafana database, run the following commands:
-
-```bash
-backup:
-> mysqldump -u root -p[root_password] [grafana] > grafana_backup.sql
-
-restore:
-> mysql -u root -p grafana < grafana_backup.sql
-```
-
-### Postgres
-
-To back up or restore a Postgres Grafana database, run the following commands:
-
-```bash
-backup:
-> pg_dump grafana > grafana_backup
-
-restore:
-> psql grafana < grafana_backup
-```
-
-## Backup plugins
-
-We recommend that you back up installed plugins before you upgrade Grafana so that you can roll back to a previous version of Grafana, if necessary.
+{{< docs/shared lookup="back-up/back-up-grafana.md" source="grafana" version="<GRAFANA VERSION>" leveloffset="+1" >}}
 
 ## Upgrade Grafana
 
