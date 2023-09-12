@@ -761,38 +761,6 @@ export class LokiDatasource
     return this.logContextProvider.getLogRowContextUi(row, runContextQuery, getLokiQueryFromDataQuery(origQuery));
   }
 
-  testDatasource(): Promise<{ status: string; message: string }> {
-    // Consider only last 10 minutes otherwise request takes too long
-    const nowMs = Date.now();
-    const params = {
-      start: (nowMs - 10 * 60 * 1000) * NS_IN_MS,
-      end: nowMs * NS_IN_MS,
-    };
-
-    return this.metadataRequest('labels', params).then(
-      (values) => {
-        return values.length > 0
-          ? { status: 'success', message: 'Data source successfully connected.' }
-          : {
-              status: 'error',
-              message:
-                'Data source connected, but no labels were received. Verify that Loki and Promtail are correctly configured.',
-            };
-      },
-      (err) => {
-        // we did a resource-call that failed.
-        // the only info we have, if exists, is err.data.message
-        // (when in development-mode, err.data.error exists too, but not in production-mode)
-        // things like err.status & err.statusText does not help,
-        // because those will only describe how the request between browser<>server failed
-        const info: string = err?.data?.message ?? '';
-        const infoInParentheses = info !== '' ? ` (${info})` : '';
-        const message = `Unable to connect with Loki${infoInParentheses}. Please check the server logs for more details.`;
-        return { status: 'error', message: message };
-      }
-    );
-  }
-
   async annotationQuery(options: any): Promise<AnnotationEvent[]> {
     const { expr, maxLines, instant, tagKeys = '', titleFormat = '', textFormat = '' } = options.annotation;
 

@@ -3,7 +3,7 @@ import { advanceTo, clear } from 'jest-date-mock';
 import { dateTime } from '@grafana/data';
 import { SceneCanvasText, SceneFlexItem, SceneFlexLayout, SceneTimeRange } from '@grafana/scenes';
 
-import { activateFullSceneTree } from '../utils/utils';
+import { activateFullSceneTree } from '../utils/test-utils';
 
 import { PanelTimeRange } from './PanelTimeRange';
 

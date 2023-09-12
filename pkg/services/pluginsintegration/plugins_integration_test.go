@@ -18,9 +18,9 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
-	"github.com/grafana/grafana/pkg/plugins/manager/store"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/searchV2"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor"
@@ -134,7 +134,7 @@ func verifyPluginQuery(t *testing.T, ctx context.Context, c plugins.Client) {
 	require.JSONEq(t, `{"results":{"A":{"frames":[{"schema":{"refId":"A","fields":[{"name":"time","type":"time","typeInfo":{"frame":"time.Time"}},{"name":"A-series","type":"number","typeInfo":{"frame":"int64","nullable":true}}]},"data":{"values":[[1661420570000,1661420630000,1661420690000,1661420750000,1661420810000,1661420870000],[1,20,90,30,5,0]]}}],"status":200}}}`, string(payload))
 }
 
-func verifyCorePluginCatalogue(t *testing.T, ctx context.Context, ps *store.Service) {
+func verifyCorePluginCatalogue(t *testing.T, ctx context.Context, ps *pluginstore.Service) {
 	t.Helper()
 
 	expPanels := map[string]struct{}{
@@ -207,7 +207,7 @@ func verifyCorePluginCatalogue(t *testing.T, ctx context.Context, ps *store.Serv
 	require.Equal(t, len(expPanels), len(panels))
 	for _, p := range panels {
 		p, exists := ps.Plugin(ctx, p.ID)
-		require.NotEqual(t, plugins.PluginDTO{}, p)
+		require.NotEqual(t, pluginstore.Plugin{}, p)
 		require.True(t, exists)
 		require.Contains(t, expPanels, p.ID)
 	}
@@ -216,7 +216,7 @@ func verifyCorePluginCatalogue(t *testing.T, ctx context.Context, ps *store.Serv
 	require.Equal(t, len(expDataSources), len(dataSources))
 	for _, ds := range dataSources {
 		p, exists := ps.Plugin(ctx, ds.ID)
-		require.NotEqual(t, plugins.PluginDTO{}, p)
+		require.NotEqual(t, pluginstore.Plugin{}, p)
 		require.True(t, exists)
 		require.Contains(t, expDataSources, ds.ID)
 	}
@@ -233,7 +233,7 @@ func verifyCorePluginCatalogue(t *testing.T, ctx context.Context, ps *store.Serv
 	require.Equal(t, len(expPanels)+len(expDataSources)+len(expApps), len(ps.Plugins(ctx)))
 }
 
-func verifyBundledPlugins(t *testing.T, ctx context.Context, ps *store.Service) {
+func verifyBundledPlugins(t *testing.T, ctx context.Context, ps *pluginstore.Service) {
 	t.Helper()
 
 	dsPlugins := make(map[string]struct{})
@@ -243,7 +243,7 @@ func verifyBundledPlugins(t *testing.T, ctx context.Context, ps *store.Service) 
 
 	inputPlugin, exists := ps.Plugin(ctx, "input")
 	require.True(t, exists)
-	require.NotEqual(t, plugins.PluginDTO{}, inputPlugin)
+	require.NotEqual(t, pluginstore.Plugin{}, inputPlugin)
 	require.NotNil(t, dsPlugins["input"])
 
 	pluginRoutes := make(map[string]*plugins.StaticRoute)

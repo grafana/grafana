@@ -17,12 +17,12 @@ import (
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
-	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/updatechecker"
@@ -30,7 +30,7 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
-func setupTestEnvironment(t *testing.T, cfg *setting.Cfg, features *featuremgmt.FeatureManager, pstore plugins.Store, psettings pluginsettings.Service) (*web.Mux, *HTTPServer) {
+func setupTestEnvironment(t *testing.T, cfg *setting.Cfg, features *featuremgmt.FeatureManager, pstore pluginstore.Store, psettings pluginsettings.Service) (*web.Mux, *HTTPServer) {
 	t.Helper()
 	db.InitTestDB(t)
 	cfg.IsFeatureToggleEnabled = features.IsEnabled
@@ -48,7 +48,7 @@ func setupTestEnvironment(t *testing.T, cfg *setting.Cfg, features *featuremgmt.
 
 	var pluginStore = pstore
 	if pluginStore == nil {
-		pluginStore = &fakes.FakePluginStore{}
+		pluginStore = &pluginstore.FakePluginStore{}
 	}
 
 	var pluginsSettings = psettings
@@ -68,7 +68,7 @@ func setupTestEnvironment(t *testing.T, cfg *setting.Cfg, features *featuremgmt.
 		SettingsProvider:     setting.ProvideProvider(cfg),
 		pluginStore:          pluginStore,
 		grafanaUpdateChecker: &updatechecker.GrafanaService{},
-		AccessControl:        accesscontrolmock.New().WithDisabled(),
+		AccessControl:        accesscontrolmock.New(),
 		PluginSettings:       pluginsSettings,
 		pluginsCDNService: pluginscdn.ProvideService(&config.Cfg{
 			PluginsCDNURLTemplate: cfg.PluginsCDNURLTemplate,
@@ -212,15 +212,15 @@ func TestHTTPServer_GetFrontendSettings_apps(t *testing.T) {
 
 	tests := []struct {
 		desc           string
-		pluginStore    func() plugins.Store
+		pluginStore    func() pluginstore.Store
 		pluginSettings func() pluginsettings.Service
 		expected       settings
 	}{
 		{
 			desc: "disabled app with preload",
-			pluginStore: func() plugins.Store {
-				return &fakes.FakePluginStore{
-					PluginList: []plugins.PluginDTO{
+			pluginStore: func() pluginstore.Store {
+				return &pluginstore.FakePluginStore{
+					PluginList: []pluginstore.Plugin{
 						{
 							Module: fmt.Sprintf("/%s/module.js", "test-app"),
 							JSONData: plugins.JSONData{
@@ -251,9 +251,9 @@ func TestHTTPServer_GetFrontendSettings_apps(t *testing.T) {
 		},
 		{
 			desc: "enabled app with preload",
-			pluginStore: func() plugins.Store {
-				return &fakes.FakePluginStore{
-					PluginList: []plugins.PluginDTO{
+			pluginStore: func() pluginstore.Store {
+				return &pluginstore.FakePluginStore{
+					PluginList: []pluginstore.Plugin{
 						{
 							Module: fmt.Sprintf("/%s/module.js", "test-app"),
 							JSONData: plugins.JSONData{
@@ -284,9 +284,9 @@ func TestHTTPServer_GetFrontendSettings_apps(t *testing.T) {
 		},
 		{
 			desc: "angular app plugin",
-			pluginStore: func() plugins.Store {
-				return &fakes.FakePluginStore{
-					PluginList: []plugins.PluginDTO{
+			pluginStore: func() pluginstore.Store {
+				return &pluginstore.FakePluginStore{
+					PluginList: []pluginstore.Plugin{
 						{
 							Module: fmt.Sprintf("/%s/module.js", "test-app"),
 							JSONData: plugins.JSONData{

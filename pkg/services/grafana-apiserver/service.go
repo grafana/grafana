@@ -9,8 +9,12 @@ import (
 
 	"github.com/go-logr/logr"
 	"github.com/grafana/dskit/services"
+	kindsv1 "github.com/grafana/grafana-apiserver/pkg/apis/kinds/v1"
+	grafanaapiserver "github.com/grafana/grafana-apiserver/pkg/apiserver"
+	"github.com/grafana/grafana-apiserver/pkg/certgenerator"
 	grafanaapiserveroptions "github.com/grafana/grafana-apiserver/pkg/cmd/server/options"
-	"github.com/grafana/grafana/pkg/modules"
+	"github.com/grafana/grafana-apiserver/pkg/storage/filepath"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apiserver/pkg/authentication/authenticator"
 	"k8s.io/apiserver/pkg/authentication/request/headerrequest"
 	"k8s.io/apiserver/pkg/authentication/user"
@@ -21,7 +25,7 @@ import (
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 	"k8s.io/klog/v2"
 
-	"github.com/grafana/grafana-apiserver/pkg/certgenerator"
+	"github.com/grafana/grafana/pkg/modules"
 )
 
 const (
@@ -78,6 +82,7 @@ func (s *service) start(ctx context.Context) error {
 	o.RecommendedOptions.Authorization.AlwaysAllowPaths = []string{"*"}
 	o.RecommendedOptions.Authorization.AlwaysAllowGroups = []string{user.SystemPrivilegedGroup, "grafana"}
 	o.RecommendedOptions.Etcd = nil
+	o.RecommendedOptions.Admission = nil
 	o.RecommendedOptions.CoreAPI = nil
 
 	// Get the util to get the paths to pre-generated certs
@@ -116,6 +121,10 @@ func (s *service) start(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+
+	serverConfig.ExtraConfig.RESTOptionsGetter = filepath.NewRESTOptionsGetter(s.dataPath, unstructured.UnstructuredJSONScheme)
+	serverConfig.GenericConfig.RESTOptionsGetter = filepath.NewRESTOptionsGetter(s.dataPath, grafanaapiserver.Codecs.LegacyCodec(kindsv1.SchemeGroupVersion))
+	serverConfig.GenericConfig.Config.RESTOptionsGetter = filepath.NewRESTOptionsGetter(s.dataPath, grafanaapiserver.Codecs.LegacyCodec(kindsv1.SchemeGroupVersion))
 
 	authenticator, err := newAuthenticator(rootCert)
 	if err != nil {

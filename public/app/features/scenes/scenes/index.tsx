@@ -4,6 +4,7 @@ import { getGridWithMultipleTimeRanges } from './gridMultiTimeRange';
 import { getMultipleGridLayoutTest } from './gridMultiple';
 import { getGridWithMultipleData } from './gridWithMultipleData';
 import { getQueryVariableDemo } from './queryVariableDemo';
+import { getRepeatingPanelsDemo, getRepeatingRowsDemo } from './repeatingPanels';
 import { getSceneWithRows } from './sceneWithRows';
 import { getTransformationsDemo } from './transformations';
 import { getVariablesDemo, getVariablesDemoWithAll } from './variablesDemo';
@@ -20,6 +21,8 @@ export function getScenes(): SceneDef[] {
     { title: 'Multiple grid layouts test', getScene: getMultipleGridLayoutTest },
     { title: 'Variables', getScene: getVariablesDemo },
     { title: 'Variables with All values', getScene: getVariablesDemoWithAll },
+    { title: 'Variables - Repeating panels', getScene: getRepeatingPanelsDemo },
+    { title: 'Variables - Repeating rows', getScene: getRepeatingRowsDemo },
     { title: 'Query variable', getScene: getQueryVariableDemo },
     { title: 'Transformations demo', getScene: getTransformationsDemo },
   ];
