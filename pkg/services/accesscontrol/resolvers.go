@@ -44,7 +44,7 @@ type Resolvers struct {
 }
 
 func (s *Resolvers) AddScopeAttributeResolver(prefix string, resolver ScopeAttributeResolver) {
-	s.log.Debug("adding scope attribute resolver", "prefix", prefix)
+	s.log.Debug("Adding scope attribute resolver", "prefix", prefix)
 	s.attributeResolvers[prefix] = resolver
 }
 
@@ -54,7 +54,7 @@ func (s *Resolvers) GetScopeAttributeMutator(orgID int64) ScopeAttributeMutator 
 		// Check cache before computing the scope
 		if cachedScope, ok := s.cache.Get(key); ok {
 			scopes := cachedScope.([]string)
-			s.log.Debug("used cache to resolve scope", "scope", scope, "resolved_scopes", scopes)
+			s.log.Debug("Used cache to resolve scope", "scope", scope, "resolved_scopes", scopes)
 			return scopes, nil
 		}
 
@@ -66,7 +66,7 @@ func (s *Resolvers) GetScopeAttributeMutator(orgID int64) ScopeAttributeMutator 
 			}
 			// Cache result
 			s.cache.Set(key, scopes, ttl)
-			s.log.Debug("resolved scope", "scope", scope, "resolved_scopes", scopes)
+			s.log.Debug("Resolved scope", "scope", scope, "resolved_scopes", scopes)
 			return scopes, nil
 		}
 		return nil, ErrResolverNotFound

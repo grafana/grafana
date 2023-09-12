@@ -533,7 +533,7 @@ func copyPlugins(ctx context.Context, v config.Variant, grafanaDir, tmpDir strin
 		if err != nil {
 			return fmt.Errorf("failed to read %q: %w", filepath.Join(srcDir, "plugin.json"), err)
 		}
-		var plugJSON map[string]interface{}
+		var plugJSON map[string]any
 		if err := json.Unmarshal(jsonB, &plugJSON); err != nil {
 			return err
 		}

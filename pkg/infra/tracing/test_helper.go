@@ -7,13 +7,14 @@ import (
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
+	tracesdk "go.opentelemetry.io/otel/sdk/trace"
 	"go.opentelemetry.io/otel/sdk/trace/tracetest"
 	"go.opentelemetry.io/otel/trace"
 )
 
 func InitializeTracerForTest() Tracer {
 	exp := tracetest.NewInMemoryExporter()
-	tp, _ := initTracerProvider(exp, "testing")
+	tp, _ := initTracerProvider(exp, "testing", tracesdk.AlwaysSample())
 	otel.SetTracerProvider(tp)
 
 	ots := &Opentelemetry{Propagation: "jaeger,w3c", tracerProvider: tp}
@@ -51,7 +52,7 @@ func (t *FakeSpan) IsEnded() bool {
 	return t.ended
 }
 
-func (t *FakeSpan) SetAttributes(key string, value interface{}, kv attribute.KeyValue) {
+func (t *FakeSpan) SetAttributes(key string, value any, kv attribute.KeyValue) {
 	if t.IsEnded() {
 		panic("span already ended")
 	}
@@ -92,7 +93,7 @@ func (t *FakeSpan) AddEvents(keys []string, values []EventValue) {
 	}
 }
 
-func (t *FakeSpan) contextWithSpan(ctx context.Context) context.Context {
+func (t *FakeSpan) ContextWithSpan(ctx context.Context) context.Context {
 	return ctx
 }
 

@@ -12,11 +12,13 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/oauth2"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/middleware/requestmeta"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/log"
@@ -40,7 +42,7 @@ func TestIntegrationBackendPlugins(t *testing.T) {
 		RefreshToken: "refresh-token",
 		Expiry:       time.Now().UTC().Add(24 * time.Hour),
 	}
-	oauthToken = oauthToken.WithExtra(map[string]interface{}{"id_token": "id-token"})
+	oauthToken = oauthToken.WithExtra(map[string]any{"id_token": "id-token"})
 
 	newTestScenario(t, "Datasource with no custom HTTP settings",
 		options(
@@ -262,6 +264,123 @@ func TestIntegrationBackendPlugins(t *testing.T) {
 				require.Equal(t, "msg 1\r\nmsg 2\r\n", string(bytes))
 			})
 		})
+
+	newTestScenario(t, "Query data error should return expected status code and marked with downstream status",
+		options(),
+		func(t *testing.T, tsCtx *testScenarioContext) {
+			tsCtx.backendTestPlugin.QueryDataHandler = backend.QueryDataHandlerFunc(func(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+				return nil, fmt.Errorf("BOOM")
+			})
+
+			req := createQueryDataHTTPRequest(t, tsCtx, createRegularQuery(t, tsCtx))
+			resp, err := http.DefaultClient.Do(req)
+			require.NoError(t, err)
+			require.Equal(t, http.StatusInternalServerError, resp.StatusCode)
+			require.NotNil(t, tsCtx.incomingRequest)
+			require.Equal(t, "/api/ds/query", tsCtx.incomingRequest.URL.Path)
+			rmd := requestmeta.GetRequestMetaData(tsCtx.incomingRequest.Context())
+			require.Equal(t, requestmeta.StatusSourceDownstream, rmd.StatusSource)
+			t.Cleanup(func() {
+				err := resp.Body.Close()
+				require.NoError(t, err)
+			})
+		})
+
+	newTestScenario(t, "Call resource error should return expected status code and marked with downstream status",
+		options(),
+		func(t *testing.T, tsCtx *testScenarioContext) {
+			tsCtx.backendTestPlugin.CallResourceHandler = backend.CallResourceHandlerFunc(func(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
+				return fmt.Errorf("BOOM")
+			})
+
+			req := createCallResourceHTTPRequest(t, tsCtx)
+			resp, err := http.DefaultClient.Do(req)
+			require.NoError(t, err)
+			require.Equal(t, http.StatusInternalServerError, resp.StatusCode)
+			require.NotNil(t, tsCtx.incomingRequest)
+			require.Equal(t, "/api/datasources/uid/test-plugin/resources", tsCtx.incomingRequest.URL.Path)
+			rmd := requestmeta.GetRequestMetaData(tsCtx.incomingRequest.Context())
+			require.Equal(t, requestmeta.StatusSourceDownstream, rmd.StatusSource)
+			t.Cleanup(func() {
+				err := resp.Body.Close()
+				require.NoError(t, err)
+			})
+		})
+
+	newTestScenario(t, "Check health error should return expected status code and marked with downstream status",
+		options(),
+		func(t *testing.T, tsCtx *testScenarioContext) {
+			tsCtx.backendTestPlugin.CheckHealthHandler = backend.CheckHealthHandlerFunc(func(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
+				return nil, fmt.Errorf("BOOM")
+			})
+
+			req := createCheckHealthHTTPRequest(t, tsCtx)
+			resp, err := http.DefaultClient.Do(req)
+			require.NoError(t, err)
+			require.Equal(t, http.StatusInternalServerError, resp.StatusCode)
+			require.NotNil(t, tsCtx.incomingRequest)
+			require.Equal(t, "/api/datasources/uid/test-plugin/health", tsCtx.incomingRequest.URL.Path)
+			rmd := requestmeta.GetRequestMetaData(tsCtx.incomingRequest.Context())
+			require.Equal(t, requestmeta.StatusSourceDownstream, rmd.StatusSource)
+			t.Cleanup(func() {
+				err := resp.Body.Close()
+				require.NoError(t, err)
+			})
+		})
+
+	newTestScenario(t, "Call resource response with 502 status code should be marked with downstream status",
+		options(),
+		func(t *testing.T, tsCtx *testScenarioContext) {
+			tsCtx.backendTestPlugin.CallResourceHandler = backend.CallResourceHandlerFunc(func(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
+				return sender.Send(&backend.CallResourceResponse{
+					Status:  http.StatusBadGateway,
+					Headers: map[string][]string{},
+				})
+			})
+
+			req := createCallResourceHTTPRequest(t, tsCtx)
+			resp, err := http.DefaultClient.Do(req)
+			require.NoError(t, err)
+			b, err := io.ReadAll(resp.Body)
+			require.NoError(t, err)
+			require.Equal(t, http.StatusBadGateway, resp.StatusCode, string(b))
+			require.NotNil(t, tsCtx.incomingRequest)
+			require.Equal(t, "/api/datasources/uid/test-plugin/resources", tsCtx.incomingRequest.URL.Path)
+			rmd := requestmeta.GetRequestMetaData(tsCtx.incomingRequest.Context())
+			require.Equal(t, requestmeta.StatusSourceDownstream, rmd.StatusSource)
+			t.Cleanup(func() {
+				err := resp.Body.Close()
+				require.NoError(t, err)
+			})
+		})
+
+	newTestScenario(t, "Query data response that includes a query data response error should return expected status code and marked with downstream status",
+		options(),
+		func(t *testing.T, tsCtx *testScenarioContext) {
+			tsCtx.backendTestPlugin.QueryDataHandler = backend.QueryDataHandlerFunc(func(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+				resp := backend.NewQueryDataResponse()
+				resp.Responses["A"] = backend.DataResponse{
+					Frames: data.Frames{},
+				}
+				resp.Responses["B"] = backend.DataResponse{
+					Error: fmt.Errorf("BOOM"),
+				}
+				return resp, nil
+			})
+
+			req := createQueryDataHTTPRequest(t, tsCtx, createRegularQuery(t, tsCtx))
+			resp, err := http.DefaultClient.Do(req)
+			require.NoError(t, err)
+			require.Equal(t, http.StatusBadRequest, resp.StatusCode)
+			require.NotNil(t, tsCtx.incomingRequest)
+			require.Equal(t, "/api/ds/query", tsCtx.incomingRequest.URL.Path)
+			rmd := requestmeta.GetRequestMetaData(tsCtx.incomingRequest.Context())
+			require.Equal(t, requestmeta.StatusSourceDownstream, rmd.StatusSource)
+			t.Cleanup(func() {
+				err := resp.Body.Close()
+				require.NoError(t, err)
+			})
+		})
 }
 
 type testScenarioContext struct {
@@ -275,6 +394,7 @@ type testScenarioContext struct {
 	rt                         http.RoundTripper
 	modifyIncomingRequest      func(req *http.Request)
 	modifyCallResourceResponse func(sender backend.CallResourceResponseSender) error
+	incomingRequest            *http.Request
 }
 
 type testScenarioInput struct {
@@ -350,6 +470,12 @@ func newTestScenario(t *testing.T, name string, opts []testScenarioOption, callb
 	})
 
 	grafanaListeningAddr, testEnv := testinfra.StartGrafanaEnv(t, dir, path)
+	testEnv.RequestMiddleware = func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			tsCtx.incomingRequest = r
+			next.ServeHTTP(w, r)
+		})
+	}
 	tsCtx.grafanaListeningAddr = grafanaListeningAddr
 	testEnv.SQLStore.Cfg.LoginCookieName = loginCookieName
 	tsCtx.testEnv = testEnv
@@ -495,20 +621,13 @@ func (tsCtx *testScenarioContext) runQueryDataTest(t *testing.T, mr dtos.MetricR
 			return &backend.QueryDataResponse{}, nil
 		})
 
-		buf1 := &bytes.Buffer{}
-		err := json.NewEncoder(buf1).Encode(mr)
-		require.NoError(t, err)
-		u := fmt.Sprintf("http://admin:admin@%s/api/ds/query", tsCtx.grafanaListeningAddr)
-
-		req, err := http.NewRequest(http.MethodPost, u, buf1)
-		req.Header.Set("Content-Type", "application/json")
+		req := createQueryDataHTTPRequest(t, tsCtx, mr)
 		req.Header.Set("User-Agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/107.0.0.0 Safari/537.36")
 
 		if tsCtx.modifyIncomingRequest != nil {
 			tsCtx.modifyIncomingRequest(req)
 		}
 
-		require.NoError(t, err)
 		resp, err := http.DefaultClient.Do(req)
 		require.NoError(t, err)
 		b, err := io.ReadAll(resp.Body)
@@ -559,9 +678,7 @@ func (tsCtx *testScenarioContext) runCheckHealthTest(t *testing.T, callback func
 			}, nil
 		})
 
-		u := fmt.Sprintf("http://admin:admin@%s/api/datasources/uid/%s/health", tsCtx.grafanaListeningAddr, tsCtx.uid)
-
-		req, err := http.NewRequest(http.MethodGet, u, nil)
+		req := createCheckHealthHTTPRequest(t, tsCtx)
 		req.Header.Set("Content-Type", "application/json")
 		req.Header.Set("User-Agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/107.0.0.0 Safari/537.36")
 
@@ -569,7 +686,6 @@ func (tsCtx *testScenarioContext) runCheckHealthTest(t *testing.T, callback func
 			tsCtx.modifyIncomingRequest(req)
 		}
 
-		require.NoError(t, err)
 		resp, err := http.DefaultClient.Do(req)
 		require.NoError(t, err)
 		b, err := io.ReadAll(resp.Body)
@@ -624,9 +740,7 @@ func (tsCtx *testScenarioContext) runCallResourceTest(t *testing.T, callback fun
 			return tsCtx.modifyCallResourceResponse(sender)
 		})
 
-		u := fmt.Sprintf("http://admin:admin@%s/api/datasources/uid/%s/resources", tsCtx.grafanaListeningAddr, tsCtx.uid)
-
-		req, err := http.NewRequest(http.MethodGet, u, nil)
+		req := createCallResourceHTTPRequest(t, tsCtx)
 		req.Header.Set("Content-Type", "application/json")
 		req.Header.Set("Connection", "X-Some-Conn-Header")
 		req.Header.Set("X-Some-Conn-Header", "should be deleted")
@@ -637,7 +751,6 @@ func (tsCtx *testScenarioContext) runCallResourceTest(t *testing.T, callback fun
 			tsCtx.modifyIncomingRequest(req)
 		}
 
-		require.NoError(t, err)
 		resp, err := http.DefaultClient.Do(req)
 		require.NoError(t, err)
 		t.Cleanup(func() {
@@ -665,6 +778,39 @@ func (tsCtx *testScenarioContext) runCallResourceTest(t *testing.T, callback fun
 
 		callback(received, resp)
 	})
+}
+
+func createCheckHealthHTTPRequest(t *testing.T, tsCtx *testScenarioContext) *http.Request {
+	t.Helper()
+
+	u := fmt.Sprintf("http://admin:admin@%s/api/datasources/uid/%s/health", tsCtx.grafanaListeningAddr, tsCtx.uid)
+	req, err := http.NewRequest(http.MethodGet, u, nil)
+	require.NoError(t, err)
+	return req
+}
+
+func createCallResourceHTTPRequest(t *testing.T, tsCtx *testScenarioContext) *http.Request {
+	t.Helper()
+
+	u := fmt.Sprintf("http://admin:admin@%s/api/datasources/uid/%s/resources", tsCtx.grafanaListeningAddr, tsCtx.uid)
+	req, err := http.NewRequest(http.MethodGet, u, nil)
+	require.NoError(t, err)
+	return req
+}
+
+func createQueryDataHTTPRequest(t *testing.T, tsCtx *testScenarioContext, mr dtos.MetricRequest) *http.Request {
+	t.Helper()
+
+	buf1 := &bytes.Buffer{}
+	err := json.NewEncoder(buf1).Encode(mr)
+	require.NoError(t, err)
+	u := fmt.Sprintf("http://admin:admin@%s/api/ds/query", tsCtx.grafanaListeningAddr)
+
+	req, err := http.NewRequest(http.MethodPost, u, buf1)
+	require.NoError(t, err)
+	req.Header.Set("Content-Type", "application/json")
+
+	return req
 }
 
 func createTestPlugin(id string) (*plugins.Plugin, *testPlugin) {

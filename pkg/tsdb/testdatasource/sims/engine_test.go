@@ -15,7 +15,7 @@ func TestCoreSimulationRegistry(t *testing.T) {
 			Type:   "flight",
 			TickHZ: 1,
 		},
-		Config: map[string]interface{}{
+		Config: map[string]any{
 			"period": 100,
 			"radius": 0.05,
 		},

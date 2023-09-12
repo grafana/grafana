@@ -45,6 +45,8 @@ composableKinds: DataQuery: {
 					// Defines the maximum number of traces that are returned from Tempo
 					limit?: int64
 					filters: [...#TraceqlFilter]
+					// Filters that are used to query the metrics summary
+					groupBy?: [...#TraceqlFilter]
 				} @cuetsy(kind="interface") @grafana(TSVeneer="type")
 
 				// search = Loki search, nativeSearch = Tempo search for backwards compatibility
@@ -54,7 +56,7 @@ composableKinds: DataQuery: {
 				#SearchStreamingState: "pending" | "streaming" | "done" | "error" @cuetsy(kind="enum")
 
 				// static fields are pre-set in the UI, dynamic fields are added by the user
-				#TraceqlSearchScope: "unscoped" | "resource" | "span" @cuetsy(kind="enum")
+				#TraceqlSearchScope: "intrinsic" | "unscoped" | "resource" | "span" @cuetsy(kind="enum")
 				#TraceqlFilter: {
 					// Uniquely identify the filter, will not be used in the query generation
 					id: string

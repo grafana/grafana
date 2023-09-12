@@ -264,7 +264,7 @@ func (t *nestedTree) ListFolder(ctx context.Context, orgId int64, path string, a
 	frame := data.NewFrame("", names, mtype, fsize)
 	frame.SetMeta(&data.FrameMeta{
 		Type: data.FrameTypeDirectoryListing,
-		Custom: map[string]interface{}{
+		Custom: map[string]any{
 			"HasMore": listResponse.HasMore,
 		},
 	})
