@@ -17,6 +17,9 @@ rgm_destination = "destination"
 rgm_github_token = "github_token"
 rgm_dagger_token = "dagger_token"
 
+docker_username = "docker_username"
+docker_password = "docker_password"
+
 npm_token = "npm_token"
 
 def from_secret(secret):
@@ -41,6 +44,8 @@ def secrets():
         vault_secret("github_token", "infra/data/ci/github/grafanabot", "pat"),
         vault_secret(drone_token, "infra/data/ci/drone", "machine-user-token"),
         vault_secret(prerelease_bucket, "infra/data/ci/grafana/prerelease", "bucket"),
+        vault_secret(docker_username, "infra/data/ci/grafanaci-docker-hub", "username"),
+        vault_secret(docker_password, "infra/data/ci/grafanaci-docker-hub", "password"),
         vault_secret(
             gcp_upload_artifacts_key,
             "infra/data/ci/grafana/releng/artifacts-uploader-service-account",
@@ -141,11 +146,6 @@ def secrets():
             rgm_dagger_token,
             "infra/data/ci/grafana-release-eng/rgm",
             "dagger_token",
-        ),
-        vault_secret(
-            rgm_github_token,
-            "infra/data/ci/github/grafanabot",
-            "pat",
         ),
         # grafana-delivery-bot secrets
         vault_secret(

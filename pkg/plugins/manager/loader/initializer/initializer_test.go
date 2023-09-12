@@ -465,7 +465,7 @@ type fakeBackendProvider struct {
 }
 
 func (f *fakeBackendProvider) BackendFactory(_ context.Context, _ *plugins.Plugin) backendplugin.PluginFactoryFunc {
-	return func(_ string, _ log.Logger, _ []string) (backendplugin.Plugin, error) {
+	return func(_ string, _ log.Logger, _ func() []string) (backendplugin.Plugin, error) {
 		return f.plugin, nil
 	}
 }

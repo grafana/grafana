@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
+	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -441,7 +442,6 @@ func TestFolderGetAPIEndpoint(t *testing.T) {
 			},
 		},
 	}
-	setUpRBACGuardian(t)
 
 	type testCase struct {
 		description          string
@@ -451,6 +451,7 @@ func TestFolderGetAPIEndpoint(t *testing.T) {
 		expectedParentUIDs   []string
 		expectedParentTitles []string
 		permissions          []accesscontrol.Permission
+		g                    *guardian.FakeDashboardGuardian
 	}
 	tcs := []testCase{
 		{
@@ -463,6 +464,19 @@ func TestFolderGetAPIEndpoint(t *testing.T) {
 			permissions: []accesscontrol.Permission{
 				{Action: dashboards.ActionFoldersRead, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID("uid")},
 			},
+			g: &guardian.FakeDashboardGuardian{CanViewValue: true},
+		},
+		{
+			description:          "get folder by UID should return parent folders redacted if nested folder are enabled and user does not have read access to parent folders",
+			URL:                  "/api/folders/uid",
+			expectedCode:         http.StatusOK,
+			features:             featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders),
+			expectedParentUIDs:   []string{REDACTED, REDACTED},
+			expectedParentTitles: []string{REDACTED, REDACTED},
+			permissions: []accesscontrol.Permission{
+				{Action: dashboards.ActionFoldersRead, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID("uid")},
+			},
+			g: &guardian.FakeDashboardGuardian{CanViewValue: false},
 		},
 		{
 			description:          "get folder by UID should not return parent folders if nested folder are disabled",
@@ -474,6 +488,7 @@ func TestFolderGetAPIEndpoint(t *testing.T) {
 			permissions: []accesscontrol.Permission{
 				{Action: dashboards.ActionFoldersRead, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID("uid")},
 			},
+			g: &guardian.FakeDashboardGuardian{CanViewValue: true},
 		},
 	}
 
@@ -487,6 +502,13 @@ func TestFolderGetAPIEndpoint(t *testing.T) {
 		})
 
 		t.Run(tc.description, func(t *testing.T) {
+			origNewGuardian := guardian.New
+			t.Cleanup(func() {
+				guardian.New = origNewGuardian
+			})
+
+			guardian.MockDashboardGuardian(tc.g)
+
 			req := srv.NewGetRequest(tc.URL)
 			req = webtest.RequestWithSignedInUser(req, userWithPermissions(1, tc.permissions))
 			resp, err := srv.Send(req)
