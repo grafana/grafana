@@ -28,6 +28,7 @@ const plugin: CatalogPlugin = {
   isDev: false,
   isEnterprise: false,
   isDisabled: false,
+  isDeprecated: false,
   isPublished: true,
 };
 
