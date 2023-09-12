@@ -130,13 +130,15 @@ type DeleteFolderCommand struct {
 
 // GetFolderQuery is used for all folder Get requests. Only one of UID, ID, or
 // Title should be set; if multiple fields are set by the caller the dashboard
-// service will select the field with the most specificity, in order: ID, UID,
-// Title.
+// service will select the field with the most specificity, in order: UID, ID
+// Title. If Title is set, it will fetch the folder in the root folder.
+// Callers can additionally set the ParentUID field to fetch a folder by title under a specific folder.
 type GetFolderQuery struct {
-	UID   *string
-	ID    *int64
-	Title *string
-	OrgID int64
+	UID       *string
+	ParentUID *string
+	ID        *int64
+	Title     *string
+	OrgID     int64
 
 	SignedInUser identity.Requester `json:"-"`
 }
