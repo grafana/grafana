@@ -79,9 +79,10 @@ func TestProcessManager_Start(t *testing.T) {
 			plugin.Backend = true
 		})
 
+		tickerDuration := keepPluginAliveTickerDuration
 		keepPluginAliveTickerDuration = 1 * time.Millisecond
 		defer func() {
-			keepPluginAliveTickerDuration = 1 * time.Second
+			keepPluginAliveTickerDuration = tickerDuration
 		}()
 
 		m := &Service{}
@@ -92,7 +93,7 @@ func TestProcessManager_Start(t *testing.T) {
 		require.Equal(t, 1, bp.StartCount)
 		cancel()
 
-		<-bp.ExitedCheckDone
+		<-bp.ExitedCheckDoneOrStopped
 		require.False(t, p.Exited())
 		require.Equal(t, 0, bp.StopCount)
 	})

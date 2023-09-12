@@ -522,11 +522,13 @@ func (f *FakeTerminator) Terminate(ctx context.Context, p *plugins.Plugin) (*plu
 type FakeBackendPlugin struct {
 	Managed bool
 
-	StartCount      int
-	StopCount       int
-	Decommissioned  bool
-	Running         bool
-	ExitedCheckDone chan struct{}
+	StartCount     int
+	StopCount      int
+	Decommissioned bool
+	Running        bool
+
+	// ExitedCheckDoneOrStopped is used to signal that the Exited() or Stop() method has been called.
+	ExitedCheckDoneOrStopped chan struct{}
 
 	mutex sync.RWMutex
 	backendplugin.Plugin
@@ -534,8 +536,8 @@ type FakeBackendPlugin struct {
 
 func NewFakeBackendPlugin(managed bool) *FakeBackendPlugin {
 	return &FakeBackendPlugin{
-		Managed:         managed,
-		ExitedCheckDone: make(chan struct{}),
+		Managed:                  managed,
+		ExitedCheckDoneOrStopped: make(chan struct{}),
 	}
 }
 
@@ -552,7 +554,7 @@ func (p *FakeBackendPlugin) Stop(_ context.Context) error {
 	defer p.mutex.Unlock()
 	p.Running = false
 	p.StopCount++
-	go func() { p.ExitedCheckDone <- struct{}{} }()
+	go func() { p.ExitedCheckDoneOrStopped <- struct{}{} }()
 	return nil
 }
 
@@ -578,7 +580,7 @@ func (p *FakeBackendPlugin) IsManaged() bool {
 func (p *FakeBackendPlugin) Exited() bool {
 	p.mutex.RLock()
 	defer p.mutex.RUnlock()
-	go func() { p.ExitedCheckDone <- struct{}{} }()
+	go func() { p.ExitedCheckDoneOrStopped <- struct{}{} }()
 	return !p.Running
 }
 

@@ -52,11 +52,11 @@ func startPluginAndKeepItAlive(ctx context.Context, p *plugins.Plugin) error {
 		return nil
 	}
 
-	go func(ctx context.Context, p *plugins.Plugin) {
+	go func(p *plugins.Plugin) {
 		if err := keepPluginAlive(p); err != nil {
 			p.Logger().Error("Attempt to restart killed plugin process failed", "error", err)
 		}
-	}(ctx, p)
+	}(p)
 
 	return nil
 }
