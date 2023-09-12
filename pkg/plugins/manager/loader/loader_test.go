@@ -1047,7 +1047,7 @@ func TestLoader_Load_SkipUninitializedPlugins(t *testing.T) {
 		procPrvdr := fakes.NewFakeBackendProcessProvider()
 		// Cause an initialization error
 		procPrvdr.BackendFactoryFunc = func(ctx context.Context, p *plugins.Plugin) backendplugin.PluginFactoryFunc {
-			return func(pluginID string, _ log.Logger, _ []string) (backendplugin.Plugin, error) {
+			return func(pluginID string, _ log.Logger, _ func() []string) (backendplugin.Plugin, error) {
 				if pluginID == "test-datasource" {
 					return nil, errors.New("failed to initialize")
 				}
