@@ -2,8 +2,7 @@ import { Namespace } from 'i18next';
 import { find, startsWith } from 'lodash';
 
 import { DataSourceInstanceSettings, ScopedVars } from '@grafana/data';
-import { DataSourceWithBackend, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
-import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { DataSourceWithBackend, getTemplateSrv, TemplateSrv } from '@grafana/runtime';                                       
 
 import { getAuthType, getAzureCloud, getAzurePortalUrl } from '../credentials';
 import TimegrainConverter from '../time_grain_converter';
@@ -49,13 +48,11 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
   azurePortalUrl: string;
   declare resourceGroup: string;
   declare resourceName: string;
-  timeSrv: TimeSrv;
   templateSrv: TemplateSrv;
 
   constructor(private instanceSettings: DataSourceInstanceSettings<AzureDataSourceJsonData>) {
     super(instanceSettings);
 
-    this.timeSrv = getTimeSrv();
     this.templateSrv = getTemplateSrv();
     this.defaultSubscriptionId = instanceSettings.jsonData.subscriptionId;
 

@@ -110,7 +110,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
             {error.details && <details style={{ whiteSpace: 'pre-wrap' }}>{error.details}</details>}
           </Alert>
         )}
-        {config.secureSocksDSProxyEnabled && (
+        {config.secureSocksDSProxyEnabled && ( // cant remove?
           <>
             <Divider />
             <ConfigSection

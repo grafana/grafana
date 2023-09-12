@@ -1,4 +1,18 @@
-import { CustomVariableModel, initialVariableModelState, VariableHide } from 'app/features/variables/types';
+import { BaseVariableModel, CustomVariableModel, LoadingState, VariableHide } from '@grafana/data'
+
+const initialVariableModelState: BaseVariableModel = {
+  id: '00000000-0000-0000-0000-000000000000',
+  rootStateKey: null,
+  name: '',
+  type: 'query',
+  global: false,
+  index: -1,
+  hide: VariableHide.dontHide,
+  skipUrlSync: false,
+  state: LoadingState.NotStarted,
+  error: null,
+  description: null,
+};
 
 export const subscriptionsVariable: CustomVariableModel = {
   ...initialVariableModelState,
