@@ -19,6 +19,7 @@ import {
 import { Stack } from '@grafana/experimental';
 import { useTheme2, Select, StatsPicker, InlineField } from '@grafana/ui';
 
+import { getHelperContent } from '../helpers/getHelperContent';
 import { useAllFieldNamesFromDataFrames } from '../utils';
 
 interface FieldProps {
@@ -134,4 +135,5 @@ export const groupByTransformRegistryItem: TransformerRegistryItem<GroupByTransf
     TransformerCategory.CalculateNewFields,
     TransformerCategory.Reformat,
   ]),
+  help: getHelperContent(DataTransformerID.groupBy),
 };

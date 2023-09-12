@@ -9,6 +9,7 @@ import { FilterByRefIdHelper } from './FilterByRefIdHelper';
 import { FilterByValueHelper } from './FilterByValueHelper';
 import { FilterFieldsByNameHelper } from './FilterFieldsByNameHelper';
 import { FormatTimeHelper } from './FormatTimeHelper';
+import { GroupByHelper } from './GroupByHelper';
 
 interface Helper {
   [key: string]: JSX.Element | string;
@@ -28,6 +29,7 @@ const helperContent: Helper = {
   filterByValue: FilterByValueHelper(),
   filterFieldsByName: FilterFieldsByNameHelper(),
   formatTime: FormatTimeHelper(),
+  groupBy: GroupByHelper(),
   heatmap: CreateHeatmapHelp(),
 };
 
