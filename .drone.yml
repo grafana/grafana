@@ -2314,7 +2314,7 @@ steps:
   - cp C:\App\nssm-2.24.zip .
   - .\grabpl.exe windows-installer --edition oss --build-id $$env:DRONE_BUILD_NUMBER
   - $$fname = ((Get-Childitem grafana*.msi -name) -split "`n")[0]
-  - gsutil cp $$fname gs://grafana-downloads/oss/main/
+  - gsutil cp "$$fname" gs://grafana-downloads/oss/main/
   - gsutil cp "$$fname.sha256" gs://grafana-downloads/oss/main/
   depends_on:
   - windows-init
@@ -4746,6 +4746,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 346964fa38e1b7b260e1a9a7f619bc7963a4c9e66979a229891e0d97fb1fe2ba
+hmac: 43be5c3799e498e245d555510ce5f2cc9664a857e77fe0995792feb949b8cf62
 
 ...
