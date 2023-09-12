@@ -8,6 +8,7 @@ def rgm_package_step(distros = "linux/amd64,linux/arm64", file = "packages.txt")
     return {
         "name": "rgm-package",
         "image": "grafana/grafana-build:main",
+        "pull": "always",
         "depends_on": ["yarn-install"],
         "commands": [
             "/src/grafana-build package --distro={} ".format(distros) +
@@ -25,6 +26,7 @@ def rgm_build_backend_step(distros = "linux/amd64,linux/arm64"):
     return {
         "name": "rgm-package",
         "image": "grafana/grafana-build:main",
+        "pull": "always",
         "commands": [
             "/src/grafana-build build --distro={} --grafana-dir=$$PWD".format(distros),
         ],
@@ -35,9 +37,11 @@ def rgm_build_docker_step(packages, ubuntu, alpine, depends_on = ["rgm-package"]
     return {
         "name": "rgm-build-docker",
         "image": "grafana/grafana-build:main",
+        "pull": "always",
         "commands": [
+            "docker run --privileged --rm tonistiigi/binfmt --install all",
             "/src/grafana-build docker " +
-            "--package=$(cat {} | grep tar.gz | grep -v docker | grep -v sha256) ".format(packages) +
+            "$(cat {} | grep tar.gz | grep -v docker | grep -v sha256 | awk '{{print \"--package=\" $0}}') ".format(packages) +
             "--ubuntu-base={} ".format(ubuntu) +
             "--alpine-base={} ".format(alpine) +
             "--tag-format='{}' ".format(tag_format) +

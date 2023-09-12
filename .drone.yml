@@ -588,6 +588,7 @@ steps:
   - yarn-install
   image: grafana/grafana-build:main
   name: rgm-package
+  pull: always
   volumes:
   - name: docker
     path: /var/run/docker.sock
@@ -722,8 +723,9 @@ steps:
   image: grafana/docker-puppeteer:1.1.0
   name: test-a11y-frontend
 - commands:
-  - /src/grafana-build docker --package=$(cat packages.txt | grep tar.gz | grep -v
-    docker | grep -v sha256) --ubuntu-base=ubuntu:22.10 --alpine-base=alpine:3.17.1
+  - docker run --privileged --rm tonistiigi/binfmt --install all
+  - /src/grafana-build docker $(cat packages.txt | grep tar.gz | grep -v docker |
+    grep -v sha256 | awk '{print "--package=" $0}') --ubuntu-base=ubuntu:22.04 --alpine-base=alpine:3.17.1
     --tag-format='{{ .version_base }}-{{ .buildID }}-{{ .arch }}' --ubuntu-tag-format='{{
     .version_base }}-{{ .buildID }}-ubuntu-{{ .arch }}' > docker.txt
   - find ./dist -name '*docker*.tar.gz' -type f | xargs -n1 docker load -i
@@ -731,6 +733,7 @@ steps:
   - rgm-package
   image: grafana/grafana-build:main
   name: rgm-build-docker
+  pull: always
   volumes:
   - name: docker
     path: /var/run/docker.sock
@@ -1723,6 +1726,7 @@ steps:
   - yarn-install
   image: grafana/grafana-build:main
   name: rgm-package
+  pull: always
   volumes:
   - name: docker
     path: /var/run/docker.sock
@@ -1892,8 +1896,9 @@ steps:
     repo:
     - grafana/grafana
 - commands:
-  - /src/grafana-build docker --package=$(cat packages.txt | grep tar.gz | grep -v
-    docker | grep -v sha256) --ubuntu-base=ubuntu:22.10 --alpine-base=alpine:3.17.1
+  - docker run --privileged --rm tonistiigi/binfmt --install all
+  - /src/grafana-build docker $(cat packages.txt | grep tar.gz | grep -v docker |
+    grep -v sha256 | awk '{print "--package=" $0}') --ubuntu-base=ubuntu:22.04 --alpine-base=alpine:3.17.1
     --tag-format='{{ .version_base }}-{{ .buildID }}-{{ .arch }}' --ubuntu-tag-format='{{
     .version_base }}-{{ .buildID }}-ubuntu-{{ .arch }}' > docker.txt
   - find ./dist -name '*docker*.tar.gz' -type f | xargs -n1 docker load -i
@@ -1901,6 +1906,7 @@ steps:
   - rgm-package
   image: grafana/grafana-build:main
   name: rgm-build-docker
+  pull: always
   volumes:
   - name: docker
     path: /var/run/docker.sock
@@ -2944,6 +2950,7 @@ steps:
   failure: ignore
   image: grafana/grafana-build:main
   name: rgm-build
+  pull: always
   volumes:
   - name: docker
     path: /var/run/docker.sock
@@ -3002,6 +3009,7 @@ steps:
       from_secret: packages_gpg_public_key
   image: grafana/grafana-build:main
   name: rgm-build
+  pull: always
   volumes:
   - name: docker
     path: /var/run/docker.sock
@@ -3123,6 +3131,7 @@ steps:
       from_secret: packages_gpg_public_key
   image: grafana/grafana-build:main
   name: rgm-build
+  pull: always
   volumes:
   - name: docker
     path: /var/run/docker.sock
@@ -3864,7 +3873,7 @@ steps:
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM google/cloud-sdk:431.0.0
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/grafana-ci-deploy:1.3.3
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM alpine:3.17.1
-  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM ubuntu:22.10
+  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM ubuntu:22.04
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM byrnedo/alpine-curl:0.1.8
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM plugins/slack
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM python:3.8
@@ -3897,7 +3906,7 @@ steps:
   - trivy --exit-code 1 --severity HIGH,CRITICAL google/cloud-sdk:431.0.0
   - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/grafana-ci-deploy:1.3.3
   - trivy --exit-code 1 --severity HIGH,CRITICAL alpine:3.17.1
-  - trivy --exit-code 1 --severity HIGH,CRITICAL ubuntu:22.10
+  - trivy --exit-code 1 --severity HIGH,CRITICAL ubuntu:22.04
   - trivy --exit-code 1 --severity HIGH,CRITICAL byrnedo/alpine-curl:0.1.8
   - trivy --exit-code 1 --severity HIGH,CRITICAL plugins/slack
   - trivy --exit-code 1 --severity HIGH,CRITICAL python:3.8
@@ -4164,6 +4173,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: d3a519d45aa8abd7424ede359c024e5212341bcbc1a51e27cda1922a4e42877a
+hmac: 3f0b291de7bb76eea4fe7ca2416f95bf54c18a0e4b87f707b883524f223efa21
 
 ...
