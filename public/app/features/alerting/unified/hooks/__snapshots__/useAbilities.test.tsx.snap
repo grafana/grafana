@@ -1,0 +1,292 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`alertmanager abilities should report Create / Update / Delete actions aren't supported for external vanilla alertmanager 1`] = `
+{
+  "create-contact-point": [
+    false,
+    false,
+  ],
+  "create-mute-timing": [
+    false,
+    false,
+  ],
+  "create-notification-policy": [
+    false,
+    false,
+  ],
+  "create-notification-template": [
+    false,
+    false,
+  ],
+  "create-silence": [
+    false,
+    false,
+  ],
+  "delete-contact-point": [
+    false,
+    false,
+  ],
+  "delete-mute-timing": [
+    false,
+    false,
+  ],
+  "delete-notification-policy": [
+    false,
+    false,
+  ],
+  "delete-notification-template": [
+    false,
+    false,
+  ],
+  "edit-contact-points": [
+    false,
+    false,
+  ],
+  "edit-notification-template": [
+    false,
+    false,
+  ],
+  "export-contact-point": [
+    false,
+    false,
+  ],
+  "export-notification-policies": [
+    false,
+    false,
+  ],
+  "update-external-configuration": [
+    false,
+    false,
+  ],
+  "update-mute-timing": [
+    false,
+    false,
+  ],
+  "update-notification-policy-tree": [
+    false,
+    false,
+  ],
+  "update-silence": [
+    false,
+    false,
+  ],
+  "view-contact-point": [
+    true,
+    false,
+  ],
+  "view-external-configuration": [
+    true,
+    false,
+  ],
+  "view-mute-timing": [
+    true,
+    false,
+  ],
+  "view-notification-policy-tree": [
+    true,
+    false,
+  ],
+  "view-notification-template": [
+    true,
+    false,
+  ],
+  "view-silence": [
+    true,
+    false,
+  ],
+}
+`;
+
+exports[`alertmanager abilities should report everything except exporting for Mimir alertmanager 1`] = `
+{
+  "create-contact-point": [
+    true,
+    true,
+  ],
+  "create-mute-timing": [
+    true,
+    true,
+  ],
+  "create-notification-policy": [
+    true,
+    true,
+  ],
+  "create-notification-template": [
+    true,
+    true,
+  ],
+  "create-silence": [
+    true,
+    true,
+  ],
+  "delete-contact-point": [
+    true,
+    true,
+  ],
+  "delete-mute-timing": [
+    true,
+    true,
+  ],
+  "delete-notification-policy": [
+    true,
+    true,
+  ],
+  "delete-notification-template": [
+    true,
+    true,
+  ],
+  "edit-contact-points": [
+    true,
+    true,
+  ],
+  "edit-notification-template": [
+    true,
+    true,
+  ],
+  "export-contact-point": [
+    false,
+    false,
+  ],
+  "export-notification-policies": [
+    false,
+    false,
+  ],
+  "update-external-configuration": [
+    true,
+    true,
+  ],
+  "update-mute-timing": [
+    true,
+    true,
+  ],
+  "update-notification-policy-tree": [
+    true,
+    true,
+  ],
+  "update-silence": [
+    true,
+    true,
+  ],
+  "view-contact-point": [
+    true,
+    true,
+  ],
+  "view-external-configuration": [
+    true,
+    true,
+  ],
+  "view-mute-timing": [
+    true,
+    true,
+  ],
+  "view-notification-policy-tree": [
+    true,
+    true,
+  ],
+  "view-notification-template": [
+    true,
+    true,
+  ],
+  "view-silence": [
+    true,
+    true,
+  ],
+}
+`;
+
+exports[`alertmanager abilities should report everything is supported for builtin alertmanager 1`] = `
+{
+  "create-contact-point": [
+    true,
+    false,
+  ],
+  "create-mute-timing": [
+    true,
+    false,
+  ],
+  "create-notification-policy": [
+    true,
+    false,
+  ],
+  "create-notification-template": [
+    true,
+    false,
+  ],
+  "create-silence": [
+    true,
+    false,
+  ],
+  "delete-contact-point": [
+    true,
+    false,
+  ],
+  "delete-mute-timing": [
+    true,
+    false,
+  ],
+  "delete-notification-policy": [
+    true,
+    false,
+  ],
+  "delete-notification-template": [
+    true,
+    false,
+  ],
+  "edit-contact-points": [
+    true,
+    false,
+  ],
+  "edit-notification-template": [
+    true,
+    false,
+  ],
+  "export-contact-point": [
+    true,
+    false,
+  ],
+  "export-notification-policies": [
+    true,
+    false,
+  ],
+  "update-external-configuration": [
+    true,
+    false,
+  ],
+  "update-mute-timing": [
+    true,
+    false,
+  ],
+  "update-notification-policy-tree": [
+    true,
+    false,
+  ],
+  "update-silence": [
+    true,
+    false,
+  ],
+  "view-contact-point": [
+    true,
+    true,
+  ],
+  "view-external-configuration": [
+    true,
+    false,
+  ],
+  "view-mute-timing": [
+    true,
+    true,
+  ],
+  "view-notification-policy-tree": [
+    true,
+    true,
+  ],
+  "view-notification-template": [
+    true,
+    true,
+  ],
+  "view-silence": [
+    true,
+    true,
+  ],
+}
+`;
