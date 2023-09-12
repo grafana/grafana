@@ -430,4 +430,8 @@ const (
 	// FlagRequestInstrumentationStatusSource
 	// Include a status source label for request metrics and logs
 	FlagRequestInstrumentationStatusSource = "requestInstrumentationStatusSource"
+
+	// FlagLibraryPanelRBAC
+	// Enables RBAC support for library panels
+	FlagLibraryPanelRBAC = "libraryPanelRBAC"
 )

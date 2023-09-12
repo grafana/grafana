@@ -134,6 +134,7 @@ Experimental features might be changed or removed without prior notice.
 | `dashgpt`                                   | Enable AI powered features in dashboards                                                                     |
 | `sseGroupByDatasource`                      | Send query to the same datasource in a single request when using server side expressions                     |
 | `requestInstrumentationStatusSource`        | Include a status source label for request metrics and logs                                                   |
+| `libraryPanelRBAC`                          | Enables RBAC support for library panels                                                                      |
 
 ## Development feature toggles
 

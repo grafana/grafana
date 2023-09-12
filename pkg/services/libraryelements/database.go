@@ -203,8 +203,10 @@ func (l *LibraryElementService) createLibraryElement(c context.Context, signedIn
 		},
 	}
 
-	if err := l.updatePermissions(c, &dto, signedInUser); err != nil {
-		l.log.Error(err.Error())
+	if l.features.IsEnabled(featuremgmt.FlagLibraryPanelRBAC) {
+		if err := l.updatePermissions(c, &dto, signedInUser); err != nil {
+			l.log.Error(err.Error())
+		}
 	}
 
 	return dto, err
