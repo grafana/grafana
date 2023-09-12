@@ -255,10 +255,9 @@ func executeDSNodesGrouped(ctx context.Context, now time.Time, vars mathexp.Vars
 				})
 			}
 
-			responseType := "unknown"
-			respStatus := "success"
-
 			instrument := func(e error, rt string) {
+				respStatus := "success"
+				responseType := rt
 				if e != nil {
 					responseType = "error"
 					respStatus = "failure"
@@ -291,7 +290,7 @@ func executeDSNodesGrouped(ctx context.Context, now time.Time, vars mathexp.Vars
 				}
 
 				var result mathexp.Results
-				responseType, result, err = convertDataFramesToResults(ctx, dataFrames, dn.datasource.Type, s, logger)
+				responseType, result, err := convertDataFramesToResults(ctx, dataFrames, dn.datasource.Type, s, logger)
 				if err != nil {
 					result.Error = makeConversionError(dn.RefID(), err)
 				}
