@@ -36,7 +36,7 @@ The Grafana plugin files are located in the following directories:
 
 ## Back up the Grafana database
 
-Although Grafana automatically upgrades the database on startup, we recommend that you back up your Grafana database so that you can roll back to a previous version, if required.
+We recommend that you back up your Grafana database so that you can roll back to a previous version, if required.
 
 ### SQLite
 
