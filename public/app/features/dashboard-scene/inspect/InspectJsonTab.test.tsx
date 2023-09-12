@@ -10,11 +10,11 @@ import {
   SceneObjectRef,
   VizPanel,
 } from '@grafana/scenes';
-import { InspectTab } from 'app/features/inspector/types';
 import { getStandardTransformers } from 'app/features/transformers/standardTransformers';
 
 import { DashboardScene } from '../scene/DashboardScene';
 import { activateFullSceneTree } from '../utils/test-utils';
+import { findVizPanelByKey } from '../utils/utils';
 
 import { InspectJsonTab } from './InspectJsonTab';
 
@@ -31,13 +31,13 @@ describe('InspectJsonTab', () => {
 
     const obj = JSON.parse(tab.state.jsonText);
     expect(obj.gridPos).toEqual({ x: 0, y: 0, w: 10, h: 12 });
-    expect(tab.isReadOnly()).toBe(false);
+    expect(tab.isEditable()).toBe(true);
   });
 
   it('Can show panel data with field config', async () => {
     const { tab } = await buildTestScene();
     tab.onChangeShow({ value: 'panel-data' });
-    expect(tab.isReadOnly()).toBe(true);
+    expect(tab.isEditable()).toBe(false);
 
     const obj = JSON.parse(tab.state.jsonText);
     expect(obj.series.length).toBe(1);
@@ -54,7 +54,33 @@ describe('InspectJsonTab', () => {
     const obj = JSON.parse(tab.state.jsonText);
     expect(Array.isArray(obj)).toBe(true);
     expect(obj[0].schema.fields.length).toBe(1);
-    expect(tab.isReadOnly()).toBe(true);
+    expect(tab.isEditable()).toBe(false);
+  });
+
+  it('Can update model', async () => {
+    const { tab, panel, scene } = await buildTestScene();
+
+    tab.onCodeEditorBlur(`{
+      "id": 12,
+      "type": "table",
+      "title": "New title",
+      "gridPos": {
+        "x": 1,
+        "y": 2,
+        "w": 3,
+        "h": 4
+      },
+      "options": {},
+      "fieldConfig": {},
+      "transformations": [],
+      "transparent": false
+    }`);
+
+    tab.onApplyChange();
+
+    const panel2 = findVizPanelByKey(scene, panel.state.key)!;
+    expect(panel2.state.title).toBe('New title');
+    expect((panel2.parent as SceneGridItem).state.width!).toBe(3);
   });
 });
 
@@ -104,6 +130,9 @@ async function buildTestScene() {
   const scene = new DashboardScene({
     title: 'hello',
     uid: 'dash-1',
+    meta: {
+      canEdit: true,
+    },
     body: new SceneGridLayout({
       children: [
         new SceneGridItem({
@@ -124,9 +153,6 @@ async function buildTestScene() {
 
   const tab = new InspectJsonTab({
     panelRef: new SceneObjectRef(panel),
-    label: 'a',
-    value: InspectTab.JSON,
-    canEdit: true,
   });
 
   return { scene, tab, panel };

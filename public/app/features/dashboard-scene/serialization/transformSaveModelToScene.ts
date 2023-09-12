@@ -26,6 +26,7 @@ import {
   behaviors,
   VizPanelState,
   SceneGridItemLike,
+  sceneUtils,
 } from '@grafana/scenes';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { DashboardDTO } from 'app/types';
@@ -181,6 +182,7 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
   return new DashboardScene({
     title: oldModel.title,
     uid: oldModel.uid,
+    meta: oldModel.meta,
     body: new SceneGridLayout({
       isLazy: true,
       children: createSceneObjectsForPanels(oldModel.panels),
@@ -312,6 +314,25 @@ export function buildGridItemForPanel(panel: PanelModel): SceneGridItemLike {
     height: panel.gridPos.h,
     body: new VizPanel(vizPanelState),
   });
+}
+
+/**
+ * Used from inspect json tab to raw update a panel
+ */
+export function updatePanelFromSaveModel(panel: VizPanel, jsonText: string) {
+  const panelContainer = panel.parent;
+
+  if (!(panelContainer instanceof SceneGridItem)) {
+    console.error('Parent is not a SceneGridItem');
+    return;
+  }
+
+  const json = JSON.parse(jsonText);
+  const panelModel = new PanelModel(json);
+  const gridItem = buildGridItemForPanel(panelModel);
+  const newState = sceneUtils.cloneSceneObjectState(gridItem.state);
+
+  panelContainer.setState(newState);
 }
 
 const isCustomVariable = (v: VariableModel): v is CustomVariableModel => v.type === 'custom';

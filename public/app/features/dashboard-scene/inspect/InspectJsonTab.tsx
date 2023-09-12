@@ -10,23 +10,26 @@ import {
   sceneGraph,
   SceneGridItem,
   SceneObjectBase,
+  SceneObjectRef,
+  SceneObjectState,
   VizPanel,
 } from '@grafana/scenes';
 import { Button, CodeEditor, Field, Select, useStyles2 } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 import { getPanelDataFrames } from 'app/features/dashboard/components/HelpWizard/utils';
 import { getPanelInspectorStyles2 } from 'app/features/inspector/styles';
+import { InspectTab } from 'app/features/inspector/types';
 import { getPrettyJSON } from 'app/features/inspector/utils/utils';
 
+import { updatePanelFromSaveModel } from '../serialization/transformSaveModelToScene';
 import { gridItemToPanel } from '../serialization/transformSceneToSaveModel';
-
-import { InspectTabState } from './types';
+import { getDashboardSceneFor } from '../utils/utils';
 
 export type ShowContent = 'panel-json' | 'panel-data' | 'data-frames';
 
-export interface InspectJsonTabState extends InspectTabState {
+export interface InspectJsonTabState extends SceneObjectState {
+  panelRef: SceneObjectRef<VizPanel>;
   show: ShowContent;
-  canEdit?: boolean;
   jsonText: string;
 }
 
@@ -37,6 +40,14 @@ export class InspectJsonTab extends SceneObjectBase<InspectJsonTabState> {
       show: 'panel-json',
       jsonText: getJsonText('panel-json', state.panelRef.resolve()),
     });
+  }
+
+  public getTabLabel() {
+    return t('dashboard.inspect.json-tab', 'JSON');
+  }
+
+  public getTabValue() {
+    return InspectTab.JSON;
   }
 
   public getOptions(dataProvider: SceneDataProvider): Array<SelectableValue<ShowContent>> {
@@ -75,19 +86,31 @@ export class InspectJsonTab extends SceneObjectBase<InspectJsonTabState> {
   };
 
   public onApplyChange = () => {
-    // TODO
+    const panel = this.state.panelRef.resolve();
+    if (!panel) {
+      return;
+    }
+
+    updatePanelFromSaveModel(panel, this.state.jsonText);
   };
 
   public onCodeEditorBlur = (value: string) => {
     this.setState({ jsonText: value });
   };
 
-  public isReadOnly() {
-    return this.state.show !== 'panel-json' || !this.state.canEdit;
+  public isEditable() {
+    if (this.state.show !== 'panel-json') {
+      return false;
+    }
+
+    const dashboard = getDashboardSceneFor(this.state.panelRef.resolve());
+
+    // TOOD check that we are not a repeated clone
+    return dashboard.state.meta.canEdit;
   }
 
   static Component = ({ model }: SceneComponentProps<InspectJsonTab>) => {
-    const { show, canEdit, jsonText } = model.useState();
+    const { show, jsonText } = model.useState();
     const styles = useStyles2(getPanelInspectorStyles2);
     const panel = model.state.panelRef.resolve();
     const dataProvider = sceneGraph.getData(panel);
@@ -104,7 +127,7 @@ export class InspectJsonTab extends SceneObjectBase<InspectJsonTabState> {
               onChange={model.onChangeShow}
             />
           </Field>
-          {panel && canEdit && (
+          {model.isEditable() && (
             <Button className={styles.toolbarItem} onClick={model.onApplyChange}>
               Apply
             </Button>
@@ -121,7 +144,7 @@ export class InspectJsonTab extends SceneObjectBase<InspectJsonTabState> {
                 showLineNumbers={true}
                 showMiniMap={jsonText.length > 100}
                 value={jsonText}
-                readOnly={!model.isReadOnly()}
+                readOnly={!model.isEditable()}
                 onBlur={model.onCodeEditorBlur}
               />
             )}
