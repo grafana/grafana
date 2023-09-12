@@ -54,14 +54,12 @@ export const Basic: StoryFn<typeof Grid> = (args) => {
   const theme = useTheme2();
   return (
     <Grid
-      display={args.display}
       gap={args.gap}
       rowGap={args.rowGap}
       columnGap={args.columnGap}
       templateColumns={args.templateColumns}
       templateRows={args.templateRows}
       autoFlow={args.autoFlow}
-      autoRows={args.autoRows}
     >
       {Array.from({ length: 9 }).map((_, i) => (
         <GridItem key={i}>{gridItem(i, theme, undefined, undefined)}</GridItem>
