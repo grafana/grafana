@@ -9,6 +9,7 @@ import {
 } from '@grafana/data';
 import { Alert, HorizontalGroup, InlineField, InlineFieldRow, Select, ValuePicker } from '@grafana/ui';
 
+import { getHelperContent } from '../helpers/getHelperContent';
 import { getDistinctLabels } from '../utils';
 
 import { joinByLabelsTransformer, JoinByLabelsTransformOptions } from './joinByLabels';
@@ -163,10 +164,5 @@ export const joinByLabelsTransformRegistryItem: TransformerRegistryItem<JoinByLa
   description: joinByLabelsTransformer.description,
   state: PluginState.beta,
   categories: new Set([TransformerCategory.Combine]),
-  // JEV: rebuild this help to a react component
-  //   help: `
-  // ### Use cases
-
-  // This transforms labeled results into a table
-  // `,
+  help: getHelperContent(joinByLabelsTransformer.id),
 };
