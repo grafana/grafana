@@ -139,12 +139,7 @@ function ProfileTypeRow(props: {
         label={'Profile type'}
         aria-label={'Profile type'}
         labelWidth={20}
-        tooltip={
-          <div>
-            Select profile type for which to retrieve
-            available labels
-          </div>
-        }
+        tooltip={<div>Select profile type for which to retrieve available labels</div>}
       >
         {profileTypes ? (
           <ProfileTypesCascader

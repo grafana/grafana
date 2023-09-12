@@ -69,10 +69,7 @@ describe('VariableQueryEditor', () => {
 });
 
 function getMockDatasource() {
-  const ds = new PhlareDataSource(
-    {} as DataSourceInstanceSettings<PhlareDataSourceOptions>,
-    new TemplateSrv()
-  );
+  const ds = new PhlareDataSource({} as DataSourceInstanceSettings<PhlareDataSourceOptions>, new TemplateSrv());
   ds.getResource = jest.fn();
   (ds.getResource as jest.Mock).mockImplementation(async (type: string) => {
     if (type === 'profileTypes') {
