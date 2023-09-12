@@ -23,7 +23,7 @@ const gridItem = (index: number, theme: GrafanaTheme2, width?: string, height?: 
     theme.visualization.getColorByName('green')  
   ];
   return (
-    <div style={{ backgroundColor: colorList[colorOrder], width, height, fontSize: theme.typography.bodySmall.fontSize, color: theme.colors.text.maxContrast }}>Grid item {itemOrder}</div>
+    <div style={{ backgroundColor: colorList[colorOrder], width, height, fontSize: theme.typography.bodySmall.fontSize, color: theme.colors.text.maxContrast }}>Item {itemOrder}</div>
   );
 };
 
