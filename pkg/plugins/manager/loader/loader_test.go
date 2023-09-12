@@ -2,6 +2,7 @@ package loader
 
 import (
 	"context"
+	"errors"
 	"path/filepath"
 	"sort"
 	"testing"
@@ -13,18 +14,16 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
-	"github.com/grafana/grafana/pkg/plugins/manager/loader/angular/angularinspector"
-	"github.com/grafana/grafana/pkg/plugins/manager/loader/assetpath"
 	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/bootstrap"
 	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/discovery"
 	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/initialization"
-	"github.com/grafana/grafana/pkg/plugins/manager/signature"
+	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/termination"
+	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/validation"
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
-	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	"github.com/grafana/grafana/pkg/services/org"
 )
 
-var compareOpts = []cmp.Option{cmpopts.IgnoreFields(plugins.Plugin{}, "client", "log"), fsComparer}
+var compareOpts = []cmp.Option{cmpopts.IgnoreFields(plugins.Plugin{}, "client", "log", "mu"), fsComparer}
 
 var fsComparer = cmp.Comparer(func(fs1 plugins.FS, fs2 plugins.FS) bool {
 	fs1Files, err := fs1.Files()
@@ -59,12 +58,11 @@ func TestLoader_Load(t *testing.T) {
 		return
 	}
 	tests := []struct {
-		name         string
-		class        plugins.Class
-		cfg          *config.Cfg
-		pluginPaths  []string
-		want         []*plugins.Plugin
-		pluginErrors map[string]*plugins.Error
+		name        string
+		class       plugins.Class
+		cfg         *config.Cfg
+		pluginPaths []string
+		want        []*plugins.Plugin
 	}{
 		{
 			name:        "Load a Core plugin",
@@ -84,8 +82,8 @@ func TestLoader_Load(t *testing.T) {
 							},
 							Description: "Data source for Amazon AWS monitoring service",
 							Logos: plugins.Logos{
-								Small: "public/app/plugins/datasource/cloudwatch/img/amazon-web-services.png",
-								Large: "public/app/plugins/datasource/cloudwatch/img/amazon-web-services.png",
+								Small: "/public/app/plugins/datasource/cloudwatch/img/amazon-web-services.png",
+								Large: "/public/app/plugins/datasource/cloudwatch/img/amazon-web-services.png",
 							},
 						},
 						Includes: []*plugins.Includes{
@@ -107,8 +105,8 @@ func TestLoader_Load(t *testing.T) {
 						Backend:      true,
 						QueryOptions: map[string]bool{"minInterval": true},
 					},
-					Module:  "app/plugins/datasource/cloudwatch/module",
-					BaseURL: "public/app/plugins/datasource/cloudwatch",
+					Module:  "core:plugin/cloudwatch",
+					BaseURL: "/public/app/plugins/datasource/cloudwatch",
 
 					FS:        mustNewStaticFSForTests(t, filepath.Join(corePluginDir, "app/plugins/datasource/cloudwatch")),
 					Signature: plugins.SignatureStatusInternal,
@@ -134,8 +132,8 @@ func TestLoader_Load(t *testing.T) {
 							},
 							Version: "1.0.0",
 							Logos: plugins.Logos{
-								Small: "public/img/icn-datasource.svg",
-								Large: "public/img/icn-datasource.svg",
+								Small: "/public/img/icn-datasource.svg",
+								Large: "/public/img/icn-datasource.svg",
 							},
 							Description: "Test",
 						},
@@ -147,8 +145,8 @@ func TestLoader_Load(t *testing.T) {
 						Backend:    true,
 						State:      "alpha",
 					},
-					Module:        "plugins/test-datasource/module",
-					BaseURL:       "public/plugins/test-datasource",
+					Module:        "/public/plugins/test-datasource/module.js",
+					BaseURL:       "/public/plugins/test-datasource",
 					FS:            mustNewStaticFSForTests(t, filepath.Join(parentDir, "testdata/valid-v2-signature/plugin/")),
 					Signature:     "valid",
 					SignatureType: plugins.SignatureTypeGrafana,
@@ -173,8 +171,8 @@ func TestLoader_Load(t *testing.T) {
 								URL:  "http://test.com",
 							},
 							Logos: plugins.Logos{
-								Small: "public/plugins/test-app/img/logo_small.png",
-								Large: "public/plugins/test-app/img/logo_large.png",
+								Small: "/public/plugins/test-app/img/logo_small.png",
+								Large: "/public/plugins/test-app/img/logo_large.png",
 							},
 							Links: []plugins.InfoLink{
 								{Name: "Project site", URL: "http://project.com"},
@@ -182,8 +180,8 @@ func TestLoader_Load(t *testing.T) {
 							},
 							Description: "Official Grafana Test App & Dashboard bundle",
 							Screenshots: []plugins.Screenshots{
-								{Path: "public/plugins/test-app/img/screenshot1.png", Name: "img1"},
-								{Path: "public/plugins/test-app/img/screenshot2.png", Name: "img2"},
+								{Path: "/public/plugins/test-app/img/screenshot1.png", Name: "img1"},
+								{Path: "/public/plugins/test-app/img/screenshot2.png", Name: "img2"},
 							},
 							Version: "1.0.0",
 							Updated: "2015-02-10",
@@ -224,8 +222,8 @@ func TestLoader_Load(t *testing.T) {
 						},
 					},
 					Class:         plugins.ClassExternal,
-					Module:        "plugins/test-app/module",
-					BaseURL:       "public/plugins/test-app",
+					Module:        "/public/plugins/test-app/module.js",
+					BaseURL:       "/public/plugins/test-app",
 					FS:            mustNewStaticFSForTests(t, filepath.Join(parentDir, "testdata/includes-symlinks")),
 					Signature:     "valid",
 					SignatureType: plugins.SignatureTypeGrafana,
@@ -251,8 +249,8 @@ func TestLoader_Load(t *testing.T) {
 								URL:  "https://grafana.com",
 							},
 							Logos: plugins.Logos{
-								Small: "public/img/icn-datasource.svg",
-								Large: "public/img/icn-datasource.svg",
+								Small: "/public/img/icn-datasource.svg",
+								Large: "/public/img/icn-datasource.svg",
 							},
 							Description: "Test",
 						},
@@ -264,24 +262,19 @@ func TestLoader_Load(t *testing.T) {
 						State:   plugins.ReleaseStateAlpha,
 					},
 					Class:     plugins.ClassExternal,
-					Module:    "plugins/test-datasource/module",
-					BaseURL:   "public/plugins/test-datasource",
+					Module:    "/public/plugins/test-datasource/module.js",
+					BaseURL:   "/public/plugins/test-datasource",
 					FS:        mustNewStaticFSForTests(t, filepath.Join(parentDir, "testdata/unsigned-datasource/plugin")),
 					Signature: "unsigned",
 				},
 			},
-		}, {
+		},
+		{
 			name:        "Load an unsigned plugin (production)",
 			class:       plugins.ClassExternal,
 			cfg:         &config.Cfg{},
 			pluginPaths: []string{"../testdata/unsigned-datasource"},
 			want:        []*plugins.Plugin{},
-			pluginErrors: map[string]*plugins.Error{
-				"test-datasource": {
-					PluginID:  "test-datasource",
-					ErrorCode: "signatureMissing",
-				},
-			},
 		},
 		{
 			name:  "Load an unsigned plugin using PluginsAllowUnsigned config (production)",
@@ -302,8 +295,8 @@ func TestLoader_Load(t *testing.T) {
 								URL:  "https://grafana.com",
 							},
 							Logos: plugins.Logos{
-								Small: "public/img/icn-datasource.svg",
-								Large: "public/img/icn-datasource.svg",
+								Small: "/public/img/icn-datasource.svg",
+								Large: "/public/img/icn-datasource.svg",
 							},
 							Description: "Test",
 						},
@@ -315,8 +308,8 @@ func TestLoader_Load(t *testing.T) {
 						State:   plugins.ReleaseStateAlpha,
 					},
 					Class:     plugins.ClassExternal,
-					Module:    "plugins/test-datasource/module",
-					BaseURL:   "public/plugins/test-datasource",
+					Module:    "/public/plugins/test-datasource/module.js",
+					BaseURL:   "/public/plugins/test-datasource",
 					FS:        mustNewStaticFSForTests(t, filepath.Join(parentDir, "testdata/unsigned-datasource/plugin")),
 					Signature: plugins.SignatureStatusUnsigned,
 				},
@@ -328,12 +321,6 @@ func TestLoader_Load(t *testing.T) {
 			cfg:         &config.Cfg{},
 			pluginPaths: []string{"../testdata/lacking-files"},
 			want:        []*plugins.Plugin{},
-			pluginErrors: map[string]*plugins.Error{
-				"test-datasource": {
-					PluginID:  "test-datasource",
-					ErrorCode: "signatureInvalid",
-				},
-			},
 		},
 		{
 			name:  "Load a plugin with v1 manifest using PluginsAllowUnsigned config (production) should return signatureInvali",
@@ -343,12 +330,6 @@ func TestLoader_Load(t *testing.T) {
 			},
 			pluginPaths: []string{"../testdata/lacking-files"},
 			want:        []*plugins.Plugin{},
-			pluginErrors: map[string]*plugins.Error{
-				"test-datasource": {
-					PluginID:  "test-datasource",
-					ErrorCode: "signatureInvalid",
-				},
-			},
 		},
 		{
 			name:  "Load a plugin with manifest which has a file not found in plugin folder",
@@ -358,12 +339,6 @@ func TestLoader_Load(t *testing.T) {
 			},
 			pluginPaths: []string{"../testdata/invalid-v2-missing-file"},
 			want:        []*plugins.Plugin{},
-			pluginErrors: map[string]*plugins.Error{
-				"test-datasource": {
-					PluginID:  "test-datasource",
-					ErrorCode: "signatureModified",
-				},
-			},
 		},
 		{
 			name:  "Load a plugin with file which is missing from the manifest",
@@ -373,12 +348,6 @@ func TestLoader_Load(t *testing.T) {
 			},
 			pluginPaths: []string{"../testdata/invalid-v2-extra-file"},
 			want:        []*plugins.Plugin{},
-			pluginErrors: map[string]*plugins.Error{
-				"test-datasource": {
-					PluginID:  "test-datasource",
-					ErrorCode: "signatureModified",
-				},
-			},
 		},
 		{
 			name:  "Load an app with includes",
@@ -405,8 +374,8 @@ func TestLoader_Load(t *testing.T) {
 								{Name: "License & Terms", URL: "http://license.com"},
 							},
 							Logos: plugins.Logos{
-								Small: "public/img/icn-app.svg",
-								Large: "public/img/icn-app.svg",
+								Small: "/public/img/icn-app.svg",
+								Large: "/public/img/icn-app.svg",
 							},
 							Updated: "2015-02-10",
 						},
@@ -425,33 +394,65 @@ func TestLoader_Load(t *testing.T) {
 					FS:            mustNewStaticFSForTests(t, filepath.Join(parentDir, "testdata/test-app-with-includes")),
 					Class:         plugins.ClassExternal,
 					Signature:     plugins.SignatureStatusUnsigned,
-					Module:        "plugins/test-app/module",
-					BaseURL:       "public/plugins/test-app",
+					Module:        "/public/plugins/test-app/module.js",
+					BaseURL:       "/public/plugins/test-app",
+				},
+			},
+		},
+		{
+			name:  "Load a plugin with app sub url set",
+			class: plugins.ClassExternal,
+			cfg: &config.Cfg{
+				DevMode:          true,
+				GrafanaAppSubURL: "grafana",
+			},
+			pluginPaths: []string{"../testdata/unsigned-datasource"},
+			want: []*plugins.Plugin{
+				{
+					JSONData: plugins.JSONData{
+						ID:   "test-datasource",
+						Type: plugins.TypeDataSource,
+						Name: "Test",
+						Info: plugins.Info{
+							Author: plugins.InfoLink{
+								Name: "Grafana Labs",
+								URL:  "https://grafana.com",
+							},
+							Logos: plugins.Logos{
+								Small: "/grafana/public/img/icn-datasource.svg",
+								Large: "/grafana/public/img/icn-datasource.svg",
+							},
+							Description: "Test",
+						},
+						Dependencies: plugins.Dependencies{
+							GrafanaVersion: "*",
+							Plugins:        []plugins.Dependency{},
+						},
+						Backend: true,
+						State:   plugins.ReleaseStateAlpha,
+					},
+					Class:     plugins.ClassExternal,
+					Module:    "/grafana/public/plugins/test-datasource/module.js",
+					BaseURL:   "/grafana/public/plugins/test-datasource",
+					FS:        mustNewStaticFSForTests(t, filepath.Join(parentDir, "testdata/unsigned-datasource/plugin")),
+					Signature: plugins.SignatureStatusUnsigned,
 				},
 			},
 		},
 	}
 	for _, tt := range tests {
-		angularInspector, err := angularinspector.NewStaticInspector()
-		require.NoError(t, err)
-
-		l := New(tt.cfg, signature.NewUnsignedAuthorizer(tt.cfg), fakes.NewFakePluginRegistry(),
-			fakes.NewFakeProcessManager(), fakes.NewFakeRoleRegistry(),
-			assetpath.ProvideService(pluginscdn.ProvideService(tt.cfg)), angularInspector, &fakes.FakeOauthService{},
-			discovery.New(tt.cfg, discovery.Opts{}), bootstrap.New(tt.cfg, bootstrap.Opts{}),
-			initialization.New(tt.cfg, initialization.Opts{}))
-
 		t.Run(tt.name, func(t *testing.T) {
+			terminationStage, err := termination.New(tt.cfg, termination.Opts{})
+			require.NoError(t, err)
+
+			l := New(discovery.New(tt.cfg, discovery.Opts{}), bootstrap.New(tt.cfg, bootstrap.Opts{}),
+				validation.New(tt.cfg, validation.Opts{}), initialization.New(tt.cfg, initialization.Opts{}),
+				terminationStage)
+
 			got, err := l.Load(context.Background(), sources.NewLocalSource(tt.class, tt.pluginPaths))
 			require.NoError(t, err)
 			if !cmp.Equal(got, tt.want, compareOpts...) {
 				t.Fatalf("Result mismatch (-want +got):\n%s", cmp.Diff(got, tt.want, compareOpts...))
-			}
-
-			pluginErrs := l.PluginErrors()
-			require.Equal(t, len(tt.pluginErrors), len(pluginErrs))
-			for _, pluginErr := range pluginErrs {
-				require.Equal(t, tt.pluginErrors[pluginErr.PluginID], pluginErr)
 			}
 		})
 	}
@@ -468,51 +469,84 @@ func TestLoader_Load(t *testing.T) {
 				return plugins.Signature{}, false
 			},
 		}
-		pJSON := plugins.JSONData{ID: "test-datasource", Type: plugins.TypeDataSource, Info: plugins.Info{Version: "1.0.0"}}
-		p := &plugins.Plugin{
-			JSONData:      pJSON,
+		pluginJSON := plugins.JSONData{ID: "test-datasource", Type: plugins.TypeDataSource, Info: plugins.Info{Version: "1.0.0"}}
+		plugin := &plugins.Plugin{
+			JSONData:      pluginJSON,
 			Signature:     plugins.SignatureStatusValid,
 			SignatureType: plugins.SignatureTypeCommunity,
 			FS:            plugins.NewFakeFS(),
 		}
 
-		cfg := &config.Cfg{}
-		angularInspector, err := angularinspector.NewStaticInspector()
-		require.NoError(t, err)
-
 		var steps []string
-		l := New(cfg, signature.NewUnsignedAuthorizer(cfg), fakes.NewFakePluginRegistry(), fakes.NewFakeProcessManager(),
-			fakes.NewFakeRoleRegistry(), assetpath.ProvideService(pluginscdn.ProvideService(cfg)),
-			angularInspector, &fakes.FakeOauthService{},
+		l := New(
 			&fakes.FakeDiscoverer{
 				DiscoverFunc: func(ctx context.Context, s plugins.PluginSource) ([]*plugins.FoundBundle, error) {
 					require.Equal(t, src, s)
 					steps = append(steps, "discover")
-					return []*plugins.FoundBundle{{Primary: plugins.FoundPlugin{JSONData: pJSON}}}, nil
+					return []*plugins.FoundBundle{{Primary: plugins.FoundPlugin{JSONData: pluginJSON}}}, nil
 				},
 			}, &fakes.FakeBootstrapper{
 				BootstrapFunc: func(ctx context.Context, s plugins.PluginSource, b []*plugins.FoundBundle) ([]*plugins.Plugin, error) {
 					require.True(t, len(b) == 1)
-					require.Equal(t, b[0].Primary.JSONData, pJSON)
+					require.Equal(t, b[0].Primary.JSONData, pluginJSON)
 					require.Equal(t, src, s)
 
 					steps = append(steps, "bootstrap")
-					return []*plugins.Plugin{p}, nil
+					return []*plugins.Plugin{plugin}, nil
 				},
-			}, &fakes.FakeInitializer{
+			}, &fakes.FakeValidator{ValidateFunc: func(ctx context.Context, ps []*plugins.Plugin) ([]*plugins.Plugin, error) {
+				require.Equal(t, []*plugins.Plugin{plugin}, ps)
+
+				steps = append(steps, "validate")
+				return ps, nil
+			}},
+			&fakes.FakeInitializer{
 				IntializeFunc: func(ctx context.Context, ps []*plugins.Plugin) ([]*plugins.Plugin, error) {
 					require.True(t, len(ps) == 1)
-					require.Equal(t, ps[0].JSONData, pJSON)
+					require.Equal(t, ps[0].JSONData, pluginJSON)
 					steps = append(steps, "initialize")
 					return ps, nil
 				},
-			})
+			}, &fakes.FakeTerminator{})
 
 		got, err := l.Load(context.Background(), src)
 		require.NoError(t, err)
-		require.Equal(t, []*plugins.Plugin{p}, got)
-		require.Equal(t, []string{"discover", "bootstrap", "initialize"}, steps)
-		require.Zero(t, len(l.PluginErrors()))
+		require.Equal(t, []*plugins.Plugin{plugin}, got)
+		require.Equal(t, []string{"discover", "bootstrap", "validate", "initialize"}, steps)
+	})
+}
+
+func TestLoader_Unload(t *testing.T) {
+	t.Run("Termination stage error is returned from Unload", func(t *testing.T) {
+		plugin := &plugins.Plugin{
+			JSONData: plugins.JSONData{ID: "test-datasource", Type: plugins.TypeDataSource, Info: plugins.Info{Version: "1.0.0"}},
+		}
+		tcs := []struct {
+			expectedErr error
+		}{
+			{
+				expectedErr: errors.New("plugin not found"),
+			},
+			{
+				expectedErr: nil,
+			},
+		}
+
+		for _, tc := range tcs {
+			l := New(&fakes.FakeDiscoverer{},
+				&fakes.FakeBootstrapper{},
+				&fakes.FakeValidator{},
+				&fakes.FakeInitializer{},
+				&fakes.FakeTerminator{
+					TerminateFunc: func(ctx context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
+						require.Equal(t, plugin, p)
+						return p, tc.expectedErr
+					},
+				})
+
+			_, err := l.Unload(context.Background(), plugin)
+			require.ErrorIs(t, err, tc.expectedErr)
+		}
 	})
 }
 

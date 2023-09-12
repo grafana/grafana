@@ -1,5 +1,7 @@
 import { AdHocVariableFilter, DataQuery, DataSourceJsonData } from '@grafana/data';
 
+export const DEFAULT_POLICY = 'default';
+
 export enum InfluxVersion {
   InfluxQL = 'InfluxQL',
   Flux = 'Flux',

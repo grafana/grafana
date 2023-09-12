@@ -1,9 +1,14 @@
 import React, { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
-import { applyFieldOverrides, TimeZone, SplitOpen, DataFrame, LoadingState } from '@grafana/data';
+import { applyFieldOverrides, TimeZone, SplitOpen, DataFrame, LoadingState, FieldType } from '@grafana/data';
+import { getTemplateSrv } from '@grafana/runtime';
 import { Table, AdHocFilterItem, PanelChrome } from '@grafana/ui';
 import { config } from 'app/core/config';
+import {
+  hasDeprecatedParentRowIndex,
+  migrateFromParentRowIndexToNestedFrames,
+} from 'app/plugins/panel/table/migrations';
 import { StoreState } from 'app/types';
 import { ExploreItemState } from 'app/types/explore';
 
@@ -34,11 +39,9 @@ const connector = connect(mapStateToProps, {});
 type Props = TableContainerProps & ConnectedProps<typeof connector>;
 
 export class TableContainer extends PureComponent<Props> {
-  getMainFrames(frames: DataFrame[] | null) {
-    return frames?.filter((df) => df.meta?.custom?.parentRowIndex === undefined) || [frames?.[0]];
-  }
+  hasSubFrames = (data: DataFrame) => data.fields.some((f) => f.type === FieldType.nestedFrames);
 
-  getTableHeight(rowCount: number, hasSubFrames = true) {
+  getTableHeight(rowCount: number, hasSubFrames: boolean) {
     if (rowCount === 0) {
       return 200;
     }
@@ -50,8 +53,9 @@ export class TableContainer extends PureComponent<Props> {
   render() {
     const { loading, onCellFilterAdded, tableResult, width, splitOpenFn, range, ariaLabel, timeZone } = this.props;
 
-    let dataFrames = tableResult;
-
+    let dataFrames = hasDeprecatedParentRowIndex(tableResult)
+      ? migrateFromParentRowIndexToNestedFrames(tableResult)
+      : tableResult;
     const dataLinkPostProcessor = exploreDataLinkPostProcessorFactory(splitOpenFn, range);
 
     if (dataFrames?.length) {
@@ -59,7 +63,7 @@ export class TableContainer extends PureComponent<Props> {
         data: dataFrames,
         timeZone,
         theme: config.theme2,
-        replaceVariables: (v: string) => v,
+        replaceVariables: getTemplateSrv().replace.bind(getTemplateSrv()),
         fieldConfig: {
           defaults: {},
           overrides: [],
@@ -68,40 +72,31 @@ export class TableContainer extends PureComponent<Props> {
       });
     }
 
-    // move dataframes to be grouped by table, with optional sub-tables for a row
-    const tableData: Array<{ main: DataFrame; sub?: DataFrame[] }> = [];
-    const mainFrames = this.getMainFrames(dataFrames).filter(
+    const frames = dataFrames?.filter(
       (frame: DataFrame | undefined): frame is DataFrame => !!frame && frame.length !== 0
     );
 
-    mainFrames?.forEach((frame) => {
-      const subFrames =
-        dataFrames?.filter((df) => frame.refId === df.refId && df.meta?.custom?.parentRowIndex !== undefined) ||
-        undefined;
-      tableData.push({ main: frame, sub: subFrames });
-    });
-
     return (
       <>
-        {tableData.length === 0 && (
+        {frames && frames.length === 0 && (
           <PanelChrome title={'Table'} width={width} height={200}>
             {() => <MetaInfoText metaItems={[{ value: '0 series returned' }]} />}
           </PanelChrome>
         )}
-        {tableData.length > 0 &&
-          tableData.map((data, i) => (
+        {frames &&
+          frames.length > 0 &&
+          frames.map((data, i) => (
             <PanelChrome
-              key={data.main.refId || `table-${i}`}
-              title={tableData.length > 1 ? `Table - ${data.main.name || data.main.refId || i}` : 'Table'}
+              key={data.refId || `table-${i}`}
+              title={dataFrames && dataFrames.length > 1 ? `Table - ${data.name || data.refId || i}` : 'Table'}
               width={width}
-              height={this.getTableHeight(data.main.length, (data.sub?.length || 0) > 0)}
+              height={this.getTableHeight(data.length, this.hasSubFrames(data))}
               loadingState={loading ? LoadingState.Loading : undefined}
             >
               {(innerWidth, innerHeight) => (
                 <Table
                   ariaLabel={ariaLabel}
-                  data={data.main}
-                  subData={data.sub}
+                  data={data}
                   width={innerWidth}
                   height={innerHeight}
                   onCellFilterAdded={onCellFilterAdded}

@@ -40,7 +40,7 @@ func (i *FakePluginInstaller) Remove(ctx context.Context, pluginID string) error
 
 type FakeLoader struct {
 	LoadFunc   func(_ context.Context, _ plugins.PluginSource) ([]*plugins.Plugin, error)
-	UnloadFunc func(_ context.Context, _ string) error
+	UnloadFunc func(_ context.Context, _ *plugins.Plugin) (*plugins.Plugin, error)
 }
 
 func (l *FakeLoader) Load(ctx context.Context, src plugins.PluginSource) ([]*plugins.Plugin, error) {
@@ -50,11 +50,11 @@ func (l *FakeLoader) Load(ctx context.Context, src plugins.PluginSource) ([]*plu
 	return nil, nil
 }
 
-func (l *FakeLoader) Unload(ctx context.Context, pluginID string) error {
+func (l *FakeLoader) Unload(ctx context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
 	if l.UnloadFunc != nil {
-		return l.UnloadFunc(ctx, pluginID)
+		return l.UnloadFunc(ctx, p)
 	}
-	return nil
+	return nil, nil
 }
 
 type FakePluginClient struct {
@@ -248,8 +248,8 @@ func (s *FakePluginStorage) Extract(ctx context.Context, pluginID string, dirNam
 }
 
 type FakeProcessManager struct {
-	StartFunc func(_ context.Context, pluginID string) error
-	StopFunc  func(_ context.Context, pluginID string) error
+	StartFunc func(_ context.Context, p *plugins.Plugin) error
+	StopFunc  func(_ context.Context, p *plugins.Plugin) error
 	Started   map[string]int
 	Stopped   map[string]int
 }
@@ -261,18 +261,18 @@ func NewFakeProcessManager() *FakeProcessManager {
 	}
 }
 
-func (m *FakeProcessManager) Start(ctx context.Context, pluginID string) error {
-	m.Started[pluginID]++
+func (m *FakeProcessManager) Start(ctx context.Context, p *plugins.Plugin) error {
+	m.Started[p.ID]++
 	if m.StartFunc != nil {
-		return m.StartFunc(ctx, pluginID)
+		return m.StartFunc(ctx, p)
 	}
 	return nil
 }
 
-func (m *FakeProcessManager) Stop(ctx context.Context, pluginID string) error {
-	m.Stopped[pluginID]++
+func (m *FakeProcessManager) Stop(ctx context.Context, p *plugins.Plugin) error {
+	m.Stopped[p.ID]++
 	if m.StopFunc != nil {
-		return m.StopFunc(ctx, pluginID)
+		return m.StopFunc(ctx, p)
 	}
 	return nil
 }
@@ -290,7 +290,7 @@ func NewFakeBackendProcessProvider() *FakeBackendProcessProvider {
 	}
 	f.BackendFactoryFunc = func(ctx context.Context, p *plugins.Plugin) backendplugin.PluginFactoryFunc {
 		f.Requested[p.ID]++
-		return func(pluginID string, _ log.Logger, _ []string) (backendplugin.Plugin, error) {
+		return func(pluginID string, _ log.Logger, _ func() []string) (backendplugin.Plugin, error) {
 			f.Invoked[pluginID]++
 			return &FakePluginClient{}, nil
 		}
@@ -433,37 +433,6 @@ func (f *FakeOauthService) RegisterExternalService(ctx context.Context, name str
 	return f.Result, nil
 }
 
-type FakePluginStore struct {
-	PluginList []plugins.PluginDTO
-}
-
-func (pr *FakePluginStore) Plugin(_ context.Context, pluginID string) (plugins.PluginDTO, bool) {
-	for _, v := range pr.PluginList {
-		if v.ID == pluginID {
-			return v, true
-		}
-	}
-
-	return plugins.PluginDTO{}, false
-}
-
-func (pr *FakePluginStore) Plugins(_ context.Context, pluginTypes ...plugins.Type) []plugins.PluginDTO {
-	var result []plugins.PluginDTO
-	if len(pluginTypes) == 0 {
-		pluginTypes = plugins.PluginTypes
-	}
-
-	for _, v := range pr.PluginList {
-		for _, t := range pluginTypes {
-			if v.Type == t {
-				result = append(result, v)
-			}
-		}
-	}
-
-	return result
-}
-
 type FakeDiscoverer struct {
 	DiscoverFunc func(ctx context.Context, src plugins.PluginSource) ([]*plugins.FoundBundle, error)
 }
@@ -486,6 +455,17 @@ func (f *FakeBootstrapper) Bootstrap(ctx context.Context, src plugins.PluginSour
 	return []*plugins.Plugin{}, nil
 }
 
+type FakeValidator struct {
+	ValidateFunc func(ctx context.Context, ps []*plugins.Plugin) ([]*plugins.Plugin, error)
+}
+
+func (f *FakeValidator) Validate(ctx context.Context, ps []*plugins.Plugin) ([]*plugins.Plugin, error) {
+	if f.ValidateFunc != nil {
+		return f.ValidateFunc(ctx, ps)
+	}
+	return []*plugins.Plugin{}, nil
+}
+
 type FakeInitializer struct {
 	IntializeFunc func(ctx context.Context, ps []*plugins.Plugin) ([]*plugins.Plugin, error)
 }
@@ -495,4 +475,109 @@ func (f *FakeInitializer) Initialize(ctx context.Context, ps []*plugins.Plugin) 
 		return f.IntializeFunc(ctx, ps)
 	}
 	return []*plugins.Plugin{}, nil
+}
+
+type FakeTerminator struct {
+	TerminateFunc func(ctx context.Context, p *plugins.Plugin) (*plugins.Plugin, error)
+}
+
+func (f *FakeTerminator) Terminate(ctx context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
+	if f.TerminateFunc != nil {
+		return f.TerminateFunc(ctx, p)
+	}
+	return nil, nil
+}
+
+type FakeBackendPlugin struct {
+	Managed bool
+
+	StartCount     int
+	StopCount      int
+	Decommissioned bool
+	Running        bool
+
+	// ExitedCheckDoneOrStopped is used to signal that the Exited() or Stop() method has been called.
+	ExitedCheckDoneOrStopped chan struct{}
+
+	mutex sync.RWMutex
+	backendplugin.Plugin
+}
+
+func NewFakeBackendPlugin(managed bool) *FakeBackendPlugin {
+	return &FakeBackendPlugin{
+		Managed:                  managed,
+		ExitedCheckDoneOrStopped: make(chan struct{}),
+	}
+}
+
+func (p *FakeBackendPlugin) Start(_ context.Context) error {
+	p.mutex.Lock()
+	defer p.mutex.Unlock()
+	p.Running = true
+	p.StartCount++
+	return nil
+}
+
+func (p *FakeBackendPlugin) Stop(_ context.Context) error {
+	p.mutex.Lock()
+	defer p.mutex.Unlock()
+	p.Running = false
+	p.StopCount++
+	go func() { p.ExitedCheckDoneOrStopped <- struct{}{} }()
+	return nil
+}
+
+func (p *FakeBackendPlugin) Decommission() error {
+	p.mutex.Lock()
+	defer p.mutex.Unlock()
+	p.Decommissioned = true
+	return nil
+}
+
+func (p *FakeBackendPlugin) IsDecommissioned() bool {
+	p.mutex.RLock()
+	defer p.mutex.RUnlock()
+	return p.Decommissioned
+}
+
+func (p *FakeBackendPlugin) IsManaged() bool {
+	p.mutex.RLock()
+	defer p.mutex.RUnlock()
+	return p.Managed
+}
+
+func (p *FakeBackendPlugin) Exited() bool {
+	p.mutex.RLock()
+	defer p.mutex.RUnlock()
+	go func() { p.ExitedCheckDoneOrStopped <- struct{}{} }()
+	return !p.Running
+}
+
+func (p *FakeBackendPlugin) Kill() {
+	p.mutex.Lock()
+	defer p.mutex.Unlock()
+	p.Running = false
+}
+
+type FakeFeatureToggles struct {
+	features map[string]bool
+}
+
+func NewFakeFeatureToggles(features ...string) *FakeFeatureToggles {
+	m := make(map[string]bool)
+	for _, f := range features {
+		m[f] = true
+	}
+
+	return &FakeFeatureToggles{
+		features: m,
+	}
+}
+
+func (f *FakeFeatureToggles) GetEnabled(_ context.Context) map[string]bool {
+	return f.features
+}
+
+func (f *FakeFeatureToggles) IsEnabled(feature string) bool {
+	return f.features[feature]
 }

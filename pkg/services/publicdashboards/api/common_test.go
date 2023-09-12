@@ -16,18 +16,17 @@ import (
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
-	pluginFakes "github.com/grafana/grafana/pkg/plugins/manager/fakes"
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	fakeDatasources "github.com/grafana/grafana/pkg/services/datasources/fakes"
+	"github.com/grafana/grafana/pkg/services/datasources/guardian"
 	datasourceService "github.com/grafana/grafana/pkg/services/datasources/service"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	pluginSettings "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings/service"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	"github.com/grafana/grafana/pkg/services/query"
 	fakeSecrets "github.com/grafana/grafana/pkg/services/secrets/fakes"
@@ -47,19 +46,6 @@ func setupTestServer(
 	// build router to register routes
 	rr := routing.NewRouteRegister()
 
-	var permissions []accesscontrol.Permission
-	if user != nil && user.Permissions != nil {
-		for action, scopes := range user.Permissions[user.OrgID] {
-			for _, scope := range scopes {
-				permissions = append(permissions, accesscontrol.Permission{
-					Action: action,
-					Scope:  scope,
-				})
-			}
-		}
-	}
-
-	acService := actest.FakeService{ExpectedPermissions: permissions, ExpectedDisabled: !cfg.RBACEnabled}
 	ac := acimpl.ProvideAccessControl(cfg)
 
 	// build mux
@@ -67,7 +53,6 @@ func setupTestServer(
 
 	// set initial context
 	m.Use(contextProvider(&testContext{user}))
-	m.Use(accesscontrol.LoadPermissionsMiddleware(acService))
 
 	// build api, this will mount the routes at the same time if
 	// featuremgmt.FlagPublicDashboard is enabled
@@ -116,7 +101,7 @@ func buildQueryDataService(t *testing.T, cs datasources.CacheService, fpc *fakeP
 
 	// default cache service
 	if cs == nil {
-		cs = datasourceService.ProvideCacheService(localcache.ProvideService(), store)
+		cs = datasourceService.ProvideCacheService(localcache.ProvideService(), store, guardian.ProvideGuardian())
 	}
 
 	// default fakePluginClient
@@ -134,8 +119,8 @@ func buildQueryDataService(t *testing.T, cs datasources.CacheService, fpc *fakeP
 	}
 
 	ds := &fakeDatasources.FakeDataSourceService{}
-	pCtxProvider := plugincontext.ProvideService(localcache.ProvideService(), &pluginFakes.FakePluginStore{
-		PluginList: []plugins.PluginDTO{
+	pCtxProvider := plugincontext.ProvideService(localcache.ProvideService(), &pluginstore.FakePluginStore{
+		PluginList: []pluginstore.Plugin{
 			{
 				JSONData: plugins.JSONData{
 					ID: "mysql",

@@ -19,7 +19,6 @@ import { GrafanaTheme2, LinkModel, TimeZone } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
 import { stylesFactory, withTheme2 } from '@grafana/ui';
 
-import { Accessors } from '../ScrollManager';
 import { autoColor } from '../Theme';
 import { merge as mergeShortcuts } from '../keyboard-shortcuts';
 import { SpanBarOptions } from '../settings/SpanBarSettings';
@@ -68,7 +67,6 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
 });
 
 export type TProps = {
-  registerAccessors: (accessors: Accessors) => void;
   findMatchesIDs: Set<string> | TNil;
   traceTimeline: TTraceTimeline;
   trace: Trace;

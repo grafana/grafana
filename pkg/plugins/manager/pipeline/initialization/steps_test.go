@@ -28,7 +28,7 @@ func TestInitializer_Initialize(t *testing.T) {
 			Class: plugins.ClassCore,
 		}
 
-		stepFunc := NewBackendClientInitStep(&fakeEnvVarsProvider{}, &fakeBackendProvider{plugin: p})
+		stepFunc := BackendClientInitStep(&fakeEnvVarsProvider{}, &fakeBackendProvider{plugin: p})
 
 		var err error
 		p, err = stepFunc(context.Background(), p)
@@ -52,7 +52,7 @@ func TestInitializer_Initialize(t *testing.T) {
 			Class: plugins.ClassExternal,
 		}
 
-		stepFunc := NewBackendClientInitStep(&fakeEnvVarsProvider{}, &fakeBackendProvider{plugin: p})
+		stepFunc := BackendClientInitStep(&fakeEnvVarsProvider{}, &fakeBackendProvider{plugin: p})
 
 		var err error
 		p, err = stepFunc(context.Background(), p)
@@ -76,7 +76,7 @@ func TestInitializer_Initialize(t *testing.T) {
 			Class: plugins.ClassExternal,
 		}
 
-		stepFunc := NewBackendClientInitStep(&fakeEnvVarsProvider{}, &fakeBackendProvider{plugin: p})
+		stepFunc := BackendClientInitStep(&fakeEnvVarsProvider{}, &fakeBackendProvider{plugin: p})
 
 		var err error
 		p, err = stepFunc(context.Background(), p)
@@ -94,7 +94,7 @@ func TestInitializer_Initialize(t *testing.T) {
 			},
 		}
 
-		i := NewBackendClientInitStep(&fakeEnvVarsProvider{}, &fakeBackendProvider{
+		i := BackendClientInitStep(&fakeEnvVarsProvider{}, &fakeBackendProvider{
 			plugin: p,
 		})
 
@@ -115,7 +115,7 @@ type fakeBackendProvider struct {
 }
 
 func (f *fakeBackendProvider) BackendFactory(_ context.Context, _ *plugins.Plugin) backendplugin.PluginFactoryFunc {
-	return func(_ string, _ log.Logger, _ []string) (backendplugin.Plugin, error) {
+	return func(_ string, _ log.Logger, _ func() []string) (backendplugin.Plugin, error) {
 		return f.plugin, nil
 	}
 }
@@ -124,9 +124,9 @@ type fakeEnvVarsProvider struct {
 	GetFunc func(ctx context.Context, p *plugins.Plugin) []string
 }
 
-func (f *fakeEnvVarsProvider) Get(ctx context.Context, p *plugins.Plugin) ([]string, error) {
+func (f *fakeEnvVarsProvider) Get(ctx context.Context, p *plugins.Plugin) []string {
 	if f.GetFunc != nil {
-		return f.GetFunc(ctx, p), nil
+		return f.GetFunc(ctx, p)
 	}
-	return nil, nil
+	return nil
 }

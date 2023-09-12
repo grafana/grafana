@@ -15,6 +15,7 @@ type Base struct {
 	messageID     string
 	publicMessage string
 	logLevel      LogLevel
+	source        Source
 }
 
 // NewBase initializes a [Base] that is used to construct [Error].
@@ -32,6 +33,7 @@ func NewBase(reason StatusReason, msgID string, opts ...BaseOpt) Base {
 		reason:    reason,
 		messageID: msgID,
 		logLevel:  reason.Status().LogLevel(),
+		source:    SourceServer,
 	}
 
 	for _, opt := range opts {
@@ -39,6 +41,134 @@ func NewBase(reason StatusReason, msgID string, opts ...BaseOpt) Base {
 	}
 
 	return b
+}
+
+// NotFound initializes a new [Base] error with reason StatusNotFound
+// that is used to construct [Error]. The msgID is passed to the caller
+// to serve as the base for user facing error messages.
+//
+// msgID should be structured as component.errorBrief, for example
+//
+//	folder.notFound
+//	plugin.notRegistered
+func NotFound(msgID string, opts ...BaseOpt) Base {
+	return NewBase(StatusNotFound, msgID, opts...)
+}
+
+// BadRequest initializes a new [Base] error with reason StatusBadRequest
+// that is used to construct [Error]. The msgID is passed to the caller
+// to serve as the base for user facing error messages.
+//
+// msgID should be structured as component.errorBrief, for example
+//
+//	query.invalidDatasourceId
+//	sse.dataQueryError
+func BadRequest(msgID string, opts ...BaseOpt) Base {
+	return NewBase(StatusBadRequest, msgID, opts...)
+}
+
+// ValidationFailed initializes a new [Base] error with reason StatusValidationFailed
+// that is used to construct [Error]. The msgID is passed to the caller
+// to serve as the base for user facing error messages.
+//
+// msgID should be structured as component.errorBrief, for example
+//
+//	datasource.nameInvalid
+//	datasource.urlInvalid
+//	serviceaccounts.errInvalidInput
+func ValidationFailed(msgID string, opts ...BaseOpt) Base {
+	return NewBase(StatusValidationFailed, msgID, opts...)
+}
+
+// Internal initializes a new [Base] error with reason StatusInternal
+// that is used to construct [Error]. The msgID is passed to the caller
+// to serve as the base for user facing error messages.
+//
+// msgID should be structured as component.errorBrief, for example
+//
+//	sqleng.connectionError
+//	plugin.downstreamError
+func Internal(msgID string, opts ...BaseOpt) Base {
+	return NewBase(StatusInternal, msgID, opts...)
+}
+
+// Timeout initializes a new [Base] error with reason StatusTimeout.
+//
+//	area.timeout
+func Timeout(msgID string, opts ...BaseOpt) Base {
+	return NewBase(StatusTimeout, msgID, opts...)
+}
+
+// Unauthorized initializes a new [Base] error with reason StatusUnauthorized
+// that is used to construct [Error]. The msgID is passed to the caller
+// to serve as the base for user facing error messages.
+//
+// msgID should be structured as component.errorBrief, for example
+//
+//	auth.unauthorized
+func Unauthorized(msgID string, opts ...BaseOpt) Base {
+	return NewBase(StatusUnauthorized, msgID, opts...)
+}
+
+// Forbidden initializes a new [Base] error with reason StatusForbidden
+// that is used to construct [Error]. The msgID is passed to the caller
+// to serve as the base for user facing error messages.
+//
+// msgID should be structured as component.errorBrief, for example
+//
+//	quota.disabled
+//	user.sync.forbidden
+func Forbidden(msgID string, opts ...BaseOpt) Base {
+	return NewBase(StatusForbidden, msgID, opts...)
+}
+
+// TooManyRequests initializes a new [Base] error with reason StatusTooManyRequests
+// that is used to construct [Error]. The msgID is passed to the caller
+// to serve as the base for user facing error messages.
+//
+// msgID should be structured as component.errorBrief, for example
+//
+//	area.tooManyRequests
+func TooManyRequests(msgID string, opts ...BaseOpt) Base {
+	return NewBase(StatusTooManyRequests, msgID, opts...)
+}
+
+// NotImplemented initializes a new [Base] error with reason StatusNotImplemented
+// that is used to construct [Error]. The msgID is passed to the caller
+// to serve as the base for user facing error messages.
+//
+// msgID should be structured as component.errorBrief, for example
+//
+//	plugin.notImplemented
+//	auth.identity.unsupported
+func NotImplemented(msgID string, opts ...BaseOpt) Base {
+	return NewBase(StatusNotImplemented, msgID, opts...)
+}
+
+// BadGateway initializes a new [Base] error with reason StatusBadGateway
+// and source SourceDownstream that is used to construct [Error]. The msgID
+// is passed to the caller to serve as the base for user facing error messages.
+//
+// msgID should be structured as component.errorBrief, for example
+//
+//	area.downstreamError
+func BadGateway(msgID string, opts ...BaseOpt) Base {
+	newOpts := []BaseOpt{WithDownstream()}
+	newOpts = append(newOpts, opts...)
+	return NewBase(StatusBadGateway, msgID, newOpts...)
+}
+
+// GatewayTimeout initializes a new [Base] error with reason StatusGatewayTimeout
+// and source SourceDownstream that is used to construct [Error]. The msgID
+// is passed to the caller to serve as the base for user facing error messages.
+//
+// msgID should be structured as component.errorBrief, for example
+//
+//	area.downstreamTimeout
+func GatewayTimeout(msgID string, opts ...BaseOpt) Base {
+	newOpts := []BaseOpt{WithDownstream()}
+	newOpts = append(newOpts, opts...)
+	return NewBase(StatusGatewayTimeout, msgID, newOpts...)
 }
 
 type BaseOpt func(Base) Base
@@ -65,10 +195,21 @@ func WithPublicMessage(message string) BaseOpt {
 	}
 }
 
+// WithDownstream sets the source as SourceDownstream that will be used
+// for errors based on this [Base].
+//
+// Used as a functional option to [NewBase].
+func WithDownstream() BaseOpt {
+	return func(b Base) Base {
+		b.source = SourceDownstream
+		return b
+	}
+}
+
 // Errorf creates a new [Error] with Reason and MessageID from [Base],
 // and Message and Underlying will be populated using the rules of
 // [fmt.Errorf].
-func (b Base) Errorf(format string, args ...interface{}) Error {
+func (b Base) Errorf(format string, args ...any) Error {
 	err := fmt.Errorf(format, args...)
 
 	return Error{
@@ -78,6 +219,7 @@ func (b Base) Errorf(format string, args ...interface{}) Error {
 		MessageID:     b.messageID,
 		Underlying:    errors.Unwrap(err),
 		LogLevel:      b.logLevel,
+		Source:        b.source,
 	}
 }
 
@@ -168,9 +310,11 @@ type Error struct {
 	PublicMessage string
 	// PublicPayload provides fields for passing structured data to
 	// construct localized error messages in the client.
-	PublicPayload map[string]interface{}
+	PublicPayload map[string]any
 	// LogLevel provides a suggested level of logging for the error.
 	LogLevel LogLevel
+	// Source identifies from where the error originates.
+	Source Source
 }
 
 // MarshalJSON returns an error, we do not want raw [Error]s being
@@ -225,10 +369,10 @@ func (e Error) Is(other error) bool {
 // PublicError is derived from Error and only contains information
 // available to the end user.
 type PublicError struct {
-	StatusCode int                    `json:"statusCode"`
-	MessageID  string                 `json:"messageId"`
-	Message    string                 `json:"message,omitempty"`
-	Extra      map[string]interface{} `json:"extra,omitempty"`
+	StatusCode int            `json:"statusCode"`
+	MessageID  string         `json:"messageId"`
+	Message    string         `json:"message,omitempty"`
+	Extra      map[string]any `json:"extra,omitempty"`
 }
 
 // Public returns a subset of the error with non-sensitive information

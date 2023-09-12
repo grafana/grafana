@@ -5,7 +5,6 @@ import { contextSrv } from 'app/core/core';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { AccessControlAction } from 'app/types';
 
-import { isGrafanaAdmin } from './permissions';
 import { CatalogPlugin, LocalPlugin, RemotePlugin, Version } from './types';
 
 export function mergeLocalsAndRemotes(
@@ -223,13 +222,10 @@ export const sortPlugins = (plugins: CatalogPlugin[], sortBy: Sorters) => {
 };
 
 function groupErrorsByPluginId(errors: PluginError[] = []): Record<string, PluginError | undefined> {
-  return errors.reduce(
-    (byId, error) => {
-      byId[error.pluginId] = error;
-      return byId;
-    },
-    {} as Record<string, PluginError | undefined>
-  );
+  return errors.reduce<Record<string, PluginError | undefined>>((byId, error) => {
+    byId[error.pluginId] = error;
+    return byId;
+  }, {});
 }
 
 function getPluginSignature(options: {
@@ -254,7 +250,7 @@ function getPluginSignature(options: {
     return local.signature;
   }
 
-  if (remote?.signatureType || remote?.versionSignatureType) {
+  if (remote?.signatureType && remote?.versionSignatureType) {
     return PluginSignatureStatus.valid;
   }
 
@@ -286,7 +282,7 @@ export const hasInstallControlWarning = (
   latestCompatibleVersion?: Version
 ) => {
   const isExternallyManaged = config.pluginAdminExternalManageEnabled;
-  const hasPermission = contextSrv.hasAccess(AccessControlAction.PluginsInstall, isGrafanaAdmin());
+  const hasPermission = contextSrv.hasPermission(AccessControlAction.PluginsInstall);
   const isCompatible = Boolean(latestCompatibleVersion);
   return (
     plugin.type === PluginType.renderer ||

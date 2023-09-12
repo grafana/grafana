@@ -47,11 +47,11 @@ You can use this variable type to specify any number of key/value filters, and G
 
 For more information, refer to [Add ad hoc filters][add-template-variables-add-ad-hoc-filters].
 
-## Use interval and range variables
+## Use $\_\_auto variable for Loki metric queries
 
-You can use some global built-in variables in query variables: `$__interval`, `$__interval_ms`, `$__range`, `$__range_s`, and `$__range_ms`.
+Consider using the `$__auto` variable in your Loki metric queries, which will automatically be substituted with the [step value](https://grafana.com/docs/grafana/next/datasources/loki/query-editor/#options) for range queries, and with the selected time range's value (computed from the starting and ending times) for instant queries.
 
-For more information, refer to [Global built-in variables][add-template-variables-global-variables].
+For more information about variables, refer to [Global built-in variables][add-template-variables-global-variables].
 
 ## Label extraction and indexing in Loki
 

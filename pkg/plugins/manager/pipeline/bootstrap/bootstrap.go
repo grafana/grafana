@@ -48,7 +48,7 @@ func New(cfg *config.Cfg, opts Opts) *Bootstrap {
 	}
 
 	if opts.DecorateFuncs == nil {
-		opts.DecorateFuncs = DefaultDecorateFuncs
+		opts.DecorateFuncs = DefaultDecorateFuncs(cfg)
 	}
 
 	return &Bootstrap{
@@ -65,14 +65,26 @@ func (b *Bootstrap) Bootstrap(ctx context.Context, src plugins.PluginSource, fou
 		return nil, err
 	}
 
+	if len(b.decorateSteps) == 0 {
+		return ps, nil
+	}
+
+	bootstrappedPlugins := make([]*plugins.Plugin, 0, len(ps))
 	for _, p := range ps {
-		for _, decorator := range b.decorateSteps {
-			p, err = decorator(ctx, p)
+		var ip *plugins.Plugin
+		stepFailed := false
+		for _, decorate := range b.decorateSteps {
+			ip, err = decorate(ctx, p)
 			if err != nil {
-				return nil, err
+				stepFailed = true
+				b.log.Error("Could not decorate plugin", "pluginId", p.ID, "error", err)
+				break
 			}
+		}
+		if !stepFailed {
+			bootstrappedPlugins = append(bootstrappedPlugins, ip)
 		}
 	}
 
-	return ps, nil
+	return bootstrappedPlugins, nil
 }

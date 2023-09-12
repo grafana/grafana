@@ -101,7 +101,7 @@ Grafana dashboards can easily be exported and imported. For more information, re
 You can generate and save PDF files of any dashboard.
 
 {{% admonition type="note" %}}
-Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}).
+Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}) and [Grafana Cloud](/docs/grafana-cloud/).
 {{% /admonition %}}
 
 1. Click **Dashboards** in the left-side menu.
@@ -188,6 +188,6 @@ To create a library panel from the **Share Panel** dialog:
 
 1. Click **Library panel**.
 1. In **Library panel name**, enter the name.
-1. In **Save in folder**, select the folder in which to save the library panel. By default, the General folder is selected.
+1. In **Save in folder**, select the folder in which to save the library panel. By default, the root level is selected.
 1. Click **Create library panel** to save your changes.
 1. Save the dashboard.

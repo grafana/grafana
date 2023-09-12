@@ -100,7 +100,7 @@ func TestIntegrationAlertmanagerConfigurationIsTransactional(t *testing.T) {
 		resp := postRequest(t, alertConfigURL, payload, http.StatusBadRequest) // nolint
 		b, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
-		var res map[string]interface{}
+		var res map[string]any
 		require.NoError(t, json.Unmarshal(b, &res))
 		require.Regexp(t, `^failed to save and apply Alertmanager configuration: failed to validate integration "slack.receiver" \(UID [^\)]+\) of type "slack": token must be specified when using the Slack chat API`, res["message"])
 		resp = getRequest(t, alertConfigURL, http.StatusOK) // nolint
@@ -223,7 +223,7 @@ func TestIntegrationAlertmanagerConfigurationPersistSecrets(t *testing.T) {
 
 		resp := postRequest(t, alertConfigURL, payload, http.StatusBadRequest) // nolint
 		s := getBody(t, resp.Body)
-		var res map[string]interface{}
+		var res map[string]any
 		require.NoError(t, json.Unmarshal([]byte(s), &res))
 		require.Equal(t, "unknown receiver: invalid", res["message"])
 	}

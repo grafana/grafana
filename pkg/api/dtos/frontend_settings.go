@@ -111,6 +111,7 @@ type FrontendSettingsWhitelabelingDTO struct {
 	LoginSubtitle         *string                                         `json:"loginSubtitle,omitempty"`
 	LoginBoxBackground    *string                                         `json:"loginBoxBackground,omitempty"`
 	LoadingLogo           *string                                         `json:"loadingLogo,omitempty"`
+	HideEdition           *bool                                           `json:"hideEdition,omitempty"`
 	PublicDashboardFooter *FrontendSettingsPublicDashboardFooterConfigDTO `json:"publicDashboardFooter,omitempty"` // PR TODO: type this properly
 }
 
@@ -208,15 +209,15 @@ type FrontendSettingsDTO struct {
 	Reporting               FrontendSettingsReportingDTO       `json:"reporting"`
 	UnifiedAlertingEnabled  bool                               `json:"unifiedAlertingEnabled"`
 	UnifiedAlerting         FrontendSettingsUnifiedAlertingDTO `json:"unifiedAlerting"`
-	Oauth                   map[string]interface{}             `json:"oauth"`
+	Oauth                   map[string]any                     `json:"oauth"`
 	SamlEnabled             bool                               `json:"samlEnabled"`
 	SamlName                string                             `json:"samlName"`
 	TokenExpirationDayLimit int                                `json:"tokenExpirationDayLimit"`
 
-	GeomapDefaultBaseLayerConfig *map[string]interface{} `json:"geomapDefaultBaseLayerConfig,omitempty"`
-	GeomapDisableCustomBaseLayer bool                    `json:"geomapDisableCustomBaseLayer"`
+	GeomapDefaultBaseLayerConfig *map[string]any `json:"geomapDefaultBaseLayerConfig,omitempty"`
+	GeomapDisableCustomBaseLayer bool            `json:"geomapDisableCustomBaseLayer"`
 
-	IsPublicDashboardView bool `json:"isPublicDashboardView"`
+	PublicDashboardAccessToken string `json:"publicDashboardAccessToken"`
 
 	DateFormats setting.DateFormats `json:"dateFormats,omitempty"`
 

@@ -272,7 +272,7 @@ func Test_seriesToDataFrame(t *testing.T) {
 }
 
 type FakeClient struct {
-	Args []interface{}
+	Args []any
 }
 
 func (f *FakeClient) ProfileTypes(ctx context.Context) ([]*ProfileType, error) {
@@ -313,7 +313,7 @@ func (f *FakeClient) GetProfile(ctx context.Context, profileTypeID, labelSelecto
 }
 
 func (f *FakeClient) GetSeries(ctx context.Context, profileTypeID, labelSelector string, start, end int64, groupBy []string, step float64) (*SeriesResponse, error) {
-	f.Args = []interface{}{profileTypeID, labelSelector, start, end, groupBy, step}
+	f.Args = []any{profileTypeID, labelSelector, start, end, groupBy, step}
 	return &SeriesResponse{
 		Series: []*Series{
 			{

@@ -1,16 +1,31 @@
-// we find the first error-node in the tree that is at the cursor-position.
-// NOTE: this might be too slow, might need to optimize it
-// (ideas: we do not need to go into every subtree, based on from/to)
-// also, only go to places that are in the sub-tree of the node found
-// by default by lezer. problem is, `next()` will go upward too,
-// and we do not want to go higher than our node
 import { SyntaxNode, Tree } from '@lezer/common';
 
-import { AttributeField, FieldExpression, FieldOp, parser, SpansetFilter } from '@grafana/lezer-traceql';
+import {
+  Aggregate,
+  And,
+  AttributeField,
+  ComparisonOp,
+  FieldExpression,
+  FieldOp,
+  GroupOperation,
+  IntrinsicField,
+  Or,
+  parser,
+  ScalarFilter,
+  SelectArgs,
+  SpansetFilter,
+  SpansetPipeline,
+  SpansetPipelineExpression,
+  Static,
+  TraceQL,
+} from '@grafana/lezer-traceql';
 
 type Direction = 'parent' | 'firstChild' | 'lastChild' | 'nextSibling' | 'prevSibling';
 type NodeType = number;
-export type Situation =
+
+export type Situation = { query: string } & SituationType;
+
+export type SituationType =
   | {
       type: 'UNKNOWN';
     }
@@ -27,6 +42,9 @@ export type Situation =
       type: 'SPANSET_EXPRESSION_OPERATORS';
     }
   | {
+      type: 'SPANFIELD_COMBINING_OPERATORS';
+    }
+  | {
       type: 'SPANSET_IN_NAME';
     }
   | {
@@ -40,13 +58,34 @@ export type Situation =
     }
   | {
       type: 'SPANSET_AFTER_VALUE';
+    }
+  | {
+      type: 'SPANSET_COMBINING_OPERATORS';
+    }
+  | {
+      type: 'SPANSET_PIPELINE_AFTER_OPERATOR';
+    }
+  | {
+      type: 'SPANSET_IN_THE_MIDDLE';
+    }
+  | {
+      type: 'SPANSET_EXPRESSION_OPERATORS_WITH_MISSING_CLOSED_BRACE';
+    }
+  | {
+      type: 'NEW_SPANSET';
+    }
+  | {
+      type: 'ATTRIBUTE_FOR_FUNCTION';
+    }
+  | {
+      type: 'SPANSET_COMPARISON_OPERATORS';
     };
 
 type Path = Array<[Direction, NodeType[]]>;
 
 type Resolver = {
   path: NodeType[];
-  fun: (node: SyntaxNode, text: string, pos: number) => Situation | null;
+  fun: (node: SyntaxNode, text: string, pos: number) => SituationType | null;
 };
 
 function getErrorNode(tree: Tree, cursorPos: number): SyntaxNode | null {
@@ -68,13 +107,15 @@ function move(node: SyntaxNode, direction: Direction): SyntaxNode | null {
 
 function walk(node: SyntaxNode, path: Path): SyntaxNode | null {
   let current: SyntaxNode | null = node;
-  for (const [direction, expectedNodes] of path) {
+  for (const [direction, expectedNodeIDs] of path) {
     current = move(current, direction);
     if (current === null) {
       // we could not move in the direction, we stop
       return null;
     }
-    if (!expectedNodes.find((en) => en === current?.type.id)) {
+
+    // note that the found value can be 0, which is acceptable
+    if (expectedNodeIDs.find((id) => id === current?.type.id) === undefined) {
       // the reached node has wrong type, we stop
       return null;
     }
@@ -93,52 +134,63 @@ function isPathMatch(resolverPath: NodeType[], cursorPath: number[]): boolean {
 
 /**
  * Figure out where is the cursor and what kind of suggestions are appropriate.
- * @param text
- * @param offset
+ * @param text the user input
+ * @param offset the position of the cursor (starting from 0) in the user input
  */
 export function getSituation(text: string, offset: number): Situation | null {
   // there is a special case when we are at the start of writing text,
   // so we handle that case first
   if (text === '') {
     return {
+      query: text,
       type: 'EMPTY',
     };
   }
 
   const tree = parser.parse(text);
 
+  // Whitespaces (especially when multiple) on the left of the text cursor can trick the Lezer parser,
+  // causing a wrong tree cursor to be picked.
+  // Example: `{ span.foo =    ↓ }`, with `↓` being the cursor, tricks the parser.
+  // Quick and dirty hack: Shift the cursor to the left until we find a non-whitespace character on its left.
+  let shiftedOffset = offset;
+  while (shiftedOffset - 1 >= 0 && text[shiftedOffset - 1] === ' ') {
+    shiftedOffset -= 1;
+  }
+
   // if the tree contains error, it is very probable that
   // our node is one of those error nodes.
   // also, if there are errors, the node lezer finds us,
   // might not be the best node.
   // so first we check if there is an error node at the cursor position
-  let maybeErrorNode = getErrorNode(tree, offset);
+  let maybeErrorNode = getErrorNode(tree, shiftedOffset);
   if (!maybeErrorNode) {
     // try again with the previous character
-    maybeErrorNode = getErrorNode(tree, offset - 1);
+    maybeErrorNode = getErrorNode(tree, shiftedOffset - 1);
   }
 
-  const cur = maybeErrorNode != null ? maybeErrorNode.cursor() : tree.cursorAt(offset);
+  const cur = maybeErrorNode != null ? maybeErrorNode.cursor() : tree.cursorAt(shiftedOffset);
 
   const currentNode = cur.node;
-
   const ids = [cur.type.id];
   while (cur.parent()) {
     ids.push(cur.type.id);
   }
 
+  let situationType: SituationType | null = null;
   for (let resolver of RESOLVERS) {
     if (isPathMatch(resolver.path, ids)) {
-      return resolver.fun(currentNode, text, offset);
+      situationType = resolver.fun(currentNode, text, shiftedOffset);
     }
   }
 
-  return null;
+  return { query: text, ...(situationType ?? { type: 'UNKNOWN' }) };
 }
 
 const ERROR_NODE_ID = 0;
 
 const RESOLVERS: Resolver[] = [
+  // Incomplete query cases
   {
     path: [ERROR_NODE_ID, AttributeField],
     fun: resolveAttribute,
@@ -149,15 +201,85 @@ const RESOLVERS: Resolver[] = [
   },
   {
     path: [ERROR_NODE_ID, SpansetFilter],
-    fun: resolveErrorInFilterRoot,
+    fun: () => ({
+      type: 'SPANSET_EXPRESSION_OPERATORS_WITH_MISSING_CLOSED_BRACE',
+    }),
+  },
+  {
+    path: [ERROR_NODE_ID, SpansetPipeline],
+    fun: resolveSpansetPipeline,
+  },
+  {
+    path: [ERROR_NODE_ID, Aggregate],
+    fun: resolveAttributeForFunction,
+  },
+  {
+    path: [ERROR_NODE_ID, IntrinsicField],
+    fun: resolveAttributeForFunction,
+  },
+  {
+    path: [ERROR_NODE_ID, SpansetPipelineExpression],
+    fun: () => {
+      return {
+        type: 'NEW_SPANSET',
+      };
+    },
+  },
+  {
+    path: [ERROR_NODE_ID, ScalarFilter, SpansetPipeline],
+    fun: resolveArithmeticOperator,
+  },
+  {
+    path: [ERROR_NODE_ID, TraceQL],
+    fun: () => {
+      return {
+        type: 'UNKNOWN',
+      };
+    },
+  },
+  // Valid query cases
+  {
+    path: [FieldExpression],
+    fun: () => ({
+      type: 'SPANSET_EXPRESSION_OPERATORS',
+    }),
   },
   {
     path: [SpansetFilter],
     fun: resolveSpanset,
   },
+  {
+    path: [SpansetPipelineExpression],
+    fun: resolveNewSpansetExpression,
+  },
+  {
+    path: [TraceQL],
+    fun: resolveNewSpansetExpression,
+  },
 ];
 
-function resolveSpanset(node: SyntaxNode, text: string, pos: number): Situation {
+function resolveSpanset(node: SyntaxNode): SituationType {
+  const firstChild = walk(node, [
+    ['firstChild', [FieldExpression]],
+    ['firstChild', [AttributeField]],
+  ]);
+  if (firstChild) {
+    return {
+      type: 'SPANSET_EXPRESSION_OPERATORS',
+    };
+  }
+
+  const lastFieldExpression1 = walk(node, [
+    ['lastChild', [FieldExpression]],
+    ['lastChild', [FieldExpression]],
+    ['lastChild', [Static]],
+  ]);
+  if (lastFieldExpression1) {
+    return {
+      type: 'SPANFIELD_COMBINING_OPERATORS',
+    };
+  }
+
   const lastFieldExpression = walk(node, [['lastChild', [FieldExpression]]]);
   if (lastFieldExpression) {
     return {
@@ -170,7 +292,7 @@ function resolveSpanset(node: SyntaxNode, text: string, pos: number): Situation 
   };
 }
 
-function resolveAttribute(node: SyntaxNode, text: string, pos: number): Situation {
+function resolveAttribute(node: SyntaxNode, text: string): SituationType {
   const attributeFieldParent = walk(node, [['parent', [AttributeField]]]);
   const attributeFieldParentText = attributeFieldParent ? getNodeText(attributeFieldParent, text) : '';
 
@@ -194,7 +316,7 @@ function resolveAttribute(node: SyntaxNode, text: string, pos: number): Situatio
   };
 }
 
-function resolveExpression(node: SyntaxNode, text: string, pos: number): Situation {
+function resolveExpression(node: SyntaxNode, text: string): SituationType {
   if (node.prevSibling?.type.id === FieldOp) {
     let attributeField = node.prevSibling.prevSibling;
     if (attributeField) {
@@ -205,13 +327,67 @@ function resolveExpression(node: SyntaxNode, text: string, pos: number): Situati
       };
     }
   }
+
+  if (node.prevSibling?.type.name === 'And' || node.prevSibling?.type.name === 'Or') {
+    return {
+      type: 'SPANSET_EMPTY',
+    };
+  }
+
   return {
-    type: 'SPANSET_EMPTY',
+    type: 'SPANSET_IN_THE_MIDDLE',
   };
 }
 
-function resolveErrorInFilterRoot(node: SyntaxNode, text: string, pos: number): Situation {
+function resolveArithmeticOperator(node: SyntaxNode, _0: string, _1: number): SituationType {
+  if (node.prevSibling?.type.id === ComparisonOp) {
+    return {
+      type: 'UNKNOWN',
+    };
+  }
+
   return {
-    type: 'SPANSET_IN_NAME',
+    type: 'SPANSET_COMPARISON_OPERATORS',
+  };
+}
+
+function resolveNewSpansetExpression(node: SyntaxNode, text: string, offset: number): SituationType {
+  // Select the node immediately before the one pointed by the cursor
+  let previousNode = node.firstChild;
+  try {
+    previousNode = node.firstChild;
+    while (previousNode!.to < offset) {
+      previousNode = previousNode!.nextSibling;
+    }
+  } catch (error) {
+    console.error('Unexpected error while searching for previous node', error);
+  }
+
+  if (previousNode?.type.id === And || previousNode?.type.id === Or) {
+    return {
+      type: 'NEW_SPANSET',
+    };
+  }
+
+  return {
+    type: 'SPANSET_COMBINING_OPERATORS',
+  };
+}
+
+function resolveAttributeForFunction(node: SyntaxNode, _0: string, _1: number): SituationType {
+  const parent = node?.parent;
+  if (!!parent && [IntrinsicField, Aggregate, GroupOperation, SelectArgs].includes(parent.type.id)) {
+    return {
+      type: 'ATTRIBUTE_FOR_FUNCTION',
+    };
+  }
+  return {
+    type: 'UNKNOWN',
+  };
+}
+
+function resolveSpansetPipeline(_0: SyntaxNode, _1: string, _2: number): SituationType {
+  return {
+    type: 'SPANSET_PIPELINE_AFTER_OPERATOR',
   };
 }

@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useEffect, useId, useMemo } from 'react';
+import React, { useId, useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { InlineLabel, SegmentSection, useStyles2 } from '@grafana/ui';
@@ -23,7 +23,6 @@ import {
 } from '../../../../../queryUtils';
 import { InfluxQuery, InfluxQueryTag } from '../../../../../types';
 import { DEFAULT_RESULT_FORMAT } from '../../../constants';
-import { useRetentionPolicies } from '../hooks/useRetentionPolicies';
 import { filterTags } from '../utils/filterTags';
 import { getNewGroupByPartOptions, getNewSelectPartOptions, makePartList } from '../utils/partListUtils';
 import { withTemplateVariableOptions } from '../utils/withTemplateVariableOptions';
@@ -52,17 +51,6 @@ export const VisualInfluxQLEditor = (props: Props): JSX.Element => {
   const query = normalizeQuery(props.query);
   const { datasource } = props;
   const { measurement, policy } = query;
-  const { retentionPolicies } = useRetentionPolicies(datasource);
-
-  useEffect(() => {
-    if (!policy && retentionPolicies.length > 0) {
-      props.onChange({
-        ...query,
-        policy: retentionPolicies[0],
-      });
-      props.onRunQuery();
-    }
-  }, [policy, props, query, retentionPolicies]);
 
   const allTagKeys = useMemo(async () => {
     const tagKeys = (await getTagKeysForMeasurementAndTags(datasource, [], measurement, policy)).map(
@@ -94,11 +82,9 @@ export const VisualInfluxQLEditor = (props: Props): JSX.Element => {
   // is used in both memoized and un-memoized parts, so we have no choice
   const getTagKeys = useMemo(
     () => async () => {
-      const selectedTagKeys = new Set(query.tags?.map((tag) => tag.key));
-
-      return [...(await allTagKeys)].filter((tagKey) => !selectedTagKeys.has(tagKey));
+      return [...(await allTagKeys)];
     },
-    [query.tags, allTagKeys]
+    [allTagKeys]
   );
 
   const groupByList = useMemo(() => {

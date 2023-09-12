@@ -42,7 +42,7 @@ func TestBuilder_EqualResults_Basic(t *testing.T) {
 	createDashboards(t, store, 1, 2, 2)
 
 	builder := &searchstore.Builder{
-		Filters: []interface{}{
+		Filters: []any{
 			searchstore.OrgFilter{OrgId: user.OrgID},
 			searchstore.TitleSorter{},
 		},
@@ -79,7 +79,7 @@ func TestBuilder_Pagination(t *testing.T) {
 	createDashboards(t, store, 0, 25, user.OrgID)
 
 	builder := &searchstore.Builder{
-		Filters: []interface{}{
+		Filters: []any{
 			searchstore.OrgFilter{OrgId: user.OrgID},
 			searchstore.TitleSorter{},
 		},
@@ -118,13 +118,13 @@ func TestBuilder_RBAC(t *testing.T) {
 	testsCases := []struct {
 		desc            string
 		userPermissions []accesscontrol.Permission
-		features        []interface{}
-		expectedParams  []interface{}
+		features        []any
+		expectedParams  []any
 	}{
 		{
 			desc:     "no user permissions",
-			features: []interface{}{},
-			expectedParams: []interface{}{
+			features: []any{},
+			expectedParams: []any{
 				int64(1),
 			},
 		},
@@ -133,8 +133,8 @@ func TestBuilder_RBAC(t *testing.T) {
 			userPermissions: []accesscontrol.Permission{
 				{Action: dashboards.ActionDashboardsRead, Scope: "dashboards:uid:1"},
 			},
-			features: []interface{}{},
-			expectedParams: []interface{}{
+			features: []any{},
+			expectedParams: []any{
 				int64(1),
 				int64(1),
 				int64(1),
@@ -170,8 +170,8 @@ func TestBuilder_RBAC(t *testing.T) {
 			userPermissions: []accesscontrol.Permission{
 				{Action: dashboards.ActionDashboardsRead, Scope: "dashboards:uid:1"},
 			},
-			features: []interface{}{featuremgmt.FlagNestedFolders},
-			expectedParams: []interface{}{
+			features: []any{featuremgmt.FlagNestedFolders},
+			expectedParams: []any{
 				int64(1),
 				int64(1),
 				0,
@@ -232,7 +232,7 @@ func TestBuilder_RBAC(t *testing.T) {
 				level := dashboards.PERMISSION_EDIT
 
 				builder := &searchstore.Builder{
-					Filters: []interface{}{
+					Filters: []any{
 						searchstore.OrgFilter{OrgId: user.OrgID},
 						searchstore.TitleSorter{},
 						permissions.NewAccessControlDashboardPermissionFilter(

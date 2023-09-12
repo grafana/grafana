@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-import { locationService, reportInteraction } from '@grafana/runtime';
+import { config, locationService, reportInteraction } from '@grafana/runtime';
 import { Button, Drawer, Dropdown, Icon, Menu, MenuItem } from '@grafana/ui';
 import { Permissions } from 'app/core/components/AccessControl';
 import { appEvents, contextSrv } from 'app/core/core';
@@ -24,7 +24,9 @@ export function FolderActionsButton({ folder }: Props) {
   const [deleteFolder] = useDeleteFolderMutation();
   const canViewPermissions = contextSrv.hasPermission(AccessControlAction.FoldersPermissionsRead);
   const canSetPermissions = contextSrv.hasPermission(AccessControlAction.FoldersPermissionsWrite);
-  const canMoveFolder = contextSrv.hasPermission(AccessControlAction.FoldersWrite);
+  // Can only move folders when nestedFolders is enabled
+  const canMoveFolder =
+    config.featureToggles.nestedFolders && contextSrv.hasPermission(AccessControlAction.FoldersWrite);
   const canDeleteFolder = contextSrv.hasPermission(AccessControlAction.FoldersDelete);
 
   const onMove = async (destinationUID: string) => {

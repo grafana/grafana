@@ -204,7 +204,7 @@ export class LokiDatasource
           refId: `${REF_ID_STARTER_LOG_VOLUME}${normalizedQuery.refId}`,
           queryType: LokiQueryType.Range,
           supportingQueryType: SupportingQueryType.LogsVolume,
-          expr: `sum by (level) (count_over_time(${expr}[$__interval]))`,
+          expr: `sum by (level) (count_over_time(${expr}[$__auto]))`,
         };
 
       case SupplementaryQueryType.LogsSample:
@@ -659,18 +659,34 @@ export class LokiDatasource
 
   modifyQuery(query: LokiQuery, action: QueryFixAction): LokiQuery {
     let expression = query.expr ?? '';
+    // NB: Usually the labelKeys should be fetched and cached in the datasource,
+    // but there might be some edge cases where this wouldn't be the case.
+    // However the changed would make this method `async`.
+    const allLabels = this.languageProvider.getLabelKeys();
     switch (action.type) {
       case 'ADD_FILTER': {
         if (action.options?.key && action.options?.value) {
           const value = escapeLabelValueInSelector(action.options.value);
-          expression = addLabelToQuery(expression, action.options.key, '=', value);
+          expression = addLabelToQuery(
+            expression,
+            action.options.key,
+            '=',
+            value,
+            allLabels.includes(action.options.key) === false
+          );
         }
         break;
       }
       case 'ADD_FILTER_OUT': {
         if (action.options?.key && action.options?.value) {
           const value = escapeLabelValueInSelector(action.options.value);
-          expression = addLabelToQuery(expression, action.options.key, '!=', value);
+          expression = addLabelToQuery(
+            expression,
+            action.options.key,
+            '!=',
+            value,
+            allLabels.includes(action.options.key) === false
+          );
         }
         break;
       }
@@ -743,38 +759,6 @@ export class LokiDatasource
 
   getLogRowContextUi(row: LogRowModel, runContextQuery: () => void, origQuery: DataQuery): React.ReactNode {
     return this.logContextProvider.getLogRowContextUi(row, runContextQuery, getLokiQueryFromDataQuery(origQuery));
-  }
-
-  testDatasource(): Promise<{ status: string; message: string }> {
-    // Consider only last 10 minutes otherwise request takes too long
-    const nowMs = Date.now();
-    const params = {
-      start: (nowMs - 10 * 60 * 1000) * NS_IN_MS,
-      end: nowMs * NS_IN_MS,
-    };
-
-    return this.metadataRequest('labels', params).then(
-      (values) => {
-        return values.length > 0
-          ? { status: 'success', message: 'Data source successfully connected.' }
-          : {
-              status: 'error',
-              message:
-                'Data source connected, but no labels were received. Verify that Loki and Promtail are correctly configured.',
-            };
-      },
-      (err) => {
-        // we did a resource-call that failed.
-        // the only info we have, if exists, is err.data.message
-        // (when in development-mode, err.data.error exists too, but not in production-mode)
-        // things like err.status & err.statusText does not help,
-        // because those will only describe how the request between browser<>server failed
-        const info: string = err?.data?.message ?? '';
-        const infoInParentheses = info !== '' ? ` (${info})` : '';
-        const message = `Unable to connect with Loki${infoInParentheses}. Please check the server logs for more details.`;
-        return { status: 'error', message: message };
-      }
-    );
   }
 
   async annotationQuery(options: any): Promise<AnnotationEvent[]> {
@@ -888,7 +872,7 @@ export class LokiDatasource
   applyTemplateVariables(target: LokiQuery, scopedVars: ScopedVars): LokiQuery {
     // We want to interpolate these variables on backend because we support using them in
     // alerting/ML queries and we want to have consistent interpolation for all queries
-    const { __interval, __interval_ms, __range, __range_s, __range_ms, ...rest } = scopedVars || {};
+    const { __auto, __interval, __interval_ms, __range, __range_s, __range_ms, ...rest } = scopedVars || {};
 
     const exprWithAdHoc = this.addAdHocFilters(target.expr);
 

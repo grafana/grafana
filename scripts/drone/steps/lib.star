@@ -8,6 +8,7 @@ load(
     "gcp_grafanauploads",
     "gcp_grafanauploads_base64",
     "gcp_upload_artifacts_key",
+    "npm_token",
     "prerelease_bucket",
 )
 load(
@@ -19,7 +20,7 @@ load(
     "windows_images",
 )
 
-grabpl_version = "v3.0.40"
+grabpl_version = "v3.0.41"
 
 trigger_oss = {
     "repo": [
@@ -746,10 +747,7 @@ def codespell_step():
         "name": "codespell",
         "image": images["build_image"],
         "commands": [
-            # Important: all words have to be in lowercase, and separated by "\n".
-            'echo -e "unknwon\nreferer\nerrorstring\neror\niam\nwan" > words_to_ignore.txt',
-            "codespell -I words_to_ignore.txt docs/",
-            "rm words_to_ignore.txt",
+            "codespell -I .codespellignore docs/",
         ],
     }
 
@@ -850,7 +848,6 @@ def e2e_tests_step(suite, port = 3001, tries = None):
             "HOST": "grafana-server",
         },
         "commands": [
-            "apt-get install -y netcat",
             cmd,
         ],
     }
@@ -876,7 +873,7 @@ def cloud_plugins_e2e_tests_step(suite, cloud, trigger = None):
         environment = {
             "CYPRESS_CI": "true",
             "HOST": "grafana-server",
-            "GITHUB_TOKEN": from_secret("github_token_pr"),
+            "GITHUB_TOKEN": from_secret("github_token"),
             "AZURE_SP_APP_ID": from_secret("azure_sp_app_id"),
             "AZURE_SP_PASSWORD": from_secret("azure_sp_app_pw"),
             "AZURE_TENANT": from_secret("azure_tenant"),
@@ -894,7 +891,7 @@ def cloud_plugins_e2e_tests_step(suite, cloud, trigger = None):
     branch = "${DRONE_SOURCE_BRANCH}".replace("/", "-")
     step = {
         "name": "end-to-end-tests-{}-{}".format(suite, cloud),
-        "image": images["cloud_datasources_e2e_image"],
+        "image": "us-docker.pkg.dev/grafanalabs-dev/cloud-data-sources/e2e:2.0.0",
         "depends_on": [
             "grafana-server",
         ],
@@ -1022,8 +1019,8 @@ def publish_images_step(ver_mode, docker_repo, trigger = None):
 
     if ver_mode == "pr":
         environment = {
-            "DOCKER_USER": from_secret("docker_username_pr"),
-            "DOCKER_PASSWORD": from_secret("docker_password_pr"),
+            "DOCKER_USER": from_secret("docker_username"),
+            "DOCKER_PASSWORD": from_secret("docker_password"),
             "GITHUB_APP_ID": from_secret("delivery-bot-app-id"),
             "GITHUB_APP_INSTALLATION_ID": from_secret("delivery-bot-app-installation-id"),
             "GITHUB_APP_PRIVATE_KEY": from_secret("delivery-bot-app-private-key"),
@@ -1142,7 +1139,7 @@ def release_canary_npm_packages_step(trigger = None):
         "image": images["build_image"],
         "depends_on": end_to_end_tests_deps(),
         "environment": {
-            "NPM_TOKEN": from_secret("npm_token"),
+            "NPM_TOKEN": from_secret(npm_token),
         },
         "commands": [
             "./scripts/publish-npm-packages.sh --dist-tag 'canary' --registry 'https://registry.npmjs.org'",
@@ -1297,6 +1294,7 @@ def get_windows_steps(ver_mode, bucket = "%PRERELEASE_BUCKET%"):
     if ver_mode in (
         "release",
         "release-branch",
+        "main",
     ):
         gcp_bucket = "{}/artifacts/downloads".format(bucket)
         if ver_mode == "release":
@@ -1400,7 +1398,7 @@ def trigger_test_release():
         "name": "trigger-test-release",
         "image": images["build_image"],
         "environment": {
-            "GITHUB_TOKEN": from_secret("github_token_pr"),
+            "GITHUB_TOKEN": from_secret("github_token"),
             "TEST_TAG": "v0.0.0-test",
         },
         "commands": [
