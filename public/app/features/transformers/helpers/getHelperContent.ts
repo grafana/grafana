@@ -4,10 +4,11 @@ import { ConfigFromQueryHelper } from './ConfigFromQueryHelper';
 import { ConvertFieldTypeHelper } from './ConvertFieldTypeHelper';
 import { CreateHeatmapHelp } from './CreateHeatmapHelp';
 import { ExtractFieldsHelper } from './ExtractFieldsHelper';
-import { FieldLookupHelper } from "./FieldLookupHelper";
-import { FilterByRefIdHelper } from "./FilterByRefIdHelper";
-import { FilterByValueHelper } from "./FilterByValueHelper";
-import { FilterFieldsByNameHelper } from "./FilterFieldsByNameHelper";
+import { FieldLookupHelper } from './FieldLookupHelper';
+import { FilterByRefIdHelper } from './FilterByRefIdHelper';
+import { FilterByValueHelper } from './FilterByValueHelper';
+import { FilterFieldsByNameHelper } from './FilterFieldsByNameHelper';
+import { FormatTimeHelper } from './FormatTimeHelper';
 
 interface Helper {
   [key: string]: JSX.Element | string;
@@ -26,6 +27,7 @@ const helperContent: Helper = {
   filterByRefId: FilterByRefIdHelper(),
   filterByValue: FilterByValueHelper(),
   filterFieldsByName: FilterFieldsByNameHelper(),
+  formatTime: FormatTimeHelper(),
   heatmap: CreateHeatmapHelp(),
 };
 
