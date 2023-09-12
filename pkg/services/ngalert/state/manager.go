@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/benbjohnson/clock"
-	"github.com/grafana/dskit/concurrency"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"go.opentelemetry.io/otel/attribute"
 
@@ -46,6 +45,8 @@ type Manager struct {
 	doNotSaveNormalState           bool
 	maxStateSaveConcurrency        int
 	applyNoDataAndErrorToAllStates bool
+
+	stateQueue chan StateTransition
 }
 
 type ManagerCfg struct {
@@ -82,6 +83,7 @@ func NewManager(cfg ManagerCfg) *Manager {
 		maxStateSaveConcurrency:        cfg.MaxStateSaveConcurrency,
 		applyNoDataAndErrorToAllStates: cfg.ApplyNoDataAndErrorToAllStates,
 		tracer:                         cfg.Tracer,
+		stateQueue:                     make(chan StateTransition, 1000),
 	}
 }
 
@@ -89,6 +91,7 @@ func (st *Manager) Run(ctx context.Context) error {
 	if st.applyNoDataAndErrorToAllStates {
 		st.log.Info("Running in alternative execution of Error/NoData mode")
 	}
+	st.startQueueProcessor(ctx, st.log)
 	ticker := st.clock.Ticker(MetricsScrapeInterval)
 	for {
 		select {
@@ -100,6 +103,28 @@ func (st *Manager) Run(ctx context.Context) error {
 			ticker.Stop()
 			return ctx.Err()
 		}
+	}
+}
+
+func (st *Manager) startQueueProcessor(ctx context.Context, logger log.Logger) {
+	workers := st.maxStateSaveConcurrency
+	if workers < 1 {
+		workers = 1
+	}
+	for i := 0; i < workers; i++ {
+		go func() {
+			for {
+				select {
+				case <-ctx.Done():
+					return
+				case state, ok := <-st.stateQueue:
+					if !ok {
+						return
+					}
+					st.saveStateInStore(ctx, logger, state)
+				}
+			}
+		}()
 	}
 }
 
@@ -446,46 +471,41 @@ func (st *Manager) Put(states []*State) {
 	}
 }
 
-// TODO: Is the `State` type necessary? Should it embed the instance?
-func (st *Manager) saveAlertStates(ctx context.Context, logger log.Logger, states ...StateTransition) {
+func (st *Manager) saveAlertStates(states ...StateTransition) {
 	if st.instanceStore == nil || len(states) == 0 {
 		return
 	}
+	for _, state := range states {
+		st.stateQueue <- state
+	}
+}
 
-	saveState := func(ctx context.Context, idx int) error {
-		s := states[idx]
-		// Do not save normal state to database and remove transition to Normal state but keep mapped states
-		if st.doNotSaveNormalState && IsNormalStateWithNoReason(s.State) && !s.Changed() {
-			return nil
-		}
-
-		key, err := s.GetAlertInstanceKey()
-		if err != nil {
-			logger.Error("Failed to create a key for alert state to save it to database. The state will be ignored ", "cacheID", s.CacheID, "error", err, "labels", s.Labels.String())
-			return nil
-		}
-		instance := ngModels.AlertInstance{
-			AlertInstanceKey:  key,
-			Labels:            ngModels.InstanceLabels(s.Labels),
-			CurrentState:      ngModels.InstanceStateType(s.State.State.String()),
-			CurrentReason:     s.StateReason,
-			LastEvalTime:      s.LastEvaluationTime,
-			CurrentStateSince: s.StartsAt,
-			CurrentStateEnd:   s.EndsAt,
-		}
-
-		err = st.instanceStore.SaveAlertInstance(ctx, instance)
-		if err != nil {
-			logger.Error("Failed to save alert state", "labels", s.Labels.String(), "state", s.State, "error", err)
-			return nil
-		}
-		return nil
+func (st *Manager) saveStateInStore(ctx context.Context, logger log.Logger, s StateTransition) {
+	// Do not save normal state to database and remove transition to Normal state but keep mapped states
+	if st.doNotSaveNormalState && IsNormalStateWithNoReason(s.State) && !s.Changed() {
+		return
 	}
 
-	start := time.Now()
-	logger.Debug("Saving alert states", "count", len(states), "max_state_save_concurrency", st.maxStateSaveConcurrency)
-	_ = concurrency.ForEachJob(ctx, len(states), st.maxStateSaveConcurrency, saveState)
-	logger.Debug("Saving alert states done", "count", len(states), "max_state_save_concurrency", st.maxStateSaveConcurrency, "duration", time.Since(start))
+	key, err := s.GetAlertInstanceKey()
+	if err != nil {
+		logger.Error("Failed to create a key for alert state to save it to database. The state will be ignored ", "cacheID", s.CacheID, "error", err, "labels", s.Labels.String())
+		return
+	}
+	instance := ngModels.AlertInstance{
+		AlertInstanceKey:  key,
+		Labels:            ngModels.InstanceLabels(s.Labels),
+		CurrentState:      ngModels.InstanceStateType(s.State.State.String()),
+		CurrentReason:     s.StateReason,
+		LastEvalTime:      s.LastEvaluationTime,
+		CurrentStateSince: s.StartsAt,
+		CurrentStateEnd:   s.EndsAt,
+	}
+
+	err = st.instanceStore.SaveAlertInstance(ctx, instance)
+	if err != nil {
+		logger.Error("Failed to save alert state", "labels", s.Labels.String(), "state", s.State, "error", err)
+		return
+	}
 }
 
 func (st *Manager) deleteAlertStates(ctx context.Context, logger log.Logger, states []StateTransition) {

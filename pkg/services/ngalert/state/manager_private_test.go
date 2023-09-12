@@ -18,7 +18,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/expr"
-	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
@@ -128,7 +127,7 @@ func TestManager_saveAlertStates(t *testing.T) {
 	t.Run("should save all transitions if doNotSaveNormalState is false", func(t *testing.T) {
 		st := &FakeInstanceStore{}
 		m := Manager{instanceStore: st, doNotSaveNormalState: false, maxStateSaveConcurrency: 1}
-		m.saveAlertStates(context.Background(), &logtest.Fake{}, transitions...)
+		m.saveAlertStates(transitions...)
 
 		savedKeys := map[ngmodels.AlertInstanceKey]ngmodels.AlertInstance{}
 		for _, op := range st.RecordedOps {
@@ -145,7 +144,7 @@ func TestManager_saveAlertStates(t *testing.T) {
 	t.Run("should not save Normal->Normal if doNotSaveNormalState is true", func(t *testing.T) {
 		st := &FakeInstanceStore{}
 		m := Manager{instanceStore: st, doNotSaveNormalState: true, maxStateSaveConcurrency: 1}
-		m.saveAlertStates(context.Background(), &logtest.Fake{}, transitions...)
+		m.saveAlertStates(transitions...)
 
 		savedKeys := map[ngmodels.AlertInstanceKey]ngmodels.AlertInstance{}
 		for _, op := range st.RecordedOps {
