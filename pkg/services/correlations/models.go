@@ -9,17 +9,17 @@ import (
 )
 
 var (
-	ErrCorrelationReadOnly                = errors.New("correlation can only be edited via provisioning")
-	ErrSourceDataSourceDoesNotExists      = errors.New("source data source does not exist")
-	ErrTargetDataSourceDoesNotExists      = errors.New("target data source does not exist")
-	ErrCorrelationNotFound                = errors.New("correlation not found")
-	ErrUpdateCorrelationEmptyParams       = errors.New("not enough parameters to edit correlation")
-	ErrInvalidConfigType                  = errors.New("invalid correlation config type")
-	ErrInvalidTransformationType          = errors.New("invalid transformation type")
-	ErrTransformationNotNested            = errors.New("transformations must be nested under config")
-	ErrTransformationRegexReqExp          = errors.New("regex transformations require expression")
-	ErrCorrelationsQuotaFailed            = errors.New("error getting correlations quota")
-	ErrCorrelationsQuotaReached           = errors.New("correlations quota reached")
+	ErrCorrelationReadOnly           = errors.New("correlation can only be edited via provisioning")
+	ErrSourceDataSourceDoesNotExists = errors.New("source data source does not exist")
+	ErrTargetDataSourceDoesNotExists = errors.New("target data source does not exist")
+	ErrCorrelationNotFound           = errors.New("correlation not found")
+	ErrUpdateCorrelationEmptyParams  = errors.New("not enough parameters to edit correlation")
+	ErrInvalidConfigType             = errors.New("invalid correlation config type")
+	ErrInvalidTransformationType     = errors.New("invalid transformation type")
+	ErrTransformationNotNested       = errors.New("transformations must be nested under config")
+	ErrTransformationRegexReqExp     = errors.New("regex transformations require expression")
+	ErrCorrelationsQuotaFailed       = errors.New("error getting correlations quota")
+	ErrCorrelationsQuotaReached      = errors.New("correlations quota reached")
 )
 
 const (
