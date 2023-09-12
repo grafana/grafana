@@ -62,7 +62,6 @@ export const FolderSection = ({
   const styles = useStyles2(useCallback((theme: GrafanaTheme2) => getSectionHeaderStyles(theme, editable), [editable]));
   const [expandedFolder, setExpandedFolder] = useLocalStorage<string | null>(SEARCH_EXPANDED_FOLDER_STORAGE_KEY, null);
   const [sectionExpanded, setSectionExpanded] = useState(uid === expandedFolder);
-  // const sectionExpanded = uid === expandedFolder;
 
   const results = useAsync(async () => {
     if (!sectionExpanded && !renderStandaloneBody) {
