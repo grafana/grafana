@@ -31,7 +31,7 @@ The most common problems are related to the query and response from your data so
 like a bug or visualization issue in Grafana, it is almost always a problem with the data source query or
 the data source response. Start by inspecting your panel query and response.
 
-For more information, refer to [Inspect request and response data][].
+For more information, refer to [Inspect request and response data][inspect].
 
 ## My query is slow
 
@@ -42,6 +42,6 @@ How many data points is your query returning? A query that returns lots of data 
 - In your query, use a `group by` function.
 
 {{% docs/reference %}}
-[Inspect request and response data]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/panel-inspector#inspect-query-request-and-response data"
-[Inspect request and response data]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/panel-inspector#inspect-query-request-and-response data"
+[inspect]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/panel-inspector#inspect-query-request-and-response-data"
+[inspect]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/panel-inspector#inspect-query-request-and-response-data"
 {{% /docs/reference %}}

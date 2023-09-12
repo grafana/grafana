@@ -248,4 +248,7 @@ In the case of using an expression on multiple queries, the expression engine re
 
 [labels]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/fundamentals/timeseries-dimensions#labels"
 [labels]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/fundamentals/timeseries-dimensions#labels"
+
+[No data and error handling]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting/alerting-rules/create-grafana-managed-rule#configure-no-data-and-error-handling"
+[No data and error handling]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/alerting/alerting-rules/create-grafana-managed-rule#configure-no-data-and-error-handling"
 {{% /docs/reference %}}
