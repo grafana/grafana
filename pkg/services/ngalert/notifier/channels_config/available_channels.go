@@ -845,7 +845,7 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 				},
 				{
 					Label:        "Disable Web Page Preview",
-					Description:  "Sends the message without showing the web page preview.",
+					Description:  "Disables link previews for links in this message",
 					Element:      ElementTypeCheckbox,
 					PropertyName: "disable_web_page_preview",
 				},
