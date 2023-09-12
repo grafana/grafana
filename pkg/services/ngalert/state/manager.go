@@ -312,7 +312,7 @@ func (st *Manager) ProcessEvalResults(ctx context.Context, evaluatedAt time.Time
 			})
 	}
 
-	st.saveAlertStates(tracingCtx, logger, states...)
+	st.saveAlertStates(states...)
 
 	span.AddEvents([]string{"message"},
 		[]tracing.EventValue{
