@@ -57,6 +57,14 @@ jest.mock('@grafana/runtime', () => {
                 { queryType: 'Azure Regions' },
                 { queryType: 'Grafana Template Variable Function' },
                 { queryType: 'unknown' },
+                {
+                  queryType: 'Azure Log Analytics',
+                  azureLogAnalytics: { dashboardTime: true },
+                },
+                {
+                  queryType: 'Azure Log Analytics',
+                  azureLogAnalytics: { dashboardTime: false },
+                },
               ] as AzureMonitorQuery[],
             },
           })
@@ -78,10 +86,12 @@ describe('queriesOnInitDashboard', () => {
       azure_monitor_multiple_resource: 1,
       azure_monitor_query: 2,
 
-      azure_log_analytics_queries: 1,
+      azure_log_analytics_queries: 3,
       azure_log_analytics_queries_hidden: 1,
+      azure_log_analytics_queries_grafana_time: 1,
+      azure_log_analytics_queries_query_time: 3,
       azure_log_multiple_resource: 1,
-      azure_log_query: 2,
+      azure_log_query: 4,
 
       azure_resource_graph_queries: 1,
       azure_resource_graph_queries_hidden: 1,

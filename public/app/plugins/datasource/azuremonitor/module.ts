@@ -37,6 +37,8 @@ getAppEvents().subscribe<DashboardLoadedEvent<AzureMonitorQuery>>(
       },
       [AzureQueryType.LogAnalytics]: {
         ...common,
+        grafanaTime: 0,
+        queryTime: 0,
       },
       [AzureQueryType.AzureResourceGraph]: {
         ...common,
@@ -69,6 +71,7 @@ getAppEvents().subscribe<DashboardLoadedEvent<AzureMonitorQuery>>(
       }
       if (query.queryType === AzureQueryType.LogAnalytics) {
         stats[AzureQueryType.LogAnalytics][query.hide ? 'hidden' : 'visible']++;
+        stats[AzureQueryType.LogAnalytics][query.azureLogAnalytics?.dashboardTime ? 'grafanaTime' : 'queryTime']++;
         if (query.azureLogAnalytics?.resources && query.azureLogAnalytics.resources.length > 1) {
           stats[AzureQueryType.LogAnalytics].multiResource++;
         }
@@ -137,6 +140,8 @@ getAppEvents().subscribe<DashboardLoadedEvent<AzureMonitorQuery>>(
         azure_log_analytics_queries: stats[AzureQueryType.LogAnalytics].visible,
         azure_log_analytics_queries_hidden: stats[AzureQueryType.LogAnalytics].hidden,
         azure_log_multiple_resource: stats[AzureQueryType.LogAnalytics].multiResource,
+        azure_log_analytics_queries_grafana_time: stats[AzureQueryType.LogAnalytics].grafanaTime,
+        azure_log_analytics_queries_query_time: stats[AzureQueryType.LogAnalytics].queryTime,
         azure_log_query: stats[AzureQueryType.LogAnalytics].count,
 
         // ARG queries stats
