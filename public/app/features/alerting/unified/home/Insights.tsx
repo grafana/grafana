@@ -33,7 +33,6 @@ import { getMissedIterationsScene } from '../insights/mimir/rules/MissedIteratio
 import { getMostFiredInstancesScene as getMostFiredCloudInstances } from '../insights/mimir/rules/MostFiredInstances';
 import { getPendingCloudAlertsScene } from '../insights/mimir/rules/Pending';
 
-
 const ashDs = {
   type: 'loki',
   uid: 'grafanacloud-alert-state-history',
