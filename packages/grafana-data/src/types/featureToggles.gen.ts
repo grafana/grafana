@@ -47,7 +47,6 @@ export interface FeatureToggles {
   redshiftAsyncQueryDataSupport?: boolean;
   athenaAsyncQueryDataSupport?: boolean;
   cloudwatchNewRegionsHandler?: boolean;
-  newPanelChromeUI?: boolean;
   showDashboardValidationWarnings?: boolean;
   mysqlAnsiQuotes?: boolean;
   accessControlOnCall?: boolean;
@@ -123,4 +122,7 @@ export interface FeatureToggles {
   angularDeprecationUI?: boolean;
   dashgpt?: boolean;
   reportingRetries?: boolean;
+  newBrowseDashboards?: boolean;
+  sseGroupByDatasource?: boolean;
+  requestInstrumentationStatusSource?: boolean;
 }

@@ -28,7 +28,6 @@ cloudWatchCrossAccountQuerying,GA,@grafana/aws-datasources,false,false,false,fal
 redshiftAsyncQueryDataSupport,GA,@grafana/aws-datasources,false,false,false,false
 athenaAsyncQueryDataSupport,GA,@grafana/aws-datasources,false,false,false,true
 cloudwatchNewRegionsHandler,GA,@grafana/aws-datasources,false,false,false,false
-newPanelChromeUI,GA,@grafana/dashboards-squad,false,false,false,true
 showDashboardValidationWarnings,experimental,@grafana/dashboards-squad,false,false,false,false
 mysqlAnsiQuotes,experimental,@grafana/backend-platform,false,false,false,false
 accessControlOnCall,preview,@grafana/grafana-authnz-team,false,false,false,false
@@ -76,7 +75,7 @@ dashboardEmbed,experimental,@grafana/grafana-as-code,false,false,false,true
 frontendSandboxMonitorOnly,experimental,@grafana/plugins-platform-backend,false,false,false,true
 sqlDatasourceDatabaseSelection,preview,@grafana/grafana-bi-squad,false,false,false,true
 lokiFormatQuery,experimental,@grafana/observability-logs,false,false,false,true
-cloudWatchLogsMonacoEditor,experimental,@grafana/aws-datasources,false,false,false,true
+cloudWatchLogsMonacoEditor,preview,@grafana/aws-datasources,false,false,false,true
 exploreScrollableLogsContainer,experimental,@grafana/observability-logs,false,false,false,true
 recordedQueriesMulti,experimental,@grafana/observability-metrics,false,false,false,false
 pluginsDynamicAngularDetectionPatterns,experimental,@grafana/plugins-platform-backend,false,false,false,false
@@ -92,11 +91,11 @@ traceQLStreaming,experimental,@grafana/observability-traces-and-profiling,false,
 metricsSummary,experimental,@grafana/observability-traces-and-profiling,false,false,false,true
 grafanaAPIServer,experimental,@grafana/grafana-app-platform-squad,false,false,false,false
 featureToggleAdminPage,experimental,@grafana/grafana-operator-experience-squad,false,false,true,false
-awsAsyncQueryCaching,experimental,@grafana/aws-datasources,false,false,false,false
+awsAsyncQueryCaching,preview,@grafana/aws-datasources,false,false,false,false
 splitScopes,preview,@grafana/grafana-authnz-team,false,false,true,false
 azureMonitorDataplane,GA,@grafana/partner-datasources,false,false,false,false
 permissionsFilterRemoveSubquery,experimental,@grafana/backend-platform,false,false,false,false
-prometheusConfigOverhaulAuth,experimental,@grafana/observability-metrics,false,false,false,false
+prometheusConfigOverhaulAuth,GA,@grafana/observability-metrics,false,false,false,false
 configurableSchedulerTick,experimental,@grafana/alerting-squad,false,false,true,false
 influxdbSqlSupport,experimental,@grafana/observability-metrics,false,false,false,false
 noBasicRole,experimental,@grafana/grafana-authnz-team,false,false,true,true
@@ -104,3 +103,6 @@ alertingNoDataErrorExecution,privatePreview,@grafana/alerting-squad,false,false,
 angularDeprecationUI,experimental,@grafana/plugins-platform-backend,false,false,false,true
 dashgpt,experimental,@grafana/dashboards-squad,false,false,false,true
 reportingRetries,preview,@grafana/sharing-squad,false,false,true,false
+newBrowseDashboards,preview,@grafana/grafana-frontend-platform,false,false,false,true
+sseGroupByDatasource,experimental,@grafana/observability-metrics,false,false,false,false
+requestInstrumentationStatusSource,experimental,@grafana/plugins-platform-backend,false,false,false,false
