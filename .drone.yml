@@ -2312,6 +2312,10 @@ steps:
   - gcloud auth activate-service-account --key-file=gcpkey.json
   - rm gcpkey.json
   - cp C:\App\nssm-2.24.zip .
+  - .\grabpl.exe windows-installer --edition oss --build-id $$env:DRONE_BUILD_NUMBER
+  - $$fname = ((Get-Childitem grafana*.msi -name) -split "`n")[0]
+  - gsutil cp $$fname gs://grafana-downloads/oss/main/
+  - gsutil cp "$$fname.sha256" gs://grafana-downloads/oss/main/
   depends_on:
   - windows-init
   environment:
@@ -4742,6 +4746,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 58b77325696868ab394acaf1790f387278191c9494842d944eab1653d18ba70c
+hmac: 0d6a76c8e02d40641e3ccd2fc34dd1adaa7a94e0d40a581cd368cfd1acb06c28
 
 ...
