@@ -20,5 +20,5 @@ images = {
     "drone_downstream_image": "grafana/drone-downstream",
     "docker_puppeteer_image": "grafana/docker-puppeteer:1.1.0",
     "docs_image": "grafana/docs-base:dbd975af06",
-    "cypress_image": "cypress/included:12.15.0",
+    "cypress_image": "cypress/included:13.1.0",
 }
