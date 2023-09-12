@@ -15,6 +15,7 @@ import {
 import { ReceiversState } from 'app/types/alerting';
 
 import { mockAlertGroup, mockAlertmanagerAlert, mockReceiversState } from '../../mocks';
+import { AlertmanagerProvider } from '../../state/AlertmanagerContext';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 
 import { Policy } from './Policy';
@@ -286,7 +287,11 @@ describe('Policy', () => {
 });
 
 const renderPolicy = (element: JSX.Element) =>
-  render(<Router history={locationService.getHistory()}>{element}</Router>);
+  render(
+    <Router history={locationService.getHistory()}>
+      <AlertmanagerProvider accessType="notification">{element}</AlertmanagerProvider>
+    </Router>
+  );
 
 const eq = MatcherOperator.equal;
 
