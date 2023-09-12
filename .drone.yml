@@ -582,7 +582,7 @@ steps:
   image: node:18.12.0-alpine
   name: build-frontend-packages
 - commands:
-  - /src/grafana-build package --distro=linux/amd64,linux/arm64,linux/arm/v7 --yarn-cache=$$YARN_CACHE_FOLDER
+  - /src/grafana-build package --distro=linux/amd64,linux/arm64 --yarn-cache=$$YARN_CACHE_FOLDER
     --build-id=$$DRONE_BUILD_NUMBER --grafana-dir=$$PWD > packages.txt
   depends_on:
   - yarn-install
@@ -1110,8 +1110,9 @@ steps:
   image: golang:1.21.1-alpine
   name: compile-build-cmd
 - commands:
+  - apt-get update -yq && apt-get install shellcheck
   - shellcheck -e SC1071 -e SC2162 scripts/**/*.sh
-  image: koalaman/shellcheck:stable
+  image: ubuntu:22.04
   name: shellcheck
 trigger:
   event:
@@ -1720,7 +1721,7 @@ steps:
   image: node:18.12.0-alpine
   name: build-frontend-packages
 - commands:
-  - /src/grafana-build package --distro=linux/amd64,linux/arm64,linux/arm/v7 --yarn-cache=$$YARN_CACHE_FOLDER
+  - /src/grafana-build package --distro=linux/amd64,linux/arm64 --yarn-cache=$$YARN_CACHE_FOLDER
     --build-id=$$DRONE_BUILD_NUMBER --grafana-dir=$$PWD > packages.txt
   depends_on:
   - yarn-install
@@ -4173,6 +4174,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: e6c37ab3aab25cc5dd52e6f231a7334eeb75e0ccb8ab29087ac26d41d50f5bb1
+hmac: c09b9eb6695682d02ab84725dda97b7e095d1ed8db110739d59d944551d43c15
 
 ...

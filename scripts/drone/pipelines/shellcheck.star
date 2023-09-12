@@ -29,8 +29,9 @@ trigger = {
 def shellcheck_step():
     return {
         "name": "shellcheck",
-        "image": images["shellcheck"],
+        "image": images["ubuntu"],
         "commands": [
+            "apt-get update -yq && apt-get install shellcheck",
             "shellcheck -e SC1071 -e SC2162 scripts/**/*.sh",
         ],
     }
