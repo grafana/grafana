@@ -2769,7 +2769,7 @@ steps:
       from_secret: packages_gpg_private_key
     GPG_PUBLIC_KEY:
       from_secret: packages_gpg_public_key
-  image: grafana/grafana-build:dev-634d8dc
+  image: grafana/grafana-build:dev-7a93728
   name: rgm-build
   volumes:
   - name: docker
@@ -3007,7 +3007,7 @@ steps:
       from_secret: packages_gpg_private_key
     GPG_PUBLIC_KEY:
       from_secret: packages_gpg_public_key
-  image: grafana/grafana-build:dev-634d8dc
+  image: grafana/grafana-build:dev-7a93728
   name: rgm-build
   volumes:
   - name: docker
@@ -3177,7 +3177,7 @@ steps:
       from_secret: packages_gpg_private_key
     GPG_PUBLIC_KEY:
       from_secret: packages_gpg_public_key
-  image: grafana/grafana-build:dev-634d8dc
+  image: grafana/grafana-build:dev-7a93728
   name: rgm-build
   volumes:
   - name: docker
@@ -3396,7 +3396,7 @@ steps:
       from_secret: packages_gpg_private_key
     GPG_PUBLIC_KEY:
       from_secret: packages_gpg_public_key
-  image: grafana/grafana-build:dev-634d8dc
+  image: grafana/grafana-build:dev-7a93728
   name: rgm-build
   volumes:
   - name: docker
@@ -3509,7 +3509,7 @@ steps:
       from_secret: packages_gpg_private_key
     GPG_PUBLIC_KEY:
       from_secret: packages_gpg_public_key
-  image: grafana/grafana-build:dev-634d8dc
+  image: grafana/grafana-build:dev-7a93728
   name: rgm-publish
   volumes:
   - name: docker
@@ -4473,6 +4473,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 3189710769ecc4466edc6d6253930a9f893d0f03e5ae1d12084eae46e93bc4d1
+hmac: 4ed7f49d5e072c4a8014fad4be64cb7810c5484ffab1d2eaea129696a30b1dbd
 
 ...
