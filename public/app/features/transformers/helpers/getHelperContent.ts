@@ -16,6 +16,7 @@ import { HistogramHelper } from './HistogramHelper';
 import { JoinByFieldHelper } from './JoinByFieldHelper';
 import { JoinByLabelsHelper } from './JoinByLabelsHelper';
 import { LabelsToFieldsHelper } from './LabelsToFieldsHelper';
+import { LimitHelper } from './LimitHelper';
 
 interface Helper {
   [key: string]: JSX.Element | string;
@@ -42,6 +43,7 @@ const helperContent: Helper = {
   joinByField: JoinByFieldHelper(),
   joinByLabels: JoinByLabelsHelper(),
   labelsToFields: LabelsToFieldsHelper(),
+  limit: LimitHelper(),
 };
 
 // JEV: add logic for no helper/string content
