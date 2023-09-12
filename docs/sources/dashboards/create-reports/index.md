@@ -308,4 +308,7 @@ filters = report:debug
 
 [Configuration]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana#filters"
 [Configuration]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana#filters"
+
+[HTTP APIs]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/developers/http_api"
+[HTTP APIs]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/developers/http_api"
 {{% /docs/reference %}}
