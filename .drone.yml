@@ -2021,6 +2021,10 @@ steps:
   - gcloud auth activate-service-account --key-file=gcpkey.json
   - rm gcpkey.json
   - cp C:\App\nssm-2.24.zip .
+  - .\grabpl.exe windows-installer --edition oss --build-id $$env:DRONE_BUILD_NUMBER
+  - $$fname = ((Get-Childitem grafana*.msi -name) -split "`n")[0]
+  - gsutil cp "$$fname" gs://grafana-downloads/oss/main/
+  - gsutil cp "$$fname.sha256" gs://grafana-downloads/oss/main/
   depends_on:
   - windows-init
   environment:
@@ -2824,7 +2828,7 @@ steps:
   - .\grabpl.exe windows-installer --target gs://grafana-prerelease/artifacts/downloads/${DRONE_TAG}/oss/release/grafana-${DRONE_TAG:1}.windows-amd64.zip
     --edition oss ${DRONE_TAG}
   - $$fname = ((Get-Childitem grafana*.msi -name) -split "`n")[0]
-  - gsutil cp $$fname gs://grafana-prerelease/artifacts/downloads/${DRONE_TAG}/oss/release/
+  - gsutil cp "$$fname" gs://grafana-prerelease/artifacts/downloads/${DRONE_TAG}/oss/release/
   - gsutil cp "$$fname.sha256" gs://grafana-prerelease/artifacts/downloads/${DRONE_TAG}/oss/release/
   depends_on:
   - windows-init
@@ -4337,6 +4341,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 42f58be67ea9a6fe5ff07c3908eafa94534060b42b27a3a320b1a8d896758f99
+hmac: 356704a2a281f3e71fd9ceda9ea7d726c60defadf5f66fb67df6376c37532d1b
 
 ...
