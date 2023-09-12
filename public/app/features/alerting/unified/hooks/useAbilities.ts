@@ -64,7 +64,7 @@ export enum AlertSourceAction {
 const AlwaysSupported = true; // this just makes it easier to understand the code
 export type Action = AlertmanagerAction | AlertSourceAction;
 
-export type Ability = [actionSupported: boolean, actionPermitted: boolean];
+export type Ability = [actionSupported: boolean, actionAllowed: boolean];
 export type Abilities<T extends Action> = Record<T, Ability>;
 
 export function useAlertSourceAbilities(): Abilities<AlertSourceAction> {
