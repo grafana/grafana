@@ -74,4 +74,48 @@ describe('dashlist migrations', () => {
       folderUID: 'abc-124',
     });
   });
+
+  it("doesn't fail if the api request fails", async () => {
+    const spyConsoleWarn = jest.spyOn(console, 'warn').mockImplementation();
+
+    getMock.mockRejectedValue({
+      status: 403,
+      statusText: 'Forbidden',
+      data: {
+        accessErrorId: 'ACE0577385389',
+        message: "You'll need additional permissions to perform this action. Permissions needed: folders:read",
+        title: 'Access denied',
+      },
+      config: {
+        showErrorAlert: false,
+        method: 'GET',
+        url: 'api/folders/id/0',
+        retry: 0,
+        headers: {
+          'X-Grafana-Org-Id': 1,
+        },
+        hideFromInspector: true,
+      },
+    });
+
+    const basePanelOptions = {
+      showStarred: true,
+      showRecentlyViewed: true,
+      showSearch: true,
+      showHeadings: true,
+      maxItems: 7,
+      query: 'hello, query',
+      includeVars: false,
+      keepTime: false,
+      tags: [],
+      folderId: 77,
+    };
+    const panelModel = wellFormedPanelModel(basePanelOptions);
+
+    // We expect it to not reject
+    const newOptions = await dashlistMigrationHandler(panelModel);
+
+    expect(newOptions).toStrictEqual(basePanelOptions);
+    expect(spyConsoleWarn).toHaveBeenCalledTimes(1);
+  });
 });

@@ -1,5 +1,6 @@
-import { e2e } from '@grafana/e2e';
 import { selectors } from '@grafana/e2e-selectors';
+
+import { e2e } from '../utils';
 
 e2e.scenario({
   describeName: 'Pie Chart Panel',
@@ -11,8 +12,9 @@ e2e.scenario({
     // open Panel Tests - Pie Chart
     e2e.flows.openDashboard({ uid: 'lVE-2YFMz' });
 
-    e2e()
-      .get(`[data-panelid=11] [aria-label^="${selectors.components.Panels.Visualization.PieChart.svgSlice}"]`)
-      .should('have.length', 5);
+    cy.get(`[data-panelid=11] [aria-label^="${selectors.components.Panels.Visualization.PieChart.svgSlice}"]`).should(
+      'have.length',
+      5
+    );
   },
 });

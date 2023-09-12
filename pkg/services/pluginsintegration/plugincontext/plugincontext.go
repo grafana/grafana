@@ -10,13 +10,13 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
 	"github.com/grafana/grafana/pkg/infra/localcache"
-	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/envvars"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/adapters"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 )
 
 const (
@@ -26,7 +26,7 @@ const (
 
 var ErrPluginNotFound = errors.New("plugin not found")
 
-func ProvideService(cacheService *localcache.CacheService, pluginStore plugins.Store,
+func ProvideService(cacheService *localcache.CacheService, pluginStore pluginstore.Store,
 	dataSourceService datasources.DataSourceService, pluginSettingsService pluginsettings.Service,
 	licensing plugins.Licensing, pCfg *config.Cfg) *Provider {
 	return &Provider{
@@ -41,7 +41,7 @@ func ProvideService(cacheService *localcache.CacheService, pluginStore plugins.S
 type Provider struct {
 	pluginEnvVars         *envvars.Service
 	cacheService          *localcache.CacheService
-	pluginStore           plugins.Store
+	pluginStore           pluginstore.Store
 	dataSourceService     datasources.DataSourceService
 	pluginSettingsService pluginsettings.Service
 }
@@ -112,7 +112,7 @@ func (p *Provider) datasourceInstanceSettings(ctx context.Context, ds *datasourc
 	return datasourceSettings, nil
 }
 
-func (p *Provider) appInstanceSettings(ctx context.Context, plugin plugins.PluginDTO, orgID int64) (*backend.AppInstanceSettings, error) {
+func (p *Provider) appInstanceSettings(ctx context.Context, plugin pluginsintegration.Plugin, orgID int64) (*backend.AppInstanceSettings, error) {
 	jsonData := json.RawMessage{}
 	decryptedSecureJSONData := map[string]string{}
 	var updated time.Time

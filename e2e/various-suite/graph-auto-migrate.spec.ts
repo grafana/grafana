@@ -1,4 +1,4 @@
-import { e2e } from '@grafana/e2e';
+import { e2e } from '../utils';
 const DASHBOARD_ID = 'XMjIZPmik';
 const DASHBOARD_NAME = 'Panel Tests - Graph Time Regions';
 
@@ -10,12 +10,12 @@ e2e.scenario({
   skipScenario: false,
   scenario: () => {
     e2e.flows.openDashboard({ uid: DASHBOARD_ID });
-    e2e().contains(DASHBOARD_NAME).should('be.visible');
+    cy.contains(DASHBOARD_NAME).should('be.visible');
     cy.contains('uplot-main-div').should('not.exist');
 
     e2e.flows.openDashboard({ uid: DASHBOARD_ID, queryParams: { '__feature.autoMigrateOldPanels': true } });
 
-    e2e().wait(1000);
+    cy.wait(1000);
 
     e2e.components.Panels.Panel.title('Business Hours')
       .should('exist')
