@@ -573,7 +573,7 @@ func (s *UserAuthTokenService) GetUserRevokedTokens(ctx context.Context, userId 
 	result := []*auth.UserToken{}
 	err := s.sqlStore.WithDbSession(ctx, func(dbSession *db.Session) error {
 		var tokens []*userAuthToken
-		err := dbSession.Where("user_id = ? AND revoked_at > 0", userId).Asc("revoked_at").Find(&tokens)
+		err := dbSession.Where("user_id = ? AND revoked_at > 0", userId).Asc("seen_at").Find(&tokens)
 		if err != nil {
 			return err
 		}
