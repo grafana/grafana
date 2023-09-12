@@ -3121,7 +3121,7 @@ steps:
   - .\grabpl.exe windows-installer --target gs://grafana-prerelease/artifacts/downloads/${DRONE_TAG}/oss/release/grafana-${DRONE_TAG:1}.windows-amd64.zip
     --edition oss ${DRONE_TAG}
   - $$fname = ((Get-Childitem grafana*.msi -name) -split "`n")[0]
-  - gsutil cp $$fname gs://grafana-prerelease/artifacts/downloads/${DRONE_TAG}/oss/release/
+  - gsutil cp "$$fname" gs://grafana-prerelease/artifacts/downloads/${DRONE_TAG}/oss/release/
   - gsutil cp "$$fname.sha256" gs://grafana-prerelease/artifacts/downloads/${DRONE_TAG}/oss/release/
   depends_on:
   - windows-init
@@ -4746,6 +4746,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 0d6a76c8e02d40641e3ccd2fc34dd1adaa7a94e0d40a581cd368cfd1acb06c28
+hmac: 346964fa38e1b7b260e1a9a7f619bc7963a4c9e66979a229891e0d97fb1fe2ba
 
 ...
