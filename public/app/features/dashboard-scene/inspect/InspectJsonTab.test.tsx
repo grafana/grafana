@@ -81,6 +81,8 @@ describe('InspectJsonTab', () => {
     const panel2 = findVizPanelByKey(scene, panel.state.key)!;
     expect(panel2.state.title).toBe('New title');
     expect((panel2.parent as SceneGridItem).state.width!).toBe(3);
+
+    expect(tab.state.onClose).toHaveBeenCalled();
   });
 });
 
@@ -153,6 +155,7 @@ async function buildTestScene() {
 
   const tab = new InspectJsonTab({
     panelRef: new SceneObjectRef(panel),
+    onClose: jest.fn(),
   });
 
   return { scene, tab, panel };
