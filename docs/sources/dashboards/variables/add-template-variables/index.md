@@ -97,6 +97,7 @@ Query expressions are different for each data source. For more information, refe
    - **On Time Range Change:** Queries the data source when the dashboard time range changes. Only use this option if your variable options query contains a time range filter or is dependent on the dashboard time range.
 1. In the **Query** field, enter a query.
    - The query field varies according to your data source. Some data sources have custom query editors.
+   - Make sure that the query returns values named `__text` and `__value` as appropriate in your query syntax. For example, in SQL, you can use a query such as `SELECT hostname AS __text, id AS __value FROM MyTable`. Queries for other languages will vary depending on syntax.
    - If you need more room in a single input field query editor, then hover your cursor over the lines in the lower right corner of the field and drag downward to expand.
 1. (Optional) In the **Regex** field, type a regex expression to filter or capture specific parts of the names returned by your data source query. To see examples, refer to [Filter variables with regex](#filter-variables-with-regex).
 1. In the **Sort** list, select the sort order for values to be displayed in the dropdown list. The default option, **Disabled**, means that the order of options returned by your data source query will be used.
@@ -324,6 +325,10 @@ Currently only supported for Prometheus and Loki data sources. This variable rep
 ### $\_\_rate_interval
 
 Currently only supported for Prometheus data sources. The `$__rate_interval` variable is meant to be used in the rate function. Refer to [Prometheus query variables][] for details.
+
+### $\_\_rate_interval_ms
+
+This variable is the `$__rate_interval` variable in milliseconds, not a time-interval-formatted string. For example, if the `$__rate_interval` is `20m` then the `$__rate_interval_ms` is `1200000`.
 
 ### $timeFilter or $\_\_timeFilter
 

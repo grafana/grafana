@@ -64,6 +64,7 @@
     "@babel/preset-env": "7.22.9",
     "@cypress/webpack-preprocessor": "5.17.1",
     "@grafana/e2e-selectors": "10.2.0-pre",
+    "@grafana/schema": "10.2.0-pre",
     "@grafana/tsconfig": "^1.2.0-rc1",
     "@mochajs/json-file-reporter": "^1.2.0",
     "babel-loader": "9.1.3",

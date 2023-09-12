@@ -108,6 +108,20 @@ func TestDynamicAngularDetectorsProvider(t *testing.T) {
 			require.False(t, gcom.httpCalls.called(), "gcom api should not be called")
 			require.Empty(t, svc.ProvideDetectors(context.Background()))
 		})
+
+		t.Run("returns error if status code is outside 2xx range", func(t *testing.T) {
+			errScenario := &gcomScenario{httpHandlerFunc: func(w http.ResponseWriter, req *http.Request) {
+				// Return a valid json response so json.Unmarshal succeeds
+				// but still return 500 status code
+				w.WriteHeader(http.StatusInternalServerError)
+				_, _ = w.Write([]byte("[]"))
+			}}
+			errSrv := errScenario.newHTTPTestServer()
+			t.Cleanup(errSrv.Close)
+			svc := provideDynamic(t, errSrv.URL)
+			_, err := svc.fetch(context.Background())
+			require.Error(t, err)
+		})
 	})
 
 	t.Run("updateDetectors", func(t *testing.T) {
@@ -283,7 +297,7 @@ func TestDynamicAngularDetectorsProviderBackgroundService(t *testing.T) {
 			done := make(chan struct{})
 			gcom := newDefaultGCOMScenario(func(_ http.ResponseWriter, _ *http.Request) {
 				now := time.Now()
-				assert.WithinDuration(t, now, lastJobTime, jobInterval+jobInterval/2)
+				assert.WithinDuration(t, now, lastJobTime, jobInterval*2)
 				lastJobTime = now
 
 				jobCalls.inc()
@@ -314,6 +328,29 @@ func TestDynamicAngularDetectorsProviderBackgroundService(t *testing.T) {
 			require.True(t, gcom.httpCalls.calledX(tcRuns), "should have the correct number of gcom api calls")
 		})
 	})
+}
+
+func TestRandomSkew(t *testing.T) {
+	const runs = 100
+
+	gcom := newDefaultGCOMScenario()
+	srv := gcom.newHTTPTestServer()
+	t.Cleanup(srv.Close)
+	svc := provideDynamic(t, srv.URL)
+	const ttl = time.Hour * 1
+	const skew = ttl / 4
+	var different bool
+	var previous time.Duration
+	for i := 0; i < runs; i++ {
+		v := svc.randomSkew(skew)
+		require.True(t, v >= 0 && v <= skew, "returned skew must be within ttl and +ttl/4")
+		if i == 0 {
+			previous = v
+		} else if !different {
+			different = float64(previous) != float64(v)
+		}
+	}
+	require.True(t, different, "must not always return the same value")
 }
 
 var mockGCOMResponse = []byte(`[{

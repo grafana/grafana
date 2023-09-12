@@ -16,7 +16,7 @@ labels:
     - enterprise
     - oss
 title: Logs panel
-weight: 700
+weight: 100
 ---
 
 # Logs panel

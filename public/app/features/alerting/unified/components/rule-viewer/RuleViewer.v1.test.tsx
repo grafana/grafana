@@ -3,7 +3,7 @@ import React from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
 import { byRole, byText } from 'testing-library-selector';
 
-import { config, locationService, setBackendSrv, setDataSourceSrv } from '@grafana/runtime';
+import { locationService, setBackendSrv } from '@grafana/runtime';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -20,13 +20,13 @@ import {
   getGrafanaRule,
   grantUserPermissions,
   mockDataSource,
-  MockDataSourceSrv,
   mockPromAlertingRule,
   mockRulerAlertingRule,
   promRuleFromRulerRule,
 } from '../../mocks';
 import { mockAlertmanagerChoiceResponse } from '../../mocks/alertmanagerApi';
 import { mockPluginSettings } from '../../mocks/plugins';
+import { setupDataSources } from '../../testSetup/datasources';
 import { SupportedPlugin } from '../../types/pluginBridges';
 import * as ruleId from '../../utils/rule-id';
 
@@ -47,20 +47,6 @@ const mockRoute = (id?: string): GrafanaRouteComponentProps<{ id?: string; sourc
   staticContext: {},
 });
 
-// jest.mock('../../hooks/useCombinedRule');
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  getDataSourceSrv: () => {
-    return {
-      getInstanceSettings: () => ({ name: 'prometheus' }),
-      get: () =>
-        Promise.resolve({
-          filterQuery: () => true,
-        }),
-    };
-  },
-}));
-
 jest.mock('../../hooks/useIsRuleEditable');
 jest.mock('../../api/buildInfo');
 
@@ -71,7 +57,7 @@ const mocks = {
 const ui = {
   actionButtons: {
     edit: byRole('link', { name: /edit/i }),
-    clone: byRole('link', { name: /copy/i }),
+    clone: byRole('button', { name: /^copy$/i }),
     delete: byRole('button', { name: /delete/i }),
     silence: byRole('link', { name: 'Silence' }),
   },
@@ -105,15 +91,12 @@ beforeAll(() => {
   // we need to mock this one for the "declare incident" button
   mockPluginSettings(server, SupportedPlugin.Incident);
 
-  const dsSettings = mockDataSource({
+  const promDsSettings = mockDataSource({
     name: dsName,
     uid: dsName,
   });
-  config.datasources = {
-    [dsName]: dsSettings,
-  };
 
-  setDataSourceSrv(new MockDataSourceSrv({ [dsName]: dsSettings }));
+  setupDataSources(promDsSettings);
 
   mockAlertRuleApi(server).rulerRules('grafana', {
     [mockGrafanaRule.namespace.name]: [

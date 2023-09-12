@@ -58,10 +58,7 @@ export const colorPickerFactory = <T extends ColorPickerProps>(
                 )}
 
                 {children ? (
-                  // Children have a bit weird type due to intersection used in the definition so we need to cast here,
-                  // but the definition is correct and should not allow to pass a children that does not conform to
-                  // ColorPickerTriggerRenderer type.
-                  (children as ColorPickerTriggerRenderer)({
+                  children({
                     ref: this.pickerTriggerRef,
                     showColorPicker: showPopper,
                     hideColorPicker: hidePopper,

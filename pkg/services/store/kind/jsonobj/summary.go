@@ -18,7 +18,7 @@ func GetEntityKindInfo() entity.EntityKindInfo {
 
 func GetEntitySummaryBuilder() entity.EntitySummaryBuilder {
 	return func(ctx context.Context, uid string, body []byte) (*entity.EntitySummary, []byte, error) {
-		v := make(map[string]interface{})
+		v := make(map[string]any)
 		err := json.Unmarshal(body, &v)
 		if err != nil {
 			return nil, nil, err

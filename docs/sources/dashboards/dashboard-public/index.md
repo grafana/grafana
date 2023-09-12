@@ -54,7 +54,7 @@ If you are using Docker, use an environment variable to enable public dashboards
 
 {{% admonition type="note" %}}
 
-For Grafana Cloud (Pro and Advanced only), contact support to have the feature enabled.
+For Grafana Cloud, contact support to have the feature enabled.
 
 {{% /admonition %}}
 
@@ -88,7 +88,7 @@ The link no longer works. You must create a new public URL, as in [Make a dashbo
 
 {{% admonition type="note" %}}
 
-Available in [private preview](/docs/release-life-cycle/) in [Grafana Cloud Pro and Advanced](/docs/grafana-cloud). This feature will have a cost by active users after being promoted into general availability.
+Available in [private preview](/docs/release-life-cycle/) in [Grafana Cloud](/docs/grafana-cloud). This feature will have a cost by active users after being promoted into general availability.
 
 Please contact support to have the feature enabled.
 
@@ -149,9 +149,7 @@ If a Grafana user has read access to the parent dashboard, they can view the pub
 
 ## Assess public dashboard usage
 
-{{% admonition type="note" %}}
-Available in [Grafana Enterprise][] and [Grafana Cloud Pro and Advanced](/docs/grafana-cloud).
-{{% /admonition %}}
+> **Note:** Available in [Grafana Enterprise][] and [Grafana Cloud](/docs/grafana-cloud).
 
 You can check usage analytics about your public dashboard by clicking the insights icon in the dashboard header:
 

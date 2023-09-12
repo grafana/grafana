@@ -541,7 +541,7 @@ steps:
     $${TEST_TAG}
   environment:
     GITHUB_TOKEN:
-      from_secret: github_token_pr
+      from_secret: github_token
     TEST_TAG: v0.0.0-test
   failure: ignore
   image: grafana/build-container:1.7.5
@@ -627,40 +627,36 @@ steps:
   image: grafana/build-container:1.7.5
   name: grafana-server
 - commands:
-  - apt-get install -y netcat
   - ./bin/build e2e-tests --port 3001 --suite dashboards-suite
   depends_on:
   - grafana-server
   environment:
     HOST: grafana-server
-  image: cypress/included:9.5.1-node16.14.0-slim-chrome99-ff97
+  image: cypress/included:12.15.0
   name: end-to-end-tests-dashboards-suite
 - commands:
-  - apt-get install -y netcat
   - ./bin/build e2e-tests --port 3001 --suite smoke-tests-suite
   depends_on:
   - grafana-server
   environment:
     HOST: grafana-server
-  image: cypress/included:9.5.1-node16.14.0-slim-chrome99-ff97
+  image: cypress/included:12.15.0
   name: end-to-end-tests-smoke-tests-suite
 - commands:
-  - apt-get install -y netcat
   - ./bin/build e2e-tests --port 3001 --suite panels-suite
   depends_on:
   - grafana-server
   environment:
     HOST: grafana-server
-  image: cypress/included:9.5.1-node16.14.0-slim-chrome99-ff97
+  image: cypress/included:12.15.0
   name: end-to-end-tests-panels-suite
 - commands:
-  - apt-get install -y netcat
   - ./bin/build e2e-tests --port 3001 --suite various-suite
   depends_on:
   - grafana-server
   environment:
     HOST: grafana-server
-  image: cypress/included:9.5.1-node16.14.0-slim-chrome99-ff97
+  image: cypress/included:12.15.0
   name: end-to-end-tests-various-suite
 - commands:
   - cd /
@@ -676,9 +672,9 @@ steps:
       from_secret: azure_tenant
     CYPRESS_CI: "true"
     GITHUB_TOKEN:
-      from_secret: github_token_pr
+      from_secret: github_token
     HOST: grafana-server
-  image: us-docker.pkg.dev/grafanalabs-dev/cloud-data-sources/e2e:latest
+  image: us-docker.pkg.dev/grafanalabs-dev/cloud-data-sources/e2e:2.0.0
   name: end-to-end-tests-cloud-plugins-suite-azure
   when:
     paths:
@@ -786,9 +782,9 @@ steps:
   - build-docker-images-ubuntu
   environment:
     DOCKER_PASSWORD:
-      from_secret: docker_password_pr
+      from_secret: docker_password
     DOCKER_USER:
-      from_secret: docker_username_pr
+      from_secret: docker_username
     GITHUB_APP_ID:
       from_secret: delivery-bot-app-id
     GITHUB_APP_INSTALLATION_ID:
@@ -1786,40 +1782,36 @@ steps:
   image: grafana/build-container:1.7.5
   name: grafana-server
 - commands:
-  - apt-get install -y netcat
   - ./bin/build e2e-tests --port 3001 --suite dashboards-suite
   depends_on:
   - grafana-server
   environment:
     HOST: grafana-server
-  image: cypress/included:9.5.1-node16.14.0-slim-chrome99-ff97
+  image: cypress/included:12.15.0
   name: end-to-end-tests-dashboards-suite
 - commands:
-  - apt-get install -y netcat
   - ./bin/build e2e-tests --port 3001 --suite smoke-tests-suite
   depends_on:
   - grafana-server
   environment:
     HOST: grafana-server
-  image: cypress/included:9.5.1-node16.14.0-slim-chrome99-ff97
+  image: cypress/included:12.15.0
   name: end-to-end-tests-smoke-tests-suite
 - commands:
-  - apt-get install -y netcat
   - ./bin/build e2e-tests --port 3001 --suite panels-suite
   depends_on:
   - grafana-server
   environment:
     HOST: grafana-server
-  image: cypress/included:9.5.1-node16.14.0-slim-chrome99-ff97
+  image: cypress/included:12.15.0
   name: end-to-end-tests-panels-suite
 - commands:
-  - apt-get install -y netcat
   - ./bin/build e2e-tests --port 3001 --suite various-suite
   depends_on:
   - grafana-server
   environment:
     HOST: grafana-server
-  image: cypress/included:9.5.1-node16.14.0-slim-chrome99-ff97
+  image: cypress/included:12.15.0
   name: end-to-end-tests-various-suite
 - commands:
   - cd /
@@ -1835,9 +1827,9 @@ steps:
       from_secret: azure_tenant
     CYPRESS_CI: "true"
     GITHUB_TOKEN:
-      from_secret: github_token_pr
+      from_secret: github_token
     HOST: grafana-server
-  image: us-docker.pkg.dev/grafanalabs-dev/cloud-data-sources/e2e:latest
+  image: us-docker.pkg.dev/grafanalabs-dev/cloud-data-sources/e2e:2.0.0
   name: end-to-end-tests-cloud-plugins-suite-azure
   when:
     paths:
@@ -2312,6 +2304,25 @@ steps:
     -OutFile grabpl.exe
   image: grafana/ci-wix:0.1.1
   name: windows-init
+- commands:
+  - $$gcpKey = $$env:GCP_KEY
+  - '[System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($$gcpKey))
+    > gcpkey.json'
+  - dos2unix gcpkey.json
+  - gcloud auth activate-service-account --key-file=gcpkey.json
+  - rm gcpkey.json
+  - cp C:\App\nssm-2.24.zip .
+  depends_on:
+  - windows-init
+  environment:
+    GCP_KEY:
+      from_secret: gcp_grafanauploads_base64
+    GITHUB_TOKEN:
+      from_secret: github_token
+    PRERELEASE_BUCKET:
+      from_secret: prerelease_bucket
+  image: grafana/ci-wix:0.1.1
+  name: build-windows-installer
 trigger:
   branch: main
   event:
@@ -2581,7 +2592,7 @@ steps:
   - compile-build-cmd
   environment:
     GCP_KEY:
-      from_secret: gcp_upload_artifacts_key
+      from_secret: gcp_grafanauploads_base64
     PRERELEASE_BUCKET:
       from_secret: prerelease_bucket
   image: grafana/grafana-ci-deploy:1.3.3
@@ -2592,7 +2603,7 @@ steps:
   - compile-build-cmd
   environment:
     GCP_KEY:
-      from_secret: gcp_upload_artifacts_key
+      from_secret: gcp_grafanauploads_base64
     PRERELEASE_BUCKET:
       from_secret: prerelease_bucket
     STATIC_ASSET_EDITIONS:
@@ -2605,7 +2616,7 @@ steps:
   - compile-build-cmd
   environment:
     GCP_KEY:
-      from_secret: gcp_upload_artifacts_key
+      from_secret: gcp_grafanauploads_base64
     PRERELEASE_BUCKET:
       from_secret: prerelease_bucket
   image: grafana/grafana-ci-deploy:1.3.3
@@ -2656,7 +2667,7 @@ steps:
   - yarn-install
   environment:
     GCP_KEY:
-      from_secret: gcp_upload_artifacts_key
+      from_secret: gcp_grafanauploads_base64
     PRERELEASE_BUCKET:
       from_secret: prerelease_bucket
   failure: ignore
@@ -3049,7 +3060,6 @@ steps:
       from_secret: packages_gpg_private_key
     GPG_PUBLIC_KEY:
       from_secret: packages_gpg_public_key
-  failure: ignore
   image: grafana/grafana-build:main
   name: rgm-build
   volumes:
@@ -3163,8 +3173,7 @@ steps:
   environment:
     BUCKET: grafana-prerelease
     GCP_KEY:
-      from_secret: gcp_upload_artifacts_key
-  failure: ignore
+      from_secret: gcp_key_base64
   image: google/cloud-sdk:431.0.0
   name: gsutil-stat
 trigger:
@@ -3389,40 +3398,36 @@ steps:
   image: grafana/build-container:1.7.5
   name: grafana-server
 - commands:
-  - apt-get install -y netcat
   - ./bin/build e2e-tests --port 3001 --suite dashboards-suite --tries 3
   depends_on:
   - grafana-server
   environment:
     HOST: grafana-server
-  image: cypress/included:9.5.1-node16.14.0-slim-chrome99-ff97
+  image: cypress/included:12.15.0
   name: end-to-end-tests-dashboards-suite
 - commands:
-  - apt-get install -y netcat
   - ./bin/build e2e-tests --port 3001 --suite smoke-tests-suite --tries 3
   depends_on:
   - grafana-server
   environment:
     HOST: grafana-server
-  image: cypress/included:9.5.1-node16.14.0-slim-chrome99-ff97
+  image: cypress/included:12.15.0
   name: end-to-end-tests-smoke-tests-suite
 - commands:
-  - apt-get install -y netcat
   - ./bin/build e2e-tests --port 3001 --suite panels-suite --tries 3
   depends_on:
   - grafana-server
   environment:
     HOST: grafana-server
-  image: cypress/included:9.5.1-node16.14.0-slim-chrome99-ff97
+  image: cypress/included:12.15.0
   name: end-to-end-tests-panels-suite
 - commands:
-  - apt-get install -y netcat
   - ./bin/build e2e-tests --port 3001 --suite various-suite --tries 3
   depends_on:
   - grafana-server
   environment:
     HOST: grafana-server
-  image: cypress/included:9.5.1-node16.14.0-slim-chrome99-ff97
+  image: cypress/included:12.15.0
   name: end-to-end-tests-various-suite
 - commands:
   - apt-get update
@@ -4167,13 +4172,42 @@ platform:
   os: linux
 steps:
 - commands:
-  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/grafana:latest
+  - echo $${GCR_CREDENTIALS} | docker login -u _json_key --password-stdin https://us.gcr.io
+  environment:
+    GCR_CREDENTIALS:
+      from_secret: gcr_credentials
+  image: docker:dind
+  name: authenticate-gcr
+  volumes:
+  - name: docker
+    path: /var/run/docker.sock
+  - name: config
+    path: /root/.docker/
+- commands:
+  - trivy image --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/grafana:latest
+  depends_on:
+  - authenticate-gcr
   image: aquasec/trivy:0.21.0
   name: scan-unknown-low-medium-vulnerabilities
+  volumes:
+  - name: docker
+    path: /var/run/docker.sock
+  - name: config
+    path: /root/.docker/
 - commands:
-  - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/grafana:latest
+  - trivy image --exit-code 1 --severity HIGH,CRITICAL grafana/grafana:latest
+  depends_on:
+  - authenticate-gcr
+  environment:
+    GOOGLE_APPLICATION_CREDENTIALS:
+      from_secret: gcr_credentials_json
   image: aquasec/trivy:0.21.0
   name: scan-high-critical-vulnerabilities
+  volumes:
+  - name: docker
+    path: /var/run/docker.sock
+  - name: config
+    path: /root/.docker/
 - image: plugins/slack
   name: slack-notify-failure
   settings:
@@ -4187,6 +4221,12 @@ trigger:
   cron: nightly
   event: cron
 type: docker
+volumes:
+- host:
+    path: /var/run/docker.sock
+  name: docker
+- name: config
+  temp: {}
 ---
 clone:
   retries: 3
@@ -4197,13 +4237,42 @@ platform:
   os: linux
 steps:
 - commands:
-  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/grafana:main
+  - echo $${GCR_CREDENTIALS} | docker login -u _json_key --password-stdin https://us.gcr.io
+  environment:
+    GCR_CREDENTIALS:
+      from_secret: gcr_credentials
+  image: docker:dind
+  name: authenticate-gcr
+  volumes:
+  - name: docker
+    path: /var/run/docker.sock
+  - name: config
+    path: /root/.docker/
+- commands:
+  - trivy image --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/grafana:main
+  depends_on:
+  - authenticate-gcr
   image: aquasec/trivy:0.21.0
   name: scan-unknown-low-medium-vulnerabilities
+  volumes:
+  - name: docker
+    path: /var/run/docker.sock
+  - name: config
+    path: /root/.docker/
 - commands:
-  - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/grafana:main
+  - trivy image --exit-code 1 --severity HIGH,CRITICAL grafana/grafana:main
+  depends_on:
+  - authenticate-gcr
+  environment:
+    GOOGLE_APPLICATION_CREDENTIALS:
+      from_secret: gcr_credentials_json
   image: aquasec/trivy:0.21.0
   name: scan-high-critical-vulnerabilities
+  volumes:
+  - name: docker
+    path: /var/run/docker.sock
+  - name: config
+    path: /root/.docker/
 - image: plugins/slack
   name: slack-notify-failure
   settings:
@@ -4217,6 +4286,12 @@ trigger:
   cron: nightly
   event: cron
 type: docker
+volumes:
+- host:
+    path: /var/run/docker.sock
+  name: docker
+- name: config
+  temp: {}
 ---
 clone:
   retries: 3
@@ -4227,13 +4302,42 @@ platform:
   os: linux
 steps:
 - commands:
-  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/grafana:latest-ubuntu
+  - echo $${GCR_CREDENTIALS} | docker login -u _json_key --password-stdin https://us.gcr.io
+  environment:
+    GCR_CREDENTIALS:
+      from_secret: gcr_credentials
+  image: docker:dind
+  name: authenticate-gcr
+  volumes:
+  - name: docker
+    path: /var/run/docker.sock
+  - name: config
+    path: /root/.docker/
+- commands:
+  - trivy image --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/grafana:latest-ubuntu
+  depends_on:
+  - authenticate-gcr
   image: aquasec/trivy:0.21.0
   name: scan-unknown-low-medium-vulnerabilities
+  volumes:
+  - name: docker
+    path: /var/run/docker.sock
+  - name: config
+    path: /root/.docker/
 - commands:
-  - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/grafana:latest-ubuntu
+  - trivy image --exit-code 1 --severity HIGH,CRITICAL grafana/grafana:latest-ubuntu
+  depends_on:
+  - authenticate-gcr
+  environment:
+    GOOGLE_APPLICATION_CREDENTIALS:
+      from_secret: gcr_credentials_json
   image: aquasec/trivy:0.21.0
   name: scan-high-critical-vulnerabilities
+  volumes:
+  - name: docker
+    path: /var/run/docker.sock
+  - name: config
+    path: /root/.docker/
 - image: plugins/slack
   name: slack-notify-failure
   settings:
@@ -4248,6 +4352,12 @@ trigger:
   cron: nightly
   event: cron
 type: docker
+volumes:
+- host:
+    path: /var/run/docker.sock
+  name: docker
+- name: config
+  temp: {}
 ---
 clone:
   retries: 3
@@ -4258,13 +4368,42 @@ platform:
   os: linux
 steps:
 - commands:
-  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/grafana:main-ubuntu
+  - echo $${GCR_CREDENTIALS} | docker login -u _json_key --password-stdin https://us.gcr.io
+  environment:
+    GCR_CREDENTIALS:
+      from_secret: gcr_credentials
+  image: docker:dind
+  name: authenticate-gcr
+  volumes:
+  - name: docker
+    path: /var/run/docker.sock
+  - name: config
+    path: /root/.docker/
+- commands:
+  - trivy image --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/grafana:main-ubuntu
+  depends_on:
+  - authenticate-gcr
   image: aquasec/trivy:0.21.0
   name: scan-unknown-low-medium-vulnerabilities
+  volumes:
+  - name: docker
+    path: /var/run/docker.sock
+  - name: config
+    path: /root/.docker/
 - commands:
-  - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/grafana:main-ubuntu
+  - trivy image --exit-code 1 --severity HIGH,CRITICAL grafana/grafana:main-ubuntu
+  depends_on:
+  - authenticate-gcr
+  environment:
+    GOOGLE_APPLICATION_CREDENTIALS:
+      from_secret: gcr_credentials_json
   image: aquasec/trivy:0.21.0
   name: scan-high-critical-vulnerabilities
+  volumes:
+  - name: docker
+    path: /var/run/docker.sock
+  - name: config
+    path: /root/.docker/
 - image: plugins/slack
   name: slack-notify-failure
   settings:
@@ -4279,6 +4418,12 @@ trigger:
   cron: nightly
   event: cron
 type: docker
+volumes:
+- host:
+    path: /var/run/docker.sock
+  name: docker
+- name: config
+  temp: {}
 ---
 clone:
   retries: 3
@@ -4288,6 +4433,18 @@ platform:
   arch: amd64
   os: linux
 steps:
+- commands:
+  - echo $${GCR_CREDENTIALS} | docker login -u _json_key --password-stdin https://us.gcr.io
+  environment:
+    GCR_CREDENTIALS:
+      from_secret: gcr_credentials
+  image: docker:dind
+  name: authenticate-gcr
+  volumes:
+  - name: docker
+    path: /var/run/docker.sock
+  - name: config
+    path: /root/.docker/
 - commands:
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM google/cloud-sdk:431.0.0
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/build-container:1.7.5
@@ -4306,10 +4463,16 @@ steps:
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/drone-downstream
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/docker-puppeteer:1.1.0
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/docs-base:dbd975af06
-  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM cypress/included:9.5.1-node16.14.0-slim-chrome99-ff97
-  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM us-docker.pkg.dev/grafanalabs-dev/cloud-data-sources/e2e:latest
+  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM cypress/included:12.15.0
+  depends_on:
+  - authenticate-gcr
   image: aquasec/trivy:0.21.0
   name: scan-unknown-low-medium-vulnerabilities
+  volumes:
+  - name: docker
+    path: /var/run/docker.sock
+  - name: config
+    path: /root/.docker/
 - commands:
   - trivy --exit-code 1 --severity HIGH,CRITICAL google/cloud-sdk:431.0.0
   - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/build-container:1.7.5
@@ -4328,10 +4491,19 @@ steps:
   - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/drone-downstream
   - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/docker-puppeteer:1.1.0
   - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/docs-base:dbd975af06
-  - trivy --exit-code 1 --severity HIGH,CRITICAL cypress/included:9.5.1-node16.14.0-slim-chrome99-ff97
-  - trivy --exit-code 1 --severity HIGH,CRITICAL us-docker.pkg.dev/grafanalabs-dev/cloud-data-sources/e2e:latest
+  - trivy --exit-code 1 --severity HIGH,CRITICAL cypress/included:12.15.0
+  depends_on:
+  - authenticate-gcr
+  environment:
+    GOOGLE_APPLICATION_CREDENTIALS:
+      from_secret: gcr_credentials_json
   image: aquasec/trivy:0.21.0
   name: scan-high-critical-vulnerabilities
+  volumes:
+  - name: docker
+    path: /var/run/docker.sock
+  - name: config
+    path: /root/.docker/
 - image: plugins/slack
   name: slack-notify-failure
   settings:
@@ -4345,6 +4517,12 @@ trigger:
   cron: nightly
   event: cron
 type: docker
+volumes:
+- host:
+    path: /var/run/docker.sock
+  name: docker
+- name: config
+  temp: {}
 ---
 clone:
   retries: 3
@@ -4376,6 +4554,12 @@ trigger:
   cron: grafana-com-nightly
   event: cron
 type: docker
+volumes:
+- host:
+    path: /var/run/docker.sock
+  name: docker
+- name: config
+  temp: {}
 ---
 get:
   name: credentials.json
@@ -4390,8 +4574,8 @@ kind: secret
 name: gcp_grafanauploads_base64
 ---
 get:
-  name: grafana_api_key
-  path: infra/data/ci/drone-plugins
+  name: api_key
+  path: infra/data/ci/grafana-release-eng/grafanacom
 kind: secret
 name: grafana_api_key
 ---
@@ -4418,6 +4602,18 @@ get:
   path: infra/data/ci/grafana/prerelease
 kind: secret
 name: prerelease_bucket
+---
+get:
+  name: username
+  path: infra/data/ci/grafanaci-docker-hub
+kind: secret
+name: docker_username
+---
+get:
+  name: password
+  path: infra/data/ci/grafanaci-docker-hub
+kind: secret
+name: docker_password
 ---
 get:
   name: credentials.json
@@ -4522,12 +4718,6 @@ kind: secret
 name: dagger_token
 ---
 get:
-  name: pat
-  path: infra/data/ci/github/grafanabot
-kind: secret
-name: github_token
----
-get:
   name: app-id
   path: infra/data/ci/grafana-release-eng/grafana-delivery-bot
 kind: secret
@@ -4545,7 +4735,13 @@ get:
 kind: secret
 name: delivery-bot-app-private-key
 ---
+get:
+  name: service-account
+  path: secret/data/common/gcr
+kind: secret
+name: gcr_credentials
+---
 kind: signature
-hmac: da71a34a4dca17f08a083941cc4f8582abc5c855dca13382a54db96c23ea7e65
+hmac: 58b77325696868ab394acaf1790f387278191c9494842d944eab1653d18ba70c
 
 ...

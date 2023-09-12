@@ -645,7 +645,6 @@
   ],
   "refresh": "10s",
   "schemaVersion": 18,
-  "style": "dark",
   "tags": ["gdev", "demo"],
   "templating": {
     "list": []

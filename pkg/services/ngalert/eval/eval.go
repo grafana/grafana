@@ -21,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -55,7 +56,7 @@ type conditionEvaluator struct {
 func (r *conditionEvaluator) EvaluateRaw(ctx context.Context, now time.Time) (resp *backend.QueryDataResponse, err error) {
 	defer func() {
 		if e := recover(); e != nil {
-			logger.FromContext(ctx).Error("alert rule panic", "error", e, "stack", string(debug.Stack()))
+			logger.FromContext(ctx).Error("Alert rule panic", "error", e, "stack", string(debug.Stack()))
 			panicErr := fmt.Errorf("alert rule panic; please check the logs for the full stack")
 			if err != nil {
 				err = fmt.Errorf("queries and expressions execution failed: %w; %v", err, panicErr.Error())
@@ -88,14 +89,14 @@ type evaluatorImpl struct {
 	evaluationTimeout time.Duration
 	dataSourceCache   datasources.CacheService
 	expressionService *expr.Service
-	pluginsStore      plugins.Store
+	pluginsStore      pluginstore.Store
 }
 
 func NewEvaluatorFactory(
 	cfg setting.UnifiedAlertingSettings,
 	datasourceCache datasources.CacheService,
 	expressionService *expr.Service,
-	pluginsStore plugins.Store,
+	pluginsStore pluginstore.Store,
 ) EvaluatorFactory {
 	return &evaluatorImpl{
 		evaluationTimeout: cfg.EvaluationTimeout,

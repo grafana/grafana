@@ -158,7 +158,7 @@ func (am *AlertmanagerNotifier) Notify(evalContext *alerting.EvalContext) error 
 	}
 
 	// Send one alert per matching series.
-	alerts := make([]interface{}, 0)
+	alerts := make([]any, 0)
 	for _, match := range evalContext.EvalMatches {
 		alert := am.createAlert(evalContext, match, ruleURL)
 		alerts = append(alerts, alert)

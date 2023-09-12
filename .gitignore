@@ -138,7 +138,6 @@ pkg/services/quota/quotaimpl/storage/storage.json
 /packages/**/.rpt2_cache
 /packages/**/tsdoc-metadata.json
 /packages/**/package.tgz
-/packages/grafana-toolkit/sass
 ## CI places the packages in a different location
 /npm-artifacts
 

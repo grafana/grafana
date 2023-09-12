@@ -198,7 +198,6 @@
     }
   ],
   "schemaVersion": 22,
-  "style": "dark",
   "tags": ["datasource-test", "gdev", "opentsdb"],
   "templating": {
     "list": []

@@ -14,7 +14,7 @@ labels:
     - enterprise
     - oss
 title: Bar gauge
-weight: 200
+weight: 100
 ---
 
 # Bar gauge

@@ -74,7 +74,7 @@ type CorrelationConfig struct {
 	// Target data query
 	// required:true
 	// example: {"prop1":"value1","prop2":"value"}
-	Target map[string]interface{} `json:"target" binding:"Required"`
+	Target map[string]any `json:"target" binding:"Required"`
 	// Source data transformations
 	// required:false
 	// example: [{"type":"logfmt"}]
@@ -85,13 +85,13 @@ func (c CorrelationConfig) MarshalJSON() ([]byte, error) {
 	target := c.Target
 	transformations := c.Transformations
 	if target == nil {
-		target = map[string]interface{}{}
+		target = map[string]any{}
 	}
 	return json.Marshal(struct {
-		Type            CorrelationConfigType  `json:"type"`
-		Field           string                 `json:"field"`
-		Target          map[string]interface{} `json:"target"`
-		Transformations Transformations        `json:"transformations,omitempty"`
+		Type            CorrelationConfigType `json:"type"`
+		Field           string                `json:"field"`
+		Target          map[string]any        `json:"target"`
+		Transformations Transformations       `json:"transformations,omitempty"`
 	}{
 		Type:            ConfigTypeQuery,
 		Field:           c.Field,
@@ -109,6 +109,9 @@ type Correlation struct {
 	// UID of the data source the correlation originates from
 	// example: d0oxYRg4z
 	SourceUID string `json:"sourceUID" xorm:"pk 'source_uid'"`
+	// OrgID of the data source the correlation originates from
+	// Example: 1
+	OrgID int64 `json:"orgId" xorm:"pk 'org_id'"`
 	// UID of the data source the correlation points to
 	// example: PE1C5CBDA0504A6A3
 	TargetUID *string `json:"targetUID" xorm:"target_uid"`
@@ -201,7 +204,7 @@ type CorrelationConfigUpdateDTO struct {
 	Type *CorrelationConfigType `json:"type"`
 	// Target data query
 	// example: {"prop1":"value1","prop2":"value"}
-	Target *map[string]interface{} `json:"target"`
+	Target *map[string]any `json:"target"`
 	// Source data transformations
 	// example: [{"type": "logfmt"},{"type":"regex","expression":"(Superman|Batman)", "variable":"name"}]
 	Transformations []Transformation `json:"transformations"`
@@ -286,8 +289,10 @@ type GetCorrelationsQuery struct {
 
 type DeleteCorrelationsBySourceUIDCommand struct {
 	SourceUID string
+	OrgId     int64
 }
 
 type DeleteCorrelationsByTargetUIDCommand struct {
 	TargetUID string
+	OrgId     int64
 }

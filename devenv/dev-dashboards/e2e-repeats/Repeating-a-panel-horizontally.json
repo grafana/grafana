@@ -106,8 +106,7 @@
     }
   ],
   "schemaVersion": 36,
-  "style": "dark",
-  "tags": [],
+  "tags": ["gdev", "templating"],
   "templating": {
     "list": [
       {
@@ -200,7 +199,7 @@
   },
   "timepicker": {},
   "timezone": "utc",
-  "title": "Repeating a panel horizontally",
+  "title": "Templating - Repeating a panel horizontally",
   "uid": "WVpf2jp7z",
   "version": 1,
   "weekStart": ""
