@@ -63,8 +63,7 @@ The Grafana OnCall integration is only available for Grafana Alertmanager.
 [create-notification-policy]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>alerting/alerting-rules/create-notification-policy/"
 [create-notification-policy]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/create-notification-policy/"
 
-[oncall-integration]: "/docs/oncall -> /docs/oncall/latest/integrations/grafana-alerting/"
-[oncall-integration]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/oncall/integrations/grafana-alerting/"
+[oncall-integration]: "/ -> /docs/oncall/latest/integrations/grafana-alerting"
 
 [escalation-chain] "/docs/oncall -> /docs/oncall/latest/escalation-chains-and-routes/"
 [oncall-integration]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/oncall/escalation-chains-and-routes/"
