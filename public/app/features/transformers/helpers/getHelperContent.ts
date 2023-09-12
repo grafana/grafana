@@ -22,6 +22,7 @@ import { OrganizeFieldsHelper } from './OrganizeFieldsHelper';
 import { PartitionByValuesHelper } from './PartitionByValuesHelper';
 import { PrepareTimeSeriesHelper } from './PrepareTimeSeriesHelper';
 import { ReduceHelper } from './ReduceHelper';
+import { RenameByRegexHelper } from './RenameByRegexHelper';
 
 interface Helper {
   [key: string]: JSX.Element | string;
@@ -54,6 +55,7 @@ const helperContent: Helper = {
   partitionByValues: PartitionByValuesHelper(),
   prepareTimeSeries: PrepareTimeSeriesHelper(),
   reduce: ReduceHelper(),
+  renameByRegex: RenameByRegexHelper(),
 };
 
 // JEV: add logic for no helper/string content
