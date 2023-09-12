@@ -1,13 +1,18 @@
+import React, { useMemo, useState } from 'react';
+
 import {
   EmbeddedScene,
   NestedScene,
   QueryVariable,
-  SceneFlexItem,
+  SceneApp,
+  SceneAppPage,
   SceneFlexLayout,
   SceneTimeRange,
   SceneVariableSet,
   VariableValueSelectors,
 } from '@grafana/scenes';
+import { usePageNav } from 'app/core/components/Page/usePageNav';
+import { PluginPageContext, PluginPageContextType } from 'app/features/plugins/components/PluginPageContext';
 
 import { getFiringAlertsScene } from '../insights/grafana/FiringAlertsPercentage';
 import { getFiringAlertsRateScene } from '../insights/grafana/FiringAlertsRate';
@@ -27,6 +32,7 @@ import { getInstancesPercentageByStateScene } from '../insights/mimir/rules/Inst
 import { getMissedIterationsScene } from '../insights/mimir/rules/MissedIterationsScene';
 import { getMostFiredInstancesScene as getMostFiredCloudInstances } from '../insights/mimir/rules/MostFiredInstances';
 import { getPendingCloudAlertsScene } from '../insights/mimir/rules/Pending';
+
 
 const ashDs = {
   type: 'loki',
@@ -145,4 +151,55 @@ function getMimirManagedRulesPerGroupScenes() {
     }),
     controls: [new VariableValueSelectors({})],
   });
+}
+
+export function getMainPageScene() {
+  return new SceneAppPage({
+    title: 'Alerting Insights',
+    subTitle: 'Monitor the status of your alerts',
+    url: '/alerting',
+    hideFromBreadcrumbs: true,
+    getScene: getGrafanaScenes,
+    tabs: [
+      new SceneAppPage({
+        title: 'Grafana',
+        url: '/alerting/insights',
+        getScene: getGrafanaScenes,
+      }),
+      new SceneAppPage({
+        title: 'Mimir alertmanager',
+        url: '/alerting/insights/mimir-alertmanager',
+        getScene: getCloudScenes,
+      }),
+      new SceneAppPage({
+        title: 'Mimir-managed rules',
+        url: '/alerting/insights/mimir-rules',
+        getScene: getMimirManagedRulesScenes,
+      }),
+      new SceneAppPage({
+        title: 'Mimir-managed Rules - Per Rule Group',
+        url: '/alerting/insights/mimir-rules-per-group',
+        getScene: getMimirManagedRulesPerGroupScenes,
+      }),
+    ],
+  });
+}
+
+export default function Insights() {
+  const appScene = useMemo(
+    () =>
+      new SceneApp({
+        pages: [getMainPageScene()],
+      }),
+    []
+  );
+
+  const sectionNav = usePageNav('alerting')!;
+  const [pluginContext] = useState<PluginPageContextType>({ sectionNav });
+
+  return (
+    <PluginPageContext.Provider value={pluginContext}>
+      <appScene.Component model={appScene} />
+    </PluginPageContext.Provider>
+  );
 }
