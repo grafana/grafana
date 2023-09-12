@@ -6,6 +6,7 @@ import (
 	"net"
 	"os"
 	"path"
+	"time"
 
 	"github.com/go-logr/logr"
 	"github.com/grafana/dskit/services"
@@ -13,13 +14,17 @@ import (
 	grafanaapiserver "github.com/grafana/grafana-apiserver/pkg/apiserver"
 	"github.com/grafana/grafana-apiserver/pkg/certgenerator"
 	grafanaapiserveroptions "github.com/grafana/grafana-apiserver/pkg/cmd/server/options"
-	"github.com/grafana/grafana-apiserver/pkg/storage/filepath"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/authentication/authenticator"
 	"k8s.io/apiserver/pkg/authentication/request/headerrequest"
 	"k8s.io/apiserver/pkg/authentication/user"
+	"k8s.io/apiserver/pkg/registry/generic"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/apiserver/pkg/server/options"
+	"k8s.io/apiserver/pkg/storage/storagebackend"
+	flowcontrolrequest "k8s.io/apiserver/pkg/util/flowcontrol/request"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
@@ -122,9 +127,9 @@ func (s *service) start(ctx context.Context) error {
 		return err
 	}
 
-	serverConfig.ExtraConfig.RESTOptionsGetter = filepath.NewRESTOptionsGetter(s.dataPath, unstructured.UnstructuredJSONScheme)
-	serverConfig.GenericConfig.RESTOptionsGetter = filepath.NewRESTOptionsGetter(s.dataPath, grafanaapiserver.Codecs.LegacyCodec(kindsv1.SchemeGroupVersion))
-	serverConfig.GenericConfig.Config.RESTOptionsGetter = filepath.NewRESTOptionsGetter(s.dataPath, grafanaapiserver.Codecs.LegacyCodec(kindsv1.SchemeGroupVersion))
+	serverConfig.ExtraConfig.RESTOptionsGetter = NewRESTOptionsGetter(s.dataPath, unstructured.UnstructuredJSONScheme)
+	serverConfig.GenericConfig.RESTOptionsGetter = NewRESTOptionsGetter(s.dataPath, grafanaapiserver.Codecs.LegacyCodec(kindsv1.SchemeGroupVersion))
+	serverConfig.GenericConfig.Config.RESTOptionsGetter = NewRESTOptionsGetter(s.dataPath, grafanaapiserver.Codecs.LegacyCodec(kindsv1.SchemeGroupVersion))
 
 	authenticator, err := newAuthenticator(rootCert)
 	if err != nil {
@@ -239,4 +244,93 @@ func newAuthenticator(cert *x509.Certificate) (authenticator.Request, error) {
 	}
 
 	return requestHeaderAuthenticator, nil
+}
+
+type restOptionsGetter struct {
+	path  string
+	Codec runtime.Codec
+}
+
+func NewRESTOptionsGetter(path string, codec runtime.Codec) *restOptionsGetter {
+	if path == "" {
+		path = "/tmp/grafana-apiserver"
+	}
+
+	return &restOptionsGetter{path: path, Codec: codec}
+}
+
+func (f *restOptionsGetter) GetRESTOptions(resource schema.GroupResource) (generic.RESTOptions, error) {
+	// Having a resource there seems to be no simple way to tell a cluster-level resource from a namespace-level one.
+	// Fortunatelly, we now only have GRDs as cluster-level resources.
+	if resource.Resource == "grafanaresourcedefinitions" {
+		return f.getClusterScopedRESTOptions(resource)
+	} else {
+		return f.getNamespaceScopedRESTOptions(resource)
+	}
+}
+
+func (f *restOptionsGetter) getClusterScopedRESTOptions(resource schema.GroupResource) (generic.RESTOptions, error) {
+	storageConfig := &storagebackend.ConfigForResource{
+		Config: storagebackend.Config{
+			Type:                      "custom",
+			Prefix:                    f.path,
+			Transport:                 storagebackend.TransportConfig{},
+			Paging:                    false,
+			Codec:                     f.Codec,
+			EncodeVersioner:           nil,
+			Transformer:               nil,
+			CompactionInterval:        0,
+			CountMetricPollPeriod:     0,
+			DBMetricPollInterval:      0,
+			HealthcheckTimeout:        0,
+			ReadycheckTimeout:         0,
+			StorageObjectCountTracker: nil,
+		},
+		GroupResource: resource,
+	}
+
+	ret := generic.RESTOptions{
+		StorageConfig:             storageConfig,
+		Decorator:                 NewJSONStorage,
+		DeleteCollectionWorkers:   0,
+		EnableGarbageCollection:   false,
+		ResourcePrefix:            path.Join(storageConfig.Prefix+"/cluster", resource.Group, resource.Resource),
+		CountMetricPollPeriod:     1 * time.Second,
+		StorageObjectCountTracker: flowcontrolrequest.NewStorageObjectCountTracker(),
+	}
+
+	return ret, nil
+}
+
+func (f *restOptionsGetter) getNamespaceScopedRESTOptions(resource schema.GroupResource) (generic.RESTOptions, error) {
+	storageConfig := &storagebackend.ConfigForResource{
+		Config: storagebackend.Config{
+			Type:                      "custom",
+			Prefix:                    f.path,
+			Transport:                 storagebackend.TransportConfig{},
+			Paging:                    false,
+			Codec:                     f.Codec,
+			EncodeVersioner:           nil,
+			Transformer:               nil,
+			CompactionInterval:        0,
+			CountMetricPollPeriod:     0,
+			DBMetricPollInterval:      0,
+			HealthcheckTimeout:        0,
+			ReadycheckTimeout:         0,
+			StorageObjectCountTracker: nil,
+		},
+		GroupResource: resource,
+	}
+
+	ret := generic.RESTOptions{
+		StorageConfig:             storageConfig,
+		Decorator:                 NewMemoryStorage,
+		DeleteCollectionWorkers:   0,
+		EnableGarbageCollection:   false,
+		ResourcePrefix:            path.Join(storageConfig.Prefix+"/namespaced", resource.Group, resource.Resource),
+		CountMetricPollPeriod:     1 * time.Second,
+		StorageObjectCountTracker: flowcontrolrequest.NewStorageObjectCountTracker(),
+	}
+
+	return ret, nil
 }
