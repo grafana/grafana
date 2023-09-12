@@ -53,6 +53,7 @@ export const Components = {
     },
     Prometheus: {
       configPage: {
+        connectionSettings: 'Data source connection URL',
         exemplarsAddButton: 'Add exemplar config button',
         internalLinkSwitch: 'Internal link switch',
       },
@@ -71,11 +72,12 @@ export const Components = {
   Panels: {
     Panel: {
       title: (title: string) => `data-testid Panel header ${title}`,
-      headerItems: (item: string) => `Panel header item ${item}`,
+      headerItems: (item: string) => `data-testid Panel header item ${item}`,
       menuItems: (item: string) => `data-testid Panel menu item ${item}`,
       menu: (title: string) => `data-testid Panel menu ${title}`,
       containerByTitle: (title: string) => `${title} panel`,
       headerCornerInfo: (mode: string) => `Panel header ${mode}`,
+      status: (status: string) => `data-testid Panel status ${status}`,
       loadingBar: () => `Panel loading bar`,
       HoverWidget: {
         container: 'data-testid hover-header-container',

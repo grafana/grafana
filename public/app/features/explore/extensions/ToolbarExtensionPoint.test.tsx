@@ -215,7 +215,7 @@ describe('ToolbarExtensionPoint', () => {
 
   describe('without extension points', () => {
     beforeAll(() => {
-      contextSrvMock.hasAccess.mockReturnValue(true);
+      contextSrvMock.hasPermission.mockReturnValue(true);
       getPluginLinkExtensionsMock.mockReturnValue({ extensions: [] });
     });
 
@@ -233,7 +233,7 @@ describe('ToolbarExtensionPoint', () => {
 
   describe('with insufficient permissions', () => {
     beforeAll(() => {
-      contextSrvMock.hasAccess.mockReturnValue(false);
+      contextSrvMock.hasPermission.mockReturnValue(false);
       getPluginLinkExtensionsMock.mockReturnValue({ extensions: [] });
     });
 

@@ -3,7 +3,7 @@ import React from 'react';
 
 import { NavModelItem, GrafanaTheme2 } from '@grafana/data';
 import { Tab, TabsBar, Icon, useStyles2, toIconName } from '@grafana/ui';
-import { PanelHeaderMenuItem } from 'app/features/dashboard/dashgrid/PanelHeader/PanelHeaderMenuItem';
+import { PanelHeaderMenuItem } from 'app/core/components/PageHeader/PanelHeaderMenuItem';
 
 import { PageInfoItem } from '../Page/types';
 import { PageInfo } from '../PageInfo/PageInfo';
