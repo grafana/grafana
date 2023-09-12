@@ -723,6 +723,7 @@ steps:
   image: grafana/docker-puppeteer:1.1.0
   name: test-a11y-frontend
 - commands:
+  - docker run --privileged --rm tonistiigi/binfmt --install all
   - /src/grafana-build docker --package=$(cat packages.txt | grep tar.gz | grep -v
     docker | grep -v sha256) --ubuntu-base=ubuntu:22.04 --alpine-base=alpine:3.17.1
     --tag-format='{{ .version_base }}-{{ .buildID }}-{{ .arch }}' --ubuntu-tag-format='{{
@@ -1895,6 +1896,7 @@ steps:
     repo:
     - grafana/grafana
 - commands:
+  - docker run --privileged --rm tonistiigi/binfmt --install all
   - /src/grafana-build docker --package=$(cat packages.txt | grep tar.gz | grep -v
     docker | grep -v sha256) --ubuntu-base=ubuntu:22.04 --alpine-base=alpine:3.17.1
     --tag-format='{{ .version_base }}-{{ .buildID }}-{{ .arch }}' --ubuntu-tag-format='{{
@@ -4171,6 +4173,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 17aadee78c9a8bb6250346acb61477801d47b1591d8fd7b61d8d192b2d2ccd90
+hmac: 949da38eb5870264a09e11ba9f82401c5ddf14666325502f915a8e9b5e2b857c
 
 ...
