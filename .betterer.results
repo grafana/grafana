@@ -1704,6 +1704,10 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"]
     ],
+    "public/app/features/alerting/unified/components/Authorize.tsx:5381": [
+      [0, 0, 0, "Do not use any type assertions.", "0"],
+      [0, 0, 0, "Do not use any type assertions.", "1"]
+    ],
     "public/app/features/alerting/unified/components/Expression.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"]
@@ -1824,9 +1828,6 @@ exports[`better eslint`] = {
     "public/app/features/alerting/unified/utils/amroutes.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"]
-    ],
-    "public/app/features/alerting/unified/utils/datasource.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
     "public/app/features/alerting/unified/utils/misc.test.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
