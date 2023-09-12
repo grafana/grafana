@@ -54,6 +54,10 @@ export interface Props extends Themeable2 {
   isFilterLabelActive?: (key: string, value: string) => Promise<boolean>;
   pinnedRowId?: string;
   containerRendered?: boolean;
+  /**
+   * If true, the `contain:strict` css property will be added to the wrapping `<table>` for performance reasons.
+   * Any overflowing content will be clipped at the table boundary.
+   */
   containContent?: boolean;
 }
 
