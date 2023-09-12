@@ -250,7 +250,7 @@ function getPluginSignature(options: {
     return local.signature;
   }
 
-  if (remote?.signatureType || remote?.versionSignatureType) {
+  if (remote?.signatureType && remote?.versionSignatureType) {
     return PluginSignatureStatus.valid;
   }
 

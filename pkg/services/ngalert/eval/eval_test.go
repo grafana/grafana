@@ -15,11 +15,11 @@ import (
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
-	pluginFakes "github.com/grafana/grafana/pkg/plugins/manager/fakes"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	fakes "github.com/grafana/grafana/pkg/services/datasources/fakes"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -359,7 +359,7 @@ func TestEvaluateExecutionResultsNoData(t *testing.T) {
 func TestValidate(t *testing.T) {
 	type services struct {
 		cache        *fakes.FakeCacheService
-		pluginsStore *pluginFakes.FakePluginStore
+		pluginsStore *pluginstore.FakePluginStore
 	}
 
 	testCases := []struct {
@@ -387,7 +387,7 @@ func TestValidate(t *testing.T) {
 					Type: util.GenerateShortUID(),
 				}
 				services.cache.DataSources = append(services.cache.DataSources, ds)
-				services.pluginsStore.PluginList = append(services.pluginsStore.PluginList, plugins.PluginDTO{
+				services.pluginsStore.PluginList = append(services.pluginsStore.PluginList, pluginstore.Plugin{
 					JSONData: plugins.JSONData{
 						ID:      ds.Type,
 						Backend: true,
@@ -413,7 +413,7 @@ func TestValidate(t *testing.T) {
 					Type: util.GenerateShortUID(),
 				}
 				services.cache.DataSources = append(services.cache.DataSources, ds)
-				services.pluginsStore.PluginList = append(services.pluginsStore.PluginList, plugins.PluginDTO{
+				services.pluginsStore.PluginList = append(services.pluginsStore.PluginList, pluginstore.Plugin{
 					JSONData: plugins.JSONData{
 						ID:      ds.Type,
 						Backend: true,
@@ -476,12 +476,12 @@ func TestValidate(t *testing.T) {
 					Type: util.GenerateShortUID(),
 				}
 				services.cache.DataSources = append(services.cache.DataSources, ds1, ds2)
-				services.pluginsStore.PluginList = append(services.pluginsStore.PluginList, plugins.PluginDTO{
+				services.pluginsStore.PluginList = append(services.pluginsStore.PluginList, pluginstore.Plugin{
 					JSONData: plugins.JSONData{
 						ID:      ds1.Type,
 						Backend: false,
 					},
-				}, plugins.PluginDTO{
+				}, pluginstore.Plugin{
 					JSONData: plugins.JSONData{
 						ID:      ds2.Type,
 						Backend: true,
@@ -507,7 +507,7 @@ func TestValidate(t *testing.T) {
 					Type: util.GenerateShortUID(),
 				}
 				services.cache.DataSources = append(services.cache.DataSources, ds)
-				services.pluginsStore.PluginList = append(services.pluginsStore.PluginList, plugins.PluginDTO{
+				services.pluginsStore.PluginList = append(services.pluginsStore.PluginList, pluginstore.Plugin{
 					JSONData: plugins.JSONData{
 						ID:      ds.Type,
 						Backend: true,
@@ -530,7 +530,7 @@ func TestValidate(t *testing.T) {
 
 		t.Run(testCase.name, func(t *testing.T) {
 			cacheService := &fakes.FakeCacheService{}
-			store := &pluginFakes.FakePluginStore{}
+			store := &pluginstore.FakePluginStore{}
 			condition := testCase.condition(services{
 				cache:        cacheService,
 				pluginsStore: store,

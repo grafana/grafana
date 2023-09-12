@@ -123,4 +123,5 @@ export interface FeatureToggles {
   reportingRetries?: boolean;
   newBrowseDashboards?: boolean;
   sseGroupByDatasource?: boolean;
+  requestInstrumentationStatusSource?: boolean;
 }
