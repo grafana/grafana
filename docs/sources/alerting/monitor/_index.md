@@ -22,6 +22,6 @@ Monitor your alerting metrics to ensure you identify potential issues before the
 [Meta monitoring][meta-monitoring]
 
 {{% docs/reference %}}
-[meta-monitoring]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting/monitor/meta-monitoring/"
+[meta-monitoring]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting/monitor/meta-monitoring"
 [meta-monitoring]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/meta-monitoring"
 {{% /docs/reference %}}
