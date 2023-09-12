@@ -59,7 +59,7 @@ require (
 	github.com/google/uuid v1.3.0 // @grafana/backend-platform
 	github.com/google/wire v0.5.0 // @grafana/backend-platform
 	github.com/gorilla/websocket v1.5.0 // @grafana/grafana-app-platform-squad
-	github.com/grafana/alerting v0.0.0-20230831092459-f7dba8ede9b0 // @grafana/alerting-squad-backend
+	github.com/grafana/alerting v0.0.0-20230911211918-c939956dbb10 // @grafana/alerting-squad-backend
 	github.com/grafana/cuetsy v0.1.10 // @grafana/grafana-as-code
 	github.com/grafana/grafana-aws-sdk v0.19.1 // @grafana/aws-datasources
 	github.com/grafana/grafana-azure-sdk-go v1.8.1 // @grafana/backend-platform
@@ -302,7 +302,7 @@ require (
 	github.com/buildkite/yaml v2.1.0+incompatible // indirect
 	github.com/bwmarrin/snowflake v0.3.0 // indirect
 	github.com/centrifugal/protocol v0.10.0 // indirect
-	github.com/cloudflare/circl v1.1.0 // indirect
+	github.com/cloudflare/circl v1.3.3 // indirect
 	github.com/cockroachdb/errors v1.9.1 // indirect
 	github.com/cockroachdb/logtags v0.0.0-20211118104740-dabe8e521a4f // indirect
 	github.com/cockroachdb/redact v1.1.3 // indirect
@@ -440,7 +440,7 @@ require (
 	github.com/AzureAD/microsoft-authentication-library-for-go v1.0.0 // indirect
 	github.com/Masterminds/sprig/v3 v3.2.2 // @grafana/backend-platform
 	github.com/Microsoft/go-winio v0.6.0 // indirect
-	github.com/ProtonMail/go-crypto v0.0.0-20230426101702-58e86b294756 // @grafana/plugins-platform-backend
+	github.com/ProtonMail/go-crypto v0.0.0-20230828082145-3c4c8a2d2371 // @grafana/plugins-platform-backend
 	github.com/RoaringBitmap/roaring v0.9.4 // indirect
 	github.com/acomagu/bufpipe v1.0.3 // indirect
 	github.com/axiomhq/hyperloglog v0.0.0-20191112132149-a4c4c47bc57f // indirect
