@@ -20,7 +20,7 @@ import {
 import { dashboardApi } from '../../api/dashboardApi';
 
 export interface PanelDTO {
-  id: number;
+  id?: number;
   title?: string;
   type: string;
 }
@@ -73,11 +73,12 @@ export const DashboardPicker = ({ dashboardUid, panelId, isOpen, onChange, onDis
 
   const filteredPanels =
     dashboardResult?.dashboard?.panels
-      ?.filter((panel): panel is PanelDTO => typeof panel.id === 'number' && typeof panel.type === 'string')
       ?.filter((panel) => panel.title?.toLowerCase().includes(panelFilter.toLowerCase()))
       .sort(panelSort) ?? [];
 
-  const currentPanel = dashboardResult?.dashboard?.panels?.find((panel) => panel.id.toString() === selectedPanelId);
+  const currentPanel: PanelDTO | undefined = dashboardResult?.dashboard?.panels?.find(
+    (panel: PanelDTO) => isValidPanelIdentifier(panel) && panel.id?.toString() === selectedPanelId
+  );
 
   const selectedDashboardIndex = useMemo(() => {
     return filteredDashboards.map((dashboard) => dashboard.uid).indexOf(selectedDashboardUid ?? '');
@@ -128,8 +129,9 @@ export const DashboardPicker = ({ dashboardUid, panelId, isOpen, onChange, onDis
   const PanelRow = ({ index, style }: { index: number; style: CSSProperties }) => {
     const panel = filteredPanels[index];
     const panelTitle = panel.title || '<No title>';
-    const isSelected = selectedPanelId === panel.id.toString();
+    const isSelected = panel.id && selectedPanelId === panel.id?.toString();
     const isAlertingCompatible = panel.type === 'graph' || panel.type === 'timeseries';
+    const hasIdentifier = isValidPanelIdentifier(panel);
 
     return (
       <button
@@ -138,15 +140,21 @@ export const DashboardPicker = ({ dashboardUid, panelId, isOpen, onChange, onDis
         className={cx(styles.rowButton, styles.panelButton, {
           [styles.rowOdd]: index % 2 === 1,
           [styles.rowSelected]: isSelected,
+          [styles.disabled]: !hasIdentifier,
         })}
-        onClick={() => setSelectedPanelId(panel.id.toString())}
+        onClick={() => setSelectedPanelId(panel.id?.toString())}
       >
         <div className={styles.rowButtonTitle} title={panelTitle}>
           {panelTitle}
         </div>
-        {!isAlertingCompatible && (
+        {!isAlertingCompatible && hasIdentifier && (
           <Tooltip content="Alert tab will be disabled for this panel. It is only supported on graph and timeseries panels">
             <Icon name="exclamation-triangle" className={styles.warnIcon} data-testid="warning-icon" />
+          </Tooltip>
+        )}
+        {!hasIdentifier && (
+          <Tooltip content="This panel does not have a valid identifier.">
+            <Icon name="info-circle" data-testid="info-icon" />
           </Tooltip>
         )}
       </button>
@@ -169,7 +177,7 @@ export const DashboardPicker = ({ dashboardUid, panelId, isOpen, onChange, onDis
             Dashboard: {dashboardResult?.dashboard.title} ({dashboardResult?.dashboard.uid}) in folder{' '}
             {dashboardResult?.meta.folderTitle ?? 'General'}
           </div>
-          {Boolean(currentPanel) && (
+          {currentPanel && (
             <div>
               Panel: {currentPanel.title} ({currentPanel.id})
             </div>
@@ -248,6 +256,10 @@ export const DashboardPicker = ({ dashboardUid, panelId, isOpen, onChange, onDis
       </Modal.ButtonRow>
     </Modal>
   );
+};
+
+const isValidPanelIdentifier = (panel: PanelDTO): boolean => {
+  return typeof panel.id === 'number' && typeof panel.type === 'string';
 };
 
 const getPickerStyles = (theme: GrafanaTheme2) => {
@@ -337,6 +349,10 @@ const getPickerStyles = (theme: GrafanaTheme2) => {
     `,
     warnIcon: css`
       fill: ${theme.colors.warning.main};
+    `,
+    disabled: css`
+      cursor: auto;
+      color: ${theme.colors.secondary.shade};
     `,
   };
 };
