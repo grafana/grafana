@@ -51,7 +51,7 @@ trigger = {
     "event": [
         "push",
     ],
-    "branch": "main",
+    "branch": "km/update-pr-pipeline",
     "paths": {
         "exclude": [
             "*.md",
