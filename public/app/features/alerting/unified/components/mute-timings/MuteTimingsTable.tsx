@@ -8,7 +8,7 @@ import { MuteTimeInterval } from 'app/plugins/datasource/alertmanager/types';
 import { useDispatch } from 'app/types/store';
 
 import { Authorize } from '../../components/Authorize';
-import { AlertmanagerAction, useAlertmanagerAbility } from '../../hooks/useAbilities';
+import { AlertmanagerAction, useAlertmanagerAbilities, useAlertmanagerAbility } from '../../hooks/useAbilities';
 import { useAlertmanagerConfig } from '../../hooks/useAlertmanagerConfig';
 import { deleteMuteTimingAction } from '../../state/actions';
 import { makeAMLink } from '../../utils/misc';
@@ -110,8 +110,10 @@ export const MuteTimingsTable = ({ alertManagerSourceName, muteTimingNames, hide
 };
 
 function useColumns(alertManagerSourceName: string, hideActions = false, setMuteTimingName: (name: string) => void) {
-  const [_editSupported, allowedToEdit] = useAlertmanagerAbility(AlertmanagerAction.UpdateMuteTiming);
-  const [_deleteSupported, allowedToDelete] = useAlertmanagerAbility(AlertmanagerAction.DeleteMuteTiming);
+  const [[_editSupported, allowedToEdit], [_deleteSupported, allowedToDelete]] = useAlertmanagerAbilities([
+    AlertmanagerAction.UpdateMuteTiming,
+    AlertmanagerAction.DeleteMuteTiming,
+  ]);
   const showActions = !hideActions && (allowedToEdit || allowedToDelete);
 
   return useMemo((): Array<DynamicTableColumnProps<MuteTimeInterval>> => {

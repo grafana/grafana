@@ -11,7 +11,7 @@ import ConditionalWrap from 'app/features/alerting/components/ConditionalWrap';
 import { RouteWithID, Receiver, ObjectMatcher, AlertmanagerGroup } from 'app/plugins/datasource/alertmanager/types';
 import { ReceiversState } from 'app/types';
 
-import { AlertmanagerAction, useAlertmanagerAbility } from '../../hooks/useAbilities';
+import { AlertmanagerAction, useAlertmanagerAbilities } from '../../hooks/useAbilities';
 import { INTEGRATION_ICONS } from '../../types/contact-points';
 import { normalizeMatchers } from '../../utils/matchers';
 import { createContactPointLink, createMuteTimingLink } from '../../utils/misc';
@@ -69,15 +69,15 @@ const Policy: FC<PolicyComponentProps> = ({
   const styles = useStyles2(getStyles);
   const isDefaultPolicy = currentRoute === routeTree;
 
-  const [updatePoliciesSupported, updatePoliciesAllowed] = useAlertmanagerAbility(
-    AlertmanagerAction.UpdateNotificationPolicyTree
-  );
-  const [deletePolicySupported, deletePolicyAllowed] = useAlertmanagerAbility(
-    AlertmanagerAction.DeleteNotificationPolicy
-  );
-  const [exportPoliciesSupported, exportPoliciesAllowed] = useAlertmanagerAbility(
-    AlertmanagerAction.ExportNotificationPolicies
-  );
+  const [
+    [updatePoliciesSupported, updatePoliciesAllowed],
+    [deletePolicySupported, deletePolicyAllowed],
+    [exportPoliciesSupported, exportPoliciesAllowed],
+  ] = useAlertmanagerAbilities([
+    AlertmanagerAction.UpdateNotificationPolicyTree,
+    AlertmanagerAction.DeleteNotificationPolicy,
+    AlertmanagerAction.ExportNotificationPolicies,
+  ]);
 
   const contactPoint = currentRoute.receiver;
   const continueMatching = currentRoute.continue ?? false;

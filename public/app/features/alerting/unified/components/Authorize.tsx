@@ -6,8 +6,8 @@ import {
   Action,
   AlertmanagerAction,
   AlertSourceAction,
-  useAlertmanagerAbilities,
   useAlertSourceAbilities,
+  useAllAlertmanagerAbilities,
 } from '../hooks/useAbilities';
 
 interface AuthorizeProps extends PropsWithChildren {
@@ -34,7 +34,7 @@ interface ActionsProps<T extends Action> extends PropsWithChildren {
 }
 
 const AuthorizeAlertmanager = ({ actions, children }: ActionsProps<AlertmanagerAction>) => {
-  const alertmanagerAbilties = useAlertmanagerAbilities();
+  const alertmanagerAbilties = useAllAlertmanagerAbilities();
   const allowed = actionsAllowed(alertmanagerAbilties, actions);
 
   if (allowed) {

@@ -11,7 +11,12 @@ import { AlertmanagerProvider } from '../state/AlertmanagerContext';
 import { setupDataSources } from '../testSetup/datasources';
 import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 
-import { AlertmanagerAction, useAlertmanagerAbilities, useAlertmanagerAbility } from './useAbilities';
+import {
+  AlertmanagerAction,
+  useAlertmanagerAbilities,
+  useAlertmanagerAbility,
+  useAllAlertmanagerAbilities,
+} from './useAbilities';
 
 /**
  * This test will write snapshots with a record of the current permissions assigned to actions.
@@ -27,7 +32,7 @@ describe('alertmanager abilities', () => {
       })
     );
 
-    const abilities = renderHook(() => useAlertmanagerAbilities(), { wrapper: createWrapper('does-not-exist') });
+    const abilities = renderHook(() => useAllAlertmanagerAbilities(), { wrapper: createWrapper('does-not-exist') });
     expect(abilities.result.current).toMatchSnapshot();
   });
 
@@ -41,7 +46,7 @@ describe('alertmanager abilities', () => {
 
     grantUserPermissions([AccessControlAction.AlertingNotificationsRead, AccessControlAction.AlertingInstanceRead]);
 
-    const abilities = renderHook(() => useAlertmanagerAbilities(), {
+    const abilities = renderHook(() => useAllAlertmanagerAbilities(), {
       wrapper: createWrapper(GRAFANA_RULES_SOURCE_NAME),
     });
 
@@ -91,11 +96,39 @@ describe('alertmanager abilities', () => {
       AccessControlAction.AlertingInstancesExternalWrite,
     ]);
 
-    const abilities = renderHook(() => useAlertmanagerAbilities(), {
+    const abilities = renderHook(() => useAllAlertmanagerAbilities(), {
       wrapper: createWrapper('mimir'),
     });
 
     expect(abilities.result.current).toMatchSnapshot();
+  });
+
+  it('should be able to return multiple abilities', () => {
+    setupDataSources(
+      mockDataSource<AlertManagerDataSourceJsonData>({
+        name: GRAFANA_RULES_SOURCE_NAME,
+        type: DataSourceType.Alertmanager,
+      })
+    );
+
+    grantUserPermissions([AccessControlAction.AlertingNotificationsRead]);
+
+    const abilities = renderHook(
+      () =>
+        useAlertmanagerAbilities([
+          AlertmanagerAction.ViewContactPoint,
+          AlertmanagerAction.CreateContactPoint,
+          AlertmanagerAction.ExportContactPoint,
+        ]),
+      {
+        wrapper: createWrapper(GRAFANA_RULES_SOURCE_NAME),
+      }
+    );
+
+    expect(abilities.result.current).toHaveLength(3);
+    expect(abilities.result.current[0]).toStrictEqual([true, true]);
+    expect(abilities.result.current[1]).toStrictEqual([true, false]);
+    expect(abilities.result.current[2]).toStrictEqual([true, false]);
   });
 });
 

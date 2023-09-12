@@ -99,7 +99,7 @@ export function useAlertSourceAbilities(): Abilities<AlertSourceAction> {
   return abilities;
 }
 
-export function useAlertmanagerAbilities(): Abilities<AlertmanagerAction> {
+export function useAllAlertmanagerAbilities(): Abilities<AlertmanagerAction> {
   const {
     selectedAlertmanager,
     hasConfigurationAPI,
@@ -184,8 +184,19 @@ export function useAlertmanagerAbilities(): Abilities<AlertmanagerAction> {
 }
 
 export function useAlertmanagerAbility(action: AlertmanagerAction): Ability {
-  const abilities = useAlertmanagerAbilities();
-  return useMemo(() => abilities[action], [abilities, action]);
+  const abilities = useAllAlertmanagerAbilities();
+
+  return useMemo(() => {
+    return abilities[action];
+  }, [abilities, action]);
+}
+
+export function useAlertmanagerAbilities(actions: AlertmanagerAction[]): Ability[] {
+  const abilities = useAllAlertmanagerAbilities();
+
+  return useMemo(() => {
+    return actions.map((action) => abilities[action]);
+  }, [abilities, actions]);
 }
 
 export function useAlertSourceAbility(action: AlertSourceAction): Ability {
