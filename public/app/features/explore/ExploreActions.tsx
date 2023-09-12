@@ -2,7 +2,7 @@ import { useRegisterActions, useKBar, Action, Priority } from 'kbar';
 import { useEffect, useState } from 'react';
 
 import { config } from '@grafana/runtime';
-import { contextSrv } from 'app/core/core';
+import { contextSrv } from 'app/core/services/context_srv';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 import { AccessControlAction, ExploreItemState, useDispatch, useSelector } from 'app/types';
 
