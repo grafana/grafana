@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { useStyles2 } from '@grafana/ui';
+import { useStyles2, useTheme2 } from '@grafana/ui';
 
 export interface PublicDashboardFooterCfg {
   hide: boolean;
@@ -14,6 +14,8 @@ export interface PublicDashboardFooterCfg {
 export const PublicDashboardFooter = function () {
   const styles = useStyles2(getStyles);
   const conf = useGetPublicDashboardFooterConfig();
+
+  console.log(conf);
 
   return conf.hide ? null : (
     <div className={styles.footer}>
@@ -28,12 +30,13 @@ export function setPublicDashboardFooterConfigFn(fn: typeof useGetPublicDashboar
   useGetPublicDashboardFooterConfig = fn;
 }
 export let useGetPublicDashboardFooterConfig = (): PublicDashboardFooterCfg => {
+  const theme = useTheme2();
   const styles = useStyles2(getStyles);
 
   return {
     hide: false,
     text: <span className={styles.text}>Powered by</span>,
-    logo: 'public/img/grafana_text_logo.svg',
+    logo: theme.isDark ? 'public/img/grafana_text_logo_light.svg' : 'public/img/grafana_text_logo_dark.svg',
     link: 'https://grafana.com/',
   };
 };
