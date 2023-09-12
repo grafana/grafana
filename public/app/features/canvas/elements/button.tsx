@@ -5,7 +5,8 @@ import { TextDimensionConfig, TextDimensionMode } from '@grafana/schema';
 import { Button } from '@grafana/ui';
 import { DimensionContext } from 'app/features/dimensions/context';
 import { TextDimensionEditor } from 'app/features/dimensions/editors/TextDimensionEditor';
-import { APIEditor, APIEditorConfig, callApi } from 'app/plugins/panel/canvas/editor/element/APIEditor';
+import { APIEditor, APIEditorConfig } from 'app/plugins/panel/canvas/editor/element/APIEditor';
+import { callApi } from 'app/plugins/panel/canvas/editor/element/utils';
 import { HttpRequestMethod } from 'app/plugins/panel/canvas/panelcfg.gen';
 
 import { CanvasElementItem, CanvasElementProps, defaultBgColor } from '../element';

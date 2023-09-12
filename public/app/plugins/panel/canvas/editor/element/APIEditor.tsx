@@ -1,15 +1,16 @@
 import React, { useCallback } from 'react';
 
-import { AppEvents, StandardEditorProps, StandardEditorsRegistryItem, StringFieldConfigSettings } from '@grafana/data';
-import { BackendSrvRequest, config, getBackendSrv } from '@grafana/runtime';
+import { StandardEditorProps, StandardEditorsRegistryItem, StringFieldConfigSettings } from '@grafana/data';
+import { BackendSrvRequest, config, getTemplateSrv } from '@grafana/runtime';
 import { Button, Field, InlineField, InlineFieldRow, JSONFormatter, RadioButtonGroup } from '@grafana/ui';
 import { StringValueEditor } from 'app/core/components/OptionsUI/string';
-import { appEvents } from 'app/core/core';
 import { defaultApiConfig } from 'app/features/canvas/elements/button';
+import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 
 import { HttpRequestMethod } from '../../panelcfg.gen';
 
 import { QueryParamsEditor } from './QueryParamsEditor';
+import { callApi } from './utils';
 
 export interface APIEditorConfig {
   method: string;
@@ -22,62 +23,6 @@ export interface APIEditorConfig {
 const dummyStringSettings = {
   settings: {},
 } as StandardEditorsRegistryItem<string, StringFieldConfigSettings>;
-
-const getRequest = (api: APIEditorConfig) => {
-  const requestHeaders: HeadersInit = [];
-
-  let request: BackendSrvRequest = {
-    url: api.endpoint,
-    method: api.method,
-    data: getData(api),
-    headers: requestHeaders,
-  };
-
-  if (api.paramsType === 'header') {
-    api.params?.forEach((param) => {
-      requestHeaders.push([param[0], param[1]]);
-    });
-  } else if (api.paramsType === 'query') {
-    request.url = api.endpoint + '?' + api.params?.map((param) => param[0] + '=' + param[1]).join('&');
-  }
-
-  if (api.method === HttpRequestMethod.POST) {
-    requestHeaders.push(['Content-Type', 'application/json']);
-  }
-
-  request.headers = requestHeaders;
-
-  return request;
-};
-
-export const callApi = (api: APIEditorConfig, isTest = false) => {
-  if (api && api.endpoint) {
-    getBackendSrv()
-      .fetch(getRequest(api))
-      .subscribe({
-        error: (error) => {
-          if (isTest) {
-            appEvents.emit(AppEvents.alertError, ['Error has occurred: ', JSON.stringify(error)]);
-            console.error(error);
-          }
-        },
-        complete: () => {
-          if (isTest) {
-            appEvents.emit(AppEvents.alertSuccess, ['Test successful']);
-          }
-        },
-      });
-  }
-};
-
-const getData = (api: APIEditorConfig) => {
-  let data: string | undefined = api.data ?? '{}';
-  if (api.method === HttpRequestMethod.GET) {
-    data = undefined;
-  }
-
-  return data;
-};
 
 type Props = StandardEditorProps<APIEditorConfig>;
 
@@ -105,6 +50,13 @@ export function APIEditor({ value, context, onChange }: Props) {
   if (!value) {
     value = defaultApiConfig;
   }
+
+  // @TODO ??
+  const panel = getDashboardSrv().getCurrent()?.panelInEdit;
+
+  const interpolateVariables = (text: string) => {
+    return getTemplateSrv().replace(text, panel?.scopedVars);
+  };
 
   const onEndpointChange = useCallback(
     (endpoint = '') => {
@@ -156,9 +108,52 @@ export function APIEditor({ value, context, onChange }: Props) {
     [onChange, value]
   );
 
+  const getRequest = () => {
+    const requestHeaders: HeadersInit = [];
+    const api = value;
+
+    const url = new URL(interpolateVariables(api.endpoint!));
+
+    let request: BackendSrvRequest = {
+      url: url.toString(),
+      method: api.method,
+      data: getData(),
+      headers: requestHeaders,
+    };
+
+    if (api.paramsType === 'header') {
+      api.params?.forEach((param) => {
+        requestHeaders.push([interpolateVariables(param[0]), interpolateVariables(param[1])]);
+      });
+    } else if (api.paramsType === 'query') {
+      api.params?.forEach((param) => {
+        url.searchParams.append(interpolateVariables(param[0]), interpolateVariables(param[1]));
+      });
+
+      request.url = url.toString();
+    }
+
+    if (api.method === HttpRequestMethod.POST) {
+      requestHeaders.push(['Content-Type', 'application/json']);
+    }
+
+    request.headers = requestHeaders;
+
+    return request;
+  };
+
+  const getData = () => {
+    let data: string | undefined = value.data ? interpolateVariables(value.data) : '{}';
+    if (value.method === HttpRequestMethod.GET) {
+      data = undefined;
+    }
+
+    return data;
+  };
+
   const renderJSON = (data: string) => {
     try {
-      const json = JSON.parse(data);
+      const json = JSON.parse(interpolateVariables(data));
       return <JSONFormatter json={json} />;
     } catch (error) {
       if (error instanceof Error) {
@@ -172,7 +167,7 @@ export function APIEditor({ value, context, onChange }: Props) {
   const renderTestAPIButton = (api: APIEditorConfig) => {
     if (api && api.endpoint) {
       return (
-        <Button onClick={() => callApi(api, true)} title={'Test API'}>
+        <Button onClick={() => callApi(api, true, getRequest())} title={'Test API'}>
           Test API
         </Button>
       );

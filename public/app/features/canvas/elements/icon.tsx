@@ -7,7 +7,8 @@ import { SanitizedSVG } from 'app/core/components/SVG/SanitizedSVG';
 import { getPublicOrAbsoluteUrl } from 'app/features/dimensions';
 import { DimensionContext } from 'app/features/dimensions/context';
 import { ColorDimensionEditor, ResourceDimensionEditor } from 'app/features/dimensions/editors';
-import { APIEditorConfig, callApi } from 'app/plugins/panel/canvas/editor/element/APIEditor';
+import { APIEditorConfig } from 'app/plugins/panel/canvas/editor/element/APIEditor';
+import { callApi } from 'app/plugins/panel/canvas/editor/element/utils';
 
 import { CanvasElementItem, CanvasElementProps, defaultBgColor } from '../element';
 import { LineConfig } from '../types';
