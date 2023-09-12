@@ -212,11 +212,11 @@ function createServiceMapDataFrames() {
   const edges = createDF('Edges', [
     { name: Fields.id, type: FieldType.string },
     { name: Fields.source, type: FieldType.string },
-    { name: Fields.sourceName, type: FieldType.string },
-    { name: Fields.sourceNamespace, type: FieldType.string },
+    { name: AdditionalEdgeFields.sourceName, type: FieldType.string },
+    { name: AdditionalEdgeFields.sourceNamespace, type: FieldType.string },
     { name: Fields.target, type: FieldType.string },
-    { name: Fields.targetName, type: FieldType.string },
-    { name: Fields.targetNamespace, type: FieldType.string },
+    { name: AdditionalEdgeFields.targetName, type: FieldType.string },
+    { name: AdditionalEdgeFields.targetNamespace, type: FieldType.string },
     { name: Fields.mainStat, type: FieldType.number, config: { unit: 'ms/r', displayName: 'Average response time' } },
     {
       name: Fields.secondaryStat,
@@ -259,6 +259,15 @@ type EdgeObject = ServiceMapStatistics & {
   targetName: string;
   targetNamespace: string;
 };
+
+// These fields are not necessary for rendering, so not available from the Fields enum
+// Will be used for linking when namespace is present
+enum AdditionalEdgeFields {
+  sourceName = 'sourceName',
+  sourceNamespace = 'sourceNamespace',
+  targetName = 'targetName',
+  targetNamespace = 'targetNamespace',
+}
 
 /**
  * Collect data from a metric into a map of nodes and edges. The metric data is modeled as counts of metric per edge
@@ -360,11 +369,11 @@ function convertToDataFrames(
     edges.add({
       [Fields.id]: edgeId,
       [Fields.source]: edge.source,
-      [Fields.sourceName]: edge.sourceName,
-      [Fields.sourceNamespace]: edge.sourceNamespace,
+      [AdditionalEdgeFields.sourceName]: edge.sourceName,
+      [AdditionalEdgeFields.sourceNamespace]: edge.sourceNamespace,
       [Fields.target]: edge.target,
-      [Fields.targetName]: edge.targetName,
-      [Fields.targetNamespace]: edge.targetNamespace,
+      [AdditionalEdgeFields.targetName]: edge.targetName,
+      [AdditionalEdgeFields.targetNamespace]: edge.targetNamespace,
       [Fields.mainStat]: edge.total ? (edge.seconds! / edge.total) * 1000 : Number.NaN, // Average response time
       [Fields.secondaryStat]: edge.total ? Math.round(edge.total * 100) / 100 : Number.NaN, // Request per second (to 2 decimals)
     });
