@@ -1779,6 +1779,8 @@ github.com/gotestyourself/gotestyourself v1.3.0/go.mod h1:zZKM6oeNM8k+FRljX1mnzV
 github.com/gotestyourself/gotestyourself v2.2.0+incompatible/go.mod h1:zZKM6oeNM8k+FRljX1mnzVYeS8wiGgQyvST1/GafPbY=
 github.com/grafana/alerting v0.0.0-20230831092459-f7dba8ede9b0 h1:iDCcF7YzzVWQDtgUp3pS5caAAfI3lk7RZ0BI5DMrero=
 github.com/grafana/alerting v0.0.0-20230831092459-f7dba8ede9b0/go.mod h1:gyUqgDT+v6gARVCpbfi8bb/WiGNELNJiq6hGKadnIxc=
+github.com/grafana/alerting v0.0.0-20230911211918-c939956dbb10 h1:GfTtChG09pAfCIQBjvM2e52WfIGrByBhxZ9VW/x1hXo=
+github.com/grafana/alerting v0.0.0-20230911211918-c939956dbb10/go.mod h1:gyUqgDT+v6gARVCpbfi8bb/WiGNELNJiq6hGKadnIxc=
 github.com/grafana/codejen v0.0.3 h1:tAWxoTUuhgmEqxJPOLtJoxlPBbMULFwKFOcRsPRPXDw=
 github.com/grafana/codejen v0.0.3/go.mod h1:zmwwM/DRyQB7pfuBjTWII3CWtxcXh8LTwAYGfDfpR6s=
 github.com/grafana/cuetsy v0.1.10 h1:+W9/7roI8LorL+D1RJhKGdhsTZ81adrK9dHS0r7qsXs=
