@@ -651,4 +651,7 @@ enp216s0f0np3         0000:d7:00_0_0000:d8:00_3
 
 [add]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables/add-template-variables"
 [add]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables/add-template-variables"
+
+[inspect]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables/inspect-variable"
+[inspect]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables/inspect-variable"
 {{% /docs/reference %}}

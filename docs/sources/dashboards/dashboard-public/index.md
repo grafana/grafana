@@ -270,7 +270,7 @@ We're excited to share this enhancement with you and we’d love your feedback! 
 
 ## Custom branding
 
-If you're a Grafana Enterprise customer, you can use custom branding to change the appearance of a public dashboard footer. For more information, refer to [Custom branding](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/configure-custom-branding/).
+If you're a Grafana Enterprise customer, you can use custom branding to change the appearance of a public dashboard footer. For more information, refer to [Custom branding][].
 
 {{% docs/reference %}}
 [caching]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/administration/data-source-management#query-and-resource-caching"
@@ -284,4 +284,7 @@ If you're a Grafana Enterprise customer, you can use custom branding to change t
 
 [dashboard sharing]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/share-dashboards-panels"
 [dashboard sharing]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/share-dashboards-panels"
+
+[Custom branding]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana/configure-custom-branding"
+[Custom branding]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana/configure-custom-branding"
 {{% /docs/reference %}}

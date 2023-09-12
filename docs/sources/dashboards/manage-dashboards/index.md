@@ -176,6 +176,6 @@ You can find more examples in `public/dashboards/` directory of your Grafana ins
 [panels]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations"
 [panels]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations"
 
-[HTTP API]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>"
-[HTTP API]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>"
+[HTTP API]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/developers/http_api"
+[HTTP API]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/developers/http_api"
 {{% /docs/reference %}}
