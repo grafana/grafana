@@ -52,13 +52,17 @@ The Grafana OnCall integration is only available for Grafana Alertmanager.
 
 8. Connect your contact point to a notification policy.
 
-    For more information on connecting your contact point to a notification policy, see [Create notification policy](https://grafana.com/docs/grafana/latest/alerting/alerting-rules/create-notification-policy/).
+    For more information on connecting your contact point to a notification policy, see
+    [Create notification policy][create-notification-policy]
 
 9. To view your integration in the Grafana OnCall application and set up routes and escalation chains, click the Link next to the integration on the Contact points list view page in the **Type** column.
 
     This redirects you to the Grafana OnCall integration page in the Grafana OnCall application.  From there, you can add [routes and escalation chains](https://grafana.com/docs/oncall/latest/escalation-chains-and-routes/).
 
-
+{{% docs/reference %}}
+[create-notification-policy]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>alerting/alerting-rules/create-notification-policy/"
+[create-notification-policy]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/create-notification-policy/"
+{{% /docs/reference %}}
 
 
 
