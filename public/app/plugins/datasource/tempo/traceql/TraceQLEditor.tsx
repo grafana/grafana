@@ -78,6 +78,7 @@ export function TraceQLEditor(props: Props) {
           if (!model) {
             return;
           }
+          // Use red markers (squiggles) to highlight syntax errors in queries
           monaco.editor.setModelMarkers(
             model,
             'owner',
