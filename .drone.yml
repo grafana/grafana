@@ -1893,8 +1893,8 @@ steps:
 - commands:
   - /src/grafana-build docker --package=$(cat packages.txt | grep tar.gz | grep -v
     docker | grep -v sha256) --ubuntu-base=ubuntu:22.10 --alpine-base=alpine:3.17.1
-    --tag-format='{{ .version }}-{{ .arch }}' --ubuntu-tag-format='{{ .version }}-ubuntu-{{
-    .arch }}' > docker.txt
+    --tag-format='{{ .version_base }}-{{ .buildID }}-{{ .arch }}' --ubuntu-tag-format='{{
+    .version_base }}-{{ .buildID }}-ubuntu-{{ .arch }}' > docker.txt
   - find ./dist -name '*docker*.tar.gz' -type f | xargs -n1 docker load -i
   depends_on:
   - rgm-package
@@ -4163,6 +4163,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 5ccdc60b94e3d992613fc1e978057a285d1858ea7db4f9daf87213f91212f1f3
+hmac: 9ba7dbe63cfa156c8895c9d575c79e7399c048d67315332f64cbcbfa3c56e448
 
 ...
