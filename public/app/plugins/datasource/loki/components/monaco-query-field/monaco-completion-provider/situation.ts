@@ -27,10 +27,9 @@ import {
   KeepLabels,
   ParserFlag,
   LabelExtractionExpression,
-  LogfmtParserFlags,
   LabelExtractionExpressionList
 } from '../../../lezer/index.es';
-import { getLogQueryFromMetricsQuery, getNodesFromQuery, isQueryWithNode } from '../../../queryUtils';
+import { getLogQueryFromMetricsQuery, getNodesFromQuery } from '../../../queryUtils';
 
 type Direction = 'parent' | 'firstChild' | 'lastChild' | 'nextSibling';
 type NodeType = number;
@@ -107,7 +106,7 @@ export type Situation =
   | {
     type: 'IN_LOGFMT',
     otherLabels: string[],
-    flag: boolean,
+    flags: boolean,
     logQuery: string;
   }
   | {
@@ -455,7 +454,7 @@ function resolveLogfmtParser(_: SyntaxNode, text: string, cursorPosition: number
     return null;
   }
 
-  const flag = isQueryWithNode(text, LogfmtParserFlags);
+  const flags = getNodesFromQuery(text, [ParserFlag]).length > 1;
   const labelNodes = getNodesFromQuery(text, [LabelExtractionExpression]);
   const otherLabels = labelNodes
     .map((label: SyntaxNode) => label.getChild(Identifier))
@@ -465,7 +464,7 @@ function resolveLogfmtParser(_: SyntaxNode, text: string, cursorPosition: number
   return {
     type: 'IN_LOGFMT',
     otherLabels,
-    flag,
+    flags,
     logQuery: getLogQueryFromMetricsQuery(text).trim(),
   }
 }
