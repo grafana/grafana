@@ -101,7 +101,7 @@ func Test_handleGetRegions_regionCache(t *testing.T) {
 		return &cli
 	}
 	im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-		return DataSource{Settings: models.CloudWatchSettings{}}, nil
+		return DataSource{Settings: models.CloudWatchSettings{AWSDatasourceSettings: awsds.AWSDatasourceSettings{Region: "us-east-2"}}}, nil
 	})
 
 	t.Run("AWS only called once for multiple calls to handleGetRegions", func(t *testing.T) {
