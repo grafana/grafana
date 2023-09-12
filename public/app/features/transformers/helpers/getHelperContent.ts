@@ -23,6 +23,8 @@ import { PartitionByValuesHelper } from './PartitionByValuesHelper';
 import { PrepareTimeSeriesHelper } from './PrepareTimeSeriesHelper';
 import { ReduceHelper } from './ReduceHelper';
 import { RenameByRegexHelper } from './RenameByRegexHelper';
+import { RowsToFieldsHelper } from './RowsToFieldsHelper';
+import { SeriesToRowsHelper } from './SeriesToRowsHelper';
 
 interface Helper {
   [key: string]: JSX.Element | string;
@@ -56,6 +58,8 @@ const helperContent: Helper = {
   prepareTimeSeries: PrepareTimeSeriesHelper(),
   reduce: ReduceHelper(),
   renameByRegex: RenameByRegexHelper(),
+  rowsToFields: RowsToFieldsHelper(),
+  seriesToRows: SeriesToRowsHelper(),
 };
 
 // JEV: add logic for no helper/string content
