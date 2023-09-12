@@ -458,7 +458,7 @@ func newTestTemplateResult(res *notifier.TestTemplatesResults) apimodels.TestTem
 	return apiRes
 }
 
-func (srv AlertmanagerSrv) AlertmanagerFor(orgID int64) (Alertmanager, *response.NormalResponse) {
+func (srv AlertmanagerSrv) AlertmanagerFor(orgID int64) (notifier.Alertmanager, *response.NormalResponse) {
 	am, err := srv.mam.AlertmanagerFor(orgID)
 	if err == nil {
 		return am, nil

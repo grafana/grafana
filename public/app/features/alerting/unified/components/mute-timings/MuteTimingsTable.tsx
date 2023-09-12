@@ -4,14 +4,13 @@ import React, { useMemo, useState } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
 import { IconButton, LinkButton, Link, useStyles2, ConfirmModal } from '@grafana/ui';
-import { contextSrv } from 'app/core/services/context_srv';
 import { MuteTimeInterval } from 'app/plugins/datasource/alertmanager/types';
 import { useDispatch } from 'app/types/store';
 
 import { Authorize } from '../../components/Authorize';
+import { AlertmanagerAction, useAlertmanagerAbilities, useAlertmanagerAbility } from '../../hooks/useAbilities';
 import { useAlertmanagerConfig } from '../../hooks/useAlertmanagerConfig';
 import { deleteMuteTimingAction } from '../../state/actions';
-import { getNotificationsPermissions } from '../../utils/access-control';
 import { makeAMLink } from '../../utils/misc';
 import { DynamicTable, DynamicTableItemProps, DynamicTableColumnProps } from '../DynamicTable';
 import { EmptyAreaWithCTA } from '../EmptyAreaWithCTA';
@@ -29,7 +28,6 @@ interface Props {
 export const MuteTimingsTable = ({ alertManagerSourceName, muteTimingNames, hideActions }: Props) => {
   const styles = useStyles2(getStyles);
   const dispatch = useDispatch();
-  const permissions = getNotificationsPermissions(alertManagerSourceName);
 
   const { currentData } = useAlertmanagerConfig(alertManagerSourceName, {
     refetchOnFocus: true,
@@ -57,6 +55,7 @@ export const MuteTimingsTable = ({ alertManagerSourceName, muteTimingNames, hide
   }, [config?.mute_time_intervals, config?.muteTimeProvenances, muteTimingNames]);
 
   const columns = useColumns(alertManagerSourceName, hideActions, setMuteTimingName);
+  const [_, allowedToCreateMuteTiming] = useAlertmanagerAbility(AlertmanagerAction.CreateMuteTiming);
 
   return (
     <div className={styles.container}>
@@ -67,7 +66,7 @@ export const MuteTimingsTable = ({ alertManagerSourceName, muteTimingNames, hide
         </span>
         <Spacer />
         {!hideActions && items.length > 0 && (
-          <Authorize actions={[permissions.create]}>
+          <Authorize actions={[AlertmanagerAction.CreateMuteTiming]}>
             <LinkButton
               className={styles.addMuteButton}
               icon="plus"
@@ -88,7 +87,7 @@ export const MuteTimingsTable = ({ alertManagerSourceName, muteTimingNames, hide
           buttonIcon="plus"
           buttonSize="lg"
           href={makeAMLink('alerting/routes/mute-timing/new', alertManagerSourceName)}
-          showButton={contextSrv.hasPermission(permissions.create)}
+          showButton={allowedToCreateMuteTiming}
         />
       ) : (
         <EmptyAreaWithCTA text="No mute timings configured" buttonLabel={''} showButton={false} />
@@ -111,11 +110,11 @@ export const MuteTimingsTable = ({ alertManagerSourceName, muteTimingNames, hide
 };
 
 function useColumns(alertManagerSourceName: string, hideActions = false, setMuteTimingName: (name: string) => void) {
-  const permissions = getNotificationsPermissions(alertManagerSourceName);
-
-  const userHasEditPermissions = contextSrv.hasPermission(permissions.update);
-  const userHasDeletePermissions = contextSrv.hasPermission(permissions.delete);
-  const showActions = !hideActions && (userHasEditPermissions || userHasDeletePermissions);
+  const [[_editSupported, allowedToEdit], [_deleteSupported, allowedToDelete]] = useAlertmanagerAbilities([
+    AlertmanagerAction.UpdateMuteTiming,
+    AlertmanagerAction.DeleteMuteTiming,
+  ]);
+  const showActions = !hideActions && (allowedToEdit || allowedToDelete);
 
   return useMemo((): Array<DynamicTableColumnProps<MuteTimeInterval>> => {
     const columns: Array<DynamicTableColumnProps<MuteTimeInterval>> = [
@@ -159,7 +158,7 @@ function useColumns(alertManagerSourceName: string, hideActions = false, setMute
           }
           return (
             <div>
-              <Authorize actions={[permissions.update]}>
+              <Authorize actions={[AlertmanagerAction.UpdateMuteTiming]}>
                 <Link
                   href={makeAMLink(`/alerting/routes/mute-timing/edit`, alertManagerSourceName, {
                     muteName: data.name,
@@ -168,7 +167,7 @@ function useColumns(alertManagerSourceName: string, hideActions = false, setMute
                   <IconButton name="edit" tooltip="Edit mute timing" />
                 </Link>
               </Authorize>
-              <Authorize actions={[permissions.delete]}>
+              <Authorize actions={[AlertmanagerAction.DeleteMuteTiming]}>
                 <IconButton
                   name="trash-alt"
                   tooltip="Delete mute timing"
@@ -182,7 +181,7 @@ function useColumns(alertManagerSourceName: string, hideActions = false, setMute
       });
     }
     return columns;
-  }, [alertManagerSourceName, setMuteTimingName, showActions, permissions]);
+  }, [alertManagerSourceName, setMuteTimingName, showActions]);
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
