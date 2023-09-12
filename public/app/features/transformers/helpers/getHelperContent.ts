@@ -6,6 +6,7 @@ import { CreateHeatmapHelp } from './CreateHeatmapHelp';
 import { ExtractFieldsHelper } from './ExtractFieldsHelper';
 import { FieldLookupHelper } from "./FieldLookupHelper";
 import { FilterByRefIdHelper } from "./FilterByRefIdHelper";
+import { FilterByValueHelper } from "./FilterByValueHelper";
 import { FilterFieldsByNameHelper } from "./FilterFieldsByNameHelper";
 
 interface Helper {
@@ -23,6 +24,7 @@ const helperContent: Helper = {
   extractFields: ExtractFieldsHelper(),
   fieldLookup: FieldLookupHelper(),
   filterByRefId: FilterByRefIdHelper(),
+  filterByValue: FilterByValueHelper(),
   filterFieldsByName: FilterFieldsByNameHelper(),
   heatmap: CreateHeatmapHelp(),
 };
