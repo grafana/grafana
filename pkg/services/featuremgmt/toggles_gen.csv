@@ -109,3 +109,4 @@ lokiRunQueriesInParallel,privatePreview,@grafana/observability-logs,false,false,
 wargamesTesting,experimental,@grafana/hosted-grafana-team,false,false,false,false
 alertingInsights,experimental,@grafana/alerting-squad,false,false,false,true
 pluginsAPIMetrics,experimental,@grafana/plugins-platform-backend,false,false,false,true
+httpSLOLevels,preview,@grafana/hosted-grafana-team,false,false,true,false
