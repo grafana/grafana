@@ -550,6 +550,8 @@ func TestIntegrationUserAuthToken(t *testing.T) {
 			revokedTokens, err := ctx.tokenService.GetUserRevokedTokens(context.Background(), usr.ID)
 			require.NoError(t, err)
 			assert.Len(t, revokedTokens, 1)
+
+			getTime = time.Now
 		})
 	})
 
