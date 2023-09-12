@@ -21,16 +21,15 @@ const YamlExportProvider: ExportProvider<'yaml'> = {
   exportFormat: 'yaml',
 };
 
-// TODO Waiting for BE changes
-// const HclRuleExportProvider: RuleExportProvider<'hcl'> = {
-//   name: 'HCL',
+// const HclRuleExportProvider: ExportProvider<'hcl'> = {
+//   name: 'Terraform (HCL)',
 //   exportFormat: 'hcl',
 // };
 
 export const grafanaExportProviders = {
   [JsonExportProvider.exportFormat]: JsonExportProvider,
   [YamlExportProvider.exportFormat]: YamlExportProvider,
-  // [HclRuleExportProvider.exportFormat]: HclRuleExportProvider,
+  // [HclRuleExportProvider.exportFormat]: HclExportProvider,
 } as const;
 
 export type ExportFormats = keyof typeof grafanaExportProviders;

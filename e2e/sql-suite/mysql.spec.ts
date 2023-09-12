@@ -1,4 +1,4 @@
-import { e2e } from '@grafana/e2e';
+import { e2e } from '../utils';
 
 import datasetResponse from './datasets-response.json';
 import fieldsResponse from './fields-response.json';
@@ -11,7 +11,7 @@ describe('MySQL datasource', () => {
   it('code editor autocomplete should handle table name escaping/quoting', () => {
     e2e.flows.login('admin', 'admin');
 
-    e2e().intercept(
+    cy.intercept(
       'POST',
       {
         pathname: '/api/ds/query',
@@ -40,26 +40,26 @@ describe('MySQL datasource', () => {
 
     e2e.components.DataSourcePicker.container().should('be.visible').type('gdev-mysql{enter}');
 
-    e2e().get("label[for^='option-code']").should('be.visible').click();
-    e2e().get('textarea').type('S{downArrow}{enter}');
-    e2e().wait('@tables');
-    e2e().get('.suggest-widget').contains(tableNameWithSpecialCharacter).should('be.visible');
-    e2e().get('textarea').type('{enter}');
-    e2e().get('textarea').should('have.value', `SELECT  FROM grafana.\`${tableNameWithSpecialCharacter}\``);
+    cy.get("label[for^='option-code']").should('be.visible').click();
+    cy.get('textarea').type('S{downArrow}{enter}');
+    cy.wait('@tables');
+    cy.get('.suggest-widget').contains(tableNameWithSpecialCharacter).should('be.visible');
+    cy.get('textarea').type('{enter}');
+    cy.get('textarea').should('have.value', `SELECT  FROM grafana.\`${tableNameWithSpecialCharacter}\``);
 
     const deleteTimes = new Array(tableNameWithSpecialCharacter.length + 2).fill(
       '{backspace}',
       0,
       tableNameWithSpecialCharacter.length + 2
     );
-    e2e().get('textarea').type(deleteTimes.join(''));
+    cy.get('textarea').type(deleteTimes.join(''));
 
-    e2e().get('textarea').type('{command}i');
-    e2e().get('.suggest-widget').contains(tableNameWithSpecialCharacter).should('be.visible');
-    e2e().get('textarea').type('S{downArrow}{enter}');
-    e2e().get('textarea').should('have.value', `SELECT  FROM grafana.${normalTableName}`);
+    cy.get('textarea').type('{command}i');
+    cy.get('.suggest-widget').contains(tableNameWithSpecialCharacter).should('be.visible');
+    cy.get('textarea').type('S{downArrow}{enter}');
+    cy.get('textarea').should('have.value', `SELECT  FROM grafana.${normalTableName}`);
 
-    e2e().get('textarea').type('.');
-    e2e().get('.suggest-widget').contains('No suggestions.').should('be.visible');
+    cy.get('textarea').type('.');
+    cy.get('.suggest-widget').contains('No suggestions.').should('be.visible');
   });
 });

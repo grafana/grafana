@@ -244,7 +244,7 @@ type ActionCellProps = {
 
 function ActionCell(props: ActionCellProps) {
   const styles = useStyles2(getStyles);
-  const symbol = props.frame.fields.find((f: Field) => f.name === 'Symbol')?.values.get(props.rowIndex);
+  const symbol = props.frame.fields.find((f: Field) => f.name === 'Symbol')?.values[props.rowIndex];
   const isSearched = props.search === symbol;
   const isSandwiched = props.sandwichItem === symbol;
 
