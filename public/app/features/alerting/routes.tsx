@@ -259,6 +259,14 @@ const unifiedRoutes: RouteDescriptor[] = [
       () => import(/* webpackChunkName: "AlertingAdmin" */ 'app/features/alerting/unified/Admin')
     ),
   },
+
+  {
+    path: '/alerting/insights',
+    exact: false,
+    component: SafeDynamicImport(
+      () => import(/* webpackChunkName: "AlertingHome" */ 'app/features/alerting/unified/home/Home')
+    ),
+  },
 ];
 
 export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
