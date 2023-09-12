@@ -9,7 +9,6 @@ import (
 	"github.com/grafana/grafana/pkg/kinds/team"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/services/user"
 )
 
 // Typed errors
@@ -160,7 +159,7 @@ type GetTeamMembersQuery struct {
 	TeamUID      string
 	UserID       int64
 	External     bool
-	SignedInUser *user.SignedInUser
+	SignedInUser identity.Requester
 }
 
 // ----------------------

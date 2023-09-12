@@ -1,4 +1,4 @@
-import { e2e } from '@grafana/e2e';
+import { e2e } from '../utils';
 
 e2e.scenario({
   describeName: 'Explore',
@@ -23,12 +23,12 @@ e2e.scenario({
       .scrollIntoView()
       .should('be.visible')
       .within(() => {
-        e2e().get('input[id*="test-data-scenario-select-"]').should('be.visible').click();
+        cy.get('input[id*="test-data-scenario-select-"]').should('be.visible').click();
       });
 
     cy.contains('CSV Metric Values').scrollIntoView().should('be.visible').click();
 
-    const canvases = e2e().get('canvas');
+    const canvases = cy.get('canvas');
     canvases.should('have.length', 1);
 
     // Both queries above should have been run and be shown in the query history

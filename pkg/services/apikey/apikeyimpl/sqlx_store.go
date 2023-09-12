@@ -22,7 +22,7 @@ type sqlxStore struct {
 
 func (ss *sqlxStore) GetAPIKeys(ctx context.Context, query *apikey.GetApiKeysQuery) ([]*apikey.APIKey, error) {
 	var where []string
-	var args []interface{}
+	var args []any
 
 	if query.IncludeExpired {
 		where = append(where, "org_id=?")

@@ -2,11 +2,9 @@ import React from 'react';
 
 import { Stack } from '@grafana/experimental';
 import { Alert, LinkButton } from '@grafana/ui';
-import { contextSrv } from 'app/core/core';
 import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
-import { AccessControlAction } from 'app/types';
 
-import { getNotificationsPermissions } from '../../utils/access-control';
+import { AlertmanagerAction, useAlertmanagerAbility } from '../../hooks/useAbilities';
 import { GRAFANA_RULES_SOURCE_NAME, isVanillaPrometheusAlertManagerDataSource } from '../../utils/datasource';
 import { makeAMLink } from '../../utils/misc';
 import { Authorize } from '../Authorize';
@@ -36,7 +34,9 @@ export const ReceiversAndTemplatesView = ({ config, alertManagerName }: Props) =
 };
 
 export const TemplatesView = ({ config, alertManagerName }: Props) => {
-  const permissions = getNotificationsPermissions(alertManagerName);
+  const [createNotificationTemplateSupported, createNotificationTemplateAllowed] = useAlertmanagerAbility(
+    AlertmanagerAction.CreateNotificationTemplate
+  );
 
   return (
     <ReceiversSection
@@ -44,7 +44,7 @@ export const TemplatesView = ({ config, alertManagerName }: Props) => {
       description="Create notification templates to customize your notifications."
       addButtonLabel="Add template"
       addButtonTo={makeAMLink('/alerting/notifications/templates/new', alertManagerName)}
-      showButton={contextSrv.hasPermission(permissions.create)}
+      showButton={createNotificationTemplateSupported && createNotificationTemplateAllowed}
     >
       <TemplatesTable config={config} alertManagerName={alertManagerName} />
     </ReceiversSection>
@@ -59,7 +59,7 @@ export const GlobalConfigAlert = ({ alertManagerName }: GlobalConfigAlertProps) 
   const isVanillaAM = isVanillaPrometheusAlertManagerDataSource(alertManagerName);
 
   return (
-    <Authorize actions={[AccessControlAction.AlertingNotificationsExternalWrite]}>
+    <Authorize actions={[AlertmanagerAction.UpdateExternalConfiguration]}>
       <Alert severity="info" title="Global config for contact points">
         <p>
           For each external Alertmanager you can define global settings, like server addresses, usernames and password,

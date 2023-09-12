@@ -50,32 +50,27 @@ describe('Phlare data source', () => {
   });
 
   describe('applyTemplateVariables', () => {
-    const interpolationVar = '$interpolationVar';
-    const interpolationText = 'interpolationText';
-    const noInterpolation = 'noInterpolation';
+    const templateSrv = new TemplateSrv();
+    templateSrv.replace = jest.fn((query: string): string => {
+      return query.replace(/\$var/g, 'interpolated');
+    });
 
     it('should not update labelSelector if there are no template variables', () => {
-      const templateSrv = new TemplateSrv();
-      templateSrv.replace = jest.fn((query: string): string => {
-        return query.replace(/\$interpolationVar/g, interpolationText);
-      });
       ds = new PhlareDataSource(defaultSettings, templateSrv);
-      const query = ds.applyTemplateVariables(defaultQuery(`{${noInterpolation}}`), {});
-      expect(templateSrv.replace).toBeCalledTimes(1);
-      expect(query.labelSelector).toBe(`{${noInterpolation}}`);
+      const query = ds.applyTemplateVariables(defaultQuery({ labelSelector: `no var`, profileTypeId: 'no var' }), {});
+      expect(query).toMatchObject({
+        labelSelector: `no var`,
+        profileTypeId: 'no var',
+      });
     });
 
     it('should update labelSelector if there are template variables', () => {
-      const templateSrv = new TemplateSrv();
-      templateSrv.replace = jest.fn((query: string): string => {
-        return query.replace(/\$interpolationVar/g, interpolationText);
-      });
       ds = new PhlareDataSource(defaultSettings, templateSrv);
-      const query = ds.applyTemplateVariables(defaultQuery(`{${interpolationVar}="${interpolationVar}"}`), {
-        interpolationVar: { text: interpolationText, value: interpolationText },
-      });
-      expect(templateSrv.replace).toBeCalledTimes(1);
-      expect(query.labelSelector).toBe(`{${interpolationText}="${interpolationText}"}`);
+      const query = ds.applyTemplateVariables(
+        defaultQuery({ labelSelector: `{$var="$var"}`, profileTypeId: '$var' }),
+        {}
+      );
+      expect(query).toMatchObject({ labelSelector: `{interpolated="interpolated"}`, profileTypeId: 'interpolated' });
     });
   });
 });
@@ -116,13 +111,14 @@ describe('normalizeQuery', () => {
   });
 });
 
-const defaultQuery = (query: string) => {
+const defaultQuery = (query: Partial<Query>): Query => {
   return {
     refId: 'x',
     groupBy: [],
-    labelSelector: query,
+    labelSelector: '',
     profileTypeId: '',
     queryType: defaultPhlareQueryType,
+    ...query,
   };
 };
 

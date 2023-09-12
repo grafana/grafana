@@ -17,7 +17,6 @@ import {
   MetricExpr,
   Matcher,
   Identifier,
-  Distinct,
   Range,
   formatLokiQuery,
 } from '@grafana/lezer-logql';
@@ -246,10 +245,6 @@ export function isQueryWithLabelFilter(query: string): boolean {
 
 export function isQueryWithLineFilter(query: string): boolean {
   return isQueryWithNode(query, LineFilter);
-}
-
-export function isQueryWithDistinct(query: string): boolean {
-  return isQueryWithNode(query, Distinct);
 }
 
 export function isQueryWithRangeVariable(query: string): boolean {

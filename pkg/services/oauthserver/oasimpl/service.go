@@ -58,7 +58,7 @@ type OAuth2ServiceImpl struct {
 	saService     serviceaccounts.Service
 	userService   user.Service
 	teamService   team.Service
-	publicKey     interface{}
+	publicKey     any
 }
 
 func ProvideService(router routing.RouteRegister, db db.DB, cfg *setting.Cfg,
@@ -77,7 +77,7 @@ func ProvideService(router routing.RouteRegister, db db.DB, cfg *setting.Cfg,
 
 	privateKey := keySvc.GetServerPrivateKey()
 
-	var publicKey interface{}
+	var publicKey any
 	switch k := privateKey.(type) {
 	case *rsa.PrivateKey:
 		publicKey = &k.PublicKey
@@ -109,8 +109,8 @@ func ProvideService(router routing.RouteRegister, db db.DB, cfg *setting.Cfg,
 	return s, nil
 }
 
-func newProvider(config *fosite.Config, storage interface{}, key interface{}) fosite.OAuth2Provider {
-	keyGetter := func(context.Context) (interface{}, error) {
+func newProvider(config *fosite.Config, storage any, key any) fosite.OAuth2Provider {
+	keyGetter := func(context.Context) (any, error) {
 		return key, nil
 	}
 	return compose.Compose(
@@ -372,11 +372,11 @@ func (s *OAuth2ServiceImpl) handleKeyOptions(ctx context.Context, keyOption *oau
 	if keyOption.PublicPEM != "" {
 		pemEncoded, err := base64.StdEncoding.DecodeString(keyOption.PublicPEM)
 		if err != nil {
-			s.logger.Error("cannot decode base64 encoded PEM string", "error", err)
+			s.logger.Error("Cannot decode base64 encoded PEM string", "error", err)
 		}
 		_, err = utils.ParsePublicKeyPem(pemEncoded)
 		if err != nil {
-			s.logger.Error("cannot parse PEM encoded string", "error", err)
+			s.logger.Error("Cannot parse PEM encoded string", "error", err)
 			return nil, err
 		}
 		return &oauthserver.KeyResult{
@@ -462,7 +462,7 @@ func (s *OAuth2ServiceImpl) createServiceAccount(ctx context.Context, extSvcName
 		return oauthserver.NoServiceAccountID, err
 	}
 
-	s.logger.Debug("create tailored role for service account", "external service name", extSvcName, "name", slug, "service_account_id", sa.Id, "permissions", permissions)
+	s.logger.Debug("Create tailored role for service account", "external service name", extSvcName, "name", slug, "service_account_id", sa.Id, "permissions", permissions)
 	if err := s.acService.SaveExternalServiceRole(ctx, ac.SaveExternalServiceRoleCommand{
 		OrgID:             ac.GlobalOrgID,
 		Global:            true,

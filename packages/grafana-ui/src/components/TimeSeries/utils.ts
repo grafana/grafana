@@ -294,21 +294,18 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
         }
       }
 
-      let axisColorOpts = {};
-
-      if (axisColor) {
-        axisColorOpts = {
-          border: {
-            show: true,
-            width: 1,
-            stroke: axisColor,
-          },
-          ticks: {
-            stroke: axisColor,
-          },
-          color: customConfig.axisColorMode === AxisColorMode.Series ? axisColor : undefined,
-        };
-      }
+      const axisDisplayOptions = {
+        border: {
+          show: customConfig.axisShow || false,
+          width: 1,
+          stroke: axisColor || theme.colors.text.primary,
+        },
+        ticks: {
+          show: customConfig.axisShow || false,
+          stroke: axisColor || theme.colors.text.primary,
+        },
+        color: axisColor || theme.colors.text.primary,
+      };
 
       let incrs: uPlot.Axis.Incrs | undefined;
 
@@ -339,7 +336,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
             splits,
             values,
             incrs,
-            ...axisColorOpts,
+            ...axisDisplayOptions,
           },
           field
         )

@@ -211,19 +211,19 @@ type PluginMetaDTO struct {
 }
 
 type DataSourceDTO struct {
-	ID              int64                  `json:"id,omitempty"`
-	UID             string                 `json:"uid,omitempty"`
-	Type            string                 `json:"type"`
-	Name            string                 `json:"name"`
-	PluginMeta      *PluginMetaDTO         `json:"meta"`
-	URL             string                 `json:"url,omitempty"`
-	IsDefault       bool                   `json:"isDefault"`
-	Access          string                 `json:"access,omitempty"`
-	Preload         bool                   `json:"preload"`
-	Module          string                 `json:"module,omitempty"`
-	JSONData        map[string]interface{} `json:"jsonData"`
-	ReadOnly        bool                   `json:"readOnly"`
-	AngularDetected bool                   `json:"angularDetected"`
+	ID              int64          `json:"id,omitempty"`
+	UID             string         `json:"uid,omitempty"`
+	Type            string         `json:"type"`
+	Name            string         `json:"name"`
+	PluginMeta      *PluginMetaDTO `json:"meta"`
+	URL             string         `json:"url,omitempty"`
+	IsDefault       bool           `json:"isDefault"`
+	Access          string         `json:"access,omitempty"`
+	Preload         bool           `json:"preload"`
+	Module          string         `json:"module,omitempty"`
+	JSONData        map[string]any `json:"jsonData"`
+	ReadOnly        bool           `json:"readOnly"`
+	AngularDetected bool           `json:"angularDetected"`
 
 	BasicAuth       string `json:"basicAuth,omitempty"`
 	WithCredentials bool   `json:"withCredentials,omitempty"`

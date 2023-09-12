@@ -17,6 +17,7 @@ import {
 
 import { CloudCommonChannelSettings } from './CloudCommonChannelSettings';
 import { ReceiverForm } from './ReceiverForm';
+import { Notifier } from './notifiers';
 
 interface Props {
   alertManagerSourceName: string;
@@ -33,6 +34,8 @@ const defaultChannelValues: CloudChannelValues = Object.freeze({
   type: 'email',
 });
 
+const cloudNotifiers = cloudNotifierTypes.map<Notifier>((n) => ({ dto: n }));
+
 export const CloudReceiverForm = ({ existing, alertManagerSourceName, config }: Props) => {
   const dispatch = useDispatch();
   const isVanillaAM = isVanillaPrometheusAlertManagerDataSource(alertManagerSourceName);
@@ -45,9 +48,9 @@ export const CloudReceiverForm = ({ existing, alertManagerSourceName, config }: 
     return cloudReceiverToFormValues(existing, cloudNotifierTypes);
   }, [existing]);
 
-  const onSubmit = (values: ReceiverFormValues<CloudChannelValues>) => {
+  const onSubmit = async (values: ReceiverFormValues<CloudChannelValues>) => {
     const newReceiver = formValuesToCloudReceiver(values, defaultChannelValues);
-    dispatch(
+    await dispatch(
       updateAlertManagerConfigAction({
         newConfig: updateConfigWithReceiver(config, newReceiver, existing?.name),
         oldConfig: config,
@@ -82,7 +85,7 @@ export const CloudReceiverForm = ({ existing, alertManagerSourceName, config }: 
         config={config}
         onSubmit={onSubmit}
         initialValues={existingValue}
-        notifiers={cloudNotifierTypes}
+        notifiers={cloudNotifiers}
         alertManagerSourceName={alertManagerSourceName}
         defaultItem={defaultChannelValues}
         takenReceiverNames={takenReceiverNames}

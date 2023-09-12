@@ -63,7 +63,7 @@ describe('ContactPoints', () => {
 
     it('should show / hide loading states', async () => {
       render(
-        <AlertmanagerProvider accessType={'notification'} context={{ selectedAlertmanager: MIMIR_DATASOURCE_UID }}>
+        <AlertmanagerProvider accessType={'notification'} alertmanagerSourceName={MIMIR_DATASOURCE_UID}>
           <ContactPoints />
         </AlertmanagerProvider>,
         { wrapper: TestProvider }
