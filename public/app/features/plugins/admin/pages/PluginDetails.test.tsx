@@ -726,6 +726,22 @@ describe('Plugin details page', () => {
 
       expect(queryByRole('button', { name: /uninstall/i })).not.toBeInTheDocument();
     });
+
+    it('shows a "angular warning" if the plugin uses Angular', async () => {
+      const { queryByText } = renderPluginDetails({
+        angularDetected: true,
+      });
+
+      await waitFor(() => expect(queryByText(/angular plugin/i)).toBeInTheDocument);
+    });
+
+    it('does not show an "angular warning" if the plugin is not using Angular', async () => {
+      const { queryByText } = renderPluginDetails({
+        angularDetected: false,
+      });
+
+      await waitFor(() => expect(queryByText(/angular plugin/i)).not.toBeInTheDocument);
+    });
   });
 
   describe('viewed as user without grafana admin permissions', () => {
