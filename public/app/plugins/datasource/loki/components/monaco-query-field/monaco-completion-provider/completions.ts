@@ -348,7 +348,7 @@ export async function getAfterSelectorCompletions(
 
 export async function getLogfmtCompletions(
   logQuery: string,
-  flag: boolean,
+  flags: boolean,
   otherLabels: string[],
   dataProvider: CompletionDataProvider
 ): Promise<Completion[]> {
@@ -372,7 +372,7 @@ export async function getLogfmtCompletions(
   );
   const pipeOperations = getPipeOperationsCompletions('| ');
 
-  if (!flag) {
+  if (!flags) {
     completions = [...completions, ...LOGFMT_ARGUMENT_COMPLETIONS, ...parserCompletions, ...pipeOperations]
   } else if (!trailingComma) {
     completions = [...completions, ...parserCompletions, ...pipeOperations];
@@ -471,7 +471,7 @@ export async function getCompletions(
     case 'AFTER_KEEP_AND_DROP':
       return getAfterKeepAndDropCompletions(situation.logQuery, dataProvider);
     case 'IN_LOGFMT':
-      return getLogfmtCompletions(situation.logQuery, situation.flag, situation.otherLabels, dataProvider);
+      return getLogfmtCompletions(situation.logQuery, situation.flags, situation.otherLabels, dataProvider);
     default:
       throw new NeverCaseError(situation);
   }
