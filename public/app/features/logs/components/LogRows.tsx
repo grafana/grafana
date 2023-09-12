@@ -55,10 +55,10 @@ export interface Props extends Themeable2 {
   pinnedRowId?: string;
   containerRendered?: boolean;
   /**
-   * If true, the `contain:strict` css property will be added to the wrapping `<table>` for performance reasons.
+   * If false or undefined, the `contain:strict` css property will be added to the wrapping `<table>` for performance reasons.
    * Any overflowing content will be clipped at the table boundary.
    */
-  containContent?: boolean;
+  overflowingContent?: boolean;
 }
 
 interface State {
@@ -134,7 +134,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
     const keyMaker = new UniqueKeyMaker();
 
     return (
-      <table className={cx(styles.logsRowsTable, this.props.containContent ? styles.logsRowsTableContain : '')}>
+      <table className={cx(styles.logsRowsTable, this.props.overflowingContent ? '' : styles.logsRowsTableContain)}>
         <tbody>
           {hasData &&
             firstRows.map((row) => (
