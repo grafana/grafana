@@ -62,6 +62,9 @@ type Requester interface {
 	HasUniqueId() bool
 	// AuthenticatedBy returns the authentication method used to authenticate the entity.
 	GetAuthenticatedBy() string
+	// GetIDToken returns a signed token that can be used to identify caller
+	// Will only be set if featuremgmt.FlagIdToken is enabled
+	GetIDToken() string
 }
 
 // IntIdentifier converts a string identifier to an int64.

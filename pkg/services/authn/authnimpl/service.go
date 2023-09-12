@@ -72,6 +72,7 @@ func ProvideService(
 	socialService social.Service, cache *remotecache.RemoteCache,
 	ldapService service.LDAP, registerer prometheus.Registerer,
 	signingKeysService signingkeys.Service, oauthServer oauthserver.OAuth2Server,
+	idSinger auth.IDSignerService,
 ) *Service {
 	s := &Service{
 		log:            log.New("authn.service"),
@@ -170,6 +171,7 @@ func ProvideService(
 
 	s.RegisterPostAuthHook(userSyncService.FetchSyncedUserHook, 100)
 	s.RegisterPostAuthHook(sync.ProvidePermissionsSync(accessControlService).SyncPermissionsHook, 110)
+	s.RegisterPostAuthHook(sync.ProvideIDTokenSync(idSinger, features).SyncIDTokenHook, 120)
 
 	return s
 }

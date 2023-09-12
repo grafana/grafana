@@ -232,6 +232,9 @@ type Identity struct {
 	ClientParams ClientParams
 	// Permissions is the list of permissions the entity has.
 	Permissions map[int64]map[string][]string
+	// IDToken is a signed token that can be used to identify caller
+	// Will only be set if featuremgmt.FlagIdToken is enabled
+	IDToken string
 }
 
 // Role returns the role of the identity in the active organization.
@@ -283,6 +286,7 @@ func (i *Identity) SignedInUser() *user.SignedInUser {
 		LastSeenAt:      i.LastSeenAt,
 		Teams:           i.Teams,
 		Permissions:     i.Permissions,
+		IDToken:         i.IDToken,
 	}
 
 	namespace, id := i.NamespacedID()
@@ -331,6 +335,7 @@ func IdentityFromSignedInUser(id string, usr *user.SignedInUser, params ClientPa
 		Teams:           usr.Teams,
 		ClientParams:    params,
 		Permissions:     usr.Permissions,
+		IDToken:         usr.IDToken,
 	}
 }
 
