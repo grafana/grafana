@@ -48,7 +48,15 @@ export function getResponsiveStyle<T>(
       return;
     };
 
-    return [getCSS(prop.base), ...theme.breakpoints.keys.map((key) => breakpointCSS(key as ThemeBreakpointsKey))];
+    return [
+      getCSS(prop.base),
+      breakpointCSS('xs'),
+      breakpointCSS('sm'),
+      breakpointCSS('md'),
+      breakpointCSS('lg'),
+      breakpointCSS('xl'),
+      breakpointCSS('xxl'),
+    ];
   }
 
   return getCSS(prop);
