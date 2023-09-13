@@ -12,7 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/services/auth"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
@@ -27,7 +26,7 @@ import (
 func ProvideService(dataSourceCache datasources.CacheService, plugReqValidator validations.PluginRequestValidator,
 	pluginStore pluginstore.Store, cfg *setting.Cfg, httpClientProvider httpclient.Provider,
 	oauthTokenService *oauthtoken.Service, dsService datasources.DataSourceService,
-	tracer tracing.Tracer, secretsService secrets.Service, idSigner auth.IDSignerService) *DataSourceProxyService {
+	tracer tracing.Tracer, secretsService secrets.Service) *DataSourceProxyService {
 	return &DataSourceProxyService{
 		DataSourceCache:        dataSourceCache,
 		PluginRequestValidator: plugReqValidator,
@@ -38,7 +37,6 @@ func ProvideService(dataSourceCache datasources.CacheService, plugReqValidator v
 		DataSourcesService:     dsService,
 		tracer:                 tracer,
 		secretsService:         secretsService,
-		idSigner:               idSigner,
 	}
 }
 
@@ -52,7 +50,6 @@ type DataSourceProxyService struct {
 	DataSourcesService     datasources.DataSourceService
 	tracer                 tracing.Tracer
 	secretsService         secrets.Service
-	idSigner               auth.IDSignerService
 }
 
 func (p *DataSourceProxyService) ProxyDataSourceRequest(c *contextmodel.ReqContext) {
@@ -123,7 +120,7 @@ func (p *DataSourceProxyService) proxyDatasourceRequest(c *contextmodel.ReqConte
 
 	proxyPath := getProxyPath(c)
 	proxy, err := pluginproxy.NewDataSourceProxy(ds, plugin.Routes, c, proxyPath, p.Cfg, p.HTTPClientProvider,
-		p.OAuthTokenService, p.DataSourcesService, p.tracer, p.idSigner)
+		p.OAuthTokenService, p.DataSourcesService, p.tracer)
 	if err != nil {
 		var urlValidationError datasource.URLValidationError
 		if errors.As(err, &urlValidationError) {
