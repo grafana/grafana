@@ -27,7 +27,6 @@ entityStore,experimental,@grafana/grafana-app-platform-squad,true,false,false,fa
 cloudWatchCrossAccountQuerying,GA,@grafana/aws-datasources,false,false,false,false
 redshiftAsyncQueryDataSupport,GA,@grafana/aws-datasources,false,false,false,false
 athenaAsyncQueryDataSupport,GA,@grafana/aws-datasources,false,false,false,true
-newPanelChromeUI,GA,@grafana/dashboards-squad,false,false,false,true
 showDashboardValidationWarnings,experimental,@grafana/dashboards-squad,false,false,false,false
 mysqlAnsiQuotes,experimental,@grafana/backend-platform,false,false,false,false
 accessControlOnCall,preview,@grafana/grafana-authnz-team,false,false,false,false
