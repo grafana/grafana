@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/grafana/dataplane/examples"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -44,7 +45,7 @@ func TestPassThroughDataplaneExamples(t *testing.T) {
 
 func framesPassThroughService(t *testing.T, frames data.Frames) (data.Frames, error) {
 	me := &mockEndpoint{
-		Frames: frames,
+		map[string]backend.DataResponse{"A": {Frames: frames}},
 	}
 
 	cfg := setting.NewCfg()

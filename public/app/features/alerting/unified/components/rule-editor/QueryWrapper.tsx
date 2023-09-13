@@ -14,7 +14,7 @@ import {
 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
 import { DataQuery } from '@grafana/schema';
-import { GraphTresholdsStyleMode, Icon, InlineField, Input, Tooltip, useStyles2 } from '@grafana/ui';
+import { Badge, GraphTresholdsStyleMode, Icon, InlineField, Input, Tooltip, useStyles2 } from '@grafana/ui';
 import { QueryEditorRow } from 'app/features/query/components/QueryEditorRow';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
 
@@ -119,6 +119,8 @@ export const QueryWrapper = ({
       minInterval: queryOptions.minInterval,
     };
 
+    const isAlertCondition = condition === query.refId;
+
     return (
       <Stack direction="row" alignItems="baseline" gap={1}>
         <SelectingDataSourceTooltip />
@@ -132,9 +134,12 @@ export const QueryWrapper = ({
 
         <AlertConditionIndicator
           onSetCondition={() => onSetCondition(query.refId)}
-          enabled={condition === query.refId}
+          enabled={isAlertCondition}
           error={error}
         />
+        {!isAlertCondition && error && (
+          <Badge color="red" icon="exclamation-circle" text="Error" tooltip={error.message} />
+        )}
       </Stack>
     );
   }
