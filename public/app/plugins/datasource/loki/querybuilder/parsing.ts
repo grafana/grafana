@@ -87,7 +87,6 @@ interface ParsingError {
 interface GetOperationResult { operation?: QueryBuilderOperation; error?: string };
 
 export function buildVisualQueryFromString(expr: string): Context {
-  console.log(expr);
   const replacedExpr = replaceVariables(expr);
   const tree = parser.parse(replacedExpr);
   const node = tree.topNode;
