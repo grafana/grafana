@@ -603,16 +603,47 @@
       "view": "查看"
     }
   },
+  "playlist-edit": {
+    "error-prefix": "",
+    "form": {
+      "add-tag-label": "",
+      "add-tag-placeholder": "",
+      "add-title-label": "",
+      "cancel": "",
+      "heading": "",
+      "interval-label": "",
+      "interval-placeholder": "",
+      "interval-required": "",
+      "name-label": "",
+      "name-placeholder": "",
+      "name-required": "",
+      "save": "",
+      "table-delete": "",
+      "table-drag": "",
+      "table-empty": "",
+      "table-heading": ""
+    },
+    "sub-title": "",
+    "title": ""
+  },
   "playlist-page": {
-    "action": {
+    "card": {
+      "delete": "",
+      "edit": "",
+      "start": "",
+      "tooltip": ""
+    },
+    "create-button": {
       "title": ""
     },
-    "confirmBody": "",
-    "confirmText": "",
+    "delete-modal": {
+      "body": "",
+      "confirm-text": ""
+    },
     "empty": {
       "button": "",
-      "proTip": "",
-      "proTipLinkTitle": "",
+      "pro-tip": "",
+      "pro-tip-link-title": "",
       "title": ""
     }
   },

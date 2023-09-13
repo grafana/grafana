@@ -24,7 +24,7 @@ export const PlaylistPageList = ({ playlists, setStartPlaylist, setPlaylistToDel
         <li className={styles.listItem} key={playlist.uid}>
           <Card>
             <Card.Heading>
-              <Trans i18nKey="playlist-page.card.heading">{playlist.name}</Trans>
+              {playlist.name}
               <ModalsController key="button-share">
                 {({ showModal, hideModal }) => (
                   <DashNavButton
