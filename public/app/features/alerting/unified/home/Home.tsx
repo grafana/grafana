@@ -1,64 +1,82 @@
 import React, { useState } from 'react';
 
 import { config } from '@grafana/runtime';
-import { SceneApp, SceneAppPage } from '@grafana/scenes';
+import {
+  EmbeddedScene,
+  SceneApp,
+  SceneAppPage,
+  SceneFlexItem,
+  SceneFlexLayout,
+  SceneReactObject,
+} from '@grafana/scenes';
 import { usePageNav } from 'app/core/components/Page/usePageNav';
 import { PluginPageContext, PluginPageContextType } from 'app/features/plugins/components/PluginPageContext';
 
-import { getOverviewScene, WelcomeHeader } from './GettingStarted';
+import GettingStarted, { WelcomeHeader } from './GettingStarted';
 import { getGrafanaScenes } from './Insights';
 
 let homeApp: SceneApp | undefined;
 
-export function getHomeApp(insightsEnabled: boolean) {
+export function getHomeApp() {
   if (homeApp) {
     return homeApp;
   }
 
-  if (insightsEnabled) {
-    homeApp = new SceneApp({
-      pages: [
-        new SceneAppPage({
-          title: 'Alerting',
-          subTitle: <WelcomeHeader />,
-          url: '/alerting',
-          hideFromBreadcrumbs: true,
-          tabs: [
-            new SceneAppPage({
-              title: 'Grafana',
-              url: '/alerting/home/insights',
-              getScene: getGrafanaScenes,
-            }),
-            new SceneAppPage({
-              title: 'Overview',
-              url: '/alerting/home/overview',
-              getScene: getOverviewScene,
-            }),
-          ],
-        }),
-      ],
-    });
-  } else {
-    homeApp = new SceneApp({
-      pages: [
-        new SceneAppPage({
-          title: 'Alerting',
-          subTitle: <WelcomeHeader />,
-          url: '/alerting',
-          hideFromBreadcrumbs: true,
-          getScene: getOverviewScene,
-        }),
-      ],
-    });
-  }
+  homeApp = new SceneApp({
+    pages: [
+      new SceneAppPage({
+        title: 'Alerting',
+        subTitle: <WelcomeHeader />,
+        url: '/alerting',
+        hideFromBreadcrumbs: true,
+        tabs: [
+          new SceneAppPage({
+            title: 'Grafana',
+            url: '/alerting/insights',
+            getScene: getGrafanaScenes,
+          }),
+          new SceneAppPage({
+            title: 'Overview',
+            url: '/alerting/overview',
+            getScene: () => {
+              return new EmbeddedScene({
+                body: new SceneFlexLayout({
+                  children: [
+                    new SceneFlexItem({
+                      body: new SceneReactObject({
+                        component: GettingStarted,
+                      }),
+                    }),
+                  ],
+                }),
+              });
+            },
+          }),
+          // new SceneAppPage({
+          //   title: 'Mimir alertmanager',
+          //   url: '/alerting/insights/mimir-alertmanager',
+          //   getScene: getCloudScenes,
+          // }),
+          // new SceneAppPage({
+          //   title: 'Mimir-managed rules',
+          //   url: '/alerting/insights/mimir-rules',
+          //   getScene: getMimirManagedRulesScenes,
+          // }),
+          // new SceneAppPage({
+          //   title: 'Mimir-managed Rules - Per Rule Group',
+          //   url: '/alerting/insights/mimir-rules-per-group',
+          //   getScene: getMimirManagedRulesPerGroupScenes,
+          // }),
+        ],
+      }),
+    ],
+  });
 
   return homeApp;
 }
 
 export default function Home() {
-  const insightsEnabled = !!config.featureToggles.alertingInsights;
-
-  const appScene = getHomeApp(insightsEnabled);
+  const appScene = getHomeApp();
 
   const sectionNav = usePageNav('alerting')!;
   const [pluginContext] = useState<PluginPageContextType>({ sectionNav });

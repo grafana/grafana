@@ -6,6 +6,7 @@ import {
   QueryVariable,
   SceneApp,
   SceneAppPage,
+  SceneFlexItem,
   SceneFlexLayout,
   SceneTimeRange,
   SceneVariableSet,
@@ -125,12 +126,12 @@ function getMimirManagedRulesScenes() {
 }
 
 function getMimirManagedRulesPerGroupScenes() {
-  const ruleGroupHandler = new QueryVariable({
-    label: 'Rule Group',
-    name: 'rule_group',
-    datasource: cloudUsageDs,
-    query: 'label_values(grafanacloud_instance_rule_group_rules,rule_group)',
-  });
+  // const ruleGroupHandler = new QueryVariable({
+  //   label: 'Rule Group',
+  //   name: 'rule_group',
+  //   datasource: cloudUsageDs,
+  //   query: 'label_values(grafanacloud_instance_rule_group_rules,rule_group)',
+  // });
 
   return new NestedScene({
     title: 'Mimir-managed Rules - Per Rule Group',
@@ -145,60 +146,9 @@ function getMimirManagedRulesPerGroupScenes() {
         getRulesPerGroupScene(THIS_WEEK_TIME_RANGE, cloudUsageDs, 'Rules per Group'),
       ],
     }),
-    $variables: new SceneVariableSet({
-      variables: [ruleGroupHandler],
-    }),
-    controls: [new VariableValueSelectors({})],
+    // $variables: new SceneVariableSet({
+    //   variables: [ruleGroupHandler],
+    // }),
+    //controls: [new VariableValueSelectors({})],
   });
-}
-
-export function getMainPageScene() {
-  return new SceneAppPage({
-    title: 'Alerting Insights',
-    subTitle: 'Monitor the status of your alerts',
-    url: '/alerting',
-    hideFromBreadcrumbs: true,
-    getScene: getGrafanaScenes,
-    tabs: [
-      new SceneAppPage({
-        title: 'Grafana',
-        url: '/alerting/insights',
-        getScene: getGrafanaScenes,
-      }),
-      new SceneAppPage({
-        title: 'Mimir alertmanager',
-        url: '/alerting/insights/mimir-alertmanager',
-        getScene: getCloudScenes,
-      }),
-      new SceneAppPage({
-        title: 'Mimir-managed rules',
-        url: '/alerting/insights/mimir-rules',
-        getScene: getMimirManagedRulesScenes,
-      }),
-      new SceneAppPage({
-        title: 'Mimir-managed Rules - Per Rule Group',
-        url: '/alerting/insights/mimir-rules-per-group',
-        getScene: getMimirManagedRulesPerGroupScenes,
-      }),
-    ],
-  });
-}
-
-export default function Insights() {
-  const appScene = useMemo(
-    () =>
-      new SceneApp({
-        pages: [getMainPageScene()],
-      }),
-    []
-  );
-
-  const sectionNav = usePageNav('alerting')!;
-  const [pluginContext] = useState<PluginPageContextType>({ sectionNav });
-
-  return (
-    <PluginPageContext.Provider value={pluginContext}>
-      <appScene.Component model={appScene} />
-    </PluginPageContext.Provider>
-  );
 }

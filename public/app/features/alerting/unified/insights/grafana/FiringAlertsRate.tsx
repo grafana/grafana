@@ -19,6 +19,7 @@ export function getFiringAlertsRateScene(timeRange: SceneTimeRange, datasource: 
 
   return new SceneFlexItem({
     minHeight: 300,
+    minWidth: '40%',
     body: PanelBuilders.timeseries()
       .setTitle(panelTitle)
       .setData(query)
