@@ -37,15 +37,15 @@ describe('Dashboard time zone support', () => {
     for (const title of panelsToCheck) {
       e2e.components.Panels.Panel.title(title)
         .should('be.visible')
-        .within(() =>
+        .within(() => {
+          e2e.components.Panels.Visualization.Graph.xAxis.labels().should('be.visible');
           e2e.components.Panels.Visualization.Graph.xAxis
             .labels()
-            .should('be.visible')
             .last()
             .should((element) => {
               timesInUtc[title] = element.text();
-            })
-        );
+            });
+        });
     }
 
     e2e.components.PageToolbar.item('Dashboard settings').click();
