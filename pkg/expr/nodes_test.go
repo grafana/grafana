@@ -180,6 +180,7 @@ func TestCheckIfSeriesNeedToBeFixed(t *testing.T) {
 }
 
 func TestConvertDataFramesToResults(t *testing.T) {
+	var features featuremgmt.FeatureToggles = &featuremgmt.FeatureManager{}
 	execute := func(frames []*data.Frame, datasourceType string) (mathexp.Results, error) {
 		dsNode := DSNode{
 			baseNode: baseNode{
@@ -195,7 +196,7 @@ func TestConvertDataFramesToResults(t *testing.T) {
 		}
 		s := &Service{
 			cfg:      setting.NewCfg(),
-			features: &featuremgmt.FeatureManager{},
+			features: features,
 			tracer:   tracing.InitializeTracerForTest(),
 			metrics:  newMetrics(nil),
 			dataService: &mockEndpoint{
@@ -206,6 +207,19 @@ func TestConvertDataFramesToResults(t *testing.T) {
 		return dsNode.Execute(context.Background(), time.Now(), nil, s)
 	}
 
+	t.Run("when it is not dataplane", func(t *testing.T) {
+		f := features
+		t.Cleanup(func() {
+			features = f
+		})
+		features = featuremgmt.WithFeatures(featuremgmt.FlagDisableSSEDataplane)
+		t.Run("should return NoData if no frames", func(t *testing.T) {
+
+			result, err := execute(nil, "test")
+			require.NoError(t, err)
+			require.Equal(t, mathexp.NewNoData(), result.Values[0].Value())
+		})
+	})
 	t.Run("should add name label if no labels and specific data source", func(t *testing.T) {
 		supported := []string{datasources.DS_GRAPHITE, datasources.DS_TESTDATA}
 		t.Run("when only field name is specified", func(t *testing.T) {
