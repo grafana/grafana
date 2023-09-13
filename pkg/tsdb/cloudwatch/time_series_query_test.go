@@ -50,7 +50,7 @@ func TestTimeSeriesQuery(t *testing.T) {
 					StatusCode: aws.String("Complete"), Id: aws.String("b"), Label: aws.String("NetworkIn"), Values: []*float64{aws.Float64(1.0)}, Timestamps: []*time.Time{&now},
 				}}}, nil)
 
-		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+		im := datasource.NewInstanceManager(func(ctx context.Context, s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 			return DataSource{Settings: models.CloudWatchSettings{}}, nil
 		})
 
@@ -148,7 +148,7 @@ func Test_executeTimeSeriesQuery_getCWClient_is_called_once_per_region_and_GetMe
 		return &mockMetricClient
 	}
 
-	im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+	im := datasource.NewInstanceManager(func(ctx context.Context, s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 		return DataSource{Settings: models.CloudWatchSettings{}}, nil
 	})
 
@@ -337,7 +337,7 @@ func Test_QueryData_timeSeriesQuery_GetMetricDataWithContext(t *testing.T) {
 		return &api
 	}
 
-	im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+	im := datasource.NewInstanceManager(func(ctx context.Context, s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 		return DataSource{Settings: models.CloudWatchSettings{}}, nil
 	})
 
@@ -429,7 +429,7 @@ func Test_QueryData_response_data_frame_name_is_always_response_label(t *testing
 					Values: []*float64{aws.Float64(1.0)}, Timestamps: []*time.Time{{}}},
 			}}, nil)
 
-	im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+	im := datasource.NewInstanceManager(func(ctx context.Context, s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 		return DataSource{Settings: models.CloudWatchSettings{}}, nil
 	})
 	executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
@@ -584,7 +584,7 @@ func TestTimeSeriesQuery_CrossAccountQuerying(t *testing.T) {
 	NewCWClient = func(sess *session.Session) cloudwatchiface.CloudWatchAPI {
 		return &api
 	}
-	im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+	im := datasource.NewInstanceManager(func(ctx context.Context, s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 		return DataSource{Settings: models.CloudWatchSettings{}}, nil
 	})
 

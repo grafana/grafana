@@ -16,6 +16,8 @@ import (
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/config"
+	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
@@ -127,7 +129,8 @@ func buildQueryDataService(t *testing.T, cs datasources.CacheService, fpc *fakeP
 				},
 			},
 		},
-	}, ds, pluginSettings.ProvideService(store, fakeSecrets.NewFakeSecretsService()))
+	}, ds, pluginSettings.ProvideService(store, fakeSecrets.NewFakeSecretsService()), fakes.NewFakeLicensingService(),
+		&config.Cfg{})
 
 	return query.ProvideService(
 		setting.NewCfg(),

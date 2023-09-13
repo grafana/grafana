@@ -46,7 +46,7 @@ func Test_CloudWatch_CallResource_Integration_Test(t *testing.T) {
 		return &api
 	}
 
-	im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+	im := datasource.NewInstanceManager(func(ctx context.Context, s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 		return DataSource{Settings: models.CloudWatchSettings{}}, nil
 	})
 

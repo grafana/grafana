@@ -12,6 +12,8 @@ import (
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/config"
+	pluginFakes "github.com/grafana/grafana/pkg/plugins/manager/fakes"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	datasourceservice "github.com/grafana/grafana/pkg/services/datasources/service"
@@ -45,7 +47,7 @@ func TestHandleRequest(t *testing.T) {
 
 		pCtxProvider := plugincontext.ProvideService(localcache.ProvideService(), &pluginstore.FakePluginStore{
 			PluginList: []pluginstore.Plugin{{JSONData: plugins.JSONData{ID: "test"}}},
-		}, dsService, pluginSettings.ProvideService(sqlStore, secretsService))
+		}, dsService, pluginSettings.ProvideService(sqlStore, secretsService), pluginFakes.NewFakeLicensingService(), &config.Cfg{})
 		s := ProvideService(client, nil, dsService, pCtxProvider)
 
 		ds := &datasources.DataSource{ID: 12, Type: "test", JsonData: simplejson.New()}

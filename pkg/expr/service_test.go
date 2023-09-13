@@ -14,6 +14,8 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/config"
+	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	datafakes "github.com/grafana/grafana/pkg/services/datasources/fakes"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -36,7 +38,7 @@ func TestService(t *testing.T) {
 		PluginList: []pluginstore.Plugin{
 			{JSONData: plugins.JSONData{ID: "test"}},
 		},
-	}, &datafakes.FakeDataSourceService{}, nil)
+	}, &datafakes.FakeDataSourceService{}, nil, fakes.NewFakeLicensingService(), &config.Cfg{})
 
 	s := Service{
 		cfg:          setting.NewCfg(),
