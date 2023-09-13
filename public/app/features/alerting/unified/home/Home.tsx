@@ -31,12 +31,12 @@ export function getHomeApp() {
         tabs: [
           new SceneAppPage({
             title: 'Grafana',
-            url: '/alerting/insights',
+            url: '/alerting/home/insights',
             getScene: getGrafanaScenes,
           }),
           new SceneAppPage({
             title: 'Overview',
-            url: '/alerting/overview',
+            url: '/alerting/home/overview',
             getScene: () => {
               return new EmbeddedScene({
                 body: new SceneFlexLayout({
