@@ -888,7 +888,7 @@ describe('buildVisualQueryFromString', () => {
           },
         ],
         operations: [
-          { id: LokiOperationId.Logfmt, params: [true, true, 'label1', 'label2', "label3=\"label4"] },
+          { id: LokiOperationId.Logfmt, params: [true, true, 'label1', 'label2', "label3=\"label4\""] },
         ],
       })
     );

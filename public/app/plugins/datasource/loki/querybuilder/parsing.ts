@@ -173,6 +173,7 @@ export function handleExpression(expr: string, node: SyntaxNode, context: Contex
       if (error) {
         context.errors.push(createNotSupportedError(expr, node, error));
       }
+      break;
     }
 
     case LogfmtExpressionParser: {
@@ -183,6 +184,7 @@ export function handleExpression(expr: string, node: SyntaxNode, context: Contex
       if (error) {
         context.errors.push(createNotSupportedError(expr, node, error));
       }
+      break;
     }
 
     case LineFormatExpr: {
