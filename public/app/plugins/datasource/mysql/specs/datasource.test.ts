@@ -2,6 +2,7 @@ import { of } from 'rxjs';
 
 import {
   dataFrameToJSON,
+  getDefaultTimeRange,
   DataQueryRequest,
   DataSourceInstanceSettings,
   dateTime,
@@ -18,6 +19,7 @@ import { MySqlDatasource } from '../MySqlDatasource';
 import { MySQLOptions } from '../types';
 
 describe('MySQLDatasource', () => {
+  const defaultRange = getDefaultTimeRange(); // it does not matter what value this has
   const setupTestContext = (response: unknown) => {
     jest.clearAllMocks();
     setBackendSrv(backendSrv);
@@ -82,7 +84,7 @@ describe('MySQLDatasource', () => {
 
     it('should return an empty array when metricFindQuery is called', async () => {
       const query = 'select * from atable';
-      const results = await ds.metricFindQuery(query);
+      const results = await ds.metricFindQuery(query, { range: defaultRange });
       expect(results.length).toBe(0);
     });
 
@@ -216,7 +218,7 @@ describe('MySQLDatasource', () => {
 
     it('should return list of all string field values', async () => {
       const { ds } = setupTestContext(response);
-      const results = await ds.metricFindQuery(query, {});
+      const results = await ds.metricFindQuery(query, { range: defaultRange });
 
       expect(results.length).toBe(6);
       expect(results[0].text).toBe('aTitle');
@@ -249,7 +251,7 @@ describe('MySQLDatasource', () => {
 
     it('should return list of all column values', async () => {
       const { ds, fetchMock } = setupTestContext(response);
-      const results = await ds.metricFindQuery(query, { searchFilter: 'aTit' });
+      const results = await ds.metricFindQuery(query, { range: defaultRange, searchFilter: 'aTit' });
 
       expect(fetchMock).toBeCalledTimes(1);
       expect(fetchMock.mock.calls[0][0].data.queries[0].rawSql).toBe(
@@ -284,7 +286,7 @@ describe('MySQLDatasource', () => {
 
     it('should return list of all column values', async () => {
       const { ds, fetchMock } = setupTestContext(response);
-      const results = await ds.metricFindQuery(query, {});
+      const results = await ds.metricFindQuery(query, { range: defaultRange });
 
       expect(fetchMock).toBeCalledTimes(1);
       expect(fetchMock.mock.calls[0][0].data.queries[0].rawSql).toBe("select title from atable where title LIKE '%'");
@@ -317,7 +319,7 @@ describe('MySQLDatasource', () => {
 
     it('should return list of as text, value', async () => {
       const { ds } = setupTestContext(response);
-      const results = await ds.metricFindQuery(query, {});
+      const results = await ds.metricFindQuery(query, { range: defaultRange });
 
       expect(results.length).toBe(3);
       expect(results[0].text).toBe('aTitle');
@@ -352,7 +354,7 @@ describe('MySQLDatasource', () => {
 
     it('should return list of all field values as text', async () => {
       const { ds } = setupTestContext(response);
-      const results = await ds.metricFindQuery(query, {});
+      const results = await ds.metricFindQuery(query, { range: defaultRange });
 
       expect(results).toEqual([
         { text: 1 },
@@ -390,7 +392,7 @@ describe('MySQLDatasource', () => {
 
     it('should return list of unique keys', async () => {
       const { ds } = setupTestContext(response);
-      const results = await ds.metricFindQuery(query, {});
+      const results = await ds.metricFindQuery(query, { range: defaultRange });
 
       expect(results.length).toBe(1);
       expect(results[0].text).toBe('aTitle');
