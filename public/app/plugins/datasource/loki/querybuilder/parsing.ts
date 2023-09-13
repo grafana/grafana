@@ -24,12 +24,14 @@ import {
   KeepLabel,
   KeepLabels,
   KeepLabelsExpr,
+  LabelExtractionExpression,
   LabelExtractionExpressionList,
   LabelFilter,
   LabelFormatMatcher,
   LabelParser,
   LineFilter,
   LineFormatExpr,
+  LogfmtExpressionParser,
   LogfmtParser,
   LogRangeExpr,
   Matcher,
@@ -166,6 +168,16 @@ export function handleExpression(expr: string, node: SyntaxNode, context: Contex
     }
 
     case LogfmtParser: {
+      const { operation, error } = getLogfmtParser(expr, node);
+      if (operation) {
+        visQuery.operations.push(operation);
+      }
+      if (error) {
+        context.errors.push(createNotSupportedError(expr, node, error));
+      }
+    }
+
+    case LogfmtExpressionParser: {
       const { operation, error } = getLogfmtParser(expr, node);
       if (operation) {
         visQuery.operations.push(operation);
@@ -324,6 +336,7 @@ function getJsonExpressionParser(expr: string, node: SyntaxNode): QueryBuilderOp
 function getLogfmtParser(expr: string, node: SyntaxNode): GetOperationResult {
   const params: QueryBuilderOperationParamValue[] = [];
   const flags: string[] = [];
+  const labels: string[] = [];
   let error: string | undefined = undefined;
 
   const offset = node.from;
@@ -331,18 +344,18 @@ function getLogfmtParser(expr: string, node: SyntaxNode): GetOperationResult {
     enter: (subNode) => {
       if (subNode.type.id === ParserFlag) {
         flags.push(expr.substring(subNode.from + offset, subNode.to + offset));
-      } else if (subNode.type.id === ErrorId) {
+      } else if (subNode.type.id === LabelExtractionExpression) {
+        labels.push(expr.substring(subNode.from + offset, subNode.to + offset));
+      }
+      else if (subNode.type.id === ErrorId) {
         error = `Unexpected string "${expr.substring(subNode.from + offset, subNode.to + offset)}"`;
       }
     },
   });
 
-  params.push(flags.includes('--strict'));
-  params.push(flags.includes('--keep-empty'));
-
   const operation = {
     id: LokiOperationId.Logfmt,
-    params,
+    params: [flags.includes('--strict'), flags.includes('--keep-empty'), ...labels],
   };
 
   return {
