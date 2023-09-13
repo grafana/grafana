@@ -115,6 +115,8 @@ For example, if you are using Prometheus you should add a `scrape_config` to Pro
 
 ### List of available metrics
 
+The following is a list of available metrics for Alertmanager.
+
 #### alertmanager_alerts
 
 This metric is a counter that shows you the number of active, suppressed, and unprocessed alerts in Alertmanager. Suppressed alerts are silenced alerts, and unprocessed alerts are alerts that have been sent to the Alertmanager but have not been processed.
