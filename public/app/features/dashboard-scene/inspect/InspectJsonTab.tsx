@@ -125,7 +125,7 @@ export class InspectJsonTab extends SceneObjectBase<InspectJsonTabState> {
       panel_type_changed: panel.state.pluginId !== panelModel.type,
       panel_id_changed: getPanelIdForVizPanel(panel) !== panelModel.id,
       panel_grid_pos_changed: hasGridPosChanged(panel.parent.state, newState),
-      panel_targets_changed: hasQueriesChanged(getQueryRunnerFor(panel), getQueryRunnerFor(gridItem.state.body)),
+      panel_targets_changed: hasQueriesChanged(getQueryRunnerFor(panel), getQueryRunnerFor(newState.$data)),
     });
   };
 
@@ -218,7 +218,6 @@ function getJsonText(show: ShowContent, panel: VizPanel): string {
 
     case 'data-frames': {
       reportPanelInspectInteraction(InspectTab.JSON, 'dataFrame');
-
       const dataProvider = sceneGraph.getData(panel);
 
       if (dataProvider.state.data) {
