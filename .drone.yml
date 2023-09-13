@@ -4180,12 +4180,6 @@ kind: secret
 name: static_asset_editions
 ---
 get:
-  name: cdn_path
-  path: infra/data/ci/grafana-release-eng/enterprise2
-kind: secret
-name: enterprise2-cdn-path
----
-get:
   name: gcp_service_account_prod_base64
   path: infra/data/ci/grafana-release-eng/rgm
 kind: secret
@@ -4246,6 +4240,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 12449867a2fad72bbdc91ae4f3d5479747fe12479b1ecbe09068ca5dd168cb0c
+hmac: e34c10286bcbc3d00bee9650adba43e1784cf6c52ec765377ae408a57e4fd022
 
 ...
