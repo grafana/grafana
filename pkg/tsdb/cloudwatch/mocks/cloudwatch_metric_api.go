@@ -64,16 +64,16 @@ func (m *MetricsAPI) GetMetricDataWithContext(ctx aws.Context, input *cloudwatch
 	return args.Get(0).(*cloudwatch.GetMetricDataOutput), args.Error(1)
 }
 
-func (c *MetricsAPI) ListMetricsPages(input *cloudwatch.ListMetricsInput, fn func(*cloudwatch.ListMetricsOutput, bool) bool) error {
-	if c.MetricsPerPage == 0 {
-		c.MetricsPerPage = 1000
+func (m *MetricsAPI) ListMetricsPages(input *cloudwatch.ListMetricsInput, fn func(*cloudwatch.ListMetricsOutput, bool) bool) error {
+	if m.MetricsPerPage == 0 {
+		m.MetricsPerPage = 1000
 	}
-	chunks := chunkSlice(c.Metrics, c.MetricsPerPage)
+	chunks := chunkSlice(m.Metrics, m.MetricsPerPage)
 
 	for i, metrics := range chunks {
 		response := fn(&cloudwatch.ListMetricsOutput{
 			Metrics:        metrics,
-			OwningAccounts: c.OwningAccounts,
+			OwningAccounts: m.OwningAccounts,
 		}, i+1 == len(chunks))
 		if !response {
 			break
