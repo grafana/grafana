@@ -1954,6 +1954,10 @@ steps:
   - gcloud auth activate-service-account --key-file=gcpkey.json
   - rm gcpkey.json
   - cp C:\App\nssm-2.24.zip .
+  - .\grabpl.exe windows-installer --edition oss --build-id $$env:DRONE_BUILD_NUMBER
+  - $$fname = ((Get-Childitem grafana*.msi -name) -split "`n")[0]
+  - gsutil cp "$$fname" gs://grafana-downloads/oss/main/
+  - gsutil cp "$$fname.sha256" gs://grafana-downloads/oss/main/
   depends_on:
   - windows-init
   environment:
@@ -2755,7 +2759,7 @@ steps:
   - .\grabpl.exe windows-installer --target gs://grafana-prerelease/artifacts/downloads/${DRONE_TAG}/oss/release/grafana-${DRONE_TAG:1}.windows-amd64.zip
     --edition oss ${DRONE_TAG}
   - $$fname = ((Get-Childitem grafana*.msi -name) -split "`n")[0]
-  - gsutil cp $$fname gs://grafana-prerelease/artifacts/downloads/${DRONE_TAG}/oss/release/
+  - gsutil cp "$$fname" gs://grafana-prerelease/artifacts/downloads/${DRONE_TAG}/oss/release/
   - gsutil cp "$$fname.sha256" gs://grafana-prerelease/artifacts/downloads/${DRONE_TAG}/oss/release/
   depends_on:
   - windows-init
@@ -4160,12 +4164,6 @@ kind: secret
 name: static_asset_editions
 ---
 get:
-  name: cdn_path
-  path: infra/data/ci/grafana-release-eng/enterprise2
-kind: secret
-name: enterprise2-cdn-path
----
-get:
   name: gcp_service_account_prod_base64
   path: infra/data/ci/grafana-release-eng/rgm
 kind: secret
@@ -4226,6 +4224,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 4f7dcf8944d20c6f4fbdb0b099969871f4f07d40d44106594f82617ec199e963
+hmac: 2da64839224ed2376f040f6a21b071c8a894e568da43a9349f4013863fba14a0
 
 ...
