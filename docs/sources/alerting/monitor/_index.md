@@ -14,7 +14,7 @@ labels:
     - oss
 menuTitle: Monitor
 title: Meta monitoring
-weight: 100
+weight: 200
 ---
 
 # Meta monitoring
