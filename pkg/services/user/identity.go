@@ -106,6 +106,7 @@ func (u *SignedInUser) HasUniqueId() bool {
 
 // GetCacheKey returns a unique key for the entity.
 // Add an extra prefix to avoid collisions with other caches
+<<<<<<< HEAD
 func (u *SignedInUser) GetCacheKey() string {
 	namespace, id := u.GetNamespacedID()
 	if !u.HasUniqueId() {
@@ -115,6 +116,19 @@ func (u *SignedInUser) GetCacheKey() string {
 	}
 
 	return fmt.Sprintf("%d-%s-%s", u.GetOrgID(), namespace, id)
+=======
+func (u *SignedInUser) GetCacheKey() (string, error) {
+	if u.IsRealUser() {
+		return fmt.Sprintf("%d-user-%d", u.OrgID, u.UserID), nil
+	}
+	if u.IsApiKeyUser() {
+		return fmt.Sprintf("%d-apikey-%d", u.OrgID, u.ApiKeyID), nil
+	}
+	if u.IsServiceAccountUser() { // not considered a real user
+		return fmt.Sprintf("%d-service-%d", u.OrgID, u.UserID), nil
+	}
+	return "", ErrNoUniqueID
+>>>>>>> 1ada5af6b00 (Revert changes)
 }
 
 // GetIsGrafanaAdmin returns true if the user is a server admin
