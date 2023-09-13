@@ -43,6 +43,11 @@ load(
 ver_mode = "release"
 
 release_trigger = {
+    "repo": {
+        "exclude": [
+            "grafana/grafana",
+        ],
+    },
     "event": {
         "exclude": [
             "promote",
