@@ -115,7 +115,7 @@ export const calculateFieldTransformer: DataTransformerInfo<CalculateFieldTransf
               name: options.alias ?? 'Row',
               type: FieldType.number,
               values: indexArr,
-              config: { unit: 'percentunit' },
+              config: options.index?.showPercentage ? { unit: 'percentunit' } : {},
             };
             return {
               ...frame,
