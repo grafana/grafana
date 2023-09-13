@@ -3,14 +3,14 @@ package validator
 import (
 	"context"
 
-	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 )
 
 type UsageStatsValidator struct {
-	pluginStore plugins.Store
+	pluginStore pluginstore.Store
 }
 
-func ProvideService(pluginStore plugins.Store) (Service, error) {
+func ProvideService(pluginStore pluginstore.Store) (Service, error) {
 	s := &UsageStatsValidator{
 		pluginStore: pluginStore,
 	}

@@ -1,14 +1,13 @@
-import { e2e } from '@grafana/e2e';
+import { e2e } from '../utils';
 
 const flakyTimeout = 10000;
 
-e2e.scenario({
-  describeName: 'Panel edit tests - queries',
-  itName: 'Testes various Panel edit queries scenarios',
-  addScenarioDataSource: false,
-  addScenarioDashBoard: false,
-  skipScenario: false,
-  scenario: () => {
+describe('Panel edit tests - queries', () => {
+  beforeEach(() => {
+    e2e.flows.login(e2e.env('USERNAME'), e2e.env('PASSWORD'));
+  });
+
+  it('Tests various Panel edit queries scenarios', () => {
     e2e.flows.openDashboard({ uid: '5SdHCadmz', queryParams: { editPanel: 3 } });
 
     // New panel editor opens when navigating from Panel menu
@@ -39,15 +38,14 @@ e2e.scenario({
     e2e.components.QueryEditorRow.actionButton('Duplicate query').eq(0).should('be.visible').click();
 
     // We expect row with refId Band and A to exist and be visible
-    e2e.components.QueryEditorRows.rows().within((rows) => {
-      expect(rows.length).equals(2);
-    });
+    e2e.components.QueryEditorRows.rows().should('have.length', 2);
 
     // Change to CSV Metric Values scenario for A
     e2e.components.DataSource.TestData.QueryTab.scenarioSelectContainer()
+      .first()
       .should('be.visible')
       .within(() => {
-        e2e().get('input[id*="test-data-scenario-select-"]').eq(0).should('be.visible').click();
+        cy.get('input[id*="test-data-scenario-select-"]').eq(0).should('be.visible').click();
       });
 
     cy.contains('CSV Metric Values').scrollIntoView().should('be.visible').eq(0).click();
@@ -85,7 +83,7 @@ e2e.scenario({
       expect(resultIds.has('A:')).equals(true);
       expect(resultIds.has('B:')).equals(true);
     });
-  },
+  });
 });
 
 const expectInspectorResultAndClose = (expectCallBack: (keys: JQuery<HTMLElement>) => void) => {
@@ -95,7 +93,7 @@ const expectInspectorResultAndClose = (expectCallBack: (keys: JQuery<HTMLElement
 
   e2e.components.PanelInspector.Query.jsonObjectKeys({ timeout: flakyTimeout })
     .should('be.visible')
-    .within((keys) => expectCallBack(keys));
+    .should((keys) => expectCallBack(keys));
 
   e2e.components.Drawer.General.close().should('be.visible').click();
 };

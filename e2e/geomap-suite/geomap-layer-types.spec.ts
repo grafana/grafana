@@ -1,4 +1,4 @@
-import { e2e } from '@grafana/e2e';
+import { e2e } from '../utils';
 
 const DASHBOARD_ID = 'P2jR04WVk';
 
@@ -6,13 +6,12 @@ const MAP_LAYERS_TYPE = 'Map layers Layer type';
 const MAP_LAYERS_DATA = 'Map layers Data';
 const MAP_LAYERS_GEOJSON = 'Map layers GeoJSON URL';
 
-e2e.scenario({
-  describeName: 'Geomap layer types',
-  itName: 'Tests changing the layer type',
-  addScenarioDataSource: false,
-  addScenarioDashBoard: false,
-  skipScenario: false,
-  scenario: () => {
+describe('Geomap layer types', () => {
+  beforeEach(() => {
+    e2e.flows.login(e2e.env('USERNAME'), e2e.env('PASSWORD'));
+  });
+
+  it('Tests changing the layer type', () => {
     e2e.flows.openDashboard({ uid: DASHBOARD_ID, queryParams: { editPanel: 1 } });
     cy.get('[data-testid="layer-drag-drop-list"]').should('be.visible');
     e2e.components.PanelEditor.OptionsPane.fieldLabel(MAP_LAYERS_TYPE).should('be.visible');
@@ -57,16 +56,9 @@ e2e.scenario({
     e2e.components.PanelEditor.OptionsPane.fieldLabel('Map layers URL template').should('be.visible');
     e2e.components.PanelEditor.OptionsPane.fieldLabel('Map layers Attribution').should('be.visible');
     e2e.components.PanelEditor.General.content().should('be.visible');
-  },
-});
+  });
 
-e2e.scenario({
-  describeName: 'Geomap layer types (alpha)',
-  itName: 'Tests changing the layer type (alpha)',
-  addScenarioDataSource: false,
-  addScenarioDashBoard: false,
-  skipScenario: true,
-  scenario: () => {
+  it.skip('Tests changing the layer type (alpha)', () => {
     e2e.flows.openDashboard({ uid: DASHBOARD_ID, queryParams: { editPanel: 1 } });
     cy.get('[data-testid="layer-drag-drop-list"]').should('be.visible');
     e2e.components.PanelEditor.OptionsPane.fieldLabel(MAP_LAYERS_TYPE).should('be.visible');
@@ -103,5 +95,5 @@ e2e.scenario({
     e2e.components.PanelEditor.OptionsPane.fieldLabel('Map layers Style').should('be.visible');
     e2e.components.PanelEditor.OptionsPane.fieldLabel('Map layers Line width').should('be.visible');
     e2e.components.PanelEditor.General.content().should('be.visible');
-  },
+  });
 });

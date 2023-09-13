@@ -8,7 +8,7 @@ export default {
   'better eslint': () =>
     countEslintErrors()
       .include('**/*.{ts,tsx}')
-      .exclude(/public\/app\/angular/),
+      .exclude(/public\/app\/angular|packages\/grafana-e2e/),
   'no undocumented stories': () => countUndocumentedStories().include('**/!(*.internal).story.tsx'),
 };
 

@@ -118,9 +118,9 @@ describe('MetricsSummary', () => {
                   "displayNameFromDS": "Span count",
                 },
                 "name": "spanCount",
-                "type": "string",
+                "type": "number",
                 "values": [
-                  "10",
+                  10,
                 ],
               },
               {
@@ -132,9 +132,9 @@ describe('MetricsSummary', () => {
                   "unit": "percent",
                 },
                 "name": "errorPercentage",
-                "type": "string",
+                "type": "number",
                 "values": [
-                  "10",
+                  10,
                 ],
               },
               {
@@ -148,7 +148,7 @@ describe('MetricsSummary', () => {
                 "name": "p50",
                 "type": "number",
                 "values": [
-                  "1",
+                  1,
                 ],
               },
               {
@@ -162,7 +162,7 @@ describe('MetricsSummary', () => {
                 "name": "p90",
                 "type": "number",
                 "values": [
-                  "2",
+                  2,
                 ],
               },
               {
@@ -176,7 +176,7 @@ describe('MetricsSummary', () => {
                 "name": "p95",
                 "type": "number",
                 "values": [
-                  "3",
+                  3,
                 ],
               },
               {
@@ -190,7 +190,7 @@ describe('MetricsSummary', () => {
                 "name": "p99",
                 "type": "number",
                 "values": [
-                  "4",
+                  4,
                 ],
               },
             ],
@@ -219,15 +219,15 @@ describe('MetricsSummary', () => {
       expect(result).toMatchInlineSnapshot(`
         {
           "contains_sink": "true",
-          "errorPercentage": "10",
+          "errorPercentage": 10,
           "kind": "server",
-          "p50": "1",
-          "p90": "2",
-          "p95": "3",
-          "p99": "4",
+          "p50": 1,
+          "p90": 2,
+          "p95": 3,
+          "p99": 4,
           "room": "kitchen",
           "span.http.status_code": 208,
-          "spanCount": "10",
+          "spanCount": 10,
           "spanKind": "server",
           "spanStatus": "ok",
           "temperature": 38.1,
