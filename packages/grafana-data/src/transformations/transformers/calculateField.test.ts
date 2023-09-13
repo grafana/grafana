@@ -260,9 +260,9 @@ describe('calculateField transformer w/ timeseries', () => {
     await expect(transformDataFrame([cfg], [series])).toEmitValuesWith((received) => {
       const data = received[0][0];
       expect(data.fields.length).toEqual(1);
-      expect(data.fields[0].values[2]).toEqual(25);
-      expect(data.fields[0].values[4]).toEqual(50);
-      expect(data.fields[0].values[6]).toEqual(75);
+      expect(data.fields[0].values[2]).toEqual(0.25);
+      expect(data.fields[0].values[4]).toEqual(0.5);
+      expect(data.fields[0].values[6]).toEqual(0.75);
     });
   });
 
