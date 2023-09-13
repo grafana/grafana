@@ -163,4 +163,3 @@ This metric is a gauge. It has a constant value `1`, and contains a label called
 #### alertmanager_cluster_reconnections_failed_total
 
 This metric is a counter that shows you the number of failed peer connection attempts. In most cases you will want to use the `rate` function to understand how often reconnections fail as this may be indicative of an issue or instability in your network.
-
