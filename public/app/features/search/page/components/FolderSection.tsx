@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import React, { useCallback, useId, useState } from 'react';
-import { useAsync, useLocalStorage } from 'react-use';
+import { useAsync } from 'react-use';
 
 import { GrafanaTheme2, toIconName } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -76,17 +76,20 @@ export const FolderSection = ({
   }, [sectionExpanded, tags]);
 
   const onSectionExpand = () => {
-    const lastExpandedFolder = window.localStorage.getItem(SEARCH_EXPANDED_FOLDER_STORAGE_KEY);
+    const newExpandedValue = !sectionExpanded;
 
-    if (sectionExpanded) {
+    if (newExpandedValue) {
+      // If we've just expanded the section, remember it to local storage
+      window.localStorage.setItem(SEARCH_EXPANDED_FOLDER_STORAGE_KEY, uid);
+    } else {
+      // Else, when closing a section, remove it from local storage only if this folder was the most recently opened
+      const lastExpandedFolder = window.localStorage.getItem(SEARCH_EXPANDED_FOLDER_STORAGE_KEY);
       if (lastExpandedFolder === uid) {
         window.localStorage.removeItem(SEARCH_EXPANDED_FOLDER_STORAGE_KEY);
       }
-    } else {
-      window.localStorage.setItem(SEARCH_EXPANDED_FOLDER_STORAGE_KEY, uid);
     }
 
-    setSectionExpanded(!sectionExpanded);
+    setSectionExpanded(newExpandedValue);
   };
 
   const onToggleFolder = (evt: React.FormEvent) => {
