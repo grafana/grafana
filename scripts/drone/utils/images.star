@@ -15,7 +15,7 @@ images = {
     "cloudsdk": "google/cloud-sdk:431.0.0",
     "publish": "grafana/grafana-ci-deploy:1.3.3",
     "alpine": "alpine:3.17.1",
-    "ubuntu": "ubuntu:22.10",
+    "ubuntu": "ubuntu:22.04",
     "curl": "byrnedo/alpine-curl:0.1.8",
     "plugins_slack": "plugins/slack",
     "python": "python:3.8",
@@ -29,7 +29,7 @@ images = {
     "drone_downstream": "grafana/drone-downstream",
     "docker_puppeteer": "grafana/docker-puppeteer:1.1.0",
     "docs": "grafana/docs-base:dbd975af06",
-    "cypress": "cypress/included:12.15.0",
+    "cypress": "cypress/included:13.1.0",
     "dockerize": "jwilder/dockerize:0.6.1",
     "shellcheck": "koalaman/shellcheck:stable",
 }

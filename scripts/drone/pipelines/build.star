@@ -76,7 +76,7 @@ def build_e2e(trigger, ver_mode):
     build_steps.extend(
         [
             build_frontend_package_step(),
-            rgm_package_step(distros = "linux/amd64,linux/arm64", file = "packages.txt"),
+            rgm_package_step(distros = "linux/amd64,linux/arm64,linux/arm/v7", file = "packages.txt"),
             grafana_server_step(),
             e2e_tests_step("dashboards-suite"),
             e2e_tests_step("smoke-tests-suite"),
@@ -98,7 +98,13 @@ def build_e2e(trigger, ver_mode):
             [
                 store_storybook_step(trigger = trigger_oss, ver_mode = ver_mode),
                 frontend_metrics_step(trigger = trigger_oss),
-                rgm_build_docker_step("packages.txt", images["ubuntu"], images["alpine"]),
+                rgm_build_docker_step(
+                    "packages.txt",
+                    images["ubuntu"],
+                    images["alpine"],
+                    tag_format = "{{ .version_base }}-{{ .buildID }}-{{ .arch }}",
+                    ubuntu_tag_format = "{{ .version_base }}-{{ .buildID }}-ubuntu-{{ .arch }}",
+                ),
                 publish_images_step(
                     docker_repo = "grafana",
                     trigger = trigger_oss,
