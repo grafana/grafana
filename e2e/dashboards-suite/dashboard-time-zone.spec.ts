@@ -11,13 +11,12 @@ import {
 
 import { e2e } from '../utils';
 
-e2e.scenario({
-  describeName: 'Dashboard time zone support',
-  itName: 'Tests dashboard time zone scenarios',
-  addScenarioDataSource: false,
-  addScenarioDashBoard: false,
-  skipScenario: true,
-  scenario: () => {
+describe('Dashboard time zone support', () => {
+  beforeEach(() => {
+    e2e.flows.login(e2e.env('USERNAME'), e2e.env('PASSWORD'));
+  });
+
+  it('Tests dashboard time zone scenarios', () => {
     e2e.flows.openDashboard({ uid: '5SdHCasdf' });
 
     const fromTimeZone = 'UTC';
@@ -38,15 +37,15 @@ e2e.scenario({
     for (const title of panelsToCheck) {
       e2e.components.Panels.Panel.title(title)
         .should('be.visible')
-        .within(() =>
+        .within(() => {
+          e2e.components.Panels.Visualization.Graph.xAxis.labels().should('be.visible');
           e2e.components.Panels.Visualization.Graph.xAxis
             .labels()
-            .should('be.visible')
             .last()
             .should((element) => {
               timesInUtc[title] = element.text();
-            })
-        );
+            });
+        });
     }
 
     e2e.components.PageToolbar.item('Dashboard settings').click();
@@ -80,22 +79,15 @@ e2e.scenario({
             })
         );
     }
-  },
-});
+  });
 
-e2e.scenario({
-  describeName: 'Dashboard time zone support',
-  itName: 'Tests relative timezone support and overrides',
-  addScenarioDataSource: false,
-  addScenarioDashBoard: false,
-  skipScenario: false,
-  scenario: () => {
+  it('Tests relative timezone support and overrides', () => {
     // Open dashboard
     e2e.flows.openDashboard({
       uid: 'd41dbaa2-a39e-4536-ab2b-caca52f1a9c8',
     });
 
-    e2e().intercept('/api/ds/query*').as('dataQuery');
+    cy.intercept('/api/ds/query*').as('dataQuery');
 
     // Switch to Browser timezone
     e2e.flows.setTimeRange({
@@ -104,12 +96,12 @@ e2e.scenario({
       zone: 'Browser',
     });
     // Need to wait for 2 calls as there's 2 panels
-    e2e().wait(['@dataQuery', '@dataQuery']);
+    cy.wait(['@dataQuery', '@dataQuery']);
 
     e2e.components.Panels.Panel.title('Panel with relative time override')
       .should('be.visible')
       .within(() => {
-        e2e().contains('[role="row"]', '00:00:00').should('be.visible');
+        cy.contains('[role="row"]', '00:00:00').should('be.visible');
       });
 
     // Today so far, still in Browser timezone
@@ -118,18 +110,18 @@ e2e.scenario({
       to: 'now',
     });
     // Need to wait for 2 calls as there's 2 panels
-    e2e().wait(['@dataQuery', '@dataQuery']);
+    cy.wait(['@dataQuery', '@dataQuery']);
 
     e2e.components.Panels.Panel.title('Panel with relative time override')
       .should('be.visible')
       .within(() => {
-        e2e().contains('[role="row"]', '00:00:00').should('be.visible');
+        cy.contains('[role="row"]', '00:00:00').should('be.visible');
       });
 
     e2e.components.Panels.Panel.title('Panel in timezone')
       .should('be.visible')
       .within(() => {
-        e2e().contains('[role="row"]', '00:00:00').should('be.visible');
+        cy.contains('[role="row"]', '00:00:00').should('be.visible');
       });
 
     // Test Tokyo timezone
@@ -139,12 +131,12 @@ e2e.scenario({
       zone: 'Asia/Tokyo',
     });
     // Need to wait for 2 calls as there's 2 panels
-    e2e().wait(['@dataQuery', '@dataQuery']);
+    cy.wait(['@dataQuery', '@dataQuery']);
 
     e2e.components.Panels.Panel.title('Panel with relative time override')
       .should('be.visible')
       .within(() => {
-        e2e().contains('[role="row"]', '00:00:00').should('be.visible');
+        cy.contains('[role="row"]', '00:00:00').should('be.visible');
       });
 
     // Today so far, still in Tokyo timezone
@@ -153,18 +145,18 @@ e2e.scenario({
       to: 'now',
     });
     // Need to wait for 2 calls as there's 2 panels
-    e2e().wait(['@dataQuery', '@dataQuery']);
+    cy.wait(['@dataQuery', '@dataQuery']);
 
     e2e.components.Panels.Panel.title('Panel with relative time override')
       .should('be.visible')
       .within(() => {
-        e2e().contains('[role="row"]', '00:00:00').should('be.visible');
+        cy.contains('[role="row"]', '00:00:00').should('be.visible');
       });
 
     e2e.components.Panels.Panel.title('Panel in timezone')
       .should('be.visible')
       .within(() => {
-        e2e().contains('[role="row"]', '00:00:00').should('be.visible');
+        cy.contains('[role="row"]', '00:00:00').should('be.visible');
       });
 
     // Test LA timezone
@@ -174,12 +166,12 @@ e2e.scenario({
       zone: 'America/Los_Angeles',
     });
     // Need to wait for 2 calls as there's 2 panels
-    e2e().wait(['@dataQuery', '@dataQuery']);
+    cy.wait(['@dataQuery', '@dataQuery']);
 
     e2e.components.Panels.Panel.title('Panel with relative time override')
       .should('be.visible')
       .within(() => {
-        e2e().contains('[role="row"]', '00:00:00').should('be.visible');
+        cy.contains('[role="row"]', '00:00:00').should('be.visible');
       });
 
     // Today so far, still in LA timezone
@@ -188,20 +180,20 @@ e2e.scenario({
       to: 'now',
     });
     // Need to wait for 2 calls as there's 2 panels
-    e2e().wait(['@dataQuery', '@dataQuery']);
+    cy.wait(['@dataQuery', '@dataQuery']);
 
     e2e.components.Panels.Panel.title('Panel with relative time override')
       .should('be.visible')
       .within(() => {
-        e2e().contains('[role="row"]', '00:00:00').should('be.visible');
+        cy.contains('[role="row"]', '00:00:00').should('be.visible');
       });
 
     e2e.components.Panels.Panel.title('Panel in timezone')
       .should('be.visible')
       .within(() => {
-        e2e().contains('[role="row"]', '00:00:00').should('be.visible');
+        cy.contains('[role="row"]', '00:00:00').should('be.visible');
       });
-  },
+  });
 });
 
 const isTimeCorrect = (inUtc: string, inTz: string, offset: number): boolean => {

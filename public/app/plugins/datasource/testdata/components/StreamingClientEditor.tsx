@@ -4,14 +4,13 @@ import { SelectableValue } from '@grafana/data';
 import { InlineField, InlineFieldRow, Input, Select } from '@grafana/ui';
 
 import { EditorProps } from '../QueryEditor';
-import { StreamingQuery } from '../dataquery.gen';
 
 const streamingClientFields = [
   { label: 'Speed (ms)', id: 'speed', placeholder: 'value', min: 10, step: 10 },
   { label: 'Spread', id: 'spread', placeholder: 'value', min: 0.5, step: 0.1 },
   { label: 'Noise', id: 'noise', placeholder: 'value', min: 0, step: 0.1 },
   { label: 'Bands', id: 'bands', placeholder: 'bands', min: 0, step: 1 },
-];
+] as const;
 
 const types = [
   { value: 'signal', label: 'Signal' },
@@ -46,7 +45,7 @@ export const StreamingClientEditor = ({ onChange, query }: EditorProps) => {
                 name={id}
                 min={min}
                 step={step}
-                value={query.stream?.[id as keyof StreamingQuery]}
+                value={query.stream?.[id]}
                 placeholder={placeholder}
                 onChange={onInputChange}
               />

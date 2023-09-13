@@ -1,12 +1,11 @@
 import { e2e } from '../utils';
 
-e2e.scenario({
-  describeName: 'Dashboard templating',
-  itName: 'Verify variable interpolation works',
-  addScenarioDataSource: false,
-  addScenarioDashBoard: false,
-  skipScenario: false,
-  scenario: () => {
+describe('Dashboard templating', () => {
+  beforeEach(() => {
+    e2e.flows.login(e2e.env('USERNAME'), e2e.env('PASSWORD'));
+  });
+
+  it('Verify variable interpolation works', () => {
     // Open dashboard global variables and interpolation
     e2e.flows.openDashboard({ uid: 'HYaGDGIMk' });
 
@@ -40,8 +39,7 @@ e2e.scenario({
       `Example: from=now-6h&to=now`,
     ];
 
-    e2e()
-      .get('.markdown-html li')
+    cy.get('.markdown-html li')
       .should('have.length', 26)
       .each((element) => {
         items.push(element.text());
@@ -53,8 +51,10 @@ e2e.scenario({
       });
 
     // Check link interpolation is working correctly
-    e2e()
-      .contains('a', 'Example: from=now-6h&to=now')
-      .should('have.attr', 'href', 'https://example.com/?from=now-6h&to=now');
-  },
+    cy.contains('a', 'Example: from=now-6h&to=now').should(
+      'have.attr',
+      'href',
+      'https://example.com/?from=now-6h&to=now'
+    );
+  });
 });

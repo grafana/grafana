@@ -3,7 +3,7 @@ const PAGE_UNDER_TEST = 'WVpf2jp7z/repeating-a-panel-horizontally';
 
 describe('Repeating a panel horizontally', () => {
   beforeEach(() => {
-    e2e.flows.login('admin', 'admin');
+    e2e.flows.login(e2e.env('USERNAME'), e2e.env('PASSWORD'));
   });
 
   it('should be able to repeat a panel horizontally', () => {
@@ -41,7 +41,7 @@ describe('Repeating a panel horizontally', () => {
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('1').click();
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('3').click();
     // blur the dropdown
-    e2e().get('body').click();
+    cy.get('body').click();
 
     const panelsShown = ['Panel Title 1', 'Panel Title 3'];
     const panelsNotShown = ['Panel Title 2'];

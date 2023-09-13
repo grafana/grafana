@@ -1,12 +1,11 @@
 import { e2e } from '../utils';
 
-e2e.scenario({
-  describeName: 'Explore',
-  itName: 'Basic path through Explore.',
-  addScenarioDataSource: false,
-  addScenarioDashBoard: false,
-  skipScenario: false,
-  scenario: () => {
+describe('Explore', () => {
+  beforeEach(() => {
+    e2e.flows.login(e2e.env('USERNAME'), e2e.env('PASSWORD'));
+  });
+
+  it('Basic path through Explore.', () => {
     e2e.pages.Explore.visit();
     e2e.pages.Explore.General.container().should('have.length', 1);
     e2e.components.RefreshPicker.runButtonV2().should('have.length', 1);
@@ -23,12 +22,12 @@ e2e.scenario({
       .scrollIntoView()
       .should('be.visible')
       .within(() => {
-        e2e().get('input[id*="test-data-scenario-select-"]').should('be.visible').click();
+        cy.get('input[id*="test-data-scenario-select-"]').should('be.visible').click();
       });
 
     cy.contains('CSV Metric Values').scrollIntoView().should('be.visible').click();
 
-    const canvases = e2e().get('canvas');
+    const canvases = cy.get('canvas');
     canvases.should('have.length', 1);
 
     // Both queries above should have been run and be shown in the query history
@@ -39,5 +38,5 @@ e2e.scenario({
     cy.get('button[title="Delete query"]').each((button) => {
       button.trigger('click');
     });
-  },
+  });
 });

@@ -17,7 +17,7 @@ export type Dashboard = { title: string; panels: Panel[]; uid: string; [key: str
  * @param skipPanelValidation skip panel validation
  */
 export const importDashboard = (dashboardToImport: Dashboard, queryTimeout?: number, skipPanelValidation?: boolean) => {
-  e2e().visit(fromBaseUrl('/dashboard/import'));
+  cy.visit(fromBaseUrl('/dashboard/import'));
 
   // Note: normally we'd use 'click' and then 'type' here, but the json object is so big that using 'val' is much faster
   e2e.components.DashboardImportPage.textarea().should('be.visible');
@@ -28,11 +28,10 @@ export const importDashboard = (dashboardToImport: Dashboard, queryTimeout?: num
   e2e.components.ImportDashboardForm.submit().should('be.visible').click();
 
   // wait for dashboard to load
-  e2e().wait(queryTimeout || 6000);
+  cy.wait(queryTimeout || 6000);
 
   // save the newly imported dashboard to context so it'll get properly deleted later
-  e2e()
-    .url()
+  cy.url()
     .should('contain', '/d/')
     .then((url: string) => {
       const uid = getDashboardUid(url);

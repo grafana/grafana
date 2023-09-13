@@ -11,15 +11,18 @@ function assertPreviewValues(expectedValues: string[]) {
 }
 
 describe('Variables - Interval', () => {
+  beforeEach(() => {
+    e2e.flows.login(e2e.env('USERNAME'), e2e.env('PASSWORD'));
+  });
+
   it('can add a new interval variable', () => {
-    e2e.flows.login('admin', 'admin');
     e2e.flows.openDashboard({ uid: `${PAGE_UNDER_TEST}?orgId=1&editview=templating` });
-    e2e().contains(DASHBOARD_NAME).should('be.visible');
+    cy.contains(DASHBOARD_NAME).should('be.visible');
 
     // Create a new "Interval" variable
     e2e.components.CallToActionCard.buttonV2('Add variable').click();
     e2e.pages.Dashboard.Settings.Variables.Edit.General.generalTypeSelectV2().within(() => {
-      e2e().get('input').type('Interval{enter}');
+      cy.get('input').type('Interval{enter}');
     });
     e2e.pages.Dashboard.Settings.Variables.Edit.General.generalNameInputV2().clear().type('VariableUnderTest').blur();
     e2e.pages.Dashboard.Settings.Variables.Edit.General.generalLabelInputV2().type('Variable under test').blur();
@@ -40,6 +43,6 @@ describe('Variables - Interval', () => {
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('1h30m').click();
 
     // Assert it was rendered
-    e2e().get('.markdown-html').should('include.text', 'VariableUnderTest: 1h30m');
+    cy.get('.markdown-html').should('include.text', 'VariableUnderTest: 1h30m');
   });
 });
