@@ -44,6 +44,16 @@ export const Components = {
         startValue: 'TestData start value',
         drop: 'TestData drop values',
       },
+      LogsTab: {
+        scenarioSelectContainer: 'Test Data Query scenario select container',
+        max: 'TestData max',
+        min: 'TestData min',
+        noise: 'TestData noise',
+        seriesCount: 'TestData series count',
+        spread: 'TestData spread',
+        startValue: 'TestData start value',
+        drop: 'TestData drop values',
+      },
     },
     DataSourceHttpSettings: {
       urlInput: 'Datasource HTTP settings url',
@@ -85,6 +95,16 @@ export const Components = {
       },
     },
     Visualization: {
+      LogsVolume: {
+        container: 'data-testid Panel header Logs volume', //testid
+        Legend: {
+          wrapperPartial: 'VizLegend series', //aria label partial
+        },
+      },
+      Logs: {
+        container: 'data-testid Panel header Logs', //testid, contained by logsVolume, could be problematic
+        rows: '[data-testid="logRows"]', //testid
+      },
       Graph: {
         container: 'Graph container',
         VisualizationTab: {
