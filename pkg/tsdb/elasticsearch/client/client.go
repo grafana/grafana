@@ -202,10 +202,14 @@ func (c *baseClientImpl) ExecuteMultisearch(r *MultiSearchRequest) (*MultiSearch
 	start = time.Now()
 	var msr MultiSearchResponse
 	dec := json.NewDecoder(res.Body)
+	_, resSpan := c.tracer.Start(c.ctx, "datasource.elasticsearch.queryData.executeMultisearch.decodeResponse")
+	defer resSpan.End()
 	err = dec.Decode(&msr)
 	if err != nil {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
+		resSpan.RecordError(err)
+		resSpan.SetStatus(codes.Error, err.Error())
 		c.logger.Error("Failed to decode response from Elasticsearch", "error", err, "duration", time.Since(start))
 		return nil, err
 	}
