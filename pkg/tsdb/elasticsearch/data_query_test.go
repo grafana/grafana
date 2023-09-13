@@ -1,6 +1,7 @@
 package elasticsearch
 
 import (
+	"context"
 	"encoding/json"
 	"testing"
 	"time"
@@ -9,6 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	es "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client"
 )
 
@@ -328,7 +330,7 @@ func TestExecuteElasticsearchDataQuery(t *testing.T) {
 			require.Equal(t, percentilesAgg.Aggregation.Type, "percentiles")
 			metricAgg := percentilesAgg.Aggregation.Aggregation.(*es.MetricAggregation)
 			require.Equal(t, metricAgg.Field, "@load_time")
-			percents := metricAgg.Settings["percents"].([]interface{})
+			percents := metricAgg.Settings["percents"].([]any)
 			require.Len(t, percents, 4)
 			require.Equal(t, percents[0], "1")
 			require.Equal(t, percents[1], "2")
@@ -426,7 +428,7 @@ func TestExecuteElasticsearchDataQuery(t *testing.T) {
 			require.Equal(t, sr.Size, defaultSize)
 			require.Equal(t, sr.Sort["@timestamp"], map[string]string{"order": "desc", "unmapped_type": "boolean"})
 			require.Equal(t, sr.Sort["_doc"], map[string]string{"order": "desc"})
-			require.Equal(t, sr.CustomProps["script_fields"], map[string]interface{}{})
+			require.Equal(t, sr.CustomProps["script_fields"], map[string]any{})
 		})
 
 		t.Run("With raw data metric query (from frontend tests)", func(t *testing.T) {
@@ -447,7 +449,7 @@ func TestExecuteElasticsearchDataQuery(t *testing.T) {
 			require.Equal(t, sr.Size, defaultSize)
 			require.Equal(t, sr.Sort["@timestamp"], map[string]string{"order": "desc", "unmapped_type": "boolean"})
 			require.Equal(t, sr.Sort["_doc"], map[string]string{"order": "desc"})
-			require.Equal(t, sr.CustomProps["script_fields"], map[string]interface{}{})
+			require.Equal(t, sr.CustomProps["script_fields"], map[string]any{})
 		})
 
 		t.Run("With raw document metric size set", func(t *testing.T) {
@@ -1209,7 +1211,7 @@ func TestExecuteElasticsearchDataQuery(t *testing.T) {
 			bucketScriptAgg := firstLevel.Aggregation.Aggs[2]
 			require.Equal(t, bucketScriptAgg.Key, "4")
 			plAgg := bucketScriptAgg.Aggregation.Aggregation.(*es.PipelineAggregation)
-			require.Equal(t, plAgg.BucketPath.(map[string]interface{}), map[string]interface{}{
+			require.Equal(t, plAgg.BucketPath.(map[string]any), map[string]any{
 				"var1": "1",
 				"var2": "3",
 			})
@@ -1245,7 +1247,7 @@ func TestExecuteElasticsearchDataQuery(t *testing.T) {
 			bucketScriptAgg := firstLevel.Aggregation.Aggs[2]
 			require.Equal(t, bucketScriptAgg.Key, "2")
 			plAgg := bucketScriptAgg.Aggregation.Aggregation.(*es.PipelineAggregation)
-			require.Equal(t, plAgg.BucketPath.(map[string]interface{}), map[string]interface{}{
+			require.Equal(t, plAgg.BucketPath.(map[string]any), map[string]any{
 				"var1": "3",
 				"var2": "5",
 			})
@@ -1279,7 +1281,7 @@ func TestExecuteElasticsearchDataQuery(t *testing.T) {
 			bucketScriptAgg := firstLevel.Aggregation.Aggs[0]
 			require.Equal(t, bucketScriptAgg.Key, "2")
 			plAgg := bucketScriptAgg.Aggregation.Aggregation.(*es.PipelineAggregation)
-			require.Equal(t, plAgg.BucketPath.(map[string]interface{}), map[string]interface{}{
+			require.Equal(t, plAgg.BucketPath.(map[string]any), map[string]any{
 				"var1": "_count",
 			})
 		})
@@ -1312,7 +1314,7 @@ func TestExecuteElasticsearchDataQuery(t *testing.T) {
 			bucketScriptAgg := firstLevel.Aggregation.Aggs[0]
 			require.Equal(t, bucketScriptAgg.Key, "4")
 			plAgg := bucketScriptAgg.Aggregation.Aggregation.(*es.PipelineAggregation)
-			require.Equal(t, plAgg.BucketPath.(map[string]interface{}), map[string]interface{}{
+			require.Equal(t, plAgg.BucketPath.(map[string]any), map[string]any{
 				"var1": "_count",
 			})
 		})
@@ -1362,7 +1364,7 @@ func TestExecuteElasticsearchDataQuery(t *testing.T) {
 
 			require.Equal(t, sr.Sort["@timestamp"], map[string]string{"order": "desc", "unmapped_type": "boolean"})
 			require.Equal(t, sr.Sort["_doc"], map[string]string{"order": "desc"})
-			require.Equal(t, sr.CustomProps["script_fields"], map[string]interface{}{})
+			require.Equal(t, sr.CustomProps["script_fields"], map[string]any{})
 
 			firstLevel := sr.Aggs[0]
 			require.Equal(t, firstLevel.Key, "1")
@@ -1394,9 +1396,9 @@ func TestExecuteElasticsearchDataQuery(t *testing.T) {
 			}`, from, to)
 			require.NoError(t, err)
 			sr := c.multisearchRequests[0].Requests[0]
-			require.Equal(t, sr.CustomProps["highlight"], map[string]interface{}{
-				"fields": map[string]interface{}{
-					"*": map[string]interface{}{},
+			require.Equal(t, sr.CustomProps["highlight"], map[string]any{
+				"fields": map[string]any{
+					"*": map[string]any{},
 				},
 				"fragment_size": 2147483647,
 				"post_tags":     []string{"@/HIGHLIGHT@"},
@@ -1414,7 +1416,7 @@ func TestExecuteElasticsearchDataQuery(t *testing.T) {
 			require.Equal(t, sr.Sort["@timestamp"], map[string]string{"order": "asc", "unmapped_type": "boolean"})
 			require.Equal(t, sr.Sort["_doc"], map[string]string{"order": "asc"})
 
-			searchAfter := sr.CustomProps["search_after"].([]interface{})
+			searchAfter := sr.CustomProps["search_after"].([]any)
 			firstSearchAfter, err := searchAfter[0].(json.Number).Int64()
 			require.NoError(t, err)
 			require.Equal(t, firstSearchAfter, int64(1))
@@ -1468,7 +1470,7 @@ func TestSettingsCasting(t *testing.T) {
 		assert.Equal(t, movingAvgSettings["window"], 5.0)
 		assert.Equal(t, movingAvgSettings["predict"], 10.0)
 
-		modelSettings := movingAvgSettings["settings"].(map[string]interface{})
+		modelSettings := movingAvgSettings["settings"].(map[string]any)
 
 		assert.Equal(t, modelSettings["alpha"], 1.0)
 		assert.Equal(t, modelSettings["beta"], 2.0)
@@ -1512,7 +1514,7 @@ func TestSettingsCasting(t *testing.T) {
 		assert.Equal(t, 10., movingAvgSettings["window"])
 		assert.Equal(t, 5., movingAvgSettings["predict"])
 
-		modelSettings := movingAvgSettings["settings"].(map[string]interface{})
+		modelSettings := movingAvgSettings["settings"].(map[string]any)
 
 		assert.Equal(t, .5, modelSettings["alpha"])
 		assert.Equal(t, .7, modelSettings["beta"])
@@ -1816,6 +1818,6 @@ func executeElasticsearchDataQuery(c es.Client, body string, from, to time.Time)
 			},
 		},
 	}
-	query := newElasticsearchDataQuery(c, dataRequest.Queries)
+	query := newElasticsearchDataQuery(context.Background(), c, dataRequest.Queries, log.New("test.logger"))
 	return query.execute()
 }

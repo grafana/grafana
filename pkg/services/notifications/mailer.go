@@ -60,7 +60,7 @@ func (ns *NotificationService) buildEmailMessage(cmd *SendEmailCommand) (*Messag
 
 	data := cmd.Data
 	if data == nil {
-		data = make(map[string]interface{}, 10)
+		data = make(map[string]any, 10)
 	}
 
 	setDefaultTemplateData(ns.Cfg, data, nil)
@@ -82,7 +82,7 @@ func (ns *NotificationService) buildEmailMessage(cmd *SendEmailCommand) (*Messag
 
 	subject := cmd.Subject
 	if cmd.Subject == "" {
-		subjectData := data["Subject"].(map[string]interface{})
+		subjectData := data["Subject"].(map[string]any)
 		subjectText, hasSubject := subjectData["executed_template"].(string)
 		if hasSubject {
 			// first check to see if the template has already been executed in a template func

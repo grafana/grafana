@@ -28,6 +28,7 @@ title: CanvasPanelCfg kind
 | `ConnectionPath`        | string                           | **Yes**  |         | Possible values are: `straight`.                                      |
 | `Constraint`            | [object](#constraint)            | **Yes**  |         |                                                                       |
 | `HorizontalConstraint`  | string                           | **Yes**  |         | Possible values are: `left`, `right`, `leftright`, `center`, `scale`. |
+| `HttpRequestMethod`     | string                           | **Yes**  |         | Possible values are: `GET`, `POST`.                                   |
 | `LineConfig`            | [object](#lineconfig)            | **Yes**  |         |                                                                       |
 | `Options`               | [object](#options)               | **Yes**  |         |                                                                       |
 | `Placement`             | [object](#placement)             | **Yes**  |         |                                                                       |

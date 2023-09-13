@@ -6,8 +6,8 @@ describe('DashboardScene', () => {
   describe('Given a standard scene', () => {
     it('Should set inspectPanelKey when url has inspect key', () => {
       const scene = buildTestScene();
-      scene.urlSync?.updateFromUrl({ inspect: 'panel-2' });
-      expect(scene.state.inspectPanelKey).toBe('panel-2');
+      scene.urlSync?.updateFromUrl({ inspect: '2' });
+      expect(scene.state.inspectPanelKey).toBe('2');
     });
 
     it('Should handle inspect key that is not found', () => {
@@ -18,8 +18,8 @@ describe('DashboardScene', () => {
 
     it('Should set viewPanelKey when url has viewPanel', () => {
       const scene = buildTestScene();
-      scene.urlSync?.updateFromUrl({ viewPanel: 'panel-2' });
-      expect(scene.state.viewPanelKey).toBe('panel-2');
+      scene.urlSync?.updateFromUrl({ viewPanel: '2' });
+      expect(scene.state.viewPanelKey).toBe('2');
     });
   });
 
@@ -55,6 +55,7 @@ describe('DashboardScene', () => {
 function buildTestScene() {
   const scene = new DashboardScene({
     title: 'hello',
+    uid: 'dash-1',
     body: new SceneGridLayout({
       children: [
         new SceneGridItem({

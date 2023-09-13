@@ -1,10 +1,10 @@
 import { AppEvents } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
-import { SceneObjectUrlSyncHandler, SceneObjectUrlValues } from '@grafana/scenes';
+import { SceneObjectRef, SceneObjectUrlSyncHandler, SceneObjectUrlValues } from '@grafana/scenes';
 import appEvents from 'app/core/app_events';
 
 import { PanelInspectDrawer } from '../inspect/PanelInspectDrawer';
-import { findVizPanel } from '../utils/findVizPanel';
+import { findVizPanelByKey } from '../utils/utils';
 
 import { DashboardScene, DashboardSceneState } from './DashboardScene';
 
@@ -21,12 +21,12 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
   }
 
   updateFromUrl(values: SceneObjectUrlValues): void {
-    const { inspectPanelKey, viewPanelKey } = this._scene.state;
+    const { inspectPanelKey: inspectPanelId, viewPanelKey: viewPanelId } = this._scene.state;
     const update: Partial<DashboardSceneState> = {};
 
     // Handle inspect object state
     if (typeof values.inspect === 'string') {
-      const panel = findVizPanel(this._scene, values.inspect);
+      const panel = findVizPanelByKey(this._scene, values.inspect);
       if (!panel) {
         appEvents.emit(AppEvents.alertError, ['Panel not found']);
         locationService.partial({ inspect: null });
@@ -34,15 +34,15 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
       }
 
       update.inspectPanelKey = values.inspect;
-      update.drawer = new PanelInspectDrawer(panel);
-    } else if (inspectPanelKey) {
+      update.drawer = new PanelInspectDrawer({ panelRef: new SceneObjectRef(panel) });
+    } else if (inspectPanelId) {
       update.inspectPanelKey = undefined;
       update.drawer = undefined;
     }
 
     // Handle view panel state
     if (typeof values.viewPanel === 'string') {
-      const panel = findVizPanel(this._scene, values.viewPanel);
+      const panel = findVizPanelByKey(this._scene, values.viewPanel);
       if (!panel) {
         appEvents.emit(AppEvents.alertError, ['Panel not found']);
         locationService.partial({ viewPanel: null });
@@ -50,7 +50,7 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
       }
 
       update.viewPanelKey = values.viewPanel;
-    } else if (viewPanelKey) {
+    } else if (viewPanelId) {
       update.viewPanelKey = undefined;
     }
 

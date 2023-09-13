@@ -145,7 +145,7 @@ func TestPluginProxy(t *testing.T) {
 		req := getPluginProxiedRequest(
 			t,
 			&pluginsettings.DTO{
-				JSONData: map[string]interface{}{
+				JSONData: map[string]any{
 					"dynamicUrl": "https://dynamic.grafana.com",
 				},
 			},
@@ -212,7 +212,7 @@ func TestPluginProxy(t *testing.T) {
 		req := getPluginProxiedRequest(
 			t,
 			&pluginsettings.DTO{
-				JSONData:       map[string]interface{}{"dynamicUrl": "https://dynamic.grafana.com"},
+				JSONData:       map[string]any{"dynamicUrl": "https://dynamic.grafana.com"},
 				SecureJSONData: encryptedJsonData,
 			},
 			secretsService,

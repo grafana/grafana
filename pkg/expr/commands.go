@@ -123,7 +123,7 @@ func UnmarshalReduceCommand(rn *rawNode) (*ReduceCommand, error) {
 	settings, ok := rn.Query["settings"]
 	if ok {
 		switch s := settings.(type) {
-		case map[string]interface{}:
+		case map[string]any:
 			mode, ok := s["mode"]
 			if ok && mode != "" {
 				switch mode {
