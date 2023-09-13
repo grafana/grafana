@@ -40,6 +40,14 @@ func (cfg *Cfg) readPluginSettings(iniFile *ini.File) error {
 		cfg.PluginsAllowUnsigned = append(cfg.PluginsAllowUnsigned, plug)
 	}
 
+	skipPlugins := pluginsSection.Key("skip_plugins").MustString("")
+	for _, plug := range strings.Split(skipPlugins, ",") {
+		plug = strings.TrimSpace(plug)
+		if plug != "" {
+			cfg.SkipPlugins = append(cfg.SkipPlugins, plug)
+		}
+	}
+
 	cfg.PluginCatalogURL = pluginsSection.Key("plugin_catalog_url").MustString("https://grafana.com/grafana/plugins/")
 	cfg.PluginAdminEnabled = pluginsSection.Key("plugin_admin_enabled").MustBool(true)
 	cfg.PluginAdminExternalManageEnabled = pluginsSection.Key("plugin_admin_external_manage_enabled").MustBool(false)
@@ -49,6 +57,8 @@ func (cfg *Cfg) readPluginSettings(iniFile *ini.File) error {
 		plug = strings.TrimSpace(plug)
 		cfg.PluginCatalogHiddenPlugins = append(cfg.PluginCatalogHiddenPlugins, plug)
 	}
+	// Pull skipped plugins from the catalog
+	cfg.PluginCatalogHiddenPlugins = append(cfg.PluginCatalogHiddenPlugins, cfg.SkipPlugins...)
 
 	// Plugins CDN settings
 	cfg.PluginsCDNURLTemplate = strings.TrimRight(pluginsSection.Key("cdn_base_url").MustString(""), "/")
