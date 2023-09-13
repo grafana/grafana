@@ -1,7 +1,16 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
-import { LinkButton, FilterInput, InlineField, CellProps, DeleteButton, InteractiveTable, Icon } from '@grafana/ui';
+import {
+  LinkButton,
+  FilterInput,
+  InlineField,
+  CellProps,
+  DeleteButton,
+  InteractiveTable,
+  Icon,
+  Tooltip,
+} from '@grafana/ui';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { Page } from 'app/core/components/Page/Page';
 import { fetchRoleOptions } from 'app/core/components/RolePicker/api';
@@ -108,7 +117,9 @@ export const TeamList = ({
           );
           return canReadTeam ? (
             <a href={`org/teams/edit/${original.id}`} aria-label={`Edit team ${original.name}`}>
-              <Icon name={'pen'} />
+              <Tooltip content={'Edit team'}>
+                <Icon name={'pen'} />
+              </Tooltip>
             </a>
           ) : null;
         },

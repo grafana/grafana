@@ -113,6 +113,10 @@ const getStyles = (theme: GrafanaTheme2) => {
   return {
     filter: css`
       margin: 0 ${theme.spacing(1)};
+
+      ${theme.breakpoints.down('sm')} {
+        margin: 0;
+      }
     `,
     actionBar: css`
       margin-bottom: ${theme.spacing(2)};
@@ -134,6 +138,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       ${theme.breakpoints.down('sm')} {
         flex-wrap: wrap;
         gap: ${theme.spacing(2)};
+        width: 100%;
       }
     `,
   };
