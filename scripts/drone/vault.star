@@ -113,11 +113,6 @@ def secrets():
             "static_asset_editions",
         ),
         vault_secret(
-            "enterprise2-cdn-path",
-            "infra/data/ci/grafana-release-eng/enterprise2",
-            "cdn_path",
-        ),
-        vault_secret(
             rgm_gcp_key_base64,
             "infra/data/ci/grafana-release-eng/rgm",
             "gcp_service_account_prod_base64",
