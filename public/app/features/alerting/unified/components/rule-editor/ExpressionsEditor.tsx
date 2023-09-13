@@ -45,8 +45,8 @@ export const ExpressionsEditor = ({
         const data = panelData[query.refId];
 
         const isAlertCondition = condition === query.refId;
-        const error = isAlertCondition && data ? errorFromSeries(data.series) : undefined;
-        const warning = isAlertCondition && data ? warningFromSeries(data.series) : undefined;
+        const error = data ? errorFromSeries(data.series) : undefined;
+        const warning = data ? warningFromSeries(data.series) : undefined;
 
         return (
           <Expression
