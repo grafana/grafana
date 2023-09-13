@@ -30,10 +30,10 @@ export const VisualEditor = ({ query, db, queryRowFilter, onChange, onValidate, 
         <EditorRow>
           <SQLSelectRow fields={state.value || []} query={query} onQueryChange={onChange} db={db} />
         </EditorRow>
-        {queryRowFilter.filter && (
+        {queryRowFilter.filter && state.value && (
           <EditorRow>
             <EditorField label="Filter by column value" optional>
-              <SQLWhereRow fields={state.value || []} query={query} onQueryChange={onChange} db={db} />
+              <SQLWhereRow fields={state.value} query={query} onQueryChange={onChange} db={db} />
             </EditorField>
           </EditorRow>
         )}
