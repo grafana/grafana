@@ -99,5 +99,3 @@ const getGridStyles = (
     }),
   };
 };
-
-

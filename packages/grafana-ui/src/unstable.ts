@@ -12,5 +12,5 @@
 export * from './components/Flex/Flex';
 
 export { Stack } from './components/Stack/Stack';
-export {Grid} from './components/Layout/Grid/Grid';
-export {GridItem} from './components/Layout/Grid/GridItem';
+export { Grid } from './components/Layout/Grid/Grid';
+export { GridItem } from './components/Layout/Grid/GridItem';
