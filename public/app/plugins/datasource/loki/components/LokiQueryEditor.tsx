@@ -70,6 +70,11 @@ export const LokiQueryEditor = React.memo<LokiQueryEditorProps>((props) => {
           setParseModalOpen(true);
           return;
         }
+
+        if (!result.query.labels.length && !result.query.operations.length && query.expr.length > 0) {
+          setParseModalOpen(true);
+          return;
+        }
       }
       changeEditorMode(query, newEditorMode, onChange);
     },
