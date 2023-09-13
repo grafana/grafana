@@ -21,6 +21,8 @@ import {
   DropzoneFile,
   FileDropzoneDefaultChildren,
   LinkButton,
+  TextLink,
+  Label,
 } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { Page } from 'app/core/components/Page/Page';
@@ -41,6 +43,13 @@ type DashboardImportPageRouteSearchParams = {
 type OwnProps = Themeable2 & GrafanaRouteComponentProps<{}, DashboardImportPageRouteSearchParams>;
 
 const IMPORT_STARTED_EVENT_NAME = 'dashboard_import_loaded';
+const JSON_PLACEHOLDER = `{
+    "title": "Example - Repeating Dictionary variables",
+    "uid": "_0HnEoN4z",
+    "panels": [...]
+    ...
+}
+`;
 
 const mapStateToProps = (state: StoreState) => ({
   loadingState: state.importDashboard.state,
@@ -136,7 +145,16 @@ class UnthemedDashboardImport extends PureComponent<Props> {
           <Form onSubmit={this.getGcomDashboard} defaultValues={{ gcomDashboard: '' }}>
             {({ register, errors }) => (
               <Field
-                label="Import via grafana.com"
+                label={
+                  <Label className={styles.labelWithLink} htmlFor="url-input">
+                    <span>
+                      Find and import dashboards for common applications at{' '}
+                      <TextLink variant="bodySmall" href="https://grafana.com/grafana/dashboards/" external>
+                        grafana.com/dashboards
+                      </TextLink>
+                    </span>
+                  </Label>
+                }
                 invalid={!!errors.gcomDashboard}
                 error={errors.gcomDashboard && errors.gcomDashboard.message}
               >
@@ -159,7 +177,7 @@ class UnthemedDashboardImport extends PureComponent<Props> {
             {({ register, errors }) => (
               <>
                 <Field
-                  label="Import via panel json"
+                  label="Import via dashboard JSON model"
                   invalid={!!errors.dashboardJson}
                   error={errors.dashboardJson && errors.dashboardJson.message}
                 >
@@ -171,6 +189,7 @@ class UnthemedDashboardImport extends PureComponent<Props> {
                     data-testid={selectors.components.DashboardImportPage.textarea}
                     id="dashboard-json-textarea"
                     rows={10}
+                    placeholder={JSON_PLACEHOLDER}
                   />
                 </Field>
                 <HorizontalGroup>
@@ -225,6 +244,12 @@ const importStyles = stylesFactory((theme: GrafanaTheme2) => {
     option: css`
       margin-bottom: ${theme.spacing(4)};
       max-width: 600px;
+    `,
+    labelWithLink: css`
+      max-width: 100%;
+    `,
+    linkWithinLabel: css`
+      font-size: inherit;
     `,
   };
 });
