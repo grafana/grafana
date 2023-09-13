@@ -177,7 +177,20 @@ func TestConvertDataFramesToResults(t *testing.T) {
 		tracer:   tracing.InitializeTracerForTest(),
 		metrics:  newMetrics(nil),
 	}
-
+	var features featuremgmt.FeatureToggles = &featuremgmt.FeatureManager{}
+	t.Run("when it is not dataplane", func(t *testing.T) {
+		f := features
+		t.Cleanup(func() {
+			features = f
+		})
+		features = featuremgmt.WithFeatures(featuremgmt.FlagDisableSSEDataplane)
+		t.Run("should return NoData if no frames", func(t *testing.T) {
+			resultType, res, err := convertDataFramesToResults(context.Background(), []*data.Frame{}, datasources.DS_GRAPHITE, s, &logtest.Fake{})
+			require.NoError(t, err)
+			require.Equal(t, "no-data", resultType)
+			require.Equal(t, mathexp.NewNoData(), res.Values[0].Value())
+		})
+	})
 	t.Run("should add name label if no labels and specific data source", func(t *testing.T) {
 		supported := []string{datasources.DS_GRAPHITE, datasources.DS_TESTDATA}
 		t.Run("when only field name is specified", func(t *testing.T) {

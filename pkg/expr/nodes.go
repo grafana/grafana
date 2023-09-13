@@ -445,7 +445,11 @@ func convertDataFramesToResults(ctx context.Context, frames data.Frames, datasou
 	}
 
 	if len(filtered) == 0 {
-		return "no data", mathexp.Results{Values: mathexp.Values{mathexp.NoData{Frame: frames[0]}}}, nil
+		noData := mathexp.NewNoData()
+		if len(frames) > 0 {
+			noData.Frame = frames[0]
+		}
+		return "no data", mathexp.Results{Values: mathexp.Values{noData}}, nil
 	}
 
 	maybeFixerFn := checkIfSeriesNeedToBeFixed(filtered, datasourceType)
