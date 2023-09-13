@@ -39,7 +39,6 @@ declare -A cypressConfig=(
   [viewportWidth]=1920
   [viewportHeight]=1080
   [trashAssetsBeforeRuns]=false
-  [videoUploadOnPasses]=false
   [reporter]=./e2e/log-reporter.js
   [baseUrl]=${BASE_URL:-"http://$HOST:$PORT"}
 )
