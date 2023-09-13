@@ -3,7 +3,7 @@ const PAGE_UNDER_TEST = 'WVpf2jp7z/repeating-a-panel-horizontally';
 
 describe('Repeating a panel horizontally', () => {
   beforeEach(() => {
-    e2e.flows.login('admin', 'admin');
+    e2e.flows.login(e2e.env('USERNAME'), e2e.env('PASSWORD'));
   });
 
   it('should be able to repeat a panel horizontally', () => {
