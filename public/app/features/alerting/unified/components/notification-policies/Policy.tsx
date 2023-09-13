@@ -126,7 +126,6 @@ const Policy: FC<PolicyComponentProps> = ({
     ? sumBy(matchingAlertGroups, (group) => group.alerts.length)
     : undefined;
 
-  // const showExportOption = shouldShowExportOption(alertManagerSourceName, isDefaultPolicy, canReadProvisioning);
   const [showExportDrawer, toggleShowExportDrawer] = useToggle(false);
   const showExportAction = exportPoliciesAllowed && exportPoliciesSupported && isDefaultPolicy;
   const showEditAction = updatePoliciesSupported && updatePoliciesAllowed;

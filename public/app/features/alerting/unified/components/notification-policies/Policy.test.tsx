@@ -10,23 +10,32 @@ import {
   AlertmanagerGroup,
   MatcherOperator,
   ObjectMatcher,
-  RouteWithID,
+  RouteWithID
 } from 'app/plugins/datasource/alertmanager/types';
 import { ReceiversState } from 'app/types/alerting';
 
+import { useAlertmanagerAbilities } from '../../hooks/useAbilities';
 import { mockAlertGroup, mockAlertmanagerAlert, mockReceiversState } from '../../mocks';
 import { AlertmanagerProvider } from '../../state/AlertmanagerContext';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 
 import { Policy } from './Policy';
-import { shouldShowExportOption } from './shouldShowExportOption';
 
-jest.mock('./shouldShowExportOption');
-jest.mocked(shouldShowExportOption).mockReturnValue(true);
+jest.mock('../../hooks/useAbilities', () => ({
+  ...jest.requireActual('../../hooks/useAbilities'),
+  useAlertmanagerAbilities: jest.fn()
+}));
+
+const useAlertmanagerAbilitiesMock = jest.mocked(useAlertmanagerAbilities);
 
 describe('Policy', () => {
   beforeAll(() => {
     jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
+    useAlertmanagerAbilitiesMock.mockReturnValue([
+      [true, true],
+      [true, true],
+      [true, true]
+    ]);
   });
 
   it('should render a policy tree', async () => {
@@ -34,7 +43,7 @@ describe('Policy', () => {
     const onAddPolicy = jest.fn();
     const onDeletePolicy = jest.fn();
     const onShowAlertInstances = jest.fn(
-      (alertGroups: AlertmanagerGroup[], matchers?: ObjectMatcher[] | undefined) => {}
+      (alertGroups: AlertmanagerGroup[], matchers?: ObjectMatcher[] | undefined) => { }
     );
 
     const routeTree = mockRoutes;
@@ -139,12 +148,10 @@ describe('Policy', () => {
     const onAddPolicy = jest.fn();
     const onDeletePolicy = jest.fn();
     const onShowAlertInstances = jest.fn(
-      (alertGroups: AlertmanagerGroup[], matchers?: ObjectMatcher[] | undefined) => {}
+      (alertGroups: AlertmanagerGroup[], matchers?: ObjectMatcher[] | undefined) => { }
     );
 
     const routeTree = mockRoutes;
-    jest.mocked(shouldShowExportOption).mockReturnValue(true);
-
     const user = userEvent.setup();
 
     renderPolicy(
@@ -166,16 +173,58 @@ describe('Policy', () => {
     expect(screen.getByRole('menuitem', { name: 'Export' })).toBeInTheDocument();
   });
 
-  it('should not show export option when shouldShowExportOption returns false', async () => {
+  it('should not show export option when is not supported', async () => {
     const onEditPolicy = jest.fn();
     const onAddPolicy = jest.fn();
     const onDeletePolicy = jest.fn();
     const onShowAlertInstances = jest.fn(
-      (alertGroups: AlertmanagerGroup[], matchers?: ObjectMatcher[] | undefined) => {}
+      (alertGroups: AlertmanagerGroup[], matchers?: ObjectMatcher[] | undefined) => { }
     );
 
     const routeTree = mockRoutes;
-    jest.mocked(shouldShowExportOption).mockReturnValue(false);
+
+    useAlertmanagerAbilitiesMock.mockReturnValue([
+      [true, true],
+      [true, true],
+      [false, true]
+    ]);
+
+    const user = userEvent.setup();
+
+    renderPolicy(
+      <Policy
+        routeTree={routeTree}
+        currentRoute={routeTree}
+        alertManagerSourceName={GRAFANA_RULES_SOURCE_NAME}
+        onEditPolicy={onEditPolicy}
+        onAddPolicy={onAddPolicy}
+        onDeletePolicy={onDeletePolicy}
+        onShowAlertInstances={onShowAlertInstances}
+      />
+    );
+    // should have default policy
+    const defaultPolicy = screen.getByTestId('am-root-route-container');
+    // click "more actions"
+    expect(within(defaultPolicy).getByTestId('more-actions')).toBeInTheDocument();
+    await user.click(within(defaultPolicy).getByTestId('more-actions'));
+    expect(screen.queryByRole('menuitem', { name: 'Export' })).not.toBeInTheDocument();
+  });
+
+  it('should not show export option when is not allowed', async () => {
+    const onEditPolicy = jest.fn();
+    const onAddPolicy = jest.fn();
+    const onDeletePolicy = jest.fn();
+    const onShowAlertInstances = jest.fn(
+      (alertGroups: AlertmanagerGroup[], matchers?: ObjectMatcher[] | undefined) => { }
+    );
+
+    const routeTree = mockRoutes;
+
+    useAlertmanagerAbilitiesMock.mockReturnValue([
+      [true, true],
+      [true, true],
+      [true, false]
+    ]);
 
     const user = userEvent.setup();
 
