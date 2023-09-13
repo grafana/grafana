@@ -20,11 +20,11 @@ import {
   Ip,
   IpLabelFilter,
   Json,
-  JsonExpression,
   JsonExpressionParser,
   KeepLabel,
   KeepLabels,
   KeepLabelsExpr,
+  LabelExtractionExpressionList,
   LabelFilter,
   LabelFormatMatcher,
   LabelParser,
@@ -299,7 +299,7 @@ function getJsonExpressionParser(expr: string, node: SyntaxNode): QueryBuilderOp
   const parserNode = node.getChild(Json);
   const parser = getString(expr, parserNode);
 
-  const params = [...getAllByType(expr, node, JsonExpression)];
+  const params = [...getAllByType(expr, node, LabelExtractionExpressionList)];
   return {
     id: parser,
     params,
