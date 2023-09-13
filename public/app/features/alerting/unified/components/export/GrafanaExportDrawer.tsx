@@ -21,11 +21,10 @@ export function GrafanaExportDrawer({
   onClose,
   formatProviders,
 }: GrafanaExportDrawerProps) {
-  const grafanaRulesTabs =
-    Object.values(formatProviders).map((provider) => ({
-      label: provider.name,
-      value: provider.exportFormat,
-    }))
+  const grafanaRulesTabs = Object.values(formatProviders).map((provider) => ({
+    label: provider.name,
+    value: provider.exportFormat,
+  }));
 
   return (
     <Drawer

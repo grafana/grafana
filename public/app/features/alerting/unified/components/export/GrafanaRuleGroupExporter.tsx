@@ -18,7 +18,12 @@ export function GrafanaRuleGroupExporter({ folderUid, groupName, onClose }: Graf
   const [activeTab, setActiveTab] = useState<ExportFormats>('yaml');
 
   return (
-    <GrafanaExportDrawer activeTab={activeTab} onTabChange={setActiveTab} onClose={onClose} formatProviders={Object.values(allGrafanaExportProviders)}>
+    <GrafanaExportDrawer
+      activeTab={activeTab}
+      onTabChange={setActiveTab}
+      onClose={onClose}
+      formatProviders={Object.values(allGrafanaExportProviders)}
+    >
       <GrafanaRuleGroupExportPreview
         folderUid={folderUid}
         groupName={groupName}

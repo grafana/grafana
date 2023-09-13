@@ -41,7 +41,12 @@ export const GrafanaPoliciesExporter = ({ onClose }: GrafanaPoliciesExporterProp
   const [activeTab, setActiveTab] = useState<ExportFormats>('yaml');
 
   return (
-    <GrafanaExportDrawer activeTab={activeTab} onTabChange={setActiveTab} onClose={onClose} formatProviders={jsonAndYamlGrafanaExportProviders}>
+    <GrafanaExportDrawer
+      activeTab={activeTab}
+      onTabChange={setActiveTab}
+      onClose={onClose}
+      formatProviders={jsonAndYamlGrafanaExportProviders}
+    >
       <GrafanaPoliciesExporterPreview exportFormat={activeTab} onClose={onClose} />
     </GrafanaExportDrawer>
   );

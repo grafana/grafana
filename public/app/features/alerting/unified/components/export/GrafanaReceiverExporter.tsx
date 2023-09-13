@@ -53,7 +53,12 @@ export const GrafanaReceiverExporter = ({ onClose, receiverName, decrypt }: Graf
   const [activeTab, setActiveTab] = useState<ExportFormats>('yaml');
 
   return (
-    <GrafanaExportDrawer activeTab={activeTab} onTabChange={setActiveTab} onClose={onClose} formatProviders={jsonAndYamlGrafanaExportProviders}>
+    <GrafanaExportDrawer
+      activeTab={activeTab}
+      onTabChange={setActiveTab}
+      onClose={onClose}
+      formatProviders={jsonAndYamlGrafanaExportProviders}
+    >
       <GrafanaReceiverExportPreview
         receiverName={receiverName}
         decrypt={decrypt}
