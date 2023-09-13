@@ -214,7 +214,6 @@ func TestConvertDataFramesToResults(t *testing.T) {
 		})
 		features = featuremgmt.WithFeatures(featuremgmt.FlagDisableSSEDataplane)
 		t.Run("should return NoData if no frames", func(t *testing.T) {
-
 			result, err := execute(nil, "test")
 			require.NoError(t, err)
 			require.Equal(t, mathexp.NewNoData(), result.Values[0].Value())
