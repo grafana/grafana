@@ -61,7 +61,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
           queries: queryRunner.state.queries,
           dsRef: queryRunner.state.datasource,
           timeRange: timeRange.state.value,
-          scopedVars: {},
+          scopedVars: { __sceneObject: { value: panel } },
         }),
       });
     }

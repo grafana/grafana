@@ -162,6 +162,11 @@ export class TestDataDataSource extends DataSourceWithBackend<TestData> {
     }
   }
 
+  applyTemplateVariables(query: TestData, scopedVars: ScopedVars): TestData {
+    this.resolveTemplateVariables(query, scopedVars);
+    return query;
+  }
+
   annotationDataTopicTest(target: TestData, req: DataQueryRequest<TestData>): Observable<DataQueryResponse> {
     const events = this.buildFakeAnnotationEvents(req.range, target.lines ?? 10);
     const dataFrame = new ArrayDataFrame(events);
