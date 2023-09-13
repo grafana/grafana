@@ -2,6 +2,7 @@ package angularinspector
 
 import (
 	"context"
+	"regexp"
 	"strconv"
 	"testing"
 
@@ -143,5 +144,18 @@ func TestDefaultStaticDetectorsInspector(t *testing.T) {
 		p := &plugins.Plugin{FS: plugins.NewInMemoryFS(map[string][]byte{})}
 		_, err := inspector.Inspect(context.Background(), p)
 		require.NoError(t, err)
+	})
+}
+
+func TestDetectorStringer(t *testing.T) {
+	t.Run("contains bytes detector", func(t *testing.T) {
+		d := angulardetector.ContainsBytesDetector{Pattern: []byte("pattern")}
+		require.Equal(t, "pattern", d.String())
+	})
+
+	t.Run("regex detector", func(t *testing.T) {
+		const r = `["']QueryCtrl["']`
+		d := angulardetector.RegexDetector{Regex: regexp.MustCompile(r)}
+		require.Equal(t, r, d.String())
 	})
 }
