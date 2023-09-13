@@ -75,7 +75,7 @@ func (s *AccessControlStore) SearchUsersPermissions(ctx context.Context, orgID i
 					INNER JOIN team_role AS tr ON tr.role_id = p.role_id
 					INNER JOIN team_member AS tm ON tm.team_id = tr.team_id
 			UNION ALL
-				SELECT ou.user_id, br.org_id, p.action, p.scope
+				SELECT ou.user_id, ou.org_id, p.action, p.scope
 					FROM permission AS p
 					INNER JOIN builtin_role AS br ON br.role_id = p.role_id
 					INNER JOIN org_user AS ou ON ou.role = br.role
