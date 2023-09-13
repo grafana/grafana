@@ -1,12 +1,11 @@
 import { e2e } from '../utils';
 
-e2e.scenario({
-  describeName: 'Templating',
-  itName: 'Tests dashboard links and variables in links',
-  addScenarioDataSource: false,
-  addScenarioDashBoard: false,
-  skipScenario: false,
-  scenario: () => {
+describe('Templating', () => {
+  beforeEach(() => {
+    e2e.flows.login(e2e.env('USERNAME'), e2e.env('PASSWORD'));
+  });
+
+  it('Tests dashboard links and variables in links', () => {
     cy.intercept({
       method: 'GET',
       url: '/api/search?tag=templating&limit=100',
@@ -51,5 +50,5 @@ e2e.scenario({
 
     // verify all links, should have p2 value
     verifyLinks('p2');
-  },
+  });
 });
