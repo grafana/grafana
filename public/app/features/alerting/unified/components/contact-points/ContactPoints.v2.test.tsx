@@ -5,10 +5,12 @@ import React, { PropsWithChildren } from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
 
 import { selectors } from '@grafana/e2e-selectors';
+import { AccessControlAction } from 'app/types';
 
-import { disableRBAC, mockDataSource } from '../../mocks';
+import { grantUserPermissions, mockDataSource } from '../../mocks';
 import { AlertmanagerProvider } from '../../state/AlertmanagerContext';
 import { setupDataSources } from '../../testSetup/datasources';
+import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 
 import ContactPoints, { ContactPoint } from './ContactPoints.v2';
 import setupGrafanaManagedServer from './__mocks__/grafanaManagedServer';
@@ -29,12 +31,15 @@ import setupMimirFlavoredServer, { MIMIR_DATASOURCE_UID } from './__mocks__/mimi
  *    if those have any logic or data structure transformations in them.
  */
 describe('ContactPoints', () => {
-  beforeAll(() => {
-    disableRBAC();
-  });
-
   describe('Grafana managed alertmanager', () => {
     setupGrafanaManagedServer();
+
+    beforeAll(() => {
+      grantUserPermissions([
+        AccessControlAction.AlertingNotificationsRead,
+        AccessControlAction.AlertingNotificationsWrite,
+      ]);
+    });
 
     it('should show / hide loading states', async () => {
       render(
@@ -57,9 +62,20 @@ describe('ContactPoints', () => {
 
   describe('Mimir-flavored alertmanager', () => {
     setupMimirFlavoredServer();
-    setupDataSources(
-      mockDataSource({ type: 'prometheus', name: 'mimir', uid: MIMIR_DATASOURCE_UID }, { alerting: true })
-    );
+
+    beforeAll(() => {
+      grantUserPermissions([
+        AccessControlAction.AlertingNotificationsExternalRead,
+        AccessControlAction.AlertingNotificationsExternalWrite,
+      ]);
+      setupDataSources(
+        mockDataSource({
+          type: DataSourceType.Alertmanager,
+          name: MIMIR_DATASOURCE_UID,
+          uid: MIMIR_DATASOURCE_UID,
+        })
+      );
+    });
 
     it('should show / hide loading states', async () => {
       render(

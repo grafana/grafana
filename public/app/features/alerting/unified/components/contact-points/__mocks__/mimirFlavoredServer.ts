@@ -15,6 +15,9 @@ export default () => {
   server.use(
     rest.get(`/api/alertmanager/${MIMIR_DATASOURCE_UID}/config/api/v1/alerts`, (_req, res, ctx) =>
       res(ctx.json<AlertManagerCortexConfig>(mimirAlertmanagerMock))
+    ),
+    rest.get(`/api/datasources/proxy/uid/${MIMIR_DATASOURCE_UID}/api/v1/status/buildinfo`, (_req, res, ctx) =>
+      res(ctx.status(404))
     )
   );
 };
