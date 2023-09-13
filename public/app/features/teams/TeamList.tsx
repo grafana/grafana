@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
-import { LinkButton, FilterInput, InlineField, CellProps, DeleteButton, InteractiveTable } from '@grafana/ui';
+import { LinkButton, FilterInput, InlineField, CellProps, DeleteButton, InteractiveTable, Icon } from '@grafana/ui';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { Page } from 'app/core/components/Page/Page';
 import { fetchRoleOptions } from 'app/core/components/RolePicker/api';
@@ -92,6 +92,27 @@ export const TeamList = ({
             },
           ]
         : []),
+      {
+        id: 'edit',
+        header: '',
+        cell: ({ row: { original } }: Cell) => {
+          const isTeamAdmin = isPermissionTeamAdmin({
+            permission: original.permission,
+            editorsCanAdmin,
+            signedInUser,
+          });
+          const canReadTeam = contextSrv.hasAccessInMetadata(
+            AccessControlAction.ActionTeamsRead,
+            original,
+            isTeamAdmin
+          );
+          return canReadTeam ? (
+            <a href={`org/teams/edit/${original.id}`} aria-label={`Edit team ${original.name}`}>
+              <Icon name={'pen'} />
+            </a>
+          ) : null;
+        },
+      },
       {
         id: 'delete',
         header: '',
