@@ -17,36 +17,16 @@ export const OrgUnits = ({ units, icon }: OrgUnitProps) => {
   return units.length > 1 ? (
     <Tooltip
       placement={'top'}
-      content={
-        <div className={styles.unitTooltip}>
-          {units?.map((unit) => (
-            <a
-              href={unit.url}
-              className={styles.link}
-              title={unit.name}
-              key={unit.name}
-              aria-label={`Edit ${unit.name}`}
-            >
-              {unit.name}
-            </a>
-          ))}
-        </div>
-      }
+      content={<div className={styles.unitTooltip}>{units?.map((unit) => <>{unit.name}</>)}</div>}
     >
       <div className={styles.unitItem}>
         <Icon name={icon} /> <span>{units.length}</span>
       </div>
     </Tooltip>
   ) : (
-    <a
-      href={units[0].url}
-      className={styles.unitItem}
-      title={units[0].name}
-      key={units[0].name}
-      aria-label={`Edit ${units[0].name}`}
-    >
+    <>
       <Icon name={icon} /> {units[0].name}
-    </a>
+    </>
   );
 };
 

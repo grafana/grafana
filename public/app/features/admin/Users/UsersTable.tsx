@@ -7,11 +7,11 @@ import { InteractiveTable, CellProps, Tooltip, Icon, useStyles2, Tag } from '@gr
 import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
 import { UserDTO } from 'app/types';
 
+import { Avatar } from './Avatar';
 import { OrgUnits } from './OrgUnits';
-import { UserCell, CellWrapper } from './UserCell';
 import { createSortFn } from './sort';
 
-type Cell<T extends keyof UserDTO> = CellProps<UserDTO, UserDTO[T]>;
+type Cell<T extends keyof UserDTO = keyof UserDTO> = CellProps<UserDTO, UserDTO[T]>;
 
 interface UsersTableProps {
   users: UserDTO[];
@@ -20,52 +20,36 @@ interface UsersTableProps {
 }
 
 export const UsersTable = ({ users, showPaging, perPage }: UsersTableProps) => {
-  const styles = useStyles2(getStyles);
   const showLicensedRole = useMemo(() => users.some((user) => user.licensedRole), [users]);
   const columns = useMemo(
     () => [
       {
         id: 'avatarUrl',
         header: '',
-        cell: ({ cell: { value } }: Cell<'avatarUrl'>) => (
-          <img className={styles.image} src={value} alt="User avatar" />
-        ),
+        cell: ({ cell: { value } }: Cell<'avatarUrl'>) => <Avatar src={value} alt={'User avatar'} />,
       },
       {
         id: 'login',
         header: 'Login',
-        cell: UserCell,
+        cell: ({ cell: { value } }: Cell<'login'>) => value,
         sortType: createSortFn<UserDTO>('login'),
       },
       {
         id: 'email',
         header: 'Email',
-        cell: UserCell,
+        cell: ({ cell: { value } }: Cell<'email'>) => value,
         sortType: createSortFn<UserDTO>('email'),
       },
       {
         id: 'name',
         header: 'Name',
-        cell: UserCell,
+        cell: ({ cell: { value } }: Cell<'name'>) => value,
         sortType: createSortFn<UserDTO>('name'),
       },
       {
         id: 'orgs',
         header: 'Belongs to',
-        cell: ({ cell: { value, row } }: Cell<'orgs'>) => {
-          return (
-            <div className={styles.row}>
-              <OrgUnits units={value} icon={'building'} />
-              {row.original.isAdmin && (
-                <CellWrapper original={row.original}>
-                  <Tooltip placement="top" content="Grafana Admin">
-                    <Icon name="shield" />
-                  </Tooltip>
-                </CellWrapper>
-              )}
-            </div>
-          );
-        },
+        cell: OrgUnitsCell,
         sortType: (a: Row<UserDTO>, b: Row<UserDTO>) => (a.original.orgs?.length || 0) - (b.original.orgs?.length || 0),
       },
       ...(showLicensedRole
@@ -73,20 +57,7 @@ export const UsersTable = ({ users, showPaging, perPage }: UsersTableProps) => {
             {
               id: 'licensedRole',
               header: 'Licensed role',
-              cell: ({ cell: { value, row } }: Cell<'licensedRole'>) => (
-                <CellWrapper original={row.original}>
-                  {value === 'None' ? (
-                    <span className={styles.disabled}>
-                      Not assigned{' '}
-                      <Tooltip placement="top" content="A licensed role will be assigned when this user signs in">
-                        <Icon name="question-circle" />
-                      </Tooltip>
-                    </span>
-                  ) : (
-                    value
-                  )}
-                </CellWrapper>
-              ),
+              cell: LicensedRoleCell,
               sortType: createSortFn<UserDTO>('licensedRole'),
             },
           ]
@@ -98,17 +69,7 @@ export const UsersTable = ({ users, showPaging, perPage }: UsersTableProps) => {
           content: 'Time since user was seen using Grafana',
           iconName: 'question-circle',
         },
-        cell: ({ cell: { value, row } }: Cell<'lastSeenAtAge'>) => {
-          return (
-            <>
-              {value && (
-                <CellWrapper original={row.original}>
-                  {value === '10 years' ? <span className={styles.disabled}>Never</span> : value}
-                </CellWrapper>
-              )}
-            </>
-          );
-        },
+        cell: LastSeenAtCell,
         sortType: createSortFn<UserDTO>('lastSeenAt'),
       },
       {
@@ -124,8 +85,21 @@ export const UsersTable = ({ users, showPaging, perPage }: UsersTableProps) => {
         cell: ({ cell: { value } }: Cell<'isDisabled'>) => <>{value && <Tag colorIndex={9} name={'Disabled'} />}</>,
         sortType: createSortFn<UserDTO>('isDisabled'),
       },
+      {
+        id: 'edit',
+        header: '',
+        cell: ({ row: { original } }: Cell) => {
+          return (
+            <a href={`admin/users/edit/${original.id}`} aria-label={`Edit team ${original.name}`}>
+              <Tooltip content={'Edit user'}>
+                <Icon name={'pen'} />
+              </Tooltip>
+            </a>
+          );
+        },
+      },
     ],
-    [showLicensedRole, styles]
+    [showLicensedRole]
   );
   return (
     <InteractiveTable
@@ -135,6 +109,45 @@ export const UsersTable = ({ users, showPaging, perPage }: UsersTableProps) => {
       pageSize={showPaging ? perPage : 0}
     />
   );
+};
+
+const OrgUnitsCell = ({ cell: { value, row } }: Cell<'orgs'>) => {
+  const styles = useStyles2(getStyles);
+  return (
+    <div className={styles.row}>
+      <OrgUnits units={value} icon={'building'} />
+      {row.original.isAdmin && (
+        <Tooltip placement="top" content="Grafana Admin">
+          <Icon name="shield" />
+        </Tooltip>
+      )}
+    </div>
+  );
+};
+
+const LicensedRoleCell = ({ cell: { value } }: Cell<'licensedRole'>) => {
+  const styles = useStyles2(getStyles);
+
+  return (
+    <>
+      {value === 'None' ? (
+        <span className={styles.disabled}>
+          Not assigned{' '}
+          <Tooltip placement="top" content="A licensed role will be assigned when this user signs in">
+            <Icon name="question-circle" />
+          </Tooltip>
+        </span>
+      ) : (
+        value
+      )}
+    </>
+  );
+};
+
+const LastSeenAtCell = ({ cell: { value } }: Cell<'lastSeenAtAge'>) => {
+  const styles = useStyles2(getStyles);
+
+  return <>{value && <>{value === '10 years' ? <span className={styles.disabled}>Never</span> : value}</>}</>;
 };
 
 const getStyles = (theme: GrafanaTheme2) => {

@@ -14,7 +14,7 @@ import { OrgRolePicker } from '../OrgRolePicker';
 
 import { createSortFn } from './sort';
 
-type Cell<T extends keyof OrgUser> = CellProps<OrgUser, OrgUser[T]>;
+type Cell<T extends keyof OrgUser = keyof OrgUser> = CellProps<OrgUser, OrgUser[T]>;
 
 const disabledRoleMessage = `This user's role is not editable because it is synchronized from your auth provider.
   Refer to the Grafana authentication docs for details.`;
@@ -118,7 +118,7 @@ export const OrgUsersTable = ({ users, orgId, onRoleChange, onRemoveUser }: Prop
     {
       id: 'info',
       header: '',
-      cell: ({ row: { original } }: Cell<keyof OrgUser>) => {
+      cell: ({ row: { original } }: Cell) => {
         const basicRoleDisabled = getBasicRoleDisabled(original);
         return (
           basicRoleDisabled && (
@@ -147,7 +147,7 @@ export const OrgUsersTable = ({ users, orgId, onRoleChange, onRemoveUser }: Prop
     {
       id: 'delete',
       header: '',
-      cell: ({ row: { original } }: Cell<keyof OrgUser>) => {
+      cell: ({ row: { original } }: Cell) => {
         return (
           contextSrv.hasPermissionInMetadata(AccessControlAction.OrgUsersRemove, original) && (
             <Button
