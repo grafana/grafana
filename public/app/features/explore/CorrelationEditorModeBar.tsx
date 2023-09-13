@@ -6,9 +6,10 @@ import { useBeforeUnload } from 'react-use';
 import { GrafanaTheme2, colorManipulator } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import { Button, HorizontalGroup, Icon, Tooltip, useStyles2 } from '@grafana/ui';
-import { ExploreItemState, useDispatch, useSelector } from 'app/types';
+import { CORRELATION_EDITOR_POST_CONFIRM_ACTION, ExploreItemState, useDispatch, useSelector } from 'app/types';
 
 import { CorrelationUnsavedChangesModal } from './CorrelationUnsavedChangesModal';
+import { changeDatasource } from './state/datasource';
 import { removeCorrelationHelperData } from './state/explorePane';
 import { changeCorrelationEditorDetails, splitClose } from './state/main';
 import { runQueries, saveCurrentCorrelation } from './state/query';
@@ -34,7 +35,6 @@ export const CorrelationEditorModeBar = ({ panes }: { panes: Array<[string, Expl
           editorMode: false,
           dirty: false,
           isExiting: false,
-          closePaneExploreId: undefined,
         })
       );
     }
@@ -52,7 +52,6 @@ export const CorrelationEditorModeBar = ({ panes }: { panes: Array<[string, Expl
           label: undefined,
           description: undefined,
           canSave: false,
-          closePaneExploreId: undefined,
         })
       );
       panes.forEach((pane) => {
@@ -63,7 +62,7 @@ export const CorrelationEditorModeBar = ({ panes }: { panes: Array<[string, Expl
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const closePane = (exploreId: string) => {
+  const closePaneAndReset = (exploreId: string) => {
     setShowSavePrompt(false);
     dispatch(splitClose(exploreId));
     reportInteraction('grafana_explore_split_view_closed');
@@ -75,7 +74,28 @@ export const CorrelationEditorModeBar = ({ panes }: { panes: Array<[string, Expl
         label: undefined,
         description: undefined,
         canSave: false,
-        closePaneExploreId: undefined,
+      })
+    );
+
+    panes.forEach((pane) => {
+      if (pane[0] !== exploreId) {
+        dispatch(removeCorrelationHelperData(pane[0]));
+        dispatch(runQueries({ exploreId: pane[0] }));
+      }
+    });
+  };
+
+  const changeDatasourceAndReset = (exploreId: string, datasourceUid: string) => {
+    setShowSavePrompt(false);
+    dispatch(changeDatasource(exploreId, datasourceUid, { importQueries: true }));
+    dispatch(
+      changeCorrelationEditorDetails({
+        editorMode: true,
+        isExiting: false,
+        dirty: false,
+        label: undefined,
+        description: undefined,
+        canSave: false,
       })
     );
   };
@@ -100,8 +120,16 @@ export const CorrelationEditorModeBar = ({ panes }: { panes: Array<[string, Expl
       {showSavePrompt && (
         <CorrelationUnsavedChangesModal
           onDiscard={() => {
-            if (correlationDetails?.closePaneExploreId !== undefined) {
-              closePane(correlationDetails?.closePaneExploreId);
+            if (correlationDetails?.postConfirmAction !== undefined) {
+              const { exploreId, action, changeDatasourceUid } = correlationDetails?.postConfirmAction;
+              if (action === CORRELATION_EDITOR_POST_CONFIRM_ACTION.CLOSE_PANE) {
+                closePaneAndReset(exploreId);
+              } else if (
+                action === CORRELATION_EDITOR_POST_CONFIRM_ACTION.CHANGE_DATASOURCE &&
+                changeDatasourceUid !== undefined
+              ) {
+                changeDatasourceAndReset(exploreId, changeDatasourceUid);
+              }
             } else {
               // exit correlations mode
               // if we are discarding the in progress correlation, reset everything
@@ -111,20 +139,27 @@ export const CorrelationEditorModeBar = ({ panes }: { panes: Array<[string, Expl
                   editorMode: false,
                   dirty: false,
                   isExiting: false,
-                  closePaneExploreId: undefined,
                 })
               );
             }
           }}
           onCancel={() => {
             // if we are cancelling the exit, set the editor mode back to true and hide the prompt
-            dispatch(changeCorrelationEditorDetails({ isExiting: false, closePaneExploreId: undefined }));
+            dispatch(changeCorrelationEditorDetails({ isExiting: false }));
             setShowSavePrompt(false);
           }}
           onSave={() => {
             dispatch(saveCurrentCorrelation(correlationDetails?.label, correlationDetails?.description));
-            if (correlationDetails?.closePaneExploreId !== undefined) {
-              closePane(correlationDetails?.closePaneExploreId);
+            if (correlationDetails?.postConfirmAction !== undefined) {
+              const { exploreId, action, changeDatasourceUid } = correlationDetails?.postConfirmAction;
+              if (action === CORRELATION_EDITOR_POST_CONFIRM_ACTION.CLOSE_PANE) {
+                closePaneAndReset(exploreId);
+              } else if (
+                action === CORRELATION_EDITOR_POST_CONFIRM_ACTION.CHANGE_DATASOURCE &&
+                changeDatasourceUid !== undefined
+              ) {
+                changeDatasourceAndReset(exploreId, changeDatasourceUid);
+              }
             } else {
               dispatch(changeCorrelationEditorDetails({ editorMode: false, dirty: false, isExiting: false }));
             }

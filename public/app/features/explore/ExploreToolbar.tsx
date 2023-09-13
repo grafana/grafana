@@ -9,6 +9,7 @@ import { defaultIntervals, PageToolbar, RefreshPicker, SetInterval, ToolbarButto
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { createAndCopyShortLink } from 'app/core/utils/shortLinks';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
+import { CORRELATION_EDITOR_POST_CONFIRM_ACTION } from 'app/types/explore';
 import { StoreState, useDispatch, useSelector } from 'app/types/store';
 
 import { contextSrv } from '../../core/core';
@@ -20,7 +21,6 @@ import { ExploreTimeControls } from './ExploreTimeControls';
 import { LiveTailButton } from './LiveTailButton';
 import { ToolbarExtensionPoint } from './extensions/ToolbarExtensionPoint';
 import { changeDatasource } from './state/datasource';
-import { removeCorrelationHelperData } from './state/explorePane';
 import {
   splitClose,
   splitOpen,
@@ -29,7 +29,7 @@ import {
   changeCorrelationEditorDetails,
 } from './state/main';
 import { cancelQueries, runQueries, selectIsWaitingForData } from './state/query';
-import { isLeftPaneSelector, isSplit, selectCorrelationDetails, selectPanesEntries } from './state/selectors';
+import { isLeftPaneSelector, isSplit, selectCorrelationDetails } from './state/selectors';
 import { syncTimes, changeRefreshInterval } from './state/time';
 import { LiveTailControls } from './useLiveTailControls';
 
@@ -65,7 +65,6 @@ export function ExploreToolbar({ exploreId, topOfViewRef, onChangeTime }: Props)
     (state) => state.explore.panes[exploreId]!.containerWidth < (splitted ? 700 : 800)
   );
 
-  const panes = useSelector(selectPanesEntries);
   const correlationDetails = useSelector(selectCorrelationDetails);
   const isCorrelationsEditorMode = correlationDetails?.editorMode || false;
   const isLeftPane = useSelector(isLeftPaneSelector(exploreId));
@@ -81,21 +80,20 @@ export function ExploreToolbar({ exploreId, topOfViewRef, onChangeTime }: Props)
   };
 
   const onChangeDatasource = async (dsSettings: DataSourceInstanceSettings) => {
-    dispatch(changeDatasource(exploreId, dsSettings.uid, { importQueries: true }));
-
-    if (isCorrelationsEditorMode && isLeftPane) {
-      panes.forEach((pane) => {
-        dispatch(removeCorrelationHelperData(pane[0]));
-        dispatch(
-          changeCorrelationEditorDetails({
-            label: undefined,
-            description: undefined,
-            canSave: false,
-            dirty: false,
-            closePaneExploreId: undefined,
-          })
-        );
-      });
+    // left pane datasource changes don't affect created correlation. Right pane datasource changes might be destructive
+    if (isCorrelationsEditorMode && correlationDetails?.dirty && !isLeftPane) {
+      dispatch(
+        changeCorrelationEditorDetails({
+          isExiting: true,
+          postConfirmAction: {
+            exploreId: exploreId,
+            action: CORRELATION_EDITOR_POST_CONFIRM_ACTION.CHANGE_DATASOURCE,
+            changeDatasourceUid: dsSettings.uid,
+          },
+        })
+      );
+    } else {
+      dispatch(changeDatasource(exploreId, dsSettings.uid, { importQueries: true }));
     }
   };
 
@@ -120,7 +118,10 @@ export function ExploreToolbar({ exploreId, topOfViewRef, onChangeTime }: Props)
       dispatch(
         changeCorrelationEditorDetails({
           isExiting: true,
-          closePaneExploreId: exploreId,
+          postConfirmAction: {
+            exploreId: exploreId,
+            action: CORRELATION_EDITOR_POST_CONFIRM_ACTION.CLOSE_PANE,
+          },
         })
       );
     } else {

@@ -521,7 +521,8 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
               {correlationsBox}
               <QueryRows exploreId={exploreId} />
               <SecondaryActions
-                addQueryRowButtonDisabled={isLive}
+                // do not allow people to add queries with potentially different datasources in correlations editor mode
+                addQueryRowButtonDisabled={isLive || (isCorrelationsEditorMode && datasourceInstance.meta.mixed)}
                 // We cannot show multiple traces at the same time right now so we do not show add query button.
                 //TODO:unification
                 addQueryRowButtonHidden={false}
