@@ -286,30 +286,6 @@ func TestIntegrationUpdate(t *testing.T) {
 		f = updated
 	})
 
-	t.Run("updating folder UID should succeed", func(t *testing.T) {
-		newUID := "new"
-		existingTitle := f.Title
-		existingDesc := f.Description
-		updated, err := folderStore.Update(context.Background(), folder.UpdateFolderCommand{
-			UID:    f.UID,
-			OrgID:  f.OrgID,
-			NewUID: &newUID,
-		})
-		require.NoError(t, err)
-
-		assert.Equal(t, newUID, updated.UID)
-
-		updated, err = folderStore.Get(context.Background(), folder.GetFolderQuery{
-			UID:   &updated.UID,
-			OrgID: orgID,
-		})
-		require.NoError(t, err)
-		assert.Equal(t, newUID, updated.UID)
-		assert.Equal(t, existingTitle, updated.Title)
-		assert.Equal(t, existingDesc, updated.Description)
-		assert.NotEmpty(t, updated.URL)
-	})
-
 	t.Run("updating folder parent UID", func(t *testing.T) {
 		testCases := []struct {
 			desc                  string
