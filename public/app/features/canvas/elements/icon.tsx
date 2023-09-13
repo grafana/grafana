@@ -7,8 +7,6 @@ import { SanitizedSVG } from 'app/core/components/SVG/SanitizedSVG';
 import { getPublicOrAbsoluteUrl } from 'app/features/dimensions';
 import { DimensionContext } from 'app/features/dimensions/context';
 import { ColorDimensionEditor, ResourceDimensionEditor } from 'app/features/dimensions/editors';
-import { APIEditorConfig } from 'app/plugins/panel/canvas/editor/element/APIEditor';
-import { callApi } from 'app/plugins/panel/canvas/editor/element/utils';
 
 import { CanvasElementItem, CanvasElementProps, defaultBgColor } from '../element';
 import { LineConfig } from '../types';
@@ -17,7 +15,6 @@ export interface IconConfig {
   path?: ResourceDimensionConfig;
   fill?: ColorDimensionConfig;
   stroke?: LineConfig;
-  api?: APIEditorConfig;
 }
 
 interface IconData {
@@ -25,7 +22,6 @@ interface IconData {
   fill: string;
   strokeColor?: string;
   stroke?: number;
-  api?: APIEditorConfig;
 }
 
 // When a stoke is defined, we want the path to be in page units
@@ -41,12 +37,6 @@ export function IconDisplay(props: CanvasElementProps) {
     return null;
   }
 
-  const onClick = () => {
-    if (data?.api) {
-      callApi(data.api);
-    }
-  };
-
   const svgStyle: CSSProperties = {
     fill: data?.fill,
     stroke: data?.strokeColor,
@@ -57,7 +47,6 @@ export function IconDisplay(props: CanvasElementProps) {
 
   return (
     <SanitizedSVG
-      onClick={onClick}
       src={data.path}
       style={svgStyle}
       className={svgStyle.strokeWidth ? svgStrokePathClass : undefined}
@@ -107,7 +96,6 @@ export const iconItem: CanvasElementItem<IconConfig, IconData> = {
     const data: IconData = {
       path,
       fill: cfg.fill ? ctx.getColor(cfg.fill).value() : defaultBgColor,
-      api: cfg?.api ?? undefined,
     };
 
     if (cfg.stroke?.width && cfg.stroke.color) {
@@ -168,12 +156,5 @@ export const iconItem: CanvasElementItem<IconConfig, IconData> = {
     //   },
     //   showIf: (cfg) => Boolean(cfg?.config?.stroke?.width),
     // })
-    // .addCustomEditor({
-    //   category,
-    //   id: 'apiSelector',
-    //   path: 'config.api',
-    //   name: 'API',
-    //   editor: APIEditor,
-    // });
   },
 };
