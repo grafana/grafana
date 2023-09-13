@@ -49,14 +49,14 @@ export const TestContactPointModal = ({ isOpen, onDismiss, onTest }: Props) => {
       const alert = {
         annotations: data.annotations
           .filter(({ key, value }) => !!key && !!value)
-          .reduce((acc, { key, value }) => {
+          .reduce<Annotations>((acc, { key, value }) => {
             return { ...acc, [key]: value };
-          }, {} as Annotations),
+          }, {}),
         labels: data.labels
           .filter(({ key, value }) => !!key && !!value)
-          .reduce((acc, { key, value }) => {
+          .reduce<Labels>((acc, { key, value }) => {
             return { ...acc, [key]: value };
-          }, {} as Labels),
+          }, {}),
       };
       onTest(alert);
     } else {

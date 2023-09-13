@@ -543,7 +543,7 @@ func TestGroupingResultsWithNumericField(t *testing.T) {
 	assert.ElementsMatch(t, expectedGroupedFrames, groupedResults)
 }
 
-func TestGroupingResultsWithRemoveNonTimeTrue(t *testing.T) {
+func TestGroupingResultsWithFromSyncQueryTrue(t *testing.T) {
 	logField := data.NewField("@log", data.Labels{}, []*string{
 		aws.String("fakelog-a"),
 		aws.String("fakelog-b"),
@@ -602,6 +602,8 @@ func TestGroupingResultsWithRemoveNonTimeTrue(t *testing.T) {
 			RefID: "",
 		},
 	}
+	expectedGroupedFrames[0].Fields[1].Config = &data.FieldConfig{DisplayNameFromDS: "fakelog-a1"}
+	expectedGroupedFrames[1].Fields[1].Config = &data.FieldConfig{DisplayNameFromDS: "fakelog-b1"}
 
 	groupedResults, err := groupResults(fakeDataFrame, []string{"@log", "stream"}, true)
 	require.NoError(t, err)

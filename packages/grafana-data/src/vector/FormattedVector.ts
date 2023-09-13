@@ -9,6 +9,6 @@ import { formattedValueToString } from '../valueFormats';
 export class FormattedVector<T = any> extends Array<string> {
   constructor(source: Vector<T>, formatter: DisplayProcessor) {
     super();
-    return source.map((v) => formattedValueToString(formatter(v))) as FormattedVector<T>;
+    return source.map((v) => formattedValueToString(formatter(v)));
   }
 }

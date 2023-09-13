@@ -4,8 +4,11 @@ const PAGE_UNDER_TEST = '-Y-tnEDWk/templating-nested-template-variables';
 const DASHBOARD_NAME = 'Templating - Nested Template Variables';
 
 describe('Variables - Query - Add variable', () => {
+  beforeEach(() => {
+    e2e.flows.login(e2e.env('USERNAME'), e2e.env('PASSWORD'));
+  });
+
   it('query variable should be default and default fields should be correct', () => {
-    e2e.flows.login('admin', 'admin');
     e2e.flows.openDashboard({ uid: `${PAGE_UNDER_TEST}?orgId=1&editview=templating` });
     cy.contains(DASHBOARD_NAME).should('be.visible');
 
@@ -70,7 +73,6 @@ describe('Variables - Query - Add variable', () => {
   });
 
   it('adding a single value query variable', () => {
-    e2e.flows.login('admin', 'admin');
     e2e.flows.openDashboard({ uid: `${PAGE_UNDER_TEST}?orgId=1&editview=templating` });
     cy.contains(DASHBOARD_NAME).should('be.visible');
 
@@ -118,7 +120,6 @@ describe('Variables - Query - Add variable', () => {
   });
 
   it('adding a multi value query variable', () => {
-    e2e.flows.login('admin', 'admin');
     e2e.flows.openDashboard({ uid: `${PAGE_UNDER_TEST}?orgId=1&editview=templating` });
     cy.contains(DASHBOARD_NAME).should('be.visible');
 
