@@ -184,7 +184,13 @@ export function isConflictingFilter(
 }
 
 export function pipelineRenderer(model: QueryBuilderOperation, def: QueryBuilderOperationDef, innerExpr: string) {
-  return `${innerExpr} | ${model.id}`;
+  switch (model.id) {
+    case LokiOperationId.Logfmt:
+      const [strict = false, keepEmpty = false, ...labels] = model.params;
+      return `${innerExpr} | logfmt ${strict ? '--strict' : ''} ${keepEmpty ? '--keep-empty' : ''} ${labels.join(', ')})`;
+    default:
+      return `${innerExpr} | ${model.id}`;
+  }
 }
 
 function isRangeVectorFunction(def: QueryBuilderOperationDef) {
