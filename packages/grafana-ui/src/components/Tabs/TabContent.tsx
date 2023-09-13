@@ -22,6 +22,8 @@ export const TabContent = ({ children, className, ...restProps }: Props) => {
   const theme = useTheme2();
   const styles = getTabContentStyle(theme);
 
+  console.log(restProps);
+
   return (
     <div {...restProps} className={cx(styles.tabContent, className)}>
       {children}

@@ -1,4 +1,4 @@
-import { css, cx } from '@emotion/css';
+import { css, cx, keyframes } from '@emotion/css';
 import React, { HTMLProps } from 'react';
 
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
@@ -62,6 +62,20 @@ export const Tab = React.forwardRef<HTMLAnchorElement, TabProps>(
 Tab.displayName = 'Tab';
 
 const getStyles = (theme: GrafanaTheme2) => {
+
+  // const gradientAnim = keyframes`
+  //   0% {
+  //     background-position: 0% 50%;
+  //   }
+  //   50% {
+  //     background-position: 100% 50%;
+  //   }
+  //   100% {
+  //     background-position: 0% 50%;
+  //   }
+  // `;
+
+
   return {
     item: css({
       listStyle: 'none',
@@ -74,7 +88,11 @@ const getStyles = (theme: GrafanaTheme2) => {
         display: 'block',
         content: '" "',
         height: '4px',
+        width: '100%',
         borderRadius: `${theme.shape.radius.default} ${theme.shape.radius.default} 0 0`,
+        position: 'absolute',
+        top: 0,
+        transition: 'all 0.5s ease',
       },
 
       '&:hover': {
@@ -97,6 +115,11 @@ const getStyles = (theme: GrafanaTheme2) => {
       backgroundColor: `${theme.colors.background.primary}`,
 
       '&:hover': {
+
+        '&::before': {
+          boxShadow: '-2px 0px 2px #FF8833, 2px 0px 2px #F55F3E',
+        },
+
         a: {
           backgroundColor: theme.colors.background.primary,
           borderBottom: 0,
@@ -109,9 +132,9 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     link: css({
       color: theme.colors.text.secondary,
-      padding: theme.spacing(1, 2),
+      padding: theme.spacing(1.5, 2, 1),
       display: 'block',
-      height: 'calc(100% - 4px)',
+      height: 'calc(100%)',
       // borderBottom: `1px solid ${theme.components.panel.borderColor}`,
 
       svg: {
