@@ -10,7 +10,7 @@ CLASSNAME_PROP="$(grep -r -o -E --include="*.ts*" "\.*.className=\W.*\W.*" publi
 EMOTION_IMPORTS="$(grep -r -o -E --include="*.ts*" --exclude="*.test*" "\{.*css.*\} from '@emotion/css'" public/app | wc -l)"
 TS_FILES="$(find public/app -type f -name "*.ts*" -not -name "*.test*" | wc -l)"
 
-TOTAL_BUNDLE="$(du -sk ./public/build | cut -f1)"
+TOTAL_BUNDLE="$(du -sk ./grafana/public/build | cut -f1)"
 OUTDATED_DEPENDENCIES="$(yarn outdated --all | grep -oP '[[:digit:]]+ *(?= dependencies are out of date)')"
 ## Disabled due to yarn PnP update breaking npm audit
 #VULNERABILITY_AUDIT="$(yarn npm audit --all --recursive --json)"
