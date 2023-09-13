@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import React, { ElementType, useCallback } from 'react';
 
-import { GrafanaTheme2, ThemeSpacingTokens, ThemeShape } from '@grafana/data';
+import { GrafanaTheme2, ThemeSpacingTokens, ThemeShape, ThemeShadows } from '@grafana/data';
 
 import { useStyles2 } from '../../../themes';
 import { AlignItems, JustifyContent } from '../Flex/Flex';
@@ -12,6 +12,7 @@ export type BackgroundColor = keyof GrafanaTheme2['colors']['background'] | 'err
 export type BorderStyle = 'solid' | 'dashed';
 export type BorderColor = keyof GrafanaTheme2['colors']['border'] | 'error' | 'success' | 'warning' | 'info';
 export type BorderRadius = keyof ThemeShape['radius'];
+export type BoxShadow = keyof ThemeShadows;
 
 interface BoxProps {
   // Margin props
@@ -46,6 +47,7 @@ interface BoxProps {
   backgroundColor?: ResponsiveProp<BackgroundColor>;
   display?: ResponsiveProp<Display>;
   element?: ElementType;
+  boxShadow?: ResponsiveProp<BoxShadow>;
 }
 
 export const Box = ({ children, ...props }: React.PropsWithChildren<BoxProps>) => {
@@ -106,6 +108,7 @@ const getStyles = (theme: GrafanaTheme2, props: BoxProps) => {
     borderRadius,
     justifyContent,
     alignItems,
+    boxShadow,
   } = props;
   return {
     root: css([
@@ -184,6 +187,9 @@ const getStyles = (theme: GrafanaTheme2, props: BoxProps) => {
       })),
       getResponsiveStyle<BorderRadius>(theme, borderRadius, (val) => ({
         borderRadius: theme.shape.radius[val],
+      })),
+      getResponsiveStyle<BoxShadow>(theme, boxShadow, (val) => ({
+        boxShadow: theme.shadows[val],
       })),
     ]),
   };

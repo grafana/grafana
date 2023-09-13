@@ -71,6 +71,7 @@ export const Alert = React.forwardRef<HTMLDivElement, Props>(
           borderStyle="solid"
           borderColor={severity}
           alignItems="stretch"
+          boxShadow={elevated ? 'z3' : undefined}
         >
           <Box paddingTop={1} paddingRight={2}>
             <div className={styles.icon}>
@@ -136,7 +137,6 @@ const getStyles = (
 
   return {
     wrapper: css({
-      boxShadow: elevated ? theme.shadows.z3 : 'none',
       flexGrow: 1,
       marginBottom: theme.spacing(bottomSpacing ?? 2),
       marginTop: theme.spacing(topSpacing ?? 0),
