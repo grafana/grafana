@@ -128,7 +128,7 @@ export function getOperationDefinitions(): QueryBuilderOperationDef[] {
             'Using expressions with your logfmt parser will extract and rename (if provided) only the specified fields to labels. You can specify one or more expressions in this way.',
         },
       ],
-      defaultParams: [],
+      defaultParams: [false, false],
       alternativesKey: 'format',
       category: LokiVisualQueryOperationCategory.Formats,
       orderRank: LokiOperationOrder.Parsers,
