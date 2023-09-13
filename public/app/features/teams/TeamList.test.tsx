@@ -26,10 +26,10 @@ const setup = (propOverrides?: object) => {
     changePage: jest.fn(),
     changeQuery: jest.fn(),
     query: '',
-    page: 1,
     totalPages: 0,
     hasFetched: false,
     editorsCanAdmin: false,
+    perPage: 10,
     signedInUser: {
       id: 1,
       orgRole: OrgRole.Viewer,
