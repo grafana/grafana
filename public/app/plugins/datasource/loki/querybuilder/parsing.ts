@@ -30,6 +30,7 @@ import {
   LabelParser,
   LineFilter,
   LineFormatExpr,
+  LogfmtParser,
   LogRangeExpr,
   Matcher,
   MetricExpr,
@@ -37,6 +38,7 @@ import {
   On,
   Or,
   parser,
+  ParserFlag,
   Range,
   RangeAggregationExpr,
   RangeOp,
@@ -80,7 +82,10 @@ interface ParsingError {
   parentType?: string;
 }
 
+interface GetOperationResult { operation?: QueryBuilderOperation; error?: string };
+
 export function buildVisualQueryFromString(expr: string): Context {
+  console.log(expr);
   const replacedExpr = replaceVariables(expr);
   const tree = parser.parse(replacedExpr);
   const node = tree.topNode;
@@ -158,6 +163,16 @@ export function handleExpression(expr: string, node: SyntaxNode, context: Contex
     case JsonExpressionParser: {
       visQuery.operations.push(getJsonExpressionParser(expr, node));
       break;
+    }
+
+    case LogfmtParser: {
+      const { operation, error } = getLogfmtParser(expr, node);
+      if (operation) {
+        visQuery.operations.push(operation);
+      }
+      if (error) {
+        context.errors.push(createNotSupportedError(expr, node, error));
+      }
     }
 
     case LineFormatExpr: {
@@ -250,7 +265,7 @@ function getLabel(expr: string, node: SyntaxNode): QueryBuilderLabelFilter {
   };
 }
 
-function getLineFilter(expr: string, node: SyntaxNode): { operation?: QueryBuilderOperation; error?: string } {
+function getLineFilter(expr: string, node: SyntaxNode): GetOperationResult {
   const filter = getString(expr, node.getChild(Filter));
   const filterExpr = handleQuotes(getString(expr, node.getChild(String)));
   const ipLineFilter = node.getChild(FilterOp)?.getChild(Ip);
@@ -306,7 +321,37 @@ function getJsonExpressionParser(expr: string, node: SyntaxNode): QueryBuilderOp
   };
 }
 
-function getLabelFilter(expr: string, node: SyntaxNode): { operation?: QueryBuilderOperation; error?: string } {
+function getLogfmtParser(expr: string, node: SyntaxNode): GetOperationResult {
+  const params: QueryBuilderOperationParamValue[] = [];
+  const flags: string[] = [];
+  let error: string | undefined = undefined;
+
+  const offset = node.from;
+  node.toTree().iterate({
+    enter: (subNode) => {
+      if (subNode.type.id === ParserFlag) {
+        flags.push(expr.substring(subNode.from + offset, subNode.to + offset));
+      } else if (subNode.type.id === ErrorId) {
+        error = `Unexpected string "${expr.substring(subNode.from + offset, subNode.to + offset)}"`;
+      }
+    },
+  });
+
+  params.push(flags.includes('--strict'));
+  params.push(flags.includes('--keep-empty'));
+
+  const operation = {
+    id: LokiOperationId.Logfmt,
+    params,
+  };
+
+  return {
+    operation,
+    error,
+  };
+}
+
+function getLabelFilter(expr: string, node: SyntaxNode): GetOperationResult {
   // Check for nodes not supported in visual builder and return error
   if (node.getChild(Or) || node.getChild(And) || node.getChild('Comma')) {
     return {
@@ -403,7 +448,7 @@ function handleUnwrapExpr(
   expr: string,
   node: SyntaxNode,
   context: Context
-): { operation?: QueryBuilderOperation; error?: string } {
+): GetOperationResult {
   const unwrapExprChild = node.getChild(UnwrapExpr);
   const labelFilterChild = node.getChild(LabelFilter);
   const unwrapChild = node.getChild(Unwrap);
