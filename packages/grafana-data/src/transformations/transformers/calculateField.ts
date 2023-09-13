@@ -107,7 +107,7 @@ export const calculateFieldTransformer: DataTransformerInfo<CalculateFieldTransf
 
             if (options.index?.showPercentage) {
               for (let i = 0; i < indexArr.length; i++) {
-                indexArr[i] = (indexArr[i] / indexArr.length) * 100;
+                indexArr[i] = indexArr[i] / indexArr.length;
               }
             }
 
@@ -115,7 +115,7 @@ export const calculateFieldTransformer: DataTransformerInfo<CalculateFieldTransf
               name: options.alias ?? 'Row',
               type: FieldType.number,
               values: indexArr,
-              config: {},
+              config: { unit: 'percentunit' },
             };
             return {
               ...frame,
