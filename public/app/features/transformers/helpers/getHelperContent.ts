@@ -1,7 +1,7 @@
 import { getLinkToDocs } from './getLinkToDocs';
 
 import {
-  CalculateFieldHelper,
+  calculateFieldHelper,
   concatenateHelper,
   ConfigFromQueryHelper,
   ConvertFieldTypeHelper,
@@ -33,7 +33,7 @@ import {
 } from './index';
 
 const helperContent: Record<string, () => string> = {
-  calculateField: CalculateFieldHelper,
+  calculateField: calculateFieldHelper,
   concatenate: concatenateHelper,
   configFromData: ConfigFromQueryHelper,
   convertFieldType: ConvertFieldTypeHelper,

@@ -1,4 +1,4 @@
-export { CalculateFieldHelper } from './CalculateFieldHelper';
+export { calculateFieldHelper } from './calculateFieldHelper';
 export { concatenateHelper } from './ConcatenateHelper';
 export { ConfigFromQueryHelper } from './ConfigFromQueryHelper';
 export { ConvertFieldTypeHelper } from './ConvertFieldTypeHelper';

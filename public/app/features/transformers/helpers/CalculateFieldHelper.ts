@@ -1,6 +1,6 @@
 import { getLinkToDocs } from './getLinkToDocs';
 
-export const CalculateFieldHelper = () => {
+export const calculateFieldHelper = () => {
   return `
   Use this transformation to add a new field calculated from two other fields. Each transformation allows you to add one new field.
 
