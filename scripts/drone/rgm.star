@@ -37,30 +37,14 @@ load(
 load(
     "scripts/drone/vault.star",
     "from_secret",
+    "rgm_cdn_destination",
     "rgm_dagger_token",
     "rgm_destination",
+    "rgm_downloads_destination",
     "rgm_gcp_key_base64",
     "rgm_github_token",
+    "rgm_storybook_destination",
 )
-
-def rgm_env_secrets(env):
-    """Adds the rgm secret ENV variables to the given env arg
-
-    Args:
-      env: A map of environment varables. This function will adds the necessary secrets to it (and potentially overwrite them).
-    Returns:
-        Drone step.
-    """
-    env["GCP_KEY_BASE64"] = from_secret(rgm_gcp_key_base64)
-    env["DESTINATION"] = from_secret(rgm_destination)
-    env["GITHUB_TOKEN"] = from_secret(rgm_github_token)
-    env["_EXPERIMENTAL_DAGGER_CLOUD_TOKEN"] = from_secret(rgm_dagger_token)
-    env["GPG_PRIVATE_KEY"] = from_secret("packages_gpg_private_key")
-    env["GPG_PUBLIC_KEY"] = from_secret("packages_gpg_public_key")
-    env["GPG_PASSPHRASE"] = from_secret("packages_gpg_passphrase")
-    env["DOCKER_USERNAME"] = from_secret("docker_username")
-    env["DOCKER_PASSWORD"] = from_secret("docker_password")
-    return env
 
 docs_paths = {
     "exclude": [
@@ -108,6 +92,29 @@ nightly_trigger = {
 
 version_branch_trigger = {"ref": ["refs/heads/v[0-9]*"]}
 
+def rgm_env_secrets(env):
+    """Adds the rgm secret ENV variables to the given env arg
+
+    Args:
+      env: A map of environment varables. This function will adds the necessary secrets to it (and potentially overwrite them).
+    Returns:
+        Drone step.
+    """
+    env["DESTINATION"] = from_secret(rgm_destination)
+    env["STORYBOOK_DESTINATION"] = from_secret(rgm_storybook_destination)
+    env["CDN_DESTINATION"] = from_secret(rgm_cdn_destination)
+    env["DOWNLOADS_DESTINATION"] = from_secret(rgm_downloads_destination)
+
+    env["GCP_KEY_BASE64"] = from_secret(rgm_gcp_key_base64)
+    env["GITHUB_TOKEN"] = from_secret(rgm_github_token)
+    env["_EXPERIMENTAL_DAGGER_CLOUD_TOKEN"] = from_secret(rgm_dagger_token)
+    env["GPG_PRIVATE_KEY"] = from_secret("packages_gpg_private_key")
+    env["GPG_PUBLIC_KEY"] = from_secret("packages_gpg_public_key")
+    env["GPG_PASSPHRASE"] = from_secret("packages_gpg_passphrase")
+    env["DOCKER_USERNAME"] = from_secret("docker_username")
+    env["DOCKER_PASSWORD"] = from_secret("docker_password")
+    return env
+
 def rgm_run(name, script):
     """Returns a pipeline that does a full build & package of Grafana.
 
@@ -122,7 +129,7 @@ def rgm_run(name, script):
     }
     rgm_run_step = {
         "name": name,
-        "image": "grafana/grafana-build:dev-5e36725",
+        "image": "grafana/grafana-build:dev-f5ebe1f",
         "pull": "always",
         "commands": [
             "export GRAFANA_DIR=$$(pwd)",

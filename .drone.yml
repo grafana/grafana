@@ -2761,12 +2761,16 @@ steps:
   environment:
     _EXPERIMENTAL_DAGGER_CLOUD_TOKEN:
       from_secret: dagger_token
+    CDN_DESTINATION:
+      from_secret: rgm_cdn_destination
     DESTINATION:
       from_secret: destination
     DOCKER_PASSWORD:
       from_secret: docker_password
     DOCKER_USERNAME:
       from_secret: docker_username
+    DOWNLOADS_DESTINATION:
+      from_secret: rgm_downloads_destination
     GCP_KEY_BASE64:
       from_secret: gcp_key_base64
     GITHUB_TOKEN:
@@ -2778,7 +2782,9 @@ steps:
       from_secret: packages_gpg_private_key
     GPG_PUBLIC_KEY:
       from_secret: packages_gpg_public_key
-  image: grafana/grafana-build:dev-5e36725
+    STORYBOOK_DESTINATION:
+      from_secret: rgm_storybook_destination
+  image: grafana/grafana-build:dev-f5ebe1f
   name: rgm-build
   pull: always
   volumes:
@@ -3000,12 +3006,16 @@ steps:
   environment:
     _EXPERIMENTAL_DAGGER_CLOUD_TOKEN:
       from_secret: dagger_token
+    CDN_DESTINATION:
+      from_secret: rgm_cdn_destination
     DESTINATION:
       from_secret: destination
     DOCKER_PASSWORD:
       from_secret: docker_password
     DOCKER_USERNAME:
       from_secret: docker_username
+    DOWNLOADS_DESTINATION:
+      from_secret: rgm_downloads_destination
     GCP_KEY_BASE64:
       from_secret: gcp_key_base64
     GITHUB_TOKEN:
@@ -3017,7 +3027,9 @@ steps:
       from_secret: packages_gpg_private_key
     GPG_PUBLIC_KEY:
       from_secret: packages_gpg_public_key
-  image: grafana/grafana-build:dev-5e36725
+    STORYBOOK_DESTINATION:
+      from_secret: rgm_storybook_destination
+  image: grafana/grafana-build:dev-f5ebe1f
   name: rgm-build
   pull: always
   volumes:
@@ -3171,12 +3183,16 @@ steps:
   environment:
     _EXPERIMENTAL_DAGGER_CLOUD_TOKEN:
       from_secret: dagger_token
+    CDN_DESTINATION:
+      from_secret: rgm_cdn_destination
     DESTINATION:
       from_secret: destination
     DOCKER_PASSWORD:
       from_secret: docker_password
     DOCKER_USERNAME:
       from_secret: docker_username
+    DOWNLOADS_DESTINATION:
+      from_secret: rgm_downloads_destination
     GCP_KEY_BASE64:
       from_secret: gcp_key_base64
     GITHUB_TOKEN:
@@ -3188,7 +3204,9 @@ steps:
       from_secret: packages_gpg_private_key
     GPG_PUBLIC_KEY:
       from_secret: packages_gpg_public_key
-  image: grafana/grafana-build:dev-5e36725
+    STORYBOOK_DESTINATION:
+      from_secret: rgm_storybook_destination
+  image: grafana/grafana-build:dev-f5ebe1f
   name: rgm-build
   pull: always
   volumes:
@@ -3391,12 +3409,16 @@ steps:
   environment:
     _EXPERIMENTAL_DAGGER_CLOUD_TOKEN:
       from_secret: dagger_token
+    CDN_DESTINATION:
+      from_secret: rgm_cdn_destination
     DESTINATION:
       from_secret: destination
     DOCKER_PASSWORD:
       from_secret: docker_password
     DOCKER_USERNAME:
       from_secret: docker_username
+    DOWNLOADS_DESTINATION:
+      from_secret: rgm_downloads_destination
     GCP_KEY_BASE64:
       from_secret: gcp_key_base64
     GITHUB_TOKEN:
@@ -3408,7 +3430,9 @@ steps:
       from_secret: packages_gpg_private_key
     GPG_PUBLIC_KEY:
       from_secret: packages_gpg_public_key
-  image: grafana/grafana-build:dev-5e36725
+    STORYBOOK_DESTINATION:
+      from_secret: rgm_storybook_destination
+  image: grafana/grafana-build:dev-f5ebe1f
   name: rgm-build
   pull: always
   volumes:
@@ -3424,12 +3448,16 @@ steps:
   environment:
     _EXPERIMENTAL_DAGGER_CLOUD_TOKEN:
       from_secret: dagger_token
+    CDN_DESTINATION:
+      from_secret: rgm_cdn_destination
     DESTINATION:
       from_secret: destination
     DOCKER_PASSWORD:
       from_secret: docker_password
     DOCKER_USERNAME:
       from_secret: docker_username
+    DOWNLOADS_DESTINATION:
+      from_secret: rgm_downloads_destination
     GCP_KEY_BASE64:
       from_secret: gcp_key_base64
     GITHUB_TOKEN:
@@ -3440,6 +3468,8 @@ steps:
       from_secret: packages_gpg_private_key
     GPG_PUBLIC_KEY:
       from_secret: packages_gpg_public_key
+    STORYBOOK_DESTINATION:
+      from_secret: rgm_storybook_destination
   image: google/cloud-sdk:alpine
   name: rgm-copy
 trigger:
@@ -3479,12 +3509,16 @@ steps:
   environment:
     _EXPERIMENTAL_DAGGER_CLOUD_TOKEN:
       from_secret: dagger_token
+    CDN_DESTINATION:
+      from_secret: rgm_cdn_destination
     DESTINATION:
       from_secret: destination
     DOCKER_PASSWORD:
       from_secret: docker_password
     DOCKER_USERNAME:
       from_secret: docker_username
+    DOWNLOADS_DESTINATION:
+      from_secret: rgm_downloads_destination
     GCP_KEY_BASE64:
       from_secret: gcp_key_base64
     GITHUB_TOKEN:
@@ -3495,6 +3529,8 @@ steps:
       from_secret: packages_gpg_private_key
     GPG_PUBLIC_KEY:
       from_secret: packages_gpg_public_key
+    STORYBOOK_DESTINATION:
+      from_secret: rgm_storybook_destination
   image: google/cloud-sdk:alpine
   name: rgm-copy
 - commands:
@@ -3505,12 +3541,16 @@ steps:
   environment:
     _EXPERIMENTAL_DAGGER_CLOUD_TOKEN:
       from_secret: dagger_token
+    CDN_DESTINATION:
+      from_secret: rgm_cdn_destination
     DESTINATION:
       from_secret: destination
     DOCKER_PASSWORD:
       from_secret: docker_password
     DOCKER_USERNAME:
       from_secret: docker_username
+    DOWNLOADS_DESTINATION:
+      from_secret: rgm_downloads_destination
     GCP_KEY_BASE64:
       from_secret: gcp_key_base64
     GITHUB_TOKEN:
@@ -3522,7 +3562,9 @@ steps:
       from_secret: packages_gpg_private_key
     GPG_PUBLIC_KEY:
       from_secret: packages_gpg_public_key
-  image: grafana/grafana-build:dev-5e36725
+    STORYBOOK_DESTINATION:
+      from_secret: rgm_storybook_destination
+  image: grafana/grafana-build:dev-f5ebe1f
   name: rgm-publish
   pull: always
   volumes:
@@ -4451,6 +4493,24 @@ kind: secret
 name: destination
 ---
 get:
+  name: storybook_destination
+  path: infra/data/ci/grafana-release-eng/rgm
+kind: secret
+name: rgm_storybook_destination
+---
+get:
+  name: cdn_destination
+  path: infra/data/ci/grafana-release-eng/rgm
+kind: secret
+name: rgm_cdn_destination
+---
+get:
+  name: downloads_destination
+  path: infra/data/ci/grafana-release-eng/rgm
+kind: secret
+name: rgm_downloads_destination
+---
+get:
   name: dagger_token
   path: infra/data/ci/grafana-release-eng/rgm
 kind: secret
@@ -4481,6 +4541,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 25069dbd6ca4a171f0f4dc83f0d1226e1cfd381838901e45680f250aaee6bd49
+hmac: 301eaf207111c55e5fb6f0f01a875d32c0d9b6b0d78a8b2b34eb7836e8f2206a
 
 ...
