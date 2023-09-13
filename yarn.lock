@@ -12356,6 +12356,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"afterframe@npm:^1.0.2":
+  version: 1.0.2
+  resolution: "afterframe@npm:1.0.2"
+  checksum: dd99dcfdfc5286f61d7a60ec29bf21a6137aba0e6bc57aa2c633d37455e848f806774356f58b7a35409e1a01089f37e389c0aff7950563d38d0f2d4d2059024b
+  languageName: node
+  linkType: hard
+
 "agent-base@npm:5":
   version: 5.1.1
   resolution: "agent-base@npm:5.1.1"
@@ -19774,6 +19781,7 @@ __metadata:
     "@visx/shape": 3.3.0
     "@visx/tooltip": 3.3.0
     "@welldone-software/why-did-you-render": 7.0.1
+    afterframe: ^1.0.2
     angular: 1.8.3
     angular-bindonce: 0.3.1
     angular-route: 1.8.3

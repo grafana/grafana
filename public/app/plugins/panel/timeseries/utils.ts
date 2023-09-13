@@ -131,7 +131,7 @@ export function prepareGraphableFields(
       ? frame
       : applyNullInsertThreshold({
           frame,
-          refFieldPseudoMin: timeRange?.from.valueOf(),
+          refFieldPseudoMin: timeRange?.from.valueOf()! / 2,
           refFieldPseudoMax: timeRange?.to.valueOf(),
         });
 
