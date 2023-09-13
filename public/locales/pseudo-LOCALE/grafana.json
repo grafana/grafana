@@ -608,6 +608,29 @@
       "view": "Vįęŵ"
     }
   },
+  "playlist-edit": {
+    "error-prefix": "Ēřřőř ľőäđįŉģ pľäyľįşŧ:",
+    "form": {
+      "add-tag-label": "Åđđ þy ŧäģ",
+      "add-tag-placeholder": "Ŝęľęčŧ ä ŧäģ",
+      "add-title-label": "Åđđ þy ŧįŧľę",
+      "cancel": "Cäŉčęľ",
+      "heading": "Åđđ đäşĥþőäřđş",
+      "interval-label": "Ĩŉŧęřväľ",
+      "interval-placeholder": "5m",
+      "interval-required": "Ĩŉŧęřväľ įş řęqūįřęđ",
+      "name-label": "Ńämę",
+      "name-placeholder": "Ńämę",
+      "name-required": "Ńämę įş řęqūįřęđ",
+      "save": "Ŝävę",
+      "table-delete": "Đęľęŧę pľäyľįşŧ įŧęm",
+      "table-drag": "Đřäģ äŉđ đřőp ŧő řęőřđęř",
+      "table-empty": "Pľäyľįşŧ įş ęmpŧy. Åđđ đäşĥþőäřđş þęľőŵ.",
+      "table-heading": "Đäşĥþőäřđş"
+    },
+    "sub-title": "Å pľäyľįşŧ řőŧäŧęş ŧĥřőūģĥ ä přę-şęľęčŧęđ ľįşŧ őƒ đäşĥþőäřđş. Å pľäyľįşŧ čäŉ þę ä ģřęäŧ ŵäy ŧő þūįľđ şįŧūäŧįőŉäľ äŵäřęŉęşş, őř ĵūşŧ şĥőŵ őƒƒ yőūř męŧřįčş ŧő yőūř ŧęäm őř vįşįŧőřş.",
+    "title": "Ēđįŧ pľäyľįşŧ"
+  },
   "refresh-picker": {
     "aria-label": {
       "choose-interval": "Åūŧő řęƒřęşĥ ŧūřŉęđ őƒƒ. Cĥőőşę řęƒřęşĥ ŧįmę įŉŧęřväľ",
