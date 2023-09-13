@@ -16,21 +16,35 @@ export type BoxShadow = keyof ThemeShadows;
 
 interface BoxProps {
   // Margin props
+  /** Sets the property `margin` */
   margin?: ResponsiveProp<ThemeSpacingTokens>;
+  /** Sets the properties `margin-top` and `margin-bottom`. Higher priority than margin. */
   marginX?: ResponsiveProp<ThemeSpacingTokens>;
+  /** Sets the properties `margin-left` and `margin-right`. Higher priority than margin. */
   marginY?: ResponsiveProp<ThemeSpacingTokens>;
+  /** Sets the property `margin-top`. Higher priority than margin and marginY. */
   marginTop?: ResponsiveProp<ThemeSpacingTokens>;
+  /** Sets the property `margin-bottom`. Higher priority than margin and marginXY */
   marginBottom?: ResponsiveProp<ThemeSpacingTokens>;
+  /** Sets the property `margin-left`. Higher priority than margin and marginX. */
   marginLeft?: ResponsiveProp<ThemeSpacingTokens>;
+  /** Sets the property `margin-right`. Higher priority than margin and marginX. */
   marginRight?: ResponsiveProp<ThemeSpacingTokens>;
 
   // Padding props
+  /** Sets the property `padding` */
   padding?: ResponsiveProp<ThemeSpacingTokens>;
+  /** Sets the properties `padding-top` and `padding-bottom`. Higher priority than padding. */
   paddingX?: ResponsiveProp<ThemeSpacingTokens>;
+  /** Sets the properties `padding-left` and `padding-right`. Higher priority than padding. */
   paddingY?: ResponsiveProp<ThemeSpacingTokens>;
+  /** Sets the property `padding-top`. Higher priority than padding and paddingY. */
   paddingTop?: ResponsiveProp<ThemeSpacingTokens>;
+  /** Sets the property `padding-bottom`. Higher priority than padding and paddingY. */
   paddingBottom?: ResponsiveProp<ThemeSpacingTokens>;
+  /** Sets the property `padding-left`. Higher priority than padding and paddingX. */
   paddingLeft?: ResponsiveProp<ThemeSpacingTokens>;
+  /** Sets the property `padding-right`. Higher priority than padding and paddingX. */
   paddingRight?: ResponsiveProp<ThemeSpacingTokens>;
 
   // Border Props
@@ -39,15 +53,19 @@ interface BoxProps {
   borderRadius?: ResponsiveProp<BorderRadius>;
 
   // Flex Props
+  /** Sets the property `flex` */
   grow?: ResponsiveProp<number>;
+  /** Sets the property `flex-shrink` */
   shrink?: ResponsiveProp<number>;
   alignItems?: ResponsiveProp<AlignItems>;
   justifyContent?: ResponsiveProp<JustifyContent>;
 
+  // Other props
   backgroundColor?: ResponsiveProp<BackgroundColor>;
   display?: ResponsiveProp<Display>;
-  element?: ElementType;
   boxShadow?: ResponsiveProp<BoxShadow>;
+  /** Sets the HTML element that will be rendered as a Box. Defaults to 'div' */
+  element?: ElementType;
 }
 
 export const Box = ({ children, ...props }: React.PropsWithChildren<BoxProps>) => {
