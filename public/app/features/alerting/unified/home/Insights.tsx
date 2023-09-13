@@ -1,19 +1,4 @@
-import React, { useMemo, useState } from 'react';
-
-import {
-  EmbeddedScene,
-  NestedScene,
-  QueryVariable,
-  SceneApp,
-  SceneAppPage,
-  SceneFlexItem,
-  SceneFlexLayout,
-  SceneTimeRange,
-  SceneVariableSet,
-  VariableValueSelectors,
-} from '@grafana/scenes';
-import { usePageNav } from 'app/core/components/Page/usePageNav';
-import { PluginPageContext, PluginPageContextType } from 'app/features/plugins/components/PluginPageContext';
+import { EmbeddedScene, NestedScene, SceneFlexItem, SceneFlexLayout, SceneTimeRange } from '@grafana/scenes';
 
 import { getFiringAlertsScene } from '../insights/grafana/FiringAlertsPercentage';
 import { getFiringAlertsRateScene } from '../insights/grafana/FiringAlertsRate';
