@@ -15,7 +15,7 @@ interface GrafanaReceiversExportPreviewProps {
 }
 
 const GrafanaReceiversExportPreview = ({ decrypt, exportFormat, onClose }: GrafanaReceiversExportPreviewProps) => {
-  const { currentData: receiverDefinition = '', isFetching } = alertRuleApi.useExportReceiversQuery({
+  const { currentData: receiversDefinition = '', isFetching } = alertRuleApi.useExportReceiversQuery({
     decrypt: decrypt,
     format: exportFormat,
   });
@@ -29,7 +29,7 @@ const GrafanaReceiversExportPreview = ({ decrypt, exportFormat, onClose }: Grafa
   return (
     <FileExportPreview
       format={exportFormat}
-      textDefinition={receiverDefinition}
+      textDefinition={receiversDefinition}
       downloadFileName={downloadFileName}
       onClose={onClose}
     />
