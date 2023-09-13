@@ -53,7 +53,7 @@ export const useInspectTabs = (
     }
 
     if (metaDs) {
-      tabs.push({ label: t('dashboard.inspect.meta-tab', 'Meta Data'), value: InspectTab.Meta });
+      tabs.push({ label: t('dashboard.inspect.meta-tab', 'Meta data'), value: InspectTab.Meta });
     }
 
     tabs.push({ label: t('dashboard.inspect.json-tab', 'JSON'), value: InspectTab.JSON });
