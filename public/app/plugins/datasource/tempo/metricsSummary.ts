@@ -101,7 +101,7 @@ export function createTableFrameFromMetricsSummaryQuery(
       field.values.push(trace[field.name]);
     }
   }
-  frame = sortDataFrame(frame, 0);
+  frame = sortDataFrame(frame, 0, true);
 
   return [frame];
 }
@@ -183,7 +183,7 @@ const getConfig = (series: Series, query: string, instanceSettings: DataSourceIn
   return { ...commonConfig };
 };
 
-const NO_VALUE = '';
+const NO_VALUE = '<no value>';
 
 const getMetricValue = (series: Series) => {
   if (!series.value.type) {
