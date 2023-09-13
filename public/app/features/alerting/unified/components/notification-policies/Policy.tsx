@@ -151,12 +151,7 @@ const Policy: FC<PolicyComponentProps> = ({
 
   if (showExportAction) {
     dropdownMenuActions.push(
-      <Menu.Item
-        key="export-policy"
-        icon="download-alt"
-        label="Export"
-        onClick={toggleShowExportDrawer}
-      />
+      <Menu.Item key="export-policy" icon="download-alt" label="Export" onClick={toggleShowExportDrawer} />
     );
   }
 
@@ -231,13 +226,13 @@ const Policy: FC<PolicyComponentProps> = ({
                         />
                       </Dropdown>
                     )}
-                  </Stack >
+                  </Stack>
                 )}
-              </Stack >
-            </div >
+              </Stack>
+            </div>
 
             {/* Metadata row */}
-            < div className={styles.metadataRow} >
+            <div className={styles.metadataRow}>
               <Stack direction="row" alignItems="center" gap={1}>
                 {matchingInstancesPreview.enabled && (
                   <MetaText
@@ -302,10 +297,10 @@ const Policy: FC<PolicyComponentProps> = ({
                   </>
                 )}
               </Stack>
-            </div >
-          </Stack >
-        </div >
-      </div >
+            </div>
+          </Stack>
+        </div>
+      </div>
       <div className={styles.childPolicies}>
         {/* pass the "readOnly" prop from the parent, because if you can't edit the parent you can't edit children */}
         {childPolicies.map((child) => {
@@ -333,7 +328,7 @@ const Policy: FC<PolicyComponentProps> = ({
         })}
       </div>
       {showExportDrawer && <GrafanaPoliciesExporter onClose={toggleShowExportDrawer} />}
-    </Stack >
+    </Stack>
   );
 };
 

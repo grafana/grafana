@@ -10,7 +10,7 @@ import {
   AlertmanagerGroup,
   MatcherOperator,
   ObjectMatcher,
-  RouteWithID
+  RouteWithID,
 } from 'app/plugins/datasource/alertmanager/types';
 import { ReceiversState } from 'app/types/alerting';
 
@@ -23,7 +23,7 @@ import { Policy } from './Policy';
 
 jest.mock('../../hooks/useAbilities', () => ({
   ...jest.requireActual('../../hooks/useAbilities'),
-  useAlertmanagerAbilities: jest.fn()
+  useAlertmanagerAbilities: jest.fn(),
 }));
 
 const useAlertmanagerAbilitiesMock = jest.mocked(useAlertmanagerAbilities);
@@ -34,7 +34,7 @@ describe('Policy', () => {
     useAlertmanagerAbilitiesMock.mockReturnValue([
       [true, true],
       [true, true],
-      [true, true]
+      [true, true],
     ]);
   });
 
@@ -43,7 +43,7 @@ describe('Policy', () => {
     const onAddPolicy = jest.fn();
     const onDeletePolicy = jest.fn();
     const onShowAlertInstances = jest.fn(
-      (alertGroups: AlertmanagerGroup[], matchers?: ObjectMatcher[] | undefined) => { }
+      (alertGroups: AlertmanagerGroup[], matchers?: ObjectMatcher[] | undefined) => {}
     );
 
     const routeTree = mockRoutes;
@@ -148,7 +148,7 @@ describe('Policy', () => {
     const onAddPolicy = jest.fn();
     const onDeletePolicy = jest.fn();
     const onShowAlertInstances = jest.fn(
-      (alertGroups: AlertmanagerGroup[], matchers?: ObjectMatcher[] | undefined) => { }
+      (alertGroups: AlertmanagerGroup[], matchers?: ObjectMatcher[] | undefined) => {}
     );
 
     const routeTree = mockRoutes;
@@ -178,7 +178,7 @@ describe('Policy', () => {
     const onAddPolicy = jest.fn();
     const onDeletePolicy = jest.fn();
     const onShowAlertInstances = jest.fn(
-      (alertGroups: AlertmanagerGroup[], matchers?: ObjectMatcher[] | undefined) => { }
+      (alertGroups: AlertmanagerGroup[], matchers?: ObjectMatcher[] | undefined) => {}
     );
 
     const routeTree = mockRoutes;
@@ -186,7 +186,7 @@ describe('Policy', () => {
     useAlertmanagerAbilitiesMock.mockReturnValue([
       [true, true],
       [true, true],
-      [false, true]
+      [false, true],
     ]);
 
     const user = userEvent.setup();
@@ -215,7 +215,7 @@ describe('Policy', () => {
     const onAddPolicy = jest.fn();
     const onDeletePolicy = jest.fn();
     const onShowAlertInstances = jest.fn(
-      (alertGroups: AlertmanagerGroup[], matchers?: ObjectMatcher[] | undefined) => { }
+      (alertGroups: AlertmanagerGroup[], matchers?: ObjectMatcher[] | undefined) => {}
     );
 
     const routeTree = mockRoutes;
@@ -223,7 +223,7 @@ describe('Policy', () => {
     useAlertmanagerAbilitiesMock.mockReturnValue([
       [true, true],
       [true, true],
-      [true, false]
+      [true, false],
     ]);
 
     const user = userEvent.setup();

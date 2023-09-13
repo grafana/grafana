@@ -9,7 +9,7 @@ import { setBackendSrv } from '@grafana/runtime';
 import {
   AlertManagerCortexConfig,
   GrafanaManagedReceiverConfig,
-  Receiver
+  Receiver,
 } from 'app/plugins/datasource/alertmanager/types';
 import { configureStore } from 'app/store/configureStore';
 import { AccessControlAction, ContactPointsState, NotifierDTO, NotifierType } from 'app/types';

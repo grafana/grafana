@@ -275,7 +275,7 @@ export const Pages = {
   PlaylistForm: {
     name: 'Playlist name',
     interval: 'Playlist interval',
-    itemDelete: 'Delete playlist item',
+    itemDelete: 'data-testid playlist-form-delete-item',
   },
   BrowseDashboards: {
     table: {

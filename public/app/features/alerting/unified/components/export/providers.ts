@@ -29,7 +29,7 @@ const HclExportProvider: ExportProvider<'hcl'> = {
 export const grafanaExportProviders = {
   [JsonExportProvider.exportFormat]: JsonExportProvider,
   [YamlExportProvider.exportFormat]: YamlExportProvider,
-   [HclExportProvider.exportFormat]: HclExportProvider,
+  [HclExportProvider.exportFormat]: HclExportProvider,
 } as const;
 
 export const grafanaExportProvidersWithoutHCL = {

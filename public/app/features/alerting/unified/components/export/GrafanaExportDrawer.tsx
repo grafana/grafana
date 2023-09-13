@@ -4,7 +4,12 @@ import { Drawer } from '@grafana/ui';
 
 import { RuleInspectorTabs } from '../rule-editor/RuleInspector';
 
-import { ExportFormats, ExportFormatsWithoutHCL, grafanaExportProviders, grafanaExportProvidersWithoutHCL } from './providers';
+import {
+  ExportFormats,
+  ExportFormatsWithoutHCL,
+  grafanaExportProviders,
+  grafanaExportProvidersWithoutHCL,
+} from './providers';
 
 interface GrafanaExportDrawerProps {
   activeTab: ExportFormats | ExportFormatsWithoutHCL;
@@ -14,15 +19,22 @@ interface GrafanaExportDrawerProps {
   allowHcl?: boolean;
 }
 
-export function GrafanaExportDrawer({ activeTab, onTabChange, children, onClose, allowHcl = false }: GrafanaExportDrawerProps) {
-
-  const grafanaRulesTabs = allowHcl ? Object.values(grafanaExportProviders).map((provider) => ({
-    label: provider.name,
-    value: provider.exportFormat,
-  })) : Object.values(grafanaExportProvidersWithoutHCL).map((provider) => ({
-    label: provider.name,
-    value: provider.exportFormat,
-  }))
+export function GrafanaExportDrawer({
+  activeTab,
+  onTabChange,
+  children,
+  onClose,
+  allowHcl = false,
+}: GrafanaExportDrawerProps) {
+  const grafanaRulesTabs = allowHcl
+    ? Object.values(grafanaExportProviders).map((provider) => ({
+        label: provider.name,
+        value: provider.exportFormat,
+      }))
+    : Object.values(grafanaExportProvidersWithoutHCL).map((provider) => ({
+        label: provider.name,
+        value: provider.exportFormat,
+      }));
 
   return (
     <Drawer

@@ -370,10 +370,10 @@ export const ReceiversTable = ({ config, alertManagerName }: Props) => {
       exportLink={
         showExport
           ? createUrl('/api/v1/provisioning/contact-points/export', {
-            download: 'true',
-            format: 'yaml',
-            decrypt: isOrgAdmin().toString(),
-          })
+              download: 'true',
+              format: 'yaml',
+              decrypt: isOrgAdmin().toString(),
+            })
           : undefined
       }
     >
@@ -385,8 +385,8 @@ export const ReceiversTable = ({ config, alertManagerName }: Props) => {
         renderExpandedContent={
           errorStateAvailable
             ? ({ data: { name } }) => (
-              <NotifiersTable notifiersState={contactPointsState?.receivers[name]?.notifiers ?? {}} />
-            )
+                <NotifiersTable notifiersState={contactPointsState?.receivers[name]?.notifiers ?? {}} />
+              )
             : undefined
         }
       />
