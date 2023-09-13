@@ -174,7 +174,7 @@ Reporting is all about convenience - getting info to eyeballs as quickly as poss
 
 ## Breaking Changes
 
-This is a partial list of notable breaking changes. For the complete list, see our [Release Notes](LINK-TO-9.0-RELEASE-NOTES).
+This is a partial list of notable breaking changes. For the complete list, see our [Release Notes]({{< relref "../release-notes/release-notes-9-0-0/" >}}).
 
 ### Role-based access control: changes for general release
 
