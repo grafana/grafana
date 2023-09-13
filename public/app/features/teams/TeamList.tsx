@@ -148,7 +148,6 @@ export const TeamList = ({
             />
           );
         },
-        sortType: createSortFn<Team>('email'),
       },
     ],
     [displayRolePicker, editorsCanAdmin, roleOptions, signedInUser, deleteTeam]
