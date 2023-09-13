@@ -1,5 +1,5 @@
 export { CalculateFieldHelper } from './CalculateFieldHelper';
-export { ConcatenateHelper } from './ConcatenateHelper';
+export { concatenateHelper } from './ConcatenateHelper';
 export { ConfigFromQueryHelper } from './ConfigFromQueryHelper';
 export { ConvertFieldTypeHelper } from './ConvertFieldTypeHelper';
 export { CreateHeatmapHelp } from './CreateHeatmapHelp';

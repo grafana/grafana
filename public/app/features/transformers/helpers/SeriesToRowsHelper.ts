@@ -2,8 +2,6 @@ import { getLinkToDocs } from './getLinkToDocs';
 
 export const SeriesToRowsHelper = () => {
   return `
-  > Note: This transformation is available in Grafana 7.1+.
-
   Use this transformation to combine the result from multiple time series data queries into one single result. This is helpful when using the table panel visualization.
 
   The result from this transformation will contain three columns: Time, Metric, and Value. The Metric column is added so you easily can see from which query the metric originates from. Customize this value by defining Label on the source query.
@@ -36,6 +34,8 @@ export const SeriesToRowsHelper = () => {
   | 2020-07-07 10:31:22 | Temperature | 22    |
   | 2020-07-07 09:30:57 | Humidity    | 33    |
   | 2020-07-07 09:30:05 | Temperature | 19    |
+
+  > **Note:** This transformation is available in Grafana 7.1+.
   ${getLinkToDocs()}
   `;
 };

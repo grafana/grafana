@@ -1,8 +1,8 @@
 import { getLinkToDocs } from './getLinkToDocs';
 
-export const ConcatenateHelper = () => {
+export const concatenateHelper = () => {
   return `
-  This transformation combines all fields from all frames into one result. Consider the following:
+  Use this transformation to combine all fields from all frames into one result. Consider the following:
 
   **Query A:**
 

@@ -2,7 +2,7 @@ import { getLinkToDocs } from './getLinkToDocs';
 
 import {
   CalculateFieldHelper,
-  ConcatenateHelper,
+  concatenateHelper,
   ConfigFromQueryHelper,
   ConvertFieldTypeHelper,
   CreateHeatmapHelp,
@@ -34,7 +34,7 @@ import {
 
 const helperContent: Record<string, () => string> = {
   calculateField: CalculateFieldHelper,
-  concatenate: ConcatenateHelper,
+  concatenate: concatenateHelper,
   configFromData: ConfigFromQueryHelper,
   convertFieldType: ConvertFieldTypeHelper,
   extractFields: ExtractFieldsHelper,
