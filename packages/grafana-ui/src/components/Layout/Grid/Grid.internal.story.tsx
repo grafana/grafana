@@ -3,9 +3,9 @@ import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
-import { useTheme2 } from '../../themes';
-import { Stack } from '../../unstable';
-import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
+import { useTheme2 } from '../../../themes';
+import { Stack } from '../../../unstable';
+import { withCenteredStory } from '../../../utils/storybook/withCenteredStory';
 
 import { Grid } from './Grid';
 import mdx from './Grid.mdx';

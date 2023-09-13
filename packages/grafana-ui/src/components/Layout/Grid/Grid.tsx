@@ -3,7 +3,7 @@ import React, { useCallback } from 'react';
 
 import { GrafanaTheme2, ThemeSpacingTokens } from '@grafana/data';
 
-import { useStyles2 } from '../../themes';
+import { useStyles2 } from '../../../themes';
 
 export type ItemsAlignment = 'start' | 'end' | 'center' | 'stretch';
 

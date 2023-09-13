@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import React, { useCallback } from 'react';
 
-import { useStyles2 } from '../../themes';
+import { useStyles2 } from '../../../themes';
 
 export interface GridItemProps {
     children: NonNullable<React.ReactNode>;
