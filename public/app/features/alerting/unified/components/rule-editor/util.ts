@@ -110,6 +110,16 @@ export function errorFromSeries(series: DataFrame[]): Error | undefined {
   return error;
 }
 
+export function errorFromPreviewData(data: PanelData): Error | undefined {
+  // give preference to QueryErrors
+  if (data.errors?.length) {
+    return new Error(data.errors[0].message);
+  }
+
+  // if none, return errors from series
+  return errorFromSeries(data.series);
+}
+
 export function warningFromSeries(series: DataFrame[]): Error | undefined {
   const notices = series[0]?.meta?.notices ?? [];
   const warning = notices.find((notice) => notice.severity === 'warning')?.text;

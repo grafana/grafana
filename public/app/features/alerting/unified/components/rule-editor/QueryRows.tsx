@@ -18,7 +18,7 @@ import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { AlertDataQuery, AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { AlertQueryOptions, EmptyQueryWrapper, QueryWrapper } from './QueryWrapper';
-import { errorFromSeries, getThresholdsForQueries } from './util';
+import { errorFromPreviewData, getThresholdsForQueries } from './util';
 
 interface Props {
   // The query configuration
@@ -161,9 +161,7 @@ export class QueryRows extends PureComponent<Props> {
                       state: LoadingState.NotStarted,
                     };
                     const dsSettings = this.getDataSourceSettings(query);
-
-                    const isAlertCondition = this.props.condition === query.refId;
-                    const error = isAlertCondition ? errorFromSeries(data.series) : undefined;
+                    const error = data ? errorFromPreviewData(data) : undefined;
 
                     if (!dsSettings) {
                       return (
