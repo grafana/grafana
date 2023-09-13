@@ -328,7 +328,7 @@ export function describeInterval(str: string) {
     );
   }
   return {
-    sec: (intervals_in_seconds as any)[matches[2]] as number,
+    sec: intervals_in_seconds[matches[2] as keyof typeof intervals_in_seconds],
     type: matches[2],
     count: parseInt(matches[1], 10),
   };

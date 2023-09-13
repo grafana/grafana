@@ -551,11 +551,29 @@ func (s *UserAuthTokenService) ActiveTokenCount(ctx context.Context, userID *int
 	return count, err
 }
 
+func (s *UserAuthTokenService) DeleteUserRevokedTokens(ctx context.Context, userID int64, window time.Duration) error {
+	return s.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
+		query := "DELETE FROM user_auth_token WHERE user_id = ? AND revoked_at > 0 AND revoked_at <= ?"
+		res, err := sess.Exec(query, userID, time.Now().Add(-window).Unix())
+		if err != nil {
+			return err
+		}
+
+		rows, err := res.RowsAffected()
+		if err != nil {
+			return err
+		}
+
+		s.log.FromContext(ctx).Debug("Deleted user revoked tokens", "userId", userID, "count", rows)
+		return err
+	})
+}
+
 func (s *UserAuthTokenService) GetUserRevokedTokens(ctx context.Context, userId int64) ([]*auth.UserToken, error) {
 	result := []*auth.UserToken{}
 	err := s.sqlStore.WithDbSession(ctx, func(dbSession *db.Session) error {
 		var tokens []*userAuthToken
-		err := dbSession.Where("user_id = ? AND revoked_at > 0", userId).Find(&tokens)
+		err := dbSession.Where("user_id = ? AND revoked_at > 0", userId).Asc("seen_at").Find(&tokens)
 		if err != nil {
 			return err
 		}
