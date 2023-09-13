@@ -40,7 +40,6 @@ export const TransformationOperationRow = ({
   uiConfig,
   onChange,
 }: TransformationOperationRowProps) => {
-  console.log(id, 'id');
   const [showDeleteModal, setShowDeleteModal] = useToggle(false);
   const [showDebug, toggleShowDebug] = useToggle(false);
   const [showHelp, toggleShowHelp] = useToggle(false);

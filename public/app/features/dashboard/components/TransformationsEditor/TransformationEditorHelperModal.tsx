@@ -31,7 +31,7 @@ export const TransformationEditorHelperModal = ({
       onClickBackdrop={() => onCloseClick(false)}
       onDismiss={() => onCloseClick(false)}
     >
-      <OperationRowHelp markdown={helpContent} styleOverrides={{ borderTop: true }} />
+      <OperationRowHelp markdown={helpContent} styleOverrides={{ borderTop: '2px solid' }} />
     </Modal>
   );
 };

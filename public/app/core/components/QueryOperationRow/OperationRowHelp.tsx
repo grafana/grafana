@@ -8,20 +8,22 @@ export interface Props extends React.HTMLAttributes<HTMLDivElement> {
   children?: React.ReactNode;
   markdown?: string;
   onRemove?: () => void;
-  styleOverrides?: Record<string, any>;
+  styleOverrides?: { [key: string]: string };
 }
 
 export const OperationRowHelp = React.memo(
-  React.forwardRef<HTMLDivElement, Props>(({ className, children, markdown, styleOverrides, onRemove, ...otherProps }, ref) => {
-    const styles = useStyles2((theme) => getStyles(theme, styleOverrides?.borderTop));
+  React.forwardRef<HTMLDivElement, Props>(
+    ({ className, children, markdown, styleOverrides, onRemove, ...otherProps }, ref) => {
+      const styles = useStyles2((theme) => getStyles(theme, styleOverrides?.borderTop));
 
-    return (
-      <div className={cx(styles.wrapper, className)} {...otherProps} ref={ref}>
-        {markdown && markdownHelper(markdown)}
-        {children}
-      </div>
-    );
-  })
+      return (
+        <div className={cx(styles.wrapper, className)} {...otherProps} ref={ref}>
+          {markdown && markdownHelper(markdown)}
+          {children}
+        </div>
+      );
+    }
+  )
 );
 
 function markdownHelper(markdown: string) {
@@ -31,16 +33,16 @@ function markdownHelper(markdown: string) {
 
 OperationRowHelp.displayName = 'OperationRowHelp';
 
-const getStyles = (theme: GrafanaTheme2, borderTop?: boolean) => {
+const getStyles = (theme: GrafanaTheme2, borderTop?: string) => {
   const borderRadius = theme.shape.radius.default;
-  // This wrapper is also being used in the TransformationEditorHelperModal.tsx, which requires a border-top.
-  const borderSettings = `2px solid ${theme.colors.background.secondary}`;
+
+  const themeBackgroundColor = theme.colors.background.secondary;
 
   return {
     wrapper: css`
       padding: ${theme.spacing(2)};
-      border: ${borderSettings};
-      border-top: ${borderTop ? borderSettings : 'none'};
+      border: 2px solid ${themeBackgroundColor};
+      border-top: ${borderTop ? borderTop + themeBackgroundColor : 'none'};
       border-radius: 0 0 ${borderRadius} ${borderRadius};
       position: relative;
       top: -4px;
