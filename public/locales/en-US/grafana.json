@@ -622,7 +622,11 @@
       "name-label": "Name",
       "name-placeholder": "Name",
       "name-required": "Name is required",
-      "save": "Save"
+      "save": "Save",
+      "table-delete": "Delete playlist item",
+      "table-drag": "Drag and drop to reorder",
+      "table-empty": "Playlist is empty. Add dashboards below.",
+      "table-heading": "Dashboards"
     },
     "sub-title": "A playlist rotates through a pre-selected list of dashboards. A playlist can be a great way to build situational awareness, or just show off your metrics to your team or visitors.",
     "title": "Edit playlist"
