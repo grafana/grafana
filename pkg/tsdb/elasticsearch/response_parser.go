@@ -53,6 +53,7 @@ func parseResponse(ctx context.Context, responses []*es.SearchResponse, targets 
 	}
 	ctx, span := tracer.Start(ctx, "datasource.elastic.parseResponse")
 	span.SetAttributes("responseLength", len(responses), attribute.Key("responseLength").Int(len(responses)))
+	defer span.End()
 
 	for i, res := range responses {
 		_, resSpan := tracer.Start(ctx, "datasource.elastic.parseResponse.response")
@@ -106,6 +107,9 @@ func parseResponse(ctx context.Context, responses []*es.SearchResponse, targets 
 				mt, _ := json.Marshal(target)
 				span.RecordError(err)
 				span.SetStatus(codes.Error, err.Error())
+				resSpan.RecordError(err)
+				resSpan.SetStatus(codes.Error, err.Error())
+				resSpan.End()
 				logger.Error("Error processing buckets", "error", err, "query", string(mt), "aggregationsLength", len(res.Aggregations))
 				return &backend.QueryDataResponse{}, err
 			}
@@ -117,7 +121,6 @@ func parseResponse(ctx context.Context, responses []*es.SearchResponse, targets 
 		resSpan.End()
 		logger.Info("Finished processing of response", "duration", time.Since(start), "stage", es.StageParseResponse)
 	}
-	span.End()
 	return &result, nil
 }
 
