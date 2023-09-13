@@ -1,3 +1,5 @@
+import { getLinkToDocs } from './getLinkToDocs';
+
 import {
   CalculateFieldHelper,
   ConcatenateHelper,
@@ -61,7 +63,7 @@ const helperContent: Record<string, () => string> = {
 };
 
 export function getHelperContent(id: string): string {
-  const defaultMessage = 'u broke it, u buy it';
+  const defaultMessage = getLinkToDocs();
 
   if (id in helperContent) {
     return helperContent[id]();

@@ -4,6 +4,8 @@ import { TransformerRegistryItem } from '@grafana/data';
 import { Modal } from '@grafana/ui';
 import { OperationRowHelp } from 'app/core/components/QueryOperationRow/OperationRowHelp';
 
+import { getLinkToDocs } from '../../../transformers/helpers/getLinkToDocs';
+
 interface TransformationEditorHelperModalProps {
   isOpen: boolean;
   onCloseClick: (value: boolean) => void;
@@ -20,7 +22,7 @@ export const TransformationEditorHelperModal = ({
     help,
   } = transformer;
 
-  const helpContent = help ? help : 'hi there';
+  const helpContent = help ? help : getLinkToDocs();
 
   const helpTitle = `Transformation help - ${name}`;
 
