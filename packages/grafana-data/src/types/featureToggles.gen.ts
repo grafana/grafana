@@ -123,4 +123,5 @@ export interface FeatureToggles {
   newBrowseDashboards?: boolean;
   sseGroupByDatasource?: boolean;
   requestInstrumentationStatusSource?: boolean;
+  wargamesTesting?: boolean;
 }
