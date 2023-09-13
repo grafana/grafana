@@ -61,7 +61,7 @@ export const UsersListPageUnconnected = ({
   changePage,
   updateUser,
   removeUser,
-}: Props): JSX.Element => {
+}: Props) => {
   const [showInvites, setShowInvites] = useState(false);
   const externalUserMngInfoHtml = externalUserMngInfo ? renderMarkdown(externalUserMngInfo) : '';
 
@@ -73,6 +73,8 @@ export const UsersListPageUnconnected = ({
   const onRoleChange = (role: OrgRole, user: OrgUser) => {
     updateUser({ ...user, role: role });
   };
+
+  const onRemoveUser = (user: OrgUser) => removeUser(user.userId);
 
   const onShowInvites = () => {
     setShowInvites(!showInvites);
@@ -87,8 +89,8 @@ export const UsersListPageUnconnected = ({
           <OrgUsersTable
             users={users}
             orgId={contextSrv.user.orgId}
-            onRoleChange={(role, user) => onRoleChange(role, user)}
-            onRemoveUser={(user) => removeUser(user.userId)}
+            onRoleChange={onRoleChange}
+            onRemoveUser={onRemoveUser}
           />
           <HorizontalGroup justify="flex-end">
             <Pagination

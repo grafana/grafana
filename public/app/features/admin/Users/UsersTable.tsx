@@ -155,11 +155,6 @@ const getStyles = (theme: GrafanaTheme2) => {
     disabled: css`
       color: ${theme.colors.text.disabled};
     `,
-    image: css`
-      width: 25px;
-      height: 25px;
-      border-radius: 50%;
-    `,
     row: css`
       display: flex;
       align-items: center;

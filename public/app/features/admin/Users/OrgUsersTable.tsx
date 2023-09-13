@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 
 import { GrafanaTheme2, OrgRole } from '@grafana/data';
 import { Button, ConfirmModal, Icon, Tooltip, CellProps, useStyles2, Tag, InteractiveTable } from '@grafana/ui';
@@ -12,6 +12,7 @@ import { AccessControlAction, OrgUser, Role } from 'app/types';
 
 import { OrgRolePicker } from '../OrgRolePicker';
 
+import { Avatar } from './Avatar';
 import { createSortFn } from './sort';
 
 type Cell<T extends keyof OrgUser = keyof OrgUser> = CellProps<OrgUser, OrgUser[T]>;
@@ -42,7 +43,6 @@ export interface Props {
 export const OrgUsersTable = ({ users, orgId, onRoleChange, onRemoveUser }: Props) => {
   const [userToRemove, setUserToRemove] = useState<OrgUser | null>(null);
   const [roleOptions, setRoleOptions] = useState<Role[]>([]);
-  const styles = useStyles2(getStyles);
 
   useEffect(() => {
     async function fetchOptions() {
@@ -60,110 +60,102 @@ export const OrgUsersTable = ({ users, orgId, onRoleChange, onRemoveUser }: Prop
     }
   }, [orgId]);
 
-  const columns = [
-    {
-      id: 'avatarUrl',
-      header: '',
-      cell: ({ cell: { value } }: Cell<'avatarUrl'>) => <img className={styles.image} src={value} alt="User avatar" />,
-    },
-    {
-      id: 'login',
-      header: 'Login',
-      cell: ({ cell: { value } }: Cell<'login'>) => <div>{value}</div>,
-      sortType: createSortFn<OrgUser>('login'),
-    },
-    {
-      id: 'email',
-      header: 'Email',
-      cell: ({ cell: { value } }: Cell<'email'>) => value,
-      sortType: createSortFn<OrgUser>('email'),
-    },
-    {
-      id: 'name',
-      header: 'Name',
-      cell: ({ cell: { value } }: Cell<'name'>) => value,
-      sortType: createSortFn<OrgUser>('name'),
-    },
-    {
-      id: 'lastSeenAtAge',
-      header: 'Last active',
-      cell: ({ cell: { value } }: Cell<'lastSeenAtAge'>) => value,
-      sortType: createSortFn<OrgUser>('lastSeenAt'),
-    },
-    {
-      id: 'role',
-      header: 'Role',
-      cell: ({ cell: { value }, row: { original } }: Cell<'role'>) => {
-        const basicRoleDisabled = getBasicRoleDisabled(original);
-        return contextSrv.licensedAccessControlEnabled() ? (
-          <UserRolePicker
-            userId={original.userId}
-            orgId={orgId}
-            roleOptions={roleOptions}
-            basicRole={value}
-            onBasicRoleChange={(newRole) => onRoleChange(newRole, original)}
-            basicRoleDisabled={basicRoleDisabled}
-            basicRoleDisabledMessage={disabledRoleMessage}
-          />
-        ) : (
-          <OrgRolePicker
-            aria-label="Role"
-            value={value}
-            disabled={basicRoleDisabled}
-            onChange={(newRole) => onRoleChange(newRole, original)}
-          />
-        );
+  const columns = useMemo(
+    () => [
+      {
+        id: 'avatarUrl',
+        header: '',
+        cell: ({ cell: { value } }: Cell<'avatarUrl'>) => <Avatar src={value} alt="User avatar" />,
       },
-    },
-    {
-      id: 'info',
-      header: '',
-      cell: ({ row: { original } }: Cell) => {
-        const basicRoleDisabled = getBasicRoleDisabled(original);
-        return (
-          basicRoleDisabled && (
-            <div className={styles.row}>
-              <Tooltip content={disabledRoleMessage}>
-                <Icon name="question-circle" className={styles.icon} />
-              </Tooltip>
-            </div>
-          )
-        );
+      {
+        id: 'login',
+        header: 'Login',
+        cell: ({ cell: { value } }: Cell<'login'>) => <div>{value}</div>,
+        sortType: createSortFn<OrgUser>('login'),
       },
-    },
-    {
-      id: 'authLabels',
-      header: 'Origin',
-      cell: ({ cell: { value } }: Cell<'authLabels'>) => (
-        <>{Array.isArray(value) && value.length > 0 && <TagBadge label={value[0]} removeIcon={false} count={0} />}</>
-      ),
-    },
-    {
-      id: 'isDisabled',
-      header: '',
-      cell: ({ cell: { value } }: Cell<'isDisabled'>) => <>{value && <Tag colorIndex={9} name={'Disabled'} />}</>,
-      sortType: createSortFn<OrgUser>('isDisabled'),
-    },
-    {
-      id: 'delete',
-      header: '',
-      cell: ({ row: { original } }: Cell) => {
-        return (
-          contextSrv.hasPermissionInMetadata(AccessControlAction.OrgUsersRemove, original) && (
-            <Button
-              size="sm"
-              variant="destructive"
-              onClick={() => {
-                setUserToRemove(original);
-              }}
-              icon="times"
-              aria-label={`Delete user ${original.name}`}
+      {
+        id: 'email',
+        header: 'Email',
+        cell: ({ cell: { value } }: Cell<'email'>) => value,
+        sortType: createSortFn<OrgUser>('email'),
+      },
+      {
+        id: 'name',
+        header: 'Name',
+        cell: ({ cell: { value } }: Cell<'name'>) => value,
+        sortType: createSortFn<OrgUser>('name'),
+      },
+      {
+        id: 'lastSeenAtAge',
+        header: 'Last active',
+        cell: ({ cell: { value } }: Cell<'lastSeenAtAge'>) => value,
+        sortType: createSortFn<OrgUser>('lastSeenAt'),
+      },
+      {
+        id: 'role',
+        header: 'Role',
+        cell: ({ cell: { value }, row: { original } }: Cell<'role'>) => {
+          const basicRoleDisabled = getBasicRoleDisabled(original);
+          return contextSrv.licensedAccessControlEnabled() ? (
+            <UserRolePicker
+              userId={original.userId}
+              orgId={orgId}
+              roleOptions={roleOptions}
+              basicRole={value}
+              onBasicRoleChange={(newRole) => onRoleChange(newRole, original)}
+              basicRoleDisabled={basicRoleDisabled}
+              basicRoleDisabledMessage={disabledRoleMessage}
             />
-          )
-        );
+          ) : (
+            <OrgRolePicker
+              aria-label="Role"
+              value={value}
+              disabled={basicRoleDisabled}
+              onChange={(newRole) => onRoleChange(newRole, original)}
+            />
+          );
+        },
       },
-    },
-  ];
+      {
+        id: 'info',
+        header: '',
+        cell: InfoCell,
+      },
+      {
+        id: 'authLabels',
+        header: 'Origin',
+        cell: ({ cell: { value } }: Cell<'authLabels'>) => (
+          <>{Array.isArray(value) && value.length > 0 && <TagBadge label={value[0]} removeIcon={false} count={0} />}</>
+        ),
+      },
+      {
+        id: 'isDisabled',
+        header: '',
+        cell: ({ cell: { value } }: Cell<'isDisabled'>) => <>{value && <Tag colorIndex={9} name={'Disabled'} />}</>,
+        sortType: createSortFn<OrgUser>('isDisabled'),
+      },
+      {
+        id: 'delete',
+        header: '',
+        cell: ({ row: { original } }: Cell) => {
+          return (
+            contextSrv.hasPermissionInMetadata(AccessControlAction.OrgUsersRemove, original) && (
+              <Button
+                size="sm"
+                variant="destructive"
+                onClick={() => {
+                  setUserToRemove(original);
+                }}
+                icon="times"
+                aria-label={`Delete user ${original.name}`}
+              />
+            )
+          );
+        },
+      },
+    ],
+    [orgId, roleOptions, onRoleChange]
+  );
 
   return (
     <>
@@ -190,15 +182,21 @@ export const OrgUsersTable = ({ users, orgId, onRoleChange, onRemoveUser }: Prop
   );
 };
 
+const InfoCell = ({ row: { original } }: Cell) => {
+  const styles = useStyles2(getStyles);
+  const basicRoleDisabled = getBasicRoleDisabled(original);
+  return (
+    basicRoleDisabled && (
+      <div className={styles.row}>
+        <Tooltip content={disabledRoleMessage}>
+          <Icon name="question-circle" className={styles.icon} />
+        </Tooltip>
+      </div>
+    )
+  );
+};
+
 const getStyles = (theme: GrafanaTheme2) => ({
-  disabled: css`
-    color: ${theme.colors.text.disabled};
-  `,
-  image: css`
-    width: 25px;
-    height: 25px;
-    border-radius: 50%;
-  `,
   row: css`
     display: flex;
     align-items: center;
