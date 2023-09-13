@@ -134,27 +134,24 @@ func ProvideClientDecorator(
 	pluginRegistry registry.Service,
 	oAuthTokenService oauthtoken.OAuthTokenService,
 	tracer tracing.Tracer,
-	idSigner auth.IDSignerService,
 	cachingService caching.CachingService,
 	features *featuremgmt.FeatureManager,
 ) (*client.Decorator, error) {
-	return NewClientDecorator(cfg, pCfg, pluginRegistry, oAuthTokenService, tracer, idSigner, cachingService, features)
+	return NewClientDecorator(cfg, pCfg, pluginRegistry, oAuthTokenService, tracer, cachingService, features)
 }
 
 func NewClientDecorator(
 	cfg *setting.Cfg, pCfg *pCfg.Cfg,
 	pluginRegistry registry.Service, oAuthTokenService oauthtoken.OAuthTokenService,
-	tracer tracing.Tracer, idSigner auth.IDSignerService, cachingService caching.CachingService, features *featuremgmt.FeatureManager,
+	tracer tracing.Tracer, cachingService caching.CachingService, features *featuremgmt.FeatureManager,
 ) (*client.Decorator, error) {
 	c := client.ProvideService(pluginRegistry, pCfg)
-	middlewares := CreateMiddlewares(cfg, oAuthTokenService, tracer, idSigner, cachingService, features)
+	middlewares := CreateMiddlewares(cfg, oAuthTokenService, tracer, cachingService, features)
 
 	return client.NewDecorator(c, middlewares...)
 }
 
-func CreateMiddlewares(cfg *setting.Cfg, oAuthTokenService oauthtoken.OAuthTokenService,
-	tracer tracing.Tracer, idSigner auth.IDSignerService,
-	cachingService caching.CachingService, features *featuremgmt.FeatureManager) []plugins.ClientMiddleware {
+func CreateMiddlewares(cfg *setting.Cfg, oAuthTokenService oauthtoken.OAuthTokenService, tracer tracing.Tracer, cachingService caching.CachingService, features *featuremgmt.FeatureManager) []plugins.ClientMiddleware {
 	skipCookiesNames := []string{cfg.LoginCookieName}
 	middlewares := []plugins.ClientMiddleware{
 		clientmiddleware.NewTracingMiddleware(tracer),
@@ -162,7 +159,7 @@ func CreateMiddlewares(cfg *setting.Cfg, oAuthTokenService oauthtoken.OAuthToken
 		clientmiddleware.NewTracingHeaderMiddleware(),
 		clientmiddleware.NewClearAuthHeadersMiddleware(),
 		clientmiddleware.NewOAuthTokenMiddleware(oAuthTokenService),
-		clientmiddleware.NewGrafanaIDMiddleware(idSigner),
+		clientmiddleware.NewGrafanaIDMiddleware(),
 		clientmiddleware.NewCookiesMiddleware(skipCookiesNames),
 		clientmiddleware.NewResourceResponseMiddleware(),
 	}
