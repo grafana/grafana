@@ -1,4 +1,4 @@
-import { e2e } from '@grafana/e2e';
+import { e2e } from '../utils';
 
 const PANEL_UNDER_TEST = 'Lines 500 data points';
 
@@ -9,13 +9,11 @@ e2e.scenario({
   addScenarioDashBoard: false,
   skipScenario: false,
   scenario: () => {
-    e2e()
-      .intercept({
-        pathname: '/api/ds/query',
-      })
-      .as('query');
+    cy.intercept({
+      pathname: '/api/ds/query',
+    }).as('query');
     e2e.flows.openDashboard({ uid: 'TkZXxlNG3' });
-    e2e().wait('@query');
+    cy.wait('@query');
 
     e2e.flows.openPanelMenuItem(e2e.flows.PanelMenuItems.Edit, PANEL_UNDER_TEST);
 
@@ -71,7 +69,7 @@ e2e.scenario({
     e2e.components.PanelEditor.toggleVizOptions().click();
     e2e.components.PanelEditor.OptionsPane.content().should('not.exist');
 
-    e2e().wait(100);
+    cy.wait(100);
 
     // open options pane
     e2e.components.PanelEditor.toggleVizOptions().should('be.visible').click();

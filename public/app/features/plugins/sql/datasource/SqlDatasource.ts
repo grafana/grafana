@@ -14,6 +14,7 @@ import {
   CoreApp,
   getSearchFilterScopedVar,
   LegacyMetricFindQueryOptions,
+  VariableWithMultiSupport,
 } from '@grafana/data';
 import { EditorMode } from '@grafana/experimental';
 import {
@@ -22,13 +23,12 @@ import {
   FetchResponse,
   getBackendSrv,
   getTemplateSrv,
+  toDataQueryResponse,
   TemplateSrv,
   reportInteraction,
 } from '@grafana/runtime';
-import { toDataQueryResponse } from '@grafana/runtime/src/utils/queryResponse';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
-import { VariableWithMultiSupport } from '../../../variables/types';
 import { ResponseParser } from '../ResponseParser';
 import { SqlQueryEditor } from '../components/QueryEditor';
 import { MACRO_NAMES } from '../constants';

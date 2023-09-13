@@ -8,6 +8,7 @@ import {
   updateDatasourcePluginJsonDataOption,
   updateDatasourcePluginResetOption,
 } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import {
   Alert,
   InlineSwitch,
@@ -19,7 +20,6 @@ import {
   SecretInput,
   Link,
 } from '@grafana/ui';
-import { config } from 'app/core/config';
 import { ConnectionLimits } from 'app/features/plugins/sql/components/configuration/ConnectionLimits';
 import { TLSSecretsConfig } from 'app/features/plugins/sql/components/configuration/TLSSecretsConfig';
 import { useMigrateDatabaseFields } from 'app/features/plugins/sql/components/configuration/useMigrateDatabaseFields';
