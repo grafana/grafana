@@ -218,6 +218,7 @@ func queryData(ctx context.Context, req *backend.QueryDataRequest, dsInfo *datas
 			} else {
 				queryRes.Frames = frames
 			}
+			span.End()
 
 			resultLock.Lock()
 			defer resultLock.Unlock()
