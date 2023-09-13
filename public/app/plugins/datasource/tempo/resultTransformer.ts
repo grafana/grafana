@@ -16,7 +16,6 @@ import {
   FieldDTO,
   createDataFrame,
   getDisplayProcessor,
-  createTheme,
 } from '@grafana/data';
 
 import { createGraphFrames } from './graphTransform';
@@ -763,9 +762,8 @@ const traceSubFrame = (
     },
   });
 
-  const theme = createTheme();
   for (const field of subFrame.fields) {
-    field.display = getDisplayProcessor({ field, theme });
+    field.display = getDisplayProcessor({ field });
   }
 
   spanSet.spans.forEach((span) => {

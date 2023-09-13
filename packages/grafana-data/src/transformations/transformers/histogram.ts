@@ -1,7 +1,7 @@
 import { map } from 'rxjs/operators';
 
 import { getDisplayProcessor } from '../../field';
-import { createTheme, GrafanaTheme2 } from '../../themes';
+import { GrafanaTheme2 } from '../../themes';
 import { DataFrameType, SynchronousDataTransformerInfo } from '../../types';
 import { DataFrame, Field, FieldConfig, FieldType } from '../../types/dataFrame';
 import { roundDecimals } from '../../utils';
@@ -405,7 +405,6 @@ export function histogramFieldsToFrame(info: HistogramFields, theme?: GrafanaThe
   if (!info.xMin.display) {
     const display = getDisplayProcessor({
       field: info.xMin,
-      theme: theme ?? createTheme(),
     });
     info.xMin.display = display;
     info.xMax.display = display;
@@ -414,7 +413,6 @@ export function histogramFieldsToFrame(info: HistogramFields, theme?: GrafanaThe
   // ensure updated units are reflected on the count field used for y axis formatting
   info.counts[0].display = getDisplayProcessor({
     field: info.counts[0],
-    theme: theme ?? createTheme(),
   });
 
   return {

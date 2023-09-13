@@ -1,12 +1,4 @@
-import {
-  createTheme,
-  DataFrame,
-  DisplayProcessor,
-  Field,
-  FieldType,
-  getDisplayProcessor,
-  GrafanaTheme2,
-} from '@grafana/data';
+import { DataFrame, DisplayProcessor, Field, FieldType, getDisplayProcessor, GrafanaTheme2 } from '@grafana/data';
 
 import { SampleUnit } from '../types';
 
@@ -153,7 +145,7 @@ export class FlameGraphDataContainer {
   private levels: LevelItem[][] | undefined;
   private uniqueLabelsMap: Record<string, LevelItem[]> | undefined;
 
-  constructor(data: DataFrame, theme: GrafanaTheme2 = createTheme()) {
+  constructor(data: DataFrame, theme?: GrafanaTheme2) {
     this.data = data;
 
     const wrongFields = checkFields(data);
