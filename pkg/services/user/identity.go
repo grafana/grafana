@@ -107,9 +107,9 @@ func (u *SignedInUser) HasUniqueId() bool {
 // Add an extra prefix to avoid collisions with other caches
 func (u *SignedInUser) GetCacheKey() string {
 	namespace, id := u.GetNamespacedID()
-	if namespace == identity.NamespaceRenderService {
-		// Hack use the org role as id for rendering service because it can vary between keys
-		// and we don't have any other unique identifier to go on
+	if !u.HasUniqueId() {
+		// Hack use the org role as id for identities that do not have a unique id
+		// e.g. anonymous and render key.
 		id = string(u.GetOrgRole())
 	}
 
