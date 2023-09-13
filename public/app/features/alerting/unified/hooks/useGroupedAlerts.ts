@@ -10,7 +10,7 @@ export const useGroupedAlerts = (groups: AlertmanagerGroup[], groupBy: string[])
       const emptyGroupings = groups.filter((group) => Object.keys(group.labels).length === 0);
       if (emptyGroupings.length > 1) {
         // Merges multiple ungrouped grouping
-        return groups.reduce((combinedGroups, group) => {
+        return groups.reduce<AlertmanagerGroup[]>((combinedGroups, group) => {
           if (Object.keys(group.labels).length === 0) {
             const noGroupingGroup = combinedGroups.find(({ labels }) => Object.keys(labels));
             if (!noGroupingGroup) {
@@ -22,13 +22,13 @@ export const useGroupedAlerts = (groups: AlertmanagerGroup[], groupBy: string[])
             combinedGroups.push(group);
           }
           return combinedGroups;
-        }, [] as AlertmanagerGroup[]);
+        }, []);
       } else {
         return groups;
       }
     }
     const alerts = groups.flatMap(({ alerts }) => alerts);
-    return alerts.reduce((groupings, alert) => {
+    return alerts.reduce<AlertmanagerGroup[]>((groupings, alert) => {
       const alertContainsGroupings = groupBy.every((groupByLabel) => Object.keys(alert.labels).includes(groupByLabel));
 
       if (alertContainsGroupings) {
@@ -38,10 +38,10 @@ export const useGroupedAlerts = (groups: AlertmanagerGroup[], groupBy: string[])
           });
         });
         if (!existingGrouping) {
-          const labels = groupBy.reduce((acc, key) => {
+          const labels = groupBy.reduce<Labels>((acc, key) => {
             acc = { ...acc, [key]: alert.labels[key] };
             return acc;
-          }, {} as Labels);
+          }, {});
           groupings.push({
             alerts: [alert],
             labels,
@@ -62,6 +62,6 @@ export const useGroupedAlerts = (groups: AlertmanagerGroup[], groupBy: string[])
       }
 
       return groupings;
-    }, [] as AlertmanagerGroup[]);
+    }, []);
   }, [groups, groupBy]);
 };

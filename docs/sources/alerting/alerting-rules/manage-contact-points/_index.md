@@ -1,11 +1,12 @@
 ---
 aliases:
-  - ../../contact-points/create-contact-point/
-  - ../../contact-points/delete-contact-point/
-  - ../../contact-points/edit-contact-point/
-  - ../../contact-points/test-contact-point/
-  - ../create-contact-point/
-  - alerting/manage-notifications/manage-contact-points/
+  - ../contact-points/ # /docs/grafana/<GRAFANA_VERSION>/alerting/contact-points/
+  - ../contact-points/create-contact-point/ # /docs/grafana/<GRAFANA_VERSION>/alerting/contact-points/create-contact-point/
+  - ../contact-points/delete-contact-point/ # /docs/grafana/<GRAFANA_VERSION>/alerting/contact-points/delete-contact-point/
+  - ../contact-points/edit-contact-point/ # /docs/grafana/<GRAFANA_VERSION>/alerting/contact-points/edit-contact-point/
+  - ../contact-points/test-contact-point/ # /docs/grafana/<GRAFANA_VERSION>/alerting/contact-points/test-contact-point/
+  - ../manage-notifications/manage-contact-points/ # /docs/grafana/<GRAFANA_VERSION>/alerting/manage-notifications/manage-contact-points/
+  - create-contact-point/ # /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-contact-point/
 canonical: https://grafana.com/docs/grafana/latest/alerting/alerting-rules/manage-contact-points/
 description: How to manage your contact points
 keywords:

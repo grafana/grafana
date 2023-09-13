@@ -32,12 +32,12 @@ type Series = {
 };
 
 type MetricsData = {
-  spanCount: string;
-  errorPercentage: string;
-  p50: string;
-  p90: string;
-  p95: string;
-  p99: string;
+  spanCount: number;
+  errorPercentage: number | string;
+  p50: number;
+  p90: number;
+  p95: number;
+  p99: number;
   [key: string]: string | number;
 };
 
@@ -76,12 +76,12 @@ export function createTableFrameFromMetricsSummaryQuery(
       },
       {
         name: 'spanCount',
-        type: FieldType.string,
+        type: FieldType.number,
         config: { displayNameFromDS: 'Span count', custom: { width: 150 } },
       },
       {
         name: 'errorPercentage',
-        type: FieldType.string,
+        type: FieldType.number,
         config: { displayNameFromDS: 'Error', unit: 'percent', custom: { width: 150 } },
       },
       getPercentileRow('p50'),
@@ -108,17 +108,17 @@ export function createTableFrameFromMetricsSummaryQuery(
 
 export const transformToMetricsData = (data: MetricsSummary) => {
   const errorPercentage = data.errorSpanCount
-    ? ((parseInt(data.errorSpanCount, 10) / parseInt(data.spanCount, 10)) * 100).toString()
+    ? (getNumberForMetric(data.errorSpanCount) / getNumberForMetric(data.spanCount)) * 100
     : '0%';
 
   const metricsData: MetricsData = {
     kind: 'server', // so the user knows all results are of kind = server
-    spanCount: data.spanCount,
+    spanCount: getNumberForMetric(data.spanCount),
     errorPercentage,
-    p50: data.p50,
-    p90: data.p90,
-    p95: data.p95,
-    p99: data.p99,
+    p50: getNumberForMetric(data.p50),
+    p90: getNumberForMetric(data.p90),
+    p95: getNumberForMetric(data.p95),
+    p99: getNumberForMetric(data.p99),
   };
 
   data.series.forEach((series: Series) => {
@@ -158,6 +158,7 @@ export const getConfigQuery = (series: Series[], targetQuery: string) => {
 const getConfig = (series: Series, query: string, instanceSettings: DataSourceInstanceSettings) => {
   const commonConfig = {
     displayNameFromDS: series.key,
+    noValue: '<no value>',
     links: [
       {
         title: 'Query in explore',
@@ -260,6 +261,11 @@ const getPercentileRow = (name: string) => {
       },
     },
   };
+};
+
+const getNumberForMetric = (metric: string) => {
+  const number = parseInt(metric, 10);
+  return isNaN(number) ? 0 : number;
 };
 
 export const emptyResponse = new MutableDataFrame({

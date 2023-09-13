@@ -65,7 +65,7 @@ describe('optionsPickerReducer', () => {
         clearOthers: args.clearOthers,
         option: { text: args.option, value: args.option, selected: true },
       };
-      const expectedAsRecord: any = args.expectSelected.reduce((all: any, current: any) => {
+      const expectedAsRecord = args.expectSelected.reduce((all: any, current: any) => {
         all[current] = current;
         return all;
       }, {});

@@ -14,7 +14,7 @@ describe.skip('Dashboard browse (nested)', () => {
 
   // Add nested folder structure
   before(() => {
-    e2e.flows.login('admin', 'admin');
+    e2e.flows.login(e2e.env('USERNAME'), e2e.env('PASSWORD'), false);
 
     // Add root folders
     for (let i = 0; i < NUM_ROOT_FOLDERS; i++) {

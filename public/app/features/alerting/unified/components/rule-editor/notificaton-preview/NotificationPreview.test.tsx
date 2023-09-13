@@ -3,7 +3,6 @@ import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { byRole, byTestId, byText } from 'testing-library-selector';
 
-import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import 'core-js/stable/structured-clone';
@@ -11,7 +10,7 @@ import { TestProvider } from '../../../../../../../test/helpers/TestProvider';
 import { MatcherOperator } from '../../../../../../plugins/datasource/alertmanager/types';
 import { Labels } from '../../../../../../types/unified-alerting-dto';
 import { mockApi, setupMswServer } from '../../../mockApi';
-import { mockAlertQuery } from '../../../mocks';
+import { grantUserPermissions, mockAlertQuery } from '../../../mocks';
 import { mockPreviewApiResponse } from '../../../mocks/alertRuleApi';
 import * as dataSource from '../../../utils/datasource';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../../utils/datasource';
@@ -34,8 +33,6 @@ jest.spyOn(notificationPreview, 'useGetAlertManagersSourceNamesAndImage').mockRe
 ]);
 
 jest.spyOn(dataSource, 'getDatasourceAPIUid').mockImplementation((ds: string) => ds);
-jest.mock('app/core/services/context_srv');
-const contextSrvMock = jest.mocked(contextSrv);
 
 const useGetAlertManagersSourceNamesAndImageMock = useGetAlertManagersSourceNamesAndImage as jest.MockedFunction<
   typeof useGetAlertManagersSourceNamesAndImage
@@ -113,20 +110,19 @@ function mockTwoAlertManagers() {
 }
 
 function mockHasEditPermission(enabled: boolean) {
-  contextSrvMock.accessControlEnabled.mockReturnValue(true);
-  contextSrvMock.hasAccess.mockImplementation((action) => {
-    const onlyReadPermissions: string[] = [
-      AccessControlAction.AlertingNotificationsRead,
-      AccessControlAction.AlertingNotificationsExternalRead,
-    ];
-    const readAndWritePermissions: string[] = [
-      AccessControlAction.AlertingNotificationsRead,
-      AccessControlAction.AlertingNotificationsWrite,
-      AccessControlAction.AlertingNotificationsExternalRead,
-      AccessControlAction.AlertingNotificationsExternalWrite,
-    ];
-    return enabled ? readAndWritePermissions.includes(action) : onlyReadPermissions.includes(action);
-  });
+  const onlyReadPermissions = [
+    AccessControlAction.AlertingNotificationsRead,
+    AccessControlAction.AlertingNotificationsExternalRead,
+  ];
+
+  const readAndWritePermissions = [
+    AccessControlAction.AlertingNotificationsRead,
+    AccessControlAction.AlertingNotificationsWrite,
+    AccessControlAction.AlertingNotificationsExternalRead,
+    AccessControlAction.AlertingNotificationsExternalWrite,
+  ];
+
+  return enabled ? grantUserPermissions(readAndWritePermissions) : grantUserPermissions(onlyReadPermissions);
 }
 
 const folder: Folder = {

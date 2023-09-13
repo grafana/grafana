@@ -3,6 +3,11 @@ This module returns the pipeline used for integration benchmarks.
 """
 
 load(
+    "scripts/drone/services/services.star",
+    "integration_test_services",
+    "integration_test_services_volumes",
+)
+load(
     "scripts/drone/steps/lib.star",
     "compile_build_cmd",
     "enterprise_setup_step",
@@ -10,11 +15,6 @@ load(
     "verify_gen_cue_step",
     "verify_gen_jsonnet_step",
     "wire_install_step",
-)
-load(
-    "scripts/drone/services/services.star",
-    "integration_test_services",
-    "integration_test_services_volumes",
 )
 load(
     "scripts/drone/utils/utils.star",
@@ -52,22 +52,20 @@ def integration_benchmarks(prefix):
         wire_install_step(),
     ]
 
-    benchmark_steps = [
-        integration_benchmarks_step("sqlite"),
-        integration_benchmarks_step("postgres", {
-            "PGPASSWORD": "grafanatest",
-            "GRAFANA_TEST_DB": "postgres",
-            "POSTGRES_HOST": "postgres",
-        }),
-        integration_benchmarks_step("mysql-5.7", {
-            "GRAFANA_TEST_DB": "mysql",
-            "MYSQL_HOST": "mysql57",
-        }),
-        integration_benchmarks_step("mysql-8.0", {
-            "GRAFANA_TEST_DB": "mysql",
-            "MYSQL_HOST": "mysql80",
-        }),
-    ]
+    benchmark_steps = integration_benchmarks_step("sqlite") + \
+                      integration_benchmarks_step("postgres", {
+                          "PGPASSWORD": "grafanatest",
+                          "GRAFANA_TEST_DB": "postgres",
+                          "POSTGRES_HOST": "postgres",
+                      }) + \
+                      integration_benchmarks_step("mysql-5.7", {
+                          "GRAFANA_TEST_DB": "mysql",
+                          "MYSQL_HOST": "mysql57",
+                      }) + \
+                      integration_benchmarks_step("mysql-8.0", {
+                          "GRAFANA_TEST_DB": "mysql",
+                          "MYSQL_HOST": "mysql80",
+                      })
 
     return pipeline(
         name = "{}-integration-benchmarks".format(prefix),
