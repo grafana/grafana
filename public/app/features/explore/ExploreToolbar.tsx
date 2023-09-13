@@ -29,7 +29,7 @@ import {
   changeCorrelationEditorDetails,
 } from './state/main';
 import { cancelQueries, runQueries, selectIsWaitingForData } from './state/query';
-import { isLeftPaneSelector, isSplit, selectCorrelationEditorMode, selectPanesEntries } from './state/selectors';
+import { isLeftPaneSelector, isSplit, selectCorrelationDetails, selectPanesEntries } from './state/selectors';
 import { syncTimes, changeRefreshInterval } from './state/time';
 import { LiveTailControls } from './useLiveTailControls';
 
@@ -66,7 +66,8 @@ export function ExploreToolbar({ exploreId, topOfViewRef, onChangeTime }: Props)
   );
 
   const panes = useSelector(selectPanesEntries);
-  const isCorrelationsEditorMode = useSelector(selectCorrelationEditorMode);
+  const correlationDetails = useSelector(selectCorrelationDetails);
+  const isCorrelationsEditorMode = correlationDetails?.editorMode || false;
   const isLeftPane = useSelector(isLeftPaneSelector(exploreId));
 
   const shouldRotateSplitIcon = useMemo(
@@ -86,7 +87,13 @@ export function ExploreToolbar({ exploreId, topOfViewRef, onChangeTime }: Props)
       panes.forEach((pane) => {
         dispatch(removeCorrelationHelperData(pane[0]));
         dispatch(
-          changeCorrelationEditorDetails({ label: undefined, description: undefined, canSave: false, dirty: false })
+          changeCorrelationEditorDetails({
+            label: undefined,
+            description: undefined,
+            canSave: false,
+            dirty: false,
+            closePaneExploreId: undefined,
+          })
         );
       });
     }
@@ -108,26 +115,18 @@ export function ExploreToolbar({ exploreId, topOfViewRef, onChangeTime }: Props)
   };
 
   const onCloseSplitView = () => {
-    if (isCorrelationsEditorMode) {
+    // this does mean the user will need to reclick "close" after the confirmation prompt
+    if (isCorrelationsEditorMode && correlationDetails?.dirty) {
       dispatch(
         changeCorrelationEditorDetails({
-          label: undefined,
-          description: undefined,
-          canSave: false,
-          dirty: false,
+          isExiting: true,
+          closePaneExploreId: exploreId,
         })
       );
-
-      panes.forEach((pane) => {
-        dispatch(removeCorrelationHelperData(pane[0]));
-        if (pane[0] !== exploreId) {
-          dispatch(runQueries({ exploreId: pane[0] }));
-        }
-      });
+    } else {
+      dispatch(splitClose(exploreId));
+      reportInteraction('grafana_explore_split_view_closed');
     }
-
-    dispatch(splitClose(exploreId));
-    reportInteraction('grafana_explore_split_view_closed');
   };
 
   const onClickResize = () => {

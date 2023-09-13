@@ -4,21 +4,21 @@ import { Prompt } from 'react-router-dom';
 import { useBeforeUnload } from 'react-use';
 
 import { GrafanaTheme2, colorManipulator } from '@grafana/data';
+import { reportInteraction } from '@grafana/runtime';
 import { Button, HorizontalGroup, Icon, Tooltip, useStyles2 } from '@grafana/ui';
 import { ExploreItemState, useDispatch, useSelector } from 'app/types';
 
 import { CorrelationUnsavedChangesModal } from './CorrelationUnsavedChangesModal';
 import { removeCorrelationHelperData } from './state/explorePane';
-import { changeCorrelationEditorDetails } from './state/main';
+import { changeCorrelationEditorDetails, splitClose } from './state/main';
 import { runQueries, saveCurrentCorrelation } from './state/query';
-import { selectCorrelationDetails, selectCorrelationEditorMode } from './state/selectors';
+import { selectCorrelationDetails } from './state/selectors';
 
 // we keep component rendered and hidden to avoid race conditions with the prompt
 export const CorrelationEditorModeBar = ({ panes }: { panes: Array<[string, ExploreItemState]> }) => {
   const dispatch = useDispatch();
   const styles = useStyles2(getStyles);
   const correlationDetails = useSelector(selectCorrelationDetails);
-  const correlationsEditorMode = useSelector(selectCorrelationEditorMode);
   const [showSavePrompt, setShowSavePrompt] = useState(false);
 
   // handle refreshing and closing the tab
@@ -29,7 +29,14 @@ export const CorrelationEditorModeBar = ({ panes }: { panes: Array<[string, Expl
     if (correlationDetails?.isExiting && correlationDetails?.dirty) {
       setShowSavePrompt(true);
     } else if (correlationDetails?.isExiting && !correlationDetails?.dirty) {
-      dispatch(changeCorrelationEditorDetails({ editorMode: false, dirty: false, isExiting: false }));
+      dispatch(
+        changeCorrelationEditorDetails({
+          editorMode: false,
+          dirty: false,
+          isExiting: false,
+          closePaneExploreId: undefined,
+        })
+      );
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [correlationDetails?.dirty, correlationDetails?.isExiting]);
@@ -45,6 +52,7 @@ export const CorrelationEditorModeBar = ({ panes }: { panes: Array<[string, Expl
           label: undefined,
           description: undefined,
           canSave: false,
+          closePaneExploreId: undefined,
         })
       );
       panes.forEach((pane) => {
@@ -55,12 +63,33 @@ export const CorrelationEditorModeBar = ({ panes }: { panes: Array<[string, Expl
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const closePane = (exploreId: string) => {
+    setShowSavePrompt(false);
+    dispatch(splitClose(exploreId));
+    reportInteraction('grafana_explore_split_view_closed');
+    dispatch(
+      changeCorrelationEditorDetails({
+        editorMode: true,
+        isExiting: false,
+        dirty: false,
+        label: undefined,
+        description: undefined,
+        canSave: false,
+        closePaneExploreId: undefined,
+      })
+    );
+  };
+
   return (
     <>
       {/* Handle navigating outside of Explore */}
       <Prompt
         message={(location) => {
-          if (location.pathname !== '/explore' && correlationsEditorMode && (correlationDetails?.dirty || false)) {
+          if (
+            location.pathname !== '/explore' &&
+            (correlationDetails?.editorMode || false) &&
+            (correlationDetails?.dirty || false)
+          ) {
             return 'You have unsaved correlation data. Continue?';
           } else {
             return true;
@@ -71,18 +100,34 @@ export const CorrelationEditorModeBar = ({ panes }: { panes: Array<[string, Expl
       {showSavePrompt && (
         <CorrelationUnsavedChangesModal
           onDiscard={() => {
-            // if we are discarding the in progress correlation, reset everything
-            // this modal only shows if the editorMode is false, so we just need to update the dirty state
-            dispatch(changeCorrelationEditorDetails({ editorMode: false, dirty: false, isExiting: false }));
+            if (correlationDetails?.closePaneExploreId !== undefined) {
+              closePane(correlationDetails?.closePaneExploreId);
+            } else {
+              // exit correlations mode
+              // if we are discarding the in progress correlation, reset everything
+              // this modal only shows if the editorMode is false, so we just need to update the dirty state
+              dispatch(
+                changeCorrelationEditorDetails({
+                  editorMode: false,
+                  dirty: false,
+                  isExiting: false,
+                  closePaneExploreId: undefined,
+                })
+              );
+            }
           }}
           onCancel={() => {
             // if we are cancelling the exit, set the editor mode back to true and hide the prompt
-            dispatch(changeCorrelationEditorDetails({ isExiting: false }));
+            dispatch(changeCorrelationEditorDetails({ isExiting: false, closePaneExploreId: undefined }));
             setShowSavePrompt(false);
           }}
           onSave={() => {
-            dispatch(changeCorrelationEditorDetails({ editorMode: false, dirty: false, isExiting: false }));
             dispatch(saveCurrentCorrelation(correlationDetails?.label, correlationDetails?.description));
+            if (correlationDetails?.closePaneExploreId !== undefined) {
+              closePane(correlationDetails?.closePaneExploreId);
+            } else {
+              dispatch(changeCorrelationEditorDetails({ editorMode: false, dirty: false, isExiting: false }));
+            }
           }}
         />
       )}

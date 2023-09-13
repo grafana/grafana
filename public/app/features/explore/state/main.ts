@@ -262,7 +262,7 @@ export const exploreReducer = (state = initialExploreState, action: AnyAction): 
   }
 
   if (changeCorrelationEditorDetails.match(action)) {
-    const { editorMode, label, description, canSave, dirty, isExiting } = action.payload;
+    const { editorMode, label, description, canSave, dirty, isExiting, closePaneExploreId } = action.payload;
     return {
       ...state,
       correlationEditorDetails: {
@@ -272,6 +272,8 @@ export const exploreReducer = (state = initialExploreState, action: AnyAction): 
         description: description !== undefined ? description : state.correlationEditorDetails?.description,
         dirty: dirty !== undefined ? dirty : state.correlationEditorDetails?.dirty || false,
         isExiting: isExiting !== undefined ? isExiting : state.correlationEditorDetails?.isExiting || false,
+        closePaneExploreId:
+          closePaneExploreId !== undefined ? closePaneExploreId : state.correlationEditorDetails?.closePaneExploreId,
       },
     };
   }

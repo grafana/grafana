@@ -20,7 +20,7 @@ import { useSplitSizeUpdater } from './hooks/useSplitSizeUpdater';
 import { useStateSync } from './hooks/useStateSync';
 import { useTimeSrvFix } from './hooks/useTimeSrvFix';
 import { changeCorrelationEditorDetails } from './state/main';
-import { isSplit, selectCorrelationEditorMode, selectPanesEntries } from './state/selectors';
+import { isSplit, selectCorrelationDetails, selectPanesEntries } from './state/selectors';
 
 const MIN_PANE_WIDTH = 200;
 
@@ -41,7 +41,8 @@ export default function ExplorePage(props: GrafanaRouteComponentProps<{}, Explor
 
   const panes = useSelector(selectPanesEntries);
   const hasSplit = useSelector(isSplit);
-  const isCorrelationsEditorMode = useSelector(selectCorrelationEditorMode);
+  const correlationDetails = useSelector(selectCorrelationDetails);
+  const isCorrelationsEditorMode = correlationDetails?.editorMode || false;
 
   useEffect(() => {
     //This is needed for breadcrumbs and topnav.
@@ -61,7 +62,7 @@ export default function ExplorePage(props: GrafanaRouteComponentProps<{}, Explor
       navModel.node = exploreNavItem;
       chrome.update({ sectionNav: navModel });
     }
-  }, [chrome, isCorrelationsEditorMode, navModel, dispatch, panes]);
+  }, [chrome, navModel, dispatch, panes, isCorrelationsEditorMode]);
 
   useKeyboardShortcuts();
 

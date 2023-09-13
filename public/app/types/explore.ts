@@ -28,6 +28,7 @@ export interface CorrelationEditorDetails {
   editorMode: boolean;
   dirty: boolean;
   isExiting: boolean;
+  closePaneExploreId?: string; // this is to close a pane after a confirmation modal instead of exiting editor mode
   canSave?: boolean;
   label?: string;
   description?: string;

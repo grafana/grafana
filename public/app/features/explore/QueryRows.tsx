@@ -12,12 +12,7 @@ import { QueryEditorRows } from '../query/components/QueryEditorRows';
 
 import { changeCorrelationEditorDetails } from './state/main';
 import { changeQueries, runQueries } from './state/query';
-import {
-  getExploreItemSelector,
-  selectCorrelationDetails,
-  selectCorrelationEditorMode,
-  isLeftPaneSelector,
-} from './state/selectors';
+import { getExploreItemSelector, selectCorrelationDetails, isLeftPaneSelector } from './state/selectors';
 
 interface Props {
   exploreId: string;
@@ -49,8 +44,8 @@ export const QueryRows = ({ exploreId }: Props) => {
   const queryResponse = useSelector(getQueryResponse);
   const history = useSelector(getHistory);
   const eventBridge = useSelector(getEventBridge);
-  const isCorrelationsEditorMode = useSelector(selectCorrelationEditorMode);
   const correlationDetails = useSelector(selectCorrelationDetails);
+  const isCorrelationsEditorMode = correlationDetails?.editorMode || false;
   const isLeftPane = useSelector(isLeftPaneSelector(exploreId));
 
   const onRunQueries = useCallback(() => {

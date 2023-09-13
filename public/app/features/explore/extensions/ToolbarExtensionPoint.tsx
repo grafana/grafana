@@ -7,7 +7,7 @@ import { Dropdown, ToolbarButton } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction, ExplorePanelData, useSelector } from 'app/types';
 
-import { getExploreItemSelector, isLeftPaneSelector, selectCorrelationEditorMode } from '../state/selectors';
+import { getExploreItemSelector, isLeftPaneSelector, selectCorrelationDetails } from '../state/selectors';
 
 import { ConfirmNavigationModal } from './ConfirmNavigationModal';
 import { ToolbarExtensionPointMenu } from './ToolbarExtensionPointMenu';
@@ -86,7 +86,8 @@ export type PluginExtensionExploreContext = {
 
 function useExtensionPointContext(props: Props): PluginExtensionExploreContext {
   const { exploreId, timeZone } = props;
-  const isCorrelationsEditorMode = useSelector(selectCorrelationEditorMode);
+  const isCorrelationDetails = useSelector(selectCorrelationDetails);
+  const isCorrelationsEditorMode = isCorrelationDetails?.editorMode || false;
   const { queries, queryResponse, range } = useSelector(getExploreItemSelector(exploreId))!;
   const isLeftPane = useSelector(isLeftPaneSelector(exploreId));
 
