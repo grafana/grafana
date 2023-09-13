@@ -37,16 +37,12 @@ export function getPanelOptionsWithDefaults({
   currentFieldConfig,
   isAfterPluginChange,
 }: Props): OptionDefaults {
-  const optionsWithDefaults = mergeWith(
-    {},
-    plugin.defaults,
-    currentOptions || {},
-    (objValue: any, srcValue: any): any => {
-      if (isArray(srcValue)) {
-        return srcValue;
-      }
+  const optionsWithDefaults = mergeWith({}, plugin.defaults, currentOptions || {}, (objValue, srcValue) => {
+    if (isArray(srcValue)) {
+      return srcValue;
     }
-  );
+    return;
+  });
 
   const fieldConfigWithDefaults = applyFieldConfigDefaults(currentFieldConfig, plugin);
   const fieldConfigWithOptimalColorMode = adaptFieldColorMode(plugin, fieldConfigWithDefaults, isAfterPluginChange);
@@ -62,10 +58,11 @@ function applyFieldConfigDefaults(existingFieldConfig: FieldConfigSource, plugin
       {},
       pluginDefaults.defaults,
       existingFieldConfig ? existingFieldConfig.defaults : {},
-      (objValue: any, srcValue: any): any => {
+      (objValue, srcValue) => {
         if (isArray(srcValue)) {
           return srcValue;
         }
+        return;
       }
     ),
     overrides: existingFieldConfig?.overrides ?? [],
@@ -86,7 +83,7 @@ function applyFieldConfigDefaults(existingFieldConfig: FieldConfigSource, plugin
   for (const override of result.overrides) {
     for (const property of override.properties) {
       if (property.id === 'thresholds') {
-        fixThresholds(property.value as ThresholdsConfig);
+        fixThresholds(property.value);
       }
     }
   }
@@ -157,7 +154,7 @@ function adaptFieldColorMode(
   const color = plugin.fieldConfigRegistry.getIfExists(FieldConfigProperty.Color);
 
   if (color && color.settings) {
-    const colorSettings = color.settings as FieldColorConfigSettings;
+    const colorSettings: FieldColorConfigSettings = color.settings;
     const mode = fieldColorModeRegistry.getIfExists(fieldConfig.defaults.color?.mode);
 
     // When no support fo value colors, use classic palette

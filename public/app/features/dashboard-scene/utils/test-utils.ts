@@ -11,7 +11,7 @@ export function setupLoadDashboardMock(rsp: DeepPartial<DashboardDTO>) {
 }
 
 export function mockResizeObserver() {
-  (window as any).ResizeObserver = class ResizeObserver {
+  window.ResizeObserver = class ResizeObserver {
     constructor(callback: ResizeObserverCallback) {
       setTimeout(() => {
         callback(

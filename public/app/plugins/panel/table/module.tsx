@@ -138,7 +138,7 @@ export const plugin = new PanelPlugin<Options, TableFieldOptions>(TablePanel)
         path: 'footer.reducer',
         name: 'Calculation',
         description: 'Choose a reducer function / calculation',
-        editor: standardEditorsRegistry.get('stats-picker').editor as any,
+        editor: standardEditorsRegistry.get('stats-picker').editor,
         defaultValue: [ReducerID.sum],
         showIf: (cfg) => cfg.footer?.show,
       })
@@ -167,7 +167,7 @@ export const plugin = new PanelPlugin<Options, TableFieldOptions>(TablePanel)
                 if (field.type === FieldType.number) {
                   const name = getFieldDisplayName(field, frame, context.data);
                   const value = field.name;
-                  options.push({ value, label: name } as any);
+                  options.push({ value, label: name });
                 }
               }
             }

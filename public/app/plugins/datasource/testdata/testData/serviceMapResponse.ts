@@ -1,4 +1,4 @@
-import { FieldColorModeId, FieldType, PreferredVisualisationType, NodeGraphDataFrameFieldNames } from '@grafana/data';
+import { FieldColorModeId, FieldType, NodeGraphDataFrameFieldNames } from '@grafana/data';
 
 export const nodes = {
   fields: [
@@ -157,7 +157,7 @@ export const nodes = {
       values: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
     },
   ],
-  meta: { preferredVisualisationType: 'nodeGraph' as PreferredVisualisationType },
+  meta: { preferredVisualisationType: 'nodeGraph' as const },
   name: 'nodes',
 };
 
@@ -333,6 +333,6 @@ export const edges = {
       ],
     },
   ],
-  meta: { preferredVisualisationType: 'nodeGraph' as PreferredVisualisationType },
+  meta: { preferredVisualisationType: 'nodeGraph' as const },
   name: 'edges',
 };
