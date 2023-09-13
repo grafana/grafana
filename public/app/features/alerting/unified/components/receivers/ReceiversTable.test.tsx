@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { AutoSizerProps } from 'react-virtualized-auto-sizer';
@@ -9,7 +9,7 @@ import { setBackendSrv } from '@grafana/runtime';
 import {
   AlertManagerCortexConfig,
   GrafanaManagedReceiverConfig,
-  Receiver,
+  Receiver
 } from 'app/plugins/datasource/alertmanager/types';
 import { configureStore } from 'app/store/configureStore';
 import { AccessControlAction, ContactPointsState, NotifierDTO, NotifierType } from 'app/types';
@@ -248,11 +248,13 @@ describe('ReceiversTable', () => {
 
       // Assert
       expect(ui.export.yamlTab.get(drawer)).toHaveAttribute('aria-selected', 'true');
-      expect(ui.export.editor.get(drawer)).toHaveTextContent('Yaml Export Content');
-
+      await waitFor(() => {
+        expect(ui.export.editor.get(drawer)).toHaveTextContent('Yaml Export Content');
+      });
       await user.click(ui.export.jsonTab.get(drawer));
-
-      expect(ui.export.editor.get(drawer)).toHaveTextContent('Json Export Content');
+      await waitFor(() => {
+        expect(ui.export.editor.get(drawer)).toHaveTextContent('Json Export Content');
+      });
       expect(ui.export.copyCodeButton.get(drawer)).toBeInTheDocument();
       expect(ui.export.downloadButton.get(drawer)).toBeInTheDocument();
     });

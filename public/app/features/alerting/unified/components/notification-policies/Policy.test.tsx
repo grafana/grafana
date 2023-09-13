@@ -143,7 +143,7 @@ describe('Policy', () => {
     );
   });
 
-  it('should show export option when shouldShowExportOption returns true', async () => {
+  it('should show export option when export is allowed and supported returns true', async () => {
     const onEditPolicy = jest.fn();
     const onAddPolicy = jest.fn();
     const onDeletePolicy = jest.fn();
