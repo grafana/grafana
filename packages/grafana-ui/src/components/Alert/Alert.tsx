@@ -78,7 +78,7 @@ export const Alert = React.forwardRef<HTMLDivElement, Props>(
             </div>
           </Box>
 
-          <Box paddingY={1}>
+          <Box paddingY={1} grow={1}>
             <Text weight="medium">{title}</Text>
             {children && <div className={styles.content}>{children}</div>}
           </Box>
@@ -140,6 +140,18 @@ const getStyles = (
       flexGrow: 1,
       marginBottom: theme.spacing(bottomSpacing ?? 2),
       marginTop: theme.spacing(topSpacing ?? 0),
+      position: 'relative',
+
+      '&:before': {
+        content: '""',
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        bottom: 0,
+        right: 0,
+        background: theme.colors.background.primary,
+        zIndex: -1,
+      },
     }),
     icon: css({
       color: color.text,
