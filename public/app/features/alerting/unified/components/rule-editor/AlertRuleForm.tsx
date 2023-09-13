@@ -112,7 +112,7 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
   const ruleType = translateRouteParamToRuleType(routeParams.type);
   const uidFromParams = routeParams.id;
 
-  const returnTo: string = (queryParams['returnTo'] as string | undefined) ?? '/alerting/list';
+  const returnTo = String(queryParams['returnTo']) ?? '/alerting/list';
   const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
 
   const defaultValues: RuleFormValues = useMemo(() => {

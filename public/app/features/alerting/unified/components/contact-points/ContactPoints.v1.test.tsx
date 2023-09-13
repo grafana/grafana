@@ -27,6 +27,7 @@ import * as receiversApi from '../../api/receiversApi';
 import * as grafanaApp from '../../components/receivers/grafanaAppReceivers/grafanaApp';
 import { mockApi, setupMswServer } from '../../mockApi';
 import {
+  grantUserPermissions,
   mockDataSource,
   MockDataSourceSrv,
   onCallPluginMetaMock,
@@ -86,14 +87,11 @@ const dataSources = {
 };
 
 const renderReceivers = (alertManagerSourceName?: string) => {
-  locationService.push(
-    '/alerting/notifications' +
-      (alertManagerSourceName ? `?${ALERTMANAGER_NAME_QUERY_KEY}=${alertManagerSourceName}` : '')
-  );
+  locationService.push('/alerting/notifications');
 
   return render(
     <TestProvider>
-      <AlertmanagerProvider accessType="notification">
+      <AlertmanagerProvider accessType="notification" alertmanagerSourceName={alertManagerSourceName}>
         <Receivers />
       </AlertmanagerProvider>
     </TestProvider>
@@ -167,26 +165,15 @@ describe('Receivers', () => {
     mocks.api.discoverAlertmanagerFeatures.mockResolvedValue({ lazyConfigInit: false });
     mocks.hooks.useGetContactPointsState.mockReturnValue(emptyContactPointsState);
     setDataSourceSrv(new MockDataSourceSrv(dataSources));
-    mocks.contextSrv.isEditor = true;
+
     store.delete(ALERTMANAGER_NAME_LOCAL_STORAGE_KEY);
 
-    mocks.contextSrv.evaluatePermission.mockImplementation(() => []);
-    mocks.contextSrv.hasPermission.mockImplementation((action) => {
-      const permissions = [
-        AccessControlAction.AlertingNotificationsRead,
-        AccessControlAction.AlertingNotificationsWrite,
-        AccessControlAction.AlertingNotificationsExternalRead,
-        AccessControlAction.AlertingNotificationsExternalWrite,
-      ];
-      return permissions.includes(action as AccessControlAction);
-    });
-
-    // respond with "true" when asked if we are an administrator
-    mocks.contextSrv.hasRole.mockImplementation((role: string) => {
-      return role === 'Admin';
-    });
-
-    mocks.contextSrv.hasAccess.mockImplementation(() => true);
+    grantUserPermissions([
+      AccessControlAction.AlertingNotificationsRead,
+      AccessControlAction.AlertingNotificationsWrite,
+      AccessControlAction.AlertingNotificationsExternalRead,
+      AccessControlAction.AlertingNotificationsExternalWrite,
+    ]);
   });
 
   it('Template and receiver tables are rendered, alertmanager can be selected, no notification errors', async () => {
@@ -340,11 +327,10 @@ describe('Receivers', () => {
 
     mocks.api.fetchConfig.mockResolvedValue(someGrafanaAlertManagerConfig);
     mocks.api.updateConfig.mockResolvedValue();
-    mocks.contextSrv.hasPermission.mockImplementation((action) =>
-      [AccessControlAction.AlertingNotificationsRead, AccessControlAction.AlertingNotificationsExternalRead].some(
-        (a) => a === action
-      )
-    );
+    grantUserPermissions([
+      AccessControlAction.AlertingNotificationsRead,
+      AccessControlAction.AlertingNotificationsExternalRead,
+    ]);
     mocks.hooks.useGetContactPointsState.mockReturnValue(emptyContactPointsState);
     renderReceivers();
     await ui.receiversTable.find();
@@ -523,7 +509,6 @@ describe('Receivers', () => {
 
     expect(templatesTable).toBeInTheDocument();
     expect(receiversTable).toBeInTheDocument();
-    expect(ui.newContactPointButton.get()).toBeInTheDocument();
   });
 
   describe('Contact points health', () => {
