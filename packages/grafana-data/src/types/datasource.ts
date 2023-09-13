@@ -339,7 +339,7 @@ abstract class DataSourceApi<
 
   getVersion?(optionalOptions?: any): Promise<string>;
 
-  interpolateVariablesInQueries?(queries: TQuery[], scopedVars: ScopedVars | {}): TQuery[];
+  interpolateVariablesInQueries?(queries: TQuery[], scopedVars: ScopedVars): TQuery[];
 
   /**
    * An annotation processor allows explicit control for how annotations are managed.
