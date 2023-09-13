@@ -4,12 +4,13 @@ import { Provider } from 'react-redux';
 import { Route, Router } from 'react-router-dom';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
-import { AppPlugin, PluginType, AppRootProps, NavModelItem } from '@grafana/data';
+import { AppPlugin, PluginType, AppRootProps, NavModelItem, PluginIncludeType, OrgRole } from '@grafana/data';
 import { getMockPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
 import { locationService, setEchoSrv } from '@grafana/runtime';
 import { GrafanaContext } from 'app/core/context/GrafanaContext';
 import { GrafanaRoute } from 'app/core/navigation/GrafanaRoute';
 import { RouteDescriptor } from 'app/core/navigation/types';
+import { contextSrv } from 'app/core/services/context_srv';
 import { Echo } from 'app/core/services/echo/Echo';
 import { configureStore } from 'app/store/configureStore';
 
@@ -43,7 +44,7 @@ class RootComponent extends Component<AppRootProps> {
   }
 }
 
-function renderUnderRouter() {
+function renderUnderRouter(page) {
   const appPluginNavItem: NavModelItem = {
     text: 'App',
     id: 'plugin-page-app',
@@ -72,13 +73,13 @@ function renderUnderRouter() {
   const route = {
     component: () => <AppRootPage pluginId="my-awesome-plugin" pluginNavSection={appsSection} />,
   } as unknown as RouteDescriptor;
-  locationService.push('/a/my-awesome-plugin');
+  locationService.push(`/a/my-awesome-plugin/${page}`);
 
   render(
     <Router history={locationService.getHistory()}>
       <Provider store={store}>
         <GrafanaContext.Provider value={getGrafanaContextMock()}>
-          <Route path="/a/:pluginId" exact render={(props) => <GrafanaRoute {...props} route={route} />} />
+          <Route path={`/a/:pluginId/${page}`} exact render={(props) => <GrafanaRoute {...props} route={route} />} />
         </GrafanaContext.Provider>
       </Provider>
     </Router>
@@ -95,6 +96,14 @@ describe('AppRootPage', () => {
     id: 'my-awesome-plugin',
     type: PluginType.app,
     enabled: true,
+    includes: [
+      {
+        type: PluginIncludeType.page,
+        name: 'Awesome name',
+        path: '/a/my-awesome-plugin/page-1',
+        role: 'Editor',
+      },
+    ],
   });
 
   it('should not render component if not at plugin path', async () => {
@@ -106,7 +115,7 @@ describe('AppRootPage', () => {
 
     importAppPluginMock.mockResolvedValue(plugin);
 
-    renderUnderRouter();
+    renderUnderRouter('');
 
     expect(await screen.findByText('my great component')).toBeVisible();
 
@@ -124,5 +133,28 @@ describe('AppRootPage', () => {
     });
 
     expect(RootComponent.timesRendered).toEqual(2);
+  });
+
+  it('should respect role for specific plugin page', async () => {
+    contextSrv.user.orgRole = OrgRole.Viewer;
+    getPluginSettingsMock.mockResolvedValue(pluginMeta);
+
+    const plugin = new AppPlugin();
+    plugin.meta = pluginMeta;
+    plugin.root = RootComponent;
+
+    importAppPluginMock.mockResolvedValue(plugin);
+
+    renderUnderRouter('page-1');
+
+    expect(await screen.findByText('Access denied')).toBeVisible();
+
+    contextSrv.user.orgRole = OrgRole.Editor;
+
+    await act(async () => {
+      locationService.push('/a/my-awesome-plugin/page-1');
+    });
+
+    expect(await screen.findByText('my great component')).toBeVisible();
   });
 });

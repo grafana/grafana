@@ -3,7 +3,7 @@ import { AnyAction, createSlice, PayloadAction } from '@reduxjs/toolkit';
 import React, { useCallback, useEffect, useMemo, useReducer } from 'react';
 import { useLocation, useRouteMatch } from 'react-router-dom';
 
-import { AppEvents, AppPlugin, AppPluginMeta, NavModel, NavModelItem, PluginType } from '@grafana/data';
+import { AppEvents, AppPlugin, AppPluginMeta, NavModel, NavModelItem, OrgRole, PluginType } from '@grafana/data';
 import { config, locationSearchToObject } from '@grafana/runtime';
 import { Alert } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
@@ -84,54 +84,47 @@ export function AppRootPage({ pluginId, pluginNavSection }: Props) {
 
   // Because of the fallback at plugin routes, we need to check
   // if the user has permissions to see the plugin page.
-  const userHasPermissionsToPluginPage = (path: string) => {
-    if (!plugin.meta?.includes) {
+  const userHasPermissionsToPluginPage = () => {
+    // Check if plugin does not have any configurations or the user is Grafana Admin
+    if (!plugin.meta?.includes || contextSrv.isGrafanaAdmin) {
       return true;
     }
-    let rolesMap = new Map();
-    plugin.meta?.includes.map((include) => {
-      rolesMap.set(include.path, include.role);
-    });
-    if (contextSrv.isGrafanaAdmin) {
+
+    const pluginInclude = plugin.meta?.includes.find((include) => include.path === pluginRoot.props.path);
+    // Check if include configuration contains current path
+    if (!pluginInclude) {
       return true;
     }
-    if (contextSrv.isEditor && rolesMap.get(path) === 'Viewer') {
+    const pathRole: string = pluginInclude?.role || '';
+    // Check if role exists  and give access to Editor to be able to see Viewer pages
+    if (!pathRole || (contextSrv.isEditor && pathRole === OrgRole.Viewer)) {
       return true;
     }
-    return contextSrv.hasRole(rolesMap.get(path));
+    return contextSrv.hasRole(pathRole);
   };
 
   const AccessDenied = () => {
     return (
       <Alert severity="warning" title="Access denied">
-        You do not have permission to see this plugin.
+        You do not have permission to see this page.
       </Alert>
     );
   };
+
+  if (!userHasPermissionsToPluginPage()) {
+    return <AccessDenied />;
+  }
+
   if (!pluginNav) {
-    return (
-      <>
-        {userHasPermissionsToPluginPage(pluginRoot.props.path) ? (
-          <PluginPageContext.Provider value={context}>{pluginRoot}</PluginPageContext.Provider>
-        ) : (
-          <AccessDenied />
-        )}
-      </>
-    );
+    return <PluginPageContext.Provider value={context}>{pluginRoot}</PluginPageContext.Provider>;
   }
 
   return (
     <>
       {navModel ? (
-        <>
-          {userHasPermissionsToPluginPage(pluginRoot.props.path) ? (
-            <Page navModel={navModel} pageNav={pluginNav?.node}>
-              <Page.Contents isLoading={loading}>{pluginRoot}</Page.Contents>
-            </Page>
-          ) : (
-            <AccessDenied />
-          )}
-        </>
+        <Page navModel={navModel} pageNav={pluginNav?.node}>
+          <Page.Contents isLoading={loading}>{pluginRoot}</Page.Contents>
+        </Page>
       ) : (
         <Page>{pluginRoot}</Page>
       )}
