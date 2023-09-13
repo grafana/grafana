@@ -24,9 +24,9 @@ weight: 200
 
 Usage insights enables you to have a better understanding of how your Grafana instance is used.
 
-{{% admonition type="note" %}}
-Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}) and [Grafana Cloud](/docs/grafana-cloud/). Grafana Cloud insights logs include additional fields with their own dashboards. Read more in the [Grafana Cloud documentation](/docs/grafana-cloud/usage-insights/).
-{{% /admonition %}}
+> **Note:** Available in [Grafana Enterprise][] and [Grafana Cloud](/docs/grafana-cloud/).
+> Grafana Cloud insights logs include additional fields with their own dashboards.
+> Read more in the [Grafana Cloud documentation](/docs/grafana-cloud/usage-insights/).
 
 The usage insights feature collects a number of aggregated data and stores them in the database:
 
@@ -36,12 +36,12 @@ The usage insights feature collects a number of aggregated data and stores them 
 
 The aggregated data provides you access to several features:
 
-- [Dashboard and data source insights]({{< relref "#dashboard-and-data-source-insights" >}})
-- [Presence indicator]({{< relref "#presence-indicator" >}})
-- [Sort dashboards by using insights data]({{< relref "#sort-dashboards-by-using-insights-data" >}})
-- [Visualize usage insight data in a dashboard]({{< relref "#visualize-usage-insights-data" >}})
+- [Dashboard and data source insights](#dashboard-and-data-source-insights)
+- [Presence indicator](#presence-indicator)
+- [Sort dashboards by using insights data](#sort-dashboards-by-using-insights-data)
+- [Visualize usage insight data in a dashboard](#visualize-usage-insights-data)
 
-This feature also generates detailed logs that can be exported to Loki. Refer to [Export logs of usage insights]({{< relref "../../setup-grafana/configure-security/export-logs/" >}}).
+This feature also generates detailed logs that can be exported to Loki. Refer to [Export logs of usage insights][].
 
 ## Dashboard and data source insights
 
@@ -87,11 +87,11 @@ To find data source insights:
 
 When you are signed in and looking at a dashboard, you can know who is looking at the same dashboard as you are via a presence indicator, which displays avatars of users who have recently interacted with the dashboard. The default time frame is 10 minutes. To see the user's name, hover over the user's avatar. The avatars come from [Gravatar](https://gravatar.com) based on the user's email.
 
-When there are more active users on a dashboard than can fit within the presence indicator, click the **+X** icon. Doing so opens [dashboard insights]({{< relref "#dashboard-and-data-source-insights" >}}), which contains more details about recent user activity.
+When there are more active users on a dashboard than can fit within the presence indicator, click the **+X** icon. Doing so opens [dashboard insights](#dashboard-and-data-source-insights), which contains more details about recent user activity.
 
 {{< figure src="/static/img/docs/enterprise/presence_indicators.png" max-width="400px" class="docs-image--no-shadow" >}}
 
-To change _recent_ to something other than the past 10 minutes, edit the [configuration]({{< relref "../../setup-grafana/configure-grafana/" >}}) file:
+To change _recent_ to something other than the past 10 minutes, edit the [configuration][] file:
 
 ```ini
 [analytics.views]
@@ -114,9 +114,23 @@ You can sort the dashboards by:
 
 ## Visualize usage insights data
 
-If you set up your installation to [export logs of usage insights]({{< relref "../../setup-grafana/configure-security/export-logs/" >}}), we've created two dashboards to help you take advantage of this data.
+If you set up your installation to [export logs of usage insights][], we've created two dashboards to help you take advantage of this data.
 
 1. [Usage Insights overview](/grafana/dashboards/13785) provides a top-level perspective of user activity.
 1. [Data source details](/grafana/dashboards/13786) dashboard provides a view of data source activity and health.
 
 You can click the previous links to download the respective dashboard JSON, then import into your Grafana installation.
+
+{{% docs/reference %}}
+[export logs of usage insights]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-security/export-logs"
+[export logs of usage insights]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-security/export-logs"
+
+[Export logs of usage insights]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-security/export-logs"
+[Export logs of usage insights]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-security/export-logs"
+
+[configuration]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana"
+[configuration]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana"
+
+[Grafana Enterprise]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/introduction/grafana-enterprise"
+[Grafana Enterprise]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/introduction/grafana-enterprise"
+{{% /docs/reference %}}
