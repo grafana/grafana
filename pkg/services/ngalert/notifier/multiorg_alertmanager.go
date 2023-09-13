@@ -252,7 +252,7 @@ func (moa *MultiOrgAlertmanager) SyncAlertmanagersForOrgs(ctx context.Context, o
 					BasicAuthPassword: remoteAmCfg.Password,
 					DefaultConfig:     moa.settings.UnifiedAlerting.DefaultConfiguration,
 				}
-				am, err = newExternalAlertmanager(cfg, orgID)
+				am, err = newExternalAlertmanager(cfg, orgID, moa.configStore)
 			} else {
 				// These metrics are not exported by Grafana and are mostly a placeholder.
 				// To export them, we need to translate the metrics from each individual registry and,

@@ -3,27 +3,30 @@ package notifier
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
 	"net/url"
+	"time"
 
 	httptransport "github.com/go-openapi/runtime/client"
 	"github.com/go-openapi/strfmt"
 	"github.com/grafana/grafana/pkg/infra/log"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	amclient "github.com/prometheus/alertmanager/api/v2/client"
 	"github.com/prometheus/alertmanager/api/v2/client/alert"
 	"github.com/prometheus/alertmanager/api/v2/client/alertgroup"
 	"github.com/prometheus/alertmanager/api/v2/client/general"
 	"github.com/prometheus/alertmanager/api/v2/client/receiver"
 	"github.com/prometheus/alertmanager/api/v2/client/silence"
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 )
 
 type configStore interface {
-	GetLatestAlertmanagerConfiguration(ctx context.Context, query *models.GetLatestAlertmanagerConfigurationQuery) (*models.AlertConfiguration, error)
+	SaveAlertmanagerConfiguration(ctx context.Context, cmd *models.SaveAlertmanagerConfigurationCmd) error
 }
 
 type externalAlertmanager struct {
@@ -31,6 +34,7 @@ type externalAlertmanager struct {
 	url           string
 	tenantID      string
 	orgID         int64
+	configStore   configStore
 	amClient      *amclient.AlertmanagerAPI
 	httpClient    *http.Client
 	defaultConfig string
@@ -43,7 +47,7 @@ type ExternalAlertmanagerConfig struct {
 	DefaultConfig     string
 }
 
-func newExternalAlertmanager(cfg ExternalAlertmanagerConfig, orgID int64) (*externalAlertmanager, error) {
+func newExternalAlertmanager(cfg ExternalAlertmanagerConfig, orgID int64, store configStore) (*externalAlertmanager, error) {
 	client := http.Client{
 		Transport: &roundTripper{
 			tenantID:          cfg.TenantID,
@@ -62,6 +66,7 @@ func newExternalAlertmanager(cfg ExternalAlertmanagerConfig, orgID int64) (*exte
 	return &externalAlertmanager{
 		amClient:      amclient.New(transport, nil),
 		httpClient:    &client,
+		configStore:   store,
 		log:           log.New("ngalert.notifier.external.alertmanager"),
 		url:           cfg.URL,
 		tenantID:      cfg.TenantID,
@@ -70,49 +75,27 @@ func newExternalAlertmanager(cfg ExternalAlertmanagerConfig, orgID int64) (*exte
 	}, nil
 }
 
-func (am *externalAlertmanager) SaveAndApplyConfig(ctx context.Context, config *apimodels.PostableUserConfig) error {
-	data, err := yaml.Marshal(config)
-	if err != nil {
+func (am *externalAlertmanager) SaveAndApplyConfig(ctx context.Context, cfg *apimodels.PostableUserConfig) error {
+	fmt.Println("SaveAndApplyConfig() called")
+	if err := am.postConfig(ctx, cfg); err != nil {
 		return err
 	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, am.url, bytes.NewReader(data))
-	if err != nil {
-		return fmt.Errorf("error creating request: %v", err)
-	}
-
-	res, err := am.httpClient.Do(req)
-	if err != nil {
-		return err
-	}
-
-	if res.StatusCode == http.StatusNotFound {
-		return fmt.Errorf("config not found")
-	}
-
-	defer func() {
-		if err := res.Body.Close(); err != nil {
-			am.log.Warn("Failed to close response body", "err", err)
-		}
-	}()
-
-	resBody, err := io.ReadAll(res.Body)
-	if err != nil {
-		return fmt.Errorf("error reading request response: %w", err)
-	}
-
-	if res.StatusCode != http.StatusCreated {
-		return fmt.Errorf("setting config failed with status code %d and error %v", res.StatusCode, string(resBody))
-	}
-	return nil
+	return am.saveConfig(ctx, cfg)
 }
 
 func (am *externalAlertmanager) SaveAndApplyDefaultConfig(ctx context.Context) error {
+	fmt.Println("SaveAndApplyDefaultConfig() called")
 	cfg, err := Load([]byte(am.defaultConfig))
 	if err != nil {
 		return err
 	}
-	return am.SaveAndApplyConfig(ctx, cfg)
+
+	if err := am.postConfig(ctx, cfg); err != nil {
+		return err
+	}
+
+	return am.saveConfig(ctx, cfg)
 }
 
 func (am *externalAlertmanager) GetStatus() (apimodels.GettableStatus, error) {
@@ -183,7 +166,6 @@ func (am *externalAlertmanager) ListSilences([]string) (apimodels.GettableSilenc
 	return res.Payload, err
 }
 
-// Alerts
 func (am *externalAlertmanager) GetAlerts(active, silenced, inhibited bool, filter []string, receiver string) (apimodels.GettableAlerts, error) {
 	params := alert.NewGetAlertsParams()
 	res, err := am.amClient.Alert.GetAlerts(params)
@@ -210,7 +192,6 @@ func (am *externalAlertmanager) PutAlerts(postableAlerts apimodels.PostableAlert
 	return err
 }
 
-// Receivers
 func (am *externalAlertmanager) GetReceivers(ctx context.Context) ([]apimodels.Receiver, error) {
 	params := receiver.NewGetReceiversParams()
 	res, err := am.amClient.Receiver.GetReceivers(params)
@@ -232,6 +213,69 @@ func (am *externalAlertmanager) GetReceivers(ctx context.Context) ([]apimodels.R
 	return grafanaRcvs, nil
 }
 
+func (am *externalAlertmanager) ApplyConfig(ctx context.Context, config *models.AlertConfiguration) error {
+	fmt.Println("ApplyConfig() called")
+	cfg, err := Load([]byte(config.AlertmanagerConfiguration))
+	if err != nil {
+		return err
+	}
+
+	return am.postConfig(ctx, cfg)
+}
+
+func (am *externalAlertmanager) postConfig(ctx context.Context, cfg *apimodels.PostableUserConfig) error {
+	b, err := yaml.Marshal(cfg)
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("Sending request to URL %s with payload %s\n", am.url+"/api/v1/alerts", string(b))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, am.url+"/api/v1/alerts", bytes.NewReader(b))
+	if err != nil {
+		return fmt.Errorf("error creating request: %v", err)
+	}
+
+	res, err := am.httpClient.Do(req)
+	if err != nil {
+		return err
+	}
+
+	if res.StatusCode == http.StatusNotFound {
+		return fmt.Errorf("config not found")
+	}
+
+	defer func() {
+		if err := res.Body.Close(); err != nil {
+			am.log.Warn("Failed to close response body", "err", err)
+		}
+	}()
+
+	resBody, err := io.ReadAll(res.Body)
+	if err != nil {
+		return fmt.Errorf("error reading request response: %w", err)
+	}
+
+	if res.StatusCode != http.StatusCreated {
+		return fmt.Errorf("setting config failed with status code %d and error %v", res.StatusCode, string(resBody))
+	}
+	return nil
+}
+
+func (am *externalAlertmanager) saveConfig(ctx context.Context, cfg *apimodels.PostableUserConfig) error {
+	b, err := json.Marshal(&cfg)
+	if err != nil {
+		return fmt.Errorf("failed to serialize to the Alertmanager configuration: %w", err)
+	}
+
+	cmd := ngmodels.SaveAlertmanagerConfigurationCmd{
+		AlertmanagerConfiguration: string(b),
+		ConfigurationVersion:      fmt.Sprintf("v%d", ngmodels.AlertConfigurationVersion),
+		OrgID:                     am.orgID,
+		LastApplied:               time.Now().UTC().Unix(),
+	}
+	return am.configStore.SaveAlertmanagerConfiguration(ctx, &cmd)
+}
+
 // TODO: implement!
 func (am *externalAlertmanager) TestReceivers(ctx context.Context, c apimodels.TestReceiversConfigBodyParams) (*TestReceiversResult, error) {
 	return nil, fmt.Errorf("Testing of receivers not implemented")
@@ -242,12 +286,6 @@ func (am *externalAlertmanager) TestTemplate(ctx context.Context, c apimodels.Te
 	return nil, fmt.Errorf("Testing of templates not implemented")
 }
 
-// TODO: implement!
-func (am *externalAlertmanager) ApplyConfig(context.Context, *models.AlertConfiguration) error {
-	return fmt.Errorf("Applying configuration not implemented")
-}
-
-// State
 // TODO: implement!
 func (am *externalAlertmanager) StopAndWait() {
 }
