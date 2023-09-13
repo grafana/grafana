@@ -730,5 +730,12 @@ var (
 			FrontendOnly: false,
 			Owner:        grafanaPluginsPlatformSquad,
 		},
+		{
+			Name:         "wargamesTesting",
+			Description:  "Placeholder feature flag for internal testing",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: false,
+			Owner:        hostedGrafanaTeam,
+		},
 	}
 )

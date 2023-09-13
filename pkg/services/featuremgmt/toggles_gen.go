@@ -426,4 +426,8 @@ const (
 	// FlagRequestInstrumentationStatusSource
 	// Include a status source label for request metrics and logs
 	FlagRequestInstrumentationStatusSource = "requestInstrumentationStatusSource"
+
+	// FlagWargamesTesting
+	// Placeholder feature flag for internal testing
+	FlagWargamesTesting = "wargamesTesting"
 )
