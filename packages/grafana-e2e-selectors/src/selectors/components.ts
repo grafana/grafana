@@ -96,14 +96,22 @@ export const Components = {
     },
     Visualization: {
       LogsVolume: {
-        container: 'data-testid Panel header Logs volume', //testid
+        container: 'data-testid Panel header Logs volume',
         Legend: {
           wrapperPartial: 'VizLegend series', //aria label partial
         },
       },
+      // @todo learn more about this object and what it's doing to these selectors
       Logs: {
-        container: 'data-testid Panel header Logs', //testid, contained by logsVolume, could be problematic
-        rows: '[data-testid="logRows"]', //testid
+        container: 'data-testid Panel header Logs',
+        rows: '[data-testid="logRows"]',
+        Buttons: {
+          olderLogs: '[data-testid="olderLogsButton"]',
+          newerLogs: '[data-testid="newerLogsButton"]',
+        },
+        LogsNav: {
+          logsNavigationPages: '[data-testid="logsNavigationPages"]',
+        },
       },
       Graph: {
         container: 'Graph container',
