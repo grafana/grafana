@@ -27,7 +27,6 @@ Some features are enabled by default. You can disable these feature by setting t
 | `cloudWatchCrossAccountQuerying`                 | Enables cross-account querying in CloudWatch datasources                                                                                                                                            | Yes                |
 | `redshiftAsyncQueryDataSupport`                  | Enable async query data support for Redshift                                                                                                                                                        | Yes                |
 | `athenaAsyncQueryDataSupport`                    | Enable async query data support for Athena                                                                                                                                                          | Yes                |
-| `newPanelChromeUI`                               | Show updated look and feel of grafana-ui PanelChrome: panel header, icons, and menu                                                                                                                 | Yes                |
 | `nestedFolderPicker`                             | Enables the new folder picker to work with nested folders. Requires the nestedFolders feature flag                                                                                                  | Yes                |
 | `accessTokenExpirationCheck`                     | Enable OAuth access_token expiration check and token refresh using the refresh_token                                                                                                                |                    |
 | `emptyDashboardPage`                             | Enable the redesigned user interface of a dashboard page that includes no panels                                                                                                                    | Yes                |
@@ -46,6 +45,7 @@ Some features are enabled by default. You can disable these feature by setting t
 | `transformationsRedesign`                        | Enables the transformations redesign                                                                                                                                                                | Yes                |
 | `toggleLabelsInLogsUI`                           | Enable toggleable filters in log details view                                                                                                                                                       | Yes                |
 | `azureMonitorDataplane`                          | Adds dataplane compliant frame metadata in the Azure Monitor datasource                                                                                                                             | Yes                |
+| `prometheusConfigOverhaulAuth`                   | Update the Prometheus configuration page with the new auth component                                                                                                                                | Yes                |
 
 ## Preview feature toggles
 
@@ -117,7 +117,6 @@ Experimental features might be changed or removed without prior notice.
 | `exploreScrollableLogsContainer`            | Improves the scrolling behavior of logs in Explore                                                           |
 | `recordedQueriesMulti`                      | Enables writing multiple items from a single query within Recorded Queries                                   |
 | `pluginsDynamicAngularDetectionPatterns`    | Enables fetching Angular detection patterns for plugins from GCOM and fallback to hardcoded ones             |
-| `alertingLokiRangeToInstant`                | Rewrites eligible loki range queries to instant queries                                                      |
 | `vizAndWidgetSplit`                         | Split panels between vizualizations and widgets                                                              |
 | `prometheusIncrementalQueryInstrumentation` | Adds RudderStack events to incremental queries                                                               |
 | `logsExploreTableVisualisation`             | A table visualisation for logs in Explore                                                                    |
@@ -128,7 +127,6 @@ Experimental features might be changed or removed without prior notice.
 | `grafanaAPIServer`                          | Enable Kubernetes API Server for Grafana resources                                                           |
 | `featureToggleAdminPage`                    | Enable admin page for managing feature toggles from the Grafana front-end                                    |
 | `permissionsFilterRemoveSubquery`           | Alternative permission filter implementation that does not use subqueries for fetching the dashboard folder  |
-| `prometheusConfigOverhaulAuth`              | Update the Prometheus configuration page with the new auth component                                         |
 | `influxdbSqlSupport`                        | Enable InfluxDB SQL query language support with new querying UI                                              |
 | `noBasicRole`                               | Enables a new role that has no permissions by default                                                        |
 | `angularDeprecationUI`                      | Display new Angular deprecation-related UI features                                                          |

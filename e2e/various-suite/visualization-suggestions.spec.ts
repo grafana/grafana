@@ -1,12 +1,11 @@
 import { e2e } from '../utils';
 
-e2e.scenario({
-  describeName: 'Visualization suggestions',
-  itName: 'Should be shown and clickable',
-  addScenarioDataSource: false,
-  addScenarioDashBoard: false,
-  skipScenario: false,
-  scenario: () => {
+describe('Visualization suggestions', () => {
+  beforeEach(() => {
+    e2e.flows.login(e2e.env('USERNAME'), e2e.env('PASSWORD'));
+  });
+
+  it('Should be shown and clickable', () => {
     e2e.flows.openDashboard({ uid: 'aBXrJ0R7z', queryParams: { editPanel: 9 } });
 
     // Try visualization suggestions
@@ -25,5 +24,5 @@ e2e.scenario({
     // Select a visualisation
     e2e.components.VisualizationPreview.card('Table').click();
     e2e.components.Panels.Visualization.Table.header().should('be.visible');
-  },
+  });
 });

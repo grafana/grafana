@@ -9,7 +9,7 @@ const addDataSource = () => {
     form: () => {
       e2e.components.DataSource.Prometheus.configPage.exemplarsAddButton().click();
       e2e.components.DataSource.Prometheus.configPage.internalLinkSwitch().check({ force: true });
-      e2e.components.DataSource.DataSourceHttpSettings.urlInput().type('http://prom-url:9090');
+      e2e.components.DataSource.Prometheus.configPage.connectionSettings().type('http://prom-url:9090');
       e2e.components.DataSourcePicker.inputV2().click({ force: true }).should('have.focus');
 
       cy.contains('gdev-tempo').scrollIntoView().should('be.visible').click();
@@ -19,7 +19,7 @@ const addDataSource = () => {
 
 describe('Exemplars', () => {
   beforeEach(() => {
-    e2e.flows.login('admin', 'admin');
+    e2e.flows.login(e2e.env('USERNAME'), e2e.env('PASSWORD'));
 
     cy.request({ url: `${e2e.env('BASE_URL')}/api/datasources/name/${dataSourceName}`, failOnStatusCode: false }).then(
       (response) => {

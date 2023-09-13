@@ -69,52 +69,6 @@ type Plugin struct {
 	Alias string `json:"alias,omitempty"`
 }
 
-type PluginDTO struct {
-	JSONData
-
-	fs                FS
-	logger            log.Logger
-	supportsStreaming bool
-
-	Class Class
-
-	// App fields
-	IncludedInAppID string
-	DefaultNavURL   string
-	Pinned          bool
-
-	// Signature fields
-	Signature      SignatureStatus
-	SignatureType  SignatureType
-	SignatureOrg   string
-	SignatureError *SignatureError
-
-	// SystemJS fields
-	Module  string
-	BaseURL string
-
-	AngularDetected bool
-
-	// This will be moved to plugin.json when we have general support in gcom
-	Alias string `json:"alias,omitempty"`
-}
-
-func (p PluginDTO) SupportsStreaming() bool {
-	return p.supportsStreaming
-}
-
-func (p PluginDTO) Base() string {
-	return p.fs.Base()
-}
-
-func (p PluginDTO) IsApp() bool {
-	return p.Type == TypeApp
-}
-
-func (p PluginDTO) IsCorePlugin() bool {
-	return p.Class == ClassCore
-}
-
 // JSONData represents the plugin's plugin.json
 type JSONData struct {
 	// Common settings
@@ -444,27 +398,6 @@ type PluginClient interface {
 	backend.CheckHealthHandler
 	backend.CallResourceHandler
 	backend.StreamHandler
-}
-
-func (p *Plugin) ToDTO() PluginDTO {
-	return PluginDTO{
-		logger:            p.Logger(),
-		fs:                p.FS,
-		supportsStreaming: p.client != nil && p.client.(backend.StreamHandler) != nil,
-		Class:             p.Class,
-		JSONData:          p.JSONData,
-		IncludedInAppID:   p.IncludedInAppID,
-		DefaultNavURL:     p.DefaultNavURL,
-		Pinned:            p.Pinned,
-		Signature:         p.Signature,
-		SignatureType:     p.SignatureType,
-		SignatureOrg:      p.SignatureOrg,
-		SignatureError:    p.SignatureError,
-		Module:            p.Module,
-		BaseURL:           p.BaseURL,
-		AngularDetected:   p.AngularDetected,
-		Alias:             p.Alias,
-	}
 }
 
 func (p *Plugin) StaticRoute() *StaticRoute {
