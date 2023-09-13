@@ -10,7 +10,7 @@ import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { accessControlQueryParam } from 'app/core/utils/accessControl';
 import { OrgUser, AccessControlAction, OrgRole } from 'app/types';
 
-import { UsersTable } from '../users/UsersTable';
+import { OrgUsersTable } from './Users/OrgUsersTable';
 
 const perPage = 30;
 
@@ -121,7 +121,7 @@ const AdminEditOrgPage = ({ match }: Props) => {
             {!canReadUsers && renderMissingPermissionMessage()}
             {canReadUsers && !!users.length && (
               <VerticalGroup spacing="md">
-                <UsersTable users={users} orgId={orgId} onRoleChange={onRoleChange} onRemoveUser={onRemoveUser} />
+                <OrgUsersTable users={users} orgId={orgId} onRoleChange={onRoleChange} onRemoveUser={onRemoveUser} />
                 <HorizontalGroup justify="flex-end">
                   <Pagination
                     onNavigate={onPageChange}

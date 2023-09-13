@@ -2,10 +2,10 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
-import { OrgUser } from 'app/types';
+import { OrgUser } from '../../../types';
+import { getMockUsers } from '../../users/__mocks__/userMocks';
 
-import { UsersTable, Props } from './UsersTable';
-import { getMockUsers } from './__mocks__/userMocks';
+import { OrgUsersTable, Props } from './OrgUsersTable';
 
 jest.mock('app/core/core', () => ({
   contextSrv: {
@@ -24,7 +24,7 @@ const setup = (propOverrides?: object) => {
 
   Object.assign(props, propOverrides);
 
-  render(<UsersTable {...props} />);
+  render(<OrgUsersTable {...props} />);
 };
 
 describe('Render', () => {

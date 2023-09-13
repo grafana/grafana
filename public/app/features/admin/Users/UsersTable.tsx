@@ -120,7 +120,7 @@ export const UsersTable = ({ users, showPaging, perPage }: UsersTableProps) => {
       },
       {
         id: 'isDisabled',
-        header: 'Status',
+        header: '',
         cell: ({ cell: { value } }: Cell<'isDisabled'>) => <>{value && <Tag colorIndex={9} name={'Disabled'} />}</>,
         sortType: createSortFn<UserDTO>('isDisabled'),
       },

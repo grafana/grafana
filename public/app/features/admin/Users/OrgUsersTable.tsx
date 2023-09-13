@@ -140,7 +140,7 @@ export const OrgUsersTable = ({ users, orgId, onRoleChange, onRemoveUser }: Prop
     },
     {
       id: 'isDisabled',
-      header: 'Status',
+      header: '',
       cell: ({ cell: { value } }: Cell<'isDisabled'>) => <>{value && <Tag colorIndex={9} name={'Disabled'} />}</>,
       sortType: createSortFn<OrgUser>('isDisabled'),
     },
