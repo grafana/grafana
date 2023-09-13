@@ -6,7 +6,7 @@ import { alertRuleApi } from '../../api/alertRuleApi';
 
 import { FileExportPreview } from './FileExportPreview';
 import { GrafanaExportDrawer } from './GrafanaExportDrawer';
-import { ExportFormats } from './providers';
+import { allGrafanaExportProviders, ExportFormats } from './providers';
 
 interface GrafanaRuleExportPreviewProps {
   alertUid: string;
@@ -45,7 +45,7 @@ export const GrafanaRuleExporter = ({ onClose, alertUid }: GrafanaRulerExporterP
   const [activeTab, setActiveTab] = useState<ExportFormats>('yaml');
 
   return (
-    <GrafanaExportDrawer activeTab={activeTab} onTabChange={setActiveTab} onClose={onClose} allowHcl>
+    <GrafanaExportDrawer activeTab={activeTab} onTabChange={setActiveTab} onClose={onClose} formatProviders={Object.values(allGrafanaExportProviders)}>
       <GrafanaRuleExportPreview alertUid={alertUid} exportFormat={activeTab} onClose={onClose} />
     </GrafanaExportDrawer>
   );

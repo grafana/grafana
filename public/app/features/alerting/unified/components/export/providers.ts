@@ -1,10 +1,10 @@
-interface ExportProvider<TFormat> {
+export interface ExportProvider<TFormat> {
   name: string;
   exportFormat: TFormat;
   formatter?: (raw: string) => string;
 }
 
-const JsonExportProvider: ExportProvider<'json'> = {
+export const JsonExportProvider: ExportProvider<'json'> = {
   name: 'JSON',
   exportFormat: 'json',
   formatter: (raw: string) => {
@@ -16,26 +16,22 @@ const JsonExportProvider: ExportProvider<'json'> = {
   },
 };
 
-const YamlExportProvider: ExportProvider<'yaml'> = {
+export const YamlExportProvider: ExportProvider<'yaml'> = {
   name: 'YAML',
   exportFormat: 'yaml',
 };
 
-const HclExportProvider: ExportProvider<'hcl'> = {
+export const HclExportProvider: ExportProvider<'hcl'> = {
   name: 'Terraform (HCL)',
   exportFormat: 'hcl',
 };
 
-export const grafanaExportProviders = {
+export const allGrafanaExportProviders = {
   [JsonExportProvider.exportFormat]: JsonExportProvider,
   [YamlExportProvider.exportFormat]: YamlExportProvider,
   [HclExportProvider.exportFormat]: HclExportProvider,
 } as const;
 
-export const grafanaExportProvidersWithoutHCL = {
-  [JsonExportProvider.exportFormat]: JsonExportProvider,
-  [YamlExportProvider.exportFormat]: YamlExportProvider,
-} as const;
+export const jsonAndYamlGrafanaExportProviders = [JsonExportProvider, YamlExportProvider];
 
-export type ExportFormats = keyof typeof grafanaExportProviders;
-export type ExportFormatsWithoutHCL = keyof typeof grafanaExportProvidersWithoutHCL;
+export type ExportFormats = keyof typeof allGrafanaExportProviders;

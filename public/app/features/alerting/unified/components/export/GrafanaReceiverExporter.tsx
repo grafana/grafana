@@ -6,10 +6,10 @@ import { alertRuleApi } from '../../api/alertRuleApi';
 
 import { FileExportPreview } from './FileExportPreview';
 import { GrafanaExportDrawer } from './GrafanaExportDrawer';
-import { ExportFormats, ExportFormatsWithoutHCL } from './providers';
+import { ExportFormats, jsonAndYamlGrafanaExportProviders } from './providers';
 
 interface GrafanaReceiverExportPreviewProps {
-  exportFormat: ExportFormatsWithoutHCL | ExportFormats;
+  exportFormat: ExportFormats;
   onClose: () => void;
   receiverName: string;
   decrypt: string;
@@ -50,10 +50,10 @@ interface GrafanaReceiverExporterProps {
 }
 
 export const GrafanaReceiverExporter = ({ onClose, receiverName, decrypt }: GrafanaReceiverExporterProps) => {
-  const [activeTab, setActiveTab] = useState<ExportFormatsWithoutHCL | ExportFormats>('yaml');
+  const [activeTab, setActiveTab] = useState<ExportFormats>('yaml');
 
   return (
-    <GrafanaExportDrawer activeTab={activeTab} onTabChange={setActiveTab} onClose={onClose}>
+    <GrafanaExportDrawer activeTab={activeTab} onTabChange={setActiveTab} onClose={onClose} formatProviders={jsonAndYamlGrafanaExportProviders}>
       <GrafanaReceiverExportPreview
         receiverName={receiverName}
         decrypt={decrypt}
