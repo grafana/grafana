@@ -2,6 +2,7 @@ import React, { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { applyFieldOverrides, TimeZone, SplitOpen, DataFrame, LoadingState, FieldType } from '@grafana/data';
+import { getTemplateSrv } from '@grafana/runtime';
 import { Table, AdHocFilterItem, PanelChrome } from '@grafana/ui';
 import { config } from 'app/core/config';
 import {
@@ -49,6 +50,14 @@ export class TableContainer extends PureComponent<Props> {
     return Math.min(600, Math.max(rowCount * 36, hasSubFrames ? 300 : 0) + 40 + 46);
   }
 
+  getTableTitle(dataFrames: DataFrame[] | null, data: DataFrame, i: number) {
+    let title = data.name ? `Table - ${data.name}` : 'Table';
+    if (dataFrames && dataFrames.length > 1) {
+      title = `Table - ${data.name || data.refId || i}`;
+    }
+    return title;
+  }
+
   render() {
     const { loading, onCellFilterAdded, tableResult, width, splitOpenFn, range, ariaLabel, timeZone } = this.props;
 
@@ -62,7 +71,7 @@ export class TableContainer extends PureComponent<Props> {
         data: dataFrames,
         timeZone,
         theme: config.theme2,
-        replaceVariables: (v: string) => v,
+        replaceVariables: getTemplateSrv().replace.bind(getTemplateSrv()),
         fieldConfig: {
           defaults: {},
           overrides: [],
@@ -87,7 +96,7 @@ export class TableContainer extends PureComponent<Props> {
           frames.map((data, i) => (
             <PanelChrome
               key={data.refId || `table-${i}`}
-              title={dataFrames && dataFrames.length > 1 ? `Table - ${data.name || data.refId || i}` : 'Table'}
+              title={this.getTableTitle(dataFrames, data, i)}
               width={width}
               height={this.getTableHeight(data.length, this.hasSubFrames(data))}
               loadingState={loading ? LoadingState.Loading : undefined}

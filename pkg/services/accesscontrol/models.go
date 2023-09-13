@@ -13,7 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
-var ErrInternal = errutil.NewBase(errutil.StatusInternal, "accesscontrol.internal")
+var ErrInternal = errutil.Internal("accesscontrol.internal")
 
 // RoleRegistration stores a role and its assignments to built-in roles
 // (Viewer, Editor, Admin, Grafana Admin)

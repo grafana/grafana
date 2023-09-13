@@ -3,6 +3,8 @@ package correlations
 import (
 	"context"
 
+	"xorm.io/core"
+
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/quota"
@@ -13,11 +15,13 @@ import (
 func (s CorrelationsService) createCorrelation(ctx context.Context, cmd CreateCorrelationCommand) (Correlation, error) {
 	correlation := Correlation{
 		UID:         util.GenerateShortUID(),
+		OrgID:       cmd.OrgId,
 		SourceUID:   cmd.SourceUID,
 		TargetUID:   cmd.TargetUID,
 		Label:       cmd.Label,
 		Description: cmd.Description,
 		Config:      cmd.Config,
+		Provisioned: cmd.Provisioned,
 	}
 
 	err := s.SQLStore.WithTransactionalDbSession(ctx, func(session *db.Session) error {
@@ -27,13 +31,9 @@ func (s CorrelationsService) createCorrelation(ctx context.Context, cmd CreateCo
 			OrgID: cmd.OrgId,
 			UID:   cmd.SourceUID,
 		}
-		dataSource, err := s.DataSourceService.GetDataSource(ctx, query)
+		_, err = s.DataSourceService.GetDataSource(ctx, query)
 		if err != nil {
 			return ErrSourceDataSourceDoesNotExists
-		}
-
-		if !cmd.SkipReadOnlyCheck && dataSource.ReadOnly {
-			return ErrSourceDataSourceReadOnly
 		}
 
 		if cmd.TargetUID != nil {
@@ -66,13 +66,19 @@ func (s CorrelationsService) deleteCorrelation(ctx context.Context, cmd DeleteCo
 			OrgID: cmd.OrgId,
 			UID:   cmd.SourceUID,
 		}
-		dataSource, err := s.DataSourceService.GetDataSource(ctx, query)
+		_, err := s.DataSourceService.GetDataSource(ctx, query)
 		if err != nil {
 			return ErrSourceDataSourceDoesNotExists
 		}
 
-		if dataSource.ReadOnly {
-			return ErrSourceDataSourceReadOnly
+		correlation, err := s.GetCorrelation(ctx, GetCorrelationQuery(cmd))
+
+		if err != nil {
+			return err
+		}
+
+		if correlation.Provisioned {
+			return ErrCorrelationReadOnly
 		}
 
 		deletedCount, err := session.Delete(&Correlation{UID: cmd.UID, SourceUID: cmd.SourceUID})
@@ -87,6 +93,7 @@ func (s CorrelationsService) updateCorrelation(ctx context.Context, cmd UpdateCo
 	correlation := Correlation{
 		UID:       cmd.UID,
 		SourceUID: cmd.SourceUID,
+		OrgID:     cmd.OrgId,
 	}
 
 	err := s.SQLStore.WithTransactionalDbSession(ctx, func(session *db.Session) error {
@@ -94,13 +101,9 @@ func (s CorrelationsService) updateCorrelation(ctx context.Context, cmd UpdateCo
 			OrgID: cmd.OrgId,
 			UID:   cmd.SourceUID,
 		}
-		dataSource, err := s.DataSourceService.GetDataSource(ctx, query)
+		_, err := s.DataSourceService.GetDataSource(ctx, query)
 		if err != nil {
 			return ErrSourceDataSourceDoesNotExists
-		}
-
-		if dataSource.ReadOnly {
-			return ErrSourceDataSourceReadOnly
 		}
 
 		found, err := session.Get(&correlation)
@@ -109,6 +112,9 @@ func (s CorrelationsService) updateCorrelation(ctx context.Context, cmd UpdateCo
 		}
 		if err != nil {
 			return err
+		}
+		if correlation.Provisioned {
+			return ErrCorrelationReadOnly
 		}
 
 		if cmd.Label != nil {
@@ -164,7 +170,8 @@ func (s CorrelationsService) getCorrelation(ctx context.Context, cmd GetCorrelat
 			return ErrSourceDataSourceDoesNotExists
 		}
 
-		found, err := session.Select("correlation.*").Join("", "data_source AS dss", "correlation.source_uid = dss.uid and dss.org_id = ?", cmd.OrgId).Join("", "data_source AS dst", "correlation.target_uid = dst.uid and dst.org_id = ?", cmd.OrgId).Where("correlation.uid = ? AND correlation.source_uid = ?", correlation.UID, correlation.SourceUID).Get(&correlation)
+		// Correlations created before the fix #72498 may have org_id = 0, but it's deprecated and will be removed in #72325
+		found, err := session.Select("correlation.*").Join("", "data_source AS dss", "correlation.source_uid = dss.uid and (correlation.org_id = 0 or dss.org_id = correlation.org_id) and dss.org_id = ?", cmd.OrgId).Join("", "data_source AS dst", "correlation.target_uid = dst.uid and dst.org_id = ?", cmd.OrgId).Where("correlation.uid = ? AND correlation.source_uid = ?", correlation.UID, correlation.SourceUID).Get(&correlation)
 		if !found {
 			return ErrCorrelationNotFound
 		}
@@ -214,8 +221,8 @@ func (s CorrelationsService) getCorrelationsBySourceUID(ctx context.Context, cmd
 		if _, err := s.DataSourceService.GetDataSource(ctx, query); err != nil {
 			return ErrSourceDataSourceDoesNotExists
 		}
-
-		return session.Select("correlation.*").Join("", "data_source AS dss", "correlation.source_uid = dss.uid and dss.org_id = ?", cmd.OrgId).Join("", "data_source AS dst", "correlation.target_uid = dst.uid and dst.org_id = ?", cmd.OrgId).Where("correlation.source_uid = ?", cmd.SourceUID).Find(&correlations)
+		// Correlations created before the fix #72498 may have org_id = 0, but it's deprecated and will be removed in #72325
+		return session.Select("correlation.*").Join("", "data_source AS dss", "correlation.source_uid = dss.uid and (correlation.org_id = 0 or dss.org_id = correlation.org_id) and dss.org_id = ?", cmd.OrgId).Join("", "data_source AS dst", "correlation.target_uid = dst.uid and dst.org_id = ?", cmd.OrgId).Where("correlation.source_uid = ?", cmd.SourceUID).Find(&correlations)
 	})
 
 	if err != nil {
@@ -235,7 +242,8 @@ func (s CorrelationsService) getCorrelations(ctx context.Context, cmd GetCorrela
 	err := s.SQLStore.WithDbSession(ctx, func(session *db.Session) error {
 		offset := cmd.Limit * (cmd.Page - 1)
 
-		q := session.Select("correlation.*").Join("", "data_source AS dss", "correlation.source_uid = dss.uid and dss.org_id = ?", cmd.OrgId).Join("", "data_source AS dst", "correlation.target_uid = dst.uid and dst.org_id = ?", cmd.OrgId)
+		// Correlations created before the fix #72498 may have org_id = 0, but it's deprecated and will be removed in #72325
+		q := session.Select("correlation.*").Join("", "data_source AS dss", "correlation.source_uid = dss.uid and (correlation.org_id = 0 or dss.org_id = correlation.org_id) and dss.org_id = ? ", cmd.OrgId).Join("", "data_source AS dst", "correlation.target_uid = dst.uid and dst.org_id = ?", cmd.OrgId)
 
 		if len(cmd.SourceUIDs) > 0 {
 			q.In("dss.uid", cmd.SourceUIDs)
@@ -265,14 +273,57 @@ func (s CorrelationsService) getCorrelations(ctx context.Context, cmd GetCorrela
 
 func (s CorrelationsService) deleteCorrelationsBySourceUID(ctx context.Context, cmd DeleteCorrelationsBySourceUIDCommand) error {
 	return s.SQLStore.WithDbSession(ctx, func(session *db.Session) error {
-		_, err := session.Delete(&Correlation{SourceUID: cmd.SourceUID})
+		// Correlations created before the fix #72498 may have org_id = 0, but it's deprecated and will be removed in #72325
+		db := session.Where("source_uid = ? and (org_id = ? or org_id = 0)", cmd.SourceUID, cmd.OrgId)
+		if cmd.OnlyProvisioned {
+			// bool in a struct needs to be in Where
+			// https://github.com/go-xorm/xorm/blob/v0.7.9/engine_cond.go#L102
+			db = db.And("provisioned = ?", true)
+		}
+		_, err := db.Delete(&Correlation{})
 		return err
 	})
 }
 
 func (s CorrelationsService) deleteCorrelationsByTargetUID(ctx context.Context, cmd DeleteCorrelationsByTargetUIDCommand) error {
 	return s.SQLStore.WithDbSession(ctx, func(session *db.Session) error {
-		_, err := session.Delete(&Correlation{TargetUID: &cmd.TargetUID})
+		// Correlations created before the fix #72498 may have org_id = 0, but it's deprecated and will be removed in #72325
+		_, err := session.Where("source_uid = ? and (org_id = ? or org_id = 0)", cmd.TargetUID, cmd.OrgId).Delete(&Correlation{})
 		return err
 	})
+}
+
+// internal use: It's require only for correct migration of existing records. Can be removed in Grafana 11.
+func (s CorrelationsService) createOrUpdateCorrelation(ctx context.Context, cmd CreateCorrelationCommand) error {
+	correlation := Correlation{
+		SourceUID:   cmd.SourceUID,
+		OrgID:       cmd.OrgId,
+		TargetUID:   cmd.TargetUID,
+		Label:       cmd.Label,
+		Description: cmd.Description,
+		Config:      cmd.Config,
+		Provisioned: false,
+	}
+
+	found := false
+	err := s.SQLStore.WithDbSession(ctx, func(session *db.Session) error {
+		has, err := session.Get(&correlation)
+		found = has
+		return err
+	})
+
+	if err != nil {
+		return err
+	}
+
+	if found && cmd.Provisioned {
+		correlation.Provisioned = true
+		return s.SQLStore.WithDbSession(ctx, func(session *db.Session) error {
+			_, err := session.ID(core.NewPK(correlation.UID, correlation.SourceUID, correlation.OrgID)).Cols("provisioned").Update(&correlation)
+			return err
+		})
+	} else {
+		_, err := s.createCorrelation(ctx, cmd)
+		return err
+	}
 }

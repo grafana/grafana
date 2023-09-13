@@ -74,26 +74,32 @@ func (ss *sqlStore) Get(ctx context.Context, orgID int64) (*org.Org, error) {
 	return &orga, nil
 }
 
-func (ss *sqlStore) Insert(ctx context.Context, org *org.Org) (int64, error) {
+func (ss *sqlStore) Insert(ctx context.Context, orga *org.Org) (int64, error) {
 	var orgID int64
 	var err error
 	err = ss.db.WithDbSession(ctx, func(sess *db.Session) error {
-		if _, err = sess.Insert(org); err != nil {
+		if isNameTaken, err := isOrgNameTaken(orga.Name, orga.ID, sess); err != nil {
+			return err
+		} else if isNameTaken {
+			return org.ErrOrgNameTaken
+		}
+
+		if _, err = sess.Insert(orga); err != nil {
 			return err
 		}
 
-		orgID = org.ID
+		orgID = orga.ID
 
-		if org.ID != 0 {
+		if orga.ID != 0 {
 			// it sets the setval in the sequence
 			if err := ss.dialect.PostInsertId("org", sess.Session); err != nil {
 				return err
 			}
 		}
 		sess.PublishAfterCommit(&events.OrgCreated{
-			Timestamp: org.Created,
-			Id:        org.ID,
-			Name:      org.Name,
+			Timestamp: orga.Created,
+			Id:        orga.ID,
+			Name:      orga.Name,
 		})
 		return nil
 	})
@@ -543,7 +549,7 @@ func (ss *sqlStore) SearchOrgUsers(ctx context.Context, query *org.SearchOrgUser
 		sess.Join("INNER", ss.dialect.Quote("user"), fmt.Sprintf("org_user.user_id=%s.id", ss.dialect.Quote("user")))
 
 		whereConditions := make([]string, 0)
-		whereParams := make([]interface{}, 0)
+		whereParams := make([]any, 0)
 
 		whereConditions = append(whereConditions, "org_user.org_id = ?")
 		whereParams = append(whereParams, query.OrgID)
@@ -560,7 +566,7 @@ func (ss *sqlStore) SearchOrgUsers(ctx context.Context, query *org.SearchOrgUser
 			ss.log.Warn("Query user not set for filtering.")
 		}
 
-		if !query.DontEnforceAccessControl && !accesscontrol.IsDisabled(ss.cfg) {
+		if !query.DontEnforceAccessControl {
 			acFilter, err := accesscontrol.Filter(query.User, "org_user.user_id", "users:id:", accesscontrol.ActionOrgUsersRead)
 			if err != nil {
 				return err
@@ -764,7 +770,7 @@ func deleteUserAccessControl(sess *db.Session, userID int64) error {
 	}
 
 	query := "DELETE FROM permission WHERE role_id IN(? " + strings.Repeat(",?", len(roleIDs)-1) + ")"
-	args := make([]interface{}, 0, len(roleIDs)+1)
+	args := make([]any, 0, len(roleIDs)+1)
 	args = append(args, query)
 	for _, id := range roleIDs {
 		args = append(args, id)

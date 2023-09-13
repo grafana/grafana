@@ -86,7 +86,7 @@ export class ElementState implements LayerElement {
 
     const { constraint } = this.options;
     const { vertical, horizontal } = constraint ?? {};
-    const placement = this.options.placement ?? ({} as Placement);
+    const placement: Placement = this.options.placement ?? {};
 
     const editingEnabled = this.getScene()?.isEditingEnabled;
 
@@ -229,7 +229,7 @@ export class ElementState implements LayerElement {
         ? Math.round(parentContainer.right - parentBorderWidth - elementContainer.right)
         : 0;
 
-    const placement = {} as Placement;
+    const placement: Placement = {};
 
     const width = elementContainer?.width ?? 100;
     const height = elementContainer?.height ?? 100;
@@ -486,6 +486,20 @@ export class ElementState implements LayerElement {
   };
 
   onElementClick = (event: React.MouseEvent) => {
+    this.onTooltipCallback();
+  };
+
+  onElementKeyDown = (event: React.KeyboardEvent) => {
+    if (
+      event.key === 'Enter' &&
+      (event.currentTarget instanceof HTMLElement || event.currentTarget instanceof SVGElement)
+    ) {
+      const scene = this.getScene();
+      scene?.select({ targets: [event.currentTarget] });
+    }
+  };
+
+  onTooltipCallback = () => {
     const scene = this.getScene();
     if (scene?.tooltipCallback && scene.tooltip?.anchorPoint) {
       scene.tooltipCallback({
@@ -503,14 +517,15 @@ export class ElementState implements LayerElement {
     const isSelected = div && scene && scene.selecto && scene.selecto.getSelectedTargets().includes(div);
 
     return (
-      // TODO: fix keyboard a11y
-      // eslint-disable-next-line jsx-a11y/click-events-have-key-events
       <div
         key={this.UID}
         ref={this.initElement}
         onMouseEnter={(e: React.MouseEvent) => this.handleMouseEnter(e, isSelected)}
         onMouseLeave={!scene?.isEditingEnabled ? this.handleMouseLeave : undefined}
         onClick={!scene?.isEditingEnabled ? this.onElementClick : undefined}
+        onKeyDown={!scene?.isEditingEnabled ? this.onElementKeyDown : undefined}
+        role="button"
+        tabIndex={0}
       >
         <item.display
           key={`${this.UID}/${this.revId}`}

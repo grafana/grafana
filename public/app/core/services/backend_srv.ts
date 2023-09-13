@@ -1,3 +1,4 @@
+import FingerprintJS from '@fingerprintjs/fingerprintjs';
 import { from, lastValueFrom, MonoTypeOperatorFunction, Observable, Subject, Subscription, throwError } from 'rxjs';
 import { fromFetch } from 'rxjs/fetch';
 import {
@@ -15,9 +16,11 @@ import {
 import { v4 as uuidv4 } from 'uuid';
 
 import { AppEvents, DataQueryErrorType } from '@grafana/data';
+import { GrafanaEdition } from '@grafana/data/src/types/config';
 import { BackendSrv as BackendService, BackendSrvRequest, config, FetchError, FetchResponse } from '@grafana/runtime';
 import appEvents from 'app/core/app_events';
 import { getConfig } from 'app/core/config';
+import { getSessionExpiry } from 'app/core/utils/auth';
 import { loadUrlToken } from 'app/core/utils/urlToken';
 import { DashboardModel } from 'app/features/dashboard/state';
 import { DashboardSearchItem } from 'app/features/search/types';
@@ -61,6 +64,7 @@ export class BackendSrv implements BackendService {
   private readonly fetchQueue: FetchQueue;
   private readonly responseQueue: ResponseQueue;
   private _tokenRotationInProgress?: Observable<FetchResponse> | null = null;
+  private deviceID?: string | null = null;
 
   private dependencies: BackendSrvDependencies = {
     fromFetch: fromFetch,
@@ -83,7 +87,24 @@ export class BackendSrv implements BackendService {
     this.internalFetch = this.internalFetch.bind(this);
     this.fetchQueue = new FetchQueue();
     this.responseQueue = new ResponseQueue(this.fetchQueue, this.internalFetch);
+
+    this.initGrafanaDeviceID();
+
     new FetchQueueWorker(this.fetchQueue, this.responseQueue, getConfig());
+  }
+
+  private async initGrafanaDeviceID() {
+    if (config.buildInfo?.edition === GrafanaEdition.OpenSource) {
+      return;
+    }
+
+    try {
+      const fp = await FingerprintJS.load();
+      const result = await fp.get();
+      this.deviceID = result.visitorId;
+    } catch (error) {
+      console.error(error);
+    }
   }
 
   async request<T = any>(options: BackendSrvRequest): Promise<T> {
@@ -134,13 +155,16 @@ export class BackendSrv implements BackendService {
 
     const token = loadUrlToken();
     if (token !== null && token !== '') {
-      if (!options.headers) {
-        options.headers = {};
-      }
-
       if (config.jwtUrlLogin && config.jwtHeaderName) {
+        options.headers = options.headers ?? {};
         options.headers[config.jwtHeaderName] = `${token}`;
       }
+    }
+
+    // Add device id header if not OSS build
+    if (config.buildInfo?.edition !== GrafanaEdition.OpenSource && this.deviceID) {
+      options.headers = options.headers ?? {};
+      options.headers['X-Grafana-Device-Id'] = `${this.deviceID}`;
     }
 
     return this.getFromFetchStream<T>(options).pipe(
@@ -366,7 +390,12 @@ export class BackendSrv implements BackendService {
                   return throwError(() => error);
                 }
 
-                let authChecker = config.featureToggles.clientTokenRotation ? this.rotateToken() : this.loginPing();
+                let authChecker = this.loginPing();
+
+                const expired = getSessionExpiry() * 1000 < Date.now();
+                if (config.featureToggles.clientTokenRotation && expired) {
+                  authChecker = this.rotateToken();
+                }
 
                 return from(authChecker).pipe(
                   catchError((err) => {
@@ -387,7 +416,7 @@ export class BackendSrv implements BackendService {
       );
   }
 
-  private handleStreamCancellation(options: BackendSrvRequest): MonoTypeOperatorFunction<FetchResponse<any>> {
+  private handleStreamCancellation(options: BackendSrvRequest): MonoTypeOperatorFunction<FetchResponse> {
     return (inputStream) =>
       inputStream.pipe(
         takeUntil(
@@ -423,7 +452,7 @@ export class BackendSrv implements BackendService {
       );
   }
 
-  getInspectorStream(): Observable<FetchResponse<any> | FetchError> {
+  getInspectorStream(): Observable<FetchResponse | FetchError> {
     return this.inspectorStream;
   }
 
@@ -436,23 +465,23 @@ export class BackendSrv implements BackendService {
     return this.request<T>({ ...options, method: 'GET', url, params, requestId });
   }
 
-  async delete<T = any>(url: string, data?: any, options?: Partial<BackendSrvRequest>) {
+  async delete<T = unknown>(url: string, data?: unknown, options?: Partial<BackendSrvRequest>) {
     return this.request<T>({ ...options, method: 'DELETE', url, data });
   }
 
-  async post<T = any>(url: string, data?: any, options?: Partial<BackendSrvRequest>) {
+  async post<T = any>(url: string, data?: unknown, options?: Partial<BackendSrvRequest>) {
     return this.request<T>({ ...options, method: 'POST', url, data });
   }
 
-  async patch<T = any>(url: string, data: any, options?: Partial<BackendSrvRequest>) {
+  async patch<T = any>(url: string, data: unknown, options?: Partial<BackendSrvRequest>) {
     return this.request<T>({ ...options, method: 'PATCH', url, data });
   }
 
-  async put<T = any>(url: string, data: any, options?: Partial<BackendSrvRequest>): Promise<T> {
+  async put<T = any>(url: string, data: unknown, options?: Partial<BackendSrvRequest>): Promise<T> {
     return this.request<T>({ ...options, method: 'PUT', url, data });
   }
 
-  withNoBackendCache(callback: any) {
+  withNoBackendCache(callback: () => Promise<void>) {
     this.noBackendCache = true;
     return callback().finally(() => {
       this.noBackendCache = false;

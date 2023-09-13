@@ -877,10 +877,10 @@ const getQueryWithVariables = (key: string, getState: () => StoreState): UrlQuer
 
   const queryParamsNew = Object.keys(queryParams)
     .filter((key) => key.indexOf(VARIABLE_PREFIX) === -1)
-    .reduce((obj, key) => {
+    .reduce<UrlQueryMap>((obj, key) => {
       obj[key] = queryParams[key];
       return obj;
-    }, {} as UrlQueryMap);
+    }, {});
 
   for (const variable of getVariablesByKey(key, getState())) {
     if (variable.skipUrlSync) {

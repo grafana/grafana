@@ -16,7 +16,7 @@ labels:
     - enterprise
     - oss
 title: Histogram
-weight: 605
+weight: 100
 ---
 
 # Histogram
@@ -55,7 +55,7 @@ Controls the fill opacity bars.
 
 ### Gradient mode
 
-Set the mode of the gradient fill. Fill gradient is based on the line color. To change the color, use the standard [color scheme]({{< relref "../../configure-standard-options/#color-scheme" >}}) field option.
+Set the mode of the gradient fill. Fill gradient is based on the line color. To change the color, use the standard [color scheme][] field option.
 
 Gradient display is influenced by the **Fill opacity** setting.
 
@@ -71,10 +71,18 @@ Transparency of the gradient is calculated based on the values on the Y-axis. Th
 
 Gradient color is generated based on the hue of the line color.
 
-{{< docs/shared "visualizations/tooltip-mode.md" >}}
+{{< docs/shared lookup="visualizations/tooltip-mode.md" source="grafana" version="<GRAFANA VERSION>" >}}
 
-{{< docs/shared "visualizations/legend-mode.md" >}}
+{{< docs/shared lookup="visualizations/legend-mode.md" source="grafana" version="<GRAFANA VERSION>" >}}
 
 ### Legend calculations
 
-Choose a [standard calculations]({{< relref "../../calculation-types/" >}}) to show in the legend. You can select more than one.
+Choose a [standard calculations][] to show in the legend. You can select more than one.
+
+{{% docs/reference %}}
+[color scheme]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/configure-standard-options#color-scheme"
+[color scheme]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/configure-standard-options#color-scheme"
+
+[standard calculations]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/calculation-types"
+[standard calculations]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/calculation-types"
+{{% /docs/reference %}}
