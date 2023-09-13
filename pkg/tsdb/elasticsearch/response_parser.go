@@ -55,7 +55,7 @@ func parseResponse(ctx context.Context, responses []*es.SearchResponse, targets 
 	span.SetAttributes("responseLength", len(responses), attribute.Key("responseLength").Int(len(responses)))
 
 	for i, res := range responses {
-		_, span := tracer.Start(ctx, "datasource.elastic.parseResponse.response")
+		_, resSpan := tracer.Start(ctx, "datasource.elastic.parseResponse.response")
 		span.SetAttributes("queryMetricType", targets[i].Metrics[0].Type, attribute.Key("queryMetricType").String(targets[i].Metrics[0].Type))
 		start := time.Now()
 		target := targets[i]
@@ -103,6 +103,8 @@ func parseResponse(ctx context.Context, responses []*es.SearchResponse, targets 
 			logger.Debug("Processed metric query response")
 			if err != nil {
 				mt, _ := json.Marshal(target)
+				span.RecordError(err)
+				span.SetStatus(codes.Error, err.Error())
 				logger.Error("Error processing buckets", "error", err, "query", string(mt), "aggregationsLength", len(res.Aggregations))
 				return &backend.QueryDataResponse{}, err
 			}
@@ -110,8 +112,8 @@ func parseResponse(ctx context.Context, responses []*es.SearchResponse, targets 
 			trimDatapoints(queryRes, target)
 
 			result.Responses[target.RefID] = queryRes
-			span.End()
 		}
+		resSpan.End()
 		logger.Info("Finished processing of response", "duration", time.Since(start), "stage", es.StageParseResponse)
 	}
 	span.End()
