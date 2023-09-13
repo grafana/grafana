@@ -11,6 +11,7 @@ const mockOnCloseClick = jest.fn();
 
 const standardTransformers: Array<TransformerRegistryItem<null>> = getStandardTransformers();
 
+// JEV: iterate over the transformers and test each one?
 const testTransformer: TransformerRegistryItem<null> = standardTransformers[0];
 const testTransformerName = testTransformer.name;
 
@@ -48,7 +49,6 @@ describe('TransformationEditorHelperModal', () => {
 
   it('renders a default message when help content is not provided', () => {
     const transformerWithoutHelp = { ...testTransformer, help: undefined };
-    console.log('transformerWithoutHelp:', transformerWithoutHelp);
 
     render(
       <TransformationEditorHelperModal
