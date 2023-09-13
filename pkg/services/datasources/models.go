@@ -149,6 +149,12 @@ type DeleteDataSourceCommand struct {
 	DeletedDatasourcesCount int64
 
 	UpdateSecretFn UpdateSecretFn
+
+	// Optional way to skip publishing delete event for data sources that are
+	// deleted just to be re-created with the same UID during provisioning.
+	// In such case we don't want to publish the event that triggers clean-up
+	// of related resources (like correlations)
+	SkipPublish bool
 }
 
 // Function for updating secrets along with datasources, to ensure atomicity
