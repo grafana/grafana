@@ -152,6 +152,8 @@ environment variable `HOSTNAME`, if that is empty or does not exist Grafana will
 
 Force migration will run migrations that might cause data loss. Default is `false`.
 
+Set force_migration=true in your grafana.ini and restart Grafana to roll back and delete Unified Alerting configuration data. Any alert rules created while using Unified Alerting will be deleted by rolling back.
+
 <hr />
 
 ## [paths]

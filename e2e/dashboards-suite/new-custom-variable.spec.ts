@@ -20,8 +20,11 @@ function assertPreviewValues(expectedValues: string[]) {
 }
 
 describe('Variables - Custom', () => {
+  beforeEach(() => {
+    e2e.flows.login(e2e.env('USERNAME'), e2e.env('PASSWORD'));
+  });
+
   it('can add a custom template variable', () => {
-    e2e.flows.login('admin', 'admin');
     e2e.flows.openDashboard({ uid: `${PAGE_UNDER_TEST}?orgId=1&editview=templating` });
     cy.contains(DASHBOARD_NAME).should('be.visible');
 
@@ -41,7 +44,6 @@ describe('Variables - Custom', () => {
   });
 
   it('can add a custom template variable with labels', () => {
-    e2e.flows.login('admin', 'admin');
     e2e.flows.openDashboard({ uid: `${PAGE_UNDER_TEST}?orgId=1&editview=templating` });
     cy.contains(DASHBOARD_NAME).should('be.visible');
 
