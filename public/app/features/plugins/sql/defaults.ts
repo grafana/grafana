@@ -14,13 +14,12 @@ export function applyQueryDefaults(q?: SQLQuery): SQLQuery {
   const result: SQLQuery = {
     ...q,
     refId: q?.refId || 'A',
-    format: q?.format !== undefined ? q.format : QueryFormat.Table,
+    format: q?.format !== undefined ? q.format : QueryFormat.Timeseries,
     rawSql: q?.rawSql || '',
     editorMode,
     sql: q?.sql ?? {
       columns: [createFunctionField()],
       groupBy: [setGroupByField()],
-      limit: 50,
     },
   };
 
