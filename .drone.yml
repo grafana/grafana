@@ -3460,7 +3460,7 @@ steps:
   - mkdir -p $${DESTINATION}/$${DRONE_BUILD_EVENT}
   - printenv GCP_KEY_BASE64 | base64 -d > /tmp/key.json
   - gcloud auth activate-service-account --key-file=/tmp/key.json
-  - gcloud storage cp -r $${DRONE_WORKSPACE}/dist $${DESTINATION}/$${DRONE_BUILD_EVENT}
+  - gcloud storage cp -r $${DRONE_WORKSPACE}/dist/* $${DESTINATION}/$${DRONE_BUILD_EVENT}
   depends_on:
   - rgm-build
   environment:
@@ -4559,6 +4559,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 520eb222ef26923d767abe5591b39bf36842ae574b968a168857973e711f0d49
+hmac: 179c600ef0d50537015a2216cb9e3733fa6346cdc2d0d6179f1e64ae15bbc20d
 
 ...

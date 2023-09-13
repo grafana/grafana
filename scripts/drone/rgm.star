@@ -233,7 +233,7 @@ def rgm_version_branch():
     )
 
 def rgm_nightly_build():
-    src = "$${DRONE_WORKSPACE}/dist"
+    src = "$${DRONE_WORKSPACE}/dist/*"
     dst = "$${DESTINATION}/$${DRONE_BUILD_EVENT}"
 
     copy_steps = with_deps(rgm_copy(src, dst), ["rgm-build"])
