@@ -143,7 +143,7 @@ export const TagFilter = ({
     width,
     components: {
       Option: TagOption,
-      MultiValueLabel: (): any => {
+      MultiValueLabel: () => {
         return null; // We want the whole tag to be clickable so we use MultiValueRemove instead
       },
       MultiValueRemove(props: any) {
@@ -155,7 +155,7 @@ export const TagFilter = ({
           </components.MultiValueRemove>
         );
       },
-      MultiValueContainer: hideValues ? (): any => null : components.MultiValueContainer,
+      MultiValueContainer: hideValues ? () => null : components.MultiValueContainer,
     },
   };
 

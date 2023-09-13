@@ -3,6 +3,11 @@ Individual steps that use 'grafana-build' to replace existing individual steps.
 These aren't used in releases.
 """
 
+load(
+    "scripts/drone/variables.star",
+    "golang_version",
+)
+
 # rgm_package_step will create a tar.gz for use in e2e tests or other PR testing related activities..
 def rgm_package_step(distros = "linux/amd64,linux/arm64", file = "packages.txt"):
     return {
@@ -12,6 +17,7 @@ def rgm_package_step(distros = "linux/amd64,linux/arm64", file = "packages.txt")
         "depends_on": ["yarn-install"],
         "commands": [
             "/src/grafana-build package --distro={} ".format(distros) +
+            "--go-version={} ".format(golang_version) +
             "--yarn-cache=$$YARN_CACHE_FOLDER " +
             "--build-id=$$DRONE_BUILD_NUMBER " +
             "--grafana-dir=$$PWD > {}".format(file),
@@ -28,7 +34,9 @@ def rgm_build_backend_step(distros = "linux/amd64,linux/arm64"):
         "image": "grafana/grafana-build:main",
         "pull": "always",
         "commands": [
-            "/src/grafana-build build --distro={} --grafana-dir=$$PWD".format(distros),
+            "/src/grafana-build build " +
+            "--go-version={} ".format(golang_version) +
+            "--distro={} --grafana-dir=$$PWD".format(distros),
         ],
         "volumes": [{"name": "docker", "path": "/var/run/docker.sock"}],
     }
@@ -41,7 +49,7 @@ def rgm_build_docker_step(packages, ubuntu, alpine, depends_on = ["rgm-package"]
         "commands": [
             "docker run --privileged --rm tonistiigi/binfmt --install all",
             "/src/grafana-build docker " +
-            "--package=$(cat {} | grep tar.gz | grep -v docker | grep -v sha256) ".format(packages) +
+            "$(cat {} | grep tar.gz | grep -v docker | grep -v sha256 | awk '{{print \"--package=\" $0}}') ".format(packages) +
             "--ubuntu-base={} ".format(ubuntu) +
             "--alpine-base={} ".format(alpine) +
             "--tag-format='{}' ".format(tag_format) +

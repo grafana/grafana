@@ -184,11 +184,8 @@ describe('PanelAlertTabContent', () => {
     const dsService = new MockDataSourceSrv(dataSources);
     dsService.datasources[dataSources.prometheus.uid] = new PrometheusDatasource(
       dataSources.prometheus
-    ) as DataSourceApi<any, any>;
-    dsService.datasources[dataSources.default.uid] = new PrometheusDatasource(dataSources.default) as DataSourceApi<
-      any,
-      any
-    >;
+    ) as DataSourceApi;
+    dsService.datasources[dataSources.default.uid] = new PrometheusDatasource(dataSources.default) as DataSourceApi;
     setDataSourceSrv(dsService);
     disableRBAC();
   });

@@ -604,7 +604,7 @@ export const runQueries = createAsyncThunk<void, RunQueriesOptions>(
 
       newQuerySubscription = newQuerySource.subscribe({
         next(data) {
-          if (data.logsResult !== null) {
+          if (data.logsResult !== null && data.state === LoadingState.Done) {
             reportInteraction('grafana_explore_logs_result_displayed', {
               datasourceType: datasourceInstance.type,
             });
