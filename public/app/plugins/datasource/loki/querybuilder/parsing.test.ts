@@ -119,7 +119,7 @@ describe('buildVisualQueryFromString', () => {
         ],
         operations: [
           { id: LokiOperationId.LineFilterIpMatches, params: ['|=', '192.168.4.5/16'] },
-          { id: LokiOperationId.Logfmt, params: [] },
+          { id: LokiOperationId.Logfmt, params: [false, false] },
         ],
       })
     );
@@ -209,7 +209,7 @@ describe('buildVisualQueryFromString', () => {
           },
         ],
         operations: [
-          { id: LokiOperationId.Logfmt, params: [] },
+          { id: LokiOperationId.Logfmt, params: [false, false] },
           { id: LokiOperationId.LabelFilterIpMatches, params: ['address', '=', '192.168.4.5/16'] },
         ],
       })
@@ -260,7 +260,7 @@ describe('buildVisualQueryFromString', () => {
           },
         ],
         operations: [
-          { id: LokiOperationId.Logfmt, params: [] },
+          { id: LokiOperationId.Logfmt, params: [false, false] },
           { id: LokiOperationId.Unwrap, params: ['bytes_processed', ''] },
           { id: LokiOperationId.SumOverTime, params: ['1m'] },
         ],
@@ -281,7 +281,7 @@ describe('buildVisualQueryFromString', () => {
           },
         ],
         operations: [
-          { id: LokiOperationId.Logfmt, params: [] },
+          { id: LokiOperationId.Logfmt, params: [false, false] },
           { id: LokiOperationId.Unwrap, params: ['duration', ''] },
           { id: LokiOperationId.LabelFilterNoErrors, params: [] },
           { id: LokiOperationId.SumOverTime, params: ['1m'] },
@@ -303,7 +303,7 @@ describe('buildVisualQueryFromString', () => {
           },
         ],
         operations: [
-          { id: LokiOperationId.Logfmt, params: [] },
+          { id: LokiOperationId.Logfmt, params: [false, false] },
           { id: LokiOperationId.Unwrap, params: ['duration', ''] },
           { id: LokiOperationId.LabelFilter, params: ['label', '=', 'value'] },
           { id: LokiOperationId.SumOverTime, params: ['1m'] },
@@ -326,7 +326,7 @@ describe('buildVisualQueryFromString', () => {
           },
         ],
         operations: [
-          { id: LokiOperationId.Logfmt, params: [] },
+          { id: LokiOperationId.Logfmt, params: [false, false] },
           { id: LokiOperationId.Unwrap, params: ['label', 'duration'] },
           { id: LokiOperationId.SumOverTime, params: ['5m'] },
         ],
@@ -360,7 +360,7 @@ describe('buildVisualQueryFromString', () => {
           },
         ],
         operations: [
-          { id: LokiOperationId.Logfmt, params: [] },
+          { id: LokiOperationId.Logfmt, params: [false, false] },
           { id: LokiOperationId.Decolorize, params: [] },
           { id: LokiOperationId.LabelFilterNoErrors, params: [] },
         ],
@@ -477,7 +477,7 @@ describe('buildVisualQueryFromString', () => {
           },
         ],
         operations: [
-          { id: LokiOperationId.Logfmt, params: [] },
+          { id: LokiOperationId.Logfmt, params: [false, false] },
           { id: LokiOperationId.LabelFilterNoErrors, params: [] },
           { id: LokiOperationId.CountOverTime, params: ['5m'] },
           { id: LokiOperationId.Sum, params: [] },
@@ -833,6 +833,63 @@ describe('buildVisualQueryFromString', () => {
           },
         ],
         operations: [{ id: LokiOperationId.Keep, params: ['id', 'email', 'test="test1"'] }],
+      })
+    );
+  });
+
+  it('parses query with logfmt parser', () => {
+    expect(
+      buildVisualQueryFromString('{label="value"} | logfmt')
+    ).toEqual(
+      noErrors({
+        labels: [
+          {
+            op: '=',
+            value: 'value',
+            label: 'label',
+          },
+        ],
+        operations: [
+          { id: LokiOperationId.Logfmt, params: [false, false] },
+        ],
+      })
+    );
+  });
+
+  it('parses query with logfmt parser and flags', () => {
+    expect(
+      buildVisualQueryFromString('{label="value"} | logfmt --keep-empty --strict')
+    ).toEqual(
+      noErrors({
+        labels: [
+          {
+            op: '=',
+            value: 'value',
+            label: 'label',
+          },
+        ],
+        operations: [
+          { id: LokiOperationId.Logfmt, params: [true, true] },
+        ],
+      })
+    );
+  });
+
+  it('parses query with logfmt parser, flags, and labels', () => {
+    expect(
+      buildVisualQueryFromString('{label="value"} | logfmt --keep-empty --strict label1, label2, label3="label4"')
+    ).toEqual(
+      noErrors({
+        labels: [
+          {
+            op: '=',
+            value: 'value',
+            label: 'label',
+          },
+        ],
+        operations: [
+          { id: LokiOperationId.Logfmt, params: [true, true, 'label1', 'label2', "label3=\"label4"] },
+        ],
       })
     );
   });

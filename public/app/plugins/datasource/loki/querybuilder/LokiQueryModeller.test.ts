@@ -49,6 +49,51 @@ describe('LokiQueryModeller', () => {
     ).toBe('{app="grafana"} | logfmt');
   });
 
+  it('Models a logfmt query with strict flag', () => {
+    expect(
+      modeller.renderQuery({
+        labels: [{ label: 'app', op: '=', value: 'grafana' }],
+        operations: [{ id: LokiOperationId.Logfmt, params: [true] }],
+      })
+    ).toBe('{app="grafana"} | logfmt --strict');
+  });
+
+  it('Models a logfmt query with keep empty flag', () => {
+    expect(
+      modeller.renderQuery({
+        labels: [{ label: 'app', op: '=', value: 'grafana' }],
+        operations: [{ id: LokiOperationId.Logfmt, params: [false, true] }],
+      })
+    ).toBe('{app="grafana"} | logfmt --keep-empty');
+  });
+
+  it('Models a logfmt query with multiple flags', () => {
+    expect(
+      modeller.renderQuery({
+        labels: [{ label: 'app', op: '=', value: 'grafana' }],
+        operations: [{ id: LokiOperationId.Logfmt, params: [true, true] }],
+      })
+    ).toBe('{app="grafana"} | logfmt --strict --keep-empty');
+  });
+
+  it('Models a logfmt query with multiple flags and labels', () => {
+    expect(
+      modeller.renderQuery({
+        labels: [{ label: 'app', op: '=', value: 'grafana' }],
+        operations: [{ id: LokiOperationId.Logfmt, params: [true, true, 'label', 'label2="label3'] }],
+      })
+    ).toBe("{app=\"grafana\"} | logfmt --strict --keep-empty label, label2=\"label3");
+  });
+
+  it('Models a logfmt query with labels', () => {
+    expect(
+      modeller.renderQuery({
+        labels: [{ label: 'app', op: '=', value: 'grafana' }],
+        operations: [{ id: LokiOperationId.Logfmt, params: [false, false, 'label', 'label2="label3'] }],
+      })
+    ).toBe("{app=\"grafana\"} | logfmt label, label2=\"label3");
+  });
+
   it('Can query with pipeline operation regexp', () => {
     expect(
       modeller.renderQuery({

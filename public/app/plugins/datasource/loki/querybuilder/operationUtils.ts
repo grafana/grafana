@@ -187,7 +187,7 @@ export function pipelineRenderer(model: QueryBuilderOperation, def: QueryBuilder
   switch (model.id) {
     case LokiOperationId.Logfmt:
       const [strict = false, keepEmpty = false, ...labels] = model.params;
-      return `${innerExpr} | logfmt ${strict ? '--strict' : ''} ${keepEmpty ? '--keep-empty' : ''} ${labels.join(', ')}`;
+      return `${innerExpr} | logfmt${strict ? ' --strict' : ''}${keepEmpty ? ' --keep-empty' : ''} ${labels.join(', ')}`.trim();
     default:
       return `${innerExpr} | ${model.id}`;
   }

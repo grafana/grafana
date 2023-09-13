@@ -1,4 +1,5 @@
-import { QueryBuilderOperationDef } from '../../prometheus/querybuilder/shared/types';
+import { QueryBuilderOperation, QueryBuilderOperationDef } from '../../prometheus/querybuilder/shared/types';
+import { getOperationDefinitions } from './operations';
 
 import {
   createRangeOperation,
@@ -6,8 +7,9 @@ import {
   getLineFilterRenderer,
   isConflictingFilter,
   labelFilterRenderer,
+  pipelineRenderer,
 } from './operationUtils';
-import { LokiVisualQueryOperationCategory } from './types';
+import { LokiOperationId, LokiVisualQueryOperationCategory } from './types';
 
 describe('createRangeOperation', () => {
   it('should create basic range operation without possible grouping', () => {
@@ -203,5 +205,21 @@ describe('isConflictingFilter', () => {
       { id: '__label_filter', params: ['abc', '=', '123'] },
     ];
     expect(isConflictingFilter(operation, queryOperations)).toBe(false);
+  });
+});
+
+describe('pipelineRenderer', () => {
+  let definitions: QueryBuilderOperationDef[];
+  beforeEach(() => {
+    definitions = getOperationDefinitions();
+  })
+
+  it('Correctly renders unpack expressions', () => {
+    const model: QueryBuilderOperation = {
+      id: LokiOperationId.Unpack,
+      params: [],
+    }
+    const definition = definitions.find(def => def.id === LokiOperationId.Unpack);
+    expect(pipelineRenderer(model, definition!, '{}')).toBe('{} | unpack');
   });
 });

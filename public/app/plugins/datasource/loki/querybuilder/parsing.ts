@@ -25,7 +25,6 @@ import {
   KeepLabels,
   KeepLabelsExpr,
   LabelExtractionExpression,
-  LabelExtractionExpressionList,
   LabelFilter,
   LabelFormatMatcher,
   LabelParser,
@@ -325,7 +324,7 @@ function getJsonExpressionParser(expr: string, node: SyntaxNode): QueryBuilderOp
   const parserNode = node.getChild(Json);
   const parser = getString(expr, parserNode);
 
-  const params = [...getAllByType(expr, node, LabelExtractionExpressionList)];
+  const params = [...getAllByType(expr, node, LabelExtractionExpression)];
   return {
     id: parser,
     params,
