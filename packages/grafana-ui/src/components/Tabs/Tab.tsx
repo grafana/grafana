@@ -81,7 +81,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       listStyle: 'none',
       position: 'relative',
       whiteSpace: 'nowrap',
-      // backgroundColor: `${theme.colors.background.secondary}`,
       marginBottom: '0px',
 
       '&::before': {
@@ -92,13 +91,12 @@ const getStyles = (theme: GrafanaTheme2) => {
         borderRadius: `${theme.shape.radius.default} ${theme.shape.radius.default} 0 0`,
         position: 'absolute',
         top: 0,
-        transition: 'all 0.5s ease',
+        backgroundColor: theme.colors.action.hover,
       },
 
       '&:hover': {
         a: {
           backgroundColor: theme.colors.background.primary,
-          borderBottom: `1px solid ${theme.components.panel.borderColor}`,
         }
       },
 
@@ -107,12 +105,11 @@ const getStyles = (theme: GrafanaTheme2) => {
 
         '&::before': {
           borderRadius: '3px 3px 0 0',
-          backgroundColor: theme.colors.action.hover,
         },
       },
     }),
     itemActive: css({
-      backgroundColor: `${theme.colors.background.primary}`,
+      
 
       '&:hover': {
 
@@ -131,19 +128,17 @@ const getStyles = (theme: GrafanaTheme2) => {
       },
     }),
     link: css({
+      backgroundColor: `${theme.colors.background.primary}`,
       color: theme.colors.text.secondary,
       padding: theme.spacing(1.5, 2, 1),
       display: 'block',
-      height: 'calc(100%)',
-      // borderBottom: `1px solid ${theme.components.panel.borderColor}`,
-
+      height: '100%',
+    
       svg: {
         marginRight: theme.spacing(1),
       },
 
-      '&:focus-visible': getFocusStyles(theme),
-
-      
+      '&:focus-visible': getFocusStyles(theme),  
     }),
     notActive: css({
       
@@ -153,6 +148,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       color: theme.colors.text.primary,
       overflow: 'hidden',
       border: 0,
+      height: 'calc(100% + 1px)',
       borderLeft: `1px solid ${theme.components.panel.borderColor}`,
       borderRight: `1px solid ${theme.components.panel.borderColor}`,
 

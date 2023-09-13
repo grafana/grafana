@@ -13,7 +13,6 @@ const getTabContentStyle = stylesFactory((theme: GrafanaTheme2) => {
   return {
     tabContent: css({
       background: theme.colors.background.primary,
-      marginTop: '40px',
     }),
   };
 });
