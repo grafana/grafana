@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"strings"
 	"time"
+
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 )
 
 type HelpFlags1 uint64
@@ -104,7 +106,7 @@ type SetUsingOrgCommand struct {
 }
 
 type SearchUsersQuery struct {
-	SignedInUser *SignedInUser
+	SignedInUser identity.Requester
 	OrgID        int64 `xorm:"org_id"`
 	Query        string
 	Page         int

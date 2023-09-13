@@ -102,15 +102,13 @@ const result = createDataFrame({
 
 ## Enhance your logs data source plugin with optional features
 
-You can use the following optional features to enhance your logs data source plugin.
-
-### Implement features that enhance log querying experience in Explore
+You can use the following optional features to enhance your logs data source plugin. With optional features, you are going to enhance log querying experience in Explore.
 
 [Explore]({{< relref "../../../../explore" >}}) provides a useful interface for investigating incidents and troubleshooting logs. If the data source produces log results, we highly recommend implementing the following APIs to allow your users to get the most out of the logs UI and its features within Explore.
 
 The following steps show the process for adding support for Explore features in a data source plugin through a seamless integration. Implement these APIs to enhance the user experience and take advantage of Explore's powerful log investigation capabilities.
 
-#### Show log results in Explore's Logs view
+### Show log results in Explore's Logs view
 
 To ensure that your log results are displayed in an interactive Logs view, you must add a `meta` attribute to `preferredVisualisationType` in your log result data frame.
 
@@ -135,7 +133,7 @@ const result = createDataFrame({
 });
 ```
 
-#### Highlight searched words
+### Highlight searched words
 
 {{% admonition type="note" %}} This feature must be implemented in the data frame as a meta attribute. {{%
 /admonition %}}
@@ -167,7 +165,7 @@ const result = createDataFrame({
 });
 ```
 
-#### Log result `meta` information
+### Log result `meta` information
 
 {{% admonition type="note" %}} This feature must be implemented in the data frame as a meta attribute, or in the data frame as a field. {{%
 /admonition %}}
@@ -235,7 +233,7 @@ const result = createDataFrame({
 });
 ```
 
-#### Color-coded log levels
+### Color-coded log levels
 
 {{% admonition type="note" %}} This feature must be implemented in the data frame as a field. {{%
 /admonition %}}
@@ -244,7 +242,7 @@ Color-coded [log levels]({{< relref "../../../../explore/logs-integration/#log-l
 
 Refer to [Logs data frame format](#logs-data-frame-format) for more information.
 
-#### Copy link to log line
+### Copy link to log line
 
 {{% admonition type="note" %}} This feature must be implemented in the data frame as a field. {{%
 /admonition %}}
@@ -255,7 +253,7 @@ If the underlying database doesn't return an `id` field, you can implement one w
 
 Refer to [Logs data frame format](#logs-data-frame-format) for more information.
 
-#### Filter fields using Log details
+### Filter fields using Log details
 
 {{% admonition type="note" %}} Implement this feature through the data source method. {{%
 /admonition %}}
@@ -273,14 +271,14 @@ export class ExampleDatasource extends DataSourceApi<ExampleQuery, ExampleOption
       case 'ADD_FILTER':
         if (action.options?.key && action.options?.value) {
           // Be sure to adjust this example code based on your data source logic.
-          queryText = addLabelToQuery(queryText, action.options.key, '=', action.options.value);
+          queryText = addPositiveFilterToQuery(queryText, action.options.key, action.options.value);
         }
         break;
       case 'ADD_FILTER_OUT':
         {
           if (action.options?.key && action.options?.value) {
             // Be sure to adjust this example code based on your data source logic.
-            queryText = addLabelToQuery(queryText, action.options.key, '!=', action.options.value);
+            queryText = addNegativeFilterToQuery(queryText, action.options.key, action.options.value);
           }
         }
         break;
@@ -290,7 +288,7 @@ export class ExampleDatasource extends DataSourceApi<ExampleQuery, ExampleOption
 }
 ```
 
-#### Live tailing
+### Live tailing
 
 {{% admonition type="note" %}} Implement this feature data source method and enabled in `plugin.json` {{%
 /admonition %}}
@@ -323,7 +321,7 @@ export class ExampleDatasource extends DataSourceApi<ExampleQuery, ExampleOption
 }
 ```
 
-#### Log context
+### Log context
 
 {{% admonition type="note" %}} Implement this feature through the `DataSourceWithXXXSupport` interface{{%
 /admonition %}}
@@ -402,7 +400,7 @@ With [full range logs volume]({{< relref "../../../../explore/logs-integration/#
 
 **How to implement `DataSourceWithSupplementaryQueriesSupport` API in data source:**
 
-{{% admonition type="note" %}} This API must be implemented in data source in typescript code. {{%
+{{% admonition type="note" %}} This API must be implemented in the data source in typescript code. {{%
 /admonition %}}
 
 ```ts
@@ -487,7 +485,7 @@ export class ExampleDatasource
 
 ### Logs sample
 
-{{% admonition type="note" %}} This feature is currently not supported for external plugins outside of the Grafana repo. Implement this API in a data source by implementing the `DataSourceWithXXXSupport` interface. {{%
+{{% admonition type="note" %}} This feature is currently not supported for external plugins outside of the Grafana repo. Add support for this API in a data source by implementing the `DataSourceWith<Feature>Support` interface. {{%
 /admonition %}}
 
 The [logs sample]({{< relref "../../../../explore/logs-integration/#logs-sample" >}}) feature is a valuable addition when your data source supports both logs and metrics. It enables users to view samples of log lines that contributed to the visualized metrics, providing deeper insights into the data.
@@ -612,3 +610,76 @@ const result = createDataFrame({
 /admonition %}}
 
 It allows plugin developers to display a custom UI in the context view by implementing the `getLogRowContextUi?(row: LogRowModel, runContextQuery?: () => void, origQuery?: TQuery): React.ReactNode;` method.
+
+### Toggleable filters in Log Details
+
+{{% admonition type="note" %}} This feature is currently not supported for external plugins outside of the Grafana repo. Add support for this API in a data source by implementing the `DataSourceWith<Feature>Support` interface. {{%
+/admonition %}}
+
+The [logs details]({{< relref "../../../../explore/logs-integration/#log-details-view" >}}) component offers the possibility of adding and removing filters from the query that generated a given log line by clicking the corresponding button next to each field associated with the log line. When this interface is implemented in your data source, you get access to the following functionalities:
+
+- If a positive filter for the field and field value is present in the query, the "plus" icon is displayed as active.
+- If a positive filter is active, it can be toggled off (removed) from the source query.
+- If a positive filter is active, it can be changed to a negative equivalent by clicking on the "minus" icon.
+- A negative filter for a field and field value can be added to the source query by clicking on the corresponding icon.
+
+To implement toggleable filters support in your data source plugin, you can use the `DataSourceWithToggleableQueryFiltersSupport` API.
+
+```ts
+import {
+  queryHasPositiveFilter,
+  removePositiveFilterFromQuery,
+  addPositiveFilterToQuery,
+  addNegativeFilterToQuery,
+} from '../your/own/package/functions';
+import { DataSourceWithToggleableQueryFiltersSupport, QueryFilterOptions } from '@grafana/data';
+
+export class ExampleDatasource
+  extends DataSourceApi<ExampleQuery, ExampleOptions>
+  implements DataSourceWithToggleableQueryFiltersSupport<ExampleQuery>
+{
+  /**
+   * Given a query, determine if it has a filter that matches the options.
+   */
+  queryHasFilter(query: ExampleQuery, filter: QueryFilterOptions): boolean {
+    /**
+     * Pass the query and the key => value pair to your query-analyzing function.
+     * We only care about equality/positive filters as only those fields will be
+     * present in the log lines.
+     */
+    return queryHasPositiveFilter(query.query, filter.key, filter.value);
+  }
+
+  /**
+   * Toggle filters on and off from query.
+   * If the filter is already present, it should be removed.
+   * If the opposite filter is present, it should be replaced.
+   */
+  toggleQueryFilter(query: ExampleQuery, filter: ToggleFilterAction): LokiQuery {
+    const queryText = query.query; // The current query.
+    const { key, value } = filter.options;
+    // We currently support 2 types of filter: FILTER_FOR (positive) and FILTER_OUT (negative).
+    switch (filter.type) {
+      case 'FILTER_FOR': {
+        // This gives the user the ability to toggle a filter on and off.
+        queryText = queryHasPositiveFilter(queryText, key, value)
+          ? removePositiveFilterFromQuery(queryText, key, value)
+          : addPositiveFilterToQuery(queryText, key, value);
+        break;
+      }
+      case 'FILTER_OUT': {
+        // If there is a positive filter with the same key and value, remove it.
+        if (queryHasPositiveFilter(queryText, key, value)) {
+          queryText = removePositiveLabelFromQuery(queryText, key, value);
+        }
+        // Add the inequality filter to the query.
+        queryText = addNegativeFilterToQuery(queryText, key, value);
+        break;
+      }
+      default:
+        break;
+    }
+    return { ...query, query: queryText };
+  }
+}
+```

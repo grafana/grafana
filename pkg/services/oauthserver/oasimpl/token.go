@@ -72,9 +72,9 @@ func (s *OAuth2ServiceImpl) HandleTokenRequest(rw http.ResponseWriter, req *http
 func (s *OAuth2ServiceImpl) writeAccessError(ctx context.Context, rw http.ResponseWriter, accessRequest fosite.AccessRequester, err error) {
 	var fositeErr *fosite.RFC6749Error
 	if errors.As(err, &fositeErr) {
-		s.logger.Error("description", fositeErr.DescriptionField, "hint", fositeErr.HintField, "error", fositeErr.ErrorField)
+		s.logger.Error("Description", fositeErr.DescriptionField, "hint", fositeErr.HintField, "error", fositeErr.ErrorField)
 	} else {
-		s.logger.Error("error", err)
+		s.logger.Error("Error", err)
 	}
 	s.oauthProvider.WriteAccessError(ctx, rw, accessRequest, err)
 }

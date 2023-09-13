@@ -15,14 +15,15 @@ import (
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/modules"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	grafanaapiserver "github.com/grafana/grafana/pkg/services/grafana-apiserver"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 // NewModule returns an instance of a ModuleServer, responsible for managing
 // dskit modules (services).
-func NewModule(opts Options, apiOpts api.ServerOptions, cfg *setting.Cfg) (*ModuleServer, error) {
-	s, err := newModuleServer(opts, apiOpts, cfg)
+func NewModule(opts Options, apiOpts api.ServerOptions, features featuremgmt.FeatureToggles, cfg *setting.Cfg) (*ModuleServer, error) {
+	s, err := newModuleServer(opts, apiOpts, features, cfg)
 	if err != nil {
 		return nil, err
 	}
@@ -34,7 +35,7 @@ func NewModule(opts Options, apiOpts api.ServerOptions, cfg *setting.Cfg) (*Modu
 	return s, nil
 }
 
-func newModuleServer(opts Options, apiOpts api.ServerOptions, cfg *setting.Cfg) (*ModuleServer, error) {
+func newModuleServer(opts Options, apiOpts api.ServerOptions, features featuremgmt.FeatureToggles, cfg *setting.Cfg) (*ModuleServer, error) {
 	rootCtx, shutdownFn := context.WithCancel(context.Background())
 
 	s := &ModuleServer{
@@ -44,6 +45,7 @@ func newModuleServer(opts Options, apiOpts api.ServerOptions, cfg *setting.Cfg) 
 		shutdownFn:       shutdownFn,
 		shutdownFinished: make(chan struct{}),
 		log:              log.New("base-server"),
+		features:         features,
 		cfg:              cfg,
 		pidFile:          opts.PidFile,
 		version:          opts.Version,
@@ -61,6 +63,7 @@ type ModuleServer struct {
 	opts    Options
 	apiOpts api.ServerOptions
 
+	features         featuremgmt.FeatureToggles
 	context          context.Context
 	shutdownFn       context.CancelFunc
 	log              log.Logger
@@ -106,7 +109,7 @@ func (s *ModuleServer) Run() error {
 	s.log.Debug("Waiting on services...")
 
 	// Only allow individual dskit modules to run in dev mode.
-	if s.cfg.Env != "dev" {
+	if s.cfg.Env != setting.Dev {
 		if len(s.cfg.Target) > 1 || s.cfg.Target[0] != "all" {
 			s.log.Error("dskit module targeting is only supported in dev mode. Falling back to 'all'")
 			s.cfg.Target = []string{"all"}
@@ -119,9 +122,13 @@ func (s *ModuleServer) Run() error {
 		return NewService(s.cfg, s.opts, s.apiOpts)
 	})
 
-	m.RegisterModule(modules.GrafanaAPIServer, func() (services.Service, error) {
-		return grafanaapiserver.New(path.Join(s.cfg.DataPath, "k8s"))
-	})
+	if s.features.IsEnabled(featuremgmt.FlagGrafanaAPIServer) {
+		m.RegisterModule(modules.GrafanaAPIServer, func() (services.Service, error) {
+			return grafanaapiserver.New(path.Join(s.cfg.DataPath, "k8s"))
+		})
+	} else {
+		s.log.Debug("apiserver feature is disabled")
+	}
 
 	m.RegisterModule(modules.All, nil)
 
