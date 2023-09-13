@@ -11,23 +11,31 @@ const mockOnCloseClick = jest.fn();
 
 const standardTransformers: Array<TransformerRegistryItem<null>> = getStandardTransformers();
 
-// JEV: iterate over the transformers and test each one?
-const testTransformer: TransformerRegistryItem<null> = standardTransformers[0];
-const testTransformerName = testTransformer.name;
+const singleTestTransformer: TransformerRegistryItem<null> = standardTransformers[0];
 
 describe('TransformationEditorHelperModal', () => {
   it('renders the modal with the correct title and content', () => {
-    render(
-      <TransformationEditorHelperModal isOpen={true} onCloseClick={mockOnCloseClick} transformer={testTransformer} />
-    );
+    // Test each transformer
+    standardTransformers.forEach((transformer) => {
+      const { unmount } = render(
+        <TransformationEditorHelperModal isOpen={true} onCloseClick={mockOnCloseClick} transformer={transformer} />
+      );
 
-    // Check if the modal title is rendered with the correct text
-    expect(screen.getByText(`Transformation help - ${testTransformerName}`)).toBeInTheDocument();
+      // Check if the modal title is rendered with the correct text
+      expect(screen.getByText(`Transformation help - ${transformer.transformation.name}`)).toBeInTheDocument();
+
+      // Unmount the component to clean up
+      unmount();
+    });
   });
 
   it('calls onCloseClick when the modal is dismissed', () => {
     render(
-      <TransformationEditorHelperModal isOpen={true} onCloseClick={mockOnCloseClick} transformer={testTransformer} />
+      <TransformationEditorHelperModal
+        isOpen={true}
+        onCloseClick={mockOnCloseClick}
+        transformer={singleTestTransformer}
+      />
     );
 
     // Find and click the modal's close button
@@ -40,15 +48,19 @@ describe('TransformationEditorHelperModal', () => {
 
   it('does not render when isOpen is false', () => {
     render(
-      <TransformationEditorHelperModal isOpen={false} onCloseClick={mockOnCloseClick} transformer={testTransformer} />
+      <TransformationEditorHelperModal
+        isOpen={false}
+        onCloseClick={mockOnCloseClick}
+        transformer={singleTestTransformer}
+      />
     );
 
     // Ensure that the modal is not rendered
-    expect(screen.queryByText(`Transformation help - ${testTransformerName}`)).toBeNull();
+    expect(screen.queryByText(`Transformation help - ${singleTestTransformer.name}`)).toBeNull();
   });
 
   it('renders a default message when help content is not provided', () => {
-    const transformerWithoutHelp = { ...testTransformer, help: undefined };
+    const transformerWithoutHelp = { ...singleTestTransformer, help: undefined };
 
     render(
       <TransformationEditorHelperModal
@@ -65,7 +77,7 @@ describe('TransformationEditorHelperModal', () => {
   it('renders with custom help content when provided', () => {
     const customHelpContent = 'Custom help content for testing';
 
-    const transformerWithCustomHelp = { ...testTransformer, help: customHelpContent };
+    const transformerWithCustomHelp = { ...singleTestTransformer, help: customHelpContent };
 
     render(
       <TransformationEditorHelperModal
