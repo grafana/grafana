@@ -2,9 +2,11 @@ import React, { useMemo, useState } from 'react';
 
 import {
   EmbeddedScene,
+  NestedScene,
   QueryVariable,
   SceneApp,
   SceneAppPage,
+  SceneFlexItem,
   SceneFlexLayout,
   SceneTimeRange,
   SceneVariableSet,
@@ -50,31 +52,50 @@ const grafanaCloudPromDs = {
 const THIS_WEEK_TIME_RANGE = new SceneTimeRange({ from: 'now-1w', to: 'now' });
 const LAST_WEEK_TIME_RANGE = new SceneTimeRange({ from: 'now-2w', to: 'now-1w' });
 
-function getGrafanaScenes() {
+export function getGrafanaScenes() {
   return new EmbeddedScene({
     body: new SceneFlexLayout({
-      wrap: 'wrap',
+      direction: 'column',
       children: [
-        getMostFiredInstancesScene(THIS_WEEK_TIME_RANGE, ashDs, 'Top 10 firing instances this week'),
-
-        getFiringAlertsRateScene(THIS_WEEK_TIME_RANGE, ashDs, 'Alerts firing per minute'),
-
-        getFiringAlertsScene(THIS_WEEK_TIME_RANGE, ashDs, 'Firing alerts this week'),
-
-        getFiringAlertsScene(LAST_WEEK_TIME_RANGE, ashDs, 'Firing alerts last week'),
+        new SceneFlexLayout({
+          children: [
+            getMostFiredInstancesScene(THIS_WEEK_TIME_RANGE, ashDs, 'Top 10 firing instances this week'),
+            getFiringAlertsRateScene(THIS_WEEK_TIME_RANGE, ashDs, 'Alerts firing per minute'),
+          ],
+        }),
+        new SceneFlexLayout({
+          children: [
+            getFiringAlertsScene(THIS_WEEK_TIME_RANGE, ashDs, 'Firing alerts this week'),
+            getFiringAlertsScene(LAST_WEEK_TIME_RANGE, ashDs, 'Firing alerts last week'),
+          ],
+        }),
+        new SceneFlexItem({
+          ySizing: 'content',
+          body: getCloudScenes(),
+        }),
+        new SceneFlexItem({
+          ySizing: 'content',
+          body: getMimirManagedRulesScenes(),
+        }),
+        new SceneFlexItem({
+          ySizing: 'content',
+          body: getMimirManagedRulesPerGroupScenes(),
+        }),
       ],
     }),
   });
 }
 
 function getCloudScenes() {
-  return new EmbeddedScene({
+  return new NestedScene({
+    title: 'Mimir alertmanager',
+    canCollapse: true,
+    isCollapsed: true,
     body: new SceneFlexLayout({
       wrap: 'wrap',
       children: [
         getAlertsByStateScene(THIS_WEEK_TIME_RANGE, cloudUsageDs, 'Alerts by State'),
         getNotificationsScene(THIS_WEEK_TIME_RANGE, cloudUsageDs, 'Notifications'),
-
         getSilencesScene(LAST_WEEK_TIME_RANGE, cloudUsageDs, 'Silences'),
         getInvalidConfigScene(THIS_WEEK_TIME_RANGE, cloudUsageDs, 'Invalid configuration'),
       ],
@@ -83,7 +104,10 @@ function getCloudScenes() {
 }
 
 function getMimirManagedRulesScenes() {
-  return new EmbeddedScene({
+  return new NestedScene({
+    title: 'Mimir-managed rules',
+    canCollapse: true,
+    isCollapsed: true,
     body: new SceneFlexLayout({
       wrap: 'wrap',
       children: [
@@ -102,14 +126,17 @@ function getMimirManagedRulesScenes() {
 }
 
 function getMimirManagedRulesPerGroupScenes() {
-  const ruleGroupHandler = new QueryVariable({
-    label: 'Rule Group',
-    name: 'rule_group',
-    datasource: cloudUsageDs,
-    query: 'label_values(grafanacloud_instance_rule_group_rules,rule_group)',
-  });
+  // const ruleGroupHandler = new QueryVariable({
+  //   label: 'Rule Group',
+  //   name: 'rule_group',
+  //   datasource: cloudUsageDs,
+  //   query: 'label_values(grafanacloud_instance_rule_group_rules,rule_group)',
+  // });
 
-  return new EmbeddedScene({
+  return new NestedScene({
+    title: 'Mimir-managed Rules - Per Rule Group',
+    canCollapse: true,
+    isCollapsed: true,
     body: new SceneFlexLayout({
       wrap: 'wrap',
       children: [
@@ -119,60 +146,9 @@ function getMimirManagedRulesPerGroupScenes() {
         getRulesPerGroupScene(THIS_WEEK_TIME_RANGE, cloudUsageDs, 'Rules per Group'),
       ],
     }),
-    $variables: new SceneVariableSet({
-      variables: [ruleGroupHandler],
-    }),
-    controls: [new VariableValueSelectors({})],
+    // $variables: new SceneVariableSet({
+    //   variables: [ruleGroupHandler],
+    // }),
+    //controls: [new VariableValueSelectors({})],
   });
-}
-
-export function getMainPageScene() {
-  return new SceneAppPage({
-    title: 'Alerting Insights',
-    subTitle: 'Monitor the status of your alerts',
-    url: '/alerting',
-    hideFromBreadcrumbs: true,
-    getScene: getGrafanaScenes,
-    tabs: [
-      new SceneAppPage({
-        title: 'Grafana',
-        url: '/alerting/insights',
-        getScene: getGrafanaScenes,
-      }),
-      new SceneAppPage({
-        title: 'Mimir alertmanager',
-        url: '/alerting/insights/mimir-alertmanager',
-        getScene: getCloudScenes,
-      }),
-      new SceneAppPage({
-        title: 'Mimir-managed rules',
-        url: '/alerting/insights/mimir-rules',
-        getScene: getMimirManagedRulesScenes,
-      }),
-      new SceneAppPage({
-        title: 'Mimir-managed Rules - Per Rule Group',
-        url: '/alerting/insights/mimir-rules-per-group',
-        getScene: getMimirManagedRulesPerGroupScenes,
-      }),
-    ],
-  });
-}
-
-export default function Insights() {
-  const appScene = useMemo(
-    () =>
-      new SceneApp({
-        pages: [getMainPageScene()],
-      }),
-    []
-  );
-
-  const sectionNav = usePageNav('alerting')!;
-  const [pluginContext] = useState<PluginPageContextType>({ sectionNav });
-
-  return (
-    <PluginPageContext.Provider value={pluginContext}>
-      <appScene.Component model={appScene} />
-    </PluginPageContext.Provider>
-  );
 }
