@@ -46,11 +46,7 @@ export function IconDisplay(props: CanvasElementProps) {
   };
 
   return (
-    <SanitizedSVG
-      src={data.path}
-      style={svgStyle}
-      className={svgStyle.strokeWidth ? svgStrokePathClass : undefined}
-    />
+    <SanitizedSVG src={data.path} style={svgStyle} className={svgStyle.strokeWidth ? svgStrokePathClass : undefined} />
   );
 }
 
