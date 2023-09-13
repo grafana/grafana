@@ -63,8 +63,9 @@ func parseResponse(ctx context.Context, responses []*es.SearchResponse, targets 
 		if res.Error != nil {
 			mt, _ := json.Marshal(target)
 			me, _ := json.Marshal(res.Error)
-			span.RecordError(errors.New(string(me)))
-			span.SetStatus(codes.Error, string(me))
+			resSpan.RecordError(errors.New(string(me)))
+			resSpan.SetStatus(codes.Error, string(me))
+			resSpan.End()
 			logger.Error("Processing error response from Elasticsearch", "error", string(me), "query", string(mt))
 			errResult := getErrorFromElasticResponse(res)
 			result.Responses[target.RefID] = backend.DataResponse{
