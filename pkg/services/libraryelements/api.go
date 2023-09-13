@@ -21,7 +21,6 @@ func (l *LibraryElementService) registerAPIEndpoints() {
 
 	l.RouteRegister.Group("/api/library-elements", func(entities routing.RouteRegister) {
 		uidScope := ScopeLibraryPanelsProvider.GetResourceScopeUID(ac.Parameter(":uid"))
-		nameScope := ScopeLibraryPanelsProvider.GetResourceScopeName(ac.Parameter(":name"))
 
 		if l.features.IsEnabled(featuremgmt.FlagLibraryPanelRBAC) {
 			entities.Post("/", authorize(ac.EvalPermission(ActionLibraryPanelsCreate)), routing.Wrap(l.createHandler))
@@ -29,7 +28,7 @@ func (l *LibraryElementService) registerAPIEndpoints() {
 			entities.Get("/", authorize(ac.EvalPermission(ActionLibraryPanelsRead)), routing.Wrap(l.getAllHandler))
 			entities.Get("/:uid", authorize(ac.EvalPermission(ActionLibraryPanelsRead, uidScope)), routing.Wrap(l.getHandler))
 			entities.Get("/:uid/connections/", authorize(ac.EvalPermission(ActionLibraryPanelsRead, uidScope)), routing.Wrap(l.getConnectionsHandler))
-			entities.Get("/name/:name", authorize(ac.EvalPermission(ActionLibraryPanelsRead, nameScope)), routing.Wrap(l.getByNameHandler))
+			entities.Get("/name/:name", authorize(ac.EvalPermission(ActionLibraryPanelsRead)), routing.Wrap(l.getByNameHandler))
 			entities.Patch("/:uid", authorize(ac.EvalPermission(ActionLibraryPanelsWrite, uidScope)), routing.Wrap(l.patchHandler))
 		} else {
 			entities.Post("/", routing.Wrap(l.createHandler))
