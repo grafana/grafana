@@ -13,7 +13,7 @@ import { supportsDataQuery } from '../PanelEditor/utils';
  * Given PanelData return first data source supporting metadata inspector
  */
 export const useDatasourceMetadata = (data?: PanelData) => {
-  const state = useAsync(getDataSourceWithInspector, [data]);
+  const state = useAsync(async () => getDataSourceWithInspector(data), [data]);
   return state.value;
 };
 

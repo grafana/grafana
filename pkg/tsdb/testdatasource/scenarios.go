@@ -757,13 +757,21 @@ func RandomWalk(query backend.DataQuery, model JSONModel, index int) *data.Frame
 		timeWalkerMs += query.Interval.Milliseconds()
 	}
 
-	return data.NewFrame("",
+	frame := data.NewFrame("",
 		data.NewField("time", nil, timeVec).
 			SetConfig(&data.FieldConfig{
 				Interval: float64(query.Interval.Milliseconds()),
 			}),
 		data.NewField(frameNameForQuery(query, model, index), parseLabels(model, index), floatVec),
 	)
+
+	frame.SetMeta(&data.FrameMeta{
+		Custom: map[string]interface{}{
+			"customStat": 10,
+		},
+	})
+
+	return frame
 }
 
 func randomWalkTable(query backend.DataQuery, model JSONModel) *data.Frame {
