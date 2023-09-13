@@ -12,6 +12,7 @@ labels:
   products:
     - enterprise
     - oss
+menuTitle: Monitor
 title: Meta monitoring
 weight: 100
 ---
