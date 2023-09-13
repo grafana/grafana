@@ -1,13 +1,6 @@
 import { SyntaxNode } from '@lezer/common';
 import { escapeRegExp } from 'lodash';
 
-import { reportInteraction } from '@grafana/runtime';
-import { DataQuery } from '@grafana/schema';
-
-import { ErrorId, replaceVariables, returnVariables } from '../prometheus/querybuilder/shared/parsingUtils';
-
-import { placeHolderScopedVars } from './components/monaco-query-field/monaco-completion-provider/validation';
-import { LokiDatasource } from './datasource';
 import {
   parser,
   LineFilter,
@@ -27,7 +20,14 @@ import {
   Range,
   formatLokiQuery,
   Logfmt,
-} from './lezer/index.es';
+} from '@grafana/lezer-logql';
+import { reportInteraction } from '@grafana/runtime';
+import { DataQuery } from '@grafana/schema';
+
+import { ErrorId, replaceVariables, returnVariables } from '../prometheus/querybuilder/shared/parsingUtils';
+
+import { placeHolderScopedVars } from './components/monaco-query-field/monaco-completion-provider/validation';
+import { LokiDatasource } from './datasource';
 import { getStreamSelectorPositions, NodePosition } from './modifyQuery';
 import { LokiQuery, LokiQueryType } from './types';
 

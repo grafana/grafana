@@ -1,8 +1,7 @@
 import { SyntaxNode } from '@lezer/common';
 
+import { parser } from '@grafana/lezer-logql';
 import { ErrorId } from 'app/plugins/datasource/prometheus/querybuilder/shared/parsingUtils';
-
-import { parser } from '../../../lezer/index.es';
 
 interface ParserErrorBoundary {
   startLineNumber: number;

@@ -28,7 +28,8 @@ import {
   ParserFlag,
   LabelExtractionExpression,
   LabelExtractionExpressionList
-} from '../../../lezer/index.es';
+} from '@grafana/lezer-logql';
+
 import { getLogQueryFromMetricsQuery, getNodesFromQuery } from '../../../queryUtils';
 
 type Direction = 'parent' | 'firstChild' | 'lastChild' | 'nextSibling';
