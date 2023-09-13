@@ -26,3 +26,4 @@ export { RowsToFieldsHelper } from './RowsToFieldsHelper';
 export { SeriesToRowsHelper } from './SeriesToRowsHelper';
 export { SortByHelper } from './SortByHelper';
 export { SpatialHelper } from './SpatialHelper';
+export { TimeSeriesTableHelper } from './TimeSeriesTableHelper';

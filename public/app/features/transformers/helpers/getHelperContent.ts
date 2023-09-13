@@ -29,6 +29,7 @@ import {
   SeriesToRowsHelper,
   SortByHelper,
   SpatialHelper,
+  TimeSeriesTableHelper,
 } from './index';
 
 const helperContent: Record<string, () => string> = {
@@ -60,6 +61,7 @@ const helperContent: Record<string, () => string> = {
   seriesToRows: SeriesToRowsHelper,
   sortBy: SortByHelper,
   spatial: SpatialHelper,
+  timeSeriesTable: TimeSeriesTableHelper,
 };
 
 export function getHelperContent(id: string): string {

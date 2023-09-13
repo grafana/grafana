@@ -2,6 +2,8 @@ import React from 'react';
 
 import { PluginState, TransformerRegistryItem, TransformerUIProps } from '@grafana/data';
 
+import { getHelperContent } from '../helpers/getHelperContent';
+
 import { timeSeriesTableTransformer, TimeSeriesTableTransformerOptions } from './timeSeriesTableTransformer';
 
 export interface Props extends TransformerUIProps<{}> {}
@@ -21,6 +23,5 @@ export const timeSeriesTableTransformRegistryItem: TransformerRegistryItem<TimeS
   name: timeSeriesTableTransformer.name,
   description: timeSeriesTableTransformer.description,
   state: PluginState.beta,
-  // JEV: rebuild this help to a react component
-  help: ``,
+  help: getHelperContent(timeSeriesTableTransformer.id),
 };

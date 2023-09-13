@@ -22,7 +22,6 @@ import { TransformationsEditorTransformation } from './types';
 
 interface TransformationOperationRowProps {
   id: string;
-  // JEV: shouldn't this be a `DataTransformerID`?
   index: number;
   data: DataFrame[];
   uiConfig: TransformerRegistryItem<null>;
