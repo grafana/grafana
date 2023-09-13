@@ -21,6 +21,10 @@ func (d *fakeDetector) DetectAngular(_ []byte) bool {
 	return d.returns
 }
 
+func (d *fakeDetector) String() string {
+	return "fake"
+}
+
 func TestPatternsListInspector(t *testing.T) {
 	plugin := &plugins.Plugin{
 		FS: plugins.NewInMemoryFS(map[string][]byte{"module.js": nil}),
@@ -73,9 +77,7 @@ func TestPatternsListInspector(t *testing.T) {
 			for _, d := range tc.fakeDetectors {
 				detectors = append(detectors, angulardetector.AngularDetector(d))
 			}
-			inspector := &PatternsListInspector{
-				DetectorsProvider: &angulardetector.StaticDetectorsProvider{Detectors: detectors},
-			}
+			inspector := NewPatternListInspector(&angulardetector.StaticDetectorsProvider{Detectors: detectors})
 			r, err := inspector.Inspect(context.Background(), plugin)
 			tc.exp(t, r, err, tc.fakeDetectors)
 		})
@@ -128,7 +130,7 @@ func TestDefaultStaticDetectorsInspector(t *testing.T) {
 			exp: false,
 		})
 	}
-	inspector := PatternsListInspector{DetectorsProvider: NewDefaultStaticDetectorsProvider()}
+	inspector := NewPatternListInspector(NewDefaultStaticDetectorsProvider())
 	for _, tc := range tcs {
 		t.Run(tc.name, func(t *testing.T) {
 			isAngular, err := inspector.Inspect(context.Background(), tc.plugin)
