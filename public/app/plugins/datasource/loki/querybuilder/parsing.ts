@@ -333,7 +333,6 @@ function getJsonExpressionParser(expr: string, node: SyntaxNode): QueryBuilderOp
 }
 
 function getLogfmtParser(expr: string, node: SyntaxNode): GetOperationResult {
-  const params: QueryBuilderOperationParamValue[] = [];
   const flags: string[] = [];
   const labels: string[] = [];
   let error: string | undefined = undefined;
