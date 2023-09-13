@@ -10,7 +10,7 @@ import { AccessControlAction } from 'app/types';
 import { grantUserPermissions, mockDataSource } from '../../mocks';
 import { AlertmanagerProvider } from '../../state/AlertmanagerContext';
 import { setupDataSources } from '../../testSetup/datasources';
-import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
+import { DataSourceType } from '../../utils/datasource';
 
 import ContactPoints, { ContactPoint } from './ContactPoints.v2';
 import setupGrafanaManagedServer from './__mocks__/grafanaManagedServer';
