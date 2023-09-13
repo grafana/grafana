@@ -159,6 +159,9 @@ func (u *SignedInUser) GetTeams() []int64 {
 
 // GetOrgRole returns the role of the active entity in the active organization
 func (u *SignedInUser) GetOrgRole() roletype.RoleType {
+	if u.OrgRole == "" {
+		return roletype.RoleNone
+	}
 	return u.OrgRole
 }
 
