@@ -1,6 +1,16 @@
 import React, { useEffect, useState } from 'react';
 
-import { LinkButton, FilterInput, VerticalGroup, HorizontalGroup, Pagination, InlineField } from '@grafana/ui';
+import {
+  LinkButton,
+  FilterInput,
+  VerticalGroup,
+  HorizontalGroup,
+  Pagination,
+  InlineField,
+  CellProps,
+  DeleteButton,
+  InteractiveTable,
+} from '@grafana/ui';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { Page } from 'app/core/components/Page/Page';
 import { fetchRoleOptions } from 'app/core/components/RolePicker/api';
@@ -8,13 +18,16 @@ import { config } from 'app/core/config';
 import { contextSrv, User } from 'app/core/services/context_srv';
 import { AccessControlAction, Role, StoreState, Team } from 'app/types';
 
+import { TeamRolePicker } from '../../core/components/RolePicker/TeamRolePicker';
 import { connectWithCleanUp } from '../../core/components/connectWithCleanUp';
+import { Avatar } from '../admin/Users/Avatar';
+import { createSortFn } from '../admin/Users/sort';
 
-import { TeamListRow } from './TeamListRow';
 import { deleteTeam, loadTeams, changePage, changeQuery } from './state/actions';
 import { initialTeamsState } from './state/reducers';
 import { isPermissionTeamAdmin } from './state/selectors';
 
+type Cell<T extends keyof Team = keyof Team> = CellProps<Team, Team[T]>;
 export interface Props {
   teams: Team[];
   page: number;
@@ -63,6 +76,69 @@ export const TeamList = ({
   const canCreate = contextSrv.hasPermission(AccessControlAction.ActionTeamsCreate);
   const displayRolePicker = shouldDisplayRolePicker();
 
+  const columns = [
+    {
+      id: 'avatarUrl',
+      header: '',
+      cell: ({ cell: { value } }: Cell<'avatarUrl'>) => <Avatar src={value!} alt="User avatar" />,
+    },
+    {
+      id: 'name',
+      header: 'Name',
+      cell: ({ cell: { value } }: Cell<'name'>) => value,
+      sortType: createSortFn<Team>('name'),
+    },
+    {
+      id: 'email',
+      header: 'Email',
+      cell: ({ cell: { value } }: Cell<'email'>) => value,
+      sortType: createSortFn<Team>('email'),
+    },
+    {
+      id: 'memberCount',
+      header: 'Members',
+      cell: ({ cell: { value } }: Cell<'memberCount'>) => <div>{value}</div>,
+      sortType: createSortFn<Team>('memberCount'),
+    },
+    ...(displayRolePicker
+      ? [
+          {
+            id: 'role',
+            header: 'Role',
+            cell: ({ cell: { value }, row: { original } }: Cell<'memberCount'>) => {
+              const canSeeTeamRoles = contextSrv.hasAccessInMetadata(
+                AccessControlAction.ActionTeamsRolesList,
+                original,
+                false
+              );
+              return canSeeTeamRoles && <TeamRolePicker teamId={original.id} roleOptions={roleOptions} />;
+            },
+          },
+        ]
+      : []),
+    {
+      id: 'delete',
+      header: '',
+      cell: ({ row: { original } }: Cell) => {
+        const isTeamAdmin = isPermissionTeamAdmin({
+          permission: original.permission,
+          editorsCanAdmin,
+          signedInUser,
+        });
+        const canDelete = contextSrv.hasAccessInMetadata(AccessControlAction.ActionTeamsDelete, original, isTeamAdmin);
+
+        return (
+          <DeleteButton
+            aria-label={`Delete team ${original.name}`}
+            size="sm"
+            disabled={!canDelete}
+            onConfirm={() => deleteTeam(original.id)}
+          />
+        );
+      },
+      sortType: createSortFn<Team>('email'),
+    },
+  ];
   return (
     <Page navId="teams">
       <Page.Contents isLoading={!hasFetched}>
@@ -92,34 +168,7 @@ export const TeamList = ({
 
             <div className="admin-list-table">
               <VerticalGroup spacing="md">
-                <table className="filter-table filter-table--hover form-inline">
-                  <thead>
-                    <tr>
-                      <th />
-                      <th>Name</th>
-                      <th>Email</th>
-                      <th>Members</th>
-                      {displayRolePicker && <th>Roles</th>}
-                      <th style={{ width: '1%' }} />
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {teams.map((team) => (
-                      <TeamListRow
-                        key={team.id}
-                        team={team}
-                        roleOptions={roleOptions}
-                        displayRolePicker={displayRolePicker}
-                        isTeamAdmin={isPermissionTeamAdmin({
-                          permission: team.permission,
-                          editorsCanAdmin,
-                          signedInUser,
-                        })}
-                        onDelete={deleteTeam}
-                      />
-                    ))}
-                  </tbody>
-                </table>
+                <InteractiveTable columns={columns} data={teams} getRowId={(team) => String(team.id)} />
                 <HorizontalGroup justify="flex-end">
                   <Pagination
                     hideWhenSinglePage
