@@ -1,49 +1,88 @@
 import React, { useState } from 'react';
-import { Enable, Disable } from 'react-enable';
 
-import { Tab, TabContent, TabsBar } from '@grafana/ui';
-
-import { AlertingPageWrapper } from '../components/AlertingPageWrapper';
-import { AlertingFeature } from '../features';
+import {
+  EmbeddedScene,
+  SceneApp,
+  SceneAppPage,
+  SceneFlexItem,
+  SceneFlexLayout,
+  SceneReactObject,
+} from '@grafana/scenes';
+import { usePageNav } from 'app/core/components/Page/usePageNav';
+import { PluginPageContext, PluginPageContextType } from 'app/features/plugins/components/PluginPageContext';
 
 import GettingStarted, { WelcomeHeader } from './GettingStarted';
-import Insights from './Insights';
+import { getGrafanaScenes } from './Insights';
 
-type HomeTabs = 'insights' | 'gettingStarted';
+let homeApp: SceneApp | undefined;
+
+export function getHomeApp() {
+  if (homeApp) {
+    return homeApp;
+  }
+
+  homeApp = new SceneApp({
+    pages: [
+      new SceneAppPage({
+        title: 'Alerting',
+        subTitle: <WelcomeHeader />,
+        url: '/alerting',
+        hideFromBreadcrumbs: true,
+        tabs: [
+          new SceneAppPage({
+            title: 'Grafana',
+            url: '/alerting/insights',
+            getScene: getGrafanaScenes,
+          }),
+          new SceneAppPage({
+            title: 'Overview',
+            url: '/alerting/overview',
+            getScene: () => {
+              return new EmbeddedScene({
+                body: new SceneFlexLayout({
+                  children: [
+                    new SceneFlexItem({
+                      body: new SceneReactObject({
+                        component: GettingStarted,
+                      }),
+                    }),
+                  ],
+                }),
+              });
+            },
+          }),
+          // new SceneAppPage({
+          //   title: 'Mimir alertmanager',
+          //   url: '/alerting/insights/mimir-alertmanager',
+          //   getScene: getCloudScenes,
+          // }),
+          // new SceneAppPage({
+          //   title: 'Mimir-managed rules',
+          //   url: '/alerting/insights/mimir-rules',
+          //   getScene: getMimirManagedRulesScenes,
+          // }),
+          // new SceneAppPage({
+          //   title: 'Mimir-managed Rules - Per Rule Group',
+          //   url: '/alerting/insights/mimir-rules-per-group',
+          //   getScene: getMimirManagedRulesPerGroupScenes,
+          // }),
+        ],
+      }),
+    ],
+  });
+
+  return homeApp;
+}
 
 export default function Home() {
-  const [activeTab, setActiveTab] = useState<HomeTabs>('insights');
+  const appScene = getHomeApp();
+
+  const sectionNav = usePageNav('alerting')!;
+  const [pluginContext] = useState<PluginPageContextType>({ sectionNav });
 
   return (
-    <AlertingPageWrapper pageId={'alerting'}>
-      <Enable feature={AlertingFeature.InsightsPage}>
-        <WelcomeHeader />
-        <TabsBar>
-          <Tab
-            key={'insights'}
-            label={'Insights'}
-            active={activeTab === 'insights'}
-            onChangeTab={() => {
-              setActiveTab('insights');
-            }}
-          />
-          <Tab
-            key={'gettingStarted'}
-            label={'Overview'}
-            active={activeTab === 'gettingStarted'}
-            onChangeTab={() => {
-              setActiveTab('gettingStarted');
-            }}
-          />
-        </TabsBar>
-        <TabContent>
-          {activeTab === 'insights' && <Insights />}
-          {activeTab === 'gettingStarted' && <GettingStarted />}
-        </TabContent>
-      </Enable>
-      <Disable feature={AlertingFeature.InsightsPage}>
-        <GettingStarted showWelcomeHeader={true} />
-      </Disable>
-    </AlertingPageWrapper>
+    <PluginPageContext.Provider value={pluginContext}>
+      <appScene.Component model={appScene} />
+    </PluginPageContext.Provider>
   );
 }

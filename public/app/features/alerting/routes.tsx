@@ -89,6 +89,7 @@ const unifiedRoutes: RouteDescriptor[] = [
   ...commonRoutes,
   {
     path: '/alerting',
+    exact: false,
     component: SafeDynamicImport(
       () => import(/* webpackChunkName: "AlertingHome" */ 'app/features/alerting/unified/home/Home')
     ),
@@ -257,14 +258,6 @@ const unifiedRoutes: RouteDescriptor[] = [
     roles: () => ['Admin'],
     component: SafeDynamicImport(
       () => import(/* webpackChunkName: "AlertingAdmin" */ 'app/features/alerting/unified/Admin')
-    ),
-  },
-
-  {
-    path: '/alerting/insights',
-    exact: false,
-    component: SafeDynamicImport(
-      () => import(/* webpackChunkName: "AlertingHome" */ 'app/features/alerting/unified/home/Home')
     ),
   },
 ];
