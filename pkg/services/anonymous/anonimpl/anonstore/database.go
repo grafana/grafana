@@ -7,13 +7,18 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/serverlock"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 )
 
 const cacheKeyPrefix = "anon-device"
+const keepFor = time.Hour * 24 * 61
 
 type AnonDBStore struct {
-	sqlStore db.DB
+	sqlStore   db.DB
+	serverLock *serverlock.ServerLockService
+	log        log.Logger
 }
 
 type Device struct {
@@ -35,8 +40,8 @@ type AnonStore interface {
 	CountDevices(ctx context.Context, from time.Time, to time.Time) (int64, error)
 }
 
-func ProvideAnonDBStore(sqlStore db.DB) *AnonDBStore {
-	return &AnonDBStore{sqlStore: sqlStore}
+func ProvideAnonDBStore(sqlStore db.DB, serverLockService *serverlock.ServerLockService) *AnonDBStore {
+	return &AnonDBStore{sqlStore: sqlStore, serverLock: serverLockService, log: log.New("anonstore")}
 }
 
 func (s *AnonDBStore) ListDevices(ctx context.Context, from *time.Time, to *time.Time) ([]*Device, error) {
@@ -45,7 +50,7 @@ func (s *AnonDBStore) ListDevices(ctx context.Context, from *time.Time, to *time
 	args := []any{}
 	if from != nil && to != nil {
 		query += " WHERE updated_at BETWEEN ? AND ?"
-		args = append(args, from, to)
+		args = append(args, from.UTC(), to.UTC())
 	}
 	err := s.sqlStore.GetSqlxSession().Select(ctx, &devices, query, args...)
 	if err != nil {
@@ -61,33 +66,27 @@ func (s *AnonDBStore) CreateOrUpdateDevice(ctx context.Context, device *Device) 
 		device.CreatedAt.UTC(), device.UpdatedAt.UTC()}
 	switch s.sqlStore.GetDBType() {
 	case migrator.Postgres:
-		query = `
-			INSERT INTO anon_device (device_id, client_ip, user_agent, created_at, updated_at)
-			VALUES ($1, $2, $3, $4, $5)
-			ON CONFLICT (device_id) DO UPDATE SET
-				client_ip = $2,
-				user_agent = $3,
-				updated_at = $5
-			RETURNING id
-		`
+		query = `INSERT INTO anon_device (device_id, client_ip, user_agent, created_at, updated_at)
+VALUES ($1, $2, $3, $4, $5)
+ON CONFLICT (device_id) DO UPDATE SET
+client_ip = $2,
+user_agent = $3,
+updated_at = $5
+RETURNING id`
 	case migrator.MySQL:
-		query = `
-			INSERT INTO anon_device (device_id, client_ip, user_agent, created_at, updated_at)
-			VALUES (?, ?, ?, ?, ?)
-			ON DUPLICATE KEY UPDATE
-				client_ip = VALUES(client_ip),
-				user_agent = VALUES(user_agent),
-				updated_at = VALUES(updated_at)
-		`
+		query = `INSERT INTO anon_device (device_id, client_ip, user_agent, created_at, updated_at)
+VALUES (?, ?, ?, ?, ?)
+ON DUPLICATE KEY UPDATE
+client_ip = VALUES(client_ip),
+user_agent = VALUES(user_agent),
+updated_at = VALUES(updated_at)`
 	case migrator.SQLite:
-		query = `
-			INSERT INTO anon_device (device_id, client_ip, user_agent, created_at, updated_at)
-			VALUES (?, ?, ?, ?, ?)
-			ON CONFLICT (device_id) DO UPDATE SET
-				client_ip = excluded.client_ip,
-				user_agent = excluded.user_agent,
-				updated_at = excluded.updated_at
-		`
+		query = `INSERT INTO anon_device (device_id, client_ip, user_agent, created_at, updated_at)
+VALUES (?, ?, ?, ?, ?)
+ON CONFLICT (device_id) DO UPDATE SET
+client_ip = excluded.client_ip,
+user_agent = excluded.user_agent,
+updated_at = excluded.updated_at`
 	default:
 		return fmt.Errorf("unsupported database driver: %s", s.sqlStore.GetDBType())
 	}
@@ -103,4 +102,34 @@ func (s *AnonDBStore) CountDevices(ctx context.Context, from time.Time, to time.
 		return 0, err
 	}
 	return count, nil
+}
+
+// deleteDevices deletes all devices that have no been updated since the given time.
+func (s *AnonDBStore) deleteDevices(ctx context.Context, olderThan time.Time) error {
+	_, err := s.sqlStore.GetSqlxSession().Exec(ctx, "DELETE FROM anon_device WHERE updated_at <= ?", olderThan.UTC())
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *AnonDBStore) Run(ctx context.Context) error {
+	ticker := time.NewTicker(2 * time.Hour)
+
+	for {
+		select {
+		case <-ticker.C:
+			err := s.serverLock.LockAndExecute(ctx, "cleanup old anon devices", time.Hour*10, func(context.Context) {
+				if err := s.deleteDevices(ctx, time.Now().Add(-keepFor)); err != nil {
+					s.log.Error("An error occurred while deleting old anon devices", "err", err)
+				}
+			})
+			if err != nil {
+				s.log.Error("Failed to lock and execute cleanup old anon devices", "error", err)
+			}
+
+		case <-ctx.Done():
+			return ctx.Err()
+		}
+	}
 }

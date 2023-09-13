@@ -108,7 +108,7 @@ func TestIntegrationDeviceService_tag(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			store := db.InitTestDB(t)
-			anonDBStore := anonstore.ProvideAnonDBStore(store)
+			anonDBStore := anonstore.ProvideAnonDBStore(store, nil)
 			anonService := ProvideAnonymousDeviceService(&usagestats.UsageStatsMock{}, anonDBStore)
 
 			for _, req := range tc.req {
@@ -143,7 +143,7 @@ func TestIntegrationDeviceService_tag(t *testing.T) {
 // Ensure that the local cache prevents request from being tagged
 func TestIntegrationAnonDeviceService_localCacheSafety(t *testing.T) {
 	store := db.InitTestDB(t)
-	anonDBStore := anonstore.ProvideAnonDBStore(store)
+	anonDBStore := anonstore.ProvideAnonDBStore(store, nil)
 	anonService := ProvideAnonymousDeviceService(&usagestats.UsageStatsMock{}, anonDBStore)
 
 	req := &http.Request{
