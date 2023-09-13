@@ -56,7 +56,7 @@ func parseResponse(ctx context.Context, responses []*es.SearchResponse, targets 
 
 	for i, res := range responses {
 		_, resSpan := tracer.Start(ctx, "datasource.elastic.parseResponse.response")
-		span.SetAttributes("queryMetricType", targets[i].Metrics[0].Type, attribute.Key("queryMetricType").String(targets[i].Metrics[0].Type))
+		resSpan.SetAttributes("queryMetricType", targets[i].Metrics[0].Type, attribute.Key("queryMetricType").String(targets[i].Metrics[0].Type))
 		start := time.Now()
 		target := targets[i]
 
