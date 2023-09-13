@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/database"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -732,11 +733,12 @@ func TestPermissionCacheKey(t *testing.T) {
 			expected: "rbac-permissions-1-service-account--1",
 		},
 		{
-			name: "should fallback to user 0",
+			name: "should use org role if no unique id",
 			signedInUser: &user.SignedInUser{
-				OrgID: 1,
+				OrgID:   1,
+				OrgRole: org.RoleNone,
 			},
-			expected: "rbac-permissions-1-user-0",
+			expected: "rbac-permissions-1-user-None",
 		},
 	}
 	for _, tc := range testcases {
