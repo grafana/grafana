@@ -152,7 +152,7 @@
       "data-tab": "Data",
       "error-tab": "Error",
       "json-tab": "JSON",
-      "meta-tab": "Meta Data",
+      "meta-tab": "Meta data",
       "query-tab": "Query",
       "stats-tab": "Stats",
       "subtitle": "{{queryCount}} queries with total query time of {{formatted}}",

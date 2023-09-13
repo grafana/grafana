@@ -13,25 +13,27 @@ import { supportsDataQuery } from '../PanelEditor/utils';
  * Given PanelData return first data source supporting metadata inspector
  */
 export const useDatasourceMetadata = (data?: PanelData) => {
-  const state = useAsync(async () => {
-    const targets = data?.request?.targets || [];
+  const state = useAsync(getDataSourceWithInspector, [data]);
+  return state.value;
+};
 
-    if (data && data.series && targets.length) {
-      for (const frame of data.series) {
-        if (frame.meta && frame.meta.custom) {
-          // get data source from first query
-          const dataSource = await getDataSourceSrv().get(targets[0].datasource);
-          if (dataSource && dataSource.components?.MetadataInspector) {
-            return dataSource;
-          }
+export async function getDataSourceWithInspector(data?: PanelData): Promise<DataSourceApi | undefined> {
+  const targets = data?.request?.targets || [];
+
+  if (data && data.series && targets.length) {
+    for (const frame of data.series) {
+      if (frame.meta && frame.meta.custom) {
+        // get data source from first query
+        const dataSource = await getDataSourceSrv().get(targets[0].datasource);
+        if (dataSource && dataSource.components?.MetadataInspector) {
+          return dataSource;
         }
       }
     }
+  }
 
-    return undefined;
-  }, [data]);
-  return state.value;
-};
+  return undefined;
+}
 
 /**
  * Configures tabs for PanelInspector
