@@ -18,15 +18,12 @@ export const PluginList = ({ plugins, displayMode }: Props) => {
   const { pathname } = useLocation();
   const pathName = config.appSubUrl + (pathname.endsWith('/') ? pathname.slice(0, -1) : pathname);
   return (
-    <Grid
-      display="grid"
-      gap={3}
-      templateColumns={isList ? '1fr' : 'repeat(auto-fill, minmax(288px, 1fr))'}
-      data-testid="plugin-list"
-    >
-      {plugins.map((plugin) => (
-        <PluginListItem key={plugin.id} plugin={plugin} pathName={pathName} displayMode={displayMode} />
-      ))}
-    </Grid>
+    <div data-testid="plugin-list">
+      <Grid display="grid" gap={3} templateColumns={isList ? '1fr' : 'repeat(auto-fill, minmax(288px, 1fr))'}>
+        {plugins.map((plugin) => (
+          <PluginListItem key={plugin.id} plugin={plugin} pathName={pathName} displayMode={displayMode} />
+        ))}
+      </Grid>
+    </div>
   );
 };
