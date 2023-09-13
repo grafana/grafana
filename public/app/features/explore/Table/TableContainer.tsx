@@ -51,11 +51,11 @@ export class TableContainer extends PureComponent<Props> {
   }
 
   getTableTitle(dataFrames: DataFrame[] | null, data: DataFrame, i: number) {
-    let tableTitle = data.name ? `Table - ${data.name}` : 'Table';
+    let title = data.name ? `Table - ${data.name}` : 'Table';
     if (dataFrames && dataFrames.length > 1) {
-      tableTitle = `Table - ${data.name || data.refId || i}`;
+      title = `Table - ${data.name || data.refId || i}`;
     }
-    return tableTitle;
+    return title;
   }
 
   render() {
