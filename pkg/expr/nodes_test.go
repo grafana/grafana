@@ -201,6 +201,11 @@ func TestConvertDataFramesToResults(t *testing.T) {
 		return dsNode.Execute(context.Background(), time.Now(), nil, s)
 	}
 
+	t.Run("should return NoData if no frames", func(t *testing.T) {
+		result, err := execute(nil, "test")
+		require.NoError(t, err)
+		require.Equal(t, mathexp.NewNoData(), result.Values[0].Value())
+	})
 	t.Run("should add name label if no labels and specific data source", func(t *testing.T) {
 		supported := []string{datasources.DS_GRAPHITE, datasources.DS_TESTDATA}
 		t.Run("when only field name is specified", func(t *testing.T) {

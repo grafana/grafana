@@ -314,7 +314,11 @@ func (dn *DSNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s 
 
 	if len(filtered) == 0 {
 		responseType = "no data"
-		return mathexp.Results{Values: mathexp.Values{mathexp.NoData{Frame: response.Frames[0]}}}, nil
+		noData := mathexp.NewNoData()
+		if len(response.Frames) > 0 {
+			noData.Frame = response.Frames[0]
+		}
+		return mathexp.Results{Values: mathexp.Values{noData}}, nil
 	}
 
 	maybeFixerFn := checkIfSeriesNeedToBeFixed(filtered, dataSource)
