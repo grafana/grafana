@@ -18,13 +18,13 @@ weight: 100
 
 # Flame graph
 
-Flame graph panel is a visualization that allows you to visualize profiling data. It can represent the profile as a flame graph, table, or both
+Flame graphs let you visualize profiling data. Using this visualization, the profile can be represented as a flame graph, table, or both
 
-![<Flame graph panel>](/media/docs/grafana/panels-visualizations/flamegraph/screenshot-flamegraph-10.1.png)
+![<Flame graph>](/media/docs/grafana/panels-visualizations/flamegraph/screenshot-flamegraph-10.1.png)
 
 ## Flame graph mode
 
-The flame graph takes advantage of the hierarchical nature of profiling data. It condenses data into a format that allows you to easily see which code paths are consuming the most system resources, such as CPU time, allocated objects, or space when measuring memory. Each block in the flame graph represents a function call in a stack and its width represents its value.
+A flame graph takes advantage of the hierarchical nature of profiling data. It condenses data into a format that allows you to easily see which code paths are consuming the most system resources, such as CPU time, allocated objects, or space when measuring memory. Each block in the flame graph represents a function call in a stack and its width represents its value.
 
 ![<Flame graph>](/media/docs/grafana/panels-visualizations/flamegraph/screenshot-flamegraph-10.1-flamegraph.png)
 
