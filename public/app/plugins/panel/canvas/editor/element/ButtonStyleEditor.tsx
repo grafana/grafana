@@ -1,11 +1,11 @@
 import React, { useCallback } from 'react';
 
 import { SelectableValue, StandardEditorProps } from '@grafana/data';
-import { ButtonVariant, InlineField, InlineFieldRow, RadioButtonGroup } from '@grafana/ui';
+import { InlineField, InlineFieldRow, Select } from '@grafana/ui';
 import { defaultStyleConfig } from 'app/features/canvas/elements/button';
 
 export interface ButtonStyleConfig {
-  variant: ButtonVariant;
+  variant: string;
 }
 
 type Props = StandardEditorProps<ButtonStyleConfig>;
@@ -23,10 +23,10 @@ export const ButtonStyleEditor = ({ value, onChange }: Props) => {
   }
 
   const onVariantChange = useCallback(
-    (variant: ButtonVariant) => {
+    (variant: SelectableValue<string>) => {
       onChange({
         ...value,
-        variant,
+        variant: variant?.value ?? defaultStyleConfig.variant,
       });
     },
     [onChange, value]
@@ -35,8 +35,8 @@ export const ButtonStyleEditor = ({ value, onChange }: Props) => {
   return (
     <>
       <InlineFieldRow>
-        <InlineField label="Method" grow={true}>
-          <RadioButtonGroup value={value?.variant} options={variantOptions} onChange={onVariantChange} fullWidth />
+        <InlineField label="Variant" grow={true}>
+          <Select options={variantOptions} value={value?.variant} onChange={onVariantChange} />
         </InlineField>
       </InlineFieldRow>
     </>
