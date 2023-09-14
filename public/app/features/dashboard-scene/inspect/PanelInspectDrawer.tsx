@@ -7,25 +7,23 @@ import {
   SceneComponentProps,
   SceneObjectBase,
   SceneObjectState,
-  SceneObject,
   sceneGraph,
   VizPanel,
   SceneObjectRef,
 } from '@grafana/scenes';
 import { Alert, Drawer, Tab, TabsBar } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 import { supportsDataQuery } from 'app/features/dashboard/components/PanelEditor/utils';
-import { InspectTab } from 'app/features/inspector/types';
 
 import { InspectDataTab } from './InspectDataTab';
 import { InspectJsonTab } from './InspectJsonTab';
 import { InspectStatsTab } from './InspectStatsTab';
-import { InspectTabState } from './types';
+import { SceneInspectTab } from './types';
 
 interface PanelInspectDrawerState extends SceneObjectState {
-  tabs?: Array<SceneObject<InspectTabState>>;
+  tabs?: SceneInspectTab[];
   panelRef: SceneObjectRef<VizPanel>;
   pluginNotLoaded?: boolean;
+  canEdit?: boolean;
 }
 
 export class PanelInspectDrawer extends SceneObjectBase<PanelInspectDrawerState> {
@@ -45,24 +43,22 @@ export class PanelInspectDrawer extends SceneObjectBase<PanelInspectDrawerState>
     const panelRef = this.state.panelRef;
     const panel = panelRef.resolve();
     const plugin = panel.getPlugin();
-    const tabs: Array<SceneObject<InspectTabState>> = [];
+    const tabs: SceneInspectTab[] = [];
 
-    if (plugin) {
-      if (supportsDataQuery(plugin)) {
-        tabs.push(
-          new InspectDataTab({ panelRef, label: t('dashboard.inspect.data-tab', 'Data'), value: InspectTab.Data })
-        );
-        tabs.push(
-          new InspectStatsTab({ panelRef, label: t('dashboard.inspect.stats-tab', 'Stats'), value: InspectTab.Stats })
-        );
+    if (!plugin) {
+      if (retry < 2000) {
+        setTimeout(() => this.buildTabs(retry + 100), 100);
+      } else {
+        this.setState({ pluginNotLoaded: true });
       }
-    } else if (retry < 2000) {
-      setTimeout(() => this.buildTabs(retry + 100), 100);
-    } else {
-      this.setState({ pluginNotLoaded: true });
     }
 
-    tabs.push(new InspectJsonTab({ panelRef, label: t('dashboard.inspect.json-tab', 'JSON'), value: InspectTab.JSON }));
+    if (supportsDataQuery(plugin)) {
+      tabs.push(new InspectDataTab({ panelRef }));
+      tabs.push(new InspectStatsTab({ panelRef }));
+    }
+
+    tabs.push(new InspectJsonTab({ panelRef, onClose: this.onClose }));
 
     this.setState({ tabs });
   }
@@ -87,23 +83,23 @@ function PanelInspectRenderer({ model }: SceneComponentProps<PanelInspectDrawer>
   }
 
   const urlTab = queryParams.get('inspectTab');
-  const currentTab = tabs.find((tab) => tab.state.value === urlTab) ?? tabs[0];
+  const currentTab = tabs.find((tab) => tab.getTabValue() === urlTab) ?? tabs[0];
 
   return (
     <Drawer
       title={model.getDrawerTitle()}
       scrollableContent
       onClose={model.onClose}
-      size="lg"
+      size="md"
       tabs={
         <TabsBar>
           {tabs.map((tab) => {
             return (
               <Tab
                 key={tab.state.key!}
-                label={tab.state.label}
+                label={tab.getTabLabel()}
                 active={tab === currentTab}
-                href={locationUtil.getUrlForPartial(location, { inspectTab: tab.state.value })}
+                href={locationUtil.getUrlForPartial(location, { inspectTab: tab.getTabValue() })}
               />
             );
           })}
@@ -115,7 +111,7 @@ function PanelInspectRenderer({ model }: SceneComponentProps<PanelInspectDrawer>
           Make sure the panel you want to inspect is visible and has been displayed before opening inspect.
         </Alert>
       )}
-      {currentTab.Component && <currentTab.Component model={currentTab} />}
+      {currentTab && currentTab.Component && <currentTab.Component model={currentTab} />}
     </Drawer>
   );
 }
