@@ -171,6 +171,19 @@ describe('AppRootPage', () => {
       importAppPluginMock.mockResolvedValue(plugin);
     });
 
+    it('an User with no existing role should be able to see any page', async () => {
+      contextSrv.user.orgRole = 'NotExistingRole';
+
+      await renderUnderRouter('viewer-page');
+      expect(await screen.findByText('Access denied')).toBeVisible();
+
+      await renderUnderRouter('editor-page');
+      expect(await screen.findByText('Access denied')).toBeVisible();
+
+      await renderUnderRouter('admin-page');
+      expect(await screen.findByText('Access denied')).toBeVisible();
+    });
+
     it('a Viewer should only have access to pages with "Viewer" roles', async () => {
       contextSrv.user.orgRole = OrgRole.Viewer;
 
