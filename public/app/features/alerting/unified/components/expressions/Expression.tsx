@@ -4,7 +4,7 @@ import React, { FC, useCallback, useState } from 'react';
 
 import { DataFrame, dateTimeFormat, GrafanaTheme2, isTimeSeriesFrames, LoadingState, PanelData } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
-import { AutoSizeInput, Button, clearButtonStyles, IconButton, useStyles2 } from '@grafana/ui';
+import { AutoSizeInput, Badge, Button, clearButtonStyles, IconButton, useStyles2 } from '@grafana/ui';
 import { ClassicConditions } from 'app/features/expressions/components/ClassicConditions';
 import { Math } from 'app/features/expressions/components/Math';
 import { Reduce } from 'app/features/expressions/components/Reduce';
@@ -302,6 +302,10 @@ const Header: FC<HeaderProps> = ({
           <div>{getExpressionLabel(queryType)}</div>
         </Stack>
         <Spacer />
+        {/* when we have an evaluation error, we show a badge next to "set as alert condition" */}
+        {!alertCondition && error && (
+          <Badge color="red" icon="exclamation-circle" text="Error" tooltip={error.message} />
+        )}
         <AlertConditionIndicator
           onSetCondition={() => onSetCondition(query.refId)}
           enabled={alertCondition}
