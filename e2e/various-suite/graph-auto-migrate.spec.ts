@@ -10,12 +10,12 @@ e2e.scenario({
   skipScenario: false,
   scenario: () => {
     e2e.flows.openDashboard({ uid: DASHBOARD_ID });
-    e2e().contains(DASHBOARD_NAME).should('be.visible');
+    cy.contains(DASHBOARD_NAME).should('be.visible');
     cy.contains('uplot-main-div').should('not.exist');
 
     e2e.flows.openDashboard({ uid: DASHBOARD_ID, queryParams: { '__feature.autoMigrateOldPanels': true } });
 
-    e2e().wait(1000);
+    cy.wait(1000);
 
     e2e.components.Panels.Panel.title('Business Hours')
       .should('exist')

@@ -49,28 +49,24 @@ export const benchmark = ({
           return it(testName, () => {
             e2e.flows.openDashboard();
 
-            e2e().wait(dashboard.delayAfterOpening);
+            cy.wait(dashboard.delayAfterOpening);
 
             if (appStats) {
               const startCollecting = appStats.startCollecting;
               if (startCollecting) {
-                e2e()
-                  .window()
-                  .then((win) => startCollecting(win));
+                cy.window().then((win) => startCollecting(win));
               }
 
-              e2e().startBenchmarking(testName);
-              e2e().wait(duration);
+              cy.startBenchmarking(testName);
+              cy.wait(duration);
 
-              e2e()
-                .window()
-                .then((win) => {
-                  e2e().stopBenchmarking(testName, appStats.collect(win));
-                });
+              cy.window().then((win) => {
+                cy.stopBenchmarking(testName, appStats.collect(win));
+              });
             } else {
-              e2e().startBenchmarking(testName);
-              e2e().wait(duration);
-              e2e().stopBenchmarking(testName, {});
+              cy.startBenchmarking(testName);
+              cy.wait(duration);
+              cy.stopBenchmarking(testName, {});
             }
           });
         });

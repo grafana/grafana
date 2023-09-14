@@ -20,15 +20,18 @@ import { DASHBOARD_DATASOURCE_PLUGIN_ID } from 'app/plugins/datasource/dashboard
 
 import { PanelRepeaterGridItem } from '../scene/PanelRepeaterGridItem';
 import { PanelTimeRange } from '../scene/PanelTimeRange';
+import { RowRepeaterBehavior } from '../scene/RowRepeaterBehavior';
 import { ShareQueryDataProvider } from '../scene/ShareQueryDataProvider';
 
+import repeatingRowsAndPanelsDashboardJson from './testfiles/repeating_rows_and_panels.json';
 import {
   createDashboardSceneFromDashboardModel,
   buildGridItemForPanel,
   createSceneVariableFromVariableModel,
+  transformSaveModelToScene,
 } from './transformSaveModelToScene';
 
-describe('DashboardLoader', () => {
+describe('transformSaveModelToScene', () => {
   describe('when creating dashboard scene', () => {
     it('should initialize the DashboardScene with the model state', () => {
       const dash = {
@@ -130,6 +133,7 @@ describe('DashboardLoader', () => {
       const rowWithPanel = createPanelJSONFixture({
         title: 'Row with panel',
         type: 'row',
+        id: 10,
         collapsed: false,
         gridPos: {
           h: 1,
@@ -182,6 +186,7 @@ describe('DashboardLoader', () => {
       expect(body.state.children[1]).toBeInstanceOf(SceneGridRow);
       const rowWithPanelsScene = body.state.children[1] as SceneGridRow;
       expect(rowWithPanelsScene.state.title).toBe(rowWithPanel.title);
+      expect(rowWithPanelsScene.state.key).toBe('panel-10');
       expect(rowWithPanelsScene.state.children).toHaveLength(1);
       // Panel within row
       expect(rowWithPanelsScene.state.children[0]).toBeInstanceOf(SceneGridItem);
@@ -410,6 +415,7 @@ describe('DashboardLoader', () => {
         hide: 0,
       });
     });
+
     it('should migrate query variable', () => {
       const variable = {
         allValue: null,
@@ -613,6 +619,22 @@ describe('DashboardLoader', () => {
       };
 
       expect(() => createSceneVariableFromVariableModel(variable)).toThrow();
+    });
+  });
+
+  describe('Repeating rows', () => {
+    it('Should build correct scene model', () => {
+      const scene = transformSaveModelToScene({ dashboard: repeatingRowsAndPanelsDashboardJson as any, meta: {} });
+      const body = scene.state.body as SceneGridLayout;
+      const row2 = body.state.children[1] as SceneGridRow;
+
+      expect(row2.state.$behaviors?.[0]).toBeInstanceOf(RowRepeaterBehavior);
+
+      const repeatBehavior = row2.state.$behaviors?.[0] as RowRepeaterBehavior;
+      expect(repeatBehavior.state.variableName).toBe('server');
+
+      const lastRow = body.state.children[body.state.children.length - 1] as SceneGridRow;
+      expect(lastRow.state.isCollapsed).toBe(true);
     });
   });
 });
