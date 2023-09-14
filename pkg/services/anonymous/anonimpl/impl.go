@@ -92,6 +92,10 @@ func (a *AnonDeviceService) tagDeviceUI(ctx context.Context, httpReq *http.Reque
 
 func (a *AnonDeviceService) untagDevice(ctx context.Context,
 	identity *authn.Identity, r *authn.Request, err error) {
+	if err != nil {
+		return
+	}
+
 	deviceID := r.HTTPRequest.Header.Get(deviceIDHeader)
 	if deviceID == "" {
 		return
