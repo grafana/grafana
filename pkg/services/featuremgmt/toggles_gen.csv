@@ -104,3 +104,4 @@ reportingRetries,preview,@grafana/sharing-squad,false,false,true,false
 newBrowseDashboards,preview,@grafana/grafana-frontend-platform,false,false,false,true
 sseGroupByDatasource,experimental,@grafana/observability-metrics,false,false,false,false
 requestInstrumentationStatusSource,experimental,@grafana/plugins-platform-backend,false,false,false,false
+wargamesTesting,experimental,@grafana/hosted-grafana-team,false,false,false,false

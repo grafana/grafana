@@ -82,8 +82,6 @@ This metric is a gauge that shows you the number of seconds that the scheduler i
 
 This metric is a histogram that shows you the number of seconds taken to send notifications for firing and resolved alerts. This metric will let you observe slow or over-utilized integrations, such as an SMTP server that is being given emails faster than it can send them.
 
-> These metrics are not available at present in Grafana Cloud.
-
 ## Metrics for Mimir-managed alerts
 
 To meta monitor Grafana Mimir-managed alerts, open source and on-premise users need a Prometheus/Mimir server, or another metrics database to collect and store metrics exported by the Mimir ruler.
@@ -137,13 +135,7 @@ This metric is a counter that shows you how many notifications have failed in to
 
 This metric is a histogram that shows you the amount of time it takes Alertmanager to send notifications and for those notifications to be accepted by the receiving service. This metric uses a label "integration" to show the amount of time by integration. For example, you can use this metric to show the 95th percentile latency of sending emails.
 
-> In Grafana Cloud some of these metrics are available via the Prometheus usage datasource that is provisioned for all Grafana Cloud customers.
-
 ## Metrics for Alertmanager in high availability mode
-
-{{% admonition type="note" %}}
-These metrics are not available in Grafana Cloud as it uses a different high availability strategy than on-premise Alertmanagers.
-{{% /admonition %}}
 
 If you are using Alertmanager in high availability mode there are a number of additional metrics that you might want to create alerts for.
 

@@ -58,7 +58,7 @@ func newExternalAlertmanager(cfg externalAlertmanagerConfig, orgID int64) (*exte
 	return &externalAlertmanager{
 		amClient:      amclient.New(transport, nil),
 		httpClient:    &client,
-		log:           log.New("ngalert.notifier.external.alertmanager"),
+		log:           log.New("ngalert.notifier.external-alertmanager"),
 		url:           cfg.URL,
 		tenantID:      cfg.TenantID,
 		orgID:         orgID,
