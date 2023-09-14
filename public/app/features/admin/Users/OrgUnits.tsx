@@ -26,9 +26,9 @@ export const OrgUnits = ({ units, icon }: OrgUnitProps) => {
       </div>
     </Tooltip>
   ) : (
-    <>
+    <span className={styles.unitItem}>
       <Icon name={icon} /> {units[0].name}
-    </>
+    </span>
   );
 };
 
@@ -39,9 +39,12 @@ const getStyles = (theme: GrafanaTheme2) => {
       flex-direction: column;
     `,
     unitItem: css`
-      cursor: pointer;
       padding: ${theme.spacing(0.5)} 0;
       margin-right: ${theme.spacing(1)};
+
+      svg {
+        margin-bottom: ${theme.spacing(0.25)};
+      }
     `,
     link: css`
       color: inherit;
