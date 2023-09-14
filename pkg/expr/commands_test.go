@@ -133,12 +133,12 @@ func TestReduceExecute(t *testing.T) {
 				require.Equal(t, expectedValue, actualValue)
 			}
 
-			t.Run("should add warn notices to every frame", func(t *testing.T) {
+			t.Run("should add warn notices to the first frame", func(t *testing.T) {
 				frames := execute.Values.AsDataFrames("test")
-				for _, frame := range frames {
-					require.Len(t, frame.Meta.Notices, 1)
-					notice := frame.Meta.Notices[0]
-					require.Equal(t, data.NoticeSeverityWarning, notice.Severity)
+				notice := frames[0].Meta.Notices[0]
+				require.Equal(t, data.NoticeSeverityWarning, notice.Severity)
+				for _, frame := range frames[1:] {
+					require.Empty(t, frame.Meta.Notices)
 				}
 			})
 		})
