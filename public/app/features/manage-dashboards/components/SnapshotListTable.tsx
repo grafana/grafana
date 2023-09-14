@@ -1,7 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import useAsync from 'react-use/lib/useAsync';
 
-import { getBackendSrv, locationService } from '@grafana/runtime';
+import { getBackendSrv, config } from '@grafana/runtime';
 import { ConfirmModal, Button, LinkButton } from '@grafana/ui';
 
 import { Snapshot } from '../types';
@@ -12,17 +12,13 @@ export function getSnapshots() {
     .then((result: Snapshot[]) => {
       return result.map((snapshot) => ({
         ...snapshot,
-        url: `/dashboard/snapshot/${snapshot.key}`,
+        url: `${config.appUrl}dashboard/snapshot/${snapshot.key}`,
       }));
     });
 }
 export const SnapshotListTable = () => {
   const [snapshots, setSnapshots] = useState<Snapshot[]>([]);
   const [removeSnapshot, setRemoveSnapshot] = useState<Snapshot | undefined>();
-  const currentPath = locationService.getLocation().pathname;
-  const fullUrl = window.location.href;
-  const baseUrl = fullUrl.substring(0, fullUrl.indexOf(currentPath));
-
   useAsync(async () => {
     const response = await getSnapshots();
     setSnapshots(response);
@@ -60,14 +56,13 @@ export const SnapshotListTable = () => {
         <tbody>
           {snapshots.map((snapshot) => {
             const url = snapshot.externalUrl || snapshot.url;
-            const fullUrl = snapshot.externalUrl || `${baseUrl}${snapshot.url}`;
             return (
               <tr key={snapshot.key}>
                 <td>
                   <a href={url}>{snapshot.name}</a>
                 </td>
                 <td>
-                  <a href={url}>{fullUrl}</a>
+                  <a href={url}>{url}</a>
                 </td>
                 <td>{snapshot.external && <span className="query-keyword">External</span>}</td>
                 <td className="text-center">
