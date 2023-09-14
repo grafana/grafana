@@ -2,18 +2,18 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 
-const cachedListPath = path.join(__dirname, '../src/components/Icon/cached.json');
+const cachedListPath = path.join(__dirname, '../public/app/core/icons/cached.json');
 const iconsList = require(cachedListPath);
 
-const iconsBundleJsTemplatePath = path.join(__dirname, '../src/components/Icon/iconBundle.ts.template');
-const iconsBundleJsPath = path.join(__dirname, '../src/components/Icon/iconBundle.ts');
+const iconsBundleJsTemplatePath = path.join(__dirname, '../public/app/core/icons/iconBundle.ts.template');
+const iconsBundleJsPath = path.join(__dirname, '../public/app/core/icons/iconBundle.ts');
 
 const iconsBundleJsTemplate = fs.readFileSync(iconsBundleJsTemplatePath).toString();
 
 const importsStatements = [];
 const cacheStatements = [];
 
-const grafanaIconsPublicPath = '../../../../../public/img/icons/';
+const grafanaIconsPublicPath = '../../../img/icons/';
 
 function generateIconBundle({ outputPath, verbose = false }) {
   const modulePrefix = 'u';
@@ -28,7 +28,7 @@ function generateIconBundle({ outputPath, verbose = false }) {
     importsStatements.push(
       `import ${modulePrefix}${moduleNameCount} from '${grafanaIconsPublicPath}${iconEntry}.svg';`
     );
-    cacheStatements.push(`  cacheItem(${modulePrefix}${moduleNameCount}, '${iconEntry}.svg');`);
+    cacheStatements.push(`  cacheItem(${modulePrefix}${moduleNameCount}, resolvePath('${iconEntry}.svg'));`);
     moduleNameCount++;
   }
   const output = iconsBundleJsTemplate
