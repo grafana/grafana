@@ -1,4 +1,4 @@
-package clients
+package anonimpl
 
 import (
 	"context"
@@ -16,15 +16,6 @@ import (
 var _ authn.ContextAwareClient = new(Anonymous)
 
 const timeoutTag = 2 * time.Minute
-
-func ProvideAnonymous(cfg *setting.Cfg, orgService org.Service, anonDeviceService anonymous.Service) *Anonymous {
-	return &Anonymous{
-		cfg:               cfg,
-		log:               log.New("authn.anonymous"),
-		orgService:        orgService,
-		anonDeviceService: anonDeviceService,
-	}
-}
 
 type Anonymous struct {
 	cfg               *setting.Cfg

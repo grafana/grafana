@@ -11,6 +11,8 @@ import (
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/services/anonymous"
 	"github.com/grafana/grafana/pkg/services/anonymous/anonimpl/anonstore"
+	"github.com/grafana/grafana/pkg/services/authn"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -24,7 +26,8 @@ type AnonDeviceService struct {
 	anonStore  anonstore.AnonStore
 }
 
-func ProvideAnonymousDeviceService(usageStats usagestats.Service, anonStore anonstore.AnonStore) *AnonDeviceService {
+func ProvideAnonymousDeviceService(usageStats usagestats.Service, authBroker authn.Service,
+	anonStore anonstore.AnonStore, cfg *setting.Cfg, orgService org.Service) *AnonDeviceService {
 	a := &AnonDeviceService{
 		log:        log.New("anonymous-session-service"),
 		localCache: localcache.New(29*time.Minute, 15*time.Minute),
@@ -32,6 +35,17 @@ func ProvideAnonymousDeviceService(usageStats usagestats.Service, anonStore anon
 	}
 
 	usageStats.RegisterMetricsFunc(a.usageStatFn)
+
+	anonClient := &Anonymous{
+		cfg:               cfg,
+		log:               log.New("authn.anonymous"),
+		orgService:        orgService,
+		anonDeviceService: a,
+	}
+
+	if anonClient.cfg.AnonymousEnabled {
+		authBroker.RegisterClient(anonClient)
+	}
 
 	return a
 }

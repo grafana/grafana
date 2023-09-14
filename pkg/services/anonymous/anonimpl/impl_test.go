@@ -13,6 +13,9 @@ import (
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/services/anonymous"
 	"github.com/grafana/grafana/pkg/services/anonymous/anonimpl/anonstore"
+	"github.com/grafana/grafana/pkg/services/authn/authntest"
+	"github.com/grafana/grafana/pkg/services/org/orgtest"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestIntegrationDeviceService_tag(t *testing.T) {
@@ -109,7 +112,8 @@ func TestIntegrationDeviceService_tag(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			store := db.InitTestDB(t)
 			anonDBStore := anonstore.ProvideAnonDBStore(store, nil)
-			anonService := ProvideAnonymousDeviceService(&usagestats.UsageStatsMock{}, anonDBStore)
+			anonService := ProvideAnonymousDeviceService(&usagestats.UsageStatsMock{},
+				&authntest.FakeService{}, anonDBStore, setting.NewCfg(), orgtest.NewOrgServiceFake())
 
 			for _, req := range tc.req {
 				err := anonService.TagDevice(context.Background(), req.httpReq, req.kind)
@@ -144,7 +148,8 @@ func TestIntegrationDeviceService_tag(t *testing.T) {
 func TestIntegrationAnonDeviceService_localCacheSafety(t *testing.T) {
 	store := db.InitTestDB(t)
 	anonDBStore := anonstore.ProvideAnonDBStore(store, nil)
-	anonService := ProvideAnonymousDeviceService(&usagestats.UsageStatsMock{}, anonDBStore)
+	anonService := ProvideAnonymousDeviceService(&usagestats.UsageStatsMock{},
+		&authntest.FakeService{}, anonDBStore, setting.NewCfg(), orgtest.NewOrgServiceFake())
 
 	req := &http.Request{
 		Header: http.Header{
