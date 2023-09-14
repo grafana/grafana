@@ -2,10 +2,6 @@
 
 exports[`alertmanager abilities should report Create / Update / Delete actions aren't supported for external vanilla alertmanager 1`] = `
 {
-  "can-read-secrets": [
-    false,
-    false,
-  ],
   "create-contact-point": [
     false,
     false,
@@ -23,6 +19,10 @@ exports[`alertmanager abilities should report Create / Update / Delete actions a
     false,
   ],
   "create-silence": [
+    false,
+    false,
+  ],
+  "decrypt-secrets": [
     false,
     false,
   ],
@@ -103,10 +103,6 @@ exports[`alertmanager abilities should report Create / Update / Delete actions a
 
 exports[`alertmanager abilities should report everything except exporting for Mimir alertmanager 1`] = `
 {
-  "can-read-secrets": [
-    true,
-    false,
-  ],
   "create-contact-point": [
     true,
     true,
@@ -126,6 +122,10 @@ exports[`alertmanager abilities should report everything except exporting for Mi
   "create-silence": [
     true,
     true,
+  ],
+  "decrypt-secrets": [
+    false,
+    false,
   ],
   "delete-contact-point": [
     true,
@@ -204,10 +204,6 @@ exports[`alertmanager abilities should report everything except exporting for Mi
 
 exports[`alertmanager abilities should report everything is supported for builtin alertmanager 1`] = `
 {
-  "can-read-secrets": [
-    true,
-    false,
-  ],
   "create-contact-point": [
     true,
     false,
@@ -225,6 +221,10 @@ exports[`alertmanager abilities should report everything is supported for builti
     false,
   ],
   "create-silence": [
+    true,
+    false,
+  ],
+  "decrypt-secrets": [
     true,
     false,
   ],
