@@ -125,7 +125,7 @@ Enable fine-grained access control by adding the term `accesscontrol` to the lis
 
 ### Assign SAML users different roles in different Organizations
 
-You can use Grafana’s SAML integration to map organizations in your SAML service to [Organizations](​​https://grafana.com/docs/grafana/latest/manage-users/server-admin/server-admin-manage-orgs/) in Grafana so that users who authenticate using SAML have the right permissions. Previously, you could only choose a single role (Viewer, Editor, or Admin) for users, which would apply to all of their Organizations. Now, you can map a given SAML user or org to different roles in different Organizations, so that, for example, they can be a Viewer in one Organization and an Admin in another.
+You can use Grafana’s SAML integration to map organizations in your SAML service to organizations in Grafana so that users who authenticate using SAML have the right permissions. Previously, you could only choose a single role (Viewer, Editor, or Admin) for users, which would apply to all of their Organizations. Now, you can map a given SAML user or org to different roles in different Organizations, so that, for example, they can be a Viewer in one Organization and an Admin in another.
 
 Additionally, you can now grant multiple SAML organizations access to Grafana, using the `allowed_organizations` attribute. Previously, you could only map one.
 
