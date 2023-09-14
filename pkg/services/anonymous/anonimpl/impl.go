@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/network"
+	"github.com/grafana/grafana/pkg/infra/serverlock"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/services/anonymous"
 	"github.com/grafana/grafana/pkg/services/anonymous/anonimpl/anonstore"
@@ -19,19 +20,24 @@ import (
 
 const thirtyDays = 30 * 24 * time.Hour
 const deviceIDHeader = "X-Grafana-Device-Id"
+const keepFor = time.Hour * 24 * 61
 
 type AnonDeviceService struct {
 	log        log.Logger
 	localCache *localcache.CacheService
 	anonStore  anonstore.AnonStore
+	serverLock *serverlock.ServerLockService
 }
 
 func ProvideAnonymousDeviceService(usageStats usagestats.Service, authBroker authn.Service,
-	anonStore anonstore.AnonStore, cfg *setting.Cfg, orgService org.Service) *AnonDeviceService {
+	anonStore anonstore.AnonStore, cfg *setting.Cfg, orgService org.Service,
+	serverLockService *serverlock.ServerLockService,
+) *AnonDeviceService {
 	a := &AnonDeviceService{
 		log:        log.New("anonymous-session-service"),
 		localCache: localcache.New(29*time.Minute, 15*time.Minute),
 		anonStore:  anonStore,
+		serverLock: serverLockService,
 	}
 
 	usageStats.RegisterMetricsFunc(a.usageStatFn)
@@ -130,4 +136,25 @@ func (a *AnonDeviceService) TagDevice(ctx context.Context, httpReq *http.Request
 	}
 
 	return nil
+}
+
+func (a *AnonDeviceService) Run(ctx context.Context) error {
+	ticker := time.NewTicker(2 * time.Hour)
+
+	for {
+		select {
+		case <-ticker.C:
+			err := a.serverLock.LockAndExecute(ctx, "cleanup old anon devices", time.Hour*10, func(context.Context) {
+				if err := a.anonStore.DeleteDevicesOlderThan(ctx, time.Now().Add(-keepFor)); err != nil {
+					a.log.Error("An error occurred while deleting old anon devices", "err", err)
+				}
+			})
+			if err != nil {
+				a.log.Error("Failed to lock and execute cleanup old anon devices", "error", err)
+			}
+
+		case <-ctx.Done():
+			return ctx.Err()
+		}
+	}
 }

@@ -8,17 +8,14 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/infra/serverlock"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 )
 
 const cacheKeyPrefix = "anon-device"
-const keepFor = time.Hour * 24 * 61
 
 type AnonDBStore struct {
-	sqlStore   db.DB
-	serverLock *serverlock.ServerLockService
-	log        log.Logger
+	sqlStore db.DB
+	log      log.Logger
 }
 
 type Device struct {
@@ -43,10 +40,12 @@ type AnonStore interface {
 	CountDevices(ctx context.Context, from time.Time, to time.Time) (int64, error)
 	// DeleteDevice deletes a device by its ID.
 	DeleteDevice(ctx context.Context, deviceID string) error
+	// DeleteDevicesOlderThan deletes all devices that have no been updated since the given time.
+	DeleteDevicesOlderThan(ctx context.Context, olderThan time.Time) error
 }
 
-func ProvideAnonDBStore(sqlStore db.DB, serverLockService *serverlock.ServerLockService) *AnonDBStore {
-	return &AnonDBStore{sqlStore: sqlStore, serverLock: serverLockService, log: log.New("anonstore")}
+func ProvideAnonDBStore(sqlStore db.DB) *AnonDBStore {
+	return &AnonDBStore{sqlStore: sqlStore, log: log.New("anonstore")}
 }
 
 func (s *AnonDBStore) ListDevices(ctx context.Context, from *time.Time, to *time.Time) ([]*Device, error) {
@@ -118,31 +117,10 @@ func (s *AnonDBStore) DeleteDevice(ctx context.Context, deviceID string) error {
 }
 
 // deleteOldDevices deletes all devices that have no been updated since the given time.
-func (s *AnonDBStore) deleteOldDevices(ctx context.Context, olderThan time.Time) error {
+func (s *AnonDBStore) DeleteDevicesOlderThan(ctx context.Context, olderThan time.Time) error {
 	_, err := s.sqlStore.GetSqlxSession().Exec(ctx, "DELETE FROM anon_device WHERE updated_at <= ?", olderThan.UTC())
 	if err != nil {
 		return err
 	}
 	return nil
-}
-
-func (s *AnonDBStore) Run(ctx context.Context) error {
-	ticker := time.NewTicker(2 * time.Hour)
-
-	for {
-		select {
-		case <-ticker.C:
-			err := s.serverLock.LockAndExecute(ctx, "cleanup old anon devices", time.Hour*10, func(context.Context) {
-				if err := s.deleteOldDevices(ctx, time.Now().Add(-keepFor)); err != nil {
-					s.log.Error("An error occurred while deleting old anon devices", "err", err)
-				}
-			})
-			if err != nil {
-				s.log.Error("Failed to lock and execute cleanup old anon devices", "error", err)
-			}
-
-		case <-ctx.Done():
-			return ctx.Err()
-		}
-	}
 }

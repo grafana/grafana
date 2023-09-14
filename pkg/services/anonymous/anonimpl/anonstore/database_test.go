@@ -13,7 +13,8 @@ import (
 
 func TestIntegrationAnonStore_delete(t *testing.T) {
 	store := db.InitTestDB(t)
-	anonDBStore := ProvideAnonDBStore(store, nil)
+	anonDBStore := ProvideAnonDBStore(store)
+	const keepFor = time.Hour * 24 * 61
 
 	anonDevice := &Device{
 		DeviceID:  "32mdo31deeqwes",
@@ -38,7 +39,7 @@ func TestIntegrationAnonStore_delete(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, int64(2), count)
 
-	err = anonDBStore.deleteOldDevices(context.Background(), time.Now().Add(-keepFor))
+	err = anonDBStore.DeleteDevicesOlderThan(context.Background(), time.Now().Add(-keepFor))
 	require.NoError(t, err)
 
 	devices, err := anonDBStore.ListDevices(context.Background(), &from, &to)
