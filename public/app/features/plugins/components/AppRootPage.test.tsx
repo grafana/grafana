@@ -44,7 +44,7 @@ class RootComponent extends Component<AppRootProps> {
   }
 }
 
-function renderUnderRouter(page) {
+function renderUnderRouter(page: string | undefined) {
   const appPluginNavItem: NavModelItem = {
     text: 'App',
     id: 'plugin-page-app',
