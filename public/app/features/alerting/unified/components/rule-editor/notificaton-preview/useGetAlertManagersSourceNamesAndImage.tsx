@@ -1,10 +1,6 @@
 import { AlertmanagerChoice } from '../../../../../../plugins/datasource/alertmanager/types';
 import { alertmanagerApi } from '../../../api/alertmanagerApi';
-import {
-  getAlertManagerDataSources,
-  getExternalDsAlertManagers,
-  GRAFANA_RULES_SOURCE_NAME,
-} from '../../../utils/datasource';
+import { getExternalDsAlertManagers, GRAFANA_RULES_SOURCE_NAME } from '../../../utils/datasource';
 
 export interface AlertManagerNameWithImage {
   name: string;
