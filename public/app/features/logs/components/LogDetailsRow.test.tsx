@@ -1,4 +1,4 @@
-import { screen, render, fireEvent } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import React, { ComponentProps } from 'react';
 
 import { LogRowModel } from '@grafana/data';
@@ -116,5 +116,14 @@ describe('LogDetailsRow', () => {
     fireEvent.click(adHocStatsButton);
     expect(screen.getByTestId('logLabelStats')).toBeInTheDocument();
     expect(screen.getByTestId('logLabelStats')).toHaveTextContent('another value');
+  });
+
+  describe('copy button', () => {
+    it('should be invisible unless mouse is over', () => {
+      setup({ parsedValues: ['test value'] });
+      // This tests a regression where the button was always visible.
+      expect(screen.getByTitle('Copy value to clipboard')).not.toBeVisible();
+      // Asserting visibility on mouse-over is currently not possible.
+    });
   });
 });
