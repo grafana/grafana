@@ -36,8 +36,9 @@ const QueryField = ({ query, onQueryChange, schema }: AzureQueryEditorFieldProps
         const languages = monaco.languages as unknown as MonacoLanguages;
         const model = editor.getModel();
         if (model) {
-          const kustoWorker = await (await languages.kusto.getKustoWorker())(model?.uri);
-          await kustoWorker.setSchema(schema);
+          const kustoWorker = await languages.kusto.getKustoWorker();
+          const kustoMode = await kustoWorker(model?.uri);
+          await kustoMode.setSchema(schema);
         }
       } catch (err) {
         console.error(err);

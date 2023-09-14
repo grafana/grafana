@@ -15,8 +15,8 @@ export function TimeManagement({ query, onQueryChange: onChange, schema }: Azure
 
   useEffect(() => {
     if (schema && query.azureLogAnalytics?.dashboardTime) {
-      let timeColumns: SelectableValue[] = [];
-      let timeColumnsSet: Set<string> = new Set();
+      const timeColumnOptions: SelectableValue[] = [];
+      const timeColumnsSet: Set<string> = new Set();
       const defaultColumnsMap: Map<string, SelectableValue> = new Map();
       const db = schema.database;
       if (db) {
@@ -30,7 +30,7 @@ export function TimeManagement({ query, onQueryChange: onChange, schema }: Azure
             }
             return prev;
           }, []);
-          timeColumns = timeColumns.concat(cols);
+          timeColumnOptions.push(...cols);
           if (table.timespanColumn && !defaultColumnsMap.has(table.timespanColumn)) {
             defaultColumnsMap.set(table.timespanColumn, {
               value: table.timespanColumn,
@@ -39,7 +39,7 @@ export function TimeManagement({ query, onQueryChange: onChange, schema }: Azure
           }
         }
       }
-      setTimeColumns(timeColumns);
+      setTimeColumns(timeColumnOptions);
       const defaultColumns = Array.from(defaultColumnsMap.values());
       setDefaultTimeColumns(defaultColumns);
 
@@ -54,8 +54,8 @@ export function TimeManagement({ query, onQueryChange: onChange, schema }: Azure
           setDefaultColumn(defaultColumns[0].value);
           setDefaultColumn(defaultColumns[0].value);
           return;
-        } else if (timeColumns && timeColumns.length) {
-          setDefaultColumn(timeColumns[0].value);
+        } else if (timeColumnOptions && timeColumnOptions.length) {
+          setDefaultColumn(timeColumnOptions[0].value);
           return;
         } else {
           setDefaultColumn('TimeGenerated');

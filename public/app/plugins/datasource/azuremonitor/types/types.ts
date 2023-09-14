@@ -140,7 +140,7 @@ export interface AzureQueryEditorFieldProps {
   setError: (source: string, error: AzureMonitorErrorish | undefined) => void;
 }
 
-// To avoid a better issue we redeclare the EngineSchema type from @kusto/monaco-kusto
+// To avoid a type issue we redeclare the EngineSchema type from @kusto/monaco-kusto
 export interface EngineSchema {
   clusterType: 'Engine';
   cluster: {
