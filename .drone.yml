@@ -1886,7 +1886,8 @@ steps:
     - grafana/grafana
 - commands:
   - apk add --update bash grep git
-  - ./scripts/ci-frontend-metrics.sh | ./bin/build publish-metrics $$GRAFANA_MISC_STATS_API_KEY
+  - ./scripts/ci-frontend-metrics.sh ./grafana/public/build | ./bin/build publish-metrics
+    $$GRAFANA_MISC_STATS_API_KEY
   depends_on:
   - test-a11y-frontend
   environment:
@@ -4170,6 +4171,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 538cef38e484745c589a317a981d016e38111a2296c27283a1a6a4977d2697b6
+hmac: 4e941a78e96f8af91ac31a928f79bd26191230df34c8a1f36775ea9833345c1e
 
 ...
