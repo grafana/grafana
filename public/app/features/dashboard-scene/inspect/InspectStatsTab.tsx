@@ -1,12 +1,31 @@
 import React from 'react';
 
-import { SceneComponentProps, sceneGraph, SceneObjectBase } from '@grafana/scenes';
+import {
+  SceneComponentProps,
+  sceneGraph,
+  SceneObjectBase,
+  SceneObjectState,
+  SceneObjectRef,
+  VizPanel,
+} from '@grafana/scenes';
+import { t } from 'app/core/internationalization';
+import { InspectTab } from 'app/features/inspector/types';
 
 import { InspectStatsTab as OldInspectStatsTab } from '../../inspector/InspectStatsTab';
 
-import { InspectTabState } from './types';
+export interface InspectDataTabState extends SceneObjectState {
+  panelRef: SceneObjectRef<VizPanel>;
+}
 
-export class InspectStatsTab extends SceneObjectBase<InspectTabState> {
+export class InspectStatsTab extends SceneObjectBase<InspectDataTabState> {
+  public getTabLabel() {
+    return t('dashboard.inspect.stats-tab', 'Stats');
+  }
+
+  public getTabValue() {
+    return InspectTab.Stats;
+  }
+
   static Component = ({ model }: SceneComponentProps<InspectStatsTab>) => {
     const data = sceneGraph.getData(model.state.panelRef.resolve()).useState();
     const timeRange = sceneGraph.getTimeRange(model.state.panelRef.resolve());
