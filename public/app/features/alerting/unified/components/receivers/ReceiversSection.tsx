@@ -29,7 +29,7 @@ export const ReceiversSection = ({
   children,
   showButton = true,
   canReadSecrets = false,
-  showExport = false
+  showExport = false,
 }: React.PropsWithChildren<Props>) => {
   const styles = useStyles2(getStyles);
   const showMore = showExport;

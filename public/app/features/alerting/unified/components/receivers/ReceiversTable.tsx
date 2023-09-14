@@ -351,7 +351,6 @@ export const ReceiversTable = ({ config, alertManagerName }: Props) => {
     canReadSecrets
   );
 
-
   return (
     <ReceiversSection
       canReadSecrets={canReadSecrets}
@@ -370,8 +369,8 @@ export const ReceiversTable = ({ config, alertManagerName }: Props) => {
         renderExpandedContent={
           errorStateAvailable
             ? ({ data: { name } }) => (
-              <NotifiersTable notifiersState={contactPointsState?.receivers[name]?.notifiers ?? {}} />
-            )
+                <NotifiersTable notifiersState={contactPointsState?.receivers[name]?.notifiers ?? {}} />
+              )
             : undefined
         }
       />
@@ -501,7 +500,9 @@ function useGetColumns(
               />
             )}
             {(isVanillaAM || provisioned) && <ViewAction alertManagerName={alertManagerName} receiverName={name} />}
-            {isGrafanaAlertManager && <ExportAction alertManagerName={alertManagerName} receiverName={name} canReadSecrets={canReadSecrets} />}
+            {isGrafanaAlertManager && (
+              <ExportAction alertManagerName={alertManagerName} receiverName={name} canReadSecrets={canReadSecrets} />
+            )}
           </div>
         </Authorize>
       ),
