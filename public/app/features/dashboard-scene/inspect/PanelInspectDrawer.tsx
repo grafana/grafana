@@ -16,6 +16,7 @@ import { supportsDataQuery } from 'app/features/dashboard/components/PanelEditor
 
 import { InspectDataTab } from './InspectDataTab';
 import { InspectJsonTab } from './InspectJsonTab';
+import { InspectQueryTab } from './InspectQueryTab';
 import { InspectStatsTab } from './InspectStatsTab';
 import { SceneInspectTab } from './types';
 
@@ -56,6 +57,7 @@ export class PanelInspectDrawer extends SceneObjectBase<PanelInspectDrawerState>
     if (supportsDataQuery(plugin)) {
       tabs.push(new InspectDataTab({ panelRef }));
       tabs.push(new InspectStatsTab({ panelRef }));
+      tabs.push(new InspectQueryTab({ panelRef }));
     }
 
     tabs.push(new InspectJsonTab({ panelRef, onClose: this.onClose }));
