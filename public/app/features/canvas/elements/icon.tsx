@@ -72,12 +72,6 @@ export const iconItem: CanvasElementItem<IconConfig, IconData> = {
   display: IconDisplay,
 
   getNewOptions: (options) => ({
-    placement: {
-      width: 100,
-      height: 100,
-      top: 0,
-      left: 0,
-    },
     ...options,
     config: {
       path: {
@@ -90,6 +84,12 @@ export const iconItem: CanvasElementItem<IconConfig, IconData> = {
       color: {
         fixed: 'transparent',
       },
+    },
+    placement: {
+      width: options?.placement?.width ?? 100,
+      height: options?.placement?.height ?? 100,
+      top: options?.placement?.top ?? 0,
+      left: options?.placement?.left ?? 0,
     },
   }),
 

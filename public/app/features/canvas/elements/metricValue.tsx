@@ -164,8 +164,10 @@ export const metricValueItem: CanvasElementItem<TextConfig, TextData> = {
       },
     },
     placement: {
-      top: 100,
-      left: 100,
+      width: options?.placement?.width,
+      height: options?.placement?.height,
+      top: options?.placement?.top ?? 100,
+      left: options?.placement?.left ?? 100,
     },
   }),
 
