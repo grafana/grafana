@@ -1789,6 +1789,9 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"]
     ],
+    "public/app/features/dashboard-scene/inspect/InspectJsonTab.tsx:5381": [
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"]
+    ],
     "public/app/features/dashboard-scene/scene/RowRepeaterBehavior.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
