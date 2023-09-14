@@ -8,7 +8,7 @@ import {
   Labels,
   PromRulesResponse,
   RulerRuleGroupDTO,
-  RulerRulesConfigDTO,
+  RulerRulesConfigDTO
 } from 'app/types/unified-alerting-dto';
 
 import { ExportFormats } from '../components/export/providers';
@@ -22,7 +22,7 @@ import {
   FetchPromRulesFilter,
   groupRulesByFileName,
   paramsWithMatcherAndState,
-  prepareRulesFilterQueryParams,
+  prepareRulesFilterQueryParams
 } from './prometheus';
 import { FetchRulerRulesFilter, rulerUrlBuilder } from './ruler';
 
@@ -192,14 +192,14 @@ export const alertRuleApi = alertingApi.injectEndpoints({
         responseType: 'text',
       }),
     }),
-    exportReceiver: build.query<string, { receiverName: string; decrypt: string; format: ExportFormats }>({
+    exportReceiver: build.query<string, { receiverName: string; decrypt: boolean; format: ExportFormats }>({
       query: ({ receiverName, decrypt, format }) => ({
         url: `/api/v1/provisioning/contact-points/export/`,
         params: { format: format, decrypt: decrypt, name: receiverName },
         responseType: 'text',
       }),
     }),
-    exportReceivers: build.query<string, { decrypt: string; format: ExportFormats }>({
+    exportReceivers: build.query<string, { decrypt: boolean; format: ExportFormats }>({
       query: ({ decrypt, format }) => ({
         url: `/api/v1/provisioning/contact-points/export/`,
         params: { format: format, decrypt: decrypt },

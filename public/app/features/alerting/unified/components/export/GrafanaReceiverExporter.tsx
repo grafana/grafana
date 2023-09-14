@@ -12,7 +12,7 @@ interface GrafanaReceiverExportPreviewProps {
   exportFormat: ExportFormats;
   onClose: () => void;
   receiverName: string;
-  decrypt: string;
+  decrypt: boolean;
 }
 
 const GrafanaReceiverExportPreview = ({
@@ -46,7 +46,7 @@ const GrafanaReceiverExportPreview = ({
 interface GrafanaReceiverExporterProps {
   onClose: () => void;
   receiverName: string;
-  decrypt: string;
+  decrypt: boolean;
 }
 
 export const GrafanaReceiverExporter = ({ onClose, receiverName, decrypt }: GrafanaReceiverExporterProps) => {

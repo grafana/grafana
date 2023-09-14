@@ -9,7 +9,7 @@ import {
   PromBuildInfoResponse,
   PromRulesResponse,
   RulerRuleGroupDTO,
-  RulerRulesConfigDTO,
+  RulerRulesConfigDTO
 } from 'app/types/unified-alerting-dto';
 
 import { backendSrv } from '../../../core/services/backend_srv';
@@ -20,7 +20,7 @@ import {
   EmailConfig,
   GrafanaManagedReceiverConfig,
   MatcherOperator,
-  Route,
+  Route
 } from '../../../plugins/datasource/alertmanager/types';
 import { FolderDTO, NotifierDTO } from '../../../types';
 
@@ -327,7 +327,7 @@ export function mockProvisioningApi(server: SetupServer) {
         )
       );
     },
-    exportReceiver: (receiverName: string, decrypt: string, response: Record<string, string>) => {
+    exportReceiver: (receiverName: string, decrypt: boolean, response: Record<string, string>) => {
       server.use(
         rest.get(`/api/v1/provisioning/contact-points/export/`, (req, res, ctx) =>
           res(ctx.status(200), ctx.text(response[req.url.searchParams.get('format') ?? 'yaml']))

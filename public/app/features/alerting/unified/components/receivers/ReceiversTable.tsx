@@ -94,7 +94,7 @@ function ExportAction({ receiverName, canReadSecrets = false }: ActionProps) {
       {showExportDrawer && (
         <GrafanaReceiverExporter
           receiverName={receiverName}
-          decrypt={canReadSecrets.toString()}
+          decrypt={canReadSecrets}
           onClose={toggleShowExportDrawer}
         />
       )}
@@ -339,7 +339,7 @@ export const ReceiversTable = ({ config, alertManagerName }: Props) => {
 
   const [createSupported, createAllowed] = useAlertmanagerAbility(AlertmanagerAction.CreateContactPoint);
 
-  const [canReadSecrets] = useAlertmanagerAbility(AlertmanagerAction.CanReadSecrets);
+  const [_, canReadSecrets] = useAlertmanagerAbility(AlertmanagerAction.CanReadSecrets);
 
   const columns = useGetColumns(
     alertManagerName,
@@ -369,8 +369,8 @@ export const ReceiversTable = ({ config, alertManagerName }: Props) => {
         renderExpandedContent={
           errorStateAvailable
             ? ({ data: { name } }) => (
-                <NotifiersTable notifiersState={contactPointsState?.receivers[name]?.notifiers ?? {}} />
-              )
+              <NotifiersTable notifiersState={contactPointsState?.receivers[name]?.notifiers ?? {}} />
+            )
             : undefined
         }
       />

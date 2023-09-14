@@ -9,7 +9,7 @@ import { setBackendSrv } from '@grafana/runtime';
 import {
   AlertManagerCortexConfig,
   GrafanaManagedReceiverConfig,
-  Receiver,
+  Receiver
 } from 'app/plugins/datasource/alertmanager/types';
 import { configureStore } from 'app/store/configureStore';
 import { AccessControlAction, ContactPointsState, NotifierDTO, NotifierType } from 'app/types';
@@ -216,7 +216,7 @@ describe('ReceiversTable', () => {
   describe('Exporter functionality', () => {
     it('Should allow exporting receiver', async () => {
       // Arrange
-      mockProvisioningApi(server).exportReceiver('coolReceiver', 'true', {
+      mockProvisioningApi(server).exportReceiver('coolReceiver', true, {
         yaml: 'Yaml Export Content',
         json: 'Json Export Content',
       });

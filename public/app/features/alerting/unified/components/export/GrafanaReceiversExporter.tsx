@@ -11,7 +11,7 @@ import { ExportFormats, jsonAndYamlGrafanaExportProviders } from './providers';
 interface GrafanaReceiversExportPreviewProps {
   exportFormat: ExportFormats;
   onClose: () => void;
-  decrypt: string;
+  decrypt: boolean;
 }
 
 const GrafanaReceiversExportPreview = ({ decrypt, exportFormat, onClose }: GrafanaReceiversExportPreviewProps) => {
@@ -38,7 +38,7 @@ const GrafanaReceiversExportPreview = ({ decrypt, exportFormat, onClose }: Grafa
 
 interface GrafanaReceiversExporterProps {
   onClose: () => void;
-  decrypt: string;
+  decrypt: boolean;
 }
 
 export const GrafanaReceiversExporter = ({ onClose, decrypt }: GrafanaReceiversExporterProps) => {
