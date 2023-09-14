@@ -40,12 +40,14 @@ export const QueryParamsEditor = ({ value, onChange }: Props) => {
     onChange(newParams);
   };
 
+  const isAddParamsDisabled = !paramName && !paramValue;
+
   return (
     <div>
       <HorizontalGroup>
         <Input placeholder="Key" value={paramName} onChange={changeParamName} />
         <Input placeholder="Value" value={paramValue} onChange={changeParamValue} />
-        <IconButton aria-label="add" name="plus-circle" onClick={addParam} />
+        <IconButton aria-label="add" name="plus-circle" onClick={addParam} disabled={isAddParamsDisabled} />
       </HorizontalGroup>
       <VerticalGroup>
         {Array.from(value || []).map((entry) => (

@@ -22,8 +22,8 @@ export interface APIEditorConfig {
   endpoint: string;
   data?: string;
   contentType?: string;
-  paramsType: string;
-  params?: Array<[string, string]>;
+  queryParams?: Array<[string, string]>;
+  headerParams?: Array<[string, string]>;
 }
 
 const dummyStringSettings = {
@@ -40,26 +40,31 @@ const getRequest = (api: APIEditorConfig) => {
     headers: requestHeaders,
   };
 
-  if (api.paramsType === 'header') {
-    api.params?.forEach((param) => {
+  if (api.headerParams) {
+    api.headerParams.forEach((param) => {
       requestHeaders.push([param[0], param[1]]);
     });
-  } else if (api.paramsType === 'query') {
-    request.url = api.endpoint + '?' + api.params?.map((param) => param[0] + '=' + param[1]).join('&');
+  }
+
+  if (api.queryParams) {
+    const symbol = api.endpoint.match(questionMarkRegex) ? '&' : '?';
+    request.url = api.endpoint + symbol + api.queryParams?.map((param) => param[0] + '=' + param[1]).join('&');
   }
 
   if (api.method === HttpRequestMethod.POST) {
     requestHeaders.push(['Content-Type', 'application/json']);
   }
 
-    if (api.method === HttpRequestMethod.POST) {
-        requestHeaders.push(['Content-Type', api.contentType!]);
-    }
+  if (api.method === HttpRequestMethod.POST) {
+    requestHeaders.push(['Content-Type', api.contentType!]);
+  }
 
   request.headers = requestHeaders;
 
   return request;
 };
+
+const questionMarkRegex = '.+\\?.*';
 
 export const callApi = (api: APIEditorConfig, isTest = false) => {
   if (api && api.endpoint) {
@@ -104,19 +109,6 @@ const contentTypeOptions: SelectableValue[] = [
   { label: 'HTML', value: 'text/html' },
   { label: 'XML', value: 'application/XML' },
   { label: 'x-www-form-urlencoded', value: 'application/x-www-form-urlencoded' },
-];
-
-const httpParamsType = [
-  {
-    label: 'Header',
-    value: 'header',
-    // description: 'Send the parameters as request HTTP headers',
-  },
-  {
-    label: 'Query',
-    value: 'query',
-    // description: 'Send the parameters as `key=value` query parameter',
-  },
 ];
 
 export function APIEditor({ value, context, onChange }: Props) {
@@ -170,21 +162,21 @@ export function APIEditor({ value, context, onChange }: Props) {
     return input;
   };
 
-  const onParamsTypeChange = useCallback(
-    (paramsType: string) => {
+  const onQueryParamsChange = useCallback(
+    (queryParams: Array<[string, string]>) => {
       onChange({
         ...value,
-        paramsType,
+        queryParams,
       });
     },
     [onChange, value]
   );
 
-  const onParamsChange = useCallback(
-    (params: Array<[string, string]>) => {
+  const onHeaderParamsChange = useCallback(
+    (headerParams: Array<[string, string]>) => {
       onChange({
         ...value,
-        params,
+        headerParams,
       });
     },
     [onChange, value]
@@ -232,18 +224,11 @@ export function APIEditor({ value, context, onChange }: Props) {
           <RadioButtonGroup value={value?.method} options={httpMethodOptions} onChange={onMethodChange} fullWidth />
         </InlineField>
       </InlineFieldRow>
-      <InlineFieldRow>
-        <InlineField label="Type" labelWidth={LABEL_WIDTH} tooltip="How the parameters are sent" grow={true}>
-          <RadioButtonGroup
-            value={value?.paramsType}
-            options={httpParamsType}
-            onChange={onParamsTypeChange}
-            fullWidth
-          />
-        </InlineField>
-      </InlineFieldRow>
-      <Field label="Parameters" description="Query parameters">
-        <QueryParamsEditor value={value?.params ?? []} onChange={onParamsChange} />
+      <Field label="Query parameters">
+        <QueryParamsEditor value={value?.queryParams ?? []} onChange={onQueryParamsChange} />
+      </Field>
+      <Field label="Header parameters">
+        <QueryParamsEditor value={value?.headerParams ?? []} onChange={onHeaderParamsChange} />
       </Field>
       {value?.method === HttpRequestMethod.POST && (
         <>

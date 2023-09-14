@@ -28,8 +28,8 @@ export const defaultApiConfig: APIEditorConfig = {
   method: HttpRequestMethod.POST,
   data: '{}',
   contentType: 'application/json',
-    paramsType: 'header',
-    params: [],
+  queryParams: [],
+  headerParams: [],
 };
 
 export const defaultStyleConfig: ButtonStyleConfig = {
