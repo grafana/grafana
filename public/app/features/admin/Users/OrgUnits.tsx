@@ -17,7 +17,9 @@ export const OrgUnits = ({ units, icon }: OrgUnitProps) => {
   return units.length > 1 ? (
     <Tooltip
       placement={'top'}
-      content={<div className={styles.unitTooltip}>{units?.map((unit) => <>{unit.name}</>)}</div>}
+      content={
+        <div className={styles.unitTooltip}>{units?.map((unit) => <span key={unit.name}>{unit.name}</span>)}</div>
+      }
     >
       <div className={styles.unitItem}>
         <Icon name={icon} /> <span>{units.length}</span>
