@@ -171,7 +171,7 @@ describe('AppRootPage', () => {
       importAppPluginMock.mockResolvedValue(plugin);
     });
 
-    it('an User with no existing role should be able to see any page', async () => {
+    it('an User with no existing role should not be able to see any page', async () => {
       contextSrv.user.orgRole = 'NotExistingRole';
 
       await renderUnderRouter('viewer-page');
