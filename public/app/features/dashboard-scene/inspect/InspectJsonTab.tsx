@@ -6,7 +6,6 @@ import { SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import {
   SceneComponentProps,
-  SceneDataProvider,
   SceneDataTransformer,
   sceneGraph,
   SceneGridItem,
@@ -30,7 +29,7 @@ import { reportPanelInspectInteraction } from 'app/features/search/page/reportin
 import { PanelRepeaterGridItem } from '../scene/PanelRepeaterGridItem';
 import { buildGridItemForPanel } from '../serialization/transformSaveModelToScene';
 import { gridItemToPanel } from '../serialization/transformSceneToSaveModel';
-import { getDashboardSceneFor, getPanelIdForVizPanel } from '../utils/utils';
+import { getDashboardSceneFor, getPanelIdForVizPanel, getQueryRunnerFor } from '../utils/utils';
 
 export type ShowContent = 'panel-json' | 'panel-data' | 'data-frames';
 
@@ -108,7 +107,8 @@ export class InspectJsonTab extends SceneObjectBase<InspectJsonTabState> {
     const gridItem = buildGridItemForPanel(panelModel);
     const newState = sceneUtils.cloneSceneObjectState(gridItem.state);
 
-    if (!(panel.parent instanceof SceneGridItem)) {
+    if (!(panel.parent instanceof SceneGridItem) || !(gridItem instanceof SceneGridItem)) {
+      console.error('Cannot update state of panel', panel, gridItem);
       return;
     }
 
@@ -125,7 +125,7 @@ export class InspectJsonTab extends SceneObjectBase<InspectJsonTabState> {
       panel_type_changed: panel.state.pluginId !== panelModel.type,
       panel_id_changed: getPanelIdForVizPanel(panel) !== panelModel.id,
       panel_grid_pos_changed: hasGridPosChanged(panel.parent.state, newState),
-      panel_targets_changed: hasQueriesChanged(getQueryRunner(panel.state.$data), getQueryRunner(newState.$data)),
+      panel_targets_changed: hasQueriesChanged(getQueryRunnerFor(panel), getQueryRunnerFor(gridItem.state.body)),
     });
   };
 
@@ -245,20 +245,4 @@ function hasQueriesChanged(a: SceneQueryRunner | undefined, b: SceneQueryRunner 
   }
 
   return !isEqual(a.state.queries, b.state.queries);
-}
-
-function getQueryRunner(dataProvider: SceneDataProvider | undefined): SceneQueryRunner | undefined {
-  if (!dataProvider) {
-    return undefined;
-  }
-
-  if (dataProvider instanceof SceneDataTransformer) {
-    return getQueryRunner(dataProvider.state.$data);
-  }
-
-  if (dataProvider instanceof SceneQueryRunner) {
-    return dataProvider;
-  }
-
-  return undefined;
 }
