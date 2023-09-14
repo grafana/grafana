@@ -20,7 +20,6 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/repo"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
@@ -492,15 +491,15 @@ func (hs *HTTPServer) UninstallPlugin(c *contextmodel.ReqContext) response.Respo
 }
 
 func translatePluginRequestErrorToAPIError(err error) response.Response {
-	if errors.Is(err, backendplugin.ErrPluginNotRegistered) {
+	if errors.Is(err, plugins.ErrPluginNotRegistered) {
 		return response.Error(http.StatusNotFound, "Plugin not found", err)
 	}
 
-	if errors.Is(err, backendplugin.ErrMethodNotImplemented) {
+	if errors.Is(err, plugins.ErrMethodNotImplemented) {
 		return response.Error(http.StatusNotFound, "Not found", err)
 	}
 
-	if errors.Is(err, backendplugin.ErrPluginUnavailable) {
+	if errors.Is(err, plugins.ErrPluginUnavailable) {
 		return response.Error(http.StatusServiceUnavailable, "Plugin unavailable", err)
 	}
 

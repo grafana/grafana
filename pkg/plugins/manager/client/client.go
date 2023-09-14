@@ -10,7 +10,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/instrumentation"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
@@ -48,7 +47,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 
 	p, exists := s.plugin(ctx, req.PluginContext.PluginID)
 	if !exists {
-		return nil, plugins.ErrPluginNotRegistered.Errorf("%w", backendplugin.ErrPluginNotRegistered)
+		return nil, plugins.ErrPluginNotRegistered
 	}
 
 	var totalBytes float64
@@ -65,12 +64,13 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 	})
 
 	if err != nil {
-		if errors.Is(err, backendplugin.ErrMethodNotImplemented) {
-			return nil, plugins.ErrMethodNotImplemented.Errorf("%w", backendplugin.ErrMethodNotImplemented)
+		// Convert the errutil.Base to a errutil.Error
+		if errors.Is(err, plugins.ErrMethodNotImplemented) {
+			return nil, plugins.ErrMethodNotImplemented.Errorf("%w", plugins.ErrMethodNotImplemented)
 		}
 
-		if errors.Is(err, backendplugin.ErrPluginUnavailable) {
-			return nil, plugins.ErrPluginUnavailable.Errorf("%w", backendplugin.ErrPluginUnavailable)
+		if errors.Is(err, plugins.ErrPluginUnavailable) {
+			return nil, plugins.ErrPluginUnavailable.Errorf("%w", plugins.ErrPluginUnavailable)
 		}
 
 		return nil, plugins.ErrPluginDownstreamError.Errorf("client: failed to query data: %w", err)
@@ -99,7 +99,7 @@ func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceReq
 
 	p, exists := s.plugin(ctx, req.PluginContext.PluginID)
 	if !exists {
-		return backendplugin.ErrPluginNotRegistered
+		return plugins.ErrPluginNotRegistered
 	}
 
 	totalBytes := float64(len(req.Body))
@@ -145,7 +145,7 @@ func (s *Service) CollectMetrics(ctx context.Context, req *backend.CollectMetric
 
 	p, exists := s.plugin(ctx, req.PluginContext.PluginID)
 	if !exists {
-		return nil, backendplugin.ErrPluginNotRegistered
+		return nil, plugins.ErrPluginNotRegistered
 	}
 
 	var resp *backend.CollectMetricsResult
@@ -169,7 +169,7 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 
 	p, exists := s.plugin(ctx, req.PluginContext.PluginID)
 	if !exists {
-		return nil, backendplugin.ErrPluginNotRegistered
+		return nil, plugins.ErrPluginNotRegistered
 	}
 
 	var resp *backend.CheckHealthResult
@@ -181,11 +181,11 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 	})
 
 	if err != nil {
-		if errors.Is(err, backendplugin.ErrMethodNotImplemented) {
+		if errors.Is(err, plugins.ErrMethodNotImplemented) {
 			return nil, err
 		}
 
-		if errors.Is(err, backendplugin.ErrPluginUnavailable) {
+		if errors.Is(err, plugins.ErrPluginUnavailable) {
 			return nil, err
 		}
 
@@ -202,7 +202,7 @@ func (s *Service) SubscribeStream(ctx context.Context, req *backend.SubscribeStr
 
 	plugin, exists := s.plugin(ctx, req.PluginContext.PluginID)
 	if !exists {
-		return nil, backendplugin.ErrPluginNotRegistered
+		return nil, plugins.ErrPluginNotRegistered
 	}
 
 	return plugin.SubscribeStream(ctx, req)
@@ -215,7 +215,7 @@ func (s *Service) PublishStream(ctx context.Context, req *backend.PublishStreamR
 
 	plugin, exists := s.plugin(ctx, req.PluginContext.PluginID)
 	if !exists {
-		return nil, backendplugin.ErrPluginNotRegistered
+		return nil, plugins.ErrPluginNotRegistered
 	}
 
 	return plugin.PublishStream(ctx, req)
@@ -232,7 +232,7 @@ func (s *Service) RunStream(ctx context.Context, req *backend.RunStreamRequest, 
 
 	plugin, exists := s.plugin(ctx, req.PluginContext.PluginID)
 	if !exists {
-		return backendplugin.ErrPluginNotRegistered
+		return plugins.ErrPluginNotRegistered
 	}
 
 	return plugin.RunStream(ctx, req, sender)

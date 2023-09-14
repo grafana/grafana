@@ -233,13 +233,13 @@ func TestDataSourceQueryError(t *testing.T) {
 	}{
 		{
 			request:        reqValid,
-			clientErr:      backendplugin.ErrPluginUnavailable,
+			clientErr:      plugins.ErrPluginUnavailable,
 			expectedStatus: http.StatusInternalServerError,
 			expectedBody:   `{"message":"Internal server error","messageId":"plugin.unavailable","statusCode":500,"traceID":""}`,
 		},
 		{
 			request:        reqValid,
-			clientErr:      backendplugin.ErrMethodNotImplemented,
+			clientErr:      plugins.ErrMethodNotImplemented,
 			expectedStatus: http.StatusNotImplemented,
 			expectedBody:   `{"message":"Not implemented","messageId":"plugin.notImplemented","statusCode":501,"traceID":""}`,
 		},

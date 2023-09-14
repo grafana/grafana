@@ -12,6 +12,7 @@ const (
 )
 
 var (
+	// TODO: Move these?
 	ErrInstallCorePlugin   = errors.New("cannot install a Core plugin")
 	ErrUninstallCorePlugin = errors.New("cannot uninstall a Core plugin")
 	ErrPluginNotInstalled  = errors.New("plugin is not installed")

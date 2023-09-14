@@ -11,7 +11,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/middleware/requestmeta"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/httpresponsesender"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -125,12 +125,12 @@ func (hs *HTTPServer) makePluginResourceRequest(w http.ResponseWriter, req *http
 }
 
 func handleCallResourceError(err error, reqCtx *contextmodel.ReqContext) {
-	if errors.Is(err, backendplugin.ErrPluginUnavailable) {
+	if errors.Is(err, plugins.ErrPluginUnavailable) {
 		reqCtx.JsonApiErr(http.StatusServiceUnavailable, "Plugin unavailable", err)
 		return
 	}
 
-	if errors.Is(err, backendplugin.ErrMethodNotImplemented) {
+	if errors.Is(err, plugins.ErrMethodNotImplemented) {
 		reqCtx.JsonApiErr(http.StatusNotFound, "Not found", err)
 		return
 	}
