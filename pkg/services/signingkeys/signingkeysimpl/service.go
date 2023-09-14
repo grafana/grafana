@@ -8,6 +8,7 @@ import (
 
 	"github.com/go-jose/go-jose/v3"
 
+	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/signingkeys"
 )
@@ -18,7 +19,7 @@ const (
 
 var _ signingkeys.Service = new(Service)
 
-func ProvideEmbeddedSigningKeysService() (*Service, error) {
+func ProvideEmbeddedSigningKeysService(router routing.RouteRegister) (*Service, error) {
 	s := &Service{
 		log:  log.New("auth.key_service"),
 		keys: map[string]crypto.Signer{},
@@ -33,6 +34,8 @@ func ProvideEmbeddedSigningKeysService() (*Service, error) {
 	if err := s.AddPrivateKey(serverPrivateKeyID, privateKey); err != nil {
 		return nil, err
 	}
+
+	registerRoutes(router, s)
 
 	return s, nil
 }
