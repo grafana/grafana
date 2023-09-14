@@ -6,7 +6,7 @@ import { useToggle } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
-import { locationService } from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
 import {
   Button,
   ClipboardButton,
@@ -145,15 +145,18 @@ export const RuleActionsButtons = ({ rule, rulesSource }: Props) => {
 
     if (isGrafanaRulerRule(rulerRule) && canReadProvisioning) {
       moreActions.push(<Menu.Item label="Export" icon="download-alt" onClick={toggleShowExportDrawer} />);
-      moreActions.push(
-        <Menu.Item
-          label="Modified export"
-          icon="edit"
-          onClick={() =>
-            locationService.push(`/alerting/${encodeURIComponent(ruleId.stringifyIdentifier(identifier))}/design`)
-          }
-        />
-      );
+
+      if (config.featureToggles.alertingModifiedExport) {
+        moreActions.push(
+          <Menu.Item
+            label="Modified export"
+            icon="edit"
+            onClick={() =>
+              locationService.push(`/alerting/${encodeURIComponent(ruleId.stringifyIdentifier(identifier))}/design`)
+            }
+          />
+        );
+      }
     }
 
     moreActions.push(
