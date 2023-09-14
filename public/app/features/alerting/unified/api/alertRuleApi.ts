@@ -8,7 +8,7 @@ import {
   Labels,
   PromRulesResponse,
   RulerRuleGroupDTO,
-  RulerRulesConfigDTO
+  RulerRulesConfigDTO,
 } from 'app/types/unified-alerting-dto';
 
 import { ExportFormats } from '../components/export/providers';
@@ -22,7 +22,7 @@ import {
   FetchPromRulesFilter,
   groupRulesByFileName,
   paramsWithMatcherAndState,
-  prepareRulesFilterQueryParams
+  prepareRulesFilterQueryParams,
 } from './prometheus';
 import { FetchRulerRulesFilter, rulerUrlBuilder } from './ruler';
 

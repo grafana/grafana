@@ -9,9 +9,9 @@ import { logInfo, LogMessages } from './Analytics';
 import { GrafanaRulesExporter } from './components/export/GrafanaRulesExporter';
 import { useRulesAccess } from './utils/accessControlHooks';
 
-interface Props { }
+interface Props {}
 
-export function MoreActionsRuleButtons({ }: Props) {
+export function MoreActionsRuleButtons({}: Props) {
   const { canCreateGrafanaRules, canCreateCloudRules, canReadProvisioning } = useRulesAccess();
   const location = useLocation();
   const [showExportDrawer, toggleShowExportDrawer] = useToggle(false);
@@ -25,12 +25,7 @@ export function MoreActionsRuleButtons({ }: Props) {
           label="New recording rule"
         />
       )}
-      {canReadProvisioning && (
-        <MenuItem
-          onClick={toggleShowExportDrawer}
-          label="Export all Grafana-managed rules"
-        />
-      )}
+      {canReadProvisioning && <MenuItem onClick={toggleShowExportDrawer} label="Export all Grafana-managed rules" />}
     </Menu>
   );
 
@@ -52,9 +47,7 @@ export function MoreActionsRuleButtons({ }: Props) {
           <Icon name="angle-down" />
         </Button>
       </Dropdown>
-      {showExportDrawer && (
-        <GrafanaRulesExporter onClose={toggleShowExportDrawer} />
-      )}
+      {showExportDrawer && <GrafanaRulesExporter onClose={toggleShowExportDrawer} />}
     </>
   );
 }
