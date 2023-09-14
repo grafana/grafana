@@ -353,7 +353,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
               this._request('/api/search', {
                 q: queryValue,
                 limit: options.targets[0].limit ?? DEFAULT_LIMIT,
-                spss: options.targets[0].spss,
+                spss: options.targets[0].spss ?? DEFAULT_SPSS,
                 start: options.range.from.unix(),
                 end: options.range.to.unix(),
               }).pipe(
@@ -407,7 +407,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
               this._request('/api/search', {
                 q: queryValue,
                 limit: options.targets[0].limit ?? DEFAULT_LIMIT,
-                spss: options.targets[0].spss,
+                spss: options.targets[0].spss ?? DEFAULT_SPSS,
                 start: options.range.from.unix(),
                 end: options.range.to.unix(),
               }).pipe(

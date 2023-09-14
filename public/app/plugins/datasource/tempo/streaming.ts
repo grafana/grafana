@@ -17,7 +17,7 @@ import {
 import { getGrafanaLiveSrv } from '@grafana/runtime';
 
 import { SearchStreamingState } from './dataquery.gen';
-import { TempoDatasource } from './datasource';
+import { DEFAULT_SPSS, TempoDatasource } from './datasource';
 import { createTableFrameFromTraceQlQuery } from './resultTransformer';
 import { SearchMetrics, TempoJsonData, TempoQuery } from './types';
 export async function getLiveStreamKey(): Promise<string> {
@@ -45,7 +45,7 @@ export function doTempoChannelStream(
           path: `search/${key}`,
           data: {
             ...query,
-            SpansPerSpanSet: query.spss,
+            SpansPerSpanSet: query.spss ?? DEFAULT_SPSS,
             timeRange: {
               from: range.from.toISOString(),
               to: range.to.toISOString(),
