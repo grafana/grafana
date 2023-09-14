@@ -26,6 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/oauthserver/oastest"
 	sa "github.com/grafana/grafana/pkg/services/serviceaccounts"
 	satests "github.com/grafana/grafana/pkg/services/serviceaccounts/tests"
+	"github.com/grafana/grafana/pkg/services/serviceauth"
 	"github.com/grafana/grafana/pkg/services/team/teamtest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/usertest"
@@ -116,7 +117,7 @@ func TestOAuth2ServiceImpl_SaveExternalService(t *testing.T) {
 	tests := []struct {
 		name       string
 		init       func(*TestEnv)
-		cmd        *oauthserver.ExternalServiceRegistration
+		cmd        *serviceauth.ExternalServiceRegistration
 		mockChecks func(*testing.T, *TestEnv)
 		wantErr    bool
 	}{
@@ -127,9 +128,9 @@ func TestOAuth2ServiceImpl_SaveExternalService(t *testing.T) {
 				env.OAuthStore.On("GetExternalServiceByName", mock.Anything, mock.Anything).Return(nil, oauthserver.ErrClientNotFound(serviceName))
 				env.OAuthStore.On("SaveExternalService", mock.Anything, mock.Anything).Return(nil)
 			},
-			cmd: &oauthserver.ExternalServiceRegistration{
-				Name: serviceName,
-				Key:  &oauthserver.KeyOption{Generate: true},
+			cmd: &serviceauth.ExternalServiceRegistration{
+				Name:            serviceName,
+				AuthProviderCfg: oauthserver.ProviderCfg{Key: &oauthserver.KeyOption{Generate: true}},
 			},
 			mockChecks: func(t *testing.T, env *TestEnv) {
 				env.OAuthStore.AssertCalled(t, "GetExternalServiceByName", mock.Anything, mock.MatchedBy(func(name string) bool {
@@ -152,10 +153,10 @@ func TestOAuth2ServiceImpl_SaveExternalService(t *testing.T) {
 				env.SAService.On("CreateServiceAccount", mock.Anything, mock.Anything, mock.Anything).Return(&sa1, nil)
 				env.AcStore.On("SaveExternalServiceRole", mock.Anything, mock.Anything).Return(nil)
 			},
-			cmd: &oauthserver.ExternalServiceRegistration{
-				Name: serviceName,
-				Key:  &oauthserver.KeyOption{Generate: true},
-				Self: oauthserver.SelfCfg{
+			cmd: &serviceauth.ExternalServiceRegistration{
+				Name:            serviceName,
+				AuthProviderCfg: oauthserver.ProviderCfg{Key: &oauthserver.KeyOption{Generate: true}},
+				Self: serviceauth.SelfCfg{
 					Enabled:     true,
 					Permissions: []ac.Permission{{Action: "users:read", Scope: "users:*"}},
 				},
@@ -186,10 +187,10 @@ func TestOAuth2ServiceImpl_SaveExternalService(t *testing.T) {
 				env.SAService.On("DeleteServiceAccount", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 				env.AcStore.On("DeleteExternalServiceRole", mock.Anything, mock.Anything).Return(nil)
 			},
-			cmd: &oauthserver.ExternalServiceRegistration{
-				Name: serviceName,
-				Key:  &oauthserver.KeyOption{Generate: true},
-				Self: oauthserver.SelfCfg{
+			cmd: &serviceauth.ExternalServiceRegistration{
+				Name:            serviceName,
+				AuthProviderCfg: oauthserver.ProviderCfg{Key: &oauthserver.KeyOption{Generate: true}},
+				Self: serviceauth.SelfCfg{
 					Enabled: false,
 				},
 			},
@@ -221,10 +222,10 @@ func TestOAuth2ServiceImpl_SaveExternalService(t *testing.T) {
 				// Update the service account permissions
 				env.AcStore.On("SaveExternalServiceRole", mock.Anything, mock.Anything).Return(nil)
 			},
-			cmd: &oauthserver.ExternalServiceRegistration{
-				Name: serviceName,
-				Key:  &oauthserver.KeyOption{Generate: true},
-				Self: oauthserver.SelfCfg{
+			cmd: &serviceauth.ExternalServiceRegistration{
+				Name:            serviceName,
+				AuthProviderCfg: oauthserver.ProviderCfg{Key: &oauthserver.KeyOption{Generate: true}},
+				Self: serviceauth.SelfCfg{
 					Enabled:     true,
 					Permissions: []ac.Permission{{Action: "dashboards:create", Scope: "folders:uid:general"}},
 				},
@@ -249,10 +250,10 @@ func TestOAuth2ServiceImpl_SaveExternalService(t *testing.T) {
 				env.SAService.On("CreateServiceAccount", mock.Anything, mock.Anything, mock.Anything).Return(&sa1, nil)
 				env.AcStore.On("SaveExternalServiceRole", mock.Anything, mock.Anything).Return(nil)
 			},
-			cmd: &oauthserver.ExternalServiceRegistration{
-				Name: serviceName,
-				Key:  &oauthserver.KeyOption{Generate: true},
-				Impersonation: oauthserver.ImpersonationCfg{
+			cmd: &serviceauth.ExternalServiceRegistration{
+				Name:            serviceName,
+				AuthProviderCfg: oauthserver.ProviderCfg{Key: &oauthserver.KeyOption{Generate: true}},
+				Impersonation: serviceauth.ImpersonationCfg{
 					Enabled:     true,
 					Groups:      true,
 					Permissions: []ac.Permission{{Action: "dashboards:read", Scope: "dashboards:*"}},
@@ -294,26 +295,30 @@ func TestOAuth2ServiceImpl_SaveExternalService(t *testing.T) {
 			require.NotEmpty(t, dto.Secret)
 
 			// Check that we have generated keys and that we correctly return them
-			if tt.cmd.Key != nil && tt.cmd.Key.Generate {
-				require.NotNil(t, dto.KeyResult)
-				require.True(t, dto.KeyResult.Generated)
-				require.NotEmpty(t, dto.KeyResult.PublicPem)
-				require.NotEmpty(t, dto.KeyResult.PrivatePem)
+			providerCfg, ok := tt.cmd.AuthProviderCfg.(oauthserver.ProviderCfg)
+			require.True(t, ok)
+			dtoExtra, ok := dto.Extra.(oauthserver.ExternalServiceDTOExtra)
+			require.True(t, ok)
+			if providerCfg.Key != nil && providerCfg.Key.Generate {
+				require.NotNil(t, dtoExtra.KeyResult)
+				require.True(t, dtoExtra.KeyResult.Generated)
+				require.NotEmpty(t, dtoExtra.KeyResult.PublicPem)
+				require.NotEmpty(t, dtoExtra.KeyResult.PrivatePem)
 			}
 
 			// Check that we computed grant types and created or updated the service account
 			if tt.cmd.Self.Enabled {
-				require.NotNil(t, dto.GrantTypes)
-				require.Contains(t, dto.GrantTypes, fosite.GrantTypeClientCredentials, "grant types should contain client_credentials")
+				require.NotNil(t, dtoExtra.GrantTypes)
+				require.Contains(t, dtoExtra.GrantTypes, fosite.GrantTypeClientCredentials, "grant types should contain client_credentials")
 			} else {
-				require.NotContains(t, dto.GrantTypes, fosite.GrantTypeClientCredentials, "grant types should not contain client_credentials")
+				require.NotContains(t, dtoExtra.GrantTypes, fosite.GrantTypeClientCredentials, "grant types should not contain client_credentials")
 			}
 			// Check that we updated grant types
 			if tt.cmd.Impersonation.Enabled {
-				require.NotNil(t, dto.GrantTypes)
-				require.Contains(t, dto.GrantTypes, fosite.GrantTypeJWTBearer, "grant types should contain JWT Bearer grant")
+				require.NotNil(t, dtoExtra.GrantTypes)
+				require.Contains(t, dtoExtra.GrantTypes, fosite.GrantTypeJWTBearer, "grant types should contain JWT Bearer grant")
 			} else {
-				require.NotContains(t, dto.GrantTypes, fosite.GrantTypeJWTBearer, "grant types should not contain JWT Bearer grant")
+				require.NotContains(t, dtoExtra.GrantTypes, fosite.GrantTypeJWTBearer, "grant types should not contain JWT Bearer grant")
 			}
 
 			// Check that mocks were called as expected

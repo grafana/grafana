@@ -46,7 +46,7 @@ func (s *Service) RegisterExternalService(ctx context.Context, svcName string, s
 			self.Enabled = true
 		}
 	}
-	extSvc, err := s.os.SaveExternalService(ctx, &oauthserver.ExternalServiceRegistration{
+	extSvc, err := s.os.SaveExternalService(ctx, &oauthserver.ProviderCfg{
 		Name:          svcName,
 		Impersonation: impersonation,
 		Self:          self,

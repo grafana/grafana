@@ -34,6 +34,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/oauthserver/utils"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
+	"github.com/grafana/grafana/pkg/services/serviceauth"
 	"github.com/grafana/grafana/pkg/services/signingkeys"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -189,7 +190,7 @@ func (s *OAuth2ServiceImpl) GetExternalService(ctx context.Context, id string) (
 // SaveExternalService creates or updates an external service in the database, it generates client_id and secrets and
 // it ensures that the associated service account has the correct permissions.
 // Database consistency is not guaranteed, consider changing this in the future.
-func (s *OAuth2ServiceImpl) SaveExternalService(ctx context.Context, registration *oauthserver.ExternalServiceRegistration) (*oauthserver.ExternalServiceDTO, error) {
+func (s *OAuth2ServiceImpl) SaveExternalService(ctx context.Context, registration *serviceauth.ExternalServiceRegistration) (*serviceauth.ExternalServiceDTO, error) {
 	if registration == nil {
 		s.logger.Warn("RegisterExternalService called without registration")
 		return nil, nil
@@ -220,8 +221,12 @@ func (s *OAuth2ServiceImpl) SaveExternalService(ctx context.Context, registratio
 	// Parse registration form to compute required permissions for the client
 	client.SelfPermissions, client.ImpersonatePermissions = s.handleRegistrationPermissions(registration)
 
-	if registration.RedirectURI != nil {
-		client.RedirectURI = *registration.RedirectURI
+	additionalCfg, ok := registration.AuthProviderCfg.(oauthserver.ProviderCfg)
+	if !ok {
+		s.logger.Error("Error parsing authProvider config", "external service", registration.Name)
+	}
+	if additionalCfg.RedirectURI != nil {
+		client.RedirectURI = *additionalCfg.RedirectURI
 	}
 
 	var errGenCred error
@@ -243,7 +248,7 @@ func (s *OAuth2ServiceImpl) SaveExternalService(ctx context.Context, registratio
 
 	// Handle key options
 	s.logger.Debug("Handle key options")
-	keys, err := s.handleKeyOptions(ctx, registration.Key)
+	keys, err := s.handleKeyOptions(ctx, additionalCfg.Key)
 	if err != nil {
 		s.logger.Error("Error handling key options", "client", client.LogID(), "error", err)
 		return nil, err
@@ -251,8 +256,7 @@ func (s *OAuth2ServiceImpl) SaveExternalService(ctx context.Context, registratio
 	if keys != nil {
 		client.PublicPem = []byte(keys.PublicPem)
 	}
-	dto := client.ToDTO()
-	dto.KeyResult = keys
+	dto := client.ToDTO(keys)
 
 	hashedSecret, err := bcrypt.GenerateFromPassword([]byte(client.Secret), bcrypt.DefaultCost)
 	if err != nil {
@@ -478,7 +482,7 @@ func (s *OAuth2ServiceImpl) createServiceAccount(ctx context.Context, extSvcName
 
 // handleRegistrationPermissions parses the registration form to retrieve requested permissions and adds default
 // permissions when impersonation is requested
-func (*OAuth2ServiceImpl) handleRegistrationPermissions(registration *oauthserver.ExternalServiceRegistration) ([]ac.Permission, []ac.Permission) {
+func (*OAuth2ServiceImpl) handleRegistrationPermissions(registration *serviceauth.ExternalServiceRegistration) ([]ac.Permission, []ac.Permission) {
 	selfPermissions := []ac.Permission{}
 	impersonatePermissions := []ac.Permission{}
 

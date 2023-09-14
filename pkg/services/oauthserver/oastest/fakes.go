@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/grafana/grafana/pkg/services/oauthserver"
+	"github.com/grafana/grafana/pkg/services/serviceauth"
 	"gopkg.in/square/go-jose.v2"
 )
 
@@ -16,8 +17,8 @@ type FakeService struct {
 
 var _ oauthserver.OAuth2Server = &FakeService{}
 
-func (s *FakeService) SaveExternalService(ctx context.Context, cmd *oauthserver.ExternalServiceRegistration) (*oauthserver.ExternalServiceDTO, error) {
-	return s.ExpectedClient.ToDTO(), s.ExpectedErr
+func (s *FakeService) SaveExternalService(ctx context.Context, cmd *serviceauth.ExternalServiceRegistration) (*serviceauth.ExternalServiceDTO, error) {
+	return s.ExpectedClient.ToDTO(nil), s.ExpectedErr
 }
 
 func (s *FakeService) GetExternalService(ctx context.Context, id string) (*oauthserver.ExternalService, error) {

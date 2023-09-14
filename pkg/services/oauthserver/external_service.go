@@ -8,6 +8,7 @@ import (
 	"github.com/ory/fosite"
 
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/serviceauth"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
@@ -18,10 +19,7 @@ type KeyResult struct {
 	Generated  bool   `json:"generated,omitempty"`
 }
 
-type ExternalServiceDTO struct {
-	Name        string     `json:"name"`
-	ID          string     `json:"clientId"`
-	Secret      string     `json:"clientSecret"`
+type ExternalServiceDTOExtra struct {
 	RedirectURI string     `json:"redirectUri,omitempty"` // Not used yet (code flow)
 	GrantTypes  string     `json:"grantTypes"`            // CSV value
 	Audiences   string     `json:"audiences"`             // CSV value
@@ -49,19 +47,24 @@ type ExternalService struct {
 	ImpersonateScopes []string
 }
 
-func (c *ExternalService) ToDTO() *ExternalServiceDTO {
-	c2 := ExternalServiceDTO{
-		Name:        c.Name,
-		ID:          c.ClientID,
-		Secret:      c.Secret,
+func (c *ExternalService) ToDTO(keys *KeyResult) *serviceauth.ExternalServiceDTO {
+	extra := ExternalServiceDTOExtra{
 		GrantTypes:  c.GrantTypes,
 		Audiences:   c.Audiences,
 		RedirectURI: c.RedirectURI,
+		KeyResult:   keys,
 	}
-	if len(c.PublicPem) > 0 {
-		c2.KeyResult = &KeyResult{PublicPem: string(c.PublicPem)}
+	// Fallback to only display the public pem
+	if keys == nil && len(c.PublicPem) > 0 {
+		extra.KeyResult = &KeyResult{PublicPem: string(c.PublicPem)}
 	}
-	return &c2
+
+	return &serviceauth.ExternalServiceDTO{
+		Name:   c.Name,
+		ID:     c.ClientID,
+		Secret: c.Secret,
+		Extra:  extra,
+	}
 }
 
 func (c *ExternalService) LogID() string {

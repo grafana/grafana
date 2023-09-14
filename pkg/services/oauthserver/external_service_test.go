@@ -195,16 +195,20 @@ func TestExternalService_ToDTO(t *testing.T) {
 		PublicPem:   []byte("pem_encoded_public_key"),
 	}
 
-	dto := client.ToDTO()
+	dto := client.ToDTO(nil)
 
 	require.Equal(t, client.ClientID, dto.ID)
 	require.Equal(t, client.Name, dto.Name)
-	require.Equal(t, client.RedirectURI, dto.RedirectURI)
-	require.Equal(t, client.GrantTypes, dto.GrantTypes)
-	require.Equal(t, client.Audiences, dto.Audiences)
-	require.Equal(t, client.PublicPem, []byte(dto.KeyResult.PublicPem))
-	require.Empty(t, dto.KeyResult.PrivatePem)
-	require.Empty(t, dto.KeyResult.URL)
-	require.False(t, dto.KeyResult.Generated)
 	require.Equal(t, client.Secret, dto.Secret)
+
+	extra, ok := dto.Extra.(ExternalServiceDTOExtra)
+	require.True(t, ok)
+
+	require.Equal(t, client.RedirectURI, extra.RedirectURI)
+	require.Equal(t, client.GrantTypes, extra.GrantTypes)
+	require.Equal(t, client.Audiences, extra.Audiences)
+	require.Equal(t, client.PublicPem, []byte(extra.KeyResult.PublicPem))
+	require.Empty(t, extra.KeyResult.PrivatePem)
+	require.Empty(t, extra.KeyResult.URL)
+	require.False(t, extra.KeyResult.Generated)
 }
