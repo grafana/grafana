@@ -44,7 +44,7 @@ class RootComponent extends Component<AppRootProps> {
   }
 }
 
-function renderUnderRouter(page = '') {
+async function renderUnderRouter(page = '') {
   const appPluginNavItem: NavModelItem = {
     text: 'App',
     id: 'plugin-page-app',
@@ -69,17 +69,21 @@ function renderUnderRouter(page = '') {
 
   appPluginNavItem.parentItem = appsSection;
 
+  const pagePath = page ? `/${page}` : '';
   const store = configureStore();
   const route = {
     component: () => <AppRootPage pluginId="my-awesome-plugin" pluginNavSection={appsSection} />,
   } as unknown as RouteDescriptor;
-  locationService.push(`/a/my-awesome-plugin/${page}`);
+
+  await act(async () => {
+    locationService.push(`/a/my-awesome-plugin${pagePath}`);
+  });
 
   render(
     <Router history={locationService.getHistory()}>
       <Provider store={store}>
         <GrafanaContext.Provider value={getGrafanaContextMock()}>
-          <Route path={`/a/:pluginId/${page}`} exact render={(props) => <GrafanaRoute {...props} route={route} />} />
+          <Route path={`/a/:pluginId${pagePath}`} exact render={(props) => <GrafanaRoute {...props} route={route} />} />
         </GrafanaContext.Provider>
       </Provider>
     </Router>
@@ -98,7 +102,7 @@ describe('AppRootPage', () => {
     enabled: true,
   });
 
-  it('should not render component if not at plugin path', async () => {
+  it('should not render the component if we are not under a plugin path', async () => {
     getPluginSettingsMock.mockResolvedValue(pluginMeta);
 
     const plugin = new AppPlugin();
@@ -107,155 +111,137 @@ describe('AppRootPage', () => {
 
     importAppPluginMock.mockResolvedValue(plugin);
 
-    renderUnderRouter();
-
+    // Renders once for the first time
+    await renderUnderRouter();
     expect(await screen.findByText('my great component')).toBeVisible();
-
-    // renders the first time
     expect(RootComponent.timesRendered).toEqual(1);
 
+    // Does not render again when navigating to a non-plugin path
     await act(async () => {
       locationService.push('/foo');
     });
-
     expect(RootComponent.timesRendered).toEqual(1);
 
+    // Renders it again when navigating back to a plugin path
     await act(async () => {
       locationService.push('/a/my-awesome-plugin');
     });
-
     expect(RootComponent.timesRendered).toEqual(2);
   });
 
-  // it('should respect roles for specific plugin page', async () => {
-  //   contextSrv.user.orgRole = OrgRole.Viewer;
-  //   getPluginSettingsMock.mockResolvedValue(pluginMeta);
+  describe('When accessing using different roles', () => {
+    beforeEach(() => {
+      const pluginMetaWithIncludes = getMockPlugin({
+        id: 'my-awesome-plugin',
+        type: PluginType.app,
+        enabled: true,
+        includes: [
+          {
+            type: PluginIncludeType.page,
+            name: 'Awesome page 1',
+            path: '/a/my-awesome-plugin/viewer-page',
+            role: 'Viewer',
+          },
+          {
+            type: PluginIncludeType.page,
+            name: 'Awesome page 2',
+            path: '/a/my-awesome-plugin/editor-page',
+            role: 'Editor',
+          },
+          {
+            type: PluginIncludeType.page,
+            name: 'Awesome page 2',
+            path: '/a/my-awesome-plugin/admin-page',
+            role: 'Admin',
+          },
+          {
+            type: PluginIncludeType.page,
+            name: 'Awesome page 2',
+            path: '/a/my-awesome-plugin/page-without-role',
+          },
+        ],
+      });
 
-  //   const plugin = new AppPlugin();
-  //   plugin.meta = pluginMetaWithIncludes;
-  //   plugin.root = RootComponent;
+      getPluginSettingsMock.mockResolvedValue(pluginMetaWithIncludes);
 
-  //   importAppPluginMock.mockResolvedValue(plugin);
+      const plugin = new AppPlugin();
+      plugin.meta = pluginMetaWithIncludes;
+      plugin.root = RootComponent;
 
-  //   renderUnderRouter('page-1');
-  //   // Viewer has access to Viewer page
-  //   expect(await screen.findByText('my great component')).toBeVisible();
-
-  //   renderUnderRouter('page-2');
-
-  //   // Viewer does not have access to Editor page
-  //   expect(await screen.findByText('Access denied')).toBeVisible();
-
-  //   contextSrv.user.orgRole = OrgRole.Editor;
-
-  //   await act(async () => {
-  //     locationService.push('/a/my-awesome-plugin/page-1');
-  //   });
-
-  //   // Editor has access to Viewer page
-  //   expect(await screen.findByText('my great component')).toBeVisible();
-
-  //   await act(async () => {
-  //     locationService.push('/a/my-awesome-plugin/page-2');
-  //   });
-  //   // Editor has access to Editor page
-  //   expect(await screen.findByText('my great component')).toBeVisible();
-
-  //   contextSrv.isGrafanaAdmin = true;
-
-  //   await act(async () => {
-  //     locationService.push('/a/my-awesome-plugin/page-1');
-  //   });
-
-  //   // Admin has access to Viewer page
-  //   expect(await screen.findByText('my great component')).toBeVisible();
-
-  //   await act(async () => {
-  //     locationService.push('/a/my-awesome-plugin/page-2');
-  //   });
-  //   // Admin has access to Editor page
-  //   expect(await screen.findByText('my great component')).toBeVisible();
-  // });
-});
-
-describe('AppRootPage', () => {
-  beforeEach(() => {
-    jest.resetAllMocks();
-    setEchoSrv(new Echo());
-
-    const pluginMetaWithIncludes = getMockPlugin({
-      id: 'my-awesome-plugin',
-      type: PluginType.app,
-      enabled: true,
-      includes: [
-        {
-          type: PluginIncludeType.page,
-          name: 'Awesome page 1',
-          path: '/a/my-awesome-plugin/page-1',
-          role: 'Viewer',
-        },
-        {
-          type: PluginIncludeType.page,
-          name: 'Awesome page 2',
-          path: '/a/my-awesome-plugin/page-2',
-          role: 'Editor',
-        },
-      ],
+      importAppPluginMock.mockResolvedValue(plugin);
     });
 
-    getPluginSettingsMock.mockResolvedValue(pluginMetaWithIncludes);
+    it('a Viewer should only have access to pages with "Viewer" roles', async () => {
+      contextSrv.user.orgRole = OrgRole.Viewer;
 
-    const plugin = new AppPlugin();
-    plugin.meta = pluginMetaWithIncludes;
-    plugin.root = RootComponent;
+      // Viewer has access to a plugin entry page by default
+      await renderUnderRouter('');
+      expect(await screen.findByText('my great component')).toBeVisible();
 
-    importAppPluginMock.mockResolvedValue(plugin);
-  });
+      // Viewer has access to a page without roles
+      await renderUnderRouter('page-without-role');
+      expect(await screen.findByText('my great component')).toBeVisible();
 
-  it('should respect roles for specific plugin page', async () => {
-    contextSrv.user.orgRole = OrgRole.Viewer;
-    // getPluginSettingsMock.mockResolvedValue(pluginMeta);
+      // Viewer has access to Viewer page
+      await renderUnderRouter('viewer-page');
+      expect(await screen.findByText('my great component')).toBeVisible();
 
-    // const plugin = new AppPlugin();
-    // plugin.meta = pluginMetaWithIncludes;
-    // plugin.root = RootComponent;
+      // Viewer does not have access to Editor page
+      await renderUnderRouter('editor-page');
+      expect(await screen.findByText('Access denied')).toBeVisible();
 
-    // importAppPluginMock.mockResolvedValue(plugin);
+      // Viewer does not have access to a Admin page
+      await renderUnderRouter('admin-page');
+      expect(await screen.findByText('Access denied')).toBeVisible();
+    });
 
-    renderUnderRouter('page-1');
-    // Viewer has access to Viewer page
-    expect(await screen.findByText('my great component')).toBeVisible();
+    it('an Editor should have access to pages with both "Viewer" and "Editor" roles', async () => {
+      contextSrv.user.orgRole = OrgRole.Editor;
+      contextSrv.isEditor = true;
 
-    renderUnderRouter('page-2');
+      // Viewer has access to a plugin entry page by default
+      await renderUnderRouter('');
+      expect(await screen.findByText('my great component')).toBeVisible();
 
-    // Viewer does not have access to Editor page
-    expect(await screen.findByText('Access denied')).toBeVisible();
-  });
+      // Editor has access to a page without roles
+      await renderUnderRouter('page-without-role');
+      expect(await screen.findByText('my great component')).toBeVisible();
 
-  it('should respect Editor role for specific plugin page', async () => {
-    contextSrv.user.orgRole = OrgRole.Editor;
+      // Editor has access to Viewer page
+      await renderUnderRouter('viewer-page');
+      expect(await screen.findByText('my great component')).toBeVisible();
 
-    renderUnderRouter('page-1');
+      // Editor has access to Editor page
+      await renderUnderRouter('editor-page');
+      expect(await screen.findByText('my great component')).toBeVisible();
 
-    // Editor has access to Viewer page
-    expect(await screen.findByText('my great component')).toBeVisible();
+      // Editor does not have access to a Admin page
+      await renderUnderRouter('admin-page');
+      expect(await screen.findByText('Access denied')).toBeVisible();
+    });
 
-    renderUnderRouter('page-2');
-    // Editor has access to Editor page
-    expect(await screen.findByText('my great component')).toBeVisible();
-  });
+    it('a Grafana Admin should be able to see any page', async () => {
+      contextSrv.isGrafanaAdmin = true;
 
-  it('should respect Admin role for specific plugin page', async () => {
-    contextSrv.isGrafanaAdmin = true;
+      // Viewer has access to a plugin entry page
+      await renderUnderRouter('');
+      expect(await screen.findByText('my great component')).toBeVisible();
 
-    renderUnderRouter('page-1');
+      // Admin has access to a page without roles
+      await renderUnderRouter('page-without-role');
+      expect(await screen.findByText('my great component')).toBeVisible();
 
-    // Admin has access to Viewer page
-    expect(await screen.findByText('my great component')).toBeVisible();
+      // Admin has access to Viewer page
+      await renderUnderRouter('viewer-page');
+      expect(await screen.findByText('my great component')).toBeVisible();
 
-    renderUnderRouter('page-2');
+      // Admin has access to Editor page
+      await renderUnderRouter('editor-page');
+      expect(await screen.findByText('my great component')).toBeVisible();
 
-    // Admin has access to Editor page
-    expect(await screen.findByText('my great component')).toBeVisible();
+      // Admin has access to a Admin page
+      await renderUnderRouter('admin-page');
+      expect(await screen.findByText('my great component')).toBeVisible();
+    });
   });
 });

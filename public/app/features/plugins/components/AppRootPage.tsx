@@ -96,16 +96,13 @@ export function AppRootPage({ pluginId, pluginNavSection }: Props) {
       return true;
     }
     const pathRole: string = pluginInclude?.role || '';
-    console.log('pathRole', pathRole);
     // Check if role exists  and give access to Editor to be able to see Viewer pages
     if (!pathRole || (contextSrv.isEditor && pathRole === OrgRole.Viewer)) {
-      console.log('ENTERED');
       return true;
     }
     return contextSrv.hasRole(pathRole);
   };
 
-  console.log('ROLE:', contextSrv.user.orgRole);
   const AccessDenied = () => {
     return (
       <Alert severity="warning" title="Access denied">
