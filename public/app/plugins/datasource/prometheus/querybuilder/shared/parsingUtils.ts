@@ -97,10 +97,14 @@ export function makeBinOp(
   numberNode: SyntaxNode,
   hasBool: boolean
 ): QueryBuilderOperation {
-  const params: QueryBuilderOperationParamValue[] = [parseFloat(getString(expr, numberNode))];
+  const params: QueryBuilderOperationParamValue[] = [];
+
+  // Boolean operator is the first element in the array, if it exists, so make sure to add it first!
   if (opDef.comparison) {
     params.push(hasBool);
   }
+
+  params.push(parseFloat(getString(expr, numberNode)));
   return {
     id: opDef.id,
     params,

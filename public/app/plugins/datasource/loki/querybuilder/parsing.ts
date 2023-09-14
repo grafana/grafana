@@ -1,5 +1,5 @@
 import { SyntaxNode } from '@lezer/common';
-import { BinModifiers, OnOrIgnoring } from '@prometheus-io/lezer-promql';
+import { BinaryExpr, BinModifiers, OnOrIgnoring } from '@prometheus-io/lezer-promql';
 
 import {
   And,
@@ -115,6 +115,13 @@ export function buildVisualQueryFromString(expr: string): Context {
   return context;
 }
 
+/**
+ * Builds LokiVisualQuery and error context from the given SyntaxNode.
+ * Each node calls functions that determine how the tree is traversed, and what is added to the query/context.
+ * @param expr
+ * @param node
+ * @param context
+ */
 export function handleExpression(expr: string, node: SyntaxNode, context: Context) {
   const visQuery = context.query;
   switch (node.type.id) {
@@ -201,6 +208,10 @@ export function handleExpression(expr: string, node: SyntaxNode, context: Contex
     case BinOpExpr: {
       handleBinary(expr, node, context);
       break;
+    }
+
+    case NumberLezer: {
+      console.log('NUMBER WHAT DO');
     }
 
     case ErrorId: {
@@ -554,7 +565,7 @@ function handleBinary(expr: string, node: SyntaxNode, context: Context) {
     // number will be just skipped.
     handleExpression(expr, right, context);
   } else {
-    visQuery.binaryQueries = visQuery.binaryQueries || [];
+    visQuery.binaryQueries = visQuery.binaryQueries ?? [];
     const binQuery: LokiVisualQueryBinary = {
       operator: op,
       query: {
@@ -589,6 +600,7 @@ function getBinaryModifier(
   } else {
     const matcher = node.getChild(OnOrIgnoring);
     if (!matcher) {
+      console.warn('Failed get binary modifier', node);
       // Not sure what this could be, maybe should be an error.
       return undefined;
     }

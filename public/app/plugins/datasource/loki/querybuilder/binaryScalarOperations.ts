@@ -104,6 +104,8 @@ export const binaryScalarOperations: QueryBuilderOperationDef[] = binaryScalarDe
 
 function getSimpleBinaryRenderer(operator: string) {
   return function binaryRenderer(model: QueryBuilderOperation, def: QueryBuilderOperationDef, innerExpr: string) {
+    console.log('binaryRenderer', innerExpr);
+    console.log('params', model);
     let param = model.params[0];
     let bool = '';
     if (model.params.length === 2) {
@@ -111,6 +113,7 @@ function getSimpleBinaryRenderer(operator: string) {
       bool = model.params[0] ? ' bool' : '';
     }
 
+    console.log('output', `${innerExpr} ${operator}${bool} ${param}`);
     return `${innerExpr} ${operator}${bool} ${param}`;
   };
 }
