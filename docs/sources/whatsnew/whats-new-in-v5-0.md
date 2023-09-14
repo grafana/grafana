@@ -111,7 +111,7 @@ and alerts as well.
 ### Data sources
 
 Data sources can now be set up using config files. These data sources are by default not editable from the Grafana GUI.
-It's also possible to update and delete data sources from the config file. More info in the [data source provisioning docs](/administration/provisioning/#datasources).
+It's also possible to update and delete data sources from the config file. More info in the [data source provisioning docs]({{< relref "../administration/provisioning#data-sources" >}}).
 
 ### Dashboards
 
@@ -119,7 +119,7 @@ We also deprecated the `[dashboard.json]` in favor of our new dashboard provisio
 in sync with dashboards in Grafana's database. The dashboard provisioner has multiple advantages over the old
 `[dashboard.json]` feature. Instead of storing the dashboard in memory we now insert the dashboard into the database,
 which makes it possible to star them, use one as the home dashboard, set permissions and other features in Grafana that
-expects the dashboards to exist in the database. More info in the [dashboard provisioning docs]({{< relref "../administration/provisioning.md" >}})
+expects the dashboards to exist in the database. More info in the [dashboard provisioning docs]({{< relref "../administration/provisioning#dashboards" >}})
 
 ## Graphite Tags and Integrated Function Docs
 
@@ -138,7 +138,7 @@ We are introducing a new unique identifier (`uid`) in the dashboard JSON model. 
 generated if not provided when creating a dashboard and will have a length of 9-12 characters.
 
 The unique identifier allows having persistent URLs for accessing dashboards, sharing them
-between instances and when using [dashboard provisioning](<(/administration/provisioning/#reusable-dashboard-urls)>). This means that dashboard can
+between instances and when using [dashboard provisioning]({{< relref "../administration/provisioning#reusable-dashboard-urls" >}}). This means that dashboard can
 be renamed without breaking any links. We're changing the URL format for dashboards
 from `/dashboard/db/:slug` to `/d/:uid/:slug`. We'll keep supporting the old slug-based URLs for dashboards
 and redirects to the new one for backward compatibility. Please note that the old slug-based URLs
