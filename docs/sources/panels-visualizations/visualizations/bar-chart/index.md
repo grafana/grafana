@@ -189,6 +189,8 @@ Set a **Soft min** or **soft max** option for better control of Y-axis limits. B
 
 You can set standard min/max options to define hard limits of the Y-axis. For more information, refer to [Standard options definitions][].
 
+{{< docs/shared lookup="visualizations/multiple-y-axes.md" source="grafana" version="<GRAFANA VERSION>" leveloffset="+2" >}}
+
 {{% docs/reference %}}
 [Add a field override]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/configure-overrides#add-a-field-override"
 [Add a field override]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/configure-overrides#add-a-field-override"
