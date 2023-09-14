@@ -54,11 +54,13 @@ export const Table = memo((props: Props) => {
 
   const listRef = useRef<VariableSizeList>(null);
   const tableDivRef = useRef<HTMLDivElement>(null);
+  const variableSizeListKey = useRef(0); // (part of the) key for the `VariableSizeList` component
   const variableSizeListScrollbarRef = useRef<HTMLDivElement>(null);
   const theme = useTheme2();
   const tableStyles = useTableStyles(theme, cellHeight);
   const headerHeight = noHeader ? 0 : tableStyles.rowHeight;
   const [footerItems, setFooterItems] = useState<FooterItem[] | undefined>(footerValues);
+  const [scrollTop, setScrollTop] = useState(0);
 
   const footerHeight = useMemo(() => {
     const EXTENDED_ROW_HEIGHT = FOOTER_ROW_HEIGHT;
@@ -111,7 +113,18 @@ export const Table = memo((props: Props) => {
   );
 
   // Internal react table state reducer
-  const stateReducer = useTableStateReducer(props);
+  const stateReducer = useTableStateReducer({
+    ...props,
+    onSortByChange: () => {
+      // For scroll to top when sorting.
+      // This is necessary to prevent the variable size list to render the wrong rows.
+      // If pagination is enabled, the user stays on the current page - they are not brought to the first page.
+      setScrollTop(0);
+
+      // Update the key of the `VariableSizeList` to force a remount
+      variableSizeListKey.current += 1;
+    },
+  });
 
   const options: any = useMemo(
     () => ({
@@ -213,11 +226,9 @@ export const Table = memo((props: Props) => {
   );
 
   const RenderRow = useCallback(
-    ({ index: rowIndex, style }: { index: number; style: CSSProperties }) => {
-      let row = rows[rowIndex];
-      if (enablePagination) {
-        row = page[rowIndex];
-      }
+    ({ index, style }: { index: number; style: CSSProperties }) => {
+      const indexForPagination = rowIndexForPagination(index);
+      const row = rows[indexForPagination];
 
       prepareRow(row);
 
@@ -251,18 +262,17 @@ export const Table = memo((props: Props) => {
       );
     },
     [
+      rowIndexForPagination,
       rows,
-      enablePagination,
       prepareRow,
+      state.expanded,
       tableStyles,
       nestedDataField,
-      page,
+      width,
+      cellHeight,
       onCellFilterAdded,
       timeRange,
       data,
-      width,
-      cellHeight,
-      state.expanded,
     ]
   );
 
@@ -301,10 +311,10 @@ export const Table = memo((props: Props) => {
 
   const getItemSize = (index: number): number => {
     const indexForPagination = rowIndexForPagination(index);
-    if (state.expanded[indexForPagination] && nestedDataField) {
+    const row = rows[indexForPagination];
+    if (state.expanded[row.index] && nestedDataField) {
       return getExpandedRowHeight(nestedDataField, indexForPagination, tableStyles);
     }
-
     return tableStyles.rowHeight;
   };
 
@@ -315,6 +325,16 @@ export const Table = memo((props: Props) => {
       listRef.current.scrollTo(scrollTop);
     }
   };
+
+  // If the expanded state changes, reset the heights of the rows in the `VariableSizeList` component
+  const expandedState = useRef('');
+  useEffect(() => {
+    const nextExpandedState = JSON.stringify(Object.keys(state.expanded));
+    if (expandedState.current !== nextExpandedState) {
+      expandedState.current = nextExpandedState;
+      listRef.current?.resetAfterIndex(0);
+    }
+  }, [state.expanded, listRef]);
 
   return (
     <div
@@ -332,10 +352,15 @@ export const Table = memo((props: Props) => {
           )}
           {itemCount > 0 ? (
             <div data-testid={selectors.components.Panels.Visualization.Table.body} ref={variableSizeListScrollbarRef}>
-              <CustomScrollbar onScroll={handleScroll} hideHorizontalTrack={true}>
+              <CustomScrollbar
+                scrollTop={scrollTop}
+                setScrollTop={({ scrollTop }) => setScrollTop(scrollTop)}
+                onScroll={handleScroll}
+                hideHorizontalTrack={true}
+              >
                 <VariableSizeList
-                  // This component needs an unmount/remount when row height or page changes
-                  key={tableStyles.rowHeight + state.pageIndex}
+                  // Force a remount if something related to the row list changes
+                  key={state.pageIndex + tableStyles.rowHeight + variableSizeListKey.current}
                   height={listHeight}
                   itemCount={itemCount}
                   itemSize={getItemSize}
