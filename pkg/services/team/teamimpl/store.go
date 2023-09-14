@@ -140,6 +140,7 @@ func (ss *xormStore) Delete(ctx context.Context, cmd *team.DeleteTeamCommand) er
 			"DELETE FROM team WHERE org_id=? and id = ?",
 			"DELETE FROM dashboard_acl WHERE org_id=? and team_id = ?",
 			"DELETE FROM team_role WHERE org_id=? and team_id = ?",
+			"DELETE FROM role WHERE org_id=? and name = 'managed:teams:' || ? || ':permissions'",
 		}
 
 		for _, sql := range deletes {
