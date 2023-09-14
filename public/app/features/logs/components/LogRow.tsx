@@ -1,6 +1,6 @@
 import { cx } from '@emotion/css';
 import { debounce } from 'lodash';
-import React, { PureComponent } from 'react';
+import React, { FocusEvent, MouseEvent, PureComponent } from 'react';
 
 import { Field, LinkModel, LogRowModel, LogsSortOrder, dateTimeFormat, CoreApp, DataFrame } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
@@ -113,7 +113,12 @@ class UnThemedLogRow extends PureComponent<Props, State> {
     });
   }
 
-  onMouseEnter = () => {
+  onMouseEnter = (e: MouseEvent | FocusEvent) => {
+    e.target?.addEventListener('selectstart', (e) => {
+      if (window.getSelection()?.toString()) {
+        this.setState({ mouseIsOver: false });
+      }
+    });
     this.setState({ mouseIsOver: true });
     if (this.props.onLogRowHover) {
       this.props.onLogRowHover(this.props.row);
@@ -201,9 +206,13 @@ class UnThemedLogRow extends PureComponent<Props, State> {
         <tr
           ref={this.logLineRef}
           className={logRowBackground}
-          onClick={this.toggleDetails}
           onMouseEnter={this.onMouseEnter}
           onMouseLeave={this.onMouseLeave}
+          onMouseUp={() => {
+            if (!window.getSelection()?.toString()) {
+              this.toggleDetails();
+            }
+          }}
           /**
            * For better accessibility support, we listen to the onFocus event here (to display the LogRowMenuCell), and
            * to onBlur event in the LogRowMenuCell (to hide it). This way, the LogRowMenuCell is displayed when the user navigates
