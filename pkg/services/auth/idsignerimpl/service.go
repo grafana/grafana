@@ -26,7 +26,6 @@ var _ auth.IDSignerService = new(Service)
 const cacheKeyPrefix = "assertid"
 
 type TokenSigner interface {
-	GetJWK() jose.JSONWebKey
 	SignToken(claims *jwt.Claims, assertions *auth.IDAssertions) (string, error)
 }
 
