@@ -955,6 +955,7 @@ def release_canary_npm_packages_step(trigger = None):
             "NPM_TOKEN": from_secret(npm_token),
         },
         "commands": [
+            "apk add --update bash",
             "./scripts/publish-npm-packages.sh --dist-tag 'canary' --registry 'https://registry.npmjs.org'",
         ],
     }
