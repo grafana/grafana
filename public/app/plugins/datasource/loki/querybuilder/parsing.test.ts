@@ -37,6 +37,58 @@ describe('buildVisualQueryFromString', () => {
     });
   });
 
+  it('parses simple binary comparison', () => {
+    expect(buildVisualQueryFromString('count_over_time({app="aggregator"} [$__auto]) == bool 10')).toEqual({
+      query: {
+        labels: [
+          {
+            label: 'app',
+            op: '=',
+            value: 'aggregator',
+          },
+        ],
+        operations: [
+          {
+            id: LokiOperationId.CountOverTime,
+            params: ['$__auto'],
+          },
+          {
+            id: LokiOperationId.EqualTo,
+            // defined in getSimpleBinaryRenderer, the first argument is the bool parameter, and the second is the value
+            params: [true, 10],
+          },
+        ],
+      },
+      errors: [],
+    });
+  });
+
+  it('parses simple query with label-values with boolean operator', () => {
+    expect(buildVisualQueryFromString('count_over_time({app="aggregator"} [$__auto]) == bool 10')).toEqual({
+      query: {
+        labels: [
+          {
+            label: 'app',
+            op: '=',
+            value: 'aggregator',
+          },
+        ],
+        operations: [
+          {
+            id: LokiOperationId.CountOverTime,
+            params: ['$__auto'],
+          },
+          {
+            id: LokiOperationId.EqualTo,
+            // defined in getSimpleBinaryRenderer, the first argument is the bool parameter, and the second is the value
+            params: [true, 10],
+          },
+        ],
+      },
+      errors: [],
+    });
+  });
+
   it('parses simple query with label-values with boolean operator', () => {
     expect(buildVisualQueryFromString('count_over_time({app="aggregator"} [$__auto]) == bool 10')).toEqual({
       query: {
