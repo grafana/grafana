@@ -45,6 +45,7 @@ func ProvideAnonymousDeviceService(usageStats usagestats.Service, authBroker aut
 
 	if anonClient.cfg.AnonymousEnabled {
 		authBroker.RegisterClient(anonClient)
+		authBroker.RegisterPostLoginHook(a.untagDevice, 100)
 	}
 
 	return a
@@ -83,6 +84,20 @@ func (a *AnonDeviceService) tagDeviceUI(ctx context.Context, httpReq *http.Reque
 	return nil
 }
 
+func (a *AnonDeviceService) untagDevice(ctx context.Context,
+	identity *authn.Identity, r *authn.Request, err error) {
+	deviceID := r.HTTPRequest.Header.Get(deviceIDHeader)
+	if deviceID == "" {
+		return
+	}
+
+	errD := a.anonStore.DeleteDevice(ctx, deviceID)
+	if errD != nil {
+		a.log.Debug("Failed to untag device", "error", err)
+	}
+}
+
+// FIXME: Unexport and remove interface
 func (a *AnonDeviceService) TagDevice(ctx context.Context, httpReq *http.Request, kind anonymous.DeviceKind) error {
 	deviceID := httpReq.Header.Get(deviceIDHeader)
 	if deviceID == "" {
