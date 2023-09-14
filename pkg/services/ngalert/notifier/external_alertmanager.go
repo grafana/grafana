@@ -1,17 +1,24 @@
 package notifier
 
 import (
+	"bytes"
 	"context"
 	"errors"
+	"fmt"
+	"io"
 	"net/http"
 	"net/url"
+	"strings"
 
 	httptransport "github.com/go-openapi/runtime/client"
 	"github.com/grafana/grafana/pkg/infra/log"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	amclient "github.com/prometheus/alertmanager/api/v2/client"
+	"gopkg.in/yaml.v3"
 )
+
+const configEndpoint = "/api/v1/alerts"
 
 type externalAlertmanager struct {
 	log           log.Logger
@@ -66,6 +73,54 @@ func newExternalAlertmanager(cfg externalAlertmanagerConfig, orgID int64) (*exte
 	}, nil
 }
 
+func (am *externalAlertmanager) ApplyConfig(ctx context.Context, config *models.AlertConfiguration) error {
+	cfg, err := Load([]byte(config.AlertmanagerConfiguration))
+	if err != nil {
+		return err
+	}
+
+	return am.postConfig(ctx, cfg)
+}
+
+func (am *externalAlertmanager) postConfig(ctx context.Context, cfg *apimodels.PostableUserConfig) error {
+	b, err := yaml.Marshal(cfg)
+	if err != nil {
+		return err
+	}
+
+	url := strings.TrimSuffix(am.url, "/") + "/api/v1/alerts"
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewReader(b))
+	if err != nil {
+		return fmt.Errorf("error creating request: %v", err)
+	}
+
+	am.log.Debug("Sending request to external Alertmanager", "url", url)
+	res, err := am.httpClient.Do(req)
+	if err != nil {
+		return err
+	}
+
+	if res.StatusCode == http.StatusNotFound {
+		return fmt.Errorf("config not found")
+	}
+
+	defer func() {
+		if err := res.Body.Close(); err != nil {
+			am.log.Warn("Failed to close response body", "err", err)
+		}
+	}()
+
+	_, err = io.ReadAll(res.Body)
+	if err != nil {
+		return fmt.Errorf("error reading request response: %w", err)
+	}
+
+	if res.StatusCode != http.StatusCreated {
+		return fmt.Errorf("setting config failed with status code %d", res.StatusCode)
+	}
+	return nil
+}
+
 func (am *externalAlertmanager) SaveAndApplyConfig(ctx context.Context, cfg *apimodels.PostableUserConfig) error {
 	return nil
 }
@@ -108,10 +163,6 @@ func (am *externalAlertmanager) PutAlerts(postableAlerts apimodels.PostableAlert
 
 func (am *externalAlertmanager) GetReceivers(ctx context.Context) ([]apimodels.Receiver, error) {
 	return []apimodels.Receiver{}, nil
-}
-
-func (am *externalAlertmanager) ApplyConfig(ctx context.Context, config *models.AlertConfiguration) error {
-	return nil
 }
 
 func (am *externalAlertmanager) TestReceivers(ctx context.Context, c apimodels.TestReceiversConfigBodyParams) (*TestReceiversResult, error) {

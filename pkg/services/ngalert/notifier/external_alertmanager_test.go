@@ -1,13 +1,16 @@
 package notifier
 
 import (
+	"context"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/stretchr/testify/require"
 )
 
+const validConfig = `{"template_files":{},"alertmanager_config":{"route":{"receiver":"grafana-default-email","group_by":["grafana_folder","alertname"]},"templates":null,"receivers":[{"name":"grafana-default-email","grafana_managed_receiver_configs":[{"uid":"","name":"some other name","type":"email","disableResolveMessage":false,"settings":{"addresses":"\u003cexample@email.com\u003e"},"secureSettings":null}]}]}}`
+
 func TestNewExternalAlertmanager(t *testing.T) {
-	validConfig := `{"template_files":null,"alertmanager_config":{"route":{"receiver":"grafana-default-email","group_by":["grafana_folder","alertname"]},"templates":null,"receivers":[{"name":"grafana-default-email","grafana_managed_receiver_configs":[{"uid":"","name":"email receiver","type":"email","disableResolveMessage":false,"settings":{"addresses":"\u003cexample@email.com\u003e"},"secureSettings":null}]}]}}`
 	tests := []struct {
 		name          string
 		url           string
@@ -75,6 +78,95 @@ func TestNewExternalAlertmanager(t *testing.T) {
 			require.Equal(tt, am.OrgID(), test.orgID)
 			require.NotNil(tt, am.amClient)
 			require.NotNil(tt, am.httpClient)
+		})
+	}
+}
+
+func TestApplyConfig(t *testing.T) {
+	fakeAm := NewFakeExternalAlertmanager(t, "1", "password")
+	validAlertConfiguration := models.AlertConfiguration{
+		AlertmanagerConfiguration: validConfig,
+	}
+
+	tests := []struct {
+		name     string
+		config   models.AlertConfiguration
+		url      string
+		tenantID string
+		password string
+		expErr   string
+	}{
+		{
+			"missing password",
+			validAlertConfiguration,
+			fakeAm.Server.URL,
+			fakeAm.tenantID,
+			"",
+			"setting config failed with status code 401",
+		},
+		{
+			"incorrect password",
+			validAlertConfiguration,
+			fakeAm.Server.URL,
+			fakeAm.tenantID,
+			"incorrect",
+			"setting config failed with status code 403",
+		},
+		{
+			"incorrect tenantID",
+			validAlertConfiguration,
+			fakeAm.Server.URL,
+			"incorrect",
+			fakeAm.password,
+			"setting config failed with status code 403",
+		},
+		{
+			"invalid configuration",
+			models.AlertConfiguration{
+				AlertmanagerConfiguration: "",
+			},
+			fakeAm.Server.URL,
+			fakeAm.tenantID,
+			fakeAm.password,
+			"unable to parse Alertmanager configuration: unexpected end of JSON input",
+		},
+		{
+			"empty configuration",
+			models.AlertConfiguration{
+				AlertmanagerConfiguration: "invalid",
+			},
+			fakeAm.Server.URL,
+			fakeAm.tenantID,
+			fakeAm.password,
+			"unable to parse Alertmanager configuration: invalid character 'i' looking for beginning of value",
+		},
+		{
+			"trailing forward slash",
+			validAlertConfiguration,
+			fakeAm.Server.URL + "/",
+			fakeAm.tenantID,
+			fakeAm.password,
+			"",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(tt *testing.T) {
+			cfg := externalAlertmanagerConfig{
+				URL:               test.url,
+				TenantID:          test.tenantID,
+				BasicAuthPassword: test.password,
+				DefaultConfig:     validConfig,
+			}
+			am, err := newExternalAlertmanager(cfg, 1)
+			require.NoError(tt, err)
+
+			err = am.ApplyConfig(context.Background(), &test.config)
+			if test.expErr != "" {
+				require.EqualError(tt, err, test.expErr)
+				return
+			}
+			require.NoError(tt, err)
 		})
 	}
 }
