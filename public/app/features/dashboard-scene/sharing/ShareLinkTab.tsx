@@ -1,7 +1,8 @@
 import React from 'react';
 
+import { UrlQueryMap } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
-import { config } from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
 import {
   SceneComponentProps,
   SceneObjectBase,
@@ -12,11 +13,13 @@ import {
 } from '@grafana/scenes';
 import { Alert, ClipboardButton, Field, FieldSet, Icon, Input, Switch } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
+import { createShortLink } from 'app/core/utils/shortLinks';
 import { ThemePicker } from 'app/features/dashboard/components/ShareModal/ThemePicker';
 import { trackDashboardSharingActionPerType } from 'app/features/dashboard/components/ShareModal/analytics';
 import { shareDashboardType } from 'app/features/dashboard/components/ShareModal/utils';
 
 import { DashboardScene } from '../scene/DashboardScene';
+import { getDashboardUrl } from '../utils/utils';
 
 export interface ShareLinkTabState extends SceneObjectState, ShareOptions {
   panelRef?: SceneObjectRef<VizPanel>;
@@ -48,10 +51,40 @@ export class ShareLinkTab extends SceneObjectBase<ShareLinkTabState> {
   }
 
   async buildUrl() {
-    //const { panelRef, dashboardRef, useCurrentTimeRange, useShortUrl, selectedTheme } = this.state;
-    // const imageUrl = buildImageUrl(useCurrentTimeRange, dashboard.uid, selectedTheme, panel);
+    const { panelRef, dashboardRef, useCurrentTimeRange, useShortUrl, selectedTheme } = this.state;
+    const dashboard = dashboardRef.resolve();
+    const panel = panelRef?.resolve();
+    const location = locationService.getLocation();
 
-    this.setState({ shareUrl: 'share url', imageUrl: 'image url' });
+    const urlParamsUpdate: UrlQueryMap = {};
+
+    if (panel) {
+      urlParamsUpdate.viewPanel = panel.state.key;
+    }
+
+    if (useCurrentTimeRange) {
+      const timeRange = sceneGraph.getTimeRange(panel ?? dashboard);
+      urlParamsUpdate.from = timeRange.state.value.from.toISOString();
+      urlParamsUpdate.to = timeRange.state.value.to.toISOString();
+    }
+
+    if (selectedTheme !== 'current') {
+      urlParamsUpdate.theme = selectedTheme!;
+    }
+
+    let shareUrl = getDashboardUrl({
+      uid: dashboard.state.uid,
+      currentQueryParams: location.search,
+      updateQuery: urlParamsUpdate,
+    });
+
+    shareUrl = new URL(shareUrl, config.appUrl).toString();
+
+    if (useShortUrl) {
+      shareUrl = await createShortLink(shareUrl);
+    }
+
+    this.setState({ shareUrl, imageUrl: 'image url' });
   }
 
   public getTabLabel() {
@@ -60,14 +93,17 @@ export class ShareLinkTab extends SceneObjectBase<ShareLinkTabState> {
 
   onUseCurrentTimeRangeChange = () => {
     this.setState({ useCurrentTimeRange: !this.state.useCurrentTimeRange });
+    this.buildUrl();
   };
 
   onUrlShorten = () => {
     this.setState({ useShortUrl: !this.state.useShortUrl });
+    this.buildUrl();
   };
 
   onThemeChange = (value: string) => {
     this.setState({ selectedTheme: value });
+    this.buildUrl();
   };
 
   getShareUrl = () => {
@@ -193,3 +229,40 @@ export class ShareLinkTab extends SceneObjectBase<ShareLinkTabState> {
     );
   };
 }
+
+// function buildParams({
+//   useCurrentTimeRange,
+//   selectedTheme,
+//   panel,
+//   search = window.location.search,
+//   orgId = config.bootData.user.orgId,
+// }: BuildParamsArgs): URLSearchParams {
+//   const searchParams = new URLSearchParams(search);
+//   const relative = panel?.timeFrom;
+
+//   // Use panel's relative time if it's set
+//   if (relative) {
+//     const { from, to } = rangeUtil.describeTextRange(relative);
+//     searchParams.set('from', from);
+//     searchParams.set('to', to);
+//   } else {
+//     searchParams.set('from', String(range.from.valueOf()));
+//     searchParams.set('to', String(range.to.valueOf()));
+//   }
+//   searchParams.set('orgId', String(orgId));
+
+//   if (!useCurrentTimeRange) {
+//     searchParams.delete('from');
+//     searchParams.delete('to');
+//   }
+
+//   if (selectedTheme !== 'current') {
+//     searchParams.set('theme', selectedTheme!);
+//   }
+
+//   if (panel && !searchParams.has('editPanel')) {
+//     searchParams.set('viewPanel', String(panel.id));
+//   }
+
+//   return searchParams;
+// }
