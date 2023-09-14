@@ -28,7 +28,7 @@ export enum AlertmanagerAction {
   ViewNotificationTemplate = 'view-notification-template',
   UpdateNotificationTemplate = 'edit-notification-template',
   DeleteNotificationTemplate = 'delete-notification-template',
-  CanReadSecrets = 'can-read-secrets',
+  DecryptSecrets = 'can-read-secrets',
 
   // notification policies
   CreateNotificationPolicy = 'create-notification-policy',
@@ -170,7 +170,7 @@ export function useAllAlertmanagerAbilities(): Abilities<AlertmanagerAction> {
       ctx.hasPermission(notificationsPermissions.provisioning.read) ||
         ctx.hasPermission(notificationsPermissions.provisioning.readSecrets),
     ],
-    [AlertmanagerAction.CanReadSecrets]: [
+    [AlertmanagerAction.DecryptSecrets]: [
       hasConfigurationAPI,
       ctx.hasPermission(notificationsPermissions.provisioning.readSecrets),
     ],

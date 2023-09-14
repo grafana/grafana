@@ -339,7 +339,7 @@ export const ReceiversTable = ({ config, alertManagerName }: Props) => {
 
   const [createSupported, createAllowed] = useAlertmanagerAbility(AlertmanagerAction.CreateContactPoint);
 
-  const [_, canReadSecrets] = useAlertmanagerAbility(AlertmanagerAction.CanReadSecrets);
+  const [_, canReadSecrets] = useAlertmanagerAbility(AlertmanagerAction.DecryptSecrets);
 
   const columns = useGetColumns(
     alertManagerName,
