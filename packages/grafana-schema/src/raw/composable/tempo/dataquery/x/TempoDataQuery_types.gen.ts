@@ -55,6 +55,10 @@ export interface TempoQuery extends common.DataQuery {
    * @deprecated Query traces by span name
    */
   spanName?: string;
+  /**
+   * Defines the maximum number of spans per spanset that are returned from Tempo
+   */
+  spss?: number;
 }
 
 export const defaultTempoQuery: Partial<TempoQuery> = {

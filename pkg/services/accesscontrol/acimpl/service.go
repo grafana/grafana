@@ -143,11 +143,7 @@ func (s *Service) getUserPermissions(ctx context.Context, user identity.Requeste
 }
 
 func (s *Service) getCachedUserPermissions(ctx context.Context, user identity.Requester, options accesscontrol.Options) ([]accesscontrol.Permission, error) {
-	key, err := permissionCacheKey(user)
-	if err != nil {
-		return nil, err
-	}
-
+	key := permissionCacheKey(user)
 	if !options.ReloadCache {
 		permissions, ok := s.cache.Get(key)
 		if ok {
@@ -169,11 +165,7 @@ func (s *Service) getCachedUserPermissions(ctx context.Context, user identity.Re
 }
 
 func (s *Service) ClearUserPermissionCache(user identity.Requester) {
-	key, err := permissionCacheKey(user)
-	if err != nil {
-		return
-	}
-	s.cache.Delete(key)
+	s.cache.Delete(permissionCacheKey(user))
 }
 
 func (s *Service) DeleteUserPermissions(ctx context.Context, orgID int64, userID int64) error {
@@ -215,12 +207,8 @@ func (s *Service) RegisterFixedRoles(ctx context.Context) error {
 	return nil
 }
 
-func permissionCacheKey(user identity.Requester) (string, error) {
-	key, err := user.GetCacheKey()
-	if err != nil {
-		return "", err
-	}
-	return fmt.Sprintf("rbac-permissions-%s", key), nil
+func permissionCacheKey(user identity.Requester) string {
+	return fmt.Sprintf("rbac-permissions-%s", user.GetCacheKey())
 }
 
 // DeclarePluginRoles allow the caller to declare, to the service, plugin roles and their assignments
@@ -380,13 +368,9 @@ func (s *Service) searchUserPermissionsFromCache(orgID int64, searchOptions acce
 		UserID: searchOptions.UserID,
 		OrgID:  orgID,
 	}
-	key, err := permissionCacheKey(tempUser)
-	if err != nil {
-		s.log.Debug("Could not obtain cache key to search user permissions", "error", err.Error())
-		return nil, false
-	}
 
-	permissions, ok := s.cache.Get(key)
+	key := permissionCacheKey(tempUser)
+	permissions, ok := s.cache.Get((key))
 	if !ok {
 		return nil, false
 	}

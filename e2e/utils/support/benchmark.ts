@@ -30,13 +30,8 @@ export const benchmark = ({
     });
   } else {
     describe(name, () => {
-      before(() => {
-        cy.session('login', () => e2e.flows.login(e2e.env('USERNAME'), e2e.env('PASSWORD'), true), {
-          cacheAcrossSpecs: true,
-        });
-      });
-
       beforeEach(() => {
+        e2e.flows.login(e2e.env('USERNAME'), e2e.env('PASSWORD'));
         e2e.flows.importDashboards(dashboard.folder, 1000, dashboard.skipPanelValidation);
       });
 

@@ -1,13 +1,12 @@
 import { e2e } from '../utils';
 const DASHBOARD_ID = 'P2jR04WVk';
 
-e2e.scenario({
-  describeName: 'Geomap map controls options',
-  itName: 'Tests map controls options',
-  addScenarioDataSource: false,
-  addScenarioDashBoard: false,
-  skipScenario: false,
-  scenario: () => {
+describe('Geomap layer controls options', () => {
+  beforeEach(() => {
+    e2e.flows.login(e2e.env('USERNAME'), e2e.env('PASSWORD'));
+  });
+
+  it('Tests map controls options', () => {
     e2e.flows.openDashboard({ uid: DASHBOARD_ID, queryParams: { editPanel: 1 } });
 
     // Show zoom
@@ -31,5 +30,5 @@ e2e.scenario({
     // Show debug
     cy.get('input[id="controls.showDebug"]').check({ force: true });
     e2e.components.DebugOverlay.wrapper().should('exist');
-  },
+  });
 });

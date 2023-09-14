@@ -2,6 +2,7 @@ package expr
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
@@ -13,7 +14,7 @@ var ConversionError = errutil.BadRequest("sse.readDataError").MustTemplate(
 	),
 )
 
-func MakeConversionError(refID string, err error) error {
+func makeConversionError(refID string, err error) error {
 	data := errutil.TemplateData{
 		// Conversion errors should only have meta information in errors
 		Public: map[string]any{
@@ -51,4 +52,42 @@ func MakeQueryError(refID, datasourceUID string, err error) error {
 	}
 
 	return QueryError.Build(data)
+}
+
+var depErrStr = "did not execute expression [{{ .Public.refId }}] due to a failure to of the dependent expression or query [{{.Public.depRefId}}]"
+
+var DependencyError = errutil.NewBase(
+	errutil.StatusBadRequest, "sse.dependencyError").MustTemplate(
+	depErrStr,
+	errutil.WithPublic(depErrStr))
+
+func makeDependencyError(refID, depRefID string) error {
+	data := errutil.TemplateData{
+		Public: map[string]interface{}{
+			"refId":    refID,
+			"depRefId": depRefID,
+		},
+		Error: fmt.Errorf("did not execute expression %v due to a failure to of the dependent expression or query %v", refID, depRefID),
+	}
+
+	return DependencyError.Build(data)
+}
+
+var unexpectedNodeTypeErrString = "expected executable node type but got node type [{{ .Public.nodeType }} for refid [{{ .Public.refId}}]"
+
+var UnexpectedNodeTypeError = errutil.NewBase(
+	errutil.StatusBadRequest, "sse.unexpectedNodeType").MustTemplate(
+	unexpectedNodeTypeErrString,
+	errutil.WithPublic(unexpectedNodeTypeErrString))
+
+func makeUnexpectedNodeTypeError(refID, nodeType string) error {
+	data := errutil.TemplateData{
+		Public: map[string]interface{}{
+			"refId":    refID,
+			"nodeType": nodeType,
+		},
+		Error: fmt.Errorf("expected executable node type but got node type %v for refId %v", nodeType, refID),
+	}
+
+	return UnexpectedNodeTypeError.Build(data)
 }

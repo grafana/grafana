@@ -1,8 +1,14 @@
 import React, { useCallback } from 'react';
 
-import { AppEvents, StandardEditorProps, StandardEditorsRegistryItem, StringFieldConfigSettings } from '@grafana/data';
+import {
+  AppEvents,
+  SelectableValue,
+  StandardEditorProps,
+  StandardEditorsRegistryItem,
+  StringFieldConfigSettings,
+} from '@grafana/data';
 import { BackendSrvRequest, config, getBackendSrv } from '@grafana/runtime';
-import { Button, Field, InlineField, InlineFieldRow, JSONFormatter, RadioButtonGroup } from '@grafana/ui';
+import { Button, Field, InlineField, InlineFieldRow, JSONFormatter, RadioButtonGroup, Select } from '@grafana/ui';
 import { StringValueEditor } from 'app/core/components/OptionsUI/string';
 import { appEvents } from 'app/core/core';
 import { defaultApiConfig } from 'app/features/canvas/elements/button';
@@ -15,6 +21,7 @@ export interface APIEditorConfig {
   method: string;
   endpoint: string;
   data?: string;
+  contentType?: string;
   paramsType: string;
   params?: Array<[string, string]>;
 }
@@ -44,6 +51,10 @@ const getRequest = (api: APIEditorConfig) => {
   if (api.method === HttpRequestMethod.POST) {
     requestHeaders.push(['Content-Type', 'application/json']);
   }
+
+    if (api.method === HttpRequestMethod.POST) {
+        requestHeaders.push(['Content-Type', api.contentType!]);
+    }
 
   request.headers = requestHeaders;
 
@@ -86,6 +97,15 @@ const httpMethodOptions = [
   { label: HttpRequestMethod.POST, value: HttpRequestMethod.POST },
 ];
 
+const contentTypeOptions: SelectableValue[] = [
+  { label: 'JSON', value: 'application/json' },
+  { label: 'Text', value: 'text/plain' },
+  { label: 'JavaScript', value: 'application/javascript' },
+  { label: 'HTML', value: 'text/html' },
+  { label: 'XML', value: 'application/XML' },
+  { label: 'x-www-form-urlencoded', value: 'application/x-www-form-urlencoded' },
+];
+
 const httpParamsType = [
   {
     label: 'Header',
@@ -100,7 +120,7 @@ const httpParamsType = [
 ];
 
 export function APIEditor({ value, context, onChange }: Props) {
-  const LABEL_WIDTH = 9;
+  const LABEL_WIDTH = 13;
 
   if (!value) {
     value = defaultApiConfig;
@@ -135,6 +155,20 @@ export function APIEditor({ value, context, onChange }: Props) {
     },
     [onChange, value]
   );
+
+  const onContentTypeChange = useCallback(
+    (contentType: SelectableValue<string>) => {
+      onChange({
+        ...value,
+        contentType: contentType?.value,
+      });
+    },
+    [onChange, value]
+  );
+
+  const formatCreateLabel = (input: string) => {
+    return input;
+  };
 
   const onParamsTypeChange = useCallback(
     (paramsType: string) => {
@@ -212,18 +246,35 @@ export function APIEditor({ value, context, onChange }: Props) {
         <QueryParamsEditor value={value?.params ?? []} onChange={onParamsChange} />
       </Field>
       {value?.method === HttpRequestMethod.POST && (
-        <Field label="Payload">
-          <StringValueEditor
-            context={context}
-            value={value?.data ?? '{}'}
-            onChange={onDataChange}
-            item={{ ...dummyStringSettings, settings: { useTextarea: true } }}
-          />
-        </Field>
+        <>
+          <InlineFieldRow>
+            <InlineField label="Content-Type" labelWidth={LABEL_WIDTH} grow={true}>
+              <Select
+                options={contentTypeOptions}
+                allowCustomValue={true}
+                formatCreateLabel={formatCreateLabel}
+                value={value?.contentType}
+                onChange={onContentTypeChange}
+              />
+            </InlineField>
+          </InlineFieldRow>
+          {value?.contentType && (
+            <Field label="Payload">
+              <StringValueEditor
+                context={context}
+                value={value?.data ?? '{}'}
+                onChange={onDataChange}
+                item={{ ...dummyStringSettings, settings: { useTextarea: true } }}
+              />
+            </Field>
+          )}
+        </>
       )}
       {renderTestAPIButton(value)}
       <br />
-      {value?.method === HttpRequestMethod.POST && renderJSON(value?.data ?? '{}')}
+      {value?.method === HttpRequestMethod.POST &&
+        value?.contentType === defaultApiConfig.contentType &&
+        renderJSON(value?.data ?? '{}')}
     </>
   ) : (
     <>Must enable disableSanitizeHtml feature flag to access</>
