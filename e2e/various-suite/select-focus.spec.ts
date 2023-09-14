@@ -1,12 +1,11 @@
 import { e2e } from '../utils';
 
-e2e.scenario({
-  describeName: 'Select focus/unfocus tests',
-  itName: 'Tests select focus/unfocus scenarios',
-  addScenarioDataSource: false,
-  addScenarioDashBoard: false,
-  skipScenario: false,
-  scenario: () => {
+describe('Select focus/unfocus tests', () => {
+  beforeEach(() => {
+    e2e.flows.login(e2e.env('USERNAME'), e2e.env('PASSWORD'));
+  });
+
+  it('Tests select focus/unfocus scenarios', () => {
     e2e.flows.openDashboard({ uid: '5SdHCadmz' });
     e2e.components.PageToolbar.item('Dashboard settings').click();
 
@@ -31,5 +30,5 @@ e2e.scenario({
       .within(() => {
         cy.get('#dashboard-folder-input').should('exist').should('not.have.focus');
       });
-  },
+  });
 });

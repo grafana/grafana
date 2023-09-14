@@ -97,7 +97,6 @@ export interface FeatureToggles {
   exploreScrollableLogsContainer?: boolean;
   recordedQueriesMulti?: boolean;
   pluginsDynamicAngularDetectionPatterns?: boolean;
-  alertingLokiRangeToInstant?: boolean;
   vizAndWidgetSplit?: boolean;
   prometheusIncrementalQueryInstrumentation?: boolean;
   logsExploreTableVisualisation?: boolean;
@@ -124,4 +123,6 @@ export interface FeatureToggles {
   newBrowseDashboards?: boolean;
   sseGroupByDatasource?: boolean;
   requestInstrumentationStatusSource?: boolean;
+  wargamesTesting?: boolean;
+  alertingInsights?: boolean;
 }

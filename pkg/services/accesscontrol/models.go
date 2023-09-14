@@ -330,6 +330,10 @@ const (
 
 	GeneralFolderUID = "general"
 
+	// Basic Role None
+	BasicRoleNoneUID  = "basic_none"
+	BasicRoleNoneName = "basic:none"
+
 	// Permission actions
 
 	ActionAPIKeyRead   = "apikeys:read"
