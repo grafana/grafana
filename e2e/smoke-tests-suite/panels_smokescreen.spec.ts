@@ -2,13 +2,16 @@ import { GrafanaBootConfig } from '@grafana/runtime';
 
 import { e2e } from '../utils';
 
-e2e.scenario({
-  describeName: 'Panels smokescreen',
-  itName: 'Tests each panel type in the panel edit view to ensure no crash',
-  addScenarioDataSource: false,
-  addScenarioDashBoard: false,
-  skipScenario: false,
-  scenario: () => {
+describe('Panels smokescreen', () => {
+  beforeEach(() => {
+    e2e.flows.login(e2e.env('USERNAME'), e2e.env('PASSWORD'), false);
+  });
+
+  after(() => {
+    e2e.flows.revertAllChanges();
+  });
+
+  it('Tests each panel type in the panel edit view to ensure no crash', () => {
     e2e.flows.addDashboard();
 
     // TODO: Try and use e2e.flows.addPanel() instead of block below
@@ -40,5 +43,5 @@ e2e.scenario({
         }
       });
     });
-  },
+  });
 });

@@ -48,7 +48,7 @@ export class EventBusSrv implements EventBus, LegacyEmitter {
     });
   }
 
-  newScopedBus(key: string, filter?: EventFilterOptions): EventBus {
+  newScopedBus(key: string, filter?: EventFilterOptions): ScopedEventBus {
     return new ScopedEventBus([key], this, filter);
   }
 
