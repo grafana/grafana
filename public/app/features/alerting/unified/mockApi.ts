@@ -327,7 +327,7 @@ export function mockProvisioningApi(server: SetupServer) {
         )
       );
     },
-    exportReceiver: (receiverName: string, decrypt: boolean, response: Record<string, string>) => {
+    exportReceiver: (response: Record<string, string>) => {
       server.use(
         rest.get(`/api/v1/provisioning/contact-points/export/`, (req, res, ctx) =>
           res(ctx.status(200), ctx.text(response[req.url.searchParams.get('format') ?? 'yaml']))

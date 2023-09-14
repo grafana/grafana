@@ -216,7 +216,7 @@ describe('ReceiversTable', () => {
   describe('Exporter functionality', () => {
     it('Should allow exporting receiver', async () => {
       // Arrange
-      mockProvisioningApi(server).exportReceiver('coolReceiver', true, {
+      mockProvisioningApi(server).exportReceiver({
         yaml: 'Yaml Export Content',
         json: 'Json Export Content',
       });
