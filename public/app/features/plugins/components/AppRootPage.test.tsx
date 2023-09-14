@@ -156,6 +156,12 @@ describe('AppRootPage', () => {
           },
           {
             type: PluginIncludeType.page,
+            name: 'Awesome page with mistake',
+            path: '/a/my-awesome-plugin/mistake-page',
+            role: 'NotExistingRole',
+          },
+          {
+            type: PluginIncludeType.page,
             name: 'Awesome page 2',
             path: '/a/my-awesome-plugin/page-without-role',
           },
@@ -171,16 +177,10 @@ describe('AppRootPage', () => {
       importAppPluginMock.mockResolvedValue(plugin);
     });
 
-    it('an User with no existing role should not be able to see any page', async () => {
-      contextSrv.user.orgRole = 'NotExistingRole';
+    it('an User should not be able to see page with not existing role', async () => {
+      contextSrv.user.orgRole = OrgRole.Editor;
 
-      await renderUnderRouter('viewer-page');
-      expect(await screen.findByText('Access denied')).toBeVisible();
-
-      await renderUnderRouter('editor-page');
-      expect(await screen.findByText('Access denied')).toBeVisible();
-
-      await renderUnderRouter('admin-page');
+      await renderUnderRouter('mistake-page');
       expect(await screen.findByText('Access denied')).toBeVisible();
     });
 
