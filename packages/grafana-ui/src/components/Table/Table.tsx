@@ -326,15 +326,11 @@ export const Table = memo((props: Props) => {
     }
   };
 
-  // If the expanded state changes, reset the heights of the rows in the `VariableSizeList` component
-  const expandedState = useRef('');
+  // If a row is expanded/collapsed, reset the heights of the rows in the `VariableSizeList` component
+  const expandedRowsRepr = JSON.stringify(Object.keys(state.expanded));
   useEffect(() => {
-    const nextExpandedState = JSON.stringify(Object.keys(state.expanded));
-    if (expandedState.current !== nextExpandedState) {
-      expandedState.current = nextExpandedState;
-      listRef.current?.resetAfterIndex(0);
-    }
-  }, [state.expanded, listRef]);
+    listRef.current?.resetAfterIndex(0);
+  }, [expandedRowsRepr]);
 
   return (
     <div
