@@ -91,7 +91,7 @@ const contentTypeOptions: SelectableValue[] = [
 ];
 
 export function APIEditor({ value, context, onChange }: Props) {
-  const LABEL_WIDTH = 9;
+  const LABEL_WIDTH = 13;
 
   if (!value) {
     value = defaultApiConfig;
@@ -185,16 +185,17 @@ export function APIEditor({ value, context, onChange }: Props) {
       </InlineFieldRow>
       {value?.method === HttpRequestMethod.POST && (
         <>
-          <Field label="Content-Type">
-            <Select
-              minMenuHeight={200}
-              options={contentTypeOptions}
-              allowCustomValue={true}
-              formatCreateLabel={formatCreateLabel}
-              value={value?.contentType}
-              onChange={onContentTypeChange}
-            />
-          </Field>
+          <InlineFieldRow>
+            <InlineField label="Content-Type" labelWidth={LABEL_WIDTH} grow={true}>
+              <Select
+                options={contentTypeOptions}
+                allowCustomValue={true}
+                formatCreateLabel={formatCreateLabel}
+                value={value?.contentType}
+                onChange={onContentTypeChange}
+              />
+            </InlineField>
+          </InlineFieldRow>
           {value?.contentType && (
             <Field label="Payload">
               <StringValueEditor
