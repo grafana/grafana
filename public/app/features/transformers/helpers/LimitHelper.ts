@@ -1,6 +1,6 @@
 import { getLinkToDocs } from './getLinkToDocs';
 
-export const LimitHelper = () => {
+export const limitHelper = () => {
   return `
   Use this transformation to limit the number of rows displayed.
 

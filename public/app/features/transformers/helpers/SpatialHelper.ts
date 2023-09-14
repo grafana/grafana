@@ -1,3 +1,3 @@
 import { getLinkToDocs } from './getLinkToDocs';
 
-export const SpatialHelper = () => getLinkToDocs();
+export const spatialHelper = () => getLinkToDocs();

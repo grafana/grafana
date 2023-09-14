@@ -1,6 +1,6 @@
 import { getLinkToDocs } from './getLinkToDocs';
 
-export const FilterByRefIdHelper = () => {
+export const filterByRefIdHelper = () => {
   return `
   Use this transformation in panels that have multiple queries, if you want to hide one or more of the queries.
 

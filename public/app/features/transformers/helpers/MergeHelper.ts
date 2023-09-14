@@ -1,6 +1,6 @@
 import { getLinkToDocs } from './getLinkToDocs';
 
-export const MergeHelper = () => {
+export const mergeHelper = () => {
   return `
   Use this transformation to combine the result from multiple queries into one single result. This is helpful when using the table panel visualization. Values that can be merged are combined into the same row. Values are mergeable if the shared fields contain the same data. For information, refer to [Table panel]({{< relref "../../visualizations/table/" >}}).
 

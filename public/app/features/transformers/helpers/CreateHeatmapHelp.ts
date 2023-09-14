@@ -1,6 +1,6 @@
 import { getLinkToDocs } from './getLinkToDocs';
 
-export const CreateHeatmapHelp = () => {
+export const createHeatmapHelp = () => {
   return `
   Use this transformation to prepare histogram data to be visualized over time. Similar to the Heatmap panel, this transformation allows you to convert histogram metrics to buckets over time.
 

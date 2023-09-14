@@ -1,6 +1,6 @@
 import { getLinkToDocs } from './getLinkToDocs';
 
-export const OrganizeFieldsHelper = () => {
+export const organizeFieldsHelper = () => {
   return `
   Use this transformation to rename, reorder, or hide fields returned by the query.
 

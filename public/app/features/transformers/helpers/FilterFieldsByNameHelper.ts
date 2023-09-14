@@ -1,6 +1,6 @@
 import { getLinkToDocs } from './getLinkToDocs';
 
-export const FilterFieldsByNameHelper = () => {
+export const filterFieldsByNameHelper = () => {
   return `
   Use this transformation to remove portions of the query results.
 

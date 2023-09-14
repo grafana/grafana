@@ -1,6 +1,6 @@
 import { getLinkToDocs } from './getLinkToDocs';
 
-export const LabelsToFieldsHelper = () => {
+export const labelsToFieldsHelper = () => {
   return `
   This transformation changes time series results that include labels or tags into a table where each label keys and values are included in the table result. The labels can be displayed either as columns or as row values.
 

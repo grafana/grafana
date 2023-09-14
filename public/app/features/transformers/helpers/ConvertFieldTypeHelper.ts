@@ -1,6 +1,6 @@
 import { getLinkToDocs } from './getLinkToDocs';
 
-export const ConvertFieldTypeHelper = () => {
+export const convertFieldTypeHelper = () => {
   return `
   This transformation changes the field type of the specified field.
 

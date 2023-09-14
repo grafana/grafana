@@ -1,10 +1,8 @@
 import { getLinkToDocs } from './getLinkToDocs';
 
-export const ConfigFromQueryHelper = () => {
+export const configFromQueryHelper = () => {
   return `
-  ### Use cases
-
-  This transformation allows you select one query and from it extract standard options such as
+  Use this transformation to select one query and from it extract standard options such as
   **Min**, **Max**, **Unit**, and **Thresholds** and apply them to other query results.
   This enables dynamic query driven visualization configuration.
 

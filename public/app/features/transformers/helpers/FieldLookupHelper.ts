@@ -1,6 +1,6 @@
 import { getLinkToDocs } from './getLinkToDocs';
 
-export const FieldLookupHelper = () => {
+export const fieldLookupHelper = () => {
   return `
   Use this transformation on a field value to look up additional fields from an external source.
 

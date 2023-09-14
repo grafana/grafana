@@ -1,6 +1,6 @@
 import { getLinkToDocs } from './getLinkToDocs';
 
-export const SeriesToRowsHelper = () => {
+export const seriesToRowsHelper = () => {
   return `
   Use this transformation to combine the result from multiple time series data queries into one single result. This is helpful when using the table panel visualization.
 

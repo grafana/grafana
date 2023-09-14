@@ -1,6 +1,6 @@
 import { getLinkToDocs } from './getLinkToDocs';
 
-export const JoinByFieldHelper = () => {
+export const joinByFieldHelper = () => {
   return `
   Use this transformation to join multiple results into a single table. This is especially useful for converting multiple
   time series results into a single wide table with a shared time field.

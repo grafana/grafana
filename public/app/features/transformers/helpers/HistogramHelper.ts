@@ -1,6 +1,6 @@
 import { getLinkToDocs } from './getLinkToDocs';
 
-export const HistogramHelper = () => {
+export const histogramHelper = () => {
   return `
   Use this transformation to generate a histogram based on the input data.
 

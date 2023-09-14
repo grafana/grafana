@@ -1,6 +1,6 @@
 import { getLinkToDocs } from './getLinkToDocs';
 
-export const GroupByHelper = () => {
+export const groupByHelper = () => {
   return `
   This transformation groups the data by a specified field (column) value and processes calculations on each group. Click to see a list of calculation choices. For information about available calculations, refer to [Calculation types](https://grafana.com/docs/grafana/latest/panels-visualizations/calculation-types/).
 

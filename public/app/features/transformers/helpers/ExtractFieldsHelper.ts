@@ -1,6 +1,6 @@
 import { getLinkToDocs } from './getLinkToDocs';
 
-export const ExtractFieldsHelper = () => {
+export const extractFieldsHelper = () => {
   return `
   Use this transformation to select one source of data and extract content from it in different formats. Set the following fields:
 

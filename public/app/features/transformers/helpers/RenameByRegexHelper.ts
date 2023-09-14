@@ -1,6 +1,6 @@
 import { getLinkToDocs } from './getLinkToDocs';
 
-export const RenameByRegexHelper = () => {
+export const renameByRegexHelper = () => {
   return `
   Use this transformation to rename parts of the query results using a regular expression and replacement pattern.
 
