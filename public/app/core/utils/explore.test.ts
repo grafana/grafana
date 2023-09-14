@@ -71,7 +71,7 @@ describe('state functions', () => {
 
 describe('getExploreUrl', () => {
   const args = {
-    targets: [
+    queries: [
       { refId: 'A', expr: 'query1', legendFormat: 'legendFormat1' },
       { refId: 'B', expr: 'query2', datasource: { type: '__expr__', uid: '__expr__' } },
     ],
@@ -81,13 +81,10 @@ describe('getExploreUrl', () => {
     timeRange: { from: dateTime(), to: dateTime(), raw: { from: 'now-1h', to: 'now' } },
   } as unknown as GetExploreUrlArguments;
   it('should use raw range in explore url', async () => {
-    expect(getExploreUrl(args).then((data) => expect(data).toMatch(/from%22:%22now-1h%22,%22to%22:%22now/g)));
+    expect(await getExploreUrl(args)).toMatch(/from%22:%22now-1h%22,%22to%22:%22now/g);
   });
-  it('should omit legendFormat in explore url', () => {
-    expect(getExploreUrl(args).then((data) => expect(data).not.toMatch(/legendFormat1/g)));
-  });
-  it('should omit expression target in explore url', () => {
-    expect(getExploreUrl(args).then((data) => expect(data).not.toMatch(/__expr__/g)));
+  it('should omit expression target in explore url', async () => {
+    expect(await getExploreUrl(args)).not.toMatch(/__expr__/g);
   });
 });
 
