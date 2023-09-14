@@ -331,8 +331,8 @@ const (
 	GeneralFolderUID = "general"
 
 	// Basic Role None
-	NoBasicRoleUID  = "basic:none"
-	NoBasicRoleName = "basic_none"
+	BasicRoleNoneUID  = "basic:none"
+	BasicRoleNoneName = "basic_none"
 
 	// Permission actions
 
