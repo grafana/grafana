@@ -2,13 +2,12 @@ import { selectors } from '@grafana/e2e-selectors';
 
 import { e2e } from '../utils';
 
-e2e.scenario({
-  describeName: 'Pie Chart Panel',
-  itName: 'Pie Chart rendering e2e tests',
-  addScenarioDataSource: false,
-  addScenarioDashBoard: false,
-  skipScenario: false,
-  scenario: () => {
+describe('Pie Chart Panel', () => {
+  beforeEach(() => {
+    e2e.flows.login(e2e.env('USERNAME'), e2e.env('PASSWORD'));
+  });
+
+  it('Pie Chart rendering e2e tests', () => {
     // open Panel Tests - Pie Chart
     e2e.flows.openDashboard({ uid: 'lVE-2YFMz' });
 
@@ -16,5 +15,5 @@ e2e.scenario({
       'have.length',
       5
     );
-  },
+  });
 });

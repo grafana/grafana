@@ -17,7 +17,7 @@ const finalQuery = 'rate({instance=~"instance1|instance2"} | logfmt | __error__=
 
 describe('Loki query builder', () => {
   beforeEach(() => {
-    e2e.flows.login('admin', 'admin');
+    e2e.flows.login(e2e.env('USERNAME'), e2e.env('PASSWORD'));
 
     cy.request({ url: `${e2e.env('BASE_URL')}/api/datasources/name/${dataSourceName}`, failOnStatusCode: false }).then(
       (response) => {
