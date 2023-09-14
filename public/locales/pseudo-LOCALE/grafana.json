@@ -26,7 +26,10 @@
   "browse-dashboards": {
     "action": {
       "cancel-button": "Cäŉčęľ",
+      "cannot-move-folders": "Főľđęřş čäŉ ŉőŧ þę mővęđ",
       "delete-button": "Đęľęŧę",
+      "delete-modal-invalid-text": "Øŉę őř mőřę ƒőľđęřş čőŉŧäįŉ ľįþřäřy päŉęľş őř äľęřŧ řūľęş. Đęľęŧę ŧĥęşę ƒįřşŧ įŉ őřđęř ŧő přőčęęđ.",
+      "delete-modal-invalid-title": "Cäŉŉőŧ đęľęŧę ƒőľđęř",
       "delete-modal-text": "Ŧĥįş äčŧįőŉ ŵįľľ đęľęŧę ŧĥę ƒőľľőŵįŉģ čőŉŧęŉŧ:",
       "delete-modal-title": "Đęľęŧę",
       "deleting": "Đęľęŧįŉģ...",
@@ -132,18 +135,18 @@
       "widget": "Ŵįđģęŧ"
     },
     "empty": {
-      "add-import-body": "Ĩmpőřŧ vįşūäľįžäŧįőŉş ŧĥäŧ äřę şĥäřęđ ŵįŧĥ őŧĥęř đäşĥþőäřđş.",
-      "add-import-button": "Ĩmpőřŧ ľįþřäřy päŉęľ",
-      "add-import-header": "Ĩmpőřŧ päŉęľ",
-      "add-row-body": "Ğřőūp yőūř vįşūäľįžäŧįőŉş įŉŧő ęχpäŉđäþľę şęčŧįőŉş.",
-      "add-row-button": "Åđđ řőŵ",
-      "add-row-header": "Åđđ ä řőŵ",
+      "add-library-panel-body": "Åđđ vįşūäľįžäŧįőŉş ŧĥäŧ äřę şĥäřęđ ŵįŧĥ őŧĥęř đäşĥþőäřđş.",
+      "add-library-panel-button": "Åđđ ľįþřäřy päŉęľ",
+      "add-library-panel-header": "Åđđ ä ľįþřäřy päŉęľ",
       "add-visualization-body": "Ŝęľęčŧ ä đäŧä şőūřčę äŉđ ŧĥęŉ qūęřy äŉđ vįşūäľįžę yőūř đäŧä ŵįŧĥ čĥäřŧş, şŧäŧş äŉđ ŧäþľęş őř čřęäŧę ľįşŧş, mäřĸđőŵŉş äŉđ őŧĥęř ŵįđģęŧş.",
       "add-visualization-button": "Åđđ vįşūäľįžäŧįőŉ",
       "add-visualization-header": "Ŝŧäřŧ yőūř ŉęŵ đäşĥþőäřđ þy äđđįŉģ ä vįşūäľįžäŧįőŉ",
       "add-widget-body": "Cřęäŧę ľįşŧş, mäřĸđőŵŉş äŉđ őŧĥęř ŵįđģęŧş",
       "add-widget-button": "Åđđ ŵįđģęŧ",
-      "add-widget-header": "Åđđ ä ŵįđģęŧ"
+      "add-widget-header": "Åđđ ä ŵįđģęŧ",
+      "import-a-dashboard-body": "Ĩmpőřŧ đäşĥþőäřđ ƒřőm ƒįľę őř <1>ģřäƒäŉä.čőm</1>.",
+      "import-a-dashboard-header": "Ĩmpőřŧ ä đäşĥþőäřđ",
+      "import-dashboard-button": "Ĩmpőřŧ đäşĥþőäřđ"
     },
     "inspect": {
       "data-tab": "Đäŧä",
@@ -221,6 +224,9 @@
     "loading": "Ŀőäđįŉģ ƒőľđęřş..."
   },
   "grafana-ui": {
+    "modal": {
+      "close-tooltip": "Cľőşę"
+    },
     "segment-async": {
       "error": "Fäįľęđ ŧő ľőäđ őpŧįőŉş",
       "loading": "Ŀőäđįŉģ őpŧįőŉş...",
@@ -230,6 +236,46 @@
       "no-options-label": "Ńő őpŧįőŉş ƒőūŉđ",
       "placeholder": "Cĥőőşę"
     }
+  },
+  "help-modal": {
+    "shortcuts-category": {
+      "dashboard": "Đäşĥþőäřđ",
+      "focused-panel": "Főčūşęđ Päŉęľ",
+      "global": "Ğľőþäľ",
+      "time-range": "Ŧįmę Ŗäŉģę"
+    },
+    "shortcuts-description": {
+      "change-theme": "Cĥäŉģę ŧĥęmę",
+      "collapse-all-rows": "Cőľľäpşę äľľ řőŵş",
+      "dashboard-settings": "Đäşĥþőäřđ şęŧŧįŉģş",
+      "duplicate-panel": "Đūpľįčäŧę Päŉęľ",
+      "exit-edit/setting-views": "Ēχįŧ ęđįŧ/şęŧŧįŉģ vįęŵş",
+      "expand-all-rows": "Ēχpäŉđ äľľ řőŵş",
+      "go-to-dashboards": "Ğő ŧő Đäşĥþőäřđş",
+      "go-to-explore": "Ğő ŧő Ēχpľőřę",
+      "go-to-home-dashboard": "Ğő ŧő Ħőmę Đäşĥþőäřđ",
+      "go-to-profile": "Ğő ŧő Přőƒįľę",
+      "make-time-range-permanent": "Mäĸę ŧįmę řäŉģę äþşőľūŧę/pęřmäŉęŉŧ",
+      "move-time-range-back": "Mővę ŧįmę řäŉģę þäčĸ",
+      "move-time-range-forward": "Mővę ŧįmę řäŉģę ƒőřŵäřđ",
+      "open-search": "Øpęŉ şęäřčĥ",
+      "open-shared-modal": "Øpęŉ Päŉęľ Ŝĥäřę Mőđäľ",
+      "refresh-all-panels": "Ŗęƒřęşĥ äľľ päŉęľş",
+      "remove-panel": "Ŗęmővę Päŉęľ",
+      "save-dashboard": "Ŝävę đäşĥþőäřđ",
+      "show-all-shortcuts": "Ŝĥőŵ äľľ ĸęyþőäřđ şĥőřŧčūŧş",
+      "toggle-active-mode": "Ŧőģģľę įŉ-äčŧįvę / vįęŵ mőđę",
+      "toggle-all-panel-legends": "Ŧőģģľę äľľ päŉęľ ľęģęŉđş",
+      "toggle-auto-fit": "Ŧőģģľę äūŧő ƒįŧ päŉęľş (ęχpęřįmęŉŧäľ ƒęäŧūřę)",
+      "toggle-exemplars": "Ŧőģģľę ęχęmpľäřş įŉ äľľ päŉęľ",
+      "toggle-graph-crosshair": "Ŧőģģľę şĥäřęđ ģřäpĥ čřőşşĥäįř",
+      "toggle-kiosk": "Ŧőģģľę ĸįőşĸ mőđę (ĥįđęş ŧőp ŉäv)",
+      "toggle-panel-edit": "Ŧőģģľę päŉęľ ęđįŧ vįęŵ",
+      "toggle-panel-fullscreen": "Ŧőģģľę päŉęľ ƒūľľşčřęęŉ vįęŵ",
+      "toggle-panel-legend": "Ŧőģģľę päŉęľ ľęģęŉđ",
+      "zoom-out-time-range": "Żőőm őūŧ ŧįmę řäŉģę"
+    },
+    "title": "Ŝĥőřŧčūŧş"
   },
   "library-panel": {
     "add-modal": {
@@ -562,6 +608,50 @@
       "view": "Vįęŵ"
     }
   },
+  "playlist-edit": {
+    "error-prefix": "Ēřřőř ľőäđįŉģ pľäyľįşŧ:",
+    "form": {
+      "add-tag-label": "Åđđ þy ŧäģ",
+      "add-tag-placeholder": "Ŝęľęčŧ ä ŧäģ",
+      "add-title-label": "Åđđ þy ŧįŧľę",
+      "cancel": "Cäŉčęľ",
+      "heading": "Åđđ đäşĥþőäřđş",
+      "interval-label": "Ĩŉŧęřväľ",
+      "interval-placeholder": "5m",
+      "interval-required": "Ĩŉŧęřväľ įş řęqūįřęđ",
+      "name-label": "Ńämę",
+      "name-placeholder": "Ńämę",
+      "name-required": "Ńämę įş řęqūįřęđ",
+      "save": "Ŝävę",
+      "table-delete": "Đęľęŧę pľäyľįşŧ įŧęm",
+      "table-drag": "Đřäģ äŉđ đřőp ŧő řęőřđęř",
+      "table-empty": "Pľäyľįşŧ įş ęmpŧy. Åđđ đäşĥþőäřđş þęľőŵ.",
+      "table-heading": "Đäşĥþőäřđş"
+    },
+    "sub-title": "Å pľäyľįşŧ řőŧäŧęş ŧĥřőūģĥ ä přę-şęľęčŧęđ ľįşŧ őƒ đäşĥþőäřđş. Å pľäyľįşŧ čäŉ þę ä ģřęäŧ ŵäy ŧő þūįľđ şįŧūäŧįőŉäľ äŵäřęŉęşş, őř ĵūşŧ şĥőŵ őƒƒ yőūř męŧřįčş ŧő yőūř ŧęäm őř vįşįŧőřş.",
+    "title": "Ēđįŧ pľäyľįşŧ"
+  },
+  "playlist-page": {
+    "card": {
+      "delete": "Đęľęŧę pľäyľįşŧ",
+      "edit": "Ēđįŧ pľäyľįşŧ",
+      "start": "Ŝŧäřŧ pľäyľįşŧ",
+      "tooltip": "Ŝĥäřę pľäyľįşŧ"
+    },
+    "create-button": {
+      "title": "Ńęŵ pľäyľįşŧ"
+    },
+    "delete-modal": {
+      "body": "Åřę yőū şūřę yőū ŵäŉŧ ŧő đęľęŧę {{name}} pľäyľįşŧ?",
+      "confirm-text": "Đęľęŧę"
+    },
+    "empty": {
+      "button": "Cřęäŧę Pľäyľįşŧ",
+      "pro-tip": "Ÿőū čäŉ ūşę pľäyľįşŧş ŧő čyčľę đäşĥþőäřđş őŉ ŦVş ŵįŧĥőūŧ ūşęř čőŉŧřőľ",
+      "pro-tip-link-title": "Ŀęäřŉ mőřę",
+      "title": "Ŧĥęřę äřę ŉő pľäyľįşŧş čřęäŧęđ yęŧ"
+    }
+  },
   "refresh-picker": {
     "aria-label": {
       "choose-interval": "Åūŧő řęƒřęşĥ ŧūřŉęđ őƒƒ. Cĥőőşę řęƒřęşĥ ŧįmę įŉŧęřväľ",
@@ -701,6 +791,17 @@
     "view-json": {
       "copy-button": "Cőpy ŧő Cľįpþőäřđ"
     }
+  },
+  "share-playlist": {
+    "checkbox-description": "Päŉęľ ĥęįģĥŧş ŵįľľ þę äđĵūşŧęđ ŧő ƒįŧ şčřęęŉ şįžę",
+    "checkbox-label": "Åūŧőƒįŧ",
+    "copy-link-button": "Cőpy",
+    "link-url-label": "Ŀįŉĸ ŮŖĿ",
+    "mode": "Mőđę",
+    "mode-kiosk": "Ķįőşĸ",
+    "mode-normal": "Ńőřmäľ",
+    "mode-tv": "ŦV",
+    "title": "Ŝĥäřę pľäyľįşŧ"
   },
   "shared": {
     "preferences": {

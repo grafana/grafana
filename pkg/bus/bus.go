@@ -12,10 +12,10 @@ import (
 )
 
 // HandlerFunc defines a handler function interface.
-type HandlerFunc interface{}
+type HandlerFunc any
 
 // Msg defines a message interface.
-type Msg interface{}
+type Msg any
 
 // ErrHandlerNotFound defines an error if a handler is not found.
 var ErrHandlerNotFound = errors.New("handler not found")

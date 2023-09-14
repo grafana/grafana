@@ -11,6 +11,7 @@ import { backendSrv } from 'app/core/services/backend_srv';
 
 import BrowseFolderLibraryPanelsPage, { OwnProps } from './BrowseFolderLibraryPanelsPage';
 import { getLibraryElementsResponse } from './fixtures/libraryElements.fixture';
+import * as permissions from './permissions';
 
 function render(...[ui, options]: Parameters<typeof rtlRender>) {
   rtlRender(<TestProvider>{ui}</TestProvider>, options);
@@ -34,6 +35,14 @@ const mockLibraryElementsResponse = getLibraryElementsResponse(1, {
 describe('browse-dashboards BrowseFolderLibraryPanelsPage', () => {
   let props: OwnProps;
   let server: SetupServer;
+  const mockPermissions = {
+    canCreateDashboards: true,
+    canCreateFolder: true,
+    canDeleteFolder: true,
+    canEditFolder: true,
+    canViewPermissions: true,
+    canSetPermissions: true,
+  };
 
   beforeAll(() => {
     server = setupServer(
@@ -66,6 +75,7 @@ describe('browse-dashboards BrowseFolderLibraryPanelsPage', () => {
   });
 
   beforeEach(() => {
+    jest.spyOn(permissions, 'getFolderPermissions').mockImplementation(() => mockPermissions);
     jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
     props = {
       ...getRouteComponentProps({
@@ -97,7 +107,15 @@ describe('browse-dashboards BrowseFolderLibraryPanelsPage', () => {
   });
 
   it('does not display the "Folder actions" button if the user does not have permissions', async () => {
-    jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
+    jest.spyOn(permissions, 'getFolderPermissions').mockImplementation(() => {
+      return {
+        ...mockPermissions,
+        canDeleteFolder: false,
+        canEditFolder: false,
+        canViewPermissions: false,
+        canSetPermissions: false,
+      };
+    });
     render(<BrowseFolderLibraryPanelsPage {...props} />);
     expect(await screen.findByRole('heading', { name: mockFolderName })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Folder actions' })).not.toBeInTheDocument();

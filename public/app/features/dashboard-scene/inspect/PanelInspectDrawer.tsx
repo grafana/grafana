@@ -7,53 +7,67 @@ import {
   SceneComponentProps,
   SceneObjectBase,
   SceneObjectState,
-  SceneObject,
   sceneGraph,
   VizPanel,
+  SceneObjectRef,
 } from '@grafana/scenes';
-import { Drawer, Tab, TabsBar } from '@grafana/ui';
+import { Alert, Drawer, Tab, TabsBar } from '@grafana/ui';
 import { supportsDataQuery } from 'app/features/dashboard/components/PanelEditor/utils';
 
 import { InspectDataTab } from './InspectDataTab';
 import { InspectJsonTab } from './InspectJsonTab';
+import { InspectQueryTab } from './InspectQueryTab';
 import { InspectStatsTab } from './InspectStatsTab';
-import { InspectTabState } from './types';
+import { SceneInspectTab } from './types';
 
 interface PanelInspectDrawerState extends SceneObjectState {
-  tabs?: Array<SceneObject<InspectTabState>>;
+  tabs?: SceneInspectTab[];
+  panelRef: SceneObjectRef<VizPanel>;
+  pluginNotLoaded?: boolean;
+  canEdit?: boolean;
 }
 
 export class PanelInspectDrawer extends SceneObjectBase<PanelInspectDrawerState> {
   static Component = PanelInspectRenderer;
 
-  // Not stored in state as this is just a reference and it never changes
-  private _panel: VizPanel;
+  constructor(state: PanelInspectDrawerState) {
+    super(state);
 
-  constructor(panel: VizPanel) {
-    super({});
-
-    this._panel = panel;
-    this.buildTabs();
+    this.buildTabs(0);
   }
 
-  buildTabs() {
-    const plugin = this._panel.getPlugin();
-    const tabs: Array<SceneObject<InspectTabState>> = [];
+  /**
+   * We currently have no async await to get the panel plugin from the VizPanel.
+   * That is why there is a retry argument here and a setTimeout, to try again a bit later.
+   */
+  buildTabs(retry: number) {
+    const panelRef = this.state.panelRef;
+    const panel = panelRef.resolve();
+    const plugin = panel.getPlugin();
+    const tabs: SceneInspectTab[] = [];
 
-    if (plugin) {
-      if (supportsDataQuery(plugin)) {
-        tabs.push(new InspectDataTab(this._panel));
-        tabs.push(new InspectStatsTab(this._panel));
+    if (!plugin) {
+      if (retry < 2000) {
+        setTimeout(() => this.buildTabs(retry + 100), 100);
+      } else {
+        this.setState({ pluginNotLoaded: true });
       }
     }
 
-    tabs.push(new InspectJsonTab(this._panel));
+    if (supportsDataQuery(plugin)) {
+      tabs.push(new InspectDataTab({ panelRef }));
+      tabs.push(new InspectStatsTab({ panelRef }));
+      tabs.push(new InspectQueryTab({ panelRef }));
+    }
+
+    tabs.push(new InspectJsonTab({ panelRef, onClose: this.onClose }));
 
     this.setState({ tabs });
   }
 
   getDrawerTitle() {
-    return sceneGraph.interpolate(this._panel, `Inspect: ${this._panel.state.title}`);
+    const panel = this.state.panelRef.resolve();
+    return sceneGraph.interpolate(panel, `Inspect: ${panel.state.title}`);
   }
 
   onClose = () => {
@@ -62,7 +76,7 @@ export class PanelInspectDrawer extends SceneObjectBase<PanelInspectDrawerState>
 }
 
 function PanelInspectRenderer({ model }: SceneComponentProps<PanelInspectDrawer>) {
-  const { tabs } = model.useState();
+  const { tabs, pluginNotLoaded } = model.useState();
   const location = useLocation();
   const queryParams = new URLSearchParams(location.search);
 
@@ -71,7 +85,7 @@ function PanelInspectRenderer({ model }: SceneComponentProps<PanelInspectDrawer>
   }
 
   const urlTab = queryParams.get('inspectTab');
-  const currentTab = tabs.find((tab) => tab.state.value === urlTab) ?? tabs[0];
+  const currentTab = tabs.find((tab) => tab.getTabValue() === urlTab) ?? tabs[0];
 
   return (
     <Drawer
@@ -85,16 +99,21 @@ function PanelInspectRenderer({ model }: SceneComponentProps<PanelInspectDrawer>
             return (
               <Tab
                 key={tab.state.key!}
-                label={tab.state.label}
+                label={tab.getTabLabel()}
                 active={tab === currentTab}
-                href={locationUtil.getUrlForPartial(location, { inspectTab: tab.state.value })}
+                href={locationUtil.getUrlForPartial(location, { inspectTab: tab.getTabValue() })}
               />
             );
           })}
         </TabsBar>
       }
     >
-      {currentTab.Component && <currentTab.Component model={currentTab} />}
+      {pluginNotLoaded && (
+        <Alert title="Panel plugin not loaded">
+          Make sure the panel you want to inspect is visible and has been displayed before opening inspect.
+        </Alert>
+      )}
+      {currentTab && currentTab.Component && <currentTab.Component model={currentTab} />}
     </Drawer>
   );
 }

@@ -28,11 +28,6 @@ The unique identifier (uid) of a folder can be used for uniquely identify folder
 
 The uid can have a maximum length of 40 characters.
 
-## A note about the General folder
-
-The General folder (id=0) is special and is not part of the Folder API which means
-that you cannot use this API for retrieving information about the General folder.
-
 ## Get all folders
 
 `GET /api/folders`
@@ -240,7 +235,6 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 
 JSON Body schema:
 
-- **uid** – Provide another [unique identifier](/http_api/folder/#identifier-id-vs-unique-identifier-uid) than stored to change the unique identifier. Starting with 10.0, this is **deprecated**. It will be removed in a future release. Please avoid using it because it can result in folder losing its permissions.
 - **title** – The title of the folder.
 - **version** – Provide the current version to be able to update the folder. Not needed if `overwrite=true`.
 - **overwrite** – Set to true if you want to overwrite existing folder with newer version.

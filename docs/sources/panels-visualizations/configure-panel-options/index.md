@@ -67,7 +67,7 @@ Add a title and description to a panel to share with users any important informa
 
    Text entered in this field appears in a tooltip in the upper-left corner of the panel.
 
-   You can use [variables you have defined]({{< relref "../../dashboards/variables/" >}}) in the **Title** and **Description** field, but not [global variables]({{< relref "../../dashboards/variables/add-template-variables/#global-variables" >}}).
+   You can use [variables you have defined][] in the **Title** and **Description** field, but not [global variables][].
 
    ![](/static/img/docs/panels/panel-options-8-0.png)
 
@@ -89,13 +89,13 @@ Explore and export panel, panel data, and data frame JSON models.
 
 ## Configure repeating panels
 
-You can configure Grafana to dynamically add panels or rows to a dashboard. A dynamic panel is a panel that the system creates based on the value of a variable. Variables dynamically change your queries across all panels in a dashboard. For more information about repeating rows, refer to [Configure repeating rows]({{< relref "../../dashboards/build-dashboards/create-dashboard/#configure-repeating-rows" >}}).
+You can configure Grafana to dynamically add panels or rows to a dashboard. A dynamic panel is a panel that the system creates based on the value of a variable. Variables dynamically change your queries across all panels in a dashboard. For more information about repeating rows, refer to [Configure repeating rows][].
 
 {{% admonition type="note" %}}
 Repeating panels require variables to have one or more items selected; you cannot repeat a panel zero times to hide it.
 {{% /admonition %}}
 
-To see an example of repeating panels, refer to [Prometheus dashboard with repeating panels](https://play.grafana.org/d/000000036/prometheus-repeat).
+To see an example of repeating panels, refer to [this dashboard with repeating panels](https://play.grafana.org/d/testdata-repeating/testdata-repeating-panels?orgId=1).
 
 **Before you begin:**
 
@@ -113,3 +113,14 @@ To see an example of repeating panels, refer to [Prometheus dashboard with repea
    - Choose `vertical` to arrange panels in a column. The width of repeated panels is the same as the original, repeated panel.
 
 1. To propagate changes to all panels, reload the dashboard.
+
+{{% docs/reference %}}
+[variables you have defined]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables"
+[variables you have defined]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables"
+
+[global variables]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables/add-template-variables#global-variables"
+[global variables]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables/add-template-variables#global-variables"
+
+[Configure repeating rows]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/build-dashboards/create-dashboard#configure-repeating-rows"
+[Configure repeating rows]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/build-dashboards/create-dashboard#configure-repeating-rows"
+{{% /docs/reference %}}

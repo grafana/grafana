@@ -355,7 +355,7 @@ func (s *store) getResourcePermissions(sess *db.Session, orgID int64, query GetR
 
 	scope := accesscontrol.Scope(query.Resource, query.ResourceAttribute, query.ResourceID)
 
-	args := []interface{}{
+	args := []any{
 		orgID,
 		orgID,
 		accesscontrol.Scope(query.Resource, "*"),
@@ -668,7 +668,7 @@ func deletePermissions(sess *db.Session, ids []int64) error {
 	}
 
 	rawSQL := "DELETE FROM permission WHERE id IN(?" + strings.Repeat(",?", len(ids)-1) + ")"
-	args := make([]interface{}, 0, len(ids)+1)
+	args := make([]any, 0, len(ids)+1)
 	args = append(args, rawSQL)
 	for _, id := range ids {
 		args = append(args, id)

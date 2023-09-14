@@ -2,7 +2,6 @@
 This module provides functions for cronjob pipelines and steps used within.
 """
 
-load("scripts/drone/vault.star", "from_secret")
 load(
     "scripts/drone/steps/lib.star",
     "compile_build_cmd",
@@ -11,6 +10,7 @@ load(
     "scripts/drone/utils/images.star",
     "images",
 )
+load("scripts/drone/vault.star", "from_secret")
 
 aquasec_trivy_image = "aquasec/trivy:0.21.0"
 
@@ -58,6 +58,10 @@ def cron_job_pipeline(cronName, name, steps):
                 "host": {
                     "path": "/var/run/docker.sock",
                 },
+            },
+            {
+                "name": "config",
+                "temp": {},
             },
         ],
     }
@@ -117,13 +121,13 @@ def scan_docker_image_unknown_low_medium_vulnerabilities_step(docker_image):
         for key in images:
             cmds = cmds + ["trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM " + images[key]]
     else:
-        cmds = ["trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM " + docker_image]
+        cmds = ["trivy image --exit-code 0 --severity UNKNOWN,LOW,MEDIUM " + docker_image]
     return {
         "name": "scan-unknown-low-medium-vulnerabilities",
         "image": aquasec_trivy_image,
         "commands": cmds,
         "depends_on": ["authenticate-gcr"],
-        "volumes": [{"name": "docker", "path": "/var/run/docker.sock"}],
+        "volumes": [{"name": "docker", "path": "/var/run/docker.sock"}, {"name": "config", "path": "/root/.docker/"}],
     }
 
 def scan_docker_image_high_critical_vulnerabilities_step(docker_image):
@@ -141,19 +145,22 @@ def scan_docker_image_high_critical_vulnerabilities_step(docker_image):
         for key in images:
             cmds = cmds + ["trivy --exit-code 1 --severity HIGH,CRITICAL " + images[key]]
     else:
-        cmds = ["trivy --exit-code 1 --severity HIGH,CRITICAL " + docker_image]
+        cmds = ["trivy image --exit-code 1 --severity HIGH,CRITICAL " + docker_image]
     return {
         "name": "scan-high-critical-vulnerabilities",
         "image": aquasec_trivy_image,
         "commands": cmds,
         "depends_on": ["authenticate-gcr"],
-        "volumes": [{"name": "docker", "path": "/var/run/docker.sock"}],
+        "environment": {
+            "GOOGLE_APPLICATION_CREDENTIALS": from_secret("gcr_credentials_json"),
+        },
+        "volumes": [{"name": "docker", "path": "/var/run/docker.sock"}, {"name": "config", "path": "/root/.docker/"}],
     }
 
 def slack_job_failed_step(channel, image):
     return {
         "name": "slack-notify-failure",
-        "image": images["plugins_slack_image"],
+        "image": images["plugins_slack"],
         "settings": {
             "webhook": from_secret("slack_webhook_backend"),
             "channel": channel,
@@ -167,7 +174,7 @@ def slack_job_failed_step(channel, image):
 def post_to_grafana_com_step():
     return {
         "name": "post-to-grafana-com",
-        "image": images["publish_image"],
+        "image": images["publish"],
         "environment": {
             "GRAFANA_COM_API_KEY": from_secret("grafana_api_key"),
             "GCP_KEY": from_secret("gcp_key"),

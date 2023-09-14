@@ -13,7 +13,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
-	plog "github.com/grafana/grafana/pkg/plugins/log"
 )
 
 var (
@@ -58,16 +57,13 @@ const (
 	endpointQueryData      = "queryData"
 )
 
-var logger = plog.New("plugin.instrumentation")
-
 // instrumentPluginRequest instruments success rate and latency of `fn`
-func instrumentPluginRequest(ctx context.Context, cfg Cfg, pluginCtx *backend.PluginContext, endpoint string, fn func() error) error {
+func instrumentPluginRequest(ctx context.Context, cfg Cfg, pluginCtx *backend.PluginContext, endpoint string, fn func(ctx context.Context) error) error {
 	status := statusOK
-
 	start := time.Now()
-	timeBeforePluginRequest := log.TimeSinceStart(ctx, start)
 
-	err := fn()
+	ctx = instrumentContext(ctx, endpoint, *pluginCtx)
+	err := fn(ctx)
 	if err != nil {
 		status = statusError
 		if errors.Is(err, context.Canceled) {
@@ -95,57 +91,34 @@ func instrumentPluginRequest(ctx context.Context, cfg Cfg, pluginCtx *backend.Pl
 		pluginRequestDurationSecondsWithLabels.Observe(elapsed.Seconds())
 	}
 
-	if cfg.LogDatasourceRequests {
-		logParams := []interface{}{
-			"status", status,
-			"duration", elapsed,
-			"pluginId", pluginCtx.PluginID,
-			"endpoint", endpoint,
-			"eventName", "grafana-data-egress",
-			"time_before_plugin_request", timeBeforePluginRequest,
-		}
-
-		if pluginCtx.User != nil {
-			logParams = append(logParams, "uname", pluginCtx.User.Login)
-		}
-
-		traceID := tracing.TraceIDFromContext(ctx, false)
-		if traceID != "" {
-			logParams = append(logParams, "traceID", traceID)
-		}
-
-		if pluginCtx.DataSourceInstanceSettings != nil {
-			logParams = append(logParams, "dsName", pluginCtx.DataSourceInstanceSettings.Name)
-			logParams = append(logParams, "dsUID", pluginCtx.DataSourceInstanceSettings.UID)
-		}
-
-		if status == statusError {
-			logParams = append(logParams, "error", err)
-		}
-
-		logger.Info("Plugin Request Completed", logParams...)
-	}
-
 	return err
 }
 
+func instrumentContext(ctx context.Context, endpoint string, pCtx backend.PluginContext) context.Context {
+	p := []any{"endpoint", endpoint, "pluginId", pCtx.PluginID}
+	if pCtx.DataSourceInstanceSettings != nil {
+		p = append(p, "dsName", pCtx.DataSourceInstanceSettings.Name)
+		p = append(p, "dsUID", pCtx.DataSourceInstanceSettings.UID)
+	}
+	return log.WithContextualAttributes(ctx, p)
+}
+
 type Cfg struct {
-	LogDatasourceRequests bool
-	Target                backendplugin.Target
+	Target backendplugin.Target
 }
 
 // InstrumentCollectMetrics instruments collectMetrics.
-func InstrumentCollectMetrics(ctx context.Context, req *backend.PluginContext, cfg Cfg, fn func() error) error {
+func InstrumentCollectMetrics(ctx context.Context, req *backend.PluginContext, cfg Cfg, fn func(ctx context.Context) error) error {
 	return instrumentPluginRequest(ctx, cfg, req, endpointCollectMetrics, fn)
 }
 
 // InstrumentCheckHealthRequest instruments checkHealth.
-func InstrumentCheckHealthRequest(ctx context.Context, req *backend.PluginContext, cfg Cfg, fn func() error) error {
+func InstrumentCheckHealthRequest(ctx context.Context, req *backend.PluginContext, cfg Cfg, fn func(ctx context.Context) error) error {
 	return instrumentPluginRequest(ctx, cfg, req, endpointCheckHealth, fn)
 }
 
 // InstrumentCallResourceRequest instruments callResource.
-func InstrumentCallResourceRequest(ctx context.Context, req *backend.PluginContext, cfg Cfg, requestSize float64, fn func() error) error {
+func InstrumentCallResourceRequest(ctx context.Context, req *backend.PluginContext, cfg Cfg, requestSize float64, fn func(ctx context.Context) error) error {
 	pluginRequestSizeHistogram.WithLabelValues("grafana-backend", req.PluginID, endpointCallResource,
 		string(cfg.Target)).Observe(requestSize)
 	return instrumentPluginRequest(ctx, cfg, req, endpointCallResource, fn)
@@ -153,7 +126,7 @@ func InstrumentCallResourceRequest(ctx context.Context, req *backend.PluginConte
 
 // InstrumentQueryDataRequest instruments success rate and latency of query data requests.
 func InstrumentQueryDataRequest(ctx context.Context, req *backend.PluginContext, cfg Cfg,
-	requestSize float64, fn func() error) error {
+	requestSize float64, fn func(ctx context.Context) error) error {
 	pluginRequestSizeHistogram.WithLabelValues("grafana-backend", req.PluginID, endpointQueryData,
 		string(cfg.Target)).Observe(requestSize)
 	return instrumentPluginRequest(ctx, cfg, req, endpointQueryData, fn)
