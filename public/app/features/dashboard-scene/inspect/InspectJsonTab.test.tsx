@@ -36,7 +36,7 @@ describe('InspectJsonTab', () => {
 
   it('Can show panel data with field config', async () => {
     const { tab } = await buildTestScene();
-    tab.onChangeShow({ value: 'panel-data' });
+    tab.onChangeSource({ value: 'panel-data' });
     expect(tab.isEditable()).toBe(false);
 
     const obj = JSON.parse(tab.state.jsonText);
@@ -49,7 +49,7 @@ describe('InspectJsonTab', () => {
 
   it('Can show raw data frames', async () => {
     const { tab } = await buildTestScene();
-    tab.onChangeShow({ value: 'data-frames' });
+    tab.onChangeSource({ value: 'data-frames' });
 
     const obj = JSON.parse(tab.state.jsonText);
     expect(Array.isArray(obj)).toBe(true);

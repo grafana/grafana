@@ -35,16 +35,16 @@ export type ShowContent = 'panel-json' | 'panel-data' | 'data-frames';
 
 export interface InspectJsonTabState extends SceneObjectState {
   panelRef: SceneObjectRef<VizPanel>;
-  show: ShowContent;
+  source: ShowContent;
   jsonText: string;
   onClose: () => void;
 }
 
 export class InspectJsonTab extends SceneObjectBase<InspectJsonTabState> {
-  public constructor(state: Omit<InspectJsonTabState, 'show' | 'jsonText'>) {
+  public constructor(state: Omit<InspectJsonTabState, 'source' | 'jsonText'>) {
     super({
       ...state,
-      show: 'panel-json',
+      source: 'panel-json',
       jsonText: getJsonText('panel-json', state.panelRef.resolve()),
     });
   }
@@ -94,8 +94,8 @@ export class InspectJsonTab extends SceneObjectBase<InspectJsonTabState> {
     return options;
   }
 
-  public onChangeShow = (value: SelectableValue<ShowContent>) => {
-    this.setState({ show: value.value!, jsonText: getJsonText(value.value!, this.state.panelRef.resolve()) });
+  public onChangeSource = (value: SelectableValue<ShowContent>) => {
+    this.setState({ source: value.value!, jsonText: getJsonText(value.value!, this.state.panelRef.resolve()) });
   };
 
   public onApplyChange = () => {
@@ -134,7 +134,7 @@ export class InspectJsonTab extends SceneObjectBase<InspectJsonTabState> {
   };
 
   public isEditable() {
-    if (this.state.show !== 'panel-json') {
+    if (this.state.source !== 'panel-json') {
       return false;
     }
 
@@ -150,7 +150,7 @@ export class InspectJsonTab extends SceneObjectBase<InspectJsonTabState> {
   }
 
   static Component = ({ model }: SceneComponentProps<InspectJsonTab>) => {
-    const { show, jsonText } = model.useState();
+    const { source: show, jsonText } = model.useState();
     const styles = useStyles2(getPanelInspectorStyles2);
     const options = model.getOptions();
 
@@ -162,7 +162,7 @@ export class InspectJsonTab extends SceneObjectBase<InspectJsonTabState> {
               inputId="select-source-dropdown"
               options={options}
               value={options.find((v) => v.value === show) ?? options[0].value}
-              onChange={model.onChangeShow}
+              onChange={model.onChangeSource}
             />
           </Field>
           {model.isEditable() && (
