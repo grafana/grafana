@@ -1,6 +1,11 @@
 #!/usr/bin/env bash
 set -e
 
+BUILD_FOLDER=$1
+if [ -z "$BUILD_FOLDER" ]; then
+  BUILD_FOLDER="./public/build"
+fi
+
 ERROR_COUNT="0"
 ACCESSIBILITY_ERRORS="$(grep -oP '\"errors\":(\d+),' pa11y-ci-results.json | grep -oP '\d+')"
 DIRECTIVES="$(grep -r -o  directive public/app/ | wc -l)"
@@ -10,7 +15,7 @@ CLASSNAME_PROP="$(grep -r -o -E --include="*.ts*" "\.*.className=\W.*\W.*" publi
 EMOTION_IMPORTS="$(grep -r -o -E --include="*.ts*" --exclude="*.test*" "\{.*css.*\} from '@emotion/css'" public/app | wc -l)"
 TS_FILES="$(find public/app -type f -name "*.ts*" -not -name "*.test*" | wc -l)"
 
-TOTAL_BUNDLE="$(du -sk ./public/build | cut -f1)"
+TOTAL_BUNDLE="$(du -sk $BUILD_FOLDER | cut -f1)"
 OUTDATED_DEPENDENCIES="$(yarn outdated --all | grep -oP '[[:digit:]]+ *(?= dependencies are out of date)')"
 ## Disabled due to yarn PnP update breaking npm audit
 #VULNERABILITY_AUDIT="$(yarn npm audit --all --recursive --json)"

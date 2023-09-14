@@ -4,13 +4,7 @@ import {
   PluginExtensionPoints,
   type PluginExtensionPanelContext,
 } from '@grafana/data';
-import {
-  AngularComponent,
-  getDataSourceSrv,
-  locationService,
-  reportInteraction,
-  getPluginLinkExtensions,
-} from '@grafana/runtime';
+import { AngularComponent, locationService, reportInteraction, getPluginLinkExtensions } from '@grafana/runtime';
 import { PanelCtrl } from 'app/angular/panel/panel_ctrl';
 import config from 'app/core/config';
 import { t } from 'app/core/internationalization';
@@ -112,7 +106,6 @@ export function getPanelMenu(
       event.ctrlKey || event.metaKey ? (url: string) => window.open(`${config.appSubUrl}${url}`) : undefined;
     store.dispatch(
       navigateToExplore(panel, {
-        getDataSourceSrv,
         timeRange: getTimeSrv().timeRange(),
         getExploreUrl,
         openInNewWindow,

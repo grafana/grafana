@@ -696,6 +696,7 @@ const traceSubFrame = (
     fields: [
       {
         name: 'traceIdHidden',
+        type: FieldType.string,
         config: {
           custom: { hidden: true },
         },
