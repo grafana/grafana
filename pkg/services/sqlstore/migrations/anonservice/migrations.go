@@ -15,9 +15,11 @@ func AddMigration(mg *migrator.Migrator) {
 		},
 		Indices: []*migrator.Index{
 			{Cols: []string{"device_id"}, Type: migrator.UniqueIndex},
+			{Cols: []string{"updated_at"}, Type: migrator.IndexType},
 		},
 	}
 
 	mg.AddMigration("create anon_device table", migrator.NewAddTableMigration(anonV1))
 	mg.AddMigration("add unique index anon_device.device_id", migrator.NewAddIndexMigration(anonV1, anonV1.Indices[0]))
+	mg.AddMigration("add index anon_device.updated_at", migrator.NewAddIndexMigration(anonV1, anonV1.Indices[1]))
 }
