@@ -19,10 +19,15 @@ export const SPECIAL_DONE_TOKEN = '¬';
 /**
  * The llm library doesn't indicate when the stream is done, so we need to ask the LLM to add an special token to indicate that the stream is done at the end of the message.
  */
-const DONE_MESSAGE = {
+export const DONE_MESSAGE = {
   role: Role.system,
   content: `When you are done with the response, write "${SPECIAL_DONE_TOKEN}" always at the end of the response.`,
 };
+
+/**
+ * The OpenAI model to be used.
+ */
+export const OPEN_AI_MODEL = 'gpt-4';
 
 /**
  * Generate a text with the instructions for LLM to follow.
@@ -48,7 +53,7 @@ export const generateTextWithLLM = async (
 
   return llms.openai
     .streamChatCompletions({
-      model: 'gpt-4',
+      model: OPEN_AI_MODEL,
       messages: [DONE_MESSAGE, ...messages],
     })
     .pipe(
