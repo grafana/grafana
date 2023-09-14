@@ -1,12 +1,11 @@
 import { e2e } from '../utils';
 
-e2e.scenario({
-  describeName: 'Dashboard templating',
-  itName: 'Verify variable interpolation works',
-  addScenarioDataSource: false,
-  addScenarioDashBoard: false,
-  skipScenario: false,
-  scenario: () => {
+describe('Dashboard templating', () => {
+  beforeEach(() => {
+    e2e.flows.login(e2e.env('USERNAME'), e2e.env('PASSWORD'));
+  });
+
+  it('Verify variable interpolation works', () => {
     // Open dashboard global variables and interpolation
     e2e.flows.openDashboard({ uid: 'HYaGDGIMk' });
 
@@ -57,5 +56,5 @@ e2e.scenario({
       'href',
       'https://example.com/?from=now-6h&to=now'
     );
-  },
+  });
 });

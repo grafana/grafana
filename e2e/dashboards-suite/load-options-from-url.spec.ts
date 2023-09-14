@@ -3,8 +3,11 @@ import { e2e } from '../utils';
 const PAGE_UNDER_TEST = '-Y-tnEDWk/templating-nested-template-variables';
 
 describe('Variables - Load options from Url', () => {
+  beforeEach(() => {
+    e2e.flows.login(e2e.env('USERNAME'), e2e.env('PASSWORD'));
+  });
+
   it('default options should be correct', () => {
-    e2e.flows.login('admin', 'admin');
     e2e.flows.openDashboard({ uid: PAGE_UNDER_TEST });
     cy.intercept({
       method: 'POST',
@@ -54,7 +57,6 @@ describe('Variables - Load options from Url', () => {
   });
 
   it('options set in url should load correct options', () => {
-    e2e.flows.login('admin', 'admin');
     e2e.flows.openDashboard({ uid: `${PAGE_UNDER_TEST}?orgId=1&var-datacenter=B&var-server=BB&var-pod=BBB` });
     cy.intercept({
       method: 'POST',
@@ -104,7 +106,6 @@ describe('Variables - Load options from Url', () => {
   });
 
   it('options set in url that do not exist should load correct options', () => {
-    e2e.flows.login('admin', 'admin');
     // @ts-ignore some typing issue
     cy.on('uncaught:exception', (err) => {
       if (err.stack?.indexOf("Couldn't find any field of type string in the results.") !== -1) {

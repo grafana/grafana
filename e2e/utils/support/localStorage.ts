@@ -1,5 +1,3 @@
-import { e2e } from '../index';
-
 // @todo this actually returns type `Cypress.Chainable`
 const get = (key: string): any =>
   cy.wrap({ getLocalStorage: () => localStorage.getItem(key) }, { log: false }).invoke('getLocalStorage');

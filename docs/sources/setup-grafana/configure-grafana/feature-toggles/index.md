@@ -117,7 +117,6 @@ Experimental features might be changed or removed without prior notice.
 | `exploreScrollableLogsContainer`            | Improves the scrolling behavior of logs in Explore                                                           |
 | `recordedQueriesMulti`                      | Enables writing multiple items from a single query within Recorded Queries                                   |
 | `pluginsDynamicAngularDetectionPatterns`    | Enables fetching Angular detection patterns for plugins from GCOM and fallback to hardcoded ones             |
-| `alertingLokiRangeToInstant`                | Rewrites eligible loki range queries to instant queries                                                      |
 | `vizAndWidgetSplit`                         | Split panels between vizualizations and widgets                                                              |
 | `prometheusIncrementalQueryInstrumentation` | Adds RudderStack events to incremental queries                                                               |
 | `logsExploreTableVisualisation`             | A table visualisation for logs in Explore                                                                    |
@@ -134,6 +133,8 @@ Experimental features might be changed or removed without prior notice.
 | `dashgpt`                                   | Enable AI powered features in dashboards                                                                     |
 | `sseGroupByDatasource`                      | Send query to the same datasource in a single request when using server side expressions                     |
 | `requestInstrumentationStatusSource`        | Include a status source label for request metrics and logs                                                   |
+| `wargamesTesting`                           | Placeholder feature flag for internal testing                                                                |
+| `alertingInsights`                          | Show the new alerting insights landing page                                                                  |
 
 ## Development feature toggles
 

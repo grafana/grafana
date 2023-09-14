@@ -4,7 +4,7 @@ import { EditorField, EditorRow } from '@grafana/experimental';
 import { AutoSizeInput } from '@grafana/ui';
 import { QueryOptionGroup } from 'app/plugins/datasource/prometheus/querybuilder/shared/QueryOptionGroup';
 
-import { DEFAULT_LIMIT } from '../datasource';
+import { DEFAULT_LIMIT, DEFAULT_SPSS } from '../datasource';
 import { TempoQuery } from '../types';
 
 interface Props {
@@ -20,8 +20,11 @@ export const TempoQueryBuilderOptions = React.memo<Props>(({ onChange, query }) 
   const onLimitChange = (e: React.FormEvent<HTMLInputElement>) => {
     onChange({ ...query, limit: parseInt(e.currentTarget.value, 10) });
   };
+  const onSpssChange = (e: React.FormEvent<HTMLInputElement>) => {
+    onChange({ ...query, spss: parseInt(e.currentTarget.value, 10) });
+  };
 
-  const collapsedInfoList = [`Limit: ${query.limit || DEFAULT_LIMIT}`];
+  const collapsedInfoList = [`Limit: ${query.limit || DEFAULT_LIMIT}`, `Spans Limit: ${query.spss || DEFAULT_SPSS}`];
 
   return (
     <>
@@ -36,6 +39,17 @@ export const TempoQueryBuilderOptions = React.memo<Props>(({ onChange, query }) 
               defaultValue={query.limit || DEFAULT_LIMIT}
               onCommitChange={onLimitChange}
               value={query.limit}
+            />
+          </EditorField>
+          <EditorField label="Span Limit" tooltip="Maximum number of spans to return for each span set.">
+            <AutoSizeInput
+              className="width-4"
+              placeholder="auto"
+              type="number"
+              min={1}
+              defaultValue={query.spss || DEFAULT_SPSS}
+              onCommitChange={onSpssChange}
+              value={query.spss}
             />
           </EditorField>
         </QueryOptionGroup>

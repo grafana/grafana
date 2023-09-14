@@ -27,6 +27,7 @@ export const defaultApiConfig: APIEditorConfig = {
   endpoint: '',
   method: HttpRequestMethod.POST,
   data: '{}',
+  contentType: 'application/json',
 };
 
 export const defaultStyleConfig: ButtonStyleConfig = {
@@ -88,7 +89,11 @@ export const buttonItem: CanvasElementItem<ButtonConfig, ButtonData> = {
   prepareData: (ctx: DimensionContext, cfg: ButtonConfig) => {
     const getCfgApi = () => {
       if (cfg?.api) {
-        cfg.api = { ...cfg.api, method: cfg.api.method ?? HttpRequestMethod.POST };
+        cfg.api = {
+          ...cfg.api,
+          method: cfg.api.method ?? defaultApiConfig.method,
+          contentType: cfg.api.contentType ?? defaultApiConfig.contentType,
+        };
         return cfg.api;
       }
 
