@@ -42,22 +42,6 @@ load(
 
 ver_mode = "release"
 
-release_trigger = {
-    "event": {
-        "exclude": [
-            "promote",
-        ],
-    },
-    "ref": {
-        "include": [
-            "refs/tags/v*",
-        ],
-        "exclude": [
-            "refs/tags/*-cloud*",
-        ],
-    },
-}
-
 def retrieve_npm_packages_step():
     return {
         "name": "retrieve-npm-packages",
@@ -262,7 +246,7 @@ def verify_release_pipeline(
         bucket = from_secret(prerelease_bucket),
         gcp_key = from_secret(rgm_gcp_key_base64),
         version = "${DRONE_TAG}",
-        trigger = release_trigger,
+        trigger = {},
         depends_on = [
             "release-build-e2e-publish",
             "release-windows",
