@@ -110,6 +110,7 @@ function getMimirManagedRulesScenes() {
   });
 }
 
+//@todo: enable query variables after https://github.com/grafana/scenes/pull/335 is merged
 function getMimirManagedRulesPerGroupScenes() {
   // const ruleGroupHandler = new QueryVariable({
   //   label: 'Rule Group',
