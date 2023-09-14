@@ -61,7 +61,7 @@ describe('GenAIButton', () => {
   describe('when LLM plugin is properly configured', () => {
     beforeEach(() => {
       jest.resetAllMocks();
-      isLLMPluginEnabled.mockResolvedValue(true);
+      jest.mocked(isLLMPluginEnabled).mockResolvedValue(true);
     });
 
     it('should renders text ', async () => {
@@ -77,7 +77,7 @@ describe('GenAIButton', () => {
 
     it('disables the button while generating', async () => {
       const isDoneGeneratingMessage = false;
-      generateTextWithLLM.mockImplementationOnce((messages = [], replyHandler) => {
+      jest.mocked(generateTextWithLLM).mockImplementationOnce((messages = [], replyHandler) => {
         replyHandler('Generated text', isDoneGeneratingMessage);
         return new Promise(() => new Subscription());
       });
@@ -95,7 +95,7 @@ describe('GenAIButton', () => {
 
     it('handles the response and re-enables the button', async () => {
       const isDoneGeneratingMessage = true;
-      generateTextWithLLM.mockImplementationOnce((messages = [], replyHandler) => {
+      jest.mocked(generateTextWithLLM).mockImplementationOnce((messages = [], replyHandler) => {
         replyHandler('Generated text', isDoneGeneratingMessage);
         return new Promise(() => new Subscription());
       });

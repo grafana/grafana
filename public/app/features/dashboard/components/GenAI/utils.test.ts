@@ -23,7 +23,7 @@ jest.mock('@grafana/experimental', () => ({
 
 describe('generateTextWithLLM', () => {
   it('should throw an error if LLM plugin is not enabled', async () => {
-    llms.openai.enabled.mockResolvedValue(false);
+    jest.mocked(llms.openai.enabled).mockResolvedValue(false);
 
     await expect(generateTextWithLLM([{ role: Role.user, content: 'Hello' }], jest.fn())).rejects.toThrow(
       'LLM plugin is not enabled'
@@ -32,11 +32,13 @@ describe('generateTextWithLLM', () => {
 
   it('should call llms.openai.streamChatCompletions with the correct parameters', async () => {
     // Mock llms.openai.enabled to return true
-    llms.openai.enabled.mockResolvedValue(true);
+    jest.mocked(llms.openai.enabled).mockResolvedValue(true);
 
-    // Mock llms.openai.streamChatCompletions to return a mock observable
-    const mockObservable = { pipe: jest.fn().mockReturnValue({ subscribe: jest.fn() }) };
-    llms.openai.streamChatCompletions.mockReturnValue(mockObservable);
+    // Mock llms.openai.streamChatCompletions to return a mock observable (types not exported from library)
+    const mockObservable = { pipe: jest.fn().mockReturnValue({ subscribe: jest.fn() }) } as unknown as ReturnType<
+      typeof llms.openai.streamChatCompletions
+    >;
+    jest.mocked(llms.openai.streamChatCompletions).mockReturnValue(mockObservable);
 
     const messages = [{ role: Role.user, content: 'Hello' }];
     const onReply = jest.fn();
@@ -57,7 +59,7 @@ describe('generateTextWithLLM', () => {
 describe('isLLMPluginEnabled', () => {
   it('should return true if LLM plugin is enabled', async () => {
     // Mock llms.openai.enabled to return true
-    llms.openai.enabled.mockResolvedValue(true);
+    jest.mocked(llms.openai.enabled).mockResolvedValue(true);
 
     const enabled = await isLLMPluginEnabled();
 
@@ -66,7 +68,7 @@ describe('isLLMPluginEnabled', () => {
 
   it('should return false if LLM plugin is not enabled', async () => {
     // Mock llms.openai.enabled to return false
-    llms.openai.enabled.mockResolvedValue(false);
+    jest.mocked(llms.openai.enabled).mockResolvedValue(false);
 
     const enabled = await isLLMPluginEnabled();
 
