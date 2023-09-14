@@ -18,7 +18,7 @@ export class SharePanelModal extends SceneObjectBase<SharePanelModalState> {
 
   onClose = () => {
     const dashboard = getDashboardSceneFor(this);
-    dashboard.setState({ drawer: undefined });
+    dashboard.closeModal();
   };
 }
 

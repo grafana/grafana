@@ -169,4 +169,12 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   public getInitialState(): DashboardSceneState | undefined {
     return this._initialState;
   }
+
+  public showModal(modal: SceneObject) {
+    this.setState({ drawer: modal });
+  }
+
+  public closeModal() {
+    this.setState({ drawer: undefined });
+  }
 }
