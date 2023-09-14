@@ -155,10 +155,11 @@ type FrontendSettingsDTO struct {
 	GoogleAnalytics4Id                  string `json:"googleAnalytics4Id"`
 	GoogleAnalytics4SendManualPageViews bool   `json:"GoogleAnalytics4SendManualPageViews"`
 
-	RudderstackWriteKey     string `json:"rudderstackWriteKey"`
-	RudderstackDataPlaneUrl string `json:"rudderstackDataPlaneUrl"`
-	RudderstackSdkUrl       string `json:"rudderstackSdkUrl"`
-	RudderstackConfigUrl    string `json:"rudderstackConfigUrl"`
+	RudderstackWriteKey        string `json:"rudderstackWriteKey"`
+	RudderstackDataPlaneUrl    string `json:"rudderstackDataPlaneUrl"`
+	RudderstackSdkUrl          string `json:"rudderstackSdkUrl"`
+	RudderstackConfigUrl       string `json:"rudderstackConfigUrl"`
+	RudderstackIntegrationsUrl string `json:"rudderstackIntegrationsUrl"`
 
 	FeedbackLinksEnabled                bool     `json:"feedbackLinksEnabled"`
 	ApplicationInsightsConnectionString string   `json:"applicationInsightsConnectionString"`

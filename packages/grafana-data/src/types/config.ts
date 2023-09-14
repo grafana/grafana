@@ -218,6 +218,7 @@ export interface GrafanaConfig {
   rudderstackDataPlaneUrl: string | undefined;
   rudderstackSdkUrl: string | undefined;
   rudderstackConfigUrl: string | undefined;
+  rudderstackIntegrationsUrl: string | undefined;
   sqlConnectionLimits: SqlConnectionLimits;
 }
 

@@ -575,6 +575,12 @@ URL to load the Rudderstack SDK.
 Optional. If tracking with Rudderstack is enabled, you can provide a custom
 URL to load the Rudderstack config.
 
+### rudderstack_integrations_url
+
+Optional. If tracking with Rudderstack is enabled, you can provide a custom
+URL to load the SDK for destinations running in device mode. Only valid for
+Rudderstack version 1.1 or newer.
+
 ### application_insights_connection_string
 
 If you want to track Grafana usage via Azure Application Insights, then specify _your_ Application Insights connection string. Since the connection string contains semicolons, you need to wrap it in backticks (`). By default, tracking usage is disabled.
