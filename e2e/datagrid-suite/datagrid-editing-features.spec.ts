@@ -3,13 +3,12 @@ import { e2e } from '../utils';
 const DASHBOARD_ID = 'c01bf42b-b783-4447-a304-8554cee1843b';
 const DATAGRID_CANVAS = 'data-grid-canvas';
 
-e2e.scenario({
-  describeName: 'Datagrid data changes',
-  itName: 'Tests changing data in the grid',
-  addScenarioDataSource: false,
-  addScenarioDashBoard: false,
-  skipScenario: false,
-  scenario: () => {
+describe('Datagrid data changes', () => {
+  beforeEach(() => {
+    e2e.flows.login(e2e.env('USERNAME'), e2e.env('PASSWORD'));
+  });
+
+  it('Tests changing data in the grid', () => {
     e2e.flows.openDashboard({ uid: DASHBOARD_ID, queryParams: { editPanel: 1 } });
 
     // Edit datagrid which triggers a snapshot query
@@ -155,5 +154,5 @@ e2e.scenario({
     cy.get('body').type('Val{enter}');
     cy.get(`[data-testid="${DATAGRID_CANVAS}"] tbody tr`).contains('Val');
     cy.get(`[data-testid="${DATAGRID_CANVAS}"] tbody tr`).should('have.length', 8);
-  },
+  });
 });

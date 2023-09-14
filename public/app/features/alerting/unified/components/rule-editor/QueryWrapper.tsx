@@ -119,8 +119,10 @@ export const QueryWrapper = ({
       minInterval: queryOptions.minInterval,
     };
 
+    const isAlertCondition = condition === query.refId;
+
     return (
-      <Stack direction="row" alignItems="baseline" gap={1}>
+      <Stack direction="row" alignItems="center" gap={1}>
         <SelectingDataSourceTooltip />
         <QueryOptions
           onChangeTimeRange={onChangeTimeRange}
@@ -132,7 +134,7 @@ export const QueryWrapper = ({
         <ExpressionStatusIndicator
           error={error}
           onSetCondition={() => onSetCondition(query.refId)}
-          isCondition={condition === query.refId}
+          isCondition={isAlertCondition}
         />
       </Stack>
     );
