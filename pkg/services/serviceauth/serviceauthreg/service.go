@@ -1,4 +1,4 @@
-package serviceauhtreg
+package serviceauthreg
 
 import (
 	"context"
@@ -10,17 +10,17 @@ import (
 	"github.com/grafana/grafana/pkg/services/serviceauth"
 )
 
-var _ serviceauth.ExternalServiceRegistry = &registry{}
+var _ serviceauth.ExternalServiceRegistry = &Registry{}
 
-type registry struct {
+type Registry struct {
 	logger      log.Logger
 	acSvc       accesscontrol.Service
 	saSvc       serviceaccounts.Service
 	oauthServer oauthserver.OAuth2Server
 }
 
-func ProvideServiceAuthRegistry(acSvc accesscontrol.Service, saSvc serviceaccounts.Service, oauthServer oauthserver.OAuth2Server) *registry {
-	return &registry{
+func ProvideServiceAuthRegistry(acSvc accesscontrol.Service, saSvc serviceaccounts.Service, oauthServer oauthserver.OAuth2Server) *Registry {
+	return &Registry{
 		logger:      log.New("serviceauth.registry"),
 		acSvc:       acSvc,
 		saSvc:       saSvc,
@@ -29,7 +29,7 @@ func ProvideServiceAuthRegistry(acSvc accesscontrol.Service, saSvc serviceaccoun
 }
 
 // SaveExternalService implements serviceauth.ExternalServiceRegistry.
-func (r *registry) SaveExternalService(ctx context.Context, cmd *serviceauth.ExternalServiceRegistration) (*serviceauth.ExternalServiceDTO, error) {
+func (r *Registry) SaveExternalService(ctx context.Context, cmd *serviceauth.ExternalServiceRegistration) (*serviceauth.ExternalServiceDTO, error) {
 	switch cmd.AuthProvider {
 	case serviceauth.OAuth2Server:
 		r.logger.Debug("Routing the External Service registration to the OAuth2Server", "service", cmd.Name)
@@ -42,6 +42,6 @@ func (r *registry) SaveExternalService(ctx context.Context, cmd *serviceauth.Ext
 	}
 }
 
-func (r *registry) SaveSATokenExternalService(ctx context.Context, cmd *serviceauth.ExternalServiceRegistration) (*serviceauth.ExternalServiceDTO, error) {
+func (r *Registry) SaveSATokenExternalService(ctx context.Context, cmd *serviceauth.ExternalServiceRegistration) (*serviceauth.ExternalServiceDTO, error) {
 	return nil, nil
 }
