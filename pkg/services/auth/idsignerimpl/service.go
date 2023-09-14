@@ -67,12 +67,8 @@ func (s *Service) SignIdentity(ctx context.Context, id identity.Requester, req *
 		return "", fmt.Errorf("signer unavailable")
 	}
 
-	cacheKey, err := id.GetCacheKey()
-	if err != nil {
-		return "", err
-	}
-
-	val, err := s.remoteCache.Get(ctx, getCacheKey(cacheKey))
+	cacheKey := prefixChacheKey(id.GetCacheKey())
+	val, err := s.remoteCache.Get(ctx, cacheKey)
 	if err == nil {
 		return string(val), nil
 	}
@@ -99,7 +95,7 @@ func (s *Service) SignIdentity(ctx context.Context, id identity.Requester, req *
 		return "", err
 	}
 
-	if err := s.remoteCache.Set(ctx, getCacheKey(cacheKey), []byte(token), time.Minute*4); err != nil {
+	if err := s.remoteCache.Set(ctx, cacheKey, []byte(token), time.Minute*4); err != nil {
 		s.logger.Error("failed to set cache", "error", err)
 	}
 
@@ -143,6 +139,6 @@ func getIPString(req *http.Request) string {
 	return ip.String()
 }
 
-func getCacheKey(key string) string {
+func prefixChacheKey(key string) string {
 	return fmt.Sprintf("%s-%s", cacheKeyPrefix, key)
 }
