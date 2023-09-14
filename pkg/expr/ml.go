@@ -49,6 +49,11 @@ func (m *MLNode) NodeType() NodeType {
 	return TypeMLNode
 }
 
+// NodeType returns the data pipeline node type.
+func (m *MLNode) NeedsVars() []string {
+	return []string{}
+}
+
 // Execute initializes plugin API client,  executes a ml.Command and then converts the result of the execution.
 // Returns non-empty mathexp.Results if evaluation was successful. Returns QueryError if command execution failed
 func (m *MLNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s *Service) (r mathexp.Results, e error) {

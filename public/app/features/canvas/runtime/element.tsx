@@ -86,7 +86,7 @@ export class ElementState implements LayerElement {
 
     const { constraint } = this.options;
     const { vertical, horizontal } = constraint ?? {};
-    const placement = this.options.placement ?? ({} as Placement);
+    const placement: Placement = this.options.placement ?? {};
 
     const editingEnabled = this.getScene()?.isEditingEnabled;
 
@@ -229,7 +229,7 @@ export class ElementState implements LayerElement {
         ? Math.round(parentContainer.right - parentBorderWidth - elementContainer.right)
         : 0;
 
-    const placement = {} as Placement;
+    const placement: Placement = {};
 
     const width = elementContainer?.width ?? 100;
     const height = elementContainer?.height ?? 100;

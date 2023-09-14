@@ -49,10 +49,6 @@ export const ConfigureCorrelationSourceForm = () => {
           name="sourceUID"
           rules={{
             required: { value: true, message: 'This field is required.' },
-            validate: {
-              writable: (uid: string) =>
-                !getDatasourceSrv().getInstanceSettings(uid)?.readOnly || "Source can't be a read-only data source.",
-            },
           }}
           render={({ field: { onChange, value } }) => (
             <Field

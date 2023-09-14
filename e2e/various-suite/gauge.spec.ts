@@ -1,12 +1,11 @@
 import { e2e } from '../utils';
 
-e2e.scenario({
-  describeName: 'Gauge Panel',
-  itName: 'Gauge rendering e2e tests',
-  addScenarioDataSource: false,
-  addScenarioDashBoard: false,
-  skipScenario: false,
-  scenario: () => {
+describe('Gauge Panel', () => {
+  beforeEach(() => {
+    e2e.flows.login(e2e.env('USERNAME'), e2e.env('PASSWORD'));
+  });
+
+  it('Gauge rendering e2e tests', () => {
     // open Panel Tests - Gauge
     e2e.flows.openDashboard({ uid: '_5rDmaQiz' });
 
@@ -17,5 +16,5 @@ e2e.scenario({
 
     // check that no panel errors exist
     e2e.components.Panels.Panel.headerCornerInfo('error').should('not.exist');
-  },
+  });
 });

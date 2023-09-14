@@ -7,14 +7,18 @@ import {
   SceneDataTransformer,
   sceneGraph,
   SceneObjectBase,
+  SceneObjectRef,
+  SceneObjectState,
+  VizPanel,
 } from '@grafana/scenes';
+import { t } from 'app/core/internationalization';
+import { InspectTab } from 'app/features/inspector/types';
 import { GetDataOptions } from 'app/features/query/state/PanelQueryRunner';
 
 import { InspectDataTab as InspectDataTabOld } from '../../inspector/InspectDataTab';
 
-import { InspectTabState } from './types';
-
-export interface InspectDataTabState extends InspectTabState {
+export interface InspectDataTabState extends SceneObjectState {
+  panelRef: SceneObjectRef<VizPanel>;
   options: GetDataOptions;
 }
 
@@ -27,6 +31,14 @@ export class InspectDataTab extends SceneObjectBase<InspectDataTabState> {
         withFieldConfig: true,
       },
     });
+  }
+
+  public getTabLabel() {
+    return t('dashboard.inspect.data-tab', 'Data');
+  }
+
+  public getTabValue() {
+    return InspectTab.Data;
   }
 
   public onOptionsChange = (options: GetDataOptions) => {
