@@ -12,7 +12,7 @@ describe('buildVisualQueryFromString', () => {
   });
 
   it('parses simple binary comparison', () => {
-    expect(buildVisualQueryFromString('count_over_time({app="aggregator"} [$__auto]) == 10')).toEqual({
+    expect(buildVisualQueryFromString('count_over_time({app="aggregator"} [$__auto]) == 11')).toEqual({
       query: {
         labels: [
           {
@@ -29,7 +29,7 @@ describe('buildVisualQueryFromString', () => {
           {
             id: LokiOperationId.EqualTo,
             // defined in getSimpleBinaryRenderer, the first argument is the bool parameter, and the second is the value
-            params: [false, 10],
+            params: [false, 11],
           },
         ],
       },
@@ -37,34 +37,9 @@ describe('buildVisualQueryFromString', () => {
     });
   });
 
-  it('parses simple binary comparison', () => {
-    expect(buildVisualQueryFromString('count_over_time({app="aggregator"} [$__auto]) == bool 10')).toEqual({
-      query: {
-        labels: [
-          {
-            label: 'app',
-            op: '=',
-            value: 'aggregator',
-          },
-        ],
-        operations: [
-          {
-            id: LokiOperationId.CountOverTime,
-            params: ['$__auto'],
-          },
-          {
-            id: LokiOperationId.EqualTo,
-            // defined in getSimpleBinaryRenderer, the first argument is the bool parameter, and the second is the value
-            params: [true, 10],
-          },
-        ],
-      },
-      errors: [],
-    });
-  });
-
+  // This still fails because loki doesn't properly parse the bool operator
   it('parses simple query with label-values with boolean operator', () => {
-    expect(buildVisualQueryFromString('count_over_time({app="aggregator"} [$__auto]) == bool 10')).toEqual({
+    expect(buildVisualQueryFromString('count_over_time({app="aggregator"} [$__auto]) == bool 12')).toEqual({
       query: {
         labels: [
           {
@@ -81,33 +56,7 @@ describe('buildVisualQueryFromString', () => {
           {
             id: LokiOperationId.EqualTo,
             // defined in getSimpleBinaryRenderer, the first argument is the bool parameter, and the second is the value
-            params: [true, 10],
-          },
-        ],
-      },
-      errors: [],
-    });
-  });
-
-  it('parses simple query with label-values with boolean operator', () => {
-    expect(buildVisualQueryFromString('count_over_time({app="aggregator"} [$__auto]) == bool 10')).toEqual({
-      query: {
-        labels: [
-          {
-            label: 'app',
-            op: '=',
-            value: 'aggregator',
-          },
-        ],
-        operations: [
-          {
-            id: LokiOperationId.CountOverTime,
-            params: ['$__auto'],
-          },
-          {
-            id: LokiOperationId.EqualTo,
-            // defined in getSimpleBinaryRenderer, the first argument is the bool parameter, and the second is the value
-            params: [true, 10],
+            params: [true, 12],
           },
         ],
       },
