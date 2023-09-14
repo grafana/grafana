@@ -1,5 +1,5 @@
 export const sortByHelper = () => {
   return `
-  This transformation will sort each frame by the configured field, When 'reverse' is checked, the values will return in the opposite order.
+  Use this transformation to sort each frame by the configured field, When 'reverse' is checked, the values will return in the opposite order.
   `;
 };

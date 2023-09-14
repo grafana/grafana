@@ -1,6 +1,6 @@
 export const partitionByValuesHelper = () => {
   return `
-  This transformation can help eliminate the need for multiple queries to the same datasource with different 'WHERE' clauses when graphing multiple series. Consider a metrics SQL table with the following data:
+  Use this transformation to eliminate the need for multiple queries to the same datasource with different 'WHERE' clauses when graphing multiple series. Consider a metrics SQL table with the following data:
 
   | Time                | Region | Value |
   | ------------------- | ------ | ----- |

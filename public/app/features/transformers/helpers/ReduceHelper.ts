@@ -1,6 +1,6 @@
 export const reduceHelper = () => {
   return `
-  The _Reduce_ transformation applies a calculation to each field in the frame and return a single value. Time fields are removed when applying this transformation.
+  Use this transformation to apply a calculation to each field in the frame and return a single value. Time fields are removed when applying this transformation.
 
   Consider the input:
 

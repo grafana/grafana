@@ -1,6 +1,6 @@
 export const convertFieldTypeHelper = () => {
   return `
-  This transformation changes the field type of the specified field.
+  use this transformation to change the field type of the specified field.
 
   - **Field -** Select from available fields
   - **as -** Select the FieldType to convert to
