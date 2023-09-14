@@ -8,6 +8,7 @@ This directory contains guides for contributors to the Grafana project.
 - [Triage issues](triage-issues.md)
 - [Merge a pull request](merge-pull-request.md)
 - [Making changes to the CI pipeline](drone-pipeline.md)
+- [Breaking changes in frontend APIs](./breaking-changes-guide/breaking-changes-guide.md)
 
 The `style-guides` directory contains style guides for the Grafana software project and documentation.
 
