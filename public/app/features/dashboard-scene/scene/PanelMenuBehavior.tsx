@@ -54,7 +54,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
         iconClassName: 'share-alt',
         onClick: () => {
           reportInteraction('dashboards_panelheader_menu', { item: 'share' });
-          dashboard.showModal(new SharePanelModal({ panelRef: new SceneObjectRef(panel) }));
+          dashboard.showModal(new SharePanelModal({ panelRef: panel.getRef(), dashboardRef: dashboard.getRef() }));
         },
         shortcut: 'p s',
       });

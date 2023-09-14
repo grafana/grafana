@@ -1885,8 +1885,9 @@ steps:
     repo:
     - grafana/grafana
 - commands:
-  - apk add --update bash grep
-  - ./scripts/ci-frontend-metrics.sh | ./bin/build publish-metrics $$GRAFANA_MISC_STATS_API_KEY
+  - apk add --update bash grep git
+  - ./scripts/ci-frontend-metrics.sh ./grafana/public/build | ./bin/build publish-metrics
+    $$GRAFANA_MISC_STATS_API_KEY
   depends_on:
   - test-a11y-frontend
   environment:
@@ -2777,6 +2778,9 @@ trigger:
     - refs/tags/*-cloud*
     include:
     - refs/tags/v*
+  repo:
+    exclude:
+    - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -2832,6 +2836,9 @@ trigger:
     - refs/tags/*-cloud*
     include:
     - refs/tags/v*
+  repo:
+    exclude:
+    - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -2909,6 +2916,9 @@ trigger:
     - refs/tags/*-cloud*
     include:
     - refs/tags/v*
+  repo:
+    exclude:
+    - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -3025,6 +3035,9 @@ trigger:
     - refs/tags/*-cloud*
     include:
     - refs/tags/v*
+  repo:
+    exclude:
+    - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -3091,6 +3104,9 @@ trigger:
     - refs/tags/*-cloud*
     include:
     - refs/tags/v*
+  repo:
+    exclude:
+    - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -3186,6 +3202,9 @@ trigger:
     - refs/tags/*-cloud*
     include:
     - refs/tags/v*
+  repo:
+    exclude:
+    - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -4170,6 +4189,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 61a1d1c141e2eec8ed8110600e6a9b910bee3e2e974bf711b969b3010364ca2d
+hmac: dd510a5bc713ecde460082403f309b93dcdcb823368e642bac07861eddbf051e
 
 ...
