@@ -1,6 +1,5 @@
 ---
 aliases:
-  - unified-alerting/ # /docs/grafana/<GRAFANA VERSION>/alerting/unified-alerting/
   - alerting/migrating-alerts/ # /docs/grafana/<GRAFANA VERSION>/alerting/migrating-alerts/
 canonical: https://grafana.com/docs/grafana/latest/alerting/set-up/migrating-alerts/
 description: Upgrade Grafana alerts
