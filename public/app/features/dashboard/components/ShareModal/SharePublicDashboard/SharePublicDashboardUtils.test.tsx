@@ -1,5 +1,7 @@
 import { DataSourceRef, DataQuery } from '@grafana/data/src/types/query';
+import { DataSourceWithBackend } from '@grafana/runtime';
 import { updateConfig } from 'app/core/config';
+import { mockDataSource } from 'app/features/alerting/unified/mocks';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { VariableModel } from 'app/features/variables/types';
 
@@ -10,6 +12,29 @@ import {
   generatePublicDashboardUrl,
   getUnsupportedDashboardDatasources,
 } from './SharePublicDashboardUtils';
+
+const mockDS = mockDataSource({
+  name: 'mock-ds',
+  type: 'mock-ds-type',
+});
+
+jest.mock('@grafana/runtime/src/services/dataSourceSrv', () => {
+  return {
+    getDataSourceSrv: () => ({
+      get: () =>
+        Promise.resolve(
+          new DataSourceWithBackend({
+            ...mockDS,
+            meta: {
+              ...mockDS.meta,
+              alerting: true,
+              backend: true,
+            },
+          })
+        ),
+    }),
+  };
+});
 
 describe('dashboardHasTemplateVariables', () => {
   it('false', () => {
@@ -50,7 +75,7 @@ describe('publicDashboardPersisted', () => {
 });
 
 describe('getUnsupportedDashboardDatasources', () => {
-  it('itIsSupported', () => {
+  it('itIsSupported', async () => {
     const pm = {
       targets: [
         {
@@ -65,10 +90,11 @@ describe('getUnsupportedDashboardDatasources', () => {
       ] as DataQuery[],
     } as PanelModel;
     const panelArray: PanelModel[] = [pm];
-    expect(getUnsupportedDashboardDatasources(panelArray)).toEqual([]);
+    const unsupportedDataSources = await getUnsupportedDashboardDatasources(panelArray);
+    expect(unsupportedDataSources).toEqual([]);
   });
 
-  it('itIsNotSupported', () => {
+  it('itIsNotSupported', async () => {
     const pm = {
       targets: [
         {
@@ -77,6 +103,8 @@ describe('getUnsupportedDashboardDatasources', () => {
       ] as DataQuery[],
     } as PanelModel;
     const panelArray: PanelModel[] = [pm];
-    expect(getUnsupportedDashboardDatasources(panelArray)).toEqual(['blah']);
+    const unsupportedDataSources = await getUnsupportedDashboardDatasources(panelArray);
+
+    expect(unsupportedDataSources).toEqual(['blah']);
   });
 });

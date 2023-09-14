@@ -1,4 +1,6 @@
+import { DataSourceWithBackend } from '@grafana/runtime';
 import { getConfig } from 'app/core/config';
+import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { VariableModel } from 'app/features/variables/types';
 
 import { PanelModel } from '../../../state';
@@ -50,14 +52,20 @@ export const publicDashboardPersisted = (publicDashboard?: PublicDashboard): boo
 /**
  * Get unique datasource names from all panels that are not currently supported by public dashboards.
  */
-export const getUnsupportedDashboardDatasources = (panels: PanelModel[]): string[] => {
+export const getUnsupportedDashboardDatasources = async (panels: PanelModel[]): Promise<string[]> => {
   let unsupportedDS = new Set<string>();
 
   for (const panel of panels) {
     for (const target of panel.targets) {
-      let ds = target?.datasource?.type;
-      if (ds && !supportedDatasources.has(ds)) {
-        unsupportedDS.add(ds);
+      const dsType = target?.datasource?.type;
+      if (dsType && supportedDatasources.has(dsType)) {
+        const ds = await getDatasourceSrv().get(target.datasource);
+        if (!(ds instanceof DataSourceWithBackend)) {
+          unsupportedDS.add(dsType);
+        }
+      }
+      if (dsType && !supportedDatasources.has(dsType)) {
+        unsupportedDS.add(dsType);
       }
     }
   }

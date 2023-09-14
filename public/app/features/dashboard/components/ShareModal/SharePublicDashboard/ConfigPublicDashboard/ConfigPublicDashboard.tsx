@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useContext } from 'react';
+import React, { useContext, useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data/src';
@@ -60,7 +60,18 @@ const ConfigPublicDashboard = () => {
   const dashboardState = useSelector((store) => store.dashboard);
   const dashboard = dashboardState.getModel()!;
   const dashboardVariables = dashboard.getVariables();
-  const unsupportedDataSources = getUnsupportedDashboardDatasources(dashboard.panels);
+
+  const [unsupportedDataSources, setUnsupportedDataSources] = useState<string[]>([]);
+
+  useEffect(() => {
+    const fetchUnsupportedDataSources = async () => {
+      return await getUnsupportedDashboardDatasources(dashboard.panels);
+    };
+
+    fetchUnsupportedDataSources().then((dsList) => {
+      setUnsupportedDataSources(dsList);
+    });
+  }, [dashboard.panels]);
 
   const { data: publicDashboard, isFetching: isGetLoading } = useGetPublicDashboardQuery(dashboard.uid);
   const [update, { isLoading: isUpdateLoading }] = useUpdatePublicDashboardMutation();

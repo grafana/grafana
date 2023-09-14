@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { FormState, UseFormRegister } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data/src';
@@ -31,7 +31,18 @@ const CreatePublicDashboard = ({ isError }: { isError: boolean }) => {
   const hasWritePermissions = contextSrv.hasPermission(AccessControlAction.DashboardsPublicWrite);
   const dashboardState = useSelector((store) => store.dashboard);
   const dashboard = dashboardState.getModel()!;
-  const unsupportedDataSources = getUnsupportedDashboardDatasources(dashboard.panels);
+
+  const [unsupportedDataSources, setUnsupportedDataSources] = useState<string[]>([]);
+
+  useEffect(() => {
+    const fetchUnsupportedDataSources = async () => {
+      return await getUnsupportedDashboardDatasources(dashboard.panels);
+    };
+
+    fetchUnsupportedDataSources().then((dsList) => {
+      setUnsupportedDataSources(dsList);
+    });
+  }, [dashboard.panels]);
 
   const [createPublicDashboard, { isLoading: isSaveLoading }] = useCreatePublicDashboardMutation();
 

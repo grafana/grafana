@@ -164,10 +164,8 @@ guaranteed because plugin developers can override this functionality. The follow
   <tr>
     <td>
       <ul>
-        <li>Altinity plugin for ClickHouse</li>
         <li>ClickHouse</li>
         <li>Elasticsearch</li>
-        <li>Graphite</li>
         <li>Infinity</li>
         <li>InfluxDB</li>
         <li>Loki</li>
@@ -178,7 +176,6 @@ guaranteed because plugin developers can override this functionality. The follow
       <ul>
         <li>MongoDB</li>
         <li>MySQL</li>
-        <li>OpenTSDB</li>
         <li>Oracle Database</li>
         <li>PostgreSQL</li>
         <li>Prometheus</li>
@@ -191,16 +188,11 @@ guaranteed because plugin developers can override this functionality. The follow
 
 ### Unconfirmed:
 
-{{% admonition type="note" %}}
-
-If you've confirmed one of these data sources work with public dashboards, let us know in our [Github](https://github.com/grafana/grafana/discussions/49253) discussion, and we'll mark it as confirmed!
-
-{{% /admonition %}}
-
 <table>
   <tr>
     <td>
       <ul>
+        <li>Altinity plugin for ClickHouse</li>
         <li>Amazon Athena</li>
         <li>Amazon Redshift</li>
         <li>Amazon Timestream</li>
@@ -223,6 +215,7 @@ If you've confirmed one of these data sources work with public dashboards, let u
         <li>GitHub</li>
         <li>Google BigQuery</li>
         <li>Grafana for YNAB</li>
+        <li>Graphite</li>
         <li>Honeycomb</li>
         <li>Jira</li>
         <li>Mock</li>
@@ -231,12 +224,13 @@ If you've confirmed one of these data sources work with public dashboards, let u
         <li>OPC UA (Unified Architecture)</li>
         <li>Open Distro for Elasticsearch</li>
         <li>OpenSearch</li>
-        <li>Orbit</li>
-        <li>SAP HANA®</li>
+        <li>OpenTSDB</li>
       </ul>
     </td>
     <td>
       <ul>
+        <li>Orbit</li>
+        <li>SAP HANA®</li>
         <li>Salesforce</li>
         <li>Sentry</li>
         <li>ServiceNow</li>
