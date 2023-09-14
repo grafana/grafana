@@ -1,4 +1,4 @@
-export const createHeatmapHelp = () => {
+export const createHeatmapHelper = () => {
   return `
   Use this transformation to prepare histogram data to be visualized over time. Similar to the Heatmap panel, this transformation allows you to convert histogram metrics to buckets over time.
 

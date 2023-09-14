@@ -2,7 +2,7 @@ export { calculateFieldHelper } from './calculateFieldHelper';
 export { concatenateHelper } from './concatenateHelper';
 export { configFromQueryHelper } from './configFromQueryHelper';
 export { convertFieldTypeHelper } from './convertFieldTypeHelper';
-export { createHeatmapHelp } from './createHeatmapHelp';
+export { createHeatmapHelper } from './createHeatmapHelper';
 export { extractFieldsHelper } from './extractFieldsHelper';
 export { fieldLookupHelper } from './fieldLookupHelper';
 export { filterByRefIdHelper } from './filterByRefIdHelper';
