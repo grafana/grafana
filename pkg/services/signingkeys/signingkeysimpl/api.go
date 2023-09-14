@@ -23,7 +23,7 @@ type api struct {
 }
 
 func handleGetJWKS(s service) web.Handler {
-	return func(c contextmodel.ReqContext) {
+	return func(c *contextmodel.ReqContext) {
 		c.JSON(http.StatusOK, s.GetJWKS())
 	}
 }

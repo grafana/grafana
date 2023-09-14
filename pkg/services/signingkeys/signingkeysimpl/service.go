@@ -71,6 +71,7 @@ func (s *Service) GetJWK(keyID string) (jose.JSONWebKey, error) {
 	}
 
 	result := jose.JSONWebKey{
+		KeyID: keyID,
 		Key: privateKey.Public(),
 		Use: "sig",
 	}
