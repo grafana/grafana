@@ -3,12 +3,13 @@ import React, { useState } from 'react';
 import { config, locationService, reportInteraction } from '@grafana/runtime';
 import { Button, Drawer, Dropdown, Icon, Menu, MenuItem } from '@grafana/ui';
 import { Permissions } from 'app/core/components/AccessControl';
-import { appEvents, contextSrv } from 'app/core/core';
+import { appEvents } from 'app/core/core';
 import { t, Trans } from 'app/core/internationalization';
-import { AccessControlAction, FolderDTO } from 'app/types';
+import { FolderDTO } from 'app/types';
 import { ShowModalReactEvent } from 'app/types/events';
 
 import { useDeleteFolderMutation, useMoveFolderMutation } from '../api/browseDashboardsAPI';
+import { getFolderPermissions } from '../permissions';
 
 import { DeleteModal } from './BrowseActions/DeleteModal';
 import { MoveModal } from './BrowseActions/MoveModal';
@@ -22,12 +23,9 @@ export function FolderActionsButton({ folder }: Props) {
   const [showPermissionsDrawer, setShowPermissionsDrawer] = useState(false);
   const [moveFolder] = useMoveFolderMutation();
   const [deleteFolder] = useDeleteFolderMutation();
-  const canViewPermissions = contextSrv.hasPermission(AccessControlAction.FoldersPermissionsRead);
-  const canSetPermissions = contextSrv.hasPermission(AccessControlAction.FoldersPermissionsWrite);
+  const { canEditFolder, canDeleteFolder, canViewPermissions, canSetPermissions } = getFolderPermissions(folder);
   // Can only move folders when nestedFolders is enabled
-  const canMoveFolder =
-    config.featureToggles.nestedFolders && contextSrv.hasPermission(AccessControlAction.FoldersWrite);
-  const canDeleteFolder = contextSrv.hasPermission(AccessControlAction.FoldersDelete);
+  const canMoveFolder = config.featureToggles.nestedFolders && canEditFolder;
 
   const onMove = async (destinationUID: string) => {
     await moveFolder({ folder, destinationUID });
