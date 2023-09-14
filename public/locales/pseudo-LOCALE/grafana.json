@@ -26,7 +26,10 @@
   "browse-dashboards": {
     "action": {
       "cancel-button": "Cäŉčęľ",
+      "cannot-move-folders": "Főľđęřş čäŉ ŉőŧ þę mővęđ",
       "delete-button": "Đęľęŧę",
+      "delete-modal-invalid-text": "Øŉę őř mőřę ƒőľđęřş čőŉŧäįŉ ľįþřäřy päŉęľş őř äľęřŧ řūľęş. Đęľęŧę ŧĥęşę ƒįřşŧ įŉ őřđęř ŧő přőčęęđ.",
+      "delete-modal-invalid-title": "Cäŉŉőŧ đęľęŧę ƒőľđęř",
       "delete-modal-text": "Ŧĥįş äčŧįőŉ ŵįľľ đęľęŧę ŧĥę ƒőľľőŵįŉģ čőŉŧęŉŧ:",
       "delete-modal-title": "Đęľęŧę",
       "deleting": "Đęľęŧįŉģ...",
@@ -603,6 +606,50 @@
       "show-legend": "Ŝĥőŵ ľęģęŉđ",
       "unlink-library-panel": "Ůŉľįŉĸ ľįþřäřy päŉęľ",
       "view": "Vįęŵ"
+    }
+  },
+  "playlist-edit": {
+    "error-prefix": "Ēřřőř ľőäđįŉģ pľäyľįşŧ:",
+    "form": {
+      "add-tag-label": "Åđđ þy ŧäģ",
+      "add-tag-placeholder": "Ŝęľęčŧ ä ŧäģ",
+      "add-title-label": "Åđđ þy ŧįŧľę",
+      "cancel": "Cäŉčęľ",
+      "heading": "Åđđ đäşĥþőäřđş",
+      "interval-label": "Ĩŉŧęřväľ",
+      "interval-placeholder": "5m",
+      "interval-required": "Ĩŉŧęřväľ įş řęqūįřęđ",
+      "name-label": "Ńämę",
+      "name-placeholder": "Ńämę",
+      "name-required": "Ńämę įş řęqūįřęđ",
+      "save": "Ŝävę",
+      "table-delete": "Đęľęŧę pľäyľįşŧ įŧęm",
+      "table-drag": "Đřäģ äŉđ đřőp ŧő řęőřđęř",
+      "table-empty": "Pľäyľįşŧ įş ęmpŧy. Åđđ đäşĥþőäřđş þęľőŵ.",
+      "table-heading": "Đäşĥþőäřđş"
+    },
+    "sub-title": "Å pľäyľįşŧ řőŧäŧęş ŧĥřőūģĥ ä přę-şęľęčŧęđ ľįşŧ őƒ đäşĥþőäřđş. Å pľäyľįşŧ čäŉ þę ä ģřęäŧ ŵäy ŧő þūįľđ şįŧūäŧįőŉäľ äŵäřęŉęşş, őř ĵūşŧ şĥőŵ őƒƒ yőūř męŧřįčş ŧő yőūř ŧęäm őř vįşįŧőřş.",
+    "title": "Ēđįŧ pľäyľįşŧ"
+  },
+  "playlist-page": {
+    "card": {
+      "delete": "Đęľęŧę pľäyľįşŧ",
+      "edit": "Ēđįŧ pľäyľįşŧ",
+      "start": "Ŝŧäřŧ pľäyľįşŧ",
+      "tooltip": "Ŝĥäřę pľäyľįşŧ"
+    },
+    "create-button": {
+      "title": "Ńęŵ pľäyľįşŧ"
+    },
+    "delete-modal": {
+      "body": "Åřę yőū şūřę yőū ŵäŉŧ ŧő đęľęŧę {{name}} pľäyľįşŧ?",
+      "confirm-text": "Đęľęŧę"
+    },
+    "empty": {
+      "button": "Cřęäŧę Pľäyľįşŧ",
+      "pro-tip": "Ÿőū čäŉ ūşę pľäyľįşŧş ŧő čyčľę đäşĥþőäřđş őŉ ŦVş ŵįŧĥőūŧ ūşęř čőŉŧřőľ",
+      "pro-tip-link-title": "Ŀęäřŉ mőřę",
+      "title": "Ŧĥęřę äřę ŉő pľäyľįşŧş čřęäŧęđ yęŧ"
     }
   },
   "refresh-picker": {

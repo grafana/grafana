@@ -137,8 +137,7 @@ export function isCloudRulesSource(rulesSource: RulesSource | string): rulesSour
 export function isVanillaPrometheusAlertManagerDataSource(name: string): boolean {
   return (
     name !== GRAFANA_RULES_SOURCE_NAME &&
-    (getDataSourceByName(name)?.jsonData as AlertManagerDataSourceJsonData)?.implementation ===
-      AlertManagerImplementation.prometheus
+    getAlertmanagerDataSourceByName(name)?.jsonData?.implementation === AlertManagerImplementation.prometheus
   );
 }
 
@@ -150,6 +149,13 @@ export function isGrafanaRulesSource(
 
 export function getDataSourceByName(name: string): DataSourceInstanceSettings<DataSourceJsonData> | undefined {
   return getAllDataSources().find((source) => source.name === name);
+}
+
+export function getAlertmanagerDataSourceByName(name: string) {
+  return getAllDataSources().find(
+    (source): source is DataSourceInstanceSettings<AlertManagerDataSourceJsonData> =>
+      source.name === name && source.type === 'alertmanager'
+  );
 }
 
 export function getRulesSourceByName(name: string): RulesSource | undefined {

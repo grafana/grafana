@@ -640,7 +640,7 @@ Latest Version: 0.7.1 | Signature: Community | Last Updated: 2021
 Lack of recent activity in the [project repository](https://github.com/fatcloud/windrose-panel) in the past 4 years suggests project _may_ not be actively maintained.
 {{% /admonition %}}
 
-> **Migration available - potential alternative:** another plugin exists which provides similar capabilities - [Operato Windrose](https://grafana.com/grafana/plugins/operato-windrose-panel/)
+> **Migration available - potential alternative:** another plugin exists which provides similar capabilities - [Operator Windrose](https://grafana.com/grafana/plugins/operato-windrose-panel/)
 
 ### [Statusmap](https://grafana.com/grafana/plugins/flant-statusmap-panel/)
 

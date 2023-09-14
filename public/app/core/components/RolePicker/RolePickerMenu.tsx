@@ -219,7 +219,15 @@ export const RolePickerMenu = ({
       )}
     >
       <div className={customStyles.menu} aria-label="Role picker menu">
-        <CustomScrollbar autoHide={false} autoHeightMax={`${MENU_MAX_HEIGHT}px`} hideHorizontalTrack hideVerticalTrack>
+        <CustomScrollbar
+          autoHide={false}
+          autoHeightMax={`${MENU_MAX_HEIGHT}px`}
+          hideHorizontalTrack
+          hideVerticalTrack
+          // NOTE: this is a way to force hiding of the scrollbar
+          // the scrollbar makes the mouseEvents drop
+          className={cx(customStyles.hideScrollBar)}
+        >
           {showBasicRole && (
             <div className={customStyles.menuSection}>
               <BuiltinRoleSelector
