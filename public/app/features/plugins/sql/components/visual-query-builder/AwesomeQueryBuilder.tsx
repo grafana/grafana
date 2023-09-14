@@ -2,7 +2,6 @@ import { List } from 'immutable';
 import { isString } from 'lodash';
 import React from 'react';
 import {
-  BaseOperator,
   BasicConfig,
   Config,
   JsonTree,
@@ -22,37 +21,9 @@ const buttonLabels = {
   remove: 'Remove',
 };
 
-export const treeWithTimeFilterMacro: JsonTree = {
-  id: Utils.uuid(),
-  type: 'group' as const,
-  children1: {
-    [Utils.uuid()]: {
-      type: 'rule',
-      properties: {
-        field: 'time',
-        operator: 'macros',
-        value: ['timeFilter'],
-        valueSrc: ['value'],
-        valueType: ['datetime'],
-      },
-    },
-  },
-};
-
 export const emptyInitTree: JsonTree = {
   id: Utils.uuid(),
-  type: 'group' as const,
-  children1: {
-    [Utils.uuid()]: {
-      type: 'rule',
-      properties: {
-        field: null,
-        operator: null,
-        value: [],
-        valueSrc: [],
-      },
-    },
-  },
+  type: 'group',
 };
 
 const TIME_FILTER = 'timeFilter';
@@ -285,13 +256,13 @@ function getCustomOperators(config: BasicConfig) {
     },
     [Op.MACROS]: {
       label: 'Macros',
-      sqlFormatOp: (field, _operator, value) => {
+      sqlFormatOp: (field: string, _operator: string, value: string | List<string>) => {
         if (value === TIME_FILTER) {
           return `$__timeFilter(${field})`;
         }
         return value;
       },
-    } as BaseOperator,
+    },
   };
 
   return customOperators;

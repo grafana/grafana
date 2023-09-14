@@ -19,6 +19,8 @@ interface SelectRowProps {
 }
 
 const asteriskValue = { label: '*', value: '*' };
+export const timeAlias = { label: 'time', value: 'time' };
+export const valueAlias = { label: 'value', value: 'value' };
 
 export function SelectRow({ sql, format, columns, onSqlChange, functions }: SelectRowProps) {
   const styles = useStyles2(getStyles);
@@ -28,8 +30,8 @@ export function SelectRow({ sql, format, columns, onSqlChange, functions }: Sele
   // Add necessary alias options for time series format
   // when that format has been selected
   if (format === QueryFormat.Timeseries) {
-    timeSeriesAliasOpts.push({ label: 'time', value: 'time' });
-    timeSeriesAliasOpts.push({ label: 'value', value: 'value' });
+    timeSeriesAliasOpts.push(timeAlias);
+    timeSeriesAliasOpts.push(valueAlias);
   }
 
   const onColumnChange = useCallback(
