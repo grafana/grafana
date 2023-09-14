@@ -6,24 +6,32 @@ import { Button } from '@grafana/ui';
 import { DimensionContext } from 'app/features/dimensions/context';
 import { TextDimensionEditor } from 'app/features/dimensions/editors/TextDimensionEditor';
 import { APIEditor, APIEditorConfig, callApi } from 'app/plugins/panel/canvas/editor/element/APIEditor';
+import { ButtonStyleConfig, ButtonStyleEditor } from 'app/plugins/panel/canvas/editor/element/ButtonStyleEditor';
 import { HttpRequestMethod } from 'app/plugins/panel/canvas/panelcfg.gen';
 
-import { CanvasElementItem, CanvasElementProps, defaultBgColor } from '../element';
+import { CanvasElementItem, CanvasElementProps } from '../element';
 
 interface ButtonData {
   text?: string;
   api?: APIEditorConfig;
+  style?: ButtonStyleConfig;
 }
 
 interface ButtonConfig {
   text?: TextDimensionConfig;
   api?: APIEditorConfig;
+  style?: ButtonStyleConfig;
 }
 
 export const defaultApiConfig: APIEditorConfig = {
   endpoint: '',
   method: HttpRequestMethod.POST,
   data: '{}',
+  contentType: 'application/json',
+};
+
+export const defaultStyleConfig: ButtonStyleConfig = {
+  variant: 'primary',
 };
 
 class ButtonDisplay extends PureComponent<CanvasElementProps<ButtonConfig, ButtonData>> {
@@ -36,7 +44,7 @@ class ButtonDisplay extends PureComponent<CanvasElementProps<ButtonConfig, Butto
     };
 
     return (
-      <Button type="submit" onClick={onClick} style={{ background: defaultBgColor }}>
+      <Button type="submit" variant={data?.style?.variant} onClick={onClick}>
         {data?.text}
       </Button>
     );
@@ -64,6 +72,7 @@ export const buttonItem: CanvasElementItem<ButtonConfig, ButtonData> = {
         fixed: 'Button',
       },
       api: defaultApiConfig,
+      style: defaultStyleConfig,
     },
     background: {
       color: {
@@ -80,7 +89,11 @@ export const buttonItem: CanvasElementItem<ButtonConfig, ButtonData> = {
   prepareData: (ctx: DimensionContext, cfg: ButtonConfig) => {
     const getCfgApi = () => {
       if (cfg?.api) {
-        cfg.api = { ...cfg.api, method: cfg.api.method ?? HttpRequestMethod.POST };
+        cfg.api = {
+          ...cfg.api,
+          method: cfg.api.method ?? defaultApiConfig.method,
+          contentType: cfg.api.contentType ?? defaultApiConfig.contentType,
+        };
         return cfg.api;
       }
 
@@ -90,6 +103,7 @@ export const buttonItem: CanvasElementItem<ButtonConfig, ButtonData> = {
     const data: ButtonData = {
       text: cfg?.text ? ctx.getText(cfg.text).value() : '',
       api: getCfgApi(),
+      style: cfg?.style ?? defaultStyleConfig,
     };
 
     return data;
@@ -105,6 +119,13 @@ export const buttonItem: CanvasElementItem<ButtonConfig, ButtonData> = {
         path: 'config.text',
         name: 'Text',
         editor: TextDimensionEditor,
+      })
+      .addCustomEditor({
+        category,
+        id: 'styleSelector',
+        path: 'config.style',
+        name: 'Style',
+        editor: ButtonStyleEditor,
       })
       .addCustomEditor({
         category,
