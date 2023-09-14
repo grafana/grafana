@@ -17,7 +17,7 @@ import { LokiQueryBuilderContainer } from '../querybuilder/components/LokiQueryB
 import { LokiQueryBuilderOptions } from '../querybuilder/components/LokiQueryBuilderOptions';
 import { LokiQueryCodeEditor } from '../querybuilder/components/LokiQueryCodeEditor';
 import { QueryPatternsModal } from '../querybuilder/components/QueryPatternsModal';
-import { buildVisualQueryFromString } from '../querybuilder/parsing';
+import { buildVisualQueryFromString, isLokiQueryEmpty } from '../querybuilder/parsing';
 import { changeEditorMode, getQueryWithDefaults } from '../querybuilder/state';
 import { LokiQuery, QueryStats } from '../types';
 
@@ -64,14 +64,16 @@ export const LokiQueryEditor = React.memo<LokiQueryEditorProps>((props) => {
       });
 
       if (newEditorMode === QueryEditorMode.Builder) {
-        const result = buildVisualQueryFromString(query.expr || '');
+        const result = buildVisualQueryFromString(query.expr ?? '');
+
         // If there are errors, give user a chance to decide if they want to go to builder as that can lose some data.
         if (result.errors.length) {
           setParseModalOpen(true);
           return;
         }
 
-        if (!result.query.labels.length && !result.query.operations.length && query.expr.length > 0) {
+        // Error nodes are stripped out for empty visual queries, so we need to check if the query is empty, but the expression is not, and throw the warning that the visual query might not get this correct.
+        if (isLokiQueryEmpty(result.query) && query.expr.length > 0) {
           setParseModalOpen(true);
           return;
         }

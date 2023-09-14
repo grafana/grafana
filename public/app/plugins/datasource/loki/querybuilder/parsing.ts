@@ -109,7 +109,7 @@ export function buildVisualQueryFromString(expr: string): Context {
   }
 
   // If we have empty query, we want to reset errors
-  if (isEmptyQuery(context.query)) {
+  if (isLokiQueryEmpty(context.query)) {
     context.errors = [];
   }
   return context;
@@ -646,7 +646,7 @@ function createNotSupportedError(expr: string, node: SyntaxNode, error: string) 
   return err;
 }
 
-function isEmptyQuery(query: LokiVisualQuery) {
+export function isLokiQueryEmpty(query: LokiVisualQuery) {
   if (query.labels.length === 0 && query.operations.length === 0) {
     return true;
   }
