@@ -13,17 +13,20 @@ import { ShareLinkTab } from './ShareLinkTab';
 import { ShareSnapshotTab } from './ShareSnapshotTab';
 import { SceneShareTab } from './types';
 
-interface SharePanelModalState extends SceneObjectState {
+interface ShareModalState extends SceneObjectState {
   dashboardRef: SceneObjectRef<DashboardScene>;
   panelRef?: SceneObjectRef<VizPanel>;
   tabs?: SceneShareTab[];
   activeTab: string;
 }
 
-export class SharePanelModal extends SceneObjectBase<SharePanelModalState> {
+/**
+ * Used for full dashboard share modal and the panel level share modal
+ */
+export class ShareModal extends SceneObjectBase<ShareModalState> {
   static Component = SharePanelModalRenderer;
 
-  constructor(state: Omit<SharePanelModalState, 'activeTab'>) {
+  constructor(state: Omit<ShareModalState, 'activeTab'>) {
     super({
       ...state,
       activeTab: 'Link',
@@ -69,13 +72,6 @@ export class SharePanelModal extends SceneObjectBase<SharePanelModalState> {
     //     component: SharePublicDashboard,
     //   });
     // }
-
-    // const at = tabs.find((t) => t.value === activeTab);
-
-    // return {
-    //   tabs,
-    //   activeTab: at?.value ?? tabs[0].value,
-    // };
   }
 
   onClose = () => {
@@ -88,7 +84,7 @@ export class SharePanelModal extends SceneObjectBase<SharePanelModalState> {
   };
 }
 
-function SharePanelModalRenderer({ model }: SceneComponentProps<SharePanelModal>) {
+function SharePanelModalRenderer({ model }: SceneComponentProps<ShareModal>) {
   const { panelRef, tabs, activeTab } = model.useState();
   const title = panelRef ? t('share-modal.panel.title', 'Share Panel') : t('share-modal.dashboard.title', 'Share');
 

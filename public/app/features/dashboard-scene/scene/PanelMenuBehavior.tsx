@@ -6,7 +6,7 @@ import { t } from 'app/core/internationalization';
 import { getExploreUrl } from 'app/core/utils/explore';
 import { InspectTab } from 'app/features/inspector/types';
 
-import { SharePanelModal } from '../sharing/SharePanelModal';
+import { ShareModal } from '../sharing/ShareModal';
 import { getDashboardUrl, getPanelIdForVizPanel, getQueryRunnerFor } from '../utils/utils';
 
 import { DashboardScene } from './DashboardScene';
@@ -54,7 +54,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
         iconClassName: 'share-alt',
         onClick: () => {
           reportInteraction('dashboards_panelheader_menu', { item: 'share' });
-          dashboard.showModal(new SharePanelModal({ panelRef: panel.getRef(), dashboardRef: dashboard.getRef() }));
+          dashboard.showModal(new ShareModal({ panelRef: panel.getRef(), dashboardRef: dashboard.getRef() }));
         },
         shortcut: 'p s',
       });
