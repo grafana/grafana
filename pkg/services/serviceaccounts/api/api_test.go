@@ -324,6 +324,7 @@ type fakeServiceAccountService struct {
 	service
 	ExpectedErr                   error
 	ExpectedAPIKey                *apikey.APIKey
+	ExpectedClientSecret          string
 	ExpectedServiceAccountTokens  []apikey.APIKey
 	ExpectedServiceAccount        *serviceaccounts.ServiceAccountDTO
 	ExpectedServiceAccountProfile *serviceaccounts.ServiceAccountProfileDTO
@@ -350,8 +351,8 @@ func (f *fakeServiceAccountService) UpdateServiceAccount(ctx context.Context, or
 	return f.ExpectedServiceAccountProfile, f.ExpectedErr
 }
 
-func (f *fakeServiceAccountService) AddServiceAccountToken(ctx context.Context, id int64, cmd *serviceaccounts.AddServiceAccountTokenCommand) (*apikey.APIKey, error) {
-	return f.ExpectedAPIKey, f.ExpectedErr
+func (f *fakeServiceAccountService) AddServiceAccountToken(ctx context.Context, id int64, cmd *serviceaccounts.AddServiceAccountTokenCommand) (*apikey.APIKey, string, error) {
+	return f.ExpectedAPIKey, f.ExpectedClientSecret, f.ExpectedErr
 }
 
 func (f *fakeServiceAccountService) DeleteServiceAccountToken(ctx context.Context, orgID, id, tokenID int64) error {

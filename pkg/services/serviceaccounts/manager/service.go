@@ -205,7 +205,7 @@ func (sa *ServiceAccountsService) ListTokens(ctx context.Context, query *service
 	return sa.store.ListTokens(ctx, query)
 }
 
-func (sa *ServiceAccountsService) AddServiceAccountToken(ctx context.Context, serviceAccountID int64, query *serviceaccounts.AddServiceAccountTokenCommand) (*apikey.APIKey, error) {
+func (sa *ServiceAccountsService) AddServiceAccountToken(ctx context.Context, serviceAccountID int64, query *serviceaccounts.AddServiceAccountTokenCommand) (*apikey.APIKey, string, error) {
 	if err := validServiceAccountID(serviceAccountID); err != nil {
 		return nil, err
 	}

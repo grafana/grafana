@@ -7,7 +7,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/components/satokengen"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/tests"
@@ -21,17 +20,14 @@ func TestIntegrationStore_UsageStats(t *testing.T) {
 	db.Cfg.SATokenExpirationDayLimit = 4
 
 	keyName := t.Name()
-	key, err := satokengen.New(keyName)
-	require.NoError(t, err)
 
 	cmd := serviceaccounts.AddServiceAccountTokenCommand{
 		Name:          keyName,
 		OrgId:         sa.OrgID,
-		Key:           key.HashedKey,
 		SecondsToLive: 0,
 	}
 
-	_, err = store.AddServiceAccountToken(context.Background(), sa.ID, &cmd)
+	_, err := store.AddServiceAccountToken(context.Background(), sa.ID, &cmd)
 	require.NoError(t, err)
 
 	role := org.RoleNone

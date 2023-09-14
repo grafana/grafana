@@ -32,7 +32,6 @@ func TestStore_AddServiceAccountToken(t *testing.T) {
 			cmd := serviceaccounts.AddServiceAccountTokenCommand{
 				Name:          keyName,
 				OrgId:         user.OrgID,
-				Key:           key.HashedKey,
 				SecondsToLive: tc.secondsToLive,
 			}
 
@@ -79,17 +78,14 @@ func TestStore_AddServiceAccountToken_WrongServiceAccount(t *testing.T) {
 	sa := tests.SetupUserServiceAccount(t, db, saToCreate)
 
 	keyName := t.Name()
-	key, err := apikeygen.New(sa.OrgID, keyName)
-	require.NoError(t, err)
 
 	cmd := serviceaccounts.AddServiceAccountTokenCommand{
 		Name:          keyName,
 		OrgId:         sa.OrgID,
-		Key:           key.HashedKey,
 		SecondsToLive: 0,
 	}
 
-	_, err = store.AddServiceAccountToken(context.Background(), sa.ID+1, &cmd)
+	_, err := store.AddServiceAccountToken(context.Background(), sa.ID+1, &cmd)
 	require.Error(t, err, "It should not be possible to add token to non-existing service account")
 }
 
@@ -99,13 +95,10 @@ func TestStore_RevokeServiceAccountToken(t *testing.T) {
 	sa := tests.SetupUserServiceAccount(t, db, userToCreate)
 
 	keyName := t.Name()
-	key, err := apikeygen.New(sa.OrgID, keyName)
-	require.NoError(t, err)
 
 	cmd := serviceaccounts.AddServiceAccountTokenCommand{
 		Name:          keyName,
 		OrgId:         sa.OrgID,
-		Key:           key.HashedKey,
 		SecondsToLive: 0,
 	}
 
@@ -139,13 +132,10 @@ func TestStore_DeleteServiceAccountToken(t *testing.T) {
 	sa := tests.SetupUserServiceAccount(t, db, userToCreate)
 
 	keyName := t.Name()
-	key, err := apikeygen.New(sa.OrgID, keyName)
-	require.NoError(t, err)
 
 	cmd := serviceaccounts.AddServiceAccountTokenCommand{
 		Name:          keyName,
 		OrgId:         sa.OrgID,
-		Key:           key.HashedKey,
 		SecondsToLive: 0,
 	}
 

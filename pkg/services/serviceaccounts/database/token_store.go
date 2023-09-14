@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/grafana/grafana/pkg/components/satokengen"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -41,10 +42,15 @@ func (s *ServiceAccountsStoreImpl) ListTokens(
 	return result, err
 }
 
-func (s *ServiceAccountsStoreImpl) AddServiceAccountToken(ctx context.Context, serviceAccountId int64, cmd *serviceaccounts.AddServiceAccountTokenCommand) (*apikey.APIKey, error) {
+func (s *ServiceAccountsStoreImpl) AddServiceAccountToken(ctx context.Context, serviceAccountId int64, cmd *serviceaccounts.AddServiceAccountTokenCommand) (*apikey.APIKey, string, error) {
 	var apiKey *apikey.APIKey
 
-	return apiKey, s.sqlStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+	newKeyInfo, err := satokengen.New(serviceaccounts.ServiceID)
+	if err != nil {
+		return nil, "", serviceaccounts.ErrGeneratingServiceAccountToken.Errorf("error generating service account token: %w", err)
+	}
+
+	return apiKey, newKeyInfo.ClientSecret, s.sqlStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		if _, err := s.RetrieveServiceAccount(ctx, cmd.OrgId, serviceAccountId); err != nil {
 			return err
 		}
@@ -53,7 +59,7 @@ func (s *ServiceAccountsStoreImpl) AddServiceAccountToken(ctx context.Context, s
 			Name:             cmd.Name,
 			Role:             org.RoleViewer,
 			OrgID:            cmd.OrgId,
-			Key:              cmd.Key,
+			Key:              newKeyInfo.HashedKey,
 			SecondsToLive:    cmd.SecondsToLive,
 			ServiceAccountID: &serviceAccountId,
 		}

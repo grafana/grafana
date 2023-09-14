@@ -6,6 +6,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/apikey"
 )
 
+const (
+	ServiceID = "sa"
+)
+
 /*
 ServiceAccountService is the service that manages service accounts.
 

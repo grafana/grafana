@@ -35,6 +35,7 @@ var (
 	ErrServiceAccountTokenNotFound       = errutil.NotFound("serviceaccounts.ErrTokenNotFound", errutil.WithPublicMessage("service account token not found"))
 	ErrInvalidTokenExpiration            = errutil.ValidationFailed("serviceaccounts.ErrInvalidInput", errutil.WithPublicMessage("invalid SecondsToLive value"))
 	ErrDuplicateToken                    = errutil.BadRequest("serviceaccounts.ErrTokenAlreadyExists", errutil.WithPublicMessage("service account token with given name already exists in the organization"))
+	ErrGeneratingServiceAccountToken     = errutil.StatusInternal("serviceaccounts.ErrGeneratingToken", errutil.WithPublicMessage("generating service account token failed"))
 )
 
 type MigrationResult struct {
@@ -96,7 +97,6 @@ type GetSATokensQuery struct {
 type AddServiceAccountTokenCommand struct {
 	Name          string `json:"name" binding:"Required"`
 	OrgId         int64  `json:"-"`
-	Key           string `json:"-"`
 	SecondsToLive int64  `json:"secondsToLive"`
 }
 

@@ -7,7 +7,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/components/satokengen"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/web"
@@ -15,7 +14,6 @@ import (
 
 const (
 	failedToDeleteMsg = "Failed to delete service account token"
-	ServiceID         = "sa"
 )
 
 // swagger:model
@@ -161,14 +159,7 @@ func (api *ServiceAccountsAPI) CreateToken(c *contextmodel.ReqContext) response.
 		}
 	}
 
-	newKeyInfo, err := satokengen.New(ServiceID)
-	if err != nil {
-		return response.Error(http.StatusInternalServerError, "Generating service account token failed", err)
-	}
-
-	cmd.Key = newKeyInfo.HashedKey
-
-	apiKey, err := api.service.AddServiceAccountToken(c.Req.Context(), saID, &cmd)
+	apiKey, clientSecret, err := api.service.AddServiceAccountToken(c.Req.Context(), saID, &cmd)
 	if err != nil {
 		return response.ErrOrFallback(http.StatusInternalServerError, "failed to add service account token", err)
 	}
@@ -176,7 +167,7 @@ func (api *ServiceAccountsAPI) CreateToken(c *contextmodel.ReqContext) response.
 	result := &dtos.NewApiKeyResult{
 		ID:   apiKey.ID,
 		Name: apiKey.Name,
-		Key:  newKeyInfo.ClientSecret,
+		Key:  clientSecret,
 	}
 
 	return response.JSON(http.StatusOK, result)
