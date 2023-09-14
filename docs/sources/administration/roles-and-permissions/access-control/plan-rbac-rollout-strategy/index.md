@@ -31,7 +31,7 @@ Your rollout strategy should help you answer the following questions:
 
 ## Review basic role and fixed role definitions
 
-As a first step in determining your permissions rollout strategy, we recommend that you become familiar with basic role and fixed role definitions. In addition to assigning fixed roles to any user and team, you can also modify basic roles permissions, which changes what a Viewer, Editor, or Admin can do. This flexibility means that there are many combinations of role assignments for you to consider. If you have a large number of Grafana users and teams, we recommend that you make a list of which fixed roles you might want to use.
+As a first step in determining your permissions rollout strategy, we recommend that you become familiar with basic role and fixed role definitions. In addition to assigning fixed roles to any user and team, you can also modify basic roles permissions, which changes what a Viewer, Editor, or Admin can do. This flexibility means that there are many combinations of role assignments for you to consider. If you have a large number of Grafana users and teams, we recommend that you make a list of which fixed roles you might want to use. Keep in mind that `No Basic Role`, a role without any permissions, cannot be modified or updated.
 
 To learn more about basic roles and fixed roles, refer to the following documentation:
 
@@ -68,6 +68,10 @@ Consider the following guidelines when you determine if you should modify basic 
 
   {{% admonition type="note" %}}
   Changes that you make to basic roles impact the role definition for all [organizations]({{< relref "../../../organization-management/" >}}) in the Grafana instance. For example, when you add the `fixed:users:writer` role's permissions to the viewer basic role, all viewers in any org in the Grafana instance can create users within that org.
+  {{% /admonition %}}
+
+  {{% admonition type="note" %}}
+  You cannot modify the `No Basic Role` permissions.
   {{% /admonition %}}
 
 - **Create custom roles** when fixed role definitions don't meet you permissions requirements. For example, the `fixed:dashboards:writer` role allows users to delete dashboards. If you want some users or teams to be able to create and update but not delete dashboards, you can create a custom role with a name like `custom:dashboards:creator` that lacks the `dashboards:delete` permission.
@@ -301,3 +305,27 @@ roles:
 ```
 
 - Or use [RBAC HTTP API]({{< relref "../../../../developers/http_api/access_control/#update-a-role" >}}).
+
+### Manager user permissions through teams
+
+In the scenario where you want users to have granted access by the team they belong to, we recommend to set users role to `No Basic Role` and let the team assignment assign the role instead.
+
+1. In Grafana, ensure the following configuration settings are enabled.
+   1. `users.auto_assign_org = true` this will automatically assign users to the default organization.
+   1. `users.auto_assign_org_id = <org_id>` this will automatically assign users to the specified organization.
+   1. `users.auto_assign_org_role = None` this will automatically assign users to the specified role.
+   1. Restart the Grafana instance.
+2. Create a team with the desired name.
+3. Set the fixed roles needed for the team.
+4. Add users to the team.
+
+This way, a user will be added automatically to the default organization and have no permissions until it has been assigned to a team.
+
+### Allow user to access only to a specific dashboard
+
+In the scenario where you want to allow a user access to a specific dashboard, we recommend the `No Basic Role` as a starting point for the user and then assign the dashboard permissions to the user.
+However, in order to access the dashboard more permissions are needed other than just the dashboard. Here's a list of permissions needed in order to access a dashboard:
+
+1.
+
+WIP
