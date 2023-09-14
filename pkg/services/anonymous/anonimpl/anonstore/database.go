@@ -35,9 +35,14 @@ func (a *Device) CacheKey() string {
 }
 
 type AnonStore interface {
+	// ListDevices returns all devices that have been updated between the given times.
 	ListDevices(ctx context.Context, from *time.Time, to *time.Time) ([]*Device, error)
+	// CreateOrUpdateDevice creates or updates a device.
 	CreateOrUpdateDevice(ctx context.Context, device *Device) error
+	// CountDevices returns the number of devices that have been updated between the given times.
 	CountDevices(ctx context.Context, from time.Time, to time.Time) (int64, error)
+	// DeleteDevice deletes a device by its ID.
+	DeleteDevice(ctx context.Context, deviceID string) error
 }
 
 func ProvideAnonDBStore(sqlStore db.DB, serverLockService *serverlock.ServerLockService) *AnonDBStore {
@@ -104,8 +109,16 @@ func (s *AnonDBStore) CountDevices(ctx context.Context, from time.Time, to time.
 	return count, nil
 }
 
-// deleteDevices deletes all devices that have no been updated since the given time.
-func (s *AnonDBStore) deleteDevices(ctx context.Context, olderThan time.Time) error {
+func (s *AnonDBStore) DeleteDevice(ctx context.Context, deviceID string) error {
+	_, err := s.sqlStore.GetSqlxSession().Exec(ctx, "DELETE FROM anon_device WHERE device_id = ?", deviceID)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// deleteOldDevices deletes all devices that have no been updated since the given time.
+func (s *AnonDBStore) deleteOldDevices(ctx context.Context, olderThan time.Time) error {
 	_, err := s.sqlStore.GetSqlxSession().Exec(ctx, "DELETE FROM anon_device WHERE updated_at <= ?", olderThan.UTC())
 	if err != nil {
 		return err
@@ -120,7 +133,7 @@ func (s *AnonDBStore) Run(ctx context.Context) error {
 		select {
 		case <-ticker.C:
 			err := s.serverLock.LockAndExecute(ctx, "cleanup old anon devices", time.Hour*10, func(context.Context) {
-				if err := s.deleteDevices(ctx, time.Now().Add(-keepFor)); err != nil {
+				if err := s.deleteOldDevices(ctx, time.Now().Add(-keepFor)); err != nil {
 					s.log.Error("An error occurred while deleting old anon devices", "err", err)
 				}
 			})

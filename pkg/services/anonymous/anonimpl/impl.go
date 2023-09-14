@@ -37,6 +37,8 @@ func ProvideAnonymousDeviceService(usageStats usagestats.Service, anonStore anon
 }
 
 func (a *AnonDeviceService) usageStatFn(ctx context.Context) (map[string]any, error) {
+	// Count the number of unique devices that have been updated in the last 30 days.
+	// One minute is added to the end time as mysql has a precision of seconds and it will break tests that write too fast.
 	anonUIDeviceCount, err := a.anonStore.CountDevices(ctx, time.Now().Add(-thirtyDays), time.Now().Add(time.Minute))
 	if err != nil {
 		return nil, err

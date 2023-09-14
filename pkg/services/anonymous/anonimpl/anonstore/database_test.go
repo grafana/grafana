@@ -38,7 +38,7 @@ func TestIntegrationAnonStore_delete(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, int64(2), count)
 
-	err = anonDBStore.deleteDevices(context.Background(), time.Now().Add(-keepFor))
+	err = anonDBStore.deleteOldDevices(context.Background(), time.Now().Add(-keepFor))
 	require.NoError(t, err)
 
 	devices, err := anonDBStore.ListDevices(context.Background(), &from, &to)
