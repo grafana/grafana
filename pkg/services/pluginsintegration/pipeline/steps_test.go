@@ -1,4 +1,4 @@
-package discovery
+package pipeline
 
 import (
 	"testing"
@@ -10,9 +10,9 @@ import (
 
 func TestSkipPlugins(t *testing.T) {
 	cfg := &config.Cfg{
-		SkipPlugins: []string{"plugin1", "plugin2"},
+		DisablePlugins: []string{"plugin1", "plugin2"},
 	}
-	s := NewSkipPluginsStep(cfg)
+	s := NewDisablePluginsStep(cfg)
 
 	bundles := []*plugins.FoundBundle{
 		{

@@ -243,7 +243,7 @@ type Cfg struct {
 	PluginAdminExternalManageEnabled bool
 	PluginForcePublicKeyDownload     bool
 	PluginSkipPublicKeyDownload      bool
-	SkipPlugins                      []string
+	DisablePlugins                   []string
 
 	PluginsCDNURLTemplate    string
 	PluginLogBackendRequests bool

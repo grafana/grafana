@@ -53,39 +53,3 @@ func (d *DuplicatePluginValidation) Filter(ctx context.Context, bundles []*plugi
 
 	return res, nil
 }
-
-// SkipPlugins is a filter step that will filter out any configured plugins
-type SkipPlugins struct {
-	log log.Logger
-	cfg *config.Cfg
-}
-
-// NewSkipPluginsStep returns a new SkipPlugins.
-func NewSkipPluginsStep(cfg *config.Cfg) *SkipPlugins {
-	return &SkipPlugins{
-		cfg: cfg,
-		log: log.New("plugins.skip"),
-	}
-}
-
-// Filter will filter out any plugins that are marked to be skipped.
-func (c *SkipPlugins) Filter(bundles []*plugins.FoundBundle) ([]*plugins.FoundBundle, error) {
-	if len(c.cfg.SkipPlugins) == 0 {
-		return bundles, nil
-	}
-
-	skipPluginsMap := make(map[string]bool)
-	for _, pluginID := range c.cfg.SkipPlugins {
-		skipPluginsMap[pluginID] = true
-	}
-
-	res := []*plugins.FoundBundle{}
-	for _, bundle := range bundles {
-		if skipPluginsMap[bundle.Primary.JSONData.ID] {
-			c.log.Debug("Skipping plugin load", "pluginID", bundle.Primary.JSONData.ID)
-		} else {
-			res = append(res, bundle)
-		}
-	}
-	return res, nil
-}
