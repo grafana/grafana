@@ -123,6 +123,20 @@
       "placeholder": "Search all"
     }
   },
+  "correlations": {
+    "add-new": "Add new",
+    "alert": {
+      "error-message": "An unknown error occurred while fetching correlation data. Please try again.",
+      "title": "Error fetching correlation data"
+    },
+    "badge": {
+      "text": "Read only"
+    },
+    "loading": "loading...",
+    "page-content": "To enable Correlations, add it in the Grafana config:",
+    "page-heading": "Correlations are disabled",
+    "sub-title": "Define how data living in different data sources relates to each other. Read more in the"
+  },
   "dashboard": {
     "add-menu": {
       "import": "Import from library",
