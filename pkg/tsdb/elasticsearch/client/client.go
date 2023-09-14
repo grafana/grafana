@@ -168,17 +168,23 @@ func (c *baseClientImpl) executeRequest(method, uriPath, uriQuery string, body [
 }
 
 func (c *baseClientImpl) ExecuteMultisearch(r *MultiSearchRequest) (*MultiSearchResponse, error) {
+	var err error
 	multiRequests := c.createMultiSearchRequests(r.Requests)
 	queryParams := c.getMultiSearchQueryParameters()
 	_, span := c.tracer.Start(c.ctx, "datasource.elasticsearch.queryData.executeMultisearch")
 	span.SetAttributes("queryParams", queryParams, attribute.Key("queryParams").String(queryParams))
 	span.SetAttributes("url", c.ds.URL, attribute.Key("url").String(c.ds.URL))
-	defer span.End()
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, err.Error())
+		}
+		span.End()
+	}()
+
 	start := time.Now()
 	clientRes, err := c.executeBatchRequest("_msearch", queryParams, multiRequests)
 	if err != nil {
-		span.RecordError(err)
-		span.SetStatus(codes.Error, err.Error())
 		status := "error"
 		if errors.Is(err, context.Canceled) {
 			status = "cancelled"
@@ -203,13 +209,15 @@ func (c *baseClientImpl) ExecuteMultisearch(r *MultiSearchRequest) (*MultiSearch
 	var msr MultiSearchResponse
 	dec := json.NewDecoder(res.Body)
 	_, resSpan := c.tracer.Start(c.ctx, "datasource.elasticsearch.queryData.executeMultisearch.decodeResponse")
-	defer resSpan.End()
+	defer func() {
+		if err != nil {
+			resSpan.RecordError(err)
+			resSpan.SetStatus(codes.Error, err.Error())
+		}
+		resSpan.End()
+	}()
 	err = dec.Decode(&msr)
 	if err != nil {
-		span.RecordError(err)
-		span.SetStatus(codes.Error, err.Error())
-		resSpan.RecordError(err)
-		resSpan.SetStatus(codes.Error, err.Error())
 		c.logger.Error("Failed to decode response from Elasticsearch", "error", err, "duration", time.Since(start))
 		return nil, err
 	}
