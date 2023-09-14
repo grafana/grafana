@@ -737,5 +737,12 @@ var (
 			FrontendOnly: false,
 			Owner:        hostedGrafanaTeam,
 		},
+		{
+			Name:         "alertingInsights",
+			Description:  "Show the new alerting insights landing page",
+			FrontendOnly: true,
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAlertingSquad,
+		},
 	}
 )
