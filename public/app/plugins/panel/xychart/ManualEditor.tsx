@@ -7,6 +7,8 @@ import { FieldNamePicker } from '@grafana/ui/src/components/MatchersUI/FieldName
 import { LayerName } from 'app/core/components/Layers/LayerName';
 import { ColorDimensionEditor, ScaleDimensionEditor } from 'app/features/dimensions/editors';
 
+import { faroLogEvent } from '../performanceMeasurementUtils';
+
 import { Options, ScatterSeriesConfig, defaultFieldConfig } from './panelcfg.gen';
 
 export const ManualEditor = ({
@@ -26,6 +28,12 @@ export const ManualEditor = ({
         return obj;
       })
     );
+
+    faroLogEvent(
+      'onFieldChange',
+      { fieldVal: JSON.stringify(val), fieldIndex: index.toString(), fieldName: field },
+      'xychart_panel'
+    );
   };
 
   const createNewSeries = () => {
@@ -37,6 +45,8 @@ export const ManualEditor = ({
       },
     ]);
     setSelected(value.length);
+
+    faroLogEvent('createNewSeries', { noOfSeries: (value.length + 1).toString() }, 'xychart_panel');
   };
 
   // Component-did-mount callback to check if a new series should be created
@@ -49,6 +59,8 @@ export const ManualEditor = ({
 
   const onSeriesDelete = (index: number) => {
     onChange(value.filter((_, i) => i !== index));
+
+    faroLogEvent('onSeriesDelete', { noOfSeries: (value.length - 1).toString() }, 'xychart_panel');
   };
 
   // const { options } = context;

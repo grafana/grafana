@@ -1,24 +1,35 @@
 import afterFrame from 'afterframe';
-import { ReactNode, useEffect } from 'react';
+import { useEffect, useState } from 'react';
+
+import { faro } from '@grafana/faro-web-sdk';
 
 interface Props {
-  children: any;
+  children: JSX.Element;
+  panelType: string;
 }
 
 export const PanelPerformanceMonitor = (props: Props) => {
-  performance.mark('test2 start');
+  const [startLoadTime, _] = useState<number>(performance.now());
 
   useEffect(() => {
     afterFrame(() => {
-      // this.panelRenderTimeMs = performance.now() - this.panelRenderTimeMs;
-      performance.mark('test2 end');
-      const test = performance.measure('test2 duration', 'test2 start', 'test2 end');
-      console.log(test);
-      // debugger;
-      // console.log(this.panelRenderTimeMs, " ms to render ", panel.plugin?.meta.name ?? "panel");
-      // debugger;
-      // faro.api.pushMeasurement(timeVal);
+      faro.api.pushMeasurement(
+        {
+          type: 'internal_panel_measurements_' + props.panelType,
+          values: {
+            start_loading_time_ms: startLoadTime,
+            load_time_ms: performance.now() - startLoadTime,
+          },
+        }
+        // should be fixed by https://github.com/grafana/faro-web-sdk/pull/256/
+        // {
+        //   context: {
+        //     panel_type: props.panelType,
+        //   }
+        // }
+      );
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return props.children;
