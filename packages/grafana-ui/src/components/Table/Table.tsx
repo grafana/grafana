@@ -356,7 +356,7 @@ export const Table = memo((props: Props) => {
               >
                 <VariableSizeList
                   // Force a remount if something related to the row list changes
-                  key={state.pageIndex + tableStyles.rowHeight + variableSizeListKey.current}
+                  key={tableStyles.rowHeight + state.pageIndex + variableSizeListKey.current}
                   height={listHeight}
                   itemCount={itemCount}
                   itemSize={getItemSize}
