@@ -63,9 +63,7 @@ export const ReceiversSection = ({
         </Stack>
       </div>
       {children}
-      {showExportDrawer && (
-        <GrafanaReceiversExporter decrypt={canReadSecrets} onClose={toggleShowExportDrawer} />
-      )}
+      {showExportDrawer && <GrafanaReceiversExporter decrypt={canReadSecrets} onClose={toggleShowExportDrawer} />}
     </Stack>
   );
 };

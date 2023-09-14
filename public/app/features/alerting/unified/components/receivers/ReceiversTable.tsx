@@ -369,8 +369,8 @@ export const ReceiversTable = ({ config, alertManagerName }: Props) => {
         renderExpandedContent={
           errorStateAvailable
             ? ({ data: { name } }) => (
-              <NotifiersTable notifiersState={contactPointsState?.receivers[name]?.notifiers ?? {}} />
-            )
+                <NotifiersTable notifiersState={contactPointsState?.receivers[name]?.notifiers ?? {}} />
+              )
             : undefined
         }
       />
