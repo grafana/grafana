@@ -323,6 +323,7 @@
 /packages/grafana-ui/src/utils/storybook/ @grafana/plugins-platform-frontend
 /packages/grafana-data/src/**/*logs* @grafana/observability-logs
 /packages/grafana-schema/src/**/*tempo* @grafana/observability-traces-and-profiling
+/packages/grafana-flamegraph/ @grafana/observability-traces-and-profiling
 /plugins-bundled/ @grafana/plugins-platform-frontend
 
 
@@ -353,6 +354,7 @@ lerna.json @grafana/frontend-ops
 /lefthook.yml @grafana/frontend-ops
 /lefthook.rc @grafana/frontend-ops
 .husky/pre-commit @grafana/frontend-ops
+cypress.config.js @grafana/grafana-frontend-platform
 .levignore.js @grafana/plugins-platform-frontend
 
 

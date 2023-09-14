@@ -1,15 +1,14 @@
-import { e2e } from '@grafana/e2e';
+import { e2e } from '../utils';
 
 const DASHBOARD_ID = 'c01bf42b-b783-4447-a304-8554cee1843b';
 const DATAGRID_SELECT_SERIES = 'Datagrid Select series';
 
-e2e.scenario({
-  describeName: 'Datagrid data changes',
-  itName: 'Tests changing data in the grid',
-  addScenarioDataSource: false,
-  addScenarioDashBoard: false,
-  skipScenario: false,
-  scenario: () => {
+describe('Datagrid data changes', () => {
+  beforeEach(() => {
+    e2e.flows.login(e2e.env('USERNAME'), e2e.env('PASSWORD'));
+  });
+
+  it('Tests changing data in the grid', () => {
     e2e.flows.openDashboard({ uid: DASHBOARD_ID, queryParams: { editPanel: 1 } });
 
     // Check that the data is series A
@@ -32,5 +31,5 @@ e2e.scenario({
     cy.get('[data-testid="data-testid Confirm Modal Danger Button"]').click();
 
     cy.get('[data-testid="query-editor-row"]').contains('Snapshot');
-  },
+  });
 });
