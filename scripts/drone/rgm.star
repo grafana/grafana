@@ -246,7 +246,7 @@ def rgm_nightly_build():
     )
 
 def rgm_nightly_publish():
-    src = "$${DESTINATION}/$${DRONE_BUILD_EVENT}/*$${DRONE_BUILD_ID}*"
+    src = "$${DESTINATION}/$${DRONE_BUILD_EVENT}/*_$${DRONE_BUILD_NUMBER}_*"
     dst = "$${DRONE_WORKSPACE}/dist"
 
     publish_steps = with_deps(rgm_run("rgm-publish", "drone_publish_nightly_grafana.sh"), ["rgm-copy"])

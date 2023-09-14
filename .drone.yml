@@ -3524,7 +3524,7 @@ steps:
   - mkdir -p $${DRONE_WORKSPACE}/dist
   - printenv GCP_KEY_BASE64 | base64 -d > /tmp/key.json
   - gcloud auth activate-service-account --key-file=/tmp/key.json
-  - gcloud storage cp -r $${DESTINATION}/$${DRONE_BUILD_EVENT}/*$${DRONE_BUILD_ID}*
+  - gcloud storage cp -r $${DESTINATION}/$${DRONE_BUILD_EVENT}/*_$${DRONE_BUILD_NUMBER}_*
     $${DRONE_WORKSPACE}/dist
   environment:
     _EXPERIMENTAL_DAGGER_CLOUD_TOKEN:
@@ -4561,6 +4561,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: d672484cbf0cc318400f44bdb568818cb69ad573f102ed561229e9a1d6bb4f80
+hmac: 2a28e21dbe014d20be0dde427d3e45ca9ec865d1983827a1022cec4f65b76b7e
 
 ...
