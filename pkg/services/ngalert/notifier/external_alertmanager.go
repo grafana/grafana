@@ -3,28 +3,36 @@ package notifier
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
 
 	httptransport "github.com/go-openapi/runtime/client"
 	"github.com/grafana/grafana/pkg/infra/log"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	amclient "github.com/prometheus/alertmanager/api/v2/client"
 	"gopkg.in/yaml.v3"
 )
 
 const configEndpoint = "/api/v1/alerts"
 
+type configStore interface {
+	SaveAlertmanagerConfiguration(ctx context.Context, cmd *models.SaveAlertmanagerConfigurationCmd) error
+}
+
 type externalAlertmanager struct {
 	log           log.Logger
 	url           string
 	tenantID      string
 	orgID         int64
+	configStore   configStore
 	amClient      *amclient.AlertmanagerAPI
 	httpClient    *http.Client
 	defaultConfig string
@@ -37,7 +45,7 @@ type externalAlertmanagerConfig struct {
 	DefaultConfig     string
 }
 
-func newExternalAlertmanager(cfg externalAlertmanagerConfig, orgID int64) (*externalAlertmanager, error) {
+func newExternalAlertmanager(cfg externalAlertmanagerConfig, orgID int64, store configStore) (*externalAlertmanager, error) {
 	client := http.Client{
 		Transport: &roundTripper{
 			tenantID:          cfg.TenantID,
@@ -65,6 +73,7 @@ func newExternalAlertmanager(cfg externalAlertmanagerConfig, orgID int64) (*exte
 	return &externalAlertmanager{
 		amClient:      amclient.New(transport, nil),
 		httpClient:    &client,
+		configStore:   store,
 		log:           log.New("ngalert.notifier.external-alertmanager"),
 		url:           cfg.URL,
 		tenantID:      cfg.TenantID,
@@ -80,6 +89,28 @@ func (am *externalAlertmanager) ApplyConfig(ctx context.Context, config *models.
 	}
 
 	return am.postConfig(ctx, cfg)
+}
+
+func (am *externalAlertmanager) SaveAndApplyConfig(ctx context.Context, cfg *apimodels.PostableUserConfig) error {
+	if err := am.postConfig(ctx, cfg); err != nil {
+		return err
+	}
+	return am.saveConfig(ctx, cfg)
+}
+
+func (am *externalAlertmanager) saveConfig(ctx context.Context, cfg *apimodels.PostableUserConfig) error {
+	b, err := json.Marshal(&cfg)
+	if err != nil {
+		return fmt.Errorf("failed to serialize to the Alertmanager configuration: %w", err)
+	}
+
+	cmd := ngmodels.SaveAlertmanagerConfigurationCmd{
+		AlertmanagerConfiguration: string(b),
+		ConfigurationVersion:      fmt.Sprintf("v%d", ngmodels.AlertConfigurationVersion),
+		OrgID:                     am.orgID,
+		LastApplied:               time.Now().UTC().Unix(),
+	}
+	return am.configStore.SaveAlertmanagerConfiguration(ctx, &cmd)
 }
 
 func (am *externalAlertmanager) postConfig(ctx context.Context, cfg *apimodels.PostableUserConfig) error {
@@ -118,10 +149,6 @@ func (am *externalAlertmanager) postConfig(ctx context.Context, cfg *apimodels.P
 	if res.StatusCode != http.StatusCreated {
 		return fmt.Errorf("setting config failed with status code %d", res.StatusCode)
 	}
-	return nil
-}
-
-func (am *externalAlertmanager) SaveAndApplyConfig(ctx context.Context, cfg *apimodels.PostableUserConfig) error {
 	return nil
 }
 

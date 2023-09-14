@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/stretchr/testify/require"
 )
@@ -65,7 +66,7 @@ func TestNewExternalAlertmanager(t *testing.T) {
 				BasicAuthPassword: test.password,
 				DefaultConfig:     test.defaultConfig,
 			}
-			am, err := newExternalAlertmanager(cfg, test.orgID)
+			am, err := newExternalAlertmanager(cfg, test.orgID, nil)
 			if test.expErr != "" {
 				require.EqualError(tt, err, test.expErr)
 				return
@@ -158,7 +159,7 @@ func TestApplyConfig(t *testing.T) {
 				BasicAuthPassword: test.password,
 				DefaultConfig:     validConfig,
 			}
-			am, err := newExternalAlertmanager(cfg, 1)
+			am, err := newExternalAlertmanager(cfg, 1, nil)
 			require.NoError(tt, err)
 
 			err = am.ApplyConfig(context.Background(), &test.config)
@@ -167,6 +168,65 @@ func TestApplyConfig(t *testing.T) {
 				return
 			}
 			require.NoError(tt, err)
+		})
+	}
+}
+
+func TestSaveAndApplyConfig(t *testing.T) {
+	fakeAm := NewFakeExternalAlertmanager(t, "1", "password")
+	configStore := NewFakeConfigStore(t, map[int64]*models.AlertConfiguration{
+		1: {
+			AlertmanagerConfiguration: validConfig,
+			OrgID:                     1,
+		},
+	})
+	validPostableConfig, err := Load([]byte(validConfig))
+	require.NoError(t, err)
+
+	tests := []struct {
+		name      string
+		config    *definitions.PostableUserConfig
+		password  string
+		expConfig string
+		expErr    string
+	}{
+		{
+			"error posting config",
+			validPostableConfig,
+			"invalid",
+			"",
+			"setting config failed with status code 403",
+		},
+		{
+			"configuration saved and applied",
+			validPostableConfig,
+			fakeAm.password,
+			validConfig,
+			"",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(tt *testing.T) {
+			cfg := externalAlertmanagerConfig{
+				URL:               fakeAm.Server.URL,
+				TenantID:          fakeAm.tenantID,
+				BasicAuthPassword: test.password,
+				DefaultConfig:     validConfig,
+			}
+			am, err := newExternalAlertmanager(cfg, 1, configStore)
+			require.NoError(tt, err)
+
+			err = am.SaveAndApplyConfig(context.Background(), test.config)
+			if test.expErr != "" {
+				require.EqualError(tt, err, test.expErr)
+				return
+			}
+			require.NoError(tt, err)
+
+			savedConfig, ok := configStore.configs[1]
+			require.True(tt, ok)
+			require.Equal(tt, test.expConfig, savedConfig.AlertmanagerConfiguration)
 		})
 	}
 }
