@@ -124,4 +124,5 @@ export interface FeatureToggles {
   sseGroupByDatasource?: boolean;
   requestInstrumentationStatusSource?: boolean;
   wargamesTesting?: boolean;
+  alertingInsights?: boolean;
 }
