@@ -45,6 +45,7 @@ describe('ExpressionStatusIndicator', () => {
 
     expect(screen.queryByText('Error')).not.toBeInTheDocument();
     expect(screen.queryByText('Warning')).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Set as alert condition' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Alert condition' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Set as alert condition' })).toBeInTheDocument();
   });
 });
