@@ -230,3 +230,57 @@ func TestSaveAndApplyConfig(t *testing.T) {
 		})
 	}
 }
+
+func TestSaveAndApplyDefaultConfig(t *testing.T) {
+	fakeAm := NewFakeExternalAlertmanager(t, "1", "password")
+	configStore := NewFakeConfigStore(t, map[int64]*models.AlertConfiguration{
+		1: {
+			AlertmanagerConfiguration: validConfig,
+			OrgID:                     1,
+		},
+	})
+
+	tests := []struct {
+		name          string
+		defaultConfig string
+		password      string
+		expErr        string
+	}{
+		{
+			"error posting config",
+			validConfig,
+			"invalid",
+			"setting config failed with status code 403",
+		},
+		{
+			"default configuration saved and applied",
+			validConfig,
+			fakeAm.password,
+			"",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(tt *testing.T) {
+			cfg := externalAlertmanagerConfig{
+				URL:               fakeAm.Server.URL,
+				TenantID:          fakeAm.tenantID,
+				BasicAuthPassword: test.password,
+				DefaultConfig:     test.defaultConfig,
+			}
+			am, err := newExternalAlertmanager(cfg, 1, configStore)
+			require.NoError(tt, err)
+
+			err = am.SaveAndApplyDefaultConfig(context.Background())
+			if test.expErr != "" {
+				require.EqualError(tt, err, test.expErr)
+				return
+			}
+			require.NoError(tt, err)
+
+			savedConfig, ok := configStore.configs[1]
+			require.True(tt, ok)
+			require.Equal(tt, am.defaultConfig, savedConfig.AlertmanagerConfiguration)
+		})
+	}
+}

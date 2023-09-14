@@ -95,10 +95,23 @@ func (am *externalAlertmanager) SaveAndApplyConfig(ctx context.Context, cfg *api
 	if err := am.postConfig(ctx, cfg); err != nil {
 		return err
 	}
-	return am.saveConfig(ctx, cfg)
+	return am.saveConfig(ctx, cfg, false)
 }
 
-func (am *externalAlertmanager) saveConfig(ctx context.Context, cfg *apimodels.PostableUserConfig) error {
+func (am *externalAlertmanager) SaveAndApplyDefaultConfig(ctx context.Context) error {
+	cfg, err := Load([]byte(am.defaultConfig))
+	if err != nil {
+		return err
+	}
+
+	if err := am.postConfig(ctx, cfg); err != nil {
+		return err
+	}
+
+	return am.saveConfig(ctx, cfg, true)
+}
+
+func (am *externalAlertmanager) saveConfig(ctx context.Context, cfg *apimodels.PostableUserConfig, isDefault bool) error {
 	b, err := json.Marshal(&cfg)
 	if err != nil {
 		return fmt.Errorf("failed to serialize to the Alertmanager configuration: %w", err)
@@ -109,6 +122,7 @@ func (am *externalAlertmanager) saveConfig(ctx context.Context, cfg *apimodels.P
 		ConfigurationVersion:      fmt.Sprintf("v%d", ngmodels.AlertConfigurationVersion),
 		OrgID:                     am.orgID,
 		LastApplied:               time.Now().UTC().Unix(),
+		Default:                   isDefault,
 	}
 	return am.configStore.SaveAlertmanagerConfiguration(ctx, &cmd)
 }
@@ -149,10 +163,6 @@ func (am *externalAlertmanager) postConfig(ctx context.Context, cfg *apimodels.P
 	if res.StatusCode != http.StatusCreated {
 		return fmt.Errorf("setting config failed with status code %d", res.StatusCode)
 	}
-	return nil
-}
-
-func (am *externalAlertmanager) SaveAndApplyDefaultConfig(ctx context.Context) error {
 	return nil
 }
 
