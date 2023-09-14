@@ -86,7 +86,7 @@ export function AppRootPage({ pluginId, pluginNavSection }: Props) {
   // if the user has permissions to see the plugin page.
   const userHasPermissionsToPluginPage = () => {
     // Check if plugin does not have any configurations or the user is Grafana Admin
-    if (!plugin.meta?.includes || contextSrv.isGrafanaAdmin) {
+    if (!plugin.meta?.includes || contextSrv.isGrafanaAdmin || contextSrv.user.orgRole === OrgRole.Admin) {
       return true;
     }
 
@@ -96,13 +96,16 @@ export function AppRootPage({ pluginId, pluginNavSection }: Props) {
       return true;
     }
     const pathRole: string = pluginInclude?.role || '';
+    console.log('pathRole', pathRole);
     // Check if role exists  and give access to Editor to be able to see Viewer pages
     if (!pathRole || (contextSrv.isEditor && pathRole === OrgRole.Viewer)) {
+      console.log('ENTERED');
       return true;
     }
     return contextSrv.hasRole(pathRole);
   };
 
+  console.log('ROLE:', contextSrv.user.orgRole);
   const AccessDenied = () => {
     return (
       <Alert severity="warning" title="Access denied">
