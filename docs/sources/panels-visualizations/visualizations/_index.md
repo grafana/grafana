@@ -17,7 +17,7 @@ weight: 75
 
 # Visualizations
 
-Grafana offers a variety of visualizations to support different use cases. This section of the documentation highlights the built-in panels, their options and typical usage.
+Grafana offers a variety of visualizations to support different use cases. This section of the documentation highlights the built-in visualizations, their options and typical usage.
 
 {{% admonition type="note" %}}
 If you are unsure which visualization to pick, Grafana can provide visualization suggestions based on the panel query. When you select a visualization, Grafana will show a preview with that visualization applied.
@@ -40,12 +40,12 @@ If you are unsure which visualization to pick, Grafana can provide visualization
   - [Logs][] is the main visualization for logs.
   - [Node graph][] for directed graphs or networks.
   - [Traces][] is the main visualization for traces.
-  - [Flame Graph][] is the main visualization for profiling.
+  - [Flame graph][] is the main visualization for profiling.
 - Widgets
   - [Dashboard list][] can list dashboards.
   - [Alert list][] can list alerts.
-  - [Text panel][] can show markdown and html.
-  - [News panel][] can show RSS feeds.
+  - [Text][] can show markdown and html.
+  - [News][] can show RSS feeds.
 
 ## Get more
 
@@ -57,69 +57,69 @@ Below you can find some good examples for how all the visualizations in Grafana 
 
 ### Graphs
 
-For time based line, area and bar charts we recommend the default [Time series][] visualization. [This public demo dashboard](https://play.grafana.org/d/000000016/1-time-series-graphs?orgId=1) contains many different examples for how this visualization can be configured and styled.
+For time based line, area and bar charts we recommend the default [time series][] visualization. [This public demo dashboard](https://play.grafana.org/d/000000016/1-time-series-graphs?orgId=1) contains many different examples for how this visualization can be configured and styled.
 
 {{< figure src="/static/img/docs/time-series-panel/time_series_small_example.png" max-width="700px" caption="Time series" >}}
 
-For categorical data use the [Bar chart][] visualization.
+For categorical data use a [bar chart][].
 
 {{< figure src="/static/img/docs/bar-chart-panel/barchart_small_example.png" max-width="700px" caption="Bar chart" >}}
 
 ### Big numbers & stats
 
-The [Stat][] visualization shows one large stat value with an optional graph sparkline. You can control the background or value color using thresholds or color scales.
+A [stat][] shows one large stat value with an optional graph sparkline. You can control the background or value color using thresholds or color scales.
 
-{{< figure src="/static/img/docs/v66/stat_panel_dark3.png" max-width="1025px" caption="Stat panel" >}}
+{{< figure src="/static/img/docs/v66/stat_panel_dark3.png" max-width="1025px" caption="Stat" >}}
 
 ### Gauge
 
-If you want to present a value as it relates to a min and max value you have two options. First a standard [Radial Gauge][] shown below.
+If you want to present a value as it relates to a min and max value you have two options. First a standard radial [gauge][] shown below.
 
 {{< figure src="/static/img/docs/v66/gauge_panel_cover.png" max-width="700px" >}}
 
-Secondly Grafana also has a horizontal or vertical [Bar gauge][] with three different distinct display modes.
+Secondly Grafana also has a horizontal or vertical [bar gauge][] with three different distinct display modes.
 
 {{< figure src="/static/img/docs/v66/bar_gauge_lcd.png" max-width="700px" >}}
 
 ### Table
 
-To show data in a table layout, use the [Table][] visualization.
+To show data in a table layout, use a [table][].
 
 {{< figure src="/static/img/docs/tables/table_visualization.png" max-width="700px" lightbox="true" caption="Table visualization" >}}
 
 ### Pie chart
 
-Grafana now ships with an included [Pie chart][] visualization.
+To display reduced series, or values in a series, from one or more queries, as they relate to each other, use a [pie chart][].
 
-{{< figure src="/static/img/docs/pie-chart-panel/pie-chart-example.png" max-width="700px" lightbox="true" caption="Pie chart visualization" >}}
+{{< figure src="/static/img/docs/pie-chart-panel/pie-chart-example.png" max-width="700px" lightbox="true" caption="Pie chart" >}}
 
 ### Heatmaps
 
-To show value distribution over, time use the [heatmap][] visualization.
+To show value distribution over, time use a [heatmap][].
 
 {{< figure src="/static/img/docs/v43/heatmap_panel_cover.jpg" max-width="1000px" lightbox="true" caption="Heatmap" >}}
 
 ### State timeline
 
-The state timeline panel visualization shows discrete state changes over time. When used with time series, the thresholds are used to turn the numerical values into discrete state regions.
+A state timeline shows discrete state changes over time. When used with time series, the thresholds are used to turn the numerical values into discrete state regions.
 
-{{< figure src="/static/img/docs/v8/state_timeline_strings.png" max-width="700px" caption="state timeline with string states" >}}
+{{< figure src="/static/img/docs/v8/state_timeline_strings.png" max-width="700px" caption="State timeline with string states" >}}
 
 {{% docs/reference %}}
-[News panel]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/news"
-[News panel]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/news"
+[News]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/news"
+[News]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/news"
 
 [Histogram]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/histogram"
 [Histogram]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/histogram"
 
-[Text panel]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/text"
-[Text panel]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/text"
+[Text]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/text"
+[Text]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/text"
 
 [Dashboard list]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/dashboard-list"
 [Dashboard list]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/dashboard-list"
 
-[Flame Graph]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/flame-graph"
-[Flame Graph]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/flame-graph"
+[Flame graph]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/flame-graph"
+[Flame graph]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/flame-graph"
 
 [Status history]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/status-history"
 [Status history]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/status-history"
