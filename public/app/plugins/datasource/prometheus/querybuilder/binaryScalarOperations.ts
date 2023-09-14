@@ -107,6 +107,10 @@ export const binaryScalarOperations: QueryBuilderOperationDef[] = binaryScalarDe
   };
 });
 
+/**
+ * Exact copy of the Loki version
+ * @param operator
+ */
 function getSimpleBinaryRenderer(operator: string) {
   return function binaryRenderer(model: QueryBuilderOperation, def: QueryBuilderOperationDef, innerExpr: string) {
     let param = model.params[0];

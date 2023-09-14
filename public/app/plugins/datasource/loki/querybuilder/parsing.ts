@@ -1,5 +1,5 @@
 import { SyntaxNode } from '@lezer/common';
-import { BinaryExpr, BinModifiers, OnOrIgnoring } from '@prometheus-io/lezer-promql';
+import { BinModifiers, OnOrIgnoring } from '@prometheus-io/lezer-promql';
 
 import {
   And,
@@ -54,7 +54,6 @@ import {
   getAllByType,
   getLeftMostChild,
   getString,
-  makeBinOp,
   makeError,
   replaceVariables,
 } from '../../prometheus/querybuilder/shared/parsingUtils';
@@ -696,5 +695,23 @@ function handleKeepFilter(expr: string, node: SyntaxNode, context: Context): Que
   return {
     id: LokiOperationId.Keep,
     params: labels,
+  };
+}
+
+export function makeBinOp(
+  opDef: { id: string; comparison?: boolean },
+  expr: string,
+  numberNode: SyntaxNode,
+  hasBool: boolean
+): QueryBuilderOperation {
+  // params are backwards in loki for some reason?
+  const params: QueryBuilderOperationParamValue[] = [];
+  if (opDef.comparison) {
+    params.push(hasBool);
+  }
+  params.push(parseFloat(getString(expr, numberNode)));
+  return {
+    id: opDef.id,
+    params,
   };
 }
