@@ -9,6 +9,8 @@ import {
   VizPanel,
 } from '@grafana/scenes';
 
+import { DashboardScene } from '../scene/DashboardScene';
+
 export function getVizPanelKeyForPanelId(panelId: number) {
   return `panel-${panelId}`;
 }
@@ -135,4 +137,13 @@ export function getQueryRunnerFor(sceneObject: SceneObject | undefined): SceneQu
   }
 
   return undefined;
+}
+
+export function getDashboardSceneFor(sceneObject: SceneObject): DashboardScene {
+  const root = sceneObject.getRoot();
+  if (root instanceof DashboardScene) {
+    return root;
+  }
+
+  throw new Error('SceneObject root is not a DashboardScene');
 }

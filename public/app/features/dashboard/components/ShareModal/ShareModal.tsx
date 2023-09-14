@@ -1,7 +1,5 @@
-import { css } from '@emotion/css';
 import React from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
 import { Modal, ModalTabsHeader, TabContent, Themeable2, withTheme2 } from '@grafana/ui';
 import { config } from 'app/core/config';
 import { contextSrv } from 'app/core/core';
@@ -130,19 +128,12 @@ class UnthemedShareModal extends React.Component<Props, State> {
   }
 
   render() {
-    const { dashboard, panel, theme } = this.props;
-    const styles = getStyles(theme);
+    const { dashboard, panel } = this.props;
     const activeTabModel = this.getActiveTab();
     const ActiveTab = activeTabModel.component;
 
     return (
-      <Modal
-        isOpen={true}
-        title={this.renderTitle()}
-        onDismiss={this.props.onDismiss}
-        className={styles.container}
-        contentClassName={styles.content}
-      >
+      <Modal isOpen={true} title={this.renderTitle()} onDismiss={this.props.onDismiss}>
         <TabContent>
           <ActiveTab dashboard={dashboard} panel={panel} onDismiss={this.props.onDismiss} />
         </TabContent>
@@ -152,16 +143,3 @@ class UnthemedShareModal extends React.Component<Props, State> {
 }
 
 export const ShareModal = withTheme2(UnthemedShareModal);
-
-const getStyles = (theme: GrafanaTheme2) => {
-  return {
-    container: css({
-      label: 'shareModalContainer',
-      paddingTop: theme.spacing(1),
-    }),
-    content: css({
-      label: 'shareModalContent',
-      padding: theme.spacing(3, 2, 2, 2),
-    }),
-  };
-};

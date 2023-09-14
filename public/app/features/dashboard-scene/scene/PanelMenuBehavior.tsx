@@ -1,11 +1,12 @@
 import { locationUtil, PanelMenuItem } from '@grafana/data';
 import { locationService, reportInteraction } from '@grafana/runtime';
-import { sceneGraph, VizPanel, VizPanelMenu } from '@grafana/scenes';
+import { sceneGraph, SceneObjectRef, VizPanel, VizPanelMenu } from '@grafana/scenes';
 import { contextSrv } from 'app/core/core';
 import { t } from 'app/core/internationalization';
 import { getExploreUrl } from 'app/core/utils/explore';
 import { InspectTab } from 'app/features/inspector/types';
 
+import { SharePanelModal } from '../sharing/SharePanelModal';
 import { getDashboardUrl, getPanelIdForVizPanel, getQueryRunnerFor } from '../utils/utils';
 
 import { DashboardScene } from './DashboardScene';
@@ -46,6 +47,18 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
           subPath: `/panel-edit/${panelId}`,
           currentQueryParams: location.search,
         }),
+      });
+
+      items.push({
+        text: t('panel.header-menu.share', `Share`),
+        iconClassName: 'share-alt',
+        onClick: () => {
+          reportInteraction('dashboards_panelheader_menu', { item: 'share' });
+          dashboard.setState({
+            drawer: new SharePanelModal({ panelRef: new SceneObjectRef(panel) }),
+          });
+        },
+        shortcut: 'p s',
       });
     }
 

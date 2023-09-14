@@ -33,7 +33,7 @@ export interface DashboardSceneState extends SceneObjectState {
   inspectPanelKey?: string;
   /** Panel to view in full screen */
   viewPanelKey?: string;
-  /** Scene object that handles the current drawer */
+  /** Scene object that handles the current drawer or modal */
   drawer?: SceneObject;
 }
 
