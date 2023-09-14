@@ -10,9 +10,9 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/auth"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/log"
-	"github.com/grafana/grafana/pkg/plugins/oauth"
 	"github.com/grafana/grafana/pkg/plugins/plugindef"
 	"github.com/grafana/grafana/pkg/plugins/repo"
 	"github.com/grafana/grafana/pkg/plugins/storage"
@@ -426,10 +426,10 @@ func (f *FakePluginFileStore) File(ctx context.Context, pluginID, filename strin
 }
 
 type FakeOauthService struct {
-	Result *oauth.ExternalService
+	Result *auth.ExternalService
 }
 
-func (f *FakeOauthService) RegisterExternalService(ctx context.Context, name string, svc *plugindef.ExternalServiceRegistration) (*oauth.ExternalService, error) {
+func (f *FakeOauthService) RegisterExternalService(ctx context.Context, name string, svc *plugindef.ExternalServiceRegistration) (*auth.ExternalService, error) {
 	return f.Result, nil
 }
 

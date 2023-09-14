@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/auth"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/log"
@@ -23,7 +24,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
-	"github.com/grafana/grafana/pkg/plugins/oauth"
 	"github.com/grafana/grafana/pkg/plugins/plugindef"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -555,7 +555,7 @@ func TestLoader_Load_ExternalRegistration(t *testing.T) {
 				Signature: plugins.SignatureStatusUnsigned,
 				Module:    "/public/plugins/grafana-test-datasource/module.js",
 				BaseURL:   "/public/plugins/grafana-test-datasource",
-				ExternalService: &oauth.ExternalService{
+				ExternalService: &auth.ExternalService{
 					ClientID:     "client-id",
 					ClientSecret: "secretz",
 					PrivateKey:   "priv@t3",
@@ -577,7 +577,7 @@ func TestLoader_Load_ExternalRegistration(t *testing.T) {
 
 		l := newLoaderWithOpts(t, cfg, loaderDepOpts{
 			oauthServiceRegistry: &fakes.FakeOauthService{
-				Result: &oauth.ExternalService{
+				Result: &auth.ExternalService{
 					ClientID:     "client-id",
 					ClientSecret: "secretz",
 					PrivateKey:   "priv@t3",
@@ -1468,7 +1468,7 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 
 type loaderDepOpts struct {
 	angularInspector       angularinspector.Inspector
-	oauthServiceRegistry   oauth.ExternalServiceRegistry
+	oauthServiceRegistry   auth.ExternalServiceRegistry
 	backendFactoryProvider plugins.BackendFactoryProvider
 }
 
