@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
-import { useToggle } from 'react-use';
 
 import { Stack } from '@grafana/experimental';
 import { Button, CustomScrollbar } from '@grafana/ui';
@@ -22,6 +21,8 @@ interface GrafanaRuleDesignerFormProps {
   ruleForm?: RuleFormValues;
 }
 
+type RuleDesignExportMode = 'rule' | 'group';
+
 export function GrafanaRuleDesigner({ ruleForm, alertUid }: GrafanaRuleDesignerFormProps) {
   const formAPI = useForm<RuleFormValues>({
     mode: 'onSubmit',
@@ -31,7 +32,7 @@ export function GrafanaRuleDesigner({ ruleForm, alertUid }: GrafanaRuleDesignerF
 
   const existing = Boolean(ruleForm);
 
-  const [showExporter, toggleShowExporter] = useToggle(false);
+  const [showExporter, setShowExporter] = useState<RuleDesignExportMode | undefined>(undefined);
 
   const [conditionErrorMsg, setConditionErrorMsg] = useState('');
   const [evaluateEvery, setEvaluateEvery] = useState(ruleForm?.evaluateEvery ?? MINUTE);
@@ -41,19 +42,21 @@ export function GrafanaRuleDesigner({ ruleForm, alertUid }: GrafanaRuleDesignerF
   };
 
   const actionButtons = [
-    <Button key="cancel" size="sm" variant="secondary" onClick={() => toggleShowExporter(false)}>
+    <Button key="cancel" size="sm" variant="secondary" onClick={() => null}>
       Cancel
     </Button>,
-    <Button key="export" size="sm" onClick={() => toggleShowExporter(true)}>
-      Export
+    <Button key="export-rule" size="sm" onClick={() => setShowExporter('rule')}>
+      Export Rule
+    </Button>,
+    <Button key="export-group" size="sm" onClick={() => setShowExporter('group')}>
+      Export Group
     </Button>,
   ];
 
   return (
     <>
-      <AppChromeUpdate actions={actionButtons} />
       <FormProvider {...formAPI}>
-        {/*<AppChromeUpdate actions={actionButtons} />*/}
+        <AppChromeUpdate actions={actionButtons} />
         <form onSubmit={(e) => e.preventDefault()}>
           <div>
             <CustomScrollbar autoHeightMin="100%" hideHorizontalTrack={true}>
@@ -80,20 +83,24 @@ export function GrafanaRuleDesigner({ ruleForm, alertUid }: GrafanaRuleDesignerF
           </div>
         </form>
       </FormProvider>
-      {showExporter && <GrafanaRuleDesignExporter onClose={toggleShowExporter} />}
+      {showExporter && (
+        <GrafanaRuleDesignExporter exportMode={showExporter} onClose={() => setShowExporter(undefined)} />
+      )}
     </>
   );
 }
 
 interface GrafanaRuleDesignExporterProps {
   onClose: () => void;
+  exportMode: RuleDesignExportMode;
 }
 
-export const GrafanaRuleDesignExporter = ({ onClose }: GrafanaRuleDesignExporterProps) => {
+export const GrafanaRuleDesignExporter = ({ onClose, exportMode }: GrafanaRuleDesignExporterProps) => {
   const [activeTab, setActiveTab] = useState<RuleExportFormats>('yaml');
+  const title = exportMode === 'rule' ? 'Export Rule' : 'Export Group';
 
   return (
-    <GrafanaExportDrawer activeTab={activeTab} onTabChange={setActiveTab} onClose={onClose}>
+    <GrafanaExportDrawer title={title} activeTab={activeTab} onTabChange={setActiveTab} onClose={onClose}>
       TODO
     </GrafanaExportDrawer>
   );

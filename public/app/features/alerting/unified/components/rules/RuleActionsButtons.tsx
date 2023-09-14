@@ -145,18 +145,15 @@ export const RuleActionsButtons = ({ rule, rulesSource }: Props) => {
 
     if (isGrafanaRulerRule(rulerRule) && canReadProvisioning) {
       moreActions.push(<Menu.Item label="Export" icon="download-alt" onClick={toggleShowExportDrawer} />);
-
-      if (isProvisioned) {
-        moreActions.push(
-          <Menu.Item
-            label="Modified export"
-            icon="edit"
-            onClick={() =>
-              locationService.push(`/alerting/${encodeURIComponent(ruleId.stringifyIdentifier(identifier))}/design`)
-            }
-          />
-        );
-      }
+      moreActions.push(
+        <Menu.Item
+          label="Modified export"
+          icon="edit"
+          onClick={() =>
+            locationService.push(`/alerting/${encodeURIComponent(ruleId.stringifyIdentifier(identifier))}/design`)
+          }
+        />
+      );
     }
 
     moreActions.push(
