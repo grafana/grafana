@@ -88,7 +88,10 @@ export const InspectContent = ({
     >
       {activeTab === InspectTab.Data && (
         <InspectDataTab
-          panel={panel}
+          dataName={panel.getDisplayTitle()}
+          panelPluginId={panel.type}
+          fieldConfig={panel.fieldConfig}
+          hasTransformations={Boolean(panel.transformations?.length)}
           data={data && data.series}
           isLoading={isDataLoading}
           options={dataOptions}
@@ -106,9 +109,7 @@ export const InspectContent = ({
       )}
       {activeTab === InspectTab.Error && <InspectErrorTab errors={errors} />}
       {data && activeTab === InspectTab.Stats && <InspectStatsTab data={data} timeZone={dashboard.getTimezone()} />}
-      {data && activeTab === InspectTab.Query && (
-        <QueryInspector panel={panel} data={data.series} onRefreshQuery={() => panel.refresh()} />
-      )}
+      {data && activeTab === InspectTab.Query && <QueryInspector data={data} onRefreshQuery={() => panel.refresh()} />}
     </Drawer>
   );
 };

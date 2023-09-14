@@ -13,7 +13,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
-	plog "github.com/grafana/grafana/pkg/plugins/log"
 )
 
 var (
@@ -58,14 +57,10 @@ const (
 	endpointQueryData      = "queryData"
 )
 
-var logger = plog.New("plugin.instrumentation")
-
 // instrumentPluginRequest instruments success rate and latency of `fn`
 func instrumentPluginRequest(ctx context.Context, cfg Cfg, pluginCtx *backend.PluginContext, endpoint string, fn func(ctx context.Context) error) error {
 	status := statusOK
-
 	start := time.Now()
-	timeBeforePluginRequest := log.TimeSinceStart(ctx, start)
 
 	ctx = instrumentContext(ctx, endpoint, *pluginCtx)
 	err := fn(ctx)
@@ -96,37 +91,6 @@ func instrumentPluginRequest(ctx context.Context, cfg Cfg, pluginCtx *backend.Pl
 		pluginRequestDurationSecondsWithLabels.Observe(elapsed.Seconds())
 	}
 
-	if cfg.LogDatasourceRequests {
-		logParams := []any{
-			"status", status,
-			"duration", elapsed,
-			"pluginId", pluginCtx.PluginID,
-			"endpoint", endpoint,
-			"eventName", "grafana-data-egress",
-			"time_before_plugin_request", timeBeforePluginRequest,
-		}
-
-		if pluginCtx.User != nil {
-			logParams = append(logParams, "uname", pluginCtx.User.Login)
-		}
-
-		traceID := tracing.TraceIDFromContext(ctx, false)
-		if traceID != "" {
-			logParams = append(logParams, "traceID", traceID)
-		}
-
-		if pluginCtx.DataSourceInstanceSettings != nil {
-			logParams = append(logParams, "dsName", pluginCtx.DataSourceInstanceSettings.Name)
-			logParams = append(logParams, "dsUID", pluginCtx.DataSourceInstanceSettings.UID)
-		}
-
-		if status == statusError {
-			logParams = append(logParams, "error", err)
-		}
-
-		logger.Info("Plugin Request Completed", logParams...)
-	}
-
 	return err
 }
 
@@ -136,12 +100,14 @@ func instrumentContext(ctx context.Context, endpoint string, pCtx backend.Plugin
 		p = append(p, "dsName", pCtx.DataSourceInstanceSettings.Name)
 		p = append(p, "dsUID", pCtx.DataSourceInstanceSettings.UID)
 	}
+	if pCtx.User != nil {
+		p = append(p, "uname", pCtx.User.Login)
+	}
 	return log.WithContextualAttributes(ctx, p)
 }
 
 type Cfg struct {
-	LogDatasourceRequests bool
-	Target                backendplugin.Target
+	Target backendplugin.Target
 }
 
 // InstrumentCollectMetrics instruments collectMetrics.

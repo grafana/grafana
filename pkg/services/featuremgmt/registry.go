@@ -197,14 +197,6 @@ var (
 			Owner:        awsDatasourcesSquad,
 		},
 		{
-			Name:         "newPanelChromeUI",
-			Description:  "Show updated look and feel of grafana-ui PanelChrome: panel header, icons, and menu",
-			Stage:        FeatureStageGeneralAvailability,
-			FrontendOnly: true,
-			Expression:   "true", // enabled by default
-			Owner:        grafanaDashboardsSquad,
-		},
-		{
 			Name:        "showDashboardValidationWarnings",
 			Description: "Show warnings when dashboards do not validate against the schema",
 			Stage:       FeatureStageExperimental,
@@ -551,13 +543,6 @@ var (
 			Owner:        grafanaPluginsPlatformSquad,
 		},
 		{
-			Name:         "alertingLokiRangeToInstant",
-			Description:  "Rewrites eligible loki range queries to instant queries",
-			Stage:        FeatureStageExperimental,
-			FrontendOnly: false,
-			Owner:        grafanaAlertingSquad,
-		},
-		{
 			Name:         "vizAndWidgetSplit",
 			Description:  "Split panels between vizualizations and widgets",
 			Stage:        FeatureStageExperimental,
@@ -666,8 +651,9 @@ var (
 		{
 			Name:        "prometheusConfigOverhaulAuth",
 			Description: "Update the Prometheus configuration page with the new auth component",
-			Stage:       FeatureStageExperimental,
 			Owner:       grafanaObservabilityMetricsSquad,
+			Stage:       FeatureStageGeneralAvailability,
+			Expression:  "true", // on by default
 		},
 		{
 			Name:            "configurableSchedulerTick",
@@ -743,6 +729,20 @@ var (
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: false,
 			Owner:        grafanaPluginsPlatformSquad,
+		},
+		{
+			Name:         "wargamesTesting",
+			Description:  "Placeholder feature flag for internal testing",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: false,
+			Owner:        hostedGrafanaTeam,
+		},
+		{
+			Name:         "alertingInsights",
+			Description:  "Show the new alerting insights landing page",
+			FrontendOnly: true,
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAlertingSquad,
 		},
 	}
 )

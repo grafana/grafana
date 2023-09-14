@@ -300,8 +300,9 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *A
 	}
 
 	defer func() {
-		err := res.Body.Close()
-		backend.Logger.Error("Failed to close response body", "err", err)
+		if err := res.Body.Close(); err != nil {
+			backend.Logger.Warn("Failed to close response body", "err", err)
+		}
 	}()
 
 	logResponse, err := e.unmarshalResponse(res)
@@ -578,7 +579,7 @@ func getCorrelationWorkspaces(ctx context.Context, baseResource string, resource
 
 		defer func() {
 			if err := res.Body.Close(); err != nil {
-				backend.Logger.Error("Failed to close response body", "err", err)
+				backend.Logger.Warn("Failed to close response body", "err", err)
 			}
 		}()
 
@@ -681,8 +682,9 @@ func (e *AzureLogAnalyticsDatasource) unmarshalResponse(res *http.Response) (Azu
 		return AzureLogAnalyticsResponse{}, err
 	}
 	defer func() {
-		err := res.Body.Close()
-		backend.Logger.Error("Failed to close response body", "err", err)
+		if err := res.Body.Close(); err != nil {
+			backend.Logger.Warn("Failed to close response body", "err", err)
+		}
 	}()
 
 	if res.StatusCode/100 != 2 {
