@@ -111,9 +111,11 @@ function SharePanelModalRenderer({ model }: SceneComponentProps<SharePanelModal>
     />
   );
 
+  const currentTab = tabs.find((t) => t.getTabLabel() === activeTab);
+
   return (
     <Modal isOpen={true} title={header} onDismiss={model.onClose}>
-      <TabContent>Tab content</TabContent>
+      <TabContent>{currentTab && <currentTab.Component model={currentTab} />}</TabContent>
     </Modal>
   );
 }

@@ -1,6 +1,6 @@
 import { locationUtil, PanelMenuItem } from '@grafana/data';
 import { locationService, reportInteraction } from '@grafana/runtime';
-import { sceneGraph, SceneObjectRef, VizPanel, VizPanelMenu } from '@grafana/scenes';
+import { sceneGraph, VizPanel, VizPanelMenu } from '@grafana/scenes';
 import { contextSrv } from 'app/core/core';
 import { t } from 'app/core/internationalization';
 import { getExploreUrl } from 'app/core/utils/explore';
