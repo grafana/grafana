@@ -1,5 +1,3 @@
-import { getLinkToDocs } from './getLinkToDocs';
-
 export const convertFieldTypeHelper = () => {
   return `
   This transformation changes the field type of the specified field.
@@ -33,6 +31,5 @@ export const convertFieldTypeHelper = () => {
   | 2018-01-01 00:00:00 | below     | 22    |
   | 2019-01-01 00:00:00 | below     | 29    |
   | 2020-01-01 00:00:00 | above     | 22    |
-  ${getLinkToDocs()}
   `;
 };

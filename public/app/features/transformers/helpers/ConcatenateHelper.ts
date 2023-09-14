@@ -1,5 +1,3 @@
-import { getLinkToDocs } from './getLinkToDocs';
-
 export const concatenateHelper = () => {
   return `
   Use this transformation to combine all fields from all frames into one result. Consider the following:
@@ -21,6 +19,5 @@ export const concatenateHelper = () => {
   | Temp  | Uptime   | AQI   | Errors |
   | ----- | -------- | ----- | ------ |
   | 15.4  | 1230233  | 3.2   | 5      |
-  ${getLinkToDocs()}
   `;
 };

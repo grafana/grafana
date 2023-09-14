@@ -1,5 +1,3 @@
-import { getLinkToDocs } from './getLinkToDocs';
-
 export const calculateFieldHelper = () => {
   return `
   Use this transformation to add a new field calculated from two other fields. Each transformation allows you to add one new field.
@@ -13,6 +11,5 @@ export const calculateFieldHelper = () => {
   - **Operation -** If you select **Binary option** mode, then the **Operation** fields appear. These fields allow you to do basic math operations on values in a single row from two selected fields. You can also use numerical values for binary operations.
   - **Alias -** (Optional) Enter the name of your new field. If you leave this blank, then the field will be named to match the calculation.
   - **Replace all fields -** (Optional) Select this option if you want to hide all other fields and display only your calculated field in the visualization.
-  ${getLinkToDocs()}
   `;
 };

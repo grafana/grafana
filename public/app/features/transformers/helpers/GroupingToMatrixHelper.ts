@@ -1,5 +1,3 @@
-import { getLinkToDocs } from './getLinkToDocs';
-
 export const groupingToMatrixHelper = () => {
   return `
   Use this transformation to combine three fields-that will be used as input for the **Column**, **Row**, and **Cell value** fields-from the query output, and generate a matrix. This matrix will be calculated as follows:
@@ -21,6 +19,5 @@ export const groupingToMatrixHelper = () => {
   | server 1                | 82   |          |
   | server 2                | 88.6 |          |
   | server 3                |      | 59.6     |
-  ${getLinkToDocs()}
   `;
 };

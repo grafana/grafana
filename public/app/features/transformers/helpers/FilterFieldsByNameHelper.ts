@@ -1,5 +1,3 @@
-import { getLinkToDocs } from './getLinkToDocs';
-
 export const filterFieldsByNameHelper = () => {
   return `
   Use this transformation to remove portions of the query results.
@@ -10,6 +8,5 @@ export const filterFieldsByNameHelper = () => {
 
   - Enter a regex expression.
   - Click a field to toggle filtering on that field. Filtered fields are displayed with dark gray text, unfiltered fields have white text.
-  ${getLinkToDocs()}
   `;
 };

@@ -1,5 +1,3 @@
-import { getLinkToDocs } from './getLinkToDocs';
-
 export const organizeFieldsHelper = () => {
   return `
   Use this transformation to rename, reorder, or hide fields returned by the query.
@@ -11,6 +9,5 @@ export const organizeFieldsHelper = () => {
   - Change field order by hovering your cursor over a field. The cursor turns into a hand and then you can drag the field to its new place.
   - Hide or show a field by clicking the eye icon next to the field name.
   - Rename fields by typing a new name in the **Rename <field>** box.
-  ${getLinkToDocs()}
   `;
 };

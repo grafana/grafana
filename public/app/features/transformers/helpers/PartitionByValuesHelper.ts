@@ -1,5 +1,3 @@
-import { getLinkToDocs } from './getLinkToDocs';
-
 export const partitionByValuesHelper = () => {
   return `
   This transformation can help eliminate the need for multiple queries to the same datasource with different 'WHERE' clauses when graphing multiple series. Consider a metrics SQL table with the following data:
@@ -31,6 +29,5 @@ export const partitionByValuesHelper = () => {
   | ------------------- | ------ | ----- |
   | 2022-10-20 12:00:00 | EU     | 2936  |
   | 2022-10-20 01:00:00 | EU     | 912   |
-  ${getLinkToDocs()}
   `;
 };

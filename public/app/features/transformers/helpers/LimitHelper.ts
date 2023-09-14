@@ -1,5 +1,3 @@
-import { getLinkToDocs } from './getLinkToDocs';
-
 export const limitHelper = () => {
   return `
   Use this transformation to limit the number of rows displayed.
@@ -22,6 +20,5 @@ export const limitHelper = () => {
   | 2020-07-07 11:34:20 | Temperature | 25    |
   | 2020-07-07 11:34:20 | Humidity    | 22    |
   | 2020-07-07 10:32:20 | Humidity    | 29    |
-  ${getLinkToDocs()}
   `;
 };

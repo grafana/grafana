@@ -1,5 +1,3 @@
-import { getLinkToDocs } from './getLinkToDocs';
-
 export const configFromQueryHelper = () => {
   return `
   Use this transformation to select one query and from it extract standard options such as
@@ -65,6 +63,5 @@ export const configFromQueryHelper = () => {
   | Color | Value mappings / Ciolor | All values |
 
   Grafana will build the value mappings from you query result and apply it the the real data query results. You should see values being mapped and colored according to the config query results.
-  ${getLinkToDocs()}
   `;
 };

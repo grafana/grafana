@@ -1,5 +1,3 @@
-import { getLinkToDocs } from './getLinkToDocs';
-
 export const seriesToRowsHelper = () => {
   return `
   Use this transformation to combine the result from multiple time series data queries into one single result. This is helpful when using the table panel visualization.
@@ -36,6 +34,5 @@ export const seriesToRowsHelper = () => {
   | 2020-07-07 09:30:05 | Temperature | 19    |
 
   > **Note:** This transformation is available in Grafana 7.1+.
-  ${getLinkToDocs()}
   `;
 };

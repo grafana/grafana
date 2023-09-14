@@ -1,5 +1,3 @@
-import { getLinkToDocs } from './getLinkToDocs';
-
 export const extractFieldsHelper = () => {
   return `
   Use this transformation to select one source of data and extract content from it in different formats. Set the following fields:
@@ -40,6 +38,5 @@ export const extractFieldsHelper = () => {
   | 1636678740000000000 | 1        |
   | 1636678680000000000 | 5        |
   | 1636678620000000000 | 12       |
-  ${getLinkToDocs()}
   `;
 };

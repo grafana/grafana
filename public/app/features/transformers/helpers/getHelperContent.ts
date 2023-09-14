@@ -1,5 +1,3 @@
-import { getLinkToDocs } from './getLinkToDocs';
-
 import {
   calculateFieldHelper,
   concatenateHelper,
@@ -65,11 +63,20 @@ const helperContent: Record<string, () => string> = {
 };
 
 export function getHelperContent(id: string): string {
-  const defaultMessage = getLinkToDocs();
-
   if (id in helperContent) {
-    return helperContent[id]();
+    return `
+    ${helperContent[id]()}
+    ${getLinkToDocs()}
+    `;
   }
 
-  return defaultMessage;
+  return getLinkToDocs();
+}
+
+export function getLinkToDocs(): string {
+  return `
+  Go the <a href="https://grafana.com/docs/grafana/latest/panels/transformations/?utm_source=grafana" target="_blank" rel="noreferrer">
+  transformation documentation
+  </a> for more.
+  `;
 }

@@ -1,5 +1,3 @@
-import { getLinkToDocs } from './getLinkToDocs';
-
 export const groupByHelper = () => {
   return `
   This transformation groups the data by a specified field (column) value and processes calculations on each group. Click to see a list of calculation choices. For information about available calculations, refer to [Calculation types](https://grafana.com/docs/grafana/latest/panels-visualizations/calculation-types/).
@@ -57,6 +55,5 @@ export const groupByHelper = () => {
   | server 3  | 59.6                   | 62                     | 2020-07-07 11:34:20 | OK                   |
 
   This transformation enables you to extract key information from your time series and display it in a convenient way.
-  ${getLinkToDocs()}
   `;
 };
