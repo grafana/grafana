@@ -4,10 +4,11 @@ import React from 'react';
 
 import { dateTime, DateTime, dateTimeAsMoment, GrafanaTheme2, isDateTimeInput } from '@grafana/data';
 
-import { Icon, useStyles2 } from '../../index';
+import { useStyles2 } from '../../themes/ThemeContext';
 import { getFocusStyles } from '../../themes/mixins';
 import { inputSizes } from '../Forms/commonStyles';
 import { FormInputSize } from '../Forms/types';
+import { Icon } from '../Icon/Icon';
 
 export interface Props {
   onChange: (value: DateTime) => void;
