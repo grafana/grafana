@@ -1,87 +1,68 @@
 import React, { useState } from 'react';
 
 import { config } from '@grafana/runtime';
-import {
-  EmbeddedScene,
-  SceneApp,
-  SceneAppPage,
-  SceneFlexItem,
-  SceneFlexLayout,
-  SceneReactObject,
-} from '@grafana/scenes';
+import { SceneApp, SceneAppPage } from '@grafana/scenes';
 import { usePageNav } from 'app/core/components/Page/usePageNav';
 import { PluginPageContext, PluginPageContextType } from 'app/features/plugins/components/PluginPageContext';
 
-import GettingStarted, { WelcomeHeader } from './GettingStarted';
+import { getOverviewScene, WelcomeHeader } from './GettingStarted';
 import { getGrafanaScenes } from './Insights';
 
 let homeApp: SceneApp | undefined;
 
-export function getHomeApp() {
+export function getHomeApp(insightsEnabled: boolean) {
   if (homeApp) {
     return homeApp;
   }
 
-  homeApp = new SceneApp({
-    pages: [
-      new SceneAppPage({
-        title: 'Alerting',
-        subTitle: <WelcomeHeader />,
-        url: '/alerting',
-        hideFromBreadcrumbs: true,
-        tabs: [
-          new SceneAppPage({
-            title: 'Grafana',
-            url: '/alerting/home/insights',
-            getScene: getGrafanaScenes,
-          }),
-          new SceneAppPage({
-            title: 'Overview',
-            url: '/alerting/home/overview',
-            getScene: () => {
-              return new EmbeddedScene({
-                body: new SceneFlexLayout({
-                  children: [
-                    new SceneFlexItem({
-                      body: new SceneReactObject({
-                        component: GettingStarted,
-                      }),
-                    }),
-                  ],
-                }),
-              });
-            },
-          }),
-          // new SceneAppPage({
-          //   title: 'Mimir alertmanager',
-          //   url: '/alerting/insights/mimir-alertmanager',
-          //   getScene: getCloudScenes,
-          // }),
-          // new SceneAppPage({
-          //   title: 'Mimir-managed rules',
-          //   url: '/alerting/insights/mimir-rules',
-          //   getScene: getMimirManagedRulesScenes,
-          // }),
-          // new SceneAppPage({
-          //   title: 'Mimir-managed Rules - Per Rule Group',
-          //   url: '/alerting/insights/mimir-rules-per-group',
-          //   getScene: getMimirManagedRulesPerGroupScenes,
-          // }),
-        ],
-      }),
-    ],
-  });
+  if (insightsEnabled) {
+    homeApp = new SceneApp({
+      pages: [
+        new SceneAppPage({
+          title: 'Alerting',
+          subTitle: <WelcomeHeader />,
+          url: '/alerting',
+          hideFromBreadcrumbs: true,
+          tabs: [
+            new SceneAppPage({
+              title: 'Grafana',
+              url: '/alerting/home/insights',
+              getScene: getGrafanaScenes,
+            }),
+            new SceneAppPage({
+              title: 'Overview',
+              url: '/alerting/home/overview',
+              getScene: getOverviewScene,
+            }),
+          ],
+        }),
+      ],
+    });
+  } else {
+    homeApp = new SceneApp({
+      pages: [
+        new SceneAppPage({
+          title: 'Alerting',
+          subTitle: <WelcomeHeader />,
+          url: '/alerting',
+          hideFromBreadcrumbs: true,
+          getScene: getOverviewScene,
+        }),
+      ],
+    });
+  }
 
   return homeApp;
 }
 
 export default function Home() {
-  const appScene = getHomeApp();
+  const insightsEnabled = !!config.featureToggles.alertingInsights;
+
+  const appScene = getHomeApp(insightsEnabled);
 
   const sectionNav = usePageNav('alerting')!;
   const [pluginContext] = useState<PluginPageContextType>({ sectionNav });
 
-  const alertingInsightsEnabled = config.featureToggles.alertingInsights;
   return (
     <PluginPageContext.Provider value={pluginContext}>
       <appScene.Component model={appScene} />

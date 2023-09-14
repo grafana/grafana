@@ -4,7 +4,22 @@ import SVG from 'react-inlinesvg';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
+import { EmbeddedScene, SceneFlexLayout, SceneFlexItem, SceneReactObject } from '@grafana/scenes';
 import { Icon, useStyles2, useTheme2 } from '@grafana/ui';
+
+export const getOverviewScene = () => {
+  return new EmbeddedScene({
+    body: new SceneFlexLayout({
+      children: [
+        new SceneFlexItem({
+          body: new SceneReactObject({
+            component: GettingStarted,
+          }),
+        }),
+      ],
+    }),
+  });
+};
 
 export default function GettingStarted({ showWelcomeHeader }: { showWelcomeHeader?: boolean }) {
   const theme = useTheme2();
