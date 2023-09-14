@@ -55,12 +55,12 @@ func ProvideBackgroundServiceRegistry(
 	publicDashboardsMetric *publicdashboardsmetric.Service,
 	keyRetriever *dynamic.KeyRetriever,
 	dynamicAngularDetectorsProvider *angulardetectorsprovider.Dynamic,
+	anon *anonimpl.AnonDeviceService,
 	// Need to make sure these are initialized, is there a better place to put them?
 	_ dashboardsnapshots.Service, _ *alerting.AlertNotificationService,
 	_ serviceaccounts.Service, _ *guardian.Provider,
 	_ *plugindashboardsservice.DashboardUpdater, _ *sanitizer.Provider,
 	_ *grpcserver.HealthService, _ entity.EntityStoreServer, _ *grpcserver.ReflectionService, _ *ldapapi.Service,
-	_ *anonimpl.AnonDeviceService,
 ) *BackgroundServiceRegistry {
 	return NewBackgroundServiceRegistry(
 		httpServer,
@@ -94,6 +94,7 @@ func ProvideBackgroundServiceRegistry(
 		publicDashboardsMetric,
 		keyRetriever,
 		dynamicAngularDetectorsProvider,
+		anon,
 	)
 }
 
