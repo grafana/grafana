@@ -33,7 +33,7 @@ import { CorrelationData, useCorrelations } from './useCorrelations';
 const sortDatasource: SortByFn<CorrelationData> = (a, b, column) =>
   a.values[column].name.localeCompare(b.values[column].name);
 
-const isSourceReadOnly = ({ source }: Pick<CorrelationData, 'source'>) => source.readOnly;
+const isCorrelationsReadOnly = (correlation: CorrelationData) => correlation.provisioned;
 
 const loaderWrapper = css`
   display: flex;
@@ -92,13 +92,14 @@ export default function CorrelationsPage() {
       row: {
         index,
         original: {
-          source: { uid: sourceUID, readOnly },
+          source: { uid: sourceUID },
+          provisioned,
           uid,
         },
       },
     }: CellProps<CorrelationData, void>) => {
       return (
-        !readOnly && (
+        !provisioned && (
           <DeleteButton
             aria-label="delete correlation"
             onConfirm={() =>
@@ -119,7 +120,7 @@ export default function CorrelationsPage() {
         id: 'info',
         cell: InfoCell,
         disableGrow: true,
-        visible: (data) => data.some(isSourceReadOnly),
+        visible: (data) => data.some(isCorrelationsReadOnly),
       },
       {
         id: 'source',
@@ -138,7 +139,7 @@ export default function CorrelationsPage() {
         id: 'actions',
         cell: RowActions,
         disableGrow: true,
-        visible: (data) => canWriteCorrelations && data.some(negate(isSourceReadOnly)),
+        visible: (data) => canWriteCorrelations && data.some(negate(isCorrelationsReadOnly)),
       },
     ],
     [RowActions, canWriteCorrelations]
@@ -205,7 +206,7 @@ export default function CorrelationsPage() {
                   <ExpendedRow
                     correlation={correlation}
                     onUpdated={handleUpdated}
-                    readOnly={isSourceReadOnly({ source: correlation.source }) || !canWriteCorrelations}
+                    readOnly={isCorrelationsReadOnly(correlation) || !canWriteCorrelations}
                   />
                 )}
                 columns={columns}
@@ -285,7 +286,7 @@ const noWrap = css`
 
 const InfoCell = memo(
   function InfoCell({ ...props }: CellProps<CorrelationData, void>) {
-    const readOnly = props.row.original.source.readOnly;
+    const readOnly = props.row.original.provisioned;
 
     if (readOnly) {
       return <Badge text={t('correlations.badge.text', 'Read only')} color="purple" className={noWrap} />;

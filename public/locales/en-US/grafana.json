@@ -26,7 +26,10 @@
   "browse-dashboards": {
     "action": {
       "cancel-button": "Cancel",
+      "cannot-move-folders": "Folders can not be moved",
       "delete-button": "Delete",
+      "delete-modal-invalid-text": "One or more folders contain library panels or alert rules. Delete these first in order to proceed.",
+      "delete-modal-invalid-title": "Cannot delete folder",
       "delete-modal-text": "This action will delete the following content:",
       "delete-modal-title": "Delete",
       "deleting": "Deleting...",
@@ -617,6 +620,50 @@
       "show-legend": "Show legend",
       "unlink-library-panel": "Unlink library panel",
       "view": "View"
+    }
+  },
+  "playlist-edit": {
+    "error-prefix": "Error loading playlist:",
+    "form": {
+      "add-tag-label": "Add by tag",
+      "add-tag-placeholder": "Select a tag",
+      "add-title-label": "Add by title",
+      "cancel": "Cancel",
+      "heading": "Add dashboards",
+      "interval-label": "Interval",
+      "interval-placeholder": "5m",
+      "interval-required": "Interval is required",
+      "name-label": "Name",
+      "name-placeholder": "Name",
+      "name-required": "Name is required",
+      "save": "Save",
+      "table-delete": "Delete playlist item",
+      "table-drag": "Drag and drop to reorder",
+      "table-empty": "Playlist is empty. Add dashboards below.",
+      "table-heading": "Dashboards"
+    },
+    "sub-title": "A playlist rotates through a pre-selected list of dashboards. A playlist can be a great way to build situational awareness, or just show off your metrics to your team or visitors.",
+    "title": "Edit playlist"
+  },
+  "playlist-page": {
+    "card": {
+      "delete": "Delete playlist",
+      "edit": "Edit playlist",
+      "start": "Start playlist",
+      "tooltip": "Share playlist"
+    },
+    "create-button": {
+      "title": "New playlist"
+    },
+    "delete-modal": {
+      "body": "Are you sure you want to delete {{name}} playlist?",
+      "confirm-text": "Delete"
+    },
+    "empty": {
+      "button": "Create Playlist",
+      "pro-tip": "You can use playlists to cycle dashboards on TVs without user control",
+      "pro-tip-link-title": "Learn more",
+      "title": "There are no playlists created yet"
     }
   },
   "refresh-picker": {

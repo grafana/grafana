@@ -46,7 +46,6 @@ export interface FeatureToggles {
   cloudWatchCrossAccountQuerying?: boolean;
   redshiftAsyncQueryDataSupport?: boolean;
   athenaAsyncQueryDataSupport?: boolean;
-  newPanelChromeUI?: boolean;
   showDashboardValidationWarnings?: boolean;
   mysqlAnsiQuotes?: boolean;
   accessControlOnCall?: boolean;
@@ -98,7 +97,6 @@ export interface FeatureToggles {
   exploreScrollableLogsContainer?: boolean;
   recordedQueriesMulti?: boolean;
   pluginsDynamicAngularDetectionPatterns?: boolean;
-  alertingLokiRangeToInstant?: boolean;
   vizAndWidgetSplit?: boolean;
   prometheusIncrementalQueryInstrumentation?: boolean;
   logsExploreTableVisualisation?: boolean;
@@ -122,4 +120,8 @@ export interface FeatureToggles {
   angularDeprecationUI?: boolean;
   dashgpt?: boolean;
   reportingRetries?: boolean;
+  newBrowseDashboards?: boolean;
+  sseGroupByDatasource?: boolean;
+  requestInstrumentationStatusSource?: boolean;
+  wargamesTesting?: boolean;
 }
