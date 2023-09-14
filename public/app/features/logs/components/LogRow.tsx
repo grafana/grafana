@@ -113,19 +113,43 @@ class UnThemedLogRow extends PureComponent<Props, State> {
     });
   }
 
+  debouncedMenuOpen = debounce(() => {
+    this.setState({ mouseIsOver: true });
+  }, 1000);
+
+  delayMenu = () => {
+    if (window.getSelection()?.toString()) {
+      this.setState({ mouseIsOver: false });
+      this.debouncedMenuOpen();
+    }
+  };
+
   onMouseEnter = (e: MouseEvent | FocusEvent) => {
-    e.target?.addEventListener('selectstart', (e) => {
-      if (window.getSelection()?.toString()) {
-        this.setState({ mouseIsOver: false });
-      }
-    });
+    const target = e.target;
+    if (e.type === 'focus') {
+      e.target?.addEventListener('selectstart', (e) => {
+        document.addEventListener('selectionchange', (e) => {
+          if ('contains' in target ? target.contains(window.getSelection()?.focusNode || null) : false) {
+            this.delayMenu();
+          }
+        });
+      });
+      e.target?.addEventListener('selectfinish', (e) => {
+        document.removeEventListener('selectionchange', () => {
+          if ('contains' in target ? target.contains(window.getSelection()?.focusNode || null) : false) {
+            this.delayMenu();
+          }
+        });
+      });
+    }
     this.setState({ mouseIsOver: true });
     if (this.props.onLogRowHover) {
       this.props.onLogRowHover(this.props.row);
     }
   };
 
-  onMouseLeave = () => {
+  onMouseLeave = (e?: MouseEvent) => {
+    // handle event removements; too lazy to do it properly right now
     this.setState({ mouseIsOver: false });
     if (this.props.onLogRowHover) {
       this.props.onLogRowHover(undefined);
