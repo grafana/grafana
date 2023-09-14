@@ -131,7 +131,7 @@ const initialUserListAdminState: UserListAdminState = {
   totalPages: 1,
   showPaging: false,
   filters: [{ name: 'activeLast30Days', value: false }],
-  isLoading: false,
+  isLoading: true,
 };
 
 interface UsersFetched {
