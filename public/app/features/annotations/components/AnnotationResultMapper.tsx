@@ -126,14 +126,11 @@ export class AnnotationFieldMapper extends PureComponent<Props, State> {
     let picker = [...fieldNames];
     const current = mapping.value;
     let currentValue = fieldNames.find((f) => current === f.value);
-    if (current) {
-      picker = [...fieldNames];
-      if (!currentValue) {
-        picker.push({
-          label: current,
-          value: current,
-        });
-      }
+    if (current && !currentValue) {
+      picker.push({
+        label: current,
+        value: current,
+      });
     }
 
     let value = first ? first[row.key] : '';
