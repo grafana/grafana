@@ -3,9 +3,10 @@ import React from 'react';
 import { DataSourceSettings } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { FieldSet, InlineField, InlineFieldRow, InlineSwitch } from '@grafana/ui';
-import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
 
 import { SQLConnectionLimits, SQLOptions } from '../../types';
+
+import { NumberInput } from './ConnectionLimitNumber';
 
 interface Props<T> {
   onOptionsChange: Function;
