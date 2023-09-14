@@ -28,6 +28,7 @@ export enum AlertmanagerAction {
   ViewNotificationTemplate = 'view-notification-template',
   UpdateNotificationTemplate = 'edit-notification-template',
   DeleteNotificationTemplate = 'delete-notification-template',
+  CanReadSecrets = 'can-read-secrets',
 
   // notification policies
   CreateNotificationPolicy = 'create-notification-policy',
@@ -168,6 +169,10 @@ export function useAllAlertmanagerAbilities(): Abilities<AlertmanagerAction> {
       isGrafanaFlavoredAlertmanager,
       ctx.hasPermission(notificationsPermissions.provisioning.read) ||
         ctx.hasPermission(notificationsPermissions.provisioning.readSecrets),
+    ],
+    [AlertmanagerAction.CanReadSecrets]: [
+      hasConfigurationAPI,
+      ctx.hasPermission(notificationsPermissions.provisioning.readSecrets),
     ],
     // -- silences --
     [AlertmanagerAction.CreateSilence]: [hasConfigurationAPI, ctx.hasPermission(instancePermissions.create)],

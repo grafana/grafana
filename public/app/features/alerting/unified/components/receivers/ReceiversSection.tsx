@@ -16,8 +16,8 @@ interface Props {
   addButtonTo: string;
   className?: string;
   showButton?: boolean;
-  exportLink?: string;
   canReadSecrets?: boolean;
+  showExport?: boolean;
 }
 
 export const ReceiversSection = ({
@@ -28,14 +28,14 @@ export const ReceiversSection = ({
   addButtonTo,
   children,
   showButton = true,
-  exportLink,
   canReadSecrets = false,
+  showExport = false
 }: React.PropsWithChildren<Props>) => {
   const styles = useStyles2(getStyles);
-  const showMore = Boolean(exportLink);
+  const showMore = showExport;
   const [showExportDrawer, toggleShowExportDrawer] = useToggle(false);
 
-  const newMenu = <Menu>{exportLink && <MenuItem onClick={toggleShowExportDrawer} label="Export all" />}</Menu>;
+  const newMenu = <Menu>{showExport && <MenuItem onClick={toggleShowExportDrawer} label="Export all" />}</Menu>;
 
   return (
     <Stack direction="column" gap={2}>
