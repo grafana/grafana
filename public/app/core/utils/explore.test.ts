@@ -71,20 +71,12 @@ describe('state functions', () => {
 
 describe('getExploreUrl', () => {
   const args = {
-    panel: {
-      getSavedId: () => 1,
-      targets: [
-        { refId: 'A', expr: 'query1', legendFormat: 'legendFormat1' },
-        { refId: 'B', expr: 'query2', datasource: { type: '__expr__', uid: '__expr__' } },
-      ],
-    },
-    datasourceSrv: {
-      get() {
-        return {
-          getRef: jest.fn(),
-        };
-      },
-      getDataSourceById: jest.fn(),
+    targets: [
+      { refId: 'A', expr: 'query1', legendFormat: 'legendFormat1' },
+      { refId: 'B', expr: 'query2', datasource: { type: '__expr__', uid: '__expr__' } },
+    ],
+    dsRef: {
+      uid: 'ds1',
     },
     timeRange: { from: dateTime(), to: dateTime(), raw: { from: 'now-1h', to: 'now' } },
   } as unknown as GetExploreUrlArguments;
