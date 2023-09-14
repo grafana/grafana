@@ -31,6 +31,7 @@ import FlameGraphMetadata from './FlameGraphMetadata';
 import FlameGraphTooltip from './FlameGraphTooltip';
 import { FlameGraphDataContainer, LevelItem } from './dataTransform';
 import { getBarX, useFlameRender } from './rendering';
+import { useFlameRender2 } from './rendering2';
 
 type Props = {
   data: FlameGraphDataContainer;
@@ -111,6 +112,24 @@ const FlameGraph = ({
     getTheme,
   });
 
+  useFlameRender2({
+    canvasRef: graphRef,
+    colorScheme,
+    data,
+    focusedItemData,
+    levels,
+    rangeMax,
+    rangeMin,
+    search,
+    textAlign,
+    totalViewTicks,
+    // We need this so that if we have a diff profile and are in sandwich view we still show the same diff colors.
+    totalColorTicks: data.isDiffFlamegraph() ? totalProfileTicks : totalViewTicks,
+    totalTicksRight: totalProfileTicksRight,
+    wrapperWidth,
+    getTheme,
+  });
+
   const onGraphClick = useCallback(
     (e: ReactMouseEvent<HTMLCanvasElement>) => {
       setTooltipItem(undefined);
@@ -123,14 +142,22 @@ const FlameGraph = ({
         rangeMin
       );
 
+      const item = convertPixelCoordinatesToBarCoordinates2(
+        { x: e.nativeEvent.offsetX, y: e.nativeEvent.offsetY },
+        levels,
+        pixelsPerTick,
+        totalViewTicks,
+        rangeMin
+      );
+
       // if clicking on a block in the canvas
-      if (barIndex !== -1 && !isNaN(levelIndex) && !isNaN(barIndex)) {
-        const item = levels[levelIndex][barIndex];
+      // if (barIndex !== -1 && !isNaN(levelIndex) && !isNaN(barIndex)) {
+      if (item) {
+        // const item = levels[levelIndex][barIndex];
         setClickedItemData({
           posY: e.clientY,
           posX: e.clientX,
           item,
-          level: levelIndex,
           label: data.getLabel(item.itemIndexes[0]),
         });
       } else {
@@ -156,9 +183,18 @@ const FlameGraph = ({
           rangeMin
         );
 
-        if (barIndex !== -1 && !isNaN(levelIndex) && !isNaN(barIndex)) {
+        const item = convertPixelCoordinatesToBarCoordinates2(
+          { x: e.nativeEvent.offsetX, y: e.nativeEvent.offsetY },
+          levels,
+          pixelsPerTick,
+          totalViewTicks,
+          rangeMin
+        );
+
+        // if (barIndex !== -1 && !isNaN(levelIndex) && !isNaN(barIndex)) {
+        if (item) {
           setMousePosition({ x: e.clientX, y: e.clientY });
-          setTooltipItem(levels[levelIndex][barIndex]);
+          setTooltipItem(item);
         }
       }
     },
@@ -278,6 +314,43 @@ const getStyles = () => ({
   `,
 });
 
+const convertPixelCoordinatesToBarCoordinates2 = (
+  // position relative to the start of the graph
+  pos: { x: number; y: number },
+  levels: LevelItem[][],
+  pixelsPerTick: number,
+  totalTicks: number,
+  rangeMin: number
+) => {
+  console.time('convertPixelCoordinatesToBarCoordinates2');
+  let next: LevelItem | undefined = levels[0][0];
+  let currentLevel = 0;
+  const levelIndex = Math.floor(pos.y / (PIXELS_PER_LEVEL / window.devicePixelRatio));
+  let found = undefined;
+
+  while (!found && next) {
+    const node: LevelItem = next;
+    next = undefined;
+    if (currentLevel === levelIndex) {
+      found = node;
+      break;
+    }
+
+    for (const child of node.children) {
+      const xStart = getBarX(child.start, totalTicks, rangeMin, pixelsPerTick);
+      const xEnd = getBarX(child.start + child.value, totalTicks, rangeMin, pixelsPerTick);
+      if (xStart <= pos.x && pos.x < xEnd) {
+        next = child;
+        currentLevel++;
+        break;
+      }
+    }
+  }
+
+  console.timeEnd('convertPixelCoordinatesToBarCoordinates2');
+  return found;
+};
+
 // Convert pixel coordinates to bar coordinates in the levels array so that we can add mouse events like clicks to
 // the canvas.
 const convertPixelCoordinatesToBarCoordinates = (
@@ -288,8 +361,10 @@ const convertPixelCoordinatesToBarCoordinates = (
   totalTicks: number,
   rangeMin: number
 ) => {
+  console.time('convertPixelCoordinatesToBarCoordinates');
   const levelIndex = Math.floor(pos.y / (PIXELS_PER_LEVEL / window.devicePixelRatio));
   const barIndex = getBarIndex(pos.x, levels[levelIndex], pixelsPerTick, totalTicks, rangeMin);
+  console.timeEnd('convertPixelCoordinatesToBarCoordinates');
   return { levelIndex, barIndex };
 };
 

@@ -44,7 +44,7 @@ type RenderOptions = {
   getTheme: () => GrafanaTheme2;
 };
 
-export function useFlameRender(options: RenderOptions) {
+export function useFlameRender2(options: RenderOptions) {
   const {
     canvasRef,
     data,
@@ -86,35 +86,90 @@ export function useFlameRender(options: RenderOptions) {
       return;
     }
 
-    console.time('render');
+    const collapsedMap = data.getCollapsedMap();
+
+    console.time('render2');
     ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
     const pixelsPerTick = (wrapperWidth * window.devicePixelRatio) / totalViewTicks / (rangeMax - rangeMin);
 
-    for (let levelIndex = 0; levelIndex < levels.length; levelIndex++) {
-      const level = levels[levelIndex];
-      // Get all the dimensions of the rectangles for the level. We do this by level instead of per rectangle, because
-      // sometimes we collapse multiple bars into single rect.
-      const dimensions = getRectDimensionsForLevel(data, level, levelIndex, totalViewTicks, rangeMin, pixelsPerTick);
-      for (const rect of dimensions) {
-        const focusedLevel = focusedItemData ? focusedItemData.item.level : 0;
-        // Render each rectangle based on the computed dimensions
-        renderRect(
-          ctx,
-          rect,
+    const stack: Array<{ item: LevelItem; levelOffset: number }> = [];
+    stack.push({ item: levels[0][0], levelOffset: 0 });
+
+    let collapsedItemRendered = false;
+
+    while (stack.length > 0) {
+      const args = stack.shift()!;
+      const item = args.item;
+
+      const barX = getBarX(item.start, totalViewTicks, rangeMin, pixelsPerTick);
+      const barY = (item.level + args.levelOffset) * PIXELS_PER_LEVEL;
+
+      let curBarTicks = item.value;
+      const collapsed = curBarTicks * pixelsPerTick <= COLLAPSE_THRESHOLD;
+      const width = curBarTicks * pixelsPerTick - (collapsed ? 0 : BAR_BORDER_WIDTH * 2);
+
+      if (width < HIDE_THRESHOLD) {
+        // We don't render nor it's children
+        continue;
+      }
+
+      let offsetModifier = 0;
+      let skipRender = false;
+      if (collapsedMap.has(item)) {
+        if (collapsedItemRendered) {
+          offsetModifier = -1;
+          skipRender = true;
+        }
+      } else {
+        collapsedItemRendered = false;
+      }
+
+      if (!skipRender) {
+        const height = PIXELS_PER_LEVEL;
+
+        ctx.beginPath();
+        ctx.rect(barX + (collapsed ? 0 : BAR_BORDER_WIDTH), barY, width, height);
+
+        let label = '';
+        if (collapsedMap.has(item)) {
+          const numberOfCollapsedItems = collapsedMap.get(item)!.items.length;
+          label = `${numberOfCollapsedItems} collapsed items`;
+          collapsedItemRendered = true;
+        } else {
+          label = data.getLabel(item.itemIndexes[0]);
+        }
+
+        ctx.fillStyle = getFillStyle(
+          colorScheme,
+          item,
           totalColorTicks,
           totalTicksRight,
+          theme,
+          label,
           rangeMin,
           rangeMax,
-          levelIndex,
-          focusedLevel,
           foundLabels,
-          textAlign,
-          colorScheme,
-          theme
+          collapsed,
+          focusedItemData ? focusedItemData.item.level : 0
         );
+
+        if (collapsed) {
+          // Only fill the collapsed rects
+          ctx.fill();
+        } else {
+          ctx.stroke();
+          ctx.fill();
+
+          if (width >= LABEL_THRESHOLD) {
+            renderLabel(ctx, data, label, item, width, barX, barY, textAlign);
+          }
+        }
+      }
+      if (item.children) {
+        stack.unshift(...item.children.map((c) => ({ item: c, levelOffset: args.levelOffset + offsetModifier })));
       }
     }
-    console.timeEnd('render');
+    console.timeEnd('render2');
   }, [
     ctx,
     data,
@@ -132,6 +187,42 @@ export function useFlameRender(options: RenderOptions) {
     colorScheme,
     theme,
   ]);
+}
+
+function getFillStyle(
+  colorScheme: ColorScheme | ColorSchemeDiff,
+  item: LevelItem,
+  totalTicks: number,
+  totalTicksRight: number | undefined,
+  theme: GrafanaTheme2,
+  label: string,
+  rangeMin: number,
+  rangeMax: number,
+  foundNames: Set<string> | undefined,
+  collapsed: boolean,
+  topLevel: number
+) {
+  const color =
+    item.valueRight !== undefined &&
+    (colorScheme === ColorSchemeDiff.Default || colorScheme === ColorSchemeDiff.DiffColorBlind)
+      ? getBarColorByDiff(item.value, item.valueRight!, totalTicks, totalTicksRight!, colorScheme)
+      : colorScheme === ColorScheme.ValueBased
+      ? getBarColorByValue(item.value, totalTicks, rangeMin, rangeMax)
+      : getBarColorByPackage(label, theme);
+
+  if (foundNames) {
+    // Means we are searching, we use color for matches and gray the rest
+    return foundNames.has(label) ? color.toHslString() : colors[55];
+  }
+
+  // No search
+  if (collapsed) {
+    // Collapsed are always grayed
+    return colors[55];
+  } else {
+    // Mute if we are above the focused symbol
+    return item.level > topLevel - 1 ? color.toHslString() : color.lighten(15).toHslString();
+  }
 }
 
 function useSetupCanvas(canvasRef: RefObject<HTMLCanvasElement>, wrapperWidth: number, numberOfLevels: number) {
@@ -157,141 +248,31 @@ function useSetupCanvas(canvasRef: RefObject<HTMLCanvasElement>, wrapperWidth: n
   return ctx;
 }
 
-type RectData = {
-  width: number;
-  height: number;
-  x: number;
-  y: number;
-  collapsed: boolean;
-  ticks: number;
-  ticksRight?: number;
-  label: string;
-  unitLabel: string;
-  itemIndex: number;
-};
-
-/**
- * Compute the pixel coordinates for each bar in a level. We need full level of bars so that we can collapse small bars
- * into bigger rects.
- */
-export function getRectDimensionsForLevel(
-  data: FlameGraphDataContainer,
-  level: LevelItem[],
-  levelIndex: number,
-  totalTicks: number,
-  rangeMin: number,
-  pixelsPerTick: number
-): RectData[] {
-  const coordinatesLevel = [];
-  for (let barIndex = 0; barIndex < level.length; barIndex += 1) {
-    const item = level[barIndex];
-    const barX = getBarX(item.start, totalTicks, rangeMin, pixelsPerTick);
-    let curBarTicks = item.value;
-
-    // merge very small blocks into big "collapsed" ones for performance
-    const collapsed = curBarTicks * pixelsPerTick <= COLLAPSE_THRESHOLD;
-    if (collapsed) {
-      while (
-        barIndex < level.length - 1 &&
-        item.start + curBarTicks === level[barIndex + 1].start &&
-        level[barIndex + 1].value * pixelsPerTick <= COLLAPSE_THRESHOLD
-      ) {
-        barIndex += 1;
-        curBarTicks += level[barIndex].value;
-      }
-    }
-
-    const displayValue = data.valueDisplayProcessor(item.value);
-    let unit = displayValue.suffix ? displayValue.text + displayValue.suffix : displayValue.text;
-
-    const width = curBarTicks * pixelsPerTick - (collapsed ? 0 : BAR_BORDER_WIDTH * 2);
-    coordinatesLevel.push({
-      width,
-      height: PIXELS_PER_LEVEL,
-      x: barX,
-      y: levelIndex * PIXELS_PER_LEVEL,
-      collapsed,
-      ticks: curBarTicks,
-      // When collapsed this does not make that much sense but then we don't really use it anyway.
-      ticksRight: item.valueRight,
-      label: data.getLabel(item.itemIndexes[0]),
-      unitLabel: unit,
-      itemIndex: item.itemIndexes[0],
-    });
-  }
-  return coordinatesLevel;
-}
-
-export function renderRect(
-  ctx: CanvasRenderingContext2D,
-  rect: RectData,
-  totalTicks: number,
-  totalTicksRight: number | undefined,
-  rangeMin: number,
-  rangeMax: number,
-  levelIndex: number,
-  topLevelIndex: number,
-  foundNames: Set<string> | undefined,
-  textAlign: TextAlign,
-  colorScheme: ColorScheme | ColorSchemeDiff,
-  theme: GrafanaTheme2
-) {
-  if (rect.width < HIDE_THRESHOLD) {
-    return;
-  }
-
-  ctx.beginPath();
-  ctx.rect(rect.x + (rect.collapsed ? 0 : BAR_BORDER_WIDTH), rect.y, rect.width, rect.height);
-
-  const color =
-    rect.ticksRight !== undefined &&
-    (colorScheme === ColorSchemeDiff.Default || colorScheme === ColorSchemeDiff.DiffColorBlind)
-      ? getBarColorByDiff(rect.ticks, rect.ticksRight, totalTicks, totalTicksRight!, colorScheme)
-      : colorScheme === ColorScheme.ValueBased
-      ? getBarColorByValue(rect.ticks, totalTicks, rangeMin, rangeMax)
-      : getBarColorByPackage(rect.label, theme);
-
-  if (foundNames) {
-    // Means we are searching, we use color for matches and gray the rest
-    ctx.fillStyle = foundNames.has(rect.label) ? color.toHslString() : colors[55];
-  } else {
-    // No search
-    if (rect.collapsed) {
-      // Collapsed are always grayed
-      ctx.fillStyle = colors[55];
-    } else {
-      // Mute if we are above the focused symbol
-      ctx.fillStyle = levelIndex > topLevelIndex - 1 ? color.toHslString() : color.lighten(15).toHslString();
-    }
-  }
-
-  if (rect.collapsed) {
-    // Only fill the collapsed rects
-    ctx.fill();
-    return;
-  }
-
-  ctx.stroke();
-  ctx.fill();
-
-  if (rect.width >= LABEL_THRESHOLD) {
-    renderLabel(ctx, rect.label, rect, textAlign);
-  }
-}
-
 // Renders a text inside the node rectangle. It allows setting alignment of the text left or right which takes effect
 // when text is too long to fit in the rectangle.
-function renderLabel(ctx: CanvasRenderingContext2D, name: string, rect: RectData, textAlign: TextAlign) {
+function renderLabel(
+  ctx: CanvasRenderingContext2D,
+  data: FlameGraphDataContainer,
+  label: string,
+  item: LevelItem,
+  width: number,
+  x: number,
+  y: number,
+  textAlign: TextAlign
+) {
   ctx.save();
   ctx.clip(); // so text does not overflow
   ctx.fillStyle = '#222';
 
-  // We only measure name here instead of full label because of how we deal with the units and aligning later.
-  const measure = ctx.measureText(name);
-  const spaceForTextInRect = rect.width - BAR_TEXT_PADDING_LEFT;
+  const displayValue = data.valueDisplayProcessor(item.value);
+  const unit = displayValue.suffix ? displayValue.text + displayValue.suffix : displayValue.text;
 
-  let label = `${name} (${rect.unitLabel})`;
-  let labelX = Math.max(rect.x, 0) + BAR_TEXT_PADDING_LEFT;
+  // We only measure name here instead of full label because of how we deal with the units and aligning later.
+  const measure = ctx.measureText(label);
+  const spaceForTextInRect = width - BAR_TEXT_PADDING_LEFT;
+
+  let fullLabel = `${label} (${unit})`;
+  let labelX = Math.max(x, 0) + BAR_TEXT_PADDING_LEFT;
 
   // We use the desired alignment only if there is not enough space for the text, otherwise we keep left alignment as
   // that will already show full text.
@@ -300,12 +281,12 @@ function renderLabel(ctx: CanvasRenderingContext2D, name: string, rect: RectData
     // If aligned to the right we don't want to take the space with the unit label as the assumption is user wants to
     // mainly see the name. This also reflects how pyro/flamegraph works.
     if (textAlign === 'right') {
-      label = name;
-      labelX = rect.x + rect.width - BAR_TEXT_PADDING_LEFT;
+      fullLabel = label;
+      labelX = x + width - BAR_TEXT_PADDING_LEFT;
     }
   }
 
-  ctx.fillText(label, labelX, rect.y + PIXELS_PER_LEVEL / 2);
+  ctx.fillText(fullLabel, labelX, y + PIXELS_PER_LEVEL / 2);
   ctx.restore();
 }
 

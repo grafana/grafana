@@ -91,6 +91,7 @@ export function mergeSubtrees(
       children: [],
       parents: [],
       start: 0,
+      level: args.level,
     };
 
     levels[args.level] = levels[args.level] || [];
