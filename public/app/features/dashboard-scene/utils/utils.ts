@@ -8,7 +8,6 @@ import {
   SceneQueryRunner,
   VizPanel,
 } from '@grafana/scenes';
-import { getLocalTimeZone } from 'app/features/dashboard/components/ShareModal/utils';
 
 import { DashboardScene } from '../scene/DashboardScene';
 

@@ -175,12 +175,21 @@ func (gr *ReduceCommand) Execute(ctx context.Context, _ time.Time, vars mathexp.
 			}
 			newRes.Values = append(newRes.Values, num)
 		case mathexp.Number: // if incoming vars is just a number, any reduce op is just a noop, add it as it is
+			value := v.GetFloat64Value()
+			if gr.seriesMapper != nil {
+				value = gr.seriesMapper.MapInput(value)
+				if value == nil { // same logic as in mapSeries
+					continue
+				}
+			}
 			copyV := mathexp.NewNumber(gr.refID, v.GetLabels())
-			copyV.SetValue(v.GetFloat64Value())
-			copyV.AddNotice(data.Notice{
-				Severity: data.NoticeSeverityWarning,
-				Text:     fmt.Sprintf("Reduce operation is not needed. Input query or expression %s is already reduced data.", gr.VarToReduce),
-			})
+			copyV.SetValue(value)
+			if gr.seriesMapper == nil {
+				copyV.AddNotice(data.Notice{
+					Severity: data.NoticeSeverityWarning,
+					Text:     fmt.Sprintf("Reduce operation is not needed. Input query or expression %s is already reduced data.", gr.VarToReduce),
+				})
+			}
 			newRes.Values = append(newRes.Values, copyV)
 		case mathexp.NoData:
 			newRes.Values = append(newRes.Values, v.New())

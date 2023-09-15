@@ -1965,6 +1965,7 @@ steps:
     repo:
     - grafana/grafana
 - commands:
+  - apk add --update bash
   - ./scripts/publish-npm-packages.sh --dist-tag 'canary' --registry 'https://registry.npmjs.org'
   depends_on:
   - end-to-end-tests-dashboards-suite
@@ -4189,6 +4190,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: dd510a5bc713ecde460082403f309b93dcdcb823368e642bac07861eddbf051e
+hmac: dd88ea6f6baa75d83672c61478b2e79781308249016956d863562035550b006e
 
 ...
