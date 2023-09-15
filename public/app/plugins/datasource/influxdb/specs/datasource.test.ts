@@ -1,14 +1,14 @@
-import { lastValueFrom, of } from 'rxjs';
-import { TemplateSrvStub } from 'test/specs/helpers';
+import {lastValueFrom, of} from 'rxjs';
+import {TemplateSrvStub} from 'test/specs/helpers';
 
-import { ScopedVars } from '@grafana/data/src';
-import { FetchResponse } from '@grafana/runtime';
+import {ScopedVars} from '@grafana/data/src';
+import {FetchResponse} from '@grafana/runtime';
 import config from 'app/core/config';
-import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
+import {backendSrv} from 'app/core/services/backend_srv'; // will use the version in __mocks__
 
-import { BROWSER_MODE_DISABLED_MESSAGE } from '../constants';
+import {BROWSER_MODE_DISABLED_MESSAGE} from '../constants';
 import InfluxDatasource from '../datasource';
-import { InfluxQuery, InfluxVersion } from '../types';
+import {InfluxQuery, InfluxVersion} from '../types';
 
 //@ts-ignore
 const templateSrv = new TemplateSrvStub();
@@ -212,11 +212,28 @@ describe('InfluxDataSource', () => {
   // Some functions are required by the parent datasource class to provide functionality
   // such as ad-hoc filters, which requires the definition of the getTagKeys, and getTagValues
   describe('Datasource contract', () => {
+    const metricFindQueryMock = jest.fn();
+    beforeEach(() => {
+      ctx.ds.metricFindQuery = metricFindQueryMock;
+    });
+
+    afterEach(() => {
+      jest.clearAllMocks();
+    });
+
     it('has function called getTagKeys', () => {
       expect(Object.getOwnPropertyNames(Object.getPrototypeOf(ctx.ds))).toContain('getTagKeys');
     });
     it('has function called getTagValues', () => {
       expect(Object.getOwnPropertyNames(Object.getPrototypeOf(ctx.ds))).toContain('getTagValues');
+    });
+    it('should be able to call getTagKeys without specifying any parameter', () => {
+      ctx.ds.getTagKeys();
+      expect(metricFindQueryMock).toHaveBeenCalled();
+    });
+    it('should be able to call getTagValues without specifying anything but key', () => {
+      ctx.ds.getTagValues({ key: 'test' });
+      expect(metricFindQueryMock).toHaveBeenCalled();
     });
   });
 
