@@ -14,7 +14,7 @@ import { DataQuery } from './query';
 import { RawTimeRange, TimeRange } from './time';
 import { CustomVariableSupport, DataSourceVariableSupport, StandardVariableSupport } from './variables';
 
-import { DataSourceRef, WithAccessControlMetadata } from '.';
+import { AdHocVariableFilter, DataSourceRef, WithAccessControlMetadata } from '.';
 
 export interface DataSourcePluginOptionsEditorProps<
   JSONData extends DataSourceJsonData = DataSourceJsonData,
@@ -528,6 +528,7 @@ export interface DataQueryRequest<TQuery extends DataQuery = DataQuery> {
   timeInfo?: string; // The query time description (blue text in the upper right)
   panelId?: number;
   dashboardUID?: string;
+  adhocFilters?: AdHocVariableFilter[];
 
   // Request Timing
   startTime: number;
