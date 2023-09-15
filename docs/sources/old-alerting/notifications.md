@@ -164,11 +164,11 @@ To set up PagerDuty, all you have to do is to provide an integration key.
 
 > **Note:** Grafana uses the `Events API V2` integration. This can be configured for each service.
 
-### Splunk OnCall
+### VictorOps
 
-To configure Splunk OnCall, provide the URL from the Grafana Integration and substitute `$routing_key` with a valid key.
+To configure VictorOps, provide the URL from the Grafana Integration and substitute `$routing_key` with a valid key.
 
-> **Note:** The tag `Severity` has special meaning in the [Splunk OnCall Incident Fields](https://help.victorops.com/knowledge-base/incident-fields-glossary/). If an alert panel defines this key, then it replaces the `message_type` in the root of the event sent to Splunk OnCall.
+> **Note:** The tag `Severity` has special meaning in the [VictorOps Incident Fields](https://help.victorops.com/knowledge-base/incident-fields-glossary/). If an alert panel defines this key, then it replaces the `message_type` in the root of the event sent to VictorOps.
 
 ### Pushover
 
