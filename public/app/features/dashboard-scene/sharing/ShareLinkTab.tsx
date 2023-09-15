@@ -11,7 +11,7 @@ import {
   VizPanel,
   sceneGraph,
 } from '@grafana/scenes';
-import { TimeZone, TimeZoneUtc } from '@grafana/schema';
+import { TimeZone } from '@grafana/schema';
 import { Alert, ClipboardButton, Field, FieldSet, Icon, Input, Switch } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 import { createShortLink } from 'app/core/utils/shortLinks';
