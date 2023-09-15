@@ -1,5 +1,5 @@
 import { UrlQueryMap, urlUtil } from '@grafana/data';
-import { locationSearchToObject } from '@grafana/runtime';
+import { config, locationSearchToObject } from '@grafana/runtime';
 import {
   MultiValueVariable,
   SceneDataTransformer,
@@ -8,6 +8,7 @@ import {
   SceneQueryRunner,
   VizPanel,
 } from '@grafana/scenes';
+import { getLocalTimeZone } from 'app/features/dashboard/components/ShareModal/utils';
 
 import { DashboardScene } from '../scene/DashboardScene';
 
@@ -82,14 +83,35 @@ export interface DashboardUrlOptions {
   uid?: string;
   subPath?: string;
   updateQuery?: UrlQueryMap;
-  /**
-   * Set to location.search to preserve current params
-   */
+  /** Set to location.search to preserve current params */
   currentQueryParams: string;
+  /** * Returns solo panel route instead */
+  soloRoute?: boolean;
+  /** return render url */
+  render?: boolean;
+  /** Return an absolute URL */
+  absolute?: boolean;
+  // Add tz to query params
+  timeZone?: string;
 }
 
 export function getDashboardUrl(options: DashboardUrlOptions) {
-  const url = `/scenes/dashboard/${options.uid}${options.subPath ?? ''}`;
+  let path = `/scenes/dashboard/${options.uid}${options.subPath ?? ''}`;
+
+  if (options.soloRoute) {
+    path = `/d-solo/${options.uid}${options.subPath ?? ''}`;
+  }
+
+  if (options.render) {
+    path = '/render' + path;
+
+    options.updateQuery = {
+      ...options.updateQuery,
+      width: 1000,
+      height: 500,
+      tz: options.timeZone,
+    };
+  }
 
   const params = options.currentQueryParams ? locationSearchToObject(options.currentQueryParams) : {};
 
@@ -104,7 +126,13 @@ export function getDashboardUrl(options: DashboardUrlOptions) {
     }
   }
 
-  return urlUtil.renderUrl(url, params);
+  const relativeUrl = urlUtil.renderUrl(path, params);
+
+  if (options.absolute) {
+    return config.appUrl + relativeUrl.slice(1);
+  }
+
+  return relativeUrl;
 }
 
 export function getMultiVariableValues(variable: MultiValueVariable) {

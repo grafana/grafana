@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { UrlQueryMap } from '@grafana/data';
+import { dateTime, UrlQueryMap } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { config, locationService } from '@grafana/runtime';
 import {
@@ -11,6 +11,7 @@ import {
   VizPanel,
   sceneGraph,
 } from '@grafana/scenes';
+import { TimeZone, TimeZoneUtc } from '@grafana/schema';
 import { Alert, ClipboardButton, Field, FieldSet, Icon, Input, Switch } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 import { createShortLink } from 'app/core/utils/shortLinks';
@@ -27,7 +28,7 @@ export interface ShareLinkTabState extends SceneObjectState, ShareOptions {
 }
 
 interface ShareOptions {
-  useCurrentTimeRange: boolean;
+  useLockedTime: boolean;
   useShortUrl: boolean;
   selectedTheme: string;
   shareUrl: string;
@@ -38,7 +39,7 @@ export class ShareLinkTab extends SceneObjectBase<ShareLinkTabState> {
   constructor(state: Omit<ShareLinkTabState, keyof ShareOptions>) {
     super({
       ...state,
-      useCurrentTimeRange: true,
+      useLockedTime: true,
       useShortUrl: false,
       selectedTheme: 'current',
       shareUrl: '',
@@ -51,10 +52,11 @@ export class ShareLinkTab extends SceneObjectBase<ShareLinkTabState> {
   }
 
   async buildUrl() {
-    const { panelRef, dashboardRef, useCurrentTimeRange, useShortUrl, selectedTheme } = this.state;
+    const { panelRef, dashboardRef, useLockedTime: useAbsoluteTimeRange, useShortUrl, selectedTheme } = this.state;
     const dashboard = dashboardRef.resolve();
     const panel = panelRef?.resolve();
     const location = locationService.getLocation();
+    const timeRange = sceneGraph.getTimeRange(panel ?? dashboard);
 
     const urlParamsUpdate: UrlQueryMap = {};
 
@@ -62,8 +64,7 @@ export class ShareLinkTab extends SceneObjectBase<ShareLinkTabState> {
       urlParamsUpdate.viewPanel = panel.state.key;
     }
 
-    if (useCurrentTimeRange) {
-      const timeRange = sceneGraph.getTimeRange(panel ?? dashboard);
+    if (useAbsoluteTimeRange) {
       urlParamsUpdate.from = timeRange.state.value.from.toISOString();
       urlParamsUpdate.to = timeRange.state.value.to.toISOString();
     }
@@ -76,23 +77,32 @@ export class ShareLinkTab extends SceneObjectBase<ShareLinkTabState> {
       uid: dashboard.state.uid,
       currentQueryParams: location.search,
       updateQuery: urlParamsUpdate,
+      absolute: true,
     });
-
-    shareUrl = new URL(shareUrl, config.appUrl).toString();
 
     if (useShortUrl) {
       shareUrl = await createShortLink(shareUrl);
     }
 
-    this.setState({ shareUrl, imageUrl: 'image url' });
+    const imageUrl = getDashboardUrl({
+      uid: dashboard.state.uid,
+      currentQueryParams: location.search,
+      updateQuery: urlParamsUpdate,
+      absolute: true,
+      soloRoute: true,
+      render: true,
+      timeZone: getRenderTimeZone(timeRange.getTimeZone()),
+    });
+
+    this.setState({ shareUrl, imageUrl });
   }
 
   public getTabLabel() {
     return t('share-modal.tab-title.link', 'Link');
   }
 
-  onUseCurrentTimeRangeChange = () => {
-    this.setState({ useCurrentTimeRange: !this.state.useCurrentTimeRange });
+  onToggleLockedTime = () => {
+    this.setState({ useLockedTime: !this.state.useLockedTime });
     this.buildUrl();
   };
 
@@ -124,14 +134,14 @@ export class ShareLinkTab extends SceneObjectBase<ShareLinkTabState> {
     const timeRange = sceneGraph.getTimeRange(panel ?? dashboard);
     const isRelativeTime = timeRange.state.to === 'now' ? true : false;
 
-    const { useCurrentTimeRange, useShortUrl, selectedTheme, shareUrl, imageUrl } = state;
+    const { useLockedTime, useShortUrl, selectedTheme, shareUrl, imageUrl } = state;
 
     const selectors = e2eSelectors.pages.SharePanelModal;
     const isDashboardSaved = Boolean(dashboard.state.uid);
 
-    const timeRangeLabelTranslation = t('share-modal.link.time-range-label', `Lock time range`);
+    const lockTimeRangeLabel = t('share-modal.link.time-range-label', `Lock time range`);
 
-    const timeRangeDescriptionTranslation = t(
+    const lockTimeRangeDescription = t(
       'share-modal.link.time-range-description',
       `Transforms the current relative time range to an absolute time range`
     );
@@ -148,12 +158,8 @@ export class ShareLinkTab extends SceneObjectBase<ShareLinkTabState> {
           </Trans>
         </p>
         <FieldSet>
-          <Field label={timeRangeLabelTranslation} description={isRelativeTime ? timeRangeDescriptionTranslation : ''}>
-            <Switch
-              id="share-current-time-range"
-              value={useCurrentTimeRange}
-              onChange={model.onUseCurrentTimeRangeChange}
-            />
+          <Field label={lockTimeRangeLabel} description={isRelativeTime ? lockTimeRangeDescription : ''}>
+            <Switch id="share-current-time-range" value={useLockedTime} onChange={model.onToggleLockedTime} />
           </Field>
           <ThemePicker selectedTheme={selectedTheme} onChange={model.onThemeChange} />
           <Field label={shortenURLTranslation}>
@@ -230,39 +236,26 @@ export class ShareLinkTab extends SceneObjectBase<ShareLinkTabState> {
   };
 }
 
-// function buildParams({
-//   useCurrentTimeRange,
-//   selectedTheme,
-//   panel,
-//   search = window.location.search,
-//   orgId = config.bootData.user.orgId,
-// }: BuildParamsArgs): URLSearchParams {
-//   const searchParams = new URLSearchParams(search);
-//   const relative = panel?.timeFrom;
+function getRenderTimeZone(timeZone: TimeZone): string {
+  const utcOffset = 'UTC' + encodeURIComponent(dateTime().format('Z'));
 
-//   // Use panel's relative time if it's set
-//   if (relative) {
-//     const { from, to } = rangeUtil.describeTextRange(relative);
-//     searchParams.set('from', from);
-//     searchParams.set('to', to);
-//   } else {
-//     searchParams.set('from', String(range.from.valueOf()));
-//     searchParams.set('to', String(range.to.valueOf()));
-//   }
-//   searchParams.set('orgId', String(orgId));
+  if (timeZone === 'utc') {
+    return 'UTC';
+  }
 
-//   if (!useCurrentTimeRange) {
-//     searchParams.delete('from');
-//     searchParams.delete('to');
-//   }
+  if (timeZone === 'browser') {
+    if (!window.Intl) {
+      return utcOffset;
+    }
 
-//   if (selectedTheme !== 'current') {
-//     searchParams.set('theme', selectedTheme!);
-//   }
+    const dateFormat = window.Intl.DateTimeFormat();
+    const options = dateFormat.resolvedOptions();
+    if (!options.timeZone) {
+      return utcOffset;
+    }
 
-//   if (panel && !searchParams.has('editPanel')) {
-//     searchParams.set('viewPanel', String(panel.id));
-//   }
+    return options.timeZone;
+  }
 
-//   return searchParams;
-// }
+  return timeZone;
+}
