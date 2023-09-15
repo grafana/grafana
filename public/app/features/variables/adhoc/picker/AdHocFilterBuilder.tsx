@@ -39,7 +39,6 @@ export const AdHocFilterBuilder = ({ datasource, appendBefore, onCompleted, getT
       onCompleted({
         value: item.value ?? '',
         operator: operator,
-        condition: '',
         key: key!,
       });
       setKey(null);
@@ -64,7 +63,7 @@ export const AdHocFilterBuilder = ({ datasource, appendBefore, onCompleted, getT
       {appendBefore}
       <AdHocFilterRenderer
         datasource={datasource}
-        filter={{ key, value: '', operator, condition: '' }}
+        filter={{ key, value: '', operator }}
         placeHolder={t('variable.adhoc.placeholder', 'Select value')}
         onKeyChange={onKeyChanged}
         onOperatorChange={onOperatorChanged}
