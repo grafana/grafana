@@ -6,7 +6,13 @@ import config from 'app/core/config';
 
 import { InfluxQuery } from '../types';
 
-import { getMockDS, getMockDSInstanceSettings, mockBackendService, mockInfluxFetchResponse } from './mocks';
+import {
+  getMockDS,
+  getMockDSInstanceSettings,
+  mockBackendService,
+  mockInfluxFetchResponse,
+  mockTemplateSrv,
+} from './mocks';
 
 config.featureToggles.influxdbBackendMigration = true;
 const fetchMock = mockBackendService(mockInfluxFetchResponse());
@@ -28,11 +34,11 @@ describe('InfluxDataSource Backend Mode', () => {
       condition: '',
     },
   ];
-  const templateSrv: any = {
-    getAdhocFilters: jest.fn(() => {
+  const templateSrv = mockTemplateSrv(
+    jest.fn(() => {
       return adhocFilters;
     }),
-    replace: jest.fn((target?: string, scopedVars?: ScopedVars, format?: string | Function): string => {
+    jest.fn((target?: string, scopedVars?: ScopedVars, format?: string | Function): string => {
       if (!format) {
         return variableMap[target!] || '';
       }
@@ -40,8 +46,8 @@ describe('InfluxDataSource Backend Mode', () => {
         return textWithFormatRegex;
       }
       return textWithoutFormatRegex;
-    }),
-  };
+    })
+  );
 
   let queryOptions: DataQueryRequest<InfluxQuery>;
   let influxQuery: InfluxQuery;
