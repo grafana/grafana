@@ -129,7 +129,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   };
 
   public onSave = () => {
-    this.setState({ drawer: new SaveDashboardDrawer({ dashboardRef: new SceneObjectRef(this) }) });
+    this.setState({ drawer: new SaveDashboardDrawer({ dashboardRef: this.getRef() }) });
   };
 
   public getPageNav(location: H.Location) {
