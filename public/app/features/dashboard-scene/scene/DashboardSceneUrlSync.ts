@@ -1,6 +1,6 @@
 import { AppEvents } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
-import { SceneObjectRef, SceneObjectUrlSyncHandler, SceneObjectUrlValues } from '@grafana/scenes';
+import { SceneObjectUrlSyncHandler, SceneObjectUrlValues } from '@grafana/scenes';
 import appEvents from 'app/core/app_events';
 
 import { PanelInspectDrawer } from '../inspect/PanelInspectDrawer';

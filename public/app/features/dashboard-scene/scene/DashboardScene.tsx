@@ -10,7 +10,6 @@ import {
   SceneGridLayout,
   SceneObject,
   SceneObjectBase,
-  SceneObjectRef,
   SceneObjectState,
   SceneObjectStateChangedEvent,
   sceneUtils,
