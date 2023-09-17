@@ -24,6 +24,8 @@ import {
   ScopedVars,
   TimeRange,
   renderLegendFormat,
+  DataSourceGetTagKeysOptions,
+  DataSourceGetTagValuesOptions,
 } from '@grafana/data';
 import {
   BackendDataSourceResponse,
@@ -971,7 +973,8 @@ export class PrometheusDatasource
   // this is used to get label keys, a.k.a label names
   // it is used in metric_find_query.ts
   // and in Tempo here grafana/public/app/plugins/datasource/tempo/QueryEditor/ServiceGraphSection.tsx
-  async getTagKeys(options?: { series: string[] }) {
+  async getTagKeys(options: DataSourceGetTagKeysOptions) {
+    // needs rethining, don't think providing multiple series here makes sense, this looping needs to be outside this function
     if (options?.series) {
       // Get tags for the provided series only
       const seriesLabels: Array<Record<string, string[]>> = await Promise.all(
@@ -991,7 +994,7 @@ export class PrometheusDatasource
   }
 
   // By implementing getTagKeys and getTagValues we add ad-hoc filters functionality
-  async getTagValues(options: { key?: string } = {}) {
+  async getTagValues(options: DataSourceGetTagValuesOptions) {
     const params = this.getTimeRangeParams();
     const result = await this.metadataRequest(`/api/v1/label/${options.key}/values`, params);
     return result?.data?.data?.map((value: any) => ({ text: value })) ?? [];

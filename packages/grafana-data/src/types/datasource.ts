@@ -287,12 +287,12 @@ abstract class DataSourceApi<
   /**
    * Get tag keys for adhoc filters
    */
-  getTagKeys?(options?: any): Promise<MetricFindValue[]>;
+  getTagKeys?(options: DataSourceGetTagKeysOptions): Promise<MetricFindValue[]>;
 
   /**
    * Get tag values for adhoc filters
    */
-  getTagValues?(options: any): Promise<MetricFindValue[]>;
+  getTagValues?(options: DataSourceGetTagValuesOptions): Promise<MetricFindValue[]>;
 
   /**
    * Set after constructor call, as the data source instance is the most common thing to pass around
@@ -368,6 +368,35 @@ abstract class DataSourceApi<
    * @alpha -- experimental
    */
   getDefaultQuery?(app: CoreApp): Partial<TQuery>;
+}
+
+/**
+ * Options argument to DataSourceAPI.getTagKeys
+ */
+export interface DataSourceGetTagKeysOptions {
+  /**
+   * The other existing filters or base filters. New in v10.3
+   */
+  filters: AdHocVariableFilter[];
+  /**
+   * Context time range. New in v10.3
+   */
+  timeRange: TimeRange;
+}
+
+/**
+ * Options argument to DataSourceAPI.getTagValues
+ */
+export interface DataSourceGetTagValuesOptions {
+  key: string;
+  /**
+   * The other existing filters or base filters. New in v10.3
+   */
+  filters: AdHocVariableFilter[];
+  /**
+   * Context time range. New in v10.3
+   */
+  timeRange: TimeRange;
 }
 
 export interface MetadataInspectorProps<

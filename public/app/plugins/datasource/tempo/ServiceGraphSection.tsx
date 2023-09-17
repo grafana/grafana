@@ -29,13 +29,14 @@ export function ServiceGraphSection({
   const [hasKeys, setHasKeys] = useState<boolean | undefined>(undefined);
   useEffect(() => {
     async function fn(ds: PrometheusDatasource) {
-      const keys = await ds.getTagKeys({
-        series: [
-          'traces_service_graph_request_server_seconds_sum',
-          'traces_service_graph_request_total',
-          'traces_service_graph_request_failed_total',
-        ],
-      });
+      // Needs rethinkg
+      // const keys = await ds.getTagKeys({
+      //   series: [
+      //     'traces_service_graph_request_server_seconds_sum',
+      //     'traces_service_graph_request_total',
+      //     'traces_service_graph_request_failed_total',
+      //   ],
+      // });
       setHasKeys(Boolean(keys.length));
     }
     if (!dsState.loading && dsState.value) {
