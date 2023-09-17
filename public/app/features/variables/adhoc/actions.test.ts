@@ -374,7 +374,7 @@ describe('adhoc actions', () => {
         .whenActionIsDispatched(createAddVariableAction(variable))
         .whenAsyncActionIsDispatched(setFiltersFromUrl(toKeyedVariableIdentifier(variable), fromUrl), true);
 
-      const expectedQuery = { 'var-elastic-filter': ['key|=|value', 'key|=|value'] };
+      const expectedQuery = { 'var-elastic-filter': ['key|=|value'] };
       const expectedFilters = [{ key: 'key', value: 'value', operator: '=', name: 'value-2' }];
 
       tester.thenDispatchedActionsShouldEqual(
