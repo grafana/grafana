@@ -1,6 +1,7 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
 
 import { PanelProps, DataFrameType } from '@grafana/data';
+import { faro } from '@grafana/faro-web-sdk';
 import { PanelDataErrorView } from '@grafana/runtime';
 import { TooltipDisplayMode } from '@grafana/schema';
 import { KeyboardPlugin, TimeSeries, TooltipPlugin, usePanelContext, ZoomPlugin } from '@grafana/ui';
@@ -45,6 +46,10 @@ export const TimeSeriesPanel = ({
     }
     return undefined;
   }, [frames, id]);
+
+  useEffect(() => {
+    faro.api.pushEvent('changeFieldConfig', { fieldConfig: JSON.stringify(fieldConfig.defaults) }, 'timeseries_panel');
+  }, [fieldConfig.defaults]);
 
   if (!frames || suggestions) {
     return (

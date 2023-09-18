@@ -8,12 +8,11 @@ interface LogArg {
 
 export const NULL_VALUE = 'NULL_VALUE';
 
-export function faroMeasureInteraction(interactionName: string, context: string) {
+export function faroMeasureInteraction(context: string) {
   const startTimestamp = performance.now();
 
   return {
     end() {
-      // console.log('The '+ interactionName + ' took', endTimestamp - startTimestamp, 'ms');
       faro.api.pushMeasurement(
         {
           type: 'internal_panel_measurements_' + context,
@@ -33,7 +32,7 @@ export function faroMeasureInteraction(interactionName: string, context: string)
 }
 
 export function faroMeasureAndLogEvent(interactionName: string, logArgs: LogArg, context: string) {
-  const interaction = faroMeasureInteraction(interactionName, context);
+  const interaction = faroMeasureInteraction(context);
 
   afterFrame(() => {
     interaction.end();

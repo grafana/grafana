@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2, InternalTimeZones, StandardEditorProps } from '@grafana/data';
+import { faro } from '@grafana/faro-web-sdk';
 import { OptionsWithTimezones } from '@grafana/schema';
 import { IconButton, TimeZonePicker, useStyles2 } from '@grafana/ui';
 
@@ -16,12 +17,16 @@ export const TimezonesEditor = ({ value, onChange }: Props) => {
 
   const addTimezone = () => {
     onChange([...value, InternalTimeZones.default]);
+
+    faro.api.pushEvent('addTimezone', { timezones: value.join() }, 'timeseries_panel');
   };
 
   const removeTimezone = (idx: number) => {
     const copy = value.slice();
     copy.splice(idx, 1);
     onChange(copy);
+
+    faro.api.pushEvent('removeTimezone', { timezones: copy.join() }, 'timeseries_panel');
   };
 
   const setTimezone = (idx: number, tz?: string) => {
@@ -32,6 +37,8 @@ export const TimezonesEditor = ({ value, onChange }: Props) => {
     } else {
       onChange(copy);
     }
+
+    faro.api.pushEvent('setTimezone', { timezones: copy.join() }, 'timeseries_panel');
   };
 
   return (

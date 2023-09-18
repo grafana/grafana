@@ -26,7 +26,7 @@ import {
 import { FacetedData } from '@grafana/ui/src/components/uPlot/types';
 import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
 
-import { faroLogEvent, faroMeasureAndLogEvent, NULL_VALUE } from '../performanceMeasurementUtils';
+import { faroMeasureAndLogEvent, NULL_VALUE } from '../performanceMeasurementUtils';
 
 import { TooltipView } from './TooltipView';
 import { Options, SeriesMapping } from './panelcfg.gen';
