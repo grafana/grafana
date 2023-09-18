@@ -114,8 +114,7 @@ export function useStyles<T>(getStyles: (theme: GrafanaTheme) => T) {
  * across renders (or only change if they need to)
  * */
 /** @public */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function useStyles2<T extends any[], CSSReturnValue>(
+export function useStyles2<T extends unknown[], CSSReturnValue>(
   getStyles: (theme: GrafanaTheme2, ...args: T) => CSSReturnValue,
   ...additionalArguments: T
 ): CSSReturnValue {
@@ -132,7 +131,7 @@ export function useStyles2<T extends any[], CSSReturnValue>(
 }
 
 /**
- * Enables theme context  mocking
+ * Enables theme context mocking
  */
 /** @public */
 export const mockThemeContext = (theme: Partial<GrafanaTheme2>) => {
