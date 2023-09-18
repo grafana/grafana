@@ -108,12 +108,14 @@ export function buildImageUrl(
   useCurrentTimeRange: boolean,
   dashboardUid: string,
   selectedTheme?: string,
-  panel?: PanelModel
+  panel?: PanelModel,
+  width?: number,
+  height?: number
 ) {
   let soloUrl = buildSoloUrl(useCurrentTimeRange, dashboardUid, selectedTheme, panel);
   let imageUrl = soloUrl.replace(config.appSubUrl + '/dashboard-solo/', config.appSubUrl + '/render/dashboard-solo/');
   imageUrl = imageUrl.replace(config.appSubUrl + '/d-solo/', config.appSubUrl + '/render/d-solo/');
-  imageUrl += '&width=1000&height=500' + getLocalTimeZone();
+  imageUrl += '&width=' + (width ?? 1000) + '&height=' + (height ?? 500) + getLocalTimeZone();
   return imageUrl;
 }
 
@@ -159,4 +161,5 @@ export const shareDashboardType: {
   pdf: 'pdf',
   report: 'report',
   publicDashboard: 'public_dashboard',
+  image: 'image',
 };
