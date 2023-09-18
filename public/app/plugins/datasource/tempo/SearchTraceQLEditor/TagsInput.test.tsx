@@ -112,6 +112,7 @@ describe('TagsInput', () => {
         }}
         staticTags={[]}
         isTagsLoading={false}
+        query={''}
       />
     );
   };

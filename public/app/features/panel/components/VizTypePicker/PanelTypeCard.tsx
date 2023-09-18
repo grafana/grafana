@@ -84,7 +84,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       flex-shrink: 0;
       cursor: pointer;
       background: ${theme.colors.background.secondary};
-      border-radius: ${theme.shape.borderRadius()};
+      border-radius: ${theme.shape.radius.default};
       box-shadow: ${theme.shadows.z1};
       border: 1px solid ${theme.colors.background.secondary};
       align-items: center;

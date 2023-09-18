@@ -31,7 +31,7 @@ export default function CheckboxCell({
 
   return (
     <Checkbox
-      data-testid={selectors.pages.BrowseDashbards.table.checkbox(item.uid)}
+      data-testid={selectors.pages.BrowseDashboards.table.checkbox(item.uid)}
       value={state === SelectionState.Selected}
       indeterminate={state === SelectionState.Mixed}
       onChange={(ev) => onItemSelectionChange?.(item, ev.currentTarget.checked)}

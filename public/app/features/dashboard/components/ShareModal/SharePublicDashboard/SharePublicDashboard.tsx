@@ -1,8 +1,7 @@
 import { css } from '@emotion/css';
-import React, { useEffect } from 'react';
+import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data/src';
-import { reportInteraction } from '@grafana/runtime/src';
 import { Spinner, useStyles2 } from '@grafana/ui/src';
 import { useGetPublicDashboardQuery } from 'app/features/dashboard/api/publicDashboardApi';
 import { publicDashboardPersisted } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
@@ -29,10 +28,6 @@ const Loader = () => {
 
 export const SharePublicDashboard = (props: Props) => {
   const { data: publicDashboard, isLoading, isError } = useGetPublicDashboardQuery(props.dashboard.uid);
-
-  useEffect(() => {
-    reportInteraction('grafana_dashboards_public_share_viewed');
-  }, []);
 
   return (
     <>

@@ -193,13 +193,40 @@ func TestUserService(t *testing.T) {
 	})
 }
 
+func TestMetrics(t *testing.T) {
+	userStore := newUserStoreFake()
+	orgService := orgtest.NewOrgServiceFake()
+
+	userService := Service{
+		store:        userStore,
+		orgService:   orgService,
+		cacheService: localcache.ProvideService(),
+		teamService:  &teamtest.FakeService{},
+	}
+
+	t.Run("update user with role None", func(t *testing.T) {
+		userStore.ExpectedCountUserAccountsWithEmptyRoles = int64(1)
+
+		userService.cfg = setting.NewCfg()
+		userService.cfg.CaseInsensitiveLogin = true
+
+		stats := userService.GetUsageStats(context.Background())
+		assert.NotEmpty(t, stats)
+
+		assert.Len(t, stats, 2, stats)
+		assert.Equal(t, 1, stats["stats.case_insensitive_login.count"])
+		assert.Equal(t, int64(1), stats["stats.user.role_none.count"])
+	})
+}
+
 type FakeUserStore struct {
-	ExpectedUser                  *user.User
-	ExpectedSignedInUser          *user.SignedInUser
-	ExpectedUserProfile           *user.UserProfileDTO
-	ExpectedSearchUserQueryResult *user.SearchUserQueryResult
-	ExpectedError                 error
-	ExpectedDeleteUserError       error
+	ExpectedUser                            *user.User
+	ExpectedSignedInUser                    *user.SignedInUser
+	ExpectedUserProfile                     *user.UserProfileDTO
+	ExpectedSearchUserQueryResult           *user.SearchUserQueryResult
+	ExpectedError                           error
+	ExpectedDeleteUserError                 error
+	ExpectedCountUserAccountsWithEmptyRoles int64
 }
 
 func newUserStoreFake() *FakeUserStore {
@@ -288,6 +315,10 @@ func (f *FakeUserStore) Search(ctx context.Context, query *user.SearchUsersQuery
 
 func (f *FakeUserStore) Count(ctx context.Context) (int64, error) {
 	return 0, nil
+}
+
+func (f *FakeUserStore) CountUserAccountsWithEmptyRole(ctx context.Context) (int64, error) {
+	return f.ExpectedCountUserAccountsWithEmptyRoles, nil
 }
 
 func TestUpdateLastSeenAt(t *testing.T) {

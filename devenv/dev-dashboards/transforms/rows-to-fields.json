@@ -592,8 +592,7 @@
     ],
     "refresh": "",
     "schemaVersion": 33,
-    "style": "dark",
-    "tags": [
+      "tags": [
       "gdev",
       "transform"
     ],

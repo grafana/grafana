@@ -8,7 +8,6 @@ import { contextSrv } from 'app/core/core';
 import { AccessControlAction } from 'app/types';
 
 import { getExternalManageLink } from '../../helpers';
-import { isGrafanaAdmin } from '../../permissions';
 import { useIsRemotePluginsAvailable } from '../../state/hooks';
 import { CatalogPlugin, PluginStatus, Version } from '../../types';
 
@@ -21,7 +20,7 @@ interface Props {
 export const InstallControlsWarning = ({ plugin, pluginStatus, latestCompatibleVersion }: Props) => {
   const styles = useStyles2(getStyles);
   const isExternallyManaged = config.pluginAdminExternalManageEnabled;
-  const hasPermission = contextSrv.hasAccess(AccessControlAction.PluginsInstall, isGrafanaAdmin());
+  const hasPermission = contextSrv.hasPermission(AccessControlAction.PluginsInstall);
   const isRemotePluginsAvailable = useIsRemotePluginsAvailable();
   const isCompatible = Boolean(latestCompatibleVersion);
 

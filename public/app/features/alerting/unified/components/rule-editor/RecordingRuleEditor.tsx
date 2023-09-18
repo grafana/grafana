@@ -60,14 +60,17 @@ export const RecordingRuleEditor: FC<RecordingRuleEditorProps> = ({
 
     const merged = {
       ...query,
-      refId: changedQuery.refId,
-      queryType: changedQuery.queryType ?? '',
+      ...changedQuery,
       datasourceUid: dataSourceId,
       expr,
       model: {
-        refId: changedQuery.refId,
         expr,
-        editorMode: 'code',
+        datasource: changedQuery.datasource,
+        refId: changedQuery.refId,
+        editorMode: changedQuery.editorMode,
+        instant: Boolean(changedQuery.instant),
+        range: Boolean(changedQuery.range),
+        legendFormat: changedQuery.legendFormat,
       },
     };
     onChangeQuery([merged]);

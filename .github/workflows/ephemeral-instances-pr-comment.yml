@@ -2,15 +2,37 @@ name: 'Ephemeral instances: PR comment'
 on:
   issue_comment:
     types: [created]
-jobs:      
+jobs:
+  config:
+    runs-on: "ubuntu-latest"
+    outputs:
+      has-secrets: ${{ steps.check.outputs.has-secrets }}
+    steps:
+      - name: "Check for secrets"
+        id: check
+        shell: bash
+        run: |
+          if [ -n "${{ (secrets.EI_APP_ID != '' &&
+                        secrets.EI_APP_PRIVATE_KEY != '' &&
+                        secrets.EI_GCOM_HOST != '' &&
+                        secrets.EI_GCOM_TOKEN != '' &&
+                        secrets.EI_EPHEMERAL_INSTANCES_REGISTRY != '' &&
+                        secrets.EI_GCP_SERVICE_ACCOUNT_KEY_BASE64 != '' &&
+                        secrets.EI_EPHEMERAL_ORG_ID != ''
+                        ) || '' }}" ]; then
+            echo "has-secrets=1" >> "$GITHUB_OUTPUT"
+          fi
+
   handle-pull-request-event:
-    if: github.event.sender.type == 'User' && 
+    needs: config
+    if: needs.config.outputs.has-secrets &&
+        github.event.sender.type == 'User' &&
         github.event.issue.pull_request &&
         startsWith(github.event.comment.body, '/deploy-to-hg')
-    runs-on: 
+    runs-on:
       labels: ubuntu-latest-8-cores
     continue-on-error: true
-    steps:        
+    steps:
       - name: Setup Go
         uses: actions/setup-go@v4
         with:
@@ -24,13 +46,13 @@ jobs:
           private_key: ${{ secrets.EI_APP_PRIVATE_KEY }}
 
       - name: Checkout ephemeral instances repository
-        uses: actions/checkout@v3  
+        uses: actions/checkout@v4
         with:
           repository: grafana/ephemeral-grafana-instances-github-action
           token: ${{ steps.generate_token.outputs.token }}
           ref: main
           path: ephemeral
-        
+
       - name: Run action
         env:
           GITHUB_EVENT: ${{ toJson(github.event)}}

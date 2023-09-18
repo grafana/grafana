@@ -19,7 +19,7 @@ export const getFieldValidationMessageStyles = stylesFactory((theme: GrafanaThem
       padding: ${theme.spacing(0.5, 1)};
       color: ${theme.colors.error.contrastText};
       background: ${theme.colors.error.main};
-      border-radius: ${theme.shape.borderRadius()};
+      border-radius: ${theme.shape.radius.default};
       position: relative;
       display: inline-block;
       align-self: flex-start;

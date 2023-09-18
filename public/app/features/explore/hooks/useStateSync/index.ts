@@ -1,7 +1,7 @@
 import { identity, isEmpty, isEqual, isObject, mapValues, omitBy } from 'lodash';
 import { useEffect, useRef } from 'react';
 
-import { CoreApp, ExploreUrlState, isDateTime, TimeRange, RawTimeRange, DataSourceApi } from '@grafana/data';
+import { CoreApp, ExploreUrlState, DataSourceApi, toURLRange } from '@grafana/data';
 import { DataQuery, DataSourceRef } from '@grafana/schema';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { clearQueryKeys, getLastUsedDatasourceUID } from 'app/core/utils/explore';
@@ -15,7 +15,7 @@ import { clearPanes, splitClose, splitOpen, syncTimesAction } from '../../state/
 import { runQueries, setQueriesAction } from '../../state/query';
 import { selectPanes } from '../../state/selectors';
 import { changeRangeAction, updateTime } from '../../state/time';
-import { DEFAULT_RANGE } from '../../state/utils';
+import { DEFAULT_RANGE, fromURLRange } from '../../state/utils';
 import { withUniqueRefIds } from '../../utils/queries';
 import { isFulfilled } from '../utils';
 
@@ -118,7 +118,7 @@ export function useStateSync(params: ExploreQueryParams) {
             })
             .then(() => {
               if (update.range) {
-                dispatch(updateTime({ exploreId, rawRange: range }));
+                dispatch(updateTime({ exploreId, rawRange: fromURLRange(range) }));
               }
 
               if (update.queries) {
@@ -139,7 +139,7 @@ export function useStateSync(params: ExploreQueryParams) {
               exploreId,
               datasource: datasource || '',
               queries: withUniqueRefIds(queries),
-              range,
+              range: fromURLRange(range),
               panelsState,
               position: i,
             })
@@ -207,7 +207,7 @@ export function useStateSync(params: ExploreQueryParams) {
                 exploreId,
                 datasource,
                 queries,
-                range,
+                range: fromURLRange(range),
                 panelsState,
               })
             ).unwrap();
@@ -375,7 +375,7 @@ export function getUrlStateFromPaneState(pane: ExploreItemState): ExploreUrlStat
     // lets just fallback instead of crashing.
     datasource: pane.datasourceInstance?.uid || '',
     queries: pane.queries.map(clearQueryKeys),
-    range: toRawTimeRange(pane.range),
+    range: toURLRange(pane.range.raw),
     // don't include panelsState in the url unless a piece of state is actually set
     panelsState: pruneObject(pane.panelsState),
   };
@@ -393,20 +393,3 @@ function pruneObject(obj: object): object | undefined {
   }
   return pruned;
 }
-
-const toRawTimeRange = (range: TimeRange): RawTimeRange => {
-  let from = range.raw.from;
-  if (isDateTime(from)) {
-    from = from.valueOf().toString(10);
-  }
-
-  let to = range.raw.to;
-  if (isDateTime(to)) {
-    to = to.valueOf().toString(10);
-  }
-
-  return {
-    from,
-    to,
-  };
-};

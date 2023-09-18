@@ -21,7 +21,7 @@ func (s *Service) handleCsvContentScenario(ctx context.Context, req *backend.Que
 	resp := backend.NewQueryDataResponse()
 
 	for _, q := range req.Queries {
-		model, err := getModel(q.JSON)
+		model, err := GetJSONModel(q.JSON)
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse query json: %v", err)
 		}
@@ -58,7 +58,7 @@ func (s *Service) handleCsvFileScenario(ctx context.Context, req *backend.QueryD
 	resp := backend.NewQueryDataResponse()
 
 	for _, q := range req.Queries {
-		model, err := getModel(q.JSON)
+		model, err := GetJSONModel(q.JSON)
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse query json %v", err)
 		}

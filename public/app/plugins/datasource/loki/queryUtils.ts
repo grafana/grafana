@@ -17,7 +17,6 @@ import {
   MetricExpr,
   Matcher,
   Identifier,
-  Distinct,
   Range,
   formatLokiQuery,
 } from '@grafana/lezer-logql';
@@ -109,7 +108,7 @@ export function getLokiQueryType(query: LokiQuery): LokiQueryType {
 }
 
 const tagsToObscure = ['String', 'Identifier', 'LineComment', 'Number'];
-const partsToKeep = ['__error__', '__interval', '__interval_ms'];
+const partsToKeep = ['__error__', '__interval', '__interval_ms', '__auto'];
 export function obfuscate(query: string): string {
   let obfuscatedQuery: string = query;
   const tree = parser.parse(query);
@@ -246,10 +245,6 @@ export function isQueryWithLabelFilter(query: string): boolean {
 
 export function isQueryWithLineFilter(query: string): boolean {
   return isQueryWithNode(query, LineFilter);
-}
-
-export function isQueryWithDistinct(query: string): boolean {
-  return isQueryWithNode(query, Distinct);
 }
 
 export function isQueryWithRangeVariable(query: string): boolean {

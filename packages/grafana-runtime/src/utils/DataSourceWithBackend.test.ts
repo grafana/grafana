@@ -11,12 +11,15 @@ import {
   createDataFrame,
 } from '@grafana/data';
 
+import { config } from '../config';
+
 import {
   DataSourceWithBackend,
   isExpressionReference,
   standardStreamOptionsProvider,
   toStreamingDataResponse,
 } from './DataSourceWithBackend';
+import { publicDashboardQueryHandler } from './publicDashboardQueryHandler';
 
 class MyDataSource extends DataSourceWithBackend<DataQuery, DataSourceJsonData> {
   constructor(instanceSettings: DataSourceInstanceSettings<DataSourceJsonData>) {
@@ -44,6 +47,7 @@ jest.mock('../services', () => ({
     };
   },
 }));
+jest.mock('./publicDashboardQueryHandler');
 
 describe('DataSourceWithBackend', () => {
   test('check the executed queries', () => {
@@ -311,6 +315,43 @@ describe('DataSourceWithBackend', () => {
       expect(isExpressionReference({ type: '-100' })).toBeTruthy();
       expect(isExpressionReference(null)).toBeFalsy();
       expect(isExpressionReference(undefined)).toBeFalsy();
+    });
+  });
+
+  describe('public dashboard scope', () => {
+    test("check public dashboard handler is not executed when it's not public dashboard scope", () => {
+      const { ds } = createMockDatasource();
+
+      const request = {
+        maxDataPoints: 10,
+        intervalMs: 5000,
+        targets: [{ refId: 'A' }, { refId: 'B', datasource: { type: 'sample' } }],
+        dashboardUID: 'dashA',
+        panelId: 123,
+        queryGroupId: 'abc',
+      } as DataQueryRequest;
+
+      ds.query(request);
+
+      expect(publicDashboardQueryHandler).not.toHaveBeenCalledWith(request);
+    });
+
+    test("check public dashboard handler is executed when it's public dashboard scope", () => {
+      config.publicDashboardAccessToken = 'abc123';
+      const { ds } = createMockDatasource();
+
+      const request = {
+        maxDataPoints: 10,
+        intervalMs: 5000,
+        targets: [{ refId: 'A' }, { refId: 'B', datasource: { type: 'sample' } }],
+        dashboardUID: 'dashA',
+        panelId: 123,
+        queryGroupId: 'abc',
+      } as DataQueryRequest;
+
+      ds.query(request);
+
+      expect(publicDashboardQueryHandler).toHaveBeenCalledWith(request);
     });
   });
 });

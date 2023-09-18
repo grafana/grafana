@@ -67,8 +67,9 @@ const renderForm = (defaultValues?: FormDTO) => (
       console.log(data);
     }}
   >
-    {({ register, control, errors }) =>
-      (console.log(errors) as any) || (
+    {({ register, control, errors }) => {
+      console.log(errors);
+      return (
         <>
           <Legend>Edit user</Legend>
 
@@ -120,8 +121,8 @@ const renderForm = (defaultValues?: FormDTO) => (
 
           <Button type="submit">Update</Button>
         </>
-      )
-    }
+      );
+    }}
   </Form>
 );
 
@@ -153,8 +154,9 @@ export const AsyncValidation: Story = ({ passAsyncValidation }) => {
           alert('Submitted successfully!');
         }}
       >
-        {({ register, control, errors, formState }) =>
-          (console.log(errors) as any) || (
+        {({ register, control, errors, formState }) => {
+          console.log(errors);
+          return (
             <>
               <Legend>Edit user</Legend>
 
@@ -169,8 +171,8 @@ export const AsyncValidation: Story = ({ passAsyncValidation }) => {
                 Submit
               </Button>
             </>
-          )
-        }
+          );
+        }}
       </Form>
     </>
   );

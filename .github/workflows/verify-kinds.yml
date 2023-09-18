@@ -11,14 +11,14 @@ jobs:
     runs-on: "ubuntu-latest"
     steps:
       - name: "Checkout Grafana repo"
-        uses: "actions/checkout@v3"
+        uses: "actions/checkout@v4"
         with:
           fetch-depth: 0
 
       - name: "Setup Go"
         uses: "actions/setup-go@v4"
         with:
-          go-version: '1.20.6'
+          go-version: '1.20.8'
 
       - name: "Verify kinds"
         run: go run .github/workflows/scripts/kinds/verify-kinds.go

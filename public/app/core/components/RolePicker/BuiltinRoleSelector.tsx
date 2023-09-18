@@ -1,25 +1,33 @@
 import React from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { Icon, RadioButtonGroup, Tooltip, useStyles2, useTheme2 } from '@grafana/ui';
+import { config } from '@grafana/runtime';
+import { Icon, RadioButtonList, Tooltip, useStyles2, useTheme2, PopoverContent } from '@grafana/ui';
+import { contextSrv } from 'app/core/core';
 import { OrgRole } from 'app/types';
 
 import { getStyles } from './styles';
 
-const BasicRoles = Object.values(OrgRole).filter((r) => r !== OrgRole.None);
-const BasicRoleOption: Array<SelectableValue<OrgRole>> = BasicRoles.map((r) => ({
-  label: r,
-  value: r,
-}));
+const noBasicRoleFlag = contextSrv.licensedAccessControlEnabled();
+
+const noBasicRole = config.featureToggles.noBasicRole && noBasicRoleFlag;
+
+const BasicRoleOption: Array<SelectableValue<OrgRole>> = Object.values(OrgRole)
+  .filter((r) => noBasicRole || r !== OrgRole.None)
+  .map((r) => ({
+    label: r === OrgRole.None ? 'No basic role' : r,
+    value: r,
+  }));
 
 interface Props {
   value?: OrgRole;
   onChange: (value: OrgRole) => void;
   disabled?: boolean;
   disabledMesssage?: string;
+  tooltipMessage?: PopoverContent;
 }
 
-export const BuiltinRoleSelector = ({ value, onChange, disabled, disabledMesssage }: Props) => {
+export const BuiltinRoleSelector = ({ value, onChange, disabled, disabledMesssage, tooltipMessage }: Props) => {
   const styles = useStyles2(getStyles);
   const theme = useTheme2();
 
@@ -32,13 +40,18 @@ export const BuiltinRoleSelector = ({ value, onChange, disabled, disabledMesssag
             <Icon name="question-circle" />
           </Tooltip>
         )}
+        {!disabled && tooltipMessage && (
+          <Tooltip placement="right-end" interactive={true} content={tooltipMessage}>
+            <Icon name="info-circle" size="xs" />
+          </Tooltip>
+        )}
       </div>
-      <RadioButtonGroup
+      <RadioButtonList
+        name="Basic Role Selector"
         className={styles.basicRoleSelector}
         options={BasicRoleOption}
         value={value}
         onChange={onChange}
-        fullWidth={true}
         disabled={disabled}
       />
     </>

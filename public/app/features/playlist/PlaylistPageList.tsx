@@ -3,6 +3,7 @@ import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Button, Card, LinkButton, ModalsController, useStyles2 } from '@grafana/ui';
+import { t, Trans } from 'app/core/internationalization';
 import { contextSrv } from 'app/core/services/context_srv';
 import { DashNavButton } from 'app/features/dashboard/components/DashNav/DashNavButton';
 
@@ -27,7 +28,7 @@ export const PlaylistPageList = ({ playlists, setStartPlaylist, setPlaylistToDel
               <ModalsController key="button-share">
                 {({ showModal, hideModal }) => (
                   <DashNavButton
-                    tooltip="Share playlist"
+                    tooltip={t('playlist-page.card.tooltip', 'Share playlist')}
                     icon="share-alt"
                     iconSize="lg"
                     onClick={() => {
@@ -42,12 +43,12 @@ export const PlaylistPageList = ({ playlists, setStartPlaylist, setPlaylistToDel
             </Card.Heading>
             <Card.Actions>
               <Button variant="secondary" icon="play" onClick={() => setStartPlaylist(playlist)}>
-                Start playlist
+                <Trans i18nKey="playlist-page.card.start">Start playlist</Trans>
               </Button>
               {contextSrv.isEditor && (
                 <>
                   <LinkButton key="edit" variant="secondary" href={`/playlists/edit/${playlist.uid}`} icon="cog">
-                    Edit playlist
+                    <Trans i18nKey="playlist-page.card.edit">Edit playlist</Trans>
                   </LinkButton>
                   <Button
                     disabled={false}
@@ -55,7 +56,7 @@ export const PlaylistPageList = ({ playlists, setStartPlaylist, setPlaylistToDel
                     icon="trash-alt"
                     variant="destructive"
                   >
-                    Delete playlist
+                    <Trans i18nKey="playlist-page.card.delete">Delete playlist</Trans>
                   </Button>
                 </>
               )}

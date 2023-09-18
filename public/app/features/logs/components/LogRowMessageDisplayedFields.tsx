@@ -20,6 +20,7 @@ export interface Props {
   onUnpinLine?: (row: LogRowModel) => void;
   pinned?: boolean;
   mouseIsOver: boolean;
+  onBlur: () => void;
 }
 
 export const LogRowMessageDisplayedFields = React.memo((props: Props) => {
@@ -65,8 +66,8 @@ export const LogRowMessageDisplayedFields = React.memo((props: Props) => {
             row={row}
             styles={styles}
             pinned={pinned}
-            {...rest}
             mouseIsOver={mouseIsOver}
+            {...rest}
           />
         )}
       </td>

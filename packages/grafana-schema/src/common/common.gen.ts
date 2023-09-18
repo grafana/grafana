@@ -358,6 +358,7 @@ export interface AxisConfig {
   axisGridShow?: boolean;
   axisLabel?: string;
   axisPlacement?: AxisPlacement;
+  axisShow?: boolean;
   axisSoftMax?: number;
   axisSoftMin?: number;
   axisWidth?: number;

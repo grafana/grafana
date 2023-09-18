@@ -13,8 +13,8 @@ import (
 
 // GetJsonData just gets the json in easier to work with type. It's used on multiple places which isn't super effective
 // but only when creating a client which should not happen often anyway.
-func GetJsonData(settings backend.DataSourceInstanceSettings) (map[string]interface{}, error) {
-	var jsonData map[string]interface{}
+func GetJsonData(settings backend.DataSourceInstanceSettings) (map[string]any, error) {
+	var jsonData map[string]any
 	err := json.Unmarshal(settings.JSONData, &jsonData)
 	if err != nil {
 		return nil, fmt.Errorf("error unmarshalling JSONData: %w", err)
@@ -24,7 +24,7 @@ func GetJsonData(settings backend.DataSourceInstanceSettings) (map[string]interf
 
 type Attribute struct {
 	Key   string
-	Value interface{}
+	Value any
 	Kv    attribute.KeyValue
 }
 

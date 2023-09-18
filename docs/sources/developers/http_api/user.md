@@ -206,7 +206,7 @@ See note in the [introduction]({{< ref "#user-api" >}}) for an explanation.
 GET /api/users/lookup?loginOrEmail=user@mygraf.com HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Basic YWRtaW46YWRtaW4=
 ```
 
 **Example Request using the username as option**:

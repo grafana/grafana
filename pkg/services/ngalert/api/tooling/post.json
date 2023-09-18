@@ -764,6 +764,9 @@
     "uid": {
      "description": "UID is the unique identifier of the contact point. The UID can be\nset by the user.",
      "example": "my_external_reference",
+     "maxLength": 40,
+     "minLength": 1,
+     "pattern": "^[a-zA-Z0-9\\-\\_]+$",
      "type": "string"
     }
    },
@@ -1251,6 +1254,12 @@
     "sns_configs": {
      "items": {
       "$ref": "#/definitions/SNSConfig"
+     },
+     "type": "array"
+    },
+    "teams_configs": {
+     "items": {
+      "$ref": "#/definitions/MSTeamsConfig"
      },
      "type": "array"
     },
@@ -1812,6 +1821,26 @@
    },
    "type": "object"
   },
+  "MSTeamsConfig": {
+   "properties": {
+    "http_config": {
+     "$ref": "#/definitions/HTTPClientConfig"
+    },
+    "send_resolved": {
+     "type": "boolean"
+    },
+    "text": {
+     "type": "string"
+    },
+    "title": {
+     "type": "string"
+    },
+    "webhook_url": {
+     "$ref": "#/definitions/SecretURL"
+    }
+   },
+   "type": "object"
+  },
   "MatchRegexps": {
    "additionalProperties": {
     "$ref": "#/definitions/Regexp"
@@ -2294,6 +2323,12 @@
      },
      "type": "array"
     },
+    "teams_configs": {
+     "items": {
+      "$ref": "#/definitions/MSTeamsConfig"
+     },
+     "type": "array"
+    },
     "telegram_configs": {
      "items": {
       "$ref": "#/definitions/TelegramConfig"
@@ -2631,6 +2666,9 @@
      "type": "string"
     },
     "uid": {
+     "maxLength": 40,
+     "minLength": 1,
+     "pattern": "^[a-zA-Z0-9-_]+$",
      "type": "string"
     },
     "updated": {
@@ -2862,6 +2900,12 @@
     "sns_configs": {
      "items": {
       "$ref": "#/definitions/SNSConfig"
+     },
+     "type": "array"
+    },
+    "teams_configs": {
+     "items": {
+      "$ref": "#/definitions/MSTeamsConfig"
      },
      "type": "array"
     },
@@ -3477,8 +3521,16 @@
   },
   "TLSConfig": {
    "properties": {
+    "ca": {
+     "description": "Text of the CA cert to use for the targets.",
+     "type": "string"
+    },
     "ca_file": {
      "description": "The CA cert to use for the targets.",
+     "type": "string"
+    },
+    "cert": {
+     "description": "Text of the client cert file for the targets.",
      "type": "string"
     },
     "cert_file": {
@@ -3488,6 +3540,9 @@
     "insecure_skip_verify": {
      "description": "Disable target certificate validation.",
      "type": "boolean"
+    },
+    "key": {
+     "$ref": "#/definitions/Secret"
     },
     "key_file": {
      "description": "The client key file for the targets.",
@@ -4202,7 +4257,6 @@
    "type": "object"
   },
   "gettableAlerts": {
-   "description": "GettableAlerts gettable alerts",
    "items": {
     "$ref": "#/definitions/gettableAlert"
    },
@@ -4407,6 +4461,7 @@
    "type": "array"
   },
   "postableSilence": {
+   "description": "PostableSilence postable silence",
    "properties": {
     "comment": {
      "description": "comment",
@@ -4444,6 +4499,7 @@
    "type": "object"
   },
   "receiver": {
+   "description": "Receiver receiver",
    "properties": {
     "active": {
      "description": "active",
@@ -6415,6 +6471,27 @@
       "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
       "in": "query",
       "name": "format",
+      "type": "string"
+     },
+     {
+      "description": "UIDs of folders from which to export rules",
+      "in": "query",
+      "items": {
+       "type": "string"
+      },
+      "name": "folderUid",
+      "type": "array"
+     },
+     {
+      "description": "Name of group of rules to export. Must be specified only together with a single folder UID",
+      "in": "query",
+      "name": "group",
+      "type": "string"
+     },
+     {
+      "description": "UID of alert rule to export. If specified, parameters folderUid and group must be empty.",
+      "in": "query",
+      "name": "ruleUid",
       "type": "string"
      }
     ],

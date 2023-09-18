@@ -151,7 +151,6 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 			},
 			want: &authn.Identity{
 				OrgID:           1,
-				OrgCount:        0,
 				OrgName:         "",
 				OrgRoles:        map[int64]roletype.RoleType{1: roletype.RoleAdmin},
 				ID:              "user:2",
@@ -535,9 +534,9 @@ type testEnv struct {
 	s        *ExtendedJWT
 }
 
-func generateToken(payload ExtendedJWTClaims, signingKey interface{}, alg jose.SignatureAlgorithm) string {
+func generateToken(payload ExtendedJWTClaims, signingKey any, alg jose.SignatureAlgorithm) string {
 	signer, _ := jose.NewSigner(jose.SigningKey{Algorithm: alg, Key: signingKey}, &jose.SignerOptions{
-		ExtraHeaders: map[jose.HeaderKey]interface{}{
+		ExtraHeaders: map[jose.HeaderKey]any{
 			jose.HeaderType: "at+jwt",
 		}})
 

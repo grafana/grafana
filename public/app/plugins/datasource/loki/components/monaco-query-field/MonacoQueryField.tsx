@@ -74,7 +74,7 @@ function ensureLogQL(monaco: Monaco) {
 const getStyles = (theme: GrafanaTheme2, placeholder: string) => {
   return {
     container: css`
-      border-radius: ${theme.shape.borderRadius()};
+      border-radius: ${theme.shape.radius.default};
       border: 1px solid ${theme.components.input.borderColor};
       width: 100%;
       .monaco-editor .suggest-widget {

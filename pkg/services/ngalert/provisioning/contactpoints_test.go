@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/prometheus/alertmanager/config"
@@ -12,14 +13,18 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
-	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/database"
 	"github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 func TestContactPointService(t *testing.T) {
@@ -79,6 +84,16 @@ func TestContactPointService(t *testing.T) {
 		require.NoError(t, err)
 		require.Len(t, cps, 2)
 		require.Equal(t, customUID, cps[1].UID)
+	})
+
+	t.Run("it's not possible to use invalid UID", func(t *testing.T) {
+		customUID := strings.Repeat("1", util.MaxUIDLength+1)
+		sut := createContactPointServiceSut(t, secretsService)
+		newCp := createTestContactPoint()
+		newCp.UID = customUID
+
+		_, err := sut.CreateContactPoint(context.Background(), 1, newCp, models.ProvenanceAPI)
+		require.ErrorIs(t, err, ErrValidation)
 	})
 
 	t.Run("it's not possible to use the same uid twice", func(t *testing.T) {
@@ -243,6 +258,7 @@ func TestContactPointService(t *testing.T) {
 func TestContactPointServiceDecryptRedact(t *testing.T) {
 	sqlStore := db.InitTestDB(t)
 	secretsService := manager.SetupTestService(t, database.ProvideSecretsStore(sqlStore))
+	ac := acimpl.ProvideAccessControl(setting.NewCfg())
 	t.Run("GetContactPoints gets redacted contact points by default", func(t *testing.T) {
 		sut := createContactPointServiceSut(t, secretsService)
 
@@ -253,20 +269,36 @@ func TestContactPointServiceDecryptRedact(t *testing.T) {
 		require.Equal(t, "slack receiver", cps[0].Name)
 		require.Equal(t, definitions.RedactedValue, cps[0].Settings.Get("url").MustString())
 	})
-	t.Run("GetContactPoints errors when Decrypt = true and user not Org Admin", func(t *testing.T) {
+	t.Run("GetContactPoints errors when Decrypt = true and user does not have permissions", func(t *testing.T) {
 		sut := createContactPointServiceSut(t, secretsService)
+		sut.ac = ac
+
+		q := cpsQuery(1)
+		q.Decrypt = true
+		_, err := sut.GetContactPoints(context.Background(), q, &user.SignedInUser{})
+		require.ErrorIs(t, err, ErrPermissionDenied)
+	})
+	t.Run("GetContactPoints errors when Decrypt = true and user is nil", func(t *testing.T) {
+		sut := createContactPointServiceSut(t, secretsService)
+		sut.ac = ac
 
 		q := cpsQuery(1)
 		q.Decrypt = true
 		_, err := sut.GetContactPoints(context.Background(), q, nil)
 		require.ErrorIs(t, err, ErrPermissionDenied)
 	})
-	t.Run("GetContactPoints gets decrypted contact points when Decrypt = true and user is Org Admin", func(t *testing.T) {
+
+	t.Run("GetContactPoints gets decrypted contact points when Decrypt = true and user has permissions", func(t *testing.T) {
 		sut := createContactPointServiceSut(t, secretsService)
+		sut.ac = ac
 
 		q := cpsQuery(1)
 		q.Decrypt = true
-		cps, err := sut.GetContactPoints(context.Background(), q, &user.SignedInUser{OrgID: 1, OrgRole: org.RoleAdmin})
+		cps, err := sut.GetContactPoints(context.Background(), q, &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{
+			1: {
+				accesscontrol.ActionAlertingProvisioningReadSecrets: nil,
+			},
+		}})
 		require.NoError(t, err)
 
 		require.Len(t, cps, 1)
@@ -325,6 +357,7 @@ func createContactPointServiceSut(t *testing.T, secretService secrets.Service) *
 		xact:              newNopTransactionManager(),
 		encryptionService: secretService,
 		log:               log.NewNopLogger(),
+		ac:                actest.FakeAccessControl{},
 	}
 }
 
@@ -964,6 +997,108 @@ func TestStitchReceivers(t *testing.T) {
 									UID:  "ghi",
 									Name: "brand-new-group",
 									Type: "opsgenie",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "single item group rename to existing group",
+			initial: &definitions.PostableUserConfig{
+				AlertmanagerConfig: definitions.PostableApiAlertingConfig{
+					Config: definitions.Config{
+						Route: &definitions.Route{
+							Receiver: "receiver-1",
+							Routes: []*definitions.Route{
+								{
+									Receiver: "receiver-1",
+								},
+								{
+									Receiver: "receiver-2",
+								},
+							},
+						},
+					},
+					Receivers: []*definitions.PostableApiReceiver{
+						{
+							Receiver: config.Receiver{
+								Name: "receiver-1",
+							},
+							PostableGrafanaReceivers: definitions.PostableGrafanaReceivers{
+								GrafanaManagedReceivers: []*definitions.PostableGrafanaReceiver{
+									{
+										UID:  "1",
+										Name: "receiver-1",
+										Type: "slack",
+									},
+									{
+										UID:  "2",
+										Name: "receiver-1",
+										Type: "slack",
+									},
+								},
+							},
+						},
+						{
+							Receiver: config.Receiver{
+								Name: "receiver-2",
+							},
+							PostableGrafanaReceivers: definitions.PostableGrafanaReceivers{
+								GrafanaManagedReceivers: []*definitions.PostableGrafanaReceiver{
+									{
+										UID:  "3",
+										Name: "receiver-2",
+										Type: "slack",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			new: &definitions.PostableGrafanaReceiver{
+				UID:  "3",
+				Name: "receiver-1",
+				Type: "slack",
+			},
+			expModified: true,
+			expCfg: definitions.PostableApiAlertingConfig{
+				Config: definitions.Config{
+					Route: &definitions.Route{
+						Receiver: "receiver-1",
+						Routes: []*definitions.Route{
+							{
+								Receiver: "receiver-1",
+							},
+							{
+								Receiver: "receiver-1",
+							},
+						},
+					},
+				},
+				Receivers: []*definitions.PostableApiReceiver{
+					{
+						Receiver: config.Receiver{
+							Name: "receiver-1",
+						},
+						PostableGrafanaReceivers: definitions.PostableGrafanaReceivers{
+							GrafanaManagedReceivers: []*definitions.PostableGrafanaReceiver{
+								{
+									UID:  "1",
+									Name: "receiver-1",
+									Type: "slack",
+								},
+								{
+									UID:  "2",
+									Name: "receiver-1",
+									Type: "slack",
+								},
+								{
+									UID:  "3",
+									Name: "receiver-1",
+									Type: "slack",
 								},
 							},
 						},

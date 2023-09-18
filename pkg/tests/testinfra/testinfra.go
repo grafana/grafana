@@ -45,11 +45,12 @@ func StartGrafanaEnv(t *testing.T, grafDir, cfgPath string) (string, *server.Tes
 	setting.IsEnterprise = extensions.IsEnterprise
 	listener, err := net.Listen("tcp", "127.0.0.1:0")
 	require.NoError(t, err)
-	cmdLineArgs := setting.CommandLineArgs{Config: cfgPath, HomePath: grafDir}
+	cfg, err := setting.NewCfgFromArgs(setting.CommandLineArgs{Config: cfgPath, HomePath: grafDir})
+	require.NoError(t, err)
 	serverOpts := server.Options{Listener: listener, HomePath: grafDir}
 	apiServerOpts := api.ServerOptions{Listener: listener}
 
-	env, err := server.InitializeForTest(cmdLineArgs, serverOpts, apiServerOpts)
+	env, err := server.InitializeForTest(cfg, serverOpts, apiServerOpts)
 	require.NoError(t, err)
 	require.NoError(t, env.SQLStore.Sync())
 
@@ -58,9 +59,21 @@ func StartGrafanaEnv(t *testing.T, grafDir, cfgPath string) (string, *server.Tes
 	require.NoError(t, err)
 	assert.Greater(t, dbSec.Key("query_retries").MustInt(), 0)
 
+	env.Server.HTTPServer.AddMiddleware(func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if env.RequestMiddleware != nil {
+				h := env.RequestMiddleware(next)
+				h.ServeHTTP(w, r)
+				return
+			}
+
+			next.ServeHTTP(w, r)
+		})
+	})
+
 	go func() {
 		// When the server runs, it will also build and initialize the service graph
-		if err := env.Server.Run(ctx); err != nil {
+		if err := env.Server.Run(); err != nil {
 			t.Log("Server exited uncleanly", "error", err)
 		}
 	}()
@@ -71,8 +84,6 @@ func StartGrafanaEnv(t *testing.T, grafDir, cfgPath string) (string, *server.Tes
 	})
 
 	// Wait for Grafana to be ready
-	err = env.Server.AwaitHealthy(ctx)
-	require.NoError(t, err)
 	addr := listener.Addr().String()
 	resp, err := http.Get(fmt.Sprintf("http://%s/api/health", addr))
 	require.NoError(t, err)
@@ -199,15 +210,6 @@ func CreateGrafDir(t *testing.T, opts ...GrafanaOpts) (string, string) {
 	_, err = serverSect.NewKey("port", "0")
 	require.NoError(t, err)
 	_, err = serverSect.NewKey("static_root_path", publicDir)
-	require.NoError(t, err)
-
-	authSect, err := cfg.NewSection("auth")
-	require.NoError(t, err)
-	authBrokerState := "false"
-	if len(opts) > 0 && opts[0].AuthBrokerEnabled {
-		authBrokerState = "true"
-	}
-	_, err = authSect.NewKey("broker", authBrokerState)
 	require.NoError(t, err)
 
 	anonSect, err := cfg.NewSection("auth.anonymous")
@@ -395,7 +397,6 @@ type GrafanaOpts struct {
 	EnableLog                             bool
 	GRPCServerAddress                     string
 	QueryRetries                          int64
-	AuthBrokerEnabled                     bool
 }
 
 func CreateUser(t *testing.T, store *sqlstore.SQLStore, cmd user.CreateUserCommand) *user.User {

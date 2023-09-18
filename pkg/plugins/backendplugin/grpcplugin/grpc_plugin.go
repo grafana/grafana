@@ -33,12 +33,12 @@ type grpcPlugin struct {
 
 // newPlugin allocates and returns a new gRPC (external) backendplugin.Plugin.
 func newPlugin(descriptor PluginDescriptor) backendplugin.PluginFactoryFunc {
-	return func(pluginID string, logger log.Logger, env []string) (backendplugin.Plugin, error) {
+	return func(pluginID string, logger log.Logger, env func() []string) (backendplugin.Plugin, error) {
 		return &grpcPlugin{
 			descriptor: descriptor,
 			logger:     logger,
 			clientFactory: func() *plugin.Client {
-				return plugin.NewClient(newClientConfig(descriptor.executablePath, env, logger, descriptor.versionedPlugins))
+				return plugin.NewClient(newClientConfig(descriptor.executablePath, env(), logger, descriptor.versionedPlugins))
 			},
 		}, nil
 	}
@@ -76,7 +76,7 @@ func (p *grpcPlugin) Start(_ context.Context) error {
 
 	elevated, err := process.IsRunningWithElevatedPrivileges()
 	if err != nil {
-		p.logger.Debug("Error checking plugin process execution privilege", "err", err)
+		p.logger.Debug("Error checking plugin process execution privilege", "error", err)
 	}
 	if elevated {
 		p.logger.Warn("Plugin process is running with elevated privileges. This is not recommended")

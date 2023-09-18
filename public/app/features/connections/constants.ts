@@ -13,4 +13,8 @@ export const ROUTES = {
   // Add new connection
   AddNewConnection: `/${ROUTE_BASE_ID}/add-new-connection`,
   DataSourcesDetails: `/${ROUTE_BASE_ID}/datasources/:id`,
+
+  // Outdated
+  ConnectDataOutdated: `/${ROUTE_BASE_ID}/connect-data`,
+  YourConnectionsOutdated: `/${ROUTE_BASE_ID}/your-connections`,
 } as const;

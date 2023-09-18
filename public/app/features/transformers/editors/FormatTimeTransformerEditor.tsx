@@ -74,7 +74,16 @@ export function FormatTimeTransfomerEditor({
         <InlineField
           label="Format"
           labelWidth={10}
-          tooltip="The output format for the field specified as a moment.js format string."
+          tooltip={
+            <>
+              The output format for the field specified as a{' '}
+              <a href="https://momentjs.com/docs/#/displaying/" target="_blank" rel="noopener noreferrer">
+                Moment.js format string
+              </a>
+              .
+            </>
+          }
+          interactive={true}
         >
           <Input onChange={onFormatChange} value={options.outputFormat} />
         </InlineField>

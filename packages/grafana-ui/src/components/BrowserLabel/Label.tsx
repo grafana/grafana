@@ -111,7 +111,7 @@ const getLabelStyles = (theme: GrafanaTheme2) => ({
     whiteSpace: 'nowrap',
     textShadow: 'none',
     padding: theme.spacing(0.5),
-    borderRadius: theme.shape.borderRadius(),
+    borderRadius: theme.shape.radius.default,
     border: 'none',
     marginRight: theme.spacing(1),
     marginBottom: theme.spacing(0.5),

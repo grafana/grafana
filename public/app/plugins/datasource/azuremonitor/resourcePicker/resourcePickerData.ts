@@ -3,7 +3,7 @@ import { uniq } from 'lodash';
 import { DataSourceInstanceSettings } from '@grafana/data';
 import { DataSourceWithBackend, reportInteraction } from '@grafana/runtime';
 
-import { logsResourceTypes, resourceTypeDisplayNames } from '../azureMetadata';
+import { logsResourceTypes, resourceTypeDisplayNames, resourceTypes } from '../azureMetadata';
 import AzureMonitorDatasource from '../azure_monitor/azure_monitor_datasource';
 import { ResourceRow, ResourceRowGroup, ResourceRowType } from '../components/ResourcePicker/types';
 import {
@@ -378,7 +378,9 @@ export default class ResourcePickerData extends DataSourceWithBackend<AzureMonit
         'Unable to resolve a list of valid metric namespaces. Validate the datasource configuration is correct and required permissions have been granted for all subscriptions. Grafana requires at least the Reader role to be assigned.'
       );
     }
-    this.supportedMetricNamespaces = uniq(supportedMetricNamespaces).join(',');
+    this.supportedMetricNamespaces = uniq(
+      supportedMetricNamespaces.concat(resourceTypes.map((namespace) => `"${namespace}"`))
+    ).join(',');
   }
 
   parseRows(resources: Array<string | AzureMonitorResource>): ResourceRow[] {

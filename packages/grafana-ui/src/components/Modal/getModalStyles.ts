@@ -5,7 +5,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { stylesFactory } from '../../themes';
 
 export const getModalStyles = stylesFactory((theme: GrafanaTheme2) => {
-  const borderRadius = theme.shape.borderRadius(1);
+  const borderRadius = theme.shape.radius.default;
 
   return {
     modal: css({

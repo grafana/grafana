@@ -13,16 +13,16 @@ import (
 type Builder struct {
 	// List of FilterWhere/FilterGroupBy/FilterOrderBy/FilterLeftJoin
 	// to modify the query.
-	Filters []interface{}
+	Filters []any
 	Dialect migrator.Dialect
 
-	params []interface{}
+	params []any
 	sql    bytes.Buffer
 }
 
 // ToSQL builds the SQL query and returns it as a string, together with the SQL parameters.
-func (b *Builder) ToSQL(limit, page int64) (string, []interface{}) {
-	b.params = make([]interface{}, 0)
+func (b *Builder) ToSQL(limit, page int64) (string, []any) {
+	b.params = make([]any, 0)
 	b.sql = bytes.Buffer{}
 
 	b.buildSelect()
@@ -45,7 +45,7 @@ func (b *Builder) ToSQL(limit, page int64) (string, []interface{}) {
 
 func (b *Builder) buildSelect() {
 	var recQuery string
-	var recQueryParams []interface{}
+	var recQueryParams []any
 
 	b.sql.WriteString(
 		`SELECT
@@ -90,16 +90,19 @@ func (b *Builder) applyFilters() (ordering string) {
 	orderJoins := []string{}
 
 	wheres := []string{}
-	whereParams := []interface{}{}
+	whereParams := []any{}
 
 	groups := []string{}
-	groupParams := []interface{}{}
+	groupParams := []any{}
 
 	orders := []string{}
 
 	for _, f := range b.Filters {
 		if f, ok := f.(FilterLeftJoin); ok {
-			joins = append(joins, fmt.Sprintf(" LEFT OUTER JOIN %s ", f.LeftJoin()))
+			s := f.LeftJoin()
+			if s != "" {
+				joins = append(joins, fmt.Sprintf(" LEFT OUTER JOIN %s ", s))
+			}
 		}
 
 		if f, ok := f.(FilterWhere); ok {

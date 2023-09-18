@@ -6,12 +6,9 @@ import (
 	"path/filepath"
 	"sync"
 
-	"github.com/grafana/dskit/services"
-
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/modules"
-	plugifaces "github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/correlations"
@@ -24,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	prov_alerting "github.com/grafana/grafana/pkg/services/provisioning/alerting"
 	"github.com/grafana/grafana/pkg/services/provisioning/dashboards"
 	"github.com/grafana/grafana/pkg/services/provisioning/datasources"
@@ -39,7 +37,7 @@ func ProvideService(
 	ac accesscontrol.AccessControl,
 	cfg *setting.Cfg,
 	sqlStore db.DB,
-	pluginStore plugifaces.Store,
+	pluginStore pluginstore.Store,
 	encryptionService encryption.Internal,
 	notificatonService *notifications.NotificationService,
 	dashboardProvisioningService dashboardservice.DashboardProvisioningService,
@@ -54,7 +52,7 @@ func ProvideService(
 	secrectService secrets.Service,
 	orgService org.Service,
 ) (*ProvisioningServiceImpl, error) {
-	ps := &ProvisioningServiceImpl{
+	s := &ProvisioningServiceImpl{
 		Cfg:                          cfg,
 		SQLStore:                     sqlStore,
 		ac:                           ac,
@@ -78,14 +76,12 @@ func ProvideService(
 		log:                          log.New("provisioning"),
 		orgService:                   orgService,
 	}
-
-	ps.BasicService = services.NewBasicService(ps.RunInitProvisioners, ps.Run, nil).WithName(modules.Provisioning)
-
-	return ps, nil
+	return s, nil
 }
 
 type ProvisioningService interface {
-	services.NamedService
+	registry.BackgroundService
+	RunInitProvisioners(ctx context.Context) error
 	ProvisionDatasources(ctx context.Context) error
 	ProvisionPlugins(ctx context.Context) error
 	ProvisionNotifications(ctx context.Context) error
@@ -93,21 +89,18 @@ type ProvisioningService interface {
 	ProvisionAlerting(ctx context.Context) error
 	GetDashboardProvisionerResolvedPath(name string) string
 	GetAllowUIUpdatesFromConfig(name string) bool
-	RunInitProvisioners(ctx context.Context) error
 }
 
 // Add a public constructor for overriding service to be able to instantiate OSS as fallback
 func NewProvisioningServiceImpl() *ProvisioningServiceImpl {
 	logger := log.New("provisioning")
-	ps := &ProvisioningServiceImpl{
+	return &ProvisioningServiceImpl{
 		log:                     logger,
 		newDashboardProvisioner: dashboards.New,
 		provisionNotifiers:      notifiers.Provision,
 		provisionDatasources:    datasources.Provision,
 		provisionPlugins:        plugins.Provision,
 	}
-	ps.BasicService = services.NewBasicService(ps.RunInitProvisioners, ps.Run, nil).WithName(modules.Provisioning)
-	return ps
 }
 
 // Used for testing purposes
@@ -115,27 +108,23 @@ func newProvisioningServiceImpl(
 	newDashboardProvisioner dashboards.DashboardProvisionerFactory,
 	provisionNotifiers func(context.Context, string, notifiers.Manager, org.Service, encryption.Internal, *notifications.NotificationService) error,
 	provisionDatasources func(context.Context, string, datasources.Store, datasources.CorrelationsStore, org.Service) error,
-	provisionPlugins func(context.Context, string, plugifaces.Store, pluginsettings.Service, org.Service) error,
+	provisionPlugins func(context.Context, string, pluginstore.Store, pluginsettings.Service, org.Service) error,
 ) *ProvisioningServiceImpl {
-	ps := &ProvisioningServiceImpl{
+	return &ProvisioningServiceImpl{
 		log:                     log.New("provisioning"),
 		newDashboardProvisioner: newDashboardProvisioner,
 		provisionNotifiers:      provisionNotifiers,
 		provisionDatasources:    provisionDatasources,
 		provisionPlugins:        provisionPlugins,
 	}
-	ps.BasicService = services.NewBasicService(ps.RunInitProvisioners, ps.Run, nil).WithName(modules.Provisioning)
-	return ps
 }
 
 type ProvisioningServiceImpl struct {
-	*services.BasicService
-
 	Cfg                          *setting.Cfg
 	SQLStore                     db.DB
 	orgService                   org.Service
 	ac                           accesscontrol.AccessControl
-	pluginStore                  plugifaces.Store
+	pluginStore                  pluginstore.Store
 	EncryptionService            encryption.Internal
 	NotificationService          *notifications.NotificationService
 	log                          log.Logger
@@ -144,7 +133,7 @@ type ProvisioningServiceImpl struct {
 	dashboardProvisioner         dashboards.DashboardProvisioner
 	provisionNotifiers           func(context.Context, string, notifiers.Manager, org.Service, encryption.Internal, *notifications.NotificationService) error
 	provisionDatasources         func(context.Context, string, datasources.Store, datasources.CorrelationsStore, org.Service) error
-	provisionPlugins             func(context.Context, string, plugifaces.Store, pluginsettings.Service, org.Service) error
+	provisionPlugins             func(context.Context, string, pluginstore.Store, pluginsettings.Service, org.Service) error
 	provisionAlerting            func(context.Context, prov_alerting.ProvisionerConfig) error
 	mutex                        sync.Mutex
 	dashboardProvisioningService dashboardservice.DashboardProvisioningService
@@ -208,10 +197,8 @@ func (ps *ProvisioningServiceImpl) Run(ctx context.Context) error {
 			continue
 		case <-ctx.Done():
 			// Root server context was cancelled so cancel polling and leave.
-			ps.mutex.Lock()
 			ps.cancelPolling()
-			ps.mutex.Unlock()
-			return nil
+			return ctx.Err()
 		}
 	}
 }
@@ -289,7 +276,7 @@ func (ps *ProvisioningServiceImpl) ProvisionAlerting(ctx context.Context) error 
 		int64(ps.Cfg.UnifiedAlerting.BaseInterval.Seconds()),
 		ps.log)
 	contactPointService := provisioning.NewContactPointService(&st, ps.secretService,
-		st, ps.SQLStore, ps.log)
+		st, ps.SQLStore, ps.log, ps.ac)
 	notificationPolicyService := provisioning.NewNotificationPolicyService(&st,
 		st, ps.SQLStore, ps.Cfg.UnifiedAlerting, ps.log)
 	mutetimingsService := provisioning.NewMuteTimingService(&st, st, &st, ps.log)

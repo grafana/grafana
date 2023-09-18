@@ -46,7 +46,7 @@ export const changeVariableName = (identifier: KeyedVariableIdentifier, newName:
     }
 
     if (!newName.match(/^\w+$/)) {
-      errorText = 'Only word and digit characters are allowed in variable names';
+      errorText = 'Only word characters are allowed in variable names';
     }
 
     const variables = getVariablesByKey(uid, getState());

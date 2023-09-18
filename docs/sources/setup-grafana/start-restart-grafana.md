@@ -52,7 +52,7 @@ sudo systemctl enable grafana-server.service
 
 #### Serve Grafana on a port < 1024
 
-{{< docs/shared "systemd/bind-net-capabilities.md" >}}
+{{< docs/shared lookup="systemd/bind-net-capabilities.md" source="grafana" version="<GRAFANA VERSION>" >}}
 
 ### Restart the Grafana server using systemd
 
@@ -180,6 +180,14 @@ To restart the Grafana server, complete the following steps:
 ## macOS
 
 Restart methods differ depending on whether you installed Grafana using Homebrew or as standalone macOS binaries.
+
+### Start Grafana using Homebrew
+
+To start Grafana using [Homebrew](http://brew.sh/), run the following start command:
+
+```bash
+brew services start grafana
+```
 
 ### Restart Grafana using Homebrew
 

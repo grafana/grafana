@@ -265,14 +265,34 @@ describe('situation', () => {
     });
   });
 
-  it('identifies AFTER_DISTINCT autocomplete situations', () => {
-    assertSituation('{label="value"} | logfmt | distinct^', {
-      type: 'AFTER_DISTINCT',
+  it('identifies AFTER_KEEP_AND_DROP autocomplete situations', () => {
+    assertSituation('{label="value"} | logfmt | drop^', {
+      type: 'AFTER_KEEP_AND_DROP',
       logQuery: '{label="value"} | logfmt ',
     });
 
-    assertSituation('{label="value"} | logfmt | distinct id,^', {
-      type: 'AFTER_DISTINCT',
+    assertSituation('{label="value"} | logfmt | keep^', {
+      type: 'AFTER_KEEP_AND_DROP',
+      logQuery: '{label="value"} | logfmt ',
+    });
+
+    assertSituation('{label="value"} | logfmt | drop id,^', {
+      type: 'AFTER_KEEP_AND_DROP',
+      logQuery: '{label="value"} | logfmt ',
+    });
+
+    assertSituation('{label="value"} | logfmt | keep id,^', {
+      type: 'AFTER_KEEP_AND_DROP',
+      logQuery: '{label="value"} | logfmt ',
+    });
+
+    assertSituation('{label="value"} | logfmt | drop id, name="test",^', {
+      type: 'AFTER_KEEP_AND_DROP',
+      logQuery: '{label="value"} | logfmt ',
+    });
+
+    assertSituation('{label="value"} | logfmt | keep id, name="test",^', {
+      type: 'AFTER_KEEP_AND_DROP',
       logQuery: '{label="value"} | logfmt ',
     });
   });

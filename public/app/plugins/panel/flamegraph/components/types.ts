@@ -29,6 +29,8 @@ export enum SelectedView {
 export interface TableData {
   self: number;
   total: number;
+  // For diff view
+  totalRight: number;
 }
 
 export interface TopTableData {
@@ -45,6 +47,11 @@ export type TopTableValue = {
 export enum ColorScheme {
   ValueBased = 'valueBased',
   PackageBased = 'packageBased',
+}
+
+export enum ColorSchemeDiff {
+  Default = 'default',
+  DiffColorBlind = 'diffColorBlind',
 }
 
 export type TextAlign = 'left' | 'right';

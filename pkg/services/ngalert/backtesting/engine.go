@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
@@ -40,7 +41,7 @@ type Engine struct {
 	createStateManager func() stateManager
 }
 
-func NewEngine(appUrl *url.URL, evalFactory eval.EvaluatorFactory) *Engine {
+func NewEngine(appUrl *url.URL, evalFactory eval.EvaluatorFactory, tracer tracing.Tracer) *Engine {
 	return &Engine{
 		evalFactory: evalFactory,
 		createStateManager: func() stateManager {
@@ -52,6 +53,7 @@ func NewEngine(appUrl *url.URL, evalFactory eval.EvaluatorFactory) *Engine {
 				Clock:                   clock.New(),
 				Historian:               nil,
 				MaxStateSaveConcurrency: 1,
+				Tracer:                  tracer,
 			}
 			return state.NewManager(cfg)
 		},

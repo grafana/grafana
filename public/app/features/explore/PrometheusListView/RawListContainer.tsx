@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { cloneDeep } from 'lodash';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useId, useRef, useState } from 'react';
 import { useWindowSize } from 'react-use';
 import { VariableSizeList as List } from 'react-window';
 
@@ -113,12 +113,14 @@ const RawListContainer = (props: RawListContainerProps) => {
     return 1.5 * singleLineHeight + (Object.keys(item).length - valueLabels.length) * additionalLineHeight;
   };
 
+  const switchId = `isExpandedView ${useId()}`;
+
   return (
     <section>
       <header className={styles.header}>
         <Field className={styles.switchWrapper} label={`Expand results`} htmlFor={'isExpandedView'}>
           <div className={styles.switch}>
-            <Switch onChange={onContentClick} id="isExpandedView" value={isExpandedView} label={`Expand results`} />
+            <Switch onChange={onContentClick} id={switchId} value={isExpandedView} label={`Expand results`} />
           </div>
         </Field>
 

@@ -71,12 +71,19 @@ interface AutoSize extends BaseProps {
 
 interface Collapsible {
   collapsible: boolean;
+  collapsed?: boolean;
+  /**
+   * callback when collapsing or expanding the panel
+   */
+  onToggleCollapse?: (collapsed: boolean) => void;
   hoverHeader?: never;
   hoverHeaderOffset?: never;
 }
 
 interface HoverHeader {
   collapsible?: never;
+  collapsed?: never;
+  onToggleCollapse?: never;
   hoverHeader?: boolean;
   hoverHeaderOffset?: number;
 }
@@ -111,24 +118,32 @@ export function PanelChrome({
   onCancelQuery,
   onOpenMenu,
   collapsible = false,
+  collapsed,
+  onToggleCollapse,
 }: PanelChromeProps) {
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
   const panelContentId = useId();
 
+  const hasHeader = !hoverHeader;
+
   const [isOpen, toggleOpen] = useToggle(true);
 
-  const hasHeader = !hoverHeader;
+  // if collapsed is not defined, then component is uncontrolled and state is managed internally
+  if (collapsed === undefined) {
+    collapsed = !isOpen;
+  }
 
   // hover menu is only shown on hover when not on touch devices
   const showOnHoverClass = 'show-on-hover';
+  const isPanelTransparent = displayMode === 'transparent';
 
   const headerHeight = getHeaderHeight(theme, hasHeader);
   const { contentStyle, innerWidth, innerHeight } = getContentStyle(
     padding,
     theme,
     headerHeight,
-    isOpen,
+    collapsed,
     height,
     width
   );
@@ -138,12 +153,7 @@ export function PanelChrome({
     cursor: dragClass ? 'move' : 'auto',
   };
 
-  const containerStyles: CSSProperties = { width, height: isOpen ? height : headerHeight };
-  if (displayMode === 'transparent') {
-    containerStyles.backgroundColor = 'transparent';
-    containerStyles.border = 'none';
-  }
-
+  const containerStyles: CSSProperties = { width, height: collapsed ? undefined : height };
   const [ref, { width: loadingBarWidth }] = useMeasure<HTMLDivElement>();
 
   /** Old property name now maps to actions */
@@ -153,34 +163,39 @@ export function PanelChrome({
 
   const testid = title ? selectors.components.Panels.Panel.title(title) : 'Panel';
 
-  const collapsibleHeader = (
-    <h6 className={styles.title}>
-      <button
-        type="button"
-        className={styles.clearButtonStyles}
-        onClick={toggleOpen}
-        aria-expanded={isOpen}
-        aria-controls={isOpen ? panelContentId : undefined}
-      >
-        <Icon
-          name={isOpen ? 'angle-down' : 'angle-right'}
-          aria-hidden={!!title}
-          aria-label={!title ? 'toggle collapse panel' : undefined}
-        />
-        {title}
-      </button>
-    </h6>
-  );
-
   const headerContent = (
     <>
-      {collapsible
-        ? collapsibleHeader
-        : title && (
-            <h6 title={title} className={styles.title}>
-              {title}
-            </h6>
-          )}
+      {/* Non collapsible title */}
+      {!collapsible && title && (
+        <h6 title={title} className={styles.title}>
+          {title}
+        </h6>
+      )}
+
+      {/* Collapsible title */}
+      {collapsible && (
+        <h6 className={styles.title}>
+          <button
+            type="button"
+            className={styles.clearButtonStyles}
+            onClick={() => {
+              toggleOpen();
+              if (onToggleCollapse) {
+                onToggleCollapse(!collapsed);
+              }
+            }}
+            aria-expanded={!collapsed}
+            aria-controls={!collapsed ? panelContentId : undefined}
+          >
+            <Icon
+              name={!collapsed ? 'angle-down' : 'angle-right'}
+              aria-hidden={!!title}
+              aria-label={!title ? 'toggle collapse panel' : undefined}
+            />
+            {title}
+          </button>
+        </h6>
+      )}
 
       <div className={cx(styles.titleItems, dragClassCancel)} data-testid="title-items-container">
         <PanelDescription description={description} className={dragClassCancel} />
@@ -214,8 +229,13 @@ export function PanelChrome({
 
   return (
     // tabIndex={0} is needed for keyboard accessibility in the plot area
-    // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex
-    <div className={styles.container} style={containerStyles} data-testid={testid} tabIndex={0} ref={ref}>
+    <div
+      className={cx(styles.container, { [styles.transparentContainer]: isPanelTransparent })}
+      style={containerStyles}
+      data-testid={testid}
+      tabIndex={0} //eslint-disable-line jsx-a11y/no-noninteractive-tabindex
+      ref={ref}
+    >
       <div className={styles.loadingBarContainer}>
         {loadingState === LoadingState.Loading ? (
           <LoadingBar width={loadingBarWidth} ariaLabel="Panel loading bar" />
@@ -264,7 +284,7 @@ export function PanelChrome({
         </div>
       )}
 
-      {isOpen && (
+      {!collapsed && (
         <div
           id={panelContentId}
           className={cx(styles.content, height === undefined && styles.containNone)}
@@ -294,7 +314,7 @@ const getContentStyle = (
   padding: string,
   theme: GrafanaTheme2,
   headerHeight: number,
-  isOpen: boolean,
+  collapsed: boolean,
   height?: number,
   width?: number
 ) => {
@@ -313,7 +333,7 @@ const getContentStyle = (
     innerHeight = height - headerHeight - panelPadding - panelBorder;
   }
 
-  if (!isOpen) {
+  if (collapsed) {
     innerHeight = headerHeight;
   }
 
@@ -333,7 +353,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       backgroundColor: background,
       border: `1px solid ${borderColor}`,
       position: 'relative',
-      borderRadius: theme.shape.borderRadius(1),
+      borderRadius: theme.shape.radius.default,
       height: '100%',
       display: 'flex',
       flexDirection: 'column',
@@ -359,6 +379,15 @@ const getStyles = (theme: GrafanaTheme2) => {
           visibility: 'visible',
           opacity: '1',
         },
+      },
+    }),
+    transparentContainer: css({
+      label: 'panel-transparent-container',
+      backgroundColor: 'transparent',
+      border: '1px solid transparent',
+      boxSizing: 'border-box',
+      '&:hover': {
+        border: `1px solid ${borderColor}`,
       },
     }),
     loadingBarContainer: css({
@@ -447,6 +476,8 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     clearButtonStyles: css({
       alignItems: 'center',
+      display: 'flex',
+      gap: theme.spacing(0.5),
       background: 'transparent',
       color: theme.colors.text.primary,
       border: 'none',

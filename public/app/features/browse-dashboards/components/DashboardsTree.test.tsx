@@ -44,7 +44,7 @@ describe('browse-dashboards DashboardsTree', () => {
     );
     expect(screen.queryByText(dashboard.item.title)).toBeInTheDocument();
     expect(screen.queryByText(assertIsDefined(dashboard.item.tags)[0])).toBeInTheDocument();
-    expect(screen.getByTestId(selectors.pages.BrowseDashbards.table.checkbox(dashboard.item.uid))).toBeInTheDocument();
+    expect(screen.getByTestId(selectors.pages.BrowseDashboards.table.checkbox(dashboard.item.uid))).toBeInTheDocument();
   });
 
   it('does not render checkbox when disabled', () => {
@@ -63,7 +63,7 @@ describe('browse-dashboards DashboardsTree', () => {
       />
     );
     expect(
-      screen.queryByTestId(selectors.pages.BrowseDashbards.table.checkbox(dashboard.item.uid))
+      screen.queryByTestId(selectors.pages.BrowseDashboards.table.checkbox(dashboard.item.uid))
     ).not.toBeInTheDocument();
   });
 
@@ -101,7 +101,7 @@ describe('browse-dashboards DashboardsTree', () => {
         requestLoadMore={requestLoadMore}
       />
     );
-    const folderButton = screen.getByLabelText('Expand folder');
+    const folderButton = screen.getByLabelText(`Expand folder ${folder.item.title}`);
     await userEvent.click(folderButton);
 
     expect(handler).toHaveBeenCalledWith(folder.item.uid, true);

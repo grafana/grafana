@@ -261,6 +261,7 @@ export class QueryGroup extends PureComponent<Props, State> {
             pluginType={PluginType.datasource}
             angularSupportEnabled={config?.angularSupportEnabled}
             showPluginDetailsLink={true}
+            interactionElementId="datasource-query"
           />
         )}
       </div>
@@ -370,10 +371,9 @@ export class QueryGroup extends PureComponent<Props, State> {
             icon="plus"
             onClick={this.onAddQueryClick}
             variant="secondary"
-            aria-label={selectors.components.QueryTab.addQuery}
-            data-testid="query-tab-add-query"
+            data-testid={selectors.components.QueryTab.addQuery}
           >
-            Query
+            Add query
           </Button>
         )}
         {config.expressionsEnabled && this.isExpressionsSupported(dsSettings) && (

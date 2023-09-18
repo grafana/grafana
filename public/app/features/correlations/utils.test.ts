@@ -110,6 +110,7 @@ function setup() {
       source: loki,
       target: prometheus,
       config: { type: 'query', field: 'traceId', target: { expr: 'target Prometheus query' } },
+      provisioned: false,
     },
     // Test multiple correlations attached to the same field
     {
@@ -118,6 +119,7 @@ function setup() {
       source: loki,
       target: elastic,
       config: { type: 'query', field: 'traceId', target: { expr: 'target Elastic query' } },
+      provisioned: false,
     },
     {
       uid: 'prometheus-to-elastic',
@@ -125,6 +127,7 @@ function setup() {
       source: prometheus,
       target: elastic,
       config: { type: 'query', field: 'value', target: { expr: 'target Elastic query' } },
+      provisioned: false,
     },
   ];
 

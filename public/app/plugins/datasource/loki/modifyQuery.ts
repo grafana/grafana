@@ -139,12 +139,19 @@ function getMatchersWithFilter(query: string, label: string, operator: string, v
  * This operates on substrings of the query with labels and operates just on those. This makes this
  * more robust and can alter even invalid queries, and preserves in general the query structure and whitespace.
  *
- * @param query
- * @param key
- * @param value
- * @param operator
+ * @param {string} query
+ * @param {string} key
+ * @param {string} operator
+ * @param {string} value
+ * @param {boolean} [forceAsLabelFilter=false]  - if true, it will add a LabelFilter expression even if there is no parser in the query
  */
-export function addLabelToQuery(query: string, key: string, operator: string, value: string): string {
+export function addLabelToQuery(
+  query: string,
+  key: string,
+  operator: string,
+  value: string,
+  forceAsLabelFilter = false
+): string {
   if (!key || !value) {
     throw new Error('Need label to add to query.');
   }
@@ -167,7 +174,16 @@ export function addLabelToQuery(query: string, key: string, operator: string, va
   const filter = toLabelFilter(key, value, operator);
   // If we have non-empty stream selector and parser/label filter, we want to add a new label filter after the last one.
   // If some of the stream selectors don't have matchers, we want to add new matcher to the all stream selectors.
-  if (everyStreamSelectorHasMatcher && (labelFilterPositions.length || parserPositions.length)) {
+  if (forceAsLabelFilter) {
+    // `forceAsLabelFilter` is mostly used for structured metadata labels. Those are not
+    // very well distinguishable from real labels, but need to be added as label
+    // filters after the last stream selector, parser or label filter. This is
+    // just a quickfix for now and still has edge-cases where it can fail.
+    // TODO: improve this once we have a better API in Loki to distinguish
+    // between the origins of labels.
+    const positionToAdd = findLastPosition([...streamSelectorPositions, ...labelFilterPositions, ...parserPositions]);
+    return addFilterAsLabelFilter(query, [positionToAdd], filter);
+  } else if (everyStreamSelectorHasMatcher && (labelFilterPositions.length || parserPositions.length)) {
     const positionToAdd = findLastPosition([...labelFilterPositions, ...parserPositions]);
     return addFilterAsLabelFilter(query, [positionToAdd], filter);
   } else {

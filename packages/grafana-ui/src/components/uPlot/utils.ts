@@ -117,7 +117,7 @@ export function getStackingGroups(frame: DataFrame) {
     let transform = custom.transform;
     let stackDir = getStackDirection(transform, values);
 
-    let drawStyle = custom.drawStyle as GraphDrawStyle;
+    let drawStyle: GraphDrawStyle = custom.drawStyle;
     let drawStyle2 =
       drawStyle === GraphDrawStyle.Bars
         ? (custom.barAlignment as BarAlignment)
@@ -153,7 +153,7 @@ export function preparePlotData2(
   stackingGroups: StackingGroup[],
   onStackMeta?: (meta: StackMeta) => void
 ) {
-  let data = Array(frame.fields.length) as AlignedData;
+  let data: AlignedData = Array(frame.fields.length);
 
   let stacksQty = stackingGroups.length;
 

@@ -1,5 +1,5 @@
 import { cloneDeep, extend, groupBy, has, isString, map as _map, omit, pick, reduce } from 'lodash';
-import { defer, lastValueFrom, merge, mergeMap, Observable, of, throwError } from 'rxjs';
+import { lastValueFrom, merge, Observable, of, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 
 import {
@@ -36,12 +36,11 @@ import { FluxQueryEditor } from './components/editor/query/flux/FluxQueryEditor'
 import { BROWSER_MODE_DISABLED_MESSAGE } from './constants';
 import InfluxQueryModel from './influx_query_model';
 import InfluxSeries from './influx_series';
-import { getAllPolicies } from './influxql_metadata_query';
 import { buildMetadataQuery } from './influxql_query_builder';
 import { prepareAnnotation } from './migrations';
-import { buildRawQuery, replaceHardCodedRetentionPolicy } from './queryUtils';
+import { buildRawQuery } from './queryUtils';
 import ResponseParser from './response_parser';
-import { InfluxOptions, InfluxQuery, InfluxVersion } from './types';
+import { DEFAULT_POLICY, InfluxOptions, InfluxQuery, InfluxVersion } from './types';
 
 export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery, InfluxOptions> {
   type: string;
@@ -55,9 +54,8 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
   access: 'direct' | 'proxy';
   responseParser: ResponseParser;
   httpMode: string;
-  isFlux: boolean;
+  version?: InfluxVersion;
   isProxyAccess: boolean;
-  retentionPolicies: string[];
 
   constructor(
     instanceSettings: DataSourceInstanceSettings<InfluxOptions>,
@@ -81,11 +79,10 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     this.interval = settingsData.timeInterval;
     this.httpMode = settingsData.httpMode || 'GET';
     this.responseParser = new ResponseParser();
-    this.isFlux = settingsData.version === InfluxVersion.Flux;
+    this.version = settingsData.version ?? InfluxVersion.InfluxQL;
     this.isProxyAccess = instanceSettings.access === 'proxy';
-    this.retentionPolicies = [];
 
-    if (this.isFlux) {
+    if (this.version === InfluxVersion.Flux) {
       // When flux, use an annotation processor rather than the `annotationQuery` lifecycle
       this.annotations = {
         QueryEditor: FluxQueryEditor,
@@ -98,48 +95,13 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     }
   }
 
-  async getRetentionPolicies(): Promise<string[]> {
-    // Only For InfluxQL Mode
-    if (this.isFlux || this.retentionPolicies.length) {
-      return Promise.resolve(this.retentionPolicies);
-    } else {
-      return getAllPolicies(this).catch((err) => {
-        console.error(
-          'Unable to fetch retention policies. Queries will be run without specifying retention policy.',
-          err
-        );
-        return Promise.resolve(this.retentionPolicies);
-      });
-    }
-  }
-
   query(request: DataQueryRequest<InfluxQuery>): Observable<DataQueryResponse> {
     if (!this.isProxyAccess) {
       const error = new Error(BROWSER_MODE_DISABLED_MESSAGE);
       return throwError(() => error);
     }
 
-    // When the dashboard first load or on dashboard panel edit mode
-    // PanelQueryRunner runs the queries to have a visualization on the panel.
-    // At that point datasource doesn't have the retention policies fetched.
-    // So hardcoded policy is being sent. Which causes problems.
-    // To overcome this we check/load policies first and then do the query.
-    return defer(() => this.getRetentionPolicies()).pipe(
-      mergeMap((allPolicies) => {
-        this.retentionPolicies = allPolicies;
-        const policyFixedRequests = {
-          ...request,
-          targets: request.targets.map((t) => {
-            t.policy = t.policy ? this.templateSrv.replace(t.policy, {}, 'regex') : '';
-            return {
-              ...t,
-              policy: replaceHardCodedRetentionPolicy(t.policy, this.retentionPolicies),
-            };
-          }),
-        };
-        return this._query(policyFixedRequests);
-      })
-    );
+    return this._query(request);
   }
 
   _query(request: DataQueryRequest<InfluxQuery>): Observable<DataQueryResponse> {
@@ -171,7 +133,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
       return merge(...streams);
     }
 
-    if (this.isFlux) {
+    if (this.version === InfluxVersion.Flux || this.version === InfluxVersion.SQL) {
       return super.query(filteredRequest);
     }
 
@@ -221,7 +183,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
   }
 
   getQueryDisplayText(query: InfluxQuery) {
-    if (this.isFlux) {
+    if (this.version === InfluxVersion.Flux) {
       return query.query;
     }
     return new InfluxQueryModel(query).render(false);
@@ -231,7 +193,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
    * Returns false if the query should be skipped
    */
   filterQuery(query: InfluxQuery): boolean {
-    if (this.isFlux) {
+    if (this.version === InfluxVersion.Flux) {
       return !!query.query;
     }
     return true;
@@ -241,7 +203,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     // We want to interpolate these variables on backend
     const { __interval, __interval_ms, ...rest } = scopedVars || {};
 
-    if (this.isFlux) {
+    if (this.version === InfluxVersion.Flux) {
       return {
         ...query,
         query: this.templateSrv.replace(query.query ?? '', rest), // The raw query text
@@ -258,7 +220,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
   targetContainsTemplate(target: InfluxQuery) {
     // for flux-mode we just take target.query,
     // for influxql-mode we use InfluxQueryModel to create the text-representation
-    const queryText = this.isFlux ? target.query : buildRawQuery(target);
+    const queryText = this.version === InfluxVersion.Flux ? target.query : buildRawQuery(target);
 
     return this.templateSrv.containsTemplate(queryText);
   }
@@ -269,7 +231,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     }
 
     return queries.map((query) => {
-      if (this.isFlux) {
+      if (this.version === InfluxVersion.Flux) {
         return {
           ...query,
           datasource: this.getRef(),
@@ -347,7 +309,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
   }
 
   async metricFindQuery(query: string, options?: any): Promise<MetricFindValue[]> {
-    if (this.isFlux || this.isMigrationToggleOnAndIsAccessProxy()) {
+    if (this.version === InfluxVersion.Flux || this.isMigrationToggleOnAndIsAccessProxy()) {
       const target: InfluxQuery = {
         refId: 'metricFindQuery',
         query,
@@ -463,7 +425,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
       params.db = this.database;
     }
 
-    if (options?.policy) {
+    if (options?.policy && options.policy !== DEFAULT_POLICY) {
       params.rp = options.policy;
     }
 
@@ -696,7 +658,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
   }
 
   async annotationEvents(options: DataQueryRequest, annotation: InfluxQuery): Promise<AnnotationEvent[]> {
-    if (this.isFlux) {
+    if (this.version === InfluxVersion.Flux) {
       return Promise.reject({
         message: 'Flux requires the standard annotation query',
       });

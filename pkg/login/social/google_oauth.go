@@ -20,8 +20,9 @@ const googleIAMScope = "https://www.googleapis.com/auth/cloud-identity.groups.re
 
 type SocialGoogle struct {
 	*SocialBase
-	hostedDomain string
-	apiUrl       string
+	hostedDomain    string
+	apiUrl          string
+	skipOrgRoleSync bool
 }
 
 type googleUserData struct {

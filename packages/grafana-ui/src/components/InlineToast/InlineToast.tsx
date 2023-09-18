@@ -63,7 +63,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       background: theme.components.tooltip.background,
       color: theme.components.tooltip.text,
       padding: theme.spacing(0.5, 1.5), // get's an extra .5 of vertical padding to account for the rounded corners
-      borderRadius: 100, // just a sufficiently large value to ensure ends are completely rounded
+      borderRadius: theme.shape.radius.circle,
       display: 'inline-flex',
       gap: theme.spacing(0.5),
       alignItems: 'center',

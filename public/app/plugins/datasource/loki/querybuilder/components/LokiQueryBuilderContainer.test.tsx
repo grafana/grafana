@@ -42,7 +42,7 @@ describe('LokiQueryBuilderContainer', () => {
     await addOperation('Range functions', 'Rate');
     expect(await screen.findByText('Rate')).toBeInTheDocument();
     expect(props.onChange).toBeCalledWith({
-      expr: 'rate({job="testjob"} [$__interval])',
+      expr: 'rate({job="testjob"} [$__auto])',
       refId: 'A',
     });
   });

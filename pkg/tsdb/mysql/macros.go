@@ -34,7 +34,7 @@ func newMysqlMacroEngine(logger log.Logger, cfg *setting.Cfg) sqleng.SQLMacroEng
 func (m *mySQLMacroEngine) Interpolate(query *backend.DataQuery, timeRange backend.TimeRange, sql string) (string, error) {
 	matches := restrictedRegExp.FindAllStringSubmatch(sql, 1)
 	if len(matches) > 0 {
-		m.logger.Error("show grants, session_user(), current_user(), system_user() or user() not allowed in query")
+		m.logger.Error("Show grants, session_user(), current_user(), system_user() or user() not allowed in query")
 		return "", fmt.Errorf("invalid query - %s", m.userError)
 	}
 

@@ -131,7 +131,7 @@ export function getNavTitle(navId: string | undefined) {
     case 'plugin-page-grafana-app-observability-app':
       return t('nav.application.title', 'Application (preview)');
     case 'plugin-page-grafana-pyroscope-app':
-      return t('nav.profiles.title', 'Profiles (preview)');
+      return t('nav.profiles.title', 'Profiles');
     case 'plugin-page-grafana-kowalski-app':
       return t('nav.frontend.title', 'Frontend');
     case 'plugin-page-grafana-synthetic-monitoring-app':

@@ -3,9 +3,11 @@
 name: Check for patch conflicts
 run-name: check-patch-conflicts-${{ github.base_ref }}-${{ github.head_ref }}
 on:
-  pull_request_target:
+  pull_request:
     types:
       - opened
+      - reopened
+      - synchronize
     branches:
       - "main"
       - "v*.*.*"

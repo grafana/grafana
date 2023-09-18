@@ -344,6 +344,17 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
         </InlineField>
       )}
 
+      {scenarioId === TestDataQueryType.FlameGraph && (
+        <InlineField label={'Diff profile'} grow>
+          <InlineSwitch
+            value={Boolean(query.flamegraphDiff)}
+            onChange={(e) => {
+              onUpdate({ ...query, flamegraphDiff: e.currentTarget.checked });
+            }}
+          />
+        </InlineField>
+      )}
+
       {scenarioId === TestDataQueryType.PredictablePulse && (
         <PredictablePulseEditor onChange={onPulseWaveChange} query={query} ds={datasource} />
       )}

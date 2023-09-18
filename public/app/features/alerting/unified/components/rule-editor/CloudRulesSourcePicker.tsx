@@ -9,13 +9,14 @@ import { useRulesSourcesWithRuler } from '../../hooks/useRuleSourcesWithRuler';
 import { fetchAllPromBuildInfoAction } from '../../state/actions';
 
 interface Props {
+  disabled?: boolean;
   onChange: (ds: DataSourceInstanceSettings) => void;
   value: string | null;
   onBlur?: () => void;
   name?: string;
 }
 
-export function CloudRulesSourcePicker({ value, ...props }: Props): JSX.Element {
+export function CloudRulesSourcePicker({ value, disabled, ...props }: Props): JSX.Element {
   const rulesSourcesWithRuler = useRulesSourcesWithRuler();
 
   const { loading = true } = useAsync(() => dispatch(fetchAllPromBuildInfoAction()), [dispatch]);
@@ -28,6 +29,13 @@ export function CloudRulesSourcePicker({ value, ...props }: Props): JSX.Element 
   );
 
   return (
-    <DataSourcePicker disabled={loading} noDefault alerting filter={dataSourceFilter} current={value} {...props} />
+    <DataSourcePicker
+      disabled={loading || disabled}
+      noDefault
+      alerting
+      filter={dataSourceFilter}
+      current={value}
+      {...props}
+    />
   );
 }

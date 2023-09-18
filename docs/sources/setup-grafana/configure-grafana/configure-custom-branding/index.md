@@ -16,7 +16,7 @@ weight: 300
 Custom branding allows you to replace the Grafana brand and logo with your own corporate brand and logo.
 
 {{% admonition type="note" %}}
-Available in [Grafana Enterprise]({{< relref "../../../introduction/grafana-enterprise" >}}) and [Grafana Cloud](/docs/grafana-cloud).
+Available in [Grafana Enterprise]({{< relref "../../../introduction/grafana-enterprise" >}}) and [Grafana Cloud](/docs/grafana-cloud). For Cloud Advanced and Enterprise customers, please provide your desired custom elements and corresponding logos to our Support team. We will help you in hosting your images and updating your Custom Branding.
 {{% /admonition %}}
 
 Grafana Enterprise has custom branding options in the `grafana.ini` file. As with all configuration options, you can also set them with environment variables.
@@ -73,6 +73,9 @@ The configuration file in Grafana Enterprise contains the following options. Eac
 
 # Set to complete URL to override loading logo
 ;loading_logo =
+
+# Set to `true` to remove the Grafana edition from appearing in the footer
+;hide_edition =
 ```
 
 You can replace the default footer links (Documentation, Support, Community) and even add your own custom links.

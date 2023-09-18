@@ -111,7 +111,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       flexDirection: 'row',
       flexWrap: 'nowrap',
       border: `1px solid ${theme.components.input.borderColor}`,
-      borderRadius: theme.shape.borderRadius(),
+      borderRadius: theme.shape.radius.default,
       padding: '2px',
     }),
     fullWidth: css({

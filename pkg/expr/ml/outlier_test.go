@@ -20,14 +20,14 @@ func TestOutlierExec(t *testing.T) {
 		config: OutlierCommandConfiguration{
 			DatasourceType: "prometheus",
 			DatasourceUID:  "a4ce599c-4c93-44b9-be5b-76385b8c01be",
-			QueryParams: map[string]interface{}{
+			QueryParams: map[string]any{
 				"expr":  "go_goroutines{}",
 				"range": true,
 				"refId": "A",
 			},
-			Algorithm: map[string]interface{}{
+			Algorithm: map[string]any{
 				"name": "dbscan",
-				"config": map[string]interface{}{
+				"config": map[string]any{
 					"epsilon": 7.667,
 				},
 				"sensitivity": 0.83,

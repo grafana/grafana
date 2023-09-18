@@ -183,7 +183,7 @@ export const getCheckboxStyles = (theme: GrafanaTheme2, invalid = false) => {
       display: 'inline-block',
       width: theme.spacing(checkboxSize),
       height: theme.spacing(checkboxSize),
-      borderRadius: theme.shape.borderRadius(),
+      borderRadius: theme.shape.radius.default,
       background: theme.components.input.background,
       border: `1px solid ${getBorderColor(theme.components.input.borderColor)}`,
 

@@ -51,7 +51,7 @@ export const RolePicker = ({
   useEffect(() => {
     setSelectedBuiltInRole(basicRole);
     setSelectedRoles(appliedRoles);
-  }, [appliedRoles, basicRole]);
+  }, [appliedRoles, basicRole, onBasicRoleChange]);
 
   useEffect(() => {
     const dimensions = ref?.current?.getBoundingClientRect();
@@ -164,7 +164,7 @@ export const RolePicker = ({
       }}
       ref={ref}
     >
-      <ClickOutsideWrapper onClick={onClickOutside}>
+      <ClickOutsideWrapper onClick={onClickOutside} useCapture={true}>
         <RolePickerInput
           basicRole={selectedBuiltInRole}
           appliedRoles={selectedRoles}

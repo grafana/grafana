@@ -46,7 +46,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
       gap: ${theme.spacing(2)};
       grid-auto-flow: row;
       background: ${theme.colors.background.secondary};
-      border-radius: ${theme.shape.borderRadius()};
+      border-radius: ${theme.shape.radius.default};
       padding: ${theme.spacing(3)};
       transition: ${theme.transitions.create(['background-color', 'box-shadow', 'border-color', 'color'], {
         duration: theme.transitions.duration.short,

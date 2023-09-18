@@ -525,9 +525,10 @@ export function getThresholdItems(fieldConfig: FieldConfig, theme: GrafanaTheme2
   }
 
   const steps = thresholds.steps;
-  const disp = getValueFormat(thresholds.mode === ThresholdsMode.Percentage ? 'percent' : fieldConfig.unit ?? '');
+  const getDisplay = getValueFormat(thresholds.mode === ThresholdsMode.Percentage ? 'percent' : fieldConfig.unit ?? '');
 
-  const fmt = (v: number) => formattedValueToString(disp(v));
+  // `undefined` value for decimals will use `auto`
+  const format = (value: number) => formattedValueToString(getDisplay(value, fieldConfig.decimals ?? undefined));
 
   for (let i = 0; i < steps.length; i++) {
     let step = steps[i];
@@ -543,7 +544,7 @@ export function getThresholdItems(fieldConfig: FieldConfig, theme: GrafanaTheme2
     }
 
     items.push({
-      label: `${pre}${fmt(value)}${suf}`,
+      label: `${pre}${format(value)}${suf}`,
       color: theme.visualization.getColorByName(step.color),
       yAxis: 1,
     });

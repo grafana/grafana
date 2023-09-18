@@ -85,13 +85,11 @@ export const AuthConfigPageUnconnected = ({ providerStatuses, isLoading, loadSet
               <ProviderCard
                 key={provider.id}
                 providerId={provider.id}
-                displayName={provider.displayName}
-                authType={provider.type}
+                displayName={providerStatuses[provider.id]?.name || provider.displayName}
+                authType={provider.protocol}
                 enabled={providerStatuses[provider.id]?.enabled}
                 configPath={provider.configPath}
-                onClick={() => {
-                  onProviderCardClick(provider);
-                }}
+                onClick={() => onProviderCardClick(provider)}
               />
             ))}
           </div>
@@ -111,10 +109,11 @@ export const AuthConfigPageUnconnected = ({ providerStatuses, isLoading, loadSet
               <ProviderCard
                 key={provider.id}
                 providerId={provider.id}
-                displayName={provider.displayName}
+                displayName={providerStatuses[provider.id]?.name || provider.displayName}
                 authType={provider.protocol}
                 enabled={providerStatuses[provider.id]?.enabled}
                 configPath={provider.configPath}
+                onClick={() => onProviderCardClick(provider)}
               />
             ))}
           </div>

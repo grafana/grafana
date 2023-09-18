@@ -4,8 +4,7 @@ import { Link } from 'react-router-dom';
 
 import { SIGV4ConnectionConfig } from '@grafana/aws-sdk';
 import { DataSourcePluginOptionsEditorProps, SelectableValue } from '@grafana/data';
-import { DataSourceHttpSettings, InlineField, InlineFormLabel, InlineSwitch, Select } from '@grafana/ui';
-import { Text } from '@grafana/ui/src/unstable';
+import { DataSourceHttpSettings, InlineField, InlineFormLabel, InlineSwitch, Select, Text } from '@grafana/ui';
 import { config } from 'app/core/config';
 
 import { AlertManagerDataSourceJsonData, AlertManagerImplementation } from './types';

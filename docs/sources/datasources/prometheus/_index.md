@@ -59,31 +59,29 @@ Once you have provisioned a data source you cannot edit it.
 ```yaml
 apiVersion: 1
 
-
 datasources:
-- name: Prometheus
-type: prometheus
-# Access mode - proxy (server in the UI) or direct (browser in the UI).
-access: proxy
-url: http://localhost:9090
-jsonData:
-httpMethod: POST
-manageAlerts: true
-prometheusType: Prometheus
-prometheusVersion: 2.44.0
-cacheLevel: 'High'
-disableRecordingRules: false
-incrementalQueryOverlapWindow: 10m
-exemplarTraceIdDestinations:
-# Field with internal link pointing to data source in Grafana.
-# datasourceUid value can be anything, but it should be unique across all defined data source uids.
-- datasourceUid: my_jaeger_uid
-name: traceID
+  - name: Prometheus
+    type: prometheus
+    access: proxy
+    # Access mode - proxy (server in the UI) or direct (browser in the UI).
+    url: http://localhost:9090
+    jsonData:
+      httpMethod: POST
+      manageAlerts: true
+      prometheusType: Prometheus
+      prometheusVersion: 2.44.0
+      cacheLevel: 'High'
+      disableRecordingRules: false
+      incrementalQueryOverlapWindow: 10m
+      exemplarTraceIdDestinations:
+        # Field with internal link pointing to data source in Grafana.
+        # datasourceUid value can be anything, but it should be unique across all defined data source uids.
+        - datasourceUid: my_jaeger_uid
+          name: traceID
 
-
-# Field with external link.
-- name: traceID
-url: 'http://localhost:3000/explore?orgId=1&left=%5B%22now-1h%22,%22now%22,%22Jaeger%22,%7B%22query%22:%22$${__value.raw}%22%7D%5D'
+        # Field with external link.
+        - name: traceID
+          url: 'http://localhost:3000/explore?orgId=1&left=%5B%22now-1h%22,%22now%22,%22Jaeger%22,%7B%22query%22:%22$${__value.raw}%22%7D%5D'
 ```
 
 ## View Grafana metrics with Prometheus

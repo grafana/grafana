@@ -148,6 +148,12 @@ PEM-encoded key file in PKIX, PKCS #1, PKCS #8 or SEC 1 format.
 key_file = /path/to/key.pem
 ```
 
+If the JWT token's header specifies a `kid` (Key ID), then the Key ID must be set using the `key_id` configuration option.
+
+```ini
+key_id = my-key-id
+```
+
 ## Validate claims
 
 By default, only `"exp"`, `"nbf"` and `"iat"` claims are validated.
