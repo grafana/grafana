@@ -15,11 +15,15 @@ import { defaultApiConfig } from 'app/features/canvas/elements/button';
 
 import { HttpRequestMethod } from '../../panelcfg.gen';
 
+import { ParamsEditor } from './ParamsEditor';
+
 export interface APIEditorConfig {
   method: string;
   endpoint: string;
   data?: string;
   contentType?: string;
+  queryParams?: Array<[string, string]>;
+  headerParams?: Array<[string, string]>;
 }
 
 const dummyStringSettings = {
@@ -36,6 +40,21 @@ const getRequest = (api: APIEditorConfig) => {
     headers: requestHeaders,
   };
 
+  if (api.headerParams) {
+    api.headerParams.forEach((param) => {
+      requestHeaders.push([param[0], param[1]]);
+    });
+  }
+
+  if (api.queryParams) {
+    const symbol = api.endpoint.match(questionMarkRegex) ? '&' : '?';
+    request.url = api.endpoint + symbol + api.queryParams?.map((param) => param[0] + '=' + param[1]).join('&');
+  }
+
+  if (api.method === HttpRequestMethod.POST) {
+    requestHeaders.push(['Content-Type', 'application/json']);
+  }
+
   if (api.method === HttpRequestMethod.POST) {
     requestHeaders.push(['Content-Type', api.contentType!]);
   }
@@ -44,6 +63,8 @@ const getRequest = (api: APIEditorConfig) => {
 
   return request;
 };
+
+const questionMarkRegex = '.+\\?.*';
 
 export const callApi = (api: APIEditorConfig, isTest = false) => {
   if (api && api.endpoint) {
@@ -141,6 +162,26 @@ export function APIEditor({ value, context, onChange }: Props) {
     return input;
   };
 
+  const onQueryParamsChange = useCallback(
+    (queryParams: Array<[string, string]>) => {
+      onChange({
+        ...value,
+        queryParams,
+      });
+    },
+    [onChange, value]
+  );
+
+  const onHeaderParamsChange = useCallback(
+    (headerParams: Array<[string, string]>) => {
+      onChange({
+        ...value,
+        headerParams,
+      });
+    },
+    [onChange, value]
+  );
+
   const renderJSON = (data: string) => {
     try {
       const json = JSON.parse(data);
@@ -183,6 +224,12 @@ export function APIEditor({ value, context, onChange }: Props) {
           <RadioButtonGroup value={value?.method} options={httpMethodOptions} onChange={onMethodChange} fullWidth />
         </InlineField>
       </InlineFieldRow>
+      <Field label="Query parameters">
+        <ParamsEditor value={value?.queryParams ?? []} onChange={onQueryParamsChange} />
+      </Field>
+      <Field label="Header parameters">
+        <ParamsEditor value={value?.headerParams ?? []} onChange={onHeaderParamsChange} />
+      </Field>
       {value?.method === HttpRequestMethod.POST && (
         <>
           <InlineFieldRow>
