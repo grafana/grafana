@@ -1716,6 +1716,7 @@ steps:
   - 'echo "New version: $new_version"'
   - yarn run lerna version $new_version --exact --no-git-tag-version --no-push --force-publish
     -y
+  - yarn install --mode=update-lockfile
   depends_on:
   - yarn-install
   image: node:18.12.0-alpine
@@ -4195,6 +4196,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 056e2b97ca4e4403fe762e0151f42fd2bb4054e7f753129f1a7ab4d7891e38dd
+hmac: 498cea51ef5aa3188303088c5657de40dcf7c4776b39fb353c94652aa199a96d
 
 ...
