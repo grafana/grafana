@@ -155,10 +155,11 @@ const storageAcctName = 'azmonteststorage';
 const logAnalyticsName = 'az-mon-test-logs';
 const applicationInsightsName = 'az-mon-test-ai-a';
 
-e2e.scenario({
-  describeName: 'Add Azure Monitor datasource',
-  itName: 'fills out datasource connection configuration',
-  scenario: () => {
+describe('Azure monitor datasource', () => {
+  before(() => {
+    e2e.flows.login(e2e.env('USERNAME'), e2e.env('PASSWORD'));
+
+    // Add datasource
     // This variable will be set in CI
     const CI = e2e.env('CI');
     if (CI) {
@@ -186,13 +187,18 @@ e2e.scenario({
       });
     }
     e2e.setScenarioContext({ addedDataSources: [] });
-  },
-});
+  });
 
-e2e.scenario({
-  describeName: 'Create dashboard and add a panel for each query type',
-  itName: 'create dashboard, add panel for metrics, log analytics, ARG, and traces queries',
-  scenario: () => {
+  beforeEach(() => {
+    e2e.flows.login(e2e.env('USERNAME'), e2e.env('PASSWORD'));
+  });
+
+  after(() => {
+    e2e.flows.login(e2e.env('USERNAME'), e2e.env('PASSWORD'));
+    e2e.flows.revertAllChanges();
+  });
+
+  it('create dashboard, add panel for metrics, log analytics, ARG, and traces queries', () => {
     e2e.flows.addDashboard({
       timeRange: {
         from: 'now-6h',
@@ -277,13 +283,9 @@ e2e.scenario({
       },
       timeout: 10000,
     });
-  },
-});
+  });
 
-e2e.scenario({
-  describeName: 'Create dashboard with template variables',
-  itName: 'creates a dashboard that includes a template variable',
-  scenario: () => {
+  it('creates a dashboard that includes a template variable', () => {
     e2e.flows.addDashboard({
       timeRange: {
         from: 'now-6h',
@@ -343,13 +345,9 @@ e2e.scenario({
       },
       timeout: 10000,
     });
-  },
-});
+  });
 
-e2e.scenario({
-  describeName: 'Create dashboard with annotation',
-  itName: 'creates a dashboard that includes an annotation',
-  scenario: () => {
+  it.skip('creates a dashboard that includes an annotation', () => {
     e2e.flows.addDashboard({
       timeRange: {
         from: '2022-10-03 00:00:00',
@@ -382,14 +380,5 @@ e2e.scenario({
         e2eSelectors.queryEditor.metricsQueryEditor.metricName.input().find('input').type('Used capacity{enter}');
       },
     });
-  },
-  skipScenario: true,
-});
-
-e2e.scenario({
-  describeName: 'Remove datasource',
-  itName: 'remove azure monitor datasource',
-  scenario: () => {
-    e2e.flows.deleteDataSource({ name: dataSourceName, id: '', quick: true });
-  },
+  });
 });

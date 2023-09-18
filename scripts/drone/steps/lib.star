@@ -633,8 +633,8 @@ def frontend_metrics_step(trigger = None):
         },
         "failure": "ignore",
         "commands": [
-            "apk add --update bash grep",
-            "./scripts/ci-frontend-metrics.sh | ./bin/build publish-metrics $$GRAFANA_MISC_STATS_API_KEY",
+            "apk add --update bash grep git",
+            "./scripts/ci-frontend-metrics.sh ./grafana/public/build | ./bin/build publish-metrics $$GRAFANA_MISC_STATS_API_KEY",
         ],
     }
     if trigger:
@@ -736,7 +736,7 @@ def cloud_plugins_e2e_tests_step(suite, cloud, trigger = None):
     branch = "${DRONE_SOURCE_BRANCH}".replace("/", "-")
     step = {
         "name": "end-to-end-tests-{}-{}".format(suite, cloud),
-        "image": "us-docker.pkg.dev/grafanalabs-dev/cloud-data-sources/e2e:2.0.0",
+        "image": "us-docker.pkg.dev/grafanalabs-dev/cloud-data-sources/e2e:3.0.0",
         "depends_on": [
             "grafana-server",
         ],
@@ -955,6 +955,7 @@ def release_canary_npm_packages_step(trigger = None):
             "NPM_TOKEN": from_secret(npm_token),
         },
         "commands": [
+            "apk add --update bash",
             "./scripts/publish-npm-packages.sh --dist-tag 'canary' --registry 'https://registry.npmjs.org'",
         ],
     }

@@ -117,7 +117,9 @@ const ui = {
   editCloudGroupIcon: byTestId('edit-group'),
   newRuleButton: byRole('link', { name: 'New alert rule' }),
   moreButton: byRole('button', { name: 'More' }),
-  exportButton: byRole('link', { name: /export/i }),
+  exportButton: byRole('menuitem', {
+    name: /export all grafana\-managed rules/i,
+  }),
   editGroupModal: {
     dialog: byRole('dialog'),
     namespaceInput: byRole('textbox', { name: /^Namespace/ }),

@@ -1,14 +1,15 @@
 import { css } from '@emotion/css';
-import { uniqueId, groupBy, upperFirst, sumBy, isArray, defaults } from 'lodash';
+import { defaults, groupBy, isArray, sumBy, uniqueId, upperFirst } from 'lodash';
 import pluralize from 'pluralize';
 import React, { FC, Fragment, ReactNode } from 'react';
 import { Link } from 'react-router-dom';
+import { useToggle } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
-import { Badge, Button, Dropdown, getTagColorsFromName, Icon, Menu, Tooltip, useStyles2, Text } from '@grafana/ui';
+import { Badge, Button, Dropdown, getTagColorsFromName, Icon, Menu, Text, Tooltip, useStyles2 } from '@grafana/ui';
 import ConditionalWrap from 'app/features/alerting/components/ConditionalWrap';
-import { RouteWithID, Receiver, ObjectMatcher, AlertmanagerGroup } from 'app/plugins/datasource/alertmanager/types';
+import { AlertmanagerGroup, ObjectMatcher, Receiver, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
 import { ReceiversState } from 'app/types';
 
 import { AlertmanagerAction, useAlertmanagerAbilities } from '../../hooks/useAbilities';
@@ -16,7 +17,6 @@ import { INTEGRATION_ICONS } from '../../types/contact-points';
 import { normalizeMatchers } from '../../utils/matchers';
 import { createContactPointLink, createMuteTimingLink } from '../../utils/misc';
 import { getInheritedProperties, InhertitableProperties } from '../../utils/notification-policies';
-import { createUrl } from '../../utils/url';
 import { Authorize } from '../Authorize';
 import { HoverCard } from '../HoverCard';
 import { Label } from '../Label';
@@ -24,6 +24,7 @@ import { MetaText } from '../MetaText';
 import { ProvisioningBadge } from '../Provisioning';
 import { Spacer } from '../Spacer';
 import { Strong } from '../Strong';
+import { GrafanaPoliciesExporter } from '../export/GrafanaPoliciesExporter';
 
 import { Matchers } from './Matchers';
 import { TimingOptions, TIMING_OPTIONS_DEFAULTS } from './timingOptions';
@@ -125,6 +126,7 @@ const Policy: FC<PolicyComponentProps> = ({
     ? sumBy(matchingAlertGroups, (group) => group.alerts.length)
     : undefined;
 
+  const [showExportDrawer, toggleShowExportDrawer] = useToggle(false);
   const showExportAction = exportPoliciesAllowed && exportPoliciesSupported && isDefaultPolicy;
   const showEditAction = updatePoliciesSupported && updatePoliciesAllowed;
   const showDeleteAction = deletePolicySupported && deletePolicyAllowed && !isDefaultPolicy;
@@ -149,16 +151,7 @@ const Policy: FC<PolicyComponentProps> = ({
 
   if (showExportAction) {
     dropdownMenuActions.push(
-      <Menu.Item
-        key="export-policy"
-        icon="download-alt"
-        label="Export"
-        url={createUrl('/api/v1/provisioning/policies/export', {
-          download: 'true',
-          format: 'yaml',
-        })}
-        target="_blank"
-      />
+      <Menu.Item key="export-policy" icon="download-alt" label="Export" onClick={toggleShowExportDrawer} />
     );
   }
 
@@ -221,7 +214,6 @@ const Policy: FC<PolicyComponentProps> = ({
                         </Button>
                       </ConditionalWrap>
                     </Authorize>
-
                     {dropdownMenuActions.length > 0 && (
                       <Dropdown overlay={<Menu>{dropdownMenuActions}</Menu>}>
                         <Button
@@ -335,6 +327,7 @@ const Policy: FC<PolicyComponentProps> = ({
           );
         })}
       </div>
+      {showExportDrawer && <GrafanaPoliciesExporter onClose={toggleShowExportDrawer} />}
     </Stack>
   );
 };

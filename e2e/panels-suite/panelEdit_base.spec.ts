@@ -2,13 +2,12 @@ import { e2e } from '../utils';
 
 const PANEL_UNDER_TEST = 'Lines 500 data points';
 
-e2e.scenario({
-  describeName: 'Panel edit tests',
-  itName: 'Tests various Panel edit scenarios',
-  addScenarioDataSource: false,
-  addScenarioDashBoard: false,
-  skipScenario: false,
-  scenario: () => {
+describe('Panel edit tests', () => {
+  beforeEach(() => {
+    e2e.flows.login(e2e.env('USERNAME'), e2e.env('PASSWORD'));
+  });
+
+  it('Tests various Panel edit scenarios', () => {
     cy.intercept({
       pathname: '/api/ds/query',
     }).as('query');
@@ -107,5 +106,5 @@ e2e.scenario({
     // Field & Overrides tabs (need to switch to React based vis, i.e. Table)
     e2e.components.PanelEditor.OptionsPane.fieldLabel('Table Show table header').should('be.visible');
     e2e.components.PanelEditor.OptionsPane.fieldLabel('Table Column width').should('be.visible');
-  },
+  });
 });
