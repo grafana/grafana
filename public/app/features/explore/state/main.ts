@@ -2,7 +2,7 @@ import { createAction } from '@reduxjs/toolkit';
 import { AnyAction } from 'redux';
 
 import { SplitOpenOptions, TimeRange } from '@grafana/data';
-import { DataSourceSrv, locationService } from '@grafana/runtime';
+import { locationService } from '@grafana/runtime';
 import { generateExploreId, GetExploreUrlArguments } from 'app/core/utils/explore';
 import { PanelModel } from 'app/features/dashboard/state';
 import { CorrelationEditorDetailsUpdate, ExploreItemState, ExploreState } from 'app/types/explore';
@@ -113,7 +113,6 @@ export const changeCorrelationEditorDetails = createAction<CorrelationEditorDeta
 );
 
 export interface NavigateToExploreDependencies {
-  getDataSourceSrv: () => DataSourceSrv;
   timeRange: TimeRange;
   getExploreUrl: (args: GetExploreUrlArguments) => Promise<string | undefined>;
   openInNewWindow?: (url: string) => void;
@@ -124,11 +123,12 @@ export const navigateToExplore = (
   dependencies: NavigateToExploreDependencies
 ): ThunkResult<void> => {
   return async (dispatch) => {
-    const { getDataSourceSrv, timeRange, getExploreUrl, openInNewWindow } = dependencies;
-    const datasourceSrv = getDataSourceSrv();
+    const { timeRange, getExploreUrl, openInNewWindow } = dependencies;
+
     const path = await getExploreUrl({
-      panel,
-      datasourceSrv,
+      queries: panel.targets,
+      dsRef: panel.datasource,
+      scopedVars: panel.scopedVars,
       timeRange,
     });
 

@@ -77,6 +77,7 @@
     "jquery": "3.7.0",
     "lodash": "4.17.21",
     "memoize-one": "6.0.0",
+    "micro-memoize": "^4.1.2",
     "moment": "2.29.4",
     "monaco-editor": "0.34.0",
     "ol": "7.4.0",

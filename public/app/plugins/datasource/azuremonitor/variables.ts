@@ -22,7 +22,6 @@ export class VariableSupport extends CustomVariableSupport<DataSource, AzureMoni
   constructor(private readonly datasource: DataSource) {
     super();
     this.datasource = datasource;
-    this.query = this.query.bind(this);
     this.templateSrv = getTemplateSrv();
   }
 
