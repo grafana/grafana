@@ -85,7 +85,7 @@ export type PluginExtensionComponentConfig<Context extends object = object> = {
   // The React component that will be rendered as the extension
   // (This component receives the context as a prop when it is rendered. You can just return `null` from the component to hide for certain contexts)
   component: React.ComponentType<{
-    context: Context;
+    context?: Context;
   }>;
 
   // The unique identifier of the Extension Point
