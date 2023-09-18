@@ -165,17 +165,7 @@ export function handleExpression(expr: string, node: SyntaxNode, context: Contex
       break;
     }
 
-    case LogfmtParser: {
-      const { operation, error } = getLogfmtParser(expr, node);
-      if (operation) {
-        visQuery.operations.push(operation);
-      }
-      if (error) {
-        context.errors.push(createNotSupportedError(expr, node, error));
-      }
-      break;
-    }
-
+    case LogfmtParser:
     case LogfmtExpressionParser: {
       const { operation, error } = getLogfmtParser(expr, node);
       if (operation) {
