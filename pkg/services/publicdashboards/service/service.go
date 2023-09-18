@@ -226,14 +226,10 @@ func (pd *PublicDashboardServiceImpl) Update(ctx context.Context, u *user.Signed
 		return nil, err
 	}
 
-	// validate if the dashboard exists
-	dashboard, err := pd.FindDashboard(ctx, u.OrgID, dto.DashboardUid)
+	// validate dashboard exists
+	_, err = pd.FindDashboard(ctx, u.OrgID, dto.DashboardUid)
 	if err != nil {
-		return nil, ErrInternalServerError.Errorf("Update: failed to find dashboard by orgId: %d and dashboardUid: %s: %w", u.OrgID, dto.DashboardUid, err)
-	}
-
-	if dashboard == nil {
-		return nil, ErrDashboardNotFound.Errorf("Update: dashboard not found by orgId: %d and dashboardUid: %s", u.OrgID, dto.DashboardUid)
+		return nil, err
 	}
 
 	// get existing public dashboard if exists

@@ -76,7 +76,7 @@ func (m *migration) setupAlertmanagerConfigs(rulesPerOrg map[int64]map[*alertRul
 
 		// No need to create an Alertmanager configuration if there are no receivers left that aren't obsolete.
 		if len(receivers) == 0 {
-			m.mg.Logger.Warn("no available receivers", "orgId", orgID)
+			m.mg.Logger.Warn("No available receivers", "orgId", orgID)
 			continue
 		}
 
@@ -177,7 +177,7 @@ func (m *migration) getNotificationChannelMap() (channelsPerOrg, defaultChannels
 	defaultChannelsMap := make(defaultChannelsPerOrg)
 	for i, c := range allChannels {
 		if c.Type == "hipchat" || c.Type == "sensu" {
-			m.mg.Logger.Error("alert migration error: discontinued notification channel found", "type", c.Type, "name", c.Name, "uid", c.Uid)
+			m.mg.Logger.Error("Alert migration error: discontinued notification channel found", "type", c.Type, "name", c.Name, "uid", c.Uid)
 			continue
 		}
 
@@ -230,7 +230,7 @@ func (m *migration) createReceivers(allChannels []*notificationChannel) (map[uid
 		// There can be name collisions after we sanitize. We check for this and attempt to make the name unique again using a short hash of the original name.
 		if _, ok := set[sanitizedName]; ok {
 			sanitizedName = sanitizedName + fmt.Sprintf("_%.3x", md5.Sum([]byte(c.Name)))
-			m.mg.Logger.Warn("alert contains duplicate contact name after sanitization, appending unique suffix", "type", c.Type, "name", c.Name, "new_name", sanitizedName, "uid", c.Uid)
+			m.mg.Logger.Warn("Alert contains duplicate contact name after sanitization, appending unique suffix", "type", c.Type, "name", c.Name, "new_name", sanitizedName, "uid", c.Uid)
 		}
 		notifier.Name = sanitizedName
 
@@ -351,7 +351,7 @@ func (m *migration) filterReceiversForAlert(name string, channelIDs []uidOrID, r
 		if ok {
 			filteredReceiverNames[recv.Name] = struct{}{} // Deduplicate on contact point name.
 		} else {
-			m.mg.Logger.Warn("alert linked to obsolete notification channel, ignoring", "alert", name, "uid", uidOrId)
+			m.mg.Logger.Warn("Alert linked to obsolete notification channel, ignoring", "alert", name, "uid", uidOrId)
 		}
 	}
 

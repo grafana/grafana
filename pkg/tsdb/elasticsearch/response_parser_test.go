@@ -1,6 +1,7 @@
 package elasticsearch
 
 import (
+	"context"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -13,6 +14,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	es "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client"
 )
 
@@ -3526,12 +3528,12 @@ func parseTestResponse(tsdbQueries map[string]string, responseBody string) (*bac
 		return nil, err
 	}
 
-	queries, err := parseQuery(tsdbQuery.Queries)
+	queries, err := parseQuery(tsdbQuery.Queries, log.New("test.logger"))
 	if err != nil {
 		return nil, err
 	}
 
-	return parseResponse(response.Responses, queries, configuredFields)
+	return parseResponse(context.Background(), response.Responses, queries, configuredFields, log.New("test.logger"))
 }
 
 func requireTimeValue(t *testing.T, expected int64, frame *data.Frame, index int) {

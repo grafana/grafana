@@ -17,7 +17,7 @@ import {
 } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
 import { DataQuery, LoadingState, TimeZone } from '@grafana/schema';
-import { Icon, Button, Modal, useTheme2 } from '@grafana/ui';
+import { Button, Modal, useTheme2 } from '@grafana/ui';
 import store from 'app/core/store';
 import { SETTINGS_KEYS } from 'app/features/explore/Logs/utils/logs';
 import { splitOpen } from 'app/features/explore/state/main';
@@ -552,6 +552,7 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
                   onUnpinLine={() => setSticky(false)}
                   onPinLine={() => setSticky(true)}
                   pinnedRowId={sticky ? row.uid : undefined}
+                  overflowingContent={true}
                 />
               </td>
             </tr>
@@ -590,21 +591,6 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
       </div>
 
       <Modal.ButtonRow>
-        <a
-          href="https://forms.gle/Tsk4pN7vD95aBRbb7"
-          className={styles.link}
-          title="We recently reworked the Log Context UI, please let us know how we can further improve it."
-          target="_blank"
-          rel="noreferrer noopener"
-          onClick={() => {
-            reportInteraction('grafana_explore_logs_log_context_give_feedback_clicked', {
-              datasourceType: row.datasourceType,
-              logRowUid: row.uid,
-            });
-          }}
-        >
-          <Icon name="comment-alt-message" /> Give feedback
-        </a>
         {contextQuery?.datasource?.uid && (
           <Button
             variant="secondary"

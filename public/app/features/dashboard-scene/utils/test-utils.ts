@@ -1,4 +1,4 @@
-import { DeepPartial } from '@grafana/scenes';
+import { DeepPartial, SceneDeactivationHandler, SceneObject } from '@grafana/scenes';
 import { DashboardLoaderSrv, setDashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
 import { DashboardDTO } from 'app/types';
 
@@ -11,7 +11,7 @@ export function setupLoadDashboardMock(rsp: DeepPartial<DashboardDTO>) {
 }
 
 export function mockResizeObserver() {
-  (window as any).ResizeObserver = class ResizeObserver {
+  window.ResizeObserver = class ResizeObserver {
     constructor(callback: ResizeObserverCallback) {
       setTimeout(() => {
         callback(
@@ -36,5 +36,26 @@ export function mockResizeObserver() {
     observe() {}
     disconnect() {}
     unobserve() {}
+  };
+}
+
+/**
+ * Useful from tests to simulate mounting a full scene. Children are activated before parents to simulate the real order
+ * of React mount order and useEffect ordering.
+ *
+ */
+export function activateFullSceneTree(scene: SceneObject): SceneDeactivationHandler {
+  const deactivationHandlers: SceneDeactivationHandler[] = [];
+
+  scene.forEachChild((child) => {
+    deactivationHandlers.push(activateFullSceneTree(child));
+  });
+
+  deactivationHandlers.push(scene.activate());
+
+  return () => {
+    for (const handler of deactivationHandlers) {
+      handler();
+    }
   };
 }

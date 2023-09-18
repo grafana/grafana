@@ -1,6 +1,7 @@
 package elasticsearch
 
 import (
+	"context"
 	"encoding/json"
 	"testing"
 	"time"
@@ -9,6 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	es "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client"
 )
 
@@ -1816,6 +1818,6 @@ func executeElasticsearchDataQuery(c es.Client, body string, from, to time.Time)
 			},
 		},
 	}
-	query := newElasticsearchDataQuery(c, dataRequest.Queries)
+	query := newElasticsearchDataQuery(context.Background(), c, dataRequest.Queries, log.New("test.logger"))
 	return query.execute()
 }

@@ -438,13 +438,13 @@ func (i *searchIndex) reportSizeOfIndexDiskBackup(orgID int64) {
 	// create a temp directory to store the index
 	tmpDir, err := os.MkdirTemp("", "grafana.dashboard_index")
 	if err != nil {
-		i.logger.Error("can't create temp dir", "error", err)
+		i.logger.Error("Can't create temp dir", "error", err)
 		return
 	}
 	defer func() {
 		err := os.RemoveAll(tmpDir)
 		if err != nil {
-			i.logger.Error("can't remove temp dir", "error", err, "tmpDir", tmpDir)
+			i.logger.Error("Can't remove temp dir", "error", err, "tmpDir", tmpDir)
 			return
 		}
 	}()
@@ -452,13 +452,13 @@ func (i *searchIndex) reportSizeOfIndexDiskBackup(orgID int64) {
 	cancelCh := make(chan struct{})
 	err = reader.Backup(tmpDir, cancelCh)
 	if err != nil {
-		i.logger.Error("can't create index disk backup", "error", err)
+		i.logger.Error("Can't create index disk backup", "error", err)
 		return
 	}
 
 	size, err := dirSize(tmpDir)
 	if err != nil {
-		i.logger.Error("can't calculate dir size", "error", err)
+		i.logger.Error("Can't calculate dir size", "error", err)
 		return
 	}
 
@@ -598,7 +598,7 @@ func (i *searchIndex) applyIndexUpdates(ctx context.Context, lastEventID int64) 
 	ctx = log.InitCounter(ctx)
 	events, err := i.eventStore.GetAllEventsAfter(ctx, lastEventID)
 	if err != nil {
-		i.logger.Error("can't load events", "error", err)
+		i.logger.Error("Can't load events", "error", err)
 		return lastEventID
 	}
 	if len(events) == 0 {
@@ -608,7 +608,7 @@ func (i *searchIndex) applyIndexUpdates(ctx context.Context, lastEventID int64) 
 	for _, e := range events {
 		err := i.applyEventOnIndex(ctx, e)
 		if err != nil {
-			i.logger.Error("can't apply event", "error", err)
+			i.logger.Error("Can't apply event", "error", err)
 			return lastEventID
 		}
 		lastEventID = e.Id
@@ -618,22 +618,22 @@ func (i *searchIndex) applyIndexUpdates(ctx context.Context, lastEventID int64) 
 }
 
 func (i *searchIndex) applyEventOnIndex(ctx context.Context, e *store.EntityEvent) error {
-	i.logger.Debug("processing event", "event", e)
+	i.logger.Debug("Processing event", "event", e)
 
 	if !strings.HasPrefix(e.EntityId, "database/") {
-		i.logger.Warn("unknown storage", "entityId", e.EntityId)
+		i.logger.Warn("Unknown storage", "entityId", e.EntityId)
 		return nil
 	}
 	// database/org/entityType/path*
 	parts := strings.SplitN(strings.TrimPrefix(e.EntityId, "database/"), "/", 3)
 	if len(parts) != 3 {
-		i.logger.Error("can't parse entityId", "entityId", e.EntityId)
+		i.logger.Error("Can't parse entityId", "entityId", e.EntityId)
 		return nil
 	}
 	orgIDStr := parts[0]
 	orgID, err := strconv.ParseInt(orgIDStr, 10, 64)
 	if err != nil {
-		i.logger.Error("can't extract org ID", "entityId", e.EntityId)
+		i.logger.Error("Can't extract org ID", "entityId", e.EntityId)
 		return nil
 	}
 	kind := store.EntityType(parts[1])

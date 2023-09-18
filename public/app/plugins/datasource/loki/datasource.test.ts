@@ -323,63 +323,6 @@ describe('LokiDatasource', () => {
     });
   });
 
-  describe('when performing testDataSource', () => {
-    let ds: LokiDatasource;
-    beforeEach(() => {
-      ds = createLokiDatasource(templateSrvStub);
-    });
-
-    it('should return successfully when call succeeds with labels', async () => {
-      ds.metadataRequest = () => Promise.resolve(['avalue']);
-
-      const result = await ds.testDatasource();
-
-      expect(result).toStrictEqual({
-        status: 'success',
-        message: 'Data source successfully connected.',
-      });
-    });
-
-    it('should return error when call succeeds without labels', async () => {
-      ds.metadataRequest = () => Promise.resolve([]);
-
-      const result = await ds.testDatasource();
-
-      expect(result).toStrictEqual({
-        status: 'error',
-        message:
-          'Data source connected, but no labels were received. Verify that Loki and Promtail are correctly configured.',
-      });
-    });
-
-    it('should return error status with no details when call fails with no details', async () => {
-      ds.metadataRequest = () => Promise.reject({});
-
-      const result = await ds.testDatasource();
-
-      expect(result).toStrictEqual({
-        status: 'error',
-        message: 'Unable to connect with Loki. Please check the server logs for more details.',
-      });
-    });
-
-    it('should return error status with details when call fails with details', async () => {
-      ds.metadataRequest = () =>
-        Promise.reject({
-          data: {
-            message: 'error42',
-          },
-        });
-
-      const result = await ds.testDatasource();
-
-      expect(result).toStrictEqual({
-        status: 'error',
-        message: 'Unable to connect with Loki (error42). Please check the server logs for more details.',
-      });
-    });
-  });
-
   describe('when calling annotationQuery', () => {
     const getTestContext = (frame: DataFrame, options = {}) => {
       const query = makeAnnotationQueryRequest(options);

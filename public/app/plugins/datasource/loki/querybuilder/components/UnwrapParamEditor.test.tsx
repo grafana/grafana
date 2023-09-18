@@ -63,7 +63,7 @@ const createProps = (
     onChange: jest.fn(),
     onRunQuery: jest.fn(),
     index: 1,
-    operationIndex: 1,
+    operationId: '1',
     query: {
       labels: [{ op: '=', label: 'foo', value: 'bar' }],
       operations: [

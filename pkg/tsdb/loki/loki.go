@@ -8,6 +8,7 @@ import (
 	"regexp"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
@@ -30,6 +31,7 @@ type Service struct {
 	im       instancemgmt.InstanceManager
 	features featuremgmt.FeatureToggles
 	tracer   tracing.Tracer
+	logger   *log.ConcreteLogger
 }
 
 var (
@@ -43,11 +45,19 @@ func ProvideService(httpClientProvider httpclient.Provider, features featuremgmt
 		im:       datasource.NewInstanceManager(newInstanceSettings(httpClientProvider)),
 		features: features,
 		tracer:   tracer,
+		logger:   logger,
 	}
 }
 
 var (
 	legendFormat = regexp.MustCompile(`\{\{\s*(.+?)\s*\}\}`)
+)
+
+// Used in logging to mark a stage
+var (
+	stagePrepareRequest  = "prepareRequest"
+	stageDatabaseRequest = "databaseRequest"
+	stageParseResponse   = "parseResponse"
 )
 
 type datasourceInfo struct {
@@ -99,9 +109,9 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 
 func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
 	dsInfo, err := s.getDSInfo(ctx, req.PluginContext)
-	logger := logger.FromContext(ctx).New("api", "CallResource")
+	logger := s.logger.FromContext(ctx)
 	if err != nil {
-		logger.Error("failed to get data source info", "err", err)
+		logger.Error("Failed to get data source info", "error", err)
 		return err
 	}
 	return callResource(ctx, req, sender, dsInfo, logger, s.tracer)
@@ -152,7 +162,7 @@ func callResource(ctx context.Context, req *backend.CallResourceRequest, sender 
 func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	dsInfo, err := s.getDSInfo(ctx, req.PluginContext)
 	_, fromAlert := req.Headers[ngalertmodels.FromAlertHeaderName]
-	logger := logger.FromContext(ctx).New("api", "QueryData", "fromAlert", fromAlert)
+	logger := logger.FromContext(ctx).New("fromAlert", fromAlert)
 	if err != nil {
 		logger.Error("Failed to get data source info", "err", err)
 		result := backend.NewQueryDataResponse()
@@ -172,11 +182,13 @@ func queryData(ctx context.Context, req *backend.QueryDataRequest, dsInfo *datas
 
 	api := newLokiAPI(dsInfo.HTTPClient, dsInfo.URL, plog, tracer)
 
+	start := time.Now()
 	queries, err := parseQuery(req)
 	if err != nil {
-		plog.Error("Failed to parse queries", "err", err)
+		plog.Error("Failed to prepare request to Loki", "error", err, "duration", time.Since(start), "queriesLength", len(queries), "stage", stagePrepareRequest)
 		return result, err
 	}
+	plog.Info("Prepared request to Loki", "duration", time.Since(start), "queriesLength", len(queries), "stage", stagePrepareRequest)
 
 	for _, query := range queries {
 		ctx, span := tracer.Start(ctx, "datasource.loki.queryData.runQuery")
@@ -210,7 +222,7 @@ func queryData(ctx context.Context, req *backend.QueryDataRequest, dsInfo *datas
 func runQuery(ctx context.Context, api *LokiAPI, query *lokiQuery, responseOpts ResponseOpts) (data.Frames, error) {
 	frames, err := api.DataQuery(ctx, *query, responseOpts)
 	if err != nil {
-		logger.Error("Error querying loki", "err", err)
+		logger.Error("Error querying loki", "error", err)
 		return data.Frames{}, err
 	}
 
@@ -218,7 +230,7 @@ func runQuery(ctx context.Context, api *LokiAPI, query *lokiQuery, responseOpts 
 		err = adjustFrame(frame, query, !responseOpts.metricDataplane, responseOpts.logsDataplane)
 
 		if err != nil {
-			logger.Error("Error adjusting frame", "err", err)
+			logger.Error("Error adjusting frame", "error", err)
 			return data.Frames{}, err
 		}
 	}

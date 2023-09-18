@@ -393,8 +393,9 @@ func parseSubscriptions(res *http.Response) ([]string, error) {
 		return nil, err
 	}
 	defer func() {
-		err := res.Body.Close()
-		backend.Logger.Error("Failed to close response body", "err", err)
+		if err := res.Body.Close(); err != nil {
+			backend.Logger.Warn("Failed to close response body", "err", err)
+		}
 	}()
 
 	result := make([]string, len(target.Value))

@@ -52,7 +52,7 @@ export async function getPluginCode(meta: PluginMeta): Promise<string> {
     return pluginCode;
   } else {
     //local plugin loading
-    const response = await fetch('public/' + meta.module + '.js');
+    const response = await fetch(meta.module);
     let pluginCode = await response.text();
     pluginCode = patchPluginSourceMap(meta, pluginCode);
     pluginCode = patchPluginAPIs(pluginCode);
@@ -81,7 +81,7 @@ function patchPluginSourceMap(meta: PluginMeta, pluginCode: string): string {
       replaceWith += `//# sourceURL=module.js\n`;
     }
     // modify the source map url to point to the correct location
-    const sourceCodeMapUrl = `/public/${meta.module}.map`;
+    const sourceCodeMapUrl = meta.module + '.map';
     replaceWith += `//# sourceMappingURL=${sourceCodeMapUrl}`;
 
     return pluginCode.replace('//# sourceMappingURL=module.js.map', replaceWith);
