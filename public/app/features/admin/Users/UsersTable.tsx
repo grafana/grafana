@@ -3,7 +3,7 @@ import React, { useMemo } from 'react';
 import { Row } from 'react-table';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { InteractiveTable, CellProps, Tooltip, Icon, useStyles2, Tag } from '@grafana/ui';
+import { InteractiveTable, CellProps, Tooltip, Icon, useStyles2, Tag, Pagination } from '@grafana/ui';
 import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
 import { UserDTO } from 'app/types';
 
@@ -16,10 +16,12 @@ type Cell<T extends keyof UserDTO = keyof UserDTO> = CellProps<UserDTO, UserDTO[
 interface UsersTableProps {
   users: UserDTO[];
   showPaging?: boolean;
-  perPage?: number;
+  totalPages: number;
+  onChangePage: (page: number) => void;
+  currentPage: number;
 }
 
-export const UsersTable = ({ users, showPaging, perPage }: UsersTableProps) => {
+export const UsersTable = ({ users, showPaging, totalPages, onChangePage, currentPage }: UsersTableProps) => {
   const showLicensedRole = useMemo(() => users.some((user) => user.licensedRole), [users]);
   const columns = useMemo(
     () => [
@@ -102,12 +104,10 @@ export const UsersTable = ({ users, showPaging, perPage }: UsersTableProps) => {
     [showLicensedRole]
   );
   return (
-    <InteractiveTable
-      columns={columns}
-      data={users}
-      getRowId={(user) => String(user.id)}
-      pageSize={showPaging ? perPage : 0}
-    />
+    <>
+      <InteractiveTable columns={columns} data={users} getRowId={(user) => String(user.id)} />
+      {showPaging && <Pagination numberOfPages={totalPages} currentPage={currentPage} onNavigate={onChangePage} />}
+    </>
   );
 };
 

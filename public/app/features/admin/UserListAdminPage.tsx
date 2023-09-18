@@ -37,7 +37,8 @@ const mapStateToProps = (state: StoreState) => ({
   users: state.userListAdmin.users,
   query: state.userListAdmin.query,
   showPaging: state.userListAdmin.showPaging,
-  perPage: state.userListAdmin.perPage,
+  totalPages: state.userListAdmin.totalPages,
+  page: state.userListAdmin.page,
   filters: state.userListAdmin.filters,
   isLoading: state.userListAdmin.isLoading,
 });
@@ -54,10 +55,12 @@ const UserListAdminPageUnConnected = ({
   changeQuery,
   users,
   showPaging,
-  perPage,
   changeFilter,
   filters,
   isLoading,
+  totalPages,
+  page,
+  changePage,
 }: Props) => {
   const styles = useStyles2(getStyles);
 
@@ -94,7 +97,17 @@ const UserListAdminPageUnConnected = ({
           </LinkButton>
         )}
       </div>
-      {isLoading ? <PageLoader /> : <UsersTable users={users} showPaging={showPaging} perPage={perPage} />}
+      {isLoading ? (
+        <PageLoader />
+      ) : (
+        <UsersTable
+          users={users}
+          showPaging={showPaging}
+          totalPages={totalPages}
+          onChangePage={changePage}
+          currentPage={page}
+        />
+      )}
     </Page.Contents>
   );
 };
