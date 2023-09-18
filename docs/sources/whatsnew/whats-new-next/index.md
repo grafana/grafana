@@ -26,7 +26,7 @@ _Generally available in Grafana Cloud_
 
 The Datadog data source supports blocking API requests based on upstream rate limits (for metric queries). With this update, you can set a rate limit percentage at which the plugin stops sending queries.
 
-To learn more, refer to [Datadog datasource settings](https://grafana.com/docs/plugins/grafana-datadog-datasource/latest/#configure-the-data-source), as well as the following video demo.
+To learn more, refer to [Datadog data source settings](/docs/plugins/grafana-datadog-datasource/latest#configure-the-data-source), as well as the following video demo.
 
 {{< video-embed src="/media/docs/datadog/datadog-rate-limit.mp4" >}}
 
