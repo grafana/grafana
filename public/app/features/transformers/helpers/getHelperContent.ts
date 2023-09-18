@@ -75,7 +75,7 @@ export function getHelperContent(id: string): string {
 
 export function getLinkToDocs(): string {
   return `
-  Go the <a href="https://grafana.com/docs/grafana/latest/panels/transformations/?utm_source=grafana" target="_blank" rel="noreferrer">
+  Go to the <a href="https://grafana.com/docs/grafana/latest/panels/transformations/?utm_source=grafana" target="_blank" rel="noreferrer">
   transformation documentation
   </a> for more.
   `;

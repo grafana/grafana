@@ -122,7 +122,7 @@ In the example below, I added two fields together and named them Sum.
 
 ### Concatenate fields
 
-This transformation combines all fields from all frames into one result. Consider:
+Use this transformation to combine all fields from all frames into one result. Consider:
 
 Query A:
 
@@ -144,7 +144,7 @@ After you concatenate the fields, the data frame would be:
 
 ### Config from query results
 
-This transformation allow you to select one query and from it extract standard options like **Min**, **Max**, **Unit** and **Thresholds** and apply it to other query results. This enables dynamic query driven visualization configuration.
+Use this transformation to select one query and from it extract standard options like **Min**, **Max**, **Unit** and **Thresholds** and apply it to other query results. This enables dynamic query driven visualization configuration.
 
 If you want to extract a unique config for every row in the config query result then try the rows to fields transformation.
 
@@ -156,7 +156,7 @@ If you want to extract a unique config for every row in the config query result 
 
 ### Convert field type
 
-This transformation changes the field type of the specified field.
+Use this transformation to change the field type of the specified field.
 
 - **Field -** Select from available fields
 - **as -** Select the FieldType to convert to
@@ -319,7 +319,7 @@ This transformation is not available for Graphite because this data source does 
 
 ### Filter data by value
 
-This transformation allows you to filter your data directly in Grafana and remove some data points from your query result. You have the option to include or exclude data that match one or more conditions you define. The conditions are applied on a selected field.
+Use this transformation to filter your data directly in Grafana and remove some data points from your query result. You have the option to include or exclude data that match one or more conditions you define. The conditions are applied on a selected field.
 
 This transformation is very useful if your data source does not natively filter by values. You might also use this to narrow values to display if you are using a shared query.
 
@@ -380,7 +380,7 @@ Conditions that are invalid or incompletely configured are ignored.
 
 ### Group by
 
-This transformation groups the data by a specified field (column) value and processes calculations on each group. Click to see a list of calculation choices. For information about available calculations, refer to [Calculation types][].
+Use this transformation to group data by a specified field (column) value and processes calculations on each group. Click to see a list of calculation choices. For information about available calculations, refer to [Calculation types][].
 
 Here's an example of original data.
 
@@ -626,7 +626,7 @@ value: "what"
 
 ### Labels to fields
 
-This transformation changes time series results that include labels or tags into a table where each label keys and values are included in the table result. The labels can be displayed either as columns or as row values.
+Use this transformation to change time series results that include labels or tags into a table where each label keys and values are included in the table result. The labels can be displayed either as columns or as row values.
 
 Given a query result of two time series:
 
@@ -733,7 +733,7 @@ In the example below, I hid the value field and renamed Max and Min.
 
 ### Partition by values
 
-This transformation can help eliminate the need for multiple queries to the same datasource with different `WHERE` clauses when graphing multiple series. Consider a metrics SQL table with the following data:
+Use this transformation to eliminate the need for multiple queries to the same datasource with different `WHERE` clauses when graphing multiple series. Consider a metrics SQL table with the following data:
 
 | Time                | Region | Value |
 | ------------------- | ------ | ----- |
@@ -765,7 +765,7 @@ With the _Partition by values_ transformer, you can now issue a single query and
 
 ### Reduce
 
-The _Reduce_ transformation applies a calculation to each field in the frame and return a single value. Time fields are removed when applying this transformation.
+Use this transformation to apply a calculation to each field in the frame and return a single value. Time fields are removed when applying this transformation.
 
 Consider the input:
 
@@ -829,7 +829,7 @@ With the transformation applied, you can see we are left with just the remainder
 
 ### Rows to fields
 
-The rows to fields transformation converts rows into separate fields. This can be useful as fields can be styled and configured individually. It can also use additional fields as sources for dynamic field configuration or map them to field labels. The additional labels can then be used to define better display names for the resulting fields.
+Use this transformation to convert rows into separate fields. This can be useful as fields can be styled and configured individually. It can also use additional fields as sources for dynamic field configuration or map them to field labels. The additional labels can then be used to define better display names for the resulting fields.
 
 This transformation includes a field table which lists all fields in the data returned by the config query. This table gives you control over what field should be mapped to each config property (the \*Use as\*\* option). You can also choose which value to select if there are multiple rows in the returned data.
 
@@ -890,11 +890,7 @@ As you can see each row in the source data becomes a separate field. Each field 
 
 ### Prepare time series
 
-{{% admonition type="note" %}}
-This transformation is available in Grafana 7.5.10+ and Grafana 8.0.6+.
-{{% /admonition %}}
-
-Prepare time series transformation is useful when a data source returns time series data in a format that isn't supported by the panel you want to use. For more information about data frame formats, refer to [Data frames][].
+Use this transformation when a data source returns time series data in a format that isn't supported by the panel you want to use. For more information about data frame formats, refer to [Data frames][].
 
 This transformation helps you resolve this issue by converting the time series data from either the wide format to the long format or the other way around.
 
@@ -902,11 +898,11 @@ Select the `Multi-frame time series` option to transform the time series data fr
 
 Select the `Wide time series` option to transform the time series data frame from the long to the wide format.
 
-### Series to rows
-
 {{% admonition type="note" %}}
-This transformation is available in Grafana 7.1+.
+This transformation is available in Grafana 7.5.10+ and Grafana 8.0.6+.
 {{% /admonition %}}
+
+### Series to rows
 
 Use this transformation to combine the result from multiple time series data queries into one single result. This is helpful when using the table panel visualization.
 
@@ -941,9 +937,13 @@ Here is the result after applying the Series to rows transformation.
 | 2020-07-07 09:30:57 | Humidity    | 33    |
 | 2020-07-07 09:30:05 | Temperature | 19    |
 
+{{% admonition type="note" %}}
+This transformation is available in Grafana 7.1+.
+{{% /admonition %}}
+
 ### Sort by
 
-This transformation will sort each frame by the configured field, When `reverse` is checked, the values will return in the opposite order.
+Use this transformation to sort each frame by the configured field. When `reverse` is checked, the values will return in the opposite order.
 
 ### Limit
 
@@ -970,16 +970,12 @@ Here is the result after adding a Limit transformation with a value of '3':
 
 ### Time series to table transform
 
+Use this transformation to convert time series result into a table, converting time series data frame into a "Trend" field. "Trend" field can then be rendered using [sparkline cell type][], producing an inline sparkline for each table row. If there are multiple time series queries, each will result in a separate table data frame. These can be joined using join or merge transforms to produce a single table with multiple sparklines per row.
+
 > **Note:** This transformation is available in Grafana 9.5+ as an opt-in beta feature.
 > Modify Grafana [configuration file][] to enable the `timeSeriesTable` [feature toggle][] to use it.
 
-Use this transformation to convert time series result into a table, converting time series data frame into a "Trend" field. "Trend" field can then be rendered using [sparkline cell type][], producing an inline sparkline for each table row. If there are multiple time series queries, each will result in a separate table data frame. These can be joined using join or merge transforms to produce a single table with multiple sparklines per row.
-
 ### Format Time
-
-{{% admonition type="note" %}}
-This transformation is available in Grafana 10.1+ as an alpha feature.
-{{% /admonition %}}
 
 Use this transformation to format the output of a time field. Output can be formatted using (Moment.js format strings)[https://momentjs.com/docs/#/displaying/]. For instance, if you would like to display only the year of a time field the format string `YYYY` can be used to show the calendar year (e.g. 1999, 2012, etc.).
 
@@ -1008,3 +1004,7 @@ Use this transformation to format the output of a time field. Output can be form
 [feature toggle]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana#feature_toggles"
 [feature toggle]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana#feature_toggles"
 {{% /docs/reference %}}
+
+{{% admonition type="note" %}}
+This transformation is available in Grafana 10.1+ as an alpha feature.
+{{% /admonition %}}
