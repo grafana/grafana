@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import React, { useEffect, useMemo, useState } from 'react';
 
 import { GrafanaTheme2, OrgRole } from '@grafana/data';
-import { Button, ConfirmModal, Icon, Tooltip, CellProps, useStyles2, Tag, InteractiveTable } from '@grafana/ui';
+import { Button, ConfirmModal, Icon, Tooltip, CellProps, useStyles2, Tag, InteractiveTable, Column } from '@grafana/ui';
 import { UserRolePicker } from 'app/core/components/RolePicker/UserRolePicker';
 import { fetchRoleOptions } from 'app/core/components/RolePicker/api';
 import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
@@ -13,7 +13,6 @@ import { AccessControlAction, OrgUser, Role } from 'app/types';
 import { OrgRolePicker } from '../OrgRolePicker';
 
 import { Avatar } from './Avatar';
-import { createSortFn } from './sort';
 
 type Cell<T extends keyof OrgUser = keyof OrgUser> = CellProps<OrgUser, OrgUser[T]>;
 
@@ -60,7 +59,7 @@ export const OrgUsersTable = ({ users, orgId, onRoleChange, onRemoveUser }: Prop
     }
   }, [orgId]);
 
-  const columns = useMemo(
+  const columns: Array<Column<OrgUser>> = useMemo(
     () => [
       {
         id: 'avatarUrl',
@@ -71,25 +70,25 @@ export const OrgUsersTable = ({ users, orgId, onRoleChange, onRemoveUser }: Prop
         id: 'login',
         header: 'Login',
         cell: ({ cell: { value } }: Cell<'login'>) => <div>{value}</div>,
-        sortType: createSortFn<OrgUser>('login'),
+        sortType: 'string',
       },
       {
         id: 'email',
         header: 'Email',
         cell: ({ cell: { value } }: Cell<'email'>) => value,
-        sortType: createSortFn<OrgUser>('email'),
+        sortType: 'string',
       },
       {
         id: 'name',
         header: 'Name',
         cell: ({ cell: { value } }: Cell<'name'>) => value,
-        sortType: createSortFn<OrgUser>('name'),
+        sortType: 'string',
       },
       {
         id: 'lastSeenAtAge',
         header: 'Last active',
         cell: ({ cell: { value } }: Cell<'lastSeenAtAge'>) => value,
-        sortType: createSortFn<OrgUser>('lastSeenAt'),
+        sortType: (a, b) => new Date(a.original.lastSeenAt).getTime() - new Date(b.original.lastSeenAt).getTime(),
       },
       {
         id: 'role',
@@ -132,7 +131,6 @@ export const OrgUsersTable = ({ users, orgId, onRoleChange, onRemoveUser }: Prop
         id: 'isDisabled',
         header: '',
         cell: ({ cell: { value } }: Cell<'isDisabled'>) => <>{value && <Tag colorIndex={9} name={'Disabled'} />}</>,
-        sortType: createSortFn<OrgUser>('isDisabled'),
       },
       {
         id: 'delete',

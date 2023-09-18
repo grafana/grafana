@@ -27,6 +27,7 @@ const setup = (propOverrides?: object) => {
     changeQuery: jest.fn(),
     query: '',
     totalPages: 0,
+    page: 0,
     hasFetched: false,
     editorsCanAdmin: false,
     perPage: 10,

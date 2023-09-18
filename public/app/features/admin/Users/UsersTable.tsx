@@ -1,15 +1,25 @@
 import { css } from '@emotion/css';
 import React, { useMemo } from 'react';
-import { Row } from 'react-table';
+import { DefaultSortTypes } from 'react-table';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { InteractiveTable, CellProps, Tooltip, Icon, useStyles2, Tag, Pagination } from '@grafana/ui';
+import {
+  InteractiveTable,
+  CellProps,
+  Tooltip,
+  Icon,
+  useStyles2,
+  Tag,
+  Pagination,
+  Column,
+  VerticalGroup,
+  HorizontalGroup,
+} from '@grafana/ui';
 import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
 import { UserDTO } from 'app/types';
 
 import { Avatar } from './Avatar';
 import { OrgUnits } from './OrgUnits';
-import { createSortFn } from './sort';
 
 type Cell<T extends keyof UserDTO = keyof UserDTO> = CellProps<UserDTO, UserDTO[T]>;
 
@@ -23,7 +33,7 @@ interface UsersTableProps {
 
 export const UsersTable = ({ users, showPaging, totalPages, onChangePage, currentPage }: UsersTableProps) => {
   const showLicensedRole = useMemo(() => users.some((user) => user.licensedRole), [users]);
-  const columns = useMemo(
+  const columns: Array<Column<UserDTO>> = useMemo(
     () => [
       {
         id: 'avatarUrl',
@@ -34,25 +44,25 @@ export const UsersTable = ({ users, showPaging, totalPages, onChangePage, curren
         id: 'login',
         header: 'Login',
         cell: ({ cell: { value } }: Cell<'login'>) => value,
-        sortType: createSortFn<UserDTO>('login'),
+        sortType: 'string',
       },
       {
         id: 'email',
         header: 'Email',
         cell: ({ cell: { value } }: Cell<'email'>) => value,
-        sortType: createSortFn<UserDTO>('email'),
+        sortType: 'string',
       },
       {
         id: 'name',
         header: 'Name',
         cell: ({ cell: { value } }: Cell<'name'>) => value,
-        sortType: createSortFn<UserDTO>('name'),
+        sortType: 'string',
       },
       {
         id: 'orgs',
         header: 'Belongs to',
         cell: OrgUnitsCell,
-        sortType: (a: Row<UserDTO>, b: Row<UserDTO>) => (a.original.orgs?.length || 0) - (b.original.orgs?.length || 0),
+        sortType: (a, b) => (a.original.orgs?.length || 0) - (b.original.orgs?.length || 0),
       },
       ...(showLicensedRole
         ? [
@@ -60,7 +70,8 @@ export const UsersTable = ({ users, showPaging, totalPages, onChangePage, curren
               id: 'licensedRole',
               header: 'Licensed role',
               cell: LicensedRoleCell,
-              sortType: createSortFn<UserDTO>('licensedRole'),
+              // Needs the assertion here, the types are not inferred correctly due to the  conditional assignment
+              sortType: 'string' as DefaultSortTypes,
             },
           ]
         : []),
@@ -72,7 +83,7 @@ export const UsersTable = ({ users, showPaging, totalPages, onChangePage, curren
           iconName: 'question-circle',
         },
         cell: LastSeenAtCell,
-        sortType: createSortFn<UserDTO>('lastSeenAt'),
+        sortType: (a, b) => new Date(a.original.lastSeenAt!).getTime() - new Date(b.original.lastSeenAt!).getTime(),
       },
       {
         id: 'authLabels',
@@ -85,7 +96,6 @@ export const UsersTable = ({ users, showPaging, totalPages, onChangePage, curren
         id: 'isDisabled',
         header: '',
         cell: ({ cell: { value } }: Cell<'isDisabled'>) => <>{value && <Tag colorIndex={9} name={'Disabled'} />}</>,
-        sortType: createSortFn<UserDTO>('isDisabled'),
       },
       {
         id: 'edit',
@@ -104,10 +114,14 @@ export const UsersTable = ({ users, showPaging, totalPages, onChangePage, curren
     [showLicensedRole]
   );
   return (
-    <>
+    <VerticalGroup spacing={'md'}>
       <InteractiveTable columns={columns} data={users} getRowId={(user) => String(user.id)} />
-      {showPaging && <Pagination numberOfPages={totalPages} currentPage={currentPage} onNavigate={onChangePage} />}
-    </>
+      {showPaging && (
+        <HorizontalGroup justify={'flex-end'}>
+          <Pagination numberOfPages={totalPages} currentPage={currentPage} onNavigate={onChangePage} />
+        </HorizontalGroup>
+      )}
+    </VerticalGroup>
   );
 };
 

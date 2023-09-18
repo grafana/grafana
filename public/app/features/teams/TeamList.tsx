@@ -10,6 +10,10 @@ import {
   InteractiveTable,
   Icon,
   Tooltip,
+  Column,
+  HorizontalGroup,
+  Pagination,
+  VerticalGroup,
 } from '@grafana/ui';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { Page } from 'app/core/components/Page/Page';
@@ -20,7 +24,6 @@ import { AccessControlAction, Role, StoreState, Team } from 'app/types';
 
 import { TeamRolePicker } from '../../core/components/RolePicker/TeamRolePicker';
 import { Avatar } from '../admin/Users/Avatar';
-import { createSortFn } from '../admin/Users/sort';
 
 import { deleteTeam, loadTeams, changePage, changeQuery } from './state/actions';
 import { isPermissionTeamAdmin } from './state/selectors';
@@ -36,7 +39,6 @@ export const TeamList = ({
   teams,
   query,
   noTeams,
-  perPage,
   hasFetched,
   loadTeams,
   deleteTeam,
@@ -44,6 +46,8 @@ export const TeamList = ({
   totalPages,
   signedInUser,
   editorsCanAdmin,
+  page,
+  changePage,
 }: Props) => {
   const [roleOptions, setRoleOptions] = useState<Role[]>([]);
 
@@ -60,7 +64,7 @@ export const TeamList = ({
   const canCreate = contextSrv.hasPermission(AccessControlAction.ActionTeamsCreate);
   const displayRolePicker = shouldDisplayRolePicker();
 
-  const columns = useMemo(
+  const columns: Array<Column<Team>> = useMemo(
     () => [
       {
         id: 'avatarUrl',
@@ -71,19 +75,19 @@ export const TeamList = ({
         id: 'name',
         header: 'Name',
         cell: ({ cell: { value } }: Cell<'name'>) => value,
-        sortType: createSortFn<Team>('name'),
+        sortType: 'string',
       },
       {
         id: 'email',
         header: 'Email',
         cell: ({ cell: { value } }: Cell<'email'>) => value,
-        sortType: createSortFn<Team>('email'),
+        sortType: 'string',
       },
       {
         id: 'memberCount',
         header: 'Members',
         cell: ({ cell: { value } }: Cell<'memberCount'>) => value,
-        sortType: createSortFn<Team>('memberCount'),
+        sortType: 'number',
       },
       ...(displayRolePicker
         ? [
@@ -179,13 +183,12 @@ export const TeamList = ({
                 New Team
               </LinkButton>
             </div>
-
-            <InteractiveTable
-              columns={columns}
-              data={teams}
-              getRowId={(team) => String(team.id)}
-              pageSize={totalPages > 1 ? perPage : 0}
-            />
+            <VerticalGroup spacing={'md'}>
+              <InteractiveTable columns={columns} data={teams} getRowId={(team) => String(team.id)} />
+              <HorizontalGroup justify="flex-end">
+                <Pagination hideWhenSinglePage currentPage={page} numberOfPages={totalPages} onNavigate={changePage} />
+              </HorizontalGroup>
+            </VerticalGroup>
           </>
         )}
       </Page.Contents>
@@ -206,6 +209,7 @@ function mapStateToProps(state: StoreState) {
     teams: state.teams.teams,
     query: state.teams.query,
     perPage: state.teams.perPage,
+    page: state.teams.page,
     noTeams: state.teams.noTeams,
     totalPages: state.teams.totalPages,
     hasFetched: state.teams.hasFetched,
