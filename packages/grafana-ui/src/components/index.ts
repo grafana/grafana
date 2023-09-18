@@ -90,6 +90,13 @@ export {
   type TableSortByFieldState,
   type TableFooterCalc,
   type AdHocFilterItem,
+  type TableAutoCellOptions,
+  type TableSparklineCellOptions,
+  type TableBarGaugeCellOptions,
+  type TableColoredBackgroundCellOptions,
+  type TableColorTextCellOptions,
+  type TableImageCellOptions,
+  type TableJsonViewCellOptions,
 } from './Table/types';
 export { TableInputCSV } from './TableInputCSV/TableInputCSV';
 export { TabsBar } from './Tabs/TabsBar';

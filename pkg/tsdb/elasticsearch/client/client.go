@@ -14,8 +14,18 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
+)
+
+// Used in logging to mark a stage
+var (
+	StagePrepareRequest  = "prepareRequest"
+	StageDatabaseRequest = "databaseRequest"
+	StageParseResponse   = "parseResponse"
 )
 
 type DatasourceInfo struct {
@@ -45,7 +55,7 @@ type Client interface {
 }
 
 // NewClient creates a new elasticsearch client
-var NewClient = func(ctx context.Context, ds *DatasourceInfo, timeRange backend.TimeRange, logger log.Logger) (Client, error) {
+var NewClient = func(ctx context.Context, ds *DatasourceInfo, timeRange backend.TimeRange, logger log.Logger, tracer tracing.Tracer) (Client, error) {
 	logger = logger.New("entity", "client")
 
 	ip, err := newIndexPattern(ds.Interval, ds.Database)
@@ -67,6 +77,7 @@ var NewClient = func(ctx context.Context, ds *DatasourceInfo, timeRange backend.
 		configuredFields: ds.ConfiguredFields,
 		indices:          indices,
 		timeRange:        timeRange,
+		tracer:           tracer,
 	}, nil
 }
 
@@ -77,6 +88,7 @@ type baseClientImpl struct {
 	indices          []string
 	timeRange        backend.TimeRange
 	logger           log.Logger
+	tracer           tracing.Tracer
 }
 
 func (c *baseClientImpl) GetConfiguredFields() ConfiguredFields {
@@ -156,8 +168,20 @@ func (c *baseClientImpl) executeRequest(method, uriPath, uriQuery string, body [
 }
 
 func (c *baseClientImpl) ExecuteMultisearch(r *MultiSearchRequest) (*MultiSearchResponse, error) {
+	var err error
 	multiRequests := c.createMultiSearchRequests(r.Requests)
 	queryParams := c.getMultiSearchQueryParameters()
+	_, span := c.tracer.Start(c.ctx, "datasource.elasticsearch.queryData.executeMultisearch")
+	span.SetAttributes("queryParams", queryParams, attribute.Key("queryParams").String(queryParams))
+	span.SetAttributes("url", c.ds.URL, attribute.Key("url").String(c.ds.URL))
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, err.Error())
+		}
+		span.End()
+	}()
+
 	start := time.Now()
 	clientRes, err := c.executeBatchRequest("_msearch", queryParams, multiRequests)
 	if err != nil {
@@ -165,7 +189,11 @@ func (c *baseClientImpl) ExecuteMultisearch(r *MultiSearchRequest) (*MultiSearch
 		if errors.Is(err, context.Canceled) {
 			status = "cancelled"
 		}
-		c.logger.Error("Error received from Elasticsearch", "error", err, "status", status, "statusCode", clientRes.StatusCode, "duration", time.Since(start), "action", "databaseRequest")
+		lp := []any{"error", err, "status", status, "duration", time.Since(start), "stage", StageDatabaseRequest}
+		if clientRes != nil {
+			lp = append(lp, "statusCode", clientRes.StatusCode)
+		}
+		c.logger.Error("Error received from Elasticsearch", lp...)
 		return nil, err
 	}
 	res := clientRes
@@ -175,11 +203,19 @@ func (c *baseClientImpl) ExecuteMultisearch(r *MultiSearchRequest) (*MultiSearch
 		}
 	}()
 
-	c.logger.Info("Response received from Elasticsearch", "status", "ok", "statusCode", res.StatusCode, "contentLength", res.ContentLength, "duration", time.Since(start), "action", "databaseRequest")
+	c.logger.Info("Response received from Elasticsearch", "status", "ok", "statusCode", res.StatusCode, "contentLength", res.ContentLength, "duration", time.Since(start), "stage", StageDatabaseRequest)
 
 	start = time.Now()
 	var msr MultiSearchResponse
 	dec := json.NewDecoder(res.Body)
+	_, resSpan := c.tracer.Start(c.ctx, "datasource.elasticsearch.queryData.executeMultisearch.decodeResponse")
+	defer func() {
+		if err != nil {
+			resSpan.RecordError(err)
+			resSpan.SetStatus(codes.Error, err.Error())
+		}
+		resSpan.End()
+	}()
 	err = dec.Decode(&msr)
 	if err != nil {
 		c.logger.Error("Failed to decode response from Elasticsearch", "error", err, "duration", time.Since(start))

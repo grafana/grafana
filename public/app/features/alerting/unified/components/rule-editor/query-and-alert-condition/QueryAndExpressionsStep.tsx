@@ -25,7 +25,7 @@ import { NeedHelpInfo } from '../NeedHelpInfo';
 import { QueryEditor } from '../QueryEditor';
 import { RecordingRuleEditor } from '../RecordingRuleEditor';
 import { RuleEditorSection } from '../RuleEditorSection';
-import { errorFromSeries, findRenamedDataQueryReferences, refIdExists } from '../util';
+import { errorFromCurrentCondition, errorFromPreviewData, findRenamedDataQueryReferences, refIdExists } from '../util';
 
 import { CloudDataSourceSelector } from './CloudDataSourceSelector';
 import { SmartAlertTypeDetector } from './SmartAlertTypeDetector';
@@ -107,11 +107,13 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
   useEffect(() => {
     const currentCondition = getValues('condition');
 
-    if (!currentCondition || RuleFormType.cloudRecording) {
+    if (!currentCondition || !queryPreviewData[currentCondition]) {
       return;
     }
 
-    const error = errorFromSeries(queryPreviewData[currentCondition]?.series || []);
+    const error =
+      errorFromPreviewData(queryPreviewData[currentCondition]) ??
+      errorFromCurrentCondition(queryPreviewData[currentCondition]);
     onDataChange(error?.message || '');
   }, [queryPreviewData, getValues, onDataChange]);
 

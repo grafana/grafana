@@ -1,28 +1,75 @@
 import React, { useCallback } from 'react';
 
-import { AppEvents, StandardEditorProps, StandardEditorsRegistryItem, StringFieldConfigSettings } from '@grafana/data';
-import { config, getBackendSrv } from '@grafana/runtime';
-import { Button, InlineField, InlineFieldRow, JSONFormatter } from '@grafana/ui';
+import {
+  AppEvents,
+  SelectableValue,
+  StandardEditorProps,
+  StandardEditorsRegistryItem,
+  StringFieldConfigSettings,
+} from '@grafana/data';
+import { BackendSrvRequest, config, getBackendSrv } from '@grafana/runtime';
+import { Button, Field, InlineField, InlineFieldRow, JSONFormatter, RadioButtonGroup, Select } from '@grafana/ui';
 import { StringValueEditor } from 'app/core/components/OptionsUI/string';
 import { appEvents } from 'app/core/core';
+import { defaultApiConfig } from 'app/features/canvas/elements/button';
+
+import { HttpRequestMethod } from '../../panelcfg.gen';
+
+import { ParamsEditor } from './ParamsEditor';
 
 export interface APIEditorConfig {
+  method: string;
   endpoint: string;
   data?: string;
+  contentType?: string;
+  queryParams?: Array<[string, string]>;
+  headerParams?: Array<[string, string]>;
 }
 
 const dummyStringSettings = {
   settings: {},
 } as StandardEditorsRegistryItem<string, StringFieldConfigSettings>;
 
+const getRequest = (api: APIEditorConfig) => {
+  const requestHeaders: HeadersInit = [];
+
+  let request: BackendSrvRequest = {
+    url: api.endpoint,
+    method: api.method,
+    data: getData(api),
+    headers: requestHeaders,
+  };
+
+  if (api.headerParams) {
+    api.headerParams.forEach((param) => {
+      requestHeaders.push([param[0], param[1]]);
+    });
+  }
+
+  if (api.queryParams) {
+    const symbol = api.endpoint.match(questionMarkRegex) ? '&' : '?';
+    request.url = api.endpoint + symbol + api.queryParams?.map((param) => param[0] + '=' + param[1]).join('&');
+  }
+
+  if (api.method === HttpRequestMethod.POST) {
+    requestHeaders.push(['Content-Type', 'application/json']);
+  }
+
+  if (api.method === HttpRequestMethod.POST) {
+    requestHeaders.push(['Content-Type', api.contentType!]);
+  }
+
+  request.headers = requestHeaders;
+
+  return request;
+};
+
+const questionMarkRegex = '.+\\?.*';
+
 export const callApi = (api: APIEditorConfig, isTest = false) => {
-  if (api) {
+  if (api && api.endpoint) {
     getBackendSrv()
-      .fetch({
-        url: api.endpoint!,
-        method: 'POST',
-        data: api.data ?? {},
-      })
+      .fetch(getRequest(api))
       .subscribe({
         error: (error) => {
           if (isTest) {
@@ -39,10 +86,37 @@ export const callApi = (api: APIEditorConfig, isTest = false) => {
   }
 };
 
+const getData = (api: APIEditorConfig) => {
+  let data: string | undefined = api.data ?? '{}';
+  if (api.method === HttpRequestMethod.GET) {
+    data = undefined;
+  }
+
+  return data;
+};
+
 type Props = StandardEditorProps<APIEditorConfig>;
 
+const httpMethodOptions = [
+  { label: HttpRequestMethod.GET, value: HttpRequestMethod.GET },
+  { label: HttpRequestMethod.POST, value: HttpRequestMethod.POST },
+];
+
+const contentTypeOptions: SelectableValue[] = [
+  { label: 'JSON', value: 'application/json' },
+  { label: 'Text', value: 'text/plain' },
+  { label: 'JavaScript', value: 'application/javascript' },
+  { label: 'HTML', value: 'text/html' },
+  { label: 'XML', value: 'application/XML' },
+  { label: 'x-www-form-urlencoded', value: 'application/x-www-form-urlencoded' },
+];
+
 export function APIEditor({ value, context, onChange }: Props) {
-  const labelWidth = 9;
+  const LABEL_WIDTH = 13;
+
+  if (!value) {
+    value = defaultApiConfig;
+  }
 
   const onEndpointChange = useCallback(
     (endpoint = '') => {
@@ -59,6 +133,50 @@ export function APIEditor({ value, context, onChange }: Props) {
       onChange({
         ...value,
         data,
+      });
+    },
+    [onChange, value]
+  );
+
+  const onMethodChange = useCallback(
+    (method: string) => {
+      onChange({
+        ...value,
+        method,
+      });
+    },
+    [onChange, value]
+  );
+
+  const onContentTypeChange = useCallback(
+    (contentType: SelectableValue<string>) => {
+      onChange({
+        ...value,
+        contentType: contentType?.value,
+      });
+    },
+    [onChange, value]
+  );
+
+  const formatCreateLabel = (input: string) => {
+    return input;
+  };
+
+  const onQueryParamsChange = useCallback(
+    (queryParams: Array<[string, string]>) => {
+      onChange({
+        ...value,
+        queryParams,
+      });
+    },
+    [onChange, value]
+  );
+
+  const onHeaderParamsChange = useCallback(
+    (headerParams: Array<[string, string]>) => {
+      onChange({
+        ...value,
+        headerParams,
       });
     },
     [onChange, value]
@@ -92,7 +210,7 @@ export function APIEditor({ value, context, onChange }: Props) {
   return config.disableSanitizeHtml ? (
     <>
       <InlineFieldRow>
-        <InlineField label={'Endpoint'} labelWidth={labelWidth} grow={true}>
+        <InlineField label="Endpoint" labelWidth={LABEL_WIDTH} grow={true}>
           <StringValueEditor
             context={context}
             value={value?.endpoint}
@@ -102,18 +220,46 @@ export function APIEditor({ value, context, onChange }: Props) {
         </InlineField>
       </InlineFieldRow>
       <InlineFieldRow>
-        <InlineField label={'Data'} labelWidth={labelWidth} grow={true}>
-          <StringValueEditor
-            context={context}
-            value={value?.data ?? '{}'}
-            onChange={onDataChange}
-            item={dummyStringSettings}
-          />
+        <InlineField label="Method" labelWidth={LABEL_WIDTH} grow={true}>
+          <RadioButtonGroup value={value?.method} options={httpMethodOptions} onChange={onMethodChange} fullWidth />
         </InlineField>
       </InlineFieldRow>
+      <Field label="Query parameters">
+        <ParamsEditor value={value?.queryParams ?? []} onChange={onQueryParamsChange} />
+      </Field>
+      <Field label="Header parameters">
+        <ParamsEditor value={value?.headerParams ?? []} onChange={onHeaderParamsChange} />
+      </Field>
+      {value?.method === HttpRequestMethod.POST && (
+        <>
+          <InlineFieldRow>
+            <InlineField label="Content-Type" labelWidth={LABEL_WIDTH} grow={true}>
+              <Select
+                options={contentTypeOptions}
+                allowCustomValue={true}
+                formatCreateLabel={formatCreateLabel}
+                value={value?.contentType}
+                onChange={onContentTypeChange}
+              />
+            </InlineField>
+          </InlineFieldRow>
+          {value?.contentType && (
+            <Field label="Payload">
+              <StringValueEditor
+                context={context}
+                value={value?.data ?? '{}'}
+                onChange={onDataChange}
+                item={{ ...dummyStringSettings, settings: { useTextarea: true } }}
+              />
+            </Field>
+          )}
+        </>
+      )}
       {renderTestAPIButton(value)}
       <br />
-      {renderJSON(value?.data ?? '{}')}
+      {value?.method === HttpRequestMethod.POST &&
+        value?.contentType === defaultApiConfig.contentType &&
+        renderJSON(value?.data ?? '{}')}
     </>
   ) : (
     <>Must enable disableSanitizeHtml feature flag to access</>

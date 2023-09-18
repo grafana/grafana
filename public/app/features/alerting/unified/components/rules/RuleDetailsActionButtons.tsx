@@ -26,7 +26,7 @@ import * as ruleId from '../../utils/rule-id';
 import { isAlertingRule, isFederatedRuleGroup, isGrafanaRulerRule } from '../../utils/rules';
 import { DeclareIncident } from '../bridges/DeclareIncidentButton';
 
-import { CloneRuleButton } from './CloneRuleButton';
+import { CloneRuleButton } from './CloneRule';
 
 interface Props {
   rule: CombinedRule;

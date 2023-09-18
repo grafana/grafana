@@ -546,6 +546,12 @@ export function getDynamicDashboardRoutes(cfg = config): RouteDescriptor[] {
       ),
     },
     {
+      path: '/scenes/dashboard/:uid/panel-edit/:panelId',
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "scenes"*/ 'app/features/dashboard-scene/pages/PanelEditPage')
+      ),
+    },
+    {
       path: '/scenes/grafana-monitoring',
       exact: false,
       component: SafeDynamicImport(

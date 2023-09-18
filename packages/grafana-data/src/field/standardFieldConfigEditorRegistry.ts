@@ -29,4 +29,4 @@ export interface StandardEditorsRegistryItem<TValue = any, TSettings = any> exte
 }
 export const standardFieldConfigEditorRegistry = new FieldConfigOptionsRegistry();
 
-export const standardEditorsRegistry = new Registry<StandardEditorsRegistryItem<any>>();
+export const standardEditorsRegistry = new Registry<StandardEditorsRegistryItem>();

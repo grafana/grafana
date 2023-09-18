@@ -134,7 +134,6 @@ const dashboardBase = {
 describe('PublicDashboardPage', () => {
   beforeEach(() => {
     config.featureToggles.publicDashboards = true;
-    config.featureToggles.newPanelChromeUI = true;
 
     jest.clearAllMocks();
   });
