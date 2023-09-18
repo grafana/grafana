@@ -28,7 +28,7 @@ The Datadog datasource support blocking API requests based on upstream rate limi
 
 To learn more, refer to [Datadog datasource settings](https://grafana.com/docs/plugins/grafana-datadog-datasource/latest/#configure-the-data-source), as well as the following video demo.
 
-{{< video-embed src="datadog demo will go here" >}}
+{{< video-embed src="/media/docs/datadog/datadog-rate-limit.mp4" >}}
 
 ## Query-type template variables for Tempo data source
 
