@@ -11,13 +11,12 @@ import {
 
 import { e2e } from '../utils';
 
-e2e.scenario({
-  describeName: 'Dashboard time zone support',
-  itName: 'Tests dashboard time zone scenarios',
-  addScenarioDataSource: false,
-  addScenarioDashBoard: false,
-  skipScenario: true,
-  scenario: () => {
+describe('Dashboard time zone support', () => {
+  beforeEach(() => {
+    e2e.flows.login(e2e.env('USERNAME'), e2e.env('PASSWORD'));
+  });
+
+  it('Tests dashboard time zone scenarios', () => {
     e2e.flows.openDashboard({ uid: '5SdHCasdf' });
 
     const fromTimeZone = 'UTC';
@@ -38,15 +37,15 @@ e2e.scenario({
     for (const title of panelsToCheck) {
       e2e.components.Panels.Panel.title(title)
         .should('be.visible')
-        .within(() =>
+        .within(() => {
+          e2e.components.Panels.Visualization.Graph.xAxis.labels().should('be.visible');
           e2e.components.Panels.Visualization.Graph.xAxis
             .labels()
-            .should('be.visible')
             .last()
             .should((element) => {
               timesInUtc[title] = element.text();
-            })
-        );
+            });
+        });
     }
 
     e2e.components.PageToolbar.item('Dashboard settings').click();
@@ -80,16 +79,9 @@ e2e.scenario({
             })
         );
     }
-  },
-});
+  });
 
-e2e.scenario({
-  describeName: 'Dashboard time zone support',
-  itName: 'Tests relative timezone support and overrides',
-  addScenarioDataSource: false,
-  addScenarioDashBoard: false,
-  skipScenario: false,
-  scenario: () => {
+  it('Tests relative timezone support and overrides', () => {
     // Open dashboard
     e2e.flows.openDashboard({
       uid: 'd41dbaa2-a39e-4536-ab2b-caca52f1a9c8',
@@ -201,7 +193,7 @@ e2e.scenario({
       .within(() => {
         cy.contains('[role="row"]', '00:00:00').should('be.visible');
       });
-  },
+  });
 });
 
 const isTimeCorrect = (inUtc: string, inTz: string, offset: number): boolean => {

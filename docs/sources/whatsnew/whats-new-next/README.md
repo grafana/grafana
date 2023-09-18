@@ -60,6 +60,10 @@ You must use relative path references when linking to documentation within the G
 Use the Hugo `relref` shortcode for build time link checking.
 For more information about the `relref` shortcode, refer to [Links and references](https://grafana.com/docs/writers-toolkit/writing-guide/references/).
 
+Grafana Cloud documentation uses the "next" version of Grafana documentation.
+For consistency, links to Grafana OSS documentation should also link to the "next" version.
+For example, using the partial URL `/docs/grafana/next/explore/` to link to the Grafana OSS explore documentation.
+
 ## Example
 
 ```markdown
