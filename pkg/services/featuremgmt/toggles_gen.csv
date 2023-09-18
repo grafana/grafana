@@ -22,6 +22,7 @@ disableSecretsCompatibility,experimental,@grafana/hosted-grafana-team,false,fals
 logRequestsInstrumentedAsUnknown,experimental,@grafana/hosted-grafana-team,false,false,false,false
 dataConnectionsConsole,GA,@grafana/plugins-platform-backend,false,false,false,false
 topnav,deprecated,@grafana/grafana-frontend-platform,false,false,false,false
+dockedMegaMenu,preview,@grafana/grafana-frontend-platform,false,false,false,true
 grpcServer,preview,@grafana/grafana-app-platform-squad,false,false,false,false
 entityStore,experimental,@grafana/grafana-app-platform-squad,true,false,false,false
 cloudWatchCrossAccountQuerying,GA,@grafana/aws-datasources,false,false,false,false

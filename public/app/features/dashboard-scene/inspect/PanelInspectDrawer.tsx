@@ -12,10 +12,12 @@ import {
   SceneObjectRef,
 } from '@grafana/scenes';
 import { Alert, Drawer, Tab, TabsBar } from '@grafana/ui';
+import { getDataSourceWithInspector } from 'app/features/dashboard/components/Inspector/hooks';
 import { supportsDataQuery } from 'app/features/dashboard/components/PanelEditor/utils';
 
 import { InspectDataTab } from './InspectDataTab';
 import { InspectJsonTab } from './InspectJsonTab';
+import { InspectMetaDataTab } from './InspectMetaDataTab';
 import { InspectQueryTab } from './InspectQueryTab';
 import { InspectStatsTab } from './InspectStatsTab';
 import { SceneInspectTab } from './types';
@@ -32,7 +34,10 @@ export class PanelInspectDrawer extends SceneObjectBase<PanelInspectDrawerState>
 
   constructor(state: PanelInspectDrawerState) {
     super(state);
+    this.addActivationHandler(() => this._activationHandler());
+  }
 
+  private _activationHandler() {
     this.buildTabs(0);
   }
 
@@ -40,7 +45,7 @@ export class PanelInspectDrawer extends SceneObjectBase<PanelInspectDrawerState>
    * We currently have no async await to get the panel plugin from the VizPanel.
    * That is why there is a retry argument here and a setTimeout, to try again a bit later.
    */
-  buildTabs(retry: number) {
+  async buildTabs(retry: number) {
     const panelRef = this.state.panelRef;
     const panel = panelRef.resolve();
     const plugin = panel.getPlugin();
@@ -55,9 +60,16 @@ export class PanelInspectDrawer extends SceneObjectBase<PanelInspectDrawerState>
     }
 
     if (supportsDataQuery(plugin)) {
+      const data = sceneGraph.getData(panel);
+
       tabs.push(new InspectDataTab({ panelRef }));
       tabs.push(new InspectStatsTab({ panelRef }));
       tabs.push(new InspectQueryTab({ panelRef }));
+
+      const dsWithInspector = await getDataSourceWithInspector(data.state.data);
+      if (dsWithInspector) {
+        tabs.push(new InspectMetaDataTab({ panelRef, dataSource: dsWithInspector }));
+      }
     }
 
     tabs.push(new InspectJsonTab({ panelRef, onClose: this.onClose }));
