@@ -1,6 +1,11 @@
 import React, { useCallback } from 'react';
 
-import { StandardEditorProps, StandardEditorsRegistryItem, StringFieldConfigSettings, SelectableValue } from '@grafana/data';
+import {
+  StandardEditorProps,
+  StandardEditorsRegistryItem,
+  StringFieldConfigSettings,
+  SelectableValue,
+} from '@grafana/data';
 import { BackendSrvRequest, config, getTemplateSrv } from '@grafana/runtime';
 import { Button, Field, InlineField, InlineFieldRow, JSONFormatter, RadioButtonGroup, Select } from '@grafana/ui';
 import { StringValueEditor } from 'app/core/components/OptionsUI/string';
@@ -119,50 +124,50 @@ export function APIEditor({ value, context, onChange }: Props) {
     [onChange, value]
   );
 
-    const getRequest = () => {
-        const requestHeaders: HeadersInit = [];
-        const api = value;
+  const getRequest = () => {
+    const requestHeaders: HeadersInit = [];
+    const api = value;
 
-        const url = new URL(interpolateVariables(api.endpoint!));
+    const url = new URL(interpolateVariables(api.endpoint!));
 
-        let request: BackendSrvRequest = {
-            url: url.toString(),
-            method: api.method,
-            data: getData(),
-            headers: requestHeaders,
-        };
+    let request: BackendSrvRequest = {
+      url: url.toString(),
+      method: api.method,
+      data: getData(),
+      headers: requestHeaders,
+    };
 
-        if (api.headerParams) {
-            api.headerParams.forEach((param) => {
-                requestHeaders.push([interpolateVariables(param[0]), interpolateVariables(param[1])]);
-            });
-        }
-
-        if (api.queryParams) {
-            api.queryParams?.forEach((param) => {
-                url.searchParams.append(interpolateVariables(param[0]), interpolateVariables(param[1]));
-            });
-
-            request.url = url.toString();
-        }
-
-        if (api.method === HttpRequestMethod.POST) {
-            requestHeaders.push(['Content-Type', api.contentType!]);
-        }
-
-        request.headers = requestHeaders;
-
-        return request;
+    if (api.headerParams) {
+      api.headerParams.forEach((param) => {
+        requestHeaders.push([interpolateVariables(param[0]), interpolateVariables(param[1])]);
+      });
     }
 
-    const getData = () => {
-        let data: string | undefined = value.data ? interpolateVariables(value.data) : '{}';
-        if (value.method === HttpRequestMethod.GET) {
-            data = undefined;
-        }
+    if (api.queryParams) {
+      api.queryParams?.forEach((param) => {
+        url.searchParams.append(interpolateVariables(param[0]), interpolateVariables(param[1]));
+      });
 
-        return data;
-    };
+      request.url = url.toString();
+    }
+
+    if (api.method === HttpRequestMethod.POST) {
+      requestHeaders.push(['Content-Type', api.contentType!]);
+    }
+
+    request.headers = requestHeaders;
+
+    return request;
+  };
+
+  const getData = () => {
+    let data: string | undefined = value.data ? interpolateVariables(value.data) : '{}';
+    if (value.method === HttpRequestMethod.GET) {
+      data = undefined;
+    }
+
+    return data;
+  };
 
   const renderJSON = (data: string) => {
     try {
