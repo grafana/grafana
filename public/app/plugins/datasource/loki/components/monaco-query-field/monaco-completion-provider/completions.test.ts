@@ -539,7 +539,7 @@ describe('IN_LOGFMT completions', () => {
       flags: false,
       otherLabels: [],
     };
-    
+
     expect(await getCompletions(situation, completionProvider)).toMatchInlineSnapshot(`
       [
         {
@@ -645,7 +645,7 @@ describe('IN_LOGFMT completions', () => {
       flags: true,
       otherLabels: [],
     };
-    
+
     expect(await getCompletions(situation, completionProvider)).toMatchInlineSnapshot(`
       [
         {
@@ -739,7 +739,7 @@ describe('IN_LOGFMT completions', () => {
       flags: true,
       otherLabels: ['label1', 'label2'],
     };
-    
+
     expect(await getCompletions(situation, completionProvider)).toMatchInlineSnapshot(`
       [
         {
@@ -821,7 +821,7 @@ describe('IN_LOGFMT completions', () => {
       flags: false,
       otherLabels: ['label1'],
     };
-    
+
     expect(await getCompletions(situation, completionProvider)).toMatchInlineSnapshot(`
       [
         {
@@ -841,7 +841,7 @@ describe('IN_LOGFMT completions', () => {
       flags: true,
       otherLabels: ['label1'],
     };
-    
+
     expect(await getCompletions(situation, completionProvider)).toMatchInlineSnapshot(`
       [
         {
