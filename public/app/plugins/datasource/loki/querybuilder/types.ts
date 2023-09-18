@@ -94,6 +94,8 @@ export enum LokiOperationId {
   LessThan = '__less_than',
   GreaterOrEqual = '__greater_or_equal',
   LessOrEqual = '__less_or_equal',
+  // Scalar values, can only be used on left side of binary operations
+  Scalar = '__scalar',
 }
 
 export enum LokiOperationOrder {

@@ -144,12 +144,6 @@ export function handleExpression(expr: string, node: SyntaxNode, context: Contex
       break;
     }
 
-    case NumberLezer: {
-      // debugger;
-      visQuery.operations.push(getNumberParser(expr));
-      break;
-    }
-
     case LabelFilter: {
       const { operation, error } = getLabelFilter(expr, node);
       if (operation) {
@@ -281,16 +275,6 @@ function getLineFilter(expr: string, node: SyntaxNode): { operation?: QueryBuild
       id: mapFilter[filter],
       params: [filterExpr],
     },
-  };
-}
-
-function getNumberParser(expr: string): QueryBuilderOperation {
-  const funcName = LokiOperationId.Addition;
-  let params = [expr];
-
-  return {
-    id: funcName,
-    params,
   };
 }
 
@@ -549,8 +533,15 @@ function handleBinary(expr: string, node: SyntaxNode, context: Context) {
 
   if (leftNumber) {
     // TODO: this should be already handled in case parent is binary expression as it has to be added to parent
-    // If we have a number on the lhs we can add it as a scalar operation
-    visQuery.operations.push(makeBinOp(opDef, expr, left, !!binModifier?.isBool));
+    // If we have scalars on both sides of the operand, we want to add the left number as a scalar value before traversing the right side of the tree
+    if (rightNumber) {
+      visQuery.operations.push(
+        makeBinOp({ ...opDef, comparison: undefined, id: LokiOperationId.Scalar }, expr, left, !!binModifier?.isBool)
+      );
+    } else {
+      // Otherwise
+      visQuery.operations.push(makeBinOp(opDef, expr, left, !!binModifier?.isBool));
+    }
   } else {
     // If this is binary we don't really know if there is a query or just chained scalars. So
     // we have to traverse a bit deeper to know

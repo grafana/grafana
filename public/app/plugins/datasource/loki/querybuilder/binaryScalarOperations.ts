@@ -9,6 +9,11 @@ import { LokiOperationId, LokiVisualQueryOperationCategory } from './types';
 
 export const binaryScalarDefs = [
   {
+    id: LokiOperationId.Scalar,
+    name: 'Scalar value',
+    sign: '',
+  },
+  {
     id: LokiOperationId.Addition,
     name: 'Add scalar',
     sign: '+',
