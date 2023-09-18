@@ -838,9 +838,7 @@ describe('buildVisualQueryFromString', () => {
   });
 
   it('parses query with logfmt parser', () => {
-    expect(
-      buildVisualQueryFromString('{label="value"} | logfmt')
-    ).toEqual(
+    expect(buildVisualQueryFromString('{label="value"} | logfmt')).toEqual(
       noErrors({
         labels: [
           {
@@ -849,17 +847,13 @@ describe('buildVisualQueryFromString', () => {
             label: 'label',
           },
         ],
-        operations: [
-          { id: LokiOperationId.Logfmt, params: [false, false] },
-        ],
+        operations: [{ id: LokiOperationId.Logfmt, params: [false, false] }],
       })
     );
   });
 
   it('parses query with logfmt parser and flags', () => {
-    expect(
-      buildVisualQueryFromString('{label="value"} | logfmt --keep-empty --strict')
-    ).toEqual(
+    expect(buildVisualQueryFromString('{label="value"} | logfmt --keep-empty --strict')).toEqual(
       noErrors({
         labels: [
           {
@@ -868,9 +862,7 @@ describe('buildVisualQueryFromString', () => {
             label: 'label',
           },
         ],
-        operations: [
-          { id: LokiOperationId.Logfmt, params: [true, true] },
-        ],
+        operations: [{ id: LokiOperationId.Logfmt, params: [true, true] }],
       })
     );
   });
@@ -887,9 +879,7 @@ describe('buildVisualQueryFromString', () => {
             label: 'label',
           },
         ],
-        operations: [
-          { id: LokiOperationId.Logfmt, params: [true, true, 'label1', 'label2', "label3=\"label4\""] },
-        ],
+        operations: [{ id: LokiOperationId.Logfmt, params: [true, true, 'label1', 'label2', 'label3="label4"'] }],
       })
     );
   });

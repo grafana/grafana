@@ -212,14 +212,14 @@ describe('pipelineRenderer', () => {
   let definitions: QueryBuilderOperationDef[];
   beforeEach(() => {
     definitions = getOperationDefinitions();
-  })
+  });
 
   it('Correctly renders unpack expressions', () => {
     const model: QueryBuilderOperation = {
       id: LokiOperationId.Unpack,
       params: [],
-    }
-    const definition = definitions.find(def => def.id === LokiOperationId.Unpack);
+    };
+    const definition = definitions.find((def) => def.id === LokiOperationId.Unpack);
     expect(pipelineRenderer(model, definition!, '{}')).toBe('{} | unpack');
   });
 });

@@ -82,7 +82,7 @@ describe('LokiQueryModeller', () => {
         labels: [{ label: 'app', op: '=', value: 'grafana' }],
         operations: [{ id: LokiOperationId.Logfmt, params: [true, true, 'label', 'label2="label3'] }],
       })
-    ).toBe("{app=\"grafana\"} | logfmt --strict --keep-empty label, label2=\"label3");
+    ).toBe('{app="grafana"} | logfmt --strict --keep-empty label, label2="label3');
   });
 
   it('Models a logfmt query with labels', () => {
@@ -91,7 +91,7 @@ describe('LokiQueryModeller', () => {
         labels: [{ label: 'app', op: '=', value: 'grafana' }],
         operations: [{ id: LokiOperationId.Logfmt, params: [false, false, 'label', 'label2="label3'] }],
       })
-    ).toBe("{app=\"grafana\"} | logfmt label, label2=\"label3");
+    ).toBe('{app="grafana"} | logfmt label, label2="label3');
   });
 
   it('Can query with pipeline operation regexp', () => {

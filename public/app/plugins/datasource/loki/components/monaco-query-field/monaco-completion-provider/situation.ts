@@ -27,7 +27,7 @@ import {
   KeepLabels,
   ParserFlag,
   LabelExtractionExpression,
-  LabelExtractionExpressionList
+  LabelExtractionExpressionList,
 } from '@grafana/lezer-logql';
 
 import { getLogQueryFromMetricsQuery, getNodesFromQuery } from '../../../queryUtils';
@@ -105,11 +105,11 @@ export type Situation =
       type: 'AT_ROOT';
     }
   | {
-    type: 'IN_LOGFMT',
-    otherLabels: string[],
-    flags: boolean,
-    logQuery: string;
-  }
+      type: 'IN_LOGFMT';
+      otherLabels: string[];
+      flags: boolean;
+      logQuery: string;
+    }
   | {
       type: 'IN_RANGE';
     }
@@ -214,10 +214,7 @@ const RESOLVERS: Resolver[] = [
     fun: resolvePipeError,
   },
   {
-    paths: [
-      [ERROR_NODE_ID, UnwrapExpr],
-      [UnwrapExpr]
-    ],
+    paths: [[ERROR_NODE_ID, UnwrapExpr], [UnwrapExpr]],
     fun: resolveAfterUnwrap,
   },
   {
@@ -438,7 +435,7 @@ function resolveLogfmtParser(_: SyntaxNode, text: string, cursorPosition: number
 
   const cursor = tree.cursorAt(position);
 
-  const expectedNodes = [Logfmt, ParserFlag, LabelExtractionExpression, LabelExtractionExpressionList]
+  const expectedNodes = [Logfmt, ParserFlag, LabelExtractionExpression, LabelExtractionExpressionList];
   let inLogfmt = false;
   do {
     const { node } = cursor;
@@ -467,7 +464,7 @@ function resolveLogfmtParser(_: SyntaxNode, text: string, cursorPosition: number
     otherLabels,
     flags,
     logQuery: getLogQueryFromMetricsQuery(text).trim(),
-  }
+  };
 }
 
 function resolveTopLevel(node: SyntaxNode, text: string, pos: number): Situation | null {

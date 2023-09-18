@@ -83,7 +83,10 @@ interface ParsingError {
   parentType?: string;
 }
 
-interface GetOperationResult { operation?: QueryBuilderOperation; error?: string };
+interface GetOperationResult {
+  operation?: QueryBuilderOperation;
+  error?: string;
+}
 
 export function buildVisualQueryFromString(expr: string): Context {
   const replacedExpr = replaceVariables(expr);
@@ -335,8 +338,7 @@ function getLogfmtParser(expr: string, node: SyntaxNode): GetOperationResult {
         flags.push(expr.substring(subNode.from + offset, subNode.to + offset));
       } else if (subNode.type.id === LabelExtractionExpression) {
         labels.push(expr.substring(subNode.from + offset, subNode.to + offset));
-      }
-      else if (subNode.type.id === ErrorId) {
+      } else if (subNode.type.id === ErrorId) {
         error = `Unexpected string "${expr.substring(subNode.from + offset, subNode.to + offset)}"`;
       }
     },
@@ -446,11 +448,7 @@ function getDecolorize(): QueryBuilderOperation {
   };
 }
 
-function handleUnwrapExpr(
-  expr: string,
-  node: SyntaxNode,
-  context: Context
-): GetOperationResult {
+function handleUnwrapExpr(expr: string, node: SyntaxNode, context: Context): GetOperationResult {
   const unwrapExprChild = node.getChild(UnwrapExpr);
   const labelFilterChild = node.getChild(LabelFilter);
   const unwrapChild = node.getChild(Unwrap);
