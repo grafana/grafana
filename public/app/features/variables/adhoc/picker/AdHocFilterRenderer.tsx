@@ -46,6 +46,7 @@ export const AdHocFilterRenderer = ({
         datasource={datasource}
         filterKey={key}
         filterValue={value}
+        allFilters={allFilters}
         onChange={onValueChange}
         placeHolder={placeHolder}
       />
