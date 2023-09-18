@@ -8,13 +8,11 @@ import { FileExportPreview } from './FileExportPreview';
 import { GrafanaExportDrawer } from './GrafanaExportDrawer';
 import { allGrafanaExportProviders, ExportFormats } from './providers';
 
-interface GrafanaRuleGroupExporterProps {
-  folderUid: string;
-  groupName: string;
+interface GrafanaRulesExporterProps {
   onClose: () => void;
 }
 
-export function GrafanaRuleGroupExporter({ folderUid, groupName, onClose }: GrafanaRuleGroupExporterProps) {
+export function GrafanaRulesExporter({ onClose }: GrafanaRulesExporterProps) {
   const [activeTab, setActiveTab] = useState<ExportFormats>('yaml');
 
   return (
@@ -24,34 +22,22 @@ export function GrafanaRuleGroupExporter({ folderUid, groupName, onClose }: Graf
       onClose={onClose}
       formatProviders={Object.values(allGrafanaExportProviders)}
     >
-      <GrafanaRuleGroupExportPreview
-        folderUid={folderUid}
-        groupName={groupName}
-        exportFormat={activeTab}
-        onClose={onClose}
-      />
+      <GrafanaRulesExportPreview exportFormat={activeTab} onClose={onClose} />
     </GrafanaExportDrawer>
   );
 }
 
-interface GrafanaRuleGroupExportPreviewProps {
-  folderUid: string;
-  groupName: string;
+interface GrafanaRulesExportPreviewProps {
   exportFormat: ExportFormats;
   onClose: () => void;
 }
 
-function GrafanaRuleGroupExportPreview({
-  folderUid,
-  groupName,
-  exportFormat,
-  onClose,
-}: GrafanaRuleGroupExportPreviewProps) {
-  const { currentData: ruleGroupTextDefinition = '', isFetching } = alertRuleApi.useExportRuleGroupQuery({
-    folderUid,
-    groupName,
+function GrafanaRulesExportPreview({ exportFormat, onClose }: GrafanaRulesExportPreviewProps) {
+  const { currentData: rulesDefinition = '', isFetching } = alertRuleApi.useExportRulesQuery({
     format: exportFormat,
   });
+
+  const downloadFileName = `alert-rules-${new Date().getTime()}`;
 
   if (isFetching) {
     return <LoadingPlaceholder text="Loading...." />;
@@ -60,8 +46,8 @@ function GrafanaRuleGroupExportPreview({
   return (
     <FileExportPreview
       format={exportFormat}
-      textDefinition={ruleGroupTextDefinition}
-      downloadFileName={groupName}
+      textDefinition={rulesDefinition}
+      downloadFileName={downloadFileName}
       onClose={onClose}
     />
   );

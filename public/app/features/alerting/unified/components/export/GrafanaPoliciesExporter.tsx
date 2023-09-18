@@ -6,21 +6,18 @@ import { alertRuleApi } from '../../api/alertRuleApi';
 
 import { FileExportPreview } from './FileExportPreview';
 import { GrafanaExportDrawer } from './GrafanaExportDrawer';
-import { allGrafanaExportProviders, ExportFormats } from './providers';
-
-interface GrafanaRuleExportPreviewProps {
-  alertUid: string;
+import { ExportFormats, jsonAndYamlGrafanaExportProviders } from './providers';
+interface GrafanaPoliciesPreviewProps {
   exportFormat: ExportFormats;
   onClose: () => void;
 }
 
-const GrafanaRuleExportPreview = ({ alertUid, exportFormat, onClose }: GrafanaRuleExportPreviewProps) => {
-  const { currentData: ruleTextDefinition = '', isFetching } = alertRuleApi.useExportRuleQuery({
-    uid: alertUid,
+const GrafanaPoliciesExporterPreview = ({ exportFormat, onClose }: GrafanaPoliciesPreviewProps) => {
+  const { currentData: policiesDefinition = '', isFetching } = alertRuleApi.useExportPoliciesQuery({
     format: exportFormat,
   });
 
-  const downloadFileName = `${alertUid}-${new Date().getTime()}`;
+  const downloadFileName = `policies-${new Date().getTime()}`;
 
   if (isFetching) {
     return <LoadingPlaceholder text="Loading...." />;
@@ -29,19 +26,18 @@ const GrafanaRuleExportPreview = ({ alertUid, exportFormat, onClose }: GrafanaRu
   return (
     <FileExportPreview
       format={exportFormat}
-      textDefinition={ruleTextDefinition}
+      textDefinition={policiesDefinition}
       downloadFileName={downloadFileName}
       onClose={onClose}
     />
   );
 };
 
-interface GrafanaRulerExporterProps {
+interface GrafanaPoliciesExporterProps {
   onClose: () => void;
-  alertUid: string;
 }
 
-export const GrafanaRuleExporter = ({ onClose, alertUid }: GrafanaRulerExporterProps) => {
+export const GrafanaPoliciesExporter = ({ onClose }: GrafanaPoliciesExporterProps) => {
   const [activeTab, setActiveTab] = useState<ExportFormats>('yaml');
 
   return (
@@ -49,9 +45,9 @@ export const GrafanaRuleExporter = ({ onClose, alertUid }: GrafanaRulerExporterP
       activeTab={activeTab}
       onTabChange={setActiveTab}
       onClose={onClose}
-      formatProviders={Object.values(allGrafanaExportProviders)}
+      formatProviders={jsonAndYamlGrafanaExportProviders}
     >
-      <GrafanaRuleExportPreview alertUid={alertUid} exportFormat={activeTab} onClose={onClose} />
+      <GrafanaPoliciesExporterPreview exportFormat={activeTab} onClose={onClose} />
     </GrafanaExportDrawer>
   );
 };

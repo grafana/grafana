@@ -6,21 +6,21 @@ import { alertRuleApi } from '../../api/alertRuleApi';
 
 import { FileExportPreview } from './FileExportPreview';
 import { GrafanaExportDrawer } from './GrafanaExportDrawer';
-import { allGrafanaExportProviders, ExportFormats } from './providers';
+import { ExportFormats, jsonAndYamlGrafanaExportProviders } from './providers';
 
-interface GrafanaRuleExportPreviewProps {
-  alertUid: string;
+interface GrafanaReceiversExportPreviewProps {
   exportFormat: ExportFormats;
   onClose: () => void;
+  decrypt: boolean;
 }
 
-const GrafanaRuleExportPreview = ({ alertUid, exportFormat, onClose }: GrafanaRuleExportPreviewProps) => {
-  const { currentData: ruleTextDefinition = '', isFetching } = alertRuleApi.useExportRuleQuery({
-    uid: alertUid,
+const GrafanaReceiversExportPreview = ({ decrypt, exportFormat, onClose }: GrafanaReceiversExportPreviewProps) => {
+  const { currentData: receiverDefinition = '', isFetching } = alertRuleApi.useExportReceiversQuery({
+    decrypt: decrypt,
     format: exportFormat,
   });
 
-  const downloadFileName = `${alertUid}-${new Date().getTime()}`;
+  const downloadFileName = `contact-points-${new Date().getTime()}`;
 
   if (isFetching) {
     return <LoadingPlaceholder text="Loading...." />;
@@ -29,19 +29,19 @@ const GrafanaRuleExportPreview = ({ alertUid, exportFormat, onClose }: GrafanaRu
   return (
     <FileExportPreview
       format={exportFormat}
-      textDefinition={ruleTextDefinition}
+      textDefinition={receiverDefinition}
       downloadFileName={downloadFileName}
       onClose={onClose}
     />
   );
 };
 
-interface GrafanaRulerExporterProps {
+interface GrafanaReceiversExporterProps {
   onClose: () => void;
-  alertUid: string;
+  decrypt: boolean;
 }
 
-export const GrafanaRuleExporter = ({ onClose, alertUid }: GrafanaRulerExporterProps) => {
+export const GrafanaReceiversExporter = ({ onClose, decrypt }: GrafanaReceiversExporterProps) => {
   const [activeTab, setActiveTab] = useState<ExportFormats>('yaml');
 
   return (
@@ -49,9 +49,9 @@ export const GrafanaRuleExporter = ({ onClose, alertUid }: GrafanaRulerExporterP
       activeTab={activeTab}
       onTabChange={setActiveTab}
       onClose={onClose}
-      formatProviders={Object.values(allGrafanaExportProviders)}
+      formatProviders={jsonAndYamlGrafanaExportProviders}
     >
-      <GrafanaRuleExportPreview alertUid={alertUid} exportFormat={activeTab} onClose={onClose} />
+      <GrafanaReceiversExportPreview decrypt={decrypt} exportFormat={activeTab} onClose={onClose} />
     </GrafanaExportDrawer>
   );
 };
