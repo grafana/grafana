@@ -31,8 +31,7 @@ export function getGrafanaEvalSuccessVsFailuresScene(
   });
 
   return new SceneFlexItem({
-    width: 'calc(50% - 4px)',
-    height: 300,
+    minHeight: 300,
     body: PanelBuilders.timeseries()
       .setTitle(panelTitle)
       .setData(query)
