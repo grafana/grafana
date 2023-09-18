@@ -287,7 +287,7 @@ abstract class DataSourceApi<
   /**
    * Get tag keys for adhoc filters
    */
-  getTagKeys?(options: DataSourceGetTagKeysOptions): Promise<MetricFindValue[]>;
+  getTagKeys?(options?: DataSourceGetTagKeysOptions): Promise<MetricFindValue[]>;
 
   /**
    * Get tag values for adhoc filters
@@ -381,7 +381,7 @@ export interface DataSourceGetTagKeysOptions {
   /**
    * Context time range. New in v10.3
    */
-  timeRange: TimeRange;
+  timeRange?: TimeRange;
 }
 
 /**
@@ -396,7 +396,7 @@ export interface DataSourceGetTagValuesOptions {
   /**
    * Context time range. New in v10.3
    */
-  timeRange: TimeRange;
+  timeRange?: TimeRange;
 }
 
 export interface MetadataInspectorProps<

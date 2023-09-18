@@ -22,21 +22,23 @@ export function ServiceGraphSection({
   onChange: (value: TempoQuery) => void;
 }) {
   const styles = useStyles2(getStyles);
-
   const dsState = useAsync(() => getDS(graphDatasourceUid), [graphDatasourceUid]);
 
   // Check if service graph metrics are being collected. If not, displays a warning
   const [hasKeys, setHasKeys] = useState<boolean | undefined>(undefined);
   useEffect(() => {
     async function fn(ds: PrometheusDatasource) {
-      // Needs rethinkg
-      // const keys = await ds.getTagKeys({
-      //   series: [
-      //     'traces_service_graph_request_server_seconds_sum',
-      //     'traces_service_graph_request_total',
-      //     'traces_service_graph_request_failed_total',
-      //   ],
-      // });
+      const keys = await ds.getTagKeys({
+        filters: [
+          {
+            key: '__name__',
+            operator: '=~',
+            value:
+              'traces_service_graph_request_server_seconds_sum|traces_service_graph_request_total|traces_service_graph_request_failed_total',
+            condition: '',
+          },
+        ],
+      });
       setHasKeys(Boolean(keys.length));
     }
     if (!dsState.loading && dsState.value) {

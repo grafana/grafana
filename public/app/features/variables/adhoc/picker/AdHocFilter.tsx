@@ -60,7 +60,7 @@ export class AdHocFilter extends PureComponent<Props> {
             datasource={this.props.datasource!}
             appendBefore={filters.length > 0 ? <ConditionSegment label="AND" /> : null}
             onCompleted={this.appendFilterToVariable}
-            getTagKeysOptions={this.props.getTagKeysOptions}
+            allFilters={this.props.filters}
           />
         )}
       </div>
@@ -92,6 +92,7 @@ export class AdHocFilter extends PureComponent<Props> {
           onOperatorChange={this.onChange(index, 'operator')}
           onValueChange={this.onChange(index, 'value')}
           getTagKeysOptions={this.props.getTagKeysOptions}
+          allFilters={this.props.filters}
         />
       </React.Fragment>
     );
