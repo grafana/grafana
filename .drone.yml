@@ -439,6 +439,10 @@ steps:
   - go run scripts/modowners/modowners.go check go.mod
   image: golang:1.20.8-alpine
   name: validate-modfile
+- commands:
+  - make validate-api-spec
+  image: golang:1.20.8-alpine
+  name: validate-openapi-spec
 trigger:
   event:
   - pull_request
@@ -1623,6 +1627,10 @@ steps:
   - go run scripts/modowners/modowners.go check go.mod
   image: golang:1.20.8-alpine
   name: validate-modfile
+- commands:
+  - make validate-api-spec
+  image: golang:1.20.8-alpine
+  name: validate-openapi-spec
 - commands:
   - ./bin/build verify-drone
   depends_on:
@@ -4190,6 +4198,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 44164d7ef0702adcdbc3e53cb3fb70641b04af709a0d22ec65d7a6f87d4af4d2
+hmac: 39c2241e7e81d67371069eb07d7e57b5e9890f80edf2129740f1eb16eac6d08c
 
 ...
