@@ -1,6 +1,8 @@
 import { css } from '@emotion/css';
 import React, { useEffect, useState } from 'react';
 
+import { config } from '@grafana/runtime';
+
 import { CloudWatchDatasource } from '../../datasource';
 import { useAccountOptions } from '../../hooks';
 import { DescribeLogGroupsRequest } from '../../resources/types';

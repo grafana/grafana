@@ -8,8 +8,8 @@ import { notifyApp } from 'app/core/actions';
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { dispatch } from 'app/store/store';
 
-import { CloudWatchDatasource } from '../../../datasource';
-import { appendTemplateVariables } from '../../../utils/utils';
+import { CloudWatchDatasource } from '../../datasource';
+import { appendTemplateVariables } from '../../utils/utils';
 
 const MAX_LOG_GROUPS = 20;
 const MAX_VISIBLE_LOG_GROUPS = 4;

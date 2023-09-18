@@ -18,7 +18,7 @@ import {
 // dom also includes Element polyfills
 import { CloudWatchDatasource } from '../datasource';
 import syntax from '../language/cloudwatch-logs/syntax';
-import { CloudWatchJsonData, CloudWatchLogsQuery, CloudWatchQuery } from '../types';
+import { CloudWatchJsonData, CloudWatchLogsQuery, CloudWatchQuery, LogGroup } from '../types';
 import { getStatsGroups } from '../utils/query/getStatsGroups';
 
 import { LogGroupsFieldWrapper } from './LogGroups/LogGroupsField';
