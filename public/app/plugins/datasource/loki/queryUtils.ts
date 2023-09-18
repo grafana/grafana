@@ -20,6 +20,7 @@ import {
   Range,
   formatLokiQuery,
   Logfmt,
+  Json,
 } from '@grafana/lezer-logql';
 import { reportInteraction } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
@@ -200,7 +201,7 @@ export function isQueryWithParser(query: string): { queryWithParser: boolean; pa
 }
 
 export function getParserFromQuery(query: string): string | undefined {
-  const parsers = getNodesFromQuery(query, [LabelParser, JsonExpressionParser]);
+  const parsers = getNodesFromQuery(query, [LabelParser, Json, Logfmt]);
   return parsers.length > 0 ? query.substring(parsers[0].from, parsers[0].to).trim() : undefined;
 }
 
