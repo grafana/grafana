@@ -1,6 +1,5 @@
 import { css } from '@emotion/css';
 import { SyntaxNode } from '@lezer/common';
-import { languages } from 'monaco-editor';
 import React, { useEffect, useRef } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
