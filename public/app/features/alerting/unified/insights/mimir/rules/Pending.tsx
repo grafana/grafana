@@ -18,8 +18,7 @@ export function getPendingCloudAlertsScene(timeRange: SceneTimeRange, datasource
   });
 
   return new SceneFlexItem({
-    width: 'calc(25% - 4px)',
-    height: 300,
+    minHeight: 300,
     body: PanelBuilders.stat()
       .setTitle(panelTitle)
       .setData(query)
