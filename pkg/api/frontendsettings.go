@@ -146,7 +146,6 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		ExternalUserMngLinkName:             setting.ExternalUserMngLinkName,
 		ViewersCanEdit:                      hs.Cfg.ViewersCanEdit,
 		AngularSupportEnabled:               hs.Cfg.AngularSupportEnabled,
-		EditorsCanAdmin:                     hs.Cfg.EditorsCanAdmin,
 		DisableSanitizeHtml:                 hs.Cfg.DisableSanitizeHtml,
 		TrustedTypesDefaultPolicyEnabled:    trustedTypesDefaultPolicyEnabled,
 		CSPReportOnlyEnabled:                hs.Cfg.CSPReportOnlyEnabled,

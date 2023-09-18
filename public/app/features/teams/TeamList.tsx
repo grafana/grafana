@@ -4,7 +4,6 @@ import { LinkButton, FilterInput, VerticalGroup, HorizontalGroup, Pagination, In
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { Page } from 'app/core/components/Page/Page';
 import { fetchRoleOptions } from 'app/core/components/RolePicker/api';
-import { config } from 'app/core/config';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction, Role, StoreState, Team } from 'app/types';
 
@@ -144,8 +143,6 @@ function mapStateToProps(state: StoreState) {
     noTeams: state.teams.noTeams,
     totalPages: state.teams.totalPages,
     hasFetched: state.teams.hasFetched,
-    editorsCanAdmin: config.editorsCanAdmin, // this makes the feature toggle mockable/controllable from tests,
-    signedInUser: contextSrv.user, // this makes the feature toggle mockable/controllable from tests,
   };
 }
 

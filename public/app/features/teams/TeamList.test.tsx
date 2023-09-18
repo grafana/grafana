@@ -3,9 +3,9 @@ import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
 
-import { contextSrv, User } from 'app/core/services/context_srv';
+import { contextSrv } from 'app/core/services/context_srv';
 
-import { OrgRole, Team } from '../../types';
+import { Team } from '../../types';
 
 import { Props, TeamList } from './TeamList';
 import { getMockTeam, getMultipleMockTeams } from './__mocks__/teamMocks';
@@ -53,11 +53,6 @@ describe('TeamList', () => {
         teams: getMultipleMockTeams(1),
         totalCount: 1,
         hasFetched: true,
-        editorsCanAdmin: true,
-        signedInUser: {
-          id: 1,
-          orgRole: OrgRole.Editor,
-        } as User,
       });
 
       expect(screen.getByRole('link', { name: /new team/i })).not.toHaveStyle('pointer-events: none');
@@ -71,11 +66,6 @@ describe('TeamList', () => {
         teams: getMultipleMockTeams(1),
         totalCount: 1,
         hasFetched: true,
-        editorsCanAdmin: true,
-        signedInUser: {
-          id: 1,
-          orgRole: OrgRole.Viewer,
-        } as User,
       });
 
       expect(screen.getByRole('link', { name: /new team/i })).toHaveStyle('pointer-events: none');

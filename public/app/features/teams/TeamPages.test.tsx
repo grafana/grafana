@@ -5,9 +5,8 @@ import { TestProvider } from 'test/helpers/TestProvider';
 
 import { createTheme } from '@grafana/data';
 import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
-import { User } from 'app/core/services/context_srv';
 
-import { OrgRole, Team } from '../../types';
+import { Team } from '../../types';
 
 import { Props, TeamPages } from './TeamPages';
 import { getMockTeam } from './__mocks__/teamMocks';
@@ -90,14 +89,6 @@ const setup = (propOverrides?: object) => {
 };
 
 describe('TeamPages', () => {
-  // TODO how to test this?
-  // it('should render member page if team not empty', async () => {
-  //   setup({
-  //     team: getMockTeam(),
-  //   });
-  //   expect(await screen.findByRole('button', { name: 'Add member' })).toBeInTheDocument();
-  // });
-
   it('should render settings and preferences page', async () => {
     setup({
       team: getMockTeam(),
@@ -119,27 +110,5 @@ describe('TeamPages', () => {
     });
 
     expect(await screen.findByText('Team group sync')).toBeInTheDocument();
-  });
-
-  describe('when feature toggle editorsCanAdmin is turned on', () => {
-    it('should render settings page if user is team admin', async () => {
-      setup({
-        team: getMockTeam(),
-        pageName: 'settings',
-        preferences: {
-          homeDashboardUID: 'home-dashboard',
-          theme: 'Default',
-          timezone: 'Default',
-        },
-        editorsCanAdmin: true,
-        signedInUser: {
-          id: 1,
-          isGrafanaAdmin: false,
-          orgRole: OrgRole.Admin,
-        } as User,
-      });
-
-      expect(await screen.findByText('Team settings')).toBeInTheDocument();
-    });
   });
 });
