@@ -5,7 +5,7 @@ import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { Page } from 'app/core/components/Page/Page';
 import { fetchRoleOptions } from 'app/core/components/RolePicker/api';
 import { config } from 'app/core/config';
-import { contextSrv, User } from 'app/core/services/context_srv';
+import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction, Role, StoreState, Team } from 'app/types';
 
 import { connectWithCleanUp } from '../../core/components/connectWithCleanUp';
@@ -13,7 +13,6 @@ import { connectWithCleanUp } from '../../core/components/connectWithCleanUp';
 import { TeamListRow } from './TeamListRow';
 import { deleteTeam, loadTeams, changePage, changeQuery } from './state/actions';
 import { initialTeamsState } from './state/reducers';
-import { isPermissionTeamAdmin } from './state/selectors';
 
 export interface Props {
   teams: Team[];
@@ -26,8 +25,6 @@ export interface Props {
   deleteTeam: typeof deleteTeam;
   changePage: typeof changePage;
   changeQuery: typeof changeQuery;
-  editorsCanAdmin: boolean;
-  signedInUser: User;
 }
 
 export interface State {
@@ -45,8 +42,6 @@ export const TeamList = ({
   deleteTeam,
   changeQuery,
   changePage,
-  signedInUser,
-  editorsCanAdmin,
 }: Props) => {
   const [roleOptions, setRoleOptions] = useState<Role[]>([]);
 
@@ -110,11 +105,6 @@ export const TeamList = ({
                         team={team}
                         roleOptions={roleOptions}
                         displayRolePicker={displayRolePicker}
-                        isTeamAdmin={isPermissionTeamAdmin({
-                          permission: team.permission,
-                          editorsCanAdmin,
-                          signedInUser,
-                        })}
                         onDelete={deleteTeam}
                       />
                     ))}

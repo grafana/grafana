@@ -29,16 +29,9 @@ const setup = (propOverrides?: object) => {
     page: 1,
     totalPages: 0,
     hasFetched: false,
-    editorsCanAdmin: false,
-    signedInUser: {
-      id: 1,
-      orgRole: OrgRole.Viewer,
-    } as User,
   };
 
   Object.assign(props, propOverrides);
-
-  contextSrv.user = props.signedInUser;
 
   render(
     <TestProvider>
@@ -93,7 +86,7 @@ describe('TeamList', () => {
 it('should call delete team', async () => {
   const mockDelete = jest.fn();
   const mockTeam = getMockTeam();
-  jest.spyOn(contextSrv, 'hasAccessInMetadata').mockReturnValue(true);
+  jest.spyOn(contextSrv, 'hasPermissionInMetadata').mockReturnValue(true);
   setup({ deleteTeam: mockDelete, teams: [mockTeam], totalCount: 1, hasFetched: true });
   await userEvent.click(screen.getByRole('button', { name: `Delete team ${mockTeam.name}` }));
   await userEvent.click(screen.getByRole('button', { name: 'Delete' }));

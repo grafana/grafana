@@ -8,16 +8,15 @@ import { AccessControlAction, Role, Team } from 'app/types';
 type Props = {
   team: Team;
   roleOptions: Role[];
-  isTeamAdmin: boolean;
   displayRolePicker: boolean;
   onDelete: (id: number) => void;
 };
 
-export const TeamListRow = ({ team, roleOptions, isTeamAdmin, displayRolePicker, onDelete }: Props) => {
+export const TeamListRow = ({ team, roleOptions, displayRolePicker, onDelete }: Props) => {
   const teamUrl = `org/teams/edit/${team.id}`;
-  const canDelete = contextSrv.hasAccessInMetadata(AccessControlAction.ActionTeamsDelete, team, isTeamAdmin);
-  const canReadTeam = contextSrv.hasAccessInMetadata(AccessControlAction.ActionTeamsRead, team, isTeamAdmin);
-  const canSeeTeamRoles = contextSrv.hasAccessInMetadata(AccessControlAction.ActionTeamsRolesList, team, false);
+  const canDelete = contextSrv.hasPermissionInMetadata(AccessControlAction.ActionTeamsDelete, team);
+  const canReadTeam = contextSrv.hasPermissionInMetadata(AccessControlAction.ActionTeamsRead, team);
+  const canSeeTeamRoles = contextSrv.hasPermissionInMetadata(AccessControlAction.ActionTeamsRolesList, team);
 
   return (
     <tr key={team.id}>
