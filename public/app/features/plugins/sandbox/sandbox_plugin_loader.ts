@@ -85,6 +85,10 @@ async function doImportPluginModuleInSandbox(meta: PluginMeta): Promise<System.M
           // accessed it directly, aware of this possibility.
           return Reflect.get(window, 'monaco');
         },
+        get Prism() {
+          // Similar to `window.monaco`, window.Prism` may be undefined when invoked.
+          return Reflect.get(window, 'Prism');
+        },
         // Plugins builds use the AMD module system. Their code consists
         // of a single function call to `define()` that internally contains all the plugin code.
         // This is that `define` function the plugin will call.
