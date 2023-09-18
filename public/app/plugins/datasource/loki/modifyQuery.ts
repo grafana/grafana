@@ -3,7 +3,6 @@ import { sortBy } from 'lodash';
 
 import {
   Identifier,
-  JsonExpressionParser,
   LabelFilter,
   LabelParser,
   LineComment,
@@ -17,6 +16,9 @@ import {
   UnwrapExpr,
   String,
   PipelineStage,
+  LogfmtParser,
+  JsonExpressionParser,
+  LogfmtExpressionParser,
 } from '@grafana/lezer-logql';
 
 import { QueryBuilderLabelFilter } from '../prometheus/querybuilder/shared/types';
@@ -301,9 +303,10 @@ function getMatcherInStreamPositions(query: string): NodePosition[] {
 export function getParserPositions(query: string): NodePosition[] {
   const tree = parser.parse(query);
   const positions: NodePosition[] = [];
+  const parserNodeTypes = [LabelParser, JsonExpressionParser, LogfmtParser, LogfmtExpressionParser];
   tree.iterate({
     enter: ({ type, from, to }): false | void => {
-      if (type.id === LabelParser || type.id === JsonExpressionParser) {
+      if (parserNodeTypes.includes(type.id)) {
         positions.push(new NodePosition(from, to, type));
         return false;
       }
