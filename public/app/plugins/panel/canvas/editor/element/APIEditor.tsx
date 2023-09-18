@@ -15,7 +15,7 @@ import { defaultApiConfig } from 'app/features/canvas/elements/button';
 
 import { HttpRequestMethod } from '../../panelcfg.gen';
 
-import { QueryParamsEditor } from './QueryParamsEditor';
+import { ParamsEditor } from './ParamsEditor';
 
 export interface APIEditorConfig {
   method: string;
@@ -225,10 +225,10 @@ export function APIEditor({ value, context, onChange }: Props) {
         </InlineField>
       </InlineFieldRow>
       <Field label="Query parameters">
-        <QueryParamsEditor value={value?.queryParams ?? []} onChange={onQueryParamsChange} />
+        <ParamsEditor value={value?.queryParams ?? []} onChange={onQueryParamsChange} />
       </Field>
       <Field label="Header parameters">
-        <QueryParamsEditor value={value?.headerParams ?? []} onChange={onHeaderParamsChange} />
+        <ParamsEditor value={value?.headerParams ?? []} onChange={onHeaderParamsChange} />
       </Field>
       {value?.method === HttpRequestMethod.POST && (
         <>

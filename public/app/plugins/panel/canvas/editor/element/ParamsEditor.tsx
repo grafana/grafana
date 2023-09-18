@@ -7,7 +7,7 @@ interface Props {
   value: Array<[string, string]>;
 }
 
-export const QueryParamsEditor = ({ value, onChange }: Props) => {
+export const ParamsEditor = ({ value, onChange }: Props) => {
   const [paramName, setParamName] = useState('');
   const [paramValue, setParamValue] = useState('');
 
