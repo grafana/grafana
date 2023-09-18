@@ -231,6 +231,7 @@ def validate_openapi_spec_step():
         "name": "validate-openapi-spec",
         "image": images["go"],
         "commands": [
+            "apk add --update make",
             "make validate-api-spec",
         ],
     }

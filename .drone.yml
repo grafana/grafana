@@ -440,6 +440,7 @@ steps:
   image: golang:1.20.8-alpine
   name: validate-modfile
 - commands:
+  - apk add --update make
   - make validate-api-spec
   image: golang:1.20.8-alpine
   name: validate-openapi-spec
@@ -1628,6 +1629,7 @@ steps:
   image: golang:1.20.8-alpine
   name: validate-modfile
 - commands:
+  - apk add --update make
   - make validate-api-spec
   image: golang:1.20.8-alpine
   name: validate-openapi-spec
@@ -4198,6 +4200,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 39c2241e7e81d67371069eb07d7e57b5e9890f80edf2129740f1eb16eac6d08c
+hmac: ee4c1b407f4a0d0715348037a9ca0c8d953d888eefb291f9ad1fbfb30cc3a583
 
 ...
