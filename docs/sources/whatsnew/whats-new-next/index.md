@@ -17,6 +17,17 @@ weight: -37
 
 Welcome to Grafana Cloud! Read on to learn about the newest changes to Grafana Cloud.
 
+## Log Aggregation for Datadog data source
+
+<!-- Taewoo Kim -->
+<!-- OSS, Enterprise -->
+
+_Generally available in Grafana Cloud_
+
+The Datadoug data source now supports Log Aggregation. This feature helps aggregating logs/events into buckets and compute metrics and timeseries. [Datadog Log Aggregation](/docs/plugins/grafana-datadog-datasource/latest#logs-analytics--aggregation).
+
+{{< video-embed src="/media/docs/datadog/datadog-log-aggregation.mp4" >}}
+
 ## Query-type template variables for Tempo data source
 
 <!-- Fabrizio Casati -->
