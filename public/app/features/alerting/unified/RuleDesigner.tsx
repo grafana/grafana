@@ -11,7 +11,7 @@ import { RuleIdentifier, RuleWithLocation } from '../../../types/unified-alertin
 import { RulerRuleDTO } from '../../../types/unified-alerting-dto';
 
 import { AlertingPageWrapper } from './components/AlertingPageWrapper';
-import { GrafanaRuleDesigner } from './components/rule-editor/GrafanaRuleDesigner';
+import { ModifyExportRuleForm } from './components/rule-editor/ModifyExportRuleForm';
 import { fetchEditableRuleAction } from './state/actions';
 import { RuleFormValues } from './types/rule-form';
 import { rulerRuleToFormValues } from './utils/rule-form';
@@ -72,7 +72,7 @@ export default function RuleDesigner({ match }: RuleDesignerProps) {
   return (
     <AlertingPageWrapper isLoading={loading} pageId="alert-list" pageNav={{ text: 'Rule Designer' }}>
       {alertRule && isGrafanaRulerRule(alertRule.rule) && (
-        <GrafanaRuleDesigner ruleForm={alertRule ? formValuesFromExistingRule(alertRule) : undefined} />
+        <ModifyExportRuleForm ruleForm={alertRule ? formValuesFromExistingRule(alertRule) : undefined} />
       )}
     </AlertingPageWrapper>
   );

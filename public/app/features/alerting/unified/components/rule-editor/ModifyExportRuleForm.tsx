@@ -16,14 +16,14 @@ import { GrafanaEvaluationBehavior } from './GrafanaEvaluationBehavior';
 import { NotificationsStep } from './NotificationsStep';
 import { QueryAndExpressionsStep } from './query-and-alert-condition/QueryAndExpressionsStep';
 
-interface GrafanaRuleDesignerFormProps {
+interface ModifyExportRuleFormProps {
   alertUid?: string;
   ruleForm?: RuleFormValues;
 }
 
 type RuleDesignExportMode = 'rule' | 'group';
 
-export function GrafanaRuleDesigner({ ruleForm, alertUid }: GrafanaRuleDesignerFormProps) {
+export function ModifyExportRuleForm({ ruleForm, alertUid }: ModifyExportRuleFormProps) {
   const formAPI = useForm<RuleFormValues>({
     mode: 'onSubmit',
     defaultValues: ruleForm,
