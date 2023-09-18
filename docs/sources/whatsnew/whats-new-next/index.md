@@ -17,6 +17,19 @@ weight: -37
 
 Welcome to Grafana Cloud! Read on to learn about the newest changes to Grafana Cloud.
 
+## API throttling for Datadog data source
+
+<!-- Taewoo Kim -->
+<!-- OSS, Enterprise -->
+
+_Generally available in Grafana Cloud_
+
+The Datadog data source supports blocking API requests based on upstream rate limits (for metric queries). With this update, you can set a rate limit percentage at which the plugin stops sending queries.
+
+To learn more, refer to [Datadog data source settings](/docs/plugins/grafana-datadog-datasource/latest#configure-the-data-source), as well as the following video demo.
+
+{{< video-embed src="/media/docs/datadog/datadog-rate-limit.mp4" >}}
+
 ## Query-type template variables for Tempo data source
 
 <!-- Fabrizio Casati -->
