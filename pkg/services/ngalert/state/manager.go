@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/url"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/benbjohnson/clock"
@@ -22,6 +23,7 @@ import (
 
 var (
 	ResendDelay = 30 * time.Second
+	JPsFF       = true
 )
 
 // AlertInstanceManager defines the interface for querying the current alert instances.
@@ -47,6 +49,9 @@ type Manager struct {
 	doNotSaveNormalState           bool
 	maxStateSaveConcurrency        int
 	applyNoDataAndErrorToAllStates bool
+
+	stateRunnerShutdown chan interface{}
+	stateRunnerWG       sync.WaitGroup
 }
 
 type ManagerCfg struct {
@@ -90,13 +95,65 @@ func NewManager(cfg ManagerCfg) *Manager {
 		maxStateSaveConcurrency:        cfg.MaxStateSaveConcurrency,
 		applyNoDataAndErrorToAllStates: cfg.ApplyNoDataAndErrorToAllStates,
 		tracer:                         cfg.Tracer,
+		stateRunnerShutdown:            make(chan interface{}, 1),
 	}
 
-	if m.applyNoDataAndErrorToAllStates {
-		m.log.Info("Running in alternative execution of Error/NoData mode")
+	if JPsFF {
+		m.startSync(context.TODO())
 	}
-
 	return m
+}
+
+func (st *Manager) startSync(ctx context.Context) {
+	st.stateRunnerWG.Add(1)
+	go func(ctx context.Context) {
+		ticker := st.clock.Ticker(time.Minute * 5)
+	infLoop:
+		for {
+			select {
+			case <-ticker.C:
+				if err := st.fullSync(ctx); err != nil {
+					st.log.Error("Failed to do a full state sync to database", "err", err)
+				}
+			case <-st.stateRunnerShutdown:
+				shutdownCtx, cancel := context.WithTimeout(context.Background(), time.Second*30)
+				if err := st.fullSync(shutdownCtx); err != nil {
+					st.log.Error("Failed to do a full state sync to database", "err", err)
+				}
+				cancel()
+				ticker.Stop()
+				break infLoop
+			}
+		}
+		st.log.Info("State sync shut down")
+		st.stateRunnerWG.Done()
+	}(ctx)
+}
+
+func (st *Manager) fullSync(ctx context.Context) error {
+	var instances []ngModels.AlertInstance
+	for _, rule := range st.cache.states {
+		for _, ruleState := range rule {
+			for _, s := range ruleState.states {
+				key, err := s.GetAlertInstanceKey()
+				if err != nil {
+					st.log.Warn("Failed to get alert instance key during full sync, skipping instance", "err", err)
+					continue
+				}
+				instance := ngModels.AlertInstance{
+					AlertInstanceKey:  key,
+					Labels:            ngModels.InstanceLabels(s.Labels),
+					CurrentState:      ngModels.InstanceStateType(s.State.String()),
+					CurrentReason:     s.StateReason,
+					LastEvalTime:      s.LastEvaluationTime,
+					CurrentStateSince: s.StartsAt,
+					CurrentStateEnd:   s.EndsAt,
+				}
+				instances = append(instances, instance)
+			}
+		}
+	}
+	return st.instanceStore.FullSync(ctx, instances)
 }
 
 func (st *Manager) Warm(ctx context.Context, rulesReader RuleReader) {
@@ -279,16 +336,18 @@ func (st *Manager) ProcessEvalResults(ctx context.Context, evaluatedAt time.Time
 	))
 
 	staleStates := st.deleteStaleStatesFromCache(ctx, logger, evaluatedAt, alertRule)
-	st.deleteAlertStates(tracingCtx, logger, staleStates)
 
-	if len(staleStates) > 0 {
-		span.AddEvent("deleted stale states", trace.WithAttributes(
-			attribute.Int64("state_transitions", int64(len(staleStates))),
-		))
+	if !JPsFF {
+		st.deleteAlertStates(tracingCtx, logger, staleStates)
+		if len(staleStates) > 0 {
+			span.AddEvent("deleted stale states", trace.WithAttributes(
+				attribute.Int64("state_transitions", int64(len(staleStates))),
+			))
+		}
+
+		st.saveAlertStates(tracingCtx, logger, states...)
+		span.AddEvent("updated database")
 	}
-
-	st.saveAlertStates(tracingCtx, logger, states...)
-	span.AddEvent("updated database")
 
 	allChanges := append(states, staleStates...)
 	if st.historian != nil {
