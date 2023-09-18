@@ -64,13 +64,12 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 	})
 
 	if err != nil {
-		// Convert the errutil.Base to a errutil.Error
 		if errors.Is(err, plugins.ErrMethodNotImplemented) {
-			return nil, plugins.ErrMethodNotImplemented.Errorf("%w", plugins.ErrMethodNotImplemented)
+			return nil, err
 		}
 
 		if errors.Is(err, plugins.ErrPluginUnavailable) {
-			return nil, plugins.ErrPluginUnavailable.Errorf("%w", plugins.ErrPluginUnavailable)
+			return nil, err
 		}
 
 		return nil, plugins.ErrPluginDownstreamError.Errorf("client: failed to query data: %w", err)
