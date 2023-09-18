@@ -24,7 +24,7 @@ Welcome to Grafana Cloud! Read on to learn about the newest changes to Grafana C
 
 _Generally available in Grafana Cloud_
 
-The Datadoug data source now supports Log Aggregation. This feature helps aggregating logs/events into buckets and compute metrics and timeseries. [Datadog Log Aggregation](/docs/plugins/grafana-datadog-datasource/latest#logs-analytics--aggregation).
+The Datadog data source now supports log aggregation. This feature helps aggregate logs/events into buckets and compute metrics and time series. For more information, refer to [Datadog log aggregation](/docs/plugins/grafana-datadog-datasource/latest#logs-analytics--aggregation).
 
 {{< video-embed src="/media/docs/datadog/datadog-log-aggregation.mp4" >}}
 
