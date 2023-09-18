@@ -428,7 +428,8 @@ def update_package_json_version():
         ],
         "commands": [
             "apk add --update jq",
-            "new_version=$(cat package.json | jq .version | sed 's/pre/$DRONE_BUILD_NUMBER-pre/g')",
+            "new_version=$(cat package.json | jq .version | sed s/pre/$DRONE_BUILD_NUMBER-pre/g)",
+            "echo \"New version: $new_version\"",
             "yarn run lerna version $new_version --exact --no-git-tag-version --no-push --force-publish -y",
         ],
     }
