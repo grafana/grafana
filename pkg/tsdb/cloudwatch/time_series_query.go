@@ -88,8 +88,7 @@ func (e *cloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, logger 
 				return err
 			}
 
-			// fetch dimension values for wildcards
-			requestQueries, err := e.getDimensionValues(ectx, client, region, requestQueries)
+			requestQueries, err := e.getDimensionValuesForWildcards(ectx, client, region, requestQueries)
 			if err != nil {
 				return err
 			}

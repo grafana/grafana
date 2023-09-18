@@ -10,7 +10,7 @@ import (
 )
 
 // getDimensionValues gets the actual dimension values for dimensions with a wildcard
-func (e *cloudWatchExecutor) getDimensionValues(ctx context.Context, client models.CloudWatchMetricsAPIProvider, region string, queries []*models.CloudWatchQuery) ([]*models.CloudWatchQuery, error) {
+func (e *cloudWatchExecutor) getDimensionValuesForWildcards(ctx context.Context, client models.CloudWatchMetricsAPIProvider, region string, queries []*models.CloudWatchQuery) ([]*models.CloudWatchQuery, error) {
 	metricsClient := clients.NewMetricsClient(client, e.cfg)
 	service := services.NewListMetricsService(metricsClient)
 

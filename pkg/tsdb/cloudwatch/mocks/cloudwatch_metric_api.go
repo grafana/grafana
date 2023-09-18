@@ -53,7 +53,7 @@ type MetricsAPI struct {
 	cloudwatchiface.CloudWatchAPI
 	mock.Mock
 
-	Metrics        []*cloudwatch.Metric
+	Metrics []*cloudwatch.Metric
 }
 
 func (m *MetricsAPI) GetMetricDataWithContext(ctx aws.Context, input *cloudwatch.GetMetricDataInput, opts ...request.Option) (*cloudwatch.GetMetricDataOutput, error) {
@@ -65,7 +65,7 @@ func (m *MetricsAPI) GetMetricDataWithContext(ctx aws.Context, input *cloudwatch
 func (m *MetricsAPI) ListMetricsPages(input *cloudwatch.ListMetricsInput, fn func(*cloudwatch.ListMetricsOutput, bool) bool) error {
 	fn(&cloudwatch.ListMetricsOutput{
 		Metrics: m.Metrics,
-	}, false)
+	}, true)
 
 	return m.Called().Error(0)
 }
