@@ -115,14 +115,7 @@ export function createSpanLinkFactory({
 /**
  * Default keys to use when there are no configured tags.
  */
-const defaultKeys = [
-  'cluster',
-  'hostname',
-  'namespace',
-  'pod',
-  'service.name',
-  'service.namespace',
-].map((k) => ({
+const defaultKeys = ['cluster', 'hostname', 'namespace', 'pod', 'service.name', 'service.namespace'].map((k) => ({
   key: k,
   value: k.includes('.') ? k.replace('.', '_') : undefined,
 }));
