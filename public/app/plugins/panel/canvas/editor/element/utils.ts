@@ -1,8 +1,8 @@
 import { AppEvents } from '@grafana/data';
 import { BackendSrvRequest, getBackendSrv, getTemplateSrv } from '@grafana/runtime';
 import { appEvents } from 'app/core/core';
+import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 
-import { getDashboardSrv } from '../../../../../features/dashboard/services/DashboardSrv';
 import { HttpRequestMethod } from '../../panelcfg.gen';
 
 import { APIEditorConfig } from './APIEditor';
