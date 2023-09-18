@@ -51,7 +51,7 @@ describe('EventBus', () => {
     it('can add sources to the source path', () => {
       const bus = new EventBusSrv();
       const busWithSource = bus.newScopedBus('foo');
-      expect((busWithSource as any).path).toEqual(['foo']);
+      expect(busWithSource.path).toEqual(['foo']);
     });
 
     it('adds the source to the event payload', () => {

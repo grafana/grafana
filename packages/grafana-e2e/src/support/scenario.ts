@@ -23,7 +23,10 @@ export const e2eScenario = ({
     if (skipScenario) {
       it.skip(itName, () => scenario());
     } else {
-      before(() => e2e.flows.login(e2e.env('USERNAME'), e2e.env('PASSWORD'), loginViaApi));
+      before(() => {
+        e2e.flows.login(e2e.env('USERNAME'), e2e.env('PASSWORD'), loginViaApi);
+        e2e.flows.setDefaultUserPreferences();
+      });
 
       beforeEach(() => {
         Cypress.Cookies.preserveOnce('grafana_session');

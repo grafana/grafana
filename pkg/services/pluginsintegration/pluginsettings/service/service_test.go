@@ -30,7 +30,7 @@ func TestService_DecryptedValuesCache(t *testing.T) {
 
 		ps := pluginsettings.DTO{
 			ID:             1,
-			JSONData:       map[string]interface{}{},
+			JSONData:       map[string]any{},
 			SecureJSONData: encryptedJsonData,
 		}
 
@@ -68,7 +68,7 @@ func TestService_DecryptedValuesCache(t *testing.T) {
 
 		ps := pluginsettings.DTO{
 			ID:             1,
-			JSONData:       map[string]interface{}{},
+			JSONData:       map[string]any{},
 			SecureJSONData: encryptedJsonData,
 		}
 
@@ -110,7 +110,7 @@ func TestIntegrationPluginSettings(t *testing.T) {
 			PluginId: "existing",
 			Enabled:  false,
 			Pinned:   false,
-			JsonData: map[string]interface{}{
+			JsonData: map[string]any{
 				"key": "value",
 			},
 			SecureJsonData: secureJsonData,
@@ -177,7 +177,7 @@ func TestIntegrationPluginSettings(t *testing.T) {
 				PluginID:      existing.PluginId,
 				Enabled:       true,
 				PluginVersion: "1.0.1",
-				JSONData: map[string]interface{}{
+				JSONData: map[string]any{
 					"key2": "value2",
 				},
 				SecureJSONData: map[string]string{
@@ -235,7 +235,7 @@ func TestIntegrationPluginSettings(t *testing.T) {
 				Enabled:       true,
 				OrgID:         1,
 				PluginVersion: "1.0.0",
-				JSONData: map[string]interface{}{
+				JSONData: map[string]any{
 					"key": "value",
 				},
 				SecureJSONData: map[string]string{

@@ -43,15 +43,19 @@ const (
 )
 
 var (
-	errCantAuthenticateReq = errutil.NewBase(errutil.StatusUnauthorized, "auth.unauthorized")
-	errDisabledIdentity    = errutil.NewBase(errutil.StatusUnauthorized, "identity.disabled")
+	errCantAuthenticateReq = errutil.Unauthorized("auth.unauthorized")
+	errDisabledIdentity    = errutil.Unauthorized("identity.disabled")
 )
 
 // make sure service implements authn.Service interface
-var _ authn.Service = new(Service)
+func ProvideAuthnService(s *Service) authn.Service {
+	return s
+}
 
 // make sure service implements authn.IdentitySynchronizer interface
-var _ authn.IdentitySynchronizer = new(Service)
+func ProvideIdentitySynchronizer(s *Service) authn.IdentitySynchronizer {
+	return s
+}
 
 func ProvideService(
 	cfg *setting.Cfg, tracer tracing.Tracer,
@@ -97,7 +101,7 @@ func ProvideService(
 	var proxyClients []authn.ProxyClient
 	var passwordClients []authn.PasswordClient
 	if s.cfg.LDAPAuthEnabled {
-		ldap := clients.ProvideLDAP(cfg, ldapService)
+		ldap := clients.ProvideLDAP(cfg, ldapService, userService, authInfoService)
 		proxyClients = append(proxyClients, ldap)
 		passwordClients = append(passwordClients, ldap)
 	}

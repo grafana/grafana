@@ -26,7 +26,10 @@
   "browse-dashboards": {
     "action": {
       "cancel-button": "Cancel",
+      "cannot-move-folders": "Folders can not be moved",
       "delete-button": "Delete",
+      "delete-modal-invalid-text": "One or more folders contain library panels or alert rules. Delete these first in order to proceed.",
+      "delete-modal-invalid-title": "Cannot delete folder",
       "delete-modal-text": "This action will delete the following content:",
       "delete-modal-title": "Delete",
       "deleting": "Deleting...",
@@ -132,18 +135,18 @@
       "widget": "Widget"
     },
     "empty": {
-      "add-import-body": "Import visualizations that are shared with other dashboards.",
-      "add-import-button": "Import library panel",
-      "add-import-header": "Import panel",
-      "add-row-body": "Group your visualizations into expandable sections.",
-      "add-row-button": "Add row",
-      "add-row-header": "Add a row",
+      "add-library-panel-body": "Add visualizations that are shared with other dashboards.",
+      "add-library-panel-button": "Add library panel",
+      "add-library-panel-header": "Add a library panel",
       "add-visualization-body": "Select a data source and then query and visualize your data with charts, stats and tables or create lists, markdowns and other widgets.",
       "add-visualization-button": "Add visualization",
       "add-visualization-header": "Start your new dashboard by adding a visualization",
       "add-widget-body": "Create lists, markdowns and other widgets",
       "add-widget-button": "Add widget",
-      "add-widget-header": "Add a widget"
+      "add-widget-header": "Add a widget",
+      "import-a-dashboard-body": "Import dashboard from file or <1>grafana.com</1>.",
+      "import-a-dashboard-header": "Import a dashboard",
+      "import-dashboard-button": "Import dashboard"
     },
     "inspect": {
       "data-tab": "Data",
@@ -221,6 +224,9 @@
     "loading": "Loading folders..."
   },
   "grafana-ui": {
+    "modal": {
+      "close-tooltip": "Close"
+    },
     "segment-async": {
       "error": "Failed to load options",
       "loading": "Loading options...",
@@ -230,6 +236,46 @@
       "no-options-label": "No options found",
       "placeholder": "Choose"
     }
+  },
+  "help-modal": {
+    "shortcuts-category": {
+      "dashboard": "Dashboard",
+      "focused-panel": "Focused Panel",
+      "global": "Global",
+      "time-range": "Time Range"
+    },
+    "shortcuts-description": {
+      "change-theme": "Change theme",
+      "collapse-all-rows": "Collapse all rows",
+      "dashboard-settings": "Dashboard settings",
+      "duplicate-panel": "Duplicate Panel",
+      "exit-edit/setting-views": "Exit edit/setting views",
+      "expand-all-rows": "Expand all rows",
+      "go-to-dashboards": "Go to Dashboards",
+      "go-to-explore": "Go to Explore",
+      "go-to-home-dashboard": "Go to Home Dashboard",
+      "go-to-profile": "Go to Profile",
+      "make-time-range-permanent": "Make time range absolute/permanent",
+      "move-time-range-back": "Move time range back",
+      "move-time-range-forward": "Move time range forward",
+      "open-search": "Open search",
+      "open-shared-modal": "Open Panel Share Modal",
+      "refresh-all-panels": "Refresh all panels",
+      "remove-panel": "Remove Panel",
+      "save-dashboard": "Save dashboard",
+      "show-all-shortcuts": "Show all keyboard shortcuts",
+      "toggle-active-mode": "Toggle in-active / view mode",
+      "toggle-all-panel-legends": "Toggle all panel legends",
+      "toggle-auto-fit": "Toggle auto fit panels (experimental feature)",
+      "toggle-exemplars": "Toggle exemplars in all panel",
+      "toggle-graph-crosshair": "Toggle shared graph crosshair",
+      "toggle-kiosk": "Toggle kiosk mode (hides top nav)",
+      "toggle-panel-edit": "Toggle panel edit view",
+      "toggle-panel-fullscreen": "Toggle panel fullscreen view",
+      "toggle-panel-legend": "Toggle panel legend",
+      "zoom-out-time-range": "Zoom out time range"
+    },
+    "title": "Shortcuts"
   },
   "library-panel": {
     "add-modal": {
@@ -562,6 +608,50 @@
       "view": "View"
     }
   },
+  "playlist-edit": {
+    "error-prefix": "Error loading playlist:",
+    "form": {
+      "add-tag-label": "Add by tag",
+      "add-tag-placeholder": "Select a tag",
+      "add-title-label": "Add by title",
+      "cancel": "Cancel",
+      "heading": "Add dashboards",
+      "interval-label": "Interval",
+      "interval-placeholder": "5m",
+      "interval-required": "Interval is required",
+      "name-label": "Name",
+      "name-placeholder": "Name",
+      "name-required": "Name is required",
+      "save": "Save",
+      "table-delete": "Delete playlist item",
+      "table-drag": "Drag and drop to reorder",
+      "table-empty": "Playlist is empty. Add dashboards below.",
+      "table-heading": "Dashboards"
+    },
+    "sub-title": "A playlist rotates through a pre-selected list of dashboards. A playlist can be a great way to build situational awareness, or just show off your metrics to your team or visitors.",
+    "title": "Edit playlist"
+  },
+  "playlist-page": {
+    "card": {
+      "delete": "Delete playlist",
+      "edit": "Edit playlist",
+      "start": "Start playlist",
+      "tooltip": "Share playlist"
+    },
+    "create-button": {
+      "title": "New playlist"
+    },
+    "delete-modal": {
+      "body": "Are you sure you want to delete {{name}} playlist?",
+      "confirm-text": "Delete"
+    },
+    "empty": {
+      "button": "Create Playlist",
+      "pro-tip": "You can use playlists to cycle dashboards on TVs without user control",
+      "pro-tip-link-title": "Learn more",
+      "title": "There are no playlists created yet"
+    }
+  },
   "refresh-picker": {
     "aria-label": {
       "choose-interval": "Auto refresh turned off. Choose refresh time interval",
@@ -655,7 +745,7 @@
       "info-text": "Create a direct link to this dashboard or panel, customized with the options below.",
       "link-url": "Link URL",
       "render-alert": "Image renderer plugin not installed",
-      "render-instructions": "To render a panel image, you must install the&nbsp;<1>Grafana image renderer plugin</1>. Please contact your Grafana administrator to install the plugin.",
+      "render-instructions": "To render a panel image, you must install the <1>Grafana image renderer plugin</1>. Please contact your Grafana administrator to install the plugin.",
       "rendered-image": "Direct link rendered image",
       "save-alert": "Dashboard is not saved",
       "save-dashboard": "To render a panel image, you must save the dashboard first.",
@@ -701,6 +791,17 @@
     "view-json": {
       "copy-button": "Copy to Clipboard"
     }
+  },
+  "share-playlist": {
+    "checkbox-description": "Panel heights will be adjusted to fit screen size",
+    "checkbox-label": "Autofit",
+    "copy-link-button": "Copy",
+    "link-url-label": "Link URL",
+    "mode": "Mode",
+    "mode-kiosk": "Kiosk",
+    "mode-normal": "Normal",
+    "mode-tv": "TV",
+    "title": "Share playlist"
   },
   "shared": {
     "preferences": {

@@ -142,7 +142,7 @@
     "@types/d3": "7.4.0",
     "@types/hoist-non-react-statics": "3.3.1",
     "@types/is-hotkey": "0.1.7",
-    "@types/jest": "29.2.3",
+    "@types/jest": "29.5.4",
     "@types/jquery": "3.5.16",
     "@types/lodash": "4.14.195",
     "@types/mock-raf": "1.0.3",

@@ -14,15 +14,12 @@ import {
   PluginType,
   CoreApp,
 } from '@grafana/data';
-import {
-  BackendDataSourceResponse,
-  FetchResponse,
-  setBackendSrv,
-  setDataSourceSrv,
-  TemplateSrv,
-} from '@grafana/runtime';
+import { BackendDataSourceResponse, FetchResponse, setBackendSrv, setDataSourceSrv } from '@grafana/runtime';
 import { BarGaugeDisplayMode, TableCellDisplayMode } from '@grafana/schema';
+import { TemplateSrv } from 'app/features/templating/template_srv';
 
+import { TempoVariableQueryType } from './VariableQueryEditor';
+import { TraceqlSearchScope } from './dataquery.gen';
 import {
   DEFAULT_LIMIT,
   TempoDatasource,
@@ -36,6 +33,7 @@ import {
 } from './datasource';
 import mockJson from './mockJsonResponse.json';
 import mockServiceGraph from './mockServiceGraph.json';
+import { createMetadataRequest, createTempoDatasource } from './mocks';
 import { TempoJsonData, TempoQuery } from './types';
 
 let mockObservable: () => Observable<any>;
@@ -265,6 +263,18 @@ describe('Tempo data source', () => {
       maxDuration: duration,
       limit: 10,
     });
+  });
+
+  it('should format metrics summary query correctly', () => {
+    const ds = new TempoDatasource(defaultSettings, {} as TemplateSrv);
+    const queryGroupBy = [
+      { id: '1', scope: TraceqlSearchScope.Unscoped, tag: 'component' },
+      { id: '2', scope: TraceqlSearchScope.Span, tag: 'name' },
+      { id: '3', scope: TraceqlSearchScope.Resource, tag: 'service.name' },
+      { id: '4', scope: TraceqlSearchScope.Intrinsic, tag: 'kind' },
+    ];
+    const groupBy = ds.formatGroupBy(queryGroupBy);
+    expect(groupBy).toEqual('.component, span.name, resource.service.name, kind');
   });
 
   it('should include a default limit', () => {
@@ -685,6 +695,87 @@ describe('Tempo service graph view', () => {
     expect(fieldConfig).toStrictEqual(resultObj);
   });
 
+  it('should get field config correctly when namespaces are present', () => {
+    let datasourceUid = 's4Jvz8Qnk';
+    let tempoDatasourceUid = 'EbPO1fYnz';
+    let targetField = '__data.fields.targetName';
+    let tempoField = '__data.fields.target';
+    let sourceField = '__data.fields.sourceName';
+    let namespaceFields = {
+      targetNamespace: '__data.fields.targetNamespace',
+      sourceNamespace: '__data.fields.sourceNamespace',
+    };
+
+    let fieldConfig = getFieldConfig(
+      datasourceUid,
+      tempoDatasourceUid,
+      targetField,
+      tempoField,
+      sourceField,
+      namespaceFields
+    );
+
+    let resultObj = {
+      links: [
+        {
+          url: '',
+          title: 'Request rate',
+          internal: {
+            query: {
+              expr: 'sum by (client, server, server_service_namespace, client_service_namespace)(rate(traces_service_graph_request_total{client="${__data.fields.sourceName}",client_service_namespace="${__data.fields.sourceNamespace}",server="${__data.fields.targetName}",server_service_namespace="${__data.fields.targetNamespace}"}[$__rate_interval]))',
+              range: true,
+              exemplar: true,
+              instant: false,
+            },
+            datasourceUid: 's4Jvz8Qnk',
+            datasourceName: '',
+          },
+        },
+        {
+          url: '',
+          title: 'Request histogram',
+          internal: {
+            query: {
+              expr: 'histogram_quantile(0.9, sum(rate(traces_service_graph_request_server_seconds_bucket{client="${__data.fields.sourceName}",client_service_namespace="${__data.fields.sourceNamespace}",server="${__data.fields.targetName}",server_service_namespace="${__data.fields.targetNamespace}"}[$__rate_interval])) by (le, client, server, server_service_namespace, client_service_namespace))',
+              range: true,
+              exemplar: true,
+              instant: false,
+            },
+            datasourceUid: 's4Jvz8Qnk',
+            datasourceName: '',
+          },
+        },
+        {
+          url: '',
+          title: 'Failed request rate',
+          internal: {
+            query: {
+              expr: 'sum by (client, server, server_service_namespace, client_service_namespace)(rate(traces_service_graph_request_failed_total{client="${__data.fields.sourceName}",client_service_namespace="${__data.fields.sourceNamespace}",server="${__data.fields.targetName}",server_service_namespace="${__data.fields.targetNamespace}"}[$__rate_interval]))',
+              range: true,
+              exemplar: true,
+              instant: false,
+            },
+            datasourceUid: 's4Jvz8Qnk',
+            datasourceName: '',
+          },
+        },
+        {
+          url: '',
+          title: 'View traces',
+          internal: {
+            query: {
+              queryType: 'nativeSearch',
+              serviceName: '${__data.fields.target}',
+            },
+            datasourceUid: 'EbPO1fYnz',
+            datasourceName: '',
+          },
+        },
+      ],
+    };
+    expect(fieldConfig).toStrictEqual(resultObj);
+  });
+
   it('should get rate aligned values correctly', () => {
     const resp = [
       {
@@ -761,6 +852,105 @@ describe('Tempo service graph view', () => {
   });
 });
 
+describe('label names - v2 tags', () => {
+  let datasource: TempoDatasource;
+
+  beforeEach(() => {
+    datasource = createTempoDatasource();
+    jest.spyOn(datasource, 'metadataRequest').mockImplementation(
+      createMetadataRequest({
+        data: {
+          scopes: [{ name: 'span', tags: ['label1', 'label2'] }],
+        },
+      })
+    );
+  });
+
+  it('get label names', async () => {
+    // label_names()
+    const response = await datasource.executeVariableQuery({ refId: 'test', type: TempoVariableQueryType.LabelNames });
+
+    expect(response).toEqual([{ text: 'label1' }, { text: 'label2' }]);
+  });
+});
+
+describe('label names - v1 tags', () => {
+  let datasource: TempoDatasource;
+
+  beforeEach(() => {
+    datasource = createTempoDatasource();
+    jest
+      .spyOn(datasource, 'metadataRequest')
+      .mockImplementationOnce(() => {
+        throw Error;
+      })
+      .mockImplementation(
+        createMetadataRequest({
+          data: {
+            tagNames: ['label1', 'label2'],
+          },
+        })
+      );
+  });
+
+  it('get label names', async () => {
+    // label_names()
+    const response = await datasource.executeVariableQuery({ refId: 'test', type: TempoVariableQueryType.LabelNames });
+    expect(response).toEqual([{ text: 'label1' }, { text: 'label2' }, { text: 'status.code' }]);
+  });
+});
+
+describe('label values', () => {
+  let datasource: TempoDatasource;
+
+  beforeEach(() => {
+    datasource = createTempoDatasource();
+    jest.spyOn(datasource, 'metadataRequest').mockImplementation(
+      createMetadataRequest({
+        data: {
+          tagValues: [
+            {
+              type: 'value1',
+              value: 'value1',
+              label: 'value1',
+            },
+            {
+              type: 'value2',
+              value: 'value2',
+              label: 'value2',
+            },
+          ],
+        },
+      })
+    );
+  });
+
+  it('get label values for given label', async () => {
+    // label_values("label")
+    const response = await datasource.executeVariableQuery({
+      refId: 'test',
+      type: TempoVariableQueryType.LabelValues,
+      label: 'label',
+    });
+
+    expect(response).toEqual([
+      { text: { type: 'value1', value: 'value1', label: 'value1' } },
+      { text: { type: 'value2', value: 'value2', label: 'value2' } },
+    ]);
+  });
+
+  it('do not raise error when label is not set', async () => {
+    // label_values()
+    const response = await datasource.executeVariableQuery({
+      refId: 'test',
+      type: TempoVariableQueryType.LabelValues,
+      label: undefined,
+    });
+
+    expect(response).toEqual([]);
+  });
+});
+
 const backendSrvWithPrometheus = {
   async get(uid: string) {
     if (uid === 'prom') {
@@ -800,7 +990,7 @@ function setupBackendSrv(frame: DataFrame) {
   } as any);
 }
 
-const defaultSettings: DataSourceInstanceSettings<TempoJsonData> = {
+export const defaultSettings: DataSourceInstanceSettings<TempoJsonData> = {
   id: 0,
   uid: 'gdev-tempo',
   type: 'tracing',

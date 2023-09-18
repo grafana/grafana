@@ -29,7 +29,7 @@ export function MoreActionsRuleButtons({}: Props) {
             download: 'true',
             format: 'yaml',
           })}
-          label="Export all"
+          label="Export all Grafana-managed rules"
           target="_blank"
         />
       )}

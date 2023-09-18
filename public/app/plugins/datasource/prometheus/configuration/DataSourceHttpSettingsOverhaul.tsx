@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useState } from 'react';
 
 import { DataSourceSettings } from '@grafana/data';
 import { Auth, ConnectionSettings, convertLegacyAuthProps } from '@grafana/experimental';
@@ -54,16 +54,6 @@ export const DataSourcehttpSettingsOverhaul = (props: Props) => {
   if (sigV4AuthToggleEnabled) {
     customMethods.push(sigV4Option);
   }
-
-  const onSettingsChange = useCallback(
-    (change: Partial<DataSourceSettings<PromOptions, {}>>) => {
-      onOptionsChange({
-        ...options,
-        ...change,
-      });
-    },
-    [options, onOptionsChange]
-  );
 
   const azureAuthEnabled: boolean =
     (azureAuthSettings?.azureAuthSupported && azureAuthSettings.getAzureAuthEnabled(options)) || false;
@@ -150,9 +140,8 @@ export const DataSourcehttpSettingsOverhaul = (props: Props) => {
           // sigV4Id
           if (sigV4AuthToggleEnabled) {
             setSigV4Selected(method === sigV4Id);
-            onSettingsChange({
-              jsonData: { ...options.jsonData, sigV4Auth: method === sigV4Id },
-            });
+            // mutate jsonData here to store the selected option because of auth component issue with onOptionsChange being overridden
+            options.jsonData.sigV4Auth = method === sigV4Id;
           }
 
           // Azure

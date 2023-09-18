@@ -133,7 +133,7 @@ type ProxyClient interface {
 // Clients that implements this interface can specify a usage stat collection hook
 type UsageStatClient interface {
 	Client
-	UsageStatFn(ctx context.Context) (map[string]interface{}, error)
+	UsageStatFn(ctx context.Context) (map[string]any, error)
 }
 
 type Request struct {
@@ -180,6 +180,8 @@ const (
 	NamespaceUser           = identity.NamespaceUser
 	NamespaceAPIKey         = identity.NamespaceAPIKey
 	NamespaceServiceAccount = identity.NamespaceServiceAccount
+	NamespaceAnonymous      = identity.NamespaceAnonymous
+	NamespaceRenderService  = identity.NamespaceRenderService
 )
 
 type Identity struct {
@@ -341,7 +343,7 @@ type RedirectValidator func(url string) error
 
 // HandleLoginResponse is a utility function to perform common operations after a successful login and returns response.NormalResponse
 func HandleLoginResponse(r *http.Request, w http.ResponseWriter, cfg *setting.Cfg, identity *Identity, validator RedirectValidator) *response.NormalResponse {
-	result := map[string]interface{}{"message": "Logged in"}
+	result := map[string]any{"message": "Logged in"}
 	result["redirectUrl"] = handleLogin(r, w, cfg, identity, validator)
 	return response.JSON(http.StatusOK, result)
 }

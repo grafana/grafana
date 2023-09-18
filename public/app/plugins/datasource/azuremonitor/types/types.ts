@@ -74,6 +74,8 @@ export interface AzureDataSourceJsonData extends DataSourceJsonData {
 
   // App Insights
   appInsightsAppId?: string;
+
+  enableSecureSocksProxy?: boolean;
 }
 
 export interface AzureDataSourceSecureJsonData {

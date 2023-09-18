@@ -13,6 +13,7 @@ import { DataSourceWithBackend, getTemplateSrv, TemplateSrv } from '@grafana/run
 
 import { extractLabelMatchers, toPromLikeExpr } from '../prometheus/language_utils';
 
+import { VariableSupport } from './VariableSupport';
 import { defaultGrafanaPyroscope, defaultPhlareQueryType } from './dataquery.gen';
 import { PhlareDataSourceOptions, Query, ProfileTypeMessage, BackendType } from './types';
 
@@ -25,6 +26,7 @@ export class PhlareDataSource extends DataSourceWithBackend<Query, PhlareDataSou
   ) {
     super(instanceSettings);
     this.backendType = instanceSettings.jsonData.backendType ?? 'phlare';
+    this.variables = new VariableSupport(this);
   }
 
   query(request: DataQueryRequest<Query>): Observable<DataQueryResponse> {
@@ -50,15 +52,20 @@ export class PhlareDataSource extends DataSourceWithBackend<Query, PhlareDataSou
   }
 
   async getProfileTypes(): Promise<ProfileTypeMessage[]> {
-    return await super.getResource('profileTypes');
+    return await this.getResource('profileTypes');
   }
 
   async getLabelNames(query: string, start: number, end: number): Promise<string[]> {
-    return await super.getResource('labelNames', { query, start, end });
+    return await this.getResource('labelNames', { query: this.templateSrv.replace(query), start, end });
   }
 
   async getLabelValues(query: string, label: string, start: number, end: number): Promise<string[]> {
-    return await super.getResource('labelValues', { label, query, start, end });
+    return await this.getResource('labelValues', {
+      label: this.templateSrv.replace(label),
+      query: this.templateSrv.replace(query),
+      start,
+      end,
+    });
   }
 
   // We need the URL here because it may not be saved on the backend yet when used from config page.
@@ -70,6 +77,7 @@ export class PhlareDataSource extends DataSourceWithBackend<Query, PhlareDataSou
     return {
       ...query,
       labelSelector: this.templateSrv.replace(query.labelSelector ?? '', scopedVars),
+      profileTypeId: this.templateSrv.replace(query.profileTypeId ?? '', scopedVars),
     };
   }
 

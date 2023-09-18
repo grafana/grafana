@@ -140,14 +140,16 @@ function attachReferences(spans: TraceSpanData[], depth: number, spansPerLevel: 
 
 export default chance.mixin({
   trace({
-    // long trace
-    // very short trace
-    // average case
-    numberOfSpans = chance.pickone([
-      Math.ceil(chance.normal({ mean: 200, dev: 10 })) + 1,
-      Math.ceil(chance.integer({ min: 3, max: 10 })),
-      Math.ceil(chance.normal({ mean: 45, dev: 15 })) + 1,
-    ]),
+    numberOfSpans = Math.max(
+      Math.ceil(
+        chance.pickone([
+          chance.normal({ mean: 200, dev: 10 }), // long trace
+          chance.integer({ min: 3, max: 10 }), // very short trace
+          chance.normal({ mean: 45, dev: 15 }), // average case
+        ])
+      ),
+      1 // `pickone` might pick a negative number (or zero) from one of the normal distributions, but we need to have at least one span
+    ),
     numberOfProcesses = chance.integer({ min: 1, max: 10 }),
     maxDepth = chance.integer({ min: 1, max: 10 }),
     spansPerLevel = null,

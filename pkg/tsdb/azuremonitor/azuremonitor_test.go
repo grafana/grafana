@@ -17,7 +17,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
@@ -45,7 +44,7 @@ func TestNewInstanceSettings(t *testing.T) {
 				Credentials:             &azcredentials.AzureManagedIdentityCredentials{},
 				Settings:                types.AzureMonitorSettings{},
 				Routes:                  routes[azsettings.AzurePublic],
-				JSONData:                map[string]interface{}{"azureAuthType": "msi"},
+				JSONData:                map[string]any{"azureAuthType": "msi"},
 				DatasourceID:            40,
 				DecryptedSecureJSONData: map[string]string{"key": "value"},
 				Services:                map[string]types.DatasourceService{},
@@ -71,11 +70,11 @@ func TestNewInstanceSettings(t *testing.T) {
 						URL: "url",
 					},
 				},
-				JSONData: map[string]interface{}{
+				JSONData: map[string]any{
 					"azureAuthType": "clientsecret",
 					"cloudName":     "customizedazuremonitor",
-					"customizedRoutes": map[string]interface{}{
-						"Route": map[string]interface{}{
+					"customizedRoutes": map[string]any{
+						"Route": map[string]any{
 							"URL": "url",
 						},
 					},
@@ -132,10 +131,11 @@ type fakeExecutor struct {
 	expectedURL string
 }
 
-func (f *fakeExecutor) ResourceRequest(rw http.ResponseWriter, req *http.Request, cli *http.Client) {
+func (f *fakeExecutor) ResourceRequest(rw http.ResponseWriter, req *http.Request, cli *http.Client) (http.ResponseWriter, error) {
+	return nil, nil
 }
 
-func (f *fakeExecutor) ExecuteTimeSeriesQuery(ctx context.Context, logger log.Logger, originalQueries []backend.DataQuery, dsInfo types.DatasourceInfo, client *http.Client, url string, tracer tracing.Tracer) (*backend.QueryDataResponse, error) {
+func (f *fakeExecutor) ExecuteTimeSeriesQuery(ctx context.Context, originalQueries []backend.DataQuery, dsInfo types.DatasourceInfo, client *http.Client, url string, tracer tracing.Tracer) (*backend.QueryDataResponse, error) {
 	if client == nil {
 		f.t.Errorf("The HTTP client for %s is missing", f.queryType)
 	} else {

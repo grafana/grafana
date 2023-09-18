@@ -25,27 +25,27 @@ func NewDefaultPluginFactory(assetPath *assetpath.Service) *DefaultPluginFactory
 
 func (f *DefaultPluginFactory) createPlugin(p plugins.FoundPlugin, class plugins.Class,
 	sig plugins.Signature) (*plugins.Plugin, error) {
-	baseURL, err := f.assetPath.Base(p.JSONData, class, p.FS.Base())
+	info := assetpath.NewPluginInfo(p.JSONData, class, p.FS)
+	baseURL, err := f.assetPath.Base(info)
 	if err != nil {
 		return nil, fmt.Errorf("base url: %w", err)
 	}
-	moduleURL, err := f.assetPath.Module(p.JSONData, class, p.FS.Base())
+	moduleURL, err := f.assetPath.Module(info)
 	if err != nil {
 		return nil, fmt.Errorf("module url: %w", err)
 	}
-
 	plugin := &plugins.Plugin{
 		JSONData:      p.JSONData,
+		Class:         class,
 		FS:            p.FS,
 		BaseURL:       baseURL,
 		Module:        moduleURL,
-		Class:         class,
 		Signature:     sig.Status,
 		SignatureType: sig.Type,
 		SignatureOrg:  sig.SigningOrg,
 	}
-	plugin.SetLogger(log.New(fmt.Sprintf("plugin.%s", plugin.ID)))
 
+	plugin.SetLogger(log.New(fmt.Sprintf("plugin.%s", plugin.ID)))
 	if err = setImages(plugin, f.assetPath); err != nil {
 		return nil, err
 	}
@@ -54,23 +54,25 @@ func (f *DefaultPluginFactory) createPlugin(p plugins.FoundPlugin, class plugins
 }
 
 func setImages(p *plugins.Plugin, assetPath *assetpath.Service) error {
+	info := assetpath.NewPluginInfo(p.JSONData, p.Class, p.FS)
 	var err error
 	for _, dst := range []*string{&p.Info.Logos.Small, &p.Info.Logos.Large} {
-		*dst, err = assetPath.RelativeURL(p, *dst, defaultLogoPath(p.Type))
+		if len(*dst) == 0 {
+			*dst = assetPath.DefaultLogoPath(p.Type)
+			continue
+		}
+
+		*dst, err = assetPath.RelativeURL(info, *dst)
 		if err != nil {
 			return fmt.Errorf("logo: %w", err)
 		}
 	}
 	for i := 0; i < len(p.Info.Screenshots); i++ {
 		screenshot := &p.Info.Screenshots[i]
-		screenshot.Path, err = assetPath.RelativeURL(p, screenshot.Path, "")
+		screenshot.Path, err = assetPath.RelativeURL(info, screenshot.Path)
 		if err != nil {
 			return fmt.Errorf("screenshot %d relative url: %w", i, err)
 		}
 	}
 	return nil
-}
-
-func defaultLogoPath(pluginType plugins.Type) string {
-	return fmt.Sprintf("public/img/icn-%s.svg", string(pluginType))
 }

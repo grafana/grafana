@@ -17,7 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -38,6 +37,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/state/historian"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/notifications"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/secrets"
@@ -65,7 +65,7 @@ func ProvideService(
 	bus bus.Bus,
 	accesscontrolService accesscontrol.Service,
 	annotationsRepo annotations.Repository,
-	pluginsStore plugins.Store,
+	pluginsStore pluginstore.Store,
 	tracer tracing.Tracer,
 	ruleStore *store.DBstore,
 ) (*AlertNG, error) {
@@ -140,7 +140,7 @@ type AlertNG struct {
 	store                *store.DBstore
 
 	bus          bus.Bus
-	pluginsStore plugins.Store
+	pluginsStore pluginstore.Store
 	tracer       tracing.Tracer
 }
 

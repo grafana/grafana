@@ -13,7 +13,7 @@ import {
   SceneFlexItem,
 } from '@grafana/scenes';
 
-import { DashboardScene } from '../dashboard/DashboardScene';
+import { DashboardScene } from '../../dashboard-scene/scene/DashboardScene';
 
 export function getQueryVariableDemo(): DashboardScene {
   return new DashboardScene({

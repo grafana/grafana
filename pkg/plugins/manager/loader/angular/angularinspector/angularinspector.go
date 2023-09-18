@@ -8,6 +8,7 @@ import (
 	"regexp"
 
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/angular/angulardetector"
 )
 
@@ -20,8 +21,17 @@ type Inspector interface {
 // PatternsListInspector is an Inspector that matches a plugin's module.js against all the patterns returned by
 // the detectorsProvider, in sequence.
 type PatternsListInspector struct {
+	log log.Logger
+
 	// DetectorsProvider returns the detectors that will be used by Inspect.
 	DetectorsProvider angulardetector.DetectorsProvider
+}
+
+func NewPatternListInspector(detectorsProvider angulardetector.DetectorsProvider) *PatternsListInspector {
+	return &PatternsListInspector{
+		log:               log.New("plugins.validator.angular.patterns"),
+		DetectorsProvider: detectorsProvider,
+	}
 }
 
 func (i *PatternsListInspector) Inspect(ctx context.Context, p *plugins.Plugin) (isAngular bool, err error) {
@@ -44,6 +54,7 @@ func (i *PatternsListInspector) Inspect(ctx context.Context, p *plugins.Plugin) 
 	}
 	for _, d := range i.DetectorsProvider.ProvideDetectors(ctx) {
 		if d.DetectAngular(b) {
+			i.log.Debug("Angular detected", "pluginId", p.ID, "version", p.Info.Version, "detector", d.String())
 			isAngular = true
 			break
 		}
@@ -74,5 +85,5 @@ func NewDefaultStaticDetectorsProvider() angulardetector.DetectorsProvider {
 // NewStaticInspector returns the default Inspector, which is a PatternsListInspector that only uses the
 // static (hardcoded) angular detection patterns.
 func NewStaticInspector() Inspector {
-	return &PatternsListInspector{DetectorsProvider: NewDefaultStaticDetectorsProvider()}
+	return NewPatternListInspector(NewDefaultStaticDetectorsProvider())
 }

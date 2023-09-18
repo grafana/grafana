@@ -22,7 +22,6 @@ export function createDashboardModelFixture(
     editable: true,
     graphTooltip: defaultDashboardCursorSync,
     schemaVersion: 1,
-    style: 'dark',
     timezone: '',
     ...dashboardInput,
   };

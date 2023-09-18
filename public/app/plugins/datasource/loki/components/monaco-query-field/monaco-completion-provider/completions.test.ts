@@ -126,8 +126,14 @@ const afterSelectorCompletions = [
   },
   {
     documentation: 'Operator docs',
-    insertText: '| distinct',
-    label: 'distinct',
+    insertText: '| drop',
+    label: 'drop',
+    type: 'PIPE_OPERATION',
+  },
+  {
+    documentation: 'Operator docs',
+    insertText: '| keep',
+    label: 'keep',
     type: 'PIPE_OPERATION',
   },
 ];
@@ -388,8 +394,8 @@ describe('getCompletions', () => {
     expect(functionCompletions).toHaveLength(3);
   });
 
-  test('Returns completion options when the situation is AFTER_DISTINCT', async () => {
-    const situation: Situation = { type: 'AFTER_DISTINCT', logQuery: '{label="value"}' };
+  test('Returns completion options when the situation is AFTER_KEEP_AND_DROP', async () => {
+    const situation: Situation = { type: 'AFTER_KEEP_AND_DROP', logQuery: '{label="value"}' };
     const completions = await getCompletions(situation, completionProvider);
 
     expect(completions).toEqual([

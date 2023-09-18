@@ -9,7 +9,7 @@ type AlertingFileExport struct {
 	Policies      []NotificationPolicyExport `json:"policies,omitempty" yaml:"policies,omitempty"`
 }
 
-// swagger:parameters RouteGetAlertRuleGroupExport RouteGetAlertRuleExport RouteGetAlertRulesExport RouteGetContactpointsExport RouteGetContactpointExport
+// swagger:parameters RouteGetAlertRuleGroupExport RouteGetAlertRuleExport RouteGetContactpointsExport RouteGetContactpointExport
 type ExportQueryParams struct {
 	// Whether to initiate a download of the file or not.
 	// in: query

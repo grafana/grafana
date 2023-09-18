@@ -83,7 +83,7 @@ describe('GroupBy transformer', () => {
       fields: [
         { name: 'time', type: FieldType.time, values: [3000, 4000, 5000, 6000, 7000, 8000] },
         { name: 'message', type: FieldType.string, values: ['one', 'two', 'two', 'three', 'three', 'three'] },
-        { name: 'values', type: FieldType.string, values: [1, 2, 2, 3, 3, 3] },
+        { name: 'values', type: FieldType.number, values: [1, 2, 2, 3, 3, 3] },
       ],
     });
 
@@ -130,7 +130,7 @@ describe('GroupBy transformer', () => {
       fields: [
         { name: 'time', type: FieldType.time, values: [3000, 4000, 5000, 6000, 7000, 8000] },
         { name: 'message', type: FieldType.string, values: ['one', 'two', 'two', 'three', 'three', 'three'] },
-        { name: 'values', type: FieldType.string, values: [1, 2, 2, 3, 3, 3] },
+        { name: 'values', type: FieldType.number, values: [1, 2, 2, 3, 3, 3] },
       ],
     });
 
@@ -194,7 +194,7 @@ describe('GroupBy transformer', () => {
         fields: [
           { name: 'time', type: FieldType.time, values: [3000, 4000, 5000, 6000, 7000, 8000] },
           { name: 'message', type: FieldType.string, values: ['one', 'two', 'two', 'three', 'three', 'three'] },
-          { name: 'values', type: FieldType.string, values: [1, 2, 2, 3, 3, 3] },
+          { name: 'values', type: FieldType.number, values: [1, 2, 2, 3, 3, 3] },
         ],
       }),
       toDataFrame({
@@ -202,7 +202,7 @@ describe('GroupBy transformer', () => {
         fields: [
           { name: 'time', type: FieldType.time, values: [3000, 4000, 5000, 6000, 7000, 8000] },
           { name: 'message', type: FieldType.string, values: ['one', 'two', 'two', 'three', 'three', 'three'] },
-          { name: 'values', type: FieldType.string, values: [0, 2, 5, 3, 3, 2] },
+          { name: 'values', type: FieldType.number, values: [0, 2, 5, 3, 3, 2] },
         ],
       }),
     ];

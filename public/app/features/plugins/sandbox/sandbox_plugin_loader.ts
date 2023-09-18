@@ -24,15 +24,15 @@ if (process.env.NODE_ENV !== 'production') {
   require('@locker/near-membrane-dom/custom-devtools-formatter');
 }
 
-const pluginImportCache = new Map<string, Promise<unknown>>();
+const pluginImportCache = new Map<string, Promise<System.Module>>();
 
-export async function importPluginModuleInSandbox({ pluginId }: { pluginId: string }): Promise<unknown> {
+export async function importPluginModuleInSandbox({ pluginId }: { pluginId: string }): Promise<System.Module> {
   try {
     const pluginMeta = await getPluginSettings(pluginId);
     if (!pluginImportCache.has(pluginId)) {
       pluginImportCache.set(pluginId, doImportPluginModuleInSandbox(pluginMeta));
     }
-    return pluginImportCache.get(pluginId);
+    return pluginImportCache.get(pluginId)!;
   } catch (e) {
     const error = new Error(`Could not import plugin ${pluginId} inside sandbox: ` + e);
     logError(error, {
@@ -43,7 +43,7 @@ export async function importPluginModuleInSandbox({ pluginId }: { pluginId: stri
   }
 }
 
-async function doImportPluginModuleInSandbox(meta: PluginMeta): Promise<unknown> {
+async function doImportPluginModuleInSandbox(meta: PluginMeta): Promise<System.Module> {
   return new Promise(async (resolve, reject) => {
     const generalDistortionMap = getGeneralSandboxDistortionMap();
     let sandboxEnvironment: SandboxEnvironment;
@@ -189,7 +189,11 @@ function resolvePluginDependencies(deps: string[]) {
   // resolve dependencies
   const resolvedDeps: CompartmentDependencyModule[] = [];
   for (const dep of deps) {
-    const resolvedDep = sandboxPluginDependencies.get(dep);
+    let resolvedDep = sandboxPluginDependencies.get(dep);
+    if (resolvedDep?.__useDefault) {
+      resolvedDep = resolvedDep.default;
+    }
+
     if (!resolvedDep) {
       throw new Error(`[sandbox] Could not resolve dependency ${dep}`);
     }

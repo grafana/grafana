@@ -165,7 +165,7 @@ func (hs *HTTPServer) registerRoutes() {
 
 		// anonymous view public dashboard
 		r.Get("/public-dashboards/:accessToken",
-			publicdashboardsapi.SetPublicDashboardFlag,
+			publicdashboardsapi.SetPublicDashboardAccessToken,
 			publicdashboardsapi.SetPublicDashboardOrgIdOnContext(hs.PublicDashboardsApi.PublicDashboardService),
 			publicdashboardsapi.CountPublicDashboardRequest(),
 			hs.Index,

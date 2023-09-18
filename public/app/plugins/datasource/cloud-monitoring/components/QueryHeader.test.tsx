@@ -33,4 +33,17 @@ describe('QueryHeader', () => {
     await select(screen.getByLabelText('Select options menu'), 'MQL');
     expect(onChange).toBeCalledWith(expect.objectContaining({ queryType: QueryType.TIME_SERIES_QUERY }));
   });
+
+  it('can change query types to PromQL', async () => {
+    const query = createMockQuery();
+    const onChange = jest.fn();
+    const onRunQuery = jest.fn();
+
+    render(<QueryHeader query={query} onChange={onChange} onRunQuery={onRunQuery} />);
+
+    const queryType = screen.getByLabelText(/Query type/);
+    await openMenu(queryType);
+    await select(screen.getByLabelText('Select options menu'), 'PromQL');
+    expect(onChange).toBeCalledWith(expect.objectContaining({ queryType: QueryType.PROMQL }));
+  });
 });
