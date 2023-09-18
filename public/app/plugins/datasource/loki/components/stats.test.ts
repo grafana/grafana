@@ -154,13 +154,13 @@ describe('getTimeRange', () => {
     });
   });
 
-  it('should return the ds picker timerange + range duration for a range metric query', () => {
-    // metric queries with range type should request ds picker timerange + range duration
-    // in this case (1 day) + (5 minutes)
+  it('should return the ds picker timerange', () => {
+    // metric queries with range type should request ds picker timerange
+    // in this case (1 day)
     query.expr = 'rate({job="grafana"}[5m])';
 
     expect(getTimeRange(datasource, query, 0)).toEqual({
-      start: 1672552500000000000, // 01 Jan 2023 05:55:00 GMT
+      start: 1672552800000000000, // 01 Jan 2023 05:55:00 GMT
       end: 1672639200000000000, //   02 Jan 2023 06:00:00 GMT
     });
   });

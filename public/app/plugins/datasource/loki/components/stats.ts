@@ -65,34 +65,39 @@ export function getTimeRange(
 ): { start: number | undefined; end: number | undefined } {
   let start: number, end: number;
   const NS_IN_MS = 1000000;
-
-  // TODO: fix this..
-  // duration nodes are empty is variable is used
-  // this is because the variable is not converted to a duration, therefore not detected as a duration node
   const durationNodes = getNodesFromQuery(query.expr, [Duration]);
   const durations = durationNodes.map((d) => query.expr.substring(d.from, d.to));
 
-  if (!isLogsQuery(query.expr)) {
-    if (query.queryType === LokiQueryType.Instant) {
-      // metric query with instant type
-      // we want the request timerange to be the query duration e.g. [5m]
-      // with the query -- rate({label="value"} [1h]) -- the range we want to request is: "now - 1h"
-      end = ds.getTimeRangeParams().end;
-      start = end - intervalToMs(durations[idx]) * NS_IN_MS;
-    } else {
-      // metric query with range type
-      // we want the time range to be the selected range
-      // we also need to add the duration to this time range for a more accurate result
-      ({ start, end } = ds.getTimeRangeParams());
-      start = start - intervalToMs(durations[idx]) * NS_IN_MS;
-    }
-
-    return { start, end };
-  } else {
+  if (isLogsQuery(query.expr)) {
+    // logs query with instant type can not be estimated
     if (query.queryType === LokiQueryType.Instant) {
       return { start: undefined, end: undefined };
     }
-
+    // logs query with range type
     return ds.getTimeRangeParams();
   }
+
+  if (query.queryType === LokiQueryType.Instant) {
+    // metric query with instant type
+
+    if (!!durations[idx]) {
+      // if query has a duration e.g. [1m]
+      end = ds.getTimeRangeParams().end;
+      start = end - intervalToMs(durations[idx]) * NS_IN_MS;
+      return { start, end };
+    } else {
+      // if query has no duration e.g. [$__interval]
+
+      if (/(\$__auto|\$__range)/.test(query.expr)) {
+        // if $__auto or $__range is used, we can estimate the time range using the selected range
+        return ds.getTimeRangeParams();
+      }
+
+      // otherwise we cant estimate the time range
+      return { start: undefined, end: undefined };
+    }
+  }
+
+  // metric query with range type
+  return ds.getTimeRangeParams();
 }
