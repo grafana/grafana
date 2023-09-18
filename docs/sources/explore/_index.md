@@ -45,7 +45,7 @@ To access Explore:
 
 1. Choose your data source from the drop-down in the top left.
 
-   You can also click **Open advanced data source picker** to see more data source options including adding a data source.
+   You can also click **Open advanced data source picker** to see more options, including adding a data source (Admins only).
 
 1. Write the query using a query editor provided by the selected data source. Please check [data sources documentation]({{< relref "../datasources" >}}) to see how to use various query editors.
 1. For general documentation on querying data sources in Grafana, see [Query and transform data]({{< relref "../panels-visualizations/query-transform-data" >}}).

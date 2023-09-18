@@ -903,7 +903,7 @@ func Test_migrateAliasToDynamicLabel_single_query_preserves_old_alias_and_create
 					MetricName: kindsys.Ptr("CPUUtilization"),
 					Alias:      kindsys.Ptr(tc.inputAlias),
 					Dimensions: &dataquery.Dimensions{
-						"InstanceId": []interface{}{"test"},
+						"InstanceId": []any{"test"},
 					},
 					Statistic: &average,
 					Period:    kindsys.Ptr("600"),

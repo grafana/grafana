@@ -371,7 +371,7 @@ func TestIntegrationAlertRuleConflictingTitle(t *testing.T) {
 		status, body := apiClient.PostRulesGroup(t, "folder1", &rulesWithUID)
 		assert.Equal(t, http.StatusInternalServerError, status)
 
-		var res map[string]interface{}
+		var res map[string]any
 		require.NoError(t, json.Unmarshal([]byte(body), &res))
 		require.Equal(t, "failed to update rule group: failed to add rules: a conflicting alert rule is found: rule title under the same organisation and folder should be unique", res["message"])
 	})
@@ -383,7 +383,7 @@ func TestIntegrationAlertRuleConflictingTitle(t *testing.T) {
 		status, body := apiClient.PostRulesGroup(t, "folder1", &rulesWithUID)
 		assert.Equal(t, http.StatusInternalServerError, status)
 
-		var res map[string]interface{}
+		var res map[string]any
 		require.NoError(t, json.Unmarshal([]byte(body), &res))
 		require.Equal(t, "failed to update rule group: failed to update rules: a conflicting alert rule is found: rule title under the same organisation and folder should be unique", res["message"])
 	})
@@ -736,7 +736,7 @@ func TestIntegrationRulerRulesFilterByDashboard(t *testing.T) {
 		require.Equal(t, http.StatusBadRequest, resp.StatusCode)
 		b, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
-		var res map[string]interface{}
+		var res map[string]any
 		require.NoError(t, json.Unmarshal(b, &res))
 		require.Equal(t, `invalid panel_id: strconv.ParseInt: parsing "invalid": invalid syntax`, res["message"])
 	}
@@ -754,7 +754,7 @@ func TestIntegrationRulerRulesFilterByDashboard(t *testing.T) {
 		require.Equal(t, http.StatusBadRequest, resp.StatusCode)
 		b, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
-		var res map[string]interface{}
+		var res map[string]any
 		require.NoError(t, json.Unmarshal(b, &res))
 		require.Equal(t, "panel_id must be set with dashboard_uid", res["message"])
 	}

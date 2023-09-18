@@ -68,6 +68,10 @@ Latest Version: 0.0.29 | Signature: Community | Last Updated: 2023
 
 Latest Version: 0.2.4 | Signature: Commercial | Last Updated: 2022
 
+{{% admonition type="warning" %}}
+Guidance from the developer: This app is deprecated and will no longer be updated after December 31, 2023. Please consider using the [Cloudflare] Dashboard(https://dash.cloudflare.com/?to=/:account/:zone/analytics/dns) or [DNS Analytics API](https://developers.cloudflare.com/api/operations/dns-analytics-table) instead.
+{{% /admonition %}}
+
 ### [GLPI](https://grafana.com/grafana/plugins/ddurieux-glpi-app)
 
 Latest Version: 1.3.1 | Signature: Community | Last Updated: 2021
@@ -636,7 +640,7 @@ Latest Version: 0.7.1 | Signature: Community | Last Updated: 2021
 Lack of recent activity in the [project repository](https://github.com/fatcloud/windrose-panel) in the past 4 years suggests project _may_ not be actively maintained.
 {{% /admonition %}}
 
-> **Migration available - potential alternative:** another plugin exists which provides similar capabilities - [Operato Windrose](https://grafana.com/grafana/plugins/operato-windrose-panel/)
+> **Migration available - potential alternative:** another plugin exists which provides similar capabilities - [Operator Windrose](https://grafana.com/grafana/plugins/operato-windrose-panel/)
 
 ### [Statusmap](https://grafana.com/grafana/plugins/flant-statusmap-panel/)
 
@@ -744,7 +748,7 @@ Latest Version: 0.0.7 | Signature: Community | Last Updated: 2021
 Lack of recent activity in the [project repository](https://github.com/NatelEnergy/grafana-plotly-panel) in the past 2 years suggests project _may_ not be actively maintained.
 {{% /admonition %}}
 
-> **Migration available - potential alternative:** another plugin exists which provides similar capabilities - [nline-plotlyjs-panel/](https://grafana.com/grafana/plugins/nline-plotlyjs-panel/).
+> **Migration available - potential alternative:** other plugins exist which provide similar capabilities - [nline-plotlyjs-panel](https://grafana.com/grafana/plugins/nline-plotlyjs-panel/) and [ae3e-plotly-panel](https://grafana.com/grafana/plugins/ae3e-plotly-panel/).
 
 ### [Cal-HeatMap](https://grafana.com/grafana/plugins/neocat-cal-heatmap-panel/)
 

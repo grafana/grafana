@@ -10,18 +10,18 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 2
       - name: Set go version
         uses: actions/setup-go@v4
         with:
-          go-version: '1.20.6'
+          go-version: '1.20.8'
       - name: Build swagger
         run: |
           make -C pkg/services/ngalert/api/tooling post.json api.json
       - name: Open Pull Request
-        uses: peter-evans/create-pull-request@v3
+        uses: peter-evans/create-pull-request@v5
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           commit-message: "chore: update alerting swagger spec"

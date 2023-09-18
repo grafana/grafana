@@ -52,11 +52,11 @@ export const ConfigEditor = (props: Props) => {
     <>
       <DataSourceDescription
         dataSourceName="Loki"
-        docsLink="https://grafana.com/docs/grafana/latest/datasources/loki"
+        docsLink="https://grafana.com/docs/grafana/latest/datasources/loki/configure-loki-data-source/"
         hasRequiredFields={false}
       />
       <Divider />
-      <ConnectionSettings config={options} onChange={onOptionsChange} />
+      <ConnectionSettings config={options} onChange={onOptionsChange} urlPlaceholder="http://localhost:3100" />
       <Divider />
       <Auth
         {...convertLegacyAuthProps({

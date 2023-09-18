@@ -55,7 +55,7 @@ func ConfigureAzureAuthentication(settings backend.DataSourceInstanceSettings, a
 	return nil
 }
 
-func getOverriddenScopes(jsonData map[string]interface{}) ([]string, error) {
+func getOverriddenScopes(jsonData map[string]any) ([]string, error) {
 	resourceIdStr, err := maputil.GetStringOptional(jsonData, "azureEndpointResourceId")
 	if err != nil {
 		err = fmt.Errorf("overridden resource ID (audience) invalid")

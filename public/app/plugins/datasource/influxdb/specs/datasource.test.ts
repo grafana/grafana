@@ -8,7 +8,7 @@ import { backendSrv } from 'app/core/services/backend_srv'; // will use the vers
 
 import { BROWSER_MODE_DISABLED_MESSAGE } from '../constants';
 import InfluxDatasource from '../datasource';
-import { InfluxVersion } from '../types';
+import { InfluxQuery, InfluxVersion } from '../types';
 
 //@ts-ignore
 const templateSrv = new TemplateSrvStub();
@@ -34,18 +34,21 @@ describe('InfluxDataSource', () => {
 
   describe('When issuing metricFindQuery', () => {
     const query = 'SELECT max(value) FROM measurement WHERE $timeFilter';
-    const queryOptions: any = {
+    const queryOptions = {
       range: {
         from: '2018-01-01T00:00:00Z',
         to: '2018-01-02T00:00:00Z',
       },
     };
-    let requestQuery: any, requestMethod: any, requestData: any, response: any;
+    let requestQuery: any;
+    let requestMethod: string | undefined;
+    let requestData: any;
+    let response: any;
 
     beforeEach(async () => {
-      fetchMock.mockImplementation((req: any) => {
+      fetchMock.mockImplementation((req) => {
         requestMethod = req.method;
-        requestQuery = req.params.q;
+        requestQuery = req.params?.q;
         requestData = req.data;
         return of({
           data: {
@@ -160,11 +163,14 @@ describe('InfluxDataSource', () => {
 
     describe('When issuing metricFindQuery', () => {
       const query = 'SELECT max(value) FROM measurement';
-      const queryOptions: any = {};
-      let requestMethod: any, requestQueryParameter: any, queryEncoded: any, requestQuery: any;
+      const queryOptions = {};
+      let requestMethod: string | undefined;
+      let requestQueryParameter: Record<string, any> | undefined;
+      let queryEncoded: any;
+      let requestQuery: any;
 
       beforeEach(async () => {
-        fetchMock.mockImplementation((req: any) => {
+        fetchMock.mockImplementation((req) => {
           requestMethod = req.method;
           requestQueryParameter = req.params;
           requestQuery = req.data;
@@ -280,7 +286,7 @@ describe('InfluxDataSource', () => {
       adhocFilters,
     };
 
-    function influxChecks(query: any) {
+    function influxChecks(query: InfluxQuery) {
       expect(templateSrv.replace).toBeCalledTimes(10);
       expect(query.alias).toBe(text);
       expect(query.measurement).toBe(textWithFormatRegex);
@@ -291,7 +297,7 @@ describe('InfluxDataSource', () => {
       expect(query.tags![0].value).toBe(textWithFormatRegex);
       expect(query.groupBy![0].params![0]).toBe(textWithFormatRegex);
       expect(query.select![0][0].params![0]).toBe(textWithFormatRegex);
-      expect(query.adhocFilters[0].key).toBe(adhocFilters[0].key);
+      expect(query.adhocFilters?.[0].key).toBe(adhocFilters[0].key);
     }
 
     describe('when interpolating query variables for dashboard->explore', () => {

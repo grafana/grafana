@@ -12,7 +12,7 @@ import {
 } from '../types';
 
 import { locationUtil } from './location';
-import { serializeStateToUrlParam } from './url';
+import { serializeStateToUrlParam, toURLRange } from './url';
 
 export const DataLinkBuiltInVars = {
   keepTime: '__url_time_range',
@@ -33,7 +33,7 @@ export const DataLinkBuiltInVars = {
 export type LinkToExploreOptions = {
   link: DataLink;
   scopedVars: ScopedVars;
-  range: TimeRange;
+  range?: TimeRange;
   field: Field;
   internalLink: InternalDataLink;
   onClickFn?: SplitOpen;
@@ -77,13 +77,16 @@ export function mapInternalLinkToExplore(options: LinkToExploreOptions): LinkMod
 function generateInternalHref<T extends DataQuery = any>(
   datasourceUid: string,
   query: T,
-  range: TimeRange,
+  range?: TimeRange,
   panelsState?: ExplorePanelsState
 ): string {
   return locationUtil.assureBaseUrl(
     `/explore?left=${encodeURIComponent(
       serializeStateToUrlParam({
-        range: range.raw,
+        // @deprecated mapInternalLinkToExplore required passing range. Some consumers to generate the URL
+        // with defaults pass range as `{} as any`. This is why we need to check for `range?.raw` not just
+        // `range ? ...` here. This behavior will be marked as deprecated in #72498
+        ...(range?.raw ? { range: toURLRange(range.raw) } : {}),
         datasource: datasourceUid,
         queries: [query],
         panelsState: panelsState,

@@ -47,7 +47,7 @@ type MockProvisioningStore_DeleteProvenance_Call struct {
 //   - ctx context.Context
 //   - o models.Provisionable
 //   - org int64
-func (_e *MockProvisioningStore_Expecter) DeleteProvenance(ctx interface{}, o interface{}, org interface{}) *MockProvisioningStore_DeleteProvenance_Call {
+func (_e *MockProvisioningStore_Expecter) DeleteProvenance(ctx any, o any, org any) *MockProvisioningStore_DeleteProvenance_Call {
 	return &MockProvisioningStore_DeleteProvenance_Call{Call: _e.mock.On("DeleteProvenance", ctx, o, org)}
 }
 
@@ -93,7 +93,7 @@ type MockProvisioningStore_GetProvenance_Call struct {
 //   - ctx context.Context
 //   - o models.Provisionable
 //   - org int64
-func (_e *MockProvisioningStore_Expecter) GetProvenance(ctx interface{}, o interface{}, org interface{}) *MockProvisioningStore_GetProvenance_Call {
+func (_e *MockProvisioningStore_Expecter) GetProvenance(ctx any, o any, org any) *MockProvisioningStore_GetProvenance_Call {
 	return &MockProvisioningStore_GetProvenance_Call{Call: _e.mock.On("GetProvenance", ctx, o, org)}
 }
 
@@ -141,7 +141,7 @@ type MockProvisioningStore_GetProvenances_Call struct {
 //   - ctx context.Context
 //   - org int64
 //   - resourceType string
-func (_e *MockProvisioningStore_Expecter) GetProvenances(ctx interface{}, org interface{}, resourceType interface{}) *MockProvisioningStore_GetProvenances_Call {
+func (_e *MockProvisioningStore_Expecter) GetProvenances(ctx any, org any, resourceType any) *MockProvisioningStore_GetProvenances_Call {
 	return &MockProvisioningStore_GetProvenances_Call{Call: _e.mock.On("GetProvenances", ctx, org, resourceType)}
 }
 
@@ -181,7 +181,7 @@ type MockProvisioningStore_SetProvenance_Call struct {
 //   - o models.Provisionable
 //   - org int64
 //   - p models.Provenance
-func (_e *MockProvisioningStore_Expecter) SetProvenance(ctx interface{}, o interface{}, org interface{}, p interface{}) *MockProvisioningStore_SetProvenance_Call {
+func (_e *MockProvisioningStore_Expecter) SetProvenance(ctx any, o any, org any, p any) *MockProvisioningStore_SetProvenance_Call {
 	return &MockProvisioningStore_SetProvenance_Call{Call: _e.mock.On("SetProvenance", ctx, o, org, p)}
 }
 

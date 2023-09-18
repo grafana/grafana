@@ -321,7 +321,7 @@ func (c *client) sendBatch(tenantID string, batch *batch) {
 	}
 
 	if err != nil {
-		c.logger.Error("final error sendnig batch", "status", status, "error")
+		c.logger.Error("final error sending batch", "status", status, "error")
 		c.metrics.droppedBytes.WithLabelValues(c.cfg.URL.Host).Add(bufBytes)
 		c.metrics.droppedEntries.WithLabelValues(c.cfg.URL.Host).Add(float64(entriesCount))
 	}

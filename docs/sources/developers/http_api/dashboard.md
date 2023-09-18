@@ -35,7 +35,7 @@ The uid can have a maximum length of 40 characters.
 
 `POST /api/dashboards/db`
 
-Creates a new dashboard or updates an existing dashboard. When updating existing dashboards, if you do not define the `folderId` or the `folderUid` property, then the dashboard(s) are moved to the General folder. (You need to define only one property, not both).
+Creates a new dashboard or updates an existing dashboard. When updating existing dashboards, if you do not define the `folderId` or the `folderUid` property, then the dashboard(s) are moved to the root level. (You need to define only one property, not both).
 
 **Required permissions**
 
@@ -61,10 +61,8 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
     "tags": [ "templated" ],
     "timezone": "browser",
     "schemaVersion": 16,
-    "version": 0,
     "refresh": "25s"
   },
-  "folderId": 0,
   "folderUid": "l3KqBxCMz",
   "message": "Made changes to xyz",
   "overwrite": false
@@ -73,169 +71,36 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 
 JSON Body schema:
 
-- **dashboard** – The complete dashboard model, id = null to create a new dashboard.
+- **dashboard** – The complete dashboard model.
 - **dashboard.id** – id = null to create a new dashboard.
 - **dashboard.uid** – Optional unique identifier when creating a dashboard. uid = null will generate a new uid.
+- **dashboard.refresh** - Set the dashboard refresh interval. If this is lower than [the minimum refresh interval]({{< relref "/docs/grafana/latest/setup-grafana/configure-grafana#min_refresh_interval" >}}), then Grafana will ignore it and will enforce the minimum refresh interval.
 - **folderId** – The id of the folder to save the dashboard in.
 - **folderUid** – The UID of the folder to save the dashboard in. Overrides the `folderId`.
 - **overwrite** – Set to true if you want to overwrite existing dashboard with newer version, same dashboard title in folder or same dashboard uid.
 - **message** - Set a commit message for the version history.
-- **refresh** - Set the dashboard refresh interval. If this is lower than [the minimum refresh interval]({{< relref "/docs/grafana/latest/setup-grafana/configure-grafana#min_refresh_interval" >}}), then Grafana will ignore it and will enforce the minimum refresh interval.
 
-For adding or updating an alert rule for a dashboard panel the user should declare a
-`dashboard.panels.alert` block.
-
-**Example Request for updating dashboard alert rule**:
+**Example Request for updating a dashboard**:
 
 ```http
-HTTP/1.1 200 OK
-Content-Type: application/json; charset=UTF-8
-Content-Length: 78
+POST /api/dashboards/db HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 
 {
- "dashboard":  {
-        "id": 104,
-        "panels": [
-            {
-                "alert": {
-                    "alertRuleTags": {},
-                    "conditions": [
-                        {
-                            "evaluator": {
-                                "params": [
-                                    25
-                                ],
-                                "type": "gt"
-                            },
-                            "operator": {
-                                "type": "and"
-                            },
-                            "query": {
-                                "params": [
-                                    "A",
-                                    "5m",
-                                    "now"
-                                ]
-                            },
-                            "reducer": {
-                                "params": [],
-                                "type": "avg"
-                            },
-                            "type": "query"
-                        }
-                    ],
-                    "executionErrorState": "alerting",
-                    "for": "5m",
-                    "frequency": "1m",
-                    "handler": 1,
-                    "name": "Panel Title alert",
-                    "noDataState": "no_data",
-                    "notifications": []
-                },
-                "aliasColors": {},
-                "bars": false,
-                "dashLength": 10,
-                "dashes": false,
-                "datasource": null,
-                "fieldConfig": {
-                    "defaults": {
-                        "custom": {}
-                    },
-                    "overrides": []
-                },
-                "fill": 1,
-                "fillGradient": 0,
-                "gridPos": {
-                    "h": 9,
-                    "w": 12,
-                    "x": 0,
-                    "y": 0
-                },
-                "hiddenSeries": false,
-                "id": 2,
-                "legend": {
-                    "avg": false,
-                    "current": false,
-                    "max": false,
-                    "min": false,
-                    "show": true,
-                    "total": false,
-                    "values": false
-                },
-                "lines": true,
-                "linewidth": 1,
-                "nullPointMode": "null",
-                "options": {
-                    "dataLinks": []
-                },
-                "percentage": false,
-                "pointradius": 2,
-                "points": false,
-                "renderer": "flot",
-                "seriesOverrides": [],
-                "spaceLength": 10,
-                "stack": false,
-                "steppedLine": false,
-                "targets": [
-                    {
-                        "refId": "A",
-                        "scenarioId": "random_walk"
-                    }
-                ],
-                "thresholds": [
-                    {
-                        "colorMode": "critical",
-                        "fill": true,
-                        "line": true,
-                        "op": "gt",
-                        "value": 50
-                    }
-                ],
-                "timeFrom": null,
-                "timeRegions": [],
-                "timeShift": null,
-                "title": "Panel Title",
-                "tooltip": {
-                    "shared": true,
-                    "sort": 0,
-                    "value_type": "individual"
-                },
-                "type": "graph",
-                "xaxis": {
-                    "buckets": null,
-                    "mode": "time",
-                    "name": null,
-                    "show": true,
-                    "values": []
-                },
-                "yaxes": [
-                    {
-                        "format": "short",
-                        "label": null,
-                        "logBase": 1,
-                        "max": null,
-                        "min": null,
-                        "show": true
-                    },
-                    {
-                        "format": "short",
-                        "label": null,
-                        "logBase": 1,
-                        "max": null,
-                        "min": null,
-                        "show": true
-                    }
-                ],
-                "yaxis": {
-                    "align": false,
-                    "alignLevel": null
-                }
-            }
-        ],
-        "title": "Update alert rule via API",
-        "uid": "dHEquNzGz",
-        "version": 1
-    }
+  "dashboard": {
+    "id": 1,
+    "title": "Production Overview Updated",
+    "tags": [ "templated" ],
+    "timezone": "browser",
+    "schemaVersion": 16,
+    "version": 1,
+    "refresh": "25s"
+  },
+  "folderUid": "l3KqBxCMz",
+  "message": "Made changes to xyz",
+  "overwrite": false
 }
 ```
 
@@ -247,12 +112,12 @@ Content-Type: application/json; charset=UTF-8
 Content-Length: 78
 
 {
-  "id":      1,
-  "uid":     "cIBgcSjkk",
-  "url":     "/d/cIBgcSjkk/production-overview",
-  "status":  "success",
-  "version": 1,
-  "slug":    "production-overview" //deprecated in Grafana v5.0
+    "id": 1,
+    "uid": "e883f11b-77c0-4ee3-9a70-3ba223d66e56",
+    "url": "/d/e883f11b-77c0-4ee3-9a70-3ba223d66e56/production-overview-updated",
+    "status": "success",
+    "version": 2
+    "slug": "production-overview-updated",
 }
 ```
 

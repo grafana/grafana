@@ -297,7 +297,7 @@ export function graphToTimeseriesOptions(angular: any): {
     }
   }
 
-  const graph = y1.custom ?? ({} as GraphFieldConfig);
+  const graph: GraphFieldConfig = y1.custom ?? {};
   graph.drawStyle = angular.bars ? GraphDrawStyle.Bars : angular.lines ? GraphDrawStyle.Line : GraphDrawStyle.Points;
 
   if (angular.points) {
@@ -344,7 +344,7 @@ export function graphToTimeseriesOptions(angular: any): {
   }
 
   y1.custom = omitBy(graph, isNil);
-  y1.nullValueMode = angular.nullPointMode as NullValueMode;
+  y1.nullValueMode = angular.nullPointMode;
 
   const options: Options = {
     legend: {
@@ -616,7 +616,7 @@ function getFieldConfigFromOldAxis(obj: any): FieldConfig<GraphFieldConfig> {
     graph.axisLabel = obj.label;
   }
   if (obj.logBase) {
-    const log = obj.logBase as number;
+    const log: number = obj.logBase;
     if (log === 2 || log === 10) {
       graph.scaleDistribution = {
         type: ScaleDistribution.Log,
@@ -666,7 +666,7 @@ function fillY2DynamicValues(
   }
 }
 
-function validNumber(val: any): number | undefined {
+function validNumber(val: unknown): number | undefined {
   if (isNumber(val)) {
     return val;
   }

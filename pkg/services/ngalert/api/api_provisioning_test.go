@@ -33,6 +33,7 @@ import (
 	secrets_fakes "github.com/grafana/grafana/pkg/services/secrets/fakes"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -283,7 +284,7 @@ func TestProvisioningApi(t *testing.T) {
 
 			t.Run("PUT sets expected fields with no provenance", func(t *testing.T) {
 				sut := createProvisioningSrvSut(t)
-				uid := t.Name()
+				uid := util.GenerateShortUID()
 				rule := createTestAlertRule("rule", 1)
 				rule.UID = uid
 				insertRuleInOrg(t, sut, rule, 3)
@@ -565,6 +566,106 @@ func TestProvisioningApi(t *testing.T) {
 				require.Equal(t, 200, response.Status())
 				require.Equal(t, expectedResponse, string(response.Body()))
 			})
+
+			t.Run("hcl body content is as expected", func(t *testing.T) {
+				sut := createProvisioningSrvSut(t)
+				rule1 := createTestAlertRule("rule1", 1)
+				rule1.Labels = map[string]string{
+					"test": "label",
+				}
+				rule1.Annotations = map[string]string{
+					"test": "annotation",
+				}
+				rule1.NoDataState = definitions.Alerting
+				rule1.ExecErrState = definitions.ErrorErrState
+				insertRule(t, sut, rule1)
+				insertRule(t, sut, createTestAlertRule("rule2", 1))
+
+				expectedResponse := `resource "grafana_rule_group" "rule_group_0000" {
+  org_id           = 1
+  name             = "my-cool-group"
+  folder_uid       = "folder-uid"
+  interval_seconds = 60
+
+  rule {
+    name      = "rule1"
+    condition = "A"
+
+    data {
+      ref_id     = "A"
+      query_type = ""
+
+      relative_time_range {
+        from = 0
+        to   = 0
+      }
+
+      datasource_uid = ""
+      model          = "{\"conditions\":[{\"evaluator\":{\"params\":[3],\"type\":\"gt\"},\"operator\":{\"type\":\"and\"},\"query\":{\"params\":[\"A\"]},\"reducer\":{\"type\":\"last\"},\"type\":\"query\"}],\"datasource\":{\"type\":\"__expr__\",\"uid\":\"__expr__\"},\"expression\":\"1==0\",\"intervalMs\":1000,\"maxDataPoints\":43200,\"refId\":\"A\",\"type\":\"math\"}"
+    }
+
+    no_data_state  = "Alerting"
+    exec_err_state = "Error"
+    for            = 0
+    annotations = {
+      test = "annotation"
+    }
+    labels = {
+      test = "label"
+    }
+    is_paused = false
+  }
+  rule {
+    name      = "rule2"
+    condition = "A"
+
+    data {
+      ref_id     = "A"
+      query_type = ""
+
+      relative_time_range {
+        from = 0
+        to   = 0
+      }
+
+      datasource_uid = ""
+      model          = "{\"conditions\":[{\"evaluator\":{\"params\":[3],\"type\":\"gt\"},\"operator\":{\"type\":\"and\"},\"query\":{\"params\":[\"A\"]},\"reducer\":{\"type\":\"last\"},\"type\":\"query\"}],\"datasource\":{\"type\":\"__expr__\",\"uid\":\"__expr__\"},\"expression\":\"1==0\",\"intervalMs\":1000,\"maxDataPoints\":43200,\"refId\":\"A\",\"type\":\"math\"}"
+    }
+
+    no_data_state  = "OK"
+    exec_err_state = "OK"
+    for            = 0
+    annotations    = null
+    labels         = null
+    is_paused      = false
+  }
+}
+`
+				rc := createTestRequestCtx()
+				rc.Context.Req.Form.Set("format", "hcl")
+				rc.Context.Req.Form.Set("download", "false")
+
+				response := sut.RouteGetAlertRuleGroupExport(&rc, "folder-uid", "my-cool-group")
+				response.WriteTo(&rc)
+
+				require.Equal(t, 200, response.Status())
+				require.Equal(t, expectedResponse, string(response.Body()))
+				require.Equal(t, "text/hcl", rc.Resp.Header().Get("Content-Type"))
+
+				t.Run("and add specific headers if download=true", func(t *testing.T) {
+					rc := createTestRequestCtx()
+					rc.Context.Req.Form.Set("format", "hcl")
+					rc.Context.Req.Form.Set("download", "true")
+
+					response := sut.RouteGetAlertRuleGroupExport(&rc, "folder-uid", "my-cool-group")
+					response.WriteTo(&rc)
+
+					require.Equal(t, 200, response.Status())
+					require.Equal(t, expectedResponse, string(response.Body()))
+					require.Equal(t, "application/terraform+hcl", rc.Resp.Header().Get("Content-Type"))
+					require.Equal(t, `attachment;filename=export.tf`, rc.Resp.Header().Get("Content-Disposition"))
+				})
+			})
 		})
 
 		t.Run("alert rule", func(t *testing.T) {
@@ -812,6 +913,120 @@ func TestProvisioningApi(t *testing.T) {
 
 				require.Equal(t, 200, response.Status())
 				require.Equal(t, expectedResponse, string(response.Body()))
+			})
+
+			t.Run("accept query parameter folder_uid", func(t *testing.T) {
+				sut := createProvisioningSrvSut(t)
+				rc := createTestRequestCtx()
+				insertRule(t, sut, createTestAlertRuleWithFolderAndGroup("rule1", 1, "folder-uid", "groupa"))
+				insertRule(t, sut, createTestAlertRuleWithFolderAndGroup("rule2", 1, "folder-uid", "groupb"))
+				insertRule(t, sut, createTestAlertRuleWithFolderAndGroup("rule3", 1, "folder-uid2", "groupb"))
+
+				rc.Context.Req.Header.Add("Accept", "application/json")
+				rc.Context.Req.Form.Set("folderUid", "folder-uid")
+				expectedResponse := `{"apiVersion":1,"groups":[{"orgId":1,"name":"groupa","folder":"Folder Title","interval":"1m","rules":[{"uid":"rule1","title":"rule1","condition":"A","data":[{"refId":"A","relativeTimeRange":{"from":0,"to":0},"datasourceUid":"","model":{"conditions":[{"evaluator":{"params":[3],"type":"gt"},"operator":{"type":"and"},"query":{"params":["A"]},"reducer":{"type":"last"},"type":"query"}],"datasource":{"type":"__expr__","uid":"__expr__"},"expression":"1==0","intervalMs":1000,"maxDataPoints":43200,"refId":"A","type":"math"}}],"noDataState":"OK","execErrState":"OK","for":"0s","isPaused":false}]},{"orgId":1,"name":"groupb","folder":"Folder Title","interval":"1m","rules":[{"uid":"rule2","title":"rule2","condition":"A","data":[{"refId":"A","relativeTimeRange":{"from":0,"to":0},"datasourceUid":"","model":{"conditions":[{"evaluator":{"params":[3],"type":"gt"},"operator":{"type":"and"},"query":{"params":["A"]},"reducer":{"type":"last"},"type":"query"}],"datasource":{"type":"__expr__","uid":"__expr__"},"expression":"1==0","intervalMs":1000,"maxDataPoints":43200,"refId":"A","type":"math"}}],"noDataState":"OK","execErrState":"OK","for":"0s","isPaused":false}]}]}`
+
+				response := sut.RouteGetAlertRulesExport(&rc)
+
+				require.Equal(t, 200, response.Status())
+				require.Equal(t, expectedResponse, string(response.Body()))
+			})
+
+			t.Run("accept multiple query parameters folder_uid", func(t *testing.T) {
+				sut := createProvisioningSrvSut(t)
+				rc := createTestRequestCtx()
+				insertRule(t, sut, createTestAlertRuleWithFolderAndGroup("rule1", 1, "folder-uid", "groupa"))
+				insertRule(t, sut, createTestAlertRuleWithFolderAndGroup("rule2", 1, "folder-uid", "groupb"))
+				insertRule(t, sut, createTestAlertRuleWithFolderAndGroup("rule3", 1, "folder-uid2", "groupb"))
+
+				rc.Context.Req.Header.Add("Accept", "application/json")
+				rc.Context.Req.Form.Set("folder_uid", "folder-uid")
+				rc.Context.Req.Form.Add("folder_uid", "folder-uid2")
+				expectedResponse := `{"apiVersion":1,"groups":[{"orgId":1,"name":"groupa","folder":"Folder Title","interval":"1m","rules":[{"uid":"rule1","title":"rule1","condition":"A","data":[{"refId":"A","relativeTimeRange":{"from":0,"to":0},"datasourceUid":"","model":{"conditions":[{"evaluator":{"params":[3],"type":"gt"},"operator":{"type":"and"},"query":{"params":["A"]},"reducer":{"type":"last"},"type":"query"}],"datasource":{"type":"__expr__","uid":"__expr__"},"expression":"1==0","intervalMs":1000,"maxDataPoints":43200,"refId":"A","type":"math"}}],"noDataState":"OK","execErrState":"OK","for":"0s","isPaused":false}]},{"orgId":1,"name":"groupb","folder":"Folder Title","interval":"1m","rules":[{"uid":"rule2","title":"rule2","condition":"A","data":[{"refId":"A","relativeTimeRange":{"from":0,"to":0},"datasourceUid":"","model":{"conditions":[{"evaluator":{"params":[3],"type":"gt"},"operator":{"type":"and"},"query":{"params":["A"]},"reducer":{"type":"last"},"type":"query"}],"datasource":{"type":"__expr__","uid":"__expr__"},"expression":"1==0","intervalMs":1000,"maxDataPoints":43200,"refId":"A","type":"math"}}],"noDataState":"OK","execErrState":"OK","for":"0s","isPaused":false}]},{"orgId":1,"name":"groupb","folder":"Folder Title2","interval":"1m","rules":[{"uid":"rule3","title":"rule3","condition":"A","data":[{"refId":"A","relativeTimeRange":{"from":0,"to":0},"datasourceUid":"","model":{"conditions":[{"evaluator":{"params":[3],"type":"gt"},"operator":{"type":"and"},"query":{"params":["A"]},"reducer":{"type":"last"},"type":"query"}],"datasource":{"type":"__expr__","uid":"__expr__"},"expression":"1==0","intervalMs":1000,"maxDataPoints":43200,"refId":"A","type":"math"}}],"noDataState":"OK","execErrState":"OK","for":"0s","isPaused":false}]}]}`
+
+				response := sut.RouteGetAlertRulesExport(&rc)
+
+				require.Equal(t, 200, response.Status())
+				require.Equal(t, expectedResponse, string(response.Body()))
+			})
+
+			t.Run("accepts parameter group", func(t *testing.T) {
+				sut := createProvisioningSrvSut(t)
+				insertRule(t, sut, createTestAlertRuleWithFolderAndGroup("rule1", 1, "folder-uid", "groupa"))
+				insertRule(t, sut, createTestAlertRuleWithFolderAndGroup("rule2", 1, "folder-uid", "groupb"))
+				insertRule(t, sut, createTestAlertRuleWithFolderAndGroup("rule3", 1, "folder-uid2", "groupb"))
+
+				rc := createTestRequestCtx()
+				rc.Context.Req.Header.Add("Accept", "application/json")
+				rc.Context.Req.Form.Set("folderUid", "folder-uid")
+				rc.Context.Req.Form.Set("group", "groupa")
+
+				expectedResponse := `{"apiVersion":1,"groups":[{"orgId":1,"name":"groupa","folder":"Folder Title","interval":"1m","rules":[{"uid":"rule1","title":"rule1","condition":"A","data":[{"refId":"A","relativeTimeRange":{"from":0,"to":0},"datasourceUid":"","model":{"conditions":[{"evaluator":{"params":[3],"type":"gt"},"operator":{"type":"and"},"query":{"params":["A"]},"reducer":{"type":"last"},"type":"query"}],"datasource":{"type":"__expr__","uid":"__expr__"},"expression":"1==0","intervalMs":1000,"maxDataPoints":43200,"refId":"A","type":"math"}}],"noDataState":"OK","execErrState":"OK","for":"0s","isPaused":false}]}]}`
+
+				response := sut.RouteGetAlertRulesExport(&rc)
+
+				require.Equal(t, 200, response.Status())
+				require.Equal(t, expectedResponse, string(response.Body()))
+
+				t.Run("and fails if folderUID is empty", func(t *testing.T) {
+					rc := createTestRequestCtx()
+					rc.Context.Req.Header.Add("Accept", "application/json")
+					rc.Context.Req.Form.Set("group", "groupa")
+					rc.Context.Req.Form.Set("folderUid", "")
+					response := sut.RouteGetAlertRulesExport(&rc)
+
+					require.Equal(t, 400, response.Status())
+				})
+
+				t.Run("and fails if multiple folder UIDs are specified", func(t *testing.T) {
+					rc := createTestRequestCtx()
+					rc.Context.Req.Header.Add("Accept", "application/json")
+					rc.Context.Req.Form.Set("group", "groupa")
+					rc.Context.Req.Form.Set("folderUid", "folder-uid")
+					rc.Context.Req.Form.Add("folderUid", "folder-uid2")
+					response := sut.RouteGetAlertRulesExport(&rc)
+
+					require.Equal(t, 400, response.Status())
+				})
+			})
+
+			t.Run("accepts parameter ruleUid", func(t *testing.T) {
+				sut := createProvisioningSrvSut(t)
+				insertRule(t, sut, createTestAlertRuleWithFolderAndGroup("rule1", 1, "folder-uid", "groupa"))
+				insertRule(t, sut, createTestAlertRuleWithFolderAndGroup("rule2", 1, "folder-uid", "groupa"))
+				insertRule(t, sut, createTestAlertRuleWithFolderAndGroup("rule3", 1, "folder-uid2", "groupb"))
+
+				rc := createTestRequestCtx()
+				rc.Context.Req.Header.Add("Accept", "application/json")
+				rc.Context.Req.Form.Set("ruleUid", "rule1")
+
+				expectedResponse := `{"apiVersion":1,"groups":[{"orgId":1,"name":"groupa","folder":"Folder Title","interval":"1m","rules":[{"uid":"rule1","title":"rule1","condition":"A","data":[{"refId":"A","relativeTimeRange":{"from":0,"to":0},"datasourceUid":"","model":{"conditions":[{"evaluator":{"params":[3],"type":"gt"},"operator":{"type":"and"},"query":{"params":["A"]},"reducer":{"type":"last"},"type":"query"}],"datasource":{"type":"__expr__","uid":"__expr__"},"expression":"1==0","intervalMs":1000,"maxDataPoints":43200,"refId":"A","type":"math"}}],"noDataState":"OK","execErrState":"OK","for":"0s","isPaused":false}]}]}`
+
+				response := sut.RouteGetAlertRulesExport(&rc)
+
+				require.Equal(t, 200, response.Status())
+				require.Equal(t, expectedResponse, string(response.Body()))
+
+				t.Run("and fails if folderUID and group are specified", func(t *testing.T) {
+					rc := createTestRequestCtx()
+					rc.Context.Req.Header.Add("Accept", "application/json")
+					rc.Context.Req.Form.Set("group", "groupa")
+					rc.Context.Req.Form.Set("folderUid", "folder-uid")
+					rc.Context.Req.Form.Set("ruleUid", "rule1")
+					response := sut.RouteGetAlertRulesExport(&rc)
+
+					require.Equal(t, 400, response.Status())
+				})
+
+				t.Run("and fails if only folderUID is specified", func(t *testing.T) {
+					rc := createTestRequestCtx()
+					rc.Context.Req.Header.Add("Accept", "application/json")
+					rc.Context.Req.Form.Set("folderUid", "folder-uid")
+					rc.Context.Req.Form.Set("ruleUid", "rule2")
+					response := sut.RouteGetAlertRulesExport(&rc)
+
+					require.Equal(t, 400, response.Status())
+				})
 			})
 		})
 

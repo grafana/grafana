@@ -79,7 +79,7 @@ func TestIntegrationAdminConfiguration_SendingToExternalAlertmanagers(t *testing
 		resp := getRequest(t, alertsURL, http.StatusNotFound) // nolint
 		b, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
-		var res map[string]interface{}
+		var res map[string]any
 		err = json.Unmarshal(b, &res)
 		require.NoError(t, err)
 		require.Equal(t, "no admin configuration available", res["message"])
@@ -99,7 +99,7 @@ func TestIntegrationAdminConfiguration_SendingToExternalAlertmanagers(t *testing
 		resp := postRequest(t, alertsURL, buf.String(), http.StatusBadRequest) // nolint
 		b, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
-		var res map[string]interface{}
+		var res map[string]any
 		err = json.Unmarshal(b, &res)
 		require.NoError(t, err)
 		require.Equal(t, "Invalid alertmanager choice specified", res["message"])
@@ -120,7 +120,7 @@ func TestIntegrationAdminConfiguration_SendingToExternalAlertmanagers(t *testing
 		resp := postRequest(t, alertsURL, buf.String(), http.StatusBadRequest) // nolint
 		b, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
-		var res map[string]interface{}
+		var res map[string]any
 		err = json.Unmarshal(b, &res)
 		require.NoError(t, err)
 		require.Equal(t, "At least one Alertmanager must be provided or configured as a datasource that handles alerts to choose this option", res["message"])
@@ -134,7 +134,7 @@ func TestIntegrationAdminConfiguration_SendingToExternalAlertmanagers(t *testing
 			Type:   datasources.DS_ALERTMANAGER,
 			Access: "proxy",
 			URL:    fakeAM1.URL(),
-			JsonData: simplejson.NewFromAny(map[string]interface{}{
+			JsonData: simplejson.NewFromAny(map[string]any{
 				"handleGrafanaManagedAlerts": true,
 				"implementation":             "prometheus",
 			}),
@@ -147,7 +147,7 @@ func TestIntegrationAdminConfiguration_SendingToExternalAlertmanagers(t *testing
 		resp := postRequest(t, dataSourcesUrl, buf.String(), http.StatusOK) // nolint
 		b, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
-		var res map[string]interface{}
+		var res map[string]any
 		err = json.Unmarshal(b, &res)
 		require.NoError(t, err)
 		require.Equal(t, "Datasource added", res["message"])
@@ -161,7 +161,7 @@ func TestIntegrationAdminConfiguration_SendingToExternalAlertmanagers(t *testing
 			Type:   datasources.DS_ALERTMANAGER,
 			Access: "proxy",
 			URL:    fakeAM2.URL(),
-			JsonData: simplejson.NewFromAny(map[string]interface{}{
+			JsonData: simplejson.NewFromAny(map[string]any{
 				"handleGrafanaManagedAlerts": true,
 				"implementation":             "prometheus",
 			}),
@@ -174,7 +174,7 @@ func TestIntegrationAdminConfiguration_SendingToExternalAlertmanagers(t *testing
 		resp := postRequest(t, dataSourcesUrl, buf.String(), http.StatusOK) // nolint
 		b, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
-		var res map[string]interface{}
+		var res map[string]any
 		err = json.Unmarshal(b, &res)
 		require.NoError(t, err)
 		require.Equal(t, "Datasource added", res["message"])
@@ -195,7 +195,7 @@ func TestIntegrationAdminConfiguration_SendingToExternalAlertmanagers(t *testing
 		resp := postRequest(t, alertsURL, buf.String(), http.StatusCreated) // nolint
 		b, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
-		var res map[string]interface{}
+		var res map[string]any
 		err = json.Unmarshal(b, &res)
 		require.NoError(t, err)
 		require.Equal(t, "admin configuration updated", res["message"])
@@ -290,7 +290,7 @@ func TestIntegrationAdminConfiguration_SendingToExternalAlertmanagers(t *testing
 			Type:   datasources.DS_ALERTMANAGER,
 			Access: "proxy",
 			URL:    fakeAM3.URL(),
-			JsonData: simplejson.NewFromAny(map[string]interface{}{
+			JsonData: simplejson.NewFromAny(map[string]any{
 				"handleGrafanaManagedAlerts": true,
 				"implementation":             "prometheus",
 			}),
@@ -303,7 +303,7 @@ func TestIntegrationAdminConfiguration_SendingToExternalAlertmanagers(t *testing
 		resp := postRequest(t, dataSourcesUrl, buf.String(), http.StatusOK) // nolint
 		b, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
-		var res map[string]interface{}
+		var res map[string]any
 		err = json.Unmarshal(b, &res)
 		require.NoError(t, err)
 		require.Equal(t, "Datasource added", res["message"])
@@ -322,7 +322,7 @@ func TestIntegrationAdminConfiguration_SendingToExternalAlertmanagers(t *testing
 		resp := postRequest(t, alertsURL, buf.String(), http.StatusCreated) // nolint
 		b, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
-		var res map[string]interface{}
+		var res map[string]any
 		err = json.Unmarshal(b, &res)
 		require.NoError(t, err)
 		require.Equal(t, "admin configuration updated", res["message"])

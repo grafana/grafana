@@ -1,19 +1,8 @@
-import { css, cx } from '@emotion/css';
 import { take } from 'lodash';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 
-import {
-  DateTime,
-  GrafanaTheme2,
-  InterpolateFunction,
-  PanelProps,
-  textUtil,
-  UrlQueryValue,
-  urlUtil,
-} from '@grafana/data';
-import { CustomScrollbar, stylesFactory, useStyles2 } from '@grafana/ui';
-import { Icon, IconProps } from '@grafana/ui/src/components/Icon/Icon';
-import { getFocusStyles } from '@grafana/ui/src/themes/mixins';
+import { DateTime, InterpolateFunction, PanelProps, textUtil, UrlQueryValue, urlUtil } from '@grafana/data';
+import { CustomScrollbar, useStyles2, IconButton } from '@grafana/ui';
 import { getConfig } from 'app/core/config';
 import { setStarred } from 'app/core/reducers/navBarTree';
 import { getBackendSrv } from 'app/core/services/backend_srv';
@@ -52,10 +41,11 @@ async function fetchDashboards(options: Options, replaceVars: InterpolateFunctio
 
   let searchedDashboards: Promise<DashboardSearchItem[]> = Promise.resolve([]);
   if (options.showSearch) {
+    const uid = options.folderUID === '' ? 'general' : options.folderUID;
     const params = {
       limit: options.maxItems,
       query: replaceVars(options.query, {}, 'text'),
-      folderIds: options.folderId,
+      folderUIDs: uid,
       tag: options.tags.map((tag: string) => replaceVars(tag, {}, 'text')),
       type: 'dash-db',
     };
@@ -182,12 +172,10 @@ export function DashList(props: PanelProps<Options>) {
                 </a>
                 {dash.folderTitle && <div className={css.dashlistFolder}>{dash.folderTitle}</div>}
               </div>
-              <IconToggle
-                aria-label={`Star dashboard "${dash.title}".`}
-                className={css.dashlistStar}
-                enabled={{ name: 'favorite', type: 'mono' }}
-                disabled={{ name: 'star', type: 'default' }}
-                checked={dash.isStarred}
+              <IconButton
+                tooltip={dash.isStarred ? `Unmark "${dash.title}" as favorite` : `Mark "${dash.title}" as favorite`}
+                name={dash.isStarred ? 'favorite' : 'star'}
+                iconType={dash.isStarred ? 'mono' : 'default'}
                 onClick={(e) => toggleDashboardStar(e, dash)}
               />
             </div>
@@ -211,68 +199,3 @@ export function DashList(props: PanelProps<Options>) {
     </CustomScrollbar>
   );
 }
-
-interface IconToggleProps extends Partial<IconProps> {
-  enabled: IconProps;
-  disabled: IconProps;
-  checked: boolean;
-}
-
-function IconToggle({
-  enabled,
-  disabled,
-  checked,
-  onClick,
-  className,
-  'aria-label': ariaLabel,
-  ...otherProps
-}: IconToggleProps) {
-  const toggleCheckbox = useCallback(
-    (e: React.MouseEvent<HTMLInputElement>) => {
-      e.preventDefault();
-      e.stopPropagation();
-
-      onClick?.(e);
-    },
-    [onClick]
-  );
-
-  const iconPropsOverride = checked ? enabled : disabled;
-  const iconProps = { ...otherProps, ...iconPropsOverride };
-  const styles = useStyles2(getCheckboxStyles);
-  return (
-    <label className={styles.wrapper}>
-      <input
-        type="checkbox"
-        defaultChecked={checked}
-        onClick={toggleCheckbox}
-        className={styles.checkBox}
-        aria-label={ariaLabel}
-      />
-      <Icon className={cx(styles.icon, className)} {...iconProps} />
-    </label>
-  );
-}
-
-export const getCheckboxStyles = stylesFactory((theme: GrafanaTheme2) => {
-  return {
-    wrapper: css({
-      display: 'flex',
-      alignSelf: 'center',
-      cursor: 'pointer',
-      zIndex: 1,
-    }),
-    checkBox: css({
-      appearance: 'none',
-      '&:focus-visible + *': {
-        ...getFocusStyles(theme),
-        borderRadius: theme.shape.radius.default,
-      },
-    }),
-    icon: css({
-      marginBottom: 0,
-      verticalAlign: 'baseline',
-      display: 'flex',
-    }),
-  };
-});
