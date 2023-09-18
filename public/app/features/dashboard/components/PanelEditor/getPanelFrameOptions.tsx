@@ -29,7 +29,7 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
   };
 
   const setPanelDescription = (description: string) => {
-    const input = document.getElementById('description-text-area') as HTMLTextAreaElement;
+    const input = document.getElementById('description-text-area');
     if (input instanceof HTMLTextAreaElement) {
       input.value = description;
       onPanelConfigChange('description', description);
