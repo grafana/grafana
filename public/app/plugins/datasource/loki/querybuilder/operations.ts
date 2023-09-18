@@ -105,7 +105,6 @@ export function getOperationDefinitions(): QueryBuilderOperationDef[] {
           name: 'Strict',
           type: 'boolean',
           optional: true,
-          restParam: true,
           description:
             'With strict parsing enabled, the logfmt parser immediately stops scanning the log line and returns early with an error when it encounters any poorly formatted key/value pair.',
         },
@@ -113,7 +112,6 @@ export function getOperationDefinitions(): QueryBuilderOperationDef[] {
           name: 'Keep empty',
           type: 'boolean',
           optional: true,
-          restParam: true,
           description:
             'The logfmt parser retains standalone keys (keys without a value) as labels with its value set to empty string. ',
         },
