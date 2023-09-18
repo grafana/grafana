@@ -4051,6 +4051,18 @@ kind: secret
 name: prerelease_bucket
 ---
 get:
+  name: username
+  path: infra/data/ci/grafanaci-docker-hub
+kind: secret
+name: docker_username
+---
+get:
+  name: password
+  path: infra/data/ci/grafanaci-docker-hub
+kind: secret
+name: docker_password
+---
+get:
   name: credentials.json
   path: infra/data/ci/grafana/releng/artifacts-uploader-service-account
 kind: secret
@@ -4201,6 +4213,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 8e64be13fcb6f9d60dc993aa0a22ea5b7943912e95a7a9fde31a8ab8de2652c8
+hmac: 571f5239458504f70c9a2132b89989c4cfc82f752d26dca3b300dae978d1645d
 
 ...
