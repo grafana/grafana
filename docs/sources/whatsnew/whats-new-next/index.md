@@ -17,7 +17,7 @@ weight: -37
 
 Welcome to Grafana Cloud! Read on to learn about the newest changes to Grafana Cloud.
 
-## API Throttling for Datadog data source
+## API throttling for Datadog data source
 
 <!-- Taewoo Kim -->
 <!-- OSS, Enterprise -->
