@@ -71,7 +71,7 @@ func TestLocalFS_Remove(t *testing.T) {
 		fs = NewLocalFS(pluginDir)
 
 		err = fs.Remove()
-		require.ErrorIs(t, err, ErrUninstallInvalidPluginDir)
+		require.ErrorIs(t, err, errUninstallInvalidPluginDir)
 
 		_, err = os.Stat(pluginDir)
 		require.NoError(t, err)

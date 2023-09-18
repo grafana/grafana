@@ -74,7 +74,7 @@ func Test_ReadPluginJSON(t *testing.T) {
 				require.NoError(t, err)
 				return reader
 			},
-			err: ErrInvalidPluginJSON,
+			err: errInvalidPluginJSON,
 		},
 		{
 			name: "Default value overrides",
@@ -164,7 +164,7 @@ func Test_validatePluginJSON(t *testing.T) {
 					Type: TypePanel,
 				},
 			},
-			err: ErrInvalidPluginJSON,
+			err: errInvalidPluginJSON,
 		},
 		{
 			name: "Invalid plugin type",
@@ -174,7 +174,7 @@ func Test_validatePluginJSON(t *testing.T) {
 					Type: "test",
 				},
 			},
-			err: ErrInvalidPluginJSON,
+			err: errInvalidPluginJSON,
 		},
 	}
 	for _, tt := range tests {

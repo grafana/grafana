@@ -384,7 +384,7 @@ func TestPluginMarkdown(t *testing.T) {
 	t.Run("Plugin not installed returns error", func(t *testing.T) {
 		pluginFileStore := &fakes.FakePluginFileStore{
 			FileFunc: func(ctx context.Context, pluginID, filename string) (*plugins.File, error) {
-				return nil, plugins.ErrPluginNotInstalled
+				return nil, plugins.ErrPluginNotRegistered
 			},
 		}
 		hs := HTTPServer{pluginFileStore: pluginFileStore}

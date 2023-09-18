@@ -162,7 +162,7 @@ func (f LocalFS) Remove() error {
 	// extra security check to ensure we only remove a directory that looks like a plugin
 	if _, err := os.Stat(filepath.Join(f.basePath, "plugin.json")); os.IsNotExist(err) {
 		if _, err = os.Stat(filepath.Join(f.basePath, "dist/plugin.json")); os.IsNotExist(err) {
-			return ErrUninstallInvalidPluginDir
+			return errUninstallInvalidPluginDir
 		}
 	}
 	return os.RemoveAll(f.basePath)

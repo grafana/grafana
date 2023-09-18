@@ -1,7 +1,6 @@
 package plugins
 
 import (
-	"errors"
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/services/org"
@@ -9,12 +8,6 @@ import (
 
 const (
 	TypeDashboard = "dashboard"
-)
-
-var (
-	ErrInstallCorePlugin   = errors.New("cannot install a Core plugin")
-	ErrUninstallCorePlugin = errors.New("cannot uninstall a Core plugin")
-	ErrPluginNotInstalled  = errors.New("plugin is not installed")
 )
 
 type NotFoundError struct {

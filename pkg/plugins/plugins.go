@@ -25,10 +25,8 @@ import (
 )
 
 var (
-	ErrFileNotExist              = errors.New("file does not exist")
-	ErrPluginFileRead            = errors.New("file could not be read")
-	ErrUninstallInvalidPluginDir = errors.New("cannot recognize as plugin folder")
-	ErrInvalidPluginJSON         = errors.New("did not find valid type or id properties in plugin.json")
+	errUninstallInvalidPluginDir = errors.New("cannot recognize as plugin folder")
+	errInvalidPluginJSON         = errors.New("did not find valid type or id properties in plugin.json")
 )
 
 type Plugin struct {
@@ -155,7 +153,7 @@ func ReadPluginJSON(reader io.Reader) (JSONData, error) {
 
 func validatePluginJSON(data JSONData) error {
 	if data.ID == "" || !data.Type.IsValid() {
-		return ErrInvalidPluginJSON
+		return errInvalidPluginJSON
 	}
 	return nil
 }

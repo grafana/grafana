@@ -15,4 +15,16 @@ var (
 	ErrPluginDownstreamError = errutil.Internal("plugin.downstreamError",
 		errutil.WithPublicMessage("An error occurred within the plugin"),
 		errutil.WithDownstream())
+	// ErrInstallCorePlugin error returned when trying to install a core plugin.
+	ErrInstallCorePlugin = errutil.Forbidden("plugin.installCorePlugin",
+		errutil.WithPublicMessage("Cannot install a Core plugin"))
+	// ErrUninstallCorePlugin error returned when trying to uninstall a core plugin.
+	ErrUninstallCorePlugin = errutil.Forbidden("plugin.uninstallCorePlugin",
+		errutil.WithPublicMessage("Cannot uninstall a Core plugin"))
+	// ErrFileNotExist error returned when a file does not exist.
+	ErrFileNotExist = errutil.NotFound("plugin.fileNotFound",
+		errutil.WithPublicMessage("File does not exist"))
+	// ErrPluginFileRead error returned when a file could not be read.
+	ErrPluginFileRead = errutil.Internal("plugin.fileReadError",
+		errutil.WithPublicMessage("File could not be read"))
 )

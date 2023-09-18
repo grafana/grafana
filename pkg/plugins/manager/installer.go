@@ -138,7 +138,7 @@ func (m *PluginInstaller) Add(ctx context.Context, pluginID, version string, opt
 func (m *PluginInstaller) Remove(ctx context.Context, pluginID string) error {
 	plugin, exists := m.plugin(ctx, pluginID)
 	if !exists {
-		return plugins.ErrPluginNotInstalled
+		return plugins.ErrPluginNotRegistered
 	}
 
 	if plugin.IsCorePlugin() || plugin.IsBundledPlugin() {

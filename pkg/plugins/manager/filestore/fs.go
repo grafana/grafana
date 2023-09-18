@@ -49,6 +49,6 @@ func (s *Service) File(ctx context.Context, pluginID, filename string) (*plugins
 			ModTime: fi.ModTime(),
 		}, nil
 	} else {
-		return nil, plugins.ErrPluginNotInstalled
+		return nil, plugins.ErrPluginNotRegistered
 	}
 }

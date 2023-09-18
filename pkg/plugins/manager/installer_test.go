@@ -147,7 +147,7 @@ func TestPluginManager_Add_Remove(t *testing.T) {
 				inst.pluginRegistry = fakes.NewFakePluginRegistry()
 
 				err = inst.Remove(context.Background(), pluginID)
-				require.Equal(t, plugins.ErrPluginNotInstalled, err)
+				require.Equal(t, plugins.ErrPluginNotRegistered, err)
 			})
 		})
 	})

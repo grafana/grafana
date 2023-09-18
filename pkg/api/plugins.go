@@ -283,10 +283,7 @@ func (hs *HTTPServer) GetPluginMarkdown(c *contextmodel.ReqContext) response.Res
 	if len(content) == 0 {
 		content, err = hs.pluginMarkdown(c.Req.Context(), pluginID, "readme")
 		if err != nil {
-			if errors.Is(err, plugins.ErrFileNotExist) {
-				return response.Error(http.StatusNotFound, plugins.ErrFileNotExist.Error(), nil)
-			}
-			return response.Error(http.StatusNotImplemented, "Could not get markdown file", err)
+			return response.ErrOrFallback(http.StatusNotImplemented, "Could not get markdown file", err)
 		}
 	}
 
@@ -461,15 +458,12 @@ func (hs *HTTPServer) InstallPlugin(c *contextmodel.ReqContext) response.Respons
 		if errors.As(err, &clientError) {
 			return response.Error(clientError.StatusCode(), clientError.Message(), err)
 		}
-		if errors.Is(err, plugins.ErrInstallCorePlugin) {
-			return response.Error(http.StatusForbidden, "Cannot install or change a Core plugin", err)
-		}
 		var archError repo.ErrArcNotFound
 		if errors.As(err, &archError) {
 			return response.Error(http.StatusNotFound, archError.Error(), nil)
 		}
 
-		return response.Error(http.StatusInternalServerError, "Failed to install plugin", err)
+		return response.ErrOrFallback(http.StatusInternalServerError, "Failed to install plugin", err)
 	}
 
 	return response.JSON(http.StatusOK, []byte{})
@@ -480,13 +474,7 @@ func (hs *HTTPServer) UninstallPlugin(c *contextmodel.ReqContext) response.Respo
 
 	err := hs.pluginInstaller.Remove(c.Req.Context(), pluginID)
 	if err != nil {
-		if errors.Is(err, plugins.ErrPluginNotInstalled) {
-			return response.Error(http.StatusNotFound, "Plugin not installed", err)
-		}
-		if errors.Is(err, plugins.ErrUninstallCorePlugin) {
-			return response.Error(http.StatusForbidden, "Cannot uninstall a Core plugin", err)
-		}
-		return response.Error(http.StatusInternalServerError, "Failed to uninstall plugin", err)
+		return response.ErrOrFallback(http.StatusInternalServerError, "Failed to uninstall plugin", err)
 	}
 	return response.JSON(http.StatusOK, []byte{})
 }
@@ -515,7 +503,7 @@ func (hs *HTTPServer) pluginMarkdown(ctx context.Context, pluginID string, name 
 
 	md, err := hs.pluginFileStore.File(ctx, pluginID, file)
 	if err != nil {
-		if errors.Is(err, plugins.ErrPluginNotInstalled) {
+		if errors.Is(err, plugins.ErrPluginNotRegistered) {
 			return make([]byte, 0), plugins.NotFoundError{PluginID: pluginID}
 		}
 
