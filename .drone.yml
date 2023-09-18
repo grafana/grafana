@@ -1711,6 +1711,7 @@ steps:
   image: node:18.12.0-alpine
   name: yarn-install
 - commands:
+  - apk add --update jq
   - new_version=$(cat package.json | jq .version | sed 's/pre/$DRONE_BUILD_NUMBER-pre/g')
   - yarn run lerna version $new_version --exact --no-git-tag-version --no-push --force-publish
     -y
@@ -4193,6 +4194,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 1935d2923c9b60a67dd6d2cd1e9a26f36af2aea3d2370bd267b3fed40ba28d70
+hmac: d6c4b3d5b2e4a61ca73807d6f757537eee88c719bd19ddcfd63058097f1e5b64
 
 ...
