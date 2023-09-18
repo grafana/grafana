@@ -2,6 +2,12 @@ import afterFrame from 'afterframe';
 
 import { faro } from '@grafana/faro-web-sdk';
 
+interface LogArg {
+  [key: string]: string;
+}
+
+export const NULL_VALUE = 'NULL_VALUE';
+
 export function faroMeasureInteraction(interactionName: string, context: string) {
   const startTimestamp = performance.now();
 
@@ -26,7 +32,7 @@ export function faroMeasureInteraction(interactionName: string, context: string)
   };
 }
 
-export function faroMeasureAndLogEvent(interactionName: string, logArgs: any, context: string) {
+export function faroMeasureAndLogEvent(interactionName: string, logArgs: LogArg, context: string) {
   const interaction = faroMeasureInteraction(interactionName, context);
 
   afterFrame(() => {
@@ -34,8 +40,4 @@ export function faroMeasureAndLogEvent(interactionName: string, logArgs: any, co
   });
 
   faro.api.pushEvent(interactionName, logArgs, context);
-}
-
-export function faroLogEvent(eventName: string, logArgs: any, context: string) {
-  faro.api.pushEvent(eventName, logArgs, context);
 }

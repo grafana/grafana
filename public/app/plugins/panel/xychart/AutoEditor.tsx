@@ -8,9 +8,10 @@ import {
   getFieldDisplayName,
   GrafanaTheme2,
 } from '@grafana/data';
+import { faro } from '@grafana/faro-web-sdk';
 import { Field, IconButton, Select, useStyles2 } from '@grafana/ui';
 
-import { faroLogEvent } from '../performanceMeasurementUtils';
+import { NULL_VALUE } from '../performanceMeasurementUtils';
 
 import { getXYDimensions, isGraphable } from './dims';
 import { XYDimensionConfig, Options } from './panelcfg.gen';
@@ -97,7 +98,7 @@ export const AutoEditor = ({ value, onChange, context }: StandardEditorProps<XYD
               frame: v.value!,
             });
 
-            faroLogEvent('onDataChange', { value: frameNames[v.value!].label }, 'xychart_panel');
+            faro.api.pushEvent('onDataChange', { value: frameNames[v.value!].label }, 'xychart_panel');
           }}
         />
       </Field>
@@ -111,7 +112,7 @@ export const AutoEditor = ({ value, onChange, context }: StandardEditorProps<XYD
               x: v.value,
             });
 
-            faroLogEvent('onXFieldChange', { value: v.value }, 'xychart_panel');
+            faro.api.pushEvent('onXFieldChange', { value: v.value ?? NULL_VALUE }, 'xychart_panel');
           }}
         />
       </Field>
@@ -134,7 +135,7 @@ export const AutoEditor = ({ value, onChange, context }: StandardEditorProps<XYD
                     exclude,
                   });
 
-                  faroLogEvent(
+                  faro.api.pushEvent(
                     'onYFieldHide',
                     { value: v.label!, excluded: idx < 0 ? 'true' : 'false' },
                     'xychart_panel'
