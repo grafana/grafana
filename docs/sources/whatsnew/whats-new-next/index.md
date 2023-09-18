@@ -17,7 +17,6 @@ weight: -37
 
 Welcome to Grafana Cloud! Read on to learn about the newest changes to Grafana Cloud.
 
-
 ## Log aggregation for Datadog data source
 
 <!-- Taewoo Kim -->
@@ -41,7 +40,6 @@ The Datadog data source supports blocking API requests based on upstream rate li
 To learn more, refer to [Datadog data source settings](/docs/plugins/grafana-datadog-datasource/latest#configure-the-data-source), as well as the following video demo.
 
 {{< video-embed src="/media/docs/datadog/datadog-rate-limit.mp4" >}}
-
 
 ## Query-type template variables for Tempo data source
 
