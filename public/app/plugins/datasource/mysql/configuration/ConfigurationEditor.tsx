@@ -137,15 +137,20 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<My
         </Field>
       </ConfigSection>
 
-      {config.secureSocksDSProxyEnabled || jsonData.tlsAuth || jsonData.tlsAuthWithCACert ? (
+      {config.secureSocksDSProxyEnabled && (
+        <>
+          <Divider />
+          {config.secureSocksDSProxyEnabled && (
+            <SecureSocksProxySettings options={options} onOptionsChange={onOptionsChange} />
+          )}
+        </>
+      )}
+
+      {jsonData.tlsAuth || jsonData.tlsAuthWithCACert ? (
         <>
           <Divider />
 
           <ConfigSection title="TLS/SSL Auth Details">
-            {config.secureSocksDSProxyEnabled && (
-              <SecureSocksProxySettings options={options} onOptionsChange={onOptionsChange} />
-            )}
-
             {jsonData.tlsAuth || jsonData.tlsAuthWithCACert ? (
               <TLSSecretsConfig
                 showCACert={jsonData.tlsAuthWithCACert}
