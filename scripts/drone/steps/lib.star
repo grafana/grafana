@@ -409,8 +409,34 @@ def build_frontend_step():
         ],
     }
 
-def build_frontend_package_step():
+def update_package_json_version():
+    """For some steps on certain pipelines, the expected package.json version is different than what is committed in the
+    codebase. Where the version might be committed as '1.2.3-pre', the version some steps expect is
+    '1.2.3-{DRONE_BUILD_NUMBER}-pre'.
+
+    This step uses 'lerna' to update that version.
+
+    Returns:
+      Drone step that updates the 'version' key in package.json
+    """
+
+    return {
+        "name": "update-package-json-version",
+        "image": images["node"],
+        "depends_on": [
+            "yarn-install",
+        ],
+        "commands": [
+            "new_version=$(cat package.json | jq .version | sed 's/pre/$DRONE_BUILD_NUMBER-pre/g')",
+            "yarn run lerna version $new_version --exact --no-git-tag-version --no-push --force-publish -y",
+        ],
+    }
+
+def build_frontend_package_step(depends_on = []):
     """Build the frontend packages using the Grafana build tool.
+
+    Args:
+        depends_on: a list of step names (strings) that must complete before this step runs.
 
     Returns:
       Drone step.
@@ -432,7 +458,7 @@ def build_frontend_package_step():
         },
         "depends_on": [
             "yarn-install",
-        ],
+        ] + depends_on,
         "commands": cmds,
     }
 

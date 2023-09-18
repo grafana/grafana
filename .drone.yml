@@ -527,6 +527,17 @@ steps:
   image: node:18.12.0-alpine
   name: yarn-install
 - commands:
+  - apk add --update jq bash
+  - yarn packages:build
+  - yarn packages:pack
+  - ./scripts/validate-npm-packages.sh
+  depends_on:
+  - yarn-install
+  environment:
+    NODE_OPTIONS: --max_old_space_size=8192
+  image: node:18.12.0-alpine
+  name: build-frontend-packages
+- commands:
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
     --depth=1
   - cd grafana-enterprise
@@ -570,17 +581,6 @@ steps:
     server: https://drone.grafana.net
     token:
       from_secret: drone_token
-- commands:
-  - apk add --update jq bash
-  - yarn packages:build
-  - yarn packages:pack
-  - ./scripts/validate-npm-packages.sh
-  depends_on:
-  - yarn-install
-  environment:
-    NODE_OPTIONS: --max_old_space_size=8192
-  image: node:18.12.0-alpine
-  name: build-frontend-packages
 - commands:
   - /src/grafana-build package --distro=linux/amd64,linux/arm64,linux/arm/v7 --go-version=1.20.8
     --yarn-cache=$$YARN_CACHE_FOLDER --build-id=$$DRONE_BUILD_NUMBER --grafana-dir=$$PWD
@@ -1711,12 +1711,21 @@ steps:
   image: node:18.12.0-alpine
   name: yarn-install
 - commands:
+  - new_version=$(cat package.json | jq .version | sed 's/pre/$DRONE_BUILD_NUMBER-pre/g')
+  - yarn run lerna version $new_version --exact --no-git-tag-version --no-push --force-publish
+    -y
+  depends_on:
+  - yarn-install
+  image: node:18.12.0-alpine
+  name: update-package-json-version
+- commands:
   - apk add --update jq bash
   - yarn packages:build
   - yarn packages:pack
   - ./scripts/validate-npm-packages.sh
   depends_on:
   - yarn-install
+  - update-package-json-version
   environment:
     NODE_OPTIONS: --max_old_space_size=8192
   image: node:18.12.0-alpine
@@ -4190,6 +4199,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: dd88ea6f6baa75d83672c61478b2e79781308249016956d863562035550b006e
+hmac: e8bf26ff7585596448d0b1a47606639fbaafee4e06e692e7a723d4cd3f5be47b
 
 ...
