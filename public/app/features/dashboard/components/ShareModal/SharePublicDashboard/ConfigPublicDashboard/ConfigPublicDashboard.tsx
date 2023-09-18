@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useContext, useState, useEffect } from 'react';
+import React, { useContext } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data/src';
@@ -30,11 +30,8 @@ import { NoUpsertPermissionsAlert } from '../ModalAlerts/NoUpsertPermissionsAler
 import { SaveDashboardChangesAlert } from '../ModalAlerts/SaveDashboardChangesAlert';
 import { UnsupportedDataSourcesAlert } from '../ModalAlerts/UnsupportedDataSourcesAlert';
 import { UnsupportedTemplateVariablesAlert } from '../ModalAlerts/UnsupportedTemplateVariablesAlert';
-import {
-  dashboardHasTemplateVariables,
-  generatePublicDashboardUrl,
-  getUnsupportedDashboardDatasources,
-} from '../SharePublicDashboardUtils';
+import { dashboardHasTemplateVariables, generatePublicDashboardUrl } from '../SharePublicDashboardUtils';
+import { useGetUnsupportedDataSources } from '../useGetUnsupportedDataSources';
 
 import { Configuration } from './Configuration';
 import { EmailSharingConfiguration } from './EmailSharingConfiguration';
@@ -61,17 +58,7 @@ const ConfigPublicDashboard = () => {
   const dashboard = dashboardState.getModel()!;
   const dashboardVariables = dashboard.getVariables();
 
-  const [unsupportedDataSources, setUnsupportedDataSources] = useState<string[]>([]);
-
-  useEffect(() => {
-    const fetchUnsupportedDataSources = async () => {
-      return await getUnsupportedDashboardDatasources(dashboard.panels);
-    };
-
-    fetchUnsupportedDataSources().then((dsList) => {
-      setUnsupportedDataSources(dsList);
-    });
-  }, [dashboard.panels]);
+  const { unsupportedDataSources } = useGetUnsupportedDataSources(dashboard);
 
   const { data: publicDashboard, isFetching: isGetLoading } = useGetPublicDashboardQuery(dashboard.uid);
   const [update, { isLoading: isUpdateLoading }] = useUpdatePublicDashboardMutation();
