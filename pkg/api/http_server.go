@@ -75,6 +75,7 @@ import (
 	publicdashboardsApi "github.com/grafana/grafana/pkg/services/publicdashboards/api"
 	"github.com/grafana/grafana/pkg/services/query"
 	"github.com/grafana/grafana/pkg/services/queryhistory"
+	"github.com/grafana/grafana/pkg/services/queryrecommend"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/search"
@@ -139,6 +140,7 @@ type HTTPServer struct {
 	SearchService                search.Service
 	ShortURLService              shorturls.Service
 	QueryHistoryService          queryhistory.Service
+	QueryRecommendService        queryrecommend.Service
 	CorrelationsService          correlations.Service
 	Live                         *live.GrafanaLive
 	LivePushGateway              *pushhttp.Gateway
@@ -218,7 +220,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	pluginDashboardService plugindashboards.Service, pluginStore plugins.Store, pluginClient plugins.Client,
 	pluginErrorResolver plugins.ErrorResolver, pluginInstaller plugins.Installer, settingsProvider setting.Provider,
 	dataSourceCache datasources.CacheService, userTokenService auth.UserTokenService,
-	cleanUpService *cleanup.CleanUpService, shortURLService shorturls.Service, queryHistoryService queryhistory.Service,
+	cleanUpService *cleanup.CleanUpService, shortURLService shorturls.Service, queryHistoryService queryhistory.Service, queryRecommendService queryrecommend.Service,
 	correlationsService correlations.Service, remoteCache *remotecache.RemoteCache, provisioningService provisioning.ProvisioningService,
 	accessControl accesscontrol.AccessControl, dataSourceProxy *datasourceproxy.DataSourceProxyService, searchService *search.SearchService,
 	live *live.GrafanaLive, livePushGateway *pushhttp.Gateway, plugCtxProvider *plugincontext.Provider,
@@ -278,6 +280,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		cleanUpService:               cleanUpService,
 		ShortURLService:              shortURLService,
 		QueryHistoryService:          queryHistoryService,
+		QueryRecommendService:        queryRecommendService,
 		CorrelationsService:          correlationsService,
 		Features:                     features,
 		StorageService:               storageService,

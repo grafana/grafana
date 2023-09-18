@@ -21,13 +21,14 @@ import (
 	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
 	"github.com/grafana/grafana/pkg/services/ngalert/image"
 	"github.com/grafana/grafana/pkg/services/queryhistory"
+	"github.com/grafana/grafana/pkg/services/queryrecommend"
 	"github.com/grafana/grafana/pkg/services/shorturls"
 	tempuser "github.com/grafana/grafana/pkg/services/temp_user"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 func ProvideService(cfg *setting.Cfg, serverLockService *serverlock.ServerLockService,
-	shortURLService shorturls.Service, sqlstore db.DB, queryHistoryService queryhistory.Service,
+	shortURLService shorturls.Service, sqlstore db.DB, queryHistoryService queryhistory.Service, queryRecommendService queryrecommend.Service,
 	dashboardVersionService dashver.Service, dashSnapSvc dashboardsnapshots.Service, deleteExpiredImageService *image.DeleteExpiredService,
 	tempUserService tempuser.Service, tracer tracing.Tracer, annotationCleaner annotations.Cleaner) *CleanUpService {
 	s := &CleanUpService{
@@ -35,6 +36,7 @@ func ProvideService(cfg *setting.Cfg, serverLockService *serverlock.ServerLockSe
 		ServerLockService:         serverLockService,
 		ShortURLService:           shortURLService,
 		QueryHistoryService:       queryHistoryService,
+		QueryRecommendService:     queryRecommendService,
 		store:                     sqlstore,
 		log:                       log.New("cleanup"),
 		dashboardVersionService:   dashboardVersionService,
@@ -55,6 +57,7 @@ type CleanUpService struct {
 	ServerLockService         *serverlock.ServerLockService
 	ShortURLService           shorturls.Service
 	QueryHistoryService       queryhistory.Service
+	QueryRecommendService     queryrecommend.Service
 	dashboardVersionService   dashver.Service
 	dashboardSnapshotService  dashboardsnapshots.Service
 	deleteExpiredImageService *image.DeleteExpiredService
