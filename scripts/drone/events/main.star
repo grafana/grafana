@@ -51,7 +51,7 @@ trigger = {
     "event": [
         "push",
     ],
-    "branch": "km/main-fix-packages-publish",
+    "branch": "main",
     "paths": {
         "exclude": [
             "*.md",

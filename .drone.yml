@@ -1415,7 +1415,7 @@ steps:
   image: node:18.12.0-alpine
   name: test-frontend
 trigger:
-  branch: km/main-fix-packages-publish
+  branch: main
   event:
   - push
   paths:
@@ -1482,7 +1482,7 @@ steps:
   image: node:18.12.0-alpine
   name: verify-i18n
 trigger:
-  branch: km/main-fix-packages-publish
+  branch: main
   event:
   - push
   paths:
@@ -1561,7 +1561,7 @@ steps:
   image: golang:1.20.8-alpine
   name: test-backend-integration
 trigger:
-  branch: km/main-fix-packages-publish
+  branch: main
   event:
   - push
   paths:
@@ -1630,7 +1630,7 @@ steps:
   image: byrnedo/alpine-curl:0.1.8
   name: lint-drone
 trigger:
-  branch: km/main-fix-packages-publish
+  branch: main
   event:
   - push
   paths:
@@ -1990,6 +1990,12 @@ steps:
       from_secret: npm_token
   image: node:18.12.0-alpine
   name: release-canary-npm-packages
+  when:
+    paths:
+      include:
+      - packages/**
+    repo:
+    - grafana/grafana
 - commands:
   - ./bin/build upload-packages --edition oss
   depends_on:
@@ -2022,7 +2028,7 @@ steps:
     repo:
     - grafana/grafana
 trigger:
-  branch: km/main-fix-packages-publish
+  branch: main
   event:
   - push
   paths:
@@ -2231,7 +2237,7 @@ steps:
   image: golang:1.20.8-alpine
   name: memcached-integration-tests
 trigger:
-  branch: km/main-fix-packages-publish
+  branch: main
   event:
   - push
   paths:
@@ -2286,7 +2292,7 @@ steps:
   image: grafana/ci-wix:0.1.1
   name: windows-init
 trigger:
-  branch: km/main-fix-packages-publish
+  branch: main
   event:
   - push
   paths:
@@ -2405,7 +2411,7 @@ steps:
     webhook:
       from_secret: slack_webhook
 trigger:
-  branch: km/main-fix-packages-publish
+  branch: main
   event:
   - push
   paths:
@@ -4196,6 +4202,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 498cea51ef5aa3188303088c5657de40dcf7c4776b39fb353c94652aa199a96d
+hmac: 3a37f81e1cee396e779e76bb0aa38331e4fbcdcb5d73a788aabbb2972d9aad6a
 
 ...

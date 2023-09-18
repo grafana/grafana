@@ -989,18 +989,19 @@ def release_canary_npm_packages_step(trigger = None):
         ],
     }
 
-    # if trigger:
-    #     step = dict(
-    #         step,
-    #         when = dict(
-    #             trigger,
-    #             paths = {
-    #                 "include": [
-    #                     "packages/**",
-    #                 ],
-    #             },
-    #         ),
-    #     )
+    if trigger:
+        step = dict(
+            step,
+            when = dict(
+                trigger,
+                paths = {
+                    "include": [
+                        "packages/**",
+                    ],
+                },
+            ),
+        )
+
     return step
 
 def upload_packages_step(ver_mode, trigger = None):
