@@ -337,7 +337,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
         rawQuery: true,
       },
       this.templateSrv,
-      options.scopedVars
+      options?.scopedVars
     ).render(true);
 
     return lastValueFrom(this._seriesQuery(interpolated, options)).then((resp) => {
