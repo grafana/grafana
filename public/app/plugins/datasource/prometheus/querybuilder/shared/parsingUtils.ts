@@ -86,7 +86,6 @@ export function getString(expr: string, node: SyntaxNode | TreeCursor | null | u
 
 /**
  * Create simple scalar binary op object.
- * Implementation in loki is backwards?
  * @param opDef - definition of the op to be created
  * @param expr
  * @param numberNode - the node for the scalar
