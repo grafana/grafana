@@ -1,3 +1,5 @@
+import { ScalarParameter, TabularParameter, Function } from '@kusto/monaco-kusto';
+
 import {
   DataSourceInstanceSettings,
   DataSourceJsonData,
@@ -8,6 +10,7 @@ import {
 
 import Datasource from '../datasource';
 
+import { AzureLogAnalyticsMetadataTable } from './logAnalyticsMetadata';
 import { AzureMonitorQuery, ResultFormat } from './query';
 
 export type AzureDataSourceSettings = DataSourceSettings<AzureDataSourceJsonData, AzureDataSourceSecureJsonData>;
@@ -131,9 +134,30 @@ export interface AzureQueryEditorFieldProps {
   datasource: Datasource;
   subscriptionId?: string;
   variableOptionGroup: VariableOptionGroup;
+  schema?: EngineSchema;
 
   onQueryChange: (newQuery: AzureMonitorQuery) => void;
   setError: (source: string, error: AzureMonitorErrorish | undefined) => void;
+}
+
+// To avoid a type issue we redeclare the EngineSchema type from @kusto/monaco-kusto
+export interface EngineSchema {
+  clusterType: 'Engine';
+  cluster: {
+    connectionString: string;
+    databases: Database[];
+  };
+  database: Database | undefined;
+  globalScalarParameters?: ScalarParameter[];
+  globalTabularParameters?: TabularParameter[];
+}
+
+export interface Database {
+  name: string;
+  tables: AzureLogAnalyticsMetadataTable[];
+  functions: Function[];
+  majorVersion: number;
+  minorVersion: number;
 }
 
 export interface FormatAsFieldProps extends AzureQueryEditorFieldProps {
