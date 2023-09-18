@@ -19,7 +19,7 @@ import { QueryEditorRow } from 'app/features/query/components/QueryEditorRow';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { msToSingleUnitDuration } from '../../utils/time';
-import { AlertConditionIndicator } from '../expressions/AlertConditionIndicator';
+import { ExpressionStatusIndicator } from '../expressions/ExpressionStatusIndicator';
 
 import { QueryOptions } from './QueryOptions';
 import { VizWrapper } from './VizWrapper';
@@ -119,8 +119,10 @@ export const QueryWrapper = ({
       minInterval: queryOptions.minInterval,
     };
 
+    const isAlertCondition = condition === query.refId;
+
     return (
-      <Stack direction="row" alignItems="baseline" gap={1}>
+      <Stack direction="row" alignItems="center" gap={1}>
         <SelectingDataSourceTooltip />
         <QueryOptions
           onChangeTimeRange={onChangeTimeRange}
@@ -129,11 +131,10 @@ export const QueryWrapper = ({
           onChangeQueryOptions={onChangeQueryOptions}
           index={index}
         />
-
-        <AlertConditionIndicator
-          onSetCondition={() => onSetCondition(query.refId)}
-          enabled={condition === query.refId}
+        <ExpressionStatusIndicator
           error={error}
+          onSetCondition={() => onSetCondition(query.refId)}
+          isCondition={isAlertCondition}
         />
       </Stack>
     );

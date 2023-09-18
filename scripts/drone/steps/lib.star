@@ -633,8 +633,8 @@ def frontend_metrics_step(trigger = None):
         },
         "failure": "ignore",
         "commands": [
-            "apk add --update bash grep",
-            "./scripts/ci-frontend-metrics.sh | ./bin/build publish-metrics $$GRAFANA_MISC_STATS_API_KEY",
+            "apk add --update bash grep git",
+            "./scripts/ci-frontend-metrics.sh ./grafana/public/build | ./bin/build publish-metrics $$GRAFANA_MISC_STATS_API_KEY",
         ],
     }
     if trigger:
@@ -955,6 +955,7 @@ def release_canary_npm_packages_step(trigger = None):
             "NPM_TOKEN": from_secret(npm_token),
         },
         "commands": [
+            "apk add --update bash",
             "./scripts/publish-npm-packages.sh --dist-tag 'canary' --registry 'https://registry.npmjs.org'",
         ],
     }

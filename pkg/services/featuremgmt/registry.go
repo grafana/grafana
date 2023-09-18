@@ -543,13 +543,6 @@ var (
 			Owner:        grafanaPluginsPlatformSquad,
 		},
 		{
-			Name:         "alertingLokiRangeToInstant",
-			Description:  "Rewrites eligible loki range queries to instant queries",
-			Stage:        FeatureStageExperimental,
-			FrontendOnly: false,
-			Owner:        grafanaAlertingSquad,
-		},
-		{
 			Name:         "vizAndWidgetSplit",
 			Description:  "Split panels between vizualizations and widgets",
 			Stage:        FeatureStageExperimental,
@@ -736,6 +729,20 @@ var (
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: false,
 			Owner:        grafanaPluginsPlatformSquad,
+		},
+		{
+			Name:         "wargamesTesting",
+			Description:  "Placeholder feature flag for internal testing",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: false,
+			Owner:        hostedGrafanaTeam,
+		},
+		{
+			Name:         "alertingInsights",
+			Description:  "Show the new alerting insights landing page",
+			FrontendOnly: true,
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAlertingSquad,
 		},
 	}
 )

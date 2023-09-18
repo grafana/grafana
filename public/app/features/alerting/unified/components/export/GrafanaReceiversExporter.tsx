@@ -11,11 +11,11 @@ import { ExportFormats, jsonAndYamlGrafanaExportProviders } from './providers';
 interface GrafanaReceiversExportPreviewProps {
   exportFormat: ExportFormats;
   onClose: () => void;
-  decrypt: string;
+  decrypt: boolean;
 }
 
 const GrafanaReceiversExportPreview = ({ decrypt, exportFormat, onClose }: GrafanaReceiversExportPreviewProps) => {
-  const { currentData: receiversDefinition = '', isFetching } = alertRuleApi.useExportReceiversQuery({
+  const { currentData: receiverDefinition = '', isFetching } = alertRuleApi.useExportReceiversQuery({
     decrypt: decrypt,
     format: exportFormat,
   });
@@ -29,7 +29,7 @@ const GrafanaReceiversExportPreview = ({ decrypt, exportFormat, onClose }: Grafa
   return (
     <FileExportPreview
       format={exportFormat}
-      textDefinition={receiversDefinition}
+      textDefinition={receiverDefinition}
       downloadFileName={downloadFileName}
       onClose={onClose}
     />
@@ -38,7 +38,7 @@ const GrafanaReceiversExportPreview = ({ decrypt, exportFormat, onClose }: Grafa
 
 interface GrafanaReceiversExporterProps {
   onClose: () => void;
-  decrypt: string;
+  decrypt: boolean;
 }
 
 export const GrafanaReceiversExporter = ({ onClose, decrypt }: GrafanaReceiversExporterProps) => {
