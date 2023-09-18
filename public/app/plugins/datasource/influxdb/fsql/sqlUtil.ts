@@ -36,7 +36,7 @@ export function toRawSql({ sql, dataset, table }: SQLQuery): string {
 
   // Although LIMIT 0 doesn't make sense, it is still possible to have LIMIT 0
   if (isLimit(sql.limit)) {
-    rawQuery += `LIMIT ${sql.limit} `;
+    rawQuery += `LIMIT ${sql.limit}`;
   }
 
   return rawQuery;
