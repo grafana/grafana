@@ -55,6 +55,7 @@ describe('DashboardScene', () => {
 function buildTestScene() {
   const scene = new DashboardScene({
     title: 'hello',
+    uid: 'dash-1',
     body: new SceneGridLayout({
       children: [
         new SceneGridItem({

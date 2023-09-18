@@ -5,8 +5,8 @@ import { flow, get, isArray, isEmpty, last, sortBy, tail, toNumber, isNaN } from
 
 export type Diff = {
   op: 'add' | 'replace' | 'remove' | 'copy' | 'test' | '_get' | 'move';
-  value: any;
-  originalValue: any;
+  value: unknown;
+  originalValue: unknown;
   path: string[];
   startLineNumber: number;
 };

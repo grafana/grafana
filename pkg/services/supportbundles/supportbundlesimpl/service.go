@@ -11,11 +11,11 @@ import (
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
-	"github.com/grafana/grafana/pkg/plugins"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/supportbundles"
 	"github.com/grafana/grafana/pkg/services/supportbundles/bundleregistry"
 	"github.com/grafana/grafana/pkg/setting"
@@ -32,7 +32,7 @@ type Service struct {
 	cfg            *setting.Cfg
 	features       *featuremgmt.FeatureManager
 	pluginSettings pluginsettings.Service
-	pluginStore    plugins.Store
+	pluginStore    pluginstore.Store
 	store          bundleStore
 
 	log                  log.Logger
@@ -51,7 +51,7 @@ func ProvideService(
 	httpServer *grafanaApi.HTTPServer,
 	kvStore kvstore.KVStore,
 	pluginSettings pluginsettings.Service,
-	pluginStore plugins.Store,
+	pluginStore pluginstore.Store,
 	routeRegister routing.RouteRegister,
 	settings setting.Provider,
 	sql db.DB,

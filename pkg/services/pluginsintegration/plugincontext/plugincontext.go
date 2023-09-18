@@ -10,16 +10,16 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
 	"github.com/grafana/grafana/pkg/infra/localcache"
-	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/adapters"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 )
 
 var ErrPluginNotFound = errors.New("plugin not found")
 
-func ProvideService(cacheService *localcache.CacheService, pluginStore plugins.Store,
+func ProvideService(cacheService *localcache.CacheService, pluginStore pluginstore.Store,
 	dataSourceService datasources.DataSourceService, pluginSettingsService pluginsettings.Service) *Provider {
 	return &Provider{
 		cacheService:          cacheService,
@@ -31,7 +31,7 @@ func ProvideService(cacheService *localcache.CacheService, pluginStore plugins.S
 
 type Provider struct {
 	cacheService          *localcache.CacheService
-	pluginStore           plugins.Store
+	pluginStore           pluginstore.Store
 	dataSourceService     datasources.DataSourceService
 	pluginSettingsService pluginsettings.Service
 }

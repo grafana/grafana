@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { HTMLAttributes, useCallback } from 'react';
+import React, { HTMLAttributes } from 'react';
 import tinycolor from 'tinycolor2';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -19,7 +19,7 @@ export interface BadgeProps extends HTMLAttributes<HTMLDivElement> {
 }
 
 export const Badge = React.memo<BadgeProps>(({ icon, color, text, tooltip, className, ...otherProps }) => {
-  const styles = useStyles2(useCallback((theme) => getStyles(theme, color), [color]));
+  const styles = useStyles2(getStyles, color);
   const badge = (
     <div className={cx(styles.wrapper, className)} {...otherProps}>
       {icon && <Icon name={icon} size="sm" />}
