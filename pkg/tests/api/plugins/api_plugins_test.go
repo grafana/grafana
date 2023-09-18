@@ -78,7 +78,7 @@ func TestIntegrationPlugins(t *testing.T) {
 
 			statusCode, body = makePostRequest(t, grafanaAPIURL(usernameAdmin, grafanaListedAddr, "plugins/test/uninstall"))
 			assert.Equal(t, 404, statusCode)
-			assert.Equal(t, "Plugin not installed", body["message"])
+			assert.Equal(t, "Plugin not found", body["message"])
 		})
 	})
 

@@ -4,7 +4,8 @@ import "github.com/grafana/grafana/pkg/util/errutil"
 
 var (
 	// ErrPluginNotRegistered error returned when a plugin is not registered.
-	ErrPluginNotRegistered = errutil.NotFound("plugin.notRegistered")
+	ErrPluginNotRegistered = errutil.NotFound("plugin.notRegistered",
+		errutil.WithPublicMessage("Plugin not found"))
 	// ErrHealthCheckFailed error returned when a plugin health check failed.
 	ErrHealthCheckFailed = errutil.Internal("plugin.failedHealthCheck")
 	// ErrPluginUnavailable error returned when a plugin is unavailable.
