@@ -1,5 +1,4 @@
 import { QueryBuilderOperation, QueryBuilderOperationDef } from '../../prometheus/querybuilder/shared/types';
-import { getOperationDefinitions } from './operations';
 
 import {
   createRangeOperation,
@@ -9,6 +8,7 @@ import {
   labelFilterRenderer,
   pipelineRenderer,
 } from './operationUtils';
+import { getOperationDefinitions } from './operations';
 import { LokiOperationId, LokiVisualQueryOperationCategory } from './types';
 
 describe('createRangeOperation', () => {
