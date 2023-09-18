@@ -17,7 +17,7 @@ weight: -37
 
 Welcome to Grafana Cloud! Read on to learn about the newest changes to Grafana Cloud.
 
-## Log Aggregation for Datadog data source
+## Log aggregation for Datadog data source
 
 <!-- Taewoo Kim -->
 <!-- OSS, Enterprise -->
