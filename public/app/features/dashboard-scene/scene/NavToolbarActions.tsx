@@ -22,7 +22,7 @@ export const NavToolbarActions = React.memo<Props>(({ dashboard }) => {
   if (uid) {
     toolbarActions.push(
       <DashNavButton
-        tooltip={t('dashboard.toolbar.share', 'Share dashboard or panel')}
+        tooltip={t('dashboard.toolbar.share', 'Share dashboard')}
         icon="share-alt"
         iconSize="lg"
         onClick={() => {
