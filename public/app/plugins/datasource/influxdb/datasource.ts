@@ -335,7 +335,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
         rawQuery: true,
       },
       this.templateSrv,
-      options.scopedVars
+      options?.scopedVars
     ).render(true);
 
     return lastValueFrom(this._seriesQuery(interpolated, options)).then((resp) => {
@@ -345,12 +345,12 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
 
   // By implementing getTagKeys and getTagValues we add ad-hoc filters functionality
   // Used in public/app/features/variables/adhoc/picker/AdHocFilterKey.tsx::fetchFilterKeys
-  getTagKeys(options: InfluxQuery) {
+  getTagKeys(options?: InfluxQuery) {
     const query = buildMetadataQuery({
       type: 'TAG_KEYS',
       templateService: this.templateSrv,
       database: this.database,
-      measurement: options.measurement ?? '',
+      measurement: options?.measurement ?? '',
       tags: [],
     });
     return this.metricFindQuery(query, options);
@@ -361,8 +361,8 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
       type: 'TAG_VALUES',
       templateService: this.templateSrv,
       database: this.database,
-      withKey: options.key,
-      measurement: options.measurement ?? '',
+      withKey: options.key ?? '',
+      measurement: options?.measurement ?? '',
       tags: [],
     });
     return this.metricFindQuery(query, options);
