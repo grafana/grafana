@@ -1,7 +1,7 @@
 import { isEmpty } from 'lodash';
 
-import { SQLExpression, SQLQuery } from 'app/features/plugins/sql/types';
-import { haveColumns } from 'app/features/plugins/sql/utils/sql.utils';
+import { SQLQuery } from 'app/features/plugins/sql/types';
+import { createSelectClause, haveColumns } from 'app/features/plugins/sql/utils/sql.utils';
 
 export function toRawSql({ sql, dataset, table }: SQLQuery): string {
   let rawQuery = '';
@@ -11,7 +11,7 @@ export function toRawSql({ sql, dataset, table }: SQLQuery): string {
     return rawQuery;
   }
 
-  rawQuery += createSelectClause(sql.columns, sql.limit);
+  rawQuery += createSelectClause(sql.columns);
 
   if (dataset && table) {
     rawQuery += `FROM ${dataset}.${table} `;
@@ -34,24 +34,12 @@ export function toRawSql({ sql, dataset, table }: SQLQuery): string {
     rawQuery += `${sql.orderByDirection} `;
   }
 
-  return rawQuery;
-}
+  // Although LIMIT 0 doesn't make sense, it is still possible to have LIMIT 0
+  if (isLimit(sql.limit)) {
+    rawQuery += `LIMIT ${sql.limit} `;
+  }
 
-function createSelectClause(sqlColumns: NonNullable<SQLExpression['columns']>, limit?: number): string {
-  const columns = sqlColumns.map((c) => {
-    let rawColumn = '';
-    if (c.name && c.alias) {
-      rawColumn += `${c.name}(${c.parameters?.map((p) => `${p.name}`)}) AS ${c.alias}`;
-    } else if (c.name) {
-      rawColumn += `${c.name}(${c.parameters?.map((p) => `${p.name}`)})`;
-    } else if (c.alias) {
-      rawColumn += `${c.parameters?.map((p) => `${p.name}`)} AS ${c.alias}`;
-    } else {
-      rawColumn += `${c.parameters?.map((p) => `${p.name}`)}`;
-    }
-    return rawColumn;
-  });
-  return `SELECT ${isLimit(limit) ? 'TOP(' + limit + ')' : ''} ${columns.join(', ')} `;
+  return rawQuery;
 }
 
 const isLimit = (limit: number | undefined): boolean => limit !== undefined && limit >= 0;
