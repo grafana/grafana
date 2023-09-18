@@ -1,4 +1,13 @@
-import { EmbeddedScene, NestedScene, SceneFlexItem, SceneFlexLayout, SceneTimeRange } from '@grafana/scenes';
+import {
+  EmbeddedScene,
+  NestedScene,
+  QueryVariable,
+  SceneFlexItem,
+  SceneFlexLayout,
+  SceneTimeRange,
+  SceneVariableSet,
+  VariableValueSelectors,
+} from '@grafana/scenes';
 
 import { getFiringAlertsScene } from '../insights/grafana/FiringAlertsPercentage';
 import { getFiringAlertsRateScene } from '../insights/grafana/FiringAlertsRate';
@@ -110,14 +119,13 @@ function getMimirManagedRulesScenes() {
   });
 }
 
-//@todo: enable query variables after https://github.com/grafana/scenes/pull/335 is merged
 function getMimirManagedRulesPerGroupScenes() {
-  // const ruleGroupHandler = new QueryVariable({
-  //   label: 'Rule Group',
-  //   name: 'rule_group',
-  //   datasource: cloudUsageDs,
-  //   query: 'label_values(grafanacloud_instance_rule_group_rules,rule_group)',
-  // });
+  const ruleGroupHandler = new QueryVariable({
+    label: 'Rule Group',
+    name: 'rule_group',
+    datasource: cloudUsageDs,
+    query: 'label_values(grafanacloud_instance_rule_group_rules,rule_group)',
+  });
 
   return new NestedScene({
     title: 'Mimir-managed Rules - Per Rule Group',
@@ -132,9 +140,9 @@ function getMimirManagedRulesPerGroupScenes() {
         getRulesPerGroupScene(THIS_WEEK_TIME_RANGE, cloudUsageDs, 'Rules per Group'),
       ],
     }),
-    // $variables: new SceneVariableSet({
-    //   variables: [ruleGroupHandler],
-    // }),
-    //controls: [new VariableValueSelectors({})],
+    $variables: new SceneVariableSet({
+      variables: [ruleGroupHandler],
+    }),
+    controls: [new VariableValueSelectors({})],
   });
 }
