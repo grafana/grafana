@@ -43,7 +43,6 @@ const GrafanaReceiverExportPreview = ({
   );
 };
 
-
 interface GrafanaReceiverExporterProps {
   onClose: () => void;
   receiverName: string;
