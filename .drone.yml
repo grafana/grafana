@@ -17,14 +17,14 @@ services: []
 steps:
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.17.1
+  image: alpine:3.18.3
   name: identify-runner
 - commands:
   - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.20.4
+  image: golang:1.20.8
   name: compile-build-cmd
 - commands:
   - ./bin/build verify-drone
@@ -67,14 +67,14 @@ services: []
 steps:
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.17.1
+  image: alpine:3.18.3
   name: identify-runner
 - commands:
   - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.20.4
+  image: golang:1.20.8
   name: compile-build-cmd
 - commands:
   - ./bin/build verify-starlark .
@@ -116,7 +116,7 @@ services: []
 steps:
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.17.1
+  image: alpine:3.18.3
   name: identify-runner
 - commands:
   - mkdir -p bin
@@ -219,7 +219,7 @@ steps:
   name: clone-enterprise
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.17.1
+  image: alpine:3.18.3
   name: identify-runner
 - commands:
   - yarn install --immutable
@@ -293,14 +293,14 @@ steps:
   name: clone-enterprise
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.17.1
+  image: alpine:3.18.3
   name: identify-runner
 - commands:
   - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.20.4
+  image: golang:1.20.8
   name: compile-build-cmd
 - commands:
   - '# It is required that code generated from Thema/CUE be committed and in sync
@@ -377,14 +377,14 @@ services: []
 steps:
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.17.1
+  image: alpine:3.18.3
   name: identify-runner
 - commands:
   - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.20.4
+  image: golang:1.20.8
   name: compile-build-cmd
 - commands:
   - is_fork=$(curl "https://$GITHUB_TOKEN@api.github.com/repos/grafana/grafana/pulls/$DRONE_PULL_REQUEST"
@@ -418,7 +418,7 @@ steps:
   - wire-install
   environment:
     CGO_ENABLED: "1"
-  image: golang:1.20.4
+  image: golang:1.20.8
   name: lint-backend
 trigger:
   event:
@@ -461,7 +461,7 @@ services: []
 steps:
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.17.1
+  image: alpine:3.18.3
   name: identify-runner
 - commands:
   - mkdir -p bin
@@ -474,7 +474,7 @@ steps:
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.20.4
+  image: golang:1.20.8
   name: compile-build-cmd
 - commands:
   - '# It is required that code generated from Thema/CUE be committed and in sync
@@ -861,11 +861,11 @@ steps:
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.20.4
+  image: golang:1.20.8
   name: compile-build-cmd
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.17.1
+  image: alpine:3.18.3
   name: identify-runner
 - commands:
   - '# It is required that code generated from Thema/CUE be committed and in sync
@@ -967,7 +967,7 @@ services: []
 steps:
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.17.1
+  image: alpine:3.18.3
   name: identify-runner
 - commands:
   - yarn install --immutable
@@ -1036,7 +1036,7 @@ steps:
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.20.4
+  image: golang:1.20.8
   name: compile-build-cmd
 - commands:
   - ./bin/build shellcheck
@@ -1078,7 +1078,7 @@ services: []
 steps:
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.17.1
+  image: alpine:3.18.3
   name: identify-runner
 - commands:
   - yarn install --immutable
@@ -1145,7 +1145,7 @@ services: []
 steps:
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.17.1
+  image: alpine:3.18.3
   name: identify-runner
 - commands:
   - mkdir -p bin
@@ -1205,7 +1205,7 @@ services: []
 steps:
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.17.1
+  image: alpine:3.18.3
   name: identify-runner
 - commands:
   - yarn install --immutable
@@ -1256,14 +1256,14 @@ services: []
 steps:
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.17.1
+  image: alpine:3.18.3
   name: identify-runner
 - commands:
   - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.20.4
+  image: golang:1.20.8
   name: compile-build-cmd
 - commands:
   - '# It is required that code generated from Thema/CUE be committed and in sync
@@ -1333,14 +1333,14 @@ services: []
 steps:
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.17.1
+  image: alpine:3.18.3
   name: identify-runner
 - commands:
   - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.20.4
+  image: golang:1.20.8
   name: compile-build-cmd
 - commands:
   - make gen-go
@@ -1354,7 +1354,7 @@ steps:
   - wire-install
   environment:
     CGO_ENABLED: "1"
-  image: golang:1.20.4
+  image: golang:1.20.8
   name: lint-backend
 - commands:
   - ./bin/build verify-drone
@@ -1395,7 +1395,7 @@ services: []
 steps:
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.17.1
+  image: alpine:3.18.3
   name: identify-runner
 - commands:
   - mkdir -p bin
@@ -1408,7 +1408,7 @@ steps:
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.20.4
+  image: golang:1.20.8
   name: compile-build-cmd
 - commands:
   - '# It is required that code generated from Thema/CUE be committed and in sync
@@ -1851,11 +1851,11 @@ steps:
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.20.4
+  image: golang:1.20.8
   name: compile-build-cmd
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.17.1
+  image: alpine:3.18.3
   name: identify-runner
 - commands:
   - '# It is required that code generated from Thema/CUE be committed and in sync
@@ -2135,7 +2135,7 @@ services: []
 steps:
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.17.1
+  image: alpine:3.18.3
   name: identify-runner
 - commands:
   - mkdir -p bin
@@ -2148,7 +2148,7 @@ steps:
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.20.4
+  image: golang:1.20.8
   name: compile-build-cmd
 - commands:
   - ./bin/build artifacts docker fetch --edition oss
@@ -2244,7 +2244,7 @@ steps:
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.20.4
+  image: golang:1.20.8
   name: compile-build-cmd
 - commands:
   - ./bin/build artifacts packages --tag $${DRONE_TAG} --src-bucket $${PRERELEASE_BUCKET}
@@ -2313,7 +2313,7 @@ steps:
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.20.4
+  image: golang:1.20.8
   name: compile-build-cmd
 - commands:
   - yarn install --immutable
@@ -2378,7 +2378,7 @@ steps:
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.20.4
+  image: golang:1.20.8
   name: compile-build-cmd
 - depends_on:
   - compile-build-cmd
@@ -2466,13 +2466,13 @@ steps:
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.20.4
+  image: golang:1.20.8
   name: compile-build-cmd
 - commands:
   - ./bin/build whatsnew-checker
   depends_on:
   - compile-build-cmd
-  image: golang:1.20.4
+  image: golang:1.20.8
   name: whats-new-checker
 trigger:
   event:
@@ -2507,7 +2507,7 @@ services: []
 steps:
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.17.1
+  image: alpine:3.18.3
   name: identify-runner
 - commands:
   - mkdir -p bin
@@ -2567,14 +2567,14 @@ services: []
 steps:
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.17.1
+  image: alpine:3.18.3
   name: identify-runner
 - commands:
   - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.20.4
+  image: golang:1.20.8
   name: compile-build-cmd
 - commands:
   - '# It is required that code generated from Thema/CUE be committed and in sync
@@ -2919,7 +2919,7 @@ services: []
 steps:
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.17.1
+  image: alpine:3.18.3
   name: identify-runner
 - commands:
   - mkdir -p bin
@@ -2952,7 +2952,7 @@ steps:
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.20.4
+  image: golang:1.20.8
   name: compile-build-cmd
 - commands:
   - ./bin/build build-backend --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
@@ -3198,7 +3198,7 @@ services: []
 steps:
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.17.1
+  image: alpine:3.18.3
   name: identify-runner
 - commands:
   - mkdir -p bin
@@ -3252,14 +3252,14 @@ services: []
 steps:
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.17.1
+  image: alpine:3.18.3
   name: identify-runner
 - commands:
   - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.20.4
+  image: golang:1.20.8
   name: compile-build-cmd
 - commands:
   - '# It is required that code generated from Thema/CUE be committed and in sync
@@ -3349,7 +3349,7 @@ steps:
   name: grabpl
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.17.1
+  image: alpine:3.18.3
   name: identify-runner
 - commands:
   - '# It is required that code generated from Thema/CUE be committed and in sync
@@ -3520,7 +3520,7 @@ steps:
   name: grabpl
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.17.1
+  image: alpine:3.18.3
   name: identify-runner
 - commands:
   - '# It is required that code generated from Thema/CUE be committed and in sync
@@ -3658,7 +3658,7 @@ steps:
 - commands:
   - if [ -z "${BUILD_CONTAINER_VERSION}" ]; then echo Missing BUILD_CONTAINER_VERSION;
     false; fi
-  image: alpine:3.17.1
+  image: alpine:3.18.3
   name: validate-version
 - commands:
   - printenv GCP_KEY > /tmp/key.json
@@ -3944,9 +3944,9 @@ steps:
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM google/cloud-sdk:431.0.0
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/build-container:1.7.4
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/grafana-ci-deploy:1.3.3
-  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM alpine:3.17.1
+  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM alpine:3.18.3
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM byrnedo/alpine-curl:0.1.8
-  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM golang:1.20.4
+  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM golang:1.20.8
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM plugins/slack
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM postgres:12.3-alpine
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM mysql:5.7.39
@@ -3971,9 +3971,9 @@ steps:
   - trivy --exit-code 1 --severity HIGH,CRITICAL google/cloud-sdk:431.0.0
   - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/build-container:1.7.4
   - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/grafana-ci-deploy:1.3.3
-  - trivy --exit-code 1 --severity HIGH,CRITICAL alpine:3.17.1
+  - trivy --exit-code 1 --severity HIGH,CRITICAL alpine:3.18.3
   - trivy --exit-code 1 --severity HIGH,CRITICAL byrnedo/alpine-curl:0.1.8
-  - trivy --exit-code 1 --severity HIGH,CRITICAL golang:1.20.4
+  - trivy --exit-code 1 --severity HIGH,CRITICAL golang:1.20.8
   - trivy --exit-code 1 --severity HIGH,CRITICAL plugins/slack
   - trivy --exit-code 1 --severity HIGH,CRITICAL postgres:12.3-alpine
   - trivy --exit-code 1 --severity HIGH,CRITICAL mysql:5.7.39
@@ -4025,7 +4025,7 @@ steps:
   depends_on: []
   environment:
     CGO_ENABLED: 0
-  image: golang:1.20.4
+  image: golang:1.20.8
   name: compile-build-cmd
 - commands:
   - ./bin/build publish grafana-com --edition oss
@@ -4240,6 +4240,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: e34c10286bcbc3d00bee9650adba43e1784cf6c52ec765377ae408a57e4fd022
+hmac: a0be61b00bbe2cd94b11a1922b413b394f5f79cf2d2fafa0e1ee1b13c40ad3d0
 
 ...
