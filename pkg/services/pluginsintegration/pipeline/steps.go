@@ -121,3 +121,39 @@ func (v *SignatureValidation) Validate(ctx context.Context, p *plugins.Plugin) e
 
 	return nil
 }
+
+// DisablePlugins is a filter step that will filter out any configured plugins
+type DisablePlugins struct {
+	log log.Logger
+	cfg *config.Cfg
+}
+
+// NewDisablePluginsStep returns a new DisablePlugins.
+func NewDisablePluginsStep(cfg *config.Cfg) *DisablePlugins {
+	return &DisablePlugins{
+		cfg: cfg,
+		log: log.New("plugins.disable"),
+	}
+}
+
+// Filter will filter out any plugins that are marked to be disabled.
+func (c *DisablePlugins) Filter(bundles []*plugins.FoundBundle) ([]*plugins.FoundBundle, error) {
+	if len(c.cfg.DisablePlugins) == 0 {
+		return bundles, nil
+	}
+
+	disablePluginsMap := make(map[string]bool)
+	for _, pluginID := range c.cfg.DisablePlugins {
+		disablePluginsMap[pluginID] = true
+	}
+
+	res := []*plugins.FoundBundle{}
+	for _, bundle := range bundles {
+		if disablePluginsMap[bundle.Primary.JSONData.ID] {
+			c.log.Debug("Disabling plugin load", "pluginID", bundle.Primary.JSONData.ID)
+		} else {
+			res = append(res, bundle)
+		}
+	}
+	return res, nil
+}

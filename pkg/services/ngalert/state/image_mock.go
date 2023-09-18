@@ -46,7 +46,7 @@ func (m *MockImageCapturer) NewImage(arg0 context.Context, arg1 *models.AlertRul
 }
 
 // NewImage indicates an expected call of NewImage.
-func (mr *MockImageCapturerMockRecorder) NewImage(arg0, arg1 interface{}) *gomock.Call {
+func (mr *MockImageCapturerMockRecorder) NewImage(arg0, arg1 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NewImage", reflect.TypeOf((*MockImageCapturer)(nil).NewImage), arg0, arg1)
 }

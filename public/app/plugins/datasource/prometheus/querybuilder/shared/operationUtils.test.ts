@@ -1,6 +1,7 @@
 import {
   createAggregationOperation,
   createAggregationOperationWithParam,
+  getOperationParamId,
   isConflictingSelector,
 } from './operationUtils';
 
@@ -195,5 +196,13 @@ describe('isConflictingSelector', () => {
       { label: 'host', op: '=', value: 'docker-desktop' },
     ];
     expect(isConflictingSelector(newLabel, labels)).toBe(false);
+  });
+});
+
+describe('getOperationParamId', () => {
+  it('Generates correct id for operation param', () => {
+    const operationId = 'abc';
+    const paramId = 0;
+    expect(getOperationParamId(operationId, paramId)).toBe('operations.abc.param.0');
   });
 });

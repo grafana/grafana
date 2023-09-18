@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/database"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -695,7 +696,6 @@ func TestPermissionCacheKey(t *testing.T) {
 		name         string
 		signedInUser *user.SignedInUser
 		expected     string
-		expectedErr  error
 	}{
 		{
 			name: "should return correct key for user",
@@ -703,8 +703,7 @@ func TestPermissionCacheKey(t *testing.T) {
 				OrgID:  1,
 				UserID: 1,
 			},
-			expected:    "rbac-permissions-1-user-1",
-			expectedErr: nil,
+			expected: "rbac-permissions-1-user-1",
 		},
 		{
 			name: "should return correct key for api key",
@@ -713,8 +712,7 @@ func TestPermissionCacheKey(t *testing.T) {
 				ApiKeyID:         1,
 				IsServiceAccount: false,
 			},
-			expected:    "rbac-permissions-1-apikey-1",
-			expectedErr: nil,
+			expected: "rbac-permissions-1-api-key-1",
 		},
 		{
 			name: "should return correct key for service account",
@@ -723,8 +721,7 @@ func TestPermissionCacheKey(t *testing.T) {
 				UserID:           1,
 				IsServiceAccount: true,
 			},
-			expected:    "rbac-permissions-1-service-1",
-			expectedErr: nil,
+			expected: "rbac-permissions-1-service-account-1",
 		},
 		{
 			name: "should return correct key for matching a service account with userId -1",
@@ -733,24 +730,20 @@ func TestPermissionCacheKey(t *testing.T) {
 				UserID:           -1,
 				IsServiceAccount: true,
 			},
-			expected:    "rbac-permissions-1-service--1",
-			expectedErr: nil,
+			expected: "rbac-permissions-1-service-account--1",
 		},
 		{
-			name: "should return error if not matching any",
+			name: "should use org role if no unique id",
 			signedInUser: &user.SignedInUser{
-				OrgID:  1,
-				UserID: -1,
+				OrgID:   1,
+				OrgRole: org.RoleNone,
 			},
-			expected:    "",
-			expectedErr: user.ErrNoUniqueID,
+			expected: "rbac-permissions-1-user-None",
 		},
 	}
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
-			str, err := permissionCacheKey(tc.signedInUser)
-			require.Equal(t, tc.expectedErr, err)
-			assert.Equal(t, tc.expected, str)
+			assert.Equal(t, tc.expected, permissionCacheKey(tc.signedInUser))
 		})
 	}
 }

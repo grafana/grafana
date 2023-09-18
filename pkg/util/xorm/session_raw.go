@@ -13,7 +13,7 @@ import (
 	"xorm.io/core"
 )
 
-func (session *Session) queryPreprocess(sqlStr *string, paramStr ...interface{}) {
+func (session *Session) queryPreprocess(sqlStr *string, paramStr ...any) {
 	for _, filter := range session.engine.dialect.Filters() {
 		*sqlStr = filter.Do(*sqlStr, session.engine.dialect, session.statement.RefTable)
 	}
@@ -22,7 +22,7 @@ func (session *Session) queryPreprocess(sqlStr *string, paramStr ...interface{})
 	session.lastSQLArgs = paramStr
 }
 
-func (session *Session) queryRows(sqlStr string, args ...interface{}) (*core.Rows, error) {
+func (session *Session) queryRows(sqlStr string, args ...any) (*core.Rows, error) {
 	defer session.resetStatement()
 
 	session.queryPreprocess(&sqlStr, args...)
@@ -79,7 +79,7 @@ func (session *Session) queryRows(sqlStr string, args ...interface{}) (*core.Row
 	return rows, nil
 }
 
-func (session *Session) queryRow(sqlStr string, args ...interface{}) *core.Row {
+func (session *Session) queryRow(sqlStr string, args ...any) *core.Row {
 	return core.NewRow(session.queryRows(sqlStr, args...))
 }
 
@@ -93,9 +93,9 @@ func value2Bytes(rawValue *reflect.Value) ([]byte, error) {
 
 func row2map(rows *core.Rows, fields []string) (resultsMap map[string][]byte, err error) {
 	result := make(map[string][]byte)
-	scanResultContainers := make([]interface{}, len(fields))
+	scanResultContainers := make([]any, len(fields))
 	for i := 0; i < len(fields); i++ {
-		var scanResultContainer interface{}
+		var scanResultContainer any
 		scanResultContainers[i] = &scanResultContainer
 	}
 	if err := rows.Scan(scanResultContainers...); err != nil {
@@ -135,7 +135,7 @@ func rows2maps(rows *core.Rows) (resultsSlice []map[string][]byte, err error) {
 	return resultsSlice, nil
 }
 
-func (session *Session) queryBytes(sqlStr string, args ...interface{}) ([]map[string][]byte, error) {
+func (session *Session) queryBytes(sqlStr string, args ...any) ([]map[string][]byte, error) {
 	rows, err := session.queryRows(sqlStr, args...)
 	if err != nil {
 		return nil, err
@@ -145,7 +145,7 @@ func (session *Session) queryBytes(sqlStr string, args ...interface{}) ([]map[st
 	return rows2maps(rows)
 }
 
-func (session *Session) exec(sqlStr string, args ...interface{}) (sql.Result, error) {
+func (session *Session) exec(sqlStr string, args ...any) (sql.Result, error) {
 	defer session.resetStatement()
 
 	session.queryPreprocess(&sqlStr, args...)
@@ -190,7 +190,7 @@ func (session *Session) exec(sqlStr string, args ...interface{}) (sql.Result, er
 	return session.DB().ExecContext(session.ctx, sqlStr, args...)
 }
 
-func convertSQLOrArgs(sqlOrArgs ...interface{}) (string, []interface{}, error) {
+func convertSQLOrArgs(sqlOrArgs ...any) (string, []any, error) {
 	switch sqlOrArgs[0].(type) {
 	case string:
 		return sqlOrArgs[0].(string), sqlOrArgs[1:], nil
@@ -205,7 +205,7 @@ func convertSQLOrArgs(sqlOrArgs ...interface{}) (string, []interface{}, error) {
 }
 
 // Exec raw sql
-func (session *Session) Exec(sqlOrArgs ...interface{}) (sql.Result, error) {
+func (session *Session) Exec(sqlOrArgs ...any) (sql.Result, error) {
 	if session.isAutoClose {
 		defer session.Close()
 	}

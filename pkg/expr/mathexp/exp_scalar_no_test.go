@@ -25,7 +25,7 @@ func TestScalarExpr(t *testing.T) {
 			newErrIs:  assert.NoError,
 			execErrIs: assert.NoError,
 			resultIs:  assert.Equal,
-			Results:   Results{[]Value{NewScalar("", float64Pointer(1.0))}},
+			Results:   resultValuesNoErr(NewScalar("", float64Pointer(1.0))),
 		},
 		{
 			name:      "unary: scalar",
@@ -34,7 +34,7 @@ func TestScalarExpr(t *testing.T) {
 			newErrIs:  assert.NoError,
 			execErrIs: assert.NoError,
 			resultIs:  assert.Equal,
-			Results:   Results{[]Value{NewScalar("", float64Pointer(0.0))}},
+			Results:   resultValuesNoErr(NewScalar("", float64Pointer(0.0))),
 		},
 		{
 			name:      "binary: scalar Op scalar",
@@ -43,7 +43,7 @@ func TestScalarExpr(t *testing.T) {
 			newErrIs:  assert.NoError,
 			execErrIs: assert.NoError,
 			resultIs:  assert.Equal,
-			Results:   Results{[]Value{NewScalar("", float64Pointer(2.0))}},
+			Results:   resultValuesNoErr(NewScalar("", float64Pointer(2.0))),
 		},
 		{
 			name:      "binary: scalar Op scalar - divide by zero",
@@ -52,25 +52,25 @@ func TestScalarExpr(t *testing.T) {
 			newErrIs:  assert.NoError,
 			execErrIs: assert.NoError,
 			resultIs:  assert.Equal,
-			Results:   Results{[]Value{NewScalar("", float64Pointer(math.Inf(1)))}},
+			Results:   resultValuesNoErr(NewScalar("", float64Pointer(math.Inf(1)))),
 		},
 		{
 			name:      "binary: scalar Op number",
 			expr:      "1 + $A",
-			vars:      Vars{"A": Results{[]Value{makeNumber("temp", nil, float64Pointer(2.0))}}},
+			vars:      Vars{"A": resultValuesNoErr(makeNumber("temp", nil, float64Pointer(2.0)))},
 			newErrIs:  assert.NoError,
 			execErrIs: assert.NoError,
 			resultIs:  assert.Equal,
-			Results:   Results{[]Value{makeNumber("", nil, float64Pointer(3.0))}},
+			Results:   resultValuesNoErr(makeNumber("", nil, float64Pointer(3.0))),
 		},
 		{
 			name:      "binary: number Op Scalar",
 			expr:      "$A - 3",
-			vars:      Vars{"A": Results{[]Value{makeNumber("temp", nil, float64Pointer(2.0))}}},
+			vars:      Vars{"A": resultValuesNoErr(makeNumber("temp", nil, float64Pointer(2.0)))},
 			newErrIs:  assert.NoError,
 			execErrIs: assert.NoError,
 			resultIs:  assert.Equal,
-			Results:   Results{[]Value{makeNumber("", nil, float64Pointer(-1))}},
+			Results:   resultValuesNoErr(makeNumber("", nil, float64Pointer(-1))),
 		},
 	}
 
@@ -101,20 +101,20 @@ func TestNumberExpr(t *testing.T) {
 		{
 			name:      "binary: number Op Scalar",
 			expr:      "$A / $A",
-			vars:      Vars{"A": Results{[]Value{makeNumber("temp", nil, float64Pointer(2.0))}}},
+			vars:      Vars{"A": resultValuesNoErr(makeNumber("temp", nil, float64Pointer(2.0)))},
 			newErrIs:  assert.NoError,
 			execErrIs: assert.NoError,
 			resultIs:  assert.Equal,
-			results:   Results{[]Value{makeNumber("", nil, float64Pointer(1))}},
+			results:   resultValuesNoErr(makeNumber("", nil, float64Pointer(1))),
 		},
 		{
 			name:      "unary: number",
 			expr:      "- $A",
-			vars:      Vars{"A": Results{[]Value{makeNumber("temp", nil, float64Pointer(2.0))}}},
+			vars:      Vars{"A": resultValuesNoErr(makeNumber("temp", nil, float64Pointer(2.0)))},
 			newErrIs:  assert.NoError,
 			execErrIs: assert.NoError,
 			resultIs:  assert.Equal,
-			results:   Results{[]Value{makeNumber("", nil, float64Pointer(-2.0))}},
+			results:   resultValuesNoErr(makeNumber("", nil, float64Pointer(-2.0))),
 		},
 		{
 			name:      "binary: Scalar Op Number (Number will nil val) returns nil",
@@ -122,8 +122,8 @@ func TestNumberExpr(t *testing.T) {
 			newErrIs:  assert.NoError,
 			execErrIs: assert.NoError,
 			resultIs:  assert.Equal,
-			vars:      Vars{"A": Results{[]Value{makeNumber("", nil, nil)}}},
-			results:   Results{[]Value{makeNumber("", nil, nil)}},
+			vars:      Vars{"A": resultValuesNoErr(makeNumber("", nil, nil))},
+			results:   resultValuesNoErr(makeNumber("", nil, nil)),
 		},
 	}
 

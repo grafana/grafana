@@ -131,7 +131,7 @@ func (e *AzureResourceGraphDatasource) executeQuery(ctx context.Context, query *
 		return nil, err
 	}
 
-	reqBody, err := json.Marshal(map[string]interface{}{
+	reqBody, err := json.Marshal(map[string]any{
 		"subscriptions": model.Subscriptions,
 		"query":         query.InterpolatedQuery,
 		"options":       map[string]string{"resultFormat": "table"},
@@ -167,8 +167,9 @@ func (e *AzureResourceGraphDatasource) executeQuery(ctx context.Context, query *
 	}
 
 	defer func() {
-		err := res.Body.Close()
-		backend.Logger.Error("Failed to close response body", "err", err)
+		if err := res.Body.Close(); err != nil {
+			backend.Logger.Warn("Failed to close response body", "err", err)
+		}
 	}()
 
 	argResponse, err := e.unmarshalResponse(res)
@@ -221,8 +222,9 @@ func (e *AzureResourceGraphDatasource) unmarshalResponse(res *http.Response) (Az
 	}
 
 	defer func() {
-		err := res.Body.Close()
-		backend.Logger.Error("Failed to close response body", "err", err)
+		if err := res.Body.Close(); err != nil {
+			backend.Logger.Warn("Failed to close response body", "err", err)
+		}
 	}()
 
 	if res.StatusCode/100 != 2 {

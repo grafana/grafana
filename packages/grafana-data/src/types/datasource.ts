@@ -263,11 +263,9 @@ abstract class DataSourceApi<
   abstract testDatasource(): Promise<TestDataSourceResponse>;
 
   /**
-   * Override to skip executing a query
+   * This function is not called automatically unless running within the DataSourceWithBackend
    *
-   * @returns false if the query should be skipped
-   *
-   * @virtual
+   * @deprecated
    */
   filterQuery?(query: TQuery): boolean;
 
@@ -341,7 +339,7 @@ abstract class DataSourceApi<
 
   getVersion?(optionalOptions?: any): Promise<string>;
 
-  interpolateVariablesInQueries?(queries: TQuery[], scopedVars: ScopedVars | {}): TQuery[];
+  interpolateVariablesInQueries?(queries: TQuery[], scopedVars: ScopedVars): TQuery[];
 
   /**
    * An annotation processor allows explicit control for how annotations are managed.

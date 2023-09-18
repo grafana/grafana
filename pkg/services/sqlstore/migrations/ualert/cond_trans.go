@@ -110,7 +110,7 @@ func transConditions(set dashAlertSettings, orgID int64, dsUIDMap dsUIDLookup) (
 				continue
 			}
 
-			var queryObj map[string]interface{} // copy the model
+			var queryObj map[string]any // copy the model
 			err := json.Unmarshal(set.Conditions[condIdx].Query.Model, &queryObj)
 			if err != nil {
 				return nil, err
@@ -308,7 +308,7 @@ type classicConditionJSON struct {
 	} `json:"query"`
 
 	Reducer struct {
-		// Params []interface{} `json:"params"` (Unused)
+		// Params []any `json:"params"` (Unused)
 		Type string `json:"type"`
 	} `json:"reducer"`
 }

@@ -170,7 +170,7 @@ func (s *JWT) Priority() uint {
 
 const roleGrafanaAdmin = "GrafanaAdmin"
 
-func (s *JWT) extractRoleAndAdmin(claims map[string]interface{}) (org.RoleType, bool) {
+func (s *JWT) extractRoleAndAdmin(claims map[string]any) (org.RoleType, bool) {
 	if s.cfg.JWTAuthRoleAttributePath == "" {
 		return "", false
 	}
@@ -186,7 +186,7 @@ func (s *JWT) extractRoleAndAdmin(claims map[string]interface{}) (org.RoleType, 
 	return org.RoleType(role), false
 }
 
-func searchClaimsForStringAttr(attributePath string, claims map[string]interface{}) (string, error) {
+func searchClaimsForStringAttr(attributePath string, claims map[string]any) (string, error) {
 	val, err := searchClaimsForAttr(attributePath, claims)
 	if err != nil {
 		return "", err
@@ -200,7 +200,7 @@ func searchClaimsForStringAttr(attributePath string, claims map[string]interface
 	return "", nil
 }
 
-func searchClaimsForAttr(attributePath string, claims map[string]interface{}) (interface{}, error) {
+func searchClaimsForAttr(attributePath string, claims map[string]any) (any, error) {
 	if attributePath == "" {
 		return "", errors.New("no attribute path specified")
 	}

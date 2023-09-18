@@ -220,10 +220,10 @@ func (m *mockStreamer) Context() context.Context {
 	panic("implement me")
 }
 
-func (m *mockStreamer) SendMsg(a interface{}) error {
+func (m *mockStreamer) SendMsg(a any) error {
 	panic("implement me")
 }
 
-func (m *mockStreamer) RecvMsg(a interface{}) error {
+func (m *mockStreamer) RecvMsg(a any) error {
 	panic("implement me")
 }

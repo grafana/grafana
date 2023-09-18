@@ -18,8 +18,8 @@ type memoPrometheusFlavor struct {
 	memoized time.Time
 }
 
-func (s *Service) collectPrometheusFlavors(ctx context.Context) (map[string]interface{}, error) {
-	m := map[string]interface{}{}
+func (s *Service) collectPrometheusFlavors(ctx context.Context) (map[string]any, error) {
+	m := map[string]any{}
 	variants, err := s.detectPrometheusVariants(ctx)
 	if err != nil {
 		return nil, err
@@ -68,8 +68,8 @@ func (s *Service) detectPrometheusVariants(ctx context.Context) (map[string]int6
 func (s *Service) detectPrometheusVariant(ctx context.Context, ds *datasources.DataSource) (string, error) {
 	type buildInfo struct {
 		Data struct {
-			Application *string                `json:"application"`
-			Features    map[string]interface{} `json:"features"`
+			Application *string        `json:"application"`
+			Features    map[string]any `json:"features"`
 		} `json:"data"`
 	}
 

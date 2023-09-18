@@ -86,7 +86,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 		Services: map[string]types.DatasourceService{
 			"Azure Monitor": {URL: svr.URL, HTTPClient: client},
 		},
-		JSONData: map[string]interface{}{
+		JSONData: map[string]any{
 			"azureLogAnalyticsSameAs": false,
 		},
 	}
@@ -1526,7 +1526,7 @@ func Test_executeQueryErrorWithDifferentLogAnalyticsCreds(t *testing.T) {
 		Services: map[string]types.DatasourceService{
 			"Azure Log Analytics": {URL: "http://ds"},
 		},
-		JSONData: map[string]interface{}{
+		JSONData: map[string]any{
 			"azureLogAnalyticsSameAs": false,
 		},
 	}
@@ -1537,6 +1537,6 @@ func Test_executeQueryErrorWithDifferentLogAnalyticsCreds(t *testing.T) {
 	tracer := tracing.InitializeTracerForTest()
 	_, err := ds.executeQuery(ctx, query, dsInfo, &http.Client{}, dsInfo.Services["Azure Log Analytics"].URL, tracer)
 	if !strings.Contains(err.Error(), "credentials for Log Analytics are no longer supported") {
-		t.Error("expecting the error to inform of bad credentials")
+		t.Error("Expecting the error to inform of bad credentials")
 	}
 }

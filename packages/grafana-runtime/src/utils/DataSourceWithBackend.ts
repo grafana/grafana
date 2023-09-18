@@ -268,6 +268,16 @@ class DataSourceWithBackend<
   }
 
   /**
+   * Override to skip executing a query.  Note this function may not be called
+   * if the query method is overwritten.
+   *
+   * @returns false if the query should be skipped
+   *
+   * @virtual
+   */
+  filterQuery?(query: TQuery): boolean;
+
+  /**
    * Override to apply template variables.  The result is usually also `TQuery`, but sometimes this can
    * be used to modify the query structure before sending to the backend.
    *

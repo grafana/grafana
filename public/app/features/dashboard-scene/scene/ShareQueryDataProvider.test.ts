@@ -8,7 +8,8 @@ import {
   SceneObjectState,
 } from '@grafana/scenes';
 
-import { activateFullSceneTree, getVizPanelKeyForPanelId } from '../utils/utils';
+import { activateFullSceneTree } from '../utils/test-utils';
+import { getVizPanelKeyForPanelId } from '../utils/utils';
 
 import { ShareQueryDataProvider } from './ShareQueryDataProvider';
 
