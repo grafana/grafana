@@ -41,7 +41,7 @@ class ButtonDisplay extends PureComponent<CanvasElementProps<ButtonConfig, Butto
   render() {
     const { data } = this.props;
     const onClick = () => {
-      if (data?.api) {
+      if (data?.api && data?.api?.endpoint) {
         callApi(data.api);
       }
     };
