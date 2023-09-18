@@ -25,9 +25,6 @@ const dummyStringSettings = {
   settings: {},
 } as StandardEditorsRegistryItem<string, StringFieldConfigSettings>;
 
-
-const questionMarkRegex = '.+\\?.*';
-
 type Props = StandardEditorProps<APIEditorConfig>;
 
 const httpMethodOptions = [
@@ -142,13 +139,11 @@ export function APIEditor({ value, context, onChange }: Props) {
         }
 
         if (api.queryParams) {
-            // const symbol = api.endpoint.match(questionMarkRegex) ? '&' : '?';
             api.queryParams?.forEach((param) => {
                 url.searchParams.append(interpolateVariables(param[0]), interpolateVariables(param[1]));
             });
 
             request.url = url.toString();
-            // request.url = api.endpoint + symbol + api.queryParams?.map((param) => interpolateVariables(param[0]) + '=' + interpolateVariables(param[1])).join('&');
         }
 
         if (api.method === HttpRequestMethod.POST) {
