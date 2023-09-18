@@ -122,7 +122,6 @@ const defaultKeys = [
   'pod',
   'service.name',
   'service.namespace',
-  'deployment.environment',
 ].map((k) => ({
   key: k,
   value: k.includes('.') ? k.replace('.', '_') : undefined,
