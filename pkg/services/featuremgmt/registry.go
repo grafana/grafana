@@ -769,7 +769,7 @@ var (
 		{
 			Name:            "httpSLOLevels",
 			Description:     "Adds SLO level to http request metrics",
-			Stage:           FeatureStagePublicPreview,
+			Stage:           FeatureStageExperimental,
 			FrontendOnly:    false,
 			Owner:           hostedGrafanaTeam,
 			RequiresRestart: true,
