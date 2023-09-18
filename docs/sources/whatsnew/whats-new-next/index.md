@@ -24,7 +24,7 @@ Welcome to Grafana Cloud! Read on to learn about the newest changes to Grafana C
 
 _Generally available in Grafana Cloud_
 
-The Datadog datasource support blocking API requests based on upstream rate limits (for metric queries). With this update, you can set rate limit percentage where the plugin stops sending queries.
+The Datadog data source supports blocking API requests based on upstream rate limits (for metric queries). With this update, you can set a rate limit percentage at which the plugin stops sending queries.
 
 To learn more, refer to [Datadog datasource settings](https://grafana.com/docs/plugins/grafana-datadog-datasource/latest/#configure-the-data-source), as well as the following video demo.
 
