@@ -578,7 +578,7 @@ URL to load the Rudderstack config.
 ### rudderstack_integrations_url
 
 Optional. If tracking with Rudderstack is enabled, you can provide a custom
-URL to load the SDK for destinations running in device mode. Only valid for
+URL to load the SDK for destinations running in device mode. This setting is only valid for
 Rudderstack version 1.1 and higher.
 
 ### application_insights_connection_string
