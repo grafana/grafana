@@ -55,6 +55,7 @@ import {
   getAllByType,
   getLeftMostChild,
   getString,
+  makeBinOp,
   makeError,
   replaceVariables,
 } from '../../prometheus/querybuilder/shared/parsingUtils';
@@ -684,21 +685,5 @@ function handleKeepFilter(expr: string, node: SyntaxNode, context: Context): Que
   return {
     id: LokiOperationId.Keep,
     params: labels,
-  };
-}
-
-export function makeBinOp(
-  opDef: { id: string; comparison?: boolean },
-  expr: string,
-  numberNode: SyntaxNode,
-  hasBool: boolean
-): QueryBuilderOperation {
-  const params: QueryBuilderOperationParamValue[] = [parseFloat(getString(expr, numberNode))];
-  if (opDef.comparison) {
-    params.push(hasBool);
-  }
-  return {
-    id: opDef.id,
-    params,
   };
 }
