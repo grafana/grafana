@@ -2,16 +2,24 @@ import React from 'react';
 
 import { DataSourceSettings } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { FieldSet, InlineField, InlineFieldRow, InlineSwitch } from '@grafana/ui';
+import { FieldSet, InlineField, InlineFieldRow, InlineLabel, InlineSwitch, Input } from '@grafana/ui';
 
 import { SQLConnectionLimits, SQLOptions } from '../../types';
-
-import { NumberInput } from './ConnectionLimitNumber';
 
 interface Props<T> {
   onOptionsChange: Function;
   options: DataSourceSettings<SQLOptions>;
   labelWidth: number;
+}
+
+function toNumber(text: string): number {
+  if (text.trim() === '') {
+    // calling `Number('')` returns zero,
+    // so we have to handle this case
+    return NaN;
+  }
+
+  return Number(text);
 }
 
 export const ConnectionLimits = <T extends SQLConnectionLimits>(props: Props<T>) => {
@@ -96,7 +104,17 @@ export const ConnectionLimits = <T extends SQLConnectionLimits>(props: Props<T>)
         labelWidth={labelWidth}
         label="Max open"
       >
-        <NumberInput placeholder="unlimited" value={jsonData.maxOpenConns} onChange={onMaxConnectionsChanged} />
+        <Input
+          type="number"
+          placeholder="unlimited"
+          defaultValue={jsonData.maxOpenConns}
+          onChange={(e) => {
+            const newVal = toNumber(e.currentTarget.value);
+            if (!Number.isNaN(newVal)) {
+              onMaxConnectionsChanged(newVal);
+            }
+          }}
+        />
       </InlineField>
       <InlineFieldRow>
         <InlineField
@@ -110,13 +128,23 @@ export const ConnectionLimits = <T extends SQLConnectionLimits>(props: Props<T>)
           labelWidth={labelWidth}
           label="Max idle"
         >
-          <NumberInput
-            placeholder="2"
-            value={jsonData.maxIdleConns}
-            onChange={onJSONDataNumberChanged('maxIdleConns')}
-            width={8}
-            fieldDisabled={autoIdle}
-          />
+          {autoIdle ? (
+            <InlineLabel width={8}>{options.jsonData.maxIdleConns}</InlineLabel>
+          ) : (
+            <Input
+              type="number"
+              placeholder="2"
+              defaultValue={jsonData.maxIdleConns}
+              onChange={(e) => {
+                const newVal = toNumber(e.currentTarget.value);
+                if (!Number.isNaN(newVal)) {
+                  onJSONDataNumberChanged('maxIdleConns')(newVal);
+                }
+              }}
+              width={8}
+              disabled={autoIdle}
+            />
+          )}
         </InlineField>
         <InlineField
           label="Auto"
@@ -137,11 +165,17 @@ export const ConnectionLimits = <T extends SQLConnectionLimits>(props: Props<T>)
         labelWidth={labelWidth}
         label="Max lifetime"
       >
-        <NumberInput
+        <Input
+          type="number"
           placeholder="14400"
-          value={jsonData.connMaxLifetime}
-          onChange={onJSONDataNumberChanged('connMaxLifetime')}
-        ></NumberInput>
+          defaultValue={jsonData.connMaxLifetime}
+          onChange={(e) => {
+            const newVal = toNumber(e.currentTarget.value);
+            if (!Number.isNaN(newVal)) {
+              onJSONDataNumberChanged('connMaxLifetime')(newVal);
+            }
+          }}
+        ></Input>
       </InlineField>
     </FieldSet>
   );
