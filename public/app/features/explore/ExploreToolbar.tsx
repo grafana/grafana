@@ -21,6 +21,7 @@ import { ExploreTimeControls } from './ExploreTimeControls';
 import { LiveTailButton } from './LiveTailButton';
 import { ToolbarExtensionPoint } from './extensions/ToolbarExtensionPoint';
 import { changeDatasource } from './state/datasource';
+import { changeCorrelationHelperData } from './state/explorePane';
 import {
   splitClose,
   splitOpen,
@@ -29,7 +30,7 @@ import {
   changeCorrelationEditorDetails,
 } from './state/main';
 import { cancelQueries, runQueries, selectIsWaitingForData } from './state/query';
-import { isLeftPaneSelector, isSplit, selectCorrelationDetails } from './state/selectors';
+import { isLeftPaneSelector, isSplit, selectCorrelationDetails, selectPanesEntries } from './state/selectors';
 import { syncTimes, changeRefreshInterval } from './state/time';
 import { LiveTailControls } from './useLiveTailControls';
 
@@ -65,6 +66,7 @@ export function ExploreToolbar({ exploreId, topOfViewRef, onChangeTime }: Props)
     (state) => state.explore.panes[exploreId]!.containerWidth < (splitted ? 700 : 800)
   );
 
+  const panes = useSelector(selectPanesEntries);
   const correlationDetails = useSelector(selectCorrelationDetails);
   const isCorrelationsEditorMode = correlationDetails?.editorMode || false;
   const isLeftPane = useSelector(isLeftPaneSelector(exploreId));
@@ -113,17 +115,31 @@ export function ExploreToolbar({ exploreId, topOfViewRef, onChangeTime }: Props)
   };
 
   const onCloseSplitView = () => {
-    // this does mean the user will need to reclick "close" after the confirmation prompt
-    if (isCorrelationsEditorMode && correlationDetails?.dirty) {
-      dispatch(
-        changeCorrelationEditorDetails({
-          isExiting: true,
-          postConfirmAction: {
-            exploreId: exploreId,
-            action: CORRELATION_EDITOR_POST_CONFIRM_ACTION.CLOSE_PANE,
-          },
-        })
-      );
+    if (isCorrelationsEditorMode) {
+      if (correlationDetails?.dirty) {
+        // if dirty, prompt
+        dispatch(
+          changeCorrelationEditorDetails({
+            isExiting: true,
+            postConfirmAction: {
+              exploreId: exploreId,
+              action: CORRELATION_EDITOR_POST_CONFIRM_ACTION.CLOSE_PANE,
+            },
+          })
+        );
+      } else {
+        // otherwise, clear helper data and close
+        panes.forEach((pane) => {
+          dispatch(
+            changeCorrelationHelperData({
+              exploreId: pane[0],
+              correlationEditorHelperData: undefined,
+            })
+          );
+        });
+        dispatch(splitClose(exploreId));
+        reportInteraction('grafana_explore_split_view_closed');
+      }
     } else {
       dispatch(splitClose(exploreId));
       reportInteraction('grafana_explore_split_view_closed');

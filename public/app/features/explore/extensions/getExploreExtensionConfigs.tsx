@@ -47,9 +47,7 @@ export function getExploreExtensionConfigs(): PluginExtensionLinkConfig[] {
         extensionPointId: PluginExtensionPoints.ExploreToolbarAction,
         icon: 'link',
         configure: (context) => {
-          const shouldShow =
-            context?.shouldShowAddCorrelation !== undefined ? context?.shouldShowAddCorrelation : false;
-          return shouldShow ? {} : undefined;
+          return context?.shouldShowAddCorrelation ? {} : undefined;
         },
         onClick: (_, { context }) => {
           dispatch(changeCorrelationEditorDetails({ editorMode: true }));

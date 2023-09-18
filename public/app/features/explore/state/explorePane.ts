@@ -84,37 +84,9 @@ interface ChangeCorrelationHelperData {
   exploreId: string;
   correlationEditorHelperData?: ExploreCorrelationHelperData;
 }
-const changeCorrelationHelperDataAction = createAction<ChangeCorrelationHelperData>(
+export const changeCorrelationHelperData = createAction<ChangeCorrelationHelperData>(
   'explore/changeCorrelationHelperData'
 );
-
-export function changeCorrelationHelperData(
-  exploreId: string,
-  correlationHelperData: ExploreCorrelationHelperData
-): ThunkResult<void> {
-  return async (dispatch, getState) => {
-    dispatch(
-      changeCorrelationHelperDataAction({
-        exploreId,
-        correlationEditorHelperData: {
-          ...getState().explore.panes[exploreId]?.correlationEditorHelperData,
-          ...correlationHelperData,
-        },
-      })
-    );
-  };
-}
-
-export function removeCorrelationHelperData(exploreId: string): ThunkResult<void> {
-  return async (dispatch) => {
-    dispatch(
-      changeCorrelationHelperDataAction({
-        exploreId,
-        correlationEditorHelperData: undefined,
-      })
-    );
-  };
-}
 
 /**
  * Initialize Explore state with state from the URL and the React component.
@@ -207,7 +179,7 @@ export const initializeExplore = createAsyncThunk(
     // initialize new pane with helper data
     if (correlationHelperData !== undefined && getState().explore.correlationEditorDetails?.editorMode) {
       dispatch(
-        changeCorrelationHelperDataAction({
+        changeCorrelationHelperData({
           exploreId,
           correlationEditorHelperData: correlationHelperData,
         })
@@ -259,7 +231,7 @@ export const paneReducer = (state: ExploreItemState = makeExplorePaneState(), ac
     return { ...state, panelsState };
   }
 
-  if (changeCorrelationHelperDataAction.match(action)) {
+  if (changeCorrelationHelperData.match(action)) {
     const { correlationEditorHelperData } = action.payload;
     return { ...state, correlationEditorHelperData };
   }

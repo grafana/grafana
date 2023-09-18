@@ -10,12 +10,11 @@ import { CORRELATION_EDITOR_POST_CONFIRM_ACTION, ExploreItemState, useDispatch, 
 
 import { CorrelationUnsavedChangesModal } from './CorrelationUnsavedChangesModal';
 import { changeDatasource } from './state/datasource';
-import { removeCorrelationHelperData } from './state/explorePane';
+import { changeCorrelationHelperData } from './state/explorePane';
 import { changeCorrelationEditorDetails, splitClose } from './state/main';
 import { runQueries, saveCurrentCorrelation } from './state/query';
 import { selectCorrelationDetails } from './state/selectors';
 
-// we keep component rendered and hidden to avoid race conditions with the prompt
 export const CorrelationEditorModeBar = ({ panes }: { panes: Array<[string, ExploreItemState]> }) => {
   const dispatch = useDispatch();
   const styles = useStyles2(getStyles);
@@ -55,7 +54,12 @@ export const CorrelationEditorModeBar = ({ panes }: { panes: Array<[string, Expl
         })
       );
       panes.forEach((pane) => {
-        dispatch(removeCorrelationHelperData(pane[0]));
+        dispatch(
+          changeCorrelationHelperData({
+            exploreId: pane[0],
+            correlationEditorHelperData: undefined,
+          })
+        );
         dispatch(runQueries({ exploreId: pane[0] }));
       });
     };
@@ -78,10 +82,13 @@ export const CorrelationEditorModeBar = ({ panes }: { panes: Array<[string, Expl
     );
 
     panes.forEach((pane) => {
-      if (pane[0] !== exploreId) {
-        dispatch(removeCorrelationHelperData(pane[0]));
-        dispatch(runQueries({ exploreId: pane[0] }));
-      }
+      dispatch(
+        changeCorrelationHelperData({
+          exploreId: pane[0],
+          correlationEditorHelperData: undefined,
+        })
+      );
+      dispatch(runQueries({ exploreId: pane[0] }));
     });
   };
 
