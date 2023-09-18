@@ -29,7 +29,7 @@ describe('buildVisualQueryFromString', () => {
           {
             id: LokiOperationId.EqualTo,
             // defined in getSimpleBinaryRenderer, the first argument is the bool parameter, and the second is the value
-            params: [false, 11],
+            params: [11, false],
           },
         ],
       },
@@ -56,7 +56,7 @@ describe('buildVisualQueryFromString', () => {
           {
             id: LokiOperationId.EqualTo,
             // defined in getSimpleBinaryRenderer, the first argument is the bool parameter, and the second is the value
-            params: [true, 12],
+            params: [12, true],
           },
         ],
       },

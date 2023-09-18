@@ -1,5 +1,4 @@
 import { SyntaxNode } from '@lezer/common';
-import { BinModifiers, OnOrIgnoring } from '@prometheus-io/lezer-promql';
 
 import {
   And,
@@ -47,6 +46,8 @@ import {
   VectorAggregationExpr,
   VectorOp,
   Without,
+  BinOpModifier,
+  OnOrIgnoringModifier,
 } from '@grafana/lezer-logql';
 
 import {
@@ -519,7 +520,7 @@ function handleBinary(expr: string, node: SyntaxNode, context: Context) {
   const visQuery = context.query;
   const left = node.firstChild!;
   const op = getString(expr, left.nextSibling);
-  const binModifier = getBinaryModifier(expr, node.getChild(BinModifiers));
+  const binModifier = getBinaryModifier(expr, node.getChild(BinOpModifier));
 
   const right = node.lastChild!;
 
@@ -545,7 +546,7 @@ function handleBinary(expr: string, node: SyntaxNode, context: Context) {
     // Due to the way binary ops are parsed we can get a binary operation on the right that starts with a number which
     // is a factor for a current binary operation. So we have to add it as an operation now.
     const leftMostChild = getLeftMostChild(right);
-    if (leftMostChild?.name === 'Number') {
+    if (leftMostChild?.type.id === NumberLezer) {
       visQuery.operations.push(makeBinOp(opDef, expr, leftMostChild, !!binModifier?.isBool));
     }
 
@@ -586,7 +587,7 @@ function getBinaryModifier(
   if (node.getChild(Bool)) {
     return { isBool: true, isMatcher: false };
   } else {
-    const matcher = node.getChild(OnOrIgnoring);
+    const matcher = node.getChild(OnOrIgnoringModifier);
     if (!matcher) {
       // Not sure what this could be, maybe should be an error.
       return undefined;
@@ -692,12 +693,10 @@ export function makeBinOp(
   numberNode: SyntaxNode,
   hasBool: boolean
 ): QueryBuilderOperation {
-  // params are backwards in loki for some reason?
-  const params: QueryBuilderOperationParamValue[] = [];
+  const params: QueryBuilderOperationParamValue[] = [parseFloat(getString(expr, numberNode))];
   if (opDef.comparison) {
     params.push(hasBool);
   }
-  params.push(parseFloat(getString(expr, numberNode)));
   return {
     id: opDef.id,
     params,
