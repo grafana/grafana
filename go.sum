@@ -1818,6 +1818,8 @@ github.com/grafana/grafana-plugin-sdk-go v0.94.0/go.mod h1:3VXz4nCv6wH5SfgB3mlW3
 github.com/grafana/grafana-plugin-sdk-go v0.114.0/go.mod h1:D7x3ah+1d4phNXpbnOaxa/osSaZlwh9/ZUnGGzegRbk=
 github.com/grafana/grafana-plugin-sdk-go v0.174.0 h1:b0bHa5DUO71f2NtSCg6AAdPXQ0Z1axxfJFRMS1hvui0=
 github.com/grafana/grafana-plugin-sdk-go v0.174.0/go.mod h1:9crAQqSzxvPe0VKC/T23cd+2I9TZb43yoOcUL/qZ5FU=
+github.com/grafana/grafana-plugin-sdk-go v0.176.0 h1:dayiqGR6uJyJBO8rRTp/E7oKsnEjNSS0p7vVkXy/Brw=
+github.com/grafana/grafana-plugin-sdk-go v0.176.0/go.mod h1:9crAQqSzxvPe0VKC/T23cd+2I9TZb43yoOcUL/qZ5FU=
 github.com/grafana/kindsys v0.0.0-20230508162304-452481b63482 h1:1YNoeIhii4UIIQpCPU+EXidnqf449d0C3ZntAEt4KSo=
 github.com/grafana/kindsys v0.0.0-20230508162304-452481b63482/go.mod h1:GNcfpy5+SY6RVbNGQW264gC0r336Dm+0zgQ5vt6+M8Y=
 github.com/grafana/phlare/api v0.1.4-0.20230426005640-f90edba05413 h1:bBzCezZNRyYlJpXTkyZdY4fpPxHZUdyeyRWzhtw/P6I=
