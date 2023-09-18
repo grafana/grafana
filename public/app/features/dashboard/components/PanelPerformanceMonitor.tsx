@@ -1,5 +1,5 @@
 import afterFrame from 'afterframe';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 
 import { faro } from '@grafana/faro-web-sdk';
 
@@ -9,7 +9,7 @@ interface Props {
 }
 
 export const PanelPerformanceMonitor = (props: Props) => {
-  const [startLoadTime, _] = useState<number>(performance.now());
+  const startLoadTime = performance.now();
 
   useEffect(() => {
     afterFrame(() => {
