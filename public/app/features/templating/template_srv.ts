@@ -1,6 +1,6 @@
 import { escape, isString, property } from 'lodash';
 
-import { deprecationWarning, ScopedVars, TimeRange, logzioServices } from '@grafana/data'; // LOGZ.IO GRAFANA CHANGE :: DEV-27954 :: Global Filters :: import logzioServices
+import { deprecationWarning, ScopedVars, TimeRange } from '@grafana/data';
 import { getDataSourceSrv, setTemplateSrv, TemplateSrv as BaseTemplateSrv } from '@grafana/runtime';
 
 import { variableAdapters } from '../variables/adapters';
@@ -353,23 +353,6 @@ export class TemplateSrv implements BaseTemplateSrv {
   }
 
   private getAdHocVariables(): AdHocVariableModel[] {
-    // LOGZ.IO GRAFANA CHANGE :: DEV-27954 :: Unified Filters :: concat logzioAdHocVariables to actual variables
-    const logzioAdHocVariables = logzioServices.unifiedFiltersService.grafana.getUnifiedFilterAdHocVariables();
-    if (logzioAdHocVariables?.length) {
-      const updatedLogzioAdHocVariables = logzioAdHocVariables.map((v: any) => {
-        const ds = getDataSourceSrv().getInstanceSettings(v.datasource);
-        return {
-          ...v,
-          datasource: {
-            type: ds?.type,
-            uid: ds?.uid
-          }
-        }
-      })
-      return this.dependencies.getFilteredVariables(isAdHoc).concat(updatedLogzioAdHocVariables) as AdHocVariableModel[];
-    }
-    // LOGZ.IO GRAFANA CHANGE :: DEV-27954 :: Unified Filters :: concat logzioAdHocVariables to actual variables :: End
-
     return this.dependencies.getFilteredVariables(isAdHoc) as AdHocVariableModel[];
   }
 }
