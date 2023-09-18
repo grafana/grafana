@@ -17,6 +17,9 @@ import { getGrafanaInstancesPercentageByStateScene } from '../insights/grafana/I
 import { getGrafanaMissedIterationsScene } from '../insights/grafana/MissedIterationsScene';
 import { getMostFiredInstancesScene } from '../insights/grafana/MostFiredInstancesTable';
 import { getPausedGrafanaAlertsScene } from '../insights/grafana/Paused';
+import { getGrafanaAlertmanagerInstancesByStateScene } from '../insights/grafana/alertmanager/AlertsByStateScene';
+import { getGrafanaAlertmanagerNotificationsScene } from '../insights/grafana/alertmanager/NotificationsScene';
+import { getGrafanaAlertmanagerSilencesScene } from '../insights/grafana/alertmanager/SilencesByStateScene';
 import { getAlertsByStateScene } from '../insights/mimir/AlertsByState';
 import { getInvalidConfigScene } from '../insights/mimir/InvalidConfig';
 import { getNotificationsScene } from '../insights/mimir/Notifications';
@@ -32,9 +35,6 @@ import { getInstancesPercentageByStateScene } from '../insights/mimir/rules/Inst
 import { getMissedIterationsScene } from '../insights/mimir/rules/MissedIterationsScene';
 import { getMostFiredInstancesScene as getMostFiredCloudInstances } from '../insights/mimir/rules/MostFiredInstances';
 import { getPendingCloudAlertsScene } from '../insights/mimir/rules/Pending';
-import { getGrafanaAlertmanagerInstancesByStateScene } from '../insights/grafana/alertmanager/AlertsByStateScene';
-import { getGrafanaAlertmanagerNotificationsScene } from '../insights/grafana/alertmanager/NotificationsScene';
-import { getGrafanaAlertmanagerSilencesScene } from '../insights/grafana/alertmanager/SilencesByStateScene';
 
 const ashDs = {
   type: 'loki',
