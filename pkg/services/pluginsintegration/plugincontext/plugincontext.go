@@ -17,7 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 )
 
-// TODO: Delete this?
 var ErrPluginNotFound = errors.New("plugin not found")
 
 func ProvideService(cacheService *localcache.CacheService, pluginStore pluginstore.Store,

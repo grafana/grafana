@@ -11,7 +11,6 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/middleware/requestmeta"
-	"github.com/grafana/grafana/pkg/plugins"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -28,12 +27,6 @@ func (hs *HTTPServer) handleQueryMetricsError(err error) *response.NormalRespons
 	}
 	if errors.Is(err, plugincontext.ErrPluginNotFound) {
 		return response.Error(http.StatusNotFound, "Plugin not found", err)
-	}
-	if errors.Is(err, plugins.ErrPluginNotRegistered) {
-		return response.Err(err)
-	}
-	if errors.Is(err, plugins.ErrMethodNotImplemented) {
-		return response.Err(err)
 	}
 
 	var secretsPlugin datasources.ErrDatasourceSecretsPluginUserFriendly

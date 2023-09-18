@@ -491,18 +491,6 @@ func (hs *HTTPServer) UninstallPlugin(c *contextmodel.ReqContext) response.Respo
 }
 
 func translatePluginRequestErrorToAPIError(err error) response.Response {
-	if errors.Is(err, plugins.ErrPluginNotRegistered) {
-		return response.Error(http.StatusNotFound, "Plugin not found", err)
-	}
-
-	if errors.Is(err, plugins.ErrMethodNotImplemented) {
-		return response.Error(http.StatusNotFound, "Not found", err)
-	}
-
-	if errors.Is(err, plugins.ErrPluginUnavailable) {
-		return response.Error(http.StatusServiceUnavailable, "Plugin unavailable", err)
-	}
-
 	return response.ErrOrFallback(http.StatusInternalServerError, "Plugin request failed", err)
 }
 
