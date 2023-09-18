@@ -160,7 +160,7 @@ describe('getTimeRange', () => {
     query.expr = 'rate({job="grafana"}[5m])';
 
     expect(getTimeRange(datasource, query, 0)).toEqual({
-      start: 1672552800000000000, // 01 Jan 2023 05:55:00 GMT
+      start: 1672552800000000000, // 01 Jan 2023 06:00:00 GMT
       end: 1672639200000000000, //   02 Jan 2023 06:00:00 GMT
     });
   });
