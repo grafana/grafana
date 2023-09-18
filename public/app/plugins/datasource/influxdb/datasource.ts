@@ -348,35 +348,23 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
   // By implementing getTagKeys and getTagValues we add ad-hoc filters functionality
   // Used in public/app/features/variables/adhoc/picker/AdHocFilterKey.tsx::fetchFilterKeys
   getTagKeys(options: DataSourceGetTagKeysOptions) {
-    let measurement = '';
-
-    if (options && options.filters) {
-      measurement = options.filters.find((f) => f.key === '__measurement__')?.value ?? '';
-    }
-
     const query = buildMetadataQuery({
       type: 'TAG_KEYS',
       templateService: this.templateSrv,
       database: this.database,
-      measurement: measurement,
+      measurement: '',
       tags: [],
     });
     return this.metricFindQuery(query, options);
   }
 
   getTagValues(options: DataSourceGetTagValuesOptions) {
-    let measurement = '';
-
-    if (options && options.filters) {
-      measurement = options.filters.find((f) => f.key === '__measurement__')?.value ?? '';
-    }
-
     const query = buildMetadataQuery({
       type: 'TAG_VALUES',
       templateService: this.templateSrv,
       database: this.database,
       withKey: options.key,
-      measurement: measurement,
+      measurement: '',
       tags: [],
     });
 
