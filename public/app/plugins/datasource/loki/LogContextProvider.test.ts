@@ -264,7 +264,7 @@ describe('LogContextProvider', () => {
         {
           expr: '{bar="baz"} | logfmt | line_format "foo"',
           refId: 'A',
-        } 
+        }
       );
 
       expect(contextQuery.query.expr).toEqual(`{bar="baz"} | logfmt | line_format "foo"`);
@@ -279,7 +279,7 @@ describe('LogContextProvider', () => {
         LogRowContextQueryDirection.Backward,
         {
           expr: '{bar="baz"} | logfmt | line_format "foo" |= "bar"',
-          refId: 'A'
+          refId: 'A',
         }
       );
 
@@ -483,24 +483,24 @@ describe('LogContextProvider', () => {
   describe('queryContainsValidPipelineStages', () => {
     it('should return true if query contains a line_format stage', () => {
       expect(
-        logContextProvider.queryContainsValidPipelineStages({ expr: '{foo="bar"} | line_format "foo"', refId: 'A', })
+        logContextProvider.queryContainsValidPipelineStages({ expr: '{foo="bar"} | line_format "foo"', refId: 'A' })
       ).toBe(true);
     });
 
     it('should return true if query contains a label_format stage', () => {
       expect(
-        logContextProvider.queryContainsValidPipelineStages({ expr: '{foo="bar"} | label_format a="foo"', refId: 'A', })
+        logContextProvider.queryContainsValidPipelineStages({ expr: '{foo="bar"} | label_format a="foo"', refId: 'A' })
       ).toBe(true);
     });
 
     it('should return false if query contains a parser', () => {
-      expect(logContextProvider.queryContainsValidPipelineStages({ expr: '{foo="bar"} | json', refId: 'A', })).toBe(
+      expect(logContextProvider.queryContainsValidPipelineStages({ expr: '{foo="bar"} | json', refId: 'A' })).toBe(
         false
       );
     });
 
     it('should return false if query contains a line filter', () => {
-      expect(logContextProvider.queryContainsValidPipelineStages({ expr: '{foo="bar"} |= "test"', refId: 'A', })).toBe(
+      expect(logContextProvider.queryContainsValidPipelineStages({ expr: '{foo="bar"} |= "test"', refId: 'A' })).toBe(
         false
       );
     });

@@ -358,7 +358,9 @@ describe('getParserFromQuery', () => {
     expect(getParserFromQuery('{job="grafana"} | logfmt field="otherField"')).toBe('logfmt');
     expect(getParserFromQuery('{job="grafana"} | logfmt field="otherField", label')).toBe('logfmt');
     expect(getParserFromQuery('{job="grafana"} | logfmt --strict field="otherField"')).toBe('logfmt');
-    expect(getParserFromQuery('{job="grafana"} | logfmt --strict --keep-empty field="otherField", label="field2"')).toBe('logfmt');
+    expect(
+      getParserFromQuery('{job="grafana"} | logfmt --strict --keep-empty field="otherField", label="field2"')
+    ).toBe('logfmt');
   });
 });
 
