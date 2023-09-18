@@ -32,6 +32,9 @@ import { getInstancesPercentageByStateScene } from '../insights/mimir/rules/Inst
 import { getMissedIterationsScene } from '../insights/mimir/rules/MissedIterationsScene';
 import { getMostFiredInstancesScene as getMostFiredCloudInstances } from '../insights/mimir/rules/MostFiredInstances';
 import { getPendingCloudAlertsScene } from '../insights/mimir/rules/Pending';
+import { getGrafanaAlertmanagerInstancesByStateScene } from '../insights/grafana/alertmanager/AlertsByStateScene';
+import { getGrafanaAlertmanagerNotificationsScene } from '../insights/grafana/alertmanager/NotificationsScene';
+import { getGrafanaAlertmanagerSilencesScene } from '../insights/grafana/alertmanager/SilencesByStateScene';
 
 const ashDs = {
   type: 'loki',
@@ -84,6 +87,10 @@ export function getGrafanaScenes() {
         }),
         new SceneFlexItem({
           ySizing: 'content',
+          body: getGrafanaAlertmanagerScenes(),
+        }),
+        new SceneFlexItem({
+          ySizing: 'content',
           body: getCloudScenes(),
         }),
         new SceneFlexItem({
@@ -93,6 +100,28 @@ export function getGrafanaScenes() {
         new SceneFlexItem({
           ySizing: 'content',
           body: getMimirManagedRulesPerGroupScenes(),
+        }),
+      ],
+    }),
+  });
+}
+
+function getGrafanaAlertmanagerScenes() {
+  return new NestedScene({
+    title: 'Grafana Alertmanager',
+    canCollapse: true,
+    isCollapsed: false,
+    body: new SceneFlexLayout({
+      direction: 'column',
+      children: [
+        new SceneFlexLayout({
+          children: [
+            getGrafanaAlertmanagerInstancesByStateScene(THIS_WEEK_TIME_RANGE, cloudUsageDs, 'Alerts by State'),
+            getGrafanaAlertmanagerNotificationsScene(THIS_WEEK_TIME_RANGE, cloudUsageDs, 'Notifications'),
+          ],
+        }),
+        new SceneFlexLayout({
+          children: [getGrafanaAlertmanagerSilencesScene(LAST_WEEK_TIME_RANGE, cloudUsageDs, 'Silences')],
         }),
       ],
     }),
