@@ -64,6 +64,7 @@ export function ServiceGraphSection({
       </div>
     );
   }
+
   const filters = queryToFilter(query.serviceMapQuery || '');
 
   return (
@@ -73,9 +74,14 @@ export function ServiceGraphSection({
           <AdHocFilter
             datasource={{ uid: graphDatasourceUid }}
             filters={filters}
-            getTagKeysOptions={{
-              series: ['traces_service_graph_request_total', 'traces_spanmetrics_calls_total'],
-            }}
+            baseFilters={[
+              {
+                key: '__name__',
+                operator: '=~',
+                value: 'traces_service_graph_request_total|traces_spanmetrics_calls_total',
+                condition: '',
+              },
+            ]}
             addFilter={(filter: AdHocVariableFilter) => {
               onChange({
                 ...query,
