@@ -410,11 +410,7 @@ def build_frontend_step():
     }
 
 def update_package_json_version():
-    """For some steps on certain pipelines, the expected package.json version is different than what is committed in the
-    codebase. Where the version might be committed as '1.2.3-pre', the version some steps expect is
-    '1.2.3-{DRONE_BUILD_NUMBER}-pre'.
-
-    This step uses 'lerna' to update that version.
+    """Updates the packages/ to use a version that has the build ID in it: 10.0.0pre -> 10.0.0-5432pre
 
     Returns:
       Drone step that updates the 'version' key in package.json
@@ -428,7 +424,7 @@ def update_package_json_version():
         ],
         "commands": [
             "apk add --update jq",
-            "new_version=$(cat package.json | jq .version | sed s/pre/$DRONE_BUILD_NUMBER-pre/g)",
+            "new_version=$(cat package.json | jq .version | sed s/pre/$DRONE_BUILD_NUMBERpre/g)",
             "echo \"New version: $new_version\"",
             "yarn run lerna version $new_version --exact --no-git-tag-version --no-push --force-publish -y",
             "yarn install --mode=update-lockfile",
