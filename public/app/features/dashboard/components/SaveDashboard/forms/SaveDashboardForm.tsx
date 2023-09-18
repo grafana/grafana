@@ -1,10 +1,14 @@
+import { css } from '@emotion/css';
 import React, { useMemo, useState } from 'react';
 
+import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Stack } from '@grafana/experimental';
-import { Button, Checkbox, Form, TextArea } from '@grafana/ui';
+import { config } from '@grafana/runtime';
+import { Button, Checkbox, Form, TextArea, useStyles2 } from '@grafana/ui';
 import { DashboardModel } from 'app/features/dashboard/state';
 
+import { GenAIDashboardChangesButton } from '../../GenAI/GenAIDashboardChangesButton';
 import { SaveDashboardData, SaveDashboardOptions } from '../types';
 
 interface FormDTO {
@@ -36,6 +40,7 @@ export const SaveDashboardForm = ({
   const hasVariableChanged = useMemo(() => dashboard.hasVariableValuesChanged(), [dashboard]);
 
   const [saving, setSaving] = useState(false);
+  const styles = useStyles2(getStyles);
 
   return (
     <Form
@@ -89,21 +94,36 @@ export const SaveDashboardForm = ({
                 aria-label={selectors.pages.SaveDashboardModal.saveVariables}
               />
             )}
-            <TextArea
-              {...messageProps}
-              aria-label="message"
-              value={options.message}
-              onChange={(e) => {
-                onOptionsChange({
-                  ...options,
-                  message: e.currentTarget.value,
-                });
-                messageProps.onChange(e);
-              }}
-              placeholder="Add a note to describe your changes."
-              autoFocus
-              rows={5}
-            />
+            <div className={styles.changesDescription}>
+              {config.featureToggles.dashgpt && (
+                <GenAIDashboardChangesButton
+                  onGenerate={(text) => {
+                    onOptionsChange({
+                      ...options,
+                      message: text,
+                    });
+                    messageProps.onChange({ currentTarget: { value: text } });
+                  }}
+                  diff={saveModel.diff}
+                />
+              )}
+              <TextArea
+                {...messageProps}
+                aria-label="message"
+                value={options.message}
+                onChange={(e) => {
+                  onOptionsChange({
+                    ...options,
+                    message: e.currentTarget.value,
+                  });
+                  messageProps.onChange(e);
+                }}
+                placeholder="Add a note to describe your changes."
+                autoFocus
+                rows={5}
+              />
+            </div>
+
             <Stack alignItems="center">
               <Button variant="secondary" onClick={onCancel} fill="outline">
                 Cancel
@@ -124,3 +144,14 @@ export const SaveDashboardForm = ({
     </Form>
   );
 };
+
+function getStyles(theme: GrafanaTheme2) {
+  return {
+    changesDescription: css`
+      display: flex;
+      align-items: end;
+      flex-direction: column;
+      width: 100%;
+    `,
+  };
+}
