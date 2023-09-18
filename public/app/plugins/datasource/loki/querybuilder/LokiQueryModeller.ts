@@ -20,7 +20,8 @@ export class LokiQueryModeller extends LokiAndPromQueryModellerBase {
 
   renderLabels(labels: QueryBuilderLabelFilter[]) {
     if (labels.length === 0) {
-      return '{}';
+      // We can have operations without labels
+      // return '{}';
     }
 
     return super.renderLabels(labels);
