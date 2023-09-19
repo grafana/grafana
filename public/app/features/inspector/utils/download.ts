@@ -5,7 +5,6 @@ import {
   DataFrame,
   DataTransformerID,
   dateTimeFormat,
-  dateTimeFormatISO,
   LogsModel,
   MutableDataFrame,
   toCSV,
