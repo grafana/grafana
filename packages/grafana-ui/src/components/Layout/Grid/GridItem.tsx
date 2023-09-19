@@ -9,8 +9,8 @@ export interface GridItemProps {
   displayContents?: boolean;
   /** Specifies the column where the grid item starts within the grid */
   columnStart?: number;
-  /** Specifies the  column where the grid item ends. 
-    If its value is span <number> the item spans across the provider number of columns*/
+  /** Specifies the column where the grid item ends.
+    If its value is `span ${number}`, the item spans across the provided number of columns */
   columnEnd?: number | `span ${number}`;
   /** Specifies the row where the grid item starts within the grid */
   rowStart?: number;
