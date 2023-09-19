@@ -29,6 +29,7 @@ import {
   SceneDataLayers,
   dataLayers,
   SceneDataLayerProvider,
+  SceneDataLayerControls,
 } from '@grafana/scenes';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
@@ -155,7 +156,7 @@ function createRowFromPanelModel(row: PanelModel, content: SceneGridItemLike[]):
 
 export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel) {
   let variables: SceneVariableSet | undefined = undefined;
-  const layers: SceneDataLayerProvider[] = [];
+  let layers: SceneDataLayerProvider[] = [];
 
   if (oldModel.templating?.list?.length) {
     const variableObjects = oldModel.templating.list
@@ -177,14 +178,19 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
   }
 
   if (oldModel.annotations?.list?.length) {
-    layers.push(
-      new dataLayers.AnnotationsDataLayer({
-        queries: oldModel.annotations.list,
-      })
-    );
+    layers = oldModel.annotations?.list.map((a) => {
+      // Each annotation query is an individual data layer
+      return new dataLayers.AnnotationsDataLayer({
+        query: a,
+        name: a.name,
+        isEnabled: Boolean(a.enable),
+        isHidden: Boolean(a.hide),
+      });
+    });
   }
 
   const controls: SceneObject[] = [
+    new SceneDataLayerControls(),
     new VariableValueSelectors({}),
     new SceneControlsSpacer(),
     new SceneTimePicker({}),
