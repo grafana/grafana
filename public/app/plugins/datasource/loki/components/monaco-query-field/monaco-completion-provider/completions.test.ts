@@ -545,13 +545,13 @@ describe('IN_LOGFMT completions', () => {
         {
           "documentation": "Strict parsing. The logfmt parser stops scanning the log line and returns early with an error when it encounters any poorly formatted key/value pair.",
           "insertText": "--strict",
-          "label": "strict",
+          "label": "--strict",
           "type": "FUNCTION",
         },
         {
           "documentation": "Retain standalone keys with empty value. The logfmt parser retains standalone keys (keys without a value) as labels with value set to empty string.",
           "insertText": "--keep-empty",
-          "label": "keep empty",
+          "label": "--keep-empty",
           "type": "FUNCTION",
         },
         {
