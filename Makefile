@@ -36,31 +36,62 @@ node_modules: package.json yarn.lock ## Install node modules.
 
 ##@ Swagger
 SPEC_TARGET = public/api-spec.json
-MERGED_SPEC_TARGET := public/api-merged.json
+ENTERPRISE_SPEC_TARGET = public/api-enterprise-spec.json
+MERGED_SPEC_TARGET = public/api-merged.json
 NGALERT_SPEC_TARGET = pkg/services/ngalert/api/tooling/api.json
+ENTERPRISE_EXT_FILE = pkg/extensions/ext.go
+SWAGGER_OSS_FILES ?= $(shell git diff main...HEAD --name-only . ':(exclude)Makefile' | xargs grep -H swagger: | cut -d: -f1 )
+SWAGGER_ENTERPRISE_FILES ?= $(shell cd ../grafana-enterprise && git diff main...HEAD --name-only | xargs grep -H swagger: | cut -d: -f1 )
 
 $(NGALERT_SPEC_TARGET):
 	+$(MAKE) -C pkg/services/ngalert/api/tooling api.json
 
-$(MERGED_SPEC_TARGET): $(SPEC_TARGET) $(NGALERT_SPEC_TARGET) $(SWAGGER) ## Merge generated and ngalert API specs
+$(MERGED_SPEC_TARGET): swagger-oss-gen swagger-enterprise-gen $(NGALERT_SPEC_TARGET) $(SWAGGER) ## Merge generated and ngalert API specs
 	# known conflicts DsPermissionType, AddApiKeyCommand, Json, Duration (identical models referenced by both specs)
-	$(SWAGGER) mixin $(SPEC_TARGET) $(NGALERT_SPEC_TARGET) --ignore-conflicts -o $(MERGED_SPEC_TARGET)
+	$(SWAGGER) mixin $(SPEC_TARGET) $(ENTERPRISE_SPEC_TARGET) $(NGALERT_SPEC_TARGET) --ignore-conflicts -o $(MERGED_SPEC_TARGET)
 
-$(SPEC_TARGET): $(SWAGGER) ## Generate API Swagger specification
+ifneq ($(SWAGGER_OSS_FILES),)
+swagger-oss-gen: $(SWAGGER) ## Generate API Swagger specification
+	@echo "re-generating swagger for OSS"
+	rm -f $(SPEC_TARGET)
 	SWAGGER_GENERATE_EXTENSION=false $(SWAGGER) generate spec -m -w pkg/server -o $(SPEC_TARGET) \
 	-x "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions" \
 	-x "github.com/prometheus/alertmanager" \
 	-i pkg/api/swagger_tags.json \
-	--exclude-tag=alpha
-	go run pkg/services/ngalert/api/tooling/cmd/clean-swagger/main.go -if $@ -of $@
+	--exclude-tag=alpha \
+	--exclude-tag=enterprise
+else
+swagger-oss-gen: $(SWAGGER) ## Generate API Swagger specification
+	@echo "skipping re-generating swagger for OSS"
+endif
 
-swagger-api-spec: gen-go $(SPEC_TARGET) $(MERGED_SPEC_TARGET) validate-api-spec
+ifeq ("$(wildcard $(ENTERPRISE_EXT_FILE))","") ## if enterprise is enabled
+swagger-enterprise-gen:
+	@echo "skipping re-generating swagger for enterprise: not enabled"
+else
+ifeq ($(SWAGGER_ENTERPRISE_FILES),)
+swagger-enterprise-gen:
+	@echo "skipping re-generating swagger for enterprise: no swagger changes"
+	@echo $(SWAGGER_ENTERPRISE_FILES)
+else
+swagger-enterprise-gen: $(SWAGGER) ## Generate API Swagger specification
+	@echo "re-generating swagger for enterprise"
+	rm -f $(ENTERPRISE_SPEC_TARGET)
+	SWAGGER_GENERATE_EXTENSION=false $(SWAGGER) generate spec -m -w pkg/server -o $(ENTERPRISE_SPEC_TARGET) \
+	-x "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions" \
+	-x "github.com/prometheus/alertmanager" \
+	-i pkg/api/swagger_tags.json \
+	--include-tag=enterprise
+endif
+endif
 
-validate-api-spec: $(MERGED_SPEC_TARGET) $(SWAGGER) ## Validate API spec
+swagger-gen: gen-go $(MERGED_SPEC_TARGET) swagger-validate
+
+swagger-validate: $(MERGED_SPEC_TARGET) $(SWAGGER) ## Validate API spec
 	$(SWAGGER) validate $(<)
 
-clean-api-spec:
-	rm -f $(SPEC_TARGET) $(MERGED_SPEC_TARGET) $(OAPI_SPEC_TARGET)
+swagger-clean:
+	rm -f $(SPEC_TARGET) $(MERGED_SPEC_TARGET) $(ENTERPRISE_SPEC_TARGET) $(OAPI_SPEC_TARGET)
 
 .PHONY: cleanup-old-git-hooks
 cleanup-old-git-hooks:
@@ -77,7 +108,7 @@ lefthook-uninstall: $(LEFTHOOK)
 ##@ OpenAPI 3
 OAPI_SPEC_TARGET = public/openapi3.json
 
-openapi3-gen: swagger-api-spec ## Generates OpenApi 3 specs from the Swagger 2 already generated
+openapi3-gen: swagger-gen ## Generates OpenApi 3 specs from the Swagger 2 already generated
 	$(GO) run scripts/openapi3/openapi3conv.go $(MERGED_SPEC_TARGET) $(OAPI_SPEC_TARGET)
 
 ##@ Building
