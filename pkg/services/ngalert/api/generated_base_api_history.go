@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/middleware"
+	"github.com/grafana/grafana/pkg/middleware/requestmeta"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 )
@@ -28,6 +29,7 @@ func (api *API) RegisterHistoryApiEndpoints(srv HistoryApi, m *metrics.API) {
 	api.RouteRegister.Group("", func(group routing.RouteRegister) {
 		group.Get(
 			toMacaronPath("/api/v1/rules/history"),
+			requestmeta.SetOwner(requestmeta.TeamAlerting),
 			api.authorize(http.MethodGet, "/api/v1/rules/history"),
 			metrics.Instrument(
 				http.MethodGet,

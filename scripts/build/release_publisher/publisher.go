@@ -245,7 +245,7 @@ func (p *publisher) apiURL(url string) string {
 	return fmt.Sprintf("%s/%s%s", p.apiURI, p.product, url)
 }
 
-func (p *publisher) postRequest(url string, obj interface{}, desc string) error {
+func (p *publisher) postRequest(url string, obj any, desc string) error {
 	jsonBytes, err := json.Marshal(obj)
 	if err != nil {
 		return err

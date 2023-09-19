@@ -12,7 +12,7 @@ describe('Worldmap Migrations', () => {
   });
 
   it('simple worldmap', () => {
-    const old: any = {
+    const old = {
       angular: simpleWorldmapConfig,
     };
     const panel = {} as PanelModel;

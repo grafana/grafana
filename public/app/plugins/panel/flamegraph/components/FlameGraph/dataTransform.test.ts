@@ -148,7 +148,7 @@ function diffFlamebearerToDataFrameDTO(levels: number[][], names: string[]) {
       if (i > 0) {
         const prevNodesInLevel = nodeLevels[i].slice(0, -1);
         const currentNodeStart =
-          prevNodesInLevel.reduce((acc: number, n: any) => n.offsetTotal + n.valTotal + acc, 0) + node.offsetTotal;
+          prevNodesInLevel.reduce((acc, n) => n.offsetTotal + n.valTotal + acc, 0) + node.offsetTotal;
 
         const prevLevel = nodeLevels[i - 1];
         let prevLevelOffset = 0;

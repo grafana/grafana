@@ -13,12 +13,12 @@ var _ InstanceStore = &FakeInstanceStore{}
 
 type FakeInstanceStore struct {
 	mtx         sync.Mutex
-	RecordedOps []interface{}
+	RecordedOps []any
 }
 
 type FakeInstanceStoreOp struct {
 	Name string
-	Args []interface{}
+	Args []any
 }
 
 func (f *FakeInstanceStore) ListAlertInstances(_ context.Context, q *models.ListAlertInstancesQuery) ([]*models.AlertInstance, error) {
@@ -41,7 +41,7 @@ func (f *FakeInstanceStore) DeleteAlertInstances(ctx context.Context, q ...model
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
 	f.RecordedOps = append(f.RecordedOps, FakeInstanceStoreOp{
-		Name: "DeleteAlertInstances", Args: []interface{}{
+		Name: "DeleteAlertInstances", Args: []any{
 			ctx,
 			q,
 		},

@@ -16,7 +16,7 @@ func TestIntegrationCreateQueryInQueryHistory(t *testing.T) {
 		func(t *testing.T, sc scenarioContext) {
 			command := CreateQueryInQueryHistoryCommand{
 				DatasourceUID: "NCzh67i",
-				Queries: simplejson.NewFromAny(map[string]interface{}{
+				Queries: simplejson.NewFromAny(map[string]any{
 					"expr": "test",
 				}),
 			}

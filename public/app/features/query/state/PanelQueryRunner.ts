@@ -3,7 +3,6 @@ import { Observable, of, ReplaySubject, Unsubscribable } from 'rxjs';
 import { map, mergeMap, catchError } from 'rxjs/operators';
 
 import {
-  ApplyFieldOverrideOptions,
   applyFieldOverrides,
   compareArrayValues,
   compareDataFrameStructures,
@@ -20,23 +19,22 @@ import {
   getDefaultTimeRange,
   LoadingState,
   PanelData,
-  preProcessPanelData,
   rangeUtil,
   ScopedVars,
-  StreamingDataFrame,
   TimeRange,
   TimeZone,
   toDataFrame,
   transformDataFrame,
+  preProcessPanelData,
+  ApplyFieldOverrideOptions,
+  StreamingDataFrame,
 } from '@grafana/data';
-import { config, getTemplateSrv, toDataQueryError } from '@grafana/runtime';
+import { getTemplateSrv, toDataQueryError } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/src/utils/DataSourceWithBackend';
-import { updatePanelDataWithASHFromLoki } from 'app/features/alerting/unified/components/rules/state-history/common';
 import { isStreamingDataFrame } from 'app/features/live/data/utils';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 
 import { isSharedDashboardQuery, runSharedRequest } from '../../../plugins/datasource/dashboard';
-import { PublicDashboardDataSource } from '../../dashboard/services/PublicDashboardDataSource';
 import { PanelModel } from '../../dashboard/state';
 
 import { getDashboardQueryRunner } from './DashboardQueryRunner/DashboardQueryRunner';
@@ -332,11 +330,8 @@ export class PanelQueryRunner {
     }
 
     this.subscription = panelData.subscribe({
-      next: async (data) => {
-        this.lastResult = skipPreProcess
-          ? data
-          : await updatePanelDataWithASHFromLoki(preProcessPanelData(data, this.lastResult));
-
+      next: (data) => {
+        this.lastResult = skipPreProcess ? data : preProcessPanelData(data, this.lastResult);
         // Store preprocessed query results for applying overrides later on in the pipeline
         this.subject.next(this.lastResult);
       },
@@ -415,14 +410,9 @@ async function getDataSource(
   datasource: DataSourceRef | string | DataSourceApi | null,
   scopedVars: ScopedVars
 ): Promise<DataSourceApi> {
-  if (!config.publicDashboardAccessToken && datasource && typeof datasource === 'object' && 'query' in datasource) {
+  if (datasource && typeof datasource === 'object' && 'query' in datasource) {
     return datasource;
   }
 
-  const ds = await getDatasourceSrv().get(datasource, scopedVars);
-  if (config.publicDashboardAccessToken) {
-    return new PublicDashboardDataSource(ds);
-  }
-
-  return ds;
+  return await getDatasourceSrv().get(datasource, scopedVars);
 }

@@ -222,7 +222,7 @@ func TestSocialGoogle_UserInfo(t *testing.T) {
 
 	sig, err := jose.NewSigner(jose.SigningKey{Algorithm: jose.HS256, Key: []byte("secret")}, (&jose.SignerOptions{}).WithType("JWT"))
 	require.NoError(t, err)
-	idMap := map[string]interface{}{
+	idMap := map[string]any{
 		"email":          "test@example.com",
 		"name":           "Test User",
 		"hd":             "example.com",
@@ -234,7 +234,7 @@ func TestSocialGoogle_UserInfo(t *testing.T) {
 
 	tokenWithID := (&oauth2.Token{
 		AccessToken: "fake_token",
-	}).WithExtra(map[string]interface{}{"id_token": raw})
+	}).WithExtra(map[string]any{"id_token": raw})
 
 	tokenWithoutID := &oauth2.Token{}
 

@@ -9,15 +9,15 @@ type selectQuery struct {
 	oneExtra bool
 
 	where []string
-	args  []interface{}
+	args  []any
 }
 
-func (q *selectQuery) addWhere(f string, val interface{}) {
+func (q *selectQuery) addWhere(f string, val any) {
 	q.args = append(q.args, val)
 	q.where = append(q.where, f+"=?")
 }
 
-func (q *selectQuery) addWhereInSubquery(f string, subquery string, subqueryArgs []interface{}) {
+func (q *selectQuery) addWhereInSubquery(f string, subquery string, subqueryArgs []any) {
 	q.args = append(q.args, subqueryArgs...)
 	q.where = append(q.where, f+" IN ("+subquery+")")
 }
@@ -42,7 +42,7 @@ func (q *selectQuery) addWhereIn(f string, vals []string) {
 	}
 }
 
-func (q *selectQuery) toQuery() (string, []interface{}) {
+func (q *selectQuery) toQuery() (string, []any) {
 	args := q.args
 	sb := strings.Builder{}
 	sb.WriteString("SELECT ")

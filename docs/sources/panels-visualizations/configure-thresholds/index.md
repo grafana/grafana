@@ -26,17 +26,17 @@ This section includes information about using thresholds in your visualizations.
 
 A threshold is a value that you specify for a metric that is visually reflected in a dashboard when the threshold value is met or exceeded.
 
-Thresholds provide one method for you to conditionally style and color your visualizations based on query results. You can apply thresholds to most, but not all, visualizations. For more information about visualizations, refer to [Visualization panels]({{< relref "../visualizations/" >}}).
+Thresholds provide one method for you to conditionally style and color your visualizations based on query results. You can apply thresholds to most, but not all, visualizations. For more information about visualizations, refer to [Visualization panels][].
 
 You can use thresholds to:
 
-- Color grid lines or grid areas in the [Time-series visualization]({{< relref "../visualizations/time-series/" >}})
-- Color lines in the [Time-series visualization]({{< relref "../visualizations/time-series#from-thresholds" >}})
-- Color the background or value text in the [Stat visualization]({{< relref "../visualizations/stat/" >}})
-- Color the gauge and threshold markers in the [Gauge visualization]({{< relref "../visualizations/gauge/" >}})
-- Color markers in the [Geomap visualization]({{< relref "../visualizations/geomap/" >}})
-- Color cell text or background in the [Table visualization]({{< relref "../visualizations/table/" >}})
-- Define regions and region colors in the [State timeline visualization]({{< relref "../visualizations/state-timeline/" >}})
+- Color grid lines or grid areas in the [Time-series visualization][]
+- Color lines in the [Time-series visualization][]
+- Color the background or value text in the [Stat visualization][]
+- Color the gauge and threshold markers in the [Gauge visualization][]
+- Color markers in the [Geomap visualization][]
+- Color cell text or background in the [Table visualization][]
+- Define regions and region colors in the [State timeline visualization][]
 
 There are two types of thresholds:
 
@@ -92,3 +92,26 @@ In the Graph panel visualization, thresholds enable you to add lines or sections
    - **Line -** Toggle the display of the threshold line.
    - **Y-Axis -** Choose to display the y-axis on either the **left** or **right** of the panel.
 1. Click **Save** to save the changes in the dashboard.
+
+{{% docs/reference %}}
+[Table visualization]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/table"
+[Table visualization]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/table"
+
+[Stat visualization]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/stat"
+[Stat visualization]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/stat"
+
+[Time-series visualization]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/time-series#from-thresholds"
+[Time-series visualization]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/time-series#from-thresholds"
+
+[State timeline visualization]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/state-timeline"
+[State timeline visualization]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/state-timeline"
+
+[Gauge visualization]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/gauge"
+[Gauge visualization]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/gauge"
+
+[Visualization panels]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations"
+[Visualization panels]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations"
+
+[Geomap visualization]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/geomap"
+[Geomap visualization]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/geomap"
+{{% /docs/reference %}}

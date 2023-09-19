@@ -90,8 +90,8 @@ type Service struct {
 	features      *featuremgmt.FeatureManager
 }
 
-func (s *Service) GetUsageStats(_ context.Context) map[string]interface{} {
-	return map[string]interface{}{
+func (s *Service) GetUsageStats(_ context.Context) map[string]any {
+	return map[string]any{
 		"stats.oss.accesscontrol.enabled.count": 1,
 	}
 }
@@ -143,37 +143,29 @@ func (s *Service) getUserPermissions(ctx context.Context, user identity.Requeste
 }
 
 func (s *Service) getCachedUserPermissions(ctx context.Context, user identity.Requester, options accesscontrol.Options) ([]accesscontrol.Permission, error) {
-	key, err := permissionCacheKey(user)
-	if err != nil {
-		return nil, err
-	}
-
+	key := permissionCacheKey(user)
 	if !options.ReloadCache {
 		permissions, ok := s.cache.Get(key)
 		if ok {
-			s.log.Debug("using cached permissions", "key", key)
+			s.log.Debug("Using cached permissions", "key", key)
 			return permissions.([]accesscontrol.Permission), nil
 		}
 	}
 
-	s.log.Debug("fetch permissions from store", "key", key)
+	s.log.Debug("Fetch permissions from store", "key", key)
 	permissions, err := s.getUserPermissions(ctx, user, options)
 	if err != nil {
 		return nil, err
 	}
 
-	s.log.Debug("cache permissions", "key", key)
+	s.log.Debug("Cache permissions", "key", key)
 	s.cache.Set(key, permissions, cacheTTL)
 
 	return permissions, nil
 }
 
 func (s *Service) ClearUserPermissionCache(user identity.Requester) {
-	key, err := permissionCacheKey(user)
-	if err != nil {
-		return
-	}
-	s.cache.Delete(key)
+	s.cache.Delete(permissionCacheKey(user))
 }
 
 func (s *Service) DeleteUserPermissions(ctx context.Context, orgID int64, userID int64) error {
@@ -215,16 +207,8 @@ func (s *Service) RegisterFixedRoles(ctx context.Context) error {
 	return nil
 }
 
-func (s *Service) IsDisabled() bool {
-	return accesscontrol.IsDisabled(s.cfg)
-}
-
-func permissionCacheKey(user identity.Requester) (string, error) {
-	key, err := user.GetCacheKey()
-	if err != nil {
-		return "", err
-	}
-	return fmt.Sprintf("rbac-permissions-%s", key), nil
+func permissionCacheKey(user identity.Requester) string {
+	return fmt.Sprintf("rbac-permissions-%s", user.GetCacheKey())
 }
 
 // DeclarePluginRoles allow the caller to declare, to the service, plugin roles and their assignments
@@ -384,18 +368,14 @@ func (s *Service) searchUserPermissionsFromCache(orgID int64, searchOptions acce
 		UserID: searchOptions.UserID,
 		OrgID:  orgID,
 	}
-	key, err := permissionCacheKey(tempUser)
-	if err != nil {
-		s.log.Debug("could not obtain cache key to search user permissions", "error", err.Error())
-		return nil, false
-	}
 
-	permissions, ok := s.cache.Get(key)
+	key := permissionCacheKey(tempUser)
+	permissions, ok := s.cache.Get((key))
 	if !ok {
 		return nil, false
 	}
 
-	s.log.Debug("using cached permissions", "key", key)
+	s.log.Debug("Using cached permissions", "key", key)
 	filteredPermissions := make([]accesscontrol.Permission, 0)
 	for _, permission := range permissions.([]accesscontrol.Permission) {
 		if PermissionMatchesSearchOptions(permission, searchOptions) {
@@ -418,7 +398,7 @@ func PermissionMatchesSearchOptions(permission accesscontrol.Permission, searchO
 
 func (s *Service) SaveExternalServiceRole(ctx context.Context, cmd accesscontrol.SaveExternalServiceRoleCommand) error {
 	if !s.features.IsEnabled(featuremgmt.FlagExternalServiceAuth) {
-		s.log.Debug("registering an external service role is behind a feature flag, enable it to use this feature.")
+		s.log.Debug("Registering an external service role is behind a feature flag, enable it to use this feature.")
 		return nil
 	}
 
@@ -431,7 +411,7 @@ func (s *Service) SaveExternalServiceRole(ctx context.Context, cmd accesscontrol
 
 func (s *Service) DeleteExternalServiceRole(ctx context.Context, externalServiceID string) error {
 	if !s.features.IsEnabled(featuremgmt.FlagExternalServiceAuth) {
-		s.log.Debug("deleting an external service role is behind a feature flag, enable it to use this feature.")
+		s.log.Debug("Deleting an external service role is behind a feature flag, enable it to use this feature.")
 		return nil
 	}
 

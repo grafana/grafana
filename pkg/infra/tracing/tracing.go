@@ -108,7 +108,7 @@ type Span interface {
 	// SetAttributes repeats the key value pair with [string] and [any]
 	// used for OpenTracing and [attribute.KeyValue] used for
 	// OpenTelemetry.
-	SetAttributes(key string, value interface{}, kv attribute.KeyValue)
+	SetAttributes(key string, value any, kv attribute.KeyValue)
 	// SetName renames the span.
 	SetName(name string)
 	// SetStatus can be used to indicate whether the span was
@@ -137,9 +137,9 @@ func ProvideService(cfg *setting.Cfg) (Tracer, error) {
 		return nil, err
 	}
 
-	log.RegisterContextualLogProvider(func(ctx context.Context) ([]interface{}, bool) {
+	log.RegisterContextualLogProvider(func(ctx context.Context) ([]any, bool) {
 		if traceID := TraceIDFromContext(ctx, false); traceID != "" {
-			return []interface{}{"traceID", traceID}, true
+			return []any{"traceID", traceID}, true
 		}
 
 		return nil, false
@@ -224,6 +224,22 @@ func (ots *Opentelemetry) parseSettings() error {
 		return err
 	}
 
+	// if sampler_type is set in tracing.opentelemetry, we ignore the config in tracing.jaeger
+	sampler := section.Key("sampler_type").MustString("")
+	if sampler != "" {
+		ots.sampler = sampler
+	}
+
+	samplerParam := section.Key("sampler_param").MustFloat64(0)
+	if samplerParam != 0 {
+		ots.samplerParam = samplerParam
+	}
+
+	samplerRemoteURL := section.Key("sampling_server_url").MustString("")
+	if samplerRemoteURL != "" {
+		ots.samplerRemoteURL = samplerRemoteURL
+	}
+
 	section = ots.Cfg.Raw.Section("tracing.opentelemetry.jaeger")
 	ots.enabled = noopExporter
 
@@ -295,16 +311,9 @@ func (ots *Opentelemetry) initJaegerTracerProvider() (*tracesdk.TracerProvider, 
 		return nil, err
 	}
 
-	sampler := tracesdk.AlwaysSample()
-	if ots.sampler == "const" || ots.sampler == "probabilistic" {
-		sampler = tracesdk.TraceIDRatioBased(ots.samplerParam)
-	} else if ots.sampler == "rateLimiting" {
-		sampler = newRateLimiter(ots.samplerParam)
-	} else if ots.sampler == "remote" {
-		sampler = jaegerremote.New("grafana", jaegerremote.WithSamplingServerURL(ots.samplerRemoteURL),
-			jaegerremote.WithInitialSampler(tracesdk.TraceIDRatioBased(ots.samplerParam)))
-	} else if ots.sampler != "" {
-		return nil, fmt.Errorf("invalid sampler type: %s", ots.sampler)
+	sampler, err := ots.initSampler()
+	if err != nil {
+		return nil, err
 	}
 
 	tp := tracesdk.NewTracerProvider(
@@ -323,10 +332,39 @@ func (ots *Opentelemetry) initOTLPTracerProvider() (*tracesdk.TracerProvider, er
 		return nil, err
 	}
 
-	return initTracerProvider(exp, ots.Cfg.BuildVersion, ots.customAttribs...)
+	sampler, err := ots.initSampler()
+	if err != nil {
+		return nil, err
+	}
+
+	return initTracerProvider(exp, ots.Cfg.BuildVersion, sampler, ots.customAttribs...)
 }
 
-func initTracerProvider(exp tracesdk.SpanExporter, version string, customAttribs ...attribute.KeyValue) (*tracesdk.TracerProvider, error) {
+func (ots *Opentelemetry) initSampler() (tracesdk.Sampler, error) {
+	switch ots.sampler {
+	case "const", "":
+		if ots.samplerParam >= 1 {
+			return tracesdk.AlwaysSample(), nil
+		} else if ots.samplerParam <= 0 {
+			return tracesdk.NeverSample(), nil
+		}
+
+		return nil, fmt.Errorf("invalid param for const sampler - must be 0 or 1: %f", ots.samplerParam)
+	case "probabilistic":
+		return tracesdk.TraceIDRatioBased(ots.samplerParam), nil
+	case "rateLimiting":
+		return newRateLimiter(ots.samplerParam), nil
+	case "remote":
+		return jaegerremote.New("grafana",
+			jaegerremote.WithSamplingServerURL(ots.samplerRemoteURL),
+			jaegerremote.WithInitialSampler(tracesdk.TraceIDRatioBased(ots.samplerParam)),
+		), nil
+	default:
+		return nil, fmt.Errorf("invalid sampler type: %s", ots.sampler)
+	}
+}
+
+func initTracerProvider(exp tracesdk.SpanExporter, version string, sampler tracesdk.Sampler, customAttribs ...attribute.KeyValue) (*tracesdk.TracerProvider, error) {
 	res, err := resource.New(
 		context.Background(),
 		resource.WithAttributes(
@@ -343,9 +381,7 @@ func initTracerProvider(exp tracesdk.SpanExporter, version string, customAttribs
 
 	tp := tracesdk.NewTracerProvider(
 		tracesdk.WithBatcher(exp),
-		tracesdk.WithSampler(tracesdk.ParentBased(
-			tracesdk.AlwaysSample(),
-		)),
+		tracesdk.WithSampler(tracesdk.ParentBased(sampler)),
 		tracesdk.WithResource(res),
 	)
 	return tp, nil
@@ -460,7 +496,7 @@ func (s OpentelemetrySpan) End() {
 	s.span.End()
 }
 
-func (s OpentelemetrySpan) SetAttributes(key string, value interface{}, kv attribute.KeyValue) {
+func (s OpentelemetrySpan) SetAttributes(key string, value any, kv attribute.KeyValue) {
 	s.span.SetAttributes(kv)
 }
 
@@ -501,21 +537,23 @@ func (s OpentelemetrySpan) ContextWithSpan(ctx context.Context) context.Context 
 
 type rateLimiter struct {
 	sync.Mutex
-	rps        float64
-	balance    float64
-	maxBalance float64
-	lastTick   time.Time
+	description string
+	rps         float64
+	balance     float64
+	maxBalance  float64
+	lastTick    time.Time
 
 	now func() time.Time
 }
 
 func newRateLimiter(rps float64) *rateLimiter {
 	return &rateLimiter{
-		rps:        rps,
-		balance:    math.Max(rps, 1),
-		maxBalance: math.Max(rps, 1),
-		lastTick:   time.Now(),
-		now:        time.Now,
+		rps:         rps,
+		description: fmt.Sprintf("RateLimitingSampler{%g}", rps),
+		balance:     math.Max(rps, 1),
+		maxBalance:  math.Max(rps, 1),
+		lastTick:    time.Now(),
+		now:         time.Now,
 	}
 }
 
@@ -538,4 +576,4 @@ func (rl *rateLimiter) ShouldSample(p tracesdk.SamplingParameters) tracesdk.Samp
 	return tracesdk.SamplingResult{Decision: tracesdk.Drop, Tracestate: psc.TraceState()}
 }
 
-func (rl *rateLimiter) Description() string { return "RateLimitingSampler" }
+func (rl *rateLimiter) Description() string { return rl.description }
