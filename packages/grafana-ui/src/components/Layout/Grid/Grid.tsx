@@ -64,7 +64,7 @@ export const Grid = ({
       [display, columnGap, rowGap, gap, templateColumns, templateRows, alignItems, justifyItems, autoRows, autoFlow]
     )
   );
-  return React.createElement('div', { className: styles.grid }, children);
+  return <div className={styles.grid}>{children}</div>;
 };
 
 Grid.displayName = 'Grid';
