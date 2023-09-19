@@ -515,9 +515,12 @@ export const runQueries = createAsyncThunk<void, RunQueriesOptions>(
       absoluteRange,
       cache,
       supplementaryQueries,
+      correlationEditorHelperData,
     } = exploreItemState;
     const isCorrelationEditorMode = getState().explore.correlationEditorDetails?.editorMode || false;
     const isLeftPane = Object.entries(getState().explore.panes)[0][0] === exploreId;
+    const interpolateCorrelationHelperVars =
+      (isCorrelationEditorMode && !isLeftPane && correlationEditorHelperData !== undefined) || false;
     let newQuerySource: Observable<ExplorePanelData>;
     let newQuerySubscription: SubscriptionLike;
 
@@ -576,8 +579,23 @@ export const runQueries = createAsyncThunk<void, RunQueriesOptions>(
         liveStreaming: live,
       };
 
+      let scopedVars: ScopedVars = {};
+      if (interpolateCorrelationHelperVars && correlationEditorHelperData !== undefined) {
+        Object.entries(correlationEditorHelperData?.vars).forEach((variable) => {
+          scopedVars[variable[0]] = { value: variable[1] };
+        });
+      }
+
       const timeZone = getTimeZone(getState().user);
-      const transaction = buildQueryTransaction(exploreId, queries, queryOptions, range, scanning, timeZone);
+      const transaction = buildQueryTransaction(
+        exploreId,
+        queries,
+        queryOptions,
+        range,
+        scanning,
+        timeZone,
+        scopedVars
+      );
 
       dispatch(changeLoadingStateAction({ exploreId, loadingState: LoadingState.Loading }));
 
