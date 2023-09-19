@@ -306,7 +306,7 @@ roles:
 
 - Or use [RBAC HTTP API]({{< relref "../../../../developers/http_api/access_control/#update-a-role" >}}).
 
-### Manager user permissions through teams
+### Manage user permissions through teams
 
 In the scenario where you want users to have granted access by the team they belong to, we recommend to set users role to `No Basic Role` and let the team assignment assign the role instead.
 
@@ -326,6 +326,20 @@ This way, a user will be added automatically to the default organization and hav
 In the scenario where you want to allow a user access to a specific dashboard, we recommend the `No Basic Role` as a starting point for the user and then assign the dashboard permissions to the user.
 However, in order to access the dashboard more permissions are needed other than just the dashboard. Here's a list of permissions needed in order to access a dashboard:
 
-1.
+1. The dashboard owner must give permission to the user
+1. The admin must grant the following permissions to the user
+   1. annotations:read
+   1. datasource:read
 
-WIP
+The permissions list here are the bare minumum needed to be able to view the dashboard. However, keep in mind that if the dashboard has multiple features, the permissions needed to see the dashboard might be more than just the ones listed here.
+
+### Reducing scope of service accounts
+
+Service Accounts are great tools for M2M communications. However, they are also a security risk if not properly scoped. To reduce the scope of a service account, you can create a Service Account with `No Basic Role` as a starting point and then assign the permissions needed for the service account.
+
+1. Head over to the Service Accounts page and add a new Service Account.
+1. Set the necessary roles for the Service Account.
+   1. Set the basic role to `No Basic Role`.
+   1. Set the fixed roles needed for the Service Account.
+
+This will reduce the permissions needed for the Service Account and reduce the risk of the Service Account being compromised.
