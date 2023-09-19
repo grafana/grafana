@@ -57,9 +57,10 @@ export function addAxisConfig(
       path: 'axisGridShow',
       name: 'Show grid lines',
       category,
-      defaultValue: true,
+      defaultValue: undefined,
       settings: {
         options: [
+          { value: undefined, label: 'Auto' },
           { value: true, label: 'On' },
           { value: false, label: 'Off' },
         ],
