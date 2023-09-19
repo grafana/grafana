@@ -818,8 +818,8 @@
       "select-time": "Einen Zeitbereich auswählen"
     },
     "content": {
-      "empty-recent-list-text1": "",
-      "empty-recent-list-text2": "",
+      "empty-recent-list-docs": "",
+      "empty-recent-list-info": "",
       "filter-placeholder": "Schnellbereiche suchen"
     },
     "footer": {

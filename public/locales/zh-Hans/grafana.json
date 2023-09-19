@@ -813,8 +813,8 @@
       "select-time": "选择时间范围"
     },
     "content": {
-      "empty-recent-list-text1": "",
-      "empty-recent-list-text2": "",
+      "empty-recent-list-docs": "",
+      "empty-recent-list-info": "",
       "filter-placeholder": "搜索快速范围"
     },
     "footer": {
