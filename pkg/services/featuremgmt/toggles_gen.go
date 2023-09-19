@@ -99,6 +99,10 @@ const (
 	// Enables topnav support in external plugins. The new Grafana navigation cannot be disabled.
 	FlagTopnav = "topnav"
 
+	// FlagDockedMegaMenu
+	// Enable support for a persistent (docked) navigation menu
+	FlagDockedMegaMenu = "dockedMegaMenu"
+
 	// FlagGrpcServer
 	// Run the GRPC server
 	FlagGrpcServer = "grpcServer"
@@ -426,6 +430,10 @@ const (
 	// FlagRequestInstrumentationStatusSource
 	// Include a status source label for request metrics and logs
 	FlagRequestInstrumentationStatusSource = "requestInstrumentationStatusSource"
+
+	// FlagLokiRunQueriesInParallel
+	// Enables running Loki queries in parallel
+	FlagLokiRunQueriesInParallel = "lokiRunQueriesInParallel"
 
 	// FlagWargamesTesting
 	// Placeholder feature flag for internal testing
