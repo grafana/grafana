@@ -1991,9 +1991,6 @@ steps:
   image: node:18.12.0-alpine
   name: release-canary-npm-packages
   when:
-    paths:
-      include:
-      - packages/**
     repo:
     - grafana/grafana
 - commands:
@@ -4202,6 +4199,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: b7009bea932e621db567d1d9da72bd69d408c304585255e1c297dd63d60d956c
+hmac: d2c4ca271a6125cdf5247ed1a0f8c318ba3e2ebd8cb37219686ed585312d5ac4
 
 ...

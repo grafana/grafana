@@ -38,9 +38,13 @@ echo "Starting to release $dist_tag version"
 
 registry_without_protocol=${registry#*:}
 
+# is npmrc cached perhaps?
+ls -la ~/.npmrc
+
 echo "$registry_without_protocol/:_authToken=${NPM_TOKEN}" >> ~/.npmrc
 
 # Loop over .tar files in directory and publish them to npm registry
 for file in ./npm-artifacts/*.tgz; do
-    npm publish "$file" --tag "$dist_tag" --registry "$registry"
+    echo "we will publish $file to registry: $registry with tag: $dist_tag"
+    # npm publish "$file" --tag "$dist_tag" --registry "$registry" --
 done

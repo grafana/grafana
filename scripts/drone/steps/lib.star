@@ -990,11 +990,11 @@ def release_canary_npm_packages_step(trigger = None):
             step,
             when = dict(
                 trigger,
-                paths = {
-                    "include": [
-                        "packages/**",
-                    ],
-                },
+                # paths = {
+                #     "include": [
+                #         "packages/**",
+                #     ],
+                # },
             ),
         )
 
