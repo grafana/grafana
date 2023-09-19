@@ -331,7 +331,7 @@ However, in order to access the dashboard more permissions are needed other than
    1. annotations:read
    1. datasource:read
 
-The permissions list here are the bare minumum needed to be able to view the dashboard. However, keep in mind that if the dashboard has multiple features, the permissions needed to see the dashboard might be more than just the ones listed here.
+The permissions list here are the bare minimum needed to be able to view the dashboard. However, keep in mind that if the dashboard has multiple features, the permissions needed to see the dashboard might be more than just the ones listed here.
 
 ### Reducing scope of service accounts
 
