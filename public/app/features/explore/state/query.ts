@@ -523,6 +523,7 @@ export const runQueries = createAsyncThunk<void, RunQueriesOptions>(
       (isCorrelationEditorMode && !isLeftPane && correlationEditorHelperData !== undefined) || false;
     let newQuerySource: Observable<ExplorePanelData>;
     let newQuerySubscription: SubscriptionLike;
+    const defaultDatasource = await getDataSourceSrv().get();
 
     const queries = exploreItemState.queries.map((query) => ({
       ...query,
@@ -540,6 +541,7 @@ export const runQueries = createAsyncThunk<void, RunQueriesOptions>(
       newQuerySource = combineLatest([of(cachedValue), correlations$]).pipe(
         mergeMap(([data, correlations]) =>
           decorateData(
+            defaultDatasource,
             data,
             queryResponse,
             absoluteRange,
@@ -609,6 +611,7 @@ export const runQueries = createAsyncThunk<void, RunQueriesOptions>(
       ]).pipe(
         mergeMap(([data, correlations]) =>
           decorateData(
+            defaultDatasource,
             data,
             queryResponse,
             absoluteRange,

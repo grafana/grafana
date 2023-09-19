@@ -12,6 +12,7 @@ import {
   preProcessPanelData,
   DataLinkConfigOrigin,
   getRawDisplayProcessor,
+  DataSourceApi,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
@@ -95,10 +96,12 @@ export const decorateWithFrameTypeMetadata = (data: PanelData): ExplorePanelData
 };
 
 export const decorateWithCorrelations = ({
+  defaultDatasource,
   showCorrelationEditorLinks,
   queries,
   correlations,
 }: {
+  defaultDatasource: DataSourceApi;
   showCorrelationEditorLinks: boolean;
   queries: DataQuery[] | undefined;
   correlations: CorrelationData[] | undefined;
@@ -115,14 +118,15 @@ export const decorateWithCorrelations = ({
           frame.fields.map((field) => {
             availableVars[`${field.name}`] = "${__data.fields.['" + `${field.name}` + `']}`;
           });
+
           field.config.links.push({
             url: '',
             origin: DataLinkConfigOrigin.ExploreCorrelationsEditor,
             title: `Correlate with ${field.name}`,
             internal: {
-              datasourceUid: 'default',
-              datasourceName: 'default',
-              query: {},
+              datasourceUid: defaultDatasource.uid,
+              datasourceName: defaultDatasource.name,
+              query: { datasource: { uid: defaultDatasource.uid } },
               meta: {
                 correlationData: { resultField: field.name, vars: availableVars },
               },
@@ -280,6 +284,7 @@ export const decorateWithLogsResult =
 
 // decorateData applies all decorators
 export function decorateData(
+  defaultDatasource: DataSourceApi,
   data: PanelData,
   queryResponse: PanelData,
   absoluteRange: AbsoluteTimeRange,
@@ -290,7 +295,7 @@ export function decorateData(
 ): Observable<ExplorePanelData> {
   return of(data).pipe(
     map((data: PanelData) => preProcessPanelData(data, queryResponse)),
-    map(decorateWithCorrelations({ showCorrelationEditorLinks, queries, correlations })),
+    map(decorateWithCorrelations({ defaultDatasource, showCorrelationEditorLinks, queries, correlations })),
     map(decorateWithFrameTypeMetadata),
     map(decorateWithGraphResult),
     map(decorateWithLogsResult({ absoluteRange, refreshInterval, queries })),
