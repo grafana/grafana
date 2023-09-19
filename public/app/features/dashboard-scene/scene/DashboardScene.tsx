@@ -38,7 +38,7 @@ export interface DashboardSceneState extends SceneObjectState {
   /** Panel to view in full screen */
   viewPanelKey?: string;
   /** Scene object that handles the current drawer or modal */
-  drawer?: SceneObject;
+  overlay?: SceneObject;
 }
 
 export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
@@ -129,7 +129,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   };
 
   public onSave = () => {
-    this.setState({ drawer: new SaveDashboardDrawer({ dashboardRef: new SceneObjectRef(this) }) });
+    this.setState({ overlay: new SaveDashboardDrawer({ dashboardRef: new SceneObjectRef(this) }) });
   };
 
   public getPageNav(location: H.Location) {
@@ -186,10 +186,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   }
 
   public showModal(modal: SceneObject) {
-    this.setState({ drawer: modal });
+    this.setState({ overlay: modal });
   }
 
   public closeModal() {
-    this.setState({ drawer: undefined });
+    this.setState({ overlay: undefined });
   }
 }
