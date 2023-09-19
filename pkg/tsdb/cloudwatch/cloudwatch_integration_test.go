@@ -267,7 +267,6 @@ func Test_CloudWatch_CallResource_Integration_Test(t *testing.T) {
 		require.NotNil(t, sent)
 		require.Equal(t, http.StatusOK, sent.Status)
 		require.Nil(t, err)
-		fmt.Println(string(sent.Body))
 		assert.Contains(t, string(sent.Body), `"name":"us-east-1"`)
 	})
 
