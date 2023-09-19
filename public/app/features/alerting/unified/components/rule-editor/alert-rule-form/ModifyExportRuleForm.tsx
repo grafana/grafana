@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
+import { Link } from 'react-router-dom';
 
 import { Stack } from '@grafana/experimental';
 import { Button, CustomScrollbar } from '@grafana/ui';
@@ -30,6 +31,7 @@ export function ModifyExportRuleForm({ ruleForm, alertUid }: ModifyExportRuleFor
   });
 
   const existing = Boolean(ruleForm);
+  const returnTo = `/alerting/list`;
 
   const [showExporter, setShowExporter] = useState<ModifyExportMode | undefined>(undefined);
 
@@ -42,9 +44,11 @@ export function ModifyExportRuleForm({ ruleForm, alertUid }: ModifyExportRuleFor
   };
 
   const actionButtons = [
-    <Button key="cancel" size="sm" variant="secondary" onClick={() => null}>
-      Cancel
-    </Button>,
+    <Link to={returnTo} key="cancel">
+      <Button size="sm" variant="secondary" onClick={() => null}>
+        Cancel
+      </Button>
+    </Link>,
     <Button key="export-rule" size="sm" onClick={() => setShowExporter('rule')}>
       Export Rule
     </Button>,
