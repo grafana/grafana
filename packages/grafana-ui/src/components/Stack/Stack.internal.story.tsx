@@ -36,35 +36,13 @@ export const Basic: StoryFn<typeof Stack> = ({ direction = 'vertical', gap = 2 }
 export const TestCases: StoryFn<typeof Stack> = ({ direction = 'column', gap = 2 }) => {
   return (
     <div style={{ width: '100%' }}>
-      <Example title="Vertical stack, mismatched heights">
-        <Stack direction="vertical">
-          <Card>
-            <Card.Heading>I am a card heading</Card.Heading>
-          </Card>
-
-          <Card>
-            <Card.Heading>I am a card heading</Card.Heading>
-            <Card.Description>Ohhhhh - and now a description and some actions</Card.Description>
-            <Card.Actions>
-              <Button variant="secondary">Settings</Button>
-              <Button variant="secondary">Explore</Button>
-            </Card.Actions>
-          </Card>
-
-          <Card>
-            <Card.Heading>I am a card heading</Card.Heading>
-            <Card.Description>Ohhhhh - and now a description!</Card.Description>
-          </Card>
-          <Button>Hello, press to help me</Button>
-        </Stack>
-      </Example>
       <Stack direction="vertical" gap={4}>
         <Example title="No stack">
           <Button>A button</Button>
           <Button>Longer button button</Button>
         </Example>
 
-        <Example title="Horizontal/row stack">
+        <Example title="Horizontal stack">
           <Stack direction="horizontal">
             <Button>A button</Button>
             <Button>Longer button button</Button>
@@ -89,6 +67,28 @@ export const TestCases: StoryFn<typeof Stack> = ({ direction = 'column', gap = 2
             <Card.Heading>I am a card heading</Card.Heading>
             <Card.Description>Ohhhhh - and now a description!</Card.Description>
           </Card>
+        </Example>
+        <Example title="Vertical stack, mismatched heights">
+          <Stack direction="vertical">
+            <Card>
+              <Card.Heading>I am a card heading</Card.Heading>
+            </Card>
+
+            <Card>
+              <Card.Heading>I am a card heading</Card.Heading>
+              <Card.Description>Ohhhhh - and now a description and some actions</Card.Description>
+              <Card.Actions>
+                <Button variant="secondary">Settings</Button>
+                <Button variant="secondary">Explore</Button>
+              </Card.Actions>
+            </Card>
+
+            <Card>
+              <Card.Heading>I am a card heading</Card.Heading>
+              <Card.Description>Ohhhhh - and now a description!</Card.Description>
+            </Card>
+            <Button>Hello, press to help me</Button>
+          </Stack>
         </Example>
 
         <div style={{ width: 500 }}>
