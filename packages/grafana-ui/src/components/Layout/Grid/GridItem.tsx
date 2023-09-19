@@ -5,17 +5,16 @@ import { useStyles2 } from '../../../themes';
 
 export interface GridItemProps {
   children: NonNullable<React.ReactNode>;
-  /** If false will the grid item inherits the display of the parent. 
-    If true, the display with 'contents' as value. See info: https://developer.mozilla.org/en-US/docs/Web/CSS/display#display_contents*/
+  /** If set to 'false,' the grid item will inherit the parent's display property. If set to 'true,' the display property will be set to 'contents'. More info: https://developer.mozilla.org/en-US/docs/Web/CSS/display#display_contents */
   displayContents?: boolean;
   /** Specifies the column where the grid item starts within the grid */
   columnStart?: number;
-  /** Specifies the  column where the grid item ends. 
-    If its value is span <number> the item spans across the provider number of columns*/
+  /** Specifies the column where the grid item ends.
+    If its value is `span ${number}`, the item spans across the provided number of columns */
   columnEnd?: number | `span ${number}`;
   /** Specifies the row where the grid item starts within the grid */
   rowStart?: number;
-  /** Specifies the row where the grid item ends.*/
+  /** Specifies the row where the grid item ends */
   rowEnd?: number | `span ${number}`;
 }
 
