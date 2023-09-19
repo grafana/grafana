@@ -29,7 +29,7 @@ export const testIds = {
 };
 
 export const LokiQueryEditor = React.memo<LokiQueryEditorProps>((props) => {
-  const { onChange, onRunQuery, onAddQuery, data, app, queries, datasource } = props;
+  const { onChange, onRunQuery, onAddQuery, data, app, queries, datasource, range } = props;
   const [parseModalOpen, setParseModalOpen] = useState(false);
   const [queryPatternsModalOpen, setQueryPatternsModalOpen] = useState(false);
   const [dataIsStale, setDataIsStale] = useState(false);
@@ -37,9 +37,8 @@ export const LokiQueryEditor = React.memo<LokiQueryEditorProps>((props) => {
   const [queryStats, setQueryStats] = useState<QueryStats | null>(null);
   const { flag: explain, setFlag: setExplain } = useFlag(lokiQueryEditorExplainKey);
 
-  const timerange = props.range;
   const predefinedOperations = datasource.predefinedOperations;
-  const previousTimerange = usePrevious(timerange);
+  const previousTimeRange = usePrevious(range);
 
   const query = getQueryWithDefaults(props.query);
   if (config.featureToggles.lokiPredefinedOperations && !query.expr && predefinedOperations) {
@@ -96,7 +95,7 @@ export const LokiQueryEditor = React.memo<LokiQueryEditorProps>((props) => {
   };
 
   useEffect(() => {
-    const update = shouldUpdateStats(query.expr, previousQuery, timerange, previousTimerange);
+    const update = shouldUpdateStats(query.expr, previousQuery, range, previousTimeRange);
     if (update) {
       const makeAsyncRequest = async () => {
         const stats = await getStats(datasource, query.expr);
@@ -104,7 +103,7 @@ export const LokiQueryEditor = React.memo<LokiQueryEditorProps>((props) => {
       };
       makeAsyncRequest();
     }
-  }, [datasource, timerange, previousTimerange, query, previousQuery, setQueryStats]);
+  }, [datasource, range, previousTimeRange, query, previousQuery, setQueryStats]);
 
   return (
     <>

@@ -40,16 +40,16 @@ function compareTime(time1: DateTime | string | undefined, time2: DateTime | str
 export function shouldUpdateStats(
   query: string,
   prevQuery: string | undefined,
-  timerange: TimeRange | undefined,
-  prevTimerange: TimeRange | undefined
+  timeRange: TimeRange | undefined,
+  prevTimeRange: TimeRange | undefined
 ): boolean {
   if (prevQuery === undefined || query.trim() !== prevQuery.trim()) {
     return true;
   }
 
   if (
-    compareTime(timerange?.raw.from, prevTimerange?.raw.from) &&
-    compareTime(timerange?.raw.to, prevTimerange?.raw.to)
+    compareTime(timeRange?.raw.from, prevTimeRange?.raw.from) &&
+    compareTime(timeRange?.raw.to, prevTimeRange?.raw.to)
   ) {
     return false;
   }
