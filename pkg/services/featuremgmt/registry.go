@@ -751,5 +751,12 @@ var (
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaAlertingSquad,
 		},
+		{
+			Name:         "cloudAccessPolicies",
+			Description:  "Start an authentication client for cloud access policy tokens",
+			FrontendOnly: false,
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAuthnzSquad,
+		},
 	}
 )

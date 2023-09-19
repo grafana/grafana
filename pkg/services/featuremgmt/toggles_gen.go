@@ -438,4 +438,8 @@ const (
 	// FlagAlertingInsights
 	// Show the new alerting insights landing page
 	FlagAlertingInsights = "alertingInsights"
+
+	// FlagCloudAccessPolicies
+	// Start an authentication client for cloud access policy tokens
+	FlagCloudAccessPolicies = "cloudAccessPolicies"
 )
