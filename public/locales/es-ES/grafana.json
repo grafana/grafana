@@ -823,8 +823,8 @@
       "select-time": "Seleccionar un intervalo de tiempo"
     },
     "content": {
-      "empty-recent-list-docs": "",
-      "empty-recent-list-info": "",
+      "empty-recent-list-docs": "<0><0>Lea la documentación</0><1> para saber más sobre cómo introducir intervalos de tiempo personalizados.</1></0>",
+      "empty-recent-list-info": "Parece que no ha utilizado antes este selector de tiempo. En cuanto introduzca algún intervalo de tiempo, los intervalos que haya usado recientemente aparecerán aquí.",
       "filter-placeholder": "Buscar intervalos rápidos"
     },
     "footer": {
