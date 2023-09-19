@@ -10,9 +10,9 @@ export type ItemsAlignment = 'start' | 'end' | 'center' | 'stretch';
 export type ContentAlignment = ItemsAlignment | 'space-around' | 'space-between' | 'space-evenly';
 export interface GridProps {
   children: NonNullable<React.ReactNode>;
-  /** Defines whether the element is a block-lever or a inline-level grid */
+  /** Defines whether the element is a block-level or an inline-level grid */
   display?: 'grid' | 'inline-grid';
-  /** Specifies the gutters between columns and between rows. It is overwritten when column or row gap has value */
+  /** Specifies the gutters between columns and rows. It is overwritten when a column or row gap has a value */
   gap?: ThemeSpacingTokens;
   /** Specifies the gutters between columns */
   columnGap?: ThemeSpacingTokens;
