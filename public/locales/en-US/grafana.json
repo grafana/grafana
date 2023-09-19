@@ -220,6 +220,43 @@
       "label": "Add new data source"
     }
   },
+  "flame-graph": {
+    "callees": "Callees",
+    "callers": "Callers"
+  },
+  "flame-graph-header": {
+    "align-left-description": "Align text left",
+    "align-right-description": "Align text right",
+    "change-color-button": "Change color scheme",
+    "clear-button": "Clear",
+    "color-blind-name-label": "Color blind (blue to red)",
+    "default-name-label": "Default (green to red)",
+    "flame-graph-view-description": "Only show flame graph",
+    "flame-graph-view-label": "Flame Graph",
+    "package-name-label": "By package name",
+    "reset-button": "Reset focus and sandwich state",
+    "top-table-view-description": "Only show top table",
+    "top-table-view-label": "Top Table",
+    "value-name-label": "By value",
+    "width-view-label": "Both",
+    "width-view-option-description": "Show both the top table and flame graph"
+  },
+  "flame-graph-metadata": {
+    "percent-value": "{percentValue}% of total",
+    "remove-focus-tooltip": "Remove focus",
+    "remove-sandwich-tooltip": "Remove sandwich view"
+  },
+  "flame-graph-tooltip": {
+    "sample": "Samples: <1>{tooltipData.samples}</1>",
+    "self-percentage": "Self: <1>{tooltipData.unitSelf}</1> ({tooltipData.percentSelf}%)",
+    "total-percentage": "Total: <1>{tooltipData.unitValue}</1> ({tooltipData.percentValue}%)"
+  },
+  "flame-graph-top-table": {
+    "clear-button": "Clear from search",
+    "remove-button": "Remove from sandwich view",
+    "search-button": "Search for symbol",
+    "show-button": "Show in sandwich view"
+  },
   "folder-picker": {
     "loading": "Loading folders..."
   },
