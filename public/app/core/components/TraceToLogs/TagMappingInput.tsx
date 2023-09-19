@@ -28,9 +28,7 @@ export const TagMappingInput = ({ values, onChange, id }: Props) => {
               onChange={(e) => {
                 const vals = cloneDeep(values);
                 if (vals[idx]) {
-                  const val = { ...vals[idx] };
-                  val.key = String(e);
-                  vals[idx] = val;
+                  vals[idx].key = String(e);
                 }
                 onChange(vals);
               }}
@@ -45,9 +43,7 @@ export const TagMappingInput = ({ values, onChange, id }: Props) => {
               onChange={(e) => {
                 const vals = cloneDeep(values);
                 if (vals[idx]) {
-                  const val = { ...vals[idx] };
-                  val.value = String(e);
-                  vals[idx] = val;
+                  vals[idx].value = String(e);
                 }
                 onChange(vals);
               }}
