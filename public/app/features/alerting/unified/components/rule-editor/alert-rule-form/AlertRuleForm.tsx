@@ -17,30 +17,29 @@ import { useDispatch } from 'app/types';
 import { RuleWithLocation } from 'app/types/unified-alerting';
 import { RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
-import { LogMessages, trackNewAlerRuleFormError } from '../../Analytics';
-import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
-import { deleteRuleAction, saveRuleFormAction } from '../../state/actions';
-import { RuleFormType, RuleFormValues } from '../../types/rule-form';
-import { initialAsyncRequestState } from '../../utils/redux';
+import { LogMessages, trackNewAlerRuleFormError } from '../../../Analytics';
+import { useUnifiedAlertingSelector } from '../../../hooks/useUnifiedAlertingSelector';
+import { deleteRuleAction, saveRuleFormAction } from '../../../state/actions';
+import { RuleFormType, RuleFormValues } from '../../../types/rule-form';
+import { initialAsyncRequestState } from '../../../utils/redux';
 import {
   getDefaultFormValues,
   getDefaultQueries,
   MINUTE,
   normalizeDefaultAnnotations,
   rulerRuleToFormValues,
-} from '../../utils/rule-form';
-import * as ruleId from '../../utils/rule-id';
-import { GrafanaRuleExporter } from '../export/GrafanaRuleExporter';
-
-import { AlertRuleNameInput } from './AlertRuleNameInput';
-import AnnotationsStep from './AnnotationsStep';
-import { CloudEvaluationBehavior } from './CloudEvaluationBehavior';
-import { GrafanaEvaluationBehavior } from './GrafanaEvaluationBehavior';
-import { NotificationsStep } from './NotificationsStep';
-import { RecordingRulesNameSpaceAndGroupStep } from './RecordingRulesNameSpaceAndGroupStep';
-import { RuleInspector } from './RuleInspector';
-import { QueryAndExpressionsStep } from './query-and-alert-condition/QueryAndExpressionsStep';
-import { translateRouteParamToRuleType } from './util';
+} from '../../../utils/rule-form';
+import * as ruleId from '../../../utils/rule-id';
+import { GrafanaRuleExporter } from '../../export/GrafanaRuleExporter';
+import { AlertRuleNameInput } from '../AlertRuleNameInput';
+import AnnotationsStep from '../AnnotationsStep';
+import { CloudEvaluationBehavior } from '../CloudEvaluationBehavior';
+import { GrafanaEvaluationBehavior } from '../GrafanaEvaluationBehavior';
+import { NotificationsStep } from '../NotificationsStep';
+import { RecordingRulesNameSpaceAndGroupStep } from '../RecordingRulesNameSpaceAndGroupStep';
+import { RuleInspector } from '../RuleInspector';
+import { QueryAndExpressionsStep } from '../query-and-alert-condition/QueryAndExpressionsStep';
+import { translateRouteParamToRuleType } from '../util';
 
 type Props = {
   existing?: RuleWithLocation;

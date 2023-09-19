@@ -149,10 +149,12 @@ export const RuleActionsButtons = ({ rule, rulesSource }: Props) => {
       if (config.featureToggles.alertingModifiedExport) {
         moreActions.push(
           <Menu.Item
-            label="Modified export"
+            label="Modify export"
             icon="edit"
             onClick={() =>
-              locationService.push(`/alerting/${encodeURIComponent(ruleId.stringifyIdentifier(identifier))}/design`)
+              locationService.push(
+                `/alerting/${encodeURIComponent(ruleId.stringifyIdentifier(identifier))}/modify-export`
+              )
             }
           />
         );

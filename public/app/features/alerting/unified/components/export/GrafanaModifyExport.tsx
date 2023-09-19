@@ -5,20 +5,19 @@ import { useAsync } from 'react-use';
 
 import { Alert, LoadingPlaceholder } from '@grafana/ui';
 
-import { GrafanaRouteComponentProps } from '../../../core/navigation/types';
-import { useDispatch } from '../../../types';
-import { RuleIdentifier, RuleWithLocation } from '../../../types/unified-alerting';
-import { RulerRuleDTO } from '../../../types/unified-alerting-dto';
+import { GrafanaRouteComponentProps } from '../../../../../core/navigation/types';
+import { useDispatch } from '../../../../../types';
+import { RuleIdentifier, RuleWithLocation } from '../../../../../types/unified-alerting';
+import { RulerRuleDTO } from '../../../../../types/unified-alerting-dto';
+import { fetchEditableRuleAction } from '../../state/actions';
+import { RuleFormValues } from '../../types/rule-form';
+import { rulerRuleToFormValues } from '../../utils/rule-form';
+import * as ruleId from '../../utils/rule-id';
+import { isGrafanaRulerRule } from '../../utils/rules';
+import { AlertingPageWrapper } from '../AlertingPageWrapper';
+import { ModifyExportRuleForm } from '../rule-editor/alert-rule-form/ModifyExportRuleForm';
 
-import { AlertingPageWrapper } from './components/AlertingPageWrapper';
-import { ModifyExportRuleForm } from './components/rule-editor/ModifyExportRuleForm';
-import { fetchEditableRuleAction } from './state/actions';
-import { RuleFormValues } from './types/rule-form';
-import { rulerRuleToFormValues } from './utils/rule-form';
-import * as ruleId from './utils/rule-id';
-import { isGrafanaRulerRule } from './utils/rules';
-
-interface RuleDesignerProps extends GrafanaRouteComponentProps<{ id?: string }> {}
+interface GrafanaModifyExportProps extends GrafanaRouteComponentProps<{ id?: string }> {}
 
 // TODO Duplicated in AlertRuleForm
 const ignoreHiddenQueries = (ruleDefinition: RuleFormValues): RuleFormValues => {
@@ -32,7 +31,7 @@ function formValuesFromExistingRule(rule: RuleWithLocation<RulerRuleDTO>) {
   return ignoreHiddenQueries(rulerRuleToFormValues(rule));
 }
 
-export default function RuleDesigner({ match }: RuleDesignerProps) {
+export default function GrafanaModifyExport({ match }: GrafanaModifyExportProps) {
   const dispatch = useDispatch();
 
   const [ruleIdentifier, setRuleIdentifier] = useState<RuleIdentifier | undefined>(undefined);
@@ -63,14 +62,14 @@ export default function RuleDesigner({ match }: RuleDesignerProps) {
 
   if (error) {
     return (
-      <Alert title="Cannot load rule designer" severity="error">
+      <Alert title="Cannot load modify export" severity="error">
         {error.message}
       </Alert>
     );
   }
 
   return (
-    <AlertingPageWrapper isLoading={loading} pageId="alert-list" pageNav={{ text: 'Rule Designer' }}>
+    <AlertingPageWrapper isLoading={loading} pageId="alert-list" pageNav={{ text: 'Modify export' }}>
       {alertRule && isGrafanaRulerRule(alertRule.rule) && (
         <ModifyExportRuleForm ruleForm={alertRule ? formValuesFromExistingRule(alertRule) : undefined} />
       )}
