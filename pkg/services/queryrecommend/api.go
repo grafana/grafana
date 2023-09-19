@@ -28,9 +28,20 @@ func (s *QueryRecommendService) registerAPIEndpoints() {
 // 200: getQueryRecommendResponse
 // 401: unauthorisedError
 // 500: internalServerError
-func (s *QueryRecommendService) recommendHandler(c *contextmodel.ReqContext) response.Response {
 
-	result, err := s.GetQueryRecommendation(c.Req.Context(), c.Query("datasourceUid"), c.Query("metrics"))
+func isSupportedDataSource(c *contextmodel.ReqContext) bool {
+	_, ok := SupportedDataSources[c.Query("datasourceType")]
+	return ok
+}
+
+func (s *QueryRecommendService) recommendHandler(c *contextmodel.ReqContext) response.Response {
+	if !isSupportedDataSource(c) {
+		return response.Error(http.StatusBadRequest, "Unsupported datasource type", nil)
+	}
+
+	result, err := s.GetQueryRecommendation(
+		c.Req.Context(), c.Query("datasourceUid"), c.Query("metrics"), c.QueryInt64WithDefault("numSuggestions", int64(5)),
+	)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to get query recommendation", err)
 	}
@@ -39,6 +50,9 @@ func (s *QueryRecommendService) recommendHandler(c *contextmodel.ReqContext) res
 }
 
 func (s *QueryRecommendService) generateHandler(c *contextmodel.ReqContext) response.Response {
+	if !isSupportedDataSource(c) {
+		return response.Error(http.StatusBadRequest, "Unsupported datasource type", nil)
+	}
 
 	err := s.ComputeQueryRecommendation(c.Req.Context(), c.Query("datasourceUid"))
 	if err != nil {

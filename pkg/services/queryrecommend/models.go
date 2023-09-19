@@ -4,7 +4,12 @@ import (
 	"errors"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/services/datasources"
 )
+
+var SupportedDataSources = map[string]bool{
+	datasources.DS_PROMETHEUS: true,
+}
 
 var (
 	ErrQueryNotFound        = errors.New("query in query history not found")

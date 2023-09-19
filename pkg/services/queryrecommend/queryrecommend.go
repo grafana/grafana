@@ -25,16 +25,8 @@ func ProvideService(cfg *setting.Cfg, sqlStore db.DB, routeRegister routing.Rout
 }
 
 type Service interface {
-	GetQueryRecommendation(ctx context.Context, datasource string, query string) (QueryRecommendResponse, error)
+	GetQueryRecommendation(ctx context.Context, datasource string, metric string, numSuggestions int64) ([]QueryRecommendDTO, error)
 	ComputeQueryRecommendation(ctx context.Context, datasource string) error
-	// CreateQueryInQueryHistory(ctx context.Context, user *user.SignedInUser, cmd CreateQueryInQueryHistoryCommand) (QueryHistoryDTO, error)
-	// SearchInQueryHistory(ctx context.Context, user *user.SignedInUser, query SearchInQueryHistoryQuery) (QueryHistorySearchResult, error)
-	// DeleteQueryFromQueryHistory(ctx context.Context, user *user.SignedInUser, UID string) (int64, error)
-	// PatchQueryCommentInQueryHistory(ctx context.Context, user *user.SignedInUser, UID string, cmd PatchQueryCommentInQueryHistoryCommand) (QueryHistoryDTO, error)
-	// StarQueryInQueryHistory(ctx context.Context, user *user.SignedInUser, UID string) (QueryHistoryDTO, error)
-	// UnstarQueryInQueryHistory(ctx context.Context, user *user.SignedInUser, UID string) (QueryHistoryDTO, error)
-	// DeleteStaleQueriesInQueryHistory(ctx context.Context, olderThan int64) (int, error)
-	// EnforceRowLimitInQueryHistory(ctx context.Context, limit int, starredQueries bool) (int, error)
 }
 
 type QueryRecommendService struct {
@@ -45,8 +37,8 @@ type QueryRecommendService struct {
 	now           func() time.Time
 }
 
-func (s QueryRecommendService) GetQueryRecommendation(ctx context.Context, datasource string, metric string) ([]QueryRecommendDTO, error) {
-	return s.getQueryRecommendation(ctx, datasource, metric)
+func (s QueryRecommendService) GetQueryRecommendation(ctx context.Context, datasource string, metric string, numSuggestions int64) ([]QueryRecommendDTO, error) {
+	return s.getQueryRecommendation(ctx, datasource, metric, numSuggestions)
 }
 
 func (s QueryRecommendService) ComputeQueryRecommendation(ctx context.Context, datasource string) error {
