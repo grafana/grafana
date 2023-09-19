@@ -49,7 +49,7 @@ func corePlugins(rt *thema.Runtime) []pfs.ParsedPlugin {
 		parsePluginOrPanic("public/app/plugins/datasource/postgres", "postgres", rt),
 		parsePluginOrPanic("public/app/plugins/datasource/prometheus", "prometheus", rt),
 		parsePluginOrPanic("public/app/plugins/datasource/tempo", "tempo", rt),
-		parsePluginOrPanic("public/app/plugins/datasource/testdata", "testdata", rt),
+		parsePluginOrPanic("public/app/plugins/datasource/grafana-testdata-datasource", "testdata", rt),
 		parsePluginOrPanic("public/app/plugins/datasource/zipkin", "zipkin", rt),
 		parsePluginOrPanic("public/app/plugins/panel/alertGroups", "alertGroups", rt),
 		parsePluginOrPanic("public/app/plugins/panel/alertlist", "alertlist", rt),

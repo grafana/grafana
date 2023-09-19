@@ -520,7 +520,7 @@ cypress.config.js @grafana/grafana-frontend-platform
 /public/app/plugins/datasource/cloudwatch/ @grafana/aws-datasources
 /public/app/plugins/datasource/elasticsearch/ @grafana/observability-logs
 /public/app/plugins/datasource/grafana/ @grafana/grafana-frontend-platform
-/public/app/plugins/datasource/testdata/ @grafana/plugins-platform-frontend
+/public/app/plugins/datasource/grafana-testdata-datasource/ @grafana/plugins-platform-frontend
 /public/app/plugins/datasource/azuremonitor/ @grafana/partner-datasources
 /public/app/plugins/datasource/graphite/ @grafana/observability-metrics
 /public/app/plugins/datasource/influxdb/ @grafana/observability-metrics
