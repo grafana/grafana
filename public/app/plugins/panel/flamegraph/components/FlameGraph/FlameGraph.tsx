@@ -31,6 +31,8 @@ import FlameGraphTooltip from './FlameGraphTooltip';
 import { FlameGraphDataContainer, LevelItem } from './dataTransform';
 import { getBarX, useFlameRender } from './rendering';
 
+import { Trans } from 'app/core/internationalization';
+
 type Props = {
   data: FlameGraphDataContainer;
   rangeMin: number;
@@ -196,12 +198,12 @@ const FlameGraph = ({
               className={styles.sandwichMarker}
               style={{ height: (callersCount * PIXELS_PER_LEVEL) / window.devicePixelRatio }}
             >
-              Callers
+              <Trans i18nKey="flame-graph.callers">Callers</Trans>
               <Icon className={styles.sandwichMarkerIcon} name={'arrow-down'} />
             </div>
             <div className={styles.sandwichMarker} style={{ marginTop: PIXELS_PER_LEVEL / window.devicePixelRatio }}>
               <Icon className={styles.sandwichMarkerIcon} name={'arrow-up'} />
-              Callees
+              <Trans i18nKey="flame-graph.callees">Callees</Trans>
             </div>
           </div>
         )}

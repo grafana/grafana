@@ -7,6 +7,7 @@ import { Icon, IconButton, useStyles2 } from '@grafana/ui';
 import { ClickedItemData } from '../types';
 
 import { FlameGraphDataContainer } from './dataTransform';
+import { t, Trans } from 'app/core/internationalization';
 
 type Props = {
   data: FlameGraphDataContainer;
@@ -54,7 +55,7 @@ const FlameGraphMetadata = React.memo(
               name={'times'}
               size={'sm'}
               onClick={onSandwichPillClick}
-              tooltip={'Remove sandwich view'}
+              tooltip={t('flame-graph-metadata.remove-sandwich-tooltip','Remove sandwich view')}
               aria-label={'Remove sandwich view'}
             />
           </div>
@@ -68,13 +69,13 @@ const FlameGraphMetadata = React.memo(
         <span key={'focus'}>
           <Icon size={'sm'} name={'angle-right'} />
           <div className={styles.metadataPill}>
-            <Icon size={'sm'} name={'eye'} /> {percentValue}% of total
+            <Icon size={'sm'} name={'eye'} /> <Trans i18nKey='flame-graph-metadata.percent-value'>{percentValue}% of total</Trans>
             <IconButton
               className={styles.pillCloseButton}
               name={'times'}
               size={'sm'}
               onClick={onFocusPillClick}
-              tooltip={'Remove focus'}
+              tooltip={t('flame-graph-metadata.remove-focus-tooltip','Remove focus')}
               aria-label={'Remove focus'}
             />
           </div>

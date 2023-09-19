@@ -12,6 +12,8 @@ import { MIN_WIDTH_TO_SHOW_BOTH_TOPTABLE_AND_FLAMEGRAPH } from '../constants';
 import { byPackageGradient, byValueGradient, diffColorBlindGradient, diffDefaultGradient } from './FlameGraph/colors';
 import { ColorScheme, ColorSchemeDiff, SelectedView, TextAlign } from './types';
 
+import { t, Trans } from 'app/core/internationalization';
+
 type Props = {
   app: CoreApp;
   search: string;
@@ -66,7 +68,7 @@ const FlameGraphHeader = ({
           setLocalSearch('');
         }}
       >
-        Clear
+        <Trans i18nKey="flame-graph-header.clear-button">Clear</Trans>
       </Button>
     ) : null;
 
@@ -91,7 +93,7 @@ const FlameGraphHeader = ({
             fill={'outline'}
             size={'sm'}
             icon={'history-alt'}
-            tooltip={'Reset focus and sandwich state'}
+            tooltip={t('flame-graph-header.reset-button', 'Reset focus and sandwich state')}
             onClick={() => {
               onReset();
             }}
@@ -136,16 +138,16 @@ function ColorSchemeButton(props: ColorSchemeButtonProps) {
 
   let menu = (
     <Menu>
-      <Menu.Item label="By value" onClick={() => props.onChange(ColorScheme.ValueBased)} />
-      <Menu.Item label="By package name" onClick={() => props.onChange(ColorScheme.PackageBased)} />
+      <Menu.Item label={t('flame-graph-header.value-name-label','By value')} onClick={() => props.onChange(ColorScheme.ValueBased)} />
+      <Menu.Item label={t('flame-graph-header.package-name-label','By package name')} onClick={() => props.onChange(ColorScheme.PackageBased)} />
     </Menu>
   );
 
   if (props.isDiffMode) {
     menu = (
       <Menu>
-        <Menu.Item label="Default (green to red)" onClick={() => props.onChange(ColorSchemeDiff.Default)} />
-        <Menu.Item label="Color blind (blue to red)" onClick={() => props.onChange(ColorSchemeDiff.DiffColorBlind)} />
+        <Menu.Item label={t('flame-graph-header.default-name-label','Default (green to red)')} onClick={() => props.onChange(ColorSchemeDiff.Default)} />
+        <Menu.Item label={t('flame-graph-header.color-blind-name-label','Color blind (blue to red)')} onClick={() => props.onChange(ColorSchemeDiff.DiffColorBlind)} />
       </Menu>
     );
   }
@@ -165,7 +167,7 @@ function ColorSchemeButton(props: ColorSchemeButtonProps) {
         variant={'secondary'}
         fill={'outline'}
         size={'sm'}
-        tooltip={'Change color scheme'}
+        tooltip={t('flame-graph-header.change-color-button', 'Change color scheme')}
         onClick={() => {}}
         className={styles.buttonSpacing}
         aria-label={'Change color scheme'}
@@ -177,21 +179,21 @@ function ColorSchemeButton(props: ColorSchemeButtonProps) {
 }
 
 const alignOptions: Array<SelectableValue<TextAlign>> = [
-  { value: 'left', description: 'Align text left', icon: 'align-left' },
-  { value: 'right', description: 'Align text right', icon: 'align-right' },
+  { value: 'left', description: t('flame-graph-header.align-left-description','Align text left'), icon: 'align-left' },
+  { value: 'right', description: t('flame-graph-header.align-right-description','Align text right'), icon: 'align-right' },
 ];
 
 function getViewOptions(width: number): Array<SelectableValue<SelectedView>> {
   let viewOptions: Array<{ value: SelectedView; label: string; description: string }> = [
-    { value: SelectedView.TopTable, label: 'Top Table', description: 'Only show top table' },
-    { value: SelectedView.FlameGraph, label: 'Flame Graph', description: 'Only show flame graph' },
+    { value: SelectedView.TopTable, label: t('flame-graph-header.top-table-view-label','Top Table'), description: t('flame-graph-header.top-table-view-description','Only show top table')},
+    { value: SelectedView.FlameGraph, label: t('flame-graph-header.flame-graph-view-label','Flame Graph'), description: t('flame-graph-header.flame-graph-view-description','Only show flame graph')},
   ];
 
   if (width >= MIN_WIDTH_TO_SHOW_BOTH_TOPTABLE_AND_FLAMEGRAPH) {
     viewOptions.push({
       value: SelectedView.Both,
-      label: 'Both',
-      description: 'Show both the top table and flame graph',
+      label: t('flame-graph-header.width-view-label','Both'),
+      description: t('flame-graph-header.width-view-option-description','Show both the top table and flame graph'),
     });
   }
 
