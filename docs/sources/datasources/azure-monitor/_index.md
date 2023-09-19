@@ -40,6 +40,7 @@ The Azure Monitor data source supports visualizing data from three Azure service
 - **Azure Monitor Metrics:** Collect numeric data from resources in your Azure account.
 - **Azure Monitor Logs:** Collect log and performance data from your Azure account, and query using the Kusto Query Language (KQL).
 - **Azure Resource Graph:** Query your Azure resources across subscriptions.
+- **Azure Monitor Application Insights:** Collect trace logging data and other application performance metrics.
 
 ## Configure the data source
 

@@ -22,6 +22,7 @@ Supported data sources are:
 - [Jaeger]({{< relref "../datasources/jaeger/" >}})
 - [Zipkin]({{< relref "../datasources/zipkin/" >}})
 - [X-Ray](https://grafana.com/grafana/plugins/grafana-x-ray-datasource)
+- [Azure Monitor Application Insights]({{< relref "../datasources/azure-monitor/" >}})
 
 For information on how to configure queries for the data sources listed above, refer to the documentation for specific data source.
 
