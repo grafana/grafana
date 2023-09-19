@@ -101,7 +101,7 @@ export default function CorrelationsPage() {
       return (
         !provisioned && (
           <DeleteButton
-            aria-label="delete correlation"
+            aria-label={t('correlations.list.delete', 'delete correlation')}
             onConfirm={() =>
               handleDelete({ sourceUID, uid }, page.current > 1 && index === 0 && data?.correlations.length === 1)
             }
@@ -124,17 +124,17 @@ export default function CorrelationsPage() {
       },
       {
         id: 'source',
-        header: 'Source',
+        header: t('correlations.list.source', 'Source'),
         cell: DataSourceCell,
         sortType: sortDatasource,
       },
       {
         id: 'target',
-        header: 'Target',
+        header: t('correlations.list.target', 'Target'),
         cell: DataSourceCell,
         sortType: sortDatasource,
       },
-      { id: 'label', header: 'Label', sortType: 'alphanumeric' },
+      { id: 'label', header: t('correlations.list.label', 'Label'), sortType: 'alphanumeric' },
       {
         id: 'actions',
         cell: RowActions,
@@ -162,7 +162,8 @@ export default function CorrelationsPage() {
             Define how data living in different data sources relates to each other. Read more in the
           </Trans>{' '}
           <a href="https://grafana.com/docs/grafana/next/administration/correlations/" target="_blank" rel="noreferrer">
-            documentation <Icon name="external-link-alt" />
+            <Trans i18nKey="correlations.link">documentation</Trans>
+            <Icon name="external-link-alt" />
           </a>
         </>
       }
@@ -172,7 +173,7 @@ export default function CorrelationsPage() {
         <div>
           {!data && get.loading && (
             <div className={loaderWrapper}>
-              <LoadingPlaceholder text={t('correlations.loading', 'loading...')} />
+              <LoadingPlaceholder text={t('correlations.list.loading', 'loading...')} />
             </div>
           )}
 
@@ -289,7 +290,7 @@ const InfoCell = memo(
     const readOnly = props.row.original.provisioned;
 
     if (readOnly) {
-      return <Badge text={t('correlations.badge.text', 'Read only')} color="purple" className={noWrap} />;
+      return <Badge text={t('correlations.list.read-only', 'Read only')} color="purple" className={noWrap} />;
     } else {
       return null;
     }

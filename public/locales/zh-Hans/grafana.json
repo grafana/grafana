@@ -127,10 +127,15 @@
       "error-message": "",
       "title": ""
     },
-    "badge": {
-      "text": ""
+    "link": "",
+    "list": {
+      "delete": "",
+      "label": "",
+      "loading": "",
+      "read-only": "",
+      "source": "",
+      "target": ""
     },
-    "loading": "",
     "page-content": "",
     "page-heading": "",
     "sub-title": ""
