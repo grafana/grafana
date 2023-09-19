@@ -1,8 +1,6 @@
 package backendplugin
 
-import (
-	"errors"
-)
+import "errors"
 
 var (
 	// ErrPluginNotRegistered error returned when plugin is not registered.

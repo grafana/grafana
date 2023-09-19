@@ -2112,6 +2112,10 @@ Disable download of the public key for verifying plugin signature. The default i
 
 Force download of the public key for verifying plugin signature on startup. The default is `false`. If disabled, the public key will be retrieved every 10 days. Requires `public_key_retrieval_disabled` to be false to have any effect.
 
+### disable_plugins
+
+Enter a comma-separated list of plugin identifiers to avoid loading (including core plugins). These plugins will be hidden in the catalog.
+
 <hr>
 
 ## [live]
