@@ -216,7 +216,7 @@ func (rs *RenderingService) RenderErrorImage(theme models.Theme, err error) (*Re
 		theme = models.ThemeDark
 	}
 	imgUrl := "public/img/rendering_%s_%s.png"
-	if errors.Is(err, ErrTimeout) {
+	if errors.Is(err, ErrTimeout) || errors.Is(err, ErrServerTimeout) {
 		imgUrl = fmt.Sprintf(imgUrl, "timeout", theme)
 	} else {
 		imgUrl = fmt.Sprintf(imgUrl, "error", theme)

@@ -204,6 +204,51 @@ describe('applyFieldOverrides', () => {
     });
   });
 
+  describe('given nested data frames', () => {
+    const f0Nested = createDataFrame({
+      name: 'nested',
+      fields: [{ name: 'info', type: FieldType.string, values: [10, 20] }],
+    });
+    const f0 = createDataFrame({
+      name: 'A',
+      fields: [
+        {
+          name: 'message',
+          type: FieldType.string,
+          values: [10, 20],
+        },
+        {
+          name: 'nested',
+          type: FieldType.nestedFrames,
+          values: [[f0Nested]],
+        },
+      ],
+    });
+
+    it('should add scopedVars to fields', () => {
+      const withOverrides = applyFieldOverrides({
+        data: [f0],
+        fieldConfig: {
+          defaults: {},
+          overrides: [],
+        },
+        replaceVariables: (value) => value,
+        theme: createTheme(),
+        fieldConfigRegistry: new FieldConfigOptionsRegistry(),
+      });
+
+      expect(withOverrides[0].fields[1].values[0][0].fields[0].state!.scopedVars?.__dataContext?.value.frame).toBe(
+        withOverrides[0].fields[1].values[0][0]
+      );
+      expect(withOverrides[0].fields[1].values[0][0].fields[0].state!.scopedVars?.__dataContext?.value.frameIndex).toBe(
+        0
+      );
+      expect(withOverrides[0].fields[1].values[0][0].fields[0].state!.scopedVars?.__dataContext?.value.field).toBe(
+        withOverrides[0].fields[1].values[0][0].fields[0]
+      );
+    });
+  });
+
   it('will merge FieldConfig with default values', () => {
     const field: FieldConfig = {
       min: 0,
@@ -802,8 +847,8 @@ describe('getLinksSupplier', () => {
 
     const links = supplier({ valueRowIndex: 0 });
     const rangeStr = JSON.stringify({
-      from: range.from.toISOString(),
-      to: range.to.toISOString(),
+      from: range.from.valueOf().toString(),
+      to: range.to.valueOf().toString(),
     });
     const encodeURIParams = `{"range":${rangeStr},"datasource":"${datasourceUid}","queries":["12345"]}`;
     expect(links.length).toBe(1);

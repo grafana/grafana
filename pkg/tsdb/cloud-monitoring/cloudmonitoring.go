@@ -60,6 +60,7 @@ const (
 	timeSeriesListQueryType   = dataquery.QueryTypeTimeSeriesList
 	timeSeriesQueryQueryType  = dataquery.QueryTypeTimeSeriesQuery
 	sloQueryType              = dataquery.QueryTypeSlo
+	promQLQueryType           = dataquery.QueryTypePromQL
 	crossSeriesReducerDefault = "REDUCE_NONE"
 	perSeriesAlignerDefault   = "ALIGN_MEAN"
 )
@@ -207,10 +208,10 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 	}
 }
 
-func migrateMetricTypeFilter(metricTypeFilter string, prevFilters interface{}) []string {
+func migrateMetricTypeFilter(metricTypeFilter string, prevFilters any) []string {
 	metricTypeFilterArray := []string{"metric.type", "=", metricTypeFilter}
 	if prevFilters != nil {
-		filtersIface := prevFilters.([]interface{})
+		filtersIface := prevFilters.([]any)
 		filters := []string{}
 		for _, f := range filtersIface {
 			filters = append(filters, f.(string))
@@ -227,7 +228,7 @@ func strPtr(s string) *string {
 
 func migrateRequest(req *backend.QueryDataRequest) error {
 	for i, q := range req.Queries {
-		var rawQuery map[string]interface{}
+		var rawQuery map[string]any
 		err := json.Unmarshal(q.JSON, &rawQuery)
 		if err != nil {
 			return err
@@ -272,7 +273,7 @@ func migrateRequest(req *backend.QueryDataRequest) error {
 
 		// Metric query was divided between timeSeriesList and timeSeriesQuery API calls
 		if rawQuery["metricQuery"] != nil && q.QueryType == "metrics" {
-			metricQuery := rawQuery["metricQuery"].(map[string]interface{})
+			metricQuery := rawQuery["metricQuery"].(map[string]any)
 
 			if metricQuery["editorMode"] != nil && toString(metricQuery["editorMode"]) == "mql" {
 				rawQuery["timeSeriesQuery"] = &dataquery.TimeSeriesQuery{
@@ -310,7 +311,7 @@ func migrateRequest(req *backend.QueryDataRequest) error {
 		}
 
 		if rawQuery["sloQuery"] != nil && q.QueryType == string(dataquery.QueryTypeSlo) {
-			sloQuery := rawQuery["sloQuery"].(map[string]interface{})
+			sloQuery := rawQuery["sloQuery"].(map[string]any)
 			// AliasBy is now a top level property
 			if sloQuery["aliasBy"] != nil {
 				rawQuery["aliasBy"] = sloQuery["aliasBy"]
@@ -432,6 +433,15 @@ func (s *Service) buildQueryExecutors(logger log.Logger, req *backend.QueryDataR
 			}
 			cmslo.setParams(startTime, endTime, durationSeconds, query.Interval.Milliseconds())
 			queryInterface = cmslo
+		case string(dataquery.QueryTypePromQL):
+			cmp := &cloudMonitoringProm{
+				refID:      query.RefID,
+				logger:     logger,
+				aliasBy:    q.AliasBy,
+				parameters: q.PromQLQuery,
+				timeRange:  req.Queries[0].TimeRange,
+			}
+			queryInterface = cmp
 		default:
 			return nil, fmt.Errorf("unrecognized query type %q", query.QueryType)
 		}

@@ -36,12 +36,14 @@ composableKinds: DataQuery: {
 					timeSeriesQuery?: #TimeSeriesQuery
 					// SLO sub-query properties.
 					sloQuery?: #SLOQuery
+					// PromQL sub-query properties.
+					promQLQuery?: #PromQLQuery
 					// Time interval in milliseconds.
 					intervalMs?: number
 				} @cuetsy(kind="interface")
 
 				// Defines the supported queryTypes.
-				#QueryType: "timeSeriesList" | "timeSeriesQuery" | "slo" | "annotation" @cuetsy(kind="enum", memberNames="TIME_SERIES_LIST|TIME_SERIES_QUERY|SLO|ANNOTATION")
+				#QueryType: "timeSeriesList" | "timeSeriesQuery" | "slo" | "annotation" | "promQL" @cuetsy(kind="enum", memberNames="TIME_SERIES_LIST|TIME_SERIES_QUERY|SLO|ANNOTATION|PROMQL")
 
 				// Time Series List sub-query properties.
 				#TimeSeriesList: {
@@ -114,6 +116,16 @@ composableKinds: DataQuery: {
 					goal?: number
 					// Specific lookback period for the SLO.
 					lookbackPeriod?: string
+				} @cuetsy(kind="interface")
+
+				// PromQL sub-query properties.
+				#PromQLQuery: {
+					// GCP project to execute the query against.
+					projectName: string
+					// PromQL expression/query to be executed.
+					expr: string
+					// PromQL min step
+					step: string
 				} @cuetsy(kind="interface")
 
 				// @deprecated This type is for migration purposes only. Replaced by TimeSeriesList Metric sub-query properties.

@@ -7,7 +7,18 @@ import * as schema from '@grafana/schema';
 
 import { TableStyles } from './styles';
 
-export { type FieldTextAlignment, TableCellBackgroundDisplayMode, TableCellDisplayMode } from '@grafana/schema';
+export {
+  type FieldTextAlignment,
+  TableCellBackgroundDisplayMode,
+  TableCellDisplayMode,
+  type TableAutoCellOptions,
+  type TableSparklineCellOptions,
+  type TableBarGaugeCellOptions,
+  type TableColoredBackgroundCellOptions,
+  type TableColorTextCellOptions,
+  type TableImageCellOptions,
+  type TableJsonViewCellOptions,
+} from '@grafana/schema';
 
 export interface TableRow {
   [x: string]: any;
@@ -81,8 +92,6 @@ export interface Props {
   footerValues?: FooterItem[];
   enablePagination?: boolean;
   cellHeight?: schema.TableCellHeight;
-  /** @alpha */
-  subData?: DataFrame[];
   /** @alpha Used by SparklineCell when provided */
   timeRange?: TimeRange;
 }

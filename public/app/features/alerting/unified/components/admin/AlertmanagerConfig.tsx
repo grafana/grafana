@@ -68,7 +68,6 @@ export default function AlertmanagerConfig(): JSX.Element {
           oldConfig: config,
           alertManagerSourceName: selectedAlertmanager,
           successMessage: 'Alertmanager configuration updated.',
-          refetch: true,
         })
       );
     }

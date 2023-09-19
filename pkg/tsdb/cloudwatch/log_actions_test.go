@@ -283,7 +283,7 @@ func TestQuery_StartQuery(t *testing.T) {
 		)
 		expFrame.RefID = refID
 		expFrame.Meta = &data.FrameMeta{
-			Custom: map[string]interface{}{
+			Custom: map[string]any{
 				"Region": "default",
 			},
 		}
@@ -605,7 +605,7 @@ func TestQuery_GetQueryResults(t *testing.T) {
 	expFrame := data.NewFrame(refID, expField1, expField2)
 	expFrame.RefID = refID
 	expFrame.Meta = &data.FrameMeta{
-		Custom: map[string]interface{}{
+		Custom: map[string]any{
 			"Status": "Complete",
 		},
 		Stats: []data.QueryStat{
@@ -643,13 +643,13 @@ func TestGroupResponseFrame(t *testing.T) {
 		groupedFrame, err := groupResponseFrame(frame, []string{"something"})
 		require.NoError(t, err)
 		require.Equal(t, 3, groupedFrame[0].Rows())
-		require.Equal(t, []interface{}{"val1", "val2", "val3"}, asArray(groupedFrame[0].Fields[0]))
-		require.Equal(t, []interface{}{int32(10), int32(20), int32(30)}, asArray(groupedFrame[0].Fields[1]))
+		require.Equal(t, []any{"val1", "val2", "val3"}, asArray(groupedFrame[0].Fields[0]))
+		require.Equal(t, []any{int32(10), int32(20), int32(30)}, asArray(groupedFrame[0].Fields[1]))
 	})
 }
 
-func asArray(field *data.Field) []interface{} {
-	var vals []interface{}
+func asArray(field *data.Field) []any {
+	var vals []any
 	for i := 0; i < field.Len(); i++ {
 		vals = append(vals, field.At(i))
 	}

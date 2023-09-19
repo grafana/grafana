@@ -254,3 +254,24 @@ func (s *mockedCallResourceResponseSenderForOauth) Send(resp *backend.CallResour
 	s.Response = resp
 	return nil
 }
+
+type fakeAWSError struct {
+	code    string
+	message string
+}
+
+func (e fakeAWSError) OrigErr() error {
+	return nil
+}
+
+func (e fakeAWSError) Error() string {
+	return e.message
+}
+
+func (e fakeAWSError) Code() string {
+	return e.code
+}
+
+func (e fakeAWSError) Message() string {
+	return e.message
+}

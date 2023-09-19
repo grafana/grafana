@@ -64,7 +64,7 @@ export class CentrifugeLiveChannel<T = any> {
       try {
         if (ctx.data) {
           if (ctx.data.schema) {
-            this.lastMessageWithSchema = ctx.data as DataFrameJSON;
+            this.lastMessageWithSchema = ctx.data;
           }
 
           this.stream.next({
@@ -97,7 +97,7 @@ export class CentrifugeLiveChannel<T = any> {
         delete this.currentStatus.error;
 
         if (ctx.data?.schema) {
-          this.lastMessageWithSchema = ctx.data as DataFrameJSON;
+          this.lastMessageWithSchema = ctx.data;
         }
         this.sendStatus(ctx.data);
       })
@@ -119,7 +119,7 @@ export class CentrifugeLiveChannel<T = any> {
       });
   }
 
-  private sendStatus(message?: any) {
+  private sendStatus(message?: unknown) {
     const copy = { ...this.currentStatus };
     if (message) {
       copy.message = message;
@@ -138,7 +138,7 @@ export class CentrifugeLiveChannel<T = any> {
    * Get the stream of events and
    */
   getStream() {
-    return new Observable((subscriber) => {
+    return new Observable<LiveChannelEvent<T>>((subscriber) => {
       const initialMessage = { ...this.currentStatus };
       if (this.lastMessageWithSchema?.schema) {
         // send just schema instead of schema+data to avoid having data gaps
@@ -157,7 +157,7 @@ export class CentrifugeLiveChannel<T = any> {
           setTimeout(this.disconnectIfNoListeners, 250);
         }
       };
-    }) as Observable<LiveChannelEvent<T>>;
+    });
   }
 
   /**

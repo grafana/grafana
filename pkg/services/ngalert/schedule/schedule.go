@@ -351,6 +351,8 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 	evalTotal := sch.metrics.EvalTotal.WithLabelValues(orgID)
 	evalDuration := sch.metrics.EvalDuration.WithLabelValues(orgID)
 	evalTotalFailures := sch.metrics.EvalFailures.WithLabelValues(orgID)
+	processDuration := sch.metrics.ProcessDuration.WithLabelValues(orgID)
+	sendDuration := sch.metrics.SendDuration.WithLabelValues(orgID)
 
 	notify := func(states []state.StateTransition) {
 		expiredAlerts := state.FromAlertsStateToStoppedAlert(states, sch.appURL, sch.clock)
@@ -423,6 +425,7 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 			logger.Debug("Skip updating the state because the context has been cancelled")
 			return
 		}
+		start = sch.clock.Now()
 		processedStates := sch.stateManager.ProcessEvalResults(
 			ctx,
 			e.scheduledAt,
@@ -430,6 +433,9 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 			results,
 			state.GetRuleExtraLabels(e.rule, e.folderTitle, !sch.disableGrafanaFolder),
 		)
+		processDuration.Observe(sch.clock.Now().Sub(start).Seconds())
+
+		start = sch.clock.Now()
 		alerts := state.FromStateTransitionToPostableAlerts(processedStates, sch.stateManager, sch.appURL)
 		span.AddEvents(
 			[]string{"message", "state_transitions", "alerts_to_send"},
@@ -441,6 +447,7 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 		if len(alerts.PostableAlerts) > 0 {
 			sch.alertsSender.Send(key, alerts)
 		}
+		sendDuration.Observe(sch.clock.Now().Sub(start).Seconds())
 	}
 
 	retryIfError := func(f func(attempt int64) error) error {

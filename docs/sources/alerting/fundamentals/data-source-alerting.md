@@ -6,11 +6,11 @@ labels:
     - cloud
     - enterprise
     - oss
-title: Data sources
+title: Data sources and Grafana Alerting
 weight: 100
 ---
 
-# Data sources
+# Data sources and Grafana Alerting
 
 There are a number of data sources that are compatible with Grafana Alerting. Each data source is supported by a plugin. You can use one of the built-in data sources listed below, use [external data source plugins](/grafana/plugins/?type=datasource), or create your own data source plugin.
 
@@ -20,75 +20,76 @@ Specifying `{ "alerting": true, “backend”: true }` in the plugin.json file i
 
 These are the data sources that are compatible with and supported by Grafana Alerting.
 
-- [AWS CloudWatch][aws-cloudwatch]
-- [Azure Monitor][azure-monitor]
-- [Elasticsearch][elasticsearch]
-- [Google Cloud Monitoring][google-cloud-monitoring]
-- [Graphite][graphite]
-- [InfluxDB][influxdb]
-- [Loki][loki]
-- [Microsoft SQL Server MSSQL][mssql]
-- [MySQL][mysql]
-- [Open TSDB][opentsdb]
-- [PostgreSQL][postgres]
-- [Prometheus][prometheus]
-- [Jaeger][jaeger]
-- [Zipkin][zipkin]
-- [Tempo][tempo]
-- [Testdata][testdata]
+- [AWS CloudWatch][]
+- [Azure Monitor][]
+- [Elasticsearch][]
+- [Google Cloud Monitoring][]
+- [Graphite][]
+- [InfluxDB][]
+- [Loki][]
+- [Microsoft SQL Server (MSSQL)][]
+- [MySQL][]
+- [Open TSDB][]
+- [PostgreSQL][]
+- [Prometheus][]
+- [Jaeger][]
+- [Zipkin][]
+- [Tempo][]
+- [Testdata][]
 
 ## Useful links
 
-- [Grafana data sources][datasources]
+- [Grafana data sources][]
 
 {{% docs/reference %}}
-[datasources]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/datasources"
+[Grafana data sources]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/datasources"
+[Grafana data sources]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/datasources"
 
-[aws-cloudwatch]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/datasources/aws-cloudwatch"
-[aws-cloudwatch]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/datasources/aws-cloudwatch"
+[AWS CloudWatch]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/datasources/aws-cloudwatch"
+[AWS CloudWatch]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/datasources/aws-cloudwatch"
 
-[azure-monitor]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/datasources/azure-monitor"
-[azure-monitor]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/datasources/azure-monitor"
+[Azure Monitor]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/datasources/azure-monitor"
+[Azure Monitor]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/datasources/azure-monitor"
 
-[elasticsearch]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/datasources/elasticsearch"
-[elasticsearch]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/datasources/elasticsearch"
+[Elasticsearch]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/datasources/elasticsearch"
+[Elasticsearch]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/datasources/elasticsearch"
 
-[google-cloud-monitoring]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/datasources/google-cloud-monitoring"
-[google-cloud-monitoring]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/datasources/google-cloud-monitoring"
+[Google Cloud Monitoring]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/datasources/google-cloud-monitoring"
+[Google Cloud Monitoring]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/datasources/google-cloud-monitoring"
 
-[graphite]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/datasources/graphite"
-[graphite]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/datasources/graphite"
+[Graphite]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/datasources/graphite"
+[Graphite]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/datasources/graphite"
 
-[influxdb]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/datasources/influxdb"
-[influxdb]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/datasources/influxdb"
+[InfluxDB]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/datasources/influxdb"
+[InfluxDB]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/datasources/influxdb"
 
-[loki]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/datasources/loki"
-[loki]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/datasources/loki"
+[Loki]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/datasources/loki"
+[Loki]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/datasources/loki"
 
-[mssql]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/datasources/mssql"
-[mssql]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/datasources/mssql"
+[Microsoft SQL Server (MSSQL)]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/datasources/mssql"
+[Microsoft SQL Server (MSSQL)]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/datasources/mssql"
 
-[mysql]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/datasources/mysql"
-[mysql]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/datasources/mysql"
+[MySQL]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/datasources/mysql"
+[MySQL]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/datasources/mysql"
 
-[opentsdb]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/datasources/opentsdb"
-[opentsdb]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/datasources/opentsdb"
+[Open TSDB]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/datasources/opentsdb"
+[Open TSDB]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/datasources/opentsdb"
 
-[postgres]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/datasources/postgres"
-[postgres]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/datasources/postgres"
+[PostgreSQL]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/datasources/postgres"
+[PostgreSQL]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/datasources/postgres"
 
-[prometheus]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/datasources/prometheus"
-[prometheus]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/datasources/prometheus"
+[Prometheus]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/datasources/prometheus"
+[Prometheus]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/datasources/prometheus"
 
-[jaeger]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/datasources/jaeger"
-[jaeger]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/datasources/jaeger"
+[Jaeger]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/datasources/jaeger"
+[Jaeger]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/datasources/jaeger"
 
-[zipkin]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/datasources/zipkin"
-[zipkin]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/datasources/zipkin"
+[Zipkin]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/datasources/zipkin"
+[Zipkin]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/datasources/zipkin"
 
-[tempo]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/datasources/tempo"
-[tempo]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/datasources/tempo"
+[Tempo]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/datasources/tempo"
+[Tempo]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/datasources/tempo"
 
-[testdata]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/datasources/testdata"
-[testdata]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/datasources/testdata"
+[Testdata]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/datasources/testdata"
+[Testdata]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/datasources/testdata"
 {{% /docs/reference %}}

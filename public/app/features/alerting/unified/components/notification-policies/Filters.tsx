@@ -5,11 +5,10 @@ import React, { useCallback, useEffect, useRef } from 'react';
 import { SelectableValue } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
 import { Button, Field, Icon, Input, Label as LabelElement, Select, Tooltip, useStyles2 } from '@grafana/ui';
-import { ObjectMatcher, Receiver, Route, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
+import { ObjectMatcher, Receiver, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
 
 import { useURLSearchParams } from '../../hooks/useURLSearchParams';
 import { matcherToObjectMatcher, parseMatchers } from '../../utils/alertmanager';
-import { getInheritedProperties } from '../../utils/notification-policies';
 
 interface NotificationPoliciesFilterProps {
   receivers: Receiver[];
@@ -127,23 +126,6 @@ export function findRoutesMatchingPredicate(routeTree: RouteWithID, predicateFn:
 
   findMatch(routeTree);
   return matches;
-}
-
-/**
- * This function will compute the full tree with inherited properties – this is mostly used for search and filtering
- */
-export function computeInheritedTree<T extends Route>(parent: T): T {
-  return {
-    ...parent,
-    routes: parent.routes?.map((child) => {
-      const inheritedProperties = getInheritedProperties(parent, child);
-
-      return computeInheritedTree({
-        ...child,
-        ...inheritedProperties,
-      });
-    }),
-  };
 }
 
 const toOption = (receiver: Receiver) => ({

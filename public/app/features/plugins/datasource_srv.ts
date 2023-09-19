@@ -261,6 +261,7 @@ export class DatasourceSrv implements DataSourceService {
           const key = `$\{${variable.name}\}`;
           base.push({
             ...dsSettings,
+            isDefault: false,
             name: key,
             uid: key,
           });

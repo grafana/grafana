@@ -33,7 +33,7 @@ func (s *waveformSim) GetState() simulationState {
 	}
 }
 
-func (s *waveformSim) SetConfig(vals map[string]interface{}) error {
+func (s *waveformSim) SetConfig(vals map[string]any) error {
 	return updateConfigObjectFromJSON(s.cfg, vals)
 }
 
@@ -47,7 +47,7 @@ func (s *waveformSim) NewFrame(size int) *data.Frame {
 	return frame
 }
 
-func (s *waveformSim) GetValues(t time.Time) map[string]interface{} {
+func (s *waveformSim) GetValues(t time.Time) map[string]any {
 	x := 0.0
 	if s.cfg.Period > 0 {
 		periodMS := s.cfg.Period * 1000
@@ -63,7 +63,7 @@ func (s *waveformSim) GetValues(t time.Time) map[string]interface{} {
 		v += (gen.Float64() * 2.0 * noise) - noise
 	}
 
-	return map[string]interface{}{
+	return map[string]any{
 		data.TimeSeriesTimeFieldName:  t,
 		data.TimeSeriesValueFieldName: v,
 	}

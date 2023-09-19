@@ -106,7 +106,7 @@ func TestTimeSeriesQuery(t *testing.T) {
 		err = query.parseResponse(res, data, "")
 		require.NoError(t, err)
 		frames := res.Frames
-		custom, ok := frames[0].Meta.Custom.(map[string]interface{})
+		custom, ok := frames[0].Meta.Custom.(map[string]any)
 		require.True(t, ok)
 		labels, ok := custom["labels"].(gdata.Labels)
 		require.True(t, ok)

@@ -28,7 +28,7 @@ export const ShareButton = ({ dashboard }: { dashboard: DashboardModel }) => {
 
   return (
     <DashNavButton
-      tooltip={t('dashboard.toolbar.share', 'Share dashboard or panel')}
+      tooltip={t('dashboard.toolbar.share', 'Share dashboard')}
       icon="share-alt"
       iconSize="lg"
       onClick={() => {

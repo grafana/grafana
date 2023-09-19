@@ -60,7 +60,7 @@ export const TeamList = ({
     }
   }, []);
 
-  const canCreate = canCreateTeam(editorsCanAdmin);
+  const canCreate = contextSrv.hasPermission(AccessControlAction.ActionTeamsCreate);
   const displayRolePicker = shouldDisplayRolePicker();
 
   return (
@@ -136,11 +136,6 @@ export const TeamList = ({
     </Page>
   );
 };
-
-function canCreateTeam(editorsCanAdmin: boolean): boolean {
-  const teamAdmin = contextSrv.hasRole('Admin') || (editorsCanAdmin && contextSrv.hasRole('Editor'));
-  return contextSrv.hasAccess(AccessControlAction.ActionTeamsCreate, teamAdmin);
-}
 
 function shouldDisplayRolePicker(): boolean {
   return (

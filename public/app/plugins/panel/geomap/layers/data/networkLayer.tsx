@@ -21,6 +21,7 @@ import {
   Field,
   PluginState,
 } from '@grafana/data';
+import { TextDimensionMode } from '@grafana/schema';
 import { FrameVectorSource } from 'app/features/geo/utils/frameVectorSource';
 import { getGeometryField, getLocationMatchers } from 'app/features/geo/utils/location';
 import { GraphFrame } from 'app/plugins/panel/nodeGraph/types';
@@ -159,11 +160,11 @@ export const networkLayer: MapLayerRegistryItem<NetworkConfig> = {
           flowStyle.setGeometry(LS);
 
           const fontFamily = theme.typography.fontFamily;
-          if (edgeDims.text) {
+          if (edgeDims.text || edgeStyle.config.text?.mode === TextDimensionMode.Fixed) {
             const labelStyle = new Style({
               zIndex: 10,
               text: new Text({
-                text: edgeDims.text.get(edgeId),
+                text: edgeDims.text?.get(edgeId) ?? edgeStyle.config.text?.fixed,
                 font: `normal ${edgeTextConfig?.fontSize}px ${fontFamily}`,
                 fill: new Fill({ color: color1 ?? defaultStyleConfig.color.fixed }),
                 stroke: new Stroke({
@@ -210,15 +211,15 @@ export const networkLayer: MapLayerRegistryItem<NetworkConfig> = {
           return; // ignore empty
         }
 
-          // Post updates to the legend component
-          if (legend) {
-            legendProps.next({
-              styleConfig: style,
-              size: style.dims?.size,
-              layerName: options.name,
-              layer: vectorLayer,
-            });
-          }
+        // Post updates to the legend component
+        if (legend) {
+          legendProps.next({
+            styleConfig: style,
+            size: style.dims?.size,
+            layerName: options.name,
+            layer: vectorLayer,
+          });
+        }
         const graphFrames = getGraphFrame(data.series);
 
         for (const frame of data.series) {

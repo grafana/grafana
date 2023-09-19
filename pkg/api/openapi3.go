@@ -8,7 +8,7 @@ import (
 )
 
 func openapi3(c *contextmodel.ReqContext) {
-	data := map[string]interface{}{
+	data := map[string]any{
 		"Nonce": c.RequestNonce,
 	}
 

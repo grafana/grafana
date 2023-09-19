@@ -1,6 +1,8 @@
 import { render, screen } from '@testing-library/react';
 import React from 'react';
 
+import { InfluxVersion } from '../../../types';
+
 import ConfigEditor, { Props } from './ConfigEditor';
 
 jest.mock('lodash', () => {
@@ -60,6 +62,30 @@ describe('ConfigEditor', () => {
       },
     });
     expect(screen.getByDisplayValue('configured')).toBeInTheDocument();
+  });
+
+  it('influxQL options should show up if version is not defined', () => {
+    setup({});
+    expect(screen.queryByLabelText('Password')).toBeInTheDocument();
+  });
+
+  it('influxQL options should show up if version is ill-defined', () => {
+    setup({
+      jsonData: {
+        version: 'influx',
+      },
+    });
+    expect(screen.queryByLabelText('Password')).toBeInTheDocument();
+  });
+
+  it('influxQL options should not show up if version is defined as flux', () => {
+    setup({
+      jsonData: {
+        version: InfluxVersion.Flux,
+      },
+    });
+    expect(screen.queryByLabelText('Password')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Token')).toBeInTheDocument();
   });
 
   it('should hide white listed cookies input when browser access chosen', () => {

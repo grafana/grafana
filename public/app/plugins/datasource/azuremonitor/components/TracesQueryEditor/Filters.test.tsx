@@ -201,6 +201,7 @@ describe(`Traces Filters`, () => {
   });
 
   it('should add a trace filter', async () => {
+    jest.spyOn(console, 'warn').mockImplementation();
     let mockQuery = createMockQuery({ azureTraces: { traceTypes: ['customEvents'] } });
     mockQuery.azureTraces = {
       ...mockQuery.azureTraces,

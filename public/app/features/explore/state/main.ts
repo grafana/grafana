@@ -1,8 +1,8 @@
 import { createAction } from '@reduxjs/toolkit';
 import { AnyAction } from 'redux';
 
-import { SplitOpenOptions } from '@grafana/data';
-import { DataSourceSrv, locationService } from '@grafana/runtime';
+import { SplitOpenOptions, TimeRange } from '@grafana/data';
+import { locationService } from '@grafana/runtime';
 import { generateExploreId, GetExploreUrlArguments } from 'app/core/utils/explore';
 import { PanelModel } from 'app/features/dashboard/state';
 import { ExploreItemState, ExploreState } from 'app/types/explore';
@@ -10,7 +10,6 @@ import { ExploreItemState, ExploreState } from 'app/types/explore';
 import { RichHistoryResults } from '../../../core/history/RichHistoryStorage';
 import { RichHistorySearchFilters, RichHistorySettings } from '../../../core/utils/richHistoryTypes';
 import { createAsyncThunk, ThunkResult } from '../../../types';
-import { TimeSrv } from '../../dashboard/services/TimeSrv';
 import { withUniqueRefIds } from '../utils/queries';
 
 import { initializeExplore, InitializeExploreOptions, paneReducer } from './explorePane';
@@ -106,8 +105,7 @@ const createNewSplitOpenPane = createAsyncThunk(
 );
 
 export interface NavigateToExploreDependencies {
-  getDataSourceSrv: () => DataSourceSrv;
-  getTimeSrv: () => TimeSrv;
+  timeRange: TimeRange;
   getExploreUrl: (args: GetExploreUrlArguments) => Promise<string | undefined>;
   openInNewWindow?: (url: string) => void;
 }
@@ -117,12 +115,13 @@ export const navigateToExplore = (
   dependencies: NavigateToExploreDependencies
 ): ThunkResult<void> => {
   return async (dispatch) => {
-    const { getDataSourceSrv, getTimeSrv, getExploreUrl, openInNewWindow } = dependencies;
-    const datasourceSrv = getDataSourceSrv();
+    const { timeRange, getExploreUrl, openInNewWindow } = dependencies;
+
     const path = await getExploreUrl({
-      panel,
-      datasourceSrv,
-      timeSrv: getTimeSrv(),
+      queries: panel.targets,
+      dsRef: panel.datasource,
+      scopedVars: panel.scopedVars,
+      timeRange,
     });
 
     if (openInNewWindow && path) {
