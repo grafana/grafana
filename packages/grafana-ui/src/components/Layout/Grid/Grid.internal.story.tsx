@@ -63,7 +63,7 @@ export const Basic: StoryFn<typeof Grid> = (args) => {
       templateRows={args.templateRows}
       autoFlow={args.autoFlow}
     >
-      {Array.from({ length: 9 }).map((_, i) => gridItem(i, theme, undefined, undefined))}
+      {Array.from({ length: 9 }).map((_, i) => gridItem(i, theme))}
     </Grid>
   );
 };
@@ -93,7 +93,7 @@ export const AlignItemsExamples: StoryFn<typeof Grid> = (args) => {
           alignItems="stretch"
           gap={2}
         >
-          {Array.from({ length: 6 }).map((_, i) => gridItem(i, theme, undefined, undefined))}
+          {Array.from({ length: 6 }).map((_, i) => gridItem(i, theme))}
         </Grid>
       </span>
 
@@ -134,7 +134,7 @@ export const AlignItemsExamples: StoryFn<typeof Grid> = (args) => {
           alignItems="stretch"
           gap={2}
         >
-          {Array.from({ length: 6 }).map((_, i) => gridItem(i, theme, undefined, undefined))}
+          {Array.from({ length: 6 }).map((_, i) => gridItem(i, theme))}
         </Grid>
       </span>
       <span>
@@ -191,7 +191,7 @@ export const JustifyItemsExamples: StoryFn<typeof Grid> = (args) => {
           justifyItems="stretch"
           gap={2}
         >
-          {Array.from({ length: 6 }).map((_, i) => gridItem(i, theme, undefined, undefined))}
+          {Array.from({ length: 6 }).map((_, i) => gridItem(i, theme))}
         </Grid>
       </span>
       <span>
@@ -204,7 +204,7 @@ export const JustifyItemsExamples: StoryFn<typeof Grid> = (args) => {
           justifyItems="stretch"
           gap={2}
         >
-          {Array.from({ length: 6 }).map((_, i) => gridItem(i, theme, undefined, undefined))}
+          {Array.from({ length: 6 }).map((_, i) => gridItem(i, theme))}
         </Grid>
       </span>
       <span>
@@ -217,7 +217,7 @@ export const JustifyItemsExamples: StoryFn<typeof Grid> = (args) => {
           templateRows="repeat(2, 50px)"
           justifyItems="start"
         >
-          {Array.from({ length: 6 }).map((_, i) => gridItem(i, theme, '70%', undefined))}
+          {Array.from({ length: 6 }).map((_, i) => gridItem(i, theme, '70%'))}
         </Grid>
       </span>
 
@@ -231,7 +231,7 @@ export const JustifyItemsExamples: StoryFn<typeof Grid> = (args) => {
           justifyItems="center"
           gap={2}
         >
-          {Array.from({ length: 6 }).map((_, i) => gridItem(i, theme, '70%', undefined))}
+          {Array.from({ length: 6 }).map((_, i) => gridItem(i, theme, '70%'))}
         </Grid>
       </span>
       <span>
@@ -244,7 +244,7 @@ export const JustifyItemsExamples: StoryFn<typeof Grid> = (args) => {
           justifyItems="end"
           gap={2}
         >
-          {Array.from({ length: 6 }).map((_, i) => gridItem(i, theme, '70%', undefined))}
+          {Array.from({ length: 6 }).map((_, i) => gridItem(i, theme, '70%'))}
         </Grid>
       </span>
     </Grid>
@@ -279,7 +279,7 @@ export const GridItemsPosition: StoryFn<typeof Grid> = (args) => {
       <div>
         <p>Basic grid</p>
         <Grid {...args} display="grid" templateColumns="repeat(3, 1fr)" templateRows="repeat(2, 1fr)">
-          {Array.from({ length: 6 }).map((_, i) => gridItem(i, theme, undefined, undefined))}
+          {Array.from({ length: 6 }).map((_, i) => gridItem(i, theme))}
         </Grid>
       </div>
       <div>
@@ -287,7 +287,7 @@ export const GridItemsPosition: StoryFn<typeof Grid> = (args) => {
         <Grid {...args} display="grid" templateColumns="repeat(3, 1fr)" templateRows="repeat(2, 1fr)">
           {Array.from({ length: 6 }).map((_, i) => (
             <GridItem key={i} rowStart={i === 0 ? 3 : undefined}>
-              {gridItem(i, theme, undefined, undefined)}
+              {gridItem(i, theme)}
             </GridItem>
           ))}
         </Grid>
@@ -297,7 +297,7 @@ export const GridItemsPosition: StoryFn<typeof Grid> = (args) => {
         <Grid {...args} display="grid" templateColumns="repeat(3, 1fr)" templateRows="repeat(2, 1fr)">
           {Array.from({ length: 6 }).map((_, i) => (
             <GridItem key={i} columnStart={i === 2 ? 1 : undefined}>
-              {gridItem(i, theme, undefined, undefined)}
+              {gridItem(i, theme)}
             </GridItem>
           ))}
         </Grid>
@@ -307,7 +307,7 @@ export const GridItemsPosition: StoryFn<typeof Grid> = (args) => {
         <Grid {...args} display="grid" templateColumns="repeat(3, 1fr)" templateRows="repeat(2, 1fr)">
           {Array.from({ length: 6 }).map((_, i) => (
             <GridItem key={i} rowEnd={i === 1 ? 'span 2' : undefined}>
-              {gridItem(i, theme, undefined, undefined)}
+              {gridItem(i, theme)}
             </GridItem>
           ))}
         </Grid>
@@ -317,7 +317,7 @@ export const GridItemsPosition: StoryFn<typeof Grid> = (args) => {
         <Grid {...args} display="grid" templateColumns="repeat(3, 1fr)" templateRows="repeat(2, 1fr)">
           {Array.from({ length: 6 }).map((_, i) => (
             <GridItem key={i} columnEnd={i === 3 ? 'span 3' : undefined}>
-              {gridItem(i, theme, undefined, undefined)}
+              {gridItem(i, theme)}
             </GridItem>
           ))}
         </Grid>
