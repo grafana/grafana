@@ -78,9 +78,9 @@ const BrowseDashboardsPage = memo(({ match }: Props) => {
 
   const hasSelection = useHasSelection();
 
-  const { canEditInFolder, canCreateDashboards, canCreateFolder } = getFolderPermissions(folderDTO);
+  const { canEditFolder, canCreateDashboards, canCreateFolder } = getFolderPermissions(folderDTO);
 
-  const showEditTitle = canEditInFolder && folderUID;
+  const showEditTitle = canEditFolder && folderUID;
   const onEditTitle = async (newValue: string) => {
     if (folderDTO) {
       const result = await saveFolder({
@@ -125,9 +125,9 @@ const BrowseDashboardsPage = memo(({ match }: Props) => {
           <AutoSizer>
             {({ width, height }) =>
               isSearching ? (
-                <SearchView canSelect={canEditInFolder} width={width} height={height} />
+                <SearchView canSelect={canEditFolder} width={width} height={height} />
               ) : (
-                <BrowseView canSelect={canEditInFolder} width={width} height={height} folderUID={folderUID} />
+                <BrowseView canSelect={canEditFolder} width={width} height={height} folderUID={folderUID} />
               )
             }
           </AutoSizer>

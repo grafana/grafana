@@ -222,10 +222,17 @@ export function graphToTimeseriesOptions(angular: any): {
             }
             break;
           case 'lines':
-            rule.properties.push({
-              id: 'custom.lineWidth',
-              value: 0, // don't show lines
-            });
+            if (v) {
+              rule.properties.push({
+                id: 'custom.drawStyle',
+                value: 'line',
+              });
+            } else {
+              rule.properties.push({
+                id: 'custom.lineWidth',
+                value: 0,
+              });
+            }
             break;
           case 'linewidth':
             rule.properties.push({

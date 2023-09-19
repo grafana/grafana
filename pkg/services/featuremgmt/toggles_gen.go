@@ -99,6 +99,10 @@ const (
 	// Enables topnav support in external plugins. The new Grafana navigation cannot be disabled.
 	FlagTopnav = "topnav"
 
+	// FlagDockedMegaMenu
+	// Enable support for a persistent (docked) navigation menu
+	FlagDockedMegaMenu = "dockedMegaMenu"
+
 	// FlagGrpcServer
 	// Run the GRPC server
 	FlagGrpcServer = "grpcServer"
@@ -430,4 +434,8 @@ const (
 	// FlagWargamesTesting
 	// Placeholder feature flag for internal testing
 	FlagWargamesTesting = "wargamesTesting"
+
+	// FlagAlertingInsights
+	// Show the new alerting insights landing page
+	FlagAlertingInsights = "alertingInsights"
 )
