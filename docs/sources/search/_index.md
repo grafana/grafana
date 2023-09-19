@@ -10,7 +10,7 @@ labels:
     - oss
 menutitle: Search
 title: Search
-weight: 80
+weight: 85
 ---
 
 # Search dashboards
