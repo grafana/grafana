@@ -22,7 +22,6 @@ export function ServiceGraphSection({
   onChange: (value: TempoQuery) => void;
 }) {
   const styles = useStyles2(getStyles);
-
   const dsState = useAsync(() => getDS(graphDatasourceUid), [graphDatasourceUid]);
 
   // Check if service graph metrics are being collected. If not, displays a warning
@@ -30,10 +29,14 @@ export function ServiceGraphSection({
   useEffect(() => {
     async function fn(ds: PrometheusDatasource) {
       const keys = await ds.getTagKeys({
-        series: [
-          'traces_service_graph_request_server_seconds_sum',
-          'traces_service_graph_request_total',
-          'traces_service_graph_request_failed_total',
+        filters: [
+          {
+            key: '__name__',
+            operator: '=~',
+            value:
+              'traces_service_graph_request_server_seconds_sum|traces_service_graph_request_total|traces_service_graph_request_failed_total',
+            condition: '',
+          },
         ],
       });
       setHasKeys(Boolean(keys.length));
@@ -61,6 +64,7 @@ export function ServiceGraphSection({
       </div>
     );
   }
+
   const filters = queryToFilter(query.serviceMapQuery || '');
 
   return (
@@ -70,9 +74,14 @@ export function ServiceGraphSection({
           <AdHocFilter
             datasource={{ uid: graphDatasourceUid }}
             filters={filters}
-            getTagKeysOptions={{
-              series: ['traces_service_graph_request_total', 'traces_spanmetrics_calls_total'],
-            }}
+            baseFilters={[
+              {
+                key: '__name__',
+                operator: '=~',
+                value: 'traces_service_graph_request_total|traces_spanmetrics_calls_total',
+                condition: '',
+              },
+            ]}
             addFilter={(filter: AdHocVariableFilter) => {
               onChange({
                 ...query,

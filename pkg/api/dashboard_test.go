@@ -25,7 +25,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
-	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
 	"github.com/grafana/grafana/pkg/registry/corekind"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
@@ -49,6 +48,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/librarypanels"
 	"github.com/grafana/grafana/pkg/services/live"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	pref "github.com/grafana/grafana/pkg/services/preference"
 	"github.com/grafana/grafana/pkg/services/preference/preftest"
 	"github.com/grafana/grafana/pkg/services/provisioning"
@@ -76,7 +76,7 @@ func TestGetHomeDashboard(t *testing.T) {
 
 	hs := &HTTPServer{
 		Cfg:                     cfg,
-		pluginStore:             &fakes.FakePluginStore{},
+		pluginStore:             &pluginstore.FakePluginStore{},
 		SQLStore:                dbtest.NewFakeDB(),
 		preferenceService:       prefService,
 		dashboardVersionService: dashboardVersionService,
@@ -782,7 +782,7 @@ func TestDashboardVersionsAPIEndpoint(t *testing.T) {
 	getHS := func(userSvc *usertest.FakeUserService) *HTTPServer {
 		return &HTTPServer{
 			Cfg:                     cfg,
-			pluginStore:             &fakes.FakePluginStore{},
+			pluginStore:             &pluginstore.FakePluginStore{},
 			SQLStore:                mockSQLStore,
 			AccessControl:           accesscontrolmock.New(),
 			Features:                featuremgmt.WithFeatures(),
@@ -976,7 +976,7 @@ func postDashboardScenario(t *testing.T, desc string, url string, routePattern s
 			ProvisioningService:   provisioning.NewProvisioningServiceMock(context.Background()),
 			Live:                  newTestLive(t, db.InitTestDB(t)),
 			QuotaService:          quotatest.New(false, nil),
-			pluginStore:           &fakes.FakePluginStore{},
+			pluginStore:           &pluginstore.FakePluginStore{},
 			LibraryPanelService:   &mockLibraryPanelService{},
 			LibraryElementService: &mockLibraryElementService{},
 			DashboardService:      dashboardService,

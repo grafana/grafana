@@ -1,10 +1,21 @@
-import { sceneGraph, SceneObject, VizPanel } from '@grafana/scenes';
+import { UrlQueryMap, urlUtil } from '@grafana/data';
+import { locationSearchToObject } from '@grafana/runtime';
+import {
+  MultiValueVariable,
+  SceneDataTransformer,
+  sceneGraph,
+  SceneObject,
+  SceneQueryRunner,
+  VizPanel,
+} from '@grafana/scenes';
+
+import { DashboardScene } from '../scene/DashboardScene';
 
 export function getVizPanelKeyForPanelId(panelId: number) {
   return `panel-${panelId}`;
 }
 
-export function getPanelIdForVizPanel(panel: VizPanel): number {
+export function getPanelIdForVizPanel(panel: SceneObject): number {
   return parseInt(panel.state.key!.replace('panel-', ''), 10);
 }
 
@@ -65,4 +76,74 @@ export function forceRenderChildren(model: SceneObject, recursive?: boolean) {
     child.forceRender();
     forceRenderChildren(child, recursive);
   });
+}
+
+export interface DashboardUrlOptions {
+  uid?: string;
+  subPath?: string;
+  updateQuery?: UrlQueryMap;
+  /**
+   * Set to location.search to preserve current params
+   */
+  currentQueryParams: string;
+}
+
+export function getDashboardUrl(options: DashboardUrlOptions) {
+  const url = `/scenes/dashboard/${options.uid}${options.subPath ?? ''}`;
+
+  const params = options.currentQueryParams ? locationSearchToObject(options.currentQueryParams) : {};
+
+  if (options.updateQuery) {
+    for (const key of Object.keys(options.updateQuery)) {
+      // removing params with null | undefined
+      if (options.updateQuery[key] === null || options.updateQuery[key] === undefined) {
+        delete params[key];
+      } else {
+        params[key] = options.updateQuery[key];
+      }
+    }
+  }
+
+  return urlUtil.renderUrl(url, params);
+}
+
+export function getMultiVariableValues(variable: MultiValueVariable) {
+  const { value, text, options } = variable.state;
+
+  if (variable.hasAllValue()) {
+    return {
+      values: options.map((o) => o.value),
+      texts: options.map((o) => o.label),
+    };
+  }
+
+  return {
+    values: Array.isArray(value) ? value : [value],
+    texts: Array.isArray(text) ? text : [text],
+  };
+}
+
+export function getDashboardSceneFor(sceneObject: SceneObject): DashboardScene {
+  const root = sceneObject.getRoot();
+  if (root instanceof DashboardScene) {
+    return root;
+  }
+
+  throw new Error('SceneObject root is not a DashboardScene');
+}
+
+export function getQueryRunnerFor(sceneObject: SceneObject | undefined): SceneQueryRunner | undefined {
+  if (!sceneObject) {
+    return undefined;
+  }
+
+  if (sceneObject.state.$data instanceof SceneQueryRunner) {
+    return sceneObject.state.$data;
+  }
+
+  if (sceneObject.state.$data instanceof SceneDataTransformer) {
+    return getQueryRunnerFor(sceneObject.state.$data);
+  }
+
+  return undefined;
 }
