@@ -5,8 +5,7 @@ import { useStyles2 } from '../../../themes';
 
 export interface GridItemProps {
   children: NonNullable<React.ReactNode>;
-  /** If false will the grid item inherits the display of the parent. 
-    If true, the display with 'contents' as value. See info: https://developer.mozilla.org/en-US/docs/Web/CSS/display#display_contents*/
+  /** If set to 'false,' the grid item will inherit the parent's display property. If set to 'true,' the display property will be set to 'contents'. More info: https://developer.mozilla.org/en-US/docs/Web/CSS/display#display_contents */
   displayContents?: boolean;
   /** Specifies the column where the grid item starts within the grid */
   columnStart?: number;
