@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { cloneDeep } from 'lodash';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -25,13 +26,12 @@ export const TagMappingInput = ({ values, onChange, id }: Props) => {
               placeholder={'Tag name'}
               value={value.key}
               onChange={(e) => {
-                const vals = [...values];
-                vals.map((v, i) => {
-                  if (i === idx) {
-                    v.key = String(e);
-                  }
-                  return v;
-                });
+                const vals = cloneDeep(values);
+                if (vals[idx]) {
+                  const val = { ...vals[idx] };
+                  val.key = String(e);
+                  vals[idx] = val;
+                }
                 onChange(vals);
               }}
             />
@@ -43,13 +43,12 @@ export const TagMappingInput = ({ values, onChange, id }: Props) => {
               placeholder={'New name (optional)'}
               value={value.value || ''}
               onChange={(e) => {
-                const vals = [...values];
-                vals.map((v, i) => {
-                  if (i === idx) {
-                    v.value = String(e);
-                  }
-                  return v;
-                });
+                const vals = cloneDeep(values);
+                if (vals[idx]) {
+                  const val = { ...vals[idx] };
+                  val.value = String(e);
+                  vals[idx] = val;
+                }
                 onChange(vals);
               }}
             />
