@@ -225,6 +225,43 @@
       "label": ""
     }
   },
+  "flame-graph": {
+    "callees": "",
+    "callers": ""
+  },
+  "flame-graph-header": {
+    "align-left-description": "",
+    "align-right-description": "",
+    "change-color-button": "",
+    "clear-button": "",
+    "color-blind-name-label": "",
+    "default-name-label": "",
+    "flame-graph-view-description": "",
+    "flame-graph-view-label": "",
+    "package-name-label": "",
+    "reset-button": "",
+    "top-table-view-description": "",
+    "top-table-view-label": "",
+    "value-name-label": "",
+    "width-view-label": "",
+    "width-view-option-description": ""
+  },
+  "flame-graph-metadata": {
+    "percent-value": "",
+    "remove-focus-tooltip": "",
+    "remove-sandwich-tooltip": ""
+  },
+  "flame-graph-tooltip": {
+    "sample": "",
+    "self-percentage": "",
+    "total-percentage": ""
+  },
+  "flame-graph-top-table": {
+    "clear-button": "",
+    "remove-button": "",
+    "search-button": "",
+    "show-button": ""
+  },
   "folder-picker": {
     "loading": "Cargando carpetas..."
   },
