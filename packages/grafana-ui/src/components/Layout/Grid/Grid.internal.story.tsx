@@ -14,14 +14,7 @@ import { GridItem } from './GridItem';
 const gridItem = (index: number, theme: GrafanaTheme2, width?: string, height?: string) => {
   const colorOrder = index >= 6 ? index - 6 : index;
   const itemOrder = index + 1;
-  const colorList = [
-    theme.visualization.getColorByName('red'),
-    theme.visualization.getColorByName('orange'),
-    theme.visualization.getColorByName('purple'),
-    theme.visualization.getColorByName('blue'),
-    theme.visualization.getColorByName('yellow'),
-    theme.visualization.getColorByName('green'),
-  ];
+const colorList = ['red', 'orange', 'purple', 'blue', 'yellow', 'green'].map(theme.visualization.getColorByName);
   return (
     <div
       style={{
