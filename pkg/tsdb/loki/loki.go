@@ -192,6 +192,15 @@ func queryData(ctx context.Context, req *backend.QueryDataRequest, dsInfo *datas
 
 	plog.Info("Prepared request to Loki", "duration", time.Since(start), "queriesLength", len(queries), "stage", stagePrepareRequest, "runInParallel", runInParallel)
 
+	ctx, span := tracer.Start(ctx, "datasource.loki.queryData.runQueries")
+	span.SetAttributes("runInParallel", runInParallel, attribute.Key("runInParallel").Bool(runInParallel))
+	span.SetAttributes("queriesLength", len(queries), attribute.Key("queriesLength").Int((len(queries))))
+	if req.GetHTTPHeader("X-Query-Group-Id") != "" {
+		span.SetAttributes("query_group_id", req.GetHTTPHeader("X-Query-Group-Id"), attribute.Key("query_group_id").String(req.GetHTTPHeader("X-Query-Group-Id")))
+	}
+	defer span.End()
+	start = time.Now()
+
 	// We are testing running of queries in parallel behind feature flag
 	if runInParallel {
 		resultLock := sync.Mutex{}
@@ -210,13 +219,13 @@ func queryData(ctx context.Context, req *backend.QueryDataRequest, dsInfo *datas
 			result.Responses[query.RefID] = queryRes
 		}
 	}
-
+	plog.Debug("Executed queries", "duration", time.Since(start), "queriesLength", len(queries), "runInParallel", runInParallel)
 	return result, err
 }
 
 func executeQuery(ctx context.Context, query *lokiQuery, req *backend.QueryDataRequest, runInParallel bool, api *LokiAPI, responseOpts ResponseOpts, tracer tracing.Tracer) backend.DataResponse {
-	_, span := tracer.Start(ctx, "datasource.loki.queryData.runQuery")
-	span.SetAttributes("runInParallel", runInParallel, attribute.Key("runInParallel").Bool(true))
+	ctx, span := tracer.Start(ctx, "datasource.loki.queryData.runQueries.runQuery")
+	span.SetAttributes("runInParallel", runInParallel, attribute.Key("runInParallel").Bool(runInParallel))
 	span.SetAttributes("expr", query.Expr, attribute.Key("expr").String(query.Expr))
 	span.SetAttributes("start_unixnano", query.Start, attribute.Key("start_unixnano").Int64(query.Start.UnixNano()))
 	span.SetAttributes("stop_unixnano", query.End, attribute.Key("stop_unixnano").Int64(query.End.UnixNano()))
