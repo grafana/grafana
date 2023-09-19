@@ -1,16 +1,13 @@
-import { css } from '@emotion/css';
-import React from 'react';
-
-import { GrafanaTheme2 } from '@grafana/data';
 import {
   EmbeddedScene,
+  NestedScene,
   QueryVariable,
+  SceneFlexItem,
   SceneFlexLayout,
   SceneTimeRange,
   SceneVariableSet,
   VariableValueSelectors,
 } from '@grafana/scenes';
-import { useStyles2, CollapsableSection } from '@grafana/ui';
 
 import { getFiringAlertsScene } from '../insights/grafana/FiringAlertsPercentage';
 import { getFiringAlertsRateScene } from '../insights/grafana/FiringAlertsRate';
@@ -49,31 +46,50 @@ const grafanaCloudPromDs = {
 const THIS_WEEK_TIME_RANGE = new SceneTimeRange({ from: 'now-1w', to: 'now' });
 const LAST_WEEK_TIME_RANGE = new SceneTimeRange({ from: 'now-2w', to: 'now-1w' });
 
-function getGrafanaScenes() {
+export function getGrafanaScenes() {
   return new EmbeddedScene({
     body: new SceneFlexLayout({
-      wrap: 'wrap',
+      direction: 'column',
       children: [
-        getMostFiredInstancesScene(THIS_WEEK_TIME_RANGE, ashDs, 'Top 10 firing instances this week'),
-
-        getFiringAlertsRateScene(THIS_WEEK_TIME_RANGE, ashDs, 'Alerts firing per minute'),
-
-        getFiringAlertsScene(THIS_WEEK_TIME_RANGE, ashDs, 'Firing alerts this week'),
-
-        getFiringAlertsScene(LAST_WEEK_TIME_RANGE, ashDs, 'Firing alerts last week'),
+        new SceneFlexLayout({
+          children: [
+            getMostFiredInstancesScene(THIS_WEEK_TIME_RANGE, ashDs, 'Top 10 firing instances this week'),
+            getFiringAlertsRateScene(THIS_WEEK_TIME_RANGE, ashDs, 'Alerts firing per minute'),
+          ],
+        }),
+        new SceneFlexLayout({
+          children: [
+            getFiringAlertsScene(THIS_WEEK_TIME_RANGE, ashDs, 'Firing alerts this week'),
+            getFiringAlertsScene(LAST_WEEK_TIME_RANGE, ashDs, 'Firing alerts last week'),
+          ],
+        }),
+        new SceneFlexItem({
+          ySizing: 'content',
+          body: getCloudScenes(),
+        }),
+        new SceneFlexItem({
+          ySizing: 'content',
+          body: getMimirManagedRulesScenes(),
+        }),
+        new SceneFlexItem({
+          ySizing: 'content',
+          body: getMimirManagedRulesPerGroupScenes(),
+        }),
       ],
     }),
   });
 }
 
 function getCloudScenes() {
-  return new EmbeddedScene({
+  return new NestedScene({
+    title: 'Mimir alertmanager',
+    canCollapse: true,
+    isCollapsed: true,
     body: new SceneFlexLayout({
       wrap: 'wrap',
       children: [
         getAlertsByStateScene(THIS_WEEK_TIME_RANGE, cloudUsageDs, 'Alerts by State'),
         getNotificationsScene(THIS_WEEK_TIME_RANGE, cloudUsageDs, 'Notifications'),
-
         getSilencesScene(LAST_WEEK_TIME_RANGE, cloudUsageDs, 'Silences'),
         getInvalidConfigScene(THIS_WEEK_TIME_RANGE, cloudUsageDs, 'Invalid configuration'),
       ],
@@ -82,7 +98,10 @@ function getCloudScenes() {
 }
 
 function getMimirManagedRulesScenes() {
-  return new EmbeddedScene({
+  return new NestedScene({
+    title: 'Mimir-managed rules',
+    canCollapse: true,
+    isCollapsed: true,
     body: new SceneFlexLayout({
       wrap: 'wrap',
       children: [
@@ -108,7 +127,10 @@ function getMimirManagedRulesPerGroupScenes() {
     query: 'label_values(grafanacloud_instance_rule_group_rules,rule_group)',
   });
 
-  return new EmbeddedScene({
+  return new NestedScene({
+    title: 'Mimir-managed Rules - Per Rule Group',
+    canCollapse: true,
+    isCollapsed: true,
     body: new SceneFlexLayout({
       wrap: 'wrap',
       children: [
@@ -124,37 +146,3 @@ function getMimirManagedRulesPerGroupScenes() {
     controls: [new VariableValueSelectors({})],
   });
 }
-
-export default function Insights() {
-  const styles = useStyles2(getStyles);
-  const grafanaScenes = getGrafanaScenes();
-  const cloudScenes = getCloudScenes();
-  const mimirRulesScenes = getMimirManagedRulesScenes();
-  const mimirRulesPerGroupScenes = getMimirManagedRulesPerGroupScenes();
-
-  return (
-    <div className={styles.container}>
-      <CollapsableSection label="Grafana" isOpen={true}>
-        <grafanaScenes.Component model={grafanaScenes} />
-      </CollapsableSection>
-
-      <CollapsableSection label="Mimir Alertmanager" isOpen={true}>
-        <cloudScenes.Component model={cloudScenes} />
-      </CollapsableSection>
-
-      <CollapsableSection label="Mimir-managed Rules" isOpen={true}>
-        <mimirRulesScenes.Component model={mimirRulesScenes} />
-      </CollapsableSection>
-
-      <CollapsableSection label="Mimir-managed Rules - Per Rule Group" isOpen={true}>
-        <mimirRulesPerGroupScenes.Component model={mimirRulesPerGroupScenes} />
-      </CollapsableSection>
-    </div>
-  );
-}
-
-const getStyles = (theme: GrafanaTheme2) => ({
-  container: css({
-    padding: '10px 0 10px 0',
-  }),
-});
