@@ -78,7 +78,9 @@ func newServer(opts Options, cfg *setting.Cfg, httpServer *api.HTTPServer, roleR
 	return s, nil
 }
 
-// Server is responsible for managing the lifecycle of services.
+// Server is responsible for managing the lifecycle of services. This is the
+// core Server implementation which starts the entire Grafana server. Use
+// ModuleServer to launch specific modules.
 type Server struct {
 	context          context.Context
 	shutdownFn       context.CancelFunc

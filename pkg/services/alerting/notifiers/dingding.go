@@ -109,7 +109,7 @@ func (dd *DingDingNotifier) genBody(evalContext *alerting.EvalContext, messageUR
 	// Refer: https://open-doc.dingtalk.com/docs/doc.htm?treeId=385&articleId=104972&docType=1#s9
 	messageURL = "dingtalk://dingtalkclient/page/link?" + q.Encode()
 
-	dd.log.Info("messageUrl:" + messageURL)
+	dd.log.Info("MessageUrl:" + messageURL)
 
 	message := evalContext.Rule.Message
 	picURL := evalContext.ImagePublicURL

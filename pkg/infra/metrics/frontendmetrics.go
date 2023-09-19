@@ -42,4 +42,5 @@ func initFrontendMetrics() {
 	registerFrontendHistogram("frontend_boot_first_contentful_paint_time_seconds", "Frontend boot first contentful paint")
 	registerFrontendHistogram("frontend_boot_js_done_time_seconds", "Frontend boot initial js load")
 	registerFrontendHistogram("frontend_boot_css_time_seconds", "Frontend boot initial css load")
+	registerFrontendHistogram("frontend_plugins_preload_ms", "Frontend preload plugin time measurement")
 }

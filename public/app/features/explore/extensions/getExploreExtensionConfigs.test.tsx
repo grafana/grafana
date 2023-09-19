@@ -28,10 +28,10 @@ describe('getExploreExtensionConfigs', () => {
   });
 
   describe('configure function for "add to dashboard" extension', () => {
-    afterEach(() => contextSrvMock.hasAccess.mockRestore());
+    afterEach(() => contextSrvMock.hasPermission.mockRestore());
 
     it('should return undefined if insufficient permissions', () => {
-      contextSrvMock.hasAccess.mockReturnValue(false);
+      contextSrvMock.hasPermission.mockReturnValue(false);
 
       const extensions = getExploreExtensionConfigs();
       const [extension] = extensions;
@@ -40,7 +40,7 @@ describe('getExploreExtensionConfigs', () => {
     });
 
     it('should return empty object if sufficient permissions', () => {
-      contextSrvMock.hasAccess.mockReturnValue(true);
+      contextSrvMock.hasPermission.mockReturnValue(true);
 
       const extensions = getExploreExtensionConfigs();
       const [extension] = extensions;

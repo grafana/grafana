@@ -89,7 +89,7 @@ export interface QueryBuilderOperationParamEditorProps {
   /** Parameter index */
   index: number;
   operation: QueryBuilderOperation;
-  operationIndex: number;
+  operationId: string;
   query: any;
   datasource: DataSourceApi;
   onChange: (index: number, value: QueryBuilderOperationParamValue) => void;

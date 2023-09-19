@@ -92,7 +92,7 @@ func (ss *sqlStore) Update(ctx context.Context, cmd folder.UpdateFolderCommand) 
 
 	var foldr *folder.Folder
 
-	if cmd.NewDescription == nil && cmd.NewTitle == nil && cmd.NewUID == nil && cmd.NewParentUID == nil {
+	if cmd.NewDescription == nil && cmd.NewTitle == nil && cmd.NewParentUID == nil {
 		return nil, folder.ErrBadRequest.Errorf("nothing to update")
 	}
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
@@ -108,12 +108,6 @@ func (ss *sqlStore) Update(ctx context.Context, cmd folder.UpdateFolderCommand) 
 		if cmd.NewTitle != nil {
 			columnsToUpdate = append(columnsToUpdate, "title = ?")
 			args = append(args, *cmd.NewTitle)
-		}
-
-		if cmd.NewUID != nil {
-			columnsToUpdate = append(columnsToUpdate, "uid = ?")
-			uid = *cmd.NewUID
-			args = append(args, *cmd.NewUID)
 		}
 
 		if cmd.NewParentUID != nil {
