@@ -11,6 +11,49 @@ import (
 	"github.com/grafana/phlare/api/gen/proto/go/querier/v1/querierv1connect"
 )
 
+type ProfileType struct {
+	ID    string `json:"id"`
+	Label string `json:"label"`
+}
+
+type Flamebearer struct {
+	Names   []string
+	Levels  []*Level
+	Total   int64
+	MaxSelf int64
+}
+
+type Level struct {
+	Values []int64
+}
+
+type Series struct {
+	Labels []*LabelPair
+	Points []*Point
+}
+
+type LabelPair struct {
+	Name  string
+	Value string
+}
+
+type Point struct {
+	Value float64
+	// Milliseconds unix timestamp
+	Timestamp int64
+}
+
+type ProfileResponse struct {
+	Flamebearer *Flamebearer
+	Units       string
+}
+
+type SeriesResponse struct {
+	Series []*Series
+	Units  string
+	Label  string
+}
+
 type PhlareClient struct {
 	connectClient querierv1connect.QuerierServiceClient
 }
@@ -136,7 +179,7 @@ func getUnits(profileTypeID string) string {
 	return unit
 }
 
-func (c *PhlareClient) LabelNames(ctx context.Context, query string, start int64, end int64) ([]string, error) {
+func (c *PhlareClient) LabelNames(ctx context.Context) ([]string, error) {
 	resp, err := c.connectClient.LabelNames(ctx, connect.NewRequest(&querierv1.LabelNamesRequest{}))
 	if err != nil {
 		return nil, fmt.Errorf("error seding LabelNames request %v", err)
@@ -152,7 +195,7 @@ func (c *PhlareClient) LabelNames(ctx context.Context, query string, start int64
 	return filtered, nil
 }
 
-func (c *PhlareClient) LabelValues(ctx context.Context, query string, label string, start int64, end int64) ([]string, error) {
+func (c *PhlareClient) LabelValues(ctx context.Context, label string) ([]string, error) {
 	resp, err := c.connectClient.LabelValues(ctx, connect.NewRequest(&querierv1.LabelValuesRequest{Name: label}))
 	if err != nil {
 		return nil, err
