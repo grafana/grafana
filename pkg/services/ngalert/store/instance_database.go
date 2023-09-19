@@ -5,10 +5,12 @@ import (
 	"fmt"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
 // ListAlertInstances is a handler for retrieving alert instances within specific organisation
@@ -41,6 +43,52 @@ func (st DBstore) ListAlertInstances(ctx context.Context, cmd *models.ListAlertI
 		return nil
 	})
 	return result, err
+}
+
+func (st DBstore) FullSync(ctx context.Context, instances []models.AlertInstance) error {
+	if len(instances) == 0 {
+		return nil
+	}
+	st.Logger.Info("Doing a full state sync", "count", len(instances))
+	return st.SQLStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		startTime := time.Now()
+		// First we delete all records from the table
+		// TODO: could we have multiple orgs? Not sure if the scheduler is isolated by org.
+		if _, err := sess.Exec("DELETE * FROM alert_instance WHERE rule_org_id = ?", instances[0].RuleOrgID); err != nil {
+			return err
+		}
+		for _, alertInstance := range instances {
+			if err := models.ValidateAlertInstance(alertInstance); err != nil {
+				st.Logger.Warn("Failed to validate alert instance, skipping", "err", err, "rule_uid", alertInstance.RuleUID)
+				continue
+			}
+			labelTupleJSON, err := alertInstance.Labels.StringKey()
+			if err != nil {
+				st.Logger.Warn("Failed to generate alert instance labels key, skipping", "err", err, "rule_uid", alertInstance.RuleUID)
+				continue
+			}
+			params := append(make([]any, 0), alertInstance.RuleOrgID, alertInstance.RuleUID, labelTupleJSON, alertInstance.LabelsHash, alertInstance.CurrentState, alertInstance.CurrentReason, alertInstance.CurrentStateSince.Unix(), alertInstance.CurrentStateEnd.Unix(), alertInstance.LastEvalTime.Unix())
+
+			upsertSQL := st.SQLStore.GetDialect().UpsertSQL(
+				"alert_instance",
+				[]string{"rule_org_id", "rule_uid", "labels_hash"},
+				[]string{"rule_org_id", "rule_uid", "labels", "labels_hash", "current_state", "current_reason", "current_state_since", "current_state_end", "last_eval_time"})
+			_, err = sess.SQL(upsertSQL, params...).Query()
+			if err != nil {
+				if rbErr := sess.Rollback(); rbErr != nil {
+					st.Logger.Error("Failed to roll back on full sync", "err", rbErr)
+				}
+				return err
+			}
+		}
+		if err := sess.Commit(); err != nil {
+			st.Logger.Error("Failed to commit full state sync", "err", err)
+			return err
+		}
+		dur := time.Since(startTime)
+		st.Logger.Info("Full state sync done", "duration", dur.Seconds())
+		return nil
+	})
 }
 
 // SaveAlertInstance is a handler for saving a new alert instance.
