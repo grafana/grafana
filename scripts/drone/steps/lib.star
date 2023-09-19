@@ -409,8 +409,33 @@ def build_frontend_step():
         ],
     }
 
-def build_frontend_package_step():
+def update_package_json_version():
+    """Updates the packages/ to use a version that has the build ID in it: 10.0.0pre -> 10.0.0-5432pre
+
+    Returns:
+      Drone step that updates the 'version' key in package.json
+    """
+
+    return {
+        "name": "update-package-json-version",
+        "image": images["node"],
+        "depends_on": [
+            "yarn-install",
+        ],
+        "commands": [
+            "apk add --update jq",
+            "new_version=$(cat package.json | jq .version | sed s/pre/${DRONE_BUILD_NUMBER}pre/g)",
+            "echo \"New version: $new_version\"",
+            "yarn run lerna version $new_version --exact --no-git-tag-version --no-push --force-publish -y",
+            "yarn install --mode=update-lockfile",
+        ],
+    }
+
+def build_frontend_package_step(depends_on = []):
     """Build the frontend packages using the Grafana build tool.
+
+    Args:
+        depends_on: a list of step names (strings) that must complete before this step runs.
 
     Returns:
       Drone step.
@@ -432,7 +457,7 @@ def build_frontend_package_step():
         },
         "depends_on": [
             "yarn-install",
-        ],
+        ] + depends_on,
         "commands": cmds,
     }
 
@@ -959,6 +984,7 @@ def release_canary_npm_packages_step(trigger = None):
             "./scripts/publish-npm-packages.sh --dist-tag 'canary' --registry 'https://registry.npmjs.org'",
         ],
     }
+
     if trigger:
         step = dict(
             step,
@@ -971,6 +997,7 @@ def release_canary_npm_packages_step(trigger = None):
                 },
             ),
         )
+
     return step
 
 def upload_packages_step(ver_mode, trigger = None):
