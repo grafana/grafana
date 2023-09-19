@@ -17,6 +17,7 @@ import { getPanelInspectorStyles2 } from '../inspector/styles';
 import { reportPanelInspectInteraction } from '../search/page/reporting';
 
 import { InspectTab } from './types';
+import { getPrettyJSON } from './utils/utils';
 
 enum ShowContent {
   PanelJSON = 'panel',
@@ -186,39 +187,4 @@ async function getJSONObject(show: ShowContent, panel?: PanelModel, data?: Panel
   }
 
   return { note: t('dashboard.inspect-json.unknown', 'Unknown Object: {{show}}', { show }) };
-}
-
-function getPrettyJSON(obj: unknown): string {
-  let r = '';
-  try {
-    r = JSON.stringify(obj, getCircularReplacer(), 2);
-  } catch (e) {
-    if (
-      e instanceof Error &&
-      (e.toString().includes('RangeError') || e.toString().includes('allocation size overflow'))
-    ) {
-      appEvents.emit(AppEvents.alertError, [e.toString(), 'Cannot display JSON, the object is too big.']);
-    } else {
-      appEvents.emit(AppEvents.alertError, [e instanceof Error ? e.toString() : e]);
-    }
-  }
-  return r;
-}
-
-function getCircularReplacer() {
-  const seen = new WeakSet();
-
-  return (key: string, value: unknown) => {
-    if (key === '__dataContext') {
-      return 'Filtered out in JSON serialization';
-    }
-
-    if (typeof value === 'object' && value !== null) {
-      if (seen.has(value)) {
-        return;
-      }
-      seen.add(value);
-    }
-    return value;
-  };
 }

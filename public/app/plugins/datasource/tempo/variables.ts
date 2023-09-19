@@ -11,7 +11,6 @@ export class TempoVariableSupport extends CustomVariableSupport<TempoDatasource,
 
   constructor(private datasource: TempoDatasource) {
     super();
-    this.query = this.query.bind(this);
   }
 
   query(request: DataQueryRequest<TempoVariableQuery>): Observable<DataQueryResponse> {

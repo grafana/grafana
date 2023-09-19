@@ -15,17 +15,14 @@ import { extractLabelMatchers, toPromLikeExpr } from '../prometheus/language_uti
 
 import { VariableSupport } from './VariableSupport';
 import { defaultGrafanaPyroscope, defaultPhlareQueryType } from './dataquery.gen';
-import { PhlareDataSourceOptions, Query, ProfileTypeMessage, BackendType } from './types';
+import { PhlareDataSourceOptions, Query, ProfileTypeMessage } from './types';
 
 export class PhlareDataSource extends DataSourceWithBackend<Query, PhlareDataSourceOptions> {
-  backendType: BackendType;
-
   constructor(
     instanceSettings: DataSourceInstanceSettings<PhlareDataSourceOptions>,
     private readonly templateSrv: TemplateSrv = getTemplateSrv()
   ) {
     super(instanceSettings);
-    this.backendType = instanceSettings.jsonData.backendType ?? 'phlare';
     this.variables = new VariableSupport(this);
   }
 
@@ -66,11 +63,6 @@ export class PhlareDataSource extends DataSourceWithBackend<Query, PhlareDataSou
       start,
       end,
     });
-  }
-
-  // We need the URL here because it may not be saved on the backend yet when used from config page.
-  async getBackendType(url: string): Promise<{ backendType: BackendType | 'unknown' }> {
-    return await super.getResource('backendType', { url });
   }
 
   applyTemplateVariables(query: Query, scopedVars: ScopedVars): Query {

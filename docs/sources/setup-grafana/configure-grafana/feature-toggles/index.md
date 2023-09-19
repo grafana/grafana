@@ -59,6 +59,7 @@ Some features are enabled by default. You can disable these feature by setting t
 | `newDBLibrary`                   | Use jmoiron/sqlx rather than xorm for a few backend services                                                                                                                                 |
 | `autoMigrateOldPanels`           | Migrate old angular panels to supported versions (graph, table-old, worldmap, etc)                                                                                                           |
 | `disableAngular`                 | Dynamic flag to disable angular at runtime. The preferred method is to set `angular_support_enabled` to `false` in the [security] settings, which allows you to change the state at runtime. |
+| `dockedMegaMenu`                 | Enable support for a persistent (docked) navigation menu                                                                                                                                     |
 | `grpcServer`                     | Run the GRPC server                                                                                                                                                                          |
 | `accessControlOnCall`            | Access control primitives for OnCall                                                                                                                                                         |
 | `nestedFolders`                  | Enable folder nesting                                                                                                                                                                        |
@@ -134,6 +135,7 @@ Experimental features might be changed or removed without prior notice.
 | `sseGroupByDatasource`                      | Send query to the same datasource in a single request when using server side expressions                     |
 | `requestInstrumentationStatusSource`        | Include a status source label for request metrics and logs                                                   |
 | `wargamesTesting`                           | Placeholder feature flag for internal testing                                                                |
+| `alertingInsights`                          | Show the new alerting insights landing page                                                                  |
 
 ## Development feature toggles
 

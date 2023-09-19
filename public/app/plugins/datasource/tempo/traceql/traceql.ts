@@ -23,8 +23,8 @@ export const languageConfiguration: languages.LanguageConfiguration = {
   folding: {},
 };
 
-export const operators = ['=', '!=', '>', '<', '>=', '<=', '=~'];
-export const stringOperators = ['=', '!=', '=~'];
+export const operators = ['=', '!=', '>', '<', '>=', '<=', '=~', '!~'];
+export const stringOperators = ['=', '!=', '=~', '!~'];
 export const numberOperators = ['=', '!=', '>', '<', '>=', '<='];
 
 export const intrinsics = ['duration', 'kind', 'name', 'status'];
