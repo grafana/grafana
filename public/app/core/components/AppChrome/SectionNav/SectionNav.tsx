@@ -4,7 +4,6 @@ import { useLocalStorage } from 'react-use';
 
 import { NavModel, GrafanaTheme2 } from '@grafana/data';
 import { useStyles2, CustomScrollbar, useTheme2 } from '@grafana/ui';
-import config from 'app/core/config';
 
 import { SectionNavItem } from './SectionNavItem';
 import { SectionNavToggle } from './SectionNavToggle';
@@ -16,10 +15,6 @@ export interface Props {
 export function SectionNav({ model }: Props) {
   const styles = useStyles2(getStyles);
   const { isExpanded, onToggleSectionNav } = useSectionNavState();
-
-  if (config.featureToggles.dockedMegaMenu) {
-    return null;
-  }
 
   if (!Boolean(model.main?.children?.length)) {
     return null;
