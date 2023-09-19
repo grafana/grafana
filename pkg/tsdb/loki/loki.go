@@ -206,7 +206,7 @@ func queryData(ctx context.Context, req *backend.QueryDataRequest, dsInfo *datas
 		resultLock := sync.Mutex{}
 		err = concurrency.ForEachJob(ctx, len(queries), 10, func(ctx context.Context, idx int) error {
 			query := queries[idx]
-			queryRes := executeQuery(ctx, query, req, runInParallel, api, responseOpts, tracer)
+			queryRes := executeQuery(ctx, query, req, runInParallel, api, responseOpts, tracer, plog)
 
 			resultLock.Lock()
 			defer resultLock.Unlock()
@@ -215,7 +215,7 @@ func queryData(ctx context.Context, req *backend.QueryDataRequest, dsInfo *datas
 		})
 	} else {
 		for _, query := range queries {
-			queryRes := executeQuery(ctx, query, req, runInParallel, api, responseOpts, tracer)
+			queryRes := executeQuery(ctx, query, req, runInParallel, api, responseOpts, tracer, plog)
 			result.Responses[query.RefID] = queryRes
 		}
 	}
@@ -223,7 +223,7 @@ func queryData(ctx context.Context, req *backend.QueryDataRequest, dsInfo *datas
 	return result, err
 }
 
-func executeQuery(ctx context.Context, query *lokiQuery, req *backend.QueryDataRequest, runInParallel bool, api *LokiAPI, responseOpts ResponseOpts, tracer tracing.Tracer) backend.DataResponse {
+func executeQuery(ctx context.Context, query *lokiQuery, req *backend.QueryDataRequest, runInParallel bool, api *LokiAPI, responseOpts ResponseOpts, tracer tracing.Tracer, plog log.Logger) backend.DataResponse {
 	ctx, span := tracer.Start(ctx, "datasource.loki.queryData.runQueries.runQuery")
 	span.SetAttributes("runInParallel", runInParallel, attribute.Key("runInParallel").Bool(runInParallel))
 	span.SetAttributes("expr", query.Expr, attribute.Key("expr").String(query.Expr))
@@ -235,7 +235,7 @@ func executeQuery(ctx context.Context, query *lokiQuery, req *backend.QueryDataR
 
 	defer span.End()
 
-	frames, err := runQuery(ctx, api, query, responseOpts)
+	frames, err := runQuery(ctx, api, query, responseOpts, plog)
 	queryRes := backend.DataResponse{}
 	if err != nil {
 		span.RecordError(err)
@@ -249,10 +249,10 @@ func executeQuery(ctx context.Context, query *lokiQuery, req *backend.QueryDataR
 }
 
 // we extracted this part of the functionality to make it easy to unit-test it
-func runQuery(ctx context.Context, api *LokiAPI, query *lokiQuery, responseOpts ResponseOpts) (data.Frames, error) {
+func runQuery(ctx context.Context, api *LokiAPI, query *lokiQuery, responseOpts ResponseOpts, plog log.Logger) (data.Frames, error) {
 	frames, err := api.DataQuery(ctx, *query, responseOpts)
 	if err != nil {
-		logger.Error("Error querying loki", "error", err)
+		plog.Error("Error querying loki", "error", err)
 		return data.Frames{}, err
 	}
 
@@ -260,7 +260,7 @@ func runQuery(ctx context.Context, api *LokiAPI, query *lokiQuery, responseOpts 
 		err = adjustFrame(frame, query, !responseOpts.metricDataplane, responseOpts.logsDataplane)
 
 		if err != nil {
-			logger.Error("Error adjusting frame", "error", err)
+			plog.Error("Error adjusting frame", "error", err)
 			return data.Frames{}, err
 		}
 	}
