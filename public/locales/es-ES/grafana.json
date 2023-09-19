@@ -217,12 +217,12 @@
       "unmark-favorite": "Deshacer marca como favorito"
     }
   },
+  "data-source-picker": {
+    "open-advanced-button": ""
+  },
   "data-sources": {
     "datasource-add-button": {
       "label": ""
-    },
-    "picker": {
-      "open-advanced-button": ""
     }
   },
   "explore": {

@@ -212,12 +212,12 @@
       "unmark-favorite": "Ůŉmäřĸ äş ƒävőřįŧę"
     }
   },
+  "data-source-picker": {
+    "open-advanced-button": ""
+  },
   "data-sources": {
     "datasource-add-button": {
       "label": "Åđđ ŉęŵ đäŧä şőūřčę"
-    },
-    "picker": {
-      "open-advanced-button": "Øpęŉ äđväŉčęđ đäŧä şőūřčę pįčĸęř"
     }
   },
   "explore": {

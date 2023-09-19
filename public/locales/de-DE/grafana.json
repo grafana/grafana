@@ -212,12 +212,12 @@
       "unmark-favorite": "Markierung als Favorit entfernen"
     }
   },
+  "data-source-picker": {
+    "open-advanced-button": ""
+  },
   "data-sources": {
     "datasource-add-button": {
       "label": ""
-    },
-    "picker": {
-      "open-advanced-button": ""
     }
   },
   "explore": {

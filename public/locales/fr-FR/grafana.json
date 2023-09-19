@@ -217,12 +217,12 @@
       "unmark-favorite": "Supprimer des favoris"
     }
   },
+  "data-source-picker": {
+    "open-advanced-button": ""
+  },
   "data-sources": {
     "datasource-add-button": {
       "label": ""
-    },
-    "picker": {
-      "open-advanced-button": ""
     }
   },
   "explore": {
