@@ -1300,6 +1300,16 @@ Users who use LDAP role sync to only sync Viewer, Editor and Admin roles, but gr
 - **ContextMenu:** Fix padding and show border based on items. [#63948](https://github.com/grafana/grafana/pull/63948), [@aocenas](https://github.com/aocenas)
 
 <!-- 9.5.0 END -->
+<!-- 9.4.15 START -->
+
+# 9.4.15 (2023-09-18)
+
+### Features and enhancements
+
+- **Chore:** Upgrade Alpine base image to 3.18.3. [#74996](https://github.com/grafana/grafana/issues/74996), [@zerok](https://github.com/zerok)
+- **Chore:** Upgrade Go to 1.20.8. [#74981](https://github.com/grafana/grafana/issues/74981), [@zerok](https://github.com/zerok)
+
+<!-- 9.4.15 END -->
 <!-- 9.4.14 START -->
 
 # 9.4.14 (2023-09-05)
