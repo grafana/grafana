@@ -364,7 +364,6 @@ describe('GroupBy transformer', () => {
         },
       ];
 
-      console.log(result[0].fields);
       expect(result[0].fields).toEqual(expected);
     });
   });
