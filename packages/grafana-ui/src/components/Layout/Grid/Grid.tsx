@@ -7,7 +7,6 @@ import { useStyles2 } from '../../../themes';
 
 export type ItemsAlignment = 'start' | 'end' | 'center' | 'stretch';
 
-export type ContentAlignment = ItemsAlignment | 'space-around' | 'space-between' | 'space-evenly';
 export interface GridProps {
   children: NonNullable<React.ReactNode>;
   /** Defines whether the element is a block-level or an inline-level grid */
