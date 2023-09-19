@@ -4,6 +4,7 @@ import React, { PropsWithChildren } from 'react';
 
 import { GrafanaTheme2, PageLayoutType } from '@grafana/data';
 import { useStyles2, LinkButton } from '@grafana/ui';
+import config from 'app/core/config';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { CommandPalette } from 'app/features/commandPalette/CommandPalette';
 import { KioskMode } from 'app/types';
@@ -61,7 +62,9 @@ export function AppChrome({ children }: Props) {
       )}
       <main className={contentClass} id="pageContent">
         <div className={styles.panes}>
-          {state.layout === PageLayoutType.Standard && state.sectionNav && <SectionNav model={state.sectionNav} />}
+          {state.layout === PageLayoutType.Standard && state.sectionNav && !config.featureToggles.dockedMegaMenu && (
+            <SectionNav model={state.sectionNav} />
+          )}
           <div className={styles.pageContainer}>{children}</div>
         </div>
       </main>

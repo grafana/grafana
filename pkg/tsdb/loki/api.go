@@ -177,18 +177,22 @@ func (api *LokiAPI) DataQuery(ctx context.Context, query lokiQuery, responseOpts
 		return nil, err
 	}
 
-	api.log.Info("Response received from loki", "duration", time.Since(start), "statusCode", resp.StatusCode, "contentLength", resp.Header.Get("Content-Length"), "stage", stageDatabaseRequest, "status", "ok", "query", query.Expr)
-
 	defer func() {
 		if err := resp.Body.Close(); err != nil {
 			api.log.Warn("Failed to close response body", "error", err)
 		}
 	}()
 
+	lp := []any{"duration", time.Since(start), "stage", stageDatabaseRequest, "statusCode", resp.StatusCode, "contentLength", resp.Header.Get("Content-Length")}
+	lp = append(lp, queryAttrs...)
 	if resp.StatusCode/100 != 2 {
 		err := readLokiError(resp.Body)
-		api.log.Error("Error received from loki", "error", err, "status", resp.StatusCode)
+		lp = append(lp, "status", "error", "error", err)
+		api.log.Error("Error received from Loki", lp...)
 		return nil, err
+	} else {
+		lp = append(lp, "status", "ok")
+		api.log.Info("Response received from loki", lp...)
 	}
 
 	start = time.Now()
