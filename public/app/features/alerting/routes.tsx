@@ -94,6 +94,13 @@ const unifiedRoutes: RouteDescriptor[] = [
     ),
   },
   {
+    path: '/alerting/home',
+    exact: false,
+    component: SafeDynamicImport(
+      () => import(/* webpackChunkName: "AlertingHome" */ 'app/features/alerting/unified/home/Home')
+    ),
+  },
+  {
     path: '/alerting/list',
     roles: evaluateAccess([AccessControlAction.AlertingRuleRead, AccessControlAction.AlertingRuleExternalRead]),
     component: SafeDynamicImport(
