@@ -4,10 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"xorm.io/xorm"
 
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
@@ -49,6 +51,10 @@ var _ dashboards.Store = (*dashboardStore)(nil)
 func ProvideDashboardStore(sqlStore db.DB, cfg *setting.Cfg, features featuremgmt.FeatureToggles, tagService tag.Service, quotaService quota.Service) (dashboards.Store, error) {
 	s := &dashboardStore{store: sqlStore, cfg: cfg, log: log.New("dashboard-store"), features: features, tagService: tagService}
 
+	if features.IsEnabled(featuremgmt.FlagPanelTitleSearchInV1) {
+		s.DBMigration(sqlStore)
+	}
+
 	defaultLimits, err := readQuotaConfig(cfg)
 	if err != nil {
 		return nil, err
@@ -63,6 +69,36 @@ func ProvideDashboardStore(sqlStore db.DB, cfg *setting.Cfg, features featuremgm
 	}
 
 	return s, nil
+}
+
+func (d *dashboardStore) DBMigration(db db.DB) {
+	ctx := context.Background()
+	var dashboards = make([]*dashboards.Dashboard, 0)
+
+	err := db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		var err error
+		err = sess.Table("dashboard").Find(&dashboards)
+		titles := make(map[int64]string, len(dashboards))
+		sep := " ,,, "
+		for _, d := range dashboards {
+			t := make([]string, 0)
+			panels := d.Data.Get("panels").MustArray()
+			for _, p := range panels {
+				panel := simplejson.NewFromAny(p)
+				title := panel.Get("title").MustString()
+				t = append(t, title)
+			}
+			titles[d.ID] = strings.Join(t, sep)
+		}
+
+		for k, v := range titles {
+			_, err = sess.Exec("UPDATE dashboard SET panel_titles = ? WHERE id = ?", v, k)
+		}
+		return err
+	})
+	if err != nil {
+		d.log.Error("DB migration on dashboard store start failed.")
+	}
 }
 
 func (d *dashboardStore) emitEntityEvent() bool {
