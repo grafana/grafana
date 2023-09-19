@@ -147,6 +147,7 @@ def build_e2e(trigger, ver_mode):
                     trigger = trigger_oss,
                     ver_mode = ver_mode,
                 ),
+                release_canary_npm_packages_step(trigger = trigger_oss),
             ],
         )
 

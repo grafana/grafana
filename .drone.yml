@@ -759,6 +759,23 @@ steps:
   volumes:
   - name: docker
     path: /var/run/docker.sock
+- commands:
+  - apk add --update bash
+  - ./scripts/publish-npm-packages.sh --dist-tag 'canary' --registry 'https://registry.npmjs.org'
+  depends_on:
+  - end-to-end-tests-dashboards-suite
+  - end-to-end-tests-panels-suite
+  - end-to-end-tests-smoke-tests-suite
+  - end-to-end-tests-various-suite
+  - build-frontend-packages
+  environment:
+    NPM_TOKEN:
+      from_secret: npm_token
+  image: node:18.12.0-alpine
+  name: release-canary-npm-packages
+  when:
+    repo:
+    - grafana/grafana
 trigger:
   event:
   - pull_request
@@ -4199,6 +4216,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: d2c4ca271a6125cdf5247ed1a0f8c318ba3e2ebd8cb37219686ed585312d5ac4
+hmac: 313e3c6d7aaa4f4331ba26113dd8da4548935f435b01aa579b65067b7220d417
 
 ...
