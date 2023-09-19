@@ -8,8 +8,6 @@ import {
   DataQueryError,
   DataQueryRequest,
   DataQueryResponse,
-  DataSourceGetTagKeysOptions,
-  DataSourceGetTagValuesOptions,
   DataSourceInstanceSettings,
   dateMath,
   DateTime,
