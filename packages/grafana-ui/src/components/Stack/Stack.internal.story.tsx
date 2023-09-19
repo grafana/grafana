@@ -12,7 +12,6 @@ import mdx from './Stack.mdx';
 const meta: Meta<typeof Stack> = {
   title: 'General/Layout/Stack',
   component: Stack,
-  // decorators: [withCenteredStory],
   parameters: {
     docs: {
       page: mdx,
@@ -24,7 +23,7 @@ const Item = ({ children }: { children: ReactNode }) => (
   <div style={{ backgroundColor: 'lightgrey', width: '100px', height: '50px' }}>{children}</div>
 );
 
-export const Basic: StoryFn<typeof Stack> = ({ direction = 'column', gap = 2 }) => {
+export const Basic: StoryFn<typeof Stack> = ({ direction = 'vertical', gap = 2 }) => {
   return (
     <Stack direction={direction} gap={gap}>
       <Item>Item 1</Item>
@@ -37,14 +36,36 @@ export const Basic: StoryFn<typeof Stack> = ({ direction = 'column', gap = 2 }) 
 export const TestCases: StoryFn<typeof Stack> = ({ direction = 'column', gap = 2 }) => {
   return (
     <div style={{ width: '100%' }}>
-      <Stack direction="column" gap={4}>
+      <Example title="Vertical stack, mismatched heights">
+        <Stack direction="vertical">
+          <Card>
+            <Card.Heading>I am a card heading</Card.Heading>
+          </Card>
+
+          <Card>
+            <Card.Heading>I am a card heading</Card.Heading>
+            <Card.Description>Ohhhhh - and now a description and some actions</Card.Description>
+            <Card.Actions>
+              <Button variant="secondary">Settings</Button>
+              <Button variant="secondary">Explore</Button>
+            </Card.Actions>
+          </Card>
+
+          <Card>
+            <Card.Heading>I am a card heading</Card.Heading>
+            <Card.Description>Ohhhhh - and now a description!</Card.Description>
+          </Card>
+          <Button>Hello, press to help me</Button>
+        </Stack>
+      </Example>
+      <Stack direction="vertical" gap={4}>
         <Example title="No stack">
           <Button>A button</Button>
           <Button>Longer button button</Button>
         </Example>
 
         <Example title="Horizontal/row stack">
-          <Stack direction="row">
+          <Stack direction="horizontal">
             <Button>A button</Button>
             <Button>Longer button button</Button>
           </Stack>
@@ -72,7 +93,7 @@ export const TestCases: StoryFn<typeof Stack> = ({ direction = 'column', gap = 2
 
         <div style={{ width: 500 }}>
           <Example title="Row, mismatched heights">
-            <Stack direction="row">
+            <Stack direction="horizontal">
               <MyComponent>
                 <div style={{ height: 50, width: 100, background: 'blue' }} />
               </MyComponent>
@@ -84,7 +105,7 @@ export const TestCases: StoryFn<typeof Stack> = ({ direction = 'column', gap = 2
         </div>
 
         <Example title="Horizontal/row stack, mismatched heights">
-          <Stack direction="row">
+          <Stack direction="horizontal">
             <Card>
               <Card.Heading>I am a card heading</Card.Heading>
             </Card>
@@ -106,7 +127,7 @@ export const TestCases: StoryFn<typeof Stack> = ({ direction = 'column', gap = 2
         </Example>
 
         <Example title="Horizontal/row stack, mismatched heights again">
-          <Stack direction="row">
+          <Stack direction="horizontal">
             <Card>
               <Card.Heading>I am a card heading</Card.Heading>
             </Card>
@@ -121,7 +142,7 @@ export const TestCases: StoryFn<typeof Stack> = ({ direction = 'column', gap = 2
         </Example>
 
         <Example title="Horizontal/row stack, alerts with even heights">
-          <Stack direction="row">
+          <Stack direction="horizontal">
             <Alert severity="info" title="Plus an alert!" />
             <Alert severity="success" title="Plus an alert!" />
             <Alert severity="warning" title="Plus an alert!" />
@@ -130,7 +151,7 @@ export const TestCases: StoryFn<typeof Stack> = ({ direction = 'column', gap = 2
         </Example>
 
         <Example title="Horizontal/row stack, alerts with mismatched heights">
-          <Stack direction="row">
+          <Stack direction="horizontal">
             <Alert severity="info" title="Plus an alert!" />
             <Alert severity="success" title="Plus an alert!" />
             <Alert severity="warning" title="Plus an alert!">
@@ -150,7 +171,7 @@ export const TestCases: StoryFn<typeof Stack> = ({ direction = 'column', gap = 2
           </Example>
 
           <Example title="Horizontal/row stack, too many items">
-            <Stack direction="row">
+            <Stack direction="horizontal">
               <Button>A button</Button>
               <Button>Longer button button</Button>
               <Button>Another button</Button>
@@ -161,7 +182,7 @@ export const TestCases: StoryFn<typeof Stack> = ({ direction = 'column', gap = 2
         </div>
 
         <Example title="Vertical/column stack">
-          <Stack direction="column">
+          <Stack direction="vertical">
             <Button>A button</Button>
             <Button>Longer button button</Button>
           </Stack>

@@ -19,7 +19,6 @@ const ThemeableStory = ({
   const css = `#storybook-root {
     width: 100%;
     padding: 20px;
-    display: flex;
     height: 100%;
     min-height: 100%;
     background: ${theme.colors.background.primary};
