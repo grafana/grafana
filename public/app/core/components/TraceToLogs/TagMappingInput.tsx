@@ -25,14 +25,14 @@ export const TagMappingInput = ({ values, onChange, id }: Props) => {
               placeholder={'Tag name'}
               value={value.key}
               onChange={(e) => {
-                onChange(
-                  values.map((v, i) => {
-                    if (i === idx) {
-                      v.key = String(e);
-                    }
-                    return v;
-                  })
-                );
+                const vals = [...values];
+                vals.map((v, i) => {
+                  if (i === idx) {
+                    v.key = String(e);
+                  }
+                  return v;
+                });
+                onChange(vals);
               }}
             />
             <InlineLabel aria-label="equals" className={styles.operator}>
@@ -43,14 +43,14 @@ export const TagMappingInput = ({ values, onChange, id }: Props) => {
               placeholder={'New name (optional)'}
               value={value.value || ''}
               onChange={(e) => {
-                onChange(
-                  values.map((v, i) => {
-                    if (i === idx) {
-                      v.value = String(e);
-                    }
-                    return v;
-                  })
-                );
+                const vals = [...values];
+                vals.map((v, i) => {
+                  if (i === idx) {
+                    v.value = String(e);
+                  }
+                  return v;
+                });
+                onChange(vals);
               }}
             />
             <button
