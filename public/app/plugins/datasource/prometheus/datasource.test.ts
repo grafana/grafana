@@ -172,10 +172,14 @@ describe('PrometheusDatasource', () => {
       ).rejects.toMatchObject({
         message: expect.stringMatching('Browser access'),
       });
-      await expect(directDs.getTagKeys()).rejects.toMatchObject({
-        message: expect.stringMatching('Browser access'),
-      });
-      await expect(directDs.getTagValues()).rejects.toMatchObject({
+
+      const errorMock = jest.spyOn(console, 'error').mockImplementation(() => {});
+
+      await directDs.getTagKeys({ filters: [] });
+      // Language provider currently catches and just logs the error
+      expect(errorMock).toHaveBeenCalledTimes(1);
+
+      await expect(directDs.getTagValues({ filters: [], key: 'A' })).rejects.toMatchObject({
         message: expect.stringMatching('Browser access'),
       });
     });
