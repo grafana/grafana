@@ -40,9 +40,8 @@ export const getStyles = stylesFactory((theme: GrafanaTheme2) => {
     indentGuide: css`
       label: indentGuide;
       /* The size of the indentGuide is based off of the iconWrapper */
-      padding-right: calc(0.5rem + 12px);
+      padding-right: 1rem;
       height: 100%;
-      border-left: 3px solid transparent;
       display: inline-flex;
       &::before {
         content: '';
@@ -60,7 +59,7 @@ export const getStyles = stylesFactory((theme: GrafanaTheme2) => {
     iconWrapper: css`
       label: iconWrapper;
       position: absolute;
-      right: 0.25rem;
+      right: -0.15rem;
     `,
   };
 });

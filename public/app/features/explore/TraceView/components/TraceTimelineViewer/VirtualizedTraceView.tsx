@@ -406,6 +406,8 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
       };
     }
 
+    const prevSpan = spanIndex > 0 ? trace.spans[spanIndex - 1] : null;
+
     const styles = getStyles(this.props);
     return (
       <div className={styles.row} key={key} style={style} {...attrs}>
@@ -434,6 +436,7 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
           removeHoverIndentGuideId={removeHoverIndentGuideId}
           createSpanLink={createSpanLink}
           datasourceType={datasourceType}
+          showServiceName={prevSpan === null || prevSpan.process.serviceName !== span.process.serviceName}
         />
       </div>
     );

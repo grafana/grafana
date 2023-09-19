@@ -73,7 +73,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme2, showSpanFilterMatchesOnly
     `,
     endpointName: css`
       label: endpointName;
-      color: ${autoColor(theme, '#808080')};
+      color: ${autoColor(theme, '#404040')};
     `,
     view: css`
       label: view;
@@ -91,6 +91,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme2, showSpanFilterMatchesOnly
     `,
     row: css`
       label: row;
+      font-size: 0.9em;
       &:hover .${spanBarClassName} {
         opacity: 1;
       }
@@ -222,24 +223,17 @@ const getStyles = stylesFactory((theme: GrafanaTheme2, showSpanFilterMatchesOnly
       &::-webkit-scrollbar {
         display: none;
       }
-      &::before {
-        content: ' ';
-        position: absolute;
-        top: 4px;
-        bottom: 4px;
-        left: 0;
-        border-left: 4px solid;
-        border-left-color: inherit;
-      }
       &:focus {
         text-decoration: none;
       }
-      &:hover > small {
+      &:hover > span {
         color: ${autoColor(theme, '#000')};
       }
       text-align: left;
       background: transparent;
       border: none;
+      border-bottom-width: 1px;
+      border-bottom-style: solid;
     `,
     nameDetailExpanded: css`
       label: nameDetailExpanded;
@@ -250,7 +244,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme2, showSpanFilterMatchesOnly
     svcName: css`
       label: svcName;
       padding: 0 0.25rem 0 0.5rem;
-      font-size: 1.05em;
+      font-size: 1.025em;
     `,
     svcNameChildrenCollapsed: css`
       label: svcNameChildrenCollapsed;
@@ -301,6 +295,7 @@ export type SpanBarRowProps = {
   onDetailToggled: (spanID: string) => void;
   onChildrenToggled: (spanID: string) => void;
   numTicks: number;
+  showServiceName: boolean;
   rpc?:
     | {
         viewStart: number;
@@ -378,6 +373,7 @@ export class UnthemedSpanBarRow extends React.PureComponent<SpanBarRowProps> {
       theme,
       createSpanLink,
       datasourceType,
+      showServiceName,
     } = this.props;
     const {
       duration,
@@ -443,40 +439,42 @@ export class UnthemedSpanBarRow extends React.PureComponent<SpanBarRowProps> {
               style={{ borderColor: color }}
               tabIndex={0}
             >
-              <span
-                className={cx(styles.svcName, {
-                  [styles.svcNameChildrenCollapsed]: isParent && !isChildrenExpanded,
-                })}
-              >
-                {showErrorIcon && (
-                  <Icon
-                    name={'exclamation-circle'}
-                    style={{
-                      backgroundColor: span.errorIconColor
-                        ? autoColor(theme, span.errorIconColor)
-                        : autoColor(theme, '#db2828'),
-                    }}
-                    className={styles.errorIcon}
-                  />
-                )}
-                {serviceName}{' '}
-                {rpc && (
-                  <span>
-                    <Icon name={'arrow-right'} />{' '}
-                    <i className={styles.rpcColorMarker} style={{ background: rpc.color }} />
-                    {rpc.serviceName}
-                  </span>
-                )}
-                {noInstrumentedServer && (
-                  <span>
-                    <Icon name={'arrow-right'} />{' '}
-                    <i className={styles.rpcColorMarker} style={{ background: noInstrumentedServer.color }} />
-                    {noInstrumentedServer.serviceName}
-                  </span>
-                )}
-              </span>
-              <small className={styles.endpointName}>{rpc ? rpc.operationName : operationName}</small>
-              <small className={styles.endpointName}> {this.getSpanBarLabel(span, spanBarOptions, label)}</small>
+              {showErrorIcon && (
+                <Icon
+                  name={'exclamation-circle'}
+                  style={{
+                    backgroundColor: span.errorIconColor
+                      ? autoColor(theme, span.errorIconColor)
+                      : autoColor(theme, '#db2828'),
+                  }}
+                  className={styles.errorIcon}
+                />
+              )}
+              {showServiceName && (
+                <span
+                  className={cx(styles.svcName, {
+                    [styles.svcNameChildrenCollapsed]: isParent && !isChildrenExpanded,
+                  })}
+                >
+                  {`${serviceName} `}
+                </span>
+              )}
+              {rpc && (
+                <span>
+                  <Icon name={'arrow-right'} />{' '}
+                  <i className={styles.rpcColorMarker} style={{ background: rpc.color }} />
+                  {rpc.serviceName}
+                </span>
+              )}
+              {noInstrumentedServer && (
+                <span>
+                  <Icon name={'arrow-right'} />{' '}
+                  <i className={styles.rpcColorMarker} style={{ background: noInstrumentedServer.color }} />
+                  {noInstrumentedServer.serviceName}
+                </span>
+              )}
+              <span className={styles.endpointName}>{rpc ? rpc.operationName : operationName}</span>
+              <span className={styles.endpointName}> {this.getSpanBarLabel(span, spanBarOptions, label)}</span>
             </button>
             {createSpanLink &&
               (() => {
