@@ -669,8 +669,9 @@
       "aria-label": "Ŧūřŉ őƒƒ äūŧő řęƒřęşĥ",
       "label": "Øƒƒ"
     },
-    "select-button": {
-      "auto-refresh": "Ŝęŧ äūŧő řęƒřęşĥ įŉŧęřväľ"
+    "tooltip": {
+      "interval-selected": "Ŝęŧ äūŧő řęƒřęşĥ įŉŧęřväľ",
+      "turned-off": "Åūŧő řęƒřęşĥ őƒƒ"
     }
   },
   "search": {
