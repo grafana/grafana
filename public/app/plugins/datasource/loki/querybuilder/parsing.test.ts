@@ -66,6 +66,7 @@ describe('buildVisualQueryFromString', () => {
 
   it('parses binary operation with query', () => {
     expect(
+      // There is no capability for "bool" in the query builder for (nested) binary operation with query as of now, it will always be stripped out
       buildVisualQueryFromString(
         'max by(stream) (count_over_time({app="aggregator"}[1m])) > bool ignoring(stream) avg(count_over_time({app="aggregator"}[1m]))'
       )

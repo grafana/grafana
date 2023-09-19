@@ -580,15 +580,20 @@ function getBinaryModifier(
   node: SyntaxNode | null
 ):
   | { isBool: true; isMatcher: false }
-  | { isBool: false; isMatcher: true; matches: string; matchType: 'ignoring' | 'on' }
+  | { isBool: boolean; isMatcher: true; matches: string; matchType: 'ignoring' | 'on' }
   | undefined {
   if (!node) {
     return undefined;
   }
-  if (node.getChild(Bool)) {
+  const matcher = node.getChild(OnOrIgnoringModifier);
+  const boolMatcher = node.getChild(Bool);
+
+  console.log('matcher', matcher);
+  console.log('boolMatcher', boolMatcher);
+
+  if (!matcher && boolMatcher) {
     return { isBool: true, isMatcher: false };
   } else {
-    const matcher = node.getChild(OnOrIgnoringModifier);
     if (!matcher) {
       // Not sure what this could be, maybe should be an error.
       return undefined;
@@ -596,7 +601,7 @@ function getBinaryModifier(
     const labels = getString(expr, matcher.getChild(GroupingLabels)?.getChild(GroupingLabelList));
     return {
       isMatcher: true,
-      isBool: false,
+      isBool: !!boolMatcher,
       matches: labels,
       matchType: matcher.getChild(On) ? 'on' : 'ignoring',
     };
