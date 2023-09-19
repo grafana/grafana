@@ -13,8 +13,8 @@ labels:
     - cloud
     - enterprise
     - oss
-menuTitle: Panels
-title: Panels
+menuTitle: Panels visualizations widgets
+title: Panels, visualizations, and widgets
 weight: 80
 ---
 
