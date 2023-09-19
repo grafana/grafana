@@ -2,13 +2,14 @@ import { css } from '@emotion/css';
 import React, { useEffect, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Button, Spinner, useStyles2, Link, Tooltip } from '@grafana/ui';
+import { Button, Spinner, useStyles2, Link, Tooltip, Toggletip } from '@grafana/ui';
 
 import { Message, generateTextWithLLM, isLLMPluginEnabled } from './utils';
 
 export interface GenAIButtonProps {
   text?: string;
   loadingText?: string;
+  toggleTipTitle?: string;
   onClick?: (e: React.MouseEvent<HTMLButtonElement>) => void;
   messages: Message[];
   onReply: (response: string, isDone: boolean) => void;
@@ -17,6 +18,7 @@ export interface GenAIButtonProps {
 export const GenAIButton = ({
   text = 'Auto-generate',
   loadingText = 'Generating',
+  toggleTipTitle = '',
   onClick,
   messages,
   onReply,
@@ -24,16 +26,24 @@ export const GenAIButton = ({
   const styles = useStyles2(getStyles);
   const [enabled, setEnabled] = useState(true);
   const [loading, setLoading] = useState(false);
+  const [history, setHistory] = useState<string[]>([]);
 
   const replyHandler = (response: string, isDone: boolean) => {
     setLoading(!isDone);
     onReply(response, isDone);
+
+    if (isDone) {
+      setHistory([...history, response]);
+    }
   };
 
   const onGenerate = (e: React.MouseEvent<HTMLButtonElement>) => {
     onClick?.(e);
-    setLoading(true);
-    generateTextWithLLM(messages, replyHandler);
+
+    if (!history.length) {
+      setLoading(true);
+      generateTextWithLLM(messages, replyHandler);
+    }
   };
 
   useEffect(() => {
@@ -52,6 +62,50 @@ export const GenAIButton = ({
     return 'ai';
   };
 
+  const getText = () => {
+    let buttonText = text;
+
+    if (history.length > 0) {
+      buttonText = 'Improve';
+    }
+
+    if (loading) {
+      buttonText = loadingText;
+    }
+
+    return buttonText;
+  };
+
+  const renderHistory = () => {
+    return (
+      <div>
+        {history.map((item, index) => (
+          <div key={index}>{item}</div>
+        ))}
+      </div>
+    );
+  };
+
+  const renderButton = () => {
+    if (history.length > 0) {
+      return (
+        <Toggletip title={toggleTipTitle} content={renderHistory} placement="left">
+          {getButton()}
+        </Toggletip>
+      );
+    }
+
+    return getButton();
+  };
+
+  const getButton = () => {
+    return (
+      <Button icon={getIcon()} onClick={onGenerate} fill="text" size="sm" disabled={loading || !enabled}>
+        {getText()}
+      </Button>
+    );
+  };
+
   return (
     <div className={styles.wrapper}>
       {loading && <Spinner size={14} />}
@@ -65,9 +119,7 @@ export const GenAIButton = ({
           </span>
         }
       >
-        <Button icon={getIcon()} onClick={onGenerate} fill="text" size="sm" disabled={loading || !enabled}>
-          {!loading ? text : loadingText}
-        </Button>
+        {renderButton()}
       </Tooltip>
     </div>
   );

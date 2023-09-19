@@ -40,5 +40,12 @@ export const GenAIPanelTitleButton = ({ onGenerate, panel }: GenAIPanelTitleButt
     ];
   }
 
-  return <GenAIButton messages={getMessages()} onReply={onGenerate} loadingText={'Generating title'} />;
+  return (
+    <GenAIButton
+      messages={getMessages()}
+      onReply={onGenerate}
+      loadingText={'Generating title'}
+      toggleTipTitle={'Improving your panel title'}
+    />
+  );
 };

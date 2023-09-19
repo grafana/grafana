@@ -40,5 +40,12 @@ export const GenAIPanelDescriptionButton = ({ onGenerate, panel }: GenAIPanelDes
     ];
   }
 
-  return <GenAIButton messages={getMessages()} onReply={onGenerate} loadingText={'Generating description'} />;
+  return (
+    <GenAIButton
+      messages={getMessages()}
+      onReply={onGenerate}
+      loadingText={'Generating description'}
+      toggleTipTitle={'Improving your panel description'}
+    />
+  );
 };
