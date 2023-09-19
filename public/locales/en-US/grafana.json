@@ -212,12 +212,12 @@
       "unmark-favorite": "Unmark as favorite"
     }
   },
+  "data-source-picker": {
+    "open-advanced-button": "Open advanced data source picker"
+  },
   "data-sources": {
     "datasource-add-button": {
       "label": "Add new data source"
-    },
-    "picker": {
-      "open-advanced-button": "Open advanced data source picker"
     }
   },
   "explore": {
