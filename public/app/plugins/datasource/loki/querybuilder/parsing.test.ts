@@ -64,6 +64,62 @@ describe('buildVisualQueryFromString', () => {
     });
   });
 
+  it('parses binary operation with query', () => {
+    expect(
+      buildVisualQueryFromString(
+        'max by(stream) (count_over_time({app="aggregator"}[1m])) > bool ignoring(stream) avg(count_over_time({app="aggregator"}[1m]))'
+      )
+    ).toEqual({
+      query: {
+        binaryQueries: [
+          {
+            // nested binary operation
+            operator: '>',
+            query: {
+              labels: [
+                {
+                  label: 'app',
+                  op: '=',
+                  value: 'aggregator',
+                },
+              ],
+              operations: [
+                {
+                  id: 'count_over_time',
+                  params: ['1m'],
+                },
+                {
+                  id: 'avg',
+                  params: [],
+                },
+              ],
+            },
+            vectorMatches: 'stream',
+            vectorMatchesType: 'ignoring',
+          },
+        ],
+        labels: [
+          {
+            label: 'app',
+            op: '=',
+            value: 'aggregator',
+          },
+        ],
+        operations: [
+          {
+            id: 'count_over_time',
+            params: ['1m'],
+          },
+          {
+            id: '__max_by',
+            params: ['stream'],
+          },
+        ],
+      },
+      errors: [],
+    });
+  });
+
   it('parses simple query with label-values', () => {
     expect(buildVisualQueryFromString('{app="frontend"}')).toEqual(
       noErrors({
