@@ -224,6 +224,11 @@
     "callees": "Callees",
     "callers": "Callers"
   },
+  "flame-graph-context-menu": {
+    "copy-label": "Copy function name",
+    "focus-label": "Focus block",
+    "sandwich-label": "Sandwich view"
+  },
   "flame-graph-header": {
     "align-left-description": "Align text left",
     "align-right-description": "Align text right",
