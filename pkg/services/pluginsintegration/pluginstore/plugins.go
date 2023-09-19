@@ -30,9 +30,6 @@ type Plugin struct {
 	BaseURL string
 
 	AngularDetected bool
-
-	// This will be moved to plugin.json when we have general support in gcom
-	Alias string `json:"alias,omitempty"`
 }
 
 func (p Plugin) SupportsStreaming() bool {
@@ -73,6 +70,5 @@ func ToGrafanaDTO(p *plugins.Plugin) Plugin {
 		Module:            p.Module,
 		BaseURL:           p.BaseURL,
 		AngularDetected:   p.AngularDetected,
-		Alias:             p.Alias,
 	}
 }
