@@ -9,6 +9,7 @@ import {
   PanelData,
   PanelPlugin,
   LoadingState,
+  DataQueryError,
 } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 import { Drawer, Tab, TabsBar } from '@grafana/ui';
@@ -59,18 +60,7 @@ export const InspectContent = ({
     return null;
   }
 
-  let errors = data?.errors;
-  if (!errors?.length) {
-    if (data?.error) {
-      errors = [data.error];
-    } else if (data?.state === LoadingState.Error) {
-      errors = [
-        {
-          message: 'Error loading data',
-        },
-      ];
-    }
-  }
+  let errors = getErrors(data);
 
   // Validate that the active tab is actually valid and allowed
   let activeTab = currentTab;
@@ -129,6 +119,22 @@ export const InspectContent = ({
     </Drawer>
   );
 };
+
+// This will combine
+function getErrors(data: PanelData | undefined): DataQueryError[] {
+  let errors = data?.errors ?? [];
+  if (data?.error && !errors.includes(data.error)) {
+    errors = [data.error, ...errors];
+  }
+  if (!errors.length && data?.state === LoadingState.Error) {
+    return [
+      {
+        message: 'Error loading data',
+      },
+    ];
+  }
+  return errors;
+}
 
 function formatStats(data: PanelData) {
   const { request } = data;
