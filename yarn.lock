@@ -4150,7 +4150,6 @@ __metadata:
     is-hotkey: 0.2.0
     jquery: 3.7.0
     lodash: 4.17.21
-    memoize-one: 6.0.0
     micro-memoize: ^4.1.2
     mock-raf: 1.0.1
     moment: 2.29.4
