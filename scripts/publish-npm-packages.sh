@@ -48,3 +48,5 @@ for file in ./npm-artifacts/*.tgz; do
     echo "we will publish $file to registry: $registry with tag: $dist_tag"
     # npm publish "$file" --tag "$dist_tag" --registry "$registry" --
 done
+
+exit 2
