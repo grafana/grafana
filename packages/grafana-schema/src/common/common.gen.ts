@@ -353,12 +353,12 @@ export interface ScaleDistributionConfig {
  * TODO docs
  */
 export interface AxisConfig {
+  axisBorderShow?: boolean;
   axisCenteredZero?: boolean;
   axisColorMode?: AxisColorMode;
   axisGridShow?: boolean;
   axisLabel?: string;
   axisPlacement?: AxisPlacement;
-  axisBorderShow?: boolean;
   axisSoftMax?: number;
   axisSoftMin?: number;
   axisWidth?: number;
