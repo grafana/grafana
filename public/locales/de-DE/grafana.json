@@ -224,6 +224,11 @@
     "callees": "",
     "callers": ""
   },
+  "flame-graph-context-menu": {
+    "copy-label": "",
+    "focus-label": "",
+    "sandwich-label": ""
+  },
   "flame-graph-header": {
     "align-left-description": "",
     "align-right-description": "",
