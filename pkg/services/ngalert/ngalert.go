@@ -294,6 +294,7 @@ func (ng *AlertNG) init() error {
 		ApplyNoDataAndErrorToAllStates: ng.FeatureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingNoDataErrorExecution),
 		Tracer:                         ng.tracer,
 		Log:                            log.New("ngalert.state.manager"),
+		SaveStateAsync:                 ng.FeatureToggles.IsEnabled(featuremgmt.FlagAlertingSaveStateAsync),
 	}
 	stateManager := state.NewManager(cfg)
 	scheduler := schedule.NewScheduler(schedCfg, stateManager)

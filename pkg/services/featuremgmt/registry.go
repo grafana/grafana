@@ -1323,5 +1323,13 @@ var (
 			AllowSelfServe: false,
 			Created:        time.Date(2024, time.January, 10, 12, 0, 0, 0, time.UTC),
 		},
+		{
+			Name:         "alertingSaveStateAsync",
+			Description:  "Writes the state only on a given interval to database",
+			Stage:        FeatureStagePrivatePreview,
+			FrontendOnly: false,
+			Owner:        grafanaAlertingSquad,
+			Created:      time.Date(2024, time.January, 10, 12, 0, 0, 0, time.UTC),
+		},
 	}
 )

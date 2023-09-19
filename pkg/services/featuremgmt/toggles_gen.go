@@ -630,4 +630,8 @@ const (
 	// FlagAlertingQueryOptimization
 	// Optimizes eligible queries in order to reduce load on datasources
 	FlagAlertingQueryOptimization = "alertingQueryOptimization"
+
+	// FlagAlertingSaveStateAsync
+	// Writes the state only on a given interval to database
+	FlagAlertingSaveStateAsync = "alertingSaveStateAsync"
 )
