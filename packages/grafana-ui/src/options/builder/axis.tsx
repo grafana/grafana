@@ -57,14 +57,14 @@ export function addAxisConfig(
       path: 'axisGridShow',
       name: 'Show grid lines',
       category,
-      defaultValue: undefined,
+      defaultValue: true,
       settings: {
         options: [
-          { value: undefined, label: 'Auto' },
           { value: true, label: 'On' },
           { value: false, label: 'Off' },
         ],
       },
+      showIf: (c) => c.axisPlacement !== AxisPlacement.Hidden,
     })
     .addRadio({
       path: 'axisColorMode',
@@ -77,12 +77,14 @@ export function addAxisConfig(
           { value: AxisColorMode.Series, label: 'Series' },
         ],
       },
+      showIf: (c) => c.axisPlacement !== AxisPlacement.Hidden,
     })
     .addBooleanSwitch({
-      path: 'axisShow',
+      path: 'axisShow',  // TODO: rename to axisBorderShow / Show border
       name: 'Show axis',
       category,
       defaultValue: false,
+      showIf: (c) => c.axisPlacement !== AxisPlacement.Hidden,
     });
 
   // options for scale range

@@ -622,6 +622,7 @@ const prepConfig = (
     scaleKey: 'x',
     placement: customConfig?.axisPlacement !== AxisPlacement.Hidden ? AxisPlacement.Bottom : AxisPlacement.Hidden,
     show: customConfig?.axisPlacement !== AxisPlacement.Hidden,
+    grid: { show: customConfig?.axisGridShow },
     theme,
     label:
       xAxisLabel == null || xAxisLabel === ''
@@ -667,6 +668,7 @@ const prepConfig = (
       theme,
       placement: customConfig?.axisPlacement === AxisPlacement.Auto ? AxisPlacement.Left : customConfig?.axisPlacement,
       show: customConfig?.axisPlacement !== AxisPlacement.Hidden,
+      grid: { show: customConfig?.axisGridShow },
       label:
         yAxisLabel == null || yAxisLabel === ''
           ? getFieldDisplayName(field, scatterSeries[si].frame(frames), frames)
