@@ -197,65 +197,46 @@ func queryData(ctx context.Context, req *backend.QueryDataRequest, dsInfo *datas
 		resultLock := sync.Mutex{}
 		err = concurrency.ForEachJob(ctx, len(queries), 10, func(ctx context.Context, idx int) error {
 			query := queries[idx]
-			ctx, span := tracer.Start(ctx, "datasource.loki.queryData.runQuery")
-			span.SetAttributes("runInParallel", true, attribute.Key("runInParallel").Bool(true))
-			span.SetAttributes("expr", query.Expr, attribute.Key("expr").String(query.Expr))
-			span.SetAttributes("start_unixnano", query.Start, attribute.Key("start_unixnano").Int64(query.Start.UnixNano()))
-			span.SetAttributes("stop_unixnano", query.End, attribute.Key("stop_unixnano").Int64(query.End.UnixNano()))
-
-			if req.GetHTTPHeader("X-Query-Group-Id") != "" {
-				span.SetAttributes("query_group_id", req.GetHTTPHeader("X-Query-Group-Id"), attribute.Key("query_group_id").String(req.GetHTTPHeader("X-Query-Group-Id")))
-			}
-
-			frames, err := runQuery(ctx, api, query, responseOpts)
-
-			queryRes := backend.DataResponse{}
-
-			if err != nil {
-				span.RecordError(err)
-				span.SetStatus(codes.Error, err.Error())
-				queryRes.Error = err
-			} else {
-				queryRes.Frames = frames
-			}
-			span.End()
+			queryRes := executeQuery(ctx, query, req, runInParallel, api, responseOpts, tracer)
 
 			resultLock.Lock()
 			defer resultLock.Unlock()
 			result.Responses[query.RefID] = queryRes
-
 			return nil // errors are saved per-query,always return nil
 		})
 	} else {
 		for _, query := range queries {
-			ctx, span := tracer.Start(ctx, "datasource.loki.queryData.runQuery")
-			span.SetAttributes("runInParallel", false, attribute.Key("runInParallel").Bool(false))
-			span.SetAttributes("expr", query.Expr, attribute.Key("expr").String(query.Expr))
-			span.SetAttributes("start_unixnano", query.Start, attribute.Key("start_unixnano").Int64(query.Start.UnixNano()))
-			span.SetAttributes("stop_unixnano", query.End, attribute.Key("stop_unixnano").Int64(query.End.UnixNano()))
-
-			if req.GetHTTPHeader("X-Query-Group-Id") != "" {
-				span.SetAttributes("query_group_id", req.GetHTTPHeader("X-Query-Group-Id"), attribute.Key("query_group_id").String(req.GetHTTPHeader("X-Query-Group-Id")))
-			}
-
-			frames, err := runQuery(ctx, api, query, responseOpts)
-
-			queryRes := backend.DataResponse{}
-
-			if err != nil {
-				span.RecordError(err)
-				span.SetStatus(codes.Error, err.Error())
-				queryRes.Error = err
-			} else {
-				queryRes.Frames = frames
-			}
-
+			queryRes := executeQuery(ctx, query, req, runInParallel, api, responseOpts, tracer)
 			result.Responses[query.RefID] = queryRes
-			span.End()
 		}
 	}
 
 	return result, err
+}
+
+func executeQuery(ctx context.Context, query *lokiQuery, req *backend.QueryDataRequest, runInParallel bool, api *LokiAPI, responseOpts ResponseOpts, tracer tracing.Tracer) backend.DataResponse {
+	_, span := tracer.Start(ctx, "datasource.loki.queryData.runQuery")
+	span.SetAttributes("runInParallel", runInParallel, attribute.Key("runInParallel").Bool(true))
+	span.SetAttributes("expr", query.Expr, attribute.Key("expr").String(query.Expr))
+	span.SetAttributes("start_unixnano", query.Start, attribute.Key("start_unixnano").Int64(query.Start.UnixNano()))
+	span.SetAttributes("stop_unixnano", query.End, attribute.Key("stop_unixnano").Int64(query.End.UnixNano()))
+	if req.GetHTTPHeader("X-Query-Group-Id") != "" {
+		span.SetAttributes("query_group_id", req.GetHTTPHeader("X-Query-Group-Id"), attribute.Key("query_group_id").String(req.GetHTTPHeader("X-Query-Group-Id")))
+	}
+
+	defer span.End()
+
+	frames, err := runQuery(ctx, api, query, responseOpts)
+	queryRes := backend.DataResponse{}
+	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+		queryRes.Error = err
+	} else {
+		queryRes.Frames = frames
+	}
+
+	return queryRes
 }
 
 // we extracted this part of the functionality to make it easy to unit-test it
