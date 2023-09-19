@@ -430,11 +430,13 @@ function resolveLogfmtParser(_: SyntaxNode, text: string, cursorPosition: number
 
   const tree = parser.parse(text);
 
+  // Adjust the cursor position if there are spaces at the end of the text.
   const trimRightTextLen = text.substring(0, cursorPosition).trimEnd().length;
   const position = trimRightTextLen < cursorPosition ? trimRightTextLen : cursorPosition;
 
   const cursor = tree.cursorAt(position);
 
+  // Check if the user cursor is in any node that requires logfmt suggestions.
   const expectedNodes = [Logfmt, ParserFlag, LabelExtractionExpression, LabelExtractionExpressionList];
   let inLogfmt = false;
   do {
