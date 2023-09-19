@@ -114,7 +114,7 @@
             "showLineNumbers": false,
             "showMiniMap": false
           },
-          "content": "# Azure Database for PostgreSQL Flexible Server - Monitoring Dashboard\r\n#### - Each metric is emitted at a 1-minute interval and has up to 93 days of history.\r\n#### - For complete list of metrics, refer [Azure PostgreSQL Monitoring Metrics](https://learn.microsoft.com/en-us/azure/postgresql/flexible-server/concepts-monitoring)",
+          "content": "# Azure Database for PostgreSQL Flexible Server - Monitoring Dashboard\r\n#### - Each metric is emitted at a 1-minute interval and has up to 93 days of history.\r\n#### - For a complete list of metrics, refer to [Azure PostgreSQL Monitoring Metrics](https://learn.microsoft.com/en-us/azure/postgresql/flexible-server/concepts-monitoring)",
           "mode": "markdown"
         },
         "transparent": true,
@@ -1697,7 +1697,7 @@
           "type": "datasource",
           "uid": "-- Mixed --"
         },
-        "description": "Number of total transactions that executed in this database.",
+        "description": "Number of total transactions executed in this database.",
         "fieldConfig": {
           "defaults": {
             "color": {
@@ -2856,7 +2856,7 @@
             "showLineNumbers": false,
             "showMiniMap": false
           },
-          "content": "#### **NOTE**: While metrics are stored for 93 days, you can only query (in the Metrics tile) for a maximum of 30 days' worth of data on any single chart. If you see a blank chart or your chart displays only part of metric data, verify that the difference between start and end dates in the time picker doesn't exceed the 30-day interval. After you've selected a 30-day interval, you can pan the chart to view the full retention window.",
+          "content": "#### **NOTE**: While metrics are stored for 93 days, you can only query (in the Metrics tile) for a maximum of 30 days worth of data on any single chart. If you see a blank chart or your chart displays only part of metric data, verify that the difference between start and end dates in the time picker doesn't exceed the 30-day interval. After you've selected a 30-day interval, you can pan the chart to view the full retention window.",
           "mode": "markdown"
         },
         "transparent": true,
@@ -3360,7 +3360,7 @@
           "type": "grafana-azure-monitor-datasource",
           "uid": "${ds}"
         },
-        "description": "Number of total transactions that executed in this database (by database)",
+        "description": "Number of total transactions executed in this database (by database)",
         "fieldConfig": {
           "defaults": {
             "color": {
@@ -6488,7 +6488,7 @@
               "type": "grafana-azure-monitor-datasource",
               "uid": "${ds}"
             },
-            "description": "Overall state of the back ends",
+            "description": "Overall state of the backends",
             "fieldConfig": {
               "defaults": {
                 "color": {
@@ -6672,7 +6672,7 @@
               "type": "grafana-azure-monitor-datasource",
               "uid": "${ds}"
             },
-            "description": "Sessions by the type of event for which the back end is waiting",
+            "description": "Sessions by the type of event for which the backend is waiting",
             "fieldConfig": {
               "defaults": {
                 "color": {
@@ -7970,7 +7970,7 @@
               "type": "grafana-azure-monitor-datasource",
               "uid": "${ds}"
             },
-            "description": "Indicates if the database is up or not in last 30 days",
+            "description": "Indicates if the database is up or not in the last 30 days",
             "fieldConfig": {
               "defaults": {
                 "color": {
