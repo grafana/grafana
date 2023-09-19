@@ -81,8 +81,8 @@ export function addAxisConfig(
       showIf: (c) => c.axisPlacement !== AxisPlacement.Hidden,
     })
     .addBooleanSwitch({
-      path: 'axisShow',  // TODO: rename to axisBorderShow / Show border
-      name: 'Show axis',
+      path: 'axisShow', // TODO: rename to axisBorderShow
+      name: 'Show border',
       category,
       defaultValue: false,
       showIf: (c) => c.axisPlacement !== AxisPlacement.Hidden,

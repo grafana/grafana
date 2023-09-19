@@ -623,6 +623,7 @@ const prepConfig = (
     placement: customConfig?.axisPlacement !== AxisPlacement.Hidden ? AxisPlacement.Bottom : AxisPlacement.Hidden,
     show: customConfig?.axisPlacement !== AxisPlacement.Hidden,
     grid: { show: customConfig?.axisGridShow },
+    border: { show: customConfig?.axisShow },
     theme,
     label:
       xAxisLabel == null || xAxisLabel === ''
@@ -669,6 +670,8 @@ const prepConfig = (
       placement: customConfig?.axisPlacement === AxisPlacement.Auto ? AxisPlacement.Left : customConfig?.axisPlacement,
       show: customConfig?.axisPlacement !== AxisPlacement.Hidden,
       grid: { show: customConfig?.axisGridShow },
+      border: { show: customConfig?.axisShow },
+      size: customConfig?.axisWidth,
       label:
         yAxisLabel == null || yAxisLabel === ''
           ? getFieldDisplayName(field, scatterSeries[si].frame(frames), frames)
