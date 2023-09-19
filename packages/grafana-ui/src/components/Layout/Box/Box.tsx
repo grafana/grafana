@@ -77,7 +77,7 @@ export const Box = ({ children, ...props }: React.PropsWithChildren<BoxProps>) =
 
 Box.displayName = 'Box';
 
-const customBorderColor = (color: BorderColor, theme: GrafanaTheme2): string | undefined => {
+const customBorderColor = (color: BorderColor, theme: GrafanaTheme2) => {
   switch (color) {
     case 'error':
     case 'success':
@@ -89,7 +89,7 @@ const customBorderColor = (color: BorderColor, theme: GrafanaTheme2): string | u
   }
 };
 
-const customBackgroundColor = (color: BackgroundColor, theme: GrafanaTheme2): string | undefined => {
+const customBackgroundColor = (color: BackgroundColor, theme: GrafanaTheme2) => {
   switch (color) {
     case 'error':
     case 'success':

@@ -6,13 +6,13 @@ import { Box } from './Box';
 # Box
 
 The Box Component is the most basic layout component. It can be used to build more complex components and layouts with properties
-that use our design tokens instead of with css.
+that use our design tokens instead of using CSS.
 
 ### Usage
 
 #### When to use
 
-Use it whenever you would use custom css
+Use it whenever you would use custom CSS.
 
 #### When not to use
 
@@ -23,9 +23,9 @@ If you need more specific layouts like Flex or Grid, use those specific componen
 1. Make sure you absolutely need this prop. If in doubt, ask someone from the design system team.
 2. Add the prop to the `BoxProps` interface in `Box.tsx`.
    - Make sure it is strictly typed, making use of design tokens if needed. Instead of `[propName]: number`, use `[propName]: ThemeSpacingTokens`;
-   - If it is a css prop, you should make it responsive. To do so, instead of definiting it as `[propName]: ThemeSpacingTokens`,
+   - If it is a CSS prop, you should make it responsive. To do so, instead of defining it as `[propName]: ThemeSpacingTokens`,
      define it as `[propName]: ResponsiveProp<ThemeSpacingTokens>`.
-3. Add it to the css array in `getStyles` in `Box.tsx`.
+3. Add it to the CSS array in `getStyles` in `Box.tsx`.
    - If it is a `ResponsiveProp`, you should use the `getResponsiveStyle` helper function
    ```
     getResponsiveStyle<ThemeSpacingTokens>(theme, [propName], (val) => ({
