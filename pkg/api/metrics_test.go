@@ -240,8 +240,8 @@ func TestDataSourceQueryError(t *testing.T) {
 		{
 			request:        reqValid,
 			clientErr:      plugins.ErrMethodNotImplemented,
-			expectedStatus: http.StatusNotImplemented,
-			expectedBody:   `{"message":"Not implemented","messageId":"plugin.notImplemented","statusCode":501,"traceID":""}`,
+			expectedStatus: http.StatusNotFound,
+			expectedBody:   `{"message":"Not implemented","messageId":"plugin.notImplemented","statusCode":404,"traceID":""}`,
 		},
 		{
 			request:        reqValid,

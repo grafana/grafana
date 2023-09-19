@@ -292,11 +292,6 @@ func ErrOrFallback(status int, message string, err error) *NormalResponse {
 		return Err(err)
 	}
 
-	grafanaBaseErr := errutil.Base{}
-	if errors.As(err, &grafanaBaseErr) {
-		return Err(grafanaBaseErr.Errorf("%w", grafanaBaseErr))
-	}
-
 	return Error(status, message, err)
 }
 

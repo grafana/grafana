@@ -39,7 +39,7 @@ func TestQueryData(t *testing.T) {
 			},
 			{
 				err:           errors.New("surprise surprise"),
-				expectedError: plugins.ErrPluginDownstreamError,
+				expectedError: plugins.ErrPluginDownstreamErrorBase,
 			},
 		}
 
@@ -97,7 +97,7 @@ func TestCheckHealth(t *testing.T) {
 			},
 			{
 				err:           errors.New("surprise surprise"),
-				expectedError: plugins.ErrPluginDownstreamError,
+				expectedError: plugins.ErrPluginDownstreamErrorBase,
 			},
 		}
 
