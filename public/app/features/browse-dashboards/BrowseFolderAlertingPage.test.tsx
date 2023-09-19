@@ -11,6 +11,7 @@ import { backendSrv } from 'app/core/services/backend_srv';
 
 import BrowseFolderAlertingPage, { OwnProps } from './BrowseFolderAlertingPage';
 import { getPrometheusRulesResponse, getRulerRulesResponse } from './fixtures/alertRules.fixture';
+import * as permissions from './permissions';
 
 function render(...[ui, options]: Parameters<typeof rtlRender>) {
   rtlRender(<TestProvider>{ui}</TestProvider>, options);
@@ -34,6 +35,14 @@ const mockPrometheusRulesResponse = getPrometheusRulesResponse(mockFolderName);
 describe('browse-dashboards BrowseFolderAlertingPage', () => {
   let props: OwnProps;
   let server: SetupServer;
+  const mockPermissions = {
+    canCreateDashboards: true,
+    canCreateFolder: true,
+    canDeleteFolder: true,
+    canEditFolder: true,
+    canViewPermissions: true,
+    canSetPermissions: true,
+  };
 
   beforeAll(() => {
     server = setupServer(
@@ -61,6 +70,7 @@ describe('browse-dashboards BrowseFolderAlertingPage', () => {
   });
 
   beforeEach(() => {
+    jest.spyOn(permissions, 'getFolderPermissions').mockImplementation(() => mockPermissions);
     jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
     props = {
       ...getRouteComponentProps({
@@ -92,7 +102,15 @@ describe('browse-dashboards BrowseFolderAlertingPage', () => {
   });
 
   it('does not display the "Folder actions" button if the user does not have permissions', async () => {
-    jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
+    jest.spyOn(permissions, 'getFolderPermissions').mockImplementation(() => {
+      return {
+        ...mockPermissions,
+        canDeleteFolder: false,
+        canEditFolder: false,
+        canViewPermissions: false,
+        canSetPermissions: false,
+      };
+    });
     render(<BrowseFolderAlertingPage {...props} />);
     expect(await screen.findByRole('heading', { name: mockFolderName })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Folder actions' })).not.toBeInTheDocument();

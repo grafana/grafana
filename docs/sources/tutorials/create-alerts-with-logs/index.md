@@ -199,7 +199,8 @@ This optional step uses a python script to generate the sample logs used in this
 1. Install Python3 on your local machine if needed.
 1. Copy the python script below and paste it into a new file on your local machine.
 
-   ```#!/bin/env python3
+   ```
+   #!/bin/env python3
    ​
    import datetime
    import math
@@ -324,7 +325,8 @@ that generates the sample logs used in this tutorial to create alerts.
 
 1. Paste the following code into the file
 
-   ````#!/bin/env python3
+   ```
+   #!/bin/env python3
 
    import datetime
    import math
@@ -357,9 +359,8 @@ that generates the sample logs used in this tutorial to create alerts.
        duration_ms = math.floor(random.expovariate(1/post_average_duration_ms))
    timestamp = datetime.datetime.now(tz=datetime.timezone.utc).isoformat()
    print(f"{timestamp} level=info method={method} url=/ status={status} duration={duration_ms}ms")
-   sys.stdout.flush()```
-
-   ````
+   sys.stdout.flush()
+   ```
 
 1. Execute the log-generating python script.
 

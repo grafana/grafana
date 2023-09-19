@@ -22,6 +22,7 @@ disableSecretsCompatibility,experimental,@grafana/hosted-grafana-team,false,fals
 logRequestsInstrumentedAsUnknown,experimental,@grafana/hosted-grafana-team,false,false,false,false
 dataConnectionsConsole,GA,@grafana/plugins-platform-backend,false,false,false,false
 topnav,deprecated,@grafana/grafana-frontend-platform,false,false,false,false
+dockedMegaMenu,preview,@grafana/grafana-frontend-platform,false,false,false,true
 grpcServer,preview,@grafana/grafana-app-platform-squad,false,false,false,false
 entityStore,experimental,@grafana/grafana-app-platform-squad,true,false,false,false
 cloudWatchCrossAccountQuerying,GA,@grafana/aws-datasources,false,false,false,false
@@ -78,7 +79,6 @@ cloudWatchLogsMonacoEditor,preview,@grafana/aws-datasources,false,false,false,tr
 exploreScrollableLogsContainer,experimental,@grafana/observability-logs,false,false,false,true
 recordedQueriesMulti,experimental,@grafana/observability-metrics,false,false,false,false
 pluginsDynamicAngularDetectionPatterns,experimental,@grafana/plugins-platform-backend,false,false,false,false
-alertingLokiRangeToInstant,experimental,@grafana/alerting-squad,false,false,false,false
 vizAndWidgetSplit,experimental,@grafana/dashboards-squad,false,false,false,true
 prometheusIncrementalQueryInstrumentation,experimental,@grafana/observability-metrics,false,false,false,true
 logsExploreTableVisualisation,experimental,@grafana/observability-logs,false,false,false,true
@@ -105,3 +105,6 @@ reportingRetries,preview,@grafana/sharing-squad,false,false,true,false
 newBrowseDashboards,preview,@grafana/grafana-frontend-platform,false,false,false,true
 sseGroupByDatasource,experimental,@grafana/observability-metrics,false,false,false,false
 requestInstrumentationStatusSource,experimental,@grafana/plugins-platform-backend,false,false,false,false
+lokiRunQueriesInParallel,privatePreview,@grafana/observability-logs,false,false,false,false
+wargamesTesting,experimental,@grafana/hosted-grafana-team,false,false,false,false
+alertingInsights,experimental,@grafana/alerting-squad,false,false,false,true

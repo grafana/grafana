@@ -1,12 +1,11 @@
 import { e2e } from '../utils';
 
-e2e.scenario({
-  describeName: 'Explore',
-  itName: 'Basic path through Explore.',
-  addScenarioDataSource: false,
-  addScenarioDashBoard: false,
-  skipScenario: false,
-  scenario: () => {
+describe('Explore', () => {
+  beforeEach(() => {
+    e2e.flows.login(e2e.env('USERNAME'), e2e.env('PASSWORD'));
+  });
+
+  it('Basic path through Explore.', () => {
     e2e.pages.Explore.visit();
     e2e.pages.Explore.General.container().should('have.length', 1);
     e2e.components.RefreshPicker.runButtonV2().should('have.length', 1);
@@ -39,5 +38,5 @@ e2e.scenario({
     cy.get('button[title="Delete query"]').each((button) => {
       button.trigger('click');
     });
-  },
+  });
 });

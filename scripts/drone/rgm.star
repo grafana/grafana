@@ -69,6 +69,11 @@ docs_paths = {
 }
 
 tag_trigger = {
+    "repo": {
+        "exclude": [
+            "grafana/grafana",
+        ],
+    },
     "event": {
         "exclude": [
             "promote",
@@ -101,6 +106,7 @@ def rgm_build(script = "drone_publish_main.sh", canFail = True):
     rgm_build_step = {
         "name": "rgm-build",
         "image": "grafana/grafana-build:main",
+        "pull": "always",
         "commands": [
             "export GRAFANA_DIR=$$(pwd)",
             "cd /src && ./scripts/{}".format(script),

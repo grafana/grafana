@@ -1,4 +1,4 @@
-import { MutableDataFrame } from '@grafana/data';
+import { FieldType, MutableDataFrame } from '@grafana/data';
 
 export const bigResponse = new MutableDataFrame({
   fields: [
@@ -1807,73 +1807,73 @@ export const otlpDataFrameFromResponse = new MutableDataFrame({
   fields: [
     {
       name: 'traceID',
-      type: 'string',
+      type: FieldType.string,
       config: {},
       values: ['60ba2abb44f13eae'],
     },
     {
       name: 'spanID',
-      type: 'string',
+      type: FieldType.string,
       config: {},
       values: ['726b5e30102fc0d0'],
     },
     {
       name: 'parentSpanID',
-      type: 'string',
+      type: FieldType.string,
       config: {},
       values: ['398f0f21a3db99ae'],
     },
     {
       name: 'operationName',
-      type: 'string',
+      type: FieldType.string,
       config: {},
       values: ['HTTP GET - root'],
     },
     {
       name: 'serviceName',
-      type: 'string',
+      type: FieldType.string,
       config: {},
       values: ['db'],
     },
     {
       name: 'kind',
-      type: 'string',
+      type: FieldType.string,
       config: {},
       values: ['client'],
     },
     {
       name: 'statusCode',
-      type: 'number',
+      type: FieldType.number,
       config: {},
       values: [2],
     },
     {
       name: 'statusMessage',
-      type: 'string',
+      type: FieldType.string,
       config: {},
       values: ['message'],
     },
     {
       name: 'instrumentationLibraryName',
-      type: 'string',
+      type: FieldType.string,
       config: {},
       values: ['libraryName'],
     },
     {
       name: 'instrumentationLibraryVersion',
-      type: 'string',
+      type: FieldType.string,
       config: {},
       values: ['libraryVersion'],
     },
     {
       name: 'traceState',
-      type: 'string',
+      type: FieldType.string,
       config: {},
       values: ['traceState'],
     },
     {
       name: 'serviceTags',
-      type: 'other',
+      type: FieldType.other,
       config: {},
       values: [
         [
@@ -1906,25 +1906,25 @@ export const otlpDataFrameFromResponse = new MutableDataFrame({
     },
     {
       name: 'startTime',
-      type: 'number',
+      type: FieldType.number,
       config: {},
       values: [1627471657255.809],
     },
     {
       name: 'duration',
-      type: 'number',
+      type: FieldType.number,
       config: {},
       values: [0.459008],
     },
     {
       name: 'logs',
-      type: 'other',
+      type: FieldType.other,
       config: {},
       values: [[]],
     },
     {
       name: 'references',
-      type: 'other',
+      type: FieldType.other,
       config: {},
       values: [
         [
@@ -1946,7 +1946,7 @@ export const otlpDataFrameFromResponse = new MutableDataFrame({
     },
     {
       name: 'tags',
-      type: 'other',
+      type: FieldType.other,
       config: {},
       values: [
         [
@@ -1971,7 +1971,7 @@ export const otlpDataFrameFromResponse = new MutableDataFrame({
     },
   ],
   length: 1,
-} as any);
+});
 
 export const otlpDataFrameToResponse = new MutableDataFrame({
   meta: {
@@ -1983,7 +1983,7 @@ export const otlpDataFrameToResponse = new MutableDataFrame({
   fields: [
     {
       name: 'traceID',
-      type: 'string',
+      type: FieldType.string,
       config: {},
       values: ['60ba2abb44f13eae'],
       state: {
@@ -1992,7 +1992,7 @@ export const otlpDataFrameToResponse = new MutableDataFrame({
     },
     {
       name: 'spanID',
-      type: 'string',
+      type: FieldType.string,
       config: {},
       values: ['726b5e30102fc0d0'],
       state: {
@@ -2001,7 +2001,7 @@ export const otlpDataFrameToResponse = new MutableDataFrame({
     },
     {
       name: 'parentSpanID',
-      type: 'string',
+      type: FieldType.string,
       config: {},
       values: ['398f0f21a3db99ae'],
       state: {
@@ -2010,7 +2010,7 @@ export const otlpDataFrameToResponse = new MutableDataFrame({
     },
     {
       name: 'operationName',
-      type: 'string',
+      type: FieldType.string,
       config: {},
       values: ['HTTP GET - root'],
       state: {
@@ -2019,7 +2019,7 @@ export const otlpDataFrameToResponse = new MutableDataFrame({
     },
     {
       name: 'serviceName',
-      type: 'string',
+      type: FieldType.string,
       config: {},
       values: ['db'],
       state: {
@@ -2028,7 +2028,7 @@ export const otlpDataFrameToResponse = new MutableDataFrame({
     },
     {
       name: 'kind',
-      type: 'string',
+      type: FieldType.string,
       config: {},
       values: ['client'],
       state: {
@@ -2037,7 +2037,7 @@ export const otlpDataFrameToResponse = new MutableDataFrame({
     },
     {
       name: 'statusCode',
-      type: 'number',
+      type: FieldType.number,
       config: {},
       values: [2],
       state: {
@@ -2046,7 +2046,7 @@ export const otlpDataFrameToResponse = new MutableDataFrame({
     },
     {
       name: 'statusMessage',
-      type: 'string',
+      type: FieldType.string,
       config: {},
       values: ['message'],
       state: {
@@ -2055,7 +2055,7 @@ export const otlpDataFrameToResponse = new MutableDataFrame({
     },
     {
       name: 'instrumentationLibraryName',
-      type: 'string',
+      type: FieldType.string,
       config: {},
       values: ['libraryName'],
       state: {
@@ -2064,7 +2064,7 @@ export const otlpDataFrameToResponse = new MutableDataFrame({
     },
     {
       name: 'instrumentationLibraryVersion',
-      type: 'string',
+      type: FieldType.string,
       config: {},
       values: ['libraryVersion'],
       state: {
@@ -2073,7 +2073,7 @@ export const otlpDataFrameToResponse = new MutableDataFrame({
     },
     {
       name: 'traceState',
-      type: 'string',
+      type: FieldType.string,
       config: {},
       values: ['traceState'],
       state: {
@@ -2082,7 +2082,7 @@ export const otlpDataFrameToResponse = new MutableDataFrame({
     },
     {
       name: 'serviceTags',
-      type: 'other',
+      type: FieldType.other,
       config: {},
       values: [
         [
@@ -2118,7 +2118,7 @@ export const otlpDataFrameToResponse = new MutableDataFrame({
     },
     {
       name: 'startTime',
-      type: 'number',
+      type: FieldType.number,
       config: {},
       values: [1627471657255.809],
       state: {
@@ -2127,7 +2127,7 @@ export const otlpDataFrameToResponse = new MutableDataFrame({
     },
     {
       name: 'duration',
-      type: 'number',
+      type: FieldType.number,
       config: {},
       values: [0.459008],
       state: {
@@ -2136,7 +2136,7 @@ export const otlpDataFrameToResponse = new MutableDataFrame({
     },
     {
       name: 'logs',
-      type: 'other',
+      type: FieldType.other,
       config: {},
       values: [[]],
       state: {
@@ -2145,7 +2145,7 @@ export const otlpDataFrameToResponse = new MutableDataFrame({
     },
     {
       name: 'tags',
-      type: 'other',
+      type: FieldType.other,
       config: {},
       values: [
         [
@@ -2173,7 +2173,7 @@ export const otlpDataFrameToResponse = new MutableDataFrame({
     },
     {
       name: 'references',
-      type: 'other',
+      type: FieldType.other,
       config: {},
       labels: undefined,
       values: [
@@ -2198,9 +2198,8 @@ export const otlpDataFrameToResponse = new MutableDataFrame({
       },
     },
   ],
-  first: ['60ba2abb44f13eae'],
   length: 1,
-} as any);
+});
 
 export const otlpResponse = {
   batches: [

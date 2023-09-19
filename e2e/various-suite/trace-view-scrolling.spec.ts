@@ -1,8 +1,11 @@
 import { e2e } from '../utils';
 
 describe('Trace view', () => {
+  beforeEach(() => {
+    e2e.flows.login(e2e.env('USERNAME'), e2e.env('PASSWORD'));
+  });
+
   it('Can lazy load big traces', () => {
-    e2e.flows.login('admin', 'admin');
     cy.intercept('GET', '**/api/traces/trace', {
       fixture: 'long-trace-response.json',
     }).as('longTrace');
