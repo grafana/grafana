@@ -17,6 +17,7 @@ import {
 import { TOP_TABLE_COLUMN_WIDTH } from '../../constants';
 import { FlameGraphDataContainer } from '../FlameGraph/dataTransform';
 import { TableData } from '../types';
+import { t } from 'app/core/internationalization';
 
 type Props = {
   data: FlameGraphDataContainer;
@@ -254,7 +255,7 @@ function ActionCell(props: ActionCellProps) {
         className={styles.actionCellButton}
         name={'search'}
         variant={isSearched ? 'primary' : 'secondary'}
-        tooltip={isSearched ? 'Clear from search' : 'Search for symbol'}
+        tooltip={isSearched ? t('flame-graph-top-table.clear-button','Clear from search') : t('flame-graph-top-table.search-button','Search for symbol')}
         aria-label={isSearched ? 'Clear from search' : 'Search for symbol'}
         onClick={() => {
           props.onSearch(isSearched ? '' : symbol);
@@ -263,8 +264,8 @@ function ActionCell(props: ActionCellProps) {
       <IconButton
         className={styles.actionCellButton}
         name={'gf-show-context'}
-        tooltip={isSandwiched ? 'Remove from sandwich view' : 'Show in sandwich view'}
         variant={isSandwiched ? 'primary' : 'secondary'}
+        tooltip={isSandwiched ? t('flame-graph-top-table.remove-button','Remove from sandwich view') : t('flame-graph-top-table.show-button','Show in sandwich view')}
         aria-label={isSandwiched ? 'Remove from sandwich view' : 'Show in sandwich view'}
         onClick={() => {
           props.onSandwich(isSandwiched ? undefined : symbol);

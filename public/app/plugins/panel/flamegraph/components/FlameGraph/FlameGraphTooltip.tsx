@@ -5,6 +5,7 @@ import { DisplayValue, getValueFormat, GrafanaTheme2 } from '@grafana/data';
 import { InteractiveTable, Portal, useStyles2, VizTooltipContainer } from '@grafana/ui';
 
 import { FlameGraphDataContainer, LevelItem } from './dataTransform';
+import { Trans } from 'app/core/internationalization';
 
 type Props = {
   data: FlameGraphDataContainer;
@@ -43,11 +44,11 @@ const FlameGraphTooltip = ({ data, item, totalTicks, position }: Props) => {
       <p className={styles.lastParagraph}>
         {tooltipData.unitTitle}
         <br />
-        Total: <b>{tooltipData.unitValue}</b> ({tooltipData.percentValue}%)
+        <Trans i18nKey='flame-graph-tooltip.total-percentage'>Total: <b>{tooltipData.unitValue}</b> ({tooltipData.percentValue}%)</Trans>
         <br />
-        Self: <b>{tooltipData.unitSelf}</b> ({tooltipData.percentSelf}%)
+        <Trans i18nKey='flame-graph-tooltip.self-percentage'>Self: <b>{tooltipData.unitSelf}</b> ({tooltipData.percentSelf}%)</Trans>
         <br />
-        Samples: <b>{tooltipData.samples}</b>
+        <Trans i18nKey='flame-graph-tooltip.sample'>Samples: <b>{tooltipData.samples}</b></Trans>
       </p>
     );
   }
