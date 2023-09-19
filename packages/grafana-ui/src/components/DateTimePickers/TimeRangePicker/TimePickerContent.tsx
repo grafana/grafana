@@ -217,7 +217,7 @@ const EmptyRecentList = memo(() => {
   const theme = useTheme2();
   const styles = getEmptyListStyles(theme);
   const emptyRecentListText = t(
-    'time-picker.content.empty-recent-list-text1',
+    'time-picker.content.empty-recent-list-info',
     "It looks like you haven't used this time picker before. As soon as you enter some time intervals, recently used intervals will appear here."
   );
 
@@ -226,7 +226,7 @@ const EmptyRecentList = memo(() => {
       <div>
         <span>{emptyRecentListText}</span>
       </div>
-      <Trans i18nKey="time-picker.content.empty-recent-list-text2">
+      <Trans i18nKey="time-picker.content.empty-recent-list-docs">
         <div>
           <a
             className={styles.link}
