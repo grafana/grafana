@@ -101,14 +101,14 @@ const UNWRAP_FUNCTION_COMPLETIONS: Completion[] = [
 const LOGFMT_ARGUMENT_COMPLETIONS: Completion[] = [
   {
     type: 'FUNCTION',
-    label: 'strict',
+    label: '--strict',
     documentation:
       'Strict parsing. The logfmt parser stops scanning the log line and returns early with an error when it encounters any poorly formatted key/value pair.',
     insertText: '--strict',
   },
   {
     type: 'FUNCTION',
-    label: 'keep empty',
+    label: '--keep-empty',
     documentation:
       'Retain standalone keys with empty value. The logfmt parser retains standalone keys (keys without a value) as labels with value set to empty string.',
     insertText: '--keep-empty',
@@ -439,6 +439,7 @@ export async function getCompletions(
   situation: Situation,
   dataProvider: CompletionDataProvider
 ): Promise<Completion[]> {
+  console.log(situation.type);
   switch (situation.type) {
     case 'EMPTY':
     case 'AT_ROOT':
