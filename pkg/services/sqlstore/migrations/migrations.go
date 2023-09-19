@@ -106,6 +106,12 @@ func (*OSSMigrations) AddMigration(mg *Migrator) {
 	ualert.CreatedFoldersMigration(mg)
 
 	dashboardFolderMigrations.AddDashboardFolderMigrations(mg)
+
+	if mg.Cfg != nil && mg.Cfg.IsFeatureToggleEnabled != nil {
+		if mg.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagPanelTitleSearchInV1) {
+			addDashboardPanelMigrations(mg)
+		}
+	}
 }
 
 func addStarMigrations(mg *Migrator) {
