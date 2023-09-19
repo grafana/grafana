@@ -1,3 +1,13 @@
+<!-- 9.5.10 START -->
+
+# 9.5.10 (2023-09-18)
+
+### Features and enhancements
+
+- **Chore:** Upgrade Alpine base image to 3.18.3. [#74995](https://github.com/grafana/grafana/issues/74995), [@zerok](https://github.com/zerok)
+- **Chore:** Upgrade Go to 1.20.8. [#74982](https://github.com/grafana/grafana/issues/74982), [@zerok](https://github.com/zerok)
+
+<!-- 9.5.10 END -->
 <!-- 9.5.9 START -->
 
 # 9.5.9 (2023-09-05)
