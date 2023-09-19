@@ -1,6 +1,7 @@
 import { Meta, StoryFn } from '@storybook/react';
 import React from 'react';
 
+import { SpacingTokenControl } from '../../../utils/storybook/themeStorybookControls';
 import { withCenteredStory } from '../../../utils/storybook/withCenteredStory';
 import { Text } from '../../Text/Text';
 import { Flex } from '../Flex/Flex';
@@ -8,7 +9,6 @@ import { Flex } from '../Flex/Flex';
 import { Box, BackgroundColor, BorderColor, BorderStyle, BorderRadius, BoxShadow } from './Box';
 import mdx from './Box.mdx';
 
-const themeTokenControl = { control: 'select', options: [0, 0.25, 0.5, 1, 1.5, 2, 3, 4, 5, 6, 8, 10] };
 const backgroundOptions: BackgroundColor[] = ['primary', 'secondary', 'canvas', 'error', 'success', 'warning', 'info'];
 const borderColorOptions: BorderColor[] = ['weak', 'medium', 'strong', 'error', 'success', 'warning', 'info'];
 const borderStyleOptions: BorderStyle[] = ['dashed', 'solid'];
@@ -52,20 +52,20 @@ export const Basic: StoryFn<typeof Box> = (args) => {
 Basic.argTypes = {
   grow: { control: 'number' },
   shrink: { control: 'number' },
-  margin: themeTokenControl,
-  marginX: themeTokenControl,
-  marginY: themeTokenControl,
-  marginTop: themeTokenControl,
-  marginBottom: themeTokenControl,
-  marginLeft: themeTokenControl,
-  marginRight: themeTokenControl,
-  padding: themeTokenControl,
-  paddingX: themeTokenControl,
-  paddingY: themeTokenControl,
-  paddingTop: themeTokenControl,
-  paddingBottom: themeTokenControl,
-  paddingLeft: themeTokenControl,
-  paddingRight: themeTokenControl,
+  margin: SpacingTokenControl,
+  marginX: SpacingTokenControl,
+  marginY: SpacingTokenControl,
+  marginTop: SpacingTokenControl,
+  marginBottom: SpacingTokenControl,
+  marginLeft: SpacingTokenControl,
+  marginRight: SpacingTokenControl,
+  padding: SpacingTokenControl,
+  paddingX: SpacingTokenControl,
+  paddingY: SpacingTokenControl,
+  paddingTop: SpacingTokenControl,
+  paddingBottom: SpacingTokenControl,
+  paddingLeft: SpacingTokenControl,
+  paddingRight: SpacingTokenControl,
   display: { control: 'select', options: ['flex', 'block', 'inline', 'none'] },
   backgroundColor: { control: 'select', options: backgroundOptions },
   borderStyle: { control: 'select', options: borderStyleOptions },

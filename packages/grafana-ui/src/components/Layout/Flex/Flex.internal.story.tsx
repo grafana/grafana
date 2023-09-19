@@ -4,12 +4,11 @@ import React from 'react';
 import { ThemeSpacingTokens } from '@grafana/data';
 
 import { useTheme2 } from '../../../themes';
+import { SpacingTokenControl } from '../../../utils/storybook/themeStorybookControls';
 import { withCenteredStory } from '../../../utils/storybook/withCenteredStory';
 
 import { Flex, JustifyContent, Wrap, Direction } from './Flex';
 import mdx from './Flex.mdx';
-
-const themeTokenControl = { control: 'select', options: [0, 0.25, 0.5, 1, 1.5, 2, 3, 4, 5, 6, 8, 10] };
 
 const Item = ({ color, text, height }: { color: string; text?: string | number; height?: string }) => {
   return (
@@ -53,7 +52,7 @@ export const Basic: StoryFn<typeof Flex> = ({ direction, wrap, alignItems, justi
 };
 
 Basic.argTypes = {
-  gap: themeTokenControl,
+  gap: SpacingTokenControl,
   direction: { control: 'select', options: ['row', 'row-reverse', 'column', 'column-reverse'] },
   wrap: { control: 'select', options: ['nowrap', 'wrap', 'wrap-reverse'] },
   alignItems: {

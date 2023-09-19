@@ -130,83 +130,83 @@ const getStyles = (theme: GrafanaTheme2, props: BoxProps) => {
   } = props;
   return {
     root: css([
-      getResponsiveStyle<ThemeSpacingTokens>(theme, margin, (val) => ({
+      getResponsiveStyle(theme, margin, (val) => ({
         margin: theme.spacing(val),
       })),
-      getResponsiveStyle<ThemeSpacingTokens>(theme, marginX, (val) => ({
+      getResponsiveStyle(theme, marginX, (val) => ({
         marginLeft: theme.spacing(val),
         marginRight: theme.spacing(val),
       })),
-      getResponsiveStyle<ThemeSpacingTokens>(theme, marginY, (val) => ({
+      getResponsiveStyle(theme, marginY, (val) => ({
         marginTop: theme.spacing(val),
         marginBottom: theme.spacing(val),
       })),
-      getResponsiveStyle<ThemeSpacingTokens>(theme, marginTop, (val) => ({
+      getResponsiveStyle(theme, marginTop, (val) => ({
         marginTop: theme.spacing(val),
       })),
-      getResponsiveStyle<ThemeSpacingTokens>(theme, marginBottom, (val) => ({
+      getResponsiveStyle(theme, marginBottom, (val) => ({
         marginBottom: theme.spacing(val),
       })),
-      getResponsiveStyle<ThemeSpacingTokens>(theme, marginLeft, (val) => ({
+      getResponsiveStyle(theme, marginLeft, (val) => ({
         marginLeft: theme.spacing(val),
       })),
-      getResponsiveStyle<ThemeSpacingTokens>(theme, marginRight, (val) => ({
+      getResponsiveStyle(theme, marginRight, (val) => ({
         marginRight: theme.spacing(val),
       })),
-      getResponsiveStyle<ThemeSpacingTokens>(theme, padding, (val) => ({
+      getResponsiveStyle(theme, padding, (val) => ({
         padding: theme.spacing(val),
       })),
-      getResponsiveStyle<ThemeSpacingTokens>(theme, paddingX, (val) => ({
+      getResponsiveStyle(theme, paddingX, (val) => ({
         paddingLeft: theme.spacing(val),
         paddingRight: theme.spacing(val),
       })),
-      getResponsiveStyle<ThemeSpacingTokens>(theme, paddingY, (val) => ({
+      getResponsiveStyle(theme, paddingY, (val) => ({
         paddingTop: theme.spacing(val),
         paddingBottom: theme.spacing(val),
       })),
-      getResponsiveStyle<ThemeSpacingTokens>(theme, paddingTop, (val) => ({
+      getResponsiveStyle(theme, paddingTop, (val) => ({
         paddingTop: theme.spacing(val),
       })),
-      getResponsiveStyle<ThemeSpacingTokens>(theme, paddingBottom, (val) => ({
+      getResponsiveStyle(theme, paddingBottom, (val) => ({
         paddingBottom: theme.spacing(val),
       })),
-      getResponsiveStyle<ThemeSpacingTokens>(theme, paddingLeft, (val) => ({
+      getResponsiveStyle(theme, paddingLeft, (val) => ({
         paddingLeft: theme.spacing(val),
       })),
-      getResponsiveStyle<ThemeSpacingTokens>(theme, paddingRight, (val) => ({
+      getResponsiveStyle(theme, paddingRight, (val) => ({
         paddingRight: theme.spacing(val),
       })),
-      getResponsiveStyle<Display>(theme, display, (val) => ({
+      getResponsiveStyle(theme, display, (val) => ({
         display: val,
       })),
-      getResponsiveStyle<BackgroundColor>(theme, backgroundColor, (val) => ({
+      getResponsiveStyle(theme, backgroundColor, (val) => ({
         backgroundColor: customBackgroundColor(val, theme),
       })),
-      getResponsiveStyle<number>(theme, grow, (val) => ({
+      getResponsiveStyle(theme, grow, (val) => ({
         flex: val,
       })),
-      getResponsiveStyle<number>(theme, shrink, (val) => ({
+      getResponsiveStyle(theme, shrink, (val) => ({
         flexShrink: val,
       })),
-      getResponsiveStyle<BorderStyle>(theme, borderStyle, (val) => ({
+      getResponsiveStyle(theme, borderStyle, (val) => ({
         borderStyle: val,
       })),
-      getResponsiveStyle<BorderColor>(theme, borderColor, (val) => ({
+      getResponsiveStyle(theme, borderColor, (val) => ({
         borderColor: customBorderColor(val, theme),
       })),
       (borderStyle || borderColor) && {
         borderWidth: '1px',
       },
-      getResponsiveStyle<JustifyContent>(theme, justifyContent, (val) => ({
+      getResponsiveStyle(theme, justifyContent, (val) => ({
         justifyContent: val,
       })),
-      getResponsiveStyle<AlignItems>(theme, alignItems, (val) => ({
+      getResponsiveStyle(theme, alignItems, (val) => ({
         alignItems: val,
       })),
-      getResponsiveStyle<BorderRadius>(theme, borderRadius, (val) => ({
+      getResponsiveStyle(theme, borderRadius, (val) => ({
         borderRadius: theme.shape.radius[val],
       })),
-      getResponsiveStyle<BoxShadow>(theme, boxShadow, (val) => ({
+      getResponsiveStyle(theme, boxShadow, (val) => ({
         boxShadow: theme.shadows[val],
       })),
     ]),

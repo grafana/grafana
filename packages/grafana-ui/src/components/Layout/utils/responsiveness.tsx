@@ -7,18 +7,32 @@ import { GrafanaTheme2, ThemeBreakpointsKey } from '@grafana/data';
  *
  * @example To turn a prop like `margin: number` responsive, change it to `margin: ResponsiveProp<number>`.
  */
-export type ResponsiveProp<T> =
-  | T
-  | {
-      base: T;
-      xs?: T;
-      sm?: T;
-      md?: T;
-      lg?: T;
-      xl?: T;
-      xxl?: T;
-    };
+export type ResponsiveProp<T> = T | Responsive<T>;
 
+type Responsive<T> = {
+  base: T;
+  xs?: T;
+  sm?: T;
+  md?: T;
+  lg?: T;
+  xl?: T;
+  xxl?: T;
+};
+
+function breakpointCSS<T>(
+  theme: GrafanaTheme2,
+  prop: Responsive<T>,
+  getCSS: (val: T) => CSSInterpolation,
+  key: ThemeBreakpointsKey
+) {
+  const value = prop[key];
+  if (value !== undefined && value !== null) {
+    return {
+      [theme.breakpoints.up(key)]: getCSS(value),
+    };
+  }
+  return;
+}
 /**
  * Function that converts a ResponsiveProp object into CSS
  *
@@ -37,27 +51,17 @@ export function getResponsiveStyle<T>(
   if (prop === undefined || prop === null) {
     return null;
   }
-  if (typeof prop === 'object' && 'base' in prop) {
-    const breakpointCSS = (key: ThemeBreakpointsKey) => {
-      const value = prop[key];
-      if (value !== undefined && value !== null) {
-        return {
-          [theme.breakpoints.up(key)]: getCSS(value),
-        };
-      }
-      return;
-    };
-
-    return [
-      getCSS(prop.base),
-      breakpointCSS('xs'),
-      breakpointCSS('sm'),
-      breakpointCSS('md'),
-      breakpointCSS('lg'),
-      breakpointCSS('xl'),
-      breakpointCSS('xxl'),
-    ];
+  if (!('base' in prop)) {
+    return getCSS(prop);
   }
 
-  return getCSS(prop);
+  return [
+    getCSS(prop.base),
+    breakpointCSS(theme, prop, getCSS, 'xs'),
+    breakpointCSS(theme, prop, getCSS, 'sm'),
+    breakpointCSS(theme, prop, getCSS, 'md'),
+    breakpointCSS(theme, prop, getCSS, 'lg'),
+    breakpointCSS(theme, prop, getCSS, 'xl'),
+    breakpointCSS(theme, prop, getCSS, 'xxl'),
+  ];
 }

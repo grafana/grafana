@@ -1,12 +1,11 @@
 import { Meta, StoryFn } from '@storybook/react';
 import React, { ReactNode } from 'react';
 
+import { SpacingTokenControl } from '../../../utils/storybook/themeStorybookControls';
 import { withCenteredStory } from '../../../utils/storybook/withCenteredStory';
 
 import { Stack } from './Stack';
 import mdx from './Stack.mdx';
-
-const themeTokenControl = { control: 'select', options: [0, 0.25, 0.5, 1, 1.5, 2, 3, 4, 5, 6, 8, 10] };
 
 const meta: Meta<typeof Stack> = {
   title: 'General/Layout/Stack',
@@ -18,7 +17,7 @@ const meta: Meta<typeof Stack> = {
     },
   },
   argTypes: {
-    gap: themeTokenControl,
+    gap: SpacingTokenControl,
     direction: { control: 'select', options: ['row', 'row-reverse', 'column', 'column-reverse'] },
   },
 };
