@@ -23,7 +23,7 @@ labels:
     - oss
 menuTitle: Table
 title: Table
-weight: 1000
+weight: 100
 ---
 
 # Table
@@ -149,11 +149,10 @@ If you have a field value that is an image URL or a base64 encoded image you can
 
 ### Sparkline
 
-{{% admonition type="note" %}}
-This cell type is available in Grafana 9.5+ as an opt-in beta feature. Modify Grafana [configuration file]({{< relref "../../../setup-grafana/configure-grafana/#configuration-file-location" >}}) to enable the `timeSeriesTable` [feature toggle]({{< relref "../../../setup-grafana/configure-grafana/#feature_toggles" >}}) to use it.
-{{% /admonition %}}
+> **Note:** This cell type is available in Grafana 9.5+ as an opt-in beta feature.
+> Modify Grafana [configuration file][] to enable the `timeSeriesTable` [feature toggle][] to use it.
 
-Shows value rendered as a sparkline. Requires [time series to table]({{< relref "../../query-transform-data/transform-data/#time-series-to-table-transform" >}}) data transform.
+Shows value rendered as a sparkline. Requires [time series to table][] data transform.
 
 {{< figure src="/static/img/docs/tables/sparkline.png" max-width="500px" caption="Sparkline" class="docs-image--no-shadow" >}}
 
@@ -167,7 +166,7 @@ Cell value inspection is only available when cell display mode is set to Auto, C
 
 ## Column filter
 
-You can temporarily change how column data is displayed. For example, you can order values from highest to lowest or hide specific values. For more information, refer to [Filter table columns]({{< relref "#filter-table-columns" >}}).
+You can temporarily change how column data is displayed. For example, you can order values from highest to lowest or hide specific values. For more information, refer to [Filter table columns](#filter-table-columns).
 
 ## Pagination
 
@@ -206,7 +205,7 @@ To remove the filter, click the blue funnel icon and then click **Clear filter**
 
 ## Table footer
 
-You can use the table footer to show [calculations]({{< relref "../../calculation-types/" >}}) on fields.
+You can use the table footer to show [calculations][] on fields.
 
 After you enable the table footer:
 
@@ -218,3 +217,14 @@ The system applies the calculation to all numeric fields if you do not select a 
 ### Count rows
 
 If you want to show the number of rows in the dataset instead of the number of values in the selected fields, select the **Count** calculation and enable **Count rows**.
+
+{{% docs/reference %}}
+[calculations]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/calculation-types"
+[calculations]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/calculation-types"
+
+[time series to table]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data/transform-data#time-series-to-table-transform"
+[time series to table]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data/transform-data#time-series-to-table-transform"
+
+[configuration file]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana#configuration-file-location"
+[configuration file]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana#configuration-file-location"
+{{% /docs/reference %}}

@@ -2,6 +2,7 @@ import { Observable, of } from 'rxjs';
 import { TestScheduler } from 'rxjs/testing';
 
 import {
+  getDefaultTimeRange,
   dataFrameToJSON,
   DataQueryRequest,
   DataQueryResponse,
@@ -37,6 +38,7 @@ jest.mock('@grafana/runtime/src/services', () => ({
 }));
 
 describe('PostgreSQLDatasource', () => {
+  const defaultRange = getDefaultTimeRange(); // it does not matter what value this has
   const fetchMock = jest.spyOn(backendSrv, 'fetch');
   const setupTestContext = (data: unknown, mock?: Observable<FetchResponse<unknown>>) => {
     jest.clearAllMocks();
@@ -311,7 +313,7 @@ describe('PostgreSQLDatasource', () => {
 
     it('should return an empty array when metricFindQuery is called', async () => {
       const query = 'select * from atable';
-      const results = await ds.metricFindQuery(query);
+      const results = await ds.metricFindQuery(query, { range: defaultRange });
       expect(results.length).toBe(0);
     });
 
@@ -474,7 +476,7 @@ describe('PostgreSQLDatasource', () => {
       };
 
       const { ds } = setupTestContext(response);
-      const results = await ds.metricFindQuery(query, {});
+      const results = await ds.metricFindQuery(query, { range: defaultRange });
 
       expect(results.length).toBe(6);
       expect(results[0].text).toBe('aTitle');
@@ -507,7 +509,7 @@ describe('PostgreSQLDatasource', () => {
       };
 
       const { ds } = setupTestContext(response);
-      const results = await ds.metricFindQuery(query, { searchFilter: 'aTit' });
+      const results = await ds.metricFindQuery(query, { range: defaultRange, searchFilter: 'aTit' });
 
       expect(fetchMock).toBeCalledTimes(1);
       expect(fetchMock.mock.calls[0][0].data.queries[0].rawSql).toBe(
@@ -549,7 +551,7 @@ describe('PostgreSQLDatasource', () => {
       };
 
       const { ds } = setupTestContext(response);
-      const results = await ds.metricFindQuery(query, {});
+      const results = await ds.metricFindQuery(query, { range: defaultRange });
 
       expect(fetchMock).toBeCalledTimes(1);
       expect(fetchMock.mock.calls[0][0].data.queries[0].rawSql).toBe("select title from atable where title LIKE '%'");
@@ -588,7 +590,7 @@ describe('PostgreSQLDatasource', () => {
         },
       };
       const { ds } = setupTestContext(response);
-      const results = await ds.metricFindQuery(query, {});
+      const results = await ds.metricFindQuery(query, { range: defaultRange });
 
       expect(results).toEqual([
         { text: 'aTitle', value: 'value1' },
@@ -622,7 +624,7 @@ describe('PostgreSQLDatasource', () => {
         },
       };
       const { ds } = setupTestContext(response);
-      const results = await ds.metricFindQuery(query, {});
+      const results = await ds.metricFindQuery(query, { range: defaultRange });
 
       expect(results).toEqual([
         { text: 1 },
@@ -659,7 +661,7 @@ describe('PostgreSQLDatasource', () => {
         },
       };
       const { ds } = setupTestContext(response);
-      const results = await ds.metricFindQuery(query, {});
+      const results = await ds.metricFindQuery(query, { range: defaultRange });
 
       expect(results).toEqual([{ text: 'aTitle', value: 'same' }]);
     });

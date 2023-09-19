@@ -125,7 +125,7 @@ schemas: [{
 
 			// Required Grafana version for this plugin. Validated using
 			// https://github.com/npm/node-semver.
-			grafanaDependency: =~"^(<=|>=|<|>|=|~|\\^)?([0-9]+)(\\.[0-9x\\*]+)(\\.[0-9x\\*]+)?(\\s(<=|>=|<|=>)?([0-9]+)(\\.[0-9x]+)(\\.[0-9x]+))?$"
+			grafanaDependency?: =~"^(<=|>=|<|>|=|~|\\^)?([0-9]+)(\\.[0-9x\\*]+)(\\.[0-9x\\*]+)?(\\s(<=|>=|<|=>)?([0-9]+)(\\.[0-9x]+)(\\.[0-9x]+))?$"
 
 			// An array of required plugins on which this plugin depends
 			plugins?: [...#Dependency]

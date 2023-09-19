@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 
 import { Stack } from '@grafana/experimental';
 import { Alert, Button, Icon, LoadingPlaceholder, Tab, TabContent, TabsBar, Text } from '@grafana/ui';
@@ -35,10 +35,17 @@ enum Tabs {
 // add provisioning and federation stuff back in
 const RuleViewer = ({ match }: RuleViewerProps) => {
   const { id } = match.params;
-  const identifier = ruleId.tryParse(id, true);
   const [activeTab, setActiveTab] = useState<Tabs>(Tabs.Instances);
 
-  const { loading, error, result: rule } = useCombinedRule(identifier, identifier?.ruleSourceName);
+  const identifier = useMemo(() => {
+    if (!id) {
+      throw new Error('Rule ID is required');
+    }
+
+    return ruleId.parse(id, true);
+  }, [id]);
+
+  const { loading, error, result: rule } = useCombinedRule({ ruleIdentifier: identifier });
 
   // we're setting the document title and the breadcrumb manually
   useRuleViewerPageTitle(rule);

@@ -1,4 +1,5 @@
 // @ts-ignore
+import { Store } from 'redux';
 import configureMockStore from 'redux-mock-store';
 
 import { locationService } from '@grafana/runtime';
@@ -31,10 +32,9 @@ jest.mock('./api', () => ({
 const mockStore = configureMockStore();
 
 setStore(
-  // eslint-disable-next-line
   mockStore({
     location: {},
-  }) as any
+  }) as Store
 );
 
 function createPlaylistSrv(): PlaylistSrv {
@@ -42,7 +42,7 @@ function createPlaylistSrv(): PlaylistSrv {
   return new PlaylistSrv();
 }
 
-const mockWindowLocation = (): [jest.MockInstance<any, any>, () => void] => {
+const mockWindowLocation = (): [jest.Mock, () => void] => {
   const oldLocation = window.location;
   const hrefMock = jest.fn();
 
@@ -51,8 +51,7 @@ const mockWindowLocation = (): [jest.MockInstance<any, any>, () => void] => {
   //@ts-ignore
   delete window.location;
 
-  // eslint-disable-next-line
-  window.location = {} as any;
+  window.location = {} as Location;
 
   // Only mocking href as that is all this test needs, but otherwise there is lots of things missing, so keep that
   // in mind if this is reused.
@@ -68,7 +67,7 @@ const mockWindowLocation = (): [jest.MockInstance<any, any>, () => void] => {
 
 describe('PlaylistSrv', () => {
   let srv: PlaylistSrv;
-  let hrefMock: jest.MockInstance<any, any>;
+  let hrefMock: jest.Mock;
   let unmockLocation: () => void;
   const initialUrl = 'http://localhost/playlist';
 

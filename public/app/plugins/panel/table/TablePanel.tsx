@@ -2,11 +2,21 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { DataFrame, FieldMatcherID, getFrameDisplayName, PanelProps, SelectableValue } from '@grafana/data';
-import { PanelDataErrorView } from '@grafana/runtime';
+import { PanelDataErrorView, reportInteraction } from '@grafana/runtime';
 import { Select, Table, usePanelContext, useTheme2 } from '@grafana/ui';
 import { TableSortByFieldState } from '@grafana/ui/src/components/Table/types';
 
+import { hasDeprecatedParentRowIndex, migrateFromParentRowIndexToNestedFrames } from './migrations';
 import { Options } from './panelcfg.gen';
+
+export const INTERACTION_EVENT_NAME = 'table_panel_usage';
+export const INTERACTION_ITEM = {
+  COLUMN_RESIZE: 'column_resize',
+  SORT_BY: 'sort_by',
+  TABLE_SELECTION_CHANGE: 'table_selection_change',
+  ERROR_VIEW: 'error_view',
+  CELL_TYPE_CHANGE: 'cell_type_change',
+};
 
 interface Props extends PanelProps<Options> {}
 
@@ -15,18 +25,19 @@ export function TablePanel(props: Props) {
 
   const theme = useTheme2();
   const panelContext = usePanelContext();
-  const frames = data.series;
-  const mainFrames = frames.filter((f) => f.meta?.custom?.parentRowIndex === undefined);
-  const subFrames = frames.filter((f) => f.meta?.custom?.parentRowIndex !== undefined);
-  const count = mainFrames?.length;
-  const hasFields = mainFrames[0]?.fields.length;
-  const currentIndex = getCurrentFrameIndex(mainFrames, options);
-  const main = mainFrames[currentIndex];
+  const frames = hasDeprecatedParentRowIndex(data.series)
+    ? migrateFromParentRowIndexToNestedFrames(data.series)
+    : data.series;
+  const count = frames?.length;
+  const hasFields = frames[0]?.fields.length;
+  const currentIndex = getCurrentFrameIndex(frames, options);
+  const main = frames[currentIndex];
 
   let tableHeight = height;
-  let subData = subFrames;
 
   if (!count || !hasFields) {
+    reportInteraction(INTERACTION_EVENT_NAME, { item: INTERACTION_ITEM.ERROR_VIEW });
+
     return <PanelDataErrorView panelId={id} fieldConfig={fieldConfig} data={data} />;
   }
 
@@ -35,7 +46,6 @@ export function TablePanel(props: Props) {
     const padding = theme.spacing.gridSize;
 
     tableHeight = height - inputHeight - padding;
-    subData = subFrames.filter((f) => f.refId === main.refId);
   }
 
   const tableElement = (
@@ -52,7 +62,6 @@ export function TablePanel(props: Props) {
       onCellFilterAdded={panelContext.onAddAdHocFilter}
       footerOptions={options.footer}
       enablePagination={options.footer?.enablePagination}
-      subData={subData}
       cellHeight={options.cellHeight}
       timeRange={timeRange}
     />
@@ -62,7 +71,7 @@ export function TablePanel(props: Props) {
     return tableElement;
   }
 
-  const names = mainFrames.map((frame, index) => {
+  const names = frames.map((frame, index) => {
     return {
       label: getFrameDisplayName(frame),
       value: index,
@@ -108,6 +117,8 @@ function onColumnResize(fieldDisplayName: string, width: number, props: Props) {
     });
   }
 
+  reportInteraction(INTERACTION_EVENT_NAME, { item: INTERACTION_ITEM.COLUMN_RESIZE });
+
   props.onFieldConfigChange({
     ...fieldConfig,
     overrides,
@@ -115,6 +126,8 @@ function onColumnResize(fieldDisplayName: string, width: number, props: Props) {
 }
 
 function onSortByChange(sortBy: TableSortByFieldState[], props: Props) {
+  reportInteraction(INTERACTION_EVENT_NAME, { item: INTERACTION_ITEM.SORT_BY });
+
   props.onOptionsChange({
     ...props.options,
     sortBy,
@@ -122,6 +135,8 @@ function onSortByChange(sortBy: TableSortByFieldState[], props: Props) {
 }
 
 function onChangeTableSelection(val: SelectableValue<number>, props: Props) {
+  reportInteraction(INTERACTION_EVENT_NAME, { item: INTERACTION_ITEM.TABLE_SELECTION_CHANGE });
+
   props.onOptionsChange({
     ...props.options,
     frameIndex: val.value || 0,

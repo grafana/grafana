@@ -1,4 +1,4 @@
-import { renderHook } from '@testing-library/react';
+import { renderHook, waitFor } from '@testing-library/react';
 import React from 'react';
 import { Provider } from 'react-redux';
 
@@ -30,7 +30,7 @@ describe('useIsRuleEditable', () => {
     beforeEach(enableRBAC);
     describe('Grafana rules', () => {
       // When RBAC is enabled we require appropriate alerting permissions in the folder scope
-      it('Should allow editing when the user has the alert rule update permission in the folder', () => {
+      it('Should allow editing when the user has the alert rule update permission in the folder', async () => {
         mockUseFolder({
           accessControl: {
             [AccessControlAction.AlertingRuleUpdate]: true,
@@ -41,11 +41,11 @@ describe('useIsRuleEditable', () => {
 
         const { result } = renderHook(() => useIsRuleEditable('grafana', mockRulerGrafanaRule()), { wrapper });
 
-        expect(result.current.loading).toBe(false);
+        await waitFor(() => expect(result.current.loading).toBe(false));
         expect(result.current.isEditable).toBe(true);
       });
 
-      it('Should allow deleting when the user has the alert rule delete permission', () => {
+      it('Should allow deleting when the user has the alert rule delete permission', async () => {
         mockUseFolder({
           accessControl: {
             [AccessControlAction.AlertingRuleDelete]: true,
@@ -56,33 +56,33 @@ describe('useIsRuleEditable', () => {
 
         const { result } = renderHook(() => useIsRuleEditable('grafana', mockRulerGrafanaRule()), { wrapper });
 
-        expect(result.current.loading).toBe(false);
+        await waitFor(() => expect(result.current.loading).toBe(false));
         expect(result.current.isRemovable).toBe(true);
       });
 
-      it('Should forbid editing when the user has no alert rule update permission', () => {
+      it('Should forbid editing when the user has no alert rule update permission', async () => {
         mockUseFolder({ accessControl: {} });
 
         const wrapper = getProviderWrapper();
 
         const { result } = renderHook(() => useIsRuleEditable('grafana', mockRulerGrafanaRule()), { wrapper });
 
-        expect(result.current.loading).toBe(false);
+        await waitFor(() => expect(result.current.loading).toBe(false));
         expect(result.current.isEditable).toBe(false);
       });
 
-      it('Should forbid deleting when the user has no alert rule delete permission', () => {
+      it('Should forbid deleting when the user has no alert rule delete permission', async () => {
         mockUseFolder({ accessControl: {} });
 
         const wrapper = getProviderWrapper();
 
         const { result } = renderHook(() => useIsRuleEditable('grafana', mockRulerGrafanaRule()), { wrapper });
 
-        expect(result.current.loading).toBe(false);
+        await waitFor(() => expect(result.current.loading).toBe(false));
         expect(result.current.isRemovable).toBe(false);
       });
 
-      it('Should allow editing and deleting when the user has alert rule permissions but does not have folder canSave permission', () => {
+      it('Should allow editing and deleting when the user has alert rule permissions but does not have folder canSave permission', async () => {
         mockUseFolder({
           canSave: false,
           accessControl: {
@@ -95,7 +95,7 @@ describe('useIsRuleEditable', () => {
 
         const { result } = renderHook(() => useIsRuleEditable('grafana', mockRulerGrafanaRule()), { wrapper });
 
-        expect(result.current.loading).toBe(false);
+        await waitFor(() => expect(result.current.loading).toBe(false));
         expect(result.current.isEditable).toBe(true);
         expect(result.current.isRemovable).toBe(true);
       });
@@ -103,27 +103,28 @@ describe('useIsRuleEditable', () => {
 
     describe('Cloud rules', () => {
       beforeEach(() => {
+        mocks.useFolder.mockReturnValue({ loading: false });
         contextSrv.isEditor = true;
       });
 
-      it('Should allow editing and deleting when the user has alert rule external write permission', () => {
+      it('Should allow editing and deleting when the user has alert rule external write permission', async () => {
         mockPermissions([AccessControlAction.AlertingRuleExternalWrite]);
         const wrapper = getProviderWrapper();
 
         const { result } = renderHook(() => useIsRuleEditable('cortex', mockRulerAlertingRule()), { wrapper });
 
-        expect(result.current.loading).toBe(false);
+        await waitFor(() => expect(result.current.loading).toBe(false));
         expect(result.current.isEditable).toBe(true);
         expect(result.current.isRemovable).toBe(true);
       });
 
-      it('Should forbid editing and deleting when the user has no alert rule external write permission', () => {
+      it('Should forbid editing and deleting when the user has no alert rule external write permission', async () => {
         mockPermissions([]);
         const wrapper = getProviderWrapper();
 
         const { result } = renderHook(() => useIsRuleEditable('cortex', mockRulerAlertingRule()), { wrapper });
 
-        expect(result.current.loading).toBe(false);
+        await waitFor(() => expect(result.current.loading).toBe(false));
         expect(result.current.isEditable).toBe(false);
         expect(result.current.isRemovable).toBe(false);
       });
@@ -133,26 +134,26 @@ describe('useIsRuleEditable', () => {
   describe('RBAC disabled', () => {
     beforeEach(disableRBAC);
     describe('Grafana rules', () => {
-      it('Should allow editing and deleting when the user has folder canSave permission', () => {
+      it('Should allow editing and deleting when the user has folder canSave permission', async () => {
         mockUseFolder({ canSave: true });
 
         const wrapper = getProviderWrapper();
 
         const { result } = renderHook(() => useIsRuleEditable('grafana', mockRulerGrafanaRule()), { wrapper });
 
-        expect(result.current.loading).toBe(false);
+        await waitFor(() => expect(result.current.loading).toBe(false));
         expect(result.current.isEditable).toBe(true);
         expect(result.current.isRemovable).toBe(true);
       });
 
-      it('Should forbid editing and deleting when the user has no folder canSave permission', () => {
+      it('Should forbid editing and deleting when the user has no folder canSave permission', async () => {
         mockUseFolder({ canSave: false });
 
         const wrapper = getProviderWrapper();
 
         const { result } = renderHook(() => useIsRuleEditable('grafana', mockRulerGrafanaRule()), { wrapper });
 
-        expect(result.current.loading).toBe(false);
+        await waitFor(() => expect(result.current.loading).toBe(false));
         expect(result.current.isEditable).toBe(false);
         expect(result.current.isRemovable).toBe(false);
       });

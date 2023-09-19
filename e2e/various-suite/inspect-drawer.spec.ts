@@ -1,16 +1,15 @@
-import { e2e } from '@grafana/e2e';
+import { e2e } from '../utils';
 
 const PANEL_UNDER_TEST = 'Value reducers 1';
 
-e2e.scenario({
-  describeName: 'Inspect drawer tests',
-  itName: 'Tests various Inspect Drawer scenarios',
-  addScenarioDataSource: false,
-  addScenarioDashBoard: false,
-  skipScenario: false,
-  scenario: () => {
+describe('Inspect drawer tests', () => {
+  beforeEach(() => {
+    e2e.flows.login(e2e.env('USERNAME'), e2e.env('PASSWORD'));
+  });
+
+  it('Tests various Inspect Drawer scenarios', () => {
     // @ts-ignore some typing issue
-    e2e().on('uncaught:exception', (err) => {
+    cy.on('uncaught:exception', (err) => {
       if (err.stack?.indexOf("TypeError: Cannot read property 'getText' of null") !== -1) {
         // On occasion monaco editor will not have the time to be properly unloaded when we change the tab
         // and then the e2e test fails with the uncaught:exception:
@@ -33,7 +32,6 @@ e2e.scenario({
       return true;
     });
 
-    const viewPortWidth = e2e.config().viewportWidth;
     e2e.flows.openDashboard({ uid: 'wfTJJL5Wz' });
 
     // testing opening inspect drawer directly by clicking on Inspect in header menu
@@ -60,7 +58,7 @@ e2e.scenario({
       });
 
     e2e.components.PanelInspector.Query.content().should('be.visible');
-  },
+  });
 });
 
 const expectDrawerTabsAndContent = () => {
@@ -108,7 +106,7 @@ const expectDrawerClose = () => {
 const expectSubMenuScenario = (subMenu: string, tabTitle?: string) => {
   tabTitle = tabTitle ?? subMenu;
   // testing opening inspect drawer from sub menus under Inspect in header menu
-  e2e.components.Panels.Panel.title(PANEL_UNDER_TEST).scrollIntoView().should('be.visible').click();
+  e2e.components.Panels.Panel.title(PANEL_UNDER_TEST).scrollIntoView().should('be.visible');
   e2e.components.Panels.Panel.menu(PANEL_UNDER_TEST).click({ force: true }); // force click because menu is hidden and show on hover
   // sub menus are in the DOM but not visible and because there is no hover support in Cypress force click
   // https://github.com/cypress-io/cypress-example-recipes/blob/master/examples/testing-dom__hover-hidden-elements/cypress/integration/hover-hidden-elements-spec.js

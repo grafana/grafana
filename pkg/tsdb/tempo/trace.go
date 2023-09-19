@@ -40,7 +40,7 @@ func (s *Service) getTrace(ctx context.Context, pCtx backend.PluginContext, quer
 
 	defer func() {
 		if err := resp.Body.Close(); err != nil {
-			s.logger.FromContext(ctx).Warn("failed to close response body", "err", err)
+			s.logger.FromContext(ctx).Warn("Failed to close response body", "err", err)
 		}
 	}()
 

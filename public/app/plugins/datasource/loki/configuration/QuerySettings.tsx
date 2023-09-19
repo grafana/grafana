@@ -21,8 +21,8 @@ export const QuerySettings = (props: Props) => {
       title="Queries"
       description={
         <ConfigDescriptionLink
-          description="Additional options to customize your querying experience. "
-          suffix="loki/#configure-the-data-source"
+          description="Additional options to customize your querying experience."
+          suffix="loki/configure-loki-data-source/#queries"
           feature="query settings"
         />
       }

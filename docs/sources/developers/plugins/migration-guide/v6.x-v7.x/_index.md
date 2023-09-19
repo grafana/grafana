@@ -41,7 +41,7 @@ With Grafana 7.0, we released a new tool for making it easier to develop plugins
 
 For more information, refer to [@grafana/toolkit](https://www.npmjs.com/package/@grafana/toolkit).
 
-{{% admonition type="note" %}} As of Grafana 10.0, `@grafana/toolkit` is deprecated. It is replaced by the [`create-plugin`](https://grafana.github.io/plugin-tools/docs/getting-started/creating-a-plugin) tool.
+{{% admonition type="note" %}} As of Grafana 10.0, `@grafana/toolkit` is deprecated. It is replaced by the [`create-plugin`](https://grafana.github.io/plugin-tools/docs/get-started/) tool.
 {{% /admonition %}}
 
 ### Field options

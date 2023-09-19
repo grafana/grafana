@@ -1,0 +1,234 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`transformSceneToSaveModel Given a scene with rows Should transform back to peristed model 1`] = `
+{
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "links": [],
+  "panels": [
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 0,
+      },
+      "id": 20,
+      "panels": [],
+      "title": "Row at the top - not repeated - saved expanded",
+      "type": "row",
+    },
+    {
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": [],
+      },
+      "gridPos": {
+        "h": 2,
+        "w": 24,
+        "x": 0,
+        "y": 1,
+      },
+      "id": 15,
+      "options": {
+        "code": {
+          "language": "plaintext",
+          "showLineNumbers": false,
+          "showMiniMap": false,
+        },
+        "content": "<div class="center-vh">
+  Repeated row below. The row has 
+  a panel that is also repeated horizontally based
+  on values in the $pod variable. 
+</div>",
+        "mode": "markdown",
+      },
+      "title": "",
+      "transformations": [],
+      "transparent": false,
+      "type": "text",
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 3,
+      },
+      "id": 16,
+      "panels": [],
+      "repeat": "server",
+      "title": "Row for server $server",
+      "type": "row",
+    },
+    {
+      "collapsed": true,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 25,
+      },
+      "id": 25,
+      "panels": [
+        {
+          "fieldConfig": {
+            "defaults": {},
+            "overrides": [],
+          },
+          "gridPos": {
+            "h": 2,
+            "w": 24,
+            "x": 0,
+            "y": 26,
+          },
+          "id": 30,
+          "options": {
+            "code": {
+              "language": "plaintext",
+              "showLineNumbers": false,
+              "showMiniMap": false,
+            },
+            "content": "<div class="center-vh">
+  Just a panel
+</div>",
+            "mode": "markdown",
+          },
+          "transformations": [],
+          "transparent": false,
+          "type": "text",
+        },
+      ],
+      "title": "Row at the bottom - not repeated - saved collapsed ",
+      "type": "row",
+    },
+  ],
+  "schemaVersion": 36,
+  "tags": [],
+  "time": {
+    "from": "now-6h",
+    "to": "now",
+  },
+  "timezone": "browser",
+  "title": "Repeating rows",
+  "uid": "Repeating-rows-uid",
+}
+`;
+
+exports[`transformSceneToSaveModel Given a simple scene Should transform back to peristed model 1`] = `
+{
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "links": [],
+  "panels": [
+    {
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic",
+          },
+          "custom": {
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "lineWidth": 2,
+          },
+        },
+        "overrides": [],
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 0,
+      },
+      "id": 28,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none",
+        },
+      },
+      "title": "Simple time series graph ",
+      "transformations": [],
+      "transparent": false,
+      "type": "timeseries",
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 8,
+      },
+      "id": 5,
+      "panels": [],
+      "title": "Row title",
+      "type": "row",
+    },
+    {
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": [],
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 12,
+        "x": 0,
+        "y": 9,
+      },
+      "id": 29,
+      "options": {},
+      "title": "panel inside row",
+      "transformations": [],
+      "transparent": false,
+      "type": "timeseries",
+    },
+    {
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": [],
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 11,
+        "x": 12,
+        "y": 9,
+      },
+      "id": 25,
+      "options": {
+        "code": {
+          "language": "plaintext",
+          "showLineNumbers": false,
+          "showMiniMap": false,
+        },
+        "content": "content",
+        "mode": "markdown",
+      },
+      "title": "Transparent text panel",
+      "transformations": [],
+      "transparent": true,
+      "type": "text",
+    },
+  ],
+  "schemaVersion": 36,
+  "tags": [],
+  "time": {
+    "from": "now-5m",
+    "to": "now",
+  },
+  "timezone": "browser",
+  "title": "Dashboard to load1",
+  "uid": "nP8rcffGkasd",
+}
+`;

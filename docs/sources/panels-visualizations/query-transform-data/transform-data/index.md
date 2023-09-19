@@ -39,7 +39,7 @@ You can also use the output of one transformation as the input to another transf
 
 ## Transformation types
 
-Grafana provides a number of ways that you can transform data. For a complete list of transformations, refer to [Transformation functions]({{< relref "#transformation-functions" >}}).
+Grafana provides a number of ways that you can transform data. For a complete list of transformations, refer to [Transformation functions](#transformation-functions).
 
 ## Order of transformations
 
@@ -49,15 +49,15 @@ The order in which Grafana applies transformations directly impacts the results.
 
 ## Add a transformation function to data
 
-The following steps guide you in adding a transformation to data. This documentation does not include steps for each type of transformation. For a complete list of transformations, refer to [Transformation functions]({{< relref "#transformation-functions" >}}).
+The following steps guide you in adding a transformation to data. This documentation does not include steps for each type of transformation. For a complete list of transformations, refer to [Transformation functions](#transformation-functions).
 
 1. Navigate to the panel where you want to add one or more transformations.
 1. Hover over any part of the panel to display the actions menu on the top right corner.
 1. Click the menu and select **Edit**.
 1. Click the **Transform** tab.
 1. Click a transformation.
-   A transformation row appears where you configure the transformation options. For more information about how to configure a transformation, refer to [Transformation functions]({{< relref "#transformation-functions" >}}).
-   For information about available calculations, refer to [Calculation types]({{< relref "../../calculation-types" >}}).
+   A transformation row appears where you configure the transformation options. For more information about how to configure a transformation, refer to [Transformation functions](#transformation-functions).
+   For information about available calculations, refer to [Calculation types][].
 1. To apply another transformation, click **Add transformation**.
    This transformation acts on the result set returned by the previous transformation.
    {{< figure src="/static/img/docs/transformations/transformations-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
@@ -73,6 +73,8 @@ The input and output results sets can help you debug a transformation.
 ## Disable a transformation
 
 You can disable or hide one or more transformations by clicking on the eye icon on the top right side of the transformation row. This disables the applied actions of that specific transformation and can help to identify issues when you change several transformations one after another.
+
+{{< figure src="/static/img/docs/transformations/screenshot-example-disable-transformation.png" class="docs-image--no-shadow" max-width= "1100px" >}}
 
 ## Filter a transformation
 
@@ -94,6 +96,8 @@ We recommend that you remove transformations that you don't need. When you delet
 1. Click the **Transform** tab.
 1. Click the trash icon next to the transformation you want to delete.
 
+{{< figure src="/static/img/docs/transformations/screenshot-example-remove-transformation.png" class="docs-image--no-shadow" max-width= "1100px" >}}
+
 ## Transformation functions
 
 You can perform the following transformations on your data.
@@ -107,7 +111,7 @@ Use this transformation to add a new field calculated from two other fields. Eac
   - **Binary option -** Apply basic math operation(sum, multiply, etc) on values in a single row from two selected fields.
   - **Index -** Will insert a field with the row index.
 - **Field name -** Select the names of fields you want to use in the calculation for the new field.
-- **Calculation -** If you select **Reduce row** mode, then the **Calculation** field appears. Click in the field to see a list of calculation choices you can use to create the new field. For information about available calculations, refer to [Calculation types]({{< relref "../../calculation-types" >}}).
+- **Calculation -** If you select **Reduce row** mode, then the **Calculation** field appears. Click in the field to see a list of calculation choices you can use to create the new field. For information about available calculations, refer to [Calculation types][].
 - **Operation -** If you select **Binary option** mode, then the **Operation** fields appear. These fields allow you to do basic math operations on values in a single row from two selected fields. You can also use numerical values for binary operations.
 - **Alias -** (Optional) Enter the name of your new field. If you leave this blank, then the field will be named to match the calculation.
 - **Replace all fields -** (Optional) Select this option if you want to hide all other fields and display only your calculated field in the visualization.
@@ -182,7 +186,7 @@ The result:
 
 ### Create heatmap
 
-Use this transformation to prepare histogram data to be visualized over time. Similar to the [Heatmap panel]({{< relref "../../visualizations/heatmap" >}}), this transformation allows you to convert histogram metrics to buckets over time.
+Use this transformation to prepare histogram data to be visualized over time. Similar to the [Heatmap panel][], this transformation allows you to convert histogram metrics to buckets over time.
 
 #### X Bucket
 
@@ -223,7 +227,7 @@ Consider the following data set:
 | 1636678680000000000 | {"value": 5}  |
 | 1636678620000000000 | {"value": 12} |
 
-You could prepare the data to be used by a [Time series panel]({{< relref "../../visualizations/time-series" >}}) with this configuration:
+You could prepare the data to be used by a [Time series panel][] with this configuration:
 
 - Source: json_data
 - Format: JSON
@@ -376,7 +380,7 @@ Conditions that are invalid or incompletely configured are ignored.
 
 ### Group by
 
-This transformation groups the data by a specified field (column) value and processes calculations on each group. Click to see a list of calculation choices. For information about available calculations, refer to [Calculation types]({{< relref "../../calculation-types" >}}).
+This transformation groups the data by a specified field (column) value and processes calculations on each group. Click to see a list of calculation choices. For information about available calculations, refer to [Calculation types][].
 
 Here's an example of original data.
 
@@ -684,7 +688,7 @@ After merge:
 
 ### Merge
 
-Use this transformation to combine the result from multiple queries into one single result. This is helpful when using the table panel visualization. Values that can be merged are combined into the same row. Values are mergeable if the shared fields contain the same data. For information, refer to [Table panel]({{< relref "../../visualizations/table/" >}}).
+Use this transformation to combine the result from multiple queries into one single result. This is helpful when using the table panel visualization. Values that can be merged are combined into the same row. Values are mergeable if the shared fields contain the same data. For information, refer to [Table panel][].
 
 In the example below, we have two queries returning table data. It is visualized as two separate tables before applying the transformation.
 
@@ -890,7 +894,7 @@ As you can see each row in the source data becomes a separate field. Each field 
 This transformation is available in Grafana 7.5.10+ and Grafana 8.0.6+.
 {{% /admonition %}}
 
-Prepare time series transformation is useful when a data source returns time series data in a format that isn't supported by the panel you want to use. For more information about data frame formats, refer to [Data frames]({{< relref "../../../developers/plugins/introduction-to-plugin-development/data-frames/" >}}).
+Prepare time series transformation is useful when a data source returns time series data in a format that isn't supported by the panel you want to use. For more information about data frame formats, refer to [Data frames][].
 
 This transformation helps you resolve this issue by converting the time series data from either the wide format to the long format or the other way around.
 
@@ -966,11 +970,10 @@ Here is the result after adding a Limit transformation with a value of '3':
 
 ### Time series to table transform
 
-{{% admonition type="note" %}}
-This transformation is available in Grafana 9.5+ as an opt-in beta feature. Modify Grafana [configuration file]({{< relref "../../../setup-grafana/configure-grafana/#configuration-file-location" >}}) to enable the `timeSeriesTable` [feature toggle]({{< relref "../../../setup-grafana/configure-grafana/#feature_toggles" >}}) to use it.
-{{% /admonition %}}
+> **Note:** This transformation is available in Grafana 9.5+ as an opt-in beta feature.
+> Modify Grafana [configuration file][] to enable the `timeSeriesTable` [feature toggle][] to use it.
 
-Use this transformation to convert time series result into a table, converting time series data frame into a "Trend" field. "Trend" field can then be rendered using [sparkline cell type]({{< relref "../../visualizations/table/#sparkline" >}}), producing an inline sparkline for each table row. If there are multiple time series queries, each will result in a separate table data frame. These can be joined using join or merge transforms to produce a single table with multiple sparklines per row.
+Use this transformation to convert time series result into a table, converting time series data frame into a "Trend" field. "Trend" field can then be rendered using [sparkline cell type][], producing an inline sparkline for each table row. If there are multiple time series queries, each will result in a separate table data frame. These can be joined using join or merge transforms to produce a single table with multiple sparklines per row.
 
 ### Format Time
 
@@ -979,3 +982,29 @@ This transformation is available in Grafana 10.1+ as an alpha feature.
 {{% /admonition %}}
 
 Use this transformation to format the output of a time field. Output can be formatted using (Moment.js format strings)[https://momentjs.com/docs/#/displaying/]. For instance, if you would like to display only the year of a time field the format string `YYYY` can be used to show the calendar year (e.g. 1999, 2012, etc.).
+
+{{% docs/reference %}}
+[Table panel]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/table"
+[Table panel]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/table"
+
+[Data frames]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/developers/plugins/introduction-to-plugin-development/data-frames"
+[Data frames]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/developers/plugins/introduction-to-plugin-development/data-frames"
+
+[Calculation types]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/calculation-types"
+[Calculation types]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/calculation-types"
+
+[sparkline cell type]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/table#sparkline"
+[sparkline cell type]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/table#sparkline"
+
+[Heatmap panel]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/heatmap"
+[Heatmap panel]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/heatmap"
+
+[configuration file]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana#configuration-file-location"
+[configuration file]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana#configuration-file-location"
+
+[Time series panel]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/time-series"
+[Time series panel]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/time-series"
+
+[feature toggle]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana#feature_toggles"
+[feature toggle]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana#feature_toggles"
+{{% /docs/reference %}}

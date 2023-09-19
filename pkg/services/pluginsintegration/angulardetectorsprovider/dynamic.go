@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"math/rand"
 	"net"
 	"net/http"
 	"net/url"
@@ -17,6 +18,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/angularpatternsstore"
 )
+
+var errNotModified = errors.New("not modified")
 
 // backgroundJobInterval is the interval that passes between background job runs.
 // It can be overwritten in tests.
@@ -60,11 +63,13 @@ func ProvideDynamic(cfg *config.Cfg, store angularpatternsstore.Service, feature
 	// Perform the initial restore from db
 	st := time.Now()
 	d.log.Debug("Restoring cache")
+	d.mux.Lock()
 	if err := d.setDetectorsFromCache(context.Background()); err != nil {
 		d.log.Warn("Cache restore failed", "error", err)
 	} else {
 		d.log.Info("Restored cache from database", "duration", time.Since(st))
 	}
+	d.mux.Unlock()
 	return d, nil
 }
 
@@ -93,58 +98,95 @@ func (d *Dynamic) patternsToDetectors(patterns GCOMPatterns) ([]angulardetector.
 	return detectors, nil
 }
 
+type GCOMResponse struct {
+	Patterns GCOMPatterns
+	ETag     string
+}
+
 // fetch fetches the angular patterns from GCOM and returns them as GCOMPatterns.
 // Call detectors() on the returned value to get the corresponding detectors.
-func (d *Dynamic) fetch(ctx context.Context) (GCOMPatterns, error) {
+// If etag is not empty, it will be sent as If-None-Match header.
+// If the response status code is 304, it returns errNotModified.
+func (d *Dynamic) fetch(ctx context.Context, etag string) (GCOMResponse, error) {
 	st := time.Now()
 
 	reqURL, err := url.JoinPath(d.baseURL, gcomAngularPatternsPath)
 	if err != nil {
-		return nil, fmt.Errorf("url joinpath: %w", err)
+		return GCOMResponse{}, fmt.Errorf("url joinpath: %w", err)
 	}
 
 	d.log.Debug("Fetching dynamic angular detection patterns", "url", reqURL)
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, reqURL, nil)
 	if err != nil {
-		return nil, fmt.Errorf("new request with context: %w", err)
+		return GCOMResponse{}, fmt.Errorf("new request with context: %w", err)
 	}
+	if etag != "" {
+		req.Header.Add("If-None-Match", etag)
+	}
+
+	var r GCOMResponse
 	resp, err := d.httpClient.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("http do: %w", err)
+		return GCOMResponse{}, fmt.Errorf("http do: %w", err)
 	}
 	defer func() {
 		if closeErr := resp.Body.Close(); closeErr != nil {
 			d.log.Error("Response body close error", "error", err)
 		}
 	}()
-	var out GCOMPatterns
-	if err := json.NewDecoder(resp.Body).Decode(&out); err != nil {
-		return nil, fmt.Errorf("json decode: %w", err)
+	if resp.StatusCode == http.StatusNotModified {
+		return GCOMResponse{}, errNotModified
 	}
-	d.log.Debug("Fetched dynamic angular detection patterns", "patterns", len(out), "duration", time.Since(st))
-	return out, nil
+	if resp.StatusCode/100 != 2 {
+		return GCOMResponse{}, fmt.Errorf("bad status code: %d", resp.StatusCode)
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&r.Patterns); err != nil {
+		return GCOMResponse{}, fmt.Errorf("json decode: %w", err)
+	}
+	r.ETag = resp.Header.Get("ETag")
+	d.log.Debug("Fetched dynamic angular detection patterns", "patterns", len(r.Patterns), "duration", time.Since(st))
+	return r, nil
 }
 
 // updateDetectors fetches the patterns from GCOM, converts them to detectors,
 // stores the patterns in the database and update the cached detectors.
-func (d *Dynamic) updateDetectors(ctx context.Context) error {
+func (d *Dynamic) updateDetectors(ctx context.Context, etag string) error {
 	// Fetch patterns from GCOM
 	d.mux.Lock()
 	defer d.mux.Unlock()
-	patterns, err := d.fetch(ctx)
-	if err != nil {
+
+	resp, err := d.fetch(ctx, etag)
+	switch {
+	case err == nil:
+		break
+	case errors.Is(err, errNotModified):
+		// If patterns did not change, update the last updated anyways,
+		// so we don't keep trying to fetch them, but update the in-memory
+		// detectors from the previously stored value.
+		d.log.Debug("Not modified, skipping update")
+		if err := d.store.SetLastUpdated(ctx); err != nil {
+			return fmt.Errorf("set last updated: %w", err)
+		}
+		// Update in-memory detectors, by reading current value in the kvstore
+		if err := d.setDetectorsFromCache(ctx); err != nil {
+			return fmt.Errorf("set detectors from cache: %w", err)
+		}
+		return nil
+	default:
 		return fmt.Errorf("fetch: %w", err)
 	}
-
 	// Convert the patterns to detectors
-	newDetectors, err := d.patternsToDetectors(patterns)
+	newDetectors, err := d.patternsToDetectors(resp.Patterns)
 	if err != nil {
 		return fmt.Errorf("patterns convert to detectors: %w", err)
 	}
 
 	// Update store only if the patterns can be converted to detectors
-	if err := d.store.Set(ctx, patterns); err != nil {
+	if err := d.store.Set(ctx, resp.Patterns); err != nil {
 		return fmt.Errorf("store set: %w", err)
+	}
+	if err := d.store.SetETag(ctx, resp.ETag); err != nil {
+		return fmt.Errorf("store set etag: %w", err)
 	}
 
 	// Update cached detectors
@@ -155,9 +197,6 @@ func (d *Dynamic) updateDetectors(ctx context.Context) error {
 // setDetectorsFromCache sets the in-memory detectors from the patterns in the store.
 // The caller must Lock d.mux before calling this function.
 func (d *Dynamic) setDetectorsFromCache(ctx context.Context) error {
-	d.mux.Lock()
-	defer d.mux.Unlock()
-
 	var cachedPatterns GCOMPatterns
 	rawCached, ok, err := d.store.Get(ctx)
 	if !ok {
@@ -184,6 +223,12 @@ func (d *Dynamic) IsDisabled() bool {
 	return !d.features.IsEnabled(featuremgmt.FlagPluginsDynamicAngularDetectionPatterns)
 }
 
+// randomSkew returns a random time.Duration between 0 and maxSkew.
+// This can be added to backgroundJobInterval to skew it by a random amount.
+func (d *Dynamic) randomSkew(maxSkew time.Duration) time.Duration {
+	return time.Duration(rand.Float64() * float64(maxSkew))
+}
+
 // Run is the function implementing the background service and updates the detectors periodically.
 func (d *Dynamic) Run(ctx context.Context) error {
 	d.log.Debug("Started background service")
@@ -193,8 +238,18 @@ func (d *Dynamic) Run(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("get last updated: %w", err)
 	}
-	nextRunUntil := time.Until(lastUpdate.Add(backgroundJobInterval))
 
+	// Offset the background job interval a bit to skew GCOM calls from all instances,
+	// so GCOM is not overwhelmed with lots of requests all at the same time.
+	// Important when lots of HG instances restart at the same time.
+	skew := d.randomSkew(backgroundJobInterval / 4)
+	backgroundJobInterval += skew
+	d.log.Debug(
+		"Applied background job skew",
+		"skew", backgroundJobInterval, "interval", backgroundJobInterval,
+	)
+
+	nextRunUntil := time.Until(lastUpdate.Add(backgroundJobInterval))
 	ticker := time.NewTicker(backgroundJobInterval)
 	defer ticker.Stop()
 
@@ -217,8 +272,15 @@ func (d *Dynamic) Run(ctx context.Context) error {
 		case <-tick:
 			st := time.Now()
 			d.log.Debug("Updating patterns")
-
-			if err := d.updateDetectors(context.Background()); err != nil {
+			etag, ok, err := d.store.GetETag(context.Background())
+			if err != nil {
+				d.log.Error("Error while getting etag", "error", err)
+			}
+			// Ensure etag is empty if we don't have a value
+			if !ok {
+				etag = ""
+			}
+			if err := d.updateDetectors(context.Background(), etag); err != nil {
 				d.log.Error("Error while updating detectors", "error", err)
 			}
 			d.log.Info("Patterns update finished", "duration", time.Since(st))

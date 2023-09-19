@@ -180,8 +180,12 @@ export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
       incrs,
     };
 
-    if (border != null) {
-      config.border = border;
+    if (border?.show) {
+      config.border = {
+        stroke: color ?? theme.colors.text.primary,
+        width: 1 / devicePixelRatio,
+        ...border,
+      };
     }
 
     if (label != null && label.length > 0) {

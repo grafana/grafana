@@ -76,7 +76,7 @@ docs-rm: ## Remove the docs container.
 
 .PHONY: docs-pull
 docs-pull: ## Pull documentation base image.
-	$(PODMAN) pull $(DOCS_IMAGE)
+	$(PODMAN) pull -q $(DOCS_IMAGE)
 
 make-docs: ## Fetch the latest make-docs script.
 make-docs:

@@ -1,5 +1,4 @@
 import { nanoid } from '@reduxjs/toolkit';
-import { omit } from 'lodash';
 import { Unsubscribable } from 'rxjs';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -17,15 +16,15 @@ import {
   LogsSortOrder,
   rangeUtil,
   RawTimeRange,
+  ScopedVars,
   TimeRange,
   TimeZone,
+  toURLRange,
   urlUtil,
 } from '@grafana/data';
-import { DataSourceSrv, getDataSourceSrv } from '@grafana/runtime';
+import { getDataSourceSrv } from '@grafana/runtime';
 import { RefreshPicker } from '@grafana/ui';
 import store from 'app/core/store';
-import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
-import { PanelModel } from 'app/features/dashboard/state';
 import { ExpressionDatasourceUID } from 'app/features/expressions/types';
 import { QueryOptions, QueryTransaction } from 'app/types/explore';
 
@@ -47,11 +46,10 @@ export const setLastUsedDatasourceUID = (orgId: number, datasourceUID: string) =
   store.setObject(lastUsedDatasourceKeyForOrgId(orgId), datasourceUID);
 
 export interface GetExploreUrlArguments {
-  panel: PanelModel;
-  /** Datasource service to query other datasources in case the panel datasource is mixed */
-  datasourceSrv: DataSourceSrv;
-  /** Time service to get the current dashboard range from */
-  timeSrv: TimeSrv;
+  queries: DataQuery[];
+  dsRef: DataSourceRef | null | undefined;
+  timeRange: TimeRange;
+  scopedVars: ScopedVars | undefined;
 }
 
 export function generateExploreId() {
@@ -62,28 +60,23 @@ export function generateExploreId() {
  * Returns an Explore-URL that contains a panel's queries and the dashboard time range.
  */
 export async function getExploreUrl(args: GetExploreUrlArguments): Promise<string | undefined> {
-  const { panel, datasourceSrv, timeSrv } = args;
-  let exploreDatasource = await datasourceSrv.get(panel.datasource);
+  const { queries, dsRef, timeRange, scopedVars } = args;
+  let exploreDatasource = await getDataSourceSrv().get(dsRef);
 
-  /** In Explore, we don't have legend formatter and we don't want to keep
-   * legend formatting as we can't change it
-   *
-   * We also don't have expressions, so filter those out
+  /*
+   * Explore does not support expressions so filter those out
    */
-  let exploreTargets: DataQuery[] = panel.targets
-    .map((t) => omit(t, 'legendFormat'))
-    .filter((t) => t.datasource?.uid !== ExpressionDatasourceUID);
+  let exploreTargets: DataQuery[] = queries.filter((t) => t.datasource?.uid !== ExpressionDatasourceUID);
+
   let url: string | undefined;
 
   if (exploreDatasource) {
-    const range = timeSrv.timeRangeForUrl();
-    let state: Partial<ExploreUrlState> = { range };
+    let state: Partial<ExploreUrlState> = { range: toURLRange(timeRange.raw) };
     if (exploreDatasource.interpolateVariablesInQueries) {
-      const scopedVars = panel.scopedVars || {};
       state = {
         ...state,
         datasource: exploreDatasource.uid,
-        queries: exploreDatasource.interpolateVariablesInQueries(exploreTargets, scopedVars),
+        queries: exploreDatasource.interpolateVariablesInQueries(exploreTargets, scopedVars ?? {}),
       };
     } else {
       state = {

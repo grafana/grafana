@@ -71,9 +71,9 @@ export const QueryEditorRowHeader = <TQuery extends DataQuery>(props: Props<TQue
     onEndEditName(event.currentTarget.value.trim());
   };
 
-  const onKeyDown = (event: React.KeyboardEvent) => {
+  const onKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
     if (event.key === 'Enter') {
-      onEndEditName((event.target as any).value);
+      onEndEditName(event.currentTarget.value);
     }
   };
 

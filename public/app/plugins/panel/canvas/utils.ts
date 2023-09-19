@@ -1,6 +1,6 @@
 import { isNumber, isString } from 'lodash';
 
-import { AppEvents, Field, LinkModel, PluginState, SelectableValue } from '@grafana/data';
+import { AppEvents, Field, getFieldDisplayName, LinkModel, PluginState, SelectableValue } from '@grafana/data';
 import appEvents from 'app/core/app_events';
 import { hasAlphaPanels } from 'app/core/config';
 import {
@@ -116,8 +116,8 @@ export function getDataLinks(ctx: DimensionContext, cfg: TextConfig, textData: s
   frames?.forEach((frame) => {
     const visibleFields = frame.fields.filter((field) => !Boolean(field.config.custom?.hideFrom?.tooltip));
 
-    if (cfg.text?.field && visibleFields.some((f) => f.name === cfg.text?.field)) {
-      const field = visibleFields.filter((field) => field.name === cfg.text?.field)[0];
+    if (cfg.text?.field && visibleFields.some((f) => getFieldDisplayName(f, frame) === cfg.text?.field)) {
+      const field = visibleFields.filter((field) => getFieldDisplayName(field, frame) === cfg.text?.field)[0];
       if (field?.getLinks) {
         const disp = field.display ? field.display(textData) : { text: `${textData}`, numeric: +textData! };
         field.getLinks({ calculatedValue: disp }).forEach((link) => {

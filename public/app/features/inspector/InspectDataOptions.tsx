@@ -4,7 +4,6 @@ import { DataFrame, DataTransformerID, getFrameDisplayName, SelectableValue } fr
 import { Field, HorizontalGroup, Select, Switch, VerticalGroup, useStyles2 } from '@grafana/ui';
 import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOperationRow';
 import { t } from 'app/core/internationalization';
-import { PanelModel } from 'app/features/dashboard/state';
 import { DetailText } from 'app/features/inspector/DetailText';
 import { GetDataOptions } from 'app/features/query/state/PanelQueryRunner';
 
@@ -13,24 +12,24 @@ import { getPanelInspectorStyles2 } from './styles';
 interface Props {
   options: GetDataOptions;
   dataFrames: DataFrame[];
-  transformId: DataTransformerID;
   transformationOptions: Array<SelectableValue<DataTransformerID>>;
   selectedDataFrame: number | DataTransformerID;
   downloadForExcel: boolean;
   onDataFrameChange: (item: SelectableValue<DataTransformerID | number>) => void;
   toggleDownloadForExcel: () => void;
   data?: DataFrame[];
-  panel?: PanelModel;
+  hasTransformations?: boolean;
   onOptionsChange?: (options: GetDataOptions) => void;
+  actions?: React.ReactNode;
 }
 
 export const InspectDataOptions = ({
   options,
+  actions,
   onOptionsChange,
-  panel,
+  hasTransformations,
   data,
   dataFrames,
-  transformId,
   transformationOptions,
   selectedDataFrame,
   onDataFrameChange,
@@ -39,21 +38,16 @@ export const InspectDataOptions = ({
 }: Props) => {
   const styles = useStyles2(getPanelInspectorStyles2);
 
-  const panelTransformations = panel?.getTransformations();
-  const showPanelTransformationsOption =
-    Boolean(panelTransformations?.length) && (transformId as any) !== 'join by time';
-  const showFieldConfigsOption = panel && !panel.plugin?.fieldConfigRegistry.isEmpty();
-
   let dataSelect = dataFrames;
   if (selectedDataFrame === DataTransformerID.joinByField) {
     dataSelect = data!;
   }
 
-  const choices = dataSelect.map((frame, index) => {
+  const choices = dataSelect.map<SelectableValue<number>>((frame, index) => {
     return {
       value: index,
       label: `${getFrameDisplayName(frame)} (${index})`,
-    } as SelectableValue<number>;
+    };
   });
 
   const selectableOptions = [...transformationOptions, ...choices];
@@ -101,6 +95,7 @@ export const InspectDataOptions = ({
         title={t('dashboard.inspect-data.data-options', 'Data options')}
         headerElement={<DetailText>{getActiveString()}</DetailText>}
         isOpen={false}
+        actions={actions}
       >
         <div className={styles.options} data-testid="dataOptions">
           <VerticalGroup spacing="none">
@@ -117,7 +112,7 @@ export const InspectDataOptions = ({
             )}
 
             <HorizontalGroup>
-              {showPanelTransformationsOption && onOptionsChange && (
+              {hasTransformations && onOptionsChange && (
                 <Field
                   label={t('dashboard.inspect-data.transformations-label', 'Apply panel transformations')}
                   description={t(
@@ -131,7 +126,7 @@ export const InspectDataOptions = ({
                   />
                 </Field>
               )}
-              {showFieldConfigsOption && onOptionsChange && (
+              {onOptionsChange && (
                 <Field
                   label={t('dashboard.inspect-data.formatted-data-label', 'Formatted data')}
                   description={t(

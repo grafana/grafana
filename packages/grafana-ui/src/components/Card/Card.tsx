@@ -49,10 +49,7 @@ const CardContext = React.createContext<{
  */
 export const Card: CardInterface = ({ disabled, href, onClick, children, isSelected, className, ...htmlProps }) => {
   const hasHeadingComponent = useMemo(
-    () =>
-      React.Children.toArray(children).some(
-        (c) => React.isValidElement(c) && (c.type as any).displayName === Heading.displayName
-      ),
+    () => React.Children.toArray(children).some((c) => React.isValidElement(c) && c.type === Heading),
     [children]
   );
 

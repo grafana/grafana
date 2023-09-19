@@ -19,9 +19,9 @@ import (
 )
 
 var (
-	errAPIKeyInvalid = errutil.NewBase(errutil.StatusUnauthorized, "api-key.invalid", errutil.WithPublicMessage("Invalid API key"))
-	errAPIKeyExpired = errutil.NewBase(errutil.StatusUnauthorized, "api-key.expired", errutil.WithPublicMessage("Expired API key"))
-	errAPIKeyRevoked = errutil.NewBase(errutil.StatusUnauthorized, "api-key.revoked", errutil.WithPublicMessage("Revoked API key"))
+	errAPIKeyInvalid = errutil.Unauthorized("api-key.invalid", errutil.WithPublicMessage("Invalid API key"))
+	errAPIKeyExpired = errutil.Unauthorized("api-key.expired", errutil.WithPublicMessage("Expired API key"))
+	errAPIKeyRevoked = errutil.Unauthorized("api-key.revoked", errutil.WithPublicMessage("Revoked API key"))
 )
 
 var _ authn.HookClient = new(APIKey)
@@ -155,11 +155,11 @@ func (s *APIKey) Hook(ctx context.Context, identity *authn.Identity, r *authn.Re
 	go func(apikeyID int64) {
 		defer func() {
 			if err := recover(); err != nil {
-				s.log.Error("panic during user last seen sync", "err", err)
+				s.log.Error("Panic during user last seen sync", "err", err)
 			}
 		}()
 		if err := s.apiKeyService.UpdateAPIKeyLastUsedDate(context.Background(), apikeyID); err != nil {
-			s.log.Warn("failed to update last use date for api key", "id", apikeyID)
+			s.log.Warn("Failed to update last use date for api key", "id", apikeyID)
 		}
 	}(id)
 

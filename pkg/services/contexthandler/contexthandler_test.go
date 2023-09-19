@@ -1,123 +1,181 @@
-package contexthandler
+package contexthandler_test
 
 import (
-	"context"
-	"net"
-	"net/http"
-	"net/http/httptest"
+	"errors"
 	"testing"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/auth"
-	"github.com/grafana/grafana/pkg/services/auth/authtest"
+	"github.com/grafana/grafana/pkg/services/authn"
+	"github.com/grafana/grafana/pkg/services/authn/authntest"
+	"github.com/grafana/grafana/pkg/services/contexthandler"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
-	"github.com/grafana/grafana/pkg/util"
-	"github.com/grafana/grafana/pkg/web"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/login"
+	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/web/webtest"
 )
 
-func TestDontRotateTokensOnCancelledRequests(t *testing.T) {
-	ctxHdlr := getContextHandler(t)
-	tryRotateCallCount := 0
-	ctxHdlr.AuthTokenService = &authtest.FakeUserAuthTokenService{
-		TryRotateTokenProvider: func(ctx context.Context, token *auth.UserToken, clientIP net.IP,
-			userAgent string) (bool, *auth.UserToken, error) {
-			tryRotateCallCount++
-			return false, nil, nil
-		},
-	}
+func TestContextHandler(t *testing.T) {
+	t.Run("should set auth error if authentication was unsuccessful", func(t *testing.T) {
+		handler := contexthandler.ProvideService(
+			setting.NewCfg(),
+			tracing.NewFakeTracer(),
+			featuremgmt.WithFeatures(),
+			&authntest.FakeService{ExpectedErr: errors.New("some error")},
+		)
 
-	ctx, cancel := context.WithCancel(context.Background())
-	reqContext, _, err := initTokenRotationScenario(ctx, t, ctxHdlr)
-	require.NoError(t, err)
-	reqContext.UserToken = &auth.UserToken{AuthToken: "oldtoken"}
+		server := webtest.NewServer(t, routing.NewRouteRegister())
+		server.Mux.Use(handler.Middleware)
+		server.Mux.Get("/api/handler", func(c *contextmodel.ReqContext) {
+			require.False(t, c.IsSignedIn)
+			require.EqualValues(t, &user.SignedInUser{Permissions: map[int64]map[string][]string{}}, c.SignedInUser)
+			require.Error(t, c.LookupTokenErr)
+		})
 
-	fn := ctxHdlr.rotateEndOfRequestFunc(reqContext)
-	cancel()
-	fn(reqContext.Resp)
-
-	assert.Equal(t, 0, tryRotateCallCount, "Token rotation was attempted")
-}
-
-func TestTokenRotationAtEndOfRequest(t *testing.T) {
-	ctxHdlr := getContextHandler(t)
-	ctxHdlr.AuthTokenService = &authtest.FakeUserAuthTokenService{
-		TryRotateTokenProvider: func(ctx context.Context, token *auth.UserToken, clientIP net.IP,
-			userAgent string) (bool, *auth.UserToken, error) {
-			newToken, err := util.RandomHex(16)
-			require.NoError(t, err)
-			token.AuthToken = newToken
-			return true, token, nil
-		},
-	}
-
-	reqContext, rr, err := initTokenRotationScenario(context.Background(), t, ctxHdlr)
-	require.NoError(t, err)
-	reqContext.UserToken = &auth.UserToken{AuthToken: "oldtoken"}
-
-	ctxHdlr.rotateEndOfRequestFunc(reqContext)(reqContext.Resp)
-	foundLoginCookie := false
-	// nolint:bodyclose
-	resp := rr.Result()
-	t.Cleanup(func() {
-		err := resp.Body.Close()
-		assert.NoError(t, err)
+		_, err := server.Send(server.NewGetRequest("/api/handler"))
+		require.NoError(t, err)
 	})
-	for _, c := range resp.Cookies() {
-		if c.Name == "login_token" {
-			foundLoginCookie = true
-			require.NotEqual(t, reqContext.UserToken.AuthToken, c.Value, "Auth token is still the same")
+
+	t.Run("should set identity on successful authentication", func(t *testing.T) {
+		identity := &authn.Identity{ID: authn.NamespacedID(authn.NamespaceUser, 1), OrgID: 1}
+		handler := contexthandler.ProvideService(
+			setting.NewCfg(),
+			tracing.NewFakeTracer(),
+			featuremgmt.WithFeatures(),
+			&authntest.FakeService{ExpectedIdentity: identity},
+		)
+
+		server := webtest.NewServer(t, routing.NewRouteRegister())
+		server.Mux.Use(handler.Middleware)
+		server.Mux.Get("/api/handler", func(c *contextmodel.ReqContext) {
+			require.True(t, c.IsSignedIn)
+			require.EqualValues(t, identity.SignedInUser(), c.SignedInUser)
+			require.NoError(t, c.LookupTokenErr)
+		})
+
+		_, err := server.Send(server.NewGetRequest("/api/handler"))
+		require.NoError(t, err)
+	})
+
+	t.Run("should not set IsSignedIn on anonymous identity", func(t *testing.T) {
+		identity := &authn.Identity{IsAnonymous: true, OrgID: 1}
+		handler := contexthandler.ProvideService(
+			setting.NewCfg(),
+			tracing.NewFakeTracer(),
+			featuremgmt.WithFeatures(),
+			&authntest.FakeService{ExpectedIdentity: identity},
+		)
+
+		server := webtest.NewServer(t, routing.NewRouteRegister())
+		server.Mux.Use(handler.Middleware)
+		server.Mux.Get("/api/handler", func(c *contextmodel.ReqContext) {
+			require.False(t, c.IsSignedIn)
+			require.EqualValues(t, identity.SignedInUser(), c.SignedInUser)
+			require.NoError(t, c.LookupTokenErr)
+		})
+
+		_, err := server.Send(server.NewGetRequest("/api/handler"))
+		require.NoError(t, err)
+	})
+
+	t.Run("should set IsRenderCall when authenticated by render client", func(t *testing.T) {
+		identity := &authn.Identity{OrgID: 1, AuthenticatedBy: login.RenderModule}
+		handler := contexthandler.ProvideService(
+			setting.NewCfg(),
+			tracing.NewFakeTracer(),
+			featuremgmt.WithFeatures(),
+			&authntest.FakeService{ExpectedIdentity: identity},
+		)
+
+		server := webtest.NewServer(t, routing.NewRouteRegister())
+		server.Mux.Use(handler.Middleware)
+		server.Mux.Get("/api/handler", func(c *contextmodel.ReqContext) {
+			require.True(t, c.IsSignedIn)
+			require.True(t, c.IsRenderCall)
+			require.EqualValues(t, identity.SignedInUser(), c.SignedInUser)
+			require.NoError(t, c.LookupTokenErr)
+		})
+
+		_, err := server.Send(server.NewGetRequest("/api/handler"))
+		require.NoError(t, err)
+	})
+
+	t.Run("should delete session cookie on invalid session", func(t *testing.T) {
+		handler := contexthandler.ProvideService(
+			setting.NewCfg(),
+			tracing.NewFakeTracer(),
+			featuremgmt.WithFeatures(),
+			&authntest.FakeService{ExpectedErr: auth.ErrInvalidSessionToken},
+		)
+
+		server := webtest.NewServer(t, routing.NewRouteRegister())
+		server.Mux.Use(handler.Middleware)
+		server.Mux.Get("/api/handler", func(c *contextmodel.ReqContext) {})
+
+		res, err := server.Send(server.NewGetRequest("/api/handler"))
+		require.NoError(t, err)
+		cookies := res.Cookies()
+		require.Len(t, cookies, 1)
+		require.Equal(t, cookies[0].String(), "grafana_session_expiry=; Path=/; Max-Age=0")
+		require.NoError(t, res.Body.Close())
+	})
+
+	t.Run("should delete session cookie when oauth token refresh failed", func(t *testing.T) {
+		handler := contexthandler.ProvideService(
+			setting.NewCfg(),
+			tracing.NewFakeTracer(),
+			featuremgmt.WithFeatures(),
+			&authntest.FakeService{ExpectedErr: authn.ErrExpiredAccessToken.Errorf("")},
+		)
+
+		server := webtest.NewServer(t, routing.NewRouteRegister())
+		server.Mux.Use(handler.Middleware)
+		server.Mux.Get("/api/handler", func(c *contextmodel.ReqContext) {})
+
+		res, err := server.Send(server.NewGetRequest("/api/handler"))
+		require.NoError(t, err)
+		cookies := res.Cookies()
+		require.Len(t, cookies, 1)
+		require.Equal(t, cookies[0].String(), "grafana_session_expiry=; Path=/; Max-Age=0")
+		require.NoError(t, res.Body.Close())
+	})
+
+	t.Run("should store auth header in context", func(t *testing.T) {
+		cfg := setting.NewCfg()
+		cfg.JWTAuthEnabled = true
+		cfg.JWTAuthHeaderName = "jwt-header"
+		cfg.AuthProxyEnabled = true
+		cfg.AuthProxyHeaderName = "proxy-header"
+		cfg.AuthProxyHeaders = map[string]string{
+			"name": "proxy-header-name",
 		}
-	}
 
-	assert.True(t, foundLoginCookie, "Could not find cookie")
-}
+		handler := contexthandler.ProvideService(
+			cfg,
+			tracing.NewFakeTracer(),
+			featuremgmt.WithFeatures(),
+			&authntest.FakeService{ExpectedIdentity: &authn.Identity{}},
+		)
 
-func initTokenRotationScenario(ctx context.Context, t *testing.T, ctxHdlr *ContextHandler) (
-	*contextmodel.ReqContext, *httptest.ResponseRecorder, error) {
-	t.Helper()
+		server := webtest.NewServer(t, routing.NewRouteRegister())
+		server.Mux.Use(handler.Middleware)
+		server.Mux.Get("/api/handler", func(c *contextmodel.ReqContext) {
+			list := contexthandler.AuthHTTPHeaderListFromContext(c.Req.Context())
+			require.NotNil(t, list)
 
-	ctxHdlr.Cfg.LoginCookieName = "login_token"
-	var err error
-	ctxHdlr.Cfg.LoginMaxLifetime, err = gtime.ParseDuration("7d")
-	if err != nil {
-		return nil, nil, err
-	}
+			assert.Contains(t, list.Items, "jwt-header")
+			assert.Contains(t, list.Items, "proxy-header")
+			assert.Contains(t, list.Items, "proxy-header-name")
+			assert.Contains(t, list.Items, "Authorization")
+		})
 
-	rr := httptest.NewRecorder()
-	req, err := http.NewRequestWithContext(ctx, "", "", nil)
-	if err != nil {
-		return nil, nil, err
-	}
-	reqContext := &contextmodel.ReqContext{
-		Context: &web.Context{Req: req},
-		Logger:  log.New("testlogger"),
-	}
-
-	mw := mockWriter{rr}
-	reqContext.Resp = mw
-
-	return reqContext, rr, nil
-}
-
-type mockWriter struct {
-	*httptest.ResponseRecorder
-}
-
-func (mw mockWriter) Flush()                {}
-func (mw mockWriter) Status() int           { return 0 }
-func (mw mockWriter) Size() int             { return 0 }
-func (mw mockWriter) Written() bool         { return false }
-func (mw mockWriter) Before(web.BeforeFunc) {}
-func (mw mockWriter) Push(target string, opts *http.PushOptions) error {
-	return nil
-}
-func (mw mockWriter) CloseNotify() <-chan bool {
-	return make(<-chan bool)
-}
-func (mw mockWriter) Unwrap() http.ResponseWriter {
-	return mw
+		_, err := server.Send(server.NewGetRequest("/api/handler"))
+		require.NoError(t, err)
+	})
 }

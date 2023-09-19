@@ -1,15 +1,27 @@
 import { css } from '@emotion/css';
 import debounce from 'debounce-promise';
-import React, { useCallback, useState } from 'react';
+import React, { RefCallback, useCallback, useState } from 'react';
 import Highlighter from 'react-highlight-words';
 
 import { GrafanaTheme2, SelectableValue, toOption } from '@grafana/data';
 import { EditorField, EditorFieldGroup } from '@grafana/experimental';
 import { config } from '@grafana/runtime';
-import { AsyncSelect, Button, FormatOptionLabelMeta, Icon, InlineField, InlineFieldRow, useStyles2 } from '@grafana/ui';
+import {
+  AsyncSelect,
+  Button,
+  CustomScrollbar,
+  FormatOptionLabelMeta,
+  getSelectStyles,
+  Icon,
+  InlineField,
+  InlineFieldRow,
+  useStyles2,
+  useTheme2,
+} from '@grafana/ui';
 import { SelectMenuOptions } from '@grafana/ui/src/components/Select/SelectMenu';
 
 import { PrometheusDatasource } from '../../datasource';
+import { truncateResult } from '../../language_utils';
 import { regexifyLabelValuesQueryString } from '../shared/parsingUtils';
 import { QueryBuilderLabelFilter } from '../shared/types';
 import { PromVisualQuery } from '../types';
@@ -49,6 +61,7 @@ export function MetricSelect({
     isLoading?: boolean;
     metricsModalOpen?: boolean;
     initialMetrics?: string[];
+    resultsTruncated?: boolean;
   }>({});
 
   const prometheusMetricEncyclopedia = config.featureToggles.prometheusMetricEncyclopedia;
@@ -57,7 +70,7 @@ export function MetricSelect({
     {
       value: 'BrowseMetrics',
       label: 'Metrics explorer',
-      description: 'Browse and filter metrics and metadata with a fuzzy search',
+      description: 'Browse and filter all metrics and metadata with a fuzzy search',
     },
   ];
 
@@ -74,6 +87,7 @@ export function MetricSelect({
       }
 
       const searchWords = searchQuery.split(splitSeparator);
+
       return searchWords.reduce((acc, cur) => {
         const matcheSearch = label.toLowerCase().includes(cur.toLowerCase());
 
@@ -126,8 +140,13 @@ export function MetricSelect({
     // Since some customers can have millions of metrics, whenever the user changes the autocomplete text we want to call the backend and request all metrics that match the current query string
     const results = datasource.metricFindQuery(formatKeyValueStringsForLabelValuesQuery(query, labelsFilters));
     return results.then((results) => {
-      if (results.length > PROMETHEUS_QUERY_BUILDER_MAX_RESULTS) {
-        results.splice(0, results.length - PROMETHEUS_QUERY_BUILDER_MAX_RESULTS);
+      const resultsLength = results.length;
+      truncateResult(results);
+
+      if (resultsLength > results.length) {
+        setState({ ...state, resultsTruncated: true });
+      } else {
+        setState({ ...state, resultsTruncated: false });
       }
 
       const resultsOptions = results.map((result) => {
@@ -201,6 +220,42 @@ export function MetricSelect({
     return SelectMenuOptions(props);
   };
 
+  interface SelectMenuProps {
+    maxHeight: number;
+    innerRef: RefCallback<HTMLDivElement>;
+    innerProps: {};
+  }
+
+  const CustomMenu = ({ children, maxHeight, innerRef, innerProps }: React.PropsWithChildren<SelectMenuProps>) => {
+    const theme = useTheme2();
+    const stylesMenu = getSelectStyles(theme);
+
+    // Show the results trucated warning only if the options are loaded and the results are truncated
+    // The children are a react node(options loading node) or an array(not a valid element)
+    const optionsLoaded = !React.isValidElement(children) && state.resultsTruncated;
+
+    return (
+      <div
+        {...innerProps}
+        className={`${stylesMenu.menu} ${styles.customMenuContainer}`}
+        style={{ maxHeight }}
+        aria-label="Select options menu"
+      >
+        <CustomScrollbar scrollRefCallback={innerRef} autoHide={false} autoHeightMax="inherit" hideHorizontalTrack>
+          {children}
+        </CustomScrollbar>
+        {optionsLoaded && (
+          <div className={styles.customMenuFooter}>
+            <div>
+              Only the top 1000 metrics are displayed in the metric select. Use the metrics explorer to view all
+              metrics.
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   const asyncSelect = () => {
     return (
       <AsyncSelect
@@ -219,8 +274,10 @@ export function MetricSelect({
           setState({ isLoading: true });
           const metrics = await onGetMetrics();
           const initialMetrics: string[] = metrics.map((m) => m.value);
+          const resultsLength = metrics.length;
+
           if (metrics.length > PROMETHEUS_QUERY_BUILDER_MAX_RESULTS) {
-            metrics.splice(0, metrics.length - PROMETHEUS_QUERY_BUILDER_MAX_RESULTS);
+            truncateResult(metrics);
           }
 
           if (prometheusMetricEncyclopedia) {
@@ -230,9 +287,14 @@ export function MetricSelect({
               isLoading: undefined,
               // pass the initial metrics into the metrics explorer
               initialMetrics: initialMetrics,
+              resultsTruncated: resultsLength > metrics.length,
             });
           } else {
-            setState({ metrics, isLoading: undefined });
+            setState({
+              metrics,
+              isLoading: undefined,
+              resultsTruncated: resultsLength > metrics.length,
+            });
           }
         }}
         loadOptions={metricLookupDisabled ? metricLookupDisabledSearch : debouncedSearch}
@@ -252,7 +314,9 @@ export function MetricSelect({
             onChange({ ...query, metric: '' });
           }
         }}
-        components={prometheusMetricEncyclopedia ? { Option: CustomOption } : {}}
+        components={
+          prometheusMetricEncyclopedia ? { Option: CustomOption, MenuList: CustomMenu } : { MenuList: CustomMenu }
+        }
         onBlur={onBlur ? onBlur : () => {}}
       />
     );
@@ -323,6 +387,20 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
   customOptionWidth: css`
     min-width: 400px;
+  `,
+  customMenuFooter: css`
+    flex: 0;
+    display: flex;
+    justify-content: space-between;
+    padding: ${theme.spacing(1.5)};
+    border-top: 1px solid ${theme.colors.border.weak};
+    color: ${theme.colors.text.secondary};
+  `,
+  customMenuContainer: css`
+    display: flex;
+    flex-direction: column;
+    background: ${theme.colors.background.primary};
+    box-shadow: ${theme.shadows.z3};
   `,
 });
 

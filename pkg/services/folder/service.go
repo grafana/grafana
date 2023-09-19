@@ -22,7 +22,6 @@ type Service interface {
 	// a folder's parent folder, use Move.
 	Update(ctx context.Context, cmd *UpdateFolderCommand) (*Folder, error)
 	Delete(ctx context.Context, cmd *DeleteFolderCommand) error
-	MakeUserAdmin(ctx context.Context, orgID int64, userID, folderID int64, setViewAndEditPermissions bool) error
 	// Move changes a folder's parent folder to the requested new parent.
 	Move(ctx context.Context, cmd *MoveFolderCommand) (*Folder, error)
 	RegisterService(service RegistryService) error

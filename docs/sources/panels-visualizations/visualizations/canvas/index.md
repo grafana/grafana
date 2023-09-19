@@ -14,7 +14,7 @@ labels:
     - enterprise
     - oss
 title: Canvas
-weight: 600
+weight: 100
 ---
 
 # Canvas

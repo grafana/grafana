@@ -512,24 +512,37 @@ The panel can be collapsed/expanded by clicking on the chevron or the title.
 > _Note: `collapsible` and `hoverHeader` props are mutually exclusive and cannot be used in the same panel._
 
 ```tsx
-<PanelChrome title="My awesome panel title" width={400} height={200} collapsible={true}>
-  {(innerwidth, innerheight) => {
-    return (
-      <div
-        style={{
-          width: innerwidth,
-          height: innerheight,
-          background: 'rgba(230,0,0,0.05)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
-        Content
-      </div>
-    );
-  }}
-</PanelChrome>
+function Container() {
+  const [isCollapsed, setCollapsed] = useState(true);
+
+  return (
+    <PanelChrome
+      title="My awesome panel title"
+      width={400}
+      height={200}
+      collapsible={true}
+      collapsed={isCollapsed}
+      onToggleCollapse={(isCollapsed) => setCollapsed(isCollapsed)}
+    >
+      {(innerwidth, innerheight) => {
+        return (
+          <div
+            style={{
+              width: innerwidth,
+              height: innerheight,
+              background: 'rgba(230,0,0,0.05)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            Content
+          </div>
+        );
+      }}
+    </PanelChrome>
+  );
+}
 ```
 
 <Preview>

@@ -121,7 +121,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
       case InfluxVersion.SQL:
         return <InfluxSqlConfig {...this.props} />;
       default:
-        return null;
+        return <InfluxInfluxQLConfig {...this.props} />;
     }
   }
 

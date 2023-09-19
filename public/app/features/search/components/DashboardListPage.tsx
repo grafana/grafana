@@ -3,10 +3,11 @@ import React, { memo } from 'react';
 import { useAsync } from 'react-use';
 
 import { locationUtil, NavModelItem } from '@grafana/data';
-import { config, locationService } from '@grafana/runtime';
+import { locationService } from '@grafana/runtime';
 import { Page } from 'app/core/components/Page/Page';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import NewBrowseDashboardsPage from 'app/features/browse-dashboards/BrowseDashboardsPage';
+import { newBrowseDashboardsEnabled } from 'app/features/browse-dashboards/featureFlag';
 import { FolderDTO } from 'app/types';
 
 import { loadFolderPage } from '../loaders';
@@ -21,7 +22,7 @@ export interface DashboardListPageRouteParams {
 interface Props extends GrafanaRouteComponentProps<DashboardListPageRouteParams> {}
 
 export const DashboardListPageFeatureToggle = memo((props: Props) => {
-  if (config.featureToggles.nestedFolders) {
+  if (newBrowseDashboardsEnabled()) {
     return <NewBrowseDashboardsPage {...props} />;
   }
 
