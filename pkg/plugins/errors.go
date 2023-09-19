@@ -3,16 +3,18 @@ package plugins
 import "github.com/grafana/grafana/pkg/util/errutil"
 
 var (
-	errPluginNotRegisteredBase = errutil.NotFound("plugin.notRegistered")
+	errPluginNotRegisteredBase = errutil.NotFound("plugin.notRegistered",
+		errutil.WithPublicMessage("Plugin not registered"))
 	// ErrPluginNotRegistered error returned when a plugin is not registered.
 	ErrPluginNotRegistered = errPluginNotRegisteredBase.Errorf("%w", errPluginNotRegisteredBase)
 
-	errPluginUnavailableBase = errutil.Internal("plugin.unavailable")
+	errPluginUnavailableBase = errutil.Internal("plugin.unavailable",
+		errutil.WithPublicMessage("Plugin unavailable"))
 	// ErrPluginUnavailable error returned when a plugin is unavailable.
 	ErrPluginUnavailable = errPluginUnavailableBase.Errorf("%w", errPluginUnavailableBase)
 
 	errMethodNotImplementedBase = errutil.NotFound("plugin.notImplemented",
-		errutil.WithPublicMessage("Not implemented"))
+		errutil.WithPublicMessage("Method not implemented"))
 	// ErrMethodNotImplemented error returned when a plugin method is not implemented.
 	ErrMethodNotImplemented = errMethodNotImplementedBase.Errorf("%w", errMethodNotImplementedBase)
 
