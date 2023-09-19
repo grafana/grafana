@@ -35,12 +35,12 @@ When you apply your changes, the visualization changes appear to all users of th
 
 This topic currently applies to the following visualizations:
 
-- [Bar chart]({{< relref "../visualizations/bar-chart/" >}})
-- [Histogram]({{< relref "../visualizations/histogram/" >}})
-- [Pie chart]({{< relref "../visualizations/pie-chart/" >}})
-- [State timeline]({{< relref "../visualizations/state-timeline/" >}})
-- [Status history]({{< relref "../visualizations/status-history/" >}})
-- [Time series]({{< relref "../visualizations/time-series/" >}})
+- [Bar chart][]
+- [Histogram][]
+- [Pie chart][]
+- [State timeline][]
+- [Status history][]
+- [Time series][]
 
 ## Add values to a legend
 
@@ -72,10 +72,33 @@ By default, Grafana specifies the color of your series data, which you can chang
 
 ## Sort series
 
-You can change legend mode to **Table** and choose [calculations]({{< relref "../calculation-types/" >}}) to be displayed in the legend. Click the calculation name header in the legend table to sort the values in the table in ascending or descending order.
+You can change legend mode to **Table** and choose [calculations][] to be displayed in the legend. Click the calculation name header in the legend table to sort the values in the table in ascending or descending order.
 
 {{% admonition type="note" %}}
 This feature is only supported in these panels: Bar chart, Histogram, Time series.
 {{% /admonition %}}
 
 ![Sort legend series](/static/img/docs/legend/legend-series-sort-8-3.png).
+
+{{% docs/reference %}}
+[Bar chart]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/bar-chart"
+[Bar chart]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/bar-chart"
+
+[State timeline]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/state-timeline"
+[State timeline]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/state-timeline"
+
+[Time series]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/time-series"
+[Time series]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/time-series"
+
+[calculations]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/calculation-types"
+[calculations]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/calculation-types"
+
+[Pie chart]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/pie-chart"
+[Pie chart]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/pie-chart"
+
+[Status history]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/status-history"
+[Status history]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/status-history"
+
+[Histogram]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/histogram"
+[Histogram]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/histogram"
+{{% /docs/reference %}}

@@ -125,7 +125,7 @@ export const addDashboard = (config?: Partial<AddDashboardConfig>) => {
 
   const { annotations, timeRange, title, variables } = fullConfig;
 
-  e2e().logToConsole('Adding dashboard with title:', title);
+  cy.logToConsole('Adding dashboard with title:', title);
 
   e2e.pages.AddDashboard.visit();
 
@@ -146,9 +146,9 @@ export const addDashboard = (config?: Partial<AddDashboardConfig>) => {
   e2e.flows.assertSuccessNotification();
   e2e.pages.AddDashboard.itemButton('Create new panel button').should('be.visible');
 
-  e2e().logToConsole('Added dashboard with title:', title);
+  cy.logToConsole('Added dashboard with title:', title);
 
-  return e2e()
+  return cy
     .url()
     .should('contain', '/d/')
     .then((url: string) => {
@@ -161,7 +161,7 @@ export const addDashboard = (config?: Partial<AddDashboardConfig>) => {
       });
 
       // @todo remove `wrap` when possible
-      return e2e().wrap(
+      return cy.wrap(
         {
           config: fullConfig,
           uid,
@@ -278,7 +278,7 @@ const addVariable = (config: PartialAddVariableConfig, isFirst: boolean): AddVar
   }
 
   // Avoid flakiness
-  e2e().focused().blur();
+  cy.focused().blur();
 
   e2e.pages.Dashboard.Settings.Variables.Edit.General.previewOfValuesOption()
     .should('exist')

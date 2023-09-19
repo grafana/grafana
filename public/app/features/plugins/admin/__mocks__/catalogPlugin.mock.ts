@@ -17,6 +17,7 @@ export default {
   isEnterprise: false,
   isInstalled: false,
   isDisabled: false,
+  isDeprecated: false,
   isPublished: true,
   name: 'Zabbix',
   orgName: 'Alexander Zobnin',

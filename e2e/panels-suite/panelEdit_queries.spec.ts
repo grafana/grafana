@@ -2,13 +2,12 @@ import { e2e } from '../utils';
 
 const flakyTimeout = 10000;
 
-e2e.scenario({
-  describeName: 'Panel edit tests - queries',
-  itName: 'Testes various Panel edit queries scenarios',
-  addScenarioDataSource: false,
-  addScenarioDashBoard: false,
-  skipScenario: false,
-  scenario: () => {
+describe('Panel edit tests - queries', () => {
+  beforeEach(() => {
+    e2e.flows.login(e2e.env('USERNAME'), e2e.env('PASSWORD'));
+  });
+
+  it('Tests various Panel edit queries scenarios', () => {
     e2e.flows.openDashboard({ uid: '5SdHCadmz', queryParams: { editPanel: 3 } });
 
     // New panel editor opens when navigating from Panel menu
@@ -46,7 +45,7 @@ e2e.scenario({
       .first()
       .should('be.visible')
       .within(() => {
-        e2e().get('input[id*="test-data-scenario-select-"]').eq(0).should('be.visible').click();
+        cy.get('input[id*="test-data-scenario-select-"]').eq(0).should('be.visible').click();
       });
 
     cy.contains('CSV Metric Values').scrollIntoView().should('be.visible').eq(0).click();
@@ -84,7 +83,7 @@ e2e.scenario({
       expect(resultIds.has('A:')).equals(true);
       expect(resultIds.has('B:')).equals(true);
     });
-  },
+  });
 });
 
 const expectInspectorResultAndClose = (expectCallBack: (keys: JQuery<HTMLElement>) => void) => {

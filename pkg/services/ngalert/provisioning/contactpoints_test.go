@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/prometheus/alertmanager/config"
@@ -23,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 func TestContactPointService(t *testing.T) {
@@ -82,6 +84,16 @@ func TestContactPointService(t *testing.T) {
 		require.NoError(t, err)
 		require.Len(t, cps, 2)
 		require.Equal(t, customUID, cps[1].UID)
+	})
+
+	t.Run("it's not possible to use invalid UID", func(t *testing.T) {
+		customUID := strings.Repeat("1", util.MaxUIDLength+1)
+		sut := createContactPointServiceSut(t, secretsService)
+		newCp := createTestContactPoint()
+		newCp.UID = customUID
+
+		_, err := sut.CreateContactPoint(context.Background(), 1, newCp, models.ProvenanceAPI)
+		require.ErrorIs(t, err, ErrValidation)
 	})
 
 	t.Run("it's not possible to use the same uid twice", func(t *testing.T) {

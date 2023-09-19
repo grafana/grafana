@@ -5,6 +5,7 @@ import { ConfirmModal } from '@grafana/ui';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { Page } from 'app/core/components/Page/Page';
 import PageActionBar from 'app/core/components/PageActionBar/PageActionBar';
+import { t } from 'app/core/internationalization';
 import { contextSrv } from 'app/core/services/context_srv';
 
 import { EmptyQueryListBanner } from './EmptyQueryListBanner';
@@ -36,14 +37,14 @@ export const PlaylistPage = () => {
 
   const emptyListBanner = (
     <EmptyListCTA
-      title="There are no playlists created yet"
+      title={t('playlist-page.empty.title', 'There are no playlists created yet')}
       buttonIcon="plus"
       buttonLink="playlists/new"
-      buttonTitle="Create Playlist"
+      buttonTitle={t('playlist-page.empty.button', 'Create Playlist')}
       buttonDisabled={!contextSrv.isEditor}
-      proTip="You can use playlists to cycle dashboards on TVs without user control"
+      proTip={t('playlist-page.empty.pro-tip', 'You can use playlists to cycle dashboards on TVs without user control')}
       proTipLink="http://docs.grafana.org/reference/playlist/"
-      proTipLinkTitle="Learn more"
+      proTipLinkTitle={t('playlist-page.empty.pro-tip-link-title', 'Learn more')}
       proTipTarget="_blank"
     />
   );
@@ -56,7 +57,11 @@ export const PlaylistPage = () => {
         {showSearch && (
           <PageActionBar
             searchQuery={searchQuery}
-            linkButton={contextSrv.isEditor ? { title: 'New playlist', href: '/playlists/new' } : undefined}
+            linkButton={
+              contextSrv.isEditor
+                ? { title: t('playlist-page.create-button.title', 'New playlist'), href: '/playlists/new' }
+                : undefined
+            }
             setSearchQuery={setSearchQuery}
           />
         )}
@@ -74,8 +79,10 @@ export const PlaylistPage = () => {
         {playlistToDelete && (
           <ConfirmModal
             title={playlistToDelete.name}
-            confirmText="Delete"
-            body={`Are you sure you want to delete '${playlistToDelete.name}' playlist?`}
+            confirmText={t('playlist-page.delete-modal.confirm-text', 'Delete')}
+            body={t('playlist-page.delete-modal.body', 'Are you sure you want to delete {{name}} playlist?', {
+              name: playlistToDelete.name,
+            })}
             onConfirm={onDeletePlaylist}
             isOpen={Boolean(playlistToDelete)}
             onDismiss={onDismissDelete}

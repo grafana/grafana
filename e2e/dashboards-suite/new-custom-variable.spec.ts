@@ -5,7 +5,7 @@ const DASHBOARD_NAME = 'Test variable output';
 
 function fillInCustomVariable(name: string, label: string, value: string) {
   e2e.pages.Dashboard.Settings.Variables.Edit.General.generalTypeSelectV2().within(() => {
-    e2e().get('input').type('Custom{enter}');
+    cy.get('input').type('Custom{enter}');
   });
   e2e.pages.Dashboard.Settings.Variables.Edit.General.generalNameInputV2().clear().type(name).blur();
   e2e.pages.Dashboard.Settings.Variables.Edit.General.generalLabelInputV2().type(label).blur();
@@ -20,10 +20,13 @@ function assertPreviewValues(expectedValues: string[]) {
 }
 
 describe('Variables - Custom', () => {
+  beforeEach(() => {
+    e2e.flows.login(e2e.env('USERNAME'), e2e.env('PASSWORD'));
+  });
+
   it('can add a custom template variable', () => {
-    e2e.flows.login('admin', 'admin');
     e2e.flows.openDashboard({ uid: `${PAGE_UNDER_TEST}?orgId=1&editview=templating` });
-    e2e().contains(DASHBOARD_NAME).should('be.visible');
+    cy.contains(DASHBOARD_NAME).should('be.visible');
 
     // Create a new "Custom" variable
     e2e.components.CallToActionCard.buttonV2('Add variable').click();
@@ -37,18 +40,17 @@ describe('Variables - Custom', () => {
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('two').click();
 
     // Assert it was rendered
-    e2e().get('.markdown-html').should('include.text', 'VariableUnderTest: two');
+    cy.get('.markdown-html').should('include.text', 'VariableUnderTest: two');
   });
 
   it('can add a custom template variable with labels', () => {
-    e2e.flows.login('admin', 'admin');
     e2e.flows.openDashboard({ uid: `${PAGE_UNDER_TEST}?orgId=1&editview=templating` });
-    e2e().contains(DASHBOARD_NAME).should('be.visible');
+    cy.contains(DASHBOARD_NAME).should('be.visible');
 
     // Create a new "Custom" variable
     e2e.components.CallToActionCard.buttonV2('Add variable').click();
     e2e.pages.Dashboard.Settings.Variables.Edit.General.generalTypeSelectV2().within(() => {
-      e2e().get('input').type('Custom{enter}');
+      cy.get('input').type('Custom{enter}');
     });
 
     // Set its name, label, and content
@@ -62,6 +64,6 @@ describe('Variables - Custom', () => {
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('Two').click();
 
     // Assert it was rendered
-    e2e().get('.markdown-html').should('include.text', 'VariableUnderTest: 2');
+    cy.get('.markdown-html').should('include.text', 'VariableUnderTest: 2');
   });
 });

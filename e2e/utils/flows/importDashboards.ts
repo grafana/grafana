@@ -1,5 +1,3 @@
-import { e2e } from '../index';
-
 import { importDashboard, Dashboard } from './importDashboard';
 
 /**
@@ -11,11 +9,9 @@ import { importDashboard, Dashboard } from './importDashboard';
  * @param skipPanelValidation skips panel validation
  */
 export const importDashboards = async (dirPath: string, queryTimeout?: number, skipPanelValidation?: boolean) => {
-  e2e()
-    .getJSONFilesFromDir(dirPath)
-    .then((jsonFiles: Dashboard[]) => {
-      jsonFiles.forEach((file) => {
-        importDashboard(file, queryTimeout || 6000, skipPanelValidation);
-      });
+  cy.getJSONFilesFromDir(dirPath).then((jsonFiles: Dashboard[]) => {
+    jsonFiles.forEach((file) => {
+      importDashboard(file, queryTimeout || 6000, skipPanelValidation);
     });
+  });
 };

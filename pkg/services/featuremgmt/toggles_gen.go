@@ -99,6 +99,10 @@ const (
 	// Enables topnav support in external plugins. The new Grafana navigation cannot be disabled.
 	FlagTopnav = "topnav"
 
+	// FlagDockedMegaMenu
+	// Enable support for a persistent (docked) navigation menu
+	FlagDockedMegaMenu = "dockedMegaMenu"
+
 	// FlagGrpcServer
 	// Run the GRPC server
 	FlagGrpcServer = "grpcServer"
@@ -118,10 +122,6 @@ const (
 	// FlagAthenaAsyncQueryDataSupport
 	// Enable async query data support for Athena
 	FlagAthenaAsyncQueryDataSupport = "athenaAsyncQueryDataSupport"
-
-	// FlagNewPanelChromeUI
-	// Show updated look and feel of grafana-ui PanelChrome: panel header, icons, and menu
-	FlagNewPanelChromeUI = "newPanelChromeUI"
 
 	// FlagShowDashboardValidationWarnings
 	// Show warnings when dashboards do not validate against the schema
@@ -327,10 +327,6 @@ const (
 	// Enables fetching Angular detection patterns for plugins from GCOM and fallback to hardcoded ones
 	FlagPluginsDynamicAngularDetectionPatterns = "pluginsDynamicAngularDetectionPatterns"
 
-	// FlagAlertingLokiRangeToInstant
-	// Rewrites eligible loki range queries to instant queries
-	FlagAlertingLokiRangeToInstant = "alertingLokiRangeToInstant"
-
 	// FlagVizAndWidgetSplit
 	// Split panels between vizualizations and widgets
 	FlagVizAndWidgetSplit = "vizAndWidgetSplit"
@@ -407,6 +403,9 @@ const (
 	// Enables a new role that has no permissions by default
 	FlagNoBasicRole = "noBasicRole"
 
+	// FlagPrometheusPromQAIL
+	// Prometheus and AI/ML to assist users in creating a query
+	FlagPrometheusPromQAIL = "prometheusPromQAIL"
 	// FlagAlertingNoDataErrorExecution
 	// Changes how Alerting state manager handles execution of NoData/Error
 	FlagAlertingNoDataErrorExecution = "alertingNoDataErrorExecution"
@@ -430,4 +429,20 @@ const (
 	// FlagSseGroupByDatasource
 	// Send query to the same datasource in a single request when using server side expressions
 	FlagSseGroupByDatasource = "sseGroupByDatasource"
+
+	// FlagRequestInstrumentationStatusSource
+	// Include a status source label for request metrics and logs
+	FlagRequestInstrumentationStatusSource = "requestInstrumentationStatusSource"
+
+	// FlagLokiRunQueriesInParallel
+	// Enables running Loki queries in parallel
+	FlagLokiRunQueriesInParallel = "lokiRunQueriesInParallel"
+
+	// FlagWargamesTesting
+	// Placeholder feature flag for internal testing
+	FlagWargamesTesting = "wargamesTesting"
+
+	// FlagAlertingInsights
+	// Show the new alerting insights landing page
+	FlagAlertingInsights = "alertingInsights"
 )

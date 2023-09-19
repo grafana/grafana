@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { Provider } from 'react-redux';
@@ -133,10 +133,14 @@ describe('Rules group tests', () => {
       const drawer = await ui.export.dialog.find();
 
       expect(ui.export.yamlTab.get(drawer)).toHaveAttribute('aria-selected', 'true');
-      expect(ui.export.editor.get(drawer)).toHaveTextContent('Yaml Export Content');
+      await waitFor(() => {
+        expect(ui.export.editor.get(drawer)).toHaveTextContent('Yaml Export Content');
+      });
 
       await user.click(ui.export.jsonTab.get(drawer));
-      expect(ui.export.editor.get(drawer)).toHaveTextContent('Json Export Content');
+      await waitFor(() => {
+        expect(ui.export.editor.get(drawer)).toHaveTextContent('Json Export Content');
+      });
 
       expect(ui.export.copyCodeButton.get(drawer)).toBeInTheDocument();
       expect(ui.export.downloadButton.get(drawer)).toBeInTheDocument();

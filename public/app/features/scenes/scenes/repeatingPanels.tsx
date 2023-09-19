@@ -8,9 +8,11 @@ import {
   PanelBuilders,
   SceneGridLayout,
   SceneControlsSpacer,
+  SceneGridRow,
 } from '@grafana/scenes';
 import { VariableRefresh } from '@grafana/schema';
 import { PanelRepeaterGridItem } from 'app/features/dashboard-scene/scene/PanelRepeaterGridItem';
+import { RowRepeaterBehavior } from 'app/features/dashboard-scene/scene/RowRepeaterBehavior';
 
 import { DashboardScene } from '../../dashboard-scene/scene/DashboardScene';
 
@@ -38,7 +40,7 @@ export function getRepeatingPanelsDemo(): DashboardScene {
           refresh: VariableRefresh.onTimeRangeChanged,
           optionsToReturn: [
             { label: 'A', value: 'A' },
-            { label: 'B', value: 'C' },
+            { label: 'B', value: 'B' },
           ],
           options: [],
           $behaviors: [changeVariable],
@@ -78,31 +80,112 @@ export function getRepeatingPanelsDemo(): DashboardScene {
 function changeVariable(variable: TestVariable) {
   const sub = variable.subscribeToState((state, old) => {
     if (!state.loading && old.loading) {
-      setTimeout(() => {
-        if (variable.state.query === 'AB') {
-          variable.setState({
-            query: 'ABC',
-            optionsToReturn: [
-              { label: 'A', value: 'A' },
-              { label: 'B', value: 'B' },
-              { label: 'C', value: 'C' },
-            ],
-          });
-        } else {
-          variable.setState({
-            query: 'AB',
-            optionsToReturn: [
-              { label: 'A', value: 'A' },
-              { label: 'B', value: 'B' },
-            ],
-          });
-        }
-      });
-      return;
+      if (variable.state.optionsToReturn.length === 2) {
+        variable.setState({
+          query: 'ABC',
+          optionsToReturn: [
+            { label: 'A', value: 'A' },
+            { label: 'B', value: 'B' },
+            { label: 'C', value: 'C' },
+          ],
+        });
+      } else {
+        variable.setState({
+          query: 'AB',
+          optionsToReturn: [
+            { label: 'A', value: 'A' },
+            { label: 'B', value: 'B' },
+          ],
+        });
+      }
     }
   });
 
   return () => {
     sub.unsubscribe();
   };
+}
+
+export function getRepeatingRowsDemo(): DashboardScene {
+  return new DashboardScene({
+    title: 'Variables - Repeating rows',
+    $variables: new SceneVariableSet({
+      variables: [
+        new TestVariable({
+          name: 'server',
+          query: 'AB',
+          value: ['A', 'B', 'C'],
+          text: ['A', 'B', 'C'],
+          delayMs: 2000,
+          isMulti: true,
+          includeAll: true,
+          refresh: VariableRefresh.onTimeRangeChanged,
+          optionsToReturn: [
+            { label: 'A', value: 'A' },
+            { label: 'B', value: 'B' },
+            { label: 'C', value: 'C' },
+          ],
+          options: [],
+          //$behaviors: [changeVariable],
+        }),
+        new TestVariable({
+          name: 'pod',
+          query: 'AB',
+          value: ['Mu', 'Ma', 'Mi'],
+          text: ['Mu', 'Ma', 'Mi'],
+          delayMs: 2000,
+          isMulti: true,
+          includeAll: true,
+          refresh: VariableRefresh.onTimeRangeChanged,
+          optionsToReturn: [
+            { label: 'Mu', value: 'Mu' },
+            { label: 'Ma', value: 'Ma' },
+            { label: 'Mi', value: 'Mi' },
+          ],
+          options: [],
+        }),
+      ],
+    }),
+    body: new SceneGridLayout({
+      isDraggable: true,
+      isResizable: true,
+      children: [
+        new SceneGridRow({
+          title: 'Row $server',
+          key: 'Row A',
+          isCollapsed: false,
+          y: 0,
+          x: 0,
+          $behaviors: [
+            new RowRepeaterBehavior({
+              variableName: 'server',
+              sources: [
+                new PanelRepeaterGridItem({
+                  variableName: 'pod',
+                  x: 0,
+                  y: 0,
+                  width: 24,
+                  height: 5,
+                  itemHeight: 5,
+                  //@ts-expect-error
+                  source: PanelBuilders.timeseries()
+                    .setTitle('server = $server, pod = $pod')
+                    .setData(getQueryRunnerWithRandomWalkQuery({ alias: 'server = $server, pod = $pod' }))
+                    .build(),
+                }),
+              ],
+            }),
+          ],
+        }),
+      ],
+    }),
+    $timeRange: new SceneTimeRange(),
+    actions: [],
+    controls: [
+      new VariableValueSelectors({}),
+      new SceneControlsSpacer(),
+      new SceneTimePicker({}),
+      new SceneRefreshPicker({}),
+    ],
+  });
 }

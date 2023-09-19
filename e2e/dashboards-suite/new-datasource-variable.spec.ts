@@ -4,15 +4,18 @@ const PAGE_UNDER_TEST = 'kVi2Gex7z/test-variable-output';
 const DASHBOARD_NAME = 'Test variable output';
 
 describe('Variables - Datasource', () => {
+  beforeEach(() => {
+    e2e.flows.login(e2e.env('USERNAME'), e2e.env('PASSWORD'));
+  });
+
   it('can add a new datasource variable', () => {
-    e2e.flows.login('admin', 'admin');
     e2e.flows.openDashboard({ uid: `${PAGE_UNDER_TEST}?orgId=1&editview=templating` });
-    e2e().contains(DASHBOARD_NAME).should('be.visible');
+    cy.contains(DASHBOARD_NAME).should('be.visible');
 
     // Create a new "Datasource" variable
     e2e.components.CallToActionCard.buttonV2('Add variable').click();
     e2e.pages.Dashboard.Settings.Variables.Edit.General.generalTypeSelectV2().within(() => {
-      e2e().get('input').type('Data source{enter}');
+      cy.get('input').type('Data source{enter}');
     });
     e2e.pages.Dashboard.Settings.Variables.Edit.General.generalNameInputV2().clear().type('VariableUnderTest').blur();
     e2e.pages.Dashboard.Settings.Variables.Edit.General.generalLabelInputV2().type('Variable under test').blur();
@@ -20,7 +23,7 @@ describe('Variables - Datasource', () => {
     // If this is failing, but sure to check there are Prometheus datasources named "gdev-prometheus" and "gdev-slow-prometheus"
     // Or, just update is to match some gdev datasources to test with :)
     e2e.pages.Dashboard.Settings.Variables.Edit.DatasourceVariable.datasourceSelect().within(() => {
-      e2e().get('input').type('Prometheus{enter}');
+      cy.get('input').type('Prometheus{enter}');
     });
     e2e.pages.Dashboard.Settings.Variables.Edit.General.previewOfValuesOption()
       .eq(0)
@@ -38,7 +41,7 @@ describe('Variables - Datasource', () => {
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('gdev-slow-prometheus').click();
 
     // Assert it was rendered
-    e2e().get('.markdown-html').should('include.text', 'VariableUnderTest: gdev-slow-prometheus-uid');
-    e2e().get('.markdown-html').should('include.text', 'VariableUnderTestText: gdev-slow-prometheus');
+    cy.get('.markdown-html').should('include.text', 'VariableUnderTest: gdev-slow-prometheus-uid');
+    cy.get('.markdown-html').should('include.text', 'VariableUnderTestText: gdev-slow-prometheus');
   });
 });
