@@ -1,7 +1,19 @@
 import React, { PureComponent } from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { Alert, Button, Field, FieldSet, Input, LoadingPlaceholder, RadioButtonGroup, Switch } from '@grafana/ui';
+import {
+  Alert,
+  Button,
+  Field,
+  FieldSet,
+  InlineField,
+  InlineFieldRow,
+  InlineSwitch,
+  Input,
+  LoadingPlaceholder,
+  RadioButtonGroup,
+  Switch,
+} from '@grafana/ui';
 import config from 'app/core/config';
 import { t, Trans } from 'app/core/internationalization';
 
@@ -19,6 +31,7 @@ export interface State {
   width: number;
   height: number;
   isDownloading: boolean;
+  usePanelSize: boolean;
 }
 
 export class ShareImage extends PureComponent<Props, State> {
@@ -32,6 +45,7 @@ export class ShareImage extends PureComponent<Props, State> {
       width: 1000,
       height: 500,
       isDownloading: false,
+      usePanelSize: false,
     };
   }
 
@@ -40,17 +54,26 @@ export class ShareImage extends PureComponent<Props, State> {
   }
 
   componentDidUpdate(prevProps: Props, prevState: State) {
-    const { useCurrentTimeRange, selectedTheme } = this.state;
-    if (prevState.useCurrentTimeRange !== useCurrentTimeRange || prevState.selectedTheme !== selectedTheme) {
+    const { useCurrentTimeRange, selectedTheme, width, height, usePanelSize } = this.state;
+    if (
+      prevState.useCurrentTimeRange !== useCurrentTimeRange ||
+      prevState.selectedTheme !== selectedTheme ||
+      prevState.width !== width ||
+      prevState.height !== height ||
+      prevState.usePanelSize !== usePanelSize
+    ) {
       this.buildUrl();
     }
   }
 
   buildUrl = async () => {
-    const { panel, dashboard } = this.props;
-    const { useCurrentTimeRange, selectedTheme } = this.state;
+    const { panel, dashboard, panelSize } = this.props;
+    const { useCurrentTimeRange, selectedTheme, width, height } = this.state;
 
-    const imageUrl = buildImageUrl(useCurrentTimeRange, dashboard.uid, selectedTheme, panel);
+    const usedWidth = this.state.usePanelSize ? panelSize?.width : width;
+    const usedHeight = this.state.usePanelSize ? panelSize?.height : height;
+
+    const imageUrl = buildImageUrl(useCurrentTimeRange, dashboard.uid, selectedTheme, panel, usedWidth, usedHeight);
 
     this.setState({ imageUrl });
   };
@@ -73,6 +96,10 @@ export class ShareImage extends PureComponent<Props, State> {
 
   onFormatChange = (value: string) => {
     this.setState({ selectedFormat: value });
+  };
+
+  onPanelSizeFlagChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    this.setState({ usePanelSize: event.currentTarget.checked });
   };
 
   onDownload = () => {
@@ -99,12 +126,14 @@ export class ShareImage extends PureComponent<Props, State> {
   render() {
     const { panel, dashboard } = this.props;
     const isRelativeTime = dashboard ? dashboard.time.to === 'now' : false;
-    const { useCurrentTimeRange, selectedTheme, selectedFormat, width, height, isDownloading } = this.state;
+    const { useCurrentTimeRange, selectedTheme, selectedFormat, width, height, isDownloading, usePanelSize } =
+      this.state;
     const isDashboardSaved = Boolean(dashboard.id);
 
     const timeRangeLabelTranslation = t('share-modal.link.time-range-label', `Lock time range`);
     const widthTranslation = t('share-modal.image.width', `Width`);
     const heightTranslation = t('share-modal.image.height', `Height`);
+    const usePanelSizeTranslation = t('share-modal.image.use-panel-size', 'Use panel size');
 
     const timeRangeDescriptionTranslation = t(
       'share-modal.link.time-range-description',
@@ -145,14 +174,17 @@ export class ShareImage extends PureComponent<Props, State> {
                 />
               </Field>
               <ThemePicker selectedTheme={selectedTheme} onChange={this.onThemeChange} />
-
-              <Field label={widthTranslation}>
-                <Input id="image-width-input" type="number" width={15} value={width} onChange={this.onWidthChange} />
-              </Field>
-
-              <Field label={heightTranslation}>
-                <Input id="image-height-input" width={15} value={height} onChange={this.onHeightChange} />
-              </Field>
+              <InlineFieldRow>
+                <InlineField label={widthTranslation}>
+                  <Input id="image-width-input" type="number" width={15} value={width} onChange={this.onWidthChange} />
+                </InlineField>
+                <InlineField label={heightTranslation}>
+                  <Input id="image-height-input" width={15} value={height} onChange={this.onHeightChange} />
+                </InlineField>
+                <InlineField label={usePanelSizeTranslation}>
+                  <InlineSwitch value={usePanelSize} onChange={this.onPanelSizeFlagChange} />
+                </InlineField>
+              </InlineFieldRow>
 
               <Field label={t('share-modal.image.format', `Image format`)}>
                 <RadioButtonGroup options={imageFormats} value={selectedFormat} onChange={this.onFormatChange} />

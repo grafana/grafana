@@ -15,16 +15,17 @@ interface Props {
   panel: PanelModel;
   dashboard: DashboardModel;
   loadingState?: LoadingState;
+  panelSize?: { width: number; height: number };
   children: (props: PanelHeaderMenuProviderApi) => ReactElement;
 }
 
-export function PanelHeaderMenuProvider({ panel, dashboard, loadingState, children }: Props) {
+export function PanelHeaderMenuProvider({ panel, dashboard, loadingState, children, panelSize }: Props) {
   const [items, setItems] = useState<PanelMenuItem[]>([]);
   const angularComponent = useSelector((state) => getPanelStateForModel(state, panel)?.angularComponent);
 
   useEffect(() => {
-    setItems(getPanelMenu(dashboard, panel, angularComponent));
-  }, [dashboard, panel, angularComponent, loadingState, setItems]);
+    setItems(getPanelMenu(dashboard, panel, angularComponent, panelSize));
+  }, [dashboard, panel, angularComponent, loadingState, setItems, panelSize]);
 
   return children({ items });
 }

@@ -85,6 +85,7 @@ interface Props extends Themeable2 {
   dashboard: DashboardModel;
   panel?: PanelModel;
   activeTab?: string;
+  panelSize?: { width: number; height: number };
 
   onDismiss(): void;
 }
@@ -137,7 +138,7 @@ class UnthemedShareModal extends React.Component<Props, State> {
   }
 
   render() {
-    const { dashboard, panel, theme } = this.props;
+    const { dashboard, panel, theme, panelSize } = this.props;
     const styles = getStyles(theme);
     const activeTabModel = this.getActiveTab();
     const ActiveTab = activeTabModel.component;
@@ -151,7 +152,7 @@ class UnthemedShareModal extends React.Component<Props, State> {
         contentClassName={styles.content}
       >
         <TabContent>
-          <ActiveTab dashboard={dashboard} panel={panel} onDismiss={this.props.onDismiss} />
+          <ActiveTab dashboard={dashboard} panel={panel} panelSize={panelSize} onDismiss={this.props.onDismiss} />
         </TabContent>
       </Modal>
     );

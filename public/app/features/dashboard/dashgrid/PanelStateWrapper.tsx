@@ -526,10 +526,11 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
 
     // Shift the hover menu down if it's on the top row so it doesn't get clipped by topnav
     const hoverHeaderOffset = (panel.gridPos?.y ?? 0) === 0 ? -16 : undefined;
+    const panelSize = { width, height };
 
     const menu = (
       <div data-testid="panel-dropdown">
-        <PanelHeaderMenuWrapper panel={panel} dashboard={dashboard} loadingState={data.state} />
+        <PanelHeaderMenuWrapper panel={panel} dashboard={dashboard} loadingState={data.state} panelSize={panelSize} />
       </div>
     );
 

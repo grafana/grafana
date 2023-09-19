@@ -14,11 +14,12 @@ interface Props {
   style?: React.CSSProperties;
   menuItemsClassName?: string;
   menuWrapperClassName?: string;
+  panelSize?: { width: number; height: number };
 }
 
-export function PanelHeaderMenuWrapper({ style, panel, dashboard, loadingState }: Props) {
+export function PanelHeaderMenuWrapper({ style, panel, dashboard, loadingState, panelSize }: Props) {
   return (
-    <PanelHeaderMenuProvider panel={panel} dashboard={dashboard} loadingState={loadingState}>
+    <PanelHeaderMenuProvider panel={panel} dashboard={dashboard} loadingState={loadingState} panelSize={panelSize}>
       {({ items }) => <PanelHeaderMenu style={style} items={items} />}
     </PanelHeaderMenuProvider>
   );

@@ -57,13 +57,18 @@ export const copyPanel = (panel: IPanelModel) => {
   appEvents.emit(AppEvents.alertSuccess, ['Panel copied. Click **Add panel** icon to paste.']);
 };
 
-export const sharePanel = (dashboard: DashboardModel, panel: PanelModel) => {
+export const sharePanel = (
+  dashboard: DashboardModel,
+  panel: PanelModel,
+  panelSize?: { width: number; height: number }
+) => {
   appEvents.publish(
     new ShowModalReactEvent({
       component: ShareModal,
       props: {
         dashboard: dashboard,
         panel: panel,
+        panelSize: panelSize,
       },
     })
   );

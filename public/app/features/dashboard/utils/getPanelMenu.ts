@@ -33,7 +33,8 @@ import { getTimeSrv } from '../services/TimeSrv';
 export function getPanelMenu(
   dashboard: DashboardModel,
   panel: PanelModel,
-  angularComponent?: AngularComponent | null
+  angularComponent?: AngularComponent | null,
+  panelSize?: { width: number; height: number }
 ): PanelMenuItem[] {
   const onViewPanel = (event: React.MouseEvent) => {
     event.preventDefault();
@@ -54,7 +55,7 @@ export function getPanelMenu(
 
   const onSharePanel = (event: React.MouseEvent) => {
     event.preventDefault();
-    sharePanel(dashboard, panel);
+    sharePanel(dashboard, panel, panelSize);
     reportInteraction('dashboards_panelheader_menu', { item: 'share' });
   };
 

@@ -6,6 +6,7 @@ import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 export interface ShareModalTabProps {
   dashboard: DashboardModel;
   panel?: PanelModel;
+  panelSize?: { width: number; height: number };
   onDismiss?(): void;
 }
 
