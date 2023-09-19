@@ -129,6 +129,7 @@ func TestLDAP_AuthenticatePassword(t *testing.T) {
 				AuthenticatedBy: login.LDAPAuthModule,
 				AuthID:          "123",
 				Groups:          []string{"1", "2"},
+				IsDisabled:      true, // Users are marked as disabled to force enablement on successful login
 				ClientParams: authn.ClientParams{
 					SyncUser:            true,
 					SyncTeams:           true,
