@@ -23,7 +23,11 @@ export async function getStats(datasource: LokiDatasource, query: string): Promi
  * @param {(DateTime | string)} time1
  * @param {(DateTime | string | undefined)} time2
  */
-function compareTime(time1: DateTime | string, time2: DateTime | string | undefined) {
+function compareTime(time1: DateTime | string | undefined, time2: DateTime | string | undefined) {
+  if (!time1 || !time2) {
+    return false;
+  }
+
   const isAbsolute = isDateTime(time1);
 
   if (isAbsolute) {
@@ -36,7 +40,7 @@ function compareTime(time1: DateTime | string, time2: DateTime | string | undefi
 export function shouldUpdateStats(
   query: string,
   prevQuery: string | undefined,
-  timerange: TimeRange,
+  timerange: TimeRange | undefined,
   prevTimerange: TimeRange | undefined
 ): boolean {
   if (prevQuery === undefined || query.trim() !== prevQuery.trim()) {
@@ -44,8 +48,8 @@ export function shouldUpdateStats(
   }
 
   if (
-    compareTime(timerange.raw.from, prevTimerange?.raw.from) &&
-    compareTime(timerange.raw.to, prevTimerange?.raw.to)
+    compareTime(timerange?.raw.from, prevTimerange?.raw.from) &&
+    compareTime(timerange?.raw.to, prevTimerange?.raw.to)
   ) {
     return false;
   }
