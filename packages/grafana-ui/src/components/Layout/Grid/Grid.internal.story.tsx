@@ -24,6 +24,7 @@ const gridItem = (index: number, theme: GrafanaTheme2, width?: string, height?: 
   ];
   return (
     <div
+      key={index}
       style={{
         backgroundColor: colorList[colorOrder],
         width,
