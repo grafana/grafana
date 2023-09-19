@@ -117,6 +117,7 @@ func (c *LDAP) identityFromLDAPInfo(orgID int64, info *login.ExternalUserInfo) *
 		AuthenticatedBy: info.AuthModule,
 		AuthID:          info.AuthId,
 		Groups:          info.Groups,
+		IsDisabled:      info.IsDisabled,
 		ClientParams: authn.ClientParams{
 			SyncUser:            true,
 			SyncTeams:           true,
