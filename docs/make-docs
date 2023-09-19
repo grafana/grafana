@@ -6,6 +6,12 @@
 # [Semantic versioning](https://semver.org/) is used to help the reader identify the significance of changes.
 # Changes are relevant to this script and the support docs.mk GNU Make interface.
 
+# ## 4.2.1 (2023-09-13)
+
+# ## Fixed
+
+# - Improved consistency of the webserver request loop by polling the Hugo port rather than the proxy port.
+
 # ## 4.2.0 (2023-09-01)
 
 # ### Added
@@ -469,7 +475,7 @@ POSIX_HERESTRING
         fi
       done
       echo
-      echo 'Press Ctrl+C to stop the server'
+      echo 'Press Ctrl+c to stop the server'
 
       unset i max req url
       return
@@ -478,6 +484,8 @@ POSIX_HERESTRING
 
   echo
   errr 'The build was interrupted or a build error occurred, check the previous logs for possible causes.'
+  note 'You might need to use Ctrl+c to end the process.'
+
   unset i max req url
 }
 
@@ -626,7 +634,7 @@ ${PODMAN} run \
   ${DOCS_IMAGE} \
   /entrypoint
 EOF
-    await_build http://localhost:3002 &
+    await_build http://localhost:3003 &
 
     if [ -n "${DEBUG}" ]; then
       ${cmd}

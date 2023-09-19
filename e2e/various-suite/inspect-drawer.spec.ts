@@ -2,13 +2,12 @@ import { e2e } from '../utils';
 
 const PANEL_UNDER_TEST = 'Value reducers 1';
 
-e2e.scenario({
-  describeName: 'Inspect drawer tests',
-  itName: 'Tests various Inspect Drawer scenarios',
-  addScenarioDataSource: false,
-  addScenarioDashBoard: false,
-  skipScenario: false,
-  scenario: () => {
+describe('Inspect drawer tests', () => {
+  beforeEach(() => {
+    e2e.flows.login(e2e.env('USERNAME'), e2e.env('PASSWORD'));
+  });
+
+  it('Tests various Inspect Drawer scenarios', () => {
     // @ts-ignore some typing issue
     cy.on('uncaught:exception', (err) => {
       if (err.stack?.indexOf("TypeError: Cannot read property 'getText' of null") !== -1) {
@@ -59,7 +58,7 @@ e2e.scenario({
       });
 
     e2e.components.PanelInspector.Query.content().should('be.visible');
-  },
+  });
 });
 
 const expectDrawerTabsAndContent = () => {

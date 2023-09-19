@@ -1,6 +1,7 @@
+import type { languages } from 'monaco-editor';
 import { Grammar } from 'prismjs';
 
-export const languageConfiguration = {
+export const languageConfiguration: languages.LanguageConfiguration = {
   // the default separators except `@$`
   wordPattern: /(-?\d*\.\d\w*)|([^`~!#%^&*()\-=+\[{\]}\\|;:'",.<>\/?\s]+)/g,
   brackets: [
@@ -22,8 +23,8 @@ export const languageConfiguration = {
   folding: {},
 };
 
-export const operators = ['=', '!=', '>', '<', '>=', '<=', '=~'];
-export const stringOperators = ['=', '!=', '=~'];
+export const operators = ['=', '!=', '>', '<', '>=', '<=', '=~', '!~'];
+export const stringOperators = ['=', '!=', '=~', '!~'];
 export const numberOperators = ['=', '!=', '>', '<', '>=', '<='];
 
 export const intrinsics = ['duration', 'kind', 'name', 'status'];
@@ -35,7 +36,7 @@ const keywords = intrinsics.concat(scopes);
 
 const statusValues = ['ok', 'unset', 'error', 'false', 'true'];
 
-export const language = {
+export const language: languages.IMonarchLanguage = {
   ignoreCase: false,
   defaultToken: '',
   tokenPostfix: '.traceql',

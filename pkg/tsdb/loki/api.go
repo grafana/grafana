@@ -177,7 +177,7 @@ func (api *LokiAPI) DataQuery(ctx context.Context, query lokiQuery, responseOpts
 		return nil, err
 	}
 
-	api.log.Info("Response received from loki", "duration", time.Since(start), "statusCode", resp.StatusCode, "contentLength", resp.Header.Get("Content-Length"), "stage", stageDatabaseRequest, "status", "ok")
+	api.log.Info("Response received from loki", "duration", time.Since(start), "statusCode", resp.StatusCode, "contentLength", resp.Header.Get("Content-Length"), "stage", stageDatabaseRequest, "status", "ok", "query", query.Expr)
 
 	defer func() {
 		if err := resp.Body.Close(); err != nil {
