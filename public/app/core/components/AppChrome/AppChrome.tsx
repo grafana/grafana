@@ -63,7 +63,9 @@ export function AppChrome({ children }: Props) {
       )}
       <main className={contentClass} id="pageContent">
         <div className={styles.panes}>
-          {state.layout === PageLayoutType.Standard && state.sectionNav && <SectionNav model={state.sectionNav} />}
+          {state.layout === PageLayoutType.Standard && state.sectionNav && !config.featureToggles.dockedMegaMenu && (
+            <SectionNav model={state.sectionNav} />
+          )}
           <div className={styles.pageContainer}>{children}</div>
         </div>
       </main>

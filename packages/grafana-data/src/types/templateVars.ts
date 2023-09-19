@@ -55,6 +55,10 @@ export interface AdHocVariableModel extends BaseVariableModel {
   type: 'adhoc';
   datasource: DataSourceRef | null;
   filters: AdHocVariableFilter[];
+  /**
+   * Filters that are always applied to the lookup of keys. Not shown in the AdhocFilterBuilder UI.
+   */
+  baseFilters?: AdHocVariableFilter[];
 }
 
 export interface VariableOption {

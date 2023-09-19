@@ -20,8 +20,6 @@ export class VariableSupport extends CustomVariableSupport<PhlareDataSource> {
     private readonly timeSrv: TimeSrv = getTimeSrv()
   ) {
     super();
-    // This is needed because code in queryRunners.ts passes this method without binding it.
-    this.query = this.query.bind(this);
   }
 
   editor = VariableQueryEditor;
