@@ -8,6 +8,7 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
+import { isFetchError } from '@grafana/runtime';
 import {
   Alert,
   Button,
@@ -159,7 +160,7 @@ export const TemplateForm = ({ existing, alertManagerSourceName, config, provena
         <h4>{existing && !isduplicating ? 'Edit notification template' : 'Create notification template'}</h4>
         {error && (
           <Alert severity="error" title="Error saving template">
-            {error.message || (error as any)?.data?.message || String(error)}
+            {error.message || (isFetchError(error) && error.data?.message) || String(error)}
           </Alert>
         )}
         {provenance && <ProvisioningAlert resource={ProvisionedResource.Template} />}

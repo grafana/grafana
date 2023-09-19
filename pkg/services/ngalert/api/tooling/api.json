@@ -764,6 +764,9 @@
     "uid": {
      "description": "UID is the unique identifier of the contact point. The UID can be\nset by the user.",
      "example": "my_external_reference",
+     "maxLength": 40,
+     "minLength": 1,
+     "pattern": "^[a-zA-Z0-9\\-\\_]+$",
      "type": "string"
     }
    },
@@ -2663,6 +2666,9 @@
      "type": "string"
     },
     "uid": {
+     "maxLength": 40,
+     "minLength": 1,
+     "pattern": "^[a-zA-Z0-9-_]+$",
      "type": "string"
     },
     "updated": {
@@ -4194,6 +4200,7 @@
    "type": "object"
   },
   "gettableAlert": {
+   "description": "GettableAlert gettable alert",
    "properties": {
     "annotations": {
      "$ref": "#/definitions/labelSet"
@@ -4256,6 +4263,7 @@
    "type": "array"
   },
   "gettableSilence": {
+   "description": "GettableSilence gettable silence",
    "properties": {
     "comment": {
      "description": "comment",
@@ -4304,14 +4312,12 @@
    "type": "object"
   },
   "gettableSilences": {
-   "description": "GettableSilences gettable silences",
    "items": {
     "$ref": "#/definitions/gettableSilence"
    },
    "type": "array"
   },
   "integration": {
-   "description": "Integration integration",
    "properties": {
     "lastNotifyAttempt": {
      "description": "A timestamp indicating the last attempt to deliver a notification regardless of the outcome.\nFormat: date-time",
@@ -4683,6 +4689,27 @@
       "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
       "in": "query",
       "name": "format",
+      "type": "string"
+     },
+     {
+      "description": "UIDs of folders from which to export rules",
+      "in": "query",
+      "items": {
+       "type": "string"
+      },
+      "name": "folderUid",
+      "type": "array"
+     },
+     {
+      "description": "Name of group of rules to export. Must be specified only together with a single folder UID",
+      "in": "query",
+      "name": "group",
+      "type": "string"
+     },
+     {
+      "description": "UID of alert rule to export. If specified, parameters folderUid and group must be empty.",
+      "in": "query",
+      "name": "ruleUid",
       "type": "string"
      }
     ],

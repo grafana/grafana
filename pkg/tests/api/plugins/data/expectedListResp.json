@@ -671,11 +671,11 @@
         "name": "Grafana Labs",
         "url": "https://www.grafana.com"
       },
-      "description": "Supports Phlare and Pyroscope backends, horizontally-scalable, highly-available, multi-tenant continuous profiling aggregation systems.",
+      "description": "Data source for Grafana Pyroscope, horizontally-scalable, highly-available, multi-tenant continuous profiling aggregation system.",
       "links": [
         {
           "name": "GitHub Project",
-          "url": "https://github.com/grafana/phlare"
+          "url": "https://github.com/grafana/pyroscope"
         }
       ],
       "logos": {

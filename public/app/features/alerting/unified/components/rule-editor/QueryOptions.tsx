@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 
 import { dateTime, getDefaultRelativeTimeRange, GrafanaTheme2, RelativeTimeRange } from '@grafana/data';
 import { relativeToTimeRange } from '@grafana/data/src/datetime/rangeutil';
-import { clearButtonStyles, Icon, RelativeTimeRangePicker, Toggletip, useStyles2 } from '@grafana/ui';
+import { clearButtonStyles, Icon, InlineField, RelativeTimeRangePicker, Toggletip, useStyles2 } from '@grafana/ui';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { AlertQueryOptions, MaxDataPointsOption, MinIntervalOption } from './QueryWrapper';
@@ -33,25 +33,17 @@ export const QueryOptions = ({
     <>
       <Toggletip
         content={
-          <div className={styles.container}>
-            <div>
-              {onChangeTimeRange && (
-                <div className={styles.timeRangeContainer}>
-                  <span className={styles.timeRangeLabel}>Time Range</span>
-                  <RelativeTimeRangePicker
-                    timeRange={query.relativeTimeRange ?? getDefaultRelativeTimeRange()}
-                    onChange={(range) => onChangeTimeRange(range, index)}
-                  />
-                </div>
-              )}
-            </div>
-            <div className={styles.queryOptions}>
-              <MaxDataPointsOption
-                options={queryOptions}
-                onChange={(options) => onChangeQueryOptions(options, index)}
-              />
-              <MinIntervalOption options={queryOptions} onChange={(options) => onChangeQueryOptions(options, index)} />
-            </div>
+          <div className={styles.queryOptions}>
+            {onChangeTimeRange && (
+              <InlineField label="Time Range">
+                <RelativeTimeRangePicker
+                  timeRange={query.relativeTimeRange ?? getDefaultRelativeTimeRange()}
+                  onChange={(range) => onChangeTimeRange(range, index)}
+                />
+              </InlineField>
+            )}
+            <MaxDataPointsOption options={queryOptions} onChange={(options) => onChangeQueryOptions(options, index)} />
+            <MinIntervalOption options={queryOptions} onChange={(options) => onChangeQueryOptions(options, index)} />
           </div>
         }
         closeButton={true}
@@ -79,24 +71,9 @@ const getStyles = (theme: GrafanaTheme2) => {
   const clearButton = clearButtonStyles(theme);
 
   return {
-    container: css`
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    `,
-    timeRangeContainer: css`
-      display: flex;
-    `,
-
-    timeRangeLabel: css`
-      width: 20%;
-    `,
     queryOptions: css`
-      margin-bottom: -${theme.spacing(2)};
-
-      label {
-        line-height: 12px;
-        padding: 0px;
+      > div {
+        justify-content: space-between;
       }
     `,
 

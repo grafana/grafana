@@ -14,6 +14,7 @@ import { createErrorNotification } from 'app/core/copy/appNotification';
 import { getKioskMode } from 'app/core/navigation/kiosk';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { getNavModel } from 'app/core/selectors/navModel';
+import { newBrowseDashboardsEnabled } from 'app/features/browse-dashboards/featureFlag';
 import { PanelModel } from 'app/features/dashboard/state';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { AngularDeprecationNotice } from 'app/features/plugins/angularDeprecation/AngularDeprecationNotice';
@@ -446,7 +447,7 @@ function updateStatePageNavFromProps(props: Props, state: State): State {
 
   const { folderTitle, folderUid } = dashboard.meta;
   if (folderUid && pageNav) {
-    if (config.featureToggles.nestedFolders) {
+    if (newBrowseDashboardsEnabled()) {
       const folderNavModel = getNavModel(navIndex, `folder-dashboards-${folderUid}`).main;
       pageNav = {
         ...pageNav,

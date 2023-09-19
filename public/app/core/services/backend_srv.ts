@@ -416,7 +416,7 @@ export class BackendSrv implements BackendService {
       );
   }
 
-  private handleStreamCancellation(options: BackendSrvRequest): MonoTypeOperatorFunction<FetchResponse<any>> {
+  private handleStreamCancellation(options: BackendSrvRequest): MonoTypeOperatorFunction<FetchResponse> {
     return (inputStream) =>
       inputStream.pipe(
         takeUntil(
@@ -452,7 +452,7 @@ export class BackendSrv implements BackendService {
       );
   }
 
-  getInspectorStream(): Observable<FetchResponse<any> | FetchError> {
+  getInspectorStream(): Observable<FetchResponse | FetchError> {
     return this.inspectorStream;
   }
 
@@ -465,23 +465,23 @@ export class BackendSrv implements BackendService {
     return this.request<T>({ ...options, method: 'GET', url, params, requestId });
   }
 
-  async delete<T = any>(url: string, data?: any, options?: Partial<BackendSrvRequest>) {
+  async delete<T = unknown>(url: string, data?: unknown, options?: Partial<BackendSrvRequest>) {
     return this.request<T>({ ...options, method: 'DELETE', url, data });
   }
 
-  async post<T = any>(url: string, data?: any, options?: Partial<BackendSrvRequest>) {
+  async post<T = any>(url: string, data?: unknown, options?: Partial<BackendSrvRequest>) {
     return this.request<T>({ ...options, method: 'POST', url, data });
   }
 
-  async patch<T = any>(url: string, data: any, options?: Partial<BackendSrvRequest>) {
+  async patch<T = any>(url: string, data: unknown, options?: Partial<BackendSrvRequest>) {
     return this.request<T>({ ...options, method: 'PATCH', url, data });
   }
 
-  async put<T = any>(url: string, data: any, options?: Partial<BackendSrvRequest>): Promise<T> {
+  async put<T = any>(url: string, data: unknown, options?: Partial<BackendSrvRequest>): Promise<T> {
     return this.request<T>({ ...options, method: 'PUT', url, data });
   }
 
-  withNoBackendCache(callback: any) {
+  withNoBackendCache(callback: () => Promise<void>) {
     this.noBackendCache = true;
     return callback().finally(() => {
       this.noBackendCache = false;
