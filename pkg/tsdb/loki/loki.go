@@ -200,7 +200,7 @@ func queryData(ctx context.Context, req *backend.QueryDataRequest, dsInfo *datas
 			span.SetAttributes("query_group_id", req.GetHTTPHeader("X-Query-Group-Id"), attribute.Key("query_group_id").String(req.GetHTTPHeader("X-Query-Group-Id")))
 		}
 
-		frames, err := runQuery(ctx, api, query, responseOpts)
+		frames, err := runQuery(ctx, api, query, responseOpts, plog)
 
 		queryRes := backend.DataResponse{}
 
@@ -219,10 +219,10 @@ func queryData(ctx context.Context, req *backend.QueryDataRequest, dsInfo *datas
 }
 
 // we extracted this part of the functionality to make it easy to unit-test it
-func runQuery(ctx context.Context, api *LokiAPI, query *lokiQuery, responseOpts ResponseOpts) (data.Frames, error) {
+func runQuery(ctx context.Context, api *LokiAPI, query *lokiQuery, responseOpts ResponseOpts, plog log.Logger) (data.Frames, error) {
 	frames, err := api.DataQuery(ctx, *query, responseOpts)
 	if err != nil {
-		logger.Error("Error querying loki", "error", err)
+		plog.Error("Error querying loki", "error", err)
 		return data.Frames{}, err
 	}
 
@@ -230,7 +230,7 @@ func runQuery(ctx context.Context, api *LokiAPI, query *lokiQuery, responseOpts 
 		err = adjustFrame(frame, query, !responseOpts.metricDataplane, responseOpts.logsDataplane)
 
 		if err != nil {
-			logger.Error("Error adjusting frame", "error", err)
+			plog.Error("Error adjusting frame", "error", err)
 			return data.Frames{}, err
 		}
 	}
