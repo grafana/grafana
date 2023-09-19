@@ -1,4 +1,4 @@
-import { VisualQueryBinary } from '../../prometheus/querybuilder/shared/LokiAndPromQueryModellerBase';
+import { LokiVisualQueryBinaryWithBool } from '../../prometheus/querybuilder/shared/LokiAndPromQueryModellerBase';
 import { QueryBuilderLabelFilter, QueryBuilderOperation } from '../../prometheus/querybuilder/shared/types';
 
 /**
@@ -10,7 +10,8 @@ export interface LokiVisualQuery {
   binaryQueries?: LokiVisualQueryBinary[];
 }
 
-export type LokiVisualQueryBinary = VisualQueryBinary<LokiVisualQuery>;
+export type LokiVisualQueryBinary = LokiVisualQueryBinaryWithBool<LokiVisualQuery>;
+
 export enum LokiQueryPatternType {
   Log = 'log',
   Metric = 'metric',

@@ -1,17 +1,22 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import React, { useId } from 'react';
 
-import { GrafanaTheme2, toOption } from '@grafana/data';
+import { DataSourceApi, GrafanaTheme2, toOption } from '@grafana/data';
 import { EditorRows, FlexItem } from '@grafana/experimental';
 import { AutoSizeInput, IconButton, Select, useStyles2 } from '@grafana/ui';
 
+import { getOperationParamEditor } from '../../../prometheus/querybuilder/shared/OperationParamEditor';
+import { QueryBuilderOperation, QueryBuilderOperationParamDef } from '../../../prometheus/querybuilder/shared/types';
 import { LokiDatasource } from '../../datasource';
+import { LokiQueryModeller } from '../LokiQueryModeller';
 import { binaryScalarDefs } from '../binaryScalarOperations';
-import { LokiVisualQueryBinary } from '../types';
+import { LokiVisualQuery, LokiVisualQueryBinary } from '../types';
 
 import { LokiQueryBuilder } from './LokiQueryBuilder';
 
 export interface Props {
+  query: LokiVisualQuery;
+  operations: QueryBuilderOperation[];
   nestedQuery: LokiVisualQueryBinary;
   datasource: LokiDatasource;
   index: number;
@@ -19,11 +24,31 @@ export interface Props {
   onChange: (index: number, update: LokiVisualQueryBinary) => void;
   onRemove: (index: number) => void;
   onRunQuery: () => void;
+  queryModeller: LokiQueryModeller;
 }
 
+const booleanComparisonOperator: QueryBuilderOperationParamDef = {
+  name: 'Bool',
+  type: 'boolean',
+  description: 'If checked comparison will return 0 or 1 for the value rather than filtering.',
+};
+
 export const NestedQuery = React.memo<Props>(
-  ({ nestedQuery, index, datasource, onChange, onRemove, onRunQuery, showExplain }) => {
+  ({ nestedQuery, index, datasource, onChange, onRemove, onRunQuery, showExplain, operations, query }) => {
     const styles = useStyles2(getStyles);
+    const paramIndex = 0; // should only be a single param with this? TODO fix
+    console.log('');
+    console.log('nestedQuery', nestedQuery);
+    console.log('operations', operations);
+    console.log('query', query);
+
+    const paramDef = booleanComparisonOperator;
+    const Editor = getOperationParamEditor(paramDef);
+    const id = useId();
+
+    const onParamValueChanged = (e) => {
+      console.log('onParamValueChanged TODO', e);
+    };
 
     return (
       <div className={styles.card}>
@@ -71,6 +96,18 @@ export const NestedQuery = React.memo<Props>(
               }}
             />
           </div>
+          <Editor
+            index={paramIndex}
+            paramDef={paramDef}
+            value={nestedQuery.boolModifier}
+            operation={operations[index]}
+            operationId={id}
+            onChange={onParamValueChanged}
+            onRunQuery={onRunQuery}
+            query={query}
+            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+            datasource={datasource as DataSourceApi}
+          />
           <FlexItem grow={1} />
           <IconButton name="times" size="sm" onClick={() => onRemove(index)} tooltip="Remove nested query" />
         </div>

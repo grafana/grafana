@@ -556,8 +556,10 @@ function handleBinary(expr: string, node: SyntaxNode, context: Context) {
     handleExpression(expr, right, context);
   } else {
     visQuery.binaryQueries = visQuery.binaryQueries || [];
+    console.log('binModifier in parser', binModifier);
     const binQuery: LokiVisualQueryBinary = {
       operator: op,
+      boolModifier: binModifier?.isBool ?? false,
       query: {
         labels: [],
         operations: [],

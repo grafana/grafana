@@ -273,7 +273,8 @@ export function addNestedQueryHandler(def: QueryBuilderOperationDef, query: Loki
       ...(query.binaryQueries ?? []),
       {
         operator: '/',
-        query,
+        query: query,
+        boolModifier: false,
       },
     ],
   };

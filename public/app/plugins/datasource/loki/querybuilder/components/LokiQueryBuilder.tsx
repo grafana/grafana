@@ -168,6 +168,7 @@ export const LokiQueryBuilder = React.memo<Props>(({ datasource, query, onChange
           onChange={onChange}
           onRunQuery={onRunQuery}
           showExplain={showExplain}
+          queryModeller={lokiQueryModeller}
         />
       )}
     </div>

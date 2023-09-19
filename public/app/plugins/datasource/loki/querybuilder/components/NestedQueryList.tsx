@@ -3,6 +3,7 @@ import React from 'react';
 import { Stack } from '@grafana/experimental';
 
 import { LokiDatasource } from '../../datasource';
+import { LokiQueryModeller } from '../LokiQueryModeller';
 import { LokiVisualQuery, LokiVisualQueryBinary } from '../types';
 
 import { NestedQuery } from './NestedQuery';
@@ -13,9 +14,10 @@ export interface Props {
   showExplain: boolean;
   onChange: (query: LokiVisualQuery) => void;
   onRunQuery: () => void;
+  queryModeller: LokiQueryModeller;
 }
 
-export function NestedQueryList({ query, datasource, onChange, onRunQuery, showExplain }: Props) {
+export function NestedQueryList({ query, datasource, onChange, onRunQuery, showExplain, queryModeller }: Props) {
   const nestedQueries = query.binaryQueries ?? [];
 
   const onNestedQueryUpdate = (index: number, update: LokiVisualQueryBinary) => {
@@ -33,6 +35,7 @@ export function NestedQueryList({ query, datasource, onChange, onRunQuery, showE
     <Stack direction="column" gap={1}>
       {nestedQueries.map((nestedQuery, index) => (
         <NestedQuery
+          operations={query.operations}
           key={index.toString()}
           nestedQuery={nestedQuery}
           index={index}
@@ -41,6 +44,8 @@ export function NestedQueryList({ query, datasource, onChange, onRunQuery, showE
           onRemove={onRemove}
           onRunQuery={onRunQuery}
           showExplain={showExplain}
+          queryModeller={queryModeller}
+          query={query}
         />
       ))}
     </Stack>

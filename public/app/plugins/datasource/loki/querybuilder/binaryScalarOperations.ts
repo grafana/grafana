@@ -5,6 +5,7 @@ import {
   QueryBuilderOperationParamDef,
 } from '../../prometheus/querybuilder/shared/types';
 
+import { addNestedQueryHandler } from './operationUtils';
 import { LokiOperationId, LokiVisualQueryOperationCategory } from './types';
 
 export const binaryScalarDefs = [
@@ -76,17 +77,31 @@ export const binaryScalarDefs = [
   },
 ];
 
+const booleanComparisonOperator: QueryBuilderOperationParamDef = {
+  name: 'Bool',
+  type: 'boolean',
+  description: 'If checked comparison will return 0 or 1 for the value rather than filtering.',
+};
+
+export const binaryNestedOperation = (): QueryBuilderOperationDef => {
+  return {
+    id: LokiOperationId.NestedQuery,
+    name: 'Binary operation with query',
+    params: [booleanComparisonOperator],
+    defaultParams: [],
+    category: LokiVisualQueryOperationCategory.BinaryOps,
+    renderer: (model, def, innerExpr) => innerExpr,
+    addOperationHandler: addNestedQueryHandler,
+  };
+};
+
 // Not sure about this one. It could also be a more generic 'Simple math operation' where user specifies
 // both the operator and the operand in a single input
 export const binaryScalarOperations: QueryBuilderOperationDef[] = binaryScalarDefs.map((opDef) => {
   const params: QueryBuilderOperationParamDef[] = [{ name: 'Value', type: 'number' }];
   const defaultParams: any[] = [2];
   if (opDef.comparison) {
-    params.push({
-      name: 'Bool',
-      type: 'boolean',
-      description: 'If checked comparison will return 0 or 1 for the value rather than filtering.',
-    });
+    params.push(booleanComparisonOperator);
     defaultParams.push(false);
   }
 

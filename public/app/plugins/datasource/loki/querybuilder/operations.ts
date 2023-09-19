@@ -4,11 +4,10 @@ import {
 } from '../../prometheus/querybuilder/shared/operationUtils';
 import { QueryBuilderOperationDef, QueryBuilderOperationParamValue } from '../../prometheus/querybuilder/shared/types';
 
-import { binaryScalarOperations } from './binaryScalarOperations';
+import { binaryNestedOperation, binaryScalarOperations } from './binaryScalarOperations';
 import { UnwrapParamEditor } from './components/UnwrapParamEditor';
 import {
   addLokiOperation,
-  addNestedQueryHandler,
   createRangeOperation,
   createRangeOperationWithGrouping,
   getLineFilterRenderer,
@@ -536,15 +535,7 @@ Example: \`\`error_level=\`level\` \`\`
         'The keep expression will keep only the specified labels in the pipeline and drop all the other labels.',
     },
     ...binaryScalarOperations,
-    {
-      id: LokiOperationId.NestedQuery,
-      name: 'Binary operation with query',
-      params: [],
-      defaultParams: [],
-      category: LokiVisualQueryOperationCategory.BinaryOps,
-      renderer: (model, def, innerExpr) => innerExpr,
-      addOperationHandler: addNestedQueryHandler,
-    },
+    binaryNestedOperation(),
   ];
 
   return list;

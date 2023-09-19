@@ -11,6 +11,14 @@ export interface VisualQueryBinary<T> {
   query: T;
 }
 
+export interface LokiVisualQueryBinaryWithBool<T> {
+  operator: string;
+  vectorMatchesType?: 'on' | 'ignoring';
+  vectorMatches?: string;
+  query: T;
+  boolModifier: boolean;
+}
+
 export interface PromLokiVisualQuery {
   metric?: string;
   labels: QueryBuilderLabelFilter[];
