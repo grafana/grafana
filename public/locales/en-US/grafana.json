@@ -225,12 +225,18 @@
   },
   "explore": {
     "add-to-dashboard": "Add to dashboard",
+    "table": {
+      "no-data": "0 series returned",
+      "title": "Table",
+      "title-with-dataframes": "Table",
+      "title-with-name": "Table - {{name}}"
+    },
     "toolbar": {
       "aria-label": "Explore toolbar",
       "copy-shortened-link": "Copy shortened link",
       "refresh-picker-cancel": "Cancel",
       "refresh-picker-run": "Run query",
-      "split-close": "Close",
+      "split-close": " Close ",
       "split-close-tooltip": "Close split pane",
       "split-narrow": "Narrow pane",
       "split-title": "Split",
@@ -854,10 +860,6 @@
     "loading": "Loading...",
     "no-tags": "No tags found",
     "placeholder": "Filter by tag"
-  },
-  "table-container":{
-    "title": "Table",
-    "MetaInfoText": "0 series returned"
   },
   "time-picker": {
     "absolute": {

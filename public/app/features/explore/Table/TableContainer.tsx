@@ -52,9 +52,9 @@ export class TableContainer extends PureComponent<Props> {
   }
 
   getTableTitle(dataFrames: DataFrame[] | null, data: DataFrame, i: number) {
-    let title = data.name ? `${t('explore-table-title', 'Table')} - ${data.name}` : `${t('explore-table-title', 'Table')}`;
+    let title = data.name ? t('explore.table.title-with-name', 'Table - {{name}}', {name: data.name}) : t('explore.table.title', 'Table');
     if (dataFrames && dataFrames.length > 1) {
-      title = `${t('explore-table-title', 'Table')} - ${data.name || data.refId || i}`;
+      title = `${t('explore.table.title-with-dataframes', 'Table')} - ${data.name || data.refId || i}`;
     }
     return title;
   }
@@ -88,8 +88,8 @@ export class TableContainer extends PureComponent<Props> {
     return (
       <>
         {frames && frames.length === 0 && (
-          <PanelChrome title={t('table-container-title', 'Table')} width={width} height={200}>
-            {() => <MetaInfoText metaItems={[{ value: t('table-container-MetaInfoText', '0 series returned')}]} />}
+          <PanelChrome title={t('explore.table.title', 'Table')} width={width} height={200}>
+            {() => <MetaInfoText metaItems={[{ value: t('explore.table.no-data', '0 series returned')}]} />}
           </PanelChrome>
         )}
         {frames &&
