@@ -626,6 +626,10 @@
     "off-option": {
       "aria-label": "Désactiver l'actualisation automatique",
       "label": "Désactivé"
+    },
+    "tooltip": {
+      "interval-selected": "",
+      "turned-off": ""
     }
   },
   "search": {

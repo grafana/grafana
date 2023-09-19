@@ -616,6 +616,10 @@
     "off-option": {
       "aria-label": "关闭自动刷新",
       "label": "关"
+    },
+    "tooltip": {
+      "interval-selected": "",
+      "turned-off": ""
     }
   },
   "search": {

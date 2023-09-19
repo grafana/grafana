@@ -621,6 +621,10 @@
     "off-option": {
       "aria-label": "Turn off auto refresh",
       "label": "Off"
+    },
+    "tooltip": {
+      "interval-selected": "Set auto refresh interval",
+      "turned-off": "Auto refresh off"
     }
   },
   "search": {
