@@ -177,20 +177,22 @@ export const RuleActionsButtons = ({ rule, rulesSource }: Props) => {
           {buttons.map((button, index) => (
             <React.Fragment key={index}>{button}</React.Fragment>
           ))}
-          <Dropdown
-            overlay={
-              <Menu>
-                {moreActions.map((action) => (
-                  <React.Fragment key={uniqueId('action_')}>{action}</React.Fragment>
-                ))}
-              </Menu>
-            }
-          >
-            <Button variant="secondary" size="sm">
-              More
-              <Icon name="angle-down" />
-            </Button>
-          </Dropdown>
+          {moreActions.length > 0 && (
+            <Dropdown
+              overlay={
+                <Menu>
+                  {moreActions.map((action) => (
+                    <React.Fragment key={uniqueId('action_')}>{action}</React.Fragment>
+                  ))}
+                </Menu>
+              }
+            >
+              <Button variant="secondary" size="sm">
+                More
+                <Icon name="angle-down" />
+              </Button>
+            </Dropdown>
+          )}
         </Stack>
         {!!ruleToDelete && (
           <ConfirmModal
