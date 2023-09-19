@@ -72,7 +72,7 @@ To learn more, refer to the [Grafana OnCall integration for Alerting documentati
 
 _Available in public preview in Grafana Cloud_
 
-We are gradually rolling out our new Browse Dashboards UI. Say goodbye to the general folder, and hello to easier edit functionality as well as faster search renders.
+We are gradually rolling out our new Browse Dashboards UI. With this new feature we removed the general folder, the dashboards now sit at the root level. The feature also provide easier editing functionality as well as faster search renders.
 
 To learn more, refer to the following video demo.
 
