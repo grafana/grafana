@@ -588,9 +588,6 @@ function getBinaryModifier(
   const matcher = node.getChild(OnOrIgnoringModifier);
   const boolMatcher = node.getChild(Bool);
 
-  console.log('matcher', matcher);
-  console.log('boolMatcher', boolMatcher);
-
   if (!matcher && boolMatcher) {
     return { isBool: true, isMatcher: false };
   } else {
