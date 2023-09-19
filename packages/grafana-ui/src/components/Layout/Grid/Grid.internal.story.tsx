@@ -49,14 +49,6 @@ const meta: Meta<typeof Grid> = {
   args: {
     display: 'grid',
     gap: 1,
-    columnGap: undefined,
-    rowGap: undefined,
-    templateColumns: undefined,
-    templateRows: undefined,
-    alignItems: undefined,
-    justifyItems: undefined,
-    autoFlow: undefined,
-    autoRows: undefined,
   },
 };
 
