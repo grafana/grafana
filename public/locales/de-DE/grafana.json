@@ -855,6 +855,10 @@
     "no-tags": "Keine Tags gefunden",
     "placeholder": "Nach Tag filtern"
   },
+  "table-container":{
+    "title": "",
+    "MetaInfoText": ""
+  },
   "time-picker": {
     "absolute": {
       "recent-title": "Kürzlich verwendete absolute Bereiche",

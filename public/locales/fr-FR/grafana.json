@@ -860,6 +860,10 @@
     "no-tags": "Aucune étiquette trouvée",
     "placeholder": "Filtrer par étiquette"
   },
+  "table-container":{
+    "title": "",
+    "MetaInfoText": ""
+  },
   "time-picker": {
     "absolute": {
       "recent-title": "Périodes absolues récemment utilisées",

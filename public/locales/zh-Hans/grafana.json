@@ -850,6 +850,10 @@
     "no-tags": "未找到标签",
     "placeholder": "按标签筛选"
   },
+  "table-container":{
+    "title": "",
+    "MetaInfoText": ""
+  },
   "time-picker": {
     "absolute": {
       "recent-title": "最近使用的绝对范围",

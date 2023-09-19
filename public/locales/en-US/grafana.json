@@ -855,6 +855,10 @@
     "no-tags": "No tags found",
     "placeholder": "Filter by tag"
   },
+  "table-container":{
+    "title": "Table",
+    "MetaInfoText": "0 series returned"
+  },
   "time-picker": {
     "absolute": {
       "recent-title": "Recently used absolute ranges",
