@@ -1,9 +1,8 @@
-import { css, cx } from '@emotion/css';
 import React from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { EditorField, EditorRow } from '@grafana/experimental';
-import { TextArea, InlineFormLabel, Input } from '@grafana/ui';
+import { TextArea, Input } from '@grafana/ui';
 
 import CloudMonitoringDatasource from '../datasource';
 import { PromQLQuery } from '../types/query';
