@@ -8,7 +8,7 @@ import { SplitPaneWrapper } from 'app/core/components/SplitPaneWrapper/SplitPane
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useNavModel } from 'app/core/hooks/useNavModel';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
-import { useDispatch, useSelector } from 'app/types';
+import { useSelector } from 'app/types';
 import { ExploreQueryParams } from 'app/types/explore';
 
 import { CorrelationEditorModeBar } from './CorrelationEditorModeBar';
@@ -19,7 +19,6 @@ import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { useSplitSizeUpdater } from './hooks/useSplitSizeUpdater';
 import { useStateSync } from './hooks/useStateSync';
 import { useTimeSrvFix } from './hooks/useTimeSrvFix';
-import { changeCorrelationEditorDetails } from './state/main';
 import { isSplit, selectCorrelationDetails, selectPanesEntries } from './state/selectors';
 
 const MIN_PANE_WIDTH = 200;
@@ -36,7 +35,6 @@ export default function ExplorePage(props: GrafanaRouteComponentProps<{}, Explor
   useExplorePageTitle(props.queryParams);
   const { chrome } = useGrafana();
   const navModel = useNavModel('explore');
-  const dispatch = useDispatch();
   const { updateSplitSize, widthCalc } = useSplitSizeUpdater(MIN_PANE_WIDTH);
 
   const panes = useSelector(selectPanesEntries);
@@ -49,20 +47,6 @@ export default function ExplorePage(props: GrafanaRouteComponentProps<{}, Explor
     //We should probably abstract this out at some point
     chrome.update({ sectionNav: navModel });
   }, [chrome, navModel]);
-
-  useEffect(() => {
-    if (isCorrelationsEditorMode) {
-      const exploreNavItem = { ...navModel.node };
-      exploreNavItem.text = 'Correlations Editor';
-      exploreNavItem.parentItem = navModel.node;
-      exploreNavItem.parentItem.url = undefined;
-      exploreNavItem.parentItem.onClick = () => {
-        dispatch(changeCorrelationEditorDetails({ isExiting: true }));
-      };
-      navModel.node = exploreNavItem;
-      chrome.update({ sectionNav: navModel });
-    }
-  }, [chrome, navModel, dispatch, panes, isCorrelationsEditorMode]);
 
   useKeyboardShortcuts();
 

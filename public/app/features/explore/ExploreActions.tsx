@@ -79,12 +79,13 @@ export const ExploreActions = () => {
 
       if (config.featureToggles.correlations && canWriteCorrelations && !hasMixed) {
         actionsArr.push({
-          id: 'correlations-editor',
+          id: 'explore/correlations-editor',
           name: 'Correlations editor',
           perform: () => {
             dispatch(changeCorrelationEditorDetails({ editorMode: true }));
             dispatch(runQueries({ exploreId: keys[0] }));
           },
+          section: exploreSection,
         });
       }
 

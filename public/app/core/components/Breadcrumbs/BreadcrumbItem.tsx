@@ -14,14 +14,11 @@ type Props = Breadcrumb & {
   flexGrow: number;
 };
 
-export function BreadcrumbItem({ href, isCurrent, text, index, flexGrow, onClick }: Props) {
+export function BreadcrumbItem({ href, isCurrent, text, index, flexGrow }: Props) {
   const styles = useStyles2(getStyles);
 
   const onBreadcrumbClick = () => {
     reportInteraction('grafana_breadcrumb_clicked', { url: href });
-    if (onClick) {
-      onClick();
-    }
   };
 
   return (
@@ -38,12 +35,7 @@ export function BreadcrumbItem({ href, isCurrent, text, index, flexGrow, onClick
       ) : (
         <>
           <a
-            onClick={(e) => {
-              if (onClick) {
-                e.preventDefault();
-              }
-              onBreadcrumbClick();
-            }}
+            onClick={onBreadcrumbClick}
             data-testid={Components.Breadcrumbs.breadcrumb(text)}
             className={cx(styles.breadcrumb, styles.breadcrumbLink)}
             title={text}
