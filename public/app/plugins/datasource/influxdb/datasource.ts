@@ -8,6 +8,8 @@ import {
   DataQueryError,
   DataQueryRequest,
   DataQueryResponse,
+  DataSourceGetTagKeysOptions,
+  DataSourceGetTagValuesOptions,
   DataSourceInstanceSettings,
   dateMath,
   DateTime,
@@ -20,8 +22,6 @@ import {
   TIME_SERIES_VALUE_FIELD_NAME,
   TimeSeries,
   toDataFrame,
-  DataSourceGetTagKeysOptions,
-  DataSourceGetTagValuesOptions,
 } from '@grafana/data';
 import {
   BackendDataSourceResponse,
@@ -359,8 +359,6 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
       type: 'TAG_KEYS',
       templateService: this.templateSrv,
       database: this.database,
-      measurement: '',
-      tags: [],
     });
 
     return this.metricFindQuery(query);
@@ -372,8 +370,6 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
       templateService: this.templateSrv,
       database: this.database,
       withKey: options.key,
-      measurement: '',
-      tags: [],
     });
 
     return this.metricFindQuery(query);
