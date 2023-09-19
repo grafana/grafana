@@ -27,7 +27,7 @@ import { useAppDispatch } from 'app/store/store';
 import { useSelector } from 'app/types';
 
 import { appEvents } from '../../../core/app_events';
-import { GET_NODES_CANCEL_TOKEN } from '../Inventory.constants';
+import { CLUSTERS_SWITCH_KEY, GET_NODES_CANCEL_TOKEN } from '../Inventory.constants';
 import { Messages } from '../Inventory.messages';
 import { FlattenNode, MonitoringStatus, Node } from '../Inventory.types';
 import { StatusBadge } from '../components/StatusBadge/StatusBadge';
@@ -64,6 +64,11 @@ export const NodesTab = () => {
     ],
     [styles.actionItemTxtSpan]
   );
+
+  const clearClusterToggle = useCallback(() => {
+    // Reset toggle to false when linking from nodes
+    localStorage.removeItem(CLUSTERS_SWITCH_KEY);
+  }, []);
 
   const columns = useMemo(
     (): Array<ExtendedColumn<Node>> => [
@@ -155,7 +160,7 @@ export const NodesTab = () => {
 
           if (value.length === 1) {
             return (
-              <Link className={styles.link} href={getServiceLink(value[0].serviceId)}>
+              <Link className={styles.link} href={getServiceLink(value[0].serviceId)} onClick={clearClusterToggle}>
                 {value[0].serviceName}
               </Link>
             );
@@ -166,7 +171,7 @@ export const NodesTab = () => {
       },
       getExpandAndActionsCol(getActions),
     ],
-    [styles, getActions]
+    [styles, getActions, clearClusterToggle]
   );
 
   const loadData = useCallback(async () => {
@@ -206,7 +211,7 @@ export const NodesTab = () => {
             <DetailsRow.Contents title={Messages.nodes.details.serviceNames}>
               {row.original.services.map((service) => (
                 <div key={service.serviceId}>
-                  <Link className={styles.link} href={getServiceLink(service.serviceId)}>
+                  <Link className={styles.link} href={getServiceLink(service.serviceId)} onClick={clearClusterToggle}>
                     {service.serviceName}
                   </Link>
                 </div>
@@ -234,7 +239,7 @@ export const NodesTab = () => {
         </DetailsRow>
       );
     },
-    [styles.tagList, styles.link]
+    [styles.tagList, styles.link, clearClusterToggle]
   );
 
   const deletionMsg = useMemo(() => {

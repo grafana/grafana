@@ -60,4 +60,17 @@ export const getStyles = ({ colors, spacing }: GrafanaTheme2) => ({
   link: css`
     color: ${colors.text.link};
   `,
+  clustersSwitch: css`
+    display: flex;
+    flex-direction: row-reverse;
+
+    & > label {
+      padding: 0;
+      padding-left: ${spacing(1)};
+    }
+  `,
+  technicalPreview: css`
+    margin-left: -${spacing(1.5)};
+    color: ${colors.text.secondary};
+  `,
 });

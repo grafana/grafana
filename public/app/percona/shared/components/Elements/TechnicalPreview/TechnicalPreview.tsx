@@ -5,7 +5,7 @@ import { Icon, Tooltip, useTheme } from '@grafana/ui';
 import { Messages } from './TechnicalPreview.messages';
 import { getStyles } from './TechnicalPreview.styles';
 
-const ReadMoreLink = () => {
+export const ReadMoreLink = () => {
   const theme = useTheme();
   const styles = getStyles(theme);
 
@@ -25,7 +25,7 @@ export const TechnicalPreview = () => {
 
   return (
     <div className={styles.labelWrapper}>
-      <Tooltip placement="top" theme="info" content={<ReadMoreLink />}>
+      <Tooltip interactive placement="top" theme="info" content={<ReadMoreLink />}>
         <h1>
           <Icon name={'info-circle'} /> {Messages.labelText}
         </h1>

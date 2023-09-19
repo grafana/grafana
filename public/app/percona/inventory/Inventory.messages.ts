@@ -27,6 +27,8 @@ export const Messages = {
       `Are you sure that you want to permanently delete ${nrItems} service${nrItems ? 's' : ''}`,
     servicesDeleted: (deletedItems: number, totalItems: number) =>
       `${deletedItems} of ${totalItems} services successfully deleted`,
+    organizeByClusters: 'Organize by Clusters',
+    technicalPreview: '(Technical Preview) ',
   },
   agents: {
     goBackToServices: 'Go back to services',

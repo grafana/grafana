@@ -29,3 +29,4 @@ export const inventoryTypes = {
 export const GET_SERVICES_CANCEL_TOKEN = 'getServices';
 export const GET_NODES_CANCEL_TOKEN = 'getNodes';
 export const GET_AGENTS_CANCEL_TOKEN = 'getAgents';
+export const CLUSTERS_SWITCH_KEY = 'pmm-organize-by-clusters';
