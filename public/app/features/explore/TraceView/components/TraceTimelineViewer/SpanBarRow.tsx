@@ -74,6 +74,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme2, showSpanFilterMatchesOnly
     endpointName: css`
       label: endpointName;
       color: ${autoColor(theme, '#404040')};
+      font-size: 0.9em;
     `,
     view: css`
       label: view;
@@ -243,8 +244,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme2, showSpanFilterMatchesOnly
     `,
     svcName: css`
       label: svcName;
-      padding: 0 0.25rem 0 0.5rem;
-      font-size: 1.025em;
+      font-size: 0.9em;
     `,
     svcNameChildrenCollapsed: css`
       label: svcNameChildrenCollapsed;
