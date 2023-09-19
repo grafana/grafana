@@ -41,6 +41,7 @@ export interface FeatureToggles {
   logRequestsInstrumentedAsUnknown?: boolean;
   dataConnectionsConsole?: boolean;
   topnav?: boolean;
+  dockedMegaMenu?: boolean;
   grpcServer?: boolean;
   entityStore?: boolean;
   cloudWatchCrossAccountQuerying?: boolean;
@@ -123,6 +124,7 @@ export interface FeatureToggles {
   newBrowseDashboards?: boolean;
   sseGroupByDatasource?: boolean;
   requestInstrumentationStatusSource?: boolean;
+  lokiRunQueriesInParallel?: boolean;
   wargamesTesting?: boolean;
   alertingInsights?: boolean;
 }

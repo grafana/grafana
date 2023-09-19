@@ -82,7 +82,7 @@ func TestIntegrationPluginManager(t *testing.T) {
 	am := azuremonitor.ProvideService(cfg, hcp, features, tracer)
 	cw := cloudwatch.ProvideService(cfg, hcp, features)
 	cm := cloudmonitoring.ProvideService(hcp, tracer)
-	es := elasticsearch.ProvideService(hcp)
+	es := elasticsearch.ProvideService(hcp, tracer)
 	grap := graphite.ProvideService(hcp, tracer)
 	idb := influxdb.ProvideService(hcp)
 	lk := loki.ProvideService(hcp, features, tracer)
