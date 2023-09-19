@@ -13,12 +13,12 @@ labels:
     - cloud
     - enterprise
     - oss
-menuTitle: Panels and visualizations
-title: Panels and visualizations
+menuTitle: Panels
+title: Panels
 weight: 80
 ---
 
-# Panels and visualizations
+# Panels
 
 The _panel_ is the basic visualization building block in Grafana.
 Each panel has a query editor specific to the data source selected in the panel.
