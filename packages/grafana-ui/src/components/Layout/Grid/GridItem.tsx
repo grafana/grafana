@@ -14,7 +14,7 @@ export interface GridItemProps {
   columnEnd?: number | `span ${number}`;
   /** Specifies the row where the grid item starts within the grid */
   rowStart?: number;
-  /** Specifies the row where the grid item ends.*/
+  /** Specifies the row where the grid item ends */
   rowEnd?: number | `span ${number}`;
 }
 
