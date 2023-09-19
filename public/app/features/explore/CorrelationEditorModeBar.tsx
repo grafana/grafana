@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import React, { useEffect, useState } from 'react';
 import { Prompt } from 'react-router-dom';
-import { useBeforeUnload } from 'react-use';
+import { useBeforeUnload, useUnmount } from 'react-use';
 
 import { GrafanaTheme2, colorManipulator } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
@@ -41,30 +41,28 @@ export const CorrelationEditorModeBar = ({ panes }: { panes: Array<[string, Expl
   }, [correlationDetails?.dirty, correlationDetails?.isExiting]);
 
   // clear data when unmounted
-  useEffect(() => {
-    return () => {
+  useUnmount(() => {
+    dispatch(
+      changeCorrelationEditorDetails({
+        editorMode: false,
+        isExiting: false,
+        dirty: false,
+        label: undefined,
+        description: undefined,
+        canSave: false,
+      })
+    );
+
+    panes.forEach((pane) => {
       dispatch(
-        changeCorrelationEditorDetails({
-          editorMode: false,
-          isExiting: false,
-          dirty: false,
-          label: undefined,
-          description: undefined,
-          canSave: false,
+        changeCorrelationHelperData({
+          exploreId: pane[0],
+          correlationEditorHelperData: undefined,
         })
       );
-      panes.forEach((pane) => {
-        dispatch(
-          changeCorrelationHelperData({
-            exploreId: pane[0],
-            correlationEditorHelperData: undefined,
-          })
-        );
-        dispatch(runQueries({ exploreId: pane[0] }));
-      });
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+      dispatch(runQueries({ exploreId: pane[0] }));
+    });
+  });
 
   const closePaneAndReset = (exploreId: string) => {
     setShowSavePrompt(false);
