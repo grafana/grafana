@@ -39,4 +39,4 @@ You can add more widget types by installing panel [panel plugins](https://grafan
 
 [Annotations list]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/annotations"
 [Annotations list]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/annotations"
-{% /docs/reference %}}
+{{% /docs/reference %}}
