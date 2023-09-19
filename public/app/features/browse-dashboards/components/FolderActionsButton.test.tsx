@@ -4,11 +4,11 @@ import React from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
 
 import { config } from '@grafana/runtime';
-import { appEvents, contextSrv } from 'app/core/core';
-import { AccessControlAction } from 'app/types';
+import { appEvents } from 'app/core/core';
 import { ShowModalReactEvent } from 'app/types/events';
 
 import { mockFolderDTO } from '../fixtures/folder.fixture';
+import * as permissions from '../permissions';
 
 import { DeleteModal } from './BrowseActions/DeleteModal';
 import { MoveModal } from './BrowseActions/MoveModal';
@@ -25,9 +25,18 @@ jest.mock('app/core/components/AccessControl', () => ({
 
 describe('browse-dashboards FolderActionsButton', () => {
   const mockFolder = mockFolderDTO();
+  const mockPermissions = {
+    canCreateDashboards: true,
+    canEditDashboards: true,
+    canCreateFolders: true,
+    canDeleteFolders: true,
+    canEditFolders: true,
+    canViewPermissions: true,
+    canSetPermissions: true,
+  };
 
   beforeEach(() => {
-    jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
+    jest.spyOn(permissions, 'getFolderPermissions').mockImplementation(() => mockPermissions);
   });
 
   afterEach(() => {
@@ -44,7 +53,15 @@ describe('browse-dashboards FolderActionsButton', () => {
     });
 
     it('does not render anything when the user has no permissions to do anything', () => {
-      jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
+      jest.spyOn(permissions, 'getFolderPermissions').mockImplementation(() => {
+        return {
+          ...mockPermissions,
+          canDeleteFolders: false,
+          canEditFolders: false,
+          canViewPermissions: false,
+          canSetPermissions: false,
+        };
+      });
       render(<FolderActionsButton folder={mockFolder} />);
       expect(screen.queryByRole('button', { name: 'Folder actions' })).not.toBeInTheDocument();
     });
@@ -64,9 +81,12 @@ describe('browse-dashboards FolderActionsButton', () => {
     });
 
     it('does not render the "Manage permissions" option if the user does not have permission to view permissions', async () => {
-      jest
-        .spyOn(contextSrv, 'hasPermission')
-        .mockImplementation((permission: string) => permission !== AccessControlAction.FoldersPermissionsRead);
+      jest.spyOn(permissions, 'getFolderPermissions').mockImplementation(() => {
+        return {
+          ...mockPermissions,
+          canViewPermissions: false,
+        };
+      });
       render(<FolderActionsButton folder={mockFolder} />);
 
       await userEvent.click(screen.getByRole('button', { name: 'Folder actions' }));
@@ -76,9 +96,12 @@ describe('browse-dashboards FolderActionsButton', () => {
     });
 
     it('does not render the "Move" option if the user does not have permission to edit', async () => {
-      jest
-        .spyOn(contextSrv, 'hasPermission')
-        .mockImplementation((permission: string) => permission !== AccessControlAction.FoldersWrite);
+      jest.spyOn(permissions, 'getFolderPermissions').mockImplementation(() => {
+        return {
+          ...mockPermissions,
+          canEditFolders: false,
+        };
+      });
       render(<FolderActionsButton folder={mockFolder} />);
 
       await userEvent.click(screen.getByRole('button', { name: 'Folder actions' }));
@@ -88,9 +111,12 @@ describe('browse-dashboards FolderActionsButton', () => {
     });
 
     it('does not render the "Delete" option if the user does not have permission to delete', async () => {
-      jest
-        .spyOn(contextSrv, 'hasPermission')
-        .mockImplementation((permission: string) => permission !== AccessControlAction.FoldersDelete);
+      jest.spyOn(permissions, 'getFolderPermissions').mockImplementation(() => {
+        return {
+          ...mockPermissions,
+          canDeleteFolders: false,
+        };
+      });
       render(<FolderActionsButton folder={mockFolder} />);
 
       await userEvent.click(screen.getByRole('button', { name: 'Folder actions' }));
@@ -140,7 +166,15 @@ describe('browse-dashboards FolderActionsButton', () => {
 
   describe('with nestedFolders disabled', () => {
     it('does not render anything when the user has no permissions to do anything', () => {
-      jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
+      jest.spyOn(permissions, 'getFolderPermissions').mockImplementation(() => {
+        return {
+          ...mockPermissions,
+          canDeleteFolders: false,
+          canEditFolders: false,
+          canViewPermissions: false,
+          canSetPermissions: false,
+        };
+      });
       render(<FolderActionsButton folder={mockFolder} />);
       expect(screen.queryByRole('button', { name: 'Folder actions' })).not.toBeInTheDocument();
     });
@@ -166,9 +200,12 @@ describe('browse-dashboards FolderActionsButton', () => {
     });
 
     it('does not render the "Manage permissions" option if the user does not have permission to view permissions', async () => {
-      jest
-        .spyOn(contextSrv, 'hasPermission')
-        .mockImplementation((permission: string) => permission !== AccessControlAction.FoldersPermissionsRead);
+      jest.spyOn(permissions, 'getFolderPermissions').mockImplementation(() => {
+        return {
+          ...mockPermissions,
+          canViewPermissions: false,
+        };
+      });
       render(<FolderActionsButton folder={mockFolder} />);
 
       await userEvent.click(screen.getByRole('button', { name: 'Folder actions' }));
@@ -177,9 +214,12 @@ describe('browse-dashboards FolderActionsButton', () => {
     });
 
     it('does not render the "Move" option if the user does not have permission to edit', async () => {
-      jest
-        .spyOn(contextSrv, 'hasPermission')
-        .mockImplementation((permission: string) => permission !== AccessControlAction.FoldersWrite);
+      jest.spyOn(permissions, 'getFolderPermissions').mockImplementation(() => {
+        return {
+          ...mockPermissions,
+          canEditFolders: false,
+        };
+      });
       render(<FolderActionsButton folder={mockFolder} />);
 
       await userEvent.click(screen.getByRole('button', { name: 'Folder actions' }));
@@ -188,9 +228,12 @@ describe('browse-dashboards FolderActionsButton', () => {
     });
 
     it('does not render the "Delete" option if the user does not have permission to delete', async () => {
-      jest
-        .spyOn(contextSrv, 'hasPermission')
-        .mockImplementation((permission: string) => permission !== AccessControlAction.FoldersDelete);
+      jest.spyOn(permissions, 'getFolderPermissions').mockImplementation(() => {
+        return {
+          ...mockPermissions,
+          canDeleteFolders: false,
+        };
+      });
       render(<FolderActionsButton folder={mockFolder} />);
 
       await userEvent.click(screen.getByRole('button', { name: 'Folder actions' }));

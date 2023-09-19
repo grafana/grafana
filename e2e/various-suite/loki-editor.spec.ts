@@ -12,13 +12,16 @@ const addDataSource = () => {
   });
 };
 
-e2e.scenario({
-  describeName: 'Loki Query Editor',
-  itName: 'Autocomplete features should work as expected.',
-  addScenarioDataSource: false,
-  addScenarioDashBoard: false,
-  skipScenario: false,
-  scenario: () => {
+describe('Loki Query Editor', () => {
+  beforeEach(() => {
+    e2e.flows.login(e2e.env('USERNAME'), e2e.env('PASSWORD'));
+  });
+
+  afterEach(() => {
+    e2e.flows.revertAllChanges();
+  });
+
+  it('Autocomplete features should work as expected.', () => {
     addDataSource();
 
     cy.intercept(/labels?/, (req) => {
@@ -84,5 +87,5 @@ e2e.scenario({
     e2e.components.QueryField.container().type('{selectall}av');
     cy.contains('avg').should('be.visible');
     cy.contains('avg_over_time').should('be.visible');
-  },
+  });
 });

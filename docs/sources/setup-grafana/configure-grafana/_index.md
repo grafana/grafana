@@ -152,6 +152,8 @@ environment variable `HOSTNAME`, if that is empty or does not exist Grafana will
 
 Force migration will run migrations that might cause data loss. Default is `false`.
 
+Set force_migration=true in your grafana.ini and restart Grafana to roll back and delete Unified Alerting configuration data. Any alert rules created while using Unified Alerting will be deleted by rolling back.
+
 <hr />
 
 ## [paths]
@@ -2109,6 +2111,10 @@ Disable download of the public key for verifying plugin signature. The default i
 ### public_key_retrieval_on_startup
 
 Force download of the public key for verifying plugin signature on startup. The default is `false`. If disabled, the public key will be retrieved every 10 days. Requires `public_key_retrieval_disabled` to be false to have any effect.
+
+### disable_plugins
+
+Enter a comma-separated list of plugin identifiers to avoid loading (including core plugins). These plugins will be hidden in the catalog.
 
 <hr>
 

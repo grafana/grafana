@@ -1,12 +1,11 @@
 import { e2e } from '../utils';
 
-e2e.scenario({
-  describeName: 'Query editor',
-  itName: 'Undo should work in query editor for prometheus -- test CI.',
-  addScenarioDataSource: false,
-  addScenarioDashBoard: false,
-  skipScenario: false,
-  scenario: () => {
+describe('Query editor', () => {
+  beforeEach(() => {
+    e2e.flows.login(e2e.env('USERNAME'), e2e.env('PASSWORD'));
+  });
+
+  it('Undo should work in query editor for prometheus -- test CI.', () => {
     e2e.pages.Explore.visit();
     e2e.components.DataSourcePicker.container().should('be.visible').click();
 
@@ -31,5 +30,5 @@ e2e.scenario({
     cy.contains(queryText).should('be.visible');
 
     e2e.components.Alert.alertV2('error').should('not.be.visible');
-  },
+  });
 });

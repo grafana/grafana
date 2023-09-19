@@ -125,6 +125,9 @@ type TempoQuery struct {
 
 	// @deprecated Query traces by span name
 	SpanName *string `json:"spanName,omitempty"`
+
+	// Defines the maximum number of spans per spanset that are returned from Tempo
+	Spss *int64 `json:"spss,omitempty"`
 }
 
 // TempoQueryType search = Loki search, nativeSearch = Tempo search for backwards compatibility

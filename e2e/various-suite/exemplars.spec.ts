@@ -19,7 +19,7 @@ const addDataSource = () => {
 
 describe('Exemplars', () => {
   beforeEach(() => {
-    e2e.flows.login('admin', 'admin');
+    e2e.flows.login(e2e.env('USERNAME'), e2e.env('PASSWORD'));
 
     cy.request({ url: `${e2e.env('BASE_URL')}/api/datasources/name/${dataSourceName}`, failOnStatusCode: false }).then(
       (response) => {
