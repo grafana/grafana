@@ -737,5 +737,12 @@ var (
 			FrontendOnly: false,
 			Owner:        hostedGrafanaTeam,
 		},
+		{
+			Name:         "pdfTables",
+			Description:  "Enables generating table data as PDF in reporting",
+			Stage:        FeatureStagePrivatePreview,
+			FrontendOnly: false,
+			Owner:        grafanaSharingSquad,
+		},
 	}
 )

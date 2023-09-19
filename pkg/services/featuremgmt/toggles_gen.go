@@ -430,4 +430,8 @@ const (
 	// FlagWargamesTesting
 	// Placeholder feature flag for internal testing
 	FlagWargamesTesting = "wargamesTesting"
+
+	// FlagPdfTables
+	// Enables generating table data as PDF in reporting
+	FlagPdfTables = "pdfTables"
 )
