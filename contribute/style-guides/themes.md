@@ -126,7 +126,7 @@ For font family, font sizes and line heights use the variables under `theme.typo
 #### Using `ThemeContext` directly
 
 ```tsx
-import { ThemeContext } from '@grafana/ui';
+import { ThemeContext } from '@grafana/data';
 
 <ThemeContext.Consumer>{(theme) => <Foo theme={theme} />}</ThemeContext.Consumer>;
 ```
