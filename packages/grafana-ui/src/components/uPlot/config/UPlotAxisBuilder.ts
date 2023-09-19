@@ -155,11 +155,6 @@ export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
 
       labelGap: 0,
 
-      border: {
-        stroke: color ?? theme.colors.text.primary,
-        width: 1 / devicePixelRatio,
-        ...border,
-      },
       grid: {
         show: grid.show,
         stroke: gridColor,
@@ -184,6 +179,14 @@ export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
       filter,
       incrs,
     };
+
+    if (border?.show) {
+      config.border = {
+        stroke: color ?? theme.colors.text.primary,
+        width: 1 / devicePixelRatio,
+        ...border,
+      };
+    }
 
     if (label != null && label.length > 0) {
       config.label = label;
