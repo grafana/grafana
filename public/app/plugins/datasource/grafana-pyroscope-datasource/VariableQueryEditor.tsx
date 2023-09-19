@@ -133,19 +133,13 @@ function ProfileTypeRow(props: {
   initialValue?: string;
 }) {
   const profileTypes = useProfileTypes(props.datasource);
-  const label = props.datasource.backendType === 'phlare' ? 'Profile type' : 'Application';
   return (
     <InlineFieldRow>
       <InlineField
-        label={label}
-        aria-label={label}
+        label={'Profile type'}
+        aria-label={'Profile type'}
         labelWidth={20}
-        tooltip={
-          <div>
-            Select {props.datasource.backendType === 'phlare' ? 'profile type' : 'application'} for which to retrieve
-            available labels
-          </div>
-        }
+        tooltip={<div>Select profile type for which to retrieve available labels</div>}
       >
         {profileTypes ? (
           <ProfileTypesCascader

@@ -1,3 +1,5 @@
+import { AzureLogAnalyticsMetadataTable, EngineSchema } from '../../types';
+
 export default class FakeSchemaData {
   static getLogAnalyticsFakeSchema() {
     return {
@@ -315,6 +317,70 @@ export default class FakeSchemaData {
           functions: ['f/Func1'],
         },
       ],
+    };
+  }
+
+  static getLogAnalyticsFakeEngineSchema(tableOverride?: AzureLogAnalyticsMetadataTable[]): EngineSchema {
+    const database = {
+      name: 'test',
+      tables: tableOverride ?? [
+        {
+          id: 't/Alert',
+          name: 'Alert',
+          timespanColumn: 'TimeGenerated',
+          columns: [
+            { name: 'TimeGenerated', type: 'datetime' },
+            { name: 'AlertSeverity', type: 'string' },
+            { name: 'SourceDisplayName', type: 'string' },
+            { name: 'AlertName', type: 'string' },
+            { name: 'AlertDescription', type: 'string' },
+            { name: 'SourceSystem', type: 'string' },
+            { name: 'QueryExecutionStartTime', type: 'datetime' },
+            { name: 'QueryExecutionEndTime', type: 'datetime' },
+            { name: 'Query', type: 'string' },
+            { name: 'RemediationJobId', type: 'string' },
+            { name: 'RemediationRunbookName', type: 'string' },
+            { name: 'AlertRuleId', type: 'string' },
+            { name: 'AlertRuleInstanceId', type: 'string' },
+            { name: 'ThresholdOperator', type: 'string' },
+            { name: 'ThresholdValue', type: 'int' },
+            { name: 'LinkToSearchResults', type: 'string' },
+            { name: 'ServiceDeskConnectionName', type: 'string' },
+            { name: 'ServiceDeskId', type: 'string' },
+            { name: 'ServiceDeskWorkItemLink', type: 'string' },
+            { name: 'ServiceDeskWorkItemType', type: 'string' },
+            { name: 'ResourceId', type: 'string' },
+            { name: 'ResourceType', type: 'string' },
+            { name: 'ResourceValue', type: 'string' },
+            { name: 'RootObjectName', type: 'string' },
+            { name: 'ObjectDisplayName', type: 'string' },
+            { name: 'Computer', type: 'string' },
+            { name: 'AlertPriority', type: 'string' },
+            { name: 'SourceFullName', type: 'string' },
+            { name: 'AlertId', type: 'string' },
+            { name: 'RepeatCount', type: 'int' },
+            { name: 'AlertState', type: 'string' },
+            { name: 'ResolvedBy', type: 'string' },
+            { name: 'LastModifiedBy', type: 'string' },
+            { name: 'TimeRaised', type: 'datetime' },
+            { name: 'TimeResolved', type: 'datetime' },
+            { name: 'TimeLastModified', type: 'datetime' },
+          ],
+          related: { solutions: [] },
+        },
+      ],
+      functions: [],
+      majorVersion: 0,
+      minorVersion: 0,
+    };
+    return {
+      clusterType: 'Engine',
+      cluster: {
+        connectionString: 'test',
+        databases: [database],
+      },
+      database: database,
+      globalScalarParameters: [],
     };
   }
 }
