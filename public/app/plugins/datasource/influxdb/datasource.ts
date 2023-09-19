@@ -20,6 +20,8 @@ import {
   TIME_SERIES_VALUE_FIELD_NAME,
   TimeSeries,
   toDataFrame,
+  DataSourceGetTagKeysOptions,
+  DataSourceGetTagValuesOptions,
 } from '@grafana/data';
 import {
   BackendDataSourceResponse,
@@ -352,27 +354,29 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
 
   // By implementing getTagKeys and getTagValues we add ad-hoc filters functionality
   // Used in public/app/features/variables/adhoc/picker/AdHocFilterKey.tsx::fetchFilterKeys
-  getTagKeys(options?: InfluxQuery) {
+  getTagKeys(options?: DataSourceGetTagKeysOptions) {
     const query = buildMetadataQuery({
       type: 'TAG_KEYS',
       templateService: this.templateSrv,
       database: this.database,
-      measurement: options?.measurement ?? '',
+      measurement: '',
       tags: [],
     });
-    return this.metricFindQuery(query, options);
+
+    return this.metricFindQuery(query);
   }
 
-  getTagValues(options: InfluxQuery) {
+  getTagValues(options: DataSourceGetTagValuesOptions) {
     const query = buildMetadataQuery({
       type: 'TAG_VALUES',
       templateService: this.templateSrv,
       database: this.database,
-      withKey: options.key ?? '',
-      measurement: options?.measurement ?? '',
+      withKey: options.key,
+      measurement: '',
       tags: [],
     });
-    return this.metricFindQuery(query, options);
+
+    return this.metricFindQuery(query);
   }
 
   /**
