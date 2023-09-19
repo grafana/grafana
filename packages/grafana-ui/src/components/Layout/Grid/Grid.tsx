@@ -1,11 +1,9 @@
 import { css } from '@emotion/css';
-import React, { useCallback } from 'react';
+import React, { CSSProperties } from 'react';
 
 import { GrafanaTheme2, ThemeSpacingTokens } from '@grafana/data';
 
 import { useStyles2 } from '../../../themes';
-
-export type ItemsAlignment = 'start' | 'end' | 'center' | 'stretch';
 
 export interface GridProps {
   children: NonNullable<React.ReactNode>;
@@ -18,17 +16,17 @@ export interface GridProps {
   /** Specifies the gutters between rows */
   rowGap?: ThemeSpacingTokens;
   /** Defines the columns of the grid */
-  templateColumns?: string;
+  templateColumns?: CSSProperties['gridTemplateColumns'];
   /** Defines the rows of the grid */
-  templateRows?: string;
+  templateRows?: CSSProperties['gridTemplateRows'];
   /** Defines the horizontal alignment of the grid items in each cell */
-  justifyItems?: ItemsAlignment;
+  justifyItems?: CSSProperties['justifyItems'];
   /** Defines the vertical alignment of the grid items in each cell */
-  alignItems?: ItemsAlignment;
+  alignItems?: CSSProperties['alignItems'];
   /** Determines how grid items are automatically placed, with options to arrange them in rows, columns, or a "dense" manner to minimize empty cells */
-  autoFlow?: 'row' | 'column' | 'row dense' | 'column dense';
+  autoFlow?: CSSProperties['gridAutoFlow'];
   /** Specifies the height of rows automatically created to accommodate grid items not explicitly placed within the grid */
-  autoRows?: string;
+  autoRows?: CSSProperties['gridAutoRows'];
 }
 
 export const Grid = ({
@@ -45,24 +43,19 @@ export const Grid = ({
   autoRows,
 }: GridProps) => {
   const styles = useStyles2(
-    useCallback(
-      (theme) =>
-        getGridStyles(
-          theme,
-          display,
-          gap,
-          columnGap,
-          rowGap,
-          templateColumns,
-          templateRows,
-          alignItems,
-          justifyItems,
-          autoFlow,
-          autoRows
-        ),
-      [display, columnGap, rowGap, gap, templateColumns, templateRows, alignItems, justifyItems, autoRows, autoFlow]
-    )
+    getGridStyles,
+    display,
+    gap,
+    columnGap,
+    rowGap,
+    templateColumns,
+    templateRows,
+    alignItems,
+    justifyItems,
+    autoFlow,
+    autoRows
   );
+
   return <div className={styles.grid}>{children}</div>;
 };
 
@@ -77,7 +70,7 @@ const getGridStyles = (
   templateColumns?: GridProps['templateColumns'],
   templateRows?: GridProps['templateRows'],
   alignItems?: GridProps['alignItems'],
-  justifyItems?: GridProps['justifyItems'],
+  justifyItems?: CSSProperties['justifyItems'],
   autoFlow?: GridProps['autoFlow'],
   autoRows?: GridProps['autoRows']
 ) => {
