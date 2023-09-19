@@ -33,7 +33,7 @@ export const GridItem = ({
     )
   );
 
-  return React.createElement('div', { className: styles.gridItem }, children);
+  return <div className={styles.gridItem}>{children}</div>;
 };
 
 GridItem.displayName = 'GridItem';
