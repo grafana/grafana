@@ -144,7 +144,7 @@ After you concatenate the fields, the data frame would be:
 
 ### Config from query results
 
-Use this transformation to select one query and from it extract standard options like **Min**, **Max**, **Unit** and **Thresholds** and apply it to other query results. This enables dynamic query driven visualization configuration.
+Use this transformation to select one query, extract from it standard options like **Min**, **Max**, **Unit** and **Thresholds**, and apply it to other query results. This enables dynamic query driven visualization configuration.
 
 If you want to extract a unique config for every row in the config query result then try the rows to fields transformation.
 
@@ -380,7 +380,7 @@ Conditions that are invalid or incompletely configured are ignored.
 
 ### Group by
 
-Use this transformation to group data by a specified field (column) value and processes calculations on each group. Click to see a list of calculation choices. For information about available calculations, refer to [Calculation types][].
+Use this transformation to group data by a specified field (column) value and process calculations on each group. Click to see a list of calculation choices. For information about available calculations, refer to [Calculation types][].
 
 Here's an example of original data.
 
@@ -626,7 +626,7 @@ value: "what"
 
 ### Labels to fields
 
-Use this transformation to change time series results that include labels or tags into a table where each label keys and values are included in the table result. The labels can be displayed either as columns or as row values.
+Use this transformation to change time series results that include labels or tags into a table where each label's keys and values are included in the table result. The labels can be displayed as either columns or row values.
 
 Given a query result of two time series:
 
@@ -733,7 +733,7 @@ In the example below, I hid the value field and renamed Max and Min.
 
 ### Partition by values
 
-Use this transformation to eliminate the need for multiple queries to the same datasource with different `WHERE` clauses when graphing multiple series. Consider a metrics SQL table with the following data:
+Use this transformation to eliminate the need for multiple queries to the same data source with different `WHERE` clauses when graphing multiple series. Consider a metrics SQL table with the following data:
 
 | Time                | Region | Value |
 | ------------------- | ------ | ----- |
@@ -829,7 +829,7 @@ With the transformation applied, you can see we are left with just the remainder
 
 ### Rows to fields
 
-Use this transformation to convert rows into separate fields. This can be useful as fields can be styled and configured individually. It can also use additional fields as sources for dynamic field configuration or map them to field labels. The additional labels can then be used to define better display names for the resulting fields.
+Use this transformation to convert rows into separate fields. This can be useful because fields can be styled and configured individually. It can also use additional fields as sources for dynamic field configuration or map them to field labels. The additional labels can then be used to define better display names for the resulting fields.
 
 This transformation includes a field table which lists all fields in the data returned by the config query. This table gives you control over what field should be mapped to each config property (the \*Use as\*\* option). You can also choose which value to select if there are multiple rows in the returned data.
 
@@ -943,7 +943,7 @@ This transformation is available in Grafana 7.1+.
 
 ### Sort by
 
-Use this transformation to sort each frame by the configured field. When `reverse` is checked, the values will return in the opposite order.
+Use this transformation to sort each frame by the configured field. When the **Reverse** switch is on, the values will return in the opposite order.
 
 ### Limit
 
@@ -970,7 +970,7 @@ Here is the result after adding a Limit transformation with a value of '3':
 
 ### Time series to table transform
 
-Use this transformation to convert time series result into a table, converting time series data frame into a "Trend" field. "Trend" field can then be rendered using [sparkline cell type][], producing an inline sparkline for each table row. If there are multiple time series queries, each will result in a separate table data frame. These can be joined using join or merge transforms to produce a single table with multiple sparklines per row.
+Use this transformation to convert time series results into a table, converting a time series data frame into a trend visualization field. A trend field can then be rendered using the [sparkline cell type][], producing an inline sparkline for each table row. If there are multiple time series queries, each will result in a separate table data frame. These can be joined using join or merge transforms to produce a single table with multiple sparklines per row.
 
 > **Note:** This transformation is available in Grafana 9.5+ as an opt-in beta feature.
 > Modify Grafana [configuration file][] to enable the `timeSeriesTable` [feature toggle][] to use it.
