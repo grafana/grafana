@@ -20,6 +20,7 @@ const getStyles = (theme: GrafanaTheme2, expanded: boolean, visible: boolean) =>
       width: expanded ? 'auto' : '3em',
       transition: 'width 2.5s, visibility 2.5s',
       visibility: visible ? 'visible' : 'hidden',
+      boxShadow: `5px 0px 5px 1px black`,
       zIndex: 2,
     }),
     content: css({
