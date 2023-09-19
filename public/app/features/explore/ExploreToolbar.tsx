@@ -159,7 +159,7 @@ export function ExploreToolbar({ exploreId, topOfViewRef, onChangeTime }: Props)
               icon="columns"
               disabled={isLive}
             >
-              <Trans i18nKey="explore.toolbar.split-title"> Split </Trans>
+              <Trans i18nKey="explore.toolbar.split-title">Split</Trans>
             </ToolbarButton>
           ) : (
             <ButtonGroup key="split-controls">
