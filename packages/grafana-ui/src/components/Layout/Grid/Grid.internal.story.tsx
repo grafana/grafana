@@ -40,6 +40,24 @@ const meta: Meta<typeof Grid> = {
       page: mdx,
     },
   },
+  argTypes: {
+    templateColumns: {
+      control: {
+        type: 'text',
+      },
+    },
+    templateRows: {
+      control: {
+        type: 'text',
+      },
+    },
+    autoFlow: {
+      control: {
+        type: 'select',
+        options: ['row', 'column', 'row dense', 'column dense'],
+      },
+    },
+  },
   args: {
     display: 'grid',
     gap: 1,
