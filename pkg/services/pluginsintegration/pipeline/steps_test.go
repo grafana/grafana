@@ -65,7 +65,7 @@ func TestAsExternal(t *testing.T) {
 		},
 	}
 
-	t.Run("should skip core plugin", func(t *testing.T) {
+	t.Run("should skip a core plugin", func(t *testing.T) {
 		cfg := &config.Cfg{
 			Features: featuremgmt.WithFeatures(featuremgmt.FlagExternalCorePlugins),
 			PluginSettings: setting.PluginSettings{
@@ -82,7 +82,7 @@ func TestAsExternal(t *testing.T) {
 		require.Equal(t, filtered[0].Primary.JSONData.ID, "plugin2")
 	})
 
-	t.Run("should log an error if an enxternal plugin is not available", func(t *testing.T) {
+	t.Run("should log an error if an external plugin is not available", func(t *testing.T) {
 		cfg := &config.Cfg{
 			Features: featuremgmt.WithFeatures(featuremgmt.FlagExternalCorePlugins),
 			PluginSettings: setting.PluginSettings{
