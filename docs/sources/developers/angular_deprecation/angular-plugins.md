@@ -680,7 +680,7 @@ Lack of recent activity in the [project repository](https://github.com/MarcusCal
 
 > **Migration available - potential alternative:** Grafana provides the native [Canvas]({{< relref "../../panels-visualizations/visualizations/canvas/" >}}) panel.
 
-> **Migration available - potential alternative:** other plugins exist which provide similar capabilities - [HTML](https://grafana.com/grafana/plugins/gapit-htmlgraphics-panel/), [Dynamic Text](https://grafana.com/grafana/plugins/marcusolsson-dynamictext-panel/) and [ACE.SVG](https://grafana.com/grafana/plugins/aceiot-svg-panel/) - note this panel has compatibility issues with Grafana versions 10.0.0-10.1.0.
+> **Migration available - potential alternative:** other plugins exist which provide similar capabilities - [HTML](https://grafana.com/grafana/plugins/gapit-htmlgraphics-panel/), [Dynamic Text](https://grafana.com/grafana/plugins/marcusolsson-dynamictext-panel/) and [ACE.SVG](https://grafana.com/grafana/plugins/aceiot-svg-panel/). Note that the ACE.SVG panel has compatibility issues with Grafana versions 10.0.0-10.1.0.
 
 ### [Annunciator](https://grafana.com/grafana/plugins/michaeldmoore-annunciator-panel/)
 
