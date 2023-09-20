@@ -39,9 +39,23 @@ func (s *QueryRecommendService) recommendHandler(c *contextmodel.ReqContext) res
 		return response.Error(http.StatusBadRequest, "Unsupported datasource type", nil)
 	}
 
-	result, err := s.GetQueryRecommendation(
-		c.Req.Context(), c.Query("datasourceUid"), c.Query("metrics"), c.QueryInt64WithDefault("numSuggestions", int64(5)),
-	)
+	var result []QueryRecommendDTO
+	var err error
+
+	if c.Query("metric") == "" {
+		return response.Error(http.StatusBadRequest, "Metric name must be provided", nil)
+	}
+
+	if c.Query("datasourceUid") == "" {
+		result, err = s.getSimpleRecommendation(
+			c.Req.Context(), c.Query("datasourceType"), c.Query("metric"), c.QueryInt64WithDefault("numSuggestions", int64(5)),
+		)
+	} else {
+		result, err = s.GetQueryRecommendation(
+			c.Req.Context(), c.Query("datasourceUid"), c.Query("metric"), c.QueryInt64WithDefault("numSuggestions", int64(5)),
+		)
+	}
+
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to get query recommendation", err)
 	}

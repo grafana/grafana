@@ -3,6 +3,7 @@ package queryrecommend
 import (
 	"context"
 	"math/rand"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/querytemplate"
@@ -31,7 +32,7 @@ func (s QueryRecommendService) findQueryRecommendation(ctx context.Context, data
 	return dtos, err
 }
 
-func (s QueryRecommendService) getQueryRecommendation(ctx context.Context, datasource string, metric string, numSuggestions int64) ([]QueryRecommendDTO, error) {
+func (s QueryRecommendService) getSimpleRecommendation(ctx context.Context, datasource string, metric string, numSuggestions int64) ([]QueryRecommendDTO, error) {
 	// dtos, err := s.findQueryRecommendation(ctx, datasource, query)
 	// if err != nil {
 	// 	s.ComputeQueryRecommendation(ctx, datasource)
@@ -49,7 +50,7 @@ func (s QueryRecommendService) getQueryRecommendation(ctx context.Context, datas
 	for idx, template := range suggestionTemplates[:numSuggestions] {
 		dtos[idx] = QueryRecommendDTO{
 			Metric:           metric,
-			TemplatedExpr:    template,
+			TemplatedExpr:    strings.Replace(template, "metric", metric, -1),
 			Count:            0,
 			TopLabelValues:   nil,
 			TopLabelNoValues: nil,
@@ -57,6 +58,10 @@ func (s QueryRecommendService) getQueryRecommendation(ctx context.Context, datas
 		}
 	}
 	return dtos, nil
+}
+
+func (s QueryRecommendService) getQueryRecommendation(ctx context.Context, datasource string, metric string, numSuggestions int64) ([]QueryRecommendDTO, error) {
+	return s.getSimpleRecommendation(ctx, datasource, metric, numSuggestions)
 }
 
 func (s QueryRecommendService) computeQueryRecommendation(ctx context.Context, datasource string) error {

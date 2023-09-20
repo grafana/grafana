@@ -25,6 +25,7 @@ func ProvideService(cfg *setting.Cfg, sqlStore db.DB, routeRegister routing.Rout
 }
 
 type Service interface {
+	GetSimpleRecommendation(ctx context.Context, datasourceType string, metric string, numSuggestions int64) ([]QueryRecommendDTO, error)
 	GetQueryRecommendation(ctx context.Context, datasource string, metric string, numSuggestions int64) ([]QueryRecommendDTO, error)
 	ComputeQueryRecommendation(ctx context.Context, datasource string) error
 }
@@ -35,6 +36,10 @@ type QueryRecommendService struct {
 	RouteRegister routing.RouteRegister
 	log           log.Logger
 	now           func() time.Time
+}
+
+func (s QueryRecommendService) GetSimpleRecommendation(ctx context.Context, datasourceType string, metric string, numSuggestions int64) ([]QueryRecommendDTO, error) {
+	return s.getSimpleRecommendation(ctx, datasourceType, metric, numSuggestions)
 }
 
 func (s QueryRecommendService) GetQueryRecommendation(ctx context.Context, datasource string, metric string, numSuggestions int64) ([]QueryRecommendDTO, error) {
