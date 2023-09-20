@@ -20,9 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/termination"
 	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/validation"
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 var compareOpts = []cmp.Option{cmpopts.IgnoreFields(plugins.Plugin{}, "client", "log", "mu"), fsComparer}
@@ -440,21 +438,6 @@ func TestLoader_Load(t *testing.T) {
 					Signature: plugins.SignatureStatusUnsigned,
 				},
 			},
-		},
-		{
-			name:  "Skips a core plugin",
-			class: plugins.ClassCore,
-			cfg: &config.Cfg{
-				Features:             featuremgmt.WithFeatures(featuremgmt.FlagExternalCorePlugins),
-				PluginsAllowUnsigned: []string{"test-app"},
-				PluginSettings: setting.PluginSettings{
-					"test-app": map[string]string{
-						"as_external": "true",
-					},
-				},
-			},
-			pluginPaths: []string{"../testdata/test-app-with-includes"},
-			want:        []*plugins.Plugin{},
 		},
 	}
 	for _, tt := range tests {
