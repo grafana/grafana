@@ -293,7 +293,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptionsEX> = ({
 
       if (customConfig.axisBorderShow) {
         axisOpts.border = {
-          show: customConfig?.axisBorderShow
+          show: true
         };
       }
 
