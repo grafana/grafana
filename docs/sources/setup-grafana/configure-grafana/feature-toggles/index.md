@@ -136,6 +136,7 @@ Experimental features might be changed or removed without prior notice.
 | `requestInstrumentationStatusSource`        | Include a status source label for request metrics and logs                                                   |
 | `wargamesTesting`                           | Placeholder feature flag for internal testing                                                                |
 | `alertingInsights`                          | Show the new alerting insights landing page                                                                  |
+| `externalCorePlugins`                       | Allow external plugins to be loaded as core plugins                                                          |
 
 ## Development feature toggles
 

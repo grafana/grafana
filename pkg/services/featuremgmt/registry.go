@@ -759,5 +759,11 @@ var (
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaAlertingSquad,
 		},
+		{
+			Name:        "externalCorePlugins",
+			Description: "Allow external plugins to be loaded as core plugins",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaPluginsPlatformSquad,
+		},
 	}
 )

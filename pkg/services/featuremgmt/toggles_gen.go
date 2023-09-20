@@ -442,4 +442,8 @@ const (
 	// FlagAlertingInsights
 	// Show the new alerting insights landing page
 	FlagAlertingInsights = "alertingInsights"
+
+	// FlagExternalCorePlugins
+	// Allow external plugins to be loaded as core plugins
+	FlagExternalCorePlugins = "externalCorePlugins"
 )
