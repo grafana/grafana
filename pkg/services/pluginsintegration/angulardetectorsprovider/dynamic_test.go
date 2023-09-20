@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"sync"
@@ -11,6 +12,7 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -443,6 +445,50 @@ func TestRandomSkew(t *testing.T) {
 		}
 	}
 	require.True(t, different, "must not always return the same value")
+}
+
+func TestInstrument(t *testing.T) {
+	t.Run("no error", func(t *testing.T) {
+		svc := provideDynamic(t, "")
+
+		svc.instrumentRun(time.Now(), nil)
+		require.Equal(t, 1, testutil.CollectAndCount(svc.metrics.successes), "should have success metric")
+		require.Equal(t, 1.0, testutil.ToFloat64(svc.metrics.successes), "should increment success metric")
+		require.Equal(t, 0, testutil.CollectAndCount(svc.metrics.failures), "should not create failure metric")
+
+		svc.instrumentRun(time.Now(), nil)
+		require.Equal(t, 2.0, testutil.ToFloat64(svc.metrics.successes), "should increment success metric")
+	})
+
+	t.Run("error", func(t *testing.T) {
+		for _, tc := range []struct {
+			name           string
+			err            error
+			expReasonLabel string
+		}{
+			{"other", errors.New("other"), "other"},
+
+			{"timeout", context.DeadlineExceeded, "timeout"},
+			{"wrapped timeout", fmt.Errorf("outer: %w", context.DeadlineExceeded), "timeout"},
+
+			{"gcom", errGCOMResponse, "status_code"},
+			{"wrapped gcom", fmt.Errorf("outer: %w", errGCOMResponse), "status_code"},
+
+			{"database", errDatabase, "database"},
+			{"wrapped database", fmt.Errorf("outer: %w", errDatabase), "database"},
+
+			{"timeout has highest precedence", fmt.Errorf("%w: %w: %w", errGCOMResponse, context.DeadlineExceeded, errDatabase), "timeout"},
+		} {
+			t.Run(tc.name, func(t *testing.T) {
+				svc := provideDynamic(t, "")
+
+				svc.instrumentRun(time.Now(), tc.err)
+				require.Equal(t, 0.0, testutil.ToFloat64(svc.metrics.successes), "should not increment success metric")
+				require.Equal(t, 1, testutil.CollectAndCount(svc.metrics.failures), "should create failure metric")
+				require.Equalf(t, 1.0, testutil.ToFloat64(svc.metrics.failures.With(prometheus.Labels{"reason": tc.expReasonLabel})), "should increment %q failure metric", tc.expReasonLabel)
+			})
+		}
+	})
 }
 
 var mockGCOMResponse = []byte(`[{
