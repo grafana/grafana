@@ -1,10 +1,9 @@
 import { dateTime, getDefaultTimeRange } from '@grafana/data';
 
-import { LokiDatasource } from '../datasource';
 import { createLokiDatasource } from '../mocks';
 import { LokiQuery, LokiQueryType } from '../types';
 
-import { getStats, getTimeRange, shouldUpdateStats } from './stats';
+import { getStats, shouldUpdateStats } from './stats';
 
 describe('shouldUpdateStats', () => {
   const timerange = getDefaultTimeRange();
@@ -114,66 +113,6 @@ describe('makeStatsRequest', () => {
       chunks: 12611,
       bytes: 12913664,
       entries: 78344,
-    });
-  });
-});
-
-describe('getTimeRange', () => {
-  let query: LokiQuery;
-  let datasource: LokiDatasource;
-
-  beforeEach(() => {
-    query = { refId: 'A', expr: '', queryType: LokiQueryType.Range };
-    datasource = createLokiDatasource();
-
-    datasource.getTimeRangeParams = jest.fn().mockReturnValue({
-      start: 1672552800000000000, // 01 Jan 2023 06:00:00 GMT
-      end: 1672639200000000000, //   02 Jan 2023 06:00:00 GMT
-    });
-  });
-
-  it('should return the ds picker timerange for a logs query with range type', () => {
-    // log queries with range type should request the ds picker timerange
-    // in this case (1 day)
-    query.expr = '{job="grafana"}';
-
-    expect(getTimeRange(datasource, query, 0)).toEqual({
-      start: 1672552800000000000, // 01 Jan 2023 06:00:00 GMT
-      end: 1672639200000000000, //   02 Jan 2023 06:00:00 GMT
-    });
-  });
-
-  it('should return nothing for a logs query with instant type', () => {
-    // log queries with instant type should be invalid.
-    query.queryType = LokiQueryType.Instant;
-    query.expr = '{job="grafana"}';
-
-    expect(getTimeRange(datasource, query, 0)).toEqual({
-      start: undefined,
-      end: undefined,
-    });
-  });
-
-  it('should return the ds picker timerange', () => {
-    // metric queries with range type should request ds picker timerange
-    // in this case (1 day)
-    query.expr = 'rate({job="grafana"}[5m])';
-
-    expect(getTimeRange(datasource, query, 0)).toEqual({
-      start: 1672552800000000000, // 01 Jan 2023 06:00:00 GMT
-      end: 1672639200000000000, //   02 Jan 2023 06:00:00 GMT
-    });
-  });
-
-  it('should return the range duration for an instant metric query', () => {
-    // metric queries with instant type should request range duration
-    // in this case (5 minutes)
-    query.queryType = LokiQueryType.Instant;
-    query.expr = 'rate({job="grafana"}[5m])';
-
-    expect(getTimeRange(datasource, query, 0)).toEqual({
-      start: 1672638900000000000, // 02 Jan 2023 05:55:00 GMT
-      end: 1672639200000000000, //   02 Jan 2023 06:00:00 GMT
     });
   });
 });
