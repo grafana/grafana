@@ -13,6 +13,7 @@ import { testIds as alertingTestIds } from './LokiQueryEditorForAlerting';
 
 function setup(app: CoreApp): RenderResult {
   const dataSource = createLokiDatasource();
+  dataSource.metadataRequest = jest.fn();
 
   return render(
     <LokiQueryEditorByApp
