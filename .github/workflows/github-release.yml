@@ -24,3 +24,4 @@ jobs:
           token: ${{ steps.generate_token.outputs.token }}
           version: ${{ inputs.version }}
           metrics_api_key: ${{ secrets.GRAFANA_MISC_STATS_API_KEY }}
+          latest: ${{ inputs.latest }}
