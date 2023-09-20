@@ -8,7 +8,6 @@ import { LoadingState } from '@grafana/data';
 import { Button, Icon, PanelChrome, PanelChromeProps, RadioButtonGroup } from '@grafana/ui';
 
 import { DashboardStoryCanvas } from '../../utils/storybook/DashboardStoryCanvas';
-import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { HorizontalGroup } from '../Layout/Layout';
 import { Menu } from '../Menu/Menu';
 
@@ -20,7 +19,6 @@ const PANEL_HEIGHT = 150;
 const meta: Meta<typeof PanelChrome> = {
   title: 'Visualizations/PanelChrome',
   component: PanelChrome,
-  decorators: [withCenteredStory],
   parameters: {
     controls: {
       exclude: ['children'],
