@@ -16,6 +16,26 @@ describe('QueryEditor', () => {
     expect(await screen.findByDisplayValue('process_cpu-cpu')).toBeDefined();
   });
 
+  it('should render without error if empty profileTypes', async () => {
+    const ds = setupDs();
+    ds.getProfileTypes = jest.fn().mockResolvedValue([]);
+    setup({
+      props: {
+        datasource: ds,
+        query: {
+          queryType: 'both',
+          labelSelector: '',
+          profileTypeId: '',
+          refId: 'A',
+          maxNodes: 1000,
+          groupBy: [],
+        },
+      },
+    });
+
+    expect(await screen.findByPlaceholderText('No profile types found')).toBeDefined();
+  });
+
   it('should render options', async () => {
     setup();
     await openOptions();
@@ -41,8 +61,7 @@ async function openOptions() {
   await userEvent.click(options);
 }
 
-function setup(options: { props: Partial<Props> } = { props: {} }) {
-  const onChange = jest.fn();
+function setupDs() {
   const ds = new PhlareDataSource({
     name: 'test',
     uid: 'test',
@@ -85,6 +104,11 @@ function setup(options: { props: Partial<Props> } = { props: {} }) {
     },
   ] as ProfileTypeMessage[]);
 
+  return ds;
+}
+
+function setup(options: { props: Partial<Props> } = { props: {} }) {
+  const onChange = jest.fn();
   const utils = render(
     <QueryEditor
       query={{
@@ -95,7 +119,7 @@ function setup(options: { props: Partial<Props> } = { props: {} }) {
         maxNodes: 1000,
         groupBy: [],
       }}
-      datasource={ds}
+      datasource={setupDs()}
       onChange={onChange}
       onRunQuery={() => {}}
       app={CoreApp.Explore}

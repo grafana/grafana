@@ -3,8 +3,18 @@ import React, { ComponentType, useEffect } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
-import { LinkButton, RadioButtonGroup, useStyles2, FilterInput } from '@grafana/ui';
+import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
+import {
+  Icon,
+  IconName,
+  LinkButton,
+  Pagination,
+  RadioButtonGroup,
+  Tooltip,
+  useStyles2,
+  FilterInput,
+  InlineField,
+} from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/core';
 
@@ -70,14 +80,16 @@ const UserListAdminPageUnConnected = ({
 
   return (
     <Page.Contents>
-      <div className={styles.actionBar} data-testid={selectors.container}>
-        <div className={styles.row}>
-          <FilterInput
-            placeholder="Search user by login, email, or name."
-            autoFocus={true}
-            value={query}
-            onChange={changeQuery}
-          />
+      <div className="page-action-bar" data-testid={selectors.container}>
+        <>
+          <InlineField grow>
+            <FilterInput
+              placeholder="Search user by login, email, or name."
+              autoFocus={true}
+              value={query}
+              onChange={changeQuery}
+            />
+          </InlineField>
           <RadioButtonGroup
             options={[
               { label: 'All users', value: false },
@@ -90,7 +102,7 @@ const UserListAdminPageUnConnected = ({
           {extraFilters.map((FilterComponent, index) => (
             <FilterComponent key={index} filters={filters} onChange={changeFilter} className={styles.filter} />
           ))}
-        </div>
+        </>
         {contextSrv.hasPermission(AccessControlAction.UsersCreate) && (
           <LinkButton href="admin/users/create" variant="primary">
             New user
