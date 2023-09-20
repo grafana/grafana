@@ -2,6 +2,7 @@ package expr
 
 import (
 	"encoding/json"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -158,9 +159,9 @@ func TestUnmarshalThresholdCommand(t *testing.T) {
                     },
 					"unloadEvaluator": {
                         "params": [
-                            30
+                            31
                         ],
-                        "type": "gt"
+                        "type": "lt"
                     }
                 }]
             }`,
@@ -172,8 +173,9 @@ func TestUnmarshalThresholdCommand(t *testing.T) {
 				require.Equal(t, "gt", cmd.LoadingThresholdFunc.ThresholdFunc)
 				require.Equal(t, []float64{100.0}, cmd.LoadingThresholdFunc.Conditions)
 				require.Equal(t, []string{"B"}, cmd.UnloadingThresholdFunc.NeedsVars())
-				require.Equal(t, "gt", cmd.UnloadingThresholdFunc.ThresholdFunc)
-				require.Equal(t, []float64{30.0}, cmd.UnloadingThresholdFunc.Conditions)
+				require.Equal(t, "lt", cmd.UnloadingThresholdFunc.ThresholdFunc)
+				require.Equal(t, []float64{31.0}, cmd.UnloadingThresholdFunc.Conditions)
+				require.True(t, cmd.UnloadingThresholdFunc.Invert)
 				require.Equal(t, reader, cmd.LoadedReader)
 			},
 		},
@@ -256,17 +258,25 @@ func TestCreateMathExpression(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.description, func(t *testing.T) {
-			expr, err := createMathExpression(tc.ref, tc.function, tc.params)
+			expr, err := createMathExpression(tc.ref, tc.function, tc.params, false)
 
 			require.Nil(t, err)
 			require.NotNil(t, expr)
 
-			require.Equal(t, expr, tc.expected)
+			require.Equal(t, tc.expected, expr)
+
+			t.Run("inverted", func(t *testing.T) {
+				expr, err := createMathExpression(tc.ref, tc.function, tc.params, true)
+				require.Nil(t, err)
+				require.NotNil(t, expr)
+
+				require.Equal(t, fmt.Sprintf("!(%s)", tc.expected), expr)
+			})
 		})
 	}
 
 	t.Run("should error if function is unsupported", func(t *testing.T) {
-		expr, err := createMathExpression("A", "foo", []float64{0})
+		expr, err := createMathExpression("A", "foo", []float64{0}, false)
 		require.Equal(t, expr, "")
 		require.NotNil(t, err)
 		require.Contains(t, err.Error(), "no such threshold function")

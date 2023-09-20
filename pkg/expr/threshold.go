@@ -17,6 +17,7 @@ type ThresholdCommand struct {
 	RefID         string
 	ThresholdFunc string
 	Conditions    []float64
+	Invert        bool
 }
 
 const (
@@ -96,6 +97,7 @@ func UnmarshalThresholdCommand(rn *rawNode, r LoadedMetricsReader, features feat
 	}
 	if firstCondition.UnloadEvaluator != nil && features.IsEnabled(featuremgmt.FlagRecoveryThreshold) {
 		unloading, err := NewThresholdCommand(rn.RefID, referenceVar, firstCondition.UnloadEvaluator.Type, firstCondition.UnloadEvaluator.Params)
+		unloading.Invert = true
 		if err != nil {
 			return nil, fmt.Errorf("invalid unloadCondition: %w", err)
 		}
@@ -111,7 +113,7 @@ func (tc *ThresholdCommand) NeedsVars() []string {
 }
 
 func (tc *ThresholdCommand) Execute(ctx context.Context, now time.Time, vars mathexp.Vars, tracer tracing.Tracer) (mathexp.Results, error) {
-	mathExpression, err := createMathExpression(tc.ReferenceVar, tc.ThresholdFunc, tc.Conditions)
+	mathExpression, err := createMathExpression(tc.ReferenceVar, tc.ThresholdFunc, tc.Conditions, tc.Invert)
 	if err != nil {
 		return mathexp.Results{}, err
 	}
@@ -125,19 +127,25 @@ func (tc *ThresholdCommand) Execute(ctx context.Context, now time.Time, vars mat
 }
 
 // createMathExpression converts all the info we have about a "threshold" expression in to a Math expression
-func createMathExpression(referenceVar string, thresholdFunc string, args []float64) (string, error) {
+func createMathExpression(referenceVar string, thresholdFunc string, args []float64, invert bool) (string, error) {
+	var exp string
 	switch thresholdFunc {
 	case ThresholdIsAbove:
-		return fmt.Sprintf("${%s} > %f", referenceVar, args[0]), nil
+		exp = fmt.Sprintf("${%s} > %f", referenceVar, args[0])
 	case ThresholdIsBelow:
-		return fmt.Sprintf("${%s} < %f", referenceVar, args[0]), nil
+		exp = fmt.Sprintf("${%s} < %f", referenceVar, args[0])
 	case ThresholdIsWithinRange:
-		return fmt.Sprintf("${%s} > %f && ${%s} < %f", referenceVar, args[0], referenceVar, args[1]), nil
+		exp = fmt.Sprintf("${%s} > %f && ${%s} < %f", referenceVar, args[0], referenceVar, args[1])
 	case ThresholdIsOutsideRange:
-		return fmt.Sprintf("${%s} < %f || ${%s} > %f", referenceVar, args[0], referenceVar, args[1]), nil
+		exp = fmt.Sprintf("${%s} < %f || ${%s} > %f", referenceVar, args[0], referenceVar, args[1])
 	default:
 		return "", fmt.Errorf("failed to evaluate threshold expression: no such threshold function %s", thresholdFunc)
 	}
+
+	if invert {
+		return fmt.Sprintf("!(%s)", exp), nil
+	}
+	return exp, nil
 }
 
 func IsSupportedThresholdFunc(name string) bool {
