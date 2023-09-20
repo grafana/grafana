@@ -6,17 +6,17 @@ var (
 	errPluginNotRegisteredBase = errutil.NotFound("plugin.notRegistered",
 		errutil.WithPublicMessage("Plugin not registered"))
 	// ErrPluginNotRegistered error returned when a plugin is not registered.
-	ErrPluginNotRegistered = errPluginNotRegisteredBase.Errorf("%w", errPluginNotRegisteredBase)
+	ErrPluginNotRegistered = errPluginNotRegisteredBase.Errorf("plugin not registered")
 
 	errPluginUnavailableBase = errutil.Internal("plugin.unavailable",
 		errutil.WithPublicMessage("Plugin unavailable"))
 	// ErrPluginUnavailable error returned when a plugin is unavailable.
-	ErrPluginUnavailable = errPluginUnavailableBase.Errorf("%w", errPluginUnavailableBase)
+	ErrPluginUnavailable = errPluginUnavailableBase.Errorf("plugin unavailable")
 
 	errMethodNotImplementedBase = errutil.NotFound("plugin.notImplemented",
 		errutil.WithPublicMessage("Method not implemented"))
 	// ErrMethodNotImplemented error returned when a plugin method is not implemented.
-	ErrMethodNotImplemented = errMethodNotImplementedBase.Errorf("%w", errMethodNotImplementedBase)
+	ErrMethodNotImplemented = errMethodNotImplementedBase.Errorf("method not implemented")
 
 	// ErrPluginDownstreamError error returned when a plugin request fails.
 	// Exposed as a base error to wrap it with plugin downstream errors.
