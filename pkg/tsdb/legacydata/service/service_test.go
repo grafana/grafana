@@ -45,7 +45,7 @@ func TestHandleRequest(t *testing.T) {
 		dsService, err := datasourceservice.ProvideService(nil, secretsService, secretsStore, sqlStore.Cfg, featuremgmt.WithFeatures(), acmock.New(), datasourcePermissions, quotaService)
 		require.NoError(t, err)
 
-		pCtxProvider := plugincontext.ProvideService(localcache.ProvideService(), &pluginstore.FakePluginStore{
+		pCtxProvider := plugincontext.ProvideService(sqlStore.Cfg, localcache.ProvideService(), &pluginstore.FakePluginStore{
 			PluginList: []pluginstore.Plugin{{JSONData: plugins.JSONData{ID: "test"}}},
 		}, dsService, pluginSettings.ProvideService(sqlStore, secretsService), pluginFakes.NewFakeLicensingService(), &config.Cfg{})
 		s := ProvideService(client, nil, dsService, pCtxProvider)

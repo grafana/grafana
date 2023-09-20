@@ -469,7 +469,7 @@ func setup(t *testing.T) *testContext {
 		SimulatePluginFailure: false,
 	}
 
-	pCtxProvider := plugincontext.ProvideService(
+	pCtxProvider := plugincontext.ProvideService(sqlStore.Cfg,
 		localcache.ProvideService(), &pluginstore.FakePluginStore{
 			PluginList: []pluginstore.Plugin{
 				{JSONData: plugins.JSONData{ID: "postgres"}},

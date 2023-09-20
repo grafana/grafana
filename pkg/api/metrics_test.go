@@ -53,8 +53,9 @@ func (rv *fakePluginRequestValidator) Validate(dsURL string, req *http.Request) 
 
 // `/ds/query` endpoint test
 func TestAPIEndpoint_Metrics_QueryMetricsV2(t *testing.T) {
+	cfg := setting.NewCfg()
 	qds := query.ProvideService(
-		setting.NewCfg(),
+		cfg,
 		nil,
 		nil,
 		&fakePluginRequestValidator{},
@@ -68,7 +69,7 @@ func TestAPIEndpoint_Metrics_QueryMetricsV2(t *testing.T) {
 				return &backend.QueryDataResponse{Responses: resp}, nil
 			},
 		},
-		plugincontext.ProvideService(localcache.ProvideService(), &pluginstore.FakePluginStore{
+		plugincontext.ProvideService(cfg, localcache.ProvideService(), &pluginstore.FakePluginStore{
 			PluginList: []pluginstore.Plugin{
 				{
 					JSONData: plugins.JSONData{
@@ -110,9 +111,10 @@ func TestAPIEndpoint_Metrics_QueryMetricsV2(t *testing.T) {
 }
 
 func TestAPIEndpoint_Metrics_PluginDecryptionFailure(t *testing.T) {
+	cfg := setting.NewCfg()
 	ds := &fakeDatasources.FakeDataSourceService{SimulatePluginFailure: true}
 	db := &dbtest.FakeDB{ExpectedError: pluginsettings.ErrPluginSettingNotFound}
-	pcp := plugincontext.ProvideService(localcache.ProvideService(),
+	pcp := plugincontext.ProvideService(cfg, localcache.ProvideService(),
 		&pluginstore.FakePluginStore{
 			PluginList: []pluginstore.Plugin{
 				{
@@ -125,7 +127,7 @@ func TestAPIEndpoint_Metrics_PluginDecryptionFailure(t *testing.T) {
 		ds, pluginSettings.ProvideService(db, secretstest.NewFakeSecretsService()), pluginFakes.NewFakeLicensingService(), &config.Cfg{},
 	)
 	qds := query.ProvideService(
-		setting.NewCfg(),
+		cfg,
 		nil,
 		nil,
 		&fakePluginRequestValidator{},
@@ -284,17 +286,18 @@ func TestDataSourceQueryError(t *testing.T) {
 				},
 			})
 			srv := SetupAPITestServer(t, func(hs *HTTPServer) {
+				cfg := setting.NewCfg()
 				r := registry.NewInMemory()
 				err := r.Add(context.Background(), p)
 				require.NoError(t, err)
 				ds := &fakeDatasources.FakeDataSourceService{}
 				hs.queryDataService = query.ProvideService(
-					setting.NewCfg(),
+					cfg,
 					&fakeDatasources.FakeCacheService{},
 					nil,
 					&fakePluginRequestValidator{},
 					pluginClient.ProvideService(r, &config.Cfg{}),
-					plugincontext.ProvideService(localcache.ProvideService(), &pluginstore.FakePluginStore{
+					plugincontext.ProvideService(cfg, localcache.ProvideService(), &pluginstore.FakePluginStore{
 						PluginList: []pluginstore.Plugin{pluginstore.ToGrafanaDTO(p)},
 					},
 						ds, pluginSettings.ProvideService(dbtest.NewFakeDB(),

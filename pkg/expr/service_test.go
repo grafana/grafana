@@ -38,7 +38,7 @@ func TestService(t *testing.T) {
 		},
 	}
 
-	pCtxProvider := plugincontext.ProvideService(nil, &pluginstore.FakePluginStore{
+	pCtxProvider := plugincontext.ProvideService(setting.NewCfg(), nil, &pluginstore.FakePluginStore{
 		PluginList: []pluginstore.Plugin{
 			{JSONData: plugins.JSONData{ID: "test"}},
 		},
@@ -124,11 +124,11 @@ func TestDSQueryError(t *testing.T) {
 		},
 	}
 
-	pCtxProvider := plugincontext.ProvideService(nil, &pluginstore.FakePluginStore{
+	pCtxProvider := plugincontext.ProvideService(setting.NewCfg(), nil, &pluginstore.FakePluginStore{
 		PluginList: []pluginstore.Plugin{
 			{JSONData: plugins.JSONData{ID: "test"}},
 		},
-	}, &datafakes.FakeDataSourceService{}, nil)
+	}, &datafakes.FakeDataSourceService{}, nil, nil, &config.Cfg{})
 
 	s := Service{
 		cfg:          setting.NewCfg(),

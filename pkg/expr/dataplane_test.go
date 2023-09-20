@@ -56,7 +56,7 @@ func framesPassThroughService(t *testing.T, frames data.Frames) (data.Frames, er
 		cfg:         cfg,
 		dataService: me,
 		features:    &featuremgmt.FeatureManager{},
-		pCtxProvider: plugincontext.ProvideService(nil, &pluginstore.FakePluginStore{
+		pCtxProvider: plugincontext.ProvideService(cfg, nil, &pluginstore.FakePluginStore{
 			PluginList: []pluginstore.Plugin{
 				{JSONData: plugins.JSONData{ID: "test"}},
 			}},

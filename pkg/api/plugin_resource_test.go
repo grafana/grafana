@@ -43,7 +43,6 @@ func TestCallResource(t *testing.T) {
 	require.NoError(t, err)
 
 	cfg := setting.NewCfg()
-
 	cfg.StaticRootPath = staticRootPath
 	cfg.IsFeatureToggleEnabled = func(_ string) bool {
 		return false
@@ -55,7 +54,7 @@ func TestCallResource(t *testing.T) {
 
 	textCtx := pluginsintegration.CreateIntegrationTestCtx(t, cfg, coreRegistry)
 
-	pcp := plugincontext.ProvideService(localcache.ProvideService(), textCtx.PluginStore, &datasources.FakeDataSourceService{},
+	pcp := plugincontext.ProvideService(cfg, localcache.ProvideService(), textCtx.PluginStore, &datasources.FakeDataSourceService{},
 		pluginSettings.ProvideService(db.InitTestDB(t), fakeSecrets.NewFakeSecretsService()), nil, nil)
 
 	srv := SetupAPITestServer(t, func(hs *HTTPServer) {
