@@ -4,7 +4,7 @@ import React from 'react';
 
 import { CoreApp, PluginType } from '@grafana/data';
 
-import { PhlareDataSource } from '../datasource';
+import { PyroscopeDataSource } from '../datasource';
 import { ProfileTypeMessage } from '../types';
 
 import { Props, QueryEditor } from './QueryEditor';
@@ -43,7 +43,7 @@ async function openOptions() {
 
 function setup(options: { props: Partial<Props> } = { props: {} }) {
   const onChange = jest.fn();
-  const ds = new PhlareDataSource({
+  const ds = new PyroscopeDataSource({
     name: 'test',
     uid: 'test',
     type: PluginType.datasource,

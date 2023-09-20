@@ -4,9 +4,9 @@ import { DataSourcePluginOptionsEditorProps } from '@grafana/data';
 import { DataSourceHttpSettings, EventsWithValidation, LegacyForms, regexValidation } from '@grafana/ui';
 import { config } from 'app/core/config';
 
-import { PhlareDataSourceOptions } from './types';
+import { PyroscopeDataSourceOptions } from './types';
 
-interface Props extends DataSourcePluginOptionsEditorProps<PhlareDataSourceOptions> {}
+interface Props extends DataSourcePluginOptionsEditorProps<PyroscopeDataSourceOptions> {}
 
 export const ConfigEditor = (props: Props) => {
   const { options, onOptionsChange } = props;
