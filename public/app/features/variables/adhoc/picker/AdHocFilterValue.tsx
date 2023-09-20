@@ -52,9 +52,9 @@ const fetchFilterValues = async (
     return [];
   }
 
-  const range = getTimeSrv().timeRange();
+  const timeRange = getTimeSrv().timeRange();
   // Filter out the current filter key from the list of all filters
   const otherFilters = allFilters.filter((f) => f.key !== key);
-  const metrics = await ds.getTagValues({ key, filters: otherFilters, range });
+  const metrics = await ds.getTagValues({ key, filters: otherFilters, timeRange });
   return metrics.map((m: MetricFindValue) => ({ label: m.text, value: m.text }));
 };
