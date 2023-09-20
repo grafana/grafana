@@ -125,6 +125,22 @@ describe('buildVisualQueryFromString', () => {
     );
   });
 
+  it('returns error when parsing ambiguous query', () => {
+    //becomes topk(5, count_over_time({app="aggregator"} [1m])) / count_over_time({cluster="dev-eu-west-2"} [1m])
+    const context = buildVisualQueryFromString(
+      'topk(5,count_over_time({app="aggregator"}[1m])/count_over_time({cluster="dev-eu-west-2"}[1m]))'
+    );
+    expect(context).toMatchObject({
+      errors: [
+        {
+          from: 0,
+          text: 'Query parsing is ambiguous.',
+          to: 99,
+        },
+      ],
+    });
+  });
+
   it('parses query with matcher label filter', () => {
     expect(buildVisualQueryFromString('{app="frontend"} | bar="baz"')).toEqual(
       noErrors({
@@ -193,6 +209,11 @@ describe('buildVisualQueryFromString', () => {
         from: 28,
         to: 59,
         parentType: 'PipelineStage',
+      },
+      {
+        from: 0,
+        text: 'Query parsing is ambiguous.',
+        to: 25,
       },
     ]);
   });
@@ -425,8 +446,9 @@ describe('buildVisualQueryFromString', () => {
   });
 
   it('parses metrics query with function and aggregation with grouping at the end', () => {
-    expect(buildVisualQueryFromString('sum(rate({app="frontend"} | json [5m])) without(job,name)')).toEqual(
-      noErrors({
+    const expression = 'sum(rate({app="frontend"} | json [5m])) without(job,name)';
+    expect(buildVisualQueryFromString(expression)).toEqual(
+      ambigiousError(59, {
         labels: [
           {
             op: '=',
@@ -557,8 +579,10 @@ describe('buildVisualQueryFromString', () => {
   });
 
   it('parses query with multiple label format', () => {
-    expect(buildVisualQueryFromString('{app="frontend"} | label_format renameTo=original, bar=baz')).toEqual(
-      noErrors({
+    // Converted to {app="frontend"} | label_format renameTo=original | label_format bar=baz by visual query builder
+    const expression = '{app="frontend"} | label_format renameTo=original, bar=baz';
+    expect(buildVisualQueryFromString(expression)).toEqual(
+      ambigiousError(72, {
         labels: [
           {
             op: '=',
@@ -605,10 +629,11 @@ describe('buildVisualQueryFromString', () => {
   });
 
   it('parses chained binary query', () => {
-    expect(
-      buildVisualQueryFromString('rate({project="bar"}[5m]) * 2 / rate({project="foo"}[5m]) + rate({app="test"}[1m])')
-    ).toEqual(
-      noErrors({
+    const expression = 'rate({project="bar"}[5m]) * 2 / rate({project="foo"}[5m]) + rate({app="test"}[1m])';
+    // is converted to (rate({project="bar"} [5m]) * 2) / (rate({project="foo"} [5m]) + rate({app="test"} [1m])) by visual query builder
+    // Note the extra parenthesis around the first binary operation expression: (rate({project="bar"} [5m]) * 2)
+    expect(buildVisualQueryFromString(expression)).toEqual(
+      ambigiousError(89, {
         labels: [{ op: '=', value: 'bar', label: 'project' }],
         operations: [
           { id: LokiOperationId.Rate, params: ['5m'] },
@@ -667,8 +692,10 @@ describe('buildVisualQueryFromString', () => {
   });
 
   it('parses a regexp with no param', () => {
-    expect(buildVisualQueryFromString('{app="frontend"} | regexp ')).toEqual(
-      noErrors({
+    const expression = '{app="frontend"} | regexp ';
+    // Converted to {app="frontend"} | regexp `` by visual query builder
+    expect(buildVisualQueryFromString(expression)).toEqual(
+      ambigiousError(28, {
         labels: [
           {
             op: '=',
@@ -698,7 +725,7 @@ describe('buildVisualQueryFromString', () => {
 
   it('parses a pattern with no param', () => {
     expect(buildVisualQueryFromString('{app="frontend"} | pattern ')).toEqual(
-      noErrors({
+      ambigiousError(29, {
         labels: [
           {
             op: '=',
@@ -841,6 +868,19 @@ describe('buildVisualQueryFromString', () => {
 function noErrors(query: LokiVisualQuery) {
   return {
     errors: [],
+    query,
+  };
+}
+
+function ambigiousError(to: number, query: LokiVisualQuery) {
+  return {
+    errors: [
+      {
+        from: 0,
+        text: 'Query parsing is ambiguous.',
+        to,
+      },
+    ],
     query,
   };
 }

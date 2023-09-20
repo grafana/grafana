@@ -1,4 +1,4 @@
-import { SyntaxNode, Tree } from '@lezer/common';
+import { SyntaxNode } from '@lezer/common';
 import { BinModifiers, OnOrIgnoring } from '@prometheus-io/lezer-promql';
 
 import {
@@ -16,8 +16,6 @@ import {
   Grouping,
   GroupingLabelList,
   GroupingLabels,
-  GroupLeft,
-  GroupRight,
   Identifier,
   Ip,
   IpLabelFilter,
@@ -52,6 +50,7 @@ import {
 } from '@grafana/lezer-logql';
 
 import {
+  doTreesHaveSameNodes,
   ErrorId,
   getAllByType,
   getLeftMostChild,
@@ -119,7 +118,7 @@ export function buildVisualQueryFromString(expr: string): Context {
 
     const newExpression = replaceVariables(lokiQueryModeller.renderQuery(context.query));
     const newTree = parser.parse(newExpression);
-    const treesValid = compareTrees(newTree.topNode, tree.topNode);
+    const treesValid = doTreesHaveSameNodes(newTree.topNode, tree.topNode);
 
     if (!treesValid) {
       context.errors.push({
@@ -131,31 +130,6 @@ export function buildVisualQueryFromString(expr: string): Context {
   }
   return context;
 }
-
-/**
- * Traverse two trees and return false if any node pair in the same position do not have the same type
- * Using this to check if the visual query parse is ambiguous
- * @param node
- * @param compareNode
- * @returns boolean
- */
-const compareTrees = (node: SyntaxNode, compareNode: SyntaxNode): boolean => {
-  let child = node.firstChild;
-  let compareChild = compareNode.firstChild;
-
-  while (child && compareChild) {
-    if (child.type.id !== compareChild.type.id) {
-      return false;
-    }
-    if (!compareTrees(child, compareChild)) {
-      return false;
-    }
-    child = child.nextSibling;
-    compareChild = compareChild.nextSibling;
-  }
-
-  return true;
-};
 
 export function handleExpression(expr: string, node: SyntaxNode, context: Context) {
   const visQuery = context.query;
