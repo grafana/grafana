@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -577,6 +578,7 @@ func provideDynamic(t *testing.T, gcomURL string, opts ...provideDynamicOpts) *D
 		&config.Cfg{GrafanaComURL: gcomURL},
 		opt.store,
 		featuremgmt.WithFeatures(featuremgmt.FlagPluginsDynamicAngularDetectionPatterns),
+		prometheus.NewRegistry(),
 	)
 	require.NoError(t, err)
 	return d

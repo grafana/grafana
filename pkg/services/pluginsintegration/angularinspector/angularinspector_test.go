@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/kvstore"
@@ -22,6 +23,7 @@ func TestProvideService(t *testing.T) {
 			pCfg,
 			angularpatternsstore.ProvideService(kvstore.NewFakeKVStore()),
 			featuremgmt.WithFeatures(featuremgmt.FlagPluginsDynamicAngularDetectionPatterns),
+			prometheus.NewRegistry(),
 		)
 		require.NoError(t, err)
 		inspector, err := ProvideService(pCfg, dynamic)
@@ -40,6 +42,7 @@ func TestProvideService(t *testing.T) {
 			pCfg,
 			angularpatternsstore.ProvideService(kvstore.NewFakeKVStore()),
 			featuremgmt.WithFeatures(),
+			prometheus.NewRegistry(),
 		)
 		require.NoError(t, err)
 		inspector, err := ProvideService(pCfg, dynamic)
