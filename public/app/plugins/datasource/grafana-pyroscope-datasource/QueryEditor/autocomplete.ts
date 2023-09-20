@@ -4,7 +4,7 @@ import { monacoTypes, Monaco } from '@grafana/ui';
  * Class that implements CompletionItemProvider interface and allows us to provide suggestion for the Monaco
  * autocomplete system.
  *
- * At this moment we just pass it all the labels/values we get from Phlare backend later on we may do something a bit
+ * At this moment we just pass it all the labels/values we get from Pyroscope backend later on we may do something a bit
  * smarter if there will be lots of labels.
  */
 export class CompletionProvider implements monacoTypes.languages.CompletionItemProvider {
@@ -153,7 +153,7 @@ const inLabelNameRegex = new RegExp(/[{,]\s*[a-zA-Z0-9_]*$/);
 
 /**
  * Figure out where is the cursor and what kind of suggestions are appropriate.
- * As currently Phlare handles just a simple {foo="bar", baz="zyx"} kind of values we can do with simple regex to figure
+ * As currently Pyroscope handles just a simple {foo="bar", baz="zyx"} kind of values we can do with simple regex to figure
  * out where we are with the cursor.
  * @param text
  * @param offset
