@@ -1,5 +1,8 @@
 import { llms } from '@grafana/experimental';
 
+import { DashboardModel } from '../../state';
+import { Diffs, jsonDiff } from '../VersionHistory/utils';
+
 export interface Message {
   role: Role;
   content: string;
@@ -45,7 +48,7 @@ export const OPEN_AI_MODEL = 'gpt-4';
 export const generateTextWithLLM = async (
   messages: Message[],
   onReply: (response: string, isDone: boolean) => void,
-  temperature: number=1,
+  temperature = 1
 ) => {
   const enabled = await isLLMPluginEnabled();
 
@@ -95,4 +98,28 @@ export function isResponseCompleted(response: string) {
  */
 export function cleanupResponse(response: string) {
   return response.replace(SPECIAL_DONE_TOKEN, '').replace(/"/g, '');
+}
+
+/**
+ * Diff the current dashboard with the original dashboard and the dashboard after migration
+ * to split the changes into user changes and migration changes.
+ * * User changes: changes made by the user
+ * * Migration changes: changes made by the DashboardMigrator after opening the dashboard
+ *
+ * @param dashboard current dashboard to be saved
+ * @returns user changes and migration changes
+ */
+export function getDashboardChanges(dashboard: DashboardModel): {
+  userChanges: Diffs;
+  migrationChanges: Diffs;
+} {
+  // Re-parse the dashboard to remove functions and other non-serializable properties
+  const currentDashboard = JSON.parse(JSON.stringify(dashboard.getSaveModelClone()));
+  const originalDashboard = dashboard.getOriginalDashboard()!;
+  const dashboardAfterMigration = JSON.parse(JSON.stringify(new DashboardModel(originalDashboard).getSaveModelClone()));
+
+  return {
+    userChanges: jsonDiff(dashboardAfterMigration, currentDashboard),
+    migrationChanges: jsonDiff(originalDashboard, dashboardAfterMigration),
+  };
 }

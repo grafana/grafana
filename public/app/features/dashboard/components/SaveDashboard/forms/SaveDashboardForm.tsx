@@ -40,7 +40,7 @@ export const SaveDashboardForm = ({
   const hasVariableChanged = useMemo(() => dashboard.hasVariableValuesChanged(), [dashboard]);
 
   const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState('');
+  const [message, setMessage] = useState(options.message);
   const styles = useStyles2(getStyles);
 
   return (

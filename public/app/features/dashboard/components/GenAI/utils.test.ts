@@ -1,4 +1,9 @@
+import { title } from 'process';
+
 import { llms } from '@grafana/experimental';
+
+import { DashboardModel } from '../../state';
+import { createDashboardModelFixture, createPanelJSONFixture } from '../../state/__fixtures__/dashboardFixtures';
 
 import {
   generateTextWithLLM,
@@ -8,6 +13,7 @@ import {
   Role,
   DONE_MESSAGE,
   OPEN_AI_MODEL,
+  getDashboardChanges,
 } from './utils';
 
 // Mock the llms.openai module
@@ -42,8 +48,9 @@ describe('generateTextWithLLM', () => {
 
     const messages = [{ role: Role.user, content: 'Hello' }];
     const onReply = jest.fn();
+    const temperature = 0.5;
 
-    await generateTextWithLLM(messages, onReply);
+    await generateTextWithLLM(messages, onReply, temperature);
 
     expect(llms.openai.streamChatCompletions).toHaveBeenCalledWith({
       model: OPEN_AI_MODEL,
@@ -52,6 +59,7 @@ describe('generateTextWithLLM', () => {
         DONE_MESSAGE,
         ...messages,
       ],
+      temperature,
     });
   });
 });
@@ -101,5 +109,56 @@ describe('cleanupResponse', () => {
     const cleanedResponse = cleanupResponse(response);
 
     expect(cleanedResponse).toBe('This is a response');
+  });
+});
+
+describe('getDashboardChanges', () => {
+  it('should correctly split user changes and migration changes', () => {
+    // Mock data for testing
+    const deprecatedOptions = {
+      legend: { displayMode: 'hidden', showLegend: false },
+    };
+    const deprecatedVersion = 37;
+    const dashboard = createDashboardModelFixture({
+      schemaVersion: deprecatedVersion,
+      panels: [createPanelJSONFixture({ title: 'Panel 1', options: deprecatedOptions })],
+    });
+
+    // Update title for the first panel
+    dashboard.updatePanels([
+      {
+        ...dashboard.panels[0],
+        title: 'New title',
+      },
+      ...dashboard.panels.slice(1),
+    ]);
+
+    // Call the function to test
+    const result = getDashboardChanges(dashboard);
+
+    // Assertions
+    expect(result.userChanges).toEqual({
+      panels: [
+        {
+          op: 'replace',
+          originalValue: 'Panel 1',
+          value: 'New title',
+          startLineNumber: expect.any(Number),
+          path: ['panels', '0', 'title'],
+        },
+      ],
+    });
+    expect(result.migrationChanges).toBeDefined();
+    expect(result.userChanges).not.toContain({
+      panels: [
+        {
+          op: 'replace',
+          originalValue: 'Panel 1',
+          value: 'New title',
+          startLineNumber: expect.any(Number),
+          path: ['panels', '0', 'title'],
+        },
+      ],
+    });
   });
 });

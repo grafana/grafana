@@ -4,7 +4,7 @@ import { DashboardModel } from '../../state';
 import { Diffs, jsonDiff } from '../VersionHistory/utils';
 
 import { GenAIButton } from './GenAIButton';
-import { Message, Role } from './utils';
+import { getDashboardChanges, Message, Role } from './utils';
 
 interface GenAIDashboardChangesButtonProps {
   dashboard: DashboardModel;
@@ -55,28 +55,4 @@ function getMessages(dashboard: DashboardModel): Message[] {
       role: Role.system,
     },
   ];
-}
-
-/**
- * Diff the current dashboard with the original dashboard and the dashboard after migration
- * to split the changes into user changes and migration changes.
- * * User changes: changes made by the user
- * * Migration changes: changes made by the DashboardMigrator after opening the dashboard
- *
- * @param dashboard current dashboard to be saved
- * @returns user changes and migration changes
- */
-function getDashboardChanges(dashboard: DashboardModel): {
-  userChanges: Diffs;
-  migrationChanges: Diffs;
-} {
-  // Re-parse the dashboard to remove functions and other non-serializable properties
-  const currentDashboard = JSON.parse(JSON.stringify(dashboard.getSaveModelClone()));
-  const originalDashboard = JSON.parse(JSON.stringify(dashboard.getOriginalDashboard()!));
-  const dashboardAfterMigration = JSON.parse(JSON.stringify(new DashboardModel(originalDashboard).getSaveModelClone()));
-
-  return {
-    userChanges: jsonDiff(dashboardAfterMigration, currentDashboard),
-    migrationChanges: jsonDiff(originalDashboard, dashboardAfterMigration),
-  };
 }
