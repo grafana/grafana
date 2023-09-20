@@ -7,7 +7,6 @@ import {
   filterByValue,
   getColumns,
   getFilteredOptions,
-  getTextAlign,
   rowToFieldValue,
   sortNumber,
   sortOptions,
@@ -72,21 +71,6 @@ describe('Table utils', () => {
 
       expect(columns[0].field.name).toBe('Time');
       expect(columns[1].field.name).toBe('Value');
-    });
-  });
-
-  describe('getTextAlign', () => {
-    it('Should use textAlign from custom', () => {
-      const data = getData();
-      const textAlign = getTextAlign(data.fields[2]);
-
-      expect(textAlign).toBe('center');
-    });
-
-    it('Should set textAlign to right for number values', () => {
-      const data = getData();
-      const textAlign = getTextAlign(data.fields[1]);
-      expect(textAlign).toBe('flex-end');
     });
   });
 

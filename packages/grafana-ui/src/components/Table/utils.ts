@@ -1,4 +1,3 @@
-import { Property } from 'csstype';
 import { clone } from 'lodash';
 import memoizeOne from 'memoize-one';
 import { Row } from 'react-table';
@@ -40,33 +39,9 @@ import {
   GrafanaTableColumn,
   TableFooterCalc,
 } from './types';
+import { getTextAlign } from './utils/textAlign';
 
 export const EXPANDER_WIDTH = 50;
-
-export function getTextAlign(field?: Field): Property.JustifyContent {
-  if (!field) {
-    return 'flex-start';
-  }
-
-  if (field.config.custom) {
-    const custom = field.config.custom as TableFieldOptions;
-
-    switch (custom.align) {
-      case 'right':
-        return 'flex-end';
-      case 'left':
-        return 'flex-start';
-      case 'center':
-        return 'center';
-    }
-  }
-
-  if (field.type === FieldType.number) {
-    return 'flex-end';
-  }
-
-  return 'flex-start';
-}
 
 export function getColumns(
   data: DataFrame,
