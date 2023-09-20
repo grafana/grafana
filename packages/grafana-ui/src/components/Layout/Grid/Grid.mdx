@@ -8,6 +8,10 @@ import { GridItem } from './GridItem';
 
 The `Grid` component allows for the organized layout and alignment of content into a grid-based structure.
 
+When a grid child needs to set a value to either `grid-column-start`, `grid-column-end`, `grid-row-start` or `grid-column-end` you should use the `GridItem`. The `GridItem` also has the `displayContents` prop that makes the item not occupy any space but passing the positioning props and keeps their children as elements of the grid. You can an example on the [GridItemPosition story](/story/general-layout-grid--grid-items-position).
+
+When there is no need to pass any prop to the children of the grid, you can just pass an array of elements to the Grid component as you can see in the rest of the story examples.
+
 ## Usage
 
 ### When to use
@@ -19,7 +23,7 @@ Use the Grid component when you want to create structured and organized layouts 
 Use the `Stack` component instead for these use cases:
 
 - **Simple layouts:** When you need to arrange elements in a linear format, either vertically or horizontally.
-- **Dynamic content:** When your content or elements have varying heights or widths and you want them to adapt to each item's size without predefined rows or columns.
+- **Regular flow:** When you want a "regular" site flow but with standardized spacing between the elements.
 
 Use the `Flex` component instead for these use cases:
 
