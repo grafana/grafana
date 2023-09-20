@@ -22,7 +22,7 @@ func TestIntegrationDashboardFolderStore(t *testing.T) {
 	var dashboardStore dashboards.Store
 
 	setup := func() {
-		sqlStore, cfg = db.InitTestDBwithCfg(t)
+		sqlStore, cfg = db.InitTestDBwithCfg(t, db.InitTestDBOpt{FeatureFlags: []string{featuremgmt.FlagPanelTitleSearchInV1}})
 		quotaService := quotatest.New(false, nil)
 		var err error
 		dashboardStore, err = database.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(featuremgmt.FlagPanelTitleSearch), tagimpl.ProvideService(sqlStore, cfg), quotaService)

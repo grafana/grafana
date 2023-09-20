@@ -47,7 +47,7 @@ func TestIntegrationAlertingDataAccess(t *testing.T) {
 	var items []*models.Alert
 
 	setup := func(t *testing.T) {
-		ss := db.InitTestDB(t)
+		ss, _ := db.InitTestDBwithCfg(t, db.InitTestDBOpt{FeatureFlags: []string{featuremgmt.FlagPanelTitleSearchInV1}})
 		tagService := tagimpl.ProvideService(ss, ss.Cfg)
 		cfg := setting.NewCfg()
 		store = &sqlStore{
@@ -333,8 +333,7 @@ func TestIntegrationPausingAlerts(t *testing.T) {
 	defer resetTimeNow()
 
 	t.Run("Given an alert", func(t *testing.T) {
-		ss := db.InitTestDB(t)
-		cfg := setting.NewCfg()
+		ss, cfg := db.InitTestDBwithCfg(t, db.InitTestDBOpt{FeatureFlags: []string{featuremgmt.FlagPanelTitleSearchInV1}})
 		sqlStore := sqlStore{db: ss, cfg: cfg, log: log.New(), tagService: tagimpl.ProvideService(ss, ss.Cfg), features: featuremgmt.WithFeatures()}
 
 		testDash := insertTestDashboard(t, sqlStore.db, "dashboard with alerts", 1, 0, "", false, "alert")

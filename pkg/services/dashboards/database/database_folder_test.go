@@ -31,7 +31,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
 )
 
-var testFeatureToggles = featuremgmt.WithFeatures(featuremgmt.FlagPanelTitleSearch)
+var testFeatureToggles = featuremgmt.WithFeatures(
+	featuremgmt.FlagPanelTitleSearch,
+	featuremgmt.FlagPanelTitleSearchInV1,
+)
 
 func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 	if testing.Short() {
@@ -44,7 +47,7 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 		var dashboardStore dashboards.Store
 
 		setup := func() {
-			sqlStore = db.InitTestDB(t)
+			sqlStore, _ = db.InitTestDBwithCfg(t, db.InitTestDBOpt{FeatureFlags: []string{featuremgmt.FlagPanelTitleSearchInV1}})
 			quotaService := quotatest.New(false, nil)
 			var err error
 			dashboardStore, err = ProvideDashboardStore(sqlStore, sqlStore.Cfg, testFeatureToggles, tagimpl.ProvideService(sqlStore, sqlStore.Cfg), quotaService)
@@ -245,7 +248,7 @@ func TestIntegrationDashboardInheritedFolderRBAC(t *testing.T) {
 	var viewer *user.SignedInUser
 
 	setup := func() {
-		sqlStore = db.InitTestDB(t)
+		sqlStore, _ = db.InitTestDBwithCfg(t, db.InitTestDBOpt{FeatureFlags: []string{featuremgmt.FlagPanelTitleSearchInV1}})
 		quotaService := quotatest.New(false, nil)
 
 		// enable nested folders so that the folder table is populated for all the tests

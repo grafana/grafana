@@ -10,6 +10,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
@@ -32,7 +33,7 @@ func TestIntegrationDashboardACLDataAccess(t *testing.T) {
 	var dashboardStore dashboards.Store
 
 	setup := func(t *testing.T) int64 {
-		sqlStore = db.InitTestDB(t)
+		sqlStore, _ = db.InitTestDBwithCfg(t, db.InitTestDBOpt{FeatureFlags: []string{featuremgmt.FlagPanelTitleSearchInV1}})
 		quotaService := quotatest.New(false, nil)
 		var err error
 		dashboardStore, err = ProvideDashboardStore(sqlStore, sqlStore.Cfg, testFeatureToggles, tagimpl.ProvideService(sqlStore, sqlStore.Cfg), quotaService)
