@@ -1,0 +1,668 @@
+{
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "schemes": [
+    "http",
+    "https"
+  ],
+  "swagger": "2.0",
+  "info": {
+    "description": "The Grafana backend exposes an HTTP API, the same API is used by the frontend to do\neverything from saving dashboards, creating users and updating data sources.",
+    "title": "Grafana HTTP API.",
+    "contact": {
+      "name": "Grafana Labs",
+      "url": "https://grafana.com",
+      "email": "hello@grafana.com"
+    },
+    "version": "0.0.1"
+  },
+  "basePath": "/api",
+  "paths": {},
+  "definitions": {
+    "AddCommand": {},
+    "CookieType": {},
+    "Correlation": {
+      "description": "Correlation is the model for correlations definitions"
+    },
+    "CorrelationConfig": {},
+    "CorrelationConfigUpdateDTO": {},
+    "CreateCorrelationCommand": {
+      "description": "CreateCorrelationCommand is the command for creating a correlation"
+    },
+    "CreateCorrelationResponseBody": {
+      "description": "CreateCorrelationResponse is the response struct for CreateCorrelationCommand"
+    },
+    "CreateDashboardSnapshotCommand": {},
+    "CreateLibraryElementCommand": {
+      "description": "CreateLibraryElementCommand is the command for adding a LibraryElement"
+    },
+    "CreateQueryInQueryHistoryCommand": {
+      "description": "CreateQueryInQueryHistoryCommand is the command for adding query history"
+    },
+    "CreateServiceAccountForm": {},
+    "DashboardACLUpdateItem": {},
+    "DataResponse": {
+      "description": "A map of RefIDs (unique query identifiers) to this type makes up the Responses property of a QueryDataResponse.\nThe Error property is used to allow for partial success responses from the containing QueryDataResponse.",
+      "title": "DataResponse contains the results from a DataQuery."
+    },
+    "DeleteCorrelationResponseBody": {},
+    "Field": {
+      "description": "A Field is essentially a slice of various types with extra properties and methods.\nSee NewField() for supported types.\n\nThe slice data in the Field is a not exported, so methods on the Field are used to to manipulate its data.",
+      "title": "Field represents a typed column of data within a Frame."
+    },
+    "Frame": {
+      "description": "Each Field is well typed by its FieldType and supports optional Labels.\n\nA Frame is a general data container for Grafana. A Frame can be table data\nor time series data depending on its content and field types.",
+      "title": "Frame is a columnar data structure where each column is a Field."
+    },
+    "FrameLabels": {
+      "description": "Labels are used to add metadata to an object.  The JSON will always be sorted keys"
+    },
+    "FrameMeta": {
+      "description": "https://github.com/grafana/grafana/blob/master/packages/grafana-data/src/types/data.ts#L11\nNOTE -- in javascript this can accept any `[key: string]: any;` however\nthis interface only exposes the values we want to be exposed",
+      "title": "FrameMeta matches:"
+    },
+    "Frames": {
+      "description": "It is the main data container within a backend.DataResponse.\nThere should be no `nil` entries in the Frames slice (making them pointers was a mistake).",
+      "title": "Frames is a slice of Frame pointers."
+    },
+    "GetHomeDashboardResponse": {
+      "title": "Get home dashboard response."
+    },
+    "LegacyAlert": {},
+    "MetricRequest": {},
+    "NewApiKeyResult": {},
+    "PatchPrefsCmd": {},
+    "PatchQueryCommentInQueryHistoryCommand": {
+      "description": "PatchQueryCommentInQueryHistoryCommand is the command for updating comment for query in query history"
+    },
+    "Responses": {
+      "description": "The QueryData method the QueryDataHandler method will set the RefId\nproperty on the DataResponses' frames based on these RefIDs.",
+      "title": "Responses is a map of RefIDs (Unique Query ID) to DataResponses."
+    },
+    "ServiceAccountProfileDTO": {},
+    "SuccessResponseBody": {},
+    "TokenDTO": {},
+    "UpdateCorrelationCommand": {
+      "description": "UpdateCorrelationCommand is the command for updating a correlation"
+    },
+    "UpdateCorrelationResponseBody": {},
+    "UpdateDashboardACLCommand": {},
+    "UpdatePrefsCmd": {},
+    "UpdateServiceAccountForm": {}
+  },
+  "responses": {
+    "SMTPNotEnabledError": {
+      "description": ""
+    },
+    "acceptedResponse": {
+      "description": "AcceptedResponse"
+    },
+    "adminCreateUserResponse": {
+      "description": ""
+    },
+    "adminGetSettingsResponse": {
+      "description": ""
+    },
+    "adminGetStatsResponse": {
+      "description": ""
+    },
+    "adminGetUserAuthTokensResponse": {
+      "description": "",
+      "schema": {
+        "type": "array",
+        "items": {}
+      }
+    },
+    "badRequestError": {
+      "description": "BadRequestError is returned when the request is invalid and it cannot be processed."
+    },
+    "calculateDashboardDiffResponse": {
+      "description": "",
+      "schema": {
+        "type": "array",
+        "items": {
+          "type": "integer",
+          "format": "uint8"
+        }
+      }
+    },
+    "conflictError": {
+      "description": "ConflictError"
+    },
+    "createCorrelationResponse": {
+      "description": ""
+    },
+    "createDashboardSnapshotResponse": {
+      "description": ""
+    },
+    "createOrUpdateDatasourceResponse": {
+      "description": ""
+    },
+    "createOrgResponse": {
+      "description": ""
+    },
+    "createPlaylistResponse": {
+      "description": ""
+    },
+    "createServiceAccountResponse": {
+      "description": ""
+    },
+    "createTeamResponse": {
+      "description": ""
+    },
+    "createTokenResponse": {
+      "description": ""
+    },
+    "dashboardResponse": {
+      "description": ""
+    },
+    "dashboardVersionResponse": {
+      "description": ""
+    },
+    "dashboardVersionsResponse": {
+      "description": "",
+      "schema": {
+        "type": "array",
+        "items": {}
+      }
+    },
+    "deleteAlertNotificationChannelResponse": {
+      "description": ""
+    },
+    "deleteCorrelationResponse": {
+      "description": ""
+    },
+    "deleteDashboardResponse": {
+      "description": ""
+    },
+    "deleteDataSourceByNameResponse": {
+      "description": ""
+    },
+    "deleteFolderResponse": {
+      "description": ""
+    },
+    "folderResponse": {
+      "description": ""
+    },
+    "forbiddenError": {
+      "description": "ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource."
+    },
+    "genericError": {
+      "description": "A GenericError is the default error message that is generated.\nFor certain status codes there are more appropriate error structures."
+    },
+    "getAPIkeyResponse": {
+      "description": "",
+      "schema": {
+        "type": "array",
+        "items": {}
+      }
+    },
+    "getAlertNotificationChannelResponse": {
+      "description": ""
+    },
+    "getAlertNotificationChannelsResponse": {
+      "description": "",
+      "schema": {
+        "type": "array",
+        "items": {}
+      }
+    },
+    "getAlertNotificationLookupResponse": {
+      "description": "",
+      "schema": {
+        "type": "array",
+        "items": {}
+      }
+    },
+    "getAlertResponse": {
+      "description": ""
+    },
+    "getAlertsResponse": {
+      "description": "",
+      "schema": {
+        "type": "array",
+        "items": {}
+      }
+    },
+    "getAnnotationByIDResponse": {
+      "description": ""
+    },
+    "getAnnotationTagsResponse": {
+      "description": ""
+    },
+    "getAnnotationsResponse": {
+      "description": "",
+      "schema": {
+        "type": "array",
+        "items": {}
+      }
+    },
+    "getCorrelationResponse": {
+      "description": ""
+    },
+    "getCorrelationsBySourceUIDResponse": {
+      "description": "",
+      "schema": {
+        "type": "array",
+        "items": {}
+      }
+    },
+    "getCorrelationsResponse": {
+      "description": "",
+      "schema": {
+        "type": "array",
+        "items": {}
+      }
+    },
+    "getCurrentOrgResponse": {
+      "description": ""
+    },
+    "getDashboardPermissionsListResponse": {
+      "description": "",
+      "schema": {
+        "type": "array",
+        "items": {}
+      }
+    },
+    "getDashboardSnapshotResponse": {
+      "description": ""
+    },
+    "getDashboardStatesResponse": {
+      "description": "",
+      "schema": {
+        "type": "array",
+        "items": {}
+      }
+    },
+    "getDashboardsTagsResponse": {
+      "description": "",
+      "schema": {
+        "type": "array",
+        "items": {}
+      }
+    },
+    "getDataSourceIDResponse": {
+      "description": ""
+    },
+    "getDataSourceResponse": {
+      "description": ""
+    },
+    "getDataSourcesResponse": {
+      "description": ""
+    },
+    "getFolderDescendantCountsResponse": {
+      "description": ""
+    },
+    "getFolderPermissionListResponse": {
+      "description": "",
+      "schema": {
+        "type": "array",
+        "items": {}
+      }
+    },
+    "getFoldersResponse": {
+      "description": "",
+      "schema": {
+        "type": "array",
+        "items": {}
+      }
+    },
+    "getHomeDashboardResponse": {
+      "description": ""
+    },
+    "getLibraryElementConnectionsResponse": {
+      "description": ""
+    },
+    "getLibraryElementResponse": {
+      "description": ""
+    },
+    "getLibraryElementsResponse": {
+      "description": ""
+    },
+    "getOrgByIDResponse": {
+      "description": ""
+    },
+    "getOrgByNameResponse": {
+      "description": ""
+    },
+    "getOrgUsersForCurrentOrgLookupResponse": {
+      "description": "",
+      "schema": {
+        "type": "array",
+        "items": {}
+      }
+    },
+    "getOrgUsersForCurrentOrgResponse": {
+      "description": "",
+      "schema": {
+        "type": "array",
+        "items": {}
+      }
+    },
+    "getOrgUsersResponse": {
+      "description": "",
+      "schema": {
+        "type": "array",
+        "items": {}
+      }
+    },
+    "getPendingOrgInvitesResponse": {
+      "description": "",
+      "schema": {
+        "type": "array",
+        "items": {}
+      }
+    },
+    "getPlaylistDashboardsResponse": {
+      "description": ""
+    },
+    "getPlaylistItemsResponse": {
+      "description": "",
+      "schema": {
+        "type": "array",
+        "items": {}
+      }
+    },
+    "getPlaylistResponse": {
+      "description": ""
+    },
+    "getPreferencesResponse": {
+      "description": ""
+    },
+    "getQueryHistoryDeleteQueryResponse": {
+      "description": ""
+    },
+    "getQueryHistoryResponse": {
+      "description": ""
+    },
+    "getQueryHistorySearchResponse": {
+      "description": ""
+    },
+    "getQuotaResponse": {
+      "description": "",
+      "schema": {
+        "type": "array",
+        "items": {}
+      }
+    },
+    "getSharingOptionsResponse": {
+      "description": ""
+    },
+    "getSignedInUserOrgListResponse": {
+      "description": "",
+      "schema": {
+        "type": "array",
+        "items": {}
+      }
+    },
+    "getSignedInUserTeamListResponse": {
+      "description": "",
+      "schema": {
+        "type": "array",
+        "items": {}
+      }
+    },
+    "getTeamByIDResponse": {
+      "description": ""
+    },
+    "getTeamMembersResponse": {
+      "description": "",
+      "schema": {
+        "type": "array",
+        "items": {}
+      }
+    },
+    "getUserAuthTokensResponse": {
+      "description": "",
+      "schema": {
+        "type": "array",
+        "items": {}
+      }
+    },
+    "getUserOrgListResponse": {
+      "description": "",
+      "schema": {
+        "type": "array",
+        "items": {}
+      }
+    },
+    "getUserTeamsResponse": {
+      "description": "",
+      "schema": {
+        "type": "array",
+        "items": {}
+      }
+    },
+    "helpFlagResponse": {
+      "description": ""
+    },
+    "importDashboardResponse": {
+      "description": ""
+    },
+    "internalServerError": {
+      "description": "InternalServerError is a general error indicating something went wrong internally."
+    },
+    "listSortOptionsResponse": {
+      "description": ""
+    },
+    "listTokensResponse": {
+      "description": ""
+    },
+    "notFoundError": {
+      "description": "NotFoundError is returned when the requested resource was not found."
+    },
+    "okResponse": {
+      "description": "An OKResponse is returned if the request was successful."
+    },
+    "pauseAlertResponse": {
+      "description": ""
+    },
+    "pauseAlertsResponse": {
+      "description": ""
+    },
+    "postAPIkeyResponse": {
+      "description": ""
+    },
+    "postAnnotationResponse": {
+      "description": ""
+    },
+    "postDashboardResponse": {
+      "description": ""
+    },
+    "preconditionFailedError": {
+      "description": "PreconditionFailedError"
+    },
+    "queryMetricsWithExpressionsRespons": {
+      "description": ""
+    },
+    "retrieveServiceAccountResponse": {
+      "description": ""
+    },
+    "searchDashboardSnapshotsResponse": {
+      "description": "",
+      "schema": {
+        "type": "array",
+        "items": {}
+      }
+    },
+    "searchOrgServiceAccountsWithPagingResponse": {
+      "description": ""
+    },
+    "searchOrgUsersResponse": {
+      "description": ""
+    },
+    "searchOrgsResponse": {
+      "description": "",
+      "schema": {
+        "type": "array",
+        "items": {}
+      }
+    },
+    "searchPlaylistsResponse": {
+      "description": ""
+    },
+    "searchResponse": {
+      "description": ""
+    },
+    "searchTeamsResponse": {
+      "description": ""
+    },
+    "searchUsersResponse": {
+      "description": "",
+      "schema": {
+        "type": "array",
+        "items": {}
+      }
+    },
+    "searchUsersWithPagingResponse": {
+      "description": ""
+    },
+    "testAlertResponse": {
+      "description": ""
+    },
+    "trimDashboardResponse": {
+      "description": ""
+    },
+    "unauthorisedError": {
+      "description": "UnauthorizedError is returned when the request is not authenticated."
+    },
+    "unprocessableEntityError": {
+      "description": "UnprocessableEntityError"
+    },
+    "updateCorrelationResponse": {
+      "description": ""
+    },
+    "updatePlaylistResponse": {
+      "description": ""
+    },
+    "updateServiceAccountResponse": {
+      "description": ""
+    },
+    "userResponse": {
+      "description": ""
+    },
+    "validateDashboardResponse": {
+      "description": "",
+      "headers": {
+        "isValid": {
+          "type": "boolean"
+        },
+        "message": {
+          "type": "string"
+        }
+      }
+    }
+  },
+  "securityDefinitions": {
+    "api_key": {
+      "type": "apiKey",
+      "name": "Authorization",
+      "in": "header"
+    },
+    "basic": {
+      "type": "basic"
+    }
+  },
+  "security": [
+    {
+      "basic": []
+    },
+    {
+      "api_key": []
+    }
+  ],
+  "tags": [
+    {
+      "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled, for some endpoints you would need to have relevant permissions. Refer to specific resources to understand what permissions are required.",
+      "name": "datasources"
+    },
+    {
+      "description": "Folders are identified by the identifier (id) and the unique identifier (uid).\nThe identifier (id) of a folder is an auto-incrementing numeric value and is only unique per Grafana install.\nThe unique identifier (uid) of a folder can be used for uniquely identify folders between multiple Grafana installs. It’s automatically generated if not provided when creating a folder. The uid allows having consistent URLs for accessing folders and when syncing folders between multiple Grafana installs. This means that changing the title of a folder will not break any bookmarked links to that folder.\nThe uid can have a maximum length of 40 characters.",
+      "name": "folders"
+    },
+    {
+      "description": "Permissions with `folderId=-1` are the default permissions for users with the Viewer and Editor roles. Permissions can be set for a user, a team or a role (Viewer or Editor). Permissions cannot be set for Admins - they always have access to everything.",
+      "name": "folder_permissions"
+    },
+    {
+      "description": "The Admin HTTP API does not currently work with an API Token. API Tokens are currently only linked to an organization and an organization role. They cannot be given the permission of server admin, only users can be given that permission. So in order to use these API calls you will have to use Basic Auth and the Grafana user must have the Grafana Admin permission. (The default admin user is called admin and has permission to use this API.)",
+      "name": "admin"
+    },
+    {
+      "description": "You can use the Alerting API to get information about legacy dashboard alerts and their states but this API cannot be used to modify the alert. To create new alerts or modify them you need to update the dashboard JSON that contains the alerts.\nThis topic is relevant for the legacy dashboard alerts only.\nYou can find Grafana 8 alerts API specification details [here](https://editor.swagger.io/?url=https://raw.githubusercontent.com/grafana/grafana/main/pkg/services/ngalert/api/tooling/post.json).",
+      "name": "legacy_alerts"
+    },
+    {
+      "description": "The identifier (id) of a notification channel is an auto-incrementing numeric value and is only unique per Grafana install.\nThe unique identifier (uid) of a notification channel can be used for uniquely identify a notification channel between multiple Grafana installs. It’s automatically generated if not provided when creating a notification channel. The uid allows having consistent URLs for accessing notification channels and when syncing notification channels between multiple Grafana installations, refer to alert notification channel provisioning.\nThe uid can have a maximum length of 40 characters.",
+      "name": "legacy_alerts_notification_channels"
+    },
+    {
+      "description": "Grafana Annotations feature released in Grafana 4.6. Annotations are saved in the Grafana database (sqlite, mysql or postgres). Annotations can be organization annotations that can be shown on any dashboard by configuring an annotation data source - they are filtered by tags. Or they can be tied to a panel on a dashboard and are then only shown on that panel.",
+      "name": "annotations"
+    },
+    {
+      "description": "The identifier (ID) of a library element is an auto-incrementing numeric value that is unique per Grafana install.\nThe unique identifier (UID) of a library element uniquely identifies library elements between multiple Grafana installs. It’s automatically generated unless you specify it during library element creation. The UID provides consistent URLs for accessing library elements and when syncing library elements between multiple Grafana installs.\nThe maximum length of a UID is 40 characters.",
+      "name": "library_elements"
+    },
+    {
+      "description": "The identifier (ID) of a query in query history is an auto-incrementing numeric value that is unique per Grafana install.\nThe unique identifier (UID) of a query history uniquely identifies queries in query history between multiple Grafana installs. It’s automatically generated. The UID provides consistent URLs for accessing queries in query history.",
+      "name": "query_history"
+    },
+    {
+      "description": "The Admin Organizations HTTP API does not currently work with an API Token. API Tokens are currently only linked to an organization and an organization role. They cannot be given the permission of server admin, only users can be given that permission. So in order to use these API calls you will have to use Basic Auth and the Grafana user must have the Grafana Admin permission (The default admin user is called `admin` and has permission to use this API).",
+      "name": "orgs"
+    },
+    {
+      "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled, for some endpoints you would need to have relevant permissions. Refer to specific resources to understand what permissions are required.",
+      "name": "org"
+    },
+    {
+      "description": "This API can be used to create/update/delete Teams and to add/remove users to Teams. All actions require that the user has the Admin role for the organization.",
+      "name": "teams"
+    },
+    {
+      "description": "This API can be used to enable, disable, list, add and remove permissions for a data source.\nPermissions can be set for a user or a team. Permissions cannot be set for Admins - they always have access to everything.\nThis is only available in Grafana Enterprise\nIf you are running Grafana Enterprise and have Fine-grained access control enabled, for some endpoints you would need to have relevant permissions. Refer to specific resources to understand what permissions are required.",
+      "name": "datasource_permissions"
+    },
+    {
+      "description": "These are only available in Grafana Enterprise",
+      "name": "enterprise"
+    },
+    {
+      "description": "The API can be used to create, update, get and list roles, and create or remove built-in role assignments. To use the API, you would need to enable fine-grained access control.\nThis only available in Grafana Enterprise.\nThe API does not currently work with an API Token. So in order to use these API endpoints you will have to use Basic auth.",
+      "name": "access_control"
+    },
+    {
+      "description": "Licensing is only available in Grafana Enterprise. Read more about Grafana Enterprise.\nIf you are running Grafana Enterprise and have Fine-grained access control enabled, for some endpoints you would need to have relevant permissions. Refer to specific resources to understand what permissions are required.",
+      "name": "licensing"
+    },
+    {
+      "description": "This API allows you to interact programmatically with the Reporting feature.\nReporting is only available in Grafana Enterprise. Read more about Grafana Enterprise.\nIf you have Fine-grained access Control enabled, for some endpoints you would need to have relevant permissions. Refer to specific resources to understand what permissions are required.",
+      "name": "reports"
+    },
+    {
+      "description": "Grafana Alerting Alertmanager-compatible endpoints",
+      "name": "alertmanager"
+    },
+    {
+      "description": "Grafana Alerting endpoints for managing rules",
+      "name": "ruler"
+    },
+    {
+      "description": "Grafana Alerting testing endpoints",
+      "name": "testing"
+    },
+    {
+      "description": "Grafana Alerting Prometheus-compatible endpoints",
+      "name": "prometheus"
+    },
+    {
+      "description": "If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions](https://grafana.com/docs/grafana/latest/administration/roles-and-permissions/access-control/custom-role-actions-scopes/) for more information.",
+      "name": "service_accounts"
+    }
+  ]
+}
