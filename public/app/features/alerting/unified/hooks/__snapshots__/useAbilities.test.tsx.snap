@@ -22,6 +22,10 @@ exports[`alertmanager abilities should report Create / Update / Delete actions a
     false,
     false,
   ],
+  "decrypt-secrets": [
+    false,
+    false,
+  ],
   "delete-contact-point": [
     false,
     false,
@@ -119,6 +123,10 @@ exports[`alertmanager abilities should report everything except exporting for Mi
     true,
     true,
   ],
+  "decrypt-secrets": [
+    false,
+    false,
+  ],
   "delete-contact-point": [
     true,
     true,
@@ -213,6 +221,10 @@ exports[`alertmanager abilities should report everything is supported for builti
     false,
   ],
   "create-silence": [
+    true,
+    false,
+  ],
+  "decrypt-secrets": [
     true,
     false,
   ],

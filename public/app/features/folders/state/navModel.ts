@@ -1,8 +1,8 @@
 import { NavModel, NavModelItem } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { getNavSubTitle } from 'app/core/components/AppChrome/MegaMenu/navBarItem-translations';
 import { t } from 'app/core/internationalization';
 import { contextSrv } from 'app/core/services/context_srv';
+import { getNavSubTitle } from 'app/core/utils/navBarItem-translations';
 import { newBrowseDashboardsEnabled } from 'app/features/browse-dashboards/featureFlag';
 import { AccessControlAction, FolderDTO } from 'app/types';
 

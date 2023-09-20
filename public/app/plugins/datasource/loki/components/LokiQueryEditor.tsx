@@ -21,7 +21,7 @@ import { buildVisualQueryFromString } from '../querybuilder/parsing';
 import { changeEditorMode, getQueryWithDefaults } from '../querybuilder/state';
 import { LokiQuery, QueryStats } from '../types';
 
-import { getStats, shouldUpdateStats } from './stats';
+import { shouldUpdateStats } from './stats';
 import { LokiQueryEditorProps } from './types';
 
 export const testIds = {
@@ -45,7 +45,8 @@ export const LokiQueryEditor = React.memo<LokiQueryEditorProps>((props) => {
   if (config.featureToggles.lokiPredefinedOperations && !query.expr && predefinedOperations) {
     query.expr = `{} ${predefinedOperations}`;
   }
-  const previousQuery = usePrevious(query.expr);
+  const previousQueryExpr = usePrevious(query.expr);
+  const previousQueryType = usePrevious(query.queryType);
 
   // This should be filled in from the defaults by now.
   const editorMode = query.editorMode!;
@@ -96,15 +97,22 @@ export const LokiQueryEditor = React.memo<LokiQueryEditorProps>((props) => {
   };
 
   useEffect(() => {
-    const update = shouldUpdateStats(query.expr, previousQuery, timerange, previousTimerange);
+    const update = shouldUpdateStats(
+      query.expr,
+      previousQueryExpr,
+      timerange,
+      previousTimerange,
+      query.queryType,
+      previousQueryType
+    );
     if (update) {
       const makeAsyncRequest = async () => {
-        const stats = await getStats(datasource, query.expr);
+        const stats = await datasource.getStats(query);
         setQueryStats(stats);
       };
       makeAsyncRequest();
     }
-  }, [datasource, timerange, previousTimerange, query, previousQuery, setQueryStats]);
+  }, [datasource, timerange, previousTimerange, query, previousQueryExpr, previousQueryType, setQueryStats]);
 
   return (
     <>
@@ -180,13 +188,7 @@ export const LokiQueryEditor = React.memo<LokiQueryEditorProps>((props) => {
       <Space v={0.5} />
       <EditorRows>
         {editorMode === QueryEditorMode.Code && (
-          <LokiQueryCodeEditor
-            {...props}
-            query={query}
-            onChange={onChangeInternal}
-            showExplain={explain}
-            setQueryStats={setQueryStats}
-          />
+          <LokiQueryCodeEditor {...props} query={query} onChange={onChangeInternal} showExplain={explain} />
         )}
         {editorMode === QueryEditorMode.Builder && (
           <LokiQueryBuilderContainer
