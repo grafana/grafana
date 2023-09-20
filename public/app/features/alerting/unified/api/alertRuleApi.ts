@@ -173,7 +173,7 @@ export const alertRuleApi = alertingApi.injectEndpoints({
       { rulerConfig: RulerDataSourceConfig; namespace: string; group: string }
     >({
       query: ({ rulerConfig, namespace, group }) => {
-        const { path, params } = rulerUrlBuilder(rulerConfig).namespaceGroup(namespace, group);
+        const { path, params } = rulerUrlBuilder(rulerConfig).namespaceGroup(namespace, group); //@todo change namespace to folder uid
         return { url: path, params };
       },
     }),

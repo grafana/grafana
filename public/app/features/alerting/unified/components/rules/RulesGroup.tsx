@@ -248,13 +248,19 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
       {isEditingGroup && (
         <EditCloudGroupModal
           namespace={namespace}
+          folderUid={folderUID}
           group={group}
           onClose={() => closeEditModal()}
           folderUrl={folder?.canEdit ? makeFolderSettingsLink(folder) : undefined}
         />
       )}
       {isReorderingGroup && (
-        <ReorderCloudGroupModal group={group} namespace={namespace} onClose={() => setIsReorderingGroup(false)} />
+        <ReorderCloudGroupModal
+          group={group}
+          folderUid={folderUID}
+          namespace={namespace}
+          onClose={() => setIsReorderingGroup(false)}
+        />
       )}
       <ConfirmModal
         isOpen={isDeletingGroup}

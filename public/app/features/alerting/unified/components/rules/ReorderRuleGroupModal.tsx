@@ -25,6 +25,7 @@ import { AlertStateTag } from './AlertStateTag';
 
 interface ModalProps {
   namespace: CombinedRuleNamespace;
+  folderUid?: string;
   group: CombinedRuleGroup;
   onClose: () => void;
 }
@@ -32,7 +33,7 @@ interface ModalProps {
 type CombinedRuleWithUID = { uid: string } & CombinedRule;
 
 export const ReorderCloudGroupModal = (props: ModalProps) => {
-  const { group, namespace, onClose } = props;
+  const { group, namespace, onClose, folderUid } = props;
   const [pending, setPending] = useState<boolean>(false);
   const [rulesList, setRulesList] = useState<CombinedRule[]>(group.rules);
 
@@ -50,6 +51,10 @@ export const ReorderCloudGroupModal = (props: ModalProps) => {
         return;
       }
 
+      if (!folderUid) {
+        return;
+      }
+
       const newOrderedRules = reorder(rulesList, result.source.index, result.destination.index);
       setRulesList(newOrderedRules); // optimistically update the new rules list
 
@@ -63,6 +68,7 @@ export const ReorderCloudGroupModal = (props: ModalProps) => {
           groupName: group.name,
           rulesSourceName: rulesSourceName,
           newRules: rulerRules,
+          folderUid: folderUid,
         })
       )
         .unwrap()

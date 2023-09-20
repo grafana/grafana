@@ -50,7 +50,7 @@ export function getRulerClient(rulerConfig: RulerDataSourceConfig): RulerClient 
 
     if (isCloudRuleIdentifier(ruleIdentifier)) {
       const { ruleSourceName, namespace, groupName } = ruleIdentifier;
-      const group = await fetchRulerRulesGroup(rulerConfig, namespace, groupName);
+      const group = await fetchRulerRulesGroup(rulerConfig, namespace, groupName); //@todo change namespace to folder uid
 
       if (!group) {
         return null;
@@ -85,11 +85,12 @@ export function getRulerClient(rulerConfig: RulerDataSourceConfig): RulerClient 
 
     // it was the last rule, delete the entire group
     if (group.rules.length === 1) {
-      await deleteRulerRulesGroup(rulerConfig, namespace, group.name);
+      await deleteRulerRulesGroup(rulerConfig, namespace, group.name); //@todo: change namespace to folder uid
       return;
     }
     // post the group with rule removed
     await setRulerRuleGroup(rulerConfig, namespace, {
+      //@todo: change namespace to folder uid
       ...group,
       rules: group.rules.filter((r) => r !== rule),
     });
@@ -122,14 +123,14 @@ export function getRulerClient(rulerConfig: RulerDataSourceConfig): RulerClient 
             ),
             evaluateEvery: evaluateEvery,
           };
-          await setRulerRuleGroup(rulerConfig, namespace, payload);
+          await setRulerRuleGroup(rulerConfig, namespace, payload); //@todo: change namespace to folder uid
           return ruleId.fromRulerRule(dataSourceName, namespace, group, formRule);
         }
       }
 
       // if creating new rule or existing rule was in a different namespace/group, create new rule in target group
 
-      const targetGroup = await fetchRulerRulesGroup(rulerConfig, namespace, group);
+      const targetGroup = await fetchRulerRulesGroup(rulerConfig, namespace, group); //@todo change namespace to folder uid
 
       const payload: RulerRuleGroupDTO = targetGroup
         ? {
@@ -141,7 +142,7 @@ export function getRulerClient(rulerConfig: RulerDataSourceConfig): RulerClient 
             rules: [formRule],
           };
 
-      await setRulerRuleGroup(rulerConfig, namespace, payload);
+      await setRulerRuleGroup(rulerConfig, namespace, payload); //@todo: change namespace to folder uid
       return ruleId.fromRulerRule(dataSourceName, namespace, group, formRule);
     } else {
       throw new Error('Data source and location must be specified');
@@ -190,7 +191,7 @@ export function getRulerClient(rulerConfig: RulerDataSourceConfig): RulerClient 
     group: { name: string; interval: string },
     newRule: PostableRuleGrafanaRuleDTO
   ): Promise<RuleIdentifier> => {
-    const existingGroup = await fetchRulerRulesGroup(rulerConfig, namespace, group.name);
+    const existingGroup = await fetchRulerRulesGroup(rulerConfig, namespace, group.name); //@todo change namespace to folder uid
     if (!existingGroup) {
       throw new Error(`No group found with name "${group.name}"`);
     }
@@ -201,7 +202,7 @@ export function getRulerClient(rulerConfig: RulerDataSourceConfig): RulerClient 
       rules: (existingGroup.rules ?? []).concat(newRule as RulerGrafanaRuleDTO),
     };
 
-    await setRulerRuleGroup(rulerConfig, namespace, payload);
+    await setRulerRuleGroup(rulerConfig, namespace, payload); //@todo: change namespace to folder uid
 
     return { uid: newRule.grafana_alert.uid ?? '', ruleSourceName: GRAFANA_RULES_SOURCE_NAME };
   };
@@ -243,6 +244,7 @@ export function getRulerClient(rulerConfig: RulerDataSourceConfig): RulerClient 
     });
 
     await setRulerRuleGroup(rulerConfig, existingRule.namespace, {
+      //@todo: change namespace to folder uid
       name: existingRule.group.name,
       interval: interval,
       rules: newRules,
