@@ -20,7 +20,6 @@ const CHANGES_GENERATION_STANDARD_PROMPT = [
   'Group changes when all panels are affected',
   'Do not mention line number',
   'Refer to templating elements as variables',
-  'Ignore and never mention "getVariables" property changes',
   'Ignore and never mention changes about plugin version',
   'Try to make it as short as possible.',
 ].join('. ');
@@ -32,7 +31,7 @@ export const GenAIDashboardChangesButton = ({ dashboard, onGenerate }: GenAIDash
 };
 
 function getMessages(dashboard: DashboardModel): Message[] {
-  const { userChanges, migrationChanges } = getChanges(dashboard);
+  const { userChanges, migrationChanges } = getDashboardChanges(dashboard);
 
   return [
     {
@@ -67,13 +66,14 @@ function getMessages(dashboard: DashboardModel): Message[] {
  * @param dashboard current dashboard to be saved
  * @returns user changes and migration changes
  */
-function getChanges(dashboard: DashboardModel): {
+function getDashboardChanges(dashboard: DashboardModel): {
   userChanges: Diffs;
   migrationChanges: Diffs;
 } {
-  const currentDashboard = dashboard.getSaveModelClone();
-  const originalDashboard = dashboard.getOriginalDashboard()!;
-  const dashboardAfterMigration = new DashboardModel(originalDashboard).getSaveModelClone();
+  // Re-parse the dashboard to remove functions and other non-serializable properties
+  const currentDashboard = JSON.parse(JSON.stringify(dashboard.getSaveModelClone()));
+  const originalDashboard = JSON.parse(JSON.stringify(dashboard.getOriginalDashboard()!));
+  const dashboardAfterMigration = JSON.parse(JSON.stringify(new DashboardModel(originalDashboard).getSaveModelClone()));
 
   return {
     userChanges: jsonDiff(dashboardAfterMigration, currentDashboard),
