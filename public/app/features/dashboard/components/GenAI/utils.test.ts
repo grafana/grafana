@@ -1,8 +1,5 @@
-import { title } from 'process';
-
 import { llms } from '@grafana/experimental';
 
-import { DashboardModel } from '../../state';
 import { createDashboardModelFixture, createPanelJSONFixture } from '../../state/__fixtures__/dashboardFixtures';
 
 import {
