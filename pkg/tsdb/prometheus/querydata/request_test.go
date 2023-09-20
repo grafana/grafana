@@ -363,10 +363,10 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 
 type queryResult struct {
 	Type   p.ValueType `json:"resultType"`
-	Result interface{} `json:"result"`
+	Result any         `json:"result"`
 }
 
-func executeWithHeaders(tctx *testContext, query backend.DataQuery, qr interface{}, headers map[string]string) (data.Frames, error) {
+func executeWithHeaders(tctx *testContext, query backend.DataQuery, qr any, headers map[string]string) (data.Frames, error) {
 	req := backend.QueryDataRequest{
 		Queries: []backend.DataQuery{query},
 		Headers: headers,
@@ -391,7 +391,7 @@ func executeWithHeaders(tctx *testContext, query backend.DataQuery, qr interface
 	return res.Responses[req.Queries[0].RefID].Frames, nil
 }
 
-func execute(tctx *testContext, query backend.DataQuery, qr interface{}) (data.Frames, error) {
+func execute(tctx *testContext, query backend.DataQuery, qr any) (data.Frames, error) {
 	return executeWithHeaders(tctx, query, qr, map[string]string{})
 }
 
@@ -400,7 +400,7 @@ type apiResponse struct {
 	Data   json.RawMessage `json:"data"`
 }
 
-func toAPIResponse(d interface{}) (*http.Response, error) {
+func toAPIResponse(d any) (*http.Response, error) {
 	b, err := json.Marshal(d)
 	if err != nil {
 		return nil, err

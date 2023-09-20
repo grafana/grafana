@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"sort"
 	"strings"
@@ -99,7 +100,7 @@ func (ecp *ContactPointService) GetContactPoints(ctx context.Context, q ContactP
 		for k, v := range contactPoint.SecureSettings {
 			decryptedValue, err := ecp.decryptValue(v)
 			if err != nil {
-				ecp.log.Warn("decrypting value failed", "error", err.Error())
+				ecp.log.Warn("Decrypting value failed", "error", err.Error())
 				continue
 			}
 			if decryptedValue == "" {
@@ -151,7 +152,7 @@ func (ecp *ContactPointService) getContactPointDecrypted(ctx context.Context, or
 		for k, v := range receiver.SecureSettings {
 			decryptedValue, err := ecp.decryptValue(v)
 			if err != nil {
-				ecp.log.Warn("decrypting value failed", "error", err.Error())
+				ecp.log.Warn("Decrypting value failed", "error", err.Error())
 				continue
 			}
 			if decryptedValue == "" {
@@ -190,6 +191,8 @@ func (ecp *ContactPointService) CreateContactPoint(ctx context.Context, orgID in
 
 	if contactPoint.UID == "" {
 		contactPoint.UID = util.GenerateShortUID()
+	} else if err := util.ValidateUID(contactPoint.UID); err != nil {
+		return apimodels.EmbeddedContactPoint{}, errors.Join(ErrValidation, fmt.Errorf("cannot create contact point with UID '%s': %w", contactPoint.UID, err))
 	}
 
 	jsonData, err := contactPoint.Settings.MarshalJSON()
@@ -454,7 +457,7 @@ func stitchReceiver(cfg *apimodels.PostableUserConfig, target *apimodels.Postabl
 	// All receivers in a given receiver group have the same name. We must maintain this across renames.
 	configModified := false
 groupLoop:
-	for _, receiverGroup := range cfg.AlertmanagerConfig.Receivers {
+	for groupIdx, receiverGroup := range cfg.AlertmanagerConfig.Receivers {
 		// Does the current group contain the grafana receiver we're interested in?
 		for i, grafanaReceiver := range receiverGroup.GrafanaManagedReceivers {
 			if grafanaReceiver.UID == target.UID {
@@ -477,8 +480,6 @@ groupLoop:
 					replaceReferences(receiverGroup.Name, target.Name, cfg.AlertmanagerConfig.Route)
 					receiverGroup.Name = target.Name
 					receiverGroup.GrafanaManagedReceivers[i] = target
-					configModified = true
-					break groupLoop
 				}
 
 				// Otherwise, we only want to rename the receiver we are touching... NOT all of them.
@@ -491,6 +492,11 @@ groupLoop:
 						// Add the modified receiver to the new group...
 						candidateExistingGroup.GrafanaManagedReceivers = append(candidateExistingGroup.GrafanaManagedReceivers, target)
 						configModified = true
+
+						// if the old receiver group turns out to be empty. Remove it.
+						if len(receiverGroup.GrafanaManagedReceivers) == 0 {
+							cfg.AlertmanagerConfig.Receivers = append(cfg.AlertmanagerConfig.Receivers[:groupIdx], cfg.AlertmanagerConfig.Receivers[groupIdx+1:]...)
+						}
 						break groupLoop
 					}
 				}

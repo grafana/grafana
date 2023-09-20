@@ -178,6 +178,10 @@ Name of the TrueType font file with bold style.
 
 Name of the TrueType font file with italic style.
 
+### max_retries_per_panel
+
+Maximum number of panel rendering request retries before returning an error. To disable the retry feature, enter `0`. This is available in public preview and requires the 'reportingRetries' feature toggle.
+
 ## [auditing]
 
 [Auditing]({{< relref "../../configure-security/audit-grafana" >}}) allows you to track important changes to your Grafana instance. By default, audit logs are logged to file but the auditing feature also supports sending logs directly to Loki.

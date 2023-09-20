@@ -78,9 +78,10 @@ const BrowseDashboardsPage = memo(({ match }: Props) => {
 
   const hasSelection = useHasSelection();
 
-  const { canEditInFolder, canCreateDashboards, canCreateFolder } = getFolderPermissions(folderDTO);
+  const { canEditFolders, canEditDashboards, canCreateDashboards, canCreateFolders } = getFolderPermissions(folderDTO);
 
-  const showEditTitle = canEditInFolder && folderUID;
+  const showEditTitle = canEditFolders && folderUID;
+  const canSelect = canEditFolders || canEditDashboards;
   const onEditTitle = async (newValue: string) => {
     if (folderDTO) {
       const result = await saveFolder({
@@ -101,11 +102,11 @@ const BrowseDashboardsPage = memo(({ match }: Props) => {
       actions={
         <>
           {folderDTO && <FolderActionsButton folder={folderDTO} />}
-          {(canCreateDashboards || canCreateFolder) && (
+          {(canCreateDashboards || canCreateFolders) && (
             <CreateNewButton
               parentFolder={folderDTO}
               canCreateDashboard={canCreateDashboards}
-              canCreateFolder={canCreateFolder}
+              canCreateFolder={canCreateFolders}
             />
           )}
         </>
@@ -125,9 +126,9 @@ const BrowseDashboardsPage = memo(({ match }: Props) => {
           <AutoSizer>
             {({ width, height }) =>
               isSearching ? (
-                <SearchView canSelect={canEditInFolder} width={width} height={height} />
+                <SearchView canSelect={canSelect} width={width} height={height} />
               ) : (
-                <BrowseView canSelect={canEditInFolder} width={width} height={height} folderUID={folderUID} />
+                <BrowseView canSelect={canSelect} width={width} height={height} folderUID={folderUID} />
               )
             }
           </AutoSizer>

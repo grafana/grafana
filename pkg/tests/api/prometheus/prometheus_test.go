@@ -43,7 +43,7 @@ func TestIntegrationPrometheus(t *testing.T) {
 	}))
 	t.Cleanup(outgoingServer.Close)
 
-	jsonData := simplejson.NewFromAny(map[string]interface{}{
+	jsonData := simplejson.NewFromAny(map[string]any{
 		"httpMethod":            "post",
 		"httpHeaderName1":       "X-CUSTOM-HEADER",
 		"customQueryParameters": "q1=1&q2=2",
@@ -69,8 +69,8 @@ func TestIntegrationPrometheus(t *testing.T) {
 	require.NoError(t, err)
 
 	t.Run("When calling /api/ds/query should set expected headers on outgoing HTTP request", func(t *testing.T) {
-		query := simplejson.NewFromAny(map[string]interface{}{
-			"datasource": map[string]interface{}{
+		query := simplejson.NewFromAny(map[string]any{
+			"datasource": map[string]any{
 				"uid": uid,
 			},
 			"expr":         "1",
@@ -101,8 +101,8 @@ func TestIntegrationPrometheus(t *testing.T) {
 	})
 
 	t.Run("When calling /api/ds/query should set expected headers on outgoing HTTP request", func(t *testing.T) {
-		query := simplejson.NewFromAny(map[string]interface{}{
-			"datasource": map[string]interface{}{
+		query := simplejson.NewFromAny(map[string]any{
+			"datasource": map[string]any{
 				"uid": uid,
 			},
 			"expr":         "up",

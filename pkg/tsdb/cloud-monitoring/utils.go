@@ -40,7 +40,7 @@ func addInterval(period string, field *data.Field) error {
 	return nil
 }
 
-func toString(v interface{}) string {
+func toString(v any) string {
 	if v == nil {
 		return ""
 	}
@@ -70,7 +70,7 @@ func createRequest(ctx context.Context, logger log.Logger, dsInfo *datasourceInf
 	return req, nil
 }
 
-func doRequestPage(ctx context.Context, logger log.Logger, r *http.Request, dsInfo datasourceInfo, params url.Values, body map[string]interface{}) (cloudMonitoringResponse, error) {
+func doRequestPage(ctx context.Context, logger log.Logger, r *http.Request, dsInfo datasourceInfo, params url.Values, body map[string]any) (cloudMonitoringResponse, error) {
 	if params != nil {
 		r.URL.RawQuery = params.Encode()
 	}
@@ -89,7 +89,7 @@ func doRequestPage(ctx context.Context, logger log.Logger, r *http.Request, dsIn
 
 	defer func() {
 		if err = res.Body.Close(); err != nil {
-			logger.Warn("failed to close response body", "error", err)
+			logger.Warn("Failed to close response body", "error", err)
 		}
 	}()
 
@@ -101,7 +101,7 @@ func doRequestPage(ctx context.Context, logger log.Logger, r *http.Request, dsIn
 	return dnext, nil
 }
 
-func doRequestWithPagination(ctx context.Context, logger log.Logger, r *http.Request, dsInfo datasourceInfo, params url.Values, body map[string]interface{}) (cloudMonitoringResponse, error) {
+func doRequestWithPagination(ctx context.Context, logger log.Logger, r *http.Request, dsInfo datasourceInfo, params url.Values, body map[string]any) (cloudMonitoringResponse, error) {
 	d, err := doRequestPage(ctx, logger, r, dsInfo, params, body)
 	if err != nil {
 		return cloudMonitoringResponse{}, err
@@ -136,7 +136,7 @@ func traceReq(ctx context.Context, tracer tracing.Tracer, req *backend.QueryData
 }
 
 func runTimeSeriesRequest(ctx context.Context, logger log.Logger, req *backend.QueryDataRequest,
-	s *Service, dsInfo datasourceInfo, tracer tracing.Tracer, projectName string, params url.Values, body map[string]interface{}) (*backend.DataResponse, cloudMonitoringResponse, string, error) {
+	s *Service, dsInfo datasourceInfo, tracer tracing.Tracer, projectName string, params url.Values, body map[string]any) (*backend.DataResponse, cloudMonitoringResponse, string, error) {
 	dr := &backend.DataResponse{}
 	projectName, err := s.ensureProject(ctx, dsInfo, projectName)
 	if err != nil {
@@ -309,7 +309,7 @@ func appendFrames(
 	return frames, nil
 }
 
-func generateLink(projectName string, dataSets []map[string]interface{}, start, end string) (string, error) {
+func generateLink(projectName string, dataSets []map[string]any, start, end string) (string, error) {
 	u, err := url.Parse("https://console.cloud.google.com/monitoring/metrics-explorer")
 	if err != nil {
 		return "", err
@@ -319,8 +319,8 @@ func generateLink(projectName string, dataSets []map[string]interface{}, start, 
 	rawQuery.Set("project", projectName)
 	rawQuery.Set("Grafana_deeplink", "true")
 
-	pageState := map[string]interface{}{
-		"xyChart": map[string]interface{}{
+	pageState := map[string]any{
+		"xyChart": map[string]any{
 			"constantLines":     []string{},
 			"dataSets":          dataSets,
 			"timeshiftDuration": "0s",

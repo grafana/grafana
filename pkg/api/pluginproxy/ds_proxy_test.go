@@ -109,7 +109,7 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 		require.NoError(t, err)
 
 		ds := &datasources.DataSource{
-			JsonData: simplejson.NewFromAny(map[string]interface{}{
+			JsonData: simplejson.NewFromAny(map[string]any{
 				"clientId":   "asd",
 				"dynamicUrl": "https://dynamic.grafana.com",
 				"queryParam": "apiKey",
@@ -277,7 +277,7 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 		require.NoError(t, err)
 
 		ds := &datasources.DataSource{
-			JsonData: simplejson.NewFromAny(map[string]interface{}{
+			JsonData: simplejson.NewFromAny(map[string]any{
 				"clientId": "asd",
 				"tenantId": "mytenantId",
 			}),
@@ -517,7 +517,7 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 		ds := &datasources.DataSource{
 			Type: "custom-datasource",
 			URL:  "http://host/root/",
-			JsonData: simplejson.NewFromAny(map[string]interface{}{
+			JsonData: simplejson.NewFromAny(map[string]any{
 				"oauthPassThru": true,
 			}),
 		}
@@ -535,7 +535,7 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 			TokenType:    "Bearer",
 			Expiry:       time.Now().AddDate(0, 0, 1),
 		}
-		extra := map[string]interface{}{
+		extra := map[string]any{
 			"id_token": "testidtoken",
 		}
 		token = token.WithExtra(extra)

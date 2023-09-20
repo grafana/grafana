@@ -80,9 +80,13 @@ func ProvideService(cfg *setting.Cfg, cacheService *localcache.CacheService, mig
 	db := s.engine.DB().DB
 
 	// register the go_sql_stats_connections_* metrics
-	prometheus.MustRegister(sqlstats.NewStatsCollector("grafana", db))
+	if err := prometheus.Register(sqlstats.NewStatsCollector("grafana", db)); err != nil {
+		s.log.Warn("Failed to register sqlstore stats collector", "error", err)
+	}
 	// TODO: deprecate/remove these metrics
-	prometheus.MustRegister(newSQLStoreMetrics(db))
+	if err := prometheus.Register(newSQLStoreMetrics(db)); err != nil {
+		s.log.Warn("Failed to register sqlstore metrics", "error", err)
+	}
 
 	return s, nil
 }
@@ -559,9 +563,9 @@ func (ss *SQLStore) RecursiveQueriesAreSupported() (bool, error) {
 // ITestDB is an interface of arguments for testing db
 type ITestDB interface {
 	Helper()
-	Fatalf(format string, args ...interface{})
-	Logf(format string, args ...interface{})
-	Log(args ...interface{})
+	Fatalf(format string, args ...any)
+	Logf(format string, args ...any)
+	Log(args ...any)
 }
 
 var testSQLStore *SQLStore

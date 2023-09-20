@@ -37,7 +37,7 @@ jobs:
 
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         # We must fetch at least the immediate parents so that if this is
         # a pull request then we can checkout the head.
@@ -47,7 +47,7 @@ jobs:
       name: Set go version
       uses: actions/setup-go@v4
       with:
-        go-version: '1.20.6'
+        go-version: '1.20.8'
 
     # Initializes the CodeQL tools for scanning.
     - name: Initialize CodeQL

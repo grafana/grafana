@@ -18,15 +18,20 @@ import { createPanelJSONFixture } from 'app/features/dashboard/state/__fixtures_
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
 import { DASHBOARD_DATASOURCE_PLUGIN_ID } from 'app/plugins/datasource/dashboard/types';
 
+import { PanelRepeaterGridItem } from '../scene/PanelRepeaterGridItem';
+import { PanelTimeRange } from '../scene/PanelTimeRange';
+import { RowRepeaterBehavior } from '../scene/RowRepeaterBehavior';
 import { ShareQueryDataProvider } from '../scene/ShareQueryDataProvider';
 
+import repeatingRowsAndPanelsDashboardJson from './testfiles/repeating_rows_and_panels.json';
 import {
   createDashboardSceneFromDashboardModel,
-  createVizPanelFromPanelModel,
+  buildGridItemForPanel,
   createSceneVariableFromVariableModel,
+  transformSaveModelToScene,
 } from './transformSaveModelToScene';
 
-describe('DashboardLoader', () => {
+describe('transformSaveModelToScene', () => {
   describe('when creating dashboard scene', () => {
     it('should initialize the DashboardScene with the model state', () => {
       const dash = {
@@ -128,6 +133,7 @@ describe('DashboardLoader', () => {
       const rowWithPanel = createPanelJSONFixture({
         title: 'Row with panel',
         type: 'row',
+        id: 10,
         collapsed: false,
         gridPos: {
           h: 1,
@@ -180,6 +186,7 @@ describe('DashboardLoader', () => {
       expect(body.state.children[1]).toBeInstanceOf(SceneGridRow);
       const rowWithPanelsScene = body.state.children[1] as SceneGridRow;
       expect(rowWithPanelsScene.state.title).toBe(rowWithPanel.title);
+      expect(rowWithPanelsScene.state.key).toBe('panel-10');
       expect(rowWithPanelsScene.state.children).toHaveLength(1);
       // Panel within row
       expect(rowWithPanelsScene.state.children[0]).toBeInstanceOf(SceneGridItem);
@@ -213,6 +220,7 @@ describe('DashboardLoader', () => {
           defaults: {
             unit: 'none',
           },
+          overrides: [],
         },
         pluginVersion: '1.0.0',
         transformations: [
@@ -234,24 +242,26 @@ describe('DashboardLoader', () => {
           },
         ],
       };
-      const vizPanelSceneObject = createVizPanelFromPanelModel(new PanelModel(panel));
-      const vizPanelItelf = vizPanelSceneObject.state.body as VizPanel;
-      expect(vizPanelItelf?.state.title).toBe('test');
-      expect(vizPanelItelf?.state.pluginId).toBe('test-plugin');
-      expect(vizPanelSceneObject.state.x).toEqual(0);
-      expect(vizPanelSceneObject.state.y).toEqual(0);
-      expect(vizPanelSceneObject.state.width).toEqual(12);
-      expect(vizPanelSceneObject.state.height).toEqual(8);
-      expect(vizPanelItelf?.state.options).toEqual(panel.options);
-      expect(vizPanelItelf?.state.fieldConfig).toEqual(panel.fieldConfig);
-      expect(vizPanelItelf?.state.pluginVersion).toBe('1.0.0');
+
+      const { gridItem, vizPanel } = buildGridItemForTest(panel);
+
+      expect(gridItem.state.x).toEqual(0);
+      expect(gridItem.state.y).toEqual(0);
+      expect(gridItem.state.width).toEqual(12);
+      expect(gridItem.state.height).toEqual(8);
+
+      expect(vizPanel.state.title).toBe('test');
+      expect(vizPanel.state.pluginId).toBe('test-plugin');
+      expect(vizPanel.state.options).toEqual(panel.options);
+      expect(vizPanel.state.fieldConfig).toEqual(panel.fieldConfig);
+      expect(vizPanel.state.pluginVersion).toBe('1.0.0');
+      expect(((vizPanel.state.$data as SceneDataTransformer)?.state.$data as SceneQueryRunner).state.queries).toEqual(
+        panel.targets
+      );
       expect(
-        ((vizPanelItelf.state.$data as SceneDataTransformer)?.state.$data as SceneQueryRunner).state.queries
-      ).toEqual(panel.targets);
-      expect(
-        ((vizPanelItelf.state.$data as SceneDataTransformer)?.state.$data as SceneQueryRunner).state.maxDataPoints
+        ((vizPanel.state.$data as SceneDataTransformer)?.state.$data as SceneQueryRunner).state.maxDataPoints
       ).toEqual(100);
-      expect((vizPanelItelf.state.$data as SceneDataTransformer)?.state.transformations).toEqual(panel.transformations);
+      expect((vizPanel.state.$data as SceneDataTransformer)?.state.transformations).toEqual(panel.transformations);
     });
 
     it('should initalize the VizPanel without title and transparent true', () => {
@@ -262,11 +272,25 @@ describe('DashboardLoader', () => {
         transparent: true,
       };
 
-      const gridItem = createVizPanelFromPanelModel(new PanelModel(panel));
-      const vizPanel = gridItem.state.body as VizPanel;
+      const { vizPanel } = buildGridItemForTest(panel);
 
       expect(vizPanel.state.displayMode).toEqual('transparent');
       expect(vizPanel.state.hoverHeader).toEqual(true);
+    });
+
+    it('should set PanelTimeRange when timeFrom or timeShift is present', () => {
+      const panel = {
+        type: 'test-plugin',
+        timeFrom: '2h',
+        timeShift: '1d',
+      };
+
+      const { vizPanel } = buildGridItemForTest(panel);
+      const timeRange = vizPanel.state.$timeRange as PanelTimeRange;
+
+      expect(timeRange).toBeInstanceOf(PanelTimeRange);
+      expect(timeRange.state.timeFrom).toBe('2h');
+      expect(timeRange.state.timeShift).toBe('1d');
     });
 
     it('should handle a dashboard query data source', () => {
@@ -279,8 +303,7 @@ describe('DashboardLoader', () => {
         targets: [{ refId: 'A', panelId: 10 }],
       };
 
-      const vizPanel = createVizPanelFromPanelModel(new PanelModel(panel)).state.body as VizPanel;
-
+      const { vizPanel } = buildGridItemForTest(panel);
       expect(vizPanel.state.$data).toBeInstanceOf(ShareQueryDataProvider);
     });
 
@@ -297,10 +320,30 @@ describe('DashboardLoader', () => {
         skipDataQuery: true,
       }).meta;
 
-      const gridItem = createVizPanelFromPanelModel(new PanelModel(panel));
-      const vizPanel = gridItem.state.body as VizPanel;
+      const { vizPanel } = buildGridItemForTest(panel);
 
       expect(vizPanel.state.$data).toBeUndefined();
+    });
+
+    it('When repeat is set should build PanelRepeaterGridItem', () => {
+      const panel = {
+        title: '',
+        type: 'text-plugin-34',
+        gridPos: { x: 0, y: 0, w: 8, h: 8 },
+        repeat: 'server',
+        repeatDirection: 'v',
+        maxPerRow: 8,
+      };
+
+      const gridItem = buildGridItemForPanel(new PanelModel(panel));
+      const repeater = gridItem as PanelRepeaterGridItem;
+
+      expect(repeater.state.maxPerRow).toBe(8);
+      expect(repeater.state.variableName).toBe('server');
+      expect(repeater.state.width).toBe(8);
+      expect(repeater.state.height).toBe(8);
+      expect(repeater.state.repeatDirection).toBe('v');
+      expect(repeater.state.maxPerRow).toBe(8);
     });
   });
 
@@ -372,6 +415,7 @@ describe('DashboardLoader', () => {
         hide: 0,
       });
     });
+
     it('should migrate query variable', () => {
       const variable = {
         allValue: null,
@@ -577,4 +621,29 @@ describe('DashboardLoader', () => {
       expect(() => createSceneVariableFromVariableModel(variable)).toThrow();
     });
   });
+
+  describe('Repeating rows', () => {
+    it('Should build correct scene model', () => {
+      const scene = transformSaveModelToScene({ dashboard: repeatingRowsAndPanelsDashboardJson as any, meta: {} });
+      const body = scene.state.body as SceneGridLayout;
+      const row2 = body.state.children[1] as SceneGridRow;
+
+      expect(row2.state.$behaviors?.[0]).toBeInstanceOf(RowRepeaterBehavior);
+
+      const repeatBehavior = row2.state.$behaviors?.[0] as RowRepeaterBehavior;
+      expect(repeatBehavior.state.variableName).toBe('server');
+
+      const lastRow = body.state.children[body.state.children.length - 1] as SceneGridRow;
+      expect(lastRow.state.isCollapsed).toBe(true);
+    });
+  });
 });
+
+function buildGridItemForTest(saveModel: Partial<Panel>): { gridItem: SceneGridItem; vizPanel: VizPanel } {
+  const gridItem = buildGridItemForPanel(new PanelModel(saveModel));
+  if (gridItem instanceof SceneGridItem) {
+    return { gridItem, vizPanel: gridItem.state.body as VizPanel };
+  }
+
+  throw new Error('buildGridItemForPanel to return SceneGridItem');
+}

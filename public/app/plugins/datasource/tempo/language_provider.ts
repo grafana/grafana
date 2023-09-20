@@ -118,7 +118,8 @@ export default class TempoLanguageProvider extends LanguageProvider {
   };
 
   async getOptionsV1(tag: string): Promise<Array<SelectableValue<string>>> {
-    const response = await this.request(`/api/search/tag/${tag}/values`);
+    const encodedTag = this.encodeTag(tag);
+    const response = await this.request(`/api/search/tag/${encodedTag}/values`);
     let options: Array<SelectableValue<string>> = [];
     if (response && response.tagValues) {
       options = response.tagValues.map((v: string) => ({
@@ -129,8 +130,9 @@ export default class TempoLanguageProvider extends LanguageProvider {
     return options;
   }
 
-  async getOptionsV2(tag: string, query: string): Promise<Array<SelectableValue<string>>> {
-    const response = await this.request(`/api/v2/search/tag/${tag}/values`, query ? { q: query } : {});
+  async getOptionsV2(tag: string, query?: string): Promise<Array<SelectableValue<string>>> {
+    const encodedTag = this.encodeTag(tag);
+    const response = await this.request(`/api/v2/search/tag/${encodedTag}/values`, query ? { q: query } : {});
     let options: Array<SelectableValue<string>> = [];
     if (response && response.tagValues) {
       response.tagValues.forEach((v: { type: string; value?: string }) => {
@@ -145,4 +147,16 @@ export default class TempoLanguageProvider extends LanguageProvider {
     }
     return options;
   }
+
+  /**
+   * Encode (serialize) a given tag for use in a URL.
+   *
+   * @param tag the tag to encode
+   * @returns the encoded tag
+   */
+  private encodeTag = (tag: string): string => {
+    // If we call `encodeURIComponent` only once, we still get an error when issuing a request to the backend
+    // Reference: https://stackoverflow.com/a/37456192
+    return encodeURIComponent(encodeURIComponent(tag));
+  };
 }

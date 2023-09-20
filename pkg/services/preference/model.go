@@ -100,7 +100,7 @@ func (j *PreferenceJSONData) FromDB(data []byte) error {
 	return dec.Decode(j)
 }
 
-func (j *PreferenceJSONData) Scan(val interface{}) error {
+func (j *PreferenceJSONData) Scan(val any) error {
 	switch v := val.(type) {
 	case []byte:
 		if len(v) == 0 {

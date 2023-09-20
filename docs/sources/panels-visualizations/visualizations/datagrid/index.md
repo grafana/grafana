@@ -18,7 +18,7 @@ labels:
     - oss
 menuTitle: Datagrid
 title: Datagrid
-weight: 350
+weight: 100
 ---
 
 # Datagrid

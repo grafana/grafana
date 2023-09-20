@@ -151,11 +151,13 @@ func AlertRuleGroupExportFromAlertRuleGroupWithFolderTitle(d models.AlertRuleGro
 		rules = append(rules, alert)
 	}
 	return definitions.AlertRuleGroupExport{
-		OrgID:    d.OrgID,
-		Name:     d.Title,
-		Folder:   d.FolderTitle,
-		Interval: model.Duration(time.Duration(d.Interval) * time.Second),
-		Rules:    rules,
+		OrgID:           d.OrgID,
+		Name:            d.Title,
+		Folder:          d.FolderTitle,
+		FolderUID:       d.FolderUID,
+		Interval:        model.Duration(time.Duration(d.Interval) * time.Second),
+		IntervalSeconds: d.Interval,
+		Rules:           rules,
 	}, nil
 }
 
@@ -184,6 +186,7 @@ func AlertRuleExportFromAlertRule(rule models.AlertRule) (definitions.AlertRuleE
 		UID:          rule.UID,
 		Title:        rule.Title,
 		For:          model.Duration(rule.For),
+		ForSeconds:   int64(rule.For.Seconds()),
 		Condition:    rule.Condition,
 		Data:         data,
 		DashboardUID: dashboardUID,
@@ -199,7 +202,7 @@ func AlertRuleExportFromAlertRule(rule models.AlertRule) (definitions.AlertRuleE
 // AlertQueryExportFromAlertQuery creates a definitions.AlertQueryExport DTO from models.AlertQuery.
 func AlertQueryExportFromAlertQuery(query models.AlertQuery) (definitions.AlertQueryExport, error) {
 	// We unmarshal the json.RawMessage model into a map in order to facilitate yaml marshalling.
-	var mdl map[string]interface{}
+	var mdl map[string]any
 	err := json.Unmarshal(query.Model, &mdl)
 	if err != nil {
 		return definitions.AlertQueryExport{}, err
@@ -207,12 +210,13 @@ func AlertQueryExportFromAlertQuery(query models.AlertQuery) (definitions.AlertQ
 	return definitions.AlertQueryExport{
 		RefID:     query.RefID,
 		QueryType: query.QueryType,
-		RelativeTimeRange: definitions.RelativeTimeRange{
-			From: definitions.Duration(query.RelativeTimeRange.From),
-			To:   definitions.Duration(query.RelativeTimeRange.To),
+		RelativeTimeRange: definitions.RelativeTimeRangeExport{
+			FromSeconds: int64(time.Duration(query.RelativeTimeRange.From).Seconds()),
+			ToSeconds:   int64(time.Duration(query.RelativeTimeRange.To).Seconds()),
 		},
 		DatasourceUID: query.DatasourceUID,
 		Model:         mdl,
+		ModelString:   string(query.Model),
 	}, nil
 }
 

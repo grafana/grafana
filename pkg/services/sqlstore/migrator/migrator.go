@@ -239,6 +239,7 @@ func (mg *Migrator) run() (err error) {
 }
 
 func (mg *Migrator) exec(m Migration, sess *xorm.Session) error {
+	start := time.Now()
 	mg.Logger.Info("Executing migration", "id", m.Id())
 
 	condition := m.GetCondition()
@@ -271,9 +272,11 @@ func (mg *Migrator) exec(m Migration, sess *xorm.Session) error {
 	}
 
 	if err != nil {
-		mg.Logger.Error("Executing migration failed", "id", m.Id(), "error", err)
+		mg.Logger.Error("Executing migration failed", "id", m.Id(), "error", err, "duration", time.Since(start))
 		return err
 	}
+
+	mg.Logger.Info("Migration successfully executed", "id", m.Id(), "duration", time.Since(start))
 
 	return nil
 }
