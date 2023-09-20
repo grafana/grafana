@@ -26,7 +26,7 @@ You use the Service Graph to detect performance issues; track increases in error
 
 ## Display the Service Graph
 
-1. [Configure Grafana Agent](/docs/tempo/latest/grafana-agent/service-graphs/#quickstart) or [Tempo or GET](/docs/tempo/latest/metrics-generator/service_graphs/#tempo) to generate Service Graph data.
+1. [Configure Grafana Agent](/docs/tempo/latest/configuration/grafana-agent/) or [Tempo or GET](/docs/tempo/latest/metrics-generator/service_graphs/#tempo) to generate Service Graph data.
 1. Link a Prometheus data source in the Tempo data source's [Service Graph]({{< relref "./configure-tempo-data-source#configure-service-graph" >}}) settings.
 1. Navigate to [Explore][explore].
 1. Select the Tempo data source.
