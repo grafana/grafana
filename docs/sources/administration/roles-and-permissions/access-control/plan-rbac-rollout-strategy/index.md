@@ -331,18 +331,6 @@ In the scenario where you want users to grant access by the team they belong to,
 
 A user will be added to the default organization automatically but won't have any permissions until assigned to a team.
 
-### Allow user to access only to a specific dashboard
-
-To grant a user access to a particular dashboard, we suggest starting with the `No Basic Role` and then assigning the necessary permissions.
-Below is a list of permissions required to access a dashboard:
-
-1. The dashboard owner must give permission to the user.
-1. The admin must grant the following permissions to the user:
-   - `annotations:read`
-   - `datasource:read`
-
-Please note that the permissions listed above are the minimum required to access the dashboard. It's important to keep in mind that if the dashboard has multiple features, additional permissions may be required beyond those listed here.
-
 ### Reduce scope of service accounts
 
 Using Service Accounts is an efficient way to facilitate M2M communications. However, they can pose a security threat if not scoped appropriately. To limit the scope of a service account, you can begin by creating a Service Account with `No Basic Role` and then assign the necessary permissions for the account.

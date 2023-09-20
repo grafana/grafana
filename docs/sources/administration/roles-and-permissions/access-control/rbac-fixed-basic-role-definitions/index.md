@@ -166,4 +166,3 @@ The following table lists the default RBAC OnCall role assignments to the basic 
 | Admin         | `plugins:grafana-oncall-app:admin`  | Default [Grafana organization administrator]({{< relref "../#basic-roles" >}}) assignments.             |
 | Editor        | `plugins:grafana-oncall-app:editor` | Default [Editor]({{< relref "../#basic-roles" >}}) assignments.                                         |
 | Viewer        | `plugins:grafana-oncall-app:reader` | Default [Viewer]({{< relref "../#basic-roles" >}}) assignments.                                         |
-| None          | `plugins:grafana-oncall-app:none`   | Default [None]({{< relref "../#basic-roles" >}}) assignments.                                           |
