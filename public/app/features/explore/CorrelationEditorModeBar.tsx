@@ -105,6 +105,23 @@ export const CorrelationEditorModeBar = ({ panes }: { panes: Array<[string, Expl
     );
   };
 
+  const saveCorrelation = (skipPostConfirmAction: boolean) => {
+    dispatch(saveCurrentCorrelation(correlationDetails?.label, correlationDetails?.description));
+    if (!skipPostConfirmAction && correlationDetails?.postConfirmAction !== undefined) {
+      const { exploreId, action, changeDatasourceUid } = correlationDetails?.postConfirmAction;
+      if (action === CORRELATION_EDITOR_POST_CONFIRM_ACTION.CLOSE_PANE) {
+        closePaneAndReset(exploreId);
+      } else if (
+        action === CORRELATION_EDITOR_POST_CONFIRM_ACTION.CHANGE_DATASOURCE &&
+        changeDatasourceUid !== undefined
+      ) {
+        changeDatasourceAndReset(exploreId, changeDatasourceUid);
+      }
+    } else {
+      dispatch(changeCorrelationEditorDetails({ editorMode: false, dirty: false, isExiting: false }));
+    }
+  };
+
   return (
     <>
       {/* Handle navigating outside of Explore */}
@@ -154,20 +171,7 @@ export const CorrelationEditorModeBar = ({ panes }: { panes: Array<[string, Expl
             setShowSavePrompt(false);
           }}
           onSave={() => {
-            dispatch(saveCurrentCorrelation(correlationDetails?.label, correlationDetails?.description));
-            if (correlationDetails?.postConfirmAction !== undefined) {
-              const { exploreId, action, changeDatasourceUid } = correlationDetails?.postConfirmAction;
-              if (action === CORRELATION_EDITOR_POST_CONFIRM_ACTION.CLOSE_PANE) {
-                closePaneAndReset(exploreId);
-              } else if (
-                action === CORRELATION_EDITOR_POST_CONFIRM_ACTION.CHANGE_DATASOURCE &&
-                changeDatasourceUid !== undefined
-              ) {
-                changeDatasourceAndReset(exploreId, changeDatasourceUid);
-              }
-            } else {
-              dispatch(changeCorrelationEditorDetails({ editorMode: false, dirty: false, isExiting: false }));
-            }
+            saveCorrelation(false);
           }}
         />
       )}
@@ -182,8 +186,7 @@ export const CorrelationEditorModeBar = ({ panes }: { panes: Array<[string, Expl
             fill="outline"
             className={correlationDetails?.canSave ? styles.buttonColor : styles.disabledButtonColor}
             onClick={() => {
-              dispatch(changeCorrelationEditorDetails({ dirty: false, editorMode: false, isExiting: false }));
-              dispatch(saveCurrentCorrelation(correlationDetails?.label, correlationDetails?.description));
+              saveCorrelation(true);
             }}
           >
             Save

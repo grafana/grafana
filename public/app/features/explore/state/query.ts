@@ -1286,16 +1286,21 @@ export function saveCurrentCorrelation(label?: string, description?: string): Th
     const keys = Object.keys(getState().explore!.panes);
     const sourcePane = getState().explore!.panes[keys[0]]!;
     const targetPane = getState().explore!.panes[keys[1]]!;
+    const sourceDatasourceRef = sourcePane.datasourceInstance?.meta.mixed
+      ? sourcePane.queries[0].datasource
+      : sourcePane.datasourceInstance?.getRef();
+    const targetDataSourceRef = targetPane.datasourceInstance?.meta.mixed
+      ? targetPane.queries[0].datasource
+      : targetPane.datasourceInstance?.getRef();
 
-    if (
-      sourcePane.datasourceInstance?.uid &&
-      targetPane.datasourceInstance?.uid &&
-      targetPane.correlationEditorHelperData?.resultField
-    ) {
+    const sourceDatasource = await getDataSourceSrv().get(sourceDatasourceRef);
+    const targetDatasource = await getDataSourceSrv().get(targetDataSourceRef);
+
+    if (sourceDatasource?.uid && targetDatasource?.uid && targetPane.correlationEditorHelperData?.resultField) {
       const correlation: CreateCorrelationParams = {
-        sourceUID: sourcePane.datasourceInstance.uid,
-        targetUID: targetPane.datasourceInstance.uid,
-        label: label || `${sourcePane.datasourceInstance.name} to ${targetPane.datasourceInstance.name}`,
+        sourceUID: sourceDatasource.uid,
+        targetUID: targetDatasource.uid,
+        label: label || `${sourceDatasource?.name} to ${targetDatasource.name}`,
         description,
         config: {
           field: targetPane.correlationEditorHelperData.resultField,
@@ -1303,11 +1308,11 @@ export function saveCurrentCorrelation(label?: string, description?: string): Th
           type: 'query',
         },
       };
-      await createCorrelation(sourcePane.datasourceInstance.uid, correlation).then(async (onFulfilled) => {
+      await createCorrelation(sourceDatasource.uid, correlation).then(async (onFulfilled) => {
         if (onFulfilled) {
           await dispatch(splitClose(keys[1]));
           await dispatch(reloadCorrelations(keys[0]));
-          dispatch(runQueries({ exploreId: keys[0] }));
+          await dispatch(runQueries({ exploreId: keys[0] }));
         }
       });
     }
