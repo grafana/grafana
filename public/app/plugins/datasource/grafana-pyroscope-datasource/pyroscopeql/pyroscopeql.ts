@@ -20,7 +20,7 @@ export const languageConfiguration: languages.LanguageConfiguration = {
 export const language: languages.IMonarchLanguage = {
   ignoreCase: false,
   defaultToken: '',
-  tokenPostfix: '.phlareql',
+  tokenPostfix: '.pyroscopeql',
 
   keywords: [],
   operators: [],

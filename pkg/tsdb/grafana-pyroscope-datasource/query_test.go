@@ -1,4 +1,4 @@
-package phlare
+package pyroscope
 
 import (
 	"context"
@@ -13,7 +13,7 @@ import (
 // This is where the tests for the datasource backend live.
 func Test_query(t *testing.T) {
 	client := &FakeClient{}
-	ds := &PhlareDatasource{
+	ds := &PyroscopeDatasource{
 		client: client,
 	}
 
