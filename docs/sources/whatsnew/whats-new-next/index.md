@@ -77,3 +77,16 @@ We are gradually rolling out our new browse dashboards user interface. With this
 To learn more, refer to the following video demo.
 
 {{< video-embed src="/media/docs/grafana/2023-09-11-New-Browse-Dashboards-Enablement-Video.mp4" >}}
+
+## Temporary Credentials in CloudWatch Data Source
+
+<!-- Michael Mandrus, Ida Štambuk, Sarah Zinger  -->
+<!-- Cloud -->
+
+_Available in private preview in Grafana Cloud_
+
+`Grafana Assume Role` lets Grafana Cloud users of the CloudWatch Data Source authenticate with AWS without having to create and maintain long term AWS Users. By using the new Grafana Assume Role authentication method, you will no longer have to rotate access and secret keys in your CloudWatch Datasource. Instead Grafana Cloud customers can create an IAM Role with atrust relationship with Grafana's AWS Account and Grafana's AWS Account will then use STS to create temporary credentials to access the customer's AWS data.
+
+To learn more, refer to the [CloudWatch Authentication Documentation](/docs/grafana/next/datasources/aws-cloudwatch/aws-authentication).
+
+> > > > > > > 4c1a04626de (Cloudwatch: Add Documentation on Temporary Credentials)
