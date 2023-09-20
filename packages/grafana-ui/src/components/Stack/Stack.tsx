@@ -4,6 +4,9 @@ import { ThemeSpacingTokens } from '@grafana/data';
 
 import { Flex } from '../Flex/Flex';
 
+import { HorizontalStack } from './HorizontalStack';
+import { VerticalStack } from './VerticalStack';
+
 interface StackProps {
   direction?: 'horizontal' | 'vertical';
   gap?: ThemeSpacingTokens;
@@ -22,3 +25,5 @@ export const Stack = React.forwardRef<HTMLDivElement, React.PropsWithChildren<St
 );
 
 Stack.displayName = 'Stack';
+
+export { HorizontalStack, VerticalStack };
