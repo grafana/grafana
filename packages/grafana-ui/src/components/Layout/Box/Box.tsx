@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { ElementType, useCallback } from 'react';
+import React, { ElementType } from 'react';
 
 import { GrafanaTheme2, ThemeSpacingTokens, ThemeShape, ThemeShadows } from '@grafana/data';
 
