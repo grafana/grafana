@@ -27,10 +27,6 @@ The query editor allows you to build a query that returns the data you want to v
 There are a wide variety of styling and formatting options for each panel.
 Panels can be dragged, dropped, and resized to rearrange them on the dashboard.
 
-blah blah blah visualization and widgets...
-
-<!-- We could have widgets at same level as viz or as sub-level -->
-
 Before you add a panel, ensure that you have configured a data source.
 
 - For more information about adding and managing data sources as an administrator, refer to [Data source management][].
