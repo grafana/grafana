@@ -27,13 +27,13 @@ import {
   VizLegendOptions,
 } from '@grafana/schema';
 import { FIXED_UNIT, measureText, UPlotConfigBuilder, UPlotConfigPrepFn, UPLOT_AXIS_FONT_SIZE } from '@grafana/ui';
+import { AxisProps } from '@grafana/ui/src/components/uPlot/config/UPlotAxisBuilder';
 import { getStackingGroups } from '@grafana/ui/src/components/uPlot/utils';
 import { findField } from 'app/features/dimensions';
 
 import { BarsOptions, getConfig } from './bars';
 import { FieldConfig, Options, defaultFieldConfig } from './panelcfg.gen';
 import { BarChartDisplayValues, BarChartDisplayWarning } from './types';
-import { AxisProps } from '@grafana/ui/src/components/uPlot/config/UPlotAxisBuilder';
 
 function getBarCharScaleOrientation(orientation: VizOrientation) {
   if (orientation === VizOrientation.Vertical) {
