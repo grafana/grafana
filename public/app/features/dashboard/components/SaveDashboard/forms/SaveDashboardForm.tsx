@@ -40,6 +40,7 @@ export const SaveDashboardForm = ({
   const hasVariableChanged = useMemo(() => dashboard.hasVariableValuesChanged(), [dashboard]);
 
   const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState('');
   const styles = useStyles2(getStyles);
 
   return (
@@ -49,7 +50,7 @@ export const SaveDashboardForm = ({
           return;
         }
         setSaving(true);
-        options = { ...options, message: data.message };
+        options = { ...options, message };
         const result = await onSubmit(saveModel.clone, options, dashboard);
         if (result.status === 'success') {
           if (options.saveVariables) {
@@ -65,7 +66,6 @@ export const SaveDashboardForm = ({
       }}
     >
       {({ register, errors }) => {
-        const messageProps = register('message');
         return (
           <Stack gap={2} direction="column" alignItems="flex-start">
             {hasTimeChanged && (
@@ -94,7 +94,7 @@ export const SaveDashboardForm = ({
                 aria-label={selectors.pages.SaveDashboardModal.saveVariables}
               />
             )}
-            <div className={styles.changesDescription}>
+            <div className={styles.message}>
               {config.featureToggles.dashgpt && (
                 <GenAIDashboardChangesButton
                   onGenerate={(text) => {
@@ -102,21 +102,19 @@ export const SaveDashboardForm = ({
                       ...options,
                       message: text,
                     });
-                    messageProps.onChange({ currentTarget: { value: text } });
+                    setMessage(text);
                   }}
-                  diff={saveModel.diff}
                 />
               )}
               <TextArea
-                {...messageProps}
                 aria-label="message"
-                value={options.message}
+                value={message}
                 onChange={(e) => {
                   onOptionsChange({
                     ...options,
                     message: e.currentTarget.value,
                   });
-                  messageProps.onChange(e);
+                  setMessage(e.currentTarget.value);
                 }}
                 placeholder="Add a note to describe your changes."
                 autoFocus
@@ -147,7 +145,7 @@ export const SaveDashboardForm = ({
 
 function getStyles(theme: GrafanaTheme2) {
   return {
-    changesDescription: css`
+    message: css`
       display: flex;
       align-items: end;
       flex-direction: column;

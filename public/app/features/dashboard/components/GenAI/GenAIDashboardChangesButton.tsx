@@ -1,60 +1,83 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 
-import { Diffs } from '../VersionHistory/utils';
+import { DashboardModel } from '../../state';
+import { Diffs, jsonDiff } from '../VersionHistory/utils';
 
 import { GenAIButton } from './GenAIButton';
 import { Message, Role } from './utils';
 
 interface GenAIDashboardChangesButtonProps {
+  dashboard: DashboardModel;
   onGenerate: (title: string, isDone: boolean) => void;
-  diff: Diffs;
 }
 
-const CHANGES_GENERATION_STANDARD_PROMPT =
-  'You are an expert in Grafana Dashboards.' +
-  'Your goal is to write a description of the changes for a dashboard.' +
-  'When refering to panel changes, use the panel title.' +
-  'Group all the positioning changes together under the title "Panel position changes".' +
-  'Group changes when all panels are affected.' +
-  'Do not mention line number.' +
-  'Refer to templating element as variables.' +
-  'Try to make it as short as possible.' +
-  'Ignore the changes related to plugin version and schema version.';
+const CHANGES_GENERATION_STANDARD_PROMPT = [
+  'You are an expert in Grafana Dashboards',
+  'Your goal is to write a description of the changes for a dashboard',
+  'When refering to panel changes, use the panel title',
+  'When using panel title, wrap it with double quotes',
+  'Group all the positioning changes together under the title "Panel position changes"',
+  'Group changes when all panels are affected',
+  'Do not mention line number',
+  'Do not mention values when describing changes, only the property that have changed',
+  'Refer to templating elements as variables',
+  'Ignore and never mention "getVariables" property changes',
+  'Ignore and never mention changes about plugin version',
+  'Try to make it as short as possible.',
+].join('. ');
 
-export const GenAIDashboardChangesButton = ({ onGenerate, diff }: GenAIDashboardChangesButtonProps) => {
-  function getMessages(): Message[] {
-    return [
-      {
-        content: CHANGES_GENERATION_STANDARD_PROMPT,
-        role: Role.system,
-      },
-      {
-        content: 'The following messages repfresents is the list of the changes:',
-        role: Role.system,
-      },
-      ...getDiffMessages(diff),
-    ];
-  }
+export const GenAIDashboardChangesButton = ({ dashboard, onGenerate }: GenAIDashboardChangesButtonProps) => {
+  const messages = useMemo(() => getMessages(dashboard), [dashboard]);
 
-  return <GenAIButton
-    messages={getMessages()}
-    onReply={onGenerate}
-    loadingText={'Generating title'}
-    temperature={0}
-  />;
+  return <GenAIButton messages={messages} onReply={onGenerate} loadingText={'Generating title'} temperature={0} />;
 };
 
-function getDiffMessages(diff: Diffs): Message[] {
-  return Object.entries(diff)
-    .map(([key, value]) => value)
-    .map((diff) => {
-      let content;
-      try {
-        content = JSON.stringify(diff, null, 2);
-      } catch (e) {
-        content = '';
-      }
-      return { content, role: Role.system };
-    })
-    .filter((message) => !!message.content);
+function getMessages(dashboard: DashboardModel): Message[] {
+  const { userChanges, migrationChanges } = getChanges(dashboard);
+
+  return [
+    {
+      content: CHANGES_GENERATION_STANDARD_PROMPT,
+      role: Role.system,
+    },
+    {
+      content: `This is the list of panel names, when refering to a panel, please use the title: ${JSON.stringify(
+        dashboard.panels.map((panel) => panel.title)
+      )}`,
+      role: Role.system,
+    },
+    {
+      content: `Group the following diff under "User changes" as a bullet list: ${JSON.stringify(userChanges)}`,
+      role: Role.system,
+    },
+    {
+      content: `Group the following diff under "Migration changes" as a bullet list: ${JSON.stringify(
+        migrationChanges
+      )}`,
+      role: Role.system,
+    },
+  ];
+}
+
+/**
+ * Diff the current dashboard with the original dashboard and the dashboard after migration
+ * to split the changes into user changes and migration changes.
+ * * User changes: changes made by the user
+ * * Migration changes: changes made by the DashboardMigrator after opening the dashboard
+ *
+ * @param dashboard current dashboard to be saved
+ * @returns user changes and migration changes
+ */
+function getChanges(dashboard: DashboardModel): {
+  userChanges: Diffs;
+  migrationChanges: Diffs;
+} {
+  const currentDashboard = dashboard.getSaveModelClone()!;
+  const originalDashboard = dashboard.getOriginalDashboard()!;
+  const dashboardAfterMigration = new DashboardModel(originalDashboard).getSaveModelClone();
+
+  return {
+    userChanges: jsonDiff(dashboardAfterMigration, currentDashboard),
+    migrationChanges: jsonDiff(originalDashboard, dashboardAfterMigration),
+  };
 }

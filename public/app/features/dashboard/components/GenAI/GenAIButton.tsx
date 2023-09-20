@@ -12,7 +12,7 @@ export interface GenAIButtonProps {
   onClick?: (e: React.MouseEvent<HTMLButtonElement>) => void;
   messages: Message[];
   onReply: (response: string, isDone: boolean) => void;
-  temperature?: number,
+  temperature?: number;
 }
 
 export const GenAIButton = ({
