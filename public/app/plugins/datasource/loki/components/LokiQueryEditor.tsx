@@ -21,7 +21,7 @@ import { buildVisualQueryFromString } from '../querybuilder/parsing';
 import { changeEditorMode, getQueryWithDefaults } from '../querybuilder/state';
 import { LokiQuery, QueryStats } from '../types';
 
-import { getStats, shouldUpdateStats } from './stats';
+import { shouldUpdateStats } from './stats';
 import { LokiQueryEditorProps } from './types';
 
 export const testIds = {
@@ -107,7 +107,7 @@ export const LokiQueryEditor = React.memo<LokiQueryEditorProps>((props) => {
     );
     if (update) {
       const makeAsyncRequest = async () => {
-        const stats = await getStats(datasource, query);
+        const stats = await datasource.getStats(query);
         setQueryStats(stats);
       };
       makeAsyncRequest();

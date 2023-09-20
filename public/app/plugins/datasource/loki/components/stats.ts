@@ -1,21 +1,6 @@
 import { DateTime, isDateTime, TimeRange } from '@grafana/data';
 
-import { LokiDatasource } from '../datasource';
-import { LokiQuery, LokiQueryType, QueryStats } from '../types';
-
-export async function getStats(datasource: LokiDatasource, query: LokiQuery): Promise<QueryStats | null> {
-  if (!query) {
-    return null;
-  }
-
-  const response = await datasource.getQueryStats(query);
-
-  if (!response) {
-    return null;
-  }
-
-  return Object.values(response).every((v) => v === 0) ? null : response;
-}
+import { LokiQueryType } from '../types';
 
 /**
  * This function compares two time values. If the first is absolute, it compares them using `DateTime.isSame`.

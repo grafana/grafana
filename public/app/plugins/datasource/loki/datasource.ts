@@ -538,6 +538,20 @@ export class LokiDatasource
     return this.getTimeRangeParams();
   }
 
+  async getStats(query: LokiQuery): Promise<QueryStats | null> {
+    if (!query) {
+      return null;
+    }
+
+    const response = await this.getQueryStats(query);
+
+    if (!response) {
+      return null;
+    }
+
+    return Object.values(response).every((v) => v === 0) ? null : response;
+  }
+
   async metricFindQuery(query: LokiVariableQuery | string) {
     if (!query) {
       return Promise.resolve([]);

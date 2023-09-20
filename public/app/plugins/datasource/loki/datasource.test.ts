@@ -1493,6 +1493,62 @@ describe('applyTemplateVariables', () => {
   });
 });
 
+describe('makeStatsRequest', () => {
+  const datasource = createLokiDatasource();
+  let query: LokiQuery;
+
+  beforeEach(() => {
+    query = { refId: 'A', expr: '', queryType: LokiQueryType.Range };
+  });
+
+  it('should return null if there is no query', () => {
+    query.expr = '';
+    expect(datasource.getStats(query)).resolves.toBe(null);
+  });
+
+  it('should return null if the query is invalid', () => {
+    query.expr = '{job="grafana",';
+    expect(datasource.getStats(query)).resolves.toBe(null);
+  });
+
+  it('should return null if the response has no data', () => {
+    query.expr = '{job="grafana"}';
+    datasource.getQueryStats = jest.fn().mockResolvedValue({ streams: 0, chunks: 0, bytes: 0, entries: 0 });
+    expect(datasource.getStats(query)).resolves.toBe(null);
+  });
+
+  it('should return the stats if the response has data', () => {
+    query.expr = '{job="grafana"}';
+
+    datasource.getQueryStats = jest
+      .fn()
+      .mockResolvedValue({ streams: 1, chunks: 12611, bytes: 12913664, entries: 78344 });
+    expect(datasource.getStats(query)).resolves.toEqual({
+      streams: 1,
+      chunks: 12611,
+      bytes: 12913664,
+      entries: 78344,
+    });
+  });
+
+  it('should support queries with variables', () => {
+    query.expr = 'count_over_time({job="grafana"}[$__interval])';
+
+    datasource.interpolateString = jest
+      .fn()
+      .mockImplementationOnce((value: string) => value.replace('$__interval', '1h'));
+    datasource.getQueryStats = jest
+      .fn()
+      .mockResolvedValue({ streams: 1, chunks: 12611, bytes: 12913664, entries: 78344 });
+    expect(datasource.getStats(query)).resolves.toEqual({
+      streams: 1,
+      chunks: 12611,
+      bytes: 12913664,
+      entries: 78344,
+    });
+  });
+});
+
 describe('getTimeRange*()', () => {
   it('exposes the current time range', () => {
     const ds = createLokiDatasource();

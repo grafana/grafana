@@ -1,9 +1,8 @@
 import { dateTime, getDefaultTimeRange } from '@grafana/data';
 
-import { createLokiDatasource } from '../mocks';
-import { LokiQuery, LokiQueryType } from '../types';
+import { LokiQueryType } from '../types';
 
-import { getStats, shouldUpdateStats } from './stats';
+import { shouldUpdateStats } from './stats';
 
 describe('shouldUpdateStats', () => {
   const timerange = getDefaultTimeRange();
@@ -58,61 +57,5 @@ describe('shouldUpdateStats', () => {
     const prevQuery = '{job="grafana"}';
     prevQueryType = LokiQueryType.Instant;
     expect(shouldUpdateStats(query, prevQuery, timerange, timerange, queryType, prevQueryType)).toBe(true);
-  });
-});
-
-describe('makeStatsRequest', () => {
-  const datasource = createLokiDatasource();
-  let query: LokiQuery;
-
-  beforeEach(() => {
-    query = { refId: 'A', expr: '', queryType: LokiQueryType.Range };
-  });
-
-  it('should return null if there is no query', () => {
-    query.expr = '';
-    expect(getStats(datasource, query)).resolves.toBe(null);
-  });
-
-  it('should return null if the query is invalid', () => {
-    query.expr = '{job="grafana",';
-    expect(getStats(datasource, query)).resolves.toBe(null);
-  });
-
-  it('should return null if the response has no data', () => {
-    query.expr = '{job="grafana"}';
-    datasource.getQueryStats = jest.fn().mockResolvedValue({ streams: 0, chunks: 0, bytes: 0, entries: 0 });
-    expect(getStats(datasource, query)).resolves.toBe(null);
-  });
-
-  it('should return the stats if the response has data', () => {
-    query.expr = '{job="grafana"}';
-
-    datasource.getQueryStats = jest
-      .fn()
-      .mockResolvedValue({ streams: 1, chunks: 12611, bytes: 12913664, entries: 78344 });
-    expect(getStats(datasource, query)).resolves.toEqual({
-      streams: 1,
-      chunks: 12611,
-      bytes: 12913664,
-      entries: 78344,
-    });
-  });
-
-  it('should support queries with variables', () => {
-    query.expr = 'count_over_time({job="grafana"}[$__interval])';
-
-    datasource.interpolateString = jest
-      .fn()
-      .mockImplementationOnce((value: string) => value.replace('$__interval', '1h'));
-    datasource.getQueryStats = jest
-      .fn()
-      .mockResolvedValue({ streams: 1, chunks: 12611, bytes: 12913664, entries: 78344 });
-    expect(getStats(datasource, query)).resolves.toEqual({
-      streams: 1,
-      chunks: 12611,
-      bytes: 12913664,
-      entries: 78344,
-    });
   });
 });
