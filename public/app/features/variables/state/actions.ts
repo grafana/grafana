@@ -364,10 +364,17 @@ export const processVariable = (
     await processVariableDependencies(variable, getState());
 
     const urlValue = queryParams[VARIABLE_PREFIX + variable.name];
-    if (urlValue !== void 0) {
+    if (urlValue !== undefined) {
       const stringUrlValue = ensureStringValues(urlValue);
-      await variableAdapters.get(variable.type).setValueFromUrl(variable, stringUrlValue);
-      return;
+      if (variable.type === 'custom') {
+        if (variable.options.some((o) => o.value === stringUrlValue)) {
+          await variableAdapters.get(variable.type).setValueFromUrl(variable, stringUrlValue);
+          return;
+        }
+      } else {
+        await variableAdapters.get(variable.type).setValueFromUrl(variable, stringUrlValue);
+        return;
+      }
     }
 
     if (variable.hasOwnProperty('refresh')) {
