@@ -2,8 +2,9 @@ import { css } from '@emotion/css';
 import React, { useEffect, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Button, Spinner, useStyles2, Link, Tooltip, Toggletip } from '@grafana/ui';
+import { Button, Spinner, useStyles2, Link, Tooltip, Toggletip, Text } from '@grafana/ui';
 
+import { GenAIHistory } from './GenAIHistory';
 import { Message, generateTextWithLLM, isLLMPluginEnabled } from './utils';
 
 export interface GenAIButtonProps {
@@ -76,34 +77,25 @@ export const GenAIButton = ({
     return buttonText;
   };
 
-  const renderHistory = () => {
-    return (
-      <div>
-        {history.map((item, index) => (
-          <div key={index}>{item}</div>
-        ))}
-      </div>
-    );
-  };
+  const button = (
+    <Button icon={getIcon()} onClick={onGenerate} fill="text" size="sm" disabled={loading || !enabled}>
+      {getText()}
+    </Button>
+  );
 
+  // @TODO Fix React warning for Tooltip ref
   const renderButton = () => {
     if (history.length > 0) {
+      const title = <Text element="p">{toggleTipTitle}</Text>;
+
       return (
-        <Toggletip title={toggleTipTitle} content={renderHistory} placement="left">
-          {getButton()}
+        <Toggletip title={title} content={<GenAIHistory history={history} />} placement="bottom-start">
+          {button}
         </Toggletip>
       );
     }
 
-    return getButton();
-  };
-
-  const getButton = () => {
-    return (
-      <Button icon={getIcon()} onClick={onGenerate} fill="text" size="sm" disabled={loading || !enabled}>
-        {getText()}
-      </Button>
-    );
+    return button;
   };
 
   return (

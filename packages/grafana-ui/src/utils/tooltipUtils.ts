@@ -45,7 +45,7 @@ export function buildTooltipTheme(
       padding: theme.spacing(tooltipPadding.topBottom, tooltipPadding.rightLeft),
       transition: 'opacity 0.3s',
       zIndex: theme.zIndex.tooltip,
-      maxWidth: '400px',
+      maxWidth: '550px',
       overflowWrap: 'break-word',
 
       "&[data-popper-interactive='false']": {
