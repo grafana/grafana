@@ -80,7 +80,7 @@ func TestIntegrationReadCorrelation(t *testing.T) {
 		Config: correlations.CorrelationConfig{
 			Type:   correlations.ConfigTypeQuery,
 			Field:  "foo",
-			Target: map[string]interface{}{},
+			Target: map[string]any{},
 			Transformations: []correlations.Transformation{
 				{Type: "logfmt"},
 			},

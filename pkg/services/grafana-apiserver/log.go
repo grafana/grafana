@@ -22,7 +22,7 @@ func (l *logAdapter) WithName(name string) logr.LogSink {
 	return l
 }
 
-func (l *logAdapter) WithValues(keysAndValues ...interface{}) logr.LogSink {
+func (l *logAdapter) WithValues(keysAndValues ...any) logr.LogSink {
 	l.log = l.log.New(keysAndValues...)
 	return l
 }
@@ -35,7 +35,7 @@ func (l *logAdapter) Enabled(level int) bool {
 	return level <= 5
 }
 
-func (l *logAdapter) Info(level int, msg string, keysAndValues ...interface{}) {
+func (l *logAdapter) Info(level int, msg string, keysAndValues ...any) {
 	msg = strings.TrimSpace(msg)
 	if level < 1 {
 		l.log.Info(msg, keysAndValues...)
@@ -44,7 +44,7 @@ func (l *logAdapter) Info(level int, msg string, keysAndValues ...interface{}) {
 	l.log.Debug(msg, keysAndValues...)
 }
 
-func (l *logAdapter) Error(err error, msg string, keysAndValues ...interface{}) {
+func (l *logAdapter) Error(err error, msg string, keysAndValues ...any) {
 	msg = strings.TrimSpace(msg)
 	l.log.Error(msg, keysAndValues...)
 }

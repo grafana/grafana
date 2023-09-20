@@ -99,6 +99,6 @@ func (s *Service) cleanup(ctx context.Context) {
 	})
 
 	if err != nil {
-		s.logger.Error("failed to lock and execute cleanup of old login attempts", "error", err)
+		s.logger.Error("Failed to lock and execute cleanup of old login attempts", "error", err)
 	}
 }

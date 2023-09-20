@@ -115,7 +115,7 @@ func canNotFetchExpiredItems(t *testing.T, client CacheStorage) {
 }
 
 func TestCollectUsageStats(t *testing.T) {
-	wantMap := map[string]interface{}{
+	wantMap := map[string]any{
 		"stats.remote_cache.redis.count":           1,
 		"stats.remote_cache.encrypt_enabled.count": 1,
 	}

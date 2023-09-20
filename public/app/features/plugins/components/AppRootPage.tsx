@@ -3,12 +3,13 @@ import { AnyAction, createSlice, PayloadAction } from '@reduxjs/toolkit';
 import React, { useCallback, useEffect, useMemo, useReducer } from 'react';
 import { useLocation, useRouteMatch } from 'react-router-dom';
 
-import { AppEvents, AppPlugin, AppPluginMeta, NavModel, NavModelItem, PluginType } from '@grafana/data';
+import { AppEvents, AppPlugin, AppPluginMeta, NavModel, NavModelItem, OrgRole, PluginType } from '@grafana/data';
 import { config, locationSearchToObject } from '@grafana/runtime';
+import { Alert } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { useGrafana } from 'app/core/context/GrafanaContext';
-import { appEvents } from 'app/core/core';
+import { appEvents, contextSrv } from 'app/core/core';
 import { getNotFoundNav, getWarningNav, getExceptionNav } from 'app/core/navigation/errorModels';
 
 import { getPluginSettings } from '../pluginSettings';
@@ -80,6 +81,39 @@ export function AppRootPage({ pluginId, pluginNavSection }: Props) {
       path={location.pathname}
     />
   );
+
+  // Because of the fallback at plugin routes, we need to check
+  // if the user has permissions to see the plugin page.
+  const userHasPermissionsToPluginPage = () => {
+    // Check if plugin does not have any configurations or the user is Grafana Admin
+    if (!plugin.meta?.includes || contextSrv.isGrafanaAdmin || contextSrv.user.orgRole === OrgRole.Admin) {
+      return true;
+    }
+
+    const pluginInclude = plugin.meta?.includes.find((include) => include.path === pluginRoot.props.path);
+    // Check if include configuration contains current path
+    if (!pluginInclude) {
+      return true;
+    }
+    const pathRole: string = pluginInclude?.role || '';
+    // Check if role exists  and give access to Editor to be able to see Viewer pages
+    if (!pathRole || (contextSrv.isEditor && pathRole === OrgRole.Viewer)) {
+      return true;
+    }
+    return contextSrv.hasRole(pathRole);
+  };
+
+  const AccessDenied = () => {
+    return (
+      <Alert severity="warning" title="Access denied">
+        You do not have permission to see this page.
+      </Alert>
+    );
+  };
+
+  if (!userHasPermissionsToPluginPage()) {
+    return <AccessDenied />;
+  }
 
   if (!pluginNav) {
     return <PluginPageContext.Provider value={context}>{pluginRoot}</PluginPageContext.Provider>;

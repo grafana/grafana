@@ -1,14 +1,13 @@
-import { e2e } from '@grafana/e2e';
+import { e2e } from '../utils';
 
 const DASHBOARD_ID = 'P2jR04WVk';
 
-e2e.scenario({
-  describeName: 'Geomap spatial operations - auto transforms',
-  itName: 'Tests location auto option',
-  addScenarioDataSource: false,
-  addScenarioDashBoard: false,
-  skipScenario: false,
-  scenario: () => {
+describe('Geomap spatial operations', () => {
+  beforeEach(() => {
+    e2e.flows.login(e2e.env('USERNAME'), e2e.env('PASSWORD'));
+  });
+
+  it('Tests location auto option', () => {
     e2e.flows.openDashboard({ uid: DASHBOARD_ID, queryParams: { editPanel: 1 } });
     e2e.components.Tab.title('Transform').should('be.visible').click();
 
@@ -25,16 +24,9 @@ e2e.scenario({
       .within(() => {
         cy.contains('Point').should('be.visible');
       });
-  },
-});
+  });
 
-e2e.scenario({
-  describeName: 'Geomap spatial operations - coords transforms ',
-  itName: 'Tests location coords option',
-  addScenarioDataSource: false,
-  addScenarioDashBoard: false,
-  skipScenario: false,
-  scenario: () => {
+  it('Tests location coords option', () => {
     e2e.flows.openDashboard({ uid: DASHBOARD_ID, queryParams: { editPanel: 1 } });
     e2e.components.Tab.title('Transform').should('be.visible').click();
 
@@ -56,16 +48,9 @@ e2e.scenario({
       .within(() => {
         cy.contains('Point').should('be.visible');
       });
-  },
-});
+  });
 
-e2e.scenario({
-  describeName: 'Geomap spatial operations - geohash transforms ',
-  itName: 'Tests geoshash field column appears in table view',
-  addScenarioDataSource: false,
-  addScenarioDashBoard: false,
-  skipScenario: false,
-  scenario: () => {
+  it('Tests geoshash field column appears in table view', () => {
     e2e.flows.openDashboard({ uid: DASHBOARD_ID, queryParams: { editPanel: 1 } });
     e2e.components.Tab.title('Transform').should('be.visible').click();
 
@@ -84,16 +69,9 @@ e2e.scenario({
       .within(() => {
         cy.contains('State 1').should('be.visible');
       });
-  },
-});
+  });
 
-e2e.scenario({
-  describeName: 'Geomap spatial operations - lookup transforms ',
-  itName: 'Tests location lookup option',
-  addScenarioDataSource: false,
-  addScenarioDashBoard: false,
-  skipScenario: false,
-  scenario: () => {
+  it('Tests location lookup option', () => {
     e2e.flows.openDashboard({ uid: DASHBOARD_ID, queryParams: { editPanel: 1 } });
     e2e.components.Tab.title('Transform').should('be.visible').click();
 
@@ -115,5 +93,5 @@ e2e.scenario({
       .within(() => {
         cy.contains('Geometry').should('be.visible');
       });
-  },
+  });
 });

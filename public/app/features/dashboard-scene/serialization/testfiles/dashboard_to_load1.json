@@ -33,57 +33,17 @@
             "mode": "palette-classic"
           },
           "custom": {
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "drawStyle": "line",
             "fillOpacity": 0,
             "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "auto",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
+            "lineWidth": 2
           }
         },
         "overrides": []
       },
       "gridPos": {
         "h": 8,
-        "w": 24,
-        "x": 0,
+        "w": 12,
+        "x": 12,
         "y": 0
       },
       "id": 28,
@@ -116,10 +76,6 @@
     },
     {
       "collapsed": false,
-      "datasource": {
-        "type": "testdata",
-        "uid": "PD8C576611E62080A"
-      },
       "gridPos": {
         "h": 1,
         "w": 24,
@@ -128,15 +84,6 @@
       },
       "id": 5,
       "panels": [],
-      "targets": [
-        {
-          "datasource": {
-            "type": "testdata",
-            "uid": "PD8C576611E62080A"
-          },
-          "refId": "A"
-        }
-      ],
       "title": "Row title",
       "type": "row"
     },
@@ -146,56 +93,7 @@
         "uid": "PD8C576611E62080A"
       },
       "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "drawStyle": "line",
-            "fillOpacity": 0,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "auto",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          }
-        },
+        "defaults": {},
         "overrides": []
       },
       "gridPos": {
@@ -205,18 +103,7 @@
         "y": 9
       },
       "id": 29,
-      "options": {
-        "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "mode": "single",
-          "sort": "none"
-        }
-      },
+      "options": {},
       "targets": [
         {
           "alias": "series",
@@ -233,10 +120,6 @@
       "type": "timeseries"
     },
     {
-      "datasource": {
-        "type": "testdata",
-        "uid": "PD8C576611E62080A"
-      },
       "gridPos": {
         "h": 10,
         "w": 11,
@@ -255,18 +138,6 @@
         "mode": "markdown"
       },
       "pluginVersion": "10.2.0-pre",
-      "targets": [
-        {
-          "alias": "__server_names",
-          "datasource": {
-            "type": "testdata",
-            "uid": "PD8C576611E62080A"
-          },
-          "refId": "A",
-          "scenarioId": "random_walk",
-          "seriesCount": 6
-        }
-      ],
       "title": "Transparent text panel",
       "transparent": true,
       "type": "text"

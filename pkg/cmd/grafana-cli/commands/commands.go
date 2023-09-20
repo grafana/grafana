@@ -50,12 +50,17 @@ func runDbCommand(command func(commandLine utils.CommandLine, sqlStore db.DB) er
 
 func initializeRunner(cmd *utils.ContextCommandLine) (server.Runner, error) {
 	configOptions := strings.Split(cmd.String("configOverrides"), " ")
-	runner, err := server.InitializeForCLI(setting.CommandLineArgs{
+	cfg, err := setting.NewCfgFromArgs(setting.CommandLineArgs{
 		Config:   cmd.ConfigFile(),
 		HomePath: cmd.HomePath(),
 		// tailing arguments have precedence over the options string
 		Args: append(configOptions, cmd.Args().Slice()...),
 	})
+	if err != nil {
+		return server.Runner{}, err
+	}
+
+	runner, err := server.InitializeForCLI(cfg)
 	if err != nil {
 		return server.Runner{}, fmt.Errorf("%v: %w", "failed to initialize runner", err)
 	}

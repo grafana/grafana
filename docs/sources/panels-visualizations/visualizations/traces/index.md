@@ -13,7 +13,7 @@ labels:
     - enterprise
     - oss
 title: Traces
-weight: 850
+weight: 100
 ---
 
 # Traces panel
@@ -23,8 +23,8 @@ The Traces panel visualizes traces data into a diagram that allows you to easily
 
 For more information about traces and how to use them, refer to the following documentation:
 
-- [Tracing in Explore]({{< relref "../../../explore/trace-integration/" >}})
-- [Tempo data source]({{< relref "../../../datasources/tempo/" >}})
+- [Tracing in Explore][]
+- [Tempo data source][]
 - [Getting started with Tempo](/docs/tempo/latest/getting-started)
 
 {{< figure src="/static/img/docs/explore/trace-view-9-4.png" class="docs-image--no-shadow" max-width= "900px" caption="Screenshot of the trace view" >}}
@@ -34,20 +34,20 @@ For more information about traces and how to use them, refer to the following do
 Once you have tracing data available in your Grafana stack, you can add tracing panels to your Grafana dashboards.
 
 Using a dashboard variable, `traceID`, lets you create a query to show specific traces for a given trace ID.
-For more information about dashboard variables, refer to the [Variables documentation]({{< relref "../../../dashboards/variables" >}}).
+For more information about dashboard variables, refer to the [Variables documentation][].
 
 ### Before you begin
 
 To use this procedure, you need:
 
 - A Grafana instance
-- A Tempo data source connected to your Grafana instance (see [documentation](/docs/grafana/datasources/tempo/))
+- A Tempo data source connected to your Grafana instance (refer to [documentation]({{< relref "../../../datasources/tempo" >}}))
 
 ### Add the Traces panel query
 
 To view and analyze traces data in a dashboard, you need to add the tracing panel to your dashboard and define a query using the panel editor.
 The query determines the data that is displayed in the panel.
-For more information on the panel editor, refer to the [Panel editor documentation]({{< relref "../../panel-editor-overview" >}}).
+For more information on the panel editor, refer to the [Panel editor documentation][].
 
 This procedure uses dashboard variables and templates to allow you to enter trace IDs which can then be visualized. You'll use a variable called `traceId` and add it as a template query.
 
@@ -55,7 +55,7 @@ This procedure uses dashboard variables and templates to allow you to enter trac
 1. Select **Add visualization** from a new dashboard or select **Add Panel** on an existing dashboard.
 1. Search for and select the appropriate tracing data source.
 1. In the top-right of the panel editor, select the **Visualizations** tab, search for, and select **Traces**.
-1. Under the **Panel options**, enter a **Title** for your trace panel. For more information on the panel editor, refer to the [Configure panel options documentation]({{< relref "../../configure-panel-options" >}}).
+1. Under the **Panel options**, enter a **Title** for your trace panel. For more information on the panel editor, refer to the [Configure panel options documentation][].
 1. In the query editor, select the **TraceQL** query type tab.
 1. Enter `${traceId}` in the TraceQL query field to create a dashboard variable. This variable is used as the template query.
 
@@ -114,3 +114,20 @@ You should now see a list of matching traces in the Table visualization. While s
 {{< figure src="/static/img/docs/panels/traces/screenshot-traces-trace-link.png" caption="Selecting the trace link" >}}
 
 {{< figure src="/static/img/docs/panels/traces/screenshot-traces-trace-link-follow.png" caption="Follow the trace link populates the trace ID and displays the traces view" >}}
+
+{{% docs/reference %}}
+[Tracing in Explore]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/explore/trace-integration"
+[Tracing in Explore]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/explore/trace-integration"
+
+[Tempo data source]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/datasources/tempo"
+[Tempo data source]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/datasources/tempo"
+
+[Panel editor documentation]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/panel-editor-overview"
+[Panel editor documentation]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/panel-editor-overview"
+
+[Variables documentation]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables"
+[Variables documentation]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables"
+
+[Configure panel options documentation]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/configure-panel-options"
+[Configure panel options documentation]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/configure-panel-options"
+{{% /docs/reference %}}

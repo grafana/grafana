@@ -3,10 +3,11 @@ import { merge } from 'lodash';
 import React, { useState } from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { config, reportInteraction } from '@grafana/runtime';
 import { TableCellOptions } from '@grafana/schema';
 import { Field, Select, TableCellDisplayMode, useStyles2 } from '@grafana/ui';
 
+import { INTERACTION_EVENT_NAME, INTERACTION_ITEM } from './TablePanel';
 import { BarGaugeCellOptionsEditor } from './cells/BarGaugeCellOptionsEditor';
 import { ColorBackgroundCellOptionsEditor } from './cells/ColorBackgroundCellOptionsEditor';
 import { SparklineCellOptionsEditor } from './cells/SparklineCellOptionsEditor';
@@ -42,6 +43,8 @@ export const TableCellOptionEditor = ({ value, onChange }: Props) => {
       if (settingCache[value.type] !== undefined && Object.keys(settingCache[value.type]).length > 1) {
         value = merge(value, settingCache[value.type]);
       }
+
+      reportInteraction(INTERACTION_EVENT_NAME, { item: INTERACTION_ITEM.CELL_TYPE_CHANGE, type: value.type });
 
       onChange(value);
     }

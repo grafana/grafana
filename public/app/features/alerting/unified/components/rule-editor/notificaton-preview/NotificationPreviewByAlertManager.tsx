@@ -88,7 +88,6 @@ export default withErrorBoundary(NotificationPreviewByAlertManager);
 
 const getStyles = (theme: GrafanaTheme2) => ({
   alertManagerRow: css`
-    margin-top: ${theme.spacing(2)};
     display: flex;
     flex-direction: column;
     gap: ${theme.spacing(1)};
