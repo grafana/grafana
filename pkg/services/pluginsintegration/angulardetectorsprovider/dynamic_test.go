@@ -448,19 +448,19 @@ func TestRandomSkew(t *testing.T) {
 }
 
 func TestInstrument(t *testing.T) {
-	t.Run("no error", func(t *testing.T) {
+	t.Run("success", func(t *testing.T) {
 		svc := provideDynamic(t, "")
 
-		svc.instrumentRun(time.Now(), nil)
+		svc.instrumentRun(0, nil)
 		require.Equal(t, 1, testutil.CollectAndCount(svc.metrics.successes), "should have success metric")
 		require.Equal(t, 1.0, testutil.ToFloat64(svc.metrics.successes), "should increment success metric")
 		require.Equal(t, 0, testutil.CollectAndCount(svc.metrics.failures), "should not create failure metric")
 
-		svc.instrumentRun(time.Now(), nil)
+		svc.instrumentRun(0, nil)
 		require.Equal(t, 2.0, testutil.ToFloat64(svc.metrics.successes), "should increment success metric")
 	})
 
-	t.Run("error", func(t *testing.T) {
+	t.Run("failure", func(t *testing.T) {
 		for _, tc := range []struct {
 			name           string
 			err            error
@@ -482,7 +482,7 @@ func TestInstrument(t *testing.T) {
 			t.Run(tc.name, func(t *testing.T) {
 				svc := provideDynamic(t, "")
 
-				svc.instrumentRun(time.Now(), tc.err)
+				svc.instrumentRun(0, tc.err)
 				require.Equal(t, 0.0, testutil.ToFloat64(svc.metrics.successes), "should not increment success metric")
 				require.Equal(t, 1, testutil.CollectAndCount(svc.metrics.failures), "should create failure metric")
 				require.Equalf(t, 1.0, testutil.ToFloat64(svc.metrics.failures.With(prometheus.Labels{"reason": tc.expReasonLabel})), "should increment %q failure metric", tc.expReasonLabel)
