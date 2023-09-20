@@ -171,7 +171,20 @@ export function findVariableNodeInList(allVariables: TypedVariableModel[], nodeN
   return variableNode;
 }
 
-// Some variable types have a refresh options, and it might be configured to refresh on time range change
+/**
+ * Checks if a variable is configured to refresh when the time range changes.
+ *
+ * The function supports three types of variables: 'query', 'datasource', and 'interval'.
+ * Each of these variable types can be configured to refresh based on certain conditions.
+ * For 'query' variables, we offer a UI configuration to set refresh "on time range change."
+ * For 'interval' variables, the default configuration is often set to refresh "on time range change."
+ * For 'datasource' variables, this property is assigned to their model.
+ *
+ * Note: for datasource, It's unclear if provisioned dashboards might come with this default setting for time range.
+ *
+ * @param variable - The variable object with its type and refresh setting
+ * @returns True if the variable should refresh on time range change, otherwise False
+ */
 export function isVariableOnTimeRangeConfigured(variable: TypedVariableModel) {
   return (
     (variable.type === 'query' || variable.type === 'datasource' || variable.type === 'interval') &&
