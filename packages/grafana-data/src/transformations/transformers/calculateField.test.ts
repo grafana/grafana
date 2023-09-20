@@ -245,7 +245,7 @@ describe('calculateField transformer w/ timeseries', () => {
         mode: CalculateFieldMode.Index,
         replaceFields: true,
         index: {
-          showPercentage: true,
+          asPercentile: true,
         },
       },
     };

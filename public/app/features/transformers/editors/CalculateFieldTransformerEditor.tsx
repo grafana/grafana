@@ -143,12 +143,12 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
     });
   };
 
-  onToggleRowIndexShowPercentage = () => {
+  onToggleRowIndexAsPercentile = () => {
     const { options } = this.props;
     this.props.onChange({
       ...options,
       index: {
-        showPercentage: !options.index?.showPercentage ?? false,
+        asPercentile: !options.index?.asPercentile ?? false,
       },
     });
   };
@@ -213,11 +213,11 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
       <>
         <div className="gf-form-inline">
           <LegacyForms.Switch
-            label="Show percentile"
-            tooltip="Show the row index as a percentile."
+            label="As percentile"
+            tooltip="Transform the row index as a percentile."
             labelClass="width-8"
-            checked={!!options?.showPercentage}
-            onChange={this.onToggleRowIndexShowPercentage}
+            checked={!!options?.asPercentile}
+            onChange={this.onToggleRowIndexAsPercentile}
           />
         </div>
       </>

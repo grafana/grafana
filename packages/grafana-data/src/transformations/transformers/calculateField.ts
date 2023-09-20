@@ -32,7 +32,7 @@ export interface BinaryOptions {
 }
 
 export interface IndexOptions {
-  showPercentage: boolean;
+  asPercentile: boolean;
 }
 
 const defaultReduceOptions: ReduceOptions = {
@@ -105,7 +105,7 @@ export const calculateFieldTransformer: DataTransformerInfo<CalculateFieldTransf
           return data.map((frame) => {
             const indexArr = [...Array(frame.length).keys()];
 
-            if (options.index?.showPercentage) {
+            if (options.index?.asPercentile) {
               for (let i = 0; i < indexArr.length; i++) {
                 indexArr[i] = indexArr[i] / indexArr.length;
               }
@@ -115,7 +115,7 @@ export const calculateFieldTransformer: DataTransformerInfo<CalculateFieldTransf
               name: options.alias ?? 'Row',
               type: FieldType.number,
               values: indexArr,
-              config: options.index?.showPercentage ? { unit: 'percentunit' } : {},
+              config: options.index?.asPercentile ? { unit: 'percentunit' } : {},
             };
             return {
               ...frame,
