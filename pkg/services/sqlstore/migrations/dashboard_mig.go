@@ -4,7 +4,6 @@ import (
 	. "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 )
 
-// dashboard v2
 var DashboardV2 = Table{
 	Name: "dashboard",
 	Columns: []*Column{
