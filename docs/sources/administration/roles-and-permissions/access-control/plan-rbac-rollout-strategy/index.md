@@ -31,7 +31,7 @@ Your rollout strategy should help you answer the following questions:
 
 ## Review basic role and fixed role definitions
 
-As a first step in determining your permissions rollout strategy, we recommend that you become familiar with basic role and fixed role definitions. In addition to assigning fixed roles to any user and team, you can also modify basic roles permissions, which changes what a Viewer, Editor, or Admin can do. This flexibility means that there are many combinations of role assignments for you to consider. If you have a large number of Grafana users and teams, we recommend that you make a list of which fixed roles you might want to use. Keep in mind that `No Basic Role`, a role without any permissions, cannot be modified or updated.
+As a first step in determining your permissions rollout strategy, we recommend that you become familiar with basic role and fixed role definitions. In addition to assigning fixed roles to any user and team, you can also modify basic roles permissions, which changes what a Viewer, Editor, or Admin can do. This flexibility means that there are many combinations of role assignments for you to consider. If you have a large number of Grafana users and teams, we recommend that you make a list of which fixed roles you might want to use. Keep in mind that `No Basic Role`, which is a role without permissions, cannot be modified or updated.
 
 To learn more about basic roles and fixed roles, refer to the following documentation:
 
@@ -319,27 +319,27 @@ In the scenario where you want users to have granted access by the team they bel
 3. Set the fixed roles needed for the team.
 4. Add users to the team.
 
-This way, a user will be added automatically to the default organization and have no permissions until it has been assigned to a team.
+A user will be added to the default organization automatically but won't have any permissions until assigned to a team.
 
 ### Allow user to access only to a specific dashboard
 
-In the scenario where you want to allow a user access to a specific dashboard, we recommend the `No Basic Role` as a starting point for the user and then assign the dashboard permissions to the user.
-However, in order to access the dashboard more permissions are needed other than just the dashboard. Here's a list of permissions needed in order to access a dashboard:
+To grant a user access to a particular dashboard, we suggest starting with the `No Basic Role` and then assigning the necessary permissions.
+Below is a list of permissions required to access a dashboard:
 
-1. The dashboard owner must give permission to the user
-1. The admin must grant the following permissions to the user
+1. The dashboard owner must give permission to the user.
+1. The admin must grant the following permissions to the user:
    1. annotations:read
    1. datasource:read
 
-The permissions list here are the bare minimum needed to be able to view the dashboard. However, keep in mind that if the dashboard has multiple features, the permissions needed to see the dashboard might be more than just the ones listed here.
+Please note that the permissions listed above are the minimum required to access the dashboard. It's important to keep in mind that if the dashboard has multiple features, additional permissions may be required beyond those listed here.
 
-### Reducing scope of service accounts
+### Reduce scope of service accounts
 
-Service Accounts are great tools for M2M communications. However, they are also a security risk if not properly scoped. To reduce the scope of a service account, you can create a Service Account with `No Basic Role` as a starting point and then assign the permissions needed for the service account.
+Using Service Accounts is an efficient way to facilitate M2M communications. However, they can pose a security threat if not scoped appropriately. To limit the scope of a service account, you can begin by creating a Service Account with `No Basic Role` and then assign the necessary permissions for the account.
 
 1. Head over to the Service Accounts page and add a new Service Account.
 1. Set the necessary roles for the Service Account.
    1. Set the basic role to `No Basic Role`.
    1. Set the fixed roles needed for the Service Account.
 
-This will reduce the permissions needed for the Service Account and reduce the risk of the Service Account being compromised.
+This will reduce the required permissions for the Service Account and minimize the risk of compromise.

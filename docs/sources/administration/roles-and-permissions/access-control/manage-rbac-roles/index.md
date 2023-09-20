@@ -259,7 +259,7 @@ If the default basic role definitions do not meet your requirements, you can cha
 - Determine the permissions you want to add or remove from a basic role. For more information about the permissions associated with basic roles, refer to [RBAC role definitions]({{< relref "./rbac-fixed-basic-role-definitions/#basic-role-assignments" >}}).
 
 {{% admonition type="note" %}}
-You cannot add permissions to the `No Basic Role` basic role.
+You cannot modify the `No Basic Role` permissions.
 {{% /admonition %}}
 
 **To change permissions from a basic role:**
