@@ -36,7 +36,12 @@ export const GenAIDashboardChangesButton = ({ onGenerate, diff }: GenAIDashboard
     ];
   }
 
-  return <GenAIButton messages={getMessages()} onReply={onGenerate} loadingText={'Generating title'} />;
+  return <GenAIButton
+    messages={getMessages()}
+    onReply={onGenerate}
+    loadingText={'Generating title'}
+    temperature={0}
+  />;
 };
 
 function getDiffMessages(diff: Diffs): Message[] {
