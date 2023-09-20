@@ -1,7 +1,6 @@
 import { Meta, StoryFn } from '@storybook/react';
 import React from 'react';
 
-import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { Button } from '../Button';
 import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
 import mdx from '../Toggletip/Toggletip.mdx';
@@ -11,7 +10,6 @@ import { Toggletip } from './Toggletip';
 const meta: Meta<typeof Toggletip> = {
   title: 'Overlays/Toggletip',
   component: Toggletip,
-  decorators: [withCenteredStory],
   parameters: {
     docs: {
       page: mdx,

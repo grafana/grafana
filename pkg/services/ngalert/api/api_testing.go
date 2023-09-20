@@ -89,6 +89,7 @@ func (srv TestingApiSrv) RouteTestGrafanaRuleConfig(c *contextmodel.ReqContext, 
 		Historian:               nil,
 		MaxStateSaveConcurrency: 1,
 		Tracer:                  srv.tracer,
+		Log:                     log.New("ngalert.state.manager"),
 	}
 	manager := state.NewManager(cfg)
 	includeFolder := !srv.cfg.ReservedLabels.IsReservedLabelDisabled(models.FolderTitleLabel)
