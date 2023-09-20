@@ -326,7 +326,7 @@ In the scenario where you want users to grant access by the team they belong to,
 
 1. Restart the Grafana instance.
 1. Create a team with the desired name.
-1. Set the fixed roles needed for the team.
+1. Assign fixed roles to the team.
 1. Add users to the team.
 
 A user will be added to the default organization automatically but won't have any permissions until assigned to a team.
