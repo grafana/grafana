@@ -41,6 +41,7 @@ type Query struct {
 	FolderUIDs    []string
 	Permission    dashboards.PermissionType
 	Sort          string
+	PanelTitle    string
 }
 
 type Service interface {

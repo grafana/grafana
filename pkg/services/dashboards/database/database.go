@@ -1036,6 +1036,10 @@ func (d *dashboardStore) FindDashboards(ctx context.Context, query *dashboards.F
 		filters = append(filters, searchstore.TitleFilter{Dialect: d.store.GetDialect(), Title: query.Title})
 	}
 
+	if d.features.IsEnabled(featuremgmt.FlagPanelTitleSearchInV1) && len(query.PanelTitle) > 0 {
+		filters = append(filters, searchstore.PanelTitleFilter{Dialect: d.store.GetDialect(), PanelTitle: query.PanelTitle})
+	}
+
 	if len(query.Type) > 0 {
 		filters = append(filters, searchstore.TypeFilter{Dialect: d.store.GetDialect(), Type: query.Type})
 	}

@@ -49,6 +49,15 @@ func (f TitleFilter) Where() (string, []any) {
 	return fmt.Sprintf("dashboard.title %s ?", f.Dialect.LikeStr()), []any{"%" + f.Title + "%"}
 }
 
+type PanelTitleFilter struct {
+	Dialect    migrator.Dialect
+	PanelTitle string
+}
+
+func (f PanelTitleFilter) Where() (string, []any) {
+	return fmt.Sprintf("dashboard.panel_titles %s ?", f.Dialect.LikeStr()), []any{"%" + f.PanelTitle + "%"}
+}
+
 type FolderFilter struct {
 	IDs []int64
 }

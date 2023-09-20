@@ -28,6 +28,7 @@ func (hs *HTTPServer) Search(c *contextmodel.ReqContext) response.Response {
 	page := c.QueryInt64("page")
 	dashboardType := c.Query("type")
 	sort := c.Query("sort")
+	panelTitle := c.Query("panelTitle")
 	permission := dashboards.PERMISSION_VIEW
 
 	if limit > 5000 {
@@ -84,6 +85,7 @@ func (hs *HTTPServer) Search(c *contextmodel.ReqContext) response.Response {
 		FolderUIDs:    folderUIDs,
 		Permission:    permission,
 		Sort:          sort,
+		PanelTitle:    panelTitle,
 	}
 
 	hits, err := hs.SearchService.SearchHandler(c.Req.Context(), &searchQuery)
