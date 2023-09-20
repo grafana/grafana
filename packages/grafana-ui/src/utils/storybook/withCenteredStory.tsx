@@ -1,34 +1,13 @@
 import { DecoratorFn } from '@storybook/react';
-import React from 'react';
 
-interface CenteredStoryProps {
-  children: React.ReactNode;
-  horizontal?: boolean;
-  vertical?: boolean;
-}
-const CenteredStory = ({ horizontal, vertical, children }: CenteredStoryProps) => {
-  return (
-    <div
-      style={{
-        minHeight: '100%',
-        width: '100%',
-        display: 'flex',
-        alignItems: vertical ? 'center' : 'flex-start',
-        justifyContent: horizontal ? 'center' : 'flex-start',
-      }}
-    >
-      {children}
-    </div>
-  );
-};
+/** @deprecated Stories should not be centered on the page. This decorator now does nothing */
+export const withNotCenteredStory: DecoratorFn = (story) => story();
 
-export const withNotCenteredStory: DecoratorFn = (story) => <CenteredStory>{story()}</CenteredStory>;
-export const withCenteredStory: DecoratorFn = (story) => (
-  <CenteredStory horizontal vertical>
-    {story()}
-  </CenteredStory>
-);
-export const withHorizontallyCenteredStory: DecoratorFn = (story) => (
-  <CenteredStory horizontal>{story()}</CenteredStory>
-);
-export const withVerticallyCenteredStory: DecoratorFn = (story) => <CenteredStory vertical>{story()}</CenteredStory>;
+/** @deprecated Stories should not be centered on the page. This decorator now does nothing */
+export const withCenteredStory: DecoratorFn = (story) => story();
+
+/** @deprecated Stories should not be centered on the page. This decorator now does nothing */
+export const withHorizontallyCenteredStory: DecoratorFn = (story) => story();
+
+/** @deprecated Stories should not be centered on the page. This decorator now does nothing */
+export const withVerticallyCenteredStory: DecoratorFn = (story) => story();

@@ -111,13 +111,17 @@ composableKinds: DataQuery: {
 					resultFormat?: #ResultFormat
 					// Array of resource URIs to be queried.
 					resources?: [...string]
-					// If set to true the intersection of time ranges specified in the query and Grafana will be used. Otherwise the query time ranges will be used. Defaults to false
-					intersectTime?: bool
-					// Workspace ID. This was removed in Grafana 8, but remains for backwards compat
+					// If set to true the dashboard time range will be used as a filter for the query. Otherwise the query time ranges will be used. Defaults to false.
+					dashboardTime?: bool
+					// If dashboardTime is set to true this value dictates which column the time filter will be applied to. Defaults to the first tables timeSpan column, the first datetime column found, or TimeGenerated
+					timeColumn?: string
+					// Workspace ID. This was removed in Grafana 8, but remains for backwards compat.
 					workspace?: string
 
 					// @deprecated Use resources instead 
 					resource?: string
+					// @deprecated Use dashboardTime instead
+					intersectTime?: bool
 				} @cuetsy(kind="interface")
 
 				// Application Insights Traces sub-query properties

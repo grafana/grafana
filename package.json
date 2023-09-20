@@ -52,10 +52,7 @@
     "betterer": "betterer",
     "betterer:merge": "betterer merge",
     "betterer:stats": "ts-node --transpile-only --project ./scripts/cli/tsconfig.json ./scripts/cli/reportBettererStats.ts",
-    "betterer:issues": "ts-node --transpile-only --project ./scripts/cli/tsconfig.json ./scripts/cli/generateBettererIssues.ts",
-    "cy:run": "cypress run --browser=chrome",
-    "cy:open": "cypress open",
-    "cy:benchmark": "CYPRESS_NO_COMMAND_LOG=1 cypress run --browser=chrome"
+    "betterer:issues": "ts-node --transpile-only --project ./scripts/cli/tsconfig.json ./scripts/cli/generateBettererIssues.ts"
   },
   "grafana": {
     "whatsNewUrl": "https://grafana.com/docs/grafana/next/whatsnew/whats-new-in-v10-1/",
@@ -251,10 +248,10 @@
     "@grafana/flamegraph": "workspace:*",
     "@grafana/google-sdk": "0.1.1",
     "@grafana/lezer-logql": "0.1.11",
-    "@grafana/lezer-traceql": "0.0.5",
+    "@grafana/lezer-traceql": "0.0.6",
     "@grafana/monaco-logql": "^0.0.7",
     "@grafana/runtime": "workspace:*",
-    "@grafana/scenes": "^1.1.1",
+    "@grafana/scenes": "^1.5.1",
     "@grafana/schema": "workspace:*",
     "@grafana/ui": "workspace:*",
     "@kusto/monaco-kusto": "^7.4.0",

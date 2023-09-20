@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useCallback } from 'react';
+import React from 'react';
 
 import { GrafanaTheme2, ThemeSpacingTokens } from '@grafana/data';
 
@@ -42,16 +42,17 @@ interface FlexProps {
   children?: React.ReactNode;
 }
 
-export const Flex = ({ gap = 1, alignItems, justifyContent, direction, wrap, children }: FlexProps) => {
-  const styles = useStyles2(
-    useCallback(
-      (theme) => getStyles(theme, gap, alignItems, justifyContent, direction, wrap),
-      [gap, alignItems, justifyContent, direction, wrap]
-    )
-  );
+export const Flex = React.forwardRef<HTMLDivElement, FlexProps>(
+  ({ gap = 1, alignItems, justifyContent, direction, wrap, children }, ref) => {
+    const styles = useStyles2(getStyles, gap, alignItems, justifyContent, direction, wrap);
 
-  return <div className={styles.flex}>{children}</div>;
-};
+    return (
+      <div ref={ref} className={styles.flex}>
+        {children}
+      </div>
+    );
+  }
+);
 
 Flex.displayName = 'Flex';
 
