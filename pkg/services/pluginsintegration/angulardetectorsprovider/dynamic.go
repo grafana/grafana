@@ -12,6 +12,9 @@ import (
 	"sync"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
+
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/angular/angulardetector"
@@ -19,7 +22,24 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/angularpatternsstore"
 )
 
-var errNotModified = errors.New("not modified")
+const (
+	metricsNamespace = "grafana"
+	metricsSubsystem = "dynamic_angular_detectors_provider"
+
+	metricLabelNameFailureReason = "reason"
+
+	metricLabelFailureReasonTimeout    = "timeout"
+	metricLabelFailureReasonStatusCode = "status_code"
+	metricLabelFailureReasonDatabase   = "database"
+	metricLabelFailureReasonOther      = "other"
+)
+
+var (
+	errNotModified = errors.New("not modified")
+
+	errGCOMResponse = errors.New("gcom response error")
+	errDatabase     = errors.New("database error")
+)
 
 // backgroundJobInterval is the interval that passes between background job runs.
 // It can be overwritten in tests.
@@ -45,15 +65,42 @@ type Dynamic struct {
 
 	// mux is the mutex used to read/write the cached detectors in a concurrency-safe way.
 	mux sync.RWMutex
+
+	// metrics contains the Prometheus metrics for this service.
+	metrics dynamicMetrics
 }
 
-func ProvideDynamic(cfg *config.Cfg, store angularpatternsstore.Service, features featuremgmt.FeatureToggles) (*Dynamic, error) {
+// dynamicMetrics contains the Prometheus metrics for this service.
+type dynamicMetrics struct {
+	duration  prometheus.Histogram
+	failures  *prometheus.CounterVec
+	successes prometheus.Counter
+}
+
+func ProvideDynamic(cfg *config.Cfg, store angularpatternsstore.Service, features featuremgmt.FeatureToggles, r prometheus.Registerer) (*Dynamic, error) {
 	d := &Dynamic{
 		log:        log.New("plugin.angulardetectorsprovider.dynamic"),
 		features:   features,
 		store:      store,
 		httpClient: makeHttpClient(),
 		baseURL:    cfg.GrafanaComURL,
+		metrics: dynamicMetrics{
+			duration: promauto.With(r).NewHistogram(prometheus.HistogramOpts{
+				Name:      "duration_seconds",
+				Namespace: metricsNamespace,
+				Subsystem: metricsSubsystem,
+			}),
+			failures: promauto.With(r).NewCounterVec(prometheus.CounterOpts{
+				Name:      "failures_total",
+				Namespace: metricsNamespace,
+				Subsystem: metricsSubsystem,
+			}, []string{metricLabelNameFailureReason}),
+			successes: promauto.With(r).NewCounter(prometheus.CounterOpts{
+				Name:      "successes_total",
+				Namespace: metricsNamespace,
+				Subsystem: metricsSubsystem,
+			}),
+		},
 	}
 	if d.IsDisabled() {
 		// Do not attempt to restore if the background service is disabled (no feature flag)
@@ -127,7 +174,7 @@ func (d *Dynamic) fetch(ctx context.Context, etag string) (GCOMResponse, error) 
 	var r GCOMResponse
 	resp, err := d.httpClient.Do(req)
 	if err != nil {
-		return GCOMResponse{}, fmt.Errorf("http do: %w", err)
+		return GCOMResponse{}, fmt.Errorf("%w: http do: %w", errGCOMResponse, err)
 	}
 	defer func() {
 		if closeErr := resp.Body.Close(); closeErr != nil {
@@ -138,10 +185,10 @@ func (d *Dynamic) fetch(ctx context.Context, etag string) (GCOMResponse, error) 
 		return GCOMResponse{}, errNotModified
 	}
 	if resp.StatusCode/100 != 2 {
-		return GCOMResponse{}, fmt.Errorf("bad status code: %d", resp.StatusCode)
+		return GCOMResponse{}, fmt.Errorf("%w: status code: %d", errGCOMResponse, resp.StatusCode)
 	}
 	if err := json.NewDecoder(resp.Body).Decode(&r.Patterns); err != nil {
-		return GCOMResponse{}, fmt.Errorf("json decode: %w", err)
+		return GCOMResponse{}, fmt.Errorf("%w: json decode: %w", errGCOMResponse, err)
 	}
 	r.ETag = resp.Header.Get("ETag")
 	d.log.Debug("Fetched dynamic angular detection patterns", "patterns", len(r.Patterns), "duration", time.Since(st))
@@ -165,7 +212,7 @@ func (d *Dynamic) updateDetectors(ctx context.Context, etag string) error {
 		// detectors from the previously stored value.
 		d.log.Debug("Not modified, skipping update")
 		if err := d.store.SetLastUpdated(ctx); err != nil {
-			return fmt.Errorf("set last updated: %w", err)
+			return fmt.Errorf("%w: set last updated: %w", errDatabase, err)
 		}
 		// Update in-memory detectors, by reading current value in the kvstore
 		if err := d.setDetectorsFromCache(ctx); err != nil {
@@ -183,10 +230,10 @@ func (d *Dynamic) updateDetectors(ctx context.Context, etag string) error {
 
 	// Update store only if the patterns can be converted to detectors
 	if err := d.store.Set(ctx, resp.Patterns); err != nil {
-		return fmt.Errorf("store set: %w", err)
+		return fmt.Errorf("%w: store set: %w", errDatabase, err)
 	}
 	if err := d.store.SetETag(ctx, resp.ETag); err != nil {
-		return fmt.Errorf("store set etag: %w", err)
+		return fmt.Errorf("%w: store set etag: %w", errDatabase, err)
 	}
 
 	// Update cached detectors
@@ -204,7 +251,7 @@ func (d *Dynamic) setDetectorsFromCache(ctx context.Context) error {
 		return nil
 	}
 	if err != nil {
-		return fmt.Errorf("get cached value: %w", err)
+		return fmt.Errorf("%w: get cached value: %w", errDatabase, err)
 	}
 	// Try to unmarshal, convert to detectors and set local cache
 	if err := json.Unmarshal([]byte(rawCached), &cachedPatterns); err != nil {
@@ -236,7 +283,7 @@ func (d *Dynamic) Run(ctx context.Context) error {
 	// Determine when next run is, and check if we should run immediately
 	lastUpdate, err := d.store.GetLastUpdated(ctx)
 	if err != nil {
-		return fmt.Errorf("get last updated: %w", err)
+		return fmt.Errorf("%w: get last updated: %w", errDatabase, err)
 	}
 
 	// Offset the background job interval a bit to skew GCOM calls from all instances,
@@ -280,10 +327,11 @@ func (d *Dynamic) Run(ctx context.Context) error {
 			if !ok {
 				etag = ""
 			}
-			if err := d.updateDetectors(context.Background(), etag); err != nil {
+			if err = d.updateDetectors(context.Background(), etag); err != nil {
 				d.log.Error("Error while updating detectors", "error", err)
 			}
 			d.log.Info("Patterns update finished", "duration", time.Since(st))
+			d.instrumentRun(st, err)
 
 			// Restore default ticker if we run with a shorter interval the first time
 			ticker.Reset(backgroundJobInterval)
@@ -292,6 +340,29 @@ func (d *Dynamic) Run(ctx context.Context) error {
 			return ctx.Err()
 		}
 	}
+}
+
+// instrumentRun instruments a single run by observing the duration of the run and incrementing the successes/errors.
+func (d *Dynamic) instrumentRun(startTime time.Time, updateDetectorsErr error) {
+	d.metrics.duration.Observe(time.Since(startTime).Seconds())
+
+	if updateDetectorsErr == nil {
+		d.metrics.successes.Inc()
+		return
+	}
+
+	var label string
+	switch {
+	case errors.Is(updateDetectorsErr, context.DeadlineExceeded):
+		label = metricLabelFailureReasonTimeout
+	case errors.Is(updateDetectorsErr, errGCOMResponse):
+		label = metricLabelFailureReasonStatusCode
+	case errors.Is(updateDetectorsErr, errDatabase):
+		label = metricLabelFailureReasonDatabase
+	default:
+		label = metricLabelFailureReasonOther
+	}
+	d.metrics.failures.With(prometheus.Labels{metricLabelNameFailureReason: label}).Inc()
 }
 
 // ProvideDetectors returns the cached detectors. It returns an empty slice if there's no value.
