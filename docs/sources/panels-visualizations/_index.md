@@ -13,12 +13,12 @@ labels:
     - cloud
     - enterprise
     - oss
-menuTitle: Panels visualizations widgets
-title: Panels, visualizations, and widgets
+menuTitle: Panels and visualizations
+title: Panels and visualizations
 weight: 80
 ---
 
-# Panels
+# Panels and visualizations
 
 The _panel_ is the basic visualization building block in Grafana.
 Each panel has a query editor specific to the data source selected in the panel.
@@ -26,6 +26,10 @@ The query editor allows you to build a query that returns the data you want to v
 
 There are a wide variety of styling and formatting options for each panel.
 Panels can be dragged, dropped, and resized to rearrange them on the dashboard.
+
+blah blah blah visualization and widgets...
+
+<!-- We could have widgets at same level as viz or as sub-level -->
 
 Before you add a panel, ensure that you have configured a data source.
 
