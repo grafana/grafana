@@ -5,7 +5,6 @@ export const supportedDatasources = new Set<string>([
   'apache-iotdb-datasource',
   'aquaqanalytics-kdbbackend-datasource',
   'axiomhq-axiom-datasource',
-  'cloudwatch',
   'cnos-cnosdb-datasource',
   'datasource',
   'dlopes7-appdynamics-datasource',

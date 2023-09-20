@@ -58,14 +58,15 @@ export const getUnsupportedDashboardDatasources = async (panels: PanelModel[]): 
   for (const panel of panels) {
     for (const target of panel.targets) {
       const dsType = target?.datasource?.type;
-      if (dsType && supportedDatasources.has(dsType)) {
-        const ds = await getDatasourceSrv().get(target.datasource);
-        if (!(ds instanceof DataSourceWithBackend)) {
+      if (dsType) {
+        if (!supportedDatasources.has(dsType)) {
           unsupportedDS.add(dsType);
+        } else {
+          const ds = await getDatasourceSrv().get(target.datasource);
+          if (!(ds instanceof DataSourceWithBackend)) {
+            unsupportedDS.add(dsType);
+          }
         }
-      }
-      if (dsType && !supportedDatasources.has(dsType)) {
-        unsupportedDS.add(dsType);
       }
     }
   }

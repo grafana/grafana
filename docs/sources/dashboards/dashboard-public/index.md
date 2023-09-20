@@ -186,6 +186,19 @@ guaranteed because plugin developers can override this functionality. The follow
   </tr>
 </table>
 
+### Unsupported:
+
+<table>
+  <tr>
+    <td>
+      <ul>
+        <li>CloudWatch</li>
+        <li>Graphite</li>
+      </ul>
+    </td>
+  </tr>
+</table>
+
 ### Unconfirmed:
 
 <table>
@@ -201,7 +214,6 @@ guaranteed because plugin developers can override this functionality. The follow
         <li>Azure Data Explorer Datasource</li>
         <li>Azure Monitor</li>
         <li>CSV</li>
-        <li>CloudWatch</li>
         <li>DB2 Datasource</li>
         <li>Databricks</li>
         <li>Datadog</li>
@@ -215,7 +227,6 @@ guaranteed because plugin developers can override this functionality. The follow
         <li>GitHub</li>
         <li>Google BigQuery</li>
         <li>Grafana for YNAB</li>
-        <li>Graphite</li>
         <li>Honeycomb</li>
         <li>Jira</li>
         <li>Mock</li>
