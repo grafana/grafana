@@ -1313,6 +1313,10 @@ export function saveCurrentCorrelation(label?: string, description?: string): Th
           await dispatch(splitClose(keys[1]));
           await dispatch(reloadCorrelations(keys[0]));
           await dispatch(runQueries({ exploreId: keys[0] }));
+          reportInteraction('grafana_explore_correlation_editor_saved', {
+            sourceDatasourceType: sourceDatasource.type,
+            targetDataSourceType: targetDatasource.type,
+          });
         }
       });
     }

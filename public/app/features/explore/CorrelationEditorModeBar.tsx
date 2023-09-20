@@ -61,6 +61,8 @@ export const CorrelationEditorModeBar = ({ panes }: { panes: Array<[string, Expl
         })
       );
       dispatch(runQueries({ exploreId: pane[0] }));
+
+      reportInteraction('grafana_explore_correlation_editor_exited');
     });
   });
 
