@@ -21,7 +21,7 @@ export interface RadioButtonGroupProps<T> {
   fullWidth?: boolean;
   className?: string;
   autoFocus?: boolean;
-  ariaLabel?: string;
+  ['aria-label']?: string;
   invalid?: boolean;
 }
 
@@ -37,7 +37,7 @@ export function RadioButtonGroup<T>({
   className,
   fullWidth = false,
   autoFocus = false,
-  ariaLabel,
+  'aria-label': ariaLabel,
   invalid = false,
 }: RadioButtonGroupProps<T>) {
   const handleOnChange = useCallback(
