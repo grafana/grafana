@@ -10,6 +10,8 @@ import { AzureQueryEditorFieldProps, AzureTracesFilter } from '../../types';
 import { makeRenderItem } from './Filter';
 import { tablesSchema } from './consts';
 import { setFilters } from './setQueryValue';
+import { ContextSrv } from 'app/core/services/context_srv';
+import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 const Filters = ({ query, datasource, onQueryChange, variableOptionGroup }: AzureQueryEditorFieldProps) => {
   const { azureTraces } = query;
@@ -34,7 +36,9 @@ const Filters = ({ query, datasource, onQueryChange, variableOptionGroup }: Azur
   const queryFilters = useMemo(() => query.azureTraces?.filters ?? [], [query.azureTraces?.filters]);
   const [filters, updateFilters] = useState(queryFilters);
 
-  const timeSrv = datasource.azureLogAnalyticsDatasource.timeSrv;
+  const contextSrv = new ContextSrv();
+  const timeSrv = new TimeSrv(contextSrv);
+  //const timeSrv = datasource.azureLogAnalyticsDatasource.timeSrv;
   const [timeRange, setTimeRange] = useState(timeSrv.timeRange());
 
   const useTime = (time: TimeRange) => {

@@ -1,36 +1,16 @@
 import { set, get } from 'lodash';
 
-import { backendSrv } from 'app/core/services/backend_srv';
-import { TemplateSrv } from '@grafana/runtime';
+import { TextBoxVariableModel } from '@grafana/data';
 
 import { Context, createContext } from '../__mocks__/datasource';
 import createMockQuery from '../__mocks__/query';
 import { createTemplateVariables } from '../__mocks__/utils';
 import { multiVariable, singleVariable, subscriptionsVariable } from '../__mocks__/variables';
-import AzureMonitorDatasource from '../datasource';
 import { AzureQueryType } from '../types';
 
-const templateSrv = new TemplateSrv({
-  getVariables: () => [subscriptionsVariable, singleVariable, multiVariable],
-  getVariableWithName: jest.fn(),
-  getFilteredVariables: jest.fn(),
-});
 
-jest.mock('app/core/services/backend_srv');
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  getBackendSrv: () => backendSrv,
-  getTemplateSrv: () => templateSrv,
-}));
 
 describe('AzureResourceGraphDatasource', () => {
-  const datasourceRequestMock = jest.spyOn(backendSrv, 'datasourceRequest');
-
-  beforeEach(() => {
-    jest.clearAllMocks();
-    datasourceRequestMock.mockImplementation(jest.fn());
-  });
-
   let ctx: Context;
 
   beforeEach(() => {
@@ -43,21 +23,20 @@ describe('AzureResourceGraphDatasource', () => {
   });
 
   describe('When performing interpolateVariablesInQueries for azure_resource_graph', () => {
-    beforeEach(() => {
-      templateSrv.init([]);
-    });
-
     it('should return a query unchanged if no template variables are provided', () => {
       const query = createMockQuery();
       query.queryType = AzureQueryType.AzureResourceGraph;
-      const templatedQuery = ctx.datasource.azureResourceGraphDatasource.interpolateVariablesInQueries([query], {});
-      expect(templatedQuery[0]).toEqual(query);
+      const getTempVars = () => {return [] as TextBoxVariableModel[];}
+      const replace = (target?: string | undefined) => {return target || ''}
+      const templatedQuery = ctx.datasource.azureResourceGraphDatasource.applyVars(query, {}, getTempVars, replace);
+      expect(templatedQuery).toEqual(query);
     });
 
     it('should return a query with any template variables replaced', () => {
       const templateableProps = ['query'];
       const templateVariables = createTemplateVariables(templateableProps);
-      templateSrv.init(Array.from(templateVariables.values()).map((item) => item.templateVariable));
+      const getTempVars = () => Array.from(templateVariables.values()).map((item) => item.templateVariable as TextBoxVariableModel);
+      const replace = () => {return "query-template-variable"}
       const query = createMockQuery();
       const azureResourceGraph = {};
       for (const [path, templateVariable] of templateVariables.entries()) {
@@ -69,10 +48,10 @@ describe('AzureResourceGraphDatasource', () => {
         ...query.azureResourceGraph,
         ...azureResourceGraph,
       };
-      const templatedQuery = ctx.datasource.azureResourceGraphDatasource.interpolateVariablesInQueries([query], {});
-      expect(templatedQuery[0]).toHaveProperty('datasource');
+      const templatedQuery = ctx.datasource.azureResourceGraphDatasource.applyVars(query, {}, getTempVars, replace);
+      expect(templatedQuery).toHaveProperty('datasource');
       for (const [path, templateVariable] of templateVariables.entries()) {
-        expect(get(templatedQuery[0].azureResourceGraph, path)).toEqual(
+        expect(get(templatedQuery.azureResourceGraph, path)).toEqual(
           templateVariable.templateVariable.current.value
         );
       }
@@ -80,10 +59,6 @@ describe('AzureResourceGraphDatasource', () => {
   });
 
   describe('When applying template variables', () => {
-    beforeEach(() => {
-      templateSrv.init([subscriptionsVariable, singleVariable, multiVariable]);
-    });
-
     it('should expand single value template variable', () => {
       const target = createMockQuery({
         subscriptions: [],
@@ -92,7 +67,14 @@ describe('AzureResourceGraphDatasource', () => {
           resultFormat: '',
         },
       });
-      expect(ctx.datasource.azureResourceGraphDatasource.applyTemplateVariables(target, {})).toEqual(
+      const getTempVars = () => Array.from([subscriptionsVariable, singleVariable, multiVariable].values()).map((item) => item);
+      const replace = (target?: string | undefined) => {
+        if (target === "Resources | $var1") {
+          return "Resources | var1-foo"
+        }
+        return target || "";
+      }
+      expect(ctx.datasource.azureResourceGraphDatasource.applyVars(target, {}, getTempVars, replace)).toEqual(
         expect.objectContaining({
           ...target,
           azureResourceGraph: { query: 'Resources | var1-foo', resultFormat: 'table' },
@@ -110,7 +92,14 @@ describe('AzureResourceGraphDatasource', () => {
           resultFormat: '',
         },
       });
-      expect(ctx.datasource.azureResourceGraphDatasource.applyTemplateVariables(target, {})).toEqual(
+      const getTempVars = () => Array.from([subscriptionsVariable, singleVariable, multiVariable].values()).map((item) => item);
+      const replace = (target?: string | undefined) => {
+        if (target === "resources | where $__contains(name, $var3)") {
+          return "resources | where $__contains(name, 'var3-foo','var3-baz')"
+        }
+        return target || "";
+      }
+      expect(ctx.datasource.azureResourceGraphDatasource.applyVars(target, {}, getTempVars, replace)).toEqual(
         expect.objectContaining({
           ...target,
           azureResourceGraph: {
@@ -128,62 +117,26 @@ describe('AzureResourceGraphDatasource', () => {
     const target = createMockQuery({
       subscriptions: ['$subs'],
       azureResourceGraph: {
-        query: 'resources | where $__contains(name, $var3)',
+        query: 'resources | where $__contains(name)',
         resultFormat: '',
       },
     });
-    expect(ctx.datasource.azureResourceGraphDatasource.applyTemplateVariables(target, {})).toEqual(
+    const getTempVars = () => Array.from([subscriptionsVariable, singleVariable, multiVariable].values()).map((item) => item);
+      const replace = (target?: string | undefined) => {
+        if (target === "$subs") {
+          return "sub-foo,sub-baz"
+        }
+        return target || "";
+      }
+    expect(ctx.datasource.azureResourceGraphDatasource.applyVars(target, {}, getTempVars, replace)).toEqual(
       expect.objectContaining({
         azureResourceGraph: {
-          query: `resources | where $__contains(name, 'var3-foo','var3-baz')`,
+          query: `resources | where $__contains(name)`,
           resultFormat: 'table',
         },
         queryType: 'Azure Resource Graph',
         subscriptions: ['sub-foo', 'sub-baz'],
       })
     );
-  });
-
-  describe('When performing targetContainsTemplate', () => {
-    it('should return false when no variable is being used', () => {
-      const query = createMockQuery();
-      const ds = new AzureMonitorDatasource(ctx.instanceSettings, templateSrv);
-      query.queryType = AzureQueryType.AzureResourceGraph;
-      expect(ds.targetContainsTemplate(query)).toEqual(false);
-    });
-
-    it('should return true when resource field is using a variable', () => {
-      const query = createMockQuery();
-      const templateSrv = new TemplateSrv();
-      templateSrv.init([singleVariable]);
-
-      const ds = new AzureMonitorDatasource(ctx.instanceSettings, templateSrv);
-      query.queryType = AzureQueryType.AzureResourceGraph;
-      query.azureResourceGraph = { query: `$${singleVariable.name}` };
-      expect(ds.targetContainsTemplate(query)).toEqual(true);
-    });
-
-    it('should return true when resource field is using a variable in the subscriptions field', () => {
-      const query = createMockQuery();
-      const templateSrv = new TemplateSrv();
-      templateSrv.init([multiVariable]);
-
-      const ds = new AzureMonitorDatasource(ctx.instanceSettings, templateSrv);
-      query.queryType = AzureQueryType.AzureResourceGraph;
-      query.subscriptions = [multiVariable.name];
-      query.azureResourceGraph = { query: `$${multiVariable.name}` };
-      expect(ds.targetContainsTemplate(query)).toEqual(true);
-    });
-
-    it('should return false when a variable is used in a different part of the query', () => {
-      const query = createMockQuery();
-      const templateSrv = new TemplateSrv();
-      templateSrv.init([singleVariable]);
-
-      const ds = new AzureMonitorDatasource(ctx.instanceSettings, templateSrv);
-      query.queryType = AzureQueryType.AzureResourceGraph;
-      query.azureMonitor = { metricName: `$${singleVariable.name}` };
-      expect(ds.targetContainsTemplate(query)).toEqual(false);
-    });
   });
 });

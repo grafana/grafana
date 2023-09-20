@@ -2,7 +2,7 @@ import { map } from 'lodash';
 
 import { DataSourceInstanceSettings, ScopedVars } from '@grafana/data';
 import { DataSourceWithBackend, getTemplateSrv } from '@grafana/runtime';
-import { TimeSrv, getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
+//import { TimeSrv, getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 import ResponseParser from '../azure_monitor/response_parser';
 import { getAuthType, getAzureCloud, getAzurePortalUrl } from '../credentials';
@@ -33,7 +33,7 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
   azureMonitorPath: string;
   firstWorkspace?: string;
 
-  readonly timeSrv: TimeSrv = getTimeSrv();
+  //readonly timeSrv: TimeSrv = getTimeSrv();
 
   constructor(private instanceSettings: DataSourceInstanceSettings<AzureDataSourceJsonData>) {
     super(instanceSettings);
