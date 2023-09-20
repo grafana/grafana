@@ -4,10 +4,12 @@ import React, { PropsWithChildren } from 'react';
 
 import { GrafanaTheme2, PageLayoutType } from '@grafana/data';
 import { useStyles2, LinkButton } from '@grafana/ui';
+import config from 'app/core/config';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { CommandPalette } from 'app/features/commandPalette/CommandPalette';
 import { KioskMode } from 'app/types';
 
+import { DockedMegaMenu } from './DockedMegaMenu/DockedMegaMenu';
 import { MegaMenu } from './MegaMenu/MegaMenu';
 import { NavToolbar } from './NavToolbar/NavToolbar';
 import { SectionNav } from './SectionNav/SectionNav';
@@ -61,13 +63,19 @@ export function AppChrome({ children }: Props) {
       )}
       <main className={contentClass} id="pageContent">
         <div className={styles.panes}>
-          {state.layout === PageLayoutType.Standard && state.sectionNav && <SectionNav model={state.sectionNav} />}
+          {state.layout === PageLayoutType.Standard && state.sectionNav && !config.featureToggles.dockedMegaMenu && (
+            <SectionNav model={state.sectionNav} />
+          )}
           <div className={styles.pageContainer}>{children}</div>
         </div>
       </main>
       {!state.chromeless && (
         <>
-          <MegaMenu searchBarHidden={searchBarHidden} onClose={() => chrome.setMegaMenu(false)} />
+          {config.featureToggles.dockedMegaMenu ? (
+            <DockedMegaMenu searchBarHidden={searchBarHidden} onClose={() => chrome.setMegaMenu(false)} />
+          ) : (
+            <MegaMenu searchBarHidden={searchBarHidden} onClose={() => chrome.setMegaMenu(false)} />
+          )}
           <CommandPalette />
         </>
       )}

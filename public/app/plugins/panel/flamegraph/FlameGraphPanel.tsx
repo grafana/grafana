@@ -1,11 +1,8 @@
 import React from 'react';
 
 import { CoreApp, PanelProps } from '@grafana/data';
-import { FlameGraph } from '@grafana/flamegraph';
+import { FlameGraph, checkFields, getMessageCheckFieldsResult } from '@grafana/flamegraph';
 import { PanelDataErrorView, reportInteraction, config } from '@grafana/runtime';
-
-import { checkFields, getMessageCheckFieldsResult } from './components/FlameGraph/dataTransform';
-// import FlameGraphContainer from './components/FlameGraphContainer';
 
 function interaction(name: string, context: Record<string, string | number> = {}) {
   reportInteraction(`grafana_flamegraph_${name}`, {
