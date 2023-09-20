@@ -482,10 +482,12 @@ func TestInstrument(t *testing.T) {
 			t.Run(tc.name, func(t *testing.T) {
 				svc := provideDynamic(t, "")
 
+				labels := prometheus.Labels{"reason": tc.expReasonLabel}
+				require.Equalf(t, 0.0, testutil.ToFloat64(svc.metrics.failures.With(labels)), "failure metric %q should start from 0", tc.expReasonLabel)
+
 				svc.instrumentRun(0, tc.err)
 				require.Equal(t, 0.0, testutil.ToFloat64(svc.metrics.successes), "should not increment success metric")
-				require.Equal(t, 1, testutil.CollectAndCount(svc.metrics.failures), "should create failure metric")
-				require.Equalf(t, 1.0, testutil.ToFloat64(svc.metrics.failures.With(prometheus.Labels{"reason": tc.expReasonLabel})), "should increment %q failure metric", tc.expReasonLabel)
+				require.Equalf(t, 1.0, testutil.ToFloat64(svc.metrics.failures.With(labels)), "should increment %q failure metric", tc.expReasonLabel)
 			})
 		}
 	})
