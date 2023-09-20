@@ -46,15 +46,15 @@ func (st DBstore) ListAlertInstances(ctx context.Context, cmd *models.ListAlertI
 }
 
 func (st DBstore) FullSync(ctx context.Context, instances []models.AlertInstance) error {
+	st.Logger.Info("Doing a full state sync", "count", len(instances))
 	if len(instances) == 0 {
 		return nil
 	}
-	st.Logger.Info("Doing a full state sync", "count", len(instances))
 	return st.SQLStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		startTime := time.Now()
 		// First we delete all records from the table
 		// TODO: could we have multiple orgs? Not sure if the scheduler is isolated by org.
-		if _, err := sess.Exec("DELETE * FROM alert_instance WHERE rule_org_id = ?", instances[0].RuleOrgID); err != nil {
+		if _, err := sess.Exec("DELETE FROM alert_instance WHERE rule_org_id = ?", instances[0].RuleOrgID); err != nil {
 			return err
 		}
 		for _, alertInstance := range instances {
