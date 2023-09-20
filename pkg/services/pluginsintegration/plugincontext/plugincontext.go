@@ -5,6 +5,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/useragent"
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/setting"
+	"runtime"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -27,24 +31,28 @@ const (
 
 var ErrPluginNotFound = errors.New("plugin not found")
 
-func ProvideService(cacheService *localcache.CacheService, pluginStore pluginstore.Store,
+func ProvideService(cfg *setting.Cfg, cacheService *localcache.CacheService, pluginStore pluginstore.Store,
 	dataSourceService datasources.DataSourceService, pluginSettingsService pluginsettings.Service,
 	licensing plugins.Licensing, pCfg *config.Cfg) *Provider {
 	return &Provider{
+		cfg: cfg,
 		cacheService:          cacheService,
 		pluginStore:           pluginStore,
 		dataSourceService:     dataSourceService,
 		pluginSettingsService: pluginSettingsService,
 		pluginEnvVars:         envvars.NewProvider(pCfg, licensing),
+		logger: log.New("plugin.context"),
 	}
 }
 
 type Provider struct {
+	cfg *setting.Cfg
 	pluginEnvVars         *envvars.Service
 	cacheService          *localcache.CacheService
 	pluginStore           pluginstore.Store
 	dataSourceService     datasources.DataSourceService
 	pluginSettingsService pluginsettings.Service
+	logger log.Logger
 }
 
 // Get allows getting plugin context by its ID. If datasourceUID is not empty string
@@ -59,6 +67,7 @@ func (p *Provider) Get(ctx context.Context, pluginID string, user identity.Reque
 
 	pCtx := backend.PluginContext{
 		PluginID: pluginID,
+		PluginVersion: plugin.Info.Version,
 	}
 	if user != nil && !user.IsNil() {
 		pCtx.OrgID = user.GetOrgID()
@@ -72,6 +81,12 @@ func (p *Provider) Get(ctx context.Context, pluginID string, user identity.Reque
 		}
 		pCtx.AppInstanceSettings = appSettings
 	}
+
+	ua, err := useragent.New(p.cfg.BuildVersion, runtime.GOOS, runtime.GOARCH)
+	if err != nil {
+		p.logger.Warn("Could not parse user agent", "error", err)
+	}
+	pCtx.UserAgent = ua
 
 	return pCtx, nil
 }
@@ -87,6 +102,7 @@ func (p *Provider) GetWithDataSource(ctx context.Context, pluginID string, user 
 
 	pCtx := backend.PluginContext{
 		PluginID: pluginID,
+		PluginVersion: plugin.Info.Version,
 	}
 	if user != nil && !user.IsNil() {
 		pCtx.OrgID = user.GetOrgID()
@@ -101,6 +117,12 @@ func (p *Provider) GetWithDataSource(ctx context.Context, pluginID string, user 
 
 	settings := p.pluginEnvVars.GetConfigMap(ctx, plugin.ID, plugin.ExternalService)
 	pCtx.GrafanaConfig = backend.NewGrafanaCfg(settings)
+
+	ua, err := useragent.New(p.cfg.BuildVersion, runtime.GOOS, runtime.GOARCH)
+	if err != nil {
+		p.logger.Warn("Could not parse user agent", "error", err)
+	}
+	pCtx.UserAgent = ua
 
 	return pCtx, nil
 }

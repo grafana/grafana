@@ -7,12 +7,10 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/grafana/grafana-plugin-sdk-go/experimental/featuretoggles"
-	"github.com/grafana/grafana-plugin-sdk-go/experimental/oauthtokenretriever"
-
 	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
 	"github.com/grafana/grafana-azure-sdk-go/azsettings"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
+	"github.com/grafana/grafana-plugin-sdk-go/experimental/featuretoggles"
 
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
@@ -75,18 +73,16 @@ func (s *Service) Get(ctx context.Context, p *plugins.Plugin) []string {
 }
 
 // GetConfigMap returns a map of configuration that should be passed in a plugin request.
-// Note: Licensing is not included as part of this resulting config map.
-func (s *Service) GetConfigMap(ctx context.Context, pluginID string, externalService *oauth.ExternalService) map[string]string {
-	m := map[string]string{
-		//backend.GrafanaVersion: s.cfg.BuildVersion,
-	}
+func (s *Service) GetConfigMap(ctx context.Context, _ string, _ *oauth.ExternalService) map[string]string {
+	m := make(map[string]string)
 
-	if externalService != nil {
-		m[oauthtokenretriever.AppURL] = s.cfg.GrafanaAppURL
-		m[oauthtokenretriever.AppClientID] = externalService.ClientID
-		m[oauthtokenretriever.AppClientSecret] = externalService.ClientSecret
-		m[oauthtokenretriever.AppPrivateKey] = externalService.PrivateKey
-	}
+	// TODO add support via plugin SDK
+	//if externalService != nil {
+	//	m[oauthtokenretriever.AppURL] = s.cfg.GrafanaAppURL
+	//	m[oauthtokenretriever.AppClientID] = externalService.ClientID
+	//	m[oauthtokenretriever.AppClientSecret] = externalService.ClientSecret
+	//	m[oauthtokenretriever.AppPrivateKey] = externalService.PrivateKey
+	//}
 
 	if s.cfg.Features != nil {
 		enabledFeatures := s.cfg.Features.GetEnabled(ctx)
@@ -99,15 +95,16 @@ func (s *Service) GetConfigMap(ctx context.Context, pluginID string, externalSer
 		}
 	}
 
-	if s.cfg.AWSAssumeRoleEnabled {
-		m[awsds.AssumeRoleEnabledEnvVarKeyName] = "true"
-	}
-	if len(s.cfg.AWSAllowedAuthProviders) > 0 {
-		m[awsds.AllowedAuthProvidersEnvVarKeyName] = strings.Join(s.cfg.AWSAllowedAuthProviders, ",")
-	}
-	if s.cfg.AWSExternalId != "" {
-		m[awsds.GrafanaAssumeRoleExternalIdKeyName] = s.cfg.AWSExternalId
-	}
+	// TODO add support via plugin SDK
+	//if s.cfg.AWSAssumeRoleEnabled {
+	//	m[awsds.AssumeRoleEnabledEnvVarKeyName] = "true"
+	//}
+	//if len(s.cfg.AWSAllowedAuthProviders) > 0 {
+	//	m[awsds.AllowedAuthProvidersEnvVarKeyName] = strings.Join(s.cfg.AWSAllowedAuthProviders, ",")
+	//}
+	//if s.cfg.AWSExternalId != "" {
+	//	m[awsds.GrafanaAssumeRoleExternalIdKeyName] = s.cfg.AWSExternalId
+	//}
 
 	if s.cfg.ProxySettings.Enabled {
 		m[proxy.PluginSecureSocksProxyEnabled] = "true"
@@ -118,44 +115,46 @@ func (s *Service) GetConfigMap(ctx context.Context, pluginID string, externalSer
 		m[proxy.PluginSecureSocksProxyServerName] = s.cfg.ProxySettings.ServerName
 	}
 
-	azureSettings := s.cfg.Azure
-	if azureSettings != nil {
-		if azureSettings.Cloud != "" {
-			m[azsettings.AzureCloud] = azureSettings.Cloud
-		}
+	// TODO add support via plugin SDK
+	//azureSettings := s.cfg.Azure
+	//if azureSettings != nil {
+	//	if azureSettings.Cloud != "" {
+	//		m[azsettings.AzureCloud] = azureSettings.Cloud
+	//	}
+	//
+	//	if azureSettings.ManagedIdentityEnabled {
+	//		m[azsettings.ManagedIdentityEnabled] = "true"
+	//
+	//		if azureSettings.ManagedIdentityClientId != "" {
+	//			m[azsettings.ManagedIdentityClientID] = azureSettings.ManagedIdentityClientId
+	//		}
+	//	}
+	//
+	//	if azureSettings.UserIdentityEnabled {
+	//		m[azsettings.UserIdentityEnabled] = "true"
+	//
+	//		if azureSettings.UserIdentityTokenEndpoint != nil {
+	//			if azureSettings.UserIdentityTokenEndpoint.TokenUrl != "" {
+	//				m[azsettings.UserIdentityTokenURL] = azureSettings.UserIdentityTokenEndpoint.TokenUrl
+	//			}
+	//			if azureSettings.UserIdentityTokenEndpoint.ClientId != "" {
+	//				m[azsettings.UserIdentityClientID] = azureSettings.UserIdentityTokenEndpoint.ClientId
+	//			}
+	//			if azureSettings.UserIdentityTokenEndpoint.ClientSecret != "" {
+	//				m[azsettings.UserIdentityClientSecret] = azureSettings.UserIdentityTokenEndpoint.ClientSecret
+	//			}
+	//			if azureSettings.UserIdentityTokenEndpoint.UsernameAssertion {
+	//				m[azsettings.UserIdentityAssertion] = "username"
+	//			}
+	//		}
+	//	}
+	//}
 
-		if azureSettings.ManagedIdentityEnabled {
-			m[azsettings.ManagedIdentityEnabled] = "true"
-
-			if azureSettings.ManagedIdentityClientId != "" {
-				m[azsettings.ManagedIdentityClientID] = azureSettings.ManagedIdentityClientId
-			}
-		}
-
-		if azureSettings.UserIdentityEnabled {
-			m[azsettings.UserIdentityEnabled] = "true"
-
-			if azureSettings.UserIdentityTokenEndpoint != nil {
-				if azureSettings.UserIdentityTokenEndpoint.TokenUrl != "" {
-					m[azsettings.UserIdentityTokenURL] = azureSettings.UserIdentityTokenEndpoint.TokenUrl
-				}
-				if azureSettings.UserIdentityTokenEndpoint.ClientId != "" {
-					m[azsettings.UserIdentityClientID] = azureSettings.UserIdentityTokenEndpoint.ClientId
-				}
-				if azureSettings.UserIdentityTokenEndpoint.ClientSecret != "" {
-					m[azsettings.UserIdentityClientSecret] = azureSettings.UserIdentityTokenEndpoint.ClientSecret
-				}
-				if azureSettings.UserIdentityTokenEndpoint.UsernameAssertion {
-					m[azsettings.UserIdentityAssertion] = "username"
-				}
-			}
-		}
-	}
-
-	ps := getPluginSettings(pluginID, s.cfg)
-	for k, v := range ps {
-		m[fmt.Sprintf("%s_%s", customConfigPrefix, strings.ToUpper(k))] = v
-	}
+	// TODO add support via plugin SDK
+	//ps := getPluginSettings(pluginID, s.cfg)
+	//for k, v := range ps {
+	//	m[fmt.Sprintf("%s_%s", customConfigPrefix, strings.ToUpper(k))] = v
+	//}
 
 	return m
 }
