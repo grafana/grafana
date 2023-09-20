@@ -213,8 +213,8 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
       <>
         <div className="gf-form-inline">
           <LegacyForms.Switch
-            label="Show quantile"
-            tooltip="Show the row index as a quantile. Defaults to percentage as unit option used."
+            label="Show percentile"
+            tooltip="Show the row index as a percentile."
             labelClass="width-8"
             checked={!!options?.showPercentage}
             onChange={this.onToggleRowIndexShowPercentage}
