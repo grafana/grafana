@@ -28,7 +28,7 @@ const meta: Meta<typeof CodeEditor> = {
 export const Basic: StoryFn<typeof CodeEditor> = (args) => {
   return (
     <CodeEditor
-      width={'100%'}
+      width='100%'
       height={args.height}
       value={args.value}
       language={args.language}
