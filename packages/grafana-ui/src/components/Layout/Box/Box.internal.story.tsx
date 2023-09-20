@@ -2,7 +2,6 @@ import { Meta, StoryFn } from '@storybook/react';
 import React from 'react';
 
 import { SpacingTokenControl } from '../../../utils/storybook/themeStorybookControls';
-import { withCenteredStory } from '../../../utils/storybook/withCenteredStory';
 import { Text } from '../../Text/Text';
 import { Flex } from '../Flex/Flex';
 
@@ -18,7 +17,6 @@ const boxShadowOptions: BoxShadow[] = ['z1', 'z2', 'z3'];
 const meta: Meta<typeof Box> = {
   title: 'General/Layout/Box',
   component: Box,
-  decorators: [withCenteredStory],
   parameters: {
     docs: {
       page: mdx,

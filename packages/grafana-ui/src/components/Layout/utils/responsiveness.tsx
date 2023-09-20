@@ -10,8 +10,7 @@ import { GrafanaTheme2, ThemeBreakpointsKey } from '@grafana/data';
 export type ResponsiveProp<T> = T | Responsive<T>;
 
 type Responsive<T> = {
-  base: T;
-  xs?: T;
+  xs: T;
   sm?: T;
   md?: T;
   lg?: T;
@@ -51,12 +50,11 @@ export function getResponsiveStyle<T>(
   if (prop === undefined || prop === null) {
     return null;
   }
-  if (typeof prop !== 'object' || !('base' in prop)) {
+  if (typeof prop !== 'object' || !('xs' in prop)) {
     return getCSS(prop);
   }
 
   return [
-    getCSS(prop.base),
     breakpointCSS(theme, prop, getCSS, 'xs'),
     breakpointCSS(theme, prop, getCSS, 'sm'),
     breakpointCSS(theme, prop, getCSS, 'md'),
