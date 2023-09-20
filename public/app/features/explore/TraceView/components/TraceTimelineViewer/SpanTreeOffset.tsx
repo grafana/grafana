@@ -51,9 +51,8 @@ export const getStyles = stylesFactory((theme: GrafanaTheme2) => {
     `,
     indentGuideActive: css`
       label: indentGuideActive;
-      border-color: ${autoColor(theme, 'darkgrey')};
       &::before {
-        background-color: transparent;
+        background-color: ${autoColor(theme, '#777')};
       }
     `,
     iconWrapper: css`

@@ -436,7 +436,7 @@ export class UnthemedSpanBarRow extends React.PureComponent<SpanBarRowProps> {
               title={labelDetail}
               onClick={this._detailToggle}
               role="switch"
-              style={{ borderColor: color }}
+              style={{ background: `${color}15`, borderBottomColor: color }}
               tabIndex={0}
             >
               {showErrorIcon && (
