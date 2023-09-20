@@ -182,7 +182,7 @@ export const CorrelationEditorModeBar = ({ panes }: { panes: Array<[string, Expl
             fill="outline"
             className={correlationDetails?.canSave ? styles.buttonColor : styles.disabledButtonColor}
             onClick={() => {
-              dispatch(changeCorrelationEditorDetails({ dirty: false }));
+              dispatch(changeCorrelationEditorDetails({ dirty: false, editorMode: false, isExiting: false }));
               dispatch(saveCurrentCorrelation(correlationDetails?.label, correlationDetails?.description));
             }}
           >
