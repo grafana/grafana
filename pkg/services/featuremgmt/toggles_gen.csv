@@ -77,7 +77,7 @@ sqlDatasourceDatabaseSelection,preview,@grafana/grafana-bi-squad,false,false,fal
 lokiFormatQuery,experimental,@grafana/observability-logs,false,false,false,true
 cloudWatchLogsMonacoEditor,preview,@grafana/aws-datasources,false,false,false,true
 exploreScrollableLogsContainer,experimental,@grafana/observability-logs,false,false,false,true
-recordedQueriesMulti,experimental,@grafana/observability-metrics,false,false,false,false
+recordedQueriesMulti,GA,@grafana/observability-metrics,false,false,false,false
 pluginsDynamicAngularDetectionPatterns,experimental,@grafana/plugins-platform-backend,false,false,false,false
 vizAndWidgetSplit,experimental,@grafana/dashboards-squad,false,false,false,true
 prometheusIncrementalQueryInstrumentation,experimental,@grafana/observability-metrics,false,false,false,true
