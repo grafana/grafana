@@ -1,5 +1,5 @@
 import { NodeType, SyntaxNode } from '@lezer/common';
-import { groupBy, sortBy } from 'lodash';
+import { sortBy } from 'lodash';
 
 import {
   Identifier,
