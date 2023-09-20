@@ -1,4 +1,11 @@
-import { MultiValueVariable, SceneGridItemLike, SceneGridLayout, SceneGridRow, SceneVariable } from '@grafana/scenes';
+import {
+  MultiValueVariable,
+  SceneDataLayers,
+  SceneGridItemLike,
+  SceneGridLayout,
+  SceneGridRow,
+  SceneVariable,
+} from '@grafana/scenes';
 import { Panel, RowPanel } from '@grafana/schema';
 import { PanelModel } from 'app/features/dashboard/state';
 
@@ -92,6 +99,36 @@ describe('transformSceneToSaveModel', () => {
       expect(saveModel.gridPos?.y).toBe(2);
       expect(saveModel.gridPos?.w).toBe(12);
       expect(saveModel.gridPos?.h).toBe(8);
+    });
+  });
+
+  describe('Annotations', () => {
+    it('should transform annotations to save model', () => {
+      const scene = transformSaveModelToScene({ dashboard: dashboard_to_load1 as any, meta: {} });
+      const saveModel = transformSceneToSaveModel(scene);
+
+      expect(saveModel.annotations?.list?.length).toBe(4);
+      expect(saveModel.annotations?.list).toMatchSnapshot();
+    });
+    it('should transform annotations to save model after state changes', () => {
+      const scene = transformSaveModelToScene({ dashboard: dashboard_to_load1 as any, meta: {} });
+
+      const layers = (scene.state.$data as SceneDataLayers)?.state.layers;
+      const enabledLayer = layers[1];
+      const hiddenLayer = layers[3];
+
+      enabledLayer.setState({
+        isEnabled: false,
+      });
+      hiddenLayer.setState({
+        isHidden: false,
+      });
+
+      const saveModel = transformSceneToSaveModel(scene);
+
+      expect(saveModel.annotations?.list?.length).toBe(4);
+      expect(saveModel.annotations?.list?.[1].enable).toEqual(false);
+      expect(saveModel.annotations?.list?.[3].hide).toEqual(false);
     });
   });
 });

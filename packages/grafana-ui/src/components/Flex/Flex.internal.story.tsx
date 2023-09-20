@@ -4,7 +4,6 @@ import React from 'react';
 import { ThemeSpacingTokens } from '@grafana/data';
 
 import { useTheme2 } from '../../themes';
-import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 
 import { Flex, JustifyContent, Wrap, Direction } from './Flex';
 import mdx from './Flex.mdx';
@@ -29,7 +28,6 @@ const Item = ({ color, text, height }: { color: string; text?: string | number; 
 const meta: Meta<typeof Flex> = {
   title: 'General/Layout/Flex',
   component: Flex,
-  decorators: [withCenteredStory],
   parameters: {
     docs: {
       page: mdx,

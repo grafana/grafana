@@ -9,6 +9,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/mock"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
@@ -28,6 +29,7 @@ func BenchmarkProcessEvalResults(b *testing.B) {
 		Historian:               hist,
 		MaxStateSaveConcurrency: 1,
 		Tracer:                  tracing.InitializeTracerForTest(),
+		Log:                     log.New("ngalert.state.manager"),
 	}
 	sut := state.NewManager(cfg)
 	now := time.Now().UTC()
