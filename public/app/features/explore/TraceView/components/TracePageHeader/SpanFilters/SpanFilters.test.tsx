@@ -214,7 +214,6 @@ describe('SpanFilters', () => {
     const matchesSwitch = screen.getByRole('checkbox', { name: 'Show matches only switch' });
     expect(matchesSwitch).not.toBeChecked();
     await user.click(matchesSwitch);
-    jest.advanceTimersByTime(1000);
     expect(matchesSwitch).toBeChecked();
 
     expect((clearFiltersButton as HTMLButtonElement)['disabled']).toBe(false);
