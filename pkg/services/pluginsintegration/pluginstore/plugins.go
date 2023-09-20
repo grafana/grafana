@@ -77,5 +77,6 @@ func ToGrafanaDTO(p *plugins.Plugin) Plugin {
 		BaseURL:           p.BaseURL,
 		AngularDetected:   p.AngularDetected,
 		Alias:             p.Alias,
+		ExternalService:   p.ExternalService,
 	}
 }

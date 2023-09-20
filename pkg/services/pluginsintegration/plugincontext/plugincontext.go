@@ -84,7 +84,7 @@ func (p *Provider) Get(ctx context.Context, pluginID string, user identity.Reque
 
 	ua, err := useragent.New(p.cfg.BuildVersion, runtime.GOOS, runtime.GOARCH)
 	if err != nil {
-		p.logger.Warn("Could not parse user agent", "error", err)
+		p.logger.Warn("Could not create user agent", "error", err)
 	}
 	pCtx.UserAgent = ua
 
@@ -109,7 +109,7 @@ func (p *Provider) GetWithDataSource(ctx context.Context, pluginID string, user 
 		pCtx.User = adapters.BackendUserFromSignedInUser(user)
 	}
 
-	datasourceSettings, err := p.datasourceInstanceSettings(ctx, ds)
+	datasourceSettings, err := adapters.ModelToInstanceSettings(ds, p.decryptSecureJsonDataFn(ctx))
 	if err != nil {
 		return pCtx, err
 	}
@@ -120,19 +120,11 @@ func (p *Provider) GetWithDataSource(ctx context.Context, pluginID string, user 
 
 	ua, err := useragent.New(p.cfg.BuildVersion, runtime.GOOS, runtime.GOARCH)
 	if err != nil {
-		p.logger.Warn("Could not parse user agent", "error", err)
+		p.logger.Warn("Could not create user agent", "error", err)
 	}
 	pCtx.UserAgent = ua
 
 	return pCtx, nil
-}
-
-func (p *Provider) datasourceInstanceSettings(ctx context.Context, ds *datasources.DataSource) (*backend.DataSourceInstanceSettings, error) {
-	datasourceSettings, err := adapters.ModelToInstanceSettings(ds, p.decryptSecureJsonDataFn(ctx))
-	if err != nil {
-		return nil, err
-	}
-	return datasourceSettings, nil
 }
 
 func (p *Provider) appInstanceSettings(ctx context.Context, pluginID string, orgID int64) (*backend.AppInstanceSettings, error) {
