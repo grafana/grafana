@@ -28,25 +28,28 @@ export function QueryEditor(props: Props) {
   const { labels, getLabelValues, onLabelSelectorChange } = useLabels(range, datasource, query, onChange);
   useNormalizeQuery(query, profileTypes, onChange, app);
 
+  let cascader = <LoadingPlaceholder text={'Loading'} />;
+
+  // The cascader is uncontrolled component so if we want to set some default value we can do it only on initial
+  // render, so we are waiting until we have the profileTypes and know what the default value should be before
+  // rendering.
+  if (profileTypes && query.profileTypeId !== undefined) {
+    cascader = (
+      <ProfileTypesCascader
+        placeholder={profileTypes.length === 0 ? 'No profile types found' : 'Select profile type'}
+        profileTypes={profileTypes}
+        initialProfileTypeId={query.profileTypeId}
+        onChange={(val) => {
+          onChange({ ...query, profileTypeId: val });
+        }}
+      />
+    );
+  }
+
   return (
     <EditorRows>
       <EditorRow stackProps={{ wrap: false, gap: 1 }}>
-        {/*
-            The cascader is uncontrolled component so if we want to set some default value we can do it only on initial
-            render, so we are waiting until we have the profileTypes and know what the default value should be before
-            rendering.
-         */}
-        {profileTypes && query.profileTypeId ? (
-          <ProfileTypesCascader
-            profileTypes={profileTypes}
-            initialProfileTypeId={query.profileTypeId}
-            onChange={(val) => {
-              onChange({ ...query, profileTypeId: val });
-            }}
-          />
-        ) : (
-          <LoadingPlaceholder text={'Loading'} />
-        )}
+        {cascader}
         <LabelsEditor
           value={query.labelSelector}
           onChange={onLabelSelectorChange}
@@ -98,7 +101,7 @@ function defaultProfileType(profileTypes: ProfileTypeMessage[]): string {
   }
 
   // Fallback to first profile type from response data
-  return profileTypes[0].id;
+  return profileTypes[0]?.id || '';
 }
 
 function useLabels(

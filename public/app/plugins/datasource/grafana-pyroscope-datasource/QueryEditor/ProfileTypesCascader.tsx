@@ -9,6 +9,7 @@ type Props = {
   initialProfileTypeId?: string;
   profileTypes?: ProfileTypeMessage[];
   onChange: (value: string) => void;
+  placeholder?: string;
 };
 
 export function ProfileTypesCascader(props: Props) {
@@ -16,6 +17,7 @@ export function ProfileTypesCascader(props: Props) {
 
   return (
     <Cascader
+      placeholder={props.placeholder}
       separator={'-'}
       displayAllSelectedLevels={true}
       initialValue={props.initialProfileTypeId}
