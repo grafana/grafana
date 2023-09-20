@@ -16,11 +16,10 @@ const meta: Meta<typeof CodeEditor> = {
       page: mdx,
     },
     controls: {
-      exclude: ['monacoOptions', 'onEditorDidMount', 'onBlur', 'onSave', 'getSuggestions', 'showLineNumbers'],
+      exclude: ['width', 'monacoOptions', 'onEditorDidMount', 'onBlur', 'onSave', 'getSuggestions', 'showLineNumbers'],
     },
   },
   argTypes: {
-    width: { control: { type: 'range', min: 100, max: 500, step: 10 } },
     height: { control: { type: 'range', min: 100, max: 800, step: 10 } },
     language: { control: { type: 'select' }, options: ['sql', 'json'] },
   },
@@ -29,7 +28,7 @@ const meta: Meta<typeof CodeEditor> = {
 export const Basic: StoryFn<typeof CodeEditor> = (args) => {
   return (
     <CodeEditor
-      width={args.width}
+      width="100%"
       height={args.height}
       value={args.value}
       language={args.language}
