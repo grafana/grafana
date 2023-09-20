@@ -56,11 +56,6 @@ docs_paths = {
 }
 
 tag_trigger = {
-    "repo": {
-        "exclude": [
-            "grafana/grafana",
-        ],
-    },
     "event": {
         "exclude": [
             "promote",

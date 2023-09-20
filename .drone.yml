@@ -2860,9 +2860,6 @@ trigger:
     - refs/tags/*-cloud*
     include:
     - refs/tags/v*
-  repo:
-    exclude:
-    - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -2918,9 +2915,6 @@ trigger:
     - refs/tags/*-cloud*
     include:
     - refs/tags/v*
-  repo:
-    exclude:
-    - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -2998,9 +2992,6 @@ trigger:
     - refs/tags/*-cloud*
     include:
     - refs/tags/v*
-  repo:
-    exclude:
-    - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -3067,9 +3058,6 @@ trigger:
     - refs/tags/*-cloud*
     include:
     - refs/tags/v*
-  repo:
-    exclude:
-    - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -3136,9 +3124,6 @@ trigger:
     - refs/tags/*-cloud*
     include:
     - refs/tags/v*
-  repo:
-    exclude:
-    - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -3184,9 +3169,6 @@ trigger:
     - refs/tags/*-cloud*
     include:
     - refs/tags/v*
-  repo:
-    exclude:
-    - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -4573,6 +4555,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 2315c733f8725f515529068f45d20fe190fb0101dd09352c917b1067c602752f
+hmac: edb99aa6558e05a59a499575db72b72f0b5191d06f2e7b5d625d38ecc3e14576
 
 ...
