@@ -27,7 +27,7 @@ const CHANGES_GENERATION_STANDARD_PROMPT = [
 export const GenAIDashboardChangesButton = ({ dashboard, onGenerate }: GenAIDashboardChangesButtonProps) => {
   const messages = useMemo(() => getMessages(dashboard), [dashboard]);
 
-  return <GenAIButton messages={messages} onReply={onGenerate} loadingText={'Generating title'} temperature={0} />;
+  return <GenAIButton messages={messages} onReply={onGenerate} loadingText={'Generating changes summary'} temperature={0} />;
 };
 
 function getMessages(dashboard: DashboardModel): Message[] {
