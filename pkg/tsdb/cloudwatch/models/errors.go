@@ -1,9 +1,7 @@
 package models
 
+import "fmt"
+
 // put misc expected user errors here
 
-type MissingRegion struct{}
-
-func (e *MissingRegion) Error() string {
-	return "missing default region"
-}
+var ErrMissingRegion = fmt.Errorf("missing default region")

@@ -3,7 +3,6 @@ package cloudwatch
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"testing"
 
@@ -288,4 +287,30 @@ func Test_CloudWatch_CallResource_Integration_Test(t *testing.T) {
 		require.Nil(t, err)
 		assert.Contains(t, string(sent.Body), `"text":"us-east-1"`)
 	})
+
+	t.Run("Should error for any request when a default region is not selected", func(t *testing.T) {
+		imWithoutDefaultRegion := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+			return DataSource{Settings: models.CloudWatchSettings{
+				AWSDatasourceSettings: awsds.AWSDatasourceSettings{},
+			}}, nil
+		})
+
+		executor := newExecutor(imWithoutDefaultRegion, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures(featuremgmt.FlagCloudwatchNewRegionsHandler, false))
+		req := &backend.CallResourceRequest{
+			Method: "GET",
+			Path:   `/regions`,
+			PluginContext: backend.PluginContext{
+				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{ID: 0},
+				PluginID:                   "cloudwatch",
+			},
+		}
+		err := executor.CallResource(context.Background(), req, sender)
+		require.NoError(t, err)
+		sent := sender.Response
+		require.NotNil(t, sent)
+		require.Equal(t, http.StatusBadRequest, sent.Status)
+		require.Nil(t, err)
+		assert.Contains(t, string(sent.Body), "unexpected error missing default region")
+	})
+
 }

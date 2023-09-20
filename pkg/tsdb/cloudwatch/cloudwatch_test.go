@@ -109,16 +109,17 @@ func Test_CheckHealth(t *testing.T) {
 	NewLogsAPI = func(sess *session.Session) models.CloudWatchLogsAPIProvider {
 		return client
 	}
+	im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+		return DataSource{Settings: models.CloudWatchSettings{
+			AWSDatasourceSettings: awsds.AWSDatasourceSettings{
+				Region: "us-east-1",
+			},
+		}}, nil
+	})
 
 	t.Run("successfully query metrics and logs", func(t *testing.T) {
 		client = fakeCheckHealthClient{}
-		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-			return DataSource{Settings: models.CloudWatchSettings{
-				AWSDatasourceSettings: awsds.AWSDatasourceSettings{
-					Region: "us-east-1",
-				},
-			}}, nil
-		})
+
 		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
 
 		resp, err := executor.CheckHealth(context.Background(), &backend.CheckHealthRequest{
@@ -137,13 +138,7 @@ func Test_CheckHealth(t *testing.T) {
 			describeLogGroups: func(input *cloudwatchlogs.DescribeLogGroupsInput) (*cloudwatchlogs.DescribeLogGroupsOutput, error) {
 				return nil, fmt.Errorf("some logs query error")
 			}}
-		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-			return DataSource{Settings: models.CloudWatchSettings{
-				AWSDatasourceSettings: awsds.AWSDatasourceSettings{
-					Region: "us-east-1",
-				},
-			}}, nil
-		})
+
 		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
 
 		resp, err := executor.CheckHealth(context.Background(), &backend.CheckHealthRequest{
@@ -162,13 +157,7 @@ func Test_CheckHealth(t *testing.T) {
 			listMetricsPages: func(input *cloudwatch.ListMetricsInput, fn func(*cloudwatch.ListMetricsOutput, bool) bool) error {
 				return fmt.Errorf("some list metrics error")
 			}}
-		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-			return DataSource{Settings: models.CloudWatchSettings{
-				AWSDatasourceSettings: awsds.AWSDatasourceSettings{
-					Region: "us-east-1",
-				},
-			}}, nil
-		})
+
 		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
 
 		resp, err := executor.CheckHealth(context.Background(), &backend.CheckHealthRequest{
@@ -184,13 +173,7 @@ func Test_CheckHealth(t *testing.T) {
 
 	t.Run("fail to get clients", func(t *testing.T) {
 		client = fakeCheckHealthClient{}
-		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-			return DataSource{Settings: models.CloudWatchSettings{
-				AWSDatasourceSettings: awsds.AWSDatasourceSettings{
-					Region: "us-east-1",
-				},
-			}}, nil
-		})
+
 		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{getSession: func(c awsds.SessionConfig) (*session.Session, error) {
 			return nil, fmt.Errorf("some sessions error")
 		}}, featuremgmt.WithFeatures())
@@ -215,9 +198,7 @@ func TestQuery_ResourceRequest_DescribeLogGroups_with_CrossAccountQuerying(t *te
 	origNewEC2Client := NewEC2Client
 	NewMetricsAPI = func(sess *session.Session) models.CloudWatchMetricsAPIProvider { return nil }
 	NewOAMAPI = func(sess *session.Session) models.OAMAPIProvider { return nil }
-	NewEC2Client = func(provider awsclient.ConfigProvider) models.EC2APIProvider {
-		return fakeEC2Client{}
-	}
+	NewEC2Client = func(provider awsclient.ConfigProvider) models.EC2APIProvider { return nil }
 	t.Cleanup(func() {
 		NewOAMAPI = origNewOAMAPI
 		NewMetricsAPI = origNewMetricsAPI

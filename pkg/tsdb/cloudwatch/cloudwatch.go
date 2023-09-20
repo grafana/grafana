@@ -241,7 +241,7 @@ func (e *cloudWatchExecutor) newSession(ctx context.Context, pluginCtx backend.P
 
 	if region == defaultRegion {
 		if len(instance.Settings.Region) == 0 {
-			return nil, &models.MissingRegion{}
+			return nil, models.ErrMissingRegion
 		}
 		region = instance.Settings.Region
 	}

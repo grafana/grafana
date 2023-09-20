@@ -19,7 +19,7 @@ const (
 func RegionsHandler(ctx context.Context, pluginCtx backend.PluginContext, reqCtxFactory models.RequestContextFactoryFunc, parameters url.Values) ([]byte, *models.HttpError) {
 	service, err := newRegionsService(ctx, pluginCtx, reqCtxFactory, defaultRegion)
 	if err != nil {
-		if errors.Is(err, &models.MissingRegion{}) {
+		if errors.Is(err, models.ErrMissingRegion) {
 			return nil, models.NewHttpError("Error in Regions Handler when connecting to aws without a default region selection", http.StatusBadRequest, err)
 		}
 		return nil, models.NewHttpError("Error in Regions Handler when connecting to aws", http.StatusInternalServerError, err)
