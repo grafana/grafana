@@ -5,15 +5,14 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/grafana/grafana-plugin-sdk-go/backend/useragent"
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/setting"
 	"runtime"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/useragent"
 
 	"github.com/grafana/grafana/pkg/infra/localcache"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/envvars"
@@ -22,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/adapters"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 const (
@@ -35,24 +35,24 @@ func ProvideService(cfg *setting.Cfg, cacheService *localcache.CacheService, plu
 	dataSourceService datasources.DataSourceService, pluginSettingsService pluginsettings.Service,
 	licensing plugins.Licensing, pCfg *config.Cfg) *Provider {
 	return &Provider{
-		cfg: cfg,
+		cfg:                   cfg,
 		cacheService:          cacheService,
 		pluginStore:           pluginStore,
 		dataSourceService:     dataSourceService,
 		pluginSettingsService: pluginSettingsService,
 		pluginEnvVars:         envvars.NewProvider(pCfg, licensing),
-		logger: log.New("plugin.context"),
+		logger:                log.New("plugin.context"),
 	}
 }
 
 type Provider struct {
-	cfg *setting.Cfg
+	cfg                   *setting.Cfg
 	pluginEnvVars         *envvars.Service
 	cacheService          *localcache.CacheService
 	pluginStore           pluginstore.Store
 	dataSourceService     datasources.DataSourceService
 	pluginSettingsService pluginsettings.Service
-	logger log.Logger
+	logger                log.Logger
 }
 
 // Get allows getting plugin context by its ID. If datasourceUID is not empty string
@@ -66,7 +66,7 @@ func (p *Provider) Get(ctx context.Context, pluginID string, user identity.Reque
 	}
 
 	pCtx := backend.PluginContext{
-		PluginID: pluginID,
+		PluginID:      pluginID,
 		PluginVersion: plugin.Info.Version,
 	}
 	if user != nil && !user.IsNil() {
@@ -75,7 +75,7 @@ func (p *Provider) Get(ctx context.Context, pluginID string, user identity.Reque
 	}
 
 	if plugin.IsApp() {
-		appSettings, err := p.appInstanceSettings(ctx, plugin.ID, orgID)
+		appSettings, err := p.appInstanceSettings(ctx, pluginID, orgID)
 		if err != nil {
 			return backend.PluginContext{}, err
 		}
@@ -101,7 +101,7 @@ func (p *Provider) GetWithDataSource(ctx context.Context, pluginID string, user 
 	}
 
 	pCtx := backend.PluginContext{
-		PluginID: pluginID,
+		PluginID:      pluginID,
 		PluginVersion: plugin.Info.Version,
 	}
 	if user != nil && !user.IsNil() {
@@ -115,7 +115,7 @@ func (p *Provider) GetWithDataSource(ctx context.Context, pluginID string, user 
 	}
 	pCtx.DataSourceInstanceSettings = datasourceSettings
 
-	settings := p.pluginEnvVars.GetConfigMap(ctx, plugin.ID, plugin.ExternalService)
+	settings := p.pluginEnvVars.GetConfigMap(ctx, pluginID, plugin.ExternalService)
 	pCtx.GrafanaConfig = backend.NewGrafanaCfg(settings)
 
 	ua, err := useragent.New(p.cfg.BuildVersion, runtime.GOOS, runtime.GOARCH)
