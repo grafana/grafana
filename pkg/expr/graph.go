@@ -225,7 +225,7 @@ func (s *Service) buildGraph(req *Request) (*simple.DirectedGraph, error) {
 		case TypeDatasourceNode:
 			node, err = s.buildDSNode(dp, rn, req)
 		case TypeCMDNode:
-			node, err = buildCMDNode(dp, rn, req.LoadedMetricsReader)
+			node, err = buildCMDNode(dp, rn, req.LoadedMetricsReader, s.features)
 		case TypeMLNode:
 			if s.features.IsEnabled(featuremgmt.FlagMlExpressions) {
 				node, err = s.buildMLNode(dp, rn, req)

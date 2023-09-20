@@ -442,4 +442,8 @@ const (
 	// FlagAlertingInsights
 	// Show the new alerting insights landing page
 	FlagAlertingInsights = "alertingInsights"
+
+	// FlagRecoveryThreshold
+	// Enables feature recovery threshold (aka hysteresis) for threshold server-side expression
+	FlagRecoveryThreshold = "recoveryThreshold"
 )

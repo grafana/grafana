@@ -759,5 +759,13 @@ var (
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaAlertingSquad,
 		},
+		{
+			Name:            "recoveryThreshold",
+			Description:     "Enables feature recovery threshold (aka hysteresis) for threshold server-side expression",
+			Stage:           FeatureStageExperimental,
+			FrontendOnly:    false,
+			Owner:           grafanaAlertingSquad,
+			RequiresRestart: true,
+		},
 	}
 )

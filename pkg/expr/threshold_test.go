@@ -5,6 +5,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 func TestNewThresholdCommand(t *testing.T) {
@@ -188,7 +190,7 @@ func TestUnmarshalThresholdCommand(t *testing.T) {
 				Query:      qmap,
 				QueryType:  "",
 				DataSource: nil,
-			}, reader)
+			}, reader, featuremgmt.WithFeatures(featuremgmt.FlagRecoveryThreshold))
 
 			if tc.shouldError {
 				require.Nil(t, cmd)

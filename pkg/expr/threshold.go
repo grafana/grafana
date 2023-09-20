@@ -9,6 +9,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/expr/mathexp"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 type ThresholdCommand struct {
@@ -62,7 +63,7 @@ type ConditionEvalJSON struct {
 }
 
 // UnmarshalResampleCommand creates a ResampleCMD from Grafana's frontend query.
-func UnmarshalThresholdCommand(rn *rawNode, r LoadedMetricsReader) (Command, error) {
+func UnmarshalThresholdCommand(rn *rawNode, r LoadedMetricsReader, features featuremgmt.FeatureToggles) (Command, error) {
 	rawQuery := rn.Query
 
 	rawExpression, ok := rawQuery["expression"]
@@ -93,7 +94,7 @@ func UnmarshalThresholdCommand(rn *rawNode, r LoadedMetricsReader) (Command, err
 	if err != nil {
 		return nil, fmt.Errorf("invalid condition: %w", err)
 	}
-	if firstCondition.UnloadEvaluator != nil {
+	if firstCondition.UnloadEvaluator != nil && features.IsEnabled(featuremgmt.FlagRecoveryThreshold) {
 		unloading, err := NewThresholdCommand(rn.RefID, referenceVar, firstCondition.UnloadEvaluator.Type, firstCondition.UnloadEvaluator.Params)
 		if err != nil {
 			return nil, fmt.Errorf("invalid unloadCondition: %w", err)
