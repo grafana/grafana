@@ -33,7 +33,7 @@ export const InlineToast: Story<InlineToastProps> = (args) => {
   const [el, setEl] = useState<null | HTMLInputElement>(null);
 
   return (
-    <div>
+    <div style={{ maxWidth: 500, width: `calc(100% - 100px)` }}>
       <InlineToastImpl {...args} referenceElement={el}>
         Saved
       </InlineToastImpl>
