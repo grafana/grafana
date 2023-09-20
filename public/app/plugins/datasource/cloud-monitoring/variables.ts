@@ -17,7 +17,6 @@ export class CloudMonitoringVariableSupport extends CustomVariableSupport<
   constructor(private readonly datasource: CloudMonitoringDatasource) {
     super();
     this.metricFindQuery = new CloudMonitoringMetricFindQuery(datasource);
-    this.query = this.query.bind(this);
   }
 
   editor = CloudMonitoringVariableQueryEditor;
