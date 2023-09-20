@@ -70,7 +70,7 @@ type Dynamic struct {
 	metrics dynamicMetrics
 }
 
-// dynamicMetrics contains the Prometheus metrics for this service.
+// dynamicMetrics contains the Prometheus metrics for the [Dynamic] service.
 type dynamicMetrics struct {
 	duration  prometheus.Histogram
 	failures  *prometheus.CounterVec
@@ -330,8 +330,9 @@ func (d *Dynamic) Run(ctx context.Context) error {
 			if err = d.updateDetectors(context.Background(), etag); err != nil {
 				d.log.Error("Error while updating detectors", "error", err)
 			}
-			d.log.Info("Patterns update finished", "duration", time.Since(st))
-			d.instrumentRun(st, err)
+			duration := time.Since(st)
+			d.log.Info("Patterns update finished", "duration", duration)
+			d.instrumentRun(duration, err)
 
 			// Restore default ticker if we run with a shorter interval the first time
 			ticker.Reset(backgroundJobInterval)
@@ -343,8 +344,8 @@ func (d *Dynamic) Run(ctx context.Context) error {
 }
 
 // instrumentRun instruments a single run by observing the duration of the run and incrementing the successes/errors.
-func (d *Dynamic) instrumentRun(startTime time.Time, updateDetectorsErr error) {
-	d.metrics.duration.Observe(time.Since(startTime).Seconds())
+func (d *Dynamic) instrumentRun(runDuration time.Duration, updateDetectorsErr error) {
+	d.metrics.duration.Observe(runDuration.Seconds())
 
 	if updateDetectorsErr == nil {
 		d.metrics.successes.Inc()
