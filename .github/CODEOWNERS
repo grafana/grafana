@@ -107,7 +107,6 @@
 /pkg/services/dashboardversion/ @grafana/backend-platform
 /pkg/services/encryption/ @grafana/backend-platform
 /pkg/services/folder/ @grafana/backend-platform
-/pkg/services/grafana-apiserver @grafana/grafana-app-platform-squad
 /pkg/services/hooks/ @grafana/backend-platform
 /pkg/services/kmsproviders/ @grafana/backend-platform
 /pkg/services/licensing/ @grafana/backend-platform

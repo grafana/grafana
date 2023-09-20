@@ -276,12 +276,10 @@ require (
 )
 
 require (
-	github.com/grafana/grafana-apiserver v0.0.0-20230713001719-88a9ed41992d // @grafana/grafana-app-platform-squad
 	go.opentelemetry.io/otel v1.16.0 // @grafana/backend-platform
 	k8s.io/apimachinery v0.27.1 // @grafana/grafana-app-platform-squad
 	k8s.io/apiserver v0.27.1 // @grafana/grafana-app-platform-squad
-	k8s.io/client-go v0.27.1 // @grafana/grafana-app-platform-squad
-	k8s.io/klog/v2 v2.90.1 // @grafana/grafana-app-platform-squad
+	k8s.io/klog/v2 v2.90.1 // indirect; @grafana/grafana-app-platform-squad
 )
 
 require (
@@ -290,17 +288,14 @@ require (
 	github.com/Azure/azure-pipeline-go v0.2.3 // indirect
 	github.com/Azure/go-ntlmssp v0.0.0-20220621081337-cb9428e4ac1e // indirect
 	github.com/Masterminds/goutils v1.1.1 // indirect
-	github.com/NYTimes/gziphandler v1.1.1 // indirect
 	github.com/agext/levenshtein v1.2.1 // indirect
 	github.com/alicebob/gopher-json v0.0.0-20200520072559-a9ecdc9d1d3a // indirect
-	github.com/antlr/antlr4/runtime/Go/antlr v1.4.10 // indirect
 	github.com/apache/thrift v0.18.1 // indirect
 	github.com/apapsch/go-jsonmerge/v2 v2.0.0 // indirect
 	github.com/apparentlymart/go-textseg/v13 v13.0.0 // indirect
 	github.com/armon/go-metrics v0.4.1 // indirect
 	github.com/bmatcuk/doublestar v1.1.1 // indirect
 	github.com/buildkite/yaml v2.1.0+incompatible // indirect
-	github.com/bwmarrin/snowflake v0.3.0 // indirect
 	github.com/centrifugal/protocol v0.10.0 // indirect
 	github.com/cloudflare/circl v1.3.3 // indirect
 	github.com/cockroachdb/errors v1.9.1 // indirect
@@ -321,8 +316,6 @@ require (
 	github.com/drone/runner-go v1.12.0 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/ecordell/optgen v0.0.6 // indirect
-	github.com/emicklei/go-restful/v3 v3.10.1 // indirect
-	github.com/evanphx/json-patch v4.12.0+incompatible // indirect
 	github.com/felixge/httpsnoop v1.0.3 // indirect
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
 	github.com/getsentry/sentry-go v0.12.0 // indirect
@@ -331,8 +324,6 @@ require (
 	github.com/gogo/googleapis v1.4.1 // indirect
 	github.com/gogo/status v1.1.1 // indirect
 	github.com/golang-sql/sqlexp v0.1.0 // indirect
-	github.com/google/cel-go v0.12.6 // indirect
-	github.com/google/gnostic v0.6.9 // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/google/gofuzz v1.2.0 // indirect
 	github.com/google/s2a-go v0.1.4 // indirect
@@ -361,8 +352,8 @@ require (
 	github.com/mitchellh/copystructure v1.2.0 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/mitchellh/reflectwalk v1.0.2 // indirect
+	github.com/moby/term v0.0.0-20221205130635-1aeaba878587 // indirect
 	github.com/mohae/deepcopy v0.0.0-20170929034955-c48cc78d4826 // indirect
-	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/image-spec v1.0.3-0.20220512140940-7b36cea86235 // indirect
 	github.com/opentracing-contrib/go-stdlib v1.0.0 // indirect
@@ -385,7 +376,6 @@ require (
 	github.com/spf13/cobra v1.7.0 // indirect
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
-	github.com/stoewer/go-strcase v1.2.0 // indirect
 	github.com/subosito/gotenv v1.4.1 // indirect
 	github.com/unknwon/bra v0.0.0-20200517080246-1e3013ecaff8 // indirect
 	github.com/unknwon/com v1.0.1 // indirect
@@ -395,24 +385,13 @@ require (
 	github.com/yuin/gopher-lua v1.1.0 // indirect
 	github.com/zclconf/go-cty v1.13.0 // indirect
 	github.com/zeebo/xxh3 v1.0.2 // indirect
-	go.etcd.io/etcd/api/v3 v3.5.7 // indirect
-	go.etcd.io/etcd/client/pkg/v3 v3.5.7 // indirect
-	go.etcd.io/etcd/client/v3 v3.5.7 // indirect
-	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.42.0 // indirect
 	go.opentelemetry.io/otel/metric v1.16.0 // indirect
 	go.starlark.net v0.0.0-20221020143700-22309ac47eac // indirect
 	go.uber.org/multierr v1.10.0 // indirect
-	go.uber.org/zap v1.24.0 // indirect
-	golang.org/x/term v0.11.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20230731193218-e0aa005b6bdf // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20230731193218-e0aa005b6bdf // indirect
 	gopkg.in/fsnotify/fsnotify.v1 v1.4.7 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
-	gopkg.in/natefinch/lumberjack.v2 v2.0.0 // indirect
-	k8s.io/api v0.27.1 // indirect
-	k8s.io/component-base v0.27.1 // indirect
-	k8s.io/kms v0.27.1 // indirect
-	k8s.io/kube-aggregator v0.27.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20230501164219-8b0f38b5fd1f // indirect
 	lukechampine.com/uint128 v1.2.0 // indirect
 	modernc.org/cc/v3 v3.40.0 // indirect
@@ -424,10 +403,8 @@ require (
 	modernc.org/sqlite v1.18.2 // indirect
 	modernc.org/strutil v1.1.3 // indirect
 	modernc.org/token v1.1.0 // indirect
-	sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.1.2 // indirect
 	sigs.k8s.io/json v0.0.0-20221116044647-bc3834ca7abd // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.2.3 // indirect
-	sigs.k8s.io/yaml v1.3.0 // indirect
 )
 
 require (
@@ -452,7 +429,6 @@ require (
 	github.com/blugelabs/ice v1.0.0 // indirect
 	github.com/caio/go-tdigest v3.1.0+incompatible // indirect
 	github.com/chromedp/cdproto v0.0.0-20220208224320-6efb837e6bc2 // indirect
-	github.com/coreos/go-semver v0.3.0 // indirect
 	github.com/dgryski/go-metro v0.0.0-20211217172704-adc40b04c140 // indirect
 	github.com/docker/docker v23.0.4+incompatible // @grafana/grafana-delivery
 	github.com/elazarl/goproxy v0.0.0-20230731152917-f99041a5c027 // indirect
@@ -460,7 +436,7 @@ require (
 	github.com/ghodss/yaml v1.0.1-0.20190212211648-25d852aebe32 // indirect
 	github.com/go-git/gcfg v1.5.0 // indirect
 	github.com/go-git/go-billy/v5 v5.3.1 // indirect
-	github.com/go-logr/logr v1.2.4 // @grafana/grafana-app-platform-squad
+	github.com/go-logr/logr v1.2.4 // indirect; @grafana/grafana-app-platform-squad
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/google/go-github v17.0.0+incompatible // @grafana/grafana-app-platform-squad
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.16.2 // indirect
