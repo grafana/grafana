@@ -46,8 +46,9 @@ type Dashboard struct {
 	IsFolder  bool
 	HasACL    bool `xorm:"has_acl"`
 
-	Title string
-	Data  *simplejson.Json
+	Title       string
+	PanelTitles string
+	Data        *simplejson.Json
 }
 
 func (d *Dashboard) SetID(id int64) {

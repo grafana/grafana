@@ -78,27 +78,25 @@ func (d *dashboardStore) DBMigration(db db.DB) {
 	err := db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		var err error
 		err = sess.Table("dashboard").Find(&dashboards)
-		titles := make(map[int64]string, len(dashboards))
-		sep := " ,,, "
 		for _, d := range dashboards {
-			t := make([]string, 0)
-			panels := d.Data.Get("panels").MustArray()
-			for _, p := range panels {
-				panel := simplejson.NewFromAny(p)
-				title := panel.Get("title").MustString()
-				t = append(t, title)
-			}
-			titles[d.ID] = strings.Join(t, sep)
-		}
-
-		for k, v := range titles {
-			_, err = sess.Exec("UPDATE dashboard SET panel_titles = ? WHERE id = ?", v, k)
+			_, err = sess.Exec("UPDATE dashboard SET panel_titles = ? WHERE id = ?", getPanelTitles(d), d.ID)
 		}
 		return err
 	})
 	if err != nil {
 		d.log.Error("DB migration on dashboard store start failed.")
 	}
+}
+
+func getPanelTitles(dash *dashboards.Dashboard) string {
+	titles := make([]string, 0)
+	panels := dash.Data.Get("panels").MustArray()
+	for _, p := range panels {
+		panel := simplejson.NewFromAny(p)
+		titles = append(titles, panel.Get("title").MustString())
+	}
+	const sep = " ,,, "
+	return strings.Join(titles, sep)
 }
 
 func (d *dashboardStore) emitEntityEvent() bool {
@@ -177,7 +175,7 @@ func (d *dashboardStore) SaveProvisionedDashboard(ctx context.Context, cmd dashb
 	var result *dashboards.Dashboard
 	var err error
 	err = d.store.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		result, err = saveDashboard(sess, &cmd, d.emitEntityEvent())
+		result, err = d.saveDashboard(sess, &cmd, d.emitEntityEvent())
 		if err != nil {
 			return err
 		}
@@ -195,7 +193,7 @@ func (d *dashboardStore) SaveDashboard(ctx context.Context, cmd dashboards.SaveD
 	var result *dashboards.Dashboard
 	var err error
 	err = d.store.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		result, err = saveDashboard(sess, &cmd, d.emitEntityEvent())
+		result, err = d.saveDashboard(sess, &cmd, d.emitEntityEvent())
 		if err != nil {
 			return err
 		}
@@ -455,7 +453,7 @@ func getExistingDashboardByTitleAndFolder(sess *db.Session, dash *dashboards.Das
 	return isParentFolderChanged, nil
 }
 
-func saveDashboard(sess *db.Session, cmd *dashboards.SaveDashboardCommand, emitEntityEvent bool) (*dashboards.Dashboard, error) {
+func (d *dashboardStore) saveDashboard(sess *db.Session, cmd *dashboards.SaveDashboardCommand, emitEntityEvent bool) (*dashboards.Dashboard, error) {
 	dash := cmd.GetDashboardModel()
 
 	userId := cmd.UserID
@@ -491,6 +489,10 @@ func saveDashboard(sess *db.Session, cmd *dashboards.SaveDashboardCommand, emitE
 
 	if dash.UID == "" {
 		dash.SetUID(util.GenerateShortUID())
+	}
+
+	if d.features.IsEnabled(featuremgmt.FlagPanelTitleSearchInV1) && !dash.IsFolder {
+		dash.PanelTitles = getPanelTitles(dash)
 	}
 
 	parentVersion := dash.Version
