@@ -68,9 +68,62 @@ interface BoxProps {
   element?: ElementType;
 }
 
-export const Box = ({ children, ...props }: React.PropsWithChildren<BoxProps>) => {
-  const styles = useStyles2(useCallback((theme) => getStyles(theme, props), [props]));
-  const Element = props.element ?? 'div';
+export const Box = ({
+  children,
+  margin,
+  marginX,
+  marginY,
+  marginTop,
+  marginBottom,
+  marginLeft,
+  marginRight,
+  padding,
+  paddingX,
+  paddingY,
+  paddingTop,
+  paddingBottom,
+  paddingLeft,
+  paddingRight,
+  display,
+  backgroundColor,
+  grow,
+  shrink,
+  borderColor,
+  borderStyle,
+  borderRadius,
+  justifyContent,
+  alignItems,
+  boxShadow,
+  element,
+}: React.PropsWithChildren<BoxProps>) => {
+  const styles = useStyles2(
+    getStyles,
+    margin,
+    marginX,
+    marginY,
+    marginTop,
+    marginBottom,
+    marginLeft,
+    marginRight,
+    padding,
+    paddingX,
+    paddingY,
+    paddingTop,
+    paddingBottom,
+    paddingLeft,
+    paddingRight,
+    display,
+    backgroundColor,
+    grow,
+    shrink,
+    borderColor,
+    borderStyle,
+    borderRadius,
+    justifyContent,
+    alignItems,
+    boxShadow
+  );
+  const Element = element ?? 'div';
 
   return <Element className={styles.root}>{children}</Element>;
 };
@@ -101,33 +154,33 @@ const customBackgroundColor = (color: BackgroundColor, theme: GrafanaTheme2) => 
   }
 };
 
-const getStyles = (theme: GrafanaTheme2, props: BoxProps) => {
-  const {
-    margin,
-    marginX,
-    marginY,
-    marginTop,
-    marginBottom,
-    marginLeft,
-    marginRight,
-    padding,
-    paddingX,
-    paddingY,
-    paddingTop,
-    paddingBottom,
-    paddingLeft,
-    paddingRight,
-    display,
-    backgroundColor,
-    grow,
-    shrink,
-    borderColor,
-    borderStyle,
-    borderRadius,
-    justifyContent,
-    alignItems,
-    boxShadow,
-  } = props;
+const getStyles = (
+  theme: GrafanaTheme2,
+  margin: BoxProps['margin'],
+  marginX: BoxProps['marginX'],
+  marginY: BoxProps['marginY'],
+  marginTop: BoxProps['marginTop'],
+  marginBottom: BoxProps['marginBottom'],
+  marginLeft: BoxProps['marginLeft'],
+  marginRight: BoxProps['marginRight'],
+  padding: BoxProps['padding'],
+  paddingX: BoxProps['paddingX'],
+  paddingY: BoxProps['paddingY'],
+  paddingTop: BoxProps['paddingTop'],
+  paddingBottom: BoxProps['paddingBottom'],
+  paddingLeft: BoxProps['paddingLeft'],
+  paddingRight: BoxProps['paddingRight'],
+  display: BoxProps['display'],
+  backgroundColor: BoxProps['backgroundColor'],
+  grow: BoxProps['grow'],
+  shrink: BoxProps['shrink'],
+  borderColor: BoxProps['borderColor'],
+  borderStyle: BoxProps['borderStyle'],
+  borderRadius: BoxProps['borderRadius'],
+  justifyContent: BoxProps['justifyContent'],
+  alignItems: BoxProps['alignItems'],
+  boxShadow: BoxProps['boxShadow']
+) => {
   return {
     root: css([
       getResponsiveStyle(theme, margin, (val) => ({
