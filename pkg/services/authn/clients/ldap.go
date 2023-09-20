@@ -107,7 +107,7 @@ func (c *LDAP) disableUser(ctx context.Context, username string) (*authn.Identit
 }
 
 func (c *LDAP) identityFromLDAPInfo(orgID int64, info *login.ExternalUserInfo) *authn.Identity {
-	return &authn.Identity{
+	id := &authn.Identity{
 		OrgID:           orgID,
 		OrgRoles:        info.OrgRoles,
 		Login:           info.Login,
@@ -131,4 +131,12 @@ func (c *LDAP) identityFromLDAPInfo(orgID int64, info *login.ExternalUserInfo) *
 			},
 		},
 	}
+
+	// The ldap service is not aware of the internal state of the user. Fetching the user
+	// from the store to know if that user is disabled or not, is almost as costly as
+	// running an update systematically. We are setting IsDisabled to true so that the
+	// EnableDisabledUserHook force-enable that user.
+	id.IsDisabled = true
+
+	return id
 }
