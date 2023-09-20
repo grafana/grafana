@@ -51,7 +51,7 @@ export function getResponsiveStyle<T>(
   if (prop === undefined || prop === null) {
     return null;
   }
-  if (!('base' in prop)) {
+  if (typeof prop !== 'object' || !('base' in prop)) {
     return getCSS(prop);
   }
 
