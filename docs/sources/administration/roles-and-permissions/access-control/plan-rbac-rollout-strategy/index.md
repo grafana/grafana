@@ -308,16 +308,26 @@ roles:
 
 ### Manage user permissions through teams
 
-In the scenario where you want users to have granted access by the team they belong to, we recommend to set users role to `No Basic Role` and let the team assignment assign the role instead.
+In the scenario where you want users to grant access by the team they belong to, we recommend to set users role to `No Basic Role` and let the team assignment assign the role instead.
 
 1. In Grafana, ensure the following configuration settings are enabled.
-   1. `users.auto_assign_org = true` this will automatically assign users to the default organization.
-   1. `users.auto_assign_org_id = <org_id>` this will automatically assign users to the specified organization.
-   1. `users.auto_assign_org_role = None` this will automatically assign users to the specified role.
-   1. Restart the Grafana instance.
-2. Create a team with the desired name.
-3. Set the fixed roles needed for the team.
-4. Add users to the team.
+
+   ```
+   [users]
+   # Set to true to automatically assign new users to the default organization (id 1)
+   auto_assign_org = true
+
+   # Set this value to automatically add new users to the provided organization (if auto_assign_org above is set to true)
+   auto_assign_org_id = <org_id>
+
+   # Default role new users will be automatically assigned (if auto_assign_org above is set to true)
+   auto_assign_org_role = None
+   ```
+
+1. Restart the Grafana instance.
+1. Create a team with the desired name.
+1. Set the fixed roles needed for the team.
+1. Add users to the team.
 
 A user will be added to the default organization automatically but won't have any permissions until assigned to a team.
 
@@ -328,8 +338,8 @@ Below is a list of permissions required to access a dashboard:
 
 1. The dashboard owner must give permission to the user.
 1. The admin must grant the following permissions to the user:
-   1. annotations:read
-   1. datasource:read
+   - `annotations:read`
+   - `datasource:read`
 
 Please note that the permissions listed above are the minimum required to access the dashboard. It's important to keep in mind that if the dashboard has multiple features, additional permissions may be required beyond those listed here.
 
@@ -337,9 +347,8 @@ Please note that the permissions listed above are the minimum required to access
 
 Using Service Accounts is an efficient way to facilitate M2M communications. However, they can pose a security threat if not scoped appropriately. To limit the scope of a service account, you can begin by creating a Service Account with `No Basic Role` and then assign the necessary permissions for the account.
 
-1. Head over to the Service Accounts page and add a new Service Account.
-1. Set the necessary roles for the Service Account.
-   1. Set the basic role to `No Basic Role`.
-   1. Set the fixed roles needed for the Service Account.
+1. Refer to [Service Accounts](https://grafana.com/docs/grafana/latest/administration/service-accounts/) and add a new Service Account.
+1. Set the basic role to `No Basic Role`.
+1. Set the fixed roles needed for the Service Account.
 
 This will reduce the required permissions for the Service Account and minimize the risk of compromise.
