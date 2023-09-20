@@ -14,7 +14,7 @@ interface GenAIDashboardChangesButtonProps {
 const CHANGES_GENERATION_STANDARD_PROMPT = [
   'You are an expert in Grafana Dashboards',
   'Your goal is to write a description of the changes for a dashboard',
-  'When refering to panel changes, use the panel title',
+  'When referring to panel changes, use the panel title',
   'When using panel title, wrap it with double quotes',
   'Group all the positioning changes together under the title "Panel position changes"',
   'Group changes when all panels are affected',
@@ -40,7 +40,7 @@ function getMessages(dashboard: DashboardModel): Message[] {
       role: Role.system,
     },
     {
-      content: `This is the list of panel names, when refering to a panel, please use the title: ${JSON.stringify(
+      content: `This is the list of panel names, when referring to a panel, please use the title: ${JSON.stringify(
         dashboard.panels.map((panel) => panel.title)
       )}`,
       role: Role.system,
