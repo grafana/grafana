@@ -32,6 +32,7 @@ To see the permissions associated with basic roles, refer to the following basic
 
 | Basic role      | UID                   |
 | --------------- | --------------------- |
+| `No Basic Role` | `basic_none`          |
 | `Viewer`        | `basic_viewer`        |
 | `Editor`        | `basic_editor`        |
 | `Admin`         | `basic_admin`         |
@@ -256,6 +257,10 @@ If the default basic role definitions do not meet your requirements, you can cha
 **Before you begin:**
 
 - Determine the permissions you want to add or remove from a basic role. For more information about the permissions associated with basic roles, refer to [RBAC role definitions]({{< relref "./rbac-fixed-basic-role-definitions/#basic-role-assignments" >}}).
+
+{{% admonition type="note" %}}
+You cannot modify the `No Basic Role` permissions.
+{{% /admonition %}}
 
 **To change permissions from a basic role:**
 

@@ -1,4 +1,4 @@
-package phlare
+package pyroscope
 
 import (
 	"context"
@@ -54,17 +54,17 @@ type SeriesResponse struct {
 	Label  string
 }
 
-type PhlareClient struct {
+type PyroscopeClient struct {
 	connectClient querierv1connect.QuerierServiceClient
 }
 
-func NewPhlareClient(httpClient *http.Client, url string) *PhlareClient {
-	return &PhlareClient{
+func NewPyroscopeClient(httpClient *http.Client, url string) *PyroscopeClient {
+	return &PyroscopeClient{
 		connectClient: querierv1connect.NewQuerierServiceClient(httpClient, url),
 	}
 }
 
-func (c *PhlareClient) ProfileTypes(ctx context.Context) ([]*ProfileType, error) {
+func (c *PyroscopeClient) ProfileTypes(ctx context.Context) ([]*ProfileType, error) {
 	res, err := c.connectClient.ProfileTypes(ctx, connect.NewRequest(&querierv1.ProfileTypesRequest{}))
 	if err != nil {
 		return nil, err
@@ -84,7 +84,7 @@ func (c *PhlareClient) ProfileTypes(ctx context.Context) ([]*ProfileType, error)
 	}
 }
 
-func (c *PhlareClient) GetSeries(ctx context.Context, profileTypeID string, labelSelector string, start int64, end int64, groupBy []string, step float64) (*SeriesResponse, error) {
+func (c *PyroscopeClient) GetSeries(ctx context.Context, profileTypeID string, labelSelector string, start int64, end int64, groupBy []string, step float64) (*SeriesResponse, error) {
 	req := connect.NewRequest(&querierv1.SelectSeriesRequest{
 		ProfileTypeID: profileTypeID,
 		LabelSelector: labelSelector,
@@ -133,7 +133,7 @@ func (c *PhlareClient) GetSeries(ctx context.Context, profileTypeID string, labe
 	}, nil
 }
 
-func (c *PhlareClient) GetProfile(ctx context.Context, profileTypeID, labelSelector string, start, end int64, maxNodes *int64) (*ProfileResponse, error) {
+func (c *PyroscopeClient) GetProfile(ctx context.Context, profileTypeID, labelSelector string, start, end int64, maxNodes *int64) (*ProfileResponse, error) {
 	req := &connect.Request[querierv1.SelectMergeStacktracesRequest]{
 		Msg: &querierv1.SelectMergeStacktracesRequest{
 			ProfileTypeID: profileTypeID,
@@ -179,7 +179,7 @@ func getUnits(profileTypeID string) string {
 	return unit
 }
 
-func (c *PhlareClient) LabelNames(ctx context.Context) ([]string, error) {
+func (c *PyroscopeClient) LabelNames(ctx context.Context) ([]string, error) {
 	resp, err := c.connectClient.LabelNames(ctx, connect.NewRequest(&querierv1.LabelNamesRequest{}))
 	if err != nil {
 		return nil, fmt.Errorf("error seding LabelNames request %v", err)
@@ -195,7 +195,7 @@ func (c *PhlareClient) LabelNames(ctx context.Context) ([]string, error) {
 	return filtered, nil
 }
 
-func (c *PhlareClient) LabelValues(ctx context.Context, label string) ([]string, error) {
+func (c *PyroscopeClient) LabelValues(ctx context.Context, label string) ([]string, error) {
 	resp, err := c.connectClient.LabelValues(ctx, connect.NewRequest(&querierv1.LabelValuesRequest{Name: label}))
 	if err != nil {
 		return nil, err

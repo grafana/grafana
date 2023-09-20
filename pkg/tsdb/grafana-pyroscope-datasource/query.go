@@ -1,4 +1,4 @@
-package phlare
+package pyroscope
 
 import (
 	"context"
@@ -27,13 +27,13 @@ type dsJsonModel struct {
 }
 
 const (
-	queryTypeProfile = string(dataquery.PhlareQueryTypeProfile)
-	queryTypeMetrics = string(dataquery.PhlareQueryTypeMetrics)
-	queryTypeBoth    = string(dataquery.PhlareQueryTypeBoth)
+	queryTypeProfile = string(dataquery.PyroscopeQueryTypeProfile)
+	queryTypeMetrics = string(dataquery.PyroscopeQueryTypeMetrics)
+	queryTypeBoth    = string(dataquery.PyroscopeQueryTypeBoth)
 )
 
-// query processes single Phlare query transforming the response to data.Frame packaged in DataResponse
-func (d *PhlareDatasource) query(ctx context.Context, pCtx backend.PluginContext, query backend.DataQuery) backend.DataResponse {
+// query processes single Pyroscope query transforming the response to data.Frame packaged in DataResponse
+func (d *PyroscopeDatasource) query(ctx context.Context, pCtx backend.PluginContext, query backend.DataQuery) backend.DataResponse {
 	var qm queryModel
 	response := backend.DataResponse{}
 
@@ -118,7 +118,7 @@ func (d *PhlareDatasource) query(ctx context.Context, pCtx backend.PluginContext
 	return response
 }
 
-// responseToDataFrames turns Phlare response to data.Frame. We encode the data into a nested set format where we have
+// responseToDataFrames turns Pyroscope response to data.Frame. We encode the data into a nested set format where we have
 // [level, value, label] columns and by ordering the items in a depth first traversal order we can recreate the whole
 // tree back.
 func responseToDataFrames(resp *ProfileResponse) *data.Frame {
@@ -151,7 +151,7 @@ type ProfileTree struct {
 }
 
 // levelsToTree converts flamebearer format into a tree. This is needed to then convert it into nested set format
-// dataframe. This should be temporary, and ideally we should get some sort of tree struct directly from Phlare API.
+// dataframe. This should be temporary, and ideally we should get some sort of tree struct directly from Pyroscope API.
 func levelsToTree(levels []*Level, names []string) *ProfileTree {
 	if len(levels) == 0 {
 		return nil

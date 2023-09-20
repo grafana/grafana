@@ -2,7 +2,6 @@ import { Meta, StoryFn } from '@storybook/react';
 import React, { ReactNode } from 'react';
 
 import { SpacingTokenControl } from '../../../utils/storybook/themeStorybookControls';
-import { withCenteredStory } from '../../../utils/storybook/withCenteredStory';
 
 import { Stack } from './Stack';
 import mdx from './Stack.mdx';
@@ -10,7 +9,6 @@ import mdx from './Stack.mdx';
 const meta: Meta<typeof Stack> = {
   title: 'General/Layout/Stack',
   component: Stack,
-  decorators: [withCenteredStory],
   parameters: {
     docs: {
       page: mdx,
