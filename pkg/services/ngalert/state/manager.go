@@ -3,6 +3,7 @@ package state
 import (
 	"context"
 	"net/url"
+	"strconv"
 	"time"
 
 	"github.com/benbjohnson/clock"
@@ -158,6 +159,14 @@ func (st *Manager) Warm(ctx context.Context, rulesReader RuleReader) {
 			if err != nil {
 				st.log.Error("Error getting cacheId for entry", "error", err)
 			}
+			var resultFp data.Fingerprint
+			if entry.ResultFingerprint != "" {
+				fp, err := strconv.ParseUint(entry.ResultFingerprint, 16, 64)
+				if err != nil {
+					st.log.Error("Failed to parse result fingerprint of alert instance", "error", err, "ruleUID", entry.RuleUID)
+				}
+				resultFp = data.Fingerprint(fp)
+			}
 			rulesStates.states[cacheID] = &State{
 				AlertRuleUID:         entry.RuleUID,
 				OrgID:                entry.RuleOrgID,
@@ -170,6 +179,7 @@ func (st *Manager) Warm(ctx context.Context, rulesReader RuleReader) {
 				EndsAt:               entry.CurrentStateEnd,
 				LastEvaluationTime:   entry.LastEvalTime,
 				Annotations:          ruleForEntry.Annotations,
+				ResultFingerprint:    resultFp,
 			}
 			statesCount++
 		}
@@ -458,6 +468,7 @@ func (st *Manager) saveAlertStates(ctx context.Context, logger log.Logger, state
 			LastEvalTime:      s.LastEvaluationTime,
 			CurrentStateSince: s.StartsAt,
 			CurrentStateEnd:   s.EndsAt,
+			ResultFingerprint: s.ResultFingerprint.String(),
 		}
 
 		err = st.instanceStore.SaveAlertInstance(ctx, instance)

@@ -286,6 +286,15 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 		"system + rule + datasource-error": mergeLabels(mergeLabels(expectedDatasourceErrorLabels, baseRule.Labels), systemLabels),
 	}
 
+	resultFingerprints := map[string]data.Fingerprint{
+		"system + rule":                    data.Labels{}.Fingerprint(),
+		"system + rule + labels1":          labels1.Fingerprint(),
+		"system + rule + labels2":          labels2.Fingerprint(),
+		"system + rule + labels3":          labels3.Fingerprint(),
+		"system + rule + no-data":          noDataLabels.Fingerprint(),
+		"system + rule + datasource-error": data.Labels{}.Fingerprint(),
+	}
+
 	patchState := func(r *ngmodels.AlertRule, s *State) {
 		// patch all optional fields of the expected state
 		setCacheID(s)
@@ -303,6 +312,14 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 		}
 		if s.Values == nil {
 			s.Values = make(map[string]float64)
+		}
+		if s.ResultFingerprint == data.Fingerprint(0) {
+			for key, set := range labels {
+				if set.Fingerprint() == s.Labels.Fingerprint() {
+					s.ResultFingerprint = resultFingerprints[key]
+					break
+				}
+			}
 		}
 	}
 
