@@ -16,6 +16,7 @@ import {
 } from '@grafana/data';
 import { maybeSortFrame } from '@grafana/data/src/transformations/transformers/joinDataFrames';
 import {
+  AxisColorMode,
   AxisPlacement,
   GraphTransform,
   GraphTresholdsStyleMode,
@@ -32,6 +33,7 @@ import { findField } from 'app/features/dimensions';
 import { BarsOptions, getConfig } from './bars';
 import { FieldConfig, Options, defaultFieldConfig } from './panelcfg.gen';
 import { BarChartDisplayValues, BarChartDisplayWarning } from './types';
+import { AxisProps } from '@grafana/ui/src/components/uPlot/config/UPlotAxisBuilder';
 
 function getBarCharScaleOrientation(orientation: VizOrientation) {
   if (orientation === VizOrientation.Vertical) {
@@ -256,6 +258,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptionsEX> = ({
       max: field.config.max,
       softMin,
       softMax,
+      centeredZero: customConfig.axisCenteredZero,
       orientation: vizOrientation.yOri,
       direction: vizOrientation.yDir,
       distribution: customConfig.scaleDistribution?.type,
@@ -276,7 +279,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptionsEX> = ({
         }
       }
 
-      builder.addAxis({
+      let axisOpts: AxisProps = {
         scaleKey,
         label: customConfig.axisLabel,
         size: customConfig.axisWidth,
@@ -286,7 +289,19 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptionsEX> = ({
         tickLabelRotation: vizOrientation.xOri === 1 ? xTickLabelRotation * -1 : 0,
         theme,
         grid: { show: customConfig.axisGridShow },
-      });
+      };
+
+      if (customConfig.axisBorderShow) {
+        axisOpts.border = {
+          show: customConfig?.axisBorderShow
+        };
+      }
+
+      if (customConfig.axisColorMode === AxisColorMode.Series) {
+        axisOpts.color = seriesColor;
+      }
+
+      builder.addAxis(axisOpts);
     }
   }
 
