@@ -5,25 +5,14 @@ import React from 'react';
 import { CoreApp } from '@grafana/data';
 
 import { LokiDatasource } from '../datasource';
+import { createLokiDatasource } from '../mocks';
 
 import { testIds as regularTestIds } from './LokiQueryEditor';
 import { LokiQueryEditorByApp } from './LokiQueryEditorByApp';
 import { testIds as alertingTestIds } from './LokiQueryEditorForAlerting';
 
 function setup(app: CoreApp): RenderResult {
-  const dataSource = {
-    languageProvider: {
-      start: () => Promise.resolve([]),
-      getSyntax: () => {},
-      getLabelKeys: () => [],
-      metrics: [],
-    },
-    getQueryHints: () => [],
-    getDataSamples: () => [],
-    getQueryStats: jest.fn(),
-    maxLines: 20,
-    getTimeRange: jest.fn(),
-  } as unknown as LokiDatasource;
+  const dataSource = createLokiDatasource();
 
   return render(
     <LokiQueryEditorByApp
