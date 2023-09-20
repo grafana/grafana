@@ -19,7 +19,6 @@ const CHANGES_GENERATION_STANDARD_PROMPT = [
   'Group all the positioning changes together under the title "Panel position changes"',
   'Group changes when all panels are affected',
   'Do not mention line number',
-  'Do not mention values when describing changes, only the property that have changed',
   'Refer to templating elements as variables',
   'Ignore and never mention "getVariables" property changes',
   'Ignore and never mention changes about plugin version',
@@ -72,7 +71,7 @@ function getChanges(dashboard: DashboardModel): {
   userChanges: Diffs;
   migrationChanges: Diffs;
 } {
-  const currentDashboard = dashboard.getSaveModelClone()!;
+  const currentDashboard = dashboard.getSaveModelClone();
   const originalDashboard = dashboard.getOriginalDashboard()!;
   const dashboardAfterMigration = new DashboardModel(originalDashboard).getSaveModelClone();
 
