@@ -31,7 +31,7 @@ Your rollout strategy should help you answer the following questions:
 
 ## Review basic role and fixed role definitions
 
-As a first step in determining your permissions rollout strategy, we recommend that you become familiar with basic role and fixed role definitions. In addition to assigning fixed roles to any user and team, you can also modify basic roles permissions, which changes what a Viewer, Editor, or Admin can do. This flexibility means that there are many combinations of role assignments for you to consider. If you have a large number of Grafana users and teams, we recommend that you make a list of which fixed roles you might want to use.
+As a first step in determining your permissions rollout strategy, we recommend that you become familiar with basic role and fixed role definitions. In addition to assigning fixed roles to any user and team, you can also modify basic roles permissions, which changes what a Viewer, Editor, or Admin can do. This flexibility means that there are many combinations of role assignments for you to consider. If you have a large number of Grafana users and teams, we recommend that you make a list of which fixed roles you might want to use. Keep in mind that `No Basic Role`, which is a role without permissions, cannot be modified or updated.
 
 To learn more about basic roles and fixed roles, refer to the following documentation:
 
@@ -68,6 +68,10 @@ Consider the following guidelines when you determine if you should modify basic 
 
   {{% admonition type="note" %}}
   Changes that you make to basic roles impact the role definition for all [organizations]({{< relref "../../../organization-management/" >}}) in the Grafana instance. For example, when you add the `fixed:users:writer` role's permissions to the viewer basic role, all viewers in any org in the Grafana instance can create users within that org.
+  {{% /admonition %}}
+
+  {{% admonition type="note" %}}
+  You cannot modify the `No Basic Role` permissions.
   {{% /admonition %}}
 
 - **Create custom roles** when fixed role definitions don't meet you permissions requirements. For example, the `fixed:dashboards:writer` role allows users to delete dashboards. If you want some users or teams to be able to create and update but not delete dashboards, you can create a custom role with a name like `custom:dashboards:creator` that lacks the `dashboards:delete` permission.
@@ -301,3 +305,38 @@ roles:
 ```
 
 - Or use [RBAC HTTP API]({{< relref "../../../../developers/http_api/access_control/#update-a-role" >}}).
+
+### Manage user permissions through teams
+
+In the scenario where you want users to grant access by the team they belong to, we recommend to set users role to `No Basic Role` and let the team assignment assign the role instead.
+
+1. In Grafana, ensure the following configuration settings are enabled.
+
+   ```
+   [users]
+   # Set to true to automatically assign new users to the default organization (id 1)
+   auto_assign_org = true
+
+   # Set this value to automatically add new users to the provided organization (if auto_assign_org above is set to true)
+   auto_assign_org_id = <org_id>
+
+   # Default role new users will be automatically assigned (if auto_assign_org above is set to true)
+   auto_assign_org_role = None
+   ```
+
+1. Restart the Grafana instance.
+1. Create a team with the desired name.
+1. Assign fixed roles to the team.
+1. Add users to the team.
+
+A user will be added to the default organization automatically but won't have any permissions until assigned to a team.
+
+### Reduce scope of service accounts
+
+Using Service Accounts is an efficient way to facilitate M2M communications. However, they can pose a security threat if not scoped appropriately. To limit the scope of a service account, you can begin by creating a Service Account with `No Basic Role` and then assign the necessary permissions for the account.
+
+1. Refer to [Service Accounts](https://grafana.com/docs/grafana/latest/administration/service-accounts/) and add a new Service Account.
+1. Set the basic role to `No Basic Role`.
+1. Set the fixed roles needed for the Service Account.
+
+This will reduce the required permissions for the Service Account and minimize the risk of compromise.
