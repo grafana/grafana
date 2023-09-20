@@ -95,8 +95,18 @@ type UnifiedAlertingSettings struct {
 	Screenshots                   UnifiedAlertingScreenshotSettings
 	ReservedLabels                UnifiedAlertingReservedLabelSettings
 	StateHistory                  UnifiedAlertingStateHistorySettings
+	RemoteAlertmanager            RemoteAlertmanagerSettings
 	// MaxStateSaveConcurrency controls the number of goroutines (per rule) that can save alert state in parallel.
 	MaxStateSaveConcurrency int
+}
+
+// RemoteAlertmanagerSettings contains the configuration needed
+// to disable the internal Alertmanager and use an external one instead.
+type RemoteAlertmanagerSettings struct {
+	Enable   bool
+	URL      string
+	TenantID string
+	Password string
 }
 
 type UnifiedAlertingScreenshotSettings struct {
@@ -336,6 +346,15 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	if uaMinInterval > uaCfg.DefaultRuleEvaluationInterval {
 		uaCfg.DefaultRuleEvaluationInterval = uaMinInterval
 	}
+
+	remoteAlertmanager := iniFile.Section("remote.alertmanager")
+	uaCfgRemoteAM := RemoteAlertmanagerSettings{
+		Enable:   remoteAlertmanager.Key("enabled").MustBool(false),
+		URL:      remoteAlertmanager.Key("url").MustString(""),
+		TenantID: remoteAlertmanager.Key("tenant").MustString(""),
+		Password: remoteAlertmanager.Key("password").MustString(""),
+	}
+	uaCfg.RemoteAlertmanager = uaCfgRemoteAM
 
 	screenshots := iniFile.Section("unified_alerting.screenshots")
 	uaCfgScreenshots := uaCfg.Screenshots

@@ -16,7 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
-	pluginFakes "github.com/grafana/grafana/pkg/plugins/manager/fakes"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
@@ -27,6 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	pluginSettings "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings/service"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	"github.com/grafana/grafana/pkg/services/query"
 	fakeSecrets "github.com/grafana/grafana/pkg/services/secrets/fakes"
@@ -119,8 +119,8 @@ func buildQueryDataService(t *testing.T, cs datasources.CacheService, fpc *fakeP
 	}
 
 	ds := &fakeDatasources.FakeDataSourceService{}
-	pCtxProvider := plugincontext.ProvideService(localcache.ProvideService(), &pluginFakes.FakePluginStore{
-		PluginList: []plugins.PluginDTO{
+	pCtxProvider := plugincontext.ProvideService(localcache.ProvideService(), &pluginstore.FakePluginStore{
+		PluginList: []pluginstore.Plugin{
 			{
 				JSONData: plugins.JSONData{
 					ID: "mysql",

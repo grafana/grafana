@@ -231,7 +231,7 @@ func TestAlertmanagerConfig(t *testing.T) {
 
 		am, err := sut.mam.AlertmanagerFor(1)
 		require.NoError(t, err)
-		hash := am.Base.ConfigHash()
+		hash := am.ConfigHash()
 
 		getResponse := sut.RouteGetAlertingConfig(&rc)
 		require.Equal(t, 200, getResponse.Status())
@@ -243,7 +243,7 @@ func TestAlertmanagerConfig(t *testing.T) {
 
 		am, err = sut.mam.AlertmanagerFor(1)
 		require.NoError(t, err)
-		newHash := am.Base.ConfigHash()
+		newHash := am.ConfigHash()
 		require.Equal(t, hash, newHash)
 	})
 

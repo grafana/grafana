@@ -11,11 +11,11 @@ import (
 	"sync"
 
 	"github.com/grafana/dskit/services"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/modules"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	grafanaapiserver "github.com/grafana/grafana/pkg/services/grafana-apiserver"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -109,7 +109,7 @@ func (s *ModuleServer) Run() error {
 	s.log.Debug("Waiting on services...")
 
 	// Only allow individual dskit modules to run in dev mode.
-	if s.cfg.Env != "development" {
+	if s.cfg.Env != setting.Dev {
 		if len(s.cfg.Target) > 1 || s.cfg.Target[0] != "all" {
 			s.log.Error("dskit module targeting is only supported in dev mode. Falling back to 'all'")
 			s.cfg.Target = []string{"all"}

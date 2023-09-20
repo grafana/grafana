@@ -55,6 +55,7 @@ describe('PluginListItem', () => {
     isDev: false,
     isEnterprise: false,
     isDisabled: false,
+    isDeprecated: false,
     isPublished: true,
   };
 

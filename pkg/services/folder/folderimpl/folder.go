@@ -254,7 +254,7 @@ func (s *Service) getFolderByTitle(ctx context.Context, orgID int64, title strin
 func (s *Service) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (*folder.Folder, error) {
 	logger := s.log.FromContext(ctx)
 
-	if cmd.SignedInUser == nil {
+	if cmd.SignedInUser == nil || cmd.SignedInUser.IsNil() {
 		return nil, folder.ErrBadRequest.Errorf("missing signed in user")
 	}
 
@@ -281,14 +281,17 @@ func (s *Service) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (
 	dashFolder.SetUID(trimmedUID)
 
 	user := cmd.SignedInUser
+
+	userID := int64(0)
+	var err error
 	namespaceID, userIDstr := user.GetNamespacedID()
-	if namespaceID == identity.NamespaceAPIKey {
-		s.log.Warn("namespace API key detected, using 0 as user ID", "namespaceID", namespaceID, "userID", userIDstr)
-		userIDstr = "0"
-	}
-	userID, err := identity.IntIdentifier(namespaceID, userIDstr)
-	if err != nil {
-		s.log.Warn("failed to parse user ID", "namespaceID", namespaceID, "userID", userIDstr, "error", err)
+	if namespaceID != identity.NamespaceUser && namespaceID != identity.NamespaceServiceAccount {
+		s.log.Debug("User does not belong to a user or service account namespace, using 0 as user ID", "namespaceID", namespaceID, "userID", userIDstr)
+	} else {
+		userID, err = identity.IntIdentifier(namespaceID, userIDstr)
+		if err != nil {
+			s.log.Debug("failed to parse user ID", "namespaceID", namespaceID, "userID", userIDstr, "error", err)
+		}
 	}
 
 	if userID == 0 {
@@ -370,18 +373,9 @@ func (s *Service) Update(ctx context.Context, cmd *folder.UpdateFolderCommand) (
 		return dashFolder, nil
 	}
 
-	if cmd.NewUID != nil && *cmd.NewUID != "" {
-		if !util.IsValidShortUID(*cmd.NewUID) {
-			return nil, dashboards.ErrDashboardInvalidUid
-		} else if util.IsShortUIDTooLong(*cmd.NewUID) {
-			return nil, dashboards.ErrDashboardUidTooLong
-		}
-	}
-
 	foldr, err := s.store.Update(ctx, folder.UpdateFolderCommand{
 		UID:            cmd.UID,
 		OrgID:          cmd.OrgID,
-		NewUID:         cmd.NewUID,
 		NewTitle:       cmd.NewTitle,
 		NewDescription: cmd.NewDescription,
 		SignedInUser:   user,
@@ -467,10 +461,6 @@ func prepareForUpdate(dashFolder *dashboards.Dashboard, orgId int64, userId int6
 	}
 	dashFolder.Title = strings.TrimSpace(title)
 	dashFolder.Data.Set("title", dashFolder.Title)
-
-	if cmd.NewUID != nil && *cmd.NewUID != "" {
-		dashFolder.SetUID(*cmd.NewUID)
-	}
 
 	dashFolder.SetVersion(cmd.Version)
 	dashFolder.IsFolder = true
@@ -773,14 +763,15 @@ func (s *Service) BuildSaveDashboardCommand(ctx context.Context, dto *dashboards
 		}
 	}
 
+	userID := int64(0)
 	namespaceID, userIDstr := dto.User.GetNamespacedID()
-	if namespaceID == identity.NamespaceAPIKey {
-		s.log.Warn("namespace API key detected, using 0 as user ID", "namespaceID", namespaceID, "userID", userIDstr)
-		userIDstr = "0"
-	}
-	userID, err := identity.IntIdentifier(namespaceID, userIDstr)
-	if err != nil {
-		s.log.Warn("failed to parse user ID", "namespaceID", namespaceID, "userID", userIDstr, "error", err)
+	if namespaceID != identity.NamespaceUser && namespaceID != identity.NamespaceServiceAccount {
+		s.log.Warn("User does not belong to a user or service account namespace, using 0 as user ID", "namespaceID", namespaceID, "userID", userIDstr)
+	} else {
+		userID, err = identity.IntIdentifier(namespaceID, userIDstr)
+		if err != nil {
+			s.log.Warn("failed to parse user ID", "namespaceID", namespaceID, "userID", userIDstr, "error", err)
+		}
 	}
 
 	cmd := &dashboards.SaveDashboardCommand{

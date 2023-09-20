@@ -54,8 +54,7 @@ export function getMostFiredRulesScene(timeRange: SceneTimeRange, datasource: Da
   });
 
   return new SceneFlexItem({
-    width: 'calc(50% - 4px)',
-    height: 300,
+    minHeight: 300,
     body: PanelBuilders.table().setTitle(panelTitle).setData(transformation).build(),
   });
 }
