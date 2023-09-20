@@ -1,14 +1,16 @@
 import { AnyAction } from 'redux';
 
+import { getBackendSrv } from '@grafana/runtime';
 import { PrometheusDatasource } from 'app/plugins/datasource/prometheus/datasource';
 import { getMetadataHelp } from 'app/plugins/datasource/prometheus/language_provider';
 
-import { promQueryModeller } from '../../../PromQueryModeller';
+// import { promQueryModeller } from '../../../PromQueryModeller';
 import { buildVisualQueryFromString } from '../../../parsing';
 import { PromVisualQuery } from '../../../types';
-import { Interaction, QuerySuggestion, SuggestionType } from '../types';
+import { Interaction, QuerySuggestion, SimpleSuggestionResult, SuggestionType } from '../types';
 
 import { createInteraction, stateSlice } from './state';
+
 
 // actions to update the state
 const { updateInteraction } = stateSlice.actions;
@@ -170,80 +172,49 @@ export async function promQailSuggest(
   query: PromVisualQuery,
   interaction?: Interaction
 ) {
-  // when you're not running promqail
-  const check = await promQailHealthcheck();
-  if (!check) {
-    new Promise<void>((resolve) => {
-      return setTimeout(() => {
-        const interactionToUpdate = interaction ? interaction : createInteraction(SuggestionType.Historical);
 
-        const suggestions =
-          interactionToUpdate.suggestionType === SuggestionType.Historical ? querySuggestions : [querySuggestions[0]];
+  let suggestions: QuerySuggestion[];
 
-        const payload = {
-          idx,
-          interaction: { ...interactionToUpdate, suggestions: suggestions, isLoading: false },
-        };
-        dispatch(updateInteraction(payload));
-        resolve();
-      }, 1000);
-    });
+  if (interaction?.suggestionType === SuggestionType.AI) {
+    suggestions = [
+      {
+        query: 'LLM suggestion is not yet implemented',
+        explanation: 'LLM suggestion is not yet implemented',
+      }
+    ];
   } else {
-    let url = 'http://localhost:5001/query-suggest';
-
-    type SuggestionBody = {
-      metric: string;
-      labels: string;
-      prompt?: string;
-    };
-
-    let feedTheAI: SuggestionBody = {
-      metric: query.metric,
-      labels: promQueryModeller.renderLabels(query.labels),
-    };
-
-    if (interaction?.suggestionType === SuggestionType.AI) {
-      feedTheAI = { ...feedTheAI, prompt: interaction.prompt };
-    }
-
-    const body = {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(feedTheAI),
-    };
-
-    const promQailPromise = fetch(url, body);
-
-    const promQailResp = await promQailPromise
-      .then((resp) => {
-        return resp.json();
-      })
-      .catch((error) => {
-        return { error: error };
-      });
-
-    const interactionToUpdate = interaction ? interaction : createInteraction(SuggestionType.Historical);
-
-    const suggestions: QuerySuggestion[] = promQailResp.map((resp: string) => {
+    const promQailResp = await getSimpleQuerySuggestion(query);
+    suggestions = promQailResp.result.map(data => {
       return {
-        query: resp,
+        query: data.templatedExpr,
         explanation: '',
       };
     });
-
-    const payload = {
-      idx,
-      interaction: {
-        ...interactionToUpdate,
-        suggestions: suggestions,
-        isLoading: false,
-      },
-    };
-
-    dispatch(updateInteraction(payload));
   }
+
+  const interactionToUpdate = interaction ? interaction : createInteraction(SuggestionType.Historical);
+
+  const payload = {
+    idx,
+    interaction: {
+      ...interactionToUpdate,
+      suggestions: suggestions,
+      isLoading: false,
+    },
+  };
+
+  dispatch(updateInteraction(payload));
+
+  
+}
+
+async function getSimpleQuerySuggestion(query: PromVisualQuery) {
+  const datasourceType = 'prometheus';
+  let params = `datasourceType=${datasourceType}&metric=${query.metric}`;
+
+  const simpleSuggestion: SimpleSuggestionResult = await getBackendSrv().get(`/api/query-recommend?${params}`);
+
+  return simpleSuggestion;
 }
 
 async function promQailHealthcheck() {

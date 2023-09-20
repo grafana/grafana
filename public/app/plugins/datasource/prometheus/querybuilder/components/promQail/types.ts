@@ -15,3 +15,17 @@ export type Interaction = {
   isLoading: boolean;
   explanationIsLoading: boolean;
 };
+
+
+export type SimpleSuggestionData = {
+  metric: string;
+  templatedExpr: string;
+  count: number;
+  topLabelValues: { [key: string]: number };
+  topLabelNoValues: { [key: string]: number };
+  createdAt: number;
+};
+
+export type SimpleSuggestionResult = {
+  result: SimpleSuggestionData[];
+};
