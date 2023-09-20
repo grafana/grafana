@@ -1432,7 +1432,7 @@ describe('applyTemplateVariables', () => {
     });
   });
 
-  describe('getTimeRange', () => {
+  describe('getStatsTimeRange', () => {
     let query: LokiQuery;
     let datasource: LokiDatasource;
 
