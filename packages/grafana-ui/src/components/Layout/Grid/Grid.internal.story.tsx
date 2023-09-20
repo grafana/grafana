@@ -11,7 +11,7 @@ import { Grid } from './Grid';
 import mdx from './Grid.mdx';
 import { GridItem } from './GridItem';
 
-const gridItem = (index: number, theme: GrafanaTheme2, width?: string, height?: string) => {
+const gridItem = (index: number, theme: GrafanaTheme2, width?: string, height?: string, example?: boolean) => {
   const colorOrder = index >= 6 ? index - 6 : index;
   const itemOrder = index + 1;
   const colorList = ['red', 'orange', 'purple', 'blue', 'yellow', 'green'].map(theme.visualization.getColorByName);
@@ -19,7 +19,7 @@ const gridItem = (index: number, theme: GrafanaTheme2, width?: string, height?: 
     <div
       key={index}
       style={{
-        backgroundColor: colorList[colorOrder],
+        backgroundColor: example ? theme.colors.background.secondary : colorList[colorOrder],
         width,
         height,
         fontSize: theme.typography.bodySmall.fontSize,
@@ -96,7 +96,7 @@ export const AlignItemsExamples: StoryFn<typeof Grid> = (args) => {
   return (
     <Grid templateColumns="repeat(3,1fr)" templateRows="repeat(2, 1fr)" gap={4}>
       <span>
-        <p>Align items stretch - Grid structure reference</p>
+        <p>Align items stretch - reference</p>
         <Grid
           {...args}
           display="grid"
@@ -105,7 +105,7 @@ export const AlignItemsExamples: StoryFn<typeof Grid> = (args) => {
           alignItems="stretch"
           gap={2}
         >
-          {Array.from({ length: 6 }).map((_, i) => gridItem(i, theme))}
+          {Array.from({ length: 6 }).map((_, i) => gridItem(i, theme, undefined, undefined, true))}
         </Grid>
       </span>
 
@@ -137,7 +137,7 @@ export const AlignItemsExamples: StoryFn<typeof Grid> = (args) => {
         </Grid>
       </span>
       <span>
-        <p>Align items stretch - Grid structure reference</p>
+        <p>Align items stretch - reference</p>
         <Grid
           {...args}
           display="grid"
@@ -146,7 +146,7 @@ export const AlignItemsExamples: StoryFn<typeof Grid> = (args) => {
           alignItems="stretch"
           gap={2}
         >
-          {Array.from({ length: 6 }).map((_, i) => gridItem(i, theme))}
+          {Array.from({ length: 6 }).map((_, i) => gridItem(i, theme, undefined, undefined, true))}
         </Grid>
       </span>
       <span>
@@ -194,7 +194,7 @@ export const JustifyItemsExamples: StoryFn<typeof Grid> = (args) => {
   return (
     <Grid templateColumns="repeat(2,1fr)" templateRows="repeat(3, 1fr)" gap={4}>
       <span>
-        <p>Justify items stretch - Grid structure reference</p>
+        <p>Justify items stretch - reference</p>
         <Grid
           {...args}
           display="grid"
@@ -203,11 +203,11 @@ export const JustifyItemsExamples: StoryFn<typeof Grid> = (args) => {
           justifyItems="stretch"
           gap={2}
         >
-          {Array.from({ length: 6 }).map((_, i) => gridItem(i, theme))}
+          {Array.from({ length: 6 }).map((_, i) => gridItem(i, theme, undefined, undefined, true))}
         </Grid>
       </span>
       <span>
-        <p>Justify items stretch - Grid structure reference</p>
+        <p>Justify items stretch - reference</p>
         <Grid
           {...args}
           display="grid"
@@ -216,7 +216,7 @@ export const JustifyItemsExamples: StoryFn<typeof Grid> = (args) => {
           justifyItems="stretch"
           gap={2}
         >
-          {Array.from({ length: 6 }).map((_, i) => gridItem(i, theme))}
+          {Array.from({ length: 6 }).map((_, i) => gridItem(i, theme, undefined, undefined, true))}
         </Grid>
       </span>
       <span>
