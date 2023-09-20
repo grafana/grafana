@@ -259,7 +259,7 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
           disabled={submitState.loading}
           size="sm"
         >
-          {'Edit YAML'}
+          Edit YAML
         </Button>
       )}
     </HorizontalGroup>
