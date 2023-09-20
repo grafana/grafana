@@ -39,11 +39,13 @@ export const OPEN_AI_MODEL = 'gpt-4';
  *
  * @param messages messages to send to LLM
  * @param onReply callback to call when LLM replies. The reply will be streamed, so it will be called for every token received.
+ * @param temperature what temperature to use when calling the llm. default 1.
  * @returns The subscription to the stream.
  */
 export const generateTextWithLLM = async (
   messages: Message[],
-  onReply: (response: string, isDone: boolean) => void
+  onReply: (response: string, isDone: boolean) => void,
+  temperature: number=1,
 ) => {
   const enabled = await isLLMPluginEnabled();
 
@@ -55,6 +57,7 @@ export const generateTextWithLLM = async (
     .streamChatCompletions({
       model: OPEN_AI_MODEL,
       messages: [DONE_MESSAGE, ...messages],
+      temperature,
     })
     .pipe(
       // Accumulate the stream content into a stream of strings, where each

@@ -12,6 +12,7 @@ export interface GenAIButtonProps {
   onClick?: (e: React.MouseEvent<HTMLButtonElement>) => void;
   messages: Message[];
   onReply: (response: string, isDone: boolean) => void;
+  temperature?: number,
 }
 
 export const GenAIButton = ({
@@ -20,6 +21,7 @@ export const GenAIButton = ({
   onClick,
   messages,
   onReply,
+  temperature = 1,
 }: GenAIButtonProps) => {
   const styles = useStyles2(getStyles);
   const [enabled, setEnabled] = useState(true);
@@ -33,7 +35,7 @@ export const GenAIButton = ({
   const onGenerate = (e: React.MouseEvent<HTMLButtonElement>) => {
     onClick?.(e);
     setLoading(true);
-    generateTextWithLLM(messages, replyHandler);
+    generateTextWithLLM(messages, replyHandler, temperature);
   };
 
   useEffect(() => {
