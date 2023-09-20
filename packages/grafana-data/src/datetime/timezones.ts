@@ -120,14 +120,14 @@ const mapInternal = (zone: string, timestamp: number): TimeZoneInfo | undefined 
     case InternalTimeZones.default: {
       const tz = getTimeZone();
       const isInternal = tz === 'browser' || tz === 'utc';
-      const info = (isInternal ? mapInternal(tz, timestamp) : mapToInfo(tz, timestamp)) ?? {};
+      const info = isInternal ? mapInternal(tz, timestamp) : mapToInfo(tz, timestamp);
 
       return {
         countries: countriesByTimeZone[tz] ?? [],
         abbreviation: '',
         offsetInMins: 0,
         ...info,
-        ianaName: (info as TimeZoneInfo).ianaName,
+        ianaName: info?.ianaName ?? '',
         name: 'Default',
         zone,
       };
@@ -135,7 +135,7 @@ const mapInternal = (zone: string, timestamp: number): TimeZoneInfo | undefined 
 
     case InternalTimeZones.localBrowserTime: {
       const tz = moment.tz.guess(true);
-      const info = mapToInfo(tz, timestamp) ?? {};
+      const info = mapToInfo(tz, timestamp);
 
       return {
         countries: countriesByTimeZone[tz] ?? [],
@@ -143,7 +143,7 @@ const mapInternal = (zone: string, timestamp: number): TimeZoneInfo | undefined 
         offsetInMins: new Date().getTimezoneOffset(),
         ...info,
         name: 'Browser Time',
-        ianaName: (info as TimeZoneInfo).ianaName,
+        ianaName: info?.ianaName ?? '',
         zone,
       };
     }
