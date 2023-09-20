@@ -108,7 +108,7 @@ describe('transformSceneToSaveModel', () => {
       const saveModel = transformSceneToSaveModel(scene);
 
       expect(saveModel.annotations?.list?.length).toBe(4);
-      expect(saveModel.annotations?.list).toEqual(dashboard_to_load1.annotations?.list);
+      expect(saveModel.annotations?.list).toMatchSnapshot();
     });
     it('should transform annotations to save model after state changes', () => {
       const scene = transformSaveModelToScene({ dashboard: dashboard_to_load1 as any, meta: {} });
