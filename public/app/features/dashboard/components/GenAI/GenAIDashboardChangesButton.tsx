@@ -15,7 +15,7 @@ const CHANGES_GENERATION_STANDARD_PROMPT = [
   'Your goal is to write a description of the changes for a dashboard',
   'When referring to panel changes, use the panel title',
   'When using panel title, wrap it with double quotes',
-  'When the panel changes the postion, just mention the panel title has changed position',
+  'When the panel changes the position, just mention the panel title has changed position',
   'When an entire panel is added or removed, use the panel title and only say it was added or removed and disregard the rest of the changes for that panel',
   'Group changes when all panels are affected',
   'Do not mention line number',
