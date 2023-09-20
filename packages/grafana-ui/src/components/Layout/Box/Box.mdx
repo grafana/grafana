@@ -28,7 +28,7 @@ If you need more specific layouts like Flex or Grid, use those specific componen
 3. Add it to the CSS array in `getStyles` in `Box.tsx`.
    - If it is a `ResponsiveProp`, you should use the `getResponsiveStyle` helper function
    ```
-    getResponsiveStyle<ThemeSpacingTokens>(theme, [propName], (val) => ({
+    getResponsiveStyle(theme, [propName], (val) => ({
         [cssProp]: theme.spacing(val),
     })),
    ```
