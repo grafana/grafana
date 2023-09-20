@@ -1,9 +1,6 @@
 import { DateTime, isDateTime, TimeRange } from '@grafana/data';
-import { intervalToMs } from '@grafana/data/src/datetime/rangeutil';
-import { Duration } from '@grafana/lezer-logql';
 
 import { LokiDatasource } from '../datasource';
-import { getNodesFromQuery, isLogsQuery } from '../queryUtils';
 import { LokiQuery, LokiQueryType, QueryStats } from '../types';
 
 export async function getStats(datasource: LokiDatasource, query: LokiQuery): Promise<QueryStats | null> {
@@ -56,48 +53,4 @@ export function shouldUpdateStats(
   }
 
   return true;
-}
-
-export function getTimeRange(
-  ds: LokiDatasource,
-  query: LokiQuery,
-  idx: number
-): { start: number | undefined; end: number | undefined } {
-  let start: number, end: number;
-  const NS_IN_MS = 1000000;
-  const durationNodes = getNodesFromQuery(query.expr, [Duration]);
-  const durations = durationNodes.map((d) => query.expr.substring(d.from, d.to));
-
-  if (isLogsQuery(query.expr)) {
-    // logs query with instant type can not be estimated
-    if (query.queryType === LokiQueryType.Instant) {
-      return { start: undefined, end: undefined };
-    }
-    // logs query with range type
-    return ds.getTimeRangeParams();
-  }
-
-  if (query.queryType === LokiQueryType.Instant) {
-    // metric query with instant type
-
-    if (!!durations[idx]) {
-      // if query has a duration e.g. [1m]
-      end = ds.getTimeRangeParams().end;
-      start = end - intervalToMs(durations[idx]) * NS_IN_MS;
-      return { start, end };
-    } else {
-      // if query has no duration e.g. [$__interval]
-
-      if (/(\$__auto|\$__range)/.test(query.expr)) {
-        // if $__auto or $__range is used, we can estimate the time range using the selected range
-        return ds.getTimeRangeParams();
-      }
-
-      // otherwise we cant estimate the time range
-      return { start: undefined, end: undefined };
-    }
-  }
-
-  // metric query with range type
-  return ds.getTimeRangeParams();
 }
