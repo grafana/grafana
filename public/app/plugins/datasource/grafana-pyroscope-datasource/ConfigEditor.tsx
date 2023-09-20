@@ -53,7 +53,7 @@ export const ConfigEditor = (props: Props) => {
                   }}
                 />
               }
-              tooltip="Minimal step used for metric query. Should be the same or higher as the scrape interval setting in the Phlare database."
+              tooltip="Minimal step used for metric query. Should be the same or higher as the scrape interval setting in the Pyroscope database."
             />
           </div>
         </div>

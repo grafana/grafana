@@ -8,6 +8,8 @@ import {
   DataQueryError,
   DataQueryRequest,
   DataQueryResponse,
+  DataSourceGetTagKeysOptions,
+  DataSourceGetTagValuesOptions,
   DataSourceInstanceSettings,
   dateMath,
   DateTime,
@@ -20,8 +22,6 @@ import {
   TIME_SERIES_VALUE_FIELD_NAME,
   TimeSeries,
   toDataFrame,
-  DataSourceGetTagKeysOptions,
-  DataSourceGetTagValuesOptions,
 } from '@grafana/data';
 import {
   BackendDataSourceResponse,
@@ -42,7 +42,7 @@ import { buildMetadataQuery } from './influxql_query_builder';
 import { prepareAnnotation } from './migrations';
 import { buildRawQuery } from './queryUtils';
 import ResponseParser from './response_parser';
-import { DEFAULT_POLICY, InfluxOptions, InfluxQuery, InfluxVersion } from './types';
+import { DEFAULT_POLICY, InfluxOptions, InfluxQuery, InfluxQueryTag, InfluxVersion } from './types';
 
 export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery, InfluxOptions> {
   type: string;
@@ -214,6 +214,13 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
 
     if (this.isMigrationToggleOnAndIsAccessProxy()) {
       query = this.applyVariables(query, scopedVars, rest);
+      if (query.adhocFilters?.length) {
+        const adhocFiltersToTags: InfluxQueryTag[] = (query.adhocFilters ?? []).map((af) => {
+          const { condition, ...asTag } = af;
+          return asTag;
+        });
+        query.tags = [...(query.tags ?? []), ...adhocFiltersToTags];
+      }
     }
 
     return query;
@@ -352,8 +359,6 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
       type: 'TAG_KEYS',
       templateService: this.templateSrv,
       database: this.database,
-      measurement: '',
-      tags: [],
     });
 
     return this.metricFindQuery(query);
@@ -365,8 +370,6 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
       templateService: this.templateSrv,
       database: this.database,
       withKey: options.key,
-      measurement: '',
-      tags: [],
     });
 
     return this.metricFindQuery(query);

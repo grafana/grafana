@@ -48,7 +48,8 @@ export interface AdHocVariableFilter {
   key: string;
   operator: string;
   value: string;
-  condition: string;
+  /** @deprecated  */
+  condition?: string;
 }
 
 export interface AdHocVariableModel extends BaseVariableModel {
