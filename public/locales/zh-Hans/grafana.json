@@ -215,6 +215,13 @@
       "label": ""
     }
   },
+  "explorer": {
+    "trace-view": {
+      "panel-chrome": {
+        "title": ""
+      }
+    }
+  },
   "folder-picker": {
     "loading": "正在加载文件夹..."
   },

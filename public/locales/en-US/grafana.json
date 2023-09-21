@@ -220,6 +220,13 @@
       "label": "Add new data source"
     }
   },
+  "explorer": {
+    "trace-view": {
+      "panel-chrome": {
+        "title": "Trace"
+      }
+    }
+  },
   "folder-picker": {
     "loading": "Loading folders..."
   },

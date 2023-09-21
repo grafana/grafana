@@ -220,6 +220,13 @@
       "label": "Åđđ ŉęŵ đäŧä şőūřčę"
     }
   },
+  "explorer": {
+    "trace-view": {
+      "panel-chrome": {
+        "title": ""
+      }
+    }
+  },
   "folder-picker": {
     "loading": "Ŀőäđįŉģ ƒőľđęřş..."
   },

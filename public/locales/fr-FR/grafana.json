@@ -225,6 +225,13 @@
       "label": ""
     }
   },
+  "explorer": {
+    "trace-view": {
+      "panel-chrome": {
+        "title": ""
+      }
+    }
+  },
   "folder-picker": {
     "loading": "Chargement des dossiers..."
   },
