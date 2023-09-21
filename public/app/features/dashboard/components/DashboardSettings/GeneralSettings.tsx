@@ -2,6 +2,7 @@ import React, { ChangeEvent, useState } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { TimeZone } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import {
   CollapsableSection,
   Field,
@@ -122,7 +123,9 @@ export function GeneralSettingsUnconnected({
             label={
               <HorizontalGroup justify="space-between">
                 <Label htmlFor="title">Title</Label>
-                <GenAIDashTitleButton onGenerate={onTitleChange} dashboard={dashboard} />
+                {config.featureToggles.dashgpt && (
+                  <GenAIDashTitleButton onGenerate={onTitleChange} dashboard={dashboard} />
+                )}
               </HorizontalGroup>
             }
           >
@@ -137,7 +140,9 @@ export function GeneralSettingsUnconnected({
             label={
               <HorizontalGroup justify="space-between">
                 <Label htmlFor="description">Description</Label>
-                <GenAIDashDescriptionButton onGenerate={onDescriptionChange} dashboard={dashboard} />
+                {config.featureToggles.dashgpt && (
+                  <GenAIDashDescriptionButton onGenerate={onDescriptionChange} dashboard={dashboard} />
+                )}
               </HorizontalGroup>
             }
           >
