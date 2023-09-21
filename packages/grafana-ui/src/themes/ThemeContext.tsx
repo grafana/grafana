@@ -106,14 +106,17 @@ export function useStyles<T>(getStyles: (theme: GrafanaTheme) => T) {
  * Prefer using primitive values (boolean, number, string, etc) for
  * additional arguments for better performance
  *
+ * ```
  * const getStyles = (theme, isDisabled, isOdd) => {css(...)}
  * [...]
  * const styles = useStyles2(getStyles, true, Boolean(index % 2))
+ * ```
  *
  * NOTE: For memoization to work, ensure that all arguments don't change
  * across renders (or only change if they need to)
+ *
+ * @public
  * */
-/** @public */
 export function useStyles2<T extends unknown[], CSSReturnValue>(
   getStyles: (theme: GrafanaTheme2, ...args: T) => CSSReturnValue,
   ...additionalArguments: T

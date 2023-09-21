@@ -3,12 +3,9 @@ import React from 'react';
 
 import { ButtonCascader } from '@grafana/ui';
 
-import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
-
 const meta: Meta<typeof ButtonCascader> = {
   title: 'Forms/Cascader/ButtonCascader',
   component: ButtonCascader,
-  decorators: [withCenteredStory],
   parameters: {
     controls: {
       exclude: ['className', 'value', 'fieldNames', 'loadData', 'onChange', 'onPopupVisibleChange'],

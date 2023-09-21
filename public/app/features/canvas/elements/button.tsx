@@ -5,8 +5,9 @@ import { TextDimensionConfig, TextDimensionMode } from '@grafana/schema';
 import { Button } from '@grafana/ui';
 import { DimensionContext } from 'app/features/dimensions/context';
 import { TextDimensionEditor } from 'app/features/dimensions/editors/TextDimensionEditor';
-import { APIEditor, APIEditorConfig, callApi } from 'app/plugins/panel/canvas/editor/element/APIEditor';
+import { APIEditor, APIEditorConfig } from 'app/plugins/panel/canvas/editor/element/APIEditor';
 import { ButtonStyleConfig, ButtonStyleEditor } from 'app/plugins/panel/canvas/editor/element/ButtonStyleEditor';
+import { callApi } from 'app/plugins/panel/canvas/editor/element/utils';
 import { HttpRequestMethod } from 'app/plugins/panel/canvas/panelcfg.gen';
 
 import { CanvasElementItem, CanvasElementProps } from '../element';
@@ -28,6 +29,8 @@ export const defaultApiConfig: APIEditorConfig = {
   method: HttpRequestMethod.POST,
   data: '{}',
   contentType: 'application/json',
+  queryParams: [],
+  headerParams: [],
 };
 
 export const defaultStyleConfig: ButtonStyleConfig = {
@@ -38,7 +41,7 @@ class ButtonDisplay extends PureComponent<CanvasElementProps<ButtonConfig, Butto
   render() {
     const { data } = this.props;
     const onClick = () => {
-      if (data?.api) {
+      if (data?.api && data?.api?.endpoint) {
         callApi(data.api);
       }
     };
