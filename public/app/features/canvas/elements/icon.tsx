@@ -88,8 +88,8 @@ export const iconItem: CanvasElementItem<IconConfig, IconData> = {
     placement: {
       width: options?.placement?.width ?? 100,
       height: options?.placement?.height ?? 100,
-      top: options?.placement?.top ?? 0,
-      left: options?.placement?.left ?? 0,
+      top: options?.placement?.top ?? 100,
+      left: options?.placement?.left ?? 100,
     },
   }),
 
