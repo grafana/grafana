@@ -9,6 +9,7 @@ import { useGrafana } from 'app/core/context/GrafanaContext';
 import { CommandPalette } from 'app/features/commandPalette/CommandPalette';
 import { KioskMode } from 'app/types';
 
+import { DockedMegaMenu } from './DockedMegaMenu/DockedMegaMenu';
 import { MegaMenu } from './MegaMenu/MegaMenu';
 import { NavToolbar } from './NavToolbar/NavToolbar';
 import { SectionNav } from './SectionNav/SectionNav';
@@ -70,7 +71,11 @@ export function AppChrome({ children }: Props) {
       </main>
       {!state.chromeless && (
         <>
-          <MegaMenu searchBarHidden={searchBarHidden} onClose={() => chrome.setMegaMenu(false)} />
+          {config.featureToggles.dockedMegaMenu ? (
+            <DockedMegaMenu searchBarHidden={searchBarHidden} onClose={() => chrome.setMegaMenu(false)} />
+          ) : (
+            <MegaMenu searchBarHidden={searchBarHidden} onClose={() => chrome.setMegaMenu(false)} />
+          )}
           <CommandPalette />
         </>
       )}

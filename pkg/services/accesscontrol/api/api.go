@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/middleware"
+	"github.com/grafana/grafana/pkg/middleware/requestmeta"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -41,7 +42,7 @@ func (api *AccessControlAPI) RegisterAPIEndpoints() {
 			rr.Get("/users/permissions/search", authorize(ac.EvalPermission(ac.ActionUsersPermissionsRead)), routing.Wrap(api.searchUsersPermissions))
 			rr.Get("/user/:userID/permissions/search", authorize(ac.EvalPermission(ac.ActionUsersPermissionsRead, userIDScope)), routing.Wrap(api.searchUserPermissions))
 		}
-	})
+	}, requestmeta.SetOwner(requestmeta.TeamAuth))
 }
 
 // GET /api/access-control/user/actions

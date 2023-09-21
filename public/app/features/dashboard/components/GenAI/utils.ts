@@ -1,5 +1,8 @@
 import { llms } from '@grafana/experimental';
 
+import { DashboardModel } from '../../state';
+import { Diffs, jsonDiff } from '../VersionHistory/utils';
+
 export interface Message {
   role: Role;
   content: string;
@@ -39,11 +42,13 @@ export const OPEN_AI_MODEL = 'gpt-4';
  *
  * @param messages messages to send to LLM
  * @param onReply callback to call when LLM replies. The reply will be streamed, so it will be called for every token received.
+ * @param temperature what temperature to use when calling the llm. default 1.
  * @returns The subscription to the stream.
  */
 export const generateTextWithLLM = async (
   messages: Message[],
-  onReply: (response: string, isDone: boolean) => void
+  onReply: (response: string, isDone: boolean) => void,
+  temperature = 1
 ) => {
   const enabled = await isLLMPluginEnabled();
 
@@ -55,6 +60,7 @@ export const generateTextWithLLM = async (
     .streamChatCompletions({
       model: OPEN_AI_MODEL,
       messages: [DONE_MESSAGE, ...messages],
+      temperature,
     })
     .pipe(
       // Accumulate the stream content into a stream of strings, where each
@@ -92,4 +98,28 @@ export function isResponseCompleted(response: string) {
  */
 export function cleanupResponse(response: string) {
   return response.replace(SPECIAL_DONE_TOKEN, '').replace(/"/g, '');
+}
+
+/**
+ * Diff the current dashboard with the original dashboard and the dashboard after migration
+ * to split the changes into user changes and migration changes.
+ * * User changes: changes made by the user
+ * * Migration changes: changes made by the DashboardMigrator after opening the dashboard
+ *
+ * @param dashboard current dashboard to be saved
+ * @returns user changes and migration changes
+ */
+export function getDashboardChanges(dashboard: DashboardModel): {
+  userChanges: Diffs;
+  migrationChanges: Diffs;
+} {
+  // Re-parse the dashboard to remove functions and other non-serializable properties
+  const currentDashboard = JSON.parse(JSON.stringify(dashboard.getSaveModelClone()));
+  const originalDashboard = dashboard.getOriginalDashboard()!;
+  const dashboardAfterMigration = JSON.parse(JSON.stringify(new DashboardModel(originalDashboard).getSaveModelClone()));
+
+  return {
+    userChanges: jsonDiff(dashboardAfterMigration, currentDashboard),
+    migrationChanges: jsonDiff(originalDashboard, dashboardAfterMigration),
+  };
 }
