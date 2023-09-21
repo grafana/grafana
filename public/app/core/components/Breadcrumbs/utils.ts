@@ -24,7 +24,7 @@ export function buildBreadcrumbs(sectionNav: NavModelItem, pageNav?: NavModelIte
     }
 
     // This enabled app plugins to control breadcrumbs of their root pages
-    const isSamePathAsLastBreadcrumb = lastPath === urlToMatch;
+    const isSamePathAsLastBreadcrumb = lastPath === urlToMatch && node.url !== undefined;
     // Remember this path for the next breadcrumb
     lastPath = urlToMatch;
 
