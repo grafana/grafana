@@ -224,7 +224,7 @@ export const Components = {
     },
     SpatialOperations: {
       actionLabel: 'root Action field property editor',
-      locationLabel: 'root Location field property editor',
+      locationLabel: 'root Location Mode field property editor',
       location: {
         autoOption: 'Auto location option',
         coords: {
