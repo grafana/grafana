@@ -4,6 +4,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/oauth"
 )
 
 type Plugin struct {
@@ -30,6 +31,8 @@ type Plugin struct {
 	BaseURL string
 
 	AngularDetected bool
+
+	ExternalService *oauth.ExternalService
 }
 
 func (p Plugin) SupportsStreaming() bool {
@@ -70,5 +73,6 @@ func ToGrafanaDTO(p *plugins.Plugin) Plugin {
 		Module:            p.Module,
 		BaseURL:           p.BaseURL,
 		AngularDetected:   p.AngularDetected,
+		ExternalService:   p.ExternalService,
 	}
 }
