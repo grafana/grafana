@@ -20,6 +20,7 @@ import { DataQuery } from '@grafana/schema';
 import { useStyles2 } from '@grafana/ui';
 import { getTraceToLogsOptions, TraceToLogsData } from 'app/core/components/TraceToLogs/TraceToLogsSettings';
 import { TraceToMetricsData } from 'app/core/components/TraceToMetrics/TraceToMetricsSettings';
+import {t,Trans} from 'app/core/internationalization';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { getTimeZone } from 'app/features/profile/state/selectors';
 import { TempoQuery } from 'app/plugins/datasource/tempo/types';
@@ -200,7 +201,11 @@ export function TraceView(props: Props) {
           />
         </>
       ) : (
-        <div className={styles.noDataMsg}>No data</div>
+        <div className={styles.noDataMsg}>
+					<Trans i18nKey="explorer.trace-view.no-data-message">
+						No data
+					</Trans>
+				</div>
       )}
     </>
   );
@@ -235,7 +240,7 @@ function useFocusSpanLink(options: {
 
   const createFocusSpanLink = (traceId: string, spanId: string) => {
     const link: DataLink = {
-      title: 'Deep link to this span',
+      title: t('explorer.trace-view.focus-span-link.title', 'Deep link to this span'),
       url: '',
       internal: {
         datasourceUid: options.datasource?.uid!,

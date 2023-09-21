@@ -217,6 +217,10 @@
   },
   "explorer": {
     "trace-view": {
+      "focus-span-link": {
+        "title": ""
+      },
+      "no-data-message": "",
       "panel-chrome": {
         "title": ""
       }

@@ -222,6 +222,10 @@
   },
   "explorer": {
     "trace-view": {
+      "focus-span-link": {
+        "title": "Deep link to this span"
+      },
+      "no-data-message": "No data",
       "panel-chrome": {
         "title": "Trace"
       }
