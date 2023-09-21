@@ -323,6 +323,7 @@ export type SpanBarRowProps = {
   clippingRight?: boolean;
   createSpanLink?: SpanLinkFunc;
   datasourceType: string;
+  visibleSpanIds: string[];
 };
 
 /**
@@ -375,6 +376,7 @@ export class UnthemedSpanBarRow extends React.PureComponent<SpanBarRowProps> {
       createSpanLink,
       datasourceType,
       showServiceName,
+      visibleSpanIds,
     } = this.props;
     const {
       duration,
@@ -429,6 +431,7 @@ export class UnthemedSpanBarRow extends React.PureComponent<SpanBarRowProps> {
               hoverIndentGuideIds={hoverIndentGuideIds}
               addHoverIndentGuideId={addHoverIndentGuideId}
               removeHoverIndentGuideId={removeHoverIndentGuideId}
+              visibleSpanIds={visibleSpanIds}
             />
             <button
               type="button"

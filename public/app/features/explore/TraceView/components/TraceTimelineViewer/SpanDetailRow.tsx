@@ -97,6 +97,7 @@ export type SpanDetailRowProps = {
   createFocusSpanLink: (traceId: string, spanId: string) => LinkModel;
   topOfViewRefType?: TopOfViewRefType;
   datasourceType: string;
+  visibleSpanIds: string[];
 };
 
 export class UnthemedSpanDetailRow extends React.PureComponent<SpanDetailRowProps> {
@@ -134,6 +135,7 @@ export class UnthemedSpanDetailRow extends React.PureComponent<SpanDetailRowProp
       createFocusSpanLink,
       topOfViewRefType,
       datasourceType,
+      visibleSpanIds,
     } = this.props;
     const styles = getStyles(theme);
     return (
@@ -145,6 +147,7 @@ export class UnthemedSpanDetailRow extends React.PureComponent<SpanDetailRowProp
             hoverIndentGuideIds={hoverIndentGuideIds}
             addHoverIndentGuideId={addHoverIndentGuideId}
             removeHoverIndentGuideId={removeHoverIndentGuideId}
+            visibleSpanIds={visibleSpanIds}
           />
           <Button
             fill="text"
