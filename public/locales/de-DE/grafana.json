@@ -220,6 +220,15 @@
       "label": ""
     }
   },
+  "explorer": {
+    "node-graph": {
+      "count-warning__one": "",
+      "count-warning__other": "",
+      "planel-chrome": {
+        "title": ""
+      }
+    }
+  },
   "folder-picker": {
     "loading": "Ordner werden geladen …"
   },

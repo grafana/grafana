@@ -220,6 +220,15 @@
       "label": "Add new data source"
     }
   },
+  "explorer": {
+    "node-graph": {
+      "count-warning__one": "{{count}} nodes, can be slow to load",
+      "count-warning__other": "{{count}} nodes, can be slow to load",
+      "planel-chrome": {
+        "title": "Node graph"
+      }
+    }
+  },
   "folder-picker": {
     "loading": "Loading folders..."
   },

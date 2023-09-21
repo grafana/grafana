@@ -225,6 +225,16 @@
       "label": ""
     }
   },
+  "explorer": {
+    "node-graph": {
+      "count-warning__one": "",
+      "count-warning__many": "",
+      "count-warning__other": "",
+      "planel-chrome": {
+        "title": ""
+      }
+    }
+  },
   "folder-picker": {
     "loading": "Chargement des dossiers..."
   },
