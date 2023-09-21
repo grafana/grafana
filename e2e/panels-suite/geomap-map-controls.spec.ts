@@ -8,27 +8,51 @@ describe('Geomap layer controls options', () => {
 
   it('Tests map controls options', () => {
     e2e.flows.openDashboard({ uid: DASHBOARD_ID, queryParams: { editPanel: 1 } });
+    e2e.components.OptionsGroup.group('Map controls').scrollIntoView().should('exist');
 
     // Show zoom
-    e2e.components.OptionsGroup.group('Map controls').scrollIntoView().should('exist');
-    cy.get('input[id="controls.showZoom"]').check({ force: true });
+    e2e.components.PanelEditor.showZoomField()
+      .should('exist')
+      .within(() => {
+        cy.get('input[type="checkbox"]').check({ force: true });
+      });
+
     cy.contains('+');
     cy.get('.ol-zoom').should('exist');
 
     // Show attribution
-    cy.get('input[id="controls.showAttribution"]').check({ force: true });
+    e2e.components.PanelEditor.showAttributionField()
+      .should('exist')
+      .within(() => {
+        cy.get('input[type="checkbox"]').check({ force: true });
+      });
+
     cy.get('.ol-attribution').should('exist');
 
     // Show scale
-    cy.get('input[id="controls.showScale"]').check({ force: true });
+    e2e.components.PanelEditor.showScaleField()
+      .should('exist')
+      .within(() => {
+        cy.get('input[type="checkbox"]').check({ force: true });
+      });
+
     cy.get('.ol-scale-line').should('exist');
 
     // Show measure tool
-    cy.get('input[id="controls.showMeasure"]').check({ force: true });
+    e2e.components.PanelEditor.showMeasureField()
+      .should('exist')
+      .within(() => {
+        cy.get('input[type="checkbox"]').check({ force: true });
+      });
+
     e2e.components.PanelEditor.measureButton().should('exist');
 
     // Show debug
-    cy.get('input[id="controls.showDebug"]').check({ force: true });
+    e2e.components.PanelEditor.showDebugField()
+      .should('exist')
+      .within(() => {
+        cy.get('input[type="checkbox"]').check({ force: true });
+      });
     e2e.components.DebugOverlay.wrapper().should('exist');
   });
 });
