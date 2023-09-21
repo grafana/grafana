@@ -58,7 +58,7 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
               </Button>
             </Flex>
           </Box>
-          <Flex direction={{ base: 'column', md: 'row' }} wrap="wrap" gap={4}>
+          <Flex direction={{ xs: 'column', md: 'row' }} wrap="wrap" gap={4}>
             {config.featureToggles.vizAndWidgetSplit && (
               <Box borderStyle="dashed" borderColor="info" padding={3} grow={1}>
                 <Flex direction="column" alignItems="center" gap={1}>
