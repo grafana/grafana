@@ -153,10 +153,8 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
     if (isLegacyQueryEditor(VariableQueryEditor, datasource)) {
       return (
         <Box marginBottom={2}>
-          <div style={{ paddingBottom: '8px' }}>
-            <Text element={'h4'} variant="h4">
-              Query
-            </Text>
+          <div style={{ marginBottom: '8px' }}>
+            <Text element={'h4'}>Query</Text>
           </div>
           <VariableQueryEditor
             key={datasource.uid}
@@ -174,10 +172,8 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
     if (isQueryEditor(VariableQueryEditor, datasource)) {
       return (
         <Box marginBottom={2}>
-          <div style={{ paddingBottom: '8px' }}>
-            <Text element={'h4'} variant="h4">
-              Query
-            </Text>
+          <div style={{ marginBottom: '8px' }}>
+            <Text element={'h4'}>Query</Text>
           </div>
           <VariableQueryEditor
             key={datasource.uid}
