@@ -15,7 +15,7 @@ export function getGrafanaMissedIterationsScene(
         refId: 'A',
         expr: 'sum by (rule_group) (grafanacloud_instance_rule_group_iterations_missed_total:rate5m)',
         range: true,
-        legendFormat: 'missed',
+        legendFormat: '{{rule_group}}',
       },
     ],
     $timeRange: timeRange,
