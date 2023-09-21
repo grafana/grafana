@@ -13,9 +13,7 @@ import (
 
 var (
 	// SortOptionsByQueryParam is a map to translate the "sort" query param values to SortOption(s)
-	// FIXME: SortOptions have to be customized based on the table name "user" or alias "u"
-	//        It would be nice to align SQL search functions to use one or the other.
-	SortOptionsByQueryParam = map[string]func(table string) model.SortOption{
+	SortOptionsByQueryParam = map[string]model.SortOption{
 		"login-asc":          newSortOption("login", false, 0),
 		"login-desc":         newSortOption("login", true, 0),
 		"email-asc":          newSortOption("email", false, 1),
@@ -32,47 +30,33 @@ var (
 type Sorter struct {
 	Field      string
 	Descending bool
-	Table      string
 }
 
 func (s Sorter) OrderBy() string {
 	if s.Descending {
-		return fmt.Sprintf("%v.%v DESC", s.Table, s.Field)
+		return fmt.Sprintf("u.%v DESC", s.Field)
 	}
-
-	return fmt.Sprintf("%v.%v ASC", s.Table, s.Field)
+	return fmt.Sprintf("u.%v ASC", s.Field)
 }
 
-func newSortOption(field string, desc bool, index int) func(table string) model.SortOption {
+func newSortOption(field string, desc bool, index int) model.SortOption {
 	direction := "asc"
 	alpha := ("A-Z")
 	if desc {
 		direction = "desc"
 		alpha = ("Z-A")
 	}
-	return func(table string) model.SortOption {
-		return model.SortOption{
-			Name:        fmt.Sprintf("%v-%v", field, direction),
-			DisplayName: fmt.Sprintf("%v (%v)", cases.Title(language.Und).String(field), alpha),
-			Description: fmt.Sprintf("Sort %v in an alphabetically %vending order", field, direction),
-			Index:       index,
-			Filter:      []model.SortOptionFilter{Sorter{Table: table, Field: field, Descending: desc}},
-		}
+	return model.SortOption{
+		Name:        fmt.Sprintf("%v-%v", field, direction),
+		DisplayName: fmt.Sprintf("%v (%v)", cases.Title(language.Und).String(field), alpha),
+		Description: fmt.Sprintf("Sort %v in an alphabetically %vending order", field, direction),
+		Index:       index,
+		Filter:      []model.SortOptionFilter{Sorter{Field: field, Descending: desc}},
 	}
 }
 
-func ParseSortQueryParamUserTableName(param string) ([]model.SortOption, error) {
-	return ParseSortQueryParam("user", param)
-}
-
-func ParseSortQueryParamUserTableAlias(param string) ([]model.SortOption, error) {
-	return ParseSortQueryParam("u", param)
-}
-
 // ParseSortQueryParam parses the "sort" query param and returns an ordered list of SortOption(s)
-// FIXME: SortOptions have to be customized based on the table name "user" or alias "u"
-// It would be nice to align SQL search functions to use one or the other.
-func ParseSortQueryParam(table, param string) ([]model.SortOption, error) {
+func ParseSortQueryParam(param string) ([]model.SortOption, error) {
 	opts := []model.SortOption{}
 	if param != "" {
 		optsStr := strings.Split(param, ",")
@@ -80,7 +64,7 @@ func ParseSortQueryParam(table, param string) ([]model.SortOption, error) {
 			if opt, ok := SortOptionsByQueryParam[optsStr[i]]; !ok {
 				return nil, ErrorUnknownSortingOption.Errorf("%v option unknown", optsStr[i])
 			} else {
-				opts = append(opts, opt(table))
+				opts = append(opts, opt)
 			}
 		}
 		sort.Slice(opts, func(i, j int) bool {

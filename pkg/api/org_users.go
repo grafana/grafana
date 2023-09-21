@@ -265,7 +265,7 @@ func (hs *HTTPServer) SearchOrgUsersWithPaging(c *contextmodel.ReqContext) respo
 		page = 1
 	}
 
-	sortOpts, err := sortopts.ParseSortQueryParamUserTableName(c.Query("sort"))
+	sortOpts, err := sortopts.ParseSortQueryParam(c.Query("sort"))
 	if err != nil {
 		return response.Err(err)
 	}

@@ -88,7 +88,7 @@ func (s *OSSService) SearchUser(c *contextmodel.ReqContext) (*user.SearchUserQue
 		}
 	}
 
-	sortOpts, err := sortopts.ParseSortQueryParamUserTableAlias(c.Query("sort"))
+	sortOpts, err := sortopts.ParseSortQueryParam(c.Query("sort"))
 	if err != nil {
 		return nil, err
 	}
