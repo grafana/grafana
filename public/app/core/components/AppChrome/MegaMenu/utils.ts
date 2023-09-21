@@ -1,11 +1,10 @@
 import { locationUtil, NavModelItem } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
+import appEvents from 'app/core/app_events';
+import { getFooterLinks } from 'app/core/components/Footer/Footer';
+import { HelpModal } from 'app/core/components/help/HelpModal';
 import { t } from 'app/core/internationalization';
-
-import { ShowModalReactEvent } from '../../../../types/events';
-import appEvents from '../../../app_events';
-import { getFooterLinks } from '../../Footer/Footer';
-import { HelpModal } from '../../help/HelpModal';
+import { ShowModalReactEvent } from 'app/types/events';
 
 export const enrichHelpItem = (helpItem: NavModelItem) => {
   let menuItems = helpItem.children || [];

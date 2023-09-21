@@ -1,12 +1,12 @@
 import { render, screen } from '@testing-library/react';
 import React from 'react';
 import { Router } from 'react-router-dom';
+import { TestProvider } from 'test/helpers/TestProvider';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
 import { NavModelItem } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 
-import { TestProvider } from '../../../../../test/helpers/TestProvider';
 
 import { MegaMenu } from './MegaMenu';
 

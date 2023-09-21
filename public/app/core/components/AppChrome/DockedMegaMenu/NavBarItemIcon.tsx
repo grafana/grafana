@@ -3,8 +3,7 @@ import React from 'react';
 
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { Icon, toIconName, useTheme2 } from '@grafana/ui';
-
-import { Branding } from '../../Branding/Branding';
+import { Branding } from 'app/core/components/Branding/Branding';
 
 interface NavBarItemIconProps {
   link: NavModelItem;
