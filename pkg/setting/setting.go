@@ -409,6 +409,9 @@ type Cfg struct {
 
 	Env string
 
+	StackID string
+	Slug    string
+
 	ForceMigration bool
 
 	// Analytics
@@ -1034,6 +1037,8 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 	}
 	Env = valueAsString(iniFile.Section(""), "app_mode", "development")
 	cfg.Env = Env
+	cfg.StackID = valueAsString(iniFile.Section("environment"), "stack_id", "")
+	cfg.Slug = valueAsString(iniFile.Section("environment"), "slug", "")
 	cfg.ForceMigration = iniFile.Section("").Key("force_migration").MustBool(false)
 	InstanceName = valueAsString(iniFile.Section(""), "instance_name", "unknown_instance_name")
 	plugins := valueAsString(iniFile.Section("paths"), "plugins", "")
