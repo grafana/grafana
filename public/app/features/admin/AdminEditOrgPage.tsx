@@ -3,7 +3,7 @@ import { useAsyncFn } from 'react-use';
 
 import { NavModelItem, UrlQueryValue } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
-import { Form, Field, Input, Button, Legend, Alert, VerticalGroup, HorizontalGroup, Pagination } from '@grafana/ui';
+import { Form, Field, Input, Button, Legend, Alert } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/core';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
@@ -120,17 +120,15 @@ const AdminEditOrgPage = ({ match }: Props) => {
             <Legend>Organization users</Legend>
             {!canReadUsers && renderMissingPermissionMessage()}
             {canReadUsers && !!users.length && (
-              <VerticalGroup spacing="md">
-                <OrgUsersTable users={users} orgId={orgId} onRoleChange={onRoleChange} onRemoveUser={onRemoveUser} />
-                <HorizontalGroup justify="flex-end">
-                  <Pagination
-                    onNavigate={onPageChange}
-                    currentPage={page}
-                    numberOfPages={totalPages}
-                    hideWhenSinglePage={true}
-                  />
-                </HorizontalGroup>
-              </VerticalGroup>
+              <OrgUsersTable
+                users={users}
+                orgId={orgId}
+                onRoleChange={onRoleChange}
+                onRemoveUser={onRemoveUser}
+                changePage={onPageChange}
+                page={page}
+                totalPages={totalPages}
+              />
             )}
           </div>
         </>
