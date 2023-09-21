@@ -137,7 +137,7 @@ export const useFetchDetailsLazy = () => {
   const dispatch = useDispatch();
 
   return (id: string) => dispatch(fetchDetails(id));
-}
+};
 
 export const useDisplayMode = () => {
   const dispatch = useDispatch();
