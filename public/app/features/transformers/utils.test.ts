@@ -1,4 +1,4 @@
-import { numberOrVariableValidator } from './BasicMatcherEditor';
+import { numberOrVariableValidator } from './utils';
 
 describe('validator', () => {
   it('validates a number', () => {
