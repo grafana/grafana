@@ -19,6 +19,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/state/template"
 )
 
+// allOrgs can be provided as orgID to get states from all orgs.
+const allOrgs = -1
+
 type ruleStates struct {
 	states map[string]*State
 }
@@ -275,15 +278,28 @@ func (c *cache) getAll(orgID int64, skipNormalState bool) []*State {
 	var states []*State
 	c.mtxStates.RLock()
 	defer c.mtxStates.RUnlock()
-	for _, v1 := range c.states[orgID] {
-		for _, v2 := range v1.states {
-			if skipNormalState && IsNormalStateWithNoReason(v2) {
-				continue
+	for _, id := range c.getSelectedOrgs(orgID) {
+		for _, v1 := range c.states[id] {
+			for _, v2 := range v1.states {
+				if skipNormalState && IsNormalStateWithNoReason(v2) {
+					continue
+				}
+				states = append(states, v2)
 			}
-			states = append(states, v2)
 		}
 	}
 	return states
+}
+
+func (c *cache) getSelectedOrgs(orgID int64) []int64 {
+	if orgID != allOrgs {
+		return []int64{orgID}
+	}
+	orgs := make([]int64, len(c.states))
+	for id := range c.states {
+		orgs = append(orgs, id)
+	}
+	return orgs
 }
 
 func (c *cache) getStatesForRuleUID(orgID int64, alertRuleUID string, skipNormalState bool) []*State {

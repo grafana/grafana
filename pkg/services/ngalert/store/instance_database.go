@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"sort"
 	"strings"
-	"time"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -46,16 +45,13 @@ func (st DBstore) ListAlertInstances(ctx context.Context, cmd *models.ListAlertI
 }
 
 func (st DBstore) FullSync(ctx context.Context, instances []models.AlertInstance) error {
-	st.Logger.Info("Doing a full state sync", "count", len(instances))
 	if len(instances) == 0 {
 		return nil
 	}
 	return st.SQLStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		startTime := time.Now()
 		// First we delete all records from the table
-		// TODO: could we have multiple orgs? Not sure if the scheduler is isolated by org.
-		if _, err := sess.Exec("DELETE FROM alert_instance WHERE rule_org_id = ?", instances[0].RuleOrgID); err != nil {
-			return err
+		if _, err := sess.Exec("DELETE FROM alert_instance"); err != nil {
+			return fmt.Errorf("failed to delete alert_instance table: %w", err)
 		}
 		for _, alertInstance := range instances {
 			if err := models.ValidateAlertInstance(alertInstance); err != nil {
@@ -82,11 +78,8 @@ func (st DBstore) FullSync(ctx context.Context, instances []models.AlertInstance
 			}
 		}
 		if err := sess.Commit(); err != nil {
-			st.Logger.Error("Failed to commit full state sync", "err", err)
-			return err
+			return fmt.Errorf("failed to commit alert_instance table: %w", err)
 		}
-		dur := time.Since(startTime)
-		st.Logger.Info("Full state sync done", "duration", dur.Seconds())
 		return nil
 	})
 }
