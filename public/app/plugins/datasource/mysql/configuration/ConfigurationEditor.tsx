@@ -186,7 +186,7 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<My
         </FieldSet>
       ) : null}
 
-      <ConnectionLimits labelWidth={WIDTH_SHORT} options={options} onOptionsChange={onOptionsChange} />
+      <ConnectionLimits options={options} onOptionsChange={onOptionsChange} />
 
       <FieldSet label="MySQL details">
         <InlineField

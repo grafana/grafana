@@ -265,7 +265,7 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<Ms
         </FieldSet>
       )}
 
-      <ConnectionLimits labelWidth={SHORT_WIDTH} options={dsSettings} onOptionsChange={onOptionsChange} />
+      <ConnectionLimits options={dsSettings} onOptionsChange={onOptionsChange} />
 
       <FieldSet label="MS SQL details">
         <InlineField
