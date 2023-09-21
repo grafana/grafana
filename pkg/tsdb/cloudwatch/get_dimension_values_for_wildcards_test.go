@@ -8,11 +8,12 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/mocks"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/utils"
+	"github.com/patrickmn/go-cache"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestGetDimensionValuesForWildcards(t *testing.T) {
-	executor := &cloudWatchExecutor{}
+	executor := &cloudWatchExecutor{tagValueCache: cache.New(0, 0)}
 
 	t.Run("Should not change non-wildcard dimension value", func(t *testing.T) {
 		query := getBaseQuery()
@@ -52,6 +53,26 @@ func TestGetDimensionValuesForWildcards(t *testing.T) {
 		assert.Nil(t, err)
 		assert.Len(t, queries, 1)
 		assert.Equal(t, map[string][]string{"Test_DimensionName1": {"Value1", "Value2", "Value3", "Value4"}}, queries[0].Dimensions)
+		api.AssertExpectations(t)
+	})
+
+	t.Run("Should use cache for previously fetched value", func(t *testing.T) {
+		query := getBaseQuery()
+		query.MetricName = "Test_MetricName2"
+		query.Dimensions = map[string][]string{"Test_DimensionName2": {"*"}}
+		query.MatchExact = false
+		api := &mocks.MetricsAPI{Metrics: []*cloudwatch.Metric{
+			{MetricName: utils.Pointer("Test_MetricName2"), Dimensions: []*cloudwatch.Dimension{{Name: utils.Pointer("Test_DimensionName2"), Value: utils.Pointer("Value1")}}},
+		}}
+		api.On("ListMetricsPages").Return(nil)
+		_, err := executor.getDimensionValuesForWildcards(context.Background(), api, "us-east-1", []*models.CloudWatchQuery{query})
+		assert.Nil(t, err)
+
+		//setting the api to nil confirms that it's using the cached value
+		queries, err := executor.getDimensionValuesForWildcards(context.Background(), nil, "us-east-1", []*models.CloudWatchQuery{query})
+		assert.Nil(t, err)
+		assert.Len(t, queries, 1)
+		assert.Equal(t, map[string][]string{"Test_DimensionName2": {"Value1"}}, queries[0].Dimensions)
 		api.AssertExpectations(t)
 	})
 }

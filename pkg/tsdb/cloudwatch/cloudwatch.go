@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"sync"
+	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -28,6 +29,7 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/clients"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/kinds/dataquery"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
+	"github.com/patrickmn/go-cache"
 )
 
 type DataQueryJson struct {
@@ -73,10 +75,11 @@ type SessionCache interface {
 
 func newExecutor(im instancemgmt.InstanceManager, cfg *setting.Cfg, sessions SessionCache, features featuremgmt.FeatureToggles) *cloudWatchExecutor {
 	e := &cloudWatchExecutor{
-		im:       im,
-		cfg:      cfg,
-		sessions: sessions,
-		features: features,
+		im:            im,
+		cfg:           cfg,
+		sessions:      sessions,
+		features:      features,
+		tagValueCache: cache.New(time.Hour*24, time.Hour*24*5),
 	}
 
 	e.resourceHandler = httpadapter.New(e.newResourceMux())
@@ -109,11 +112,12 @@ func NewInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 
 // cloudWatchExecutor executes CloudWatch requests.
 type cloudWatchExecutor struct {
-	im          instancemgmt.InstanceManager
-	cfg         *setting.Cfg
-	sessions    SessionCache
-	features    featuremgmt.FeatureToggles
-	regionCache sync.Map
+	im            instancemgmt.InstanceManager
+	cfg           *setting.Cfg
+	sessions      SessionCache
+	features      featuremgmt.FeatureToggles
+	regionCache   sync.Map
+	tagValueCache *cache.Cache
 
 	resourceHandler backend.CallResourceHandler
 }
