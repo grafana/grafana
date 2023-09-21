@@ -192,6 +192,7 @@ def rgm_publish_packages(bucket = "grafana-packages"):
       Drone steps.
     """
     steps = []
+    env_secrets = rgm_env_secrets({})
     for package_manager in ["deb", "rpm"]:
         steps.append({
             "name": "publish-{}".format(package_manager),
@@ -206,7 +207,10 @@ def rgm_publish_packages(bucket = "grafana-packages"):
                 "gpg_passphrase": from_secret("packages_gpg_passphrase"),
                 "gpg_public_key": from_secret("packages_gpg_public_key"),
                 "gpg_private_key": from_secret("packages_gpg_private_key"),
-                "package_path": "file://$${{DRONE_WORKSPACE}}/dist/**.{}".format(package_manager),
+                "package_path": "gs://$${{DESTINATION}}/$${{DRONE_BUILD_EVENT}}/*_$${{DRONE_BUILD_NUMBER}}_*.{}".format(package_manager),
+            },
+            "environment": {
+                "DESTINATION": env_secrets["DESTINATION"],
             },
         })
 

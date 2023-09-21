@@ -3631,6 +3631,9 @@ steps:
     path: /var/run/docker.sock
 - depends_on:
   - rgm-publish
+  environment:
+    DESTINATION:
+      from_secret: destination
   image: us.gcr.io/kubernetes-dev/package-publish:latest
   name: publish-deb
   privileged: true
@@ -3643,7 +3646,7 @@ steps:
       from_secret: packages_gpg_private_key
     gpg_public_key:
       from_secret: packages_gpg_public_key
-    package_path: file://$${DRONE_WORKSPACE}/dist/**.deb
+    package_path: gs://$${DESTINATION}/$${DRONE_BUILD_EVENT}/*_$${DRONE_BUILD_NUMBER}_*.deb
     secret_access_key:
       from_secret: packages_secret_access_key
     service_account_json:
@@ -3651,6 +3654,9 @@ steps:
     target_bucket: grafana-packages-testing
 - depends_on:
   - rgm-publish
+  environment:
+    DESTINATION:
+      from_secret: destination
   image: us.gcr.io/kubernetes-dev/package-publish:latest
   name: publish-rpm
   privileged: true
@@ -3663,7 +3669,7 @@ steps:
       from_secret: packages_gpg_private_key
     gpg_public_key:
       from_secret: packages_gpg_public_key
-    package_path: file://$${DRONE_WORKSPACE}/dist/**.rpm
+    package_path: gs://$${DESTINATION}/$${DRONE_BUILD_EVENT}/*_$${DRONE_BUILD_NUMBER}_*.rpm
     secret_access_key:
       from_secret: packages_secret_access_key
     service_account_json:
@@ -4640,6 +4646,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 99ce57a615066a8431c8292076342dbec01c41f3eaff3407ab2ac93495ca1db0
+hmac: cefa8a7a8656109fd5d54b8c9c510a6befe553bede436e2ad16fc8a690a4295c
 
 ...
