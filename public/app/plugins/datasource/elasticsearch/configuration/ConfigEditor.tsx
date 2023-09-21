@@ -1,4 +1,3 @@
-import { css } from '@emotion/css';
 import React, { useEffect } from 'react';
 
 import { SIGV4ConnectionConfig } from '@grafana/aws-sdk';
@@ -6,6 +5,7 @@ import { DataSourcePluginOptionsEditorProps } from '@grafana/data';
 import {
   AdvancedHttpSettings,
   Auth,
+  AuthMethod,
   ConfigSection,
   ConnectionSettings,
   convertLegacyAuthProps,
@@ -43,7 +43,7 @@ export const ConfigEditor = (props: Props) => {
         id: 'custom-sigv4',
         label: 'SigV4 auth',
         description: 'AWS Signature Version 4 authentication',
-        component: <SIGV4ConnectionConfig {...props} />,
+        component: <SIGV4ConnectionConfig inExperimentalAuthComponent={true} {...props} />,
       },
     ];
     authProps.selectedMethod = options.jsonData.sigV4Auth ? 'custom-sigv4' : authProps.selectedMethod;
@@ -64,15 +64,20 @@ export const ConfigEditor = (props: Props) => {
       <Divider />
       <ConnectionSettings config={options} onChange={onOptionsChange} urlPlaceholder="http://localhost:9200" />
       <Divider />
-      <div className={options.jsonData.sigV4Auth ? styles.sigV4authContainer : ''}>
-        <Auth
-          {...authProps}
-          onAuthMethodSelect={(method) => {
-            options.jsonData.sigV4Auth = method === 'custom-sigv4';
-            authProps.onAuthMethodSelect(method);
-          }}
-        />
-      </div>
+      <Auth
+        {...authProps}
+        onAuthMethodSelect={(method) => {
+          onOptionsChange({
+            ...options,
+            basicAuth: method === AuthMethod.BasicAuth,
+            withCredentials: method === AuthMethod.CrossSiteCredentials,
+            jsonData: {
+              ...options.jsonData,
+              sigV4Auth: method === 'custom-sigv4',
+            },
+          });
+        }}
+      />
       <Divider />
       <ConfigSection
         title="Additional settings"
@@ -112,12 +117,4 @@ export const ConfigEditor = (props: Props) => {
       </ConfigSection>
     </>
   );
-};
-
-const styles = {
-  sigV4authContainer: css`
-    & > div {
-      max-width: 100%;
-    }
-  `,
 };
