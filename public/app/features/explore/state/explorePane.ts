@@ -116,7 +116,6 @@ export interface InitializeExploreOptions {
   panelsState?: ExplorePanelsState;
   position?: number;
 }
-
 /**
  * Initialize Explore state with state from the URL and the React component.
  * Call this only on components for with the Explore state has not been initialized.
