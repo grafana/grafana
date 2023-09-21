@@ -50,7 +50,6 @@ import {
 } from '@grafana/lezer-logql';
 
 import {
-  doTreesHaveSameNodes,
   ErrorId,
   getAllByType,
   getLeftMostChild,
@@ -65,7 +64,6 @@ import {
   QueryBuilderOperationParamValue,
 } from '../../prometheus/querybuilder/shared/types';
 
-import { lokiQueryModeller } from './LokiQueryModeller';
 import { binaryScalarDefs } from './binaryScalarOperations';
 import { checkParamsAreValid, getDefinitionById } from './operations';
 import { LokiOperationId, LokiVisualQuery, LokiVisualQueryBinary } from './types';
@@ -113,21 +111,8 @@ export function buildVisualQueryFromString(expr: string): Context {
   // If we have empty query, we want to reset errors
   if (isEmptyQuery(context.query)) {
     context.errors = [];
-  } else {
-    // we want to check if the tree we just parsed matches after converting back into a string
-
-    const newExpression = replaceVariables(lokiQueryModeller.renderQuery(context.query));
-    const newTree = parser.parse(newExpression);
-    const treesValid = doTreesHaveSameNodes(newTree.topNode, tree.topNode);
-
-    if (!treesValid) {
-      context.errors.push({
-        text: 'Query parsing is ambiguous.',
-        from: 0,
-        to: newExpression.length,
-      });
-    }
   }
+
   return context;
 }
 
@@ -511,6 +496,15 @@ function handleVectorAggregation(expr: string, node: SyntaxNode, context: Contex
   const op: QueryBuilderOperation = { id: funcName, params };
 
   if (metricExpr) {
+    // A vector aggregation expression with a child of metric expression with a child of binary expression is ambiguous after being parsed into a visual query
+    if (metricExpr.firstChild?.type.id === BinOpExpr) {
+      context.errors.push({
+        text: 'Query parsing is ambiguous.',
+        from: metricExpr.firstChild.from,
+        to: metricExpr.firstChild?.to,
+      });
+    }
+
     handleExpression(expr, metricExpr, context);
   }
 

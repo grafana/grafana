@@ -133,9 +133,9 @@ describe('buildVisualQueryFromString', () => {
     expect(context).toMatchObject({
       errors: [
         {
-          from: 0,
+          from: 7,
           text: 'Query parsing is ambiguous.',
-          to: 99,
+          to: 93,
         },
       ],
     });
@@ -209,11 +209,6 @@ describe('buildVisualQueryFromString', () => {
         from: 28,
         to: 59,
         parentType: 'PipelineStage',
-      },
-      {
-        from: 0,
-        text: 'Query parsing is ambiguous.',
-        to: 25,
       },
     ]);
   });
@@ -448,7 +443,7 @@ describe('buildVisualQueryFromString', () => {
   it('parses metrics query with function and aggregation with grouping at the end', () => {
     const expression = 'sum(rate({app="frontend"} | json [5m])) without(job,name)';
     expect(buildVisualQueryFromString(expression)).toEqual(
-      ambigiousError(59, {
+      noErrors({
         labels: [
           {
             op: '=',
@@ -582,7 +577,7 @@ describe('buildVisualQueryFromString', () => {
     // Converted to {app="frontend"} | label_format renameTo=original | label_format bar=baz by visual query builder
     const expression = '{app="frontend"} | label_format renameTo=original, bar=baz';
     expect(buildVisualQueryFromString(expression)).toEqual(
-      ambigiousError(72, {
+      noErrors({
         labels: [
           {
             op: '=',
@@ -633,7 +628,7 @@ describe('buildVisualQueryFromString', () => {
     // is converted to (rate({project="bar"} [5m]) * 2) / (rate({project="foo"} [5m]) + rate({app="test"} [1m])) by visual query builder
     // Note the extra parenthesis around the first binary operation expression: (rate({project="bar"} [5m]) * 2)
     expect(buildVisualQueryFromString(expression)).toEqual(
-      ambigiousError(89, {
+      noErrors({
         labels: [{ op: '=', value: 'bar', label: 'project' }],
         operations: [
           { id: LokiOperationId.Rate, params: ['5m'] },
@@ -695,7 +690,7 @@ describe('buildVisualQueryFromString', () => {
     const expression = '{app="frontend"} | regexp ';
     // Converted to {app="frontend"} | regexp `` by visual query builder
     expect(buildVisualQueryFromString(expression)).toEqual(
-      ambigiousError(28, {
+      noErrors({
         labels: [
           {
             op: '=',
@@ -725,7 +720,7 @@ describe('buildVisualQueryFromString', () => {
 
   it('parses a pattern with no param', () => {
     expect(buildVisualQueryFromString('{app="frontend"} | pattern ')).toEqual(
-      ambigiousError(29, {
+      noErrors({
         labels: [
           {
             op: '=',
@@ -868,19 +863,6 @@ describe('buildVisualQueryFromString', () => {
 function noErrors(query: LokiVisualQuery) {
   return {
     errors: [],
-    query,
-  };
-}
-
-function ambigiousError(to: number, query: LokiVisualQuery) {
-  return {
-    errors: [
-      {
-        from: 0,
-        text: 'Query parsing is ambiguous.',
-        to,
-      },
-    ],
     query,
   };
 }

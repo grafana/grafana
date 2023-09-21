@@ -8,38 +8,6 @@ export const ErrorId = 0;
 export function getLeftMostChild(cur: SyntaxNode): SyntaxNode {
   return cur.firstChild ? getLeftMostChild(cur.firstChild) : cur;
 }
-
-/**
- * Traverse two trees and return false if any node pair in the same position do not have the same type
- * Using this to check if the visual query parse is ambiguous
- * @param node
- * @param compareNode
- * @returns boolean
- */
-export const doTreesHaveSameNodes = (node: SyntaxNode, compareNode: SyntaxNode): boolean => {
-  let child = node.firstChild;
-  let compareChild = compareNode.firstChild;
-
-  // Iterate through the children
-  while (child && compareChild) {
-    // Check further descendants
-    if (!doTreesHaveSameNodes(child, compareChild)) {
-      return false;
-    }
-
-    // Check if the types match
-    if (child.type.id !== compareChild.type.id) {
-      return false;
-    }
-
-    // Move to the next sibling
-    child = child.nextSibling;
-    compareChild = compareChild.nextSibling;
-  }
-
-  return true;
-};
-
 export function makeError(expr: string, node: SyntaxNode) {
   return {
     text: getString(expr, node),
