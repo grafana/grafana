@@ -16,12 +16,10 @@ const getStyles = (theme: GrafanaTheme2, expanded: boolean, visible: boolean) =>
       justifyContent: 'center',
       height: '100%',
       backgroundColor: theme.colors.background.primary,
-      marginRight: expanded ? theme.spacing(-3) : theme.spacing(1),
-      width: expanded ? 'auto' : '3em',
-      transition: 'width 2.5s, visibility 2.5s',
+      marginRight: theme.spacing(1),
       visibility: visible ? 'visible' : 'hidden',
       boxShadow: `5px 0px 5px 1px black`,
-      zIndex: 2,
+      zIndex: theme.zIndex.sidemenu,
     }),
     content: css({
       label: 'content',
@@ -31,6 +29,7 @@ const getStyles = (theme: GrafanaTheme2, expanded: boolean, visible: boolean) =>
     }),
     buttonStyles: css({
       textAlign: 'left',
+      width: '100%',
     }),
   };
 };
@@ -42,10 +41,11 @@ interface ContentOutlineProps {
 const ContentOutline = ({ visible }: ContentOutlineProps) => {
   const [expanded, toggleExpanded] = useToggle(false);
   const styles = useStyles2((theme) => getStyles(theme, expanded, visible));
+  // TODO: this should be passed as a prop - move it to Explore
   const { outlineItems } = useContentOutlineContext();
 
   const scrollIntoView = (ref: HTMLElement | null) => {
-    ref?.scrollIntoView({ behavior: 'smooth', inline: 'start' });
+    ref?.scrollIntoView({ behavior: 'smooth' });
   };
 
   return (
@@ -55,6 +55,7 @@ const ContentOutline = ({ visible }: ContentOutlineProps) => {
           className={styles.buttonStyles}
           icon={expanded ? 'angle-left' : 'angle-right'}
           onClick={toggleExpanded}
+          tooltip={!expanded ? 'Show Content Outline' : undefined}
         >
           {expanded && 'Hide Content Outline'}
         </ToolbarButton>
