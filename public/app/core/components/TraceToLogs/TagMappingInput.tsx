@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import { cloneDeep } from 'lodash';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -26,11 +25,14 @@ export const TagMappingInput = ({ values, onChange, id }: Props) => {
               placeholder={'Tag name'}
               value={value.key}
               onChange={(e) => {
-                const vals = cloneDeep(values);
-                if (vals[idx]) {
-                  vals[idx].key = String(e);
-                }
-                onChange(vals);
+                onChange(
+                  values.map((v, i) => {
+                    if (i === idx) {
+                      return { ...v, key: String(e) };
+                    }
+                    return v;
+                  })
+                );
               }}
             />
             <InlineLabel aria-label="equals" className={styles.operator}>
@@ -41,11 +43,14 @@ export const TagMappingInput = ({ values, onChange, id }: Props) => {
               placeholder={'New name (optional)'}
               value={value.value || ''}
               onChange={(e) => {
-                const vals = cloneDeep(values);
-                if (vals[idx]) {
-                  vals[idx].value = String(e);
-                }
-                onChange(vals);
+                onChange(
+                  values.map((v, i) => {
+                    if (i === idx) {
+                      return { ...v, value: String(e) };
+                    }
+                    return v;
+                  })
+                );
               }}
             />
             <button
