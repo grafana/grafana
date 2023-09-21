@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import React, { useEffect, useMemo, useState } from 'react';
 
 import { GrafanaTheme2, OrgRole } from '@grafana/data';
+import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import {
   Button,
   ConfirmModal,
@@ -13,6 +14,9 @@ import {
   InteractiveTable,
   Column,
   FetchDataFunc,
+  Pagination,
+  HorizontalGroup,
+  VerticalGroup,
 } from '@grafana/ui';
 import { UserRolePicker } from 'app/core/components/RolePicker/UserRolePicker';
 import { fetchRoleOptions } from 'app/core/components/RolePicker/api';
@@ -43,15 +47,29 @@ const getBasicRoleDisabled = (user: OrgUser) => {
   return basicRoleDisabled;
 };
 
+const selectors = e2eSelectors.pages.UserListPage.UsersListPage;
+
 export interface Props {
   users: OrgUser[];
   orgId?: number;
   onRoleChange: (role: OrgRole, user: OrgUser) => void;
   onRemoveUser: (user: OrgUser) => void;
   fetchData?: FetchDataFunc<OrgUser>;
+  changePage: (page: number) => void;
+  page: number;
+  totalPages: number;
 }
 
-export const OrgUsersTable = ({ users, orgId, onRoleChange, onRemoveUser, fetchData }: Props) => {
+export const OrgUsersTable = ({
+  users,
+  orgId,
+  onRoleChange,
+  onRemoveUser,
+  fetchData,
+  changePage,
+  page,
+  totalPages,
+}: Props) => {
   const [userToRemove, setUserToRemove] = useState<OrgUser | null>(null);
   const [roleOptions, setRoleOptions] = useState<Role[]>([]);
 
@@ -168,8 +186,11 @@ export const OrgUsersTable = ({ users, orgId, onRoleChange, onRemoveUser, fetchD
   );
 
   return (
-    <>
+    <VerticalGroup spacing="md" data-testid={selectors.container}>
       <InteractiveTable columns={columns} data={users} getRowId={(user) => String(user.userId)} fetchData={fetchData} />
+      <HorizontalGroup justify="flex-end">
+        <Pagination onNavigate={changePage} currentPage={page} numberOfPages={totalPages} hideWhenSinglePage={true} />
+      </HorizontalGroup>
       {Boolean(userToRemove) && (
         <ConfirmModal
           body={`Are you sure you want to delete user ${userToRemove?.login}?`}
@@ -188,7 +209,7 @@ export const OrgUsersTable = ({ users, orgId, onRoleChange, onRemoveUser, fetchD
           }}
         />
       )}
-    </>
+    </VerticalGroup>
   );
 };
 

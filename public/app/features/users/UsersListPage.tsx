@@ -2,8 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { renderMarkdown } from '@grafana/data';
-import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
-import { HorizontalGroup, Pagination, VerticalGroup } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/core';
 import { OrgUser, OrgRole, StoreState } from 'app/types';
@@ -48,8 +46,6 @@ export interface State {
   showInvites: boolean;
 }
 
-const selectors = e2eSelectors.pages.UserListPage.UsersListPage;
-
 export const UsersListPageUnconnected = ({
   users,
   page,
@@ -87,23 +83,16 @@ export const UsersListPageUnconnected = ({
       return <InviteesTable invitees={invitees} />;
     } else {
       return (
-        <VerticalGroup spacing="md" data-testid={selectors.container}>
-          <OrgUsersTable
-            users={users}
-            orgId={contextSrv.user.orgId}
-            onRoleChange={onRoleChange}
-            onRemoveUser={onRemoveUser}
-            fetchData={changeSort}
-          />
-          <HorizontalGroup justify="flex-end">
-            <Pagination
-              onNavigate={changePage}
-              currentPage={page}
-              numberOfPages={totalPages}
-              hideWhenSinglePage={true}
-            />
-          </HorizontalGroup>
-        </VerticalGroup>
+        <OrgUsersTable
+          users={users}
+          orgId={contextSrv.user.orgId}
+          onRoleChange={onRoleChange}
+          onRemoveUser={onRemoveUser}
+          fetchData={changeSort}
+          changePage={changePage}
+          page={page}
+          totalPages={totalPages}
+        />
       );
     }
   };
