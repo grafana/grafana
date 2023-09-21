@@ -153,16 +153,16 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
     if (isLegacyQueryEditor(VariableQueryEditor, datasource)) {
       return (
         <Box marginBottom={2}>
-          <div style={{ marginBottom: '8px' }}>
-            <Text element={'h4'}>Query</Text>
-          </div>
-          <VariableQueryEditor
-            key={datasource.uid}
-            datasource={datasource}
-            query={query}
-            templateSrv={getTemplateSrv()}
-            onChange={this.onLegacyQueryChange}
-          />
+          <Text element={'h4'}>Query</Text>
+          <Box marginTop={1}>
+            <VariableQueryEditor
+              key={datasource.uid}
+              datasource={datasource}
+              query={query}
+              templateSrv={getTemplateSrv()}
+              onChange={this.onLegacyQueryChange}
+            />
+          </Box>
         </Box>
       );
     }
@@ -172,20 +172,20 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
     if (isQueryEditor(VariableQueryEditor, datasource)) {
       return (
         <Box marginBottom={2}>
-          <div style={{ marginBottom: '8px' }}>
-            <Text element={'h4'}>Query</Text>
-          </div>
-          <VariableQueryEditor
-            key={datasource.uid}
-            datasource={datasource}
-            query={query}
-            onChange={this.onQueryChange}
-            onRunQuery={() => {}}
-            data={{ series: [], state: LoadingState.Done, timeRange: range }}
-            range={range}
-            onBlur={() => {}}
-            history={[]}
-          />
+          <Text element={'h4'}>Query</Text>
+          <Box marginTop={1}>
+            <VariableQueryEditor
+              key={datasource.uid}
+              datasource={datasource}
+              query={query}
+              onChange={this.onQueryChange}
+              onRunQuery={() => {}}
+              data={{ series: [], state: LoadingState.Done, timeRange: range }}
+              range={range}
+              onBlur={() => {}}
+              history={[]}
+            />
+          </Box>
         </Box>
       );
     }
