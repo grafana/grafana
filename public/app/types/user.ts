@@ -80,6 +80,7 @@ export interface UsersState {
   page: number;
   perPage: number;
   totalPages: number;
+  sort?: string;
 }
 
 export interface UserSession {

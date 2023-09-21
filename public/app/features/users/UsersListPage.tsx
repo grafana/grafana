@@ -14,7 +14,7 @@ import { fetchInvitees } from '../invites/state/actions';
 import { selectInvitesMatchingQuery } from '../invites/state/selectors';
 
 import { UsersActionBar } from './UsersActionBar';
-import { loadUsers, removeUser, updateUser, changePage } from './state/actions';
+import { loadUsers, removeUser, updateUser, changePage, changeSort } from './state/actions';
 import { getUsers, getUsersSearchQuery } from './state/selectors';
 
 function mapStateToProps(state: StoreState) {
@@ -35,6 +35,7 @@ const mapDispatchToProps = {
   loadUsers,
   fetchInvitees,
   changePage,
+  changeSort,
   updateUser,
   removeUser,
 };
@@ -61,6 +62,7 @@ export const UsersListPageUnconnected = ({
   changePage,
   updateUser,
   removeUser,
+  changeSort,
 }: Props) => {
   const [showInvites, setShowInvites] = useState(false);
   const externalUserMngInfoHtml = externalUserMngInfo ? renderMarkdown(externalUserMngInfo) : '';
@@ -91,15 +93,8 @@ export const UsersListPageUnconnected = ({
             orgId={contextSrv.user.orgId}
             onRoleChange={onRoleChange}
             onRemoveUser={onRemoveUser}
+            fetchData={changeSort}
           />
-          <HorizontalGroup justify="flex-end">
-            <Pagination
-              onNavigate={changePage}
-              currentPage={page}
-              numberOfPages={totalPages}
-              hideWhenSinglePage={true}
-            />
-          </HorizontalGroup>
         </VerticalGroup>
       );
     }

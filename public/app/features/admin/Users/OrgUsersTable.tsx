@@ -2,7 +2,18 @@ import { css } from '@emotion/css';
 import React, { useEffect, useMemo, useState } from 'react';
 
 import { GrafanaTheme2, OrgRole } from '@grafana/data';
-import { Button, ConfirmModal, Icon, Tooltip, CellProps, useStyles2, Tag, InteractiveTable, Column } from '@grafana/ui';
+import {
+  Button,
+  ConfirmModal,
+  Icon,
+  Tooltip,
+  CellProps,
+  useStyles2,
+  Tag,
+  InteractiveTable,
+  Column,
+  FetchDataFunc,
+} from '@grafana/ui';
 import { UserRolePicker } from 'app/core/components/RolePicker/UserRolePicker';
 import { fetchRoleOptions } from 'app/core/components/RolePicker/api';
 import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
@@ -37,9 +48,10 @@ export interface Props {
   orgId?: number;
   onRoleChange: (role: OrgRole, user: OrgUser) => void;
   onRemoveUser: (user: OrgUser) => void;
+  fetchData?: FetchDataFunc<OrgUser>;
 }
 
-export const OrgUsersTable = ({ users, orgId, onRoleChange, onRemoveUser }: Props) => {
+export const OrgUsersTable = ({ users, orgId, onRoleChange, onRemoveUser, fetchData }: Props) => {
   const [userToRemove, setUserToRemove] = useState<OrgUser | null>(null);
   const [roleOptions, setRoleOptions] = useState<Role[]>([]);
 
@@ -157,7 +169,7 @@ export const OrgUsersTable = ({ users, orgId, onRoleChange, onRemoveUser }: Prop
 
   return (
     <>
-      <InteractiveTable columns={columns} data={users} getRowId={(user) => String(user.userId)} />
+      <InteractiveTable columns={columns} data={users} getRowId={(user) => String(user.userId)} fetchData={fetchData} />
       {Boolean(userToRemove) && (
         <ConfirmModal
           body={`Are you sure you want to delete user ${userToRemove?.login}?`}

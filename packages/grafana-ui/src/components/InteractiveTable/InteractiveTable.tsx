@@ -5,6 +5,7 @@ import {
   HeaderGroup,
   PluginHook,
   Row,
+  SortingRule,
   TableOptions,
   useExpanded,
   usePagination,
@@ -116,6 +117,8 @@ export type InteractiveTableHeaderTooltip = {
   iconName?: IconName;
 };
 
+export type FetchDataArgs<Data> = { sortBy: Array<SortingRule<Data>> };
+export type FetchDataFunc<Data> = ({ sortBy }: FetchDataArgs<Data>) => void;
 interface Props<TableData extends object> {
   className?: string;
   /**
@@ -142,6 +145,7 @@ interface Props<TableData extends object> {
    * Render function for the expanded row. if not provided, the tables rows will not be expandable.
    */
   renderExpandedRow?: (row: TableData) => ReactNode;
+  fetchData?: FetchDataFunc<TableData>;
 }
 
 /** @alpha */
@@ -153,6 +157,7 @@ export function InteractiveTable<TableData extends object>({
   headerTooltips,
   pageSize = 0,
   renderExpandedRow,
+  fetchData,
 }: Props<TableData>) {
   const styles = useStyles2(getStyles);
   const tableColumns = useMemo(() => {
@@ -181,6 +186,7 @@ export function InteractiveTable<TableData extends object>({
       autoResetExpanded: false,
       autoResetSortBy: false,
       disableMultiSort: true,
+      manualSortBy: true,
       getRowId,
       initialState: {
         hiddenColumns: [
@@ -196,6 +202,12 @@ export function InteractiveTable<TableData extends object>({
   );
 
   const { getTableProps, getTableBodyProps, headerGroups, prepareRow } = tableInstance;
+  const { sortBy } = tableInstance.state;
+  useEffect(() => {
+    if (fetchData) {
+      fetchData({ sortBy });
+    }
+  }, [sortBy, fetchData]);
 
   useEffect(() => {
     if (paginationEnabled) {
