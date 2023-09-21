@@ -20,8 +20,8 @@ var (
 		"email-desc":         newSortOption("email", true, 1),
 		"name-asc":           newSortOption("name", false, 2),
 		"name-desc":          newSortOption("name", true, 2),
-		"lastSeenAtAge-asc":  newSortOption("last_seen_at", false, 3),
-		"lastSeenAtAge-desc": newSortOption("last_seen_at", true, 3),
+		"lastSeenAtAge-asc":  newTimeSortOption("last_seen_at", false, 3),
+		"lastSeenAtAge-desc": newTimeSortOption("last_seen_at", true, 3),
 	}
 
 	ErrorUnknownSortingOption = errutil.BadRequest("unknown sorting option")
@@ -41,14 +41,30 @@ func (s Sorter) OrderBy() string {
 
 func newSortOption(field string, desc bool, index int) model.SortOption {
 	direction := "asc"
-	alpha := ("A-Z")
+	description := ("A-Z")
 	if desc {
 		direction = "desc"
-		alpha = ("Z-A")
+		description = ("Z-A")
 	}
 	return model.SortOption{
 		Name:        fmt.Sprintf("%v-%v", field, direction),
-		DisplayName: fmt.Sprintf("%v (%v)", cases.Title(language.Und).String(field), alpha),
+		DisplayName: fmt.Sprintf("%v (%v)", cases.Title(language.Und).String(field), description),
+		Description: fmt.Sprintf("Sort %v in an alphabetically %vending order", field, direction),
+		Index:       index,
+		Filter:      []model.SortOptionFilter{Sorter{Field: field, Descending: desc}},
+	}
+}
+
+func newTimeSortOption(field string, desc bool, index int) model.SortOption {
+	direction := "asc"
+	description := ("Oldest-Newest")
+	if desc {
+		direction = "desc"
+		description = ("Newest-Oldest")
+	}
+	return model.SortOption{
+		Name:        fmt.Sprintf("%v-%v", field, direction),
+		DisplayName: fmt.Sprintf("%v (%v)", cases.Title(language.Und).String(field), description),
 		Description: fmt.Sprintf("Sort %v in an alphabetically %vending order", field, direction),
 		Index:       index,
 		Filter:      []model.SortOptionFilter{Sorter{Field: field, Descending: desc}},

@@ -15,6 +15,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
+	"github.com/grafana/grafana/pkg/services/search/model"
+	"github.com/grafana/grafana/pkg/services/searchusers/sortopts"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -403,6 +405,37 @@ func TestIntegrationOrgUserDataAccess(t *testing.T) {
 			require.NoError(t, err)
 			require.Equal(t, len(result.OrgUsers), 1)
 			require.Equal(t, result.OrgUsers[0].Email, ac1.Email)
+		})
+		t.Run("Can get organization users with custom ordering", func(t *testing.T) {
+			query := org.SearchOrgUsersQuery{
+				OrgID: ac1.OrgID,
+				SortOpts: []model.SortOption{
+					{
+						Name:        "login-asc",
+						DisplayName: "Login (A-Z)",
+						Description: "Sort users by login ascending order",
+						Index:       0,
+						Filter:      []model.SortOptionFilter{sortopts.Sorter{Field: "login", Descending: false}},
+					},
+					{
+						Name:        "last_seen_at-desc",
+						DisplayName: "Last seen at (Newest-Oldest)",
+						Description: "Sort users by 'seen at' time",
+						Index:       2,
+						Filter:      []model.SortOptionFilter{sortopts.Sorter{Field: "last_seen_at", Descending: false}},
+					},
+				},
+				User: &user.SignedInUser{
+					OrgID:       ac1.OrgID,
+					Permissions: map[int64]map[string][]string{ac1.OrgID: {accesscontrol.ActionOrgUsersRead: {accesscontrol.ScopeUsersAll}}},
+				},
+			}
+			result, err := orgUserStore.SearchOrgUsers(context.Background(), &query)
+
+			require.NoError(t, err)
+			require.Equal(t, len(result.OrgUsers), 2)
+			require.Equal(t, result.OrgUsers[0].Email, ac1.Email)
+			require.Equal(t, result.OrgUsers[1].Email, ac2.Email)
 		})
 		t.Run("Cannot update role so no one is admin user", func(t *testing.T) {
 			remCmd := org.RemoveOrgUserCommand{OrgID: ac1.OrgID, UserID: ac2.ID, ShouldDeleteOrphanedUser: true}

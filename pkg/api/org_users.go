@@ -237,12 +237,18 @@ func (hs *HTTPServer) SearchOrgUsers(c *contextmodel.ReqContext) response.Respon
 		page = 1
 	}
 
+	sortOpts, err := sortopts.ParseSortQueryParam(c.Query("sort"))
+	if err != nil {
+		return response.Err(err)
+	}
+
 	result, err := hs.searchOrgUsersHelper(c, &org.SearchOrgUsersQuery{
-		OrgID: orgID,
-		Query: c.Query("query"),
-		Page:  page,
-		Limit: perPage,
-		User:  c.SignedInUser,
+		OrgID:    orgID,
+		Query:    c.Query("query"),
+		Page:     page,
+		Limit:    perPage,
+		User:     c.SignedInUser,
+		SortOpts: sortOpts,
 	})
 
 	if err != nil {
