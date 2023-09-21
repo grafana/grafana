@@ -1,10 +1,11 @@
-import React, { FormEvent, PureComponent, ReactElement } from 'react';
+import React, { FormEvent, PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { DataSourceInstanceSettings, getDataSourceRef, LoadingState, SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { getTemplateSrv } from '@grafana/runtime';
-import { Field, useTheme2 } from '@grafana/ui';
+import { Field, Text } from '@grafana/ui';
+import { Box } from '@grafana/ui/src/unstable';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 
 import { StoreState } from '../../../types';
@@ -49,19 +50,6 @@ const mapDispatchToProps = {
 };
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
-
-const Container = ({ children }: { children: ReactElement[] }) => {
-  const theme = useTheme2();
-  return (
-    <div
-      style={{
-        marginBottom: theme.spacing(2),
-      }}
-    >
-      {...children}
-    </div>
-  );
-};
 
 export interface OwnProps extends VariableEditorProps<QueryVariableModel> {}
 
@@ -164,8 +152,12 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
 
     if (isLegacyQueryEditor(VariableQueryEditor, datasource)) {
       return (
-        <Container>
-          <VariableLegend header={'h4'}>Query</VariableLegend>
+        <Box marginBottom={2}>
+          <div style={{ paddingBottom: '8px' }}>
+            <Text element={'h4'} variant="h4">
+              Query
+            </Text>
+          </div>
           <VariableQueryEditor
             key={datasource.uid}
             datasource={datasource}
@@ -173,7 +165,7 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
             templateSrv={getTemplateSrv()}
             onChange={this.onLegacyQueryChange}
           />
-        </Container>
+        </Box>
       );
     }
 
@@ -181,8 +173,12 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
 
     if (isQueryEditor(VariableQueryEditor, datasource)) {
       return (
-        <Container>
-          <VariableLegend header={'h4'}>Query</VariableLegend>
+        <Box marginBottom={2}>
+          <div style={{ paddingBottom: '8px' }}>
+            <Text element={'h4'} variant="h4">
+              Query
+            </Text>
+          </div>
           <VariableQueryEditor
             key={datasource.uid}
             datasource={datasource}
@@ -194,7 +190,7 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
             onBlur={() => {}}
             history={[]}
           />
-        </Container>
+        </Box>
       );
     }
 
