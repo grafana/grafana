@@ -2,7 +2,16 @@ import React, { ChangeEvent, useState } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { TimeZone } from '@grafana/data';
-import { CollapsableSection, Field, Input, RadioButtonGroup, TagsInput, Label, HorizontalGroup } from '@grafana/ui';
+import {
+  CollapsableSection,
+  Field,
+  Input,
+  RadioButtonGroup,
+  TagsInput,
+  Label,
+  HorizontalGroup,
+  TextArea,
+} from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { updateTimeZoneDashboard, updateWeekStartDashboard } from 'app/features/dashboard/state/actions';
@@ -54,12 +63,6 @@ export function GeneralSettingsUnconnected({
     },
     [setDashboardDescription, dashboard]
   );
-
-  const onBlur = (event: React.FocusEvent<HTMLInputElement>) => {
-    if (event.currentTarget.name === 'title' || event.currentTarget.name === 'description') {
-      dashboard[event.currentTarget.name] = event.currentTarget.value;
-    }
-  };
 
   const onTooltipChange = (graphTooltip: number) => {
     dashboard.graphTooltip = graphTooltip;
@@ -126,7 +129,6 @@ export function GeneralSettingsUnconnected({
             <Input
               id="title-input"
               name="title"
-              onBlur={onBlur}
               value={dashboardTitle}
               onChange={(e: ChangeEvent<HTMLInputElement>) => onTitleChange(e.target.value)}
             />
@@ -139,12 +141,11 @@ export function GeneralSettingsUnconnected({
               </HorizontalGroup>
             }
           >
-            <Input
+            <TextArea
               id="description-input"
               name="description"
-              onBlur={onBlur}
               value={dashboardDescription}
-              onChange={(e: ChangeEvent<HTMLInputElement>) => onDescriptionChange(e.target.value)}
+              onChange={(e: ChangeEvent<HTMLTextAreaElement>) => onDescriptionChange(e.target.value)}
             />
           </Field>
           <Field label="Tags">
