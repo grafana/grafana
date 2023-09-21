@@ -47,6 +47,9 @@ const setup = () => {
 };
 
 describe('MegaMenu', () => {
+  afterEach(() => {
+    window.localStorage.clear();
+  });
   it('should render component', async () => {
     setup();
 
@@ -56,16 +59,16 @@ describe('MegaMenu', () => {
 
   it('should render children', async () => {
     setup();
-    userEvent.click(await screen.findByRole('button', { name: 'Expand section Section name' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Expand section Section name' }));
     expect(await screen.findByRole('link', { name: 'Child1' })).toBeInTheDocument();
     expect(await screen.findByRole('link', { name: 'Child2' })).toBeInTheDocument();
   });
 
   it('should render grandchildren', async () => {
     setup();
-    userEvent.click(await screen.findByRole('button', { name: 'Expand section Section name' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Expand section Section name' }));
     expect(await screen.findByRole('link', { name: 'Child1' })).toBeInTheDocument();
-    userEvent.click(await screen.findByRole('button', { name: 'Expand section Child1' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Expand section Child1' }));
     expect(await screen.findByRole('link', { name: 'Grandchild1' })).toBeInTheDocument();
     expect(await screen.findByRole('link', { name: 'Child2' })).toBeInTheDocument();
   });
