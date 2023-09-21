@@ -247,11 +247,12 @@ const unifiedRoutes: RouteDescriptor[] = [
     path: '/alerting/:id/modify-export',
     pageClass: 'page-alerting',
     roles: evaluateAccess([AccessControlAction.AlertingRuleUpdate]),
-    component: SafeDynamicImport(
-      () =>
-        import(
-          /* webpackChunkName: "AlertingRuleForm"*/ 'app/features/alerting/unified/components/export/GrafanaModifyExport'
-        )
+    component: SafeDynamicImport(() =>
+      config.featureToggles.alertingModifiedExport
+        ? import(
+            /* webpackChunkName: "AlertingRuleForm"*/ 'app/features/alerting/unified/components/export/GrafanaModifyExport'
+          )
+        : import(/* webpackChunkName: "AlertingHome" */ 'app/features/alerting/unified/home/Home')
     ),
   },
   {
