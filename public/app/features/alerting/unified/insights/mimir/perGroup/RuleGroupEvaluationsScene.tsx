@@ -1,6 +1,8 @@
 import { PanelBuilders, SceneFlexItem, SceneQueryRunner, SceneTimeRange } from '@grafana/scenes';
 import { DataSourceRef, GraphDrawStyle } from '@grafana/schema';
 
+import { PANEL_STYLES } from '../../../home/Insights';
+
 export function getRuleGroupEvaluationsScene(timeRange: SceneTimeRange, datasource: DataSourceRef, panelTitle: string) {
   const query = new SceneQueryRunner({
     datasource,
@@ -22,7 +24,7 @@ export function getRuleGroupEvaluationsScene(timeRange: SceneTimeRange, datasour
   });
 
   return new SceneFlexItem({
-    minHeight: 300,
+    ...PANEL_STYLES,
     body: PanelBuilders.timeseries()
       .setTitle(panelTitle)
       .setData(query)

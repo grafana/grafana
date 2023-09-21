@@ -1,6 +1,8 @@
 import { PanelBuilders, SceneDataTransformer, SceneFlexItem, SceneQueryRunner, SceneTimeRange } from '@grafana/scenes';
 import { DataSourceRef } from '@grafana/schema';
 
+import { PANEL_STYLES } from '../../home/Insights';
+
 export function getMostFiredRulesScene(timeRange: SceneTimeRange, datasource: DataSourceRef, panelTitle: string) {
   const query = new SceneQueryRunner({
     datasource,
@@ -51,7 +53,7 @@ export function getMostFiredRulesScene(timeRange: SceneTimeRange, datasource: Da
   });
 
   return new SceneFlexItem({
-    minHeight: 300,
+    ...PANEL_STYLES,
     body: PanelBuilders.table().setTitle(panelTitle).setData(transformation).build(),
   });
 }

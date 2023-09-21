@@ -51,6 +51,8 @@ const grafanaCloudPromDs = {
   uid: 'grafanacloud-prom',
 };
 
+export const PANEL_STYLES = { minHeight: 300 };
+
 const THIS_WEEK_TIME_RANGE = new SceneTimeRange({ from: 'now-1w', to: 'now' });
 const LAST_WEEK_TIME_RANGE = new SceneTimeRange({ from: 'now-2w', to: 'now-1w' });
 

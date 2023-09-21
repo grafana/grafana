@@ -1,6 +1,8 @@
 import { PanelBuilders, SceneFlexItem, SceneQueryRunner, SceneTimeRange } from '@grafana/scenes';
 import { DataSourceRef, GraphDrawStyle } from '@grafana/schema';
 
+import { PANEL_STYLES } from '../../home/Insights';
+
 export function getGrafanaEvalSuccessVsFailuresScene(
   timeRange: SceneTimeRange,
   datasource: DataSourceRef,
@@ -26,7 +28,7 @@ export function getGrafanaEvalSuccessVsFailuresScene(
   });
 
   return new SceneFlexItem({
-    minHeight: 300,
+    ...PANEL_STYLES,
     body: PanelBuilders.timeseries()
       .setTitle(panelTitle)
       .setData(query)

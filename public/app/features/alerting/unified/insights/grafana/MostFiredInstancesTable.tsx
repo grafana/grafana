@@ -13,6 +13,7 @@ import {
 import { DataSourceRef } from '@grafana/schema';
 import { Icon, Link } from '@grafana/ui';
 
+import { PANEL_STYLES } from '../../home/Insights';
 import { createUrl } from '../../utils/url';
 
 export function getMostFiredInstancesScene(timeRange: SceneTimeRange, datasource: DataSourceRef, panelTitle: string) {
@@ -100,7 +101,7 @@ export function getMostFiredInstancesScene(timeRange: SceneTimeRange, datasource
   });
 
   return new SceneFlexItem({
-    minHeight: 300,
+    ...PANEL_STYLES,
     body: PanelBuilders.table().setTitle(panelTitle).setData(transformation).build(),
   });
 }
