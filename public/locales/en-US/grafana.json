@@ -26,7 +26,7 @@
   "browse-dashboards": {
     "action": {
       "cancel-button": "Cancel",
-      "cannot-move-folders": "Folders can not be moved",
+      "cannot-move-folders": "Folders cannot be moved",
       "delete-button": "Delete",
       "delete-modal-invalid-text": "One or more folders contain library panels or alert rules. Delete these first in order to proceed.",
       "delete-modal-invalid-title": "Cannot delete folder",
@@ -44,15 +44,15 @@
     },
     "counts": {
       "alertRule__one": "{{count}} alert rule",
-      "alertRule__other": "{{count}} alert rules",
+      "alertRule__other": "{{count}} alert rule",
       "dashboard__one": "{{count}} dashboard",
-      "dashboard__other": "{{count}} dashboards",
+      "dashboard__other": "{{count}} dashboard",
       "folder__one": "{{count}} folder",
-      "folder__other": "{{count}} folders",
+      "folder__other": "{{count}} folder",
       "libraryPanel__one": "{{count}} library panel",
-      "libraryPanel__other": "{{count}} library panels",
+      "libraryPanel__other": "{{count}} library panel",
       "total__one": "{{count}} item",
-      "total__other": "{{count}} items"
+      "total__other": "{{count}} item"
     },
     "dashboards-tree": {
       "name-column": "Name",
@@ -137,14 +137,14 @@
     "empty": {
       "add-library-panel-body": "Add visualizations that are shared with other dashboards.",
       "add-library-panel-button": "Add library panel",
-      "add-library-panel-header": "Add a library panel",
+      "add-library-panel-header": "Import panel",
       "add-visualization-body": "Select a data source and then query and visualize your data with charts, stats and tables or create lists, markdowns and other widgets.",
       "add-visualization-button": "Add visualization",
       "add-visualization-header": "Start your new dashboard by adding a visualization",
       "add-widget-body": "Create lists, markdowns and other widgets",
       "add-widget-button": "Add widget",
       "add-widget-header": "Add a widget",
-      "import-a-dashboard-body": "Import dashboard from file or <1>grafana.com</1>.",
+      "import-a-dashboard-body": "Import dashboards from files or<1>grafana.com</1>.",
       "import-a-dashboard-header": "Import a dashboard",
       "import-dashboard-button": "Import dashboard"
     },
@@ -225,12 +225,17 @@
   },
   "explore": {
     "add-to-dashboard": "Add to dashboard",
+    "graph": {
+      "graph-container": {
+        "title": "Graph"
+      }
+    },
     "toolbar": {
       "aria-label": "Explore toolbar",
       "copy-shortened-link": "Copy shortened link",
       "refresh-picker-cancel": "Cancel",
       "refresh-picker-run": "Run query",
-      "split-close": "Close",
+      "split-close": " Close ",
       "split-close-tooltip": "Close split pane",
       "split-narrow": "Narrow pane",
       "split-title": "Split",
@@ -764,7 +769,7 @@
       "info-text": "Create a direct link to this dashboard or panel, customized with the options below.",
       "link-url": "Link URL",
       "render-alert": "Image renderer plugin not installed",
-      "render-instructions": "To render a panel image, you must install the <1>Grafana image renderer plugin</1>. Please contact your Grafana administrator to install the plugin.",
+      "render-instructions": "To render a panel image, you must install the<1>Grafana image renderer plugin</1>. Please contact your Grafana administrator to install the plugin.",
       "rendered-image": "Direct link rendered image",
       "save-alert": "Dashboard is not saved",
       "save-dashboard": "To render a panel image, you must save the dashboard first.",

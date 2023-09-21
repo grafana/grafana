@@ -20,7 +20,9 @@ import {
   useStyles2,
   Tooltip,
 } from '@grafana/ui';
+import {t} from 'app/core/internationalization';
 import { ExploreGraphStyle } from 'app/types';
+
 
 import { storeGraphStyle } from '../state/utils';
 
@@ -69,7 +71,7 @@ export const GraphContainer = ({
 
   return (
     <PanelChrome
-      title="Graph"
+      title={t('explore.graph.graph-container.title','Graph')}
       titleItems={[
         MAX_NUMBER_OF_TIME_SERIES < data.length && !showAllTimeSeries && (
           <div key="disclaimer" className={styles.timeSeriesDisclaimer}>
