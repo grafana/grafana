@@ -2,8 +2,9 @@ import { cx } from '@emotion/css';
 import React, { RefCallback, SyntheticEvent, useState } from 'react';
 import { lastValueFrom } from 'rxjs';
 
-import { CoreApp, DataFrame, SelectableValue, TimeRange } from '@grafana/data';
+import { DataFrame, SelectableValue } from '@grafana/data';
 import { AccessoryButton } from '@grafana/experimental';
+import { getTemplateSrv } from '@grafana/runtime';
 import {
   HorizontalGroup,
   Select,
@@ -24,7 +25,6 @@ export interface FilterProps {
   datasource: Datasource;
   propertyMap: Map<string, SelectableValue[]>;
   setPropertyMap: React.Dispatch<React.SetStateAction<Map<string, Array<SelectableValue<string>>>>>;
-  timeRange: TimeRange;
   queryTraceTypes: string[];
   properties: string[];
   variableOptionGroup: VariableOptionGroup;
@@ -50,7 +50,6 @@ const onFieldChange = <Key extends keyof AzureTracesFilter>(
 const getTraceProperties = async (
   query: AzureMonitorQuery,
   datasource: Datasource,
-  timeRange: TimeRange,
   traceTypes: string[],
   propertyMap: Map<string, SelectableValue[]>,
   setPropertyMap: React.Dispatch<React.SetStateAction<Map<string, Array<SelectableValue<string>>>>>,
@@ -78,15 +77,12 @@ const getTraceProperties = async (
   | summarize make_list(pack_all()));
   print properties = bag_pack("${property}", ${property});`;
 
+  const range = (getTemplateSrv() as any).timeRange;
+  console.log(getTemplateSrv());
+  console.log(range);
   const results = await lastValueFrom(
     datasource.azureLogAnalyticsDatasource.query({
       requestId: 'azure-traces-properties-req',
-      interval: '',
-      intervalMs: 0,
-      scopedVars: {},
-      timezone: '',
-      startTime: 0,
-      app: CoreApp.Unknown,
       targets: [
         {
           ...query,
@@ -97,7 +93,13 @@ const getTraceProperties = async (
           queryType: AzureQueryType.LogAnalytics,
         },
       ],
-      range: timeRange,
+      interval: '',
+      intervalMs: 0,
+      range: range,
+      scopedVars: {},
+      timezone: '',
+      app: '',
+      startTime: 0
     })
   );
   if (results.data.length > 0) {
@@ -191,7 +193,6 @@ const Filter = (
     datasource,
     propertyMap,
     setPropertyMap,
-    timeRange,
     queryTraceTypes,
     properties,
     item,
@@ -215,7 +216,6 @@ const Filter = (
         const promise = await getTraceProperties(
           query,
           datasource,
-          timeRange,
           queryTraceTypes,
           propertyMap,
           setPropertyMap,

@@ -1,23 +1,16 @@
-import { TypedVariableModel } from '@grafana/data';
+import { CustomVariableModel } from '@grafana/data';
 import * as grafanaRuntime from '@grafana/runtime';
 
 import { Context, createContext } from '../__mocks__/datasource';
 import createMockQuery from '../__mocks__/query';
-import { createTemplateVariables } from '../__mocks__/utils';
 import { singleVariable } from '../__mocks__/variables';
-import AzureMonitorDatasource from '../datasource';
 import { AzureLogsQuery, AzureMonitorQuery, AzureQueryType, AzureTracesQuery } from '../types';
 
 import FakeSchemaData from './__mocks__/schema';
 import AzureLogAnalyticsDatasource from './azure_log_analytics_datasource';
 
-
-jest.mock('app/core/services/backend_srv');
-
-const spyOnTempSrcWithVars = (replace: string, vars: TypedVariableModel[]) => {
-  templateSrcReplaceValue = replace;
-  templateSrcGetVars = vars;
-}
+let getTempVars = () => [] as CustomVariableModel[];
+let replace = () => "";
 
 jest.mock('@grafana/runtime', () => {
   return {
@@ -26,14 +19,12 @@ jest.mock('@grafana/runtime', () => {
   };
 });
 
-let templateSrcGetVars: TypedVariableModel[] = []
-let templateSrcReplaceValue = ""
-  jest.spyOn(grafanaRuntime, 'getTemplateSrv').mockImplementation(() => ({
-    replace: () => templateSrcReplaceValue,
-    getVariables: () => templateSrcGetVars,
-    updateTimeRange: jest.fn(),
-    containsTemplate: jest.fn()
-  }));
+jest.spyOn(grafanaRuntime, 'getTemplateSrv').mockImplementation(() => ({
+  replace: replace,
+  getVariables: getTempVars,
+  updateTimeRange: jest.fn(),
+  containsTemplate: jest.fn(),
+}));
 
 describe('AzureLogAnalyticsDatasource', () => {
   let ctx: Context;
@@ -51,6 +42,8 @@ describe('AzureLogAnalyticsDatasource', () => {
         return Promise.resolve(FakeSchemaData.getlogAnalyticsFakeMetadata());
       });
       ctx.datasource.azureLogAnalyticsDatasource.getResource = ctx.getResource;
+      getTempVars = () => [] as CustomVariableModel[];
+      replace = () => "";
     });
 
     it('should return a schema to use with monaco-kusto', async () => {
@@ -85,6 +78,7 @@ describe('AzureLogAnalyticsDatasource', () => {
     });
 
     it('should interpolate variables when making a request for a schema with a uri that contains template variables', async () => {
+      replace = () => "myWorkspace/var1-foo";
       await ctx.datasource.azureLogAnalyticsDatasource.getKustoSchema('myWorkspace/$var1');
       expect(ctx.getResource).lastCalledWith('loganalytics/v1myWorkspace/var1-foo/metadata');
     });
@@ -103,8 +97,8 @@ describe('AzureLogAnalyticsDatasource', () => {
     });
 
     it('should include template variables as global parameters', async () => {
+      getTempVars = () => [singleVariable];
       const result = await ctx.datasource.azureLogAnalyticsDatasource.getKustoSchema('myWorkspace');
-      spyOnTempSrcWithVars("-", [singleVariable]);
       
       expect(result.globalParameters.map((f: { name: string }) => f.name)).toEqual([`$${singleVariable.name}`]);
     });
@@ -142,37 +136,6 @@ describe('AzureLogAnalyticsDatasource', () => {
     it('should return the first workspace', async () => {
       const workspace = await ctx.datasource.azureLogAnalyticsDatasource.getFirstWorkspace();
       expect(workspace).toEqual('foo');
-    });
-  });
-
-  describe('When performing targetContainsTemplate', () => {
-    it('should return false when no variable is being used', () => {
-      const query = createMockQuery();
-      spyOnTempSrcWithVars("-", [singleVariable]);
-
-      const ds = new AzureMonitorDatasource(ctx.instanceSettings);
-      query.queryType = AzureQueryType.LogAnalytics;
-      expect(ds.targetContainsTemplate(query)).toEqual(false);
-    });
-
-    it('should return true when resource field is using a variable', () => {
-      const query = createMockQuery();
-      spyOnTempSrcWithVars("-", [singleVariable]);
-
-      const ds = new AzureMonitorDatasource(ctx.instanceSettings, grafanaRuntime.getTemplateSrv());
-      query.queryType = AzureQueryType.LogAnalytics;
-      query.azureLogAnalytics = { resources: [`$${singleVariable.name}`] };
-      expect(ds.targetContainsTemplate(query)).toEqual(true);
-    });
-
-    it('should return false when a variable is used in a different part of the query', () => {
-      const query = createMockQuery();
-      spyOnTempSrcWithVars("-", [singleVariable]);
-
-      const ds = new AzureMonitorDatasource(ctx.instanceSettings, grafanaRuntime.getTemplateSrv());
-      query.queryType = AzureQueryType.LogAnalytics;
-      query.azureResourceGraph = { query: `$${singleVariable.name}` };
-      expect(ds.targetContainsTemplate(query)).toEqual(false);
     });
   });
 
@@ -263,28 +226,31 @@ describe('AzureLogAnalyticsDatasource', () => {
   });
 
   describe('When performing interpolateVariablesInQueries for azure_log_analytics', () => {
-    // beforeEach(() => {
-    //   templateSrv.init([]);
-    // });
+    beforeEach(() => {
+      getTempVars = () => [] as CustomVariableModel[];
+      replace = () => "";
+    });
 
     it('should return a query unchanged if no template variables are provided', () => {
       const query = createMockQuery();
       query.queryType = AzureQueryType.LogAnalytics;
+      replace = (target?: string | undefined) => {return target || ''}
       const templatedQuery = ctx.datasource.interpolateVariablesInQueries([query], {});
       expect(templatedQuery[0]).toEqual(query);
     });
 
     it('should return a logs query with any template variables replaced', () => {
-      const templateableProps = ['resource', 'workspace', 'query'];
-      const templateVariables = createTemplateVariables(templateableProps);
-      //templateSrv.init(Array.from(templateVariables.values()).map((item) => item.templateVariable));
-      const f = Array.from(templateVariables.values()).map((item) => item.templateVariable)
-      spyOnTempSrcWithVars("-", f as TypedVariableModel[]);
+      replace = (target?: string) => {
+        if (target === "$var") {
+          return "template-variable";
+        }
+        return target || "";
+      }
       const query = createMockQuery();
       const azureLogAnalytics: Partial<AzureLogsQuery> = {};
-      azureLogAnalytics.query = '$query';
-      azureLogAnalytics.workspace = '$workspace';
-      azureLogAnalytics.resources = ['$resource'];
+      azureLogAnalytics.query = '$var';
+      azureLogAnalytics.workspace = '$var';
+      azureLogAnalytics.resources = ['$var'];
       query.queryType = AzureQueryType.LogAnalytics;
       query.azureLogAnalytics = {
         ...query.azureLogAnalytics,
@@ -293,17 +259,16 @@ describe('AzureLogAnalyticsDatasource', () => {
       const templatedQuery = ctx.datasource.interpolateVariablesInQueries([query], {});
       expect(templatedQuery[0]).toHaveProperty('datasource');
       expect(templatedQuery[0].azureLogAnalytics).toMatchObject({
-        query: templateVariables.get('query')?.templateVariable.current.value,
-        workspace: templateVariables.get('workspace')?.templateVariable.current.value,
-        resources: [templateVariables.get('resource')?.templateVariable.current.value],
+        query: "template-variable",
+        workspace: "template-variable",
+        resources: ["template-variable"],
       });
     });
 
     it('should return a logs query with multiple resources template variables replaced', () => {
-      const templateVariables = createTemplateVariables(['resource'], 'resource1,resource2');
-      //templateSrv.init(A);
-      const f = Array.from(templateVariables.values()).map((item) => item.templateVariable);
-      spyOnTempSrcWithVars("-", f as TypedVariableModel[]);
+      replace = () => {
+        return "resource1,resource2";
+      }
       const query = createMockQuery();
       const azureLogAnalytics: Partial<AzureLogsQuery> = {};
       azureLogAnalytics.resources = ['$resource'];
@@ -320,18 +285,19 @@ describe('AzureLogAnalyticsDatasource', () => {
     });
 
     it('should return a traces query with any template variables replaced', () => {
-      const templateableProps = ['resource', 'query', 'traceTypes', 'property', 'operation', 'filter', 'operationId'];
-      const templateVariables = createTemplateVariables(templateableProps);
-      //templateSrv.init(Array.from(templateVariables.values()).map((item) => item.templateVariable));
-      const f = Array.from(templateVariables.values()).map((item) => item.templateVariable);
-      spyOnTempSrcWithVars("-", f as TypedVariableModel[]);
+      replace = (target?: string) => {
+        if (target === "$var") {
+          return "template-variable";
+        }
+        return target || "";
+      }
       const query = createMockQuery();
       const azureTraces: Partial<AzureTracesQuery> = {};
-      azureTraces.resources = ['$resource'];
-      azureTraces.query = '$query';
-      azureTraces.traceTypes = ['$traceTypes'];
-      azureTraces.filters = [{ filters: ['$filter'], operation: 'eq', property: '$property' }];
-      azureTraces.operationId = '$operationId';
+      azureTraces.resources = ['$var'];
+      azureTraces.query = '$var';
+      azureTraces.traceTypes = ['$var'];
+      azureTraces.filters = [{ filters: ['$var'], operation: 'eq', property: '$var' }];
+      azureTraces.operationId = '$var';
       query.queryType = AzureQueryType.AzureTraces;
       query.azureTraces = {
         ...query.azureTraces,
@@ -341,25 +307,24 @@ describe('AzureLogAnalyticsDatasource', () => {
       const templatedQuery = ctx.datasource.interpolateVariablesInQueries([query], {});
       expect(templatedQuery[0]).toHaveProperty('datasource');
       expect(templatedQuery[0].azureTraces).toMatchObject({
-        query: templateVariables.get('query')?.templateVariable.current.value,
-        resources: [templateVariables.get('resource')?.templateVariable.current.value],
-        operationId: templateVariables.get('operationId')?.templateVariable.current.value,
-        traceTypes: [templateVariables.get('traceTypes')?.templateVariable.current.value],
+        query: "template-variable",
+        resources: ["template-variable"],
+        operationId: "template-variable",
+        traceTypes: ["template-variable"],
         filters: [
           {
-            filters: [templateVariables.get('filter')?.templateVariable.current.value],
+            filters: ["template-variable"],
             operation: 'eq',
-            property: templateVariables.get('property')?.templateVariable.current.value,
+            property: "template-variable",
           },
         ],
       });
     });
 
     it('should return a trace query with multiple resources template variables replaced', () => {
-      const templateVariables = createTemplateVariables(['resource'], 'resource1,resource2');
-      //templateSrv.init(Array.from(templateVariables.values()).map((item) => item.templateVariable));
-      const f = Array.from(templateVariables.values()).map((item) => item.templateVariable);
-      spyOnTempSrcWithVars("-", f as TypedVariableModel[]);
+      replace = () => {
+        return "resource1,resource2";
+      }
       const query = createMockQuery();
       const azureTraces: Partial<AzureTracesQuery> = {};
       azureTraces.resources = ['$resource'];

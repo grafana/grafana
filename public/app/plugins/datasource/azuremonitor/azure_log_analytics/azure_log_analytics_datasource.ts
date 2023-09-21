@@ -102,7 +102,6 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
 
   async getKustoSchema(resourceUri: string) {
     const templateSrv = getTemplateSrv();
-    console.log(templateSrv.getVariables())
     const interpolatedUri = templateSrv.replace(resourceUri, {}, interpolateVariable);
     const metadata = await this.getMetadata(interpolatedUri);
     return transformMetadataToKustoSchema(metadata, interpolatedUri, templateSrv.getVariables());

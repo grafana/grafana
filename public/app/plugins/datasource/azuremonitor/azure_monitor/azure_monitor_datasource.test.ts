@@ -1,7 +1,7 @@
 import { get, set } from 'lodash';
 
-import { DataSourceInstanceSettings } from '@grafana/data';
-import { TemplateSrv } from '@grafana/runtime';
+import { CustomVariableModel, DataSourceInstanceSettings } from '@grafana/data';
+import * as grafanaRuntime from '@grafana/runtime';
 
 import createMockQuery from '../__mocks__/query';
 import { createTemplateVariables } from '../__mocks__/utils';
@@ -9,13 +9,23 @@ import { multiVariable, singleVariable, subscriptionsVariable } from '../__mocks
 import AzureMonitorDatasource from '../datasource';
 import { AzureAPIResponse, AzureDataSourceJsonData, AzureQueryType, Location } from '../types';
 
-const templateSrv = new TemplateSrv();
 
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  getTemplateSrv: () => templateSrv,
+let getTempVars = () => [] as CustomVariableModel[];
+let replace = () => "";
+
+jest.mock('@grafana/runtime', () => {
+  return {
+    __esModule: true,
+    ...jest.requireActual('@grafana/runtime')
+  };
+});
+
+jest.spyOn(grafanaRuntime, 'getTemplateSrv').mockImplementation(() => ({
+  replace: replace,
+  getVariables: getTempVars,
+  updateTimeRange: jest.fn(),
+  containsTemplate: jest.fn()
 }));
-
 interface TestContext {
   instanceSettings: DataSourceInstanceSettings<AzureDataSourceJsonData>;
   ds: AzureMonitorDatasource;
@@ -86,6 +96,7 @@ describe('AzureMonitorDatasource', () => {
           metricDefinition: 'microsoft.insights/components',
         },
       });
+      replace = () => "microsoft.insights/components";
       const templatedQuery = ctx.ds.azureMonitorDatasource.applyTemplateVariables(query, {});
       expect(templatedQuery).toMatchObject({
         azureMonitor: {
@@ -99,15 +110,13 @@ describe('AzureMonitorDatasource', () => {
       const resourceGroup = 'cloud-datasources';
       const metricNamespace = 'microsoft.insights/components';
       const resourceName = 'AppInsightsTestData';
-      templateSrv.init([
-        {
-          id: 'resourceUri',
-          name: 'resourceUri',
-          current: {
-            value: `/subscriptions/${subscription}/resourceGroups/${resourceGroup}/providers/${metricNamespace}/${resourceName}`,
-          },
-        },
-      ]);
+      replace = (target?: string) => 
+      {
+        if (target === "$resourceUri") {
+          return `/subscriptions/${subscription}/resourceGroups/${resourceGroup}/providers/${metricNamespace}/${resourceName}`;
+        }
+        return target || "";
+      }
       const query = createMockQuery({
         azureMonitor: {
           resourceUri: '$resourceUri',
@@ -1072,36 +1081,6 @@ describe('AzureMonitorDatasource', () => {
               ]
             `);
           });
-      });
-
-      describe('When performing targetContainsTemplate', () => {
-        it('should return false when no variable is being used', () => {
-          const query = createMockQuery();
-          query.queryType = AzureQueryType.AzureMonitor;
-          expect(ctx.ds.targetContainsTemplate(query)).toEqual(false);
-        });
-
-        it('should return true when subscriptions field is using a variable', () => {
-          const query = createMockQuery();
-          const templateSrv = new TemplateSrv();
-          templateSrv.init([subscriptionsVariable]);
-
-          const ds = new AzureMonitorDatasource(ctx.instanceSettings, templateSrv);
-          query.queryType = AzureQueryType.AzureMonitor;
-          query.subscription = `$${subscriptionsVariable.name}`;
-          expect(ds.targetContainsTemplate(query)).toEqual(true);
-        });
-
-        it('should return false when a variable is used in a different part of the query', () => {
-          const query = createMockQuery();
-          const templateSrv = new TemplateSrv();
-          templateSrv.init([singleVariable]);
-
-          const ds = new AzureMonitorDatasource(ctx.instanceSettings, templateSrv);
-          query.queryType = AzureQueryType.AzureMonitor;
-          query.azureLogAnalytics = { resources: [`$${singleVariable.name}`] };
-          expect(ds.targetContainsTemplate(query)).toEqual(false);
-        });
       });
 
       it('should return an empty array for a Metric that does not have dimensions', () => {

@@ -35,8 +35,6 @@ describe('Azure Monitor Datasource', () => {
       const ds = new Datasource(createMockInstanceSetttings());
       const queries = [createMockQuery({ azureMonitor: { resources: [{ resourceGroup: '$resourceGroup' }] } })];
 
-     
-
       const interpolatedQueries = ds.interpolateVariablesInQueries(queries, {
         resourceGroup: { text: 'the-resource-group', value: 'the-resource-group' },
       });
