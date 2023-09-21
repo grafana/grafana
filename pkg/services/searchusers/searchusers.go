@@ -1,14 +1,13 @@
 package searchusers
 
 import (
-	"fmt"
 	"net/http"
-	"strings"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/login"
+	"github.com/grafana/grafana/pkg/services/searchusers/sortopts"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
@@ -89,25 +88,9 @@ func (s *OSSService) SearchUser(c *contextmodel.ReqContext) (*user.SearchUserQue
 		}
 	}
 
-	// TODO move this to Search Options
-	sort := c.Query("sort")
-	sortOptions := []user.SortOption{}
-	if sort != "" {
-		sortOptionsStr := strings.Split(sort, ",")
-		for i := range sortOptionsStr {
-			optionStr := strings.Split(sortOptionsStr[i], "-")
-			if len(optionStr) != 2 {
-				return nil, fmt.Errorf("option mal formatted %v", sortOptionsStr[i])
-			}
-			dir := user.SortDirection(strings.ToUpper(optionStr[1]))
-			if !dir.IsValid() {
-				return nil, fmt.Errorf("unknown direction %v", optionStr[1])
-			}
-			sortOptions = append(sortOptions, user.SortOption{
-				Field:     optionStr[0],
-				Direction: dir,
-			})
-		}
+	sortOpts, err := sortopts.ParseSortQueryParam(c.Query("sort"))
+	if err != nil {
+		return nil, err
 	}
 
 	query := &user.SearchUsersQuery{
@@ -117,7 +100,7 @@ func (s *OSSService) SearchUser(c *contextmodel.ReqContext) (*user.SearchUserQue
 		Filters:      filters,
 		Page:         page,
 		Limit:        perPage,
-		SortOpts:     sortOptions,
+		SortOpts:     sortOpts,
 	}
 	res, err := s.userService.Search(c.Req.Context(), query)
 	if err != nil {

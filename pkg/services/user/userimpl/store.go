@@ -681,13 +681,9 @@ func (ss *sqlStore) Search(ctx context.Context, query *user.SearchUsersQuery) (*
 		sess.Cols("u.id", "u.email", "u.name", "u.login", "u.is_admin", "u.is_disabled", "u.last_seen_at", "user_auth.auth_module")
 
 		if len(query.SortOpts) > 0 {
-			// TODO prevent injections
 			for i := range query.SortOpts {
-				if query.SortOpts[i].Direction == user.SortAsc {
-					sess.Asc(fmt.Sprintf("u.%v", query.SortOpts[i].Field))
-				}
-				if query.SortOpts[i].Direction == user.SortDesc {
-					sess.Desc(fmt.Sprintf("u.%v", query.SortOpts[i].Field))
+				for j := range query.SortOpts[i].Filter {
+					sess.OrderBy(query.SortOpts[i].Filter[j].OrderBy())
 				}
 			}
 		} else {
