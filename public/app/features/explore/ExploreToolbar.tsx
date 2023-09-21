@@ -4,7 +4,7 @@ import React, { RefObject, useMemo } from 'react';
 import { shallowEqual } from 'react-redux';
 
 import { DataSourceInstanceSettings, RawTimeRange } from '@grafana/data';
-import { reportInteraction } from '@grafana/runtime';
+import { reportInteraction, config } from '@grafana/runtime';
 import { defaultIntervals, PageToolbar, RefreshPicker, SetInterval, ToolbarButton, ButtonGroup } from '@grafana/ui';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { createAndCopyShortLink } from 'app/core/utils/shortLinks';
@@ -134,16 +134,18 @@ export function ExploreToolbar({ exploreId, topOfViewRef, onChangeTime, onConten
       <PageToolbar
         aria-label="Explore toolbar"
         leftItems={[
-          <ToolbarButton
-            key="content-outline"
-            variant="canvas"
-            tooltip="Content Outline"
-            icon="list-ui-alt"
-            iconOnly={splitted}
-            onClick={onContentOutlineToogle}
-          >
-            Outline
-          </ToolbarButton>,
+          config.featureToggles.exploreContentOutline && (
+            <ToolbarButton
+              key="content-outline"
+              variant="canvas"
+              tooltip="Content Outline"
+              icon="list-ui-alt"
+              iconOnly={splitted}
+              onClick={onContentOutlineToogle}
+            >
+              Outline
+            </ToolbarButton>
+          ),
           <DataSourcePicker
             key={`${exploreId}-ds-picker`}
             mixed
@@ -152,7 +154,7 @@ export function ExploreToolbar({ exploreId, topOfViewRef, onChangeTime, onConten
             hideTextValue={showSmallDataSourcePicker}
             width={showSmallDataSourcePicker ? 8 : undefined}
           />,
-        ]}
+        ].filter(Boolean)}
         forceShowLeftItems
       >
         {[

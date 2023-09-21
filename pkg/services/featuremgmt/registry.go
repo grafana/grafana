@@ -86,6 +86,12 @@ var (
 			Owner:       grafanaExploreSquad,
 		},
 		{
+			Name:        "exploreContentOutline",
+			Description: "Content outline sidebar",
+			Stage:       FeatureStagePrivatePreview,
+			Owner:       grafanaExploreSquad,
+		},
+		{
 			Name:        "datasourceQueryMultiStatus",
 			Description: "Introduce HTTP 207 Multi Status for api/ds/query",
 			Stage:       FeatureStageExperimental,

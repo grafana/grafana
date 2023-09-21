@@ -30,6 +30,7 @@ export interface FeatureToggles {
   migrationLocking?: boolean;
   storage?: boolean;
   correlations?: boolean;
+  exploreContentOutline?: boolean;
   datasourceQueryMultiStatus?: boolean;
   traceToMetrics?: boolean;
   newDBLibrary?: boolean;
