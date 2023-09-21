@@ -2,8 +2,6 @@ import { ThresholdsMode } from '@grafana/data';
 import { PanelBuilders, SceneFlexItem, SceneQueryRunner, SceneTimeRange } from '@grafana/scenes';
 import { DataSourceRef } from '@grafana/schema';
 
-const QUERY = 'sum by (state) (grafanacloud_grafana_instance_alerting_rule_group_rules{state="active"})';
-
 export function getFiringGrafanaAlertsScene(timeRange: SceneTimeRange, datasource: DataSourceRef, panelTitle: string) {
   const query = new SceneQueryRunner({
     datasource,
@@ -11,7 +9,7 @@ export function getFiringGrafanaAlertsScene(timeRange: SceneTimeRange, datasourc
       {
         refId: 'A',
         instant: true,
-        expr: QUERY,
+        expr: 'sum by (state) (grafanacloud_grafana_instance_alerting_rule_group_rules{state="active"})',
       },
     ],
     $timeRange: timeRange,

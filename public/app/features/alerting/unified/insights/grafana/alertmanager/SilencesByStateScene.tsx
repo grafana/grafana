@@ -1,8 +1,6 @@
 import { PanelBuilders, SceneFlexItem, SceneQueryRunner, SceneTimeRange } from '@grafana/scenes';
 import { DataSourceRef, GraphDrawStyle } from '@grafana/schema';
 
-const QUERY_A = 'sum by (state) (grafanacloud_grafana_instance_alerting_silences)';
-
 export function getGrafanaAlertmanagerSilencesScene(
   timeRange: SceneTimeRange,
   datasource: DataSourceRef,
@@ -13,7 +11,7 @@ export function getGrafanaAlertmanagerSilencesScene(
     queries: [
       {
         refId: 'A',
-        expr: QUERY_A,
+        expr: 'sum by (state) (grafanacloud_grafana_instance_alerting_silences)',
         range: true,
         legendFormat: '{{state}}',
       },

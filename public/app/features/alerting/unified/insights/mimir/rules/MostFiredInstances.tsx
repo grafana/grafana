@@ -1,15 +1,13 @@
 import { PanelBuilders, SceneDataTransformer, SceneFlexItem, SceneQueryRunner, SceneTimeRange } from '@grafana/scenes';
 import { DataSourceRef } from '@grafana/schema';
 
-const TOP_5_FIRING_INSTANCES = 'topk(10, sum by (alertname) (ALERTS))';
-
 export function getMostFiredInstancesScene(timeRange: SceneTimeRange, datasource: DataSourceRef, panelTitle: string) {
   const query = new SceneQueryRunner({
     datasource,
     queries: [
       {
         refId: 'A',
-        expr: TOP_5_FIRING_INSTANCES,
+        expr: 'topk(10, sum by (alertname) (ALERTS))',
         range: true,
       },
     ],

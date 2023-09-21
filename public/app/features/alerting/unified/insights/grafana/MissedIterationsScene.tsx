@@ -1,8 +1,6 @@
 import { PanelBuilders, SceneFlexItem, SceneQueryRunner, SceneTimeRange } from '@grafana/scenes';
 import { DataSourceRef, GraphDrawStyle } from '@grafana/schema';
 
-const QUERY_A = 'sum by (rule_group) (grafanacloud_instance_rule_group_iterations_missed_total:rate5m)';
-
 export function getGrafanaMissedIterationsScene(
   timeRange: SceneTimeRange,
   datasource: DataSourceRef,
@@ -13,7 +11,7 @@ export function getGrafanaMissedIterationsScene(
     queries: [
       {
         refId: 'A',
-        expr: QUERY_A,
+        expr: 'sum by (rule_group) (grafanacloud_instance_rule_group_iterations_missed_total:rate5m)',
         range: true,
         legendFormat: 'missed',
       },

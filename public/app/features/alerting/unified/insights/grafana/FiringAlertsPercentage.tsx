@@ -1,9 +1,6 @@
 import { PanelBuilders, SceneDataTransformer, SceneFlexItem, SceneQueryRunner, SceneTimeRange } from '@grafana/scenes';
 import { DataSourceRef } from '@grafana/schema';
 
-const TOTALS = 'sum(count_over_time({from="state-history"} | json [1w]))';
-const TOTALS_FIRING = 'sum(count_over_time({from="state-history"} | json | current="Alerting"[1w]))';
-
 export function getFiringAlertsScene(timeRange: SceneTimeRange, datasource: DataSourceRef, panelTitle: string) {
   const query = new SceneQueryRunner({
     datasource,
@@ -11,12 +8,12 @@ export function getFiringAlertsScene(timeRange: SceneTimeRange, datasource: Data
       {
         refId: 'A',
         instant: true,
-        expr: TOTALS_FIRING,
+        expr: 'sum(count_over_time({from="state-history"} | json | current="Alerting"[1w]))',
       },
       {
         refId: 'B',
         instant: true,
-        expr: TOTALS,
+        expr: 'sum(count_over_time({from="state-history"} | json [1w]))',
       },
     ],
     $timeRange: timeRange,

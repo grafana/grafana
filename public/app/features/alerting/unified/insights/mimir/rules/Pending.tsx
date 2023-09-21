@@ -2,8 +2,6 @@ import { ThresholdsMode } from '@grafana/data';
 import { PanelBuilders, SceneFlexItem, SceneQueryRunner, SceneTimeRange } from '@grafana/scenes';
 import { DataSourceRef } from '@grafana/schema';
 
-const QUERY = 'sum by (alertstate) (ALERTS{alertstate="pending"})';
-
 export function getPendingCloudAlertsScene(timeRange: SceneTimeRange, datasource: DataSourceRef, panelTitle: string) {
   const query = new SceneQueryRunner({
     datasource,
@@ -11,7 +9,7 @@ export function getPendingCloudAlertsScene(timeRange: SceneTimeRange, datasource
       {
         refId: 'A',
         instant: true,
-        expr: QUERY,
+        expr: 'sum by (alertstate) (ALERTS{alertstate="pending"})',
       },
     ],
     $timeRange: timeRange,

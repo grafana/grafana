@@ -1,10 +1,6 @@
 import { PanelBuilders, SceneFlexItem, SceneQueryRunner, SceneTimeRange } from '@grafana/scenes';
 import { DataSourceRef, GraphDrawStyle } from '@grafana/schema';
 
-const QUERY_A =
-  'grafanacloud_grafana_instance_alerting_notifications_total:rate5m - grafanacloud_grafana_instance_alerting_notifications_failed_total:rate5m';
-const QUERY_B = 'grafanacloud_grafana_instance_alerting_notifications_failed_total:rate5m';
-
 export function getGrafanaAlertmanagerNotificationsScene(
   timeRange: SceneTimeRange,
   datasource: DataSourceRef,
@@ -15,13 +11,13 @@ export function getGrafanaAlertmanagerNotificationsScene(
     queries: [
       {
         refId: 'A',
-        expr: QUERY_A,
+        expr: 'grafanacloud_grafana_instance_alerting_notifications_total:rate5m - grafanacloud_grafana_instance_alerting_notifications_failed_total:rate5m',
         range: true,
         legendFormat: 'success',
       },
       {
         refId: 'B',
-        expr: QUERY_B,
+        expr: 'grafanacloud_grafana_instance_alerting_notifications_failed_total:rate5m',
         range: true,
         legendFormat: 'failed',
       },

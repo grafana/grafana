@@ -1,15 +1,13 @@
 import { PanelBuilders, SceneFlexItem, SceneQueryRunner, SceneTimeRange } from '@grafana/scenes';
 import { DataSourceRef, GraphDrawStyle } from '@grafana/schema';
 
-const QUERY = 'sum by (alertstate) (ALERTS)';
-
 export function getInstancesByStateScene(timeRange: SceneTimeRange, datasource: DataSourceRef, panelTitle: string) {
   const query = new SceneQueryRunner({
     datasource,
     queries: [
       {
         refId: 'A',
-        expr: QUERY,
+        expr: 'sum by (alertstate) (ALERTS)',
         range: true,
         legendFormat: '{{state}}',
       },
