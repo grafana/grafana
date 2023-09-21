@@ -431,6 +431,10 @@ const (
 	// Include a status source label for request metrics and logs
 	FlagRequestInstrumentationStatusSource = "requestInstrumentationStatusSource"
 
+	// FlagLokiRunQueriesInParallel
+	// Enables running Loki queries in parallel
+	FlagLokiRunQueriesInParallel = "lokiRunQueriesInParallel"
+
 	// FlagWargamesTesting
 	// Placeholder feature flag for internal testing
 	FlagWargamesTesting = "wargamesTesting"
@@ -438,4 +442,8 @@ const (
 	// FlagAlertingInsights
 	// Show the new alerting insights landing page
 	FlagAlertingInsights = "alertingInsights"
+
+	// FlagPluginsAPIMetrics
+	// Sends metrics of public grafana packages usage by plugins
+	FlagPluginsAPIMetrics = "pluginsAPIMetrics"
 )

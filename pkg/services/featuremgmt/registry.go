@@ -539,7 +539,8 @@ var (
 		{
 			Name:        "recordedQueriesMulti",
 			Description: "Enables writing multiple items from a single query within Recorded Queries",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStageGeneralAvailability,
+			Expression:  "true",
 			Owner:       grafanaObservabilityMetricsSquad,
 		},
 		{
@@ -738,6 +739,13 @@ var (
 			Owner:        grafanaPluginsPlatformSquad,
 		},
 		{
+			Name:         "lokiRunQueriesInParallel",
+			Description:  "Enables running Loki queries in parallel",
+			Stage:        FeatureStagePrivatePreview,
+			FrontendOnly: false,
+			Owner:        grafanaObservabilityLogsSquad,
+		},
+		{
 			Name:         "wargamesTesting",
 			Description:  "Placeholder feature flag for internal testing",
 			Stage:        FeatureStageExperimental,
@@ -750,6 +758,13 @@ var (
 			FrontendOnly: true,
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaAlertingSquad,
+		},
+		{
+			Name:         "pluginsAPIMetrics",
+			Description:  "Sends metrics of public grafana packages usage by plugins",
+			FrontendOnly: true,
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaPluginsPlatformSquad,
 		},
 	}
 )

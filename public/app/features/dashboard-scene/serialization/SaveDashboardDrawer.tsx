@@ -15,7 +15,7 @@ interface SaveDashboardDrawerState extends SceneObjectState {
 
 export class SaveDashboardDrawer extends SceneObjectBase<SaveDashboardDrawerState> {
   onClose = () => {
-    this.state.dashboardRef.resolve().setState({ drawer: undefined });
+    this.state.dashboardRef.resolve().setState({ overlay: undefined });
   };
 
   static Component = ({ model }: SceneComponentProps<SaveDashboardDrawer>) => {

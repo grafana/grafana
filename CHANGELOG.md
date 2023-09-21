@@ -1,3 +1,13 @@
+<!-- 10.1.2 START -->
+
+# 10.1.2 (2023-09-18)
+
+### Features and enhancements
+
+- **Chore:** Upgrade Alpine base image to 3.18.3. [#74993](https://github.com/grafana/grafana/issues/74993), [@zerok](https://github.com/zerok)
+- **Chore:** Upgrade Go to 1.20.8. [#74980](https://github.com/grafana/grafana/issues/74980), [@zerok](https://github.com/zerok)
+
+<!-- 10.1.2 END -->
 <!-- 10.1.1 START -->
 
 # 10.1.1 (2023-08-29)
@@ -427,6 +437,16 @@ Starting with 10.0, changing the folder UID is deprecated. It will be removed in
 - **Grafana/ui:** Fix margin in RadioButtonGroup option when only icon is present. [#68899](https://github.com/grafana/grafana/issues/68899), [@aocenas](https://github.com/aocenas)
 
 <!-- 10.1.0 END -->
+<!-- 10.0.6 START -->
+
+# 10.0.6 (2023-09-18)
+
+### Features and enhancements
+
+- **Chore:** Upgrade Alpine base image to 3.18.3. [#74994](https://github.com/grafana/grafana/issues/74994), [@zerok](https://github.com/zerok)
+- **Chore:** Upgrade Go to 1.20.8. [#74983](https://github.com/grafana/grafana/issues/74983), [@zerok](https://github.com/zerok)
+
+<!-- 10.0.6 END -->
 <!-- 10.0.5 START -->
 
 # 10.0.5 (2023-09-05)
