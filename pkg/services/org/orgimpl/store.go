@@ -602,7 +602,16 @@ func (ss *sqlStore) SearchOrgUsers(ctx context.Context, query *org.SearchOrgUser
 			"user.updated",
 			"user.is_disabled",
 		)
-		sess.Asc("user.email", "user.login")
+
+		if len(query.SortOpts) > 0 {
+			for i := range query.SortOpts {
+				for j := range query.SortOpts[i].Filter {
+					sess.OrderBy(query.SortOpts[i].Filter[j].OrderBy())
+				}
+			}
+		} else {
+			sess.Asc("user.login", "user.email")
+		}
 
 		if err := sess.Find(&result.OrgUsers); err != nil {
 			return err
