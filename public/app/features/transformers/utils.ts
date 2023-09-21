@@ -47,3 +47,16 @@ export const categoriesLabels: { [K in TransformerCategory]: string } = {
   reformat: 'Reformat',
   reorderAndRename: 'Reorder and rename',
 };
+
+export const numberOrVariableValidator = (value: string | number) => {
+  if (typeof value === 'number') {
+    return true;
+  }
+  if (!Number.isNaN(Number(value))) {
+    return true;
+  }
+  if (/^\$\{[A-Za-z0-9_]+\}$/.test(value)) {
+    return true;
+  }
+  return false;
+};

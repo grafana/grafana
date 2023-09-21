@@ -6,6 +6,7 @@ import { getTemplateSrv } from '@grafana/runtime';
 import { Field } from '@grafana/ui';
 
 import { SuggestionsInput } from '../../suggestionsInput/SuggestionsInput';
+import { numberOrVariableValidator } from '../../utils';
 
 import { ValueMatcherEditorConfig, ValueMatcherUIProps, ValueMatcherUIRegistryItem } from './types';
 
@@ -51,19 +52,6 @@ export function basicMatcherEditor<T = any>(
       </Field>
     );
   };
-}
-
-export function numberOrVariableValidator(value: string | number) {
-  if (typeof value === 'number') {
-    return true;
-  }
-  if (!Number.isNaN(Number(value))) {
-    return true;
-  }
-  if (/^\$\{[A-Za-z0-9_]+\}$/.test(value)) {
-    return true;
-  }
-  return false;
 }
 
 export const getBasicValueMatchersUI = (): Array<ValueMatcherUIRegistryItem<BasicValueMatcherOptions>> => {

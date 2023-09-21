@@ -1,4 +1,5 @@
-import React, { useCallback } from 'react';
+import { css } from '@emotion/css';
+import React, { useCallback, useState } from 'react';
 
 import {
   DataTransformerID,
@@ -10,13 +11,17 @@ import {
 } from '@grafana/data';
 import { LimitTransformerOptions } from '@grafana/data/src/transformations/transformers/limit';
 import { getTemplateSrv } from '@grafana/runtime';
-import { InlineFieldRow } from '@grafana/ui';
+import { Field, InlineFieldRow } from '@grafana/ui';
 
 import { SuggestionsInput } from '../suggestionsInput/SuggestionsInput';
+import { numberOrVariableValidator } from '../utils';
 
 export const LimitTransformerEditor = ({ options, onChange }: TransformerUIProps<LimitTransformerOptions>) => {
+  const [isInvalid, setInvalid] = useState<boolean>(false);
+
   const onSetLimit = useCallback(
     (value: string) => {
+      setInvalid(!numberOrVariableValidator(value));
       onChange({
         ...options,
         limitField: value,
@@ -33,12 +38,19 @@ export const LimitTransformerEditor = ({ options, onChange }: TransformerUIProps
   return (
     <>
       <InlineFieldRow>
-        <SuggestionsInput
-          value={String(options.limitField)}
-          onChange={onSetLimit}
-          placeholder="Value or variable"
-          suggestions={variables}
-        ></SuggestionsInput>
+        <Field
+          invalid={isInvalid}
+          error={'Value needs to be an integer or a variable'}
+          className={css({ width: '100%' })}
+        >
+          <SuggestionsInput
+            invalid={isInvalid}
+            value={String(options.limitField)}
+            onChange={onSetLimit}
+            placeholder="Value or variable"
+            suggestions={variables}
+          ></SuggestionsInput>
+        </Field>
       </InlineFieldRow>
     </>
   );

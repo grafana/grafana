@@ -4,8 +4,8 @@ import { ValueMatcherID, RangeValueMatcherOptions, VariableOrigin } from '@grafa
 import { getTemplateSrv } from '@grafana/runtime';
 
 import { SuggestionsInput } from '../../suggestionsInput/SuggestionsInput';
+import { numberOrVariableValidator } from '../../utils';
 
-import { numberOrVariableValidator } from './BasicMatcherEditor';
 import { ValueMatcherEditorConfig, ValueMatcherUIProps, ValueMatcherUIRegistryItem } from './types';
 
 type PropNames = 'from' | 'to';
