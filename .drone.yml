@@ -2785,6 +2785,8 @@ steps:
   environment:
     _EXPERIMENTAL_DAGGER_CLOUD_TOKEN:
       from_secret: dagger_token
+    ACCESS_KEY_ID:
+      from_secret: packages_access_key_id
     CDN_DESTINATION:
       from_secret: rgm_cdn_destination
     DESTINATION:
@@ -2806,9 +2808,12 @@ steps:
       from_secret: packages_gpg_private_key
     GPG_PUBLIC_KEY:
       from_secret: packages_gpg_public_key
+    PACKAGES_DESTINATION: gs://grafana-packages-testing
+    SECRET_ACCESS_KEY:
+      from_secret: packages_secret_access_key
     STORYBOOK_DESTINATION:
       from_secret: rgm_storybook_destination
-  image: grafana/grafana-build:dev-224a0dd
+  image: grafana/grafana-build:dev-dc11c89
   name: rgm-build
   pull: always
   volumes:
@@ -3030,6 +3035,8 @@ steps:
   environment:
     _EXPERIMENTAL_DAGGER_CLOUD_TOKEN:
       from_secret: dagger_token
+    ACCESS_KEY_ID:
+      from_secret: packages_access_key_id
     CDN_DESTINATION:
       from_secret: rgm_cdn_destination
     DESTINATION:
@@ -3051,9 +3058,12 @@ steps:
       from_secret: packages_gpg_private_key
     GPG_PUBLIC_KEY:
       from_secret: packages_gpg_public_key
+    PACKAGES_DESTINATION: gs://grafana-packages-testing
+    SECRET_ACCESS_KEY:
+      from_secret: packages_secret_access_key
     STORYBOOK_DESTINATION:
       from_secret: rgm_storybook_destination
-  image: grafana/grafana-build:dev-224a0dd
+  image: grafana/grafana-build:dev-dc11c89
   name: rgm-build
   pull: always
   volumes:
@@ -3207,6 +3217,8 @@ steps:
   environment:
     _EXPERIMENTAL_DAGGER_CLOUD_TOKEN:
       from_secret: dagger_token
+    ACCESS_KEY_ID:
+      from_secret: packages_access_key_id
     CDN_DESTINATION:
       from_secret: rgm_cdn_destination
     DESTINATION:
@@ -3228,9 +3240,12 @@ steps:
       from_secret: packages_gpg_private_key
     GPG_PUBLIC_KEY:
       from_secret: packages_gpg_public_key
+    PACKAGES_DESTINATION: gs://grafana-packages-testing
+    SECRET_ACCESS_KEY:
+      from_secret: packages_secret_access_key
     STORYBOOK_DESTINATION:
       from_secret: rgm_storybook_destination
-  image: grafana/grafana-build:dev-224a0dd
+  image: grafana/grafana-build:dev-dc11c89
   name: rgm-build
   pull: always
   volumes:
@@ -3433,6 +3448,8 @@ steps:
   environment:
     _EXPERIMENTAL_DAGGER_CLOUD_TOKEN:
       from_secret: dagger_token
+    ACCESS_KEY_ID:
+      from_secret: packages_access_key_id
     CDN_DESTINATION:
       from_secret: rgm_cdn_destination
     DESTINATION:
@@ -3454,9 +3471,12 @@ steps:
       from_secret: packages_gpg_private_key
     GPG_PUBLIC_KEY:
       from_secret: packages_gpg_public_key
+    PACKAGES_DESTINATION: gs://grafana-packages-testing
+    SECRET_ACCESS_KEY:
+      from_secret: packages_secret_access_key
     STORYBOOK_DESTINATION:
       from_secret: rgm_storybook_destination
-  image: grafana/grafana-build:dev-224a0dd
+  image: grafana/grafana-build:dev-dc11c89
   name: rgm-build
   pull: always
   volumes:
@@ -3472,6 +3492,8 @@ steps:
   environment:
     _EXPERIMENTAL_DAGGER_CLOUD_TOKEN:
       from_secret: dagger_token
+    ACCESS_KEY_ID:
+      from_secret: packages_access_key_id
     CDN_DESTINATION:
       from_secret: rgm_cdn_destination
     DESTINATION:
@@ -3492,6 +3514,9 @@ steps:
       from_secret: packages_gpg_private_key
     GPG_PUBLIC_KEY:
       from_secret: packages_gpg_public_key
+    PACKAGES_DESTINATION: gs://grafana-packages-testing
+    SECRET_ACCESS_KEY:
+      from_secret: packages_secret_access_key
     STORYBOOK_DESTINATION:
       from_secret: rgm_storybook_destination
   image: google/cloud-sdk:alpine
@@ -3533,6 +3558,8 @@ steps:
   environment:
     _EXPERIMENTAL_DAGGER_CLOUD_TOKEN:
       from_secret: dagger_token
+    ACCESS_KEY_ID:
+      from_secret: packages_access_key_id
     CDN_DESTINATION:
       from_secret: rgm_cdn_destination
     DESTINATION:
@@ -3553,6 +3580,9 @@ steps:
       from_secret: packages_gpg_private_key
     GPG_PUBLIC_KEY:
       from_secret: packages_gpg_public_key
+    PACKAGES_DESTINATION: gs://grafana-packages-testing
+    SECRET_ACCESS_KEY:
+      from_secret: packages_secret_access_key
     STORYBOOK_DESTINATION:
       from_secret: rgm_storybook_destination
   image: google/cloud-sdk:alpine
@@ -3565,6 +3595,8 @@ steps:
   environment:
     _EXPERIMENTAL_DAGGER_CLOUD_TOKEN:
       from_secret: dagger_token
+    ACCESS_KEY_ID:
+      from_secret: packages_access_key_id
     CDN_DESTINATION:
       from_secret: rgm_cdn_destination
     DESTINATION:
@@ -3586,9 +3618,12 @@ steps:
       from_secret: packages_gpg_private_key
     GPG_PUBLIC_KEY:
       from_secret: packages_gpg_public_key
+    PACKAGES_DESTINATION: gs://grafana-packages-testing
+    SECRET_ACCESS_KEY:
+      from_secret: packages_secret_access_key
     STORYBOOK_DESTINATION:
       from_secret: rgm_storybook_destination
-  image: grafana/grafana-build:dev-224a0dd
+  image: grafana/grafana-build:dev-dc11c89
   name: rgm-publish
   pull: always
   volumes:
@@ -4565,6 +4600,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 271c6e0db9626a729c27527a29e646df1c733aa638dffb79dc5bbbe81e26e604
+hmac: db83d241656e7a6663d2c1c931cc02809a28ec9239e375d7d599b37e7a42fc58
 
 ...

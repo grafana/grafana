@@ -104,6 +104,7 @@ def rgm_env_secrets(env):
     env["STORYBOOK_DESTINATION"] = from_secret(rgm_storybook_destination)
     env["CDN_DESTINATION"] = from_secret(rgm_cdn_destination)
     env["DOWNLOADS_DESTINATION"] = from_secret(rgm_downloads_destination)
+    env["PACKAGES_DESTINATION"] = "gs://grafana-packages-testing"
 
     env["GCP_KEY_BASE64"] = from_secret(rgm_gcp_key_base64)
     env["GITHUB_TOKEN"] = from_secret(rgm_github_token)
@@ -113,6 +114,8 @@ def rgm_env_secrets(env):
     env["GPG_PASSPHRASE"] = from_secret("packages_gpg_passphrase")
     env["DOCKER_USERNAME"] = from_secret("docker_username")
     env["DOCKER_PASSWORD"] = from_secret("docker_password")
+    env["ACCESS_KEY_ID"] = from_secret("packages_access_key_id")
+    env["SECRET_ACCESS_KEY"] = from_secret("packages_secret_access_key")
     return env
 
 def rgm_run(name, script):
@@ -129,7 +132,7 @@ def rgm_run(name, script):
     }
     rgm_run_step = {
         "name": name,
-        "image": "grafana/grafana-build:dev-224a0dd",
+        "image": "grafana/grafana-build:dev-dc11c89",
         "pull": "always",
         "commands": [
             "export GRAFANA_DIR=$$(pwd)",
