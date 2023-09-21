@@ -68,7 +68,7 @@ func TestGetHomeDashboard(t *testing.T) {
 	httpReq, err := http.NewRequest(http.MethodGet, "", nil)
 	require.NoError(t, err)
 	httpReq.Header.Add("Content-Type", "application/json")
-	req := &contextmodel.ReqContext{SignedInUser: &user.SignedInUser{}, Context: &web.Context{Req: httpReq}}
+
 	cfg := setting.NewCfg()
 	cfg.StaticRootPath = "../../public/"
 	prefService := preftest.NewPreferenceServiceFake()
@@ -88,9 +88,28 @@ func TestGetHomeDashboard(t *testing.T) {
 		name                  string
 		defaultSetting        string
 		expectedDashboardPath string
+		req                   *contextmodel.ReqContext
 	}{
-		{name: "using default config", defaultSetting: "", expectedDashboardPath: "../../public/dashboards/home.json"},
-		{name: "custom path", defaultSetting: "../../public/dashboards/default.json", expectedDashboardPath: "../../public/dashboards/default.json"},
+		{
+			name:                  "using default config",
+			defaultSetting:        "",
+			expectedDashboardPath: "../../public/dashboards/home.json",
+			req:                   &contextmodel.ReqContext{SignedInUser: &user.SignedInUser{}, Context: &web.Context{Req: httpReq}},
+		},
+		{
+			name:                  "custom path",
+			defaultSetting:        "../../public/dashboards/default.json",
+			expectedDashboardPath: "../../public/dashboards/default.json",
+			req:                   &contextmodel.ReqContext{SignedInUser: &user.SignedInUser{}, Context: &web.Context{Req: httpReq}},
+		},
+		{
+			name:                  "custom path",
+			defaultSetting:        "../../public/dashboards/default.json",
+			expectedDashboardPath: "../../public/dashboards/default.json",
+			req: &contextmodel.ReqContext{SignedInUser: &user.SignedInUser{
+				IsAnonymous: true,
+			}, Context: &web.Context{Req: httpReq}},
+		},
 	}
 
 	for _, tc := range tests {
@@ -111,7 +130,7 @@ func TestGetHomeDashboard(t *testing.T) {
 			b, err := json.Marshal(dash)
 			require.NoError(t, err, "must be able to marshal object to JSON")
 
-			res := hs.GetHomeDashboard(req)
+			res := hs.GetHomeDashboard(tc.req)
 			nr, ok := res.(*response.NormalResponse)
 			require.True(t, ok, "should return *NormalResponse")
 			require.Equal(t, b, nr.Body(), "default home dashboard should equal content on disk")
