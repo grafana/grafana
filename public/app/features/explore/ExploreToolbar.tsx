@@ -20,7 +20,6 @@ import { ExploreTimeControls } from './ExploreTimeControls';
 import { LiveTailButton } from './LiveTailButton';
 import { ToolbarExtensionPoint } from './extensions/ToolbarExtensionPoint';
 import { changeDatasource } from './state/datasource';
-import { contentOutlineAction } from './state/explorePane';
 import { splitClose, splitOpen, maximizePaneAction, evenPaneResizeAction } from './state/main';
 import { cancelQueries, runQueries, selectIsWaitingForData } from './state/query';
 import { isSplit, selectPanesEntries } from './state/selectors';
@@ -36,10 +35,11 @@ const rotateIcon = css({
 interface Props {
   exploreId: string;
   onChangeTime: (range: RawTimeRange, changedByScanner?: boolean) => void;
+  onContentOutlineToogle: () => void;
   topOfViewRef: RefObject<HTMLDivElement>;
 }
 
-export function ExploreToolbar({ exploreId, topOfViewRef, onChangeTime }: Props) {
+export function ExploreToolbar({ exploreId, topOfViewRef, onChangeTime, onContentOutlineToogle }: Props) {
   const dispatch = useDispatch();
 
   const splitted = useSelector(isSplit);
@@ -58,7 +58,6 @@ export function ExploreToolbar({ exploreId, topOfViewRef, onChangeTime }: Props)
   const showSmallDataSourcePicker = useSelector(
     (state) => state.explore.panes[exploreId]!.containerWidth < (splitted ? 700 : 800)
   );
-  const isContentOutlineVisible = useSelector((state) => state.explore.panes[exploreId]!.contentOutlineVisible);
 
   const panes = useSelector(selectPanesEntries);
 
@@ -113,10 +112,6 @@ export function ExploreToolbar({ exploreId, topOfViewRef, onChangeTime }: Props)
 
   const onChangeRefreshInterval = (refreshInterval: string) => {
     dispatch(changeRefreshInterval({ exploreId, refreshInterval }));
-  };
-
-  const onContentOutlineToogle = () => {
-    dispatch(contentOutlineAction({ exploreId, visible: !isContentOutlineVisible }));
   };
 
   return (

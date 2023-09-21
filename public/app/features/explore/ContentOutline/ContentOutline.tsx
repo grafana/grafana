@@ -5,9 +5,9 @@ import { useToggle } from 'react-use';
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2, ToolbarButton } from '@grafana/ui';
 
-import { useContentOutlineContext } from './ContentOutlineContext';
+import { ContentOutlineItemContextProps } from './ContentOutlineContext';
 
-const getStyles = (theme: GrafanaTheme2, expanded: boolean, visible: boolean) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     wrapper: css({
       label: 'wrapper',
@@ -17,8 +17,6 @@ const getStyles = (theme: GrafanaTheme2, expanded: boolean, visible: boolean) =>
       height: '100%',
       backgroundColor: theme.colors.background.primary,
       marginRight: theme.spacing(1),
-      visibility: visible ? 'visible' : 'hidden',
-      boxShadow: `5px 0px 5px 1px black`,
       zIndex: theme.zIndex.sidemenu,
     }),
     content: css({
@@ -35,14 +33,12 @@ const getStyles = (theme: GrafanaTheme2, expanded: boolean, visible: boolean) =>
 };
 
 interface ContentOutlineProps {
-  visible: boolean;
+  outlineItems: ContentOutlineItemContextProps[];
 }
 
-const ContentOutline = ({ visible }: ContentOutlineProps) => {
+const ContentOutline = ({ outlineItems }: ContentOutlineProps) => {
   const [expanded, toggleExpanded] = useToggle(false);
-  const styles = useStyles2((theme) => getStyles(theme, expanded, visible));
-  // TODO: this should be passed as a prop - move it to Explore
-  const { outlineItems } = useContentOutlineContext();
+  const styles = useStyles2((theme) => getStyles(theme));
 
   const scrollIntoView = (ref: HTMLElement | null) => {
     ref?.scrollIntoView({ behavior: 'smooth' });

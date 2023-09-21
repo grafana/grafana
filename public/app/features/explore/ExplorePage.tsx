@@ -9,6 +9,7 @@ import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { useSelector } from 'app/types';
 import { ExploreQueryParams } from 'app/types/explore';
 
+import { ContentOutlineContextProvider } from './ContentOutline/ContentOutlineContext';
 import { ExploreActions } from './ExploreActions';
 import { ExplorePaneContainer } from './ExplorePaneContainer';
 import { useExplorePageTitle } from './hooks/useExplorePageTitle';
@@ -55,27 +56,29 @@ export default function ExplorePage(props: GrafanaRouteComponentProps<{}, Explor
   useKeyboardShortcuts();
 
   return (
-    <div className={styles.pageScrollbarWrapper}>
-      <ExploreActions />
+    <ContentOutlineContextProvider>
+      <div className={styles.pageScrollbarWrapper}>
+        <ExploreActions />
 
-      <SplitPaneWrapper
-        splitOrientation="vertical"
-        paneSize={widthCalc}
-        minSize={MIN_PANE_WIDTH}
-        maxSize={MIN_PANE_WIDTH * -1}
-        primary="second"
-        splitVisible={hasSplit}
-        paneStyle={{ overflow: 'auto', display: 'flex', flexDirection: 'column' }}
-        onDragFinished={(size) => size && updateSplitSize(size)}
-      >
-        {panes.map(([exploreId]) => {
-          return (
-            <ErrorBoundaryAlert key={exploreId} style="page">
-              <ExplorePaneContainer exploreId={exploreId} />
-            </ErrorBoundaryAlert>
-          );
-        })}
-      </SplitPaneWrapper>
-    </div>
+        <SplitPaneWrapper
+          splitOrientation="vertical"
+          paneSize={widthCalc}
+          minSize={MIN_PANE_WIDTH}
+          maxSize={MIN_PANE_WIDTH * -1}
+          primary="second"
+          splitVisible={hasSplit}
+          paneStyle={{ overflow: 'auto', display: 'flex', flexDirection: 'column' }}
+          onDragFinished={(size) => size && updateSplitSize(size)}
+        >
+          {panes.map(([exploreId]) => {
+            return (
+              <ErrorBoundaryAlert key={exploreId} style="page">
+                <ExplorePaneContainer exploreId={exploreId} />
+              </ErrorBoundaryAlert>
+            );
+          })}
+        </SplitPaneWrapper>
+      </div>
+    </ContentOutlineContextProvider>
   );
 }

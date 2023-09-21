@@ -117,7 +117,6 @@ export interface InitializeExploreOptions {
   position?: number;
 }
 
-export const contentOutlineAction = createAction<{ exploreId: string; visible: boolean }>('explore/contentOutline');
 /**
  * Initialize Explore state with state from the URL and the React component.
  * Call this only on components for with the Explore state has not been initialized.
@@ -213,13 +212,6 @@ export const paneReducer = (state: ExploreItemState = makeExplorePaneState(), ac
     return {
       ...state,
       correlations: action.payload.correlations,
-    };
-  }
-
-  if (contentOutlineAction.match(action)) {
-    return {
-      ...state,
-      contentOutlineVisible: action.payload.visible,
     };
   }
 

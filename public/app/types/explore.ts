@@ -193,11 +193,6 @@ export interface ExploreItemState {
   panelsState: ExplorePanelsState;
 
   correlations?: CorrelationData[];
-
-  /**
-   * Content outline sidebar
-   */
-  contentOutlineVisible: boolean;
 }
 
 export interface ExploreUpdateState {
