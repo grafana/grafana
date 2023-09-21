@@ -1275,7 +1275,11 @@ export function reloadCorrelations(exploreId: string): ThunkResult<void> {
     const pane = getState().explore!.panes[exploreId]!;
 
     if (pane.datasourceInstance?.uid !== undefined) {
-      const correlations = await getCorrelationsBySourceUIDs([pane.datasourceInstance.uid]);
+      // TODO: Tie correlations with query refID for mixed datasource
+      let datasourceUIDs = pane.datasourceInstance.meta.mixed
+        ? pane.queries.map((query) => query.datasource?.uid).filter((x): x is string => x !== null)
+        : [pane.datasourceInstance.uid];
+      const correlations = await getCorrelationsBySourceUIDs(datasourceUIDs);
       dispatch(saveCorrelationsAction({ exploreId, correlations: correlations.correlations || [] }));
     }
   };

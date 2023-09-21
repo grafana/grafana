@@ -61,8 +61,6 @@ export const CorrelationEditorModeBar = ({ panes }: { panes: Array<[string, Expl
         })
       );
       dispatch(runQueries({ exploreId: pane[0] }));
-
-      reportInteraction('grafana_explore_correlation_editor_exited');
     });
   });
 
@@ -200,6 +198,7 @@ export const CorrelationEditorModeBar = ({ panes }: { panes: Array<[string, Expl
             icon="times"
             onClick={() => {
               dispatch(changeCorrelationEditorDetails({ isExiting: true }));
+              reportInteraction('grafana_explore_correlation_editor_exit_pressed');
             }}
             aria-label="exit correlations editor mode"
           >
