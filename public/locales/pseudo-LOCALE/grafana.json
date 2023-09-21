@@ -221,6 +221,15 @@
     }
   },
   "explore": {
+    "prometheus-list-view": {
+      "raw-list-container": {
+        "result-count": "",
+        "switch-label": ""
+      },
+      "raw-list-item": {
+        "icon-tooltip-copy": ""
+      }
+    },
     "raw-prometheus-container": {
       "label": {
         "table": ""

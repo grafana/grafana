@@ -7,6 +7,7 @@ import { VariableSizeList as List } from 'react-window';
 import { DataFrame, Field as DataFrameField } from '@grafana/data/';
 import { reportInteraction } from '@grafana/runtime/src';
 import { Field, Switch } from '@grafana/ui/';
+import {t,Trans} from 'app/core/internationalization';
 
 import {
   getRawPrometheusListItemsFromDataFrame,
@@ -54,6 +55,7 @@ const styles = {
 
 const mobileWidthThreshold = 480;
 const numberOfColumnsBeforeExpandedViewIsDefault = 2;
+const switchLabel = t('explore.prometheus-list-view.raw-list-container.switch-label','Expand results');
 
 /**
  * The container that provides the virtualized list to the child components
@@ -120,11 +122,15 @@ const RawListContainer = (props: RawListContainerProps) => {
       <header className={styles.header}>
         <Field className={styles.switchWrapper} label={`Expand results`} htmlFor={'isExpandedView'}>
           <div className={styles.switch}>
-            <Switch onChange={onContentClick} id={switchId} value={isExpandedView} label={`Expand results`} />
+            <Switch onChange={onContentClick} id={switchId} value={isExpandedView} label={switchLabel} />
           </div>
         </Field>
 
-        <div className={styles.resultCount}>Result series: {items.length}</div>
+        <div className={styles.resultCount}>
+					<Trans i18nKey="explore.prometheus-list-view.raw-list-container.result-count" items_length={items.length}>
+						Result series: {{items_length: items.length}}
+					</Trans>
+				</div>
       </header>
 
       <div role={'table'}>

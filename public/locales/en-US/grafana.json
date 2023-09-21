@@ -221,6 +221,16 @@
     }
   },
   "explore": {
+    "prometheus-list-view": {
+      "raw-list-container": {
+        "result-count__one": "Result series: {{items_length}}",
+				"result-count__other": "Result series: {{items_length}}",
+				"switch-label": "Expand results"
+      },
+      "raw-list-item": {
+        "icon-tooltip-copy": "Copy to clipboard"
+      }
+    },
     "raw-prometheus-container": {
       "label": {
         "table": "Table"
