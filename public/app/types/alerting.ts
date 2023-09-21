@@ -55,9 +55,11 @@ export type GrafanaNotifierType =
   | 'victorops'
   | 'pushover'
   | 'LINE'
-  | 'kafka';
+  | 'kafka'
+  | 'wecom';
 
 export type CloudNotifierType =
+  | 'oncall' // Only FE implementation for now
   | 'email'
   | 'pagerduty'
   | 'pushover'
@@ -122,6 +124,7 @@ export interface NotificationChannelOption {
     | 'input'
     | 'select'
     | 'checkbox'
+    | 'radio'
     | 'textarea'
     | 'subform'
     | 'subform_array'
@@ -136,7 +139,7 @@ export interface NotificationChannelOption {
   secure: boolean;
   selectOptions?: Array<SelectableValue<string>> | null;
   defaultValue?: SelectableValue<string>;
-  showWhen: { field: string; is: string };
+  showWhen: { field: string; is: string | boolean };
   validationRule: string;
   subformOptions?: NotificationChannelOption[];
   dependsOn: string;

@@ -1,6 +1,6 @@
 import { Property } from 'csstype';
 import { clone } from 'lodash';
-import memoizeOne from 'memoize-one';
+import memoize from 'micro-memoize';
 import { Row } from 'react-table';
 
 import {
@@ -137,7 +137,7 @@ export function getColumns(
       sortType: selectSortType(field.type),
       width: fieldTableOptions.width,
       minWidth: fieldTableOptions.minWidth ?? columnMinWidth,
-      filter: memoizeOne(filterByValue(field)),
+      filter: memoize(filterByValue(field)),
       justifyContent: getTextAlign(field),
       Footer: getFooterValue(fieldIndex, footerValues, isCountRowsSet),
     });

@@ -12,10 +12,11 @@ export interface Props extends GrafanaRouteComponentProps<{ uid: string }> {}
 
 export function DashboardScenePage({ match }: Props) {
   const stateManager = getDashboardScenePageStateManager();
-  const { dashboard, isLoading } = stateManager.useState();
+  const { dashboard, isLoading, loadError } = stateManager.useState();
 
   useEffect(() => {
-    stateManager.loadAndInit(match.params.uid);
+    stateManager.loadDashboard(match.params.uid);
+
     return () => {
       stateManager.clearState();
     };
@@ -25,7 +26,7 @@ export function DashboardScenePage({ match }: Props) {
     return (
       <Page layout={PageLayoutType.Canvas}>
         {isLoading && <PageLoader />}
-        {!isLoading && <h2>Dashboard not found</h2>}
+        {loadError && <h2>{loadError}</h2>}
       </Page>
     );
   }

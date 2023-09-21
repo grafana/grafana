@@ -26,7 +26,7 @@ import * as ruleId from '../../utils/rule-id';
 import { isAlertingRule, isFederatedRuleGroup, isGrafanaRulerRule } from '../../utils/rules';
 import { DeclareIncident } from '../bridges/DeclareIncidentButton';
 
-import { CloneRuleButton } from './CloneRuleButton';
+import { CloneRuleButton } from './CloneRule';
 
 interface Props {
   rule: CombinedRule;
@@ -291,7 +291,7 @@ function useCanSilence(rule: CombinedRule) {
     return false;
   }
 
-  const hasPermissions = contextSrv.hasAccess(AccessControlAction.AlertingInstanceCreate, contextSrv.isEditor);
+  const hasPermissions = contextSrv.hasPermission(AccessControlAction.AlertingInstanceCreate);
 
   const interactsOnlyWithExternalAMs = amConfigStatus?.alertmanagersChoice === AlertmanagerChoice.External;
   const interactsWithAll = amConfigStatus?.alertmanagersChoice === AlertmanagerChoice.All;

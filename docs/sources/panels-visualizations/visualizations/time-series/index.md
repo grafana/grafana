@@ -90,12 +90,12 @@ Use opacity to specify the series area fill color.
 
 ### Gradient mode
 
-Gradient mode specifies the gradient fill, which is based on the series color. To change the color, use the standard color scheme field option. For more information, refer to [Color scheme]({{< relref "../../configure-standard-options/#color-scheme" >}}).
+Gradient mode specifies the gradient fill, which is based on the series color. To change the color, use the standard color scheme field option. For more information, refer to [Color scheme][].
 
 - **None:** No gradient fill. This is the default setting.
 - **Opacity:** An opacity gradient where the opacity of the fill increases as Y-axis values increase.
 - **Hue:** A subtle gradient that is based on the hue of the series color.
-- **Scheme:** A color gradient defined by your [Color scheme]({{< relref "../../configure-standard-options/#color-scheme" >}}). This setting is used for the fill area and line. For more information about scheme, refer to [Scheme gradient mode]({{< relref "#cheme-gradient-mode"  >}}).
+- **Scheme:** A color gradient defined by your [Color scheme][]. This setting is used for the fill area and line. For more information about scheme, refer to [Scheme gradient mode](#scheme-gradient-mode).
 
 Gradient appearance is influenced by the **Fill opacity** setting. The following image show, the **Fill opacity** is set to 50.
 
@@ -126,7 +126,7 @@ This option controls how the graph interpolates the series line.
 
 ### Line style
 
-Set the style of the line. To change the color, use the standard [color scheme]({{< relref "../../configure-standard-options/#color-scheme" >}}) field option.
+Set the style of the line. To change the color, use the standard [color scheme][] field option.
 
 ![Line style option](/static/img/docs/time-series-panel/line-style-option-v9.png)
 
@@ -142,7 +142,7 @@ Set the style of the line. To change the color, use the standard [color scheme](
 
 ### Stack series
 
-_Stacking_ allows Grafana to display series on top of each other. Be cautious when using stacking in the visualization as it can easily create misleading graphs. To read more about why stacking might not be the best approach, refer to [Stacked Area Graphs Are Not Your Friend](https://everydayanalytics.ca/2014/08/stacked-area-graphs-are-not-your-friend.html).
+_Stacking_ allows Grafana to display series on top of each other. Be cautious when using stacking in the visualization as it can easily create misleading graphs. To read more about why stacking might not be the best approach, refer to [The issue with stacking](https://www.data-to-viz.com/caveat/stacking.html).
 
 ![Stack option](/static/img/docs/time-series-panel/stack-option-v9.png)
 
@@ -152,7 +152,7 @@ _Stacking_ allows Grafana to display series on top of each other. Be cautious wh
 
 #### Stack series in groups
 
-The stacking group option is only available as an override. For more information about creating an override, refer to [Configure field overrides]({{< relref "../../configure-overrides" >}}).
+The stacking group option is only available as an override. For more information about creating an override, refer to [Configure field overrides][].
 
 1. Edit the panel and click **Overrides**.
 1. Create a field override for the **Stack series** option.
@@ -187,7 +187,7 @@ Select the placement of the Y-axis.
 - **Right:** Display all Y-axes on the right side.
 - **Hidden:** Hide all axes.
 
-To selectively hide axes, [Add a field override]({{< relref "../../configure-overrides#add-a-field-override" >}}) that targets specific fields.
+To selectively hide axes, [Add a field override][] that targets specific fields.
 
 ### Label
 
@@ -205,7 +205,7 @@ Set a **Soft min** or **soft max** option for better control of Y-axis limits. B
 
 **Soft min** and **soft max** settings can prevent blips from turning into mountains when the data is mostly flat, and hard min or max derived from standard min and max field options can prevent intermittent spikes from flattening useful detail by clipping the spikes past a specific point.
 
-To define hard limits of the Y-axis, You can set standard min/max options. For more information, refer to [Configure standard options]({{< relref "../../configure-standard-options/#max" >}}).
+To define hard limits of the Y-axis, You can set standard min/max options. For more information, refer to [Configure standard options][].
 
 ![Label example](/static/img/docs/time-series-panel/axis-soft-min-max-7-4.png)
 
@@ -227,9 +227,11 @@ Use this option to transform the series values without affecting the values show
 The transform option is only available as an override.
 {{% /admonition %}}
 
+{{< docs/shared lookup="visualizations/multiple-y-axes.md" source="grafana" version="<GRAFANA VERSION>" leveloffset="+2" >}}
+
 ## Color options
 
-By default, the graph uses the standard [Color scheme]({{< relref "../../configure-standard-options/#color-scheme" >}}) option to assign series colors. You can also use the legend to open the color picker by clicking the legend series color icon. Setting
+By default, the graph uses the standard [Color scheme][] option to assign series colors. You can also use the legend to open the color picker by clicking the legend series color icon. Setting
 color this way automatically creates an override rule that set's a specific color for a specific series.
 
 ### Classic palette
@@ -267,3 +269,20 @@ The following image shows a line chart with the **Green-Yellow-Red (by value)** 
 The following image shows a bar chart with the **Green-Yellow-Red (by value)** color scheme option selected.
 
 {{< figure src="/static/img/docs/time-series-panel/gradient_mode_scheme_bars.png" max-width="1200px" caption="Color scheme: Green-Yellow-Red" >}}
+
+{{% docs/reference %}}
+[Color scheme]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/configure-standard-options#color-scheme"
+[Color scheme]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/configure-standard-options#color-scheme"
+
+[Add a field override]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/configure-overrides#add-a-field-override"
+[Add a field override]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/configure-overrides#add-a-field-override"
+
+[Configure standard options]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/configure-standard-options#max"
+[Configure standard options]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/configure-standard-options#max"
+
+[color scheme]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/configure-standard-options#color-scheme"
+[color scheme]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/configure-standard-options#color-scheme"
+
+[Configure field overrides]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/configure-overrides"
+[Configure field overrides]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/configure-overrides"
+{{% /docs/reference %}}

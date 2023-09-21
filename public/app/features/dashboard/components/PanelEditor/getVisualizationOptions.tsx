@@ -78,6 +78,7 @@ export function getVisualizationOptions(props: OptionPaneRenderProps): OptionsPa
     return (categoryIndex[categoryName] = new OptionsPaneCategoryDescriptor({
       title: categoryName,
       id: categoryName,
+      sandboxId: plugin.meta.id,
     }));
   };
 

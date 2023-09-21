@@ -80,6 +80,15 @@ async function doImportPluginModuleInSandbox(meta: PluginMeta): Promise<System.M
         // window.locationSandbox. In the future `window.location` could be a proxy if we
         // want to intercept calls to it.
         locationSandbox: window.location,
+        get monaco() {
+          // `window.monaco` may be undefined when invoked. However, plugins have long
+          // accessed it directly, aware of this possibility.
+          return Reflect.get(window, 'monaco');
+        },
+        get Prism() {
+          // Similar to `window.monaco`, `window.Prism` may be undefined when invoked.
+          return Reflect.get(window, 'Prism');
+        },
         // Plugins builds use the AMD module system. Their code consists
         // of a single function call to `define()` that internally contains all the plugin code.
         // This is that `define` function the plugin will call.
@@ -189,7 +198,11 @@ function resolvePluginDependencies(deps: string[]) {
   // resolve dependencies
   const resolvedDeps: CompartmentDependencyModule[] = [];
   for (const dep of deps) {
-    const resolvedDep = sandboxPluginDependencies.get(dep);
+    let resolvedDep = sandboxPluginDependencies.get(dep);
+    if (resolvedDep?.__useDefault) {
+      resolvedDep = resolvedDep.default;
+    }
+
     if (!resolvedDep) {
       throw new Error(`[sandbox] Could not resolve dependency ${dep}`);
     }

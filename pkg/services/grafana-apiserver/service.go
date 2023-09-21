@@ -9,8 +9,12 @@ import (
 
 	"github.com/go-logr/logr"
 	"github.com/grafana/dskit/services"
+	kindsv1 "github.com/grafana/grafana-apiserver/pkg/apis/kinds/v1"
+	grafanaapiserver "github.com/grafana/grafana-apiserver/pkg/apiserver"
 	"github.com/grafana/grafana-apiserver/pkg/certgenerator"
 	grafanaapiserveroptions "github.com/grafana/grafana-apiserver/pkg/cmd/server/options"
+	"github.com/grafana/grafana-apiserver/pkg/storage/filepath"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apiserver/pkg/authentication/authenticator"
 	"k8s.io/apiserver/pkg/authentication/request/headerrequest"
 	"k8s.io/apiserver/pkg/authentication/user"
@@ -78,7 +82,7 @@ func (s *service) start(ctx context.Context) error {
 	o.RecommendedOptions.Authorization.AlwaysAllowPaths = []string{"*"}
 	o.RecommendedOptions.Authorization.AlwaysAllowGroups = []string{user.SystemPrivilegedGroup, "grafana"}
 	o.RecommendedOptions.Etcd = nil
-	// TODO: setting CoreAPI to nil currently segfaults in grafana-apiserver
+	o.RecommendedOptions.Admission = nil
 	o.RecommendedOptions.CoreAPI = nil
 
 	// Get the util to get the paths to pre-generated certs
@@ -86,13 +90,11 @@ func (s *service) start(ctx context.Context) error {
 		K8sDataPath: s.dataPath,
 	}
 
-	err := certUtil.InitializeCACertPKI()
-	if err != nil {
+	if err := certUtil.InitializeCACertPKI(); err != nil {
 		return err
 	}
 
-	err = certUtil.EnsureApiServerPKI(certgenerator.DefaultAPIServerIp)
-	if err != nil {
+	if err := certUtil.EnsureApiServerPKI(certgenerator.DefaultAPIServerIp); err != nil {
 		return err
 	}
 
@@ -120,6 +122,10 @@ func (s *service) start(ctx context.Context) error {
 		return err
 	}
 
+	serverConfig.ExtraConfig.RESTOptionsGetter = filepath.NewRESTOptionsGetter(s.dataPath, unstructured.UnstructuredJSONScheme)
+	serverConfig.GenericConfig.RESTOptionsGetter = filepath.NewRESTOptionsGetter(s.dataPath, grafanaapiserver.Codecs.LegacyCodec(kindsv1.SchemeGroupVersion))
+	serverConfig.GenericConfig.Config.RESTOptionsGetter = filepath.NewRESTOptionsGetter(s.dataPath, grafanaapiserver.Codecs.LegacyCodec(kindsv1.SchemeGroupVersion))
+
 	authenticator, err := newAuthenticator(rootCert)
 	if err != nil {
 		return err
@@ -139,6 +145,33 @@ func (s *service) start(ctx context.Context) error {
 	}
 
 	prepared := server.GenericAPIServer.PrepareRun()
+
+	// TODO: not sure if we can still inject RouteRegister with the new module server setup
+	// Disabling the /k8s endpoint until we have a solution
+
+	/* handler := func(c *contextmodel.ReqContext) {
+		req := c.Req
+		req.URL.Path = strings.TrimPrefix(req.URL.Path, "/k8s")
+		if req.URL.Path == "" {
+			req.URL.Path = "/"
+		}
+		ctx := req.Context()
+		signedInUser := appcontext.MustUser(ctx)
+
+		req.Header.Set("X-Remote-User", strconv.FormatInt(signedInUser.UserID, 10))
+		req.Header.Set("X-Remote-Group", "grafana")
+		req.Header.Set("X-Remote-Extra-token-name", signedInUser.Name)
+		req.Header.Set("X-Remote-Extra-org-role", string(signedInUser.OrgRole))
+		req.Header.Set("X-Remote-Extra-org-id", strconv.FormatInt(signedInUser.OrgID, 10))
+		req.Header.Set("X-Remote-Extra-user-id", strconv.FormatInt(signedInUser.UserID, 10))
+
+		resp := responsewriter.WrapForHTTP1Or2(c.Resp)
+		prepared.GenericAPIServer.Handler.ServeHTTP(resp, req)
+	}
+	/* s.rr.Group("/k8s", func(k8sRoute routing.RouteRegister) {
+		k8sRoute.Any("/", middleware.ReqSignedIn, handler)
+		k8sRoute.Any("/*", middleware.ReqSignedIn, handler)
+	}) */
 
 	go func() {
 		s.stoppedCh <- prepared.Run(s.stopCh)

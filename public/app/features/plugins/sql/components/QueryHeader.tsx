@@ -1,8 +1,10 @@
 import React, { useCallback, useState } from 'react';
 import { useCopyToClipboard } from 'react-use';
+import { v4 as uuidv4 } from 'uuid';
 
 import { SelectableValue } from '@grafana/data';
 import { EditorField, EditorHeader, EditorMode, EditorRow, FlexItem, InlineSelect, Space } from '@grafana/experimental';
+import { reportInteraction } from '@grafana/runtime';
 import { Button, InlineSwitch, RadioButtonGroup, Tooltip } from '@grafana/ui';
 
 import { QueryWithDefaults } from '../defaults';
@@ -48,6 +50,13 @@ export function QueryHeader({
 
   const onEditorModeChange = useCallback(
     (newEditorMode: EditorMode) => {
+      if (newEditorMode === EditorMode.Code) {
+        reportInteraction('grafana_sql_editor_mode_changed', {
+          datasource: query.datasource?.type,
+          selectedEditorMode: EditorMode.Code,
+        });
+      }
+
       if (editorMode === EditorMode.Code) {
         setShowConfirm(true);
         return;
@@ -59,6 +68,11 @@ export function QueryHeader({
 
   const onFormatChange = (e: SelectableValue) => {
     const next = { ...query, format: e.value !== undefined ? e.value : QueryFormat.Table };
+
+    reportInteraction('grafana_sql_format_changed', {
+      datasource: query.datasource?.type,
+      selectedFormat: next.format,
+    });
     onChange(next);
   };
 
@@ -118,51 +132,83 @@ export function QueryHeader({
         {editorMode === EditorMode.Builder && (
           <>
             <InlineSwitch
-              id="sql-filter"
+              id={`sql-filter-${uuidv4()}}`}
               label="Filter"
               transparent={true}
               showLabel={true}
               value={queryRowFilter.filter}
-              onChange={(ev) =>
-                ev.target instanceof HTMLInputElement &&
-                onQueryRowChange({ ...queryRowFilter, filter: ev.target.checked })
-              }
+              onChange={(ev) => {
+                if (!(ev.target instanceof HTMLInputElement)) {
+                  return;
+                }
+
+                reportInteraction('grafana_sql_filter_toggled', {
+                  datasource: query.datasource?.type,
+                  displayed: ev.target.checked,
+                });
+
+                onQueryRowChange({ ...queryRowFilter, filter: ev.target.checked });
+              }}
             />
 
             <InlineSwitch
-              id="sql-group"
+              id={`sql-group-${uuidv4()}}`}
               label="Group"
               transparent={true}
               showLabel={true}
               value={queryRowFilter.group}
-              onChange={(ev) =>
-                ev.target instanceof HTMLInputElement &&
-                onQueryRowChange({ ...queryRowFilter, group: ev.target.checked })
-              }
+              onChange={(ev) => {
+                if (!(ev.target instanceof HTMLInputElement)) {
+                  return;
+                }
+
+                reportInteraction('grafana_sql_group_toggled', {
+                  datasource: query.datasource?.type,
+                  displayed: ev.target.checked,
+                });
+
+                onQueryRowChange({ ...queryRowFilter, group: ev.target.checked });
+              }}
             />
 
             <InlineSwitch
-              id="sql-order"
+              id={`sql-order-${uuidv4()}}`}
               label="Order"
               transparent={true}
               showLabel={true}
               value={queryRowFilter.order}
-              onChange={(ev) =>
-                ev.target instanceof HTMLInputElement &&
-                onQueryRowChange({ ...queryRowFilter, order: ev.target.checked })
-              }
+              onChange={(ev) => {
+                if (!(ev.target instanceof HTMLInputElement)) {
+                  return;
+                }
+
+                reportInteraction('grafana_sql_order_toggled', {
+                  datasource: query.datasource?.type,
+                  displayed: ev.target.checked,
+                });
+
+                onQueryRowChange({ ...queryRowFilter, order: ev.target.checked });
+              }}
             />
 
             <InlineSwitch
-              id="sql-preview"
+              id={`sql-preview-${uuidv4()}}`}
               label="Preview"
               transparent={true}
               showLabel={true}
               value={queryRowFilter.preview}
-              onChange={(ev) =>
-                ev.target instanceof HTMLInputElement &&
-                onQueryRowChange({ ...queryRowFilter, preview: ev.target.checked })
-              }
+              onChange={(ev) => {
+                if (!(ev.target instanceof HTMLInputElement)) {
+                  return;
+                }
+
+                reportInteraction('grafana_sql_preview_toggled', {
+                  datasource: query.datasource?.type,
+                  displayed: ev.target.checked,
+                });
+
+                onQueryRowChange({ ...queryRowFilter, preview: ev.target.checked });
+              }}
             />
           </>
         )}
@@ -195,6 +241,12 @@ export function QueryHeader({
         <ConfirmModal
           isOpen={showConfirm}
           onCopy={() => {
+            reportInteraction('grafana_sql_editor_mode_changed', {
+              datasource: query.datasource?.type,
+              selectedEditorMode: EditorMode.Builder,
+              type: 'copy',
+            });
+
             setShowConfirm(false);
             copyToClipboard(query.rawSql!);
             onChange({
@@ -204,6 +256,12 @@ export function QueryHeader({
             });
           }}
           onDiscard={() => {
+            reportInteraction('grafana_sql_editor_mode_changed', {
+              datasource: query.datasource?.type,
+              selectedEditorMode: EditorMode.Builder,
+              type: 'discard',
+            });
+
             setShowConfirm(false);
             onChange({
               ...query,
@@ -211,7 +269,15 @@ export function QueryHeader({
               editorMode: EditorMode.Builder,
             });
           }}
-          onCancel={() => setShowConfirm(false)}
+          onCancel={() => {
+            reportInteraction('grafana_sql_editor_mode_changed', {
+              datasource: query.datasource?.type,
+              selectedEditorMode: EditorMode.Builder,
+              type: 'cancel',
+            });
+
+            setShowConfirm(false);
+          }}
         />
       </EditorHeader>
 

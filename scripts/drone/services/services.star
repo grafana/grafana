@@ -18,7 +18,7 @@ def integration_test_services():
     services = [
         {
             "name": "postgres",
-            "image": images["postgres_alpine_image"],
+            "image": images["postgres_alpine"],
             "environment": {
                 "POSTGRES_USER": "grafanatest",
                 "POSTGRES_PASSWORD": "grafanatest",
@@ -31,7 +31,7 @@ def integration_test_services():
         },
         {
             "name": "mysql57",
-            "image": images["mysql5_image"],
+            "image": images["mysql5"],
             "environment": {
                 "MYSQL_ROOT_PASSWORD": "rootpass",
                 "MYSQL_DATABASE": "grafana_tests",
@@ -43,7 +43,7 @@ def integration_test_services():
         },
         {
             "name": "mysql80",
-            "image": images["mysql8_image"],
+            "image": images["mysql8"],
             "environment": {
                 "MYSQL_ROOT_PASSWORD": "rootpass",
                 "MYSQL_DATABASE": "grafana_tests",
@@ -55,12 +55,12 @@ def integration_test_services():
         },
         {
             "name": "redis",
-            "image": images["redis_alpine_image"],
+            "image": images["redis_alpine"],
             "environment": {},
         },
         {
             "name": "memcached",
-            "image": images["memcached_alpine_image"],
+            "image": images["memcached_alpine"],
             "environment": {},
         },
     ]
@@ -70,7 +70,7 @@ def integration_test_services():
 def ldap_service():
     return {
         "name": "ldap",
-        "image": images["openldap_image"],
+        "image": images["openldap"],
         "environment": {
             "LDAP_ADMIN_PASSWORD": "grafana",
             "LDAP_DOMAIN": "grafana.org",

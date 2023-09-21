@@ -186,7 +186,7 @@ describe('RuleEditor cloud: checking editable data sources', () => {
 
     await ui.inputs.name.find();
 
-    const switchToCloudButton = screen.getByText('Switch to data source-managed alert rule');
+    const switchToCloudButton = screen.getByText('Data source-managed');
     expect(switchToCloudButton).toBeInTheDocument();
 
     await userEvent.click(switchToCloudButton);

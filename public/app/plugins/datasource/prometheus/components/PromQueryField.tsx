@@ -100,8 +100,8 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
       BracesPlugin(),
       SlatePrism(
         {
-          onlyIn: (node: any) => node.type === 'code_block',
-          getSyntax: (node: any) => 'promql',
+          onlyIn: (node) => 'type' in node && node.type === 'code_block',
+          getSyntax: (node) => 'promql',
         },
         { ...(prismLanguages as LanguageMap), promql: this.props.datasource.languageProvider.syntax }
       ),

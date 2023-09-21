@@ -33,7 +33,7 @@ func (s *PermissionsSync) SyncPermissionsHook(ctx context.Context, identity *aut
 	permissions, err := s.ac.GetUserPermissions(ctx, identity.SignedInUser(),
 		accesscontrol.Options{ReloadCache: false})
 	if err != nil {
-		s.log.FromContext(ctx).Error("failed to fetch permissions from db", "error", err, "user_id", identity.ID)
+		s.log.FromContext(ctx).Error("Failed to fetch permissions from db", "error", err, "user_id", identity.ID)
 		return errSyncPermissionsForbidden
 	}
 
