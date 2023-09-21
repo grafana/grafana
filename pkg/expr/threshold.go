@@ -19,14 +19,14 @@ type ThresholdCommand struct {
 }
 
 const (
-	ThresholdIsAbove        = "gt"
-	ThresholdIsBelow        = "lt"
-	ThresholdIsWithinRange  = "within_range"
-	ThresholdIsOutsideRange = "outside_range"
-	ThresholdIsEqual        = "eq"
-	ThresholdIsNotEqual     = "ne"
-	ThresholdIsGe        	= "ge"
-	ThresholdIsLe        	= "le"
+	ThresholdIsAbove                = "gt"
+	ThresholdIsBelow                = "lt"
+	ThresholdIsWithinRange          = "within_range"
+	ThresholdIsOutsideRange         = "outside_range"
+	ThresholdIsEqual                = "eq"
+	ThresholdIsNotEqual             = "ne"
+	ThresholdIsGe                   = "ge"
+	ThresholdIsLe                   = "le"
 	ThresholdIsWithinRangeIncluded  = "within_range_included"
 	ThresholdIsOutsideRangeIncluded = "outside_range_included"
 )
