@@ -122,7 +122,7 @@ export function GeneralSettingsUnconnected({
           <Field
             label={
               <HorizontalGroup justify="space-between">
-                <Label htmlFor="title">Title</Label>
+                <Label htmlFor="title-input">Title</Label>
                 {config.featureToggles.dashgpt && (
                   <GenAIDashTitleButton onGenerate={onTitleChange} dashboard={dashboard} />
                 )}
@@ -139,7 +139,7 @@ export function GeneralSettingsUnconnected({
           <Field
             label={
               <HorizontalGroup justify="space-between">
-                <Label htmlFor="description">Description</Label>
+                <Label htmlFor="description-input">Description</Label>
                 {config.featureToggles.dashgpt && (
                   <GenAIDashDescriptionButton onGenerate={onDescriptionChange} dashboard={dashboard} />
                 )}
