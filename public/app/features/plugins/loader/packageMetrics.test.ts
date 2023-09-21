@@ -30,6 +30,7 @@ describe('trackPackageUsage', () => {
       key: 'foo',
       parent: 'your-package',
       packageName: 'your-package',
+      guessedPluginName: '',
     });
     expect(result).toEqual(obj);
   });
@@ -52,11 +53,13 @@ describe('trackPackageUsage', () => {
       key: 'foo2',
       parent: 'your-package',
       packageName: 'your-package',
+      guessedPluginName: '',
     });
     expect(logInfoMock).toHaveBeenCalledWith(`Plugin using your-package.foo2.bar`, {
       key: 'bar',
       parent: 'your-package.foo2',
       packageName: 'your-package',
+      guessedPluginName: '',
     });
 
     expect(result.foo2).toEqual(obj.foo2);
@@ -93,12 +96,14 @@ describe('trackPackageUsage', () => {
       key: 'foo3',
       parent: 'your-package',
       packageName: 'your-package',
+      guessedPluginName: '',
     });
     mockUsage(result2.foo3.bar);
     expect(logInfoMock).toHaveBeenCalledWith(`Plugin using your-package.foo3.bar`, {
       key: 'bar',
       parent: 'your-package.foo3',
       packageName: 'your-package',
+      guessedPluginName: '',
     });
 
     expect(result1.foo3).toEqual(obj.foo3);
