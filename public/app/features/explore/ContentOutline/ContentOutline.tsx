@@ -5,7 +5,7 @@ import { useToggle } from 'react-use';
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2, ToolbarButton } from '@grafana/ui';
 
-import { ContentOutlineItemContextProps } from './ContentOutlineContext';
+import { useContentOutlineContext } from './ContentOutlineContext';
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
@@ -32,13 +32,10 @@ const getStyles = (theme: GrafanaTheme2) => {
   };
 };
 
-interface ContentOutlineProps {
-  outlineItems: ContentOutlineItemContextProps[];
-}
-
-const ContentOutline = ({ outlineItems }: ContentOutlineProps) => {
+const ContentOutline = () => {
   const [expanded, toggleExpanded] = useToggle(false);
   const styles = useStyles2((theme) => getStyles(theme));
+  const { outlineItems } = useContentOutlineContext();
 
   const scrollIntoView = (ref: HTMLElement | null) => {
     ref?.scrollIntoView({ behavior: 'smooth' });

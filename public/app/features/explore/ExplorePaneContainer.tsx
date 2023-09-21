@@ -8,7 +8,6 @@ import { useStyles2 } from '@grafana/ui';
 import { stopQueryState } from 'app/core/utils/explore';
 import { StoreState, useSelector } from 'app/types';
 
-import { useContentOutlineContext } from './ContentOutline/ContentOutlineContext';
 import Explore from './Explore';
 import { getExploreItemSelector } from './state/selectors';
 
@@ -45,7 +44,6 @@ function ExplorePaneContainerUnconnected({ exploreId }: Props) {
   const styles = useStyles2(getStyles);
   const eventBus = useRef(new EventBusSrv());
   const ref = useRef(null);
-  const { outlineItems } = useContentOutlineContext();
 
   useEffect(() => {
     const bus = eventBus.current;
@@ -54,7 +52,7 @@ function ExplorePaneContainerUnconnected({ exploreId }: Props) {
 
   return (
     <div className={styles.explore} ref={ref} data-testid={selectors.pages.Explore.General.container}>
-      <Explore exploreId={exploreId} eventBus={eventBus.current} contentOutlineItems={outlineItems} />
+      <Explore exploreId={exploreId} eventBus={eventBus.current} />
     </div>
   );
 }
