@@ -105,6 +105,22 @@ type SetUsingOrgCommand struct {
 	OrgID  int64
 }
 
+type SortDirection string
+
+const (
+	SortAsc  = "ASC"
+	SortDesc = "DESC"
+)
+
+func (sd SortDirection) IsValid() bool {
+	return sd == SortAsc || sd == SortDesc
+}
+
+type SortOption struct {
+	Field     string
+	Direction SortDirection
+}
+
 type SearchUsersQuery struct {
 	SignedInUser identity.Requester
 	OrgID        int64 `xorm:"org_id"`
@@ -112,6 +128,7 @@ type SearchUsersQuery struct {
 	Page         int
 	Limit        int
 	AuthModule   string
+	SortOpts     []SortOption
 	Filters      []Filter
 
 	IsDisabled *bool
