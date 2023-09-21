@@ -140,10 +140,10 @@ func (st *Manager) fullSync(ctx context.Context) error {
 	st.log.Info("Full state sync start")
 	instances := st.cache.asInstances(st.doNotSaveNormalState)
 	if err := st.instanceStore.FullSync(ctx, instances); err != nil {
-		st.log.Error("Full state sync failed", "duration", time.Since(startTime).Seconds(), "instances", len(instances))
+		st.log.Error("Full state sync failed", "duration", time.Since(startTime), "instances", len(instances))
 		return err
 	}
-	st.log.Info("Full state sync done", "duration", time.Since(startTime).Seconds(), "instances", len(instances))
+	st.log.Info("Full state sync done", "duration", time.Since(startTime), "instances", len(instances))
 	return nil
 }
 
