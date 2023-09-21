@@ -1,4 +1,4 @@
-import React, { FormEvent, useCallback } from 'react';
+import React, { useCallback } from 'react';
 
 import {
   DataTransformerID,
@@ -6,27 +6,39 @@ import {
   TransformerRegistryItem,
   TransformerUIProps,
   TransformerCategory,
+  VariableOrigin,
 } from '@grafana/data';
 import { LimitTransformerOptions } from '@grafana/data/src/transformations/transformers/limit';
-import { InlineField, InlineFieldRow, Input } from '@grafana/ui';
+import { getTemplateSrv } from '@grafana/runtime';
+import { InlineFieldRow } from '@grafana/ui';
+
+import { SuggestionsInput } from '../suggestionsInput/SuggestionsInput';
 
 export const LimitTransformerEditor = ({ options, onChange }: TransformerUIProps<LimitTransformerOptions>) => {
   const onSetLimit = useCallback(
-    (value: FormEvent<HTMLInputElement>) => {
+    (value: string) => {
       onChange({
         ...options,
-        limitField: value.currentTarget.value,
+        limitField: value,
       });
     },
     [onChange, options]
   );
 
+  const templateSrv = getTemplateSrv();
+  const variables = templateSrv.getVariables().map((v) => {
+    return { value: v.name, label: v.label || v.name, origin: VariableOrigin.Template };
+  });
+
   return (
     <>
       <InlineFieldRow>
-        <InlineField label="Limit" labelWidth={8}>
-          <Input placeholder="Limit count" value={options.limitField} onChange={onSetLimit} width={25} />
-        </InlineField>
+        <SuggestionsInput
+          value={String(options.limitField)}
+          onChange={onSetLimit}
+          placeholder="Value or variable"
+          suggestions={variables}
+        ></SuggestionsInput>
       </InlineFieldRow>
     </>
   );

@@ -8,7 +8,7 @@ import Plain from 'slate-plain-serializer';
 import { Editor } from 'slate-react';
 
 import { GrafanaTheme2, VariableSuggestion } from '@grafana/data';
-import { CustomScrollbar, getInputStyles, makeValue, Portal, SCHEMA, SlatePrism, useStyles2 } from '@grafana/ui';
+import { CustomScrollbar, getInputStyles, makeValue, Portal, SCHEMA, SlatePrism, useTheme2 } from '@grafana/ui';
 import { DataLinkSuggestions } from '@grafana/ui/src/components/DataLinks/DataLinkSuggestions';
 import { SelectionReference } from '@grafana/ui/src/components/DataLinks/SelectionReference';
 
@@ -20,6 +20,7 @@ interface SuggestionsInputProps {
   onChange: (url: string, callback?: () => void) => void;
   suggestions: VariableSuggestion[];
   placeholder?: string;
+  invalid?: boolean;
 }
 
 const variableSyntax: Grammar = {
@@ -38,8 +39,8 @@ const plugins = [
   ),
 ];
 
-const getStyles = (theme: GrafanaTheme2) => ({
-  input: getInputStyles({ theme, invalid: false }).input,
+const getStyles = (theme: GrafanaTheme2, invalid: boolean) => ({
+  input: getInputStyles({ theme, invalid: invalid }).input,
   editor: css({
     '.token.builtInVariable': {
       color: theme.colors.success.text,
@@ -66,9 +67,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
 // This memoised also because rerendering the slate editor grabs focus which created problem in some cases this
 // was used and changes to different state were propagated here.
 export const SuggestionsInput = memo(
-  ({ className, value, onChange, suggestions, placeholder }: SuggestionsInputProps) => {
+  ({ className, value, onChange, suggestions, placeholder, invalid = false }: SuggestionsInputProps) => {
     const editorRef = useRef<Editor>(null);
-    const styles = useStyles2(getStyles);
+    const theme = useTheme2();
+    const styles = getStyles(theme, invalid);
     const [showingSuggestions, setShowingSuggestions] = useState(false);
     const [suggestionsIndex, setSuggestionsIndex] = useState(0);
     const [variableValue, setVariableValue] = useState<Value>(makeValue(String(value)));
@@ -233,6 +235,7 @@ export const SuggestionsInput = memo(
                 styles.input,
                 css({
                   padding: '3px 8px',
+                  minHeight: '32px',
                 })
               )}
             />

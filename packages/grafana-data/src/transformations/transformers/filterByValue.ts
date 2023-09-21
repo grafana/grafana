@@ -81,8 +81,6 @@ export const filterByValueTransformer: DataTransformerInfo<FilterByValueTransfor
       return filter;
     });
 
-    console.log(interpolatedFilters);
-
     return source.pipe(
       map((data) => {
         if (!Array.isArray(data) || data.length === 0) {

@@ -1,7 +1,9 @@
+import { css } from '@emotion/css';
 import React, { useCallback, useState } from 'react';
 
 import { ValueMatcherID, BasicValueMatcherOptions, VariableOrigin } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
+import { Field } from '@grafana/ui';
 
 import { SuggestionsInput } from '../../suggestionsInput/SuggestionsInput';
 
@@ -31,34 +33,37 @@ export function basicMatcherEditor<T = any>(
       [setInvalid, validator, onChange, options]
     );
 
-    /* const onChangeOptions = useCallback(
-      () => {
-        if (isInvalid) {
-          return;
-        }
-
-        const { value } = event.currentTarget;
-
-        onChange({
-          ...options,
-          value: value,
-        });
-      },
-      [options, onChange, isInvalid]
-    );
-*/
-
-    //TODO: make regex matcher use a simple input, without suggestions.
+    //TODO: make regex matcher use a simple input, witaout suggestions.
     //Also exclude from actual transformation operation
     return (
-      <SuggestionsInput
-        value={value}
-        onChange={onChangeValue}
-        placeholder="Value or variable"
-        suggestions={variables}
-      ></SuggestionsInput>
+      <Field
+        invalid={isInvalid}
+        error={'Value needs to be an integer or a variable'}
+        className={css({ width: '100%' })}
+      >
+        <SuggestionsInput
+          invalid={isInvalid}
+          value={value}
+          onChange={onChangeValue}
+          placeholder="Value or variable"
+          suggestions={variables}
+        ></SuggestionsInput>
+      </Field>
     );
   };
+}
+
+export function numberOrVariableValidator(value: string | number) {
+  if (typeof value === 'number') {
+    return true;
+  }
+  if (!Number.isNaN(Number(value))) {
+    return true;
+  }
+  if (/^\$\{[A-Za-z0-9_]+\}$/.test(value)) {
+    return true;
+  }
+  return false;
 }
 
 export const getBasicValueMatchersUI = (): Array<ValueMatcherUIRegistryItem<BasicValueMatcherOptions>> => {
@@ -67,28 +72,28 @@ export const getBasicValueMatchersUI = (): Array<ValueMatcherUIRegistryItem<Basi
       name: 'Is greater',
       id: ValueMatcherID.greater,
       component: basicMatcherEditor<string | number>({
-        validator: () => true, //TODO: validate number or dashboard variable
+        validator: numberOrVariableValidator,
       }),
     },
     {
       name: 'Is greater or equal',
       id: ValueMatcherID.greaterOrEqual,
       component: basicMatcherEditor<string | number>({
-        validator: () => true,
+        validator: numberOrVariableValidator,
       }),
     },
     {
       name: 'Is lower',
       id: ValueMatcherID.lower,
       component: basicMatcherEditor<string | number>({
-        validator: () => true,
+        validator: numberOrVariableValidator,
       }),
     },
     {
       name: 'Is lower or equal',
       id: ValueMatcherID.lowerOrEqual,
       component: basicMatcherEditor<string | number>({
-        validator: () => true,
+        validator: numberOrVariableValidator,
       }),
     },
     {

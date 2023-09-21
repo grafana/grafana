@@ -5,6 +5,7 @@ import { getTemplateSrv } from '@grafana/runtime';
 
 import { SuggestionsInput } from '../../suggestionsInput/SuggestionsInput';
 
+import { numberOrVariableValidator } from './BasicMatcherEditor';
 import { ValueMatcherEditorConfig, ValueMatcherUIProps, ValueMatcherUIRegistryItem } from './types';
 
 type PropNames = 'from' | 'to';
@@ -24,19 +25,16 @@ export function rangeMatcherEditor<T = any>(
       return { value: v.name, label: v.label || v.name, origin: VariableOrigin.Template };
     });
 
-    const onChangeValue = useCallback(
-      (value: string, prop: PropNames) => {
-        setInvalid({
-          ...isInvalid,
-          [prop]: !validator(value),
-        });
-      },
-      [setInvalid, validator, isInvalid]
-    );
-
     const onChangeOptions = useCallback(
       (value: string, prop: PropNames) => {
-        if (isInvalid[prop]) {
+        const invalid = !validator(value);
+
+        setInvalid({
+          ...isInvalid,
+          [prop]: invalid,
+        });
+
+        if (invalid) {
           return;
         }
 
@@ -45,7 +43,7 @@ export function rangeMatcherEditor<T = any>(
           [prop]: value,
         });
       },
-      [options, onChange, isInvalid]
+      [options, onChange, isInvalid, setInvalid, validator]
     );
 
     return (
@@ -76,7 +74,7 @@ export const getRangeValueMatchersUI = (): Array<ValueMatcherUIRegistryItem<Rang
       name: 'Is between',
       id: ValueMatcherID.between,
       component: rangeMatcherEditor<string | number>({
-        validator: () => true,
+        validator: numberOrVariableValidator,
       }),
     },
   ];
