@@ -8,6 +8,7 @@ export const ErrorId = 0;
 export function getLeftMostChild(cur: SyntaxNode): SyntaxNode {
   return cur.firstChild ? getLeftMostChild(cur.firstChild) : cur;
 }
+
 export function makeError(expr: string, node: SyntaxNode) {
   return {
     text: getString(expr, node),
