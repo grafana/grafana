@@ -441,7 +441,7 @@ steps:
   name: validate-modfile
 - commands:
   - apk add --update make
-  - make validate-api-spec
+  - make swagger-validate
   image: golang:1.20.8-alpine
   name: validate-openapi-spec
 trigger:
@@ -1630,7 +1630,7 @@ steps:
   name: validate-modfile
 - commands:
   - apk add --update make
-  - make validate-api-spec
+  - make swagger-validate
   image: golang:1.20.8-alpine
   name: validate-openapi-spec
 - commands:
@@ -4212,6 +4212,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 0b878d482338e27f3b8208271c974aa6c9cce0c4785eec59cf338464665b9ab5
+hmac: 1c2b4631d052b574bae953aebe0ecbdeb9a88c558bdba437bdac6856905d7a69
 
 ...
