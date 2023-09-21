@@ -95,6 +95,14 @@ export const UsersListPageUnconnected = ({
             onRemoveUser={onRemoveUser}
             fetchData={changeSort}
           />
+          <HorizontalGroup justify="flex-end">
+            <Pagination
+              onNavigate={changePage}
+              currentPage={page}
+              numberOfPages={totalPages}
+              hideWhenSinglePage={true}
+            />
+          </HorizontalGroup>
         </VerticalGroup>
       );
     }
