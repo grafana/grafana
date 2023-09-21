@@ -80,7 +80,7 @@ swagger-validate: $(MERGED_SPEC_TARGET) $(SWAGGER) ## Validate API spec
 	$(SWAGGER) validate $(<)
 
 swagger-clean:
-	rm -f $(SPEC_TARGET) $(MERGED_SPEC_TARGET) $(ENTERPRISE_SPEC_TARGET) $(OAPI_SPEC_TARGET)
+	rm -f $(SPEC_TARGET) $(MERGED_SPEC_TARGET) $(OAPI_SPEC_TARGET)
 
 .PHONY: cleanup-old-git-hooks
 cleanup-old-git-hooks:
