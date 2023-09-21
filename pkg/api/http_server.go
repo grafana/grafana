@@ -679,7 +679,7 @@ func (hs *HTTPServer) apiHealthHandler(ctx *web.Context) {
 	if !hs.Cfg.AnonymousHideVersion {
 		data.Set("version", hs.Cfg.BuildVersion)
 		data.Set("commit", hs.Cfg.BuildCommit)
-		if hs.Cfg.EnterpriseBuildCommit != "NA" {
+		if hs.Cfg.EnterpriseBuildCommit != "NA" && hs.Cfg.EnterpriseBuildCommit != "" {
 			data.Set("enterpriseCommit", hs.Cfg.EnterpriseBuildCommit)
 		}
 	}
