@@ -3,7 +3,8 @@ import React from 'react';
 
 import { ThemeSpacingTokens } from '@grafana/data';
 
-import { useTheme2 } from '../../themes';
+import { useTheme2 } from '../../../themes';
+import { SpacingTokenControl } from '../../../utils/storybook/themeStorybookControls';
 
 import { Flex, JustifyContent, Wrap, Direction } from './Flex';
 import mdx from './Flex.mdx';
@@ -46,6 +47,31 @@ export const Basic: StoryFn<typeof Flex> = ({ direction, wrap, alignItems, justi
       </Flex>
     </div>
   );
+};
+
+Basic.argTypes = {
+  gap: SpacingTokenControl,
+  direction: { control: 'select', options: ['row', 'row-reverse', 'column', 'column-reverse'] },
+  wrap: { control: 'select', options: ['nowrap', 'wrap', 'wrap-reverse'] },
+  alignItems: {
+    control: 'select',
+    options: ['stretch', 'flex-start', 'flex-end', 'center', 'baseline', 'start', 'end', 'self-start', 'self-end'],
+  },
+  justifyContent: {
+    control: 'select',
+    options: [
+      'flex-start',
+      'flex-end',
+      'center',
+      'space-between',
+      'space-around',
+      'space-evenly',
+      'start',
+      'end',
+      'left',
+      'right',
+    ],
+  },
 };
 
 export const AlignItemsExamples: StoryFn<typeof Flex> = () => {
