@@ -72,12 +72,12 @@ The current team members are:
 - Brian Gann ([Grafana Labs](https://grafana.com/))
 - Carl Bergquist ([Grafana Labs](https://grafana.com/))
 - Chris Trott ([Grafana Labs](https://grafana.com/))
-- Daniel Lee 
+- Daniel Lee
 - David Kaltschmidt ([Grafana Labs](https://grafana.com/))
 - Diana Payton ([Grafana Labs](https://grafana.com/))
 - Diana Sarlinska ([Grafana Labs](https://grafana.com/))
 - Dominik Prokop ([Grafana Labs](https://grafana.com/))
-- Emil Tullstedt 
+- Emil Tullstedt
 - Erik Sundell ([Grafana Labs](https://grafana.com/))
 - Fredrik Enestad ([Embark Studios](https://www.embark-studios.com/))
 - Ivana Huckova ([Grafana Labs](https://grafana.com/))
