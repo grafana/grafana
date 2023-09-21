@@ -62,12 +62,12 @@ func TestLDAP_AuthenticateProxy(t *testing.T) {
 				Groups:          []string{"1", "2"},
 				IsDisabled:      true, // Users are marked as disabled to force enablement on successful login
 				ClientParams: authn.ClientParams{
-					SyncUser:            true,
-					SyncTeams:           true,
-					EnableDisabledUsers: true,
-					FetchSyncedUser:     true,
-					SyncOrgRoles:        true,
-					SyncPermissions:     true,
+					SyncUser:        true,
+					SyncTeams:       true,
+					EnableUser:      true,
+					FetchSyncedUser: true,
+					SyncOrgRoles:    true,
+					SyncPermissions: true,
 					LookUpParams: login.UserLookupParams{
 						Email: strPtr("test@test.com"),
 						Login: strPtr("test"),
@@ -132,12 +132,12 @@ func TestLDAP_AuthenticatePassword(t *testing.T) {
 				Groups:          []string{"1", "2"},
 				IsDisabled:      true, // Users are marked as disabled to force enablement on successful login
 				ClientParams: authn.ClientParams{
-					SyncUser:            true,
-					SyncTeams:           true,
-					EnableDisabledUsers: true,
-					FetchSyncedUser:     true,
-					SyncOrgRoles:        true,
-					SyncPermissions:     true,
+					SyncUser:        true,
+					SyncTeams:       true,
+					EnableUser:      true,
+					FetchSyncedUser: true,
+					SyncOrgRoles:    true,
+					SyncPermissions: true,
 					LookUpParams: login.UserLookupParams{
 						Email: strPtr("test@test.com"),
 						Login: strPtr("test"),
