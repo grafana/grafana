@@ -23,19 +23,25 @@ const (
 	ThresholdIsBelow        = "lt"
 	ThresholdIsWithinRange  = "within_range"
 	ThresholdIsOutsideRange = "outside_range"
+	ThresholdIsEqual        = "eq"
+	ThresholdIsNotEqual     = "ne"
+	ThresholdIsGe        	= "ge"
+	ThresholdIsLe        	= "le"
+	ThresholdIsWithinRangeIncluded  = "within_range_included"
+	ThresholdIsOutsideRangeIncluded = "outside_range_included"
 )
 
 var (
-	supportedThresholdFuncs = []string{ThresholdIsAbove, ThresholdIsBelow, ThresholdIsWithinRange, ThresholdIsOutsideRange}
+	supportedThresholdFuncs = []string{ThresholdIsAbove, ThresholdIsBelow, ThresholdIsWithinRange, ThresholdIsOutsideRange, ThresholdIsEqual, ThresholdIsNotEqual, ThresholdIsGe, ThresholdIsLe, ThresholdIsWithinRangeIncluded, ThresholdIsOutsideRangeIncluded}
 )
 
 func NewThresholdCommand(refID, referenceVar, thresholdFunc string, conditions []float64) (*ThresholdCommand, error) {
 	switch thresholdFunc {
-	case ThresholdIsOutsideRange, ThresholdIsWithinRange:
+	case ThresholdIsOutsideRange, ThresholdIsWithinRange, ThresholdIsWithinRangeIncluded, ThresholdIsOutsideRangeIncluded:
 		if len(conditions) < 2 {
 			return nil, fmt.Errorf("incorrect number of arguments: got %d but need 2", len(conditions))
 		}
-	case ThresholdIsAbove, ThresholdIsBelow:
+	case ThresholdIsAbove, ThresholdIsBelow, ThresholdIsEqual, ThresholdIsNotEqual, ThresholdIsGe, ThresholdIsLe:
 		if len(conditions) < 1 {
 			return nil, fmt.Errorf("incorrect number of arguments: got %d but need 1", len(conditions))
 		}
@@ -122,10 +128,22 @@ func createMathExpression(referenceVar string, thresholdFunc string, args []floa
 		return fmt.Sprintf("${%s} > %f", referenceVar, args[0]), nil
 	case ThresholdIsBelow:
 		return fmt.Sprintf("${%s} < %f", referenceVar, args[0]), nil
+	case ThresholdIsEqual:
+		return fmt.Sprintf("${%s} == %f", referenceVar, args[0]), nil
+	case ThresholdIsNotEqual:
+		return fmt.Sprintf("${%s} != %f", referenceVar, args[0]), nil
+	case ThresholdIsGe:
+		return fmt.Sprintf("${%s} >= %f", referenceVar, args[0]), nil
+	case ThresholdIsLe:
+		return fmt.Sprintf("${%s} <= %f", referenceVar, args[0]), nil
 	case ThresholdIsWithinRange:
 		return fmt.Sprintf("${%s} > %f && ${%s} < %f", referenceVar, args[0], referenceVar, args[1]), nil
+	case ThresholdIsWithinRangeIncluded:
+		return fmt.Sprintf("${%s} >= %f && ${%s} <= %f", referenceVar, args[0], referenceVar, args[1]), nil
 	case ThresholdIsOutsideRange:
 		return fmt.Sprintf("${%s} < %f || ${%s} > %f", referenceVar, args[0], referenceVar, args[1]), nil
+	case ThresholdIsOutsideRangeIncluded:
+		return fmt.Sprintf("${%s} <= %f || ${%s} >= %f", referenceVar, args[0], referenceVar, args[1]), nil
 	default:
 		return "", fmt.Errorf("failed to evaluate threshold expression: no such threshold function %s", thresholdFunc)
 	}

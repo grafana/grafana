@@ -64,7 +64,7 @@ export const Threshold = ({ labelWidth, onChange, refIds, query }: Props) => {
   };
 
   const isRange =
-    condition.evaluator.type === EvalFunction.IsWithinRange || condition.evaluator.type === EvalFunction.IsOutsideRange;
+    condition.evaluator.type === EvalFunction.IsWithinRange || condition.evaluator.type === EvalFunction.IsOutsideRange || condition.evaluator.type === EvalFunction.IsOutsideRangeIncluded || condition.evaluator.type === EvalFunction.IsWithinRangeIncluded;
 
   return (
     <>
