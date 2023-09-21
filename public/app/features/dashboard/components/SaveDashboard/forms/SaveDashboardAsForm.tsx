@@ -1,5 +1,6 @@
 import React, { ChangeEvent } from 'react';
 
+import { config } from '@grafana/runtime';
 import { Button, Input, Switch, Form, Field, InputControl, HorizontalGroup, Label, TextArea } from '@grafana/ui';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
@@ -108,7 +109,9 @@ export const SaveDashboardAsForm = ({
                 label={
                   <HorizontalGroup justify="space-between">
                     <Label htmlFor="title">Dashboard name</Label>
-                    <GenAIDashTitleButton onGenerate={(title) => field.onChange(title)} dashboard={dashboard} />
+                    {config.featureToggles.dashgpt && (
+                      <GenAIDashTitleButton onGenerate={(title) => field.onChange(title)} dashboard={dashboard} />
+                    )}
                   </HorizontalGroup>
                 }
                 invalid={!!errors.title}
@@ -134,10 +137,12 @@ export const SaveDashboardAsForm = ({
                 label={
                   <HorizontalGroup justify="space-between">
                     <Label htmlFor="description">Dashboard description</Label>
-                    <GenAIDashDescriptionButton
-                      onGenerate={(description) => field.onChange(description)}
-                      dashboard={dashboard}
-                    />
+                    {config.featureToggles.dashgpt && (
+                      <GenAIDashDescriptionButton
+                        onGenerate={(description) => field.onChange(description)}
+                        dashboard={dashboard}
+                      />
+                    )}
                   </HorizontalGroup>
                 }
                 invalid={!!errors.description}
