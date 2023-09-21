@@ -226,6 +226,16 @@ def validate_modfile_step():
         ],
     }
 
+def validate_openapi_spec_step():
+    return {
+        "name": "validate-openapi-spec",
+        "image": images["go"],
+        "commands": [
+            "apk add --update make",
+            "make validate-api-spec",
+        ],
+    }
+
 def dockerize_step(name, hostname, port):
     return {
         "name": name,

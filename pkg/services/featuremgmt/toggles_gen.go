@@ -442,4 +442,8 @@ const (
 	// FlagAlertingInsights
 	// Show the new alerting insights landing page
 	FlagAlertingInsights = "alertingInsights"
+
+	// FlagPluginsAPIMetrics
+	// Sends metrics of public grafana packages usage by plugins
+	FlagPluginsAPIMetrics = "pluginsAPIMetrics"
 )

@@ -38,6 +38,8 @@ import {
   QueryFilterOptions,
   renderLegendFormat,
 } from '@grafana/data';
+import { intervalToMs } from '@grafana/data/src/datetime/rangeutil';
+import { Duration } from '@grafana/lezer-logql';
 import { BackendSrvRequest, config, DataSourceWithBackend, FetchError } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { convertToWebSocketUrl } from 'app/core/utils/explore';
@@ -77,6 +79,7 @@ import { runSplitQuery } from './querySplitting';
 import {
   getLogQueryFromMetricsQuery,
   getLokiQueryFromDataQuery,
+  getNodesFromQuery,
   getNormalizedLokiQuery,
   getStreamSelectorsFromQuery,
   isLogsQuery,
@@ -454,22 +457,30 @@ export class LokiDatasource
     return await this.getResource(url, params, options);
   }
 
-  async getQueryStats(query: string): Promise<QueryStats | undefined> {
+  async getQueryStats(query: LokiQuery): Promise<QueryStats | undefined> {
     // if query is invalid, clear stats, and don't request
-    if (isQueryWithError(this.interpolateString(query, placeHolderScopedVars))) {
+    if (isQueryWithError(this.interpolateString(query.expr, placeHolderScopedVars))) {
       return undefined;
     }
 
-    const { start, end } = this.getTimeRangeParams();
-    const labelMatchers = getStreamSelectorsFromQuery(query);
-
+    const labelMatchers = getStreamSelectorsFromQuery(query.expr);
     let statsForAll: QueryStats = { streams: 0, chunks: 0, bytes: 0, entries: 0 };
 
-    for (const labelMatcher of labelMatchers) {
+    for (const idx in labelMatchers) {
+      const { start, end } = this.getStatsTimeRange(query, Number(idx));
+
+      if (start === undefined || end === undefined) {
+        return { streams: 0, chunks: 0, bytes: 0, entries: 0, message: 'Query size estimate not available.' };
+      }
+
       try {
         const data = await this.statsMetadataRequest(
           'index/stats',
-          { query: labelMatcher, start, end },
+          {
+            query: labelMatchers[idx],
+            start: start,
+            end: end,
+          },
           { showErrorAlert: false }
         );
 
@@ -485,6 +496,60 @@ export class LokiDatasource
     }
 
     return statsForAll;
+  }
+
+  getStatsTimeRange(query: LokiQuery, idx: number): { start: number | undefined; end: number | undefined } {
+    let start: number, end: number;
+    const NS_IN_MS = 1000000;
+    const durationNodes = getNodesFromQuery(query.expr, [Duration]);
+    const durations = durationNodes.map((d) => query.expr.substring(d.from, d.to));
+
+    if (isLogsQuery(query.expr)) {
+      // logs query with instant type can not be estimated
+      if (query.queryType === LokiQueryType.Instant) {
+        return { start: undefined, end: undefined };
+      }
+      // logs query with range type
+      return this.getTimeRangeParams();
+    }
+
+    if (query.queryType === LokiQueryType.Instant) {
+      // metric query with instant type
+
+      if (!!durations[idx]) {
+        // if query has a duration e.g. [1m]
+        end = this.getTimeRangeParams().end;
+        start = end - intervalToMs(durations[idx]) * NS_IN_MS;
+        return { start, end };
+      } else {
+        // if query has no duration e.g. [$__interval]
+
+        if (/(\$__auto|\$__range)/.test(query.expr)) {
+          // if $__auto or $__range is used, we can estimate the time range using the selected range
+          return this.getTimeRangeParams();
+        }
+
+        // otherwise we cant estimate the time range
+        return { start: undefined, end: undefined };
+      }
+    }
+
+    // metric query with range type
+    return this.getTimeRangeParams();
+  }
+
+  async getStats(query: LokiQuery): Promise<QueryStats | null> {
+    if (!query) {
+      return null;
+    }
+
+    const response = await this.getQueryStats(query);
+
+    if (!response) {
+      return null;
+    }
+
+    return Object.values(response).every((v) => v === 0) ? null : response;
   }
 
   async metricFindQuery(query: LokiVariableQuery | string) {
