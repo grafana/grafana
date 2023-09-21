@@ -27,6 +27,45 @@ describe('buildVisualQueryFromString', () => {
     );
   });
 
+  it('throws error when visual query parse is ambiguous', () => {
+    expect(
+      buildVisualQueryFromString('topk(5, node_arp_entries / node_arp_entries{cluster="dev-eu-west-2"})')
+    ).toMatchObject({
+      errors: [
+        {
+          from: 8,
+          text: 'Query parsing is ambiguous.',
+          to: 68,
+        },
+      ],
+    });
+  });
+  it('throws error when visual query parse is ambiguous (scalar)', () => {
+    expect(buildVisualQueryFromString('topk(5, 1 / 2)')).toMatchObject({
+      errors: [
+        {
+          from: 8,
+          text: 'Query parsing is ambiguous.',
+          to: 13,
+        },
+      ],
+    });
+  });
+
+  it('does not throw error when visual query parse is unambiguous', () => {
+    expect(
+      buildVisualQueryFromString('topk(5, node_arp_entries) / node_arp_entries{cluster="dev-eu-west-2"}')
+    ).toMatchObject({
+      errors: [],
+    });
+  });
+  it('does not throw error when visual query parse is unambiguous (scalar)', () => {
+    // Note this topk query with scalars is not valid in prometheus, but it does not currently throw an error during parse
+    expect(buildVisualQueryFromString('topk(5, 1) / 2')).toMatchObject({
+      errors: [],
+    });
+  });
+
   it('parses query with rate and interval', () => {
     expect(buildVisualQueryFromString('rate(counters_logins{app="frontend"}[5m])')).toEqual(
       noErrors({
