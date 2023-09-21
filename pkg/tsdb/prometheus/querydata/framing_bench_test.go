@@ -24,7 +24,7 @@ import (
 )
 
 // when memory-profiling this benchmark, these commands are recommended:
-// - go test -benchmem -run=^$ -benchtime 1x -memprofile memprofile.out -memprofilerate 1 -bench ^BenchmarkExemplarJson$ github.com/grafana/grafana/pkg/tsdb/prometheus/buffered
+// - go test -benchmem -run=^$ -bench ^BenchmarkExemplarJson$ github.com/grafana/grafana/pkg/tsdb/prometheus/querydata -memprofile memprofile.out -count 6 | tee old.txt
 // - go tool pprof -http=localhost:6061 memprofile.out
 func BenchmarkExemplarJson(b *testing.B) {
 	queryFileName := filepath.Join("../testdata", "exemplar.query.json")
@@ -58,8 +58,9 @@ func BenchmarkExemplarJson(b *testing.B) {
 var resp *backend.QueryDataResponse
 
 // when memory-profiling this benchmark, these commands are recommended:
-// - go test -benchmem -run=^$ -benchtime 1x -memprofile memprofile.out -memprofilerate 1 -bench ^BenchmarkJson$ github.com/grafana/grafana/pkg/tsdb/prometheus
+// - go test -benchmem -run=^$ -bench ^BenchmarkRangeJson$ github.com/grafana/grafana/pkg/tsdb/prometheus/querydata -memprofile memprofile.out -count 6 | tee old.txt
 // - go tool pprof -http=localhost:6061 memprofile.out
+// - benchstat old.txt new.txt
 func BenchmarkRangeJson(b *testing.B) {
 	var (
 		r   *backend.QueryDataResponse

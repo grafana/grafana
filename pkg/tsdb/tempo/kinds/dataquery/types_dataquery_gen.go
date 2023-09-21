@@ -31,9 +31,10 @@ const (
 
 // Defines values for TraceqlSearchScope.
 const (
-	TraceqlSearchScopeResource TraceqlSearchScope = "resource"
-	TraceqlSearchScopeSpan     TraceqlSearchScope = "span"
-	TraceqlSearchScopeUnscoped TraceqlSearchScope = "unscoped"
+	TraceqlSearchScopeIntrinsic TraceqlSearchScope = "intrinsic"
+	TraceqlSearchScopeResource  TraceqlSearchScope = "resource"
+	TraceqlSearchScopeSpan      TraceqlSearchScope = "span"
+	TraceqlSearchScopeUnscoped  TraceqlSearchScope = "unscoped"
 )
 
 // These are the common properties available to all queries in all datasources.
@@ -81,6 +82,9 @@ type TempoQuery struct {
 	Datasource *any            `json:"datasource,omitempty"`
 	Filters    []TraceqlFilter `json:"filters"`
 
+	// Filters that are used to query the metrics summary
+	GroupBy []TraceqlFilter `json:"groupBy,omitempty"`
+
 	// Hide true if query is disabled (ie should not be returned to the dashboard)
 	// Note this does not always imply that the query should not be executed since
 	// the results from a hidden query may be used as the input to other queries (SSE etc)
@@ -121,6 +125,9 @@ type TempoQuery struct {
 
 	// @deprecated Query traces by span name
 	SpanName *string `json:"spanName,omitempty"`
+
+	// Defines the maximum number of spans per spanset that are returned from Tempo
+	Spss *int64 `json:"spss,omitempty"`
 }
 
 // TempoQueryType search = Loki search, nativeSearch = Tempo search for backwards compatibility

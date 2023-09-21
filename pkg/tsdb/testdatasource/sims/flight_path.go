@@ -40,7 +40,7 @@ func (s *flightSim) GetState() simulationState {
 	}
 }
 
-func (s *flightSim) SetConfig(vals map[string]interface{}) error {
+func (s *flightSim) SetConfig(vals map[string]any) error {
 	return updateConfigObjectFromJSON(s.cfg, vals)
 }
 
@@ -60,10 +60,10 @@ func (s *flightSim) NewFrame(size int) *data.Frame {
 	return frame
 }
 
-func (s *flightSim) GetValues(t time.Time) map[string]interface{} {
+func (s *flightSim) GetValues(t time.Time) map[string]any {
 	p := s.cfg.getNextPoint(t)
 
-	return map[string]interface{}{
+	return map[string]any{
 		"time":     p.time,
 		"lat":      p.lat,
 		"lng":      p.lng,

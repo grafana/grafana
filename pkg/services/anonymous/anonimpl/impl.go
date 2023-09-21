@@ -65,7 +65,7 @@ func ProvideAnonymousDeviceService(remoteCache remotecache.CacheStorage, usageSt
 	return a
 }
 
-func (a *AnonDeviceService) usageStatFn(ctx context.Context) (map[string]interface{}, error) {
+func (a *AnonDeviceService) usageStatFn(ctx context.Context) (map[string]any, error) {
 	anonDeviceCount, err := a.remoteCache.Count(ctx, string(anonymous.AnonDevice))
 	if err != nil {
 		return nil, nil
@@ -86,7 +86,7 @@ func (a *AnonDeviceService) usageStatFn(ctx context.Context) (map[string]interfa
 		return nil, nil
 	}
 
-	return map[string]interface{}{
+	return map[string]any{
 		"stats.anonymous.session.count":   anonDeviceCount, // keep session for legacy data
 		"stats.users.device.count":        authedDeviceCount,
 		"stats.anonymous.device.ui.count": anonUIDeviceCount,
@@ -138,7 +138,7 @@ func (a *AnonDeviceService) tagDeviceUI(ctx context.Context, httpReq *http.Reque
 	}
 
 	if setting.Env == setting.Dev {
-		a.log.Debug("tagging device for UI", "deviceID", deviceID, "device", device, "key", key)
+		a.log.Debug("Tagging device for UI", "deviceID", deviceID, "device", device, "key", key)
 	}
 
 	if _, ok := a.localCache.Get(key); ok {
@@ -177,7 +177,7 @@ func (a *AnonDeviceService) TagDevice(ctx context.Context, httpReq *http.Request
 	addr := web.RemoteAddr(httpReq)
 	ip, err := network.GetIPFromAddress(addr)
 	if err != nil {
-		a.log.Debug("failed to parse ip from address", "addr", addr)
+		a.log.Debug("Failed to parse ip from address", "addr", addr)
 		return nil
 	}
 
@@ -195,7 +195,7 @@ func (a *AnonDeviceService) TagDevice(ctx context.Context, httpReq *http.Request
 
 	err = a.tagDeviceUI(ctx, httpReq, *taggedDevice)
 	if err != nil {
-		a.log.Debug("failed to tag device for UI", "error", err)
+		a.log.Debug("Failed to tag device for UI", "error", err)
 	}
 
 	key, err := taggedDevice.Key()
@@ -204,7 +204,7 @@ func (a *AnonDeviceService) TagDevice(ctx context.Context, httpReq *http.Request
 	}
 
 	if setting.Env == setting.Dev {
-		a.log.Debug("tagging device", "device", taggedDevice, "key", key)
+		a.log.Debug("Tagging device", "device", taggedDevice, "key", key)
 	}
 
 	if _, ok := a.localCache.Get(key); ok {

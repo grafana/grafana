@@ -22,11 +22,11 @@ type MockSocialConnector struct {
 
 // AuthCodeURL provides a mock function with given fields: state, opts
 func (_m *MockSocialConnector) AuthCodeURL(state string, opts ...oauth2.AuthCodeOption) string {
-	_va := make([]interface{}, len(opts))
+	_va := make([]any, len(opts))
 	for _i := range opts {
 		_va[_i] = opts[_i]
 	}
-	var _ca []interface{}
+	var _ca []any
 	_ca = append(_ca, state)
 	_ca = append(_ca, _va...)
 	ret := _m.Called(_ca...)
@@ -59,11 +59,11 @@ func (_m *MockSocialConnector) Client(ctx context.Context, t *oauth2.Token) *htt
 
 // Exchange provides a mock function with given fields: ctx, code, authOptions
 func (_m *MockSocialConnector) Exchange(ctx context.Context, code string, authOptions ...oauth2.AuthCodeOption) (*oauth2.Token, error) {
-	_va := make([]interface{}, len(authOptions))
+	_va := make([]any, len(authOptions))
 	for _i := range authOptions {
 		_va[_i] = authOptions[_i]
 	}
-	var _ca []interface{}
+	var _ca []any
 	_ca = append(_ca, ctx, code)
 	_ca = append(_ca, _va...)
 	ret := _m.Called(_ca...)

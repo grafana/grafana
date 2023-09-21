@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader"
+	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
 	"github.com/grafana/grafana/pkg/plugins/repo"
 	"github.com/grafana/grafana/pkg/plugins/storage"
@@ -17,7 +18,7 @@ import (
 var _ plugins.Installer = (*PluginInstaller)(nil)
 
 type PluginInstaller struct {
-	pluginStore            plugins.Store
+	pluginRegistry         registry.Service
 	pluginLoader           loader.Service
 	pluginRepo             repo.Service
 	pluginStorageExtractor storage.Extractor
@@ -26,18 +27,18 @@ type PluginInstaller struct {
 	log                    log.Logger
 }
 
-func ProvideInstaller(cfg *config.Cfg, pluginStore plugins.Store, pluginLoader loader.Service,
+func ProvideInstaller(cfg *config.Cfg, pluginRegistry registry.Service, pluginLoader loader.Service,
 	pluginRepo repo.Service, pluginFileStore plugins.FileStore) *PluginInstaller {
-	return New(pluginStore, pluginLoader, pluginRepo,
+	return New(pluginRegistry, pluginLoader, pluginRepo,
 		storage.FileSystem(log.NewPrettyLogger("installer.fs"), cfg.PluginsPath),
 		storage.SimpleDirNameGeneratorFunc, pluginFileStore)
 }
 
-func New(pluginStore plugins.Store, pluginLoader loader.Service, pluginRepo repo.Service,
+func New(pluginRegistry registry.Service, pluginLoader loader.Service, pluginRepo repo.Service,
 	pluginStorageExtractor storage.Extractor, pluginStorageNamerFunc storage.NamerFunc, pluginFileStore plugins.FileStore) *PluginInstaller {
 	return &PluginInstaller{
 		pluginLoader:           pluginLoader,
-		pluginStore:            pluginStore,
+		pluginRegistry:         pluginRegistry,
 		pluginRepo:             pluginRepo,
 		pluginStorageExtractor: pluginStorageExtractor,
 		pluginStorageNamerFunc: pluginStorageNamerFunc,
@@ -53,7 +54,7 @@ func (m *PluginInstaller) Add(ctx context.Context, pluginID, version string, opt
 	}
 
 	var pluginArchive *repo.PluginArchive
-	if plugin, exists := m.plugin(ctx, pluginID); exists {
+	if plugin, exists := m.plugin(ctx, pluginID, version); exists {
 		if plugin.IsCorePlugin() || plugin.IsBundledPlugin() {
 			return plugins.ErrInstallCorePlugin
 		}
@@ -138,7 +139,7 @@ func (m *PluginInstaller) Add(ctx context.Context, pluginID, version string, opt
 }
 
 func (m *PluginInstaller) Remove(ctx context.Context, pluginID string) error {
-	plugin, exists := m.plugin(ctx, pluginID)
+	plugin, exists := m.plugin(ctx, pluginID, "")
 	if !exists {
 		return plugins.ErrPluginNotInstalled
 	}
@@ -161,10 +162,10 @@ func (m *PluginInstaller) Remove(ctx context.Context, pluginID string) error {
 }
 
 // plugin finds a plugin with `pluginID` from the store
-func (m *PluginInstaller) plugin(ctx context.Context, pluginID string) (plugins.PluginDTO, bool) {
-	p, exists := m.pluginStore.Plugin(ctx, pluginID)
+func (m *PluginInstaller) plugin(ctx context.Context, pluginID, version string) (*plugins.Plugin, bool) {
+	p, exists := m.pluginRegistry.Plugin(ctx, pluginID, version)
 	if !exists {
-		return plugins.PluginDTO{}, false
+		return &plugins.Plugin{}, false
 	}
 
 	return p, true

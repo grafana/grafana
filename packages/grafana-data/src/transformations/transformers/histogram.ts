@@ -361,7 +361,7 @@ function histogram(
   vals: number[],
   getBucket: (v: number) => number,
   filterOut?: any[] | null,
-  sort?: ((a: any, b: any) => number) | null
+  sort?: ((a: number, b: number) => number) | null
 ) {
   let hist = new Map();
 

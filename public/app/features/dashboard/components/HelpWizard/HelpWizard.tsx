@@ -66,8 +66,7 @@ export function HelpWizard({ panel, plugin, onClose }: Props) {
   ];
 
   const hasSupportBundleAccess =
-    config.supportBundlesEnabled &&
-    contextSrv.hasAccess(AccessControlAction.ActionSupportBundlesCreate, contextSrv.isGrafanaAdmin);
+    config.supportBundlesEnabled && contextSrv.hasPermission(AccessControlAction.ActionSupportBundlesCreate);
 
   return (
     <Drawer

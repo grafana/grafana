@@ -3,7 +3,6 @@ package client
 import (
 	"context"
 	"errors"
-	"fmt"
 	"net/http"
 	"net/textproto"
 	"strings"
@@ -14,7 +13,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/instrumentation"
 	"github.com/grafana/grafana/pkg/plugins/config"
-	"github.com/grafana/grafana/pkg/plugins/manager/client"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 )
 
@@ -48,7 +46,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		return nil, errNilRequest
 	}
 
-	p, exists := s.plugin(ctx, req.PluginContext.PluginID)
+	p, exists := s.plugin(ctx, req.PluginContext.PluginID, req.PluginContext.PluginVersion)
 	if !exists {
 		return nil, plugins.ErrPluginNotRegistered.Errorf("%w", backendplugin.ErrPluginNotRegistered)
 	}
@@ -60,9 +58,8 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 
 	var resp *backend.QueryDataResponse
 	err := instrumentation.InstrumentQueryDataRequest(ctx, &req.PluginContext, instrumentation.Cfg{
-		LogDatasourceRequests: s.cfg.LogDatasourceRequests,
-		Target:                p.Target(),
-	}, totalBytes, func() (innerErr error) {
+		Target: p.Target(),
+	}, totalBytes, func(ctx context.Context) (innerErr error) {
 		resp, innerErr = p.QueryData(ctx, req)
 		return
 	})
@@ -76,7 +73,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 			return nil, plugins.ErrPluginUnavailable.Errorf("%w", backendplugin.ErrPluginUnavailable)
 		}
 
-		return nil, plugins.ErrPluginDownstreamError.Errorf("%v: %w", "failed to query data", err)
+		return nil, plugins.ErrPluginDownstreamError.Errorf("client: failed to query data: %w", err)
 	}
 
 	for refID, res := range resp.Responses {
@@ -100,22 +97,21 @@ func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceReq
 		return errNilSender
 	}
 
-	p, exists := s.plugin(ctx, req.PluginContext.PluginID)
+	p, exists := s.plugin(ctx, req.PluginContext.PluginID, req.PluginContext.PluginVersion)
 	if !exists {
 		return backendplugin.ErrPluginNotRegistered
 	}
 
 	totalBytes := float64(len(req.Body))
 	err := instrumentation.InstrumentCallResourceRequest(ctx, &req.PluginContext, instrumentation.Cfg{
-		LogDatasourceRequests: s.cfg.LogDatasourceRequests,
-		Target:                p.Target(),
-	}, totalBytes, func() error {
+		Target: p.Target(),
+	}, totalBytes, func(ctx context.Context) (innerErr error) {
 		removeConnectionHeaders(req.Headers)
 		removeHopByHopHeaders(req.Headers)
 		removeNonAllowedHeaders(req.Headers)
 
 		processedStreams := 0
-		wrappedSender := client.CallResourceResponseSenderFunc(func(res *backend.CallResourceResponse) error {
+		wrappedSender := callResourceResponseSenderFunc(func(res *backend.CallResourceResponse) error {
 			// Expected that headers and status are only part of first stream
 			if processedStreams == 0 && res != nil {
 				if len(res.Headers) > 0 {
@@ -131,14 +127,12 @@ func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceReq
 			return sender.Send(res)
 		})
 
-		if err := p.CallResource(ctx, req, wrappedSender); err != nil {
-			return err
-		}
-		return nil
+		innerErr = p.CallResource(ctx, req, wrappedSender)
+		return
 	})
 
 	if err != nil {
-		return err
+		return plugins.ErrPluginDownstreamError.Errorf("client: failed to call resources: %w", err)
 	}
 
 	return nil
@@ -149,21 +143,20 @@ func (s *Service) CollectMetrics(ctx context.Context, req *backend.CollectMetric
 		return nil, errNilRequest
 	}
 
-	p, exists := s.plugin(ctx, req.PluginContext.PluginID)
+	p, exists := s.plugin(ctx, req.PluginContext.PluginID, req.PluginContext.PluginVersion)
 	if !exists {
 		return nil, backendplugin.ErrPluginNotRegistered
 	}
 
 	var resp *backend.CollectMetricsResult
 	err := instrumentation.InstrumentCollectMetrics(ctx, &req.PluginContext, instrumentation.Cfg{
-		LogDatasourceRequests: s.cfg.LogDatasourceRequests,
-		Target:                p.Target(),
-	}, func() (innerErr error) {
+		Target: p.Target(),
+	}, func(ctx context.Context) (innerErr error) {
 		resp, innerErr = p.CollectMetrics(ctx, req)
 		return
 	})
 	if err != nil {
-		return nil, err
+		return nil, plugins.ErrPluginDownstreamError.Errorf("client: failed to collect metrics: %w", err)
 	}
 
 	return resp, nil
@@ -174,16 +167,15 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 		return nil, errNilRequest
 	}
 
-	p, exists := s.plugin(ctx, req.PluginContext.PluginID)
+	p, exists := s.plugin(ctx, req.PluginContext.PluginID, req.PluginContext.PluginVersion)
 	if !exists {
 		return nil, backendplugin.ErrPluginNotRegistered
 	}
 
 	var resp *backend.CheckHealthResult
 	err := instrumentation.InstrumentCheckHealthRequest(ctx, &req.PluginContext, instrumentation.Cfg{
-		LogDatasourceRequests: s.cfg.LogDatasourceRequests,
-		Target:                p.Target(),
-	}, func() (innerErr error) {
+		Target: p.Target(),
+	}, func(ctx context.Context) (innerErr error) {
 		resp, innerErr = p.CheckHealth(ctx, req)
 		return
 	})
@@ -197,7 +189,7 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 			return nil, err
 		}
 
-		return nil, fmt.Errorf("%w: %w", backendplugin.ErrHealthCheckFailed, err)
+		return nil, plugins.ErrPluginDownstreamError.Errorf("client: failed to check health: %w", err)
 	}
 
 	return resp, nil
@@ -208,7 +200,7 @@ func (s *Service) SubscribeStream(ctx context.Context, req *backend.SubscribeStr
 		return nil, errNilRequest
 	}
 
-	plugin, exists := s.plugin(ctx, req.PluginContext.PluginID)
+	plugin, exists := s.plugin(ctx, req.PluginContext.PluginID, req.PluginContext.PluginVersion)
 	if !exists {
 		return nil, backendplugin.ErrPluginNotRegistered
 	}
@@ -221,7 +213,7 @@ func (s *Service) PublishStream(ctx context.Context, req *backend.PublishStreamR
 		return nil, errNilRequest
 	}
 
-	plugin, exists := s.plugin(ctx, req.PluginContext.PluginID)
+	plugin, exists := s.plugin(ctx, req.PluginContext.PluginID, req.PluginContext.PluginVersion)
 	if !exists {
 		return nil, backendplugin.ErrPluginNotRegistered
 	}
@@ -238,7 +230,7 @@ func (s *Service) RunStream(ctx context.Context, req *backend.RunStreamRequest, 
 		return errNilSender
 	}
 
-	plugin, exists := s.plugin(ctx, req.PluginContext.PluginID)
+	plugin, exists := s.plugin(ctx, req.PluginContext.PluginID, req.PluginContext.PluginVersion)
 	if !exists {
 		return backendplugin.ErrPluginNotRegistered
 	}
@@ -246,10 +238,9 @@ func (s *Service) RunStream(ctx context.Context, req *backend.RunStreamRequest, 
 	return plugin.RunStream(ctx, req, sender)
 }
 
-// plugin finds a plugin with `pluginID` from the registry that is not decommissioned.
-// Note: version is empty because we don't support multiple versions of plugins.
-func (s *Service) plugin(ctx context.Context, pluginID string) (*plugins.Plugin, bool) {
-	p, exists := s.pluginRegistry.Plugin(ctx, pluginID, "")
+// plugin finds a plugin with `pluginID` from the registry that is not decommissioned
+func (s *Service) plugin(ctx context.Context, pluginID, version string) (*plugins.Plugin, bool) {
+	p, exists := s.pluginRegistry.Plugin(ctx, pluginID, version)
 	if !exists {
 		return nil, false
 	}
@@ -341,4 +332,10 @@ func ensureContentTypeHeader(res *backend.CallResourceResponse) {
 	if !hasContentType && res.Status != http.StatusNoContent {
 		res.Headers[contentTypeHeaderName] = []string{defaultContentType}
 	}
+}
+
+type callResourceResponseSenderFunc func(res *backend.CallResourceResponse) error
+
+func (fn callResourceResponseSenderFunc) Send(res *backend.CallResourceResponse) error {
+	return fn(res)
 }

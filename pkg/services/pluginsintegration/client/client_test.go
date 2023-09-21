@@ -99,7 +99,7 @@ func TestCheckHealth(t *testing.T) {
 			},
 			{
 				err:           errors.New("surprise surprise"),
-				expectedError: backendplugin.ErrHealthCheckFailed,
+				expectedError: plugins.ErrPluginDownstreamError,
 			},
 		}
 

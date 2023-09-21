@@ -12,7 +12,6 @@ import {
   getParserFromQuery,
   obfuscate,
   requestSupportsSplitting,
-  isQueryWithDistinct,
   isQueryWithRangeVariable,
   isQueryPipelineErrorFiltering,
   getLogQueryFromMetricsQuery,
@@ -307,18 +306,6 @@ describe('isQueryWithLabelFormat', () => {
 
   it('returns false if metrics query without label format', () => {
     expect(isQueryWithLabelFormat('rate({job="grafana"} [5m])')).toBe(false);
-  });
-});
-
-describe('isQueryWithDistinct', () => {
-  it('identifies queries using distinct', () => {
-    expect(isQueryWithDistinct('{job="grafana"} | distinct id')).toBe(true);
-    expect(isQueryWithDistinct('count_over_time({job="grafana"} | distinct id [1m])')).toBe(true);
-  });
-
-  it('does not return false positives', () => {
-    expect(isQueryWithDistinct('{label="distinct"} | logfmt')).toBe(false);
-    expect(isQueryWithDistinct('count_over_time({job="distinct"} | json [1m])')).toBe(false);
   });
 });
 

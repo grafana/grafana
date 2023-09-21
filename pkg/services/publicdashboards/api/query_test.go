@@ -56,7 +56,7 @@ func TestAPIViewPublicDashboard(t *testing.T) {
 			AccessToken:          validAccessToken,
 			ExpectedHttpResponse: http.StatusOK,
 			DashboardResult: &dtos.DashboardFullWithMeta{
-				Dashboard: simplejson.NewFromAny(map[string]interface{}{
+				Dashboard: simplejson.NewFromAny(map[string]any{
 					"Uid": DashboardUid,
 				}),
 				Meta: dtos.DashboardMeta{
@@ -292,13 +292,13 @@ func TestIntegrationUnauthenticatedUserCanGetPubdashPanelQueryData(t *testing.T)
 		OrgID:    1,
 		FolderID: 1,
 		IsFolder: false,
-		Dashboard: simplejson.NewFromAny(map[string]interface{}{
+		Dashboard: simplejson.NewFromAny(map[string]any{
 			"id":    nil,
 			"title": "test",
-			"panels": []map[string]interface{}{
+			"panels": []map[string]any{
 				{
 					"id": 1,
-					"targets": []map[string]interface{}{
+					"targets": []map[string]any{
 						{
 							"datasource": map[string]string{
 								"type": "mysql",

@@ -152,6 +152,28 @@ describe('SearchField', () => {
       expect(updateFilter).toHaveBeenCalledWith({ ...filter, value: undefined });
     }
   });
+
+  it('should not provide intrinsic as a selectable scope', async () => {
+    const updateFilter = jest.fn((val) => {
+      return val;
+    });
+    const filter: TraceqlFilter = { id: 'test1', valueType: 'string', tag: 'test-tag' };
+
+    const { container } = renderSearchField(updateFilter, filter, [], true);
+
+    const scopeSelect = container.querySelector(`input[aria-label="select test1 scope"]`);
+    expect(scopeSelect).not.toBeNull();
+    expect(scopeSelect).toBeInTheDocument();
+
+    if (scopeSelect) {
+      await user.click(scopeSelect);
+      jest.advanceTimersByTime(1000);
+      expect(await screen.findByText('resource')).toBeInTheDocument();
+      expect(await screen.findByText('span')).toBeInTheDocument();
+      expect(await screen.findByText('unscoped')).toBeInTheDocument();
+      expect(screen.queryByText('intrinsic')).not.toBeInTheDocument();
+    }
+  });
 });
 
 const renderSearchField = (

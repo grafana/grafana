@@ -14,7 +14,7 @@ func newCompositeLogger(loggers ...gokitlog.Logger) *compositeLogger {
 	return &compositeLogger{loggers: loggers}
 }
 
-func (l *compositeLogger) Log(keyvals ...interface{}) error {
+func (l *compositeLogger) Log(keyvals ...any) error {
 	for _, logger := range l.loggers {
 		if err := logger.Log(keyvals...); err != nil {
 			return err

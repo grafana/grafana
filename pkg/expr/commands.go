@@ -123,7 +123,7 @@ func UnmarshalReduceCommand(rn *rawNode) (*ReduceCommand, error) {
 	settings, ok := rn.Query["settings"]
 	if ok {
 		switch s := settings.(type) {
-		case map[string]interface{}:
+		case map[string]any:
 			mode, ok := s["mode"]
 			if ok && mode != "" {
 				switch mode {
@@ -166,7 +166,7 @@ func (gr *ReduceCommand) Execute(ctx context.Context, _ time.Time, vars mathexp.
 	span.SetAttributes("reducer", gr.Reducer, attribute.Key("reducer").String(gr.Reducer))
 
 	newRes := mathexp.Results{}
-	for _, val := range vars[gr.VarToReduce].Values {
+	for i, val := range vars[gr.VarToReduce].Values {
 		switch v := val.(type) {
 		case mathexp.Series:
 			num, err := v.Reduce(gr.refID, gr.Reducer, gr.seriesMapper)
@@ -175,12 +175,21 @@ func (gr *ReduceCommand) Execute(ctx context.Context, _ time.Time, vars mathexp.
 			}
 			newRes.Values = append(newRes.Values, num)
 		case mathexp.Number: // if incoming vars is just a number, any reduce op is just a noop, add it as it is
+			value := v.GetFloat64Value()
+			if gr.seriesMapper != nil {
+				value = gr.seriesMapper.MapInput(value)
+				if value == nil { // same logic as in mapSeries
+					continue
+				}
+			}
 			copyV := mathexp.NewNumber(gr.refID, v.GetLabels())
-			copyV.SetValue(v.GetFloat64Value())
-			copyV.AddNotice(data.Notice{
-				Severity: data.NoticeSeverityWarning,
-				Text:     fmt.Sprintf("Reduce operation is not needed. Input query or expression %s is already reduced data.", gr.VarToReduce),
-			})
+			copyV.SetValue(value)
+			if gr.seriesMapper == nil && i == 0 { // Add notice to only the first result to not multiple them in presentation
+				copyV.AddNotice(data.Notice{
+					Severity: data.NoticeSeverityWarning,
+					Text:     fmt.Sprintf("Reduce operation is not needed. Input query or expression %s is already reduced data.", gr.VarToReduce),
+				})
+			}
 			newRes.Values = append(newRes.Values, copyV)
 		case mathexp.NoData:
 			newRes.Values = append(newRes.Values, v.New())

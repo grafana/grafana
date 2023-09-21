@@ -248,10 +248,10 @@ type timeSeries struct {
 		Type   string            `json:"type"`
 		Labels map[string]string `json:"labels"`
 	} `json:"resource"`
-	MetaData   map[string]map[string]interface{} `json:"metadata"`
-	MetricKind string                            `json:"metricKind"`
-	ValueType  string                            `json:"valueType"`
-	Points     []timeSeriesPoint                 `json:"points"`
+	MetaData   map[string]map[string]any `json:"metadata"`
+	MetricKind string                    `json:"metricKind"`
+	ValueType  string                    `json:"valueType"`
+	Points     []timeSeriesPoint         `json:"points"`
 }
 
 func (ts timeSeries) length() int {
@@ -305,7 +305,7 @@ func (ts timeSeries) getLabels(groupBys []string) (data.Labels, string) {
 			case bool:
 				strVal := strconv.FormatBool(v)
 				seriesLabels[key] = strVal
-			case []interface{}:
+			case []any:
 				for _, v := range v {
 					strVal := v.(string)
 					if len(seriesLabels[key]) > 0 {

@@ -164,7 +164,7 @@ func TestUserAuth(t *testing.T) {
 				TokenType:    "Bearer",
 			}
 			idToken := "testidtoken"
-			token = token.WithExtra(map[string]interface{}{"id_token": idToken})
+			token = token.WithExtra(map[string]any{"id_token": idToken})
 
 			// Find a user to set tokens on
 			userlogin := "loginuser0"
@@ -550,8 +550,8 @@ func (f *FakeAuthInfoStore) GetUserByEmail(ctx context.Context, email string) (*
 	return f.ExpectedUser, f.ExpectedError
 }
 
-func (f *FakeAuthInfoStore) CollectLoginStats(ctx context.Context) (map[string]interface{}, error) {
-	var res = make(map[string]interface{})
+func (f *FakeAuthInfoStore) CollectLoginStats(ctx context.Context) (map[string]any, error) {
+	var res = make(map[string]any)
 	res["stats.users.duplicate_user_entries"] = f.ExpectedDuplicateUserEntries
 	res["stats.users.has_duplicate_user_entries"] = f.ExpectedHasDuplicateUserEntries
 	res["stats.users.duplicate_user_entries_by_login"] = 0

@@ -12,7 +12,6 @@ export class LokiVariableSupport extends CustomVariableSupport<LokiDatasource, L
 
   constructor(private datasource: LokiDatasource) {
     super();
-    this.query = this.query.bind(this);
   }
 
   async execute(query: LokiVariableQuery) {

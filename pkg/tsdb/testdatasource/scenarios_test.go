@@ -11,9 +11,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	// nolint:depguard // Lint exception can be removed once we move testdata to a separate module
-	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 )
 
 func TestTestdataScenarios(t *testing.T) {
@@ -21,13 +18,14 @@ func TestTestdataScenarios(t *testing.T) {
 
 	t.Run("random walk ", func(t *testing.T) {
 		t.Run("Should start at the requested value", func(t *testing.T) {
-			timeRange := legacydata.DataTimeRange{From: "5m", To: "now", Now: time.Now()}
+			from := time.Now()
+			to := from.Add(5 * time.Minute)
 
 			query := backend.DataQuery{
 				RefID: "A",
 				TimeRange: backend.TimeRange{
-					From: timeRange.MustGetFrom(),
-					To:   timeRange.MustGetTo(),
+					From: from,
+					To:   to,
 				},
 				Interval:      100 * time.Millisecond,
 				MaxDataPoints: 100,
@@ -60,13 +58,14 @@ func TestTestdataScenarios(t *testing.T) {
 
 	t.Run("random walk table", func(t *testing.T) {
 		t.Run("Should return a table that looks like value/min/max", func(t *testing.T) {
-			timeRange := legacydata.DataTimeRange{From: "5m", To: "now", Now: time.Now()}
+			from := time.Now()
+			to := from.Add(5 * time.Minute)
 
 			query := backend.DataQuery{
 				RefID: "A",
 				TimeRange: backend.TimeRange{
-					From: timeRange.MustGetFrom(),
-					To:   timeRange.MustGetTo(),
+					From: from,
+					To:   to,
 				},
 				Interval:      100 * time.Millisecond,
 				MaxDataPoints: 100,
@@ -110,13 +109,14 @@ func TestTestdataScenarios(t *testing.T) {
 		})
 
 		t.Run("Should return a table with some nil values", func(t *testing.T) {
-			timeRange := legacydata.DataTimeRange{From: "5m", To: "now", Now: time.Now()}
+			from := time.Now()
+			to := from.Add(5 * time.Minute)
 
 			query := backend.DataQuery{
 				RefID: "A",
 				TimeRange: backend.TimeRange{
-					From: timeRange.MustGetFrom(),
-					To:   timeRange.MustGetTo(),
+					From: from,
+					To:   to,
 				},
 				Interval:      100 * time.Millisecond,
 				MaxDataPoints: 100,

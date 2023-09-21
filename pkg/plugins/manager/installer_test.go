@@ -65,14 +65,12 @@ func TestPluginManager_Add_Remove(t *testing.T) {
 			},
 		}
 
-		inst := New(&fakes.FakePluginStore{}, loader, pluginRepo, extractor, storage.SimpleDirNameGeneratorFunc, &fakes.FakePluginFileStore{})
+		inst := New(&fakes.FakePluginRegistry{}, loader, pluginRepo, extractor, storage.SimpleDirNameGeneratorFunc, &fakes.FakePluginFileStore{})
 		err := inst.Add(context.Background(), pluginID, v1, testCompatOpts())
 		require.NoError(t, err)
 
 		t.Run("Won't add if already exists", func(t *testing.T) {
-			inst.pluginStore = &fakes.FakePluginStore{
-				PluginList: []plugins.PluginDTO{pluginV1.ToDTO()},
-			}
+			inst.pluginRegistry = fakes.NewFakePluginRegistry(pluginV1)
 
 			err = inst.Add(context.Background(), pluginID, v1, testCompatOpts())
 			require.Equal(t, plugins.DuplicateError{
@@ -122,9 +120,7 @@ func TestPluginManager_Add_Remove(t *testing.T) {
 		})
 
 		t.Run("Removing an existing plugin", func(t *testing.T) {
-			inst.pluginStore = &fakes.FakePluginStore{
-				PluginList: []plugins.PluginDTO{pluginV1.ToDTO()},
-			}
+			inst.pluginRegistry = fakes.NewFakePluginRegistry(pluginV1)
 
 			var unloadedPlugins []string
 			inst.pluginLoader = &fakes.FakeLoader{
@@ -140,7 +136,7 @@ func TestPluginManager_Add_Remove(t *testing.T) {
 			require.Equal(t, []string{pluginID}, unloadedPlugins)
 
 			t.Run("Won't remove if not exists", func(t *testing.T) {
-				inst.pluginStore = fakes.NewFakePluginStore()
+				inst.pluginRegistry = fakes.NewFakePluginRegistry()
 
 				err = inst.Remove(context.Background(), pluginID)
 				require.Equal(t, plugins.ErrPluginNotInstalled, err)
@@ -161,7 +157,7 @@ func TestPluginManager_Add_Remove(t *testing.T) {
 				plugin.Info.Version = "1.0.0"
 			})
 
-			pm := New(fakes.NewFakePluginStore(p.ToDTO()), &fakes.FakeLoader{}, &fakes.FakePluginRepo{}, &fakes.FakePluginExtractor{}, storage.SimpleDirNameGeneratorFunc, &fakes.FakePluginFileStore{})
+			pm := New(fakes.NewFakePluginRegistry(p), &fakes.FakeLoader{}, &fakes.FakePluginRepo{}, &fakes.FakePluginExtractor{}, storage.SimpleDirNameGeneratorFunc, &fakes.FakePluginFileStore{})
 			err := pm.Add(context.Background(), p.ID, "3.2.0", testCompatOpts())
 			require.ErrorIs(t, err, plugins.ErrInstallCorePlugin)
 
