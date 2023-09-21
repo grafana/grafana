@@ -152,6 +152,8 @@ export interface QueryStats {
   chunks: number;
   bytes: number;
   entries: number;
+  // The error message displayed in the UI when we cant estimate the size of the query.
+  message?: string;
 }
 
 export interface ContextFilter {

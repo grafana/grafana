@@ -18,6 +18,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/expr"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
@@ -313,6 +314,7 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 		cfg := ManagerCfg{
 			Metrics:                 testMetrics,
 			Tracer:                  tracing.InitializeTracerForTest(),
+			Log:                     log.New("ngalert.state.manager"),
 			ExternalURL:             nil,
 			InstanceStore:           &FakeInstanceStore{},
 			Images:                  &NotAvailableImageService{},
