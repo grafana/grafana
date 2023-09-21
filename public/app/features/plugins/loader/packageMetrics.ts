@@ -98,5 +98,4 @@ function createMetricsProxy<T extends object>(obj: T, parentName: string, packag
 
 export function trackPackageUsage<T extends object>(obj: T, packageName: string): T {
   return createMetricsProxy(obj, packageName, packageName);
-  // return obj;
 }
