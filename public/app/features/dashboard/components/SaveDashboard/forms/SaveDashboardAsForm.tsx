@@ -133,7 +133,7 @@ export const SaveDashboardAsForm = ({
               <Field
                 label={
                   <HorizontalGroup justify="space-between">
-                    <Label htmlFor="description">Dashboard name</Label>
+                    <Label htmlFor="description">Dashboard description</Label>
                     <GenAIDashDescriptionButton
                       onGenerate={(description) => field.onChange(description)}
                       dashboard={dashboard}
