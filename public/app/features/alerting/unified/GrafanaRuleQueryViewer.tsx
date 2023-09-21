@@ -455,5 +455,10 @@ const getCommonQueryStyles = (theme: GrafanaTheme2) => ({
 });
 
 function isRangeEvaluator(evaluator: { params: number[]; type: EvalFunction }) {
-  return evaluator.type === EvalFunction.IsWithinRange || evaluator.type === EvalFunction.IsOutsideRange || evaluator.type === EvalFunction.IsOutsideRangeIncluded || evaluator.type === EvalFunction.IsWithinRangeIncluded;
+  return (
+    evaluator.type === EvalFunction.IsWithinRange ||
+    evaluator.type === EvalFunction.IsOutsideRange ||
+    evaluator.type === EvalFunction.IsOutsideRangeIncluded ||
+    evaluator.type === EvalFunction.IsWithinRangeIncluded
+  );
 }

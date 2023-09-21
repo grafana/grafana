@@ -336,7 +336,10 @@ export function getThresholdsForQueries(queries: AlertQuery[]) {
 
 function isRangeCondition(condition: ClassicCondition) {
   return (
-    condition.evaluator.type === EvalFunction.IsWithinRange || condition.evaluator.type === EvalFunction.IsOutsideRange || condition.evaluator.type === EvalFunction.IsOutsideRangeIncluded || condition.evaluator.type === EvalFunction.IsWithinRangeIncluded
+    condition.evaluator.type === EvalFunction.IsWithinRange ||
+    condition.evaluator.type === EvalFunction.IsOutsideRange ||
+    condition.evaluator.type === EvalFunction.IsOutsideRangeIncluded ||
+    condition.evaluator.type === EvalFunction.IsWithinRangeIncluded
   );
 }
 
