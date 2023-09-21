@@ -138,24 +138,7 @@ func (st *Manager) startSync(ctx context.Context) {
 func (st *Manager) fullSync(ctx context.Context) error {
 	startTime := time.Now()
 	st.log.Info("Full state sync start")
-	var instances []ngModels.AlertInstance
-	for _, state := range st.GetAll(allOrgs) {
-		key, err := state.GetAlertInstanceKey()
-		if err != nil {
-			st.log.Warn("Failed to get alert instance key during full sync, skipping instance", "err", err)
-			continue
-		}
-		instance := ngModels.AlertInstance{
-			AlertInstanceKey:  key,
-			Labels:            ngModels.InstanceLabels(state.Labels),
-			CurrentState:      ngModels.InstanceStateType(state.State.String()),
-			CurrentReason:     state.StateReason,
-			LastEvalTime:      state.LastEvaluationTime,
-			CurrentStateSince: state.StartsAt,
-			CurrentStateEnd:   state.EndsAt,
-		}
-		instances = append(instances, instance)
-	}
+	instances := st.cache.asInstances(st.doNotSaveNormalState)
 	if err := st.instanceStore.FullSync(ctx, instances); err != nil {
 		st.log.Error("Full state sync failed", "duration", time.Since(startTime).Seconds(), "instances", len(instances))
 		return err
