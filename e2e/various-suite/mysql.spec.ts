@@ -50,7 +50,9 @@ describe('MySQL datasource', () => {
     );
     cy.get('textarea').type(deleteTimes.join(''));
 
-    cy.get('textarea').type('{command}i');
+    const commandKey = Cypress.platform === 'darwin' ? '{command}' : '{ctrl}';
+
+    cy.get('textarea').type(`${commandKey}i`);
     cy.get('.suggest-widget').contains(tableNameWithSpecialCharacter).should('be.visible');
     cy.get('textarea').type('S{downArrow}{enter}');
     cy.get('textarea').should('have.value', `SELECT  FROM grafana.${normalTableName}`);
