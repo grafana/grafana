@@ -1,5 +1,11 @@
 <!-- 10.1.2 START -->
 
+# 10.1.2 (2023-09-21)
+
+### Features and enhancements
+
+- **Alerting:** Alerting:Add alarm condition functions,such as IS EQUAL TO、IS NOT EQU…. [#75071](https://github.com/grafana/grafana/issues/75071), [@GitHamburg](https://github.com/GitHamburg)
+
 # 10.1.2 (2023-09-18)
 
 ### Features and enhancements
