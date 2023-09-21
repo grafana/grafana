@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -290,7 +291,7 @@ func TestSetFeatureToggles(t *testing.T) {
 		})
 	})
 
-	t.Run("succeeds with all conditions met", func(t *testing.T) {
+	t.Run("when all conditions met", func(t *testing.T) {
 		features := []*featuremgmt.FeatureFlag{
 			{
 				Name:    featuremgmt.FlagFeatureToggleAdminPage,
@@ -316,8 +317,9 @@ func TestSetFeatureToggles(t *testing.T) {
 		}
 
 		s := setting.FeatureMgmtSettings{
-			AllowEditing:        true,
-			UpdateControllerUrl: "random",
+			AllowEditing:          true,
+			UpdateControllerUrl:   "random",
+			UpdateControllerToken: "token",
 			ReadOnlyToggles: map[string]struct{}{
 				"toggle3": {},
 			},
@@ -332,11 +334,34 @@ func TestSetFeatureToggles(t *testing.T) {
 				Enabled: false,
 			},
 		}
-		// TODO: check for success status after the handler is fully implemented
-		res := runSetScenario(t, features, updates, s, writePermissions, http.StatusNotImplemented)
-		defer func() { require.NoError(t, res.Body.Close()) }()
-		p := readBody(t, res.Body)
-		assert.Equal(t, "UpdateFeatureToggle is unimplemented", p["message"])
+		t.Run("fail when webhook request is not successful", func(t *testing.T) {
+			webhookServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusBadRequest)
+			}))
+			defer webhookServer.Close()
+			s.UpdateControllerUrl = webhookServer.URL
+			res := runSetScenario(t, features, updates, s, writePermissions, http.StatusBadRequest)
+			defer func() { require.NoError(t, res.Body.Close()) }()
+			assert.Equal(t, http.StatusBadRequest, res.StatusCode)
+		})
+
+		t.Run("succeed when webhook request is successul", func(t *testing.T) {
+			webhookServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				assert.Equal(t, "Bearer "+s.UpdateControllerToken, r.Header.Get("Authorization"))
+
+				var req UpdatePayload
+				require.NoError(t, json.NewDecoder(r.Body).Decode(&req))
+
+				assert.Equal(t, true, req.FeatureToggles["toggle4"])
+				assert.Equal(t, false, req.FeatureToggles["toggle5"])
+				w.WriteHeader(http.StatusOK)
+			}))
+			defer webhookServer.Close()
+			s.UpdateControllerUrl = webhookServer.URL
+			res := runSetScenario(t, features, updates, s, writePermissions, http.StatusOK)
+			defer func() { require.NoError(t, res.Body.Close()) }()
+			assert.Equal(t, http.StatusOK, res.StatusCode)
+		})
 	})
 }
 
