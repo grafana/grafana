@@ -220,6 +220,16 @@
       "label": "Add new data source"
     }
   },
+  "explore": {
+    "raw-prometheus-container": {
+      "label": {
+        "table": "Table"
+      },
+      "meta-item-value": "0 series returned",
+      "raw-result-style": "Raw",
+      "table-result-style": "Table"
+    }
+  },
   "folder-picker": {
     "loading": "Loading folders..."
   },

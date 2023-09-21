@@ -220,6 +220,16 @@
       "label": ""
     }
   },
+  "explore": {
+    "raw-prometheus-container": {
+      "label": {
+        "table": ""
+      },
+      "meta-item-value": "",
+      "raw-result-style": "",
+      "table-result-style": ""
+    }
+  },
   "folder-picker": {
     "loading": "Ordner werden geladen …"
   },

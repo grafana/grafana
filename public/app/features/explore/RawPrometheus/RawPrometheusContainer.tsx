@@ -7,6 +7,7 @@ import { getTemplateSrv, reportInteraction } from '@grafana/runtime';
 import { Collapse, RadioButtonGroup, Table, AdHocFilterItem } from '@grafana/ui';
 import { config } from 'app/core/config';
 import { PANEL_BORDER } from 'app/core/constants';
+import {t} from 'app/core/internationalization';
 import { StoreState, TABLE_RESULTS_STYLE } from 'app/types';
 import { ExploreItemState, TABLE_RESULTS_STYLES, TableResultsStyle } from 'app/types/explore';
 
@@ -42,6 +43,11 @@ function mapStateToProps(state: StoreState, { exploreId }: RawPrometheusContaine
 }
 
 const connector = connect(mapStateToProps, {});
+
+const RawResultStyle = t('explore.raw-prometheus-container.raw-result-style','Raw');
+const TableResultStyle = t('explore.raw-prometheus-container.table-result-style','Table');
+const LabelTable = t('explore.raw-prometheus-container.label.table','Table');
+const MetaItemValue = t('explore.raw-prometheus-container.meta-item-value','0 series returned');
 
 type Props = RawPrometheusContainerProps & ConnectedProps<typeof connector>;
 
@@ -86,7 +92,7 @@ export class RawPrometheusContainer extends PureComponent<Props, PrometheusConta
 
     return (
       <div className={spacing}>
-        {this.state.resultsStyle === TABLE_RESULTS_STYLE.raw ? 'Raw' : 'Table'}
+        {this.state.resultsStyle === TABLE_RESULTS_STYLE.raw ? RawResultStyle : TableResultStyle }
         <RadioButtonGroup
           onClick={() => {
             const props = {
@@ -133,7 +139,7 @@ export class RawPrometheusContainer extends PureComponent<Props, PrometheusConta
       (frame: DataFrame | undefined): frame is DataFrame => !!frame && frame.length !== 0
     );
 
-    const label = this.state?.resultsStyle !== undefined ? this.renderLabel() : 'Table';
+    const label = this.state?.resultsStyle !== undefined ? this.renderLabel() : LabelTable ;
 
     // Render table as default if resultsStyle is not set.
     const renderTable = !this.state?.resultsStyle || this.state?.resultsStyle === TABLE_RESULTS_STYLE.table;
@@ -154,7 +160,7 @@ export class RawPrometheusContainer extends PureComponent<Props, PrometheusConta
             {this.state?.resultsStyle === TABLE_RESULTS_STYLE.raw && <RawListContainer tableResult={frames[0]} />}
           </>
         )}
-        {!frames?.length && <MetaInfoText metaItems={[{ value: '0 series returned' }]} />}
+        {!frames?.length && <MetaInfoText metaItems={[{ value: MetaItemValue  }]} />}
       </Collapse>
     );
   }
