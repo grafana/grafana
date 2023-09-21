@@ -228,7 +228,24 @@
       "no-data-message": "",
       "panel-chrome": {
         "title": ""
+      },
+      "span-link-defined": {
+        "content": {
+          "icon-title": ""
+        }
+      },
+      "span-link-title": ""
+    },
+    "trace-view-span-link-metric": {
+      "content": {
+        "icon-title": ""
       }
+    },
+    "trace-view-span-link-referenced": {
+      "content": {
+        "title": ""
+      },
+      "title": ""
     }
   },
   "folder-picker": {

@@ -19,6 +19,7 @@ import { DataQuery } from '@grafana/schema';
 import { Icon } from '@grafana/ui';
 import { TraceToLogsOptionsV2, TraceToLogsTag } from 'app/core/components/TraceToLogs/TraceToLogsSettings';
 import { TraceToMetricQuery, TraceToMetricsOptions } from 'app/core/components/TraceToMetrics/TraceToMetricsSettings';
+import {t} from 'app/core/internationalization'
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { PromQuery } from 'app/plugins/datasource/prometheus/types';
 
@@ -232,9 +233,9 @@ function legacyCreateSpanLinkFactory(
 
           links.push({
             href: link.href,
-            title: 'Related logs',
+            title: t('explorer.trace-view.span-link-title','Related logs'),
             onClick: link.onClick,
-            content: <Icon name="gf-logs" title="Explore the logs for this in split view" />,
+            content: <Icon name="gf-logs" title={t('explorer.trace-view.span-link-defined.content.icon-title', 'Explore the logs for this in split view')} />,
             field,
             type: SpanLinkType.Logs,
           });
@@ -280,7 +281,7 @@ function legacyCreateSpanLinkFactory(
           title: query?.name,
           href: link.href,
           onClick: link.onClick,
-          content: <Icon name="chart-line" title="Explore metrics for this span" />,
+          content: <Icon name="chart-line" title={t('explorer.trace-view-span-link-metric.content.icon-title', 'Explore metrics for this span')} />,
           field,
           type: SpanLinkType.Metrics,
         });
@@ -314,8 +315,8 @@ function legacyCreateSpanLinkFactory(
 
         links!.push({
           href: link.href,
-          title: reference.span ? reference.span.operationName : 'View linked span',
-          content: <Icon name="link" title="View linked span" />,
+          title: reference.span ? reference.span.operationName : t('explorer.trace-view-span-link-referenced.title', 'View linked span') ,
+          content: <Icon name="link" title={t('explorer.trace-view-span-link-referenced.content.title', 'View linked span')} />,
           onClick: link.onClick,
           field: link.origin,
           type: SpanLinkType.Traces,

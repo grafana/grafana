@@ -228,7 +228,24 @@
       "no-data-message": "No data",
       "panel-chrome": {
         "title": "Trace"
+      },
+      "span-link-defined": {
+        "content": {
+          "icon-title": "Explore the logs for this in split view"
+        }
+      },
+      "span-link-title": "Related logs"
+    },
+    "trace-view-span-link-metric": {
+      "content": {
+        "icon-title": "Explore metrics for this span"
       }
+    },
+    "trace-view-span-link-referenced": {
+      "content": {
+        "title": "View linked span"
+      },
+      "title": "View linked span"
     }
   },
   "folder-picker": {
