@@ -297,7 +297,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
       const axisDisplayOptions = {
         border: {
           show: customConfig.axisBorderShow || false,
-          width: 1,
+          width: 1 / devicePixelRatio,
           stroke: axisColor || theme.colors.text.primary,
         },
         ticks: {
