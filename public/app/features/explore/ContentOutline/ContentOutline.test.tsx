@@ -1,14 +1,23 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import React from 'react';
-import { act } from 'react-dom/test-utils';
 
 import ContentOutline from './ContentOutline';
-import { ContentOutlineContextProvider } from './ContentOutlineContext'; // Assuming you have a provider
+import { ContentOutlineContextProvider } from './ContentOutlineContext';
 
 const setup = () => {
   const outlineItemsMock = [
-    { id: '1', title: 'Item 1', icon: 'icon1', ref: document.createElement('div') },
-    { id: '2', title: 'Item 2', icon: 'icon2', ref: document.createElement('div') },
+    {
+      id: '1',
+      title: 'Item 1',
+      icon: 'icon1',
+      ref: document.createElement('div'),
+    },
+    {
+      id: '2',
+      title: 'Item 2',
+      icon: 'icon2',
+      ref: document.createElement('div'),
+    },
   ];
   return render(
     <ContentOutlineContextProvider>
@@ -17,33 +26,34 @@ const setup = () => {
   );
 };
 
+const scrollIntoViewMock = jest.fn();
+HTMLElement.prototype.scrollIntoView = scrollIntoViewMock;
+
 describe('<ContentOutline />', () => {
+  scrollIntoViewMock.mockClear();
   beforeEach(() => {
     setup();
   });
 
   it('toggles content on button click', () => {
-    const toggleButton = screen.getByText(/Hide Content Outline/);
-    expect(toggleButton).not.toBeInTheDocument();
+    let showContentOutlineButton = screen.getByLabelText('Show Content Outline');
+    expect(showContentOutlineButton).toBeInTheDocument();
 
-    const collapsedButton = screen.getByText('');
-    fireEvent.click(collapsedButton);
-    expect(screen.getByText(/Hide Content Outline/)).toBeInTheDocument();
+    fireEvent.click(showContentOutlineButton);
+    const hideContentOutlineButton = screen.getByText('Hide Content Outline');
+    expect(hideContentOutlineButton).toBeInTheDocument();
+
+    fireEvent.click(hideContentOutlineButton);
+    showContentOutlineButton = screen.getByLabelText('Show Content Outline');
+    expect(showContentOutlineButton).toBeInTheDocument();
   });
 
   it('scrolls into view on content button click', () => {
-    const itemButton = screen.getByText('Item 1');
+    const itemButton = screen.getByLabelText('Item 1');
 
-    act(() => {
-      fireEvent.click(itemButton);
-    });
+    fireEvent.click(itemButton);
+
     // mock the `scrollIntoView` method and assert it's called
-    document.documentElement.scrollIntoView = jest.fn();
-    expect(document.documentElement.scrollIntoView).toHaveBeenCalled();
+    expect(scrollIntoViewMock).toHaveBeenCalled();
   });
-
-  // it('shows tooltip when content is collapsed', () => {
-  //   const itemButton = screen.getByText('Item 1');
-  //   // Check for tooltip
-  // });
 });
