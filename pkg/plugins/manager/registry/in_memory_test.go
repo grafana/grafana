@@ -278,6 +278,7 @@ func TestAliasSupport(t *testing.T) {
 
 		pluginIdNew := "plugin-new"
 		pluginIdOld := "plugin-old"
+		pluginIdOld2 := "plugin-old2"
 
 		p, exists := i.Plugin(ctx, pluginIdNew)
 		require.False(t, exists)
@@ -286,7 +287,7 @@ func TestAliasSupport(t *testing.T) {
 		pluginNew := &plugins.Plugin{
 			JSONData: plugins.JSONData{
 				ID:    pluginIdNew,
-				Alias: pluginIdOld,
+				Alias: []string{pluginIdOld, pluginIdOld2},
 			},
 		}
 		err := i.Add(ctx, pluginNew)
@@ -299,6 +300,11 @@ func TestAliasSupport(t *testing.T) {
 
 		// Can lookup by the old ID
 		found, exists = i.Plugin(ctx, pluginIdOld)
+		require.True(t, exists)
+		require.Equal(t, pluginNew, found)
+
+		// Can lookup by the other old ID
+		found, exists = i.Plugin(ctx, pluginIdOld2)
 		require.True(t, exists)
 		require.Equal(t, pluginNew, found)
 

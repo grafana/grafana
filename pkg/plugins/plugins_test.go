@@ -108,13 +108,13 @@ func Test_ReadPluginJSON(t *testing.T) {
 				pJSON := `{
 					"id": "grafana-pyroscope-datasource",
 					"type": "datasource",					
-					"alias": "phlare"
+					"alias": ["phlare"]
 				}`
 				return io.NopCloser(strings.NewReader(pJSON))
 			},
 			expected: JSONData{
 				ID:    "grafana-pyroscope-datasource",
-				Alias: "phlare", // Hardcoded from the parser
+				Alias: []string{"phlare"}, // Hardcoded from the parser
 				Type:  TypeDataSource,
 				Dependencies: Dependencies{
 					GrafanaDependency: "",
@@ -129,14 +129,14 @@ func Test_ReadPluginJSON(t *testing.T) {
 				pJSON := `{
 					"id": "my-custom-app",
 					"type": "app",
-					"alias": "phlare"
+					"alias": ["phlare"]
 				}`
 				return io.NopCloser(strings.NewReader(pJSON))
 			},
 			err: ErrUnsupportedAlias,
 			expected: JSONData{
 				ID:           "my-custom-app",
-				Alias:        "phlare", // Hardcoded from the parser
+				Alias:        []string{"phlare"}, // Hardcoded from the parser
 				Type:         "app",
 				Dependencies: Dependencies{},
 			},

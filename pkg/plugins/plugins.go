@@ -73,7 +73,7 @@ type JSONData struct {
 	ID           string       `json:"id"`
 	Type         Type         `json:"type"`
 	Name         string       `json:"name"`
-	Alias        string       `json:"alias,omitempty"`
+	Alias        []string     `json:"alias,omitempty"`
 	Info         Info         `json:"info"`
 	Dependencies Dependencies `json:"dependencies"`
 	Includes     []*Includes  `json:"includes"`
@@ -133,11 +133,11 @@ func ReadPluginJSON(reader io.Reader) (JSONData, error) {
 	case "annolist":
 		fallthrough
 	case "debug":
-		if plugin.Alias == "" {
+		if len(plugin.Alias) == 0 {
 			return plugin, fmt.Errorf("expected alias to be set")
 		}
 	default: // TODO: when gcom validates the alias, this condition can be removed
-		if plugin.Alias != "" {
+		if len(plugin.Alias) > 0 {
 			return plugin, ErrUnsupportedAlias
 		}
 	}

@@ -20,7 +20,7 @@ schemas: [{
 
 		// An alias is useful when migrating from one plugin id to another (rebranding etc)
 		// This should be used sparingly, and is currently only supported though a hardcoded checklist
-		alias?: string
+		alias?: [...string]
 		
 		// Human-readable name of the plugin that is shown to the user in
 		// the UI.
