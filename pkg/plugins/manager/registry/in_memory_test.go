@@ -286,8 +286,8 @@ func TestAliasSupport(t *testing.T) {
 
 		pluginNew := &plugins.Plugin{
 			JSONData: plugins.JSONData{
-				ID:    pluginIdNew,
-				Alias: []string{pluginIdOld, pluginIdOld2},
+				ID:       pluginIdNew,
+				AliasIDs: []string{pluginIdOld, pluginIdOld2},
 			},
 		}
 		err := i.Add(ctx, pluginNew)

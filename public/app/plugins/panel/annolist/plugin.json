@@ -2,7 +2,7 @@
   "type": "panel",
   "name": "Annotations list",
   "id": "annolist",
-  "alias": ["ryantxu-annolist-panel"],
+  "aliasIds": ["ryantxu-annolist-panel"],
 
   "skipDataQuery": true,
 
