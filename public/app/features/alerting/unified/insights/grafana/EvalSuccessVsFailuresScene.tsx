@@ -1,10 +1,9 @@
-import { ThresholdsMode } from '@grafana/data';
 import { PanelBuilders, SceneFlexItem, SceneQueryRunner, SceneTimeRange } from '@grafana/scenes';
 import { DataSourceRef, GraphDrawStyle } from '@grafana/schema';
 
-import { PANEL_STYLES } from '../../../home/Insights';
+import { PANEL_STYLES } from '../../home/Insights';
 
-export function getInstancesPercentageByStateScene(
+export function getGrafanaEvalSuccessVsFailuresScene(
   timeRange: SceneTimeRange,
   datasource: DataSourceRef,
   panelTitle: string
@@ -14,9 +13,15 @@ export function getInstancesPercentageByStateScene(
     queries: [
       {
         refId: 'A',
-        expr: 'sum by (alertstate) (ALERTS) / ignoring(alertstate) group_left sum(ALERTS)',
+        expr: 'sum(grafanacloud_grafana_instance_alerting_rule_evaluations_total:rate5m) - sum(grafanacloud_grafana_instance_alerting_rule_evaluation_failures_total:rate5m)',
         range: true,
-        legendFormat: '{{alertstate}}',
+        legendFormat: 'success',
+      },
+      {
+        refId: 'B',
+        expr: 'sum(grafanacloud_grafana_instance_alerting_rule_evaluation_failures_total:rate5m)',
+        range: true,
+        legendFormat: 'failed',
       },
     ],
     $timeRange: timeRange,
@@ -28,22 +33,6 @@ export function getInstancesPercentageByStateScene(
       .setTitle(panelTitle)
       .setData(query)
       .setCustomFieldConfig('drawStyle', GraphDrawStyle.Line)
-      .setCustomFieldConfig('fillOpacity', 45)
-      .setUnit('percentunit')
-      .setMax(1)
-      .setThresholds({
-        mode: ThresholdsMode.Absolute,
-        steps: [
-          {
-            color: 'green',
-            value: 0,
-          },
-          {
-            color: 'red',
-            value: 80,
-          },
-        ],
-      })
       .build(),
   });
 }

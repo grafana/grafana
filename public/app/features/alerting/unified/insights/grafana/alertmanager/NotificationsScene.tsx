@@ -3,15 +3,25 @@ import { DataSourceRef, GraphDrawStyle } from '@grafana/schema';
 
 import { PANEL_STYLES } from '../../../home/Insights';
 
-export function getRuleGroupIntervalScene(timeRange: SceneTimeRange, datasource: DataSourceRef, panelTitle: string) {
+export function getGrafanaAlertmanagerNotificationsScene(
+  timeRange: SceneTimeRange,
+  datasource: DataSourceRef,
+  panelTitle: string
+) {
   const query = new SceneQueryRunner({
     datasource,
     queries: [
       {
         refId: 'A',
-        expr: `grafanacloud_instance_rule_group_interval_seconds{rule_group="$rule_group"}`,
+        expr: 'grafanacloud_grafana_instance_alerting_notifications_total:rate5m - grafanacloud_grafana_instance_alerting_notifications_failed_total:rate5m',
         range: true,
-        legendFormat: 'interval',
+        legendFormat: 'success',
+      },
+      {
+        refId: 'B',
+        expr: 'grafanacloud_grafana_instance_alerting_notifications_failed_total:rate5m',
+        range: true,
+        legendFormat: 'failed',
       },
     ],
     $timeRange: timeRange,
@@ -23,7 +33,6 @@ export function getRuleGroupIntervalScene(timeRange: SceneTimeRange, datasource:
       .setTitle(panelTitle)
       .setData(query)
       .setCustomFieldConfig('drawStyle', GraphDrawStyle.Line)
-      .setUnit('s')
       .build(),
   });
 }

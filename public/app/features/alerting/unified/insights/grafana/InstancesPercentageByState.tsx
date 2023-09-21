@@ -2,9 +2,9 @@ import { ThresholdsMode } from '@grafana/data';
 import { PanelBuilders, SceneFlexItem, SceneQueryRunner, SceneTimeRange } from '@grafana/scenes';
 import { DataSourceRef, GraphDrawStyle } from '@grafana/schema';
 
-import { PANEL_STYLES } from '../../../home/Insights';
+import { PANEL_STYLES } from '../../home/Insights';
 
-export function getInstancesPercentageByStateScene(
+export function getGrafanaInstancesPercentageByStateScene(
   timeRange: SceneTimeRange,
   datasource: DataSourceRef,
   panelTitle: string
@@ -14,7 +14,7 @@ export function getInstancesPercentageByStateScene(
     queries: [
       {
         refId: 'A',
-        expr: 'sum by (alertstate) (ALERTS) / ignoring(alertstate) group_left sum(ALERTS)',
+        expr: 'sum by (state) (grafanacloud_grafana_instance_alerting_rule_group_rules) / ignoring(state) group_left sum(grafanacloud_grafana_instance_alerting_rule_group_rules)',
         range: true,
         legendFormat: '{{alertstate}}',
       },

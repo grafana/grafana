@@ -1,25 +1,21 @@
 import { PanelBuilders, SceneFlexItem, SceneQueryRunner, SceneTimeRange } from '@grafana/scenes';
 import { DataSourceRef, GraphDrawStyle } from '@grafana/schema';
 
-import { PANEL_STYLES } from '../../../home/Insights';
+import { PANEL_STYLES } from '../../home/Insights';
 
-export function getEvalSuccessVsFailuresScene(
-  timeRange: SceneTimeRange,
-  datasource: DataSourceRef,
-  panelTitle: string
-) {
+export function getGrafanaEvalDurationScene(timeRange: SceneTimeRange, datasource: DataSourceRef, panelTitle: string) {
   const query = new SceneQueryRunner({
     datasource,
     queries: [
       {
         refId: 'A',
-        expr: 'sum(grafanacloud_instance_rule_evaluations_total:rate5m) - sum(grafanacloud_instance_rule_evaluation_failures_total:rate5m)',
+        expr: 'sum(grafanacloud_grafana_instance_alerting_rule_evaluations_total:rate5m) - sum(grafanacloud_grafana_instance_alerting_rule_evaluation_failures_total:rate5m)',
         range: true,
         legendFormat: 'success',
       },
       {
         refId: 'B',
-        expr: 'sum(grafanacloud_instance_rule_evaluation_failures_total:rate5m)',
+        expr: 'sum(grafanacloud_grafana_instance_alerting_rule_evaluation_failures_total:rate5m)',
         range: true,
         legendFormat: 'failed',
       },
