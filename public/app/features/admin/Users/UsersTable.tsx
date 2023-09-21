@@ -14,6 +14,7 @@ import {
   Column,
   VerticalGroup,
   HorizontalGroup,
+  FetchDataFunc,
 } from '@grafana/ui';
 import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
 import { UserDTO } from 'app/types';
@@ -29,9 +30,17 @@ interface UsersTableProps {
   totalPages: number;
   onChangePage: (page: number) => void;
   currentPage: number;
+  fetchData?: FetchDataFunc<UserDTO>;
 }
 
-export const UsersTable = ({ users, showPaging, totalPages, onChangePage, currentPage }: UsersTableProps) => {
+export const UsersTable = ({
+  users,
+  showPaging,
+  totalPages,
+  onChangePage,
+  currentPage,
+  fetchData,
+}: UsersTableProps) => {
   const showLicensedRole = useMemo(() => users.some((user) => user.licensedRole), [users]);
   const columns: Array<Column<UserDTO>> = useMemo(
     () => [
@@ -115,7 +124,7 @@ export const UsersTable = ({ users, showPaging, totalPages, onChangePage, curren
   );
   return (
     <VerticalGroup spacing={'md'}>
-      <InteractiveTable columns={columns} data={users} getRowId={(user) => String(user.id)} />
+      <InteractiveTable columns={columns} data={users} getRowId={(user) => String(user.id)} fetchData={fetchData} />
       {showPaging && (
         <HorizontalGroup justify={'flex-end'}>
           <Pagination numberOfPages={totalPages} currentPage={currentPage} onNavigate={onChangePage} />

@@ -149,6 +149,7 @@ export const userListAdminSlice = createSlice({
       const { totalCount, perPage, ...rest } = action.payload;
       const totalPages = Math.ceil(totalCount / perPage);
 
+      console.log('setting', action.payload, state.sort);
       return {
         ...state,
         ...rest,
@@ -173,6 +174,11 @@ export const userListAdminSlice = createSlice({
       ...state,
       page: action.payload,
     }),
+    sortChanged: (state, action: PayloadAction<UserListAdminState['sort']>) => ({
+      ...state,
+      page: 0,
+      sort: action.payload,
+    }),
     filterChanged: (state, action: PayloadAction<UserFilter>) => {
       const { name, value } = action.payload;
 
@@ -192,7 +198,7 @@ export const userListAdminSlice = createSlice({
   },
 });
 
-export const { usersFetched, usersFetchBegin, usersFetchEnd, queryChanged, pageChanged, filterChanged } =
+export const { usersFetched, usersFetchBegin, usersFetchEnd, queryChanged, pageChanged, filterChanged, sortChanged } =
   userListAdminSlice.actions;
 export const userListAdminReducer = userListAdminSlice.reducer;
 

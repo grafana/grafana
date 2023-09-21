@@ -12,7 +12,7 @@ import PageLoader from '../../core/components/PageLoader/PageLoader';
 import { AccessControlAction, StoreState, UserFilter } from '../../types';
 
 import { UsersTable } from './Users/UsersTable';
-import { changeFilter, changePage, changeQuery, fetchUsers } from './state/actions';
+import { changeFilter, changePage, changeQuery, changeSort, fetchUsers } from './state/actions';
 
 export interface FilterProps {
   filters: UserFilter[];
@@ -31,6 +31,7 @@ const mapDispatchToProps = {
   changeQuery,
   changePage,
   changeFilter,
+  changeSort,
 };
 
 const mapStateToProps = (state: StoreState) => ({
@@ -61,6 +62,7 @@ const UserListAdminPageUnConnected = ({
   totalPages,
   page,
   changePage,
+  changeSort,
 }: Props) => {
   const styles = useStyles2(getStyles);
 
@@ -106,6 +108,7 @@ const UserListAdminPageUnConnected = ({
           totalPages={totalPages}
           onChangePage={changePage}
           currentPage={page}
+          fetchData={changeSort}
         />
       )}
     </Page.Contents>

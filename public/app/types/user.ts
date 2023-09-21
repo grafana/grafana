@@ -125,4 +125,5 @@ export interface UserListAdminState {
   showPaging: boolean;
   filters: UserFilter[];
   isLoading: boolean;
+  sort?: string;
 }
