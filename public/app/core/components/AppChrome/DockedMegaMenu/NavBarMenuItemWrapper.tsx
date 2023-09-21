@@ -34,7 +34,14 @@ export function NavBarMenuItemWrapper({
       {linkHasChildren(link) && (
         <ul className={styles.children}>
           {link.children.map((childLink) => {
-            return (
+            return linkHasChildren(childLink) ? (
+              <NavBarMenuItemWrapper
+                key={`${link.text}-${childLink.text}`}
+                link={childLink}
+                activeItem={activeItem}
+                onClose={onClose}
+              />
+            ) : (
               !childLink.isCreateAction && (
                 <NavBarMenuItem
                   key={`${link.text}-${childLink.text}`}

@@ -1,4 +1,4 @@
-package phlare
+package pyroscope
 
 import (
 	"context"
@@ -11,9 +11,9 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func Test_PhlareClient(t *testing.T) {
-	connectClient := &FakePhlareConnectClient{}
-	client := &PhlareClient{
+func Test_PyroscopeClient(t *testing.T) {
+	connectClient := &FakePyroscopeConnectClient{}
+	client := &PyroscopeClient{
 		connectClient: connectClient,
 	}
 
@@ -53,27 +53,27 @@ func Test_PhlareClient(t *testing.T) {
 	})
 }
 
-type FakePhlareConnectClient struct {
+type FakePyroscopeConnectClient struct {
 	Req any
 }
 
-func (f *FakePhlareConnectClient) ProfileTypes(ctx context.Context, c *connect.Request[querierv1.ProfileTypesRequest]) (*connect.Response[querierv1.ProfileTypesResponse], error) {
+func (f *FakePyroscopeConnectClient) ProfileTypes(ctx context.Context, c *connect.Request[querierv1.ProfileTypesRequest]) (*connect.Response[querierv1.ProfileTypesResponse], error) {
 	panic("implement me")
 }
 
-func (f *FakePhlareConnectClient) LabelValues(ctx context.Context, c *connect.Request[querierv1.LabelValuesRequest]) (*connect.Response[querierv1.LabelValuesResponse], error) {
+func (f *FakePyroscopeConnectClient) LabelValues(ctx context.Context, c *connect.Request[querierv1.LabelValuesRequest]) (*connect.Response[querierv1.LabelValuesResponse], error) {
 	panic("implement me")
 }
 
-func (f *FakePhlareConnectClient) LabelNames(context.Context, *connect.Request[querierv1.LabelNamesRequest]) (*connect.Response[querierv1.LabelNamesResponse], error) {
+func (f *FakePyroscopeConnectClient) LabelNames(context.Context, *connect.Request[querierv1.LabelNamesRequest]) (*connect.Response[querierv1.LabelNamesResponse], error) {
 	panic("implement me")
 }
 
-func (f *FakePhlareConnectClient) Series(ctx context.Context, c *connect.Request[querierv1.SeriesRequest]) (*connect.Response[querierv1.SeriesResponse], error) {
+func (f *FakePyroscopeConnectClient) Series(ctx context.Context, c *connect.Request[querierv1.SeriesRequest]) (*connect.Response[querierv1.SeriesResponse], error) {
 	panic("implement me")
 }
 
-func (f *FakePhlareConnectClient) SelectMergeStacktraces(ctx context.Context, c *connect.Request[querierv1.SelectMergeStacktracesRequest]) (*connect.Response[querierv1.SelectMergeStacktracesResponse], error) {
+func (f *FakePyroscopeConnectClient) SelectMergeStacktraces(ctx context.Context, c *connect.Request[querierv1.SelectMergeStacktracesRequest]) (*connect.Response[querierv1.SelectMergeStacktracesResponse], error) {
 	f.Req = c
 	return &connect.Response[querierv1.SelectMergeStacktracesResponse]{
 		Msg: &querierv1.SelectMergeStacktracesResponse{
@@ -91,7 +91,7 @@ func (f *FakePhlareConnectClient) SelectMergeStacktraces(ctx context.Context, c 
 	}, nil
 }
 
-func (f *FakePhlareConnectClient) SelectSeries(ctx context.Context, req *connect.Request[querierv1.SelectSeriesRequest]) (*connect.Response[querierv1.SelectSeriesResponse], error) {
+func (f *FakePyroscopeConnectClient) SelectSeries(ctx context.Context, req *connect.Request[querierv1.SelectSeriesRequest]) (*connect.Response[querierv1.SelectSeriesResponse], error) {
 	f.Req = req
 	return &connect.Response[querierv1.SelectSeriesResponse]{
 		Msg: &querierv1.SelectSeriesResponse{
@@ -105,6 +105,6 @@ func (f *FakePhlareConnectClient) SelectSeries(ctx context.Context, req *connect
 	}, nil
 }
 
-func (f *FakePhlareConnectClient) SelectMergeProfile(ctx context.Context, c *connect.Request[querierv1.SelectMergeProfileRequest]) (*connect.Response[googlev1.Profile], error) {
+func (f *FakePyroscopeConnectClient) SelectMergeProfile(ctx context.Context, c *connect.Request[querierv1.SelectMergeProfileRequest]) (*connect.Response[googlev1.Profile], error) {
 	panic("implement me")
 }
