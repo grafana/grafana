@@ -21,6 +21,7 @@ interface SuggestionsInputProps {
   suggestions: VariableSuggestion[];
   placeholder?: string;
   invalid?: boolean;
+  width?: number;
 }
 
 const variableSyntax: Grammar = {
@@ -39,35 +40,32 @@ const plugins = [
   ),
 ];
 
-const getStyles = (theme: GrafanaTheme2, invalid: boolean) => ({
-  input: getInputStyles({ theme, invalid: invalid }).input,
-  editor: css({
-    '.token.builtInVariable': {
-      color: theme.colors.success.text,
-    },
-    '.token.variable': {
-      color: theme.colors.primary.text,
-    },
-  }),
-  suggestionsWrapper: css({
-    boxShadow: theme.shadows.z2,
-  }),
-  // Wrapper with child selector needed.
-  // When classnames are applied to the same element as the wrapper, it causes the suggestions to stop working
-  wrapperOverrides: css({
-    width: '100%',
-    '> .slate-query-field__wrapper': {
-      padding: 0,
-      backgroundColor: 'transparent',
-      border: 'none',
-    },
-  }),
-});
+const getStyles = (theme: GrafanaTheme2, invalid: boolean) => {
+  const inputStyles = getInputStyles({ theme, invalid });
+  return {
+    input: inputStyles.input,
+    editor: css({
+      '.token.builtInVariable': {
+        color: theme.colors.success.text,
+      },
+      '.token.variable': {
+        color: theme.colors.primary.text,
+      },
+    }),
+    suggestionsWrapper: css({
+      boxShadow: theme.shadows.z2,
+    }),
+    // Wrapper with child selector needed.
+    // When classnames are applied to the same element as the wrapper, it causes the suggestions to stop working
+    inputWrapper: inputStyles.inputWrapper,
+    wrapper: inputStyles.wrapper,
+  };
+};
 
 // This memoised also because rerendering the slate editor grabs focus which created problem in some cases this
 // was used and changes to different state were propagated here.
 export const SuggestionsInput = memo(
-  ({ className, value, onChange, suggestions, placeholder, invalid = false }: SuggestionsInputProps) => {
+  ({ className, value, onChange, suggestions, placeholder, invalid = false, width }: SuggestionsInputProps) => {
     const editorRef = useRef<Editor>(null);
     const theme = useTheme2();
     const styles = getStyles(theme, invalid);
@@ -168,78 +166,77 @@ export const SuggestionsInput = memo(
     };
 
     return (
-      <div className={cx(styles.wrapperOverrides, className)}>
-        <div className="slate-query-field__wrapper">
-          <div ref={inputRef} className="slate-query-field">
-            {showingSuggestions && (
-              <Portal>
-                <ReactPopper
-                  referenceElement={selectionRef}
-                  placement="bottom-end"
-                  modifiers={[
-                    {
-                      name: 'preventOverflow',
-                      enabled: true,
-                      options: {
-                        rootBoundary: 'viewport',
-                      },
+      <div className={cx(styles.wrapper, className)}>
+        <div ref={inputRef} className={cx(styles.inputWrapper, className)}>
+          {showingSuggestions && (
+            <Portal>
+              <ReactPopper
+                referenceElement={selectionRef}
+                placement="bottom-end"
+                modifiers={[
+                  {
+                    name: 'preventOverflow',
+                    enabled: true,
+                    options: {
+                      rootBoundary: 'viewport',
                     },
-                    {
-                      name: 'arrow',
-                      enabled: false,
+                  },
+                  {
+                    name: 'arrow',
+                    enabled: false,
+                  },
+                  {
+                    name: 'offset',
+                    options: {
+                      offset: [250, 0],
                     },
-                    {
-                      name: 'offset',
-                      options: {
-                        offset: [250, 0],
-                      },
-                    },
-                  ]}
-                >
-                  {({ ref, style, placement }) => {
-                    return (
-                      <div ref={ref} style={style} data-placement={placement} className={styles.suggestionsWrapper}>
-                        <CustomScrollbar
-                          scrollTop={scrollTop}
-                          autoHeightMax="300px"
-                          setScrollTop={({ scrollTop }) => setScrollTop(scrollTop)}
-                        >
-                          {/* This suggestion component has a specialized name,
+                  },
+                ]}
+              >
+                {({ ref, style, placement }) => {
+                  return (
+                    <div ref={ref} style={style} data-placement={placement} className={styles.suggestionsWrapper}>
+                      <CustomScrollbar
+                        scrollTop={scrollTop}
+                        autoHeightMax="300px"
+                        setScrollTop={({ scrollTop }) => setScrollTop(scrollTop)}
+                      >
+                        {/* This suggestion component has a specialized name,
                            but is rather generalistic in implementation,
                            so we're using it in transformations also. 
                            We should probably rename this to something more general. */}
-                          <DataLinkSuggestions
-                            activeRef={activeRef}
-                            suggestions={stateRef.current.suggestions}
-                            onSuggestionSelect={onVariableSelect}
-                            onClose={() => setShowingSuggestions(false)}
-                            activeIndex={suggestionsIndex}
-                          />
-                        </CustomScrollbar>
-                      </div>
-                    );
-                  }}
-                </ReactPopper>
-              </Portal>
+                        <DataLinkSuggestions
+                          activeRef={activeRef}
+                          suggestions={stateRef.current.suggestions}
+                          onSuggestionSelect={onVariableSelect}
+                          onClose={() => setShowingSuggestions(false)}
+                          activeIndex={suggestionsIndex}
+                        />
+                      </CustomScrollbar>
+                    </div>
+                  );
+                }}
+              </ReactPopper>
+            </Portal>
+          )}
+          <Editor
+            schema={SCHEMA}
+            ref={editorRef}
+            placeholder={placeholder}
+            value={stateRef.current.variableValue}
+            onChange={onVariableChange}
+            onKeyDown={(event, _editor, next) => onKeyDown(event, next)}
+            plugins={plugins}
+            className={cx(
+              styles.editor,
+              styles.input,
+              css({
+                padding: '3px 8px',
+                minHeight: '32px',
+                width: width ?? '100%',
+              })
             )}
-            <Editor
-              schema={SCHEMA}
-              ref={editorRef}
-              placeholder={placeholder}
-              value={stateRef.current.variableValue}
-              onChange={onVariableChange}
-              onKeyDown={(event, _editor, next) => onKeyDown(event, next)}
-              plugins={plugins}
-              className={cx(
-                styles.editor,
-                styles.input,
-                css({
-                  padding: '3px 8px',
-                  minHeight: '32px',
-                })
-              )}
-            />
-          </div>
+          />
         </div>
       </div>
     );

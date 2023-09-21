@@ -1,8 +1,13 @@
-import React from 'react';
+import { css } from '@emotion/css';
+import React, { useState } from 'react';
 
-import { SelectableValue, StandardEditorProps } from '@grafana/data';
+import { SelectableValue, StandardEditorProps, VariableOrigin } from '@grafana/data';
+import { getTemplateSrv } from '@grafana/runtime';
 import { HeatmapCalculationBucketConfig, HeatmapCalculationMode } from '@grafana/schema';
-import { HorizontalGroup, Input, RadioButtonGroup, ScaleDistribution } from '@grafana/ui';
+import { Field, HorizontalGroup, RadioButtonGroup, ScaleDistribution } from '@grafana/ui';
+
+import { SuggestionsInput } from '../../suggestionsInput/SuggestionsInput';
+import { numberOrVariableValidator } from '../../utils';
 
 const modeOptions: Array<SelectableValue<HeatmapCalculationMode>> = [
   {
@@ -26,6 +31,21 @@ const logModeOptions: Array<SelectableValue<HeatmapCalculationMode>> = [
 ];
 
 export const AxisEditor = ({ value, onChange, item }: StandardEditorProps<HeatmapCalculationBucketConfig>) => {
+  const [isInvalid, setInvalid] = useState<boolean>(false);
+
+  const onValueChange = (bucketValue: string) => {
+    setInvalid(!numberOrVariableValidator(bucketValue));
+    onChange({
+      ...value,
+      value: bucketValue,
+    });
+  };
+
+  const templateSrv = getTemplateSrv();
+  const variables = templateSrv.getVariables().map((v) => {
+    return { value: v.name, label: v.label || v.name, origin: VariableOrigin.Template };
+  });
+
   return (
     <HorizontalGroup>
       <RadioButtonGroup
@@ -38,16 +58,21 @@ export const AxisEditor = ({ value, onChange, item }: StandardEditorProps<Heatma
           });
         }}
       />
-      <Input
-        value={value?.value ?? ''}
-        placeholder="Auto"
-        onChange={(v) => {
-          onChange({
-            ...value,
-            value: v.currentTarget.value,
-          });
-        }}
-      />
+      {/* TODO: Still needs some tweaks */}
+      <Field
+        invalid={isInvalid}
+        error={'Value needs to be an integer or a variable'}
+        className={css({ width: '100px', margin: 0 })}
+      >
+        <SuggestionsInput
+          invalid={isInvalid}
+          value={value?.value ?? ''}
+          placeholder="Auto"
+          onChange={onValueChange}
+          suggestions={variables}
+          width={150}
+        />
+      </Field>
     </HorizontalGroup>
   );
 };
