@@ -25,6 +25,10 @@ load(
     "get_windows_steps",
 )
 load(
+    "scripts/drone/utils/images.star",
+    "images",
+)
+load(
     "scripts/drone/utils/utils.star",
     "ignore_failure",
     "pipeline",
@@ -132,7 +136,7 @@ def rgm_run(name, script):
     }
     rgm_run_step = {
         "name": name,
-        "image": "grafana/grafana-build:dev-dc11c89",
+        "image": "grafana/grafana-build:main",
         "pull": "always",
         "commands": [
             "export GRAFANA_DIR=$$(pwd)",
@@ -177,6 +181,36 @@ def rgm_copy(src, dst):
     return [
         rgm_copy_step,
     ]
+
+def rgm_publish_packages(bucket = "grafana-packages"):
+    """Publish deb and rpm packages.
+
+    Args:
+      bucket: target bucket to publish the packages.
+
+    Returns:
+      Drone steps.
+    """
+    steps = []
+    for package_manager in ["deb", "rpm"]:
+        steps.append({
+            "name": "publish-{}".format(package_manager),
+            # See https://github.com/grafana/deployment_tools/blob/master/docker/package-publish/README.md for docs on that image
+            "image": images["package_publish"],
+            "privileged": True,
+            "settings": {
+                "access_key_id": from_secret("packages_access_key_id"),
+                "secret_access_key": from_secret("packages_secret_access_key"),
+                "service_account_json": from_secret("packages_service_account"),
+                "target_bucket": bucket,
+                "gpg_passphrase": from_secret("packages_gpg_passphrase"),
+                "gpg_public_key": from_secret("packages_gpg_public_key"),
+                "gpg_private_key": from_secret("packages_gpg_private_key"),
+                "package_path": "file://$${{DRONE_WORKSPACE}}/dist/**.{}".format(package_manager),
+            },
+        })
+
+    return steps
 
 def rgm_main():
     # Runs a package / build process (with some distros) when commits are merged to main
@@ -244,15 +278,21 @@ def rgm_nightly_build():
     )
 
 def rgm_nightly_publish():
+    """Nightly publish pipeline.
+
+    Returns:
+      Drone pipeline.
+    """
     src = "$${DESTINATION}/$${DRONE_BUILD_EVENT}/*_$${DRONE_BUILD_NUMBER}_*"
     dst = "$${DRONE_WORKSPACE}/dist"
 
     publish_steps = with_deps(rgm_run("rgm-publish", "drone_publish_nightly_grafana.sh"), ["rgm-copy"])
+    package_steps = with_deps(rgm_publish_packages("grafana-packages-testing"), ["rgm-publish"])
 
     return pipeline(
         name = "rgm-nightly-publish",
         trigger = nightly_trigger,
-        steps = rgm_copy(src, dst) + publish_steps,
+        steps = rgm_copy(src, dst) + publish_steps + package_steps,
         depends_on = ["rgm-nightly-build"],
     )
 

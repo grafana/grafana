@@ -2813,7 +2813,7 @@ steps:
       from_secret: packages_secret_access_key
     STORYBOOK_DESTINATION:
       from_secret: rgm_storybook_destination
-  image: grafana/grafana-build:dev-dc11c89
+  image: grafana/grafana-build:main
   name: rgm-build
   pull: always
   volumes:
@@ -3063,7 +3063,7 @@ steps:
       from_secret: packages_secret_access_key
     STORYBOOK_DESTINATION:
       from_secret: rgm_storybook_destination
-  image: grafana/grafana-build:dev-dc11c89
+  image: grafana/grafana-build:main
   name: rgm-build
   pull: always
   volumes:
@@ -3245,7 +3245,7 @@ steps:
       from_secret: packages_secret_access_key
     STORYBOOK_DESTINATION:
       from_secret: rgm_storybook_destination
-  image: grafana/grafana-build:dev-dc11c89
+  image: grafana/grafana-build:main
   name: rgm-build
   pull: always
   volumes:
@@ -3476,7 +3476,7 @@ steps:
       from_secret: packages_secret_access_key
     STORYBOOK_DESTINATION:
       from_secret: rgm_storybook_destination
-  image: grafana/grafana-build:dev-dc11c89
+  image: grafana/grafana-build:main
   name: rgm-build
   pull: always
   volumes:
@@ -3623,12 +3623,52 @@ steps:
       from_secret: packages_secret_access_key
     STORYBOOK_DESTINATION:
       from_secret: rgm_storybook_destination
-  image: grafana/grafana-build:dev-dc11c89
+  image: grafana/grafana-build:main
   name: rgm-publish
   pull: always
   volumes:
   - name: docker
     path: /var/run/docker.sock
+- depends_on:
+  - rgm-publish
+  image: us.gcr.io/kubernetes-dev/package-publish:latest
+  name: publish-deb
+  privileged: true
+  settings:
+    access_key_id:
+      from_secret: packages_access_key_id
+    gpg_passphrase:
+      from_secret: packages_gpg_passphrase
+    gpg_private_key:
+      from_secret: packages_gpg_private_key
+    gpg_public_key:
+      from_secret: packages_gpg_public_key
+    package_path: file://$${DRONE_WORKSPACE}/dist/**.deb
+    secret_access_key:
+      from_secret: packages_secret_access_key
+    service_account_json:
+      from_secret: packages_service_account
+    target_bucket: grafana-packages-testing
+- depends_on:
+  - rgm-publish
+  image: us.gcr.io/kubernetes-dev/package-publish:latest
+  name: publish-rpm
+  privileged: true
+  settings:
+    access_key_id:
+      from_secret: packages_access_key_id
+    gpg_passphrase:
+      from_secret: packages_gpg_passphrase
+    gpg_private_key:
+      from_secret: packages_gpg_private_key
+    gpg_public_key:
+      from_secret: packages_gpg_public_key
+    package_path: file://$${DRONE_WORKSPACE}/dist/**.rpm
+    secret_access_key:
+      from_secret: packages_secret_access_key
+    service_account_json:
+      from_secret: packages_service_account
+    target_bucket: grafana-packages-testing
 trigger:
   event:
     include:
@@ -4600,6 +4640,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: db83d241656e7a6663d2c1c931cc02809a28ec9239e375d7d599b37e7a42fc58
+hmac: 99ce57a615066a8431c8292076342dbec01c41f3eaff3407ab2ac93495ca1db0
 
 ...
