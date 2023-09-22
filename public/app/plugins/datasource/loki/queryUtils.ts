@@ -1,5 +1,5 @@
 import { SyntaxNode } from '@lezer/common';
-import { escapeRegExp } from 'lodash';
+import { escapeRegExp, trim } from 'lodash';
 
 import {
   parser,
@@ -343,4 +343,11 @@ export function formatLogqlQuery(query: string, datasource: LokiDatasource) {
   }
 
   return returnVariables(formatted);
+}
+
+export function parseKeyValue(text: string) {
+  const keyValue = text.split(/=|:/);
+  const key = keyValue[0].trim();
+  const value = trim(keyValue[1], '"\'`');
+  return { key, value };
 }
