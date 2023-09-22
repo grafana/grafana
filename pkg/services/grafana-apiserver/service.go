@@ -17,7 +17,6 @@ import (
 	"k8s.io/apiserver/pkg/authentication/authenticator"
 	"k8s.io/apiserver/pkg/authentication/request/headerrequest"
 	"k8s.io/apiserver/pkg/authentication/user"
-	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/apiserver/pkg/server/options"
 	clientrest "k8s.io/client-go/rest"
@@ -156,12 +155,9 @@ func (s *service) start(ctx context.Context) error {
 		return err
 	}
 
-	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(playlistv1.GroupName, Scheme, metav1.ParameterCodec, Codecs)
-	playlistv1storage := map[string]rest.Storage{}
-	playlistv1storage["playlists"] = &playlistv1.Handler{}
-
-	apiGroupInfo.VersionedResourcesStorageMap["v1"] = playlistv1storage
-	if err := server.InstallAPIGroup(&apiGroupInfo); err != nil {
+	// Install playlists
+	err = server.InstallAPIGroup(playlistv1.GetAPIGroupInfo(Scheme, Codecs))
+	if err != nil {
 		return err
 	}
 
