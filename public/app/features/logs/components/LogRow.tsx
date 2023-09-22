@@ -269,6 +269,9 @@ class UnThemedLogRow extends PureComponent<Props, State> {
               pinned={this.props.pinned}
               mouseIsOver={this.state.mouseIsOver}
               onBlur={this.onMouseLeave}
+              onClickFilterLabel={onClickFilterLabel}
+              onClickFilterOutLabel={onClickFilterOutLabel}
+              isFilterLabelActive={this.props.isFilterLabelActive}
             />
           )}
         </tr>

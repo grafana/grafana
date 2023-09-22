@@ -7,6 +7,7 @@ import { Dropdown, Menu } from '@grafana/ui';
 import { LogMessageAnsi } from './LogMessageAnsi';
 import { LogRowMenuCell } from './LogRowMenuCell';
 import { LogRowStyles } from './getLogRowStyles';
+import { parseKeyValue } from 'app/plugins/datasource/loki/queryUtils';
 
 export const MAX_CHARACTERS = 100000;
 
@@ -24,6 +25,9 @@ interface Props {
   styles: LogRowStyles;
   mouseIsOver: boolean;
   onBlur: () => void;
+  onClickFilterLabel?: (key: string, value: string, refId?: string) => void;
+  onClickFilterOutLabel?: (key: string, value: string, refId?: string) => void;
+  isFilterLabelActive?: (key: string, value: string, refId?: string) => Promise<boolean>;
 }
 
 interface LogMessageProps {
@@ -78,6 +82,7 @@ export const LogRowMessage = React.memo((props: Props) => {
     pinned,
     mouseIsOver,
     onBlur,
+    ...rest
   } = props;
   const { hasAnsi, raw } = row;
   const restructuredEntry = useMemo(() => restructureLog(raw, prettifyLogMessage), [raw, prettifyLogMessage]);
@@ -91,7 +96,7 @@ export const LogRowMessage = React.memo((props: Props) => {
       }
       <td className={styles.logsRowMessage}>
         <div className={wrapLogMessage ? styles.positionRelative : styles.horizontalScroll}>
-            <PopoverMenuHandler styles={styles}>
+            <PopoverMenuHandler styles={styles} {...rest}>
               <LogMessage hasAnsi={hasAnsi} entry={restructuredEntry} highlights={row.searchWords} styles={styles} />
             </PopoverMenuHandler>
         </div>
@@ -120,11 +125,16 @@ export const LogRowMessage = React.memo((props: Props) => {
 interface PopoverMenuHandlerProps {
   styles: LogRowStyles;
   children: ReactElement;
+  onClickFilterLabel?: (key: string, value: string, refId?: string) => void;
+  onClickFilterOutLabel?: (key: string, value: string, refId?: string) => void;
+  isFilterLabelActive?: (key: string, value: string, refId?: string) => Promise<boolean>;
 }
 
-const PopoverMenuHandler = ({ children, styles }: PopoverMenuHandlerProps) => {
+const PopoverMenuHandler = ({ children, styles, ...rest }: PopoverMenuHandlerProps) => {
   const [showContextMenu, setShowContextMenu] = useState(false);
   const [xCoordinate, setXcoordinate] = useState(0);
+  const [selection, setSelection] = useState('');
+  const [keyValueSelection, setKeyValueSelection] = useState({ key: '', value: '' });
 
   useEffect(() => {
     const handleDeselect = () => {
@@ -142,33 +152,66 @@ const PopoverMenuHandler = ({ children, styles }: PopoverMenuHandlerProps) => {
     }
   }, []);
   const handleSelection = useCallback((e: MouseEvent<HTMLButtonElement>) => {
-    const selection = document.getSelection()?.toString();
-    if (!selection) {
+    const currentSelection = document.getSelection()?.toString();
+    console.log(currentSelection);
+    if (!currentSelection) {
       return;
     }
     const position = e.currentTarget.getBoundingClientRect();
     setShowContextMenu(true);
     setXcoordinate(e.clientX - position.left);
+    setSelection(currentSelection);
+    setKeyValueSelection(parseKeyValue(currentSelection));
   }, []);
-
-  const menu = useMemo(() => (
-    <div style={{ position: "absolute", top: 0, left: xCoordinate, zIndex: 9999 }}>
-      <Menu>
-        <Menu.Item label="Copy" onClick={() => {}} />
-        <Menu.Item label="Filter for" onClick={() => {}} />
-        <Menu.Item label="Filter out" onClick={() => {}} />
-      </Menu>
-    </div>
-  ), [xCoordinate]);
 
   return (
     <div style={{ position: "relative" }}>
-      {showContextMenu && menu}
+      {showContextMenu && <PopoverMenu selection={selection} keyValueSelection={keyValueSelection} left={xCoordinate} {...rest} />}
       <button className={`${styles.logLine} ${styles.positionRelative}`} onClick={handlePropagation} onMouseUp={handleSelection}>
         <>{children}</>
       </button>
     </div>
   )
+}
+
+interface PopoverMenuProps {
+  selection: string;
+  keyValueSelection: { key: string, value: string };
+  left: number;
+  onClickFilterLabel?: (key: string, value: string, refId?: string) => void;
+  onClickFilterOutLabel?: (key: string, value: string, refId?: string) => void;
+  isFilterLabelActive?: (key: string, value: string, refId?: string) => Promise<boolean>;
+}
+
+const PopoverMenu = ({ left, isFilterLabelActive, onClickFilterLabel, onClickFilterOutLabel, selection, keyValueSelection }: PopoverMenuProps) => {
+  const [isFilterActive, setIsFilterActive] = useState(false);
+  useEffect(() => {
+    if (!onClickFilterLabel || !keyValueSelection.key || !keyValueSelection.value) {
+      return;
+    }
+    isFilterLabelActive?.(keyValueSelection.key, keyValueSelection.value).then(setIsFilterActive);
+  }, [isFilterLabelActive, keyValueSelection.key, keyValueSelection.value, onClickFilterLabel]);
+
+  if (!onClickFilterLabel || !onClickFilterOutLabel) {
+    return null;
+  }
+
+  const parsedKeyValue = keyValueSelection.key && keyValueSelection.value ? `${keyValueSelection.key}=${keyValueSelection.value}` : '';
+
+  return (
+    <div style={{ position: "absolute", top: 0, left, zIndex: 9999 }}>
+      <Menu>
+        <Menu.Item label="Copy" onClick={() => {}} />
+        {parsedKeyValue && (
+          <>
+            <Menu.Item label={isFilterActive ? "Remove from query" : `Filter for ${parsedKeyValue}`} onClick={() => onClickFilterLabel(keyValueSelection.key, keyValueSelection.value)} />
+            <Menu.Item label={`Filter out ${parsedKeyValue}`} onClick={() => onClickFilterOutLabel(keyValueSelection.key, keyValueSelection.value)} />
+          </>
+        )}
+        <Menu.Item label="Add as line filter" onClick={() => {}} />
+      </Menu>
+    </div>
+  );
 }
 
 LogRowMessage.displayName = 'LogRowMessage';
