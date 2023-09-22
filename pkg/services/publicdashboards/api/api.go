@@ -87,8 +87,15 @@ func (api *Api) RegisterAPIEndpoints() {
 		routing.Wrap(api.DeletePublicDashboard))
 }
 
-// ListPublicDashboards Gets list of public dashboards by orgId
-// GET /api/dashboards/public-dashboards
+// swagger:route GET /dashboards/public-dashboards dashboard_public listPublicDashboards
+//
+//	Get list of public dashboards
+//
+// Responses:
+// 200: getPublicDashboardResponse
+// 401: unauthorisedPublicError
+// 403: forbiddenPublicError
+// 500: internalServerPublicError
 func (api *Api) ListPublicDashboards(c *contextmodel.ReqContext) response.Response {
 	perPage := c.QueryInt("perpage")
 	if perPage <= 0 {
@@ -114,8 +121,17 @@ func (api *Api) ListPublicDashboards(c *contextmodel.ReqContext) response.Respon
 	return response.JSON(http.StatusOK, resp)
 }
 
-// GetPublicDashboard Gets public dashboard for dashboard
-// GET /api/dashboards/uid/:dashboardUid/public-dashboards
+// swagger:route GET /dashboards/uid/{dashboardUid}/public-dashboards dashboard_public getPublicDashboard
+//
+//	Get public dashboard by dashboardUid
+//
+// Responses:
+// 200: listPublicDashboardsResponse
+// 400: identifierNotSetPublicError
+// 401: unauthorisedPublicError
+// 403: forbiddenPublicError
+// 404: notFoundPublicError
+// 500: internalServerPublicError
 func (api *Api) GetPublicDashboard(c *contextmodel.ReqContext) response.Response {
 	// exit if we don't have a valid dashboardUid
 	dashboardUid := web.Params(c.Req)[":dashboardUid"]
@@ -135,8 +151,26 @@ func (api *Api) GetPublicDashboard(c *contextmodel.ReqContext) response.Response
 	return response.JSON(http.StatusOK, pd)
 }
 
-// CreatePublicDashboard Sets public dashboard for dashboard
-// POST /api/dashboards/uid/:dashboardUid/public-dashboards
+// swagger:route POST /dashboards/uid/{dashboardUid}/public-dashboards dashboard_public createPublicDashboard
+//
+//	Create public dashboard for a dashboard
+//
+// Produces:
+// - application/json
+//
+// Responses:
+// 200: createPublicDashboardResponse
+// 400: invalidUidPublicError
+// 400: badRequestPublicError
+// 400: invalidAccessTokenPublicError
+// 400: invalidShareTypePublicError
+// 400: dashboardNotFoundPublicError
+// 400: dashboardIsPublicPublicError
+// 400: dashboardUidExistsPublicError
+// 400: dashboardAccessTokenExistsPublicError
+// 401: unauthorisedPublicError
+// 403: forbiddenPublicError
+// 500: internalServerPublicError
 func (api *Api) CreatePublicDashboard(c *contextmodel.ReqContext) response.Response {
 	// exit if we don't have a valid dashboardUid
 	dashboardUid := web.Params(c.Req)[":dashboardUid"]
@@ -178,8 +212,23 @@ func (api *Api) CreatePublicDashboard(c *contextmodel.ReqContext) response.Respo
 	return response.JSON(http.StatusOK, pd)
 }
 
-// UpdatePublicDashboard Sets public dashboard for dashboard
-// PATCH /api/dashboards/uid/:dashboardUid/public-dashboards/:uid
+// swagger:route PATCH /dashboards/uid/{dashboardUid}/public-dashboards/{uid} dashboard_public updatePublicDashboard
+//
+//	Update public dashboard for a dashboard
+//
+// Produces:
+// - application/json
+//
+// Responses:
+// 200: updatePublicDashboardResponse
+// 400: invalidUidPublicError
+// 400: badRequestPublicError
+// 400: invalidShareTypePublicError
+// 400: dashboardNotFoundPublicError
+// 400: dashboardIsPublicPublicError
+// 401: unauthorisedPublicError
+// 403: forbiddenPublicError
+// 500: internalServerPublicError
 func (api *Api) UpdatePublicDashboard(c *contextmodel.ReqContext) response.Response {
 	// exit if we don't have a valid dashboardUid
 	dashboardUid := web.Params(c.Req)[":dashboardUid"]
@@ -215,12 +264,21 @@ func (api *Api) UpdatePublicDashboard(c *contextmodel.ReqContext) response.Respo
 	return response.JSON(http.StatusOK, pd)
 }
 
-// Delete a public dashboard
-// DELETE /api/dashboards/uid/:dashboardUid/public-dashboards/:uid
+// swagger:route DELETE /dashboards/uid/{dashboardUid}/public-dashboards/{uid} dashboard_public deletePublicDashboard
+//
+//	Delete public dashboard for a dashboard
+//
+// Responses:
+// 200: okResponse
+// 400: invalidUidPublicError
+// 400: badRequestPublicError
+// 401: unauthorisedPublicError
+// 403: forbiddenPublicError
+// 500: internalServerPublicError
 func (api *Api) DeletePublicDashboard(c *contextmodel.ReqContext) response.Response {
 	uid := web.Params(c.Req)[":uid"]
 	if !validation.IsValidShortUID(uid) {
-		return response.Err(ErrInvalidUid.Errorf("UpdatePublicDashboard: invalid Uid %s", uid))
+		return response.Err(ErrInvalidUid.Errorf("DeletePublicDashboard: invalid Uid %s", uid))
 	}
 
 	err := api.PublicDashboardService.Delete(c.Req.Context(), uid)
@@ -246,4 +304,67 @@ func toJsonStreamingResponse(features *featuremgmt.FeatureManager, qdr *backend.
 	}
 
 	return response.JSONStreaming(statusCode, qdr)
+}
+
+// swagger:response listPublicDashboardsResponse
+type ListPublicDashboardsResponse struct {
+	// in: body
+	Body PublicDashboardListResponseWithPagination `json:"body"`
+}
+
+// swagger:parameters getPublicDashboard
+type GetPublicDashboardParams struct {
+	// in:path
+	DashboardUid int64 `json:"dashboardUid"`
+}
+
+// swagger:response getPublicDashboardResponse
+type GetPublicDashboardResponse struct {
+	// in: body
+	Body PublicDashboard `json:"body"`
+}
+
+// swagger:parameters createPublicDashboard
+type CreatePublicDashboardParams struct {
+	// in:path
+	// required:true
+	DashboardUid int64 `json:"dashboardUid"`
+	// in:body
+	// required:true
+	Body PublicDashboardDTO
+}
+
+// swagger:response createPublicDashboardResponse
+type CreatePublicDashboardResponse struct {
+	// in: body
+	Body PublicDashboard `json:"body"`
+}
+
+// swagger:parameters updatePublicDashboard
+type UpdatePublicDashboardParams struct {
+	// in:path
+	// required:true
+	DashboardUid int64 `json:"dashboardUid"`
+	// in:path
+	// required:true
+	Uid int64 `json:"uid"`
+	// in:body
+	// required:true
+	Body PublicDashboardDTO
+}
+
+// swagger:response updatePublicDashboardResponse
+type UpdatePublicDashboardResponse struct {
+	// in: body
+	Body PublicDashboard `json:"body"`
+}
+
+// swagger:parameters deletePublicDashboard
+type DeletePublicDashboardParams struct {
+	// in:path
+	// required:true
+	DashboardUid int64 `json:"dashboardUid"`
+	// in:path
+	// required:true
+	Uid int64 `json:"uid"`
 }
