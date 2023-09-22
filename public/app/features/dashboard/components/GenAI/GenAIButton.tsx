@@ -5,7 +5,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { llms } from '@grafana/experimental';
 import { Button, Spinner, useStyles2, Link, Tooltip } from '@grafana/ui';
 
-import { useOpenaiStream } from './hooks';
+import { useOpenAIStream } from './hooks';
 import { OPEN_AI_MODEL } from './utils';
 
 export interface GenAIButtonProps {
@@ -28,7 +28,7 @@ export const GenAIButton = ({
   const styles = useStyles2(getStyles);
 
   // TODO: Implement error handling (use error object from hook)
-  const { setMessages, reply, started, loading, value, error, finished } = useOpenaiStreamHook(
+  const { setMessages, reply, started, loading, value, error, finished } = useOpenAIStream(
     OPEN_AI_MODEL,
     temperature
   );

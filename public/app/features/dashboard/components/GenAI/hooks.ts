@@ -5,7 +5,7 @@ import { Subscription, finalize } from 'rxjs';
 import { llms } from '@grafana/experimental';
 
 // TODO: Add tests
-export function useOpenaiStreamHook(
+export function useOpenAIStream(
   model = 'gpt-3.5-turbo',
   temperature = 1
 ): {
