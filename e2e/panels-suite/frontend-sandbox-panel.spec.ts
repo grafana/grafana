@@ -20,7 +20,7 @@ describe('Panel sandbox', () => {
     });
 
     it('Add iframes to body', () => {
-      // this button adds 3 iframes to the body
+      // this button adds iframes to the body
       cy.get('[data-testid="button-create-iframes"]').click();
 
       const iframeIds = [
