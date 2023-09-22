@@ -8,6 +8,7 @@ import { Message, Role } from './utils';
 interface GenAIDashDescriptionButtonProps {
   onGenerate: (description: string, isDone: boolean) => void;
   dashboard: DashboardModel;
+  onClick?: (e: React.MouseEvent<HTMLButtonElement>) => void;
 }
 
 const DESCRIPTION_GENERATION_STANDARD_PROMPT =
@@ -15,10 +16,12 @@ const DESCRIPTION_GENERATION_STANDARD_PROMPT =
   'Your goal is to write short, descriptive, and concise dashboards description using the dashboard panels title and descriptions. ' +
   'The description should be shorter than 140 characters.';
 
-export const GenAIDashDescriptionButton = ({ onGenerate, dashboard }: GenAIDashDescriptionButtonProps) => {
+export const GenAIDashDescriptionButton = ({ onClick, onGenerate, dashboard }: GenAIDashDescriptionButtonProps) => {
   const messages = React.useMemo(() => getMessages(dashboard), [dashboard]);
 
-  return <GenAIButton messages={messages} onReply={onGenerate} loadingText={'Generating description'} />;
+  return (
+    <GenAIButton messages={messages} onGenerate={onGenerate} onClick={onClick} loadingText={'Generating description'} />
+  );
 };
 
 function getMessages(dashboard: DashboardModel): Message[] {

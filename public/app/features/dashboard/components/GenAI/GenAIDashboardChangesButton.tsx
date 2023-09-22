@@ -8,6 +8,7 @@ import { getDashboardChanges, Message, Role } from './utils';
 interface GenAIDashboardChangesButtonProps {
   dashboard: DashboardModel;
   onGenerate: (title: string, isDone: boolean) => void;
+  onClick?: (e: React.MouseEvent<HTMLButtonElement>) => void;
 }
 
 const CHANGES_GENERATION_STANDARD_PROMPT = [
@@ -24,11 +25,17 @@ const CHANGES_GENERATION_STANDARD_PROMPT = [
   'Try to make it as short as possible.',
 ].join('. ');
 
-export const GenAIDashboardChangesButton = ({ dashboard, onGenerate }: GenAIDashboardChangesButtonProps) => {
+export const GenAIDashboardChangesButton = ({ dashboard, onClick, onGenerate }: GenAIDashboardChangesButtonProps) => {
   const messages = useMemo(() => getMessages(dashboard), [dashboard]);
 
   return (
-    <GenAIButton messages={messages} onReply={onGenerate} loadingText={'Generating changes summary'} temperature={0} />
+    <GenAIButton
+      messages={messages}
+      onGenerate={onGenerate}
+      onClick={onClick}
+      loadingText={'Generating changes summary'}
+      temperature={0}
+    />
   );
 };
 
