@@ -444,6 +444,6 @@ const (
 	FlagAlertingInsights = "alertingInsights"
 
 	// FlagExternalCorePlugins
-	// Allow external plugins to be loaded as core plugins
+	// Allow core plugins to be loaded as external
 	FlagExternalCorePlugins = "externalCorePlugins"
 )

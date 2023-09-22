@@ -761,7 +761,7 @@ var (
 		},
 		{
 			Name:        "externalCorePlugins",
-			Description: "Allow external plugins to be loaded as core plugins",
+			Description: "Allow core plugins to be loaded as external",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaPluginsPlatformSquad,
 		},
