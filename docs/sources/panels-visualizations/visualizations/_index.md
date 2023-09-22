@@ -12,7 +12,7 @@ weight: 75
 
 # Visualizations
 
-Grafana offers a variety of visualizations to support different use cases. This section of the documentation highlights the built-in panels, their options and typical usage.
+Grafana offers a variety of visualizations to support different use cases. This section of the documentation highlights the built-in visualizations, their options and typical usage.
 
 > **Note:** If you are unsure which visualization to pick, Grafana can provide visualization suggestions based on the panel query. When you select a visualization, Grafana will show a preview with that visualization applied.
 
@@ -31,14 +31,14 @@ Grafana offers a variety of visualizations to support different use cases. This 
 - Misc
   - [Table]({{< relref "table/" >}}) is the main and only table visualization.
   - [Logs]({{< relref "logs/" >}}) is the main visualization for logs.
-  - [Node Graph]({{< relref "node-graph/" >}}) for directed graphs or networks.
+  - [Node graph]({{< relref "node-graph/" >}}) for directed graphs or networks.
   - [Traces]({{< relref "traces/" >}}) is the main visualization for traces.
-  - [Flame Graph]({{< relref "flame-graph/" >}}) is the main visualization for profiling.
+  - [Flame graph]({{< relref "flame-graph/" >}}) is the main visualization for profiling.
 - Widgets
   - [Dashboard list]({{< relref "dashboard-list/" >}}) can list dashboards.
   - [Alert list]({{< relref "alert-list/" >}}) can list alerts.
-  - [Text panel]({{< relref "text/" >}}) can show markdown and html.
-  - [News panel]({{< relref "news/" >}}) can show RSS feeds.
+  - [Text]({{< relref "text/" >}}) can show markdown and html.
+  - [News]({{< relref "news/" >}}) can show RSS feeds.
 
 ## Get more
 
@@ -50,50 +50,50 @@ Below you can find some good examples for how all the visualizations in Grafana 
 
 ### Graphs
 
-For time based line, area and bar charts we recommend the default [Time series]({{< relref "time-series/" >}}) visualization. [This public demo dashboard](https://play.grafana.org/d/000000016/1-time-series-graphs?orgId=1) contains many different examples for how this visualization can be configured and styled.
+For time based line, area and bar charts we recommend the default [time series]({{< relref "time-series/" >}}) visualization. [This public demo dashboard](https://play.grafana.org/d/000000016/1-time-series-graphs?orgId=1) contains many different examples for how this visualization can be configured and styled.
 
 {{< figure src="/static/img/docs/time-series-panel/time_series_small_example.png" max-width="700px" caption="Time series" >}}
 
-For categorical data use the [Bar chart]({{< relref "bar-chart/" >}}) visualization.
+For categorical data use a [bar chart]({{< relref "bar-chart/" >}}).
 
 {{< figure src="/static/img/docs/bar-chart-panel/barchart_small_example.png" max-width="700px" caption="Bar chart" >}}
 
 ### Big numbers & stats
 
-The [Stat]({{< relref "stat/" >}}) visualization shows one large stat value with an optional graph sparkline. You can control the background or value color using thresholds or color scales.
+A [stat]({{< relref "stat/" >}}) shows one large stat value with an optional graph sparkline. You can control the background or value color using thresholds or color scales.
 
-{{< figure src="/static/img/docs/v66/stat_panel_dark3.png" max-width="1025px" caption="Stat panel" >}}
+{{< figure src="/static/img/docs/v66/stat_panel_dark3.png" max-width="1025px" caption="Stat" >}}
 
 ### Gauge
 
-If you want to present a value as it relates to a min and max value you have two options. First a standard [Radial Gauge]({{< relref "gauge/" >}}) shown below.
+If you want to present a value as it relates to a min and max value you have two options. First a standard radial [gauge]({{< relref "gauge/" >}}) shown below.
 
 {{< figure src="/static/img/docs/v66/gauge_panel_cover.png" max-width="700px" >}}
 
-Secondly Grafana also has a horizontal or vertical [Bar gauge]({{< relref "bar-gauge/" >}}) with three different distinct display modes.
+Secondly Grafana also has a horizontal or vertical [bar gauge]({{< relref "bar-gauge/" >}}) with three different distinct display modes.
 
 {{< figure src="/static/img/docs/v66/bar_gauge_lcd.png" max-width="700px" >}}
 
 ### Table
 
-To show data in a table layout, use the [Table]({{< relref "table/" >}}) visualization.
+To show data in a table layout, use a [table]({{< relref "table/" >}}).
 
 {{< figure src="/static/img/docs/tables/table_visualization.png" max-width="700px" lightbox="true" caption="Table visualization" >}}
 
 ### Pie chart
 
-Grafana now ships with an included [Pie chart]({{< relref "pie-chart/" >}}) visualization.
+To display reduced series, or values in a series, from one or more queries, as they relate to each other, use a [pie chart]({{< relref "pie-chart/" >}}).
 
-{{< figure src="/static/img/docs/pie-chart-panel/pie-chart-example.png" max-width="700px" lightbox="true" caption="Pie chart visualization" >}}
+{{< figure src="/static/img/docs/pie-chart-panel/pie-chart-example.png" max-width="700px" lightbox="true" caption="Pie chart" >}}
 
 ### Heatmaps
 
-To show value distribution over, time use the [heatmap]({{< relref "heatmap/" >}}) visualization.
+To show value distribution over, time use a [heatmap]({{< relref "heatmap/" >}}).
 
 {{< figure src="/static/img/docs/v43/heatmap_panel_cover.jpg" max-width="1000px" lightbox="true" caption="Heatmap" >}}
 
 ### State timeline
 
-The state timeline panel visualization shows discrete state changes over time. When used with time series, the thresholds are used to turn the numerical values into discrete state regions.
+A state timeline shows discrete state changes over time. When used with time series, the thresholds are used to turn the numerical values into discrete state regions.
 
 {{< figure src="/static/img/docs/v8/state_timeline_strings.png" max-width="700px" caption="state timeline with string states" >}}
