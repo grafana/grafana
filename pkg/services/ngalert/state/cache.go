@@ -36,7 +36,6 @@ func newCache() *cache {
 
 // RegisterMetrics registers a set of Gauges in the form of collectors for the alerts in the cache.
 func (c *cache) RegisterMetrics(r prometheus.Registerer) {
-
 	newAlertCountByState := func(state eval.State) prometheus.GaugeFunc {
 		return prometheus.NewGaugeFunc(prometheus.GaugeOpts{
 			Namespace:   metrics.Namespace,
@@ -47,7 +46,6 @@ func (c *cache) RegisterMetrics(r prometheus.Registerer) {
 		}, func() float64 {
 			return c.countAlertsBy(state)
 		})
-
 	}
 
 	r.MustRegister(newAlertCountByState(eval.Normal))
