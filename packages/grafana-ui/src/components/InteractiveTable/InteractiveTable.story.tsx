@@ -3,8 +3,6 @@ import React, { useMemo } from 'react';
 
 import { InteractiveTable, Column, CellProps, LinkButton } from '@grafana/ui';
 
-import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
-
 import { InteractiveTableHeaderTooltip } from './InteractiveTable';
 import mdx from './InteractiveTable.mdx';
 
@@ -13,7 +11,6 @@ const EXCLUDED_PROPS = ['className', 'renderExpandedRow', 'getRowId'];
 const meta: Meta<typeof InteractiveTable> = {
   title: 'Experimental/InteractiveTable',
   component: InteractiveTable,
-  decorators: [withCenteredStory],
   parameters: {
     docs: {
       page: mdx,

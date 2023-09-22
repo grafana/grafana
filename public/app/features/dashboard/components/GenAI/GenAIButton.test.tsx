@@ -112,16 +112,16 @@ describe('GenAIButton', () => {
       expect(onReply).toHaveBeenCalledTimes(1);
     });
 
-    it('should call the LLM service with the messages configured', async () => {
+    it('should call the LLM service with the messages configured and the right temperature', async () => {
       const onReply = jest.fn();
       const messages = [{ content: 'Generate X', role: 'system' as Role }];
-      setup({ onReply, messages });
+      setup({ onReply, messages, temperature: 3 });
 
       const generateButton = await screen.findByRole('button');
       await fireEvent.click(generateButton);
 
       await waitFor(() => expect(generateTextWithLLM).toHaveBeenCalledTimes(1));
-      await waitFor(() => expect(generateTextWithLLM).toHaveBeenCalledWith(messages, expect.any(Function)));
+      await waitFor(() => expect(generateTextWithLLM).toHaveBeenCalledWith(messages, expect.any(Function), 3));
     });
   });
 });

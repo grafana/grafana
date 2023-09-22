@@ -1,4 +1,4 @@
-package phlare
+package pyroscope
 
 import (
 	"context"
@@ -16,10 +16,10 @@ import (
 )
 
 var (
-	_ backend.QueryDataHandler    = (*PhlareDatasource)(nil)
-	_ backend.CallResourceHandler = (*PhlareDatasource)(nil)
-	_ backend.CheckHealthHandler  = (*PhlareDatasource)(nil)
-	_ backend.StreamHandler       = (*PhlareDatasource)(nil)
+	_ backend.QueryDataHandler    = (*PyroscopeDatasource)(nil)
+	_ backend.CallResourceHandler = (*PyroscopeDatasource)(nil)
+	_ backend.CheckHealthHandler  = (*PyroscopeDatasource)(nil)
+	_ backend.StreamHandler       = (*PyroscopeDatasource)(nil)
 )
 
 type ProfilingClient interface {
@@ -30,16 +30,16 @@ type ProfilingClient interface {
 	GetProfile(ctx context.Context, profileTypeID string, labelSelector string, start int64, end int64, maxNodes *int64) (*ProfileResponse, error)
 }
 
-// PhlareDatasource is a datasource for querying application performance profiles.
-type PhlareDatasource struct {
+// PyroscopeDatasource is a datasource for querying application performance profiles.
+type PyroscopeDatasource struct {
 	httpClient *http.Client
 	client     ProfilingClient
 	settings   backend.DataSourceInstanceSettings
 	ac         accesscontrol.AccessControl
 }
 
-// NewPhlareDatasource creates a new datasource instance.
-func NewPhlareDatasource(httpClientProvider httpclient.Provider, settings backend.DataSourceInstanceSettings, ac accesscontrol.AccessControl) (instancemgmt.Instance, error) {
+// NewPyroscopeDatasource creates a new datasource instance.
+func NewPyroscopeDatasource(httpClientProvider httpclient.Provider, settings backend.DataSourceInstanceSettings, ac accesscontrol.AccessControl) (instancemgmt.Instance, error) {
 	opt, err := settings.HTTPClientOptions()
 	if err != nil {
 		return nil, err
@@ -49,15 +49,15 @@ func NewPhlareDatasource(httpClientProvider httpclient.Provider, settings backen
 		return nil, err
 	}
 
-	return &PhlareDatasource{
+	return &PyroscopeDatasource{
 		httpClient: httpClient,
-		client:     NewPhlareClient(httpClient, settings.URL),
+		client:     NewPyroscopeClient(httpClient, settings.URL),
 		settings:   settings,
 		ac:         ac,
 	}, nil
 }
 
-func (d *PhlareDatasource) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
+func (d *PyroscopeDatasource) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
 	logger.Debug("CallResource", "Path", req.Path, "Method", req.Method, "Body", req.Body)
 	if req.Path == "profileTypes" {
 		return d.profileTypes(ctx, req, sender)
@@ -73,7 +73,7 @@ func (d *PhlareDatasource) CallResource(ctx context.Context, req *backend.CallRe
 	})
 }
 
-func (d *PhlareDatasource) profileTypes(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
+func (d *PyroscopeDatasource) profileTypes(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
 	types, err := d.client.ProfileTypes(ctx)
 	if err != nil {
 		return err
@@ -89,7 +89,7 @@ func (d *PhlareDatasource) profileTypes(ctx context.Context, req *backend.CallRe
 	return nil
 }
 
-func (d *PhlareDatasource) labelNames(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
+func (d *PyroscopeDatasource) labelNames(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
 	res, err := d.client.LabelNames(ctx)
 	if err != nil {
 		return fmt.Errorf("error calling LabelNames: %v", err)
@@ -112,7 +112,7 @@ type LabelValuesPayload struct {
 	End   int64
 }
 
-func (d *PhlareDatasource) labelValues(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
+func (d *PyroscopeDatasource) labelValues(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
 	u, err := url.Parse(req.URL)
 	if err != nil {
 		return err
@@ -138,7 +138,7 @@ func (d *PhlareDatasource) labelValues(ctx context.Context, req *backend.CallRes
 // req contains the queries []DataQuery (where each query contains RefID as a unique identifier).
 // The QueryDataResponse contains a map of RefID to the response for each query, and each response
 // contains Frames ([]*Frame).
-func (d *PhlareDatasource) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+func (d *PyroscopeDatasource) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	logger.Debug("QueryData called", "Queries", req.Queries)
 
 	// create response struct
@@ -160,7 +160,7 @@ func (d *PhlareDatasource) QueryData(ctx context.Context, req *backend.QueryData
 // The main use case for these health checks is the test button on the
 // datasource configuration page which allows users to verify that
 // a datasource is working as expected.
-func (d *PhlareDatasource) CheckHealth(ctx context.Context, _ *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
+func (d *PyroscopeDatasource) CheckHealth(ctx context.Context, _ *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
 	logger.Debug("CheckHealth called")
 
 	status := backend.HealthStatusOk
@@ -179,7 +179,7 @@ func (d *PhlareDatasource) CheckHealth(ctx context.Context, _ *backend.CheckHeal
 
 // SubscribeStream is called when a client wants to connect to a stream. This callback
 // allows sending the first message.
-func (d *PhlareDatasource) SubscribeStream(_ context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
+func (d *PyroscopeDatasource) SubscribeStream(_ context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
 	logger.Debug("SubscribeStream called")
 
 	status := backend.SubscribeStreamStatusPermissionDenied
@@ -194,7 +194,7 @@ func (d *PhlareDatasource) SubscribeStream(_ context.Context, req *backend.Subsc
 
 // RunStream is called once for any open channel.  Results are shared with everyone
 // subscribed to the same channel.
-func (d *PhlareDatasource) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
+func (d *PyroscopeDatasource) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
 	logger.Debug("RunStream called")
 
 	// Create the same data frame as for query data.
@@ -231,7 +231,7 @@ func (d *PhlareDatasource) RunStream(ctx context.Context, req *backend.RunStream
 }
 
 // PublishStream is called when a client sends a message to the stream.
-func (d *PhlareDatasource) PublishStream(_ context.Context, _ *backend.PublishStreamRequest) (*backend.PublishStreamResponse, error) {
+func (d *PyroscopeDatasource) PublishStream(_ context.Context, _ *backend.PublishStreamRequest) (*backend.PublishStreamResponse, error) {
 	logger.Debug("PublishStream called")
 
 	// Do not allow publishing at all.

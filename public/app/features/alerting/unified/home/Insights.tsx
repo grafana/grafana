@@ -9,9 +9,17 @@ import {
   VariableValueSelectors,
 } from '@grafana/scenes';
 
-import { getFiringAlertsScene } from '../insights/grafana/FiringAlertsPercentage';
-import { getFiringAlertsRateScene } from '../insights/grafana/FiringAlertsRate';
+import { getGrafanaEvalDurationScene } from '../insights/grafana/EvalDurationScene';
+import { getGrafanaEvalSuccessVsFailuresScene } from '../insights/grafana/EvalSuccessVsFailuresScene';
+import { getFiringGrafanaAlertsScene } from '../insights/grafana/Firing';
+import { getGrafanaInstancesByStateScene } from '../insights/grafana/InstancesByState';
+import { getGrafanaInstancesPercentageByStateScene } from '../insights/grafana/InstancesPercentageByState';
+import { getGrafanaMissedIterationsScene } from '../insights/grafana/MissedIterationsScene';
 import { getMostFiredInstancesScene } from '../insights/grafana/MostFiredInstancesTable';
+import { getPausedGrafanaAlertsScene } from '../insights/grafana/Paused';
+import { getGrafanaAlertmanagerInstancesByStateScene } from '../insights/grafana/alertmanager/AlertsByStateScene';
+import { getGrafanaAlertmanagerNotificationsScene } from '../insights/grafana/alertmanager/NotificationsScene';
+import { getGrafanaAlertmanagerSilencesScene } from '../insights/grafana/alertmanager/SilencesByStateScene';
 import { getAlertsByStateScene } from '../insights/mimir/AlertsByState';
 import { getInvalidConfigScene } from '../insights/mimir/InvalidConfig';
 import { getNotificationsScene } from '../insights/mimir/Notifications';
@@ -43,6 +51,8 @@ const grafanaCloudPromDs = {
   uid: 'grafanacloud-prom',
 };
 
+export const PANEL_STYLES = { minHeight: 300 };
+
 const THIS_WEEK_TIME_RANGE = new SceneTimeRange({ from: 'now-1w', to: 'now' });
 const LAST_WEEK_TIME_RANGE = new SceneTimeRange({ from: 'now-2w', to: 'now-1w' });
 
@@ -54,14 +64,32 @@ export function getGrafanaScenes() {
         new SceneFlexLayout({
           children: [
             getMostFiredInstancesScene(THIS_WEEK_TIME_RANGE, ashDs, 'Top 10 firing instances this week'),
-            getFiringAlertsRateScene(THIS_WEEK_TIME_RANGE, ashDs, 'Alerts firing per minute'),
+            getFiringGrafanaAlertsScene(THIS_WEEK_TIME_RANGE, cloudUsageDs, 'Firing'),
+            getPausedGrafanaAlertsScene(THIS_WEEK_TIME_RANGE, cloudUsageDs, 'Paused'),
           ],
         }),
         new SceneFlexLayout({
           children: [
-            getFiringAlertsScene(THIS_WEEK_TIME_RANGE, ashDs, 'Firing alerts this week'),
-            getFiringAlertsScene(LAST_WEEK_TIME_RANGE, ashDs, 'Firing alerts last week'),
+            getGrafanaInstancesByStateScene(THIS_WEEK_TIME_RANGE, cloudUsageDs, 'Count of alert instances by state'),
+            getGrafanaInstancesPercentageByStateScene(
+              THIS_WEEK_TIME_RANGE,
+              cloudUsageDs,
+              '% of Alert Instances by State'
+            ),
           ],
+        }),
+        new SceneFlexLayout({
+          children: [
+            getGrafanaEvalSuccessVsFailuresScene(THIS_WEEK_TIME_RANGE, cloudUsageDs, 'Evaluation Success vs Failures'),
+            getGrafanaMissedIterationsScene(THIS_WEEK_TIME_RANGE, cloudUsageDs, 'Iterations Missed'),
+          ],
+        }),
+        new SceneFlexLayout({
+          children: [getGrafanaEvalDurationScene(THIS_WEEK_TIME_RANGE, cloudUsageDs, 'Evaluation Duration')],
+        }),
+        new SceneFlexItem({
+          ySizing: 'content',
+          body: getGrafanaAlertmanagerScenes(),
         }),
         new SceneFlexItem({
           ySizing: 'content',
@@ -80,18 +108,48 @@ export function getGrafanaScenes() {
   });
 }
 
+function getGrafanaAlertmanagerScenes() {
+  return new NestedScene({
+    title: 'Grafana Alertmanager',
+    canCollapse: true,
+    isCollapsed: false,
+    body: new SceneFlexLayout({
+      direction: 'column',
+      children: [
+        new SceneFlexLayout({
+          children: [
+            getGrafanaAlertmanagerInstancesByStateScene(THIS_WEEK_TIME_RANGE, cloudUsageDs, 'Alerts by State'),
+            getGrafanaAlertmanagerNotificationsScene(THIS_WEEK_TIME_RANGE, cloudUsageDs, 'Notifications'),
+          ],
+        }),
+        new SceneFlexLayout({
+          children: [getGrafanaAlertmanagerSilencesScene(LAST_WEEK_TIME_RANGE, cloudUsageDs, 'Silences')],
+        }),
+      ],
+    }),
+  });
+}
+
 function getCloudScenes() {
   return new NestedScene({
     title: 'Mimir alertmanager',
     canCollapse: true,
-    isCollapsed: true,
+    isCollapsed: false,
     body: new SceneFlexLayout({
-      wrap: 'wrap',
+      direction: 'column',
       children: [
-        getAlertsByStateScene(THIS_WEEK_TIME_RANGE, cloudUsageDs, 'Alerts by State'),
-        getNotificationsScene(THIS_WEEK_TIME_RANGE, cloudUsageDs, 'Notifications'),
-        getSilencesScene(LAST_WEEK_TIME_RANGE, cloudUsageDs, 'Silences'),
-        getInvalidConfigScene(THIS_WEEK_TIME_RANGE, cloudUsageDs, 'Invalid configuration'),
+        new SceneFlexLayout({
+          children: [
+            getAlertsByStateScene(THIS_WEEK_TIME_RANGE, cloudUsageDs, 'Alerts by State'),
+            getNotificationsScene(THIS_WEEK_TIME_RANGE, cloudUsageDs, 'Notifications'),
+          ],
+        }),
+        new SceneFlexLayout({
+          children: [
+            getSilencesScene(LAST_WEEK_TIME_RANGE, cloudUsageDs, 'Silences'),
+            getInvalidConfigScene(THIS_WEEK_TIME_RANGE, cloudUsageDs, 'Invalid configuration'),
+          ],
+        }),
       ],
     }),
   });
@@ -101,19 +159,33 @@ function getMimirManagedRulesScenes() {
   return new NestedScene({
     title: 'Mimir-managed rules',
     canCollapse: true,
-    isCollapsed: true,
+    isCollapsed: false,
     body: new SceneFlexLayout({
-      wrap: 'wrap',
+      direction: 'column',
       children: [
-        getMostFiredCloudInstances(THIS_WEEK_TIME_RANGE, grafanaCloudPromDs, 'Top 10 firing instance this week'),
-        getFiringCloudAlertsScene(THIS_WEEK_TIME_RANGE, grafanaCloudPromDs, 'Firing'),
-        getPendingCloudAlertsScene(THIS_WEEK_TIME_RANGE, grafanaCloudPromDs, 'Pending'),
-
-        getInstancesByStateScene(THIS_WEEK_TIME_RANGE, grafanaCloudPromDs, 'Count of alert instances by state'),
-        getInstancesPercentageByStateScene(THIS_WEEK_TIME_RANGE, grafanaCloudPromDs, '% of Alert Instances by State'),
-
-        getEvalSuccessVsFailuresScene(THIS_WEEK_TIME_RANGE, cloudUsageDs, 'Evaluation Success vs Failures'),
-        getMissedIterationsScene(THIS_WEEK_TIME_RANGE, cloudUsageDs, 'Iterations Missed'),
+        new SceneFlexLayout({
+          children: [
+            getMostFiredCloudInstances(THIS_WEEK_TIME_RANGE, grafanaCloudPromDs, 'Top 10 firing instance this week'),
+            getFiringCloudAlertsScene(THIS_WEEK_TIME_RANGE, grafanaCloudPromDs, 'Firing'),
+            getPendingCloudAlertsScene(THIS_WEEK_TIME_RANGE, grafanaCloudPromDs, 'Pending'),
+          ],
+        }),
+        new SceneFlexLayout({
+          children: [
+            getInstancesByStateScene(THIS_WEEK_TIME_RANGE, grafanaCloudPromDs, 'Count of alert instances by state'),
+            getInstancesPercentageByStateScene(
+              THIS_WEEK_TIME_RANGE,
+              grafanaCloudPromDs,
+              '% of Alert Instances by State'
+            ),
+          ],
+        }),
+        new SceneFlexLayout({
+          children: [
+            getEvalSuccessVsFailuresScene(THIS_WEEK_TIME_RANGE, cloudUsageDs, 'Evaluation Success vs Failures'),
+            getMissedIterationsScene(THIS_WEEK_TIME_RANGE, cloudUsageDs, 'Iterations Missed'),
+          ],
+        }),
       ],
     }),
   });
@@ -130,14 +202,22 @@ function getMimirManagedRulesPerGroupScenes() {
   return new NestedScene({
     title: 'Mimir-managed Rules - Per Rule Group',
     canCollapse: true,
-    isCollapsed: true,
+    isCollapsed: false,
     body: new SceneFlexLayout({
-      wrap: 'wrap',
+      direction: 'column',
       children: [
-        getRuleGroupEvaluationsScene(THIS_WEEK_TIME_RANGE, cloudUsageDs, 'Rule Group Evaluation'),
-        getRuleGroupIntervalScene(THIS_WEEK_TIME_RANGE, cloudUsageDs, 'Rule Group Interval'),
-        getRuleGroupEvaluationDurationScene(THIS_WEEK_TIME_RANGE, cloudUsageDs, 'Rule Group Evaluation Duration'),
-        getRulesPerGroupScene(THIS_WEEK_TIME_RANGE, cloudUsageDs, 'Rules per Group'),
+        new SceneFlexLayout({
+          children: [
+            getRuleGroupEvaluationsScene(THIS_WEEK_TIME_RANGE, cloudUsageDs, 'Rule Group Evaluation'),
+            getRuleGroupIntervalScene(THIS_WEEK_TIME_RANGE, cloudUsageDs, 'Rule Group Interval'),
+          ],
+        }),
+        new SceneFlexLayout({
+          children: [
+            getRuleGroupEvaluationDurationScene(THIS_WEEK_TIME_RANGE, cloudUsageDs, 'Rule Group Evaluation Duration'),
+            getRulesPerGroupScene(THIS_WEEK_TIME_RANGE, cloudUsageDs, 'Rules per Group'),
+          ],
+        }),
       ],
     }),
     $variables: new SceneVariableSet({

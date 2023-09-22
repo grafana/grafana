@@ -22,6 +22,7 @@ import (
 	"golang.org/x/exp/slices"
 
 	"github.com/grafana/grafana/pkg/expr"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/annotations/annotationstest"
@@ -202,6 +203,7 @@ func TestWarmStateCache(t *testing.T) {
 		Historian:               &state.FakeHistorian{},
 		MaxStateSaveConcurrency: 1,
 		Tracer:                  tracing.InitializeTracerForTest(),
+		Log:                     log.New("ngalert.state.manager"),
 	}
 	st := state.NewManager(cfg)
 	st.Warm(ctx, dbstore)
@@ -239,6 +241,7 @@ func TestDashboardAnnotations(t *testing.T) {
 		Historian:               hist,
 		MaxStateSaveConcurrency: 1,
 		Tracer:                  tracing.InitializeTracerForTest(),
+		Log:                     log.New("ngalert.state.manager"),
 	}
 	st := state.NewManager(cfg)
 
@@ -1218,6 +1221,7 @@ func TestProcessEvalResults(t *testing.T) {
 				Historian:               hist,
 				MaxStateSaveConcurrency: 1,
 				Tracer:                  tracing.InitializeTracerForTest(),
+				Log:                     log.New("ngalert.state.manager"),
 			}
 			st := state.NewManager(cfg)
 
@@ -1318,6 +1322,7 @@ func TestProcessEvalResults(t *testing.T) {
 			Historian:               &state.FakeHistorian{},
 			MaxStateSaveConcurrency: 1,
 			Tracer:                  tracing.InitializeTracerForTest(),
+			Log:                     log.New("ngalert.state.manager"),
 		}
 		st := state.NewManager(cfg)
 		rule := models.AlertRuleGen()()
@@ -1469,6 +1474,7 @@ func TestStaleResultsHandler(t *testing.T) {
 			Historian:               &state.FakeHistorian{},
 			MaxStateSaveConcurrency: 1,
 			Tracer:                  tracing.InitializeTracerForTest(),
+			Log:                     log.New("ngalert.state.manager"),
 		}
 		st := state.NewManager(cfg)
 		st.Warm(ctx, dbstore)
@@ -1551,6 +1557,7 @@ func TestStaleResults(t *testing.T) {
 		Historian:               &state.FakeHistorian{},
 		MaxStateSaveConcurrency: 1,
 		Tracer:                  tracing.InitializeTracerForTest(),
+		Log:                     log.New("ngalert.state.manager"),
 	}
 	st := state.NewManager(cfg)
 
@@ -1724,6 +1731,7 @@ func TestDeleteStateByRuleUID(t *testing.T) {
 				Historian:               &state.FakeHistorian{},
 				MaxStateSaveConcurrency: 1,
 				Tracer:                  tracing.InitializeTracerForTest(),
+				Log:                     log.New("ngalert.state.manager"),
 			}
 			st := state.NewManager(cfg)
 			st.Warm(ctx, dbstore)
@@ -1865,6 +1873,7 @@ func TestResetStateByRuleUID(t *testing.T) {
 				Historian:               fakeHistorian,
 				MaxStateSaveConcurrency: 1,
 				Tracer:                  tracing.InitializeTracerForTest(),
+				Log:                     log.New("ngalert.state.manager"),
 			}
 			st := state.NewManager(cfg)
 			st.Warm(ctx, dbstore)
