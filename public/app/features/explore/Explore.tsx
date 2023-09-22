@@ -544,10 +544,6 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
         queryResponse.customFrames,
       ].every((e) => e.length === 0);
 
-    // const contentOutlineHookWrapper = () => {
-    //   const {outlineItems } = useContentOutlineContext();
-    // };
-
     return (
       <ContentOutlineContextProvider>
         <CustomScrollbar
