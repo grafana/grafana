@@ -22,6 +22,13 @@ ruleTester.run('eslint no-aria-label-e2e-selector', noAriaLabelE2ESelector, {
     {
       code: `<div aria-label={"foo"} />`,
     },
+    {
+      code: `
+import { someOtherImport } from './some-other-location';
+
+<div aria-label={someOtherImport} />
+      `,
+    },
   ],
   invalid: [
     {
@@ -29,7 +36,7 @@ ruleTester.run('eslint no-aria-label-e2e-selector', noAriaLabelE2ESelector, {
 import { selectors } from '@grafana/e2e-selectors';
 
 <div aria-label={selectors.pages.AddDashboard.addNewPanel} />
-    `,
+      `,
       errors: [
         {
           message: 'Use data-testid for E2E selectors instead of aria-label',
