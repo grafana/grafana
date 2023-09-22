@@ -67,6 +67,7 @@
 /scripts/modowners/ @grafana/backend-platform
 
 /pkg/api/ @grafana/backend-platform
+/pkg/apis/ @grafana/grafana-app-platform-squad
 /pkg/bus/ @grafana/backend-platform
 /pkg/cmd/ @grafana/backend-platform
 /pkg/components/apikeygen/ @grafana/grafana-authnz-team
