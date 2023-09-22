@@ -90,6 +90,7 @@ export function getConfig(opts: TimelineCoreOptions) {
       mark.classList.add('bar-mark');
       mark.style.position = 'absolute';
       mark.style.background = 'rgba(255,255,255,0.2)';
+      mark.style.pointerEvents = 'none';
       return mark;
     });
 

@@ -39,7 +39,7 @@
   "dependencies": {
     "@grafana/data": "10.2.0-pre",
     "@grafana/e2e-selectors": "10.2.0-pre",
-    "@grafana/faro-web-sdk": "1.1.2",
+    "@grafana/faro-web-sdk": "1.2.1",
     "@grafana/ui": "10.2.0-pre",
     "history": "4.10.1",
     "lodash": "4.17.21",

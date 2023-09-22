@@ -1280,14 +1280,17 @@ export class PrometheusDatasource
     delete variables.__interval;
     delete variables.__interval_ms;
 
-    //Add ad hoc filters
-    const expr = this.enhanceExprWithAdHocFilters(target.expr);
+    // interpolate expression
+    const expr = this.templateSrv.replace(target.expr, variables, this.interpolateQueryExpr);
+
+    // Add ad hoc filters
+    const exprWithAdHocFilters = this.enhanceExprWithAdHocFilters(expr);
 
     return {
       ...target,
-      legendFormat: this.templateSrv.replace(target.legendFormat, variables),
-      expr: this.templateSrv.replace(expr, variables, this.interpolateQueryExpr),
+      expr: exprWithAdHocFilters,
       interval: this.templateSrv.replace(target.interval, variables),
+      legendFormat: this.templateSrv.replace(target.legendFormat, variables),
     };
   }
 

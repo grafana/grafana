@@ -28,6 +28,7 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch"
 	"github.com/grafana/grafana/pkg/tsdb/elasticsearch"
 	pyroscope "github.com/grafana/grafana/pkg/tsdb/grafana-pyroscope-datasource"
+	testdatasource "github.com/grafana/grafana/pkg/tsdb/grafana-testdata-datasource"
 	"github.com/grafana/grafana/pkg/tsdb/grafanads"
 	"github.com/grafana/grafana/pkg/tsdb/graphite"
 	"github.com/grafana/grafana/pkg/tsdb/influxdb"
@@ -39,7 +40,6 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/postgres"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus"
 	"github.com/grafana/grafana/pkg/tsdb/tempo"
-	"github.com/grafana/grafana/pkg/tsdb/testdatasource"
 )
 
 func TestIntegrationPluginManager(t *testing.T) {
@@ -113,7 +113,7 @@ func verifyPluginQuery(t *testing.T, ctx context.Context, c plugins.Client) {
 	now := time.Unix(1661420870, 0)
 	req := &backend.QueryDataRequest{
 		PluginContext: backend.PluginContext{
-			PluginID: "testdata",
+			PluginID: "grafana-testdata-datasource",
 		},
 		Queries: []backend.DataQuery{
 			{
@@ -184,7 +184,7 @@ func verifyCorePluginCatalogue(t *testing.T, ctx context.Context, ps *pluginstor
 		"opentsdb":                         {},
 		"prometheus":                       {},
 		"tempo":                            {},
-		"testdata":                         {},
+		"grafana-testdata-datasource":      {},
 		"postgres":                         {},
 		"mysql":                            {},
 		"mssql":                            {},
