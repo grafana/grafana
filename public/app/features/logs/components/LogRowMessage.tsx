@@ -132,7 +132,7 @@ interface PopoverMenuHandlerProps {
 
 const PopoverMenuHandler = ({ children, styles, ...rest }: PopoverMenuHandlerProps) => {
   const [showContextMenu, setShowContextMenu] = useState(false);
-  const [xCoordinate, setXcoordinate] = useState(0);
+  const [coordinates, setCoordinates] = useState({ x: 0, y: 0 });
   const [selection, setSelection] = useState('');
   const [keyValueSelection, setKeyValueSelection] = useState({ key: '', value: '' });
 
@@ -153,37 +153,40 @@ const PopoverMenuHandler = ({ children, styles, ...rest }: PopoverMenuHandlerPro
   }, []);
   const handleSelection = useCallback((e: MouseEvent<HTMLButtonElement>) => {
     const currentSelection = document.getSelection()?.toString();
-    console.log(currentSelection);
     if (!currentSelection) {
       return;
     }
-    const position = e.currentTarget.getBoundingClientRect();
+    const position = document.querySelector('[data-testid="logRows"]')?.getBoundingClientRect();
+    if (!position) {
+      return;
+    }
     setShowContextMenu(true);
-    setXcoordinate(e.clientX - position.left);
+    setCoordinates({ x: e.clientX - position.x, y: e.clientY - position.y });
     setSelection(currentSelection);
     setKeyValueSelection(parseKeyValue(currentSelection));
   }, []);
 
   return (
-    <div style={{ position: "relative" }}>
-      {showContextMenu && <PopoverMenu selection={selection} keyValueSelection={keyValueSelection} left={xCoordinate} {...rest} />}
+    <>
+      {showContextMenu && <PopoverMenu selection={selection} keyValueSelection={keyValueSelection} {...coordinates} {...rest} />}
       <button className={`${styles.logLine} ${styles.positionRelative}`} onClick={handlePropagation} onMouseUp={handleSelection}>
         <>{children}</>
       </button>
-    </div>
+    </>
   )
 }
 
 interface PopoverMenuProps {
   selection: string;
   keyValueSelection: { key: string, value: string };
-  left: number;
+  x: number;
+  y: number;
   onClickFilterLabel?: (key: string, value: string, refId?: string) => void;
   onClickFilterOutLabel?: (key: string, value: string, refId?: string) => void;
   isFilterLabelActive?: (key: string, value: string, refId?: string) => Promise<boolean>;
 }
 
-const PopoverMenu = ({ left, isFilterLabelActive, onClickFilterLabel, onClickFilterOutLabel, selection, keyValueSelection }: PopoverMenuProps) => {
+const PopoverMenu = ({ x, y, isFilterLabelActive, onClickFilterLabel, onClickFilterOutLabel, selection, keyValueSelection }: PopoverMenuProps) => {
   const [isFilterActive, setIsFilterActive] = useState(false);
   useEffect(() => {
     if (!onClickFilterLabel || !keyValueSelection.key || !keyValueSelection.value) {
@@ -199,7 +202,7 @@ const PopoverMenu = ({ left, isFilterLabelActive, onClickFilterLabel, onClickFil
   const parsedKeyValue = keyValueSelection.key && keyValueSelection.value ? `${keyValueSelection.key}=${keyValueSelection.value}` : '';
 
   return (
-    <div style={{ position: "absolute", top: 0, left, zIndex: 9999 }}>
+    <div style={{ position: "fixed", top: y, left: x, zIndex: 9999 }}>
       <Menu>
         <Menu.Item label="Copy" onClick={() => {}} />
         {parsedKeyValue && (
