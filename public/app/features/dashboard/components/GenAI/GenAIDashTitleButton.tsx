@@ -3,6 +3,7 @@ import React from 'react';
 import { DashboardModel } from '../../state';
 
 import { GenAIButton } from './GenAIButton';
+import { EventSource, reportGenerateAIButtonClicked } from './tracking';
 import { Message, Role } from './utils';
 
 interface GenAIDashTitleButtonProps {
@@ -17,8 +18,9 @@ const DESCRIPTION_GENERATION_STANDARD_PROMPT =
 
 export const GenAIDashTitleButton = ({ onGenerate, dashboard }: GenAIDashTitleButtonProps) => {
   const messages = React.useMemo(() => getMessages(dashboard), [dashboard]);
+  const onClick = React.useCallback(() => reportGenerateAIButtonClicked(EventSource.dashboardTitle), []);
 
-  return <GenAIButton messages={messages} onReply={onGenerate} loadingText={'Generating title'} />;
+  return <GenAIButton messages={messages} onClick={onClick} onGenerate={onGenerate} loadingText={'Generating title'} />;
 };
 
 function getMessages(dashboard: DashboardModel): Message[] {
