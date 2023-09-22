@@ -1,5 +1,5 @@
 import { QueryRunnerState, SceneQueryRunner } from '@grafana/scenes';
-import { TestData } from 'app/plugins/datasource/testdata/dataquery.gen';
+import { TestData } from 'app/plugins/datasource/grafana-testdata-datasource/dataquery.gen';
 
 export function getQueryRunnerWithRandomWalkQuery(
   overrides?: Partial<TestData>,
