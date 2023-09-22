@@ -16,7 +16,9 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/kinds/dataquery"
+	azTracing "github.com/grafana/grafana/pkg/tsdb/azuremonitor/tracing"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
 )
 
@@ -1569,8 +1571,12 @@ func Test_executeQueryErrorWithDifferentLogAnalyticsCreds(t *testing.T) {
 	query := &AzureLogAnalyticsQuery{
 		TimeRange: backend.TimeRange{},
 	}
-	_, err := ds.executeQuery(ctx, query, dsInfo, &http.Client{}, dsInfo.Services["Azure Log Analytics"].URL)
-	if !strings.Contains(err.Error(), "credentials for Log Analytics are no longer supported") {
-		t.Error("Expecting the error to inform of bad credentials")
+	tracer := tracing.InitializeTracerForTest()
+	res := ds.executeQuery(ctx, logger, query, dsInfo, &http.Client{}, dsInfo.Services["Azure Log Analytics"].URL, tracer.(azTracing.Tracer))
+	if res.Error == nil {
+		t.Fatal("expecting an error")
+	}
+	if !strings.Contains(res.Error.Error(), "credentials for Log Analytics are no longer supported") {
+		t.Error("expecting the error to inform of bad credentials")
 	}
 }
