@@ -53,7 +53,10 @@ deny = [
   { pkg = "github.com/grafana/grafana/pkg/tests", desc = "Core plugins are not allowed to depend on Grafana core packages" },
   { pkg = "github.com/grafana/grafana/pkg/web", desc = "Core plugins are not allowed to depend on Grafana core packages" },
 ]
-files = ["**/pkg/tsdb/testdatasource/*", "**/pkg/tsdb/testdatasource/**/*"]
+files = [
+  "**/pkg/tsdb/grafana-testdata-datasource/*",
+  "**/pkg/tsdb/grafana-testdata-datasource/**/*",
+]
 
 [linters-settings.gocritic]
 enabled-checks = ["ruleguard"]

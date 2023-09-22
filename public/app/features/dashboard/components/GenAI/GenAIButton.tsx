@@ -7,20 +7,27 @@ import { Button, Spinner, useStyles2, Link, Tooltip } from '@grafana/ui';
 import { Message, generateTextWithLLM, isLLMPluginEnabled } from './utils';
 
 export interface GenAIButtonProps {
+  // Button label text
   text?: string;
+  // Button label text when loading
   loadingText?: string;
+  // Button click handler
   onClick?: (e: React.MouseEvent<HTMLButtonElement>) => void;
+  // Messages to send to the LLM plugin
   messages: Message[];
-  onReply: (response: string, isDone: boolean) => void;
+  // Callback when the LLM plugin responds. It is sreaming, so it will be called multiple times.
+  onGenerate: (response: string, isDone: boolean) => void;
+  // Temperature for the LLM plugin. Default is 1.
+  // Closer to 0 means more conservative, closer to 1 means more creative.
   temperature?: number;
 }
 
 export const GenAIButton = ({
   text = 'Auto-generate',
   loadingText = 'Generating',
-  onClick,
+  onClick: onClickProp,
   messages,
-  onReply,
+  onGenerate,
   temperature = 1,
 }: GenAIButtonProps) => {
   const styles = useStyles2(getStyles);
@@ -29,11 +36,11 @@ export const GenAIButton = ({
 
   const replyHandler = (response: string, isDone: boolean) => {
     setLoading(!isDone);
-    onReply(response, isDone);
+    onGenerate(response, isDone);
   };
 
-  const onGenerate = (e: React.MouseEvent<HTMLButtonElement>) => {
-    onClick?.(e);
+  const onClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+    onClickProp?.(e);
     setLoading(true);
     generateTextWithLLM(messages, replyHandler, temperature);
   };
@@ -67,7 +74,7 @@ export const GenAIButton = ({
           </span>
         }
       >
-        <Button icon={getIcon()} onClick={onGenerate} fill="text" size="sm" disabled={loading || !enabled}>
+        <Button icon={getIcon()} onClick={onClick} fill="text" size="sm" disabled={loading || !enabled}>
           {!loading ? text : loadingText}
         </Button>
       </Tooltip>

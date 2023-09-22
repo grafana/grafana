@@ -790,7 +790,7 @@ export class DashboardMigrator {
               if (panelDataSourceWasDefault && target.datasource?.uid !== '__expr__') {
                 // We can have situations when default ds changed and the panel level data source is different from the queries
                 // In this case we use the query level data source as source for truth
-                panel.datasource = target.datasource as DataSourceRef;
+                panel.datasource = target.datasource;
               }
             }
           }
@@ -1206,7 +1206,7 @@ export function migrateDatasourceNameToRef(
 
   const ds = getDataSourceSrv().getInstanceSettings(nameOrRef);
   if (!ds) {
-    return { uid: nameOrRef as string }; // not found
+    return { uid: nameOrRef ? nameOrRef : undefined }; // not found
   }
 
   return getDataSourceRef(ds);
