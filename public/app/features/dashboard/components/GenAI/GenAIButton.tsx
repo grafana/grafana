@@ -13,7 +13,7 @@ export interface GenAIButtonProps {
   loadingText?: string;
   onClick?: (e: React.MouseEvent<HTMLButtonElement>) => void;
   messages: llms.openai.Message[];
-  onReply: (response: string, isDone: boolean) => void;
+  onReply: (response: string) => void;
   temperature?: number;
 }
 
@@ -28,7 +28,7 @@ export const GenAIButton = ({
   const styles = useStyles2(getStyles);
 
   // TODO: Implement error handling (use error object from hook)
-  const { setMessages, reply, started, finished, loading, value } = useOpenaiStreamHook(OPEN_AI_MODEL, temperature);
+  const { setMessages, reply, started, loading, value } = useOpenaiStreamHook(OPEN_AI_MODEL, temperature);
 
   const onGenerate = (e: React.MouseEvent<HTMLButtonElement>) => {
     onClick?.(e);
@@ -36,7 +36,7 @@ export const GenAIButton = ({
   };
 
   if (started) {
-    onReply(reply, finished);
+    onReply(reply);
   }
 
   const isGenerating = loading || started;

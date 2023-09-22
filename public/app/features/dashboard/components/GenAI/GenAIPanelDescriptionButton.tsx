@@ -9,7 +9,7 @@ import { GenAIButton } from './GenAIButton';
 import { Role } from './utils';
 
 interface GenAIPanelDescriptionButtonProps {
-  onGenerate: (description: string, isDone: boolean) => void;
+  onGenerate: (description: string) => void;
   panel: PanelModel;
 }
 
