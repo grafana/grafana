@@ -71,7 +71,9 @@ type ManagerCfg struct {
 func NewManager(cfg ManagerCfg) *Manager {
 	// Metrics for the cache use a collector, so they need access to the register directly.
 	c := newCache()
-	c.RegisterMetrics(cfg.Metrics.Registerer())
+	if cfg.Metrics != nil {
+		c.RegisterMetrics(cfg.Metrics.Registerer())
+	}
 
 	m := &Manager{
 		cache:                          c,
