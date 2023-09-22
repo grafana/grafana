@@ -21,7 +21,7 @@ export const ColumnsNumber: StoryFn<typeof Grid> = (args) => {
   return (
     <Grid gap={args.gap} columns={args.columns}>
       {Array.from({ length: 9 }).map((_, i) => (
-        <div key={i} style={{ background: 'gray' }}>
+        <div key={i} style={{ background: 'gray', textAlign: 'center' }}>
           {' '}
           n #{i}
         </div>
