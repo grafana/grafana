@@ -27,13 +27,13 @@ const CHANGES_GENERATION_STANDARD_PROMPT = [
 
 export const GenAIDashboardChangesButton = ({ dashboard, onGenerate }: GenAIDashboardChangesButtonProps) => {
   const messages = useMemo(() => getMessages(dashboard), [dashboard]);
-  const reportClick = React.useCallback(() => reportGenerateAIButtonClicked(EventSource.dashboardChanges), []);
+  const onClick = React.useCallback(() => reportGenerateAIButtonClicked(EventSource.dashboardChanges), []);
 
   return (
     <GenAIButton
       messages={messages}
       onGenerate={onGenerate}
-      onClick={reportClick}
+      onClick={onClick}
       loadingText={'Generating changes summary'}
       temperature={0}
     />

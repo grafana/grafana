@@ -105,7 +105,6 @@ export const SaveDashboardForm = ({
                     });
                     setMessage(text);
                   }}
-                  onClick={() => reportInteraction('dashboards_autogenerate_clicked', { src: 'dashboard-changes' })}
                 />
               )}
               <TextArea

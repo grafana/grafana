@@ -18,11 +18,9 @@ const DESCRIPTION_GENERATION_STANDARD_PROMPT =
 
 export const GenAIDashTitleButton = ({ onGenerate, dashboard }: GenAIDashTitleButtonProps) => {
   const messages = React.useMemo(() => getMessages(dashboard), [dashboard]);
-  const reportClick = React.useCallback(() => reportGenerateAIButtonClicked(EventSource.dashboardTitle), []);
+  const onClick = React.useCallback(() => reportGenerateAIButtonClicked(EventSource.dashboardTitle), []);
 
-  return (
-    <GenAIButton messages={messages} onClick={reportClick} onGenerate={onGenerate} loadingText={'Generating title'} />
-  );
+  return <GenAIButton messages={messages} onClick={onClick} onGenerate={onGenerate} loadingText={'Generating title'} />;
 };
 
 function getMessages(dashboard: DashboardModel): Message[] {

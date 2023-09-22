@@ -25,7 +25,7 @@ export interface GenAIButtonProps {
 export const GenAIButton = ({
   text = 'Auto-generate',
   loadingText = 'Generating',
-  onClick,
+  onClick: onClickProp,
   messages,
   onGenerate,
   temperature = 1,
@@ -39,8 +39,8 @@ export const GenAIButton = ({
     onGenerate(response, isDone);
   };
 
-  const clickHandler = (e: React.MouseEvent<HTMLButtonElement>) => {
-    onClick?.(e);
+  const onClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+    onClickProp?.(e);
     setLoading(true);
     generateTextWithLLM(messages, replyHandler, temperature);
   };
@@ -74,7 +74,7 @@ export const GenAIButton = ({
           </span>
         }
       >
-        <Button icon={getIcon()} onClick={clickHandler} fill="text" size="sm" disabled={loading || !enabled}>
+        <Button icon={getIcon()} onClick={onClick} fill="text" size="sm" disabled={loading || !enabled}>
           {!loading ? text : loadingText}
         </Button>
       </Tooltip>

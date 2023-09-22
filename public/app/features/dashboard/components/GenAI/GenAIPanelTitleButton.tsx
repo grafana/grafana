@@ -19,11 +19,9 @@ const TITLE_GENERATION_STANDARD_PROMPT =
 
 export const GenAIPanelTitleButton = ({ onGenerate, panel }: GenAIPanelTitleButtonProps) => {
   const messages = React.useMemo(() => getMessages(panel), [panel]);
-  const reportClick = React.useCallback(() => reportGenerateAIButtonClicked(EventSource.panelTitle), []);
+  const onClick = React.useCallback(() => reportGenerateAIButtonClicked(EventSource.panelTitle), []);
 
-  return (
-    <GenAIButton messages={messages} onClick={reportClick} onGenerate={onGenerate} loadingText={'Generating title'} />
-  );
+  return <GenAIButton messages={messages} onClick={onClick} onGenerate={onGenerate} loadingText={'Generating title'} />;
 };
 
 function getMessages(panel: PanelModel): Message[] {
