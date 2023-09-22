@@ -91,21 +91,21 @@ func TestGetHomeDashboard(t *testing.T) {
 		req                   *contextmodel.ReqContext
 	}{
 		{
-			name:                  "using default config",
+			name:                  "using default configuration settings",
 			defaultSetting:        "",
 			expectedDashboardPath: "../../public/dashboards/home.json",
 			req:                   &contextmodel.ReqContext{SignedInUser: &user.SignedInUser{}, Context: &web.Context{Req: httpReq}},
 		},
 		{
-			name:                  "custom path",
+			name:                  "using custom path for configuration settings",
 			defaultSetting:        "../../public/dashboards/default.json",
 			expectedDashboardPath: "../../public/dashboards/default.json",
 			req:                   &contextmodel.ReqContext{SignedInUser: &user.SignedInUser{}, Context: &web.Context{Req: httpReq}},
 		},
 		{
-			name:                  "custom path",
-			defaultSetting:        "../../public/dashboards/default.json",
-			expectedDashboardPath: "../../public/dashboards/default.json",
+			name:                  "using anonymous user with default configuration settings",
+			defaultSetting:        "",
+			expectedDashboardPath: "../../public/dashboards/home.json",
 			req: &contextmodel.ReqContext{SignedInUser: &user.SignedInUser{
 				IsAnonymous: true,
 			}, Context: &web.Context{Req: httpReq}},
