@@ -48,7 +48,7 @@ describe('Panel sandbox', () => {
     });
   });
 
-  describe.only('Sandbox enabled', () => {
+  describe('Sandbox enabled', () => {
     beforeEach(() => {
       e2e.flows.openDashboard({
         uid: DASHBOARD_ID,
