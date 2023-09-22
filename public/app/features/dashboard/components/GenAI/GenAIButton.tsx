@@ -2,17 +2,16 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { llms } from '@grafana/experimental';
 import { Button, Spinner, useStyles2, Link, Tooltip } from '@grafana/ui';
 
 import { useOpenAIStream } from './hooks';
-import { OPEN_AI_MODEL } from './utils';
+import { OPEN_AI_MODEL, Message } from './utils';
 
 export interface GenAIButtonProps {
   text?: string;
   loadingText?: string;
   onClick?: (e: React.MouseEvent<HTMLButtonElement>) => void;
-  messages: llms.openai.Message[];
+  messages: Message[];
   onReply: (response: string) => void;
   temperature?: number;
 }

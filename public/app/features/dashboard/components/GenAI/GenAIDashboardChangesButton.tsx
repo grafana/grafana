@@ -5,7 +5,7 @@ import { llms } from '@grafana/experimental';
 import { DashboardModel } from '../../state';
 
 import { GenAIButton } from './GenAIButton';
-import { getDashboardChanges, Role } from './utils';
+import { getDashboardChanges, Role, Message } from './utils';
 
 interface GenAIDashboardChangesButtonProps {
   dashboard: DashboardModel;
@@ -34,7 +34,7 @@ export const GenAIDashboardChangesButton = ({ dashboard, onGenerate }: GenAIDash
   );
 };
 
-function getMessages(dashboard: DashboardModel): llms.openai.Message[] {
+function getMessages(dashboard: DashboardModel): Message[] {
   const { userChanges, migrationChanges } = getDashboardChanges(dashboard);
 
   return [

@@ -1,3 +1,5 @@
+import { llms } from '@grafana/experimental';
+
 import { DashboardModel } from '../../state';
 import { Diffs, jsonDiff } from '../VersionHistory/utils';
 
@@ -37,3 +39,5 @@ export function getDashboardChanges(dashboard: DashboardModel): {
     migrationChanges: jsonDiff(originalDashboard, dashboardAfterMigration),
   };
 }
+
+export type Message = llms.openai.Message;;
