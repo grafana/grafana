@@ -59,6 +59,13 @@ const getStyles = (theme: GrafanaTheme2, invalid: boolean) => {
     // When classnames are applied to the same element as the wrapper, it causes the suggestions to stop working
     inputWrapper: inputStyles.inputWrapper,
     wrapper: inputStyles.wrapper,
+    slateInput: css({
+      overflow: 'hidden',
+      '& > div': {
+        whiteSpace: 'nowrap !important' as 'nowrap',
+        overflowWrap: 'normal !important' as 'normal',
+      },
+    }),
   };
 };
 
@@ -167,7 +174,7 @@ export const SuggestionsInput = memo(
 
     return (
       <div className={cx(styles.wrapper, className)}>
-        <div ref={inputRef} className={cx(styles.inputWrapper, className)}>
+        <div ref={inputRef} className={cx(styles.inputWrapper, styles.slateInput)}>
           {showingSuggestions && (
             <Portal>
               <ReactPopper
@@ -233,7 +240,6 @@ export const SuggestionsInput = memo(
               css({
                 padding: '3px 8px',
                 minHeight: '32px',
-                width: width ?? '100%',
               })
             )}
           />

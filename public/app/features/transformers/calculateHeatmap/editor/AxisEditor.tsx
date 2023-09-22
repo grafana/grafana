@@ -70,7 +70,6 @@ export const AxisEditor = ({ value, onChange, item }: StandardEditorProps<Heatma
           placeholder="Auto"
           onChange={onValueChange}
           suggestions={variables}
-          width={150}
         />
       </Field>
     </HorizontalGroup>
