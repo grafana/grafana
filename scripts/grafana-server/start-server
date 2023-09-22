@@ -34,6 +34,7 @@ mkdir $PROV_DIR/dashboards
 cp ./scripts/grafana-server/custom.ini $RUNDIR/conf/custom.ini
 cp ./conf/defaults.ini $RUNDIR/conf/defaults.ini
 
+echo -e "Copying custom plugins from e2e tests"
 # copy custom plugins required for e2e tests
 if [ -d "./e2e/custom-plugins" ]; then
   mkdir -p $RUNDIR/data/plugins
