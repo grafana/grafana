@@ -33,7 +33,7 @@ Grafana offers a variety of visualizations to support different use cases. This 
   - [Logs]({{< relref "logs/" >}}) is the main visualization for logs.
   - [Node graph]({{< relref "node-graph/" >}}) for directed graphs or networks.
   - [Traces]({{< relref "traces/" >}}) is the main visualization for traces.
-  - [Flame Graph]({{< relref "flame-graph/" >}}) is the main visualization for profiling.
+  - [Flame graph]({{< relref "flame-graph/" >}}) is the main visualization for profiling.
 - Widgets
   - [Dashboard list]({{< relref "dashboard-list/" >}}) can list dashboards.
   - [Alert list]({{< relref "alert-list/" >}}) can list alerts.
