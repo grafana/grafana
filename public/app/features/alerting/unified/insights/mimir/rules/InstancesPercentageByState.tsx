@@ -1,6 +1,6 @@
 import { ThresholdsMode } from '@grafana/data';
 import { PanelBuilders, SceneFlexItem, SceneQueryRunner, SceneTimeRange } from '@grafana/scenes';
-import { DataSourceRef, GraphDrawStyle } from '@grafana/schema';
+import { DataSourceRef, GraphDrawStyle, TooltipDisplayMode } from '@grafana/schema';
 
 import { PANEL_STYLES } from '../../../home/Insights';
 
@@ -31,6 +31,7 @@ export function getInstancesPercentageByStateScene(
       .setCustomFieldConfig('fillOpacity', 45)
       .setUnit('percentunit')
       .setMax(1)
+      .setOption('tooltip', { mode: TooltipDisplayMode.Multi })
       .setThresholds({
         mode: ThresholdsMode.Absolute,
         steps: [
