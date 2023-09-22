@@ -46,7 +46,7 @@ fi
 if [ -d "../e2e/custom-plugins" ]; then
   echo -e "found custom plugins (nested) to copy to $RUNDIR/data/plugins"
   mkdir -p $RUNDIR/data/plugins
-  cp -r ./e2e/custom-plugins $RUNDIR/data/plugins
+  cp -r ../e2e/custom-plugins $RUNDIR/data/plugins
 fi
 
 
