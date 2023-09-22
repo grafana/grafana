@@ -3646,7 +3646,7 @@ steps:
       from_secret: packages_gpg_private_key
     gpg_public_key:
       from_secret: packages_gpg_public_key
-    package_path: file://${DRONE_WORKSPACE}/dist/*.deb
+    package_path: file:///drone/src/dist/*.deb
     secret_access_key:
       from_secret: packages_secret_access_key
     service_account_json:
@@ -3669,7 +3669,7 @@ steps:
       from_secret: packages_gpg_private_key
     gpg_public_key:
       from_secret: packages_gpg_public_key
-    package_path: file://${DRONE_WORKSPACE}/dist/*.rpm
+    package_path: file:///drone/src/dist/*.rpm
     secret_access_key:
       from_secret: packages_secret_access_key
     service_account_json:
@@ -4646,6 +4646,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 7743f895366b352e4c793f51b7b8e7751b943e5c36180c5d2c4587034afb757d
+hmac: 543446fe4a329faed8d7f4e72ebdb4a719ab6fee954244a585612f7a7c839564
 
 ...
