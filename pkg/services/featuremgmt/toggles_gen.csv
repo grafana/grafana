@@ -110,3 +110,4 @@ wargamesTesting,experimental,@grafana/hosted-grafana-team,false,false,false,fals
 alertingInsights,experimental,@grafana/alerting-squad,false,false,false,true
 externalCorePlugins,experimental,@grafana/plugins-platform-backend,false,false,false,false
 pluginsAPIMetrics,experimental,@grafana/plugins-platform-backend,false,false,false,true
+httpSLOLevels,experimental,@grafana/hosted-grafana-team,false,false,true,false

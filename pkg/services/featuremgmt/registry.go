@@ -772,5 +772,13 @@ var (
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaPluginsPlatformSquad,
 		},
+		{
+			Name:            "httpSLOLevels",
+			Description:     "Adds SLO level to http request metrics",
+			Stage:           FeatureStageExperimental,
+			FrontendOnly:    false,
+			Owner:           hostedGrafanaTeam,
+			RequiresRestart: true,
+		},
 	}
 )

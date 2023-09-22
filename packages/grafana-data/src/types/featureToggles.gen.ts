@@ -129,4 +129,5 @@ export interface FeatureToggles {
   alertingInsights?: boolean;
   externalCorePlugins?: boolean;
   pluginsAPIMetrics?: boolean;
+  httpSLOLevels?: boolean;
 }
