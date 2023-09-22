@@ -96,18 +96,18 @@ export const decorateWithFrameTypeMetadata = (data: PanelData): ExplorePanelData
 };
 
 export const decorateWithCorrelations = ({
-  defaultDatasource,
   showCorrelationEditorLinks,
   queries,
   correlations,
+  defaultTargetDatasource,
 }: {
-  defaultDatasource: DataSourceApi;
   showCorrelationEditorLinks: boolean;
   queries: DataQuery[] | undefined;
   correlations: CorrelationData[] | undefined;
+  defaultTargetDatasource?: DataSourceApi;
 }) => {
   return (data: PanelData): PanelData => {
-    if (showCorrelationEditorLinks) {
+    if (showCorrelationEditorLinks && defaultTargetDatasource) {
       for (const frame of data.series) {
         for (const field of frame.fields) {
           field.config.links = []; // hide all previous links, we only want to show fake correlations in this view
@@ -124,9 +124,9 @@ export const decorateWithCorrelations = ({
             origin: DataLinkConfigOrigin.ExploreCorrelationsEditor,
             title: `Correlate with ${field.name}`,
             internal: {
-              datasourceUid: defaultDatasource.uid,
-              datasourceName: defaultDatasource.name,
-              query: { datasource: { uid: defaultDatasource.uid } },
+              datasourceUid: defaultTargetDatasource.uid,
+              datasourceName: defaultTargetDatasource.name,
+              query: { datasource: { uid: defaultTargetDatasource.uid } },
               meta: {
                 correlationData: { resultField: field.name, vars: availableVars },
               },
@@ -284,18 +284,25 @@ export const decorateWithLogsResult =
 
 // decorateData applies all decorators
 export function decorateData(
-  defaultDatasource: DataSourceApi,
   data: PanelData,
   queryResponse: PanelData,
   absoluteRange: AbsoluteTimeRange,
   refreshInterval: string | undefined,
   queries: DataQuery[] | undefined,
   correlations: CorrelationData[] | undefined,
-  showCorrelationEditorLinks: boolean
+  showCorrelationEditorLinks: boolean,
+  defaultCorrelationTargetDatasource?: DataSourceApi
 ): Observable<ExplorePanelData> {
   return of(data).pipe(
     map((data: PanelData) => preProcessPanelData(data, queryResponse)),
-    map(decorateWithCorrelations({ defaultDatasource, showCorrelationEditorLinks, queries, correlations })),
+    map(
+      decorateWithCorrelations({
+        defaultTargetDatasource: defaultCorrelationTargetDatasource,
+        showCorrelationEditorLinks,
+        queries,
+        correlations,
+      })
+    ),
     map(decorateWithFrameTypeMetadata),
     map(decorateWithGraphResult),
     map(decorateWithLogsResult({ absoluteRange, refreshInterval, queries })),
