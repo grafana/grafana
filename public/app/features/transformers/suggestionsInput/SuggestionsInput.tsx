@@ -55,9 +55,6 @@ export const SuggestionsInput = ({
   const theme = useTheme2();
   const styles = getStyles(theme, inputHeight);
 
-  const stateRef = useRef({ showingSuggestions, suggestions, suggestionsIndex, variableValue, onChange });
-  stateRef.current = { showingSuggestions, suggestions, suggestionsIndex, variableValue, onChange };
-
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Used to get the height of the suggestion elements in order to scroll to them.
@@ -66,58 +63,67 @@ export const SuggestionsInput = ({
     setScrollTop(getElementPosition(activeRef.current, suggestionsIndex));
   }, [suggestionsIndex]);
 
-  const onKeyDown = React.useCallback((event: React.KeyboardEvent) => {
-    if (!stateRef.current.showingSuggestions) {
-      if (event.key === '$' || (event.key === 'space' && event.ctrlKey)) {
-        return setShowingSuggestions(true);
+  const onVariableSelect = React.useCallback(
+    (item: VariableSuggestion, input = inputRef.current!) => {
+      const curPos = input.selectionStart!;
+      const x = input.value;
+
+      if (x[curPos - 1] === '$') {
+        input.value = x.slice(0, curPos) + item.value + x.slice(curPos);
+      } else {
+        input.value = x.slice(0, curPos) + '$' + item.value + x.slice(curPos);
       }
-      return;
-    }
 
-    switch (event.key) {
-      case 'Backspace':
-      case 'Escape':
-        setShowingSuggestions(false);
-        return setSuggestionsIndex(0);
+      setVariableValue(input.value);
+      setShowingSuggestions(false);
 
-      case 'Enter':
-        event.preventDefault();
-        return onVariableSelect(stateRef.current.suggestions[stateRef.current.suggestionsIndex]);
+      setSuggestionsIndex(0);
+      onChange(input.value);
+    },
+    [onChange]
+  );
 
-      case 'ArrowDown':
-      case 'ArrowUp':
-        event.preventDefault();
-        const direction = event.key === 'ArrowDown' ? 1 : -1;
-        return setSuggestionsIndex((index) => modulo(index + direction, stateRef.current.suggestions.length));
-      default:
+  const onKeyDown = React.useCallback(
+    (event: React.KeyboardEvent) => {
+      if (!showingSuggestions) {
+        if (event.key === '$' || (event.key === ' ' && event.ctrlKey)) {
+          return setShowingSuggestions(true);
+        }
         return;
-    }
-  }, []);
+      }
+
+      switch (event.key) {
+        case 'Backspace':
+        case 'Escape':
+          setShowingSuggestions(false);
+          return setSuggestionsIndex(0);
+
+        case 'Enter':
+          event.preventDefault();
+          return onVariableSelect(suggestions[suggestionsIndex]);
+
+        case 'ArrowDown':
+        case 'ArrowUp':
+          event.preventDefault();
+          const direction = event.key === 'ArrowDown' ? 1 : -1;
+          return setSuggestionsIndex((index) => modulo(index + direction, suggestions.length));
+        default:
+          return;
+      }
+    },
+    [showingSuggestions, suggestions, suggestionsIndex, onVariableSelect]
+  );
 
   const onValueChanged = React.useCallback((event: FormEvent<HTMLInputElement>) => {
     setVariableValue(event.currentTarget.value);
   }, []);
 
-  const onBlur = React.useCallback((event: FormEvent<HTMLInputElement>) => {
-    stateRef.current.onChange(event.currentTarget.value);
-  }, []);
-
-  const onVariableSelect = (item: VariableSuggestion, input = inputRef.current!) => {
-    const curPos = input.selectionStart!;
-    const x = input.value;
-
-    if (x[curPos - 1] === '$') {
-      input.value = x.slice(0, curPos) + item.value + x.slice(curPos);
-    } else {
-      input.value = x.slice(0, curPos) + '$' + item.value + x.slice(curPos);
-    }
-
-    setVariableValue(input.value);
-    setShowingSuggestions(false);
-
-    setSuggestionsIndex(0);
-    stateRef.current.onChange(input.value);
-  };
+  const onBlur = React.useCallback(
+    (event: FormEvent<HTMLInputElement>) => {
+      onChange(event.currentTarget.value);
+    },
+    [onChange]
+  );
 
   useEffect(() => {
     setInputHeight(inputRef.current!.clientHeight);
@@ -164,7 +170,7 @@ export const SuggestionsInput = ({
                           We should probably rename this to something more general. */}
                     <DataLinkSuggestions
                       activeRef={activeRef}
-                      suggestions={stateRef.current.suggestions}
+                      suggestions={suggestions}
                       onSuggestionSelect={onVariableSelect}
                       onClose={() => setShowingSuggestions(false)}
                       activeIndex={suggestionsIndex}
@@ -185,7 +191,7 @@ export const SuggestionsInput = ({
         placeholder={placeholder}
         invalid={invalid}
         ref={inputRef}
-        value={stateRef.current.variableValue}
+        value={variableValue}
         onChange={onValueChanged}
         onBlur={onBlur}
         onKeyDown={onKeyDown}
