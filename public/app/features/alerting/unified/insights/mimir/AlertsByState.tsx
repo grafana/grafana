@@ -25,6 +25,12 @@ export function getAlertsByStateScene(timeRange: SceneTimeRange, datasource: Dat
       .setData(query)
       .setCustomFieldConfig('drawStyle', GraphDrawStyle.Line)
       .setOption('tooltip', { mode: TooltipDisplayMode.Multi })
+      .setOverrides((b) =>
+        b.matchFieldsWithName('active').overrideColor({
+          mode: 'fixed',
+          fixedColor: 'red',
+        })
+      )
       .build(),
   });
 }

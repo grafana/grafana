@@ -30,6 +30,12 @@ export function getRuleGroupEvaluationDurationScene(
       .setCustomFieldConfig('drawStyle', GraphDrawStyle.Line)
       .setUnit('s')
       .setOption('tooltip', { mode: TooltipDisplayMode.Multi })
+      .setOverrides((b) =>
+        b.matchFieldsByQuery('A').overrideColor({
+          mode: 'fixed',
+          fixedColor: 'blue',
+        })
+      )
       .build(),
   });
 }

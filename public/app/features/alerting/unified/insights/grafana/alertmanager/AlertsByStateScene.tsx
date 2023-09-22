@@ -29,6 +29,12 @@ export function getGrafanaAlertmanagerInstancesByStateScene(
       .setData(query)
       .setCustomFieldConfig('drawStyle', GraphDrawStyle.Line)
       .setOption('tooltip', { mode: TooltipDisplayMode.Multi })
+      .setOverrides((b) =>
+        b.matchFieldsWithName('alerting').overrideColor({
+          mode: 'fixed',
+          fixedColor: 'red',
+        })
+      )
       .build(),
   });
 }

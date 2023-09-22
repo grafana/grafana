@@ -25,6 +25,12 @@ export function getInstancesByStateScene(timeRange: SceneTimeRange, datasource: 
       .setData(query)
       .setCustomFieldConfig('drawStyle', GraphDrawStyle.Line)
       .setOption('tooltip', { mode: TooltipDisplayMode.Multi })
+      .setOverrides((b) =>
+        b.matchFieldsWithName('firing').overrideColor({
+          mode: 'fixed',
+          fixedColor: 'red',
+        })
+      )
       .build(),
   });
 }

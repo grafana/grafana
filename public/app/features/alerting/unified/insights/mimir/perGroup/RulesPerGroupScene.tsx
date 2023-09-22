@@ -26,6 +26,12 @@ export function getRulesPerGroupScene(timeRange: SceneTimeRange, datasource: Dat
       .setCustomFieldConfig('drawStyle', GraphDrawStyle.Line)
       .setUnit('none')
       .setOption('tooltip', { mode: TooltipDisplayMode.Multi })
+      .setOverrides((b) =>
+        b.matchFieldsByQuery('A').overrideColor({
+          mode: 'fixed',
+          fixedColor: 'blue',
+        })
+      )
       .build(),
   });
 }

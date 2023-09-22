@@ -33,19 +33,12 @@ export function getInstancesPercentageByStateScene(
       .setUnit('percentunit')
       .setMax(1)
       .setOption('tooltip', { mode: TooltipDisplayMode.Multi })
-      .setThresholds({
-        mode: ThresholdsMode.Absolute,
-        steps: [
-          {
-            color: 'green',
-            value: 0,
-          },
-          {
-            color: 'red',
-            value: 80,
-          },
-        ],
-      })
+      .setOverrides((b) =>
+        b.matchFieldsWithName('firing').overrideColor({
+          mode: 'fixed',
+          fixedColor: 'red',
+        })
+      )
       .build(),
   });
 }

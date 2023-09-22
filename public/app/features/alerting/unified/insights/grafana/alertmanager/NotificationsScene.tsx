@@ -34,6 +34,12 @@ export function getGrafanaAlertmanagerNotificationsScene(
       .setDescription(panelTitle)
       .setData(query)
       .setCustomFieldConfig('drawStyle', GraphDrawStyle.Line)
+      .setOverrides((b) =>
+        b.matchFieldsWithName('failed').overrideColor({
+          mode: 'fixed',
+          fixedColor: 'red',
+        })
+      )
       .build(),
   });
 }
