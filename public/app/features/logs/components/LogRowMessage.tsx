@@ -1,7 +1,8 @@
-import React, { useEffect, useMemo, useRef } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState, MouseEvent, ReactElement } from 'react';
 import Highlighter from 'react-highlight-words';
 
 import { CoreApp, findHighlightChunksInText, LogRowModel } from '@grafana/data';
+import { Dropdown, Menu } from '@grafana/ui';
 
 import { LogMessageAnsi } from './LogMessageAnsi';
 import { LogRowMenuCell } from './LogRowMenuCell';
@@ -81,36 +82,7 @@ export const LogRowMessage = React.memo((props: Props) => {
   const { hasAnsi, raw } = row;
   const restructuredEntry = useMemo(() => restructureLog(raw, prettifyLogMessage), [raw, prettifyLogMessage]);
   const shouldShowMenu = useMemo(() => mouseIsOver || pinned, [mouseIsOver, pinned]);
-  const logRef = useRef<HTMLButtonElement | null>(null);
-
-  useEffect(() => {
-    const logRow = logRef.current;
-    if (!logRow) {
-      return;
-    }
-
-    const handlePropagation = (e: MouseEvent) => {
-      if (document.getSelection()?.toString()) {
-        e.stopPropagation();
-      }
-    };
-    const handleSelection = (e: MouseEvent) => {
-      const selection = document.getSelection()?.toString();
-      if (!selection) {
-        return;
-      }
-      console.log(selection);
-    }
-
-    logRow.addEventListener('mouseup', handleSelection);
-    logRow.addEventListener('click', handlePropagation);
-
-    return () => {
-      logRow.removeEventListener('mouseup', handleSelection);
-      logRow.removeEventListener('click', handlePropagation);
-    };
-  }, [])
-
+  
   return (
     <>
       {
@@ -119,9 +91,9 @@ export const LogRowMessage = React.memo((props: Props) => {
       }
       <td className={styles.logsRowMessage}>
         <div className={wrapLogMessage ? styles.positionRelative : styles.horizontalScroll}>
-          <button className={`${styles.logLine} ${styles.positionRelative}`} ref={logRef}>
-            <LogMessage hasAnsi={hasAnsi} entry={restructuredEntry} highlights={row.searchWords} styles={styles} />
-          </button>
+            <PopoverMenuHandler styles={styles}>
+              <LogMessage hasAnsi={hasAnsi} entry={restructuredEntry} highlights={row.searchWords} styles={styles} />
+            </PopoverMenuHandler>
         </div>
       </td>
       <td className={`log-row-menu-cell ${styles.logRowMenuCell}`}>
@@ -144,5 +116,59 @@ export const LogRowMessage = React.memo((props: Props) => {
     </>
   );
 });
+
+interface PopoverMenuHandlerProps {
+  styles: LogRowStyles;
+  children: ReactElement;
+}
+
+const PopoverMenuHandler = ({ children, styles }: PopoverMenuHandlerProps) => {
+  const [showContextMenu, setShowContextMenu] = useState(false);
+  const [xCoordinate, setXcoordinate] = useState(0);
+
+  useEffect(() => {
+    const handleDeselect = () => {
+      setShowContextMenu(false);
+    }
+    document.addEventListener("selectionchange", handleDeselect);
+    return () => {
+      document.removeEventListener("selectionchange", handleDeselect);
+    };
+  }, []);
+
+  const handlePropagation = useCallback((e: MouseEvent) => {
+    if (document.getSelection()?.toString()) {
+      e.stopPropagation();
+    }
+  }, []);
+  const handleSelection = useCallback((e: MouseEvent<HTMLButtonElement>) => {
+    const selection = document.getSelection()?.toString();
+    if (!selection) {
+      return;
+    }
+    const position = e.currentTarget.getBoundingClientRect();
+    setShowContextMenu(true);
+    setXcoordinate(e.clientX - position.left);
+  }, []);
+
+  const menu = useMemo(() => (
+    <div style={{ position: "absolute", top: 0, left: xCoordinate, zIndex: 9999 }}>
+      <Menu>
+        <Menu.Item label="Copy" onClick={() => {}} />
+        <Menu.Item label="Filter for" onClick={() => {}} />
+        <Menu.Item label="Filter out" onClick={() => {}} />
+      </Menu>
+    </div>
+  ), [xCoordinate]);
+
+  return (
+    <div style={{ position: "relative" }}>
+      {showContextMenu && menu}
+      <button className={`${styles.logLine} ${styles.positionRelative}`} onClick={handlePropagation} onMouseUp={handleSelection}>
+        <>{children}</>
+      </button>
+    </div>
+  )
+}
 
 LogRowMessage.displayName = 'LogRowMessage';
