@@ -3861,7 +3861,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/faro-core@npm:1.2.1":
+"@grafana/faro-core@npm:1.2.1, @grafana/faro-core@npm:^1.2.1":
   version: 1.2.1
   resolution: "@grafana/faro-core@npm:1.2.1"
   dependencies:
@@ -3873,26 +3873,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/faro-core@npm:^1.1.2":
-  version: 1.1.2
-  resolution: "@grafana/faro-core@npm:1.1.2"
+"@grafana/faro-web-sdk@npm:1.2.1":
+  version: 1.2.1
+  resolution: "@grafana/faro-web-sdk@npm:1.2.1"
   dependencies:
-    "@opentelemetry/api": ^1.4.1
-    "@opentelemetry/api-metrics": ^0.33.0
-    "@opentelemetry/otlp-transformer": ^0.37.0
-    murmurhash-js: ^1.0.0
-  checksum: 7d2b8343c28ba7e028fa918f4ee3c0ffbf0171b975d778402adb9a2bede169f854664f18bbd12f5c7c25c2d8b88af3fdfa40af598eae3a5d0c0e7e57c9414005
-  languageName: node
-  linkType: hard
-
-"@grafana/faro-web-sdk@npm:1.1.2":
-  version: 1.1.2
-  resolution: "@grafana/faro-web-sdk@npm:1.1.2"
-  dependencies:
-    "@grafana/faro-core": ^1.1.2
+    "@grafana/faro-core": ^1.2.1
     ua-parser-js: ^1.0.32
     web-vitals: ^3.1.1
-  checksum: 7a2086c946a388590eb73d2d02f5e011db7cbeb9120ba67eab40b9824848cff99764bf76ea5cd168c749d4e0e3682aa79c89a4e84b1f0947326dbbdf1fd1d937
+  checksum: bc91b2a282dbcb66c5530c5b915de4166a9bd51d58914cbfadd64201f95c757d71a36ebf65f4a73dedde506d68201baa522e3fbe63af2fbc8beb5305da68dcbd
   languageName: node
   linkType: hard
 
@@ -3986,7 +3974,7 @@ __metadata:
   dependencies:
     "@grafana/data": 10.2.0-pre
     "@grafana/e2e-selectors": 10.2.0-pre
-    "@grafana/faro-web-sdk": 1.1.2
+    "@grafana/faro-web-sdk": 1.2.1
     "@grafana/tsconfig": ^1.2.0-rc1
     "@grafana/ui": 10.2.0-pre
     "@rollup/plugin-commonjs": 25.0.2
@@ -4085,7 +4073,7 @@ __metadata:
     "@emotion/react": 11.11.1
     "@grafana/data": 10.2.0-pre
     "@grafana/e2e-selectors": 10.2.0-pre
-    "@grafana/faro-web-sdk": 1.1.2
+    "@grafana/faro-web-sdk": 1.2.1
     "@grafana/schema": 10.2.0-pre
     "@grafana/tsconfig": ^1.2.0-rc1
     "@leeoniya/ufuzzy": 1.0.8
@@ -6567,17 +6555,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@opentelemetry/core@npm:1.11.0":
-  version: 1.11.0
-  resolution: "@opentelemetry/core@npm:1.11.0"
-  dependencies:
-    "@opentelemetry/semantic-conventions": 1.11.0
-  peerDependencies:
-    "@opentelemetry/api": ">=1.0.0 <1.5.0"
-  checksum: 866e4a85dde90d228e1822fc7238953d7353ddc1528c2936253a1c8dd47b260fe45551d9172cf97b6e34d851ee5204b391ebc66ab244e1994ac6d816e790c78e
-  languageName: node
-  linkType: hard
-
 "@opentelemetry/core@npm:1.15.2":
   version: 1.15.2
   resolution: "@opentelemetry/core@npm:1.15.2"
@@ -6601,20 +6578,6 @@ __metadata:
   peerDependencies:
     "@opentelemetry/api": ^1.0.2
   checksum: 71db7d99e81421ce707580650c06b74631ff0d593591305f825cd1c1df85f2f49a0af6f66821cf3280fc66ae3903b5c7195dbd22dbd824d46aa135fe2261f7f1
-  languageName: node
-  linkType: hard
-
-"@opentelemetry/otlp-transformer@npm:^0.37.0":
-  version: 0.37.0
-  resolution: "@opentelemetry/otlp-transformer@npm:0.37.0"
-  dependencies:
-    "@opentelemetry/core": 1.11.0
-    "@opentelemetry/resources": 1.11.0
-    "@opentelemetry/sdk-metrics": 1.11.0
-    "@opentelemetry/sdk-trace-base": 1.11.0
-  peerDependencies:
-    "@opentelemetry/api": ">=1.3.0 <1.5.0"
-  checksum: 353a0f29d27a6b969d1458de7d829da06866bce58e9e24a9ae98d463056fecc1120a88660a9e1a72643e4a3e9de0fd731e54ded02c7abb99118cf7992229234d
   languageName: node
   linkType: hard
 
@@ -6643,18 +6606,6 @@ __metadata:
   peerDependencies:
     "@opentelemetry/api": ^1.0.2
   checksum: c90186e3051e5993108d49052479a693f80959ba95c4d8343f2459c34c71574c03cd84832f6f77a7fd05debd89ccea63eda054dc178bc9eafd399f217abae338
-  languageName: node
-  linkType: hard
-
-"@opentelemetry/resources@npm:1.11.0":
-  version: 1.11.0
-  resolution: "@opentelemetry/resources@npm:1.11.0"
-  dependencies:
-    "@opentelemetry/core": 1.11.0
-    "@opentelemetry/semantic-conventions": 1.11.0
-  peerDependencies:
-    "@opentelemetry/api": ">=1.0.0 <1.5.0"
-  checksum: 3d4577d06f166d7efcf33ecc909115502d30cdf6bc53536c1672a8e76071447f3a01b2546159c7f44440c83549807e1d546ff1a0d4c169c8368013ed1d7d75f5
   languageName: node
   linkType: hard
 
@@ -6697,19 +6648,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@opentelemetry/sdk-metrics@npm:1.11.0":
-  version: 1.11.0
-  resolution: "@opentelemetry/sdk-metrics@npm:1.11.0"
-  dependencies:
-    "@opentelemetry/core": 1.11.0
-    "@opentelemetry/resources": 1.11.0
-    lodash.merge: 4.6.2
-  peerDependencies:
-    "@opentelemetry/api": ">=1.3.0 <1.5.0"
-  checksum: 158ebcb79fc08f7e1530dcd2f0bfb9afbe2668396721df98fc7a7f5a75ceed4bceb7102aae0efcc24cd9bd5c92b51aa55a86f2cc904b538a45641ca0315b2e06
-  languageName: node
-  linkType: hard
-
 "@opentelemetry/sdk-metrics@npm:1.15.2":
   version: 1.15.2
   resolution: "@opentelemetry/sdk-metrics@npm:1.15.2"
@@ -6737,19 +6675,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@opentelemetry/sdk-trace-base@npm:1.11.0":
-  version: 1.11.0
-  resolution: "@opentelemetry/sdk-trace-base@npm:1.11.0"
-  dependencies:
-    "@opentelemetry/core": 1.11.0
-    "@opentelemetry/resources": 1.11.0
-    "@opentelemetry/semantic-conventions": 1.11.0
-  peerDependencies:
-    "@opentelemetry/api": ">=1.0.0 <1.5.0"
-  checksum: 64f00f8ede6f9fe5749021b820c412a78d984883dbe7db0ab2ed24fb3e2db0bcb9b928361cccb839b8a89007391fac0ad18386140394cc165716299b9b3b37e9
-  languageName: node
-  linkType: hard
-
 "@opentelemetry/sdk-trace-base@npm:1.15.2":
   version: 1.15.2
   resolution: "@opentelemetry/sdk-trace-base@npm:1.15.2"
@@ -6767,13 +6692,6 @@ __metadata:
   version: 0.25.0
   resolution: "@opentelemetry/semantic-conventions@npm:0.25.0"
   checksum: 0771e3298ed67f87d466e3eeac17fb3363cd7759b0b306b42d296464ef40c5f00e351535bc5eab0b678f3c60cb256309d6c4779b586beaf5edf99300d1e0ab45
-  languageName: node
-  linkType: hard
-
-"@opentelemetry/semantic-conventions@npm:1.11.0":
-  version: 1.11.0
-  resolution: "@opentelemetry/semantic-conventions@npm:1.11.0"
-  checksum: 310f2aad2a958b02ea2e661251e202989c662306e85a1c27bc99dec9c4d42fce5fc9b34bf21169276798acdae9d52af3b7ec19d8e5e9bb420fc145d0b901823c
   languageName: node
   linkType: hard
 
@@ -19802,7 +19720,7 @@ __metadata:
     "@grafana/eslint-plugin": "link:./packages/grafana-eslint-rules"
     "@grafana/experimental": 1.7.0
     "@grafana/faro-core": 1.2.1
-    "@grafana/faro-web-sdk": 1.1.2
+    "@grafana/faro-web-sdk": 1.2.1
     "@grafana/flamegraph": "workspace:*"
     "@grafana/google-sdk": 0.1.1
     "@grafana/lezer-logql": 0.2.0
@@ -24008,7 +23926,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"lodash.merge@npm:4.6.2, lodash.merge@npm:^4.6.2":
+"lodash.merge@npm:^4.6.2":
   version: 4.6.2
   resolution: "lodash.merge@npm:4.6.2"
   checksum: ad580b4bdbb7ca1f7abf7e1bce63a9a0b98e370cf40194b03380a46b4ed799c9573029599caebc1b14e3f24b111aef72b96674a56cfa105e0f5ac70546cdc005
