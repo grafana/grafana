@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import Highlighter from 'react-highlight-words';
 
 import { CoreApp, findHighlightChunksInText, LogRowModel } from '@grafana/data';
@@ -81,6 +81,36 @@ export const LogRowMessage = React.memo((props: Props) => {
   const { hasAnsi, raw } = row;
   const restructuredEntry = useMemo(() => restructureLog(raw, prettifyLogMessage), [raw, prettifyLogMessage]);
   const shouldShowMenu = useMemo(() => mouseIsOver || pinned, [mouseIsOver, pinned]);
+  const logRef = useRef<HTMLButtonElement | null>(null);
+
+  useEffect(() => {
+    const logRow = logRef.current;
+    if (!logRow) {
+      return;
+    }
+
+    const handlePropagation = (e: MouseEvent) => {
+      if (document.getSelection()?.toString()) {
+        e.stopPropagation();
+      }
+    };
+    const handleSelection = (e: MouseEvent) => {
+      const selection = document.getSelection()?.toString();
+      if (!selection) {
+        return;
+      }
+      console.log(selection);
+    }
+
+    logRow.addEventListener('mouseup', handleSelection);
+    logRow.addEventListener('click', handlePropagation);
+
+    return () => {
+      logRow.removeEventListener('mouseup', handleSelection);
+      logRow.removeEventListener('click', handlePropagation);
+    };
+  }, [])
+
   return (
     <>
       {
@@ -89,7 +119,7 @@ export const LogRowMessage = React.memo((props: Props) => {
       }
       <td className={styles.logsRowMessage}>
         <div className={wrapLogMessage ? styles.positionRelative : styles.horizontalScroll}>
-          <button className={`${styles.logLine} ${styles.positionRelative}`}>
+          <button className={`${styles.logLine} ${styles.positionRelative}`} ref={logRef}>
             <LogMessage hasAnsi={hasAnsi} entry={restructuredEntry} highlights={row.searchWords} styles={styles} />
           </button>
         </div>
