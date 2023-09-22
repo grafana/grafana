@@ -4,7 +4,7 @@ import React, { useMemo, useState } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Stack } from '@grafana/experimental';
-import { config } from '@grafana/runtime';
+import { config, reportInteraction } from '@grafana/runtime';
 import { Button, Checkbox, Form, TextArea, useStyles2 } from '@grafana/ui';
 import { DashboardModel } from 'app/features/dashboard/state';
 
@@ -105,6 +105,7 @@ export const SaveDashboardForm = ({
                     });
                     setMessage(text);
                   }}
+                  onClick={() => reportInteraction('dashboards_autogenerate_clicked', { src: 'dashboard-changes' })}
                 />
               )}
               <TextArea

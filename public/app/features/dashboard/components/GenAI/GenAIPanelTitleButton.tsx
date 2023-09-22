@@ -4,10 +4,10 @@ import { getDashboardSrv } from '../../services/DashboardSrv';
 import { PanelModel } from '../../state';
 
 import { GenAIButton } from './GenAIButton';
+import { EventSource, reportGenerateAIButtonClicked } from './tracking';
 import { Message, Role } from './utils';
 
 interface GenAIPanelTitleButtonProps {
-  onClick?: (e: React.MouseEvent<HTMLButtonElement>) => void;
   onGenerate: (title: string, isDone: boolean) => void;
   panel: PanelModel;
 }
@@ -17,10 +17,13 @@ const TITLE_GENERATION_STANDARD_PROMPT =
   'Your goal is to write short, descriptive, and concise panel title for a panel.' +
   'The title should be shorter than 50 characters.';
 
-export const GenAIPanelTitleButton = ({ onClick, onGenerate, panel }: GenAIPanelTitleButtonProps) => {
+export const GenAIPanelTitleButton = ({ onGenerate, panel }: GenAIPanelTitleButtonProps) => {
   const messages = React.useMemo(() => getMessages(panel), [panel]);
+  const reportClick = React.useCallback(() => reportGenerateAIButtonClicked(EventSource.panelTitle), []);
 
-  return <GenAIButton messages={messages} onGenerate={onGenerate} loadingText={'Generating title'} />;
+  return (
+    <GenAIButton messages={messages} onClick={reportClick} onGenerate={onGenerate} loadingText={'Generating title'} />
+  );
 };
 
 function getMessages(panel: PanelModel): Message[] {
