@@ -2,35 +2,41 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import React from 'react';
 
 import ContentOutline from './ContentOutline';
-import { ContentOutlineContextProvider } from './ContentOutlineContext';
 
-const setup = () => {
-  const outlineItemsMock = [
-    {
-      id: '1',
-      title: 'Item 1',
-      icon: 'icon1',
-      ref: document.createElement('div'),
-    },
-    {
-      id: '2',
-      title: 'Item 2',
-      icon: 'icon2',
-      ref: document.createElement('div'),
-    },
-  ];
-  return render(
-    <ContentOutlineContextProvider>
-      <ContentOutline outlineItems={outlineItemsMock} />
-    </ContentOutlineContextProvider>
-  );
-};
+jest.mock('./ContentOutlineContext', () => ({
+  useContentOutlineContext: jest.fn(),
+}));
 
 const scrollIntoViewMock = jest.fn();
-HTMLElement.prototype.scrollIntoView = scrollIntoViewMock;
+
+const setup = () => {
+  HTMLElement.prototype.scrollIntoView = scrollIntoViewMock;
+
+  // Mock useContentOutlineContext with custom outlineItems
+  const mockUseContentOutlineContext = require('./ContentOutlineContext').useContentOutlineContext;
+  mockUseContentOutlineContext.mockReturnValue({
+    outlineItems: [
+      {
+        id: 'item-1',
+        icon: 'test-icon',
+        title: 'Item 1',
+        ref: document.createElement('div'),
+      },
+      {
+        id: 'item-2',
+        icon: 'test-icon',
+        title: 'Item 2',
+        ref: document.createElement('div'),
+      },
+    ],
+    register: jest.fn(),
+    unregister: jest.fn(),
+  });
+
+  return render(<ContentOutline />);
+};
 
 describe('<ContentOutline />', () => {
-  scrollIntoViewMock.mockClear();
   beforeEach(() => {
     setup();
   });
@@ -49,11 +55,15 @@ describe('<ContentOutline />', () => {
   });
 
   it('scrolls into view on content button click', () => {
-    const itemButton = screen.getByLabelText('Item 1');
+    const itemButtons = screen.getAllByLabelText(/Item/i);
 
-    fireEvent.click(itemButton);
+    itemButtons.forEach((button) => {
+      scrollIntoViewMock.mockClear();
 
-    // mock the `scrollIntoView` method and assert it's called
-    expect(scrollIntoViewMock).toHaveBeenCalled();
+      fireEvent.click(button);
+
+      //assert scrollIntoView is called
+      expect(scrollIntoViewMock).toHaveBeenCalled();
+    });
   });
 });
