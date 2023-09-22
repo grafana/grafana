@@ -92,8 +92,8 @@ These built-in core data sources are also included in the Grafana documentation:
 [alerts]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting"
 [alerts]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/alerting"
 
-[build-a-plugin]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/developers/plugins"
-[build-a-plugin]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/developers/plugins"
+[build-a-plugin]: "/docs/grafana/ -> /developers/plugin-tools/"
+[build-a-plugin]: "/docs/grafana-cloud/ -> /developers/plugin-tools/"
 
 [data-source-management]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/administration/data-source-management"
 [data-source-management]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/administration/data-source-management"

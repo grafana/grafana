@@ -148,8 +148,8 @@ Select one of the following palettes:
 Enter what Grafana should display if the field value is empty or null. The default value is a hyphen (-).
 
 {{% docs/reference %}}
-[data frame]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/developers/plugins/introduction-to-plugin-development/data-frames"
-[data frame]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/developers/plugins/introduction-to-plugin-development/data-frames"
+[data frame]: "/docs/grafana/ -> /developers/plugin-tools/introduction/data-frames"
+[data frame]: "/docs/grafana-cloud/ -> /developers/plugin-tools/introduction/data-frames"
 
 [variables]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables"
 [variables]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables"

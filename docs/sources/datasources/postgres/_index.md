@@ -492,8 +492,8 @@ conditions.
 [configure-standard-options-display-name]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/configure-standard-options#display-name"
 [configure-standard-options-display-name]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/configure-standard-options#display-name"
 
-[data-frames-wide-format]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/developers/plugins/introduction-to-plugin-development/data-frames#wide-format"
-[data-frames-wide-format]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/developers/plugins/introduction-to-plugin-development/data-frames#wide-format"
+[data-frames-wide-format]: "/docs/grafana/ -> /developers/plugin-tools/introduction/data-frames#wide-format"
+[data-frames-wide-format]: "/docs/grafana-cloud/ -> /developers/plugin-tools/introduction/data-frames#wide-format"
 
 [data-source-management]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/administration/data-source-management"
 [data-source-management]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/administration/data-source-management"
