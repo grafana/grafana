@@ -1,6 +1,10 @@
 package apis
 
 import (
+	"fmt"
+	"strconv"
+	"strings"
+
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	genericapiserver "k8s.io/apiserver/pkg/server"
@@ -25,4 +29,35 @@ type APIGroupBuilder interface {
 
 	// Register additional routes with the server
 	GetOpenAPIPostProcessor() func(*spec3.OpenAPI) (*spec3.OpenAPI, error)
+}
+
+func OrgIdToNamespace(orgId int64) string {
+	if orgId > 1 {
+		return fmt.Sprintf("org-%d", orgId)
+	}
+	return "default"
+}
+
+func NamespaceToOrgID(ns string) (int64, error) {
+	parts := strings.Split(ns, "-")
+	switch len(parts) {
+	case 1:
+		if parts[0] == "default" {
+			return 1, nil
+		}
+		if parts[0] == "" {
+			return 0, nil // no orgId, cluster scope
+		}
+		return 0, fmt.Errorf("invalid namespace (expected default)")
+	case 2:
+		if !(parts[0] == "org" || parts[0] == "tenant") {
+			return 0, fmt.Errorf("invalid namespace (org|tenant)")
+		}
+		n, err := strconv.ParseInt(parts[1], 10, 64)
+		if err != nil {
+			return 0, fmt.Errorf("invalid namepscae (%w)", err)
+		}
+		return n, nil
+	}
+	return 0, fmt.Errorf("invalid namespace (%d parts)", len(parts))
 }

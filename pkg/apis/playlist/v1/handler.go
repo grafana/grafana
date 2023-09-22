@@ -2,11 +2,14 @@ package v1
 
 import (
 	"context"
+	"fmt"
 
+	"github.com/grafana/grafana/pkg/apis"
 	"github.com/grafana/grafana/pkg/services/playlist"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
 )
 
@@ -43,6 +46,15 @@ func (r *handler) ConvertToTable(ctx context.Context, object runtime.Object, tab
 }
 
 func (r *handler) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
+	ns, ok := request.NamespaceFrom(ctx)
+	if ok && ns != "" {
+		orgId, err := apis.NamespaceToOrgID(ns)
+		if err != nil {
+			return nil, err
+		}
+		fmt.Printf("OrgID: %d\n", orgId)
+	}
+
 	// TODO: replace
 	return &PlaylistList{
 		TypeMeta: metav1.TypeMeta{
@@ -65,6 +77,15 @@ func (r *handler) List(ctx context.Context, options *internalversion.ListOptions
 }
 
 func (r *handler) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
+	ns, ok := request.NamespaceFrom(ctx)
+	if ok && ns != "" {
+		orgId, err := apis.NamespaceToOrgID(ns)
+		if err != nil {
+			return nil, err
+		}
+		fmt.Printf("OrgID: %d\n", orgId)
+	}
+
 	// TODO: replace
 	return &Playlist{
 		TypeMeta: metav1.TypeMeta{
