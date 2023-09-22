@@ -26,6 +26,7 @@ export function getGrafanaInstancesPercentageByStateScene(
     ...PANEL_STYLES,
     body: PanelBuilders.timeseries()
       .setTitle(panelTitle)
+      .setDescription(panelTitle)
       .setData(query)
       .setCustomFieldConfig('drawStyle', GraphDrawStyle.Line)
       .setCustomFieldConfig('fillOpacity', 45)

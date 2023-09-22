@@ -27,6 +27,7 @@ export function getGrafanaEvalDurationScene(timeRange: SceneTimeRange, datasourc
     ...PANEL_STYLES,
     body: PanelBuilders.timeseries()
       .setTitle(panelTitle)
+      .setDescription(panelTitle)
       .setData(query)
       .setCustomFieldConfig('drawStyle', GraphDrawStyle.Line)
       .build(),

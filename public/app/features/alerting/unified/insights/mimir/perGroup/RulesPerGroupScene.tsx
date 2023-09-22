@@ -21,6 +21,7 @@ export function getRulesPerGroupScene(timeRange: SceneTimeRange, datasource: Dat
     ...PANEL_STYLES,
     body: PanelBuilders.timeseries()
       .setTitle(panelTitle)
+      .setDescription(panelTitle)
       .setData(query)
       .setCustomFieldConfig('drawStyle', GraphDrawStyle.Line)
       .setUnit('none')

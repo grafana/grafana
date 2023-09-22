@@ -21,6 +21,7 @@ export function getFiringCloudAlertsScene(timeRange: SceneTimeRange, datasource:
     ...PANEL_STYLES,
     body: PanelBuilders.stat()
       .setTitle(panelTitle)
+      .setDescription(panelTitle)
       .setData(query)
       .setThresholds({
         mode: ThresholdsMode.Absolute,

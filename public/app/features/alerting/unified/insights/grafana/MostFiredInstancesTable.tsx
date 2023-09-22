@@ -102,6 +102,6 @@ export function getMostFiredInstancesScene(timeRange: SceneTimeRange, datasource
 
   return new SceneFlexItem({
     ...PANEL_STYLES,
-    body: PanelBuilders.table().setTitle(panelTitle).setData(transformation).build(),
+    body: PanelBuilders.table().setTitle(panelTitle).setDescription(panelTitle).setData(transformation).build(),
   });
 }

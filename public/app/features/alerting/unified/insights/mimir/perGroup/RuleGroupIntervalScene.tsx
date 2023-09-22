@@ -21,6 +21,7 @@ export function getRuleGroupIntervalScene(timeRange: SceneTimeRange, datasource:
     ...PANEL_STYLES,
     body: PanelBuilders.timeseries()
       .setTitle(panelTitle)
+      .setDescription(panelTitle)
       .setData(query)
       .setCustomFieldConfig('drawStyle', GraphDrawStyle.Line)
       .setUnit('s')
