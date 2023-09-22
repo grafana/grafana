@@ -80,12 +80,12 @@ export function getGrafanaScenes() {
         }),
         new SceneFlexLayout({
           children: [
-            getGrafanaEvalSuccessVsFailuresScene(THIS_WEEK_TIME_RANGE, cloudUsageDs, 'Evaluation Success vs Failures'),
-            getGrafanaMissedIterationsScene(THIS_WEEK_TIME_RANGE, cloudUsageDs, 'Iterations Missed'),
+            getGrafanaEvalSuccessVsFailuresScene(THIS_WEEK_TIME_RANGE, cloudUsageDs, 'Evaluation success vs failures'),
+            getGrafanaMissedIterationsScene(THIS_WEEK_TIME_RANGE, cloudUsageDs, 'Iterations missed'),
           ],
         }),
         new SceneFlexLayout({
-          children: [getGrafanaEvalDurationScene(THIS_WEEK_TIME_RANGE, cloudUsageDs, 'Evaluation Duration')],
+          children: [getGrafanaEvalDurationScene(THIS_WEEK_TIME_RANGE, cloudUsageDs, 'Evaluation duration')],
         }),
         new SceneFlexItem({
           ySizing: 'content',
@@ -118,7 +118,7 @@ function getGrafanaAlertmanagerScenes() {
       children: [
         new SceneFlexLayout({
           children: [
-            getGrafanaAlertmanagerInstancesByStateScene(THIS_WEEK_TIME_RANGE, cloudUsageDs, 'Alerts by State'),
+            getGrafanaAlertmanagerInstancesByStateScene(THIS_WEEK_TIME_RANGE, cloudUsageDs, 'Alerts by state'),
             getGrafanaAlertmanagerNotificationsScene(THIS_WEEK_TIME_RANGE, cloudUsageDs, 'Notifications'),
           ],
         }),
@@ -140,7 +140,7 @@ function getCloudScenes() {
       children: [
         new SceneFlexLayout({
           children: [
-            getAlertsByStateScene(THIS_WEEK_TIME_RANGE, cloudUsageDs, 'Alerts by State'),
+            getAlertsByStateScene(THIS_WEEK_TIME_RANGE, cloudUsageDs, 'Alerts by state'),
             getNotificationsScene(THIS_WEEK_TIME_RANGE, cloudUsageDs, 'Notifications'),
           ],
         }),
@@ -182,8 +182,8 @@ function getMimirManagedRulesScenes() {
         }),
         new SceneFlexLayout({
           children: [
-            getEvalSuccessVsFailuresScene(THIS_WEEK_TIME_RANGE, cloudUsageDs, 'Evaluation Success vs Failures'),
-            getMissedIterationsScene(THIS_WEEK_TIME_RANGE, cloudUsageDs, 'Iterations Missed'),
+            getEvalSuccessVsFailuresScene(THIS_WEEK_TIME_RANGE, cloudUsageDs, 'Evaluation success vs failures'),
+            getMissedIterationsScene(THIS_WEEK_TIME_RANGE, cloudUsageDs, 'Iterations missed'),
           ],
         }),
       ],
@@ -208,14 +208,14 @@ function getMimirManagedRulesPerGroupScenes() {
       children: [
         new SceneFlexLayout({
           children: [
-            getRuleGroupEvaluationsScene(THIS_WEEK_TIME_RANGE, cloudUsageDs, 'Rule Group Evaluation'),
-            getRuleGroupIntervalScene(THIS_WEEK_TIME_RANGE, cloudUsageDs, 'Rule Group Interval'),
+            getRuleGroupEvaluationsScene(THIS_WEEK_TIME_RANGE, cloudUsageDs, 'Rule group evaluation'),
+            getRuleGroupIntervalScene(THIS_WEEK_TIME_RANGE, cloudUsageDs, 'Rule group interval'),
           ],
         }),
         new SceneFlexLayout({
           children: [
-            getRuleGroupEvaluationDurationScene(THIS_WEEK_TIME_RANGE, cloudUsageDs, 'Rule Group Evaluation Duration'),
-            getRulesPerGroupScene(THIS_WEEK_TIME_RANGE, cloudUsageDs, 'Rules per Group'),
+            getRuleGroupEvaluationDurationScene(THIS_WEEK_TIME_RANGE, cloudUsageDs, 'Rule group evaluation duration'),
+            getRulesPerGroupScene(THIS_WEEK_TIME_RANGE, cloudUsageDs, 'Rules per group'),
           ],
         }),
       ],
