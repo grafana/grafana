@@ -23,7 +23,6 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/kinds/dataquery"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/loganalytics"
 	azTime "github.com/grafana/grafana/pkg/tsdb/azuremonitor/time"
-	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/tracing"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
 )
 
@@ -264,7 +263,9 @@ func (e *AzureMonitorDatasource) retrieveSubscriptionDetails(cli *http.Client, c
 		),
 	)
 	defer span.End()
-	//tracer.Inject(ctx, req.Header, span)
+	sctx := trace.SpanContextFromContext(ctx)
+	backend.Logger.Debug("azuremonitor query", "traceID", sctx.TraceID(), "spanID", sctx.SpanID().String())
+
 	res, err := cli.Do(req)
 	if err != nil {
 		return "", fmt.Errorf("failed to request subscription details: %s", err)
@@ -318,9 +319,9 @@ func (e *AzureMonitorDatasource) executeQuery(ctx context.Context, query *types.
 			attribute.Int64("org_id", dsInfo.OrgID),
 		),
 	)
-
 	defer span.End()
-	//tracer.Inject(ctx, req.Header, span)
+	sctx := trace.SpanContextFromContext(ctx)
+	backend.Logger.Debug("azuremonitor query", "traceID", sctx.TraceID(), "spanID", sctx.SpanID().String())
 
 	res, err := cli.Do(req)
 	if err != nil {

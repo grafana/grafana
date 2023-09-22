@@ -25,7 +25,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/kinds/dataquery"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/macros"
-	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/tracing"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
 )
 
@@ -285,7 +284,7 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *A
 		return nil, err
 	}
 
-	_, span := tracing.DefaultTracer().Start(
+	ctx, span := tracing.DefaultTracer().Start(
 		ctx,
 		"azure log analytics query",
 		trace.WithAttributes(
@@ -296,10 +295,9 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *A
 			attribute.Int64("org_id", dsInfo.OrgID),
 		),
 	)
-
 	defer span.End()
-
-	//tracer.Inject(ctx, req.Header, span)
+	sctx := trace.SpanContextFromContext(ctx)
+	backend.Logger.Debug("azure log analytics query", "traceID", sctx.TraceID(), "spanID", sctx.SpanID().String())
 
 	res, err := client.Do(req)
 	if err != nil {
@@ -575,10 +573,8 @@ func getCorrelationWorkspaces(ctx context.Context, baseResource string, resource
 				attribute.Int64("org_id", dsInfo.OrgID),
 			),
 		)
-
 		defer span.End()
-
-		//tracer.Inject(ctx, req.Header, span)
+		backend.Logger.Debug("azure traces correlation request", "traceID", trace.SpanContextFromContext(ctx).TraceID())
 
 		res, err := azMonService.HTTPClient.Do(req)
 		if err != nil {

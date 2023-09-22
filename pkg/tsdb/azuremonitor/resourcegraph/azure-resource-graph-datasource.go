@@ -20,7 +20,6 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/kinds/dataquery"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/loganalytics"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/macros"
-	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/tracing"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
 )
 
@@ -164,8 +163,8 @@ func (e *AzureResourceGraphDatasource) executeQuery(ctx context.Context, query *
 	)
 
 	defer span.End()
-
-	//tracer.Inject(ctx, req.Header, span)
+	sctx := trace.SpanContextFromContext(ctx)
+	backend.Logger.Debug("azure resource graph query", "traceID", sctx.TraceID(), "spanID", sctx.SpanID().String())
 
 	res, err := client.Do(req)
 	if err != nil {

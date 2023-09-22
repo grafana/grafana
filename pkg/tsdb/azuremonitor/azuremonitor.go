@@ -25,7 +25,7 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
 )
 
-func ProvideService(cfg *setting.Cfg, httpClientProvider *httpclient.Provider, features featuremgmt.FeatureToggles) *Service {
+func ProvideService(cfg *setting.Cfg, httpClientProvider *httpclient.Provider, features featuremgmt.FeatureToggles, tracer featuremgmt.Tracer) *Service {
 	proxy := &httpServiceProxy{}
 	executors := map[string]azDatasourceExecutor{
 		azureMonitor:       &metrics.AzureMonitorDatasource{Proxy: proxy, Features: features},
@@ -43,7 +43,7 @@ func ProvideService(cfg *setting.Cfg, httpClientProvider *httpclient.Provider, f
 
 	s.queryMux = s.newQueryMux()
 	s.resourceHandler = httpadapter.New(s.newResourceMux())
-
+	s.
 	return s
 }
 
