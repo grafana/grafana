@@ -1,10 +1,9 @@
 // @todo this actually returns type `Cypress.Chainable`
-const get = (key: string): any =>
+const get = (key: string) =>
   cy.wrap({ getLocalStorage: () => localStorage.getItem(key) }, { log: false }).invoke('getLocalStorage');
 
-// @todo this actually returns type `Cypress.Chainable`
-export const getLocalStorage = (key: string): any =>
-  get(key).then((value: any) => {
+export const getLocalStorage = (key: string) =>
+  get(key).then((value) => {
     if (value === null) {
       return value;
     } else {
@@ -12,8 +11,7 @@ export const getLocalStorage = (key: string): any =>
     }
   });
 
-// @todo this actually returns type `Cypress.Chainable`
-export const requireLocalStorage = (key: string): any =>
+export const requireLocalStorage = (key: string) =>
   get(key) // `getLocalStorage()` would turn 'null' into `null`
     .should('not.equal', null)
-    .then((value: any) => JSON.parse(value as string));
+    .then((value) => JSON.parse(value));
