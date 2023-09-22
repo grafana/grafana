@@ -186,7 +186,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
   onContentOutlineToogle = () => {
     this.setState((state) => {
       reportInteraction('grafana_explore_content_outline_toggled', {
-        contentOutlineToggleStatus: state.contentOutlineVisible ? 'open' : 'closed',
+        contentOutlineVisble: !state.contentOutlineVisible,
       });
       return {
         contentOutlineVisible: !state.contentOutlineVisible,

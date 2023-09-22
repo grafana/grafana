@@ -45,13 +45,20 @@ const ContentOutline = () => {
     });
   };
 
+  const toggle = () => {
+    toggleExpanded();
+    reportInteraction('grafana_explore_content_outline_toggle_expand', {
+      expanded: !expanded,
+    });
+  };
+
   return (
     <div className={styles.wrapper}>
       <div className={styles.content}>
         <ToolbarButton
           className={styles.buttonStyles}
           icon={expanded ? 'angle-left' : 'angle-right'}
-          onClick={toggleExpanded}
+          onClick={toggle}
           tooltip={!expanded ? 'Show Content Outline' : undefined}
         >
           {expanded && 'Hide Content Outline'}
