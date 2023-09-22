@@ -97,6 +97,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     columnWrapper: css`
       display: flex;
       flex-direction: column;
+      padding: 0 ${theme.spacing(0.25)};
       flex: 1 1 auto;
     `,
   };
