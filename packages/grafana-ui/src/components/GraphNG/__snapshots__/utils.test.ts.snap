@@ -32,11 +32,6 @@ exports[`GraphNG utils preparePlotConfigBuilder 1`] = `
       "values": [Function],
     },
     {
-      "border": {
-        "show": false,
-        "stroke": "rgb(204, 204, 220)",
-        "width": 1,
-      },
       "filter": undefined,
       "font": "12px "Inter", "Helvetica", "Arial", sans-serif",
       "gap": 5,

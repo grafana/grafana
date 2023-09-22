@@ -4,10 +4,10 @@ import { QueryEditorProps, SelectableValue } from '@grafana/data';
 import { InlineField, InlineFieldRow, LoadingPlaceholder, Select } from '@grafana/ui';
 
 import { ProfileTypesCascader, useProfileTypes } from './QueryEditor/ProfileTypesCascader';
-import { PhlareDataSource } from './datasource';
+import { PyroscopeDataSource } from './datasource';
 import { Query, VariableQuery } from './types';
 
-export function VariableQueryEditor(props: QueryEditorProps<PhlareDataSource, Query, {}, VariableQuery>) {
+export function VariableQueryEditor(props: QueryEditorProps<PyroscopeDataSource, Query, {}, VariableQuery>) {
   return (
     <>
       <InlineFieldRow>
@@ -87,7 +87,7 @@ export function VariableQueryEditor(props: QueryEditorProps<PhlareDataSource, Qu
 }
 
 function LabelRow(props: {
-  datasource: PhlareDataSource;
+  datasource: PyroscopeDataSource;
   value?: string;
   profileTypeId?: string;
   from: number;
@@ -128,7 +128,7 @@ function LabelRow(props: {
 }
 
 function ProfileTypeRow(props: {
-  datasource: PhlareDataSource;
+  datasource: PyroscopeDataSource;
   onChange: (val: string) => void;
   initialValue?: string;
 }) {

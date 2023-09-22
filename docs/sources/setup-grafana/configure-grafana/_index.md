@@ -814,7 +814,7 @@ that this organization already exists. Default is 1.
 
 The role new users will be assigned for the main organization (if the
 `auto_assign_org` setting is set to true). Defaults to `Viewer`, other valid
-options are `Admin` and `Editor`. e.g.:
+options are `Admin`, `Editor` and `None`. e.g.:
 
 `auto_assign_org_role = Viewer`
 
@@ -2194,6 +2194,12 @@ Available in Grafana v9.5.0 or later, and [OpenTelemetry must be configured as w
 {{% /admonition %}}
 
 If `true`, propagate the tracing context to the plugin backend and enable tracing (if the backend supports it).
+
+## as_external
+
+Load an external version of a core plugin if it has been installed.
+
+Experimental. Requires the feature toggle `externalCorePlugins` to be enabled.
 
 <hr>
 

@@ -6,6 +6,7 @@ import { t } from 'app/core/internationalization';
 import { getExploreUrl } from 'app/core/utils/explore';
 import { InspectTab } from 'app/features/inspector/types';
 
+import { ShareModal } from '../sharing/ShareModal';
 import { getDashboardUrl, getPanelIdForVizPanel, getQueryRunnerFor } from '../utils/utils';
 
 import { DashboardScene } from './DashboardScene';
@@ -46,6 +47,16 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
           subPath: `/panel-edit/${panelId}`,
           currentQueryParams: location.search,
         }),
+      });
+
+      items.push({
+        text: t('panel.header-menu.share', `Share`),
+        iconClassName: 'share-alt',
+        onClick: () => {
+          reportInteraction('dashboards_panelheader_menu', { item: 'share' });
+          dashboard.showModal(new ShareModal({ panelRef: panel.getRef(), dashboardRef: dashboard.getRef() }));
+        },
+        shortcut: 'p s',
       });
     }
 
