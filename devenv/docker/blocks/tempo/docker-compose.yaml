@@ -11,16 +11,16 @@
       JAEGER_SAMPLER_PARAM: 1
     labels:
       namespace: tns
-    logging: 
-      driver: loki
-      options:
-        loki-url: 'http://localhost:3100/api/prom/push'
-        labels: namespace
-        loki-relabel-config: |
-          - action: replace
-            source_labels: ["namespace","compose_service"]
-            separator: "/"
-            target_label: job
+    # logging: 
+    #   driver: loki
+    #   options:
+    #     loki-url: 'http://localhost:3100/api/prom/push'
+    #     labels: namespace
+    #     loki-relabel-config: |
+    #       - action: replace
+    #         source_labels: ["namespace","compose_service"]
+    #         separator: "/"
+    #         target_label: job
 
   app:
     image: grafana/tns-app:9c1ab38
@@ -38,16 +38,16 @@
       JAEGER_SAMPLER_PARAM: 1
     labels:
       namespace: tns
-    logging: 
-      driver: loki
-      options:
-        loki-url: 'http://localhost:3100/api/prom/push'
-        labels: namespace
-        loki-relabel-config: |
-          - action: replace
-            source_labels: ["namespace","compose_service"]
-            separator: "/"
-            target_label: job
+    # logging: 
+    #   driver: loki
+    #   options:
+    #     loki-url: 'http://localhost:3100/api/prom/push'
+    #     labels: namespace
+    #     loki-relabel-config: |
+    #       - action: replace
+    #         source_labels: ["namespace","compose_service"]
+    #         separator: "/"
+    #         target_label: job
 
   loadgen:
     image: grafana/tns-loadgen:9c1ab38
@@ -65,11 +65,11 @@
       JAEGER_SAMPLER_PARAM: 1
     labels:
       namespace: tns
-    logging: 
-      driver: loki
-      options:
-        loki-url: 'http://localhost:3100/api/prom/push'
-        labels: namespace
+    # logging: 
+    #   driver: loki
+    #   options:
+    #     loki-url: 'http://localhost:3100/api/prom/push'
+    #     labels: namespace
 
   tempo:
     image: grafana/tempo:latest
@@ -100,11 +100,11 @@
       - "9090:9090"
     labels:
       namespace: monitoring
-    logging: 
-      driver: loki
-      options:
-        loki-url: 'http://localhost:3100/api/prom/push'
-        labels: namespace
+    # logging: 
+    #   driver: loki
+    #   options:
+    #     loki-url: 'http://localhost:3100/api/prom/push'
+    #     labels: namespace
 
   loki:
     image: grafana/loki:main
@@ -116,8 +116,21 @@
       - "3100:3100"
     labels:
       namespace: monitoring
-    logging: 
-      driver: loki
-      options:
-        loki-url: 'http://localhost:3100/api/prom/push'
-        labels: namespace
+    # logging: 
+    #   driver: loki
+    #   options:
+    #     loki-url: 'http://localhost:3100/api/prom/push'
+    #     labels: namespace
+
+  phlare:
+    image: grafana/phlare:latest
+    command:
+      - --config.file=/etc/phlare.yaml
+    ports:
+      - 4100:4100
+    volumes:
+      - ./docker/blocks/tempo/phlare.yaml:/etc/phlare.yaml
+    links:
+      - app
+      - db
+      - loadgen
