@@ -89,6 +89,9 @@ func (d *dashboardStore) DBMigration(db db.DB) {
 		}
 
 		err = sess.Table("dashboard").Find(&dashboards)
+		if err != nil {
+			return err
+		}
 		for _, d := range dashboards {
 			_, err = sess.Exec("UPDATE dashboard SET panel_titles = ? WHERE id = ?", getPanelTitles(d), d.ID)
 			if err != nil {
