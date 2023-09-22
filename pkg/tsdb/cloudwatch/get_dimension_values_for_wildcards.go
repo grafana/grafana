@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/clients"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models/resources"
@@ -13,7 +14,8 @@ import (
 )
 
 // getDimensionValues gets the actual dimension values for dimensions with a wildcard
-func (e *cloudWatchExecutor) getDimensionValuesForWildcards(ctx context.Context, pluginCtx backend.PluginContext, region string, client models.CloudWatchMetricsAPIProvider, origQueries []*models.CloudWatchQuery) ([]*models.CloudWatchQuery, error) {
+func (e *cloudWatchExecutor) getDimensionValuesForWildcards(ctx context.Context, pluginCtx backend.PluginContext, region string,
+	client models.CloudWatchMetricsAPIProvider, origQueries []*models.CloudWatchQuery, logger log.Logger) ([]*models.CloudWatchQuery, error) {
 	metricsClient := clients.NewMetricsClient(client, e.cfg)
 	service := services.NewListMetricsService(metricsClient)
 	// create copies of the original query. All the fields besides Dimensions are primitives
@@ -30,13 +32,16 @@ func (e *cloudWatchExecutor) getDimensionValuesForWildcards(ctx context.Context,
 			if query.AccountId != nil {
 				accountID = *query.AccountId
 			}
-			cacheKey := fmt.Sprintf("%s-%s-%s-%s-%s-%s-%s", pluginCtx.DataSourceInstanceSettings.UID, pluginCtx.DataSourceInstanceSettings.Updated, region, accountID, query.Namespace, query.MetricName, dimensionKey)
+			cacheKey := fmt.Sprintf("%s-%s-%s-%s-%s-%s-%s", pluginCtx.DataSourceInstanceSettings.UID, pluginCtx.DataSourceInstanceSettings.Updated, region,
+				accountID, query.Namespace, query.MetricName, dimensionKey)
 			cachedDimensions, found := e.tagValueCache.Get(cacheKey)
 			if found {
+				logger.Debug("Fetching dimension values from cache")
 				query.Dimensions[dimensionKey] = cachedDimensions.([]string)
 				continue
 			}
 
+			logger.Debug("Cache miss, fetching dimension values from AWS")
 			request := resources.DimensionValuesRequest{
 				ResourceRequest: &resources.ResourceRequest{
 					Region:    region,
