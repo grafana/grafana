@@ -15,7 +15,7 @@ labels:
     - enterprise
     - oss
 title: Node graph
-weight: 850
+weight: 100
 ---
 
 # Node graph panel

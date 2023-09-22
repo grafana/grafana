@@ -18,7 +18,7 @@ import { LoadingState } from '@grafana/schema';
 import { LokiDatasource } from './datasource';
 import { splitTimeRange as splitLogsTimeRange } from './logsTimeSplitting';
 import { splitTimeRange as splitMetricTimeRange } from './metricTimeSplitting';
-import { isLogsQuery, isQueryWithDistinct, isQueryWithRangeVariable } from './queryUtils';
+import { isLogsQuery, isQueryWithRangeVariable } from './queryUtils';
 import { combineResponses } from './responseUtils';
 import { trackGroupedQueries } from './tracking';
 import { LokiGroupedRequest, LokiQuery, LokiQueryType } from './types';
@@ -208,7 +208,6 @@ function getNextRequestPointers(requests: LokiGroupedRequest[], requestGroup: nu
 function querySupportsSplitting(query: LokiQuery) {
   return (
     query.queryType !== LokiQueryType.Instant &&
-    !isQueryWithDistinct(query.expr) &&
     // Queries with $__range variable should not be split because then the interpolated $__range variable is incorrect
     // because it is interpolated on the backend with the split timeRange
     !isQueryWithRangeVariable(query.expr)

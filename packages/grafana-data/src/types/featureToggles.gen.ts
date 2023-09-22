@@ -33,7 +33,6 @@ export interface FeatureToggles {
   datasourceQueryMultiStatus?: boolean;
   traceToMetrics?: boolean;
   newDBLibrary?: boolean;
-  validateDashboardsOnSave?: boolean;
   autoMigrateOldPanels?: boolean;
   disableAngular?: boolean;
   canvasPanelNesting?: boolean;
@@ -42,12 +41,12 @@ export interface FeatureToggles {
   logRequestsInstrumentedAsUnknown?: boolean;
   dataConnectionsConsole?: boolean;
   topnav?: boolean;
+  dockedMegaMenu?: boolean;
   grpcServer?: boolean;
   entityStore?: boolean;
   cloudWatchCrossAccountQuerying?: boolean;
   redshiftAsyncQueryDataSupport?: boolean;
   athenaAsyncQueryDataSupport?: boolean;
-  newPanelChromeUI?: boolean;
   showDashboardValidationWarnings?: boolean;
   mysqlAnsiQuotes?: boolean;
   accessControlOnCall?: boolean;
@@ -99,7 +98,6 @@ export interface FeatureToggles {
   exploreScrollableLogsContainer?: boolean;
   recordedQueriesMulti?: boolean;
   pluginsDynamicAngularDetectionPatterns?: boolean;
-  alertingLokiRangeToInstant?: boolean;
   vizAndWidgetSplit?: boolean;
   prometheusIncrementalQueryInstrumentation?: boolean;
   logsExploreTableVisualisation?: boolean;
@@ -108,6 +106,7 @@ export interface FeatureToggles {
   toggleLabelsInLogsUI?: boolean;
   mlExpressions?: boolean;
   traceQLStreaming?: boolean;
+  metricsSummary?: boolean;
   grafanaAPIServer?: boolean;
   featureToggleAdminPage?: boolean;
   awsAsyncQueryCaching?: boolean;
@@ -119,4 +118,14 @@ export interface FeatureToggles {
   influxdbSqlSupport?: boolean;
   noBasicRole?: boolean;
   alertingNoDataErrorExecution?: boolean;
+  angularDeprecationUI?: boolean;
+  dashgpt?: boolean;
+  reportingRetries?: boolean;
+  newBrowseDashboards?: boolean;
+  sseGroupByDatasource?: boolean;
+  requestInstrumentationStatusSource?: boolean;
+  lokiRunQueriesInParallel?: boolean;
+  wargamesTesting?: boolean;
+  alertingInsights?: boolean;
+  pluginsAPIMetrics?: boolean;
 }

@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import React, { useEffect, useState } from 'react';
 
 import { GrafanaTheme2, PageLayoutType } from '@grafana/data';
-import { getBackendSrv } from '@grafana/runtime';
+import { getBackendSrv, locationService } from '@grafana/runtime';
 import { TimeZone } from '@grafana/schema';
 import { Button, ModalsController, PageToolbar, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
@@ -24,7 +24,7 @@ interface EmbeddedDashboardPageRouteParams {
 }
 
 interface EmbeddedDashboardPageRouteSearchParams {
-  callbackUrl?: string;
+  serverPort?: string;
   json?: string;
   accessToken?: string;
 }
@@ -45,13 +45,13 @@ export default function EmbeddedDashboardPage({ route, queryParams }: Props) {
    * Create dashboard model and initialize the dashboard from JSON
    */
   useEffect(() => {
-    const callbackUrl = queryParams.callbackUrl;
+    const serverPort = queryParams.serverPort;
 
-    if (!callbackUrl) {
-      throw new Error('No callback URL provided');
+    if (!serverPort) {
+      throw new Error('No serverPort provided');
     }
     getBackendSrv()
-      .get(`${callbackUrl}/load-dashboard`)
+      .get(`http://localhost:${serverPort}/load-dashboard`)
       .then((dashboardJson) => {
         setDashboardJson(dashboardJson);
         // Remove dashboard UID from JSON to prevent errors from external dashboards
@@ -83,7 +83,7 @@ export default function EmbeddedDashboardPage({ route, queryParams }: Props) {
 
   return (
     <Page pageNav={{ text: dashboard.title }} layout={PageLayoutType.Custom}>
-      <Toolbar dashboard={dashboard} callbackUrl={queryParams.callbackUrl} dashboardJson={dashboardJson} />
+      <Toolbar dashboard={dashboard} dashboardJson={dashboardJson} />
       {dashboardState.initError && <DashboardFailed initError={dashboardState.initError} />}
       <div>
         <DashboardGrid dashboard={dashboard} isEditable viewPanel={null} editPanel={null} hidePanelMenus />
@@ -94,11 +94,10 @@ export default function EmbeddedDashboardPage({ route, queryParams }: Props) {
 
 interface ToolbarProps {
   dashboard: DashboardModel;
-  callbackUrl?: string;
   dashboardJson: string;
 }
 
-const Toolbar = ({ dashboard, callbackUrl, dashboardJson }: ToolbarProps) => {
+const Toolbar = ({ dashboard, dashboardJson }: ToolbarProps) => {
   const dispatch = useDispatch();
   const styles = useStyles2(getStyles);
 
@@ -107,11 +106,13 @@ const Toolbar = ({ dashboard, callbackUrl, dashboardJson }: ToolbarProps) => {
   };
 
   const saveDashboard = async (clone: DashboardModel) => {
-    if (!clone || !callbackUrl) {
+    const params = locationService.getSearch();
+    const serverPort = params.get('serverPort');
+    if (!clone || !serverPort) {
       return;
     }
 
-    return getBackendSrv().post(`${callbackUrl}/save-dashboard`, { dashboard: clone });
+    return getBackendSrv().post(`http://localhost:${serverPort}/save-dashboard`, { dashboard: clone });
   };
 
   return (

@@ -2,7 +2,9 @@ package prometheus
 
 import (
 	"context"
+	"io"
 	"net/http"
+	"strings"
 	"testing"
 	"time"
 
@@ -27,10 +29,19 @@ type healthCheckFailRoundTripper struct {
 
 func (rt *healthCheckSuccessRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
 	return &http.Response{
-		Status:        "200",
-		StatusCode:    200,
-		Header:        nil,
-		Body:          nil,
+		Status:     "200",
+		StatusCode: 200,
+		Header:     nil,
+		Body: io.NopCloser(strings.NewReader(`{
+			"status": "success",
+			"data": {
+				"resultType": "scalar",
+				"result": [
+					1692969348.331,
+					"2"
+				]
+			}
+		}`)),
 		ContentLength: 0,
 		Request:       req,
 	}, nil

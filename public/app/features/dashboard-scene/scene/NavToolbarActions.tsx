@@ -4,7 +4,10 @@ import { locationService } from '@grafana/runtime';
 import { Button } from '@grafana/ui';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { NavToolbarSeparator } from 'app/core/components/AppChrome/NavToolbar/NavToolbarSeparator';
+import { t } from 'app/core/internationalization';
 import { DashNavButton } from 'app/features/dashboard/components/DashNav/DashNavButton';
+
+import { ShareModal } from '../sharing/ShareModal';
 
 import { DashboardScene } from './DashboardScene';
 
@@ -17,6 +20,17 @@ export const NavToolbarActions = React.memo<Props>(({ dashboard }) => {
   const toolbarActions = (actions ?? []).map((action) => <action.Component key={action.state.key} model={action} />);
 
   if (uid) {
+    toolbarActions.push(
+      <DashNavButton
+        tooltip={t('dashboard.toolbar.share', 'Share dashboard')}
+        icon="share-alt"
+        iconSize="lg"
+        onClick={() => {
+          dashboard.showModal(new ShareModal({ dashboardRef: dashboard.getRef() }));
+        }}
+      />
+    );
+
     toolbarActions.push(
       <DashNavButton
         key="button-scenes"
@@ -62,7 +76,7 @@ export const NavToolbarActions = React.memo<Props>(({ dashboard }) => {
   } else {
     // TODO check permissions
     toolbarActions.push(
-      <Button onClick={dashboard.onEnterEditMode} tooltip="Save as copy" fill="text" key="save-as">
+      <Button onClick={dashboard.onSave} tooltip="Save as copy" fill="text" key="save-as">
         Save as
       </Button>
     );
@@ -72,7 +86,7 @@ export const NavToolbarActions = React.memo<Props>(({ dashboard }) => {
       </Button>
     );
     toolbarActions.push(
-      <Button onClick={dashboard.onEnterEditMode} tooltip="Save changes" key="save" disabled={!isDirty}>
+      <Button onClick={dashboard.onSave} tooltip="Save changes" key="save" disabled={!isDirty}>
         Save
       </Button>
     );

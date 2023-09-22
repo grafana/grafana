@@ -22,7 +22,7 @@ type scenarioContext struct {
 	m              *web.Mux
 	context        *contextmodel.ReqContext
 	resp           *httptest.ResponseRecorder
-	respJson       map[string]interface{}
+	respJson       map[string]any
 	handlerFunc    handlerFunc
 	defaultHandler web.Handler
 	url            string

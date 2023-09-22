@@ -135,7 +135,7 @@ export const groupByTransformer: DataTransformerInfo<GroupByTransformerOptions> 
             for (const aggregation of aggregations) {
               const aggregationField: Field = {
                 name: `${fieldName} (${aggregation})`,
-                values: valuesByAggregation[aggregation],
+                values: valuesByAggregation[aggregation] ?? [],
                 type: FieldType.other,
                 config: {},
               };

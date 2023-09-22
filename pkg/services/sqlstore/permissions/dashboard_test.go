@@ -380,14 +380,14 @@ func TestIntegration_DashboardNestedPermissionFilter(t *testing.T) {
 		permission     dashboards.PermissionType
 		permissions    []accesscontrol.Permission
 		expectedResult []string
-		features       []interface{}
+		features       []any
 	}{
 		{
 			desc:           "Should not be able to view dashboards under inherited folders with no permissions if nested folders are enabled",
 			queryType:      searchstore.TypeDashboard,
 			permission:     dashboards.PERMISSION_VIEW,
 			permissions:    nil,
-			features:       []interface{}{featuremgmt.FlagNestedFolders},
+			features:       []any{featuremgmt.FlagNestedFolders},
 			expectedResult: nil,
 		},
 		{
@@ -395,14 +395,14 @@ func TestIntegration_DashboardNestedPermissionFilter(t *testing.T) {
 			queryType:      searchstore.TypeFolder,
 			permission:     dashboards.PERMISSION_VIEW,
 			permissions:    nil,
-			features:       []interface{}{featuremgmt.FlagNestedFolders},
+			features:       []any{featuremgmt.FlagNestedFolders},
 			expectedResult: nil,
 		},
 		{
 			desc:           "Should not be able to view inherited dashboards and folders with no permissions if nested folders are enabled",
 			permission:     dashboards.PERMISSION_VIEW,
 			permissions:    nil,
-			features:       []interface{}{featuremgmt.FlagNestedFolders},
+			features:       []any{featuremgmt.FlagNestedFolders},
 			expectedResult: nil,
 		},
 		{
@@ -412,7 +412,7 @@ func TestIntegration_DashboardNestedPermissionFilter(t *testing.T) {
 			permissions: []accesscontrol.Permission{
 				{Action: dashboards.ActionDashboardsRead, Scope: dashboards.ScopeFoldersAll},
 			},
-			features:       []interface{}{featuremgmt.FlagNestedFolders},
+			features:       []any{featuremgmt.FlagNestedFolders},
 			expectedResult: []string{"dashboard under parent folder", "dashboard under subfolder"},
 		},
 		{
@@ -422,7 +422,7 @@ func TestIntegration_DashboardNestedPermissionFilter(t *testing.T) {
 			permissions: []accesscontrol.Permission{
 				{Action: dashboards.ActionDashboardsRead, Scope: "folders:uid:parent"},
 			},
-			features:       []interface{}{featuremgmt.FlagNestedFolders},
+			features:       []any{featuremgmt.FlagNestedFolders},
 			expectedResult: []string{"dashboard under parent folder", "dashboard under subfolder"},
 		},
 		{
@@ -432,7 +432,7 @@ func TestIntegration_DashboardNestedPermissionFilter(t *testing.T) {
 			permissions: []accesscontrol.Permission{
 				{Action: dashboards.ActionDashboardsRead, Scope: "folders:uid:parent"},
 			},
-			features:       []interface{}{},
+			features:       []any{},
 			expectedResult: []string{"dashboard under parent folder"},
 		},
 		{
@@ -442,7 +442,7 @@ func TestIntegration_DashboardNestedPermissionFilter(t *testing.T) {
 			permissions: []accesscontrol.Permission{
 				{Action: dashboards.ActionFoldersRead, Scope: "folders:uid:parent"},
 			},
-			features:       []interface{}{featuremgmt.FlagNestedFolders},
+			features:       []any{featuremgmt.FlagNestedFolders},
 			expectedResult: []string{"parent", "subfolder"},
 		},
 		{
@@ -452,7 +452,7 @@ func TestIntegration_DashboardNestedPermissionFilter(t *testing.T) {
 			permissions: []accesscontrol.Permission{
 				{Action: dashboards.ActionFoldersRead, Scope: "folders:uid:parent"},
 			},
-			features:       []interface{}{},
+			features:       []any{},
 			expectedResult: []string{"parent"},
 		},
 		{
@@ -462,7 +462,7 @@ func TestIntegration_DashboardNestedPermissionFilter(t *testing.T) {
 				{Action: dashboards.ActionFoldersRead, Scope: "folders:uid:parent"},
 				{Action: dashboards.ActionDashboardsRead, Scope: "folders:uid:parent"},
 			},
-			features:       []interface{}{featuremgmt.FlagNestedFolders},
+			features:       []any{featuremgmt.FlagNestedFolders},
 			expectedResult: []string{"parent", "subfolder", "dashboard under parent folder", "dashboard under subfolder"},
 		},
 		{
@@ -472,7 +472,7 @@ func TestIntegration_DashboardNestedPermissionFilter(t *testing.T) {
 				{Action: dashboards.ActionFoldersRead, Scope: "folders:uid:parent"},
 				{Action: dashboards.ActionDashboardsRead, Scope: "folders:uid:parent"},
 			},
-			features:       []interface{}{},
+			features:       []any{},
 			expectedResult: []string{"parent", "dashboard under parent folder"},
 		},
 	}
@@ -533,14 +533,14 @@ func TestIntegration_DashboardNestedPermissionFilter_WithSelfContainedPermission
 		permission              dashboards.PermissionType
 		signedInUserPermissions []accesscontrol.Permission
 		expectedResult          []string
-		features                []interface{}
+		features                []any
 	}{
 		{
 			desc:                    "Should not be able to view dashboards under inherited folders with no permissions if nested folders are enabled",
 			queryType:               searchstore.TypeDashboard,
 			permission:              dashboards.PERMISSION_VIEW,
 			signedInUserPermissions: nil,
-			features:                []interface{}{featuremgmt.FlagNestedFolders},
+			features:                []any{featuremgmt.FlagNestedFolders},
 			expectedResult:          nil,
 		},
 		{
@@ -548,14 +548,14 @@ func TestIntegration_DashboardNestedPermissionFilter_WithSelfContainedPermission
 			queryType:               searchstore.TypeFolder,
 			permission:              dashboards.PERMISSION_VIEW,
 			signedInUserPermissions: nil,
-			features:                []interface{}{featuremgmt.FlagNestedFolders},
+			features:                []any{featuremgmt.FlagNestedFolders},
 			expectedResult:          nil,
 		},
 		{
 			desc:                    "Should not be able to view inherited dashboards and folders with no permissions if nested folders are enabled",
 			permission:              dashboards.PERMISSION_VIEW,
 			signedInUserPermissions: nil,
-			features:                []interface{}{featuremgmt.FlagNestedFolders},
+			features:                []any{featuremgmt.FlagNestedFolders},
 			expectedResult:          nil,
 		},
 		{
@@ -565,7 +565,7 @@ func TestIntegration_DashboardNestedPermissionFilter_WithSelfContainedPermission
 			signedInUserPermissions: []accesscontrol.Permission{
 				{Action: dashboards.ActionDashboardsRead, Scope: dashboards.ScopeFoldersAll},
 			},
-			features:       []interface{}{featuremgmt.FlagNestedFolders},
+			features:       []any{featuremgmt.FlagNestedFolders},
 			expectedResult: []string{"dashboard under parent folder", "dashboard under subfolder"},
 		},
 		{
@@ -575,7 +575,7 @@ func TestIntegration_DashboardNestedPermissionFilter_WithSelfContainedPermission
 			signedInUserPermissions: []accesscontrol.Permission{
 				{Action: dashboards.ActionDashboardsRead, Scope: "folders:uid:parent"},
 			},
-			features:       []interface{}{featuremgmt.FlagNestedFolders},
+			features:       []any{featuremgmt.FlagNestedFolders},
 			expectedResult: []string{"dashboard under parent folder", "dashboard under subfolder"},
 		},
 		{
@@ -585,7 +585,7 @@ func TestIntegration_DashboardNestedPermissionFilter_WithSelfContainedPermission
 			signedInUserPermissions: []accesscontrol.Permission{
 				{Action: dashboards.ActionDashboardsRead, Scope: "folders:uid:parent"},
 			},
-			features:       []interface{}{},
+			features:       []any{},
 			expectedResult: []string{"dashboard under parent folder"},
 		},
 		{
@@ -595,7 +595,7 @@ func TestIntegration_DashboardNestedPermissionFilter_WithSelfContainedPermission
 			signedInUserPermissions: []accesscontrol.Permission{
 				{Action: dashboards.ActionFoldersRead, Scope: "folders:uid:parent"},
 			},
-			features:       []interface{}{featuremgmt.FlagNestedFolders},
+			features:       []any{featuremgmt.FlagNestedFolders},
 			expectedResult: []string{"parent", "subfolder"},
 		},
 		{
@@ -605,7 +605,7 @@ func TestIntegration_DashboardNestedPermissionFilter_WithSelfContainedPermission
 			signedInUserPermissions: []accesscontrol.Permission{
 				{Action: dashboards.ActionFoldersRead, Scope: "folders:uid:parent"},
 			},
-			features:       []interface{}{},
+			features:       []any{},
 			expectedResult: []string{"parent"},
 		},
 		{
@@ -615,7 +615,7 @@ func TestIntegration_DashboardNestedPermissionFilter_WithSelfContainedPermission
 				{Action: dashboards.ActionFoldersRead, Scope: "folders:uid:parent"},
 				{Action: dashboards.ActionDashboardsRead, Scope: "folders:uid:parent"},
 			},
-			features:       []interface{}{featuremgmt.FlagNestedFolders},
+			features:       []any{featuremgmt.FlagNestedFolders},
 			expectedResult: []string{"parent", "subfolder", "dashboard under parent folder", "dashboard under subfolder"},
 		},
 		{
@@ -625,7 +625,7 @@ func TestIntegration_DashboardNestedPermissionFilter_WithSelfContainedPermission
 				{Action: dashboards.ActionFoldersRead, Scope: "folders:uid:parent"},
 				{Action: dashboards.ActionDashboardsRead, Scope: "folders:uid:parent"},
 			},
-			features:       []interface{}{},
+			features:       []any{},
 			expectedResult: []string{"parent", "dashboard under parent folder"},
 		},
 		{
@@ -639,7 +639,7 @@ func TestIntegration_DashboardNestedPermissionFilter_WithSelfContainedPermission
 				{Action: dashboards.ActionDashboardsRead, Scope: "folders:uid:parent"},
 				{Action: dashboards.ActionDashboardsWrite, Scope: "folders:uid:parent"},
 			},
-			features:       []interface{}{featuremgmt.FlagNestedFolders},
+			features:       []any{featuremgmt.FlagNestedFolders},
 			expectedResult: []string{"subfolder", "dashboard under parent folder", "dashboard under subfolder"},
 		},
 	}
@@ -817,7 +817,7 @@ func setupNestedTest(t *testing.T, usr *user.SignedInUser, perms []accesscontrol
 	_, err = dashStore.SaveDashboard(context.Background(), dashboards.SaveDashboardCommand{
 		OrgID:    orgID,
 		FolderID: parent.ID,
-		Dashboard: simplejson.NewFromAny(map[string]interface{}{
+		Dashboard: simplejson.NewFromAny(map[string]any{
 			"title": "dashboard under parent folder",
 		}),
 	})
@@ -827,7 +827,7 @@ func setupNestedTest(t *testing.T, usr *user.SignedInUser, perms []accesscontrol
 	_, err = dashStore.SaveDashboard(context.Background(), dashboards.SaveDashboardCommand{
 		OrgID:    orgID,
 		FolderID: subfolder.ID,
-		Dashboard: simplejson.NewFromAny(map[string]interface{}{
+		Dashboard: simplejson.NewFromAny(map[string]any{
 			"title": "dashboard under subfolder",
 		}),
 	})

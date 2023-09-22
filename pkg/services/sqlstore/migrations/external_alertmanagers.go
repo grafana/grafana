@@ -64,7 +64,7 @@ func (e externalAlertmanagerToDatasources) Exec(sess *xorm.Session, mg *migrator
 				Updated: time.Unix(result.UpdatedAt, 0),
 				UID:     uid,
 				Version: 1,
-				JsonData: simplejson.NewFromAny(map[string]interface{}{
+				JsonData: simplejson.NewFromAny(map[string]any{
 					"handleGrafanaManagedAlerts": true,
 					"implementation":             "prometheus",
 				}),

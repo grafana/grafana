@@ -67,10 +67,6 @@ const (
 	// Use jmoiron/sqlx rather than xorm for a few backend services
 	FlagNewDBLibrary = "newDBLibrary"
 
-	// FlagValidateDashboardsOnSave
-	// Validate dashboard JSON POSTed to api/dashboards/db
-	FlagValidateDashboardsOnSave = "validateDashboardsOnSave"
-
 	// FlagAutoMigrateOldPanels
 	// Migrate old angular panels to supported versions (graph, table-old, worldmap, etc)
 	FlagAutoMigrateOldPanels = "autoMigrateOldPanels"
@@ -103,6 +99,10 @@ const (
 	// Enables topnav support in external plugins. The new Grafana navigation cannot be disabled.
 	FlagTopnav = "topnav"
 
+	// FlagDockedMegaMenu
+	// Enable support for a persistent (docked) navigation menu
+	FlagDockedMegaMenu = "dockedMegaMenu"
+
 	// FlagGrpcServer
 	// Run the GRPC server
 	FlagGrpcServer = "grpcServer"
@@ -123,10 +123,6 @@ const (
 	// Enable async query data support for Athena
 	FlagAthenaAsyncQueryDataSupport = "athenaAsyncQueryDataSupport"
 
-	// FlagNewPanelChromeUI
-	// Show updated look and feel of grafana-ui PanelChrome: panel header, icons, and menu
-	FlagNewPanelChromeUI = "newPanelChromeUI"
-
 	// FlagShowDashboardValidationWarnings
 	// Show warnings when dashboards do not validate against the schema
 	FlagShowDashboardValidationWarnings = "showDashboardValidationWarnings"
@@ -144,7 +140,7 @@ const (
 	FlagNestedFolders = "nestedFolders"
 
 	// FlagNestedFolderPicker
-	// Enables the new folder picker to work with nested folders. Requires the folderPicker feature flag
+	// Enables the new folder picker to work with nested folders. Requires the nestedFolders feature flag
 	FlagNestedFolderPicker = "nestedFolderPicker"
 
 	// FlagAccessTokenExpirationCheck
@@ -331,10 +327,6 @@ const (
 	// Enables fetching Angular detection patterns for plugins from GCOM and fallback to hardcoded ones
 	FlagPluginsDynamicAngularDetectionPatterns = "pluginsDynamicAngularDetectionPatterns"
 
-	// FlagAlertingLokiRangeToInstant
-	// Rewrites eligible loki range queries to instant queries
-	FlagAlertingLokiRangeToInstant = "alertingLokiRangeToInstant"
-
 	// FlagVizAndWidgetSplit
 	// Split panels between vizualizations and widgets
 	FlagVizAndWidgetSplit = "vizAndWidgetSplit"
@@ -366,6 +358,10 @@ const (
 	// FlagTraceQLStreaming
 	// Enables response streaming of TraceQL queries of the Tempo data source
 	FlagTraceQLStreaming = "traceQLStreaming"
+
+	// FlagMetricsSummary
+	// Enables metrics summary queries in the Tempo data source
+	FlagMetricsSummary = "metricsSummary"
 
 	// FlagGrafanaAPIServer
 	// Enable Kubernetes API Server for Grafana resources
@@ -410,4 +406,44 @@ const (
 	// FlagAlertingNoDataErrorExecution
 	// Changes how Alerting state manager handles execution of NoData/Error
 	FlagAlertingNoDataErrorExecution = "alertingNoDataErrorExecution"
+
+	// FlagAngularDeprecationUI
+	// Display new Angular deprecation-related UI features
+	FlagAngularDeprecationUI = "angularDeprecationUI"
+
+	// FlagDashgpt
+	// Enable AI powered features in dashboards
+	FlagDashgpt = "dashgpt"
+
+	// FlagReportingRetries
+	// Enables rendering retries for the reporting feature
+	FlagReportingRetries = "reportingRetries"
+
+	// FlagNewBrowseDashboards
+	// New browse/manage dashboards UI
+	FlagNewBrowseDashboards = "newBrowseDashboards"
+
+	// FlagSseGroupByDatasource
+	// Send query to the same datasource in a single request when using server side expressions
+	FlagSseGroupByDatasource = "sseGroupByDatasource"
+
+	// FlagRequestInstrumentationStatusSource
+	// Include a status source label for request metrics and logs
+	FlagRequestInstrumentationStatusSource = "requestInstrumentationStatusSource"
+
+	// FlagLokiRunQueriesInParallel
+	// Enables running Loki queries in parallel
+	FlagLokiRunQueriesInParallel = "lokiRunQueriesInParallel"
+
+	// FlagWargamesTesting
+	// Placeholder feature flag for internal testing
+	FlagWargamesTesting = "wargamesTesting"
+
+	// FlagAlertingInsights
+	// Show the new alerting insights landing page
+	FlagAlertingInsights = "alertingInsights"
+
+	// FlagPluginsAPIMetrics
+	// Sends metrics of public grafana packages usage by plugins
+	FlagPluginsAPIMetrics = "pluginsAPIMetrics"
 )

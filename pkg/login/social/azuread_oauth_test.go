@@ -499,7 +499,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 
 	// Instantiate a signer using RSASSA-PSS (SHA256) with the given private key.
 	sig, err := jose.NewSigner(jose.SigningKey{Algorithm: jose.PS256, Key: privateKey}, (&jose.SignerOptions{
-		ExtraHeaders: map[jose.HeaderKey]interface{}{"kid": "1"},
+		ExtraHeaders: map[jose.HeaderKey]any{"kid": "1"},
 	}).WithType("JWT"))
 	require.NoError(t, err)
 
@@ -586,7 +586,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 				AccessToken: "fake_token",
 			}
 			if tt.claims != nil {
-				token = token.WithExtra(map[string]interface{}{"id_token": raw})
+				token = token.WithExtra(map[string]any{"id_token": raw})
 			}
 
 			if tt.fields.SocialBase != nil {
@@ -681,7 +681,7 @@ func TestSocialAzureAD_SkipOrgRole(t *testing.T) {
 
 	// Instantiate a signer using RSASSA-PSS (SHA256) with the given private key.
 	sig, err := jose.NewSigner(jose.SigningKey{Algorithm: jose.PS256, Key: privateKey}, (&jose.SignerOptions{
-		ExtraHeaders: map[jose.HeaderKey]interface{}{"kid": "1"},
+		ExtraHeaders: map[jose.HeaderKey]any{"kid": "1"},
 	}).WithType("JWT"))
 	require.NoError(t, err)
 
@@ -762,7 +762,7 @@ func TestSocialAzureAD_SkipOrgRole(t *testing.T) {
 				AccessToken: "fake_token",
 			}
 			if tt.claims != nil {
-				token = token.WithExtra(map[string]interface{}{"id_token": raw})
+				token = token.WithExtra(map[string]any{"id_token": raw})
 			}
 
 			if tt.fields.SocialBase != nil {

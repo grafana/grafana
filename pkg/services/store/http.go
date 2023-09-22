@@ -194,7 +194,7 @@ func (s *standardStorageService) doDelete(c *contextmodel.ReqContext) response.R
 	if err != nil {
 		return response.Error(400, "failed to delete the file: "+err.Error(), err)
 	}
-	return response.JSON(200, map[string]interface{}{
+	return response.JSON(200, map[string]any{
 		"message": "Removed file from storage",
 		"success": true,
 		"path":    path,
@@ -223,7 +223,7 @@ func (s *standardStorageService) doDeleteFolder(c *contextmodel.ReqContext) resp
 		return response.Error(400, "failed to delete the folder: "+err.Error(), err)
 	}
 
-	return response.JSON(200, map[string]interface{}{
+	return response.JSON(200, map[string]any{
 		"message": "Removed folder from storage",
 		"success": true,
 		"path":    path,
@@ -250,7 +250,7 @@ func (s *standardStorageService) doCreateFolder(c *contextmodel.ReqContext) resp
 		return response.Error(400, "failed to create the folder: "+err.Error(), err)
 	}
 
-	return response.JSON(200, map[string]interface{}{
+	return response.JSON(200, map[string]any{
 		"message": "Folder created",
 		"success": true,
 		"path":    cmd.Path,

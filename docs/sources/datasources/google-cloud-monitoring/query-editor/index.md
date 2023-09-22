@@ -139,7 +139,7 @@ The default values for "cloud monitoring auto" are:
 
 The other automatic option is "grafana auto", which automatically sets the Group By time depending on the time range chosen and width of the time series panel.
 
-For more information about "grafana auto", refer to [Interval variable]({{< relref "../../../dashboards/variables/add-template-variables/#add-an-interval-variable" >}}).
+For more information about "grafana auto", refer to [Interval variable][add-template-variables-add-interval-variable].
 
 You can also choose fixed time intervals to group by, like `1h` or `1d`.
 
@@ -312,6 +312,9 @@ Example result: `monitoring.googleapis.com/uptime_check/http_status has this val
 | `{{resource.label.xxx}}` | Returns the resource label value. | `{{resource.label.zone}}`        | `us-east1-b`                                      |
 
 {{% docs/reference %}}
+[add-template-variables-add-interval-variable]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables/add-template-variables#add-an-interval-variable"
+[add-template-variables-add-interval-variable]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables/add-template-variables#add-an-interval-variable"
+
 [annotate-visualizations]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/build-dashboards/annotate-visualizations"
 [annotate-visualizations]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/build-dashboards/annotate-visualizations"
 

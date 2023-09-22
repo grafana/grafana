@@ -214,7 +214,7 @@ func (s *SimulationEngine) getSimFromPath(path string) (Simulation, error) {
 }
 
 func (s *SimulationEngine) GetSimulationHandler(rw http.ResponseWriter, req *http.Request) {
-	var result interface{}
+	var result any
 	path := req.URL.Path
 	if path == "/sims" {
 		v := make([]simulationInfo, 0, len(s.registry))

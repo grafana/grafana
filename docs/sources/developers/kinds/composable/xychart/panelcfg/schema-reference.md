@@ -33,6 +33,7 @@ It extends [HideableFieldConfig](#hideablefieldconfig) and [AxisConfig](#axiscon
 
 | Property            | Type                                                | Required | Default | Description                                                                                                                             |
 |---------------------|-----------------------------------------------------|----------|---------|-----------------------------------------------------------------------------------------------------------------------------------------|
+| `axisBorderShow`    | boolean                                             | No       |         | *(Inherited from [AxisConfig](#axisconfig))*                                                                                            |
 | `axisCenteredZero`  | boolean                                             | No       |         | *(Inherited from [AxisConfig](#axisconfig))*                                                                                            |
 | `axisColorMode`     | string                                              | No       |         | *(Inherited from [AxisConfig](#axisconfig))*<br/>TODO docs<br/>Possible values are: `text`, `series`.                                   |
 | `axisGridShow`      | boolean                                             | No       |         | *(Inherited from [AxisConfig](#axisconfig))*                                                                                            |
@@ -58,6 +59,7 @@ TODO docs
 
 | Property            | Type                                                | Required | Default | Description                                                                            |
 |---------------------|-----------------------------------------------------|----------|---------|----------------------------------------------------------------------------------------|
+| `axisBorderShow`    | boolean                                             | No       |         |                                                                                        |
 | `axisCenteredZero`  | boolean                                             | No       |         |                                                                                        |
 | `axisColorMode`     | string                                              | No       |         | TODO docs<br/>Possible values are: `text`, `series`.                                   |
 | `axisGridShow`      | boolean                                             | No       |         |                                                                                        |
@@ -201,6 +203,7 @@ It extends [FieldConfig](#fieldconfig).
 
 | Property            | Type                                                | Required | Default | Description                                                                                                                               |
 |---------------------|-----------------------------------------------------|----------|---------|-------------------------------------------------------------------------------------------------------------------------------------------|
+| `axisBorderShow`    | boolean                                             | No       |         | *(Inherited from [FieldConfig](#fieldconfig))*                                                                                            |
 | `axisCenteredZero`  | boolean                                             | No       |         | *(Inherited from [FieldConfig](#fieldconfig))*                                                                                            |
 | `axisColorMode`     | string                                              | No       |         | *(Inherited from [FieldConfig](#fieldconfig))*<br/>TODO docs<br/>Possible values are: `text`, `series`.                                   |
 | `axisGridShow`      | boolean                                             | No       |         | *(Inherited from [FieldConfig](#fieldconfig))*                                                                                            |

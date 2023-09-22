@@ -43,7 +43,6 @@ func TestCallResource(t *testing.T) {
 	require.NoError(t, err)
 
 	cfg := setting.NewCfg()
-
 	cfg.StaticRootPath = staticRootPath
 	cfg.IsFeatureToggleEnabled = func(_ string) bool {
 		return false
@@ -55,8 +54,8 @@ func TestCallResource(t *testing.T) {
 
 	textCtx := pluginsintegration.CreateIntegrationTestCtx(t, cfg, coreRegistry)
 
-	pcp := plugincontext.ProvideService(localcache.ProvideService(), textCtx.PluginStore, &datasources.FakeDataSourceService{},
-		pluginSettings.ProvideService(db.InitTestDB(t), fakeSecrets.NewFakeSecretsService()))
+	pcp := plugincontext.ProvideService(cfg, localcache.ProvideService(), textCtx.PluginStore, &datasources.FakeDataSourceService{},
+		pluginSettings.ProvideService(db.InitTestDB(t), fakeSecrets.NewFakeSecretsService()), nil, nil)
 
 	srv := SetupAPITestServer(t, func(hs *HTTPServer) {
 		hs.Cfg = cfg
@@ -80,7 +79,7 @@ func TestCallResource(t *testing.T) {
 		b, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
 
-		var body = make(map[string]interface{})
+		var body = make(map[string]any)
 		err = json.Unmarshal(b, &body)
 		require.NoError(t, err)
 

@@ -16,7 +16,7 @@ type CommandLine interface {
 	String(name string) string
 	StringSlice(name string) []string
 	FlagNames() (names []string)
-	Generic(name string) interface{}
+	Generic(name string) any
 
 	PluginDirectory() string
 	PluginRepoURL() string
