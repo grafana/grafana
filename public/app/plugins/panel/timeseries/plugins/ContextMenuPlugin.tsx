@@ -167,13 +167,13 @@ export const ContextMenuPlugin = ({
 
   return (
     <>
-      <Global
+      {/* <Global
         styles={cssCore`
         .uplot .u-cursor-pt {
           pointer-events: auto !important;
         }
       `}
-      />
+      /> */}
       {isOpen && coords && (
         <ContextMenuView
           data={data}
