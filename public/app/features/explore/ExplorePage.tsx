@@ -82,22 +82,22 @@ export default function ExplorePage(props: GrafanaRouteComponentProps<{}, Explor
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    pageScrollbarWrapper: css`
-      width: 100%;
-      flex-grow: 1;
-      min-height: 0;
-      height: 100%;
-      position: relative;
-    `,
-    correlationsEditorIndicator: css`
-      border-left: 4px solid ${theme.colors.primary.main};
-      border-right: 4px solid ${theme.colors.primary.main};
-      border-bottom: 4px solid ${theme.colors.primary.main};
-      overflow: scroll;
-    `,
-    correlationEditorTop: css`
-      background-color: ${theme.colors.primary.main};
-      margin-top: 3px;
-    `,
+    pageScrollbarWrapper: css({
+      width: '100%',
+      flexGrow: 1,
+      minHeight: 0,
+      height: '100%',
+      position: 'relative',
+    }),
+    correlationsEditorIndicator: css({
+      borderLeft: `4px solid ${theme.colors.primary.main}`,
+      borderRight: `4px solid ${theme.colors.primary.main}`,
+      borderBottom: `4px solid ${theme.colors.primary.main}`,
+      overflow: 'scroll',
+    }),
+    correlationEditorTop: css({
+      backgroundColor: theme.colors.primary.main,
+      marginTop: '3px',
+    }),
   };
 };

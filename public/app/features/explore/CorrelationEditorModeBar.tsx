@@ -218,27 +218,27 @@ const getStyles = (theme: GrafanaTheme2) => {
   const disabledColor = colorManipulator.darken(contrastColor, 0.2);
 
   return {
-    correlationEditorTop: css`
-      background-color: ${theme.colors.primary.main};
-      margin-top: 3px;
-      padding: ${theme.spacing(1)};
-    `,
-    iconColor: css`
-      color: ${contrastColor};
-    `,
-    buttonColor: css`
-      color: ${contrastColor};
-      border-color: ${contrastColor};
-      &:hover {
-        color: ${contrastColor};
-        border-color: ${contrastColor};
-        background-color: ${lighterBackgroundColor};
-      }
-    `,
+    correlationEditorTop: css({
+      backgroundColor: theme.colors.primary.main,
+      marginTop: '3px',
+      padding: theme.spacing(1),
+    }),
+    iconColor: css({
+      color: contrastColor,
+    }),
+    buttonColor: css({
+      color: contrastColor,
+      borderColor: contrastColor,
+      '&:hover': {
+        color: contrastColor,
+        borderColor: contrastColor,
+        backgroundColor: lighterBackgroundColor,
+      },
+    }),
     // important needed to override disabled state styling
-    disabledButtonColor: css`
-      color: ${disabledColor} !important;
-      background-color: ${darkerBackgroundColor} !important;
-    `,
+    disabledButtonColor: css({
+      color: `${disabledColor} !important`,
+      'background-color': `${darkerBackgroundColor} !important`,
+    }),
   };
 };
