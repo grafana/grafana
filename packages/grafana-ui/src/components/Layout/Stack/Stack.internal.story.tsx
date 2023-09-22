@@ -1,6 +1,8 @@
 import { Meta, StoryFn } from '@storybook/react';
 import React, { ReactNode } from 'react';
 
+import { SpacingTokenControl } from '../../../utils/storybook/themeStorybookControls';
+
 import { Stack } from './Stack';
 import mdx from './Stack.mdx';
 
@@ -11,6 +13,10 @@ const meta: Meta<typeof Stack> = {
     docs: {
       page: mdx,
     },
+  },
+  argTypes: {
+    gap: SpacingTokenControl,
+    direction: { control: 'select', options: ['row', 'row-reverse', 'column', 'column-reverse'] },
   },
 };
 

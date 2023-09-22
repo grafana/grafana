@@ -4001,7 +4001,7 @@ __metadata:
     rollup-plugin-terser: 7.0.2
     rxjs: 7.8.1
     systemjs: 6.14.2
-    systemjs-cjs-extra: 0.1.1
+    systemjs-cjs-extra: 0.2.0
     tslib: 2.6.0
     typescript: 4.8.4
   peerDependencies:
@@ -31625,10 +31625,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"systemjs-cjs-extra@npm:0.1.1":
-  version: 0.1.1
-  resolution: "systemjs-cjs-extra@npm:0.1.1"
-  checksum: 5b2880a5ec95b995ab3e1396c8c7fb2e089ad768a4843e915ff97e75bd255ef8d1f9cd79869eb1b42d9ee7bdd64d9f8d0385d25d82992d5c11e8cacc3b896417
+"systemjs-cjs-extra@npm:0.2.0":
+  version: 0.2.0
+  resolution: "systemjs-cjs-extra@npm:0.2.0"
+  checksum: c00ea3dba63cbfb6629543cdd4fe5bcf61501cf395d08ca49b622de07fdd5a2c9a4c2c6c3a84ab73648e2da5cc690bdbdf7d5701868b654816ee8df28bd5a891
   languageName: node
   linkType: hard
 
