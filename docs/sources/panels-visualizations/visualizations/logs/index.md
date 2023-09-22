@@ -15,17 +15,17 @@ labels:
     - cloud
     - enterprise
     - oss
-title: Logs panel
+title: Logs
 weight: 100
 ---
 
-# Logs panel
+# Logs
 
-The logs panel visualization shows log lines from data sources that support logs, such as Elastic, Influx, and Loki. Typically you would use this panel next to a graph panel to display the log output of a related process.
+The logs visualization shows log lines from data sources that support logs, such as Elastic, Influx, and Loki. Typically you would use this visualization next to a graph visualization to display the log output of a related process.
 
 <img class="screenshot" src="/static/img/docs/v64/logs-panel.png">
 
-The logs panel shows the result of queries that were entered in the Query tab. The results of multiple queries are merged and sorted by time. You can scroll inside the panel if the data source returns more lines than can be displayed at any one time.
+The logs visualization shows the result of queries that were entered in the Query tab. The results of multiple queries are merged and sorted by time. You can scroll inside the panel if the data source returns more lines than can be displayed at any one time.
 
 To limit the number of lines rendered, you can use the **Max data points** setting in the **Query options**. If it is not set, then the data source will usually enforce a default limit.
 
