@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/clients"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models/resources"
@@ -12,9 +13,11 @@ import (
 )
 
 // getDimensionValues gets the actual dimension values for dimensions with a wildcard
-func (e *cloudWatchExecutor) getDimensionValuesForWildcards(ctx context.Context, client models.CloudWatchMetricsAPIProvider, region string, queries []*models.CloudWatchQuery) ([]*models.CloudWatchQuery, error) {
+func (e *cloudWatchExecutor) getDimensionValuesForWildcards(ctx context.Context, pluginCtx backend.PluginContext, region string, client models.CloudWatchMetricsAPIProvider, origQueries []*models.CloudWatchQuery) ([]*models.CloudWatchQuery, error) {
 	metricsClient := clients.NewMetricsClient(client, e.cfg)
 	service := services.NewListMetricsService(metricsClient)
+	// create copies of the original query. All the fields besides Dimensions are primitives
+	queries := copyQueries(origQueries)
 
 	for _, query := range queries {
 		for dimensionKey, values := range query.Dimensions {
@@ -23,7 +26,11 @@ func (e *cloudWatchExecutor) getDimensionValuesForWildcards(ctx context.Context,
 				continue
 			}
 
-			cacheKey := fmt.Sprintf("%s-%s-%s-%s", region, query.Namespace, query.MetricName, dimensionKey)
+			accountID := ""
+			if query.AccountId != nil {
+				accountID = *query.AccountId
+			}
+			cacheKey := fmt.Sprintf("%s-%s-%s-%s-%s-%s-%s", pluginCtx.DataSourceInstanceSettings.UID, pluginCtx.DataSourceInstanceSettings.Updated, region, accountID, query.Namespace, query.MetricName, dimensionKey)
 			cachedDimensions, found := e.tagValueCache.Get(cacheKey)
 			if found {
 				query.Dimensions[dimensionKey] = cachedDimensions.([]string)
@@ -42,7 +49,7 @@ func (e *cloudWatchExecutor) getDimensionValuesForWildcards(ctx context.Context,
 
 			dimensions, err := service.GetDimensionValuesByDimensionFilter(request)
 			if err != nil {
-				return queries, err
+				return nil, err
 			}
 			newDimensions := make([]string, 0, len(dimensions))
 			for _, resp := range dimensions {
@@ -54,4 +61,22 @@ func (e *cloudWatchExecutor) getDimensionValuesForWildcards(ctx context.Context,
 	}
 
 	return queries, nil
+}
+
+// copyQueries returns a deep copy of the passed in queries
+func copyQueries(origQueries []*models.CloudWatchQuery) []*models.CloudWatchQuery {
+	newQueries := []*models.CloudWatchQuery{}
+	for _, origQuery := range origQueries {
+		if origQuery == nil {
+			newQueries = append(newQueries, nil)
+			continue
+		}
+		newQuery := *origQuery
+		newQuery.Dimensions = map[string][]string{}
+		for key, val := range origQuery.Dimensions {
+			newQuery.Dimensions[key] = append([]string{}, val...)
+		}
+		newQueries = append(newQueries, &newQuery)
+	}
+	return newQueries
 }
