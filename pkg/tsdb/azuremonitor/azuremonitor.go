@@ -79,7 +79,7 @@ func getDatasourceService(settings *backend.DataSourceInstanceSettings, cfg *set
 }
 
 func NewInstanceSettings(cfg *setting.Cfg, clientProvider *httpclient.Provider, executors map[string]azDatasourceExecutor) datasource.InstanceFactoryFunc {
-	return func(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+	return func(_ context.Context, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 		jsonDataObj := map[string]any{}
 		err := json.Unmarshal(settings.JSONData, &jsonDataObj)
 		if err != nil {

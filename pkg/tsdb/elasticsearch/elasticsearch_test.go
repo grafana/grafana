@@ -1,6 +1,7 @@
 package elasticsearch
 
 import (
+	"context"
 	"encoding/json"
 	"testing"
 
@@ -30,7 +31,7 @@ func TestNewInstanceSettings(t *testing.T) {
 			JSONData: json.RawMessage(settingsJSON),
 		}
 
-		_, err = newInstanceSettings(httpclient.NewProvider())(dsSettings)
+		_, err = newInstanceSettings(httpclient.NewProvider())(context.Background(), dsSettings)
 		require.NoError(t, err)
 	})
 
@@ -49,7 +50,7 @@ func TestNewInstanceSettings(t *testing.T) {
 				JSONData: json.RawMessage(settingsJSON),
 			}
 
-			_, err = newInstanceSettings(httpclient.NewProvider())(dsSettings)
+			_, err = newInstanceSettings(httpclient.NewProvider())(context.Background(), dsSettings)
 			require.EqualError(t, err, "timeField cannot be cast to string")
 		})
 
@@ -68,7 +69,7 @@ func TestNewInstanceSettings(t *testing.T) {
 				JSONData: json.RawMessage(settingsJSON),
 			}
 
-			_, err = newInstanceSettings(httpclient.NewProvider())(dsSettings)
+			_, err = newInstanceSettings(httpclient.NewProvider())(context.Background(), dsSettings)
 			require.EqualError(t, err, "elasticsearch time field name is required")
 		})
 	})
