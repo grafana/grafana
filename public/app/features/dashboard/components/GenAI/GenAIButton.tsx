@@ -5,7 +5,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { llms } from '@grafana/experimental';
 import { Button, Spinner, useStyles2, Link, Tooltip } from '@grafana/ui';
 
-import { useOpenaiStreamHook } from './hooks';
+import { useOpenaiStream } from './hooks';
 import { OPEN_AI_MODEL } from './utils';
 
 export interface GenAIButtonProps {
