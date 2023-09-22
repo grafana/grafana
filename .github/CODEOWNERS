@@ -67,6 +67,7 @@
 /scripts/modowners/ @grafana/backend-platform
 
 /pkg/api/ @grafana/backend-platform
+/pkg/apis/ @grafana/grafana-app-platform-squad
 /pkg/bus/ @grafana/backend-platform
 /pkg/cmd/ @grafana/backend-platform
 /pkg/components/apikeygen/ @grafana/grafana-authnz-team
@@ -144,7 +145,7 @@
 /pkg/tsdb/intervalv2/ @grafana/backend-platform
 /pkg/tsdb/legacydata/ @grafana/backend-platform
 /pkg/tsdb/opentsdb/ @grafana/backend-platform
-/pkg/tsdb/sqleng/ @grafana/backend-platform
+/pkg/tsdb/sqleng/ @grafana/partner-datasources @grafana/oss-big-tent
 /pkg/tsdb/sqleng/proxyutil @grafana/hosted-grafana-team
 /pkg/util/ @grafana/backend-platform
 /pkg/web/ @grafana/backend-platform
@@ -194,7 +195,6 @@
 /devenv/docker/blocks/mysql_opendata/ @grafana/oss-big-tent
 /devenv/docker/blocks/mysql_tests/ @grafana/oss-big-tent
 /devenv/docker/blocks/opentsdb/ @grafana/observability-metrics
-/devenv/docker/blocks/phlare/ @grafana/observability-traces-and-profiling
 /devenv/docker/blocks/postgres/ @grafana/oss-big-tent
 /devenv/docker/blocks/postgres_tests/ @grafana/oss-big-tent
 /devenv/docker/blocks/prometheus/ @grafana/observability-metrics
@@ -289,7 +289,7 @@
 /pkg/services/datasources/ @grafana/plugins-platform-backend
 /pkg/services/pluginsintegration/ @grafana/plugins-platform-backend
 /pkg/plugins/pfs/ @grafana/plugins-platform-backend @grafana/grafana-as-code
-/pkg/tsdb/testdatasource/ @grafana/plugins-platform-backend
+/pkg/tsdb/grafana-testdata-datasource/ @grafana/plugins-platform-backend
 /pkg/services/pluginsintegration/pluginsettings/ @grafana/plugins-platform-backend
 
 # Backend code docs
@@ -304,7 +304,6 @@
 /packages/ @grafana/grafana-frontend-platform @grafana/plugins-platform-frontend
 /packages/grafana-e2e-selectors/ @grafana/grafana-frontend-platform
 /packages/grafana-e2e/ @grafana/grafana-frontend-platform
-/packages/grafana-toolkit/ @grafana/plugins-platform-frontend
 /packages/grafana-ui/.storybook/ @grafana/plugins-platform-frontend
 /packages/grafana-ui/src/components/ @grafana/grafana-frontend-platform
 /packages/grafana-ui/src/components/DateTimePickers/ @grafana/grafana-frontend-platform
@@ -324,6 +323,7 @@
 /packages/grafana-ui/src/utils/storybook/ @grafana/plugins-platform-frontend
 /packages/grafana-data/src/**/*logs* @grafana/observability-logs
 /packages/grafana-schema/src/**/*tempo* @grafana/observability-traces-and-profiling
+/packages/grafana-flamegraph/ @grafana/observability-traces-and-profiling
 /plugins-bundled/ @grafana/plugins-platform-frontend
 
 
@@ -354,6 +354,8 @@ lerna.json @grafana/frontend-ops
 /lefthook.yml @grafana/frontend-ops
 /lefthook.rc @grafana/frontend-ops
 .husky/pre-commit @grafana/frontend-ops
+cypress.config.js @grafana/grafana-frontend-platform
+.levignore.js @grafana/plugins-platform-frontend
 
 
 # public folder
@@ -391,6 +393,7 @@ lerna.json @grafana/frontend-ops
 /public/app/features/panel/ @grafana/dashboards-squad
 /public/app/features/playlist/ @grafana/dashboards-squad
 /public/app/features/plugins/ @grafana/plugins-platform-frontend
+/public/app/features/plugins/sql/ @grafana/partner-datasources @grafana/oss-big-tent
 /public/app/features/profile/ @grafana/grafana-frontend-platform
 /public/app/features/runtime/ @ryantxu
 /public/app/features/query/ @grafana/dashboards-squad
@@ -452,6 +455,7 @@ lerna.json @grafana/frontend-ops
 /public/robots.txt @grafana/frontend-ops
 /public/sass/ @grafana/grafana-frontend-platform
 /public/test/ @grafana/grafana-frontend-platform
+/public/test/helpers/alertingRuleEditor.tsx @grafana/alerting-frontend
 /public/views/ @grafana/grafana-frontend-platform
 
 /public/app/features/explore/Logs/ @grafana/observability-logs
@@ -517,7 +521,7 @@ lerna.json @grafana/frontend-ops
 /public/app/plugins/datasource/cloudwatch/ @grafana/aws-datasources
 /public/app/plugins/datasource/elasticsearch/ @grafana/observability-logs
 /public/app/plugins/datasource/grafana/ @grafana/grafana-frontend-platform
-/public/app/plugins/datasource/testdata/ @grafana/plugins-platform-frontend
+/public/app/plugins/datasource/grafana-testdata-datasource/ @grafana/plugins-platform-frontend
 /public/app/plugins/datasource/azuremonitor/ @grafana/partner-datasources
 /public/app/plugins/datasource/graphite/ @grafana/observability-metrics
 /public/app/plugins/datasource/influxdb/ @grafana/observability-metrics

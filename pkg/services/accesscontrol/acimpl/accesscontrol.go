@@ -40,7 +40,7 @@ func (a *AccessControl) Evaluate(ctx context.Context, user identity.Requester, e
 
 	namespace, identifier := user.GetNamespacedID()
 	if len(user.GetPermissions()) == 0 {
-		a.log.Warn("No permissions set for entity", "namespace", namespace, "id", identifier, "orgID", user.GetOrgID(), "login", user.GetLogin())
+		a.log.Debug("No permissions set for entity", "namespace", namespace, "id", identifier, "orgID", user.GetOrgID(), "login", user.GetLogin())
 		return false, nil
 	}
 
@@ -62,8 +62,4 @@ func (a *AccessControl) Evaluate(ctx context.Context, user identity.Requester, e
 
 func (a *AccessControl) RegisterScopeAttributeResolver(prefix string, resolver accesscontrol.ScopeAttributeResolver) {
 	a.resolvers.AddScopeAttributeResolver(prefix, resolver)
-}
-
-func (a *AccessControl) IsDisabled() bool {
-	return accesscontrol.IsDisabled(a.cfg)
 }

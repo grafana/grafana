@@ -10,7 +10,6 @@ import (
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 type AccessControl interface {
@@ -19,8 +18,6 @@ type AccessControl interface {
 	// RegisterScopeAttributeResolver allows the caller to register a scope resolver for a
 	// specific scope prefix (ex: datasources:name:)
 	RegisterScopeAttributeResolver(prefix string, resolver ScopeAttributeResolver)
-	//IsDisabled returns if access control is enabled or not
-	IsDisabled() bool
 }
 
 type Service interface {
@@ -43,8 +40,6 @@ type Service interface {
 	SaveExternalServiceRole(ctx context.Context, cmd SaveExternalServiceRoleCommand) error
 	// DeleteExternalServiceRole removes an external service's role and its assignment.
 	DeleteExternalServiceRole(ctx context.Context, externalServiceID string) error
-	//IsDisabled returns if access control is enabled or not
-	IsDisabled() bool
 }
 
 type RoleRegistry interface {
@@ -371,10 +366,6 @@ func ManagedBuiltInRoleName(builtInRole string) string {
 	return fmt.Sprintf("managed:builtins:%s:permissions", strings.ToLower(builtInRole))
 }
 
-func IsDisabled(cfg *setting.Cfg) bool {
-	return !cfg.RBACEnabled
-}
-
 // GetOrgRoles returns legacy org roles for a user
 func GetOrgRoles(user identity.Requester) []string {
 	roles := []string{string(user.GetOrgRole())}
@@ -386,7 +377,7 @@ func GetOrgRoles(user identity.Requester) []string {
 	return roles
 }
 
-func BackgroundUser(name string, orgID int64, role org.RoleType, permissions []Permission) *user.SignedInUser {
+func BackgroundUser(name string, orgID int64, role org.RoleType, permissions []Permission) identity.Requester {
 	return &user.SignedInUser{
 		OrgID:   orgID,
 		OrgRole: role,

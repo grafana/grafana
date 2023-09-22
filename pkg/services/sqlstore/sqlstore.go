@@ -55,6 +55,7 @@ type SQLStore struct {
 	migrations                   registry.DatabaseMigrator
 	tracer                       tracing.Tracer
 	recursiveQueriesAreSupported *bool
+	recursiveQueriesMu           sync.Mutex
 }
 
 func ProvideService(cfg *setting.Cfg, cacheService *localcache.CacheService, migrations registry.DatabaseMigrator, bus bus.Bus, tracer tracing.Tracer) (*SQLStore, error) {
@@ -80,9 +81,13 @@ func ProvideService(cfg *setting.Cfg, cacheService *localcache.CacheService, mig
 	db := s.engine.DB().DB
 
 	// register the go_sql_stats_connections_* metrics
-	prometheus.MustRegister(sqlstats.NewStatsCollector("grafana", db))
+	if err := prometheus.Register(sqlstats.NewStatsCollector("grafana", db)); err != nil {
+		s.log.Warn("Failed to register sqlstore stats collector", "error", err)
+	}
 	// TODO: deprecate/remove these metrics
-	prometheus.MustRegister(newSQLStoreMetrics(db))
+	if err := prometheus.Register(newSQLStoreMetrics(db)); err != nil {
+		s.log.Warn("Failed to register sqlstore metrics", "error", err)
+	}
 
 	return s, nil
 }
@@ -520,6 +525,8 @@ func (ss *SQLStore) GetMigrationLockAttemptTimeout() int {
 }
 
 func (ss *SQLStore) RecursiveQueriesAreSupported() (bool, error) {
+	ss.recursiveQueriesMu.Lock()
+	defer ss.recursiveQueriesMu.Unlock()
 	if ss.recursiveQueriesAreSupported != nil {
 		return *ss.recursiveQueriesAreSupported, nil
 	}

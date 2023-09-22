@@ -48,6 +48,16 @@ func TestIntegrationOrgDataAccess(t *testing.T) {
 		require.NoError(t, err)
 	})
 
+	t.Run("insert with org name taken", func(t *testing.T) {
+		_, err := orgStore.Insert(context.Background(), &org.Org{
+			Version: 1,
+			Name:    "test1",
+			Created: time.Now(),
+			Updated: time.Now(),
+		})
+		require.Error(t, err, org.ErrOrgNameTaken)
+	})
+
 	t.Run("org inserted with next available org ID", func(t *testing.T) {
 		orgID, err := orgStore.Insert(context.Background(), &org.Org{
 			ID:      55,
@@ -59,6 +69,14 @@ func TestIntegrationOrgDataAccess(t *testing.T) {
 		require.NoError(t, err)
 		_, err = orgStore.Get(context.Background(), orgID)
 		require.NoError(t, err)
+	})
+
+	t.Run("update with org name taken", func(t *testing.T) {
+		err := orgStore.Update(context.Background(), &org.UpdateOrgCommand{
+			OrgId: 55,
+			Name:  "test1",
+		})
+		require.Error(t, err, org.ErrOrgNameTaken)
 	})
 
 	t.Run("delete by user", func(t *testing.T) {

@@ -12,7 +12,7 @@ All packages are versioned according to the current Grafana version:
 - Grafana v6.2.5 -> @grafana/\* packages @ 6.2.5
 - Grafana - main branch version (based on package.json, i.e. 6.4.0-pre) -> @grafana/\* packages @ 6.4.0-pre-<COMMIT-SHA> (see details below about packages publishing channels)
 
-> Please note that @grafana/toolkit, @grafana/ui, @grafana/data, and @grafana/runtime packages are considered ALPHA even though they are not released as alpha versions.
+> Please note that @grafana/ui, @grafana/data, and @grafana/runtime packages are considered ALPHA even though they are not released as alpha versions.
 
 ### Stable releases
 
@@ -57,7 +57,7 @@ Every commit to main that has changes within the `packages` directory is a subje
 To build individual packages, run:
 
 ```
-yarn packages:build --scope=@grafana/<data|e2e|e2e-selectors|runtime|schema|toolkit|ui>
+yarn packages:build --scope=@grafana/<data|e2e|e2e-selectors|runtime|schema|ui>
 ```
 
 ### Setting up @grafana/\* packages for local development

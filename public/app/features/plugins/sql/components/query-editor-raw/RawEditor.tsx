@@ -4,6 +4,7 @@ import { useMeasure } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { reportInteraction } from '@grafana/runtime';
 import { Modal, useStyles2, useTheme2 } from '@grafana/ui';
 
 import { SQLQuery, QueryEditorProps } from '../../types';
@@ -97,6 +98,10 @@ export function RawEditor({ db, query, onChange, onRunQuery, onValidate, queryTo
           contentClassName={styles.modalContent}
           isOpen={isExpanded}
           onDismiss={() => {
+            reportInteraction('grafana_sql_editor_expand', {
+              datasource: query.datasource?.type,
+              expanded: false,
+            });
             setIsExpanded(false);
           }}
         >
