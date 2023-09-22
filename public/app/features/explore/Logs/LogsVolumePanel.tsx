@@ -12,6 +12,7 @@ import {
   GrafanaTheme2,
 } from '@grafana/data';
 import { Icon, Tooltip, TooltipDisplayMode, useStyles2, useTheme2 } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 
 import { getLogsVolumeDataSourceInfo, isLogsVolumeLimited } from '../../logs/utils';
 import { ExploreGraph } from '../Graph/ExploreGraph';
@@ -44,7 +45,10 @@ export function LogsVolumePanel(props: Props) {
   if (isLogsVolumeLimited(logsVolumeData.data)) {
     extraInfo = [
       extraInfo,
-      'This datasource does not support full-range histograms. The graph below is based on the logs seen in the response.',
+      t(
+        'logs-volume.datasource-limitation',
+        'This datasource does not support full-range histograms. The graph below is based on the logs seen in the response.'
+      ),
     ]
       .filter(identity)
       .join('. ');

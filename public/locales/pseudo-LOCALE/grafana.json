@@ -250,6 +250,11 @@
       "success": "Ŀįþřäřy päŉęľ şävęđ"
     }
   },
+  "live-logs": {
+    "clear-logs": "Cľęäř ľőģş",
+    "exit-live-mode": "Ēχįŧ ľįvę mőđę",
+    "last-line-received": "Ŀäşŧ ľįŉę řęčęįvęđ: <1></1> äģő"
+  },
   "login": {
     "error": {
       "blocked": "Ÿőū ĥävę ęχčęęđęđ ŧĥę ŉūmþęř őƒ ľőģįŉ äŧŧęmpŧş ƒőř ŧĥįş ūşęř. Pľęäşę ŧřy äģäįŉ ľäŧęř.",
@@ -257,6 +262,43 @@
       "title": "Ŀőģįŉ ƒäįľęđ",
       "unknown": "Ůŉĸŉőŵŉ ęřřőř őččūřřęđ"
     }
+  },
+  "logs-meta-row": {
+    "download-button": "Đőŵŉľőäđ",
+    "escape-button-text": "Ēşčäpę ŉęŵľįŉęş",
+    "highlighting-limit-info": "Ŀőģş ŵįŧĥ mőřę ŧĥäŉ 100,000 čĥäřäčŧęřş čőūľđ ŉőŧ þę päřşęđ äŉđ ĥįģĥľįģĥŧęđ",
+    "info-label": "Ĩŉƒő",
+    "remove-escape-button-text": "Ŗęmővę ęşčäpįŉģ",
+    "selected-fields-label": "Ŝĥőŵįŉģ őŉľy şęľęčŧęđ ƒįęľđş",
+    "show-original-line-button": "Ŝĥőŵ őřįģįŉäľ ľįŉę",
+    "unescaped-content-label": "Ÿőūř ľőģş mįģĥŧ ĥävę įŉčőřřęčŧľy ęşčäpęđ čőŉŧęŉŧ",
+    "unescaped-content-tooltip": "Fįχ įŉčőřřęčŧľy ęşčäpęđ ŉęŵľįŉę äŉđ ŧäþ şęqūęŉčęş įŉ ľőģ ľįŉęş. Mäŉūäľľy řęvįęŵ ŧĥę řęşūľŧş ŧő čőŉƒįřm ŧĥäŧ ŧĥę řępľäčęmęŉŧş äřę čőřřęčŧ."
+  },
+  "logs-navigation": {
+    "newer-logs": "Ńęŵęř ľőģş",
+    "older-logs": "Øľđęř ľőģş",
+    "scroll-to-top-title": "Ŝčřőľľ ŧő ŧőp",
+    "start-of-range": "Ŝŧäřŧ őƒ řäŉģę"
+  },
+  "logs-sample": {
+    "failed-to-load-title": "Fäįľęđ ŧő ľőäđ ľőģş şämpľę ƒőř ŧĥįş qūęřy",
+    "loading": "Ŀőģş şämpľę įş ľőäđįŉģ...",
+    "logs-sample": "Ŀőģş şämpľę",
+    "no-data": "Ńő ľőģş şämpľę đäŧä.",
+    "tooltip": "Ŝĥőŵ ľőģ ľįŉęş ŧĥäŧ čőŉŧřįþūŧęđ ŧő vįşūäľįžęđ męŧřįčş"
+  },
+  "logs-sample-panel": {
+    "open-in-split-view": "Øpęŉ ľőģş įŉ şpľįŧ vįęŵ"
+  },
+  "logs-volume": {
+    "datasource-limitation": "Ŧĥįş đäŧäşőūřčę đőęş ŉőŧ şūppőřŧ ƒūľľ-řäŉģę ĥįşŧőģřämş. Ŧĥę ģřäpĥ þęľőŵ įş þäşęđ őŉ ŧĥę ľőģş şęęŉ įŉ ŧĥę řęşpőŉşę.",
+    "no-volume-content": "Ńő vőľūmę įŉƒőřmäŧįőŉ äväįľäþľę ƒőř ŧĥę čūřřęŉŧ qūęřįęş äŉđ ŧįmę řäŉģę."
+  },
+  "logs-volume-list": {
+    "failed-to-load-title": "Fäįľęđ ŧő ľőäđ ľőģ vőľūmę ƒőř ŧĥįş qūęřy",
+    "loading": "Ŀőäđįŉģ...",
+    "reload-label": "Ŗęľőäđ ľőģ vőľūmę",
+    "timeout": "Ŧĥę ľőģş vőľūmę qūęřy ĥäş ŧįmęđ őūŧ"
   },
   "nav": {
     "add-new-connections": {

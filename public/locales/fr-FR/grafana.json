@@ -255,6 +255,11 @@
       "success": "Panneau de bibliothèque enregistré"
     }
   },
+  "live-logs": {
+    "clear-logs": "",
+    "exit-live-mode": "",
+    "last-line-received": ""
+  },
   "login": {
     "error": {
       "blocked": "",
@@ -262,6 +267,43 @@
       "title": "",
       "unknown": ""
     }
+  },
+  "logs-meta-row": {
+    "download-button": "",
+    "escape-button-text": "",
+    "highlighting-limit-info": "",
+    "info-label": "",
+    "remove-escape-button-text": "",
+    "selected-fields-label": "",
+    "show-original-line-button": "",
+    "unescaped-content-label": "",
+    "unescaped-content-tooltip": ""
+  },
+  "logs-navigation": {
+    "newer-logs": "",
+    "older-logs": "",
+    "scroll-to-top-title": "",
+    "start-of-range": ""
+  },
+  "logs-sample": {
+    "failed-to-load-title": "",
+    "loading": "",
+    "logs-sample": "",
+    "no-data": "",
+    "tooltip": ""
+  },
+  "logs-sample-panel": {
+    "open-in-split-view": ""
+  },
+  "logs-volume": {
+    "datasource-limitation": "",
+    "no-volume-content": ""
+  },
+  "logs-volume-list": {
+    "failed-to-load-title": "",
+    "loading": "",
+    "reload-label": "",
+    "timeout": ""
   },
   "nav": {
     "add-new-connections": {

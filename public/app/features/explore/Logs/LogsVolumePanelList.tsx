@@ -13,6 +13,7 @@ import {
   TimeZone,
 } from '@grafana/data';
 import { Button, InlineField, Alert, useStyles2 } from '@grafana/ui';
+import { t, Trans } from 'app/core/internationalization';
 
 import { mergeLogsVolumeDataFrames, isLogsVolumeLimited, getLogsVolumeMaximumRange } from '../../logs/utils';
 import { SupplementaryResultError } from '../SupplementaryResultError';
@@ -83,11 +84,15 @@ export const LogsVolumePanelList = ({
   };
 
   if (logsVolumeData?.state === LoadingState.Loading) {
-    return <span>Loading...</span>;
+    return (
+      <span>
+        <Trans i18nKey="logs-volume-list.loading">Loading...</Trans>
+      </span>
+    );
   } else if (timeoutError) {
     return (
       <SupplementaryResultError
-        title="The logs volume query has timed out"
+        title={t('logs-volume-list.timeout', 'The logs volume query has timed out')}
         // Using info to avoid users thinking that the actual query has failed.
         severity="info"
         suggestedAction="Retry"
@@ -96,14 +101,21 @@ export const LogsVolumePanelList = ({
       />
     );
   } else if (logsVolumeData?.error !== undefined) {
-    return <SupplementaryResultError error={logsVolumeData.error} title="Failed to load log volume for this query" />;
+    return (
+      <SupplementaryResultError
+        error={logsVolumeData.error}
+        title={t('logs-volume-list.failed-to-load-title', 'Failed to load log volume for this query')}
+      />
+    );
   }
 
   if (numberOfLogVolumes === 0) {
     return (
       <div className={styles.alertContainer}>
         <Alert severity="info" title="No logs volume available">
-          No volume information available for the current queries and time range.
+          <Trans i18nKey="logs-volume.no-volume-content">
+            No volume information available for the current queries and time range.
+          </Trans>
         </Alert>
       </div>
     );
@@ -132,7 +144,7 @@ export const LogsVolumePanelList = ({
       })}
       {containsZoomed && (
         <div className={styles.extraInfoContainer}>
-          <InlineField label="Reload log volume" transparent>
+          <InlineField label={t('logs-volume-list.reload-label', 'Reload log volume')} transparent>
             <Button size="xs" icon="sync" variant="secondary" onClick={onLoadLogsVolume} id="reload-volume" />
           </InlineField>
         </div>

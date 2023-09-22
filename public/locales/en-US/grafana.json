@@ -250,6 +250,11 @@
       "success": "Library panel saved"
     }
   },
+  "live-logs": {
+    "clear-logs": "Clear logs",
+    "exit-live-mode": "Exit live mode",
+    "last-line-received": "Last line received: <1></1> ago"
+  },
   "login": {
     "error": {
       "blocked": "You have exceeded the number of login attempts for this user. Please try again later.",
@@ -257,6 +262,43 @@
       "title": "Login failed",
       "unknown": "Unknown error occurred"
     }
+  },
+  "logs-meta-row": {
+    "download-button": "Download",
+    "escape-button-text": "Escape newlines",
+    "highlighting-limit-info": "Logs with more than 100,000 characters could not be parsed and highlighted",
+    "info-label": "Info",
+    "remove-escape-button-text": "Remove escaping",
+    "selected-fields-label": "Showing only selected fields",
+    "show-original-line-button": "Show original line",
+    "unescaped-content-label": "Your logs might have incorrectly escaped content",
+    "unescaped-content-tooltip": "Fix incorrectly escaped newline and tab sequences in log lines. Manually review the results to confirm that the replacements are correct."
+  },
+  "logs-navigation": {
+    "newer-logs": "Newer logs",
+    "older-logs": "Older logs",
+    "scroll-to-top-title": "Scroll to top",
+    "start-of-range": "Start of range"
+  },
+  "logs-sample": {
+    "failed-to-load-title": "Failed to load logs sample for this query",
+    "loading": "Logs sample is loading...",
+    "logs-sample": "Logs sample",
+    "no-data": "No logs sample data.",
+    "tooltip": "Show log lines that contributed to visualized metrics"
+  },
+  "logs-sample-panel": {
+    "open-in-split-view": "Open logs in split view"
+  },
+  "logs-volume": {
+    "datasource-limitation": "This datasource does not support full-range histograms. The graph below is based on the logs seen in the response.",
+    "no-volume-content": "No volume information available for the current queries and time range."
+  },
+  "logs-volume-list": {
+    "failed-to-load-title": "Failed to load log volume for this query",
+    "loading": "Loading...",
+    "reload-label": "Reload log volume",
+    "timeout": "The logs volume query has timed out"
   },
   "nav": {
     "add-new-connections": {

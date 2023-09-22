@@ -4,6 +4,7 @@ import tinycolor from 'tinycolor2';
 
 import { LogRowModel, TimeZone, dateTimeFormat, GrafanaTheme2, LogsSortOrder } from '@grafana/data';
 import { Button, Themeable2, withTheme2 } from '@grafana/ui';
+import { t, Trans } from 'app/core/internationalization';
 
 import { LogMessageAnsi } from '../../logs/components/LogMessageAnsi';
 import { getLogRowStyles } from '../../logs/components/getLogRowStyles';
@@ -162,18 +163,20 @@ class LiveLogs extends PureComponent<Props, State> {
             onClick={isPaused ? onResume : onPause}
             className={styles.button}
           >
-            {isPaused ? 'Resume' : 'Pause'}
+            <Trans i18nKey={isPaused ? 'live-logs.resume-button' : 'live-logs.pause-button'} />
           </Button>
           <Button icon="trash-alt" variant="secondary" onClick={onClear} className={styles.button}>
-            Clear logs
+            <Trans i18nKey="live-logs.clear-logs">Clear logs</Trans>
           </Button>
           <Button icon="square-shape" variant="secondary" onClick={this.props.stopLive} className={styles.button}>
-            Exit live mode
+            <Trans i18nKey="live-logs.exit-live-mode">Exit live mode</Trans>
           </Button>
           {isPaused ||
             (this.rowsToRender().length > 0 && (
               <span>
-                Last line received: <ElapsedTime resetKey={this.props.logRows} humanize={true} /> ago
+                <Trans i18nKey="live-logs.last-line-received">
+                  Last line received: <ElapsedTime resetKey={this.props.logRows} humanize={true} /> ago
+                </Trans>
               </span>
             ))}
         </div>
