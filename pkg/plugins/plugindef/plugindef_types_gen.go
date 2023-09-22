@@ -336,9 +336,6 @@ type PluginDef struct {
 	// Used to enable the plugin in the panel editor.
 	Metrics *bool `json:"metrics,omitempty"`
 
-	// For data source plugins, used to enable the plugin in the query variable editor.
-	Query *bool `json:"query,omitempty"`
-
 	// Human-readable name of the plugin that is shown to the user in
 	// the UI.
 	Name string `json:"name"`

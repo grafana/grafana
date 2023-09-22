@@ -225,13 +225,13 @@ export class DatasourceSrv implements DataSourceService {
       if (filters.pluginId && x.meta.id !== filters.pluginId) {
         return false;
       }
-      if ((filters.query && !x.meta.query) || (!filters.query && x.meta.query)) {
-        return false;
-      }
       if (filters.filter && !filters.filter(x)) {
         return false;
       }
       if (filters.type && (Array.isArray(filters.type) ? !filters.type.includes(x.type) : filters.type !== x.type)) {
+        return false;
+      }
+      if (!filters.query && x.meta.query) {
         return false;
       }
       if (

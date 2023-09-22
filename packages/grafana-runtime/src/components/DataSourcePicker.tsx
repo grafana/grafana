@@ -137,8 +137,20 @@ export class DataSourcePicker extends PureComponent<DataSourcePickerProps, DataS
   }
 
   getDataSourceOptions() {
-    const { alerting, tracing, metrics, query, mixed, dashboard, variables, annotations, pluginId, type, filter, logs } =
-      this.props;
+    const {
+      alerting,
+      tracing,
+      metrics,
+      query,
+      mixed,
+      dashboard,
+      variables,
+      annotations,
+      pluginId,
+      type,
+      filter,
+      logs,
+    } = this.props;
 
     const options = this.dataSourceSrv
       .getList({
