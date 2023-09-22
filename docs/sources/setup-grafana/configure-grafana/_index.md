@@ -1156,6 +1156,24 @@ The client ID to use for user-assigned managed identity.
 
 Should be set for user-assigned identity and should be empty for system-assigned identity.
 
+### workload_identity_enabled
+
+Foo
+
+Disabled by default, needs to be explicitly enabled.
+
+### workload_identity_tenant_id
+
+Foo
+
+### workload_identity_client_id
+
+Foo
+
+### workload_identity_token_file
+
+Foo
+
 ### user_identity_enabled
 
 Specifies whether user identity authentication (on behalf of currently signed-in user) should be enabled in datasources that support it (requires AAD authentication).
