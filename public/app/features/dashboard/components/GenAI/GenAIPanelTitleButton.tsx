@@ -1,10 +1,12 @@
 import React from 'react';
 
+import { llms } from '@grafana/experimental';
+
 import { getDashboardSrv } from '../../services/DashboardSrv';
 import { PanelModel } from '../../state';
 
 import { GenAIButton } from './GenAIButton';
-import { Message, Role } from './utils';
+import { Role } from './utils';
 
 interface GenAIPanelTitleButtonProps {
   onGenerate: (title: string, isDone: boolean) => void;
@@ -17,7 +19,7 @@ const TITLE_GENERATION_STANDARD_PROMPT =
   'The title should be shorter than 50 characters.';
 
 export const GenAIPanelTitleButton = ({ onGenerate, panel }: GenAIPanelTitleButtonProps) => {
-  function getMessages(): Message[] {
+  function getMessages(): llms.openai.Message[] {
     const dashboard = getDashboardSrv().getCurrent()!;
 
     return [

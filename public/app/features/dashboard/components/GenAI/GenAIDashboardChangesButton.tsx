@@ -1,9 +1,11 @@
 import React, { useMemo } from 'react';
 
+import { llms } from '@grafana/experimental';
+
 import { DashboardModel } from '../../state';
 
 import { GenAIButton } from './GenAIButton';
-import { getDashboardChanges, Message, Role } from './utils';
+import { getDashboardChanges, Role } from './utils';
 
 interface GenAIDashboardChangesButtonProps {
   dashboard: DashboardModel;
@@ -32,7 +34,7 @@ export const GenAIDashboardChangesButton = ({ dashboard, onGenerate }: GenAIDash
   );
 };
 
-function getMessages(dashboard: DashboardModel): Message[] {
+function getMessages(dashboard: DashboardModel): llms.openai.Message[] {
   const { userChanges, migrationChanges } = getDashboardChanges(dashboard);
 
   return [

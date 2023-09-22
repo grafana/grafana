@@ -1,9 +1,11 @@
 import React from 'react';
 
+import { llms } from '@grafana/experimental';
+
 import { DashboardModel } from '../../state';
 
 import { GenAIButton } from './GenAIButton';
-import { Message, Role } from './utils';
+import { Role } from './utils';
 
 interface GenAIDashDescriptionButtonProps {
   onGenerate: (description: string, isDone: boolean) => void;
@@ -21,7 +23,7 @@ export const GenAIDashDescriptionButton = ({ onGenerate, dashboard }: GenAIDashD
   return <GenAIButton messages={messages} onReply={onGenerate} loadingText={'Generating description'} />;
 };
 
-function getMessages(dashboard: DashboardModel): Message[] {
+function getMessages(dashboard: DashboardModel): llms.openai.Message[] {
   return [
     {
       content: DESCRIPTION_GENERATION_STANDARD_PROMPT,
