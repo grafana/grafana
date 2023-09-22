@@ -121,10 +121,13 @@ disable_signout_menu = true
 
 ### URL redirect after signing out
 
-URL to redirect the user to after signing out from Grafana. This can for example be used to enable signout from oauth provider.
+URL to redirect the user to after signing out from Grafana can be configured under `[auth]` or under specific oauth provider section(e.g `[auth.generic_oauth]`). URL configured under specific oauth provider section would take precedence over the URL configured in `[auth]` section. This can for example be used to enable signout from oauth provider.
 
 ```bash
 [auth]
+signout_redirect_url =
+
+[auth.generic_oauth]
 signout_redirect_url =
 ```
 

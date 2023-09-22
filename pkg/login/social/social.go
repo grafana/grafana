@@ -72,6 +72,7 @@ type OAuthInfo struct {
 	TlsSkipVerify           bool     `toml:"tls_skip_verify"`
 	UsePKCE                 bool     `toml:"use_pkce"`
 	UseRefreshToken         bool     `toml:"use_refresh_token"`
+	SignoutRedirectUrl      string   `toml:"signout_redirect_url"`
 }
 
 func ProvideService(cfg *setting.Cfg,
@@ -120,6 +121,7 @@ func ProvideService(cfg *setting.Cfg,
 			UseRefreshToken:         sec.Key("use_refresh_token").MustBool(false),
 			AllowAssignGrafanaAdmin: sec.Key("allow_assign_grafana_admin").MustBool(false),
 			AutoLogin:               sec.Key("auto_login").MustBool(false),
+			SignoutRedirectUrl:      sec.Key("signout_redirect_url").String(),
 		}
 
 		// when empty_scopes parameter exists and is true, overwrite scope with empty value
