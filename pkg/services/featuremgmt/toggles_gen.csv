@@ -108,4 +108,5 @@ requestInstrumentationStatusSource,experimental,@grafana/plugins-platform-backen
 lokiRunQueriesInParallel,privatePreview,@grafana/observability-logs,false,false,false,false
 wargamesTesting,experimental,@grafana/hosted-grafana-team,false,false,false,false
 alertingInsights,experimental,@grafana/alerting-squad,false,false,false,true
+externalCorePlugins,experimental,@grafana/plugins-platform-backend,false,false,false,false
 pluginsAPIMetrics,experimental,@grafana/plugins-platform-backend,false,false,false,true

@@ -760,6 +760,12 @@ var (
 			Owner:        grafanaAlertingSquad,
 		},
 		{
+			Name:        "externalCorePlugins",
+			Description: "Allow core plugins to be loaded as external",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaPluginsPlatformSquad,
+		},
+		{
 			Name:         "pluginsAPIMetrics",
 			Description:  "Sends metrics of public grafana packages usage by plugins",
 			FrontendOnly: true,
