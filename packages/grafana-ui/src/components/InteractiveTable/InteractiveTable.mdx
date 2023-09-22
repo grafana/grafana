@@ -274,7 +274,7 @@ export const MyComponent = () => {
 
 ### With controlled sorting
 
-The default sorting can be changed to controlled sorting by passing in the `fetchData` function, which is called whenever the sorting changes and should return the sorted data. This is useful when the sorting is done server side. It is important to memoize the `fetchData` function to avoid unnecessary rerenders and possible infinite render loop.
+The default sorting can be changed to controlled sorting by passing in the `fetchData` function, which is called whenever the sorting changes and should return the sorted data. This is useful when the sorting is done server side. It is important to memoize the `fetchData` function to prevent unnecessary rerenders and the possibility of an infinite render loop.
 
 ```tsx
 interface WithPaginationData {
