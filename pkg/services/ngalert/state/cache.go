@@ -57,6 +57,7 @@ func (c *cache) RegisterMetrics(r prometheus.Registerer) {
 
 func (c *cache) countAlertsBy(state eval.State) float64 {
 	c.mtxStates.RLock()
+	defer c.mtxStates.RUnlock()
 	var count float64
 	for _, orgMap := range c.states {
 		for _, rule := range orgMap {
@@ -67,7 +68,6 @@ func (c *cache) countAlertsBy(state eval.State) float64 {
 			}
 		}
 	}
-	c.mtxStates.RUnlock()
 
 	return count
 }
