@@ -50,6 +50,7 @@ export const TeamList = ({
   changePage,
 }: Props) => {
   const [roleOptions, setRoleOptions] = useState<Role[]>([]);
+  const enableSort = totalPages === 1;
 
   useEffect(() => {
     loadTeams(true);
@@ -75,19 +76,19 @@ export const TeamList = ({
         id: 'name',
         header: 'Name',
         cell: ({ cell: { value } }: Cell<'name'>) => value,
-        sortType: 'string',
+        sortType: enableSort ? 'string' : undefined,
       },
       {
         id: 'email',
         header: 'Email',
         cell: ({ cell: { value } }: Cell<'email'>) => value,
-        sortType: 'string',
+        sortType: enableSort ? 'string' : undefined,
       },
       {
         id: 'memberCount',
         header: 'Members',
         cell: ({ cell: { value } }: Cell<'memberCount'>) => value,
-        sortType: 'number',
+        sortType: enableSort ? 'number' : undefined,
       },
       ...(displayRolePicker
         ? [
@@ -154,7 +155,7 @@ export const TeamList = ({
         },
       },
     ],
-    [displayRolePicker, editorsCanAdmin, roleOptions, signedInUser, deleteTeam]
+    [displayRolePicker, editorsCanAdmin, roleOptions, signedInUser, deleteTeam, enableSort]
   );
 
   return (

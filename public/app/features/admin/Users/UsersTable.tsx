@@ -1,6 +1,5 @@
 import { css } from '@emotion/css';
 import React, { useMemo } from 'react';
-import { DefaultSortTypes } from 'react-table';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import {
@@ -33,6 +32,7 @@ interface UsersTableProps {
 
 export const UsersTable = ({ users, showPaging, totalPages, onChangePage, currentPage }: UsersTableProps) => {
   const showLicensedRole = useMemo(() => users.some((user) => user.licensedRole), [users]);
+  const enableSort = totalPages === 1;
   const columns: Array<Column<UserDTO>> = useMemo(
     () => [
       {
@@ -44,25 +44,25 @@ export const UsersTable = ({ users, showPaging, totalPages, onChangePage, curren
         id: 'login',
         header: 'Login',
         cell: ({ cell: { value } }: Cell<'login'>) => value,
-        sortType: 'string',
+        sortType: enableSort ? 'string' : undefined,
       },
       {
         id: 'email',
         header: 'Email',
         cell: ({ cell: { value } }: Cell<'email'>) => value,
-        sortType: 'string',
+        sortType: enableSort ? 'string' : undefined,
       },
       {
         id: 'name',
         header: 'Name',
         cell: ({ cell: { value } }: Cell<'name'>) => value,
-        sortType: 'string',
+        sortType: enableSort ? 'string' : undefined,
       },
       {
         id: 'orgs',
         header: 'Belongs to',
         cell: OrgUnitsCell,
-        sortType: (a, b) => (a.original.orgs?.length || 0) - (b.original.orgs?.length || 0),
+        sortType: enableSort ? (a, b) => (a.original.orgs?.length || 0) - (b.original.orgs?.length || 0) : undefined,
       },
       ...(showLicensedRole
         ? [
@@ -71,7 +71,7 @@ export const UsersTable = ({ users, showPaging, totalPages, onChangePage, curren
               header: 'Licensed role',
               cell: LicensedRoleCell,
               // Needs the assertion here, the types are not inferred correctly due to the  conditional assignment
-              sortType: 'string' as DefaultSortTypes,
+              sortType: enableSort ? ('string' as const) : undefined,
             },
           ]
         : []),
@@ -83,7 +83,9 @@ export const UsersTable = ({ users, showPaging, totalPages, onChangePage, curren
           iconName: 'question-circle',
         },
         cell: LastSeenAtCell,
-        sortType: (a, b) => new Date(a.original.lastSeenAt!).getTime() - new Date(b.original.lastSeenAt!).getTime(),
+        sortType: enableSort
+          ? (a, b) => new Date(a.original.lastSeenAt!).getTime() - new Date(b.original.lastSeenAt!).getTime()
+          : undefined,
       },
       {
         id: 'authLabels',
@@ -111,7 +113,7 @@ export const UsersTable = ({ users, showPaging, totalPages, onChangePage, curren
         },
       },
     ],
-    [showLicensedRole]
+    [showLicensedRole, enableSort]
   );
   return (
     <VerticalGroup spacing={'md'}>
