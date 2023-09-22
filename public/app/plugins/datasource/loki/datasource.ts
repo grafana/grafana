@@ -9,7 +9,6 @@ import {
   CoreApp,
   DataFrame,
   DataFrameView,
-  DataQueryError,
   DataQueryRequest,
   DataQueryResponse,
   DataSourceInstanceSettings,
@@ -18,8 +17,6 @@ import {
   SupplementaryQueryType,
   DataSourceWithQueryExportSupport,
   DataSourceWithQueryImportSupport,
-  dateMath,
-  DateTime,
   FieldCache,
   FieldType,
   Labels,
@@ -40,7 +37,7 @@ import {
 } from '@grafana/data';
 import { intervalToMs } from '@grafana/data/src/datetime/rangeutil';
 import { Duration } from '@grafana/lezer-logql';
-import { BackendSrvRequest, config, DataSourceWithBackend, FetchError } from '@grafana/runtime';
+import { BackendSrvRequest, config, DataSourceWithBackend } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { convertToWebSocketUrl } from 'app/core/utils/explore';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
@@ -141,8 +138,8 @@ export class LokiDatasource
     DataSourceWithToggleableQueryFiltersSupport<LokiQuery>
 {
   private streams = new LiveStreams();
+  private logContextProvider: LogContextProvider;
   languageProvider: LanguageProvider;
-  logContextProvider: LogContextProvider;
   maxLines: number;
   predefinedOperations: string;
 
@@ -229,7 +226,7 @@ export class LokiDatasource
     }
   }
 
-  getLogsVolumeDataProvider(request: DataQueryRequest<LokiQuery>): Observable<DataQueryResponse> | undefined {
+  private getLogsVolumeDataProvider(request: DataQueryRequest<LokiQuery>): Observable<DataQueryResponse> | undefined {
     const logsVolumeRequest = cloneDeep(request);
     const targets = logsVolumeRequest.targets
       .map((query) => this.getSupplementaryQuery({ type: SupplementaryQueryType.LogsVolume }, query))
@@ -250,7 +247,7 @@ export class LokiDatasource
     );
   }
 
-  getLogsSampleDataProvider(request: DataQueryRequest<LokiQuery>): Observable<DataQueryResponse> | undefined {
+  private getLogsSampleDataProvider(request: DataQueryRequest<LokiQuery>): Observable<DataQueryResponse> | undefined {
     const logsSampleRequest = cloneDeep(request);
     const targets = logsSampleRequest.targets
       .map((query) => this.getSupplementaryQuery({ type: SupplementaryQueryType.LogsSample, limit: 100 }, query))
@@ -321,7 +318,7 @@ export class LokiDatasource
       );
   }
 
-  runLiveQueryThroughBackend(request: DataQueryRequest<LokiQuery>): Observable<DataQueryResponse> {
+  private runLiveQueryThroughBackend(request: DataQueryRequest<LokiQuery>): Observable<DataQueryResponse> {
     // this only works in explore-mode, so variables don't need to be handled,
     //  and only for logs-queries, not metric queries
     const logsQueries = request.targets.filter((query) => query.expr !== '' && isLogsQuery(query.expr));
@@ -342,7 +339,7 @@ export class LokiDatasource
     return merge(...subQueries);
   }
 
-  createLiveTarget(target: LokiQuery, maxDataPoints: number): LokiLiveTarget {
+  private createLiveTarget(target: LokiQuery, maxDataPoints: number): LokiLiveTarget {
     const query = target.expr;
     const baseUrl = this.instanceSettings.url;
     const params = serializeParams({ query });
@@ -361,7 +358,7 @@ export class LokiDatasource
    * Loki streams, sets only common labels on dataframe.labels and has additional dataframe.fields.labels for unique
    * labels per row.
    */
-  runLiveQuery = (target: LokiQuery, maxDataPoints: number): Observable<DataQueryResponse> => {
+  private runLiveQuery = (target: LokiQuery, maxDataPoints: number): Observable<DataQueryResponse> => {
     const liveTarget = this.createLiveTarget(target, maxDataPoints);
 
     return this.streams.getStream(liveTarget).pipe(
@@ -375,16 +372,6 @@ export class LokiDatasource
       })
     );
   };
-
-  getRangeScopedVars(range: TimeRange = this.getTimeRange()) {
-    const msRange = range.to.diff(range.from);
-    const sRange = Math.round(msRange / 1000);
-    return {
-      __range_ms: { text: msRange, value: msRange },
-      __range_s: { text: sRange, value: sRange },
-      __range: { text: sRange + 's', value: sRange + 's' },
-    };
-  }
 
   interpolateVariablesInQueries(queries: LokiQuery[], scopedVars: ScopedVars): LokiQuery[] {
     let expandedQueries = queries;
@@ -571,7 +558,7 @@ export class LokiDatasource
     return await this.processMetricFindQuery(interpolatedQuery);
   }
 
-  async processMetricFindQuery(query: LokiVariableQuery) {
+  private async processMetricFindQuery(query: LokiVariableQuery) {
     if (query.type === LokiVariableQueryType.LabelNames) {
       return this.labelNamesQuery();
     }
@@ -613,14 +600,14 @@ export class LokiDatasource
     return result.map((value: string) => ({ text: value }));
   }
 
-  async labelValuesQuery(label: string) {
+  private async labelValuesQuery(label: string) {
     const params = this.getTimeRangeParams();
     const url = `label/${label}/values`;
     const result = await this.metadataRequest(url, params);
     return result.map((value: string) => ({ text: value }));
   }
 
-  async labelValuesSeriesQuery(expr: string, label: string) {
+  private async labelValuesSeriesQuery(expr: string, label: string) {
     const timeParams = this.getTimeRangeParams();
     const params = {
       ...timeParams,
@@ -798,14 +785,6 @@ export class LokiDatasource
     return { ...query, expr: expression };
   }
 
-  getTime(date: string | DateTime, roundUp: boolean) {
-    if (typeof date === 'string') {
-      date = dateMath.parse(date, roundUp)!;
-    }
-
-    return Math.ceil(date.valueOf() * 1e6);
-  }
-
   getLogRowContext = async (
     row: LogRowModel,
     options?: LogRowContextOptions,
@@ -890,17 +869,6 @@ export class LokiDatasource
 
   showContextToggle(row?: LogRowModel): boolean {
     return true;
-  }
-
-  processError(err: FetchError, target: LokiQuery) {
-    let error: DataQueryError = cloneDeep(err);
-    error.refId = target.refId;
-
-    if (error.data && err.data.message.includes('escape') && target.expr.includes('\\')) {
-      error.data.message = `Error: ${err.data.message}. Make sure that all special characters are escaped with \\. For more information on escaping of special characters visit LogQL documentation at https://grafana.com/docs/loki/latest/logql/.`;
-    }
-
-    return error;
   }
 
   addAdHocFilters(queryExpr: string) {

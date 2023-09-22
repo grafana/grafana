@@ -130,6 +130,8 @@ func ReadPluginJSON(reader io.Reader) (JSONData, error) {
 		plugin.Name = "Pie Chart (old)"
 	case "grafana-pyroscope-datasource":
 		fallthrough
+	case "grafana-testdata-datasource":
+		fallthrough
 	case "annolist":
 		fallthrough
 	case "debug":
