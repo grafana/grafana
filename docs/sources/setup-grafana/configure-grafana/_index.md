@@ -2195,6 +2195,12 @@ Available in Grafana v9.5.0 or later, and [OpenTelemetry must be configured as w
 
 If `true`, propagate the tracing context to the plugin backend and enable tracing (if the backend supports it).
 
+## as_external
+
+Load an external version of a core plugin if it has been installed.
+
+Experimental. Requires the feature toggle `externalCorePlugins` to be enabled.
+
 <hr>
 
 ## [plugin.grafana-image-renderer]
