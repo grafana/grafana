@@ -1,6 +1,8 @@
 import { Meta, StoryFn } from '@storybook/react';
 import React from 'react';
 
+import { useTheme2 } from '../../../themes';
+
 import { Grid } from './Grid';
 import mdx from './Grid.mdx';
 
@@ -18,12 +20,12 @@ const meta: Meta<typeof Grid> = {
 };
 
 export const ColumnsNumber: StoryFn<typeof Grid> = (args) => {
+  const theme = useTheme2();
   return (
     <Grid gap={args.gap} columns={args.columns}>
       {Array.from({ length: 9 }).map((_, i) => (
-        <div key={i} style={{ background: 'gray', textAlign: 'center' }}>
-          {' '}
-          n #{i}
+        <div key={i} style={{ background: theme.colors.background.secondary, textAlign: 'center' }}>
+          N# {i}
         </div>
       ))}
     </Grid>
@@ -39,19 +41,19 @@ ColumnsNumber.parameters = {
 };
 
 export const ColumnsMinWidth: StoryFn<typeof Grid> = (args) => {
+  const theme = useTheme2();
   return (
     <Grid gap={args.gap} minColumnWidth={args.minColumnWidth}>
       {Array.from({ length: 9 }).map((_, i) => (
-        <div key={i} style={{ background: 'gray' }}>
-          {' '}
-          n #{i}
+        <div key={i} style={{ background: theme.colors.background.secondary, textAlign: 'center' }}>
+          N# {i}
         </div>
       ))}
     </Grid>
   );
 };
 ColumnsMinWidth.args = {
-  minColumnWidth: 44,
+  minColumnWidth: 21,
 };
 ColumnsMinWidth.parameters = {
   controls: {
