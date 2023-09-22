@@ -3646,7 +3646,7 @@ steps:
       from_secret: packages_gpg_private_key
     gpg_public_key:
       from_secret: packages_gpg_public_key
-    package_path: gs://$${DESTINATION}/$${DRONE_BUILD_EVENT}/*_$${DRONE_BUILD_NUMBER}_*.deb
+    package_path: file://${DRONE_WORKSPACE}/dist/*.deb
     secret_access_key:
       from_secret: packages_secret_access_key
     service_account_json:
@@ -3669,7 +3669,7 @@ steps:
       from_secret: packages_gpg_private_key
     gpg_public_key:
       from_secret: packages_gpg_public_key
-    package_path: gs://$${DESTINATION}/$${DRONE_BUILD_EVENT}/*_$${DRONE_BUILD_NUMBER}_*.rpm
+    package_path: file://${DRONE_WORKSPACE}/dist/*.rpm
     secret_access_key:
       from_secret: packages_secret_access_key
     service_account_json:
@@ -4646,6 +4646,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: cefa8a7a8656109fd5d54b8c9c510a6befe553bede436e2ad16fc8a690a4295c
+hmac: 7743f895366b352e4c793f51b7b8e7751b943e5c36180c5d2c4587034afb757d
 
 ...
