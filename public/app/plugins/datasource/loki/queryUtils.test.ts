@@ -342,6 +342,26 @@ describe('getParserFromQuery', () => {
       parser
     );
   });
+
+  it('supports json parser with arguments', () => {
+    // Redundant, but gives us a baseline
+    expect(getParserFromQuery('{job="grafana"} | json')).toBe('json');
+    expect(getParserFromQuery('{job="grafana"} | json field="otherField"')).toBe('json');
+    expect(getParserFromQuery('{job="grafana"} | json field="otherField", label="field2"')).toBe('json');
+  });
+
+  it('supports logfmt parser with arguments and flags', () => {
+    // Redundant, but gives us a baseline
+    expect(getParserFromQuery('{job="grafana"} | logfmt')).toBe('logfmt');
+    expect(getParserFromQuery('{job="grafana"} | logfmt --strict')).toBe('logfmt');
+    expect(getParserFromQuery('{job="grafana"} | logfmt --strict --keep-empty')).toBe('logfmt');
+    expect(getParserFromQuery('{job="grafana"} | logfmt field="otherField"')).toBe('logfmt');
+    expect(getParserFromQuery('{job="grafana"} | logfmt field="otherField", label')).toBe('logfmt');
+    expect(getParserFromQuery('{job="grafana"} | logfmt --strict field="otherField"')).toBe('logfmt');
+    expect(
+      getParserFromQuery('{job="grafana"} | logfmt --strict --keep-empty field="otherField", label="field2"')
+    ).toBe('logfmt');
+  });
 });
 
 describe('requestSupportsSplitting', () => {

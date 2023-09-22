@@ -20,16 +20,18 @@ import {
   Ip,
   IpLabelFilter,
   Json,
-  JsonExpression,
   JsonExpressionParser,
   KeepLabel,
   KeepLabels,
   KeepLabelsExpr,
+  LabelExtractionExpression,
   LabelFilter,
   LabelFormatMatcher,
   LabelParser,
   LineFilter,
   LineFormatExpr,
+  LogfmtExpressionParser,
+  LogfmtParser,
   LogRangeExpr,
   Matcher,
   MetricExpr,
@@ -37,6 +39,7 @@ import {
   On,
   Or,
   parser,
+  ParserFlag,
   Range,
   RangeAggregationExpr,
   RangeOp,
@@ -78,6 +81,11 @@ interface ParsingError {
   from?: number;
   to?: number;
   parentType?: string;
+}
+
+interface GetOperationResult {
+  operation?: QueryBuilderOperation;
+  error?: string;
 }
 
 export function buildVisualQueryFromString(expr: string): Context {
@@ -157,6 +165,18 @@ export function handleExpression(expr: string, node: SyntaxNode, context: Contex
     }
     case JsonExpressionParser: {
       visQuery.operations.push(getJsonExpressionParser(expr, node));
+      break;
+    }
+
+    case LogfmtParser:
+    case LogfmtExpressionParser: {
+      const { operation, error } = getLogfmtParser(expr, node);
+      if (operation) {
+        visQuery.operations.push(operation);
+      }
+      if (error) {
+        context.errors.push(createNotSupportedError(expr, node, error));
+      }
       break;
     }
 
@@ -250,7 +270,7 @@ function getLabel(expr: string, node: SyntaxNode): QueryBuilderLabelFilter {
   };
 }
 
-function getLineFilter(expr: string, node: SyntaxNode): { operation?: QueryBuilderOperation; error?: string } {
+function getLineFilter(expr: string, node: SyntaxNode): GetOperationResult {
   const filter = getString(expr, node.getChild(Filter));
   const filterExpr = handleQuotes(getString(expr, node.getChild(String)));
   const ipLineFilter = node.getChild(FilterOp)?.getChild(Ip);
@@ -299,14 +319,43 @@ function getJsonExpressionParser(expr: string, node: SyntaxNode): QueryBuilderOp
   const parserNode = node.getChild(Json);
   const parser = getString(expr, parserNode);
 
-  const params = [...getAllByType(expr, node, JsonExpression)];
+  const params = [...getAllByType(expr, node, LabelExtractionExpression)];
   return {
     id: parser,
     params,
   };
 }
 
-function getLabelFilter(expr: string, node: SyntaxNode): { operation?: QueryBuilderOperation; error?: string } {
+function getLogfmtParser(expr: string, node: SyntaxNode): GetOperationResult {
+  const flags: string[] = [];
+  const labels: string[] = [];
+  let error: string | undefined = undefined;
+
+  const offset = node.from;
+  node.toTree().iterate({
+    enter: (subNode) => {
+      if (subNode.type.id === ParserFlag) {
+        flags.push(expr.substring(subNode.from + offset, subNode.to + offset));
+      } else if (subNode.type.id === LabelExtractionExpression) {
+        labels.push(expr.substring(subNode.from + offset, subNode.to + offset));
+      } else if (subNode.type.id === ErrorId) {
+        error = `Unexpected string "${expr.substring(subNode.from + offset, subNode.to + offset)}"`;
+      }
+    },
+  });
+
+  const operation = {
+    id: LokiOperationId.Logfmt,
+    params: [flags.includes('--strict'), flags.includes('--keep-empty'), ...labels],
+  };
+
+  return {
+    operation,
+    error,
+  };
+}
+
+function getLabelFilter(expr: string, node: SyntaxNode): GetOperationResult {
   // Check for nodes not supported in visual builder and return error
   if (node.getChild(Or) || node.getChild(And) || node.getChild('Comma')) {
     return {
@@ -399,11 +448,7 @@ function getDecolorize(): QueryBuilderOperation {
   };
 }
 
-function handleUnwrapExpr(
-  expr: string,
-  node: SyntaxNode,
-  context: Context
-): { operation?: QueryBuilderOperation; error?: string } {
+function handleUnwrapExpr(expr: string, node: SyntaxNode, context: Context): GetOperationResult {
   const unwrapExprChild = node.getChild(UnwrapExpr);
   const labelFilterChild = node.getChild(LabelFilter);
   const unwrapChild = node.getChild(Unwrap);
