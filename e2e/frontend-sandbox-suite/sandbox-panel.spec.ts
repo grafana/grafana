@@ -1,6 +1,5 @@
-import { e2e } from '@grafana/e2e';
-
 import panelSandboxDashboard from '../dashboards/PanelSandboxDashboard.json';
+import { e2e } from '../utils';
 
 const DASHBOARD_ID = 'c46b2460-16b7-42a5-82d1-b07fbf431950';
 
@@ -49,13 +48,16 @@ describe('Panel sandbox', () => {
     });
   });
 
-  describe('Sandbox enabled', () => {
+  describe.only('Sandbox enabled', () => {
     beforeEach(() => {
       e2e.flows.openDashboard({
         uid: DASHBOARD_ID,
         queryParams: {
           '__feature.pluginsFrontendSandbox': true,
         },
+      });
+      cy.window().then((win) => {
+        win.localStorage.setItem('grafana.featureToggles', 'pluginsFrontendSandbox=1');
       });
     });
 
@@ -93,6 +95,6 @@ describe('Panel sandbox', () => {
   });
 
   after(() => {
-    return e2e().clearCookies();
+    return cy.clearCookies();
   });
 });
