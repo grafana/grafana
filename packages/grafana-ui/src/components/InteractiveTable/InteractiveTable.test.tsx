@@ -15,9 +15,9 @@ function getRowId(row: TableData) {
 }
 
 function setup(jsx: React.JSX.Element) {
+  render(jsx);
   return {
     user: userEvent.setup(),
-    ...render(jsx),
   };
 }
 

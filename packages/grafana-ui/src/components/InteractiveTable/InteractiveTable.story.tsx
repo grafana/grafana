@@ -6,7 +6,7 @@ import { InteractiveTable, Column, CellProps, LinkButton } from '@grafana/ui';
 import { FetchDataArgs, InteractiveTableHeaderTooltip } from './InteractiveTable';
 import mdx from './InteractiveTable.mdx';
 
-const EXCLUDED_PROPS = ['className', 'renderExpandedRow', 'getRowId'];
+const EXCLUDED_PROPS = ['className', 'renderExpandedRow', 'getRowId', 'fetchData'];
 
 const meta: Meta<typeof InteractiveTable> = {
   title: 'Experimental/InteractiveTable',
