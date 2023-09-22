@@ -138,6 +138,7 @@ Experimental features might be changed or removed without prior notice.
 | `alertingInsights`                          | Show the new alerting insights landing page                                                                  |
 | `externalCorePlugins`                       | Allow core plugins to be loaded as external                                                                  |
 | `pluginsAPIMetrics`                         | Sends metrics of public grafana packages usage by plugins                                                    |
+| `httpSLOLevels`                             | Adds SLO level to http request metrics                                                                       |
 
 ## Development feature toggles
 
