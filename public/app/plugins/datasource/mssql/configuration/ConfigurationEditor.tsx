@@ -10,6 +10,7 @@ import {
   updateDatasourcePluginJsonDataOption,
   updateDatasourcePluginResetOption,
 } from '@grafana/data';
+import { ConfigSection, ConfigSubSection, DataSourceDescription } from '@grafana/experimental';
 import {
   Alert,
   FieldSet,
@@ -36,7 +37,6 @@ import {
   AzureAuthConfigType,
   MssqlSecureOptions,
 } from '../types';
-import { ConfigSection, ConfigSubSection, DataSourceDescription } from '@grafana/experimental';
 
 const SHORT_WIDTH = 15;
 const LONG_WIDTH = 40;
