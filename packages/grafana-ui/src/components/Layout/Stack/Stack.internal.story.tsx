@@ -7,7 +7,8 @@ import { Button } from '../../Button';
 import { Card } from '../../Card/Card';
 import { Text } from '../../Text/Text';
 
-import { HorizontalStack, Stack } from './Stack';
+import { HorizontalStack } from './HorizontalStack';
+import { Stack } from './Stack';
 import mdx from './Stack.mdx';
 
 const meta: Meta<typeof Stack> = {
