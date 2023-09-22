@@ -55,7 +55,7 @@ export const numberOrVariableValidator = (value: string | number) => {
   if (!Number.isNaN(Number(value))) {
     return true;
   }
-  if (/^\$\{[A-Za-z0-9_]+\}$/.test(value)) {
+  if (/^\$[A-Za-z0-9_]+$/.test(value)) {
     return true;
   }
   return false;

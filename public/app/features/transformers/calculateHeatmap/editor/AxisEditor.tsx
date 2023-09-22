@@ -58,20 +58,14 @@ export const AxisEditor = ({ value, onChange, item }: StandardEditorProps<Heatma
           });
         }}
       />
-      {/* TODO: Still needs some tweaks */}
-      <Field
+      <SuggestionsInput
         invalid={isInvalid}
         error={'Value needs to be an integer or a variable'}
-        className={css({ width: '100px', margin: 0 })}
-      >
-        <SuggestionsInput
-          invalid={isInvalid}
-          value={value?.value ?? ''}
-          placeholder="Auto"
-          onChange={onValueChange}
-          suggestions={variables}
-        />
-      </Field>
+        value={value?.value ?? ''}
+        placeholder="Auto"
+        onChange={onValueChange}
+        suggestions={variables}
+      />
     </HorizontalGroup>
   );
 };

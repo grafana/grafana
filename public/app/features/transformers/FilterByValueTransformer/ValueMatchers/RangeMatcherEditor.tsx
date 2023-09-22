@@ -49,7 +49,6 @@ export function rangeMatcherEditor<T = any>(
     return (
       <>
         <SuggestionsInput
-          className="flex-grow-1 gf-form-spacing"
           value={String(options.from)}
           placeholder="From"
           onChange={(val) => onChangeOptions(val, 'from')}
@@ -57,7 +56,6 @@ export function rangeMatcherEditor<T = any>(
         />
         <div className="gf-form-label">and</div>
         <SuggestionsInput
-          className="flex-grow-1"
           value={String(options.to)}
           placeholder="To"
           suggestions={variables}
