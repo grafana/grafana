@@ -2813,7 +2813,7 @@ steps:
       from_secret: packages_secret_access_key
     STORYBOOK_DESTINATION:
       from_secret: rgm_storybook_destination
-  image: grafana/grafana-build:main
+  image: grafana/grafana-build:dev-657ea6a
   name: rgm-build
   pull: always
   volumes:
@@ -3063,7 +3063,7 @@ steps:
       from_secret: packages_secret_access_key
     STORYBOOK_DESTINATION:
       from_secret: rgm_storybook_destination
-  image: grafana/grafana-build:main
+  image: grafana/grafana-build:dev-657ea6a
   name: rgm-build
   pull: always
   volumes:
@@ -3245,7 +3245,7 @@ steps:
       from_secret: packages_secret_access_key
     STORYBOOK_DESTINATION:
       from_secret: rgm_storybook_destination
-  image: grafana/grafana-build:main
+  image: grafana/grafana-build:dev-657ea6a
   name: rgm-build
   pull: always
   volumes:
@@ -3476,7 +3476,7 @@ steps:
       from_secret: packages_secret_access_key
     STORYBOOK_DESTINATION:
       from_secret: rgm_storybook_destination
-  image: grafana/grafana-build:main
+  image: grafana/grafana-build:dev-657ea6a
   name: rgm-build
   pull: always
   volumes:
@@ -3623,7 +3623,7 @@ steps:
       from_secret: packages_secret_access_key
     STORYBOOK_DESTINATION:
       from_secret: rgm_storybook_destination
-  image: grafana/grafana-build:main
+  image: grafana/grafana-build:dev-657ea6a
   name: rgm-publish
   pull: always
   volumes:
@@ -4640,6 +4640,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: d39b0cb7e4a6f7f251270706dcd80c91bf4f431698faccb18b9400385c2cd22a
+hmac: 634c550776ae98431ca1644f6ff67e15249c6c24c6bc39f885c2cfbbacb9c236
 
 ...
