@@ -28,15 +28,19 @@ export const GenAIButton = ({
   const styles = useStyles2(getStyles);
 
   // TODO: Implement error handling (use error object from hook)
-  const { setMessages, reply, started, loading, value } = useOpenaiStreamHook(OPEN_AI_MODEL, temperature);
+  const { setMessages, reply, started, loading, value, error, finished } = useOpenaiStreamHook(
+    OPEN_AI_MODEL,
+    temperature
+  );
 
   const onGenerate = (e: React.MouseEvent<HTMLButtonElement>) => {
     onClick?.(e);
     setMessages(messages);
   };
 
+  // Todo: Consider other options for `"` sanitation
   if (started) {
-    onReply(reply);
+    onReply(reply.replace(/"/g, ''));
   }
 
   const isGenerating = loading || started;
