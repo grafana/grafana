@@ -281,7 +281,6 @@ export const WithControlledSort: StoryFn<typeof InteractiveTable> = (args) => {
   ];
   const [data, setData] = useState(pageableData);
 
-  // A mock function that will simulate API call that returns the sorted pageableData with added delay
   const fetchData = useCallback(({ sortBy }: FetchDataArgs<WithPaginationData>) => {
     if (!sortBy?.length) {
       return setData(pageableData);
