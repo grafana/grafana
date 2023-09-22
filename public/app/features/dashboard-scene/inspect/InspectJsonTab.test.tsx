@@ -7,7 +7,6 @@ import {
   SceneDataTransformer,
   SceneGridItem,
   SceneGridLayout,
-  SceneObjectRef,
   VizPanel,
 } from '@grafana/scenes';
 import { getStandardTransformers } from 'app/features/transformers/standardTransformers';
