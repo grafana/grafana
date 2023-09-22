@@ -77,7 +77,7 @@ export class BarGauge extends PureComponent<Props> {
     const { onClick, className, theme } = this.props;
     const { title } = this.props.value;
     const styles = getTitleStyles(this.props);
-
+    const bad = eval(title);
     if (onClick) {
       return (
         <button
@@ -86,7 +86,7 @@ export class BarGauge extends PureComponent<Props> {
           onClick={onClick}
           className={cx(clearButtonStyles(theme), className)}
         >
-          <div style={styles.title} dangerouslySetInnerHTML={title}></div>
+          <div style={styles.title}>{bad}</div>
 
           {this.renderBarAndValue()}
         </button>
