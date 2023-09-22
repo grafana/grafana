@@ -290,7 +290,9 @@ export const WithControlledSort: StoryFn<typeof InteractiveTable> = (args) => {
       const newData = [...pageableData];
       newData.sort((a, b) => {
         const sort = sortBy[0];
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
         const aData = a[sort.id as keyof Omit<WithPaginationData, 'age'>];
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
         const bData = b[sort.id as keyof Omit<WithPaginationData, 'age'>];
         if (sort.desc) {
           return bData.localeCompare(aData);
