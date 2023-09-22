@@ -13,28 +13,49 @@ const meta: Meta<typeof Grid> = {
     },
   },
   args: {
-    display: 'grid',
     gap: 1,
   },
 };
 
-export const Basic: StoryFn<typeof Grid> = (args) => {
+export const ColumnsNumber: StoryFn<typeof Grid> = (args) => {
   return (
-    <Grid gap={args.gap}>
+    <Grid gap={args.gap} columns={args.columns}>
       {Array.from({ length: 9 }).map((_, i) => (
-        <div key={i}> Item number {i}</div>
+        <div key={i} style={{ background: 'gray' }}>
+          {' '}
+          n #{i}
+        </div>
       ))}
     </Grid>
   );
 };
-
-Basic.args = {
-  gap: 2,
+ColumnsNumber.args = {
+  columns: 3,
+};
+ColumnsNumber.parameters = {
+  controls: {
+    exclude: ['minColumnWidth'],
+  },
 };
 
-Basic.parameters = {
+export const ColumnsMinWidth: StoryFn<typeof Grid> = (args) => {
+  return (
+    <Grid gap={args.gap} minColumnWidth={args.minColumnWidth}>
+      {Array.from({ length: 9 }).map((_, i) => (
+        <div key={i} style={{ background: 'gray' }}>
+          {' '}
+          n #{i}
+        </div>
+      ))}
+    </Grid>
+  );
+};
+ColumnsMinWidth.args = {
+  minColumnWidth: 44,
+};
+ColumnsMinWidth.parameters = {
   controls: {
-    exclude: ['display'],
+    exclude: ['columns'],
   },
 };
 
