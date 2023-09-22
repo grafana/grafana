@@ -38,9 +38,9 @@ weight: 100
 
 # Geomap
 
-The Geomap panel visualization allows you to view and customize the world map using geospatial data. You can configure various overlay styles and map view settings to easily focus on the important location-based characteristics of the data.
+Geomaps allow you to view and customize the world map using geospatial data. You can configure various overlay styles and map view settings to easily focus on the important location-based characteristics of the data.
 
-> We would love your feedback on Geomap. Please check out the [Github discussion](https://github.com/grafana/grafana/discussions/62159) and join the conversation.
+> We would love your feedback on geomaps. Please check out the [Github discussion](https://github.com/grafana/grafana/discussions/62159) and join the conversation.
 
 {{< figure src="/static/img/docs/geomap-panel/geomap-example-8-1-0.png" max-width="1200px" caption="Geomap panel" >}}
 
@@ -50,7 +50,7 @@ The map view controls the initial view of the map when the dashboard loads.
 
 ### Initial View
 
-The initial view configures how the GeoMap panel renders when the panel is first loaded.
+The initial view configures how the geomap renders when the panel is first loaded.
 
 - **View** sets the center for the map when the panel first loads.
   - **Fit to data** fits the map view based on the data extents of Map layers and updates when data changes.
@@ -77,11 +77,11 @@ The initial view configures how the GeoMap panel renders when the panel is first
 
 ## Map layers
 
-The Geomap visualization supports showing multiple layers. Each layer determines how you visualize geospatial data on top of the base map.
+Geomaps support showing multiple layers. Each layer determines how you visualize geospatial data on top of the base map.
 
 ### Types
 
-There are seven map layer types to choose from in the Geomap visualization.
+There are seven map layer types to choose from in a geomap.
 
 - [Markers]({{< relref "#markers-layer" >}}) renders a marker at each data point.
 - [Heatmap]({{< relref "#heatmap-layer" >}}) visualizes a heatmap of the data.
@@ -125,17 +125,17 @@ docker run -p 3000:3000 -e "GF_PANELS_ENABLE_ALPHA=true" grafana/grafana:<VERSIO
 
 The layer controls allow you to create layers, change their name, reorder and delete layers.
 
-- **Add layer** creates an additional, configurable data layer for the Geomap visualization. When you add a layer, you are prompted to select a layer type. You can change the layer type at any point during panel configuration. See the **Layer Types** section above for details on each layer type.
-- The layer controls allow you to rename, delete, and reorder the layers of the panel.
+- **Add layer** creates an additional, configurable data layer for the geomap. When you add a layer, you are prompted to select a layer type. You can change the layer type at any point during panel configuration. See the **Layer Types** section above for details on each layer type.
+- The layer controls allow you to rename, delete, and reorder the layers of the visualization.
   - **Edit layer name (pencil icon)** renames the layer.
   - **Trash Bin** deletes the layer.
-  - **Reorder (six dots/grab handle)** allows you to change the layer order. Data on higher layers will appear above data on lower layers. The panel will update the layer order as you drag and drop to help simplify choosing a layer order.
+  - **Reorder (six dots/grab handle)** allows you to change the layer order. Data on higher layers will appear above data on lower layers. The visualization will update the layer order as you drag and drop to help simplify choosing a layer order.
 
-You can add multiple layers of data to a single Geomap panel in order to create rich, detailed visualizations.
+You can add multiple layers of data to a single geomap in order to create rich, detailed visualizations.
 
 ### Location
 
-The Geomap panel needs a source of geographical data. This data comes from a database query, and there are four mapping options for your data.
+Geomaps need a source of geographical data. This data comes from a database query, and there are four mapping options for your data.
 
 - **Auto** automatically searches for location data. Use this option when your query is based on one of the following names for data fields.
   - geohash: “geohash”
@@ -153,7 +153,7 @@ are available each with specific configuration options to style the base map.
 
 ### Types
 
-There are four basemap layer types to choose from in the Geomap visualization.
+There are four basemap layer types to choose from in a geomap.
 
 - [Open Street Map]({{< relref "#open-street-map-layer" >}}) adds a map from a collaborative free geographic world database.
 - [CARTO]({{< relref "#carto-layer" >}}) adds a layer from CARTO Raster basemaps.
