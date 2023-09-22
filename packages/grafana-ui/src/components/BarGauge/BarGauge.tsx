@@ -86,7 +86,8 @@ export class BarGauge extends PureComponent<Props> {
           onClick={onClick}
           className={cx(clearButtonStyles(theme), className)}
         >
-          <div style={styles.title}>{title}</div>
+          <div style={styles.title} dangerouslySetInnerHTML={title}></div>
+          
           {this.renderBarAndValue()}
         </button>
       );
