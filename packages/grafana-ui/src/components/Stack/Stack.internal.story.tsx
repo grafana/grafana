@@ -6,7 +6,7 @@ import { Button } from '../Button';
 import { Card } from '../Card/Card';
 import { Text } from '../Text/Text';
 
-import { Stack } from './Stack';
+import { HorizontalStack, Stack } from './Stack';
 import mdx from './Stack.mdx';
 
 const meta: Meta<typeof Stack> = {
@@ -33,43 +33,34 @@ export const Basic: StoryFn<typeof Stack> = ({ direction = 'vertical', gap = 2 }
   );
 };
 
-export const TestCases: StoryFn<typeof Stack> = ({ direction = 'column', gap = 2 }) => {
+export const TestCases: StoryFn<typeof Stack> = () => {
   return (
     <div style={{ width: '100%' }}>
-      <Stack direction="vertical" gap={4}>
-        <Example title="No stack">
-          <Button>A button</Button>
-          <Button>Longer button button</Button>
-        </Example>
-
-        <Example title="Horizontal stack">
-          <Stack direction="horizontal">
+      <Stack gap={4}>
+        <h2>Comparisons Stack vs No stack</h2>
+        <HorizontalStack>
+          <Example title="No stack">
             <Button>A button</Button>
             <Button>Longer button button</Button>
-          </Stack>
-        </Example>
+          </Example>
 
-        <Example title="No stack, mismatched heights">
-          <Card>
-            <Card.Heading>I am a card heading</Card.Heading>
-          </Card>
+          <Example title="Horizontal stack">
+            <Stack direction="horizontal">
+              <Button>A button</Button>
+              <Button>Longer button button</Button>
+            </Stack>
+          </Example>
 
-          <Card>
-            <Card.Heading>I am a card heading</Card.Heading>
-            <Card.Description>Ohhhhh - and now a description and some actions</Card.Description>
-            <Card.Actions>
-              <Button variant="secondary">Settings</Button>
-              <Button variant="secondary">Explore</Button>
-            </Card.Actions>
-          </Card>
+          <Example title="Vertical stack">
+            <Stack>
+              <Button>A button</Button>
+              <Button>Longer button button</Button>
+            </Stack>
+          </Example>
+        </HorizontalStack>
 
-          <Card>
-            <Card.Heading>I am a card heading</Card.Heading>
-            <Card.Description>Ohhhhh - and now a description!</Card.Description>
-          </Card>
-        </Example>
-        <Example title="Vertical stack, mismatched heights">
-          <Stack direction="vertical">
+        <HorizontalStack>
+          <Example title="No stack, mismatched heights">
             <Card>
               <Card.Heading>I am a card heading</Card.Heading>
             </Card>
@@ -87,9 +78,53 @@ export const TestCases: StoryFn<typeof Stack> = ({ direction = 'column', gap = 2
               <Card.Heading>I am a card heading</Card.Heading>
               <Card.Description>Ohhhhh - and now a description!</Card.Description>
             </Card>
-            <Button>Hello, press to help me</Button>
-          </Stack>
-        </Example>
+            <Button>Please press me!</Button>
+          </Example>
+          <Example title="Vertical stack, mismatched heights">
+            <Stack>
+              <Card>
+                <Card.Heading>I am a card heading</Card.Heading>
+              </Card>
+
+              <Card>
+                <Card.Heading>I am a card heading</Card.Heading>
+                <Card.Description>Ohhhhh - and now a description and some actions</Card.Description>
+                <Card.Actions>
+                  <Button variant="secondary">Settings</Button>
+                  <Button variant="secondary">Explore</Button>
+                </Card.Actions>
+              </Card>
+
+              <Card>
+                <Card.Heading>I am a card heading</Card.Heading>
+                <Card.Description>Ohhhhh - and now a description!</Card.Description>
+              </Card>
+              <Button>Please press me!</Button>
+            </Stack>
+          </Example>
+        </HorizontalStack>
+
+        <div style={{ width: 500 }}>
+          <Example title="No stack, too many items">
+            <Button>A button</Button>
+            <Button>Longer button button</Button>
+            <Button>Another button</Button>
+            <Button>And another</Button>
+            <Button>Why not - one last button!</Button>
+          </Example>
+
+          <Example title="Horizontal stack, too many items">
+            <HorizontalStack>
+              <Button>A button</Button>
+              <Button>Longer button button</Button>
+              <Button>Another button</Button>
+              <Button>And another</Button>
+              <Button>Why not - one last button!</Button>
+            </HorizontalStack>
+          </Example>
+        </div>
+
+        <h2>Child alignment</h2>
 
         <div style={{ width: 500 }}>
           <Example title="Row, mismatched heights">
@@ -104,8 +139,8 @@ export const TestCases: StoryFn<typeof Stack> = ({ direction = 'column', gap = 2
           </Example>
         </div>
 
-        <Example title="Horizontal/row stack, mismatched heights">
-          <Stack direction="horizontal">
+        <Example title="Horizontal stack, mismatched heights">
+          <HorizontalStack>
             <Card>
               <Card.Heading>I am a card heading</Card.Heading>
             </Card>
@@ -123,10 +158,10 @@ export const TestCases: StoryFn<typeof Stack> = ({ direction = 'column', gap = 2
               <Card.Heading>I am a card heading</Card.Heading>
               <Card.Description>Ohhhhh - and now a description!</Card.Description>
             </Card>
-          </Stack>
+          </HorizontalStack>
         </Example>
 
-        <Example title="Horizontal/row stack, mismatched heights again">
+        <Example title="Horizontal stack, mismatched heights with different components">
           <Stack direction="horizontal">
             <Card>
               <Card.Heading>I am a card heading</Card.Heading>
@@ -141,51 +176,24 @@ export const TestCases: StoryFn<typeof Stack> = ({ direction = 'column', gap = 2
           </Stack>
         </Example>
 
-        <Example title="Horizontal/row stack, alerts with even heights">
-          <Stack direction="horizontal">
+        <Example title="Horizontal stack, alerts with even heights">
+          <HorizontalStack>
             <Alert severity="info" title="Plus an alert!" />
             <Alert severity="success" title="Plus an alert!" />
             <Alert severity="warning" title="Plus an alert!" />
             <Alert severity="error" title="Plus an alert!" />
-          </Stack>
+          </HorizontalStack>
         </Example>
 
-        <Example title="Horizontal/row stack, alerts with mismatched heights">
-          <Stack direction="horizontal">
+        <Example title="Horizontal stack, alerts with mismatched heights">
+          <HorizontalStack>
             <Alert severity="info" title="Plus an alert!" />
             <Alert severity="success" title="Plus an alert!" />
             <Alert severity="warning" title="Plus an alert!">
               Surprise - a description! What will happen to the height of all the other alerts?
             </Alert>
             <Alert severity="error" title="Plus an alert!" />
-          </Stack>
-        </Example>
-
-        <div style={{ width: 500 }}>
-          <Example title="No stack, too many items">
-            <Button>A button</Button>
-            <Button>Longer button button</Button>
-            <Button>Another button</Button>
-            <Button>And another</Button>
-            <Button>Why not - one last button!</Button>
-          </Example>
-
-          <Example title="Horizontal/row stack, too many items">
-            <Stack direction="horizontal">
-              <Button>A button</Button>
-              <Button>Longer button button</Button>
-              <Button>Another button</Button>
-              <Button>And another</Button>
-              <Button>Why not - one last button!</Button>
-            </Stack>
-          </Example>
-        </div>
-
-        <Example title="Vertical/column stack">
-          <Stack direction="vertical">
-            <Button>A button</Button>
-            <Button>Longer button button</Button>
-          </Stack>
+          </HorizontalStack>
         </Example>
       </Stack>
     </div>

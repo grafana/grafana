@@ -11,4 +11,4 @@
 
 export * from './components/Flex/Flex';
 
-export { HorizontalStack, VerticalStack } from './components/Stack/Stack';
+export { HorizontalStack, Stack } from './components/Stack/Stack';
