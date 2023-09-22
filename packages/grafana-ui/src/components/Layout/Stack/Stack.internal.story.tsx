@@ -21,7 +21,7 @@ const meta: Meta<typeof Stack> = {
   },
   argTypes: {
     gap: SpacingTokenControl,
-    direction: { control: 'select', options: ['row', 'row-reverse', 'column', 'column-reverse'] },
+    direction: { control: 'select', options: ['row', 'column'] },
   },
 };
 
@@ -29,7 +29,7 @@ const Item = ({ children }: { children: ReactNode }) => (
   <div style={{ backgroundColor: 'lightgrey', width: '100px', height: '50px' }}>{children}</div>
 );
 
-export const Basic: StoryFn<typeof Stack> = ({ direction = 'vertical', gap = 2 }) => {
+export const Basic: StoryFn<typeof Stack> = ({ direction = 'column', gap = 2 }) => {
   return (
     <Stack direction={direction} gap={gap}>
       <Item>Item 1</Item>
