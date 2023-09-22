@@ -1,5 +1,14 @@
-import { SceneGridItem, SceneGridItemLike, SceneGridLayout, SceneGridRow, VizPanel } from '@grafana/scenes';
-import { Dashboard, defaultDashboard, FieldConfigSource, Panel, RowPanel } from '@grafana/schema';
+import {
+  SceneDataLayers,
+  SceneGridItem,
+  SceneGridItemLike,
+  SceneGridLayout,
+  SceneGridRow,
+  VizPanel,
+  dataLayers,
+  SceneDataLayerProvider,
+} from '@grafana/scenes';
+import { AnnotationQuery, Dashboard, defaultDashboard, FieldConfigSource, Panel, RowPanel } from '@grafana/schema';
 import { sortedDeepCloneWithoutNulls } from 'app/core/utils/object';
 
 import { DashboardScene } from '../scene/DashboardScene';
@@ -11,6 +20,7 @@ import { getPanelIdForVizPanel } from '../utils/utils';
 export function transformSceneToSaveModel(scene: DashboardScene): Dashboard {
   const state = scene.state;
   const timeRange = state.$timeRange!.state;
+  const data = state.$data;
   const body = state.body;
   const panels: Panel[] = [];
 
@@ -30,6 +40,13 @@ export function transformSceneToSaveModel(scene: DashboardScene): Dashboard {
     }
   }
 
+  let annotations: AnnotationQuery[] = [];
+  if (data instanceof SceneDataLayers) {
+    const layers = data.state.layers;
+
+    annotations = dataLayersToAnnotations(layers);
+  }
+
   const dashboard: Dashboard = {
     ...defaultDashboard,
     title: state.title,
@@ -39,6 +56,9 @@ export function transformSceneToSaveModel(scene: DashboardScene): Dashboard {
       to: timeRange.to,
     },
     panels,
+    annotations: {
+      list: annotations,
+    },
   };
 
   return sortedDeepCloneWithoutNulls(dashboard);
@@ -140,4 +160,21 @@ export function gridRowToSaveModel(gridRow: SceneGridRow, panelsArray: Array<Pan
   } else {
     panelsArray.push(...panelsInsideRow);
   }
+}
+
+export function dataLayersToAnnotations(layers: SceneDataLayerProvider[]) {
+  const annotations: AnnotationQuery[] = [];
+  for (const layer of layers) {
+    if (!(layer instanceof dataLayers.AnnotationsDataLayer)) {
+      continue;
+    }
+
+    annotations.push({
+      ...layer.state.query,
+      enable: Boolean(layer.state.isEnabled),
+      hide: Boolean(layer.state.isHidden),
+    });
+  }
+
+  return annotations;
 }
