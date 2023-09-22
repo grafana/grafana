@@ -14,9 +14,7 @@ describe('Geomap spatial operations', () => {
     e2e.components.TransformTab.newTransform('Spatial operations').scrollIntoView().should('be.visible').click();
     e2e.components.Transforms.SpatialOperations.actionLabel().type('Prepare spatial field{enter}');
     e2e.components.Transforms.SpatialOperations.locationLabel().should('be.visible');
-
-    e2e.components.Transforms.SpatialOperations.location.autoOption().check({ force: true });
-    e2e.components.Transforms.SpatialOperations.location.autoOption().should('be.checked');
+    e2e.components.Transforms.SpatialOperations.locationLabel().type('Auto{enter}');
 
     e2e.components.PanelEditor.toggleTableView().click({ force: true });
     e2e.components.Panels.Visualization.Table.header()
@@ -33,8 +31,7 @@ describe('Geomap spatial operations', () => {
     e2e.components.TransformTab.newTransform('Spatial operations').scrollIntoView().should('be.visible').click();
     e2e.components.Transforms.SpatialOperations.actionLabel().type('Prepare spatial field{enter}');
     e2e.components.Transforms.SpatialOperations.locationLabel().should('be.visible');
-    e2e.components.Transforms.SpatialOperations.location.coords.option().check({ force: true });
-    e2e.components.Transforms.SpatialOperations.location.coords.option().should('be.checked');
+    e2e.components.Transforms.SpatialOperations.locationLabel().type('Coords{enter}');
 
     e2e.components.Transforms.SpatialOperations.location.coords.latitudeFieldLabel().should('be.visible');
     e2e.components.Transforms.SpatialOperations.location.coords.latitudeFieldLabel().type('Lat{enter}');
@@ -57,7 +54,8 @@ describe('Geomap spatial operations', () => {
     e2e.components.TransformTab.newTransform('Spatial operations').scrollIntoView().should('be.visible').click();
     e2e.components.Transforms.SpatialOperations.actionLabel().type('Prepare spatial field{enter}');
     e2e.components.Transforms.SpatialOperations.locationLabel().should('be.visible');
-    e2e.components.Transforms.SpatialOperations.location.geohash.option().check({ force: true });
+    e2e.components.Transforms.SpatialOperations.locationLabel().type('Geohash{enter}');
+
     e2e.components.Transforms.SpatialOperations.location.geohash
       .geohashFieldLabel()
       .should('be.visible')
@@ -78,8 +76,7 @@ describe('Geomap spatial operations', () => {
     e2e.components.TransformTab.newTransform('Spatial operations').scrollIntoView().should('be.visible').click();
     e2e.components.Transforms.SpatialOperations.actionLabel().type('Prepare spatial field{enter}');
     e2e.components.Transforms.SpatialOperations.locationLabel().should('be.visible');
-    e2e.components.Transforms.SpatialOperations.location.lookup.option().check({ force: true });
-    e2e.components.Transforms.SpatialOperations.location.lookup.option().should('be.checked');
+    e2e.components.Transforms.SpatialOperations.locationLabel().type('Lookup{enter}');
 
     e2e.components.Transforms.SpatialOperations.location.lookup.lookupFieldLabel().should('be.visible');
     e2e.components.Transforms.SpatialOperations.location.lookup.lookupFieldLabel().type('State{enter}');
