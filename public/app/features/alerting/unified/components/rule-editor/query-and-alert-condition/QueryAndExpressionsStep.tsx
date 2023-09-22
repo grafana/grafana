@@ -25,7 +25,7 @@ import { NeedHelpInfo } from '../NeedHelpInfo';
 import { QueryEditor } from '../QueryEditor';
 import { RecordingRuleEditor } from '../RecordingRuleEditor';
 import { RuleEditorSection } from '../RuleEditorSection';
-import { errorFromSeries, findRenamedDataQueryReferences, refIdExists } from '../util';
+import { errorFromCurrentCondition, errorFromPreviewData, findRenamedDataQueryReferences, refIdExists } from '../util';
 
 import { CloudDataSourceSelector } from './CloudDataSourceSelector';
 import { SmartAlertTypeDetector } from './SmartAlertTypeDetector';
@@ -82,8 +82,14 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
   const rulesSourcesWithRuler = useRulesSourcesWithRuler();
 
   const runQueriesPreview = useCallback(() => {
+    if (isCloudAlertRuleType) {
+      // we will skip preview for cloud rules, these do not have any time series preview
+      // Grafana Managed rules and recording rules do
+      return;
+    }
+
     runQueries(getValues('queries'));
-  }, [runQueries, getValues]);
+  }, [isCloudAlertRuleType, runQueries, getValues]);
 
   // whenever we update the queries we have to update the form too
   useEffect(() => {
@@ -104,16 +110,27 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
 
   const emptyQueries = queries.length === 0;
 
+  // apply some validations and asserts to the results of the evaluation when creating or editing
+  // Grafana-managed alert rules
   useEffect(() => {
-    const currentCondition = getValues('condition');
-
-    if (!currentCondition || RuleFormType.cloudRecording) {
+    if (!isGrafanaManagedType) {
       return;
     }
 
-    const error = errorFromSeries(queryPreviewData[currentCondition]?.series || []);
+    const currentCondition = getValues('condition');
+    if (!currentCondition) {
+      return;
+    }
+
+    const previewData = queryPreviewData[currentCondition];
+    if (!previewData) {
+      return;
+    }
+
+    const error = errorFromPreviewData(previewData) ?? errorFromCurrentCondition(previewData);
+
     onDataChange(error?.message || '');
-  }, [queryPreviewData, getValues, onDataChange]);
+  }, [queryPreviewData, getValues, onDataChange, isGrafanaManagedType]);
 
   const handleSetCondition = useCallback(
     (refId: string | null) => {

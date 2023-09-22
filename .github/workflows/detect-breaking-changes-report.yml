@@ -110,7 +110,7 @@ jobs:
           ${{ steps.levitate-run.outputs.message }}
 
           [Console output](${{ steps.levitate-run.outputs.job_link }})
-          [Read our guideline](https://github.com/grafana/grafana/blob/main/contribute/breaking-changes-guide.md)
+          [Read our guideline](https://github.com/grafana/grafana/blob/main/contribute/breaking-changes-guide/breaking-changes-guide.md)
 
     # Remove comment from the PR (no more breaking changes)
     - name: Remove comment from PR

@@ -1,7 +1,7 @@
 import { PanelBuilders, SceneFlexItem, SceneQueryRunner, SceneTimeRange } from '@grafana/scenes';
 import { DataSourceRef, GraphDrawStyle } from '@grafana/schema';
 
-const QUERY_A = 'sum(grafanacloud_instance_rule_group_iterations_missed_total:rate5m)';
+import { PANEL_STYLES } from '../../../home/Insights';
 
 export function getMissedIterationsScene(timeRange: SceneTimeRange, datasource: DataSourceRef, panelTitle: string) {
   const query = new SceneQueryRunner({
@@ -9,7 +9,7 @@ export function getMissedIterationsScene(timeRange: SceneTimeRange, datasource: 
     queries: [
       {
         refId: 'A',
-        expr: QUERY_A,
+        expr: 'sum(grafanacloud_instance_rule_group_iterations_missed_total:rate5m)',
         range: true,
         legendFormat: 'missed',
       },
@@ -18,8 +18,7 @@ export function getMissedIterationsScene(timeRange: SceneTimeRange, datasource: 
   });
 
   return new SceneFlexItem({
-    width: 'calc(50% - 4px)',
-    height: 300,
+    ...PANEL_STYLES,
     body: PanelBuilders.timeseries()
       .setTitle(panelTitle)
       .setData(query)

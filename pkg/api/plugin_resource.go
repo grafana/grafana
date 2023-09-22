@@ -9,6 +9,8 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
+	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/middleware/requestmeta"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/httpresponsesender"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
@@ -44,7 +46,10 @@ func (hs *HTTPServer) callPluginResource(c *contextmodel.ReqContext, pluginID st
 
 	if err = hs.makePluginResourceRequest(c.Resp, req, pCtx); err != nil {
 		handleCallResourceError(err, c)
+		return
 	}
+
+	requestmeta.WithStatusSource(c.Req.Context(), c.Resp.Status())
 }
 
 func (hs *HTTPServer) callPluginResourceWithDataSource(c *contextmodel.ReqContext, pluginID string, ds *datasources.DataSource) {
@@ -77,7 +82,10 @@ func (hs *HTTPServer) callPluginResourceWithDataSource(c *contextmodel.ReqContex
 
 	if err = hs.makePluginResourceRequest(c.Resp, req, pCtx); err != nil {
 		handleCallResourceError(err, c)
+		return
 	}
+
+	requestmeta.WithStatusSource(c.Req.Context(), c.Resp.Status())
 }
 
 func (hs *HTTPServer) pluginResourceRequest(c *contextmodel.ReqContext) (*http.Request, error) {
@@ -118,14 +126,15 @@ func (hs *HTTPServer) makePluginResourceRequest(w http.ResponseWriter, req *http
 
 func handleCallResourceError(err error, reqCtx *contextmodel.ReqContext) {
 	if errors.Is(err, backendplugin.ErrPluginUnavailable) {
-		reqCtx.JsonApiErr(503, "Plugin unavailable", err)
+		reqCtx.JsonApiErr(http.StatusServiceUnavailable, "Plugin unavailable", err)
 		return
 	}
 
 	if errors.Is(err, backendplugin.ErrMethodNotImplemented) {
-		reqCtx.JsonApiErr(404, "Not found", err)
+		reqCtx.JsonApiErr(http.StatusNotFound, "Not found", err)
 		return
 	}
 
-	reqCtx.JsonApiErr(500, "Failed to call resource", err)
+	resp := response.ErrOrFallback(http.StatusInternalServerError, "Failed to call resource", err)
+	resp.WriteTo(reqCtx)
 }

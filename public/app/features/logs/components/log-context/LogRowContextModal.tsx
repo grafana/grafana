@@ -552,6 +552,7 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
                   onUnpinLine={() => setSticky(false)}
                   onPinLine={() => setSticky(true)}
                   pinnedRowId={sticky ? row.uid : undefined}
+                  overflowingContent={true}
                 />
               </td>
             </tr>

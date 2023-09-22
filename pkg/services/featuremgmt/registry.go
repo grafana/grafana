@@ -162,6 +162,13 @@ var (
 			Owner:       grafanaFrontendPlatformSquad,
 		},
 		{
+			Name:         "dockedMegaMenu",
+			Description:  "Enable support for a persistent (docked) navigation menu",
+			Stage:        FeatureStagePublicPreview,
+			FrontendOnly: true,
+			Owner:        grafanaFrontendPlatformSquad,
+		},
+		{
 			Name:        "grpcServer",
 			Description: "Run the GRPC server",
 			Stage:       FeatureStagePublicPreview,
@@ -195,14 +202,6 @@ var (
 			Expression:   "true", // enabled by default
 			FrontendOnly: true,
 			Owner:        awsDatasourcesSquad,
-		},
-		{
-			Name:         "newPanelChromeUI",
-			Description:  "Show updated look and feel of grafana-ui PanelChrome: panel header, icons, and menu",
-			Stage:        FeatureStageGeneralAvailability,
-			FrontendOnly: true,
-			Expression:   "true", // enabled by default
-			Owner:        grafanaDashboardsSquad,
 		},
 		{
 			Name:        "showDashboardValidationWarnings",
@@ -540,7 +539,8 @@ var (
 		{
 			Name:        "recordedQueriesMulti",
 			Description: "Enables writing multiple items from a single query within Recorded Queries",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStageGeneralAvailability,
+			Expression:  "true",
 			Owner:       grafanaObservabilityMetricsSquad,
 		},
 		{
@@ -549,13 +549,6 @@ var (
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: false,
 			Owner:        grafanaPluginsPlatformSquad,
-		},
-		{
-			Name:         "alertingLokiRangeToInstant",
-			Description:  "Rewrites eligible loki range queries to instant queries",
-			Stage:        FeatureStageExperimental,
-			FrontendOnly: false,
-			Owner:        grafanaAlertingSquad,
 		},
 		{
 			Name:         "vizAndWidgetSplit",
@@ -666,8 +659,9 @@ var (
 		{
 			Name:        "prometheusConfigOverhaulAuth",
 			Description: "Update the Prometheus configuration page with the new auth component",
-			Stage:       FeatureStageExperimental,
 			Owner:       grafanaObservabilityMetricsSquad,
+			Stage:       FeatureStageGeneralAvailability,
+			Expression:  "true", // on by default
 		},
 		{
 			Name:            "configurableSchedulerTick",
@@ -736,6 +730,55 @@ var (
 			Description: "Send query to the same datasource in a single request when using server side expressions",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaObservabilityMetricsSquad,
+		},
+		{
+			Name:         "requestInstrumentationStatusSource",
+			Description:  "Include a status source label for request metrics and logs",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: false,
+			Owner:        grafanaPluginsPlatformSquad,
+		},
+		{
+			Name:         "lokiRunQueriesInParallel",
+			Description:  "Enables running Loki queries in parallel",
+			Stage:        FeatureStagePrivatePreview,
+			FrontendOnly: false,
+			Owner:        grafanaObservabilityLogsSquad,
+		},
+		{
+			Name:         "wargamesTesting",
+			Description:  "Placeholder feature flag for internal testing",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: false,
+			Owner:        hostedGrafanaTeam,
+		},
+		{
+			Name:         "alertingInsights",
+			Description:  "Show the new alerting insights landing page",
+			FrontendOnly: true,
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAlertingSquad,
+		},
+		{
+			Name:        "externalCorePlugins",
+			Description: "Allow core plugins to be loaded as external",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaPluginsPlatformSquad,
+		},
+		{
+			Name:         "pluginsAPIMetrics",
+			Description:  "Sends metrics of public grafana packages usage by plugins",
+			FrontendOnly: true,
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaPluginsPlatformSquad,
+		},
+		{
+			Name:            "httpSLOLevels",
+			Description:     "Adds SLO level to http request metrics",
+			Stage:           FeatureStageExperimental,
+			FrontendOnly:    false,
+			Owner:           hostedGrafanaTeam,
+			RequiresRestart: true,
 		},
 	}
 )

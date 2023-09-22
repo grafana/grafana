@@ -373,18 +373,9 @@ func (s *Service) Update(ctx context.Context, cmd *folder.UpdateFolderCommand) (
 		return dashFolder, nil
 	}
 
-	if cmd.NewUID != nil && *cmd.NewUID != "" {
-		if !util.IsValidShortUID(*cmd.NewUID) {
-			return nil, dashboards.ErrDashboardInvalidUid
-		} else if util.IsShortUIDTooLong(*cmd.NewUID) {
-			return nil, dashboards.ErrDashboardUidTooLong
-		}
-	}
-
 	foldr, err := s.store.Update(ctx, folder.UpdateFolderCommand{
 		UID:            cmd.UID,
 		OrgID:          cmd.OrgID,
-		NewUID:         cmd.NewUID,
 		NewTitle:       cmd.NewTitle,
 		NewDescription: cmd.NewDescription,
 		SignedInUser:   user,
@@ -470,10 +461,6 @@ func prepareForUpdate(dashFolder *dashboards.Dashboard, orgId int64, userId int6
 	}
 	dashFolder.Title = strings.TrimSpace(title)
 	dashFolder.Data.Set("title", dashFolder.Title)
-
-	if cmd.NewUID != nil && *cmd.NewUID != "" {
-		dashFolder.SetUID(*cmd.NewUID)
-	}
 
 	dashFolder.SetVersion(cmd.Version)
 	dashFolder.IsFolder = true
