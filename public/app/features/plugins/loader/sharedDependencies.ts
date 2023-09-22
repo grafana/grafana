@@ -7,6 +7,7 @@ import moment from 'moment'; // eslint-disable-line no-restricted-imports
 import prismjs from 'prismjs';
 import react from 'react';
 import reactDom from 'react-dom';
+import * as reactInlineSvg from 'react-inlinesvg';
 import * as reactRedux from 'react-redux'; // eslint-disable-line no-restricted-imports
 import * as reactRouterDom from 'react-router-dom';
 import * as reactRouterCompat from 'react-router-dom-v5-compat';
@@ -116,6 +117,8 @@ export const sharedDependenciesMap: Record<string, System.Module> = {
   prismjs: prismjs,
   react: react,
   'react-dom': reactDom,
+  // bundling grafana-ui in plugins requires sharing react-inlinesvg for the icon cache
+  'react-inlinesvg': reactInlineSvg,
   'react-redux': reactRedux,
   // Migration - React Router v5 -> v6
   // =================================
