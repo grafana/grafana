@@ -50,12 +50,16 @@ export function rangeMatcherEditor<T = any>(
       <>
         <SuggestionsInput
           value={String(options.from)}
+          invalid={isInvalid.from}
+          error={'Value needs to be an integer or a variable'}
           placeholder="From"
           onChange={(val) => onChangeOptions(val, 'from')}
           suggestions={variables}
         />
         <div className="gf-form-label">and</div>
         <SuggestionsInput
+          invalid={isInvalid.to}
+          error={'Value needs to be an integer or a variable'}
           value={String(options.to)}
           placeholder="To"
           suggestions={variables}

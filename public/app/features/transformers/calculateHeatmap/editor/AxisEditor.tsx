@@ -1,10 +1,9 @@
-import { css } from '@emotion/css';
 import React, { useState } from 'react';
 
 import { SelectableValue, StandardEditorProps, VariableOrigin } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 import { HeatmapCalculationBucketConfig, HeatmapCalculationMode } from '@grafana/schema';
-import { Field, HorizontalGroup, RadioButtonGroup, ScaleDistribution } from '@grafana/ui';
+import { HorizontalGroup, RadioButtonGroup, ScaleDistribution } from '@grafana/ui';
 
 import { SuggestionsInput } from '../../suggestionsInput/SuggestionsInput';
 import { numberOrVariableValidator } from '../../utils';

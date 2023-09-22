@@ -1,4 +1,4 @@
-import React, { FormEvent, useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 
 import {
   DataTransformerID,
@@ -6,12 +6,17 @@ import {
   TransformerRegistryItem,
   TransformerUIProps,
   TransformerCategory,
+  VariableOrigin,
 } from '@grafana/data';
 import {
   histogramFieldInfo,
   HistogramTransformerInputs,
 } from '@grafana/data/src/transformations/transformers/histogram';
-import { InlineField, InlineFieldRow, InlineSwitch, Input } from '@grafana/ui';
+import { getTemplateSrv } from '@grafana/runtime';
+import { InlineField, InlineFieldRow, InlineSwitch } from '@grafana/ui';
+
+import { SuggestionsInput } from '../suggestionsInput/SuggestionsInput';
+import { numberOrVariableValidator } from '../utils';
 
 export const HistogramTransformerEditor = ({
   input,
@@ -20,24 +25,33 @@ export const HistogramTransformerEditor = ({
 }: TransformerUIProps<HistogramTransformerInputs>) => {
   const labelWidth = 18;
 
+  const [isInvalid, setInvalid] = useState({
+    bucketSize: !numberOrVariableValidator(options.bucketSize || ''),
+    bucketOffset: !numberOrVariableValidator(options.bucketOffset || ''),
+  });
+
   const onBucketSizeChanged = useCallback(
-    (event: FormEvent<HTMLInputElement>) => {
+    (value: string) => {
+      setInvalid({ ...isInvalid, bucketSize: !numberOrVariableValidator(value) });
+
       onChange({
         ...options,
-        bucketSize: event?.currentTarget.value,
+        bucketSize: value,
       });
     },
-    [onChange, options]
+    [onChange, options, isInvalid, setInvalid]
   );
 
   const onBucketOffsetChanged = useCallback(
-    (event?: FormEvent<HTMLInputElement>) => {
+    (value: string) => {
+      setInvalid({ ...isInvalid, bucketOffset: !numberOrVariableValidator(value) });
+
       onChange({
         ...options,
-        bucketOffset: event?.currentTarget.value,
+        bucketOffset: value,
       });
     },
-    [onChange, options]
+    [onChange, options, isInvalid, setInvalid]
   );
 
   const onToggleCombine = useCallback(() => {
@@ -47,15 +61,27 @@ export const HistogramTransformerEditor = ({
     });
   }, [onChange, options]);
 
+  const templateSrv = getTemplateSrv();
+  const variables = templateSrv.getVariables().map((v) => {
+    return { value: v.name, label: v.label || v.name, origin: VariableOrigin.Template };
+  });
+
   return (
     <div>
       <InlineFieldRow>
         <InlineField
+          invalid={isInvalid.bucketSize}
+          error={'Value needs to be an integer or a variable'}
           labelWidth={labelWidth}
           label={histogramFieldInfo.bucketSize.name}
           tooltip={histogramFieldInfo.bucketSize.description}
         >
-          <Input value={options.bucketSize} placeholder="auto" onChange={onBucketSizeChanged} min={0} />
+          <SuggestionsInput
+            suggestions={variables}
+            value={options.bucketSize}
+            placeholder="auto"
+            onChange={onBucketSizeChanged}
+          />
         </InlineField>
       </InlineFieldRow>
       <InlineFieldRow>
@@ -63,8 +89,15 @@ export const HistogramTransformerEditor = ({
           labelWidth={labelWidth}
           label={histogramFieldInfo.bucketOffset.name}
           tooltip={histogramFieldInfo.bucketOffset.description}
+          invalid={isInvalid.bucketOffset}
+          error={'Value needs to be an integer or a variable'}
         >
-          <Input value={options.bucketOffset} placeholder="none" onChange={onBucketOffsetChanged} min={0} />
+          <SuggestionsInput
+            suggestions={variables}
+            value={options.bucketOffset}
+            placeholder="none"
+            onChange={onBucketOffsetChanged}
+          />
         </InlineField>
       </InlineFieldRow>
       <InlineFieldRow>

@@ -1,9 +1,7 @@
-import { css } from '@emotion/css';
 import React, { useCallback, useState } from 'react';
 
 import { ValueMatcherID, BasicValueMatcherOptions, VariableOrigin } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
-import { Field } from '@grafana/ui';
 
 import { SuggestionsInput } from '../../suggestionsInput/SuggestionsInput';
 import { numberOrVariableValidator } from '../../utils';
@@ -37,19 +35,14 @@ export function basicMatcherEditor<T = any>(
     //TODO: make regex matcher use a simple input, witaout suggestions.
     //Also exclude from actual transformation operation
     return (
-      <Field
+      <SuggestionsInput
         invalid={isInvalid}
+        value={value}
         error={'Value needs to be an integer or a variable'}
-        className={css({ width: '100%' })}
-      >
-        <SuggestionsInput
-          invalid={isInvalid}
-          value={value}
-          onChange={onChangeValue}
-          placeholder="Value or variable"
-          suggestions={variables}
-        ></SuggestionsInput>
-      </Field>
+        onChange={onChangeValue}
+        placeholder="Value or variable"
+        suggestions={variables}
+      ></SuggestionsInput>
     );
   };
 }

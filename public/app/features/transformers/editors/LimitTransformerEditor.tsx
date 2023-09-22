@@ -1,4 +1,3 @@
-import { css } from '@emotion/css';
 import React, { useCallback, useState } from 'react';
 
 import {
@@ -11,7 +10,7 @@ import {
 } from '@grafana/data';
 import { LimitTransformerOptions } from '@grafana/data/src/transformations/transformers/limit';
 import { getTemplateSrv } from '@grafana/runtime';
-import { Field, InlineFieldRow } from '@grafana/ui';
+import { InlineFieldRow } from '@grafana/ui';
 
 import { SuggestionsInput } from '../suggestionsInput/SuggestionsInput';
 import { numberOrVariableValidator } from '../utils';
@@ -38,19 +37,14 @@ export const LimitTransformerEditor = ({ options, onChange }: TransformerUIProps
   return (
     <>
       <InlineFieldRow>
-        <Field
+        <SuggestionsInput
           invalid={isInvalid}
           error={'Value needs to be an integer or a variable'}
-          className={css({ width: '100%' })}
-        >
-          <SuggestionsInput
-            invalid={isInvalid}
-            value={String(options.limitField)}
-            onChange={onSetLimit}
-            placeholder="Value or variable"
-            suggestions={variables}
-          ></SuggestionsInput>
-        </Field>
+          value={String(options.limitField)}
+          onChange={onSetLimit}
+          placeholder="Value or variable"
+          suggestions={variables}
+        ></SuggestionsInput>
       </InlineFieldRow>
     </>
   );
