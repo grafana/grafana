@@ -21,7 +21,7 @@ weight: 100
 
 # Alert list
 
-Use Alert list to display your alerts. You can configure the list to show the current state. You can read more about alerts in [Grafana Alerting overview]({{< relref "../../../alerting/" >}}).
+Use alert lists to display your alerts. You can configure the list to show the current state. You can read more about alerts in [Grafana Alerting overview]({{< relref "../../../alerting/" >}}).
 
 {{< figure src="/static/img/docs/alert-list-panel/alert-list-panel.png" max-width="850px" >}}
 
@@ -57,7 +57,7 @@ These options allow you to limit alerts shown to only those that match the query
 
 ## State filter
 
-Choose which alert states to display in this panel.
+Choose which alert states to display in this visualization.
 
 - Alerting / Firing
 - Pending
