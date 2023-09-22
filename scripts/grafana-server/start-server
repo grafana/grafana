@@ -45,21 +45,6 @@ elif [ -d "../e2e/custom-plugins" ]; then
   cp -r "../e2e/custom-plugins" "$RUNDIR/data/plugins"
 fi
 
-# copy custom plugins required for e2e tests
-if [ -d "./e2e/custom-plugins" ]; then
-  echo -e "found custom plugins to copy to $RUNDIR/data/plugins"
-  mkdir -p $RUNDIR/data/plugins
-  cp -r ./e2e/custom-plugins $RUNDIR/data/plugins
-fi
-
-# copy custom plugins required for e2e tests
-if [ -d "../e2e/custom-plugins" ]; then
-  echo -e "found custom plugins (nested) to copy to $RUNDIR/data/plugins"
-  mkdir -p $RUNDIR/data/plugins
-  cp -r ../e2e/custom-plugins $RUNDIR/data/plugins
-fi
-
-
 echo -e "Copy provisioning setup from devenv"
 
 cp devenv/datasources.yaml $PROV_DIR/datasources
