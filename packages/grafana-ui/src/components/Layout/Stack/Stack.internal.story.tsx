@@ -51,10 +51,10 @@ export const TestCases: StoryFn<typeof Stack> = () => {
           </Example>
 
           <Example title="Horizontal stack">
-            <Stack direction="horizontal">
+            <HorizontalStack>
               <Button>A button</Button>
               <Button>Longer button button</Button>
-            </Stack>
+            </HorizontalStack>
           </Example>
 
           <Example title="Vertical stack">
@@ -134,14 +134,14 @@ export const TestCases: StoryFn<typeof Stack> = () => {
 
         <div style={{ width: 500 }}>
           <Example title="Row, mismatched heights">
-            <Stack direction="horizontal">
+            <HorizontalStack>
               <MyComponent>
                 <div style={{ height: 50, width: 100, background: 'blue' }} />
               </MyComponent>
               <MyComponent>
                 <div style={{ height: 150, width: 100, background: 'orange' }} />
               </MyComponent>
-            </Stack>
+            </HorizontalStack>
           </Example>
         </div>
 
@@ -168,7 +168,7 @@ export const TestCases: StoryFn<typeof Stack> = () => {
         </Example>
 
         <Example title="Horizontal stack, mismatched heights with different components">
-          <Stack direction="horizontal">
+          <HorizontalStack>
             <Card>
               <Card.Heading>I am a card heading</Card.Heading>
             </Card>
@@ -179,7 +179,7 @@ export const TestCases: StoryFn<typeof Stack> = () => {
             </Card>
 
             <Alert severity="info" title="Plus an alert!" />
-          </Stack>
+          </HorizontalStack>
         </Example>
 
         <Example title="Horizontal stack, alerts with even heights">
