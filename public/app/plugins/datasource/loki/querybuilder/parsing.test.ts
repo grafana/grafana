@@ -11,6 +11,116 @@ describe('buildVisualQueryFromString', () => {
     );
   });
 
+  it('parses simple binary comparison', () => {
+    expect(buildVisualQueryFromString('count_over_time({app="aggregator"} [$__auto]) == 11')).toEqual({
+      query: {
+        labels: [
+          {
+            label: 'app',
+            op: '=',
+            value: 'aggregator',
+          },
+        ],
+        operations: [
+          {
+            id: LokiOperationId.CountOverTime,
+            params: ['$__auto'],
+          },
+          {
+            id: LokiOperationId.EqualTo,
+            // defined in getSimpleBinaryRenderer, the first argument is the bool value, and the second is the comparison operator
+            params: [11, false],
+          },
+        ],
+      },
+      errors: [],
+    });
+  });
+
+  // This still fails because loki doesn't properly parse the bool operator
+  it('parses simple query with label-values with boolean operator', () => {
+    expect(buildVisualQueryFromString('count_over_time({app="aggregator"} [$__auto]) == bool 12')).toEqual({
+      query: {
+        labels: [
+          {
+            label: 'app',
+            op: '=',
+            value: 'aggregator',
+          },
+        ],
+        operations: [
+          {
+            id: LokiOperationId.CountOverTime,
+            params: ['$__auto'],
+          },
+          {
+            id: LokiOperationId.EqualTo,
+            // defined in getSimpleBinaryRenderer, the first argument is the bool value, and the second is the comparison operator
+            params: [12, true],
+          },
+        ],
+      },
+      errors: [],
+    });
+  });
+
+  it('parses binary operation with query', () => {
+    expect(
+      // There is no capability for "bool" in the query builder for (nested) binary operation with query as of now, it will always be stripped out
+      buildVisualQueryFromString(
+        'max by(stream) (count_over_time({app="aggregator"}[1m])) > bool ignoring(stream) avg(count_over_time({app="aggregator"}[1m]))'
+      )
+    ).toEqual({
+      query: {
+        binaryQueries: [
+          {
+            // nested binary operation
+            operator: '>',
+            query: {
+              labels: [
+                {
+                  label: 'app',
+                  op: '=',
+                  value: 'aggregator',
+                },
+              ],
+              operations: [
+                {
+                  id: 'count_over_time',
+                  params: ['1m'],
+                },
+                {
+                  id: 'avg',
+                  params: [],
+                },
+              ],
+            },
+            vectorMatches: 'stream',
+            vectorMatchesType: 'ignoring',
+          },
+        ],
+        labels: [
+          {
+            label: 'app',
+            op: '=',
+            value: 'aggregator',
+          },
+        ],
+        operations: [
+          {
+            id: 'count_over_time',
+            params: ['1m'],
+          },
+          {
+            id: '__max_by',
+            params: ['stream'],
+          },
+        ],
+      },
+      errors: [],
+    });
+  });
+
   it('parses simple query with label-values', () => {
     expect(buildVisualQueryFromString('{app="frontend"}')).toEqual(
       noErrors({
