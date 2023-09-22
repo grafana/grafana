@@ -200,8 +200,8 @@ Stale alert instances that are in the **Alerting**/**NoData**/**Error** states a
 [add-a-query]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data#add-a-query"
 [add-a-query]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data#add-a-query"
 
-[alerting-on-numeric-data]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting/fundamentals/evaluate-grafana-alerts#alerting-on-numeric-data-1")
-[alerting-on-numeric-data]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/evaluate-grafana-alerts#alerting-on-numeric-data-1")
+[alerting-on-numeric-data]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting/fundamentals/evaluate-grafana-alerts#alerting-on-numeric-data-1"
+[alerting-on-numeric-data]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/evaluate-grafana-alerts#alerting-on-numeric-data-1"
 
 [annotation-label]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting/fundamentals/annotation-label"
 [annotation-label]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/annotation-label"

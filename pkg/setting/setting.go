@@ -243,6 +243,7 @@ type Cfg struct {
 	PluginAdminExternalManageEnabled bool
 	PluginForcePublicKeyDownload     bool
 	PluginSkipPublicKeyDownload      bool
+	DisablePlugins                   []string
 
 	PluginsCDNURLTemplate    string
 	PluginLogBackendRequests bool
@@ -407,6 +408,9 @@ type Cfg struct {
 	ErrTemplateName string
 
 	Env string
+
+	StackID string
+	Slug    string
 
 	ForceMigration bool
 
@@ -1033,6 +1037,8 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 	}
 	Env = valueAsString(iniFile.Section(""), "app_mode", "development")
 	cfg.Env = Env
+	cfg.StackID = valueAsString(iniFile.Section("environment"), "stack_id", "")
+	cfg.Slug = valueAsString(iniFile.Section("environment"), "stack_slug", "")
 	cfg.ForceMigration = iniFile.Section("").Key("force_migration").MustBool(false)
 	InstanceName = valueAsString(iniFile.Section(""), "instance_name", "unknown_instance_name")
 	plugins := valueAsString(iniFile.Section("paths"), "plugins", "")

@@ -65,6 +65,7 @@ export function addAxisConfig(
           { value: false, label: 'Off' },
         ],
       },
+      showIf: (c) => c.axisPlacement !== AxisPlacement.Hidden,
     })
     .addRadio({
       path: 'axisColorMode',
@@ -77,12 +78,14 @@ export function addAxisConfig(
           { value: AxisColorMode.Series, label: 'Series' },
         ],
       },
+      showIf: (c) => c.axisPlacement !== AxisPlacement.Hidden,
     })
     .addBooleanSwitch({
-      path: 'axisShow',
-      name: 'Show axis',
+      path: 'axisBorderShow',
+      name: 'Show border',
       category,
       defaultValue: false,
+      showIf: (c) => c.axisPlacement !== AxisPlacement.Hidden,
     });
 
   // options for scale range

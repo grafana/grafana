@@ -162,6 +162,13 @@ var (
 			Owner:       grafanaFrontendPlatformSquad,
 		},
 		{
+			Name:         "dockedMegaMenu",
+			Description:  "Enable support for a persistent (docked) navigation menu",
+			Stage:        FeatureStagePublicPreview,
+			FrontendOnly: true,
+			Owner:        grafanaFrontendPlatformSquad,
+		},
+		{
 			Name:        "grpcServer",
 			Description: "Run the GRPC server",
 			Stage:       FeatureStagePublicPreview,
@@ -532,7 +539,8 @@ var (
 		{
 			Name:        "recordedQueriesMulti",
 			Description: "Enables writing multiple items from a single query within Recorded Queries",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStageGeneralAvailability,
+			Expression:  "true",
 			Owner:       grafanaObservabilityMetricsSquad,
 		},
 		{
@@ -731,11 +739,32 @@ var (
 			Owner:        grafanaPluginsPlatformSquad,
 		},
 		{
+			Name:         "lokiRunQueriesInParallel",
+			Description:  "Enables running Loki queries in parallel",
+			Stage:        FeatureStagePrivatePreview,
+			FrontendOnly: false,
+			Owner:        grafanaObservabilityLogsSquad,
+		},
+		{
 			Name:         "wargamesTesting",
 			Description:  "Placeholder feature flag for internal testing",
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: false,
 			Owner:        hostedGrafanaTeam,
+		},
+		{
+			Name:         "alertingInsights",
+			Description:  "Show the new alerting insights landing page",
+			FrontendOnly: true,
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAlertingSquad,
+		},
+		{
+			Name:         "pluginsAPIMetrics",
+			Description:  "Sends metrics of public grafana packages usage by plugins",
+			FrontendOnly: true,
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaPluginsPlatformSquad,
 		},
 	}
 )

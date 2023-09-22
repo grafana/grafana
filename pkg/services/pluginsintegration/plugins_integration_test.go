@@ -82,7 +82,7 @@ func TestIntegrationPluginManager(t *testing.T) {
 	am := azuremonitor.ProvideService(cfg, hcp, features, tracer)
 	cw := cloudwatch.ProvideService(cfg, hcp, features)
 	cm := cloudmonitoring.ProvideService(hcp, tracer)
-	es := elasticsearch.ProvideService(hcp)
+	es := elasticsearch.ProvideService(hcp, tracer)
 	grap := graphite.ProvideService(hcp, tracer)
 	idb := influxdb.ProvideService(hcp)
 	lk := loki.ProvideService(hcp, features, tracer)
@@ -95,9 +95,9 @@ func TestIntegrationPluginManager(t *testing.T) {
 	ms := mssql.ProvideService(cfg)
 	sv2 := searchV2.ProvideService(cfg, db.InitTestDB(t), nil, nil, tracer, features, nil, nil, nil)
 	graf := grafanads.ProvideService(sv2, nil)
-	phlare := pyroscope.ProvideService(hcp, acimpl.ProvideAccessControl(cfg))
+	pyroscope := pyroscope.ProvideService(hcp, acimpl.ProvideAccessControl(cfg))
 	parca := parca.ProvideService(hcp)
-	coreRegistry := coreplugin.ProvideCoreRegistry(am, cw, cm, es, grap, idb, lk, otsdb, pr, tmpo, td, pg, my, ms, graf, phlare, parca)
+	coreRegistry := coreplugin.ProvideCoreRegistry(am, cw, cm, es, grap, idb, lk, otsdb, pr, tmpo, td, pg, my, ms, graf, pyroscope, parca)
 
 	testCtx := CreateIntegrationTestCtx(t, cfg, coreRegistry)
 

@@ -5,6 +5,7 @@ import { NavModelItem, UrlQueryMap } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import {
   getUrlSyncManager,
+  SceneFlexLayout,
   SceneGridItem,
   SceneGridLayout,
   SceneObject,
@@ -14,6 +15,7 @@ import {
   SceneObjectStateChangedEvent,
   sceneUtils,
 } from '@grafana/scenes';
+import { DashboardMeta } from 'app/types';
 
 import { DashboardSceneRenderer } from '../scene/DashboardSceneRenderer';
 import { SaveDashboardDrawer } from '../serialization/SaveDashboardDrawer';
@@ -29,12 +31,14 @@ export interface DashboardSceneState extends SceneObjectState {
   controls?: SceneObject[];
   isEditing?: boolean;
   isDirty?: boolean;
+  /** meta flags */
+  meta: DashboardMeta;
   /** Panel to inspect */
   inspectPanelKey?: string;
   /** Panel to view in full screen */
   viewPanelKey?: string;
-  /** Scene object that handles the current drawer */
-  drawer?: SceneObject;
+  /** Scene object that handles the current drawer or modal */
+  overlay?: SceneObject;
 }
 
 export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
@@ -57,8 +61,13 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
    */
   private _changeTrackerSub?: Unsubscribable;
 
-  public constructor(state: DashboardSceneState) {
-    super(state);
+  public constructor(state: Partial<DashboardSceneState>) {
+    super({
+      title: 'Dashboard',
+      meta: {},
+      body: state.body ?? new SceneFlexLayout({ children: [] }),
+      ...state,
+    });
 
     this.addActivationHandler(() => this._activationHandler());
   }
@@ -120,7 +129,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   };
 
   public onSave = () => {
-    this.setState({ drawer: new SaveDashboardDrawer({ dashboardRef: new SceneObjectRef(this) }) });
+    this.setState({ overlay: new SaveDashboardDrawer({ dashboardRef: new SceneObjectRef(this) }) });
   };
 
   public getPageNav(location: H.Location) {
@@ -156,10 +165,16 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       SceneObjectStateChangedEvent,
       (event: SceneObjectStateChangedEvent) => {
         if (event.payload.changedObject instanceof SceneGridItem) {
-          this.setState({ isDirty: true });
+          this.setIsDirty();
         }
       }
     );
+  }
+
+  private setIsDirty() {
+    if (!this.state.isDirty) {
+      this.setState({ isDirty: true });
+    }
   }
 
   private stopTrackingChanges() {
@@ -168,5 +183,13 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
 
   public getInitialState(): DashboardSceneState | undefined {
     return this._initialState;
+  }
+
+  public showModal(modal: SceneObject) {
+    this.setState({ overlay: modal });
+  }
+
+  public closeModal() {
+    this.setState({ overlay: undefined });
   }
 }

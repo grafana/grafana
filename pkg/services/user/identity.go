@@ -105,17 +105,15 @@ func (u *SignedInUser) HasUniqueId() bool {
 
 // GetCacheKey returns a unique key for the entity.
 // Add an extra prefix to avoid collisions with other caches
-func (u *SignedInUser) GetCacheKey() (string, error) {
-	if u.IsRealUser() {
-		return fmt.Sprintf("%d-user-%d", u.OrgID, u.UserID), nil
+func (u *SignedInUser) GetCacheKey() string {
+	namespace, id := u.GetNamespacedID()
+	if !u.HasUniqueId() {
+		// Hack use the org role as id for identities that do not have a unique id
+		// e.g. anonymous and render key.
+		id = string(u.GetOrgRole())
 	}
-	if u.IsApiKeyUser() {
-		return fmt.Sprintf("%d-apikey-%d", u.OrgID, u.ApiKeyID), nil
-	}
-	if u.IsServiceAccountUser() { // not considered a real user
-		return fmt.Sprintf("%d-service-%d", u.OrgID, u.UserID), nil
-	}
-	return "", ErrNoUniqueID
+
+	return fmt.Sprintf("%d-%s-%s", u.GetOrgID(), namespace, id)
 }
 
 // GetIsGrafanaAdmin returns true if the user is a server admin
@@ -161,6 +159,9 @@ func (u *SignedInUser) GetTeams() []int64 {
 
 // GetOrgRole returns the role of the active entity in the active organization
 func (u *SignedInUser) GetOrgRole() roletype.RoleType {
+	if u.OrgRole == "" {
+		return roletype.RoleNone
+	}
 	return u.OrgRole
 }
 
@@ -178,7 +179,7 @@ func (u *SignedInUser) GetNamespacedID() (string, string) {
 		return identity.NamespaceAnonymous, ""
 	case u.AuthenticatedBy == "render": //import cycle render
 		if u.UserID == 0 {
-			return identity.NamespaceRenderService, fmt.Sprintf("%d", u.UserID)
+			return identity.NamespaceRenderService, "0"
 		} else { // this should never happen as u.UserID > 0 already catches this
 			return identity.NamespaceUser, fmt.Sprintf("%d", u.UserID)
 		}
