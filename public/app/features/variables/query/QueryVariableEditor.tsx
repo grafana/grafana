@@ -195,6 +195,7 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
             current={this.props.variable.datasource}
             onChange={this.onDataSourceChange}
             variables={true}
+            query={true}
             width={30}
           />
         </Field>

@@ -43,6 +43,9 @@ export interface GetDataSourceListFilters {
   /** Only return data sources that support metrics response */
   metrics?: boolean;
 
+  /** Only return data sources in the query variable editor */
+  query?: boolean;
+
   /** Only return data sources that support tracing response */
   tracing?: boolean;
 

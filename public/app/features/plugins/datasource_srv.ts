@@ -225,6 +225,9 @@ export class DatasourceSrv implements DataSourceService {
       if (filters.pluginId && x.meta.id !== filters.pluginId) {
         return false;
       }
+      if ((filters.query && !x.meta.query) || (!filters.query && x.meta.query)) {
+        return false;
+      }
       if (filters.filter && !filters.filter(x)) {
         return false;
       }
@@ -237,7 +240,8 @@ export class DatasourceSrv implements DataSourceService {
         x.meta.annotations !== true &&
         x.meta.tracing !== true &&
         x.meta.logs !== true &&
-        x.meta.alerting !== true
+        x.meta.alerting !== true &&
+        x.meta.query !== true
       ) {
         return false;
       }

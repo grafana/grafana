@@ -228,6 +228,9 @@ schemas: [{
 		// Used to enable the plugin in the panel editor.
 		metrics?: bool
 
+    // For data source plugins, used to enable the plugin in the query variable editor.
+		query?: bool
+
 		// FIXME there appears to be a bug in thema that prevents this from working. Maybe it'd
 		// help to refer to it with an alias, but thema can't support using current list syntax.
 		// syntax (fixed by grafana/thema#82). Either way, for now, pascalName gets populated in Go.

@@ -26,6 +26,7 @@ export interface DataSourceListProps {
   mixed?: boolean;
   dashboard?: boolean;
   metrics?: boolean;
+  query?: boolean;
   type?: string | string[];
   annotations?: boolean;
   variables?: boolean;
@@ -60,6 +61,7 @@ export function DataSourceList(props: DataSourceListProps) {
     dashboard: props.dashboard,
     logs: props.logs,
     metrics: props.metrics,
+    query: props.query,
     mixed: props.mixed,
     pluginId: props.pluginId,
     tracing: props.tracing,

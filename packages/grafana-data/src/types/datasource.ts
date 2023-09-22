@@ -126,6 +126,7 @@ export class DataSourcePlugin<
 export interface DataSourcePluginMeta<T extends KeyValue = {}> extends PluginMeta<T> {
   builtIn?: boolean; // Is this for all
   metrics?: boolean;
+  query?: boolean;
   logs?: boolean;
   annotations?: boolean;
   alerting?: boolean;

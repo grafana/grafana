@@ -98,6 +98,7 @@ type JSONData struct {
 	// Datasource settings
 	Annotations  bool            `json:"annotations"`
 	Metrics      bool            `json:"metrics"`
+	Query        bool            `json:"query"`
 	Alerting     bool            `json:"alerting"`
 	Explore      bool            `json:"explore"`
 	Table        bool            `json:"tables"`
