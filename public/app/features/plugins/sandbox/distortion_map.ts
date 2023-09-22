@@ -83,6 +83,7 @@ export function getGeneralSandboxDistortionMap() {
     distortWorkers(generalDistortionMap);
     distortDocument(generalDistortionMap);
     distortMonacoEditor(generalDistortionMap);
+    distortPostMessage(generalDistortionMap);
   }
   return generalDistortionMap;
 }
@@ -492,6 +493,30 @@ async function distortMonacoEditor(distortions: DistortionMap) {
   }
   distortions.set(monacoEditor.languages.setMonarchTokensProvider, getSetMonarchTokensProvider);
   Reflect.set(monacoEditor, SANDBOX_LIVE_API_PATCHED, {});
+}
+
+async function distortPostMessage(distortions: DistortionMap) {
+  const descriptor = Object.getOwnPropertyDescriptor(window, 'postMessage');
+
+  function getPostMessageDistortion(originalMethod: unknown) {
+    return function postMessageDistortion(this: Window, ...args: unknown[]) {
+      // proxies can't be serialized by postMessage algorithm
+      // the only way to pass it through is to send a cloned version
+      // objects passed to postMessage should be clonable
+      try {
+        const newArgs: unknown[] = cloneDeep(args);
+        if (isFunction(originalMethod)) {
+          originalMethod.apply(this, newArgs);
+        }
+      } catch (e) {
+        throw new Error('postMessage arguments are invalid objects');
+      }
+    };
+  }
+
+  if (descriptor?.value) {
+    distortions.set(descriptor.value, getPostMessageDistortion);
+  }
 }
 
 /**

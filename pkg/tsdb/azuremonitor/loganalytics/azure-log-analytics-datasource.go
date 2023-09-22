@@ -48,7 +48,8 @@ type AzureLogAnalyticsQuery struct {
 	Resources               []string
 	QueryType               string
 	AppInsightsQuery        bool
-	IntersectTime           bool
+	DashboardTime           bool
+	TimeColumn              string
 }
 
 func (e *AzureLogAnalyticsDatasource) ResourceRequest(rw http.ResponseWriter, req *http.Request, cli *http.Client) (http.ResponseWriter, error) {
@@ -108,7 +109,8 @@ func (e *AzureLogAnalyticsDatasource) buildQueries(ctx context.Context, queries 
 		traceExploreQuery := ""
 		traceParentExploreQuery := ""
 		traceLogsExploreQuery := ""
-		intersectTime := false
+		dashboardTime := false
+		timeColumn := ""
 		if query.QueryType == string(dataquery.AzureQueryTypeAzureLogAnalytics) {
 			queryJSONModel := types.LogJSONQuery{}
 			err := json.Unmarshal(query.JSON, &queryJSONModel)
@@ -144,8 +146,16 @@ func (e *AzureLogAnalyticsDatasource) buildQueries(ctx context.Context, queries 
 				queryString = *azureLogAnalyticsTarget.Query
 			}
 
-			if azureLogAnalyticsTarget.IntersectTime != nil {
-				intersectTime = *azureLogAnalyticsTarget.IntersectTime
+			if azureLogAnalyticsTarget.DashboardTime != nil {
+				dashboardTime = *azureLogAnalyticsTarget.DashboardTime
+				if dashboardTime {
+					if azureLogAnalyticsTarget.TimeColumn != nil {
+						timeColumn = *azureLogAnalyticsTarget.TimeColumn
+					} else {
+						// Final fallback to TimeGenerated if no column is provided
+						timeColumn = "TimeGenerated"
+					}
+				}
 			}
 		}
 
@@ -219,7 +229,8 @@ func (e *AzureLogAnalyticsDatasource) buildQueries(ctx context.Context, queries 
 				return nil, fmt.Errorf("failed to create traces logs explore query: %s", err)
 			}
 
-			intersectTime = true
+			dashboardTime = true
+			timeColumn = "timestamp"
 		}
 
 		apiURL := getApiURL(resourceOrWorkspace, appInsightsQuery)
@@ -242,7 +253,8 @@ func (e *AzureLogAnalyticsDatasource) buildQueries(ctx context.Context, queries 
 			TraceParentExploreQuery: traceParentExploreQuery,
 			TraceLogsExploreQuery:   traceLogsExploreQuery,
 			AppInsightsQuery:        appInsightsQuery,
-			IntersectTime:           intersectTime,
+			DashboardTime:           dashboardTime,
+			TimeColumn:              timeColumn,
 		})
 	}
 
@@ -294,8 +306,9 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *A
 	}
 
 	defer func() {
-		err := res.Body.Close()
-		backend.Logger.Error("Failed to close response body", "err", err)
+		if err := res.Body.Close(); err != nil {
+			backend.Logger.Warn("Failed to close response body", "err", err)
+		}
 	}()
 
 	logResponse, err := e.unmarshalResponse(res)
@@ -437,11 +450,14 @@ func (e *AzureLogAnalyticsDatasource) createRequest(ctx context.Context, queryUR
 		"query": query.Query,
 	}
 
-	if query.IntersectTime {
+	if query.DashboardTime {
 		from := query.TimeRange.From.Format(time.RFC3339)
 		to := query.TimeRange.To.Format(time.RFC3339)
 		timespan := fmt.Sprintf("%s/%s", from, to)
 		body["timespan"] = timespan
+		body["query_datetimescope_from"] = from
+		body["query_datetimescope_to"] = to
+		body["query_datetimescope_column"] = query.TimeColumn
 	}
 
 	if len(query.Resources) > 1 && query.QueryType == string(dataquery.AzureQueryTypeAzureLogAnalytics) && !query.AppInsightsQuery {
@@ -574,7 +590,7 @@ func getCorrelationWorkspaces(ctx context.Context, baseResource string, resource
 
 		defer func() {
 			if err := res.Body.Close(); err != nil {
-				backend.Logger.Error("Failed to close response body", "err", err)
+				backend.Logger.Warn("Failed to close response body", "err", err)
 			}
 		}()
 
@@ -677,8 +693,9 @@ func (e *AzureLogAnalyticsDatasource) unmarshalResponse(res *http.Response) (Azu
 		return AzureLogAnalyticsResponse{}, err
 	}
 	defer func() {
-		err := res.Body.Close()
-		backend.Logger.Error("Failed to close response body", "err", err)
+		if err := res.Body.Close(); err != nil {
+			backend.Logger.Warn("Failed to close response body", "err", err)
+		}
 	}()
 
 	if res.StatusCode/100 != 2 {

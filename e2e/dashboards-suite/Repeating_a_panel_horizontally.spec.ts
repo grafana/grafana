@@ -1,15 +1,15 @@
-import { e2e } from '@grafana/e2e';
+import { e2e } from '../utils';
 const PAGE_UNDER_TEST = 'WVpf2jp7z/repeating-a-panel-horizontally';
 
 describe('Repeating a panel horizontally', () => {
   beforeEach(() => {
-    e2e.flows.login('admin', 'admin');
+    e2e.flows.login(e2e.env('USERNAME'), e2e.env('PASSWORD'));
   });
 
   it('should be able to repeat a panel horizontally', () => {
     e2e.flows.openDashboard({ uid: PAGE_UNDER_TEST });
     let prevLeft = Number.NEGATIVE_INFINITY;
-    let prevTop = null;
+    let prevTop: number | null = null;
     const panelTitles = ['Panel Title 1', 'Panel Title 2', 'Panel Title 3'];
     panelTitles.forEach((title) => {
       e2e.components.Panels.Panel.title(title)
@@ -30,7 +30,7 @@ describe('Repeating a panel horizontally', () => {
   it('responds to changes to the variables', () => {
     e2e.flows.openDashboard({ uid: PAGE_UNDER_TEST });
     let prevLeft = Number.NEGATIVE_INFINITY;
-    let prevTop = null;
+    let prevTop: number | null = null;
     const panelTitles = ['Panel Title 1', 'Panel Title 2', 'Panel Title 3'];
     panelTitles.forEach((title) => {
       e2e.components.Panels.Panel.title(title).should('be.visible');
@@ -41,7 +41,7 @@ describe('Repeating a panel horizontally', () => {
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('1').click();
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('3').click();
     // blur the dropdown
-    e2e().get('body').click();
+    cy.get('body').click();
 
     const panelsShown = ['Panel Title 1', 'Panel Title 3'];
     const panelsNotShown = ['Panel Title 2'];
@@ -68,7 +68,7 @@ describe('Repeating a panel horizontally', () => {
     // Have to manually add the queryParams to the url because they have the same name
     e2e.flows.openDashboard({ uid: `${PAGE_UNDER_TEST}?var-horizontal=1&var-horizontal=3` });
     let prevLeft = Number.NEGATIVE_INFINITY;
-    let prevTop = null;
+    let prevTop: number | null = null;
     const panelsShown = ['Panel Title 1', 'Panel Title 3'];
     const panelsNotShown = ['Panel Title 2'];
     // Check correct panels are displayed

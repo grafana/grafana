@@ -72,6 +72,7 @@ export class CloudWatchDatasource
     this.annotationQueryRunner = new CloudWatchAnnotationQueryRunner(instanceSettings, templateSrv);
     this.variables = new CloudWatchVariableSupport(this.resources);
     this.annotations = CloudWatchAnnotationSupport;
+    this.defaultLogGroups = instanceSettings.jsonData.defaultLogGroups;
   }
 
   filterQuery(query: CloudWatchQuery) {

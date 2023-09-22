@@ -164,4 +164,11 @@ export class ResourcesAPI extends CloudWatchRequest {
       tags: JSON.stringify(this.convertMultiFilterFormat(tags, 'tag name')),
     });
   }
+
+  legacyDescribeLogGroups(region: string, logGroupNamePrefix?: string) {
+    return this.memoizedGetRequest<SelectableResourceValue[]>('legacy-log-groups', {
+      region: this.templateSrv.replace(this.getActualRegion(region)),
+      logGroupNamePrefix: logGroupNamePrefix || '',
+    });
+  }
 }

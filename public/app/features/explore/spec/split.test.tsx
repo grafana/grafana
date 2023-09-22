@@ -8,7 +8,7 @@ import { EventBusSrv, serializeStateToUrlParam } from '@grafana/data';
 import * as mainState from '../state/main';
 
 import { makeLogsQueryResponse } from './helper/query';
-import { setupExplore, waitForExplore } from './helper/setup';
+import { setupExplore, tearDown, waitForExplore } from './helper/setup';
 
 const testEventBus = new EventBusSrv();
 
@@ -17,6 +17,7 @@ jest.mock('app/core/core', () => {
     contextSrv: {
       hasPermission: () => true,
       hasAccess: () => true,
+      getValidIntervals: (defaultIntervals: string[]) => defaultIntervals,
     },
   };
 });
@@ -30,22 +31,16 @@ jest.mock('react-virtualized-auto-sizer', () => {
   };
 });
 
-const fetch = jest.fn().mockResolvedValue({ correlations: [] });
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
-  getBackendSrv: () => ({ fetch }),
   getAppEvents: () => testEventBus,
 }));
 
-jest.mock('rxjs', () => ({
-  ...jest.requireActual('rxjs'),
-  lastValueFrom: () =>
-    new Promise((resolve, reject) => {
-      resolve({ data: { correlations: [] } });
-    }),
-}));
-
 describe('Handles open/close splits and related events in UI and URL', () => {
+  afterEach(() => {
+    tearDown();
+  });
+
   it('opens the split pane when split button is clicked', async () => {
     const { location } = setupExplore();
 

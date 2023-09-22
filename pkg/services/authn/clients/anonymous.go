@@ -40,7 +40,7 @@ func (a *Anonymous) Name() string {
 func (a *Anonymous) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identity, error) {
 	o, err := a.orgService.GetByName(ctx, &org.GetOrgByNameQuery{Name: a.cfg.AnonymousOrgName})
 	if err != nil {
-		a.log.FromContext(ctx).Error("failed to find organization", "name", a.cfg.AnonymousOrgName, "error", err)
+		a.log.FromContext(ctx).Error("Failed to find organization", "name", a.cfg.AnonymousOrgName, "error", err)
 		return nil, err
 	}
 
@@ -54,14 +54,14 @@ func (a *Anonymous) Authenticate(ctx context.Context, r *authn.Request) (*authn.
 	go func() {
 		defer func() {
 			if err := recover(); err != nil {
-				a.log.Warn("tag anon session panic", "err", err)
+				a.log.Warn("Tag anon session panic", "err", err)
 			}
 		}()
 
 		newCtx, cancel := context.WithTimeout(context.Background(), timeoutTag)
 		defer cancel()
 		if err := a.anonDeviceService.TagDevice(newCtx, httpReqCopy, anonymous.AnonDevice); err != nil {
-			a.log.Warn("failed to tag anonymous session", "error", err)
+			a.log.Warn("Failed to tag anonymous session", "error", err)
 		}
 	}()
 

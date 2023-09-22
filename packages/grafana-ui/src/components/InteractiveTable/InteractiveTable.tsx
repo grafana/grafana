@@ -31,6 +31,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       gap: theme.spacing(2),
       flexDirection: 'column',
       width: '100%',
+      overflowX: 'auto',
     }),
     table: css({
       borderRadius: theme.shape.radius.default,

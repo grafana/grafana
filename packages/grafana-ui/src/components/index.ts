@@ -90,6 +90,13 @@ export {
   type TableSortByFieldState,
   type TableFooterCalc,
   type AdHocFilterItem,
+  type TableAutoCellOptions,
+  type TableSparklineCellOptions,
+  type TableBarGaugeCellOptions,
+  type TableColoredBackgroundCellOptions,
+  type TableColorTextCellOptions,
+  type TableImageCellOptions,
+  type TableJsonViewCellOptions,
 } from './Table/types';
 export { TableInputCSV } from './TableInputCSV/TableInputCSV';
 export { TabsBar } from './Tabs/TabsBar';
@@ -131,8 +138,6 @@ export {
   type PanelChromeType,
   PanelChromeLoadingIndicator,
   type PanelChromeLoadingIndicatorProps,
-  PanelChromeErrorIndicator,
-  type PanelChromeErrorIndicatorProps,
   PanelContextProvider,
   type PanelContext,
   PanelContextRoot,

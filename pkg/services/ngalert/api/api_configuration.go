@@ -106,7 +106,7 @@ func (srv ConfigSrv) RouteDeleteNGalertConfig(c *contextmodel.ReqContext) respon
 
 	err := srv.store.DeleteAdminConfiguration(c.OrgID)
 	if err != nil {
-		srv.log.Error("unable to delete configuration", "error", err)
+		srv.log.Error("Unable to delete configuration", "error", err)
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
 

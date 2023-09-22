@@ -8,7 +8,7 @@ import { SafeDynamicImport } from 'app/core/components/DynamicImports/SafeDynami
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 
 import { AlertingPageWrapper } from './components/AlertingPageWrapper';
-import { GrafanaRuleInspector } from './components/rule-editor/GrafanaRuleInspector';
+import { GrafanaRuleExporter } from './components/export/GrafanaRuleExporter';
 import { AlertingFeature } from './features';
 import { GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
 
@@ -31,7 +31,7 @@ const RuleViewer = (props: RuleViewerProps): JSX.Element => {
     sourceName === GRAFANA_RULES_SOURCE_NAME ? (
       <HorizontalGroup height="auto" justify="flex-end">
         <Button variant="secondary" type="button" onClick={() => setShowYaml(true)} size="sm">
-          View YAML
+          Export
         </Button>
       </HorizontalGroup>
     ) : null;
@@ -39,7 +39,7 @@ const RuleViewer = (props: RuleViewerProps): JSX.Element => {
   return (
     <AlertingPageWrapper>
       <AppChromeUpdate actions={actionButtons} />
-      {showYaml && <GrafanaRuleInspector alertUid={uidFromParams} onClose={() => setShowYaml(false)} />}
+      {showYaml && <GrafanaRuleExporter alertUid={uidFromParams} onClose={() => setShowYaml(false)} />}
       <Enable feature={AlertingFeature.DetailsViewV2}>
         <DetailViewV2 {...props} />
       </Enable>

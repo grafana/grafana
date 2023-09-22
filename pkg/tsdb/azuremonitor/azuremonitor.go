@@ -76,7 +76,7 @@ func getDatasourceService(settings *backend.DataSourceInstanceSettings, cfg *set
 }
 
 func NewInstanceSettings(cfg *setting.Cfg, clientProvider *httpclient.Provider, executors map[string]azDatasourceExecutor) datasource.InstanceFactoryFunc {
-	return func(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+	return func(_ context.Context, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 		jsonDataObj := map[string]any{}
 		err := json.Unmarshal(settings.JSONData, &jsonDataObj)
 		if err != nil {
@@ -390,8 +390,9 @@ func parseSubscriptions(res *http.Response) ([]string, error) {
 		return nil, err
 	}
 	defer func() {
-		err := res.Body.Close()
-		backend.Logger.Error("Failed to close response body", "err", err)
+		if err := res.Body.Close(); err != nil {
+			backend.Logger.Warn("Failed to close response body", "err", err)
+		}
 	}()
 
 	result := make([]string, len(target.Value))
