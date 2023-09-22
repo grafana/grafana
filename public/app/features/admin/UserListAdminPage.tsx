@@ -8,7 +8,6 @@ import { LinkButton, RadioButtonGroup, useStyles2, FilterInput } from '@grafana/
 import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/core';
 
-import PageLoader from '../../core/components/PageLoader/PageLoader';
 import { AccessControlAction, StoreState, UserFilter } from '../../types';
 
 import { UsersTable } from './Users/UsersTable';
@@ -41,7 +40,6 @@ const mapStateToProps = (state: StoreState) => ({
   totalPages: state.userListAdmin.totalPages,
   page: state.userListAdmin.page,
   filters: state.userListAdmin.filters,
-  isLoading: state.userListAdmin.isLoading,
 });
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
@@ -58,7 +56,6 @@ const UserListAdminPageUnConnected = ({
   showPaging,
   changeFilter,
   filters,
-  isLoading,
   totalPages,
   page,
   changePage,
@@ -99,18 +96,14 @@ const UserListAdminPageUnConnected = ({
           )}
         </div>
       </div>
-      {isLoading ? (
-        <PageLoader />
-      ) : (
-        <UsersTable
-          users={users}
-          showPaging={showPaging}
-          totalPages={totalPages}
-          onChangePage={changePage}
-          currentPage={page}
-          fetchData={changeSort}
-        />
-      )}
+      <UsersTable
+        users={users}
+        showPaging={showPaging}
+        totalPages={totalPages}
+        onChangePage={changePage}
+        currentPage={page}
+        fetchData={changeSort}
+      />
     </Page.Contents>
   );
 };
