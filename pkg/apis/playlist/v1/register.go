@@ -1,12 +1,15 @@
 package v1
 
 import (
+	"github.com/grafana/grafana/pkg/apis"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
+	common "k8s.io/kube-openapi/pkg/common"
+	"k8s.io/kube-openapi/pkg/spec3"
 )
 
 // GroupName is the group name for this API.
@@ -14,7 +17,22 @@ const GroupName = "playlist.x.grafana.com"
 const VersionID = "v0-alpha" //
 const APIVersion = GroupName + "/" + VersionID
 
-func GetAPIGroupInfo(
+type builder struct{}
+
+// TODO.. this will have wire dependencies
+func GetAPIGroupBuilder() apis.APIGroupBuilder {
+	return &builder{}
+}
+
+func (b *builder) InstallSchema(scheme *runtime.Scheme) error {
+	err := AddToScheme(scheme)
+	if err != nil {
+		return err
+	}
+	return scheme.SetVersionPriority(SchemeGroupVersion)
+}
+
+func (b *builder) GetAPIGroupInfo(
 	scheme *runtime.Scheme,
 	codecs serializer.CodecFactory, // pointer?
 ) *genericapiserver.APIGroupInfo {
@@ -26,6 +44,15 @@ func GetAPIGroupInfo(
 
 	apiGroupInfo.VersionedResourcesStorageMap[VersionID] = storage
 	return &apiGroupInfo
+}
+
+func (b *builder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
+	return getOpenAPIDefinitions
+}
+
+// Register additional routes with the server
+func (b *builder) GetOpenAPIPostProcessor() func(*spec3.OpenAPI) (*spec3.OpenAPI, error) {
+	return nil
 }
 
 // SchemeGroupVersion is group version used to register these objects
