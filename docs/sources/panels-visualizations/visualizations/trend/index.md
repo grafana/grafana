@@ -18,9 +18,9 @@ weight: 100
 
 # Trend
 
-The trend panel should be used for datasets that have a sequential, numeric X that is not time. Some examples are function graphs, rpm/torque curves, supply/demand relationships, and elevation or heart rate plots along a race course (with x as distance or duration from start).
+Trend visualizations should be used for datasets that have a sequential, numeric X that is not time. Some examples are function graphs, rpm/torque curves, supply/demand relationships, and elevation or heart rate plots along a race course (with x as distance or duration from start).
 
-The trend panel supports all visual styles and options available in the [Time series panel]({{< relref "../time-series" >}}) with these exceptions:
+Trend visualizations support all visual styles and options available in the [time series visualization]({{< relref "../time-series" >}}) with these exceptions:
 
 - No annotations or time regions
 - No shared cursor/crosshair
