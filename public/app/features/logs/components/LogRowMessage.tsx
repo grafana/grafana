@@ -1,13 +1,13 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState, MouseEvent, ReactElement } from 'react';
+import React, { useCallback, useEffect, useMemo, useState, MouseEvent, ReactElement } from 'react';
 import Highlighter from 'react-highlight-words';
 
 import { CoreApp, findHighlightChunksInText, LogRowModel } from '@grafana/data';
-import { Dropdown, Menu } from '@grafana/ui';
+import { Menu } from '@grafana/ui';
+import { parseKeyValue } from 'app/plugins/datasource/loki/queryUtils';
 
 import { LogMessageAnsi } from './LogMessageAnsi';
 import { LogRowMenuCell } from './LogRowMenuCell';
 import { LogRowStyles } from './getLogRowStyles';
-import { parseKeyValue } from 'app/plugins/datasource/loki/queryUtils';
 
 export const MAX_CHARACTERS = 100000;
 
