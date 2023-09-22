@@ -538,7 +538,7 @@ function resolveLogOrLogRange(node: SyntaxNode, text: string, pos: number, after
   return {
     type: 'AFTER_SELECTOR',
     afterPipe,
-    hasSpace: text.charAt(pos-1) === ' ',
+    hasSpace: text.charAt(pos - 1) === ' ',
     logQuery: getLogQueryFromMetricsQuery(text).trim(),
   };
 }
