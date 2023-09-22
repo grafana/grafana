@@ -37,6 +37,7 @@ cp ./conf/defaults.ini $RUNDIR/conf/defaults.ini
 echo -e "Copying custom plugins from e2e tests"
 # copy custom plugins required for e2e tests
 if [ -d "./e2e/custom-plugins" ]; then
+  echo -e "found custom plugins to copy"
   mkdir -p $RUNDIR/data/plugins
   cp -r ./e2e/custom-plugins $RUNDIR/data/plugins
 fi
