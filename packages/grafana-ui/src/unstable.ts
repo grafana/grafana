@@ -9,6 +9,7 @@
  * be subject to the standard policies
  */
 
-export * from './components/Flex/Flex';
+export * from './components/Layout/Box/Box';
+export * from './components/Layout/Flex/Flex';
 
-export { HorizontalStack, Stack } from './components/Stack/Stack';
+export { Stack, HorizontalStack, VerticalStack } from './components/Layout/Stack/Stack';

@@ -1,21 +1,6 @@
 import { DateTime, isDateTime, TimeRange } from '@grafana/data';
 
-import { LokiDatasource } from '../datasource';
-import { QueryStats } from '../types';
-
-export async function getStats(datasource: LokiDatasource, query: string): Promise<QueryStats | null> {
-  if (!query) {
-    return null;
-  }
-
-  const response = await datasource.getQueryStats(query);
-
-  if (!response) {
-    return null;
-  }
-
-  return Object.values(response).every((v) => v === 0) ? null : response;
-}
+import { LokiQueryType } from '../types';
 
 /**
  * This function compares two time values. If the first is absolute, it compares them using `DateTime.isSame`.
@@ -23,7 +8,11 @@ export async function getStats(datasource: LokiDatasource, query: string): Promi
  * @param {(DateTime | string)} time1
  * @param {(DateTime | string | undefined)} time2
  */
-function compareTime(time1: DateTime | string, time2: DateTime | string | undefined) {
+function compareTime(time1: DateTime | string | undefined, time2: DateTime | string | undefined) {
+  if (!time1 || !time2) {
+    return false;
+  }
+
   const isAbsolute = isDateTime(time1);
 
   if (isAbsolute) {
@@ -36,16 +25,18 @@ function compareTime(time1: DateTime | string, time2: DateTime | string | undefi
 export function shouldUpdateStats(
   query: string,
   prevQuery: string | undefined,
-  timerange: TimeRange,
-  prevTimerange: TimeRange | undefined
+  timeRange: TimeRange | undefined,
+  prevTimeRange: TimeRange | undefined,
+  queryType: LokiQueryType | undefined,
+  prevQueryType: LokiQueryType | undefined
 ): boolean {
-  if (prevQuery === undefined || query.trim() !== prevQuery.trim()) {
+  if (prevQuery === undefined || query.trim() !== prevQuery.trim() || queryType !== prevQueryType) {
     return true;
   }
 
   if (
-    compareTime(timerange.raw.from, prevTimerange?.raw.from) &&
-    compareTime(timerange.raw.to, prevTimerange?.raw.to)
+    compareTime(timeRange?.raw.from, prevTimeRange?.raw.from) &&
+    compareTime(timeRange?.raw.to, prevTimeRange?.raw.to)
   ) {
     return false;
   }

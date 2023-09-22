@@ -27,7 +27,6 @@ import {
   VizPanelState,
   SceneGridItemLike,
   SceneDataLayers,
-  dataLayers,
   SceneDataLayerProvider,
   SceneDataLayerControls,
 } from '@grafana/scenes';
@@ -35,6 +34,7 @@ import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { DashboardDTO } from 'app/types';
 
+import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
 import { DashboardScene } from '../scene/DashboardScene';
 import { LibraryVizPanel } from '../scene/LibraryVizPanel';
 import { panelMenuBehavior } from '../scene/PanelMenuBehavior';
@@ -180,7 +180,7 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
   if (oldModel.annotations?.list?.length) {
     layers = oldModel.annotations?.list.map((a) => {
       // Each annotation query is an individual data layer
-      return new dataLayers.AnnotationsDataLayer({
+      return new DashboardAnnotationsDataLayer({
         query: a,
         name: a.name,
         isEnabled: Boolean(a.enable),

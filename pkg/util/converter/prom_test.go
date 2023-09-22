@@ -32,6 +32,7 @@ var files = []string{
 	"prom-error",
 	"prom-exemplars-a",
 	"prom-exemplars-b",
+	"prom-exemplars-diff-labels",
 	"loki-streams-a",
 	"loki-streams-b",
 	"loki-streams-c",

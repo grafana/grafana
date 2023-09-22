@@ -67,7 +67,7 @@ export const InspectErrorTab = ({ errors }: InspectErrorTabProps) => {
   return (
     <>
       {errors.map((error, index) => (
-        <Alert title={error.refId || `Query ${index + 1}`} severity="error" key={index}>
+        <Alert title={error.refId || `Error ${index + 1}`} severity="error" key={index}>
           {renderError(error)}
         </Alert>
       ))}
