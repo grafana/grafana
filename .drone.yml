@@ -3631,9 +3631,6 @@ steps:
     path: /var/run/docker.sock
 - depends_on:
   - rgm-publish
-  environment:
-    DESTINATION:
-      from_secret: destination
   image: us.gcr.io/kubernetes-dev/package-publish:latest
   name: publish-deb
   privileged: true
@@ -3654,9 +3651,6 @@ steps:
     target_bucket: grafana-packages-testing
 - depends_on:
   - rgm-publish
-  environment:
-    DESTINATION:
-      from_secret: destination
   image: us.gcr.io/kubernetes-dev/package-publish:latest
   name: publish-rpm
   privileged: true
@@ -4646,6 +4640,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 543446fe4a329faed8d7f4e72ebdb4a719ab6fee954244a585612f7a7c839564
+hmac: d39b0cb7e4a6f7f251270706dcd80c91bf4f431698faccb18b9400385c2cd22a
 
 ...
