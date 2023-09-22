@@ -9,6 +9,10 @@ keywords:
   - documentation
   - api
   - queryHistory
+labels:
+  products:
+    - enterprise
+    - oss
 title: 'Query History HTTP API '
 ---
 

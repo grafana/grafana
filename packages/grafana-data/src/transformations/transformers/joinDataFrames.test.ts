@@ -2,6 +2,8 @@ import { toDataFrame } from '../../dataframe/processDataFrame';
 import { getFieldDisplayName } from '../../field';
 import { DataFrame, FieldType } from '../../types/dataFrame';
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
+import { fieldMatchers } from '../matchers';
+import { FieldMatcherID } from '../matchers/ids';
 
 import { calculateFieldTransformer } from './calculateField';
 import { JoinMode } from './joinByField';
@@ -28,6 +30,8 @@ describe('align frames', () => {
       ],
     });
 
+    // the following does not work for tabular joins where the joined on field value is duplicated
+    // the time will never have a duplicated time which is joined on
     it('should perform an outer join', () => {
       const out = joinDataFrames({ frames: [series1, series2] })!;
       expect(
@@ -123,6 +127,89 @@ describe('align frames', () => {
             "values": [
               "first",
               "third",
+            ],
+          },
+        ]
+      `);
+    });
+  });
+
+  describe('join tabular data by chosen field', () => {
+    // join on gender where there are multiple values, duplicate values which can increase the rows
+
+    const tableData1 = toDataFrame({
+      fields: [
+        { name: 'gender', type: FieldType.string, values: ['MALE', 'MALE', 'MALE', 'FEMALE', 'FEMALE', 'FEMALE'] },
+        {
+          name: 'day',
+          type: FieldType.string,
+          values: ['Wednesday', 'Tuesday', 'Monday', 'Wednesday', 'Tuesday', 'Monday'],
+        },
+        { name: 'count', type: FieldType.number, values: [18, 72, 13, 17, 71, 7] },
+      ],
+    });
+    const tableData2 = toDataFrame({
+      fields: [
+        { name: 'gender', type: FieldType.string, values: ['MALE', 'FEMALE'] },
+        { name: 'count', type: FieldType.number, values: [103, 95] },
+      ],
+    });
+
+    it('should perform an outer join with duplicated values to join on', () => {
+      const out = joinDataFrames({
+        frames: [tableData1, tableData2],
+        joinBy: fieldMatchers.get(FieldMatcherID.byName).get('gender'),
+        mode: JoinMode.outerTabular,
+      })!;
+      expect(
+        out.fields.map((f) => ({
+          name: f.name,
+          values: f.values,
+        }))
+      ).toMatchInlineSnapshot(`
+        [
+          {
+            "name": "gender",
+            "values": [
+              "MALE",
+              "MALE",
+              "MALE",
+              "FEMALE",
+              "FEMALE",
+              "FEMALE",
+            ],
+          },
+          {
+            "name": "day",
+            "values": [
+              "Wednesday",
+              "Tuesday",
+              "Monday",
+              "Wednesday",
+              "Tuesday",
+              "Monday",
+            ],
+          },
+          {
+            "name": "count",
+            "values": [
+              18,
+              72,
+              13,
+              17,
+              71,
+              7,
+            ],
+          },
+          {
+            "name": "count",
+            "values": [
+              103,
+              103,
+              103,
+              95,
+              95,
+              95,
             ],
           },
         ]
@@ -328,7 +415,7 @@ describe('align frames', () => {
   it('supports duplicate times', () => {
     //----------
     // NOTE!!!
-    // * ideally we would *keep* dupicate fields
+    // * ideally we would *keep* duplicate fields
     //----------
     const series1 = toDataFrame({
       fields: [

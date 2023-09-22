@@ -28,16 +28,10 @@ import { findFieldIndex, getScaledDimensionForField } from 'app/features/dimensi
 
 import { pointWithin, Quadtree, Rect } from '../barchart/quadtree';
 
+import { DEFAULT_POINT_SIZE } from './config';
 import { isGraphable } from './dims';
-import {
-  DimensionValues,
-  ScatterFieldConfig,
-  defaultScatterFieldConfig,
-  ScatterHoverCallback,
-  ScatterSeries,
-  Options,
-  ScatterShow,
-} from './types';
+import { FieldConfig, defaultFieldConfig, Options, ScatterShow } from './panelcfg.gen';
+import { DimensionValues, ScatterHoverCallback, ScatterSeries } from './types';
 
 export interface ScatterPanelInfo {
   error?: string;
@@ -110,7 +104,7 @@ function getScatterSeries(
     ? config.theme2.visualization.getColorByName(dims.pointColorFixed)
     : getFieldSeriesColor(y, config.theme2).color;
   let pointColor: DimensionValues<string> = () => seriesColor;
-  const fieldConfig: ScatterFieldConfig = { ...defaultScatterFieldConfig, ...y.config.custom };
+  const fieldConfig: FieldConfig = { ...defaultFieldConfig, ...y.config.custom };
   let pointColorMode = fieldColorModeRegistry.get(FieldColorModeId.PaletteClassic);
   if (dims.pointColorIndex) {
     const f = frames[frameIndex].fields[dims.pointColorIndex];
@@ -140,7 +134,7 @@ function getScatterSeries(
   // Size configs
   //----------------
   let pointSizeHints = dims.pointSizeConfig;
-  let pointSizeFixed = dims.pointSizeConfig?.fixed ?? y.config.custom?.pointSize?.fixed ?? 5;
+  let pointSizeFixed = dims.pointSizeConfig?.fixed ?? y.config.custom?.pointSize?.fixed ?? DEFAULT_POINT_SIZE;
   let pointSize: DimensionValues<number> = () => pointSizeFixed;
   if (dims.pointSizeIndex) {
     pointSize = (frame) => {
@@ -300,7 +294,7 @@ interface DrawBubblesOpts {
   };
 }
 
-//const prepConfig: UPlotConfigPrepFnXY<XYChartOptions> = ({ frames, series, theme }) => {
+//const prepConfig: UPlotConfigPrepFnXY<Options> = ({ frames, series, theme }) => {
 const prepConfig = (
   getData: () => DataFrame[],
   scatterSeries: ScatterSeries[],
@@ -628,6 +622,8 @@ const prepConfig = (
     scaleKey: 'x',
     placement: customConfig?.axisPlacement !== AxisPlacement.Hidden ? AxisPlacement.Bottom : AxisPlacement.Hidden,
     show: customConfig?.axisPlacement !== AxisPlacement.Hidden,
+    grid: { show: customConfig?.axisGridShow },
+    border: { show: customConfig?.axisBorderShow },
     theme,
     label:
       xAxisLabel == null || xAxisLabel === ''
@@ -665,21 +661,23 @@ const prepConfig = (
       decimals: config.decimals,
     });
 
-    if (customConfig?.axisPlacement !== AxisPlacement.Hidden) {
-      // why does this fall back to '' instead of null or undef?
-      let yAxisLabel = customConfig?.axisLabel;
+    // why does this fall back to '' instead of null or undef?
+    let yAxisLabel = customConfig?.axisLabel;
 
-      builder.addAxis({
-        scaleKey,
-        theme,
-        placement: customConfig?.axisPlacement,
-        label:
-          yAxisLabel == null || yAxisLabel === ''
-            ? getFieldDisplayName(field, scatterSeries[si].frame(frames), frames)
-            : yAxisLabel,
-        formatValue: (v, decimals) => formattedValueToString(field.display!(v, decimals)),
-      });
-    }
+    builder.addAxis({
+      scaleKey,
+      theme,
+      placement: customConfig?.axisPlacement === AxisPlacement.Auto ? AxisPlacement.Left : customConfig?.axisPlacement,
+      show: customConfig?.axisPlacement !== AxisPlacement.Hidden,
+      grid: { show: customConfig?.axisGridShow },
+      border: { show: customConfig?.axisBorderShow },
+      size: customConfig?.axisWidth,
+      label:
+        yAxisLabel == null || yAxisLabel === ''
+          ? getFieldDisplayName(field, scatterSeries[si].frame(frames), frames)
+          : yAxisLabel,
+      formatValue: (v, decimals) => formattedValueToString(field.display!(v, decimals)),
+    });
 
     builder.addSeries({
       facets: [

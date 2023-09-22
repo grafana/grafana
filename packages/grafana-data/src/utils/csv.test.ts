@@ -104,9 +104,7 @@ describe('write csv', () => {
       "sep=,
       "Time","Value"
       1598784913123,1234
-      1598784914123,5678
-
-      "
+      1598784914123,5678"
     `);
   });
 });
@@ -131,9 +129,7 @@ describe('DataFrame to CSV', () => {
     const csv = toCSV([dataFrame]);
     expect(csv).toMatchInlineSnapshot(`
       ""Time","{label1=""value1"", label2=""value1""}"
-      1589455688623,1234
-
-      "
+      1589455688623,1234"
     `);
   });
 
@@ -160,9 +156,7 @@ describe('DataFrame to CSV', () => {
     const csv = toCSV([dataFrame]);
     expect(csv).toMatchInlineSnapshot(`
       ""Time","Value"
-      1589455688623,2020-05-14 11:28:08
-
-      "
+      1589455688623,2020-05-14 11:28:08"
     `);
   });
 });

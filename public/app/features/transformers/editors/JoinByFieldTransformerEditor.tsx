@@ -14,8 +14,19 @@ import { Select, InlineFieldRow, InlineField } from '@grafana/ui';
 import { useAllFieldNamesFromDataFrames } from '../utils';
 
 const modes = [
-  { value: JoinMode.outer, label: 'OUTER', description: 'Keep all rows from any table with a value' },
-  { value: JoinMode.inner, label: 'INNER', description: 'Drop rows that do not match a value in all tables' },
+  {
+    value: JoinMode.outer,
+    label: 'OUTER (TIME SERIES)',
+    description:
+      'Keep all rows from any table with a value. Join on distinct field values. Performant and best used for time series.',
+  },
+  {
+    value: JoinMode.outerTabular,
+    label: 'OUTER (TABULAR)',
+    description:
+      'Join on a field value with duplicated values. Non performant outer join best used for tabular(SQL like) data.',
+  },
+  { value: JoinMode.inner, label: 'INNER', description: 'Drop rows that do not match a value in all tables.' },
 ];
 
 export function SeriesToFieldsTransformerEditor({ input, options, onChange }: TransformerUIProps<JoinByFieldOptions>) {

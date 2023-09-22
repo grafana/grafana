@@ -42,7 +42,6 @@ type QueryData struct {
 	ID                 int64
 	URL                string
 	TimeInterval       string
-	enableWideSeries   bool
 	enableDataplane    bool
 	exemplarSampler    func() exemplar.Sampler
 }
@@ -82,7 +81,6 @@ func New(
 		TimeInterval:       timeInterval,
 		ID:                 settings.ID,
 		URL:                settings.URL,
-		enableWideSeries:   features.IsEnabled(featuremgmt.FlagPrometheusWideSeries),
 		enableDataplane:    features.IsEnabled(featuremgmt.FlagPrometheusDataplane),
 		exemplarSampler:    exemplarSampler,
 	}, nil
@@ -164,7 +162,7 @@ func (s *QueryData) rangeQuery(ctx context.Context, c *client.Client, q *models.
 	defer func() {
 		err := res.Body.Close()
 		if err != nil {
-			s.log.Warn("failed to close query range response body", "error", err)
+			s.log.Warn("Failed to close query range response body", "error", err)
 		}
 	}()
 
@@ -189,7 +187,7 @@ func (s *QueryData) instantQuery(ctx context.Context, c *client.Client, q *model
 	defer func() {
 		err := res.Body.Close()
 		if err != nil {
-			s.log.Warn("failed to close response body", "error", err)
+			s.log.Warn("Failed to close response body", "error", err)
 		}
 	}()
 
@@ -207,7 +205,7 @@ func (s *QueryData) exemplarQuery(ctx context.Context, c *client.Client, q *mode
 	defer func() {
 		err := res.Body.Close()
 		if err != nil {
-			s.log.Warn("failed to close response body", "error", err)
+			s.log.Warn("Failed to close response body", "error", err)
 		}
 	}()
 	return s.parseResponse(ctx, q, res)

@@ -29,6 +29,7 @@ export type PluginExtensionLink = PluginExtensionBase & {
   path?: string;
   onClick?: (event?: React.MouseEvent) => void;
   icon?: IconName;
+  category?: string;
 };
 
 export type PluginExtensionComponent = PluginExtensionBase & {
@@ -65,11 +66,15 @@ export type PluginExtensionLinkConfig<Context extends object = object> = {
         path: string;
         onClick: (event: React.MouseEvent | undefined, helpers: PluginExtensionEventHelpers<Context>) => void;
         icon: IconName;
+        category: string;
       }>
     | undefined;
 
   // (Optional) A icon that can be displayed in the ui for the extension option.
   icon?: IconName;
+
+  // (Optional) A category to be used when grouping the options in the ui
+  category?: string;
 };
 
 export type PluginExtensionComponentConfig<Context extends object = object> = {
@@ -79,7 +84,9 @@ export type PluginExtensionComponentConfig<Context extends object = object> = {
 
   // The React component that will be rendered as the extension
   // (This component receives the context as a prop when it is rendered. You can just return `null` from the component to hide for certain contexts)
-  component: React.ComponentType;
+  component: React.ComponentType<{
+    context?: Context;
+  }>;
 
   // The unique identifier of the Extension Point
   // (Core Grafana extension point ids are available in the `PluginExtensionPoints` enum)

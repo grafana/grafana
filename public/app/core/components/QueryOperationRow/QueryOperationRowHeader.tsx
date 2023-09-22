@@ -3,6 +3,7 @@ import React, { MouseEventHandler } from 'react';
 import { DraggableProvided } from 'react-beautiful-dnd';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Stack } from '@grafana/experimental';
 import { Icon, IconButton, useStyles2 } from '@grafana/ui';
 
 export interface QueryOperationRowHeaderProps {
@@ -58,7 +59,7 @@ export const QueryOperationRowHeader = ({
         {headerElement}
       </div>
 
-      <div className={styles.column}>
+      <Stack gap={1} alignItems="center" wrap={false}>
         {actionsElement}
         {draggable && (
           <Icon
@@ -70,7 +71,7 @@ export const QueryOperationRowHeader = ({
             {...dragHandleProps}
           />
         )}
-      </div>
+      </Stack>
     </div>
   );
 };
@@ -79,7 +80,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   header: css`
     label: Header;
     padding: ${theme.spacing(0.5, 0.5)};
-    border-radius: ${theme.shape.borderRadius(1)};
+    border-radius: ${theme.shape.radius.default};
     background: ${theme.colors.background.secondary};
     min-height: ${theme.spacing(4)};
     display: grid;

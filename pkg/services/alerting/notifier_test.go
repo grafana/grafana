@@ -187,7 +187,7 @@ func notificationServiceScenario(t *testing.T, name string, evalCtx *EvalContext
 				{
 					ID:   1,
 					Type: "test",
-					Settings: simplejson.NewFromAny(map[string]interface{}{
+					Settings: simplejson.NewFromAny(map[string]any{
 						"uploadImage": uploadImage,
 					}),
 				},

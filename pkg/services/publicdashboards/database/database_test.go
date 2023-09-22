@@ -4,13 +4,13 @@ import (
 	"context"
 	"fmt"
 
-	"strings"
 	"testing"
 	"time"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashboardsDB "github.com/grafana/grafana/pkg/services/dashboards/database"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -85,11 +85,12 @@ func TestIntegrationListPublicDashboard(t *testing.T) {
 			{Action: dashboards.ActionDashboardsRead, Scope: fmt.Sprintf("dashboards:uid:%s", cDash.UID)},
 		}
 
-		err := insertPermissions(sqlStore, orgId, "viewer", permissions)
-		require.NoError(t, err)
+		usr := &user.SignedInUser{UserID: 1, OrgID: orgId, Permissions: map[int64]map[string][]string{orgId: accesscontrol.GroupScopesByAction(permissions)}}
+
+		actest.AddUserPermissionToDB(t, sqlStore, usr)
 
 		query := &PublicDashboardListQuery{
-			User:   &user.SignedInUser{UserID: 1, OrgID: orgId, Permissions: map[int64]map[string][]string{orgId: accesscontrol.GroupScopesByAction(permissions)}},
+			User:   usr,
 			OrgID:  orgId,
 			Page:   1,
 			Limit:  50,
@@ -113,11 +114,12 @@ func TestIntegrationListPublicDashboard(t *testing.T) {
 			{Action: dashboards.ActionDashboardsRead, Scope: fmt.Sprintf("dashboards:uid:%s", cDash.UID)},
 		}
 
-		err := insertPermissions(sqlStore, orgId, "viewer", permissions)
-		require.NoError(t, err)
+		usr := &user.SignedInUser{UserID: 1, OrgID: orgId, Permissions: map[int64]map[string][]string{orgId: accesscontrol.GroupScopesByAction(permissions)}}
+
+		actest.AddUserPermissionToDB(t, sqlStore, usr)
 
 		query := &PublicDashboardListQuery{
-			User:   &user.SignedInUser{UserID: 1, OrgID: orgId, Permissions: map[int64]map[string][]string{orgId: accesscontrol.GroupScopesByAction(permissions)}},
+			User:   usr,
 			OrgID:  orgId,
 			Page:   1,
 			Limit:  50,
@@ -140,11 +142,12 @@ func TestIntegrationListPublicDashboard(t *testing.T) {
 			{Action: dashboards.ActionDashboardsRead, Scope: "dashboards:uid:another-dashboard-2-uid"},
 		}
 
-		err := insertPermissions(sqlStore, orgId, "viewer", permissions)
-		require.NoError(t, err)
+		usr := &user.SignedInUser{UserID: 1, OrgID: orgId, Permissions: map[int64]map[string][]string{orgId: accesscontrol.GroupScopesByAction(permissions)}}
+
+		actest.AddUserPermissionToDB(t, sqlStore, usr)
 
 		query := &PublicDashboardListQuery{
-			User:   &user.SignedInUser{UserID: 1, OrgID: orgId, Permissions: map[int64]map[string][]string{orgId: accesscontrol.GroupScopesByAction(permissions)}},
+			User:   usr,
 			OrgID:  orgId,
 			Page:   1,
 			Limit:  50,
@@ -865,13 +868,13 @@ func TestGetMetrics(t *testing.T) {
 
 // helper function to insert a dashboard
 func insertTestDashboard(t *testing.T, dashboardStore dashboards.Store, title string, orgId int64,
-	folderId int64, isFolder bool, tags ...interface{}) *dashboards.Dashboard {
+	folderId int64, isFolder bool, tags ...any) *dashboards.Dashboard {
 	t.Helper()
 	cmd := dashboards.SaveDashboardCommand{
 		OrgID:    orgId,
 		FolderID: folderId,
 		IsFolder: isFolder,
-		Dashboard: simplejson.NewFromAny(map[string]interface{}{
+		Dashboard: simplejson.NewFromAny(map[string]any{
 			"id":    nil,
 			"title": title,
 			"tags":  tags,
@@ -916,51 +919,4 @@ func insertPublicDashboard(t *testing.T, publicdashboardStore *PublicDashboardSt
 	require.NoError(t, err)
 
 	return pubdash
-}
-
-func insertPermissions(sqlStore *sqlstore.SQLStore, orgId int64, role string, permissions []accesscontrol.Permission) error {
-	return sqlStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-		newRole := &accesscontrol.Role{
-			OrgID:   orgId,
-			UID:     fmt.Sprintf("basic_%s", role),
-			Name:    fmt.Sprintf("basic:%s", role),
-			Updated: time.Now(),
-			Created: time.Now(),
-		}
-		_, err := sess.Insert(newRole)
-		if err != nil {
-			return err
-		}
-
-		_, err = sess.Insert(accesscontrol.BuiltinRole{
-			OrgID:   orgId,
-			RoleID:  newRole.ID,
-			Role:    strings.ToUpper(role[:1]) + role[1:],
-			Created: time.Now(),
-			Updated: time.Now(),
-		})
-		if err != nil {
-			return err
-		}
-
-		for i := range permissions {
-			permissions[i].RoleID = newRole.ID
-			permissions[i].Created = time.Now()
-			permissions[i].Updated = time.Now()
-		}
-
-		_, err = sess.InsertMulti(&permissions)
-		if err != nil {
-			return err
-		}
-
-		_, err = sess.Insert(accesscontrol.UserRole{
-			OrgID:   orgId,
-			RoleID:  newRole.ID,
-			UserID:  1,
-			Created: time.Now(),
-		})
-
-		return err
-	})
 }

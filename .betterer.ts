@@ -2,13 +2,13 @@ import { BettererFileTest } from '@betterer/betterer';
 import { promises as fs } from 'fs';
 import { ESLint, Linter } from 'eslint';
 import path from 'path';
-import glob from 'glob';
+import { glob } from 'glob';
 
 export default {
   'better eslint': () =>
     countEslintErrors()
       .include('**/*.{ts,tsx}')
-      .exclude(/public\/app\/angular/),
+      .exclude(/public\/app\/angular|packages\/grafana-e2e/),
   'no undocumented stories': () => countUndocumentedStories().include('**/!(*.internal).story.tsx'),
 };
 

@@ -2,6 +2,10 @@
 aliases:
   - ../../permissions/dashboard_folder_permissions/
   - ../manage-users-and-permissions/manage-dashboard-permissions/
+labels:
+  products:
+    - enterprise
+    - oss
 title: Manage dashboard permissions
 weight: 500
 ---

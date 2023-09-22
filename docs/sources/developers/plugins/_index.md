@@ -1,9 +1,13 @@
 ---
-title: Grafana plugin developer's guide
-menuTitle: Plugin developer's guide
 aliases:
   - ../plugins/developing/
 description: Resources for creating Grafana plugins
+labels:
+  products:
+    - enterprise
+    - oss
+menuTitle: Plugin developer's guide
+title: Grafana plugin developer's guide
 weight: 200
 ---
 

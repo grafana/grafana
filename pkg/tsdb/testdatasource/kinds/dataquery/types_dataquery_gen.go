@@ -163,6 +163,7 @@ type TestDataDataQuery struct {
 	// Drop percentage (the chance we will lose a point 0-100)
 	DropPercent     *float64           `json:"dropPercent,omitempty"`
 	ErrorType       *ErrorType         `json:"errorType,omitempty"`
+	FlamegraphDiff  *bool              `json:"flamegraphDiff,omitempty"`
 	Labels          *string            `json:"labels,omitempty"`
 	LevelColumn     *bool              `json:"levelColumn,omitempty"`
 	Lines           *int64             `json:"lines,omitempty"`

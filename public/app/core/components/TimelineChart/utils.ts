@@ -61,6 +61,8 @@ interface UPlotConfigOptions {
   alignValue?: TimelineValueAlignment;
   mergeValues?: boolean;
   getValueColor: (frameIdx: number, fieldIdx: number, value: unknown) => string;
+  // Identifies the shared key for uPlot cursor sync
+  eventsScope?: string;
 }
 
 /**
@@ -102,6 +104,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<UPlotConfigOptions> = (
   alignValue,
   mergeValues,
   getValueColor,
+  eventsScope = '__global_',
 }) => {
   const builder = new UPlotConfigBuilder(timeZones[0]);
 
@@ -283,7 +286,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<UPlotConfigOptions> = (
     let cursor: Partial<uPlot.Cursor> = {};
 
     cursor.sync = {
-      key: '__global_',
+      key: eventsScope,
       filters: {
         pub: (type: string, src: uPlot, x: number, y: number, w: number, h: number, dataIdx: number) => {
           if (sync && sync() === DashboardCursorSync.Off) {
@@ -463,6 +466,7 @@ export function prepareTimelineFields(
           hasTimeseries = true;
           fields.push(field);
           break;
+        case FieldType.enum:
         case FieldType.number:
           if (mergeValues && field.config.color?.mode === FieldColorModeId.Thresholds) {
             const f = mergeThresholdValues(field, theme);
@@ -521,9 +525,10 @@ export function getThresholdItems(fieldConfig: FieldConfig, theme: GrafanaTheme2
   }
 
   const steps = thresholds.steps;
-  const disp = getValueFormat(thresholds.mode === ThresholdsMode.Percentage ? 'percent' : fieldConfig.unit ?? '');
+  const getDisplay = getValueFormat(thresholds.mode === ThresholdsMode.Percentage ? 'percent' : fieldConfig.unit ?? '');
 
-  const fmt = (v: number) => formattedValueToString(disp(v));
+  // `undefined` value for decimals will use `auto`
+  const format = (value: number) => formattedValueToString(getDisplay(value, fieldConfig.decimals ?? undefined));
 
   for (let i = 0; i < steps.length; i++) {
     let step = steps[i];
@@ -539,7 +544,7 @@ export function getThresholdItems(fieldConfig: FieldConfig, theme: GrafanaTheme2
     }
 
     items.push({
-      label: `${pre}${fmt(value)}${suf}`,
+      label: `${pre}${format(value)}${suf}`,
       color: theme.visualization.getColorByName(step.color),
       yAxis: 1,
     });

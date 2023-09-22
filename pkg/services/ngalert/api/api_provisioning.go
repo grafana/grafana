@@ -10,10 +10,12 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/log"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/ngalert/api/hcl"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	alerting_models "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -29,7 +31,7 @@ type ProvisioningSrv struct {
 }
 
 type ContactPointService interface {
-	GetContactPoints(ctx context.Context, q provisioning.ContactPointQuery) ([]definitions.EmbeddedContactPoint, error)
+	GetContactPoints(ctx context.Context, q provisioning.ContactPointQuery, user *user.SignedInUser) ([]definitions.EmbeddedContactPoint, error)
 	CreateContactPoint(ctx context.Context, orgID int64, contactPoint definitions.EmbeddedContactPoint, p alerting_models.Provenance) (definitions.EmbeddedContactPoint, error)
 	UpdateContactPoint(ctx context.Context, orgID int64, contactPoint definitions.EmbeddedContactPoint, p alerting_models.Provenance) error
 	DeleteContactPoint(ctx context.Context, orgID int64, uid string) error
@@ -64,7 +66,7 @@ type AlertRuleService interface {
 	ReplaceRuleGroup(ctx context.Context, orgID int64, group alerting_models.AlertRuleGroup, userID int64, provenance alerting_models.Provenance) error
 	GetAlertRuleWithFolderTitle(ctx context.Context, orgID int64, ruleUID string) (provisioning.AlertRuleWithFolderTitle, error)
 	GetAlertRuleGroupWithFolderTitle(ctx context.Context, orgID int64, folder, group string) (alerting_models.AlertRuleGroupWithFolderTitle, error)
-	GetAlertGroupsWithFolderTitle(ctx context.Context, orgID int64) ([]alerting_models.AlertRuleGroupWithFolderTitle, error)
+	GetAlertGroupsWithFolderTitle(ctx context.Context, orgID int64, folderUIDs []string) ([]alerting_models.AlertRuleGroupWithFolderTitle, error)
 }
 
 func (srv *ProvisioningSrv) RouteGetPolicyTree(c *contextmodel.ReqContext) response.Response {
@@ -77,6 +79,23 @@ func (srv *ProvisioningSrv) RouteGetPolicyTree(c *contextmodel.ReqContext) respo
 	}
 
 	return response.JSON(http.StatusOK, policies)
+}
+
+func (srv *ProvisioningSrv) RouteGetPolicyTreeExport(c *contextmodel.ReqContext) response.Response {
+	policies, err := srv.policies.GetPolicyTree(c.Req.Context(), c.OrgID)
+	if err != nil {
+		if errors.Is(err, store.ErrNoAlertmanagerConfiguration) {
+			return ErrResp(http.StatusNotFound, err, "")
+		}
+		return ErrResp(http.StatusInternalServerError, err, "")
+	}
+
+	e, err := AlertingFileExportFromRoute(c.OrgID, policies)
+	if err != nil {
+		return ErrResp(http.StatusInternalServerError, err, "failed to create alerting file export")
+	}
+
+	return exportResponse(c, e)
 }
 
 func (srv *ProvisioningSrv) RoutePutPolicyTree(c *contextmodel.ReqContext, tree definitions.Route) response.Response {
@@ -108,11 +127,36 @@ func (srv *ProvisioningSrv) RouteGetContactPoints(c *contextmodel.ReqContext) re
 		Name:  c.Query("name"),
 		OrgID: c.OrgID,
 	}
-	cps, err := srv.contactPointService.GetContactPoints(c.Req.Context(), q)
+	cps, err := srv.contactPointService.GetContactPoints(c.Req.Context(), q, nil)
 	if err != nil {
+		if errors.Is(err, provisioning.ErrPermissionDenied) {
+			return ErrResp(http.StatusForbidden, err, "")
+		}
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
 	return response.JSON(http.StatusOK, cps)
+}
+
+func (srv *ProvisioningSrv) RouteGetContactPointsExport(c *contextmodel.ReqContext) response.Response {
+	q := provisioning.ContactPointQuery{
+		Name:    c.Query("name"),
+		OrgID:   c.OrgID,
+		Decrypt: c.QueryBoolWithDefault("decrypt", false),
+	}
+	cps, err := srv.contactPointService.GetContactPoints(c.Req.Context(), q, c.SignedInUser)
+	if err != nil {
+		if errors.Is(err, provisioning.ErrPermissionDenied) {
+			return ErrResp(http.StatusForbidden, err, "")
+		}
+		return ErrResp(http.StatusInternalServerError, err, "")
+	}
+
+	e, err := AlertingFileExportFromEmbeddedContactPoints(c.OrgID, cps)
+	if err != nil {
+		return ErrResp(http.StatusInternalServerError, err, "failed to create alerting file export")
+	}
+
+	return exportResponse(c, e)
 }
 
 func (srv *ProvisioningSrv) RoutePostContactPoint(c *contextmodel.ReqContext, cp definitions.EmbeddedContactPoint) response.Response {
@@ -347,9 +391,31 @@ func (srv *ProvisioningSrv) RouteGetAlertRuleGroup(c *contextmodel.ReqContext, f
 
 // RouteGetAlertRulesExport retrieves all alert rules in a format compatible with file provisioning.
 func (srv *ProvisioningSrv) RouteGetAlertRulesExport(c *contextmodel.ReqContext) response.Response {
-	groupsWithTitle, err := srv.alertRules.GetAlertGroupsWithFolderTitle(c.Req.Context(), c.OrgID)
+	folderUIDs := c.QueryStrings("folderUid")
+	group := c.Query("group")
+	uid := c.Query("ruleUid")
+	if uid != "" {
+		if group != "" || len(folderUIDs) > 0 {
+			return ErrResp(http.StatusBadRequest, errors.New("group and folder should not be specified when a single rule is requested"), "")
+		}
+		return srv.RouteGetAlertRuleExport(c, uid)
+	}
+	if group != "" {
+		if len(folderUIDs) != 1 || folderUIDs[0] == "" {
+			return ErrResp(http.StatusBadRequest,
+				fmt.Errorf("group name must be specified together with a single folder_uid parameter. Got %d", len(folderUIDs)),
+				"",
+			)
+		}
+		return srv.RouteGetAlertRuleGroupExport(c, folderUIDs[0], group)
+	}
+
+	groupsWithTitle, err := srv.alertRules.GetAlertGroupsWithFolderTitle(c.Req.Context(), c.OrgID, folderUIDs)
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "failed to get alert rules")
+	}
+	if len(groupsWithTitle) == 0 {
+		return response.Empty(http.StatusNotFound)
 	}
 
 	e, err := AlertingFileExportFromAlertRuleGroupWithFolderTitle(groupsWithTitle)
@@ -433,7 +499,7 @@ func determineProvenance(ctx *contextmodel.ReqContext) definitions.Provenance {
 	return definitions.Provenance(alerting_models.ProvenanceAPI)
 }
 
-func exportResponse(c *contextmodel.ReqContext, body any) response.Response {
+func extractExportRequest(c *contextmodel.ReqContext) definitions.ExportQueryParams {
 	var format = "yaml"
 
 	acceptHeader := c.Req.Header.Get("Accept")
@@ -446,22 +512,75 @@ func exportResponse(c *contextmodel.ReqContext, body any) response.Response {
 	}
 
 	queryFormat := c.Query("format")
-	if queryFormat == "yaml" || queryFormat == "json" {
+	if queryFormat == "yaml" || queryFormat == "json" || queryFormat == "hcl" {
 		format = queryFormat
 	}
 
-	download := c.QueryBoolWithDefault("download", false)
-	if download {
+	params := definitions.ExportQueryParams{
+		Format:   format,
+		Download: c.QueryBoolWithDefault("download", false),
+	}
+
+	return params
+}
+
+func exportResponse(c *contextmodel.ReqContext, body definitions.AlertingFileExport) response.Response {
+	params := extractExportRequest(c)
+	if params.Format == "hcl" {
+		return exportHcl(params.Download, body)
+	}
+
+	if params.Download {
 		r := response.JSONDownload
-		if format == "yaml" {
+		if params.Format == "yaml" {
 			r = response.YAMLDownload
 		}
-		return r(http.StatusOK, body, fmt.Sprintf("export.%s", format))
+		return r(http.StatusOK, body, fmt.Sprintf("export.%s", params.Format))
 	}
 
 	r := response.JSON
-	if format == "yaml" {
+	if params.Format == "yaml" {
 		r = response.YAML
 	}
 	return r(http.StatusOK, body)
+}
+
+func exportHcl(download bool, body definitions.AlertingFileExport) response.Response {
+	resources := make([]hcl.Resource, 0, len(body.Groups)+len(body.ContactPoints)+len(body.Policies))
+	for idx, group := range body.Groups {
+		gr := group
+		resources = append(resources, hcl.Resource{
+			Type: "grafana_rule_group",
+			Name: fmt.Sprintf("rule_group_%04d", idx),
+			Body: &gr,
+		})
+	}
+
+	// TODO implement support.
+	// for idx, cp := range ex.ContactPoints {
+	// 	resources = append(resources, resourceBlock{
+	// 		Type: "grafana_contact_point",
+	// 		Name: fmt.Sprintf("contact_point_%d", idx),
+	// 		Body: &cp,
+	// 	})
+	// }
+	// for idx, cp := range ex.Policies {
+	// 	resources = append(resources, resourceBlock{
+	// 		Type: "grafana_notification_policy",
+	// 		Name: fmt.Sprintf("notification_policy_%d", idx),
+	// 		Body: &cp,
+	// 	})
+	//
+
+	hclBody, err := hcl.Encode(resources...)
+	if err != nil {
+		return response.Error(500, "body hcl encode", err)
+	}
+	resp := response.Respond(http.StatusOK, hclBody)
+	if download {
+		return resp.
+			SetHeader("Content-Type", "application/terraform+hcl").
+			SetHeader("Content-Disposition", `attachment;filename=export.tf`)
+	}
+	return resp.SetHeader("Content-Type", "text/hcl")
 }

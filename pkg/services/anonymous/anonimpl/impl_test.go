@@ -2,43 +2,49 @@ package anonimpl
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
+	"github.com/grafana/grafana/pkg/services/anonymous"
 )
 
-func TestAnonSessionKey(t *testing.T) {
+func TestAnonDeviceKey(t *testing.T) {
 	testCases := []struct {
 		name     string
-		session  *AnonSession
+		session  *Device
 		expected string
 	}{
 		{
 			name: "should hash correctly",
-			session: &AnonSession{
-				ip:        "10.10.10.10",
-				userAgent: "test",
+			session: &Device{
+				Kind:      anonymous.AnonDevice,
+				IP:        "10.10.10.10",
+				UserAgent: "test",
 			},
 			expected: "anon-session:ad9f5c6bf504a9fa77c37a3a6658c0cd",
 		},
 		{
 			name: "should hash correctly with different ip",
-			session: &AnonSession{
-				ip:        "10.10.10.1",
-				userAgent: "test",
+			session: &Device{
+				Kind:      anonymous.AnonDevice,
+				IP:        "10.10.10.1",
+				UserAgent: "test",
 			},
 			expected: "anon-session:580605320245e8289e0b301074a027c3",
 		},
 		{
 			name: "should hash correctly with different user agent",
-			session: &AnonSession{
-				ip:        "10.10.10.1",
-				userAgent: "test2",
+			session: &Device{
+				Kind:      anonymous.AnonDevice,
+				IP:        "10.10.10.1",
+				UserAgent: "test2",
 			},
 			expected: "anon-session:5fdd04b0bd04a9fa77c4243f8111258b",
 		},
@@ -58,75 +64,185 @@ func TestAnonSessionKey(t *testing.T) {
 	}
 }
 
-func TestIntegrationAnonSessionService_tag(t *testing.T) {
+func TestIntegrationDeviceService_tag(t *testing.T) {
+	type tagReq struct {
+		httpReq *http.Request
+		kind    anonymous.DeviceKind
+	}
 	testCases := []struct {
-		name          string
-		req           []*http.Request
-		expectedCount int64
+		name                  string
+		req                   []tagReq
+		expectedAnonCount     int64
+		expectedAuthedCount   int64
+		expectedAnonUICount   int64
+		expectedAuthedUICount int64
+		expectedDevice        *Device
 	}{
 		{
-			name:          "no requests",
-			req:           []*http.Request{},
-			expectedCount: 0,
+			name:                "no requests",
+			req:                 []tagReq{{httpReq: &http.Request{}, kind: anonymous.AnonDevice}},
+			expectedAnonCount:   0,
+			expectedAuthedCount: 0,
 		},
 		{
 			name: "missing info should not tag",
-			req: []*http.Request{
-				{
-					Header: http.Header{
-						"User-Agent": []string{"test"},
-					},
+			req: []tagReq{{httpReq: &http.Request{
+				Header: http.Header{
+					"User-Agent": []string{"test"},
 				},
 			},
-			expectedCount: 0,
+				kind: anonymous.AnonDevice,
+			}},
+			expectedAnonCount:   0,
+			expectedAuthedCount: 0,
 		},
 		{
 			name: "should tag once",
-			req: []*http.Request{
-				{
-					Header: http.Header{
-						"User-Agent":      []string{"test"},
-						"X-Forwarded-For": []string{"10.30.30.1"},
-					},
+			req: []tagReq{{httpReq: &http.Request{
+				Header: http.Header{
+					"User-Agent":      []string{"test"},
+					"X-Forwarded-For": []string{"10.30.30.1"},
 				},
 			},
-			expectedCount: 1,
+				kind: anonymous.AnonDevice,
+			},
+			},
+			expectedAnonCount:   1,
+			expectedAuthedCount: 0,
+			expectedDevice: &Device{
+				Kind:      anonymous.AnonDevice,
+				IP:        "10.30.30.1",
+				UserAgent: "test"},
+		},
+		{
+			name: "should tag device ID once",
+			req: []tagReq{{httpReq: &http.Request{
+				Header: http.Header{
+					"User-Agent":                            []string{"test"},
+					"X-Forwarded-For":                       []string{"10.30.30.1"},
+					http.CanonicalHeaderKey(deviceIDHeader): []string{"32mdo31deeqwes"},
+				},
+			},
+				kind: anonymous.AnonDevice,
+			},
+			},
+			expectedAnonUICount:   1,
+			expectedAuthedUICount: 0,
+			expectedAnonCount:     1,
+			expectedAuthedCount:   0,
+			expectedDevice: &Device{
+				Kind:      anonymous.AnonDevice,
+				IP:        "10.30.30.1",
+				UserAgent: "test"},
 		},
 		{
 			name: "repeat request should not tag",
-			req: []*http.Request{
-				{
-					Header: http.Header{
-						"User-Agent":      []string{"test"},
-						"X-Forwarded-For": []string{"10.30.30.1"},
-					},
-				},
-				{
-					Header: http.Header{
-						"User-Agent":      []string{"test"},
-						"X-Forwarded-For": []string{"10.30.30.1"},
-					},
+			req: []tagReq{{httpReq: &http.Request{
+				Header: http.Header{
+					"User-Agent":                            []string{"test"},
+					http.CanonicalHeaderKey(deviceIDHeader): []string{"32mdo31deeqwes"},
+					"X-Forwarded-For":                       []string{"10.30.30.1"},
 				},
 			},
-			expectedCount: 1,
+				kind: anonymous.AnonDevice,
+			}, {httpReq: &http.Request{
+				Header: http.Header{
+					"User-Agent":                            []string{"test"},
+					http.CanonicalHeaderKey(deviceIDHeader): []string{"32mdo31deeqwes"},
+					"X-Forwarded-For":                       []string{"10.30.30.1"},
+				},
+			},
+				kind: anonymous.AnonDevice,
+			},
+			},
+			expectedAnonCount:   1,
+			expectedAnonUICount: 1,
+			expectedAuthedCount: 0,
+		}, {
+			name: "authed request should untag anon",
+			req: []tagReq{{httpReq: &http.Request{
+				Header: http.Header{
+					"User-Agent":                            []string{"test"},
+					http.CanonicalHeaderKey(deviceIDHeader): []string{"32mdo31deeqwes"},
+					"X-Forwarded-For":                       []string{"10.30.30.1"},
+				},
+			},
+				kind: anonymous.AnonDevice,
+			}, {httpReq: &http.Request{
+				Header: http.Header{
+					"User-Agent":                            []string{"test"},
+					http.CanonicalHeaderKey(deviceIDHeader): []string{"32mdo31deeqwes"},
+					"X-Forwarded-For":                       []string{"10.30.30.1"},
+				},
+			},
+				kind: anonymous.AuthedDevice,
+			},
+			},
+			expectedAnonCount:     0,
+			expectedAuthedCount:   1,
+			expectedAuthedUICount: 1,
+		}, {
+			name: "anon request should untag authed",
+			req: []tagReq{{httpReq: &http.Request{
+				Header: http.Header{
+					"User-Agent":                            []string{"test"},
+					http.CanonicalHeaderKey(deviceIDHeader): []string{"32mdo31deeqwes"},
+					"X-Forwarded-For":                       []string{"10.30.30.1"},
+				},
+			},
+				kind: anonymous.AuthedDevice,
+			}, {httpReq: &http.Request{
+				Header: http.Header{
+					"User-Agent":                            []string{"test"},
+					http.CanonicalHeaderKey(deviceIDHeader): []string{"32mdo31deeqwes"},
+					"X-Forwarded-For":                       []string{"10.30.30.1"},
+				},
+			},
+				kind: anonymous.AnonDevice,
+			},
+			},
+			expectedAnonCount:   1,
+			expectedAnonUICount: 1,
+			expectedAuthedCount: 0,
 		},
 		{
-			name: "tag 2 different requests",
-			req: []*http.Request{
-				{
-					Header: http.Header{
-						"User-Agent":      []string{"test"},
-						"X-Forwarded-For": []string{"10.30.30.1"},
-					},
-				},
-				{
-					Header: http.Header{
-						"User-Agent":      []string{"test"},
-						"X-Forwarded-For": []string{"10.30.30.2"},
-					},
+			name: "tag 4 different requests - 2 are UI",
+			req: []tagReq{{httpReq: &http.Request{
+				Header: http.Header{
+					http.CanonicalHeaderKey("User-Agent"):      []string{"test"},
+					http.CanonicalHeaderKey("X-Forwarded-For"): []string{"10.30.30.1"},
+					http.CanonicalHeaderKey(deviceIDHeader):    []string{"a"},
 				},
 			},
-			expectedCount: 2,
+				kind: anonymous.AnonDevice,
+			}, {httpReq: &http.Request{
+				Header: http.Header{
+					"User-Agent":      []string{"test"},
+					"X-Forwarded-For": []string{"10.30.30.2"},
+				},
+			},
+				kind: anonymous.AnonDevice,
+			}, {httpReq: &http.Request{
+				Header: http.Header{
+					"User-Agent":                            []string{"test"},
+					"X-Forwarded-For":                       []string{"10.30.30.3"},
+					http.CanonicalHeaderKey(deviceIDHeader): []string{"c"},
+				},
+			},
+				kind: anonymous.AuthedDevice,
+			}, {httpReq: &http.Request{
+				Header: http.Header{
+					"User-Agent":      []string{"test"},
+					"X-Forwarded-For": []string{"10.30.30.4"},
+				},
+			},
+				kind: anonymous.AuthedDevice,
+			},
+			},
+			expectedAnonCount:     2,
+			expectedAuthedCount:   2,
+			expectedAnonUICount:   1,
+			expectedAuthedUICount: 1,
 		},
 	}
 
@@ -134,25 +250,45 @@ func TestIntegrationAnonSessionService_tag(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			fakeStore := remotecache.NewFakeStore(t)
 
-			anonService := ProvideAnonymousSessionService(fakeStore, &usagestats.UsageStatsMock{})
+			anonService := ProvideAnonymousDeviceService(fakeStore, &usagestats.UsageStatsMock{})
 
 			for _, req := range tc.req {
-				err := anonService.TagSession(context.Background(), req)
+				err := anonService.TagDevice(context.Background(), req.httpReq, req.kind)
 				require.NoError(t, err)
 			}
 
 			stats, err := anonService.usageStatFn(context.Background())
 			require.NoError(t, err)
 
-			assert.Equal(t, tc.expectedCount, stats["stats.anonymous.session.count"].(int64))
+			assert.Equal(t, tc.expectedAnonCount, stats["stats.anonymous.session.count"].(int64))
+			assert.Equal(t, tc.expectedAuthedCount, stats["stats.users.device.count"].(int64))
+			assert.Equal(t, tc.expectedAnonUICount, stats["stats.anonymous.device.ui.count"].(int64))
+			assert.Equal(t, tc.expectedAuthedUICount, stats["stats.users.device.ui.count"].(int64))
+
+			if tc.expectedDevice != nil {
+				key, err := tc.expectedDevice.Key()
+				require.NoError(t, err)
+
+				k, err := fakeStore.Get(context.Background(), key)
+				require.NoError(t, err)
+
+				gotDevice := &Device{}
+				err = json.Unmarshal(k, gotDevice)
+				require.NoError(t, err)
+
+				assert.NotNil(t, gotDevice.LastSeen)
+				gotDevice.LastSeen = time.Time{}
+
+				assert.Equal(t, tc.expectedDevice, gotDevice)
+			}
 		})
 	}
 }
 
 // Ensure that the local cache prevents request from being tagged
-func TestIntegrationAnonSessionService_localCacheSafety(t *testing.T) {
+func TestIntegrationAnonDeviceService_localCacheSafety(t *testing.T) {
 	fakeStore := remotecache.NewFakeStore(t)
-	anonService := ProvideAnonymousSessionService(fakeStore, &usagestats.UsageStatsMock{})
+	anonService := ProvideAnonymousDeviceService(fakeStore, &usagestats.UsageStatsMock{})
 
 	req := &http.Request{
 		Header: http.Header{
@@ -161,17 +297,19 @@ func TestIntegrationAnonSessionService_localCacheSafety(t *testing.T) {
 		},
 	}
 
-	anonSession := &AnonSession{
-		ip:        "10.30.30.2",
-		userAgent: "test",
+	anonDevice := &Device{
+		Kind:      anonymous.AnonDevice,
+		IP:        "10.30.30.2",
+		UserAgent: "test",
+		LastSeen:  time.Now().UTC(),
 	}
 
-	key, err := anonSession.Key()
+	key, err := anonDevice.Key()
 	require.NoError(t, err)
 
 	anonService.localCache.SetDefault(key, true)
 
-	err = anonService.TagSession(context.Background(), req)
+	err = anonService.TagDevice(context.Background(), req, anonymous.AnonDevice)
 	require.NoError(t, err)
 
 	stats, err := anonService.usageStatFn(context.Background())

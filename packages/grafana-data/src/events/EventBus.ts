@@ -48,7 +48,7 @@ export class EventBusSrv implements EventBus, LegacyEmitter {
     });
   }
 
-  newScopedBus(key: string, filter?: EventFilterOptions): EventBus {
+  newScopedBus(key: string, filter?: EventFilterOptions): ScopedEventBus {
     return new ScopedEventBus([key], this, filter);
   }
 
@@ -113,7 +113,11 @@ class ScopedEventBus implements EventBus {
   filterConfig: EventFilterOptions;
 
   // The path is not yet exposed, but can be used to indicate nested groups and support faster filtering
-  constructor(public path: string[], private eventBus: EventBus, filter?: EventFilterOptions) {
+  constructor(
+    public path: string[],
+    private eventBus: EventBus,
+    filter?: EventFilterOptions
+  ) {
     this.filterConfig = filter ?? { onlyLocal: false };
   }
 

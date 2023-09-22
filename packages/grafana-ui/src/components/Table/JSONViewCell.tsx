@@ -8,15 +8,15 @@ import { Button, clearLinkButtonStyles } from '../Button';
 import { DataLinksContextMenu } from '../DataLinks/DataLinksContextMenu';
 
 import { CellActions } from './CellActions';
-import { TableCellProps, TableFieldOptions } from './types';
+import { TableCellProps } from './types';
 
 export function JSONViewCell(props: TableCellProps): JSX.Element {
   const { cell, tableStyles, cellProps, field, row } = props;
-  const inspectEnabled = Boolean((field.config.custom as TableFieldOptions)?.inspect);
-  const txt = css`
-    cursor: pointer;
-    font-family: monospace;
-  `;
+  const inspectEnabled = Boolean(field.config.custom?.inspect);
+  const txt = css({
+    cursor: 'pointer',
+    fontFamily: 'monospace',
+  });
 
   let value = cell.value;
   let displayValue = value;

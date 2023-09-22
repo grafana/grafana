@@ -4,9 +4,7 @@ import uPlot from 'uplot';
 import {
   DataFrame,
   DataFrameFieldIndex,
-  Field,
   Labels,
-  LinkModel,
   TIME_SERIES_TIME_FIELD_NAME,
   TIME_SERIES_VALUE_FIELD_NAME,
   TimeZone,
@@ -19,17 +17,10 @@ interface ExemplarsPluginProps {
   config: UPlotConfigBuilder;
   exemplars: DataFrame[];
   timeZone: TimeZone;
-  getFieldLinks: (field: Field, rowIndex: number) => Array<LinkModel<Field>>;
   visibleSeries?: VisibleExemplarLabels;
 }
 
-export const ExemplarsPlugin = ({
-  exemplars,
-  timeZone,
-  getFieldLinks,
-  config,
-  visibleSeries,
-}: ExemplarsPluginProps) => {
+export const ExemplarsPlugin = ({ exemplars, timeZone, config, visibleSeries }: ExemplarsPluginProps) => {
   const plotInstance = useRef<uPlot>();
 
   const [lockedExemplarFieldIndex, setLockedExemplarFieldIndex] = useState<DataFrameFieldIndex | undefined>();
@@ -88,7 +79,6 @@ export const ExemplarsPlugin = ({
           setClickedExemplarFieldIndex={setLockedExemplarFieldIndex}
           clickedExemplarFieldIndex={lockedExemplarFieldIndex}
           timeZone={timeZone}
-          getFieldLinks={getFieldLinks}
           dataFrame={dataFrame}
           dataFrameFieldIndex={dataFrameFieldIndex}
           config={config}
@@ -96,7 +86,7 @@ export const ExemplarsPlugin = ({
         />
       );
     },
-    [config, timeZone, getFieldLinks, visibleSeries, setLockedExemplarFieldIndex, lockedExemplarFieldIndex]
+    [config, timeZone, visibleSeries, setLockedExemplarFieldIndex, lockedExemplarFieldIndex]
   );
 
   return (

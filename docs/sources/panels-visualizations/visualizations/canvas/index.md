@@ -8,8 +8,13 @@ keywords:
   - canvas
   - panel
   - documentation
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: Canvas
-weight: 600
+weight: 100
 ---
 
 # Canvas

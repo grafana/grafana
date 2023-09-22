@@ -13,39 +13,39 @@ import { SlideOutTransition } from '../transitions/SlideOutTransition';
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    singleValue: css`
-      label: singleValue;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      box-sizing: border-box;
-      max-width: 100%;
-      grid-area: 1 / 1 / 2 / 3;
-    `,
-    spinnerWrapper: css`
-      width: 16px;
-      height: 16px;
-      display: inline-block;
-      margin-right: 10px;
-      position: relative;
-      vertical-align: middle;
-      overflow: hidden;
-    `,
-    spinnerIcon: css`
-      width: 100%;
-      height: 100%;
-      position: absolute;
-    `,
-    optionIcon: css`
-      margin-right: ${theme.spacing(1)};
-      color: ${theme.colors.text.secondary};
-    `,
-    disabled: css`
-      color: ${theme.colors.text.disabled};
-    `,
-    isOpen: css`
-      color: ${theme.colors.text.disabled};
-    `,
+    singleValue: css({
+      label: 'singleValue',
+      whiteSpace: 'nowrap',
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      boxSizing: 'border-box',
+      maxWidth: '100%',
+      gridArea: '1 / 1 / 2 / 3',
+    }),
+    spinnerWrapper: css({
+      width: '16px',
+      height: '16px',
+      display: 'inline-block',
+      marginRight: '10px',
+      position: 'relative',
+      verticalAlign: 'middle',
+      overflow: 'hidden',
+    }),
+    spinnerIcon: css({
+      width: '100%',
+      height: '100%',
+      position: 'absolute',
+    }),
+    optionIcon: css({
+      marginRight: theme.spacing(1),
+      color: theme.colors.text.secondary,
+    }),
+    disabled: css({
+      color: theme.colors.text.disabled,
+    }),
+    isOpen: css({
+      color: theme.colors.text.disabled,
+    }),
   };
 };
 
@@ -65,12 +65,7 @@ export const SingleValue = <T extends unknown>(props: Props<T>) => {
       className={cx(styles.singleValue, isDisabled && styles.disabled, props.selectProps.menuIsOpen && styles.isOpen)}
     >
       {data.imgUrl ? (
-        <FadeWithImage
-          loading={loading}
-          imgUrl={data.imgUrl}
-          styles={styles}
-          alt={(data.label ?? data.value) as string}
-        />
+        <FadeWithImage loading={loading} imgUrl={data.imgUrl} styles={styles} alt={String(data.label ?? data.value)} />
       ) : (
         <>
           <SlideOutTransition horizontal size={16} visible={loading} duration={150}>

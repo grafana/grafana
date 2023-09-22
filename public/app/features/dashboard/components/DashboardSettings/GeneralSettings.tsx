@@ -1,16 +1,25 @@
-import React, { useState } from 'react';
+import React, { ChangeEvent, useState } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { TimeZone } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { CollapsableSection, Field, Input, RadioButtonGroup, TagsInput } from '@grafana/ui';
-import { NestedFolderPicker } from 'app/core/components/NestedFolderPicker/NestedFolderPicker';
-import { FolderChange, ROOT_FOLDER } from 'app/core/components/NestedFolderPicker/types';
+import {
+  CollapsableSection,
+  Field,
+  Input,
+  RadioButtonGroup,
+  TagsInput,
+  Label,
+  HorizontalGroup,
+  TextArea,
+} from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { updateTimeZoneDashboard, updateWeekStartDashboard } from 'app/features/dashboard/state/actions';
 
 import { DeleteDashboardButton } from '../DeleteDashboard/DeleteDashboardButton';
+import { GenAIDashDescriptionButton } from '../GenAI/GenAIDashDescriptionButton';
+import { GenAIDashTitleButton } from '../GenAI/GenAIDashTitleButton';
 
 import { TimePickerSettings } from './TimePickerSettings';
 import { SettingsPageProps } from './types';
@@ -30,19 +39,31 @@ export function GeneralSettingsUnconnected({
   sectionNav,
 }: Props): JSX.Element {
   const [renderCounter, setRenderCounter] = useState(0);
+  const [dashboardTitle, setDashboardTitle] = useState(dashboard.title);
+  const [dashboardDescription, setDashboardDescription] = useState(dashboard.description);
 
-  const onFolderChange = (newFolder: FolderChange) => {
-    dashboard.meta.folderUid = newFolder.uid === ROOT_FOLDER ? '' : newFolder.uid;
-    dashboard.meta.folderTitle = newFolder.title;
+  const onFolderChange = (newUID: string, newTitle: string) => {
+    dashboard.meta.folderUid = newUID;
+    dashboard.meta.folderTitle = newTitle;
     dashboard.meta.hasUnsavedFolderChange = true;
     setRenderCounter(renderCounter + 1);
   };
 
-  const onBlur = (event: React.FocusEvent<HTMLInputElement>) => {
-    if (event.currentTarget.name === 'title' || event.currentTarget.name === 'description') {
-      dashboard[event.currentTarget.name] = event.currentTarget.value;
-    }
-  };
+  const onTitleChange = React.useCallback(
+    (title: string) => {
+      dashboard.title = title;
+      setDashboardTitle(title);
+    },
+    [setDashboardTitle, dashboard]
+  );
+
+  const onDescriptionChange = React.useCallback(
+    (description: string) => {
+      dashboard.description = description;
+      setDashboardDescription(description);
+    },
+    [setDashboardDescription, dashboard]
+  );
 
   const onTooltipChange = (graphTooltip: number) => {
     dashboard.graphTooltip = graphTooltip;
@@ -98,30 +119,55 @@ export function GeneralSettingsUnconnected({
     <Page navModel={sectionNav}>
       <div style={{ maxWidth: '600px' }}>
         <div className="gf-form-group">
-          <Field label="Name">
-            <Input id="title-input" name="title" onBlur={onBlur} defaultValue={dashboard.title} />
+          <Field
+            label={
+              <HorizontalGroup justify="space-between">
+                <Label htmlFor="title-input">Title</Label>
+                {config.featureToggles.dashgpt && (
+                  <GenAIDashTitleButton onGenerate={onTitleChange} dashboard={dashboard} />
+                )}
+              </HorizontalGroup>
+            }
+          >
+            <Input
+              id="title-input"
+              name="title"
+              value={dashboardTitle}
+              onChange={(e: ChangeEvent<HTMLInputElement>) => onTitleChange(e.target.value)}
+            />
           </Field>
-          <Field label="Description">
-            <Input id="description-input" name="description" onBlur={onBlur} defaultValue={dashboard.description} />
+          <Field
+            label={
+              <HorizontalGroup justify="space-between">
+                <Label htmlFor="description-input">Description</Label>
+                {config.featureToggles.dashgpt && (
+                  <GenAIDashDescriptionButton onGenerate={onDescriptionChange} dashboard={dashboard} />
+                )}
+              </HorizontalGroup>
+            }
+          >
+            <TextArea
+              id="description-input"
+              name="description"
+              value={dashboardDescription}
+              onChange={(e: ChangeEvent<HTMLTextAreaElement>) => onDescriptionChange(e.target.value)}
+            />
           </Field>
           <Field label="Tags">
             <TagsInput id="tags-input" tags={dashboard.tags} onChange={onTagsChange} width={40} />
           </Field>
 
           <Field label="Folder">
-            {config.featureToggles.nestedFolderPicker ? (
-              <NestedFolderPicker value={dashboard.meta.folderUid} onChange={onFolderChange} />
-            ) : (
-              <FolderPicker
-                inputId="dashboard-folder-input"
-                initialTitle={dashboard.meta.folderTitle}
-                initialFolderUid={dashboard.meta.folderUid}
-                onChange={onFolderChange}
-                enableCreateNew={true}
-                dashboardId={dashboard.id}
-                skipInitialLoad={true}
-              />
-            )}
+            <FolderPicker
+              value={dashboard.meta.folderUid}
+              onChange={onFolderChange}
+              // TODO deprecated props that can be removed once NestedFolderPicker is enabled by default
+              initialTitle={dashboard.meta.folderTitle}
+              inputId="dashboard-folder-input"
+              enableCreateNew
+              dashboardId={dashboard.id}
+              skipInitialLoad
+            />
           </Field>
 
           <Field

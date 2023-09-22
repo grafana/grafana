@@ -5,43 +5,27 @@ import { NavModelItem } from '@grafana/data';
 import { Alert } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { MuteTimeInterval } from 'app/plugins/datasource/alertmanager/types';
-import { useDispatch } from 'app/types';
 
 import { AlertmanagerPageWrapper } from './components/AlertingPageWrapper';
 import MuteTimingForm from './components/mute-timings/MuteTimingForm';
-import { useUnifiedAlertingSelector } from './hooks/useUnifiedAlertingSelector';
+import { useAlertmanagerConfig } from './hooks/useAlertmanagerConfig';
 import { useAlertmanager } from './state/AlertmanagerContext';
-import { fetchAlertManagerConfigAction } from './state/actions';
-import { initialAsyncRequestState } from './utils/redux';
 
 const MuteTimings = () => {
   const [queryParams] = useQueryParams();
-  const dispatch = useDispatch();
   const { selectedAlertmanager } = useAlertmanager();
-
-  const amConfigs = useUnifiedAlertingSelector((state) => state.amConfigs);
-
-  const fetchConfig = useCallback(() => {
-    if (selectedAlertmanager) {
-      dispatch(fetchAlertManagerConfigAction(selectedAlertmanager));
-    }
-  }, [selectedAlertmanager, dispatch]);
-
-  useEffect(() => {
-    fetchConfig();
-  }, [fetchConfig]);
-
-  const { result, error, loading } =
-    (selectedAlertmanager && amConfigs[selectedAlertmanager]) || initialAsyncRequestState;
-
-  const config = result?.alertmanager_config;
+  const { currentData, isLoading, error } = useAlertmanagerConfig(selectedAlertmanager, {
+    refetchOnFocus: true,
+    refetchOnReconnect: true,
+  });
+  const config = currentData?.alertmanager_config;
 
   const getMuteTimingByName = useCallback(
     (id: string): MuteTimeInterval | undefined => {
       const timing = config?.mute_time_intervals?.find(({ name }: MuteTimeInterval) => name === id);
 
       if (timing) {
-        const provenance = (config?.muteTimeProvenances ?? {})[timing.name];
+        const provenance = config?.muteTimeProvenances?.[timing.name];
 
         return {
           ...timing,
@@ -56,15 +40,15 @@ const MuteTimings = () => {
 
   return (
     <>
-      {error && !loading && !result && (
+      {error && !isLoading && !currentData && (
         <Alert severity="error" title={`Error loading Alertmanager config for ${selectedAlertmanager}`}>
           {error.message || 'Unknown error.'}
         </Alert>
       )}
-      {result && !error && (
+      {currentData && !error && (
         <Switch>
           <Route exact path="/alerting/routes/mute-timing/new">
-            <MuteTimingForm loading={loading} />
+            <MuteTimingForm loading={isLoading} />
           </Route>
           <Route exact path="/alerting/routes/mute-timing/edit">
             {() => {
@@ -74,9 +58,9 @@ const MuteTimings = () => {
 
                 return (
                   <MuteTimingForm
-                    loading={loading}
+                    loading={isLoading}
                     muteTiming={muteTiming}
-                    showError={!muteTiming && !loading}
+                    showError={!muteTiming && !isLoading}
                     provenance={provenance}
                   />
                 );

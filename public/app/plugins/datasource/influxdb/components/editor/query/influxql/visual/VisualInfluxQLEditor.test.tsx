@@ -3,7 +3,7 @@ import React from 'react';
 
 import InfluxDatasource from '../../../../../datasource';
 import { getMockDS, getMockDSInstanceSettings } from '../../../../../specs/mocks';
-import { InfluxQuery } from '../../../../../types';
+import { DEFAULT_POLICY, InfluxQuery } from '../../../../../types';
 
 import { VisualInfluxQLEditor } from './VisualInfluxQLEditor';
 
@@ -53,7 +53,7 @@ describe('InfluxDB InfluxQL Visual Editor', () => {
   it('should handle minimal query', async () => {
     const query: InfluxQuery = {
       refId: 'A',
-      policy: 'default',
+      policy: DEFAULT_POLICY,
     };
     await assertEditor(
       query,
@@ -70,7 +70,7 @@ describe('InfluxDB InfluxQL Visual Editor', () => {
       refId: 'A',
       alias: 'test-alias',
       resultFormat: 'table',
-      policy: 'default',
+      policy: DEFAULT_POLICY,
     };
     await assertEditor(
       query,

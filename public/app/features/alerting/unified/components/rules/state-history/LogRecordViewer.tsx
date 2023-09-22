@@ -55,6 +55,7 @@ export const LogRecordViewerByTimestamp = React.memo(
               key={key}
               data-testid={key}
               ref={(element) => element && timestampRefs.set(key, element)}
+              className={styles.listItemWrapper}
             >
               <Timestamp time={key} />
               <div className={styles.logsContainer}>
@@ -170,11 +171,19 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
   timestampWrapper: css`
     color: ${theme.colors.text.secondary};
-    padding: ${theme.spacing(1)} 0;
   `,
   timestampText: css`
     color: ${theme.colors.text.primary};
     font-size: ${theme.typography.bodySmall.fontSize};
     font-weight: ${theme.typography.fontWeightBold};
+  `,
+  listItemWrapper: css`
+    background: transparent;
+    outline: 1px solid transparent;
+
+    transition:
+      background 150ms,
+      outline 150ms;
+    padding: ${theme.spacing(1)} ${theme.spacing(1.5)};
   `,
 });

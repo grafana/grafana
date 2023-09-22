@@ -102,19 +102,29 @@ func (client *Client) CopyLocalDir(ctx context.Context, dir string, bucket *stor
 	}
 	log.Printf("Number or files to be copied over: %d\n", len(files))
 
+	errs := make([]error, 0, 10)
+	errsLock := sync.Mutex{}
+
 	for _, chunk := range asChunks(files, maxThreads) {
 		var wg sync.WaitGroup
 		for _, f := range chunk {
 			wg.Add(1)
 			go func(file File) {
 				defer wg.Done()
-				err = client.Copy(ctx, file, bucket, bucketPath, trim)
+				err := client.Copy(ctx, file, bucket, bucketPath, trim)
 				if err != nil {
 					log.Printf("failed to copy objects, err: %s\n", err.Error())
+					errsLock.Lock()
+					errs = append(errs, err)
+					errsLock.Unlock()
 				}
 			}(f)
 		}
 		wg.Wait()
+	}
+
+	if len(errs) > 0 {
+		return fmt.Errorf("copy operation failed: %s", errs)
 	}
 
 	return nil
@@ -122,7 +132,7 @@ func (client *Client) CopyLocalDir(ctx context.Context, dir string, bucket *stor
 
 // Copy copies a single local file into the bucket at the provided path.
 // trim variable should be set to true if the full object path is needed - false otherwise.
-func (client *Client) Copy(ctx context.Context, file File, bucket *storage.BucketHandle, remote string, trim bool) error {
+func (client *Client) Copy(ctx context.Context, file File, bucket *storage.BucketHandle, remote string, trim bool) (resultErr error) {
 	if bucket == nil {
 		return ErrorNilBucket
 	}
@@ -152,11 +162,16 @@ func (client *Client) Copy(ctx context.Context, file File, bucket *storage.Bucke
 	defer func() {
 		if err := wc.Close(); err != nil {
 			log.Println("failed to close writer", "err", err)
+			// Keep the original error intact if there was one:
+			if resultErr == nil {
+				resultErr = err
+			}
 		}
 	}()
 
 	if _, err = io.Copy(wc, localFile); err != nil {
-		return fmt.Errorf("failed to copy to Cloud Storage: %w", err)
+		resultErr = fmt.Errorf("failed to copy to Cloud Storage: %w", err)
+		return
 	}
 
 	return nil
@@ -403,7 +418,7 @@ func GetLatestMainBuild(ctx context.Context, bucket *storage.BucketHandle, path 
 
 	var latestVersion string
 	for i := 0; i < len(files); i++ {
-		captureVersion := regexp.MustCompile(`(\d+\.\d+\.\d+-\d+pre)`)
+		captureVersion := regexp.MustCompile(`(\d+\.\d+\.\d+-\d+)`)
 		if captureVersion.MatchString(files[i]) {
 			latestVersion = captureVersion.FindString(files[i])
 			break

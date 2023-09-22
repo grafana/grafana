@@ -1,3 +1,4 @@
+import { xor } from 'lodash';
 import { ValidateResult } from 'react-hook-form';
 
 import { DataFrame, ThresholdsConfig, ThresholdsMode, isTimeSeriesFrames, PanelData } from '@grafana/data';
@@ -94,12 +95,13 @@ export function checkForPathSeparator(value: string): ValidateResult {
   return true;
 }
 
-export function errorFromSeries(series: DataFrame[]): Error | undefined {
-  if (series.length === 0) {
+// this function assumes we've already checked if the data passed in to the function is of the alert condition
+export function errorFromCurrentCondition(data: PanelData): Error | undefined {
+  if (data.series.length === 0) {
     return;
   }
 
-  const isTimeSeriesResults = isTimeSeriesFrames(series);
+  const isTimeSeriesResults = isTimeSeriesFrames(data.series);
 
   let error;
   if (isTimeSeriesResults) {
@@ -107,6 +109,15 @@ export function errorFromSeries(series: DataFrame[]): Error | undefined {
   }
 
   return error;
+}
+
+export function errorFromPreviewData(data: PanelData): Error | undefined {
+  // give preference to QueryErrors
+  if (data.errors?.length) {
+    return new Error(data.errors[0].message);
+  }
+
+  return;
 }
 
 export function warningFromSeries(series: DataFrame[]): Error | undefined {
@@ -302,4 +313,29 @@ export function translateRouteParamToRuleType(param = ''): RuleFormType {
   }
 
   return RuleFormType.grafana;
+}
+
+/**
+ * This function finds what refIds have been updated given the previous Array of queries and an Array of updated data queries.
+ * All expression queries are discarded from the arrays, since we have separate handlers for those (see "onUpdateRefId") of the ExpressionEditor
+ *
+ * This code assumes not more than 1 query refId has changed per "onChangeQueries",
+ */
+export function findRenamedDataQueryReferences(
+  previousQueries: AlertQuery[],
+  updatedQueries: AlertQuery[]
+): [string, string] {
+  const updatedDataQueries = updatedQueries
+    .filter((query) => !isExpressionQuery(query.model))
+    .map((query) => query.refId);
+  const previousDataQueries = previousQueries
+    .filter((query) => !isExpressionQuery(query.model))
+    .map((query) => query.refId);
+
+  // given the following two arrays
+  // ['A', 'B', 'C'] and ['FOO', 'B' 'C']
+  // the "xor" function will return ['A', 'FOO'] because those are not in both arrays
+  const [oldRefId, newRefId] = xor(previousDataQueries, updatedDataQueries);
+
+  return [oldRefId, newRefId];
 }

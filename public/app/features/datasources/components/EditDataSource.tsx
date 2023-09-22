@@ -130,10 +130,10 @@ export function EditDataSourceView({
 
     try {
       await onUpdate({ ...dataSource });
-      trackDsConfigUpdated('success');
+      trackDsConfigUpdated({ item: 'success' });
       appEvents.publish(new DataSourceUpdatedSuccessfully());
-    } catch (err) {
-      trackDsConfigUpdated('fail');
+    } catch (error) {
+      trackDsConfigUpdated({ item: 'fail', error });
       return;
     }
 

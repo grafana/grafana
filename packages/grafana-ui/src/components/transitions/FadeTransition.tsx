@@ -6,24 +6,24 @@ import { stylesFactory } from '../../themes';
 
 const getStyles = stylesFactory((duration: number) => {
   return {
-    enter: css`
-      label: enter;
-      opacity: 0;
-    `,
-    enterActive: css`
-      label: enterActive;
-      opacity: 1;
-      transition: opacity ${duration}ms ease-out;
-    `,
-    exit: css`
-      label: exit;
-      opacity: 1;
-    `,
-    exitActive: css`
-      label: exitActive;
-      opacity: 0;
-      transition: opacity ${duration}ms ease-out;
-    `,
+    enter: css({
+      label: 'enter',
+      opacity: 0,
+    }),
+    enterActive: css({
+      label: 'enterActive',
+      opacity: 1,
+      transition: `opacity ${duration}ms ease-out`,
+    }),
+    exit: css({
+      label: 'exit',
+      opacity: 1,
+    }),
+    exitActive: css({
+      label: 'exitActive',
+      opacity: 0,
+      transition: `opacity ${duration}ms ease-out`,
+    }),
   };
 });
 

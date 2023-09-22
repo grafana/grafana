@@ -16,15 +16,15 @@ import {
   toDataFrame,
   MutableDataFrame,
   AnnotationQuery,
+  getSearchFilterScopedVar,
 } from '@grafana/data';
 import { DataSourceWithBackend, getBackendSrv, getGrafanaLiveSrv, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
-import { getSearchFilterScopedVar } from 'app/features/variables/utils';
 
 import { Scenario, TestData, TestDataQueryType } from './dataquery.gen';
 import { queryMetricTree } from './metricTree';
 import { generateRandomEdges, generateRandomNodes, savedNodesResponse } from './nodeGraphUtils';
 import { runStream } from './runStreams';
-import { flameGraphData } from './testData/flameGraphResponse';
+import { flameGraphData, flameGraphDataDiff } from './testData/flameGraphResponse';
 import { TestDataVariableSupport } from './variables';
 
 export class TestDataDataSource extends DataSourceWithBackend<TestData> {
@@ -95,7 +95,7 @@ export class TestDataDataSource extends DataSourceWithBackend<TestData> {
           streams.push(this.nodesQuery(target, options));
           break;
         case 'flame_graph':
-          streams.push(this.flameGraphQuery());
+          streams.push(this.flameGraphQuery(target));
           break;
         case 'trace':
           streams.push(this.trace(target, options));
@@ -160,6 +160,11 @@ export class TestDataDataSource extends DataSourceWithBackend<TestData> {
     if (query.rawFrameContent) {
       query.rawFrameContent = this.templateSrv.replace(query.rawFrameContent, scopedVars);
     }
+  }
+
+  applyTemplateVariables(query: TestData, scopedVars: ScopedVars): TestData {
+    this.resolveTemplateVariables(query, scopedVars);
+    return query;
   }
 
   annotationDataTopicTest(target: TestData, req: DataQueryRequest<TestData>): Observable<DataQueryResponse> {
@@ -242,8 +247,9 @@ export class TestDataDataSource extends DataSourceWithBackend<TestData> {
     return of({ data: frames }).pipe(delay(100));
   }
 
-  flameGraphQuery(): Observable<DataQueryResponse> {
-    return of({ data: [flameGraphData] }).pipe(delay(100));
+  flameGraphQuery(target: TestData): Observable<DataQueryResponse> {
+    const data = target.flamegraphDiff ? flameGraphDataDiff : flameGraphData;
+    return of({ data: [{ ...data, refId: target.refId }] }).pipe(delay(100));
   }
 
   trace(target: TestData, options: DataQueryRequest<TestData>): Observable<DataQueryResponse> {

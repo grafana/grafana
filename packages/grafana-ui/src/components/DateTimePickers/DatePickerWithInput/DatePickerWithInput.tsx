@@ -74,15 +74,15 @@ export const DatePickerWithInput = ({
 
 const getStyles = () => {
   return {
-    container: css`
-      position: relative;
-    `,
-    input: css`
-    /* hides the native Calendar picker icon given when using type=date */
-    input[type='date']::-webkit-inner-spin-button,
-    input[type='date']::-webkit-calendar-picker-indicator {
-    display: none;
-    -webkit-appearance: none;
-    `,
+    container: css({
+      position: 'relative',
+    }),
+    input: css({
+      /* hides the native Calendar picker icon given when using type=date */
+      "input[type='date']::-webkit-inner-spin-button, input[type='date']::-webkit-calendar-picker-indicator": {
+        display: 'none',
+        WebkitAppearance: 'none',
+      },
+    }),
   };
 };

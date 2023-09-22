@@ -5,19 +5,19 @@ import (
 	"database/sql"
 	"database/sql/driver"
 	"errors"
+	"net"
 
-	mssql "github.com/grafana/go-mssqldb"
-	iproxy "github.com/grafana/grafana/pkg/infra/proxy"
-	"github.com/grafana/grafana/pkg/setting"
+	sdkproxy "github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
 	"github.com/grafana/grafana/pkg/util"
+	mssql "github.com/microsoft/go-mssqldb"
 	"golang.org/x/net/proxy"
 	"xorm.io/core"
 )
 
 // createMSSQLProxyDriver creates and registers a new sql driver that uses a mssql connector and updates the dialer to
 // route connections through the secure socks proxy
-func createMSSQLProxyDriver(settings *setting.SecureSocksDSProxySettings, cnnstr string) (string, error) {
+func createMSSQLProxyDriver(cnnstr string, hostName string, opts *sdkproxy.Options) (string, error) {
 	sqleng.XormDriverMu.Lock()
 	defer sqleng.XormDriverMu.Unlock()
 
@@ -35,7 +35,7 @@ func createMSSQLProxyDriver(settings *setting.SecureSocksDSProxySettings, cnnstr
 			return "", err
 		}
 
-		driver, err := newMSSQLProxyDriver(settings, connector)
+		driver, err := newMSSQLProxyDriver(connector, hostName, opts)
 		if err != nil {
 			return "", err
 		}
@@ -44,6 +44,19 @@ func createMSSQLProxyDriver(settings *setting.SecureSocksDSProxySettings, cnnstr
 	}
 
 	return driverName, nil
+}
+
+type HostTransportDialer struct {
+	Dialer proxy.ContextDialer
+	Host   string
+}
+
+func (m HostTransportDialer) DialContext(ctx context.Context, network string, addr string) (conn net.Conn, err error) {
+	return m.Dialer.DialContext(ctx, network, addr)
+}
+
+func (m HostTransportDialer) HostName() string {
+	return m.Host
 }
 
 // mssqlProxyDriver is a regular mssql driver with an updated dialer.
@@ -57,8 +70,8 @@ var _ core.Driver = (*mssqlProxyDriver)(nil)
 
 // newMSSQLProxyDriver updates the dialer for a mssql connector with a dialer that proxys connections through the secure socks proxy
 // and returns a new mssql driver to register
-func newMSSQLProxyDriver(cfg *setting.SecureSocksDSProxySettings, connector *mssql.Connector) (*mssqlProxyDriver, error) {
-	dialer, err := iproxy.NewSecureSocksProxyContextDialer(cfg)
+func newMSSQLProxyDriver(connector *mssql.Connector, hostName string, opts *sdkproxy.Options) (*mssqlProxyDriver, error) {
+	dialer, err := sdkproxy.Cli.NewSecureSocksProxyContextDialer(opts)
 	if err != nil {
 		return nil, err
 	}
@@ -68,7 +81,7 @@ func newMSSQLProxyDriver(cfg *setting.SecureSocksDSProxySettings, connector *mss
 		return nil, errors.New("unable to cast socks proxy dialer to context proxy dialer")
 	}
 
-	connector.Dialer = contextDialer
+	connector.Dialer = HostTransportDialer{contextDialer, hostName}
 	return &mssqlProxyDriver{c: connector}, nil
 }
 

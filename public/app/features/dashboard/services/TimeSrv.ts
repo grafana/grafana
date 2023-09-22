@@ -46,8 +46,8 @@ export class TimeSrv {
       this.shiftTime(e.payload.direction, e.payload.updateUrl);
     });
 
-    appEvents.subscribe(AbsoluteTimeEvent, () => {
-      this.makeAbsoluteTime();
+    appEvents.subscribe(AbsoluteTimeEvent, (e) => {
+      this.makeAbsoluteTime(e.payload.updateUrl);
     });
 
     document.addEventListener('visibilitychange', () => {
@@ -91,10 +91,7 @@ export class TimeSrv {
   }
 
   getValidIntervals(intervals: string[]): string[] {
-    if (this.contextSrv.minRefreshInterval) {
-      return intervals.filter((str) => str !== '').filter(this.contextSrv.isAllowedInterval);
-    }
-    return intervals;
+    return this.contextSrv.getValidIntervals(intervals);
   }
 
   private parseTime() {
@@ -149,7 +146,7 @@ export class TimeSrv {
   }
 
   private initTimeFromUrl() {
-    if (config.isPublicDashboardView && this.timeModel?.timepicker?.hidden) {
+    if (config.publicDashboardAccessToken && this.timeModel?.timepicker?.hidden) {
       return;
     }
 
@@ -238,7 +235,7 @@ export class TimeSrv {
     if (interval === AutoRefreshInterval) {
       intervalMs = this.getAutoRefreshInteval().intervalMs;
     } else {
-      refresh = this.contextSrv.getValidInterval(interval as string);
+      refresh = this.contextSrv.getValidInterval(interval);
       intervalMs = rangeUtil.intervalToMs(refresh);
     }
 
@@ -364,14 +361,9 @@ export class TimeSrv {
     );
   }
 
-  makeAbsoluteTime() {
-    const params = locationService.getSearch();
-    if (params.get('left')) {
-      return; // explore handles this;
-    }
-
+  makeAbsoluteTime(updateUrl: boolean) {
     const { from, to } = this.timeRange();
-    this.setTime({ from, to }, true);
+    this.setTime({ from, to }, updateUrl);
   }
 
   // isRefreshOutsideThreshold function calculates the difference between last refresh and now

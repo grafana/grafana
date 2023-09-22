@@ -1,6 +1,8 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
-import { AuthConfigState, AuthProviderStatus, Settings, SettingsError } from 'app/types';
+import { Settings } from 'app/types';
+
+import { SettingsError, AuthProviderStatus, AuthConfigState } from '../types';
 
 export const initialState: AuthConfigState = {
   settings: {},

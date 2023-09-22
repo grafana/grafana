@@ -4,9 +4,11 @@ import React from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { SegmentInput, useStyles2, InlineLabel, Icon } from '@grafana/ui';
 
+import { TraceToLogsTag } from './TraceToLogsSettings';
+
 interface Props {
-  values: Array<{ key: string; value?: string }>;
-  onChange: (values: Array<{ key: string; value?: string }>) => void;
+  values: TraceToLogsTag[];
+  onChange: (values: TraceToLogsTag[]) => void;
   id?: string;
 }
 

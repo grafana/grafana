@@ -1,6 +1,5 @@
 ---
-title: Extend a Grafana plugin
-menuTitle: Extend a plugin
+description: An index of how-to topics for extending or enhancing Grafana plugins.
 keywords:
   - grafana
   - plugins
@@ -8,7 +7,12 @@ keywords:
   - development
   - extension
   - documentation
-description: An index of how-to topics for extending or enhancing Grafana plugins.
+labels:
+  products:
+    - enterprise
+    - oss
+menuTitle: Extend a plugin
+title: Extend a Grafana plugin
 weight: 200
 ---
 
@@ -29,6 +33,6 @@ This section contains how-to topics for extending or enhancing Grafana plugins:
 
 Additional resources:
 
-- [Automate development with CI](https://grafana.github.io/plugin-tools/docs/ci)
-- [Create nested plugins](https://grafana.github.io/plugin-tools/docs/nested-plugins)
-- [Extend configurations](https://grafana.github.io/plugin-tools/docs/advanced-configuration)
+- [Automate development with CI](https://grafana.github.io/plugin-tools/docs/development/ci)
+- [Create nested plugins](https://grafana.github.io/plugin-tools/docs/advanced-usage/nested-plugins)
+- [Extend configurations](https://grafana.github.io/plugin-tools/docs/advanced-usage/advanced-configuration)

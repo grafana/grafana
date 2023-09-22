@@ -1,9 +1,13 @@
 import { cloneDeep, isFunction } from 'lodash';
 
+import { PluginMeta } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import { Monaco } from '@grafana/ui';
 
+import { loadScriptIntoSandbox } from './code_loader';
 import { forbiddenElements } from './constants';
-import { logWarning } from './utils';
+import { SandboxEnvironment } from './types';
+import { logWarning, unboxRegexesFromMembraneProxy } from './utils';
 
 /**
  * Distortions are near-membrane mechanisms to altert JS instrics and DOM APIs.
@@ -56,10 +60,15 @@ import { logWarning } from './utils';
  * The code in this file defines that generalDistortionMap.
  */
 
-type DistortionMap = Map<unknown, (originalAttrOrMethod: unknown, pluginId: string) => unknown>;
+type DistortionMap = Map<
+  unknown,
+  (originalAttrOrMethod: unknown, pluginMeta: PluginMeta, sandboxEnv?: SandboxEnvironment) => unknown
+>;
 const generalDistortionMap: DistortionMap = new Map();
 
 const monitorOnly = Boolean(config.featureToggles.frontendSandboxMonitorOnly);
+
+const SANDBOX_LIVE_API_PATCHED = Symbol.for('@SANDBOX_LIVE_API_PATCHED');
 
 export function getGeneralSandboxDistortionMap() {
   if (generalDistortionMap.size === 0) {
@@ -73,13 +82,15 @@ export function getGeneralSandboxDistortionMap() {
     distortCreateElement(generalDistortionMap);
     distortWorkers(generalDistortionMap);
     distortDocument(generalDistortionMap);
+    distortMonacoEditor(generalDistortionMap);
+    distortPostMessage(generalDistortionMap);
   }
   return generalDistortionMap;
 }
 
-function failToSet(originalAttrOrMethod: unknown, pluginId: string) {
-  logWarning(`Plugin ${pluginId} tried to set a sandboxed property`, {
-    pluginId,
+function failToSet(originalAttrOrMethod: unknown, meta: PluginMeta) {
+  logWarning(`Plugin ${meta.id} tried to set a sandboxed property`, {
+    pluginId: meta.id,
     attrOrMethod: String(originalAttrOrMethod),
     entity: 'window',
   });
@@ -98,7 +109,8 @@ function distortIframeAttributes(distortions: DistortionMap) {
   for (const property of iframeHtmlForbiddenProperties) {
     const descriptor = Object.getOwnPropertyDescriptor(HTMLIFrameElement.prototype, property);
     if (descriptor) {
-      function fail(originalAttrOrMethod: unknown, pluginId: string) {
+      function fail(originalAttrOrMethod: unknown, meta: PluginMeta) {
+        const pluginId = meta.id;
         logWarning(`Plugin ${pluginId} tried to access iframe.${property}`, {
           pluginId,
           attrOrMethod: property,
@@ -131,7 +143,8 @@ function distortIframeAttributes(distortions: DistortionMap) {
 function distortConsole(distortions: DistortionMap) {
   const descriptor = Object.getOwnPropertyDescriptor(window, 'console');
   if (descriptor?.value) {
-    function getSandboxConsole(originalAttrOrMethod: unknown, pluginId: string) {
+    function getSandboxConsole(originalAttrOrMethod: unknown, meta: PluginMeta) {
+      const pluginId = meta.id;
       // we don't monitor the console because we expect a high volume of calls
       if (monitorOnly) {
         return originalAttrOrMethod;
@@ -159,7 +172,8 @@ function distortConsole(distortions: DistortionMap) {
 
 // set distortions to alert to always output to the console
 function distortAlert(distortions: DistortionMap) {
-  function getAlertDistortion(originalAttrOrMethod: unknown, pluginId: string) {
+  function getAlertDistortion(originalAttrOrMethod: unknown, meta: PluginMeta) {
+    const pluginId = meta.id;
     logWarning(`Plugin ${pluginId} accessed window.alert`, {
       pluginId,
       attrOrMethod: 'alert',
@@ -184,7 +198,8 @@ function distortAlert(distortions: DistortionMap) {
 }
 
 function distortInnerHTML(distortions: DistortionMap) {
-  function getInnerHTMLDistortion(originalMethod: unknown, pluginId: string) {
+  function getInnerHTMLDistortion(originalMethod: unknown, meta: PluginMeta) {
+    const pluginId = meta.id;
     return function innerHTMLDistortion(this: HTMLElement, ...args: string[]) {
       for (const arg of args) {
         const lowerCase = arg?.toLowerCase() || '';
@@ -228,7 +243,8 @@ function distortInnerHTML(distortions: DistortionMap) {
 }
 
 function distortCreateElement(distortions: DistortionMap) {
-  function getCreateElementDistortion(originalMethod: unknown, pluginId: string) {
+  function getCreateElementDistortion(originalMethod: unknown, meta: PluginMeta) {
+    const pluginId = meta.id;
     return function createElementDistortion(this: HTMLElement, arg?: string, options?: unknown) {
       if (arg && forbiddenElements.includes(arg)) {
         logWarning(`Plugin ${pluginId} tried to create ${arg}`, {
@@ -253,7 +269,8 @@ function distortCreateElement(distortions: DistortionMap) {
 }
 
 function distortInsert(distortions: DistortionMap) {
-  function getInsertDistortion(originalMethod: unknown, pluginId: string) {
+  function getInsertDistortion(originalMethod: unknown, meta: PluginMeta) {
+    const pluginId = meta.id;
     return function insertChildDistortion(this: HTMLElement, node?: Node, ref?: Node) {
       const nodeType = node?.nodeName?.toLowerCase() || '';
 
@@ -274,7 +291,8 @@ function distortInsert(distortions: DistortionMap) {
     };
   }
 
-  function getinsertAdjacentElementDistortion(originalMethod: unknown, pluginId: string) {
+  function getinsertAdjacentElementDistortion(originalMethod: unknown, meta: PluginMeta) {
+    const pluginId = meta.id;
     return function insertAdjacentElementDistortion(this: HTMLElement, position?: string, node?: Node) {
       const nodeType = node?.nodeName?.toLowerCase() || '';
       if (node && forbiddenElements.includes(nodeType)) {
@@ -315,7 +333,8 @@ function distortInsert(distortions: DistortionMap) {
 // set distortions to append elements to the document
 function distortAppend(distortions: DistortionMap) {
   // append accepts an array of nodes to append https://developer.mozilla.org/en-US/docs/Web/API/Node/append
-  function getAppendDistortion(originalMethod: unknown, pluginId: string) {
+  function getAppendDistortion(originalMethod: unknown, meta: PluginMeta) {
+    const pluginId = meta.id;
     return function appendDistortion(this: HTMLElement, ...args: Node[]) {
       let acceptedNodes = args;
       const filteredAcceptedNodes = args?.filter((node) => !forbiddenElements.includes(node.nodeName.toLowerCase()));
@@ -341,7 +360,8 @@ function distortAppend(distortions: DistortionMap) {
   }
 
   // appendChild accepts a single node to add https://developer.mozilla.org/en-US/docs/Web/API/Node/appendChild
-  function getAppendChildDistortion(originalMethod: unknown, pluginId: string) {
+  function getAppendChildDistortion(originalMethod: unknown, meta: PluginMeta, sandboxEnv?: SandboxEnvironment) {
+    const pluginId = meta.id;
     return function appendChildDistortion(this: HTMLElement, arg?: Node) {
       const nodeType = arg?.nodeName?.toLowerCase() || '';
       if (arg && forbiddenElements.includes(nodeType)) {
@@ -355,6 +375,19 @@ function distortAppend(distortions: DistortionMap) {
         if (!monitorOnly) {
           return document.createDocumentFragment();
         }
+      }
+      // if the node is a script, load it into the sandbox
+      // this allows webpack chunks to be loaded into the sandbox
+      // loadScriptIntoSandbox has restrictions on what scripts can be loaded
+      if (sandboxEnv && arg && nodeType === 'script' && arg instanceof HTMLScriptElement) {
+        loadScriptIntoSandbox(arg.src, meta, sandboxEnv)
+          .then(() => {
+            arg.onload?.call(arg, new Event('load'));
+          })
+          .catch((err) => {
+            arg.onerror?.call(arg, new ErrorEvent('error', { error: err }));
+          });
+        return undefined;
       }
       if (isFunction(originalMethod)) {
         return originalMethod.call(this, arg);
@@ -427,4 +460,73 @@ function distortDocument(distortions: DistortionMap) {
       distortions.set(descriptor.value, failToSet);
     }
   }
+}
+
+async function distortMonacoEditor(distortions: DistortionMap) {
+  // We rely on `monaco` being instanciated inside `window.monaco`.
+  // this is the same object passed down to plugins using monaco editor for their editors
+  // this `window.monaco` is an instance of monaco but not the same as if we
+  // import `monaco-editor` directly in this file.
+  // Short of abusing the `window.monaco` object we would have to modify grafana-ui to export
+  // the monaco instance directly in the ReactMonacoEditor component
+  const monacoEditor: Monaco = Reflect.get(window, 'monaco');
+
+  // do not double patch
+  if (!monacoEditor || Object.hasOwn(monacoEditor, SANDBOX_LIVE_API_PATCHED)) {
+    return;
+  }
+  const originalSetMonarchTokensProvider = monacoEditor.languages.setMonarchTokensProvider;
+
+  // NOTE: this function in particular is called only once per intialized custom language inside a plugin which is a
+  // rare ocurrance but if not patched it'll break the syntax highlighting for the custom language.
+  function getSetMonarchTokensProvider() {
+    return function (...args: Parameters<typeof originalSetMonarchTokensProvider>) {
+      if (args.length !== 2) {
+        return originalSetMonarchTokensProvider.apply(monacoEditor, args);
+      }
+      return originalSetMonarchTokensProvider.call(
+        monacoEditor,
+        args[0],
+        unboxRegexesFromMembraneProxy(args[1]) as (typeof args)[1]
+      );
+    };
+  }
+  distortions.set(monacoEditor.languages.setMonarchTokensProvider, getSetMonarchTokensProvider);
+  Reflect.set(monacoEditor, SANDBOX_LIVE_API_PATCHED, {});
+}
+
+async function distortPostMessage(distortions: DistortionMap) {
+  const descriptor = Object.getOwnPropertyDescriptor(window, 'postMessage');
+
+  function getPostMessageDistortion(originalMethod: unknown) {
+    return function postMessageDistortion(this: Window, ...args: unknown[]) {
+      // proxies can't be serialized by postMessage algorithm
+      // the only way to pass it through is to send a cloned version
+      // objects passed to postMessage should be clonable
+      try {
+        const newArgs: unknown[] = cloneDeep(args);
+        if (isFunction(originalMethod)) {
+          originalMethod.apply(this, newArgs);
+        }
+      } catch (e) {
+        throw new Error('postMessage arguments are invalid objects');
+      }
+    };
+  }
+
+  if (descriptor?.value) {
+    distortions.set(descriptor.value, getPostMessageDistortion);
+  }
+}
+
+/**
+ * We define "live" APIs as APIs that can only be distorted in runtime on-the-fly and not at initialization
+ * time like other distortions do.
+ *
+ * This could be because the objects we want to patch only become available after specific states are reached
+ * or because the libraries we want to patch are lazy-loaded and we don't have access to their definitions
+ *
+ */
+export async function distortLiveApis() {
+  distortMonacoEditor(generalDistortionMap);
 }

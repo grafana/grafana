@@ -170,7 +170,7 @@ const ResourcePicker = ({
   );
 
   return (
-    <div>
+    <>
       <Search searchFn={handleSearch} />
       {shouldShowLimitFlag ? (
         <p className={styles.resultLimit}>Showing first {resourcePickerData.resultLimit} results</p>
@@ -188,7 +188,7 @@ const ResourcePicker = ({
         </thead>
       </table>
 
-      <div className={styles.tableScroller}>
+      <div className={cx(styles.scrollableTable, styles.tableScroller)}>
         <table className={styles.table}>
           <tbody>
             {isLoading && (
@@ -223,12 +223,12 @@ const ResourcePicker = ({
         </table>
       </div>
 
-      <div className={styles.selectionFooter}>
+      <footer className={styles.selectionFooter}>
         {selectedRows.length > 0 && (
           <>
             <h5>Selection</h5>
 
-            <div className={styles.tableScroller}>
+            <div className={cx(styles.scrollableTable, styles.selectedTableScroller)}>
               <table className={styles.table}>
                 <tbody>
                   {selectedRows.map((row) => (
@@ -282,8 +282,8 @@ const ResourcePicker = ({
             Apply
           </Button>
         </Modal.ButtonRow>
-      </div>
-    </div>
+      </footer>
+    </>
   );
 };
 

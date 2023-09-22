@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	pluginClient "github.com/grafana/grafana/pkg/plugins/manager/client"
+	pluginFakes "github.com/grafana/grafana/pkg/plugins/manager/fakes"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	fakeDatasources "github.com/grafana/grafana/pkg/services/datasources/fakes"
@@ -27,6 +28,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	pluginSettings "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings/service"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/query"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	secretstest "github.com/grafana/grafana/pkg/services/secrets/fakes"
@@ -51,8 +53,9 @@ func (rv *fakePluginRequestValidator) Validate(dsURL string, req *http.Request) 
 
 // `/ds/query` endpoint test
 func TestAPIEndpoint_Metrics_QueryMetricsV2(t *testing.T) {
+	cfg := setting.NewCfg()
 	qds := query.ProvideService(
-		setting.NewCfg(),
+		cfg,
 		nil,
 		nil,
 		&fakePluginRequestValidator{},
@@ -66,8 +69,8 @@ func TestAPIEndpoint_Metrics_QueryMetricsV2(t *testing.T) {
 				return &backend.QueryDataResponse{Responses: resp}, nil
 			},
 		},
-		plugincontext.ProvideService(localcache.ProvideService(), &plugins.FakePluginStore{
-			PluginList: []plugins.PluginDTO{
+		plugincontext.ProvideService(cfg, localcache.ProvideService(), &pluginstore.FakePluginStore{
+			PluginList: []pluginstore.Plugin{
 				{
 					JSONData: plugins.JSONData{
 						ID: "grafana",
@@ -75,8 +78,7 @@ func TestAPIEndpoint_Metrics_QueryMetricsV2(t *testing.T) {
 				},
 			},
 		}, &fakeDatasources.FakeDataSourceService{}, pluginSettings.ProvideService(dbtest.NewFakeDB(),
-			secretstest.NewFakeSecretsService()),
-		),
+			secretstest.NewFakeSecretsService()), pluginFakes.NewFakeLicensingService(), &config.Cfg{}),
 	)
 	serverFeatureEnabled := SetupAPITestServer(t, func(hs *HTTPServer) {
 		hs.queryDataService = qds
@@ -109,11 +111,12 @@ func TestAPIEndpoint_Metrics_QueryMetricsV2(t *testing.T) {
 }
 
 func TestAPIEndpoint_Metrics_PluginDecryptionFailure(t *testing.T) {
+	cfg := setting.NewCfg()
 	ds := &fakeDatasources.FakeDataSourceService{SimulatePluginFailure: true}
 	db := &dbtest.FakeDB{ExpectedError: pluginsettings.ErrPluginSettingNotFound}
-	pcp := plugincontext.ProvideService(localcache.ProvideService(),
-		&plugins.FakePluginStore{
-			PluginList: []plugins.PluginDTO{
+	pcp := plugincontext.ProvideService(cfg, localcache.ProvideService(),
+		&pluginstore.FakePluginStore{
+			PluginList: []pluginstore.Plugin{
 				{
 					JSONData: plugins.JSONData{
 						ID: "grafana",
@@ -121,10 +124,10 @@ func TestAPIEndpoint_Metrics_PluginDecryptionFailure(t *testing.T) {
 				},
 			},
 		},
-		ds, pluginSettings.ProvideService(db, secretstest.NewFakeSecretsService()),
+		ds, pluginSettings.ProvideService(db, secretstest.NewFakeSecretsService()), pluginFakes.NewFakeLicensingService(), &config.Cfg{},
 	)
 	qds := query.ProvideService(
-		setting.NewCfg(),
+		cfg,
 		nil,
 		nil,
 		&fakePluginRequestValidator{},
@@ -283,22 +286,22 @@ func TestDataSourceQueryError(t *testing.T) {
 				},
 			})
 			srv := SetupAPITestServer(t, func(hs *HTTPServer) {
+				cfg := setting.NewCfg()
 				r := registry.NewInMemory()
 				err := r.Add(context.Background(), p)
 				require.NoError(t, err)
 				ds := &fakeDatasources.FakeDataSourceService{}
 				hs.queryDataService = query.ProvideService(
-					setting.NewCfg(),
+					cfg,
 					&fakeDatasources.FakeCacheService{},
 					nil,
 					&fakePluginRequestValidator{},
 					pluginClient.ProvideService(r, &config.Cfg{}),
-					plugincontext.ProvideService(localcache.ProvideService(), &plugins.FakePluginStore{
-						PluginList: []plugins.PluginDTO{p.ToDTO()},
+					plugincontext.ProvideService(cfg, localcache.ProvideService(), &pluginstore.FakePluginStore{
+						PluginList: []pluginstore.Plugin{pluginstore.ToGrafanaDTO(p)},
 					},
 						ds, pluginSettings.ProvideService(dbtest.NewFakeDB(),
-							secretstest.NewFakeSecretsService()),
-					),
+							secretstest.NewFakeSecretsService()), pluginFakes.NewFakeLicensingService(), &config.Cfg{}),
 				)
 				hs.QuotaService = quotatest.New(false, nil)
 			})
@@ -307,7 +310,6 @@ func TestDataSourceQueryError(t *testing.T) {
 			resp, err := srv.SendJSON(req)
 			require.NoError(t, err)
 
-			require.Equal(t, tc.expectedStatus, resp.StatusCode)
 			require.Equal(t, tc.expectedStatus, resp.StatusCode)
 			body, err := io.ReadAll(resp.Body)
 			require.NoError(t, err)

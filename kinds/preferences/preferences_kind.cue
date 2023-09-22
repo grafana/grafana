@@ -27,11 +27,20 @@ lineage: schemas: [{
 
 			// Explore query history preferences
 			queryHistory?: #QueryHistoryPreference
+
+			// Cookie preferences
+			cookiePreferences?: #CookiePreferences
 		} @cuetsy(kind="interface")
 
 		#QueryHistoryPreference: {
 			// one of: '' | 'query' | 'starred';
 			homeTab?: string
+		} @cuetsy(kind="interface")
+
+		#CookiePreferences: {
+			analytics?: {}
+			performance?: {}
+			functional?: {}
 		} @cuetsy(kind="interface")
 	}
 }]

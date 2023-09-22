@@ -8,18 +8,20 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 )
 
-func NewStore(sql db.DB) *store {
-	return &store{sql}
+func NewStore(sql db.DB, features featuremgmt.FeatureToggles) *store {
+	return &store{sql, features}
 }
 
 type store struct {
-	sql db.DB
+	sql      db.DB
+	features featuremgmt.FeatureToggles
 }
 
 type flatResourcePermission struct {
@@ -46,6 +48,33 @@ func (p *flatResourcePermission) IsManaged(scope string) bool {
 // (ie, managed permissions on a parent resource)
 func (p *flatResourcePermission) IsInherited(scope string) bool {
 	return strings.HasPrefix(p.RoleName, accesscontrol.ManagedRolePrefix) && p.Scope != scope
+}
+
+type DeleteResourcePermissionsCmd struct {
+	Resource          string
+	ResourceAttribute string
+	ResourceID        string
+}
+
+func (s *store) DeleteResourcePermissions(ctx context.Context, orgID int64, cmd *DeleteResourcePermissionsCmd) error {
+	scope := accesscontrol.Scope(cmd.Resource, cmd.ResourceAttribute, cmd.ResourceID)
+
+	err := s.sql.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+		var permissionIDs []int64
+		err := sess.SQL(
+			"SELECT permission.id FROM permission INNER JOIN role ON permission.role_id = role.id WHERE permission.scope = ? AND role.org_id = ?",
+			scope, orgID).Find(&permissionIDs)
+		if err != nil {
+			return err
+		}
+
+		if err := deletePermissions(sess, permissionIDs); err != nil {
+			return err
+		}
+		return err
+	})
+
+	return err
 }
 
 func (s *store) SetUserResourcePermission(
@@ -326,7 +355,7 @@ func (s *store) getResourcePermissions(sess *db.Session, orgID int64, query GetR
 
 	scope := accesscontrol.Scope(query.Resource, query.ResourceAttribute, query.ResourceID)
 
-	args := []interface{}{
+	args := []any{
 		orgID,
 		orgID,
 		accesscontrol.Scope(query.Resource, "*"),
@@ -621,6 +650,9 @@ func (s *store) createPermissions(sess *db.Session, roleID int64, resource, reso
 		p.RoleID = roleID
 		p.Created = time.Now()
 		p.Updated = time.Now()
+		if s.features.IsEnabled(featuremgmt.FlagSplitScopes) {
+			p.Kind, p.Attribute, p.Identifier = p.SplitScope()
+		}
 		permissions = append(permissions, p)
 	}
 
@@ -636,7 +668,7 @@ func deletePermissions(sess *db.Session, ids []int64) error {
 	}
 
 	rawSQL := "DELETE FROM permission WHERE id IN(?" + strings.Repeat(",?", len(ids)-1) + ")"
-	args := make([]interface{}, 0, len(ids)+1)
+	args := make([]any, 0, len(ids)+1)
 	args = append(args, rawSQL)
 	for _, id := range ids {
 		args = append(args, id)

@@ -14,6 +14,10 @@ keywords:
   - permissions
   - acl
   - enterprise
+labels:
+  products:
+    - enterprise
+    - oss
 title: Datasource Permissions HTTP API
 ---
 

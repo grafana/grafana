@@ -35,6 +35,7 @@ export { StatsPicker } from './StatsPicker/StatsPicker';
 export { RefreshPicker, defaultIntervals } from './RefreshPicker/RefreshPicker';
 export { TimeRangePicker, type TimeRangePickerProps } from './DateTimePickers/TimeRangePicker';
 export { TimePickerTooltip } from './DateTimePickers/TimeRangePicker';
+export { TimeRangeLabel } from './DateTimePickers/TimeRangePicker/TimeRangeLabel';
 export { TimeOfDayPicker } from './DateTimePickers/TimeOfDayPicker';
 export { TimeZonePicker } from './DateTimePickers/TimeZonePicker';
 export { WeekStartPicker } from './DateTimePickers/WeekStartPicker';
@@ -83,10 +84,19 @@ export { SetInterval } from './SetInterval/SetInterval';
 
 export { Table } from './Table/Table';
 export {
-  TableCellDisplayMode,
+  type TableCustomCellOptions,
+  type CustomCellRendererProps,
+  type TableFieldOptions,
   type TableSortByFieldState,
   type TableFooterCalc,
   type AdHocFilterItem,
+  type TableAutoCellOptions,
+  type TableSparklineCellOptions,
+  type TableBarGaugeCellOptions,
+  type TableColoredBackgroundCellOptions,
+  type TableColorTextCellOptions,
+  type TableImageCellOptions,
+  type TableJsonViewCellOptions,
 } from './Table/types';
 export { TableInputCSV } from './TableInputCSV/TableInputCSV';
 export { TabsBar } from './Tabs/TabsBar';
@@ -128,8 +138,6 @@ export {
   type PanelChromeType,
   PanelChromeLoadingIndicator,
   type PanelChromeLoadingIndicatorProps,
-  PanelChromeErrorIndicator,
-  type PanelChromeErrorIndicatorProps,
   PanelContextProvider,
   type PanelContext,
   PanelContextRoot,
@@ -204,6 +212,8 @@ export { ToolbarButton, ToolbarButtonRow } from './ToolbarButton';
 export { ValuePicker } from './ValuePicker/ValuePicker';
 export { fieldMatchersUI } from './MatchersUI/fieldMatchersUI';
 export { Link } from './Link/Link';
+export { TextLink } from './Link/TextLink';
+export { Text } from './Text/Text';
 
 export { Label } from './Forms/Label';
 export { Field, type FieldProps } from './Forms/Field';
@@ -253,6 +263,7 @@ export { UserIcon, type UserIconProps } from './UsersIndicator/UserIcon';
 export { type UserView } from './UsersIndicator/types';
 // Export this until we've figured out a good approach to inline form styles.
 export { InlineFormLabel } from './FormLabel/FormLabel';
+export { Divider } from './Divider/Divider';
 
 const LegacyForms = {
   SecretFormField,

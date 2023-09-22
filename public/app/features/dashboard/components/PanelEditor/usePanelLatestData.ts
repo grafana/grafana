@@ -1,14 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
 import { Unsubscribable } from 'rxjs';
 
-import { DataQueryError, LoadingState, PanelData } from '@grafana/data';
+import { LoadingState, PanelData } from '@grafana/data';
 
 import { GetDataOptions } from '../../../query/state/PanelQueryRunner';
 import { PanelModel } from '../../state';
 
 interface UsePanelLatestData {
   data?: PanelData;
-  error?: DataQueryError;
+  hasError: boolean;
   isLoading: boolean;
   hasSeries: boolean;
 }
@@ -30,7 +30,8 @@ export const usePanelLatestData = (
 
     querySubscription.current = panel
       .getQueryRunner()
-      .getData(options)
+      // We apply field config later
+      .getData({ withTransforms: options.withTransforms, withFieldConfig: false })
       .subscribe({
         next: (data) => {
           if (checkSchema) {
@@ -58,12 +59,14 @@ export const usePanelLatestData = (
      * Otherwise, passing different references to the same object might cause troubles.
      */
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [panel, options.withFieldConfig, options.withTransforms]);
+  }, [panel, options.withTransforms]);
 
   return {
     data: latestData,
-    error: latestData && latestData.error,
-    isLoading: latestData ? latestData.state === LoadingState.Loading : true,
+    isLoading: latestData?.state === LoadingState.Loading,
     hasSeries: latestData ? !!latestData.series : false,
+    hasError: Boolean(
+      latestData && (latestData.error || latestData?.errors?.length || latestData.state === LoadingState.Error)
+    ),
   };
 };

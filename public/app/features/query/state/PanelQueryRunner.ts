@@ -1,6 +1,6 @@
 import { cloneDeep } from 'lodash';
 import { Observable, of, ReplaySubject, Unsubscribable } from 'rxjs';
-import { map, mergeMap } from 'rxjs/operators';
+import { map, mergeMap, catchError } from 'rxjs/operators';
 
 import {
   applyFieldOverrides,
@@ -27,15 +27,14 @@ import {
   transformDataFrame,
   preProcessPanelData,
   ApplyFieldOverrideOptions,
+  StreamingDataFrame,
 } from '@grafana/data';
 import { getTemplateSrv, toDataQueryError } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/src/utils/DataSourceWithBackend';
-import { StreamingDataFrame } from 'app/features/live/data/StreamingDataFrame';
 import { isStreamingDataFrame } from 'app/features/live/data/utils';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 
 import { isSharedDashboardQuery, runSharedRequest } from '../../../plugins/datasource/dashboard';
-import { PublicDashboardDataSource } from '../../dashboard/services/PublicDashboardDataSource';
 import { PanelModel } from '../../dashboard/state';
 
 import { getDashboardQueryRunner } from './DashboardQueryRunner/DashboardQueryRunner';
@@ -44,13 +43,12 @@ import { runRequest } from './runRequest';
 
 export interface QueryRunnerOptions<
   TQuery extends DataQuery = DataQuery,
-  TOptions extends DataSourceJsonData = DataSourceJsonData
+  TOptions extends DataSourceJsonData = DataSourceJsonData,
 > {
   datasource: DataSourceRef | DataSourceApi<TQuery, TOptions> | null;
   queries: TQuery[];
   panelId?: number;
   dashboardUID?: string;
-  publicDashboardAccessToken?: string;
   timezone: TimeZone;
   timeRange: TimeRange;
   timeInfo?: string; // String description of time range for display
@@ -179,6 +177,16 @@ export class PanelQueryRunner {
                     ...fieldConfig!,
                   }),
                 };
+                if (processedData.annotations) {
+                  processedData.annotations = applyFieldOverrides({
+                    data: processedData.annotations,
+                    ...fieldConfig!,
+                    fieldConfig: {
+                      defaults: {},
+                      overrides: [],
+                    },
+                  });
+                }
                 isFirstPacket = false;
               }
             }
@@ -210,7 +218,17 @@ export class PanelQueryRunner {
       interpolate: (v: string) => getTemplateSrv().replace(v, data?.request?.scopedVars),
     };
 
-    return transformDataFrame(transformations, data.series, ctx).pipe(map((series) => ({ ...data, series })));
+    return transformDataFrame(transformations, data.series, ctx).pipe(
+      map((series) => ({ ...data, series })),
+      catchError((err) => {
+        console.warn('Error running transformation:', err);
+        return of({
+          ...data,
+          state: LoadingState.Error,
+          errors: [toDataQueryError(err)],
+        });
+      })
+    );
   }
 
   async run(options: QueryRunnerOptions) {
@@ -220,7 +238,6 @@ export class PanelQueryRunner {
       datasource,
       panelId,
       dashboardUID,
-      publicDashboardAccessToken,
       timeRange,
       timeInfo,
       cacheTimeout,
@@ -242,7 +259,6 @@ export class PanelQueryRunner {
       timezone,
       panelId,
       dashboardUID,
-      publicDashboardAccessToken,
       range: timeRange,
       timeInfo,
       interval: '',
@@ -257,7 +273,7 @@ export class PanelQueryRunner {
     };
 
     try {
-      const ds = await getDataSource(datasource, request.scopedVars, publicDashboardAccessToken);
+      const ds = await getDataSource(datasource, request.scopedVars);
       const isMixedDS = ds.meta?.mixed;
 
       // Attach the data source to each query
@@ -392,17 +408,11 @@ export class PanelQueryRunner {
 
 async function getDataSource(
   datasource: DataSourceRef | string | DataSourceApi | null,
-  scopedVars: ScopedVars,
-  publicDashboardAccessToken?: string
+  scopedVars: ScopedVars
 ): Promise<DataSourceApi> {
-  if (!publicDashboardAccessToken && datasource && typeof datasource === 'object' && 'query' in datasource) {
+  if (datasource && typeof datasource === 'object' && 'query' in datasource) {
     return datasource;
   }
 
-  const ds = await getDatasourceSrv().get(datasource, scopedVars);
-  if (publicDashboardAccessToken) {
-    return new PublicDashboardDataSource(ds);
-  }
-
-  return ds;
+  return await getDatasourceSrv().get(datasource, scopedVars);
 }

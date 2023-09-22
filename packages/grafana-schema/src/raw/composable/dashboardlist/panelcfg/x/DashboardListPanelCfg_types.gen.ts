@@ -9,10 +9,14 @@
 //
 // Run 'make gen-cue' from repository root to regenerate.
 
-export const pluginVersion = "10.1.0-pre";
+export const pluginVersion = "10.2.0-pre";
 
 export interface Options {
+  /**
+   * folderId is deprecated, and migrated to folderUid on panel init
+   */
   folderId?: number;
+  folderUID?: string;
   includeVars: boolean;
   keepTime: boolean;
   maxItems: number;

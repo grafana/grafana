@@ -6,30 +6,28 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana/pkg/registry"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 type AccessControl interface {
 	// Evaluate evaluates access to the given resources.
-	Evaluate(ctx context.Context, user *user.SignedInUser, evaluator Evaluator) (bool, error)
+	Evaluate(ctx context.Context, user identity.Requester, evaluator Evaluator) (bool, error)
 	// RegisterScopeAttributeResolver allows the caller to register a scope resolver for a
 	// specific scope prefix (ex: datasources:name:)
 	RegisterScopeAttributeResolver(prefix string, resolver ScopeAttributeResolver)
-	//IsDisabled returns if access control is enabled or not
-	IsDisabled() bool
 }
 
 type Service interface {
 	registry.ProvidesUsageStats
 	// GetUserPermissions returns user permissions with only action and scope fields set.
-	GetUserPermissions(ctx context.Context, user *user.SignedInUser, options Options) ([]Permission, error)
+	GetUserPermissions(ctx context.Context, user identity.Requester, options Options) ([]Permission, error)
 	// SearchUsersPermissions returns all users' permissions filtered by an action prefix
-	SearchUsersPermissions(ctx context.Context, user *user.SignedInUser, orgID int64, options SearchOptions) (map[int64][]Permission, error)
+	SearchUsersPermissions(ctx context.Context, user identity.Requester, options SearchOptions) (map[int64][]Permission, error)
 	// ClearUserPermissionCache removes the permission cache entry for the given user
-	ClearUserPermissionCache(user *user.SignedInUser)
+	ClearUserPermissionCache(user identity.Requester)
 	// SearchUserPermissions returns single user's permissions filtered by an action prefix or an action
 	SearchUserPermissions(ctx context.Context, orgID int64, filterOptions SearchOptions) ([]Permission, error)
 	// DeleteUserPermissions removes all permissions user has in org and all permission to that user
@@ -42,8 +40,6 @@ type Service interface {
 	SaveExternalServiceRole(ctx context.Context, cmd SaveExternalServiceRoleCommand) error
 	// DeleteExternalServiceRole removes an external service's role and its assignment.
 	DeleteExternalServiceRole(ctx context.Context, externalServiceID string) error
-	//IsDisabled returns if access control is enabled or not
-	IsDisabled() bool
 }
 
 type RoleRegistry interface {
@@ -63,7 +59,7 @@ type SearchOptions struct {
 }
 
 type TeamPermissionsService interface {
-	GetPermissions(ctx context.Context, user *user.SignedInUser, resourceID string) ([]ResourcePermission, error)
+	GetPermissions(ctx context.Context, user identity.Requester, resourceID string) ([]ResourcePermission, error)
 	SetUserPermission(ctx context.Context, orgID int64, user User, resourceID, permission string) (*ResourcePermission, error)
 }
 
@@ -85,7 +81,7 @@ type ServiceAccountPermissionsService interface {
 
 type PermissionsService interface {
 	// GetPermissions returns all permissions for given resourceID
-	GetPermissions(ctx context.Context, user *user.SignedInUser, resourceID string) ([]ResourcePermission, error)
+	GetPermissions(ctx context.Context, user identity.Requester, resourceID string) ([]ResourcePermission, error)
 	// SetUserPermission sets permission on resource for a user
 	SetUserPermission(ctx context.Context, orgID int64, user User, resourceID, permission string) (*ResourcePermission, error)
 	// SetTeamPermission sets permission on resource for a team
@@ -96,6 +92,8 @@ type PermissionsService interface {
 	SetPermissions(ctx context.Context, orgID int64, resourceID string, commands ...SetResourcePermissionCommand) ([]ResourcePermission, error)
 	// MapActions will map actions for a ResourcePermissions to it's "friendly" name configured in PermissionsToActions map.
 	MapActions(permission ResourcePermission) string
+	// DeleteResourcePermissions removes all permissions for a resource
+	DeleteResourcePermissions(ctx context.Context, orgID int64, resourceID string) error
 }
 
 type User struct {
@@ -113,7 +111,7 @@ func HasGlobalAccess(ac AccessControl, service Service, c *contextmodel.ReqConte
 		if userCopy.Permissions[GlobalOrgID] == nil {
 			permissions, err := service.GetUserPermissions(c.Req.Context(), &userCopy, Options{})
 			if err != nil {
-				c.Logger.Error("failed fetching permissions for user", "userID", userCopy.UserID, "error", err)
+				c.Logger.Error("Failed fetching permissions for user", "userID", userCopy.UserID, "error", err)
 			}
 			userCopy.Permissions[GlobalOrgID] = GroupScopesByAction(permissions)
 		}
@@ -148,13 +146,13 @@ var ReqSignedIn = func(c *contextmodel.ReqContext) bool {
 }
 
 var ReqGrafanaAdmin = func(c *contextmodel.ReqContext) bool {
-	return c.IsGrafanaAdmin
+	return c.SignedInUser.GetIsGrafanaAdmin()
 }
 
 // ReqHasRole generates a fallback to check whether the user has a role
 // ReqHasRole(org.RoleAdmin) will always return true for Grafana server admins, eg, a Grafana Admin / Viewer role combination
 func ReqHasRole(role org.RoleType) func(c *contextmodel.ReqContext) bool {
-	return func(c *contextmodel.ReqContext) bool { return c.HasRole(role) }
+	return func(c *contextmodel.ReqContext) bool { return c.SignedInUser.HasRole(role) }
 }
 
 func BuildPermissionsMap(permissions []Permission) map[string]bool {
@@ -368,22 +366,18 @@ func ManagedBuiltInRoleName(builtInRole string) string {
 	return fmt.Sprintf("managed:builtins:%s:permissions", strings.ToLower(builtInRole))
 }
 
-func IsDisabled(cfg *setting.Cfg) bool {
-	return !cfg.RBACEnabled
-}
-
 // GetOrgRoles returns legacy org roles for a user
-func GetOrgRoles(user *user.SignedInUser) []string {
-	roles := []string{string(user.OrgRole)}
+func GetOrgRoles(user identity.Requester) []string {
+	roles := []string{string(user.GetOrgRole())}
 
-	if user.IsGrafanaAdmin {
+	if user.GetIsGrafanaAdmin() {
 		roles = append(roles, RoleGrafanaAdmin)
 	}
 
 	return roles
 }
 
-func BackgroundUser(name string, orgID int64, role org.RoleType, permissions []Permission) *user.SignedInUser {
+func BackgroundUser(name string, orgID int64, role org.RoleType, permissions []Permission) identity.Requester {
 	return &user.SignedInUser{
 		OrgID:   orgID,
 		OrgRole: role,

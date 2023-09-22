@@ -105,13 +105,17 @@ describe('explore links utils', () => {
       );
       expect(links[0].title).toBe('test_ds');
 
+      const preventDefault = jest.fn();
+
       if (links[0].onClick) {
-        links[0].onClick({});
+        links[0].onClick({
+          preventDefault,
+        });
       }
 
       expect(splitfn).toBeCalledWith({
         datasourceUid: 'uid_1',
-        query: { query: 'query_1' },
+        queries: [{ query: 'query_1' }],
         range,
         panelsState: {
           trace: {
@@ -119,6 +123,8 @@ describe('explore links utils', () => {
           },
         },
       });
+
+      expect(preventDefault).toBeCalled();
 
       expect(reportInteraction).toBeCalledWith('grafana_data_link_clicked', {
         app: CoreApp.Explore,
@@ -644,86 +650,47 @@ describe('explore links utils', () => {
   });
 
   describe('getVariableUsageInfo', () => {
-    it('returns true when query contains variables and all variables are used', () => {
-      const dataLink = {
+    function makeDataLinkWithQuery(query: string): DataLink {
+      return {
         url: '',
         title: '',
         internal: {
           datasourceUid: 'uid',
           datasourceName: 'dsName',
-          query: { query: 'test ${testVal}' },
+          query: { query },
         },
       };
+    }
+
+    function allVariablesDefinedInQuery(query: string) {
       const scopedVars = {
         testVal: { text: '', value: 'val1' },
       };
-      const dataLinkRtnVal = getVariableUsageInfo(dataLink, scopedVars).allVariablesDefined;
+      return getVariableUsageInfo(makeDataLinkWithQuery(query), scopedVars).allVariablesDefined;
+    }
 
-      expect(dataLinkRtnVal).toBe(true);
+    it('returns true when query contains variables and all variables are used', () => {
+      expect(allVariablesDefinedInQuery('test ${testVal}')).toBe(true);
+    });
+
+    it('ignores global variables', () => {
+      expect(allVariablesDefinedInQuery('test ${__rate_interval} $__from $__to')).toBe(true);
     });
 
     it('returns false when query contains variables and no variables are used', () => {
-      const dataLink = {
-        url: '',
-        title: '',
-        internal: {
-          datasourceUid: 'uid',
-          datasourceName: 'dsName',
-          query: { query: 'test ${diffVar}' },
-        },
-      };
-      const scopedVars = {
-        testVal: { text: '', value: 'val1' },
-      };
-      const dataLinkRtnVal = getVariableUsageInfo(dataLink, scopedVars).allVariablesDefined;
-
-      expect(dataLinkRtnVal).toBe(false);
+      expect(allVariablesDefinedInQuery('test ${diffVar}')).toBe(false);
     });
 
     it('returns false when query contains variables and some variables are used', () => {
-      const dataLink = {
-        url: '',
-        title: '',
-        internal: {
-          datasourceUid: 'uid',
-          datasourceName: 'dsName',
-          query: { query: 'test ${testVal} ${diffVar}' },
-        },
-      };
-      const scopedVars = {
-        testVal: { text: '', value: 'val1' },
-      };
-      const dataLinkRtnVal = getVariableUsageInfo(dataLink, scopedVars).allVariablesDefined;
-      expect(dataLinkRtnVal).toBe(false);
+      expect(allVariablesDefinedInQuery('test ${testVal} ${diffVar}')).toBe(false);
     });
 
     it('returns true when query contains no variables', () => {
-      const dataLink = {
-        url: '',
-        title: '',
-        internal: {
-          datasourceUid: 'uid',
-          datasourceName: 'dsName',
-          query: { query: 'test' },
-        },
-      };
-      const scopedVars = {
-        testVal: { text: '', value: 'val1' },
-      };
-      const dataLinkRtnVal = getVariableUsageInfo(dataLink, scopedVars).allVariablesDefined;
-      expect(dataLinkRtnVal).toBe(true);
+      expect(allVariablesDefinedInQuery('test')).toBe(true);
     });
 
     it('returns deduplicated list of variables', () => {
-      const dataLink = {
-        url: '',
-        title: '',
-        internal: {
-          datasourceUid: 'uid',
-          datasourceName: 'dsName',
-          query: { query: 'test ${test} ${foo} ${test:raw} $test' },
-        },
-      };
+      const dataLink = makeDataLinkWithQuery('test ${test} ${foo} ${test:raw} $test');
       const scopedVars = {
         testVal: { text: '', value: 'val1' },
       };

@@ -1,7 +1,6 @@
-import { useEffect, useLayoutEffect, useState } from 'react';
+import { useLayoutEffect } from 'react';
 
 import { UPlotConfigBuilder } from '../config/UPlotConfigBuilder';
-import { PlotSelection } from '../types';
 import { pluginLog } from '../utils';
 
 interface ZoomPluginProps {
@@ -16,33 +15,24 @@ const MIN_ZOOM_DIST = 5;
  * @alpha
  */
 export const ZoomPlugin = ({ onZoom, config }: ZoomPluginProps) => {
-  const [selection, setSelection] = useState<PlotSelection | null>(null);
-
-  useEffect(() => {
-    if (selection) {
-      pluginLog('ZoomPlugin', false, 'selected', selection);
-      if (selection.bbox.width < MIN_ZOOM_DIST) {
-        return;
-      }
-      onZoom({ from: selection.min, to: selection.max });
-    }
-  }, [selection]);
-
   useLayoutEffect(() => {
     config.addHook('setSelect', (u) => {
       const min = u.posToVal(u.select.left, 'x');
       const max = u.posToVal(u.select.left + u.select.width, 'x');
 
-      setSelection({
-        min,
-        max,
-        bbox: {
-          left: u.bbox.left / window.devicePixelRatio + u.select.left,
-          top: u.bbox.top / window.devicePixelRatio,
-          height: u.bbox.height / window.devicePixelRatio,
-          width: u.select.width,
-        },
-      });
+      if (u.select.width >= MIN_ZOOM_DIST) {
+        pluginLog('ZoomPlugin', false, 'selected', {
+          min,
+          max,
+          bbox: {
+            left: u.bbox.left / window.devicePixelRatio + u.select.left,
+            top: u.bbox.top / window.devicePixelRatio,
+            height: u.bbox.height / window.devicePixelRatio,
+            width: u.select.width,
+          },
+        });
+        onZoom({ from: min, to: max });
+      }
 
       // manually hide selected region (since cursor.drag.setScale = false)
       /* @ts-ignore */

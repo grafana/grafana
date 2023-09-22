@@ -19,8 +19,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
+
+const REDACTED = "redacted"
 
 // swagger:route GET /folders folders getFolders
 //
@@ -86,12 +89,12 @@ func (hs *HTTPServer) GetFolderByUID(c *contextmodel.ReqContext) response.Respon
 		return apierrors.ToFolderErrorResponse(err)
 	}
 
-	g, err := guardian.NewByUID(c.Req.Context(), folder.UID, c.OrgID, c.SignedInUser)
+	folderDTO, err := hs.newToFolderDto(c, folder)
 	if err != nil {
 		return response.Err(err)
 	}
 
-	return response.JSON(http.StatusOK, hs.newToFolderDto(c, g, folder))
+	return response.JSON(http.StatusOK, folderDTO)
 }
 
 // swagger:route GET /folders/id/{folder_id} folders getFolderByID
@@ -119,11 +122,11 @@ func (hs *HTTPServer) GetFolderByID(c *contextmodel.ReqContext) response.Respons
 		return apierrors.ToFolderErrorResponse(err)
 	}
 
-	g, err := guardian.NewByUID(c.Req.Context(), folder.UID, c.OrgID, c.SignedInUser)
+	folderDTO, err := hs.newToFolderDto(c, folder)
 	if err != nil {
 		return response.Err(err)
 	}
-	return response.JSON(http.StatusOK, hs.newToFolderDto(c, g, folder))
+	return response.JSON(http.StatusOK, folderDTO)
 }
 
 // swagger:route POST /folders folders createFolder
@@ -158,43 +161,35 @@ func (hs *HTTPServer) CreateFolder(c *contextmodel.ReqContext) response.Response
 
 	// Clear permission cache for the user who's created the folder, so that new permissions are fetched for their next call
 	// Required for cases when caller wants to immediately interact with the newly created object
-	if !hs.AccessControl.IsDisabled() {
-		hs.accesscontrolService.ClearUserPermissionCache(c.SignedInUser)
-	}
+	hs.accesscontrolService.ClearUserPermissionCache(c.SignedInUser)
 
-	g, err := guardian.NewByUID(c.Req.Context(), folder.UID, c.OrgID, c.SignedInUser)
+	folderDTO, err := hs.newToFolderDto(c, folder)
 	if err != nil {
 		return response.Err(err)
 	}
 
 	// TODO set ParentUID if nested folders are enabled
-	return response.JSON(http.StatusOK, hs.newToFolderDto(c, g, folder))
+	return response.JSON(http.StatusOK, folderDTO)
 }
 
 func (hs *HTTPServer) setDefaultFolderPermissions(ctx context.Context, orgID int64, user *user.SignedInUser, folder *folder.Folder) error {
-	isNested := folder.ParentUID != ""
-	var permissionErr error
-	if !accesscontrol.IsDisabled(hs.Cfg) {
-		var permissions []accesscontrol.SetResourcePermissionCommand
-		if user.IsRealUser() && !user.IsAnonymous {
-			permissions = append(permissions, accesscontrol.SetResourcePermissionCommand{
-				UserID: user.UserID, Permission: dashboards.PERMISSION_ADMIN.String(),
-			})
-		}
-
-		if !isNested || !hs.Features.IsEnabled(featuremgmt.FlagNestedFolders) {
-			permissions = append(permissions, []accesscontrol.SetResourcePermissionCommand{
-				{BuiltinRole: string(org.RoleEditor), Permission: dashboards.PERMISSION_EDIT.String()},
-				{BuiltinRole: string(org.RoleViewer), Permission: dashboards.PERMISSION_VIEW.String()},
-			}...)
-		}
-
-		_, permissionErr = hs.folderPermissionsService.SetPermissions(ctx, orgID, folder.UID, permissions...)
-		return permissionErr
-	} else if hs.Cfg.EditorsCanAdmin && user.IsRealUser() && !user.IsAnonymous {
-		return hs.folderService.MakeUserAdmin(ctx, orgID, user.UserID, folder.ID, !isNested)
+	var permissions []accesscontrol.SetResourcePermissionCommand
+	if user.IsRealUser() && !user.IsAnonymous {
+		permissions = append(permissions, accesscontrol.SetResourcePermissionCommand{
+			UserID: user.UserID, Permission: dashboards.PERMISSION_ADMIN.String(),
+		})
 	}
-	return nil
+
+	isNested := folder.ParentUID != ""
+	if !isNested || !hs.Features.IsEnabled(featuremgmt.FlagNestedFolders) {
+		permissions = append(permissions, []accesscontrol.SetResourcePermissionCommand{
+			{BuiltinRole: string(org.RoleEditor), Permission: dashboards.PERMISSION_EDIT.String()},
+			{BuiltinRole: string(org.RoleViewer), Permission: dashboards.PERMISSION_VIEW.String()},
+		}...)
+	}
+
+	_, err := hs.folderPermissionsService.SetPermissions(ctx, orgID, folder.UID, permissions...)
+	return err
 }
 
 // swagger:route POST /folders/{folder_uid}/move folders moveFolder
@@ -223,11 +218,11 @@ func (hs *HTTPServer) MoveFolder(c *contextmodel.ReqContext) response.Response {
 			return response.Error(http.StatusInternalServerError, "move folder failed", err)
 		}
 
-		g, err := guardian.NewByUID(c.Req.Context(), cmd.UID, c.OrgID, c.SignedInUser)
+		folderDTO, err := hs.newToFolderDto(c, theFolder)
 		if err != nil {
 			return response.Err(err)
 		}
-		return response.JSON(http.StatusOK, hs.newToFolderDto(c, g, theFolder))
+		return response.JSON(http.StatusOK, folderDTO)
 	}
 	result := map[string]string{}
 	result["message"] = "To use this service, you need to activate nested folder feature."
@@ -259,12 +254,12 @@ func (hs *HTTPServer) UpdateFolder(c *contextmodel.ReqContext) response.Response
 	if err != nil {
 		return apierrors.ToFolderErrorResponse(err)
 	}
-	g, err := guardian.NewByUID(c.Req.Context(), result.UID, c.OrgID, c.SignedInUser)
+	folderDTO, err := hs.newToFolderDto(c, result)
 	if err != nil {
 		return response.Err(err)
 	}
 
-	return response.JSON(http.StatusOK, hs.newToFolderDto(c, g, result))
+	return response.JSON(http.StatusOK, folderDTO)
 }
 
 // swagger:route DELETE /folders/{folder_uid} folders deleteFolder
@@ -289,6 +284,12 @@ func (hs *HTTPServer) DeleteFolder(c *contextmodel.ReqContext) response.Response
 		}
 		return apierrors.ToFolderErrorResponse(err)
 	}
+	/* TODO: after a decision regarding folder deletion permissions has been made
+	(https://github.com/grafana/grafana-enterprise/issues/5144),
+	remove the previous call to hs.LibraryElementService.DeleteLibraryElementsInFolder
+	and remove "user" from the signature of DeleteInFolder in the folder RegistryService.
+	Context: https://github.com/grafana/grafana/pull/69149#discussion_r1235057903
+	*/
 
 	uid := web.Params(c.Req)[":uid"]
 	err = hs.folderService.Delete(c.Req.Context(), &folder.DeleteFolderCommand{UID: uid, OrgID: c.OrgID, ForceDeleteRules: c.QueryBool("forceDeleteRules"), SignedInUser: c.SignedInUser})
@@ -296,7 +297,9 @@ func (hs *HTTPServer) DeleteFolder(c *contextmodel.ReqContext) response.Response
 		return apierrors.ToFolderErrorResponse(err)
 	}
 
-	return response.JSON(http.StatusOK, "")
+	return response.JSON(http.StatusOK, util.DynMap{
+		"message": "Folder deleted",
+	})
 }
 
 // swagger:route GET /folders/{folder_uid}/counts folders getFolderDescendantCounts
@@ -318,9 +321,14 @@ func (hs *HTTPServer) GetFolderDescendantCounts(c *contextmodel.ReqContext) resp
 
 	return response.JSON(http.StatusOK, counts)
 }
-func (hs *HTTPServer) newToFolderDto(c *contextmodel.ReqContext, g guardian.DashboardGuardian, f *folder.Folder) dtos.Folder {
+func (hs *HTTPServer) newToFolderDto(c *contextmodel.ReqContext, f *folder.Folder) (dtos.Folder, error) {
 	ctx := c.Req.Context()
-	toDTO := func(f *folder.Folder) dtos.Folder {
+	toDTO := func(f *folder.Folder, checkCanView bool) (dtos.Folder, error) {
+		g, err := guardian.NewByFolder(c.Req.Context(), f, c.OrgID, c.SignedInUser)
+		if err != nil {
+			return dtos.Folder{}, err
+		}
+
 		canEdit, _ := g.CanEdit()
 		canSave, _ := g.CanSave()
 		canAdmin, _ := g.CanAdmin()
@@ -336,6 +344,16 @@ func (hs *HTTPServer) newToFolderDto(c *contextmodel.ReqContext, g guardian.Dash
 		}
 
 		acMetadata, _ := hs.getFolderACMetadata(c, f)
+
+		if checkCanView {
+			canView, _ := g.CanView()
+			if !canView {
+				return dtos.Folder{
+					Uid:   REDACTED,
+					Title: REDACTED,
+				}, nil
+			}
+		}
 
 		return dtos.Folder{
 			Id:            f.ID,
@@ -354,13 +372,17 @@ func (hs *HTTPServer) newToFolderDto(c *contextmodel.ReqContext, g guardian.Dash
 			Version:       f.Version,
 			AccessControl: acMetadata,
 			ParentUID:     f.ParentUID,
-		}
+		}, nil
 	}
 
-	folderDTO := toDTO(f)
+	// no need to check view permission for the starting folder since it's already checked by the callers
+	folderDTO, err := toDTO(f, false)
+	if err != nil {
+		return dtos.Folder{}, err
+	}
 
 	if !hs.Features.IsEnabled(featuremgmt.FlagNestedFolders) {
-		return folderDTO
+		return folderDTO, nil
 	}
 
 	parents, err := hs.folderService.GetParents(ctx, folder.GetParentsQuery{UID: f.UID, OrgID: f.OrgID})
@@ -371,14 +393,19 @@ func (hs *HTTPServer) newToFolderDto(c *contextmodel.ReqContext, g guardian.Dash
 
 	folderDTO.Parents = make([]dtos.Folder, 0, len(parents))
 	for _, f := range parents {
-		folderDTO.Parents = append(folderDTO.Parents, toDTO(f))
+		DTO, err := toDTO(f, true)
+		if err != nil {
+			hs.log.Error("failed to convert folder to DTO", "folder", f.UID, "org", f.OrgID, "error", err)
+			continue
+		}
+		folderDTO.Parents = append(folderDTO.Parents, DTO)
 	}
 
-	return folderDTO
+	return folderDTO, nil
 }
 
 func (hs *HTTPServer) getFolderACMetadata(c *contextmodel.ReqContext, f *folder.Folder) (accesscontrol.Metadata, error) {
-	if hs.AccessControl.IsDisabled() || !c.QueryBool("accesscontrol") {
+	if !c.QueryBool("accesscontrol") {
 		return nil, nil
 	}
 
@@ -392,7 +419,7 @@ func (hs *HTTPServer) getFolderACMetadata(c *contextmodel.ReqContext, f *folder.
 		folderIDs[p.UID] = true
 	}
 
-	allMetadata := hs.getMultiAccessControlMetadata(c, c.OrgID, dashboards.ScopeFoldersPrefix, folderIDs)
+	allMetadata := hs.getMultiAccessControlMetadata(c, dashboards.ScopeFoldersPrefix, folderIDs)
 	metadata := allMetadata[f.UID]
 
 	// Flatten metadata - if any parent has a permission, the child folder inherits it

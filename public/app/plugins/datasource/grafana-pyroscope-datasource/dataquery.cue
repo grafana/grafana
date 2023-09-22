@@ -16,11 +16,7 @@ package grafanaplugin
 
 import (
 	"github.com/grafana/grafana/packages/grafana-schema/src/common"
-	"github.com/grafana/grafana/pkg/plugins/pfs"
 )
-
-// This file (with its sibling .cue files) implements pfs.GrafanaPlugin
-pfs.GrafanaPlugin
 
 composableKinds: DataQuery: {
 	maturity: "experimental"
@@ -40,8 +36,8 @@ composableKinds: DataQuery: {
 				// Allows to group the results.
 				groupBy: [...string]
 				// Sets the maximum number of nodes in the flamegraph.
-				maxNodes?:        int64
-				#PhlareQueryType: "metrics" | "profile" | *"both" @cuetsy(kind="type")
+				maxNodes?:           int64
+				#PyroscopeQueryType: "metrics" | "profile" | *"both" @cuetsy(kind="type")
 			}
 		}]
 		lenses: []

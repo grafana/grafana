@@ -99,6 +99,15 @@ jest.mock('app/features/browse-dashboards/api/services', () => {
 describe('browse-dashboards BrowseDashboardsPage', () => {
   let props: Props;
   let server: SetupServer;
+  const mockPermissions = {
+    canCreateDashboards: true,
+    canEditDashboards: true,
+    canCreateFolders: true,
+    canDeleteFolders: true,
+    canEditFolders: true,
+    canViewPermissions: true,
+    canSetPermissions: true,
+  };
 
   beforeAll(() => {
     server = setupServer(
@@ -135,13 +144,7 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
       ...getRouteComponentProps(),
     };
 
-    jest.spyOn(permissions, 'getFolderPermissions').mockImplementation(() => {
-      return {
-        canEditInFolder: true,
-        canCreateDashboards: true,
-        canCreateFolder: true,
-      };
-    });
+    jest.spyOn(permissions, 'getFolderPermissions').mockImplementation(() => mockPermissions);
     jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
   });
 
@@ -169,9 +172,9 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
     it('does not show the "New" button if the user does not have permissions', async () => {
       jest.spyOn(permissions, 'getFolderPermissions').mockImplementation(() => {
         return {
-          canEditInFolder: false,
+          ...mockPermissions,
           canCreateDashboards: false,
-          canCreateFolder: false,
+          canCreateFolders: false,
         };
       });
       render(<BrowseDashboardsPage {...props} />);
@@ -183,6 +186,12 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
       render(<BrowseDashboardsPage {...props} />);
       expect(await screen.findByRole('heading', { name: 'Dashboards' })).toBeInTheDocument();
       expect(screen.queryByRole('button', { name: 'Folder actions' })).not.toBeInTheDocument();
+    });
+
+    it('does not show an "Edit title" button', async () => {
+      render(<BrowseDashboardsPage {...props} />);
+      expect(await screen.findByRole('heading', { name: 'Dashboards' })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Edit title' })).not.toBeInTheDocument();
     });
 
     it('does not show any tabs', async () => {
@@ -208,7 +217,7 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
     it('selecting an item hides the filters and shows the actions instead', async () => {
       render(<BrowseDashboardsPage {...props} />);
 
-      const checkbox = await screen.findByTestId(selectors.pages.BrowseDashbards.table.checkbox(dashbdD.item.uid));
+      const checkbox = await screen.findByTestId(selectors.pages.BrowseDashboards.table.checkbox(dashbdD.item.uid));
       await userEvent.click(checkbox);
 
       // Check the filters are now hidden
@@ -223,7 +232,7 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
     it('navigating into a child item resets the selected state', async () => {
       const { rerender } = render(<BrowseDashboardsPage {...props} />);
 
-      const checkbox = await screen.findByTestId(selectors.pages.BrowseDashbards.table.checkbox(folderA.item.uid));
+      const checkbox = await screen.findByTestId(selectors.pages.BrowseDashboards.table.checkbox(folderA.item.uid));
       await userEvent.click(checkbox);
 
       // Check the actions are now visible
@@ -267,9 +276,9 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
     it('does not show the "New" button if the user does not have permissions', async () => {
       jest.spyOn(permissions, 'getFolderPermissions').mockImplementation(() => {
         return {
-          canEditInFolder: false,
+          ...mockPermissions,
           canCreateDashboards: false,
-          canCreateFolder: false,
+          canCreateFolders: false,
         };
       });
       render(<BrowseDashboardsPage {...props} />);
@@ -283,10 +292,35 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
     });
 
     it('does not show the "Folder actions" button if the user does not have permissions', async () => {
-      jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
+      jest.spyOn(permissions, 'getFolderPermissions').mockImplementation(() => {
+        return {
+          ...mockPermissions,
+          canDeleteFolders: false,
+          canEditFolders: false,
+          canSetPermissions: false,
+          canViewPermissions: false,
+        };
+      });
       render(<BrowseDashboardsPage {...props} />);
       expect(await screen.findByRole('heading', { name: folderA.item.title })).toBeInTheDocument();
       expect(screen.queryByRole('button', { name: 'Folder actions' })).not.toBeInTheDocument();
+    });
+
+    it('shows an "Edit title" button', async () => {
+      render(<BrowseDashboardsPage {...props} />);
+      expect(await screen.findByRole('button', { name: 'Edit title' })).toBeInTheDocument();
+    });
+
+    it('does not show the "Edit title" button if the user does not have permissions', async () => {
+      jest.spyOn(permissions, 'getFolderPermissions').mockImplementation(() => {
+        return {
+          ...mockPermissions,
+          canEditFolders: false,
+        };
+      });
+      render(<BrowseDashboardsPage {...props} />);
+      expect(await screen.findByRole('heading', { name: folderA.item.title })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Edit title' })).not.toBeInTheDocument();
     });
 
     it('displays all the folder tabs and shows the "Dashboards" tab as selected', async () => {
@@ -316,7 +350,7 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
       render(<BrowseDashboardsPage {...props} />);
 
       const checkbox = await screen.findByTestId(
-        selectors.pages.BrowseDashbards.table.checkbox(folderA_folderA.item.uid)
+        selectors.pages.BrowseDashboards.table.checkbox(folderA_folderA.item.uid)
       );
       await userEvent.click(checkbox);
 

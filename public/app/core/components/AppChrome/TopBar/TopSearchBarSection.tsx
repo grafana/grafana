@@ -29,7 +29,7 @@ export function TopSearchBarSection({ children, align = 'left' }: TopSearchBarSe
   }
 
   return (
-    <div data-test-id="wrapper" className={cx(styles.wrapper, { [styles[align]]: align === 'right' })}>
+    <div data-testid="wrapper" className={cx(styles.wrapper, { [styles[align]]: align === 'right' })}>
       {children}
     </div>
   );

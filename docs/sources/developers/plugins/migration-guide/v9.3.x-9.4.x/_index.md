@@ -1,6 +1,4 @@
 ---
-title: Migrate plugins from Grafana 9.3.x to 9.4.x
-menuTitle: v9.3.x to v9.4.x
 description: Guide for migrating plugins from Grafana v9.3.x to v9.4.x
 keywords:
   - grafana
@@ -8,6 +6,12 @@ keywords:
   - migration
   - plugin
   - documentation
+labels:
+  products:
+    - enterprise
+    - oss
+menuTitle: v9.3.x to v9.4.x
+title: Migrate plugins from Grafana 9.3.x to 9.4.x
 weight: 2000
 ---
 

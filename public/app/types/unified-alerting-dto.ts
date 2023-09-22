@@ -79,6 +79,7 @@ export interface PromBuildInfoResponse {
       query_sharding?: 'true' | 'false';
       federated_rules?: 'true' | 'false';
     };
+    [key: string]: unknown;
   };
   status: 'success';
 }
@@ -113,7 +114,7 @@ interface PromRuleDTOBase {
 }
 
 export interface PromAlertingRuleDTO extends PromRuleDTOBase {
-  alerts: Array<{
+  alerts?: Array<{
     labels: Labels;
     annotations: Annotations;
     state: Exclude<PromAlertingRuleState | GrafanaAlertStateWithReason, PromAlertingRuleState.Inactive>;
@@ -173,6 +174,7 @@ export interface RulerRecordingRuleDTO extends RulerRuleBaseDTO {
 export interface RulerAlertingRuleDTO extends RulerRuleBaseDTO {
   alert: string;
   for?: string;
+  keep_firing_for?: string;
   annotations?: Annotations;
 }
 

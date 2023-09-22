@@ -3,6 +3,7 @@ package frontend
 import (
 	"fmt"
 
+	"github.com/blang/semver/v4"
 	"github.com/grafana/grafana/pkg/build/config"
 	"github.com/urfave/cli/v2"
 )
@@ -22,7 +23,16 @@ func GetConfig(c *cli.Context, metadata config.Metadata) (config.Config, config.
 		if err != nil {
 			return config.Config{}, "", err
 		}
-		if metadata.GrafanaVersion != packageJSONVersion {
+		semverGrafanaVersion, err := semver.Parse(metadata.GrafanaVersion)
+		if err != nil {
+			return config.Config{}, "", err
+		}
+		semverPackageJSONVersion, err := semver.Parse(packageJSONVersion)
+		if err != nil {
+			return config.Config{}, "", err
+		}
+		// Check if the semver digits of the tag are not equal
+		if semverGrafanaVersion.FinalizeVersion() != semverPackageJSONVersion.FinalizeVersion() {
 			return config.Config{}, "", cli.Exit(fmt.Errorf("package.json version and input tag version differ %s != %s.\nPlease update package.json", packageJSONVersion, metadata.GrafanaVersion), 1)
 		}
 	}

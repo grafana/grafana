@@ -169,7 +169,7 @@ export function getFirstActiveAt(promRule?: AlertingRule) {
   if (!promRule?.alerts) {
     return null;
   }
-  return promRule.alerts.reduce((prev, alert) => {
+  return promRule.alerts.reduce<Date | null>((prev, alert) => {
     const isNotNormal =
       mapStateWithReasonToBaseState(alert.state as GrafanaAlertStateWithReason) !== GrafanaAlertState.Normal;
     if (alert.activeAt && isNotNormal) {
@@ -179,7 +179,7 @@ export function getFirstActiveAt(promRule?: AlertingRule) {
       }
     }
     return prev;
-  }, null as Date | null);
+  }, null);
 }
 
 /**

@@ -3,7 +3,7 @@ import { useAsync, useDebounce } from 'react-use';
 
 import { isFetchError } from '@grafana/runtime';
 import { Button, Field, Input, Modal } from '@grafana/ui';
-import { FolderPicker } from 'app/core/components/Select/FolderPicker';
+import { OldFolderPicker } from 'app/core/components/Select/OldFolderPicker';
 import { t, Trans } from 'app/core/internationalization';
 
 import { PanelModel } from '../../../dashboard/state';
@@ -71,7 +71,7 @@ export const AddLibraryPanelContents = ({ panel, initialFolderUid, onDismiss }: 
           'Library panel permissions are derived from the folder permissions'
         )}
       >
-        <FolderPicker
+        <OldFolderPicker
           onChange={({ uid }) => setFolderUid(uid)}
           initialFolderUid={initialFolderUid}
           inputId="share-panel-library-panel-folder-picker"

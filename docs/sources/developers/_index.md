@@ -1,6 +1,10 @@
 ---
 aliases:
   - plugins/developing/
+labels:
+  products:
+    - enterprise
+    - oss
 title: Developers
 weight: 190
 ---

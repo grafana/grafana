@@ -41,11 +41,18 @@ const toEnrichedCorrelationData = ({
   ...correlation
 }: Correlation): CorrelationData | undefined => {
   const sourceDatasource = getDataSourceSrv().getInstanceSettings(sourceUID);
-  if (sourceDatasource) {
+  const targetDatasource = getDataSourceSrv().getInstanceSettings(targetUID);
+
+  if (
+    sourceDatasource &&
+    sourceDatasource?.uid !== undefined &&
+    targetDatasource &&
+    targetDatasource.uid !== undefined
+  ) {
     return {
       ...correlation,
       source: sourceDatasource,
-      target: getDataSourceSrv().getInstanceSettings(targetUID)!,
+      target: targetDatasource,
     };
   } else {
     return undefined;

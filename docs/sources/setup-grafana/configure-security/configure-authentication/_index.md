@@ -8,8 +8,9 @@ labels:
   products:
     - cloud
     - enterprise
+    - oss
 title: Configure authentication
-weight: 100
+weight: 200
 ---
 
 # Configure authentication
@@ -30,6 +31,19 @@ The following table shows all supported authentication providers and the feature
 | [LDAP]({{< relref "./ldap" >}})                   |  v2.1+  |    v2.1+     |               v5.3+               |                v6.3+                |
 | [Okta OAuth]({{< relref "./okta" >}})             |  v7.0+  |    v7.0+     |               v7.0+               |                  -                  |
 | [SAML]({{< relref "./saml" >}}) (Enterprise only) |  v6.3+  |    v7.0+     |               v7.0+               |                  -                  |
+
+## Configuring multiple identity providers
+
+Grafana allows you to configure more than one authentication provider, however it is not possible to configure the same type of authentication provider twice.
+For example, you can have [SAML]({{< relref "./saml" >}}) (Enterprise only) and [Generic OAuth]({{< relref "./generic-oauth" >}}) configured, but you can not have two different [Generic OAuth]({{< relref "./generic-oauth" >}}) configurations.
+
+> Note: Grafana does not support multiple identity providers resolving the same user. Ensure there are no user account overlaps between the different providers
+
+In scenarios where you have multiple identity providers of the same type, there are a couple of options:
+
+- Use different Grafana instances each configured with a given identity provider.
+- Check if the identity provider supports account federation. In such cases, you can configure it once and let your identity provider federate the accounts from different providers.
+- If SAML is supported by the identity provider, you can configure one [Generic OAuth]({{< relref "./generic-oauth" >}}) and one [SAML]({{< relref "./saml" >}}) (Enterprise only).
 
 ## Grafana Auth
 

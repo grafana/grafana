@@ -7,30 +7,70 @@ import (
 )
 
 var _ authn.Service = new(FakeService)
+var _ authn.IdentitySynchronizer = new(FakeService)
 
 type FakeService struct {
-	ExpectedErr      error
-	ExpectedRedirect *authn.Redirect
-	ExpectedIdentity *authn.Identity
+	ExpectedErr        error
+	ExpectedRedirect   *authn.Redirect
+	ExpectedIdentity   *authn.Identity
+	ExpectedErrs       []error
+	ExpectedIdentities []*authn.Identity
+	CurrentIndex       int
 }
 
-func (f FakeService) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identity, error) {
+func (f *FakeService) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identity, error) {
+	if f.ExpectedIdentities != nil {
+		if f.CurrentIndex >= len(f.ExpectedIdentities) {
+			panic("ExpectedIdentities is empty")
+		}
+		if f.CurrentIndex >= len(f.ExpectedErrs) {
+			panic("ExpectedErrs is empty")
+		}
+
+		identity := f.ExpectedIdentities[f.CurrentIndex]
+		err := f.ExpectedErrs[f.CurrentIndex]
+
+		f.CurrentIndex += 1
+
+		return identity, err
+	}
+
 	return f.ExpectedIdentity, f.ExpectedErr
 }
 
-func (f FakeService) RegisterPostAuthHook(hook authn.PostAuthHookFn, priority uint) {}
+func (f *FakeService) RegisterPostAuthHook(hook authn.PostAuthHookFn, priority uint) {}
 
-func (f FakeService) Login(ctx context.Context, client string, r *authn.Request) (*authn.Identity, error) {
+func (f *FakeService) Login(ctx context.Context, client string, r *authn.Request) (*authn.Identity, error) {
+	if f.ExpectedIdentities != nil {
+		if f.CurrentIndex >= len(f.ExpectedIdentities) {
+			panic("ExpectedIdentities is empty")
+		}
+		if f.CurrentIndex >= len(f.ExpectedErrs) {
+			panic("ExpectedErrs is empty")
+		}
+
+		identity := f.ExpectedIdentities[f.CurrentIndex]
+		err := f.ExpectedErrs[f.CurrentIndex]
+
+		f.CurrentIndex += 1
+
+		return identity, err
+	}
+
 	return f.ExpectedIdentity, f.ExpectedErr
 }
 
-func (f FakeService) RegisterPostLoginHook(hook authn.PostLoginHookFn, priority uint) {}
+func (f *FakeService) RegisterPostLoginHook(hook authn.PostLoginHookFn, priority uint) {}
 
-func (f FakeService) RedirectURL(ctx context.Context, client string, r *authn.Request) (*authn.Redirect, error) {
+func (f *FakeService) RedirectURL(ctx context.Context, client string, r *authn.Request) (*authn.Redirect, error) {
 	return f.ExpectedRedirect, f.ExpectedErr
 }
 
-func (f FakeService) RegisterClient(c authn.Client) {}
+func (f *FakeService) RegisterClient(c authn.Client) {}
+
+func (f *FakeService) SyncIdentity(ctx context.Context, identity *authn.Identity) error {
+	return f.ExpectedErr
+}
 
 var _ authn.ContextAwareClient = new(FakeClient)
 
@@ -40,7 +80,7 @@ type FakeClient struct {
 	ExpectedTest     bool
 	ExpectedPriority uint
 	ExpectedIdentity *authn.Identity
-	ExpectedStats    map[string]interface{}
+	ExpectedStats    map[string]any
 }
 
 func (f *FakeClient) Name() string {
@@ -59,7 +99,7 @@ func (f *FakeClient) Priority() uint {
 	return f.ExpectedPriority
 }
 
-func (f *FakeClient) UsageStatFn(ctx context.Context) (map[string]interface{}, error) {
+func (f *FakeClient) UsageStatFn(ctx context.Context) (map[string]any, error) {
 	return f.ExpectedStats, f.ExpectedErr
 }
 

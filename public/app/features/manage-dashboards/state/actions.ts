@@ -1,22 +1,28 @@
 import { DataSourceInstanceSettings, locationUtil } from '@grafana/data';
-import { getDataSourceSrv, locationService, getBackendSrv, isFetchError } from '@grafana/runtime';
+import { getBackendSrv, getDataSourceSrv, isFetchError, locationService } from '@grafana/runtime';
 import { notifyApp } from 'app/core/actions';
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { SaveDashboardCommand } from 'app/features/dashboard/components/SaveDashboard/types';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { DashboardDTO, FolderInfo, PermissionLevelString, SearchQueryType, ThunkResult } from 'app/types';
 
-import { LibraryElementExport } from '../../dashboard/components/DashExportModal/DashboardExporter';
+import {
+  Input,
+  InputUsage,
+  LibraryElementExport,
+  LibraryPanel,
+} from '../../dashboard/components/DashExportModal/DashboardExporter';
 import { getLibraryPanel } from '../../library-panels/state/api';
 import { LibraryElementDTO, LibraryElementKind } from '../../library-panels/types';
 import { DashboardSearchHit } from '../../search/types';
-import { DeleteDashboardResponse } from '../types';
+import { DashboardJson, DeleteDashboardResponse } from '../types';
 
 import {
   clearDashboard,
   fetchDashboard,
   fetchFailed,
   ImportDashboardDTO,
+  ImportDashboardState,
   InputType,
   LibraryPanelInput,
   LibraryPanelInputState,
@@ -31,9 +37,9 @@ export function fetchGcomDashboard(id: string): ThunkResult<void> {
     try {
       dispatch(fetchDashboard());
       const dashboard = await getBackendSrv().get(`/api/gnet/dashboards/${id}`);
-      dispatch(setGcomDashboard(dashboard));
-      dispatch(processInputs(dashboard.json));
-      dispatch(processElements(dashboard.json));
+      await dispatch(processElements(dashboard.json));
+      await dispatch(processGcomDashboard(dashboard));
+      dispatch(processInputs());
     } catch (error) {
       dispatch(fetchFailed());
       if (isFetchError(error)) {
@@ -45,17 +51,66 @@ export function fetchGcomDashboard(id: string): ThunkResult<void> {
 
 export function importDashboardJson(dashboard: any): ThunkResult<void> {
   return async (dispatch) => {
-    dispatch(setJsonDashboard(dashboard));
-    dispatch(processInputs(dashboard));
-    dispatch(processElements(dashboard));
+    await dispatch(processElements(dashboard));
+    await dispatch(processJsonDashboard(dashboard));
+    dispatch(processInputs());
   };
 }
 
-function processInputs(dashboardJson: any): ThunkResult<void> {
-  return (dispatch) => {
-    if (dashboardJson && dashboardJson.__inputs) {
+const getNewLibraryPanelsByInput = (input: Input, state: ImportDashboardState): LibraryPanel[] | undefined => {
+  return input?.usage?.libraryPanels?.filter((usageLibPanel) =>
+    state.inputs.libraryPanels.some(
+      (libPanel) => libPanel.state !== LibraryPanelInputState.Exists && libPanel.model.uid === usageLibPanel.uid
+    )
+  );
+};
+
+export function processDashboard(dashboardJson: DashboardJson, state: ImportDashboardState): DashboardJson {
+  let inputs = dashboardJson.__inputs;
+  if (!!state.inputs.libraryPanels?.length) {
+    const filteredUsedInputs: Input[] = [];
+    dashboardJson.__inputs?.forEach((input: Input) => {
+      if (!input?.usage?.libraryPanels) {
+        filteredUsedInputs.push(input);
+        return;
+      }
+
+      const newLibraryPanels = getNewLibraryPanelsByInput(input, state);
+      input.usage = { libraryPanels: newLibraryPanels };
+
+      const isInputBeingUsedByANewLibraryPanel = !!newLibraryPanels?.length;
+      if (isInputBeingUsedByANewLibraryPanel) {
+        filteredUsedInputs.push(input);
+      }
+    });
+    inputs = filteredUsedInputs;
+  }
+
+  return { ...dashboardJson, __inputs: inputs };
+}
+
+function processGcomDashboard(dashboard: { json: DashboardJson }): ThunkResult<void> {
+  return (dispatch, getState) => {
+    const state = getState().importDashboard;
+    const dashboardJson = processDashboard(dashboard.json, state);
+    dispatch(setGcomDashboard({ ...dashboard, json: dashboardJson }));
+  };
+}
+
+function processJsonDashboard(dashboardJson: DashboardJson): ThunkResult<void> {
+  return (dispatch, getState) => {
+    const state = getState().importDashboard;
+    const dashboard = processDashboard(dashboardJson, state);
+    dispatch(setJsonDashboard(dashboard));
+  };
+}
+
+function processInputs(): ThunkResult<void> {
+  return (dispatch, getState) => {
+    const dashboard = getState().importDashboard.dashboard;
+    if (dashboard && dashboard.__inputs) {
       const inputs: any[] = [];
-      dashboardJson.__inputs.forEach((input: any) => {
+      dashboard.__inputs.forEach((input: any) => {
         const inputModel: any = {
           name: input.name,
           label: input.label,
@@ -65,6 +120,8 @@ function processInputs(dashboardJson: any): ThunkResult<void> {
           pluginId: input.pluginId,
           options: [],
         };
+
+        inputModel.description = getDataSourceDescription(input);
 
         if (input.type === InputType.DataSource) {
           getDataSourceOptions(input, inputModel);
@@ -81,48 +138,55 @@ function processInputs(dashboardJson: any): ThunkResult<void> {
 
 function processElements(dashboardJson?: { __elements?: Record<string, LibraryElementExport> }): ThunkResult<void> {
   return async function (dispatch) {
-    if (!dashboardJson || !dashboardJson.__elements) {
-      return;
-    }
-
-    const libraryPanelInputs: LibraryPanelInput[] = [];
-
-    for (const element of Object.values(dashboardJson.__elements)) {
-      if (element.kind !== LibraryElementKind.Panel) {
-        continue;
-      }
-
-      const model = element.model;
-      const { type, description } = model;
-      const { uid, name } = element;
-      const input: LibraryPanelInput = {
-        model: {
-          model,
-          uid,
-          name,
-          version: 0,
-          type,
-          kind: LibraryElementKind.Panel,
-          description,
-        } as LibraryElementDTO,
-        state: LibraryPanelInputState.New,
-      };
-
-      try {
-        const panelInDb = await getLibraryPanel(uid, true);
-        input.state = LibraryPanelInputState.Exists;
-        input.model = panelInDb;
-      } catch (e: any) {
-        if (e.status !== 404) {
-          throw e;
-        }
-      }
-
-      libraryPanelInputs.push(input);
-    }
-
+    const libraryPanelInputs = await getLibraryPanelInputs(dashboardJson);
     dispatch(setLibraryPanelInputs(libraryPanelInputs));
   };
+}
+
+export async function getLibraryPanelInputs(dashboardJson?: {
+  __elements?: Record<string, LibraryElementExport>;
+}): Promise<LibraryPanelInput[]> {
+  if (!dashboardJson || !dashboardJson.__elements) {
+    return [];
+  }
+
+  const libraryPanelInputs: LibraryPanelInput[] = [];
+
+  for (const element of Object.values(dashboardJson.__elements)) {
+    if (element.kind !== LibraryElementKind.Panel) {
+      continue;
+    }
+
+    const model = element.model;
+    const { type, description } = model;
+    const { uid, name } = element;
+    const input: LibraryPanelInput = {
+      model: {
+        model,
+        uid,
+        name,
+        version: 0,
+        type,
+        kind: LibraryElementKind.Panel,
+        description,
+      } as LibraryElementDTO,
+      state: LibraryPanelInputState.New,
+    };
+
+    try {
+      const panelInDb = await getLibraryPanel(uid, true);
+      input.state = LibraryPanelInputState.Exists;
+      input.model = panelInDb;
+    } catch (e: any) {
+      if (e.status !== 404) {
+        throw e;
+      }
+    }
+
+    libraryPanelInputs.push(input);
+  }
+
+  return libraryPanelInputs;
 }
 
 export function clearLoadedDashboard(): ThunkResult<void> {
@@ -180,6 +244,22 @@ const getDataSourceOptions = (input: { pluginId: string; pluginName: string }, i
   } else if (!inputModel.info) {
     inputModel.info = 'Select a ' + input.pluginName + ' data source';
   }
+};
+
+const getDataSourceDescription = (input: { usage?: InputUsage }): string | undefined => {
+  if (!input.usage) {
+    return undefined;
+  }
+
+  if (input.usage.libraryPanels) {
+    const libPanelNames = input.usage.libraryPanels.reduce(
+      (acc: string, libPanel, index) => (index === 0 ? libPanel.name : `${acc}, ${libPanel.name}`),
+      ''
+    );
+    return `List of affected library panels: ${libPanelNames}`;
+  }
+
+  return undefined;
 };
 
 export async function moveFolders(folderUIDs: string[], toFolder: FolderInfo) {

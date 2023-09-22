@@ -1,5 +1,4 @@
 ---
-title: Add support for variables
 aliases:
   - ../../../plugins/add-support-for-variables/
 description: Add support for variables.
@@ -9,6 +8,11 @@ keywords:
   - plugin
   - queries
   - variables
+labels:
+  products:
+    - enterprise
+    - oss
+title: Add support for variables
 weight: 600
 ---
 

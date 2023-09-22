@@ -7,7 +7,7 @@ import { FieldNamePicker } from '@grafana/ui/src/components/MatchersUI/FieldName
 import { LayerName } from 'app/core/components/Layers/LayerName';
 import { ColorDimensionEditor, ScaleDimensionEditor } from 'app/features/dimensions/editors';
 
-import { Options, ScatterSeriesConfig, defaultScatterFieldConfig } from './types';
+import { Options, ScatterSeriesConfig, defaultFieldConfig } from './panelcfg.gen';
 
 export const ManualEditor = ({
   value,
@@ -33,7 +33,7 @@ export const ManualEditor = ({
       ...value,
       {
         pointColor: {} as any,
-        pointSize: defaultScatterFieldConfig.pointSize,
+        pointSize: defaultFieldConfig.pointSize,
       },
     ]);
     setSelected(value.length);
@@ -134,7 +134,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
   row: css`
     padding: ${theme.spacing(0.5, 1)};
-    border-radius: ${theme.shape.borderRadius(1)};
+    border-radius: ${theme.shape.radius.default};
     background: ${theme.colors.background.secondary};
     min-height: ${theme.spacing(4)};
     display: flex;

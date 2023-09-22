@@ -11,6 +11,10 @@ keywords:
   - annotation
   - annotations
   - comment
+labels:
+  products:
+    - enterprise
+    - oss
 title: Annotations HTTP API
 ---
 

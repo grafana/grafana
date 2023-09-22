@@ -1,13 +1,17 @@
 ---
-title: Develop a Grafana plugin
-menuTitle: Develop a plugin
+description: An index of how-to topics for Grafana plugin development.
 keywords:
   - grafana
   - plugins
   - plugin
   - development
   - documentation
-description: An index of how-to topics for Grafana plugin development.
+labels:
+  products:
+    - enterprise
+    - oss
+menuTitle: Develop a plugin
+title: Develop a Grafana plugin
 weight: 100
 ---
 
@@ -25,4 +29,4 @@ This section contains how-to topics for developing Grafana plugins:
 
 Additional resources:
 
-- [Build a Grafana plugin with the create-plugin tool](https://grafana.github.io/plugin-tools/docs/creating-a-plugin)
+- [Build a Grafana plugin with the create-plugin tool](https://grafana.github.io/plugin-tools/docs/get-started/).

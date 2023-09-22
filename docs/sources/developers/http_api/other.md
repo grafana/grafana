@@ -9,6 +9,10 @@ keywords:
   - documentation
   - api
   - other
+labels:
+  products:
+    - enterprise
+    - oss
 title: 'Other HTTP API '
 ---
 

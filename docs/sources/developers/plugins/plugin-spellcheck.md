@@ -1,7 +1,11 @@
 ---
-title: Configuring plugin spellcheck
 description: Internal docs on how to setup the plugin spellcheck
 draft: true
+labels:
+  products:
+    - enterprise
+    - oss
+title: Configuring plugin spellcheck
 ---
 
 # Configuring plugin spellcheck

@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { HTMLAttributes, useCallback } from 'react';
+import React, { HTMLAttributes } from 'react';
 import tinycolor from 'tinycolor2';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -19,7 +19,7 @@ export interface BadgeProps extends HTMLAttributes<HTMLDivElement> {
 }
 
 export const Badge = React.memo<BadgeProps>(({ icon, color, text, tooltip, className, ...otherProps }) => {
-  const styles = useStyles2(useCallback((theme) => getStyles(theme, color), [color]));
+  const styles = useStyles2(getStyles, color);
   const badge = (
     <div className={cx(styles.wrapper, className)} {...otherProps}>
       {icon && <Icon name={icon} size="sm" />}
@@ -55,18 +55,18 @@ const getStyles = (theme: GrafanaTheme2, color: BadgeColor) => {
   }
 
   return {
-    wrapper: css`
-      display: inline-flex;
-      padding: 1px 4px;
-      border-radius: ${theme.shape.radius.default};
-      background: ${bgColor};
-      border: 1px solid ${borderColor};
-      color: ${textColor};
-      font-weight: ${theme.typography.fontWeightRegular};
-      gap: 2px;
-      font-size: ${theme.typography.bodySmall.fontSize};
-      line-height: ${theme.typography.bodySmall.lineHeight};
-      align-items: center;
-    `,
+    wrapper: css({
+      display: 'inline-flex',
+      padding: '1px 4px',
+      borderRadius: theme.shape.radius.default,
+      background: bgColor,
+      border: `1px solid ${borderColor}`,
+      color: textColor,
+      fontWeight: theme.typography.fontWeightRegular,
+      gap: '2px',
+      fontSize: theme.typography.bodySmall.fontSize,
+      lineHeight: theme.typography.bodySmall.lineHeight,
+      alignItems: 'center',
+    }),
   };
 };

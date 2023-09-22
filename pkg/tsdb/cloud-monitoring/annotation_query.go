@@ -26,19 +26,19 @@ func (s *Service) executeAnnotationQuery(ctx context.Context, req *backend.Query
 		return resp, err
 	}
 
-	mq := struct {
-		MetricQuery struct {
+	tslq := struct {
+		TimeSeriesList struct {
 			Title string `json:"title"`
 			Text  string `json:"text"`
-		} `json:"metricQuery"`
+		} `json:"timeSeriesList"`
 	}{}
 
 	firstQuery := req.Queries[0]
-	err = json.Unmarshal(firstQuery.JSON, &mq)
+	err = json.Unmarshal(firstQuery.JSON, &tslq)
 	if err != nil {
 		return resp, nil
 	}
-	err = parseToAnnotations(req.Queries[0].RefID, queryRes, dr, mq.MetricQuery.Title, mq.MetricQuery.Text)
+	err = parseToAnnotations(req.Queries[0].RefID, queryRes, dr.(cloudMonitoringResponse), tslq.TimeSeriesList.Title, tslq.TimeSeriesList.Text)
 	resp.Responses[firstQuery.RefID] = *queryRes
 
 	return resp, err

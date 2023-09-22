@@ -105,6 +105,16 @@ describe('Login Page', () => {
     expect(screen.getByRole('link', { name: 'Sign in with Okta Test' })).toBeInTheDocument();
   });
 
+  it('shows oauth errors', async () => {
+    runtimeMock.config.loginError = 'Oh no there was an error :(';
+
+    render(<LoginPage />);
+
+    const alert = await screen.findByRole('alert', { name: 'Login failed' });
+    expect(alert).toBeInTheDocument();
+    expect(alert).toHaveTextContent('Oh no there was an error :(');
+  });
+
   it('shows an error with incorrect password', async () => {
     postMock.mockRejectedValueOnce({
       data: {
@@ -122,7 +132,9 @@ describe('Login Page', () => {
     await userEvent.type(screen.getByLabelText('Password input field'), 'test');
     await userEvent.click(screen.getByRole('button', { name: 'Login button' }));
 
-    expect(await screen.findByRole('alert', { name: 'Invalid username or password' })).toBeInTheDocument();
+    const alert = await screen.findByRole('alert', { name: 'Login failed' });
+    expect(alert).toBeInTheDocument();
+    expect(alert).toHaveTextContent('Invalid username or password');
   });
 
   it('shows a different error with failed login attempts', async () => {
@@ -142,10 +154,10 @@ describe('Login Page', () => {
     await userEvent.type(screen.getByLabelText('Password input field'), 'test');
     await userEvent.click(screen.getByRole('button', { name: 'Login button' }));
 
-    expect(
-      await screen.findByRole('alert', {
-        name: 'You have exceeded the number of login attempts for this user. Please try again later.',
-      })
-    ).toBeInTheDocument();
+    const alert = await screen.findByRole('alert', { name: 'Login failed' });
+    expect(alert).toBeInTheDocument();
+    expect(alert).toHaveTextContent(
+      'You have exceeded the number of login attempts for this user. Please try again later.'
+    );
   });
 });

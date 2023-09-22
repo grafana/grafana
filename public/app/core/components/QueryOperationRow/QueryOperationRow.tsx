@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Draggable } from 'react-beautiful-dnd';
 import { useUpdateEffect } from 'react-use';
 
@@ -51,6 +51,14 @@ export function QueryOperationRow({
   const onRowToggle = useCallback(() => {
     setIsContentVisible(!isContentVisible);
   }, [isContentVisible, setIsContentVisible]);
+
+  // Force QueryOperationRow expansion when `isOpen` prop updates in parent component.
+  // `undefined` can be deliberately passed value here, but we only want booleans to trigger the effect.
+  useEffect(() => {
+    if (typeof isOpen === 'boolean') {
+      setIsContentVisible(isOpen);
+    }
+  }, [isOpen]);
 
   const reportDragMousePosition = useCallback((e: React.MouseEvent) => {
     // When drag detected react-beautiful-dnd will preventDefault the event

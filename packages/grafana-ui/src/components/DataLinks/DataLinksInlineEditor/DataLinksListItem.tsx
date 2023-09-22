@@ -54,45 +54,45 @@ export const DataLinksListItem = ({ link, onEdit, onRemove }: DataLinksListItemP
 
 const getDataLinkListItemStyles = stylesFactory((theme: GrafanaTheme2) => {
   return {
-    wrapper: css`
-      margin-bottom: ${theme.spacing(2)};
-      width: 100%;
-      &:last-child {
-        margin-bottom: 0;
-      }
-      display: flex;
-      flex-direction: column;
-    `,
-    titleWrapper: css`
-      label: data-links-list-item-title;
-      justify-content: space-between;
-      display: flex;
-      width: 100%;
-      align-items: center;
-    `,
-    actionButtons: css`
-      margin-left: ${theme.spacing(1)};
-      display: flex;
-    `,
-    errored: css`
-      color: ${theme.colors.error.text};
-      font-style: italic;
-    `,
-    notConfigured: css`
-      font-style: italic;
-    `,
-    title: css`
-      color: ${theme.colors.text.primary};
-      font-size: ${theme.typography.size.sm};
-      font-weight: ${theme.typography.fontWeightMedium};
-    `,
-    url: css`
-      color: ${theme.colors.text.secondary};
-      font-size: ${theme.typography.size.sm};
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      max-width: 90%;
-    `,
+    wrapper: css({
+      marginBottom: theme.spacing(2),
+      width: '100%',
+      '&:last-child': {
+        marginBottom: 0,
+      },
+      display: 'flex',
+      flexDirection: 'column',
+    }),
+    titleWrapper: css({
+      label: 'data-links-list-item-title',
+      justifyContent: 'space-between',
+      display: 'flex',
+      width: '100%',
+      alignItems: 'center',
+    }),
+    actionButtons: css({
+      marginLeft: theme.spacing(1),
+      display: 'flex',
+    }),
+    errored: css({
+      color: theme.colors.error.text,
+      fontStyle: 'italic',
+    }),
+    notConfigured: css({
+      fontStyle: 'italic',
+    }),
+    title: css({
+      color: theme.colors.text.primary,
+      fontSize: theme.typography.size.sm,
+      fontWeight: theme.typography.fontWeightMedium,
+    }),
+    url: css({
+      color: theme.colors.text.secondary,
+      fontSize: theme.typography.size.sm,
+      whiteSpace: 'nowrap',
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      maxWidth: '90%',
+    }),
   };
 });

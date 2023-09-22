@@ -61,14 +61,14 @@ export const LayerDragDropList = <T extends LayerElement>({
                 rows.push(
                   <Draggable key={uid} draggableId={uid} index={rows.length}>
                     {(provided, snapshot) => (
-                      // TODO: fix keyboard a11y
-                      // eslint-disable-next-line jsx-a11y/no-static-element-interactions
                       <div
                         className={getRowStyle(isSelected)}
                         ref={provided.innerRef}
                         {...provided.draggableProps}
                         {...provided.dragHandleProps}
                         onMouseDown={() => onSelect(element)}
+                        role="button"
+                        tabIndex={0}
                       >
                         <LayerName
                           name={uid}
@@ -132,7 +132,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
   row: css`
     padding: ${theme.spacing(0.5, 1)};
-    border-radius: ${theme.shape.borderRadius(1)};
+    border-radius: ${theme.shape.radius.default};
     background: ${theme.colors.background.secondary};
     min-height: ${theme.spacing(4)};
     display: flex;

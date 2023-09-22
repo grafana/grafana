@@ -160,99 +160,96 @@ const getStyles = (theme: GrafanaTheme2) => {
   const focusStyle = getFocusStyles(theme);
 
   return {
-    pre: css`
-      white-space: pre;
-    `,
-    toolbar: css`
-      align-items: center;
-      background: ${theme.colors.background.canvas};
-      display: flex;
-      gap: ${theme.spacing(2)};
-      justify-content: space-between;
-      padding: ${theme.spacing(1.5, 2)};
+    pre: css({
+      whiteSpace: 'pre',
+    }),
+    toolbar: css({
+      alignItems: 'center',
+      background: theme.colors.background.canvas,
+      display: 'flex',
+      gap: theme.spacing(2),
+      justifyContent: 'space-between',
+      padding: theme.spacing(1.5, 2),
 
-      ${theme.breakpoints.down('md')} {
-        padding-left: 53px;
-      }
-    `,
-    noPageIcon: css`
-      ${theme.breakpoints.down('md')} {
-        padding-left: ${theme.spacing(2)};
-      }
-    `,
-    leftWrapper: css`
-      display: flex;
-      flex-wrap: nowrap;
-      max-width: 70%;
-    `,
-    pageIcon: css`
-      display: none;
-      ${theme.breakpoints.up('sm')} {
-        display: flex;
-        padding-right: ${theme.spacing(1)};
-        align-items: center;
-      }
-    `,
-    truncateText: css`
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    `,
-    titleWrapper: css`
-      display: flex;
-      margin: 0;
-      min-width: 0;
-    `,
-    navElement: css`
-      display: flex;
-      align-items: center;
-      min-width: 0;
-    `,
-    h1Styles: css`
-      margin: ${spacing(0, 1, 0, 0)};
-      line-height: inherit;
-      flex-grow: 1;
-      min-width: 0;
-    `,
-    parentIcon: css`
-      margin-left: ${theme.spacing(0.5)};
-    `,
-    titleText: css`
-      display: flex;
-      font-size: ${typography.size.lg};
-      margin: 0;
-      max-width: 300px;
-      border-radius: ${theme.shape.radius.default};
-    `,
-    titleLink: css`
-      &:focus-visible {
-        ${focusStyle}
-      }
-    `,
-    titleDivider: css`
-      padding: ${spacing(0, 0.5, 0, 0.5)};
-      display: none;
-      ${theme.breakpoints.up('md')} {
-        display: unset;
-      }
-    `,
-    parentLink: css`
-      display: none;
-      ${theme.breakpoints.up('md')} {
-        display: unset;
-        flex: 1;
-      }
-    `,
-    leftActionItem: css`
-      display: none;
-      align-items: center;
-      padding-right: ${spacing(0.5)};
-      ${theme.breakpoints.up('md')} {
-        display: flex;
-      }
-    `,
-    forceShowLeftActionItems: css`
-      display: flex;
-    `,
+      [theme.breakpoints.down('md')]: {
+        paddingLeft: '53px',
+      },
+    }),
+    noPageIcon: css({
+      [theme.breakpoints.down('md')]: {
+        paddingLeft: theme.spacing(2),
+      },
+    }),
+    leftWrapper: css({
+      display: 'flex',
+      flexWrap: 'nowrap',
+      maxWidth: '70%',
+    }),
+    pageIcon: css({
+      display: 'none',
+      [theme.breakpoints.up('sm')]: {
+        display: 'flex',
+        paddingRight: theme.spacing(1),
+        alignItems: 'center',
+      },
+    }),
+    truncateText: css({
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      whiteSpace: 'nowrap',
+    }),
+    titleWrapper: css({
+      display: 'flex',
+      margin: 0,
+      minWidth: 0,
+    }),
+    navElement: css({
+      display: 'flex',
+      alignItems: 'center',
+      minWidth: 0,
+    }),
+    h1Styles: css({
+      margin: spacing(0, 1, 0, 0),
+      lineHeight: 'inherit',
+      flexGrow: 1,
+      minWidth: 0,
+    }),
+    parentIcon: css({
+      marginLeft: theme.spacing(0.5),
+    }),
+    titleText: css({
+      display: 'flex',
+      fontSize: typography.size.lg,
+      margin: 0,
+      borderRadius: theme.shape.radius.default,
+    }),
+    titleLink: css({
+      '&:focus-visible': focusStyle,
+    }),
+    titleDivider: css({
+      padding: spacing(0, 0.5, 0, 0.5),
+      display: 'none',
+      [theme.breakpoints.up('md')]: {
+        display: 'unset',
+      },
+    }),
+    parentLink: css({
+      display: 'none',
+      [theme.breakpoints.up('md')]: {
+        display: 'unset',
+        flex: 1,
+      },
+    }),
+    leftActionItem: css({
+      display: 'none',
+      alignItems: 'center',
+      paddingRight: spacing(0.5),
+      [theme.breakpoints.up('md')]: {
+        display: 'flex',
+      },
+    }),
+    forceShowLeftActionItems: css({
+      display: 'flex',
+    }),
   };
 };

@@ -7,10 +7,11 @@ import (
 	"time"
 
 	"github.com/go-openapi/strfmt"
+
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
-	"github.com/grafana/grafana/pkg/services/secrets"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 type UnknownReceiverError struct {
@@ -65,10 +66,10 @@ func (moa *MultiOrgAlertmanager) ActivateHistoricalConfiguration(ctx context.Con
 	}
 
 	if err := am.SaveAndApplyConfig(ctx, cfg); err != nil {
-		moa.logger.Error("unable to save and apply historical alertmanager configuration", "error", err, "org", orgId, "id", id)
+		moa.logger.Error("Unable to save and apply historical alertmanager configuration", "error", err, "org", orgId, "id", id)
 		return AlertmanagerConfigRejectedError{err}
 	}
-	moa.logger.Info("applied historical alertmanager configuration", "org", orgId, "id", id)
+	moa.logger.Info("Applied historical alertmanager configuration", "org", orgId, "id", id)
 
 	return nil
 }
@@ -166,14 +167,12 @@ func (moa *MultiOrgAlertmanager) ApplyAlertmanagerConfiguration(ctx context.Cont
 		}
 	}
 
-	if err := moa.Crypto.LoadSecureSettings(ctx, org, config.AlertmanagerConfig.Receivers); err != nil {
-		return err
+	if err := moa.Crypto.ProcessSecureSettings(ctx, org, config.AlertmanagerConfig.Receivers); err != nil {
+		return fmt.Errorf("failed to post process Alertmanager configuration: %w", err)
 	}
 
-	if err := config.ProcessConfig(func(ctx context.Context, payload []byte) ([]byte, error) {
-		return moa.Crypto.Encrypt(ctx, payload, secrets.WithoutScope())
-	}); err != nil {
-		return fmt.Errorf("failed to post process Alertmanager configuration: %w", err)
+	if err := assignReceiverConfigsUIDs(config.AlertmanagerConfig.Receivers); err != nil {
+		return fmt.Errorf("failed to assign missing uids: %w", err)
 	}
 
 	am, err := moa.AlertmanagerFor(org)
@@ -185,11 +184,48 @@ func (moa *MultiOrgAlertmanager) ApplyAlertmanagerConfiguration(ctx context.Cont
 	}
 
 	if err := am.SaveAndApplyConfig(ctx, &config); err != nil {
-		moa.logger.Error("unable to save and apply alertmanager configuration", "error", err)
+		moa.logger.Error("Unable to save and apply alertmanager configuration", "error", err)
 		return AlertmanagerConfigRejectedError{err}
 	}
 
 	return nil
+}
+
+// assignReceiverConfigsUIDs assigns missing UUIDs to receiver configs.
+func assignReceiverConfigsUIDs(c []*definitions.PostableApiReceiver) error {
+	seenUIDs := make(map[string]struct{})
+	// encrypt secure settings for storing them in DB
+	for _, r := range c {
+		switch r.Type() {
+		case definitions.GrafanaReceiverType:
+			for _, gr := range r.PostableGrafanaReceivers.GrafanaManagedReceivers {
+				if gr.UID == "" {
+					retries := 5
+					for i := 0; i < retries; i++ {
+						gen := util.GenerateShortUID()
+						_, ok := seenUIDs[gen]
+						if !ok {
+							gr.UID = gen
+							break
+						}
+					}
+					if gr.UID == "" {
+						return fmt.Errorf("all %d attempts to generate UID for receiver have failed; please retry", retries)
+					}
+				}
+				seenUIDs[gr.UID] = struct{}{}
+			}
+		default:
+		}
+	}
+	return nil
+}
+
+type provisioningStore interface {
+	GetProvenance(ctx context.Context, o models.Provisionable, org int64) (models.Provenance, error)
+	GetProvenances(ctx context.Context, org int64, resourceType string) (map[string]models.Provenance, error)
+	SetProvenance(ctx context.Context, o models.Provisionable, org int64, p models.Provenance) error
+	DeleteProvenance(ctx context.Context, o models.Provisionable, org int64) error
 }
 
 func (moa *MultiOrgAlertmanager) mergeProvenance(ctx context.Context, config definitions.GettableUserConfig, org int64) (definitions.GettableUserConfig, error) {

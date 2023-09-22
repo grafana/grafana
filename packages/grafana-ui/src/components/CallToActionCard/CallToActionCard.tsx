@@ -25,22 +25,25 @@ export const CallToActionCard = ({ message, callToActionElement, footer, classNa
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  wrapper: css`
-    label: call-to-action-card;
-    padding: ${theme.spacing(3)};
-    background: ${theme.colors.background.secondary};
-    border-radius: ${theme.shape.radius.default};
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    flex-grow: 1;
-  `,
-  message: css`
-    margin-bottom: ${theme.spacing(3)};
-    font-style: italic;
-  `,
-  footer: css`
-    margin-top: ${theme.spacing(3)}};
-  `,
+  wrapper: css({
+    label: 'call-to-action-card',
+    background: theme.colors.background.secondary,
+    borderRadius: theme.shape.radius.default,
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexGrow: 1,
+    padding: theme.spacing(3),
+    [theme.breakpoints.down('sm')]: {
+      padding: theme.spacing(3, 1),
+    },
+  }),
+  message: css({
+    marginBottom: theme.spacing(3),
+    fontStyle: 'italic',
+  }),
+  footer: css({
+    marginTop: theme.spacing(3),
+  }),
 });

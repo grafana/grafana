@@ -67,7 +67,7 @@ async function setupTestContext({
       getStream: () =>
         ({
           subscribe: jest.fn(),
-        } as any),
+        }) as any,
       publish: jest.fn(),
       removeAllListeners: jest.fn(),
       newScopedBus: jest.fn(),

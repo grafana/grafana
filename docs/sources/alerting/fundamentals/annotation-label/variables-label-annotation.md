@@ -1,4 +1,5 @@
 ---
+canonical: https://grafana.com/docs/grafana/latest/alerting/fundamentals/annotation-label/variables-label-annotation/
 description: Learn about templating of labels and annotations
 keywords:
   - grafana
@@ -6,6 +7,11 @@ keywords:
   - templating
   - labels
   - annotations
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: Templating labels and annotations
 weight: 117
 ---
@@ -97,14 +103,34 @@ If you were to print the value of the expression with RefID `B` in the summary o
 The summary will contain just the value:
 
 ```
-api has an over 5% of responses with 5xx errors: 6.789%
+api has over 5% of responses with 5xx errors: 6.78912%
 ```
 
-However, while `{{ $values.B }}` prints the number 6.789, it is actually a string as you are printing the object that contains both the labels and value for RefID B, not the floating point value of B. To use the floating point value of RefID B you must use the `Value` field from `$values.B`. If you were to humanize the floating point value in the summary of an alert:
+However, while `{{ $values.B }}` prints the number 6.78912, it is actually a string as you are printing the object that contains both the labels and value for RefID B, not the floating point value of B. To use the floating point value of RefID B you must use the `Value` field from `$values.B`.
+
+If you were to print the humanized floating point value in the summary of an alert:
 
 ```
 {{ $labels.service }} has over 5% of responses with 5xx errors: {{ humanize $values.B.Value }}%
 ```
+
+The summary will contain the humanized value:
+
+```
+api has over 5% of responses with 5xx errors: 6.789%
+```
+
+You can also compare the floating point value using the `eq`, `ne`, `lt`, `le`, `gt` and `ge` comparison operators:
+
+```
+{{ if gt $values.B.Value 50.0 -}}
+  Critical 5xx error rate
+{{ else -}}
+  Elevated 5xx error rate
+{{ end }}
+```
+
+When using comparison operators with `$values` make sure to compare it to a floating point number such as `50.0` and not an integer such as `50`. Go templates do not support implicit type coercion, and comparing a floating point number to an integer will break your template.
 
 ### No data, execution errors and timeouts
 
@@ -164,7 +190,7 @@ https://example.com/grafana
 
 ### graphLink
 
-The `graphLink` function returns the path to the graphical view in [Explore]({{< relref "../../../explore" >}}) for the given expression and data source.
+The `graphLink` function returns the path to the graphical view in [Explore][explore] for the given expression and data source.
 
 #### Example
 
@@ -276,7 +302,7 @@ The `pathPrefix` function returns the path of the Grafana server as configured i
 
 ### tableLink
 
-The `tableLink` function returns the path to the tabular view in [Explore]({{< relref "../../../explore" >}}) for the given expression and data source.
+The `tableLink` function returns the path to the tabular view in [Explore][explore] for the given expression and data source.
 
 #### Example
 
@@ -343,3 +369,8 @@ The `reReplaceAll` function replaces text matching the regular expression.
 ```
 example.com:8080
 ```
+
+{{% docs/reference %}}
+[explore]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/explore"
+[explore]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/explore"
+{{% /docs/reference %}}

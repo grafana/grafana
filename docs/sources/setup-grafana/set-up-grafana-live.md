@@ -8,6 +8,10 @@ aliases:
   - ../live/set-up-grafana-live/
 description: Grafana Live is a real-time messaging engine that pushes event data to
   a frontend when an event occurs.
+labels:
+  products:
+    - enterprise
+    - oss
 menuTitle: Set up Grafana Live
 title: Set up Grafana Live
 weight: 1100

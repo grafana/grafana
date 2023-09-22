@@ -9,6 +9,10 @@ keywords:
   - documentation
   - api
   - playlist
+labels:
+  products:
+    - enterprise
+    - oss
 title: 'Playlist HTTP API '
 ---
 

@@ -2,9 +2,17 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { DataSourcePluginOptionsEditorProps, GrafanaTheme2 } from '@grafana/data';
-import { ConfigSection, ConfigSubSection, DataSourceDescription } from '@grafana/experimental';
+import {
+  AdvancedHttpSettings,
+  Auth,
+  ConfigSection,
+  ConfigSubSection,
+  ConnectionSettings,
+  convertLegacyAuthProps,
+  DataSourceDescription,
+} from '@grafana/experimental';
 import { config } from '@grafana/runtime';
-import { DataSourceHttpSettings, useStyles2 } from '@grafana/ui';
+import { SecureSocksProxySettings, useStyles2 } from '@grafana/ui';
 import { ConfigDescriptionLink } from 'app/core/components/ConfigDescriptionLink';
 import { Divider } from 'app/core/components/Divider';
 import { NodeGraphSection } from 'app/core/components/NodeGraphSettings';
@@ -14,7 +22,6 @@ import { SpanBarSection } from 'app/features/explore/TraceView/components/settin
 
 import { LokiSearchSettings } from './LokiSearchSettings';
 import { QuerySettings } from './QuerySettings';
-import { SearchSettings } from './SearchSettings';
 import { ServiceGraphSettings } from './ServiceGraphSettings';
 import { TraceQLSearchSettings } from './TraceQLSearchSettings';
 
@@ -32,21 +39,20 @@ export const ConfigEditor = ({ options, onOptionsChange }: Props) => {
       />
 
       <Divider />
+      <ConnectionSettings config={options} onChange={onOptionsChange} urlPlaceholder="http://localhost:3200" />
 
-      <DataSourceHttpSettings
-        defaultUrl="http://tempo"
-        dataSourceConfig={options}
-        showAccessOptions={false}
-        onChange={onOptionsChange}
-        secureSocksDSProxyEnabled={config.secureSocksDSProxyEnabled}
+      <Divider />
+      <Auth
+        {...convertLegacyAuthProps({
+          config: options,
+          onChange: onOptionsChange,
+        })}
       />
 
       <Divider />
-
       <TraceToLogsSection options={options} onOptionsChange={onOptionsChange} />
 
       <Divider />
-
       {config.featureToggles.traceToMetrics ? (
         <>
           <TraceToMetricsSection options={options} onOptionsChange={onOptionsChange} />
@@ -60,6 +66,16 @@ export const ConfigEditor = ({ options, onOptionsChange }: Props) => {
         isCollapsible={true}
         isInitiallyOpen={false}
       >
+        <AdvancedHttpSettings config={options} onChange={onOptionsChange} />
+
+        {config.secureSocksDSProxyEnabled && (
+          <>
+            <Divider hideLine />
+            <SecureSocksProxySettings options={options} onOptionsChange={onOptionsChange} />
+          </>
+        )}
+
+        <Divider hideLine />
         <ConfigSubSection
           title="Service graph"
           description={
@@ -73,11 +89,10 @@ export const ConfigEditor = ({ options, onOptionsChange }: Props) => {
           <ServiceGraphSettings options={options} onOptionsChange={onOptionsChange} />
         </ConfigSubSection>
 
-        <Divider hideLine={true} />
-
+        <Divider hideLine />
         <NodeGraphSection options={options} onOptionsChange={onOptionsChange} />
-        <Divider hideLine={true} />
 
+        <Divider hideLine />
         <ConfigSubSection
           title="Tempo search"
           description={
@@ -88,15 +103,10 @@ export const ConfigEditor = ({ options, onOptionsChange }: Props) => {
             />
           }
         >
-          {config.featureToggles.traceqlSearch ? (
-            <TraceQLSearchSettings options={options} onOptionsChange={onOptionsChange} />
-          ) : (
-            <SearchSettings options={options} onOptionsChange={onOptionsChange} />
-          )}
+          <TraceQLSearchSettings options={options} onOptionsChange={onOptionsChange} />
         </ConfigSubSection>
 
-        <Divider hideLine={true} />
-
+        <Divider hideLine />
         <ConfigSubSection
           title="Loki search"
           description={
@@ -110,8 +120,7 @@ export const ConfigEditor = ({ options, onOptionsChange }: Props) => {
           <LokiSearchSettings options={options} onOptionsChange={onOptionsChange} />
         </ConfigSubSection>
 
-        <Divider hideLine={true} />
-
+        <Divider hideLine />
         <ConfigSubSection
           title="TraceID query"
           description={
@@ -125,8 +134,7 @@ export const ConfigEditor = ({ options, onOptionsChange }: Props) => {
           <QuerySettings options={options} onOptionsChange={onOptionsChange} />
         </ConfigSubSection>
 
-        <Divider hideLine={true} />
-
+        <Divider hideLine />
         <SpanBarSection options={options} onOptionsChange={onOptionsChange} />
       </ConfigSection>
     </div>

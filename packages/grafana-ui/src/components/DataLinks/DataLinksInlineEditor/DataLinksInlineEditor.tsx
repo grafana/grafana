@@ -112,8 +112,8 @@ export const DataLinksInlineEditor = ({ links, onChange, getSuggestions, data }:
 
 const getDataLinksInlineEditorStyles = stylesFactory((theme: GrafanaTheme2) => {
   return {
-    wrapper: css`
-      margin-bottom: ${theme.spacing(2)};
-    `,
+    wrapper: css({
+      marginBottom: theme.spacing(2),
+    }),
   };
 });

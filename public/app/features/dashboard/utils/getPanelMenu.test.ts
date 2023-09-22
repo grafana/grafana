@@ -10,7 +10,7 @@ import {
   PluginExtensionTypes,
   toDataFrame,
 } from '@grafana/data';
-import { AngularComponent, getPluginExtensions } from '@grafana/runtime';
+import { AngularComponent, getPluginLinkExtensions } from '@grafana/runtime';
 import config from 'app/core/config';
 import * as actions from 'app/features/explore/state/main';
 import { setStore } from 'app/store/store';
@@ -29,13 +29,15 @@ jest.mock('app/core/services/context_srv', () => ({
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   setPluginExtensionGetter: jest.fn(),
-  getPluginExtensions: jest.fn(),
+  getPluginLinkExtensions: jest.fn(),
 }));
+
+const getPluginLinkExtensionsMock = jest.mocked(getPluginLinkExtensions);
 
 describe('getPanelMenu()', () => {
   beforeEach(() => {
-    (getPluginExtensions as jest.Mock).mockRestore();
-    (getPluginExtensions as jest.Mock).mockReturnValue({ extensions: [] });
+    getPluginLinkExtensionsMock.mockRestore();
+    getPluginLinkExtensionsMock.mockReturnValue({ extensions: [] });
   });
 
   it('should return the correct panel menu items', () => {
@@ -66,7 +68,7 @@ describe('getPanelMenu()', () => {
         {
           "iconClassName": "compass",
           "onClick": [Function],
-          "shortcut": "x",
+          "shortcut": "p x",
           "text": "Explore",
         },
         {
@@ -119,9 +121,10 @@ describe('getPanelMenu()', () => {
 
   describe('when extending panel menu from plugins', () => {
     it('should contain menu item from link extension', () => {
-      (getPluginExtensions as jest.Mock).mockReturnValue({
+      getPluginLinkExtensionsMock.mockReturnValue({
         extensions: [
           {
+            id: '1',
             pluginId: '...',
             type: PluginExtensionTypes.link,
             title: 'Declare incident',
@@ -147,9 +150,10 @@ describe('getPanelMenu()', () => {
     });
 
     it('should truncate menu item title to 25 chars', () => {
-      (getPluginExtensions as jest.Mock).mockReturnValue({
+      getPluginLinkExtensionsMock.mockReturnValue({
         extensions: [
           {
+            id: '1',
             pluginId: '...',
             type: PluginExtensionTypes.link,
             title: 'Declare incident when pressing this amazing menu item',
@@ -177,9 +181,10 @@ describe('getPanelMenu()', () => {
     it('should pass onClick from plugin extension link to menu item', () => {
       const expectedOnClick = jest.fn();
 
-      (getPluginExtensions as jest.Mock).mockReturnValue({
+      getPluginLinkExtensionsMock.mockReturnValue({
         extensions: [
           {
+            id: '1',
             pluginId: '...',
             type: PluginExtensionTypes.link,
             title: 'Declare incident when pressing this amazing menu item',
@@ -287,7 +292,126 @@ describe('getPanelMenu()', () => {
         data,
       };
 
-      expect(getPluginExtensions).toBeCalledWith(expect.objectContaining({ context }));
+      expect(getPluginLinkExtensionsMock).toBeCalledWith(expect.objectContaining({ context }));
+    });
+
+    it('should contain menu item with category', () => {
+      getPluginLinkExtensionsMock.mockReturnValue({
+        extensions: [
+          {
+            id: '1',
+            pluginId: '...',
+            type: PluginExtensionTypes.link,
+            title: 'Declare incident',
+            description: 'Declaring an incident in the app',
+            path: '/a/grafana-basic-app/declare-incident',
+            category: 'Incident',
+          },
+        ],
+      });
+
+      const panel = new PanelModel({});
+      const dashboard = createDashboardModelFixture({});
+      const menuItems = getPanelMenu(dashboard, panel);
+      const extensionsSubMenu = menuItems.find((i) => i.text === 'Extensions')?.subMenu;
+
+      expect(extensionsSubMenu).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            text: 'Incident',
+            subMenu: expect.arrayContaining([
+              expect.objectContaining({
+                text: 'Declare incident',
+                href: '/a/grafana-basic-app/declare-incident',
+              }),
+            ]),
+          }),
+        ])
+      );
+    });
+
+    it('should truncate category to 25 chars', () => {
+      getPluginLinkExtensionsMock.mockReturnValue({
+        extensions: [
+          {
+            id: '1',
+            pluginId: '...',
+            type: PluginExtensionTypes.link,
+            title: 'Declare incident',
+            description: 'Declaring an incident in the app',
+            path: '/a/grafana-basic-app/declare-incident',
+            category: 'Declare incident when pressing this amazing menu item',
+          },
+        ],
+      });
+
+      const panel = new PanelModel({});
+      const dashboard = createDashboardModelFixture({});
+      const menuItems = getPanelMenu(dashboard, panel);
+      const extensionsSubMenu = menuItems.find((i) => i.text === 'Extensions')?.subMenu;
+
+      expect(extensionsSubMenu).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            text: 'Declare incident when...',
+            subMenu: expect.arrayContaining([
+              expect.objectContaining({
+                text: 'Declare incident',
+                href: '/a/grafana-basic-app/declare-incident',
+              }),
+            ]),
+          }),
+        ])
+      );
+    });
+
+    it('should contain menu item with category and append items without category after divider', () => {
+      getPluginLinkExtensionsMock.mockReturnValue({
+        extensions: [
+          {
+            id: '1',
+            pluginId: '...',
+            type: PluginExtensionTypes.link,
+            title: 'Declare incident',
+            description: 'Declaring an incident in the app',
+            path: '/a/grafana-basic-app/declare-incident',
+            category: 'Incident',
+          },
+          {
+            id: '2',
+            pluginId: '...',
+            type: PluginExtensionTypes.link,
+            title: 'Create forecast',
+            description: 'Declaring an incident in the app',
+            path: '/a/grafana-basic-app/declare-incident',
+          },
+        ],
+      });
+
+      const panel = new PanelModel({});
+      const dashboard = createDashboardModelFixture({});
+      const menuItems = getPanelMenu(dashboard, panel);
+      const extensionsSubMenu = menuItems.find((i) => i.text === 'Extensions')?.subMenu;
+
+      expect(extensionsSubMenu).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            text: 'Incident',
+            subMenu: expect.arrayContaining([
+              expect.objectContaining({
+                text: 'Declare incident',
+                href: '/a/grafana-basic-app/declare-incident',
+              }),
+            ]),
+          }),
+          expect.objectContaining({
+            type: 'divider',
+          }),
+          expect.objectContaining({
+            text: 'Create forecast',
+          }),
+        ])
+      );
     });
   });
 
@@ -324,7 +448,7 @@ describe('getPanelMenu()', () => {
           {
             "iconClassName": "compass",
             "onClick": [Function],
-            "shortcut": "x",
+            "shortcut": "p x",
             "text": "Explore",
           },
           {

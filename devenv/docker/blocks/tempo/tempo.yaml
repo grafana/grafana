@@ -24,6 +24,8 @@ compactor:
     compacted_block_retention: 10m
 
 metrics_generator:
+  traces_storage:
+    path: /tmp/tempo/generator/traces
   registry:
     external_labels:
       source: tempo
@@ -49,4 +51,4 @@ storage:
       path: /tmp/tempo/blocks
 
 overrides:
-  metrics_generator_processors: [service-graphs, span-metrics]
+  metrics_generator_processors: [local-blocks, service-graphs, span-metrics]

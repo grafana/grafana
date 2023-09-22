@@ -2,14 +2,15 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import {
+  DataSourceInstanceSettings,
   DataSourceJsonData,
   DataSourcePluginOptionsEditorProps,
   GrafanaTheme2,
   updateDatasourcePluginJsonDataOption,
 } from '@grafana/data';
 import { ConfigSection } from '@grafana/experimental';
-import { DataSourcePicker } from '@grafana/runtime';
 import { Button, InlineField, InlineFieldRow, Input, useStyles2 } from '@grafana/ui';
+import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 
 import { ConfigDescriptionLink } from '../ConfigDescriptionLink';
 import { IntervalInput } from '../IntervalInput/IntervalInput';
@@ -52,7 +53,7 @@ export function TraceToMetricsSettings({ options, onOptionsChange }: Props) {
             current={options.jsonData.tracesToMetrics?.datasourceUid}
             noDefault={true}
             width={40}
-            onChange={(ds) =>
+            onChange={(ds: DataSourceInstanceSettings) =>
               updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'tracesToMetrics', {
                 ...options.jsonData.tracesToMetrics,
                 datasourceUid: ds.uid,
@@ -78,31 +79,37 @@ export function TraceToMetricsSettings({ options, onOptionsChange }: Props) {
         ) : null}
       </InlineFieldRow>
 
-      <IntervalInput
-        label={getTimeShiftLabel('start')}
-        tooltip={getTimeShiftTooltip('start')}
-        value={options.jsonData.tracesToMetrics?.spanStartTimeShift || ''}
-        onChange={(val) => {
-          updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'tracesToMetrics', {
-            ...options.jsonData.tracesToMetrics,
-            spanStartTimeShift: val,
-          });
-        }}
-        isInvalidError={invalidTimeShiftError}
-      />
+      <InlineFieldRow>
+        <IntervalInput
+          label={getTimeShiftLabel('start')}
+          tooltip={getTimeShiftTooltip('start', '-2m')}
+          value={options.jsonData.tracesToMetrics?.spanStartTimeShift || ''}
+          onChange={(val) => {
+            updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'tracesToMetrics', {
+              ...options.jsonData.tracesToMetrics,
+              spanStartTimeShift: val,
+            });
+          }}
+          placeholder={'-2m'}
+          isInvalidError={invalidTimeShiftError}
+        />
+      </InlineFieldRow>
 
-      <IntervalInput
-        label={getTimeShiftLabel('end')}
-        tooltip={getTimeShiftTooltip('end')}
-        value={options.jsonData.tracesToMetrics?.spanEndTimeShift || ''}
-        onChange={(val) => {
-          updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'tracesToMetrics', {
-            ...options.jsonData.tracesToMetrics,
-            spanEndTimeShift: val,
-          });
-        }}
-        isInvalidError={invalidTimeShiftError}
-      />
+      <InlineFieldRow>
+        <IntervalInput
+          label={getTimeShiftLabel('end')}
+          tooltip={getTimeShiftTooltip('end', '2m')}
+          value={options.jsonData.tracesToMetrics?.spanEndTimeShift || ''}
+          onChange={(val) => {
+            updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'tracesToMetrics', {
+              ...options.jsonData.tracesToMetrics,
+              spanEndTimeShift: val,
+            });
+          }}
+          placeholder={'2m'}
+          isInvalidError={invalidTimeShiftError}
+        />
+      </InlineFieldRow>
 
       <InlineFieldRow>
         <InlineField tooltip="Tags that will be used in the metrics query" label="Tags" labelWidth={26}>

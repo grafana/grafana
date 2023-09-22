@@ -9,8 +9,13 @@ keywords:
   - text
   - documentation
   - panel
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: Text
-weight: 1100
+weight: 100
 ---
 
 # Text
@@ -27,8 +32,8 @@ This option formats the content as [markdown](https://en.wikipedia.org/wiki/Mark
 
 ### HTML
 
-This setting renders the content as [sanitized](https://github.com/grafana/grafana/blob/code-in-text-panel/packages/grafana-data/src/text/sanitize.ts) HTML. If you require more direct control over the output, you can set the
-[disable_sanitize_html]({{< relref "../../../setup-grafana/configure-grafana/#disable_sanitize_html" >}}) flag which enables you to directly enter HTML.
+This setting renders the content as [sanitized](https://github.com/grafana/grafana/blob/main/packages/grafana-data/src/text/sanitize.ts) HTML. If you require more direct control over the output, you can set the
+[disable_sanitize_html][] flag which enables you to directly enter HTML.
 
 ### Code
 
@@ -37,4 +42,12 @@ to the embedded text.
 
 ## Variables
 
-[Variables]({{< relref "../../../dashboards/variables/variable-syntax/" >}}) in the content will be expanded for display.
+[Variables][] in the content will be expanded for display.
+
+{{% docs/reference %}}
+[disable_sanitize_html]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana#disable_sanitize_html"
+[disable_sanitize_html]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana#disable_sanitize_html"
+
+[Variables]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables/variable-syntax"
+[Variables]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables/variable-syntax"
+{{% /docs/reference %}}

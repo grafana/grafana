@@ -20,13 +20,13 @@ export const InlineFieldRow = ({ children, className, ...htmlProps }: Props) => 
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    container: css`
-      label: InlineFieldRow;
-      display: flex;
-      flex-direction: row;
-      flex-wrap: wrap;
-      align-content: flex-start;
-      row-gap: ${theme.spacing(0.5)};
-    `,
+    container: css({
+      label: 'InlineFieldRow',
+      display: 'flex',
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      alignContent: 'flex-start',
+      rowGap: theme.spacing(0.5),
+    }),
   };
 };

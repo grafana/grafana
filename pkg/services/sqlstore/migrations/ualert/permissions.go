@@ -17,13 +17,14 @@ import (
 type roleType string
 
 const (
+	RoleNone   roleType = "None"
 	RoleViewer roleType = "Viewer"
 	RoleEditor roleType = "Editor"
 	RoleAdmin  roleType = "Admin"
 )
 
 func (r roleType) IsValid() bool {
-	return r == RoleViewer || r == RoleAdmin || r == RoleEditor
+	return r == RoleViewer || r == RoleAdmin || r == RoleEditor || r == RoleNone
 }
 
 type permissionType int
@@ -96,7 +97,7 @@ func (m *folderHelper) createFolder(orgID int64, title string) (*dashboard, erro
 		OrgId:    orgID,
 		FolderId: 0,
 		IsFolder: true,
-		Dashboard: simplejson.NewFromAny(map[string]interface{}{
+		Dashboard: simplejson.NewFromAny(map[string]any{
 			"title": title,
 		}),
 	}

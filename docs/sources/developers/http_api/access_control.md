@@ -12,12 +12,16 @@ keywords:
   - role-based-access-control
   - acl
   - enterprise
+labels:
+  products:
+    - enterprise
+    - oss
 title: RBAC HTTP API
 ---
 
 # RBAC API
 
-> Role-based access control API is only available in Grafana Enterprise. Read more about [Grafana Enterprise]({{< relref "/docs/grafana/latest/introduction/grafana-enterprise" >}}).
+> Role-based access control API is only available in Grafana Cloud or Grafana Enterprise. Read more about [Grafana Enterprise]({{< relref "/docs/grafana/latest/introduction/grafana-enterprise" >}}).
 
 The API can be used to create, update, delete, get, and list roles.
 
@@ -529,7 +533,7 @@ Content-Type: application/json; charset=UTF-8
 
 ### List your permissions
 
-`GET /api/access-control/users/permissions`
+`GET /api/access-control/user/permissions`
 
 Lists the permissions granted to the signed in user.
 

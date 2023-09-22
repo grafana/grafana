@@ -4,15 +4,15 @@ import React, { RefObject, useMemo } from 'react';
 import { shallowEqual } from 'react-redux';
 
 import { DataSourceInstanceSettings, RawTimeRange } from '@grafana/data';
-import { config, reportInteraction } from '@grafana/runtime';
+import { reportInteraction } from '@grafana/runtime';
 import { defaultIntervals, PageToolbar, RefreshPicker, SetInterval, ToolbarButton, ButtonGroup } from '@grafana/ui';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { createAndCopyShortLink } from 'app/core/utils/shortLinks';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 import { StoreState, useDispatch, useSelector } from 'app/types/store';
 
+import { contextSrv } from '../../core/core';
 import { DashNavButton } from '../dashboard/components/DashNav/DashNavButton';
-import { getTimeSrv } from '../dashboard/services/TimeSrv';
 import { updateFiscalYearStartMonthForSession, updateTimeZoneForSession } from '../profile/state/reducers';
 import { getFiscalYearStartMonth, getTimeZone } from '../profile/state/selectors';
 
@@ -135,7 +135,7 @@ export function ExploreToolbar({ exploreId, topOfViewRef, onChangeTime }: Props)
         leftItems={[
           <DataSourcePicker
             key={`${exploreId}-ds-picker`}
-            mixed={config.featureToggles.exploreMixedDatasource === true}
+            mixed
             onChange={onChangeDatasource}
             current={datasourceInstance?.getRef()}
             hideTextValue={showSmallDataSourcePicker}
@@ -200,7 +200,7 @@ export function ExploreToolbar({ exploreId, topOfViewRef, onChangeTime }: Props)
             isLoading={loading}
             text={showSmallTimePicker ? undefined : loading ? 'Cancel' : 'Run query'}
             tooltip={showSmallTimePicker ? (loading ? 'Cancel' : 'Run query') : undefined}
-            intervals={getTimeSrv().getValidIntervals(defaultIntervals)}
+            intervals={contextSrv.getValidIntervals(defaultIntervals)}
             isLive={isLive}
             onRefresh={() => onRunQuery(loading)}
             noIntervalPicker={isLive}

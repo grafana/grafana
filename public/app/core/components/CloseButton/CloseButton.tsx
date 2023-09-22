@@ -24,9 +24,8 @@ export const CloseButton = ({ onClick, 'aria-label': ariaLabel, style }: Props) 
   );
 };
 
-const getStyles = (theme: GrafanaTheme2) =>
-  css`
-    position: absolute;
-    right: ${theme.spacing(0.5)};
-    top: ${theme.spacing(1)};
-  `;
+const getStyles = (theme: GrafanaTheme2) => css`
+  position: absolute;
+  right: ${theme.spacing(0.5)};
+  top: ${theme.spacing(1)};
+`;

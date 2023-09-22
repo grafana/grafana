@@ -6,7 +6,7 @@ import { EditorField, EditorRows } from '@grafana/experimental';
 import { Input } from '@grafana/ui';
 
 import CloudMonitoringDatasource from '../datasource';
-import { AnnotationQuery, CloudMonitoringQuery, QueryType } from '../types/query';
+import { TimeSeriesList, CloudMonitoringQuery, QueryType } from '../types/query';
 import { CloudMonitoringOptions } from '../types/types';
 
 import { MetricQueryEditor, defaultTimeSeriesList } from './MetricQueryEditor';
@@ -15,7 +15,7 @@ import { AnnotationsHelp } from './';
 
 export type Props = QueryEditorProps<CloudMonitoringDatasource, CloudMonitoringQuery, CloudMonitoringOptions>;
 
-export const defaultQuery: (datasource: CloudMonitoringDatasource) => AnnotationQuery = (datasource) => ({
+export const defaultQuery: (datasource: CloudMonitoringDatasource) => TimeSeriesList = (datasource) => ({
   ...defaultTimeSeriesList(datasource),
   title: '',
   text: '',

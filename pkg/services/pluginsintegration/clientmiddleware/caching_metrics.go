@@ -19,6 +19,14 @@ var QueryCachingRequestHistogram = prometheus.NewHistogramVec(prometheus.Histogr
 	Buckets:   []float64{.005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5, 10, 25, 50, 100},
 }, []string{"datasource_type", "cache", "query_type"})
 
+var ShouldCacheQueryHistogram = prometheus.NewHistogramVec(prometheus.HistogramOpts{
+	Namespace: metrics.ExporterName,
+	Subsystem: "caching",
+	Name:      "should_cache_query_request_duration_seconds",
+	Help:      "histogram of grafana query endpoint requests in seconds",
+	Buckets:   []float64{.005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5, 10, 25, 50, 100},
+}, []string{"datasource_type", "cache", "shouldCache", "query_type"})
+
 var ResourceCachingRequestHistogram = prometheus.NewHistogramVec(prometheus.HistogramOpts{
 	Namespace: metrics.ExporterName,
 	Subsystem: "caching",
@@ -28,7 +36,7 @@ var ResourceCachingRequestHistogram = prometheus.NewHistogramVec(prometheus.Hist
 }, []string{"plugin_id", "cache"})
 
 func getQueryType(req *contextmodel.ReqContext) string {
-	if req.IsPublicDashboardView {
+	if req.IsPublicDashboardView() {
 		return QueryPubdash
 	}
 	return QueryDashboard

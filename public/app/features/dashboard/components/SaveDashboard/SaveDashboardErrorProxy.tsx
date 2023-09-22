@@ -28,7 +28,7 @@ export const SaveDashboardErrorProxy = ({
   const { onDashboardSave } = useDashboardSave(dashboard);
 
   useEffect(() => {
-    if (error.data && isHandledError(error.data.status)) {
+    if (error.data && proxyHandlesError(error.data.status)) {
       error.isHandled = true;
     }
   }, [error]);
@@ -109,7 +109,7 @@ const ConfirmPluginDashboardSaveModal = ({ onDismiss, dashboard }: SaveDashboard
   );
 };
 
-const isHandledError = (errorStatus: string) => {
+export const proxyHandlesError = (errorStatus: string) => {
   switch (errorStatus) {
     case 'version-mismatch':
     case 'name-exists':

@@ -1,5 +1,5 @@
 import { cloneDeep, defaults } from 'lodash';
-import LRU from 'lru-cache';
+import { LRUCache } from 'lru-cache';
 import React from 'react';
 import { forkJoin, lastValueFrom, merge, Observable, of, OperatorFunction, pipe, throwError } from 'rxjs';
 import { catchError, filter, map, tap } from 'rxjs/operators';
@@ -23,6 +23,10 @@ import {
   rangeUtil,
   ScopedVars,
   TimeRange,
+  renderLegendFormat,
+  DataSourceGetTagKeysOptions,
+  DataSourceGetTagValuesOptions,
+  MetricFindValue,
 } from '@grafana/data';
 import {
   BackendDataSourceResponse,
@@ -52,10 +56,10 @@ import {
   getPrometheusTime,
   getRangeSnapInterval,
 } from './language_utils';
-import { renderLegendFormat } from './legend';
 import PrometheusMetricFindQuery from './metric_find_query';
 import { getInitHints, getQueryHints } from './query_hints';
-import { QueryEditorMode } from './querybuilder/shared/types';
+import { promQueryModeller } from './querybuilder/PromQueryModeller';
+import { QueryBuilderLabelFilter, QueryEditorMode } from './querybuilder/shared/types';
 import { CacheRequestInfo, defaultPrometheusQueryOverlapWindow, QueryCache } from './querycache/QueryCache';
 import { getOriginalMetricName, transform, transformV2 } from './result_transformer';
 import { trackQuery } from './tracking';
@@ -92,7 +96,7 @@ export class PrometheusDatasource
   access: 'direct' | 'proxy';
   basicAuth: any;
   withCredentials: any;
-  metricsNameCache = new LRU<string, string[]>({ max: 10 });
+  metricsNameCache = new LRUCache<string, string[]>({ max: 10 });
   interval: string;
   queryTimeout: string | undefined;
   httpMethod: string;
@@ -971,27 +975,50 @@ export class PrometheusDatasource
   // this is used to get label keys, a.k.a label names
   // it is used in metric_find_query.ts
   // and in Tempo here grafana/public/app/plugins/datasource/tempo/QueryEditor/ServiceGraphSection.tsx
-  async getTagKeys(options?: { series: string[] }) {
-    if (options?.series) {
-      // Get tags for the provided series only
-      const seriesLabels: Array<Record<string, string[]>> = await Promise.all(
-        options.series.map((series: string) => this.languageProvider.fetchSeriesLabels(series))
-      );
-      // Combines tags from all options.series provided
-      let tags: string[] = [];
-      seriesLabels.map((value) => (tags = tags.concat(Object.keys(value))));
-      const uniqueLabels = [...new Set(tags)];
-      return uniqueLabels.map((value: any) => ({ text: value }));
-    } else {
-      // Get all tags
-      const params = this.getTimeRangeParams();
-      const result = await this.metadataRequest('/api/v1/labels', params);
-      return result?.data?.data?.map((value: any) => ({ text: value })) ?? [];
+  async getTagKeys(options: DataSourceGetTagKeysOptions): Promise<MetricFindValue[]> {
+    if (!options || options.filters.length === 0) {
+      await this.languageProvider.fetchLabels();
+      return this.languageProvider.getLabelKeys().map((k) => ({ value: k, text: k }));
     }
+
+    const labelFilters: QueryBuilderLabelFilter[] = options.filters.map((f) => ({
+      label: f.key,
+      value: f.value,
+      op: f.operator,
+    }));
+    const expr = promQueryModeller.renderLabels(labelFilters);
+
+    let labelsIndex: Record<string, string[]>;
+
+    if (this.hasLabelsMatchAPISupport()) {
+      labelsIndex = await this.languageProvider.fetchSeriesLabelsMatch(expr);
+    } else {
+      labelsIndex = await this.languageProvider.fetchSeriesLabels(expr);
+    }
+
+    // filter out already used labels
+    return Object.keys(labelsIndex)
+      .filter((labelName) => !options.filters.find((filter) => filter.key === labelName))
+      .map((k) => ({ value: k, text: k }));
   }
 
   // By implementing getTagKeys and getTagValues we add ad-hoc filters functionality
-  async getTagValues(options: { key?: string } = {}) {
+  async getTagValues(options: DataSourceGetTagValuesOptions) {
+    const labelFilters: QueryBuilderLabelFilter[] = options.filters.map((f) => ({
+      label: f.key,
+      value: f.value,
+      op: f.operator,
+    }));
+
+    const expr = promQueryModeller.renderLabels(labelFilters);
+
+    if (this.hasLabelsMatchAPISupport()) {
+      return (await this.languageProvider.fetchSeriesValuesWithMatch(options.key, expr)).map((v) => ({
+        value: v,
+        text: v,
+      }));
+    }
+
     const params = this.getTimeRangeParams();
     const result = await this.metadataRequest(`/api/v1/label/${options.key}/values`, params);
     return result?.data?.data?.map((value: any) => ({ text: value })) ?? [];

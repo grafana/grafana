@@ -184,4 +184,31 @@ describe('LogsQueryEditor', () => {
       })
     );
   });
+
+  it('should update the dashboardTime prop', async () => {
+    const mockDatasource = createMockDatasource({ resourcePickerData: createMockResourcePickerData() });
+    const query = createMockQuery();
+    const onChange = jest.fn();
+
+    render(
+      <LogsQueryEditor
+        query={query}
+        datasource={mockDatasource}
+        variableOptionGroup={variableOptionGroup}
+        onChange={onChange}
+        setError={() => {}}
+      />
+    );
+
+    const dashboardTimeOption = await screen.findByLabelText('Dashboard');
+    await userEvent.click(dashboardTimeOption);
+
+    expect(onChange).toBeCalledWith(
+      expect.objectContaining({
+        azureLogAnalytics: expect.objectContaining({
+          dashboardTime: true,
+        }),
+      })
+    );
+  });
 });

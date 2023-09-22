@@ -1,12 +1,16 @@
 ---
-title: Legacy app plugins
 aliases:
   - ../../../plugins/developing/apps/
+description: Deprecated guide for Angular plugin development.
 keywords:
   - grafana
   - plugins
   - documentation
-description: Deprecated guide for Angular plugin development.
+labels:
+  products:
+    - enterprise
+    - oss
+title: Legacy app plugins
 ---
 
 # Legacy app plugins

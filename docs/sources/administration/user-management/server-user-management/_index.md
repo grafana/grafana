@@ -8,6 +8,10 @@ aliases:
   - ../manage-users-and-permissions/manage-server-users/view-edit-user-account/
   - ../manage-users-and-permissions/manage-server-users/view-list-users/
   - ../manage-users-and-permissions/manage-server-users/view-user-account-details/
+labels:
+  products:
+    - enterprise
+    - oss
 title: Server user management
 weight: 100
 ---

@@ -56,7 +56,7 @@ func TestIntegrationSendingToExternalAlertmanager(t *testing.T) {
 		URL:   fakeAM.Server.URL,
 		OrgID: ruleKey.OrgID,
 		Type:  datasources.DS_ALERTMANAGER,
-		JsonData: simplejson.NewFromAny(map[string]interface{}{
+		JsonData: simplejson.NewFromAny(map[string]any{
 			"handleGrafanaManagedAlerts": true,
 			"implementation":             "prometheus",
 		}),
@@ -126,7 +126,7 @@ func TestIntegrationSendingToExternalAlertmanager_WithMultipleOrgs(t *testing.T)
 		URL:   fakeAM.Server.URL,
 		OrgID: ruleKey1.OrgID,
 		Type:  datasources.DS_ALERTMANAGER,
-		JsonData: simplejson.NewFromAny(map[string]interface{}{
+		JsonData: simplejson.NewFromAny(map[string]any{
 			"handleGrafanaManagedAlerts": true,
 			"implementation":             "prometheus",
 		}),
@@ -153,7 +153,7 @@ func TestIntegrationSendingToExternalAlertmanager_WithMultipleOrgs(t *testing.T)
 		URL:   fakeAM.Server.URL,
 		OrgID: ruleKey2.OrgID,
 		Type:  datasources.DS_ALERTMANAGER,
-		JsonData: simplejson.NewFromAny(map[string]interface{}{
+		JsonData: simplejson.NewFromAny(map[string]any{
 			"handleGrafanaManagedAlerts": true,
 			"implementation":             "prometheus",
 		}),
@@ -199,7 +199,7 @@ func TestIntegrationSendingToExternalAlertmanager_WithMultipleOrgs(t *testing.T)
 		URL:   fakeAM2.Server.URL,
 		OrgID: ruleKey2.OrgID,
 		Type:  datasources.DS_ALERTMANAGER,
-		JsonData: simplejson.NewFromAny(map[string]interface{}{
+		JsonData: simplejson.NewFromAny(map[string]any{
 			"handleGrafanaManagedAlerts": true,
 			"implementation":             "prometheus",
 		}),
@@ -286,7 +286,7 @@ func TestChangingAlertmanagersChoice(t *testing.T) {
 		URL:   fakeAM.Server.URL,
 		OrgID: ruleKey.OrgID,
 		Type:  datasources.DS_ALERTMANAGER,
-		JsonData: simplejson.NewFromAny(map[string]interface{}{
+		JsonData: simplejson.NewFromAny(map[string]any{
 			"handleGrafanaManagedAlerts": true,
 			"implementation":             "prometheus",
 		}),
@@ -566,7 +566,7 @@ func TestAlertManagers_buildRedactedAMs(t *testing.T) {
 		amUrls   []string
 		errCalls int
 		errLog   string
-		errCtx   []interface{}
+		errCtx   []any
 		expected []string
 	}{
 		{

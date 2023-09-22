@@ -3,9 +3,11 @@
 import './global-jquery-shim';
 
 import angular from 'angular';
+import { TextEncoder, TextDecoder } from 'util';
 
 import { EventBusSrv } from '@grafana/data';
 import { GrafanaBootConfig } from '@grafana/runtime';
+
 import 'blob-polyfill';
 import 'mutationobserver-shim';
 import './mocks/workers';
@@ -62,6 +64,9 @@ const mockIntersectionObserver = jest
   }));
 global.IntersectionObserver = mockIntersectionObserver;
 
+global.TextEncoder = TextEncoder;
+global.TextDecoder = TextDecoder;
+
 jest.mock('../app/core/core', () => ({
   ...jest.requireActual('../app/core/core'),
   appEvents: testAppEvents,
@@ -76,3 +81,34 @@ const throwUnhandledRejections = () => {
 };
 
 throwUnhandledRejections();
+
+// Used by useMeasure
+global.ResizeObserver = class ResizeObserver {
+  //callback: ResizeObserverCallback;
+
+  constructor(callback: ResizeObserverCallback) {
+    setTimeout(() => {
+      callback(
+        [
+          {
+            contentRect: {
+              x: 1,
+              y: 2,
+              width: 500,
+              height: 500,
+              top: 100,
+              bottom: 0,
+              left: 100,
+              right: 0,
+            },
+            target: {},
+          } as ResizeObserverEntry,
+        ],
+        this
+      );
+    });
+  }
+  observe() {}
+  disconnect() {}
+  unobserve() {}
+};

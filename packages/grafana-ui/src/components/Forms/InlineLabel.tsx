@@ -52,30 +52,30 @@ export const InlineLabel = ({
 
 export const getInlineLabelStyles = (theme: GrafanaTheme2, transparent = false, width?: number | 'auto') => {
   return {
-    label: css`
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      flex-shrink: 0;
-      padding: 0 ${theme.spacing(1)};
-      font-weight: ${theme.typography.fontWeightMedium};
-      font-size: ${theme.typography.size.sm};
-      background-color: ${transparent ? 'transparent' : theme.colors.background.secondary};
-      height: ${theme.spacing(theme.components.height.md)};
-      line-height: ${theme.spacing(theme.components.height.md)};
-      margin-right: ${theme.spacing(0.5)};
-      border-radius: ${theme.shape.radius.default};
-      border: none;
-      width: ${width ? (width !== 'auto' ? `${8 * width}px` : width) : '100%'};
-      color: ${theme.colors.text.primary};
-    `,
-    icon: css`
-      color: ${theme.colors.text.secondary};
-      margin-left: 10px;
+    label: css({
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      flexShrink: 0,
+      padding: theme.spacing(0, 1),
+      fontWeight: theme.typography.fontWeightMedium,
+      fontSize: theme.typography.size.sm,
+      backgroundColor: transparent ? 'transparent' : theme.colors.background.secondary,
+      height: theme.spacing(theme.components.height.md),
+      lineHeight: theme.spacing(theme.components.height.md),
+      marginRight: theme.spacing(0.5),
+      borderRadius: theme.shape.radius.default,
+      border: 'none',
+      width: width ? (width !== 'auto' ? `${8 * width}px` : width) : '100%',
+      color: theme.colors.text.primary,
+    }),
+    icon: css({
+      color: theme.colors.text.secondary,
+      marginLeft: '10px',
 
-      :hover {
-        color: ${theme.colors.text.primary};
-      }
-    `,
+      ':hover': {
+        color: theme.colors.text.primary,
+      },
+    }),
   };
 };

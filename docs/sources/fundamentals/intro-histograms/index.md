@@ -9,6 +9,11 @@ keywords:
   - panel
   - documentation
   - histogram
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 menuTitle: Histograms and heatmaps
 title: Introduction to histograms and heatmaps
 weight: 650

@@ -1,8 +1,9 @@
-import { css, cx } from '@emotion/css';
+import { css } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Button, HorizontalGroup, useTheme2 } from '@grafana/ui';
+import { Components } from '@grafana/e2e-selectors';
+import { HorizontalGroup, ToolbarButton, useTheme2 } from '@grafana/ui';
 
 type Props = {
   addQueryRowButtonDisabled?: boolean;
@@ -23,6 +24,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     `,
   };
 };
+
 export function SecondaryActions(props: Props) {
   const theme = useTheme2();
   const styles = getStyles(theme);
@@ -30,36 +32,35 @@ export function SecondaryActions(props: Props) {
     <div className={styles.containerMargin}>
       <HorizontalGroup>
         {!props.addQueryRowButtonHidden && (
-          <Button
-            variant="secondary"
-            aria-label="Add row button"
+          <ToolbarButton
+            variant="canvas"
+            aria-label="Add query"
             onClick={props.onClickAddQueryRowButton}
             disabled={props.addQueryRowButtonDisabled}
             icon="plus"
           >
             Add query
-          </Button>
+          </ToolbarButton>
         )}
         {!props.richHistoryRowButtonHidden && (
-          <Button
-            variant="secondary"
-            aria-label="Rich history button"
-            className={cx({ ['explore-active-button']: props.richHistoryButtonActive })}
+          <ToolbarButton
+            variant={props.richHistoryButtonActive ? 'active' : 'canvas'}
+            aria-label="Query history"
             onClick={props.onClickRichHistoryButton}
+            data-testid={Components.QueryTab.queryHistoryButton}
             icon="history"
           >
             Query history
-          </Button>
+          </ToolbarButton>
         )}
-        <Button
-          variant="secondary"
-          aria-label="Query inspector button"
-          className={cx({ ['explore-active-button']: props.queryInspectorButtonActive })}
+        <ToolbarButton
+          variant={props.queryInspectorButtonActive ? 'active' : 'canvas'}
+          aria-label="Query inspector"
           onClick={props.onClickQueryInspectorButton}
           icon="info-circle"
         >
-          Inspector
-        </Button>
+          Query inspector
+        </ToolbarButton>
       </HorizontalGroup>
     </div>
   );

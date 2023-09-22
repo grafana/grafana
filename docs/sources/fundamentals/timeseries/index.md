@@ -8,6 +8,11 @@ keywords:
   - guide
   - concepts
   - timeseries
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: Introduction to time series
 weight: 400
 ---

@@ -1,1 +1,1 @@
-export const forbiddenElements = ['script', 'iframe'];
+export const forbiddenElements = ['iframe'];

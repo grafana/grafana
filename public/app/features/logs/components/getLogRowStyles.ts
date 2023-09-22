@@ -74,6 +74,9 @@ export const getLogRowStyles = memoizeOne((theme: GrafanaTheme2) => {
       width: 100%;
       ${!scrollableLogsContainer && `margin-bottom: ${theme.spacing(2.25)};`}
     `,
+    logsRowsTableContain: css`
+      contain: strict;
+    `,
     highlightBackground: css`
       background-color: ${tinycolor(theme.colors.info.transparent).setAlpha(0.25).toString()};
     `,
@@ -85,12 +88,7 @@ export const getLogRowStyles = memoizeOne((theme: GrafanaTheme2) => {
 
       &:hover {
         .log-row-menu {
-          visibility: visible;
           z-index: 1;
-        }
-
-        .log-row-menu-visible {
-          visibility: hidden;
         }
 
         background: ${hoverBgColor};

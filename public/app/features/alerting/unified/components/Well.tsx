@@ -14,7 +14,7 @@ export const getStyles = (theme: GrafanaTheme2) => ({
   wrapper: css`
     background-color: ${theme.components.panel.background};
     border: solid 1px ${theme.components.input.borderColor};
-    border-radius: ${theme.shape.borderRadius(1)};
+    border-radius: ${theme.shape.radius.default};
     padding: ${theme.spacing(0.5, 1)};
     font-family: ${theme.typography.fontFamilyMonospace};
   `,

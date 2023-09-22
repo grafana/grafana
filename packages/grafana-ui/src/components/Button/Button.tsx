@@ -191,11 +191,11 @@ export const getButtonStyles = (props: StyleProps) => {
       '&[disabled]': disabledStyles,
     }),
     disabled: css(disabledStyles),
-    img: css`
-      width: 16px;
-      height: 16px;
-      margin: ${theme.spacing(0, 1, 0, 0.5)};
-    `,
+    img: css({
+      width: '16px',
+      height: '16px',
+      margin: theme.spacing(0, 1, 0, 0.5),
+    }),
     icon: iconOnly
       ? css({
           // Important not to set margin bottom here as it would override internal icon bottom margin
@@ -205,13 +205,14 @@ export const getButtonStyles = (props: StyleProps) => {
       : css({
           marginRight: theme.spacing(padding / 2),
         }),
-    content: css`
-      display: flex;
-      flex-direction: row;
-      align-items: center;
-      white-space: nowrap;
-      height: 100%;
-    `,
+    content: css({
+      display: 'flex',
+      flexDirection: 'row',
+      alignItems: 'center',
+      whiteSpace: 'nowrap',
+      overflow: 'hidden',
+      height: '100%',
+    }),
   };
 };
 
@@ -333,25 +334,25 @@ export function getPropertiesForVariant(theme: GrafanaTheme2, variant: ButtonVar
 }
 
 export const clearButtonStyles = (theme: GrafanaTheme2) => {
-  return css`
-    background: transparent;
-    color: ${theme.colors.text.primary};
-    border: none;
-    padding: 0;
-  `;
+  return css({
+    background: 'transparent',
+    color: theme.colors.text.primary,
+    border: 'none',
+    padding: 0,
+  });
 };
 
 export const clearLinkButtonStyles = (theme: GrafanaTheme2) => {
-  return css`
-    background: transparent;
-    border: none;
-    padding: 0;
-    font-family: inherit;
-    color: inherit;
-    height: 100%;
-    &:hover {
-      background: transparent;
-      color: inherit;
-    }
-  `;
+  return css({
+    background: 'transparent',
+    border: 'none',
+    padding: 0,
+    fontFamily: 'inherit',
+    color: 'inherit',
+    height: '100%',
+    '&:hover': {
+      background: 'transparent',
+      color: 'inherit',
+    },
+  });
 };

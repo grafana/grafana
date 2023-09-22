@@ -186,9 +186,7 @@ function useInternalMatches(filtered: ActionImpl[], search: string): Match[] {
       return throttledFiltered.map((action) => ({ score: 0, action }));
     }
 
-    const haystack = throttledFiltered.map(({ name, keywords, subtitle }) =>
-      `${name} ${keywords ?? ''} ${subtitle ?? ''}`.toLowerCase()
-    );
+    const haystack = throttledFiltered.map(({ name, keywords }) => `${name} ${keywords ?? ''}`.toLowerCase());
 
     const results: Match[] = [];
 
@@ -237,11 +235,9 @@ function useUfuzzy(): uFuzzy {
 
   if (!ref.current) {
     ref.current = new uFuzzy({
-      intraMode: 1,
-      intraIns: 1,
-      intraSub: 1,
-      intraTrn: 1,
-      intraDel: 1,
+      // See https://github.com/leeoniya/uFuzzy#options
+      intraMode: 0, // don't allow for typos/extra letters
+      intraIns: 0, // require each term in the search to appear exactly
     });
   }
 

@@ -2,6 +2,9 @@ package database
 
 import (
 	"context"
+	// #nosec G505 Used only for generating a 160 bit hash, it's not used for security purposes
+	"crypto/sha1"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"time"
@@ -10,9 +13,14 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 )
 
+// extServiceRoleUID generates a 160 bit unique ID using SHA-1 that fits within the 40 characters limit of the role UID.
 func extServiceRoleUID(externalServiceID string) string {
 	uid := fmt.Sprintf("%s%s_permissions", accesscontrol.ExternalServiceRoleUIDPrefix, externalServiceID)
-	return uid
+	// #nosec G505 Used only for generating a 160 bit hash, it's not used for security purposes
+	hasher := sha1.New()
+	hasher.Write([]byte(uid))
+
+	return hex.EncodeToString(hasher.Sum(nil))
 }
 
 func extServiceRoleName(externalServiceID string) string {

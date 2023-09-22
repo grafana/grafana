@@ -10,6 +10,10 @@ keywords:
   - documentation
   - api
   - organization
+labels:
+  products:
+    - enterprise
+    - oss
 title: Organization HTTP API
 ---
 

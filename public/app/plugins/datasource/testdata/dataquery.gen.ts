@@ -116,6 +116,7 @@ export interface TestData extends common.DataQuery {
    */
   dropPercent?: number;
   errorType?: ('server_panic' | 'frontend_exception' | 'frontend_observable');
+  flamegraphDiff?: boolean;
   labels?: string;
   levelColumn?: boolean;
   lines?: number;

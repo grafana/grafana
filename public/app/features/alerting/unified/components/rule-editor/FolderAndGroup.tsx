@@ -1,14 +1,17 @@
 import { css } from '@emotion/css';
 import { debounce, take, uniqueId } from 'lodash';
-import React, { useCallback, useEffect, useMemo } from 'react';
-import { useFormContext } from 'react-hook-form';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { FormProvider, useForm, useFormContext } from 'react-hook-form';
 
-import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { AppEvents, GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
-import { AsyncSelect, Badge, Field, InputControl, Label, useStyles2 } from '@grafana/ui';
-import { contextSrv } from 'app/core/core';
+import { AsyncSelect, Button, Field, Input, InputControl, Label, Modal, Text, useStyles2 } from '@grafana/ui';
+import appEvents from 'app/core/app_events';
+import { contextSrv } from 'app/core/services/context_srv';
+import { createFolder } from 'app/features/manage-dashboards/state/actions';
 import { AccessControlAction, useDispatch } from 'app/types';
 import { CombinedRuleGroup } from 'app/types/unified-alerting';
+import { RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
 import { useCombinedRuleNamespaces } from '../../hooks/useCombinedRuleNamespaces';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
@@ -17,9 +20,10 @@ import { RuleFormValues } from '../../types/rule-form';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { MINUTE } from '../../utils/rule-form';
 import { isGrafanaRulerRule } from '../../utils/rules';
-import { InfoIcon } from '../InfoIcon';
+import { ProvisioningBadge } from '../Provisioning';
+import { evaluateEveryValidationOptions } from '../rules/EditRuleGroupModal';
 
-import { Folder, RuleFolderPicker } from './RuleFolderPicker';
+import { containsSlashes, Folder, RuleFolderPicker } from './RuleFolderPicker';
 import { checkForPathSeparator } from './util';
 
 export const MAX_GROUP_RESULTS = 1000;
@@ -66,7 +70,7 @@ const findGroupMatchingLabel = (group: SelectableValue<string>, query: string) =
   return group.label?.toLowerCase().includes(query.toLowerCase());
 };
 
-export function FolderAndGroup() {
+export function FolderAndGroup({ groupfoldersForGrafana }: { groupfoldersForGrafana?: RulerRulesConfigDTO | null }) {
   const {
     formState: { errors },
     watch,
@@ -80,6 +84,24 @@ export function FolderAndGroup() {
   const group = watch('group');
 
   const { groupOptions, loading } = useGetGroupOptionsFromFolder(folder?.title ?? '');
+
+  const [isCreatingFolder, setIsCreatingFolder] = useState(false);
+  const [isCreatingEvaluationGroup, setIsCreatingEvaluationGroup] = useState(false);
+
+  const onOpenFolderCreationModal = () => setIsCreatingFolder(true);
+  const onOpenEvaluationGroupCreationModal = () => setIsCreatingEvaluationGroup(true);
+
+  const handleFolderCreation = (folder: Folder) => {
+    resetGroup();
+    setValue('folder', folder);
+    setIsCreatingFolder(false);
+  };
+
+  const handleEvalGroupCreation = (groupName: string, evaluationInterval: string) => {
+    setValue('group', groupName);
+    setValue('evaluateEvery', evaluationInterval);
+    setIsCreatingEvaluationGroup(false);
+  };
 
   const resetGroup = useCallback(() => {
     setValue('group', '');
@@ -101,116 +123,309 @@ export function FolderAndGroup() {
 
   return (
     <div className={styles.container}>
-      <Field
-        label={
-          <Label htmlFor="folder" description={'Select a folder for your rule.'}>
-            <Stack gap={0.5}>
-              Folder
-              <InfoIcon
-                text={
-                  'Each folder has unique folder permission. When you store multiple rules in a folder, the folder access permissions are assigned to the rules.'
-                }
-              />
+      <div>
+        {
+          <Field
+            label={
+              <Label htmlFor="folder" description={'Select a folder to store your rule.'}>
+                Folder
+              </Label>
+            }
+            className={styles.formInput}
+            error={errors.folder?.message}
+            invalid={!!errors.folder?.message}
+            data-testid="folder-picker"
+          >
+            <Stack direction="row" alignItems="center">
+              {(!isCreatingFolder && (
+                <>
+                  <InputControl
+                    render={({ field: { ref, ...field } }) => (
+                      <div style={{ width: 420 }}>
+                        <RuleFolderPicker
+                          inputId="folder"
+                          {...field}
+                          enableReset={true}
+                          onChange={({ title, uid }) => {
+                            field.onChange({ title, uid });
+                            resetGroup();
+                          }}
+                        />
+                      </div>
+                    )}
+                    name="folder"
+                    rules={{
+                      required: { value: true, message: 'Select a folder' },
+                      validate: {
+                        pathSeparator: (folder: Folder) => checkForPathSeparator(folder.title),
+                      },
+                    }}
+                  />
+                  <Text color="secondary">or</Text>
+                  <Button
+                    onClick={onOpenFolderCreationModal}
+                    type="button"
+                    icon="plus"
+                    fill="outline"
+                    variant="secondary"
+                    disabled={!contextSrv.hasPermission(AccessControlAction.FoldersCreate)}
+                  >
+                    New folder
+                  </Button>
+                </>
+              )) || <div>Creating new folder...</div>}
             </Stack>
-          </Label>
+          </Field>
         }
-        className={styles.formInput}
-        error={errors.folder?.message}
-        invalid={!!errors.folder?.message}
-        data-testid="folder-picker"
-      >
-        <InputControl
-          render={({ field: { ref, ...field } }) => (
-            <RuleFolderPicker
-              inputId="folder"
-              {...field}
-              enableCreateNew={contextSrv.hasPermission(AccessControlAction.FoldersCreate)}
-              enableReset={true}
-              onChange={({ title, uid }) => {
-                field.onChange({ title, uid });
-                resetGroup();
-              }}
-            />
-          )}
-          name="folder"
-          rules={{
-            required: { value: true, message: 'Select a folder' },
-            validate: {
-              pathSeparator: (folder: Folder) => checkForPathSeparator(folder.title),
-            },
-          }}
-        />
-      </Field>
+        {isCreatingFolder && (
+          <FolderCreationModal onCreate={handleFolderCreation} onClose={() => setIsCreatingFolder(false)} />
+        )}
+      </div>
 
-      <Field
-        label="Evaluation group (interval)"
-        data-testid="group-picker"
-        description="Select a group to evaluate all rules in the same group over the same time interval."
-        className={styles.formInput}
-        error={errors.group?.message}
-        invalid={!!errors.group?.message}
-      >
-        <InputControl
-          render={({ field: { ref, ...field }, fieldState }) => (
-            <AsyncSelect
-              disabled={!folder || loading}
-              inputId="group"
-              key={uniqueId()}
-              {...field}
-              onChange={(group) => {
-                field.onChange(group.label ?? '');
-              }}
-              isLoading={loading}
-              invalid={Boolean(folder) && !group && Boolean(fieldState.error)}
-              loadOptions={debouncedSearch}
-              cacheOptions
-              loadingMessage={'Loading groups...'}
-              defaultValue={defaultGroupValue}
-              defaultOptions={groupOptions}
-              getOptionLabel={(option: SelectableValue<string>) => (
-                <div>
-                  <span>{option.label}</span>
-                  {/* making the assumption here that it's provisioned when it's disabled, should probably change this */}
-                  {option.isDisabled && (
-                    <>
-                      {' '}
-                      <Badge color="purple" text="Provisioned" />
-                    </>
-                  )}
+      <div>
+        <Field
+          label="Evaluation group"
+          data-testid="group-picker"
+          description="Rules within the same group are evaluated sequentially over the same time interval."
+          className={styles.formInput}
+          error={errors.group?.message}
+          invalid={!!errors.group?.message}
+        >
+          <Stack direction="row" alignItems="center">
+            <InputControl
+              render={({ field: { ref, ...field }, fieldState }) => (
+                <div style={{ width: 420 }}>
+                  <AsyncSelect
+                    disabled={!folder || loading}
+                    inputId="group"
+                    key={uniqueId()}
+                    {...field}
+                    onChange={(group) => {
+                      field.onChange(group.label ?? '');
+                    }}
+                    isLoading={loading}
+                    invalid={Boolean(folder) && !group && Boolean(fieldState.error)}
+                    loadOptions={debouncedSearch}
+                    cacheOptions
+                    loadingMessage={'Loading groups...'}
+                    defaultValue={defaultGroupValue}
+                    defaultOptions={groupOptions}
+                    getOptionLabel={(option: SelectableValue<string>) => (
+                      <div>
+                        <span>{option.label}</span>
+                        {/* making the assumption here that it's provisioned when it's disabled, should probably change this */}
+                        {option.isDisabled && (
+                          <>
+                            {' '}
+                            <ProvisioningBadge />
+                          </>
+                        )}
+                      </div>
+                    )}
+                    placeholder={'Select an evaluation group...'}
+                  />
                 </div>
               )}
-              placeholder={'Evaluation group name'}
-              allowCustomValue
-              formatCreateLabel={(_) => '+ Add new '}
-              noOptionsMessage="Start typing to create evaluation group"
+              name="group"
+              control={control}
+              rules={{
+                required: { value: true, message: 'Must enter a group name' },
+                validate: {
+                  pathSeparator: (group_: string) => checkForPathSeparator(group_),
+                },
+              }}
             />
-          )}
-          name="group"
-          control={control}
-          rules={{
-            required: { value: true, message: 'Must enter a group name' },
-            validate: {
-              pathSeparator: (group_: string) => checkForPathSeparator(group_),
-            },
-          }}
-        />
-      </Field>
+            <Text color="secondary">or</Text>
+            <Button
+              onClick={onOpenEvaluationGroupCreationModal}
+              type="button"
+              icon="plus"
+              fill="outline"
+              variant="secondary"
+              disabled={!folder}
+            >
+              New evaluation group
+            </Button>
+          </Stack>
+        </Field>
+        {isCreatingEvaluationGroup && (
+          <EvaluationGroupCreationModal
+            onCreate={handleEvalGroupCreation}
+            onClose={() => setIsCreatingEvaluationGroup(false)}
+            groupfoldersForGrafana={groupfoldersForGrafana}
+          />
+        )}
+      </div>
     </div>
   );
 }
+
+function FolderCreationModal({
+  onClose,
+  onCreate,
+}: {
+  onClose: () => void;
+  onCreate: (folder: Folder) => void;
+}): React.ReactElement {
+  const styles = useStyles2(getStyles);
+
+  const [title, setTitle] = useState('');
+  const onSubmit = async () => {
+    const newFolder = await createFolder({ title: title });
+    if (!newFolder.uid) {
+      appEvents.emit(AppEvents.alertError, ['Folder could not be created']);
+      return;
+    }
+
+    const folder: Folder = { title: newFolder.title, uid: newFolder.uid };
+    onCreate(folder);
+    appEvents.emit(AppEvents.alertSuccess, ['Folder Created', 'OK']);
+  };
+
+  const error = containsSlashes(title);
+
+  return (
+    <Modal className={styles.modal} isOpen={true} title={'New folder'} onDismiss={onClose} onClickBackdrop={onClose}>
+      <div className={styles.modalTitle}>Create a new folder to store your rule</div>
+
+      <form onSubmit={onSubmit}>
+        <Field
+          label={<Label htmlFor="folder">Folder name</Label>}
+          error={"The folder name can't contain slashes"}
+          invalid={error}
+        >
+          <Input
+            autoFocus={true}
+            id="folderName"
+            placeholder="Enter a name"
+            value={title}
+            onChange={(e) => setTitle(e.currentTarget.value)}
+            className={styles.formInput}
+          />
+        </Field>
+
+        <Modal.ButtonRow>
+          <Button variant="secondary" type="button" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button type="submit" disabled={!title || error}>
+            Create
+          </Button>
+        </Modal.ButtonRow>
+      </form>
+    </Modal>
+  );
+}
+
+function EvaluationGroupCreationModal({
+  onClose,
+  onCreate,
+  groupfoldersForGrafana,
+}: {
+  onClose: () => void;
+  onCreate: (group: string, evaluationInterval: string) => void;
+  groupfoldersForGrafana?: RulerRulesConfigDTO | null;
+}): React.ReactElement {
+  const styles = useStyles2(getStyles);
+  const onSubmit = () => {
+    onCreate(getValues('group'), getValues('evaluateEvery'));
+  };
+
+  const { watch } = useFormContext<RuleFormValues>();
+
+  const evaluateEveryId = 'eval-every-input';
+  const [groupName, folderName] = watch(['group', 'folder.title']);
+
+  const groupRules =
+    (groupfoldersForGrafana && groupfoldersForGrafana[folderName]?.find((g) => g.name === groupName)?.rules) ?? [];
+
+  const onCancel = () => {
+    onClose();
+  };
+
+  const formAPI = useForm({
+    defaultValues: { group: '', evaluateEvery: '' },
+    mode: 'onChange',
+    shouldFocusError: true,
+  });
+
+  const { register, handleSubmit, formState, getValues } = formAPI;
+
+  return (
+    <Modal
+      className={styles.modal}
+      isOpen={true}
+      title={'New evaluation group'}
+      onDismiss={onCancel}
+      onClickBackdrop={onCancel}
+    >
+      <div className={styles.modalTitle}>Create a new evaluation group to use for this alert rule.</div>
+
+      <FormProvider {...formAPI}>
+        <form onSubmit={handleSubmit(() => onSubmit())}>
+          <Field
+            label={<Label htmlFor={'group'}>Evaluation group name</Label>}
+            error={formState.errors.group?.message}
+            invalid={!!formState.errors.group}
+          >
+            <Input
+              className={styles.formInput}
+              autoFocus={true}
+              id={'group'}
+              placeholder="Enter a name"
+              {...register('group', { required: { value: true, message: 'Required.' } })}
+            />
+          </Field>
+
+          <Field
+            error={formState.errors.evaluateEvery?.message}
+            invalid={!!formState.errors.evaluateEvery}
+            label={
+              <Label
+                htmlFor={evaluateEveryId}
+                description="How often is the rule evaluated. Applies to every rule within the group."
+              >
+                Evaluation interval
+              </Label>
+            }
+          >
+            <Input
+              className={styles.formInput}
+              id={evaluateEveryId}
+              placeholder="e.g. 5m"
+              {...register('evaluateEvery', evaluateEveryValidationOptions(groupRules))}
+            />
+          </Field>
+          <Modal.ButtonRow>
+            <Button variant="secondary" type="button" onClick={onCancel}>
+              Cancel
+            </Button>
+            <Button type="submit" disabled={!formState.isValid}>
+              Create
+            </Button>
+          </Modal.ButtonRow>
+        </form>
+      </FormProvider>
+    </Modal>
+  );
+}
+
 const getStyles = (theme: GrafanaTheme2) => ({
   container: css`
     display: flex;
-    flex-direction: row;
+    flex-direction: column;
     align-items: baseline;
-    max-width: ${theme.breakpoints.values.sm}px;
+    max-width: ${theme.breakpoints.values.lg}px;
     justify-content: space-between;
   `,
   formInput: css`
-    width: 275px;
-
-    & + & {
-      margin-left: ${theme.spacing(3)};
-    }
+    flex-grow: 1;
+  `,
+  modal: css`
+    width: ${theme.breakpoints.values.sm}px;
+  `,
+  modalTitle: css`
+    color: ${theme.colors.text.secondary};
+    margin-bottom: ${theme.spacing(2)};
   `,
 });

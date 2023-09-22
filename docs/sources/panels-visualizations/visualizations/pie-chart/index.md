@@ -5,8 +5,13 @@ aliases:
 keywords:
   - grafana
   - pie chart
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: Pie chart
-weight: 850
+weight: 100
 ---
 
 # Pie chart
@@ -28,7 +33,7 @@ Choose how much information to show.
 
 ### Calculation
 
-Select a calculation to reduce each series when Calculate has been selected. For information about available calculations, refer to [Calculation types]({{< relref "../../calculation-types/" >}}).
+Select a calculation to reduce each series when Calculate has been selected. For information about available calculations, refer to [Calculation types][].
 
 ### Limit
 
@@ -72,9 +77,9 @@ The following example shows a pie chart with **Name** and **Percent** labels dis
 
 ![Pie chart labels](/static/img/docs/pie-chart-panel/pie-chart-labels-7-5.png)
 
-{{< docs/shared "visualizations/tooltip-mode.md" >}}
+{{< docs/shared lookup="visualizations/tooltip-mode.md" source="grafana" version="<GRAFANA VERSION>" >}}
 
-{{< docs/shared "visualizations/legend-mode.md" >}}
+{{< docs/shared lookup="visualizations/legend-mode.md" source="grafana" version="<GRAFANA VERSION>" >}}
 
 ### Legend values
 
@@ -84,3 +89,8 @@ Select values to display in the legend. You can select more than one.
 - **Value:** The raw numerical value.
 
 For more information about the legend, refer to [Configure a legend](../configure-legend/).
+
+{{% docs/reference %}}
+[Calculation types]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/calculation-types"
+[Calculation types]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/calculation-types"
+{{% /docs/reference %}}

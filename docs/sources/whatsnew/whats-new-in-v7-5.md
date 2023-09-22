@@ -10,6 +10,11 @@ keywords:
   - documentation
   - '7.5'
   - release notes
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: What's new in Grafana v7.5
 weight: -32
 ---

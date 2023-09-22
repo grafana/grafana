@@ -1,8 +1,12 @@
 ---
-title: Legacy review guidelines
 aliases:
   - ../../../plugins/developing/plugin-review-guidelines/
 description: Deprecated guide for Angular plugin development.
+labels:
+  products:
+    - enterprise
+    - oss
+title: Legacy review guidelines
 ---
 
 # Legacy review guidelines

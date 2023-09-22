@@ -1,19 +1,15 @@
 import { css } from '@emotion/css';
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Alert, useStyles2 } from '@grafana/ui';
 import { useDispatch } from 'app/types';
 
+import { useAlertmanagerConfig } from '../../hooks/useAlertmanagerConfig';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { useAlertmanager } from '../../state/AlertmanagerContext';
-import {
-  deleteAlertManagerConfigAction,
-  fetchAlertManagerConfigAction,
-  updateAlertManagerConfigAction,
-} from '../../state/actions';
+import { deleteAlertManagerConfigAction, updateAlertManagerConfigAction } from '../../state/actions';
 import { GRAFANA_RULES_SOURCE_NAME, isVanillaPrometheusAlertManagerDataSource } from '../../utils/datasource';
-import { initialAsyncRequestState } from '../../utils/redux';
 
 import AlertmanagerConfigSelector, { ValidAmConfigOption } from './AlertmanagerConfigSelector';
 import { ConfigEditor } from './ConfigEditor';
@@ -33,21 +29,13 @@ export default function AlertmanagerConfig(): JSX.Element {
   const readOnly = selectedAlertmanager ? isVanillaPrometheusAlertManagerDataSource(selectedAlertmanager) : false;
   const styles = useStyles2(getStyles);
 
-  const configRequests = useUnifiedAlertingSelector((state) => state.amConfigs);
-
   const [selectedAmConfig, setSelectedAmConfig] = useState<ValidAmConfigOption | undefined>();
 
   const {
-    result: config,
-    loading: isLoadingConfig,
+    currentData: config,
     error: loadingError,
-  } = (selectedAlertmanager && configRequests[selectedAlertmanager]) || initialAsyncRequestState;
-
-  useEffect(() => {
-    if (selectedAlertmanager) {
-      dispatch(fetchAlertManagerConfigAction(selectedAlertmanager));
-    }
-  }, [selectedAlertmanager, dispatch]);
+    isLoading: isLoadingConfig,
+  } = useAlertmanagerConfig(selectedAlertmanager);
 
   const resetConfig = () => {
     if (selectedAlertmanager) {
@@ -80,7 +68,6 @@ export default function AlertmanagerConfig(): JSX.Element {
           oldConfig: config,
           alertManagerSourceName: selectedAlertmanager,
           successMessage: 'Alertmanager configuration updated.',
-          refetch: true,
         })
       );
     }

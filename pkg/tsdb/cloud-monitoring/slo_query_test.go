@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana/pkg/tsdb/cloud-monitoring/kinds/dataquery"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -20,7 +21,7 @@ func SLOQuery(t *testing.T) {
 			res := &backend.DataResponse{}
 			query := &cloudMonitoringSLO{
 				params: url.Values{},
-				parameters: &sloQuery{
+				parameters: &dataquery.SLOQuery{
 					ProjectName:  "test-proj",
 					SelectorName: "select_slo_compliance",
 					ServiceId:    "test-service",
@@ -45,7 +46,7 @@ func SLOQuery(t *testing.T) {
 			res := &backend.DataResponse{}
 			query := &cloudMonitoringSLO{
 				params: url.Values{},
-				parameters: &sloQuery{
+				parameters: &dataquery.SLOQuery{
 					ProjectName:  "test-proj",
 					SelectorName: "select_slo_compliance",
 					ServiceId:    "test-service",
@@ -66,7 +67,7 @@ func SLOQuery(t *testing.T) {
 		assert.Equal(t, 1, len(data.TimeSeries))
 
 		res := &backend.DataResponse{}
-		query := &cloudMonitoringSLO{params: url.Values{}, parameters: &sloQuery{SloId: "yes"}}
+		query := &cloudMonitoringSLO{params: url.Values{}, parameters: &dataquery.SLOQuery{SloId: "yes"}}
 		err = query.parseResponse(res, data, "")
 		require.NoError(t, err)
 		frames := res.Frames

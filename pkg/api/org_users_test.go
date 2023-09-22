@@ -66,10 +66,10 @@ func TestOrgUsersAPIEndpoint_userLoggedIn(t *testing.T) {
 	orgService := orgtest.NewOrgServiceFake()
 	orgService.ExpectedSearchOrgUsersResult = &org.SearchOrgUsersQueryResult{}
 	hs.orgService = orgService
+	setUpGetOrgUsersDB(t, sqlStore)
 	mock := dbtest.NewFakeDB()
 
 	loggedInUserScenario(t, "When calling GET on", "api/org/users", "api/org/users", func(sc *scenarioContext) {
-		setUpGetOrgUsersDB(t, sqlStore)
 		orgService.ExpectedSearchOrgUsersResult = &org.SearchOrgUsersQueryResult{
 			OrgUsers: []*org.OrgUserDTO{
 				{Login: testUserLogin, Email: "testUser@grafana.com"},
@@ -89,8 +89,6 @@ func TestOrgUsersAPIEndpoint_userLoggedIn(t *testing.T) {
 	}, mock)
 
 	loggedInUserScenario(t, "When calling GET on", "api/org/users/search", "api/org/users/search", func(sc *scenarioContext) {
-		setUpGetOrgUsersDB(t, sqlStore)
-
 		orgService.ExpectedSearchOrgUsersResult = &org.SearchOrgUsersQueryResult{
 			OrgUsers: []*org.OrgUserDTO{
 				{
@@ -123,8 +121,6 @@ func TestOrgUsersAPIEndpoint_userLoggedIn(t *testing.T) {
 	}, mock)
 
 	loggedInUserScenario(t, "When calling GET with page and limit query parameters on", "api/org/users/search", "api/org/users/search", func(sc *scenarioContext) {
-		setUpGetOrgUsersDB(t, sqlStore)
-
 		orgService.ExpectedSearchOrgUsersResult = &org.SearchOrgUsersQueryResult{
 			OrgUsers: []*org.OrgUserDTO{
 				{
@@ -159,7 +155,6 @@ func TestOrgUsersAPIEndpoint_userLoggedIn(t *testing.T) {
 		t.Cleanup(func() { settings.HiddenUsers = make(map[string]struct{}) })
 
 		loggedInUserScenario(t, "When calling GET on", "api/org/users", "api/org/users", func(sc *scenarioContext) {
-			setUpGetOrgUsersDB(t, sqlStore)
 			orgService.ExpectedSearchOrgUsersResult = &org.SearchOrgUsersQueryResult{
 				OrgUsers: []*org.OrgUserDTO{
 					{Login: testUserLogin, Email: "testUser@grafana.com"},
@@ -183,8 +178,6 @@ func TestOrgUsersAPIEndpoint_userLoggedIn(t *testing.T) {
 
 		loggedInUserScenarioWithRole(t, "When calling GET as an admin on", "GET", "api/org/users/lookup",
 			"api/org/users/lookup", org.RoleAdmin, func(sc *scenarioContext) {
-				setUpGetOrgUsersDB(t, sqlStore)
-
 				sc.handlerFunc = hs.GetOrgUsersForCurrentOrgLookup
 				sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
 
@@ -202,11 +195,12 @@ func TestOrgUsersAPIEndpoint_userLoggedIn(t *testing.T) {
 
 func TestOrgUsersAPIEndpoint_updateOrgRole(t *testing.T) {
 	type testCase struct {
-		desc            string
-		SkipOrgRoleSync bool
-		AuthEnabled     bool
-		AuthModule      string
-		expectedCode    int
+		desc                        string
+		SkipOrgRoleSync             bool
+		GcomOnlyExternalOrgRoleSync bool
+		AuthEnabled                 bool
+		AuthModule                  string
+		expectedCode                int
 	}
 	permissions := []accesscontrol.Permission{
 		{Action: accesscontrol.ActionOrgUsersRead, Scope: "users:*"},
@@ -235,6 +229,22 @@ func TestOrgUsersAPIEndpoint_updateOrgRole(t *testing.T) {
 			AuthEnabled:     true,
 			AuthModule:      login.GenericOAuthModule,
 			expectedCode:    http.StatusForbidden,
+		},
+		{
+			desc:                        "should be able to change basicRole for a user synced through GCom if GcomOnlyExternalOrgRoleSync flag is set to false",
+			SkipOrgRoleSync:             false,
+			GcomOnlyExternalOrgRoleSync: false,
+			AuthEnabled:                 true,
+			AuthModule:                  login.GrafanaComAuthModule,
+			expectedCode:                http.StatusOK,
+		},
+		{
+			desc:                        "should not be able to change basicRole for a user synced through GCom if GcomOnlyExternalOrgRoleSync flag is set to true",
+			SkipOrgRoleSync:             false,
+			GcomOnlyExternalOrgRoleSync: true,
+			AuthEnabled:                 true,
+			AuthModule:                  login.GrafanaComAuthModule,
+			expectedCode:                http.StatusForbidden,
 		},
 		{
 			desc:            "should be able to change basicRole with a basic Auth",
@@ -266,6 +276,9 @@ func TestOrgUsersAPIEndpoint_updateOrgRole(t *testing.T) {
 				} else if tt.AuthModule == login.GenericOAuthModule {
 					hs.Cfg.GenericOAuthAuthEnabled = tt.AuthEnabled
 					hs.Cfg.GenericOAuthSkipOrgRoleSync = tt.SkipOrgRoleSync
+				} else if tt.AuthModule == login.GrafanaComAuthModule {
+					hs.Cfg.GrafanaNetAuthEnabled = tt.AuthEnabled
+					hs.Cfg.GrafanaComSkipOrgRoleSync = tt.SkipOrgRoleSync
 				} else if tt.AuthModule == "" {
 					// authmodule empty means basic auth
 				} else {
@@ -275,7 +288,7 @@ func TestOrgUsersAPIEndpoint_updateOrgRole(t *testing.T) {
 				hs.authInfoService = &logintest.AuthInfoServiceFake{
 					ExpectedUserAuth: &login.UserAuth{AuthModule: tt.AuthModule},
 				}
-				hs.Features = featuremgmt.WithFeatures(featuremgmt.FlagOnlyExternalOrgRoleSync, true)
+				hs.Features = featuremgmt.WithFeatures(featuremgmt.FlagGcomOnlyExternalOrgRoleSync, tt.GcomOnlyExternalOrgRoleSync)
 				hs.userService = &usertest.FakeUserService{ExpectedSignedInUser: userWithPermissions}
 				hs.orgService = &orgtest.FakeOrgService{}
 				hs.accesscontrolService = &actest.FakeService{

@@ -206,7 +206,7 @@ const useDeletePolicyModal = (handleDelete: (route: RouteWithID) => void, loadin
 const useAlertGroupsModal = (): [
   JSX.Element,
   (alertGroups: AlertmanagerGroup[], matchers?: ObjectMatcher[]) => void,
-  () => void
+  () => void,
 ] => {
   const [showModal, setShowModal] = useState(false);
   const [alertGroups, setAlertGroups] = useState<AlertmanagerGroup[]>([]);

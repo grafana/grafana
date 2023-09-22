@@ -12,6 +12,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
@@ -461,9 +462,10 @@ func TestIntegrationSQLStore_SearchTeams(t *testing.T) {
 			assert.Len(t, queryResult.Teams, tt.expectedTeamCount)
 			assert.Equal(t, queryResult.TotalCount, int64(tt.expectedTeamCount))
 
-			if !hasWildcardScope(tt.query.SignedInUser, ac.ActionTeamsRead) {
+			castSignedInUser := tt.query.SignedInUser.(*user.SignedInUser)
+			if !hasWildcardScope(castSignedInUser, ac.ActionTeamsRead) {
 				for _, team := range queryResult.Teams {
-					assert.Contains(t, tt.query.SignedInUser.Permissions[tt.query.SignedInUser.OrgID][ac.ActionTeamsRead], fmt.Sprintf("teams:id:%d", team.ID))
+					assert.Contains(t, castSignedInUser.Permissions[castSignedInUser.OrgID][ac.ActionTeamsRead], fmt.Sprintf("teams:id:%d", team.ID))
 				}
 			}
 		})
@@ -572,7 +574,7 @@ func TestIntegrationSQLStore_GetTeamMembers_ACFilter(t *testing.T) {
 			if !hasWildcardScope(tt.query.SignedInUser, ac.ActionOrgUsersRead) {
 				for _, member := range queryResult {
 					assert.Contains(t,
-						tt.query.SignedInUser.Permissions[tt.query.SignedInUser.OrgID][ac.ActionOrgUsersRead],
+						tt.query.SignedInUser.GetPermissions()[ac.ActionOrgUsersRead],
 						ac.Scope("users", "id", fmt.Sprintf("%d", member.UserID)),
 					)
 				}
@@ -581,8 +583,8 @@ func TestIntegrationSQLStore_GetTeamMembers_ACFilter(t *testing.T) {
 	}
 }
 
-func hasWildcardScope(user *user.SignedInUser, action string) bool {
-	for _, scope := range user.Permissions[user.OrgID][action] {
+func hasWildcardScope(user identity.Requester, action string) bool {
+	for _, scope := range user.GetPermissions()[action] {
 		if strings.HasSuffix(scope, ":*") {
 			return true
 		}

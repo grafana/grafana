@@ -19,7 +19,6 @@ import { GrafanaTheme2, LinkModel, TimeZone } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
 import { stylesFactory, withTheme2 } from '@grafana/ui';
 
-import { Accessors } from '../ScrollManager';
 import { autoColor } from '../Theme';
 import { merge as mergeShortcuts } from '../keyboard-shortcuts';
 import { SpanBarOptions } from '../settings/SpanBarSettings';
@@ -30,10 +29,6 @@ import { TraceSpan, Trace, TraceLog, TraceKeyValuePair, TraceLink, TraceSpanRefe
 import TimelineHeaderRow from './TimelineHeaderRow';
 import VirtualizedTraceView, { TopOfViewRefType } from './VirtualizedTraceView';
 import { TUpdateViewRangeTimeFunction, ViewRange, ViewRangeTimeUpdate } from './types';
-
-type TExtractUiFindFromStateReturn = {
-  uiFind: string | undefined;
-};
 
 const getStyles = stylesFactory((theme: GrafanaTheme2) => {
   return {
@@ -71,8 +66,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
   };
 });
 
-export type TProps = TExtractUiFindFromStateReturn & {
-  registerAccessors: (accessors: Accessors) => void;
+export type TProps = {
   findMatchesIDs: Set<string> | TNil;
   traceTimeline: TTraceTimeline;
   trace: Trace;
@@ -99,7 +93,6 @@ export type TProps = TExtractUiFindFromStateReturn & {
   detailProcessToggle: (spanID: string) => void;
   detailTagsToggle: (spanID: string) => void;
   detailToggle: (spanID: string) => void;
-  setTrace: (trace: Trace | TNil, uiFind: string | TNil) => void;
   addHoverIndentGuideId: (spanID: string) => void;
   removeHoverIndentGuideId: (spanID: string) => void;
   linksGetter: (span: TraceSpan, items: TraceKeyValuePair[], itemIndex: number) => TraceLink[];

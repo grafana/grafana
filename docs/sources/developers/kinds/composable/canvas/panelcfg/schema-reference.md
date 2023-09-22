@@ -2,6 +2,11 @@
 keywords:
   - grafana
   - schema
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: CanvasPanelCfg kind
 ---
 > Both documentation generation and kinds schemas are in active development and subject to change without prior notice.
@@ -23,6 +28,7 @@ title: CanvasPanelCfg kind
 | `ConnectionPath`        | string                           | **Yes**  |         | Possible values are: `straight`.                                      |
 | `Constraint`            | [object](#constraint)            | **Yes**  |         |                                                                       |
 | `HorizontalConstraint`  | string                           | **Yes**  |         | Possible values are: `left`, `right`, `leftright`, `center`, `scale`. |
+| `HttpRequestMethod`     | string                           | **Yes**  |         | Possible values are: `GET`, `POST`.                                   |
 | `LineConfig`            | [object](#lineconfig)            | **Yes**  |         |                                                                       |
 | `Options`               | [object](#options)               | **Yes**  |         |                                                                       |
 | `Placement`             | [object](#placement)             | **Yes**  |         |                                                                       |

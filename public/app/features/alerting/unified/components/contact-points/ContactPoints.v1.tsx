@@ -1,14 +1,14 @@
 import React, { useEffect } from 'react';
-import { Route, RouteChildrenProps, Switch, useLocation } from 'react-router-dom';
+import { Route, RouteChildrenProps, Switch } from 'react-router-dom';
 
 import { Alert, LoadingPlaceholder } from '@grafana/ui';
 import { useDispatch } from 'app/types';
 
+import { useAlertmanagerConfig } from '../../hooks/useAlertmanagerConfig';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { useAlertmanager } from '../../state/AlertmanagerContext';
-import { fetchAlertManagerConfigAction, fetchGrafanaNotifiersAction } from '../../state/actions';
+import { fetchGrafanaNotifiersAction } from '../../state/actions';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
-import { initialAsyncRequestState } from '../../utils/redux';
 import { GrafanaAlertmanagerDeliveryWarning } from '../GrafanaAlertmanagerDeliveryWarning';
 import { DuplicateTemplateView } from '../receivers/DuplicateTemplateView';
 import { EditReceiverView } from '../receivers/EditReceiverView';
@@ -25,27 +25,9 @@ export interface NotificationErrorProps {
 const Receivers = () => {
   const { selectedAlertmanager: alertManagerSourceName } = useAlertmanager();
   const dispatch = useDispatch();
-
-  const location = useLocation();
-  const isRoot = location.pathname.endsWith('/alerting/notifications');
-  const configRequests = useUnifiedAlertingSelector((state) => state.amConfigs);
-
-  const {
-    result: config,
-    loading,
-    error,
-  } = (alertManagerSourceName && configRequests[alertManagerSourceName]) || initialAsyncRequestState;
+  const { currentData: config, isLoading: loading, error } = useAlertmanagerConfig(alertManagerSourceName);
 
   const receiverTypes = useUnifiedAlertingSelector((state) => state.grafanaNotifiers);
-
-  const shouldLoadConfig = isRoot || !config;
-  // const shouldRenderNotificationStatus = isRoot;
-
-  useEffect(() => {
-    if (alertManagerSourceName && shouldLoadConfig) {
-      dispatch(fetchAlertManagerConfigAction(alertManagerSourceName));
-    }
-  }, [alertManagerSourceName, dispatch, shouldLoadConfig]);
 
   useEffect(() => {
     if (

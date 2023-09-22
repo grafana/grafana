@@ -3,13 +3,16 @@ on:
   schedule:
     - cron: '30 1 * * *'
 
+permissions:
+  pull-requests: write
+
 jobs:
   stale:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/stale@v8
         with:
-          repo-token: ${{ secrets.GH_BOT_ACCESS_TOKEN }}
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
           # Number of days of inactivity before a stale Issue or Pull Request is closed.
           # Set to -1 to disable. If disabled, issues still need to be closed manually, but will remain marked as stale.
           days-before-close: 14

@@ -230,6 +230,13 @@ type PatchLibraryElementCommand struct {
 	UID string `json:"uid"`
 }
 
+// GetLibraryElementCommand is the command for getting a library element.
+type GetLibraryElementCommand struct {
+	FolderName string
+	FolderID   int64
+	UID        string
+}
+
 // SearchLibraryElementsQuery is the query used for searching for Elements
 type SearchLibraryElementsQuery struct {
 	PerPage          int

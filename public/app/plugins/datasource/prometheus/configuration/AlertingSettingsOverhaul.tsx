@@ -1,6 +1,9 @@
+import { cx } from '@emotion/css';
 import React from 'react';
 
 import { DataSourceJsonData, DataSourcePluginOptionsEditorProps } from '@grafana/data';
+import { ConfigSubSection } from '@grafana/experimental';
+import { config } from '@grafana/runtime';
 import { InlineField, Switch, useTheme2 } from '@grafana/ui';
 
 import { docsTip, overhaulStyles } from './ConfigEditor';
@@ -19,9 +22,13 @@ export function AlertingSettingsOverhaul<T extends AlertingConfig>({
   const theme = useTheme2();
   const styles = overhaulStyles(theme);
 
+  const prometheusConfigOverhaulAuth = config.featureToggles.prometheusConfigOverhaulAuth;
+
   return (
-    <>
-      <h3 className="page-heading">Alerting</h3>
+    <ConfigSubSection
+      title="Alerting"
+      className={cx(styles.container, { [styles.alertingTop]: prometheusConfigOverhaulAuth })}
+    >
       <div className="gf-form-group">
         <div className="gf-form-inline">
           <div className="gf-form">
@@ -51,6 +58,6 @@ export function AlertingSettingsOverhaul<T extends AlertingConfig>({
           </div>
         </div>
       </div>
-    </>
+    </ConfigSubSection>
   );
 }

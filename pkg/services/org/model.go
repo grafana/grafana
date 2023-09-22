@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/models/roletype"
-	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
@@ -16,8 +16,8 @@ var (
 	ErrLastOrgAdmin                            = errors.New("cannot remove last organization admin")
 	ErrOrgUserNotFound                         = errors.New("cannot find the organization user")
 	ErrOrgUserAlreadyAdded                     = errors.New("user is already added to organization")
-	ErrOrgNotFound                             = errutil.NewBase(errutil.StatusNotFound, "org.notFound", errutil.WithPublicMessage("organization not found"))
-	ErrCannotChangeRoleForExternallySyncedUser = errutil.NewBase(errutil.StatusForbidden, "org.externallySynced", errutil.WithPublicMessage("cannot change role for externally synced user"))
+	ErrOrgNotFound                             = errutil.NotFound("org.notFound", errutil.WithPublicMessage("organization not found"))
+	ErrCannotChangeRoleForExternallySyncedUser = errutil.Forbidden("org.externallySynced", errutil.WithPublicMessage("cannot change role for externally synced user"))
 )
 
 type Org struct {
@@ -47,9 +47,10 @@ type OrgUser struct {
 type RoleType = roletype.RoleType
 
 const (
-	RoleViewer RoleType = "Viewer"
-	RoleEditor RoleType = "Editor"
-	RoleAdmin  RoleType = "Admin"
+	RoleNone   RoleType = roletype.RoleNone
+	RoleViewer RoleType = roletype.RoleViewer
+	RoleEditor RoleType = roletype.RoleEditor
+	RoleAdmin  RoleType = roletype.RoleAdmin
 )
 
 type CreateOrgCommand struct {
@@ -173,7 +174,7 @@ type GetOrgUsersQuery struct {
 	// Flag used to allow oss edition to query users without access control
 	DontEnforceAccessControl bool
 
-	User *user.SignedInUser
+	User identity.Requester
 }
 
 type SearchOrgUsersQuery struct {
@@ -185,7 +186,7 @@ type SearchOrgUsersQuery struct {
 	// Flag used to allow oss edition to query users without access control
 	DontEnforceAccessControl bool
 
-	User *user.SignedInUser
+	User identity.Requester
 }
 
 type SearchOrgUsersQueryResult struct {

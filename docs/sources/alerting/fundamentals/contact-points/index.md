@@ -3,6 +3,7 @@ aliases:
   - /docs/grafana/latest/alerting/contact-points/
   - /docs/grafana/latest/alerting/unified-alerting/contact-points/
   - /docs/grafana/latest/alerting/fundamentals/contact-points/contact-point-types/
+canonical: https://grafana.com/docs/grafana/latest/alerting/fundamentals/contact-points/
 description: Create or edit contact point
 keywords:
   - grafana
@@ -11,6 +12,11 @@ keywords:
   - contact point
   - notification channel
   - create
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: Contact points
 weight: 106
 ---
@@ -38,7 +44,7 @@ The following table lists the contact point integrations supported by Grafana.
 | [DingDing](https://www.dingtalk.com/en)          | `dingding`                | Supported            | N/A                                                                                                      |
 | [Discord](https://discord.com/)                  | `discord`                 | Supported            | N/A                                                                                                      |
 | Email                                            | `email`                   | Supported            | Supported                                                                                                |
-| [Google Hangouts](https://hangouts.google.com/)  | `googlechat`              | Supported            | N/A                                                                                                      |
+| [Google Chat](https://chat.google.com/)          | `googlechat`              | Supported            | N/A                                                                                                      |
 | [Kafka](https://kafka.apache.org/)               | `kafka`                   | Supported            | N/A                                                                                                      |
 | [Line](https://line.me/en/)                      | `line`                    | Supported            | N/A                                                                                                      |
 | [Microsoft Teams](https://teams.microsoft.com/)  | `teams`                   | Supported            | N/A                                                                                                      |

@@ -74,7 +74,7 @@ function getStyles(theme: GrafanaTheme2) {
       text-align: start;
       line-break: anywhere;
       margin-top: -${theme.spacing(0.25)};
-      margin-right: ${theme.spacing(4)};
+      margin-right: ${theme.spacing(6)};
       min-height: ${theme.spacing(4)};
     `,
     ui: css`

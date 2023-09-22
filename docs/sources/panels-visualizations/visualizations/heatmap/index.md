@@ -8,13 +8,18 @@ keywords:
   - heatmap
   - panel
   - documentation
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: Heatmap
-weight: 600
+weight: 100
 ---
 
 # Heatmap
 
-The Heatmap panel visualization allows you to view histograms over time. For more information about histograms, refer to [Introduction to histograms and heatmaps]({{< relref "../../../fundamentals/intro-histograms/" >}}).
+The Heatmap panel visualization allows you to view histograms over time. For more information about histograms, refer to [Introduction to histograms and heatmaps][].
 
 ![](/static/img/docs/v43/heatmap_panel_cover.jpg)
 
@@ -74,6 +79,8 @@ This setting configures the axis value.
 
 When selected, the axis appears in reverse order.
 
+{{< docs/shared lookup="visualizations/multiple-y-axes.md" source="grafana" version="<GRAFANA VERSION>" leveloffset="+2" >}}
+
 ## Colors
 
 The color spectrum controls the mapping between value count (in each bucket) and the color assigned to each bucket. The leftmost color on the spectrum represents the minimum count and the color on the right most side represents the maximum count. Some color schemes are automatically inverted when using the light theme.
@@ -115,3 +122,8 @@ Choose whether you want to display the heatmap legend on the visualization.
 ### Exemplars
 
 Set the color used to show exemplar data.
+
+{{% docs/reference %}}
+[Introduction to histograms and heatmaps]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/fundamentals/intro-histograms"
+[Introduction to histograms and heatmaps]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/fundamentals/intro-histograms"
+{{% /docs/reference %}}

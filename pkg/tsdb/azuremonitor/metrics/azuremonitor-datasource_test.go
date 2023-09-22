@@ -19,7 +19,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/kinds/dataquery"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/testdata"
 	azTime "github.com/grafana/grafana/pkg/tsdb/azuremonitor/time"
@@ -41,7 +40,7 @@ func TestAzureMonitorBuildQueries(t *testing.T) {
 	testFilter := "test"
 	tests := []struct {
 		name                         string
-		azureMonitorVariedProperties map[string]interface{}
+		azureMonitorVariedProperties map[string]any
 		azureMonitorQueryTarget      string
 		expectedInterval             string
 		queryInterval                time.Duration
@@ -53,7 +52,7 @@ func TestAzureMonitorBuildQueries(t *testing.T) {
 	}{
 		{
 			name: "Parse queries from frontend and build AzureMonitor API queries",
-			azureMonitorVariedProperties: map[string]interface{}{
+			azureMonitorVariedProperties: map[string]any{
 				"resourceURI": "/subscriptions/12345678-aaaa-bbbb-cccc-123456789abc/resourceGroups/grafanastaging/providers/Microsoft.Compute/virtualMachines/grafana",
 				"timeGrain":   "PT1M",
 				"top":         "10",
@@ -63,7 +62,7 @@ func TestAzureMonitorBuildQueries(t *testing.T) {
 		},
 		{
 			name: "legacy query without resourceURI and time grain set to auto",
-			azureMonitorVariedProperties: map[string]interface{}{
+			azureMonitorVariedProperties: map[string]any{
 				"timeGrain": "auto",
 				"top":       "10",
 			},
@@ -73,7 +72,7 @@ func TestAzureMonitorBuildQueries(t *testing.T) {
 		},
 		{
 			name: "legacy query without resourceURI and time grain set to auto",
-			azureMonitorVariedProperties: map[string]interface{}{
+			azureMonitorVariedProperties: map[string]any{
 				"timeGrain":           "auto",
 				"allowedTimeGrainsMs": []int64{60000, 300000},
 				"top":                 "10",
@@ -84,7 +83,7 @@ func TestAzureMonitorBuildQueries(t *testing.T) {
 		},
 		{
 			name: "legacy query without resourceURI and has a dimension filter",
-			azureMonitorVariedProperties: map[string]interface{}{
+			azureMonitorVariedProperties: map[string]any{
 				"timeGrain":       "PT1M",
 				"dimension":       "blob",
 				"dimensionFilter": "*",
@@ -97,7 +96,7 @@ func TestAzureMonitorBuildQueries(t *testing.T) {
 		},
 		{
 			name: "legacy query without resourceURI and has a dimension filter and none Dimension",
-			azureMonitorVariedProperties: map[string]interface{}{
+			azureMonitorVariedProperties: map[string]any{
 				"timeGrain":       "PT1M",
 				"dimension":       "None",
 				"dimensionFilter": "*",
@@ -109,7 +108,7 @@ func TestAzureMonitorBuildQueries(t *testing.T) {
 		},
 		{
 			name: "legacy query without resourceURI and has dimensionFilter*s* property with one dimension",
-			azureMonitorVariedProperties: map[string]interface{}{
+			azureMonitorVariedProperties: map[string]any{
 				"timeGrain":        "PT1M",
 				"dimensionFilters": []dataquery.AzureMetricDimension{{Dimension: strPtr("blob"), Operator: strPtr("eq"), Filter: &wildcardFilter}},
 				"top":              "30",
@@ -122,7 +121,7 @@ func TestAzureMonitorBuildQueries(t *testing.T) {
 		},
 		{
 			name: "legacy query without resourceURI and has dimensionFilter*s* property with two dimensions",
-			azureMonitorVariedProperties: map[string]interface{}{
+			azureMonitorVariedProperties: map[string]any{
 				"timeGrain":        "PT1M",
 				"dimensionFilters": []dataquery.AzureMetricDimension{{Dimension: strPtr("blob"), Operator: strPtr("eq"), Filter: &wildcardFilter}, {Dimension: strPtr("tier"), Operator: strPtr("eq"), Filter: &wildcardFilter}},
 				"top":              "30",
@@ -135,7 +134,7 @@ func TestAzureMonitorBuildQueries(t *testing.T) {
 		},
 		{
 			name: "legacy query without resourceURI and has a dimension filter without specifying a top",
-			azureMonitorVariedProperties: map[string]interface{}{
+			azureMonitorVariedProperties: map[string]any{
 				"timeGrain":       "PT1M",
 				"dimension":       "blob",
 				"dimensionFilter": "*",
@@ -147,7 +146,7 @@ func TestAzureMonitorBuildQueries(t *testing.T) {
 		},
 		{
 			name: "has dimensionFilter*s* property with not equals operator",
-			azureMonitorVariedProperties: map[string]interface{}{
+			azureMonitorVariedProperties: map[string]any{
 				"timeGrain":        "PT1M",
 				"dimensionFilters": []dataquery.AzureMetricDimension{{Dimension: strPtr("blob"), Operator: strPtr("ne"), Filter: &wildcardFilter, Filters: []string{"test"}}},
 				"top":              "30",
@@ -160,7 +159,7 @@ func TestAzureMonitorBuildQueries(t *testing.T) {
 		},
 		{
 			name: "has dimensionFilter*s* property with startsWith operator",
-			azureMonitorVariedProperties: map[string]interface{}{
+			azureMonitorVariedProperties: map[string]any{
 				"timeGrain":        "PT1M",
 				"dimensionFilters": []dataquery.AzureMetricDimension{{Dimension: strPtr("blob"), Operator: strPtr("sw"), Filter: &testFilter}},
 				"top":              "30",
@@ -173,7 +172,7 @@ func TestAzureMonitorBuildQueries(t *testing.T) {
 		},
 		{
 			name: "correctly sets dimension operator to eq (irrespective of operator) when filter value is '*'",
-			azureMonitorVariedProperties: map[string]interface{}{
+			azureMonitorVariedProperties: map[string]any{
 				"timeGrain":        "PT1M",
 				"dimensionFilters": []dataquery.AzureMetricDimension{{Dimension: strPtr("blob"), Operator: strPtr("sw"), Filter: &wildcardFilter}, {Dimension: strPtr("tier"), Operator: strPtr("ne"), Filter: &wildcardFilter}},
 				"top":              "30",
@@ -186,7 +185,7 @@ func TestAzureMonitorBuildQueries(t *testing.T) {
 		},
 		{
 			name: "correctly constructs target when multiple filter values are provided for the 'eq' operator",
-			azureMonitorVariedProperties: map[string]interface{}{
+			azureMonitorVariedProperties: map[string]any{
 				"timeGrain":        "PT1M",
 				"dimensionFilters": []dataquery.AzureMetricDimension{{Dimension: strPtr("blob"), Operator: strPtr("eq"), Filter: &wildcardFilter, Filters: []string{"test", "test2"}}},
 				"top":              "30",
@@ -199,7 +198,7 @@ func TestAzureMonitorBuildQueries(t *testing.T) {
 		},
 		{
 			name: "correctly constructs target when multiple filter values are provided for ne 'eq' operator",
-			azureMonitorVariedProperties: map[string]interface{}{
+			azureMonitorVariedProperties: map[string]any{
 				"timeGrain":        "PT1M",
 				"dimensionFilters": []dataquery.AzureMetricDimension{{Dimension: strPtr("blob"), Operator: strPtr("ne"), Filter: &wildcardFilter, Filters: []string{"test", "test2"}}},
 				"top":              "30",
@@ -212,7 +211,7 @@ func TestAzureMonitorBuildQueries(t *testing.T) {
 		},
 		{
 			name: "Includes a region",
-			azureMonitorVariedProperties: map[string]interface{}{
+			azureMonitorVariedProperties: map[string]any{
 				"timeGrain": "PT1M",
 				"top":       "10",
 				"region":    "westus",
@@ -223,7 +222,7 @@ func TestAzureMonitorBuildQueries(t *testing.T) {
 		},
 		{
 			name: "Includes a region and a filter in the body with multiple resources",
-			azureMonitorVariedProperties: map[string]interface{}{
+			azureMonitorVariedProperties: map[string]any{
 				"timeGrain": "PT1M",
 				"top":       "10",
 				"region":    "westus",
@@ -236,7 +235,7 @@ func TestAzureMonitorBuildQueries(t *testing.T) {
 		},
 		{
 			name: "includes a single resource as a parameter filter",
-			azureMonitorVariedProperties: map[string]interface{}{
+			azureMonitorVariedProperties: map[string]any{
 				"timeGrain": "PT1M",
 				"resources": []dataquery.AzureMonitorResource{{ResourceGroup: strPtr("rg"), ResourceName: strPtr("vm")}},
 			},
@@ -247,7 +246,7 @@ func TestAzureMonitorBuildQueries(t *testing.T) {
 		},
 		{
 			name: "includes a resource and a dimesion as filters",
-			azureMonitorVariedProperties: map[string]interface{}{
+			azureMonitorVariedProperties: map[string]any{
 				"timeGrain":        "PT1M",
 				"resources":        []dataquery.AzureMonitorResource{{ResourceGroup: strPtr("rg"), ResourceName: strPtr("vm")}, {ResourceGroup: strPtr("rg2"), ResourceName: strPtr("vm2")}},
 				"dimensionFilters": []dataquery.AzureMetricDimension{{Dimension: strPtr("blob"), Operator: strPtr("ne"), Filter: &wildcardFilter, Filters: []string{"test", "test2"}}},
@@ -262,7 +261,7 @@ func TestAzureMonitorBuildQueries(t *testing.T) {
 		},
 	}
 
-	commonAzureModelProps := map[string]interface{}{
+	commonAzureModelProps := map[string]any{
 		"aggregation":     "Average",
 		"resourceGroup":   "grafanastaging",
 		"resourceName":    "grafana",
@@ -294,7 +293,7 @@ func TestAzureMonitorBuildQueries(t *testing.T) {
 				},
 			}
 
-			queries, err := datasource.buildQueries(log.New("test"), tsdbQuery, dsInfo)
+			queries, err := datasource.buildQueries(tsdbQuery, dsInfo)
 			require.NoError(t, err)
 
 			resources := map[string]dataquery.AzureMonitorResource{}
@@ -359,11 +358,19 @@ func TestCustomNamespace(t *testing.T) {
 			},
 		}
 
-		result, err := datasource.buildQueries(log.New("test"), q, types.DatasourceInfo{})
+		result, err := datasource.buildQueries(q, types.DatasourceInfo{})
 		require.NoError(t, err)
 		expected := "custom/namespace"
 		require.Equal(t, expected, result[0].Params.Get("metricnamespace"))
 	})
+}
+
+type fakeFeatureToggles struct {
+	flags map[string]bool
+}
+
+func (f *fakeFeatureToggles) IsEnabled(feature string) bool {
+	return f.flags[feature]
 }
 
 func TestAzureMonitorParseResponse(t *testing.T) {
@@ -371,6 +378,7 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 	resources["/subscriptions/12345678-aaaa-bbbb-cccc-123456789abc/resourceGroups/grafanastaging/providers/Microsoft.Compute/virtualMachines/grafana"] =
 		dataquery.AzureMonitorResource{ResourceGroup: strPtr("grafanastaging"), ResourceName: strPtr("grafana")}
 	subscription := "12345678-aaaa-bbbb-cccc-123456789abc"
+	datasource := &AzureMonitorDatasource{Features: &fakeFeatureToggles{flags: map[string]bool{"azureMonitorDataplane": true}}}
 
 	tests := []struct {
 		name            string
@@ -378,6 +386,7 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 		mockQuery       *types.AzureMonitorQuery
 		expectedFrames  data.Frames
 		queryIntervalMS int64
+		datasource      *AzureMonitorDatasource
 	}{
 		{
 			name:         "average aggregate time series response",
@@ -390,6 +399,7 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 				Resources:    resources,
 				Subscription: subscription,
 			},
+			datasource: datasource,
 		},
 		{
 			name:         "total aggregate time series response",
@@ -402,6 +412,7 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 				Resources:    resources,
 				Subscription: subscription,
 			},
+			datasource: datasource,
 		},
 		{
 			name:         "maximum aggregate time series response",
@@ -414,6 +425,7 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 				Resources:    resources,
 				Subscription: subscription,
 			},
+			datasource: datasource,
 		},
 		{
 			name:         "minimum aggregate time series response",
@@ -426,6 +438,7 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 				Resources:    resources,
 				Subscription: subscription,
 			},
+			datasource: datasource,
 		},
 		{
 			name:         "count aggregate time series response",
@@ -438,6 +451,7 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 				Resources:    resources,
 				Subscription: subscription,
 			},
+			datasource: datasource,
 		},
 		{
 			name:         "single dimension time series response",
@@ -450,6 +464,7 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 				Resources:    resources,
 				Subscription: subscription,
 			},
+			datasource: datasource,
 		},
 		{
 			name:         "with alias patterns in the query",
@@ -463,6 +478,7 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 				Resources:    resources,
 				Subscription: subscription,
 			},
+			datasource: datasource,
 		},
 		{
 			name:         "single dimension with alias",
@@ -476,6 +492,7 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 				Resources:    resources,
 				Subscription: subscription,
 			},
+			datasource: datasource,
 		},
 		{
 			name:         "multiple dimension time series response with label alias",
@@ -489,6 +506,7 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 				Resources:    map[string]dataquery.AzureMonitorResource{"/subscriptions/12345678-aaaa-bbbb-cccc-123456789abc/resourceGroups/grafanatest/providers/Microsoft.Storage/storageAccounts/testblobaccount/blobServices/default/providers/Microsoft.Insights/metrics": {ResourceGroup: strPtr("grafanatest"), ResourceName: strPtr("testblobaccount")}},
 				Subscription: subscription,
 			},
+			datasource: datasource,
 		},
 		{
 			name:         "unspecified unit with alias should not panic",
@@ -502,6 +520,7 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 				Resources:    resources,
 				Subscription: subscription,
 			},
+			datasource: datasource,
 		},
 		{
 			name:         "with legacy azure monitor query properties and without a resource uri",
@@ -515,6 +534,7 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 				Resources:    resources,
 				Subscription: subscription,
 			},
+			datasource: datasource,
 		},
 		{
 			name:         "with legacy azure monitor query properties and with a resource uri it should use the resource uri",
@@ -528,6 +548,7 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 				Resources:    resources,
 				Subscription: subscription,
 			},
+			datasource: datasource,
 		},
 		{
 			name:         "multiple time series response",
@@ -540,6 +561,7 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 				Resources:    resources,
 				Subscription: subscription,
 			},
+			datasource: datasource,
 		},
 		{
 			name:         "multiple time series response with multiple dimensions",
@@ -552,14 +574,27 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 				Resources:    resources,
 				Subscription: subscription,
 			},
+			datasource: datasource,
+		},
+		{
+			name:         "non-dataplane compliant response",
+			responseFile: "azuremonitor/11-azure-monitor-non-dataplane-response.json",
+			mockQuery: &types.AzureMonitorQuery{
+				URL: "/subscriptions/12345678-aaaa-bbbb-cccc-123456789abc/resourceGroups/grafanastaging/providers/Microsoft.Compute/virtualMachines/grafana/providers/microsoft.insights/metrics",
+				Params: url.Values{
+					"aggregation": {"Average"},
+				},
+				Resources:    resources,
+				Subscription: subscription,
+			},
+			datasource: &AzureMonitorDatasource{Features: &fakeFeatureToggles{flags: map[string]bool{"azureMonitorDataplane": false}}},
 		},
 	}
 
-	datasource := &AzureMonitorDatasource{}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			azData := loadTestFile(t, tt.responseFile)
-			dframes, err := datasource.parseResponse(azData, tt.mockQuery, "http://ds", "")
+			dframes, err := tt.datasource.parseResponse(azData, tt.mockQuery, "http://ds", "")
 			require.NoError(t, err)
 			require.NotNil(t, dframes)
 
@@ -654,7 +689,7 @@ func TestAzureMonitorCreateRequest(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			ds := AzureMonitorDatasource{}
-			req, err := ds.createRequest(ctx, log.New("test"), url)
+			req, err := ds.createRequest(ctx, url)
 			tt.Err(t, err)
 			if req.URL.String() != tt.expectedURL {
 				t.Errorf("Expecting %s, got %s", tt.expectedURL, req.URL.String())

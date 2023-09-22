@@ -104,6 +104,7 @@ type SchedulerCfg struct {
 	Metrics              *metrics.Scheduler
 	AlertSender          AlertsSender
 	Tracer               tracing.Tracer
+	Log                  log.Logger
 }
 
 // NewScheduler returns a new schedule.
@@ -113,7 +114,7 @@ func NewScheduler(cfg SchedulerCfg, stateManager *state.Manager) *schedule {
 		maxAttempts:           cfg.MaxAttempts,
 		clock:                 cfg.C,
 		baseInterval:          cfg.BaseInterval,
-		log:                   log.New("ngalert.scheduler"),
+		log:                   cfg.Log,
 		evaluatorFactory:      cfg.EvaluatorFactory,
 		ruleStore:             cfg.RuleStore,
 		metrics:               cfg.Metrics,
@@ -130,6 +131,7 @@ func NewScheduler(cfg SchedulerCfg, stateManager *state.Manager) *schedule {
 }
 
 func (sch *schedule) Run(ctx context.Context) error {
+	sch.log.Info("Starting scheduler", "tickInterval", sch.baseInterval)
 	t := ticker.New(sch.clock, sch.baseInterval, sch.metrics.Ticker)
 	defer t.Stop()
 
@@ -350,6 +352,8 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 	evalTotal := sch.metrics.EvalTotal.WithLabelValues(orgID)
 	evalDuration := sch.metrics.EvalDuration.WithLabelValues(orgID)
 	evalTotalFailures := sch.metrics.EvalFailures.WithLabelValues(orgID)
+	processDuration := sch.metrics.ProcessDuration.WithLabelValues(orgID)
+	sendDuration := sch.metrics.SendDuration.WithLabelValues(orgID)
 
 	notify := func(states []state.StateTransition) {
 		expiredAlerts := state.FromAlertsStateToStoppedAlert(states, sch.appURL, sch.clock)
@@ -369,7 +373,7 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 	}
 
 	evaluate := func(ctx context.Context, f fingerprint, attempt int64, e *evaluation, span tracing.Span) {
-		logger := logger.New("version", e.rule.Version, "fingerprint", f, "attempt", attempt, "now", e.scheduledAt)
+		logger := logger.New("version", e.rule.Version, "fingerprint", f, "attempt", attempt, "now", e.scheduledAt).FromContext(ctx)
 		start := sch.clock.Now()
 
 		evalCtx := eval.NewContext(ctx, SchedulerUserFor(e.rule.OrgID))
@@ -422,6 +426,7 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 			logger.Debug("Skip updating the state because the context has been cancelled")
 			return
 		}
+		start = sch.clock.Now()
 		processedStates := sch.stateManager.ProcessEvalResults(
 			ctx,
 			e.scheduledAt,
@@ -429,6 +434,9 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 			results,
 			state.GetRuleExtraLabels(e.rule, e.folderTitle, !sch.disableGrafanaFolder),
 		)
+		processDuration.Observe(sch.clock.Now().Sub(start).Seconds())
+
+		start = sch.clock.Now()
 		alerts := state.FromStateTransitionToPostableAlerts(processedStates, sch.stateManager, sch.appURL)
 		span.AddEvents(
 			[]string{"message", "state_transitions", "alerts_to_send"},
@@ -440,6 +448,7 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 		if len(alerts.PostableAlerts) > 0 {
 			sch.alertsSender.Send(key, alerts)
 		}
+		sendDuration.Observe(sch.clock.Now().Sub(start).Seconds())
 	}
 
 	retryIfError := func(f func(attempt int64) error) error {

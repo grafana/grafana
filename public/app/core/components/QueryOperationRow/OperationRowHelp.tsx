@@ -31,7 +31,7 @@ function markdownHelper(markdown: string) {
 OperationRowHelp.displayName = 'OperationRowHelp';
 
 const getStyles = (theme: GrafanaTheme2) => {
-  const borderRadius = theme.shape.borderRadius();
+  const borderRadius = theme.shape.radius.default;
 
   return {
     wrapper: css`

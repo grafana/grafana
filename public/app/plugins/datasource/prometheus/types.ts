@@ -45,6 +45,7 @@ export interface PromOptions extends DataSourceJsonData {
   incrementalQuerying?: boolean;
   incrementalQueryOverlapWindow?: string;
   disableRecordingRules?: boolean;
+  sigV4Auth?: boolean;
 }
 
 export type ExemplarTraceIdDestination = {
@@ -182,6 +183,7 @@ export enum PromVariableQueryType {
   MetricNames,
   VarQueryResult,
   SeriesQuery,
+  ClassicQuery,
 }
 
 export interface PromVariableQuery extends DataQuery {
@@ -194,6 +196,7 @@ export interface PromVariableQuery extends DataQuery {
   seriesQuery?: string;
   labelFilters?: QueryBuilderLabelFilter[];
   match?: string;
+  classicQuery?: string;
 }
 
 export type StandardPromVariableQuery = {

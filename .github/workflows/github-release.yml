@@ -5,26 +5,22 @@ on:
       version:
         required: true
         description: Needs to match, exactly, the name of a milestone (NO v prefix)
+      latest:
+        required: false
+        description: Mark this release as latest (`1`) or not (`0`, default)
 jobs:
   main:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Actions
-        uses: actions/checkout@v3
-        with:
-          repository: "grafana/grafana-github-actions"
-          path: ./actions
-          ref: main
-      - name: Install Actions
-        run: npm install --production --prefix ./actions
       - name: "Generate token"
         id: generate_token
         uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
         with:
           app_id: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_ID }}
           private_key: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_PEM }}
-      - name: Run github release action
-        uses: ./actions/github-release
+      - name: Create GitHub release (manually invoked)
+        uses: grafana/grafana-github-actions-go/github-release@main
         with:
           token: ${{ steps.generate_token.outputs.token }}
-          metricsWriteAPIKey: ${{secrets.GRAFANA_MISC_STATS_API_KEY}}
+          version: ${{ inputs.version }}
+          metrics_api_key: ${{ secrets.GRAFANA_MISC_STATS_API_KEY }}

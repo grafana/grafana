@@ -1,15 +1,19 @@
 ---
-title: Publish or update a plugin
 aliases:
   - ../../plugins/publish-a-plugin/
   - share-a-plugin/
+description: Learn how to package and share your plugin.
 keywords:
   - grafana
   - plugins
   - plugin
   - publish plugin
   - update plugin
-description: Learn how to package and share your plugin.
+labels:
+  products:
+    - enterprise
+    - oss
+title: Publish or update a plugin
 type: docs
 weight: 300
 ---

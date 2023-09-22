@@ -110,9 +110,5 @@ function mapStateToNoOptionsMessage<T>(state: AsyncState<Array<SelectableValue<T
     return t('grafana-ui.segment-async.error', 'Failed to load options');
   }
 
-  if (!Array.isArray(state.value) || state.value.length === 0) {
-    return t('grafana-ui.segment-async.no-options', 'No options found');
-  }
-
-  return '';
+  return t('grafana-ui.segment-async.no-options', 'No options found');
 }

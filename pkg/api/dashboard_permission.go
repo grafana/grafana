@@ -2,7 +2,6 @@ package api
 
 import (
 	"context"
-	"errors"
 	"net/http"
 	"strconv"
 	"time"
@@ -10,9 +9,10 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/services/guardian"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -57,16 +57,7 @@ func (hs *HTTPServer) GetDashboardPermissionList(c *contextmodel.ReqContext) res
 		return rsp
 	}
 
-	g, err := guardian.NewByDashboard(c.Req.Context(), dash, c.OrgID, c.SignedInUser)
-	if err != nil {
-		return response.Err(err)
-	}
-
-	if canAdmin, err := g.CanAdmin(); err != nil || !canAdmin {
-		return dashboardGuardianResponse(err)
-	}
-
-	acl, err := g.GetACLWithoutDuplicates()
+	acl, err := hs.getDashboardACL(c.Req.Context(), c.SignedInUser, dash)
 	if err != nil {
 		return response.Error(500, "Failed to get dashboard permissions", err)
 	}
@@ -147,15 +138,6 @@ func (hs *HTTPServer) UpdateDashboardPermissions(c *contextmodel.ReqContext) res
 		return rsp
 	}
 
-	g, err := guardian.NewByDashboard(c.Req.Context(), dash, c.OrgID, c.SignedInUser)
-	if err != nil {
-		return response.Err(err)
-	}
-
-	if canAdmin, err := g.CanAdmin(); err != nil || !canAdmin {
-		return dashboardGuardianResponse(err)
-	}
-
 	items := make([]*dashboards.DashboardACL, 0, len(apiCmd.Items))
 	for _, item := range apiCmd.Items {
 		items = append(items, &dashboards.DashboardACL{
@@ -170,44 +152,100 @@ func (hs *HTTPServer) UpdateDashboardPermissions(c *contextmodel.ReqContext) res
 		})
 	}
 
-	hiddenACL, err := g.GetHiddenACL(hs.Cfg)
+	acl, err := hs.getDashboardACL(c.Req.Context(), c.SignedInUser, dash)
 	if err != nil {
-		return response.Error(500, "Error while retrieving hidden permissions", err)
-	}
-	items = append(items, hiddenACL...)
-
-	if okToUpdate, err := g.CheckPermissionBeforeUpdate(dashboards.PERMISSION_ADMIN, items); err != nil || !okToUpdate {
-		if err != nil {
-			if errors.Is(err, guardian.ErrGuardianPermissionExists) || errors.Is(err, guardian.ErrGuardianOverride) {
-				return response.Error(400, err.Error(), err)
-			}
-
-			return response.Error(500, "Error while checking dashboard permissions", err)
-		}
-
-		return response.Error(403, "Cannot remove own admin permission for a folder", nil)
+		return response.Error(http.StatusInternalServerError, "Error while checking dashboard permissions", err)
 	}
 
-	if !hs.AccessControl.IsDisabled() {
-		old, err := g.GetACL()
-		if err != nil {
-			return response.Error(500, "Error while checking dashboard permissions", err)
-		}
-		if err := hs.updateDashboardAccessControl(c.Req.Context(), dash.OrgID, dash.UID, false, items, old); err != nil {
-			return response.Error(500, "Failed to update permissions", err)
-		}
-		return response.Success("Dashboard permissions updated")
-	}
+	items = append(items, hs.filterHiddenACL(c.SignedInUser, acl)...)
 
-	if err := hs.DashboardService.UpdateDashboardACL(c.Req.Context(), dashID, items); err != nil {
-		if errors.Is(err, dashboards.ErrDashboardACLInfoMissing) ||
-			errors.Is(err, dashboards.ErrDashboardPermissionDashboardEmpty) {
-			return response.Error(409, err.Error(), err)
-		}
-		return response.Error(500, "Failed to create permission", err)
+	if err := hs.updateDashboardAccessControl(c.Req.Context(), dash.OrgID, dash.UID, false, items, acl); err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to update permissions", err)
 	}
 
 	return response.Success("Dashboard permissions updated")
+}
+
+var dashboardPermissionMap = map[string]dashboards.PermissionType{
+	"View":  dashboards.PERMISSION_VIEW,
+	"Edit":  dashboards.PERMISSION_EDIT,
+	"Admin": dashboards.PERMISSION_ADMIN,
+}
+
+func (hs *HTTPServer) getDashboardACL(ctx context.Context, user identity.Requester, dashboard *dashboards.Dashboard) ([]*dashboards.DashboardACLInfoDTO, error) {
+	permissions, err := hs.dashboardPermissionsService.GetPermissions(ctx, user, dashboard.UID)
+	if err != nil {
+		return nil, err
+	}
+
+	acl := make([]*dashboards.DashboardACLInfoDTO, 0, len(permissions))
+	for _, p := range permissions {
+		if !p.IsManaged {
+			continue
+		}
+
+		var role *org.RoleType
+		if p.BuiltInRole != "" {
+			tmp := org.RoleType(p.BuiltInRole)
+			role = &tmp
+		}
+
+		permission := dashboardPermissionMap[hs.dashboardPermissionsService.MapActions(p)]
+
+		acl = append(acl, &dashboards.DashboardACLInfoDTO{
+			OrgID:          dashboard.OrgID,
+			DashboardID:    dashboard.ID,
+			FolderID:       dashboard.FolderID,
+			Created:        p.Created,
+			Updated:        p.Updated,
+			UserID:         p.UserId,
+			UserLogin:      p.UserLogin,
+			UserEmail:      p.UserEmail,
+			TeamID:         p.TeamId,
+			TeamEmail:      p.TeamEmail,
+			Team:           p.Team,
+			Role:           role,
+			Permission:     permission,
+			PermissionName: permission.String(),
+			UID:            dashboard.UID,
+			Title:          dashboard.Title,
+			Slug:           dashboard.Slug,
+			IsFolder:       dashboard.IsFolder,
+			URL:            dashboard.GetURL(),
+			Inherited:      false,
+		})
+	}
+
+	return acl, nil
+}
+
+func (hs *HTTPServer) filterHiddenACL(user identity.Requester, acl []*dashboards.DashboardACLInfoDTO) []*dashboards.DashboardACL {
+	var hiddenACL []*dashboards.DashboardACL
+
+	if user.GetIsGrafanaAdmin() {
+		return hiddenACL
+	}
+
+	for _, item := range acl {
+		if item.Inherited || item.UserLogin == user.GetLogin() {
+			continue
+		}
+
+		if _, hidden := hs.Cfg.HiddenUsers[item.UserLogin]; hidden {
+			hiddenACL = append(hiddenACL, &dashboards.DashboardACL{
+				OrgID:       item.OrgID,
+				DashboardID: item.DashboardID,
+				UserID:      item.UserID,
+				TeamID:      item.TeamID,
+				Role:        item.Role,
+				Permission:  item.Permission,
+				Created:     item.Created,
+				Updated:     item.Updated,
+			})
+		}
+	}
+
+	return hiddenACL
 }
 
 // updateDashboardAccessControl is used for api backward compatibility

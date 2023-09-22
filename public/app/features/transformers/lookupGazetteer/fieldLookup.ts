@@ -28,49 +28,51 @@ export const fieldLookupTransformer: DataTransformerInfo<FieldLookupOptions> = {
 async function doGazetteerXform(frames: DataFrame[], options: FieldLookupOptions): Promise<DataFrame[]> {
   const fieldMatches = fieldMatchers.get(FieldMatcherID.byName).get(options?.lookupField);
 
-  const gaz = await getGazetteer(options?.gazetteer ?? COUNTRIES_GAZETTEER_PATH);
+  const gazetteer = await getGazetteer(options?.gazetteer ?? COUNTRIES_GAZETTEER_PATH);
 
-  if (!gaz.frame) {
+  if (!gazetteer.frame) {
     return Promise.reject('missing frame in gazetteer');
   }
 
-  return addFieldsFromGazetteer(frames, gaz, fieldMatches);
+  return addFieldsFromGazetteer(frames, gazetteer, fieldMatches);
 }
 
-export function addFieldsFromGazetteer(frames: DataFrame[], gaz: Gazetteer, matcher: FieldMatcher): DataFrame[] {
-  const src = gaz.frame!()?.fields;
-  if (!src) {
+export function addFieldsFromGazetteer(frames: DataFrame[], gazetteer: Gazetteer, matcher: FieldMatcher): DataFrame[] {
+  const gazetteerFields = gazetteer.frame!()?.fields;
+
+  if (!gazetteerFields) {
     return frames;
   }
 
   return frames.map((frame) => {
-    const length = frame.length;
+    const frameLength = frame.length;
     const fields: Field[] = [];
 
     for (const field of frame.fields) {
       fields.push(field);
 
-      //if the field matches
       if (matcher(field, frame, frames)) {
         const values = field.values;
-        const sub: any[][] = [];
-        for (const f of src) {
-          const buffer = new Array(length);
-          sub.push(buffer);
-          fields.push({ ...f, values: buffer });
+        const gazetteerFieldValuesBuffer: any[][] = [];
+
+        for (const gazetteerField of gazetteerFields) {
+          const buffer = new Array(frameLength);
+          gazetteerFieldValuesBuffer.push(buffer);
+          fields.push({ ...gazetteerField, values: buffer });
         }
 
-        // Add all values to the buffer
-        for (let v = 0; v < sub.length; v++) {
-          const found = gaz.find(values[v]);
-          if (found?.index != null) {
-            for (let i = 0; i < src.length; i++) {
-              sub[i][v] = src[i].values[found.index];
+        for (let valueIndex = 0; valueIndex < gazetteer.count!; valueIndex++) {
+          const foundValue = gazetteer.find(values[valueIndex]);
+
+          if (foundValue?.index != null) {
+            for (let fieldIndex = 0; fieldIndex < gazetteerFields.length; fieldIndex++) {
+              gazetteerFieldValuesBuffer[fieldIndex][valueIndex] = gazetteerFields[fieldIndex].values[foundValue.index];
             }
           }
         }
       }
     }
+
     return {
       ...frame,
       fields,

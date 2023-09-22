@@ -184,7 +184,7 @@ export function flattenQuery(query: any): any {
   }
 
   const keys = Object.keys(query);
-  const flattened = keys.reduce((all, key) => {
+  const flattened = keys.reduce<Record<string, any>>((all, key) => {
     const value = query[key];
     if (typeof value !== 'object' || value === null) {
       all[key] = value;
@@ -199,7 +199,7 @@ export function flattenQuery(query: any): any {
     }
 
     return all;
-  }, {} as Record<string, any>);
+  }, {});
 
   return flattened;
 }

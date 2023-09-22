@@ -1,11 +1,21 @@
 import React, { useCallback } from 'react';
 
 import { DataSourcePluginOptionsEditorProps, DataSourceSettings } from '@grafana/data';
+import {
+  ConfigSection,
+  DataSourceDescription,
+  ConnectionSettings,
+  Auth,
+  convertLegacyAuthProps,
+  AdvancedHttpSettings,
+} from '@grafana/experimental';
 import { config, reportInteraction } from '@grafana/runtime';
-import { AlertingSettings, DataSourceHttpSettings } from '@grafana/ui';
+import { SecureSocksProxySettings } from '@grafana/ui';
+import { Divider } from 'app/core/components/Divider';
 
 import { LokiOptions } from '../types';
 
+import { AlertingSettings } from './AlertingSettings';
 import { DerivedFields } from './DerivedFields';
 import { QuerySettings } from './QuerySettings';
 
@@ -40,27 +50,46 @@ export const ConfigEditor = (props: Props) => {
 
   return (
     <>
-      <DataSourceHttpSettings
-        defaultUrl={'http://localhost:3100'}
-        dataSourceConfig={options}
-        showAccessOptions={false}
-        onChange={onOptionsChange}
-        secureSocksDSProxyEnabled={config.secureSocksDSProxyEnabled}
+      <DataSourceDescription
+        dataSourceName="Loki"
+        docsLink="https://grafana.com/docs/grafana/latest/datasources/loki/configure-loki-data-source/"
+        hasRequiredFields={false}
       />
-
-      <AlertingSettings<LokiOptions> options={options} onOptionsChange={onOptionsChange} />
-
-      <QuerySettings
-        maxLines={options.jsonData.maxLines || ''}
-        onMaxLinedChange={(value) => onOptionsChange(setMaxLines(options, value))}
-        predefinedOperations={options.jsonData.predefinedOperations || ''}
-        onPredefinedOperationsChange={updatePredefinedOperations}
+      <Divider />
+      <ConnectionSettings config={options} onChange={onOptionsChange} urlPlaceholder="http://localhost:3100" />
+      <Divider />
+      <Auth
+        {...convertLegacyAuthProps({
+          config: options,
+          onChange: onOptionsChange,
+        })}
       />
-
-      <DerivedFields
-        fields={options.jsonData.derivedFields}
-        onChange={(value) => onOptionsChange(setDerivedFields(options, value))}
-      />
+      <Divider />
+      <ConfigSection
+        title="Additional settings"
+        description="Additional settings are optional settings that can be configured for more control over your data source."
+        isCollapsible={true}
+        isInitiallyOpen
+      >
+        <AdvancedHttpSettings config={options} onChange={onOptionsChange} />
+        <Divider hideLine />
+        {config.secureSocksDSProxyEnabled && (
+          <SecureSocksProxySettings options={options} onOptionsChange={onOptionsChange} />
+        )}
+        <AlertingSettings options={options} onOptionsChange={onOptionsChange} />
+        <Divider hideLine />
+        <QuerySettings
+          maxLines={options.jsonData.maxLines || ''}
+          onMaxLinedChange={(value) => onOptionsChange(setMaxLines(options, value))}
+          predefinedOperations={options.jsonData.predefinedOperations || ''}
+          onPredefinedOperationsChange={updatePredefinedOperations}
+        />
+        <Divider hideLine />
+        <DerivedFields
+          fields={options.jsonData.derivedFields}
+          onChange={(value) => onOptionsChange(setDerivedFields(options, value))}
+        />
+      </ConfigSection>
     </>
   );
 };

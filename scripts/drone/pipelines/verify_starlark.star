@@ -22,7 +22,6 @@ def verify_starlark(trigger, ver_mode):
     ]
     return pipeline(
         name = "{}-verify-starlark".format(ver_mode),
-        edition = "oss",
         trigger = trigger,
         services = [],
         steps = steps,

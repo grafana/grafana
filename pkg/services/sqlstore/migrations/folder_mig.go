@@ -26,6 +26,15 @@ func addFolderMigrations(mg *migrator.Migrator) {
 		Type: migrator.UniqueIndex,
 		Cols: []string{"title", "parent_uid"},
 	}))
+	mg.AddMigration("Remove unique index for folder.title and folder.parent_uid", migrator.NewDropIndexMigration(folderv1(), &migrator.Index{
+		Type: migrator.UniqueIndex,
+		Cols: []string{"title", "parent_uid"},
+	}))
+
+	mg.AddMigration("Add unique index for title, parent_uid, and org_id", migrator.NewAddIndexMigration(folderv1(), &migrator.Index{
+		Type: migrator.UniqueIndex,
+		Cols: []string{"title", "parent_uid", "org_id"},
+	}))
 }
 
 func folderv1() migrator.Table {

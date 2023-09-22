@@ -140,50 +140,50 @@ ColorPickerPopover.displayName = 'ColorPickerPopover';
 
 const getStyles = stylesFactory((theme: GrafanaTheme2) => {
   return {
-    colorPickerPopover: css`
-      border-radius: ${theme.shape.borderRadius()};
-      box-shadow: ${theme.shadows.z3};
-      background: ${theme.colors.background.primary};
-      border: 1px solid ${theme.colors.border.weak};
+    colorPickerPopover: css({
+      borderRadius: theme.shape.radius.default,
+      boxShadow: theme.shadows.z3,
+      background: theme.colors.background.primary,
+      border: `1px solid ${theme.colors.border.weak}`,
 
-      .ColorPickerPopover__tab {
-        width: 50%;
-        text-align: center;
-        padding: ${theme.spacing(1, 0)};
-        background: ${theme.colors.background.secondary};
-        color: ${theme.colors.text.secondary};
-        font-size: ${theme.typography.bodySmall.fontSize};
-        cursor: pointer;
-        border: none;
+      '.ColorPickerPopover__tab': {
+        width: '50%',
+        textAlign: 'center',
+        padding: theme.spacing(1, 0),
+        background: theme.colors.background.secondary,
+        color: theme.colors.text.secondary,
+        fontSize: theme.typography.bodySmall.fontSize,
+        cursor: 'pointer',
+        border: 'none',
 
-        &:focus:not(:focus-visible) {
-          outline: none;
-          box-shadow: none;
-        }
+        '&:focus:not(:focus-visible)': {
+          outline: 'none',
+          boxShadow: 'none',
+        },
 
-        :focus-visible {
-          position: relative;
-        }
-      }
+        ':focus-visible': {
+          position: 'relative',
+        },
+      },
 
-      .ColorPickerPopover__tab--active {
-        color: ${theme.colors.text.primary};
-        font-weight: ${theme.typography.fontWeightMedium};
-        background: ${theme.colors.background.primary};
-      }
-    `,
-    colorPickerPopoverContent: css`
-      width: 246px;
-      font-size: ${theme.typography.bodySmall.fontSize};
-      min-height: 184px;
-      padding: ${theme.spacing(1)};
-      display: flex;
-      flex-direction: column;
-    `,
-    colorPickerPopoverTabs: css`
-      display: flex;
-      width: 100%;
-      border-radius: ${theme.shape.borderRadius()} ${theme.shape.borderRadius()} 0 0;
-    `,
+      '.ColorPickerPopover__tab--active': {
+        color: theme.colors.text.primary,
+        fontWeight: theme.typography.fontWeightMedium,
+        background: theme.colors.background.primary,
+      },
+    }),
+    colorPickerPopoverContent: css({
+      width: '246px',
+      fontSize: theme.typography.bodySmall.fontSize,
+      minHeight: '184px',
+      padding: theme.spacing(1),
+      display: 'flex',
+      flexDirection: 'column',
+    }),
+    colorPickerPopoverTabs: css({
+      display: 'flex',
+      width: '100%',
+      borderRadius: `${theme.shape.radius.default} ${theme.shape.radius.default} 0 0`,
+    }),
   };
 });

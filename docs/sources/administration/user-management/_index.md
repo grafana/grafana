@@ -1,6 +1,10 @@
 ---
 aliases:
   - manage-users-and-permissions/
+labels:
+  products:
+    - enterprise
+    - oss
 title: User management
 weight: 200
 ---

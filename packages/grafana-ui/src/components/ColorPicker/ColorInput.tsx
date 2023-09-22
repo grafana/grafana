@@ -92,17 +92,18 @@ const ColorPreview = ({ color, onClick, disabled, ariaLabel }: ColorPreviewProps
       disabled={disabled || !onClick}
       className={cx(
         styles,
-        css`
-          background-color: ${color};
-        `
+        css({
+          backgroundColor: color,
+        })
       )}
     />
   );
 };
 
-const getColorPreviewStyles = (theme: GrafanaTheme2) => css`
-  height: 100%;
-  width: ${theme.spacing.gridSize * 4}px;
-  border-radius: ${theme.shape.borderRadius()} 0 0 ${theme.shape.borderRadius()};
-  border: 1px solid ${theme.colors.border.medium};
-`;
+const getColorPreviewStyles = (theme: GrafanaTheme2) =>
+  css({
+    height: '100%',
+    width: `${theme.spacing.gridSize * 4}px`,
+    borderRadius: `${theme.shape.radius.default} 0 0 ${theme.shape.radius.default}`,
+    border: `1px solid ${theme.colors.border.medium}`,
+  });

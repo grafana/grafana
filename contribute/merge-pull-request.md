@@ -13,7 +13,6 @@ The following checklist/summary should give you a quick overview of what to ask/
 - Reviewed and approved?
 - All checks passed?
 - Proper pull request title?
-- Milestone assigned?
 - Add to changelog/release notes?
 - Needs backporting?
 
@@ -40,14 +39,17 @@ See [formatting guidelines](create-pull-request.md#formatting-guidelines) for mo
 
 ### Assign a milestone
 
-A milestone **should** be added to every pull request. Several things in the Grafana release process requires at least pull requests to be in a milestone, for example [generating changelog/release notes](#include-in-changelog-and-release-notes).
+Several things in the Grafana release process requires at least pull requests to be in a milestone, for example [generating changelog/release notes](#include-in-changelog-and-release-notes).
 
 This makes it easier to track what changes go into a certain release. Without this information, release managers have to go through git commits which is not an efficient process.
 
-Always assign the milestone for the version that a PR is merged into.
+That being said, _you don't have to assign a milestone manually_ to a pull request.
+Instead, when it is merged & closed then a bot will look for the most appropriate miletone and assign it to the pull request.
+
+That milestone should always reflect the branch that the pull request is merged into.
 For every major and minor release there is a milestone ending with `.x` (e.g. `10.0.x` for the 10.0.x releases).
-PRs targetting `main` should use the `.x` milestone of the next minor (or major) version (you can find that version number inside the `package.json` file).
-Backport PRs should use the version of the target branch (e.g. `9.4.x` for the `v9.4.x` branch).
+Pull requests targetting `main` should use the `.x` milestone of the next minor (or major) version (you can find that version number inside the `package.json` file).
+Backport pull requests should use the version of the target branch (e.g. `9.4.x` for the `v9.4.x` branch).
 
 ### Include in changelog and release notes?
 
@@ -83,15 +85,15 @@ The changelog/release notes are divided into sections and here's a description o
 
 **Features and enhancements:**
 
-Milestone assigned and labeled with `add to changelog` and any of the other section rules don't apply.
+Labeled with `add to changelog` and any of the other section rules don't apply.
 
 **Bug fixes:**
 
-Milestone assigned and labeled with `add to changelog` and either labeled with `type/bug` or the pull request title contains `fix` or `fixes`.
+Labeled with `add to changelog` and either labeled with `type/bug` or the pull request title contains `fix` or `fixes`.
 
 **Plugin development fixes & changes:**
 
-Milestone assigned and labeled with `area/grafana/toolkit`, `area/grafana/ui` or `area/grafana/runtime`.
+Labeled with `area/grafana/ui` or `area/grafana/runtime`.
 
 **Deprecations:**
 
@@ -115,30 +117,23 @@ In case the pull request introduces a breaking change you should document this. 
 
 ### Should the pull request be backported?
 
-An active decision of backporting needs to be taken for every pull request. There's a pull request check named **Backport Check** that will enforce this. By adding/removing labels on the pull request the check will be re-evaluated.
+Backporting is the process of copying the pull request into the version branch of one or multiple previous releases.
+This should only be done for _critical bug fixes_ and involves the intervention of a Grafana Labs employee.
+To make this decision explicit, there is a **Backport Check** that is re-evaluated automatically by adding/removing labels on the pull request.
 
 #### No backport
 
 If you don't want to backport you need to add a label named **no-backport** to the pull request.
 
+This should be the default!
+
 #### Backport
 
-If your pull request has changes that need to go into one or several existing release branches you need to backport the changes. Please refer to [Backport PR](/.github/bot.md#backport-pr) for detailed instructions.
+If your pull request fixes a critical bug and needs to go into one or several existing release branches it should be backported.
 
-The general rule of thumb regarding what changes goes into what release is:
-
-- bug fixes should be released in patch releases, e.g. v8.1.3, if the bug was introduced in the same major/minor or lower patch version.
-- new features should go into the next major/minor version, e.g. v8.0.0, v8.2.0.
-
-Some examples when backport is required:
-
-- The change needs to be released in the next upcoming patch release, e.g. v8.1.3, so you have to backport it, e.g. into the v8.1.x release branch.
-- You have a change to be released in the next major/minor release, e.g. v8.0.0, and there's already a release branch, e.g. v8.0.x, you have to backport it, e.g. into the v8.0.x release branch.
-- The change includes documentation changes that needs to be updated for one or multiple older versions, then you have to backport it to each release branch.
-
-Some examples when backport is not required:
-
-- The change is supposed to be released in the next major/minor release, e.g. v8.0.0, but the release branch, e.g. v8.0.x, has not yet been created.
+For a pull request to be backported, please add it to "Critical Bug Release" form so that the delivery team is aware that a release for a previous version needs to be made.
+Once approved, the backporting process will continue from there.
+In the meantime, set the `no-backport` label.
 
 #### Required labels
 
@@ -146,7 +141,8 @@ To ensure that we don't backport pull requests that don't need to be backported,
 
 - `type/bug` label: Pull requests which address bugs,
 - `product-approved` label: Urgent fixes which need product approval, in order to get merged,
-- `type/docs` label: Docs changes`.
+- `type/docs` label: Docs changes.
+- `type/ci` label: Changes to the CI automation.
 
 > **Note:** You can still backport a pull request after it's been merged.
 

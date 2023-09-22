@@ -173,7 +173,7 @@ export function mapPromMetricsToServiceMap(
   const frames = getMetricFrames(responses);
 
   // First just collect data from the metrics into a map with nodes and edges as keys
-  const nodesMap: Record<string, ServiceMapStatistics> = {};
+  const nodesMap: Record<string, NodeObject> = {};
   const edgesMap: Record<string, EdgeObject> = {};
   // At this moment we don't have any error/success or other counts so we just use these 2
   collectMetricData(frames[totalsMetric], 'total', totalsMetric, nodesMap, edgesMap);
@@ -191,6 +191,7 @@ function createServiceMapDataFrames() {
   const nodes = createDF('Nodes', [
     { name: Fields.id, type: FieldType.string },
     { name: Fields.title, type: FieldType.string, config: { displayName: 'Service name' } },
+    { name: Fields.subTitle, type: FieldType.string, config: { displayName: 'Service namespace' } },
     { name: Fields.mainStat, type: FieldType.number, config: { unit: 'ms/r', displayName: 'Average response time' } },
     {
       name: Fields.secondaryStat,
@@ -211,7 +212,11 @@ function createServiceMapDataFrames() {
   const edges = createDF('Edges', [
     { name: Fields.id, type: FieldType.string },
     { name: Fields.source, type: FieldType.string },
+    { name: AdditionalEdgeFields.sourceName, type: FieldType.string },
+    { name: AdditionalEdgeFields.sourceNamespace, type: FieldType.string },
     { name: Fields.target, type: FieldType.string },
+    { name: AdditionalEdgeFields.targetName, type: FieldType.string },
+    { name: AdditionalEdgeFields.targetNamespace, type: FieldType.string },
     { name: Fields.mainStat, type: FieldType.number, config: { unit: 'ms/r', displayName: 'Average response time' } },
     {
       name: Fields.secondaryStat,
@@ -241,10 +246,28 @@ type ServiceMapStatistics = {
   failed?: number;
 };
 
+type NodeObject = ServiceMapStatistics & {
+  name: string;
+  namespace?: string;
+};
+
 type EdgeObject = ServiceMapStatistics & {
   source: string;
+  sourceName: string;
+  sourceNamespace: string;
   target: string;
+  targetName: string;
+  targetNamespace: string;
 };
+
+// These fields are not necessary for rendering, so not available from the Fields enum
+// Will be used for linking when namespace is present
+enum AdditionalEdgeFields {
+  sourceName = 'sourceName',
+  sourceNamespace = 'sourceNamespace',
+  targetName = 'targetName',
+  targetNamespace = 'targetNamespace',
+}
 
 /**
  * Collect data from a metric into a map of nodes and edges. The metric data is modeled as counts of metric per edge
@@ -261,7 +284,7 @@ function collectMetricData(
   frame: DataFrameView | undefined,
   stat: keyof ServiceMapStatistics,
   metric: string,
-  nodesMap: Record<string, ServiceMapStatistics>,
+  nodesMap: Record<string, NodeObject>,
   edgesMap: Record<string, EdgeObject>
 ) {
   if (!frame) {
@@ -274,13 +297,20 @@ function collectMetricData(
 
   for (let i = 0; i < frame.length; i++) {
     const row = frame.get(i);
-    const edgeId = `${row.client}_${row.server}`;
+    const serverId = row.server_service_namespace ? `${row.server_service_namespace}/${row.server}` : row.server;
+    const clientId = row.client_service_namespace ? `${row.client_service_namespace}/${row.client}` : row.client;
+
+    const edgeId = `${clientId}_${serverId}`;
 
     if (!edgesMap[edgeId]) {
       // Create edge as it does not exist yet
       edgesMap[edgeId] = {
-        target: row.server,
-        source: row.client,
+        target: serverId,
+        targetName: row.server,
+        targetNamespace: row.server_service_namespace,
+        source: clientId,
+        sourceName: row.client,
+        sourceNamespace: row.client_service_namespace,
         [stat]: row[valueName],
       };
     } else {
@@ -290,20 +320,24 @@ function collectMetricData(
       edgesMap[edgeId][stat] = (edgesMap[edgeId][stat] || 0) + row[valueName];
     }
 
-    if (!nodesMap[row.server]) {
+    if (!nodesMap[serverId]) {
       // Create node for server
-      nodesMap[row.server] = {
+      nodesMap[serverId] = {
+        name: row.server,
+        namespace: row.server_service_namespace,
         [stat]: row[valueName],
       };
     } else {
       // Add stat to server node. Sum up values if there are multiple edges targeting this server node.
-      nodesMap[row.server][stat] = (nodesMap[row.server][stat] || 0) + row[valueName];
+      nodesMap[serverId][stat] = (nodesMap[serverId][stat] || 0) + row[valueName];
     }
 
-    if (!nodesMap[row.client]) {
+    if (!nodesMap[clientId]) {
       // Create the client node but don't add the stat as edge stats are attributed to the server node. This means for
       // example that the number of requests in a node show how many requests it handled not how many it generated.
-      nodesMap[row.client] = {
+      nodesMap[clientId] = {
+        name: row.client,
+        namespace: row.client_service_namespace,
         [stat]: 0,
       };
     }
@@ -311,7 +345,7 @@ function collectMetricData(
 }
 
 function convertToDataFrames(
-  nodesMap: Record<string, ServiceMapStatistics>,
+  nodesMap: Record<string, NodeObject>,
   edgesMap: Record<string, EdgeObject>,
   range: TimeRange
 ): { nodes: DataFrame; edges: DataFrame } {
@@ -320,7 +354,8 @@ function convertToDataFrames(
     const node = nodesMap[nodeId];
     nodes.add({
       [Fields.id]: nodeId,
-      [Fields.title]: nodeId,
+      [Fields.title]: node.name,
+      [Fields.subTitle]: node.namespace,
       // NaN will not be shown in the node graph. This happens for a root client node which did not process
       // any requests itself.
       [Fields.mainStat]: node.total ? (node.seconds! / node.total) * 1000 : Number.NaN, // Average response time
@@ -334,7 +369,11 @@ function convertToDataFrames(
     edges.add({
       [Fields.id]: edgeId,
       [Fields.source]: edge.source,
+      [AdditionalEdgeFields.sourceName]: edge.sourceName,
+      [AdditionalEdgeFields.sourceNamespace]: edge.sourceNamespace,
       [Fields.target]: edge.target,
+      [AdditionalEdgeFields.targetName]: edge.targetName,
+      [AdditionalEdgeFields.targetNamespace]: edge.targetNamespace,
       [Fields.mainStat]: edge.total ? (edge.seconds! / edge.total) * 1000 : Number.NaN, // Average response time
       [Fields.secondaryStat]: edge.total ? Math.round(edge.total * 100) / 100 : Number.NaN, // Request per second (to 2 decimals)
     });

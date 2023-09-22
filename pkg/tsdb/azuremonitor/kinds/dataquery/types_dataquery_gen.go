@@ -118,6 +118,12 @@ type AppInsightsMetricNameQueryKind string
 
 // Azure Monitor Logs sub-query properties
 type AzureLogsQuery struct {
+	// If set to true the dashboard time range will be used as a filter for the query. Otherwise the query time ranges will be used. Defaults to false.
+	DashboardTime *bool `json:"dashboardTime,omitempty"`
+
+	// @deprecated Use dashboardTime instead
+	IntersectTime *bool `json:"intersectTime,omitempty"`
+
 	// KQL query to be executed.
 	Query *string `json:"query,omitempty"`
 
@@ -128,7 +134,10 @@ type AzureLogsQuery struct {
 	Resources    []string      `json:"resources,omitempty"`
 	ResultFormat *ResultFormat `json:"resultFormat,omitempty"`
 
-	// Workspace ID. This was removed in Grafana 8, but remains for backwards compat
+	// If dashboardTime is set to true this value dictates which column the time filter will be applied to. Defaults to the first tables timeSpan column, the first datetime column found, or TimeGenerated
+	TimeColumn *string `json:"timeColumn,omitempty"`
+
+	// Workspace ID. This was removed in Grafana 8, but remains for backwards compat.
 	Workspace *string `json:"workspace,omitempty"`
 }
 
