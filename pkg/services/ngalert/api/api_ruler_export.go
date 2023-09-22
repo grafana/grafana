@@ -102,7 +102,7 @@ func (srv RulerSrv) getRuleWithFolderTitleById(c *contextmodel.ReqContext, ruleU
 	}
 	namespace, err := srv.store.GetNamespaceByUID(c.Req.Context(), rule.NamespaceUID, c.SignedInUser.OrgID, c.SignedInUser)
 	if err != nil {
-		return ngmodels.AlertRuleGroupWithFolderTitle{}, err
+		return ngmodels.AlertRuleGroupWithFolderTitle{}, errors.Join(errFolderAccess, err)
 	}
 	return ngmodels.NewAlertRuleGroupWithFolderTitle(rule.GetGroupKey(), []ngmodels.AlertRule{rule}, namespace.Title), nil
 }
@@ -110,7 +110,7 @@ func (srv RulerSrv) getRuleWithFolderTitleById(c *contextmodel.ReqContext, ruleU
 func (srv RulerSrv) getRuleGroupWithFolderTitle(c *contextmodel.ReqContext, ruleGroupKey ngmodels.AlertRuleGroupKey) (ngmodels.AlertRuleGroupWithFolderTitle, error) {
 	namespace, err := srv.store.GetNamespaceByUID(c.Req.Context(), ruleGroupKey.NamespaceUID, c.SignedInUser.OrgID, c.SignedInUser)
 	if err != nil {
-		return ngmodels.AlertRuleGroupWithFolderTitle{}, err
+		return ngmodels.AlertRuleGroupWithFolderTitle{}, errors.Join(errFolderAccess, err)
 	}
 	rules, err := srv.getAuthorizedRuleGroup(c.Req.Context(), c, ruleGroupKey)
 	if err != nil {
