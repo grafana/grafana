@@ -131,6 +131,30 @@
       "placeholder": ""
     }
   },
+  "correlations": {
+    "basic-info": {
+      "Description-description": "",
+      "Description-label": "",
+      "Label-description": "",
+      "Label-label": "",
+      "Label-placeholder": "",
+      "Label-required": "",
+      "sub-text": "",
+      "title": ""
+    },
+    "source-form": {
+      "control-required": "",
+      "description": "",
+      "heading": "",
+      "results-description": "",
+      "results-label": "",
+      "results-required": "",
+      "source-description": "",
+      "source-label": "",
+      "sub-text": "",
+      "titel": ""
+    }
+  },
   "dashboard": {
     "add-menu": {
       "import": "Importar de la biblioteca",

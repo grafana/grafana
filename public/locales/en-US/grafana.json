@@ -126,6 +126,30 @@
       "placeholder": "Search all"
     }
   },
+  "correlations": {
+    "basic-info": {
+      "Description-description": "Optional description with more information about the link",
+      "Description-label": "Description",
+      "Label-description": "This name will be used as the label for the correlation. This will show as button text, a menu item, or hover text on a link.",
+      "Label-label": "Label",
+      "Label-placeholder": "e.g. Tempo traces",
+      "Label-required": "This field is required.",
+      "sub-text": "<0>Define text that will describe the correlation.</0>",
+      "title": "Define correlation label (Step 1 of 3)"
+    },
+    "source-form": {
+      "control-required": "This field is required.",
+      "description": "   You have used following variables in the target query: {variables.map((name, i) => (\n                <span className={styles.variable} key={i}>\n                  {name}\n                  {i < variables.length - 1 ? ', ' : ''}\n                </span>\n              ))}<3></3>A data point needs to provide values to all variables as fields or as transformations output to make the correlation button appear in the visualization.<5></5>Note: Not every variable needs to be explicitly defined below. A transformation such as <8>logfmt</8> will create variables for every key/value pair.",
+      "heading": "  Variables used in the target query",
+      "results-description": "The link will be shown next to the value of this field",
+      "results-label": "Results field",
+      "results-required": "This field is required.",
+      "source-description": "Results from selected source data source have links displayed in the panel",
+      "source-label": "Source",
+      "sub-text": "<0>Define what data source will display the correlation, and what data will replace previously defined variables.</0>",
+      "titel": ""
+    }
+  },
   "dashboard": {
     "add-menu": {
       "import": "Import from library",
