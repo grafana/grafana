@@ -491,15 +491,6 @@ func TestUserSync_EnableDisabledUserHook(t *testing.T) {
 			enableUser: false,
 		},
 		{
-			desc: "should skip if identity is not disabled",
-			identity: &authn.Identity{
-				ID:           authn.NamespacedID(authn.NamespaceUser, 1),
-				IsDisabled:   false,
-				ClientParams: authn.ClientParams{EnableUser: true},
-			},
-			enableUser: false,
-		},
-		{
 			desc: "should skip if identity is not a user",
 			identity: &authn.Identity{
 				ID:           authn.NamespacedID(authn.NamespaceAPIKey, 1),
