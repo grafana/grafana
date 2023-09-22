@@ -1,9 +1,9 @@
 import { Meta, StoryFn } from '@storybook/react';
-import React, { useMemo } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 
 import { InteractiveTable, Column, CellProps, LinkButton } from '@grafana/ui';
 
-import { InteractiveTableHeaderTooltip } from './InteractiveTable';
+import { FetchDataArgs, InteractiveTableHeaderTooltip } from './InteractiveTable';
 import mdx from './InteractiveTable.mdx';
 
 const EXCLUDED_PROPS = ['className', 'renderExpandedRow', 'getRowId'];
@@ -272,4 +272,36 @@ export const WithHeaderTooltips: StoryFn<typeof InteractiveTable> = (args) => {
   );
 };
 
+export const WithControlledSort: StoryFn<typeof InteractiveTable> = (args) => {
+  const columns: Array<Column<WithPaginationData>> = [
+    { id: 'firstName', header: 'First name', sortType: 'string' },
+    { id: 'lastName', header: 'Last name', sortType: 'string' },
+    { id: 'car', header: 'Car', sortType: 'string' },
+    { id: 'age', header: 'Age' },
+  ];
+  const [data, setData] = useState(pageableData);
+
+  // A mock function that will simulate API call that returns the sorted pageableData with added delay
+  const fetchData = useCallback(({ sortBy }: FetchDataArgs<WithPaginationData>) => {
+    if (!sortBy?.length) {
+      return setData(pageableData);
+    }
+
+    setTimeout(() => {
+      const newData = [...pageableData];
+      newData.sort((a, b) => {
+        const sort = sortBy[0];
+        const aData = a[sort.id as keyof Omit<WithPaginationData, 'age'>];
+        const bData = b[sort.id as keyof Omit<WithPaginationData, 'age'>];
+        if (sort.desc) {
+          return bData.localeCompare(aData);
+        }
+        return aData.localeCompare(bData);
+      });
+      setData(newData);
+    }, 300);
+  }, []);
+
+  return <InteractiveTable columns={columns} data={data} getRowId={(r) => r.id} pageSize={15} fetchData={fetchData} />;
+};
 export default meta;
