@@ -20,12 +20,37 @@ const (
 	StatusSourceDownstream StatusSource = "downstream"
 )
 
-type rMDContextKey struct{}
-
 type RequestMetaData struct {
 	Team         string
 	StatusSource StatusSource
+	SLOGroup     SLOGroup
 }
+
+type SLOGroup string
+
+const (
+	// SLOGroupHighFast is the default slo group for handlers in Grafana
+	// Most handlers should respond quickly
+	SLOGroupHighFast SLOGroup = "high-fast"
+
+	// SLOGroupHighMedium is used for handlers that might take some
+	// time to respond.
+	SLOGroupHighMedium SLOGroup = "high-medium"
+
+	// SLOGroupHighSlow is used by handlers that proxies requests downstream.
+	// We expect an high successrate but without latency garantess
+	SLOGroupHighSlow SLOGroup = "high-slow"
+
+	// SLOGroupLow should only be used for experimental features
+	// that might not be stable enough for our normal SLO
+	SLOGroupLow SLOGroup = "low"
+
+	// SLOGroupNone means that errors are expect for this handler and
+	// it should not be included in the SLO.
+	SLOGroupNone SLOGroup = "none"
+)
+
+type rMDContextKey struct{}
 
 var requestMetaDataContextKey = rMDContextKey{}
 
@@ -96,5 +121,14 @@ func defaultRequestMetadata() RequestMetaData {
 	return RequestMetaData{
 		Team:         TeamCore,
 		StatusSource: StatusSourceServer,
+		SLOGroup:     SLOGroupHighFast,
+	}
+}
+
+// SetSLOGroup creates an middleware that sets the SLOGroup for the request
+func SetSLOGroup(lvl SLOGroup) web.Handler {
+	return func(w http.ResponseWriter, r *http.Request) {
+		v := GetRequestMetaData(r.Context())
+		v.SLOGroup = lvl
 	}
 }
