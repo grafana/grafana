@@ -149,7 +149,6 @@ export const userListAdminSlice = createSlice({
       const { totalCount, perPage, ...rest } = action.payload;
       const totalPages = Math.ceil(totalCount / perPage);
 
-      console.log('setting', action.payload, state.sort);
       return {
         ...state,
         ...rest,

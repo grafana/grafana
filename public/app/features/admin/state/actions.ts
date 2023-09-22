@@ -283,7 +283,6 @@ const getFilters = (filters: UserFilter[]) => {
 export function fetchUsers(): ThunkResult<void> {
   return async (dispatch, getState) => {
     try {
-      console.log('WTF', getState().userListAdmin);
       const { perPage, page, query, filters, sort } = getState().userListAdmin;
       let url = `/api/users/search?perpage=${perPage}&page=${page}&query=${query}&${getFilters(filters)}`;
       if (sort) {
