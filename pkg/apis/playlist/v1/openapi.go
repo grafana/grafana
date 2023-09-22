@@ -5,6 +5,7 @@ import (
 	spec "k8s.io/kube-openapi/pkg/validation/spec"
 )
 
+// NOTE: this must match the golang fully qualifid name!
 const kindKey = "github.com/grafana/grafana/pkg/apis/playlist/v1.Playlist"
 
 func getOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
@@ -41,6 +42,7 @@ func schema_pkg_Playlist(ref common.ReferenceCallback) common.OpenAPIDefinition 
 							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
 						},
 					},
+					// TODO!  add a real spec here
 					// "spec": {
 					// 	SchemaProps: spec.SchemaProps{
 					// 		Default: map[string]interface{}{},

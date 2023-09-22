@@ -8,6 +8,7 @@ import (
 	spec "k8s.io/kube-openapi/pkg/validation/spec"
 )
 
+// This should eventually live in grafana-app-sdk
 func getOpenAPIDefinitions(builders []apis.APIGroupBuilder) common.GetOpenAPIDefinitions {
 	return func(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 		defs := getStandardOpenAPIDefinitions(ref)
