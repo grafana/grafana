@@ -11,11 +11,11 @@ title: Traces
 weight: 100
 ---
 
-# Traces panel
+# Traces
 
-> **Note:** This panel is currently in beta. Expect changes in future releases.
+> **Note:** This visualization is currently in beta. Expect changes in future releases.
 
-_Traces_ are a visualization that enables you to track and log a request as it traverses the services in your infrastructure.
+Traces visualizations let you follow a request as it traverses the services in your infrastructure.
 
 For more information about traces and how to use them, refer to the following documentation:
 
