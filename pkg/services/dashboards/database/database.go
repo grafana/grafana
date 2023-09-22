@@ -77,14 +77,31 @@ func (d *dashboardStore) DBMigration(db db.DB) {
 
 	err := db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		var err error
+		migTable := "migration_log"
+		mig := migrator.MigrationLog{
+			MigrationID: "Add DB migration for panel_titles",
+			Success:     true,
+		}
+
+		if exists, err := sess.Table(migTable).Get(&mig); exists || (err != nil) {
+			d.log.Info("DB migration on dashboard store start skipped")
+			return err
+		}
+
 		err = sess.Table("dashboard").Find(&dashboards)
 		for _, d := range dashboards {
 			_, err = sess.Exec("UPDATE dashboard SET panel_titles = ? WHERE id = ?", getPanelTitles(d), d.ID)
+			if err != nil {
+				return err
+			}
 		}
+
+		mig.Timestamp = time.Now()
+		_, err = sess.Table(migTable).Insert(&mig)
 		return err
 	})
 	if err != nil {
-		d.log.Error("DB migration on dashboard store start failed.")
+		d.log.Error("DB migration on dashboard store start failed:", err)
 	}
 }
 
