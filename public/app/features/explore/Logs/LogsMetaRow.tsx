@@ -5,6 +5,7 @@ import React from 'react';
 import { LogsDedupStrategy, LogsMetaItem, LogsMetaKind, LogRowModel, CoreApp, dateTimeFormat } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import { Button, Dropdown, Menu, ToolbarButton, Tooltip, useStyles2 } from '@grafana/ui';
+import { t, Trans } from 'app/core/internationalization';
 
 import { downloadLogsModelAsTxt } from '../../inspector/utils/download';
 import { LogLabels } from '../../logs/components/LogLabels';
@@ -84,11 +85,15 @@ export const LogsMetaRow = React.memo(
         kind: LogsMetaKind.Number,
       });
     }
+
+    const infoTextKey = 'logs-meta-row.highlighting-limit-info';
+    const infoTextDefault = 'Logs with more than 100,000 characters could not be parsed and highlighted';
+
     // Add info about limit for highlighting
     if (logRows.some((r) => r.entry.length > MAX_CHARACTERS)) {
       logsMetaItem.push({
-        label: 'Info',
-        value: 'Logs with more than 100,000 characters could not be parsed and highlighted',
+        label: t('logs-meta-row.info-label', 'Info'),
+        value: t(infoTextKey, infoTextDefault),
         kind: LogsMetaKind.String,
       });
     }
@@ -97,14 +102,14 @@ export const LogsMetaRow = React.memo(
     if (displayedFields?.length > 0) {
       logsMetaItem.push(
         {
-          label: 'Showing only selected fields',
+          label: t('logs-meta-row.selected-fields-label', 'Showing only selected fields'),
           value: renderMetaItem(displayedFields, LogsMetaKind.LabelsMap),
         },
         {
           label: '',
           value: (
             <Button variant="secondary" size="sm" onClick={clearDetectedFields}>
-              Show original line
+              <Trans i18nKey="logs-meta-row.show-original-line-button">Show original line</Trans>
             </Button>
           ),
         }
@@ -113,15 +118,18 @@ export const LogsMetaRow = React.memo(
 
     // Add unescaped content info
     if (hasUnescapedContent) {
+      const tooltipContent = t(
+        'logs-meta-row.unescaped-content-tooltip',
+        'Fix incorrectly escaped newline and tab sequences in log lines. Manually review the results to confirm that the replacements are correct.'
+      );
+      const buttonText = t('logs-meta-row.escape-button-text', 'Escape newlines');
+      const buttonTextWhenEscaped = t('logs-meta-row.remove-escape-button-text', 'Remove escaping');
       logsMetaItem.push({
-        label: 'Your logs might have incorrectly escaped content',
+        label: t('logs-meta-row.unescaped-content-label', 'Your logs might have incorrectly escaped content'),
         value: (
-          <Tooltip
-            content="Fix incorrectly escaped newline and tab sequences in log lines. Manually review the results to confirm that the replacements are correct."
-            placement="right"
-          >
+          <Tooltip content={tooltipContent} placement="right">
             <Button variant="secondary" size="sm" onClick={onEscapeNewlines}>
-              {forceEscape ? 'Remove escaping' : 'Escape newlines'}
+              {forceEscape ? buttonTextWhenEscaped : buttonText}
             </Button>
           </Tooltip>
         ),
@@ -129,8 +137,8 @@ export const LogsMetaRow = React.memo(
     }
     const downloadMenu = (
       <Menu>
-        <Menu.Item label="txt" onClick={() => downloadLogs(DownloadFormat.Text)} />
-        <Menu.Item label="json" onClick={() => downloadLogs(DownloadFormat.Json)} />
+        <Menu.Item label={t('logs-meta-row.txt-label', 'txt')} onClick={() => downloadLogs(DownloadFormat.Text)} />
+        <Menu.Item label={t('logs-meta-row.json-label', 'json')} onClick={() => downloadLogs(DownloadFormat.Json)} />
       </Menu>
     );
     return (
@@ -147,7 +155,7 @@ export const LogsMetaRow = React.memo(
             />
             <Dropdown overlay={downloadMenu}>
               <ToolbarButton isOpen={false} variant="canvas" icon="download-alt">
-                Download
+                <Trans i18nKey="logs-meta-row.download-button">Download</Trans>
               </ToolbarButton>
             </Dropdown>
           </div>
