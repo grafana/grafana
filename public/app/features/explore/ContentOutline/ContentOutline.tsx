@@ -3,6 +3,7 @@ import React from 'react';
 import { useToggle } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { reportInteraction } from '@grafana/runtime';
 import { useStyles2, ToolbarButton } from '@grafana/ui';
 
 import { useContentOutlineContext } from './ContentOutlineContext';
@@ -37,8 +38,11 @@ const ContentOutline = () => {
   const styles = useStyles2((theme) => getStyles(theme));
   const { outlineItems } = useContentOutlineContext();
 
-  const scrollIntoView = (ref: HTMLElement | null) => {
+  const scrollIntoView = (ref: HTMLElement | null, buttonTitle: string) => {
     ref?.scrollIntoView({ behavior: 'smooth' });
+    reportInteraction('grafana_explore_content_outline_item_clicked', {
+      scrollButtonClicked: buttonTitle,
+    });
   };
 
   return (
@@ -57,7 +61,7 @@ const ContentOutline = () => {
             key={item.id}
             className={styles.buttonStyles}
             icon={item.icon}
-            onClick={() => scrollIntoView(item.ref)}
+            onClick={() => scrollIntoView(item.ref, item.title)}
             tooltip={!expanded ? item.title : undefined}
           >
             {expanded && item.title}
