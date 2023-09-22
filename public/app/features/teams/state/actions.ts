@@ -1,13 +1,22 @@
 import { debounce } from 'lodash';
 
 import { getBackendSrv } from '@grafana/runtime';
+import { FetchDataArgs } from '@grafana/ui';
 import { updateNavIndex } from 'app/core/actions';
 import { contextSrv } from 'app/core/core';
 import { accessControlQueryParam } from 'app/core/utils/accessControl';
-import { AccessControlAction, TeamMember, ThunkResult } from 'app/types';
+import { AccessControlAction, Team, TeamMember, ThunkResult } from 'app/types';
 
 import { buildNavModel } from './navModel';
-import { teamGroupsLoaded, queryChanged, pageChanged, teamLoaded, teamMembersLoaded, teamsLoaded } from './reducers';
+import {
+  teamGroupsLoaded,
+  queryChanged,
+  pageChanged,
+  teamLoaded,
+  teamMembersLoaded,
+  teamsLoaded,
+  sortChanged,
+} from './reducers';
 
 export function loadTeams(initial = false): ThunkResult<void> {
   return async (dispatch, getState) => {
@@ -63,6 +72,14 @@ export function changeQuery(query: string): ThunkResult<void> {
 export function changePage(page: number): ThunkResult<void> {
   return async (dispatch) => {
     dispatch(pageChanged(page));
+    dispatch(loadTeams());
+  };
+}
+
+export function changeSort({ sortBy }: FetchDataArgs<Team>): ThunkResult<void> {
+  const sort = sortBy.length ? `${sortBy[0].id}-${sortBy[0].desc ? 'desc' : 'asc'}` : undefined;
+  return async (dispatch) => {
+    dispatch(sortChanged(sort));
     dispatch(loadTeams());
   };
 }
