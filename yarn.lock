@@ -3819,6 +3819,8 @@ __metadata:
   dependencies:
     "@typescript-eslint/types": ^5.46.1
     "@typescript-eslint/utils": ^5.46.1
+    eslint: 8.44.0
+    tslib: 2.6.0
   languageName: unknown
   linkType: soft
 
