@@ -1,11 +1,9 @@
 import React, { useMemo } from 'react';
 
-import { llms } from '@grafana/experimental';
-
 import { DashboardModel } from '../../state';
 
 import { GenAIButton } from './GenAIButton';
-import { getDashboardChanges, Role, Message } from './utils';
+import { getDashboardChanges, Message, Role } from './utils';
 
 interface GenAIDashboardChangesButtonProps {
   dashboard: DashboardModel;

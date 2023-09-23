@@ -1,12 +1,10 @@
 import React from 'react';
 
-import { llms } from '@grafana/experimental';
-
 import { getDashboardSrv } from '../../services/DashboardSrv';
 import { PanelModel } from '../../state';
 
 import { GenAIButton } from './GenAIButton';
-import { Role } from './utils';
+import { Message, Role } from './utils';
 
 interface GenAIPanelDescriptionButtonProps {
   onGenerate: (description: string) => void;
@@ -19,7 +17,7 @@ const DESCRIPTION_GENERATION_STANDARD_PROMPT =
   'The description should be shorter than 140 characters.';
 
 export const GenAIPanelDescriptionButton = ({ onGenerate, panel }: GenAIPanelDescriptionButtonProps) => {
-  function getMessages(): llms.openai.Message[] {
+  function getMessages(): Message[] {
     const dashboard = getDashboardSrv().getCurrent()!;
 
     return [
