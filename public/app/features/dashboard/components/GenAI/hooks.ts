@@ -67,9 +67,12 @@ export function useOpenAIStream(
         // has completed.
         // The operator decision tree on the rxjs website is a useful resource:
         // https://rxjs.dev/operator-decision-tree.
+
+        // TODO: Investigate finalize being called multiple times during a stream (i.e. when generating panel description)
         finalize(() => {
           setStarted(false);
           setFinished(true);
+          setMessages([]);
         })
       );
     // Subscribe to the stream and update the state for each returned value.

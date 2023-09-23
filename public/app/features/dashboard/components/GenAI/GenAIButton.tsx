@@ -27,10 +27,7 @@ export const GenAIButton = ({
   const styles = useStyles2(getStyles);
 
   // TODO: Implement error handling (use error object from hook)
-  const { setMessages, reply, started, loading, value, error, finished } = useOpenAIStream(
-    OPEN_AI_MODEL,
-    temperature
-  );
+  const { setMessages, reply, started, loading, value, error, finished } = useOpenAIStream(OPEN_AI_MODEL, temperature);
 
   const onGenerate = (e: React.MouseEvent<HTMLButtonElement>) => {
     onClick?.(e);
