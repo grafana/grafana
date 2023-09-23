@@ -1,10 +1,8 @@
 import { of } from 'rxjs';
 
 import { DataQueryRequest, dateTime, ScopedVars } from '@grafana/data/src';
-import { FetchResponse } from '@grafana/runtime';
+import { FetchResponse } from '@grafana/runtime/src';
 import config from 'app/core/config';
-
-import { InfluxQuery } from '../types';
 
 import {
   getMockDSInstanceSettings,
@@ -12,7 +10,8 @@ import {
   mockBackendService,
   mockInfluxFetchResponse,
   mockTemplateSrv,
-} from './mocks';
+} from './specs/mocks';
+import { InfluxQuery } from './types';
 
 config.featureToggles.influxdbBackendMigration = true;
 const fetchMock = mockBackendService(mockInfluxFetchResponse());

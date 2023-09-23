@@ -2,13 +2,13 @@ import { lastValueFrom, of } from 'rxjs';
 import { TemplateSrvStub } from 'test/specs/helpers';
 
 import { ScopedVars } from '@grafana/data/src';
-import { FetchResponse } from '@grafana/runtime';
+import { FetchResponse } from '@grafana/runtime/src';
 import config from 'app/core/config';
 import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
 
-import { BROWSER_MODE_DISABLED_MESSAGE } from '../constants';
-import InfluxDatasource from '../datasource';
-import { InfluxQuery, InfluxVersion } from '../types';
+import { BROWSER_MODE_DISABLED_MESSAGE } from './constants';
+import InfluxDatasource from './datasource';
+import { InfluxQuery, InfluxVersion } from './types';
 
 //@ts-ignore
 const templateSrv = new TemplateSrvStub();
