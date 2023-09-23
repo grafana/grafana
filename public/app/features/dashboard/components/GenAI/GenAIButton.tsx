@@ -27,7 +27,7 @@ export const GenAIButton = ({
   const styles = useStyles2(getStyles);
 
   // TODO: Implement error handling (use error object from hook)
-  const { setMessages, reply, inProgress, loading, value, error } = useOpenAIStream(OPEN_AI_MODEL, temperature);
+  const { setMessages, reply, inProgress, value } = useOpenAIStream(OPEN_AI_MODEL, temperature);
 
   const onGenerate = (e: React.MouseEvent<HTMLButtonElement>) => {
     onClick?.(e);
@@ -39,10 +39,8 @@ export const GenAIButton = ({
     onReply(reply.replace(/"/g, ''));
   }
 
-  const isGenerating = loading || inProgress;
-
   const getIcon = () => {
-    if (isGenerating) {
+    if (inProgress) {
       return undefined;
     }
     if (!value?.enabled) {
@@ -53,7 +51,7 @@ export const GenAIButton = ({
 
   return (
     <div className={styles.wrapper}>
-      {isGenerating && <Spinner size={14} />}
+      {inProgress && <Spinner size={14} />}
       <Tooltip
         show={value?.enabled ? false : undefined}
         interactive
@@ -64,8 +62,8 @@ export const GenAIButton = ({
           </span>
         }
       >
-        <Button icon={getIcon()} onClick={onGenerate} fill="text" size="sm" disabled={isGenerating || !value?.enabled}>
-          {!isGenerating ? text : loadingText}
+        <Button icon={getIcon()} onClick={onGenerate} fill="text" size="sm" disabled={inProgress || !value?.enabled}>
+          {!inProgress ? text : loadingText}
         </Button>
       </Tooltip>
     </div>
