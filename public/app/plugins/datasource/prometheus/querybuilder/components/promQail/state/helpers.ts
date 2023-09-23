@@ -1,14 +1,17 @@
 import { AnyAction } from 'redux';
 
+import { llms } from '@grafana/experimental';
 import { PrometheusDatasource } from 'app/plugins/datasource/prometheus/datasource';
 import { getMetadataHelp } from 'app/plugins/datasource/prometheus/language_provider';
 
 import { promQueryModeller } from '../../../PromQueryModeller';
 import { buildVisualQueryFromString } from '../../../parsing';
 import { PromVisualQuery } from '../../../types';
+import { ExplainSystemPrompt, GetExplainUserPrompt } from '../prompts';
 import { Interaction, QuerySuggestion, SuggestionType } from '../types';
 
 import { createInteraction, stateSlice } from './state';
+
 
 // actions to update the state
 const { updateInteraction } = stateSlice.actions;
@@ -36,6 +39,26 @@ export const querySuggestions: QuerySuggestion[] = [
   },
 ];
 
+
+async function OpenAIChatCompletions(messages: llms.openai.Message[]): Promise<string> {
+  const response = await llms.openai.chatCompletions({
+    model: "gpt-3.5-turbo",
+    messages: messages
+  });
+
+  return response.choices[0].message.content
+}
+
+function getExplainMessage(documentation: string, metricType: string, description: string, query: string): llms.openai.Message[] {
+  
+  return [
+    { role: 'system', content: ExplainSystemPrompt},
+    { role: 'user', content: GetExplainUserPrompt(documentation, metricType, description, query) },
+  ]
+}
+
+
+
 /**
  * Calls the API and adds suggestions to the interaction
  *
@@ -52,108 +75,64 @@ export async function promQailExplain(
   suggIdx: number,
   datasource: PrometheusDatasource
 ) {
-  const check = await promQailHealthcheck();
+  // const enabled = await llms.openai.enabled();
 
-  // no api hooked up?
-  if (!check) {
-    new Promise<void>((resolve) => {
-      return setTimeout(() => {
-        // REFACTOR
-        const interactionToUpdate = interaction;
+  // if (!enabled) {
+  //   return false;
+  // }
 
-        const explanation = 'This is a filler explanation because the api is not hooked up.';
+  const suggestedQuery = interaction.suggestions[suggIdx].query;
 
-        const updatedSuggestions = interactionToUpdate.suggestions.map((sg: QuerySuggestion, sidx: number) => {
-          if (suggIdx === sidx) {
-            return {
-              query: interactionToUpdate.suggestions[suggIdx].query,
-              explanation: explanation,
-            };
-          }
+  let metricMetadata: string | undefined;
 
-          return sg;
-        });
+  if (datasource.languageProvider.metricsMetadata) {
+    if (interaction.suggestionType === SuggestionType.Historical) {
+      // parse the suggested query
+      // get the metric
+      // then check the metadata
+      const pvq = buildVisualQueryFromString(suggestedQuery);
+      metricMetadata = getMetadataHelp(pvq.query.metric, datasource.languageProvider.metricsMetadata!);
+    } else {
+      // for the AI we already have a metric selected
+      metricMetadata = getMetadataHelp(query.metric, datasource.languageProvider.metricsMetadata!);
+    }
+  }
 
-        const payload = {
-          idx,
-          interaction: {
-            ...interactionToUpdate,
-            suggestions: updatedSuggestions,
-            explanationIsLoading: false,
-          },
-        };
+  const promptMessages = getExplainMessage(
+    '',
+    query.metric,
+    metricMetadata ?? '',
+    suggestedQuery
+  );
 
-        dispatch(updateInteraction(payload));
-        resolve();
-      }, 1); // so fast!
-    });
-  } else {
-    const url = 'http://localhost:5001/query-explainer';
+  const explainerResponse = await OpenAIChatCompletions(promptMessages);
 
-    const suggestedQuery = interaction.suggestions[suggIdx].query;
 
-    let metricMetadata: string | undefined;
+  const interactionToUpdate = interaction;
+  // switch to returning 1 query until we get more confidence returning more
+  const explanation = explainerResponse;
 
-    if (datasource.languageProvider.metricsMetadata) {
-      if (interaction.suggestionType === SuggestionType.Historical) {
-        // parse the suggested query
-        // get the metric
-        // then check the metadata
-        const pvq = buildVisualQueryFromString(suggestedQuery);
-        metricMetadata = getMetadataHelp(pvq.query.metric, datasource.languageProvider.metricsMetadata!);
-      } else {
-        // for the AI we already have a metric selected
-        metricMetadata = getMetadataHelp(query.metric, datasource.languageProvider.metricsMetadata!);
-      }
+  const updatedSuggestions = interactionToUpdate.suggestions.map((sg: QuerySuggestion, sidx: number) => {
+    if (suggIdx === sidx) {
+      return {
+        query: interactionToUpdate.suggestions[suggIdx].query,
+        explanation: explanation,
+      };
     }
 
-    const body = {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ query: suggestedQuery, metric: query.metric, description: metricMetadata ?? '' }),
-    };
+    return sg;
+  });
 
-    const promQailPromise = fetch(url, body);
+  const payload = {
+    idx,
+    interaction: {
+      ...interactionToUpdate,
+      suggestions: updatedSuggestions,
+      explanationIsLoading: false,
+    },
+  };
 
-    const promQailResp = await promQailPromise
-      .then((resp) => {
-        return resp.json();
-      })
-      .then((data) => {
-        return data;
-      })
-      .catch((error) => {
-        return { error: error };
-      });
-
-    const interactionToUpdate = interaction;
-    // switch to returning 1 query until we get more confidence returning more
-    const explanation = promQailResp.response;
-
-    const updatedSuggestions = interactionToUpdate.suggestions.map((sg: QuerySuggestion, sidx: number) => {
-      if (suggIdx === sidx) {
-        return {
-          query: interactionToUpdate.suggestions[suggIdx].query,
-          explanation: explanation,
-        };
-      }
-
-      return sg;
-    });
-
-    const payload = {
-      idx,
-      interaction: {
-        ...interactionToUpdate,
-        suggestions: updatedSuggestions,
-        explanationIsLoading: false,
-      },
-    };
-
-    dispatch(updateInteraction(payload));
-  }
+  dispatch(updateInteraction(payload));
 }
 
 /**
