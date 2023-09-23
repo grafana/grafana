@@ -34,7 +34,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch"
-	"github.com/grafana/grafana/pkg/tsdb/testdatasource"
+	testdatasource "github.com/grafana/grafana/pkg/tsdb/grafana-testdata-datasource"
 	"github.com/grafana/grafana/pkg/web/webtest"
 )
 
@@ -67,7 +67,7 @@ func TestCallResource(t *testing.T) {
 	})
 
 	t.Run("Test successful response is received for valid request", func(t *testing.T) {
-		req := srv.NewPostRequest("/api/plugins/testdata/resources/test", strings.NewReader("{ \"test\": true }"))
+		req := srv.NewPostRequest("/api/plugins/grafana-testdata-datasource/resources/test", strings.NewReader("{ \"test\": true }"))
 		webtest.RequestWithSignedInUser(req, &user.SignedInUser{UserID: 1, OrgID: 1, Permissions: map[int64]map[string][]string{
 			1: accesscontrol.GroupScopesByAction([]accesscontrol.Permission{
 				{Action: pluginaccesscontrol.ActionAppAccess, Scope: pluginaccesscontrol.ScopeProvider.GetResourceAllScope()},
@@ -106,7 +106,7 @@ func TestCallResource(t *testing.T) {
 	})
 
 	t.Run("Test error is properly propagated to API response", func(t *testing.T) {
-		req := srv.NewGetRequest("/api/plugins/testdata/resources/scenarios")
+		req := srv.NewGetRequest("/api/plugins/grafana-testdata-datasource/resources/scenarios")
 		webtest.RequestWithSignedInUser(req, &user.SignedInUser{UserID: 1, OrgID: 1, Permissions: map[int64]map[string][]string{
 			1: accesscontrol.GroupScopesByAction([]accesscontrol.Permission{
 				{Action: pluginaccesscontrol.ActionAppAccess, Scope: pluginaccesscontrol.ScopeProvider.GetResourceAllScope()},

@@ -12,4 +12,4 @@
 export * from './components/Layout/Box/Box';
 export * from './components/Layout/Flex/Flex';
 
-export { Stack } from './components/Layout/Stack/Stack';
+export { Stack, HorizontalStack } from './components/Layout/Stack';
