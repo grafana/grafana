@@ -1711,7 +1711,6 @@ func TestDeleteByDashboard(t *testing.T) {
 		dashboard := &dashboards.Dashboard{UID: "1", OrgID: 1, IsFolder: false}
 		pubdash := &PublicDashboard{Uid: "2", OrgId: 1, DashboardUid: "2"}
 		store.On("FindByDashboardUid", mock.Anything, mock.Anything, mock.Anything).Return(pubdash, nil)
-		store.On("Delete", mock.Anything, mock.Anything, mock.Anything).Return(int64(1), nil)
 
 		err := pd.DeleteByDashboard(context.Background(), dashboard)
 		assert.Error(t, err)
