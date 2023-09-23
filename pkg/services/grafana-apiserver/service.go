@@ -17,15 +17,17 @@ import (
 	"k8s.io/apiserver/pkg/authentication/authenticator"
 	"k8s.io/apiserver/pkg/authentication/request/headerrequest"
 	"k8s.io/apiserver/pkg/authentication/user"
-	"k8s.io/apiserver/pkg/registry/rest"
+	openapinamer "k8s.io/apiserver/pkg/endpoints/openapi"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/apiserver/pkg/server/options"
+	"k8s.io/apiserver/pkg/util/openapi"
+	"k8s.io/client-go/kubernetes/scheme"
 	clientrest "k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 	"k8s.io/klog/v2"
 
-	"github.com/grafana/grafana/pkg/apis/install"
+	"github.com/grafana/grafana/pkg/apis"
 	playlistv1 "github.com/grafana/grafana/pkg/apis/playlist/v1"
 	"github.com/grafana/grafana/pkg/modules"
 )
@@ -56,7 +58,6 @@ var (
 )
 
 func init() {
-	install.Install(Scheme)
 	// we need to add the options to empty v1
 	metav1.AddToGroupVersion(Scheme, schema.GroupVersion{Group: "", Version: "v1"})
 	Scheme.AddUnversionedTypes(unversionedVersion, unversionedTypes...)
@@ -151,18 +152,43 @@ func (s *service) start(ctx context.Context) error {
 
 	serverConfig.Authentication.Authenticator = authenticator
 
+	// Get the list of groups the server will support
+	builders := []apis.APIGroupBuilder{
+		playlistv1.GetAPIGroupBuilder(),
+	}
+
+	// Install schemas
+	for _, b := range builders {
+		err = b.InstallSchema(Scheme) // previously was in init
+		if err != nil {
+			return err
+		}
+	}
+
+	// Add OpenAPI specs for each group+version
+	defsGetter := getOpenAPIDefinitions(builders)
+	serverConfig.OpenAPIConfig = genericapiserver.DefaultOpenAPIConfig(
+		openapi.GetOpenAPIDefinitionsWithoutDisabledFeatures(defsGetter),
+		openapinamer.NewDefinitionNamer(Scheme, scheme.Scheme))
+
+	serverConfig.OpenAPIV3Config = genericapiserver.DefaultOpenAPIV3Config(
+		openapi.GetOpenAPIDefinitionsWithoutDisabledFeatures(defsGetter),
+		openapinamer.NewDefinitionNamer(Scheme, scheme.Scheme))
+
+	serverConfig.SkipOpenAPIInstallation = false
+
+	// Create the server
 	server, err := serverConfig.Complete().New("grafana-apiserver", genericapiserver.NewEmptyDelegate())
 	if err != nil {
 		return err
 	}
 
-	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(playlistv1.GroupName, Scheme, metav1.ParameterCodec, Codecs)
-	playlistv1storage := map[string]rest.Storage{}
-	playlistv1storage["playlists"] = &playlistv1.Handler{}
-
-	apiGroupInfo.VersionedResourcesStorageMap["v1"] = playlistv1storage
-	if err := server.InstallAPIGroup(&apiGroupInfo); err != nil {
-		return err
+	// Install the API Group+version
+	for _, b := range builders {
+		err = server.InstallAPIGroup(b.GetAPIGroupInfo(Scheme, Codecs))
+		if err != nil {
+			return err
+		}
 	}
 
 	s.restConfig = server.LoopbackClientConfig
