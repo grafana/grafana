@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useAsync } from 'react-use';
-import { Subscription, finalize } from 'rxjs';
+import { Subscription } from 'rxjs';
 
 import { llms } from '@grafana/experimental';
 
