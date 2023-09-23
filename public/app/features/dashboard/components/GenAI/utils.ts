@@ -11,6 +11,8 @@ export enum Role {
   'user' = 'user',
 }
 
+export type Message = llms.openai.Message;
+
 /**
  * The OpenAI model to be used.
  */
@@ -39,5 +41,3 @@ export function getDashboardChanges(dashboard: DashboardModel): {
     migrationChanges: jsonDiff(originalDashboard, dashboardAfterMigration),
   };
 }
-
-export type Message = llms.openai.Message;;
