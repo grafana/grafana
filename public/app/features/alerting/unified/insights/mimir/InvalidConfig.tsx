@@ -1,7 +1,7 @@
 import { PanelBuilders, SceneFlexItem, SceneQueryRunner, SceneTimeRange } from '@grafana/scenes';
 import { DataSourceRef, GraphDrawStyle } from '@grafana/schema';
 
-const QUERY_A = 'sum by (cluster)(grafanacloud_instance_alertmanager_invalid_config)';
+import { PANEL_STYLES } from '../../home/Insights';
 
 export function getInvalidConfigScene(timeRange: SceneTimeRange, datasource: DataSourceRef, panelTitle: string) {
   const query = new SceneQueryRunner({
@@ -9,7 +9,7 @@ export function getInvalidConfigScene(timeRange: SceneTimeRange, datasource: Dat
     queries: [
       {
         refId: 'A',
-        expr: QUERY_A,
+        expr: 'sum by (cluster)(grafanacloud_instance_alertmanager_invalid_config)',
         range: true,
         legendFormat: '{{cluster}}',
       },
@@ -18,8 +18,7 @@ export function getInvalidConfigScene(timeRange: SceneTimeRange, datasource: Dat
   });
 
   return new SceneFlexItem({
-    width: 'calc(50% - 4px)',
-    height: 300,
+    ...PANEL_STYLES,
     body: PanelBuilders.timeseries()
       .setTitle(panelTitle)
       .setData(query)

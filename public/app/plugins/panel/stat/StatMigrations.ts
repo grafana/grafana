@@ -11,7 +11,7 @@ export const statPanelChangedHandler = (
   prevOptions: any
 ) => {
   // This handles most config changes
-  const options = sharedSingleStatPanelChangedHandler(panel, prevPluginId, prevOptions) as Options;
+  const options: Options = sharedSingleStatPanelChangedHandler(panel, prevPluginId, prevOptions);
 
   // Changing from angular singlestat
   if (prevOptions.angular && (prevPluginId === 'singlestat' || prevPluginId === 'grafana-singlestat-panel')) {

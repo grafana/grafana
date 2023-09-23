@@ -52,9 +52,8 @@ export type AddPanelConfig = ConfigurePanelConfig & AddPanelOverrides;
 export type PartialEditPanelConfig = PartialConfigurePanelConfig & EditPanelOverrides;
 export type EditPanelConfig = ConfigurePanelConfig & EditPanelOverrides;
 
-// @todo this actually returns type `Cypress.Chainable<AddPanelConfig | EditPanelConfig | ConfigurePanelConfig>`
 export const configurePanel = (config: PartialAddPanelConfig | PartialEditPanelConfig | PartialConfigurePanelConfig) =>
-  getScenarioContext().then(({ lastAddedDashboardUid }: any) => {
+  getScenarioContext().then(({ lastAddedDashboardUid }) => {
     const fullConfig: AddPanelConfig | EditPanelConfig | ConfigurePanelConfig = {
       chartData: {
         method: 'POST',
@@ -171,7 +170,6 @@ export const configurePanel = (config: PartialAddPanelConfig | PartialEditPanelC
     return cy.wrap({ config: fullConfig }, { log: false });
   });
 
-// @todo this actually returns type `Cypress.Chainable`
 const closeOptions = () => e2e.components.PanelEditor.toggleVizOptions().click();
 
 export const VISUALIZATION_ALERT_LIST = 'Alert list';
