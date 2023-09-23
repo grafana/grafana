@@ -7,8 +7,8 @@ import config from 'app/core/config';
 import { InfluxQuery } from '../types';
 
 import {
-  getMockDS,
   getMockDSInstanceSettings,
+  getMockInfluxDS,
   mockBackendService,
   mockInfluxFetchResponse,
   mockTemplateSrv,
@@ -116,7 +116,7 @@ describe('InfluxDataSource Backend Mode', () => {
   describe('adhoc filters', () => {
     let fetchReq: { queries: InfluxQuery[] };
     const ctx = {
-      ds: getMockDS(getMockDSInstanceSettings(), templateSrv),
+      ds: getMockInfluxDS(getMockDSInstanceSettings(), templateSrv),
     };
     beforeEach(async () => {
       fetchMock.mockImplementation((req) => {

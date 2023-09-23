@@ -8,7 +8,7 @@ import { backendSrv } from 'app/core/services/backend_srv'; // will use the vers
 
 import InfluxQueryModel from './influx_query_model';
 import ResponseParser, { getSelectedParams } from './response_parser';
-import { getMockDS, getMockDSInstanceSettings } from './specs/mocks';
+import { getMockDSInstanceSettings, getMockInfluxDS } from './specs/mocks';
 import { InfluxQuery } from './types';
 
 jest.mock('@grafana/runtime', () => ({
@@ -319,7 +319,7 @@ describe('influxdb response parser', () => {
 
   describe('When issuing annotationQuery', () => {
     const ctx = {
-      ds: getMockDS(getMockDSInstanceSettings()),
+      ds: getMockInfluxDS(getMockDSInstanceSettings()),
     };
 
     const fetchMock = jest.spyOn(backendSrv, 'fetch');

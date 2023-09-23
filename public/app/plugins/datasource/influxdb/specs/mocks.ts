@@ -54,8 +54,8 @@ export function mockBackendService(response: FetchResponse) {
   return fetchMock;
 }
 
-export function getMockDS(
-  instanceSettings: DataSourceInstanceSettings<InfluxOptions>,
+export function getMockInfluxDS(
+  instanceSettings: DataSourceInstanceSettings<InfluxOptions> = getMockDSInstanceSettings(),
   templateSrv: TemplateSrv = templateSrvStub
 ): InfluxDatasource {
   return new InfluxDatasource(instanceSettings, templateSrv);
