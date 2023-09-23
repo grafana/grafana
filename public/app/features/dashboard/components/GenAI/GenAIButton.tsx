@@ -37,7 +37,7 @@ export const GenAIButton = ({
   const { setMessages, reply, inProgress, value } = useOpenAIStream(OPEN_AI_MODEL, temperature);
 
   const onClick = (e: React.MouseEvent<HTMLButtonElement>) => {
-    onClick?.(e);
+    onClickProp?.(e);
     setMessages(messages);
   };
 
