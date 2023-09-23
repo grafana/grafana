@@ -406,7 +406,7 @@ export function getConfig(opts: TimelineCoreOptions) {
           }
         }
       });
-      }
+    }
   }
 
   const hoverMulti = mode === TimelineMode.Changes;
@@ -441,7 +441,7 @@ export function getConfig(opts: TimelineCoreOptions) {
         }
       }
 
-      return hovered[seriesIdx]?.didx;;
+      return hovered[seriesIdx]?.didx;
     },
     points: {
       fill: 'rgba(255,255,255,0.2)',
