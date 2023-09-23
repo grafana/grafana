@@ -1,148 +1,61 @@
 import { lastValueFrom, of } from 'rxjs';
-import { TemplateSrvStub } from 'test/specs/helpers';
 
 import { ScopedVars } from '@grafana/data/src';
-import { FetchResponse } from '@grafana/runtime/src';
+import { BackendSrvRequest } from '@grafana/runtime/src';
 import config from 'app/core/config';
-import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
 
 import { BROWSER_MODE_DISABLED_MESSAGE } from './constants';
 import InfluxDatasource from './datasource';
+import {
+  getMockDSInstanceSettings,
+  getMockInfluxDS,
+  mockBackendService,
+  mockInfluxFetchResponse,
+  mockInfluxQueryRequest,
+  mockInfluxQueryWithTemplateVars,
+  mockTemplateSrv,
+} from './specs/mocks';
 import { InfluxQuery, InfluxVersion } from './types';
 
-//@ts-ignore
-const templateSrv = new TemplateSrvStub();
+// we want only frontend mode in this file
+config.featureToggles.influxdbBackendMigration = false;
+const fetchMock = mockBackendService(mockInfluxFetchResponse());
 
-jest.mock('@grafana/runtime', () => ({
-  ...(jest.requireActual('@grafana/runtime') as unknown as object),
-  getBackendSrv: () => backendSrv,
-}));
-
-describe('InfluxDataSource', () => {
-  const ctx: any = {
-    instanceSettings: { url: 'url', name: 'influxDb', jsonData: { httpMode: 'GET' } },
-  };
-
-  const fetchMock = jest.spyOn(backendSrv, 'fetch');
-
+describe('InfluxDataSource Frontend Mode', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    ctx.instanceSettings.url = '/api/datasources/proxy/1';
-    ctx.instanceSettings.access = 'proxy';
-    ctx.ds = new InfluxDatasource(ctx.instanceSettings, templateSrv);
   });
 
-  describe('When issuing metricFindQuery', () => {
-    const query = 'SELECT max(value) FROM measurement WHERE $timeFilter';
-    const queryOptions = {
-      range: {
-        from: '2018-01-01T00:00:00Z',
-        to: '2018-01-02T00:00:00Z',
-      },
-    };
-    let requestQuery: any;
-    let requestMethod: string | undefined;
-    let requestData: any;
-    let response: any;
-
-    beforeEach(async () => {
-      fetchMock.mockImplementation((req) => {
-        requestMethod = req.method;
-        requestQuery = req.params?.q;
-        requestData = req.data;
-        return of({
-          data: {
-            status: 'success',
-            results: [
-              {
-                series: [
-                  {
-                    name: 'measurement',
-                    columns: ['name'],
-                    values: [['cpu']],
-                  },
-                ],
-              },
-            ],
-          },
-        } as FetchResponse);
+  it('should throw an error if there is 200 response with error', async () => {
+    const ds = getMockInfluxDS();
+    fetchMock.mockImplementation(() => {
+      return of({
+        data: {
+          results: [
+            {
+              error: 'Query timeout',
+            },
+          ],
+        },
       });
-
-      response = await ctx.ds.metricFindQuery(query, queryOptions);
     });
 
-    it('should replace $timefilter', () => {
-      expect(requestQuery).toMatch('time >= 1514764800000ms and time <= 1514851200000ms');
-    });
-
-    it('should use the HTTP GET method', () => {
-      expect(requestMethod).toBe('GET');
-    });
-
-    it('should not have any data in request body', () => {
-      expect(requestData).toBeNull();
-    });
-
-    it('parse response correctly', () => {
-      expect(response).toEqual([{ text: 'cpu' }]);
-    });
-  });
-
-  describe('When getting error on 200 after issuing a query', () => {
-    const queryOptions = {
-      range: {
-        from: '2018-01-01T00:00:00Z',
-        to: '2018-01-02T00:00:00Z',
-      },
-      rangeRaw: {
-        from: '2018-01-01T00:00:00Z',
-        to: '2018-01-02T00:00:00Z',
-      },
-      targets: [{}],
-      timezone: 'UTC',
-      scopedVars: {
-        interval: { text: '1m', value: '1m' },
-        __interval: { text: '1m', value: '1m' },
-        __interval_ms: { text: 60000, value: 60000 },
-      },
-    };
-
-    it('throws an error', async () => {
-      fetchMock.mockImplementation(() => {
-        return of({
-          data: {
-            results: [
-              {
-                error: 'Query timeout',
-              },
-            ],
-          },
-        } as FetchResponse);
-      });
-
-      ctx.ds.retentionPolicies = [''];
-
-      try {
-        await lastValueFrom(ctx.ds.query(queryOptions));
-      } catch (err) {
-        if (err instanceof Error) {
-          expect(err.message).toBe('InfluxDB Error: Query timeout');
-        }
+    try {
+      await lastValueFrom(ds.query(mockInfluxQueryRequest()));
+    } catch (err) {
+      if (err instanceof Error) {
+        expect(err.message).toBe('InfluxDB Error: Query timeout');
       }
-    });
+    }
   });
 
-  describe('When getting a request after issuing a query using outdated Browser Mode', () => {
-    beforeEach(() => {
-      jest.clearAllMocks();
-      ctx.instanceSettings.url = '/api/datasources/proxy/1';
-      ctx.instanceSettings.access = 'direct';
-      ctx.ds = new InfluxDatasource(ctx.instanceSettings, templateSrv);
-    });
-
-    it('throws an error', async () => {
+  describe('outdated browser mode', () => {
+    it('should throw an error when querying data', async () => {
+      const instanceSettings = getMockDSInstanceSettings();
+      instanceSettings.access = 'direct';
+      const ds = getMockInfluxDS(instanceSettings);
       try {
-        await lastValueFrom(ctx.ds.query({}));
+        await lastValueFrom(ds.query(mockInfluxQueryRequest()));
       } catch (err) {
         if (err instanceof Error) {
           expect(err.message).toBe(BROWSER_MODE_DISABLED_MESSAGE);
@@ -151,97 +64,123 @@ describe('InfluxDataSource', () => {
     });
   });
 
-  describe('InfluxDataSource in POST query mode', () => {
-    const ctx: any = {
-      instanceSettings: { url: 'url', name: 'influxDb', jsonData: { httpMode: 'POST' } },
+  describe('metricFindQuery with HTTP GET', () => {
+    let ds: InfluxDatasource;
+    const query = 'SELECT max(value) FROM measurement WHERE $timeFilter';
+    const queryOptions = {
+      range: {
+        from: '2018-01-01T00:00:00Z',
+        to: '2018-01-02T00:00:00Z',
+      },
     };
 
-    beforeEach(() => {
-      ctx.instanceSettings.url = '/api/datasources/proxy/1';
-      ctx.ds = new InfluxDatasource(ctx.instanceSettings, templateSrv);
-    });
-
-    describe('When issuing metricFindQuery', () => {
-      const query = 'SELECT max(value) FROM measurement';
-      const queryOptions = {};
-      let requestMethod: string | undefined;
-      let requestQueryParameter: Record<string, any> | undefined;
-      let queryEncoded: any;
-      let requestQuery: any;
-
-      beforeEach(async () => {
-        fetchMock.mockImplementation((req) => {
-          requestMethod = req.method;
-          requestQueryParameter = req.params;
-          requestQuery = req.data;
-          return of({
-            data: {
-              results: [
+    let requestQuery: string;
+    let requestMethod: string | undefined;
+    let requestData: string | null;
+    const fetchMockImpl = (req: BackendSrvRequest) => {
+      requestMethod = req.method;
+      requestQuery = req.params?.q;
+      requestData = req.data;
+      return of({
+        data: {
+          status: 'success',
+          results: [
+            {
+              series: [
                 {
-                  series: [
-                    {
-                      name: 'measurement',
-                      columns: ['max'],
-                      values: [[1]],
-                    },
-                  ],
+                  name: 'measurement',
+                  columns: ['name'],
+                  values: [['cpu']],
                 },
               ],
             },
-          } as FetchResponse);
-        });
-
-        queryEncoded = await ctx.ds.serializeParams({ q: query });
-        await ctx.ds.metricFindQuery(query, queryOptions).then(() => {});
+          ],
+        },
       });
+    };
 
-      it('should have the query form urlencoded', () => {
-        expect(requestQuery).toBe(queryEncoded);
-      });
+    beforeEach(async () => {
+      jest.clearAllMocks();
+      fetchMock.mockImplementation(fetchMockImpl);
+    });
 
-      it('should use the HTTP POST method', () => {
-        expect(requestMethod).toBe('POST');
-      });
+    it('should read the http method from jsonData', async () => {
+      ds = getMockInfluxDS(getMockDSInstanceSettings({ httpMode: 'GET' }));
+      await ds.metricFindQuery(query, queryOptions);
+      expect(requestMethod).toBe('GET');
+      ds = getMockInfluxDS(getMockDSInstanceSettings({ httpMode: 'POST' }));
+      await ds.metricFindQuery(query, queryOptions);
+      expect(requestMethod).toBe('POST');
+    });
 
-      it('should not have q as a query parameter', () => {
-        expect(requestQueryParameter).not.toHaveProperty('q');
-      });
+    it('should replace $timefilter', async () => {
+      ds = getMockInfluxDS(getMockDSInstanceSettings({ httpMode: 'GET' }));
+      await ds.metricFindQuery(query, queryOptions);
+      expect(requestQuery).toMatch('time >= 1514764800000ms and time <= 1514851200000ms');
+      ds = getMockInfluxDS(getMockDSInstanceSettings({ httpMode: 'POST' }));
+      await ds.metricFindQuery(query, queryOptions);
+      expect(requestQuery).toBeFalsy();
+      expect(requestData).toMatch('time%20%3E%3D%201514764800000ms%20and%20time%20%3C%3D%201514851200000ms');
+    });
+
+    it('should not have any data in request body if http mode is GET', async () => {
+      ds = getMockInfluxDS(getMockDSInstanceSettings({ httpMode: 'GET' }));
+      await ds.metricFindQuery(query, queryOptions);
+      expect(requestData).toBeNull();
+    });
+
+    it('should have data in request body if http mode is POST', async () => {
+      ds = getMockInfluxDS(getMockDSInstanceSettings({ httpMode: 'POST' }));
+      await ds.metricFindQuery(query, queryOptions);
+      expect(requestData).not.toBeNull();
+      expect(requestData).toMatch('q=SELECT');
+    });
+
+    it('parse response correctly', async () => {
+      ds = getMockInfluxDS(getMockDSInstanceSettings({ httpMode: 'GET' }));
+      let responseGet = await ds.metricFindQuery(query, queryOptions);
+      expect(responseGet).toEqual([{ text: 'cpu' }]);
+      ds = getMockInfluxDS(getMockDSInstanceSettings({ httpMode: 'POST' }));
+      let responsePost = await ds.metricFindQuery(query, queryOptions);
+      expect(responsePost).toEqual([{ text: 'cpu' }]);
     });
   });
 
-  // Some functions are required by the parent datasource class to provide functionality
-  // such as ad-hoc filters, which requires the definition of the getTagKeys, and getTagValues
-  describe('Datasource contract', () => {
+  describe('adhoc variables', () => {});
+
+  describe('datasource contract', () => {
+    let ds: InfluxDatasource;
     const metricFindQueryMock = jest.fn();
     beforeEach(() => {
-      ctx.ds.metricFindQuery = metricFindQueryMock;
+      jest.clearAllMocks();
+      ds = getMockInfluxDS();
+      ds.metricFindQuery = metricFindQueryMock;
     });
 
     afterEach(() => {
       jest.clearAllMocks();
     });
 
-    it('has function called getTagKeys', () => {
-      expect(Object.getOwnPropertyNames(Object.getPrototypeOf(ctx.ds))).toContain('getTagKeys');
+    it('should check the datasource has "getTagKeys" function defined', () => {
+      expect(Object.getOwnPropertyNames(Object.getPrototypeOf(ds))).toContain('getTagKeys');
     });
 
-    it('has function called getTagValues', () => {
-      expect(Object.getOwnPropertyNames(Object.getPrototypeOf(ctx.ds))).toContain('getTagValues');
+    it('should check the datasource has "getTagValues" function defined', () => {
+      expect(Object.getOwnPropertyNames(Object.getPrototypeOf(ds))).toContain('getTagValues');
     });
 
     it('should be able to call getTagKeys without specifying any parameter', () => {
-      ctx.ds.getTagKeys();
+      ds.getTagKeys();
       expect(metricFindQueryMock).toHaveBeenCalled();
     });
 
     it('should be able to call getTagValues without specifying anything but key', () => {
-      ctx.ds.getTagValues({ key: 'test' });
+      ds.getTagValues({ key: 'test', filters: [] });
       expect(metricFindQueryMock).toHaveBeenCalled();
     });
   });
 
-  describe('Variables should be interpolated correctly', () => {
-    const instanceSettings: any = {};
+  describe('variable interpolation', () => {
     const text = 'interpolationText';
     const text2 = 'interpolationText2';
     const textWithoutFormatRegex = 'interpolationText,interpolationText2';
@@ -258,11 +197,9 @@ describe('InfluxDataSource', () => {
         condition: '',
       },
     ];
-    const templateSrv: any = {
-      getAdhocFilters: jest.fn((name: string) => {
-        return adhocFilters;
-      }),
-      replace: jest.fn((target?: string, scopedVars?: ScopedVars, format?: string | Function): string => {
+    const templateSrv = mockTemplateSrv(
+      jest.fn((_: string) => adhocFilters),
+      jest.fn((target?: string, scopedVars?: ScopedVars, format?: string | Function): string => {
         if (!format) {
           return variableMap[target!] || '';
         }
@@ -270,41 +207,9 @@ describe('InfluxDataSource', () => {
           return textWithFormatRegex;
         }
         return textWithoutFormatRegex;
-      }),
-    };
-    const ds = new InfluxDatasource(instanceSettings, templateSrv);
-
-    const influxQuery = {
-      refId: 'x',
-      alias: '$interpolationVar',
-      measurement: '$interpolationVar',
-      policy: '$interpolationVar',
-      limit: '$interpolationVar',
-      slimit: '$interpolationVar',
-      tz: '$interpolationVar',
-      tags: [
-        {
-          key: 'cpu',
-          operator: '=~',
-          value: '/^$interpolationVar,$interpolationVar2$/',
-        },
-      ],
-      groupBy: [
-        {
-          params: ['$interpolationVar'],
-          type: 'tag',
-        },
-      ],
-      select: [
-        [
-          {
-            params: ['$interpolationVar'],
-            type: 'field',
-          },
-        ],
-      ],
-      adhocFilters,
-    };
+      })
+    );
+    const ds = new InfluxDatasource(getMockDSInstanceSettings(), templateSrv);
 
     function influxChecks(query: InfluxQuery) {
       expect(templateSrv.replace).toBeCalledTimes(10);
@@ -337,7 +242,7 @@ describe('InfluxDataSource', () => {
 
       it('should interpolate all variables with InfluxQL mode', () => {
         ds.version = InfluxVersion.InfluxQL;
-        const queries = ds.interpolateVariablesInQueries([influxQuery], {
+        const queries = ds.interpolateVariablesInQueries([mockInfluxQueryWithTemplateVars(adhocFilters)], {
           interpolationVar: { text: text, value: text },
           interpolationVar2: { text: text2, value: text2 },
         });
@@ -366,7 +271,7 @@ describe('InfluxDataSource', () => {
         ds.version = ds.version = InfluxVersion.InfluxQL;
         ds.access = 'proxy';
         config.featureToggles.influxdbBackendMigration = true;
-        const query = ds.applyTemplateVariables(influxQuery, {
+        const query = ds.applyTemplateVariables(mockInfluxQueryWithTemplateVars(adhocFilters), {
           interpolationVar: { text: text, value: text },
           interpolationVar2: { text: 'interpolationText2', value: 'interpolationText2' },
         });
@@ -377,7 +282,7 @@ describe('InfluxDataSource', () => {
         ds.version = InfluxVersion.InfluxQL;
         ds.access = 'proxy';
         config.featureToggles.influxdbBackendMigration = true;
-        const query = ds.applyTemplateVariables(influxQuery, {
+        const query = ds.applyTemplateVariables(mockInfluxQueryWithTemplateVars(adhocFilters), {
           interpolationVar: { text: text, value: text },
           interpolationVar2: { text: 'interpolationText2', value: 'interpolationText2' },
         });

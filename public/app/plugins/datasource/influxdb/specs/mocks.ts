@@ -61,7 +61,9 @@ export function getMockInfluxDS(
   return new InfluxDatasource(instanceSettings, templateSrv);
 }
 
-export function getMockDSInstanceSettings(): DataSourceInstanceSettings<InfluxOptions> {
+export function getMockDSInstanceSettings(
+  overrideJsonData?: Partial<InfluxOptions>
+): DataSourceInstanceSettings<InfluxOptions> {
   return {
     id: 123,
     url: 'proxied',
@@ -91,7 +93,12 @@ export function getMockDSInstanceSettings(): DataSourceInstanceSettings<InfluxOp
       module: '',
       baseUrl: '',
     },
-    jsonData: { version: InfluxVersion.InfluxQL, httpMode: 'POST', dbName: 'site' },
+    jsonData: {
+      version: InfluxVersion.InfluxQL,
+      httpMode: 'POST',
+      dbName: 'site',
+      ...(overrideJsonData ? overrideJsonData : {}),
+    },
   };
 }
 
@@ -221,12 +228,9 @@ export const mockInfluxRetentionPolicyResponse = [
   },
 ];
 
-export const mockInfluxDataRequest = (
-  targets: InfluxQuery[],
-  overrides?: Partial<DataQueryRequest>
-): Partial<DataQueryRequest<InfluxQuery>> => {
-  const defaults: DataQueryRequest<InfluxQuery> = {
-    app: 'createDataRequest',
+export const mockInfluxQueryRequest = (targets?: InfluxQuery[]): DataQueryRequest<InfluxQuery> => {
+  return {
+    app: 'explore',
     interval: '1m',
     intervalMs: 60000,
     range: {
@@ -241,8 +245,48 @@ export const mockInfluxDataRequest = (
     requestId: '',
     scopedVars: {},
     startTime: 0,
-    targets: targets,
+    targets: targets ?? mockTargets(),
     timezone: '',
   };
-  return Object.assign(defaults, overrides ?? {});
 };
+
+export const mockTargets = (): InfluxQuery[] => {
+  return [
+    {
+      refId: 'A',
+      resultFormat: 'time_series',
+    },
+  ];
+};
+
+export const mockInfluxQueryWithTemplateVars = (adhocFilters: AdHocVariableFilter[]): InfluxQuery => ({
+  refId: 'x',
+  alias: '$interpolationVar',
+  measurement: '$interpolationVar',
+  policy: '$interpolationVar',
+  limit: '$interpolationVar',
+  slimit: '$interpolationVar',
+  tz: '$interpolationVar',
+  tags: [
+    {
+      key: 'cpu',
+      operator: '=~',
+      value: '/^$interpolationVar,$interpolationVar2$/',
+    },
+  ],
+  groupBy: [
+    {
+      params: ['$interpolationVar'],
+      type: 'tag',
+    },
+  ],
+  select: [
+    [
+      {
+        params: ['$interpolationVar'],
+        type: 'field',
+      },
+    ],
+  ],
+  adhocFilters,
+});
