@@ -32,7 +32,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/apis"
-	playlistv1 "github.com/grafana/grafana/pkg/apis/playlist/v1"
 	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/modules"
@@ -95,18 +94,21 @@ type service struct {
 	stopCh    chan struct{}
 	stoppedCh chan error
 
-	rr      routing.RouteRegister
-	handler web.Handler
+	rr          routing.RouteRegister
+	handler     web.Handler
+	apibuilders *apis.GroupBuilderCollection
 }
 
-func ProvideService(cfg *setting.Cfg, rr routing.RouteRegister, features *featuremgmt.FeatureManager) (*service, error) {
+func ProvideService(cfg *setting.Cfg, rr routing.RouteRegister, b *apis.GroupBuilderCollection) (*service, error) {
 	s := &service{
-		enabled:  features.IsEnabled(featuremgmt.FlagGrafanaAPIServer),
-		rr:       rr,
-		dataPath: path.Join(cfg.DataPath, "k8s"),
-		stopCh:   make(chan struct{}),
+		enabled:     cfg.IsFeatureToggleEnabled(featuremgmt.FlagGrafanaAPIServer),
+		rr:          rr,
+		dataPath:    path.Join(cfg.DataPath, "k8s"),
+		stopCh:      make(chan struct{}),
+		apibuilders: b,
 	}
 
+	// This will be used when running as a dskit service
 	s.BasicService = services.NewBasicService(s.start, s.running, nil).WithName(modules.GrafanaAPIServer)
 
 	s.rr.Group("/k8s", func(k8sRoute routing.RouteRegister) {
@@ -202,9 +204,7 @@ func (s *service) start(ctx context.Context) error {
 	serverConfig.Authentication.Authenticator = authenticator
 
 	// Get the list of groups the server will support
-	builders := []apis.APIGroupBuilder{
-		playlistv1.GetAPIGroupBuilder(),
-	}
+	builders := s.apibuilders.GetAPIs()
 
 	// Install schemas
 	for _, b := range builders {

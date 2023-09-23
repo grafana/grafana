@@ -2,6 +2,7 @@ package backgroundsvcs
 
 import (
 	"github.com/grafana/grafana/pkg/api"
+	v1 "github.com/grafana/grafana/pkg/apis/playlist/v1"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -56,6 +57,8 @@ func ProvideBackgroundServiceRegistry(
 	keyRetriever *dynamic.KeyRetriever,
 	dynamicAngularDetectorsProvider *angulardetectorsprovider.Dynamic,
 	grafanaAPIServer grafanaapiserver.Service,
+	// K8s services (only here so wire will initialize)
+	_ *v1.PlaylistDummyService,
 	// Need to make sure these are initialized, is there a better place to put them?
 	_ dashboardsnapshots.Service, _ *alerting.AlertNotificationService,
 	_ serviceaccounts.Service, _ *guardian.Provider,
