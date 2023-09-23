@@ -18,21 +18,20 @@ const GroupName = "playlist.x.grafana.com"
 const VersionID = "v0-alpha" //
 const APIVersion = GroupName + "/" + VersionID
 
+var _ apis.APIGroupBuilder = (*PlaylistAPIBuilder)(nil)
+
 // This is used just so wire has something unique to return
-type PlaylistDummyService struct{}
-
-func RegisterAPIService(c *apis.GroupBuilderCollection, p playlist.Service) *PlaylistDummyService {
-	c.AddAPI(&builder{
-		service: p,
-	})
-	return &PlaylistDummyService{}
-}
-
-type builder struct {
+type PlaylistAPIBuilder struct {
 	service playlist.Service
 }
 
-func (b *builder) InstallSchema(scheme *runtime.Scheme) error {
+func RegisterAPIService(p playlist.Service) *PlaylistAPIBuilder {
+	return &PlaylistAPIBuilder{
+		service: p,
+	}
+}
+
+func (b *PlaylistAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	err := AddToScheme(scheme)
 	if err != nil {
 		return err
@@ -40,7 +39,7 @@ func (b *builder) InstallSchema(scheme *runtime.Scheme) error {
 	return scheme.SetVersionPriority(SchemeGroupVersion)
 }
 
-func (b *builder) GetAPIGroupInfo(
+func (b *PlaylistAPIBuilder) GetAPIGroupInfo(
 	scheme *runtime.Scheme,
 	codecs serializer.CodecFactory, // pointer?
 ) *genericapiserver.APIGroupInfo {
@@ -54,12 +53,12 @@ func (b *builder) GetAPIGroupInfo(
 	return &apiGroupInfo
 }
 
-func (b *builder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
+func (b *PlaylistAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
 	return getOpenAPIDefinitions
 }
 
 // Register additional routes with the server
-func (b *builder) GetOpenAPIPostProcessor() func(*spec3.OpenAPI) (*spec3.OpenAPI, error) {
+func (b *PlaylistAPIBuilder) GetOpenAPIPostProcessor() func(*spec3.OpenAPI) (*spec3.OpenAPI, error) {
 	return nil
 }
 

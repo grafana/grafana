@@ -32,6 +32,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/apis"
+	v1 "github.com/grafana/grafana/pkg/apis/playlist/v1"
 	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/modules"
@@ -94,18 +95,24 @@ type service struct {
 	stopCh    chan struct{}
 	stoppedCh chan error
 
-	rr          routing.RouteRegister
-	handler     web.Handler
-	apibuilders *apis.GroupBuilderCollection
+	rr       routing.RouteRegister
+	handler  web.Handler
+	builders []apis.APIGroupBuilder
 }
 
-func ProvideService(cfg *setting.Cfg, rr routing.RouteRegister, b *apis.GroupBuilderCollection) (*service, error) {
+func ProvideService(cfg *setting.Cfg,
+	rr routing.RouteRegister,
+	// Individual services -- these are acutally added to the collection above
+	api0 *v1.PlaylistAPIBuilder,
+) (*service, error) {
 	s := &service{
-		enabled:     cfg.IsFeatureToggleEnabled(featuremgmt.FlagGrafanaAPIServer),
-		rr:          rr,
-		dataPath:    path.Join(cfg.DataPath, "k8s"),
-		stopCh:      make(chan struct{}),
-		apibuilders: b,
+		enabled:  cfg.IsFeatureToggleEnabled(featuremgmt.FlagGrafanaAPIServer),
+		rr:       rr,
+		dataPath: path.Join(cfg.DataPath, "k8s"),
+		stopCh:   make(chan struct{}),
+		builders: []apis.APIGroupBuilder{
+			api0,
+		},
 	}
 
 	// This will be used when running as a dskit service
@@ -204,7 +211,7 @@ func (s *service) start(ctx context.Context) error {
 	serverConfig.Authentication.Authenticator = authenticator
 
 	// Get the list of groups the server will support
-	builders := s.apibuilders.GetAPIs()
+	builders := s.builders
 
 	// Install schemas
 	for _, b := range builders {
