@@ -5,7 +5,9 @@ import (
 	"crypto/x509"
 	"net"
 	"path"
+	"strconv"
 
+	"cuelang.org/go/pkg/strings"
 	"github.com/go-logr/logr"
 	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana-apiserver/pkg/certgenerator"
@@ -18,6 +20,7 @@ import (
 	"k8s.io/apiserver/pkg/authentication/request/headerrequest"
 	"k8s.io/apiserver/pkg/authentication/user"
 	openapinamer "k8s.io/apiserver/pkg/endpoints/openapi"
+	"k8s.io/apiserver/pkg/endpoints/responsewriter"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/apiserver/pkg/server/options"
 	"k8s.io/apiserver/pkg/util/openapi"
@@ -27,9 +30,17 @@ import (
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 	"k8s.io/klog/v2"
 
+	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/apis"
 	playlistv1 "github.com/grafana/grafana/pkg/apis/playlist/v1"
+	"github.com/grafana/grafana/pkg/infra/appcontext"
+	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/modules"
+	"github.com/grafana/grafana/pkg/registry"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/web"
 )
 
 const (
@@ -37,15 +48,16 @@ const (
 )
 
 var (
-	_ Service            = (*service)(nil)
-	_ RestConfigProvider = (*service)(nil)
+	_ Service                    = (*service)(nil)
+	_ RestConfigProvider         = (*service)(nil)
+	_ registry.BackgroundService = (*service)(nil)
+	_ registry.CanBeDisabled     = (*service)(nil)
 )
 
 var (
 	Scheme = runtime.NewScheme()
 	Codecs = serializer.NewCodecFactory(Scheme)
 
-	// if you modify this, make sure you update the crEncoder
 	unversionedVersion = schema.GroupVersion{Group: "", Version: "v1"}
 	unversionedTypes   = []runtime.Object{
 		&metav1.Status{},
@@ -65,6 +77,8 @@ func init() {
 
 type Service interface {
 	services.NamedService
+	registry.BackgroundService
+	registry.CanBeDisabled
 }
 
 type RestConfigProvider interface {
@@ -76,24 +90,59 @@ type service struct {
 
 	restConfig *clientrest.Config
 
+	enabled   bool
 	dataPath  string
 	stopCh    chan struct{}
 	stoppedCh chan error
+
+	rr      routing.RouteRegister
+	handler web.Handler
 }
 
-func New(dataPath string) (*service, error) {
+func ProvideService(cfg *setting.Cfg, rr routing.RouteRegister, features *featuremgmt.FeatureManager) (*service, error) {
 	s := &service{
-		dataPath: dataPath,
+		enabled:  features.IsEnabled(featuremgmt.FlagGrafanaAPIServer),
+		rr:       rr,
+		dataPath: path.Join(cfg.DataPath, "k8s"),
 		stopCh:   make(chan struct{}),
 	}
 
 	s.BasicService = services.NewBasicService(s.start, s.running, nil).WithName(modules.GrafanaAPIServer)
+
+	s.rr.Group("/k8s", func(k8sRoute routing.RouteRegister) {
+		handler := func(c *contextmodel.ReqContext) {
+			if s.handler == nil {
+				c.Resp.WriteHeader(404)
+				_, _ = c.Resp.Write([]byte("Not found"))
+				return
+			}
+
+			if handle, ok := s.handler.(func(c *contextmodel.ReqContext)); ok {
+				handle(c)
+				return
+			}
+		}
+		k8sRoute.Any("/", middleware.ReqSignedIn, handler)
+		k8sRoute.Any("/*", middleware.ReqSignedIn, handler)
+	})
 
 	return s, nil
 }
 
 func (s *service) GetRestConfig() *clientrest.Config {
 	return s.restConfig
+}
+
+func (s *service) IsDisabled() bool {
+	return !s.enabled
+}
+
+// Run is an adapter for the BackgroundService interface.
+func (s *service) Run(ctx context.Context) error {
+	if err := s.start(ctx); err != nil {
+		return err
+	}
+	return s.running(ctx)
 }
 
 func (s *service) start(ctx context.Context) error {
@@ -199,10 +248,7 @@ func (s *service) start(ctx context.Context) error {
 
 	prepared := server.PrepareRun()
 
-	// TODO: not sure if we can still inject RouteRegister with the new module server setup
-	// Disabling the /k8s endpoint until we have a solution
-
-	/* handler := func(c *contextmodel.ReqContext) {
+	s.handler = func(c *contextmodel.ReqContext) {
 		req := c.Req
 		req.URL.Path = strings.TrimPrefix(req.URL.Path, "/k8s")
 		if req.URL.Path == "" {
@@ -221,10 +267,6 @@ func (s *service) start(ctx context.Context) error {
 		resp := responsewriter.WrapForHTTP1Or2(c.Resp)
 		prepared.GenericAPIServer.Handler.ServeHTTP(resp, req)
 	}
-	/* s.rr.Group("/k8s", func(k8sRoute routing.RouteRegister) {
-		k8sRoute.Any("/", middleware.ReqSignedIn, handler)
-		k8sRoute.Any("/*", middleware.ReqSignedIn, handler)
-	}) */
 
 	go func() {
 		s.stoppedCh <- prepared.Run(s.stopCh)
