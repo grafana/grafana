@@ -282,6 +282,7 @@ require (
 	k8s.io/apiserver v0.27.1 // @grafana/grafana-app-platform-squad
 	k8s.io/client-go v0.27.1 // @grafana/grafana-app-platform-squad
 	k8s.io/klog/v2 v2.90.1 // @grafana/grafana-app-platform-squad
+	k8s.io/kube-openapi v0.0.0-20230501164219-8b0f38b5fd1f // @grafana/grafana-app-platform-squad
 )
 
 require (
@@ -300,7 +301,6 @@ require (
 	github.com/armon/go-metrics v0.4.1 // indirect
 	github.com/bmatcuk/doublestar v1.1.1 // indirect
 	github.com/buildkite/yaml v2.1.0+incompatible // indirect
-	github.com/bwmarrin/snowflake v0.3.0 // indirect
 	github.com/centrifugal/protocol v0.10.0 // indirect
 	github.com/cloudflare/circl v1.3.3 // indirect
 	github.com/cockroachdb/errors v1.9.1 // indirect
@@ -412,8 +412,6 @@ require (
 	k8s.io/api v0.27.1 // indirect
 	k8s.io/component-base v0.27.1 // indirect
 	k8s.io/kms v0.27.1 // indirect
-	k8s.io/kube-aggregator v0.27.1 // indirect
-	k8s.io/kube-openapi v0.0.0-20230501164219-8b0f38b5fd1f // indirect
 	lukechampine.com/uint128 v1.2.0 // indirect
 	modernc.org/cc/v3 v3.40.0 // indirect
 	modernc.org/ccgo/v3 v3.16.13 // indirect
