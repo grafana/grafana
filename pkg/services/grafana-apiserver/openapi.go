@@ -1,11 +1,12 @@
 package grafanaapiserver
 
 import (
-	"github.com/grafana/grafana/pkg/apis"
 	"golang.org/x/exp/maps"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	common "k8s.io/kube-openapi/pkg/common"
 	spec "k8s.io/kube-openapi/pkg/validation/spec"
+
+	"github.com/grafana/grafana/pkg/apis"
 )
 
 // This should eventually live in grafana-app-sdk

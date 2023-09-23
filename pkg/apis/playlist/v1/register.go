@@ -1,7 +1,6 @@
 package v1
 
 import (
-	"github.com/grafana/grafana/pkg/apis"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -10,6 +9,8 @@ import (
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	common "k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
+
+	"github.com/grafana/grafana/pkg/apis"
 )
 
 // GroupName is the group name for this API.

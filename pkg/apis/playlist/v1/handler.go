@@ -4,13 +4,14 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/grafana/grafana/pkg/apis"
-	"github.com/grafana/grafana/pkg/services/playlist"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
+
+	"github.com/grafana/grafana/pkg/apis"
+	"github.com/grafana/grafana/pkg/services/playlist"
 )
 
 var _ rest.Scoper = (*handler)(nil)
