@@ -362,6 +362,11 @@ func (pd *PublicDashboardServiceImpl) DeleteByDashboard(ctx context.Context, das
 		return nil
 	}
 
+	// validate the public dashboard belongs to the dashboard
+	if pubdash.DashboardUid != dashboard.UID {
+		return ErrInvalidUid.Errorf("DeleteByDashboard: the public dashboard does not belong to the dashboard")
+	}
+
 	return pd.serviceWrapper.Delete(ctx, pubdash.Uid)
 }
 
