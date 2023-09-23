@@ -27,7 +27,7 @@ export const GenAIButton = ({
   const styles = useStyles2(getStyles);
 
   // TODO: Implement error handling (use error object from hook)
-  const { setMessages, reply, started, loading, value, error, finished } = useOpenAIStream(OPEN_AI_MODEL, temperature);
+  const { setMessages, reply, inProgress, loading, value, error } = useOpenAIStream(OPEN_AI_MODEL, temperature);
 
   const onGenerate = (e: React.MouseEvent<HTMLButtonElement>) => {
     onClick?.(e);
@@ -35,11 +35,11 @@ export const GenAIButton = ({
   };
 
   // Todo: Consider other options for `"` sanitation
-  if (started) {
+  if (inProgress) {
     onReply(reply.replace(/"/g, ''));
   }
 
-  const isGenerating = loading || started;
+  const isGenerating = loading || inProgress;
 
   const getIcon = () => {
     if (isGenerating) {

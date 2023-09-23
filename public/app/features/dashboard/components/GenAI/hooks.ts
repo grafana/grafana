@@ -15,8 +15,7 @@ export function useOpenAIStream(
 ): {
   setMessages: React.Dispatch<React.SetStateAction<Message[]>>;
   reply: string;
-  started: boolean;
-  finished: boolean;
+  inProgress: boolean;
   loading: boolean;
   error: Error | undefined;
   value:
@@ -35,8 +34,9 @@ export function useOpenAIStream(
   // The latest reply from the LLM.
   const [reply, setReply] = useState('');
 
-  const [started, setStarted] = useState(false);
-  const [finished, setFinished] = useState(true);
+  // const [started, setStarted] = useState(false);
+  // const [finished, setFinished] = useState(true);
+  const [inProgress, setInProgress] = useState(false);
 
   const { loading, error, value } = useAsync(async () => {
     // Check if the LLM plugin is enabled and configured.
@@ -49,8 +49,7 @@ export function useOpenAIStream(
       return { enabled };
     }
 
-    setStarted(true);
-    setFinished(false);
+    setInProgress(true);
     // Stream the completions. Each element is the next stream chunk.
     const stream = llms.openai
       .streamChatCompletions({
@@ -61,25 +60,22 @@ export function useOpenAIStream(
       .pipe(
         // Accumulate the stream content into a stream of strings, where each
         // element contains the accumulated message so far.
-        llms.openai.accumulateContent(),
+        llms.openai.accumulateContent()
         // The stream is just a regular Observable, so we can use standard rxjs
         // functionality to update state, e.g. recording when the stream
         // has completed.
         // The operator decision tree on the rxjs website is a useful resource:
         // https://rxjs.dev/operator-decision-tree.
-
-        // TODO: Investigate finalize being called multiple times during a stream (i.e. when generating panel description)
-        finalize(() => {
-          setStarted(false);
-          setFinished(true);
-          setMessages([]);
-        })
       );
     // Subscribe to the stream and update the state for each returned value.
     return {
       enabled,
       stream: stream.subscribe({
         next: setReply,
+        complete: () => {
+          setInProgress(false);
+          setMessages([]);
+        },
       }),
     };
   }, [messages]);
@@ -93,8 +89,7 @@ export function useOpenAIStream(
   return {
     setMessages,
     reply,
-    started,
-    finished,
+    inProgress,
     loading,
     error,
     value,
