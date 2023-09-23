@@ -6,11 +6,22 @@ import (
 	"net"
 	"path"
 	"strconv"
+	"strings"
 
-	"cuelang.org/go/pkg/strings"
 	"github.com/go-logr/logr"
 	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana-apiserver/pkg/certgenerator"
+	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/apis"
+	playlistv1 "github.com/grafana/grafana/pkg/apis/playlist/v1"
+	"github.com/grafana/grafana/pkg/infra/appcontext"
+	"github.com/grafana/grafana/pkg/middleware"
+	"github.com/grafana/grafana/pkg/modules"
+	"github.com/grafana/grafana/pkg/registry"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/web"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -29,18 +40,6 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 	"k8s.io/klog/v2"
-
-	"github.com/grafana/grafana/pkg/api/routing"
-	"github.com/grafana/grafana/pkg/apis"
-	v1 "github.com/grafana/grafana/pkg/apis/playlist/v1"
-	"github.com/grafana/grafana/pkg/infra/appcontext"
-	"github.com/grafana/grafana/pkg/middleware"
-	"github.com/grafana/grafana/pkg/modules"
-	"github.com/grafana/grafana/pkg/registry"
-	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/web"
 )
 
 const (
@@ -102,8 +101,8 @@ type service struct {
 
 func ProvideService(cfg *setting.Cfg,
 	rr routing.RouteRegister,
-	// Individual services -- these are acutally added to the collection above
-	api0 *v1.PlaylistAPIBuilder,
+	// Individual services -- these are actually added to the collection above
+	api0 *playlistv1.PlaylistAPIBuilder,
 ) (*service, error) {
 	s := &service{
 		enabled:  cfg.IsFeatureToggleEnabled(featuremgmt.FlagGrafanaAPIServer),
@@ -111,7 +110,7 @@ func ProvideService(cfg *setting.Cfg,
 		dataPath: path.Join(cfg.DataPath, "k8s"),
 		stopCh:   make(chan struct{}),
 		builders: []apis.APIGroupBuilder{
-			api0,
+			api0, // playlist
 		},
 	}
 

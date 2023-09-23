@@ -4,14 +4,13 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/grafana/grafana/pkg/apis"
+	"github.com/grafana/grafana/pkg/services/playlist"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
-
-	"github.com/grafana/grafana/pkg/apis"
-	"github.com/grafana/grafana/pkg/services/playlist"
 )
 
 var _ rest.Scoper = (*handler)(nil)
@@ -57,9 +56,13 @@ func (r *handler) List(ctx context.Context, options *internalversion.ListOptions
 		return nil, err
 	}
 
+	limit := 100
+	if options.Limit > 0 {
+		limit = int(options.Limit)
+	}
 	res, err := r.service.Search(ctx, &playlist.GetPlaylistsQuery{
 		OrgId: orgId,
-		Limit: int(options.Limit),
+		Limit: limit,
 	})
 	if err != nil {
 		return nil, err
@@ -83,8 +86,10 @@ func (r *handler) List(ctx context.Context, options *internalversion.ListOptions
 		}
 		p.Name = v.Name + " // " + v.Interval
 		list.Items = append(list.Items, p)
-
 		// TODO?? if table... we don't need the body of each, otherwise full lookup!
+	}
+	if len(list.Items) == limit {
+		list.Continue = "<more>" // TODO?
 	}
 	return list, nil
 }
