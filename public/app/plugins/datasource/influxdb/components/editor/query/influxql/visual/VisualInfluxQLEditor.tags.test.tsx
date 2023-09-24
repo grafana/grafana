@@ -48,8 +48,8 @@ jest.mock('@grafana/runtime', () => {
 });
 
 beforeEach(() => {
-  (mockedMeta.getTagKeysForMeasurementAndTags as jest.Mock).mockClear();
-  (mockedMeta.getFieldKeysForMeasurement as jest.Mock).mockClear();
+  (mockedMeta.getTagKeys as jest.Mock).mockClear();
+  (mockedMeta.getFieldKeys as jest.Mock).mockClear();
 });
 
 const ONLY_TAGS = [
@@ -129,10 +129,10 @@ describe('InfluxDB InfluxQL Visual Editor field-filtering', () => {
     await waitFor(() => {});
 
     // when the editor-widget mounts, it calls getFieldKeysForMeasurement
-    expect(mockedMeta.getFieldKeysForMeasurement).toHaveBeenCalledTimes(1);
+    expect(mockedMeta.getFieldKeys).toHaveBeenCalledTimes(1);
 
     // when the editor-widget mounts, it calls getTagKeysForMeasurementAndTags
-    expect(mockedMeta.getTagKeysForMeasurementAndTags).toHaveBeenCalledTimes(1);
+    expect(mockedMeta.getTagKeys).toHaveBeenCalledTimes(1);
 
     // now we click on the WHERE/host2 button
     await userEvent.click(screen.getByRole('button', { name: 'host2' }));
@@ -145,7 +145,7 @@ describe('InfluxDB InfluxQL Visual Editor field-filtering', () => {
     await userEvent.click(screen.getByRole('button', { name: 'cpudata' }));
 
     // verify `getTagValues` was called once, and in the tags-param we did not receive `field1`
-    expect(mockedMeta.getAllMeasurementsForTags).toHaveBeenCalledTimes(1);
-    expect((mockedMeta.getAllMeasurementsForTags as jest.Mock).mock.calls[0][1]).toStrictEqual(ONLY_TAGS);
+    expect(mockedMeta.getAllMeasurements).toHaveBeenCalledTimes(1);
+    expect((mockedMeta.getAllMeasurements as jest.Mock).mock.calls[0][1]).toStrictEqual(ONLY_TAGS);
   });
 });
