@@ -17,9 +17,10 @@ import {
   VariableInterpolation,
 } from '@grafana/runtime/src';
 
-import { TemplateSrv } from '../../../../features/templating/template_srv';
-import InfluxDatasource from '../datasource';
-import { InfluxOptions, InfluxQuery, InfluxVersion } from '../types';
+import { TemplateSrv } from '../../../features/templating/template_srv';
+
+import InfluxDatasource from './datasource';
+import { InfluxOptions, InfluxQuery, InfluxVersion } from './types';
 
 const getAdhocFiltersMock = jest.fn().mockImplementation(() => []);
 const replaceMock = jest.fn().mockImplementation((a: string, ...rest: unknown[]) => a);

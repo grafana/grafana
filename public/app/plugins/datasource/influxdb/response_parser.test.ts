@@ -7,8 +7,8 @@ import config from 'app/core/config';
 import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
 
 import InfluxQueryModel from './influx_query_model';
+import { getMockDSInstanceSettings, getMockInfluxDS } from './mocks';
 import ResponseParser, { getSelectedParams } from './response_parser';
-import { getMockDSInstanceSettings, getMockInfluxDS } from './specs/mocks';
 import { InfluxQuery } from './types';
 
 jest.mock('@grafana/runtime', () => ({

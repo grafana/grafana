@@ -2,7 +2,7 @@ import { render, waitFor } from '@testing-library/react';
 import React from 'react';
 
 import InfluxDatasource from '../../../../../datasource';
-import { getMockInfluxDS, getMockDSInstanceSettings } from '../../../../../specs/mocks';
+import { getMockInfluxDS, getMockDSInstanceSettings } from '../../../../../mocks';
 import { DEFAULT_POLICY, InfluxQuery } from '../../../../../types';
 
 import { VisualInfluxQLEditor } from './VisualInfluxQLEditor';

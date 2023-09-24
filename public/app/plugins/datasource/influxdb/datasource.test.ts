@@ -14,7 +14,7 @@ import {
   mockInfluxQueryRequest,
   mockInfluxQueryWithTemplateVars,
   mockTemplateSrv,
-} from './specs/mocks';
+} from './mocks';
 import { InfluxQuery, InfluxVersion } from './types';
 
 // we want only frontend mode in this file

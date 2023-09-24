@@ -10,7 +10,7 @@ import {
   mockBackendService,
   mockInfluxFetchResponse,
   mockTemplateSrv,
-} from './specs/mocks';
+} from './mocks';
 import { InfluxQuery } from './types';
 
 config.featureToggles.influxdbBackendMigration = true;
