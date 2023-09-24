@@ -11,17 +11,6 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana-apiserver/pkg/certgenerator"
-	"github.com/grafana/grafana/pkg/api/routing"
-	"github.com/grafana/grafana/pkg/apis"
-	playlistv1 "github.com/grafana/grafana/pkg/apis/playlist/v1"
-	"github.com/grafana/grafana/pkg/infra/appcontext"
-	"github.com/grafana/grafana/pkg/middleware"
-	"github.com/grafana/grafana/pkg/modules"
-	"github.com/grafana/grafana/pkg/registry"
-	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/web"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -40,6 +29,18 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 	"k8s.io/klog/v2"
+
+	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/apis"
+	playlistv1 "github.com/grafana/grafana/pkg/apis/playlist/v1"
+	"github.com/grafana/grafana/pkg/infra/appcontext"
+	"github.com/grafana/grafana/pkg/middleware"
+	"github.com/grafana/grafana/pkg/modules"
+	"github.com/grafana/grafana/pkg/registry"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/web"
 )
 
 const (
@@ -117,6 +118,9 @@ func ProvideService(cfg *setting.Cfg,
 	// This will be used when running as a dskit service
 	s.BasicService = services.NewBasicService(s.start, s.running, nil).WithName(modules.GrafanaAPIServer)
 
+	// TODO: this is very hacky
+	// We need to register the routes in ProvideService to make sure
+	// the routes are registered before the Grafana HTTP server starts.
 	s.rr.Group("/k8s", func(k8sRoute routing.RouteRegister) {
 		handler := func(c *contextmodel.ReqContext) {
 			if s.handler == nil {
@@ -254,6 +258,7 @@ func (s *service) start(ctx context.Context) error {
 
 	prepared := server.PrepareRun()
 
+	// TODO: this is a hack. see note in ProvideService
 	s.handler = func(c *contextmodel.ReqContext) {
 		req := c.Req
 		req.URL.Path = strings.TrimPrefix(req.URL.Path, "/k8s")
