@@ -21,7 +21,7 @@ export function getRuleGroupEvaluationDurationIntervalRatioScene(
         refId: 'B',
         expr: `grafanacloud_instance_rule_group_interval_seconds{rule_group="$rule_group"}`,
         range: true,
-        legendFormat: 'duration',
+        legendFormat: 'interval',
       },
     ],
     $timeRange: timeRange,
