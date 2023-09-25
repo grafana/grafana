@@ -37,7 +37,7 @@ func TestRegions(t *testing.T) {
 
 	t.Run("forwards error if DescribeRegions errors out", func(t *testing.T) {
 		ec2Mock := &mocks.EC2Mock{}
-		ec2Mock.On("DescribeRegions").Return(nil, assert.AnError)
+		ec2Mock.On("DescribeRegions").Return((*ec2.DescribeRegionsOutput)(nil), assert.AnError)
 		_, err := NewRegionsService(ec2Mock).GetRegions()
 		assert.Error(t, err)
 	})

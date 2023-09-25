@@ -3,7 +3,6 @@ package models
 import (
 	"context"
 	"net/url"
-	"sync"
 
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
@@ -25,7 +24,6 @@ type RequestContext struct {
 	EC2APIProvider        EC2APIProvider
 	Settings              CloudWatchSettings
 	Features              featuremgmt.FeatureToggles
-	RegionCache           *sync.Map
 }
 
 // Services

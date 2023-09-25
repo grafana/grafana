@@ -12,10 +12,6 @@ type RegionsService struct {
 
 func (r *RegionsService) GetRegions() ([]resources.ResourceResponse[resources.Region], error) {
 	args := r.Called()
-	mockResponse := args.Get(0)
-	if mockResponse == nil {
-		return nil, args.Error(1)
-	}
 	return args.Get(0).(([]resources.ResourceResponse[resources.Region])), args.Error(1)
 }
 
@@ -25,11 +21,7 @@ type EC2Mock struct {
 
 func (e *EC2Mock) DescribeRegions(in *ec2.DescribeRegionsInput) (*ec2.DescribeRegionsOutput, error) {
 	args := e.Called()
-	mockResponse := args.Get(0)
-	if mockResponse == nil {
-		return nil, args.Error(1)
-	}
-	return mockResponse.(*ec2.DescribeRegionsOutput), args.Error(1)
+	return args.Get(0).(*ec2.DescribeRegionsOutput), args.Error(1)
 }
 
 func (e *EC2Mock) DescribeInstancesPages(in *ec2.DescribeInstancesInput, fn func(*ec2.DescribeInstancesOutput, bool) bool) error {
