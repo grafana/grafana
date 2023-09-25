@@ -211,7 +211,7 @@
       "refresh": "Refresh dashboard",
       "save": "Save dashboard",
       "settings": "Dashboard settings",
-      "share": "Share dashboard or panel",
+      "share": "Share dashboard",
       "unmark-favorite": "Unmark as favorite"
     }
   },
@@ -669,8 +669,9 @@
       "aria-label": "Turn off auto refresh",
       "label": "Off"
     },
-    "select-button": {
-      "auto-refresh": "Set auto refresh interval"
+    "tooltip": {
+      "interval-selected": "Set auto refresh interval",
+      "turned-off": "Auto refresh off"
     }
   },
   "search": {

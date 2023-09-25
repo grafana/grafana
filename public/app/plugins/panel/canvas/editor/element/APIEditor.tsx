@@ -1,21 +1,20 @@
 import React, { useCallback } from 'react';
 
 import {
-  AppEvents,
-  SelectableValue,
   StandardEditorProps,
   StandardEditorsRegistryItem,
   StringFieldConfigSettings,
+  SelectableValue,
 } from '@grafana/data';
-import { BackendSrvRequest, config, getBackendSrv } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
 import { Button, Field, InlineField, InlineFieldRow, JSONFormatter, RadioButtonGroup, Select } from '@grafana/ui';
 import { StringValueEditor } from 'app/core/components/OptionsUI/string';
-import { appEvents } from 'app/core/core';
 import { defaultApiConfig } from 'app/features/canvas/elements/button';
 
 import { HttpRequestMethod } from '../../panelcfg.gen';
 
 import { ParamsEditor } from './ParamsEditor';
+import { callApi, interpolateVariables } from './utils';
 
 export interface APIEditorConfig {
   method: string;
@@ -29,71 +28,6 @@ export interface APIEditorConfig {
 const dummyStringSettings = {
   settings: {},
 } as StandardEditorsRegistryItem<string, StringFieldConfigSettings>;
-
-const getRequest = (api: APIEditorConfig) => {
-  const requestHeaders: HeadersInit = [];
-
-  let request: BackendSrvRequest = {
-    url: api.endpoint,
-    method: api.method,
-    data: getData(api),
-    headers: requestHeaders,
-  };
-
-  if (api.headerParams) {
-    api.headerParams.forEach((param) => {
-      requestHeaders.push([param[0], param[1]]);
-    });
-  }
-
-  if (api.queryParams) {
-    const symbol = api.endpoint.match(questionMarkRegex) ? '&' : '?';
-    request.url = api.endpoint + symbol + api.queryParams?.map((param) => param[0] + '=' + param[1]).join('&');
-  }
-
-  if (api.method === HttpRequestMethod.POST) {
-    requestHeaders.push(['Content-Type', 'application/json']);
-  }
-
-  if (api.method === HttpRequestMethod.POST) {
-    requestHeaders.push(['Content-Type', api.contentType!]);
-  }
-
-  request.headers = requestHeaders;
-
-  return request;
-};
-
-const questionMarkRegex = '.+\\?.*';
-
-export const callApi = (api: APIEditorConfig, isTest = false) => {
-  if (api && api.endpoint) {
-    getBackendSrv()
-      .fetch(getRequest(api))
-      .subscribe({
-        error: (error) => {
-          if (isTest) {
-            appEvents.emit(AppEvents.alertError, ['Error has occurred: ', JSON.stringify(error)]);
-            console.error(error);
-          }
-        },
-        complete: () => {
-          if (isTest) {
-            appEvents.emit(AppEvents.alertSuccess, ['Test successful']);
-          }
-        },
-      });
-  }
-};
-
-const getData = (api: APIEditorConfig) => {
-  let data: string | undefined = api.data ?? '{}';
-  if (api.method === HttpRequestMethod.GET) {
-    data = undefined;
-  }
-
-  return data;
-};
 
 type Props = StandardEditorProps<APIEditorConfig>;
 
@@ -184,7 +118,7 @@ export function APIEditor({ value, context, onChange }: Props) {
 
   const renderJSON = (data: string) => {
     try {
-      const json = JSON.parse(data);
+      const json = JSON.parse(interpolateVariables(data));
       return <JSONFormatter json={json} />;
     } catch (error) {
       if (error instanceof Error) {
@@ -198,7 +132,7 @@ export function APIEditor({ value, context, onChange }: Props) {
   const renderTestAPIButton = (api: APIEditorConfig) => {
     if (api && api.endpoint) {
       return (
-        <Button onClick={() => callApi(api, true)} title={'Test API'}>
+        <Button onClick={() => callApi(api, true)} title="Test API">
           Test API
         </Button>
       );

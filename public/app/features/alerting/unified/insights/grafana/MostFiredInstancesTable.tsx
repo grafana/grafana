@@ -13,10 +13,8 @@ import {
 import { DataSourceRef } from '@grafana/schema';
 import { Icon, Link } from '@grafana/ui';
 
+import { PANEL_STYLES } from '../../home/Insights';
 import { createUrl } from '../../utils/url';
-
-const TOP_FIRING_INSTANCES =
-  'topk(10, sum by(labels_alertname, ruleUID) (count_over_time({from="state-history"} | json | current = `Alerting` [1w])))';
 
 export function getMostFiredInstancesScene(timeRange: SceneTimeRange, datasource: DataSourceRef, panelTitle: string) {
   const query = new SceneQueryRunner({
@@ -24,7 +22,7 @@ export function getMostFiredInstancesScene(timeRange: SceneTimeRange, datasource
     queries: [
       {
         refId: 'A',
-        expr: TOP_FIRING_INSTANCES,
+        expr: 'topk(10, sum by(labels_alertname, ruleUID) (count_over_time({from="state-history"} | json | current = `Alerting` [1w])))',
         instant: true,
       },
     ],
@@ -103,8 +101,7 @@ export function getMostFiredInstancesScene(timeRange: SceneTimeRange, datasource
   });
 
   return new SceneFlexItem({
-    width: 'calc(50% - 4px)',
-    height: 300,
+    ...PANEL_STYLES,
     body: PanelBuilders.table().setTitle(panelTitle).setData(transformation).build(),
   });
 }
