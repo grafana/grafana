@@ -4,6 +4,8 @@ import { ScopedVars } from '@grafana/data/src';
 import { BackendSrvRequest } from '@grafana/runtime/src';
 import config from 'app/core/config';
 
+import { TemplateSrv } from '../../../features/templating/template_srv';
+
 import { BROWSER_MODE_DISABLED_MESSAGE } from './constants';
 import InfluxDatasource from './datasource';
 import {
@@ -146,7 +148,26 @@ describe('InfluxDataSource Frontend Mode', () => {
     });
   });
 
-  describe('adhoc variables', () => {});
+  describe('adhoc variables', () => {
+    const adhocFilters = [
+      {
+        key: 'adhoc_key',
+        operator: '=',
+        value: 'adhoc_val',
+        condition: '',
+      },
+    ];
+    const mockTemplateService = new TemplateSrv();
+    mockTemplateService.getAdhocFilters = jest.fn((_: string) => adhocFilters);
+    let ds = getMockInfluxDS(getMockDSInstanceSettings(), mockTemplateService);
+    it('query should contain the ad-hoc variable', () => {
+      ds.query(mockInfluxQueryRequest());
+      const expected = encodeURIComponent(
+        'SELECT mean("value") FROM "cpu" WHERE time >= 0ms and time <= 10ms AND "adhoc_key" = \'adhoc_val\' GROUP BY time($__interval) fill(null)'
+      );
+      expect(fetchMock.mock.calls[0][0].data).toBe(`q=${expected}`);
+    });
+  });
 
   describe('datasource contract', () => {
     let ds: InfluxDatasource;

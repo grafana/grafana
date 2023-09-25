@@ -255,7 +255,37 @@ export const mockTargets = (): InfluxQuery[] => {
   return [
     {
       refId: 'A',
+      datasource: {
+        type: 'influxdb',
+        uid: 'vA4bkHenk',
+      },
+      policy: 'default',
       resultFormat: 'time_series',
+      orderByTime: 'ASC',
+      tags: [],
+      groupBy: [
+        {
+          type: 'time',
+          params: ['$__interval'],
+        },
+        {
+          type: 'fill',
+          params: ['null'],
+        },
+      ],
+      select: [
+        [
+          {
+            type: 'field',
+            params: ['value'],
+          },
+          {
+            type: 'mean',
+            params: [],
+          },
+        ],
+      ],
+      measurement: 'cpu',
     },
   ];
 };
