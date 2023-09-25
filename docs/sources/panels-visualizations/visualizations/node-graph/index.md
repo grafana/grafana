@@ -18,17 +18,17 @@ title: Node graph
 weight: 100
 ---
 
-# Node graph panel
+# Node graph
 
-The _Node graph_ can visualize directed graphs or networks. It uses a directed force layout to effectively position the nodes, so it can display complex infrastructure maps, hierarchies, or execution diagrams.
+Node graphs can visualize directed graphs or networks. They use a directed force layout to effectively position the nodes, so they can display complex infrastructure maps, hierarchies, or execution diagrams.
 
-![Node graph panel](/static/img/docs/node-graph/node-graph-8-0.png 'Node graph')
+![Node graph visualization](/static/img/docs/node-graph/node-graph-8-0.png 'Node graph')
 
 ## Data requirements
 
-The Node graph panel requires specific shape of the data to be able to display its nodes and edges. This means not every data source or query can be visualized in this panel. If you want to use this as a data source developer see the section about data API.
+A node graph requires a specific shape of the data to be able to display its nodes and edges. This means not every data source or query can be visualized with this graph. If you want to use this as a data source developer see the section about data API.
 
-The Node graph visualization consists of _nodes_ and _edges_.
+A node graph consists of _nodes_ and _edges_.
 
 - A _node_ is displayed as a circle. A node might represent an application, a service, or anything else that is relevant from an application perspective.
 - An _edge_ is displayed as a line that connects two nodes. The connection might be a request, an execution, or some other relationship between the two nodes.
@@ -38,7 +38,7 @@ Both nodes and edges can have associated metadata or statistics. The data source
 ### Nodes
 
 {{% admonition type="note" %}}
-Node graph can show only 1,500 nodes. If this limit is crossed a warning will be visible in upper right corner, and some nodes will be hidden. You can expand hidden parts of the graph by clicking on the "Hidden nodes" markers in the graph.
+Node graphs can show only 1,500 nodes. If this limit is crossed a warning will be visible in upper right corner, and some nodes will be hidden. You can expand hidden parts of the graph by clicking on the "Hidden nodes" markers in the graph.
 {{% /admonition %}}
 
 Usually, nodes show two statistical values inside the node and two identifiers just below the node, usually name and type. Nodes can also show another set of values as a color circle around the node, with sections of different color represents different values that should add up to 1.
@@ -55,7 +55,7 @@ The first data source supporting this visualization is X-Ray data source for its
 
 ## Navigating the node graph
 
-You can pan and zoom in or out the node graph.
+You can pan and zoom in or out a node graph.
 
 ### Pan
 
@@ -89,7 +89,7 @@ Click on the node and select "Show in Graph layout" option to switch back to gra
 
 This visualization needs a specific shape of the data to be returned from the data source in order to correctly display it.
 
-Node Graph at minimum requires a data frame describing the edges of the graph. By default, node graph will compute the nodes and any stats based on this data frame. Optionally a second data frame describing the nodes can be sent in case there is need to show more node specific metadata. You have to set `frame.meta.preferredVisualisationType = 'nodeGraph'` on both data frames or name them `nodes` and `edges` respectively for the node graph to render.
+Node graphs, at minimum, require a data frame describing the edges of the graph. By default, node graphs will compute the nodes and any stats based on this data frame. Optionally a second data frame describing the nodes can be sent in case there is need to show more node specific metadata. You have to set `frame.meta.preferredVisualisationType = 'nodeGraph'` on both data frames or name them `nodes` and `edges` respectively for the node graph to render.
 
 ### Edges data frame structure
 

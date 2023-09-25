@@ -46,7 +46,7 @@ export default class PrometheusMetricFindQuery {
     }
 
     if (labelNamesQuery) {
-      return this.datasource.getTagKeys();
+      return this.datasource.getTagKeys({ filters: [] });
     }
 
     const labelValuesQuery = this.query.match(labelValuesRegex);

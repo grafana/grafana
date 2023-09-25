@@ -19,7 +19,7 @@ weight: 100
 
 # Gauge
 
-Gauge is a single-value visualization that can repeat a gauge for every series, column or row.
+Gauges are single-value visualizations that can repeat a gauge for every series, column or row.
 
 {{< figure src="/static/img/docs/v66/gauge_panel_cover.png" max-width="1025px" >}}
 

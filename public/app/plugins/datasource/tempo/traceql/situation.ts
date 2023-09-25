@@ -11,6 +11,7 @@ import {
   IntrinsicField,
   Or,
   parser,
+  Pipe,
   ScalarFilter,
   SelectArgs,
   SpansetFilter,
@@ -206,10 +207,6 @@ const RESOLVERS: Resolver[] = [
     }),
   },
   {
-    path: [ERROR_NODE_ID, SpansetPipeline],
-    fun: resolveSpansetPipeline,
-  },
-  {
     path: [ERROR_NODE_ID, Aggregate],
     fun: resolveAttributeForFunction,
   },
@@ -219,11 +216,7 @@ const RESOLVERS: Resolver[] = [
   },
   {
     path: [ERROR_NODE_ID, SpansetPipelineExpression],
-    fun: () => {
-      return {
-        type: 'NEW_SPANSET',
-      };
-    },
+    fun: resolveSpansetPipeline,
   },
   {
     path: [ERROR_NODE_ID, ScalarFilter, SpansetPipeline],
@@ -386,8 +379,13 @@ function resolveAttributeForFunction(node: SyntaxNode, _0: string, _1: number): 
   };
 }
 
-function resolveSpansetPipeline(_0: SyntaxNode, _1: string, _2: number): SituationType {
+function resolveSpansetPipeline(node: SyntaxNode, _1: string, _2: number): SituationType {
+  if (node.prevSibling?.type.id === Pipe) {
+    return {
+      type: 'SPANSET_PIPELINE_AFTER_OPERATOR',
+    };
+  }
   return {
-    type: 'SPANSET_PIPELINE_AFTER_OPERATOR',
+    type: 'NEW_SPANSET',
   };
 }

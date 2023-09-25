@@ -7,6 +7,11 @@
     { "type": "dashboard", "name": "Azure / Alert Consumption", "path": "dashboards/v1Alerts.json" },
     {
       "type": "dashboard",
+      "name": "Azure / Azure PostgreSQL / Flexible Server Monitoring",
+      "path": "dashboards/postgresFlexibleServer.json"
+    },
+    {
+      "type": "dashboard",
       "name": "Azure / Insights / Applications",
       "path": "dashboards/appInsights.json"
     },
