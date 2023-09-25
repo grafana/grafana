@@ -49,6 +49,11 @@ load(
     "verify_starlark",
 )
 
+load(
+    'scripts/drone/pipelines/swagger_gen.star',
+    'swagger_gen',
+)
+
 ver_mode = "pr"
 trigger = {
     "event": [
@@ -137,6 +142,7 @@ def pr_pipelines():
         ),
         docs_pipelines(ver_mode, trigger_docs_pr()),
         shellcheck_pipeline(),
+        swagger_gen(get_pr_trigger(include_paths=['pkg/**']), ver_mode),
         integration_benchmarks(
             prefix = ver_mode,
         ),
