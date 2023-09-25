@@ -91,6 +91,7 @@ func (hs *hierarchicalStore) migrate(ctx context.Context, orgID int64, f *folder
 				return err
 			}
 			if err := hs.db.WithDbSession(ctx, func(sess *db.Session) error {
+				// TODO: do not update if the values are the same
 				_, err := sess.Exec("UPDATE folder SET lft = ?, rgt = ? WHERE uid = ? AND org_id = ?", child.Lft, child.Rgt, child.UID, child.OrgID)
 				if err != nil {
 					return err
