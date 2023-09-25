@@ -38,7 +38,7 @@ func GetEntitySummaryBuilder() entity.EntitySummaryBuilder {
 			Kind: entity.StandardKindDataFrame,
 			Name: df.Name,
 			UID:  uid,
-			Fields: map[string]interface{}{
+			Fields: map[string]any{
 				"rows": rows,
 				"cols": len(df.Fields),
 			},

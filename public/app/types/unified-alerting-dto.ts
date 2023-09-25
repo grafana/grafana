@@ -79,6 +79,7 @@ export interface PromBuildInfoResponse {
       query_sharding?: 'true' | 'false';
       federated_rules?: 'true' | 'false';
     };
+    [key: string]: unknown;
   };
   status: 'success';
 }
@@ -173,6 +174,7 @@ export interface RulerRecordingRuleDTO extends RulerRuleBaseDTO {
 export interface RulerAlertingRuleDTO extends RulerRuleBaseDTO {
   alert: string;
   for?: string;
+  keep_firing_for?: string;
   annotations?: Annotations;
 }
 

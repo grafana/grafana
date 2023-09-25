@@ -15,12 +15,12 @@ labels:
     - enterprise
     - oss
 title: Bar chart
-weight: 170
+weight: 100
 ---
 
 # Bar chart
 
-This panel visualization allows you to graph categorical data.
+Bar charts allow you to graph categorical data.
 
 {{< figure src="/static/img/docs/bar-chart-panel/barchart_small_example.png" max-width="1000px" caption="Bar chart" >}}
 
@@ -35,7 +35,7 @@ Example:
 | Chrome  | 50           |
 | IE      | 17.5         |
 
-If you have more than one numerical field the panel will show grouped bars.
+If you have more than one numerical field the visualization will show grouped bars.
 
 ### Visualizing time series or multiple result sets
 
@@ -127,13 +127,13 @@ Transparency of the gradient is calculated based on the values on the y-axis. Op
 
 Gradient color is generated based on the hue of the line color.
 
-{{< docs/shared "visualizations/tooltip-mode.md" >}}
+{{< docs/shared lookup="visualizations/tooltip-mode.md" source="grafana" version="<GRAFANA VERSION>" >}}
 
-{{< docs/shared "visualizations/legend-mode.md" >}}
+{{< docs/shared lookup="visualizations/legend-mode.md" source="grafana" version="<GRAFANA VERSION>" >}}
 
 ### Legend calculations
 
-Choose which of the [standard calculations]({{< relref "../../calculation-types/" >}}) to show in the legend. You can have more than one.
+Choose which of the [standard calculations][] to show in the legend. You can have more than one.
 
 For more information about the legend, refer to [Configure a legend](../configure-legend/).
 
@@ -167,7 +167,7 @@ Display all Y-axes on the right side.
 
 Hide all axes.
 
-To selectively hide axes, [Add a field override]({{< relref "../../configure-overrides#add-a-field-override" >}}) that targets specific fields.
+To selectively hide axes, [Add a field override][] that targets specific fields.
 
 ### Label
 
@@ -187,4 +187,17 @@ Set a **Soft min** or **soft max** option for better control of Y-axis limits. B
 
 **Soft min** and **soft max** settings can prevent blips from turning into mountains when the data is mostly flat, and hard min or max derived from standard min and max field options can prevent intermittent spikes from flattening useful detail by clipping the spikes past a defined point.
 
-You can set standard min/max options to define hard limits of the Y-axis. For more information, refer to [Standard options definitions]({{< relref "../../configure-standard-options/#max" >}}).
+You can set standard min/max options to define hard limits of the Y-axis. For more information, refer to [Standard options definitions][].
+
+{{< docs/shared lookup="visualizations/multiple-y-axes.md" source="grafana" version="<GRAFANA VERSION>" leveloffset="+2" >}}
+
+{{% docs/reference %}}
+[Add a field override]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/configure-overrides#add-a-field-override"
+[Add a field override]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/configure-overrides#add-a-field-override"
+
+[standard calculations]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/calculation-types"
+[standard calculations]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/calculation-types"
+
+[Standard options definitions]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/configure-standard-options#max"
+[Standard options definitions]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/configure-standard-options#max"
+{{% /docs/reference %}}

@@ -28,6 +28,8 @@ It extends [SingleStatBaseOptions](#singlestatbaseoptions).
 
 | Property               | Type                                            | Required | Default | Description                                                                                                                                 |
 |------------------------|-------------------------------------------------|----------|---------|---------------------------------------------------------------------------------------------------------------------------------------------|
+| `minVizHeight`         | uint32                                          | **Yes**  | `75`    |                                                                                                                                             |
+| `minVizWidth`          | uint32                                          | **Yes**  | `75`    |                                                                                                                                             |
 | `showThresholdLabels`  | boolean                                         | **Yes**  | `false` |                                                                                                                                             |
 | `showThresholdMarkers` | boolean                                         | **Yes**  | `true`  |                                                                                                                                             |
 | `orientation`          | string                                          | No       |         | *(Inherited from [SingleStatBaseOptions](#singlestatbaseoptions))*<br/>TODO docs<br/>Possible values are: `auto`, `vertical`, `horizontal`. |

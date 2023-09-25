@@ -122,9 +122,13 @@ export const ExemplarMarker = ({
   }, [setIsOpen]);
 
   const renderMarker = useCallback(() => {
-    // Put the traceID field in front.
-    const traceIDField = dataFrame.fields.find((field) => field.name === 'traceID') || dataFrame.fields[0];
-    const orderedDataFrameFields = [traceIDField, ...dataFrame.fields.filter((field) => traceIDField !== field)];
+    //Put fields with links on the top
+    const fieldsWithLinks =
+      dataFrame.fields.filter((field) => field.config.links?.length && field.config.links?.length > 0) || [];
+    const orderedDataFrameFields = [
+      ...fieldsWithLinks,
+      ...dataFrame.fields.filter((field) => !fieldsWithLinks.includes(field)),
+    ];
 
     const timeFormatter = (value: number) => {
       return dateTimeFormat(value, {
@@ -198,20 +202,27 @@ export const ExemplarMarker = ({
     .getSeries()
     .find((s) => s.props.dataFrameFieldIndex?.frameIndex === dataFrameFieldIndex.frameIndex)?.props.lineColor;
 
+  const onExemplarClick = () => {
+    setClickedExemplarFieldIndex(dataFrameFieldIndex);
+    lockExemplarModal();
+  };
+
   return (
     <>
-      {/* TODO: fix keyboard a11y */}
-      {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
       <div
         ref={setMarkerElement}
-        onClick={() => {
-          setClickedExemplarFieldIndex(dataFrameFieldIndex);
-          lockExemplarModal();
+        onClick={onExemplarClick}
+        onKeyDown={(e: React.KeyboardEvent) => {
+          if (e.key === 'Enter') {
+            onExemplarClick();
+          }
         }}
         onMouseEnter={onMouseEnter}
         onMouseLeave={onMouseLeave}
         className={styles.markerWrapper}
         aria-label={selectors.components.DataSource.Prometheus.exemplarMarker}
+        role="button"
+        tabIndex={0}
       >
         <svg
           viewBox="0 0 7 7"

@@ -1,6 +1,11 @@
 import { MatcherOperator, Route, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
 
-import { findMatchingRoutes, normalizeRoute, getInheritedProperties } from './notification-policies';
+import {
+  findMatchingRoutes,
+  normalizeRoute,
+  getInheritedProperties,
+  computeInheritedTree,
+} from './notification-policies';
 
 import 'core-js/stable/structured-clone';
 
@@ -256,6 +261,84 @@ describe('getInheritedProperties()', () => {
       const childInherited = getInheritedProperties(parent, child);
       expect(childInherited).toHaveProperty('receiver', 'PARENT');
     });
+  });
+
+  describe('timing options', () => {
+    it('should inherit timing options', () => {
+      const parent: Route = {
+        receiver: 'PARENT',
+        group_wait: '1m',
+        group_interval: '2m',
+      };
+
+      const child: Route = {
+        repeat_interval: '999s',
+      };
+
+      const childInherited = getInheritedProperties(parent, child);
+      expect(childInherited).toHaveProperty('group_wait', '1m');
+      expect(childInherited).toHaveProperty('group_interval', '2m');
+    });
+  });
+});
+
+describe('computeInheritedTree', () => {
+  it('should merge properties from parent', () => {
+    const parent: Route = {
+      receiver: 'PARENT',
+      group_wait: '1m',
+      group_interval: '2m',
+      repeat_interval: '3m',
+      routes: [
+        {
+          repeat_interval: '999s',
+        },
+      ],
+    };
+
+    const treeRoot = computeInheritedTree(parent);
+    expect(treeRoot).toHaveProperty('group_wait', '1m');
+    expect(treeRoot).toHaveProperty('group_interval', '2m');
+    expect(treeRoot).toHaveProperty('repeat_interval', '3m');
+
+    expect(treeRoot).toHaveProperty('routes.0.group_wait', '1m');
+    expect(treeRoot).toHaveProperty('routes.0.group_interval', '2m');
+    expect(treeRoot).toHaveProperty('routes.0.repeat_interval', '999s');
+  });
+
+  it('should not regress #73573', () => {
+    const parent: Route = {
+      routes: [
+        {
+          group_wait: '1m',
+          group_interval: '2m',
+          repeat_interval: '3m',
+          routes: [
+            {
+              group_wait: '10m',
+              group_interval: '20m',
+              repeat_interval: '30m',
+            },
+            {
+              repeat_interval: '999m',
+            },
+          ],
+        },
+      ],
+    };
+
+    const treeRoot = computeInheritedTree(parent);
+    expect(treeRoot).toHaveProperty('routes.0.group_wait', '1m');
+    expect(treeRoot).toHaveProperty('routes.0.group_interval', '2m');
+    expect(treeRoot).toHaveProperty('routes.0.repeat_interval', '3m');
+
+    expect(treeRoot).toHaveProperty('routes.0.routes.0.group_wait', '10m');
+    expect(treeRoot).toHaveProperty('routes.0.routes.0.group_interval', '20m');
+    expect(treeRoot).toHaveProperty('routes.0.routes.0.repeat_interval', '30m');
+
+    expect(treeRoot).toHaveProperty('routes.0.routes.1.group_wait', '1m');
+    expect(treeRoot).toHaveProperty('routes.0.routes.1.group_interval', '2m');
+    expect(treeRoot).toHaveProperty('routes.0.routes.1.repeat_interval', '999m');
   });
 });
 

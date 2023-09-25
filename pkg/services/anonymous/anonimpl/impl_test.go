@@ -70,11 +70,13 @@ func TestIntegrationDeviceService_tag(t *testing.T) {
 		kind    anonymous.DeviceKind
 	}
 	testCases := []struct {
-		name                string
-		req                 []tagReq
-		expectedAnonCount   int64
-		expectedAuthedCount int64
-		expectedDevice      *Device
+		name                  string
+		req                   []tagReq
+		expectedAnonCount     int64
+		expectedAuthedCount   int64
+		expectedAnonUICount   int64
+		expectedAuthedUICount int64
+		expectedDevice        *Device
 	}{
 		{
 			name:                "no requests",
@@ -113,72 +115,103 @@ func TestIntegrationDeviceService_tag(t *testing.T) {
 				UserAgent: "test"},
 		},
 		{
+			name: "should tag device ID once",
+			req: []tagReq{{httpReq: &http.Request{
+				Header: http.Header{
+					"User-Agent":                            []string{"test"},
+					"X-Forwarded-For":                       []string{"10.30.30.1"},
+					http.CanonicalHeaderKey(deviceIDHeader): []string{"32mdo31deeqwes"},
+				},
+			},
+				kind: anonymous.AnonDevice,
+			},
+			},
+			expectedAnonUICount:   1,
+			expectedAuthedUICount: 0,
+			expectedAnonCount:     1,
+			expectedAuthedCount:   0,
+			expectedDevice: &Device{
+				Kind:      anonymous.AnonDevice,
+				IP:        "10.30.30.1",
+				UserAgent: "test"},
+		},
+		{
 			name: "repeat request should not tag",
 			req: []tagReq{{httpReq: &http.Request{
 				Header: http.Header{
-					"User-Agent":      []string{"test"},
-					"X-Forwarded-For": []string{"10.30.30.1"},
+					"User-Agent":                            []string{"test"},
+					http.CanonicalHeaderKey(deviceIDHeader): []string{"32mdo31deeqwes"},
+					"X-Forwarded-For":                       []string{"10.30.30.1"},
 				},
 			},
 				kind: anonymous.AnonDevice,
 			}, {httpReq: &http.Request{
 				Header: http.Header{
-					"User-Agent":      []string{"test"},
-					"X-Forwarded-For": []string{"10.30.30.1"},
+					"User-Agent":                            []string{"test"},
+					http.CanonicalHeaderKey(deviceIDHeader): []string{"32mdo31deeqwes"},
+					"X-Forwarded-For":                       []string{"10.30.30.1"},
 				},
 			},
 				kind: anonymous.AnonDevice,
 			},
 			},
 			expectedAnonCount:   1,
+			expectedAnonUICount: 1,
 			expectedAuthedCount: 0,
 		}, {
 			name: "authed request should untag anon",
 			req: []tagReq{{httpReq: &http.Request{
 				Header: http.Header{
-					"User-Agent":      []string{"test"},
-					"X-Forwarded-For": []string{"10.30.30.1"},
+					"User-Agent":                            []string{"test"},
+					http.CanonicalHeaderKey(deviceIDHeader): []string{"32mdo31deeqwes"},
+					"X-Forwarded-For":                       []string{"10.30.30.1"},
 				},
 			},
 				kind: anonymous.AnonDevice,
 			}, {httpReq: &http.Request{
 				Header: http.Header{
-					"User-Agent":      []string{"test"},
-					"X-Forwarded-For": []string{"10.30.30.1"},
+					"User-Agent":                            []string{"test"},
+					http.CanonicalHeaderKey(deviceIDHeader): []string{"32mdo31deeqwes"},
+					"X-Forwarded-For":                       []string{"10.30.30.1"},
 				},
 			},
 				kind: anonymous.AuthedDevice,
 			},
 			},
-			expectedAnonCount:   0,
-			expectedAuthedCount: 1,
+			expectedAnonCount:     0,
+			expectedAuthedCount:   1,
+			expectedAuthedUICount: 1,
 		}, {
 			name: "anon request should untag authed",
 			req: []tagReq{{httpReq: &http.Request{
 				Header: http.Header{
-					"User-Agent":      []string{"test"},
-					"X-Forwarded-For": []string{"10.30.30.1"},
+					"User-Agent":                            []string{"test"},
+					http.CanonicalHeaderKey(deviceIDHeader): []string{"32mdo31deeqwes"},
+					"X-Forwarded-For":                       []string{"10.30.30.1"},
 				},
 			},
 				kind: anonymous.AuthedDevice,
 			}, {httpReq: &http.Request{
 				Header: http.Header{
-					"User-Agent":      []string{"test"},
-					"X-Forwarded-For": []string{"10.30.30.1"},
+					"User-Agent":                            []string{"test"},
+					http.CanonicalHeaderKey(deviceIDHeader): []string{"32mdo31deeqwes"},
+					"X-Forwarded-For":                       []string{"10.30.30.1"},
 				},
 			},
 				kind: anonymous.AnonDevice,
 			},
 			},
 			expectedAnonCount:   1,
+			expectedAnonUICount: 1,
 			expectedAuthedCount: 0,
 		},
 		{
-			name: "tag 4 different requests",
+			name: "tag 4 different requests - 2 are UI",
 			req: []tagReq{{httpReq: &http.Request{
 				Header: http.Header{
-					"User-Agent":      []string{"test"},
-					"X-Forwarded-For": []string{"10.30.30.1"},
+					http.CanonicalHeaderKey("User-Agent"):      []string{"test"},
+					http.CanonicalHeaderKey("X-Forwarded-For"): []string{"10.30.30.1"},
+					http.CanonicalHeaderKey(deviceIDHeader):    []string{"a"},
 				},
 			},
 				kind: anonymous.AnonDevice,
@@ -191,8 +224,9 @@ func TestIntegrationDeviceService_tag(t *testing.T) {
 				kind: anonymous.AnonDevice,
 			}, {httpReq: &http.Request{
 				Header: http.Header{
-					"User-Agent":      []string{"test"},
-					"X-Forwarded-For": []string{"10.30.30.3"},
+					"User-Agent":                            []string{"test"},
+					"X-Forwarded-For":                       []string{"10.30.30.3"},
+					http.CanonicalHeaderKey(deviceIDHeader): []string{"c"},
 				},
 			},
 				kind: anonymous.AuthedDevice,
@@ -205,8 +239,10 @@ func TestIntegrationDeviceService_tag(t *testing.T) {
 				kind: anonymous.AuthedDevice,
 			},
 			},
-			expectedAnonCount:   2,
-			expectedAuthedCount: 2,
+			expectedAnonCount:     2,
+			expectedAuthedCount:   2,
+			expectedAnonUICount:   1,
+			expectedAuthedUICount: 1,
 		},
 	}
 
@@ -226,6 +262,8 @@ func TestIntegrationDeviceService_tag(t *testing.T) {
 
 			assert.Equal(t, tc.expectedAnonCount, stats["stats.anonymous.session.count"].(int64))
 			assert.Equal(t, tc.expectedAuthedCount, stats["stats.users.device.count"].(int64))
+			assert.Equal(t, tc.expectedAnonUICount, stats["stats.anonymous.device.ui.count"].(int64))
+			assert.Equal(t, tc.expectedAuthedUICount, stats["stats.users.device.ui.count"].(int64))
 
 			if tc.expectedDevice != nil {
 				key, err := tc.expectedDevice.Key()

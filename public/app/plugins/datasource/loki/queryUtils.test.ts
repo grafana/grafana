@@ -12,7 +12,6 @@ import {
   getParserFromQuery,
   obfuscate,
   requestSupportsSplitting,
-  isQueryWithDistinct,
   isQueryWithRangeVariable,
   isQueryPipelineErrorFiltering,
   getLogQueryFromMetricsQuery,
@@ -310,18 +309,6 @@ describe('isQueryWithLabelFormat', () => {
   });
 });
 
-describe('isQueryWithDistinct', () => {
-  it('identifies queries using distinct', () => {
-    expect(isQueryWithDistinct('{job="grafana"} | distinct id')).toBe(true);
-    expect(isQueryWithDistinct('count_over_time({job="grafana"} | distinct id [1m])')).toBe(true);
-  });
-
-  it('does not return false positives', () => {
-    expect(isQueryWithDistinct('{label="distinct"} | logfmt')).toBe(false);
-    expect(isQueryWithDistinct('count_over_time({job="distinct"} | json [1m])')).toBe(false);
-  });
-});
-
 describe('isQueryWithRangeVariableDuration', () => {
   it('identifies queries using $__range variable', () => {
     expect(isQueryWithRangeVariable('rate({job="grafana"}[$__range])')).toBe(true);
@@ -354,6 +341,26 @@ describe('getParserFromQuery', () => {
     expect(getParserFromQuery(`sum(count_over_time({place="luna"} | ${parser} | unwrap counter )) by (place)`)).toBe(
       parser
     );
+  });
+
+  it('supports json parser with arguments', () => {
+    // Redundant, but gives us a baseline
+    expect(getParserFromQuery('{job="grafana"} | json')).toBe('json');
+    expect(getParserFromQuery('{job="grafana"} | json field="otherField"')).toBe('json');
+    expect(getParserFromQuery('{job="grafana"} | json field="otherField", label="field2"')).toBe('json');
+  });
+
+  it('supports logfmt parser with arguments and flags', () => {
+    // Redundant, but gives us a baseline
+    expect(getParserFromQuery('{job="grafana"} | logfmt')).toBe('logfmt');
+    expect(getParserFromQuery('{job="grafana"} | logfmt --strict')).toBe('logfmt');
+    expect(getParserFromQuery('{job="grafana"} | logfmt --strict --keep-empty')).toBe('logfmt');
+    expect(getParserFromQuery('{job="grafana"} | logfmt field="otherField"')).toBe('logfmt');
+    expect(getParserFromQuery('{job="grafana"} | logfmt field="otherField", label')).toBe('logfmt');
+    expect(getParserFromQuery('{job="grafana"} | logfmt --strict field="otherField"')).toBe('logfmt');
+    expect(
+      getParserFromQuery('{job="grafana"} | logfmt --strict --keep-empty field="otherField", label="field2"')
+    ).toBe('logfmt');
   });
 });
 

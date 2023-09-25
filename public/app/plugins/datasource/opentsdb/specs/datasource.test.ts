@@ -190,7 +190,6 @@ describe('opentsdb', () => {
         timezone: 'browser',
         panelId: 2,
         dashboardUID: 'tyzmfPIVz',
-        publicDashboardAccessToken: '',
         range: {
           from: dateTime('2022-10-19T08:55:18.430Z'),
           to: dateTime('2022-10-19T14:55:18.431Z'),

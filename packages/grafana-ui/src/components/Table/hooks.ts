@@ -5,7 +5,7 @@ import { DataFrame } from '@grafana/data';
 
 import { GrafanaTableState } from './types';
 
-/** 
+/**
   To have the custom vertical scrollbar always visible (https://github.com/grafana/grafana/issues/52136),
   we need to bring the element from the VariableSizeList scope to the outer Table container scope,
   because the VariableSizeList scope has overflow. By moving scrollbar to container scope we will have
@@ -17,19 +17,20 @@ export function useFixScrollbarContainer(
   tableDivRef: React.RefObject<HTMLDivElement>
 ) {
   useEffect(() => {
-    const listVerticalScrollbarHTML = (variableSizeListScrollbarRef.current as HTMLDivElement)?.querySelector(
-      '.track-vertical'
-    );
+    if (variableSizeListScrollbarRef.current && tableDivRef.current) {
+      const listVerticalScrollbarHTML = variableSizeListScrollbarRef.current.querySelector('.track-vertical');
 
-    // Select Table custom scrollbars
-    const tableScrollbarView = (tableDivRef.current as HTMLDivElement)?.firstChild;
+      // Select Table custom scrollbars
+      const tableScrollbarView = tableDivRef.current.firstChild;
 
-    //If they exists, move the scrollbar element to the Table container scope
-    if (tableScrollbarView && listVerticalScrollbarHTML) {
-      listVerticalScrollbarHTML?.remove();
-      (tableScrollbarView as HTMLDivElement).querySelector(':scope > .track-vertical')?.remove();
-
-      (tableScrollbarView as HTMLDivElement).append(listVerticalScrollbarHTML as Node);
+      //If they exists, move the scrollbar element to the Table container scope
+      if (tableScrollbarView && listVerticalScrollbarHTML) {
+        listVerticalScrollbarHTML.remove();
+        if (tableScrollbarView instanceof HTMLElement) {
+          tableScrollbarView.querySelector(':scope > .track-vertical')?.remove();
+          tableScrollbarView.append(listVerticalScrollbarHTML);
+        }
+      }
     }
   });
 }

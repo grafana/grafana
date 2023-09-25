@@ -5,7 +5,6 @@ import React from 'react';
 import { Alert, AlertVariant, VerticalGroup } from '@grafana/ui';
 
 import { StoryExample } from '../../utils/storybook/StoryExample';
-import { withCenteredStory, withHorizontallyCenteredStory } from '../../utils/storybook/withCenteredStory';
 
 import mdx from './Alert.mdx';
 
@@ -14,7 +13,6 @@ const severities: AlertVariant[] = ['error', 'warning', 'info', 'success'];
 const meta: Meta = {
   title: 'Overlays/Alert/InlineBanner',
   component: Alert,
-  decorators: [withCenteredStory, withHorizontallyCenteredStory],
   parameters: {
     docs: {
       page: mdx,

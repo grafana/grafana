@@ -2,12 +2,10 @@ package alerting
 
 import (
 	"context"
-	"errors"
 	"os"
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -16,7 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/alerting/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/services/datasources/permissions"
+	"github.com/grafana/grafana/pkg/services/datasources/guardian"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
@@ -34,18 +32,13 @@ func TestAlertRuleExtraction(t *testing.T) {
 	json, err := os.ReadFile("./testdata/graphite-alert.json")
 	require.Nil(t, err)
 
-	dsPermissions := permissions.NewMockDatasourcePermissionService()
-	dsPermissions.DsResult = []*datasources.DataSource{
-		{
-			ID: 1,
-		},
-	}
+	dsGuardian := guardian.ProvideGuardian()
 
 	dsService := &fakeDatasourceService{ExpectedDatasource: defaultDs}
 	db := dbtest.NewFakeDB()
 	cfg := &setting.Cfg{}
 	store := ProvideAlertStore(db, localcache.ProvideService(), cfg, nil, featuremgmt.WithFeatures())
-	extractor := ProvideDashAlertExtractorService(dsPermissions, dsService, store)
+	extractor := ProvideDashAlertExtractorService(dsGuardian, dsService, store)
 
 	t.Run("Parsing alert rules from dashboard json", func(t *testing.T) {
 		dashJSON, err := simplejson.NewJson(json)
@@ -304,69 +297,6 @@ func TestAlertRuleExtraction(t *testing.T) {
 		query := condition.Get("query")
 		require.EqualValues(t, 15, query.Get("datasourceId").MustInt64())
 	})
-}
-
-func TestFilterPermissionsErrors(t *testing.T) {
-	RegisterCondition("query", func(model *simplejson.Json, index int) (Condition, error) {
-		return &FakeCondition{}, nil
-	})
-
-	// mock data
-	defaultDs := &datasources.DataSource{ID: 12, OrgID: 1, Name: "I am default", IsDefault: true, UID: "def-uid"}
-
-	json, err := os.ReadFile("./testdata/graphite-alert.json")
-	require.Nil(t, err)
-	dashJSON, err := simplejson.NewJson(json)
-	require.Nil(t, err)
-
-	dsPermissions := permissions.NewMockDatasourcePermissionService()
-	dsService := &fakeDatasourceService{ExpectedDatasource: defaultDs}
-	extractor := ProvideDashAlertExtractorService(dsPermissions, dsService, nil)
-
-	tc := []struct {
-		name        string
-		result      []*datasources.DataSource
-		err         error
-		expectedErr error
-	}{
-		{
-			"Data sources are filtered and return results don't return an error",
-			[]*datasources.DataSource{defaultDs},
-			nil,
-			nil,
-		},
-		{
-			"Data sources are filtered but return empty results should return error",
-			nil,
-			nil,
-			datasources.ErrDataSourceAccessDenied,
-		},
-		{
-			"Using default OSS implementation doesn't return an error",
-			nil,
-			permissions.ErrNotImplemented,
-			nil,
-		},
-		{
-			"Returning an error different from ErrNotImplemented should fails",
-			nil,
-			errors.New("random error"),
-			errors.New("random error"),
-		},
-	}
-
-	for _, test := range tc {
-		t.Run(test.name, func(t *testing.T) {
-			dsPermissions.DsResult = test.result
-			dsPermissions.ErrResult = test.err
-			_, err = extractor.GetAlerts(WithUAEnabled(context.Background(), true), DashAlertInfo{
-				User:  nil,
-				Dash:  dashboards.NewDashboardFromJson(dashJSON),
-				OrgID: 1,
-			})
-			assert.Equal(t, err, test.expectedErr)
-		})
-	}
 }
 
 type fakeDatasourceService struct {

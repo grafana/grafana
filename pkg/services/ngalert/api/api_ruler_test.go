@@ -32,7 +32,7 @@ import (
 
 func TestRouteDeleteAlertRules(t *testing.T) {
 	getRecordedCommand := func(ruleStore *fakes.RuleStore) []fakes.GenericRecordedQuery {
-		results := ruleStore.GetRecordedCommands(func(cmd interface{}) (interface{}, bool) {
+		results := ruleStore.GetRecordedCommands(func(cmd any) (any, bool) {
 			c, ok := cmd.(fakes.GenericRecordedQuery)
 			if !ok || c.Name != "DeleteAlertRulesByUID" {
 				return nil, false

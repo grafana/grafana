@@ -35,11 +35,14 @@ type baseNode struct {
 
 type rawNode struct {
 	RefID      string `json:"refId"`
-	Query      map[string]interface{}
+	Query      map[string]any
 	QueryRaw   []byte
 	QueryType  string
 	TimeRange  TimeRange
 	DataSource *datasources.DataSource
+	// We use this index as the id of the node graph so the order can remain during a the stable sort of the dependency graph execution order.
+	// Some data sources, such as cloud watch, have order dependencies between queries.
+	idx int64
 }
 
 func (rn *rawNode) GetCommandType() (c CommandType, err error) {
@@ -82,6 +85,10 @@ func (gn *CMDNode) NodeType() NodeType {
 	return TypeCMDNode
 }
 
+func (gn *CMDNode) NeedsVars() []string {
+	return gn.Command.NeedsVars()
+}
+
 // Execute runs the node and adds the results to vars. If the node requires
 // other nodes they must have already been executed and their results must
 // already by in vars.
@@ -97,7 +104,7 @@ func buildCMDNode(dp *simple.DirectedGraph, rn *rawNode) (*CMDNode, error) {
 
 	node := &CMDNode{
 		baseNode: baseNode{
-			id:    dp.NewNode().ID(),
+			id:    rn.idx,
 			refID: rn.RefID,
 		},
 		CMDType: commandType,
@@ -148,6 +155,11 @@ func (dn *DSNode) NodeType() NodeType {
 	return TypeDatasourceNode
 }
 
+// NodeType returns the data pipeline node type.
+func (dn *DSNode) NeedsVars() []string {
+	return []string{}
+}
+
 func (s *Service) buildDSNode(dp *simple.DirectedGraph, rn *rawNode, req *Request) (*DSNode, error) {
 	if rn.TimeRange == nil {
 		return nil, fmt.Errorf("time range must be specified for refID %s", rn.RefID)
@@ -159,7 +171,7 @@ func (s *Service) buildDSNode(dp *simple.DirectedGraph, rn *rawNode, req *Reques
 
 	dsNode := &DSNode{
 		baseNode: baseNode{
-			id:    dp.NewNode().ID(),
+			id:    rn.idx,
 			refID: rn.RefID,
 		},
 		orgID:      req.OrgId,
@@ -189,6 +201,104 @@ func (s *Service) buildDSNode(dp *simple.DirectedGraph, rn *rawNode, req *Reques
 	}
 
 	return dsNode, nil
+}
+
+// executeDSNodesGrouped groups datasource node queries by the datasource instance, and then sends them
+// in a single request with one or more queries to the datasource.
+func executeDSNodesGrouped(ctx context.Context, now time.Time, vars mathexp.Vars, s *Service, nodes []*DSNode) {
+	type dsKey struct {
+		uid   string // in theory I think this all I need for the key, but rather be safe
+		id    int64
+		orgID int64
+	}
+	byDS := make(map[dsKey][]*DSNode)
+	for _, node := range nodes {
+		k := dsKey{id: node.datasource.ID, uid: node.datasource.UID, orgID: node.orgID}
+		byDS[k] = append(byDS[k], node)
+	}
+
+	for _, nodeGroup := range byDS {
+		func() {
+			ctx, span := s.tracer.Start(ctx, "SSE.ExecuteDatasourceQuery")
+			defer span.End()
+			firstNode := nodeGroup[0]
+			pCtx, err := s.pCtxProvider.GetWithDataSource(ctx, firstNode.datasource.Type, firstNode.request.User, firstNode.datasource)
+			if err != nil {
+				for _, dn := range nodeGroup {
+					vars[dn.refID] = mathexp.Results{Error: datasources.ErrDataSourceNotFound}
+				}
+				return
+			}
+
+			logger := logger.FromContext(ctx).New("datasourceType", firstNode.datasource.Type,
+				"queryRefId", firstNode.refID,
+				"datasourceUid", firstNode.datasource.UID,
+				"datasourceVersion", firstNode.datasource.Version,
+			)
+
+			span.SetAttributes("datasource.type", firstNode.datasource.Type, attribute.Key("datasource.type").String(firstNode.datasource.Type))
+			span.SetAttributes("datasource.uid", firstNode.datasource.UID, attribute.Key("datasource.uid").String(firstNode.datasource.UID))
+
+			req := &backend.QueryDataRequest{
+				PluginContext: pCtx,
+				Headers:       firstNode.request.Headers,
+			}
+
+			for _, dn := range nodeGroup {
+				req.Queries = append(req.Queries, backend.DataQuery{
+					RefID:         dn.refID,
+					MaxDataPoints: dn.maxDP,
+					Interval:      time.Duration(int64(time.Millisecond) * dn.intervalMS),
+					JSON:          dn.query,
+					TimeRange:     dn.timeRange.AbsoluteTime(now),
+					QueryType:     dn.queryType,
+				})
+			}
+
+			instrument := func(e error, rt string) {
+				respStatus := "success"
+				responseType := rt
+				if e != nil {
+					responseType = "error"
+					respStatus = "failure"
+					span.AddEvents([]string{"error", "message"},
+						[]tracing.EventValue{
+							{Str: fmt.Sprintf("%v", err)},
+							{Str: "failed to query data source"},
+						})
+				}
+				logger.Debug("Data source queried", "responseType", responseType)
+				useDataplane := strings.HasPrefix(responseType, "dataplane-")
+				s.metrics.dsRequests.WithLabelValues(respStatus, fmt.Sprintf("%t", useDataplane), firstNode.datasource.Type).Inc()
+			}
+
+			resp, err := s.dataService.QueryData(ctx, req)
+			if err != nil {
+				for _, dn := range nodeGroup {
+					vars[dn.refID] = mathexp.Results{Error: MakeQueryError(firstNode.refID, firstNode.datasource.UID, err)}
+				}
+				instrument(err, "")
+				return
+			}
+
+			for _, dn := range nodeGroup {
+				dataFrames, err := getResponseFrame(resp, dn.refID)
+				if err != nil {
+					vars[dn.refID] = mathexp.Results{Error: MakeQueryError(dn.refID, dn.datasource.UID, err)}
+					instrument(err, "")
+					return
+				}
+
+				var result mathexp.Results
+				responseType, result, err := convertDataFramesToResults(ctx, dataFrames, dn.datasource.Type, s, logger)
+				if err != nil {
+					result.Error = makeConversionError(dn.RefID(), err)
+				}
+				instrument(err, responseType)
+				vars[dn.refID] = result
+			}
+		}()
+	}
 }
 
 // Execute runs the node and adds the results to vars. If the node requires
@@ -251,7 +361,7 @@ func (dn *DSNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s 
 	var result mathexp.Results
 	responseType, result, err = convertDataFramesToResults(ctx, dataFrames, dn.datasource.Type, s, logger)
 	if err != nil {
-		err = MakeConversionError(dn.refID, err)
+		err = makeConversionError(dn.refID, err)
 	}
 	return result, err
 }

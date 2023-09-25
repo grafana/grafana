@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import React, { useCallback } from 'react';
 import Calendar from 'react-calendar';
 
-import { GrafanaTheme2, dateTime, dateTimeParse, DateTime, TimeZone } from '@grafana/data';
+import { GrafanaTheme2, dateTimeParse, DateTime, TimeZone, getZone } from '@grafana/data';
 
 import { useStyles2 } from '../../../themes';
 import { Icon } from '../../Icon/Icon';
@@ -10,7 +10,7 @@ import { Icon } from '../../Icon/Icon';
 import { TimePickerCalendarProps } from './TimePickerCalendar';
 
 export function Body({ onChange, from, to, timeZone }: TimePickerCalendarProps) {
-  const value = inputToValue(from, to);
+  const value = inputToValue(from, to, new Date(), timeZone);
   const onCalendarChange = useOnCalendarChange(onChange, timeZone);
   const styles = useStyles2(getBodyStyles);
 
@@ -32,16 +32,57 @@ export function Body({ onChange, from, to, timeZone }: TimePickerCalendarProps) 
 
 Body.displayName = 'Body';
 
-export function inputToValue(from: DateTime, to: DateTime, invalidDateDefault: Date = new Date()): [Date, Date] {
-  const fromAsDate = from.toDate();
-  const toAsDate = to.toDate();
-  const fromAsValidDate = dateTime(fromAsDate).isValid() ? fromAsDate : invalidDateDefault;
-  const toAsValidDate = dateTime(toAsDate).isValid() ? toAsDate : invalidDateDefault;
+export function inputToValue(
+  from: DateTime,
+  to: DateTime,
+  invalidDateDefault: Date = new Date(),
+  timezone?: string
+): [Date, Date] {
+  let fromAsDate = from.isValid() ? from.toDate() : invalidDateDefault;
+  let toAsDate = to.isValid() ? to.toDate() : invalidDateDefault;
 
-  if (fromAsValidDate > toAsValidDate) {
-    return [toAsValidDate, fromAsValidDate];
+  if (timezone) {
+    [fromAsDate, toAsDate] = adjustDateForReactCalendar(fromAsDate, toAsDate, timezone);
   }
-  return [fromAsValidDate, toAsValidDate];
+
+  if (fromAsDate > toAsDate) {
+    return [toAsDate, fromAsDate];
+  }
+
+  return [fromAsDate, toAsDate];
+}
+
+/**
+ * React calendar doesn't support showing ranges in other time zones, so attempting to show
+ * 10th midnight - 11th midnight in another time zone than your browsers will span three days
+ * instead of two.
+ *
+ * This function adjusts the dates by "moving" the time to appear as if it's local.
+ * e.g. make 5 PM New York "look like" 5 PM in the user's local browser time.
+ * See also https://github.com/wojtekmaj/react-calendar/issues/511#issuecomment-835333976
+ */
+function adjustDateForReactCalendar(from: Date, to: Date, timeZone: string): [Date, Date] {
+  const zone = getZone(timeZone);
+  if (!zone) {
+    return [from, to];
+  }
+
+  // get utc offset for timezone preference
+  const timezonePrefFromOffset = zone.utcOffset(from.getTime());
+  const timezonePrefToOffset = zone.utcOffset(to.getTime());
+
+  // get utc offset for local timezone
+  const localFromOffset = from.getTimezoneOffset();
+  const localToOffset = to.getTimezoneOffset();
+
+  // calculate difference between timezone preference and local timezone
+  // we keep these as separate variables in case one of them crosses a daylight savings boundary
+  const fromDiff = timezonePrefFromOffset - localFromOffset;
+  const toDiff = timezonePrefToOffset - localToOffset;
+
+  const newFromDate = new Date(from.getTime() - fromDiff * 1000 * 60);
+  const newToDate = new Date(to.getTime() - toDiff * 1000 * 60);
+  return [newFromDate, newToDate];
 }
 
 function useOnCalendarChange(onChange: (from: DateTime, to: DateTime) => void, timeZone?: TimeZone) {

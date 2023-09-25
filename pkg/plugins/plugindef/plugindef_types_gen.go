@@ -98,7 +98,7 @@ type BuildInfo struct {
 type Dependencies struct {
 	// Required Grafana version for this plugin. Validated using
 	// https://github.com/npm/node-semver.
-	GrafanaDependency string `json:"grafanaDependency"`
+	GrafanaDependency *string `json:"grafanaDependency,omitempty"`
 
 	// (Deprecated) Required Grafana version for this plugin, e.g.
 	// `6.x.x 7.x.x` to denote plugin requires Grafana v6.x.x or

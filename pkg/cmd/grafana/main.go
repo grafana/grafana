@@ -14,6 +14,7 @@ import (
 // The following variables cannot be constants, since they can be overridden through the -X link flag
 var version = "9.2.0"
 var commit = "NA"
+var enterpriseCommit = "NA"
 var buildBranch = "main"
 var buildstamp string
 
@@ -30,7 +31,7 @@ func main() {
 		Version: version,
 		Commands: []*cli.Command{
 			gcli.CLICommand(version),
-			gsrv.ServerCommand(version, commit, buildBranch, buildstamp),
+			gsrv.ServerCommand(version, commit, enterpriseCommit, buildBranch, buildstamp),
 		},
 		CommandNotFound:      cmdNotFound,
 		EnableBashCompletion: true,
