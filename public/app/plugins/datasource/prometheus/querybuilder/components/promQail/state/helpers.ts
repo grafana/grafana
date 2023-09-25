@@ -7,12 +7,19 @@ import { getMetadataHelp } from 'app/plugins/datasource/prometheus/language_prov
 import { promQueryModeller } from '../../../PromQueryModeller';
 import { buildVisualQueryFromString } from '../../../parsing';
 import { PromVisualQuery } from '../../../types';
-import { ExplainSystemPrompt, GetExplainUserPrompt } from '../prompts';
+import {
+  ExplainSystemPrompt,
+  ExplainUserPromptParams,
+  GetExplainUserPrompt,
+  GetSuggestSystemPrompt,
+  SuggestSystemPromptParams,
+} from '../prompts';
 import { Interaction, QuerySuggestion, SuggestionType } from '../types';
 
-import { suggesterSystemPrompt } from './prompts';
 import { createInteraction, stateSlice } from './state';
 
+const OPENAI_MODEL_NAME = 'gpt-3.5-turbo';
+const promQLTemplatesCollection = 'promql:templates';
 // actions to update the state
 const { updateInteraction } = stateSlice.actions;
 
@@ -39,25 +46,26 @@ export const querySuggestions: QuerySuggestion[] = [
   },
 ];
 
-async function OpenAIChatCompletions(messages: llms.openai.Message[]): Promise<string> {
-  const response = await llms.openai.chatCompletions({
-    model: 'gpt-3.5-turbo',
-    messages: messages,
-  });
-
-  return response.choices[0].message.content;
+interface TemplateSearchResult {
+  description: string | null;
+  metric_type: string | null;
+  promql: string | null;
 }
 
-function getExplainMessage(
-  documentation: string,
-  metricType: string,
-  description: string,
-  query: string
-): llms.openai.Message[] {
+function getExplainMessage({
+  documentation,
+  metricType,
+  description,
+  query,
+}: ExplainUserPromptParams): llms.openai.Message[] {
   return [
     { role: 'system', content: ExplainSystemPrompt },
-    { role: 'user', content: GetExplainUserPrompt(documentation, metricType, description, query) },
+    { role: 'user', content: GetExplainUserPrompt({ documentation, metricType, description, query }) },
   ];
+}
+
+function getSuggestMessage({ promql, question, labels, templates }: SuggestSystemPromptParams): llms.openai.Message[] {
+  return [{ role: 'system', content: GetSuggestSystemPrompt({ promql, question, labels, templates }) }];
 }
 
 /**
@@ -99,35 +107,43 @@ export async function promQailExplain(
     }
   }
 
-  const promptMessages = getExplainMessage('', query.metric, metricMetadata ?? '', suggestedQuery);
-
-  const explainerResponse = await OpenAIChatCompletions(promptMessages);
-
-  const interactionToUpdate = interaction;
-  // switch to returning 1 query until we get more confidence returning more
-  const explanation = explainerResponse;
-
-  const updatedSuggestions = interactionToUpdate.suggestions.map((sg: QuerySuggestion, sidx: number) => {
-    if (suggIdx === sidx) {
-      return {
-        query: interactionToUpdate.suggestions[suggIdx].query,
-        explanation: explanation,
-      };
-    }
-
-    return sg;
+  const promptMessages = getExplainMessage({
+    documentation: '',
+    metricType: query.metric,
+    description: metricMetadata ?? '',
+    query: suggestedQuery,
   });
 
-  const payload = {
-    idx,
-    interaction: {
-      ...interactionToUpdate,
-      suggestions: updatedSuggestions,
-      explanationIsLoading: false,
-    },
-  };
+  const interactionToUpdate = interaction;
 
-  dispatch(updateInteraction(payload));
+  return llms.openai
+    .streamChatCompletions({
+      model: OPENAI_MODEL_NAME,
+      messages: promptMessages,
+    })
+    .pipe(llms.openai.accumulateContent())
+    .subscribe((response) => {
+      const updatedSuggestions = interactionToUpdate.suggestions.map((sg: QuerySuggestion, sidx: number) => {
+        if (suggIdx === sidx) {
+          return {
+            query: interactionToUpdate.suggestions[suggIdx].query,
+            explanation: response,
+          };
+        }
+
+        return sg;
+      });
+
+      const payload = {
+        idx,
+        interaction: {
+          ...interactionToUpdate,
+          suggestions: updatedSuggestions,
+          explanationIsLoading: false,
+        },
+      };
+      dispatch(updateInteraction(payload));
+    });
 }
 
 /**
@@ -198,21 +214,17 @@ export async function promQailSuggest(
     );
 
     const interactionToUpdate = interaction ? interaction : createInteraction(SuggestionType.Historical);
-    const renderedPrompt = suggesterSystemPrompt
-      .replace('{promql}', query.metric)
-      .replace('{question}', interaction ? interaction.prompt : '')
-      .replace('{labels}', promQueryModeller.renderLabels(query.labels))
-      .replace('{templates}', resultsString);
+    const promptMessages = getSuggestMessage({
+      promql: query.metric,
+      question: interaction ? interaction.prompt : '',
+      labels: promQueryModeller.renderLabels(query.labels),
+      templates: resultsString,
+    });
 
     return llms.openai
       .streamChatCompletions({
-        model: 'gpt-3.5-turbo',
-        messages: [
-          {
-            role: 'system',
-            content: renderedPrompt,
-          },
-        ],
+        model: OPENAI_MODEL_NAME,
+        messages: promptMessages,
       })
       .pipe(llms.openai.accumulateContent())
       .subscribe((response) => {

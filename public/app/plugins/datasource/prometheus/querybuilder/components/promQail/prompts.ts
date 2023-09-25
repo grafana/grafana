@@ -1,5 +1,3 @@
-
-
 export const ExplainSystemPrompt = `You are an expert in Prometheus, the event monitoring and alerting application.
 
 You are given relevant PromQL documentation, a type and description for a Prometheus metric, and a PromQL query on that metric. Using the provided information for reference, please explain what the output of a given query is in 1 sentences. Do not walk through what the functions do separately, make your answer concise. 
@@ -36,16 +34,27 @@ topk(3, sum by(cluster) (rate(traces_exporter_sent_spans{exporter="otlp"}[5m])))
 
 Output:
 This query helps identify the top 3 clusters that have successfully sent the most number of spans to the destination.
-`
+`;
 
-export function GetExplainUserPrompt(documentation: string, metricType: string, description: string, query: string) {
-    if (documentation === "") {
-        documentation = "No documentation provided."
-    }
-    if (description === "") {
-        description = "No description provided."
-    }
-    return `
+export type ExplainUserPromptParams = {
+  documentation: string;
+  metricType: string;
+  description: string;
+  query: string;
+};
+export function GetExplainUserPrompt({
+  documentation,
+  metricType,
+  description,
+  query,
+}: ExplainUserPromptParams): string {
+  if (documentation === '') {
+    documentation = 'No documentation provided.';
+  }
+  if (description === '') {
+    description = 'No description provided.';
+  }
+  return `
         PromQL Documentation: 
         ${documentation}
 
@@ -59,5 +68,39 @@ export function GetExplainUserPrompt(documentation: string, metricType: string, 
         ${query}
 
         Output:
-    `
+    `;
+}
+
+// rewrite with a type
+export type SuggestSystemPromptParams = {
+  promql: string;
+  question: string;
+  labels: string;
+  templates: string;
+};
+
+export function GetSuggestSystemPrompt({ promql, question, labels, templates }: SuggestSystemPromptParams): string {
+  if (templates === '') {
+    templates = 'No templates provided.';
+  }
+  return `You are an PromQL expert assistant. You will be is given a PromQL expression and a user question.
+You are to edit the PromQL expression so that it answers the user question. Show only the edited PromQL.
+
+The initial PromQL query is
+\`\`\`
+${promql}
+\`\`\`
+The user question is: "${question}"
+
+To help you answer the question, here are 2 pieces of information:
+
+1. List of labels to use: ${labels}
+2. Here is a list of possibly relevant PromQL template expressions with descriptions to help target your answer:
+${templates}
+
+Rules:
+- Do not invent labels names, you must use only the labels provided.
+
+Answer:
+\`\`\``;
 }
