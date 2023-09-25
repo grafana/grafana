@@ -29,8 +29,6 @@ const (
 	pluginSettingsCachePrefix = "plugin-setting-"
 )
 
-var ErrPluginNotFound = errors.New("plugin not found")
-
 func ProvideService(cfg *setting.Cfg, cacheService *localcache.CacheService, pluginStore pluginstore.Store,
 	dataSourceService datasources.DataSourceService, pluginSettingsService pluginsettings.Service,
 	licensing plugins.Licensing, pCfg *config.Cfg) *Provider {
@@ -62,7 +60,7 @@ type Provider struct {
 func (p *Provider) Get(ctx context.Context, pluginID string, user identity.Requester, orgID int64) (backend.PluginContext, error) {
 	plugin, exists := p.pluginStore.Plugin(ctx, pluginID)
 	if !exists {
-		return backend.PluginContext{}, ErrPluginNotFound
+		return backend.PluginContext{}, plugins.ErrPluginNotRegistered
 	}
 
 	pCtx := backend.PluginContext{
@@ -97,7 +95,7 @@ func (p *Provider) Get(ctx context.Context, pluginID string, user identity.Reque
 func (p *Provider) GetWithDataSource(ctx context.Context, pluginID string, user identity.Requester, ds *datasources.DataSource) (backend.PluginContext, error) {
 	plugin, exists := p.pluginStore.Plugin(ctx, pluginID)
 	if !exists {
-		return backend.PluginContext{}, ErrPluginNotFound
+		return backend.PluginContext{}, plugins.ErrPluginNotRegistered
 	}
 
 	pCtx := backend.PluginContext{

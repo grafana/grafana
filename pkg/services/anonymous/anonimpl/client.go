@@ -1,4 +1,4 @@
-package clients
+package anonimpl
 
 import (
 	"context"
@@ -16,15 +16,6 @@ import (
 var _ authn.ContextAwareClient = new(Anonymous)
 
 const timeoutTag = 2 * time.Minute
-
-func ProvideAnonymous(cfg *setting.Cfg, orgService org.Service, anonDeviceService anonymous.Service) *Anonymous {
-	return &Anonymous{
-		cfg:               cfg,
-		log:               log.New("authn.anonymous"),
-		orgService:        orgService,
-		anonDeviceService: anonDeviceService,
-	}
-}
 
 type Anonymous struct {
 	cfg               *setting.Cfg
@@ -60,7 +51,7 @@ func (a *Anonymous) Authenticate(ctx context.Context, r *authn.Request) (*authn.
 
 		newCtx, cancel := context.WithTimeout(context.Background(), timeoutTag)
 		defer cancel()
-		if err := a.anonDeviceService.TagDevice(newCtx, httpReqCopy, anonymous.AnonDevice); err != nil {
+		if err := a.anonDeviceService.TagDevice(newCtx, httpReqCopy, anonymous.AnonDeviceUI); err != nil {
 			a.log.Warn("Failed to tag anonymous session", "error", err)
 		}
 	}()
