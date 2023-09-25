@@ -9,9 +9,11 @@ import {
   getDefaultTimeRange,
   toDataFrame,
   DataSourceApi,
+  DataSourceInstanceSettings,
 } from '@grafana/data';
 import { DataSourceJsonData, DataQuery } from '@grafana/schema';
 import TableModel from 'app/core/TableModel';
+import { CorrelationData } from 'app/features/correlations/useCorrelations';
 import { ExplorePanelData } from 'app/types';
 
 import {
@@ -113,6 +115,23 @@ const createExplorePanelData = (args: Partial<ExplorePanelData>): ExplorePanelDa
 
   return { ...defaults, ...args };
 };
+
+const datasource = {
+  name: 'testDs',
+  type: 'postgres',
+  uid: 'ds1',
+  getRef: () => {
+    return { type: 'postgres', uid: 'ds1' };
+  },
+} as DataSourceApi<DataQuery, DataSourceJsonData, {}>;
+
+const datasourceInstance = {
+  name: datasource.name,
+  id: 1,
+  uid: datasource.uid,
+  type: datasource.type,
+  jsonData: {},
+} as DataSourceInstanceSettings<DataSourceJsonData>;
 
 describe('decorateWithGraphLogsTraceTableAndFlameGraph', () => {
   it('should correctly classify the dataFrames', () => {
@@ -405,23 +424,71 @@ describe('decorateWithCorrelations', () => {
       timeRange,
     };
 
-    const datasource = {
-      name: 'testDs',
-      type: 'postgres',
-      uid: 'ds1',
-      getRef: () => {
-        return { type: 'postgres', uid: 'ds1' };
-      },
-    } as DataSourceApi<DataQuery, DataSourceJsonData, {}>;
-
     const postDecoratedPanel = decorateWithCorrelations({
       showCorrelationEditorLinks: true,
       queries: [],
       correlations: [],
       defaultTargetDatasource: datasource,
     })(panelData);
+    const flattenedLinks = flattenDeep(
+      postDecoratedPanel.series.map((frame) => frame.fields.map((field) => field.config.links))
+    );
+    expect(flattenedLinks.length).toEqual(table.fields.length);
+    expect(flattenedLinks[0]).not.toBeUndefined();
+  });
+
+  it('returns one field link per field if there are correlations and editor links', () => {
+    const { table } = getTestContext();
+    const series = [table];
+    const timeRange = getDefaultTimeRange();
+    const panelData: PanelData = {
+      series,
+      state: LoadingState.Done,
+      timeRange,
+    };
+
+    const correlations = [{ source: datasourceInstance, target: datasourceInstance }] as CorrelationData[];
+    const postDecoratedPanel = decorateWithCorrelations({
+      showCorrelationEditorLinks: true,
+      queries: [],
+      correlations: correlations,
+      defaultTargetDatasource: datasource,
+    })(panelData);
+    const flattenedLinks = flattenDeep(
+      postDecoratedPanel.series.map((frame) => frame.fields.map((field) => field.config.links))
+    );
+    expect(flattenedLinks.length).toEqual(table.fields.length);
+    expect(flattenedLinks[0]).not.toBeUndefined();
+  });
+
+  it('returns one field link per correlation if there are correlations and we are not showing editor links', () => {
+    const { table } = getTestContext();
+    const series = [table];
+    const timeRange = getDefaultTimeRange();
+    const panelData: PanelData = {
+      series,
+      state: LoadingState.Done,
+      timeRange,
+    };
+
+    const correlations = [
+      {
+        uid: '0',
+        source: datasourceInstance,
+        target: datasourceInstance,
+        provisioned: true,
+        config: { field: panelData.series[0].fields[0].name },
+      },
+    ] as CorrelationData[];
+
+    const postDecoratedPanel = decorateWithCorrelations({
+      showCorrelationEditorLinks: false,
+      queries: [{ refId: 'A', datasource: datasource.getRef() }],
+      correlations: correlations,
+      defaultTargetDatasource: undefined,
+    })(panelData);
     expect(
       flattenDeep(postDecoratedPanel.series.map((frame) => frame.fields.map((field) => field.config.links))).length
-    ).toEqual(table.fields.length);
+    ).toEqual(correlations.length);
   });
 });
