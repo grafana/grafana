@@ -1,33 +1,75 @@
-import { computeErrorBoundaries } from './TraceQLEditor';
+import { computeErrorMessage, getErrorNodes } from './errorHighlighting';
 
 describe('computeErrorMarkers', () => {
-  it.each([['{span.http.status_code=200}'], ['{span.a1=1 && span.a2=2} || {resource.a3 = "3"}']])(
-    'no error markers for valid query - %s',
-    (query: string) => {
-      expect(computeErrorBoundaries(query)).toEqual([]);
-    }
-  );
-
   it.each([
-    ['{blabla}', [[1, 7]]],
-    ['{span.http.status_code = }', [[24, 24]]],
-    ['{span.foo && }', [[12, 12]]],
+    ['{span.http.status_code = }', 'Invalid value after comparison operator.'],
+    ['{span.http.status_code 200}', 'Invalid comparison operator after field expression.'],
+    ['{span.http.status_code ""}', 'Invalid comparison operator after field expression.'],
+    ['{span.http.status_code @ 200}', 'Invalid comparison operator after field expression.'],
+    ['{span.http.status_code span.http.status_code}', 'Invalid comparison operator after field expression.'],
     [
-      '{span.foo && } || {resource.bar && }',
-      [
-        [12, 12],
-        [34, 34],
-      ],
+      '{span.http.status_code = 200} {span.http.status_code = 200}',
+      'Invalid spanset combining operator after spanset expression.',
     ],
-  ])('error markers for invalid query - %s', (query: string, boundaries: number[][]) => {
-    const markers = computeErrorBoundaries(query);
-    expect(markers).toMatchObject(createExpectedErrorMarkers(boundaries));
+    [
+      '{span.http.status_code = 200} + {span.http.status_code = 200}',
+      'Invalid spanset combining operator after spanset expression.',
+    ],
+    ['{span.http.status_code = 200} &&', 'Invalid spanset expression after spanset combining operator.'],
+    [
+      '{span.http.status_code = 200} && {span.http.status_code = 200} | foo() > 3',
+      'Invalid aggregation operator after pipepile operator.',
+    ],
+    [
+      '{span.http.status_code = 200} && {span.http.status_code = 200} | avg() > 3',
+      'Invalid expression for aggregator operator.',
+    ],
+    ['{ .a && }', 'Invalid value after comparison operator.'],
+    ['{ .a || }', 'Invalid value after comparison operator.'],
+    ['{ 200 = 200 200 }', 'Invalid comparison operator after field expression.'],
+    ['{.foo   300}', 'Invalid comparison operator after field expression.'],
+    ['{.foo  300 && .bar = 200}', 'Invalid comparison operator after field expression.'],
+    ['{.foo  300 && .bar  200}', 'Invalid comparison operator after field expression.'],
+    ['{.foo=1}  {.bar=2}', 'Invalid spanset combining operator after spanset expression.'],
+    ['{ span.http.status_code = 200 &&  }', 'Invalid value after comparison operator.'],
+    ['{ span.http.status_code = 200 ||  }', 'Invalid value after comparison operator.'],
+    ['{ .foo = 200 } && ', 'Invalid spanset expression after spanset combining operator.'],
+    ['{ .foo = 200 } || ', 'Invalid spanset expression after spanset combining operator.'],
+    ['{ .foo = 200 } >> ', 'Invalid spanset expression after spanset combining operator.'],
+    ['{.foo=1} | avg()', 'Invalid expression for aggregator operator.'],
+    ['{.foo=1} | avg() < 1s', 'Invalid expression for aggregator operator.'],
+    ['{.foo=1} | max() = 3', 'Invalid expression for aggregator operator.'],
+    ['{.foo=1} | by()', 'Invalid expression for aggregator operator.'],
+    ['{.foo=1} | select()', 'Invalid expression for aggregator operator.'],
+    ['{foo}', 'Invalid comparison operator after field expression.'],
+    ['{.}', 'Invalid expression for spanset.'],
+    ['{ resource. }', 'Invalid expression for spanset.'],
+    ['{ span. }', 'Invalid expression for spanset.'],
+    ['{.foo=}', 'Invalid value after comparison operator.'],
+    ['{.foo="}', 'Invalid value after comparison operator.'],
+    ['{.foo=300} |', 'Invalid aggregation operator after pipepile operator.'],
+    ['{.foo=300} && {.bar=200} |', 'Invalid aggregation operator after pipepile operator.'],
+    ['{.foo=300} && {.bar=300} && {.foo=300} |', 'Invalid aggregation operator after pipepile operator.'],
+    ['{.foo=300} | avg(.value)', 'Invalid comparison operator after aggregator operator.'],
+    ['{.foo=300} && {.foo=300} | avg(.value)', 'Invalid comparison operator after aggregator operator.'],
+    ['{.foo=300} | avg(.value) =', 'Invalid value after comparison operator.'],
+    ['{.foo=300} && {.foo=300} | avg(.value) =', 'Invalid value after comparison operator.'],
+    ['{ span.http.status_code', 'Invalid comparison operator after field expression.'],
+
+    // ['{foo}', '...'],
+    // ['avg(span.http.status_code) >', '...'],
+    // ['1 + 1 = 2 +', '...'],
+    // ['((true) && true', '...'],
+    // ['false false', '...'],
+    // ['true | max(.a) =', '...'],
+    // ['true | max((1 + ) * 2) = 1', '...'],
+    // ['true | max((1 + 1 * 2) = 1', '...'],
+    // ['{} | select(.a,.b,)', '...'],
+    // ['{} | count(foo) > 1', '...'],
+    // ['max(duration) > 1hs', '...'],
+    // ['true >> >> true', '...'],
+  ])('error message for invalid query - %s, %s', (query: string, expectedErrorMessage: string) => {
+    const errorNode = getErrorNodes(query)[0];
+    expect(computeErrorMessage(errorNode)).toBe(expectedErrorMessage);
   });
 });
-
-const createExpectedErrorMarkers = (boundaries: number[][]) => {
-  return boundaries.map((boundary) => ({
-    start: boundary[0],
-    end: boundary[1],
-  }));
-};

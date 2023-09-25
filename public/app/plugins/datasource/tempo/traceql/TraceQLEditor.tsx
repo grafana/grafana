@@ -1,9 +1,7 @@
 import { css } from '@emotion/css';
-import { SyntaxNode } from '@lezer/common';
 import React, { useEffect, useRef } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { parser } from '@grafana/lezer-traceql';
 import { reportInteraction } from '@grafana/runtime';
 import { CodeEditor, Monaco, monacoTypes, useTheme2 } from '@grafana/ui';
 
@@ -13,6 +11,7 @@ import { dispatch } from '../../../../store/store';
 import { TempoDatasource } from '../datasource';
 
 import { CompletionProvider, CompletionType } from './autocomplete';
+import { getErrorNodes, setErrorMarkers } from './errorHighlighting';
 import { languageDefinition } from './traceql';
 
 interface Props {
@@ -24,11 +23,6 @@ interface Props {
   readOnly?: boolean;
 }
 
-type ErrorBoudary = {
-  start: number;
-  end: number;
-};
-
 export function TraceQLEditor(props: Props) {
   const { onChange, onRunQuery, placeholder } = props;
   const setupAutocompleteFn = useAutocomplete(props.datasource);
@@ -38,6 +32,8 @@ export function TraceQLEditor(props: Props) {
   // and wouldn't get new version of onRunQuery
   const onRunQueryRef = useRef(onRunQuery);
   onRunQueryRef.current = onRunQuery;
+
+  const errorTimeoutId = useRef<number>();
 
   return (
     <CodeEditor
@@ -71,29 +67,31 @@ export function TraceQLEditor(props: Props) {
         }
         setupAutoSize(editor);
 
-        // Attach callback for query changes
-        editor.onDidChangeModelContent(() => {
+        // Register callback for query changes
+        editor.onDidChangeModelContent((changeEvent) => {
           const model = editor.getModel();
           if (!model) {
             return;
           }
-          // Use red markers (squiggles) to highlight syntax errors in queries
-          monaco.editor.setModelMarkers(
+
+          // Remove previous callback if existing, to prevent squiggles from been shown while the user is still typing
+          window.clearTimeout(errorTimeoutId.current);
+
+          const errorNodes = getErrorNodes(model.getValue());
+          const cursorPosition = changeEvent.changes[0].rangeOffset;
+
+          // Immediately updates the squiggles, in case the user fixed an error,
+          // excluding the error around the cursor position
+          setErrorMarkers(
+            monaco,
             model,
-            'owner',
-            computeErrorBoundaries(model.getValue()).map((errorNode) => ({
-              message: 'This part of the query appears to be incorrect and could make the entire query fail.',
-              severity: monaco.MarkerSeverity.Error,
-
-              // As of now, we support only single-line queries
-              startLineNumber: 0,
-              endLineNumber: 0,
-
-              // `+ 1` because squiggles seem shifted by one
-              startColumn: errorNode.start + 1,
-              endColumn: errorNode.end + 1,
-            }))
+            errorNodes.filter((errorNode) => !(errorNode.from <= cursorPosition && cursorPosition <= errorNode.to))
           );
+
+          // Later on, show all errors
+          errorTimeoutId.current = window.setTimeout(() => {
+            setErrorMarkers(monaco, model, errorNodes);
+          }, 500);
         });
       }}
     />
@@ -250,26 +248,4 @@ const getStyles = (theme: GrafanaTheme2, placeholder: string): EditorStyles => {
       }
     `,
   };
-};
-
-/**
- * Find the boudaries (start and end) of errors in the query.
- *
- * @param query the TraceQL query of the user
- * @returns the error bounaries
- */
-export const computeErrorBoundaries = (query: string): ErrorBoudary[] => {
-  const tree = parser.parse(query);
-
-  // Find all error nodes and compute the associated erro boundaries
-  const errorNodes: SyntaxNode[] = [];
-  tree.iterate({
-    enter: (nodeRef) => {
-      if (nodeRef.type.id === 0) {
-        errorNodes.push(nodeRef.node);
-      }
-    },
-  });
-
-  return errorNodes.map((errorNode) => ({ start: errorNode.from, end: errorNode.to }));
 };
