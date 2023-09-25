@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch"
 	"github.com/grafana/grafana/pkg/tsdb/elasticsearch"
 	pyroscope "github.com/grafana/grafana/pkg/tsdb/grafana-pyroscope-datasource"
+	testdatasource "github.com/grafana/grafana/pkg/tsdb/grafana-testdata-datasource"
 	"github.com/grafana/grafana/pkg/tsdb/grafanads"
 	"github.com/grafana/grafana/pkg/tsdb/graphite"
 	"github.com/grafana/grafana/pkg/tsdb/influxdb"
@@ -25,7 +26,6 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/postgres"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus"
 	"github.com/grafana/grafana/pkg/tsdb/tempo"
-	"github.com/grafana/grafana/pkg/tsdb/testdatasource"
 )
 
 const (
@@ -39,7 +39,7 @@ const (
 	OpenTSDB        = "opentsdb"
 	Prometheus      = "prometheus"
 	Tempo           = "tempo"
-	TestData        = "testdata"
+	TestData        = "grafana-testdata-datasource"
 	PostgreSQL      = "postgres"
 	MySQL           = "mysql"
 	MSSQL           = "mssql"

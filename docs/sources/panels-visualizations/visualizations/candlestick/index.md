@@ -21,11 +21,11 @@ weight: 100
 
 # Candlestick
 
-The Candlestick panel allows you to visualize data that includes a number of consistent dimensions focused on price movement. The Candlestick panel includes an Open-High-Low-Close (OHLC) mode, as well as support for additional dimensions based on time series data.
+The candlestick visualization allows you to visualize data that includes a number of consistent dimensions focused on price movement. The candlestick visualization includes an Open-High-Low-Close (OHLC) mode, as well as support for additional dimensions based on time series data.
 
-{{< figure src="/static/img/docs/candlestick-panel/candlestick-panel-8-3.png" max-width="1200px" caption="Candlestick panel" >}}
+{{< figure src="/static/img/docs/candlestick-panel/candlestick-panel-8-3.png" max-width="1200px" caption="Candlestick visualization" >}}
 
-The Candlestick panel builds upon the foundation of the [time series][] panel and includes many common configuration settings.
+Candlestick visualizations build upon the foundation of the [time series visualization][] and include many common configuration settings.
 
 ## Mode
 
@@ -33,7 +33,7 @@ The mode options allow you to toggle which dimensions are used for the visualiza
 
 - **Candles** limits the panel dimensions to the open, high, low, and close dimensions used by candlestick visualizations.
 - **Volume** limits the panel dimension to the volume dimension.
-- **Both** is the default behavior for the candlestick panel. It includes both candlestick and volume visualizations.
+- **Both** is the default behavior for the candlestick visualization. It includes both candlestick and volume visualizations.
 
 ## Candle style
 
@@ -51,7 +51,7 @@ The **Up color** and **Down color** options select which colors are used when th
 
 ## Open, High, Low, Close
 
-The candlestick panel will attempt to map fields to the appropriate dimension. The **Open**, **High**, **Low**, and **Close** options allow you to map your data to these dimensions if the panel is unable to do so.
+The candlestick visualization will attempt to map fields to the appropriate dimension. The **Open**, **High**, **Low**, and **Close** options allow you to map your data to these dimensions if the panel is unable to do so.
 
 {{% admonition type="note" %}}
 These values are hidden from the legend.
@@ -65,9 +65,9 @@ These values are hidden from the legend.
 
 ## Additional fields
 
-The candlestick panel is based on the time series panel. It can visualization additional data dimensions beyond open, high, low, close, and volume The **Include** and **Ignore** options allow the panel to visualize other included data such as simple moving averages, Bollinger bands and more, using the same styles and configurations available in the [time series][] panel.
+The candlestick visualization is based on the time series visualization. It can visualize additional data dimensions beyond open, high, low, close, and volume The **Include** and **Ignore** options allow it to visualize other included data such as simple moving averages, Bollinger bands and more, using the same styles and configurations available in the [time series][] visualization.
 
 {{% docs/reference %}}
-[time series]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/time-series"
-[time series]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/time-series"
+[time series visualization]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/time-series"
+[time series visualization]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/time-series"
 {{% /docs/reference %}}

@@ -8,12 +8,19 @@ import { GenAIHistory } from './GenAIHistory';
 import { Message, generateTextWithLLM, isLLMPluginEnabled } from './utils';
 
 export interface GenAIButtonProps {
+  // Button label text
   text?: string;
+  // Button label text when loading
   loadingText?: string;
   toggleTipTitle?: string;
+  // Button click handler
   onClick?: (e: React.MouseEvent<HTMLButtonElement>) => void;
+  // Messages to send to the LLM plugin
   messages: Message[];
-  onReply: (response: string, isDone: boolean) => void;
+  // Callback when the LLM plugin responds. It is sreaming, so it will be called multiple times.
+  onGenerate: (response: string, isDone: boolean) => void;
+  // Temperature for the LLM plugin. Default is 1.
+  // Closer to 0 means more conservative, closer to 1 means more creative.
   temperature?: number;
 }
 
@@ -21,9 +28,9 @@ export const GenAIButton = ({
   text = 'Auto-generate',
   loadingText = 'Generating',
   toggleTipTitle = '',
-  onClick,
+  onClick: onClickProp,
   messages,
-  onReply,
+  onGenerate,
   temperature = 1,
 }: GenAIButtonProps) => {
   const styles = useStyles2(getStyles);
@@ -33,15 +40,15 @@ export const GenAIButton = ({
 
   const replyHandler = (response: string, isDone: boolean) => {
     setLoading(!isDone);
-    onReply(response, isDone);
+    onGenerate(response, isDone);
 
     if (isDone) {
       setHistory([...history, response]);
     }
   };
 
-  const onGenerate = (e: React.MouseEvent<HTMLButtonElement>) => {
-    onClick?.(e);
+  const onClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+    onClickProp?.(e);
 
     if (!history.length) {
       setLoading(true);
@@ -80,7 +87,7 @@ export const GenAIButton = ({
   };
 
   const button = (
-    <Button icon={getIcon()} onClick={onGenerate} fill="text" size="sm" disabled={loading || !enabled}>
+    <Button icon={getIcon()} onClick={onClick} fill="text" size="sm" disabled={loading || !enabled}>
       {getText()}
     </Button>
   );

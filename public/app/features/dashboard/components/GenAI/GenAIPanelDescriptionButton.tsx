@@ -4,6 +4,7 @@ import { getDashboardSrv } from '../../services/DashboardSrv';
 import { PanelModel } from '../../state';
 
 import { GenAIButton } from './GenAIButton';
+import { EventSource, reportGenerateAIButtonClicked } from './tracking';
 import { Message, Role } from './utils';
 
 interface GenAIPanelDescriptionButtonProps {
@@ -17,35 +18,39 @@ const DESCRIPTION_GENERATION_STANDARD_PROMPT =
   'The description should be shorter than 140 characters.';
 
 export const GenAIPanelDescriptionButton = ({ onGenerate, panel }: GenAIPanelDescriptionButtonProps) => {
-  function getMessages(): Message[] {
-    const dashboard = getDashboardSrv().getCurrent()!;
-
-    return [
-      {
-        content: DESCRIPTION_GENERATION_STANDARD_PROMPT,
-        role: Role.system,
-      },
-      {
-        content: `The panel is part of a dashboard with the title: ${dashboard.title}`,
-        role: Role.system,
-      },
-      {
-        content: `The panel is part of a dashboard with the description: ${dashboard.title}`,
-        role: Role.system,
-      },
-      {
-        content: `Use this JSON object which defines the panel: ${JSON.stringify(panel.getSaveModel())}`,
-        role: Role.user,
-      },
-    ];
-  }
+  const messages = React.useMemo(() => getMessages(panel), [panel]);
+  const onClick = React.useCallback(() => reportGenerateAIButtonClicked(EventSource.panelDescription), []);
 
   return (
     <GenAIButton
-      messages={getMessages()}
-      onReply={onGenerate}
+      messages={messages}
+      onClick={onClick}
+      onGenerate={onGenerate}
       loadingText={'Generating description'}
       toggleTipTitle={'Improving your panel description'}
     />
   );
 };
+
+function getMessages(panel: PanelModel): Message[] {
+  const dashboard = getDashboardSrv().getCurrent()!;
+
+  return [
+    {
+      content: DESCRIPTION_GENERATION_STANDARD_PROMPT,
+      role: Role.system,
+    },
+    {
+      content: `The panel is part of a dashboard with the title: ${dashboard.title}`,
+      role: Role.system,
+    },
+    {
+      content: `The panel is part of a dashboard with the description: ${dashboard.title}`,
+      role: Role.system,
+    },
+    {
+      content: `Use this JSON object which defines the panel: ${JSON.stringify(panel.getSaveModel())}`,
+      role: Role.user,
+    },
+  ];
+}

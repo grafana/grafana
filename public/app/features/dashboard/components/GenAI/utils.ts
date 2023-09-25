@@ -42,7 +42,7 @@ export const OPEN_AI_MODEL = 'gpt-4';
  *
  * @param messages messages to send to LLM
  * @param onReply callback to call when LLM replies. The reply will be streamed, so it will be called for every token received.
- * @param temperature what temperature to use when calling the llm. default 1.
+ * @param temperature what temperature to use when calling the llm. default 1. Closer to 0 means more conservative, closer to 1 means more creative.
  * @returns The subscription to the stream.
  */
 export const generateTextWithLLM = async (

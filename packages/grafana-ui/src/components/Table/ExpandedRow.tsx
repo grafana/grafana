@@ -19,7 +19,7 @@ export interface Props {
 }
 
 export function ExpandedRow({ tableStyles, nestedData, rowIndex, width, cellHeight }: Props) {
-  const frames = nestedData.values as DataFrame[][];
+  const frames: DataFrame[][] = nestedData.values;
   const subTables: React.ReactNode[] = [];
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
@@ -72,7 +72,7 @@ const getStyles = (theme: GrafanaTheme2) => {
 };
 
 export function getExpandedRowHeight(nestedData: Field, rowIndex: number, tableStyles: TableStyles) {
-  const frames = nestedData.values as DataFrame[][];
+  const frames: DataFrame[][] = nestedData.values;
 
   const height = frames[rowIndex].reduce((acc: number, frame: DataFrame) => {
     if (frame.length) {

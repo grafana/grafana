@@ -132,6 +132,8 @@ func ReadPluginJSON(reader io.Reader) (JSONData, error) {
 		plugin.Name = "Pie Chart (old)"
 	case "grafana-pyroscope-datasource": // rebranding
 		plugin.Alias = "phlare"
+	case "grafana-testdata-datasource":
+		plugin.Alias = "testdata"
 	case "debug": // panel plugin used for testing
 		plugin.Alias = "debugX"
 	}
@@ -286,7 +288,7 @@ func (p *Plugin) Target() backendplugin.Target {
 func (p *Plugin) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	pluginClient, ok := p.Client()
 	if !ok {
-		return nil, backendplugin.ErrPluginUnavailable
+		return nil, ErrPluginUnavailable
 	}
 	return pluginClient.QueryData(ctx, req)
 }
@@ -294,7 +296,7 @@ func (p *Plugin) QueryData(ctx context.Context, req *backend.QueryDataRequest) (
 func (p *Plugin) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
 	pluginClient, ok := p.Client()
 	if !ok {
-		return backendplugin.ErrPluginUnavailable
+		return ErrPluginUnavailable
 	}
 	return pluginClient.CallResource(ctx, req, sender)
 }
@@ -302,7 +304,7 @@ func (p *Plugin) CallResource(ctx context.Context, req *backend.CallResourceRequ
 func (p *Plugin) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
 	pluginClient, ok := p.Client()
 	if !ok {
-		return nil, backendplugin.ErrPluginUnavailable
+		return nil, ErrPluginUnavailable
 	}
 	return pluginClient.CheckHealth(ctx, req)
 }
@@ -310,7 +312,7 @@ func (p *Plugin) CheckHealth(ctx context.Context, req *backend.CheckHealthReques
 func (p *Plugin) CollectMetrics(ctx context.Context, req *backend.CollectMetricsRequest) (*backend.CollectMetricsResult, error) {
 	pluginClient, ok := p.Client()
 	if !ok {
-		return nil, backendplugin.ErrPluginUnavailable
+		return nil, ErrPluginUnavailable
 	}
 	return pluginClient.CollectMetrics(ctx, req)
 }
@@ -318,7 +320,7 @@ func (p *Plugin) CollectMetrics(ctx context.Context, req *backend.CollectMetrics
 func (p *Plugin) SubscribeStream(ctx context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
 	pluginClient, ok := p.Client()
 	if !ok {
-		return nil, backendplugin.ErrPluginUnavailable
+		return nil, ErrPluginUnavailable
 	}
 	return pluginClient.SubscribeStream(ctx, req)
 }
@@ -326,7 +328,7 @@ func (p *Plugin) SubscribeStream(ctx context.Context, req *backend.SubscribeStre
 func (p *Plugin) PublishStream(ctx context.Context, req *backend.PublishStreamRequest) (*backend.PublishStreamResponse, error) {
 	pluginClient, ok := p.Client()
 	if !ok {
-		return nil, backendplugin.ErrPluginUnavailable
+		return nil, ErrPluginUnavailable
 	}
 	return pluginClient.PublishStream(ctx, req)
 }
@@ -334,7 +336,7 @@ func (p *Plugin) PublishStream(ctx context.Context, req *backend.PublishStreamRe
 func (p *Plugin) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
 	pluginClient, ok := p.Client()
 	if !ok {
-		return backendplugin.ErrPluginUnavailable
+		return ErrPluginUnavailable
 	}
 	return pluginClient.RunStream(ctx, req, sender)
 }
