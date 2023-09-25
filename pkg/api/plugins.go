@@ -29,6 +29,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
@@ -72,7 +73,7 @@ func (hs *HTTPServer) GetPluginList(c *contextmodel.ReqContext) response.Respons
 
 	// Filter plugins
 	pluginDefinitions := hs.pluginStore.Plugins(c.Req.Context())
-	filteredPluginDefinitions := []plugins.PluginDTO{}
+	filteredPluginDefinitions := []pluginstore.Plugin{}
 	filteredPluginIDs := map[string]bool{}
 	for _, pluginDef := range pluginDefinitions {
 		// filter out app sub plugins
@@ -347,7 +348,7 @@ func (hs *HTTPServer) getPluginAssets(c *contextmodel.ReqContext) {
 }
 
 // serveLocalPluginAsset returns the content of a plugin asset file from the local filesystem to the http client.
-func (hs *HTTPServer) serveLocalPluginAsset(c *contextmodel.ReqContext, plugin plugins.PluginDTO, assetPath string) {
+func (hs *HTTPServer) serveLocalPluginAsset(c *contextmodel.ReqContext, plugin pluginstore.Plugin, assetPath string) {
 	f, err := hs.pluginFileStore.File(c.Req.Context(), plugin.ID, assetPath)
 	if err != nil {
 		if errors.Is(err, plugins.ErrFileNotExist) {
@@ -368,7 +369,7 @@ func (hs *HTTPServer) serveLocalPluginAsset(c *contextmodel.ReqContext, plugin p
 }
 
 // redirectCDNPluginAsset redirects the http request to specified asset path on the configured plugins CDN.
-func (hs *HTTPServer) redirectCDNPluginAsset(c *contextmodel.ReqContext, plugin plugins.PluginDTO, assetPath string) {
+func (hs *HTTPServer) redirectCDNPluginAsset(c *contextmodel.ReqContext, plugin pluginstore.Plugin, assetPath string) {
 	remoteURL, err := hs.pluginsCDNService.AssetURL(plugin.ID, plugin.Info.Version, assetPath)
 	if err != nil {
 		c.JsonApiErr(500, "Failed to get CDN plugin asset remote URL", err)
@@ -395,9 +396,9 @@ func (hs *HTTPServer) CheckHealth(c *contextmodel.ReqContext) response.Response 
 	pCtx, err := hs.pluginContextProvider.Get(c.Req.Context(), pluginID, c.SignedInUser, c.OrgID)
 	if err != nil {
 		if errors.Is(err, plugincontext.ErrPluginNotFound) {
-			return response.Error(404, "Plugin not found", nil)
+			return response.Error(http.StatusNotFound, "Plugin not found", nil)
 		}
-		return response.Error(500, "Failed to get plugin settings", err)
+		return response.Error(http.StatusInternalServerError, "Failed to get plugin settings", err)
 	}
 	resp, err := hs.pluginClient.CheckHealth(c.Req.Context(), &backend.CheckHealthRequest{
 		PluginContext: pCtx,
@@ -417,14 +418,14 @@ func (hs *HTTPServer) CheckHealth(c *contextmodel.ReqContext) response.Response 
 		var jsonDetails map[string]any
 		err = json.Unmarshal(resp.JSONDetails, &jsonDetails)
 		if err != nil {
-			return response.Error(500, "Failed to unmarshal detailed response from backend plugin", err)
+			return response.Error(http.StatusInternalServerError, "Failed to unmarshal detailed response from backend plugin", err)
 		}
 
 		payload["details"] = jsonDetails
 	}
 
 	if resp.Status != backend.HealthStatusOk {
-		return response.JSON(503, payload)
+		return response.JSON(http.StatusBadRequest, payload)
 	}
 
 	return response.JSON(http.StatusOK, payload)
@@ -492,22 +493,18 @@ func (hs *HTTPServer) UninstallPlugin(c *contextmodel.ReqContext) response.Respo
 
 func translatePluginRequestErrorToAPIError(err error) response.Response {
 	if errors.Is(err, backendplugin.ErrPluginNotRegistered) {
-		return response.Error(404, "Plugin not found", err)
+		return response.Error(http.StatusNotFound, "Plugin not found", err)
 	}
 
 	if errors.Is(err, backendplugin.ErrMethodNotImplemented) {
-		return response.Error(404, "Not found", err)
-	}
-
-	if errors.Is(err, backendplugin.ErrHealthCheckFailed) {
-		return response.Error(500, "Plugin health check failed", err)
+		return response.Error(http.StatusNotFound, "Not found", err)
 	}
 
 	if errors.Is(err, backendplugin.ErrPluginUnavailable) {
-		return response.Error(503, "Plugin unavailable", err)
+		return response.Error(http.StatusServiceUnavailable, "Plugin unavailable", err)
 	}
 
-	return response.Error(500, "Plugin request failed", err)
+	return response.ErrOrFallback(http.StatusInternalServerError, "Plugin request failed", err)
 }
 
 func (hs *HTTPServer) pluginMarkdown(ctx context.Context, pluginID string, name string) ([]byte, error) {

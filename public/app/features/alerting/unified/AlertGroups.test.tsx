@@ -5,21 +5,21 @@ import { TestProvider } from 'test/helpers/TestProvider';
 import { byRole, byTestId, byText } from 'testing-library-selector';
 
 import { setDataSourceSrv } from '@grafana/runtime';
+import { AccessControlAction } from 'app/types';
 
 import AlertGroups from './AlertGroups';
 import { fetchAlertGroups } from './api/alertmanager';
-import { mockAlertGroup, mockAlertmanagerAlert, mockDataSource, MockDataSourceSrv } from './mocks';
+import {
+  grantUserPermissions,
+  mockAlertGroup,
+  mockAlertmanagerAlert,
+  mockDataSource,
+  MockDataSourceSrv,
+} from './mocks';
+import { AlertmanagerProvider } from './state/AlertmanagerContext';
 import { DataSourceType } from './utils/datasource';
 
 jest.mock('./api/alertmanager');
-
-jest.mock('app/core/services/context_srv', () => ({
-  contextSrv: {
-    isEditor: true,
-    hasAccess: () => true,
-    hasPermission: () => true,
-  },
-}));
 const mocks = {
   api: {
     fetchAlertGroups: jest.mocked(fetchAlertGroups),
@@ -29,7 +29,9 @@ const mocks = {
 const renderAmNotifications = () => {
   return render(
     <TestProvider>
-      <AlertGroups />
+      <AlertmanagerProvider accessType={'instance'}>
+        <AlertGroups />
+      </AlertmanagerProvider>
     </TestProvider>
   );
 };
@@ -57,6 +59,13 @@ const ui = {
 
 describe('AlertGroups', () => {
   beforeAll(() => {
+    grantUserPermissions([
+      AccessControlAction.AlertingInstanceRead,
+      AccessControlAction.AlertingInstanceCreate,
+      AccessControlAction.AlertingInstancesExternalRead,
+      AccessControlAction.AlertingRuleRead,
+    ]);
+
     mocks.api.fetchAlertGroups.mockImplementation(() => {
       return Promise.resolve([
         mockAlertGroup({ labels: {}, alerts: [mockAlertmanagerAlert({ labels: { foo: 'bar' } })] }),

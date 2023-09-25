@@ -28,16 +28,16 @@ export interface ConnectedProps {
 export type Props = OwnProps & ConnectedProps;
 
 const PanelInspectorUnconnected = ({ panel, dashboard, plugin }: Props) => {
+  const location = useLocation();
+  const defaultTab = new URLSearchParams(location.search).get('inspectTab') as InspectTab;
   const [dataOptions, setDataOptions] = useState<GetDataOptions>({
-    withTransforms: false,
+    withTransforms: defaultTab === InspectTab.Error,
     withFieldConfig: true,
   });
 
-  const location = useLocation();
-  const { data, isLoading, error } = usePanelLatestData(panel, dataOptions, true);
+  const { data, isLoading, hasError } = usePanelLatestData(panel, dataOptions, true);
   const metaDs = useDatasourceMetadata(data);
-  const tabs = useInspectTabs(panel, dashboard, plugin, error, metaDs);
-  const defaultTab = new URLSearchParams(location.search).get('inspectTab') as InspectTab;
+  const tabs = useInspectTabs(panel, dashboard, plugin, hasError, metaDs);
 
   const onClose = () => {
     locationService.partial({

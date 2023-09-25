@@ -13,6 +13,16 @@ import { setupLoadDashboardMock } from '../utils/test-utils';
 
 import { DashboardScenePage, Props } from './DashboardScenePage';
 
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getDataSourceSrv: () => {
+    return {
+      get: jest.fn().mockResolvedValue({}),
+      getInstanceSettings: jest.fn().mockResolvedValue({ uid: 'ds1' }),
+    };
+  },
+}));
+
 function setup() {
   const context = getGrafanaContextMock();
   const props: Props = {

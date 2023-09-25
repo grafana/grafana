@@ -48,13 +48,18 @@ export interface AdHocVariableFilter {
   key: string;
   operator: string;
   value: string;
-  condition: string;
+  /** @deprecated  */
+  condition?: string;
 }
 
 export interface AdHocVariableModel extends BaseVariableModel {
   type: 'adhoc';
   datasource: DataSourceRef | null;
   filters: AdHocVariableFilter[];
+  /**
+   * Filters that are always applied to the lookup of keys. Not shown in the AdhocFilterBuilder UI.
+   */
+  baseFilters?: AdHocVariableFilter[];
 }
 
 export interface VariableOption {

@@ -91,10 +91,7 @@ export class TimeSrv {
   }
 
   getValidIntervals(intervals: string[]): string[] {
-    if (this.contextSrv.minRefreshInterval) {
-      return intervals.filter((str) => str !== '').filter(this.contextSrv.isAllowedInterval);
-    }
-    return intervals;
+    return this.contextSrv.getValidIntervals(intervals);
   }
 
   private parseTime() {

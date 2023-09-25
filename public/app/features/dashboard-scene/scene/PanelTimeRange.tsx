@@ -5,9 +5,9 @@ import { dateMath, getDefaultTimeRange, GrafanaTheme2, rangeUtil, TimeRange } fr
 import {
   SceneComponentProps,
   sceneGraph,
-  SceneObjectBase,
   SceneTimeRangeLike,
   SceneTimeRangeState,
+  SceneTimeRangeTransformerBase,
 } from '@grafana/scenes';
 import { Icon, PanelChrome, TimePickerTooltip, Tooltip, useStyles2 } from '@grafana/ui';
 import { TimeOverrideResult } from 'app/features/dashboard/utils/panel';
@@ -19,7 +19,7 @@ interface PanelTimeRangeState extends SceneTimeRangeState {
   timeInfo?: string;
 }
 
-export class PanelTimeRange extends SceneObjectBase<PanelTimeRangeState> implements SceneTimeRangeLike {
+export class PanelTimeRange extends SceneTimeRangeTransformerBase<PanelTimeRangeState> implements SceneTimeRangeLike {
   public static Component = PanelTimeRangeRenderer;
 
   public constructor(state: Partial<PanelTimeRangeState> = {}) {
@@ -30,8 +30,11 @@ export class PanelTimeRange extends SceneObjectBase<PanelTimeRangeState> impleme
       to: 'now',
       value: getDefaultTimeRange(),
     });
+  }
 
-    this.addActivationHandler(() => this._activationHandler());
+  protected ancestorTimeRangeChanged(timeRange: SceneTimeRangeState): void {
+    const overrideResult = this.getTimeOverride(timeRange.value);
+    this.setState({ value: overrideResult.timeRange, timeInfo: overrideResult.timeInfo });
   }
 
   private getTimeOverride(parentTimeRange: TimeRange): TimeOverrideResult {
@@ -76,45 +79,6 @@ export class PanelTimeRange extends SceneObjectBase<PanelTimeRangeState> impleme
     }
 
     return newTimeData;
-  }
-
-  private _activationHandler(): void {
-    const parentTimeRange = this.getParentTimeRange();
-
-    this._subs.add(parentTimeRange.subscribeToState((state) => this.handleParentTimeRangeChanged(state.value)));
-
-    this.handleParentTimeRangeChanged(parentTimeRange.state.value);
-  }
-
-  private handleParentTimeRangeChanged(parentTimeRange: TimeRange) {
-    const overrideResult = this.getTimeOverride(parentTimeRange);
-    this.setState({ value: overrideResult.timeRange, timeInfo: overrideResult.timeInfo });
-  }
-
-  private getParentTimeRange(): SceneTimeRangeLike {
-    if (!this.parent || !this.parent.parent) {
-      throw new Error('Missing parent');
-    }
-
-    // Need to go up two levels otherwise we will get ourselves
-    return sceneGraph.getTimeRange(this.parent.parent);
-  }
-
-  public onTimeRangeChange = (timeRange: TimeRange) => {
-    const parentTimeRange = this.getParentTimeRange();
-    parentTimeRange.onTimeRangeChange(timeRange);
-  };
-
-  public onRefresh(): void {
-    this.getParentTimeRange().onRefresh();
-  }
-
-  public onTimeZoneChange(timeZone: string): void {
-    this.getParentTimeRange().onTimeZoneChange(timeZone);
-  }
-
-  public getTimeZone(): string {
-    return this.getParentTimeRange().getTimeZone();
   }
 }
 
