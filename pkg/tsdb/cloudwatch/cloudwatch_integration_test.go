@@ -289,7 +289,7 @@ func Test_CloudWatch_CallResource_Integration_Test(t *testing.T) {
 	})
 
 	t.Run("Should error for any request when a default region is not selected", func(t *testing.T) {
-		imWithoutDefaultRegion := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+		imWithoutDefaultRegion := datasource.NewInstanceManager(func(ctx context.Context, s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 			return DataSource{Settings: models.CloudWatchSettings{
 				AWSDatasourceSettings: awsds.AWSDatasourceSettings{},
 			}}, nil
@@ -312,5 +312,4 @@ func Test_CloudWatch_CallResource_Integration_Test(t *testing.T) {
 		require.Nil(t, err)
 		assert.Contains(t, string(sent.Body), "unexpected error missing default region")
 	})
-
 }
