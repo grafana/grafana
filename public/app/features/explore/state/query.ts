@@ -519,11 +519,12 @@ export const runQueries = createAsyncThunk<void, RunQueriesOptions>(
     } = exploreItemState;
     const isCorrelationEditorMode = getState().explore.correlationEditorDetails?.editorMode || false;
     const isLeftPane = Object.entries(getState().explore.panes)[0][0] === exploreId;
+    const showCorrelationEditorLinks = isCorrelationEditorMode && isLeftPane;
+    const defaultCorrelationEditorDatasource = showCorrelationEditorLinks ? await getDataSourceSrv().get() : undefined;
     const interpolateCorrelationHelperVars =
       (isCorrelationEditorMode && !isLeftPane && correlationEditorHelperData !== undefined) || false;
     let newQuerySource: Observable<ExplorePanelData>;
     let newQuerySubscription: SubscriptionLike;
-    const defaultDatasource = await getDataSourceSrv().get();
 
     const queries = exploreItemState.queries.map((query) => ({
       ...query,
@@ -541,14 +542,14 @@ export const runQueries = createAsyncThunk<void, RunQueriesOptions>(
       newQuerySource = combineLatest([of(cachedValue), correlations$]).pipe(
         mergeMap(([data, correlations]) =>
           decorateData(
-            defaultDatasource,
             data,
             queryResponse,
             absoluteRange,
             refreshInterval,
             queries,
             correlations,
-            isCorrelationEditorMode && isLeftPane
+            showCorrelationEditorLinks,
+            defaultCorrelationEditorDatasource
           )
         )
       );
@@ -611,14 +612,14 @@ export const runQueries = createAsyncThunk<void, RunQueriesOptions>(
       ]).pipe(
         mergeMap(([data, correlations]) =>
           decorateData(
-            defaultDatasource,
             data,
             queryResponse,
             absoluteRange,
             refreshInterval,
             queries,
             correlations,
-            isCorrelationEditorMode && isLeftPane
+            showCorrelationEditorLinks,
+            defaultCorrelationEditorDatasource
           )
         )
       );

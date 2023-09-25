@@ -16,9 +16,7 @@ export const CorrelationUnsavedChangesModal = ({ onSave, onDiscard, onCancel }: 
       title="Unsaved changes to correlation"
       onDismiss={onCancel}
       icon="exclamation-triangle"
-      className={css`
-        width: 500px;
-      `}
+      className={css({ width: '500px' })}
     >
       <h5>Do you want to save changes to this Correlation?</h5>
       <Modal.ButtonRow>

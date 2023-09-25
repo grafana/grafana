@@ -1,10 +1,21 @@
+import { flattenDeep } from 'lodash';
 import { lastValueFrom } from 'rxjs';
 
-import { DataFrame, FieldType, LoadingState, PanelData, getDefaultTimeRange, toDataFrame } from '@grafana/data';
+import {
+  DataFrame,
+  FieldType,
+  LoadingState,
+  PanelData,
+  getDefaultTimeRange,
+  toDataFrame,
+  DataSourceApi,
+} from '@grafana/data';
+import { DataSourceJsonData, DataQuery } from '@grafana/schema';
 import TableModel from 'app/core/TableModel';
 import { ExplorePanelData } from 'app/types';
 
 import {
+  decorateWithCorrelations,
   decorateWithFrameTypeMetadata,
   decorateWithGraphResult,
   decorateWithLogsResult,
@@ -360,5 +371,57 @@ describe('decorateWithCustomFrames', () => {
     };
 
     expect(decorateWithFrameTypeMetadata(panelData).customFrames).toEqual([customFrame]);
+  });
+});
+
+describe('decorateWithCorrelations', () => {
+  it('returns no links if there are no correlations and no editor links', () => {
+    const { table, logs, timeSeries, emptyTable, flameGraph } = getTestContext();
+    const series = [table, logs, timeSeries, emptyTable, flameGraph];
+    const timeRange = getDefaultTimeRange();
+    const panelData: PanelData = {
+      series,
+      state: LoadingState.Done,
+      timeRange,
+    };
+    const postDecoratedPanel = decorateWithCorrelations({
+      showCorrelationEditorLinks: false,
+      queries: [],
+      correlations: [],
+      defaultTargetDatasource: undefined,
+    })(panelData);
+    expect(
+      flattenDeep(postDecoratedPanel.series.map((frame) => frame.fields.map((field) => field.config.links)))
+    ).toEqual([]);
+  });
+
+  it('returns one field link per field if there are no correlations, but there are editor links', () => {
+    const { table } = getTestContext();
+    const series = [table];
+    const timeRange = getDefaultTimeRange();
+    const panelData: PanelData = {
+      series,
+      state: LoadingState.Done,
+      timeRange,
+    };
+
+    const datasource = {
+      name: 'testDs',
+      type: 'postgres',
+      uid: 'ds1',
+      getRef: () => {
+        return { type: 'postgres', uid: 'ds1' };
+      },
+    } as DataSourceApi<DataQuery, DataSourceJsonData, {}>;
+
+    const postDecoratedPanel = decorateWithCorrelations({
+      showCorrelationEditorLinks: true,
+      queries: [],
+      correlations: [],
+      defaultTargetDatasource: datasource,
+    })(panelData);
+    expect(
+      flattenDeep(postDecoratedPanel.series.map((frame) => frame.fields.map((field) => field.config.links))).length
+    ).toEqual(table.fields.length);
   });
 });
