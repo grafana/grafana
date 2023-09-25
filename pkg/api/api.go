@@ -436,19 +436,19 @@ func (hs *HTTPServer) registerRoutes() {
 		}
 
 		apiRoute.Get("/frontend/settings/", hs.GetFrontendSettings)
-		apiRoute.Any("/datasources/proxy/:id/*", authorize(ac.EvalPermission(datasources.ActionQuery)), hs.ProxyDataSourceRequest)
-		apiRoute.Any("/datasources/proxy/uid/:uid/*", authorize(ac.EvalPermission(datasources.ActionQuery)), hs.ProxyDataSourceRequestWithUID)
-		apiRoute.Any("/datasources/proxy/:id", authorize(ac.EvalPermission(datasources.ActionQuery)), hs.ProxyDataSourceRequest)
-		apiRoute.Any("/datasources/proxy/uid/:uid", authorize(ac.EvalPermission(datasources.ActionQuery)), hs.ProxyDataSourceRequestWithUID)
+		apiRoute.Any("/datasources/proxy/:id/*", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), authorize(ac.EvalPermission(datasources.ActionQuery)), hs.ProxyDataSourceRequest)
+		apiRoute.Any("/datasources/proxy/uid/:uid/*", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), authorize(ac.EvalPermission(datasources.ActionQuery)), hs.ProxyDataSourceRequestWithUID)
+		apiRoute.Any("/datasources/proxy/:id", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), authorize(ac.EvalPermission(datasources.ActionQuery)), hs.ProxyDataSourceRequest)
+		apiRoute.Any("/datasources/proxy/uid/:uid", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), authorize(ac.EvalPermission(datasources.ActionQuery)), hs.ProxyDataSourceRequestWithUID)
 		// Deprecated: use /datasources/uid/:uid/resources API instead.
-		apiRoute.Any("/datasources/:id/resources", authorize(ac.EvalPermission(datasources.ActionQuery)), hs.CallDatasourceResource)
-		apiRoute.Any("/datasources/uid/:uid/resources", authorize(ac.EvalPermission(datasources.ActionQuery)), hs.CallDatasourceResourceWithUID)
+		apiRoute.Any("/datasources/:id/resources", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), authorize(ac.EvalPermission(datasources.ActionQuery)), hs.CallDatasourceResource)
+		apiRoute.Any("/datasources/uid/:uid/resources", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), authorize(ac.EvalPermission(datasources.ActionQuery)), hs.CallDatasourceResourceWithUID)
 		// Deprecated: use /datasources/uid/:uid/resources/* API instead.
-		apiRoute.Any("/datasources/:id/resources/*", authorize(ac.EvalPermission(datasources.ActionQuery)), hs.CallDatasourceResource)
-		apiRoute.Any("/datasources/uid/:uid/resources/*", authorize(ac.EvalPermission(datasources.ActionQuery)), hs.CallDatasourceResourceWithUID)
+		apiRoute.Any("/datasources/:id/resources/*", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), authorize(ac.EvalPermission(datasources.ActionQuery)), hs.CallDatasourceResource)
+		apiRoute.Any("/datasources/uid/:uid/resources/*", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), authorize(ac.EvalPermission(datasources.ActionQuery)), hs.CallDatasourceResourceWithUID)
 		// Deprecated: use /datasources/uid/:uid/health API instead.
-		apiRoute.Any("/datasources/:id/health", authorize(ac.EvalPermission(datasources.ActionQuery)), routing.Wrap(hs.CheckDatasourceHealth))
-		apiRoute.Any("/datasources/uid/:uid/health", authorize(ac.EvalPermission(datasources.ActionQuery)), routing.Wrap(hs.CheckDatasourceHealthWithUID))
+		apiRoute.Any("/datasources/:id/health", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), authorize(ac.EvalPermission(datasources.ActionQuery)), routing.Wrap(hs.CheckDatasourceHealth))
+		apiRoute.Any("/datasources/uid/:uid/health", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), authorize(ac.EvalPermission(datasources.ActionQuery)), routing.Wrap(hs.CheckDatasourceHealthWithUID))
 
 		// Folders
 		apiRoute.Group("/folders", func(folderRoute routing.RouteRegister) {
@@ -532,7 +532,7 @@ func (hs *HTTPServer) registerRoutes() {
 
 		// metrics
 		// DataSource w/ expressions
-		apiRoute.Post("/ds/query", authorize(ac.EvalPermission(datasources.ActionQuery)), routing.Wrap(hs.QueryMetricsV2))
+		apiRoute.Post("/ds/query", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), authorize(ac.EvalPermission(datasources.ActionQuery)), routing.Wrap(hs.QueryMetricsV2))
 
 		apiRoute.Group("/alerts", func(alertsRoute routing.RouteRegister) {
 			alertsRoute.Post("/test", routing.Wrap(hs.AlertTest))
@@ -597,7 +597,7 @@ func (hs *HTTPServer) registerRoutes() {
 
 			// Some channels may have info
 			liveRoute.Get("/info/*", routing.Wrap(hs.Live.HandleInfoHTTP))
-		})
+		}, requestmeta.SetSLOGroup(requestmeta.SLOGroupNone))
 
 		// short urls
 		apiRoute.Post("/short-urls", routing.Wrap(hs.createShortURL))

@@ -63,11 +63,12 @@ var (
 	InstanceName     string
 
 	// build
-	BuildVersion string
-	BuildCommit  string
-	BuildBranch  string
-	BuildStamp   int64
-	IsEnterprise bool
+	BuildVersion          string
+	BuildCommit           string
+	EnterpriseBuildCommit string
+	BuildBranch           string
+	BuildStamp            int64
+	IsEnterprise          bool
 
 	// packaging
 	Packaging = "unknown"
@@ -176,11 +177,12 @@ type Cfg struct {
 	EmailCodeValidMinutes int
 
 	// build
-	BuildVersion string
-	BuildCommit  string
-	BuildBranch  string
-	BuildStamp   int64
-	IsEnterprise bool
+	BuildVersion          string
+	BuildCommit           string
+	EnterpriseBuildCommit string
+	BuildBranch           string
+	BuildStamp            int64
+	IsEnterprise          bool
 
 	// packaging
 	Packaging string
@@ -408,6 +410,9 @@ type Cfg struct {
 	ErrTemplateName string
 
 	Env string
+
+	StackID string
+	Slug    string
 
 	ForceMigration bool
 
@@ -1021,6 +1026,7 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 
 	cfg.BuildVersion = BuildVersion
 	cfg.BuildCommit = BuildCommit
+	cfg.EnterpriseBuildCommit = EnterpriseBuildCommit
 	cfg.BuildStamp = BuildStamp
 	cfg.BuildBranch = BuildBranch
 	cfg.IsEnterprise = IsEnterprise
@@ -1034,6 +1040,8 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 	}
 	Env = valueAsString(iniFile.Section(""), "app_mode", "development")
 	cfg.Env = Env
+	cfg.StackID = valueAsString(iniFile.Section("environment"), "stack_id", "")
+	cfg.Slug = valueAsString(iniFile.Section("environment"), "stack_slug", "")
 	cfg.ForceMigration = iniFile.Section("").Key("force_migration").MustBool(false)
 	InstanceName = valueAsString(iniFile.Section(""), "instance_name", "unknown_instance_name")
 	plugins := valueAsString(iniFile.Section("paths"), "plugins", "")
