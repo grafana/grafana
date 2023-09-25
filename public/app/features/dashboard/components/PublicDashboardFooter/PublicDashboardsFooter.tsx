@@ -14,7 +14,7 @@ export interface PublicDashboardCfg {
 
 export const PublicDashboardFooter = function () {
   const styles = useStyles2(getStyles);
-  const conf = useGetPublicDashboardFooterConfig();
+  const conf = useGetPublicDashboardConfig();
 
   return conf.footerHide ? null : (
     <div className={styles.footer}>
@@ -25,10 +25,10 @@ export const PublicDashboardFooter = function () {
   );
 };
 
-export function setPublicDashboardFooterConfigFn(fn: typeof useGetPublicDashboardFooterConfig) {
-  useGetPublicDashboardFooterConfig = fn;
+export function setPublicDashboardConfigFn(fn: typeof useGetPublicDashboardConfig) {
+  useGetPublicDashboardConfig = fn;
 }
-export let useGetPublicDashboardFooterConfig = (): PublicDashboardCfg => {
+export let useGetPublicDashboardConfig = (): PublicDashboardCfg => {
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
 

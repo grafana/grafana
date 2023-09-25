@@ -16,7 +16,7 @@ import { DashboardFailed } from '../components/DashboardLoading/DashboardFailed'
 import { DashboardLoading } from '../components/DashboardLoading/DashboardLoading';
 import {
   PublicDashboardFooter,
-  useGetPublicDashboardFooterConfig,
+  useGetPublicDashboardConfig,
 } from '../components/PublicDashboardFooter/PublicDashboardsFooter';
 import { PublicDashboardNotAvailable } from '../components/PublicDashboardNotAvailable/PublicDashboardNotAvailable';
 import { DashboardGrid } from '../dashgrid/DashboardGrid';
@@ -40,7 +40,7 @@ const selectors = e2eSelectors.pages.PublicDashboard;
 
 const Toolbar = ({ dashboard }: { dashboard: DashboardModel }) => {
   const dispatch = useDispatch();
-  const conf = useGetPublicDashboardFooterConfig();
+  const conf = useGetPublicDashboardConfig();
 
   const onChangeTimeZone = (timeZone: TimeZone) => {
     dispatch(updateTimeZoneForSession(timeZone));
