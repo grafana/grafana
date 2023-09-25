@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strconv"
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -56,7 +57,7 @@ func (hs *HTTPServer) UpdateFeatureToggle(ctx *contextmodel.ReqContext) response
 	}
 
 	payload := UpdatePayload{
-		FeatureToggles: make(map[string]bool, len(cmd.FeatureToggles)),
+		FeatureToggles: make(map[string]string, len(cmd.FeatureToggles)),
 		User:           ctx.SignedInUser.Email,
 	}
 
@@ -64,7 +65,7 @@ func (hs *HTTPServer) UpdateFeatureToggle(ctx *contextmodel.ReqContext) response
 		// make sure flag exists, and only continue if flag is writeable
 		if f, ok := hs.Features.LookupFlag(t.Name); ok && isFeatureWriteable(f, hs.Cfg.FeatureManagement.ReadOnlyToggles) {
 			hs.log.Info("UpdateFeatureToggle: updating toggle", "toggle_name", t.Name, "enabled", t.Enabled, "username", ctx.SignedInUser.Login)
-			payload.FeatureToggles[t.Name] = t.Enabled
+			payload.FeatureToggles[t.Name] = strconv.FormatBool(t.Enabled)
 		} else {
 			hs.log.Warn("UpdateFeatureToggle: invalid toggle passed in", "toggle_name", t.Name)
 			return response.Error(http.StatusBadRequest, "invalid toggle passed in", fmt.Errorf("invalid toggle passed in: %s", t.Name))
@@ -107,8 +108,8 @@ func isFeatureEditingAllowed(cfg setting.Cfg) bool {
 }
 
 type UpdatePayload struct {
-	FeatureToggles map[string]bool `json:"feature_toggles"`
-	User           string          `json:"user"`
+	FeatureToggles map[string]string `json:"feature_toggles"`
+	User           string            `json:"user"`
 }
 
 func sendWebhookUpdate(cfg setting.FeatureMgmtSettings, payload UpdatePayload, logger log.Logger) error {

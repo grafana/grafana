@@ -84,10 +84,10 @@ func TestGetFeatureToggles(t *testing.T) {
 			},
 		}
 		settings := setting.FeatureMgmtSettings{
-			HiddenToggles:       map[string]struct{}{"toggle1": {}},
-			ReadOnlyToggles:     map[string]struct{}{"toggle2": {}},
-			AllowEditing:        true,
-			UpdateControllerUrl: "bogus",
+			HiddenToggles:   map[string]struct{}{"toggle1": {}},
+			ReadOnlyToggles: map[string]struct{}{"toggle2": {}},
+			AllowEditing:    true,
+			UpdateWebhook:   "bogus",
 		}
 
 		result := runGetScenario(t, features, settings, readPermissions, http.StatusOK)
@@ -133,8 +133,8 @@ func TestGetFeatureToggles(t *testing.T) {
 
 		t.Run("only public preview and GA are writeable by default", func(t *testing.T) {
 			settings := setting.FeatureMgmtSettings{
-				AllowEditing:        true,
-				UpdateControllerUrl: "bogus",
+				AllowEditing:  true,
+				UpdateWebhook: "bogus",
 			}
 			result := runGetScenario(t, features, settings, readPermissions, http.StatusOK)
 			assert.Len(t, result, 3)
@@ -152,8 +152,8 @@ func TestGetFeatureToggles(t *testing.T) {
 
 		t.Run("all toggles are read-only when server is misconfigured", func(t *testing.T) {
 			settings := setting.FeatureMgmtSettings{
-				AllowEditing:        false,
-				UpdateControllerUrl: "",
+				AllowEditing:  false,
+				UpdateWebhook: "",
 			}
 			result := runGetScenario(t, features, settings, readPermissions, http.StatusOK)
 			assert.Len(t, result, 3)
@@ -217,8 +217,8 @@ func TestSetFeatureToggles(t *testing.T) {
 		}
 
 		s := setting.FeatureMgmtSettings{
-			AllowEditing:        true,
-			UpdateControllerUrl: "random",
+			AllowEditing:  true,
+			UpdateWebhook: "random",
 		}
 		res := runSetScenario(t, features, updates, s, writePermissions, http.StatusBadRequest)
 		defer func() { require.NoError(t, res.Body.Close()) }()
@@ -244,8 +244,8 @@ func TestSetFeatureToggles(t *testing.T) {
 		}
 
 		s := setting.FeatureMgmtSettings{
-			AllowEditing:        true,
-			UpdateControllerUrl: "random",
+			AllowEditing:  true,
+			UpdateWebhook: "random",
 			ReadOnlyToggles: map[string]struct{}{
 				"toggle3": {},
 			},
@@ -317,9 +317,9 @@ func TestSetFeatureToggles(t *testing.T) {
 		}
 
 		s := setting.FeatureMgmtSettings{
-			AllowEditing:          true,
-			UpdateControllerUrl:   "random",
-			UpdateControllerToken: "token",
+			AllowEditing:       true,
+			UpdateWebhook:      "random",
+			UpdateWebhookToken: "token",
 			ReadOnlyToggles: map[string]struct{}{
 				"toggle3": {},
 			},
@@ -339,7 +339,7 @@ func TestSetFeatureToggles(t *testing.T) {
 				w.WriteHeader(http.StatusBadRequest)
 			}))
 			defer webhookServer.Close()
-			s.UpdateControllerUrl = webhookServer.URL
+			s.UpdateWebhook = webhookServer.URL
 			res := runSetScenario(t, features, updates, s, writePermissions, http.StatusBadRequest)
 			defer func() { require.NoError(t, res.Body.Close()) }()
 			assert.Equal(t, http.StatusBadRequest, res.StatusCode)
@@ -347,17 +347,17 @@ func TestSetFeatureToggles(t *testing.T) {
 
 		t.Run("succeed when webhook request is successul", func(t *testing.T) {
 			webhookServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				assert.Equal(t, "Bearer "+s.UpdateControllerToken, r.Header.Get("Authorization"))
+				assert.Equal(t, "Bearer "+s.UpdateWebhookToken, r.Header.Get("Authorization"))
 
 				var req UpdatePayload
 				require.NoError(t, json.NewDecoder(r.Body).Decode(&req))
 
-				assert.Equal(t, true, req.FeatureToggles["toggle4"])
-				assert.Equal(t, false, req.FeatureToggles["toggle5"])
+				assert.Equal(t, "true", req.FeatureToggles["toggle4"])
+				assert.Equal(t, "false", req.FeatureToggles["toggle5"])
 				w.WriteHeader(http.StatusOK)
 			}))
 			defer webhookServer.Close()
-			s.UpdateControllerUrl = webhookServer.URL
+			s.UpdateWebhook = webhookServer.URL
 			res := runSetScenario(t, features, updates, s, writePermissions, http.StatusOK)
 			defer func() { require.NoError(t, res.Body.Close()) }()
 			assert.Equal(t, http.StatusOK, res.StatusCode)
