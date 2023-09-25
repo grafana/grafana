@@ -5,7 +5,7 @@ import { CustomVariableSupport, DataQueryRequest, DataQueryResponse, MetricFindV
 import { getTimeSrv, TimeSrv } from '../../../features/dashboard/services/TimeSrv';
 
 import { VariableQueryEditor } from './VariableQueryEditor';
-import { PhlareDataSource } from './datasource';
+import { PyroscopeDataSource } from './datasource';
 import { ProfileTypeMessage, VariableQuery } from './types';
 
 export interface DataAPI {
@@ -14,7 +14,7 @@ export interface DataAPI {
   getLabelValues(query: string, label: string, start: number, end: number): Promise<string[]>;
 }
 
-export class VariableSupport extends CustomVariableSupport<PhlareDataSource> {
+export class VariableSupport extends CustomVariableSupport<PyroscopeDataSource> {
   constructor(
     private readonly dataAPI: DataAPI,
     private readonly timeSrv: TimeSrv = getTimeSrv()

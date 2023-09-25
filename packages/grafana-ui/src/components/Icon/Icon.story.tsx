@@ -7,14 +7,12 @@ import { Input, Field, Icon } from '@grafana/ui';
 
 import { useTheme2 } from '../../themes';
 import { getAvailableIcons } from '../../types';
-import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 
 import mdx from './Icon.mdx';
 
 const meta: Meta<typeof Icon> = {
   title: 'Docs overview/Icon',
   component: Icon,
-  decorators: [withCenteredStory],
   parameters: {
     options: {
       showPanel: false,

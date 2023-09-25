@@ -1,24 +1,8 @@
-import { DataQuery, DataQueryRequest, DataSourceJsonData, QueryResultMeta, ScopedVars, TimeRange } from '@grafana/data';
+import { DataQuery, DataQueryRequest, DataSourceJsonData, TimeRange } from '@grafana/data';
 
 import { Loki as LokiQueryFromSchema, LokiQueryType, SupportingQueryType, LokiQueryDirection } from './dataquery.gen';
 
 export { LokiQueryDirection, LokiQueryType, SupportingQueryType };
-
-export interface LokiInstantQueryRequest {
-  query: string;
-  limit?: number;
-  time?: string;
-  direction?: LokiQueryDirection;
-}
-
-export interface LokiRangeQueryRequest {
-  query: string;
-  limit?: number;
-  start?: number;
-  end?: number;
-  step?: number;
-  direction?: LokiQueryDirection;
-}
 
 export enum LokiResultType {
   Stream = 'streams',
@@ -51,52 +35,9 @@ export interface LokiOptions extends DataSourceJsonData {
   predefinedOperations?: string;
 }
 
-export interface LokiStats {
-  [component: string]: {
-    [label: string]: number;
-  };
-}
-
-export interface LokiVectorResult {
-  metric: { [label: string]: string };
-  value: [number, string];
-}
-
-export interface LokiVectorResponse {
-  status: string;
-  data: {
-    resultType: LokiResultType.Vector;
-    result: LokiVectorResult[];
-    stats?: LokiStats;
-  };
-}
-
-export interface LokiMatrixResult {
-  metric: Record<string, string>;
-  values: Array<[number, string]>;
-}
-
-export interface LokiMatrixResponse {
-  status: string;
-  data: {
-    resultType: LokiResultType.Matrix;
-    result: LokiMatrixResult[];
-    stats?: LokiStats;
-  };
-}
-
 export interface LokiStreamResult {
   stream: Record<string, string>;
   values: Array<[string, string]>;
-}
-
-export interface LokiStreamResponse {
-  status: string;
-  data: {
-    resultType: LokiResultType.Stream;
-    result: LokiStreamResult[];
-    stats?: LokiStats;
-  };
 }
 
 export interface LokiTailResponse {
@@ -107,19 +48,6 @@ export interface LokiTailResponse {
   }> | null;
 }
 
-export type LokiResult = LokiVectorResult | LokiMatrixResult | LokiStreamResult;
-export type LokiResponse = LokiVectorResponse | LokiMatrixResponse | LokiStreamResponse;
-
-export interface LokiLogsStreamEntry {
-  line: string;
-  ts: string;
-}
-
-export interface LokiExpression {
-  regexp: string;
-  query: string;
-}
-
 export type DerivedFieldConfig = {
   matcherRegex: string;
   name: string;
@@ -127,14 +55,6 @@ export type DerivedFieldConfig = {
   urlDisplayLabel?: string;
   datasourceUid?: string;
 };
-
-export interface TransformerOptions {
-  legendFormat?: string;
-  query: string;
-  refId: string;
-  scopedVars: ScopedVars;
-  meta?: QueryResultMeta;
-}
 
 export enum LokiVariableQueryType {
   LabelNames,
@@ -152,6 +72,8 @@ export interface QueryStats {
   chunks: number;
   bytes: number;
   entries: number;
+  // The error message displayed in the UI when we cant estimate the size of the query.
+  message?: string;
 }
 
 export interface ContextFilter {

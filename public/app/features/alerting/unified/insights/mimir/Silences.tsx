@@ -1,7 +1,7 @@
 import { PanelBuilders, SceneFlexItem, SceneQueryRunner, SceneTimeRange } from '@grafana/scenes';
 import { DataSourceRef, GraphDrawStyle } from '@grafana/schema';
 
-const QUERY_A = 'sum by (state) (grafanacloud_instance_alertmanager_silences)';
+import { PANEL_STYLES } from '../../home/Insights';
 
 export function getSilencesScene(timeRange: SceneTimeRange, datasource: DataSourceRef, panelTitle: string) {
   const query = new SceneQueryRunner({
@@ -9,7 +9,7 @@ export function getSilencesScene(timeRange: SceneTimeRange, datasource: DataSour
     queries: [
       {
         refId: 'A',
-        expr: QUERY_A,
+        expr: 'sum by (state) (grafanacloud_instance_alertmanager_silences)',
         range: true,
         legendFormat: '{{state}}',
       },
@@ -18,8 +18,7 @@ export function getSilencesScene(timeRange: SceneTimeRange, datasource: DataSour
   });
 
   return new SceneFlexItem({
-    width: 'calc(50% - 4px)',
-    height: 300,
+    ...PANEL_STYLES,
     body: PanelBuilders.timeseries()
       .setTitle(panelTitle)
       .setData(query)

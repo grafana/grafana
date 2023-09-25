@@ -2,7 +2,7 @@ import { ThresholdsMode } from '@grafana/data';
 import { PanelBuilders, SceneFlexItem, SceneQueryRunner, SceneTimeRange } from '@grafana/scenes';
 import { DataSourceRef } from '@grafana/schema';
 
-const QUERY = 'sum by (alertstate) (ALERTS{alertstate="firing"})';
+import { PANEL_STYLES } from '../../../home/Insights';
 
 export function getFiringCloudAlertsScene(timeRange: SceneTimeRange, datasource: DataSourceRef, panelTitle: string) {
   const query = new SceneQueryRunner({
@@ -11,15 +11,14 @@ export function getFiringCloudAlertsScene(timeRange: SceneTimeRange, datasource:
       {
         refId: 'A',
         instant: true,
-        expr: QUERY,
+        expr: 'sum by (alertstate) (ALERTS{alertstate="firing"})',
       },
     ],
     $timeRange: timeRange,
   });
 
   return new SceneFlexItem({
-    width: 'calc(25% - 4px)',
-    height: 300,
+    ...PANEL_STYLES,
     body: PanelBuilders.stat()
       .setTitle(panelTitle)
       .setData(query)

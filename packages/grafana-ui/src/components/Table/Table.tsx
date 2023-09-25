@@ -12,7 +12,7 @@ import {
 } from 'react-table';
 import { VariableSizeList } from 'react-window';
 
-import { Field, FieldType, ReducerID } from '@grafana/data';
+import { FieldType, ReducerID } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { TableCellHeight } from '@grafana/schema';
 
@@ -176,7 +176,7 @@ export const Table = memo((props: Props) => {
     }
 
     const footerItems = getFooterItems(
-      headerGroups[0].headers as unknown as Array<{ id: string; field: Field }>,
+      headerGroups[0].headers,
       createFooterCalculationValues(rows),
       footerOptions,
       theme
