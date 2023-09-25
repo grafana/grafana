@@ -131,7 +131,7 @@ func sendWebhookUpdate(cfg setting.FeatureMgmtSettings, payload UpdatePayload) e
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusOK {
+	if resp.StatusCode >= http.StatusBadRequest {
 		if body, err := io.ReadAll(resp.Body); err != nil {
 			return fmt.Errorf("SendWebhookUpdate failed with status=%d, error: %s", resp.StatusCode, string(body))
 		} else {
