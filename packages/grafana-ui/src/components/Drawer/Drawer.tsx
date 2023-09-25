@@ -11,7 +11,6 @@ import { selectors } from '@grafana/e2e-selectors';
 import { useStyles2 } from '../../themes';
 import { Button } from '../Button';
 import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
-//import { IconButton } from '../IconButton/IconButton';
 import { Text } from '../Text/Text';
 
 export interface Props {
@@ -132,13 +131,7 @@ export function Drawer({
           )}
           {typeof title !== 'string' && title}
           <div className={styles.contentScroll}>
-            {!scrollableContent ? (
-              content
-            ) : (
-              <CustomScrollbar autoHeightMin="100%">
-                <div className={styles.content}>{children}</div>
-              </CustomScrollbar>
-            )}
+            {!scrollableContent ? content : <CustomScrollbar autoHeightMin="100%">{content}</CustomScrollbar>}
           </div>
         </div>
       </FocusScope>
