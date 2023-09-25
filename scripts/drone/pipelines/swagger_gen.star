@@ -1,6 +1,5 @@
 load(
     'scripts/drone/steps/lib.star',
-    'go_image',
 )
 
 load(
@@ -14,6 +13,11 @@ load(
     'from_secret',
 )
 
+load(
+    "scripts/drone/utils/images.star",
+    "images",
+)
+
 def clone_pr_branch(edition, ver_mode):
     if edition in ['enterprise', 'enterprise2']:
         return None
@@ -24,7 +28,7 @@ def clone_pr_branch(edition, ver_mode):
     committish = '${DRONE_SOURCE_BRANCH}'
     return {
         'name': 'clone-pr-branch',
-        'image': go_image,
+        'image': images["go"],
         'commands': [
             'git clone https://github.com/grafana/grafana.git grafana',
             'cd grafana',
@@ -42,7 +46,7 @@ def clone_enterprise_step(edition, ver_mode):
     committish = '${DRONE_SOURCE_BRANCH}'
     return {
         'name': 'clone-pr-enterprise-branch',
-        'image': go_image,
+        'image': images["go"],
         'environment': {
             'GITHUB_TOKEN': from_secret('github_token_pr'),
         },
@@ -67,7 +71,7 @@ def swagger_gen_step(edition, ver_mode):
     committish = '${DRONE_SOURCE_BRANCH}'
     return {
         'name': 'swagger-gen',
-        'image': go_image,
+        'image': images["go"],
         'environment': {
             'GITHUB_TOKEN': from_secret('github_token_pr'),
         },
