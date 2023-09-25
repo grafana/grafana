@@ -2,6 +2,7 @@ import React, { FC } from 'react';
 
 import { DataSourceRef, MetricFindValue, SelectableValue } from '@grafana/data';
 import { SegmentAsync } from '@grafana/ui';
+import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 import { getDatasourceSrv } from '../../../plugins/datasource_srv';
 
@@ -45,6 +46,7 @@ const fetchFilterValues = async (datasource: DataSourceRef, key: string): Promis
     return [];
   }
 
-  const metrics = await ds.getTagValues({ key });
+  const timeRange = getTimeSrv().timeRange();
+  const metrics = await ds.getTagValues({ key, timeRange });
   return metrics.map((m: MetricFindValue) => ({ label: m.text, value: m.text }));
 };
