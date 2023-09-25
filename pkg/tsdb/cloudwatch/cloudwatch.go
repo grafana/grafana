@@ -32,14 +32,17 @@ import (
 	"github.com/patrickmn/go-cache"
 )
 
+const tagValueCacheExpiration = time.Hour * 24
+
 type DataQueryJson struct {
 	dataquery.CloudWatchAnnotationQuery
 	Type string `json:"type,omitempty"`
 }
 
 type DataSource struct {
-	Settings   models.CloudWatchSettings
-	HTTPClient *http.Client
+	Settings      models.CloudWatchSettings
+	HTTPClient    *http.Client
+	tagValueCache *cache.Cache
 }
 
 const (
@@ -75,11 +78,10 @@ type SessionCache interface {
 
 func newExecutor(im instancemgmt.InstanceManager, cfg *setting.Cfg, sessions SessionCache, features featuremgmt.FeatureToggles) *cloudWatchExecutor {
 	e := &cloudWatchExecutor{
-		im:            im,
-		cfg:           cfg,
-		sessions:      sessions,
-		features:      features,
-		tagValueCache: cache.New(time.Hour*24, time.Hour*24*5),
+		im:       im,
+		cfg:      cfg,
+		sessions: sessions,
+		features: features,
 	}
 
 	e.resourceHandler = httpadapter.New(e.newResourceMux())
@@ -104,20 +106,20 @@ func NewInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 		}
 
 		return DataSource{
-			Settings:   instanceSettings,
-			HTTPClient: httpClient,
+			Settings:      instanceSettings,
+			HTTPClient:    httpClient,
+			tagValueCache: cache.New(tagValueCacheExpiration, tagValueCacheExpiration*5),
 		}, nil
 	}
 }
 
 // cloudWatchExecutor executes CloudWatch requests.
 type cloudWatchExecutor struct {
-	im            instancemgmt.InstanceManager
-	cfg           *setting.Cfg
-	sessions      SessionCache
-	features      featuremgmt.FeatureToggles
-	regionCache   sync.Map
-	tagValueCache *cache.Cache
+	im          instancemgmt.InstanceManager
+	cfg         *setting.Cfg
+	sessions    SessionCache
+	features    featuremgmt.FeatureToggles
+	regionCache sync.Map
 
 	resourceHandler backend.CallResourceHandler
 }
