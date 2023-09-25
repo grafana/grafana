@@ -19,6 +19,7 @@ import (
 	"k8s.io/apiserver/pkg/authentication/authenticator"
 	"k8s.io/apiserver/pkg/authentication/request/headerrequest"
 	"k8s.io/apiserver/pkg/authentication/user"
+	"k8s.io/apiserver/pkg/authorization/authorizer"
 	openapinamer "k8s.io/apiserver/pkg/endpoints/openapi"
 	"k8s.io/apiserver/pkg/endpoints/responsewriter"
 	genericapiserver "k8s.io/apiserver/pkg/server"
@@ -35,6 +36,7 @@ import (
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/modules"
 	"github.com/grafana/grafana/pkg/registry"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
@@ -97,20 +99,23 @@ type service struct {
 	stopCh    chan struct{}
 	stoppedCh chan error
 
-	rr       routing.RouteRegister
-	handler  web.Handler
-	builders []APIGroupBuilder
+	rr         routing.RouteRegister
+	handler    web.Handler
+	builders   []APIGroupBuilder
+	authorizer authorizer.Authorizer
 }
 
 func ProvideService(cfg *setting.Cfg,
 	rr routing.RouteRegister,
+	ac accesscontrol.AccessControl,
 ) (*service, error) {
 	s := &service{
-		enabled:  cfg.IsFeatureToggleEnabled(featuremgmt.FlagGrafanaAPIServer),
-		rr:       rr,
-		dataPath: path.Join(cfg.DataPath, "k8s"),
-		stopCh:   make(chan struct{}),
-		builders: []APIGroupBuilder{},
+		enabled:    cfg.IsFeatureToggleEnabled(featuremgmt.FlagGrafanaAPIServer),
+		rr:         rr,
+		dataPath:   path.Join(cfg.DataPath, "k8s"),
+		stopCh:     make(chan struct{}),
+		builders:   []APIGroupBuilder{},
+		authorizer: grafanaAuthorizer{ac},
 	}
 
 	// This will be used when running as a dskit service
@@ -237,6 +242,11 @@ func (s *service) start(ctx context.Context) error {
 		openapinamer.NewDefinitionNamer(Scheme, scheme.Scheme))
 
 	serverConfig.SkipOpenAPIInstallation = false
+
+	// Configure authorization
+	if s.authorizer != nil {
+		serverConfig.Authorization.Authorizer = s.authorizer
+	}
 
 	// Create the server
 	server, err := serverConfig.Complete().New("grafana-apiserver", genericapiserver.NewEmptyDelegate())
