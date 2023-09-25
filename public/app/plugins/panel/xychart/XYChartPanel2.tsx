@@ -11,7 +11,6 @@ import {
   ReducerID,
   getDisplayProcessor,
 } from '@grafana/data';
-import { faro } from '@grafana/faro-web-sdk';
 import { config } from '@grafana/runtime';
 import {
   Portal,
@@ -25,8 +24,6 @@ import {
 } from '@grafana/ui';
 import { FacetedData } from '@grafana/ui/src/components/uPlot/types';
 import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
-
-import { faroMeasureAndLogEvent, NULL_VALUE } from '../performanceMeasurementUtils';
 
 import { TooltipView } from './TooltipView';
 import { Options, SeriesMapping } from './panelcfg.gen';
@@ -52,8 +49,6 @@ export const XYChartPanel2 = (props: Props) => {
     isToolTipOpen.current = false;
     setShouldDisplayCloseButton(false);
     scatterHoverCallback(undefined);
-
-    faroMeasureAndLogEvent('closeTooltip', { tooltipOpen: isToolTipOpen.current.toString() }, 'xychart_panel');
   };
 
   const onUPlotClick = () => {
@@ -61,8 +56,6 @@ export const XYChartPanel2 = (props: Props) => {
 
     // Linking into useState required to re-render tooltip
     setShouldDisplayCloseButton(isToolTipOpen.current);
-
-    faroMeasureAndLogEvent('uplotClick', { tooltipOpen: isToolTipOpen.current.toString() }, 'xychart_panel');
   };
 
   const scatterHoverCallback = (hover?: ScatterHoverEvent) => {
@@ -93,22 +86,6 @@ export const XYChartPanel2 = (props: Props) => {
   const initFacets = useCallback(() => {
     setFacets(() => prepData({ error, series }, props.data.series));
   }, [props.data.series, error, series]);
-
-  useEffect(() => {
-    faro.api.pushEvent(
-      'changeSeriesMapping',
-      { seriesMapping: props.options.seriesMapping ?? NULL_VALUE },
-      'xychart_panel'
-    );
-  }, [props.options.seriesMapping]);
-
-  useEffect(() => {
-    faro.api.pushEvent(
-      'changeFieldConfig',
-      { fieldConfig: JSON.stringify(props.fieldConfig.defaults) },
-      'xychart_panel'
-    );
-  }, [props.fieldConfig.defaults]);
 
   useEffect(() => {
     if (oldOptions !== props.options || oldData?.structureRev !== props.data.structureRev) {

@@ -8,10 +8,7 @@ import {
   getFieldDisplayName,
   GrafanaTheme2,
 } from '@grafana/data';
-import { faro } from '@grafana/faro-web-sdk';
 import { Field, IconButton, Select, useStyles2 } from '@grafana/ui';
-
-import { NULL_VALUE } from '../performanceMeasurementUtils';
 
 import { getXYDimensions, isGraphable } from './dims';
 import { XYDimensionConfig, Options } from './panelcfg.gen';
@@ -97,8 +94,6 @@ export const AutoEditor = ({ value, onChange, context }: StandardEditorProps<XYD
               ...value,
               frame: v.value!,
             });
-
-            faro.api.pushEvent('onDataChange', { value: frameNames[v.value!].label }, 'xychart_panel');
           }}
         />
       </Field>
@@ -111,8 +106,6 @@ export const AutoEditor = ({ value, onChange, context }: StandardEditorProps<XYD
               ...value,
               x: v.value,
             });
-
-            faro.api.pushEvent('onXFieldChange', { value: v.value ?? NULL_VALUE }, 'xychart_panel');
           }}
         />
       </Field>
@@ -134,12 +127,6 @@ export const AutoEditor = ({ value, onChange, context }: StandardEditorProps<XYD
                     ...value,
                     exclude,
                   });
-
-                  faro.api.pushEvent(
-                    'onYFieldHide',
-                    { value: v.label!, excluded: idx < 0 ? 'true' : 'false' },
-                    'xychart_panel'
-                  );
                 }}
                 tooltip={v.value ? 'Disable' : 'Enable'}
               />
