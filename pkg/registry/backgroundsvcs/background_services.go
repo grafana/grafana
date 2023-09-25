@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/usagestats/statscollector"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/alerting"
+	"github.com/grafana/grafana/pkg/services/anonymous/anonimpl"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/cleanup"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
@@ -54,6 +55,7 @@ func ProvideBackgroundServiceRegistry(
 	publicDashboardsMetric *publicdashboardsmetric.Service,
 	keyRetriever *dynamic.KeyRetriever,
 	dynamicAngularDetectorsProvider *angulardetectorsprovider.Dynamic,
+	anon *anonimpl.AnonDeviceService,
 	// Need to make sure these are initialized, is there a better place to put them?
 	_ dashboardsnapshots.Service, _ *alerting.AlertNotificationService,
 	_ serviceaccounts.Service, _ *guardian.Provider,
@@ -92,6 +94,7 @@ func ProvideBackgroundServiceRegistry(
 		publicDashboardsMetric,
 		keyRetriever,
 		dynamicAngularDetectorsProvider,
+		anon,
 	)
 }
 

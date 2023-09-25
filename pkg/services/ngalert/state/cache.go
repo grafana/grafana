@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
@@ -31,6 +32,44 @@ func newCache() *cache {
 	return &cache{
 		states: make(map[int64]map[string]*ruleStates),
 	}
+}
+
+// RegisterMetrics registers a set of Gauges in the form of collectors for the alerts in the cache.
+func (c *cache) RegisterMetrics(r prometheus.Registerer) {
+	newAlertCountByState := func(state eval.State) prometheus.GaugeFunc {
+		return prometheus.NewGaugeFunc(prometheus.GaugeOpts{
+			Namespace:   metrics.Namespace,
+			Subsystem:   metrics.Subsystem,
+			Name:        "alerts",
+			Help:        "How many alerts by state.",
+			ConstLabels: prometheus.Labels{"state": strings.ToLower(state.String())},
+		}, func() float64 {
+			return c.countAlertsBy(state)
+		})
+	}
+
+	r.MustRegister(newAlertCountByState(eval.Normal))
+	r.MustRegister(newAlertCountByState(eval.Alerting))
+	r.MustRegister(newAlertCountByState(eval.Pending))
+	r.MustRegister(newAlertCountByState(eval.Error))
+	r.MustRegister(newAlertCountByState(eval.NoData))
+}
+
+func (c *cache) countAlertsBy(state eval.State) float64 {
+	c.mtxStates.RLock()
+	defer c.mtxStates.RUnlock()
+	var count float64
+	for _, orgMap := range c.states {
+		for _, rule := range orgMap {
+			for _, st := range rule.states {
+				if st.State == state {
+					count++
+				}
+			}
+		}
+	}
+
+	return count
 }
 
 func (c *cache) getOrCreate(ctx context.Context, log log.Logger, alertRule *ngModels.AlertRule, result eval.Result, extraLabels data.Labels, externalURL *url.URL) *State {
@@ -288,34 +327,6 @@ func (c *cache) removeByRuleUID(orgID int64, uid string) []*State {
 		states = append(states, state)
 	}
 	return states
-}
-
-func (c *cache) recordMetrics(metrics *metrics.State) {
-	c.mtxStates.RLock()
-	defer c.mtxStates.RUnlock()
-
-	// Set default values to zero such that gauges are reset
-	// after all values from a single state disappear.
-	ct := map[eval.State]int{
-		eval.Normal:   0,
-		eval.Alerting: 0,
-		eval.Pending:  0,
-		eval.NoData:   0,
-		eval.Error:    0,
-	}
-
-	for _, orgMap := range c.states {
-		for _, rule := range orgMap {
-			for _, state := range rule.states {
-				n := ct[state.State]
-				ct[state.State] = n + 1
-			}
-		}
-	}
-
-	for k, n := range ct {
-		metrics.AlertState.WithLabelValues(strings.ToLower(k.String())).Set(float64(n))
-	}
 }
 
 // if duplicate labels exist, keep the value from the first set

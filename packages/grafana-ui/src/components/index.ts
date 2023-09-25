@@ -46,7 +46,7 @@ export {
 } from './DateTimePickers/DatePickerWithInput/DatePickerWithInput';
 export { DateTimePicker } from './DateTimePickers/DateTimePicker/DateTimePicker';
 export { List } from './List/List';
-export { InteractiveTable } from './InteractiveTable/InteractiveTable';
+export { InteractiveTable, type FetchDataArgs, type FetchDataFunc } from './InteractiveTable/InteractiveTable';
 export { TagsInput } from './TagsInput/TagsInput';
 export { AutoSaveField } from './AutoSaveField/AutoSaveField';
 export { Pagination } from './Pagination/Pagination';
@@ -138,8 +138,6 @@ export {
   type PanelChromeType,
   PanelChromeLoadingIndicator,
   type PanelChromeLoadingIndicatorProps,
-  PanelChromeErrorIndicator,
-  type PanelChromeErrorIndicatorProps,
   PanelContextProvider,
   type PanelContext,
   PanelContextRoot,

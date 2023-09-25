@@ -439,6 +439,11 @@ steps:
   - go run scripts/modowners/modowners.go check go.mod
   image: golang:1.20.8-alpine
   name: validate-modfile
+- commands:
+  - apk add --update make
+  - make validate-api-spec
+  image: golang:1.20.8-alpine
+  name: validate-openapi-spec
 trigger:
   event:
   - pull_request
@@ -1624,6 +1629,11 @@ steps:
   image: golang:1.20.8-alpine
   name: validate-modfile
 - commands:
+  - apk add --update make
+  - make validate-api-spec
+  image: golang:1.20.8-alpine
+  name: validate-openapi-spec
+- commands:
   - ./bin/build verify-drone
   depends_on:
   - compile-build-cmd
@@ -1712,7 +1722,7 @@ steps:
   name: yarn-install
 - commands:
   - apk add --update jq
-  - new_version=$(cat package.json | jq .version | sed s/pre/${DRONE_BUILD_NUMBER}pre/g)
+  - new_version=$(cat package.json | jq .version | sed s/pre/${DRONE_BUILD_NUMBER}/g)
   - 'echo "New version: $new_version"'
   - yarn run lerna version $new_version --exact --no-git-tag-version --no-push --force-publish
     -y
@@ -4202,6 +4212,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: b7009bea932e621db567d1d9da72bd69d408c304585255e1c297dd63d60d956c
+hmac: f396274e4808957992b702206f675a2ff3385f67f7fce4ee8a883ceb853d5cca
 
 ...

@@ -85,5 +85,7 @@ function makeEdge(source: number, target: number): EdgeDatum {
     mainStat: '',
     secondaryStat: '',
     dataFrameRowIndex: 0,
+    sourceNodeRadius: 40,
+    targetNodeRadius: 40,
   };
 }
