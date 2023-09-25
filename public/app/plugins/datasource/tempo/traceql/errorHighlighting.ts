@@ -17,6 +17,12 @@ import {
 } from '@grafana/lezer-traceql';
 import { monacoTypes } from '@grafana/ui';
 
+/**
+ * Given an error node, generate an error message to be displayed to the user.
+ *
+ * @param errorNode the error node, as returned by the TraceQL Lezer parser
+ * @returns the error message
+ */
 export const computeErrorMessage = (errorNode: SyntaxNode) => {
   switch (errorNode.parent?.type.id) {
     case FieldExpression:

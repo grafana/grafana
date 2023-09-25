@@ -55,19 +55,6 @@ describe('computeErrorMarkers', () => {
     ['{.foo=300} | avg(.value) =', 'Invalid value after comparison operator.'],
     ['{.foo=300} && {.foo=300} | avg(.value) =', 'Invalid value after comparison operator.'],
     ['{ span.http.status_code', 'Invalid comparison operator after field expression.'],
-
-    // ['{foo}', '...'],
-    // ['avg(span.http.status_code) >', '...'],
-    // ['1 + 1 = 2 +', '...'],
-    // ['((true) && true', '...'],
-    // ['false false', '...'],
-    // ['true | max(.a) =', '...'],
-    // ['true | max((1 + ) * 2) = 1', '...'],
-    // ['true | max((1 + 1 * 2) = 1', '...'],
-    // ['{} | select(.a,.b,)', '...'],
-    // ['{} | count(foo) > 1', '...'],
-    // ['max(duration) > 1hs', '...'],
-    // ['true >> >> true', '...'],
   ])('error message for invalid query - %s, %s', (query: string, expectedErrorMessage: string) => {
     const errorNode = getErrorNodes(query)[0];
     expect(computeErrorMessage(errorNode)).toBe(expectedErrorMessage);
