@@ -33,15 +33,15 @@ func (h *HierarchicalEntity[T]) GetEntity() T {
 }
 */
 
-type hierarchicalStore struct {
+type treeStore struct {
 	sqlStore
 	db  db.DB
 	log log.Logger
 }
 
-func ProvideHierarchicalStore(db db.DB) *hierarchicalStore {
+func ProvideTreeStore(db db.DB) *treeStore {
 	logger := log.New("folder-store-mptt")
-	store := &hierarchicalStore{
+	store := &treeStore{
 		db:  db,
 		log: logger,
 	}
@@ -51,7 +51,7 @@ func ProvideHierarchicalStore(db db.DB) *hierarchicalStore {
 	return store
 }
 
-func (hs *hierarchicalStore) migrate(ctx context.Context, orgID int64, f *folder.Folder, counter int64) (int64, error) {
+func (hs *treeStore) migrate(ctx context.Context, orgID int64, f *folder.Folder, counter int64) (int64, error) {
 	// TODO: run only once
 	err := hs.db.InTransaction(ctx, func(ctx context.Context) error {
 		var children []*folder.Folder
@@ -112,7 +112,7 @@ func (hs *hierarchicalStore) migrate(ctx context.Context, orgID int64, f *folder
 	return counter, err
 }
 
-func (hs *hierarchicalStore) Create(ctx context.Context, cmd folder.CreateFolderCommand) (*folder.Folder, error) {
+func (hs *treeStore) Create(ctx context.Context, cmd folder.CreateFolderCommand) (*folder.Folder, error) {
 	if cmd.UID == "" {
 		return nil, folder.ErrBadRequest.Errorf("missing UID")
 	}
@@ -178,7 +178,7 @@ func (hs *hierarchicalStore) Create(ctx context.Context, cmd folder.CreateFolder
 }
 
 // Delete deletes a folder and all its descendants
-func (hs *hierarchicalStore) Delete(ctx context.Context, uid string, orgID int64) error {
+func (hs *treeStore) Delete(ctx context.Context, uid string, orgID int64) error {
 	if err := hs.db.InTransaction(ctx, func(ctx context.Context) error {
 		if err := hs.db.WithDbSession(ctx, func(sess *db.Session) error {
 			type res struct {
@@ -214,7 +214,7 @@ func (hs *hierarchicalStore) Delete(ctx context.Context, uid string, orgID int64
 	return nil
 }
 
-func (hs *hierarchicalStore) Update(ctx context.Context, cmd folder.UpdateFolderCommand) (*folder.Folder, error) {
+func (hs *treeStore) Update(ctx context.Context, cmd folder.UpdateFolderCommand) (*folder.Folder, error) {
 	var foldr *folder.Folder
 	var err error
 	if err := hs.db.InTransaction(ctx, func(ctx context.Context) error {
@@ -237,7 +237,7 @@ func (hs *hierarchicalStore) Update(ctx context.Context, cmd folder.UpdateFolder
 	return foldr, nil
 }
 
-func (hs *hierarchicalStore) GetParents(ctx context.Context, cmd folder.GetParentsQuery) ([]*folder.Folder, error) {
+func (hs *treeStore) GetParents(ctx context.Context, cmd folder.GetParentsQuery) ([]*folder.Folder, error) {
 	var folders []*folder.Folder
 	err := hs.db.WithDbSession(ctx, func(sess *db.Session) error {
 		if err := sess.SQL(`
@@ -258,7 +258,7 @@ func (hs *hierarchicalStore) GetParents(ctx context.Context, cmd folder.GetParen
 	return folders, nil
 }
 
-func (hs *hierarchicalStore) GetHeight(ctx context.Context, foldrUID string, orgID int64, _ *string) (int, error) {
+func (hs *treeStore) GetHeight(ctx context.Context, foldrUID string, orgID int64, _ *string) (int, error) {
 	var subpaths []string
 	err := hs.db.WithDbSession(ctx, func(sess *db.Session) error {
 		// get subpaths of the leaf nodes under the given folder
@@ -288,7 +288,7 @@ func (hs *hierarchicalStore) GetHeight(ctx context.Context, foldrUID string, org
 	return int(height), err
 }
 
-func (hs *hierarchicalStore) getTree(ctx context.Context, orgID int64) ([]string, error) {
+func (hs *treeStore) getTree(ctx context.Context, orgID int64) ([]string, error) {
 	var tree []string
 	err := hs.db.WithDbSession(ctx, func(sess *db.Session) error {
 		if err := sess.SQL(`

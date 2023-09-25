@@ -56,14 +56,14 @@ func storeFolders(t *testing.T, storeDB db.DB, storeLeftRight bool) {
 
 }
 
-func TestIntegrationMigrate(t *testing.T) {
+func TestIntegrationTreeStoreMigrate(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
 
 	sqlStore := sqlstore.InitTestDB(t)
 
-	folderStore := ProvideHierarchicalStore(sqlStore)
+	folderStore := ProvideTreeStore(sqlStore)
 	storeFolders(t, folderStore.db, false)
 
 	_, err := folderStore.migrate(context.Background(), 1, nil, 0)
@@ -99,13 +99,13 @@ func TestIntegrationMigrate(t *testing.T) {
 	}, tree)
 }
 
-func TestIntegrationGetParentsMPTT(t *testing.T) {
+func TestIntegrationTreeStoreGetParents(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
 
 	sqlStore := sqlstore.InitTestDB(t)
-	folderStore := ProvideHierarchicalStore(sqlStore)
+	folderStore := ProvideTreeStore(sqlStore)
 	storeFolders(t, folderStore.db, true)
 
 	ancestors, err := folderStore.GetParents(context.Background(), folder.GetParentsQuery{
@@ -121,7 +121,7 @@ func TestIntegrationGetParentsMPTT(t *testing.T) {
 	}
 }
 
-func TestIntegrationCreateMPTT(t *testing.T) {
+func TestIntegrationTreeStoreCreate(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
@@ -221,7 +221,7 @@ func TestIntegrationCreateMPTT(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
 			sqlStore := sqlstore.InitTestDB(t)
-			folderStore := ProvideHierarchicalStore(sqlStore)
+			folderStore := ProvideTreeStore(sqlStore)
 			storeFolders(t, folderStore.db, true)
 
 			_, err := folderStore.Create(context.Background(), folder.CreateFolderCommand{
@@ -240,13 +240,13 @@ func TestIntegrationCreateMPTT(t *testing.T) {
 	}
 }
 
-func TestIntegrationGetChildrenMPTT(t *testing.T) {
+func TestIntegrationTreeStoreGetChildren(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
 
 	sqlStore := sqlstore.InitTestDB(t)
-	folderStore := ProvideHierarchicalStore(sqlStore)
+	folderStore := ProvideTreeStore(sqlStore)
 	storeFolders(t, folderStore.db, true)
 
 	testCases := []struct {
@@ -320,7 +320,7 @@ func TestIntegrationGetChildrenMPTT(t *testing.T) {
 	}
 }
 
-func TestIntegrationGetHeightMPTT(t *testing.T) {
+func TestIntegrationTreeStoreGetHeight(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
@@ -383,7 +383,7 @@ func TestIntegrationGetHeightMPTT(t *testing.T) {
 	}
 
 	sqlStore := sqlstore.InitTestDB(t)
-	folderStore := ProvideHierarchicalStore(sqlStore)
+	folderStore := ProvideTreeStore(sqlStore)
 	storeFolders(t, folderStore.db, true)
 
 	for _, tc := range testCases {
@@ -395,13 +395,13 @@ func TestIntegrationGetHeightMPTT(t *testing.T) {
 	}
 }
 
-func TestIntegrationUpdateMPTT(t *testing.T) {
+func TestIntegrationTreeStoreUpdate(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
 
 	sqlStore := sqlstore.InitTestDB(t)
-	folderStore := ProvideHierarchicalStore(sqlStore)
+	folderStore := ProvideTreeStore(sqlStore)
 	storeFolders(t, folderStore.db, true)
 
 	testCases := []struct {
@@ -441,7 +441,7 @@ func TestIntegrationUpdateMPTT(t *testing.T) {
 	}
 }
 
-func TestIntegrationDeleteMPTT(t *testing.T) {
+func TestIntegrationTreeStoreDelete(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
@@ -588,7 +588,7 @@ func TestIntegrationDeleteMPTT(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
 			sqlStore := sqlstore.InitTestDB(t)
-			folderStore := ProvideHierarchicalStore(sqlStore)
+			folderStore := ProvideTreeStore(sqlStore)
 			storeFolders(t, folderStore.db, true)
 
 			err := folderStore.Delete(context.Background(), tc.UID, 1)
@@ -602,7 +602,7 @@ func TestIntegrationDeleteMPTT(t *testing.T) {
 	}
 }
 
-func TestIntegrationMoveMPTT(t *testing.T) {
+func TestIntegrationTreeStoreMove(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
@@ -737,7 +737,7 @@ func TestIntegrationMoveMPTT(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
 			sqlStore := sqlstore.InitTestDB(t)
-			folderStore := ProvideHierarchicalStore(sqlStore)
+			folderStore := ProvideTreeStore(sqlStore)
 			storeFolders(t, folderStore.db, true)
 
 			_, err := folderStore.Update(context.Background(), folder.UpdateFolderCommand{
