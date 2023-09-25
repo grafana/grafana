@@ -132,7 +132,13 @@ export function Drawer({
           )}
           {typeof title !== 'string' && title}
           <div className={styles.contentScroll}>
-            {!scrollableContent ? content : <CustomScrollbar autoHeightMin="100%">{content}</CustomScrollbar>}
+            {!scrollableContent ? (
+              content
+            ) : (
+              <CustomScrollbar autoHeightMin="100%">
+                <div className={styles.content}>{children}</div>
+              </CustomScrollbar>
+            )}
           </div>
         </div>
       </FocusScope>
@@ -162,6 +168,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       height: '100%',
       flex: '1 1 0',
       minHeight: '100%',
+      overflow: 'auto',
     }),
     drawer: css({
       '.main-view &': {
@@ -272,9 +279,14 @@ const getStyles = (theme: GrafanaTheme2) => {
       },
     }),
     header: css({
+      label: 'drawer-header',
       flexGrow: 0,
       padding: theme.spacing(3, 2),
       borderBottom: `1px solid ${theme.colors.border.weak}`,
+
+      [theme.breakpoints.down('sm')]: {
+        paddingTop: theme.spacing(2),
+      },
     }),
     headerWithTabs: css({
       borderBottom: 'none',
@@ -283,11 +295,17 @@ const getStyles = (theme: GrafanaTheme2) => {
       position: 'absolute',
       right: theme.spacing(1),
       top: theme.spacing(2),
+
+      [theme.breakpoints.down('sm')]: {
+        top: theme.spacing(1),
+      },
     }),
     titleWrapper: css({
+      label: 'drawer-title',
       overflowWrap: 'break-word',
     }),
     subtitle: css({
+      label: 'drawer-subtitle',
       color: theme.colors.text.secondary,
       paddingTop: theme.spacing(1),
     }),
@@ -297,12 +315,17 @@ const getStyles = (theme: GrafanaTheme2) => {
       flexGrow: 1,
     }),
     contentScroll: css({
-      minHeight: 0,
+      label: 'drawer-content',
       flex: 1,
     }),
     tabsWrapper: css({
+      label: 'drawer-tabs',
       paddingLeft: theme.spacing(2),
       margin: theme.spacing(2, -1, -3, -3),
+
+      [theme.breakpoints.down('sm')]: {
+        marginTop: theme.spacing(0),
+      },
     }),
   };
 };
