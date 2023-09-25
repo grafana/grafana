@@ -25,7 +25,7 @@ export const DefaultCell = (props: TableCellProps) => {
   const showActions = (showFilters && cell.value !== undefined) || inspectEnabled;
   const cellOptions = getCellOptions(field);
   const cellStyle = getCellStyle(tableStyles, cellOptions, displayValue, inspectEnabled);
-  const hasLinks = Boolean(getCellLinks(field, row)?.length);
+  const hasLinks = Boolean(getCellLinks(field, row, frame)?.length);
   const clearButtonStyle = useStyles2(clearLinkButtonStyles);
   let value: string | ReactElement;
 
@@ -45,7 +45,7 @@ export const DefaultCell = (props: TableCellProps) => {
       {!hasLinks && <div className={tableStyles.cellText}>{value}</div>}
 
       {hasLinks && (
-        <DataLinksContextMenu links={() => getCellLinks(field, row) || []}>
+        <DataLinksContextMenu links={() => getCellLinks(field, row, frame) || []}>
           {(api) => {
             if (api.openMenu) {
               return (

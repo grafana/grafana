@@ -9,18 +9,18 @@ import { DataLinksContextMenu } from '../DataLinks/DataLinksContextMenu';
 import { TableCellProps } from './types';
 
 export const ImageCell = (props: TableCellProps) => {
-  const { field, cell, tableStyles, row, cellProps } = props;
+  const { field, cell, tableStyles, row, cellProps, frame } = props;
 
   const displayValue = field.display!(cell.value);
 
-  const hasLinks = Boolean(getCellLinks(field, row)?.length);
+  const hasLinks = Boolean(getCellLinks(field, row, frame)?.length);
   const clearButtonStyle = useStyles2(clearLinkButtonStyles);
 
   return (
     <div {...cellProps} className={tableStyles.cellContainer}>
       {!hasLinks && <img src={displayValue.text} className={tableStyles.imageCell} alt="" />}
       {hasLinks && (
-        <DataLinksContextMenu style={{ height: '100%' }} links={() => getCellLinks(field, row) || []}>
+        <DataLinksContextMenu style={{ height: '100%' }} links={() => getCellLinks(field, row, frame) || []}>
           {(api) => {
             const img = <img src={displayValue.text} className={tableStyles.imageCell} alt="" />;
             if (api.openMenu) {

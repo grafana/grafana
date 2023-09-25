@@ -1,12 +1,12 @@
 import { Row } from 'react-table';
 
-import { Field, LinkModel } from '@grafana/data';
+import { DataFrame, Field, LinkModel } from '@grafana/data';
 
 /**
  * @internal
  */
-export const getCellLinks = (field: Field, row: Row) => {
-  let links: Array<LinkModel<unknown>> | undefined;
+export const getCellLinks = (field: Field, row: Row, frame: DataFrame) => {
+  let links: LinkModel[] | undefined;
   if (field.getLinks) {
     links = field.getLinks({
       valueRowIndex: row.index,
@@ -28,6 +28,7 @@ export const getCellLinks = (field: Field, row: Row) => {
           origOnClick!(event, {
             field,
             rowIndex: row.index,
+            frame,
           });
         }
       };

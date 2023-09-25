@@ -11,7 +11,7 @@ import { CellActions } from './CellActions';
 import { TableCellProps } from './types';
 
 export function JSONViewCell(props: TableCellProps): JSX.Element {
-  const { cell, tableStyles, cellProps, field, row } = props;
+  const { cell, tableStyles, cellProps, field, row, frame } = props;
   const inspectEnabled = Boolean(field.config.custom?.inspect);
   const txt = css({
     cursor: 'pointer',
@@ -29,7 +29,7 @@ export function JSONViewCell(props: TableCellProps): JSX.Element {
     displayValue = JSON.stringify(value, null, ' ');
   }
 
-  const hasLinks = Boolean(getCellLinks(field, row)?.length);
+  const hasLinks = Boolean(getCellLinks(field, row, frame)?.length);
   const clearButtonStyle = useStyles2(clearLinkButtonStyles);
 
   return (
@@ -37,7 +37,7 @@ export function JSONViewCell(props: TableCellProps): JSX.Element {
       <div className={cx(tableStyles.cellText, txt)}>
         {!hasLinks && <div className={tableStyles.cellText}>{displayValue}</div>}
         {hasLinks && (
-          <DataLinksContextMenu links={() => getCellLinks(field, row) || []}>
+          <DataLinksContextMenu links={() => getCellLinks(field, row, frame) || []}>
             {(api) => {
               if (api.openMenu) {
                 return (

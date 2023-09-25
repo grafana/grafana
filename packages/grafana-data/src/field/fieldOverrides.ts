@@ -446,7 +446,7 @@ export const getLinksSupplier =
           href: link.url,
           title: replaceVariables(link.title || '', dataLinkScopedVars),
           target: link.targetBlank ? '_blank' : undefined,
-          onClick: (evt: MouseEvent, origin: Field) => {
+          onClick: (evt: MouseEvent, origin?: Field) => {
             link.onClick!({
               origin: origin ?? field,
               e: evt,
