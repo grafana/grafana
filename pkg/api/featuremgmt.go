@@ -46,8 +46,8 @@ func (hs *HTTPServer) UpdateFeatureToggle(ctx *contextmodel.ReqContext) response
 		return response.Error(http.StatusForbidden, "feature toggles are read-only", fmt.Errorf("feature toggles are configured to be read-only"))
 	}
 
-	if featureMgmtCfg.UpdateControllerUrl == "" {
-		return response.Error(http.StatusInternalServerError, "feature toggles service is misconfigured", fmt.Errorf("[feature_management]update_controller_url is not set"))
+	if featureMgmtCfg.UpdateWebhook == "" {
+		return response.Error(http.StatusInternalServerError, "feature toggles service is misconfigured", fmt.Errorf("[feature_management]update_webhook is not set"))
 	}
 
 	cmd := featuremgmt.UpdateFeatureTogglesCommand{}
@@ -103,7 +103,7 @@ func isFeatureWriteable(flag featuremgmt.FeatureFlag, readOnlyCfg map[string]str
 
 // isFeatureEditingAllowed checks if the backend is properly configured to allow feature toggle changes from the UI
 func isFeatureEditingAllowed(cfg setting.Cfg) bool {
-	return cfg.FeatureManagement.AllowEditing && cfg.FeatureManagement.UpdateControllerUrl != ""
+	return cfg.FeatureManagement.AllowEditing && cfg.FeatureManagement.UpdateWebhook != ""
 }
 
 type UpdatePayload struct {
@@ -117,13 +117,13 @@ func sendWebhookUpdate(cfg setting.FeatureMgmtSettings, payload UpdatePayload, l
 		return err
 	}
 
-	req, err := http.NewRequest(http.MethodPost, cfg.UpdateControllerUrl, bytes.NewBuffer(data))
+	req, err := http.NewRequest(http.MethodPost, cfg.UpdateWebhook, bytes.NewBuffer(data))
 	if err != nil {
 		return err
 	}
 
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", "Bearer "+cfg.UpdateControllerToken)
+	req.Header.Set("Authorization", "Bearer "+cfg.UpdateWebhookToken)
 
 	client := &http.Client{}
 	resp, err := client.Do(req)

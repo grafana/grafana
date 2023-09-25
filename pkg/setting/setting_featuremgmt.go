@@ -5,11 +5,11 @@ import (
 )
 
 type FeatureMgmtSettings struct {
-	HiddenToggles         map[string]struct{}
-	ReadOnlyToggles       map[string]struct{}
-	AllowEditing          bool
-	UpdateControllerUrl   string
-	UpdateControllerToken string
+	HiddenToggles      map[string]struct{}
+	ReadOnlyToggles    map[string]struct{}
+	AllowEditing       bool
+	UpdateWebhook      string
+	UpdateWebhookToken string
 }
 
 func (cfg *Cfg) readFeatureManagementConfig() {
@@ -33,6 +33,6 @@ func (cfg *Cfg) readFeatureManagementConfig() {
 	cfg.FeatureManagement.HiddenToggles = hiddenToggles
 	cfg.FeatureManagement.ReadOnlyToggles = readOnlyToggles
 	cfg.FeatureManagement.AllowEditing = cfg.SectionWithEnvOverrides("feature_management").Key("allow_editing").MustBool(false)
-	cfg.FeatureManagement.UpdateControllerUrl = cfg.SectionWithEnvOverrides("feature_management").Key("update_controller_url").MustString("")
-	cfg.FeatureManagement.UpdateControllerToken = cfg.SectionWithEnvOverrides("feature_management").Key("update_controller_token").MustString("")
+	cfg.FeatureManagement.UpdateWebhook = cfg.SectionWithEnvOverrides("feature_management").Key("update_webhook").MustString("")
+	cfg.FeatureManagement.UpdateWebhookToken = cfg.SectionWithEnvOverrides("feature_management").Key("update_webhook_token").MustString("")
 }
