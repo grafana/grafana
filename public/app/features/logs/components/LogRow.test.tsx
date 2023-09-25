@@ -167,4 +167,26 @@ describe('LogRow', () => {
     const row = container.querySelector('tr');
     expect(row).toHaveStyle(`background-color: ${tinycolor(theme.colors.info.transparent).setAlpha(0.25).toString()}`);
   });
+
+  describe('Log details', () => {
+    it('should highlight the original log row when showing its context', async () => {
+      setup({ enableLogDetails: true });
+  
+      expect(screen.queryByText('No details available')).not.toBeInTheDocument();
+      await userEvent.click(screen.getByText('test123'));
+      expect(await screen.findByText('No details available')).toBeInTheDocument();
+    });
+
+    it('should highlight the original log row when showing its context', async () => {
+      const selection = window.getSelection();
+      jest.spyOn(window, 'getSelection').mockReturnValue(selection);
+      jest.spyOn(selection!, 'toString').mockReturnValue('selection');
+
+      setup({ enableLogDetails: true });
+  
+      expect(screen.queryByText('No details available')).not.toBeInTheDocument();
+      await userEvent.click(screen.getByText('test123'));
+      expect(screen.queryByText('No details available')).not.toBeInTheDocument();
+    });
+  })
 });

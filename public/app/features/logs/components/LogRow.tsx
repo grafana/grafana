@@ -92,6 +92,11 @@ class UnThemedLogRow extends PureComponent<Props, State> {
       return;
     }
 
+    // If the user selected some text, we don't want to toggle the details.
+    if (window.getSelection()?.toString()) {
+      return;
+    }
+
     reportInteraction('grafana_explore_logs_log_details_clicked', {
       datasourceType: this.props.row.datasourceType,
       type: this.state.showDetails ? 'close' : 'open',
