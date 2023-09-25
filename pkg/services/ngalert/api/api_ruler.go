@@ -93,10 +93,8 @@ func (srv RulerSrv) RouteDeleteAlertRules(c *contextmodel.ReqContext, namespaceT
 				continue
 			}
 			uid := make([]string, 0, len(rules))
-			keys := make([]ngmodels.AlertRuleKey, 0, len(rules))
 			for _, rule := range rules {
 				uid = append(uid, rule.UID)
-				keys = append(keys, rule.GetKey())
 			}
 			rulesToDelete = append(rulesToDelete, uid...)
 		}
