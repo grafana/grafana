@@ -495,7 +495,14 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
     return (
       <>
         <PanelContextProvider value={this.state.context}>
-          <PanelPerformanceMonitor panelType={plugin.meta.id}>
+          <PanelPerformanceMonitor
+            panelType={plugin.meta.id}
+            panelId={panel.id}
+            panelTitle={panel.title}
+            panelOptions={panelOptions}
+            panelFieldConfig={panel.fieldConfig}
+            timeRange={timeRange}
+          >
             <PanelComponent
               id={panel.id}
               data={data}
