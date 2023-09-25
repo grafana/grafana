@@ -34,12 +34,12 @@ func (e *cloudWatchExecutor) getDimensionValuesForWildcards(pluginCtx backend.Pl
 			cacheKey := fmt.Sprintf("%s-%s-%s-%s-%s", region, accountID, query.Namespace, query.MetricName, dimensionKey)
 			cachedDimensions, found := tagValueCache.Get(cacheKey)
 			if found {
-				logger.Debug("Fetching dimension values from cache", "key", cacheKey)
+				logger.Debug("Fetching dimension values from cache")
 				query.Dimensions[dimensionKey] = cachedDimensions.([]string)
 				continue
 			}
 
-			logger.Debug("Cache miss, fetching dimension values from AWS", "key", cacheKey)
+			logger.Debug("Cache miss, fetching dimension values from AWS")
 			request := resources.DimensionValuesRequest{
 				ResourceRequest: &resources.ResourceRequest{
 					Region:    region,
