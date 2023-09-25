@@ -41,6 +41,7 @@ load(
 load(
     "scripts/drone/vault.star",
     "from_secret",
+    "npm_token",
     "rgm_cdn_destination",
     "rgm_dagger_token",
     "rgm_destination",
@@ -118,8 +119,7 @@ def rgm_env_secrets(env):
     env["GPG_PASSPHRASE"] = from_secret("packages_gpg_passphrase")
     env["DOCKER_USERNAME"] = from_secret("docker_username")
     env["DOCKER_PASSWORD"] = from_secret("docker_password")
-    env["ACCESS_KEY_ID"] = from_secret("packages_access_key_id")
-    env["SECRET_ACCESS_KEY"] = from_secret("packages_secret_access_key")
+    env["NPM_TOKEN"] = from_secret(npm_token)
     return env
 
 def rgm_run(name, script):
@@ -136,7 +136,7 @@ def rgm_run(name, script):
     }
     rgm_run_step = {
         "name": name,
-        "image": "grafana/grafana-build:dev-657ea6a",
+        "image": "grafana/grafana-build:dev-1a9beec",
         "pull": "always",
         "commands": [
             "export GRAFANA_DIR=$$(pwd)",
