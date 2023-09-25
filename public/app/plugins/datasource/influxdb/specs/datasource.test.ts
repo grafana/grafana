@@ -212,11 +212,31 @@ describe('InfluxDataSource', () => {
   // Some functions are required by the parent datasource class to provide functionality
   // such as ad-hoc filters, which requires the definition of the getTagKeys, and getTagValues
   describe('Datasource contract', () => {
+    const metricFindQueryMock = jest.fn();
+    beforeEach(() => {
+      ctx.ds.metricFindQuery = metricFindQueryMock;
+    });
+
+    afterEach(() => {
+      jest.clearAllMocks();
+    });
+
     it('has function called getTagKeys', () => {
       expect(Object.getOwnPropertyNames(Object.getPrototypeOf(ctx.ds))).toContain('getTagKeys');
     });
+
     it('has function called getTagValues', () => {
       expect(Object.getOwnPropertyNames(Object.getPrototypeOf(ctx.ds))).toContain('getTagValues');
+    });
+
+    it('should be able to call getTagKeys without specifying any parameter', () => {
+      ctx.ds.getTagKeys();
+      expect(metricFindQueryMock).toHaveBeenCalled();
+    });
+
+    it('should be able to call getTagValues without specifying anything but key', () => {
+      ctx.ds.getTagValues({ key: 'test' });
+      expect(metricFindQueryMock).toHaveBeenCalled();
     });
   });
 

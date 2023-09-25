@@ -200,13 +200,18 @@ describe('CompletionProvider', () => {
   ])(
     'suggests operators that go after `|` (aggregators, selectorts, ...) - %s, %i',
     async (input: string, offset: number) => {
-      const { provider, model } = setup(input, offset);
+      const { provider, model } = setup(input, offset, undefined, v2Tags);
       const result = await provider.provideCompletionItems(model, emptyPosition);
-      expect((result! as monacoTypes.languages.CompletionList).suggestions).toEqual(
-        CompletionProvider.functions.map((s) =>
+      expect((result! as monacoTypes.languages.CompletionList).suggestions).toEqual([
+        ...CompletionProvider.functions.map((s) =>
           expect.objectContaining({ label: s.label, insertText: s.insertText, documentation: s.documentation })
-        )
-      );
+        ),
+        ...scopes.map((s) => expect.objectContaining({ label: s, insertText: s })),
+        ...intrinsics.map((s) => expect.objectContaining({ label: s, insertText: s })),
+        expect.objectContaining({ label: 'cluster', insertText: '.cluster' }),
+        expect.objectContaining({ label: 'container', insertText: '.container' }),
+        expect.objectContaining({ label: 'db', insertText: '.db' }),
+      ]);
     }
   );
 

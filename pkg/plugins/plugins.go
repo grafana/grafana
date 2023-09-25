@@ -132,6 +132,8 @@ func ReadPluginJSON(reader io.Reader) (JSONData, error) {
 		plugin.Name = "Pie Chart (old)"
 	case "grafana-pyroscope-datasource": // rebranding
 		plugin.Alias = "phlare"
+	case "grafana-testdata-datasource":
+		plugin.Alias = "testdata"
 	case "debug": // panel plugin used for testing
 		plugin.Alias = "debugX"
 	}

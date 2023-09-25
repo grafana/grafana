@@ -4,8 +4,6 @@ import React from 'react';
 
 import { ConfirmModal } from '@grafana/ui';
 
-import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
-
 import mdx from './ConfirmModal.mdx';
 
 const defaultExcludes = ['onConfirm', 'onDismiss', 'onAlternative'];
@@ -13,7 +11,6 @@ const defaultExcludes = ['onConfirm', 'onDismiss', 'onAlternative'];
 const meta: Meta<typeof ConfirmModal> = {
   title: 'Overlays/ConfirmModal',
   component: ConfirmModal,
-  decorators: [withCenteredStory],
   parameters: {
     docs: {
       page: mdx,

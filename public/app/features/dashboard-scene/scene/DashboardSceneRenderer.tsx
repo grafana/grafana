@@ -11,7 +11,7 @@ import { DashboardScene } from './DashboardScene';
 import { NavToolbarActions } from './NavToolbarActions';
 
 export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardScene>) {
-  const { controls, viewPanelKey: viewPanelId, drawer } = model.useState();
+  const { controls, viewPanelKey: viewPanelId, overlay } = model.useState();
   const styles = useStyles2(getStyles);
   const location = useLocation();
   const pageNav = model.getPageNav(location);
@@ -35,7 +35,7 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
           </div>
         </div>
       </CustomScrollbar>
-      {drawer && <drawer.Component model={drawer} />}
+      {overlay && <overlay.Component model={overlay} />}
     </Page>
   );
 }

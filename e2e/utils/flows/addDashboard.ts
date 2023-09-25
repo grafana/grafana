@@ -3,7 +3,6 @@ import { v4 as uuidv4 } from 'uuid';
 import { e2e } from '../index';
 import { getDashboardUid } from '../support/url';
 
-import { DeleteDashboardConfig } from './deleteDashboard';
 import { selectOption } from './selectOption';
 import { setDashboardTimeRange, TimeRangeConfig } from './setDashboardTimeRange';
 
@@ -154,9 +153,9 @@ export const addDashboard = (config?: Partial<AddDashboardConfig>) => {
     .then((url: string) => {
       const uid = getDashboardUid(url);
 
-      e2e.getScenarioContext().then(({ addedDashboards }: any) => {
+      e2e.getScenarioContext().then(({ addedDashboards }) => {
         e2e.setScenarioContext({
-          addedDashboards: [...addedDashboards, { title, uid } as DeleteDashboardConfig],
+          addedDashboards: [...addedDashboards, { title, uid }],
         });
       });
 
