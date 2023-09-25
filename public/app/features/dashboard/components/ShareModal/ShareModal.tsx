@@ -67,11 +67,9 @@ function getTabs(panel?: PanelModel, activeTab?: string) {
     });
   }
 
-  if (1 === 1) {
-    //if config feature toggle enabled
-    const imageLabel = t('share-modal.tab-title.image', 'Image');
-    tabs.push({ label: imageLabel, value: shareDashboardType.image, component: ShareImage });
-  }
+  //Add feature toggle enabled check
+  const imageLabel = t('share-modal.tab-title.image', 'Image');
+  tabs.push({ label: imageLabel, value: shareDashboardType.image, component: ShareImage });
 
   const at = tabs.find((t) => t.value === activeTab);
 

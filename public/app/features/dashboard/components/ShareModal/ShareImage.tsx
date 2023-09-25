@@ -107,7 +107,6 @@ export class ShareImage extends PureComponent<Props, State> {
     request.responseType = 'blob';
     request.open('GET', this.state.imageUrl);
     request.addEventListener('error', () => {
-      console.log('error');
       this.setState({ isDownloading: false });
     });
     request.addEventListener('load', () => {
