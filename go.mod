@@ -38,7 +38,7 @@ require (
 	github.com/beevik/etree v1.2.0 // @grafana/backend-platform
 	github.com/benbjohnson/clock v1.3.5 // @grafana/alerting-squad-backend
 	github.com/blang/semver/v4 v4.0.0 // @grafana/grafana-delivery
-	github.com/bradfitz/gomemcache v0.0.0-20220106215444-fb4bf637b56d // @grafana/backend-platform
+	github.com/bradfitz/gomemcache v0.0.0-20190913173617-a41fca850d0b // @grafana/backend-platform
 	github.com/centrifugal/centrifuge v0.30.2 // @grafana/grafana-app-platform-squad
 	github.com/crewjam/saml v0.4.13 // @grafana/backend-platform
 	github.com/fatih/color v1.15.0 // @grafana/backend-platform
@@ -198,7 +198,7 @@ require (
 	github.com/olekukonko/tablewriter v0.0.5 // @grafana/backend-platform
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/prometheus/common/sigv4 v0.1.0 // indirect
-	github.com/prometheus/exporter-toolkit v0.10.1-0.20230714054209-2f4150c63f97 // indirect
+	github.com/prometheus/exporter-toolkit v0.10.0 // indirect
 	github.com/prometheus/procfs v0.10.1 // indirect
 	github.com/protocolbuffers/txtpbfmt v0.0.0-20220428173112-74888fd59c2b // indirect
 	github.com/rs/cors v1.9.0 // indirect
@@ -236,10 +236,10 @@ require (
 	github.com/dlmiddlecote/sqlstats v1.0.2 // @grafana/backend-platform
 	github.com/drone/drone-cli v1.6.1 // @grafana/grafana-delivery
 	github.com/getkin/kin-openapi v0.115.0 // @grafana/grafana-operator-experience-squad
-	github.com/golang-migrate/migrate/v4 v4.15.1 // @grafana/backend-platform
+	github.com/golang-migrate/migrate/v4 v4.7.0 // @grafana/backend-platform
 	github.com/google/go-github/v45 v45.2.0 // @grafana/grafana-delivery
 	github.com/grafana/codejen v0.0.3 // @grafana/dataviz-squad
-	github.com/grafana/dskit v0.0.0-20230817134647-90d7ee0bed7c // @grafana/backend-platform
+	github.com/grafana/dskit v0.0.0-20230706162620-5081d8ed53e6 // @grafana/backend-platform
 	github.com/grafana/phlare/api v0.1.4-0.20230426005640-f90edba05413 // @grafana/observability-traces-and-profiling
 	github.com/huandu/xstrings v1.3.1 // @grafana/partner-datasources
 	github.com/jmoiron/sqlx v1.3.5 // @grafana/backend-platform
@@ -337,13 +337,12 @@ require (
 	github.com/google/gofuzz v1.2.0 // indirect
 	github.com/google/s2a-go v0.1.4 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.2.3 // indirect
-	github.com/grafana/auth v0.0.0-20230919112034-2fb5e55e81ed // indirect
 	github.com/grafana/regexp v0.0.0-20221123153739-15dc172cd2db // indirect
 	github.com/grafana/sqlds/v2 v2.3.10 // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
 	github.com/hashicorp/go-immutable-radix v1.3.1 // indirect
 	github.com/hashicorp/go-retryablehttp v0.7.2 // indirect
-	github.com/hashicorp/golang-lru/v2 v2.0.5 // indirect
+	github.com/hashicorp/golang-lru/v2 v2.0.2 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/hashicorp/memberlist v0.5.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
@@ -366,7 +365,6 @@ require (
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/image-spec v1.0.3-0.20220512140940-7b36cea86235 // indirect
-	github.com/opentracing-contrib/go-grpc v0.0.0-20210225150812-73cb765af46e // indirect
 	github.com/opentracing-contrib/go-stdlib v1.0.0 // indirect
 	github.com/ory/go-acc v0.2.6 // indirect
 	github.com/ory/go-convenience v0.1.0 // indirect
@@ -381,9 +379,7 @@ require (
 	github.com/rogpeppe/go-internal v1.11.0 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/segmentio/asm v1.2.0 // indirect
-	github.com/sercand/kuberesolver/v4 v4.0.0 // indirect
 	github.com/shopspring/decimal v1.2.0 // indirect
-	github.com/soheilhy/cmux v0.1.5 // indirect
 	github.com/spf13/afero v1.9.2 // indirect
 	github.com/spf13/cast v1.5.0 // indirect
 	github.com/spf13/cobra v1.7.0 // indirect
@@ -511,5 +507,3 @@ replace github.com/prometheus/alertmanager => github.com/grafana/prometheus-aler
 replace google.golang.org/grpc => google.golang.org/grpc v1.45.0
 
 exclude github.com/mattn/go-sqlite3 v2.0.3+incompatible
-
-replace github.com/docker/distribution => github.com/docker/distribution v2.8.2+incompatible
