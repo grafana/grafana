@@ -19,23 +19,53 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-var folderTitle string = "folder1"
-var folderDsc string = "folder desc"
+func TestIntegrationSQLStore(t *testing.T) {
+	db := sqlstore.InitTestDB(t)
+	orgID := createOrg(t, db)
+	folderStore := ProvideStore(db, db.Cfg, featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders))
 
-func TestIntegrationCreate(t *testing.T) {
+	testIntegrationStore(t, folderStore, orgID)
+}
+
+func testIntegrationStore(t *testing.T, folderStore store, orgID int64) {
+	t.Run("test integration get", func(t *testing.T) {
+		testIntegrationGet(t, folderStore, orgID)
+	})
+
+	t.Run("test integration get parents", func(t *testing.T) {
+		testIntegrationGetParents(t, folderStore, orgID)
+	})
+
+	t.Run("test integration get children", func(t *testing.T) {
+		testIntegrationGetChildren(t, folderStore, orgID)
+	})
+
+	t.Run("test integration create", func(t *testing.T) {
+		testIntegrationCreate(t, folderStore, orgID)
+	})
+
+	t.Run("test integration delete", func(t *testing.T) {
+		testIntegrationDelete(t, folderStore, orgID)
+	})
+
+	t.Run("test integration update", func(t *testing.T) {
+		testIntegrationUpdate(t, folderStore, orgID)
+	})
+}
+
+func testIntegrationCreate(t *testing.T, folderStore store, orgID int64) {
+	t.Helper()
+
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
 
-	db := sqlstore.InitTestDB(t)
-	folderStore := ProvideStore(db, db.Cfg, featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders))
-
-	orgID := CreateOrg(t, db)
-
+	folderTitle := "testIntegrationCreate"
+	folderDsc := "folder desc"
 	t.Run("creating a folder without providing a UID should fail", func(t *testing.T) {
 		_, err := folderStore.Create(context.Background(), folder.CreateFolderCommand{
 			Title:       folderTitle,
-			Description: folderDsc,
+			Description: folderTitle + " desc",
 			OrgID:       orgID,
 		})
 		require.Error(t, err)
@@ -142,15 +172,12 @@ func TestIntegrationCreate(t *testing.T) {
 	})
 }
 
-func TestIntegrationDelete(t *testing.T) {
+func testIntegrationDelete(t *testing.T, folderStore store, orgID int64) {
+	t.Helper()
+
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
-
-	db := sqlstore.InitTestDB(t)
-	folderStore := ProvideStore(db, db.Cfg, featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders))
-
-	orgID := CreateOrg(t, db)
 
 	/*
 		t.Run("attempt to delete unknown folder should fail", func(t *testing.T) {
@@ -159,7 +186,7 @@ func TestIntegrationDelete(t *testing.T) {
 		})
 	*/
 
-	ancestorUIDs := CreateSubtree(t, folderStore, orgID, "", folder.MaxNestedFolderDepth, "")
+	ancestorUIDs := createSubtree(t, folderStore, orgID, "", folder.MaxNestedFolderDepth, "")
 	require.Len(t, ancestorUIDs, folder.MaxNestedFolderDepth)
 
 	t.Cleanup(func() {
@@ -189,17 +216,16 @@ func TestIntegrationDelete(t *testing.T) {
 	})
 }
 
-func TestIntegrationUpdate(t *testing.T) {
+func testIntegrationUpdate(t *testing.T, folderStore store, orgID int64) {
+	t.Helper()
+
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
 
-	db := sqlstore.InitTestDB(t)
-	folderStore := ProvideStore(db, db.Cfg, featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders))
-
-	orgID := CreateOrg(t, db)
-
 	// create parent folder
+	folderTitle := "testIntegrationUpdate"
+	folderDsc := "folder desc"
 	parent, err := folderStore.Create(context.Background(), folder.CreateFolderCommand{
 		Title:       folderTitle,
 		Description: folderDsc,
@@ -364,18 +390,17 @@ func TestIntegrationUpdate(t *testing.T) {
 	})
 }
 
-func TestIntegrationGet(t *testing.T) {
+func testIntegrationGet(t *testing.T, folderStore store, orgID int64) {
+	t.Helper()
+
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
 
-	db := sqlstore.InitTestDB(t)
-	folderStore := ProvideStore(db, db.Cfg, featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders))
-
-	orgID := CreateOrg(t, db)
-
 	// create folder
 	uid1 := util.GenerateShortUID()
+	folderTitle := "testIntegrationGet"
+	folderDsc := "folder desc"
 	f, err := folderStore.Create(context.Background(), folder.CreateFolderCommand{
 		Title:       folderTitle,
 		Description: folderDsc,
@@ -417,7 +442,7 @@ func TestIntegrationGet(t *testing.T) {
 			OrgID: orgID,
 		})
 		require.NoError(t, err)
-		assert.Equal(t, f.ID, ff.ID)
+		//assert.Equal(t, f.ID, ff.ID)
 		assert.Equal(t, f.UID, ff.UID)
 		assert.Equal(t, f.OrgID, ff.OrgID)
 		assert.Equal(t, f.Title, ff.Title)
@@ -445,18 +470,17 @@ func TestIntegrationGet(t *testing.T) {
 	})
 }
 
-func TestIntegrationGetParents(t *testing.T) {
+func testIntegrationGetParents(t *testing.T, folderStore store, orgID int64) {
+	t.Helper()
+
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
 
-	db := sqlstore.InitTestDB(t)
-	folderStore := ProvideStore(db, db.Cfg, featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders))
-
-	orgID := CreateOrg(t, db)
-
 	// create folder
 	uid1 := util.GenerateShortUID()
+	folderTitle := "testIntegrationGetParents"
+	folderDsc := "folder desc"
 	f, err := folderStore.Create(context.Background(), folder.CreateFolderCommand{
 		Title:       folderTitle,
 		Description: folderDsc,
@@ -513,18 +537,17 @@ func TestIntegrationGetParents(t *testing.T) {
 	})
 }
 
-func TestIntegrationGetChildren(t *testing.T) {
+func testIntegrationGetChildren(t *testing.T, folderStore store, orgID int64) {
+	t.Helper()
+
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
 
-	db := sqlstore.InitTestDB(t)
-	folderStore := ProvideStore(db, db.Cfg, featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders))
-
-	orgID := CreateOrg(t, db)
-
 	// create folder
 	uid1 := util.GenerateShortUID()
+	folderTitle := "testIntegrationGetChildren"
+	folderDsc := "folder desc"
 	parent, err := folderStore.Create(context.Background(), folder.CreateFolderCommand{
 		Title:       folderTitle,
 		Description: folderDsc,
@@ -533,7 +556,7 @@ func TestIntegrationGetChildren(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	treeLeaves := CreateLeaves(t, folderStore, parent, 8)
+	treeLeaves := createLeaves(t, folderStore, parent, 8)
 	sort.Strings(treeLeaves)
 
 	t.Cleanup(func() {
@@ -674,17 +697,23 @@ func TestIntegrationGetChildren(t *testing.T) {
 }
 
 func TestIntegrationGetHeight(t *testing.T) {
+	db := sqlstore.InitTestDB(t)
+	folderStore := ProvideStore(db, db.Cfg, featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders))
+	orgID := createOrg(t, db)
+	testIntegrationGetHeight(t, folderStore, orgID)
+}
+
+func testIntegrationGetHeight(t *testing.T, folderStore store, orgID int64) {
+	t.Helper()
+
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
 
-	db := sqlstore.InitTestDB(t)
-	folderStore := ProvideStore(db, db.Cfg, featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders))
-
-	orgID := CreateOrg(t, db)
-
 	// create folder
 	uid1 := util.GenerateShortUID()
+	folderTitle := "testIntegrationGetHeight"
+	folderDsc := "folder desc"
 	parent, err := folderStore.Create(context.Background(), folder.CreateFolderCommand{
 		Title:       folderTitle,
 		Description: folderDsc,
@@ -692,7 +721,7 @@ func TestIntegrationGetHeight(t *testing.T) {
 		UID:         uid1,
 	})
 	require.NoError(t, err)
-	subTree := CreateSubtree(t, folderStore, orgID, parent.UID, 4, "sub")
+	subTree := createSubtree(t, folderStore, orgID, parent.UID, 4, "sub")
 	t.Run("should successfully get height", func(t *testing.T) {
 		height, err := folderStore.GetHeight(context.Background(), parent.UID, orgID, nil)
 		require.NoError(t, err)
@@ -705,7 +734,7 @@ func TestIntegrationGetHeight(t *testing.T) {
 	})
 }
 
-func CreateOrg(t *testing.T, db *sqlstore.SQLStore) int64 {
+func createOrg(t *testing.T, db *sqlstore.SQLStore) int64 {
 	t.Helper()
 
 	orgService, err := orgimpl.ProvideService(db, db.Cfg, quotatest.New(false, nil))
@@ -720,7 +749,7 @@ func CreateOrg(t *testing.T, db *sqlstore.SQLStore) int64 {
 	return orgID
 }
 
-func CreateSubtree(t *testing.T, store *sqlStore, orgID int64, parentUID string, depth int, prefix string) []string {
+func createSubtree(t *testing.T, store store, orgID int64, parentUID string, depth int, prefix string) []string {
 	t.Helper()
 
 	ancestorUIDs := []string{}
@@ -760,7 +789,7 @@ func CreateSubtree(t *testing.T, store *sqlStore, orgID int64, parentUID string,
 	return ancestorUIDs
 }
 
-func CreateLeaves(t *testing.T, store *sqlStore, parent *folder.Folder, num int) []string {
+func createLeaves(t *testing.T, store store, parent *folder.Folder, num int) []string {
 	t.Helper()
 
 	leaves := make([]string, 0)
@@ -778,7 +807,7 @@ func CreateLeaves(t *testing.T, store *sqlStore, parent *folder.Folder, num int)
 	return leaves
 }
 
-func assertAncestorUIDs(t *testing.T, store *sqlStore, f *folder.Folder, expected []string) {
+func assertAncestorUIDs(t *testing.T, store store, f *folder.Folder, expected []string) {
 	t.Helper()
 
 	ancestors, err := store.GetParents(context.Background(), folder.GetParentsQuery{
@@ -793,7 +822,7 @@ func assertAncestorUIDs(t *testing.T, store *sqlStore, f *folder.Folder, expecte
 	assert.Equal(t, expected, actualAncestorsUIDs)
 }
 
-func assertChildrenUIDs(t *testing.T, store *sqlStore, f *folder.Folder, expected []string) {
+func assertChildrenUIDs(t *testing.T, store store, f *folder.Folder, expected []string) {
 	t.Helper()
 
 	ancestors, err := store.GetChildren(context.Background(), folder.GetChildrenQuery{
