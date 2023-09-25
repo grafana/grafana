@@ -780,5 +780,12 @@ var (
 			Owner:           hostedGrafanaTeam,
 			RequiresRestart: true,
 		},
+		{
+			Name:            "idForwarding",
+			Description:     "Generate signed id token for identity that can be forwarded to plugins and external services",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaAuthnzSquad,
+			RequiresDevMode: true,
+		},
 	}
 )
