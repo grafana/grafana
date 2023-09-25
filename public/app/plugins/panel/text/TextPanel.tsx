@@ -104,6 +104,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     `
   ),
   containStrict: css({
-    contain: 'strict'
+    contain: 'strict',
   }),
 });
