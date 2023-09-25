@@ -74,6 +74,7 @@ export const ConfigEditor = (props: Props) => {
             jsonData: {
               ...options.jsonData,
               sigV4Auth: method === 'custom-sigv4',
+              oauthPassThru: method === AuthMethod.OAuthForward,
             },
           });
         }}

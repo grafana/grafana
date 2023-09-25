@@ -65,6 +65,7 @@ export interface ElasticsearchOptions extends DataSourceJsonData {
   includeFrozen?: boolean;
   index?: string;
   sigV4Auth?: boolean;
+  oauthPassThru?: boolean;
 }
 
 export type QueryType = 'metrics' | 'logs' | 'raw_data' | 'raw_document';
