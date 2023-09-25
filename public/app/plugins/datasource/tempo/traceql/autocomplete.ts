@@ -340,7 +340,7 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
         const functions = CompletionProvider.functions.map((key) => ({
           ...key,
           insertTextRules: this.monaco?.languages.CompletionItemInsertTextRule?.InsertAsSnippet,
-          type: 'FUNCTION' as CompletionType,
+          type: 'FUNCTION' as const,
         }));
         const tags = this.getScopesCompletions()
           .concat(this.getIntrinsicsCompletions())

@@ -16,18 +16,20 @@ const ThemeableStory = ({
 
   handleSassThemeChange(theme);
 
-  const css = `#storybook-root {
-    width: 100%;
-    padding: 20px;
-    display: flex;
-    height: 100%;
-    min-height: 100%;
+  const css = `
+  #storybook-root {
+    padding: ${theme.spacing(2)};
+  }
+
+  body {
     background: ${theme.colors.background.primary};
-  }`;
+  }
+  `;
 
   return (
     <ThemeContext.Provider value={theme}>
       <GlobalStyles />
+
       <style>{css}</style>
       {children}
     </ThemeContext.Provider>

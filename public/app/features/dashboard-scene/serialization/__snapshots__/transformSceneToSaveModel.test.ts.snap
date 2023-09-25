@@ -1,7 +1,85 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`transformSceneToSaveModel Annotations should transform annotations to save model 1`] = `
+[
+  {
+    "builtIn": 1,
+    "datasource": {
+      "type": "datasource",
+      "uid": "grafana",
+    },
+    "enable": true,
+    "hide": false,
+    "iconColor": "rgba(0, 211, 255, 1)",
+    "name": "Annotations & Alerts",
+    "type": "dashboard",
+  },
+  {
+    "datasource": {
+      "type": "testdata",
+      "uid": "gdev-testdata",
+    },
+    "enable": true,
+    "hide": false,
+    "iconColor": "red",
+    "name": "Enabled",
+    "target": {
+      "lines": 4,
+      "refId": "Anno",
+      "scenarioId": "annotations",
+    },
+  },
+  {
+    "datasource": {
+      "type": "testdata",
+      "uid": "gdev-testdata",
+    },
+    "enable": false,
+    "hide": false,
+    "iconColor": "yellow",
+    "name": "Disabled",
+    "target": {
+      "lines": 5,
+      "refId": "Anno",
+      "scenarioId": "annotations",
+    },
+  },
+  {
+    "datasource": {
+      "type": "testdata",
+      "uid": "gdev-testdata",
+    },
+    "enable": true,
+    "hide": true,
+    "iconColor": "dark-purple",
+    "name": "Hidden",
+    "target": {
+      "lines": 6,
+      "refId": "Anno",
+      "scenarioId": "annotations",
+    },
+  },
+]
+`;
+
 exports[`transformSceneToSaveModel Given a scene with rows Should transform back to peristed model 1`] = `
 {
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --",
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard",
+      },
+    ],
+  },
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
@@ -120,6 +198,67 @@ exports[`transformSceneToSaveModel Given a scene with rows Should transform back
 
 exports[`transformSceneToSaveModel Given a simple scene Should transform back to peristed model 1`] = `
 {
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "datasource",
+          "uid": "grafana",
+        },
+        "enable": true,
+        "hide": false,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard",
+      },
+      {
+        "datasource": {
+          "type": "testdata",
+          "uid": "gdev-testdata",
+        },
+        "enable": true,
+        "hide": false,
+        "iconColor": "red",
+        "name": "Enabled",
+        "target": {
+          "lines": 4,
+          "refId": "Anno",
+          "scenarioId": "annotations",
+        },
+      },
+      {
+        "datasource": {
+          "type": "testdata",
+          "uid": "gdev-testdata",
+        },
+        "enable": false,
+        "hide": false,
+        "iconColor": "yellow",
+        "name": "Disabled",
+        "target": {
+          "lines": 5,
+          "refId": "Anno",
+          "scenarioId": "annotations",
+        },
+      },
+      {
+        "datasource": {
+          "type": "testdata",
+          "uid": "gdev-testdata",
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "dark-purple",
+        "name": "Hidden",
+        "target": {
+          "lines": 6,
+          "refId": "Anno",
+          "scenarioId": "annotations",
+        },
+      },
+    ],
+  },
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,

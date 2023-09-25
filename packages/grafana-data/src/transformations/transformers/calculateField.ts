@@ -58,7 +58,7 @@ export interface CalculateFieldTransformerOptions {
   // TODO: config?: FieldConfig; or maybe field overrides? since the UI exists
 }
 
-type ValuesCreator = (data: DataFrame) => any[];
+type ValuesCreator = (data: DataFrame) => unknown[] | undefined;
 
 export const calculateFieldTransformer: DataTransformerInfo<CalculateFieldTransformerOptions> = {
   id: DataTransformerID.calculateField,
@@ -178,7 +178,7 @@ function getReduceRowCreator(options: ReduceOptions, allFrames: DataFrame[]): Va
 
   return (frame: DataFrame) => {
     // Find the columns that should be examined
-    const columns: any[] = [];
+    const columns = [];
     for (const field of frame.fields) {
       if (matcher(field, frame, allFrames)) {
         columns.push(field.values);
@@ -239,7 +239,7 @@ function getBinaryCreator(options: BinaryOptions, allFrames: DataFrame[]): Value
     const left = findFieldValuesWithNameOrConstant(frame, options.left, allFrames);
     const right = findFieldValuesWithNameOrConstant(frame, options.right, allFrames);
     if (!left || !right || !operator) {
-      return undefined as unknown as any[];
+      return undefined;
     }
 
     const arr = new Array(left.length);

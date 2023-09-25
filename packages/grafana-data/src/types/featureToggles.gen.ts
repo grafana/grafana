@@ -128,4 +128,7 @@ export interface FeatureToggles {
   wargamesTesting?: boolean;
   alertingInsights?: boolean;
   cloudAccessPolicies?: boolean;
+  externalCorePlugins?: boolean;
+  pluginsAPIMetrics?: boolean;
+  httpSLOLevels?: boolean;
 }

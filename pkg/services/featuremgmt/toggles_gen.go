@@ -446,4 +446,16 @@ const (
 	// FlagCloudAccessPolicies
 	// Start an authentication client for cloud access policy tokens
 	FlagCloudAccessPolicies = "cloudAccessPolicies"
+
+	// FlagExternalCorePlugins
+	// Allow core plugins to be loaded as external
+	FlagExternalCorePlugins = "externalCorePlugins"
+
+	// FlagPluginsAPIMetrics
+	// Sends metrics of public grafana packages usage by plugins
+	FlagPluginsAPIMetrics = "pluginsAPIMetrics"
+
+	// FlagHttpSLOLevels
+	// Adds SLO level to http request metrics
+	FlagHttpSLOLevels = "httpSLOLevels"
 )
