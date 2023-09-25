@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/api/avatar"
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/apis"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/cuectx"
 	"github.com/grafana/grafana/pkg/expr"
@@ -361,6 +362,7 @@ var wireBasicSet = wire.NewSet(
 	signingkeysimpl.ProvideEmbeddedSigningKeysService,
 	wire.Bind(new(signingkeys.Service), new(*signingkeysimpl.Service)),
 	grafanaapiserver.WireSet,
+	apis.WireSet,
 )
 
 var wireSet = wire.NewSet(

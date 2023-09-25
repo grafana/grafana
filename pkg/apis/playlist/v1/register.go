@@ -1,8 +1,6 @@
 package v1
 
 import (
-	"github.com/grafana/grafana/pkg/apis"
-	"github.com/grafana/grafana/pkg/services/playlist"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -11,6 +9,9 @@ import (
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	common "k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
+
+	grafanaapiserver "github.com/grafana/grafana/pkg/services/grafana-apiserver"
+	"github.com/grafana/grafana/pkg/services/playlist"
 )
 
 // GroupName is the group name for this API.
@@ -18,17 +19,19 @@ const GroupName = "playlist.x.grafana.com"
 const VersionID = "v0-alpha" //
 const APIVersion = GroupName + "/" + VersionID
 
-var _ apis.APIGroupBuilder = (*PlaylistAPIBuilder)(nil)
+var _ grafanaapiserver.APIGroupBuilder = (*PlaylistAPIBuilder)(nil)
 
 // This is used just so wire has something unique to return
 type PlaylistAPIBuilder struct {
 	service playlist.Service
 }
 
-func RegisterAPIService(p playlist.Service) *PlaylistAPIBuilder {
-	return &PlaylistAPIBuilder{
+func RegisterAPIService(p playlist.Service, apiregistration grafanaapiserver.APIRegistrar) *PlaylistAPIBuilder {
+	builder := &PlaylistAPIBuilder{
 		service: p,
 	}
+	apiregistration.RegisterAPI(builder)
+	return builder
 }
 
 func (b *PlaylistAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {

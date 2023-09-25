@@ -4,13 +4,14 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/grafana/grafana/pkg/apis"
-	"github.com/grafana/grafana/pkg/services/playlist"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
+
+	grafanaapiserver "github.com/grafana/grafana/pkg/services/grafana-apiserver"
+	"github.com/grafana/grafana/pkg/services/playlist"
 )
 
 var _ rest.Scoper = (*handler)(nil)
@@ -51,7 +52,7 @@ func (r *handler) List(ctx context.Context, options *internalversion.ListOptions
 		return nil, fmt.Errorf("namespace required")
 	}
 
-	orgId, err := apis.NamespaceToOrgID(ns)
+	orgId, err := grafanaapiserver.NamespaceToOrgID(ns)
 	if err != nil {
 		return nil, err
 	}
@@ -100,7 +101,7 @@ func (r *handler) Get(ctx context.Context, name string, options *metav1.GetOptio
 		return nil, fmt.Errorf("namespace required")
 	}
 
-	orgId, err := apis.NamespaceToOrgID(ns)
+	orgId, err := grafanaapiserver.NamespaceToOrgID(ns)
 	if err != nil {
 		return nil, err
 	}
