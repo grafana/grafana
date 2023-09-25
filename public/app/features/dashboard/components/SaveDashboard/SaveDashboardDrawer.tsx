@@ -51,9 +51,9 @@ export const SaveDashboardDrawer = ({ dashboard, onDismiss, onSaveSuccess, isCop
   const { state, onDashboardSave } = useDashboardSave(dashboard, isCopy);
   const onSuccess = onSaveSuccess
     ? () => {
-        onDismiss();
-        onSaveSuccess();
-      }
+      onDismiss();
+      onSaveSuccess();
+    }
     : onDismiss;
 
   const renderSaveBody = () => {
@@ -128,7 +128,6 @@ export const SaveDashboardDrawer = ({ dashboard, onDismiss, onSaveSuccess, isCop
           )}
         </TabsBar>
       }
-      // scrollableContent
     >
       {renderSaveBody()}
 
