@@ -61,6 +61,7 @@ import {
 import { getCorrelations } from './correlations';
 import { saveCorrelationsAction } from './explorePane';
 import { addHistoryItem, historyUpdatedAction, loadRichHistory } from './history';
+import { changeCorrelationEditorDetails } from './main';
 import { updateTime } from './time';
 import { createCacheKey, filterLogRowsByIndex, getDatasourceUIDs, getResultsFromCache } from './utils';
 
@@ -319,6 +320,13 @@ export const changeQueries = createAsyncThunk<void, ChangeQueriesPayload>(
     let queriesImported = false;
     const oldQueries = getState().explore.panes[exploreId]!.queries;
     const rootUID = getState().explore.panes[exploreId]!.datasourceInstance?.uid;
+    const correlationDetails = getState().explore.correlationEditorDetails;
+    const isCorrelationsEditorMode = correlationDetails?.editorMode || false;
+    const isLeftPane = Object.entries(getState().explore.panes)[0][0] === exploreId;
+
+    if (!isLeftPane && isCorrelationsEditorMode && !correlationDetails?.dirty) {
+      dispatch(changeCorrelationEditorDetails({ dirty: true }));
+    }
 
     for (const newQuery of queries) {
       for (const oldQuery of oldQueries) {
