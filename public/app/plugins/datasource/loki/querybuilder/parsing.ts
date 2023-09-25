@@ -121,7 +121,6 @@ export function buildVisualQueryFromString(expr: string): Context {
   if (isEmptyQuery(context.query)) {
     context.errors = [];
   }
-
   return context;
 }
 
