@@ -215,9 +215,27 @@
       "unmark-favorite": "Ůŉmäřĸ äş ƒävőřįŧę"
     }
   },
+  "data-source-picker": {
+    "open-advanced-button": "Øpęŉ äđväŉčęđ đäŧä şőūřčę pįčĸęř"
+  },
   "data-sources": {
     "datasource-add-button": {
       "label": "Åđđ ŉęŵ đäŧä şőūřčę"
+    }
+  },
+  "explore": {
+    "add-to-dashboard": "Åđđ ŧő đäşĥþőäřđ",
+    "toolbar": {
+      "aria-label": "Ēχpľőřę ŧőőľþäř",
+      "copy-shortened-link": "Cőpy şĥőřŧęŉęđ ľįŉĸ",
+      "refresh-picker-cancel": "Cäŉčęľ",
+      "refresh-picker-run": "Ŗūŉ qūęřy",
+      "split-close": "Cľőşę",
+      "split-close-tooltip": "Cľőşę şpľįŧ päŉę",
+      "split-narrow": "Ńäřřőŵ päŉę",
+      "split-title": "Ŝpľįŧ",
+      "split-tooltip": "Ŝpľįŧ ŧĥę päŉę",
+      "split-widen": "Ŵįđęŉ päŉę"
     }
   },
   "folder-picker": {
@@ -848,7 +866,8 @@
       "select-time": "Ŝęľęčŧ ä ŧįmę řäŉģę"
     },
     "content": {
-      "empty-recent-list": "<0><0>Ĩŧ ľőőĸş ľįĸę yőū ĥävęŉ&äpőş;ŧ ūşęđ ŧĥįş ŧįmę pįčĸęř þęƒőřę. Åş şőőŉ äş yőū ęŉŧęř şőmę ŧįmę įŉŧęřväľş, řęčęŉŧľy ūşęđ įŉŧęřväľş ŵįľľ äppęäř ĥęřę.</0></0><1><0>Ŗęäđ ŧĥę đőčūmęŉŧäŧįőŉ</0><1> ŧő ƒįŉđ őūŧ mőřę äþőūŧ ĥőŵ ŧő ęŉŧęř čūşŧőm ŧįmę řäŉģęş.</1></1>",
+      "empty-recent-list-docs": "<0><0>Ŗęäđ ŧĥę đőčūmęŉŧäŧįőŉ</0><1> ŧő ƒįŉđ őūŧ mőřę äþőūŧ ĥőŵ ŧő ęŉŧęř čūşŧőm ŧįmę řäŉģęş.</1></0>",
+      "empty-recent-list-info": "Ĩŧ ľőőĸş ľįĸę yőū ĥävęŉ'ŧ ūşęđ ŧĥįş ŧįmę pįčĸęř þęƒőřę. Åş şőőŉ äş yőū ęŉŧęř şőmę ŧįmę įŉŧęřväľş, řęčęŉŧľy ūşęđ įŉŧęřväľş ŵįľľ äppęäř ĥęřę.",
       "filter-placeholder": "Ŝęäřčĥ qūįčĸ řäŉģęş"
     },
     "footer": {
