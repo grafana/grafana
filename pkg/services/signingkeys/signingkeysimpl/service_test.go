@@ -10,8 +10,10 @@ import (
 	"testing"
 
 	"github.com/go-jose/go-jose/v3"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/infra/log"
 )
 
 const (
@@ -225,7 +227,7 @@ func TestEmbeddedKeyService_AddPrivateKey(t *testing.T) {
 }
 
 func TestProvideEmbeddedSigningKeysService(t *testing.T) {
-	s, err := ProvideEmbeddedSigningKeysService()
+	s, err := ProvideEmbeddedSigningKeysService(routing.NewRouteRegister())
 	require.NoError(t, err)
 	require.NotNil(t, s)
 
