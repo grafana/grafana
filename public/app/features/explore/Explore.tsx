@@ -71,35 +71,35 @@ import { updateTimeRange } from './state/time';
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    exploreMain: css`
-      label: exploreMain;
+    exploreMain: css({
+      label: 'exploreMain',
       // Is needed for some transition animations to work.
-      position: relative;
-      margin-top: 21px;
-      display: flex;
-      flex-direction: column;
-      gap: ${theme.spacing(1)};
-    `,
-    queryContainer: css`
-      label: queryContainer;
+      position: 'relative',
+      marginTop: '21px',
+      display: 'flex',
+      flexDirection: 'column',
+      gap: theme.spacing(1),
+    }),
+    queryContainer: css({
+      label: 'queryContainer',
       // Need to override normal css class and don't want to count on ordering of the classes in html.
-      height: auto !important;
-      flex: unset !important;
-      display: unset !important;
-      padding: ${theme.spacing(1)};
-    `,
-    exploreContainer: css`
-      display: flex;
-      padding: ${theme.spacing(2)};
-      padding-top: 0;
-      flex: 1 0 auto;
-    `,
-    columnWrapper: css`
-      display: flex;
-      flex-direction: column;
-      padding: ${theme.spacing(0, 0.25)};
-      flex: 1 1 auto;
-    `,
+      height: 'auto !important',
+      flex: 'unset !important',
+      display: 'unset !important',
+      padding: theme.spacing(1),
+    }),
+    exploreContainer: css({
+      display: 'flex',
+      padding: theme.spacing(2),
+      paddingTop: 0,
+      flex: '1 0 auto',
+    }),
+    columnWrapper: css({
+      display: 'flex',
+      flexDirection: 'column',
+      padding: theme.spacing(0, 0.25),
+      flex: '1 1 auto',
+    }),
   };
 };
 
@@ -415,11 +415,11 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
     const { exploreId, syncedTimes, theme, queryResponse } = this.props;
     const spacing = parseInt(theme.spacing(2).slice(0, -2), 10);
     // Need to make ContenOutlineItem a flex container so the gap works
-    const logsContentOutlineWrapper = css`
-      display: flex;
-      flex-direction: column;
-      gap: ${theme.spacing(1)};
-    `;
+    const logsContentOutlineWrapper = css({
+      display: 'flex',
+      flexDirection: 'column',
+      gap: theme.spacing(1),
+    });
     return (
       <ContentOutlineItem title="Logs" icon="gf-logs" className={logsContentOutlineWrapper}>
         <LogsContainer
