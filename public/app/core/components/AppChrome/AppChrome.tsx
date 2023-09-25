@@ -3,7 +3,7 @@ import { useDialog } from '@react-aria/dialog';
 import { FocusScope } from '@react-aria/focus';
 import { OverlayContainer, useOverlay } from '@react-aria/overlays';
 import classNames from 'classnames';
-import React, { PropsWithChildren, useEffect, useRef, useState } from 'react';
+import React, { PropsWithChildren, useRef } from 'react';
 import CSSTransition from 'react-transition-group/CSSTransition';
 
 import { GrafanaTheme2, PageLayoutType } from '@grafana/data';
@@ -25,11 +25,26 @@ const MENU_WIDTH = '350px';
 export interface Props extends PropsWithChildren<{}> {}
 
 export function AppChrome({ children }: Props) {
+  const theme = useTheme2();
   const { chrome } = useGrafana();
   const state = chrome.useState();
-
   const searchBarHidden = state.searchBarHidden || state.kioskMode === KioskMode.TV;
   const styles = useStyles2(getStyles, searchBarHidden);
+
+  const menuRef = useRef(null);
+  const menuBackdropRef = useRef(null);
+  const menuAnimationSpeed = theme.transitions.duration.shortest;
+  const menuAnimStyles = useStyles2(getAnimStyles, menuAnimationSpeed);
+  const menuOnClose = () => chrome.setMegaMenu(false);
+  const { overlayProps, underlayProps } = useOverlay(
+    {
+      isDismissable: true,
+      isOpen: true,
+      onClose: menuOnClose,
+    },
+    menuRef
+  );
+  const { dialogProps } = useDialog({}, menuRef);
 
   const contentClass = cx({
     [styles.content]: true,
@@ -37,33 +52,9 @@ export function AppChrome({ children }: Props) {
     [styles.contentChromeless]: state.chromeless,
   });
 
-  const menuRef = useRef(null);
-  const [menuIsOpen, setMenuIsOpen] = useState(false);
-  const theme = useTheme2();
-  const menuAnimationSpeed = theme.transitions.duration.shortest;
-  const menuAnimStyles = getAnimStyles(theme, menuAnimationSpeed);
-  const menuBackdropRef = useRef(null);
-  const menuOnClose = () => chrome.setMegaMenu(false);
-  const { overlayProps, underlayProps } = useOverlay(
-    {
-      isDismissable: true,
-      isOpen: true,
-      onClose: () => setMenuIsOpen(false),
-    },
-    menuRef
-  );
-  const { dialogProps } = useDialog({}, menuRef);
-
-  useEffect(() => {
-    if (state.megaMenuOpen) {
-      setMenuIsOpen(true);
-    }
-  }, [state.megaMenuOpen]);
-
   // Chromeless routes are without topNav, mega menu, search & command palette
   // We check chromeless twice here instead of having a separate path so {children}
   // doesn't get re-mounted when chromeless goes from true to false.
-
   return (
     <div
       className={classNames('main-view', {
@@ -90,12 +81,14 @@ export function AppChrome({ children }: Props) {
           </div>
         </>
       )}
-      <main className={contentClass} id="pageContent">
+      <main className={contentClass}>
         <div className={styles.panes}>
           {state.layout === PageLayoutType.Standard && state.sectionNav && !config.featureToggles.dockedMegaMenu && (
             <SectionNav model={state.sectionNav} />
           )}
-          <div className={styles.pageContainer}>{children}</div>
+          <div className={styles.pageContainer} id="pageContent">
+            {children}
+          </div>
         </div>
       </main>
       {!state.chromeless && (
@@ -105,21 +98,25 @@ export function AppChrome({ children }: Props) {
               <OverlayContainer>
                 <CSSTransition
                   nodeRef={menuRef}
-                  in={menuIsOpen}
+                  in={state.megaMenuOpen}
                   unmountOnExit={true}
                   classNames={menuAnimStyles.overlay}
                   timeout={{ enter: menuAnimationSpeed, exit: 0 }}
                   onExited={menuOnClose}
                 >
                   <FocusScope contain autoFocus>
-                    <div className={styles.menuContainer}>
-                      <DockedMegaMenu onClose={() => setMenuIsOpen(false)} ref={menuRef} {...overlayProps} {...dialogProps}/>
-                    </div>
+                    <DockedMegaMenu
+                      className={styles.menuContainer}
+                      onClose={menuOnClose}
+                      ref={menuRef}
+                      {...overlayProps}
+                      {...dialogProps}
+                    />
                   </FocusScope>
                 </CSSTransition>
                 <CSSTransition
                   nodeRef={menuBackdropRef}
-                  in={menuIsOpen}
+                  in={state.megaMenuOpen}
                   unmountOnExit={true}
                   classNames={menuAnimStyles.backdrop}
                   timeout={{ enter: menuAnimationSpeed, exit: 0 }}
@@ -164,7 +161,6 @@ const getStyles = (theme: GrafanaTheme2, searchBarHidden?: boolean) => {
       bottom: 0,
       flexDirection: 'column',
       left: 0,
-      marginRight: theme.spacing(1.5),
       right: 0,
       // Needs to below navbar should we change the navbarFixed? add add a new level?
       zIndex: theme.zIndex.modal,
@@ -176,6 +172,7 @@ const getStyles = (theme: GrafanaTheme2, searchBarHidden?: boolean) => {
 
       [theme.breakpoints.up('md')]: {
         right: 'unset',
+        borderRight: `1px solid ${theme.colors.border.weak}`,
         top: topPosition,
       },
     }),
@@ -267,7 +264,6 @@ const getAnimStyles = (theme: GrafanaTheme2, animationDuration: number) => {
   const overlayOpen = {
     width: '100%',
     [theme.breakpoints.up('md')]: {
-      borderRight: `1px solid ${theme.colors.border.weak}`,
       boxShadow: theme.shadows.z3,
       width: MENU_WIDTH,
     },
