@@ -70,7 +70,7 @@ These examples show how often and when reminders are sent for a triggered alert.
 | Prometheus Alertmanager                       | `prometheus-alertmanager` | yes, external only | yes                      |
 | [Pushover](#pushover)                         | `pushover`                | yes                | no                       |
 | Sensu                                         | `sensu`                   | yes, external only | no                       |
-| [Sensu Go](#sensu-go)                         | `sensugo`                 | yes, external only | no                       |
+| Sensu Go                                      | `sensugo`                 | yes, external only | no                       |
 | [Slack](#slack)                               | `slack`                   | yes                | no                       |
 | Telegram                                      | `telegram`                | yes                | no                       |
 | Threema                                       | `threema`                 | yes, external only | no                       |
