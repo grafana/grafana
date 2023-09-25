@@ -1,5 +1,7 @@
 import React from 'react';
 
+import { Alert } from '@grafana/ui';
+
 import { useAlertmanagerConfig } from '../../hooks/useAlertmanagerConfig';
 import { useAlertmanager } from '../../state/AlertmanagerContext';
 import { GlobalConfigForm } from '../receivers/GlobalConfigForm';
@@ -12,9 +14,12 @@ const NewMessageTemplate = () => {
     return 'loading...';
   }
 
-  // TODO decent error handling
   if (error) {
-    return String(error);
+    return (
+      <Alert severity="error" title="Failed to fetch message template">
+        {String(error)}
+      </Alert>
+    );
   }
 
   if (!data) {

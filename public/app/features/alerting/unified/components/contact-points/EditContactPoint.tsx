@@ -1,6 +1,7 @@
 import React from 'react';
 import { RouteChildrenProps } from 'react-router-dom';
 
+import { Alert } from '@grafana/ui';
 import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
 
 import { useAlertmanagerConfig } from '../../hooks/useAlertmanagerConfig';
@@ -22,9 +23,12 @@ const EditContactPoint = ({ match }: Props) => {
     return 'loading...';
   }
 
-  // TODO decent error handling
   if (error) {
-    return String(error);
+    return (
+      <Alert severity="error" title="Failed to fetch contact point">
+        {String(error)}
+      </Alert>
+    );
   }
 
   if (!data) {
