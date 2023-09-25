@@ -2,6 +2,7 @@ package folderimpl
 
 import (
 	"context"
+	"fmt"
 	"runtime"
 	"strings"
 	"sync/atomic"
@@ -120,6 +121,8 @@ func (hs *treeStore) Create(ctx context.Context, cmd folder.CreateFolderCommand)
 	// TODO: fix concurrency
 	foldr := &folder.Folder{}
 	now := time.Now()
+
+	cols := []string{"org_id", "uid", "title", "description", "created", "updated", "lft", "rgt"}
 	if err := hs.db.InTransaction(ctx, func(ctx context.Context) error {
 		if err := hs.db.WithDbSession(ctx, func(sess *db.Session) error {
 			if cmd.ParentUID == "" {
@@ -128,10 +131,18 @@ func (hs *treeStore) Create(ctx context.Context, cmd folder.CreateFolderCommand)
 					return err
 				}
 
-				if _, err := sess.Exec("INSERT INTO folder(org_id, uid, title, created, updated, lft, rgt) VALUES(?, ?, ?, ?, ?, ?, ?)", cmd.OrgID, cmd.UID, cmd.Title, now, now, maxRgt+1, maxRgt+2); err != nil {
+				insertSQL := fmt.Sprintf("INSERT INTO folder(%s) VALUES(%s)", strings.Join(cols, ","), strings.Join(strings.Split(strings.Repeat("?", len(cols)), ""), ","))
+				if _, err := sess.Exec(insertSQL, cmd.OrgID, cmd.UID, cmd.Title, cmd.Description, now, now, maxRgt+1, maxRgt+2); err != nil {
 					return err
 				}
 				return nil
+			}
+
+			if _, err := hs.Get(ctx, folder.GetFolderQuery{
+				UID:   &cmd.ParentUID,
+				OrgID: cmd.OrgID,
+			}); err != nil {
+				return folder.ErrFolderNotFound.Errorf("parent folder does not exist")
 			}
 
 			var parentRgt int64
@@ -153,7 +164,9 @@ func (hs *treeStore) Create(ctx context.Context, cmd folder.CreateFolderCommand)
 				return err
 			}
 
-			if _, err := sess.Exec("INSERT INTO folder(org_id, uid, title, created, updated, parent_uid, lft, rgt) VALUES(?, ?, ?, ?, ?, ?, ?, ?)", cmd.OrgID, cmd.UID, cmd.Title, now, now, cmd.ParentUID, parentRgt, parentRgt+1); err != nil {
+			cols = append(cols, "parent_uid")
+			insertSQL := fmt.Sprintf("INSERT INTO folder(%s) VALUES(%s)", strings.Join(cols, ","), strings.Join(strings.Split(strings.Repeat("?", len(cols)), ""), ","))
+			if _, err := sess.Exec(insertSQL, cmd.OrgID, cmd.UID, cmd.Title, cmd.Description, now, now, parentRgt, parentRgt+1, cmd.ParentUID); err != nil {
 				return err
 			}
 			return nil
@@ -174,7 +187,7 @@ func (hs *treeStore) Create(ctx context.Context, cmd folder.CreateFolderCommand)
 		return foldr, err
 	}
 
-	return foldr, nil
+	return foldr.WithURL(), nil
 }
 
 // Delete deletes a folder and all its descendants
@@ -234,7 +247,7 @@ func (hs *treeStore) Update(ctx context.Context, cmd folder.UpdateFolderCommand)
 	}
 
 	// NOTE: left and right cols are not updated in the foldr object
-	return foldr, nil
+	return foldr.WithURL(), nil
 }
 
 func (hs *treeStore) GetParents(ctx context.Context, cmd folder.GetParentsQuery) ([]*folder.Folder, error) {
@@ -254,6 +267,13 @@ func (hs *treeStore) GetParents(ctx context.Context, cmd folder.GetParentsQuery)
 	})
 	if err != nil {
 		return nil, err
+	}
+
+	if err := concurrency.ForEachJob(ctx, len(folders), runtime.NumCPU(), func(ctx context.Context, idx int) error {
+		folders[idx].WithURL()
+		return nil
+	}); err != nil {
+		hs.log.Debug("failed to set URL to folders", "err", err)
 	}
 	return folders, nil
 }
