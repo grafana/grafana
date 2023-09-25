@@ -14,7 +14,10 @@ import { useSelector, useDispatch } from 'app/types';
 import { DashNavTimeControls } from '../components/DashNav/DashNavTimeControls';
 import { DashboardFailed } from '../components/DashboardLoading/DashboardFailed';
 import { DashboardLoading } from '../components/DashboardLoading/DashboardLoading';
-import { PublicDashboardFooter } from '../components/PublicDashboardFooter/PublicDashboardsFooter';
+import {
+  PublicDashboardFooter,
+  useGetPublicDashboardFooterConfig,
+} from '../components/PublicDashboardFooter/PublicDashboardsFooter';
 import { PublicDashboardNotAvailable } from '../components/PublicDashboardNotAvailable/PublicDashboardNotAvailable';
 import { DashboardGrid } from '../dashgrid/DashboardGrid';
 import { getTimeSrv } from '../services/TimeSrv';
@@ -37,13 +40,18 @@ const selectors = e2eSelectors.pages.PublicDashboard;
 
 const Toolbar = ({ dashboard }: { dashboard: DashboardModel }) => {
   const dispatch = useDispatch();
+  const conf = useGetPublicDashboardFooterConfig();
 
   const onChangeTimeZone = (timeZone: TimeZone) => {
     dispatch(updateTimeZoneForSession(timeZone));
   };
 
   return (
-    <PageToolbar title={dashboard.title} pageIcon="grafana" buttonOverflowAlignment="right">
+    <PageToolbar
+      title={dashboard.title}
+      pageIcon={conf.headerLogoShow ? 'grafana' : undefined}
+      buttonOverflowAlignment="right"
+    >
       {!dashboard.timepicker.hidden && (
         <DashNavTimeControls dashboard={dashboard} onChangeTimeZone={onChangeTimeZone} />
       )}
