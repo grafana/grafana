@@ -42,6 +42,7 @@ Some features are enabled by default. You can disable these feature by setting t
 | `useCachingService`                              | When turned on, the new query and resource caching implementation using a wire service inject will be used in place of the previous middleware implementation                                       |                    |
 | `enableElasticsearchBackendQuerying`             | Enable the processing of queries and responses in the Elasticsearch data source through backend                                                                                                     | Yes                |
 | `advancedDataSourcePicker`                       | Enable a new data source picker with contextual information, recently used order and advanced mode                                                                                                  | Yes                |
+| `recordedQueriesMulti`                           | Enables writing multiple items from a single query within Recorded Queries                                                                                                                          | Yes                |
 | `transformationsRedesign`                        | Enables the transformations redesign                                                                                                                                                                | Yes                |
 | `toggleLabelsInLogsUI`                           | Enable toggleable filters in log details view                                                                                                                                                       | Yes                |
 | `azureMonitorDataplane`                          | Adds dataplane compliant frame metadata in the Azure Monitor datasource                                                                                                                             | Yes                |
@@ -59,6 +60,7 @@ Some features are enabled by default. You can disable these feature by setting t
 | `newDBLibrary`                   | Use jmoiron/sqlx rather than xorm for a few backend services                                                                                                                                 |
 | `autoMigrateOldPanels`           | Migrate old angular panels to supported versions (graph, table-old, worldmap, etc)                                                                                                           |
 | `disableAngular`                 | Dynamic flag to disable angular at runtime. The preferred method is to set `angular_support_enabled` to `false` in the [security] settings, which allows you to change the state at runtime. |
+| `dockedMegaMenu`                 | Enable support for a persistent (docked) navigation menu                                                                                                                                     |
 | `grpcServer`                     | Run the GRPC server                                                                                                                                                                          |
 | `accessControlOnCall`            | Access control primitives for OnCall                                                                                                                                                         |
 | `nestedFolders`                  | Enable folder nesting                                                                                                                                                                        |
@@ -115,7 +117,6 @@ Experimental features might be changed or removed without prior notice.
 | `frontendSandboxMonitorOnly`                | Enables monitor only in the plugin frontend sandbox (if enabled)                                             |
 | `lokiFormatQuery`                           | Enables the ability to format Loki queries                                                                   |
 | `exploreScrollableLogsContainer`            | Improves the scrolling behavior of logs in Explore                                                           |
-| `recordedQueriesMulti`                      | Enables writing multiple items from a single query within Recorded Queries                                   |
 | `pluginsDynamicAngularDetectionPatterns`    | Enables fetching Angular detection patterns for plugins from GCOM and fallback to hardcoded ones             |
 | `vizAndWidgetSplit`                         | Split panels between vizualizations and widgets                                                              |
 | `prometheusIncrementalQueryInstrumentation` | Adds RudderStack events to incremental queries                                                               |
@@ -135,6 +136,9 @@ Experimental features might be changed or removed without prior notice.
 | `requestInstrumentationStatusSource`        | Include a status source label for request metrics and logs                                                   |
 | `wargamesTesting`                           | Placeholder feature flag for internal testing                                                                |
 | `alertingInsights`                          | Show the new alerting insights landing page                                                                  |
+| `externalCorePlugins`                       | Allow core plugins to be loaded as external                                                                  |
+| `pluginsAPIMetrics`                         | Sends metrics of public grafana packages usage by plugins                                                    |
+| `httpSLOLevels`                             | Adds SLO level to http request metrics                                                                       |
 
 ## Development feature toggles
 

@@ -65,13 +65,14 @@ type ManagerCfg struct {
 	ApplyNoDataAndErrorToAllStates bool
 
 	Tracer tracing.Tracer
+	Log    log.Logger
 }
 
 func NewManager(cfg ManagerCfg) *Manager {
 	return &Manager{
 		cache:                          newCache(),
 		ResendDelay:                    ResendDelay, // TODO: make this configurable
-		log:                            log.New("ngalert.state.manager"),
+		log:                            cfg.Log,
 		metrics:                        cfg.Metrics,
 		instanceStore:                  cfg.InstanceStore,
 		images:                         cfg.Images,

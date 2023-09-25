@@ -14,7 +14,7 @@ import { DataQuery } from './query';
 import { RawTimeRange, TimeRange } from './time';
 import { CustomVariableSupport, DataSourceVariableSupport, StandardVariableSupport } from './variables';
 
-import { DataSourceRef, WithAccessControlMetadata } from '.';
+import { AdHocVariableFilter, DataSourceRef, WithAccessControlMetadata } from '.';
 
 export interface DataSourcePluginOptionsEditorProps<
   JSONData extends DataSourceJsonData = DataSourceJsonData,
@@ -287,12 +287,12 @@ abstract class DataSourceApi<
   /**
    * Get tag keys for adhoc filters
    */
-  getTagKeys?(options?: any): Promise<MetricFindValue[]>;
+  getTagKeys?(options?: DataSourceGetTagKeysOptions): Promise<MetricFindValue[]>;
 
   /**
    * Get tag values for adhoc filters
    */
-  getTagValues?(options: any): Promise<MetricFindValue[]>;
+  getTagValues?(options: DataSourceGetTagValuesOptions): Promise<MetricFindValue[]>;
 
   /**
    * Set after constructor call, as the data source instance is the most common thing to pass around
@@ -320,12 +320,6 @@ abstract class DataSourceApi<
    * Used in explore
    */
   modifyQuery?(query: TQuery, action: QueryFixAction): TQuery;
-
-  /**
-   * @deprecated since version 8.2.0
-   * Not used anymore.
-   */
-  getHighlighterExpression?(query: TQuery): string[];
 
   /** Get an identifier object for this datasource instance */
   getRef(): DataSourceRef {
@@ -368,6 +362,35 @@ abstract class DataSourceApi<
    * @alpha -- experimental
    */
   getDefaultQuery?(app: CoreApp): Partial<TQuery>;
+}
+
+/**
+ * Options argument to DataSourceAPI.getTagKeys
+ */
+export interface DataSourceGetTagKeysOptions {
+  /**
+   * The other existing filters or base filters. New in v10.3
+   */
+  filters: AdHocVariableFilter[];
+  /**
+   * Context time range. New in v10.3
+   */
+  timeRange?: TimeRange;
+}
+
+/**
+ * Options argument to DataSourceAPI.getTagValues
+ */
+export interface DataSourceGetTagValuesOptions {
+  key: string;
+  /**
+   * The other existing filters or base filters. New in v10.3
+   */
+  filters: AdHocVariableFilter[];
+  /**
+   * Context time range. New in v10.3
+   */
+  timeRange?: TimeRange;
 }
 
 export interface MetadataInspectorProps<

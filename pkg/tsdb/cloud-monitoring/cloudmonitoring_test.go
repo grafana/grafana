@@ -24,7 +24,7 @@ func TestNewInstanceSettings(t *testing.T) {
 	t.Run("should create a new instance with empty settings", func(t *testing.T) {
 		cli := httpclient.NewProvider()
 		f := newInstanceSettings(cli)
-		dsInfo, err := f(backend.DataSourceInstanceSettings{
+		dsInfo, err := f(context.Background(), backend.DataSourceInstanceSettings{
 			JSONData: json.RawMessage(`{}`),
 		})
 		require.NoError(t, err)
@@ -35,7 +35,7 @@ func TestNewInstanceSettings(t *testing.T) {
 	t.Run("should create a new instance parsing settings", func(t *testing.T) {
 		cli := httpclient.NewProvider()
 		f := newInstanceSettings(cli)
-		dsInfo, err := f(backend.DataSourceInstanceSettings{
+		dsInfo, err := f(context.Background(), backend.DataSourceInstanceSettings{
 			JSONData: json.RawMessage(`{"authenticationType": "test", "defaultProject": "test", "clientEmail": "test", "tokenUri": "test"}`),
 		})
 		require.NoError(t, err)
@@ -1144,7 +1144,7 @@ func baseTimeSeriesQuery() *backend.QueryDataRequest {
 
 func TestCheckHealth(t *testing.T) {
 	t.Run("and using GCE authentation should return proper error", func(t *testing.T) {
-		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+		im := datasource.NewInstanceManager(func(_ context.Context, s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 			return &datasourceInfo{
 				authenticationType: gceAuthentication,
 			}, nil
