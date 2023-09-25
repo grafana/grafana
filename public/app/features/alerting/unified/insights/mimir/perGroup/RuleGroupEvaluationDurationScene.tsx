@@ -30,6 +30,7 @@ export function getRuleGroupEvaluationDurationScene(
       .setCustomFieldConfig('drawStyle', GraphDrawStyle.Line)
       .setUnit('s')
       .setOption('tooltip', { mode: TooltipDisplayMode.Multi })
+      .setOption('legend', { showLegend: false })
       .setOverrides((b) =>
         b.matchFieldsByQuery('A').overrideColor({
           mode: 'fixed',

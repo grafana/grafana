@@ -25,6 +25,7 @@ export function getMissedIterationsScene(timeRange: SceneTimeRange, datasource: 
       .setData(query)
       .setCustomFieldConfig('drawStyle', GraphDrawStyle.Line)
       .setOption('tooltip', { mode: TooltipDisplayMode.Multi })
+      .setOption('legend', { showLegend: false })
       .setOverrides((b) =>
         b.matchFieldsWithName('missed').overrideColor({
           mode: 'fixed',
