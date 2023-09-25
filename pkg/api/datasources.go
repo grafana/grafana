@@ -19,7 +19,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
@@ -814,10 +813,7 @@ func (hs *HTTPServer) CheckDatasourceHealth(c *contextmodel.ReqContext) response
 func (hs *HTTPServer) checkDatasourceHealth(c *contextmodel.ReqContext, ds *datasources.DataSource) response.Response {
 	pCtx, err := hs.pluginContextProvider.GetWithDataSource(c.Req.Context(), ds.Type, c.SignedInUser, ds)
 	if err != nil {
-		if errors.Is(err, plugincontext.ErrPluginNotFound) {
-			return response.Error(http.StatusNotFound, "Unable to find datasource plugin", nil)
-		}
-		return response.Error(http.StatusInternalServerError, "Unable to get plugin context", err)
+		return response.ErrOrFallback(http.StatusInternalServerError, "Unable to get plugin context", err)
 	}
 	req := &backend.CheckHealthRequest{
 		PluginContext: pCtx,
