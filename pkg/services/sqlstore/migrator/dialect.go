@@ -53,6 +53,17 @@ type Dialect interface {
 	UpsertSQL(tableName string, keyCols, updateCols []string) string
 	UpsertMultipleSQL(tableName string, keyCols, updateCols []string, count int) (string, error)
 
+	// Concat returns the sql statement for concating multiple strings
+	// Implementations are not expected to quote the arguments
+	// therefore any callers should take care to quote arguments as necessary
+	Concat(string, ...string) string
+	// GroupConcat returns the sql statement for the group concat aggregate function
+	GroupConcat(string, string) string
+	// Position returns the sql statement for the position of a substring within a string
+	// Implementations are not expected to quote the arguments
+	// therefore any callers should take care to quote arguments as necessary
+	Position(string, string) string
+
 	ColString(*Column) string
 	ColStringNoPk(*Column) string
 
@@ -343,4 +354,12 @@ func (b *BaseDialect) OrderBy(order string) string {
 
 func (b *BaseDialect) GetDBName(_ string) (string, error) {
 	return "", nil
+}
+
+func (b *BaseDialect) Position(str string, substr string) string {
+	return fmt.Sprintf("INSTR(%s"+", "+"%s)", str, substr)
+}
+
+func (b *BaseDialect) Concat(str string, strs ...string) string {
+	return fmt.Sprintf("CONCAT(%s"+", "+"%s)", str, strings.Join(strs, ", "))
 }

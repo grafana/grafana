@@ -209,3 +209,11 @@ func (db *SQLite3) UpsertMultipleSQL(tableName string, keyCols, updateCols []str
 	)
 	return s, nil
 }
+
+func (db *SQLite3) GroupConcat(colName string, sep string) string {
+	return "GROUP_CONCAT(" + colName + ", '" + sep + "')"
+}
+
+func (db *SQLite3) Concat(str string, strs ...string) string {
+	return strings.Join(append([]string{str}, strs...), " || ")
+}

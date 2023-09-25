@@ -306,3 +306,7 @@ func (db *MySQLDialect) GetDBName(dsn string) (string, error) {
 
 	return cfg.DBName, nil
 }
+
+func (db *MySQLDialect) GroupConcat(colName string, sep string) string {
+	return "GROUP_CONCAT(" + colName + " SEPARATOR '" + sep + "')"
+}

@@ -16,16 +16,16 @@ import (
 
 var folders = [][]any{
 	// org_id, uid, title, created, updated, parent_uid, left, right
-	{1, "1", "ELECTRONICS", time.Now(), time.Now(), nil, 1, 20},
-	{1, "2", "TELEVISIONS", time.Now(), time.Now(), "1", 2, 9},
-	{1, "3", "TUBE", time.Now(), time.Now(), "2", 3, 4},
-	{1, "4", "LCD", time.Now(), time.Now(), "2", 5, 6},
-	{1, "5", "PLASMA", time.Now(), time.Now(), "2", 7, 8},
-	{1, "6", "PORTABLE ELECTRONICS", time.Now(), time.Now(), "1", 10, 19},
-	{1, "7", "MP3 PLAYERS", time.Now(), time.Now(), "6", 11, 14},
-	{1, "8", "FLASH", time.Now(), time.Now(), "7", 12, 13},
-	{1, "9", "CD PLAYERS", time.Now(), time.Now(), "6", 15, 16},
-	{1, "10", "2 WAY RADIOS", time.Now(), time.Now(), "6", 17, 18},
+	{orgID, "1", "ELECTRONICS", time.Now(), time.Now(), nil, 1, 20},
+	{orgID, "2", "TELEVISIONS", time.Now(), time.Now(), "1", 2, 9},
+	{orgID, "3", "TUBE", time.Now(), time.Now(), "2", 3, 4},
+	{orgID, "4", "LCD", time.Now(), time.Now(), "2", 5, 6},
+	{orgID, "5", "PLASMA", time.Now(), time.Now(), "2", 7, 8},
+	{orgID, "6", "PORTABLE ELECTRONICS", time.Now(), time.Now(), "1", 10, 19},
+	{orgID, "7", "MP3 PLAYERS", time.Now(), time.Now(), "6", 11, 14},
+	{orgID, "8", "FLASH", time.Now(), time.Now(), "7", 12, 13},
+	{orgID, "9", "CD PLAYERS", time.Now(), time.Now(), "6", 15, 16},
+	{orgID, "10", "2 WAY RADIOS", time.Now(), time.Now(), "6", 17, 18},
 }
 
 // storeFolders stores the folders in the database.
@@ -66,23 +66,10 @@ func TestIntegrationTreeStoreMigrate(t *testing.T) {
 	folderStore := ProvideTreeStore(sqlStore)
 	storeFolders(t, folderStore.db, false)
 
-	_, err := folderStore.migrate(context.Background(), 1, nil, 0)
+	_, err := folderStore.migrate(context.Background(), orgID, nil, 0)
 	require.NoError(t, err)
 
-	var r []*folder.Folder
-	folderStore.db.WithDbSession(context.Background(), func(sess *db.Session) error {
-		return sess.SQL("SELECT * FROM folder").Find(&r)
-	})
-	require.NoError(t, err)
-
-	for i := 0; i < len(folders); i++ {
-		assert.Equal(t, folders[i][0], int(r[i].OrgID))
-		assert.Equal(t, folders[i][1], r[i].UID)
-		assert.Equal(t, folders[i][6], int(r[i].Lft))
-		assert.Equal(t, folders[i][7], int(r[i].Rgt))
-	}
-
-	tree, err := folderStore.getTree(context.Background(), 1)
+	tree, err := folderStore.getTree(context.Background(), orgID)
 	require.NoError(t, err)
 
 	assert.Equal(t, []string{

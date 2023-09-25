@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"runtime"
+	"sort"
 	"strings"
 	"sync/atomic"
 	"time"
@@ -61,9 +62,9 @@ func (hs *treeStore) migrate(ctx context.Context, orgID int64, f *folder.Folder,
 		args := []interface{}{orgID}
 		// get children
 		if f == nil {
-			q = q + "AND parent_uid IS NULL"
+			q = q + " AND parent_uid IS NULL"
 		} else {
-			q = q + "AND parent_uid = ?"
+			q = q + " AND parent_uid = ?"
 			args = append(args, f.UID)
 		}
 
@@ -73,7 +74,7 @@ func (hs *treeStore) migrate(ctx context.Context, orgID int64, f *folder.Folder,
 			}
 			return nil
 		}); err != nil {
-			return err
+			return folder.ErrInternal.Errorf("migration failure: failed to get children: %w", err)
 		}
 
 		if len(children) == 0 {
@@ -81,6 +82,7 @@ func (hs *treeStore) migrate(ctx context.Context, orgID int64, f *folder.Folder,
 			if f != nil {
 				f.Rgt = counter
 			}
+			// terminate recursion
 			return nil
 		}
 
@@ -99,7 +101,7 @@ func (hs *treeStore) migrate(ctx context.Context, orgID int64, f *folder.Folder,
 				}
 				return nil
 			}); err != nil {
-				return err
+				return folder.ErrInternal.Errorf("migration failure: failed to update left and right columns: %w", err)
 			}
 			counter = c
 		}
@@ -208,11 +210,11 @@ func (hs *treeStore) Delete(ctx context.Context, uid string, orgID int64) error 
 				return err
 			}
 
-			if _, err := sess.Exec("UPDATE folder SET rgt = rgt - ? WHERE rgt > ? AND org_id = ?", r.Width, r.Width, r.Rgt, orgID); err != nil {
+			if _, err := sess.Exec("UPDATE folder SET rgt = rgt - ? WHERE rgt > ? AND org_id = ?", r.Width, r.Rgt, orgID); err != nil {
 				return err
 			}
 
-			if _, err := sess.Exec("UPDATE folder SET lft = lft - ? WHERE lft > ? AND org_id = ?", r.Width, r.Width, r.Rgt, orgID); err != nil {
+			if _, err := sess.Exec("UPDATE folder SET lft = lft - ? WHERE lft > ? AND org_id = ?", r.Width, r.Rgt, orgID); err != nil {
 				return err
 			}
 
@@ -259,7 +261,6 @@ func (hs *treeStore) GetParents(ctx context.Context, cmd folder.GetParentsQuery)
 			folder AS parent
 		WHERE node.lft > parent.lft AND node.lft < parent.rgt
 			AND node.org_id = ? AND node.uid = ?
-		ORDER BY node.lft
 		`, cmd.OrgID, cmd.UID).Find(&folders); err != nil {
 			return err
 		}
@@ -279,45 +280,65 @@ func (hs *treeStore) GetParents(ctx context.Context, cmd folder.GetParentsQuery)
 }
 
 func (hs *treeStore) GetHeight(ctx context.Context, foldrUID string, orgID int64, _ *string) (int, error) {
-	var subpaths []string
-	err := hs.db.WithDbSession(ctx, func(sess *db.Session) error {
-		// get subpaths of the leaf nodes under the given folder
-		s := `SELECT substr(group_concat(parent.uid), instr( group_concat(parent.uid), ?))
+	var paths []string
+	groupConcatSep := ","
+	pathSep := " "
+	if err := hs.db.WithDbSession(ctx, func(sess *db.Session) error {
+		// get the paths of the leaf nodes where the given folder is present
+		// group_concat() is used to get the paths of all leaf nodes in a single query
+		// the order of the group_concat() in SQLite is arbitrary, so we need include the lft column in the group_concat() to sort the paths later
+		// the path format is <lft><pathSep><uid>
+		leafSubpaths := hs.db.GetDialect().GroupConcat(hs.db.GetDialect().Concat("parent.lft", fmt.Sprintf("'%s'", pathSep), "parent.uid"), groupConcatSep)
+		folderInPath := hs.db.GetDialect().Position(hs.db.GetDialect().GroupConcat("parent.uid", groupConcatSep), "?")
+		s := fmt.Sprintf(`SELECT %s
 		FROM folder AS node,
 			folder AS parent
 		WHERE node.org_id = ? AND node.lft >= parent.lft AND node.lft <= parent.rgt
-		AND node.rgt = node.lft + 1
+		AND node.rgt = node.lft + 1 -- leaf nodes
 		GROUP BY node.uid
-		HAVING instr( group_concat(parent.uid), ?) > 0
-		ORDER BY node.lft`
-		if err := sess.SQL(s, foldrUID, orgID, foldrUID).Find(&subpaths); err != nil {
-			return err
-		}
-		return nil
-	})
+		HAVING %s > 0 -- folder appears in the subpath
+		`, leafSubpaths, folderInPath)
+		return sess.SQL(s, orgID, foldrUID).Find(&paths)
+	}); err != nil {
+		return 0, folder.ErrInternal.Errorf("failed to get folder height: failed to get leaf subpaths: %w", err)
+	}
 
+	// get the length of the maximum path
 	var height uint32
-	concurrency.ForEachJob(ctx, len(subpaths), runtime.NumCPU(), func(ctx context.Context, i int) error {
-		v := len(strings.Split(subpaths[i], ",")) - 1
+	concurrency.ForEachJob(ctx, len(paths), runtime.NumCPU(), func(ctx context.Context, i int) error {
+		ancestors := strings.Split(paths[i], groupConcatSep)
+		sort.Slice(ancestors, func(j, k int) bool {
+			return strings.Split(ancestors[j], pathSep)[0] < strings.Split(ancestors[k], pathSep)[0]
+		})
+		index := 0
+		for l, ancestor := range ancestors {
+			if strings.Split(ancestor, pathSep)[1] == foldrUID {
+				index = l
+				break
+			}
+		}
+
+		v := len(ancestors[index:]) - 1
 		if v > int(height) {
 			atomic.StoreUint32(&height, uint32(v))
 		}
 		return nil
 	})
 
-	return int(height), err
+	return int(height), nil
 }
 
 func (hs *treeStore) getTree(ctx context.Context, orgID int64) ([]string, error) {
 	var tree []string
 	err := hs.db.WithDbSession(ctx, func(sess *db.Session) error {
-		if err := sess.SQL(`
-		SELECT COUNT(parent.title) || '-' || node.title
+		q := fmt.Sprintf(`
+		SELECT %s
 		FROM folder AS node, folder AS parent
 		WHERE node.lft BETWEEN parent.lft AND parent.rgt AND node.org_id = ?
-		GROUP BY node.title
+		GROUP BY node.title, node.lft
 		ORDER BY node.lft
-		`, orgID).Find(&tree); err != nil {
+		`, hs.db.GetDialect().Concat("COUNT(parent.title)", "'-'", "node.title"))
+		if err := sess.SQL(q, orgID).Find(&tree); err != nil {
 			return err
 		}
 		return nil

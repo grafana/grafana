@@ -347,3 +347,11 @@ func (db *PostgresDialect) GetDBName(dsn string) (string, error) {
 	}
 	return string(submatch[1]), nil
 }
+
+func (db *PostgresDialect) GroupConcat(colName string, sep string) string {
+	return "STRING_AGG(" + colName + ", '" + sep + "')"
+}
+
+func (bb *PostgresDialect) Position(str string, substr string) string {
+	return fmt.Sprintf("POSITION(%s"+" IN "+"%s)", substr, str)
+}
