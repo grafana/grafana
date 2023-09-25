@@ -21,7 +21,7 @@ weight: 900
 
 {{% admonition type="note" %}}
 
-Setting up Grafana for High Availability requires additional steps for the Alerting HA, in order to avoid duplicate alerts.
+To prevent duplicate alerts in Grafana high availability, additional steps are required.
 
 Please check the [## Alerting high availability](#alerting-high-availability) section below.
 
