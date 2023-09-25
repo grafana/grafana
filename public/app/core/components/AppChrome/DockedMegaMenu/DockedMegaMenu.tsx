@@ -11,7 +11,7 @@ import { useSelector } from 'app/types';
 import { NavBarMenuItemWrapper } from './NavBarMenuItemWrapper';
 import { enrichWithInteractionTracking, getActiveItem } from './utils';
 
-const MENU_WIDTH = '350px';
+export const MENU_WIDTH = '350px';
 
 export interface Props extends DOMAttributes {
   onClose: () => void;

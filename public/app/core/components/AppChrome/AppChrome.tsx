@@ -13,14 +13,12 @@ import { useGrafana } from 'app/core/context/GrafanaContext';
 import { CommandPalette } from 'app/features/commandPalette/CommandPalette';
 import { KioskMode } from 'app/types';
 
-import { DockedMegaMenu } from './DockedMegaMenu/DockedMegaMenu';
+import { DockedMegaMenu, MENU_WIDTH } from './DockedMegaMenu/DockedMegaMenu';
 import { MegaMenu } from './MegaMenu/MegaMenu';
 import { NavToolbar } from './NavToolbar/NavToolbar';
 import { SectionNav } from './SectionNav/SectionNav';
 import { TopSearchBar } from './TopBar/TopSearchBar';
 import { TOP_BAR_LEVEL_HEIGHT } from './types';
-
-const MENU_WIDTH = '350px';
 
 export interface Props extends PropsWithChildren<{}> {}
 
