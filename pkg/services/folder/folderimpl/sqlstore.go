@@ -2,6 +2,7 @@ package folderimpl
 
 import (
 	"context"
+	"runtime"
 	"strings"
 	"time"
 
@@ -74,6 +75,7 @@ func (ss *sqlStore) Create(ctx context.Context, cmd folder.CreateFolderCommand) 
 	return foldr.WithURL(), err
 }
 
+// TODO delete folder and all its children
 func (ss *sqlStore) Delete(ctx context.Context, uid string, orgID int64) error {
 	return ss.db.WithDbSession(ctx, func(sess *db.Session) error {
 		_, err := sess.Exec("DELETE FROM folder WHERE uid=? AND org_id=?", uid, orgID)
@@ -209,7 +211,7 @@ func (ss *sqlStore) GetParents(ctx context.Context, q folder.GetParentsQuery) ([
 			return nil, err
 		}
 
-		if err := concurrency.ForEachJob(ctx, len(folders), len(folders), func(ctx context.Context, idx int) error {
+		if err := concurrency.ForEachJob(ctx, len(folders), runtime.NumCPU(), func(ctx context.Context, idx int) error {
 			folders[idx].WithURL()
 			return nil
 		}); err != nil {
@@ -255,7 +257,7 @@ func (ss *sqlStore) GetChildren(ctx context.Context, q folder.GetChildrenQuery) 
 			return folder.ErrDatabaseError.Errorf("failed to get folder children: %w", err)
 		}
 
-		if err := concurrency.ForEachJob(ctx, len(folders), len(folders), func(ctx context.Context, idx int) error {
+		if err := concurrency.ForEachJob(ctx, len(folders), runtime.NumCPU(), func(ctx context.Context, idx int) error {
 			folders[idx].WithURL()
 			return nil
 		}); err != nil {
