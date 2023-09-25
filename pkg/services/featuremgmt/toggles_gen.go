@@ -403,9 +403,6 @@ const (
 	// Enables a new role that has no permissions by default
 	FlagNoBasicRole = "noBasicRole"
 
-	// FlagPrometheusPromQAIL
-	// Prometheus and AI/ML to assist users in creating a query
-	FlagPrometheusPromQAIL = "prometheusPromQAIL"
 	// FlagAlertingNoDataErrorExecution
 	// Changes how Alerting state manager handles execution of NoData/Error
 	FlagAlertingNoDataErrorExecution = "alertingNoDataErrorExecution"
@@ -457,4 +454,8 @@ const (
 	// FlagHttpSLOLevels
 	// Adds SLO level to http request metrics
 	FlagHttpSLOLevels = "httpSLOLevels"
+
+	// FlagPrometheusPromQAIL
+	// Prometheus and AI/ML to assist users in creating a query
+	FlagPrometheusPromQAIL = "prometheusPromQAIL"
 )

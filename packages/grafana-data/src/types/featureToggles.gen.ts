@@ -117,7 +117,6 @@ export interface FeatureToggles {
   configurableSchedulerTick?: boolean;
   influxdbSqlSupport?: boolean;
   noBasicRole?: boolean;
-  prometheusPromQAIL?: boolean;
   alertingNoDataErrorExecution?: boolean;
   angularDeprecationUI?: boolean;
   dashgpt?: boolean;
@@ -131,4 +130,5 @@ export interface FeatureToggles {
   externalCorePlugins?: boolean;
   pluginsAPIMetrics?: boolean;
   httpSLOLevels?: boolean;
+  prometheusPromQAIL?: boolean;
 }
