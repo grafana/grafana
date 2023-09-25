@@ -33,6 +33,7 @@ import (
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/middleware/csrf"
 	"github.com/grafana/grafana/pkg/middleware/loggermw"
+	apiregistry "github.com/grafana/grafana/pkg/registry/apis"
 	"github.com/grafana/grafana/pkg/registry/corekind"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
@@ -63,6 +64,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
+	grafanaapiserver "github.com/grafana/grafana/pkg/services/grafana-apiserver"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
 	grpccontext "github.com/grafana/grafana/pkg/services/grpcserver/context"
 	"github.com/grafana/grafana/pkg/services/grpcserver/interceptors"
@@ -359,6 +361,8 @@ var wireBasicSet = wire.NewSet(
 	loggermw.Provide,
 	signingkeysimpl.ProvideEmbeddedSigningKeysService,
 	wire.Bind(new(signingkeys.Service), new(*signingkeysimpl.Service)),
+	grafanaapiserver.WireSet,
+	apiregistry.WireSet,
 )
 
 var wireSet = wire.NewSet(

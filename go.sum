@@ -847,8 +847,6 @@ github.com/buger/jsonparser v1.1.1/go.mod h1:6RYKKt7H4d4+iWqouImQ9R2FZql3VbhNgx2
 github.com/buildkite/yaml v2.1.0+incompatible h1:xirI+ql5GzfikVNDmt+yeiXpf/v1Gt03qXTtT5WXdr8=
 github.com/buildkite/yaml v2.1.0+incompatible/go.mod h1:UoU8vbcwu1+vjZq01+KrpSeLBgQQIjL/H7Y6KwikUrI=
 github.com/bwesterb/go-ristretto v1.2.3/go.mod h1:fUIoIZaG73pV5biE2Blr2xEzDoMj7NFEuV9ekS419A0=
-github.com/bwmarrin/snowflake v0.3.0 h1:xm67bEhkKh6ij1790JB83OujPR5CzNe8QuQqAgISZN0=
-github.com/bwmarrin/snowflake v0.3.0/go.mod h1:NdZxfVWX+oR6y2K0o6qAYv6gIOP9rjG0/E9WsDpxqwE=
 github.com/caio/go-tdigest v3.1.0+incompatible h1:uoVMJ3Q5lXmVLCCqaMGHLBWnbGoN6Lpu7OAUPR60cds=
 github.com/caio/go-tdigest v3.1.0+incompatible/go.mod h1:sHQM/ubZStBUmF1WbB8FAm8q9GjDajLC5T7ydxE3JHI=
 github.com/casbin/casbin/v2 v2.1.2/go.mod h1:YcPU1XXisHhLzuxH9coDNf2FbKpjGlbCg3n9yuLkIJQ=
@@ -1805,8 +1803,6 @@ github.com/grafana/grafana-google-sdk-go v0.1.0 h1:LKGY8z2DSxKjYfr2flZsWgTRTZ6HG
 github.com/grafana/grafana-google-sdk-go v0.1.0/go.mod h1:Vo2TKWfDVmNTELBUM+3lkrZvFtBws0qSZdXhQxRdJrE=
 github.com/grafana/grafana-plugin-sdk-go v0.94.0/go.mod h1:3VXz4nCv6wH5SfgB3mlW39s+c+LetqSCjFj7xxPC5+M=
 github.com/grafana/grafana-plugin-sdk-go v0.114.0/go.mod h1:D7x3ah+1d4phNXpbnOaxa/osSaZlwh9/ZUnGGzegRbk=
-github.com/grafana/grafana-plugin-sdk-go v0.176.0 h1:dayiqGR6uJyJBO8rRTp/E7oKsnEjNSS0p7vVkXy/Brw=
-github.com/grafana/grafana-plugin-sdk-go v0.176.0/go.mod h1:9crAQqSzxvPe0VKC/T23cd+2I9TZb43yoOcUL/qZ5FU=
 github.com/grafana/grafana-plugin-sdk-go v0.177.0 h1:ERJ38b91Zw8tkz8MgHio5pVeK7ySaf5+i1I4F28YgWs=
 github.com/grafana/grafana-plugin-sdk-go v0.177.0/go.mod h1:9crAQqSzxvPe0VKC/T23cd+2I9TZb43yoOcUL/qZ5FU=
 github.com/grafana/kindsys v0.0.0-20230508162304-452481b63482 h1:1YNoeIhii4UIIQpCPU+EXidnqf449d0C3ZntAEt4KSo=
@@ -4087,8 +4083,6 @@ k8s.io/klog/v2 v2.90.1 h1:m4bYOKall2MmOiRaR1J+We67Do7vm9KiQVlT96lnHUw=
 k8s.io/klog/v2 v2.90.1/go.mod h1:y1WjHnz7Dj687irZUWR/WLkLc5N1YHtjLdmgWjndZn0=
 k8s.io/kms v0.27.1 h1:JTSQbJb+mcobScQwF0bOmZhIwP17k8GvBsiLlA6SQqw=
 k8s.io/kms v0.27.1/go.mod h1:VuTsw0uHlSycKLCkypCGxfFCjLfzf/5YMeATECd/zJA=
-k8s.io/kube-aggregator v0.27.1 h1:NYgl5PDV/oX1yqAZIkRnb+KtW+eLykzc6hHg81ECgiI=
-k8s.io/kube-aggregator v0.27.1/go.mod h1:S1YUIr4mU0MjKm6kg2fUyIKK5fWgwoHFMgNjlI5JFpM=
 k8s.io/kube-openapi v0.0.0-20221012153701-172d655c2280/go.mod h1:+Axhij7bCpeqhklhUTe3xmOn6bWxolyZEeyaFpjGtl4=
 k8s.io/kube-openapi v0.0.0-20230303024457-afdc3dddf62d/go.mod h1:y5VtZWM9sHHc2ZodIH/6SHzXj+TPU5USoA8lcIeKEKY=
 k8s.io/kube-openapi v0.0.0-20230501164219-8b0f38b5fd1f h1:2kWPakN3i/k81b0gvD5C5FJ2kxm1WrQFanWchyKuqGg=
