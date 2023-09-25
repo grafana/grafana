@@ -17,6 +17,19 @@ weight: -37
 
 Welcome to Grafana Cloud! Read on to learn about the newest changes to Grafana Cloud.
 
+## Distributed Tracing in Grafana Cloud k6
+
+<!-- Heitor Tashiro Sergent -->
+<!-- OSS, Enterprise -->
+
+_Generally available in Grafana Cloud_
+
+You can now use the Grafana Cloud Traces integration with Grafana Cloud k6 to quickly debug and proactively improve application reliability.
+
+Distributed tracing in Grafana Cloud k6 works by having k6 automatically inject tracing metadata into the requests it sends to users’ backend services when they run a test. The tracing data is then correlated with k6 test run data, so users can understand how their services and operations behaved during the whole test run. The collected tracing data is aggregated to generate real-time metrics, such as frequency of calls, error rates, and percentile latencies, that help users narrow their search space and quickly spot anomalies.
+
+To learn more, refer to the [Integration with Grafana Cloud Traces documentation](/docs/grafana-cloud/k6/analyze-results/integration-with-grafana-cloud-traces/) and [Distributed Tracing in Grafana Cloud k6 blog post](https://grafana.com/blog/2023/09/19/troubleshoot-failed-performance-tests-faster-with-distributed-tracing-in-grafana-cloud-k6/).
+
 ## Tenant database instance name and number for SAP HANA® data source
 
 <!-- Miguel Palau -->
