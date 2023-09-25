@@ -40,7 +40,7 @@ describe('buildVisualQueryFromString', () => {
       ],
     });
   });
-  it('throws error when visual query parse is ambiguous (scalar)', () => {
+  it('throws error when visual query parse with aggregation is ambiguous (scalar)', () => {
     expect(buildVisualQueryFromString('topk(5, 1 / 2)')).toMatchObject({
       errors: [
         {
@@ -51,7 +51,21 @@ describe('buildVisualQueryFromString', () => {
       ],
     });
   });
-
+  it('throws error when visual query parse with functionCall is ambiguous', () => {
+    expect(
+      buildVisualQueryFromString(
+        'clamp_min(sum by(cluster)(rate(X{le="2.5"}[5m]))+sum by (cluster) (rate(X{le="5"}[5m])), 0.001)'
+      )
+    ).toMatchObject({
+      errors: [
+        {
+          from: 10,
+          text: 'Query parsing is ambiguous.',
+          to: 87,
+        },
+      ],
+    });
+  });
   it('does not throw error when visual query parse is unambiguous', () => {
     expect(
       buildVisualQueryFromString('topk(5, node_arp_entries) / node_arp_entries{cluster="dev-eu-west-2"}')
@@ -62,6 +76,16 @@ describe('buildVisualQueryFromString', () => {
   it('does not throw error when visual query parse is unambiguous (scalar)', () => {
     // Note this topk query with scalars is not valid in prometheus, but it does not currently throw an error during parse
     expect(buildVisualQueryFromString('topk(5, 1) / 2')).toMatchObject({
+      errors: [],
+    });
+  });
+  it('does not throw error when visual query parse is unambiguous, function call', () => {
+    // Note this topk query with scalars is not valid in prometheus, but it does not currently throw an error during parse
+    expect(
+      buildVisualQueryFromString(
+        'clamp_min(sum by(cluster) (rate(X{le="2.5"}[5m])), 0.001) + sum by(cluster) (rate(X{le="5"}[5m]))'
+      )
+    ).toMatchObject({
       errors: [],
     });
   });
