@@ -122,7 +122,7 @@ export const DEFAULT_HEIGHTS = {
 };
 
 const NUM_TICKS = 5;
-const BUFFER_SIZE = 32;
+const BUFFER_SIZE = 33;
 
 function generateRowStates(
   spans: TraceSpan[] | TNil,
