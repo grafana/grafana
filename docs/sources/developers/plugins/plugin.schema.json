@@ -1,0 +1,544 @@
+{
+  "$id": "https://grafana.com/plugin-metadata",
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "type": "object",
+  "title": "plugin.json",
+  "description": "The plugin.json file is required for all plugins. When Grafana starts, it scans the plugin folders and mounts every folder that contains a plugin.json file unless the folder contains a subfolder named dist. In that case, Grafana mounts the dist folder instead.",
+  "required": ["type", "name", "id", "info", "dependencies"],
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Unique name of the plugin. If the plugin is published on grafana.com, then the plugin `id` has to follow the naming conventions.",
+      "pattern": "^[0-9a-z]+\\-([0-9a-z]+\\-)?(app|panel|datasource|secretsmanager)$"
+    },
+    "type": {
+      "type": "string",
+      "description": "Plugin type.",
+      "enum": ["app", "datasource", "panel", "renderer", "secretsmanager"]
+    },
+    "info": {
+      "type": "object",
+      "description": "Metadata for the plugin. Some fields are used on the plugins page in Grafana and others on grafana.com if the plugin is published.",
+      "required": ["logos", "version", "updated", "keywords"],
+      "additionalProperties": false,
+      "properties": {
+        "author": {
+          "type": "object",
+          "description": "Information about the plugin author.",
+          "additionalProperties": false,
+          "properties": {
+            "name": {
+              "type": "string",
+              "description": "Author's name."
+            },
+            "email": {
+              "type": "string",
+              "description": "Author's name.",
+              "format": "email"
+            },
+            "url": {
+              "type": "string",
+              "description": "Link to author's website.",
+              "format": "uri"
+            }
+          }
+        },
+        "build": {
+          "type": "object",
+          "description": "Build information",
+          "additionalProperties": false,
+          "properties": {
+            "time": {
+              "type": "number",
+              "description": "Time when the plugin was built, as a Unix timestamp."
+            },
+            "repo": {
+              "type": "string",
+              "description": ""
+            },
+            "branch": {
+              "type": "string",
+              "description": "Git branch the plugin was built from."
+            },
+            "hash": {
+              "type": "string",
+              "description": "Git hash of the commit the plugin was built from"
+            },
+            "number": {
+              "type": "number",
+              "description": ""
+            },
+            "pr": {
+              "type": "number",
+              "description": "GitHub pull request the plugin was built from"
+            }
+          }
+        },
+        "description": {
+          "type": "string",
+          "description": "Description of plugin. Used on the plugins page in Grafana and for search on grafana.com."
+        },
+        "keywords": {
+          "type": "array",
+          "description": "Array of plugin keywords. Used for search on grafana.com.",
+          "minItems": 1,
+          "items": {
+            "type": "string"
+          }
+        },
+        "links": {
+          "type": "array",
+          "description": "An array of link objects to be displayed on this plugin's project page in the form `{name: 'foo', url: 'http://example.com'}`",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "url": {
+                "type": "string",
+                "format": "uri"
+              }
+            }
+          }
+        },
+        "logos": {
+          "type": "object",
+          "description": "SVG images that are used as plugin icons.",
+          "required": ["small", "large"],
+          "additionalProperties": false,
+          "properties": {
+            "small": {
+              "type": "string",
+              "description": "Link to the \"small\" version of the plugin logo, which must be an SVG image. \"Large\" and \"small\" logos can be the same image."
+            },
+            "large": {
+              "type": "string",
+              "description": "Link to the \"large\" version of the plugin logo, which must be an SVG image. \"Large\" and \"small\" logos can be the same image."
+            }
+          }
+        },
+        "screenshots": {
+          "type": "array",
+          "description": "An array of screenshot objects in the form `{name: 'bar', path: 'img/screenshot.png'}`",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "path": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "updated": {
+          "type": "string",
+          "description": "Date when this plugin was built.",
+          "pattern": "^(\\d{4}-\\d{2}-\\d{2}|\\%TODAY\\%)$"
+        },
+        "version": {
+          "type": "string",
+          "description": "Project version of this commit, e.g. `6.7.x`.",
+          "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)|(\\%VERSION\\%)$"
+        }
+      }
+    },
+    "name": {
+      "type": "string",
+      "description": "Human-readable name of the plugin that is shown to the user in the UI."
+    },
+    "dependencies": {
+      "type": "object",
+      "description": "Dependency information related to Grafana and other plugins.",
+      "required": ["grafanaDependency"],
+      "additionalProperties": false,
+      "properties": {
+        "grafanaVersion": {
+          "type": "string",
+          "description": "(Deprecated) Required Grafana version for this plugin, e.g. `6.x.x 7.x.x` to denote plugin requires Grafana v6.x.x or v7.x.x.",
+          "pattern": "^([0-9]+)(\\.[0-9x]+)?(\\.[0-9x])?$"
+        },
+        "grafanaDependency": {
+          "type": "string",
+          "description": "Required Grafana version for this plugin. Validated using https://github.com/npm/node-semver.",
+          "pattern": "^(<=|>=|<|>|=|~|\\^)?([0-9]+)(\\.[0-9x\\*]+)(\\.[0-9x\\*]+)?(\\s(<=|>=|<|=>)?([0-9]+)(\\.[0-9x]+)(\\.[0-9x]+))?$"
+        },
+        "plugins": {
+          "type": "array",
+          "description": "An array of required plugins on which this plugin depends.",
+          "additionalItems": false,
+          "items": {
+            "type": "object",
+            "description": "Plugin dependency. Used to display information about plugin dependencies in the Grafana UI.",
+            "required": ["id", "name", "type", "version"],
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^[0-9a-z]+\\-([0-9a-z]+\\-)?(app|panel|datasource|secretsmanager)$"
+              },
+              "type": {
+                "type": "string",
+                "enum": ["app", "datasource", "panel", "secretsmanager"]
+              },
+              "name": {
+                "type": "string"
+              },
+              "version": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "$schema": {
+      "type": "string",
+      "description": "Schema definition for the plugin.json file. Used primarily for schema validation."
+    },
+    "alerting": {
+      "type": "boolean",
+      "description": "For data source plugins, if the plugin supports alerting. Requires `backend` to be set to `true`."
+    },
+    "annotations": {
+      "type": "boolean",
+      "description": "For data source plugins, if the plugin supports annotation queries."
+    },
+    "autoEnabled": {
+      "type": "boolean",
+      "description": "Set to true for app plugins that should be enabled and pinned to the navigation bar in all orgs."
+    },
+    "backend": {
+      "type": "boolean",
+      "description": "If the plugin has a backend component."
+    },
+    "builtIn": {
+      "type": "boolean",
+      "description": "[internal only] Indicates whether the plugin is developed and shipped as part of Grafana. Also known as a 'core plugin'."
+    },
+    "category": {
+      "type": "string",
+      "description": "Plugin category used on the Add data source page.",
+      "enum": ["tsdb", "logging", "cloud", "tracing", "profiling", "sql", "enterprise", "iot", "other"]
+    },
+    "enterpriseFeatures": {
+      "type": "object",
+      "description": "Grafana Enterprise specific features",
+      "additionalProperties": true,
+      "properties": {
+        "healthDiagnosticsErrors": {
+          "type": "boolean",
+          "description": "Enable/Disable health diagnostics errors. Requires Grafana >=7.5.5.",
+          "default": false
+        }
+      }
+    },
+    "executable": {
+      "type": "string",
+      "description": "The first part of the file name of the backend component executable. There can be multiple executables built for different operating system and architecture. Grafana will check for executables named `<executable>_<$GOOS>_<lower case $GOARCH><.exe for Windows>`, e.g. `plugin_linux_amd64`. Combination of $GOOS and $GOARCH can be found here: https://golang.org/doc/install/source#environment."
+    },
+    "hideFromList": {
+      "type": "boolean",
+      "description": "[internal only] Excludes the plugin from listings in Grafana's UI. Only allowed for `builtIn` plugins."
+    },
+    "includes": {
+      "type": "array",
+      "description": "Resources to include in plugin.",
+      "items": {
+        "type": "object",
+        "additionalItems": false,
+        "properties": {
+          "uid": {
+            "type": "string",
+            "description": "Unique identifier of the included resource"
+          },
+          "type": {
+            "type": "string",
+            "enum": ["dashboard", "page", "panel", "datasource", "secretsmanager"]
+          },
+          "name": {
+            "type": "string"
+          },
+          "component": {
+            "type": "string",
+            "description": "(Legacy) The Angular component to use for a page."
+          },
+          "role": {
+            "type": "string",
+            "description": "The minimum role a user must have to see this page in the navigation menu.",
+            "enum": ["Admin", "Editor", "Viewer"]
+          },
+          "path": {
+            "type": "string",
+            "description": "Used for app plugins."
+          },
+          "addToNav": {
+            "type": "boolean",
+            "description": "Add the include to the navigation menu."
+          },
+          "defaultNav": {
+            "type": "boolean",
+            "description": "Page or dashboard when user clicks the icon in the side menu."
+          },
+          "icon": {
+            "type": "string",
+            "description": "Icon to use in the side menu. For information on available icon, refer to [Icons Overview](https://developers.grafana.com/ui/latest/index.html?path=/story/docs-overview-icon--icons-overview)."
+          }
+        }
+      }
+    },
+    "logs": {
+      "type": "boolean",
+      "description": "For data source plugins, if the plugin supports logs. It may be used to filter logs only features."
+    },
+    "metrics": {
+      "type": "boolean",
+      "description": "For data source plugins, if the plugin supports metric queries. Used to enable the plugin in the panel editor."
+    },
+    "pascalName": {
+      "type": "string",
+      "description": "[internal only] The PascalCase name for the plugin. Used for creating machine-friendly identifiers, typically in code generation. If not provided, defaults to name, but title-cased and sanitized (only alphabetical characters allowed).",
+      "pattern": "^([A-Z][a-zA-Z]{1,62})$"
+    },
+    "preload": {
+      "type": "boolean",
+      "description": "Initialize plugin on startup. By default, the plugin initializes on first use. Useful for app plugins that should load without user interaction."
+    },
+    "queryOptions": {
+      "type": "object",
+      "description": "For data source plugins. There is a query options section in the plugin's query editor and these options can be turned on if needed.",
+      "additionalProperties": false,
+      "properties": {
+        "maxDataPoints": {
+          "type": "boolean",
+          "description": "For data source plugins. If the `max data points` option should be shown in the query options section in the query editor."
+        },
+        "minInterval": {
+          "type": "boolean",
+          "description": "For data source plugins. If the `min interval` option should be shown in the query options section in the query editor."
+        },
+        "cacheTimeout": {
+          "type": "boolean",
+          "description": "For data source plugins. If the `cache timeout` option should be shown in the query options section in the query editor."
+        }
+      }
+    },
+    "routes": {
+      "type": "array",
+      "description": "For data source plugins. Proxy routes used for plugin authentication and adding headers to HTTP requests made by the plugin. For more information, refer to [Authentication for data source plugins](/docs/grafana/latest/developers/plugins/authentication/).",
+      "items": {
+        "type": "object",
+        "description": "For data source plugins. Proxy routes used for plugin authentication and adding headers to HTTP requests made by the plugin. For more information, refer to [Authentication for data source plugins](/docs/grafana/latest/developers/plugins/authentication/).",
+        "additionalProperties": false,
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "For data source plugins. The route path that is replaced by the route URL field when proxying the call."
+          },
+          "method": {
+            "type": "string",
+            "description": "For data source plugins. Route method matches the HTTP verb like GET or POST. Multiple methods can be provided as a comma-separated list."
+          },
+          "url": {
+            "type": "string",
+            "description": "For data source plugins. Route URL is where the request is proxied to."
+          },
+          "reqSignedIn": {
+            "type": "boolean"
+          },
+          "reqRole": {
+            "type": "string"
+          },
+          "headers": {
+            "type": "array",
+            "description": "For data source plugins. Route headers adds HTTP headers to the proxied request."
+          },
+          "body": {
+            "type": "object",
+            "description": "For data source plugins. Route headers set the body content and length to the proxied request."
+          },
+          "tokenAuth": {
+            "type": "object",
+            "description": "For data source plugins. Token authentication section used with an OAuth API.",
+            "additionalProperties": false,
+            "properties": {
+              "url": {
+                "type": "string",
+                "description": "URL to fetch the authentication token."
+              },
+              "scopes": {
+                "type": "array",
+                "description": "The list of scopes that your application should be granted access to.",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "params": {
+                "type": "object",
+                "description": "Parameters for the token authentication request.",
+                "additionalProperties": true,
+                "properties": {
+                  "grant_type": {
+                    "type": "string",
+                    "description": "OAuth grant type"
+                  },
+                  "client_id": {
+                    "type": "string",
+                    "description": "OAuth client ID"
+                  },
+                  "client_secret": {
+                    "type": "string",
+                    "description": "OAuth client secret. Usually populated by decrypting the secret from the SecureJson blob."
+                  },
+                  "resource": {
+                    "type": "string",
+                    "description": "OAuth resource"
+                  }
+                }
+              }
+            }
+          },
+          "jwtTokenAuth": {
+            "type": "object",
+            "description": "For data source plugins. Token authentication section used with an JWT OAuth API.",
+            "additionalProperties": true,
+            "properties": {
+              "url": {
+                "type": "string",
+                "description": "URL to fetch the JWT token.",
+                "format": "uri"
+              },
+              "scopes": {
+                "type": "array",
+                "description": "The list of scopes that your application should be granted access to.",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "params": {
+                "type": "object",
+                "description": "Parameters for the JWT token authentication request.",
+                "additionalProperties": false,
+                "properties": {
+                  "token_uri": {
+                    "type": "string",
+                    "description": ""
+                  },
+                  "client_email": {
+                    "type": "string",
+                    "description": ""
+                  },
+                  "private_key": {
+                    "type": "string",
+                    "description": ""
+                  }
+                }
+              }
+            }
+          },
+          "urlParams": {
+            "type": "array",
+            "description": "Add URL parameters to a proxy route",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "description": "Name of the URL parameter"
+                },
+                "content": {
+                  "type": "string",
+                  "description": "Value of the URL parameter"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "skipDataQuery": {
+      "type": "boolean",
+      "description": "For panel plugins. Hides the query editor."
+    },
+    "state": {
+      "type": "string",
+      "description": "Marks a plugin as a pre-release.",
+      "enum": ["alpha", "beta"]
+    },
+    "streaming": {
+      "type": "boolean",
+      "description": "For data source plugins, if the plugin supports streaming. Used in Explore to start live streaming."
+    },
+    "tracing": {
+      "type": "boolean",
+      "description": "For data source plugins, if the plugin supports tracing. Used for example to link logs (e.g. Loki logs) with tracing plugins."
+    },
+    "externalServiceRegistration": {
+      "type": "object",
+      "description": "Oauth App Service Registration.",
+      "properties": {
+        "impersonation": {
+          "type": "object",
+          "description": "Impersonation describes the permissions that the external service will have on behalf of the user.",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "description": "Enabled allows the service to request access tokens to impersonate users using the jwtbearer grant"
+            },
+            "groups": {
+              "type": "boolean",
+              "description": "Groups allows the service to list the impersonated user's teams."
+            },
+            "permissions": {
+              "type": "array",
+              "description": "Permissions are the permissions that the external service needs when impersonating a user. The intersection of this set with the impersonated user's permission guarantees that the client will not gain more privileges than the impersonated user has.",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "action": {
+                    "type": "string"
+                  },
+                  "scope": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "self": {
+          "type": "object",
+          "description": "Self describes the permissions that the external service will have on behalf of itself",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "description": "Enabled allows the service to request access tokens for itself using the client_credentials grant"
+            },
+            "permissions": {
+              "type": "array",
+              "description": "Permissions are the permissions that the external service needs its associated service account to have",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "action": {
+                    "type": "string"
+                  },
+                  "scope": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
