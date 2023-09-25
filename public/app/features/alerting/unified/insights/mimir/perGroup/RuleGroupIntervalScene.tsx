@@ -1,5 +1,5 @@
 import { PanelBuilders, SceneFlexItem, SceneQueryRunner, SceneTimeRange } from '@grafana/scenes';
-import { DataSourceRef, GraphDrawStyle, TooltipDisplayMode } from '@grafana/schema';
+import { BigValueGraphMode, DataSourceRef } from '@grafana/schema';
 
 import { PANEL_STYLES } from '../../../home/Insights';
 
@@ -19,13 +19,12 @@ export function getRuleGroupIntervalScene(timeRange: SceneTimeRange, datasource:
 
   return new SceneFlexItem({
     ...PANEL_STYLES,
-    body: PanelBuilders.timeseries()
+    body: PanelBuilders.stat()
       .setTitle(panelTitle)
       .setDescription(panelTitle)
       .setData(query)
-      .setCustomFieldConfig('drawStyle', GraphDrawStyle.Line)
       .setUnit('s')
-      .setOption('tooltip', { mode: TooltipDisplayMode.Multi })
+      .setOption('graphMode', BigValueGraphMode.None)
       .build(),
   });
 }
