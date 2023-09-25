@@ -108,7 +108,7 @@ export const SaveDashboardAsForm = ({
               <Field
                 label={
                   <HorizontalGroup justify="space-between">
-                    <Label htmlFor="title">Dashboard name</Label>
+                    <Label htmlFor="title">Title</Label>
                     {config.featureToggles.dashgpt && isNew && (
                       <GenAIDashTitleButton onGenerate={(title) => field.onChange(title)} dashboard={dashboard} />
                     )}
@@ -136,7 +136,7 @@ export const SaveDashboardAsForm = ({
               <Field
                 label={
                   <HorizontalGroup justify="space-between">
-                    <Label htmlFor="description">Dashboard description</Label>
+                    <Label htmlFor="description">Description</Label>
                     {config.featureToggles.dashgpt && isNew && (
                       <GenAIDashDescriptionButton
                         onGenerate={(description) => field.onChange(description)}
