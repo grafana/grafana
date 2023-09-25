@@ -8,9 +8,11 @@ const tableNameWithSpecialCharacter = tablesResponse.results.tables.frames[0].da
 const normalTableName = tablesResponse.results.tables.frames[0].data.values[0][0];
 
 describe('MySQL datasource', () => {
-  it('code editor autocomplete should handle table name escaping/quoting', () => {
-    e2e.flows.login('admin', 'admin');
+  beforeEach(() => {
+    e2e.flows.login(e2e.env('USERNAME'), e2e.env('PASSWORD'));
+  });
 
+  it('code editor autocomplete should handle table name escaping/quoting', () => {
     cy.intercept(
       'POST',
       {

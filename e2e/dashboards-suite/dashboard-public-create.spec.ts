@@ -1,12 +1,11 @@
 import { e2e } from '../utils';
 
-e2e.scenario({
-  describeName: 'Create a public dashboard',
-  itName: 'Create a public dashboard',
-  addScenarioDataSource: false,
-  addScenarioDashBoard: false,
-  skipScenario: false,
-  scenario: () => {
+describe('Public dashboards', () => {
+  beforeEach(() => {
+    e2e.flows.login(e2e.env('USERNAME'), e2e.env('PASSWORD'));
+  });
+
+  it('Create a public dashboard', () => {
     // Opening a dashboard without template variables
     cy.intercept({
       pathname: '/api/ds/query',
@@ -60,16 +59,9 @@ e2e.scenario({
     // There elements should be rendered once the Settings dropdown is opened
     e2e.pages.ShareDashboardModal.PublicDashboard.EnableAnnotationsSwitch().should('exist');
     e2e.pages.ShareDashboardModal.PublicDashboard.EnableTimeRangeSwitch().should('exist');
-  },
-});
+  });
 
-e2e.scenario({
-  describeName: 'Open a public dashboard',
-  itName: 'Open a public dashboard',
-  addScenarioDataSource: false,
-  addScenarioDashBoard: false,
-  skipScenario: false,
-  scenario: () => {
+  it('Open a public dashboard', () => {
     // Opening a dashboard without template variables
     cy.intercept({
       method: 'POST',
@@ -110,16 +102,9 @@ e2e.scenario({
             expect(resp.status).to.eq(200);
           });
       });
-  },
-});
+  });
 
-e2e.scenario({
-  describeName: 'Disable a public dashboard',
-  itName: 'Disable a public dashboard',
-  addScenarioDataSource: false,
-  addScenarioDashBoard: false,
-  skipScenario: false,
-  scenario: () => {
+  it('Disable a public dashboard', () => {
     // Opening a dashboard without template variables
     cy.intercept({
       method: 'POST',
@@ -159,7 +144,7 @@ e2e.scenario({
           expect(resp.status).to.eq(403);
         });
     });
-  },
+  });
 });
 
 const getPublicDashboardAPIUrl = (url: string): string => {

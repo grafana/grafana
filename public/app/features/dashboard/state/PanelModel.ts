@@ -1,4 +1,4 @@
-import { cloneDeep, defaultsDeep, isArray, isEqual, keys } from 'lodash';
+import { cloneDeep, defaultsDeep, isArray, isEqual } from 'lodash';
 import { v4 as uuidv4 } from 'uuid';
 
 import {
@@ -228,15 +228,15 @@ export class PanelModel implements DataConfigSource, IPanelModel {
         continue;
       }
 
-      if (typeof (this as any)[property] === 'function') {
+      if (typeof this[property] === 'function') {
         continue;
       }
 
-      if (typeof (this as any)[property] === 'symbol') {
+      if (typeof this[property] === 'symbol') {
         continue;
       }
 
-      delete (this as any)[property];
+      delete this[property];
     }
 
     // copy properties from persisted model
@@ -463,11 +463,11 @@ export class PanelModel implements DataConfigSource, IPanelModel {
 
   clearPropertiesBeforePluginChange() {
     // remove panel type specific  options
-    for (const key of keys(this)) {
+    for (const key in this) {
       if (mustKeepProps[key]) {
         continue;
       }
-      delete (this as any)[key];
+      delete this[key];
     }
 
     this.options = {};

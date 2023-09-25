@@ -32,5 +32,7 @@ export interface RuleFormValues {
   namespace: string;
   forTime: number;
   forTimeUnit: string;
+  keepFiringForTime?: number;
+  keepFiringForTimeUnit?: string;
   expression: string;
 }

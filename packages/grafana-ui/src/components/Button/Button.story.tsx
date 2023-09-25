@@ -2,7 +2,6 @@ import { StoryFn } from '@storybook/react';
 import React from 'react';
 
 import { ComponentSize } from '../../types';
-import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { Card } from '../Card/Card';
 import { HorizontalGroup, VerticalGroup } from '../Layout/Layout';
 
@@ -15,7 +14,6 @@ const sizes: ComponentSize[] = ['lg', 'md', 'sm'];
 export default {
   title: 'Buttons/Button',
   component: Button,
-  decorators: [withCenteredStory],
   parameters: {
     docs: {
       page: mdx,
