@@ -51,9 +51,7 @@ export function getExploreExtensionConfigs(): PluginExtensionLinkConfig[] {
         },
         onClick: (_, { context }) => {
           dispatch(changeCorrelationEditorDetails({ editorMode: true }));
-          if (context?.exploreId) {
-            dispatch(runQueries({ exploreId: context?.exploreId }));
-          }
+          dispatch(runQueries({ exploreId: context!.exploreId }));
         },
       }),
     ];

@@ -9,10 +9,11 @@ import { Button, HorizontalGroup, Icon, Tooltip, useStyles2 } from '@grafana/ui'
 import { CORRELATION_EDITOR_POST_CONFIRM_ACTION, ExploreItemState, useDispatch, useSelector } from 'app/types';
 
 import { CorrelationUnsavedChangesModal } from './CorrelationUnsavedChangesModal';
+import { saveCurrentCorrelation } from './state/correlations';
 import { changeDatasource } from './state/datasource';
 import { changeCorrelationHelperData } from './state/explorePane';
 import { changeCorrelationEditorDetails, splitClose } from './state/main';
-import { runQueries, saveCurrentCorrelation } from './state/query';
+import { runQueries } from './state/query';
 import { selectCorrelationDetails } from './state/selectors';
 
 export const CorrelationEditorModeBar = ({ panes }: { panes: Array<[string, ExploreItemState]> }) => {

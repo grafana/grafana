@@ -34,6 +34,7 @@ export interface ExplorePanelsState extends Partial<Record<PreferredVisualisatio
 /**
  * Keep a list of vars the correlations editor / helper in explore will use
  */
+/** @internal */
 export interface ExploreCorrelationHelperData {
   resultField: string;
   vars: Record<string, string>;

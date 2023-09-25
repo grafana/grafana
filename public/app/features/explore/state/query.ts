@@ -34,12 +34,9 @@ import {
   updateHistory,
 } from 'app/core/utils/explore';
 import { getShiftedTimeRange } from 'app/core/utils/timePicker';
-import { CreateCorrelationParams } from 'app/features/correlations/types';
-import { CorrelationData } from 'app/features/correlations/useCorrelations';
-import { createCorrelation, getCorrelationsBySourceUIDs } from 'app/features/correlations/utils';
+import { getCorrelationsBySourceUIDs } from 'app/features/correlations/utils';
 import { getTimeZone } from 'app/features/profile/state/selectors';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
-import { store } from 'app/store/store';
 import {
   createAsyncThunk,
   ExploreItemState,
@@ -61,9 +58,9 @@ import {
   supplementaryQueryTypes,
 } from '../utils/supplementaryQueries';
 
+import { getCorrelations } from './correlations';
 import { saveCorrelationsAction } from './explorePane';
 import { addHistoryItem, historyUpdatedAction, loadRichHistory } from './history';
-import { splitClose } from './main';
 import { updateTime } from './time';
 import { createCacheKey, filterLogRowsByIndex, getDatasourceUIDs, getResultsFromCache } from './utils';
 
@@ -1185,27 +1182,6 @@ export const queryReducer = (state: ExploreItemState, action: AnyAction): Explor
   return state;
 };
 
-/**
- * Creates an observable that emits correlations once they are loaded
- */
-const getCorrelations = (exploreId: string) => {
-  return new Observable<CorrelationData[]>((subscriber) => {
-    const existingCorrelations = store.getState().explore.panes[exploreId]?.correlations;
-    if (existingCorrelations) {
-      subscriber.next(existingCorrelations);
-      subscriber.complete();
-    } else {
-      const unsubscribe = store.subscribe(() => {
-        const correlations = store.getState().explore.panes[exploreId]?.correlations;
-        if (correlations) {
-          unsubscribe();
-          subscriber.next(correlations);
-          subscriber.complete();
-        }
-      });
-    }
-  });
-};
 export const processQueryResponse = (
   state: ExploreItemState,
   action: PayloadAction<QueryEndedPayload>
@@ -1270,60 +1246,3 @@ export const processQueryResponse = (
     clearedAtIndex: state.isLive ? state.clearedAtIndex : null,
   };
 };
-
-export function reloadCorrelations(exploreId: string): ThunkResult<void> {
-  return async (dispatch, getState) => {
-    const pane = getState().explore!.panes[exploreId]!;
-
-    if (pane.datasourceInstance?.uid !== undefined) {
-      // TODO: Tie correlations with query refID for mixed datasource
-      let datasourceUIDs = pane.datasourceInstance.meta.mixed
-        ? pane.queries.map((query) => query.datasource?.uid).filter((x): x is string => x !== null)
-        : [pane.datasourceInstance.uid];
-      const correlations = await getCorrelationsBySourceUIDs(datasourceUIDs);
-      dispatch(saveCorrelationsAction({ exploreId, correlations: correlations.correlations || [] }));
-    }
-  };
-}
-
-export function saveCurrentCorrelation(label?: string, description?: string): ThunkResult<void> {
-  return async (dispatch, getState) => {
-    const keys = Object.keys(getState().explore!.panes);
-    const sourcePane = getState().explore!.panes[keys[0]]!;
-    const targetPane = getState().explore!.panes[keys[1]]!;
-    const sourceDatasourceRef = sourcePane.datasourceInstance?.meta.mixed
-      ? sourcePane.queries[0].datasource
-      : sourcePane.datasourceInstance?.getRef();
-    const targetDataSourceRef = targetPane.datasourceInstance?.meta.mixed
-      ? targetPane.queries[0].datasource
-      : targetPane.datasourceInstance?.getRef();
-
-    const sourceDatasource = await getDataSourceSrv().get(sourceDatasourceRef);
-    const targetDatasource = await getDataSourceSrv().get(targetDataSourceRef);
-
-    if (sourceDatasource?.uid && targetDatasource?.uid && targetPane.correlationEditorHelperData?.resultField) {
-      const correlation: CreateCorrelationParams = {
-        sourceUID: sourceDatasource.uid,
-        targetUID: targetDatasource.uid,
-        label: label || `${sourceDatasource?.name} to ${targetDatasource.name}`,
-        description,
-        config: {
-          field: targetPane.correlationEditorHelperData.resultField,
-          target: targetPane.queries[0],
-          type: 'query',
-        },
-      };
-      await createCorrelation(sourceDatasource.uid, correlation).then(async (onFulfilled) => {
-        if (onFulfilled) {
-          await dispatch(splitClose(keys[1]));
-          await dispatch(reloadCorrelations(keys[0]));
-          await dispatch(runQueries({ exploreId: keys[0] }));
-          reportInteraction('grafana_explore_correlation_editor_saved', {
-            sourceDatasourceType: sourceDatasource.type,
-            targetDataSourceType: targetDatasource.type,
-          });
-        }
-      });
-    }
-  };
-}
