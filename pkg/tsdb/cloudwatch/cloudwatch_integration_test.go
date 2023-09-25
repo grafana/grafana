@@ -11,6 +11,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
+	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
@@ -37,8 +38,10 @@ func Test_CloudWatch_CallResource_Integration_Test(t *testing.T) {
 	NewLogsAPI = func(sess *session.Session) models.CloudWatchLogsAPIProvider {
 		return &logApi
 	}
+	ec2Mock := &mocks.EC2Mock{}
+	ec2Mock.On("DescribeRegions", mock.Anything, mock.Anything).Return(&ec2.DescribeRegionsOutput{}, nil)
 	NewEC2Client = func(provider client.ConfigProvider) models.EC2APIProvider {
-		return fakeEC2Client{}
+		return ec2Mock
 	}
 	t.Cleanup(func() {
 		NewOAMAPI = origNewOAMAPI

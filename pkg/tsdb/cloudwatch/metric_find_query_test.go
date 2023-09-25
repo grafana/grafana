@@ -19,7 +19,9 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/constants"
+	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/mocks"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
+	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/utils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -31,17 +33,19 @@ func TestQuery_Regions(t *testing.T) {
 		NewEC2Client = origNewEC2Client
 	})
 
-	var cli fakeEC2Client
-
-	NewEC2Client = func(client.ConfigProvider) models.EC2APIProvider {
-		return cli
+	ec2Mock := &mocks.EC2Mock{}
+	NewEC2Client = func(provider client.ConfigProvider) models.EC2APIProvider {
+		return ec2Mock
 	}
-
 	t.Run("An extra region", func(t *testing.T) {
 		const regionName = "xtra-region"
-		cli = fakeEC2Client{
-			regions: []string{regionName},
-		}
+		ec2Mock.On("DescribeRegions", mock.Anything, mock.Anything).Return(&ec2.DescribeRegionsOutput{
+			Regions: []*ec2.Region{
+				{
+					RegionName: utils.Pointer(regionName),
+				},
+			},
+		}, nil)
 
 		im := datasource.NewInstanceManager(func(ctx context.Context, s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 			return DataSource{Settings: models.CloudWatchSettings{AWSDatasourceSettings: awsds.AWSDatasourceSettings{Region: "us-east-2"}}}, nil
@@ -126,7 +130,7 @@ func TestQuery_InstanceAttributes(t *testing.T) {
 		NewEC2Client = origNewEC2Client
 	})
 
-	var cli fakeEC2Client
+	var cli oldEC2Client
 
 	NewEC2Client = func(client.ConfigProvider) models.EC2APIProvider {
 		return cli
@@ -134,7 +138,7 @@ func TestQuery_InstanceAttributes(t *testing.T) {
 
 	t.Run("Get instance ID", func(t *testing.T) {
 		const instanceID = "i-12345678"
-		cli = fakeEC2Client{
+		cli = oldEC2Client{
 			reservations: []*ec2.Reservation{
 				{
 					Instances: []*ec2.Instance{
@@ -188,14 +192,14 @@ func TestQuery_EBSVolumeIDs(t *testing.T) {
 		NewEC2Client = origNewEC2Client
 	})
 
-	var cli fakeEC2Client
+	var cli oldEC2Client
 
 	NewEC2Client = func(client.ConfigProvider) models.EC2APIProvider {
 		return cli
 	}
 
 	t.Run("", func(t *testing.T) {
-		cli = fakeEC2Client{
+		cli = oldEC2Client{
 			reservations: []*ec2.Reservation{
 				{
 					Instances: []*ec2.Instance{
