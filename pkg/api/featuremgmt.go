@@ -8,6 +8,7 @@ import (
 	"net/http"
 
 	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/infra/log"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
@@ -70,7 +71,7 @@ func (hs *HTTPServer) UpdateFeatureToggle(ctx *contextmodel.ReqContext) response
 		}
 	}
 
-	err := sendWebhookUpdate(featureMgmtCfg, payload)
+	err := sendWebhookUpdate(featureMgmtCfg, payload, hs.log)
 	if err != nil {
 		hs.log.Error("UpdateFeatureToggle: Failed to perform webhook request", "error", err)
 		return response.Respond(http.StatusBadRequest, "Failed to perform webhook request")
@@ -110,7 +111,7 @@ type UpdatePayload struct {
 	User           string          `json:"user"`
 }
 
-func sendWebhookUpdate(cfg setting.FeatureMgmtSettings, payload UpdatePayload) error {
+func sendWebhookUpdate(cfg setting.FeatureMgmtSettings, payload UpdatePayload, logger log.Logger) error {
 	data, err := json.Marshal(payload)
 	if err != nil {
 		return err
@@ -129,7 +130,11 @@ func sendWebhookUpdate(cfg setting.FeatureMgmtSettings, payload UpdatePayload) e
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			logger.Warn("Failed to close response body", "err", err)
+		}
+	}()
 
 	if resp.StatusCode >= http.StatusBadRequest {
 		if body, err := io.ReadAll(resp.Body); err != nil {
