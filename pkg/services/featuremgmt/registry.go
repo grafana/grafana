@@ -162,6 +162,13 @@ var (
 			Owner:       grafanaFrontendPlatformSquad,
 		},
 		{
+			Name:         "dockedMegaMenu",
+			Description:  "Enable support for a persistent (docked) navigation menu",
+			Stage:        FeatureStagePublicPreview,
+			FrontendOnly: true,
+			Owner:        grafanaFrontendPlatformSquad,
+		},
+		{
 			Name:        "grpcServer",
 			Description: "Run the GRPC server",
 			Stage:       FeatureStagePublicPreview,
@@ -532,7 +539,8 @@ var (
 		{
 			Name:        "recordedQueriesMulti",
 			Description: "Enables writing multiple items from a single query within Recorded Queries",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStageGeneralAvailability,
+			Expression:  "true",
 			Owner:       grafanaObservabilityMetricsSquad,
 		},
 		{
@@ -541,13 +549,6 @@ var (
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: false,
 			Owner:        grafanaPluginsPlatformSquad,
-		},
-		{
-			Name:         "alertingLokiRangeToInstant",
-			Description:  "Rewrites eligible loki range queries to instant queries",
-			Stage:        FeatureStageExperimental,
-			FrontendOnly: false,
-			Owner:        grafanaAlertingSquad,
 		},
 		{
 			Name:         "vizAndWidgetSplit",
@@ -744,6 +745,55 @@ var (
 			FrontendOnly:    false,
 			Owner:           grafanaDashboardsSquad,
 			RequiresRestart: true,
+		},
+		{
+			Name:         "lokiRunQueriesInParallel",
+			Description:  "Enables running Loki queries in parallel",
+			Stage:        FeatureStagePrivatePreview,
+			FrontendOnly: false,
+			Owner:        grafanaObservabilityLogsSquad,
+		},
+		{
+			Name:         "wargamesTesting",
+			Description:  "Placeholder feature flag for internal testing",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: false,
+			Owner:        hostedGrafanaTeam,
+		},
+		{
+			Name:         "alertingInsights",
+			Description:  "Show the new alerting insights landing page",
+			FrontendOnly: true,
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAlertingSquad,
+		},
+		{
+			Name:        "externalCorePlugins",
+			Description: "Allow core plugins to be loaded as external",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaPluginsPlatformSquad,
+		},
+		{
+			Name:         "pluginsAPIMetrics",
+			Description:  "Sends metrics of public grafana packages usage by plugins",
+			FrontendOnly: true,
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaPluginsPlatformSquad,
+		},
+		{
+			Name:            "httpSLOLevels",
+			Description:     "Adds SLO level to http request metrics",
+			Stage:           FeatureStageExperimental,
+			FrontendOnly:    false,
+			Owner:           hostedGrafanaTeam,
+			RequiresRestart: true,
+		},
+		{
+			Name:            "idForwarding",
+			Description:     "Generate signed id token for identity that can be forwarded to plugins and external services",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaAuthnzSquad,
+			RequiresDevMode: true,
 		},
 	}
 )

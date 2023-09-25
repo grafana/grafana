@@ -28,7 +28,7 @@ const (
 	DS_ES_OPEN_DISTRO = "grafana-es-open-distro-datasource"
 	DS_ES_OPENSEARCH  = "grafana-opensearch-datasource"
 	DS_AZURE_MONITOR  = "grafana-azure-monitor-datasource"
-	DS_TESTDATA       = "testdata"
+	DS_TESTDATA       = "grafana-testdata-datasource"
 	// CustomHeaderName is the prefix that is used to store the name of a custom header.
 	CustomHeaderName = "httpHeaderName"
 	// CustomHeaderValue is the prefix that is used to store the value of a custom header.
@@ -149,6 +149,12 @@ type DeleteDataSourceCommand struct {
 	DeletedDatasourcesCount int64
 
 	UpdateSecretFn UpdateSecretFn
+
+	// Optional way to skip publishing delete event for data sources that are
+	// deleted just to be re-created with the same UID during provisioning.
+	// In such case we don't want to publish the event that triggers clean-up
+	// of related resources (like correlations)
+	SkipPublish bool
 }
 
 // Function for updating secrets along with datasources, to ensure atomicity

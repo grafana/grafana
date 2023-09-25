@@ -45,6 +45,10 @@ func RequestMetrics(features featuremgmt.FeatureToggles, cfg *setting.Cfg, promR
 		histogramLabels = append(histogramLabels, "team")
 	}
 
+	if features.IsEnabled(featuremgmt.FlagHttpSLOLevels) {
+		histogramLabels = append(histogramLabels, "slo_group")
+	}
+
 	httpRequestDurationHistogram := prometheus.NewHistogramVec(
 		prometheus.HistogramOpts{
 			Namespace: "grafana",
@@ -93,6 +97,10 @@ func RequestMetrics(features featuremgmt.FeatureToggles, cfg *setting.Cfg, promR
 
 			if cfg.MetricsIncludeTeamLabel {
 				labelValues = append(labelValues, rmd.Team)
+			}
+
+			if features.IsEnabled(featuremgmt.FlagHttpSLOLevels) {
+				labelValues = append(labelValues, string(rmd.SLOGroup))
 			}
 
 			// avoiding the sanitize functions for in the new instrumentation

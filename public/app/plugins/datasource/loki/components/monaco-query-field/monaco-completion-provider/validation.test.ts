@@ -85,7 +85,7 @@ describe('Monaco Query Validation', () => {
 {place="luna"} 
 # this is a comment 
 |
-logfmt fail
+unpack fail
 |= "a"`;
     const queryLines = query.split('\n');
     expect(validateQuery(query, query, queryLines)).toEqual([

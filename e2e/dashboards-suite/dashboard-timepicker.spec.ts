@@ -1,12 +1,11 @@
 import { e2e } from '../utils';
 
-e2e.scenario({
-  describeName: 'Dashboard timepicker',
-  itName: 'Shows the correct calendar days with custom timezone set via preferences',
-  addScenarioDataSource: false,
-  addScenarioDashBoard: false,
-  skipScenario: false,
-  scenario: () => {
+describe('Dashboard timepicker', () => {
+  beforeEach(() => {
+    e2e.flows.login(e2e.env('USERNAME'), e2e.env('PASSWORD'));
+  });
+
+  it('Shows the correct calendar days with custom timezone set via preferences', () => {
     e2e.flows.setUserPreferences({
       timezone: 'Asia/Tokyo',
     });
@@ -26,16 +25,9 @@ e2e.scenario({
     e2e.components.TimePicker.openButton().click();
     e2e.components.TimePicker.calendar.openButton().first().click();
     cy.get('.react-calendar__tile--active, .react-calendar__tile--hasActive').should('have.length', 3);
-  },
-});
+  });
 
-e2e.scenario({
-  describeName: 'Dashboard timepicker',
-  itName: 'Shows the correct calendar days with custom timezone set via time picker',
-  addScenarioDataSource: false,
-  addScenarioDashBoard: false,
-  skipScenario: false,
-  scenario: () => {
+  it('Shows the correct calendar days with custom timezone set via time picker', () => {
     // Open dashboard with time range from 2022-06-08 00:00:00 to 2022-06-10 23:59:59 in Tokyo time
     e2e.flows.openDashboard({
       uid: '5SdHCasdf',
@@ -50,5 +42,5 @@ e2e.scenario({
     e2e.components.TimePicker.openButton().click();
     e2e.components.TimePicker.calendar.openButton().first().click();
     cy.get('.react-calendar__tile--active, .react-calendar__tile--hasActive').should('have.length', 3);
-  },
+  });
 });

@@ -1,8 +1,6 @@
 import { Meta } from '@storybook/react';
 import React, { useState } from 'react';
 
-import { withCenteredStory } from '@grafana/ui/src/utils/storybook/withCenteredStory';
-
 import { Alert } from '../Alert/Alert';
 import { Button } from '../Button';
 
@@ -13,7 +11,6 @@ import { ErrorWithStack } from './ErrorWithStack';
 const meta: Meta<typeof ErrorBoundary> = {
   title: 'General/ErrorBoundary',
   component: ErrorBoundary,
-  decorators: [withCenteredStory],
   parameters: {
     docs: {
       page: mdx,

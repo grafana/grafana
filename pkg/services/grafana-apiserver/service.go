@@ -4,27 +4,31 @@ import (
 	"context"
 	"crypto/x509"
 	"net"
-	"os"
 	"path"
 
 	"github.com/go-logr/logr"
 	"github.com/grafana/dskit/services"
-	kindsv1 "github.com/grafana/grafana-apiserver/pkg/apis/kinds/v1"
-	grafanaapiserver "github.com/grafana/grafana-apiserver/pkg/apiserver"
 	"github.com/grafana/grafana-apiserver/pkg/certgenerator"
-	grafanaapiserveroptions "github.com/grafana/grafana-apiserver/pkg/cmd/server/options"
-	"github.com/grafana/grafana-apiserver/pkg/storage/filepath"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/apiserver/pkg/authentication/authenticator"
 	"k8s.io/apiserver/pkg/authentication/request/headerrequest"
 	"k8s.io/apiserver/pkg/authentication/user"
+	openapinamer "k8s.io/apiserver/pkg/endpoints/openapi"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/apiserver/pkg/server/options"
-	"k8s.io/client-go/rest"
+	"k8s.io/apiserver/pkg/util/openapi"
+	"k8s.io/client-go/kubernetes/scheme"
+	clientrest "k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 	"k8s.io/klog/v2"
 
+	"github.com/grafana/grafana/pkg/apis"
+	playlistv1 "github.com/grafana/grafana/pkg/apis/playlist/v1"
 	"github.com/grafana/grafana/pkg/modules"
 )
 
@@ -37,18 +41,40 @@ var (
 	_ RestConfigProvider = (*service)(nil)
 )
 
+var (
+	Scheme = runtime.NewScheme()
+	Codecs = serializer.NewCodecFactory(Scheme)
+
+	// if you modify this, make sure you update the crEncoder
+	unversionedVersion = schema.GroupVersion{Group: "", Version: "v1"}
+	unversionedTypes   = []runtime.Object{
+		&metav1.Status{},
+		&metav1.WatchEvent{},
+		&metav1.APIVersions{},
+		&metav1.APIGroupList{},
+		&metav1.APIGroup{},
+		&metav1.APIResourceList{},
+	}
+)
+
+func init() {
+	// we need to add the options to empty v1
+	metav1.AddToGroupVersion(Scheme, schema.GroupVersion{Group: "", Version: "v1"})
+	Scheme.AddUnversionedTypes(unversionedVersion, unversionedTypes...)
+}
+
 type Service interface {
 	services.NamedService
 }
 
 type RestConfigProvider interface {
-	GetRestConfig() *rest.Config
+	GetRestConfig() *clientrest.Config
 }
 
 type service struct {
 	*services.BasicService
 
-	restConfig *rest.Config
+	restConfig *clientrest.Config
 
 	dataPath  string
 	stopCh    chan struct{}
@@ -66,7 +92,7 @@ func New(dataPath string) (*service, error) {
 	return s, nil
 }
 
-func (s *service) GetRestConfig() *rest.Config {
+func (s *service) GetRestConfig() *clientrest.Config {
 	return s.restConfig
 }
 
@@ -75,15 +101,15 @@ func (s *service) start(ctx context.Context) error {
 	logger.V(9)
 	klog.SetLoggerWithOptions(logger, klog.ContextualLogger(true))
 
-	o := grafanaapiserveroptions.NewGrafanaAPIServerOptions(os.Stdout, os.Stderr)
-	o.RecommendedOptions.SecureServing.BindPort = 6443
-	o.RecommendedOptions.Authentication.RemoteKubeConfigFileOptional = true
-	o.RecommendedOptions.Authorization.RemoteKubeConfigFileOptional = true
-	o.RecommendedOptions.Authorization.AlwaysAllowPaths = []string{"*"}
-	o.RecommendedOptions.Authorization.AlwaysAllowGroups = []string{user.SystemPrivilegedGroup, "grafana"}
-	o.RecommendedOptions.Etcd = nil
-	o.RecommendedOptions.Admission = nil
-	o.RecommendedOptions.CoreAPI = nil
+	o := options.NewRecommendedOptions("", unstructured.UnstructuredJSONScheme)
+	o.SecureServing.BindPort = 6443
+	o.Authentication.RemoteKubeConfigFileOptional = true
+	o.Authorization.RemoteKubeConfigFileOptional = true
+	o.Authorization.AlwaysAllowPaths = []string{"*"}
+	o.Authorization.AlwaysAllowGroups = []string{user.SystemPrivilegedGroup, "grafana"}
+	o.Etcd = nil
+	o.Admission = nil
+	o.CoreAPI = nil
 
 	// Get the util to get the paths to pre-generated certs
 	certUtil := certgenerator.CertUtil{
@@ -98,21 +124,18 @@ func (s *service) start(ctx context.Context) error {
 		return err
 	}
 
-	o.RecommendedOptions.SecureServing.BindAddress = net.ParseIP(certgenerator.DefaultAPIServerIp)
-	o.RecommendedOptions.SecureServing.ServerCert.CertKey = options.CertKey{
+	o.SecureServing.BindAddress = net.ParseIP(certgenerator.DefaultAPIServerIp)
+	o.SecureServing.ServerCert.CertKey = options.CertKey{
 		CertFile: certUtil.APIServerCertFile(),
 		KeyFile:  certUtil.APIServerKeyFile(),
 	}
 
-	if err := o.Complete(); err != nil {
-		return err
+	if err := o.Validate(); len(err) > 0 {
+		return err[0]
 	}
 
-	if err := o.Validate(); err != nil {
-		return err
-	}
-
-	serverConfig, err := o.Config()
+	serverConfig := genericapiserver.NewRecommendedConfig(Codecs)
+	err := o.ApplyTo(serverConfig)
 	if err != nil {
 		return err
 	}
@@ -122,29 +145,59 @@ func (s *service) start(ctx context.Context) error {
 		return err
 	}
 
-	serverConfig.ExtraConfig.RESTOptionsGetter = filepath.NewRESTOptionsGetter(s.dataPath, unstructured.UnstructuredJSONScheme)
-	serverConfig.GenericConfig.RESTOptionsGetter = filepath.NewRESTOptionsGetter(s.dataPath, grafanaapiserver.Codecs.LegacyCodec(kindsv1.SchemeGroupVersion))
-	serverConfig.GenericConfig.Config.RESTOptionsGetter = filepath.NewRESTOptionsGetter(s.dataPath, grafanaapiserver.Codecs.LegacyCodec(kindsv1.SchemeGroupVersion))
-
 	authenticator, err := newAuthenticator(rootCert)
 	if err != nil {
 		return err
 	}
 
-	serverConfig.GenericConfig.Authentication.Authenticator = authenticator
+	serverConfig.Authentication.Authenticator = authenticator
 
-	server, err := serverConfig.Complete().New(genericapiserver.NewEmptyDelegate())
+	// Get the list of groups the server will support
+	builders := []apis.APIGroupBuilder{
+		playlistv1.GetAPIGroupBuilder(),
+	}
+
+	// Install schemas
+	for _, b := range builders {
+		err = b.InstallSchema(Scheme) // previously was in init
+		if err != nil {
+			return err
+		}
+	}
+
+	// Add OpenAPI specs for each group+version
+	defsGetter := getOpenAPIDefinitions(builders)
+	serverConfig.OpenAPIConfig = genericapiserver.DefaultOpenAPIConfig(
+		openapi.GetOpenAPIDefinitionsWithoutDisabledFeatures(defsGetter),
+		openapinamer.NewDefinitionNamer(Scheme, scheme.Scheme))
+
+	serverConfig.OpenAPIV3Config = genericapiserver.DefaultOpenAPIV3Config(
+		openapi.GetOpenAPIDefinitionsWithoutDisabledFeatures(defsGetter),
+		openapinamer.NewDefinitionNamer(Scheme, scheme.Scheme))
+
+	serverConfig.SkipOpenAPIInstallation = false
+
+	// Create the server
+	server, err := serverConfig.Complete().New("grafana-apiserver", genericapiserver.NewEmptyDelegate())
 	if err != nil {
 		return err
 	}
 
-	s.restConfig = server.GenericAPIServer.LoopbackClientConfig
+	// Install the API Group+version
+	for _, b := range builders {
+		err = server.InstallAPIGroup(b.GetAPIGroupInfo(Scheme, Codecs))
+		if err != nil {
+			return err
+		}
+	}
+
+	s.restConfig = server.LoopbackClientConfig
 	err = s.writeKubeConfiguration(s.restConfig)
 	if err != nil {
 		return err
 	}
 
-	prepared := server.GenericAPIServer.PrepareRun()
+	prepared := server.PrepareRun()
 
 	// TODO: not sure if we can still inject RouteRegister with the new module server setup
 	// Disabling the /k8s endpoint until we have a solution
@@ -192,7 +245,7 @@ func (s *service) running(ctx context.Context) error {
 	return nil
 }
 
-func (s *service) writeKubeConfiguration(restConfig *rest.Config) error {
+func (s *service) writeKubeConfiguration(restConfig *clientrest.Config) error {
 	clusters := make(map[string]*clientcmdapi.Cluster)
 	clusters["default-cluster"] = &clientcmdapi.Cluster{
 		Server:                restConfig.Host,

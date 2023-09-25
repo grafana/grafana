@@ -99,6 +99,10 @@ const (
 	// Enables topnav support in external plugins. The new Grafana navigation cannot be disabled.
 	FlagTopnav = "topnav"
 
+	// FlagDockedMegaMenu
+	// Enable support for a persistent (docked) navigation menu
+	FlagDockedMegaMenu = "dockedMegaMenu"
+
 	// FlagGrpcServer
 	// Run the GRPC server
 	FlagGrpcServer = "grpcServer"
@@ -323,10 +327,6 @@ const (
 	// Enables fetching Angular detection patterns for plugins from GCOM and fallback to hardcoded ones
 	FlagPluginsDynamicAngularDetectionPatterns = "pluginsDynamicAngularDetectionPatterns"
 
-	// FlagAlertingLokiRangeToInstant
-	// Rewrites eligible loki range queries to instant queries
-	FlagAlertingLokiRangeToInstant = "alertingLokiRangeToInstant"
-
 	// FlagVizAndWidgetSplit
 	// Split panels between vizualizations and widgets
 	FlagVizAndWidgetSplit = "vizAndWidgetSplit"
@@ -434,4 +434,32 @@ const (
 	// FlagLibraryPanelRBAC
 	// Enables RBAC support for library panels
 	FlagLibraryPanelRBAC = "libraryPanelRBAC"
+
+	// FlagLokiRunQueriesInParallel
+	// Enables running Loki queries in parallel
+	FlagLokiRunQueriesInParallel = "lokiRunQueriesInParallel"
+
+	// FlagWargamesTesting
+	// Placeholder feature flag for internal testing
+	FlagWargamesTesting = "wargamesTesting"
+
+	// FlagAlertingInsights
+	// Show the new alerting insights landing page
+	FlagAlertingInsights = "alertingInsights"
+
+	// FlagExternalCorePlugins
+	// Allow core plugins to be loaded as external
+	FlagExternalCorePlugins = "externalCorePlugins"
+
+	// FlagPluginsAPIMetrics
+	// Sends metrics of public grafana packages usage by plugins
+	FlagPluginsAPIMetrics = "pluginsAPIMetrics"
+
+	// FlagHttpSLOLevels
+	// Adds SLO level to http request metrics
+	FlagHttpSLOLevels = "httpSLOLevels"
+
+	// FlagIdForwarding
+	// Generate signed id token for identity that can be forwarded to plugins and external services
+	FlagIdForwarding = "idForwarding"
 )
