@@ -1,0 +1,35 @@
+// Profiling
+// Docs (Scrape): https://grafana.com/docs/agent/latest/flow/reference/components/pyroscope.scrape/
+// Docs (Remote Write): https://grafana.com/docs/agent/latest/flow/reference/components/pyroscope.write/
+
+pyroscope.scrape "local" {
+  targets    = [
+    {"__address__" = "db:80", "service_name"="db"},
+    {"__address__" = "app:80", "service_name"="app"},
+    {"__address__" = "lb:80", "service_name"="lb"},
+    {"__address__" = "localhost:12345", "service_name"="agent"},
+  ]
+  forward_to = [pyroscope.write.local.receiver]
+  profiling_config {
+    profile.fgprof {
+      enabled = true
+    }
+    profile.block {
+      enabled = false
+    }
+    profile.mutex {
+      enabled = false
+    }
+  }
+}
+
+pyroscope.write "local" {
+  endpoint {
+    url = "http://pyroscope:4040"
+  }
+  external_labels = {
+    "cluster" = "docker-compose",
+    "env"     = "lab",
+    "source"  = "agent-flow",
+  }
+}

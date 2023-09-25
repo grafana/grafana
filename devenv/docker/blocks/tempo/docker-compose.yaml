@@ -122,15 +122,37 @@
     #     loki-url: 'http://localhost:3100/api/prom/push'
     #     labels: namespace
 
-  phlare:
-    image: grafana/phlare:latest
-    command:
-      - --config.file=/etc/phlare.yaml
+  pyroscope:
+    image: 'grafana/pyroscope:latest'
+    # environment:
+    #   - PYROSCOPE_CONFIG=pyroscope.yaml
+    #   - PYROSCOPE_LOG_LEVEL=debug
     ports:
-      - 4100:4100
+      - '4040:4040'
     volumes:
-      - ./docker/blocks/tempo/phlare.yaml:/etc/phlare.yaml
-    links:
-      - app
-      - db
-      - loadgen
+      -  './docker/blocks/tempo/pyroscope.yaml:/etc/pyroscope.yaml'
+    command:
+      - 'server'
+    # logging:
+    #   driver: loki
+    #   options:
+    #     loki-url: 'http://localhost:3100/loki/api/v1/push'
+
+  agent:
+    image: grafana/agent:v0.34.3
+    # entrypoint:
+    #   - /bin/grafana-agent
+    #   - -server.http.address=0.0.0.0:12345
+    #   # - -config.file=/etc/agent/agent.river
+    #   - -enable-features=integrations-next
+    volumes:
+      # - ./docker/blocks/tempo/agent.yaml:/etc/agent/agent.yaml
+      - ./docker/blocks/tempo/agent.river:/etc/agent/agent.river:ro
+    # ports:
+    #   - "12345:12345"
+    #   - "12347:12347"
+    # extra_hosts:
+    #   - "host.docker.internal:host-gateway"
+    command: [ "run", "/etc/agent/agent.river", "--disable-reporting", "--server.http.listen-addr=0.0.0.0:12345" ]
+    environment:
+      - AGENT_MODE=flow
