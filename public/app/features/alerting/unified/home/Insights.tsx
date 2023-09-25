@@ -37,6 +37,7 @@ import { getInstancesPercentageByStateScene } from '../insights/mimir/rules/Inst
 import { getMissedIterationsScene } from '../insights/mimir/rules/MissedIterationsScene';
 import { getMostFiredInstancesScene as getMostFiredCloudInstances } from '../insights/mimir/rules/MostFiredInstances';
 import { getPendingCloudAlertsScene } from '../insights/mimir/rules/Pending';
+import { getRuleGroupEvaluationDurationIntervalRatioScene } from '../insights/mimir/perGroup/RuleGroupEvaluationDurationIntervalRatioScene';
 
 const ashDs = {
   type: 'loki',
@@ -218,6 +219,11 @@ function getMimirManagedRulesPerGroupScenes() {
           children: [
             getRuleGroupEvaluationDurationScene(THIS_WEEK_TIME_RANGE, cloudUsageDs, 'Rule group evaluation duration'),
             getRulesPerGroupScene(THIS_WEEK_TIME_RANGE, cloudUsageDs, 'Rules per group'),
+            getRuleGroupEvaluationDurationIntervalRatioScene(
+              THIS_WEEK_TIME_RANGE,
+              cloudUsageDs,
+              'Evaluation duration / interval ratio'
+            ),
           ],
         }),
       ],
