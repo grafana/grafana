@@ -1,3 +1,5 @@
+import React from 'react';
+
 import {
   EmbeddedScene,
   NestedScene,
@@ -64,7 +66,7 @@ export function getGrafanaScenes() {
         new SceneFlexLayout({
           children: [
             getMostFiredInstancesScene(THIS_WEEK_TIME_RANGE, ashDs, 'Top 10 firing instances this week'),
-            getFiringGrafanaAlertsScene(THIS_WEEK_TIME_RANGE, cloudUsageDs, 'Firing'),
+            getFiringGrafanaAlertsScene(THIS_WEEK_TIME_RANGE, cloudUsageDs, 'Active'),
             getPausedGrafanaAlertsScene(THIS_WEEK_TIME_RANGE, cloudUsageDs, 'Paused'),
           ],
         }),
@@ -166,7 +168,7 @@ function getMimirManagedRulesScenes() {
         new SceneFlexLayout({
           children: [
             getMostFiredCloudInstances(THIS_WEEK_TIME_RANGE, grafanaCloudPromDs, 'Top 10 firing instance this week'),
-            getFiringCloudAlertsScene(THIS_WEEK_TIME_RANGE, grafanaCloudPromDs, 'Firing'),
+            getFiringCloudAlertsScene(THIS_WEEK_TIME_RANGE, grafanaCloudPromDs, 'Active'),
             getPendingCloudAlertsScene(THIS_WEEK_TIME_RANGE, grafanaCloudPromDs, 'Pending'),
           ],
         }),
@@ -176,7 +178,7 @@ function getMimirManagedRulesScenes() {
             getInstancesPercentageByStateScene(
               THIS_WEEK_TIME_RANGE,
               grafanaCloudPromDs,
-              '% of Alert Instances by State'
+              '% of alert instances by State'
             ),
           ],
         }),

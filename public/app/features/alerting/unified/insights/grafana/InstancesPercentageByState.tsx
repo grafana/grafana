@@ -45,6 +45,12 @@ export function getGrafanaInstancesPercentageByStateScene(
           },
         ],
       })
+      .setOverrides((b) =>
+        b.matchFieldsWithName('active').overrideColor({
+          mode: 'fixed',
+          fixedColor: 'red',
+        })
+      )
       .build(),
   });
 }
