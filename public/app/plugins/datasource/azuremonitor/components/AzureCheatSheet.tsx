@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
-import { Button, Card, Collapse, useStyles2 } from '@grafana/ui';
+import { Button, Card, Collapse, CustomScrollbar, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
 
 import tokenizer from '../../cloudwatch/language/cloudwatch-logs/syntax';
 import { RawQuery } from '../../prometheus/querybuilder/shared/RawQuery';
@@ -119,7 +119,6 @@ const AzureCheatSheet = (props: Props) => {
     await getBackendSrv()
       .get(`https://api.loganalytics.io/v1/metadata`)
       .then((result) => {
-        console.log('result', result);
         setCheatsheetQueries(result);
         setIsLoading(false);
       });
@@ -136,26 +135,35 @@ const AzureCheatSheet = (props: Props) => {
       <h3>Azure Monitor cheat sheet</h3>
       <Collapse label="Logs" collapsible={true} isOpen={isLogsOpen} onToggle={(isOpen) => setIsLogsOpen(isOpen)}>
         {!isLoading && cheatsheetQueries ?
-          cheatsheetQueries.queries.map((query) => {
-            return (
-              <Card className={styles.card} key={query.id}>
-                <Card.Heading>{query.displayName}</Card.Heading>
-                <div className={styles.rawQueryContainer}>
-                  <RawQuery
-                    aria-label={`${query.displayName} raw query`}
-                    query={query.body}
-                    lang={lang}
-                    className={styles.rawQuery}
-                  />
-                </div>
-                <Card.Actions>
-                  <Button size="sm" aria-label="use this query button" onClick={() => props.onClickExample({refId: "A", queryType: AzureQueryType.LogAnalytics})}>
-                    Use this query
-                  </Button>
-                </Card.Actions>
-              </Card>
-            );
-          }) : "Loading..."}
+          <CustomScrollbar
+            showScrollIndicators={true}
+            autoHeightMax="350px" 
+          > 
+            {cheatsheetQueries.queries.map((query) => {
+              return (
+                  <Card className={styles.card} key={query.id}>
+                    <Card.Heading>{query.displayName}</Card.Heading>
+                    <div className={styles.rawQueryContainer}>
+                      <RawQuery
+                        aria-label={`${query.displayName} raw query`}
+                        query={query.body}
+                        lang={lang}
+                        className={styles.rawQuery}
+                      />
+                    </div>
+                    <Card.Actions>
+                      <Button size="sm" aria-label="use this query button" onClick={() => {
+                        console.log(query.body)
+                        props.onClickExample({refId: "A", queryType: AzureQueryType.LogAnalytics})
+                      }}>
+                        Use this query
+                      </Button>
+                    </Card.Actions>
+                  </Card>
+              );
+            })}
+          </CustomScrollbar>
+        : <LoadingPlaceholder text="Loading..." />}
       </Collapse>
     </div>
   );
