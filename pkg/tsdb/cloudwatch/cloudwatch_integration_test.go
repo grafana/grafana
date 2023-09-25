@@ -52,13 +52,13 @@ func Test_CloudWatch_CallResource_Integration_Test(t *testing.T) {
 		return &api
 	}
 
-	im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+	im := datasource.NewInstanceManager((func(ctx context.Context, s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 		return DataSource{Settings: models.CloudWatchSettings{
 			AWSDatasourceSettings: awsds.AWSDatasourceSettings{
 				Region: "us-east-1",
 			},
 		}}, nil
-	})
+	}))
 
 	t.Run("Should handle dimension value request and return values from the api", func(t *testing.T) {
 		pageLimit := 100

@@ -152,7 +152,7 @@
       "data-tab": "Data",
       "error-tab": "Error",
       "json-tab": "JSON",
-      "meta-tab": "Meta Data",
+      "meta-tab": "Meta data",
       "query-tab": "Query",
       "stats-tab": "Stats",
       "subtitle": "{{queryCount}} queries with total query time of {{formatted}}",
@@ -211,13 +211,31 @@
       "refresh": "Refresh dashboard",
       "save": "Save dashboard",
       "settings": "Dashboard settings",
-      "share": "Share dashboard or panel",
+      "share": "Share dashboard",
       "unmark-favorite": "Unmark as favorite"
     }
+  },
+  "data-source-picker": {
+    "open-advanced-button": "Open advanced data source picker"
   },
   "data-sources": {
     "datasource-add-button": {
       "label": "Add new data source"
+    }
+  },
+  "explore": {
+    "add-to-dashboard": "Add to dashboard",
+    "toolbar": {
+      "aria-label": "Explore toolbar",
+      "copy-shortened-link": "Copy shortened link",
+      "refresh-picker-cancel": "Cancel",
+      "refresh-picker-run": "Run query",
+      "split-close": "Close",
+      "split-close-tooltip": "Close split pane",
+      "split-narrow": "Narrow pane",
+      "split-title": "Split",
+      "split-tooltip": "Split the pane",
+      "split-widen": "Widen pane"
     }
   },
   "folder-picker": {
@@ -669,8 +687,9 @@
       "aria-label": "Turn off auto refresh",
       "label": "Off"
     },
-    "select-button": {
-      "auto-refresh": "Set auto refresh interval"
+    "tooltip": {
+      "interval-selected": "Set auto refresh interval",
+      "turned-off": "Auto refresh off"
     }
   },
   "search": {
@@ -847,7 +866,8 @@
       "select-time": "Select a time range"
     },
     "content": {
-      "empty-recent-list": "<0><0>It looks like you haven&apos;t used this time picker before. As soon as you enter some time intervals, recently used intervals will appear here.</0></0><1><0>Read the documentation</0><1> to find out more about how to enter custom time ranges.</1></1>",
+      "empty-recent-list-docs": "<0><0>Read the documentation</0><1> to find out more about how to enter custom time ranges.</1></0>",
+      "empty-recent-list-info": "It looks like you haven't used this time picker before. As soon as you enter some time intervals, recently used intervals will appear here.",
       "filter-placeholder": "Search quick ranges"
     },
     "footer": {

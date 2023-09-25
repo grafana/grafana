@@ -71,7 +71,7 @@ func TestNewInstanceSettings(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			f := NewInstanceSettings(httpclient.NewProvider())
-			model, err := f(tt.settings)
+			model, err := f(context.Background(), tt.settings)
 			tt.Err(t, err)
 			datasourceComparer := cmp.Comparer(func(d1 DataSource, d2 DataSource) bool {
 				return d1.Settings.Profile == d2.Settings.Profile &&
@@ -119,7 +119,6 @@ func Test_CheckHealth(t *testing.T) {
 
 	t.Run("successfully query metrics and logs", func(t *testing.T) {
 		client = fakeCheckHealthClient{}
-
 		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
 
 		resp, err := executor.CheckHealth(context.Background(), &backend.CheckHealthRequest{
@@ -211,13 +210,13 @@ func TestQuery_ResourceRequest_DescribeLogGroups_with_CrossAccountQuerying(t *te
 		return &logsApi
 	}
 
-	im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+	im := datasource.NewInstanceManager(func(ctx context.Context, s backend.DataSourceInstanceSettings)) (instancemgmt.Instance, error) {
 		return DataSource{Settings: models.CloudWatchSettings{
 			AWSDatasourceSettings: awsds.AWSDatasourceSettings{
 				Region: "us-east-1",
 			},
 		}}, nil
-	})
+
 
 	t.Run("maps log group api response to resource response of log-groups", func(t *testing.T) {
 		logsApi = mocks.LogsAPI{}

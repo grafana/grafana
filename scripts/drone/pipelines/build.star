@@ -19,6 +19,7 @@ load(
     "test_a11y_frontend_step",
     "trigger_oss",
     "trigger_test_release",
+    "update_package_json_version",
     "upload_cdn_step",
     "upload_packages_step",
     "verify_gen_cue_step",
@@ -46,7 +47,7 @@ def build_e2e(trigger, ver_mode):
 
     Args:
       trigger: controls which events can trigger the pipeline execution.
-      ver_mode: used in the naming of the pipeline.
+      ver_mode: used in the naming of the pipeline. Either 'pr' or 'main'.
 
     Returns:
       Drone pipeline.
@@ -68,14 +69,19 @@ def build_e2e(trigger, ver_mode):
     if ver_mode == "pr":
         build_steps.extend(
             [
+                build_frontend_package_step(),
                 trigger_test_release(),
                 enterprise_downstream_step(ver_mode = ver_mode),
             ],
         )
+    else:
+        build_steps.extend([
+            update_package_json_version(),
+            build_frontend_package_step(depends_on = ["update-package-json-version"]),
+        ])
 
     build_steps.extend(
         [
-            build_frontend_package_step(),
             rgm_package_step(distros = "linux/amd64,linux/arm64,linux/arm/v7", file = "packages.txt"),
             grafana_server_step(),
             e2e_tests_step("dashboards-suite"),

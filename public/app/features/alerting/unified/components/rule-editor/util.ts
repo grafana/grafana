@@ -95,12 +95,13 @@ export function checkForPathSeparator(value: string): ValidateResult {
   return true;
 }
 
-export function errorFromSeries(series: DataFrame[]): Error | undefined {
-  if (series.length === 0) {
+// this function assumes we've already checked if the data passed in to the function is of the alert condition
+export function errorFromCurrentCondition(data: PanelData): Error | undefined {
+  if (data.series.length === 0) {
     return;
   }
 
-  const isTimeSeriesResults = isTimeSeriesFrames(series);
+  const isTimeSeriesResults = isTimeSeriesFrames(data.series);
 
   let error;
   if (isTimeSeriesResults) {
@@ -116,8 +117,7 @@ export function errorFromPreviewData(data: PanelData): Error | undefined {
     return new Error(data.errors[0].message);
   }
 
-  // if none, return errors from series
-  return errorFromSeries(data.series);
+  return;
 }
 
 export function warningFromSeries(series: DataFrame[]): Error | undefined {
