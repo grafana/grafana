@@ -97,6 +97,7 @@ export function SearchView({ width, height, canSelect }: SearchViewProps) {
             <Button variant="secondary" onClick={stateManager.onClearSearchAndFilters}>
               <Trans i18nKey="browse-dashboards.no-results.clear">Clear search and filters</Trans>
             </Button>
+            <Trans i18nKey="testing-dont-merge-this-pr">Another message</Trans>
           </Card.Actions>
         </Card>
       </div>
