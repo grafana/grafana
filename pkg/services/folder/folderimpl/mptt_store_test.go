@@ -753,3 +753,11 @@ func TestIntegrationTreeStoreMove(t *testing.T) {
 		})
 	}
 }
+
+func TestIntegrationTreeStore(t *testing.T) {
+	db := sqlstore.InitTestDB(t)
+	orgID := createOrg(t, db)
+	folderStore := ProvideTreeStore(db)
+
+	testIntegrationStore(t, folderStore, orgID)
+}
