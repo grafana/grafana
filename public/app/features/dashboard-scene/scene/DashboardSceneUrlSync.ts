@@ -1,6 +1,6 @@
 import { AppEvents } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
-import { SceneObjectRef, SceneObjectUrlSyncHandler, SceneObjectUrlValues } from '@grafana/scenes';
+import { SceneObjectUrlSyncHandler, SceneObjectUrlValues } from '@grafana/scenes';
 import appEvents from 'app/core/app_events';
 
 import { PanelInspectDrawer } from '../inspect/PanelInspectDrawer';
@@ -34,7 +34,7 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
       }
 
       update.inspectPanelKey = values.inspect;
-      update.overlay = new PanelInspectDrawer({ panelRef: new SceneObjectRef(panel) });
+      update.overlay = new PanelInspectDrawer({ panelRef: panel.getRef() });
     } else if (inspectPanelId) {
       update.inspectPanelKey = undefined;
       update.overlay = undefined;
