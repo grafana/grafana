@@ -31,8 +31,6 @@ import (
 	"k8s.io/klog/v2"
 
 	"github.com/grafana/grafana/pkg/api/routing"
-	"github.com/grafana/grafana/pkg/apis"
-	playlistv1 "github.com/grafana/grafana/pkg/apis/playlist/v1"
 	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/modules"
@@ -81,6 +79,10 @@ type Service interface {
 	registry.CanBeDisabled
 }
 
+type APIRegistrar interface {
+	RegisterAPI(builder APIGroupBuilder)
+}
+
 type RestConfigProvider interface {
 	GetRestConfig() *clientrest.Config
 }
@@ -97,22 +99,18 @@ type service struct {
 
 	rr       routing.RouteRegister
 	handler  web.Handler
-	builders []apis.APIGroupBuilder
+	builders []APIGroupBuilder
 }
 
 func ProvideService(cfg *setting.Cfg,
 	rr routing.RouteRegister,
-	// Individual services -- these are actually added to the collection above
-	api0 *playlistv1.PlaylistAPIBuilder,
 ) (*service, error) {
 	s := &service{
 		enabled:  cfg.IsFeatureToggleEnabled(featuremgmt.FlagGrafanaAPIServer),
 		rr:       rr,
 		dataPath: path.Join(cfg.DataPath, "k8s"),
 		stopCh:   make(chan struct{}),
-		builders: []apis.APIGroupBuilder{
-			api0, // playlist
-		},
+		builders: []APIGroupBuilder{},
 	}
 
 	// This will be used when running as a dskit service
@@ -155,6 +153,10 @@ func (s *service) Run(ctx context.Context) error {
 		return err
 	}
 	return s.running(ctx)
+}
+
+func (s *service) RegisterAPI(builder APIGroupBuilder) {
+	s.builders = append(s.builders, builder)
 }
 
 func (s *service) start(ctx context.Context) error {
