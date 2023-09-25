@@ -40,8 +40,8 @@ export const CorrelationHelper = ({ correlations }: { correlations: ExploreCorre
 
   return (
     <Alert title="Correlation Details" severity="info">
-      The selected field is <code>{correlations.resultField}</code>. You can use following variables to set up your
-      correlations:
+      The correlation link will appear by the <code>{correlations.resultField}</code> field. You can use the following
+      variables to set up your correlations:
       <pre>
         {Object.entries(correlations.vars).map((entry, index) => {
           return `\$\{${entry[0]}\} = ${entry[1]}\n`;
