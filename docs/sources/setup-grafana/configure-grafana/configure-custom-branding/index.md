@@ -120,7 +120,7 @@ To customize the footer of a public dashboard, add the following section to the 
 ```ini
 [white_labeling.public_dashboards]
 
-# Hides the footer for the public dashboards if set to `true``. If
+# Hides the footer for the public dashboards if set to `true`. If
 # example: footer_hide = "true"
 ;footer_hide =
 
