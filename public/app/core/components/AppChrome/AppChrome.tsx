@@ -3,7 +3,7 @@ import { useDialog } from '@react-aria/dialog';
 import { FocusScope } from '@react-aria/focus';
 import { OverlayContainer, useOverlay } from '@react-aria/overlays';
 import classNames from 'classnames';
-import React, { PropsWithChildren, useRef, useState } from 'react';
+import React, { PropsWithChildren, useEffect, useRef, useState } from 'react';
 import CSSTransition from 'react-transition-group/CSSTransition';
 
 import { GrafanaTheme2, PageLayoutType } from '@grafana/data';
@@ -25,11 +25,11 @@ const MENU_WIDTH = '350px';
 export interface Props extends PropsWithChildren<{}> {}
 
 export function AppChrome({ children }: Props) {
-  const styles = useStyles2(getStyles);
   const { chrome } = useGrafana();
   const state = chrome.useState();
 
   const searchBarHidden = state.searchBarHidden || state.kioskMode === KioskMode.TV;
+  const styles = useStyles2(getStyles, searchBarHidden);
 
   const contentClass = cx({
     [styles.content]: true,
@@ -53,6 +53,12 @@ export function AppChrome({ children }: Props) {
     menuRef
   );
   const { dialogProps } = useDialog({}, menuRef);
+
+  useEffect(() => {
+    if (state.megaMenuOpen) {
+      setMenuIsOpen(true);
+    }
+  }, [state.megaMenuOpen]);
 
   // Chromeless routes are without topNav, mega menu, search & command palette
   // We check chromeless twice here instead of having a separate path so {children}
@@ -106,7 +112,9 @@ export function AppChrome({ children }: Props) {
                   onExited={menuOnClose}
                 >
                   <FocusScope contain autoFocus>
-                    <DockedMegaMenu searchBarHidden={searchBarHidden} {...overlayProps} {...dialogProps}/>
+                    <div className={styles.menuContainer}>
+                      <DockedMegaMenu onClose={() => setMenuIsOpen(false)} ref={menuRef} {...overlayProps} {...dialogProps}/>
+                    </div>
                   </FocusScope>
                 </CSSTransition>
                 <CSSTransition
@@ -116,7 +124,7 @@ export function AppChrome({ children }: Props) {
                   classNames={menuAnimStyles.backdrop}
                   timeout={{ enter: menuAnimationSpeed, exit: 0 }}
                 >
-                  <div ref={menuBackdropRef} className={styles.backdrop} {...underlayProps} />
+                  <div ref={menuBackdropRef} className={styles.menuBackdrop} {...underlayProps} />
                 </CSSTransition>
               </OverlayContainer>
             </div>
@@ -130,13 +138,14 @@ export function AppChrome({ children }: Props) {
   );
 }
 
-const getStyles = (theme: GrafanaTheme2) => {
+const getStyles = (theme: GrafanaTheme2, searchBarHidden?: boolean) => {
   const shadow = theme.isDark
     ? `0 0.6px 1.5px rgb(0 0 0), 0 2px 4px rgb(0 0 0 / 40%), 0 5px 10px rgb(0 0 0 / 23%)`
     : '0 4px 8px rgb(0 0 0 / 4%)';
+  const topPosition = (searchBarHidden ? TOP_BAR_LEVEL_HEIGHT : TOP_BAR_LEVEL_HEIGHT * 2) + 1;
 
   return {
-    backdrop: css({
+    menuBackdrop: css({
       backdropFilter: 'blur(1px)',
       backgroundColor: theme.components.overlay.background,
       bottom: 0,
@@ -147,6 +156,26 @@ const getStyles = (theme: GrafanaTheme2) => {
       zIndex: theme.zIndex.modalBackdrop,
 
       [theme.breakpoints.up('md')]: {
+        top: topPosition,
+      },
+    }),
+    menuContainer: css({
+      display: 'flex',
+      bottom: 0,
+      flexDirection: 'column',
+      left: 0,
+      marginRight: theme.spacing(1.5),
+      right: 0,
+      // Needs to below navbar should we change the navbarFixed? add add a new level?
+      zIndex: theme.zIndex.modal,
+      position: 'fixed',
+      top: searchBarHidden ? 0 : TOP_BAR_LEVEL_HEIGHT,
+      backgroundColor: theme.colors.background.primary,
+      boxSizing: 'content-box',
+      flex: '1 1 0',
+
+      [theme.breakpoints.up('md')]: {
+        right: 'unset',
         top: topPosition,
       },
     }),
@@ -238,6 +267,7 @@ const getAnimStyles = (theme: GrafanaTheme2, animationDuration: number) => {
   const overlayOpen = {
     width: '100%',
     [theme.breakpoints.up('md')]: {
+      borderRight: `1px solid ${theme.colors.border.weak}`,
       boxShadow: theme.shadows.z3,
       width: MENU_WIDTH,
     },
