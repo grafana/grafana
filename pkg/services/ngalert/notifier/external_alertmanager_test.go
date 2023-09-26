@@ -146,7 +146,7 @@ func TestSilences(t *testing.T) {
 	require.True(t, *silences[0].ID == silenceID || *silences[0].ID == silenceID2)
 	require.True(t, *silences[1].ID == silenceID || *silences[1].ID == silenceID2)
 
-	// After deleting one of those silences, the total amound should be 2.
+	// After deleting one of those silences, the total amount should be 2.
 	err = am.DeleteSilence(context.Background(), silenceID)
 	require.NoError(t, err)
 
