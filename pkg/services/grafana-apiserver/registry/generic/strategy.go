@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"k8s.io/apimachinery/pkg/api/meta"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -18,20 +17,19 @@ type genericStrategy struct {
 	names.NameGenerator
 }
 
-// NewStrategy creates and returns a genericStrategy instance
+// NewStrategy creates and returns a genericStrategy instance.
 func NewStrategy(typer runtime.ObjectTyper) genericStrategy {
 	return genericStrategy{typer, names.SimpleNameGenerator}
 }
 
+// NamespaceScoped returns true because all Generic resources must be within a namespace.
 func (genericStrategy) NamespaceScoped() bool {
 	return true
 }
 
-func (genericStrategy) PrepareForCreate(ctx context.Context, obj runtime.Object) {
-}
+func (genericStrategy) PrepareForCreate(ctx context.Context, obj runtime.Object) {}
 
-func (genericStrategy) PrepareForUpdate(ctx context.Context, obj, old runtime.Object) {
-}
+func (genericStrategy) PrepareForUpdate(ctx context.Context, obj, old runtime.Object) {}
 
 func (genericStrategy) Validate(ctx context.Context, obj runtime.Object) field.ErrorList {
 	return field.ErrorList{}
@@ -48,8 +46,7 @@ func (genericStrategy) AllowUnconditionalUpdate() bool {
 	return false
 }
 
-func (genericStrategy) Canonicalize(obj runtime.Object) {
-}
+func (genericStrategy) Canonicalize(obj runtime.Object) {}
 
 func (genericStrategy) ValidateUpdate(ctx context.Context, obj, old runtime.Object) field.ErrorList {
 	return field.ErrorList{}
@@ -60,27 +57,19 @@ func (genericStrategy) WarningsOnUpdate(ctx context.Context, obj, old runtime.Ob
 	return nil
 }
 
+// GetAttrs returns labels and fields of an object.
 func GetAttrs(obj runtime.Object) (labels.Set, fields.Set, error) {
 	accessor, err := meta.Accessor(obj)
 	if err != nil {
 		return nil, nil, err
 	}
-	return labels.Set(accessor.GetLabels()), objectMetaFieldsSet(accessor, false), nil
+	fieldsSet := fields.Set{
+		"metadata.name": accessor.GetName(),
+	}
+	return labels.Set(accessor.GetLabels()), fieldsSet, nil
 }
 
-// objectMetaFieldsSet returns a fields that represent the ObjectMeta.
-func objectMetaFieldsSet(objectMeta metav1.Object, namespaceScoped bool) fields.Set {
-	if namespaceScoped {
-		return fields.Set{
-			"metadata.name":      objectMeta.GetName(),
-			"metadata.namespace": objectMeta.GetNamespace(),
-		}
-	}
-	return fields.Set{
-		"metadata.name": objectMeta.GetName(),
-	}
-}
-
+// Matcher returns a generic.SelectionPredicate that matches on label and field selectors.
 func Matcher(label labels.Selector, field fields.Selector) storage.SelectionPredicate {
 	return storage.SelectionPredicate{
 		Label:    label,

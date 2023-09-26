@@ -11,7 +11,6 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	grafanaapiserver "github.com/grafana/grafana/pkg/services/grafana-apiserver"
-	grafanarest "github.com/grafana/grafana/pkg/services/grafana-apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/playlist"
 )
 
@@ -21,7 +20,6 @@ var (
 	_ rest.Getter               = (*sqlStorage)(nil)
 	_ rest.Lister               = (*sqlStorage)(nil)
 	_ rest.Storage              = (*sqlStorage)(nil)
-	_ grafanarest.SQLStorage    = (*sqlStorage)(nil)
 )
 
 type sqlStorage struct {
@@ -139,22 +137,23 @@ func (s *sqlStorage) Get(ctx context.Context, name string, options *metav1.GetOp
 	}, nil
 }
 
-func (s *sqlStorage) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
-	// TODO: implement
-	return nil, nil
-}
-
-func (s *sqlStorage) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
-	// TODO: implement
-	return nil, false, nil
-}
-
-func (s *sqlStorage) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
-	// TODO: implement
-	return nil, false, nil
-}
-
-func (s *sqlStorage) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *internalversion.ListOptions) (runtime.Object, error) {
-	// TODO: implement
-	return nil, nil
-}
+// TODO: implement these
+// func (s *sqlStorage) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
+// 	// TODO: implement
+// 	return nil, nil
+// }
+//
+// func (s *sqlStorage) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
+// 	// TODO: implement
+// 	return nil, false, nil
+// }
+//
+// func (s *sqlStorage) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
+// 	// TODO: implement
+// 	return nil, false, nil
+// }
+//
+// func (s *sqlStorage) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *internalversion.ListOptions) (runtime.Object, error) {
+// 	// TODO: implement
+// 	return nil, nil
+// }
