@@ -25,7 +25,7 @@ Please note that the deduplication is done for the notification, but the alert w
 
 {{% admonition type="note" %}}
 
-If using a mix of `execute_alerts=false` and `execute_alerts=true` on the HA nodes, since the alert state is not shared amongst the Grafana instances, the instances with `execute_alerts=false` will not show any alert status. 
+If using a mix of `execute_alerts=false` and `execute_alerts=true` on the HA nodes, since the alert state is not shared amongst the Grafana instances, the instances with `execute_alerts=false` will not show any alert status.
 This is because the HA settings (`ha_peers`, etc), only apply to the alert notification delivery (i.e. de-duplication of alert notifications, and silences, as mentioned above).
 
 {{% /admonition %}}
