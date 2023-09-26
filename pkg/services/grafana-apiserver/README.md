@@ -1,6 +1,6 @@
 # Grafana Kubernetes compatible API Server
 
-## Setup
+## Basic Setup
 
 ```ini
 app_mode = development
@@ -15,9 +15,24 @@ Start Grafana:
 make run
 ```
 
+## Enable dual write to `etcd`
+
+Start `etcd`:
+```bash
+make devenv sources=etcd
+```
+
+Enable dual write to `etcd`:
+
+```ini
+[grafana-apiserver]
+etcd_servers = 127.0.0.1:2379
+```
+
 ### `kubectl` access
 
 From the root of the repository:
+
 ```bash
 export KUBECONFIG=$PWD/data/k8s/grafana.kubeconfig
 kubectl api-resources
