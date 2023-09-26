@@ -72,11 +72,14 @@ export const DataHoverView = ({ data, rowIndex, columnIndex, sortOrder, mode, he
       });
     }
 
+    const sanitizedField = { ...field };
+    // TODO: figure out how to filter out filtered property / remove it
+
     displayValues.push({
-      name: getFieldDisplayName(field, data),
+      name: getFieldDisplayName(sanitizedField, data),
       value,
       valueString: formattedValueToString(fieldDisplay),
-      highlight: field.hovered,
+      highlight: field.hovered, // THIS IS CAUSING REGRESSION??
     });
   }
 

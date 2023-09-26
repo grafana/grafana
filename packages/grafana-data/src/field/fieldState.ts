@@ -1,3 +1,5 @@
+import { isEqual } from 'lodash';
+
 import { DataFrame, Field, TIME_SERIES_VALUE_FIELD_NAME, FieldType, TIME_SERIES_TIME_FIELD_NAME } from '../types';
 import { formatLabels } from '../utils/labels';
 
@@ -166,6 +168,8 @@ function getUniqueFieldName(field: Field, frame?: DataFrame) {
       const otherField = frame.fields[i];
 
       if (field === otherField) {
+        // if (isEqual({ hovered: false, ...field }, { hovered: false, ...field })) {
+        // POTENTIAL ISSUE HERE (LNG field is matching to other LNG field for some reason...)
         foundSelf = true;
 
         if (dupeCount > 0) {
@@ -173,6 +177,15 @@ function getUniqueFieldName(field: Field, frame?: DataFrame) {
           break;
         }
       } else if (field.name === otherField.name) {
+        console.log(
+          'HMM',
+          field.name,
+          otherField.name,
+          { field, otherField },
+          isEqual({ hovered: false, ...field }, { hovered: false, ...field }),
+          'loose equality:',
+          field === otherField
+        );
         dupeCount++;
 
         if (foundSelf) {
