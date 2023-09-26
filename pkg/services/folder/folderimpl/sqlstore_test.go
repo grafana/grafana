@@ -10,7 +10,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
@@ -24,7 +23,7 @@ const folderDsc = "folder desc"
 func TestIntegrationSQLStore(t *testing.T) {
 	db := sqlstore.InitTestDB(t)
 	orgID := createOrg(t, db)
-	folderStore := ProvideStore(db, db.Cfg, featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders))
+	folderStore := ProvideStore(db)
 
 	testIntegrationStore(t, folderStore, orgID)
 }
@@ -695,7 +694,7 @@ func testIntegrationGetChildren(t *testing.T, folderStore store, orgID int64) {
 
 func TestIntegrationGetHeight(t *testing.T) {
 	db := sqlstore.InitTestDB(t)
-	folderStore := ProvideStore(db, db.Cfg, featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders))
+	folderStore := ProvideStore(db)
 	orgID := createOrg(t, db)
 	testIntegrationGetHeight(t, folderStore, orgID)
 }

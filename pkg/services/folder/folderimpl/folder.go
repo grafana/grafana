@@ -51,7 +51,7 @@ func ProvideService(
 	db db.DB, // DB for the (new) nested folder store
 	features featuremgmt.FeatureToggles,
 ) folder.Service {
-	store := ProvideStore(db, cfg, features)
+	store := ProvideStore(db)
 	srv := &Service{
 		cfg:                  cfg,
 		log:                  log.New("folder-service"),

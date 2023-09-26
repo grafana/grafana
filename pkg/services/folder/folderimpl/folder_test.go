@@ -67,7 +67,6 @@ func TestIntegrationFolderService(t *testing.T) {
 	t.Run("Folder service tests", func(t *testing.T) {
 		dashStore := &dashboards.FakeDashboardStore{}
 		db := sqlstore.InitTestDB(t)
-		nestedFolderStore := ProvideStore(db, db.Cfg, featuremgmt.WithFeatures([]interface{}{"nestedFolders"}))
 
 		folderStore := foldertest.NewFakeFolderStore(t)
 
@@ -79,11 +78,12 @@ func TestIntegrationFolderService(t *testing.T) {
 			log:                  log.New("test-folder-service"),
 			dashboardStore:       dashStore,
 			dashboardFolderStore: folderStore,
-			store:                nestedFolderStore,
-			features:             features,
-			bus:                  bus.ProvideBus(tracing.InitializeTracerForTest()),
-			db:                   db,
-			accessControl:        acimpl.ProvideAccessControl(cfg),
+			// the nested folder store should not be accessed if the feature flag is off
+			store:         nil,
+			features:      features,
+			bus:           bus.ProvideBus(tracing.InitializeTracerForTest()),
+			db:            db,
+			accessControl: acimpl.ProvideAccessControl(cfg),
 		}
 
 		t.Run("Given user has no permissions", func(t *testing.T) {
@@ -331,10 +331,23 @@ func TestIntegrationFolderService(t *testing.T) {
 }
 
 func TestIntegrationNestedFolderService(t *testing.T) {
+	db := sqlstore.InitTestDB(t)
+	nestedFolderStore := ProvideStore(db)
+	testIntegrationNestedFolderService(t, db, nestedFolderStore)
+}
+
+func TestIntegrationNestedFolderServiceWithTreeStore(t *testing.T) {
+	db := sqlstore.InitTestDB(t)
+	nestedFolderStore := ProvideTreeStore(db)
+	testIntegrationNestedFolderService(t, db, nestedFolderStore)
+}
+
+func testIntegrationNestedFolderService(t *testing.T, db *sqlstore.SQLStore, nestedFolderStore store) {
+	t.Helper()
+
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
-	db := sqlstore.InitTestDB(t)
 	quotaService := quotatest.New(false, nil)
 	folderStore := ProvideDashboardFolderStore(db)
 
@@ -343,7 +356,6 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 	featuresFlagOn := featuremgmt.WithFeatures("nestedFolders")
 	dashStore, err := database.ProvideDashboardStore(db, db.Cfg, featuresFlagOn, tagimpl.ProvideService(db, db.Cfg), quotaService)
 	require.NoError(t, err)
-	nestedFolderStore := ProvideStore(db, db.Cfg, featuresFlagOn)
 
 	b := bus.ProvideBus(tracing.InitializeTracerForTest())
 	ac := acimpl.ProvideAccessControl(cfg)
@@ -452,18 +464,18 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 			featuresFlagOff := featuremgmt.WithFeatures()
 			dashStore, err := database.ProvideDashboardStore(db, db.Cfg, featuresFlagOff, tagimpl.ProvideService(db, db.Cfg), quotaService)
 			require.NoError(t, err)
-			nestedFolderStore := ProvideStore(db, db.Cfg, featuresFlagOff)
 
 			serviceWithFlagOff := &Service{
 				cfg:                  cfg,
 				log:                  log.New("test-folder-service"),
 				dashboardStore:       dashStore,
 				dashboardFolderStore: folderStore,
-				store:                nestedFolderStore,
-				features:             featuresFlagOff,
-				bus:                  b,
-				db:                   db,
-				registry:             make(map[string]folder.RegistryService),
+				// the nested folder store should not be accessed if the feature flag is off
+				store:    nil,
+				features: featuresFlagOff,
+				bus:      b,
+				db:       db,
+				registry: make(map[string]folder.RegistryService),
 			}
 
 			origNewGuardian := guardian.New
@@ -608,7 +620,7 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 
 				dashStore, err := database.ProvideDashboardStore(db, db.Cfg, tc.featuresFlag, tagimpl.ProvideService(db, db.Cfg), quotaService)
 				require.NoError(t, err)
-				nestedFolderStore := ProvideStore(db, db.Cfg, tc.featuresFlag)
+
 				tc.service.dashboardStore = dashStore
 				tc.service.store = nestedFolderStore
 
@@ -1178,7 +1190,7 @@ func TestNestedFolderService(t *testing.T) {
 	})
 }
 
-func CreateSubtreeInStore(t *testing.T, store *sqlStore, service *Service, depth int, prefix string, cmd folder.CreateFolderCommand) []string {
+func CreateSubtreeInStore(t *testing.T, store store, service *Service, depth int, prefix string, cmd folder.CreateFolderCommand) []string {
 	t.Helper()
 
 	ancestorUIDs := []string{}
