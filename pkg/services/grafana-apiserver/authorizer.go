@@ -30,7 +30,7 @@ func (auth grafanaAuthorizer) Authorize(ctx context.Context, a authorizer.Attrib
 
 	// Find the exp
 	if extra["user-id"] != nil {
-
+		fmt.Printf("TODO, get identity: %s\n", extra["user-id"])
 	}
 
 	// TODO!

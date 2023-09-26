@@ -286,6 +286,7 @@ func (s *service) start(ctx context.Context) error {
 		req.Header.Set("X-Remote-Extra-org-role", string(signedInUser.OrgRole))
 		req.Header.Set("X-Remote-Extra-org-id", strconv.FormatInt(signedInUser.OrgID, 10))
 		req.Header.Set("X-Remote-Extra-user-id", strconv.FormatInt(signedInUser.UserID, 10))
+		// TODO?? pass identity token?
 
 		resp := responsewriter.WrapForHTTP1Or2(c.Resp)
 		prepared.GenericAPIServer.Handler.ServeHTTP(resp, req)
