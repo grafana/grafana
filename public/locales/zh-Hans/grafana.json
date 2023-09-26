@@ -211,6 +211,7 @@
     }
   },
   "data-source-picker": {
+    "add-new-data-source": "",
     "built-in-list": {
       "description-dashboard": "",
       "description-grafana": "",
