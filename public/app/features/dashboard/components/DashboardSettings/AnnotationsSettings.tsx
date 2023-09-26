@@ -41,23 +41,19 @@ function getSubPageNav(
   editIndex: number | undefined,
   node: NavModelItem
 ): NavModelItem | undefined {
+  const parentItem = config.featureToggles.dockedMegaMenu ? node.parentItem : undefined;
   if (editIndex == null) {
-    return node.parentItem;
+    return parentItem;
   }
-
-  const parentItem =
-    config.featureToggles.dockedMegaMenu && node.parentItem
-      ? {
-          ...node.parentItem,
-          url: node.url,
-        }
-      : undefined;
 
   const editItem = dashboard.annotations.list[editIndex];
   if (editItem) {
     return {
       text: editItem.name,
-      parentItem,
+      parentItem: parentItem && {
+        ...parentItem,
+        url: node.url,
+      },
     };
   }
 
