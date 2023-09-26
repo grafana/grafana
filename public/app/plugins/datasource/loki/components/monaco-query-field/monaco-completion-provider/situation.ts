@@ -28,9 +28,13 @@ import {
   ParserFlag,
   LabelExtractionExpression,
   LabelExtractionExpressionList,
+  Json,
+  LogfmtExpressionParser,
+  JsonExpressionParser,
+  LogfmtParser,
 } from '@grafana/lezer-logql';
 
-import { getLogQueryFromMetricsQuery, getNodesFromQuery } from '../../../queryUtils';
+import { getLogQueryFromMetricsQueryAtPosition, getNodesFromQuery } from '../../../queryUtils';
 
 type Direction = 'parent' | 'firstChild' | 'lastChild' | 'nextSibling';
 type NodeType = number;
@@ -105,9 +109,10 @@ export type Situation =
       type: 'AT_ROOT';
     }
   | {
-      type: 'IN_LOGFMT';
+      type: 'IN_EXPRESSION_PARSER';
       otherLabels: string[];
       flags: boolean;
+      parser: string;
       logQuery: string;
     }
   | {
@@ -170,12 +175,11 @@ const RESOLVERS: Resolver[] = [
       [LogQL],
       [RangeAggregationExpr],
       [ERROR_NODE_ID, LogRangeExpr, RangeAggregationExpr],
-      [ERROR_NODE_ID, LabelExtractionExpressionList],
       [LogRangeExpr],
       [ERROR_NODE_ID, LabelExtractionExpressionList],
       [LabelExtractionExpressionList],
     ],
-    fun: resolveLogfmtParser,
+    fun: resolveExpressionParser,
   },
   {
     paths: [[LogQL]],
@@ -303,7 +307,7 @@ function getLabels(selectorNode: SyntaxNode, text: string): Label[] {
 function resolveAfterUnwrap(node: SyntaxNode, text: string, pos: number): Situation | null {
   return {
     type: 'AFTER_UNWRAP',
-    logQuery: getLogQueryFromMetricsQuery(text).trim(),
+    logQuery: getLogQueryFromMetricsQueryAtPosition(text, pos).trim(),
   };
 }
 
@@ -353,7 +357,7 @@ function resolveLabelsForGrouping(node: SyntaxNode, text: string, pos: number): 
 
   return {
     type: 'IN_GROUPING',
-    logQuery: getLogQueryFromMetricsQuery(text).trim(),
+    logQuery: getLogQueryFromMetricsQueryAtPosition(text, pos).trim(),
   };
 }
 
@@ -424,7 +428,7 @@ function resolveMatcher(node: SyntaxNode, text: string, pos: number): Situation 
   };
 }
 
-function resolveLogfmtParser(_: SyntaxNode, text: string, cursorPosition: number): Situation | null {
+function resolveExpressionParser(_: SyntaxNode, text: string, cursorPosition: number): Situation | null {
   // We want to know if the cursor if after a log query with logfmt parser.
   // E.g. `{x="y"} | logfmt ^`
 
@@ -436,36 +440,47 @@ function resolveLogfmtParser(_: SyntaxNode, text: string, cursorPosition: number
 
   const cursor = tree.cursorAt(position);
 
-  // Check if the user cursor is in any node that requires logfmt suggestions.
-  const expectedNodes = [Logfmt, ParserFlag, LabelExtractionExpression, LabelExtractionExpressionList];
-  let inLogfmt = false;
+  // Check if the user cursor is in any node that requires expression parser suggestions.
+  const logfmtNodes = [LogfmtExpressionParser, Logfmt, LogfmtParser];
+  const jsonNodes = [Json, JsonExpressionParser];
+  let logfmtParser = false;
+  let jsonParser = false;
   do {
     const { node } = cursor;
-    if (!expectedNodes.includes(node.type.id)) {
+    // Ignore nodes outside the user position
+    const cursorInNodePosition = cursor.from <= position && cursor.to >= position;
+    if (!cursorInNodePosition) {
       continue;
     }
-    if (cursor.from <= position && cursor.to >= position) {
-      inLogfmt = true;
+    if (logfmtNodes.includes(node.type.id)) {
+      logfmtParser = true;
+      break;
+    }
+    if (jsonNodes.includes(node.type.id)) {
+      jsonParser = true;
       break;
     }
   } while (cursor.next());
 
-  if (!inLogfmt) {
+  if (!logfmtParser && !jsonParser) {
     return null;
   }
 
-  const flags = getNodesFromQuery(text, [ParserFlag]).length > 1;
-  const labelNodes = getNodesFromQuery(text, [LabelExtractionExpression]);
+  const logQuery = getLogQueryFromMetricsQueryAtPosition(text, position).trim();
+
+  const flags = getNodesFromQuery(logQuery, [ParserFlag]).length > 1;
+  const labelNodes = getNodesFromQuery(logQuery, [LabelExtractionExpression]);
   const otherLabels = labelNodes
     .map((label: SyntaxNode) => label.getChild(Identifier))
     .filter((label: SyntaxNode | null): label is SyntaxNode => label !== null)
-    .map((label: SyntaxNode) => getNodeText(label, text));
+    .map((label: SyntaxNode) => getNodeText(label, logQuery));
 
   return {
-    type: 'IN_LOGFMT',
+    type: 'IN_EXPRESSION_PARSER',
     otherLabels,
+    parser: logfmtParser ? 'logfmt' : 'json',
     flags,
-    logQuery: getLogQueryFromMetricsQuery(text).trim(),
+    logQuery,
   };
 }
 
@@ -539,7 +554,7 @@ function resolveLogOrLogRange(node: SyntaxNode, text: string, pos: number, after
     type: 'AFTER_SELECTOR',
     afterPipe,
     hasSpace: text.charAt(pos - 1) === ' ',
-    logQuery: getLogQueryFromMetricsQuery(text).trim(),
+    logQuery: getLogQueryFromMetricsQueryAtPosition(text, pos).trim(),
   };
 }
 
@@ -582,7 +597,7 @@ function resolveSelector(node: SyntaxNode, text: string, pos: number): Situation
 }
 
 function resolveAfterKeepAndDrop(node: SyntaxNode, text: string, pos: number): Situation | null {
-  let logQuery = getLogQueryFromMetricsQuery(text).trim();
+  let logQuery = getLogQueryFromMetricsQueryAtPosition(text, pos).trim();
   let keepAndDropParent: SyntaxNode | null = null;
   let parent = node.parent;
   while (parent !== null) {

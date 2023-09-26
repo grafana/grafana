@@ -52,13 +52,6 @@ describe('situation', () => {
     // check for an error we had during the implementation
     assertSituation('{level="info" ^', null);
 
-    assertSituation('{level="info"} | json ^', {
-      type: 'AFTER_SELECTOR',
-      afterPipe: false,
-      hasSpace: true,
-      logQuery: '{level="info"} | json',
-    });
-
     assertSituation('{level="info"} | json |^', {
       type: 'AFTER_SELECTOR',
       afterPipe: true,
@@ -92,88 +85,102 @@ describe('situation', () => {
     });
   });
 
-  it('identifies AFTER_LOGFMT autocomplete situations', () => {
+  it('identifies logfmt IN_EXPRESSION_PARSER autocomplete situations', () => {
     assertSituation('{level="info"} | logfmt ^', {
-      type: 'IN_LOGFMT',
+      type: 'IN_EXPRESSION_PARSER',
       otherLabels: [],
+      parser: 'logfmt',
       flags: false,
       logQuery: '{level="info"} | logfmt',
     });
     assertSituation('{level="info"} | logfmt --strict ^', {
-      type: 'IN_LOGFMT',
+      type: 'IN_EXPRESSION_PARSER',
       otherLabels: [],
+      parser: 'logfmt',
       flags: false,
       logQuery: '{level="info"} | logfmt --strict',
     });
     assertSituation('{level="info"} | logfmt --strict --keep-empty^', {
-      type: 'IN_LOGFMT',
+      type: 'IN_EXPRESSION_PARSER',
       otherLabels: [],
+      parser: 'logfmt',
       flags: true,
       logQuery: '{level="info"} | logfmt --strict --keep-empty',
     });
     assertSituation('{level="info"} | logfmt --strict label, label1="expression"^', {
-      type: 'IN_LOGFMT',
+      type: 'IN_EXPRESSION_PARSER',
       otherLabels: ['label', 'label1'],
+      parser: 'logfmt',
       flags: false,
       logQuery: '{level="info"} | logfmt --strict label, label1="expression"',
     });
     assertSituation('{level="info"} | logfmt --strict label, label1="expression",^', {
-      type: 'IN_LOGFMT',
+      type: 'IN_EXPRESSION_PARSER',
       otherLabels: ['label', 'label1'],
+      parser: 'logfmt',
       flags: false,
       logQuery: '{level="info"} | logfmt --strict label, label1="expression",',
     });
     assertSituation('count_over_time({level="info"} | logfmt ^', {
-      type: 'IN_LOGFMT',
+      type: 'IN_EXPRESSION_PARSER',
       otherLabels: [],
+      parser: 'logfmt',
       flags: false,
       logQuery: '{level="info"} | logfmt',
     });
     assertSituation('count_over_time({level="info"} | logfmt ^)', {
-      type: 'IN_LOGFMT',
+      type: 'IN_EXPRESSION_PARSER',
       otherLabels: [],
+      parser: 'logfmt',
       flags: false,
       logQuery: '{level="info"} | logfmt',
     });
     assertSituation('count_over_time({level="info"} | logfmt ^ [$__auto])', {
-      type: 'IN_LOGFMT',
+      type: 'IN_EXPRESSION_PARSER',
       otherLabels: [],
+      parser: 'logfmt',
       flags: false,
       logQuery: '{level="info"} | logfmt',
     });
     assertSituation('count_over_time({level="info"} | logfmt --keep-empty^)', {
-      type: 'IN_LOGFMT',
+      type: 'IN_EXPRESSION_PARSER',
       otherLabels: [],
+      parser: 'logfmt',
       flags: false,
       logQuery: '{level="info"} | logfmt --keep-empty',
     });
     assertSituation('count_over_time({level="info"} | logfmt --keep-empty label1, label2^)', {
-      type: 'IN_LOGFMT',
+      type: 'IN_EXPRESSION_PARSER',
       otherLabels: ['label1', 'label2'],
+      parser: 'logfmt',
       flags: false,
       logQuery: '{level="info"} | logfmt --keep-empty label1, label2',
     });
     assertSituation('sum by (test) (count_over_time({level="info"} | logfmt ^))', {
-      type: 'IN_LOGFMT',
+      type: 'IN_EXPRESSION_PARSER',
       otherLabels: [],
+      parser: 'logfmt',
       flags: false,
       logQuery: '{level="info"} | logfmt',
     });
     assertSituation('sum by (test) (count_over_time({level="info"} | logfmt label ^))', {
-      type: 'IN_LOGFMT',
+      type: 'IN_EXPRESSION_PARSER',
       otherLabels: ['label'],
+      parser: 'logfmt',
       flags: false,
       logQuery: '{level="info"} | logfmt label',
     });
     assertSituation('sum by (test) (count_over_time({level="info"} | logfmt label,^))', {
-      type: 'IN_LOGFMT',
+      type: 'IN_EXPRESSION_PARSER',
       otherLabels: ['label'],
+      parser: 'logfmt',
       flags: false,
       logQuery: '{level="info"} | logfmt label,',
     });
     assertSituation('sum by (test) (count_over_time({level="info"} | logfmt --strict ^))', {
-      type: 'IN_LOGFMT',
+      type: 'IN_EXPRESSION_PARSER',
       otherLabels: [],
+      parser: 'logfmt',
       flags: false,
       logQuery: '{level="info"} | logfmt --strict',
     });
