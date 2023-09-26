@@ -85,6 +85,16 @@
   }
 }
 
+// Hack to prevent panel overlap during drag/hover (due to descending z-index assignment)
+.react-grid-item {
+  &:hover,
+  &:active,
+  &:focus {
+    // above other panels, but below lowest pre-defined index in zIndex.ts
+    z-index: 999 !important;
+  }
+}
+
 // Hack for preventing panel menu overlapping.
 .react-grid-item.resizing.panel,
 .react-grid-item.panel.dropdown-menu-open,

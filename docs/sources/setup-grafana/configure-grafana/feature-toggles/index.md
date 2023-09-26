@@ -27,6 +27,7 @@ Some features are enabled by default. You can disable these feature by setting t
 | `cloudWatchCrossAccountQuerying`                 | Enables cross-account querying in CloudWatch datasources                                                                                                                                            | Yes                |
 | `redshiftAsyncQueryDataSupport`                  | Enable async query data support for Redshift                                                                                                                                                        | Yes                |
 | `athenaAsyncQueryDataSupport`                    | Enable async query data support for Athena                                                                                                                                                          | Yes                |
+| `cloudwatchNewRegionsHandler`                    | Refactor of /regions endpoint, no user-facing changes                                                                                                                                               | Yes                |
 | `nestedFolderPicker`                             | Enables the new folder picker to work with nested folders. Requires the nestedFolders feature flag                                                                                                  | Yes                |
 | `accessTokenExpirationCheck`                     | Enable OAuth access_token expiration check and token refresh using the refresh_token                                                                                                                |                    |
 | `emptyDashboardPage`                             | Enable the redesigned user interface of a dashboard page that includes no panels                                                                                                                    | Yes                |
@@ -136,13 +137,16 @@ Experimental features might be changed or removed without prior notice.
 | `requestInstrumentationStatusSource`        | Include a status source label for request metrics and logs                                                   |
 | `wargamesTesting`                           | Placeholder feature flag for internal testing                                                                |
 | `alertingInsights`                          | Show the new alerting insights landing page                                                                  |
+| `externalCorePlugins`                       | Allow core plugins to be loaded as external                                                                  |
 | `pluginsAPIMetrics`                         | Sends metrics of public grafana packages usage by plugins                                                    |
+| `httpSLOLevels`                             | Adds SLO level to http request metrics                                                                       |
 
 ## Development feature toggles
 
 The following toggles require explicitly setting Grafana's [app mode]({{< relref "../_index.md#app_mode" >}}) to 'development' before you can enable this feature toggle. These features tend to be experimental.
 
-| Feature toggle name   | Description                                                    |
-| --------------------- | -------------------------------------------------------------- |
-| `entityStore`         | SQL-based entity store (requires storage flag also)            |
-| `externalServiceAuth` | Starts an OAuth2 authentication provider for external services |
+| Feature toggle name   | Description                                                                                  |
+| --------------------- | -------------------------------------------------------------------------------------------- |
+| `entityStore`         | SQL-based entity store (requires storage flag also)                                          |
+| `externalServiceAuth` | Starts an OAuth2 authentication provider for external services                               |
+| `idForwarding`        | Generate signed id token for identity that can be forwarded to plugins and external services |
