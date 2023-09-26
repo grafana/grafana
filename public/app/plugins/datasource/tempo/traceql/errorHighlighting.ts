@@ -11,6 +11,7 @@ import {
   Or,
   parser,
   Pipe,
+  ScalarExpression,
   ScalarFilter,
   SpansetFilter,
   SpansetPipelineExpression,
@@ -57,8 +58,12 @@ export const computeErrorMessage = (errorNode: SyntaxNode) => {
       switch (errorNode.prevSibling?.type.id) {
         case ComparisonOp:
           return 'Invalid value after comparison operator.';
+        case ScalarExpression:
+          if (errorNode.prevSibling?.firstChild?.type.id === Aggregate) {
+            return 'Invalid comparison operator after aggregator operator.';
+          }
         default:
-          return 'Invalid comparison operator after aggregator operator.';
+          return 'Invalid value after comparison operator.';
       }
     default:
       return 'Invalid query.';

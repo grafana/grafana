@@ -37,6 +37,7 @@ describe('computeErrorMarkers', () => {
     ['{ .foo = 200 } || ', 'Invalid spanset expression after spanset combining operator.'],
     ['{ .foo = 200 } >> ', 'Invalid spanset expression after spanset combining operator.'],
     ['{.foo=1} | avg()', 'Invalid expression for aggregator operator.'],
+    ['{.foo=1} | avg(.foo) > ', 'Invalid value after comparison operator.'],
     ['{.foo=1} | avg() < 1s', 'Invalid expression for aggregator operator.'],
     ['{.foo=1} | max() = 3', 'Invalid expression for aggregator operator.'],
     ['{.foo=1} | by()', 'Invalid expression for aggregator operator.'],
@@ -54,6 +55,7 @@ describe('computeErrorMarkers', () => {
     ['{.foo=300} && {.foo=300} | avg(.value)', 'Invalid comparison operator after aggregator operator.'],
     ['{.foo=300} | avg(.value) =', 'Invalid value after comparison operator.'],
     ['{.foo=300} && {.foo=300} | avg(.value) =', 'Invalid value after comparison operator.'],
+    ['{.foo=300} | max(duration) > 1hs', 'Invalid value after comparison operator.'],
     ['{ span.http.status_code', 'Invalid comparison operator after field expression.'],
   ])('error message for invalid query - %s, %s', (query: string, expectedErrorMessage: string) => {
     const errorNode = getErrorNodes(query)[0];
