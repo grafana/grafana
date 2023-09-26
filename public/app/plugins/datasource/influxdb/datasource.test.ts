@@ -1,7 +1,7 @@
 import { lastValueFrom, of } from 'rxjs';
 
-import { ScopedVars } from '@grafana/data/src';
-import { BackendSrvRequest } from '@grafana/runtime/src';
+import { ScopedVars } from '@grafana/data';
+import { BackendSrvRequest } from '@grafana/runtime/';
 import config from 'app/core/config';
 
 import { TemplateSrv } from '../../../features/templating/template_srv';
