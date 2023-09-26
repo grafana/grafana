@@ -86,7 +86,7 @@ To assume a role in another account that was created with an external ID, specif
 
 For more information, refer to the [AWS documentation on external ID](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_create_for-user_externalid.html).
 
-When `Grafana Assume Role` is the selected authentication provider, Grafana is responsible for supplying and calling the external ID. It will be displayed on the datasource configuration page and will be unique to your account. It is very important when creating an IAM Role for `Grafana Assume Role` that you set a conditional that Grafana's AWS Account can only assume your IAM Role when a particular external ID is specified:
+When `Grafana Assume Role` is the selected authentication provider, Grafana is responsible for supplying and calling the external ID. It is displayed on the data source configuration page and is unique to your account. It's very important when creating an IAM role for `Grafana Assume Role` that you set a conditional that Grafana's AWS account can only assume your IAM role when a particular external ID is specified:
 
 ```
 {
