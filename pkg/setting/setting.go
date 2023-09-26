@@ -63,12 +63,11 @@ var (
 	InstanceName     string
 
 	// build
-	BuildVersion          string
-	BuildCommit           string
-	EnterpriseBuildCommit string
-	BuildBranch           string
-	BuildStamp            int64
-	IsEnterprise          bool
+	BuildVersion string
+	BuildCommit  string
+	BuildBranch  string
+	BuildStamp   int64
+	IsEnterprise bool
 
 	// packaging
 	Packaging = "unknown"
@@ -177,12 +176,11 @@ type Cfg struct {
 	EmailCodeValidMinutes int
 
 	// build
-	BuildVersion          string
-	BuildCommit           string
-	EnterpriseBuildCommit string
-	BuildBranch           string
-	BuildStamp            int64
-	IsEnterprise          bool
+	BuildVersion string
+	BuildCommit  string
+	BuildBranch  string
+	BuildStamp   int64
+	IsEnterprise bool
 
 	// packaging
 	Packaging string
@@ -1024,7 +1022,6 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 
 	cfg.BuildVersion = BuildVersion
 	cfg.BuildCommit = BuildCommit
-	cfg.EnterpriseBuildCommit = EnterpriseBuildCommit
 	cfg.BuildStamp = BuildStamp
 	cfg.BuildBranch = BuildBranch
 	cfg.IsEnterprise = IsEnterprise
