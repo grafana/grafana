@@ -320,27 +320,24 @@ function formValuesFromPrefill(rule: Partial<RuleFormValues>): RuleFormValues {
 function formValuesFromExistingRule(rule: RuleWithLocation<RulerRuleDTO>) {
   return ignoreHiddenQueries(rulerRuleToFormValues(rule));
 }
-
-const getStyles = (theme: GrafanaTheme2) => {
-  return {
-    buttonSpinner: css`
-      margin-right: ${theme.spacing(1)};
-    `,
-    form: css`
-      width: 100%;
-      height: 100%;
-      display: flex;
-      flex-direction: column;
-    `,
-    contentOuter: css`
-      background: ${theme.colors.background.primary};
-      overflow: hidden;
-      flex: 1;
-    `,
-    flexRow: css`
-      display: flex;
-      flex-direction: row;
-      justify-content: flex-start;
-    `,
-  };
-};
+const getStyles = (theme: GrafanaTheme2) => ({
+  buttonSpinner: css({
+    marginRight: theme.spacing(1),
+  }),
+  form: css({
+    width: '100%',
+    height: '100%',
+    display: 'flex',
+    flexDirection: 'column',
+  }),
+  contentOuter: css({
+    background: theme.colors.background.primary,
+    overflow: 'hidden',
+    flex: 1,
+  }),
+  flexRow: css({
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+  }),
+});
