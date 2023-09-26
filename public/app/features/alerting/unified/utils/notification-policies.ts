@@ -86,24 +86,23 @@ function matchLabels(matchersInNotificationPolicy: ObjectMatcher[], labelsInInst
 
     if (matchingLabelsInInstance.length === 0) {
       //NO MATCH FOR THIS MATCHER, BUT MAYBE IT'S A MISSING LABEL MATCHER
-      if (isMissingLabelMatcher(matcher)) {
-        let labelMatch: {
-          match: boolean;
-          matchers: ObjectMatcher[];
-        };
-
-        // check if there is no other matcher for the same label key in labelsMatch
-        if (labelsInInstance.some((label) => isNotEmptyValueInMissingLabel(matcher[0], label))) {
-          return false;
-        }
-        labelMatch = { match: true, matchers: [matcher] };
-        labelMatch.matchers.push(matcher);
-        matchesEmpty = true;
-        labelsMatch.set([matcher[0], ''], labelMatch);
-        return true;
-      } else {
+      if (!isMissingLabelMatcher(matcher)) {
         return false;
       }
+      // check if there is no other matcher for the same label key in labelsMatch
+      if (labelsInInstance.some((label) => isNotEmptyValueInMissingLabel(matcher[0], label))) {
+        return false;
+      }
+      let labelMatch: {
+        match: boolean;
+        matchers: ObjectMatcher[];
+      };
+
+      labelMatch = { match: true, matchers: [matcher] };
+      labelMatch.matchers.push(matcher);
+      matchesEmpty = true;
+      labelsMatch.set([matcher[0], ''], labelMatch);
+      return true;
     }
 
     details.set(matcher, matchingLabelsInInstance);
