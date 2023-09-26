@@ -33,10 +33,10 @@ export const ZoomPlugin = ({ onZoom, config, withZoomY = false }: ZoomPluginProp
               let onUp = (e: MouseEvent) => {
                 u.cursor!.drag!.x = true;
                 u.cursor!.drag!.y = false;
-                u.root!.removeEventListener('mouseup', onUp, true);
+                document.removeEventListener('mouseup', onUp, true);
               };
 
-              u.root!.addEventListener('mouseup', onUp, true);
+              document.addEventListener('mouseup', onUp, true);
             }
           },
           true
