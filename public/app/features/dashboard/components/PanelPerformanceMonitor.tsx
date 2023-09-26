@@ -124,6 +124,7 @@ export const PanelPerformanceMonitor = (props: Props) => {
         {
           type: 'internal_panel_measurements_' + props.panelType,
           values: {
+            start_loading_time_ms: startLoadTime,
             load_time_ms: performance.now() - startLoadTime,
           },
         }
