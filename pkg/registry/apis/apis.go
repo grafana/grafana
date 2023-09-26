@@ -3,7 +3,7 @@ package apiregistry
 import (
 	"context"
 
-	playlistsv0alpha "github.com/grafana/grafana/pkg/apis/playlist/v0alpha"
+	playlistsv0alpha1 "github.com/grafana/grafana/pkg/apis/playlist/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry"
 )
 
@@ -14,7 +14,7 @@ var (
 type Service struct{}
 
 func ProvideService(
-	_ *playlistsv0alpha.PlaylistAPIBuilder,
+	_ *playlistsv0alpha1.PlaylistAPIBuilder,
 ) *Service {
 	return &Service{}
 }

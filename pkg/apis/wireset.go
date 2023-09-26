@@ -3,9 +3,9 @@ package apis
 import (
 	"github.com/google/wire"
 
-	playlistv1 "github.com/grafana/grafana/pkg/apis/playlist/v0alpha"
+	playlistsv0alpha1 "github.com/grafana/grafana/pkg/apis/playlist/v0alpha1"
 )
 
 var WireSet = wire.NewSet(
-	playlistv1.RegisterAPIService,
+	playlistsv0alpha1.RegisterAPIService,
 )

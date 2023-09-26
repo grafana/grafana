@@ -1,4 +1,4 @@
-package v0alpha
+package v0alpha1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -18,7 +18,7 @@ import (
 
 // GroupName is the group name for this API.
 const GroupName = "playlist.x.grafana.com"
-const VersionID = "v0-alpha" //
+const VersionID = "v0alpha1" //
 const APIVersion = GroupName + "/" + VersionID
 
 var _ grafanaapiserver.APIGroupBuilder = (*PlaylistAPIBuilder)(nil)
