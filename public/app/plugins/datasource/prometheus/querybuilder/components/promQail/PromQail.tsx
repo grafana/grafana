@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { useReducer } from 'react';
+import React, { useEffect, useReducer, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Button, Checkbox, Input, Spinner, useTheme2 } from '@grafana/ui';
@@ -32,6 +32,20 @@ export const PromQail = (props: PromQailProps) => {
   const skipStartingMessage = store.getBool(SKIP_STARTING_MESSAGE, false);
 
   const [state, dispatch] = useReducer(stateSlice.reducer, initialState(query, !skipStartingMessage));
+
+  const [labelNames, setLabelNames] = useState([])
+  useEffect(() => {
+    const fetchLabels = async () => {
+      let labelsIndex: Record<string, string[]>;
+      if (datasource.hasLabelsMatchAPISupport()) {
+        labelsIndex = await datasource.languageProvider.fetchSeriesLabelsMatch(query.metric);
+      } else {
+        labelsIndex = await datasource.languageProvider.fetchSeriesLabels(query.metric);
+      }
+      setLabelNames(Object.keys(labelsIndex));
+    }
+    fetchLabels();
+  }, [query])
 
   const theme = useTheme2();
   const styles = getStyles(theme);
@@ -148,7 +162,7 @@ export const PromQail = (props: PromQailProps) => {
                         const suggestionType = SuggestionType.Historical;
                         dispatch(addInteraction({ suggestionType, isLoading }));
                         //CHECK THIS???
-                        promQailSuggest(dispatch, 0, query);
+                        promQailSuggest(dispatch, 0, query, labelNames);
                       }}
                     >
                       No
@@ -233,7 +247,7 @@ export const PromQail = (props: PromQailProps) => {
                                     };
 
                                     dispatch(updateInteraction(payload));
-                                    promQailSuggest(dispatch, idx, query, newInteraction);
+                                    promQailSuggest(dispatch, idx, query, labelNames, newInteraction);
                                   }}
                                 >
                                   Suggest queries instead
@@ -254,7 +268,7 @@ export const PromQail = (props: PromQailProps) => {
 
                                     dispatch(updateInteraction(payload));
                                     // add the suggestions in the API call
-                                    promQailSuggest(dispatch, idx, query, interaction);
+                                    promQailSuggest(dispatch, idx, query, labelNames, interaction);
                                   }}
                                 >
                                   Submit

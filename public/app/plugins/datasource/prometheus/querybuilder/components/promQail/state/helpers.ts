@@ -19,7 +19,7 @@ import { Interaction, QuerySuggestion, SuggestionType } from '../types';
 import { createInteraction, stateSlice } from './state';
 
 const OPENAI_MODEL_NAME = 'gpt-3.5-turbo';
-const promQLTemplatesCollection = 'promql:templates';
+const promQLTemplatesCollection = 'grafana:core:promql_templates';
 // actions to update the state
 const { updateInteraction } = stateSlice.actions;
 
@@ -158,12 +158,14 @@ export async function promQailSuggest(
   dispatch: React.Dispatch<AnyAction>,
   idx: number,
   query: PromVisualQuery,
+  labelNames: string[],
   interaction?: Interaction
 ) {
   // when you're not running promqail
   const check = (await llms.openai.enabled()) && (await llms.vector.enabled());
 
   if (!check) {
+    console.log("LLM & VectorDB check failed, using fallback")
     return new Promise<void>((resolve) => {
       return setTimeout(() => {
         const interactionToUpdate = interaction ? interaction : createInteraction(SuggestionType.Historical);
@@ -195,6 +197,7 @@ export async function promQailSuggest(
     if (interaction?.suggestionType === SuggestionType.AI) {
       feedTheAI = { ...feedTheAI, prompt: interaction.prompt };
 
+      // TODO: filter by metric type
       results = await llms.vector.search<TemplateSearchResult>({
         query: interaction.prompt,
         collection: promQLTemplatesCollection,
@@ -203,21 +206,13 @@ export async function promQailSuggest(
       // TODO: handle errors from vector search
     }
 
-    const resultsString = JSON.stringify(
-      results.map((r) => {
-        return {
-          metric_type: r.payload.metric_type,
-          promql: r.payload.promql,
-          description: r.payload.description,
-        };
-      })
-    );
+    const resultsString = results.map(r => { return `PromQL: ${r.payload.promql}\nDescription: ${r.payload.description}`}).join('\n')
 
     const interactionToUpdate = interaction ? interaction : createInteraction(SuggestionType.Historical);
     const promptMessages = getSuggestMessage({
       promql: query.metric,
       question: interaction ? interaction.prompt : '',
-      labels: promQueryModeller.renderLabels(query.labels),
+      labels: labelNames.join(', '),
       templates: resultsString,
     });
 
