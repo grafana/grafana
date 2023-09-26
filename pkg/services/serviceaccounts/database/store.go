@@ -47,7 +47,8 @@ func (s *ServiceAccountsStoreImpl) CreateServiceAccount(ctx context.Context, org
 	generatedLogin := "sa-" + strings.ToLower(saForm.Name)
 	generatedLogin = strings.ReplaceAll(generatedLogin, " ", "-")
 	isDisabled := false
-	role := org.RoleViewer
+	// default to None role
+	role := org.RoleNone
 	if saForm.IsDisabled != nil {
 		isDisabled = *saForm.IsDisabled
 	}
