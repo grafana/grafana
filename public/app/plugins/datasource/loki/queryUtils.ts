@@ -241,6 +241,20 @@ export function getLogQueryFromMetricsQuery(query: string): string {
   return `${selector} ${pipelineExpr}`.trim();
 }
 
+export function getLogQueryFromMetricsQueryAtPosition(query: string, position: number): string {
+  if (isLogsQuery(query)) {
+    return query;
+  }
+
+  const metricQuery = getNodesFromQuery(query, [MetricExpr])
+    .reverse() // So we don't get the root metric node
+    .filter((node) => node.from <= position && node.to >= position);
+  if (metricQuery.length === 0) {
+    return '';
+  }
+  return getLogQueryFromMetricsQuery(query.substring(metricQuery[0].from, metricQuery[0].to));
+}
+
 export function isQueryWithLabelFilter(query: string): boolean {
   return isQueryWithNode(query, LabelFilter);
 }
