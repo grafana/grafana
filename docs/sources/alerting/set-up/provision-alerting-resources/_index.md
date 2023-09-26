@@ -31,8 +31,8 @@ There are three options to choose from:
    For more information on the Alerting Provisioning HTTP API, refer to [Alerting provisioning HTTP API][alerting_provisioning].
 
 1. {{% admonition type="note" %}}
-If you are using Open Source, you can provision your alerting resources using [Terraform](https://www.terraform.io/).
-{{% /admonition %}}
+   If you are using Open Source, you can provision your alerting resources using [Terraform](https://www.terraform.io/).
+   {{% /admonition %}}
 
 **Note:**
 
