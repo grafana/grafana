@@ -375,6 +375,7 @@ cypress.config.js @grafana/grafana-frontend-platform
 /public/app/features/connections/ @grafana/plugins-platform-frontend @mikkancso
 /public/app/features/correlations/ @grafana/explore-squad
 /public/app/features/dashboard/ @grafana/dashboards-squad
+/public/app/features/dashboard/components/TransformationsEditor/ @grafana/grafana-bi-squad
 /public/app/features/dashboard-scene/ @grafana/dashboards-squad
 /public/app/features/datasources/ @grafana/plugins-platform-frontend @mikkancso
 /public/app/features/dimensions/ @grafana/dataviz-squad
