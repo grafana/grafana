@@ -435,7 +435,7 @@ describe('getLogQueryFromMetricsQuery', () => {
 });
 
 describe('getLogQueryFromMetricsQueryAtPosition', () => {
-  it('works like getLogQueryFromMetricsQuery for simple querles', () => {
+  it('works like getLogQueryFromMetricsQuery for simple queries', () => {
     expect(getLogQueryFromMetricsQueryAtPosition('count_over_time({job="grafana"} | logfmt | label="value" [1m])', 57)).toBe(
       '{job="grafana"} | logfmt | label="value"'
     );
