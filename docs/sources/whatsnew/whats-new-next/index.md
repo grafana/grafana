@@ -89,4 +89,3 @@ The `Grafana Assume Role` authentication provider lets Grafana Cloud users of th
 
 To learn more, refer to the [CloudWatch Authentication documentation](/docs/grafana/next/datasources/aws-cloudwatch/aws-authentication).
 
-> > > > > > > 4c1a04626de (Cloudwatch: Add Documentation on Temporary Credentials)
