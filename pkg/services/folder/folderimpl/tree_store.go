@@ -15,26 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 )
 
-/*
-type HierarchicalEntity[T any] struct {
-	a     T
-	Left  int64
-	Right int64
-}
-
-func (h *HierarchicalEntity[T]) GetLeft() int64 {
-	return h.Left
-}
-
-func (h *HierarchicalEntity[T]) GetRight() int64 {
-	return h.Right
-}
-
-func (h *HierarchicalEntity[T]) GetEntity() T {
-	return h.a
-}
-*/
-
 type treeStore struct {
 	sqlStore
 	db  db.DB
@@ -58,15 +38,17 @@ func (hs *treeStore) migrate(ctx context.Context, orgID int64, f *folder.Folder,
 	err := hs.db.InTransaction(ctx, func(ctx context.Context) error {
 		var children []*folder.Folder
 
-		q := "SELECT * FROM folder WHERE org_id = ?"
+		q := "SELECT org_id, uid, title, lft, rgt FROM folder WHERE org_id = ?"
 		args := []interface{}{orgID}
 		// get children
 		if f == nil {
-			q = q + " AND parent_uid IS NULL"
+			q += " AND parent_uid IS NULL"
 		} else {
-			q = q + " AND parent_uid = ?"
+			q += " AND parent_uid = ?"
 			args = append(args, f.UID)
 		}
+		// used for consistency
+		q += " ORDER BY title ASC"
 
 		if err := hs.db.WithDbSession(ctx, func(sess *db.Session) error {
 			if err := sess.SQL(q, args...).Find(&children); err != nil {
@@ -120,7 +102,6 @@ func (hs *treeStore) Create(ctx context.Context, cmd folder.CreateFolderCommand)
 		return nil, folder.ErrBadRequest.Errorf("missing UID")
 	}
 
-	// TODO: fix concurrency
 	foldr := &folder.Folder{}
 	now := time.Now()
 
@@ -252,6 +233,7 @@ func (hs *treeStore) Update(ctx context.Context, cmd folder.UpdateFolderCommand)
 	return foldr.WithURL(), nil
 }
 
+// Get returns a folder ancestors ordered by left column ascending
 func (hs *treeStore) GetParents(ctx context.Context, cmd folder.GetParentsQuery) ([]*folder.Folder, error) {
 	var folders []*folder.Folder
 	err := hs.db.WithDbSession(ctx, func(sess *db.Session) error {
@@ -261,6 +243,7 @@ func (hs *treeStore) GetParents(ctx context.Context, cmd folder.GetParentsQuery)
 			folder AS parent
 		WHERE node.lft > parent.lft AND node.lft < parent.rgt
 			AND node.org_id = ? AND node.uid = ?
+		ORDER BY parent.lft
 		`, cmd.OrgID, cmd.UID).Find(&folders); err != nil {
 			return err
 		}

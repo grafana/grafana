@@ -14,18 +14,32 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// folders is the following tree structure used by the tests in this file
+// |-ELECTRONICS
+// |--TELEVISIONS
+// |---TUBE
+// |---LCD
+// |---PLASMA
+// |--GAME CONSOLES
+// |--PORTABLE ELECTRONICS
+// |---MP3 PLAYERS
+// |----FLASH
+// |---CD PLAYERS
+// |---2 WAY RADIOS
+// they are insterted into the store in shuffled order
+// so that it's guarranteed that ordering by primary keys is not assumpted
 var folders = [][]any{
 	// org_id, uid, title, created, updated, parent_uid, left, right
-	{orgID, "1", "ELECTRONICS", time.Now(), time.Now(), nil, 1, 20},
-	{orgID, "2", "TELEVISIONS", time.Now(), time.Now(), "1", 2, 9},
 	{orgID, "3", "TUBE", time.Now(), time.Now(), "2", 3, 4},
-	{orgID, "4", "LCD", time.Now(), time.Now(), "2", 5, 6},
-	{orgID, "5", "PLASMA", time.Now(), time.Now(), "2", 7, 8},
-	{orgID, "6", "PORTABLE ELECTRONICS", time.Now(), time.Now(), "1", 10, 19},
 	{orgID, "7", "MP3 PLAYERS", time.Now(), time.Now(), "6", 11, 14},
-	{orgID, "8", "FLASH", time.Now(), time.Now(), "7", 12, 13},
+	{orgID, "1", "ELECTRONICS", time.Now(), time.Now(), nil, 1, 20},
+	{orgID, "6", "PORTABLE ELECTRONICS", time.Now(), time.Now(), "1", 10, 19},
 	{orgID, "9", "CD PLAYERS", time.Now(), time.Now(), "6", 15, 16},
+	{orgID, "8", "FLASH", time.Now(), time.Now(), "7", 12, 13},
+	{orgID, "2", "TELEVISIONS", time.Now(), time.Now(), "1", 2, 9},
+	{orgID, "4", "LCD", time.Now(), time.Now(), "2", 5, 6},
 	{orgID, "10", "2 WAY RADIOS", time.Now(), time.Now(), "6", 17, 18},
+	{orgID, "5", "PLASMA", time.Now(), time.Now(), "2", 7, 8},
 }
 
 // storeFolders stores the folders in the database.
@@ -74,15 +88,15 @@ func TestIntegrationTreeStoreMigrate(t *testing.T) {
 
 	assert.Equal(t, []string{
 		"1-ELECTRONICS",
-		"2-TELEVISIONS",
-		"3-TUBE",
-		"3-LCD",
-		"3-PLASMA",
 		"2-PORTABLE ELECTRONICS",
+		"3-2 WAY RADIOS",
+		"3-CD PLAYERS",
 		"3-MP3 PLAYERS",
 		"4-FLASH",
-		"3-CD PLAYERS",
-		"3-2 WAY RADIOS",
+		"2-TELEVISIONS",
+		"3-LCD",
+		"3-PLASMA",
+		"3-TUBE",
 	}, tree)
 }
 
@@ -403,7 +417,7 @@ func TestIntegrationTreeStoreUpdate(t *testing.T) {
 		},
 		{
 			desc: "get by id",
-			ID:   util.Pointer(int64(8)),
+			ID:   util.Pointer(int64(6)),
 		},
 		{
 			desc:  "get by title",
@@ -412,19 +426,20 @@ func TestIntegrationTreeStoreUpdate(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		f, err := folderStore.Get(context.Background(), folder.GetFolderQuery{
-			OrgID: 1,
-			UID:   tc.UID,
-			ID:    tc.ID,
-			Title: tc.Title,
-		})
-		require.NoError(t, err)
+		t.Run(tc.desc, func(t *testing.T) {
+			f, err := folderStore.Get(context.Background(), folder.GetFolderQuery{
+				OrgID: 1,
+				UID:   tc.UID,
+				ID:    tc.ID,
+				Title: tc.Title,
+			})
+			require.NoError(t, err)
 
-		assert.Equal(t, "FLASH", f.Title)
-		assert.Equal(t, "8", f.UID)
-		assert.Equal(t, int64(8), f.ID)
-		//assert.NotEmpty(t, f.FullPathUIDs)
-		//assert.NotEmpty(t, f.FullPath)
+			assert.Equal(t, "FLASH", f.Title)
+			assert.Equal(t, "8", f.UID)
+			//assert.NotEmpty(t, f.FullPathUIDs)
+			//assert.NotEmpty(t, f.FullPath)
+		})
 	}
 }
 
@@ -607,14 +622,14 @@ func TestIntegrationTreeStoreMove(t *testing.T) {
 			expectedTree: []string{
 				"1-ELECTRONICS",
 				"2-PORTABLE ELECTRONICS",
+				"3-2 WAY RADIOS",
+				"3-CD PLAYERS",
 				"3-MP3 PLAYERS",
 				"4-FLASH",
 				"5-TELEVISIONS",
-				"6-TUBE",
 				"6-LCD",
 				"6-PLASMA",
-				"3-CD PLAYERS",
-				"3-2 WAY RADIOS",
+				"6-TUBE",
 			},
 		},
 		{
@@ -624,14 +639,14 @@ func TestIntegrationTreeStoreMove(t *testing.T) {
 			expectedTree: []string{
 				"1-ELECTRONICS",
 				"2-PORTABLE ELECTRONICS",
+				"3-2 WAY RADIOS",
+				"3-CD PLAYERS",
 				"3-MP3 PLAYERS",
+				"4-FLASH",
 				"4-TELEVISIONS",
-				"5-TUBE",
 				"5-LCD",
 				"5-PLASMA",
-				"4-FLASH",
-				"3-CD PLAYERS",
-				"3-2 WAY RADIOS",
+				"5-TUBE",
 			},
 		},
 		{
@@ -641,14 +656,14 @@ func TestIntegrationTreeStoreMove(t *testing.T) {
 			expectedTree: []string{
 				"1-ELECTRONICS",
 				"2-PORTABLE ELECTRONICS",
-				"3-MP3 PLAYERS",
-				"4-FLASH",
+				"3-2 WAY RADIOS",
 				"3-CD PLAYERS",
 				"4-TELEVISIONS",
-				"5-TUBE",
 				"5-LCD",
 				"5-PLASMA",
-				"3-2 WAY RADIOS",
+				"5-TUBE",
+				"3-MP3 PLAYERS",
+				"4-FLASH",
 			},
 		},
 		{
@@ -657,15 +672,15 @@ func TestIntegrationTreeStoreMove(t *testing.T) {
 			newParentUID: "7",
 			expectedTree: []string{
 				"1-ELECTRONICS",
+				"2-PORTABLE ELECTRONICS",
+				"3-2 WAY RADIOS",
+				"3-CD PLAYERS",
+				"3-MP3 PLAYERS",
+				"4-FLASH",
+				"4-TUBE",
 				"2-TELEVISIONS",
 				"3-LCD",
 				"3-PLASMA",
-				"2-PORTABLE ELECTRONICS",
-				"3-MP3 PLAYERS",
-				"4-TUBE",
-				"4-FLASH",
-				"3-CD PLAYERS",
-				"3-2 WAY RADIOS",
 			},
 		},
 		{
@@ -674,15 +689,15 @@ func TestIntegrationTreeStoreMove(t *testing.T) {
 			newParentUID: "8",
 			expectedTree: []string{
 				"1-ELECTRONICS",
-				"2-TELEVISIONS",
-				"3-LCD",
-				"3-PLASMA",
 				"2-PORTABLE ELECTRONICS",
+				"3-2 WAY RADIOS",
+				"3-CD PLAYERS",
 				"3-MP3 PLAYERS",
 				"4-FLASH",
 				"5-TUBE",
-				"3-CD PLAYERS",
-				"3-2 WAY RADIOS",
+				"2-TELEVISIONS",
+				"3-LCD",
+				"3-PLASMA",
 			},
 		},
 		{
@@ -692,14 +707,14 @@ func TestIntegrationTreeStoreMove(t *testing.T) {
 			expectedTree: []string{
 				"1-ELECTRONICS",
 				"2-TELEVISIONS",
-				"3-TUBE",
-				"4-PORTABLE ELECTRONICS",
-				"5-MP3 PLAYERS",
-				"6-FLASH",
-				"5-CD PLAYERS",
-				"5-2 WAY RADIOS",
 				"3-LCD",
 				"3-PLASMA",
+				"3-TUBE",
+				"4-PORTABLE ELECTRONICS",
+				"5-2 WAY RADIOS",
+				"5-CD PLAYERS",
+				"5-MP3 PLAYERS",
+				"6-FLASH",
 			},
 		},
 		{
@@ -709,14 +724,14 @@ func TestIntegrationTreeStoreMove(t *testing.T) {
 			expectedTree: []string{
 				"1-ELECTRONICS",
 				"2-TELEVISIONS",
-				"3-TUBE",
 				"3-LCD",
 				"3-PLASMA",
 				"3-PORTABLE ELECTRONICS",
+				"4-2 WAY RADIOS",
+				"4-CD PLAYERS",
 				"4-MP3 PLAYERS",
 				"5-FLASH",
-				"4-CD PLAYERS",
-				"4-2 WAY RADIOS",
+				"3-TUBE",
 			},
 		},
 	}
