@@ -89,7 +89,7 @@ Use alert rule evaluation to determine how frequently an alert rule should be ev
 
 ## Add annotations
 
-Add [annotations][annotation-label]. to provide more context on the alert in your alert notifications.
+Add [annotations][annotation-label] to provide more context on the alert in your alert notifications.
 
 Annotations add metadata to provide more information on the alert in your alert notifications. For example, add a **Summary** annotation to tell you which value caused the alert to fire or which server it happened on.
 
@@ -128,9 +128,6 @@ All alert rules and instances, irrespective of their labels, match the default n
 
 [annotation-label]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting/fundamentals/annotation-label"
 [annotation-label]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/annotation-label"
-
-[edit-mimir-loki-namespace-group]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting/alerting-rules/edit-mimir-loki-namespace-group"
-[edit-mimir-loki-namespace-group]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/edit-mimir-loki-namespace-group"
 
 [fundamentals]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting/fundamentals"
 [fundamentals]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals"
