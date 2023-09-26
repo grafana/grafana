@@ -60,8 +60,10 @@ export function saveCurrentCorrelation(label?: string, description?: string): Th
       ? targetPane.queries[0].datasource
       : targetPane.datasourceInstance?.getRef();
 
-    const sourceDatasource = await getDataSourceSrv().get(sourceDatasourceRef);
-    const targetDatasource = await getDataSourceSrv().get(targetDataSourceRef);
+    const [sourceDatasource, targetDatasource] = await Promise.all([
+      getDataSourceSrv().get(sourceDatasourceRef),
+      getDataSourceSrv().get(targetDataSourceRef),
+    ]);
 
     if (sourceDatasource?.uid && targetDatasource?.uid && targetPane.correlationEditorHelperData?.resultField) {
       const correlation: CreateCorrelationParams = {

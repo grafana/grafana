@@ -322,7 +322,7 @@ export const changeQueries = createAsyncThunk<void, ChangeQueriesPayload>(
     const rootUID = getState().explore.panes[exploreId]!.datasourceInstance?.uid;
     const correlationDetails = getState().explore.correlationEditorDetails;
     const isCorrelationsEditorMode = correlationDetails?.editorMode || false;
-    const isLeftPane = Object.entries(getState().explore.panes)[0][0] === exploreId;
+    const isLeftPane = Object.keys(getState().explore.panes)[0] === exploreId;
 
     if (!isLeftPane && isCorrelationsEditorMode && !correlationDetails?.dirty) {
       dispatch(changeCorrelationEditorDetails({ dirty: true }));
@@ -523,7 +523,7 @@ export const runQueries = createAsyncThunk<void, RunQueriesOptions>(
       correlationEditorHelperData,
     } = exploreItemState;
     const isCorrelationEditorMode = getState().explore.correlationEditorDetails?.editorMode || false;
-    const isLeftPane = Object.entries(getState().explore.panes)[0][0] === exploreId;
+    const isLeftPane = Object.keys(getState().explore.panes)[0] === exploreId;
     const showCorrelationEditorLinks = isCorrelationEditorMode && isLeftPane;
     const defaultCorrelationEditorDatasource = showCorrelationEditorLinks ? await getDataSourceSrv().get() : undefined;
     const interpolateCorrelationHelperVars =
