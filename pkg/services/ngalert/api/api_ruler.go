@@ -57,6 +57,17 @@ func (srv RulerSrv) RouteDeleteAlertRules(c *contextmodel.ReqContext, namespaceT
 		return toNamespaceErrorResponse(err)
 	}
 
+	var loggerCtx = []any{
+		"userId",
+		c.SignedInUser.UserID,
+		"namespaceUid",
+		namespace.UID,
+	}
+	if group != "" {
+		loggerCtx = append(loggerCtx, "group", group)
+	}
+	logger := srv.log.New(loggerCtx...)
+
 	provenances, err := srv.provenanceStore.GetProvenances(c.Req.Context(), c.SignedInUser.OrgID, (&ngmodels.AlertRule{}).ResourceType())
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "failed to fetch provenances of alert rules")
@@ -87,8 +98,9 @@ func (srv RulerSrv) RouteDeleteAlertRules(c *contextmodel.ReqContext, namespaceT
 		}
 		rulesToDelete := make([]string, 0)
 		provisioned := false
-		for _, rules := range deletionCandidates {
+		for groupKey, rules := range deletionCandidates {
 			if containsProvisionedAlerts(provenances, rules) {
+				logger.Debug("Alert group cannot be deleted because it is provisioned", "group", groupKey.RuleGroup)
 				provisioned = true
 				continue
 			}
@@ -99,13 +111,19 @@ func (srv RulerSrv) RouteDeleteAlertRules(c *contextmodel.ReqContext, namespaceT
 			rulesToDelete = append(rulesToDelete, uid...)
 		}
 		if len(rulesToDelete) > 0 {
-			return srv.store.DeleteAlertRulesByUID(ctx, c.SignedInUser.OrgID, rulesToDelete...)
+			err := srv.store.DeleteAlertRulesByUID(ctx, c.SignedInUser.OrgID, rulesToDelete...)
+			if err != nil {
+				return err
+			}
+			logger.Info("Alert rules were deleted", "ruleUid", strings.Join(rulesToDelete, ","))
+			return nil
 		}
 		// if none rules were deleted return an error.
 		// Check whether provisioned check failed first because if it is true, then all rules that the user can access (actually read via GET API) are provisioned.
 		if provisioned {
 			return errProvisionedResource
 		}
+		logger.Info("No alert rules were deleted")
 		return nil
 	})
 
