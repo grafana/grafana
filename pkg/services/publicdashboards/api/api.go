@@ -56,8 +56,9 @@ func (api *Api) RegisterAPIEndpoints() {
 	// circular dependency
 
 	api.RouteRegister.Get("/api/public/dashboards/:accessToken", routing.Wrap(api.ViewPublicDashboard))
+	api.RouteRegister.Get("/api/public/dashboards/:accessToken/annotations", routing.Wrap(api.GetPublicAnnotations))
+
 	api.RouteRegister.Post("/api/public/dashboards/:accessToken/panels/:panelId/query", routing.Wrap(api.QueryPublicDashboard))
-	api.RouteRegister.Get("/api/public/dashboards/:accessToken/annotations", routing.Wrap(api.GetAnnotations))
 
 	// Auth endpoints
 	auth := accesscontrol.Middleware(api.AccessControl)
@@ -92,7 +93,7 @@ func (api *Api) RegisterAPIEndpoints() {
 //	Get list of public dashboards
 //
 // Responses:
-// 200: getPublicDashboardResponse
+// 200: listPublicDashboardsResponse
 // 401: unauthorisedPublicError
 // 403: forbiddenPublicError
 // 500: internalServerPublicError
@@ -126,7 +127,7 @@ func (api *Api) ListPublicDashboards(c *contextmodel.ReqContext) response.Respon
 //	Get public dashboard by dashboardUid
 //
 // Responses:
-// 200: listPublicDashboardsResponse
+// 200: getPublicDashboardResponse
 // 400: identifierNotSetPublicError
 // 401: unauthorisedPublicError
 // 403: forbiddenPublicError

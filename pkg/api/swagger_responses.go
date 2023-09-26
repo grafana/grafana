@@ -160,6 +160,11 @@ type InvalidShareTypePublicError PublicErrorResponse
 // swagger:response dashboardNotFoundPublicError
 type DashboardNotFoundPublicError PublicErrorResponse
 
+// PublicDashboardNotFoundPublicError is returned when the public dashboard is not found.
+//
+// swagger:response publicDashboardNotFoundPublicError
+type PublicDashboardNotFoundPublicError PublicErrorResponse
+
 // DashboardIsPublicPublicError is returned when the dashboard is already public.
 //
 // swagger:response dashboardIsPublicPublicError
@@ -170,7 +175,37 @@ type DashboardIsPublicPublicError PublicErrorResponse
 // swagger:response dashboardUidExistsPublicError
 type DashboardUidExistsPublicError PublicErrorResponse
 
-// DashboardAccessTokenExistsPublicError DashboardAccessTokenExistsPublicError is returned when the dashboard access token already exists.
+// DashboardAccessTokenExistsPublicError is returned when the dashboard access token already exists.
 //
 // swagger:response dashboardAccessTokenExistsPublicError
 type DashboardAccessTokenExistsPublicError PublicErrorResponse
+
+// PublicDashboardNotEnabledError is returned when the public dashboard is not enabled.
+//
+// swagger:response publicDashboardNotEnabledError
+type PublicDashboardNotEnabledError PublicErrorResponse
+
+// InvalidPanelIdPublicError is returned when the panel is not valid
+//
+// swagger:response invalidPanelIdPublicError
+type InvalidPanelIdPublicError PublicErrorResponse
+
+// InvalidIntervalPublicError is returned when the interval is not valid
+//
+// swagger:response invalidIntervalPublicError
+type InvalidIntervalPublicError PublicErrorResponse
+
+// InvalidMaxDataPointsPublicError is returned when the max data points is not valid
+//
+// swagger:response invalidMaxDataPointsPublicError
+type InvalidMaxDataPointsPublicError PublicErrorResponse
+
+// InvalidTimeRangePublicError is returned when the time range is not valid
+//
+// swagger:response invalidTimeRangePublicError
+type InvalidTimeRangePublicError PublicErrorResponse
+
+// PanelNotFoundPublicError is returned when the panel is not found
+//
+// swagger:response panelNotFoundPublicError
+type PanelNotFoundPublicError PublicErrorResponse
