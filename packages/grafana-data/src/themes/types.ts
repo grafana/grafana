@@ -49,7 +49,7 @@ export interface ThemeRichColor {
   border: string;
   /** Used subtly colored backgrounds */
   transparent: string;
-  /** Used for weak borders like larger alert/banner boxes */
+  /** Used for weak colored borders like larger alert/banner boxes and smaller badges and tags */
   borderTransparent: string;
   /** Text color for text ontop of main */
   contrastText: string;
