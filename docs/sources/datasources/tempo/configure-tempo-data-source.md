@@ -135,7 +135,7 @@ Each linked query consists of:
 
 ## Service Graph
 
-The **Service Graph** setting configures the [Service Graph](/docs/tempo/latest/metrics-generator/service-graphs/) feature.
+The **Service Graph** setting configures the [Service Graph](/docs/tempo/latest/metrics-generator/service_graphs/enable-service-graphs/) feature.
 
 Configure the **Data source** setting to define in which Prometheus instance the Service Graph data is stored.
 

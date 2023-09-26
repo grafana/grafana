@@ -26,10 +26,15 @@ import {
   behaviors,
   VizPanelState,
   SceneGridItemLike,
+  SceneDataLayers,
+  SceneDataLayerProvider,
+  SceneDataLayerControls,
 } from '@grafana/scenes';
+import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { DashboardDTO } from 'app/types';
 
+import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
 import { DashboardScene } from '../scene/DashboardScene';
 import { LibraryVizPanel } from '../scene/LibraryVizPanel';
 import { panelMenuBehavior } from '../scene/PanelMenuBehavior';
@@ -50,6 +55,9 @@ export function transformSaveModelToScene(rsp: DashboardDTO): DashboardScene {
   const oldModel = new DashboardModel(rsp.dashboard, rsp.meta, {
     autoMigrateOldPanels: true,
   });
+
+  // Setting for built-in annotations query to run
+  getDashboardSrv().setCurrent(oldModel);
 
   return createDashboardSceneFromDashboardModel(oldModel);
 }
@@ -148,6 +156,7 @@ function createRowFromPanelModel(row: PanelModel, content: SceneGridItemLike[]):
 
 export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel) {
   let variables: SceneVariableSet | undefined = undefined;
+  let layers: SceneDataLayerProvider[] = [];
 
   if (oldModel.templating?.list?.length) {
     const variableObjects = oldModel.templating.list
@@ -168,7 +177,20 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
     });
   }
 
+  if (oldModel.annotations?.list?.length) {
+    layers = oldModel.annotations?.list.map((a) => {
+      // Each annotation query is an individual data layer
+      return new DashboardAnnotationsDataLayer({
+        query: a,
+        name: a.name,
+        isEnabled: Boolean(a.enable),
+        isHidden: Boolean(a.hide),
+      });
+    });
+  }
+
   const controls: SceneObject[] = [
+    new SceneDataLayerControls(),
     new VariableValueSelectors({}),
     new SceneControlsSpacer(),
     new SceneTimePicker({}),
@@ -193,6 +215,12 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
         sync: oldModel.graphTooltip,
       }),
     ],
+    $data:
+      layers.length > 0
+        ? new SceneDataLayers({
+            layers,
+          })
+        : undefined,
     controls: controls,
   });
 }

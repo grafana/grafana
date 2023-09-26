@@ -44,8 +44,8 @@ export const teamsReducer = teamsSlice.reducer;
 
 export const initialTeamState: TeamState = {
   team: {} as Team,
-  members: [] as TeamMember[],
-  groups: [] as TeamGroup[],
+  members: [],
+  groups: [],
   searchMemberQuery: '',
 };
 

@@ -3,14 +3,11 @@ import { useArgs } from '@storybook/client-api';
 import { Meta, StoryFn } from '@storybook/react';
 import React from 'react';
 
-import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
-
 import { ButtonSelect } from './ButtonSelect';
 
 const meta: Meta<typeof ButtonSelect> = {
   title: 'Forms/Select/ButtonSelect',
   component: ButtonSelect,
-  decorators: [withCenteredStory],
   parameters: {
     controls: {
       exclude: ['className', 'onChange', 'tooltipContent'],
