@@ -17,6 +17,7 @@ import (
 const (
 	cachePrefix = "id-token"
 	tokenTTL    = 1 * time.Hour
+	cacheTTL    = 58 * time.Minute
 )
 
 var _ auth.IDService = (*Service)(nil)
@@ -61,7 +62,7 @@ func (s *Service) SignIdentity(ctx context.Context, id identity.Requester) (stri
 		return "", err
 	}
 
-	if err := s.cache.Set(ctx, cacheKey, []byte(token), time.Minute*4); err != nil {
+	if err := s.cache.Set(ctx, cacheKey, []byte(token), cacheTTL); err != nil {
 		s.logger.Error("failed to set cache", "error", err)
 	}
 
