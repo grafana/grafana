@@ -333,6 +333,18 @@ func (pd *PublicDashboardServiceImpl) GetOrgIdByAccessToken(ctx context.Context,
 }
 
 func (pd *PublicDashboardServiceImpl) Delete(ctx context.Context, uid string) error {
+	// get existing public dashboard if exists
+	existingPubdash, err := pd.store.Find(ctx, uid)
+	if err != nil {
+		return ErrInternalServerError.Errorf("Delete: failed to find public dashboard by uid: %s: %w", uid, err)
+	} else if existingPubdash == nil {
+		return ErrPublicDashboardNotFound.Errorf("Delete: public dashboard not found by uid: %s", uid)
+	}
+
+	// validate the public dashboard belongs to the dashboard
+	if existingPubdash.DashboardUid != uid {
+		return ErrInvalidUid.Errorf("Delete: the public dashboard does not belong to the dashboard")
+	}
 	return pd.serviceWrapper.Delete(ctx, uid)
 }
 
@@ -360,11 +372,6 @@ func (pd *PublicDashboardServiceImpl) DeleteByDashboard(ctx context.Context, das
 	}
 	if pubdash == nil {
 		return nil
-	}
-
-	// validate the public dashboard belongs to the dashboard
-	if pubdash.DashboardUid != dashboard.UID {
-		return ErrInvalidUid.Errorf("DeleteByDashboard: the public dashboard does not belong to the dashboard")
 	}
 
 	return pd.serviceWrapper.Delete(ctx, pubdash.Uid)

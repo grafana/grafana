@@ -1705,16 +1705,6 @@ func TestDeleteByDashboard(t *testing.T) {
 		err := pd.DeleteByDashboard(context.Background(), dashboard)
 		assert.Nil(t, err)
 	})
-	t.Run("Should fail when public dashboard uid does not match dashboard uid", func(t *testing.T) {
-		store := NewFakePublicDashboardStore(t)
-		pd := &PublicDashboardServiceImpl{store: store, serviceWrapper: ProvideServiceWrapper(store)}
-		dashboard := &dashboards.Dashboard{UID: "1", OrgID: 1, IsFolder: false}
-		pubdash := &PublicDashboard{Uid: "2", OrgId: 1, DashboardUid: "2"}
-		store.On("FindByDashboardUid", mock.Anything, mock.Anything, mock.Anything).Return(pubdash, nil)
-
-		err := pd.DeleteByDashboard(context.Background(), dashboard)
-		assert.Error(t, err)
-	})
 	t.Run("will delete pubdash when dashboard deleted", func(t *testing.T) {
 		store := NewFakePublicDashboardStore(t)
 		pd := &PublicDashboardServiceImpl{store: store, serviceWrapper: ProvideServiceWrapper(store)}
