@@ -24,7 +24,7 @@ func NewStrategy(typer runtime.ObjectTyper) genericStrategy {
 }
 
 func (genericStrategy) NamespaceScoped() bool {
-	return false
+	return true
 }
 
 func (genericStrategy) PrepareForCreate(ctx context.Context, obj runtime.Object) {

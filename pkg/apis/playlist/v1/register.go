@@ -55,7 +55,7 @@ func (b *PlaylistAPIBuilder) GetAPIGroupInfo(
 	sqlStore := newSQLStorage(b.service)
 	storage["playlists"] = sqlStore
 
-	// enable dual wires if a RESTOptionsGetter is provided
+	// enable dual writes if a RESTOptionsGetter is provided
 	if optsGetter != nil {
 		unifiedStorage, err := newUnifiedStorage(scheme, optsGetter)
 		if err != nil {

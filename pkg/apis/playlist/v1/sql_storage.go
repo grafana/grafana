@@ -2,7 +2,6 @@ package v1
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
@@ -141,17 +140,21 @@ func (s *sqlStorage) Get(ctx context.Context, name string, options *metav1.GetOp
 }
 
 func (s *sqlStorage) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
-	return nil, errors.New("not implemented")
+	// TODO: implement
+	return nil, nil
 }
 
 func (s *sqlStorage) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
-	return nil, false, errors.New("not implemented")
+	// TODO: implement
+	return nil, false, nil
 }
 
 func (s *sqlStorage) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
-	return nil, false, errors.New("not implemented")
+	// TODO: implement
+	return nil, false, nil
 }
 
 func (s *sqlStorage) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *internalversion.ListOptions) (runtime.Object, error) {
-	return nil, errors.New("not implemented")
+	// TODO: implement
+	return nil, nil
 }
