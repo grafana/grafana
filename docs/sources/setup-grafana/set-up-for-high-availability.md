@@ -22,7 +22,7 @@ weight: 900
 {{% admonition type="note" %}}
 To prevent duplicate alerts in Grafana high availability, additional steps are required.
 
-Please check the [## Alerting high availability](#alerting-high-availability) section below.
+Please refer to [Alerting high availability](#alerting-high-availability) for more information.
 
 {{% /admonition %}}
 
