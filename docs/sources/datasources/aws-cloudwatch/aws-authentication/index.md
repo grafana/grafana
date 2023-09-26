@@ -70,7 +70,7 @@ For example, you may have one set of long term credentials for all of your AWS d
 
 Instead, using the assume role functionality, you could have one set of AWS credentials for all of your AWS data sources that has only one permission—the permission to assume a role with STS. Then you could create a separate IAM role for each data source that specifies which permissions that data source can temporarily assume. Since IAM roles are not credentials, there's no need to rotate them and they may be easier to manage.
 
-To make this even easier, Grafana has released a new feature for Cloud customers called `Grafana Assume Role` in which Grafana's AWS Account acts as the primary credential, only having the permission to assume roles in other accounts. Users then create IAM Roles for Grafana's account to assume. Now users won't need to create any Long Term AWS Users and Keys, they only need to create IAM Roles and grant permission to Grafana's Account to assume them.
+The `Grafana Assume Role` also helps facilitate this. Using this role, Grafana's AWS account acts as the primary credential, having only the permission to assume roles in other accounts. You can then create IAM roles for Grafana's account to assume. For more information, refer to [Use Grafana assume role]({{< relref "#use-grafana-assume-role" >}}).
 
 If the Assume Role field is left blank, Grafana will use the provided credentials from the selected authentication method directly, and permissions to AWS data must be attached directly to those credentials. The Assume Role field is optional for all authentication methods except for `Grafana Assume Role`.
 
