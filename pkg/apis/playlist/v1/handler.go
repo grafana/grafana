@@ -4,13 +4,14 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/grafana/grafana/pkg/apis"
-	"github.com/grafana/grafana/pkg/services/playlist"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
+
+	grafanaapiserver "github.com/grafana/grafana/pkg/services/grafana-apiserver"
+	"github.com/grafana/grafana/pkg/services/playlist"
 )
 
 var _ rest.Scoper = (*handler)(nil)
@@ -47,54 +48,83 @@ func (r *handler) ConvertToTable(ctx context.Context, object runtime.Object, tab
 
 func (r *handler) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
 	ns, ok := request.NamespaceFrom(ctx)
-	if ok && ns != "" {
-		orgId, err := apis.NamespaceToOrgID(ns)
-		if err != nil {
-			return nil, err
-		}
-		fmt.Printf("OrgID: %d\n", orgId)
+	if !ok || ns == "" {
+		return nil, fmt.Errorf("namespace required")
 	}
 
-	// TODO: replace
-	return &PlaylistList{
+	orgId, err := grafanaapiserver.NamespaceToOrgID(ns)
+	if err != nil {
+		return nil, err
+	}
+
+	limit := 100
+	if options.Limit > 0 {
+		limit = int(options.Limit)
+	}
+	res, err := r.service.Search(ctx, &playlist.GetPlaylistsQuery{
+		OrgId: orgId,
+		Limit: limit,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	list := &PlaylistList{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "PlaylistList",
 			APIVersion: APIVersion,
 		},
-		Items: []Playlist{
-			{
-				TypeMeta: metav1.TypeMeta{
-					Kind:       "Playlist",
-					APIVersion: APIVersion,
-				},
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "test",
-				},
-				Name: "test",
+	}
+	for _, v := range res {
+		p := Playlist{
+			TypeMeta: metav1.TypeMeta{
+				Kind:       "Playlist",
+				APIVersion: APIVersion,
 			},
-		},
-	}, nil
+			ObjectMeta: metav1.ObjectMeta{
+				Name: v.UID,
+			},
+		}
+		p.Name = v.Name + " // " + v.Interval
+		list.Items = append(list.Items, p)
+		// TODO?? if table... we don't need the body of each, otherwise full lookup!
+	}
+	if len(list.Items) == limit {
+		list.Continue = "<more>" // TODO?
+	}
+	return list, nil
 }
 
 func (r *handler) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
 	ns, ok := request.NamespaceFrom(ctx)
-	if ok && ns != "" {
-		orgId, err := apis.NamespaceToOrgID(ns)
-		if err != nil {
-			return nil, err
-		}
-		fmt.Printf("OrgID: %d\n", orgId)
+	if !ok || ns == "" {
+		return nil, fmt.Errorf("namespace required")
 	}
 
-	// TODO: replace
+	orgId, err := grafanaapiserver.NamespaceToOrgID(ns)
+	if err != nil {
+		return nil, err
+	}
+
+	p, err := r.service.Get(ctx, &playlist.GetPlaylistByUidQuery{
+		UID:   name,
+		OrgId: orgId,
+	})
+	if err != nil {
+		return nil, err
+	}
+	if p == nil {
+		return nil, fmt.Errorf("not found?")
+	}
+
 	return &Playlist{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Playlist",
 			APIVersion: APIVersion,
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name: name,
+			Name: p.Uid,
 		},
-		Name: "test",
+		Name: p.Name + "//" + p.Interval,
 	}, nil
 }
