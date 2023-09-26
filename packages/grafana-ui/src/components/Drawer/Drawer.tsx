@@ -161,7 +161,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       height: '100%',
       flex: '1 1 0',
       minHeight: '100%',
-      overflow: 'auto',
     }),
     drawer: css({
       '.main-view &': {
