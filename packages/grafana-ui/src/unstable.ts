@@ -12,4 +12,5 @@
 export * from './components/Layout/Box/Box';
 export * from './components/Layout/Flex/Flex';
 
+export { Grid } from './components/Layout/Grid/Grid';
 export { Stack, HorizontalStack } from './components/Layout/Stack';

@@ -111,11 +111,11 @@
     "slate-react": "0.22.10",
     "tinycolor2": "1.6.0",
     "tslib": "2.6.0",
-    "uplot": "1.6.24",
+    "uplot": "1.6.26",
     "uuid": "9.0.0"
   },
   "devDependencies": {
-    "@babel/core": "7.22.9",
+    "@babel/core": "7.23.0",
     "@grafana/tsconfig": "^1.2.0-rc1",
     "@mdx-js/react": "1.6.22",
     "@rollup/plugin-node-resolve": "15.1.0",

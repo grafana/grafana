@@ -19,7 +19,7 @@ weight: 100
 
 ## News
 
-Th news visualization displays an RSS feed. By default, it displays articles from the Grafana Labs blog, and users can change this by entering a different RSS feed URL.
+The news visualization displays an RSS feed. By default, it displays articles from the Grafana Labs blog, and users can change this by entering a different RSS feed URL.
 
 Enter the URL of an RSS in the URL field in the Display section. This visualization type does not accept any other queries, and users should not expect to be able to filter or query the RSS feed data in any way using this visualization.
 
