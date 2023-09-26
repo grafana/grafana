@@ -216,18 +216,18 @@
     }
   },
   "data-source-picker": {
-    "open-advanced-button": "Open advanced data source picker",
-    "modal-title": "Select data source",
-    "input-placeholder": "Select data source",
-    "configure-new-data-source": "Open a new tab and configure a data source",
     "built-in-list": {
+      "description-dashboard": "Reuse query results from other visualizations",
       "description-grafana": "Discover visualizations using mock data",
-      "description-mixed": "Use multiple data sources",
-      "description-dashboard": "Reuse query results from other visualizations"
+      "description-mixed": "Use multiple data sources"
     },
+    "configure-new-data-source": "Open a new tab and configure a data source",
+    "input-placeholder": "Select data source",
     "list": {
       "no-data-source-message": "No data sources found"
-    }
+    },
+    "modal-title": "Select data source",
+    "open-advanced-button": "Open advanced data source picker"
   },
   "data-sources": {
     "datasource-add-button": {
