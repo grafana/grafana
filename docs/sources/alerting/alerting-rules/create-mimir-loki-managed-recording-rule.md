@@ -60,9 +60,9 @@ To create recording rules, follow these steps.
 1. Add namespace and group.
    - From the **Namespace** dropdown, select an existing rule namespace or add a new one. Namespaces can contain one or more rule groups and only have an organizational purpose.
    - From the **Group** dropdown, select an existing group within the selected namespace or add a new one. Newly created rules are appended to the end of the group. Rules within a group are run sequentially at a regular interval, with the same evaluation time.
-2. Add labels.
+1. Add labels.
    - Add custom labels selecting existing key-value pairs from the drop down, or add new labels by entering the new key or value .
-3. Click **Save rule** to save the rule or **Save rule and exit** to save the rule and go back to the Alerting page.
+1. Click **Save rule** to save the rule or **Save rule and exit** to save the rule and go back to the Alerting page.
 
 {{% docs/reference %}}
 [annotation-label]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting/fundamentals/annotation-label"
