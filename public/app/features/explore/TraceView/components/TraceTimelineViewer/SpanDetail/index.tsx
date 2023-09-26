@@ -33,7 +33,6 @@ import { TopOfViewRefType } from '../VirtualizedTraceView';
 import { formatDuration } from '../utils';
 
 import AccordianKeyValues from './AccordianKeyValues';
-import AccordianLogs from './AccordianLogs';
 import AccordianReferences from './AccordianReferences';
 import AccordianText from './AccordianText';
 import DetailState from './DetailState';
@@ -131,12 +130,9 @@ export default function SpanDetail(props: SpanDetailProps) {
   const {
     detailState,
     linksGetter,
-    logItemToggle,
-    logsToggle,
     processToggle,
     span,
     tagsToggle,
-    traceStartTime,
     warningsToggle,
     stackTracesToggle,
     referencesToggle,
@@ -146,14 +142,7 @@ export default function SpanDetail(props: SpanDetailProps) {
     topOfViewRefType,
     datasourceType,
   } = props;
-  const {
-    isTagsOpen,
-    isProcessOpen,
-    logs: logsState,
-    isWarningsOpen,
-    references: referencesState,
-    isStackTracesOpen,
-  } = detailState;
+  const { isTagsOpen, isProcessOpen, isWarningsOpen, references: referencesState, isStackTracesOpen } = detailState;
   const {
     operationName,
     process,
@@ -162,7 +151,6 @@ export default function SpanDetail(props: SpanDetailProps) {
     startTime,
     traceID,
     spanID,
-    logs,
     tags,
     warnings,
     references,
@@ -308,17 +296,6 @@ export default function SpanDetail(props: SpanDetailProps) {
             />
           )}
         </div>
-        {logs && logs.length > 0 && (
-          <AccordianLogs
-            linksGetter={linksGetter}
-            logs={logs}
-            isOpen={logsState.isOpen}
-            openedItems={logsState.openedItems}
-            onToggle={() => logsToggle(spanID)}
-            onItemToggle={(logItem) => logItemToggle(spanID, logItem)}
-            timestamp={traceStartTime}
-          />
-        )}
         {warnings && warnings.length > 0 && (
           <AccordianText
             className={styles.AccordianWarnings}

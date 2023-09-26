@@ -1,14 +1,15 @@
 import { css, cx } from '@emotion/css';
 import React, { useState } from 'react';
 
-import { GrafanaTheme2, TimeZone } from '@grafana/data';
-import { Button, Tab, TabContent, TabsBar, useStyles2 } from '@grafana/ui';
+import { GrafanaTheme2, TimeZone, TraceLog } from '@grafana/data';
+import { Button, CustomScrollbar, Tab, TabContent, TabsBar, useStyles2 } from '@grafana/ui';
 
 import { ExploreDrawer } from '../ExploreDrawer';
 
-import { TraceSpan } from './components';
+import { DetailState, TraceSpan } from './components';
 import { getAbsoluteTime } from './components/TraceTimelineViewer/SpanDetail';
 import AccordianKeyValues from './components/TraceTimelineViewer/SpanDetail/AccordianKeyValues';
+import AccordianLogs from './components/TraceTimelineViewer/SpanDetail/AccordianLogs';
 import LabeledList from './components/common/LabeledList';
 import { ubM0, ubTxRightAlign } from './components/uberUtilityStyles';
 import { formatDuration } from './components/utils/date';
@@ -46,14 +47,13 @@ const getStyles = (theme: GrafanaTheme2) => ({
     flex: 1 0 auto;
   `,
   tabContent: css`
-    padding: 0.25rem 0.5rem;
+    padding: 0.5rem 1rem;
   `,
 });
 
 const tabs = [
   { label: 'Attributes', key: 'attributes', active: true },
   { label: 'Events', key: 'events', active: false },
-  { label: 'Logs', key: 'logs', active: false },
   { label: 'Warnings', key: 'warnings', active: false },
   { label: 'Stack Traces', key: 'stackTraces', active: false },
   { label: 'References', key: 'references', active: false },
@@ -64,18 +64,22 @@ type Props = {
   timeZone: TimeZone;
   width: number;
   clearSelectedSpan: () => void;
+  detailState: DetailState | undefined;
+  traceStartTime: number;
+  detailLogItemToggle: (spanID: string, log: TraceLog) => void;
 };
 
 export function DetailsPanel(props: Props) {
   const [tabsState, updateTabsState] = useState(tabs);
   const styles = useStyles2(getStyles);
-  const { span, timeZone, width, clearSelectedSpan } = props;
+  const { span, timeZone, width, clearSelectedSpan, detailState, traceStartTime, detailLogItemToggle } = props;
 
-  if (!span) {
+  if (!span || !detailState) {
     return null;
   }
 
-  const { operationName, process, duration, relativeStartTime, startTime, tags } = span;
+  const { logs: logsState } = detailState;
+  const { operationName, process, duration, relativeStartTime, startTime, tags, logs } = span;
 
   const overviewItems = [
     {
@@ -140,41 +144,52 @@ export function DetailsPanel(props: Props) {
           );
         })}
       </TabsBar>
-      <TabContent className={styles.tabContent}>
-        {tabsState[0].active && (
-          <div style={{ display: 'flex', gap: '0 1rem' }}>
-            <div className={styles.attributesCol}>
-              <AccordianKeyValues
-                className={styles.attributeValues}
-                data={tags}
-                label="Span Attributes"
-                linksGetter={linksGetter}
-                isOpen={true}
-                onToggle={() => {}}
-                interactive={false}
-              />
-            </div>
-            <div className={styles.attributesCol}>
-              {process.tags && (
+
+      <CustomScrollbar autoHeightMin="100%">
+        <TabContent className={styles.tabContent}>
+          {tabsState[0].active && (
+            <div style={{ display: 'flex', gap: '0 1rem' }}>
+              <div className={styles.attributesCol}>
                 <AccordianKeyValues
                   className={styles.attributeValues}
-                  data={process.tags}
-                  label="Resource Attributes"
+                  data={tags}
+                  label="Span Attributes"
                   linksGetter={linksGetter}
                   isOpen={true}
-                  interactive={false}
                   onToggle={() => {}}
+                  interactive={false}
                 />
-              )}
+              </div>
+              <div className={styles.attributesCol}>
+                {process.tags && (
+                  <AccordianKeyValues
+                    className={styles.attributeValues}
+                    data={process.tags}
+                    label="Resource Attributes"
+                    linksGetter={linksGetter}
+                    isOpen={true}
+                    interactive={false}
+                    onToggle={() => {}}
+                  />
+                )}
+              </div>
             </div>
-          </div>
-        )}
-        {tabsState[1].active && <div>Events not yet implemented</div>}
-        {tabsState[2].active && <div>Logs not yet implemented</div>}
-        {tabsState[3].active && <div>Warnings not yet implemented</div>}
-        {tabsState[4].active && <div>Stack Traces not yet implemented</div>}
-        {tabsState[5].active && <div>References not yet implemented</div>}
-      </TabContent>
+          )}
+          {tabsState[1].active && (
+            <AccordianLogs
+              linksGetter={linksGetter}
+              logs={logs}
+              isOpen={true}
+              openedItems={logsState.openedItems}
+              onItemToggle={(logItem) => detailLogItemToggle(span.spanID, logItem)}
+              timestamp={traceStartTime}
+            />
+          )}
+          {tabsState[2].active && <div>Warnings not yet implemented</div>}
+          {tabsState[3].active && <div>Stack Traces not yet implemented</div>}
+          {tabsState[4].active && <div>References not yet implemented</div>}
+        </TabContent>
+      </CustomScrollbar>
     </ExploreDrawer>
   );
 }

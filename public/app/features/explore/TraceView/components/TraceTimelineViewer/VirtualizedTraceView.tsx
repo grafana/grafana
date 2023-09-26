@@ -351,6 +351,7 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
     const {
       childrenHiddenIDs,
       childrenToggle,
+      detailToggle,
       findMatchesIDs,
       spanNameColumnWidth,
       trace,
@@ -421,6 +422,7 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
           showSpanFilterMatchesOnly={showSpanFilterMatchesOnly}
           numTicks={NUM_TICKS}
           onDetailToggled={() => {
+            detailToggle(spanID);
             setSelectedSpan(selectedSpanId === span.spanID ? undefined : span);
           }}
           onChildrenToggled={childrenToggle}

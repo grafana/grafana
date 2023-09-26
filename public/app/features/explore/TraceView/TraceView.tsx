@@ -144,6 +144,7 @@ export function TraceView(props: Props) {
     ? props.scrollElement
     : document.getElementsByClassName(props.scrollElementClass ?? '')[0];
 
+  console.log(traceTimeline.detailStates, selectedSpan);
   return (
     <>
       {props.dataFrames?.length && traceProp ? (
@@ -215,6 +216,9 @@ export function TraceView(props: Props) {
             timeZone={timeZone}
             width={width}
             clearSelectedSpan={() => setSelectedSpan(undefined)}
+            detailState={detailStates.get(selectedSpan?.spanID ?? '')}
+            traceStartTime={traceProp.startTime}
+            detailLogItemToggle={detailLogItemToggle}
           />
         </>
       ) : (
