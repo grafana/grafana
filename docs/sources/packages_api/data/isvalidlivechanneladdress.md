@@ -1,0 +1,38 @@
+---
+disable_edit_link: true
+keywords:
+  - grafana
+  - documentation
+  - sdk
+  - '@grafana/data'
+title: isValidLiveChannelAddress
+type: docs
+---
+
+## isValidLiveChannelAddress() function
+
+### isValidLiveChannelAddress() function
+
+Check if the address has a scope, namespace, and path
+
+<b>Signature</b>
+
+```typescript
+export declare function isValidLiveChannelAddress(addr?: LiveChannelAddress): addr is LiveChannelAddress;
+```
+
+<b>Import</b>
+
+```typescript
+import { isValidLiveChannelAddress } from '@grafana/data';
+```
+
+<b>Parameters</b>
+
+| Parameter | Type                            | Description |
+| --------- | ------------------------------- | ----------- |
+| addr      | <code>LiveChannelAddress</code> |             |
+
+<b>Returns:</b>
+
+`addr is LiveChannelAddress`

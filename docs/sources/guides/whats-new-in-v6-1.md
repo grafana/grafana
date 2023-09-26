@@ -16,7 +16,7 @@ weight = -12
 
 ### Ad hoc Filtering for Prometheus
 
-{{< imgbox max-width="30%" img="/img/docs/v61/prometheus-ad-hoc.gif" caption="Ad-hoc filters variable for Prometheus" >}}
+{{< figure class="float-right"  max-width="30%" src="/static/img/docs/v61/prometheus-ad-hoc.gif" caption="Ad-hoc filters variable for Prometheus" >}}
 
 The ad hoc filter feature allows you to create new key/value filters on the fly with autocomplete for both key and values. The filter condition is then automatically applied to all queries on the dashboard. This makes it easier to explore your data in a dashboard without changing queries and without having to add new template variables.
 
@@ -32,7 +32,7 @@ This feature also adds a new Team permission that can be assigned to any user wi
 
 We believe that this is more in line with the Grafana philosophy, as it will allow teams to be more self-organizing. This option will be made permanent if it gets positive feedback from the community so let us know what you think in the [issue on GitHub](https://github.com/grafana/grafana/issues/15590).
 
-To turn this feature on add the following [config option](/installation/configuration/#editors-can-admin) to your Grafana ini file in the `users` section and then restart the Grafana server:
+To turn this feature on add the following [config option](/administration/configuration/#editors-can-admin) to your Grafana ini file in the `users` section and then restart the Grafana server:
 
 ```ini
 [users]
@@ -50,7 +50,7 @@ This release contains a lot of small features and fixes:
 - A new keyboard shortcut `d l` toggles all Graph legends in a dashboard.
 - A small bug fix for Elasticsearch - template variables in the alias field now work properly.
 - Some new capabilities have been added for data source plugins that will be of interest to plugin authors:
-  - a new oauth pass-through option.
+  - a new OAuth pass-through option.
   - it is now possible to add user details to requests sent to the dataproxy.
 - Heatmap and Explore fixes.
 

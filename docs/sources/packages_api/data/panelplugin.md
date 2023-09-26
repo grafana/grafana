@@ -50,7 +50,7 @@ import { PanelPlugin } from '@grafana/data';
 |  [setNoPadding()](#setnopadding-method) |  |  |
 |  [setPanelChangeHandler(handler)](#setpanelchangehandler-method) |  | This function is called when the visualization was changed. This passes in the panel model for previous visualisation options inspection and panel model updates.<!-- -->This is useful for supporting PanelModel API updates when changing between Angular and React panels. |
 |  [setPanelOptions(builder)](#setpaneloptions-method) |  | Enables panel options editor creation |
-|  [useFieldConfig(config)](#usefieldconfig-method) |  | Allows specyfing which standard field config options panel should use and defining default values |
+|  [useFieldConfig(config)](#usefieldconfig-method) |  | Allows specifying which standard field config options panel should use and defining default values |
 
 ### constructor(panel)
 
@@ -285,7 +285,7 @@ export const plugin = new PanelPlugin<ShapePanelOptions>(ShapePanel)
 
 ### useFieldConfig method
 
-Allows specyfing which standard field config options panel should use and defining default values
+Allows specifying which standard field config options panel should use and defining default values
 
 <b>Signature</b>
 

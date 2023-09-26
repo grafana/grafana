@@ -15,7 +15,7 @@ This page lists some useful tools to help troubleshoot common Grafana issues.
 
 ## Visualization and query issues
 
-{{< imgbox max-width="40%" img="/img/docs/v45/query_inspector.png" caption="Query Inspector" >}}
+{{< figure class="float-right"  max-width="40%" src="/static/img/docs/v45/query_inspector.png" caption="Query Inspector" >}}
 
 The most common problems are related to the query and response from your data source. Even if it looks
 like a bug or visualization issue in Grafana, it is almost always a problem with the data source query or
@@ -34,7 +34,7 @@ You can enable more logging by changing log level in the Grafana configuration f
 ## Diagnostics
 
 The `grafana-server` process can be instructed to enable certain diagnostics when it starts. This can be helpful
-when investigating certain performance problems. It's *not* recommended to have these enabled per default.
+when investigating certain performance problems. It's *not* recommended to have these enabled by default.
 
 ### Profiling
 

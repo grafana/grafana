@@ -24,7 +24,7 @@ Grafana v5.3 brings new features, many enhancements and bug fixes. This article 
 
 ## Google Stackdriver
 
-{{< docs-imagebox img="/img/docs/v53/stackdriver-with-heatmap.png"  max-width= "600px" class="docs-image--no-shadow docs-image--right" >}}
+{{< figure src="/static/img/docs/v53/stackdriver-with-heatmap.png"  max-width= "600px" class="docs-image--no-shadow docs-image--right" >}}
 
 Grafana v5.3 ships with built-in support for [Google Stackdriver](https://cloud.google.com/stackdriver/) and enables you to visualize your Stackdriver metrics in Grafana.
 
@@ -43,7 +43,7 @@ Please read [Using Google Stackdriver in Grafana](/features/datasources/stackdri
 
 ## TV and Kiosk Mode
 
-{{< docs-imagebox img="/img/docs/v53/tv_mode_still.png" max-width="600px" class="docs-image--no-shadow docs-image--right" animated-gif="/img/docs/v53/tv_mode.gif" >}}
+{{< figure src="/static/img/docs/v53/tv_mode_still.png" max-width="600px" class="docs-image--no-shadow docs-image--right" animated-gif="/static/img/docs/v53/tv_mode.gif" >}}
 
 We've improved the TV and kiosk mode to make it easier to use. There's now an icon in the top bar that will let you cycle through the different view modes.
 
@@ -52,14 +52,14 @@ We've improved the TV and kiosk mode to make it easier to use. There's now an ic
 3. Hit the escape key to go back to the default view mode.
 
 When switching view modes, the URL will be updated to reflect the view mode selected. This allows a dashboard to be opened with a
-certain view mode enabled. Additionally, this also enables [playlists](/reference/playlist) to be started with a certain view mode enabled.
+certain view mode enabled. Additionally, this also enables [playlists](/dashboards/playlist) to be started with a certain view mode enabled.
 
 <div class="clearfix"></div>
 
 ## Notification Reminders
 
 Do you use Grafana alerting and have some notifications that are more important than others? Then it's possible to set reminders so that you continue to be alerted until the problem is fixed. This is done on the notification channel itself and will affect all alerts that use that channel.
-For additional examples of why reminders might be useful for you, see [multiple series](/alerting/rules/#multiple-series).
+For additional examples of why reminders might be useful for you, see [multiple series](/alerting/alerts-overview/#multiple-series).
 
 Learn how to enable and configure reminders [here](/alerting/notifications/#send-reminders).
 
@@ -67,7 +67,7 @@ Learn how to enable and configure reminders [here](/alerting/notifications/#send
 
 Grafana 5.3 comes with a new graphical query builder for Postgres. This brings Postgres integration more in line with some of the other data sources and makes it easier for both advanced users and beginners to work with timeseries in Postgres. Learn more about it in the [documentation](/features/datasources/postgres/#query-editor).
 
-{{< docs-imagebox img="/img/docs/v53/postgres_query_still.png" class="docs-image--no-shadow" animated-gif="/img/docs/v53/postgres_query.gif" >}}
+{{< figure src="/static/img/docs/v53/postgres_query_still.png" class="docs-image--no-shadow" animated-gif="/static/img/docs/v53/postgres_query.gif" >}}
 
 ## Improved OAuth Support for GitLab
 
@@ -76,10 +76,10 @@ Learn how to enable and configure it in the [documentation](/auth/gitlab/).
 
 ## Annotations
 
-Grafana 5.3 brings improved support for [native annotations](/reference/annotations/#native-annotations) and makes it possible to use template variables when filtering by tags.
-Learn more about it in the [documentation](/reference/annotations/#query-by-tag).
+Grafana 5.3 brings improved support for [native annotations](/dashboards/annotations/#native-annotations) and makes it possible to use template variables when filtering by tags.
+Learn more about it in the [documentation](/dashboards/annotations/#query-by-tag).
 
-{{< docs-imagebox img="/img/docs/v53/annotation_tag_filter_variable.png" max-width="600px" >}}
+{{< figure src="/static/img/docs/v53/annotation_tag_filter_variable.png" max-width="600px" >}}
 
 ## Variables
 

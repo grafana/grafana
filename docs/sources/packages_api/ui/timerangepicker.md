@@ -14,7 +14,7 @@ type = "docs"
 <b>Signature</b>
 
 ```typescript
-TimeRangePicker: React.FunctionComponent<Pick<Props, "onChange" | "history" | "timeZone" | "value" | "hideText" | "timeSyncButton" | "isSynced" | "onMoveBackward" | "onMoveForward" | "onZoom">>
+TimeRangePicker: React.FunctionComponent<Pick<Props, "timeZone" | "value" | "onChange" | "history" | "onChangeTimeZone" | "hideText" | "timeSyncButton" | "isSynced" | "onMoveBackward" | "onMoveForward" | "onZoom">>
 ```
 <b>Import</b>
 

@@ -2,7 +2,7 @@
 title = "White-labeling"
 description = "White-labeling"
 keywords = ["grafana", "white-labeling", "enterprise"]
-aliases = ["/docs/grafana/latest/enterprise/white-labeling/"]
+aliases = ["/docs/grafana/v7.0/enterprise/white-labeling/"]
 type = "docs"
 [menu.docs]
 name = "White-labeling"
@@ -32,9 +32,9 @@ You can change the following elements:
 
 > You will have to host your logo and other images used by the white labeling feature separately. Make sure Grafana can access the URL where the assets are stored.
 
-{{< docs-imagebox img="/img/docs/v66/whitelabeling_1.png" max-width="800px" caption="White labeling example" >}}
+{{< figure src="/static/img/docs/v66/whitelabeling_1.png" max-width="800px" caption="White labeling example" >}}
 
-The configuration file in Grafana Enterprise contains the following options. Each option is defined in the file. For more information about configuring Grafana, refer to [Configuration]({{< relref "../installation/configuration.md">}}).
+The configuration file in Grafana Enterprise contains the following options. Each option is defined in the file. For more information about configuring Grafana, refer to [Configuration]({{< relref "../administration/configuration.md">}}).
 
 ```ini
 # Enterprise only

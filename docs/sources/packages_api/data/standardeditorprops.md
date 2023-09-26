@@ -12,7 +12,7 @@ type = "docs"
 <b>Signature</b>
 
 ```typescript
-export interface StandardEditorProps<TValue = any, TSettings = any> 
+export interface StandardEditorProps<TValue = any, TSettings = any, TOptions = any> 
 ```
 <b>Import</b>
 
@@ -23,9 +23,18 @@ import { StandardEditorProps } from '@grafana/data';
 
 |  Property | Type | Description |
 |  --- | --- | --- |
+|  [context](#context-property) | <code>StandardEditorContext&lt;TOptions&gt;</code> |  |
 |  [item](#item-property) | <code>StandardEditorsRegistryItem&lt;TValue, TSettings&gt;</code> |  |
 |  [onChange](#onchange-property) | <code>(value?: TValue) =&gt; void</code> |  |
 |  [value](#value-property) | <code>TValue</code> |  |
+
+### context property
+
+<b>Signature</b>
+
+```typescript
+context: StandardEditorContext<TOptions>;
+```
 
 ### item property
 

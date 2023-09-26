@@ -2,7 +2,7 @@
 title = "Team HTTP API "
 description = "Grafana Team HTTP API"
 keywords = ["grafana", "http", "documentation", "api", "team", "teams", "group"]
-aliases = ["/docs/grafana/latest/http_api/team/"]
+aliases = ["/docs/grafana/v7.0/http_api/team/"]
 type = "docs"
 [menu.docs]
 name = "Teams"
@@ -107,7 +107,7 @@ Status Codes:
 
 ## Add Team
 
-The Team `name` needs to be unique. `name` is required and `email` is optional.
+The Team `name` needs to be unique. `name` is required and `email`,`orgId` is optional.
 
 `POST /api/teams`
 
@@ -121,7 +121,8 @@ Authorization: Basic YWRtaW46YWRtaW4=
 
 {
   "name": "MyTestTeam",
-  "email": "email@test.com"
+  "email": "email@test.com",
+  "orgId": 2
 }
 ```
 

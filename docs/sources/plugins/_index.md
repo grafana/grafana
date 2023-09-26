@@ -11,7 +11,7 @@ weight = 1
 
 Besides the wide range of visualizations and data sources that are available immediately after you install Grafana, you can extend your Grafana experience with _plugins_.
 
-You can [install]({{< relref "./installation.md" >}}) one of the plugins built by the Grafana community, or [build one yourself]({{< relref "../developers/plugins/_index.md" >}}).
+You can [install]({{< relref "installation.md" >}}) one of the plugins built by the Grafana community, or [build one yourself]({{< relref "../developers/plugins/_index.md" >}}).
 
 Grafana supports three types of plugins: [panels](https://grafana.com/grafana/plugins?type=panel), [data sources](https://grafana.com/grafana/plugins?type=datasource), and [apps](https://grafana.com/grafana/plugins?type=app).
 
@@ -44,4 +44,5 @@ Use app plugins when you want to create an custom out-of-the-box monitoring expe
 ## Learn more
 
 - [Install plugins]({{< relref "./installation.md" >}})
+- [Plugin signature verification]({{< relref "./plugin-signature-verification.md" >}})
 - Browse the available [Plugins](https://grafana.com/grafana/plugins)

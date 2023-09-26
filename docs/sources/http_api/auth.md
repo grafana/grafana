@@ -2,7 +2,7 @@
 title = "Authentication HTTP API "
 description = "Grafana Authentication HTTP API"
 keywords = ["grafana", "http", "documentation", "api", "authentication"]
-aliases = ["/docs/grafana/latest/http_api/authentication/"]
+aliases = ["/docs/grafana/v7.0/http_api/authentication/"]
 type = "docs"
 [menu.docs]
 name = "Authentication HTTP API"
@@ -13,11 +13,11 @@ parent = "http_api"
 
 ## Tokens
 
-Currently you can authenticate via an `API Token` or via a `Session cookie` (acquired using regular login or oauth).
+Currently you can authenticate via an `API Token` or via a `Session cookie` (acquired using regular login or OAuth).
 
 ## Basic Auth
 
-If basic auth is enabled (it is enabled by default) you can authenticate your HTTP request via
+If basic auth is enabled (it is enabled by default), then you can authenticate your HTTP request via
 standard basic auth. Basic auth will also authenticate LDAP users.
 
 curl example:
@@ -30,7 +30,7 @@ curl example:
 
 Open the sidemenu and click the organization dropdown and select the `API Keys` option.
 
-![](/img/docs/v2/orgdropdown_api_keys.png)
+![](/static/img/docs/v2/orgdropdown_api_keys.png)
 
 You use the token in all requests in the `Authorization` header, like this:
 

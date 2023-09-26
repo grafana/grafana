@@ -25,13 +25,12 @@ import { QueryResultMeta } from '@grafana/data';
 |  --- | --- | --- |
 |  [alignmentPeriod](#alignmentperiod-property) | <code>string</code> |  |
 |  [custom](#custom-property) | <code>Record&lt;string, any&gt;</code> | DatasSource Specific Values |
+|  [executedQueryString](#executedquerystring-property) | <code>string</code> | This is the raw query sent to the underlying system. All macros and templating as been applied. When metadata contains this value, it will be shown in the query inspector |
 |  [gmdMeta](#gmdmeta-property) | <code>any[]</code> | Legacy data source specific, should be moved to custom |
 |  [json](#json-property) | <code>boolean</code> |  |
 |  [limit](#limit-property) | <code>number</code> |  |
 |  [notices](#notices-property) | <code>QueryResultMetaNotice[]</code> | Meta Notices |
 |  [preferredVisualisationType](#preferredvisualisationtype-property) | <code>PreferredVisualisationType</code> | Currently used to show results in Explore only in preferred visualisation option |
-|  [query](#query-property) | <code>string</code> |  |
-|  [rawQuery](#rawquery-property) | <code>string</code> |  |
 |  [searchWords](#searchwords-property) | <code>string[]</code> |  |
 |  [stats](#stats-property) | <code>QueryResultMetaStat[]</code> | Stats |
 |  [transformations](#transformations-property) | <code>string[]</code> | Used to track transformation ids that where part of the processing |
@@ -52,6 +51,16 @@ DatasSource Specific Values
 
 ```typescript
 custom?: Record<string, any>;
+```
+
+### executedQueryString property
+
+This is the raw query sent to the underlying system. All macros and templating as been applied. When metadata contains this value, it will be shown in the query inspector
+
+<b>Signature</b>
+
+```typescript
+executedQueryString?: string;
 ```
 
 ### gmdMeta property
@@ -98,22 +107,6 @@ Currently used to show results in Explore only in preferred visualisation option
 
 ```typescript
 preferredVisualisationType?: PreferredVisualisationType;
-```
-
-### query property
-
-<b>Signature</b>
-
-```typescript
-query?: string;
-```
-
-### rawQuery property
-
-<b>Signature</b>
-
-```typescript
-rawQuery?: string;
 ```
 
 ### searchWords property

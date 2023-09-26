@@ -1,0 +1,28 @@
+---
+disable_edit_link: true
+keywords:
+  - grafana
+  - documentation
+  - sdk
+  - '@grafana/ui'
+title: useRefreshAfterGraphRendered
+type: docs
+---
+
+## useRefreshAfterGraphRendered variable
+
+### useRefreshAfterGraphRendered variable
+
+Forces re-render of a component when uPlots's draw hook is fired. This hook is usefull in scenarios when you want to reposition XYCanvas elements when i.e. plot size changes
+
+<b>Signature</b>
+
+```typescript
+useRefreshAfterGraphRendered: (pluginId: string) => number;
+```
+
+<b>Import</b>
+
+```typescript
+import { useRefreshAfterGraphRendered } from '@grafana/ui';
+```
