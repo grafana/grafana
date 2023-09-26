@@ -496,6 +496,7 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
       <>
         <PanelContextProvider value={this.state.context}>
           <PanelPerformanceMonitor
+            isInPanelEdit={dashboard.panelInEdit?.id === panel.id}
             panelType={plugin.meta.id}
             panelId={panel.id}
             panelTitle={panel.title}
