@@ -28,7 +28,7 @@ There are three options to choose from:
 
 1. Provision your alerting resources using the Alerting Provisioning HTTP API.
 
-   For more information on the Alerting Provisioning HTTP API, refer to [Alerting provisioning HTTP API][[alerting_provisioning].
+   For more information on the Alerting Provisioning HTTP API, refer to [Alerting provisioning HTTP API][alerting_provisioning].
 
 2. [Open Source only] Provision your alerting resources using [Terraform](https://www.terraform.io/).
 
