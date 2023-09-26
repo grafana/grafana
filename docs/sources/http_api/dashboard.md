@@ -2,7 +2,7 @@
 title = "Dashboard HTTP API "
 description = "Grafana Dashboard HTTP API"
 keywords = ["grafana", "http", "documentation", "api", "dashboard"]
-aliases = ["/docs/grafana/latest/http_api/dashboard/"]
+aliases = ["/docs/grafana/v8.0/http_api/dashboard/"]
 +++
 
 # Dashboard API
@@ -22,7 +22,7 @@ The uid can have a maximum length of 40 characters.
 
 `POST /api/dashboards/db`
 
-Creates a new dashboard or updates an existing dashboard. When updating existing dashboards, if you do not define the `folderId` and `folderUid` properties, then the dashboard(s) are moved to the `General` folder.
+Creates a new dashboard or updates an existing dashboard.
 
 **Example Request for new dashboard**:
 

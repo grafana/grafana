@@ -2,7 +2,7 @@
 title = "Jaeger"
 description = "Guide for using Jaeger in Grafana"
 keywords = ["grafana", "jaeger", "guide", "tracing"]
-aliases = ["/docs/grafana/latest/features/datasources/jaeger"]
+aliases = ["/docs/grafana/v8.0/features/datasources/jaeger"]
 weight = 800
 +++
 

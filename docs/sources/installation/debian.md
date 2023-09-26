@@ -2,7 +2,7 @@
 title = "Install on Debian/Ubuntu"
 description = "Install guide for Grafana on Debian or Ubuntu"
 keywords = ["grafana", "installation", "documentation"]
-aliases = ["/docs/grafana/latest/installation/installation/debian"]
+aliases = ["/docs/grafana/v8.0/installation/installation/debian"]
 weight = 200
 +++
 

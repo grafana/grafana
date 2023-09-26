@@ -128,9 +128,9 @@ Never show the points.
 
 ![Show points point never example](/static/img/docs/time-series-panel/bar-graph-show-points-never-7-4.png)
 
-{{< docs/shared "visualizations/stack-series-link.md" >}}
+{{< docs/shared lookup="visualizations/stack-series-link.md" source="grafana" version="<GRAFANA VERSION>" >}}
 
-{{< docs/shared "visualizations/change-axis-link.md" >}}
+{{< docs/shared lookup="visualizations/change-axis-link.md" source="grafana" version="<GRAFANA VERSION>" >}}
 
 ## Bar graph examples
 

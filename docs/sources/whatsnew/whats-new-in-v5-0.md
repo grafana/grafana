@@ -2,7 +2,7 @@
 title = "What's new in Grafana v5.0"
 description = "Feature and improvement highlights for Grafana v5.0"
 keywords = ["grafana", "new", "documentation", "5.0", "release notes"]
-aliases = ["/docs/grafana/latest/guides/whats-new-in-v5/"]
+aliases = ["/docs/grafana/v8.0/guides/whats-new-in-v5/"]
 weight = -14
 [_build]
 list = false
@@ -115,7 +115,6 @@ in sync with dashboards in Grafana's database. The dashboard provisioner has mul
 which makes it possible to star them, use one as the home dashboard, set permissions and other features in Grafana that
 expects the dashboards to exist in the database. More info in the [dashboard provisioning docs]({{< relref "../administration/provisioning#dashboards" >}})
 
-
 ## Graphite Tags and Integrated Function Docs
 
 {{< figure src="/static/img/docs/v50/graphite_tags.png" max-width="1000px" class="docs-image--right" >}}
@@ -144,5 +143,6 @@ This might seem like a small change, but we are incredibly excited about it sinc
 much easier to manage, collaborate and navigate between dashboards.
 
 ### API changes
+
 New uid-based routes in the dashboard API have been introduced to retrieve and delete dashboards.
 The corresponding slug-based routes have been deprecated and will be removed in a future release.
