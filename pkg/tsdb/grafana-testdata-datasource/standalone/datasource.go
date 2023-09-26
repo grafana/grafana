@@ -9,10 +9,9 @@ import (
 )
 
 var (
-	_ backend.QueryDataHandler      = (*Datasource)(nil)
-	_ backend.CheckHealthHandler    = (*Datasource)(nil)
-	_ backend.StreamHandler         = (*Datasource)(nil)
-	_ instancemgmt.InstanceDisposer = (*Datasource)(nil)
+	_ backend.QueryDataHandler   = (*Datasource)(nil)
+	_ backend.CheckHealthHandler = (*Datasource)(nil)
+	_ backend.StreamHandler      = (*Datasource)(nil)
 )
 
 func NewDatasource(context.Context, backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
@@ -23,9 +22,6 @@ func NewDatasource(context.Context, backend.DataSourceInstanceSettings) (instanc
 
 type Datasource struct {
 	Service *testdatasource.Service
-}
-
-func (d *Datasource) Dispose() {
 }
 
 func (d *Datasource) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
