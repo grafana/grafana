@@ -163,7 +163,7 @@ export class VersionsSettings extends PureComponent<Props, State> {
     }
 
     return (
-      <Page navModel={this.props.sectionNav}>
+      <Page navModel={this.props.sectionNav} pageNav={this.props.sectionNav.node.parentItem}>
         {isLoading ? (
           <VersionsHistorySpinner msg="Fetching history list&hellip;" />
         ) : (

@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import React, { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Button, CodeEditor, useStyles2 } from '@grafana/ui';
+import { Button, CodeEditor, useStyles2, Text } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 
@@ -19,12 +19,14 @@ export function JsonEditorSettings({ dashboard, sectionNav }: SettingsPageProps)
   };
 
   const styles = useStyles2(getStyles);
-  const subTitle =
-    'The JSON model below is the data structure that defines the dashboard. This includes dashboard settings, panel settings, layout, queries, and so on';
 
   return (
-    <Page navModel={sectionNav} subTitle={subTitle}>
+    <Page navModel={sectionNav} pageNav={sectionNav.node.parentItem}>
       <div className={styles.wrapper}>
+        <Text>
+          The JSON model below is the data structure that defines the dashboard. This includes dashboard settings, panel
+          settings, layout, queries, and so on.
+        </Text>
         <CodeEditor
           value={dashboardJson}
           language="json"

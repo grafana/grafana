@@ -93,14 +93,14 @@ export class DashboardPermissionsUnconnected extends PureComponent<Props, State>
 
     if (dashboard.meta.hasUnsavedFolderChange) {
       return (
-        <Page navModel={sectionNav}>
+        <Page navModel={sectionNav} pageNav={sectionNav.node.parentItem}>
           <h5>You have changed a folder, please save to view permissions.</h5>
         </Page>
       );
     }
 
     return (
-      <Page navModel={sectionNav}>
+      <Page navModel={sectionNav} pageNav={sectionNav.node.parentItem}>
         <div className="page-action-bar">
           <Tooltip placement="auto" content={<PermissionsInfo />}>
             <Icon className="icon--has-hover page-sub-heading-icon" name="question-circle" />

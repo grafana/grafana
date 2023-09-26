@@ -11,7 +11,7 @@ export const AccessControlDashboardPermissions = ({ dashboard, sectionNav }: Set
   const canSetPermissions = contextSrv.hasPermission(AccessControlAction.DashboardsPermissionsWrite);
 
   return (
-    <Page navModel={sectionNav}>
+    <Page navModel={sectionNav} pageNav={sectionNav.node.parentItem}>
       <Permissions resource={'dashboards'} resourceId={dashboard.uid} canSetPermissions={canSetPermissions} />
     </Page>
   );

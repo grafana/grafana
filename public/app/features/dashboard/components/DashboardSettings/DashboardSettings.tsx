@@ -188,7 +188,7 @@ function getSectionNav(
     text: 'Settings',
     children: [],
     icon: 'apps',
-    hideFromBreadcrumbs: true,
+    url: locationUtil.getUrlForPartial(location, { editview: 'settings', editIndex: null }),
   };
 
   main.children = pages.map((page) => ({

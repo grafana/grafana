@@ -116,7 +116,7 @@ export function GeneralSettingsUnconnected({
   ];
 
   return (
-    <Page navModel={sectionNav}>
+    <Page navModel={sectionNav} pageNav={sectionNav.node.parentItem}>
       <div style={{ maxWidth: '600px' }}>
         <div className="gf-form-group">
           <Field

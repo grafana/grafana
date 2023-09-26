@@ -29,22 +29,27 @@ export function AnnotationsSettings({ dashboard, editIndex, sectionNav }: Settin
   const isEditing = editIndex != null && editIndex < dashboard.annotations.list.length;
 
   return (
-    <Page navModel={sectionNav} pageNav={getSubPageNav(dashboard, editIndex)}>
+    <Page navModel={sectionNav} pageNav={getSubPageNav(dashboard, editIndex, sectionNav.node.parentItem)}>
       {!isEditing && <AnnotationSettingsList dashboard={dashboard} onNew={onNew} onEdit={onEdit} />}
       {isEditing && <AnnotationSettingsEdit dashboard={dashboard} editIdx={editIndex!} />}
     </Page>
   );
 }
 
-function getSubPageNav(dashboard: DashboardModel, editIndex: number | undefined): NavModelItem | undefined {
+function getSubPageNav(
+  dashboard: DashboardModel,
+  editIndex: number | undefined,
+  pageNav?: NavModelItem
+): NavModelItem | undefined {
   if (editIndex == null) {
-    return undefined;
+    return pageNav;
   }
 
   const editItem = dashboard.annotations.list[editIndex];
   if (editItem) {
     return {
       text: editItem.name,
+      parentItem: pageNav,
     };
   }
 

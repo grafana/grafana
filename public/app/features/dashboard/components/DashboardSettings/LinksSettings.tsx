@@ -32,13 +32,14 @@ export function LinksSettings({ dashboard, sectionNav, editIndex }: SettingsPage
 
   const isEditing = editIndex !== undefined;
 
-  let pageNav: NavModelItem | undefined;
+  let pageNav: NavModelItem | undefined = sectionNav.node.parentItem;
   if (isEditing) {
     const title = isNew ? 'New link' : 'Edit link';
     const description = isNew ? 'Create a new link on your dashboard' : 'Edit a specific link of your dashboard';
     pageNav = {
       text: title,
       subTitle: description,
+      parentItem: pageNav,
     };
   }
 
