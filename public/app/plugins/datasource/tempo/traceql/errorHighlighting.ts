@@ -28,12 +28,13 @@ export const computeErrorMessage = (errorNode: SyntaxNode) => {
   switch (errorNode.parent?.type.id) {
     case FieldExpression:
       switch (errorNode.prevSibling?.type.id) {
-        case FieldOp:
         case And:
         case Or:
-          return 'Invalid value after comparison operator.';
+          return 'Invalid value after logical operator.';
+        case FieldOp:
+          return 'Invalid value after comparison or aritmetic operator.';
         default:
-          return 'Invalid comparison operator after field expression.';
+          return 'Invalid operator after field expression.';
       }
     case SpansetFilter:
       if (errorNode.prevSibling?.type.id === FieldExpression) {
