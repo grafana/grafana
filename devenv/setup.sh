@@ -35,6 +35,10 @@ bulkAlertingDashboard() {
 		ln -s -f ../../../devenv/bulk_alerting_dashboards/bulk_alerting_datasources.yaml ../conf/provisioning/datasources/custom.yaml
 }
 
+bulkFolders() {
+	./bulk-folders/bulk-folders.sh
+}
+
 requiresJsonnet() {
 		if ! type "jsonnet" > /dev/null; then
 				echo "you need you install jsonnet to run this script"
@@ -63,9 +67,9 @@ usage() {
 }
 
 main() {
-	echo -e "------------------------------------------------------------------"
-	echo -e "This script sets up provisioning for dev datasources and dashboards"
-	echo -e "------------------------------------------------------------------"
+	echo -e "----------------------------------------------------------------------------"
+	echo -e "This script sets up provisioning for dev datasources, dashboards and folders"
+	echo -e "----------------------------------------------------------------------------"
 	echo -e "\n"
 
 	local cmd=$1
@@ -74,6 +78,8 @@ main() {
 		bulkAlertingDashboard
 	elif [[ $cmd == "bulk-dashboards" ]]; then
 		bulkDashboard
+	elif [[ $cmd == "bulk-folders" ]]; then
+		bulkFolders
 	else
 		devDashboards
 		devDatasources
