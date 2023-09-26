@@ -248,11 +248,11 @@ export function getLogQueryFromMetricsQueryAtPosition(query: string, position: n
 
   const metricQuery = getNodesFromQuery(query, [MetricExpr])
     .reverse() // So we don't get the root metric node
-    .filter((node) => node.from <= position && node.to >= position);
-  if (metricQuery.length === 0) {
+    .find((node) => node.from <= position && node.to >= position);
+  if (!metricQuery) {
     return '';
   }
-  return getLogQueryFromMetricsQuery(query.substring(metricQuery[0].from, metricQuery[0].to));
+  return getLogQueryFromMetricsQuery(query.substring(metricQuery.from, metricQuery.to));
 }
 
 export function isQueryWithLabelFilter(query: string): boolean {
