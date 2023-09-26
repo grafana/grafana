@@ -56,7 +56,11 @@ Open source Grafana enables the `AWS SDK Default`, `Credentials file`, and `Acce
 If necessary, you can enable or disable them if you have server configuration access.
 For more information, refer to the [`allowed_auth_providers` documentation][configure-grafana-allowed-auth-providers].
 
-## Assume a role (optional for all auth methods except "Grafana Assume Role")
+## Assume a role
+
+{{% admonition type="note" %}}
+Assume a role is required for the `Grafana Assume Role`.
+{{% /admonition %}}
 
 You can specify an IAM role to assume in the **Assume Role ARN** field.
 
