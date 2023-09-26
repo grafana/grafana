@@ -5,6 +5,8 @@ import {
   CustomVariable,
   DataSourceVariable,
   QueryVariable,
+  SceneDataLayerControls,
+  SceneDataLayers,
   SceneDataTransformer,
   SceneGridItem,
   SceneGridLayout,
@@ -23,6 +25,7 @@ import { PanelTimeRange } from '../scene/PanelTimeRange';
 import { RowRepeaterBehavior } from '../scene/RowRepeaterBehavior';
 import { ShareQueryDataProvider } from '../scene/ShareQueryDataProvider';
 
+import dashboard_to_load1 from './testfiles/dashboard_to_load1.json';
 import repeatingRowsAndPanelsDashboardJson from './testfiles/repeating_rows_and_panels.json';
 import {
   createDashboardSceneFromDashboardModel,
@@ -635,6 +638,33 @@ describe('transformSaveModelToScene', () => {
 
       const lastRow = body.state.children[body.state.children.length - 1] as SceneGridRow;
       expect(lastRow.state.isCollapsed).toBe(true);
+    });
+  });
+
+  describe('Annotation queries', () => {
+    it('Should build correct scene model', () => {
+      const scene = transformSaveModelToScene({ dashboard: dashboard_to_load1 as any, meta: {} });
+
+      expect(scene.state.$data).toBeInstanceOf(SceneDataLayers);
+      expect(scene.state.controls![0]).toBeInstanceOf(SceneDataLayerControls);
+
+      const dataLayers = scene.state.$data as SceneDataLayers;
+      expect(dataLayers.state.layers).toHaveLength(4);
+      expect(dataLayers.state.layers[0].state.name).toBe('Annotations & Alerts');
+      expect(dataLayers.state.layers[0].state.isEnabled).toBe(true);
+      expect(dataLayers.state.layers[0].state.isHidden).toBe(false);
+
+      expect(dataLayers.state.layers[1].state.name).toBe('Enabled');
+      expect(dataLayers.state.layers[1].state.isEnabled).toBe(true);
+      expect(dataLayers.state.layers[1].state.isHidden).toBe(false);
+
+      expect(dataLayers.state.layers[2].state.name).toBe('Disabled');
+      expect(dataLayers.state.layers[2].state.isEnabled).toBe(false);
+      expect(dataLayers.state.layers[2].state.isHidden).toBe(false);
+
+      expect(dataLayers.state.layers[3].state.name).toBe('Hidden');
+      expect(dataLayers.state.layers[3].state.isEnabled).toBe(true);
+      expect(dataLayers.state.layers[3].state.isHidden).toBe(true);
     });
   });
 });

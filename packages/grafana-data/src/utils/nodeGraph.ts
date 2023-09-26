@@ -25,4 +25,6 @@ export enum NodeGraphDataFrameFieldNames {
 
   // Prefix for fields which will be shown in a context menu [nodes + edges]
   detail = 'detail__',
+
+  nodeRadius = 'noderadius',
 }
