@@ -441,7 +441,7 @@ steps:
   name: validate-modfile
 - commands:
   - apk add --update make
-  - make validate-api-spec
+  - make swagger-validate
   image: golang:1.20.8-alpine
   name: validate-openapi-spec
 trigger:
@@ -1630,7 +1630,7 @@ steps:
   name: validate-modfile
 - commands:
   - apk add --update make
-  - make validate-api-spec
+  - make swagger-validate
   image: golang:1.20.8-alpine
   name: validate-openapi-spec
 - commands:
@@ -1722,7 +1722,7 @@ steps:
   name: yarn-install
 - commands:
   - apk add --update jq
-  - new_version=$(cat package.json | jq .version | sed s/pre/${DRONE_BUILD_NUMBER}pre/g)
+  - new_version=$(cat package.json | jq .version | sed s/pre/${DRONE_BUILD_NUMBER}/g)
   - 'echo "New version: $new_version"'
   - yarn run lerna version $new_version --exact --no-git-tag-version --no-push --force-publish
     -y
@@ -4212,6 +4212,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 0b878d482338e27f3b8208271c974aa6c9cce0c4785eec59cf338464665b9ab5
+hmac: da647c8f3b339a16dbf84f27abcd39b4ac50b303dc360a4ea5796243e6f7d035
 
 ...

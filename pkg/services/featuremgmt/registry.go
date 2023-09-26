@@ -204,6 +204,13 @@ var (
 			Owner:        awsDatasourcesSquad,
 		},
 		{
+			Name:        "cloudwatchNewRegionsHandler",
+			Description: "Refactor of /regions endpoint, no user-facing changes",
+			Stage:       FeatureStageGeneralAvailability,
+			Expression:  "true", // enabled by default
+			Owner:       awsDatasourcesSquad,
+		},
+		{
 			Name:        "showDashboardValidationWarnings",
 			Description: "Show warnings when dashboards do not validate against the schema",
 			Stage:       FeatureStageExperimental,
@@ -779,6 +786,13 @@ var (
 			FrontendOnly:    false,
 			Owner:           hostedGrafanaTeam,
 			RequiresRestart: true,
+		},
+		{
+			Name:            "idForwarding",
+			Description:     "Generate signed id token for identity that can be forwarded to plugins and external services",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaAuthnzSquad,
+			RequiresDevMode: true,
 		},
 	}
 )
