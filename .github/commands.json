@@ -149,7 +149,7 @@
   },
   {
     "type":"label",
-    "name":"datasource/Phlare",
+    "name":"datasource/grafana-pyroscope",
     "action":"addToProject",
     "addToProject":{
       "url":"https://github.com/orgs/grafana/projects/221"

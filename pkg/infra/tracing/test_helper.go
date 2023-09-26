@@ -7,13 +7,14 @@ import (
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
+	tracesdk "go.opentelemetry.io/otel/sdk/trace"
 	"go.opentelemetry.io/otel/sdk/trace/tracetest"
 	"go.opentelemetry.io/otel/trace"
 )
 
 func InitializeTracerForTest() Tracer {
 	exp := tracetest.NewInMemoryExporter()
-	tp, _ := initTracerProvider(exp, "testing")
+	tp, _ := initTracerProvider(exp, "testing", tracesdk.AlwaysSample())
 	otel.SetTracerProvider(tp)
 
 	ots := &Opentelemetry{Propagation: "jaeger,w3c", tracerProvider: tp}
@@ -111,6 +112,10 @@ func (t *FakeTracer) Start(ctx context.Context, spanName string, opts ...trace.S
 }
 
 func (t *FakeTracer) Inject(ctx context.Context, header http.Header, span Span) {
+}
+
+func (t *FakeTracer) OtelTracer() trace.Tracer {
+	return nil
 }
 
 func NewFakeTracer() *FakeTracer {

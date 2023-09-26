@@ -82,11 +82,9 @@ export const VisualInfluxQLEditor = (props: Props): JSX.Element => {
   // is used in both memoized and un-memoized parts, so we have no choice
   const getTagKeys = useMemo(
     () => async () => {
-      const selectedTagKeys = new Set(query.tags?.map((tag) => tag.key));
-
-      return [...(await allTagKeys)].filter((tagKey) => !selectedTagKeys.has(tagKey));
+      return [...(await allTagKeys)];
     },
-    [query.tags, allTagKeys]
+    [allTagKeys]
   );
 
   const groupByList = useMemo(() => {

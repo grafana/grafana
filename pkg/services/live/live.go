@@ -50,6 +50,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/live/survey"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/query"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -73,7 +74,7 @@ type CoreGrafanaScope struct {
 }
 
 func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, routeRegister routing.RouteRegister,
-	pluginStore plugins.Store, pluginClient plugins.Client, cacheService *localcache.CacheService,
+	pluginStore pluginstore.Store, pluginClient plugins.Client, cacheService *localcache.CacheService,
 	dataSourceCache datasources.CacheService, sqlStore db.DB, secretsService secrets.Service,
 	usageStatsService usagestats.Service, queryDataService query.Service, toggles featuremgmt.FeatureToggles,
 	accessControl accesscontrol.AccessControl, dashboardService dashboards.DashboardService, annotationsRepo annotations.Repository,
@@ -300,15 +301,11 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 
 	g.websocketHandler = func(ctx *contextmodel.ReqContext) {
 		user := ctx.SignedInUser
-		namespaceID, userID := user.GetNamespacedID()
-
-		if namespaceID != identity.NamespaceUser {
-			return // Only users can connect to Live
-		}
+		_, identifier := user.GetNamespacedID()
 
 		// Centrifuge expects Credentials in context with a current user ID.
 		cred := &centrifuge.Credentials{
-			UserID: userID,
+			UserID: identifier,
 		}
 		newCtx := centrifuge.SetCredentials(ctx.Req.Context(), cred)
 		newCtx = livecontext.SetContextSignedUser(newCtx, user)
@@ -360,7 +357,7 @@ type GrafanaLive struct {
 	DataSourceCache       datasources.CacheService
 	SQLStore              db.DB
 	SecretsService        secrets.Service
-	pluginStore           plugins.Store
+	pluginStore           pluginstore.Store
 	pluginClient          plugins.Client
 	queryDataService      query.Service
 	orgService            org.Service
@@ -793,7 +790,7 @@ func subscribeStatusToHTTPError(status backend.SubscribeStreamStatus) (int, stri
 	case backend.SubscribeStreamStatusPermissionDenied:
 		return http.StatusForbidden, http.StatusText(http.StatusForbidden)
 	default:
-		logger.Warn("unknown subscribe status", "status", status)
+		logger.Warn("Unknown subscribe status", "status", status)
 		return http.StatusInternalServerError, http.StatusText(http.StatusInternalServerError)
 	}
 }
@@ -805,7 +802,7 @@ func publishStatusToHTTPError(status backend.PublishStreamStatus) (int, string) 
 	case backend.PublishStreamStatusPermissionDenied:
 		return http.StatusForbidden, http.StatusText(http.StatusForbidden)
 	default:
-		logger.Warn("unknown publish status", "status", status)
+		logger.Warn("Unknown publish status", "status", status)
 		return http.StatusInternalServerError, http.StatusText(http.StatusInternalServerError)
 	}
 }

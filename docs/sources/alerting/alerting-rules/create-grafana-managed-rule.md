@@ -65,7 +65,10 @@ Define a query to get the data you want to measure and a condition that needs to
 1. Add one or more [expressions][expression-queries].
    a. For each expression, select either **Classic condition** to create a single alert rule, or choose from the **Math**, **Reduce**, and **Resample** options to generate separate alert for each series.
 
-   For details on these options, see [Single and multi dimensional rule]
+   {{% admonition type="note" %}}
+   When using Prometheus, you can use an instant vector and built-in functions, so you don't need to add additional expressions.
+   {{% /admonition %}}
+
    b. Click **Preview** to verify that the expression is successful.
 
 1. Click **Set as alert condition** on the query or expression you want to set as your alert condition.
@@ -197,8 +200,8 @@ Stale alert instances that are in the **Alerting**/**NoData**/**Error** states a
 [add-a-query]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data#add-a-query"
 [add-a-query]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data#add-a-query"
 
-[alerting-on-numeric-data]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting/fundamentals/evaluate-grafana-alerts#alerting-on-numeric-data-1")
-[alerting-on-numeric-data]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/evaluate-grafana-alerts#alerting-on-numeric-data-1")
+[alerting-on-numeric-data]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting/fundamentals/evaluate-grafana-alerts#alerting-on-numeric-data-1"
+[alerting-on-numeric-data]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/evaluate-grafana-alerts#alerting-on-numeric-data-1"
 
 [annotation-label]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting/fundamentals/annotation-label"
 [annotation-label]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/annotation-label"

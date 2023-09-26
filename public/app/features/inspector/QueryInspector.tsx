@@ -2,21 +2,14 @@ import { css } from '@emotion/css';
 import React, { PureComponent } from 'react';
 import { Subscription } from 'rxjs';
 
-import { DataFrame } from '@grafana/data';
+import { LoadingState, PanelData } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Stack } from '@grafana/experimental';
-import { config, RefreshEvent } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
 import { Button, ClipboardButton, JSONFormatter, LoadingPlaceholder } from '@grafana/ui';
 import { backendSrv } from 'app/core/services/backend_srv';
-import { supportsDataQuery } from 'app/features/dashboard/components/PanelEditor/utils';
-import { PanelModel } from 'app/features/dashboard/state';
 
 import { getPanelInspectorStyles } from './styles';
-
-interface DsQuery {
-  isLoading: boolean;
-  response: {};
-}
 
 interface ExecutedQueryInfo {
   refId: string;
@@ -26,16 +19,15 @@ interface ExecutedQueryInfo {
 }
 
 interface Props {
-  data: DataFrame[];
+  data: PanelData;
   onRefreshQuery: () => void;
-  panel?: PanelModel;
 }
 
 interface State {
   allNodesExpanded: boolean | null;
   isMocking: boolean;
   mockedResponse: string;
-  dsQuery: DsQuery;
+  response: {};
   executedQueries: ExecutedQueryInfo[];
 }
 
@@ -50,26 +42,16 @@ export class QueryInspector extends PureComponent<Props, State> {
       allNodesExpanded: null,
       isMocking: false,
       mockedResponse: '',
-      dsQuery: {
-        isLoading: false,
-        response: {},
-      },
+      response: {},
     };
   }
 
   componentDidMount() {
-    const { panel } = this.props;
-
     this.subs.add(
       backendSrv.getInspectorStream().subscribe({
         next: (response) => this.onDataSourceResponse(response),
       })
     );
-
-    if (panel) {
-      this.subs.add(panel.events.subscribe(RefreshEvent, this.onPanelRefresh));
-      this.updateQueryList();
-    }
   }
 
   componentDidUpdate(oldProps: Props) {
@@ -83,12 +65,13 @@ export class QueryInspector extends PureComponent<Props, State> {
    */
   updateQueryList() {
     const { data } = this.props;
+    const frames = data.series;
     const executedQueries: ExecutedQueryInfo[] = [];
 
-    if (data?.length) {
+    if (frames?.length) {
       let last: ExecutedQueryInfo | undefined = undefined;
 
-      data.forEach((frame, idx) => {
+      frames.forEach((frame, idx) => {
         const query = frame.meta?.executedQueryString;
 
         if (query) {
@@ -116,16 +99,6 @@ export class QueryInspector extends PureComponent<Props, State> {
   componentWillUnmount() {
     this.subs.unsubscribe();
   }
-
-  onPanelRefresh = () => {
-    this.setState((prevState) => ({
-      ...prevState,
-      dsQuery: {
-        isLoading: true,
-        response: {},
-      },
-    }));
-  };
 
   onDataSourceResponse(response: any) {
     // ignore silent requests
@@ -168,13 +141,9 @@ export class QueryInspector extends PureComponent<Props, State> {
       delete response.$$config;
     }
 
-    this.setState((prevState) => ({
-      ...prevState,
-      dsQuery: {
-        isLoading: false,
-        response: response,
-      },
-    }));
+    this.setState({
+      response: response,
+    });
   }
 
   setFormattedJson = (formattedJson: any) => {
@@ -240,16 +209,12 @@ export class QueryInspector extends PureComponent<Props, State> {
   }
 
   render() {
-    const { allNodesExpanded, executedQueries } = this.state;
-    const { panel, onRefreshQuery } = this.props;
-    const { response, isLoading } = this.state.dsQuery;
+    const { allNodesExpanded, executedQueries, response } = this.state;
+    const { onRefreshQuery, data } = this.props;
     const openNodes = this.getNrOfOpenNodes();
     const styles = getPanelInspectorStyles();
     const haveData = Object.keys(response).length > 0;
-
-    if (panel && !supportsDataQuery(panel.plugin)) {
-      return null;
-    }
+    const isLoading = data.state === LoadingState.Loading;
 
     return (
       <div className={styles.wrap}>

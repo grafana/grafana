@@ -35,6 +35,10 @@
             "name": "react-i18next",
             "importNames": ["Trans", "t"],
             "message": "Please import from app/core/internationalization instead"
+          },
+          {
+            "name": "@grafana/e2e",
+            "message": "@grafana/e2e is deprecated. Please import from ./e2e/utils instead"
           }
         ]
       }
@@ -92,30 +96,25 @@
     },
     {
       "files": [
-        "public/app/plugins/datasource/testdata/*.{ts,tsx}",
-        "public/app/plugins/datasource/testdata/**/*.{ts,tsx}"
+        "public/app/plugins/datasource/grafana-testdata-datasource/*.{ts,tsx}",
+        "public/app/plugins/datasource/grafana-testdata-datasource/**/*.{ts,tsx}"
       ],
+      "settings": {
+        "import/resolver": {
+          "node": {
+            "extensions": [".ts", ".tsx"]
+          }
+        }
+      },
       "rules": {
-        "no-restricted-imports": [
+        "import/no-restricted-paths": [
           "error",
           {
-            "paths": [
-              // generic rules
+            "zones": [
               {
-                "name": "react-redux",
-                "importNames": ["useDispatch", "useSelector"],
-                "message": "Please import from app/types instead."
-              },
-              {
-                "name": "react-i18next",
-                "importNames": ["Trans", "t"],
-                "message": "Please import from app/core/internationalization instead"
-              }
-            ],
-            // new rules
-            "patterns": [
-              {
-                "group": ["**/app/*"],
+                "target": "./public/app/plugins",
+                "from": "./public/app",
+                "except": ["./plugins"],
                 "message": "Core plugins are not allowed to depend on Grafana core packages"
               }
             ]
