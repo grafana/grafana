@@ -144,7 +144,6 @@ export function TraceView(props: Props) {
     ? props.scrollElement
     : document.getElementsByClassName(props.scrollElementClass ?? '')[0];
 
-  console.log(traceTimeline.detailStates, selectedSpan);
   return (
     <>
       {props.dataFrames?.length && traceProp ? (

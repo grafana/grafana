@@ -35,33 +35,6 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
     TraceTimelineViewer: css`
       label: TraceTimelineViewer;
       border-bottom: 1px solid ${autoColor(theme, '#bbb')};
-
-      & .json-markup {
-        line-height: 17px;
-        font-size: 13px;
-        font-family: monospace;
-        white-space: pre-wrap;
-      }
-
-      & .json-markup-key {
-        font-weight: bold;
-      }
-
-      & .json-markup-bool {
-        color: ${autoColor(theme, 'firebrick')};
-      }
-
-      & .json-markup-string {
-        color: ${autoColor(theme, 'teal')};
-      }
-
-      & .json-markup-null {
-        color: ${autoColor(theme, 'teal')};
-      }
-
-      & .json-markup-number {
-        color: ${autoColor(theme, 'blue', 'black')};
-      }
     `,
   };
 });

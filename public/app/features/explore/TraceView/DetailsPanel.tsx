@@ -6,7 +6,7 @@ import { Button, CustomScrollbar, Tab, TabContent, TabsBar, useStyles2 } from '@
 
 import { ExploreDrawer } from '../ExploreDrawer';
 
-import { DetailState, TraceSpan } from './components';
+import { autoColor, DetailState, TraceSpan } from './components';
 import { getAbsoluteTime } from './components/TraceTimelineViewer/SpanDetail';
 import AccordianKeyValues from './components/TraceTimelineViewer/SpanDetail/AccordianKeyValues';
 import AccordianLogs from './components/TraceTimelineViewer/SpanDetail/AccordianLogs';
@@ -25,18 +25,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
     align-items: center;
     justify-content: space-between;
   `,
-  container: css`
-    height: 300px;
-    width: 100%;
-    position: sticky;
-    bottom: 0;
-    background: ${theme.colors.background.primary};
-    z-index: 2;
-    border-top: 1px solid ${theme.colors.border.strong};
-  `,
   attributesCol: css`
     display: flex;
     flex: 1 0 auto;
+    flex-direction: column;
+    flex: 0 50%;
   `,
   listWrapper: css`
     overflow: hidden;
@@ -47,7 +40,34 @@ const getStyles = (theme: GrafanaTheme2) => ({
     flex: 1 0 auto;
   `,
   tabContent: css`
-    padding: 0.5rem 1rem;
+    padding: 0.5rem 1rem 90px 1rem;
+
+    & .json-markup {
+      line-height: 17px;
+      font-size: 13px;
+      font-family: monospace;
+      white-space: pre-wrap;
+    }
+
+    & .json-markup-key {
+      font-weight: bold;
+    }
+
+    & .json-markup-bool {
+      color: ${autoColor(theme, 'firebrick')};
+    }
+
+    & .json-markup-string {
+      color: ${autoColor(theme, 'teal')};
+    }
+
+    & .json-markup-null {
+      color: ${autoColor(theme, 'teal')};
+    }
+
+    & .json-markup-number {
+      color: ${autoColor(theme, 'blue', 'black')};
+    }
   `,
 });
 

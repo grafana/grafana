@@ -31,7 +31,6 @@ const getStyles = (theme: GrafanaTheme2) => {
   return {
     AccordianLogs: css`
       label: AccordianLogs;
-      padding-bottom: 90px;
     `,
     AccordianLogsContent: css`
       label: AccordianLogsContent;
