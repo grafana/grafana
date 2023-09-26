@@ -353,43 +353,13 @@ This value is `true` by default.
 
 ### ttl
 
-_Time to live_ (TTL) is the time that a query result is stored in the caching system before it is deleted or refreshed. This setting defines the time to live for query caching, when TTL is not configured in data source settings. The default value is `1m` (1 minute).
-
-### max_ttl
-
-The max duration that a query result is stored in the caching system before it is deleted or refreshed. This value will override `ttl` config option or data source setting if the `ttl` value is greater than `max_ttl`. To disable this constraint, set this value to `0s`.
-
-The default is `0s` (disabled).
-
-> **Note:** Disabling this constraint is not recommended in production environments.
+_Time to live_ (TTL) is the time that a query result is stored in the caching system before it is deleted or refreshed. This setting defines the time to live for query caching, when TTL is not configured in data source settings. The default value is `5m` (5 minutes).
 
 ### max_value_mb
 
 This value limits the size of a single cache value. If a cache value (or query result) exceeds this size, then it is not cached. To disable this limit, set this value to `0`.
 
 The default is `1`.
-
-### connection_timeout
-
-This setting defines the duration to wait for a connection to the caching backend.
-
-The default is `5s`.
-
-### read_timeout
-
-This setting defines the duration to wait for the caching backend to return a cached result. To disable this timeout, set this value to `0s`.
-
-The default is `0s` (disabled).
-
-> **Note:** Disabling this timeout is not recommended in production environments.
-
-### write_timeout
-
-This setting defines the number of seconds to wait for the caching backend to store a result. To disable this timeout, set this value to `0s`.
-
-The default is `0s` (disabled).
-
-> **Note:** Disabling this timeout is not recommended in production environments.
 
 ## [caching.encryption]
 

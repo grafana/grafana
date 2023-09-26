@@ -30,5 +30,5 @@ The rules within a group are run sequentially at a regular interval, the default
 
 If you remaned the group, a new group is created that has all the rules from the old group, and the old group deleted.
 
-![Group list](/static/img/docs/alerting/unified/rule-list-edit-cortex-loki-icon-8-2.png 'Rule group list screenshot')
-![Group edit modal](/static/img/docs/alerting/unified/rule-list-cortex-loki-edit-ns-group-8-2.png 'Rule group edit modal screenshot')
+![Group list](/static/img/docs/alerting/unified/rule-list-edit-mimir-loki-icon-8-2.png 'Rule group list screenshot')
+![Group edit modal](/static/img/docs/alerting/unified/rule-list-mimir-loki-edit-ns-group-8-2.png 'Rule group edit modal screenshot')
