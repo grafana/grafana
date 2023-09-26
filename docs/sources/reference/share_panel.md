@@ -47,7 +47,7 @@ Below there should be an interactive Grafana graph embedded in an iframe:
 
 #### Export Panel Data
 
-{{< docs-imagebox img="/img/docs/v50/export_panel_data.png" max-width="500px" >}}
+{{< figure src="/static/img/docs/v50/export_panel_data.png" max-width="500px" >}}
 
 The submenu for a panel can be found by clicking on the title of a panel and then on the More submenu.
 

@@ -3,7 +3,7 @@ title = "Installation"
 description = "Installation guide for Grafana"
 keywords = ["grafana", "installation", "documentation"]
 type = "docs"
-aliases = ["/docs/grafana/latest/installation/installation/", "/docs/grafana/v2.1/installation/install/", "/docs/grafana/latest/install"]
+aliases = ["/docs/grafana/v7.1/installation/installation/", "/docs/grafana/v2.1/installation/install/", "/docs/grafana/v7.1/install"]
 [menu.docs]
 name = "Installation"
 identifier = "installation"

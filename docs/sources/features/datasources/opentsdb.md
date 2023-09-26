@@ -3,7 +3,7 @@ title = "Using OpenTSDB in Grafana"
 description = "Guide for using OpenTSDB in Grafana"
 keywords = ["grafana", "opentsdb", "guide"]
 type = "docs"
-aliases = ["/docs/grafana/latest/datasources/opentsdb",	"/docs/grafana/latest/features/opentsdb"]
+aliases = ["/docs/grafana/v7.1/datasources/opentsdb",	"/docs/grafana/v7.1/features/opentsdb"]
 [menu.docs]
 name = "OpenTSDB"
 parent = "datasources"
@@ -38,7 +38,7 @@ Open a graph in edit mode by click the title. Query editor will differ if the da
 In the former version, only tags can be used to query OpenTSDB. But in the latter version, filters as well as tags
 can be used to query opentsdb. Fill Policy is also introduced in OpenTSDB 2.2.
 
-![](/img/docs/v43/opentsdb_query_editor.png)
+![](/static/img/docs/v43/opentsdb_query_editor.png)
 
 > Note: While using OpenTSDB 2.2 data source, make sure you use either Filters or Tags as they are mutually exclusive. If used together, might give you weird results.
 

@@ -3,7 +3,7 @@ title = "Getting started"
 description = "Guide for getting started with Grafana"
 keywords = ["grafana", "intro", "guide", "started"]
 type = "docs"
-aliases = ["/docs/grafana/latest/guides/gettingstarted","/docs/grafana/latest/guides/getting_started"]
+aliases = ["/docs/grafana/v7.1/guides/gettingstarted","/docs/grafana/v7.1/guides/getting_started"]
 [menu.docs]
 name = "Getting started"
 identifier = "getting_started_guide"

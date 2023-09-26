@@ -3,7 +3,7 @@ title = "Using InfluxDB in Grafana"
 description = "Guide for using InfluxDB in Grafana"
 keywords = ["grafana", "influxdb", "guide", "flux"]
 type = "docs"
-aliases = ["/docs/grafana/latest/datasources/influxdb"]
+aliases = ["/docs/grafana/v7.1/datasources/influxdb"]
 [menu.docs]
 name = "InfluxDB"
 parent = "datasources"
@@ -66,9 +66,9 @@ Identifier | Description
 
 ## Query Editor
 
-{{< docs-imagebox img="/img/docs/v45/influxdb_query_still.png" class="docs-image--no-shadow" animated-gif="/img/docs/v45/influxdb_query.gif" >}}
+{{< figure src="/static/img/docs/v45/influxdb_query_still.png" class="docs-image--no-shadow" animated-gif="/static/img/docs/v45/influxdb_query.gif" >}}
 
-You can access the InfluxDB editor under the metrics tab when you are in the edit mode of the Graph or Singlestat panels. 
+You can access the InfluxDB editor under the metrics tab when you are in the edit mode of the Graph or Singlestat panels.
 Enter edit mode by clicking the panel title, and clicking **Edit**. The editor allows you to select metrics and tags.
 
 ### Filter data (WHERE)
@@ -83,7 +83,7 @@ You can type in regex patterns for metric names or tag filter values. Be sure to
 In the `SELECT` row you can specify what fields and functions you want to use. If you have a
 group by time you need an aggregation function. Some functions like derivative require an aggregation function. The editor tries to simplify and unify this part of the query. For example:
 
-![](/img/docs/influxdb/select_editor.png)
+![](/static/img/docs/influxdb/select_editor.png)
 
 The above generates the following InfluxDB `SELECT` clause:
 
@@ -97,7 +97,7 @@ specify an asterix `*` to select all fields.
 
 ### Group By
 To group by a tag click the plus icon at the end of the GROUP BY row. Pick a tag from the dropdown that appears.
-You can remove the group by by clicking on the `tag` and then click on the x icon.
+You can remove the "Group By" by clicking on the `tag` and then click on the x icon.
 
 ### Text Editor Mode (RAW)
 You can switch to raw query mode by clicking hamburger icon and then `Switch editor mode`.
@@ -132,7 +132,7 @@ Name | Description
 ------------ | -------------
 *URL* | The HTTP protocol, IP address and port of your InfluxDB API (InfluxDB 2.0 API port is by default 9999)
 *Organization* | The [Influx organization](https://v2.docs.influxdata.com/v2.0/organizations/) that will be used for Flux queries.  This is also used to for the `v.organization` query macro
-*Token* | The authentication token used for Flux queries. With Influx 2.0, use the [influx authentication token to function](https://v2.docs.influxdata.com/v2.0/security/tokens/create-token/).  For influx 1.8, the token is `username:password` 
+*Token* | The authentication token used for Flux queries. With Influx 2.0, use the [influx authentication token to function](https://v2.docs.influxdata.com/v2.0/security/tokens/create-token/).  For influx 1.8, the token is `username:password`
 *Default Bucket* | The [Influx bucket](https://v2.docs.influxdata.com/v2.0/organizations/buckets/) that will be used for the `v.defaultBucket` macro in Flux queries
 
 You can use the [Flux query and scripting language](https://www.influxdata.com/products/flux/). Grafana's Flux query editor is a text editor for raw Flux queries with Macro support.
@@ -182,7 +182,7 @@ You can view the interpolated version of a query with the Query Inspector.
 
 Querying and displaying log data from InfluxDB is available via [Explore]({{< relref "../explore" >}}).
 
-![](/img/docs/v63/influxdb_explore_logs.png)
+![](/static/img/docs/v63/influxdb_explore_logs.png)
 
 Select the InfluxDB data source, change to Logs using the Metrics/Logs switcher,
 and then use the `Measurements/Fields` button to display your logs.
@@ -278,11 +278,12 @@ You can now configure data sources using config files with Grafana's provisionin
 
 Here are some provisioning examples for this data source.
 
+### InfluxDB 1.x example
 ```yaml
 apiVersion: 1
 
 datasources:
-  - name: InfluxDB
+  - name: InfluxDB_v1
     type: influxdb
     access: proxy
     database: site
@@ -291,4 +292,22 @@ datasources:
     url: http://localhost:8086
     jsonData:
       httpMode: GET
+```
+
+### InfluxDB 2.x example
+```yaml
+apiVersion: 1
+
+datasources:
+  - name: InfluxDB_v2
+    type: influxdb
+    access: proxy
+    url: http://localhost:8086
+    secureJsonData:
+      token: token
+    jsonData:
+      version: Flux
+      organization: organization
+      defaultBucket: bucket
+      tlsSkipVerify: true
 ```

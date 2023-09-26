@@ -25,13 +25,11 @@ The following operating systems are supported for Grafana installation:
 - [macOS]({{< relref "mac" >}})
 - [Windows]({{< relref "windows" >}})
 
-While you can install Grafana on other operating systems, we do not recommend doing so and do not provide support for that use case.
-
-Installation of Grafana on other operating systems is possible, but not supported.
+Installation of Grafana on other operating systems is possible, but it is neither recommended nor supported.
 
 ## Hardware recommendations
 
-Grafana does not use a lot of resources and is very lightweight in use of memory and CPU. 
+Grafana does not use a lot of resources and is very lightweight in use of memory and CPU.
 
 Minimum recommended memory: 255 MB
 Minimum recommended CPU: 1
@@ -64,6 +62,6 @@ Grafana is supported in the current version of the following browsers. Older ver
 - Firefox
 - Safari
 - Microsoft Edge
-- Internet Explorer 11 is only fully supported in Grafana versions prior v6.0.
+- Internet Explorer 11 is only fully supported in Grafana versions prior to v6.0.
 
 > Note: Always enable JavaScript in your browser. Running Grafana without JavaScript enabled in the browser is not supported.

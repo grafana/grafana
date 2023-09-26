@@ -3,7 +3,7 @@ title = "Glossary"
 description = "Grafana glossary"
 keywords = ["grafana", "intro", "glossary", "dictionary"]
 type = "docs"
-aliases = ["/docs/grafana/latest/guides/glossary"]
+aliases = ["/docs/grafana/v7.1/guides/glossary"]
 [menu.docs]
 name = "Glossary"
 identifier = "glossary"

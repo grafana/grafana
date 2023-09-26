@@ -60,8 +60,8 @@ Next we will clone carbon and whisper and install these components. Whisper is j
 by carbon to write metrics to disk.
 
     cd /usr/local/src
-    git clone https://github.com/graphite-project/carbon.git
-    git clone https://github.com/graphite-project/whisper.git
+    git clone --depth 1 https://github.com/graphite-project/carbon.git
+    git clone --depth 1 https://github.com/graphite-project/whisper.git
 
     cd whisper && python setup.py install && cd ..
     cd carbon && python setup.py install && cd ..

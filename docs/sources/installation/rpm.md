@@ -2,7 +2,7 @@
 title = "Install on RPM-based Linux"
 description = "Grafana Installation guide for RPM-based Linux, such as Centos, Fedora, OpenSuse, and Red Hat."
 keywords = ["grafana", "installation", "documentation", "centos", "fedora", "opensuse", "redhat"]
-aliases = ["/docs/grafana/latest/installation/installation/rpm"]
+aliases = ["/docs/grafana/v7.1/installation/installation/rpm"]
 type = "docs"
 [menu.docs]
 name = "Install on RPM-based Linux"

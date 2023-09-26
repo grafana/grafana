@@ -22,17 +22,17 @@ The Grafana 7.0 stable release is scheduled for the 18th of May. In the meantime
 
 The main highlights are:
 
-- [**New Panel Editor** Redesign based on community feedback.]({{< relref "#new-panel-editor-and-unified-data-model" >}})
-- [**Explore** New tracing UI and support for visualizing Jaeger and Zipkin traces.]({{< relref "#new-tracing-ui" >}})
-- [**Enterprise** Usage insights, Presence indicator, and Auth improvements.]({{< relref "#grafana-enterprise" >}})
-- [**Transformations** Transformations and simple Math operations for all data sources.]({{< relref "#transformations" >}})
-- [**Field overrides** Automatically configure panels with data from queries.]({{< relref "#field-configuration-options-and-overrides" >}})
-- [**Table** New Table panel.]({{< relref "#table-panel" >}})
-- [**Plugins** New plugins platform.]({{< relref "#plugins-platform" >}})
-- [**Tutorials** New tutorials section.]({{< relref "#new-tutorials" >}})
-- [**Cloudwatch** Support for Cloudwatch Logs in Explore and the Logs panel.]({{< relref "#cloudwatch-logs" >}})
-- [**Breaking change** PhantomJS removed.]({{< relref "#breaking-change-phantomjs-removed" >}})
-- [**Time zones** Time zone support]({{< relref "#time-zone-support" >}})
+- [**New Panel Editor** Redesign based on community feedback.](#new-panel-editor-and-unified-data-model)
+- [**Explore** New tracing UI and support for visualizing Jaeger and Zipkin traces.](#new-tracing-ui)
+- [**Enterprise** Usage insights, Presence indicator, and Auth improvements.](#grafana-enterprise)
+- [**Transformations** Transformations and simple Math operations for all data sources.](#transformations)
+- [**Field overrides** Automatically configure panels with data from queries.](#field-options-and-overrides)
+- [**Table** New Table panel.](#table-panel)
+- [**Plugins** New plugins platform.](#plugins-platform)
+- [**Tutorials** New tutorials section.](#new-tutorials)
+- [**Cloudwatch** Support for Cloudwatch Logs in Explore and the Logs panel.](#cloudwatch-logs)
+- [**Breaking change** PhantomJS removed.](#breaking-change-phantomjs-removed)
+- [**Time zones** Time zone support](#time-zone-support)
 
 ## New panel editor and unified data model
 
@@ -54,15 +54,15 @@ You can use the new trace view in Explore either directly to search for a partic
 
 In the future we will add more workflows and integrations so that correlating between metrics, logs and traces is even easier.
 
-{{< docs-imagebox img="/img/docs/v70/tracing_ui.png" max-width="1024px" caption="Tracing UI" >}}
+{{< figure src="/static/img/docs/v70/tracing_ui.png" max-width="1024px" caption="Tracing UI" >}}
 
 ## Transformations
 
 The data you want to visualize can come from many different places and it is usually not in exactly the right form. Users can now transform non-time series data into tables (e.g., JSON files or even simple lookup tables) in seconds without any customization or additional overhead. They can then combine non-time series data with any other data in Grafana; data from an external database or a panel that already exists in one of their current dashboards.
 
-By chaining a simple set of point and click [transformations]({{< relref "../panels/transformations.md" >}}), users will be able join, pivot, filter, re-name and do calculations to get the results they need. Perfect for operations across queries or data sources missing essential data transformations.
+By chaining a simple set of point and click [transformations]({{< relref "../panels/transformations/_index.md" >}}), users will be able join, pivot, filter, re-name and do calculations to get the results they need. Perfect for operations across queries or data sources missing essential data transformations.
 
-[Transformations]({{< relref "../panels/transformations.md" >}}) also adds the ability to do maths across queries. Lots of data sources do not support this natively so being able to do it in Grafana is a powerful feature.
+[Transformations]({{< relref "../panels/transformations/_index.md" >}}) also adds the ability to do maths across queries. Lots of data sources do not support this natively, so being able to do it in Grafana is a powerful feature.
 
 For users with large dashboards or with heavy queries, being able to reuse the query result from one panel in another panel can be a huge performance gain for slow queries (e.g log or sql queries). From the data source menu in the query editor, you can choose the `--dashboard--` option and then choose the query result from another panel on the same dashboard.
 
@@ -80,9 +80,9 @@ We are also introducing a new shared data model for both time series and table d
 - **Outer join:** Joins many time series/tables by a field. This can be used to outer join multiple time series on the _time_ field to show many time series in one table.
 - **Add field from calculation:** This is a powerful transformation that allows you perform many different types of math operations and add the result as a new field. Can be used to calculate the difference between two series or fields and add the result to a new field. Or multiply one field with another another and add the result to a new field.
 
-Learn more about this feature in [Transformations]({{< relref "../panels/transformations.md" >}}).
+Learn more about this feature in [Transformations]({{< relref "../panels/transformations/_index.md" >}}).
 
-## Field configuration options and overrides
+## Field options and overrides
 
 With Grafana 7.0 we are introducing a new, unified data configuration system that powers a consistent UI for setting data options across visualizations as well as making all data display settings data driven and overridable. This new option architecture and UI will make all panels have a consistent set of options and behaviors for attributes like `unit`, `min`, `max`, `thresholds`, `links`, `decimals` or `value mappings`. Not only that but all these options will share a consistent UI for specifying override rules and is extensible for custom panel specific options.
 
@@ -90,11 +90,11 @@ Up until now the overrides were available only for Graph and Table panel(via Col
 
 This feature enables even more powerful visualizations and fine grained control over how the data is displayed.
 
-Learn more about this feature in [Field configuration options]({{< relref "../panels/field-configuration-options.md" >}}).
+Learn more about this feature in [Field options]({{< relref "../panels/field-options.md" >}}).
 
 ## Inspect panels and export data to CSV
 
-{{< docs-imagebox img="/img/docs/v70/panel_edit_export_raw_data.png" max-width="800px" class="docs-image--right" caption="Panel Edit - Export raw data to CSV" >}}
+{{< figure src="/static/img/docs/v70/panel_edit_export_raw_data.png" max-width="800px" class="docs-image--right" caption="Panel Edit - Export raw data to CSV" >}}
 
 Another new feature of Grafana 7.0 is the panel inspector. Inspect allows you to view the raw data for any Grafana panel as well as export that data to a CSV file. With Panel inspect you will also be able to perform simple raw data transformations like join, view query stats or detailed execution data.
 
@@ -132,7 +132,7 @@ In Grafana 7.0 we are maturing our panel and front-end datasource plugins platfo
 
 Plugins can use the same React components that the Grafana team uses to build Grafana. Using these components means the Grafana team will support and improve them continually and make your plugin as polished as the rest of Grafana’s UI. The new [`@grafana/ui` components library](https://developers.grafana.com/ui) is documented with Storybook (visual documentation) and is available on NPM.
 
-The `@grafana/data`, `@grafana/runtime`, `@grafana/e2e packages` (also available via NPM) aim to simplify the way plugins are developed. We want to deliver a set of [reliable APIs](https://grafana.com/docs/grafana/latest/packages_api/) for plugin developers.
+The `@grafana/data`, `@grafana/runtime`, `@grafana/e2e packages` (also available via NPM) aim to simplify the way plugins are developed. We want to deliver a set of [reliable APIs]({{< relref "../packages_api" >}}) for plugin developers.
 
 With [@grafana/toolkit](https://www.npmjs.com/package/@grafana/toolkit) we are delivering a simple CLI that helps plugin authors quickly scaffold, develop and test their plugins without worrying about configuration details. A plugin author no longer needs to be a grunt or webpack expert to build their plugin.
 
@@ -157,7 +157,7 @@ To help you get started with Grafana, we’ve launched a brand new tutorials pla
 
 ## Rollup indicator for Metrictank queries
 
-{{< docs-imagebox img="/img/docs/v70/metrictank_rollup_metadata.png" max-width="800px" class="docs-image--right" caption="Metrictank rollup metadata" >}}
+{{< figure src="/static/img/docs/v70/metrictank_rollup_metadata.png" max-width="800px" class="docs-image--right" caption="Metrictank rollup metadata" >}}
 
 Depending on the cardinality of the data and the time range MetricTank may return rolled up (aggregated) data. This can be as subtle as potentially only 1 or 2 graphs out of nine being rolled up. The new rollup indicator is visible in the panel title and you can also inspect extensive metadata and stats about the Metrictank query result and its rollups.
 
@@ -206,13 +206,13 @@ This includes problems like:
 - How to identify dashboards that are not being used
 - Who created or last viewed this dashboard?
 
-{{< docs-imagebox img="/img/docs/v70/dashboard_insights_users.png" max-width="1024px" caption="Dashboard Insights Users" >}}
+{{< figure src="/static/img/docs/v70/dashboard_insights_users.png" max-width="1024px" caption="Dashboard Insights Users" >}}
 
 ### Usage insights and Presence indicator
 
 This release includes a series of features that build on our new usage analytics engine. This “Grafana about Grafana” feature will help our large customers get better insight into the behavior and utilization of their users, dashboards, and data sources. The improved [dashboard search]({{< relref "../enterprise/usage-insights/#improved-dashboard-search" >}}) allows you to sort dashboards by usage and errors. When a user opens a dashboard, they will see a [presence indicator]({{< relref "../enterprise/usage-insights/#presence-indicator" >}}) of who else is viewing the same dashboard. And finally [Dashboard insights]({{< relref "../enterprise/usage-insights/#dashboard-insights" >}}) allows you to view recent dashboard usage.
 
-{{< docs-imagebox img="/img/docs/v70/presence_indicator.jpg" max-width="1024px" caption="Grafana Enterprise - Presence indicator" >}}
+{{< figure src="/static/img/docs/v70/presence_indicator.jpg" max-width="1024px" caption="Grafana Enterprise - Presence indicator" >}}
 
 ### SAML Role and Team Sync
 

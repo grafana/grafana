@@ -1,7 +1,7 @@
 +++
 title = "Legacy plugins"
 type = "docs"
-aliases = ["/docs/grafana/latest/plugins/development/", "/docs/grafana/latest/plugins/datasources/", "/docs/grafana/latest/plugins/apps/", "/docs/grafana/latest/plugins/panels/", "/docs/grafana/latest/plugins/developing/development/"]
+aliases = ["/docs/grafana/v7.1/plugins/development/", "/docs/grafana/v7.1/plugins/datasources/", "/docs/grafana/v7.1/plugins/apps/", "/docs/grafana/v7.1/plugins/panels/", "/docs/grafana/v7.1/plugins/developing/development/"]
 +++
 
 # Legacy plugins
