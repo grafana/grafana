@@ -52,7 +52,7 @@ export const CorrelationHelper = ({ correlations }: Props) => {
       The correlation link will appear by the <code>{correlations.resultField}</code> field. You can use the following
       variables to set up your correlations:
       <pre>
-        {Object.entries(correlations.vars).map((entry, index) => {
+        {Object.entries(correlations.vars).map((entry) => {
           return `\$\{${entry[0]}\} = ${entry[1]}\n`;
         })}
       </pre>

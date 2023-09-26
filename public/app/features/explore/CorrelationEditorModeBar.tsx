@@ -103,6 +103,14 @@ export const CorrelationEditorModeBar = ({ panes }: { panes: Array<[string, Expl
         canSave: false,
       })
     );
+    panes.forEach((pane) => {
+      dispatch(
+        changeCorrelationHelperData({
+          exploreId: pane[0],
+          correlationEditorHelperData: undefined,
+        })
+      );
+    });
   };
 
   const saveCorrelation = (skipPostConfirmAction: boolean) => {

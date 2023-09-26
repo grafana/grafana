@@ -87,20 +87,33 @@ export function ExploreToolbar({ exploreId, topOfViewRef, onChangeTime }: Props)
   };
 
   const onChangeDatasource = async (dsSettings: DataSourceInstanceSettings) => {
-    // left pane datasource changes don't affect created correlation. Right pane datasource changes might be destructive
-    if (isCorrelationsEditorMode && correlationDetails?.dirty && !isLeftPane) {
-      dispatch(
-        changeCorrelationEditorDetails({
-          isExiting: true,
-          postConfirmAction: {
-            exploreId: exploreId,
-            action: CORRELATION_EDITOR_POST_CONFIRM_ACTION.CHANGE_DATASOURCE,
-            changeDatasourceUid: dsSettings.uid,
-          },
-        })
-      );
-    } else {
+    if (!isCorrelationsEditorMode) {
       dispatch(changeDatasource(exploreId, dsSettings.uid, { importQueries: true }));
+    } else {
+      if (correlationDetails?.dirty) {
+        // prompt will handle datasource change if needed
+        dispatch(
+          changeCorrelationEditorDetails({
+            isExiting: true,
+            postConfirmAction: {
+              exploreId: exploreId,
+              action: CORRELATION_EDITOR_POST_CONFIRM_ACTION.CHANGE_DATASOURCE,
+              changeDatasourceUid: dsSettings.uid,
+            },
+          })
+        );
+      } else {
+        // not dirty, clear helper data, then switch
+        panes.forEach((pane) => {
+          dispatch(
+            changeCorrelationHelperData({
+              exploreId: pane[0],
+              correlationEditorHelperData: undefined,
+            })
+          );
+        });
+        dispatch(changeDatasource(exploreId, dsSettings.uid, { importQueries: true }));
+      }
     }
   };
 
