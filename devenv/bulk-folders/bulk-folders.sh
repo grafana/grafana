@@ -1,11 +1,19 @@
 #!/bin/bash
 
-amount=50
-counter=0
+numberOfFolders=${1:-200}
+numberOfDashboardsPerFolder=${2:-3}
 
-while [ $counter -lt $amount ]; do
-  echo "$counter"
-  mkdir -p "bulk-folders/Bulk Folder ${counter}"
-  jsonnet -o "bulk-folders/Bulk Folder ${counter}/dashboard${counter}.json" -e "local bulkDash = import 'bulk-dashboards/bulkdash.jsonnet'; bulkDash + {  uid: 'bulk-folder-${counter}',  title: 'title-${counter}' }"
-  counter=$((counter+1))
+for (( folderCounter=1; folderCounter<="$numberOfFolders"; folderCounter++ ))
+do
+   echo "Creating folder $folderCounter"
+  folderPath="bulk-folders/Bulk Folder ${folderCounter}"
+
+  mkdir -p "$folderPath"
+
+  for (( dashCounter=1; dashCounter<="$numberOfDashboardsPerFolder"; dashCounter++ ))
+  do
+    jsonnet -o "$folderPath/dashboard${dashCounter}.json" -e "local bulkDash = import 'bulk-dashboards/bulkdash.jsonnet'; bulkDash + {  uid: 'bulk-folder-${folderCounter}-${dashCounter}',  title: 'Bulk Folder  ${folderCounter} Dashboard ${dashCounter}' }"
+
+    dashCounter=$((dashCounter+1))
+  done
 done

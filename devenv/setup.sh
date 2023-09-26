@@ -36,7 +36,7 @@ bulkAlertingDashboard() {
 }
 
 bulkFolders() {
-	./bulk-folders/bulk-folders.sh
+	./bulk-folders/bulk-folders.sh "$1"
 	ln -s -f ../../../devenv/bulk-folders/bulk-folders.yaml ../conf/provisioning/dashboards/bulk-folders.yaml
 }
 
@@ -62,9 +62,11 @@ devDatasources() {
 usage() {
 	echo -e "\n"
 	echo "Usage:"
-	echo "  bulk-dashboards                              - create and provisioning 400 dashboards"
-	echo "  bulk-alerting-dashboards                     - create and provisioning 400 dashboards with alerts"
-	echo "  no args                                      - provisioning core datasources and dev dashboards"
+	echo "  bulk-dashboards                      - provision 400 dashboards"
+	echo "  bulk-alerting-dashboards             - provision 400 dashboards with alerts"
+	echo "  bulk-folders [folders] [dashboards]  - provision many folders with dashboards"
+	echo "  bulk-folders                         - provision 200 folders with 3 dashboards in each"
+	echo "  no args                              - provision core datasources and dev dashboards"
 }
 
 main() {
@@ -74,13 +76,14 @@ main() {
 	echo -e "\n"
 
 	local cmd=$1
+  local arg1=$2
 
 	if [[ $cmd == "bulk-alerting-dashboards" ]]; then
 		bulkAlertingDashboard
 	elif [[ $cmd == "bulk-dashboards" ]]; then
 		bulkDashboard
 	elif [[ $cmd == "bulk-folders" ]]; then
-		bulkFolders
+		bulkFolders "$arg1"
 	else
 		devDashboards
 		devDatasources
