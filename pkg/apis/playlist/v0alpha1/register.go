@@ -52,16 +52,16 @@ func (b *PlaylistAPIBuilder) GetAPIGroupInfo(
 	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(GroupName, scheme, metav1.ParameterCodec, codecs)
 	storage := map[string]rest.Storage{}
 
-	sqlStore := newLegacyStorage(b.service)
-	storage["playlists"] = sqlStore
+	legacyStore := newLegacyStorage(b.service)
+	storage["playlists"] = legacyStore
 
 	// enable dual writes if a RESTOptionsGetter is provided
 	if optsGetter != nil {
-		unifiedStorage, err := newStorage(scheme, optsGetter)
+		store, err := newStorage(scheme, optsGetter)
 		if err != nil {
 			return nil, err
 		}
-		storage["playlists"] = grafanarest.NewDualWriter(sqlStore, unifiedStorage)
+		storage["playlists"] = grafanarest.NewDualWriter(legacyStore, store)
 	}
 
 	apiGroupInfo.VersionedResourcesStorageMap[VersionID] = storage
