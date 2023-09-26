@@ -12,11 +12,11 @@ jest.mock('../../../../../influxql_metadata_query', () => {
   return {
     __esModule: true,
     getAllPolicies: jest.fn().mockReturnValueOnce(Promise.resolve(['default', 'autogen'])),
-    getFieldKeysForMeasurement: jest
+    getFieldKeys: jest
       .fn()
       .mockReturnValueOnce(Promise.resolve(['free', 'total']))
       .mockReturnValueOnce(Promise.resolve([])),
-    getTagKeysForMeasurementAndTags: jest
+    getTagKeys: jest
       .fn()
       // first time we are called when the widget mounts,
       // we respond by saying `cpu, host, device` are the real tags
@@ -31,7 +31,7 @@ jest.mock('../../../../../influxql_metadata_query', () => {
       // it does not matter what we return, as long as it is
       // promise-of-a-list-of-strings
       .mockReturnValueOnce(Promise.resolve([])),
-    getAllMeasurementsForTags: jest
+    getAllMeasurements: jest
       .fn()
       // it does not matter what we return, as long as it is
       // promise-of-a-list-of-strings
@@ -128,10 +128,10 @@ describe('InfluxDB InfluxQL Visual Editor field-filtering', () => {
 
     await waitFor(() => {});
 
-    // when the editor-widget mounts, it calls getFieldKeysForMeasurement
+    // when the editor-widget mounts, it calls getFieldKeys
     expect(mockedMeta.getFieldKeys).toHaveBeenCalledTimes(1);
 
-    // when the editor-widget mounts, it calls getTagKeysForMeasurementAndTags
+    // when the editor-widget mounts, it calls getTagKeys
     expect(mockedMeta.getTagKeys).toHaveBeenCalledTimes(1);
 
     // now we click on the WHERE/host2 button
