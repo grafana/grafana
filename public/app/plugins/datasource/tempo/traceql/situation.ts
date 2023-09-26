@@ -250,7 +250,9 @@ const RESOLVERS: Resolver[] = [
 ];
 
 function resolveSpanset(node: SyntaxNode, text: string, _: number, originalPos: number): SituationType {
-  // The user is completing an expression
+  // The user is completing an expression. We can take advantage of the fact that the Monaco editor is smart
+  // enough to automatically detect that there are some characters before the cursor and to take them into
+  // account when providing suggestions.
   let endOfPathNode = walk(node, [['firstChild', [FieldExpression]]]);
   if (endOfPathNode && text[originalPos - 1] !== ' ') {
     const attributeFieldParent = walk(endOfPathNode, [['firstChild', [AttributeField]]]);
