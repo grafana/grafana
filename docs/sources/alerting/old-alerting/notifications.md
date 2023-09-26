@@ -65,7 +65,7 @@ These examples show how often and when reminders are sent for a triggered alert.
 | Prometheus Alertmanager                       | `prometheus-alertmanager` | yes, external only | yes                     |
 | [Pushover](#pushover)                         | `pushover`                | yes                | no                      |
 | Sensu                                         | `sensu`                   | yes, external only | no                      |
-| [Sensu Go](#sensu-go)                         | `sensugo`                 | yes, external only | no                      |
+| Sensu Go                         | `sensugo`                 | yes, external only | no                      |
 | [Slack](#slack)                               | `slack`                   | yes                | no                      |
 | Telegram                                      | `telegram`                | yes                | no                      |
 | Threema                                       | `threema`                 | yes, external only | no                      |
@@ -258,7 +258,7 @@ Alertmanager handles alerts sent by client applications such as Prometheus serve
 
 ### Sensu Go
 
-Grafana alert notifications can be sent to [Sensu](<(https://sensu.io)>) Go as events via the API. This operation requires an API key. For information on creating this key, refer to [Sensu Go documentation](https://docs.sensu.io/sensu-go/latest/operations/control-access/use-apikeys/#api-key-authentication).
+Grafana alert notifications can be sent to Sensu Go as events via the API. This operation requires an API key. For information on creating this key, refer to [Sensu Go documentation](https://docs.sensu.io/sensu-go/latest/operations/control-access/use-apikeys/#api-key-authentication).
 
 ## Enable images in notifications {#external-image-store}
 
