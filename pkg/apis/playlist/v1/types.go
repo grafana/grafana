@@ -18,10 +18,8 @@ type Playlist struct {
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type PlaylistList struct {
 	metav1.TypeMeta `json:",inline"`
-	// Standard object's metadata
-	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
 	// +optional
-	metav1.ObjectMeta `json:"metadata,omitempty"`
+	metav1.ListMeta `json:"metadata,omitempty"`
 
 	Items []Playlist `json:"playlists,omitempty"`
 }
