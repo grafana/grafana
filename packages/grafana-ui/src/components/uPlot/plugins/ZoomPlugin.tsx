@@ -4,6 +4,7 @@ import { UPlotConfigBuilder } from '../config/UPlotConfigBuilder';
 
 interface ZoomPluginProps {
   onZoom: (range: { from: number; to: number }) => void;
+  withZoomY?: boolean;
   config: UPlotConfigBuilder;
 }
 
@@ -13,36 +14,38 @@ const MIN_ZOOM_DIST = 5;
 /**
  * @alpha
  */
-export const ZoomPlugin = ({ onZoom, config }: ZoomPluginProps) => {
+export const ZoomPlugin = ({ onZoom, config, withZoomY = false }: ZoomPluginProps) => {
   useLayoutEffect(() => {
     let yZoomed = false;
     let yDrag = false;
 
-    config.addHook('init', (u) => {
-      u.root!.addEventListener(
-        'mousedown',
-        (e) => {
-          if (e.button === 0 && e.shiftKey) {
-            yDrag = true;
+    if (withZoomY) {
+      config.addHook('init', (u) => {
+        u.root!.addEventListener(
+          'mousedown',
+          (e) => {
+            if (e.button === 0 && e.shiftKey) {
+              yDrag = true;
 
-            u.cursor!.drag!.x = false;
-            u.cursor!.drag!.y = true;
+              u.cursor!.drag!.x = false;
+              u.cursor!.drag!.y = true;
 
-            let onUp = (e: MouseEvent) => {
-              u.cursor!.drag!.x = true;
-              u.cursor!.drag!.y = false;
-              u.root!.removeEventListener('mouseup', onUp, true);
-            };
+              let onUp = (e: MouseEvent) => {
+                u.cursor!.drag!.x = true;
+                u.cursor!.drag!.y = false;
+                u.root!.removeEventListener('mouseup', onUp, true);
+              };
 
-            u.root!.addEventListener('mouseup', onUp, true);
-          }
-        },
-        true
-      );
-    });
+              u.root!.addEventListener('mouseup', onUp, true);
+            }
+          },
+          true
+        );
+      });
+    }
 
     config.addHook('setSelect', (u) => {
-      if (yDrag) {
+      if (withZoomY && yDrag) {
         if (u.select.height >= MIN_ZOOM_DIST) {
           for (let key in u.scales!) {
             if (key !== 'x') {
@@ -73,7 +76,7 @@ export const ZoomPlugin = ({ onZoom, config }: ZoomPluginProps) => {
     config.setCursor({
       bind: {
         dblclick: (u) => () => {
-          if (yZoomed) {
+          if (withZoomY && yZoomed) {
             for (let key in u.scales!) {
               if (key !== 'x') {
                 // @ts-ignore (this is not typed correctly in uPlot, assigning nulls means auto-scale / reset)
