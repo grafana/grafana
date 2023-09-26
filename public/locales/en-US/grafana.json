@@ -216,6 +216,7 @@
     }
   },
   "data-source-picker": {
+    "add-new-data-source": "Configure a new data source",
     "built-in-list": {
       "description-dashboard": "Reuse query results from other visualizations",
       "description-grafana": "Discover visualizations using mock data",
