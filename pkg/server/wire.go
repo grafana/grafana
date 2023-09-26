@@ -365,7 +365,6 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(signingkeys.Service), new(*signingkeysimpl.Service)),
 	idimpl.ProvideService,
 	wire.Bind(new(auth.IDService), new(*idimpl.Service)),
-	idimpl.ProvideLocalSigner,
 	grafanaapiserver.WireSet,
 	apiregistry.WireSet,
 )
