@@ -51,7 +51,7 @@ Open source Grafana enables the `AWS SDK Default`, `Credentials file`, and `Acce
   The EC2RoleProvider pulls credentials for a role attached to the EC2 instance that Grafana runs on.
   You can also achieve this by using the authentication method AWS SDK Default, but this option is different as it doesn't have any fallbacks.
   This option is enabled by default only in Amazon Managed Grafana.
-- `Grafana Assume Role` is a new auth type in private preview only available in Grafana Cloud. To gain early access to this feature, reach out to customer support and ask about enabling the `awsDatasourcesTempCredentials` feature toggle. With this auth provider option, Grafana Cloud customers create an AWS IAM Role which has a trust relationship with Grafana's AWS Account. Grafana then uses STS to generate temporary credentials on it's behalf. Users with this option enabled will no longer need to generate secret and access keys for users.
+- `Grafana Assume Role` - With this auth provider option, Grafana Cloud users create an AWS IAM role that has a trust relationship with Grafana's AWS account. Grafana then uses STS to generate temporary credentials on its behalf. Users with this option enabled no longer need to generate secret and access keys for users.
 
 If necessary, you can enable or disable them if you have server configuration access.
 For more information, refer to the [`allowed_auth_providers` documentation][configure-grafana-allowed-auth-providers].
