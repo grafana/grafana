@@ -433,22 +433,21 @@ function resolveExpressionParser(_: SyntaxNode, text: string, cursorPosition: nu
   // E.g. `{x="y"} | logfmt ^`
 
   const tree = parser.parse(text);
+  const cursor = tree.cursorAt(cursorPosition);
 
   // Adjust the cursor position if there are spaces at the end of the text.
   const trimRightTextLen = text.substring(0, cursorPosition).trimEnd().length;
-  const position = trimRightTextLen < cursorPosition ? trimRightTextLen : cursorPosition;
-
-  const cursor = tree.cursorAt(position);
+  const adjustedPosition = trimRightTextLen < cursorPosition ? trimRightTextLen : cursorPosition;
 
   // Check if the user cursor is in any node that requires expression parser suggestions.
-  const logfmtNodes = [LogfmtExpressionParser, Logfmt, LogfmtParser, LabelExtractionExpressionList];
+  const logfmtNodes = [Logfmt, LogfmtParser, LogfmtExpressionParser];
   const jsonNodes = [Json, JsonExpressionParser];
   let logfmtParser = false;
   let jsonParser = false;
   do {
     const { node } = cursor;
     // Ignore nodes outside the user position
-    const cursorInNodePosition = cursor.from <= position && cursor.to >= position;
+    const cursorInNodePosition = node.from <= adjustedPosition && node.to >= adjustedPosition;
     if (!cursorInNodePosition) {
       continue;
     }
@@ -466,8 +465,7 @@ function resolveExpressionParser(_: SyntaxNode, text: string, cursorPosition: nu
     return null;
   }
 
-  const logQuery = getLogQueryFromMetricsQueryAtPosition(text, position).trim();
-
+  const logQuery = getLogQueryFromMetricsQueryAtPosition(text, adjustedPosition).trim();
   const flags = getNodesFromQuery(logQuery, [ParserFlag]).length > 1;
   const labelNodes = getNodesFromQuery(logQuery, [LabelExtractionExpression]);
   const otherLabels = labelNodes
