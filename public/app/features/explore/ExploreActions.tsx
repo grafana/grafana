@@ -71,11 +71,9 @@ export const ExploreActions = () => {
       }
     } else {
       // command palette doesn't know what pane we're in, only show option if not split and no datasource is mixed
-      const hasMixed = Object.entries(panes)
-        .map((pane) => pane[1])
-        .some((pane: ExploreItemState | undefined) => {
-          return pane?.datasourceInstance?.uid === MIXED_DATASOURCE_NAME;
-        });
+      const hasMixed = Object.values(panes).some((pane) => {
+        return pane?.datasourceInstance?.uid === MIXED_DATASOURCE_NAME;
+      });
 
       if (config.featureToggles.correlations && canWriteCorrelations && !hasMixed) {
         actionsArr.push({
