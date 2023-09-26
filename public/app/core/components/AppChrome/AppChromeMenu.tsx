@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { useDialog } from '@react-aria/dialog';
 import { FocusScope } from '@react-aria/focus';
 import { OverlayContainer, useOverlay } from '@react-aria/overlays';
-import React, { PropsWithChildren, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import CSSTransition from 'react-transition-group/CSSTransition';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -13,7 +13,7 @@ import { KioskMode } from 'app/types';
 import { DockedMegaMenu, MENU_WIDTH } from './DockedMegaMenu/DockedMegaMenu';
 import { TOP_BAR_LEVEL_HEIGHT } from './types';
 
-export interface Props extends PropsWithChildren<{}> {}
+interface Props {}
 
 export function AppChromeMenu({}: Props) {
   const theme = useTheme2();
@@ -25,7 +25,17 @@ export function AppChromeMenu({}: Props) {
   const backdropRef = useRef(null);
   const animationSpeed = theme.transitions.duration.shortest;
   const animationStyles = useStyles2(getAnimStyles, animationSpeed);
-  const onClose = () => chrome.setMegaMenu(false);
+
+  // need this janky state/effect logic to prevent the mega menu from reopening
+  // when the user clicks the hamburger icon whilst it is already open
+  const [isOpen, setIsOpen] = useState(false);
+  const onClose = () => setIsOpen(false);
+  useEffect(() => {
+    if (state.megaMenuOpen) {
+      setIsOpen(true);
+    }
+  }, [state.megaMenuOpen]);
+
   const { overlayProps, underlayProps } = useOverlay(
     {
       isDismissable: true,
@@ -42,11 +52,11 @@ export function AppChromeMenu({}: Props) {
       <OverlayContainer>
         <CSSTransition
           nodeRef={ref}
-          in={state.megaMenuOpen}
+          in={isOpen}
           unmountOnExit={true}
           classNames={animationStyles.overlay}
           timeout={{ enter: animationSpeed, exit: 0 }}
-          onExited={onClose}
+          onExited={() => chrome.setMegaMenu(false)}
         >
           <FocusScope contain autoFocus>
             <DockedMegaMenu
@@ -60,7 +70,7 @@ export function AppChromeMenu({}: Props) {
         </CSSTransition>
         <CSSTransition
           nodeRef={backdropRef}
-          in={state.megaMenuOpen}
+          in={isOpen}
           unmountOnExit={true}
           classNames={animationStyles.backdrop}
           timeout={{ enter: animationSpeed, exit: 0 }}
