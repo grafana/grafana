@@ -81,7 +81,7 @@ func objectMetaFieldsSet(objectMeta metav1.Object, namespaceScoped bool) fields.
 	}
 }
 
-func matcher(label labels.Selector, field fields.Selector) storage.SelectionPredicate {
+func Matcher(label labels.Selector, field fields.Selector) storage.SelectionPredicate {
 	return storage.SelectionPredicate{
 		Label:    label,
 		Field:    field,

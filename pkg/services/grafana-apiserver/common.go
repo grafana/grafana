@@ -7,6 +7,7 @@ import (
 
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
+	"k8s.io/apiserver/pkg/registry/generic"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
@@ -22,7 +23,8 @@ type APIGroupBuilder interface {
 	GetAPIGroupInfo(
 		scheme *runtime.Scheme,
 		codecs serializer.CodecFactory, // pointer?
-	) *genericapiserver.APIGroupInfo
+		optsGetter generic.RESTOptionsGetter,
+	) (*genericapiserver.APIGroupInfo, error)
 
 	// Get OpenAPI definitions
 	GetOpenAPIDefinitions() common.GetOpenAPIDefinitions

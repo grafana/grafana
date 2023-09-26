@@ -246,7 +246,11 @@ func (s *service) start(ctx context.Context) error {
 
 	// Install the API Group+version
 	for _, b := range builders {
-		err = server.InstallAPIGroup(b.GetAPIGroupInfo(Scheme, Codecs))
+		g, err := b.GetAPIGroupInfo(Scheme, Codecs, serverConfig.RESTOptionsGetter)
+		if err != nil {
+			return err
+		}
+		err = server.InstallAPIGroup(g)
 		if err != nil {
 			return err
 		}

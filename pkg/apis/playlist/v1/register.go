@@ -5,12 +5,14 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
+	"k8s.io/apiserver/pkg/registry/generic"
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	common "k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
 
 	grafanaapiserver "github.com/grafana/grafana/pkg/services/grafana-apiserver"
+	grafanarest "github.com/grafana/grafana/pkg/services/grafana-apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/playlist"
 )
 
@@ -45,15 +47,25 @@ func (b *PlaylistAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 func (b *PlaylistAPIBuilder) GetAPIGroupInfo(
 	scheme *runtime.Scheme,
 	codecs serializer.CodecFactory, // pointer?
-) *genericapiserver.APIGroupInfo {
+	optsGetter generic.RESTOptionsGetter,
+) (*genericapiserver.APIGroupInfo, error) {
 	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(GroupName, scheme, metav1.ParameterCodec, codecs)
 	storage := map[string]rest.Storage{}
-	storage["playlists"] = &handler{
-		service: b.service,
+
+	sqlStore := newSQLStorage(b.service)
+	storage["playlists"] = sqlStore
+
+	// enable dual wires if a RESTOptionsGetter is provided
+	if optsGetter != nil {
+		unifiedStorage, err := newUnifiedStorage(scheme, optsGetter)
+		if err != nil {
+			return nil, err
+		}
+		storage["playlists"] = grafanarest.NewDualWriter(sqlStore, unifiedStorage)
 	}
 
 	apiGroupInfo.VersionedResourcesStorageMap[VersionID] = storage
-	return &apiGroupInfo
+	return &apiGroupInfo, nil
 }
 
 func (b *PlaylistAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
