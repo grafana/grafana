@@ -35,7 +35,10 @@ export const computeErrorMessage = (errorNode: SyntaxNode) => {
           return 'Invalid comparison operator after field expression.';
       }
     case SpansetFilter:
-      return 'Invalid comparison operator after field expression.';
+      if (errorNode.prevSibling?.type.id === FieldExpression) {
+        return 'Invalid comparison operator after field expression.';
+      }
+      return 'Invalid expression for spanset.';
     case SpansetPipelineExpression:
       switch (errorNode.prevSibling?.type.id) {
         case SpansetPipelineExpression:

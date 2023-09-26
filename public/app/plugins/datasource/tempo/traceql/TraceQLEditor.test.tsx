@@ -41,7 +41,7 @@ describe('computeErrorMarkers', () => {
     ['{.foo=1} | max() = 3', 'Invalid expression for aggregator operator.'],
     ['{.foo=1} | by()', 'Invalid expression for aggregator operator.'],
     ['{.foo=1} | select()', 'Invalid expression for aggregator operator.'],
-    ['{foo}', 'Invalid comparison operator after field expression.'],
+    ['{foo}', 'Invalid expression for spanset.'],
     ['{.}', 'Invalid expression for spanset.'],
     ['{ resource. }', 'Invalid expression for spanset.'],
     ['{ span. }', 'Invalid expression for spanset.'],
