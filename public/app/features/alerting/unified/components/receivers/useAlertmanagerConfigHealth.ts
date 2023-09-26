@@ -1,6 +1,7 @@
 import { countBy } from 'lodash';
 
-import { AlertmanagerConfig, Route } from '../../../../../plugins/datasource/alertmanager/types';
+import { AlertmanagerConfig } from '../../../../../plugins/datasource/alertmanager/types';
+import { getUsedContactPoints } from '../contact-points/utils';
 
 export interface ContactPointConfigHealth {
   matchingRoutes: number;
@@ -31,13 +32,4 @@ export function useAlertmanagerConfigHealth(config: AlertmanagerConfig): Alertma
   });
 
   return configHealth;
-}
-
-function getUsedContactPoints(route: Route): string[] {
-  const childrenContactPoints = route.routes?.flatMap((route) => getUsedContactPoints(route)) ?? [];
-  if (route.receiver) {
-    return [route.receiver, ...childrenContactPoints];
-  }
-
-  return childrenContactPoints;
 }

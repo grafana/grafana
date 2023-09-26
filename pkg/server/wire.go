@@ -8,6 +8,7 @@ package server
 
 import (
 	"github.com/google/wire"
+
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 
 	"github.com/grafana/grafana/pkg/api"
@@ -32,6 +33,7 @@ import (
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/middleware/csrf"
 	"github.com/grafana/grafana/pkg/middleware/loggermw"
+	apiregistry "github.com/grafana/grafana/pkg/registry/apis"
 	"github.com/grafana/grafana/pkg/registry/corekind"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
@@ -39,6 +41,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/annotations/annotationsimpl"
+	"github.com/grafana/grafana/pkg/services/anonymous/anonimpl/anonstore"
 	"github.com/grafana/grafana/pkg/services/apikey/apikeyimpl"
 	"github.com/grafana/grafana/pkg/services/auth/jwt"
 	"github.com/grafana/grafana/pkg/services/authn/authnimpl"
@@ -61,6 +64,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
+	grafanaapiserver "github.com/grafana/grafana/pkg/services/grafana-apiserver"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
 	grpccontext "github.com/grafana/grafana/pkg/services/grpcserver/context"
 	"github.com/grafana/grafana/pkg/services/grpcserver/interceptors"
@@ -351,10 +355,14 @@ var wireBasicSet = wire.NewSet(
 	authnimpl.ProvideAuthnService,
 	supportbundlesimpl.ProvideService,
 	oasimpl.ProvideService,
+	anonstore.ProvideAnonDBStore,
+	wire.Bind(new(anonstore.AnonStore), new(*anonstore.AnonDBStore)),
 	wire.Bind(new(oauthserver.OAuth2Server), new(*oasimpl.OAuth2ServiceImpl)),
 	loggermw.Provide,
 	signingkeysimpl.ProvideEmbeddedSigningKeysService,
 	wire.Bind(new(signingkeys.Service), new(*signingkeysimpl.Service)),
+	grafanaapiserver.WireSet,
+	apiregistry.WireSet,
 )
 
 var wireSet = wire.NewSet(
