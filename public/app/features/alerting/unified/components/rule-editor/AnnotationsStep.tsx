@@ -15,7 +15,7 @@ import { Annotation, annotationLabels } from '../../utils/constants';
 
 import AnnotationHeaderField from './AnnotationHeaderField';
 import DashboardAnnotationField from './DashboardAnnotationField';
-import { DashboardPicker, findSelectedPanel, mergePanels, PanelDTO } from './DashboardPicker';
+import { DashboardPicker, mergePanels, PanelDTO } from './DashboardPicker';
 import { NeedHelpInfo } from './NeedHelpInfo';
 import { RuleEditorSection } from './RuleEditorSection';
 

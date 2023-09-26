@@ -17,9 +17,9 @@ import {
   Tooltip,
   useStyles2,
 } from '@grafana/ui';
+import { DashboardDTO } from 'app/types';
 
 import { dashboardApi } from '../../api/dashboardApi';
-import { DashboardDTO } from 'app/types';
 
 export interface PanelDTO {
   id?: number;
