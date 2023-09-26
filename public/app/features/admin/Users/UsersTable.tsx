@@ -168,12 +168,10 @@ const LastSeenAtCell = ({ cell: { value } }: Cell<'lastSeenAtAge'>) => {
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    disabled: css`
-      color: ${theme.colors.text.disabled};
-    `,
-    row: css`
-      display: flex;
-      align-items: center;
-    `,
+    disabled: css({ color: theme.colors.text.disabled }),
+    row: css({
+      display: 'flex',
+      alignItems: 'center',
+    }),
   };
 };

@@ -220,11 +220,11 @@ const InfoCell = ({ row: { original } }: Cell) => {
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  row: css`
-    display: flex;
-    align-items: center;
-  `,
-  icon: css`
-    margin-left: ${theme.spacing(1)};
-  `,
+  row: css({
+    display: 'flex',
+    alignItems: 'center',
+  }),
+  icon: css({
+    marginLeft: theme.spacing(1),
+  }),
 });
