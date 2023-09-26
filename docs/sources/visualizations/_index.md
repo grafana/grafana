@@ -1,7 +1,7 @@
 +++
 title = "Visualizations"
 weight = 75
-aliases = ["/docs/grafana/latest/panels/visualizations/"]
+aliases = ["/docs/grafana/v8.2/panels/visualizations/"]
 +++
 
 # Visualization panels

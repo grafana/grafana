@@ -1,6 +1,6 @@
 +++
 title = "Legacy plugins"
-aliases = ["/docs/grafana/latest/plugins/development/", "/docs/grafana/next/plugins/datasources/", "/docs/grafana/next/plugins/apps/", "/docs/grafana/next/plugins/panels/", "/docs/grafana/next/plugins/developing/development/"]
+aliases = ["/docs/grafana/v8.2/plugins/development/", "/docs/grafana/next/plugins/datasources/", "/docs/grafana/next/plugins/apps/", "/docs/grafana/next/plugins/panels/", "/docs/grafana/next/plugins/developing/development/"]
 +++
 
 # Legacy plugins

@@ -2,7 +2,7 @@
 title = "Fine-grained access control HTTP API "
 description = "Fine-grained access control API"
 keywords = ["grafana", "http", "documentation", "api", "fine-grained-access-control", "acl", "enterprise"]
-aliases = ["/docs/grafana/latest/http_api/accesscontrol/"]
+aliases = ["/docs/grafana/v8.2/http_api/accesscontrol/"]
 +++
 
 # Fine-grained access control API

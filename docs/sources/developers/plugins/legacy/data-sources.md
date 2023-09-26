@@ -1,7 +1,7 @@
 +++
 title = "Legacy data source plugins"
 keywords = ["grafana", "plugins", "documentation"]
-aliases = ["/docs/grafana/latest/plugins/developing/datasources/"]
+aliases = ["/docs/grafana/v8.2/plugins/developing/datasources/"]
 +++
 
 # Legacy data source plugins
