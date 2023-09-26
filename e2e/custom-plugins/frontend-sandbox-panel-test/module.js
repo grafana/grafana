@@ -5,7 +5,7 @@
  */
 define(['react', '@grafana/data'], function (React, grafanaData) {
   // This would be a custom editor component
-  function Editor(props) {
+  function Editor() {
     const onChangeInternal = (event) => {
       const outsideEl =
         event.target.parentElement.parentElement.parentElement.parentElement.parentElement.parentElement.parentElement
