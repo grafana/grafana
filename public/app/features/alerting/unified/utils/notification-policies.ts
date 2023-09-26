@@ -48,20 +48,34 @@ interface MatchingResult {
   labelsMatch: Map<Label, LabelMatchResult>;
 }
 
-// check if every matcher returns "true" for the set of labels
-function matchLabels(matchers: ObjectMatcher[], labels: Label[]): MatchingResult {
-  const details = new Map<ObjectMatcher, Label[]>();
+function isMissingLabelMatcher(matcher: ObjectMatcher): boolean {
+  return (
+    (matcher[1] === MatcherOperator.equal && matcher[2] === '') ||
+    (matcher[1] === MatcherOperator.regex && matcher[2] !== '^$') ||
+    (matcher[1] === MatcherOperator.notRegex && matcher[2] === '.*')
+  );
+}
 
+function isNotEmptyValueInMissingLabel(key: string, label: Label): boolean {
+  return key === label[0] && label[1] !== '';
+}
+// check if every matcher returns "true" for the set of labels
+function matchLabels(matchersInNotificationPolicy: ObjectMatcher[], labelsInInstance: Label[]): MatchingResult {
+  const details = new Map<ObjectMatcher, Label[]>();
+  let matchesEmpty = false;
   // If a policy has no matchers it still can be a match, hence matchers can be empty and match can be true
   // So we cannot use empty array of matchers as an indicator of no match
   const labelsMatch = new Map<Label, { match: boolean; matchers: ObjectMatcher[] }>(
-    labels.map((label) => [label, { match: false, matchers: [] }])
+    labelsInInstance.map((label) => [label, { match: false, matchers: [] }])
   );
 
-  const matches = matchers.every((matcher) => {
-    const matchingLabels = labels.filter((label) => isLabelMatch(matcher, label));
+  // WE HAVE TO MATCH ALL MATCHERS
+  const matches = matchersInNotificationPolicy.every((matcher) => {
+    const matchingLabelsInInstance = labelsInInstance.filter((label) => isLabelMatch(matcher, label));
 
-    matchingLabels.forEach((label) => {
+    // update the map with the matchers and the match
+    matchingLabelsInInstance.forEach((label) => {
+      //for each label that matches a matcher, we update the map with the matchers and the match
       const labelMatch = labelsMatch.get(label);
       // The condition is just to satisfy TS. The map should have all the labels due to the previous map initialization
       if (labelMatch) {
@@ -70,12 +84,30 @@ function matchLabels(matchers: ObjectMatcher[], labels: Label[]): MatchingResult
       }
     });
 
-    if (matchingLabels.length === 0) {
-      return false;
+    if (matchingLabelsInInstance.length === 0) {
+      //NO MATCH FOR THIS MATCHER, BUT MAYBE IT'S A MISSING LABEL MATCHER
+      if (isMissingLabelMatcher(matcher)) {
+        let labelMatch: {
+          match: boolean;
+          matchers: ObjectMatcher[];
+        };
+
+        // check if there is no other matcher for the same label key in labelsMatch
+        if (labelsInInstance.some((label) => isNotEmptyValueInMissingLabel(matcher[0], label))) {
+          return false;
+        }
+        labelMatch = { match: true, matchers: [matcher] };
+        labelMatch.matchers.push(matcher);
+        matchesEmpty = true;
+        labelsMatch.set([matcher[0], ''], labelMatch);
+        return true;
+      } else {
+        return false;
+      }
     }
 
-    details.set(matcher, matchingLabels);
-    return matchingLabels.length > 0;
+    details.set(matcher, matchingLabelsInInstance);
+    return matchingLabelsInInstance.length > 0 || matchesEmpty;
   });
 
   return { matches, details, labelsMatch };

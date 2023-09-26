@@ -1,10 +1,11 @@
 import { MatcherOperator, Route, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
 
+import { Label } from './matchers';
 import {
-  findMatchingRoutes,
-  normalizeRoute,
-  getInheritedProperties,
   computeInheritedTree,
+  findMatchingRoutes,
+  getInheritedProperties,
+  normalizeRoute,
 } from './notification-policies';
 
 import 'core-js/stable/structured-clone';
@@ -38,15 +39,28 @@ describe('findMatchingRoutes', () => {
         receiver: 'C',
         object_matchers: [['foo', MatcherOperator.equal, 'bar']],
       },
+      {
+        receiver: 'D',
+        object_matchers: [['empty', MatcherOperator.equal, '']],
+      },
     ],
     group_wait: '10s',
     group_interval: '1m',
   };
 
+  const emptyLabel: Label = ['empty', ''];
+  const notEmptyLabel: Label = ['empty', 'something'];
+
   it('should match root route with no matching labels', () => {
-    const matches = findMatchingRoutes(policies, []);
+    const matches = findMatchingRoutes(policies, [notEmptyLabel]);
     expect(matches).toHaveLength(1);
     expect(matches[0].route).toHaveProperty('receiver', 'ROOT');
+  });
+
+  it('should not match root route when match policy with empty value', () => {
+    const matches = findMatchingRoutes(policies, [emptyLabel]);
+    expect(matches).toHaveLength(1);
+    expect(matches[0].route).toHaveProperty('receiver', 'D');
   });
 
   it('should match parent route with no matching children', () => {
