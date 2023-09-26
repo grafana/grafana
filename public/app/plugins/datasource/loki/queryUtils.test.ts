@@ -427,6 +427,10 @@ describe('getLogQueryFromMetricsQuery', () => {
       )
     ).toBe('{label="$var"} | logfmt | __error__=``');
   });
+  it('does not return a query when there is no log query', () => {
+    expect(getLogQueryFromMetricsQuery('1+1')).toBe('');
+    expect(getLogQueryFromMetricsQuery('count_over_time([1s])')).toBe('');
+  });
 });
 
 describe('getNodePositionsFromQuery', () => {

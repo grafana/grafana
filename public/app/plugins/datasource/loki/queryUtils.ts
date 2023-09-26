@@ -231,7 +231,7 @@ export function getLogQueryFromMetricsQuery(query: string): string {
   // Log query in metrics query composes of Selector & PipelineExpr
   const selectorNode = getNodeFromQuery(query, Selector);
   if (!selectorNode) {
-    return query;
+    return '';
   }
   const selector = query.substring(selectorNode.from, selectorNode.to);
 
