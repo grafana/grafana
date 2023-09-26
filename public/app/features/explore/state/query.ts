@@ -527,7 +527,7 @@ export const runQueries = createAsyncThunk<void, RunQueriesOptions>(
     const showCorrelationEditorLinks = isCorrelationEditorMode && isLeftPane;
     const defaultCorrelationEditorDatasource = showCorrelationEditorLinks ? await getDataSourceSrv().get() : undefined;
     const interpolateCorrelationHelperVars =
-      (isCorrelationEditorMode && !isLeftPane && correlationEditorHelperData !== undefined) || false;
+      isCorrelationEditorMode && !isLeftPane && correlationEditorHelperData !== undefined;
     let newQuerySource: Observable<ExplorePanelData>;
     let newQuerySubscription: SubscriptionLike;
 

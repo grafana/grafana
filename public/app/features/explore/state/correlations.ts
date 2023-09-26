@@ -1,6 +1,8 @@
 import { Observable } from 'rxjs';
 
 import { getDataSourceSrv, reportInteraction } from '@grafana/runtime';
+import { notifyApp } from 'app/core/actions';
+import { createErrorNotification } from 'app/core/copy/appNotification';
 import { CreateCorrelationParams } from 'app/features/correlations/types';
 import { CorrelationData } from 'app/features/correlations/useCorrelations';
 import { getCorrelationsBySourceUIDs, createCorrelation } from 'app/features/correlations/utils';
@@ -33,7 +35,7 @@ export const getCorrelations = (exploreId: string) => {
   });
 };
 
-function reloadCorrelations(exploreId: string): ThunkResult<void> {
+function reloadCorrelations(exploreId: string): ThunkResult<Promise<void>> {
   return async (dispatch, getState) => {
     const pane = getState().explore!.panes[exploreId]!;
 
@@ -48,11 +50,14 @@ function reloadCorrelations(exploreId: string): ThunkResult<void> {
   };
 }
 
-export function saveCurrentCorrelation(label?: string, description?: string): ThunkResult<void> {
+export function saveCurrentCorrelation(label?: string, description?: string): ThunkResult<Promise<void>> {
   return async (dispatch, getState) => {
-    const keys = Object.keys(getState().explore!.panes);
-    const sourcePane = getState().explore!.panes[keys[0]]!;
-    const targetPane = getState().explore!.panes[keys[1]]!;
+    const keys = Object.keys(getState().explore?.panes);
+    const sourcePane = getState().explore?.panes[keys[0]];
+    const targetPane = getState().explore?.panes[keys[1]];
+    if (!sourcePane || !targetPane) {
+      return;
+    }
     const sourceDatasourceRef = sourcePane.datasourceInstance?.meta.mixed
       ? sourcePane.queries[0].datasource
       : sourcePane.datasourceInstance?.getRef();
@@ -77,17 +82,20 @@ export function saveCurrentCorrelation(label?: string, description?: string): Th
           type: 'query',
         },
       };
-      await createCorrelation(sourceDatasource.uid, correlation).then(async (onFulfilled) => {
-        if (onFulfilled) {
-          await dispatch(splitClose(keys[1]));
+      await createCorrelation(sourceDatasource.uid, correlation)
+        .then(async () => {
+          dispatch(splitClose(keys[1]));
           await dispatch(reloadCorrelations(keys[0]));
           await dispatch(runQueries({ exploreId: keys[0] }));
           reportInteraction('grafana_explore_correlation_editor_saved', {
             sourceDatasourceType: sourceDatasource.type,
             targetDataSourceType: targetDatasource.type,
           });
-        }
-      });
+        })
+        .catch((err) => {
+          dispatch(notifyApp(createErrorNotification('Error creating correlation', err)));
+          console.error(err);
+        });
     }
   };
 }

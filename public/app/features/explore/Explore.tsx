@@ -502,8 +502,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
 
     let correlationsBox = undefined;
     const isCorrelationsEditorMode = correlationEditorDetails?.editorMode;
-    const showCorrelationHelper =
-      isCorrelationsEditorMode || (!isCorrelationsEditorMode && correlationEditorDetails?.dirty) || false;
+    const showCorrelationHelper = Boolean(isCorrelationsEditorMode || correlationEditorDetails?.dirty);
     if (showCorrelationHelper && correlationEditorHelperData !== undefined) {
       correlationsBox = <CorrelationHelper correlations={correlationEditorHelperData} />;
     }

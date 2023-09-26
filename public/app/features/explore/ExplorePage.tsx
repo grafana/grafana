@@ -95,9 +95,5 @@ const getStyles = (theme: GrafanaTheme2) => {
       borderBottom: `4px solid ${theme.colors.primary.main}`,
       overflow: 'scroll',
     }),
-    correlationEditorTop: css({
-      backgroundColor: theme.colors.primary.main,
-      marginTop: '3px',
-    }),
   };
 };

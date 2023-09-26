@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useId } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { ExploreCorrelationHelperData } from '@grafana/data';
@@ -12,11 +12,17 @@ interface Props {
   correlations: ExploreCorrelationHelperData;
 }
 
+interface FormValues {
+  label: string;
+  description: string;
+}
+
 export const CorrelationHelper = ({ correlations }: Props) => {
   const dispatch = useDispatch();
-  const { register, watch } = useForm();
+  const { register, watch } = useForm<FormValues>();
   const [isOpen, setIsOpen] = useState(false);
   const correlationDetails = useSelector(selectCorrelationDetails);
+  const id = useId();
 
   useEffect(() => {
     const subscription = watch((value) => {
@@ -39,8 +45,7 @@ export const CorrelationHelper = ({ correlations }: Props) => {
     return () => {
       dispatch(changeCorrelationEditorDetails({ canSave: false }));
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [dispatch]);
 
   return (
     <Alert title="Correlation details" severity="info">
@@ -59,11 +64,11 @@ export const CorrelationHelper = ({ correlations }: Props) => {
         }}
         label="Label/Description"
       >
-        <Field label="Label">
-          <Input {...register('label')} />
+        <Field label="Label" htmlFor={`${id}-label`}>
+          <Input {...register('label')} id={`${id}-label`} />
         </Field>
-        <Field label="Description">
-          <Input {...register('description')} />
+        <Field label="Description" htmlFor={`${id}-description`}>
+          <Input {...register('description')} id={`${id}-description`} />
         </Field>
       </Collapse>
     </Alert>

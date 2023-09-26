@@ -266,13 +266,13 @@ export const exploreReducer = (state = initialExploreState, action: AnyAction): 
     return {
       ...state,
       correlationEditorDetails: {
-        editorMode: editorMode !== undefined ? editorMode : state.correlationEditorDetails?.editorMode || false,
-        canSave: canSave !== undefined ? canSave : state.correlationEditorDetails?.canSave || false,
-        label: label !== undefined ? label : state.correlationEditorDetails?.label,
-        description: description !== undefined ? description : state.correlationEditorDetails?.description,
-        dirty: dirty !== undefined ? dirty : state.correlationEditorDetails?.dirty || false,
-        isExiting: isExiting !== undefined ? isExiting : state.correlationEditorDetails?.isExiting || false,
-        postConfirmAction: postConfirmAction !== undefined ? { ...postConfirmAction } : undefined,
+        editorMode: Boolean(editorMode ?? state.correlationEditorDetails?.editorMode),
+        canSave: Boolean(canSave ?? state.correlationEditorDetails?.canSave),
+        label: label ?? state.correlationEditorDetails?.label,
+        description: description ?? state.correlationEditorDetails?.description,
+        dirty: Boolean(dirty ?? state.correlationEditorDetails?.dirty),
+        isExiting: Boolean(isExiting ?? state.correlationEditorDetails?.isExiting),
+        postConfirmAction,
       },
     };
   }
