@@ -40,15 +40,17 @@ const ContentOutline = () => {
 
   const scrollIntoView = (ref: HTMLElement | null, buttonTitle: string) => {
     ref?.scrollIntoView({ behavior: 'smooth' });
-    reportInteraction('grafana_explore_content_outline_item_clicked', {
-      scrollButtonClicked: buttonTitle,
+    reportInteraction('explore_toolbar_contentoutline_clicked', {
+      item: 'select_section',
+      type: buttonTitle,
     });
   };
 
   const toggle = () => {
     toggleExpanded();
-    reportInteraction('grafana_explore_content_outline_toggle_expand', {
-      expanded: !expanded,
+    reportInteraction('explore_toolbar_contentoutline_clicked', {
+      item: 'outline',
+      type: expanded ? 'minimize' : 'expand',
     });
   };
 
