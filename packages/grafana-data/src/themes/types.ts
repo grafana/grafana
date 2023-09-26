@@ -49,6 +49,8 @@ export interface ThemeRichColor {
   border: string;
   /** Used subtly colored backgrounds */
   transparent: string;
+  /** Used for weak borders like larger alert/banner boxes */
+  borderTranparent: string;
   /** Text color for text ontop of main */
   contrastText: string;
 }
