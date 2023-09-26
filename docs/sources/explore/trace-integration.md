@@ -105,4 +105,4 @@ Optional fields:
 | stackTraces    | string[]            | List of stack traces associated with the current span.             |
 | errorIconColor | string              | Color of the error icon in case span is tagged with `error: true`. |
 
-For details about the types see [TraceSpanRow](https://grafana.com/docs/grafana/latest/packages_api/data/tracespanrow/), [TraceKeyValuePair](https://grafana.com/docs/grafana/latest/packages_api/data/tracekeyvaluepair/) and [TraceLog](https://grafana.com/docs/grafana/latest/packages_api/data/tracelog/)
+For details about the types see [TraceSpanRow]({{< relref "../packages_api/data/tracespanrow" >}}), [TraceKeyValuePair]({{< relref "../packages_api/data/tracekeyvaluepair" >}}) and [TraceLog]({{< relref "../packages_api/data/tracelog" >}})
