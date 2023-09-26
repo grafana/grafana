@@ -23,27 +23,15 @@ const promQLTemplatesCollection = 'grafana.promql.templates';
 // actions to update the state
 const { updateInteraction } = stateSlice.actions;
 
-export const querySuggestions: QuerySuggestion[] = [
-  {
-    query: 'min(mlapi_http_requests_total{instance="localhost:3005"})',
-    explanation: '',
-  },
-  {
-    query: 'sum(mlapi_http_requests_total{instance="localhost:3005"})',
-    explanation: '',
-  },
-  {
-    query: 'avg(mlapi_http_requests_total{job="go-app"})',
-    explanation: '',
-  },
-  {
-    query: 'mlapi_http_requests_total{job="go-app"}',
-    explanation: '',
-  },
-  {
-    query: 'mlapi_http_requests_total{instance="localhost:3005"}',
-    explanation: '',
-  },
+const commonTemplateSuggestions: string[] = [
+	"metric{}",
+	"rate(metric{}[1m])",
+	"increase(metric{}[1m])",
+	"count(metric{})",
+	"max(metric{})",
+	"avg(metric{})",
+	"sum(metric{})",
+	"sum(rate(metric{}[1m]))",
 ];
 
 interface TemplateSearchResult {
@@ -164,14 +152,17 @@ export async function promQailSuggest(
   // when you're not running promqail
   const check = (await llms.openai.enabled()) && (await llms.vector.enabled());
 
-  if (!check) {
-    console.log("LLM & VectorDB check failed, using fallback")
+  const interactionToUpdate = interaction ? interaction : createInteraction(SuggestionType.Historical);
+
+  if (!check || interactionToUpdate.suggestionType === SuggestionType.Historical) {
     return new Promise<void>((resolve) => {
       return setTimeout(() => {
-        const interactionToUpdate = interaction ? interaction : createInteraction(SuggestionType.Historical);
-
-        const suggestions =
-          interactionToUpdate.suggestionType === SuggestionType.Historical ? querySuggestions : [querySuggestions[0]];
+        const suggestions = commonTemplateSuggestions.map(suggestion => {
+          return {
+            query: suggestion.replace('metric', query.metric).replace('{}', promQueryModeller.renderLabels(query.labels)),
+            explanation: '',
+          };
+        }).sort(() => Math.random() - 0.5).slice(0, 5);
 
         const payload = {
           idx,
@@ -208,7 +199,6 @@ export async function promQailSuggest(
 
     const resultsString = results.map(r => { return `PromQL: ${r.payload.promql}\nDescription: ${r.payload.description}`}).join('\n')
 
-    const interactionToUpdate = interaction ? interaction : createInteraction(SuggestionType.Historical);
     const promptMessages = getSuggestMessage({
       promql: query.metric,
       question: interaction ? interaction.prompt : '',
