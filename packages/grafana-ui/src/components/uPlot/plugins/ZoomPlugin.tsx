@@ -76,6 +76,7 @@ export const ZoomPlugin = ({ onZoom, config }: ZoomPluginProps) => {
           if (yZoomed) {
             for (let key in u.scales!) {
               if (key !== 'x') {
+                // @ts-ignore (this is not typed correctly in uPlot, assigning nulls means auto-scale / reset)
                 u.setScale(key, { min: null, max: null });
               }
             }
