@@ -33,7 +33,7 @@ export const PromQail = (props: PromQailProps) => {
 
   const [state, dispatch] = useReducer(stateSlice.reducer, initialState(query, !skipStartingMessage));
 
-  const [labelNames, setLabelNames] = useState([])
+  const [labelNames, setLabelNames] = useState<string[]>([])
   useEffect(() => {
     const fetchLabels = async () => {
       let labelsIndex: Record<string, string[]>;
@@ -45,7 +45,7 @@ export const PromQail = (props: PromQailProps) => {
       setLabelNames(Object.keys(labelsIndex));
     }
     fetchLabels();
-  }, [query])
+  }, [query, datasource])
 
   const theme = useTheme2();
   const styles = getStyles(theme);
