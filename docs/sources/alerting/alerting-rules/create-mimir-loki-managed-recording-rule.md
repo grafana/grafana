@@ -70,3 +70,4 @@ To create recording rules, follow these steps.
 
 [configure-grafana]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana"
 [configure-grafana]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana"
+{{% /docs/reference %}}
