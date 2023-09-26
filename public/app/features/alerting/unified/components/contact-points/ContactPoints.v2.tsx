@@ -503,31 +503,31 @@ const ContactPointReceiverMetadataRow = ({ diagnostics, sendingResolved }: Conta
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  contactPointWrapper: css`
-    border-radius: ${theme.shape.radius.default};
-    border: solid 1px ${theme.colors.border.weak};
-    border-bottom: none;
-  `,
-  integrationWrapper: css`
-    position: relative;
+  contactPointWrapper: css({
+    borderRadius: `${theme.shape.radius.default}`,
+    border: `solid 1px ${theme.colors.border.weak}`,
+    borderBottom: 'none',
+  }),
+  integrationWrapper: css({
+    position: 'relative',
 
-    background: ${theme.colors.background.primary};
-    padding: ${theme.spacing(1)} ${theme.spacing(1.5)};
+    background: `${theme.colors.background.primary}`,
+    padding: `${theme.spacing(1)} ${theme.spacing(1.5)}`,
 
-    border-bottom: solid 1px ${theme.colors.border.weak};
-  `,
-  headerWrapper: css`
-    background: ${theme.colors.background.secondary};
-    padding: ${theme.spacing(1)} ${theme.spacing(1.5)};
+    borderBottom: `solid 1px ${theme.colors.border.weak}`,
+  }),
+  headerWrapper: css({
+    background: `${theme.colors.background.secondary}`,
+    padding: `${theme.spacing(1)} ${theme.spacing(1.5)}`,
 
-    border-bottom: solid 1px ${theme.colors.border.weak};
-    border-top-left-radius: ${theme.shape.radius.default};
-    border-top-right-radius: ${theme.shape.radius.default};
-  `,
-  metadataRow: css`
-    border-bottom-left-radius: ${theme.shape.radius.default};
-    border-bottom-right-radius: ${theme.shape.radius.default};
-  `,
+    borderBottom: `solid 1px ${theme.colors.border.weak}`,
+    borderTopLeftRadius: `${theme.shape.radius.default}`,
+    borderTopRightRadius: `${theme.shape.radius.default}`,
+  }),
+  metadataRow: css({
+    borderBottomLeftRadius: `${theme.shape.radius.default}`,
+    borderBottomRightRadius: `${theme.shape.radius.default}`,
+  }),
 });
 
 export default ContactPoints;
