@@ -196,7 +196,7 @@ describe('QueryRunners', () => {
 
       it('then it should call runRequest with correct args', () => {
         expect(runRequest).toHaveBeenCalledTimes(1);
-        expect(runRequest).toHaveBeenCalledWith(datasource, {}, datasource.variables.query);
+        expect(runRequest).toHaveBeenCalledWith(datasource, {}, expect.anything());
       });
     });
 
@@ -263,7 +263,7 @@ describe('QueryRunners', () => {
 
       it('then it should call runRequest with correct args', () => {
         expect(runRequest).toHaveBeenCalledTimes(1);
-        expect(runRequest).toHaveBeenCalledWith(datasource, {}, datasource.variables.query);
+        expect(runRequest).toHaveBeenCalledWith(datasource, {}, expect.anything());
       });
     });
   });

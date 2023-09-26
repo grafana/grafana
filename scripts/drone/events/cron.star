@@ -2,7 +2,6 @@
 This module provides functions for cronjob pipelines and steps used within.
 """
 
-load("scripts/drone/vault.star", "from_secret")
 load(
     "scripts/drone/steps/lib.star",
     "compile_build_cmd",
@@ -11,6 +10,7 @@ load(
     "scripts/drone/utils/images.star",
     "images",
 )
+load("scripts/drone/vault.star", "from_secret")
 
 aquasec_trivy_image = "aquasec/trivy:0.21.0"
 
@@ -160,7 +160,7 @@ def scan_docker_image_high_critical_vulnerabilities_step(docker_image):
 def slack_job_failed_step(channel, image):
     return {
         "name": "slack-notify-failure",
-        "image": images["plugins_slack_image"],
+        "image": images["plugins_slack"],
         "settings": {
             "webhook": from_secret("slack_webhook_backend"),
             "channel": channel,
@@ -174,7 +174,7 @@ def slack_job_failed_step(channel, image):
 def post_to_grafana_com_step():
     return {
         "name": "post-to-grafana-com",
-        "image": images["publish_image"],
+        "image": images["publish"],
         "environment": {
             "GRAFANA_COM_API_KEY": from_secret("grafana_api_key"),
             "GCP_KEY": from_secret("gcp_key"),
