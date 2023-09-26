@@ -75,18 +75,6 @@ func ProvideService(router routing.RouteRegister, db db.DB, cfg *setting.Cfg,
 		ScopeStrategy:       fosite.WildcardScopeStrategy,
 	}
 
-	privateKey := keySvc.GetServerPrivateKey()
-
-	var publicKey any
-	switch k := privateKey.(type) {
-	case *rsa.PrivateKey:
-		publicKey = &k.PublicKey
-	case *ecdsa.PrivateKey:
-		publicKey = &k.PublicKey
-	default:
-		return nil, fmt.Errorf("unknown private key type %T", k)
-	}
-
 	s := &OAuth2ServiceImpl{
 		cache:         localcache.New(cacheExpirationTime, cacheCleanupInterval),
 		cfg:           cfg,
@@ -98,20 +86,19 @@ func ProvideService(router routing.RouteRegister, db db.DB, cfg *setting.Cfg,
 		userService:   userSvc,
 		saService:     svcAccSvc,
 		teamService:   teamSvc,
-		publicKey:     publicKey,
 	}
 
 	api := api.NewAPI(router, s)
 	api.RegisterAPIEndpoints()
 
-	s.oauthProvider = newProvider(config, s, privateKey)
+	s.oauthProvider = newProvider(config, s, keySvc)
 
 	return s, nil
 }
 
-func newProvider(config *fosite.Config, storage any, key any) fosite.OAuth2Provider {
-	keyGetter := func(context.Context) (any, error) {
-		return key, nil
+func newProvider(config *fosite.Config, storage any, signingKeyService signingkeys.Service) fosite.OAuth2Provider {
+	keyGetter := func(ctx context.Context) (any, error) {
+		return signingKeyService.GetPrivateKey(ctx, signingkeys.ServerPrivateKeyID)
 	}
 	return compose.Compose(
 		config,

@@ -172,7 +172,8 @@ func (s *ExtendedJWT) verifyRFC9068Token(ctx context.Context, rawToken string) (
 	}
 
 	var claims ExtendedJWTClaims
-	err = parsedToken.Claims(s.signingKeys.GetServerPublicKey(), &claims)
+	key, err := s.signingKeys.GetPublicKey(ctx, signingkeys.ServerPrivateKeyID)
+	err = parsedToken.Claims(key, &claims)
 	if err != nil {
 		return nil, fmt.Errorf("failed to verify the signature: %w", err)
 	}
