@@ -30,7 +30,7 @@ There are three options to choose from:
 
    For more information on the Alerting Provisioning HTTP API, refer to [Alerting provisioning HTTP API][alerting_provisioning].
 
-2. [Open Source only] Provision your alerting resources using [Terraform](https://www.terraform.io/).
+1. [Open Source only] Provision your alerting resources using [Terraform](https://www.terraform.io/).
 
 **Note:**
 
