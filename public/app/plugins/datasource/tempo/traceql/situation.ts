@@ -249,12 +249,12 @@ const RESOLVERS: Resolver[] = [
   },
 ];
 
-function resolveSpanset(node: SyntaxNode, text: string, _: number, originalPos: number): SituationType {
+const resolveAttributeCompletion = (node: SyntaxNode, text: string, pos: number): SituationType | void => {
   // The user is completing an expression. We can take advantage of the fact that the Monaco editor is smart
   // enough to automatically detect that there are some characters before the cursor and to take them into
   // account when providing suggestions.
-  let endOfPathNode = walk(node, [['firstChild', [FieldExpression]]]);
-  if (endOfPathNode && text[originalPos - 1] !== ' ') {
+  const endOfPathNode = walk(node, [['firstChild', [FieldExpression]]]);
+  if (endOfPathNode && text[pos - 1] !== ' ') {
     const attributeFieldParent = walk(endOfPathNode, [['firstChild', [AttributeField]]]);
     const attributeFieldParentText = attributeFieldParent ? getNodeText(attributeFieldParent, text) : '';
     const indexOfDot = attributeFieldParentText.indexOf('.');
@@ -265,8 +265,15 @@ function resolveSpanset(node: SyntaxNode, text: string, _: number, originalPos: 
       scope: attributeFieldUpToDot,
     };
   }
+};
 
-  endOfPathNode = walk(node, [
+function resolveSpanset(node: SyntaxNode, text: string, _: number, originalPos: number): SituationType {
+  const situation = resolveAttributeCompletion(node, text, originalPos);
+  if (situation) {
+    return situation;
+  }
+
+  let endOfPathNode = walk(node, [
     ['firstChild', [FieldExpression]],
     ['firstChild', [AttributeField]],
   ]);
@@ -324,15 +331,9 @@ function resolveAttribute(node: SyntaxNode, text: string): SituationType {
 }
 
 function resolveExpression(node: SyntaxNode, text: string, _: number, originalPos: number): SituationType {
-  // The user is completing an expression
-  let endOfPathNode = walk(node, [['firstChild', [FieldExpression]]]);
-  if (endOfPathNode && text[originalPos - 1] !== ' ') {
-    const indexOfDot = text.indexOf('.');
-    const attributeFieldUpToDot = text.slice(0, indexOfDot);
-    return {
-      type: 'SPANSET_IN_NAME_SCOPE',
-      scope: attributeFieldUpToDot,
-    };
+  const situation = resolveAttributeCompletion(node, text, originalPos);
+  if (situation) {
+    return situation;
   }
 
   if (node.prevSibling?.type.id === FieldOp) {
