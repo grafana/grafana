@@ -1,4 +1,4 @@
-package storage
+package rest
 
 import (
 	"context"
@@ -15,12 +15,14 @@ var _ rest.TableConvertor = (*DualWriter)(nil)
 var _ rest.CreaterUpdater = (*DualWriter)(nil)
 var _ rest.CollectionDeleter = (*DualWriter)(nil)
 var _ rest.GracefulDeleter = (*DualWriter)(nil)
+var _ rest.SingularNameProvider = (*DualWriter)(nil)
 
 type UnifiedStorage interface {
 	rest.Storage
 	rest.StandardStorage
 	rest.Scoper
 	rest.TableConvertor
+	rest.SingularNameProvider
 }
 
 type SQLStorage interface {
@@ -42,7 +44,7 @@ func NewDualWriter(sql SQLStorage, unified UnifiedStorage) *DualWriter {
 	}
 }
 
-// Create overrides the default behavior of the UnifiedStorage and writes to both the SQL and UnifiedStorage
+// Create overrides the default behavior of the UnifiedStorage and writes to both the SQLStorage and UnifiedStorage
 func (d *DualWriter) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
 	_, err := d.sql.Create(ctx, obj, createValidation, options)
 	if err != nil {
@@ -57,7 +59,7 @@ func (d *DualWriter) Create(ctx context.Context, obj runtime.Object, createValid
 	return obj, nil
 }
 
-// Update overrides the default behavior of the UnifiedStorage and writes to both the SQL and UnifiedStorage
+// Update overrides the default behavior of the UnifiedStorage and writes to both the SQLStorage and UnifiedStorage
 func (d *DualWriter) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
 	_, _, err := d.sql.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
 	if err != nil {
@@ -72,7 +74,7 @@ func (d *DualWriter) Update(ctx context.Context, name string, objInfo rest.Updat
 	return obj, created, nil
 }
 
-// Delete overrides the default behavior of the UnifiedStorage and writes to both the SQL and UnifiedStorage
+// Delete overrides the default behavior of the UnifiedStorage and delete from both the SQLStorage and UnifiedStorage
 func (d *DualWriter) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
 	_, _, err := d.sql.Delete(ctx, name, deleteValidation, options)
 	if err != nil {
@@ -87,7 +89,7 @@ func (d *DualWriter) Delete(ctx context.Context, name string, deleteValidation r
 	return obj, deleted, nil
 }
 
-// DeleteCollection overrides the default behavior of the UnifiedStorage and writes to both the SQL and UnifiedStorage
+// DeleteCollection overrides the default behavior of the UnifiedStorage and writes to both the SQLStorage and UnifiedStorage
 func (d *DualWriter) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *metainternalversion.ListOptions) (runtime.Object, error) {
 	_, err := d.sql.DeleteCollection(ctx, deleteValidation, options, listOptions)
 	if err != nil {
