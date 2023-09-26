@@ -462,4 +462,8 @@ const (
 	// FlagIdForwarding
 	// Generate signed id token for identity that can be forwarded to plugins and external services
 	FlagIdForwarding = "idForwarding"
+
+	// FlagExternalServiceAccounts
+	// Automatic service account and token setup for plugins
+	FlagExternalServiceAccounts = "externalServiceAccounts"
 )

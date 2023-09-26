@@ -794,5 +794,12 @@ var (
 			Owner:           grafanaAuthnzSquad,
 			RequiresDevMode: true,
 		},
+		{
+			Name:            "externalServiceAccounts",
+			Description:     "Automatic service account and token setup for plugins",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaAuthnzSquad,
+			RequiresDevMode: true,
+		},
 	}
 )

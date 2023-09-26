@@ -132,4 +132,5 @@ export interface FeatureToggles {
   pluginsAPIMetrics?: boolean;
   httpSLOLevels?: boolean;
   idForwarding?: boolean;
+  externalServiceAccounts?: boolean;
 }
