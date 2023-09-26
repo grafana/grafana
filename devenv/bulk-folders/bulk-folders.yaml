@@ -6,4 +6,3 @@ providers:
    options:
      foldersFromFilesStructure: true
      path: devenv/bulk-folders
-

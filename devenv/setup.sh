@@ -37,7 +37,7 @@ bulkAlertingDashboard() {
 
 bulkFolders() {
 	./bulk-folders/bulk-folders.sh
-	ln -s -f ../../../devenv/bulk-folders/bulk-folders.yaml ../conf/provisioning/dashboards/custom.yaml
+	ln -s -f ../../../devenv/bulk-folders/bulk-folders.yaml ../conf/provisioning/dashboards/bulk-folders.yaml
 }
 
 requiresJsonnet() {
