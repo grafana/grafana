@@ -9,6 +9,12 @@
 
 package plugindef
 
+// Defines values for AuthProvider.
+const (
+	AuthProviderOAuth2Server    AuthProvider = "OAuth2Server"
+	AuthProviderServiceAccounts AuthProvider = "ServiceAccounts"
+)
+
 // Defines values for BasicRole.
 const (
 	BasicRoleAdmin        BasicRole = "Admin"
@@ -72,6 +78,10 @@ const (
 	ReleaseStateStable     ReleaseState = "stable"
 )
 
+// AuthProvider is a string which can be 'OAuth2Server', 'ServiceAccounts'.
+// It identifies which authentication provider will be used by the plugin to authenticate against Grafana.
+type AuthProvider string
+
 // BasicRole is a Grafana basic role, which can be 'Viewer', 'Editor', 'Admin' or 'Grafana Admin'.
 // With RBAC, the Admin basic role inherits its default permissions from the Editor basic role which
 // in turn inherits them from the Viewer basic role.
@@ -124,6 +134,9 @@ type DependencyType string
 
 // ExternalServiceRegistration defines model for ExternalServiceRegistration.
 type ExternalServiceRegistration struct {
+	// AuthProvider is a string which can be 'OAuth2Server', 'ServiceAccounts'.
+	// It identifies which authentication provider will be used by the plugin to authenticate against Grafana.
+	AuthProvider  *AuthProvider  `json:"authProvider,omitempty"`
 	Impersonation *Impersonation `json:"impersonation,omitempty"`
 	Self          *Self          `json:"self,omitempty"`
 }
@@ -470,7 +483,9 @@ type Route struct {
 
 // Self defines model for Self.
 type Self struct {
-	// Enabled allows the service to request access tokens for itself using the client_credentials grant
+	// Enabled allows the service to request access tokens for itself using either
+	// the client_credentials grant if the AuthProvider is 'OAuth2Server'
+	// or a Bearer token if the AuthProvider is 'ServiceAccounts'
 	// Defaults to true.
 	Enabled *bool `json:"enabled,omitempty"`
 

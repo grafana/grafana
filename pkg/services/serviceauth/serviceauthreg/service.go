@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/components/satokengen"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/models/roletype"
@@ -13,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/oauthserver"
+	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/kvstore"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/serviceauth"
@@ -37,14 +39,14 @@ type Registry struct {
 }
 
 func ProvideServiceAuthRegistry(acSvc ac.Service, saSvc serviceaccounts.Service, oauthServer oauthserver.OAuth2Server,
-	skvStore kvstore.SecretsKVStore, features featuremgmt.FeatureToggles) *Registry {
+	sqlStore db.DB, secretSvc secrets.Service, features featuremgmt.FeatureToggles) *Registry {
 	return &Registry{
 		acSvc:       acSvc,
 		features:    features,
 		logger:      log.New("serviceauth.registry"),
 		oauthServer: oauthServer,
 		saSvc:       saSvc,
-		skvStore:    skvStore,
+		skvStore:    kvstore.NewSQLSecretsKVStore(sqlStore, secretSvc, log.New("serviceauth.registry.skv")), // TODO (gamab) Not sure I'm allowed to use this but it prevents a cyclic dependency
 	}
 }
 
@@ -82,7 +84,7 @@ func (r *Registry) SaveSATokenExternalService(ctx context.Context, cmd *servicea
 		return nil, errRetrieve
 	}
 
-	if !cmd.Self.Enabled || len(cmd.Self.Permissions) > 0 {
+	if !cmd.Self.Enabled || len(cmd.Self.Permissions) == 0 {
 		if saID > 0 {
 			r.logger.Info("Self disabled. Deleting previous service account", "service", slug, "permission count", len(cmd.Self.Permissions), "serviceaccount", saID)
 			r.deleteServiceAccount(ctx, slug, saID)
@@ -90,13 +92,19 @@ func (r *Registry) SaveSATokenExternalService(ctx context.Context, cmd *servicea
 		r.logger.Info("Self disabled. Skipping service account creation", "service", slug, "permission count", len(cmd.Self.Permissions))
 		return nil, nil
 	}
-	saID, _, errSave := r.saveServiceAccount(ctx, slug, saID, cmd.Self.Permissions)
+	saID, token, errSave := r.saveServiceAccount(ctx, slug, saID, cmd.Self.Permissions)
 	if errSave != nil {
 		r.logger.Error("Could not save service account", "service", slug, "error", errSave.Error())
 		return nil, errSave
 	}
 
-	return nil, nil
+	return &serviceauth.ExternalServiceDTO{
+		Name:         cmd.Name,
+		ID:           slug,
+		Secret:       token,
+		AuthProvider: serviceauth.ServiceAccounts,
+		Extra:        nil,
+	}, nil
 }
 
 // saveServiceAccount creates or update the service account associated with this external service
@@ -207,7 +215,7 @@ func (r *Registry) createServiceAccountToken(ctx context.Context, slug string, s
 	}
 
 	r.logger.Debug("Save service account token in skv", "service", slug, "orgID", tmpOrgID)
-	if err = r.skvStore.Set(ctx, tmpOrgID, slug, skvType, token.Key); err != nil {
+	if err = r.skvStore.Set(ctx, tmpOrgID, slug, skvType, newKeyInfo.ClientSecret); err != nil {
 		return nil, err
 	}
 	return token, nil

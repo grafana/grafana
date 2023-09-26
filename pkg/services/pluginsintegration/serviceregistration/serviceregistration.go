@@ -49,10 +49,16 @@ func (s *Service) RegisterExternalService(ctx context.Context, svcName string, s
 		}
 	}
 
+	authProvider := serviceauth.OAuth2Server
+	if svc.AuthProvider != nil && *svc.AuthProvider == plugindef.AuthProviderServiceAccounts {
+		authProvider = serviceauth.ServiceAccounts
+	}
+
 	extSvc, err := s.os.SaveExternalService(ctx, &serviceauth.ExternalServiceRegistration{
 		Name:            svcName,
 		Impersonation:   impersonation,
 		Self:            self,
+		AuthProvider:    authProvider,
 		AuthProviderCfg: oauthserver.ProviderCfg{Key: &oauthserver.KeyOption{Generate: true}},
 	})
 	if err != nil {
