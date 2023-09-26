@@ -180,6 +180,8 @@ const (
 	NamespaceUser           = identity.NamespaceUser
 	NamespaceAPIKey         = identity.NamespaceAPIKey
 	NamespaceServiceAccount = identity.NamespaceServiceAccount
+	NamespaceAnonymous      = identity.NamespaceAnonymous
+	NamespaceRenderService  = identity.NamespaceRenderService
 )
 
 type Identity struct {

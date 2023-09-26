@@ -1,13 +1,12 @@
-import { e2e } from '@grafana/e2e';
+import { e2e } from '../utils';
 const DASHBOARD_ID = 'ed155665';
 
-e2e.scenario({
-  describeName: 'Annotations filtering',
-  itName: 'Tests switching filter type updates the UI accordingly',
-  addScenarioDataSource: false,
-  addScenarioDashBoard: false,
-  skipScenario: false,
-  scenario: () => {
+describe('Annotations filtering', () => {
+  beforeEach(() => {
+    e2e.flows.login(e2e.env('USERNAME'), e2e.env('PASSWORD'));
+  });
+
+  it('Tests switching filter type updates the UI accordingly', () => {
     e2e.flows.openDashboard({ uid: DASHBOARD_ID });
 
     e2e.components.PageToolbar.item('Dashboard settings').click();
@@ -50,12 +49,12 @@ e2e.scenario({
         e2e.pages.Dashboard.SubMenu.Annotations.annotationToggle('Red, only panel 1').should('be.checked');
       });
 
-    e2e().wait(3000);
+    cy.wait(3000);
 
     e2e.components.Panels.Panel.title('Panel one')
       .should('exist')
       .within(() => {
         e2e.pages.Dashboard.Annotations.marker().should('exist').should('have.length', 4);
       });
-  },
+  });
 });

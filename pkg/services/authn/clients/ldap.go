@@ -75,7 +75,7 @@ func (c *LDAP) AuthenticatePassword(ctx context.Context, r *authn.Request, usern
 
 // disableUser will disable users if they logged in via LDAP previously
 func (c *LDAP) disableUser(ctx context.Context, username string) (*authn.Identity, error) {
-	c.logger.Debug("user was not found in the LDAP directory tree", "username", username)
+	c.logger.Debug("User was not found in the LDAP directory tree", "username", username)
 	retErr := errIdentityNotFound.Errorf("no user found: %w", multildap.ErrDidNotFindUser)
 
 	// Retrieve the user from store based on the login
@@ -98,7 +98,7 @@ func (c *LDAP) disableUser(ctx context.Context, username string) (*authn.Identit
 	}
 
 	// Disable the user
-	c.logger.Debug("user was removed from the LDAP directory tree, disabling it", "username", username, "authID", authinfo.AuthId)
+	c.logger.Debug("User was removed from the LDAP directory tree, disabling it", "username", username, "authID", authinfo.AuthId)
 	if errDisable := c.userService.Disable(ctx, &user.DisableUserCommand{UserID: dbUser.ID, IsDisabled: true}); errDisable != nil {
 		return nil, errDisable
 	}
@@ -107,7 +107,7 @@ func (c *LDAP) disableUser(ctx context.Context, username string) (*authn.Identit
 }
 
 func (c *LDAP) identityFromLDAPInfo(orgID int64, info *login.ExternalUserInfo) *authn.Identity {
-	return &authn.Identity{
+	id := &authn.Identity{
 		OrgID:           orgID,
 		OrgRoles:        info.OrgRoles,
 		Login:           info.Login,
@@ -131,4 +131,12 @@ func (c *LDAP) identityFromLDAPInfo(orgID int64, info *login.ExternalUserInfo) *
 			},
 		},
 	}
+
+	// The ldap service is not aware of the internal state of the user. Fetching the user
+	// from the store to know if that user is disabled or not, is almost as costly as
+	// running an update systematically. We are setting IsDisabled to true so that the
+	// EnableDisabledUserHook force-enable that user.
+	id.IsDisabled = true
+
+	return id
 }
