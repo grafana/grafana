@@ -57,14 +57,20 @@ To create a Grafana Mimir or Loki managed recording rule
    - In **Rule name**, add a descriptive name.
 1. In Step 2, select **Mimir or Loki recording rule** option.
    - Select your Loki or Prometheus data source.
-   - Enter a PromQL or LogQL query.
-1. In Step 3, add alert evaluation behavior.
-   - Enter a valid **For** duration. The expression has to be true for this long for the alert to be fired.
-1. In Step 4, add additional metadata associated with the rule.
-   - From the **Namespace** dropdown, select an existing rule namespace or add a new one. Namespaces can contain one or more rule groups and only have an organizational purpose. For more information, see [Grafana Mimir or Loki rule groups and namespaces]({{< relref "./edit-mimir-loki-namespace-group" >}}).
+   - Enter a query.
+1. Add namespace and group.
+   - From the **Namespace** dropdown, select an existing rule namespace or add a new one. Namespaces can contain one or more rule groups and only have an organizational purpose.
    - From the **Group** dropdown, select an existing group within the selected namespace or add a new one. Newly created rules are appended to the end of the group. Rules within a group are run sequentially at a regular interval, with the same evaluation time.
    - Add a description and summary to customize alert messages. Use the guidelines in [Annotations and labels for alerting]({{< relref "../fundamentals/annotation-label" >}}).
    - Add Runbook URL, panel, dashboard, and alert IDs.
 1. In Step 5, add custom labels.
    - Add custom labels selecting existing key-value pairs from the drop down, or add new labels by entering the new key or value .
-1. Click **Save** to save the rule or **Save and exit** to save the rule and go back to the Alerting page.
+1. Click **Save rule** to save the rule or **Save rule and exit** to save the rule and go back to the Alerting page.
+
+{{% docs/reference %}}
+[annotation-label]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting/fundamentals/annotation-label"
+[annotation-label]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/annotation-label"
+
+[configure-grafana]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana"
+[configure-grafana]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana"
+{{% /docs/reference %}}

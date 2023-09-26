@@ -137,7 +137,9 @@ deleteRules:
 
 Create or delete contact points in your Grafana instance(s).
 
-1. Create a YAML or JSON configuration file.
+1. Create a contact point in Grafana.
+1. Use the [Alerting provisioning API][alerting_provisioning] export endpoints to download a provisioning file for your contact point.
+1. Copy the contents into a YAML or JSON configuration file in the default provisioning directory or in your configured directory.
 
    Example configuration files can be found below.
 
@@ -494,11 +496,13 @@ settings:
 
 Create or reset notification policies in your Grafana instance(s).
 
-1. Create a YAML or JSON configuration file.
+1. Create a notification policy in Grafana.
+1. Use the [Alerting provisioning API][alerting_provisioning] export endpoints to download a provisioning file for your notification policy.
+1. Copy the contents into a YAML or JSON configuration file in the default provisioning directory or in your configured directory.
 
    Example configuration files can be found below.
 
-2. Add the file(s) to your GitOps workflow, so that they deploy alongside your Grafana instance(s).
+1. Ensure that your files are in the right directory on the node running the Grafana server, so that they deploy alongside your Grafana instance(s).
 
 Here is an example of a configuration file for creating notification policiies.
 
