@@ -61,7 +61,7 @@ func testIntegrationCreate(t *testing.T, folderStore store, orgID int64) {
 	}
 
 	folderTitle := "testIntegrationCreate"
-	folderDsc := "folder desc"
+	const folderDsc = "folder desc"
 	t.Run("creating a folder without providing a UID should fail", func(t *testing.T) {
 		_, err := folderStore.Create(context.Background(), folder.CreateFolderCommand{
 			Title:       folderTitle,

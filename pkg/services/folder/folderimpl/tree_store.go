@@ -29,12 +29,11 @@ func ProvideTreeStore(db db.DB) *treeStore {
 	}
 	store.sqlStore = sqlStore{db: db, log: logger}
 
-	//store.populateLeftRightCols(1, nil, 0, 0)
+	// TODO: call migrate once for each org
 	return store
 }
 
 func (hs *treeStore) migrate(ctx context.Context, orgID int64, f *folder.Folder, counter int64) (int64, error) {
-	// TODO: run only once
 	err := hs.db.InTransaction(ctx, func(ctx context.Context) error {
 		var children []*folder.Folder
 
@@ -267,9 +266,8 @@ func (hs *treeStore) GetHeight(ctx context.Context, foldrUID string, orgID int64
 	groupConcatSep := ","
 	pathSep := " "
 	if err := hs.db.WithDbSession(ctx, func(sess *db.Session) error {
-		// get the paths of the leaf nodes where the given folder is present
-		// group_concat() is used to get the paths of all leaf nodes in a single query
-		// the order of the group_concat() in SQLite is arbitrary, so we need include the lft column in the group_concat() to sort the paths later
+		// group_concat() is used to get the paths of the leaf nodes where the given folder is present
+		// the order of the group_concat() in SQLite is arbitrary, so we need to include the lft column in order to sort the paths later
 		// the path format is <lft><pathSep><uid>
 		leafSubpaths := hs.db.GetDialect().GroupConcat(hs.db.GetDialect().Concat("parent.lft", fmt.Sprintf("'%s'", pathSep), "parent.uid"), groupConcatSep)
 		folderInPath := hs.db.GetDialect().Position(hs.db.GetDialect().GroupConcat("parent.uid", groupConcatSep), "?")
@@ -288,7 +286,7 @@ func (hs *treeStore) GetHeight(ctx context.Context, foldrUID string, orgID int64
 
 	// get the length of the maximum path
 	var height uint32
-	concurrency.ForEachJob(ctx, len(paths), runtime.NumCPU(), func(ctx context.Context, i int) error {
+	if err := concurrency.ForEachJob(ctx, len(paths), runtime.NumCPU(), func(ctx context.Context, i int) error {
 		ancestors := strings.Split(paths[i], groupConcatSep)
 		sort.Slice(ancestors, func(j, k int) bool {
 			return strings.Split(ancestors[j], pathSep)[0] < strings.Split(ancestors[k], pathSep)[0]
@@ -306,7 +304,9 @@ func (hs *treeStore) GetHeight(ctx context.Context, foldrUID string, orgID int64
 			atomic.StoreUint32(&height, uint32(v))
 		}
 		return nil
-	})
+	}); err != nil {
+		return 0, folder.ErrInternal.Errorf("failed to get folder height: failed to compute max path length: %w", err)
+	}
 
 	return int(height), nil
 }

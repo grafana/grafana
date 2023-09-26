@@ -47,7 +47,7 @@ var folders = [][]any{
 func storeFolders(t *testing.T, storeDB db.DB, storeLeftRight bool) {
 	t.Helper()
 
-	storeDB.WithDbSession(context.Background(), func(sess *db.Session) error {
+	err := storeDB.WithDbSession(context.Background(), func(sess *db.Session) error {
 		cols := []string{"org_id", "uid", "title", "created", "updated", "parent_uid"}
 		if storeLeftRight {
 			cols = append(cols, "lft", "rgt")
@@ -67,7 +67,7 @@ func storeFolders(t *testing.T, storeDB db.DB, storeLeftRight bool) {
 		require.NoError(t, err)
 		return nil
 	})
-
+	require.NoError(t, err)
 }
 
 func TestIntegrationTreeStoreMigrate(t *testing.T) {

@@ -352,6 +352,6 @@ func (db *PostgresDialect) GroupConcat(colName string, sep string) string {
 	return "STRING_AGG(" + colName + ", '" + sep + "')"
 }
 
-func (bb *PostgresDialect) Position(str string, substr string) string {
-	return fmt.Sprintf("POSITION(%s"+" IN "+"%s)", substr, str)
+func (db *PostgresDialect) Position(str string, substr string) string {
+	return "POSITION(" + substr + " IN " + str + ")"
 }

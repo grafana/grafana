@@ -47,7 +47,6 @@ func addFolderMigrations(mg *migrator.Migrator) {
 	mg.AddMigration("Add index for lft and rgt", migrator.NewAddIndexMigration(folderv1(), &migrator.Index{
 		Cols: []string{"org_id", "lft", "rgt"},
 	}))
-
 }
 
 func folderv1() migrator.Table {
