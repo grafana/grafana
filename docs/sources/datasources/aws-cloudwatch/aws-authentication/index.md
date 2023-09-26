@@ -72,7 +72,7 @@ Instead, using the assume role functionality, you could have one set of AWS cred
 
 The `Grafana Assume Role` also helps facilitate this. Using this role, Grafana's AWS account acts as the primary credential, having only the permission to assume roles in other accounts. You can then create IAM roles for Grafana's account to assume. For more information, refer to [Use Grafana assume role]({{< relref "#use-grafana-assume-role" >}}).
 
-If the Assume Role field is left blank, Grafana will use the provided credentials from the selected authentication method directly, and permissions to AWS data must be attached directly to those credentials. The Assume Role field is optional for all authentication methods except for `Grafana Assume Role`.
+If the **Assume Role ARN** field is left empty, Grafana uses the provided credentials from the selected authentication method directly, and permissions to AWS data must be attached directly to those credentials. The **Assume Role ARN** field is optional for all authentication methods except for `Grafana Assume Role`.
 
 To disable this feature, refer to the [`assume_role_enabled` documentation][configure-grafana-assume-role-enabled].
 
