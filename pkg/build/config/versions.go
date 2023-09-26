@@ -64,9 +64,10 @@ var Versions = VersionMap{
 	},
 	DownstreamMode: {
 		Variants: []Variant{
-			VariantArmV6,
-			VariantArmV7,
-			VariantArmV7Musl,
+			// https://github.com/golang/go/issues/58425 disabling arm builds until go issue is resolved
+			//VariantArmV6,
+			//VariantArmV7,
+			//VariantArmV7Musl,
 			VariantArm64,
 			VariantArm64Musl,
 			VariantDarwinAmd64,
@@ -83,7 +84,8 @@ var Versions = VersionMap{
 			Architectures: []Architecture{
 				ArchAMD64,
 				ArchARM64,
-				ArchARMv7, // GOARCH=ARM is used for both armv6 and armv7. They are differentiated by the GOARM variable.
+				// https://github.com/golang/go/issues/58425 disabling arm builds until go issue is resolved
+				// ArchARMv7, // GOARCH=ARM is used for both armv6 and armv7. They are differentiated by the GOARM variable.
 			},
 			Distribution: []Distribution{
 				Alpine,
