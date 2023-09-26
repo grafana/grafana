@@ -224,6 +224,9 @@
       "description-grafana": "Discover visualizations using mock data",
       "description-mixed": "Use multiple data sources",
       "description-dashboard": "Reuse query results from other visualizations"
+    },
+    "list": {
+      "no-data-source-message": "No data sources found"
     }
   },
   "data-sources": {
