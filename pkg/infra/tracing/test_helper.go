@@ -114,6 +114,10 @@ func (t *FakeTracer) Start(ctx context.Context, spanName string, opts ...trace.S
 func (t *FakeTracer) Inject(ctx context.Context, header http.Header, span Span) {
 }
 
+func (t *FakeTracer) OtelTracer() trace.Tracer {
+	return nil
+}
+
 func NewFakeTracer() *FakeTracer {
 	return &FakeTracer{Spans: []*FakeSpan{}}
 }

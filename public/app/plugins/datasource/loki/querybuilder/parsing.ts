@@ -1,5 +1,4 @@
 import { SyntaxNode } from '@lezer/common';
-import { BinModifiers, OnOrIgnoring } from '@prometheus-io/lezer-promql';
 
 import {
   And,
@@ -50,6 +49,8 @@ import {
   VectorAggregationExpr,
   VectorOp,
   Without,
+  BinOpModifier,
+  OnOrIgnoringModifier,
 } from '@grafana/lezer-logql';
 
 import {
@@ -540,6 +541,15 @@ function handleVectorAggregation(expr: string, node: SyntaxNode, context: Contex
   const op: QueryBuilderOperation = { id: funcName, params };
 
   if (metricExpr) {
+    // A vector aggregation expression with a child of metric expression with a child of binary expression is ambiguous after being parsed into a visual query
+    if (metricExpr.firstChild?.type.id === BinOpExpr) {
+      context.errors.push({
+        text: 'Query parsing is ambiguous.',
+        from: metricExpr.firstChild.from,
+        to: metricExpr.firstChild?.to,
+      });
+    }
+
     handleExpression(expr, metricExpr, context);
   }
 
@@ -565,7 +575,7 @@ function handleBinary(expr: string, node: SyntaxNode, context: Context) {
   const visQuery = context.query;
   const left = node.firstChild!;
   const op = getString(expr, left.nextSibling);
-  const binModifier = getBinaryModifier(expr, node.getChild(BinModifiers));
+  const binModifier = getBinaryModifier(expr, node.getChild(BinOpModifier));
 
   const right = node.lastChild!;
 
@@ -591,7 +601,7 @@ function handleBinary(expr: string, node: SyntaxNode, context: Context) {
     // Due to the way binary ops are parsed we can get a binary operation on the right that starts with a number which
     // is a factor for a current binary operation. So we have to add it as an operation now.
     const leftMostChild = getLeftMostChild(right);
-    if (leftMostChild?.name === 'Number') {
+    if (leftMostChild?.type.id === NumberLezer) {
       visQuery.operations.push(makeBinOp(opDef, expr, leftMostChild, !!binModifier?.isBool));
     }
 
@@ -624,15 +634,17 @@ function getBinaryModifier(
   node: SyntaxNode | null
 ):
   | { isBool: true; isMatcher: false }
-  | { isBool: false; isMatcher: true; matches: string; matchType: 'ignoring' | 'on' }
+  | { isBool: boolean; isMatcher: true; matches: string; matchType: 'ignoring' | 'on' }
   | undefined {
   if (!node) {
     return undefined;
   }
-  if (node.getChild(Bool)) {
+  const matcher = node.getChild(OnOrIgnoringModifier);
+  const boolMatcher = node.getChild(Bool);
+
+  if (!matcher && boolMatcher) {
     return { isBool: true, isMatcher: false };
   } else {
-    const matcher = node.getChild(OnOrIgnoring);
     if (!matcher) {
       // Not sure what this could be, maybe should be an error.
       return undefined;
@@ -640,7 +652,7 @@ function getBinaryModifier(
     const labels = getString(expr, matcher.getChild(GroupingLabels)?.getChild(GroupingLabelList));
     return {
       isMatcher: true,
-      isBool: false,
+      isBool: !!boolMatcher,
       matches: labels,
       matchType: matcher.getChild(On) ? 'on' : 'ignoring',
     };

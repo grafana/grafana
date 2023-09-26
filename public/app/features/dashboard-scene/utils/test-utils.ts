@@ -6,6 +6,8 @@ export function setupLoadDashboardMock(rsp: DeepPartial<DashboardDTO>) {
   const loadDashboardMock = jest.fn().mockResolvedValue(rsp);
   setDashboardLoaderSrv({
     loadDashboard: loadDashboardMock,
+    // disabling type checks since this is a test util
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
   } as unknown as DashboardLoaderSrv);
   return loadDashboardMock;
 }
@@ -27,6 +29,8 @@ export function mockResizeObserver() {
                 left: 100,
                 right: 0,
               },
+              // disabling type checks since this is a test util
+              // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
             } as ResizeObserverEntry,
           ],
           this

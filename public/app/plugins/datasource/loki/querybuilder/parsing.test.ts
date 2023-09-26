@@ -11,6 +11,116 @@ describe('buildVisualQueryFromString', () => {
     );
   });
 
+  it('parses simple binary comparison', () => {
+    expect(buildVisualQueryFromString('count_over_time({app="aggregator"} [$__auto]) == 11')).toEqual({
+      query: {
+        labels: [
+          {
+            label: 'app',
+            op: '=',
+            value: 'aggregator',
+          },
+        ],
+        operations: [
+          {
+            id: LokiOperationId.CountOverTime,
+            params: ['$__auto'],
+          },
+          {
+            id: LokiOperationId.EqualTo,
+            // defined in getSimpleBinaryRenderer, the first argument is the bool value, and the second is the comparison operator
+            params: [11, false],
+          },
+        ],
+      },
+      errors: [],
+    });
+  });
+
+  // This still fails because loki doesn't properly parse the bool operator
+  it('parses simple query with label-values with boolean operator', () => {
+    expect(buildVisualQueryFromString('count_over_time({app="aggregator"} [$__auto]) == bool 12')).toEqual({
+      query: {
+        labels: [
+          {
+            label: 'app',
+            op: '=',
+            value: 'aggregator',
+          },
+        ],
+        operations: [
+          {
+            id: LokiOperationId.CountOverTime,
+            params: ['$__auto'],
+          },
+          {
+            id: LokiOperationId.EqualTo,
+            // defined in getSimpleBinaryRenderer, the first argument is the bool value, and the second is the comparison operator
+            params: [12, true],
+          },
+        ],
+      },
+      errors: [],
+    });
+  });
+
+  it('parses binary operation with query', () => {
+    expect(
+      // There is no capability for "bool" in the query builder for (nested) binary operation with query as of now, it will always be stripped out
+      buildVisualQueryFromString(
+        'max by(stream) (count_over_time({app="aggregator"}[1m])) > bool ignoring(stream) avg(count_over_time({app="aggregator"}[1m]))'
+      )
+    ).toEqual({
+      query: {
+        binaryQueries: [
+          {
+            // nested binary operation
+            operator: '>',
+            query: {
+              labels: [
+                {
+                  label: 'app',
+                  op: '=',
+                  value: 'aggregator',
+                },
+              ],
+              operations: [
+                {
+                  id: 'count_over_time',
+                  params: ['1m'],
+                },
+                {
+                  id: 'avg',
+                  params: [],
+                },
+              ],
+            },
+            vectorMatches: 'stream',
+            vectorMatchesType: 'ignoring',
+          },
+        ],
+        labels: [
+          {
+            label: 'app',
+            op: '=',
+            value: 'aggregator',
+          },
+        ],
+        operations: [
+          {
+            id: 'count_over_time',
+            params: ['1m'],
+          },
+          {
+            id: '__max_by',
+            params: ['stream'],
+          },
+        ],
+      },
+      errors: [],
+    });
+  });
+
   it('parses simple query with label-values', () => {
     expect(buildVisualQueryFromString('{app="frontend"}')).toEqual(
       noErrors({
@@ -123,6 +233,22 @@ describe('buildVisualQueryFromString', () => {
         ],
       })
     );
+  });
+
+  it('returns error when parsing ambiguous query', () => {
+    //becomes topk(5, count_over_time({app="aggregator"} [1m])) / count_over_time({cluster="dev-eu-west-2"} [1m])
+    const context = buildVisualQueryFromString(
+      'topk(5,count_over_time({app="aggregator"}[1m])/count_over_time({cluster="dev-eu-west-2"}[1m]))'
+    );
+    expect(context).toMatchObject({
+      errors: [
+        {
+          from: 7,
+          text: 'Query parsing is ambiguous.',
+          to: 93,
+        },
+      ],
+    });
   });
 
   it('parses query with matcher label filter', () => {
@@ -425,7 +551,8 @@ describe('buildVisualQueryFromString', () => {
   });
 
   it('parses metrics query with function and aggregation with grouping at the end', () => {
-    expect(buildVisualQueryFromString('sum(rate({app="frontend"} | json [5m])) without(job,name)')).toEqual(
+    const expression = 'sum(rate({app="frontend"} | json [5m])) without(job,name)';
+    expect(buildVisualQueryFromString(expression)).toEqual(
       noErrors({
         labels: [
           {
@@ -557,7 +684,9 @@ describe('buildVisualQueryFromString', () => {
   });
 
   it('parses query with multiple label format', () => {
-    expect(buildVisualQueryFromString('{app="frontend"} | label_format renameTo=original, bar=baz')).toEqual(
+    // Converted to {app="frontend"} | label_format renameTo=original | label_format bar=baz by visual query builder
+    const expression = '{app="frontend"} | label_format renameTo=original, bar=baz';
+    expect(buildVisualQueryFromString(expression)).toEqual(
       noErrors({
         labels: [
           {
@@ -605,9 +734,10 @@ describe('buildVisualQueryFromString', () => {
   });
 
   it('parses chained binary query', () => {
-    expect(
-      buildVisualQueryFromString('rate({project="bar"}[5m]) * 2 / rate({project="foo"}[5m]) + rate({app="test"}[1m])')
-    ).toEqual(
+    const expression = 'rate({project="bar"}[5m]) * 2 / rate({project="foo"}[5m]) + rate({app="test"}[1m])';
+    // is converted to (rate({project="bar"} [5m]) * 2) / (rate({project="foo"} [5m]) + rate({app="test"} [1m])) by visual query builder
+    // Note the extra parenthesis around the first binary operation expression: (rate({project="bar"} [5m]) * 2)
+    expect(buildVisualQueryFromString(expression)).toEqual(
       noErrors({
         labels: [{ op: '=', value: 'bar', label: 'project' }],
         operations: [
@@ -667,7 +797,9 @@ describe('buildVisualQueryFromString', () => {
   });
 
   it('parses a regexp with no param', () => {
-    expect(buildVisualQueryFromString('{app="frontend"} | regexp ')).toEqual(
+    const expression = '{app="frontend"} | regexp ';
+    // Converted to {app="frontend"} | regexp `` by visual query builder
+    expect(buildVisualQueryFromString(expression)).toEqual(
       noErrors({
         labels: [
           {

@@ -123,20 +123,20 @@ class ScopedEventBus implements EventBus {
 
   publish<T extends BusEvent>(event: T): void {
     if (!event.origin) {
-      (event as any).origin = this;
+      event.origin = this;
     }
     this.eventBus.publish(event);
   }
 
-  filter = (event: BusEvent) => {
+  filter<T extends BusEvent>(event: T) {
     if (this.filterConfig.onlyLocal) {
       return event.origin === this;
     }
     return true;
-  };
+  }
 
   getStream<T extends BusEvent>(eventType: BusEventType<T>): Observable<T> {
-    return this.eventBus.getStream(eventType).pipe(filter(this.filter)) as Observable<T>;
+    return this.eventBus.getStream(eventType).pipe(filter(this.filter.bind(this)));
   }
 
   // syntax sugar
