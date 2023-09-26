@@ -58,8 +58,11 @@ func (e *cloudWatchExecutor) getDimensionValuesForWildcards(pluginCtx backend.Pl
 			for _, resp := range dimensions {
 				newDimensions = append(newDimensions, resp.Value)
 			}
+
 			query.Dimensions[dimensionKey] = newDimensions
-			tagValueCache.Set(cacheKey, newDimensions, cache.DefaultExpiration)
+			if len(newDimensions) > 0 {
+				tagValueCache.Set(cacheKey, newDimensions, cache.DefaultExpiration)
+			}
 		}
 	}
 
