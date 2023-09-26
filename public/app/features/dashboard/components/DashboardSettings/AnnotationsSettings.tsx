@@ -29,7 +29,7 @@ export function AnnotationsSettings({ dashboard, editIndex, sectionNav }: Settin
   const isEditing = editIndex != null && editIndex < dashboard.annotations.list.length;
 
   return (
-    <Page navModel={sectionNav} pageNav={getSubPageNav(dashboard, editIndex, sectionNav.node.parentItem)}>
+    <Page navModel={sectionNav} pageNav={getSubPageNav(dashboard, editIndex, sectionNav.node)}>
       {!isEditing && <AnnotationSettingsList dashboard={dashboard} onNew={onNew} onEdit={onEdit} />}
       {isEditing && <AnnotationSettingsEdit dashboard={dashboard} editIdx={editIndex!} />}
     </Page>
@@ -39,17 +39,20 @@ export function AnnotationsSettings({ dashboard, editIndex, sectionNav }: Settin
 function getSubPageNav(
   dashboard: DashboardModel,
   editIndex: number | undefined,
-  pageNav?: NavModelItem
+  node: NavModelItem
 ): NavModelItem | undefined {
   if (editIndex == null) {
-    return pageNav;
+    return node.parentItem;
   }
 
   const editItem = dashboard.annotations.list[editIndex];
   if (editItem) {
     return {
       text: editItem.name,
-      parentItem: pageNav,
+      parentItem: node.parentItem && {
+        ...node.parentItem,
+        url: node.url,
+      },
     };
   }
 
