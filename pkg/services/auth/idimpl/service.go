@@ -69,6 +69,6 @@ func (s *Service) SignIdentity(ctx context.Context, id identity.Requester) (stri
 	return token, nil
 }
 
-func prefixChacheKey(key string) string {
+func prefixCacheKey(key string) string {
 	return fmt.Sprintf("%s-%s", cachePrefix, key)
 }
