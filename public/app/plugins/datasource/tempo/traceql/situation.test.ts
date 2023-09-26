@@ -25,7 +25,7 @@ describe('situation', () => {
     {
       query: '{.foo}',
       cursorPos: 5,
-      expected: { type: 'SPANSET_IN_NAME_SCOPE', scope: '{' },
+      expected: { type: 'SPANSET_IN_NAME_SCOPE', scope: '' },
     },
     {
       query: '{.foo }',
