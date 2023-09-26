@@ -177,12 +177,26 @@ describe('situation', () => {
       flags: false,
       logQuery: '{level="info"} | logfmt label,',
     });
+    assertSituation('sum by (test) (count_over_time({level="info"} | logfmt label, ^))', {
+      type: 'IN_EXPRESSION_PARSER',
+      otherLabels: ['label'],
+      parser: 'logfmt',
+      flags: false,
+      logQuery: '{level="info"} | logfmt label,',
+    });
     assertSituation('sum by (test) (count_over_time({level="info"} | logfmt --strict ^))', {
       type: 'IN_EXPRESSION_PARSER',
       otherLabels: [],
       parser: 'logfmt',
       flags: false,
       logQuery: '{level="info"} | logfmt --strict',
+    });
+    assertSituation('count_over_time({level="info"} | logfmt [1m]) + avg_over_time({place="luna"} | logfmt test="test"^', {
+      type: 'IN_EXPRESSION_PARSER',
+      otherLabels: ['test'],
+      parser: 'logfmt',
+      flags: false,
+      logQuery: '{place="luna"} | logfmt test="test"',
     });
   });
 

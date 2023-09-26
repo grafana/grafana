@@ -441,7 +441,7 @@ function resolveExpressionParser(_: SyntaxNode, text: string, cursorPosition: nu
   const cursor = tree.cursorAt(position);
 
   // Check if the user cursor is in any node that requires expression parser suggestions.
-  const logfmtNodes = [LogfmtExpressionParser, Logfmt, LogfmtParser];
+  const logfmtNodes = [LogfmtExpressionParser, Logfmt, LogfmtParser, LabelExtractionExpressionList];
   const jsonNodes = [Json, JsonExpressionParser];
   let logfmtParser = false;
   let jsonParser = false;
@@ -660,9 +660,7 @@ export function getSituation(text: string, pos: number): Situation | null {
   // might not be the best node.
   // so first we check if there is an error node at the cursor position
   const maybeErrorNode = getErrorNode(tree, text, pos);
-
   const cur = maybeErrorNode != null ? maybeErrorNode.cursor() : tree.cursorAt(pos);
-
   const currentNode = cur.node;
 
   const ids = [cur.type.id];
