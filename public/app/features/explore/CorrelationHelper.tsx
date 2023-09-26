@@ -8,14 +8,18 @@ import { useDispatch, useSelector } from 'app/types';
 import { changeCorrelationEditorDetails } from './state/main';
 import { selectCorrelationDetails } from './state/selectors';
 
-export const CorrelationHelper = ({ correlations }: { correlations: ExploreCorrelationHelperData }) => {
+interface Props {
+  correlations: ExploreCorrelationHelperData;
+}
+
+export const CorrelationHelper = ({ correlations }: Props) => {
   const dispatch = useDispatch();
   const { register, watch } = useForm();
   const [isOpen, setIsOpen] = useState(false);
   const correlationDetails = useSelector(selectCorrelationDetails);
 
   useEffect(() => {
-    const subscription = watch((value, { name, type }) => {
+    const subscription = watch((value) => {
       let dirty = false;
 
       if (!correlationDetails?.dirty && (value.label !== '' || value.description !== '')) {
@@ -39,7 +43,7 @@ export const CorrelationHelper = ({ correlations }: { correlations: ExploreCorre
   }, []);
 
   return (
-    <Alert title="Correlation Details" severity="info">
+    <Alert title="Correlation details" severity="info">
       The correlation link will appear by the <code>{correlations.resultField}</code> field. You can use the following
       variables to set up your correlations:
       <pre>

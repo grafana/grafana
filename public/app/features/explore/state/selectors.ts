@@ -14,7 +14,7 @@ export const isSplit = createSelector(selectPanesEntries, (panes) => panes.lengt
 
 export const isLeftPaneSelector = (exploreId: string) =>
   createSelector(selectPanes, (panes) => {
-    return Object.entries(panes)[0][0] === exploreId;
+    return Object.keys(panes)[0] === exploreId;
   });
 
 export const getExploreItemSelector = (exploreId: string) => createSelector(selectPanes, (panes) => panes[exploreId]);

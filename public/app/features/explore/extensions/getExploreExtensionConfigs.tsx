@@ -42,7 +42,7 @@ export function getExploreExtensionConfigs(): PluginExtensionLinkConfig[] {
         },
       }),
       createExtensionLinkConfig<PluginExtensionExploreContext>({
-        title: 'Add Correlation',
+        title: 'Add correlation',
         description: 'Create a correlation from this query',
         extensionPointId: PluginExtensionPoints.ExploreToolbarAction,
         icon: 'link',

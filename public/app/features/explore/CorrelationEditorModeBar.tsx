@@ -38,8 +38,7 @@ export const CorrelationEditorModeBar = ({ panes }: { panes: Array<[string, Expl
         })
       );
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [correlationDetails?.dirty, correlationDetails?.isExiting]);
+  }, [correlationDetails?.dirty, correlationDetails?.isExiting, dispatch]);
 
   // clear data when unmounted
   useUnmount(() => {
@@ -201,9 +200,8 @@ export const CorrelationEditorModeBar = ({ panes }: { panes: Array<[string, Expl
               dispatch(changeCorrelationEditorDetails({ isExiting: true }));
               reportInteraction('grafana_explore_correlation_editor_exit_pressed');
             }}
-            aria-label="exit correlations editor mode"
           >
-            Exit Correlation Editor
+            Exit correlation editor
           </Button>
         </HorizontalGroup>
       </div>
@@ -239,7 +237,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     // important needed to override disabled state styling
     disabledButtonColor: css({
       color: `${disabledColor} !important`,
-      'background-color': `${darkerBackgroundColor} !important`,
+      backgroundColor: `${darkerBackgroundColor} !important`,
     }),
   };
 };
