@@ -148,18 +148,10 @@ securityContext:
   runAsGroup: 472
 ```
 
-{{% docs/reference %}}
-[configure-grafana-allowed-auth-providers]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana#allowed_auth_providers"
-[configure-grafana-allowed-auth-providers]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana#allowed_auth_providers"
-
-[configure-grafana-assume-role-enabled]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana#assume_role_enabled"
-[configure-grafana-assume-role-enabled]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana#assume_role_enabled"
-{{% /docs/reference %}}
-
 ## Use `Grafana Assume Role`
 
 {{% admonition type="note" %}}
-Grafana Assume Role is currently in [private preview]{{< relref "https://grafana.com/docs/release-life-cycle" >}} for Grafana Cloud. To get early access this feature, reach out to Customer Support and ask for the `awsDatasourcesTempCredentials` feature toggle to be enabled on your account. It is currently only available for CloudWatch.
+Grafana Assume Role is currently in [private preview]({{< relref "https://grafana.com/docs/release-life-cycle" >}}) for Grafana Cloud. To get early access this feature, reach out to Customer Support and ask for the `awsDatasourcesTempCredentials` feature toggle to be enabled on your account. It is currently only available for CloudWatch.
 {{% /admonition %}}
 
 The `Grafana Assume Role` authentication provider lets you authenticate with AWS without having to create and maintain long term AWS users or rotate their access and secret keys. Instead, you can create an IAM role that has permissions to access CloudWatch and a trust relationship with Grafana's AWS account. Grafana's AWS account then makes an STS request to AWS to create temporary credentials to access your AWS data. It makes this STS request by passing along an `externalID` that's unique per Cloud account, to ensure that Grafana Cloud users can only access their own AWS data. For more information, refer to the [AWS documentation on external ID](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_create_for-user_externalid.html).
@@ -196,3 +188,11 @@ Sample Trust Relationship for an IAM role:
     ]
 }
 ```
+
+{{% docs/reference %}}
+[configure-grafana-allowed-auth-providers]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana#allowed_auth_providers"
+[configure-grafana-allowed-auth-providers]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana#allowed_auth_providers"
+
+[configure-grafana-assume-role-enabled]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana#assume_role_enabled"
+[configure-grafana-assume-role-enabled]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana#assume_role_enabled"
+{{% /docs/reference %}}
