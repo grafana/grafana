@@ -48,7 +48,7 @@ export function AppChromeMenu({}: Props) {
   const styles = useStyles2(getStyles, searchBarHidden);
 
   return (
-    <div className={styles.menuWrapper}>
+    <div className={styles.wrapper}>
       <OverlayContainer>
         <CSSTransition
           nodeRef={ref}
@@ -60,7 +60,7 @@ export function AppChromeMenu({}: Props) {
         >
           <FocusScope contain autoFocus>
             <DockedMegaMenu
-              className={styles.menuContainer}
+              className={styles.container}
               onClose={onClose}
               ref={ref}
               {...overlayProps}
@@ -75,7 +75,7 @@ export function AppChromeMenu({}: Props) {
           classNames={animationStyles.backdrop}
           timeout={{ enter: animationSpeed, exit: 0 }}
         >
-          <div ref={backdropRef} className={styles.menuBackdrop} {...underlayProps} />
+          <div ref={backdropRef} className={styles.backdrop} {...underlayProps} />
         </CSSTransition>
       </OverlayContainer>
     </div>
@@ -86,7 +86,7 @@ const getStyles = (theme: GrafanaTheme2, searchBarHidden?: boolean) => {
   const topPosition = (searchBarHidden ? TOP_BAR_LEVEL_HEIGHT : TOP_BAR_LEVEL_HEIGHT * 2) + 1;
 
   return {
-    menuBackdrop: css({
+    backdrop: css({
       backdropFilter: 'blur(1px)',
       backgroundColor: theme.components.overlay.background,
       bottom: 0,
@@ -100,7 +100,7 @@ const getStyles = (theme: GrafanaTheme2, searchBarHidden?: boolean) => {
         top: topPosition,
       },
     }),
-    menuContainer: css({
+    container: css({
       display: 'flex',
       bottom: 0,
       flexDirection: 'column',
@@ -120,7 +120,7 @@ const getStyles = (theme: GrafanaTheme2, searchBarHidden?: boolean) => {
         top: topPosition,
       },
     }),
-    menuWrapper: css({
+    wrapper: css({
       position: 'fixed',
       display: 'grid',
       gridAutoFlow: 'column',
