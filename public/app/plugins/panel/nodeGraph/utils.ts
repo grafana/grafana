@@ -9,6 +9,7 @@ import {
   NodeGraphDataFrameFieldNames,
 } from '@grafana/data';
 
+import { nodeR } from './Node';
 import { EdgeDatum, GraphFrame, NodeDatum, NodeDatumFromEdge, NodeGraphOptions } from './types';
 
 type Line = { x1: number; y1: number; x2: number; y2: number };
@@ -16,22 +17,17 @@ type Line = { x1: number; y1: number; x2: number; y2: number };
 /**
  * Makes line shorter while keeping the middle in he same place.
  */
-export function shortenLine(line: Line, length: number): Line {
+export function shortenLine(line: Line, sourceNodeRadius: number, targetNodeRadius: number): Line {
   const vx = line.x2 - line.x1;
   const vy = line.y2 - line.y1;
   const mag = Math.sqrt(vx * vx + vy * vy);
-  const ratio = Math.max((mag - length) / mag, 0);
-  const vx2 = vx * ratio;
-  const vy2 = vy * ratio;
-  const xDiff = vx - vx2;
-  const yDiff = vy - vy2;
-  const newx1 = line.x1 + xDiff / 2;
-  const newy1 = line.y1 + yDiff / 2;
+  const cosine = (line.x2 - line.x1) / mag;
+  const sine = (line.y2 - line.y1) / mag;
   return {
-    x1: newx1,
-    y1: newy1,
-    x2: newx1 + vx2,
-    y2: newy1 + vy2,
+    x1: line.x1 + cosine * (sourceNodeRadius + 5),
+    y1: line.y1 + sine * (sourceNodeRadius + 5),
+    x2: line.x2 - cosine * (targetNodeRadius + 5),
+    y2: line.y2 - sine * (targetNodeRadius + 5),
   };
 }
 
@@ -45,6 +41,7 @@ export type NodeFields = {
   details: Field[];
   color?: Field;
   icon?: Field;
+  nodeRadius?: Field;
 };
 
 export function getNodeFields(nodes: DataFrame): NodeFields {
@@ -63,6 +60,7 @@ export function getNodeFields(nodes: DataFrame): NodeFields {
     details: findFieldsByPrefix(nodes, NodeGraphDataFrameFieldNames.detail),
     color: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.color),
     icon: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.icon),
+    nodeRadius: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.nodeRadius.toLowerCase()),
   };
 }
 
@@ -127,7 +125,7 @@ export function processNodes(
     }
 
     // We may not have edges in case of single node
-    let edgeDatums: EdgeDatum[] = edges ? processEdges(edges, getEdgeFields(edges)) : [];
+    let edgeDatums: EdgeDatum[] = edges ? processEdges(edges, getEdgeFields(edges), nodesMap) : [];
 
     for (const e of edgeDatums) {
       // We are adding incoming edges count, so we can later on find out which nodes are the roots
@@ -153,11 +151,9 @@ export function processNodes(
     const nodesMap: { [id: string]: NodeDatumFromEdge } = {};
 
     const edgeFields = getEdgeFields(edges);
-    let edgeDatums = processEdges(edges, edgeFields);
 
     // Turn edges into reasonable filled in nodes
-    for (let i = 0; i < edgeDatums.length; i++) {
-      const edge = edgeDatums[i];
+    for (let i = 0; i < edges.length; i++) {
       const { source, target } = makeNodeDatumsFromEdge(edgeFields, i);
 
       nodesMap[target.id] = nodesMap[target.id] || target;
@@ -176,8 +172,10 @@ export function processNodes(
       }
 
       // We are adding incoming edges count, so we can later on find out which nodes are the roots
-      nodesMap[edge.target].incoming++;
+      nodesMap[target.id].incoming++;
     }
+
+    let edgeDatums = processEdges(edges, edgeFields, nodesMap);
 
     // It is expected for stats to be Field, so we have to create them.
     const nodes = normalizeStatsForNodes(nodesMap, edgeFields);
@@ -194,7 +192,7 @@ export function processNodes(
  * @param edges
  * @param edgeFields
  */
-function processEdges(edges: DataFrame, edgeFields: EdgeFields): EdgeDatum[] {
+function processEdges(edges: DataFrame, edgeFields: EdgeFields, nodesMap: { [id: string]: NodeDatum }): EdgeDatum[] {
   if (!edgeFields.id) {
     throw new Error('id field is required for edges data frame.');
   }
@@ -203,11 +201,16 @@ function processEdges(edges: DataFrame, edgeFields: EdgeFields): EdgeDatum[] {
     const target = edgeFields.target?.values[index];
     const source = edgeFields.source?.values[index];
 
+    const sourceNode = nodesMap[source];
+    const targetNode = nodesMap[target];
+
     return {
       id,
       dataFrameRowIndex: index,
       source,
       target,
+      sourceNodeRadius: !sourceNode.nodeRadius ? nodeR : sourceNode.nodeRadius.values[sourceNode.dataFrameRowIndex],
+      targetNodeRadius: !targetNode.nodeRadius ? nodeR : targetNode.nodeRadius.values[targetNode.dataFrameRowIndex],
       mainStat: edgeFields.mainStat ? statToString(edgeFields.mainStat.config, edgeFields.mainStat.values[index]) : '',
       secondaryStat: edgeFields.secondaryStat
         ? statToString(edgeFields.secondaryStat.config, edgeFields.secondaryStat.values[index])
@@ -298,6 +301,7 @@ function makeNodeDatum(id: string, nodeFields: NodeFields, index: number): NodeD
     arcSections: nodeFields.arc,
     color: nodeFields.color,
     icon: nodeFields.icon?.values[index] || '',
+    nodeRadius: nodeFields.nodeRadius,
   };
 }
 
@@ -338,6 +342,7 @@ function makeNode(index: number) {
     secondarystat: 2,
     color: 0.5,
     icon: 'database',
+    noderadius: 40,
   };
 }
 
@@ -381,6 +386,10 @@ function nodesFrame() {
     [NodeGraphDataFrameFieldNames.icon]: {
       values: [],
       type: FieldType.string,
+    },
+    [NodeGraphDataFrameFieldNames.nodeRadius]: {
+      values: [],
+      type: FieldType.number,
     },
   };
 
