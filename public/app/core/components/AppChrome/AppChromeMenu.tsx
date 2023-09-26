@@ -59,13 +59,7 @@ export function AppChromeMenu({}: Props) {
           onExited={() => chrome.setMegaMenu(false)}
         >
           <FocusScope contain autoFocus>
-            <DockedMegaMenu
-              className={styles.container}
-              onClose={onClose}
-              ref={ref}
-              {...overlayProps}
-              {...dialogProps}
-            />
+            <DockedMegaMenu className={styles.menu} onClose={onClose} ref={ref} {...overlayProps} {...dialogProps} />
           </FocusScope>
         </CSSTransition>
         <CSSTransition
@@ -100,7 +94,7 @@ const getStyles = (theme: GrafanaTheme2, searchBarHidden?: boolean) => {
         top: topPosition,
       },
     }),
-    container: css({
+    menu: css({
       display: 'flex',
       bottom: 0,
       flexDirection: 'column',
