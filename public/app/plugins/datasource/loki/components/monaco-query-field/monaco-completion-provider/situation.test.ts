@@ -199,6 +199,93 @@ describe('situation', () => {
       logQuery: '{place="luna"} | logfmt test="test"',
     });
   });
+  
+  it('identifies json IN_EXPRESSION_PARSER autocomplete situations', () => {
+    assertSituation('{level="info"} | json ^', {
+      type: 'IN_EXPRESSION_PARSER',
+      otherLabels: [],
+      parser: 'json',
+      flags: false,
+      logQuery: '{level="info"} | json',
+    });
+    assertSituation('{level="info"} | json label="expression", label1="expression"^', {
+      type: 'IN_EXPRESSION_PARSER',
+      otherLabels: ['label', 'label1'],
+      parser: 'json',
+      flags: false,
+      logQuery: '{level="info"} | json label="expression", label1="expression"',
+    });
+    assertSituation('{level="info"} | json label="expression", label1="expression",^', {
+      type: 'IN_EXPRESSION_PARSER',
+      otherLabels: ['label', 'label1'],
+      parser: 'json',
+      flags: false,
+      logQuery: '{level="info"} | json label="expression", label1="expression",',
+    });
+    assertSituation('count_over_time({level="info"} | json ^', {
+      type: 'IN_EXPRESSION_PARSER',
+      otherLabels: [],
+      parser: 'json',
+      flags: false,
+      logQuery: '{level="info"} | json',
+    });
+    assertSituation('count_over_time({level="info"} | json ^)', {
+      type: 'IN_EXPRESSION_PARSER',
+      otherLabels: [],
+      parser: 'json',
+      flags: false,
+      logQuery: '{level="info"} | json',
+    });
+    assertSituation('count_over_time({level="info"} | json ^ [$__auto])', {
+      type: 'IN_EXPRESSION_PARSER',
+      otherLabels: [],
+      parser: 'json',
+      flags: false,
+      logQuery: '{level="info"} | json',
+    });
+    assertSituation('count_over_time({level="info"} | json label1="expression"^)', {
+      type: 'IN_EXPRESSION_PARSER',
+      otherLabels: ['label1'],
+      parser: 'json',
+      flags: false,
+      logQuery: '{level="info"} | json label1="expression"',
+    });
+    assertSituation('sum by (test) (count_over_time({level="info"} | json ^))', {
+      type: 'IN_EXPRESSION_PARSER',
+      otherLabels: [],
+      parser: 'json',
+      flags: false,
+      logQuery: '{level="info"} | json',
+    });
+    assertSituation('sum by (test) (count_over_time({level="info"} | json label=""^))', {
+      type: 'IN_EXPRESSION_PARSER',
+      otherLabels: ['label'],
+      parser: 'json',
+      flags: false,
+      logQuery: '{level="info"} | json label=""',
+    });
+    assertSituation('sum by (test) (count_over_time({level="info"} | json label="",^))', {
+      type: 'IN_EXPRESSION_PARSER',
+      otherLabels: ['label'],
+      parser: 'json',
+      flags: false,
+      logQuery: '{level="info"} | json label="",',
+    });
+    assertSituation('sum by (test) (count_over_time({level="info"} | json label="", ^))', {
+      type: 'IN_EXPRESSION_PARSER',
+      otherLabels: ['label'],
+      parser: 'json',
+      flags: false,
+      logQuery: '{level="info"} | json label="",',
+    });
+    assertSituation('count_over_time({level="info"} | json [1m]) + avg_over_time({place="luna"} | json test="test"^', {
+      type: 'IN_EXPRESSION_PARSER',
+      otherLabels: ['test'],
+      parser: 'json',
+      flags: false,
+      logQuery: '{place="luna"} | json test="test"',
+    });
+  });
 
   it('identifies IN_AGGREGATION autocomplete situations', () => {
     assertSituation('sum(^)', {
