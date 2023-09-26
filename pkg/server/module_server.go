@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net"
 	"os"
-	"path"
 	"path/filepath"
 	"strconv"
 	"sync"
@@ -16,7 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/modules"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	grafanaapiserver "github.com/grafana/grafana/pkg/services/grafana-apiserver"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -122,13 +120,14 @@ func (s *ModuleServer) Run() error {
 		return NewService(s.cfg, s.opts, s.apiOpts)
 	})
 
-	if s.features.IsEnabled(featuremgmt.FlagGrafanaAPIServer) {
-		m.RegisterModule(modules.GrafanaAPIServer, func() (services.Service, error) {
-			return grafanaapiserver.New(path.Join(s.cfg.DataPath, "k8s"))
-		})
-	} else {
-		s.log.Debug("apiserver feature is disabled")
-	}
+	// TODO: uncomment this once the apiserver is ready to be run as a standalone target
+	//if s.features.IsEnabled(featuremgmt.FlagGrafanaAPIServer) {
+	//	m.RegisterModule(modules.GrafanaAPIServer, func() (services.Service, error) {
+	//		return grafanaapiserver.New(path.Join(s.cfg.DataPath, "k8s"))
+	//	})
+	//} else {
+	//	s.log.Debug("apiserver feature is disabled")
+	//}
 
 	m.RegisterModule(modules.All, nil)
 

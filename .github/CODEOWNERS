@@ -67,6 +67,7 @@
 /scripts/modowners/ @grafana/backend-platform
 
 /pkg/api/ @grafana/backend-platform
+/pkg/apis/ @grafana/grafana-app-platform-squad
 /pkg/bus/ @grafana/backend-platform
 /pkg/cmd/ @grafana/backend-platform
 /pkg/components/apikeygen/ @grafana/grafana-authnz-team
@@ -466,6 +467,7 @@ cypress.config.js @grafana/grafana-frontend-platform
 /public/app/features/explore/TraceView/ @grafana/observability-traces-and-profiling
 
 /public/api-merged.json @grafana/backend-platform
+/public/api-enterprise-spec.json @grafana/backend-platform
 /public/openapi3.json @grafana/backend-platform
 /public/app/angular/ @torkelo
 /public/app/app.ts @grafana/frontend-ops
