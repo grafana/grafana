@@ -85,7 +85,6 @@ export const DashboardPicker = ({ dashboardUid, panelId, isOpen, onChange, onDis
     setSelectedPanelId(undefined);
   }, []);
 
-
   const allDashboardPanels = mergePanels(dashboardResult);
 
   const filteredPanels =
