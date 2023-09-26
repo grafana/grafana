@@ -36,7 +36,7 @@ type Service struct {
 func (s *Service) SignIdentity(ctx context.Context, id identity.Requester) (string, error) {
 	namespace, identifier := id.GetNamespacedID()
 
-	cacheKey := prefixChacheKey(id.GetCacheKey())
+	cacheKey := prefixCacheKey(id.GetCacheKey())
 	cachedToken, err := s.cache.Get(ctx, cacheKey)
 	if err == nil {
 		s.logger.Debug("Cached token found", "namespace", namespace, "id", identifier)
