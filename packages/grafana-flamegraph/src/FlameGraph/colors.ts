@@ -88,8 +88,11 @@ export function getBarColorByDiff(
   const totalTicksLeft = totalTicks - totalTicksRight;
 
   if (totalTicksRight === 0 || totalTicksLeft === 0) {
+    // TODO types from DefinitelyTyped seem to mismatch
+    // @ts-ignore
+    const rgbString: string = colorScale(0);
     // Fallback to neutral color as we probably have no data for one of the sides.
-    return colorScale(0);
+    return color(rgbString);
   }
 
   const percentageLeft = Math.round((10000 * ticksLeft) / totalTicksLeft) / 100;
