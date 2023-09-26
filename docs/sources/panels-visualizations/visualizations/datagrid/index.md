@@ -124,5 +124,5 @@ To delete all rows, use the "select all" checkbox at the top left corner of the 
 
 {{% docs/reference %}}
 [special data sources]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/datasources#special-data-sources"
-[special data sources]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/datasources#special-data-sources"
+[special data sources]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/connect-externally-hosted/data-sources#special-data-sources"
 {{% /docs/reference %}}

@@ -136,7 +136,7 @@ You can size a dashboard panel to suits your needs.
 
 {{% docs/reference %}}
 [Dashboard]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/datasources#special-data-sources"
-[Dashboard]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/datasources#special-data-sources"
+[Dashboard]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/connect-externally-hosted/data-sources#special-data-sources"
 
 [Override field values]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/configure-overrides"
 [Override field values]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/configure-overrides"

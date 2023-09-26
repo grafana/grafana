@@ -132,5 +132,5 @@ You should now see a list of matching traces in the table visualization. While s
 [Configure panel options documentation]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/configure-panel-options"
 
 [Tempo data source]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/datasources/tempo"
-[Tempo data source]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/datasources/tempo"
+[Tempo data source]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/connect-externally-hosted/data-sources/tempo"
 {{% /docs/reference %}}
