@@ -440,7 +440,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
     return <FlameGraphExploreContainer dataFrames={queryResponse.flameGraphFrames} />;
   }
 
-  renderTraceViewPanel() {
+  renderTraceViewPanel(width: number) {
     const { queryResponse, exploreId } = this.props;
     const dataFrames = queryResponse.series.filter((series) => series.meta?.preferredVisualisationType === 'trace');
 
@@ -454,6 +454,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
           scrollElement={this.scrollElement}
           queryResponse={queryResponse}
           topOfViewRef={this.topOfViewRef}
+          width={width}
         />
       )
     );
@@ -543,7 +544,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
                           {showLogs && <ErrorBoundaryAlert>{this.renderLogsPanel(width)}</ErrorBoundaryAlert>}
                           {showNodeGraph && <ErrorBoundaryAlert>{this.renderNodeGraphPanel()}</ErrorBoundaryAlert>}
                           {showFlameGraph && <ErrorBoundaryAlert>{this.renderFlameGraphPanel()}</ErrorBoundaryAlert>}
-                          {showTrace && <ErrorBoundaryAlert>{this.renderTraceViewPanel()}</ErrorBoundaryAlert>}
+                          {showTrace && <ErrorBoundaryAlert>{this.renderTraceViewPanel(width)}</ErrorBoundaryAlert>}
                           {showLogsSample && <ErrorBoundaryAlert>{this.renderLogsSamplePanel()}</ErrorBoundaryAlert>}
                           {showCustom && <ErrorBoundaryAlert>{this.renderCustom(width)}</ErrorBoundaryAlert>}
                           {showNoData && <ErrorBoundaryAlert>{this.renderNoData()}</ErrorBoundaryAlert>}

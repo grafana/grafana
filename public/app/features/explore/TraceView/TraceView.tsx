@@ -27,7 +27,15 @@ import { useDispatch, useSelector } from 'app/types';
 
 import { changePanelState } from '../state/explorePane';
 
-import { SpanBarOptionsData, Trace, TracePageHeader, TraceTimelineViewer, TTraceTimeline } from './components';
+import { DetailsPanel } from './DetailsPanel';
+import {
+  SpanBarOptionsData,
+  Trace,
+  TracePageHeader,
+  TraceSpan,
+  TraceTimelineViewer,
+  TTraceTimeline,
+} from './components';
 import SpanGraph from './components/TracePageHeader/SpanGraph';
 import { TopOfViewRefType } from './components/TraceTimelineViewer/VirtualizedTraceView';
 import { createSpanLinkFactory } from './createSpanLink';
@@ -59,10 +67,11 @@ type Props = {
   datasource: DataSourceApi<DataQuery, DataSourceJsonData, {}> | undefined;
   topOfViewRef: RefObject<HTMLDivElement>;
   topOfViewRefType: TopOfViewRefType;
+  width: number;
 };
 
 export function TraceView(props: Props) {
-  const { traceProp, datasource, topOfViewRef, topOfViewRefType, exploreId } = props;
+  const { traceProp, datasource, topOfViewRef, topOfViewRefType, exploreId, width } = props;
 
   const {
     detailStates,
@@ -85,6 +94,7 @@ export function TraceView(props: Props) {
   const [showSpanFilters, setShowSpanFilters] = useToggle(false);
   const [showSpanFilterMatchesOnly, setShowSpanFilterMatchesOnly] = useState(false);
   const [headerHeight, setHeaderHeight] = useState(100);
+  const [selectedSpan, setSelectedSpan] = useState<TraceSpan | undefined>();
 
   const styles = useStyles2(getStyles);
 
@@ -197,6 +207,14 @@ export function TraceView(props: Props) {
             topOfViewRef={topOfViewRef}
             topOfViewRefType={topOfViewRefType}
             headerHeight={headerHeight}
+            setSelectedSpan={setSelectedSpan}
+            selectedSpanId={selectedSpan?.spanID}
+          />
+          <DetailsPanel
+            span={selectedSpan}
+            timeZone={timeZone}
+            width={width}
+            clearSelectedSpan={() => setSelectedSpan(undefined)}
           />
         </>
       ) : (

@@ -106,6 +106,8 @@ export type TProps = {
   topOfViewRef?: RefObject<HTMLDivElement>;
   topOfViewRefType?: TopOfViewRefType;
   headerHeight: number;
+  setSelectedSpan: React.Dispatch<React.SetStateAction<TraceSpan | undefined>>;
+  selectedSpanId?: string;
 };
 
 type State = {
