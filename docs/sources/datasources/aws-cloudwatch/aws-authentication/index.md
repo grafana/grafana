@@ -164,14 +164,14 @@ The `Grafana Assume Role` authentication provider lets you authenticate with AWS
 
 To use this `Grafana Assume Role`:
 
-1. Put in a request to Customer Support to enable `awsDatasourcesTempCredentials`
-2. Once the feature is enabled, create a new CloudWatch datasource (or update an existing one) and select `Grafana Assume Role` as an authentication provider
-3. Create a new IAM role in the AWS console, and select Another AWS account as the Trusted entity.
-4. Enter the account ID of the Grafana account that has permission to assume this role 008923505280 and check the Require external ID box.
-5. Enter the external ID specified in the Instructions Box on the CloudWatch Datasource Configuration page in Grafana. This external ID will be unique to your grafana instance.
-6. Attach any required permissions you would like Grafana to be able to access on your behalf (example CloudWatch Logs and CloudWatch Metrics policies)
-7. Give the role a name and description, and click Create role.
-8. Copy the ARN of the role you just created and paste it into the Assume Role ARN field on the CloudWatch Datasource Configuration page in Grafana.
+1. Put in a request to Customer Support to enable`awsDatasourcesTempCredentials`.
+2. Once the feature is enabled, create a new CloudWatch data source (or update an existing one) and select `Grafana Assume Role` as an authentication provider.
+3. Create a new IAM role in the AWS console, and select **Another AWS account** as the Trusted entity.
+4. Enter the account ID of the Grafana account that has permission to assume this role 008923505280 and check the **Require external ID** box.
+5. Enter the external ID specified in the instructions box on the **Settings** tab of CloudWatch data source configuration in Grafana. This external ID will be unique to your Grafana instance.
+6. Attach any required permissions you would like Grafana to be able to access on your behalf (for example, CloudWatch Logs and CloudWatch Metrics policies).
+7. Give the role a name and description, and click **Create role**.
+8. Copy the ARN of the role you just created and paste it into the **Assume Role ARN** field on the **Settings** tab of CloudWatch data source configuration in Grafana.
 
 Sample Trust Relationship for an IAM role:
 
