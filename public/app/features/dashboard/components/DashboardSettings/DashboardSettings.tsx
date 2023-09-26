@@ -188,8 +188,13 @@ function getSectionNav(
     text: 'Settings',
     children: [],
     icon: 'apps',
-    url: locationUtil.getUrlForPartial(location, { editview: 'settings', editIndex: null }),
+    hideFromBreadcrumbs: true,
   };
+
+  if (config.featureToggles.dockedMegaMenu) {
+    main.hideFromBreadcrumbs = false;
+    main.url = locationUtil.getUrlForPartial(location, { editview: 'settings', editIndex: null });
+  }
 
   main.children = pages.map((page) => ({
     text: page.title,

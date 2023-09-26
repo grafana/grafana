@@ -1,7 +1,7 @@
 import React from 'react';
 
 import { AnnotationQuery, getDataSourceRef, NavModelItem } from '@grafana/data';
-import { getDataSourceSrv, locationService } from '@grafana/runtime';
+import { config, getDataSourceSrv, locationService } from '@grafana/runtime';
 import { Page } from 'app/core/components/Page/Page';
 
 import { DashboardModel } from '../../state';
@@ -45,14 +45,19 @@ function getSubPageNav(
     return node.parentItem;
   }
 
+  const parentItem =
+    config.featureToggles.dockedMegaMenu && node.parentItem
+      ? {
+          ...node.parentItem,
+          url: node.url,
+        }
+      : undefined;
+
   const editItem = dashboard.annotations.list[editIndex];
   if (editItem) {
     return {
       text: editItem.name,
-      parentItem: node.parentItem && {
-        ...node.parentItem,
-        url: node.url,
-      },
+      parentItem,
     };
   }
 
