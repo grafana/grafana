@@ -337,7 +337,9 @@ func (pd *PublicDashboardServiceImpl) Delete(ctx context.Context, uid string, da
 	existingPubdash, err := pd.store.Find(ctx, uid)
 	if err != nil {
 		return ErrInternalServerError.Errorf("Delete: failed to find public dashboard by uid: %s: %w", uid, err)
-	} else if existingPubdash == nil {
+	}
+	
+	if existingPubdash == nil {
 		return ErrPublicDashboardNotFound.Errorf("Delete: public dashboard not found by uid: %s", uid)
 	}
 
