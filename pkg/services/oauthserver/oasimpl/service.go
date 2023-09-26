@@ -455,7 +455,7 @@ func (s *OAuth2ServiceImpl) createServiceAccount(ctx context.Context, extSvcName
 	s.logger.Debug("Generate service account", "external service name", extSvcName, "orgID", oauthserver.TmpOrgID, "name", slug)
 	sa, err := s.saService.CreateServiceAccount(ctx, oauthserver.TmpOrgID, &serviceaccounts.CreateServiceAccountForm{
 		Name:       slug,
-		Role:       newRole(roletype.RoleViewer), // FIXME: Use empty role
+		Role:       newRole(roletype.RoleNone),
 		IsDisabled: newBool(false),
 	})
 	if err != nil {
