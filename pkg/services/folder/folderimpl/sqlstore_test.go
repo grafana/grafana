@@ -19,6 +19,8 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
+const folderDsc = "folder desc"
+
 func TestIntegrationSQLStore(t *testing.T) {
 	db := sqlstore.InitTestDB(t)
 	orgID := createOrg(t, db)
@@ -61,7 +63,6 @@ func testIntegrationCreate(t *testing.T, folderStore store, orgID int64) {
 	}
 
 	folderTitle := "testIntegrationCreate"
-	const folderDsc = "folder desc"
 	t.Run("creating a folder without providing a UID should fail", func(t *testing.T) {
 		_, err := folderStore.Create(context.Background(), folder.CreateFolderCommand{
 			Title:       folderTitle,
@@ -225,7 +226,6 @@ func testIntegrationUpdate(t *testing.T, folderStore store, orgID int64) {
 
 	// create parent folder
 	folderTitle := "testIntegrationUpdate"
-	folderDsc := "folder desc"
 	parent, err := folderStore.Create(context.Background(), folder.CreateFolderCommand{
 		Title:       folderTitle,
 		Description: folderDsc,
@@ -400,7 +400,6 @@ func testIntegrationGet(t *testing.T, folderStore store, orgID int64) {
 	// create folder
 	uid1 := util.GenerateShortUID()
 	folderTitle := "testIntegrationGet"
-	folderDsc := "folder desc"
 	f, err := folderStore.Create(context.Background(), folder.CreateFolderCommand{
 		Title:       folderTitle,
 		Description: folderDsc,
@@ -480,7 +479,6 @@ func testIntegrationGetParents(t *testing.T, folderStore store, orgID int64) {
 	// create folder
 	uid1 := util.GenerateShortUID()
 	folderTitle := "testIntegrationGetParents"
-	folderDsc := "folder desc"
 	f, err := folderStore.Create(context.Background(), folder.CreateFolderCommand{
 		Title:       folderTitle,
 		Description: folderDsc,
@@ -547,7 +545,6 @@ func testIntegrationGetChildren(t *testing.T, folderStore store, orgID int64) {
 	// create folder
 	uid1 := util.GenerateShortUID()
 	folderTitle := "testIntegrationGetChildren"
-	folderDsc := "folder desc"
 	parent, err := folderStore.Create(context.Background(), folder.CreateFolderCommand{
 		Title:       folderTitle,
 		Description: folderDsc,
@@ -713,7 +710,6 @@ func testIntegrationGetHeight(t *testing.T, folderStore store, orgID int64) {
 	// create folder
 	uid1 := util.GenerateShortUID()
 	folderTitle := "testIntegrationGetHeight"
-	folderDsc := "folder desc"
 	parent, err := folderStore.Create(context.Background(), folder.CreateFolderCommand{
 		Title:       folderTitle,
 		Description: folderDsc,
