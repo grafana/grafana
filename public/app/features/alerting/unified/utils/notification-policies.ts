@@ -9,7 +9,9 @@ import {
 } from 'app/plugins/datasource/alertmanager/types';
 import { Labels } from 'app/types/unified-alerting-dto';
 
-import { Label, normalizeMatchers } from './matchers';
+import { normalizeMatchers } from './matchers';
+
+export type Label = [string, string];
 
 type OperatorPredicate = (labelValue: string, matcherValue: string) => boolean;
 

@@ -1,10 +1,10 @@
 import { MatcherOperator, Route, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
 
-import { Label } from './matchers';
 import {
   computeInheritedTree,
   findMatchingRoutes,
   getInheritedProperties,
+  Label,
   normalizeRoute,
 } from './notification-policies';
 
