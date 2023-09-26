@@ -283,6 +283,17 @@ describe('CompletionProvider', () => {
   });
 
   it.each([
+    ['{ span.d }', 8],
+    ['{ span.db }', 9],
+  ])('suggests to complete attribute - %s, %i', async (input: string, offset: number) => {
+    const { provider, model } = setup(input, offset, undefined, v2Tags);
+    const result = await provider.provideCompletionItems(model, emptyPosition);
+    expect((result! as monacoTypes.languages.CompletionList).suggestions).toEqual([
+      expect.objectContaining({ label: 'db', insertText: 'db' }),
+    ]);
+  });
+
+  it.each([
     ['{.foo=1}  {.bar=2}', 8],
     ['{.foo=1}  {.bar=2}', 9],
     ['{.foo=1}  {.bar=2}', 10],

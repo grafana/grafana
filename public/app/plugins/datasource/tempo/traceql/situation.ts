@@ -249,12 +249,15 @@ const RESOLVERS: Resolver[] = [
   },
 ];
 
-function resolveSpanset(node: SyntaxNode, text: string, pos: number, originalPos: number): SituationType {
+function resolveSpanset(node: SyntaxNode, text: string, _: number, originalPos: number): SituationType {
   // The user is completing an expression
   let endOfPathNode = walk(node, [['firstChild', [FieldExpression]]]);
   if (endOfPathNode && text[originalPos - 1] !== ' ') {
-    const indexOfDot = text.indexOf('.');
-    const attributeFieldUpToDot = text.slice(0, indexOfDot);
+    const attributeFieldParent = walk(endOfPathNode, [['firstChild', [AttributeField]]]);
+    const attributeFieldParentText = attributeFieldParent ? getNodeText(attributeFieldParent, text) : '';
+    const indexOfDot = attributeFieldParentText.indexOf('.');
+    const attributeFieldUpToDot = attributeFieldParentText.slice(0, indexOfDot);
+
     return {
       type: 'SPANSET_IN_NAME_SCOPE',
       scope: attributeFieldUpToDot,
