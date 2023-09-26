@@ -156,10 +156,9 @@ export async function promQailSuggest(
   if (!check || interactionToUpdate.suggestionType === SuggestionType.Historical) {
     return new Promise<void>((resolve) => {
       return setTimeout(() => {
-
         const suggestions = commonTemplateSuggestions.map(suggestion => {
           return {
-            query: suggestion.replace('metric', query.metric),
+            query: suggestion.replace('metric', query.metric).replace('{}', promQueryModeller.renderLabels(query.labels)),
             explanation: '',
           };
         }).sort(() => Math.random() - 0.5).slice(0, 5);
