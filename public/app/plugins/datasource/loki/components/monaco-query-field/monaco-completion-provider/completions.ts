@@ -348,10 +348,11 @@ export async function getAfterSelectorCompletions(
   return [...lineFilters, ...completions];
 }
 
-export async function getLogfmtCompletions(
+export async function getExpressionParserCompletions(
   logQuery: string,
   flags: boolean,
   otherLabels: string[],
+  parser: string,
   dataProvider: CompletionDataProvider
 ): Promise<Completion[]> {
   const trailingComma = logQuery.trimEnd().endsWith(',');
@@ -374,18 +375,19 @@ export async function getLogfmtCompletions(
   );
   const pipeOperations = getPipeOperationsCompletions('| ');
 
-  if (!flags && !trailingComma) {
+  if (parser === 'logfmt' && !flags && !trailingComma) {
     completions = [...completions, ...LOGFMT_ARGUMENT_COMPLETIONS, ...parserCompletions, ...pipeOperations];
   } else if (!trailingComma) {
     completions = [...completions, ...parserCompletions, ...pipeOperations];
   }
 
   const labelPrefix = otherLabels.length === 0 || trailingComma ? '' : ', ';
+  const labelSuffix = parser === 'json' ? '=""' : '';
   const labels = extractedLabelKeys.filter((label) => !otherLabels.includes(label));
   const labelCompletions: Completion[] = labels.map((label) => ({
     type: 'LABEL_NAME',
     label,
-    insertText: labelPrefix + label,
+    insertText: labelPrefix + label + labelSuffix,
     triggerOnInsert: false,
   }));
   completions = [...completions, ...labelCompletions];
@@ -471,8 +473,8 @@ export async function getCompletions(
       return [...FUNCTION_COMPLETIONS, ...AGGREGATION_COMPLETIONS];
     case 'AFTER_KEEP_AND_DROP':
       return getAfterKeepAndDropCompletions(situation.logQuery, dataProvider);
-    case 'IN_LOGFMT':
-      return getLogfmtCompletions(situation.logQuery, situation.flags, situation.otherLabels, dataProvider);
+    case 'IN_EXPRESSION_PARSER':
+      return getExpressionParserCompletions(situation.logQuery, situation.flags, situation.otherLabels, situation.parser, dataProvider);
     default:
       throw new NeverCaseError(situation);
   }

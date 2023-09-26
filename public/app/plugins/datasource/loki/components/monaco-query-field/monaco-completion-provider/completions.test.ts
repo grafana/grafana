@@ -512,7 +512,7 @@ describe('getAfterSelectorCompletions', () => {
   });
 });
 
-describe('IN_LOGFMT completions', () => {
+describe('Logfmt IN_EXPRESSION_PARSER completions', () => {
   let datasource: LokiDatasource;
   let languageProvider: LokiLanguageProvider;
   let completionProvider: CompletionDataProvider;
@@ -534,8 +534,9 @@ describe('IN_LOGFMT completions', () => {
   });
   it('autocompleting logfmt should return flags, parsers, pipe operations, and labels', async () => {
     const situation: Situation = {
-      type: 'IN_LOGFMT',
+      type: 'IN_EXPRESSION_PARSER',
       logQuery: `{job="grafana"} | logfmt`,
+      parser: 'logfmt',
       flags: false,
       otherLabels: [],
     };
@@ -640,8 +641,9 @@ describe('IN_LOGFMT completions', () => {
 
   it('autocompleting logfmt with flags should return parser, pipe operations, and labels', async () => {
     const situation: Situation = {
-      type: 'IN_LOGFMT',
+      type: 'IN_EXPRESSION_PARSER',
       logQuery: `{job="grafana"} | logfmt`,
+      parser: 'logfmt',
       flags: true,
       otherLabels: [],
     };
@@ -734,7 +736,8 @@ describe('IN_LOGFMT completions', () => {
 
   it('autocompleting logfmt should exclude already used labels from the suggestions', async () => {
     const situation: Situation = {
-      type: 'IN_LOGFMT',
+      type: 'IN_EXPRESSION_PARSER',
+      parser: 'logfmt',
       logQuery: `{job="grafana"} | logfmt`,
       flags: true,
       otherLabels: ['label1', 'label2'],
@@ -816,7 +819,8 @@ describe('IN_LOGFMT completions', () => {
 
   it('autocompleting logfmt without flags should only offer labels when the user has a trailing comma', async () => {
     const situation: Situation = {
-      type: 'IN_LOGFMT',
+      type: 'IN_EXPRESSION_PARSER',
+      parser: 'logfmt',
       logQuery: `{job="grafana"} | logfmt --strict label3,`,
       flags: false,
       otherLabels: ['label1'],
@@ -836,7 +840,8 @@ describe('IN_LOGFMT completions', () => {
 
   it('autocompleting logfmt with flags should only offer labels when the user has a trailing comma', async () => {
     const situation: Situation = {
-      type: 'IN_LOGFMT',
+      type: 'IN_EXPRESSION_PARSER',
+      parser: 'logfmt',
       logQuery: `{job="grafana"} | logfmt --strict label3,`,
       flags: true,
       otherLabels: ['label1'],
@@ -846,6 +851,226 @@ describe('IN_LOGFMT completions', () => {
       [
         {
           "insertText": "label2",
+          "label": "label2",
+          "triggerOnInsert": false,
+          "type": "LABEL_NAME",
+        },
+      ]
+    `);
+  });
+});
+
+describe('json IN_EXPRESSION_PARSER completions', () => {
+  let datasource: LokiDatasource;
+  let languageProvider: LokiLanguageProvider;
+  let completionProvider: CompletionDataProvider;
+
+  beforeEach(() => {
+    datasource = createLokiDatasource();
+    languageProvider = new LokiLanguageProvider(datasource);
+    completionProvider = new CompletionDataProvider(languageProvider, {
+      current: history,
+    });
+
+    jest.spyOn(completionProvider, 'getParserAndLabelKeys').mockResolvedValue({
+      extractedLabelKeys: ['label1', 'label2'],
+      unwrapLabelKeys: [],
+      hasJSON: true,
+      hasjson: false,
+      hasPack: false,
+    });
+  });
+  it('autocompleting json should return parsers, pipe operations, and labels', async () => {
+    const situation: Situation = {
+      type: 'IN_EXPRESSION_PARSER',
+      logQuery: `{job="grafana"} | json`,
+      parser: 'json',
+      flags: false,
+      otherLabels: [],
+    };
+
+    expect(await getCompletions(situation, completionProvider)).toMatchInlineSnapshot(`
+      [
+        {
+          "documentation": "Operator docs",
+          "insertText": "| json",
+          "label": "json",
+          "type": "PARSER",
+        },
+        {
+          "documentation": "Operator docs",
+          "insertText": "| json",
+          "label": "json",
+          "type": "PARSER",
+        },
+        {
+          "documentation": "Operator docs",
+          "insertText": "| pattern",
+          "label": "pattern",
+          "type": "PARSER",
+        },
+        {
+          "documentation": "Operator docs",
+          "insertText": "| regexp",
+          "label": "regexp",
+          "type": "PARSER",
+        },
+        {
+          "documentation": "Operator docs",
+          "insertText": "| unpack",
+          "label": "unpack",
+          "type": "PARSER",
+        },
+        {
+          "documentation": "Operator docs",
+          "insertText": "| line_format "{{.$0}}"",
+          "isSnippet": true,
+          "label": "line_format",
+          "type": "PIPE_OPERATION",
+        },
+        {
+          "documentation": "Operator docs",
+          "insertText": "| label_format",
+          "isSnippet": true,
+          "label": "label_format",
+          "type": "PIPE_OPERATION",
+        },
+        {
+          "documentation": "Operator docs",
+          "insertText": "| unwrap",
+          "label": "unwrap",
+          "type": "PIPE_OPERATION",
+        },
+        {
+          "documentation": "Operator docs",
+          "insertText": "| decolorize",
+          "label": "decolorize",
+          "type": "PIPE_OPERATION",
+        },
+        {
+          "documentation": "Operator docs",
+          "insertText": "| drop",
+          "label": "drop",
+          "type": "PIPE_OPERATION",
+        },
+        {
+          "documentation": "Operator docs",
+          "insertText": "| keep",
+          "label": "keep",
+          "type": "PIPE_OPERATION",
+        },
+        {
+          "insertText": "label1=\\"\\""",
+          "label": "label1",
+          "triggerOnInsert": false,
+          "type": "LABEL_NAME",
+        },
+        {
+          "insertText": "label2=\\"\\"",
+          "label": "label2",
+          "triggerOnInsert": false,
+          "type": "LABEL_NAME",
+        },
+      ]
+    `);
+  });
+
+  it('autocompleting json should exclude already used labels from the suggestions', async () => {
+    const situation: Situation = {
+      type: 'IN_EXPRESSION_PARSER',
+      parser: 'json',
+      logQuery: `{job="grafana"} | json`,
+      flags: true,
+      otherLabels: ['label1', 'label2'],
+    };
+
+    expect(await getCompletions(situation, completionProvider)).toMatchInlineSnapshot(`
+      [
+        {
+          "documentation": "Operator docs",
+          "insertText": "| json",
+          "label": "json",
+          "type": "PARSER",
+        },
+        {
+          "documentation": "Operator docs",
+          "insertText": "| json",
+          "label": "json",
+          "type": "PARSER",
+        },
+        {
+          "documentation": "Operator docs",
+          "insertText": "| pattern",
+          "label": "pattern",
+          "type": "PARSER",
+        },
+        {
+          "documentation": "Operator docs",
+          "insertText": "| regexp",
+          "label": "regexp",
+          "type": "PARSER",
+        },
+        {
+          "documentation": "Operator docs",
+          "insertText": "| unpack",
+          "label": "unpack",
+          "type": "PARSER",
+        },
+        {
+          "documentation": "Operator docs",
+          "insertText": "| line_format "{{.$0}}"",
+          "isSnippet": true,
+          "label": "line_format",
+          "type": "PIPE_OPERATION",
+        },
+        {
+          "documentation": "Operator docs",
+          "insertText": "| label_format",
+          "isSnippet": true,
+          "label": "label_format",
+          "type": "PIPE_OPERATION",
+        },
+        {
+          "documentation": "Operator docs",
+          "insertText": "| unwrap",
+          "label": "unwrap",
+          "type": "PIPE_OPERATION",
+        },
+        {
+          "documentation": "Operator docs",
+          "insertText": "| decolorize",
+          "label": "decolorize",
+          "type": "PIPE_OPERATION",
+        },
+        {
+          "documentation": "Operator docs",
+          "insertText": "| drop",
+          "label": "drop",
+          "type": "PIPE_OPERATION",
+        },
+        {
+          "documentation": "Operator docs",
+          "insertText": "| keep",
+          "label": "keep",
+          "type": "PIPE_OPERATION",
+        },
+      ]
+    `);
+  });
+
+  it('autocompleting json should only offer labels when the user has a trailing comma', async () => {
+    const situation: Situation = {
+      type: 'IN_EXPRESSION_PARSER',
+      parser: 'json',
+      logQuery: `{job="grafana"} | json label3,`,
+      flags: false,
+      otherLabels: ['label1'],
+    };
+
+    expect(await getCompletions(situation, completionProvider)).toMatchInlineSnapshot(`
+      [
+        {
+          "insertText": "label2=\\"\\""",
           "label": "label2",
           "triggerOnInsert": false,
           "type": "LABEL_NAME",
