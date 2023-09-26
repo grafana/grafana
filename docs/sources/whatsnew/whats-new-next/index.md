@@ -78,7 +78,7 @@ To learn more, refer to the following video demo.
 
 {{< video-embed src="/media/docs/grafana/2023-09-11-New-Browse-Dashboards-Enablement-Video.mp4" >}}
 
-## Temporary Credentials in CloudWatch Data Source
+## Temporary credentials in CloudWatch data source
 
 <!-- Michael Mandrus, Ida Štambuk, Sarah Zinger  -->
 <!-- Cloud -->
