@@ -13,7 +13,5 @@ do
   for (( dashCounter=1; dashCounter<="$numberOfDashboardsPerFolder"; dashCounter++ ))
   do
     jsonnet -o "$folderPath/dashboard${dashCounter}.json" -e "local bulkDash = import 'bulk-dashboards/bulkdash.jsonnet'; bulkDash + {  uid: 'bulk-folder-${folderCounter}-${dashCounter}',  title: 'Bulk Folder  ${folderCounter} Dashboard ${dashCounter}' }"
-
-    dashCounter=$((dashCounter+1))
   done
 done
