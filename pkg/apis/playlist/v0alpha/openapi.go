@@ -1,4 +1,4 @@
-package v1
+package v0alpha
 
 import (
 	common "k8s.io/kube-openapi/pkg/common"

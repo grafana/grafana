@@ -1,4 +1,4 @@
-package v1
+package v0alpha
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -52,12 +52,12 @@ func (b *PlaylistAPIBuilder) GetAPIGroupInfo(
 	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(GroupName, scheme, metav1.ParameterCodec, codecs)
 	storage := map[string]rest.Storage{}
 
-	sqlStore := newSQLStorage(b.service)
+	sqlStore := newLegacyStorage(b.service)
 	storage["playlists"] = sqlStore
 
 	// enable dual writes if a RESTOptionsGetter is provided
 	if optsGetter != nil {
-		unifiedStorage, err := newUnifiedStorage(scheme, optsGetter)
+		unifiedStorage, err := newStorage(scheme, optsGetter)
 		if err != nil {
 			return nil, err
 		}

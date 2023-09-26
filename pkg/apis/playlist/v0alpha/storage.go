@@ -1,4 +1,4 @@
-package v1
+package v0alpha
 
 import (
 	"k8s.io/apimachinery/pkg/runtime"
@@ -10,13 +10,13 @@ import (
 	grafanarest "github.com/grafana/grafana/pkg/services/grafana-apiserver/rest"
 )
 
-var _ grafanarest.UnifiedStorage = (*unifiedStorage)(nil)
+var _ grafanarest.Storage = (*storage)(nil)
 
-type unifiedStorage struct {
+type storage struct {
 	*genericregistry.Store
 }
 
-func newUnifiedStorage(scheme *runtime.Scheme, optsGetter generic.RESTOptionsGetter) (*unifiedStorage, error) {
+func newStorage(scheme *runtime.Scheme, optsGetter generic.RESTOptionsGetter) (*storage, error) {
 	strategy := grafanaregistry.NewStrategy(scheme)
 
 	store := &genericregistry.Store{
@@ -36,5 +36,5 @@ func newUnifiedStorage(scheme *runtime.Scheme, optsGetter generic.RESTOptionsGet
 	if err := store.CompleteWithOptions(options); err != nil {
 		return nil, err
 	}
-	return &unifiedStorage{Store: store}, nil
+	return &storage{Store: store}, nil
 }
