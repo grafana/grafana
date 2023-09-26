@@ -34,7 +34,8 @@ export const GenAIButton = ({
   const styles = useStyles2(getStyles);
 
   // TODO: Implement error handling (use error object from hook)
-  const { setMessages, reply, isGenerating, value } = useOpenAIStream(OPEN_AI_MODEL, temperature);
+  const { setMessages, reply, isGenerating, value, error } = useOpenAIStream(OPEN_AI_MODEL, temperature);
+  console.log({ setMessages, reply, isGenerating, value, error });
 
   const onClick = (e: React.MouseEvent<HTMLButtonElement>) => {
     onClickProp?.(e);
@@ -47,30 +48,51 @@ export const GenAIButton = ({
   }
 
   const getIcon = () => {
+    if (error || !value?.enabled) {
+      return 'exclamation-circle';
+    }
     if (isGenerating) {
       return undefined;
     }
-    if (!value?.enabled) {
-      return 'exclamation-circle';
-    }
     return 'ai';
+  };
+
+  const getTooltipContent = () => {
+    if (error) {
+      return `Error: ${error.message}`;
+    }
+    if (!value?.enabled) {
+      return (
+        <span>
+          The LLM plugin is not correctly configured. See your <Link href={`/plugins/grafana-llm-app`}>settings</Link>{' '}
+          and enable your plugin.
+        </span>
+      );
+    }
+    return '';
+  };
+
+  const getText = () => {
+    if (error) {
+      return 'Retry';
+    }
+
+    return !isGenerating ? text : loadingText;
   };
 
   return (
     <div className={styles.wrapper}>
       {isGenerating && <Spinner size={14} />}
-      <Tooltip
-        show={value?.enabled ? false : undefined}
-        interactive
-        content={
-          <span>
-            The LLM plugin is not correctly configured. See your <Link href={`/plugins/grafana-llm-app`}>settings</Link>{' '}
-            and enable your plugin.
-          </span>
-        }
-      >
-        <Button icon={getIcon()} onClick={onClick} fill="text" size="sm" disabled={isGenerating || !value?.enabled}>
-          {!isGenerating ? text : loadingText}
+      <Tooltip show={value?.enabled && !error ? false : undefined} interactive content={getTooltipContent()}>
+        <Button
+          icon={getIcon()}
+          onClick={onClick}
+          fill="text"
+          size="sm"
+          disabled={isGenerating || (!value?.enabled && !error)}
+          variant={error ? 'destructive' : 'primary'}
+        >
+          {getText()}
         </Button>
       </Tooltip>
     </div>
@@ -78,7 +100,7 @@ export const GenAIButton = ({
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  wrapper: css`
-    display: flex;
-  `,
+  wrapper: css({
+    display: 'flex',
+  }),
 });

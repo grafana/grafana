@@ -20,11 +20,11 @@ export function useOpenAIStream(
   error: Error | undefined;
   value:
     | {
-        enabled: boolean;
+        enabled: boolean | undefined;
         stream?: undefined;
       }
     | {
-        enabled: boolean;
+        enabled: boolean | undefined;
         stream: Subscription;
       }
     | undefined;
@@ -33,10 +33,10 @@ export function useOpenAIStream(
   const [messages, setMessages] = useState<Message[]>([]);
   // The latest reply from the LLM.
   const [reply, setReply] = useState('');
-
   const [isGenerating, setIsGenerating] = useState(false);
+  const [error, setError] = useState<Error>();
 
-  const { error, value } = useAsync(async () => {
+  const { error: asyncError, value } = useAsync(async () => {
     // Check if the LLM plugin is enabled and configured.
     // If not, we won't be able to make requests, so return early.
     const enabled = await isLLMPluginEnabled();
@@ -48,6 +48,7 @@ export function useOpenAIStream(
     }
 
     setIsGenerating(true);
+    setError(undefined);
     // Stream the completions. Each element is the next stream chunk.
     const stream = openai
       .streamChatCompletions({
@@ -63,29 +64,29 @@ export function useOpenAIStream(
         // functionality to update state, e.g. recording when the stream
         // has completed.
         // The operator decision tree on the rxjs website is a useful resource:
-        // https://rxjs.dev/operator-decision-tree.
+        // https://rxjs.dev/operator-decision-tree.)
       );
     // Subscribe to the stream and update the state for each returned value.
     return {
       enabled,
       stream: stream.subscribe({
         next: setReply,
-        error: (e) => {
-          console.log('The backend for the stream returned an error and nobody has implemented error handling yet!');
-          console.log(e);
+        error: (e: Error) => {
+          setIsGenerating(false);
+          setMessages([]);
+          setError(e);
         },
         complete: () => {
           setIsGenerating(false);
           setMessages([]);
+          setError(undefined);
         },
       }),
     };
   }, [messages]);
 
-  if (error) {
-    // TODO: handle errors.
-    console.log('An error occurred');
-    console.log(error.message);
+  if (asyncError) {
+    setError(asyncError);
   }
 
   return {
