@@ -3,7 +3,7 @@ const DASHBOARD_ID = 'ed155665';
 
 describe('Annotations filtering', () => {
   beforeEach(() => {
-    e2e.flows.login(e2e.env('USERNAME'), e2e.env('PASSWORD'));
+    e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'));
   });
 
   it('Tests switching filter type updates the UI accordingly', () => {
