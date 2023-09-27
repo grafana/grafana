@@ -285,11 +285,11 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *A
 	}
 
 	ctx, span := tracer.Start(ctx, "azure log analytics query", trace.WithAttributes(
-		attribute.Key("target").String(query.Query),
-		attribute.Key("from").Int64(query.TimeRange.From.UnixNano()/int64(time.Millisecond)),
-		attribute.Key("until").Int64(query.TimeRange.To.UnixNano()/int64(time.Millisecond)),
-		attribute.Key("datasource_id").Int64(dsInfo.DatasourceID),
-		attribute.Key("org_id").Int64(dsInfo.OrgID),
+		attribute.String("target", query.Query),
+		attribute.Int64("from", query.TimeRange.From.UnixNano()/int64(time.Millisecond)),
+		attribute.Int64("until", query.TimeRange.To.UnixNano()/int64(time.Millisecond)),
+		attribute.Int64("datasource_id", dsInfo.DatasourceID),
+		attribute.Int64("org_id", dsInfo.OrgID),
 	))
 	defer span.End()
 
@@ -561,9 +561,9 @@ func getCorrelationWorkspaces(ctx context.Context, baseResource string, resource
 		req.Method = "GET"
 
 		ctx, span := tracer.Start(ctx, "azure traces correlation request", trace.WithAttributes(
-			attribute.Key("target").String(req.URL.String()),
-			attribute.Key("datasource_id").Int64(dsInfo.DatasourceID),
-			attribute.Key("org_id").Int64(dsInfo.OrgID),
+			attribute.String("target", req.URL.String()),
+			attribute.Int64("datasource_id", dsInfo.DatasourceID),
+			attribute.Int64("org_id", dsInfo.OrgID),
 		))
 		defer span.End()
 

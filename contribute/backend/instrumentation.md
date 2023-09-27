@@ -244,6 +244,22 @@ If span names, attribute or event values originates from user input they **shoul
 
 Be **careful** to not expose any sensitive information in span names, attribute or event values, e.g. secrets, credentials etc.
 
+### Span attributes
+
+Consider using `attributes.<Type>("<key>", <value>)` in favor of `attributes.Key("<key>").<Type>(<value>)` since it requires less characters and thereby reads easier.
+
+Example:
+
+```go
+attribute.String("datasource_name", proxy.ds.Name)
+// vs
+attribute.Key("datasource_name").String(proxy.ds.Name)
+
+attribute.Int64("org_id", proxy.ctx.SignedInUser.OrgID)
+// vs
+attribute.Key("org_id").Int64(proxy.ctx.SignedInUser.OrgID)
+```
+
 ### How to collect, visualize and query traces (and correlate logs with traces) locally
 
 #### 1. Start Jaeger

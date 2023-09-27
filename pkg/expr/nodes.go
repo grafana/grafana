@@ -10,7 +10,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/trace"
+	"go.opentelemetry.io/otel/codes"
 	"gonum.org/v1/gonum/graph/simple"
 
 	"github.com/grafana/grafana/pkg/expr/classic"
@@ -237,8 +237,8 @@ func executeDSNodesGrouped(ctx context.Context, now time.Time, vars mathexp.Vars
 			)
 
 			span.SetAttributes(
-				attribute.Key("datasource.type").String(firstNode.datasource.Type),
-				attribute.Key("datasource.uid").String(firstNode.datasource.UID),
+				attribute.String("datasource.type", firstNode.datasource.Type),
+				attribute.String("datasource.uid", firstNode.datasource.UID),
 			)
 
 			req := &backend.QueryDataRequest{
@@ -263,7 +263,8 @@ func executeDSNodesGrouped(ctx context.Context, now time.Time, vars mathexp.Vars
 				if e != nil {
 					responseType = "error"
 					respStatus = "failure"
-					span.RecordError(e, trace.WithAttributes(attribute.Key("message").String("failed to query data source")))
+					span.SetStatus(codes.Error, "failed to query data source")
+					span.RecordError(e)
 				}
 				logger.Debug("Data source queried", "responseType", responseType)
 				useDataplane := strings.HasPrefix(responseType, "dataplane-")
@@ -312,8 +313,8 @@ func (dn *DSNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s 
 		return mathexp.Results{}, err
 	}
 	span.SetAttributes(
-		attribute.Key("datasource.type").String(dn.datasource.Type),
-		attribute.Key("datasource.uid").String(dn.datasource.UID),
+		attribute.String("datasource.type", dn.datasource.Type),
+		attribute.String("datasource.uid", dn.datasource.UID),
 	)
 
 	req := &backend.QueryDataRequest{
@@ -337,7 +338,8 @@ func (dn *DSNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s 
 		if e != nil {
 			responseType = "error"
 			respStatus = "failure"
-			span.RecordError(e, trace.WithAttributes(attribute.String("message", "failed to query data source")))
+			span.SetStatus(codes.Error, "failed to query data source")
+			span.RecordError(e)
 		}
 		logger.Debug("Data source queried", "responseType", responseType)
 		useDataplane := strings.HasPrefix(responseType, "dataplane-")

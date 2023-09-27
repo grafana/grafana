@@ -141,10 +141,10 @@ func (proxy *DataSourceProxy) HandleRequest() {
 	proxy.ctx.Req = proxy.ctx.Req.WithContext(ctx)
 
 	span.SetAttributes(
-		attribute.Key("datasource_name").String(proxy.ds.Name),
-		attribute.Key("datasource_type").String(proxy.ds.Type),
-		attribute.Key("user").String(proxy.ctx.SignedInUser.Login),
-		attribute.Key("org_id").Int64(proxy.ctx.SignedInUser.OrgID),
+		attribute.String("datasource_name", proxy.ds.Name),
+		attribute.String("datasource_type", proxy.ds.Type),
+		attribute.String("user", proxy.ctx.SignedInUser.Login),
+		attribute.Int64("org_id", proxy.ctx.SignedInUser.OrgID),
 	)
 
 	proxy.addTraceFromHeaderValue(span, "X-Panel-Id", "panel_id")
@@ -159,7 +159,7 @@ func (proxy *DataSourceProxy) addTraceFromHeaderValue(span trace.Span, headerNam
 	panelId := proxy.ctx.Req.Header.Get(headerName)
 	dashId, err := strconv.Atoi(panelId)
 	if err == nil {
-		span.SetAttributes(attribute.Key(tagName).Int(dashId))
+		span.SetAttributes(attribute.Int(tagName, dashId))
 	}
 }
 

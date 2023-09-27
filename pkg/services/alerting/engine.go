@@ -217,11 +217,11 @@ func (e *AlertEngine) processJob(attemptID int, attemptChan chan int, cancelChan
 		e.evalHandler.Eval(evalContext)
 
 		span.SetAttributes(
-			attribute.Key("alertId").Int64(evalContext.Rule.ID),
-			attribute.Key("dashboardId").Int64(evalContext.Rule.DashboardID),
-			attribute.Key("firing").Bool(evalContext.Firing),
-			attribute.Key("nodatapoints").Bool(evalContext.NoDataFound),
-			attribute.Key("attemptID").Int(attemptID),
+			attribute.Int64("alertId", evalContext.Rule.ID),
+			attribute.Int64("dashboardId", evalContext.Rule.DashboardID),
+			attribute.Bool("firing", evalContext.Firing),
+			attribute.Bool("nodatapoints", evalContext.NoDataFound),
+			attribute.Int("attemptID", attemptID),
 		)
 
 		if evalContext.Error != nil {

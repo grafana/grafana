@@ -152,11 +152,11 @@ func (e *AzureResourceGraphDatasource) executeQuery(ctx context.Context, query *
 	req.URL.RawQuery = params.Encode()
 
 	ctx, span := tracer.Start(ctx, "azure resource graph query", trace.WithAttributes(
-		attribute.Key("interpolated_query").String(query.InterpolatedQuery),
-		attribute.Key("from").Int64(query.TimeRange.From.UnixNano()/int64(time.Millisecond)),
-		attribute.Key("until").Int64(query.TimeRange.To.UnixNano()/int64(time.Millisecond)),
-		attribute.Key("datasource_id").Int64(dsInfo.DatasourceID),
-		attribute.Key("org_id").Int64(dsInfo.OrgID),
+		attribute.String("interpolated_query", query.InterpolatedQuery),
+		attribute.Int64("from", query.TimeRange.From.UnixNano()/int64(time.Millisecond)),
+		attribute.Int64("until", query.TimeRange.To.UnixNano()/int64(time.Millisecond)),
+		attribute.Int64("datasource_id", dsInfo.DatasourceID),
+		attribute.Int64("org_id", dsInfo.OrgID),
 	))
 	defer span.End()
 

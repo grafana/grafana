@@ -136,7 +136,7 @@ func callResource(ctx context.Context, req *backend.CallResourceRequest, sender 
 	lokiURL := fmt.Sprintf("/loki/api/v1/%s", url)
 
 	ctx, span := tracer.Start(ctx, "datasource.loki.CallResource", trace.WithAttributes(
-		attribute.Key("url").String(lokiURL),
+		attribute.String("url", lokiURL),
 	))
 	defer span.End()
 
@@ -195,11 +195,11 @@ func queryData(ctx context.Context, req *backend.QueryDataRequest, dsInfo *datas
 	plog.Info("Prepared request to Loki", "duration", time.Since(start), "queriesLength", len(queries), "stage", stagePrepareRequest, "runInParallel", runInParallel)
 
 	ctx, span := tracer.Start(ctx, "datasource.loki.queryData.runQueries", trace.WithAttributes(
-		attribute.Key("runInParallel").Bool(runInParallel),
-		attribute.Key("queriesLength").Int((len(queries))),
+		attribute.Bool("runInParallel", runInParallel),
+		attribute.Int("queriesLength", len(queries)),
 	))
 	if req.GetHTTPHeader("X-Query-Group-Id") != "" {
-		span.SetAttributes(attribute.Key("query_group_id").String(req.GetHTTPHeader("X-Query-Group-Id")))
+		span.SetAttributes(attribute.String("query_group_id", req.GetHTTPHeader("X-Query-Group-Id")))
 	}
 	defer span.End()
 	start = time.Now()
@@ -228,13 +228,13 @@ func queryData(ctx context.Context, req *backend.QueryDataRequest, dsInfo *datas
 
 func executeQuery(ctx context.Context, query *lokiQuery, req *backend.QueryDataRequest, runInParallel bool, api *LokiAPI, responseOpts ResponseOpts, tracer tracing.Tracer, plog log.Logger) backend.DataResponse {
 	ctx, span := tracer.Start(ctx, "datasource.loki.queryData.runQueries.runQuery", trace.WithAttributes(
-		attribute.Key("runInParallel").Bool(runInParallel),
-		attribute.Key("expr").String(query.Expr),
-		attribute.Key("start_unixnano").Int64(query.Start.UnixNano()),
-		attribute.Key("stop_unixnano").Int64(query.End.UnixNano()),
+		attribute.Bool("runInParallel", runInParallel),
+		attribute.String("expr", query.Expr),
+		attribute.Int64("start_unixnano", query.Start.UnixNano()),
+		attribute.Int64("stop_unixnano", query.End.UnixNano()),
 	))
 	if req.GetHTTPHeader("X-Query-Group-Id") != "" {
-		span.SetAttributes(attribute.Key("query_group_id").String(req.GetHTTPHeader("X-Query-Group-Id")))
+		span.SetAttributes(attribute.String("query_group_id", req.GetHTTPHeader("X-Query-Group-Id")))
 	}
 
 	defer span.End()

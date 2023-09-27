@@ -144,17 +144,17 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 
 	targetStr := strings.Join(formData["target"], ",")
 	span.SetAttributes(
-		attribute.Key("target").String(targetStr),
-		attribute.Key("from").String(from),
-		attribute.Key("until").String(until),
-		attribute.Key("datasource_id").Int64(dsInfo.Id),
-		attribute.Key("org_id").Int64(req.PluginContext.OrgID),
+		attribute.String("target", targetStr),
+		attribute.String("from", from),
+		attribute.String("until", until),
+		attribute.Int64("datasource_id", dsInfo.Id),
+		attribute.Int64("org_id", req.PluginContext.OrgID),
 	)
 	s.tracer.Inject(ctx, graphiteReq.Header, span)
 
 	res, err := dsInfo.HTTPClient.Do(graphiteReq)
 	if res != nil {
-		span.SetAttributes(attribute.Key("graphite.response.code").Int(res.StatusCode))
+		span.SetAttributes(attribute.Int("graphite.response.code", res.StatusCode))
 	}
 	if err != nil {
 		span.RecordError(err)

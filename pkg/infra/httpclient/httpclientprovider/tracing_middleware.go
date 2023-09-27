@@ -31,7 +31,7 @@ func TracingMiddleware(logger log.Logger, tracer tracing.Tracer) httpclient.Midd
 			ctx = httptrace.WithClientTrace(ctx, otelhttptrace.NewClientTrace(ctx, otelhttptrace.WithoutSubSpans(), otelhttptrace.WithoutHeaders()))
 			req = req.WithContext(ctx)
 			for k, v := range opts.Labels {
-				span.SetAttributes(attribute.Key(k).String(v))
+				span.SetAttributes(attribute.String(k, v))
 			}
 
 			tracer.Inject(ctx, req.Header, span)
@@ -51,7 +51,7 @@ func TracingMiddleware(logger log.Logger, tracer tracing.Tracer) httpclient.Midd
 				// we avoid measuring contentlength less than zero because it indicates
 				// that the content size is unknown. https://godoc.org/github.com/badu/http#Response
 				if res.ContentLength > 0 {
-					span.SetAttributes(attribute.Key(httpContentLengthTagKey).Int64(res.ContentLength))
+					span.SetAttributes(attribute.Int64(httpContentLengthTagKey, res.ContentLength))
 				}
 
 				span.SetAttributes(semconv.HTTPStatusCode(res.StatusCode))

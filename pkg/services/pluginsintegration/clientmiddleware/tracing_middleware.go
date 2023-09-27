@@ -36,7 +36,7 @@ type TracingMiddleware struct {
 func setSpanAttributeFromHTTPHeader(headers http.Header, span trace.Span, attributeName, headerName string) {
 	// Set the attribute as string
 	if v := headers.Get(headerName); v != "" {
-		span.SetAttributes(attribute.Key(attributeName).String(v))
+		span.SetAttributes(attribute.String(attributeName, v))
 	}
 }
 
@@ -54,8 +54,8 @@ func (m *TracingMiddleware) traceWrap(
 	))
 
 	if settings := pluginContext.DataSourceInstanceSettings; settings != nil {
-		span.SetAttributes(attribute.Key("datasource_name").String(settings.Name))
-		span.SetAttributes(attribute.Key("datasource_uid").String(settings.UID))
+		span.SetAttributes(attribute.String("datasource_name", settings.Name))
+		span.SetAttributes(attribute.String("datasource_uid", settings.UID))
 	}
 	if u := pluginContext.User; u != nil {
 		span.SetAttributes(attribute.String("user", u.Login))
@@ -64,7 +64,7 @@ func (m *TracingMiddleware) traceWrap(
 	// Additional attributes from http headers
 	if reqCtx := contexthandler.FromContext(ctx); reqCtx != nil && reqCtx.Req != nil && len(reqCtx.Req.Header) > 0 {
 		if v, err := strconv.Atoi(reqCtx.Req.Header.Get(query.HeaderPanelID)); err == nil {
-			span.SetAttributes(attribute.Key("panel_id").Int(v))
+			span.SetAttributes(attribute.Int("panel_id", v))
 		}
 		setSpanAttributeFromHTTPHeader(reqCtx.Req.Header, span, "query_group_id", query.HeaderQueryGroupID)
 		setSpanAttributeFromHTTPHeader(reqCtx.Req.Header, span, "dashboard_uid", query.HeaderDashboardUID)

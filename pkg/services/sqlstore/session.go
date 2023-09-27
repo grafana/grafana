@@ -51,7 +51,7 @@ func startSessionOrUseExisting(ctx context.Context, engine *xorm.Engine, beginTr
 	}
 
 	tctx, span := tracer.Start(ctx, "open session")
-	span.SetAttributes(attribute.Key("transaction").Bool(beginTran))
+	span.SetAttributes(attribute.Bool("transaction", beginTran))
 
 	newSess := &DBSession{Session: engine.NewSession(), transactionOpen: beginTran}
 

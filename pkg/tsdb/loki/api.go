@@ -198,7 +198,7 @@ func (api *LokiAPI) DataQuery(ctx context.Context, query lokiQuery, responseOpts
 
 	start = time.Now()
 	_, span := api.tracer.Start(ctx, "datasource.loki.parseResponse", trace.WithAttributes(
-		attribute.Key("metricDataplane").Bool(responseOpts.metricDataplane),
+		attribute.Bool("metricDataplane", responseOpts.metricDataplane),
 	))
 	defer span.End()
 

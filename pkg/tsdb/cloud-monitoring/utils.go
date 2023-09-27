@@ -127,11 +127,11 @@ func doRequestWithPagination(ctx context.Context, logger log.Logger, r *http.Req
 
 func traceReq(ctx context.Context, tracer tracing.Tracer, req *backend.QueryDataRequest, dsInfo datasourceInfo, r *http.Request, target string) trace.Span {
 	ctx, span := tracer.Start(ctx, "cloudMonitoring query", trace.WithAttributes(
-		attribute.Key("target").String(target),
-		attribute.Key("from").String(req.Queries[0].TimeRange.From.String()),
-		attribute.Key("until").String(req.Queries[0].TimeRange.To.String()),
-		attribute.Key("datasource_id").Int64(dsInfo.id),
-		attribute.Key("org_id").Int64(req.PluginContext.OrgID),
+		attribute.String("target", target),
+		attribute.String("from", req.Queries[0].TimeRange.From.String()),
+		attribute.String("until", req.Queries[0].TimeRange.To.String()),
+		attribute.Int64("datasource_id", dsInfo.id),
+		attribute.Int64("org_id", req.PluginContext.OrgID),
 	))
 	tracer.Inject(ctx, r.Header, span)
 	return span
