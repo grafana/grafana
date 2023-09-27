@@ -95,6 +95,9 @@ type Tracer interface {
 	// Both the context and span must be derived from the same call to
 	// [Tracer.Start].
 	Inject(context.Context, http.Header, Span)
+
+	// OtelTracer returns the trace.Tracer if available or nil.
+	OtelTracer() trace.Tracer
 }
 
 // Span defines a time range for an operation. This is equivalent to a
@@ -490,6 +493,10 @@ func (ots *Opentelemetry) Start(ctx context.Context, spanName string, opts ...tr
 
 func (ots *Opentelemetry) Inject(ctx context.Context, header http.Header, _ Span) {
 	otel.GetTextMapPropagator().Inject(ctx, propagation.HeaderCarrier(header))
+}
+
+func (ots *Opentelemetry) OtelTracer() trace.Tracer {
+	return ots.tracer
 }
 
 func (s OpentelemetrySpan) End() {

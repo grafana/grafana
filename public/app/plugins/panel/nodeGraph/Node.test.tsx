@@ -40,6 +40,22 @@ describe('Node', () => {
 
     expect(screen.getByTestId('node-icon-database')).toBeInTheDocument();
   });
+
+  it('renders correct node radius', async () => {
+    render(
+      <svg>
+        <Node
+          node={{ ...nodeDatum, nodeRadius: { name: 'nodeRadius', values: [20], type: FieldType.number, config: {} } }}
+          onMouseEnter={() => {}}
+          onMouseLeave={() => {}}
+          onClick={() => {}}
+          hovering={'default'}
+        />
+      </svg>
+    );
+
+    expect(screen.getByTestId('node-circle-1')).toHaveAttribute('r', '20');
+  });
 });
 
 const nodeDatum = {

@@ -1,0 +1,34 @@
+{
+  "template_files": {},
+  "alertmanager_config": {
+    "global": {},
+    "mute_time_intervals": [],
+    "receivers": [
+      {
+        "email_configs": [
+          { "require_tls": false, "send_resolved": true, "to": "foo@bar.com" },
+          { "require_tls": false, "send_resolved": true, "to": "foo@bar.com" }
+        ],
+        "name": "mixed",
+        "webhook_configs": [{ "send_resolved": true, "url": "https://foo.bar/" }]
+      },
+      { "name": "some webhook", "webhook_configs": [{ "send_resolved": true, "url": "https://foo.bar/" }] }
+    ],
+    "route": {
+      "continue": false,
+      "group_by": ["alertname", "grafana_folder"],
+      "group_interval": "5m",
+      "group_wait": "30s",
+      "matchers": [],
+      "mute_time_intervals": [],
+      "receiver": "email",
+      "repeat_interval": "5h",
+      "routes": [
+        {
+          "receiver": "mixed"
+        }
+      ]
+    },
+    "templates": []
+  }
+}
