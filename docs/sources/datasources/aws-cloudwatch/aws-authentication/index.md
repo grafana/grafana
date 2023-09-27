@@ -20,11 +20,11 @@ weight: 200
 
 # Configure AWS authentication
 
-A Grafana plugin's requests to AWS are made on behalf of an AWS Identity and Access Management (IAM) role or IAM user.
-The IAM user or IAM role must have the associated policies to perform certain API actions.
-Since these policies are specific to each data source, refer to the data source documentation for details.
+A Grafana data source plugin's requests to AWS are made on behalf of an AWS Identity and Access Management (IAM) [role](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles.html) or IAM [user](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_users.html).
+The IAM user or IAM role must have the associated policies to perform certain API actions to query the data in the data source.
+Since these policies are specific to each data source, refer to each data source plugin's documentation for details.
 
-All requests to AWS APIs are performed on the server side by the Grafana backend using the official AWS SDK.
+All requests to AWS APIs are performed on the server side by the Grafana backend using the official [AWS SDK](https://github.com/aws/aws-sdk-go).
 
 This topic has the following sections:
 
@@ -36,25 +36,23 @@ This topic has the following sections:
 
 ## Select an authentication method
 
-You can use one of the following authentication methods.
-Open source Grafana enables the `AWS SDK Default`, `Credentials file`, and `Access and secret key` methods by default.
+Depending on your configuration and the environment your instance of Grafana is running in, you'll have different authentication methods to select from.
 
-- `AWS SDK Default` performs no custom configuration and instead uses the [default provider](https://docs.aws.amazon.com/sdk-for-go/v1/developer-guide/configuring-sdk.html) as specified by the AWS SDK for Go.
-  It requires you to configure your AWS credentials separately, such as if you've [configured the CLI](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-files.html), if you're [running on an EC2 instance](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/iam-roles-for-amazon-ec2.html), [in an ECS task](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task-iam-roles.html), or for a [Service Account in a Kubernetes cluster](https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html).
-- `Credentials file` corresponds directly to the [SharedCredentialsProvider](https://docs.aws.amazon.com/sdk-for-go/api/aws/credentials/#SharedCredentialsProvider) provider in the Go SDK.
+Open source Grafana enables the `AWS SDK Default`, `Credentials file`, and `Access and secret key` methods by default. Cloud Grafana enables `Access and secret key` by default. If necessary, you can enable or disable particular auth providers if you have server configuration access. For more information, refer to the [`allowed_auth_providers` documentation][configure-grafana-allowed-auth-providers].
+
+- `AWS SDK Default` performs no custom configuration and instead uses the [default provider](https://docs.aws.amazon.com/sdk-for-go/v1/developer-guide/configuring-sdk.html) as specified by the [AWS SDK for Go](https://github.com/aws/aws-sdk-go).
+  It requires you to configure your AWS credentials outside of grafana, such as with [the CLI](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-files.html), or by [attaching credentials directly to an EC2 instance](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/iam-roles-for-amazon-ec2.html), [in an ECS task](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task-iam-roles.html), or for a [Service Account in a Kubernetes cluster](https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html). With `AWS SDK Default` you can attach permissions directly to the data source or you can use it combination with the optional [`Assume Role ARN`]({{< relref "#assume-a-role >}}) field.
+- `Credentials file` corresponds directly to the [SharedCredentialsProvider](https://docs.aws.amazon.com/sdk-for-go/api/aws/credentials/#SharedCredentialsProvider) provider in the [AWS SDK for Go](https://github.com/aws/aws-sdk-go).
   It reads the AWS shared credentials file to find a given profile.
   While `AWS SDK Default` will also find the shared credentials file, this option allows you to specify which profile to use without using environment variables.
   This option doesn't have any implicit fallbacks to other credential providers, and it fails if the credentials provided from the file aren't correct.
 - `Access and secret key` corresponds to the [StaticProvider](https://docs.aws.amazon.com/sdk-for-go/api/aws/credentials/#StaticProvider) and uses the given access key ID and secret key to authenticate.
   This method doesn't have any fallbacks, and will fail if the provided key pair doesn't work.
+- `Grafana Assume Role` - With this auth provider option, Grafana Cloud users create an AWS IAM role that has a trust relationship with Grafana's AWS account. Grafana then uses [STS](https://docs.aws.amazon.com/STS/latest/APIReference/welcome.html) to generate temporary credentials on its behalf. Users with this option enabled no longer need to generate secret and access keys for users.
 - `Workspace IAM role` corresponds to the [EC2RoleProvider](https://docs.aws.amazon.com/sdk-for-go/api/aws/credentials/ec2rolecreds/#EC2RoleProvider).
   The EC2RoleProvider pulls credentials for a role attached to the EC2 instance that Grafana runs on.
   You can also achieve this by using the authentication method AWS SDK Default, but this option is different as it doesn't have any fallbacks.
   This option is enabled by default only in Amazon Managed Grafana.
-- `Grafana Assume Role` - With this auth provider option, Grafana Cloud users create an AWS IAM role that has a trust relationship with Grafana's AWS account. Grafana then uses STS to generate temporary credentials on its behalf. Users with this option enabled no longer need to generate secret and access keys for users.
-
-If necessary, you can enable or disable them if you have server configuration access.
-For more information, refer to the [`allowed_auth_providers` documentation][configure-grafana-allowed-auth-providers].
 
 ## Assume a role
 
@@ -66,7 +64,7 @@ You can specify an IAM role to assume in the **Assume Role ARN** field.
 
 When this field is filled in, Grafana uses the provided credentials to perform an [sts:AssumeRole](https://docs.aws.amazon.com/STS/latest/APIReference/API_AssumeRole.html) call. In this scenario, the primary authentication method does not need permission to access CloudWatch directly; it just needs the ability to assume a role, while the role it assumes should have permission to access CloudWatch.
 
-For example, you may have one set of long term credentials for all of your AWS data sources. However, you want to limit the access each data source has to AWS (maybe one accesses staging data and another production data, for example). You could create separate credentials for each data source, each maintaining its own set of permissions to various resources. However, depending on how many data sources you have and how you've set them up, that might mean rotating/managing many different secret and access keys.
+For example, you may have one set of long term credentials for all of your AWS data sources. However, you want to limit the access each data source has to AWS (maybe one accesses staging data and another production data, for example). You could create separate credentials for each data source, each maintaining its own set of permissions to various resources. However, depending on how many data sources instances you have and how you've set them up, that might mean rotating and managing many different secret and access keys.
 
 Instead, using the assume role functionality, you could have one set of AWS credentials for all of your AWS data sources that has only one permission—the permission to assume a role with STS. Then you could create a separate IAM role for each data source that specifies which permissions that data source can temporarily assume. Since IAM roles are not credentials, there's no need to rotate them and they may be easier to manage.
 
@@ -160,8 +158,8 @@ To use the `Grafana Assume Role`:
 
 1. Put in a request to Customer Support to enable`awsDatasourcesTempCredentials`.
 2. Once the feature is enabled, create a new CloudWatch data source (or update an existing one) and select `Grafana Assume Role` as an authentication provider.
-3. Create a new IAM role in the AWS console, and select **Another AWS account** as the Trusted entity.
-4. Enter the account ID of the Grafana account that has permission to assume this role 008923505280 and check the **Require external ID** box.
+3. In the AWS Console, create a new IAM role, and select **Another AWS account** as the Trusted Entity.
+4. Enter Grafana's account id (displayed in the instructions box on the the **Settings** tab of the CloudWatch data source configuration) and check the **Require external ID** box.
 5. Enter the external ID specified in the instructions box on the **Settings** tab of the CloudWatch data source configuration in Grafana. This external ID will be unique to your Grafana instance.
 6. Attach any required permissions you would like Grafana to be able to access on your behalf (for example, CloudWatch Logs and CloudWatch Metrics policies).
 7. Give the role a name and description, and click **Create role**.
