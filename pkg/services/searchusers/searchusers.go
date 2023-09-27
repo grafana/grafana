@@ -1,6 +1,7 @@
 package searchusers
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -9,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/searchusers/sortopts"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 type Service interface {
@@ -43,6 +45,10 @@ func ProvideUsersService(searchUserFilter user.SearchUserFilter, userService use
 func (s *OSSService) SearchUsers(c *contextmodel.ReqContext) response.Response {
 	result, err := s.SearchUser(c)
 	if err != nil {
+		grafanaErr := errutil.Error{}
+		if !errors.As(err, &grafanaErr) {
+			return response.Err(err)
+		}
 		return response.Error(500, "Failed to fetch users", err)
 	}
 
@@ -62,6 +68,10 @@ func (s *OSSService) SearchUsers(c *contextmodel.ReqContext) response.Response {
 func (s *OSSService) SearchUsersWithPaging(c *contextmodel.ReqContext) response.Response {
 	result, err := s.SearchUser(c)
 	if err != nil {
+		grafanaErr := errutil.Error{}
+		if !errors.As(err, &grafanaErr) {
+			return response.Err(err)
+		}
 		return response.Error(500, "Failed to fetch users", err)
 	}
 
