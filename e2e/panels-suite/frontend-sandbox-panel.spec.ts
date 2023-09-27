@@ -5,7 +5,7 @@ const DASHBOARD_ID = 'c46b2460-16b7-42a5-82d1-b07fbf431950';
 
 describe('Panel sandbox', () => {
   beforeEach(() => {
-    e2e.flows.login(e2e.env('USERNAME'), e2e.env('PASSWORD'), true);
+    e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'), true);
     return e2e.flows.importDashboard(panelSandboxDashboard, 1000, true);
   });
 

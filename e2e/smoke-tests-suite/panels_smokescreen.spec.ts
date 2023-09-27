@@ -4,7 +4,7 @@ import { e2e } from '../utils';
 
 describe('Panels smokescreen', () => {
   beforeEach(() => {
-    e2e.flows.login(e2e.env('USERNAME'), e2e.env('PASSWORD'), false);
+    e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'), false);
   });
 
   after(() => {
