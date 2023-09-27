@@ -2,7 +2,7 @@
   "type": "panel",
   "name": "Debug",
   "id": "debug",
-  "aliasIds": ["debugX"],
+  "aliasIDs": ["debugX"],
   "state": "alpha",
 
   "info": {

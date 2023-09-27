@@ -280,7 +280,7 @@ type PluginDef struct {
 
 	// An alias is useful when migrating from one plugin id to another (rebranding etc)
 	// This should be used sparingly, and is currently only supported though a hardcoded checklist
-	Alias []string `json:"alias,omitempty"`
+	AliasIDs []string `json:"aliasIDs,omitempty"`
 
 	// For data source plugins, if the plugin supports annotation
 	// queries.

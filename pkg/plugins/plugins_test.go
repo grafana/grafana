@@ -108,7 +108,7 @@ func Test_ReadPluginJSON(t *testing.T) {
 				pJSON := `{
 					"id": "grafana-pyroscope-datasource",
 					"type": "datasource",					
-					"aliasIds": ["phlare"]
+					"aliasIDs": ["phlare"]
 				}`
 				return io.NopCloser(strings.NewReader(pJSON))
 			},
@@ -129,7 +129,7 @@ func Test_ReadPluginJSON(t *testing.T) {
 				pJSON := `{
 					"id": "my-custom-app",
 					"type": "app",
-					"aliasIds": ["phlare"]
+					"aliasIDs": ["phlare"]
 				}`
 				return io.NopCloser(strings.NewReader(pJSON))
 			},
