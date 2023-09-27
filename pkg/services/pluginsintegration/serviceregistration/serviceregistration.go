@@ -65,15 +65,16 @@ func (s *Service) RegisterExternalService(ctx context.Context, svcName string, s
 		return nil, err
 	}
 
-	extSvcExtra, ok := extSvc.Extra.(oauthserver.ExternalServiceDTOExtra)
-	if !ok {
-		return nil, fmt.Errorf("could not parse dto extra config")
+	dto := &auth.ExternalService{ClientID: extSvc.ID, ClientSecret: extSvc.Secret}
+
+	if authProvider == serviceauth.OAuth2Server {
+		extSvcExtra, ok := extSvc.Extra.(oauthserver.ExternalServiceDTOExtra)
+		if !ok {
+			return nil, fmt.Errorf("could not parse dto extra config")
+		}
+		dto.PrivateKey = extSvcExtra.KeyResult.PrivatePem
 	}
-	return &auth.ExternalService{
-		ClientID:     extSvc.ID,
-		ClientSecret: extSvc.Secret,
-		PrivateKey:   extSvcExtra.KeyResult.PrivatePem,
-	}, nil
+	return dto, nil
 }
 
 func toAccessControlPermissions(ps []plugindef.Permission) []accesscontrol.Permission {
