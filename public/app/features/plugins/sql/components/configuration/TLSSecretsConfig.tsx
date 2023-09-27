@@ -7,7 +7,8 @@ import {
   onUpdateDatasourceSecureJsonDataOption,
   updateDatasourcePluginResetOption,
 } from '@grafana/data';
-import { InlineField, SecretTextArea } from '@grafana/ui';
+import { Stack } from '@grafana/experimental';
+import { Field, Icon, Label, SecretInput, Tooltip } from '@grafana/ui';
 
 export interface Props<T extends DataSourceJsonData, S> {
   editorProps: DataSourcePluginOptionsEditorProps<T, S>;
@@ -23,15 +24,26 @@ export const TLSSecretsConfig = <T extends DataSourceJsonData, S extends {} = {}
   return (
     <>
       {showKeyPair ? (
-        <InlineField
-          tooltip={
-            <span>To authenticate with an TLS/SSL client certificate, provide the client certificate here.</span>
+        <Field
+          label={
+            <Label>
+              <Stack gap={0.5}>
+                <span>TLS/SSL Client Certificate</span>
+                <Tooltip
+                  content={
+                    <span>
+                      To authenticate with an TLS/SSL client certificate, provide the client certificate here.
+                    </span>
+                  }
+                >
+                  <Icon name="info-circle" size="sm" />
+                </Tooltip>
+              </Stack>
+            </Label>
           }
-          labelWidth={labelWidth}
-          label="TLS/SSL Client Certificate"
         >
-          <SecretTextArea
-            placeholder="Begins with -----BEGIN CERTIFICATE-----"
+          <SecretInput
+            placeholder="-----BEGIN CERTIFICATE-----"
             cols={45}
             rows={7}
             isConfigured={secureJsonFields && secureJsonFields.tlsClientCert}
@@ -39,17 +51,29 @@ export const TLSSecretsConfig = <T extends DataSourceJsonData, S extends {} = {}
             onReset={() => {
               updateDatasourcePluginResetOption(editorProps, 'tlsClientCert');
             }}
-          ></SecretTextArea>
-        </InlineField>
+            width={labelWidth}
+          />
+        </Field>
       ) : null}
       {showCACert ? (
-        <InlineField
-          tooltip={<span>If the selected TLS/SSL mode requires a server root certificate, provide it here.</span>}
-          labelWidth={labelWidth}
-          label="TLS/SSL Root Certificate"
+        <Field
+          label={
+            <Label>
+              <Stack gap={0.5}>
+                <span>TLS/SSL Root Certificate</span>
+                <Tooltip
+                  content={
+                    <span>If the selected TLS/SSL mode requires a server root certificate, provide it here.</span>
+                  }
+                >
+                  <Icon name="info-circle" size="sm" />
+                </Tooltip>
+              </Stack>
+            </Label>
+          }
         >
-          <SecretTextArea
-            placeholder="Begins with -----BEGIN CERTIFICATE-----"
+          <SecretInput
+            placeholder="-----BEGIN CERTIFICATE-----"
             cols={45}
             rows={7}
             isConfigured={secureJsonFields && secureJsonFields.tlsCACert}
@@ -57,17 +81,27 @@ export const TLSSecretsConfig = <T extends DataSourceJsonData, S extends {} = {}
             onReset={() => {
               updateDatasourcePluginResetOption(editorProps, 'tlsCACert');
             }}
-          ></SecretTextArea>
-        </InlineField>
+            width={labelWidth}
+          />
+        </Field>
       ) : null}
       {showKeyPair ? (
-        <InlineField
-          tooltip={<span>To authenticate with a client TLS/SSL certificate, provide the key here.</span>}
-          labelWidth={labelWidth}
-          label="TLS/SSL Client Key"
+        <Field
+          label={
+            <Label>
+              <Stack gap={0.5}>
+                <span>TLS/SSL Client Key</span>
+                <Tooltip
+                  content={<span>To authenticate with a client TLS/SSL certificate, provide the key here.</span>}
+                >
+                  <Icon name="info-circle" size="sm" />
+                </Tooltip>
+              </Stack>
+            </Label>
+          }
         >
-          <SecretTextArea
-            placeholder="Begins with -----BEGIN RSA PRIVATE KEY-----"
+          <SecretInput
+            placeholder="-----BEGIN RSA PRIVATE KEY-----"
             cols={45}
             rows={7}
             isConfigured={secureJsonFields && secureJsonFields.tlsClientKey}
@@ -75,8 +109,9 @@ export const TLSSecretsConfig = <T extends DataSourceJsonData, S extends {} = {}
             onReset={() => {
               updateDatasourcePluginResetOption(editorProps, 'tlsClientKey');
             }}
-          ></SecretTextArea>
-        </InlineField>
+            width={labelWidth}
+          />
+        </Field>
       ) : null}
     </>
   );
