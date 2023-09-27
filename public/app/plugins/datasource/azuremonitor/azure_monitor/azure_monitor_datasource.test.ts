@@ -467,7 +467,6 @@ describe('AzureMonitorDatasource', () => {
         'dimensionFilters[0].filters[0]',
       ];
       const templateVariables = createTemplateVariables(templateableProps);
-      //const d = Array.from(templateVariables.values()).map((item) => item.templateVariable);
       replace = (target?: string) => {
         if (target === "$resources0resourceGroup") {
           return "resources0resourceGroup-template-variable";
