@@ -28,32 +28,40 @@ If your license has expired most of Grafana keeps working as normal. Some enterp
 4. Replace the current `license.jwt`-file with the one you've just downloaded.
 5. Restart Grafana.
 
-## Data source permissions
+## If your license expires
+
+If your Grafana Enterprise license expires, the following functionality affected as follows.
+
+### Data source permissions
 
 Your current data source permissions will keep working as expected, but you'll be unable to add new data source permissions until the license has been renewed.
 
-## LDAP authentication
+### LDAP authentication
 
 * LDAP synchronization is not affected by an expired license.
 * Enhanced LDAP debugging is unavailable.
 
-## SAML authentication
+### SAML authentication
 
 SAML authentication is not affected by an expired license.
 
-## Reporting
+### Reporting
 
 * You're unable to configure new reports or generate previews.
 * Scheduled reports are not generated or sent.
 
-## Enterprise plugins
+### Enterprise plugins
 
 Enterprise plugins might stop working.
 
-## White labeling
+### White labeling
 
 The white labeling feature is turned off, meaning that any white labeling options will not have any effect.
 
-## Usage insights
+### Usage insights
 
 All the usage insights features are turned off, meaning that you won't be able to look at dashboard usage, presence indicator or to use improved search. Grafana still collects usage data and you will have access to it as soon as you update your license.
+
+### Vault integration
+
+Vault integration is not affected by an expired license.

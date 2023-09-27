@@ -10,4 +10,4 @@ weight = 2
 
 # Administration
 
-This section provides resources for Grafana administrators.
+This section provides resources for Grafana administrators and users performing administrative tasks.

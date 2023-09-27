@@ -45,25 +45,25 @@ Please read the [updated documentation](/installation/docker/#migration-from-a-p
 
 ## Prometheus
 
-{{< docs-imagebox img="/img/docs/v51/prometheus_heatmap.png" max-width="800px" class="docs-image--right" >}}
+{{< figure src="/static/img/docs/v51/prometheus_heatmap.png" max-width="800px" class="docs-image--right" >}}
 
 The Prometheus data source now support transforming Prometheus histograms to the heatmap panel. Prometheus histogram is a powerful feature, and we're
 really happy to finally allow our users to render those as heatmaps. Please read [Heatmap panel documentation](/features/panels/heatmap/#pre-bucketed-data)
 for more information on how to use it.
 
-Prometheus query editor also got support for autocomplete of template variables. More information in the [Prometheus data source documentation](/features/datasources/prometheus/).
+Prometheus query editor also got support for autocomplete of template variables. More information in the [Prometheus data source documentation]({{< relref "../features/datasources/prometheus/" >}}).
 
 <div class="clearfix"></div>
 
 ## Microsoft SQL Server
 
-{{< docs-imagebox img="/img/docs/v51/mssql_query_editor_showcase.png"  max-width= "800px" class="docs-image--right" >}}
+{{< figure src="/static/img/docs/v51/mssql_query_editor_showcase.png"  max-width= "800px" class="docs-image--right" >}}
 
 Grafana v5.1 now ships with a built-in Microsoft SQL Server (MSSQL) data source plugin that allows you to query and visualize data from any
 Microsoft SQL Server 2005 or newer, including Microsoft Azure SQL Database. Do you have metric or log data in MSSQL? You can now visualize
 that data and define alert rules on it like with any of Grafana's other core data sources.
 
-Please read [Using Microsoft SQL Server in Grafana documentation](/features/datasources/mssql/) for more detailed information on how to get started and use it.
+Please read [Using Microsoft SQL Server in Grafana documentation]({{< relref "../features/datasources/mssql/" >}}) for more detailed information on how to get started and use it.
 
 <div class="clearfix"></div>
 
@@ -71,7 +71,7 @@ Please read [Using Microsoft SQL Server in Grafana documentation](/features/data
 
 ### Adding new panels to dashboards
 
-{{< docs-imagebox img="/img/docs/v51/dashboard_add_panel.png"  max-width= "800px" class="docs-image--right" >}}
+{{< figure src="/static/img/docs/v51/dashboard_add_panel.png"  max-width= "800px" class="docs-image--right" >}}
 
 The control for adding new panels to dashboards have got some enhancements and now includes functionality to search for the type of panel
 you want to add. Further, the control has tabs separating functionality for adding new panels and pasting
@@ -80,7 +80,7 @@ copied panels.
 By copying a panel in a dashboard it will be displayed in the `Paste` tab in *any* dashboard and allows you to paste the
 copied panel into the current dashboard.
 
-{{< docs-imagebox img="/img/docs/v51/dashboard_panel_copy.png"  max-width= "300px" >}}
+{{< figure src="/static/img/docs/v51/dashboard_panel_copy.png"  max-width= "300px" >}}
 
 <div class="clearfix"></div>
 
@@ -106,7 +106,7 @@ Filter Option | Example | Raw | Interpolated | Description
 
 ## Improved workflow for provisioned dashboards
 
-{{< docs-imagebox img="/img/docs/v51/provisioning_cannot_save_dashboard.png" max-width="800px" class="docs-image--right" >}}
+{{< figure src="/static/img/docs/v51/provisioning_cannot_save_dashboard.png" max-width="800px" class="docs-image--right" >}}
 
 Grafana v5.1 brings an improved workflow for provisioned dashboards:
 

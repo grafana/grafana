@@ -3,7 +3,7 @@ title = "Stat panel"
 description = "Stat panel documentation"
 keywords = ["grafana", "docs", "stat panel"]
 type = "docs"
-aliases = ["/docs/grafana/latest/features/panels/stat/", "/docs/grafana/latest/features/panels/singlestat/", "/docs/grafana/latest/reference/singlestat/"]
+aliases = ["/docs/grafana/v7.1/features/panels/stat/", "/docs/grafana/v7.1/features/panels/singlestat/", "/docs/grafana/v7.1/reference/singlestat/"]
 weight = 900
 +++
 
@@ -11,7 +11,7 @@ weight = 900
 
 The Stat panel shows a one large stat value with an optional graph sparkline. You can control the background or value color using thresholds.
 
-{{< docs-imagebox img="/img/docs/v66/stat_panel_dark3.png" max-width="1025px" caption="Stat panel" >}}
+{{< figure src="/static/img/docs/v66/stat_panel_dark3.png" max-width="1025px" caption="Stat panel" >}}
 
 > **Note:** This panel replaces the Singlestat panel, which was deprecated in Grafana 7.0.
 
@@ -19,8 +19,8 @@ The Stat panel shows a one large stat value with an optional graph sparkline. Yo
 
 Stat visualizations allow you to apply:
 
-- [Data transformations]({{< relref "../transformations.md" >}})
-- [Field configuration options and overrides]({{< relref "../field-configuration-options.md" >}})
+- [Data transformations]({{< relref "../transformations/_index.md" >}})
+- [Field options and overrides]({{< relref "../field-options.md" >}})
 - [Thresholds]({{< relref "../thresholds.md" >}})
 
 ## Automatic layout adjustment
@@ -68,4 +68,4 @@ You can use the Text mode option to control what text the panel renders. If the 
 
 Example screenshot:
 
-{{< docs-imagebox img="/img/docs/v71/stat-panel-text-modes.png" max-width="1025px" caption="Stat panel" >}}
+{{< figure src="/static/img/docs/v71/stat-panel-text-modes.png" max-width="1025px" caption="Stat panel" >}}

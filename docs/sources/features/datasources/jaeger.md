@@ -3,7 +3,7 @@ title = "Using Jaeger in Grafana"
 description = "Guide for using Jaeger in Grafana"
 keywords = ["grafana", "jaeger", "guide", "tracing"]
 type = "docs"
-aliases = ["/docs/grafana/latest/datasources/jeager"]
+aliases = ["/docs/grafana/v7.1/datasources/jeager"]
 [menu.docs]
 name = "Jaeger"
 parent = "datasources"
@@ -32,11 +32,11 @@ To access Jaeger settings, click the **Configuration** (gear) icon, then click *
 
 You can query and display traces from Jaeger via [Explore]({{< relref "../explore/" >}}).
 
-{{< docs-imagebox img="/img/docs/v70/jaeger-query-editor.png" class="docs-image--no-shadow" caption="Screenshot of the Jaeger query editor" >}}
+{{< figure src="/static/img/docs/v70/jaeger-query-editor.png" class="docs-image--no-shadow" caption="Screenshot of the Jaeger query editor" >}}
 
 The Jaeger query editor allows you to query by trace ID directly or selecting a trace from trace selector. To query by trace ID, insert the ID into the text input.
 
-{{< docs-imagebox img="/img/docs/v70/jaeger-query-editor-open.png" class="docs-image--no-shadow" caption="Screenshot of the Jaeger query editor with trace selector expanded" >}}
+{{< figure src="/static/img/docs/v70/jaeger-query-editor-open.png" class="docs-image--no-shadow" caption="Screenshot of the Jaeger query editor with trace selector expanded" >}}
 
 Use the trace selector to pick particular trace from all traces logged in the time range you have selected in Explore. The trace selector has three levels of nesting:
 1. The service you are interested in.

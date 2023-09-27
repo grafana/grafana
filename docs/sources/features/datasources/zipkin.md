@@ -3,7 +3,7 @@ title = "Using Zipkin in Grafana"
 description = "Guide for using Zipkin in Grafana"
 keywords = ["grafana", "zipkin", "guide", "tracing"]
 type = "docs"
-aliases = ["/docs/grafana/latest/datasources/zipkin"]
+aliases = ["/docs/grafana/v7.1/datasources/zipkin"]
 [menu.docs]
 name = "Zipkin"
 parent = "datasources"
@@ -32,11 +32,11 @@ To access Zipkin settings, click the **Configuration** (gear) icon, then click *
 
 Querying and displaying traces from Zipkin is available via [Explore]({{< relref "../explore" >}}).
 
-{{< docs-imagebox img="/img/docs/v70/zipkin-query-editor.png" class="docs-image--no-shadow" caption="Screenshot of the Zipkin query editor" >}}
+{{< figure src="/static/img/docs/v70/zipkin-query-editor.png" class="docs-image--no-shadow" caption="Screenshot of the Zipkin query editor" >}}
 
 The Zipkin query editor allows you to query by trace ID directly or selecting a trace from trace selector. To query by trace ID, insert the ID into the text input.
 
-{{< docs-imagebox img="/img/docs/v70/zipkin-query-editor-open.png" class="docs-image--no-shadow" caption="Screenshot of the Zipkin query editor with trace selector expanded" >}} 
+{{< figure src="/static/img/docs/v70/zipkin-query-editor-open.png" class="docs-image--no-shadow" caption="Screenshot of the Zipkin query editor with trace selector expanded" >}}
 
 Use the trace selector to pick particular trace from all traces logged in the time range you have selected in Explore. The trace selector has three levels of nesting:
 1. The service you are interested in.
@@ -49,4 +49,4 @@ Zipkin annotations are shown in the trace view as logs with annotation value sho
 
 ## Linking Trace ID from logs
 
-You can link to Zipkin trace from logs in Loki by configuring a derived field with internal link. See [Loki documentation]([Explore]({{< relref "./loki#derived-fields" >}})) for details.
+You can link to Zipkin trace from logs in Loki by configuring a derived field with internal link. See [Loki documentation]({{< relref "./loki#derived-fields" >}}) for details.

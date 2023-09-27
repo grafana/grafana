@@ -7,10 +7,25 @@
       link: /getting-started/getting-started/
     - name: Intro to time series
       link: /getting-started/timeseries/
+    - name: Time series dimensions
+      link: /getting-started/timeseries-dimensions/
     - name: Intro to histograms
       link: /getting-started/intro-histograms/
+    - name: Observability strategies
+      link: /getting-started/strategies/
     - name: Glossary
       link: /getting-started/glossary/
+- name: Best practices
+  link: /best-practices/
+  children:
+    - name: Best practices for creating dashboards
+      link: /best-practices/best-practices-for-creating-dashboards/
+    - name: Best practices for managing dashboards
+      link: /best-practices/best-practices-for-managing-dashboards/
+    - name: Observability strategies
+      link: /best-practices/common-observability-strategies/
+    - name: Dashboard management maturity model
+      link: /best-practices/dashboard-management-maturity-levels/
 - name: Installation
   link: /installation/
   children:
@@ -31,6 +46,10 @@
 - name: Administration
   link: /administration/
   children:
+    - name: Change password
+      link: /administration/change-your-password/
+    - name: Change preferences
+      link: /administration/preferences/
     - name: Configuration
       link: /administration/configuration/
     - name: Configure Docker image
@@ -75,16 +94,18 @@
           name: Dashboard and Folder
         - link: /permissions/datasource_permissions/
           name: Data source
+    - name: Provisioning
+      link: /administration/provisioning/
     - name: Grafana CLI
       link: /administration/cli/
     - name: Internal metrics
       link: /administration/metrics/
-    - name: Provisioning
-      link: /administration/provisioning/
+    - name: Jaeger instrumentation
+      link: /administration/jaeger-instrumentation/
     - name: Set up Grafana for high availability
       link: /tutorials/ha_setup/
-    - name: Troubleshooting
-      link: /installation/troubleshooting/
+    - name: Change home dashboard
+      link: /administration/change-home-dashboard/
 - name: Manage users
   link: /manage-users
   children:
@@ -144,8 +165,15 @@
       name: Queries
     - link: /panels/transformations/
       name: Transformations
-    - link: /panels/field-configuration-options/
-      name: Field config options
+      children:
+        - link: /panels/transformations/
+          name: Overview
+        - link: /panels/transformations/apply-transformations/
+          name: Apply transformations
+        - link: /panels/transformations/types-options/
+          name: Transformation types and options
+    - link: /panels/field-options/
+      name: Field options
     - link: /panels/panel-editor/
       name: Panel editor
     - name: Visualizations
@@ -240,22 +268,55 @@
       link: /linking/panel-links/
     - name: Data links
       link: /linking/data-links/
+    - link: /linking/data-link-variables/
+      name: Data link variables
 - name: Templates and variables
   link: /variables/
   children:
     - link: /variables/templates-and-variables/
       name: Overview
-    - link: /variables/global-variables/
-      name: Global variables
-    - link: /variables/url-variables/
-      name: URL variables
+    - link: /variables/variable-examples/
+      name: Variable examples
+    - name: Variable types
+      link: /variables/variable-types/
+      children:
+        - link: /variables/variable-types/add-query-variable/
+          name: Add query variable
+        - link: /variables/variable-types/add-custom-variable/
+          name: Add custom variable
+        - link: /variables/variable-types/add-text-box-variable/
+          name: Add text box variable
+        - link: /variables/variable-types/add-constant-variable/
+          name: Add constant variable
+        - link: /variables/variable-types/add-data-source-variable/
+          name: Add data source variable
+        - link: /variables/variable-types/add-interval-variable/
+          name: Add interval variable
+        - link: /variables/variable-types/add-ad-hoc-filters/
+          name: Add ad hoc filters
+        - link: /variables/variable-types/chained-variables/
+          name: Chained variables
+        - link: /variables/variable-types/global-variables/
+          name: Global variables
+    - name: Selection options
+      link: /variables/variable-selection-options/
+    - name: Value groups/tags
+      link: /variables/variable-value-tags/
     - link: /variables/advanced-variable-format-options/
       name: Advanced variable formats
+    - link: /variables/formatting-multi-value-variables/
+      name: Formatting multi-value variables
+    - link: /variables/filter-variables-with-regex/
+      name: Filter variables with regex
     - link: /variables/repeat-panels-or-rows/
       name: Repeat panels or rows
 - name: What's new in Grafana
   link: /whatsnew/
   children:
+    - name: Version 7.2
+      link: /guides/whats-new-in-v7-2/
+    - name: Version 7.1
+      link: /guides/whats-new-in-v7-1/
     - name: Version 7.0
       link: /guides/whats-new-in-v7-0/
     - name: Version 6.7
@@ -348,6 +409,8 @@
       link: /http_api/auth/
     - name: Create API Tokens and Dashboards for a Specific Organization
       link: /tutorials/api_org_token_howto/
+    - name: cURL examples
+      link: /http_api/curl-examples/
     - name: Admin API
       link: /http_api/admin/
     - name: Alerting API
@@ -390,6 +453,16 @@
       link: /http_api/team/
     - name: Users API
       link: /http_api/user/
+- name: Troubleshooting
+  children:
+    - name: Overview
+      link: /troubleshooting/
+    - name: Enable diagnostics
+      link: /troubleshooting/diagnostics/
+    - name: Troubleshoot dashboards
+      link: /troubleshooting/troubleshoot-dashboards/
+    - name: Troubleshoot queries
+      link: /troubleshooting/troubleshoot-queries/
 - name: Developers
   children:
     - name: Plugins
@@ -400,6 +473,8 @@
           link: /developers/plugins/metadata/
         - name: Data frames
           link: /developers/plugins/data-frames/
+        - name: Working with data frames
+          link: /developers/plugins/working-with-data-frames/
         - name: Add support for variables
           link: /developers/plugins/add-support-for-variables/
         - name: Add support for annotations
@@ -424,6 +499,12 @@
               name: Plugin protocol
             - link: /developers/plugins/backend/grafana-plugin-sdk-for-go/
               name: Grafana plugin SDK for Go
+        - name: Share a plugin
+          link: /developers/plugins/share-a-plugin/
+        - name: Error handling
+          link: /developers/plugins/error-handling/
+        - name: Plugin migration guide
+          link: /developers/plugins/migration-guide/
         - name: Legacy plugins
           children:
             - link: /developers/plugins/legacy/

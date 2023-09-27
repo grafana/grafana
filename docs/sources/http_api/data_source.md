@@ -2,7 +2,7 @@
 title = "Data source HTTP API "
 description = "Grafana Data source HTTP API"
 keywords = ["grafana", "http", "documentation", "api", "data source"]
-aliases = ["/docs/grafana/latest/http_api/datasource/"]
+aliases = ["/docs/grafana/v7.1/http_api/datasource/"]
 type = "docs"
 [menu.docs]
 name = "Data source"
@@ -419,7 +419,10 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 HTTP/1.1 200
 Content-Type: application/json
 
-{"message":"Data source deleted"}
+{
+  "message":"Data source deleted",
+  "id": 1
+}
 ```
 
 ## Data source proxy calls
