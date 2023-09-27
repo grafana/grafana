@@ -117,7 +117,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     fontSize: theme.typography.bodySmall.fontSize,
     display: 'flex',
     alignItems: 'center',
-    gap: theme.spacing(0.5),
+    gap: theme.spacing(1),
   }),
   disclaimerIcon: css({
     label: 'disclaimer-icon',
