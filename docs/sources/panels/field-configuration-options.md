@@ -12,7 +12,7 @@ This page explains what field configurations and field overrides in Grafana are 
 
 > **Note:** This documentation refers to a Grafana 7.0 beta feature. This documentation will be frequently updated to reflect updates to the feature, and it will probably be broken into smaller sections when the feature moves out of beta.
 
-The data model behind Grafana, the [data frame]({{< relref "../developers/plugins/data-frames.md" >}}), is a columnar-oriented table structure. 
+The data model behind Grafana, the [data frame](https://grafana.com/developers/plugin-tools/introduction/data-frames), is a columnar-oriented table structure. 
 
 Each column within this structure is called a _field_. Grafana allows to customize how a particular field is displayed in the visualization.
 
