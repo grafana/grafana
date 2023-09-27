@@ -46,6 +46,19 @@ describe('Panel sandbox', () => {
 
       cy.get('[data-sandbox-test="true"]').should('exist');
     });
+
+    it('Reaches out of the panel editor', () => {
+      e2e.flows.openDashboard({
+        uid: DASHBOARD_ID,
+        queryParams: {
+          '__feature.pluginsFrontendSandbox': false,
+          editPanel: 1,
+        },
+      });
+
+      cy.get('[data-testid="panel-editor-custom-editor-input"]').type('x');
+      cy.get('[data-sandbox-test="panel-editor"]').should('exist');
+    });
   });
 
   describe('Sandbox enabled', () => {
@@ -64,6 +77,7 @@ describe('Panel sandbox', () => {
     it('Does not add iframes to body', () => {
       // this button adds 3 iframes to the body
       cy.get('[data-testid="button-create-iframes"]').click();
+      cy.wait(100); // small delay to prevent false positives from too fast tests
 
       const iframeIds = [
         'createElementIframe',
@@ -85,8 +99,22 @@ describe('Panel sandbox', () => {
     it('Does not reaches out of panel div', () => {
       // this button reaches out of the panel div and modifies the element dataset
       cy.get('[data-testid="button-reach-out"]').click();
-
+      cy.wait(100); // small delay to prevent false positives from too fast tests
       cy.get('[data-sandbox-test="true"]').should('not.exist');
+    });
+
+    it('Does not Reaches out of the panel editor', () => {
+      e2e.flows.openDashboard({
+        uid: DASHBOARD_ID,
+        queryParams: {
+          '__feature.pluginsFrontendSandbox': false,
+          editPanel: 1,
+        },
+      });
+
+      cy.get('[data-testid="panel-editor-custom-editor-input"]').type('x');
+      cy.wait(100); // small delay to prevent false positives from too fast tests
+      cy.get('[data-sandbox-test="panel-editor"]').should('not.exist');
     });
   });
 
