@@ -64,7 +64,7 @@ The plugin signature state can be inspected for each plugin in the plugins listi
 
 ## Backend plugins
 
-If a [backend plugin]({{< relref "../developers/plugins/backend/_index.md" >}}) is not signed, then Grafana will not load or start it. If you try to load a backend plugin with an invalid signature, then Grafana writes an error message to the server log:
+If a [backend plugin](https://grafana.com/developers/plugin-tools/introduction/backend-plugins) is not signed, then Grafana will not load or start it. If you try to load a backend plugin with an invalid signature, then Grafana writes an error message to the server log:
 
 ```bash
 EROR[06-01|16:45:59] Failed to load plugin   error=plugin <plugin id> is unsigned
