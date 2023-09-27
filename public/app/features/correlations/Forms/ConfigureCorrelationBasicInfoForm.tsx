@@ -57,7 +57,7 @@ export const ConfigureCorrelationBasicInfoForm = () => {
         <Field
           label={t('correlations.basic-info.Description-label', 'Description')}
           description={t(
-            'correlations.basic-info.Description-description',
+            'correlations.basic-info.description-description',
             'Optional description with more information about the link'
           )}
           // the Field component automatically adds margin to itself, so we are forced to workaround it by overriding  its styles
