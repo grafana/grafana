@@ -2,10 +2,7 @@
 title = "Provisioning"
 description = ""
 keywords = ["grafana", "provisioning"]
-type = "docs"
-aliases = ["/docs/grafana/latest/installation/provisioning"]
-[menu.docs]
-parent = "admin"
+aliases = ["/docs/grafana/v7.3/installation/provisioning"]
 weight = 8
 +++
 
@@ -30,9 +27,9 @@ Check out the [configuration]({{< relref "configuration.md" >}}) page for more i
 
 ### Using Environment Variables
 
-It is possible to use environment variable interpolation in all 3 provisioning config types. Allowed syntax
+It is possible to use environment variable interpolation in all 3 provisioning configuration types. Allowed syntax
 is either `$ENV_VAR_NAME` or `${ENV_VAR_NAME}` and can be used only for values not for keys or bigger parts
-of the configs. It is not available in the dashboard's definition files just the dashboard provisioning
+of the configurations. It is not available in the dashboard's definition files just the dashboard provisioning
 configuration.
 Example:
 
@@ -149,14 +146,22 @@ Since not all datasources have the same configuration settings we only have the 
 | tlsAuth                 | boolean | _All_                                                            | Enable TLS authentication using client cert configured in secure json data                  |
 | tlsAuthWithCACert       | boolean | _All_                                                            | Enable TLS authentication using CA cert                                                     |
 | tlsSkipVerify           | boolean | _All_                                                            | Controls whether a client verifies the server's certificate chain and host name.            |
+| serverName              | string  | _All_                                                            | Optional. Controls the server name used for certificate common name/subject alternative name verification. Defaults to using the data source URL. |
 | graphiteVersion         | string  | Graphite                                                         | Graphite version                                                                            |
-| timeInterval            | string  | Prometheus, Elasticsearch, InfluxDB, MySQL, PostgreSQL and MSSQL | Lowest interval/step value that should be used for this data source                         |
-| httpMode                | string  | Influxdb, Prometheus                                             | HTTP Method. 'GET', 'POST', defaults to GET                                                 |
+| timeInterval            | string  | Prometheus, Elasticsearch, InfluxDB, MySQL, PostgreSQL and MSSQL | Lowest interval/step value that should be used for this data source.                         |
+| httpMode                | string  | Influxdb                                                         | HTTP Method. 'GET', 'POST', defaults to GET                                                 |
+| httpMethod              | string  | Prometheus                                                       | HTTP Method. 'GET', 'POST', defaults to GET                                                 |
 | esVersion               | number  | Elasticsearch                                                    | Elasticsearch version as a number (2/5/56/60/70)                                            |
 | timeField               | string  | Elasticsearch                                                    | Which field that should be used as timestamp                                                |
 | interval                | string  | Elasticsearch                                                    | Index date time format. nil(No Pattern), 'Hourly', 'Daily', 'Weekly', 'Monthly' or 'Yearly' |
 | logMessageField         | string  | Elasticsearch                                                    | Which field should be used as the log message                                               |
 | logLevelField           | string  | Elasticsearch                                                    | Which field should be used to indicate the priority of the log message                      |
+| sigV4Auth               | boolean | Elasticsearch                                                    | Enable usage of SigV4                                                                       |
+| sigV4AuthType           | string  | Elasticsearch                                                    | SigV4 auth provider. default/credentials/keys                                               |
+| sigV4ExternalId         | string  | Elasticsearch                                                    | Optional SigV4 External ID                                                                  |
+| sigV4AssumeRoleArn      | string  | Elasticsearch                                                    | Optional SigV4 ARN role to assume                                                           |
+| sigV4Region             | string  | Elasticsearch                                                    | SigV4 AWS region                                                                            |
+| sigV4Profile            | string  | Elasticsearch                                                    | Optional SigV4  credentials profile                                                         |
 | authType                | string  | Cloudwatch                                                       | Auth provider. default/credentials/keys                                                     |
 | externalId              | string  | Cloudwatch                                                       | Optional External ID                                                                        |
 | assumeRoleArn           | string  | Cloudwatch                                                       | Optional ARN role to assume                                                                 |
@@ -191,6 +196,8 @@ Secure json data is a map of settings that will be encrypted with [secret key]({
 | basicAuthPassword | string | _All_      | password for basic authentication       |
 | accessKey         | string | Cloudwatch | Access key for connecting to Cloudwatch |
 | secretKey         | string | Cloudwatch | Secret key for connecting to Cloudwatch |
+| sigV4AccessKey    | string | Elasticsearch | SigV4 access key. Required when using keys auth provider |
+| sigV4SecretKey    | string | Elasticsearch | SigV4 secret key. Required when using keys auth provider |
 
 #### Custom HTTP headers for datasources
 
@@ -294,7 +301,7 @@ Grafana offers options to export the JSON definition of a dashboard. Either `Cop
 
 Note: The JSON definition in the input field when using `Copy JSON to Clipboard` or `Save JSON to file` will have the `id` field automatically removed to aid the provisioning workflow.
 
-{{< docs-imagebox img="/img/docs/v51/provisioning_cannot_save_dashboard.png" max-width="500px" class="docs-image--no-shadow" >}}
+{{< figure src="/static/img/docs/v51/provisioning_cannot_save_dashboard.png" max-width="500px" class="docs-image--no-shadow" >}}
 
 ### Reusable Dashboard URLs
 
@@ -474,6 +481,17 @@ The following sections detail the supported settings and secure settings for eac
 | username |                |
 | password | yes            |
 
+#### Alert notification `sensugo`
+
+| Name      | Secure setting |
+| --------  | -------------- |
+| url       |                |
+| apikey    | yes            |
+| entity    |                |
+| check     |                |
+| handler   |                |
+| namespace |                |
+
 #### Alert notification `prometheus-alertmanager`
 
 | Name              | Secure setting |
@@ -536,11 +554,12 @@ The following sections detail the supported settings and secure settings for eac
 
 #### Alert notification `webhook`
 
-| Name     | Secure setting |
-| -------- | -------------- |
-| url      |                |
-| username |                |
-| password | yes            |
+| Name       | Secure setting |
+| ---------- | -------------- |
+| url        |                |
+| httpMethod |                |
+| username   |                |
+| password   | yes            |
 
 #### Alert notification `googlechat`
 

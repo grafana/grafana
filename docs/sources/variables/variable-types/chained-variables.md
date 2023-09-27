@@ -1,11 +1,7 @@
 +++
 title = "Chained variables"
 keywords = ["grafana", "templating", "variable", "nested", "chained", "linked"]
-type = "docs"
-aliases = ["/docs/grafana/latest/variables/chained-variables.md"]
-[menu.docs]
-identifier = "chained-variable"
-parent = "variable-types"
+aliases = ["/docs/grafana/v7.3/variables/chained-variables.md"]
 weight = 800
 +++
 
@@ -50,7 +46,7 @@ The values returned are `backend`, `country`, `fakesite`, and `All`.
 
 #### server variable
 
-The query for this variable basically says, "Give me all servers for the currently chosen application." 
+The query for this variable basically says, "Give me all servers for the currently chosen application."
 
 ```
 apps.$app.*
@@ -103,14 +99,14 @@ In this example, when the user changes the value of the `datacenter` variable, i
 The query for this variable basically says, "Give me all the data centers that exist."
 
 ```
-SHOW TAG VALUES  WITH KEY = "datacenter" 
+SHOW TAG VALUES  WITH KEY = "datacenter"
 ```
 
 The values returned are `America`, `Africa`, `Asia`, and `Europe`.
 
 #### host variable
 
-The query for this variable basically says, "Give me all hosts for the currently chosen data center." 
+The query for this variable basically says, "Give me all hosts for the currently chosen data center."
 
 ```
 SHOW TAG VALUES WITH KEY = "hostname" WHERE "datacenter" =~ /^$datacenter$/

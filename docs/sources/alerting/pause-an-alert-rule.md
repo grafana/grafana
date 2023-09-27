@@ -2,10 +2,6 @@
 title = "Pause alert rule"
 description = "Pause an existing alert rule"
 keywords = ["grafana", "alerting", "guide", "rules", "view"]
-type = "docs"
-[menu.docs]
-identifier = "pause-alerts"
-parent = "alerting"
 weight = 400
 +++
 

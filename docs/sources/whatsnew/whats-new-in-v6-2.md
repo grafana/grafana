@@ -2,13 +2,10 @@
 title = "What's new in Grafana v6.2"
 description = "Feature and improvement highlights for Grafana v6.2"
 keywords = ["grafana", "new", "documentation", "6.2", "release notes"]
-type = "docs"
-aliases = ["/docs/grafana/latest/guides/whats-new-in-v6-2/"]
-[menu.docs]
-name = "Version 6.2"
-identifier = "v6.2"
-parent = "whatsnew"
-weight = -13
+aliases = ["/docs/grafana/v7.3/guides/whats-new-in-v6-2/"]
+weight = -21
+[_build]
+list = false
 +++
 
 # What's new in Grafana v6.2
@@ -50,10 +47,10 @@ comes with 3 unique display modes, Basic, Gradient, and Retro LED. Read the
 more about the design and features of this new panel.
 
 Retro LED display mode
-{{< docs-imagebox img="/assets/img/blog/bargauge/bar_gauge_retro_led.jpg" max-width="800px" caption="Bar Gauge LED mode" >}}
+{{< figure src="/assets/img/blog/bargauge/bar_gauge_retro_led.jpg" max-width="800px" caption="Bar Gauge LED mode" >}}
 
 Gradient mode
-{{< docs-imagebox img="/assets/img/blog/bargauge/gradient.jpg" max-width="800px" caption="Bar Gauge Gradient mode" >}}
+{{< figure src="/assets/img/blog/bargauge/gradient.jpg" max-width="800px" caption="Bar Gauge Gradient mode" >}}
 
 ## Improved table data support
 
@@ -74,7 +71,7 @@ Sometimes your panels do not need a title and having that panel header still tak
 other panels look strange and have bad vertical centering. In v6.2 Grafana will allow panel content (visualizations)
 to use the full panel height in case there is no panel title.
 
-{{< docs-imagebox img="/img/docs/v62/panels_with_no_title.jpg" max-width="800px" caption="Bar Gauge Gradient mode" >}}
+{{< figure src="/static/img/docs/v62/panels_with_no_title.jpg" max-width="800px" caption="Bar Gauge Gradient mode" >}}
 
 ## Minor Features and Fixes
 

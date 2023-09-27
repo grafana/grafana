@@ -2,11 +2,7 @@
 title = "Data source HTTP API "
 description = "Grafana Data source HTTP API"
 keywords = ["grafana", "http", "documentation", "api", "data source"]
-aliases = ["/docs/grafana/latest/http_api/datasource/"]
-type = "docs"
-[menu.docs]
-name = "Data source"
-parent = "http_api"
+aliases = ["/docs/grafana/v7.3/http_api/datasource/"]
 +++
 
 
@@ -35,6 +31,7 @@ Content-Type: application/json
    {
      "id": 1,
      "orgId": 1,
+     "uid": "H8joYFVGz"
      "name": "datasource_elastic",
      "type": "elasticsearch",
      "typeLogoUrl": "public/app/plugins/datasource/elasticsearch/img/elasticsearch.svg",
@@ -78,6 +75,53 @@ Content-Type: application/json
 
 {
   "id": 1,
+  "uid": "kLtEtcRGk",
+  "orgId": 1,
+  "name": "test_datasource",
+  "type": "graphite",
+  "typeLogoUrl": "",
+  "access": "proxy",
+  "url": "http://mydatasource.com",
+  "password": "",
+  "user": "",
+  "database": "",
+  "basicAuth": false,
+  "basicAuthUser": "",
+  "basicAuthPassword": "",
+  "withCredentials": false,
+  "isDefault": false,
+  "jsonData": {
+    "graphiteType": "default",
+    "graphiteVersion": "1.1"
+  },
+  "secureJsonFields": {},
+  "version": 1,
+  "readOnly": false
+}
+```
+
+## Get a single data source by UID
+
+`GET /api/datasources/uid/:uid`
+
+**Example request:**
+
+```http
+GET /api/datasources/uid/kLtEtcRGk HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+```
+
+**Example Response**:
+
+```http
+HTTP/1.1 200
+Content-Type: application/json
+
+{
+  "id": 1,
+  "uid": "kLtEtcRGk",
   "orgId": 1,
   "name": "test_datasource",
   "type": "graphite",
@@ -123,6 +167,7 @@ Content-Type: application/json
 
 {
   "id": 1,
+  "uid": "kLtEtcRGk",
   "orgId": 1,
   "name": "test_datasource",
   "type": "graphite",
@@ -392,6 +437,28 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 ```
 
 **Example Response**:
+
+```http
+HTTP/1.1 200
+Content-Type: application/json
+
+{"message":"Data source deleted"}
+```
+
+## Delete an existing data source by UID
+
+`DELETE /api/datasources/uid/:uid`
+
+**Example request:**
+
+```http
+DELETE /api/datasources/uid/kLtEtcRGk HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+```
+
+**Example response**:
 
 ```http
 HTTP/1.1 200

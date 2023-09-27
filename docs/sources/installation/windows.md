@@ -2,9 +2,6 @@
 title = "Install on Windows"
 description = "Install Grafana on Windows"
 keywords = ["grafana", "configuration", "documentation", "windows"]
-type = "docs"
-[menu.docs]
-parent = "installation"
 weight = 400
 +++
 
@@ -16,7 +13,7 @@ Read [Upgrading Grafana]({{< relref "upgrading.md" >}}) for tips and guidance on
 installation.
 
 1. Navigate to [Download Grafana](https://grafana.com/grafana/download?platform=windows).
-1. Select a Grafana version you want to install. 
+1. Select a Grafana version you want to install.
    - The most recent Grafana version is selected by default.
    - The **Version** field displays only finished releases. If you want to install a beta version, click **Nightly Builds** and then select a version.
 1. Select an **Edition**.
@@ -29,7 +26,7 @@ You can either use the Windows installer or you can install a standalone Windows
 ## Install with Windows installer (recommended)
 
 1. Click **Download the installer**.
-1. Open and run the installer. 
+1. Open and run the installer.
 
 To run Grafana, open your browser and go to the Grafana port (http://localhost:3000/ is default) and then follow the instructions in [Getting Started]({{< relref "../getting-started/getting-started/" >}}).
 
@@ -38,7 +35,7 @@ To run Grafana, open your browser and go to the Grafana port (http://localhost:3
 1. Click **Download the zip file**.
    **Important:** After you've downloaded the zip file and before extracting it, make sure to open the properties for that file (right-click **Properties**) and select the `unblock` check box and then click `Ok`.
 
-1. Extract this folder to anywhere you want Grafana to run from. 
+1. Extract this folder to anywhere you want Grafana to run from.
 
 1. Start Grafana by executing `grafana-server.exe`, located in the `bin` directory, preferably from the command line. If you want to run Grafana as a Windows service, then download
 [NSSM](https://nssm.cc/). It is very easy to add Grafana as a Windows service using that tool.

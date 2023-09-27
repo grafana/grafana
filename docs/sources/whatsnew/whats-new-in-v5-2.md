@@ -2,13 +2,10 @@
 title = "What's new in Grafana v5.2"
 description = "Feature and improvement highlights for Grafana v5.2"
 keywords = ["grafana", "new", "documentation", "5.2", "release notes"]
-type = "docs"
-aliases = ["/docs/grafana/latest/guides/whats-new-in-v5-2/"]
-[menu.docs]
-name = "Version 5.2"
-identifier = "v5.2"
-parent = "whatsnew"
-weight = -8
+aliases = ["/docs/grafana/v7.3/guides/whats-new-in-v5-2/"]
+weight = -16
+[_build]
+list = false
 +++
 
 # What's new in Grafana v5.2
@@ -26,7 +23,7 @@ Grafana v5.2 brings new features, many enhancements and bug fixes. This article 
 
 ## Elasticsearch alerting
 
-{{< docs-imagebox img="/img/docs/v52/elasticsearch_alerting.png" max-width="800px" class="docs-image--right" >}}
+{{< figure src="/static/img/docs/v52/elasticsearch_alerting.png" max-width="800px" class="docs-image--right" >}}
 
 Grafana v5.2 ships with an updated Elasticsearch data source with support for alerting. Alerting support for Elasticsearch has been one of
 the most requested features by our community and now it's finally here. Please try it out and let us know what you think.
@@ -49,7 +46,7 @@ information in the [Installing using Docker documentation](/installation/docker/
 
 ## Security
 
-{{< docs-imagebox img="/img/docs/v52/login_change_password.png" max-width="800px" class="docs-image--right" >}}
+{{< figure src="/static/img/docs/v52/login_change_password.png" max-width="800px" class="docs-image--right" >}}
 
 Starting from Grafana v5.2, when you login with the administrator account using the default password you'll be presented with a form to change the password.
 We hope this encourages users to follow Grafana's best practices and change the default administrator password.
@@ -73,7 +70,7 @@ By popular demand Grafana now includes support for an alert notification channel
 
 ### Modified time range and variables are no longer saved by default
 
-{{< docs-imagebox img="/img/docs/v52/dashboard_save_modal.png" max-width="800px" class="docs-image--right" >}}
+{{< figure src="/static/img/docs/v52/dashboard_save_modal.png" max-width="800px" class="docs-image--right" >}}
 
 Starting from Grafana v5.2, a modified time range or variable are no longer saved by default. To save a modified
 time range or variable, you'll need to actively select that when saving a dashboard, see screenshot.
@@ -84,7 +81,7 @@ when you actually want to overwrite those settings.
 
 ### Import dashboard enhancements
 
-{{< docs-imagebox img="/img/docs/v52/dashboard_import.png" max-width="800px" class="docs-image--right" >}}
+{{< figure src="/static/img/docs/v52/dashboard_import.png" max-width="800px" class="docs-image--right" >}}
 
 Grafana v5.2 adds support for specifying an existing folder or creating a new one when importing a dashboard - a long-awaited feature since
 Grafana v5.0 introduced support for dashboard folders and permissions. The import dashboard page has also got some general improvements

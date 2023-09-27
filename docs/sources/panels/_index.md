@@ -1,9 +1,7 @@
 +++
 title = "Panels"
-type = "docs"
-[menu.docs]
-identifier = "panels"
-weight = 4
+aliases = ["/docs/grafana/v7.3/features/panels/panels/"]
+weight = 70
 +++
 
 # Panel overview
@@ -16,7 +14,7 @@ There are a wide variety of styling and formatting options for each panel. Panel
 
 You can drag and drop panels by clicking and holding the panel title, then dragging it to its new location. You can also easily resize panels by clicking the (-) and (+) icons.
 
-![](/img/docs/animated_gifs/drag_drop.gif)
+![](/static/img/docs/animated_gifs/drag_drop.gif)
 
 ## Tips and shortcuts
 
@@ -26,3 +24,4 @@ You can drag and drop panels by clicking and holding the panel title, then dragg
 - Ctrl/Shift/Meta + click legend name to hide other series.
 - Hover your cursor over a panel and press `e` to open the panel editor.
 - Hover your cursor over a panel and press `v` to open the panel in fullscreen view.
+

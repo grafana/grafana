@@ -1,10 +1,7 @@
 +++
 title = "Graph panel"
 keywords = ["grafana", "graph panel", "documentation", "guide", "graph"]
-type = "docs"
-aliases = ["/docs/grafana/latest/reference/graph/", "/docs/grafana/latest/features/panels/graph/"]
-[menu.docs]
-parent = "visualizations"
+aliases = ["/docs/grafana/v7.3/reference/graph/", "/docs/grafana/v7.3/features/panels/graph/"]
 weight = 500
 +++
 
@@ -16,8 +13,9 @@ This visualization is the most-used in the Grafana ecosystem. It can render as a
 
 Graph visualizations allow you to apply:
 
+- [Alerts]({{< relref "../../alerting/_index.md" >}}) - This is the only type of visualization that allows you to set alerts.
 - [Data transformations]({{< relref "../transformations/_index.md" >}})
-- [Alerts]({{< relref "../../alerting/alerts-overview.md" >}}) - This is the only type of visualization that allows you to set alerts.
+- [Field options and overrides]({{< relref "../field-options/_index.md" >}})
 - [Thresholds]({{< relref "../thresholds.md" >}})
 
 ## Display options
@@ -67,7 +65,7 @@ You can add multiple series overrides.
 
 1. Click **Add series override**.
 1. In **Alias or regex** Type or select a series. Click in the field to see a list of available series.
-   
+
    **Example:**  `/Network.*/` would match two series named `Network out` and `Network in`.
 
 1. Click **+** and then select a style to apply to the series. You can add multiple styles to each entry.
@@ -120,13 +118,13 @@ Options are identical for both Y-axes.
   - **Time -** (default) The X-axis represents time and that the data is grouped by time (for example, by hour, or by minute).
   - **Series -** The data is grouped by series and not by time. The Y-axis still represents the value.
     - **Value -**  The aggregation type to use for the values. The default is total (summing the values together).
-  - **Histogram -** Converts the graph into a histogram. A histogram is a kind of bar chart that groups numbers into ranges, often called buckets or bins. Taller bars show that more data falls in that range. 
-   
+  - **Histogram -** Converts the graph into a histogram. A histogram is a kind of bar chart that groups numbers into ranges, often called buckets or bins. Taller bars show that more data falls in that range.
+
     For more information about histograms, refer to [Introduction to histograms and heatmaps]({{< relref "../../getting-started/intro-histograms.md" >}}).
     - **Buckets -** The number of buckets to group the values by. If left empty, then Grafana tries to calculate a suitable number of buckets.
     - **X-Min -** Filters out values from the histogram that are under this minimum limit.
     - **X-Max -** Filters out values that are greater than this maximum limit.
-	
+
 ## Legend
 
 Use these settings to refine how the legend appears in your visualization.
@@ -149,7 +147,7 @@ Additional values can be shown along-side the legend names:
 - **Total -** Sum of all values returned from the metric query.
 - **Decimals -** Controls how many decimals are displayed for legend values and graph hover tooltips.
 
-The legend values are calculated on the client side by Grafana and depend on what type of aggregation or point consolidation your metric query is using. All the above legend values cannot be correct at the same time. 
+The legend values are calculated on the client side by Grafana and depend on what type of aggregation or point consolidation your metric query is using. All the above legend values cannot be correct at the same time.
 
 For example, if you plot a rate like requests/second, this is probably using average as an aggregator, then the Total in the legend will not represent the total number of requests. It is just the sum of all data points received by Grafana.
 
@@ -158,7 +156,7 @@ For example, if you plot a rate like requests/second, this is probably using ave
 Hide series when all values of a series from a metric query are of a specific value.
 
 - **With only nulls -** Value=null (default unchecked)
-- **With only zeroes -** Value=zero (default unchecked) 
+- **With only zeroes -** Value=zero (default unchecked)
 
 ### Time regions
 

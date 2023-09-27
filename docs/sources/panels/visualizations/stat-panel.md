@@ -2,8 +2,7 @@
 title = "Stat panel"
 description = "Stat panel documentation"
 keywords = ["grafana", "docs", "stat panel"]
-type = "docs"
-aliases = ["/docs/grafana/latest/features/panels/stat/", "/docs/grafana/latest/features/panels/singlestat/", "/docs/grafana/latest/reference/singlestat/"]
+aliases = ["/docs/grafana/v7.3/features/panels/stat/", "/docs/grafana/v7.3/features/panels/singlestat/", "/docs/grafana/v7.3/reference/singlestat/"]
 weight = 900
 +++
 
@@ -11,7 +10,7 @@ weight = 900
 
 The Stat panel shows a one large stat value with an optional graph sparkline. You can control the background or value color using thresholds.
 
-{{< docs-imagebox img="/img/docs/v66/stat_panel_dark3.png" max-width="1025px" caption="Stat panel" >}}
+{{< figure src="/static/img/docs/v66/stat_panel_dark3.png" max-width="1025px" caption="Stat panel" >}}
 
 > **Note:** This panel replaces the Singlestat panel, which was deprecated in Grafana 7.0.
 
@@ -25,7 +24,7 @@ You can use the **Text mode** to control whether the text is displayed or not.
 
 Example screenshot:
 
-{{< docs-imagebox img="/img/docs/v71/stat-panel-text-modes.png" max-width="1025px" caption="Stat panel" >}}
+{{< figure src="/static/img/docs/v71/stat-panel-text-modes.png" max-width="1025px" caption="Stat panel" >}}
 
 ## Data and field options
 

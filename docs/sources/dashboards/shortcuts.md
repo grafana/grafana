@@ -1,8 +1,5 @@
 +++
 title = "Keyboard shortcuts"
-type = "docs"
-[menu.docs]
-parent = "features"
 weight = 7
 +++
 

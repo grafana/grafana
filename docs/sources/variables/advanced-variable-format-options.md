@@ -1,16 +1,12 @@
 +++
 title = "Advanced variable format options"
 keywords = ["grafana", "templating", "documentation", "guide", "template", "variable"]
-type = "docs"
-[menu.docs]
-identifier = "advanced-variables-formats"
-parent = "variables"
 weight = 600
 +++
 
 # Advanced variable format options
 
-The formatting of the variable interpolation depends on the data source, but there are some situations where you might want to change the default formatting. 
+The formatting of the variable interpolation depends on the data source, but there are some situations where you might want to change the default formatting.
 
 For example, the default for the MySql data source is to join multiple values as comma-separated with quotes: `'server01','server02'`. In some cases, you might want to have a comma-separated string without quotes: `server01,server02`. You can make that happen with advanced variable formatting options listed below.
 
@@ -109,9 +105,9 @@ Interpolation result: 'test1.|test2'
 Turns off data source-specific formatting, such as single quotes in an SQL query.
 
 ```bash
-servers = ['test1.', 'test2']
+servers = ['test.1', 'test2']
 String to interpolate: '${var_name:raw}'
-Interpolation result: '{test.1,test2}'
+Interpolation result: 'test.1,test2'
 ```
 
 ## Regex

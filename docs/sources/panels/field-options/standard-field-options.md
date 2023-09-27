@@ -1,7 +1,6 @@
 +++
 title = "Standard field options"
 keywords = ["grafana", "table options", "documentation", "format tables"]
-type = "docs"
 weight = 400
 +++
 
@@ -17,6 +16,8 @@ For more information about applying these options, refer to:
 
 - [Configure all fields]({{< relref "configure-all-fields.md" >}})
 - [Configure specific fields]({{< relref "configure-specific-fields.md" >}})
+
+> **Note:** We are constantly working to add and expand options for all visualization, so all options might not be available for all visualizations.
 
 ## Decimals
 
@@ -81,7 +82,7 @@ To select a custom unit enter the unit and select the last `Custom: xxx` option 
 
 You can also paste a native emoji in the unit picker and pick it as a custom unit:
 
-{{< docs-imagebox img="/img/docs/v66/custom_unit_burger2.png" max-width="600px" caption="Custom unit emoji" >}}
+{{< figure src="/static/img/docs/v66/custom_unit_burger2.png" max-width="600px" caption="Custom unit emoji" >}}
 
 ### String units
 
@@ -91,21 +92,26 @@ Grafana can sometime be too aggressive in parsing strings and displaying them as
 
 > **Note:** Only available in Grafana 7.3+.
 
-The field color option defines how Grafana colors series or fields. There are multiple modes here that work very differently, and their utility depends largely on what visualization you currently have selected.
+{{< figure src="/static/img/docs/v73/color_scheme_dropdown.png" max-width="350px" caption="Color scheme" class="pull-right" >}}
 
-Continuous color modes use the percentage of a value relative to min and max to interpolate a color.
+The color scheme option defines how Grafana colors series or fields. There are multiple modes here that work very differently and their utility depends largely on what visualization you currently have selected.
 
-- **Single color:** Set a specific color using the color picker. Mostly useful from an override rule.
-- **From thresholds:** Color is derived from the matching threshold. Useful for gauges, stat and table visualizations.
+**Color by value**
+In addition to deriving color from thresholds there are also continuous (gradient) color schemes. Useful for visualizations that color individual values. For example stat panels and the table panel. Continuous color modes use the percentage of a value relative to min and max to interpolate a color.
 
-### Color by series
+<div class="clearfix"></div>
 
-Then there are color schemes that define color by series. Useful for graphs and pie charts for example.
-
-### Color by value
-
-In addition to deriving color from thresholds there are also continuous (gradient) color schemes. Useful
-for visualizations that that color individual values. For example stat panels and the table.
+| Color mode  | Description                    |
+| ------------------ | ----------------------- |
+| **Single color**   | Specify a single color, useful in an override rule  |
+| **From thresholds**   | Informs Grafana to take the color from the matching threshold  |
+| **Classic palette**   | Grafana will assign color by looking up a color in a palette by series index. Useful for Graphs and pie charts and other categorical data visualizations |
+| **Green-Yellow-Red (by value)** | Continuous color scheme |
+| **Blue-Yellow-Red (by value)** | Continuous color scheme |
+| **Blues (by value)**  | Continuous color scheme (panel background to blue) |
+| **Reds (by value)**   |  Continuous color scheme (panel background color to blue) |
+| **Greens (by value)** | Continuous color scheme (panel background color to blue) |
+| **Purple (by value)** |  Continuous color scheme (panel background color to blue) |
 
 ## Thresholds
 

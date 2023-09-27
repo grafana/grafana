@@ -2,11 +2,7 @@
 title = "Organization HTTP API "
 description = "Grafana Organization HTTP API"
 keywords = ["grafana", "http", "documentation", "api", "organization"]
-aliases = ["/docs/grafana/latest/http_api/organization/"]
-type = "docs"
-[menu.docs]
-name = "Organization"
-parent = "http_api"
+aliases = ["/docs/grafana/v7.3/http_api/organization/"]
 +++
 
 
@@ -309,7 +305,7 @@ Content-Type: application/json
 ```
 Note: The api will work in the following two ways
 1) Need to set GF_USERS_ALLOW_ORG_CREATE=true
-2) Set the config users.allow_org_create to true in ini file
+2) Set the config value users.allow_org_create to true in ini file
 
 **Example Response**:
 

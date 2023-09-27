@@ -2,11 +2,6 @@
 title = "Enhanced LDAP Integration"
 description = "Grafana Enhanced LDAP Integration Guide "
 keywords = ["grafana", "configuration", "documentation", "ldap", "active directory", "enterprise"]
-type = "docs"
-[menu.docs]
-name = "Enhanced LDAP"
-identifier = "enhanced-ldap"
-parent = "enterprise"
 weight = 300
 +++
 
@@ -18,7 +13,7 @@ The enhanced LDAP integration adds additional functionality on top of the [LDAP 
 
 ## LDAP group synchronization for teams
 
-{{< docs-imagebox img="/img/docs/enterprise/team_members_ldap.png" class="docs-image--no-shadow docs-image--right" max-width= "600px" >}}
+{{< figure src="/static/img/docs/enterprise/team_members_ldap.png" class="docs-image--no-shadow docs-image--right" max-width= "600px" >}}
 
 With enhanced LDAP integration, you can set up synchronization between LDAP groups and teams. This enables LDAP users that are members
 of certain LDAP groups to automatically be added or removed as members to certain teams in Grafana.

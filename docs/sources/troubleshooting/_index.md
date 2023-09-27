@@ -2,9 +2,7 @@
 title = "Troubleshooting"
 description = "Guide to troubleshooting Grafana problems"
 keywords = ["grafana", "troubleshooting", "documentation", "guide"]
-type = "docs"
-[menu.docs]
-weight = 100
+weight = 180
 +++
 
 # Troubleshooting
@@ -41,3 +39,5 @@ sudo yum install urw-fonts
 
 Check out the [FAQ section](https://community.grafana.com/c/howto/faq) on the Grafana Community page for answers to frequently
 asked questions.
+
+

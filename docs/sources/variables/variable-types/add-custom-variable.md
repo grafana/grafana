@@ -1,10 +1,6 @@
 +++
 title = "Add a custom variable"
-type = "docs"
-aliases = ["/docs/grafana/latest/variables/add-custom-variable.md"]
-[menu.docs]
-identifier = "add-custom-variable"
-parent = "variable-types"
+aliases = ["/docs/grafana/v7.3/variables/add-custom-variable.md"]
 weight = 200
 +++
 
@@ -12,7 +8,7 @@ weight = 200
 
 Use a _custom_ variable for values that do not change. This might be numbers, strings, or even other variables.
 
-For example, if you have server names or region names that never change, then you might want to create them as custom variables rather than query variables. Because they do not change, you might use them in [chained variables]({{< relref "chained-variables.md" >}}) rather than other query variables. That would reduce the number of queries Grafana must send when chained variables are updated. 
+For example, if you have server names or region names that never change, then you might want to create them as custom variables rather than query variables. Because they do not change, you might use them in [chained variables]({{< relref "chained-variables.md" >}}) rather than other query variables. That would reduce the number of queries Grafana must send when chained variables are updated.
 
 ## Enter General options
 

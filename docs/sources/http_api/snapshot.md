@@ -2,11 +2,7 @@
 title = "HTTP Snapshot API "
 description = "Grafana HTTP API"
 keywords = ["grafana", "http", "documentation", "api", "snapshot"]
-aliases = ["/docs/grafana/latest/http_api/snapshot/"]
-type = "docs"
-[menu.docs]
-name = "Snapshot"
-parent = "http_api"
+aliases = ["/docs/grafana/v7.3/http_api/snapshot/"]
 +++
 
 # Snapshot API
@@ -72,7 +68,8 @@ JSON Body schema:
       "deleteKey":"XXXXXXX",
       "deleteUrl":"myurl/api/snapshots-delete/XXXXXXX",
       "key":"YYYYYYY",
-      "url":"myurl/dashboard/snapshot/YYYYYYY"
+      "url":"myurl/dashboard/snapshot/YYYYYYY",
+      "id": 1,
     }
 ```
 
@@ -196,7 +193,7 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 HTTP/1.1 200
 Content-Type: application/json
 
-{"message":"Snapshot deleted. It might take an hour before it's cleared from any CDN caches."}
+{"message":"Snapshot deleted. It might take an hour before it's cleared from any CDN caches.", "id": 1}
 ```
 
 ## Delete Snapshot by deleteKey
@@ -218,5 +215,5 @@ Accept: application/json
 HTTP/1.1 200
 Content-Type: application/json
 
-{"message":"Snapshot deleted. It might take an hour before it's cleared from any CDN caches."}
+{"message":"Snapshot deleted. It might take an hour before it's cleared from any CDN caches.", "id": 1}
 ```

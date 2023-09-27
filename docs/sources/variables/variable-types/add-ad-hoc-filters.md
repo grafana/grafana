@@ -1,10 +1,6 @@
 +++
 title = "Add ad hoc filters"
-type = "docs"
-aliases = ["/docs/grafana/latest/variables/add-ad-hoc-filters.md"]
-[menu.docs]
-identifier = "add-adhoc-filters"
-parent = "variable-types"
+aliases = ["/docs/grafana/v7.3/variables/add-ad-hoc-filters.md"]
 weight = 700
 +++
 

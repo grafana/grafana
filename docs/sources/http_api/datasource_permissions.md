@@ -2,11 +2,7 @@
 title = "Datasource Permissions HTTP API "
 description = "Data Source Permissions API"
 keywords = ["grafana", "http", "documentation", "api", "datasource", "permission", "permissions", "acl", "enterprise"]
-aliases = ["/docs/grafana/latest/http_api/datasourcepermissions/"]
-type = "docs"
-[menu.docs]
-name = "Datasource Permissions"
-parent = "http_api"
+aliases = ["/docs/grafana/v7.3/http_api/datasourcepermissions/"]
 +++
 
 # Data Source Permissions API

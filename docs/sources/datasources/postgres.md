@@ -2,11 +2,7 @@
 title = "PostgreSQL"
 description = "Guide for using PostgreSQL in Grafana"
 keywords = ["grafana", "postgresql", "guide"]
-type = "docs"
-aliases = ["/docs/grafana/latest/features/datasources/postgres/"]
-[menu.docs]
-name = "PostgreSQL"
-parent = "datasources"
+aliases = ["/docs/grafana/v7.3/features/datasources/postgres/"]
 weight = 1200
 +++
 
@@ -23,20 +19,20 @@ Grafana ships with a built-in PostgreSQL data source plugin that allows you to q
 
 ### Data source options
 
-Name | Description
------------- | -------------
-*Name* | The data source name. This is how you refer to the data source in panels and queries.
-*Default* | Default data source means that it will be pre-selected for new panels.
-*Host* | The IP address/hostname and optional port of your PostgreSQL instance. _Do not_ include the database name. The connection string for connecting to Postgres will not be correct and will cause errors.
-*Database* | Name of your PostgreSQL database.
-*User* | Database user's login/username
-*Password* | Database user's password
-*SSL Mode* | This option determines whether or with what priority a secure SSL TCP/IP connection will be negotiated with the server.
-*Max open* | The maximum number of open connections to the database, default `unlimited` (Grafana v5.4+).
-*Max idle* | The maximum number of connections in the idle connection pool, default `2` (Grafana v5.4+).
-*Max lifetime* | The maximum amount of time in seconds a connection may be reused, default `14400`/4 hours (Grafana v5.4+).
-*Version* | This option determines which functions are available in the query builder (only available in Grafana 5.3+).
-*TimescaleDB* | TimescaleDB is a time-series database built as a PostgreSQL extension. If enabled, Grafana will use `time_bucket` in the `$__timeGroup` macro and display TimescaleDB specific aggregate functions in the query builder (only available in Grafana 5.3+).
+Name           | Description
+-------------- | -------------
+`Name`         | The data source name. This is how you refer to the data source in panels and queries.
+`Default`      | Default data source means that it will be pre-selected for new panels.
+`Host`         | The IP address/hostname and optional port of your PostgreSQL instance. _Do not_ include the database name. The connection string for connecting to Postgres will not be correct and will cause errors.
+`Database`     | Name of your PostgreSQL database.
+`User`         | Database user's login/username
+`Password`     | Database user's password
+`SSL Mode`     | This option determines whether or with what priority a secure SSL TCP/IP connection will be negotiated with the server.
+`Max open`     | The maximum number of open connections to the database, default `unlimited` (Grafana v5.4+).
+`Max idle`     | The maximum number of connections in the idle connection pool, default `2` (Grafana v5.4+).
+`Max lifetime` | The maximum amount of time in seconds a connection may be reused, default `14400`/4 hours (Grafana v5.4+).
+`Version`      | This option determines which functions are available in the query builder (only available in Grafana 5.3+).
+`TimescaleDB`  | TimescaleDB is a time-series database built as a PostgreSQL extension. If enabled, Grafana will use `time_bucket` in the `$__timeGroup` macro and display TimescaleDB specific aggregate functions in the query builder (only available in Grafana 5.3+).
 
 ### Min time interval
 
@@ -45,16 +41,16 @@ Recommended to be set to write frequency, for example `1m` if your data is writt
 This option can also be overridden/configured in a dashboard panel under data source options. It's important to note that this value **needs** to be formatted as a
 number followed by a valid time identifier, e.g. `1m` (1 minute) or `30s` (30 seconds). The following time identifiers are supported:
 
-Identifier | Description
------------- | -------------
-`y`   | year
-`M`   | month
-`w`   | week
-`d`   | day
-`h`   | hour
-`m`   | minute
-`s`   | second
-`ms`  | millisecond
+| Identifier | Description |
+| ---------- | ----------- |
+| `y`        | year        |
+| `M`        | month       |
+| `w`        | week        |
+| `d`        | day         |
+| `h`        | hour        |
+| `m`        | minute      |
+| `s`        | second      |
+| `ms`       | millisecond |
 
 ### Database user permissions (Important!)
 
@@ -75,7 +71,7 @@ Make sure the user does not get any unwanted privileges from the public role.
 
 ## Query editor
 
-{{< docs-imagebox img="/img/docs/v53/postgres_query_still.png" class="docs-image--no-shadow" animated-gif="/img/docs/v53/postgres_query.gif" >}}
+{{< figure src="/static/img/docs/v53/postgres_query_still.png" class="docs-image--no-shadow" animated-gif="/static/img/docs/v53/postgres_query.gif" >}}
 
 You find the PostgreSQL query editor in the metrics tab in Graph or Singlestat panel's edit mode. You enter edit mode by clicking the
 panel title, then edit.
@@ -105,7 +101,7 @@ The available functions in the query editor depend on the PostgreSQL version you
 If you use aggregate functions you need to group your resultset. The editor will automatically add a `GROUP BY time` if you add an aggregate function.
 
 The editor tries to simplify and unify this part of the query. For example:<br>
-![](/img/docs/v53/postgres_select_editor.png)<br>
+![](/static/img/docs/v53/postgres_select_editor.png)<br>
 
 The above will generate the following PostgreSQL `SELECT` clause:
 
@@ -138,26 +134,26 @@ You can switch to the raw query editor mode by clicking the hamburger icon and s
 
 Macros can be used within a query to simplify syntax and allow for dynamic parts.
 
-Macro example | Description
------------- | -------------
-*`$__time(dateColumn)`* | Will be replaced by an expression to rename the column to `time`. For example, *dateColumn as time*
-*`$__timeSec(dateColumn)`* | Will be replaced by an expression to rename the column to `time` and converting the value to Unix timestamp. For example, *extract(epoch from dateColumn) as time*
-*`$__timeFilter(dateColumn)`* | Will be replaced by a time range filter using the specified column name. For example, *dateColumn BETWEEN '2017-04-21T05:01:17Z' AND '2017-04-21T05:06:17Z'*
-*`$__timeFrom()`* | Will be replaced by the start of the currently active time selection. For example, *'2017-04-21T05:01:17Z'*
-*`$__timeTo()`* | Will be replaced by the end of the currently active time selection. For example, *'2017-04-21T05:06:17Z'*
-*`$__timeGroup(dateColumn,'5m')`* | Will be replaced by an expression usable in a GROUP BY clause. For example, *(extract(epoch from dateColumn)/300)::bigint\*300*
-*`$__timeGroup(dateColumn,'5m', 0)`* | Same as above but with a fill parameter so missing points in that series will be added by Grafana and 0 will be used as the value.
-*`$__timeGroup(dateColumn,'5m', NULL)`* | Same as above but NULL will be used as value for missing points.
-*`$__timeGroup(dateColumn,'5m', previous)`* | Same as above but the previous value in that series will be used as fill value. If no value has been seen yet, NULL will be used (only available in Grafana 5.3+).
-*`$__timeGroupAlias(dateColumn,'5m')`* | Will be replaced with an expression identical to $__timeGroup, but with an added column alias (only available in Grafana 5.3+).
-*`$__unixEpochFilter(dateColumn)`* | Will be replaced by a time range filter using the specified column name with times represented as Unix timestamps. For example, *dateColumn >= 1494410783 AND dateColumn <= 1494497183*
-*`$__unixEpochFrom()`* | Will be replaced by the start of the currently active time selection as Unix timestamp. For example, *1494410783*
-*`$__unixEpochTo()`* | Will be replaced by the end of the currently active time selection as Unix timestamp. For example, *1494497183*
-*`$__unixEpochNanoFilter(dateColumn)`* | Will be replaced by a time range filter using the specified column name with times represented as nanosecond timestamps. For example, *dateColumn >= 1494410783152415214 AND dateColumn <= 1494497183142514872*
-*`$__unixEpochNanoFrom()`* | Will be replaced by the start of the currently active time selection as nanosecond timestamp. For example, *1494410783152415214*
-*`$__unixEpochNanoTo()`* | Will be replaced by the end of the currently active time selection as Unix timestamp. For example, *1494497183142514872*
-*`$__unixEpochGroup(dateColumn,'5m', [fillmode])`* | Same as $__timeGroup, but for times stored as Unix timestamp (only available in Grafana 5.3+).
-*`$__unixEpochGroupAlias(dateColumn,'5m', [fillmode])`* | Same as above, but also adds a column alias (only available in Grafana 5.3+).
+Macro example                                          | Description
+------------------------------------------------------ | -------------
+`$__time(dateColumn)`                                  | Will be replaced by an expression to convert to a UNIX timestamp and rename the column to `time_sec`. For example, *UNIX_TIMESTAMP(dateColumn) as time_sec*
+`$__timeEpoch(dateColumn)`                             | Will be replaced by an expression to convert to a UNIX timestamp and rename the column to `time_sec`. For example, *UNIX_TIMESTAMP(dateColumn) as time_sec*
+`$__timeFilter(dateColumn)`                            | Will be replaced by a time range filter using the specified column name. For example, *dateColumn BETWEEN FROM_UNIXTIME(1494410783) AND FROM_UNIXTIME(1494410983)*
+`$__timeFrom()`                                        | Will be replaced by the start of the currently active time selection. For example, *FROM_UNIXTIME(1494410783)*
+`$__timeTo()`                                          | Will be replaced by the end of the currently active time selection. For example, *FROM_UNIXTIME(1494410983)*
+`$__timeGroup(dateColumn,'5m')`                        | Will be replaced by an expression usable in GROUP BY clause. For example, *cast(cast(UNIX_TIMESTAMP(dateColumn)/(300) as signed)*300 as signed),*
+`$__timeGroup(dateColumn,'5m', 0)`                     | Same as above but with a fill parameter so missing points in that series will be added by grafana and 0 will be used as value.
+`$__timeGroup(dateColumn,'5m', NULL)`                  | Same as above but NULL will be used as value for missing points.
+`$__timeGroup(dateColumn,'5m', previous)`              | Same as above but the previous value in that series will be used as fill value if no value has been seen yet NULL will be used (only available in Grafana 5.3+).
+`$__timeGroupAlias(dateColumn,'5m')`                   | Will be replaced identical to $__timeGroup but with an added column alias (only available in Grafana 5.3+).
+`$__unixEpochFilter(dateColumn)`                       | Will be replaced by a time range filter using the specified column name with times represented as Unix timestamp. For example, *dateColumn > 1494410783 AND dateColumn < 1494497183*
+`$__unixEpochFrom()`                                   | Will be replaced by the start of the currently active time selection as Unix timestamp. For example, *1494410783*
+`$__unixEpochTo()`                                     | Will be replaced by the end of the currently active time selection as Unix timestamp. For example, *1494497183*
+`$__unixEpochNanoFilter(dateColumn)`                   | Will be replaced by a time range filter using the specified column name with times represented as nanosecond timestamp. For example, *dateColumn > 1494410783152415214 AND dateColumn < 1494497183142514872*
+`$__unixEpochNanoFrom()`                               | Will be replaced by the start of the currently active time selection as nanosecond timestamp. For example, *1494410783152415214*
+`$__unixEpochNanoTo()`                                 | Will be replaced by the end of the currently active time selection as nanosecond timestamp. For example, *1494497183142514872*
+`$__unixEpochGroup(dateColumn,'5m', [fillmode])`       | Same as $__timeGroup but for times stored as Unix timestamp (only available in Grafana 5.3+).
+`$__unixEpochGroupAlias(dateColumn,'5m', [fillmode])`  | Same as above but also adds a column alias (only available in Grafana 5.3+).
 
 We plan to add many more macros. If you have suggestions for what macros you would like to see, please [open an issue](https://github.com/grafana/grafana) in our GitHub repo.
 
@@ -167,7 +163,7 @@ If the `Format as` query option is set to `Table` then you can basically do any 
 
 Query editor with example query:
 
-![](/img/docs/v46/postgres_table_query.png)
+![](/static/img/docs/v46/postgres_table_query.png)
 
 
 The query:
@@ -186,7 +182,7 @@ You can control the name of the Table panel columns by using regular `as ` SQL c
 
 The resulting table panel:
 
-![postgres table](/img/docs/v46/postgres_table.png)
+![postgres table](/static/img/docs/v46/postgres_table.png)
 
 ## Time series queries
 
@@ -380,12 +376,12 @@ WHERE
   $__timeFilter(native_date_time)
 ```
 
-Name | Description
------------- | -------------
-time | The name of the date/time field. Could be a column with a native SQL date/time data type or epoch value.
-timeend | Optional name of the time end field, needs to be date/time data type. If set, then annotations are marked as regions between time and time-end. (Grafana v6.6+)
-text | Event description field.
-tags | Optional field name to use for event tags as a comma separated string.
+Name        | Description
+----------- | -------------
+`time`      | The name of the date/time field. Could be a column with a native SQL date/time data type or epoch value.
+`timeend`   | Optional name of the end date/time field. Could be a column with a native SQL date/time data type or epoch value. (Grafana v6.6+)
+`text`      | Event description field.
+`tags`      | Optional field name to use for event tags as a comma separated string.
 
 ## Alerting
 

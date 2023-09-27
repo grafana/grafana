@@ -2,13 +2,8 @@
 title = "Time series"
 description = "Introduction to time series"
 keywords = ["grafana", "intro", "guide", "concepts", "timeseries"]
-type = "docs"
-aliases = ["/docs/grafana/latest/guides/timeseries"]
-[menu.docs]
-name = "Time series"
-identifier = "time_series"
-parent = "guides"
-weight = 300
+aliases = ["/docs/grafana/v7.3/guides/timeseries"]
+weight = 500
 +++
 
 # Introduction to time series
@@ -25,7 +20,7 @@ Temperature data like this is one example of what we call a *time series*—a se
 
 Tables are useful when you want to identify individual measurements but make it difficult to see the big picture. A more common visualization for time series is the _graph_, which instead places each measurement along a time axis. Visual representations like the graph make it easier to discover patterns and features of the data that otherwise would be difficult to see.
 
-{{< docs-imagebox img="/img/docs/example_graph.png" class="docs-image--no-shadow" max-width="850px" >}}
+{{< figure src="/static/img/docs/example_graph.png" class="docs-image--no-shadow" max-width="850px" >}}
 
 Temperature data like the one in the example, is far from the only example of a time series. Other examples of time series are:
 
@@ -38,7 +33,7 @@ While each of these examples are sequences of chronologically ordered measuremen
 - New data is appended at the end, at regular intervals—for example, hourly at 09:00, 10:00, 11:00, and so on.
 - Measurements are seldom updated after they were added—for example, yesterday's temperature doesn't change.
 
-Time series are powerful. They help you understand the past by letting you analyze the state of the system at any point in time. Time series could tell you that the server crashed moments after the free disk space went down to zero. 
+Time series are powerful. They help you understand the past by letting you analyze the state of the system at any point in time. Time series could tell you that the server crashed moments after the free disk space went down to zero.
 
 Time series can also help you predict the future, by uncovering trends in your data. If the number of registered users has been increasing monthly by 4% for the past few months, you can predict how big your user base is going to be at the end of the year.
 
@@ -65,9 +60,9 @@ In the IT industry, time series data is often collected to monitor things like i
 
 ### Time series databases
 
-A time series database (TSDB) is a database explicitly designed for time series data. While it's possible to use any regular database to store measurements, a TSDB comes with some useful optimizations. 
+A time series database (TSDB) is a database explicitly designed for time series data. While it's possible to use any regular database to store measurements, a TSDB comes with some useful optimizations.
 
-Modern time series databases take advantage of the fact that measurements are only ever appended, and rarely updated or removed. For example, the timestamps for each measurement change very little over time, which results in redundant data being stored. 
+Modern time series databases take advantage of the fact that measurements are only ever appended, and rarely updated or removed. For example, the timestamps for each measurement change very little over time, which results in redundant data being stored.
 
 Look at this sequence of Unix timestamps:
 

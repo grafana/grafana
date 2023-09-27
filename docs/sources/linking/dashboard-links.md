@@ -2,9 +2,6 @@
 title = "Dashboard links"
 description = ""
 keywords = ["grafana", "linking", "create links", "link dashboards", "navigate"]
-type = "docs"
-[menu.docs]
-parent = "linking"
 weight = 200
 +++
 
@@ -14,7 +11,7 @@ When you create a dashboard link, you can include the time range and current tem
 
 Dashboard links can also be used as shortcuts to external systems, such as submitting [a GitHub issue with the current dashboard name](https://github.com/grafana/grafana/issues/new?title=Dashboard%3A%20HTTP%20Requests).
 
-To see an example of dashboard links in action, check out: 
+To see an example of dashboard links in action, check out:
 - [Dashboard links with variables](https://play.grafana.org/d/rUpVRdamz/dashboard-links-with-variables?orgId=1)
 - [Prometheus repeat](https://play.grafana.org/d/000000036/prometheus-repeat?orgId=1)
 

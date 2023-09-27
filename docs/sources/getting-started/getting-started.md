@@ -1,58 +1,56 @@
 +++
-title = "Getting started"
+title = "With Grafana"
 description = "Guide for getting started with Grafana"
 keywords = ["grafana", "intro", "guide", "started"]
-type = "docs"
-aliases = ["/docs/grafana/latest/guides/gettingstarted","/docs/grafana/latest/guides/getting_started"]
-[menu.docs]
-name = "Getting started"
-identifier = "getting_started_guide"
-parent = "guides"
+aliases = ["/docs/grafana/v7.3/guides/gettingstarted","/docs/grafana/v7.3/guides/getting_started"]
 weight = 200
 +++
 
-# Getting started
+# Getting started with Grafana
 
-This guide will help you get started and acquainted with Grafana. To learn more about Grafana in general, refer to [What is Grafana?]({{< relref "what-is-grafana.md" >}}).
+This topic helps you get started with Grafana and build your first dashboard. To learn more about Grafana, refer to [What is Grafana?]({{< relref "_index.md" >}}).
 
-## Install Grafana
+> **Note:** Grafana also offers a [free account with Grafana Cloud](https://grafana.com/signup/cloud/connect-account?pg=gsdocs) to help getting started even easier and faster. You can install Grafana to self-host or get a free Grafana Cloud account.
 
-This step varies according to your computer operating system. Refer to the instructions for your OS in the [Installation]({{< relref "../installation/_index.md" >}}) section for instructions.
+## Step 1: Install Grafana
 
-## Log in for the first time 
+Grafana can be installed on many different operating systems. For a list of the minimum hardware and software requirements, as well as instructions on installing Grafana, refer to [Install Grafana]({{< relref "../installation/_index.md" >}}).
 
-1. Open your web browser and go to http://localhost:3000/. `3000` is the default HTTP port that Grafana listens to if you haven’t configured a different port.
-1. On the login page, type `admin` for the username and password.
-1. Change your password. 
+## Step 2: Log in
 
-> **Note:** We strongly encourage you to follow Grafana best practices and change the default administrator password. Don't forget to record your credentials!
+To log in to Grafana for the first time:
 
-## Create a dashboard
+1. Open your web browser and go to http://localhost:3000/. The default HTTP port that Grafana listens to is `3000` unless you have configured a different port.
+1. On the login page, enter `admin` for username and password.
+1. Click **Log In**. If login is successful, then you will see a prompt to change the password.
+1. Click **OK** on the prompt, then change your password.
 
-1. Click **New dashboard**.
-1. Click **Add Query**. Grafana creates a basic graph panel with the Random Walk scenario.
-1. Save your dashboard. Click the **Save dashboard** icon in the top corner of the screen.
+> **Note:** We strongly recommend that you follow Grafana's best practices and change the default administrator password. Don't forget to record your credentials!
 
- Congratulations, you have gotten started with Grafana! You have a dashboard and are displaying results. Feel free to experiment with what you have built, continue on to add another data source, or explore [Next steps](#next-steps).
+## Step 3: Create a dashboard
+
+To create your first dashboard:
+
+1. Click the **+** icon on the left panel, select **Create Dashboard**, and then click **Add new panel**.
+1. In the New Dashboard/Edit Panel view, go to the **Query** tab.
+1. Configure your [query]({{< relref "../panels/queries.md" >}}) by selecting ``-- Grafana --`` from the [data source selector]({{< relref "../panels/queries.md/#data-source-selector" >}}). This generates the Random Walk dashboard.
+1. Click the  **Save** icon in the top right corner of your screen to save the dashboard.
+1. Add a descriptive name, and then click **Save**.
+
+ Congratulations, you have created your first dashboard and it is displaying results.
 
 ## Next steps
 
-Different user types will have different interests. Some suggestions are listed below, or refer to [What is Grafana?]({{< relref "what-is-grafana.md" >}}) for a general overview of Grafana features.
+ Continue to experiment with what you have built, try the [explore workflow]({{< relref "../explore/index.md" >}}) or another visualization feature. Refer to [Data sources]({{< relref "../datasources" >}}) for a list of supported data sources and instructions on how to [add a data source]({{< relref "../datasources/add-a-data-source.md" >}}). The following topics will be of interest to you:
 
-### All users
-
-All users might want to learn about:
-
-* [Panels]({{< relref "../panels/panels-overview.md" >}})
-* [Dashboards]({{< relref "../dashboards/_index.md" >}})
-* [Data sources]({{< relref "../datasources/_index.md" >}}) and [Add a data source]({{< relref "../datasources/add-a-data-source.md" >}})
-* [Keyboard shortcuts]({{< relref "../dashboards/shortcuts.md" >}})
-* [Explore workflow]({{< relref "../explore/index.md" >}})
-* [Plugins](https://grafana.com/grafana/plugins?orderBy=weight&direction=asc)
+- [Panels]({{< relref "../panels/_index.md" >}})
+- [Dashboards]({{< relref "../dashboards/_index.md" >}})
+- [Keyboard shortcuts]({{< relref "../dashboards/shortcuts.md" >}})
+- [Plugins](https://grafana.com/grafana/plugins?orderBy=weight&direction=asc)
 
 ### Admins
 
-Administrators might want to learn about:
+The following topics are of interest to Grafana server admin users:
 
 - [Grafana configuration]({{< relref "../administration/configuration.md" >}})
 - [Authentication]({{< relref "../auth/overview.md" >}})

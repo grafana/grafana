@@ -2,8 +2,7 @@
 title = "Gauge panel"
 description = "Gauge panel docs"
 keywords = ["grafana", "gauge", "gauge panel"]
-type = "docs"
-aliases = ["/docs/grafana/latest/features/panels/gauge/"]
+aliases = ["/docs/grafana/v7.3/features/panels/gauge/"]
 weight = 400
 +++
 
@@ -11,7 +10,7 @@ weight = 400
 
 Gauge is a single value panel that can repeat a gauge for every series, column or row.
 
-{{< docs-imagebox img="/img/docs/v66/gauge_panel_cover.png" max-width="1025px" >}}
+{{< figure src="/static/img/docs/v66/gauge_panel_cover.png" max-width="1025px" >}}
 
 ## Data and field options
 

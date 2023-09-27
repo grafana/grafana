@@ -2,13 +2,10 @@
 title = "What's new in Grafana v6.4"
 description = "Feature and improvement highlights for Grafana v6.4"
 keywords = ["grafana", "new", "documentation", "6.4", "release notes"]
-type = "docs"
-aliases = ["/docs/grafana/latest/guides/whats-new-in-v6-4/"]
-[menu.docs]
-name = "Version 6.4"
-identifier = "v6.4"
-parent = "whatsnew"
-weight = -15
+aliases = ["/docs/grafana/v7.3/guides/whats-new-in-v6-4/"]
+weight = -23
+[_build]
+list = false
 +++
 
 # What's new in Grafana v6.4
@@ -42,16 +39,16 @@ Some of those new capabilities can already be seen in this release, like sharing
 To help accelerate workflows that involve regularly switching from Explore to a dashboard and vice-versa, we've added the ability to return to the origin dashboard
 after navigating to Explore from the panel's dropdown.
 
-{{< docs-imagebox img="/img/docs/v60/explore_panel_menu.png" caption="Screenshot of the new Explore Icon" >}}
+{{< figure src="/static/img/docs/v60/explore_panel_menu.png" caption="Screenshot of the new Explore Icon" >}}
 
 After you've navigated to Explore, you should notice a "Back" button in the Explore toolbar.
 
-<img src="/img/docs/v64/explore_toolbar_1.png" />
+<img src="/static/img/docs/v64/explore_toolbar_1.png" />
 
 Simply clicking the button will return you to the origin dashboard, or, if you'd like to bring changes you make in Explore back to the dashboard, simply click
 the arrow next to the button to reveal a "Return to panel with changes" menu item.
 
-<img src="/img/docs/v64/explore_toolbar_v2.png" />
+<img src="/static/img/docs/v64/explore_toolbar_v2.png" />
 
 ### Live tailing improvements
 
@@ -59,13 +56,13 @@ With 6.4 version you can now pause the live tail view to see the last 1000 lines
 
 We also introduced some performance optimizations to allow live tailing of higher throughput log streams and various UI fixes and improvements like more consistent styling and fresh logs highlighting.
 
-<img src="/img/docs/v64/explore_live_tailing.gif" />
+<img src="/static/img/docs/v64/explore_live_tailing.gif" />
 
 ### New Logs Panel
 
 The logs panel shows log lines from datasources that support logs, e.g., Elastic, Influx, and Loki. Typically you would use this panel next to a graph panel to display the log output of a related process.
 
-<img src="/img/docs/v64/logs-panel.png" />
+<img src="/static/img/docs/v64/logs-panel.png" />
 
 Limitations: Even though Live tailing can be enabled on logs panels in dashboards, we recommend using Live tailing in Explore. On dashboards, the refresher at the top of the page should be used instead to keep the data of all panels in sync. Note that the logs panel is still beta and we're looking to get feedback.
 
@@ -83,7 +80,7 @@ For more information about Data Links, refer to [data link](https://grafana.com/
 Some graph query results are made up only of one datapoint per series but can be shown in the graph panel with the help of [series overrides](/features/panels/graph/#series-overrides).
 To show a horizontal line through the Y-value of the datapoint across the whole graph, add a series override and select `Transform > constant`.
 
-<img src="/img/docs/v64/constant-series-override.png" />
+<img src="/static/img/docs/v64/constant-series-override.png" />
 
 ## Share query results between panels
 
@@ -132,7 +129,7 @@ A common request from Enterprise users have been to be able to set up reporting 
 
 This feature is currently limited to Organization Admins.
 
-{{< docs-imagebox img="/img/docs/v64/reports.jpeg" max-width="500px" caption="Reporting" >}}
+{{< figure src="/static/img/docs/v64/reports.jpeg" max-width="500px" caption="Reporting" >}}
 
 ### GitLab OAuth Team Sync support
 

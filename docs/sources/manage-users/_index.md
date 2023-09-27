@@ -1,10 +1,6 @@
 +++
 title = "Manage users"
-type = "docs"
-[menu.docs]
-name = "Manage users"
-identifier = "manage-users"
-weight = 40
+weight = 50
 +++
 
 # Manage users
@@ -30,3 +26,4 @@ Teams allow you to grant permissions for a group of users.
 ## Learn more
 
 Set up users and teams in our tutorial on how to [Create users and teams](https://grafana.com/tutorials/create-users-and-teams).
+

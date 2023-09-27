@@ -2,11 +2,7 @@
 title = "Azure Monitor"
 description = "Guide for using Azure Monitor in Grafana"
 keywords = ["grafana", "microsoft", "azure", "monitor", "application", "insights", "log", "analytics", "guide"]
-type = "docs"
-aliases = ["/docs/grafana/latest/features/datasources/azuremonitor"]
-[menu.docs]
-name = "Azure Monitor"
-parent = "datasources"
+aliases = ["/docs/grafana/v7.3/features/datasources/azuremonitor"]
 weight = 300
 +++
 
@@ -18,9 +14,9 @@ As of Grafana 6.0, the Azure Monitor plugin has been moved into Grafana so it no
 
 The Azure Monitor data source supports multiple services in the Azure cloud:
 
-- **[Azure Monitor]({{< relref "#querying-the-azure-monitor-service" >}})** is the platform service that provides a single source for monitoring Azure resources.
+- **[Azure Monitor Metrics]({{< relref "#querying-the-azure-monitor-service" >}})** (or Metrics) is the platform service that provides a single source for monitoring Azure resources.
+- **[Azure Monitor Logs]({{< relref "#querying-the-azure-log-analytics-service" >}})** (or Logs) gives you access to log data collected by Azure Monitor.
 - **[Application Insights]({{< relref "#querying-the-application-insights-service" >}})** is an extensible Application Performance Management (APM) service for web developers on multiple platforms and can be used to monitor your live web application - it will automatically detect performance anomalies.
-- **[Azure Log Analytics]({{< relref "#querying-the-azure-log-analytics-service" >}})** (or Azure Logs) gives you access to log data collected by Azure Monitor.
 - **[Application Insights Analytics]({{< relref "#query-the-application-insights-analytics-service" >}})** allows you to query [Application Insights data](https://docs.microsoft.com/en-us/azure/azure-monitor/app/analytics) using the same query language used for Azure Log Analytics.
 
 ## Add the data source
@@ -28,7 +24,7 @@ The Azure Monitor data source supports multiple services in the Azure cloud:
 The data source can access metrics from four different services. You can configure access to the services that you use. It is also possible to use the same credentials for multiple services if that is how you have set it up in Azure AD.
 
 - [Guide to setting up an Azure Active Directory Application for Azure Monitor.](https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-create-service-principal-portal)
-- [Guide to setting up an Azure Active Directory Application for Azure Log Analytics.](https://dev.loganalytics.io/documentation/Authorization/AAD-Setup)
+- [Guide to setting up an Azure Active Directory Application for Azure Monitor Logs.](https://dev.loganalytics.io/documentation/Authorization/AAD-Setup)
 - [Quickstart Guide for Application Insights.](https://dev.applicationinsights.io/quickstart/)
 
 1. Accessed from the Grafana main menu, newly installed data sources can be added immediately within the Data Sources section. Next, click the "Add data source" button in the upper right. The Azure Monitor data source will be available for selection in the Cloud section in the list of data sources.
@@ -43,11 +39,11 @@ The data source can access metrics from four different services. You can configu
    - **Default Subscription Id** (Subscriptions -> Choose subscription -> Overview -> Subscription ID)
 
 1. Paste these four items into the fields in the Azure Monitor API Details section:
-   {{< docs-imagebox img="/img/docs/v62/config_1_azure_monitor_details.png" class="docs-image--no-shadow" caption="Azure Monitor Configuration Details" >}}
+   {{< figure src="/static/img/docs/v62/config_1_azure_monitor_details.png" class="docs-image--no-shadow" caption="Azure Monitor Configuration Details" >}}
 
    - The Subscription Id can be changed per query. Save the data source and refresh the page to see the list of subscriptions available for the specified Client Id.
 
-1. If you are also using the Azure Log Analytics service, then you need to specify these two config values (or you can reuse the Client Id and Secret from the previous step).
+1. If you are also using the Azure Monitor Logs service, then you need to specify these two configuration values (or you can reuse the Client Id and Secret from the previous step).
 
    - Client Id (Azure Active Directory -> App Registrations -> Choose your app -> Application ID)
    - Client Secret (Azure Active Directory -> App Registrations -> Choose your app -> Keys -> Create a key -> Use client secret)
@@ -58,10 +54,10 @@ The data source can access metrics from four different services. You can configu
    - API Key
 
 1. Paste these two items into the appropriate fields in the Application Insights API Details section:
-   {{< docs-imagebox img="/img/docs/v62/config_2_app_insights_api_details.png" class="docs-image--no-shadow" caption="Application Insights Configuration Details" >}}
+   {{< figure src="/static/img/docs/v62/config_2_app_insights_api_details.png" class="docs-image--no-shadow" caption="Application Insights Configuration Details" >}}
 
 1. Test that the configuration details are correct by clicking on the "Save & Test" button:
-   {{< docs-imagebox img="/img/docs/v62/config_3_save_and_test.png" class="docs-image--no-shadow" caption="Save and Test" >}}
+   {{< figure src="/static/img/docs/v62/config_3_save_and_test.png" class="docs-image--no-shadow" caption="Save and Test" >}}
 
 Alternatively on step 4 if creating a new Azure Active Directory App, use the [Azure CLI](https://docs.microsoft.com/en-us/cli/azure/?view=azure-cli-latest):
 
@@ -71,20 +67,22 @@ az ad sp create-for-rbac -n "http://localhost:3000"
 
 ## Choose a Service
 
-In the query editor for a panel, after choosing your Azure Monitor data source, the first option is to choose a service. There are three options here:
+In the query editor for a panel, after choosing your Azure Monitor data source, the first option is to choose a service. There are four options here:
 
-- `Azure Monitor`
+- `Metrics`
 - `Application Insights`
-- `Azure Log Analytics`
+- `Logs`
 - `Insights Analytics`
 
-The query editor changes depending on which one you pick. Azure Monitor is the default.
+The query editor changes depending on which one you pick. Metrics is the default.
 
 Starting in Grafana 7.1, Insights Analytics replaced the former edit mode from within Application Insights.
 
-## Query the Azure Monitor service
+Starting in Grafana 7.4, the Azure Monitor query type was renamed to Metrics and Azure Logs Analytics was renamed to Logs.
 
-The Azure Monitor service provides metrics for all the Azure services that you have running. It helps you understand how your applications on Azure are performing and to proactively find issues affecting your applications.
+## Query the Metrics service
+
+The Metrics service provides metrics for all the Azure services that you have running. It helps you understand how your applications on Azure are performing and to proactively find issues affecting your applications.
 
 If your Azure Monitor credentials give you access to multiple subscriptions, then choose the appropriate subscription first.
 
@@ -94,13 +92,13 @@ Examples of metrics that you can get from the service are:
 - `Microsoft.Network/networkInterfaces - Bytes sent`
 - `Microsoft.Storage/storageAccounts - Used Capacity`
 
-{{< docs-imagebox img="/img/docs/v60/azuremonitor-service-query-editor.png" class="docs-image--no-shadow" caption="Azure Monitor Query Editor" >}}
+{{< figure src="/static/img/docs/v60/azuremonitor-service-query-editor.png" class="docs-image--no-shadow" caption="Metrics Query Editor" >}}
 
 As of Grafana 7.1, the query editor allows you to query multiple dimensions for metrics that support them. Metrics that support multiple dimensions are those listed in the [Azure Monitor supported Metrics List](https://docs.microsoft.com/en-us/azure/azure-monitor/platform/metrics-supported) that have one or more values listed in the "Dimension" column for the metric.
 
-### Format legend keys with aliases for Azure Monitor
+### Format legend keys with aliases for Metrics
 
-The default legend formatting for the Azure Monitor API is:
+The default legend formatting for the Metrics API is:
 
 `metricName{dimensionName=dimensionValue,dimensionTwoName=DimensionTwoValue}`
 
@@ -108,12 +106,12 @@ The default legend formatting for the Azure Monitor API is:
 
 These can be quite long, but this formatting can be changed by using aliases. In the **Legend Format** field, you can combine the aliases defined below any way you want.
 
-Azure Monitor examples:
+Metrics examples:
 
 - `Blob Type: {{ blobtype }}`
 - `{{ resourcegroup }} - {{ resourcename }}`
 
-### Alias patterns for Azure Monitor
+### Alias patterns for Metrics
 
 - `{{ resourcegroup }}` = replaced with the value of the Resource Group
 - `{{ namespace }}` = replaced with the value of the Namespace (e.g. Microsoft.Compute/virtualMachines)
@@ -123,27 +121,27 @@ Azure Monitor examples:
 - `{{ dimensionvalue }}` = _Legacy as of 7.1+ (for backwards compatibility)_ replaced with first dimension's value (as sorted by the key/label) (e.g. BlockBlob)
 - `{{ arbitraryDim }}` = _Available in 7.1+_ replaced with the value of the corresponding dimension. (e.g. `{{ blobtype }}` becomes BlockBlob)
 
-### Create template variables for Azure Monitor
+### Create template variables for Metrics
 
 Instead of hard-coding things like server, application and sensor name in your metric queries you can use variables in their place. Variables are shown as dropdown select boxes at the top of the dashboard. These dropdowns make it easy to change the data being displayed in your dashboard.
 
-Note that the Azure Monitor service does not support multiple values yet. If you want to visualize multiple time series (for example, metrics for server1 and server2) then you have to add multiple queries to able to view them on the same graph or in the same table.
+Note that the Metrics service does not support multiple values yet. If you want to visualize multiple time series (for example, metrics for server1 and server2) then you have to add multiple queries to able to view them on the same graph or in the same table.
 
-The Azure Monitor data source Plugin provides the following queries you can specify in the `Query` field in the Variable edit view. They allow you to fill a variable's options list.
+The Metrics data source Plugin provides the following queries you can specify in the `Query` field in the Variable edit view. They allow you to fill a variable's options list.
 
 | Name                                                                                               | Description                                                                     |
 | -------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
-| _Subscriptions()_                                                                                  | Returns a list of subscriptions.                                                |
-| _ResourceGroups()_                                                                                 | Returns a list of resource groups.                                              |
-| _ResourceGroups(12345678-aaaa-bbbb-cccc-123456789aaa)_                                             | Returns a list of resource groups for a specified subscription.                 |
-| _Namespaces(aResourceGroup)_                                                                       | Returns a list of namespaces for the specified resource group.                  |
-| _Namespaces(12345678-aaaa-bbbb-cccc-123456789aaa, aResourceGroup)_                                 | Returns a list of namespaces for the specified resource group and subscription. |
-| _ResourceNames(aResourceGroup, aNamespace)_                                                        | Returns a list of resource names.                                               |
-| _ResourceNames(12345678-aaaa-bbbb-cccc-123456789aaa, aResourceGroup, aNamespace)_                  | Returns a list of resource names for a specified subscription.                  |
-| _MetricNamespace(aResourceGroup, aNamespace, aResourceName)_                                       | Returns a list of metric namespaces.                                            |
-| _MetricNamespace(12345678-aaaa-bbbb-cccc-123456789aaa, aResourceGroup, aNamespace, aResourceName)_ | Returns a list of metric namespaces for a specified subscription.               |
-| _MetricNames(aResourceGroup, aNamespace, aResourceName)_                                           | Returns a list of metric names.                                                 |
-| _MetricNames(12345678-aaaa-bbbb-cccc-123456789aaa, aResourceGroup, aNamespace, aResourceName)_     | Returns a list of metric names for a specified subscription.                    |
+| `Subscriptions()`                                                                                  | Returns a list of subscriptions.                                                |
+| `ResourceGroups()`                                                                                 | Returns a list of resource groups.                                              |
+| `ResourceGroups(12345678-aaaa-bbbb-cccc-123456789aaa)`                                             | Returns a list of resource groups for a specified subscription.                 |
+| `Namespaces(aResourceGroup)`                                                                       | Returns a list of namespaces for the specified resource group.                  |
+| `Namespaces(12345678-aaaa-bbbb-cccc-123456789aaa, aResourceGroup)`                                 | Returns a list of namespaces for the specified resource group and subscription. |
+| `ResourceNames(aResourceGroup, aNamespace)`                                                        | Returns a list of resource names.                                               |
+| `ResourceNames(12345678-aaaa-bbbb-cccc-123456789aaa, aResourceGroup, aNamespace)`                  | Returns a list of resource names for a specified subscription.                  |
+| `MetricNamespace(aResourceGroup, aNamespace, aResourceName)`                                       | Returns a list of metric namespaces.                                            |
+| `MetricNamespace(12345678-aaaa-bbbb-cccc-123456789aaa, aResourceGroup, aNamespace, aResourceName)` | Returns a list of metric namespaces for a specified subscription.               |
+| `MetricNames(aResourceGroup, aNamespace, aResourceName)`                                           | Returns a list of metric names.                                                 |
+| `MetricNames(12345678-aaaa-bbbb-cccc-123456789aaa, aResourceGroup, aNamespace, aResourceName)`     | Returns a list of metric names for a specified subscription.                    |
 
 Examples:
 
@@ -152,24 +150,24 @@ Examples:
 - Chaining template variables: `ResourceNames($rg, $ns)`
 - Do not quote parameters: `MetricNames(hg, Microsoft.Network/publicIPAddresses, grafanaIP)`
 
-{{< docs-imagebox img="/img/docs/v60/azuremonitor-service-variables.png" class="docs-image--no-shadow" caption="Nested Azure Monitor Template Variables" >}}
+{{< figure src="/static/img/docs/v60/azuremonitor-service-variables.png" class="docs-image--no-shadow" caption="Nested Azure Monitor Template Variables" >}}
 
 Check out the [Templating]({{< relref "../variables/_index.md" >}}) documentation for an introduction to the templating feature and the different
 types of template variables.
 
 ### List of supported Azure Monitor metrics
 
-Not all metrics returned by the Azure Monitor API have values. To make it easier for you when building a query, the Grafana data source has a list of supported Azure Monitor metrics and ignores metrics which will never have values. This list is updated regularly as new services and metrics are added to the Azure cloud. For more information about the list of Azure Monitor metrics, refer to [current supported namespaces](https://github.com/grafana/grafana/blob/master/public/app/plugins/datasource/grafana-azure-monitor-datasource/azure_monitor/supported_namespaces.ts).
+Not all metrics returned by the Azure Monitor Metrics API have values. To make it easier for you when building a query, the Grafana data source has a list of supported metrics and ignores metrics which will never have values. This list is updated regularly as new services and metrics are added to the Azure cloud. For more information about the list of metrics, refer to [current supported namespaces](https://github.com/grafana/grafana/blob/master/public/app/plugins/datasource/grafana-azure-monitor-datasource/azure_monitor/supported_namespaces.ts).
 
-### Azure Monitor alerting
+### Alerting
 
-Grafana alerting is supported for the Azure Monitor service. This is not Azure Alerts support. For more information about Grafana alerting, refer to [how alerting in Grafana works]({{< relref "../alerting/alerts-overview.md" >}}).
+Grafana alerting is supported for the Azure Monitor service. This is not Azure Alerts support. For more information about Grafana alerting, refer to [how alerting in Grafana works]({{< relref "../alerting/_index.md" >}}).
 
-{{< docs-imagebox img="/img/docs/v60/azuremonitor-alerting.png" class="docs-image--no-shadow" caption="Azure Monitor Alerting" >}}
+{{< figure src="/static/img/docs/v60/azuremonitor-alerting.png" class="docs-image--no-shadow" caption="Azure Monitor Alerting" >}}
 
 ## Query the Application Insights Service
 
-{{< docs-imagebox img="/img/docs/azuremonitor/insights_metrics_multi-dim.png" class="docs-image--no-shadow" caption="Application Insights Query Editor" >}}
+{{< figure src="/static/img/docs/azuremonitor/insights_metrics_multi-dim.png" class="docs-image--no-shadow" caption="Application Insights Query Editor" >}}
 
 As of Grafana 7.1, you can select more than one group by dimension.
 
@@ -212,8 +210,8 @@ Check out the [Templating]({{< relref "../variables/_index.md" >}}) documentatio
 
 | Name                               | Description                                                  |
 | ---------------------------------- | ------------------------------------------------------------ |
-| _AppInsightsMetricNames()_         | Returns a list of metric names.                              |
-| _AppInsightsGroupBys(aMetricName)_ | Returns a list of "group bys" for the specified metric name. |
+| `AppInsightsMetricNames()`         | Returns a list of metric names.                              |
+| `AppInsightsGroupBys(aMetricName)` | Returns a list of "group bys" for the specified metric name. |
 
 Examples:
 
@@ -221,17 +219,17 @@ Examples:
 - Passing in metric name variable: `AppInsightsGroupBys(requests/count)`
 - Chaining template variables: `AppInsightsGroupBys($metricnames)`
 
-{{< docs-imagebox img="/img/docs/v60/appinsights-service-variables.png" class="docs-image--no-shadow" caption="Nested Application Insights Template Variables" >}}
+{{< figure src="/static/img/docs/v60/appinsights-service-variables.png" class="docs-image--no-shadow" caption="Nested Application Insights Template Variables" >}}
 
 ### Application Insights alerting
 
-Grafana alerting is supported for Application Insights. This is not Azure Alerts support. For more information about Grafana alerting, refer to [Alerts overview]({{< relref "../alerting/alerts-overview.md" >}}).
+Grafana alerting is supported for Application Insights. This is not Azure Alerts support. For more information about Grafana alerting, refer to [Alerts overview]({{< relref "../alerting/_index.md" >}}).
 
-{{< docs-imagebox img="/img/docs/v60/azuremonitor-alerting.png" class="docs-image--no-shadow" caption="Azure Monitor Alerting" >}}
+{{< figure src="/static/img/docs/v60/azuremonitor-alerting.png" class="docs-image--no-shadow" caption="Azure Monitor Alerting" >}}
 
-## Querying the Azure Log Analytics service
+## Querying the Logs service
 
-Queries are written in the new [Azure Log Analytics (or KustoDB) Query Language](https://docs.microsoft.com/en-us/azure/azure-monitor/log-query/query-language). A Log Analytics query can be formatted as time series data or as table data.
+Queries are written in the [Kusto Query Language](https://docs.microsoft.com/en-us/azure/data-explorer/kusto/query/). A Logs query can be formatted as time series data or as table data.
 
 If your credentials give you access to multiple subscriptions, then choose the appropriate subscription before entering queries.
 
@@ -269,7 +267,7 @@ Perf
 
 > **Tip**: In the above query, the Kusto syntax `Samples=count()` and `["Avg Value"]=...` is used to rename those columns — the second syntax allowing for the space. This changes the name of the metric that Grafana uses, and as a result, things like series legends and table columns will match what you specify. Here `Samples` is displayed instead of `_count`.
 
-{{< docs-imagebox img="/img/docs/azuremonitor/logs_multi-value_multi-dim.png" class="docs-image--no-shadow" caption="Azure Logs query with multiple values and multiple dimensions" >}}
+{{< figure src="/static/img/docs/azuremonitor/logs_multi-value_multi-dim.png" class="docs-image--no-shadow" caption="Azure Logs query with multiple values and multiple dimensions" >}}
 
 ### Table queries
 
@@ -290,7 +288,7 @@ The default display name format is:
 
 This can be customized by using the [display name field option]({{< relref "../panels/field-options/_index.md#display-name" >}}).
 
-### Azure Log Analytics macros
+### Logs macros
 
 To make writing queries easier there are several Grafana macros that can be used in the where clause of a query:
 
@@ -312,13 +310,13 @@ To make writing queries easier there are several Grafana macros that can be used
 
   If using the `All` option, then check the `Include All Option` checkbox and in the `Custom all value` field type in the following value: `all`. If `$myVar` has value `all` then the macro will instead expand to `1 == 1`. For template variables with a lot of options, this will increase the query performance by not building a large "where..in" clause.
 
-### Azure Log Analytics builtin variables
+### Logs builtin variables
 
-There are also some Grafana variables that can be used in Azure Log Analytics queries:
+There are also some Grafana variables that can be used in Logs queries:
 
 - `$__interval` - Grafana calculates the minimum time grain that can be used to group by time in queries. For more information about `$__interval`, refer to [interval variables]({{< relref "../variables/variable-types/_index.md#interval-variables" >}}). It returns a time grain like `5m` or `1h` that can be used in the bin function. E.g. `summarize count() by bin(TimeGenerated, $__interval)`
 
-### Templating with variables for Azure Log Analytics
+### Templating with variables for Logs
 
 Any Log Analytics query that returns a list of values can be used in the `Query` field in the Variable edit view. There is also one Grafana function for Log Analytics that returns a list of workspaces.
 
@@ -327,22 +325,22 @@ types of template variables.
 
 | Name                                               | Description                                                                                            |
 | -------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
-| _workspaces()_                                     | Returns a list of workspaces for the default subscription.                                             |
-| _workspaces(12345678-aaaa-bbbb-cccc-123456789aaa)_ | Returns a list of workspaces for the specified subscription (the parameter can be quoted or unquoted). |
+| `workspaces()`                                     | Returns a list of workspaces for the default subscription.                                             |
+| `workspaces(12345678-aaaa-bbbb-cccc-123456789aaa)` | Returns a list of workspaces for the specified subscription (the parameter can be quoted or unquoted). |
 
 Example variable queries:
 
 <!-- prettier-ignore-start -->
 | Query                                                                                   | Description                                               |
 | --------------------------------------------------------------------------------------- | --------------------------------------------------------- |
-| _subscriptions()_                                                                       | Returns a list of Azure subscriptions                     |
-| _workspaces()_                                                                          | Returns a list of workspaces for default subscription     |
-| _workspaces("12345678-aaaa-bbbb-cccc-123456789aaa")_                                    | Returns a list of workspaces for a specified subscription |
-| _workspaces("$subscription")_                                                           | With template variable for the subscription parameter     |
-| _workspace("myWorkspace").Heartbeat \| distinct Computer_                               | Returns a list of Virtual Machines                        |
-| _workspace("$workspace").Heartbeat \| distinct Computer_                                | Returns a list of Virtual Machines with template variable |
-| _workspace("$workspace").Perf \| distinct ObjectName_                                   | Returns a list of objects from the Perf table             |
-| _workspace("$workspace").Perf \| where ObjectName == "$object" \| distinct CounterName_ | Returns a list of metric names from the Perf table        |
+| `subscriptions()`                                                                       | Returns a list of Azure subscriptions                     |
+| `workspaces()`                                                                          | Returns a list of workspaces for default subscription     |
+| `workspaces("12345678-aaaa-bbbb-cccc-123456789aaa")`                                    | Returns a list of workspaces for a specified subscription |
+| `workspaces("$subscription")`                                                           | With template variable for the subscription parameter     |
+| `workspace("myWorkspace").Heartbeat \| distinct Computer`                               | Returns a list of Virtual Machines                        |
+| `workspace("$workspace").Heartbeat \| distinct Computer`                                | Returns a list of Virtual Machines with template variable |
+| `workspace("$workspace").Perf \| distinct ObjectName`                                   | Returns a list of objects from the Perf table             |
+| `workspace("$workspace").Perf \| where ObjectName == "$object" \| distinct CounterName` | Returns a list of metric names from the Perf table        |
 
 <!-- prettier-ignore-end -->
 
@@ -357,29 +355,29 @@ Perf
 | order by TimeGenerated asc
 ```
 
-### Deep linking from Grafana panels to the Log Analytics query editor in Azure Portal
+### Deep linking from Grafana panels to the Azure Metric Logs query editor in Azure Portal
 
 > Only available in Grafana v7.0+.
 
-{{< docs-imagebox img="/img/docs/v70/azure-log-analytics-deep-linking.png" max-width="500px" class="docs-image--right" caption="Azure Log Analytics deep linking" >}}
+{{< figure src="/static/img/docs/v70/azure-log-analytics-deep-linking.png" max-width="500px" class="docs-image--right" caption="Logs deep linking" >}}
 
-Click on a time series in the panel to see a context menu with a link to `View in Azure Portal`. Clicking that link opens the Azure Log Analytics query editor in the Azure Portal and runs the query from the Grafana panel there.
+Click on a time series in the panel to see a context menu with a link to `View in Azure Portal`. Clicking that link opens the Azure Metric Logs query editor in the Azure Portal and runs the query from the Grafana panel there.
 
-If you're not currently logged in to the Azure Portal, then the link opens the login page. The provided link is valid for any account, but it only displays the query if your account has access to the Azure Log Analytics workspace specified in the query.
+If you're not currently logged in to the Azure Portal, then the link opens the login page. The provided link is valid for any account, but it only displays the query if your account has access to the Azure Metric Logs workspace specified in the query.
 
 <div class="clearfix"></div>
 
-### Azure Log Analytics alerting
+### Logs alerting
 
 > Only available in Grafana v7.0+.
 
-Grafana alerting is supported for Application Insights. This is not Azure Alerts support. Read more about how alerting in Grafana works in [Alerting rules]({{< relref "../alerting/alerts-overview.md" >}}).
+Grafana alerting is supported for Application Insights. This is not Azure Alerts support. Read more about how alerting in Grafana works in [Alerting rules]({{< relref "../alerting/_index.md" >}}).
 
 ## Query the Application Insights Analytics service
 
 If you change the service type to **Insights Analytics**, then a similar editor to the Log Analytics service is available. This service also uses the Kusto language, so the instructions for querying data are identical to [querying the log analytics service]({{< relref "#querying-the-azure-log-analytics-service" >}}), except that you query Application Insights Analytics data instead.
 
-{{< docs-imagebox img="/img/docs/azuremonitor/insights_analytics_multi-dim.png" class="docs-image--no-shadow" caption="Azure Application Insights Analytics query with multiple dimensions" >}}
+{{< figure src="/static/img/docs/azuremonitor/insights_analytics_multi-dim.png" class="docs-image--no-shadow" caption="Azure Application Insights Analytics query with multiple dimensions" >}}
 
 ## Configure the data source with provisioning
 
