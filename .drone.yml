@@ -599,6 +599,21 @@ steps:
   - name: docker
     path: /var/run/docker.sock
 - commands:
+  - /src/grafana-build deb $(cat packages.txt | grep tar.gz | grep -v docker | grep
+    -v sha256 | awk '{print "--package=" $0}') --destination=gs://grafana-downloads/oss/pr/--grafana-dir=$$PWD
+    > packages.txt
+  depends_on:
+  - rgm-package
+  environment:
+    GCP_KEY_BASE64:
+      from_secret: rgm_gcp_key_base64
+  image: grafana/grafana-build:main
+  name: rgm-deb
+  pull: always
+  volumes:
+  - name: docker
+    path: /var/run/docker.sock
+- commands:
   - apk add --update tar bash
   - mkdir grafana
   - tar --strip-components=1 -xvf ./dist/*amd64.tar.gz -C grafana
@@ -1751,6 +1766,21 @@ steps:
   - yarn-install
   image: grafana/grafana-build:main
   name: rgm-package
+  pull: always
+  volumes:
+  - name: docker
+    path: /var/run/docker.sock
+- commands:
+  - /src/grafana-build deb $(cat packages.txt | grep tar.gz | grep -v docker | grep
+    -v sha256 | awk '{print "--package=" $0}') --destination=gs://grafana-downloads/oss/pr/--grafana-dir=$$PWD
+    > packages.txt
+  depends_on:
+  - rgm-package
+  environment:
+    GCP_KEY_BASE64:
+      from_secret: rgm_gcp_key_base64
+  image: grafana/grafana-build:main
+  name: rgm-deb
   pull: always
   volumes:
   - name: docker
@@ -4212,6 +4242,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 84da089797850e74589428fafc6485435b968df9183a7ee7203ae2cd03f420c1
+hmac: 437835d0655c24bbc826fa7799d65a9e217bbc4a51b91d87dcfafb472b51dc8f
 
 ...

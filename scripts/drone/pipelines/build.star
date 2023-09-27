@@ -31,6 +31,7 @@ load(
     "scripts/drone/steps/rgm.star",
     "rgm_build_docker_step",
     "rgm_package_step",
+    "rgm_deb_step",
 )
 load(
     "scripts/drone/utils/images.star",
@@ -83,6 +84,7 @@ def build_e2e(trigger, ver_mode):
     build_steps.extend(
         [
             rgm_package_step(distros = "linux/amd64,linux/arm64,linux/arm/v7", file = "packages.txt"),
+            rgm_deb_step(),
             grafana_server_step(),
             e2e_tests_step("dashboards-suite"),
             e2e_tests_step("smoke-tests-suite"),

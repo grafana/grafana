@@ -8,6 +8,12 @@ load(
     "golang_version",
 )
 
+load(
+    "scripts/drone/vault.star",
+    "from_secret",
+    "rgm_gcp_key_base64",
+)
+
 # rgm_package_step will create a tar.gz for use in e2e tests or other PR testing related activities..
 def rgm_package_step(distros = "linux/amd64,linux/arm64", file = "packages.txt"):
     return {
@@ -22,6 +28,25 @@ def rgm_package_step(distros = "linux/amd64,linux/arm64", file = "packages.txt")
             "--build-id=$$DRONE_BUILD_NUMBER " +
             "--grafana-dir=$$PWD > {}".format(file),
         ],
+        "volumes": [{"name": "docker", "path": "/var/run/docker.sock"}],
+    }
+
+# rgm_deb will use a tar.gz for creating a .deb package
+def rgm_deb_step(file = "packages.txt"):
+    return {
+        "name": "rgm-deb",
+        "image": "grafana/grafana-build:main",
+        "pull": "always",
+        "depends_on": ["rgm-package"],
+        "commands": [
+            "/src/grafana-build deb " +
+            "$(cat {} | grep tar.gz | grep -v docker | grep -v sha256 | awk '{{print \"--package=\" $0}}') ".format(file) +
+            "--destination=gs://grafana-downloads/oss/pr/" +
+            "--grafana-dir=$$PWD > {}".format(file),
+        ],
+        "environment": {
+            "GCP_KEY_BASE64": from_secret("rgm_gcp_key_base64"),
+        },
         "volumes": [{"name": "docker", "path": "/var/run/docker.sock"}],
     }
 
