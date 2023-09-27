@@ -35,7 +35,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     font-weight: 500;
     line-height: 18px;
     align-self: center;
-    max-width: 220px;
+    max-width: 210px;
   `,
   wrapper: css`
     display: flex;
@@ -50,8 +50,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
     position: absolute;
     width: 200px;
     height: 12px;
-    right: 25px;
-    top: 12px;
+    right: 30px;
+    top: 18px;
     pointer-events: none;
     background: linear-gradient(to right, transparent 30%, ${theme.colors.background.secondary} 100%);
     background: -webkit-gradient(
