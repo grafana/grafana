@@ -37,7 +37,7 @@ export function getPanelPluginMeta(id: string): PanelPluginMeta {
   if (!v) {
     // Check alias values before failing
     for (const p of Object.values(config.panels)) {
-      if (p.aliasIds?.includes(id)) {
+      if (p.aliasIDs?.includes(id)) {
         return p;
       }
     }

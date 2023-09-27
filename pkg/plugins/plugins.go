@@ -73,7 +73,7 @@ type JSONData struct {
 	ID           string       `json:"id"`
 	Type         Type         `json:"type"`
 	Name         string       `json:"name"`
-	AliasIDs     []string     `json:"aliasIds,omitempty"`
+	AliasIDs     []string     `json:"aliasIDs,omitempty"`
 	Info         Info         `json:"info"`
 	Dependencies Dependencies `json:"dependencies"`
 	Includes     []*Includes  `json:"includes"`
