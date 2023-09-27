@@ -160,11 +160,15 @@ export default function CorrelationsPage() {
         <>
           <Trans i18nKey="correlations.sub-title">
             Define how data living in different data sources relates to each other. Read more in the
+            <a
+              href="https://grafana.com/docs/grafana/next/administration/correlations/"
+              target="_blank"
+              rel="noreferrer"
+            >
+              documentation
+              <Icon name="external-link-alt" />
+            </a>
           </Trans>{' '}
-          <a href="https://grafana.com/docs/grafana/next/administration/correlations/" target="_blank" rel="noreferrer">
-            <Trans i18nKey="correlations.link">documentation</Trans>
-            <Icon name="external-link-alt" />
-          </a>
         </>
       }
       actions={addButton}
