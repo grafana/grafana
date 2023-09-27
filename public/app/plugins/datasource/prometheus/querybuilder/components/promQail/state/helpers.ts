@@ -19,7 +19,7 @@ import { Interaction, QuerySuggestion, SuggestionType } from '../types';
 import { createInteraction, stateSlice } from './state';
 
 const OPENAI_MODEL_NAME = 'gpt-3.5-turbo';
-const promQLTemplatesCollection = 'grafana.promql.templates';
+const promQLTemplatesCollection = 'grafana:core:promql_templates';
 // actions to update the state
 const { updateInteraction } = stateSlice.actions;
 
