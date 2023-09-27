@@ -5,9 +5,9 @@ type = "docs"
 
 # Add support for Explore queries
 
-This guide explains how to improve support for [Explore]({{< relref "../../features/explore/index.md" >}}) to an existing data source plugin.
+This guide explains how to improve support for [Explore]({{< relref "../../explore/index.md" >}}) to an existing data source plugin.
 
-This guide assumes that you're already familiar with how to [Build a data source plugin]({{< relref "../../../../../tutorials/build-a-data-source-plugin.md" >}}).
+This guide assumes that you're already familiar with how to [Build a data source plugin](/docs/grafana/latest/developers/plugins/create-a-grafana-plugin/develop-a-plugin/build-a-data-source-plugin/).
 
 With Explore, users can make ad-hoc queries without the use of a dashboard. This is useful when users want to troubleshoot or to learn more about the data.
 

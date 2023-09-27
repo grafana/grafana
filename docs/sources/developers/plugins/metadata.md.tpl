@@ -5,7 +5,7 @@
 title = "plugin.json"
 keywords = ["grafana", "plugins", "documentation"]
 type = "docs"
-aliases = ["/docs/grafana/latest/plugins/developing/plugin.json/"]
+aliases = ["/docs/grafana/v7.2/plugins/developing/plugin.json/"]
 +++
 
 {{ .Markdown 1 }}

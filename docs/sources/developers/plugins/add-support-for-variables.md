@@ -5,7 +5,7 @@ type = "docs"
 
 # Add support for variables in plugins
 
-Variables are placeholders for values, and can be used to create things like templated queries and dashboard or panel links. For more information on variables, refer to [Templates and variables]({{< relref "../../variables/templates-and-variables.md" >}}).
+Variables are placeholders for values, and can be used to create things like templated queries and dashboard or panel links. For more information on variables, refer to [Templates and variables]({{< relref "../../variables/_index.md" >}}).
 
 This guide explains how to leverage template variables in your panel plugins and data source plugins.
 
