@@ -1,6 +1,6 @@
 +++
 title = "Add an interval variable"
-aliases = ["/docs/grafana/latest/variables/add-interval-variable.md"]
+aliases = ["/docs/grafana/v7.4/variables/add-interval-variable.md"]
 weight = 600
 +++
 

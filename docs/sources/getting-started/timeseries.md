@@ -2,7 +2,7 @@
 title = "Time series"
 description = "Introduction to time series"
 keywords = ["grafana", "intro", "guide", "concepts", "timeseries"]
-aliases = ["/docs/grafana/latest/guides/timeseries"]
+aliases = ["/docs/grafana/v7.4/guides/timeseries"]
 weight = 500
 +++
 
@@ -20,7 +20,7 @@ Temperature data like this is one example of what we call a *time series*—a se
 
 Tables are useful when you want to identify individual measurements but make it difficult to see the big picture. A more common visualization for time series is the _graph_, which instead places each measurement along a time axis. Visual representations like the graph make it easier to discover patterns and features of the data that otherwise would be difficult to see.
 
-{{< docs-imagebox img="/img/docs/example_graph.png" class="docs-image--no-shadow" max-width="850px" >}}
+{{< figure src="/static/img/docs/example_graph.png" class="docs-image--no-shadow" max-width="850px" >}}
 
 Temperature data like the one in the example, is far from the only example of a time series. Other examples of time series are:
 

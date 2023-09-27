@@ -1,6 +1,6 @@
 +++
 title = "Add a query variable"
-aliases = ["/docs/grafana/latest/variables/add-query-variable.md"]
+aliases = ["/docs/grafana/v7.4/variables/add-query-variable.md"]
 weight = 100
 +++
 

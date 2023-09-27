@@ -2,7 +2,7 @@
 title = "Bar gauge panel"
 description = "Bar gauge panel docs"
 keywords = ["grafana", "bar", "bar gauge"]
-aliases =["/docs/grafana/latest/features/panels/bar_gauge/"]
+aliases =["/docs/grafana/v7.4/features/panels/bar_gauge/"]
 weight = 200
 +++
 
@@ -12,7 +12,7 @@ The bar gauge simplifies your data by reducing every field to a single value. Yo
 
 This panel can show one or more bar gauges depending on how many series, rows, or columns your query returns.
 
-{{< docs-imagebox img="/img/docs/v66/bar_gauge_cover.png" max-width="1025px" caption="Stat panel" >}}
+{{< figure src="/static/img/docs/v66/bar_gauge_cover.png" max-width="1025px" caption="Stat panel" >}}
 
 ## Data and field options
 

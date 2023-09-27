@@ -2,13 +2,13 @@
 title = "Tempo"
 description = "High volume, minimal dependency trace storage. OSS tracing solution from Grafana Labs."
 keywords = ["grafana", "tempo", "guide", "tracing"]
-aliases = ["/docs/grafana/latest/features/datasources/tempo"]
+aliases = ["/docs/grafana/v7.4/features/datasources/tempo"]
 weight = 1400
 +++
 
 # Tempo data source
 
-Grafana ships with built-in support for Tempo a high volume, minimal dependency trace storage, OSS tracing solution from Grafana Labs. Add it as a data source, and you are ready to query your traces in [Explore]({{< relref "../explore/index.md" >}}).
+Grafana ships with built-in support for Tempo a high volume, minimal dependency trace storage, OSS tracing solution from Grafana Labs. Add it as a data source, and you are ready to query your traces in [Explore]({{< relref "../explore/_index.md" >}}).
 
 ## Add data source
 
@@ -27,19 +27,19 @@ To access Tempo settings, click the **Configuration** (gear) icon, then click **
 
 > **Note:** This feature is available in Grafana 7.4+.
 
-This is a configuration for the [trace to logs feature]({{< relref "../explore/index.md#trace-to-logs" >}}). Select target data source (at this moment limited to Loki data sources) and select which tags will be used in the logs query.
+This is a configuration for the [trace to logs feature]({{< relref "../explore/trace-integration" >}}). Select target data source (at this moment limited to Loki data sources) and select which tags will be used in the logs query.
 
 - **Data source -** Target data source.
 - **Tags -** The tags that will be used in the Loki query. Default is `'cluster', 'hostname', 'namespace', 'pod'`.
 
-![Trace to logs settings](/img/docs/explore/trace-to-logs-settings-7-4.png "Screenshot of the trace to logs settings")
+![Trace to logs settings](/static/img/docs/explore/trace-to-logs-settings-7-4.png "Screenshot of the trace to logs settings")
 
 ## Query traces
 
-You can query and display traces from Tempo via [Explore]({{< relref "../explore/index.md" >}}).
+You can query and display traces from Tempo via [Explore]({{< relref "../explore/_index.md" >}}).
 To query a particular trace, insert its trace ID into the query text input.
 
-{{< docs-imagebox img="/img/docs/v73/tempo-query-editor.png" class="docs-image--no-shadow" caption="Screenshot of the Tempo query editor" >}}
+{{< figure src="/static/img/docs/v73/tempo-query-editor.png" class="docs-image--no-shadow" caption="Screenshot of the Tempo query editor" >}}
 
 ## Linking Trace ID from logs
 

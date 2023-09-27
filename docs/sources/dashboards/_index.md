@@ -1,6 +1,6 @@
 +++
 title = "Dashboards"
-aliases = ["/docs/grafana/latest/features/dashboard/dashboards/"]
+aliases = ["/docs/grafana/v7.4/features/dashboard/dashboards/"]
 weight = 80
 +++
 
@@ -10,7 +10,7 @@ A _dashboard_ is a set of one or more panels organized and arranged into one or 
 
 ## Dashboard UI
 
-<img src="/img/docs/v50/dashboard_annotated.png" class="no-shadow" width="700px">
+<img src="/static/img/docs/v50/dashboard_annotated.png" class="no-shadow" width="700px">
 
 1. Zoom out time range
 1. Time picker dropdown. Here you can access relative time range options, auto refresh options and set custom absolute time ranges.
@@ -22,7 +22,7 @@ A _dashboard_ is a set of one or more panels organized and arranged into one or 
 
 Click the new Dashboard link on the right side of the Dashboard picker. You now have a blank Dashboard.
 
-<img class="no-shadow" src="/img/docs/v50/top_nav_annotated.png" width="580px">
+<img class="no-shadow" src="/static/img/docs/v50/top_nav_annotated.png" width="580px">
 
 The image above shows you the top header for a Dashboard.
 

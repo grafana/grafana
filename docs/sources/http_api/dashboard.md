@@ -2,7 +2,7 @@
 title = "Dashboard HTTP API "
 description = "Grafana Dashboard HTTP API"
 keywords = ["grafana", "http", "documentation", "api", "dashboard"]
-aliases = ["/docs/grafana/latest/http_api/dashboard/"]
+aliases = ["/docs/grafana/v7.4/http_api/dashboard/"]
 +++
 
 # Dashboard API

@@ -2,7 +2,7 @@
 title = "What's new in Grafana v5.3"
 description = "Feature and improvement highlights for Grafana v5.3"
 keywords = ["grafana", "new", "documentation", "5.3", "release notes"]
-aliases = ["/docs/grafana/latest/guides/whats-new-in-v5-3/"]
+aliases = ["/docs/grafana/v7.4/guides/whats-new-in-v5-3/"]
 weight = -17
 [_build]
 list = false
@@ -22,7 +22,7 @@ Grafana v5.3 brings new features, many enhancements and bug fixes. This article 
 
 ## Google Stackdriver
 
-{{< docs-imagebox img="/img/docs/v53/stackdriver-with-heatmap.png"  max-width= "600px" class="docs-image--no-shadow docs-image--right" >}}
+{{< figure src="/static/img/docs/v53/stackdriver-with-heatmap.png"  max-width= "600px" class="docs-image--no-shadow docs-image--right" >}}
 
 Grafana v5.3 ships with built-in support for [Google Stackdriver](https://cloud.google.com/stackdriver/) and enables you to visualize your Stackdriver metrics in Grafana.
 
@@ -37,11 +37,11 @@ The Grafana Stackdriver plugin comes with support for automatic unit detection. 
 The data source is still in the `beta` phase, meaning it's currently in active development and is still missing one important feature - templating queries.
 Please try it out, but be aware of that it might be subject to changes and possible bugs. We would love to hear your feedback.
 
-Please read [Using Google Stackdriver in Grafana]({{< relref "../datasources/cloudmonitoring/" >}}) for more detailed information on how to get started and use it.
+Refer to [Using Google Stackdriver in Grafana]({{< relref "../datasources/google-cloud-monitoring/_index.md" >}}) for more detailed information on how to get started and use it.
 
 ## TV and Kiosk Mode
 
-{{< docs-imagebox img="/img/docs/v53/tv_mode_still.png" max-width="600px" class="docs-image--no-shadow docs-image--right" animated-gif="/img/docs/v53/tv_mode.gif" >}}
+{{< figure src="/static/img/docs/v53/tv_mode_still.png" max-width="600px" class="docs-image--no-shadow docs-image--right" animated-gif="/static/img/docs/v53/tv_mode.gif" >}}
 
 We've improved the TV and kiosk mode to make it easier to use. There's now an icon in the top bar that will let you cycle through the different view modes.
 
@@ -65,7 +65,7 @@ For more information about how to enable and configure reminders, refer to [aler
 
 Grafana 5.3 comes with a new graphical query builder for Postgres. This brings Postgres integration more in line with some of the other data sources and makes it easier for both advanced users and beginners to work with timeseries in Postgres. For more information about Postgres graphical query builder, refer to [query editor]({{< relref "../datasources/postgres/#query-editor" >}}).
 
-{{< docs-imagebox img="/img/docs/v53/postgres_query_still.png" class="docs-image--no-shadow" animated-gif="/img/docs/v53/postgres_query.gif" >}}
+{{< figure src="/static/img/docs/v53/postgres_query_still.png" class="docs-image--no-shadow" animated-gif="/static/img/docs/v53/postgres_query.gif" >}}
 
 ## Improved OAuth Support for GitLab
 
@@ -77,7 +77,7 @@ For more information about how to enable and configure OAuth, refer to [Gitlab O
 Grafana 5.3 brings improved support for [native annotations](/dashboards/annotations/#native-annotations) and makes it possible to use template variables when filtering by tags.
 For more information about native annotation, refer to [query by tag](/dashboards/annotations/#query-by-tag).
 
-{{< docs-imagebox img="/img/docs/v53/annotation_tag_filter_variable.png" max-width="600px" >}}
+{{< figure src="/static/img/docs/v53/annotation_tag_filter_variable.png" max-width="600px" >}}
 
 ## Variables
 

@@ -2,7 +2,7 @@
 title = "Glossary"
 description = "Grafana glossary"
 keywords = ["grafana", "intro", "glossary", "dictionary"]
-aliases = ["/docs/grafana/latest/guides/glossary"]
+aliases = ["/docs/grafana/v7.4/guides/glossary"]
 weight = 800
 +++
 
@@ -20,7 +20,7 @@ This topic lists words and abbreviations that are commonly used in the Grafana d
   <tr>
     <td style="vertical-align: top">Data source</td>
     <td>
-      A file, database, or service providing the data. Grafana supports a several data sources by default, and can be extended to support additional data sources through plugins.
+      A file, database, or service providing the data. Grafana supports several data sources by default, and can be extended to support additional data sources through plugins.
     </td>
   </tr>
   <tr>
@@ -32,7 +32,7 @@ This topic lists words and abbreviations that are commonly used in the Grafana d
   <tr>
     <td style="vertical-align: top">Explore</td>
     <td>
-      Explore allows a user to focus on a building a query. User can refine the query to return the expected metrics before building a dashboard. For more information, refer to the <a href="https://grafana.com/docs/grafana/latest/explore">Explore</a> topic.
+      Explore allows a user to focus on building a query. Users can refine the query to return the expected metrics before building a dashboard. For more information, refer to the <a href="https://grafana.com/docs/grafana/latest/explore">Explore</a> topic.
     </td>
   </tr>
   <tr>

@@ -12,7 +12,7 @@ Panels allow you to show your data in visual form. This topic walks you through 
 1. Navigate to the dashboard you want to add a panel to.
 1. Click the **Add panel** icon.
 
-   ![](/img/docs/panels/add-panel-icon-7-0.png)
+   ![](/static/img/docs/panels/add-panel-icon-7-0.png)
 
 1. Click **Add new panel**.
 
@@ -22,7 +22,7 @@ Grafana creates an empty graph panel with your default data source selected.
 
 While not required, we recommend that you add a helpful title and description to your panel. You can use [variables you have defined]({{< relref "../variables/_index.md" >}}) in either field, but not [global variables]({{< relref "../variables/variable-types/global-variables.md" >}}).
 
-![](/img/docs/panels/panel-settings-7-0.png)
+![](/static/img/docs/panels/panel-settings-7-0.png)
 
 **Panel title -** Text entered in this field is displayed at the top of your panel in the panel editor and in the dashboard.
 

@@ -47,27 +47,30 @@ With Grafana Enterprise, you get access to new features, including:
 - [Reporting]({{< relref "reporting.md" >}}) to generate a PDF report from any dashboard and set up a schedule to have it emailed to whoever you choose.
 - [Export dashboard as PDF]({{< relref "export-pdf.md" >}})
 - [White labeling]({{< relref "white-labeling.md" >}}) to customize Grafana from the brand and logo to the footer links.
-- [Usage insights]({{< relref "usage-insights.md" >}}) to understand how your Grafana instance is used.
+- [Usage insights]({{< relref "usage-insights/_index.md" >}}) to understand how your Grafana instance is used.
 - [Vault integration]({{< relref "vault.md" >}}) to manage your configuration or provisioning secrets with Vault.
 - [Auditing]({{< relref "auditing.md" >}}) tracks important changes to your Grafana instance to help you manage and mitigate suspicious activity and meet compliance requirements.
+- [Request security]({{< relref "request-security.md" >}}) makes it possible to restrict outgoing requests from the Grafana server.
 
-## Enterprise plugins
+## Enterprise data sources
 
-With a Grafana Enterprise license, you get access to premium plugins, including:
+With a Grafana Enterprise license, you get access to premium data sources, including:
 
 - [AppDynamics](https://grafana.com/plugins/dlopes7-appdynamics-datasource)
 - [DataDog](https://grafana.com/plugins/grafana-datadog-datasource)
 - [Dynatrace](https://grafana.com/plugins/grafana-dynatrace-datasource)
+- [Gitlab](https://grafana.com/grafana/plugins/grafana-gitlab-datasource)
+- [Jira](https://grafana.com/grafana/plugins/grafana-jira-datasource)
 - [MongoDB](https://grafana.com/grafana/plugins/grafana-mongodb-datasource)
 - [New Relic](https://grafana.com/plugins/grafana-newrelic-datasource)
 - [Oracle Database](https://grafana.com/plugins/grafana-oracle-datasource)
 - [ServiceNow](https://grafana.com/grafana/plugins/grafana-servicenow-datasource)
 - [Snowflake](https://grafana.com/grafana/plugins/grafana-snowflake-datasource)
 - [Splunk](https://grafana.com/plugins/grafana-splunk-datasource)
+- [Splunk Infrastructure monitoring (SignalFx)](https://grafana.com/grafana/plugins/grafana-splunk-monitoring-datasource)
 - [Wavefront](https://grafana.com/grafana/plugins/grafana-wavefront-datasource)
 
 ## Try Grafana Enterprise
 
 To purchase or obtain a trial license contact the Grafana Labs [Sales Team](https://grafana.com/contact?about=support&topic=Grafana%20Enterprise).
-
 

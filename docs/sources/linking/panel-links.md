@@ -2,7 +2,7 @@
 title = "Panel links"
 description = ""
 keywords = ["grafana", "linking", "create links", "link panels", "link dashboards", "navigate"]
-aliases = ["/docs/grafana/latest/features/navigation-links/"]
+aliases = ["/docs/grafana/v7.4/features/navigation-links/"]
 weight = 300
 +++
 
@@ -12,7 +12,7 @@ Each panel can have its own set of links that are shown in the upper left corner
 
 Click the icon on the top left corner of a panel to see available panel links.
 
-<img class="no-shadow" src="/img/docs/linking/panel-links.png" width="500px">
+<img class="no-shadow" src="/static/img/docs/linking/panel-links.png" width="500px">
 
 ## Add a panel link
 

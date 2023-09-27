@@ -1,7 +1,7 @@
 +++
 title = "Time range controls"
 keywords = ["grafana", "dashboard", "documentation", "time range"]
-aliases = ["/docs/grafana/latest/reference/timerange/"]
+aliases = ["/docs/grafana/v7.4/reference/timerange/"]
 weight = 7
 +++
 
@@ -33,7 +33,7 @@ Here are some examples:
 
 The dashboard and panel time controls have a common user interface (UI).
 
-<img class="no-shadow" src="/img/docs/time-range-controls/common-time-controls-7-0.png" max-width="700px">
+<img class="no-shadow" src="/static/img/docs/time-range-controls/common-time-controls-7-0.png" max-width="700px">
 
 The options are defined below.
 
@@ -43,11 +43,11 @@ The current time range, also called the _time picker_, shows the time range curr
 
 Hover your cursor over the field to see the exact time stamps in the range and their source (such as the local browser).
 
-<img class="no-shadow" src="/img/docs/time-range-controls/time-picker-7-0.png" max-width="300px">
+<img class="no-shadow" src="/static/img/docs/time-range-controls/time-picker-7-0.png" max-width="300px">
 
 Click on the current time range to change the time range. You can change the current time using a _relative time range_, such as the last 15 minutes, or an _absolute time range_, such as `2020-05-14 00:00:00 to 2020-05-15 23:59:59`.
 
-<img class="no-shadow" src="/img/docs/time-range-controls/change-current-time-range-7-0.png" max-width="900px">
+<img class="no-shadow" src="/static/img/docs/time-range-controls/change-current-time-range-7-0.png" max-width="900px">
 
 ### Relative time range
 

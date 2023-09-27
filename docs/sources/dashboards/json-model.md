@@ -1,7 +1,7 @@
 +++
 title = "JSON model"
 keywords = ["grafana", "dashboard", "documentation", "json", "model"]
-aliases = ["/docs/grafana/latest/reference/dashboard/"]
+aliases = ["/docs/grafana/v7.4/reference/dashboard/"]
 weight = 1200
 +++
 
@@ -9,11 +9,11 @@ weight = 1200
 
 A dashboard in Grafana is represented by a JSON object, which stores metadata of its dashboard. Dashboard metadata includes dashboard properties, metadata from panels, template variables, panel queries, etc.
 
-To view the JSON of a dashboard, follow the steps mentioned below:
+To view the JSON of a dashboard:
 
-  1. Go to a dashboard
-  1. Click on `Manage dashboard` menu on the top navigation bar
-  1. Select `View JSON` from the dropdown menu
+  1. Navigate to a dashboard.
+  1. In the top navigation menu, click the **Dashboard settings** (gear) icon.
+  1. Click **JSON Model**.
 
 ## JSON fields
 

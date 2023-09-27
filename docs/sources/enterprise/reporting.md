@@ -2,7 +2,7 @@
 title = "Reporting"
 description = ""
 keywords = ["grafana", "reporting"]
-aliases = ["/docs/grafana/latest/administration/reports"]
+aliases = ["/docs/grafana/v7.4/administration/reports"]
 weight = 400
 +++
 
@@ -12,7 +12,7 @@ Reporting allows you to automatically generate PDFs from any of your dashboards 
 
 > Only available in Grafana Enterprise v6.4+.
 
-{{< docs-imagebox img="/img/docs/enterprise/reports_list.png" max-width="500px" class="docs-image--no-shadow" >}}
+{{< figure src="/static/img/docs/enterprise/reports_list.png" max-width="500px" class="docs-image--no-shadow" >}}
 
 Any changes you make to a dashboard used in a report are reflected the next time the report is sent. For example, if you change the time range in the dashboard, then the time range in the report changes as well.
 
@@ -40,7 +40,7 @@ Currently only Organization Admins can create reports.
 1. **Save** the report.
 1. **Send test email** to verify that the whole configuration is working as expected.
 
-{{< docs-imagebox img="/img/docs/enterprise/reports_create_new.png" max-width="500px" class="docs-image--no-shadow" >}}
+{{< figure src="/static/img/docs/enterprise/reports_create_new.png" max-width="500px" class="docs-image--no-shadow" >}}
 
 ### Layout and orientation
 
@@ -48,10 +48,10 @@ Currently only Organization Admins can create reports.
 
 Layout | Orientation | Support | Description | Preview
 ------ | ----------- | ------- | ----------- | -------
-Simple | Portrait | v6.4+ | Generates an A4 page in portrait mode with three panels per page. | {{< docs-imagebox img="/img/docs/enterprise/reports_portrait_preview.png" max-width="500px" max-height="500px" class="docs-image--no-shadow" >}}
-Simple | Landscape | v6.7+ | Generates an A4 page in landscape mode with a single panel per page. | {{< docs-imagebox img="/img/docs/enterprise/reports_landscape_preview.png" max-width="500px" class="docs-image--no-shadow" >}}
-Grid | Portrait | v7.2+ | Generates an A4 page in portrait mode with panels arranged in the same way as at the original dashboard. | {{< docs-imagebox img="/img/docs/enterprise/reports_grid_portrait_preview.png" max-width="500px" max-height="500px" class="docs-image--no-shadow" >}}
-Grid | Landscape | v7.2+ | Generates an A4 page in landscape mode with panels arranged in the same way as at the original dashboard. | {{< docs-imagebox img="/img/docs/enterprise/reports_grid_landscape_preview.png" max-width="500px" class="docs-image--no-shadow" >}}
+Simple | Portrait | v6.4+ | Generates an A4 page in portrait mode with three panels per page. | {{< figure src="/static/img/docs/enterprise/reports_portrait_preview.png" max-width="500px" max-height="500px" class="docs-image--no-shadow" >}}
+Simple | Landscape | v6.7+ | Generates an A4 page in landscape mode with a single panel per page. | {{< figure src="/static/img/docs/enterprise/reports_landscape_preview.png" max-width="500px" class="docs-image--no-shadow" >}}
+Grid | Portrait | v7.2+ | Generates an A4 page in portrait mode with panels arranged in the same way as at the original dashboard. | {{< figure src="/static/img/docs/enterprise/reports_grid_portrait_preview.png" max-width="500px" max-height="500px" class="docs-image--no-shadow" >}}
+Grid | Landscape | v7.2+ | Generates an A4 page in landscape mode with panels arranged in the same way as at the original dashboard. | {{< figure src="/static/img/docs/enterprise/reports_grid_landscape_preview.png" max-width="500px" class="docs-image--no-shadow" >}}
 
 ### Scheduling
 
@@ -108,7 +108,7 @@ If you want to use email addresses from the report, then select the **Use emails
 
 The last saved version of the report will be sent to selected emails. You can use this to verify emails are working and to make sure the report is generated and displayed as you expect.
 
-{{< docs-imagebox img="/img/docs/enterprise/reports_send_test_mail.png" max-width="500px" class="docs-image--no-shadow" >}}
+{{< figure src="/static/img/docs/enterprise/reports_send_test_mail.png" max-width="500px" class="docs-image--no-shadow" >}}
 
 ## Send report via the API
 
@@ -118,7 +118,9 @@ You can send reports programmatically with the [send report]({{< relref "../http
 
 When generating reports, each panel renders separately before being collected in a PDF. The per panel rendering timeout and number of concurrently rendered panels can be configured.
 
-To modify the panels' clarity you can set a scale factor for the rendered images. A higher scale factor is more legible but will increase the file size of the generated PDF.
+To make a panel more legible, you can set a scale factor for the rendered images. However, a higher scale factor increases the file size of the generated PDF.
+
+You can also specify custom fonts that support different Unicode scripts. The DejaVu font is the default used for PDF rendering.
 
 These options are available in the [configuration]({{< relref "../administration/configuration.md">}}) file.
 
@@ -131,6 +133,14 @@ concurrent_render_limit = 4
 # Set the scale factor for rendering images. 2 is enough for monitor resolutions
 # 4 would be better for printed material. Setting a higher value affects performance and memory
 image_scale_factor = 2
+# Path to the directory containing font files
+fonts_path =
+# Name of the TrueType font file with regular style
+font_regular = DejaVuSansCondensed.ttf
+# Name of the TrueType font file with bold style
+font_bold = DejaVuSansCondensed-Bold.ttf
+# Name of the TrueType font file with italic style
+font_italic = DejaVuSansCondensed-Oblique.ttf
 ```
 
 ## Report time range
@@ -162,7 +172,7 @@ Email branding:
 - **Footer link text** - Text for the link in the report email footer. Defaults to "Grafana".
 - **Footer link URL** - Link for the report email footer.
 
-{{< docs-imagebox img="/img/docs/enterprise/reports_settings.png" max-width="500px" class="docs-image--no-shadow" >}}
+{{< figure src="/static/img/docs/enterprise/reports_settings.png" max-width="500px" class="docs-image--no-shadow" >}}
 
 ## Troubleshoot reporting
 

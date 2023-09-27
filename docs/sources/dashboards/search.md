@@ -1,7 +1,7 @@
 +++
 title = "Search"
 keywords = ["grafana", "dashboard", "documentation", "search"]
-aliases =["/docs/grafana/latest/reference/search/"]
+aliases =["/docs/grafana/v7.4/reference/search/"]
 weight = 5
 +++
 
@@ -10,7 +10,7 @@ weight = 5
 
 Dashboards can be searched by the dashboard name, filtered by one (or many) tags or filtered by starred status. The dashboard search is accessed through the dashboard picker, available in the dashboard top nav area. The dashboard search can also be opened by using the shortcut `F`.
 
-<img class="no-shadow" src="/img/docs/v50/dashboard_search_annotated.png" width="700px">
+<img class="no-shadow" src="/static/img/docs/v50/dashboard_search_annotated.png" width="700px">
 
 1. `Search Bar`: The search bar allows you to enter any string and search both database and file based dashboards in real-time.
 1. `Starred`: Here you find all your starred dashboards.

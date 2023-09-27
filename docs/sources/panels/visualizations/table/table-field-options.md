@@ -11,6 +11,7 @@ This section explains all available table field options. They are listed in the 
 Most field options will not affect the visualization until you click outside of the field option box you are editing or press Enter.
 
 For more information about applying these options, refer to:
+
 - [Configure all fields]({{< relref "../../field-options/configure-all-fields.md" >}})
 - [Configure specific fields]({{< relref "../../field-options/configure-specific-fields.md" >}})
 
@@ -39,39 +40,39 @@ By default, Grafana automatically chooses display settings. You can override the
 
 If thresholds are set, then the field text is displayed in the appropriate threshold color.
 
-{{< docs-imagebox img="/img/docs/tables/color-text.png" max-width="500px" caption="Color text" class="docs-image--no-shadow" >}}
+{{< figure src="/static/img/docs/tables/color-text.png" max-width="500px" caption="Color text" class="docs-image--no-shadow" >}}
 
 ### Color background
 
 If thresholds are set, then the field background is displayed in the appropriate threshold color.
 
-{{< docs-imagebox img="/img/docs/tables/color-background.png" max-width="500px" caption="Color background" class="docs-image--no-shadow" >}}
+{{< figure src="/static/img/docs/tables/color-background.png" max-width="500px" caption="Color background" class="docs-image--no-shadow" >}}
 
 ### Gradient gauge
 
 The threshold levels define a gradient.
 
-{{< docs-imagebox img="/img/docs/tables/gradient-gauge.png" max-width="500px" caption="Gradient gauge" class="docs-image--no-shadow" >}}
+{{< figure src="/static/img/docs/tables/gradient-gauge.png" max-width="500px" caption="Gradient gauge" class="docs-image--no-shadow" >}}
 
 ### LCD gauge
 
 The gauge is split up in small cells that are lit or unlit.
 
-{{< docs-imagebox img="/img/docs/tables/lcd-gauge.png" max-width="500px" caption="LCD gauge" class="docs-image--no-shadow" >}}
+{{< figure src="/static/img/docs/tables/lcd-gauge.png" max-width="500px" caption="LCD gauge" class="docs-image--no-shadow" >}}
 
 ### JSON view
 
 Shows value formatted as code. If a value is an object the JSON view allowing browsing the JSON object will appear on hover.
 
-{{< docs-imagebox img="/img/docs/tables/json-view.png" max-width="500px" caption="JSON view" class="docs-image--no-shadow" >}}
+{{< figure src="/static/img/docs/tables/json-view.png" max-width="500px" caption="JSON view" class="docs-image--no-shadow" >}}
 
-### Image 
+### Image
 
 > Only available in Grafana 7.3+
 
 If you have a field value that is an image URL or a base64 encoded image you can configure the table to display it as an image.
 
-{{< figure src="/img/docs/v73/table_hover.gif" max-width="900px" caption="Table hover" >}}
+{{< figure src="/static/img/docs/v73/table_hover.gif" max-width="900px" caption="Table hover" >}}
 
 ## Column filter
 

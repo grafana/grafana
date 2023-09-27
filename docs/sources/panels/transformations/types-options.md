@@ -123,15 +123,15 @@ In the example below, I removed the Min field from the results.
 
 Here is the original query table. (This is streaming data, so numbers change over time and between screenshots.)
 
-{{< docs-imagebox img="/img/docs/transformations/filter-name-table-before-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
+{{< figure src="/static/img/docs/transformations/filter-name-table-before-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
 
 Here is the table after I applied the transformation to remove the Min field.
 
-{{< docs-imagebox img="/img/docs/transformations/filter-name-table-after-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
+{{< figure src="/static/img/docs/transformations/filter-name-table-after-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
 
 Here is the same query using a Stat visualization.
 
-{{< docs-imagebox img="/img/docs/transformations/filter-name-stat-after-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
+{{< figure src="/static/img/docs/transformations/filter-name-stat-after-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
 
 ## Filter data by query
 
@@ -141,7 +141,7 @@ Grafana displays the query identification letters in dark gray text. Click a que
 
 In the example below, the panel has three queries (A, B, C). I removed the B query from the visualization.
 
-{{< docs-imagebox img="/img/docs/transformations/filter-by-query-stat-example-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
+{{< figure src="/static/img/docs/transformations/filter-by-query-stat-example-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
 
 ## Organize fields
 
@@ -157,7 +157,7 @@ Grafana displays a list of fields returned by the query. You can:
 
 In the example below, I hid the value field and renamed Max and Min.
 
-{{< docs-imagebox img="/img/docs/transformations/organize-fields-stat-example-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
+{{< figure src="/static/img/docs/transformations/organize-fields-stat-example-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
 
 ## Join by field (outer join)
 
@@ -167,11 +167,11 @@ This transformation is especially useful if you want to combine queries so that 
 
 In the example below, I have a template query displaying time series data from multiple servers in a table visualization. I can only view the results of one query at a time.
 
-{{< docs-imagebox img="/img/docs/transformations/join-fields-before-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
+{{< figure src="/static/img/docs/transformations/join-fields-before-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
 
 I applied a transformation to join the query results using the time field. Now I can run calculations, combine, and organize the results in this new table.
 
-{{< docs-imagebox img="/img/docs/transformations/join-fields-after-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
+{{< figure src="/static/img/docs/transformations/join-fields-after-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
 
 ## Add field from calculation
 
@@ -188,7 +188,7 @@ Use this transformation to add a new field calculated from two other fields. Eac
 
 In the example below, I added two fields together and named them Sum.
 
-{{< docs-imagebox img="/img/docs/transformations/add-field-from-calc-stat-example-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
+{{< figure src="/static/img/docs/transformations/add-field-from-calc-stat-example-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
 
 ## Labels to fields
 
@@ -443,8 +443,8 @@ You can specify a regular expression, which is only applied to matches, along wi
 
 In the following example, we are stripping the prefix from event types. In the before image, you can see everything is prefixed with `system.`
 
-{{< docs-imagebox img="/img/docs/transformations/rename-by-regex-before-7-3.png" class="docs-image--no-shadow" max-width= "1100px" >}}
+{{< figure src="/static/img/docs/transformations/rename-by-regex-before-7-3.png" class="docs-image--no-shadow" max-width= "1100px" >}}
 
 With the transformation applied, you can see we are left with just the remainder of the string.
 
-{{< docs-imagebox img="/img/docs/transformations/rename-by-regex-after-7-3.png" class="docs-image--no-shadow" max-width= "1100px" >}}
+{{< figure src="/static/img/docs/transformations/rename-by-regex-after-7-3.png" class="docs-image--no-shadow" max-width= "1100px" >}}

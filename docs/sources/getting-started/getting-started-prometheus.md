@@ -2,7 +2,7 @@
 title = "With Grafana and Prometheus"
 description = "Guide for getting started with Grafana"
 keywords = ["grafana", "intro", "guide", "started"]
-aliases = ["/docs/grafana/latest/guides/gettingstarted","/docs/grafana/latest/guides/getting_started"]
+aliases = ["/docs/grafana/v7.4/guides/gettingstarted","/docs/grafana/v7.4/guides/getting_started"]
 weight = 300
 +++
 
@@ -57,7 +57,7 @@ Prometheus node_exporter is a widely used tool that exposes system metrics. Inst
 
 ## Step 5. Check Prometheus metrics in Grafana Explore view
 
-In your Grafana instance, go to the [Explore]({{< relref "../explore/index.md" >}}) view and build queries to experiment with the metrics you want to monitor. Here you can also debug issues related to collecting metrics from Prometheus. Pay special attention to the [Prometheus-specific features]({{< relref "../explore/_index.md#prometheus-specific-features" >}}) to avail custom querying experience for Prometheus.
+In your Grafana instance, go to the [Explore]({{< relref "../explore/_index.md" >}}) view and build queries to experiment with the metrics you want to monitor. Here you can also debug issues related to collecting metrics from Prometheus. Pay special attention to the [Prometheus-specific features]({{< relref "../explore/_index.md#prometheus-specific-features" >}}) to avail custom querying experience for Prometheus.
 
 ## Step 6. Start building dashboards
 
@@ -65,4 +65,4 @@ Now that you have a curated list of queries, create [dashboards]({{< relref "../
 
 The following image shows a dashboard with three panels showing some system metrics.
 
-<img width="850px" src="/img/docs/getting-started/simple_grafana_prom_dashboard.png" caption="Prometheus dashboards" >
+<img width="850px" src="/static/img/docs/getting-started/simple_grafana_prom_dashboard.png" caption="Prometheus dashboards" >

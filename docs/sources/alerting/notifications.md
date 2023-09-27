@@ -62,7 +62,7 @@ Microsoft Teams | `teams` | yes, external only | no
 OpsGenie | `opsgenie` | yes, external only | yes
 [Pagerduty](#pagerduty) | `pagerduty` | yes, external only | yes
 Prometheus Alertmanager | `prometheus-alertmanager` | yes, external only | yes
-Pushover | `pushover` | yes | no
+[Pushover](#pushover) | `pushover` | yes | no
 Sensu | `sensu` | yes, external only | no
 [Sensu Go](#sensu-go) | `sensugo` | yes, external only | no
 [Slack](#slack) | `slack` | yes | no
@@ -89,7 +89,7 @@ Addresses | Email addresses to recipients. You can enter multiple email addresse
 
 ### Slack
 
-{{< imgbox max-width="40%" img="/img/docs/v4/slack_notification.png" caption="Alerting Slack Notification" >}}
+{{< figure class="float-right"  max-width="40%" src="/static/img/docs/v4/slack_notification.png" caption="Alerting Slack Notification" >}}
 
 To set up Slack, you need to configure an incoming Slack webhook URL. You can follow
 [Sending messages using Incoming Webhooks](https://api.slack.com/incoming-webhooks) on how to do that. If you want to include screenshots of the
@@ -129,7 +129,27 @@ This might break custom event rules in your PagerDuty rules if you rely on the f
 Move any existing rules using `custom_details.myMetric` to `custom_details.queries.myMetric`.
 This behavior will become the default in a future version of Grafana.
 
-> Using `dedup_key` tag will override Grafana generated `dedup_key` with a custom key.
+> **Note:** The `dedup_key` tag overrides the Grafana-generated `dedup_key` with a custom key.
+
+> **Note:** The `state` tag overrides the current alert state inside the `custom_details` payload.
+
+### Pushover
+
+To set up Pushover, you must provide a user key and an API token. Refer to [What is Pushover and how do I use it](https://support.pushover.net/i7-what-is-pushover-and-how-do-i-use-it) for instructions on how to generate them.
+
+
+Setting | Description
+---------- | -----------
+API Token | Application token
+User key(s) | A comma-separated list of user keys
+Device(s) | A comma-separated list of devices
+Priority | The priority alerting nottifications are sent
+OK priority | The priority OK notifications are sent; if not set, then OK notifications are sent with the priority set for alerting notifications
+Retry | How often (in seconds) the Pushover servers send the same notification to the user. (minimum 30 seconds)
+Expire | How many seconds your notification will continue to be retried for (maximum 86400 seconds)
+Alerting sound | The sound for alerting notifications
+OK sound | The sound for OK notifications
+
 ### Webhook
 
 The webhook notification is a simple way to send information about a state change over HTTP to a custom endpoint.
@@ -198,10 +218,6 @@ Once these two properties are set, you can send the alerts to Kafka for further 
 ### Google Hangouts Chat
 
 Notifications can be sent by setting up an incoming webhook in Google Hangouts chat. For more information about configuring a webhook, refer to [webhooks](https://developers.google.com/hangouts/chat/how-tos/webhooks).
-
-### Squadcast
-
-Squadcast helps you get alerted via Phone call, SMS, Email and Push notifications and lets you take actions on those alerts. Grafana notifications can be sent to Squadcast via a simple incoming webhook. Refer the official [Squadcast support documentation](https://support.squadcast.com/docs/grafana) for configuring these webhooks.
 
 ### Prometheus Alertmanager
 

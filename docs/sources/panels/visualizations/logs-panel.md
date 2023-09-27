@@ -1,7 +1,7 @@
 +++
 title = "Logs panel"
 keywords = ["grafana", "dashboard", "documentation", "panels", "logs panel"]
-aliases = ["/docs/grafana/latest/reference/logs/", "/docs/grafana/latest/features/panels/logs/",]
+aliases = ["/docs/grafana/v7.4/reference/logs/", "/docs/grafana/v7.4/features/panels/logs/",]
 weight = 700
 +++
 
@@ -11,7 +11,7 @@ The logs panel visualization shows log lines from data sources that support logs
 
 > **Note:** The Logs panel is only available in Grafana v6.4+.
 
-<img class="screenshot" src="/img/docs/v64/logs-panel.png">
+<img class="screenshot" src="/static/img/docs/v64/logs-panel.png">
 
 The logs panel shows the result of queries that were entered in the Query tab. The results of multiple queries are merged and sorted by time. You can scroll inside the panel if the data source returns more lines than can be displayed at any one time.
 
@@ -19,7 +19,7 @@ To limit the number of lines rendered, you can use the **Max data points** setti
 
 ## Log level
 
-For logs where a **level** label is specified, we use the value of the label to determine the log level and update color accordingly. If the log doesn't have a level label specified, we parse the log to find out if its content matches any of the supported expressions (see below for more information). The log level is always determined by the first match. In case Grafana is not able to determine a log level, it will be visualized with **unknown** log level. See [supported log levels and mappings of log level abbreviation and expressions]({{< relref "../../explore/index.md#log-level" >}}).
+For logs where a **level** label is specified, we use the value of the label to determine the log level and update color accordingly. If the log doesn't have a level label specified, we parse the log to find out if its content matches any of the supported expressions (see below for more information). The log level is always determined by the first match. In case Grafana is not able to determine a log level, it will be visualized with **unknown** log level. See [supported log levels and mappings of log level abbreviation and expressions]({{< relref "../../explore/_index.md#log-level" >}}).
 
 ### Display options
 

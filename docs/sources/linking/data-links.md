@@ -1,7 +1,7 @@
 +++
 title = "Data links"
 keywords = ["grafana", "data links", "documentation", "playlist"]
-aliases = ["/docs/grafana/latest/reference/datalinks/"]
+aliases = ["/docs/grafana/v7.4/reference/datalinks/"]
 +++
 
 # Data links
@@ -17,7 +17,7 @@ You can use variables in data links to send people to a detailed dashboard with 
 
 When creating or updating a data link, press Cmd+Space or Ctrl+Space on your keyboard to open the typeahead suggestions to more easily add variables to your URL.
 
-{{< docs-imagebox img="/img/docs/data_link_typeahead.png"  max-width= "800px" >}}
+{{< figure src="/static/img/docs/data_link_typeahead.png"  max-width= "800px" >}}
 
 ## Add a data link
 

@@ -1,7 +1,7 @@
 +++
 title = "Share a dashboard"
 keywords = ["grafana", "dashboard", "documentation", "sharing"]
-aliases = ["/docs/grafana/latest/dashboards/share-dashboard/","/docs/grafana/latest/reference/share_dashboard/"]
+aliases = ["/docs/grafana/v7.4/dashboards/share-dashboard/","/docs/grafana/v7.4/reference/share_dashboard/"]
 weight = 6
 +++
 
@@ -14,7 +14,7 @@ To share a dashboard:
 1. Go to the home page of your Grafana instance.
 1. Click on the share icon in the top navigation. The share dialog opens and shows the Link tab.
 
-![Dashboard share direct link](/img/docs/sharing/share-dashboard-direct-link-7-3.png)
+![Dashboard share direct link](/static/img/docs/sharing/share-dashboard-direct-link-7-3.png)
 ## Use direct link
 
 The Link tab has the current time range, template variables and theme selected by default. You can optionally select a shortened URL to share.
@@ -32,7 +32,7 @@ A dashboard snapshot shares an interactive dashboard publicly. Grafana strips se
 You can publish snapshots to your local instance or to [snapshot.raintank.io](http://snapshot.raintank.io). The latter is a free service
 provided by Grafana Labs that allows you to publish dashboard snapshots to an external Grafana instance. The same rules still apply: anyone with the link can view it. You can set an expiration time if you want the snapshot removed after a certain time period.
 
-![Dashboard share snapshot](/img/docs/sharing/share-dashboard-snapshot-7-3.png)
+![Dashboard share snapshot](/static/img/docs/sharing/share-dashboard-snapshot-7-3.png)
 
 To publish a snapshot:
 
@@ -45,4 +45,4 @@ In case you created a snapshot by mistake, click **delete snapshot** to remove t
 
 Grafana dashboards can easily be exported and imported. For more information, refer to [Export and import dashboards]({{< relref "../dashboards/export-import.md" >}}).
 
-![Export](/img/docs/sharing/share-dashboard-export-7-3.png)
+![Export](/static/img/docs/sharing/share-dashboard-export-7-3.png)

@@ -1,7 +1,7 @@
 +++
 title = "Contributor License Agreement (CLA)"
 description = "Contributor License Agreement (CLA)"
-aliases = ["/docs/grafana/latest/project/cla", "docs/contributing/cla.html"]
+aliases = ["/docs/grafana/v7.4/project/cla", "docs/contributing/cla.html"]
 +++
 
 # Grafana Labs Contributor License Agreement

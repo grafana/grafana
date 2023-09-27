@@ -2,8 +2,8 @@
 title = "Provisioning"
 description = ""
 keywords = ["grafana", "provisioning"]
-aliases = ["/docs/grafana/latest/installation/provisioning"]
-weight = 8
+aliases = ["/docs/grafana/v7.4/installation/provisioning"]
+weight = 800
 +++
 
 # Provisioning Grafana
@@ -148,8 +148,9 @@ Since not all datasources have the same configuration settings we only have the 
 | tlsSkipVerify           | boolean | _All_                                                            | Controls whether a client verifies the server's certificate chain and host name.            |
 | serverName              | string  | _All_                                                            | Optional. Controls the server name used for certificate common name/subject alternative name verification. Defaults to using the data source URL. |
 | graphiteVersion         | string  | Graphite                                                         | Graphite version                                                                            |
-| timeInterval            | string  | Prometheus, Elasticsearch, InfluxDB, MySQL, PostgreSQL and MSSQL | Lowest interval/step value that should be used for this data source.                         |
+| timeInterval            | string  | Prometheus, Elasticsearch, InfluxDB, MySQL, PostgreSQL and MSSQL | Lowest interval/step value that should be used for this data source.                        |
 | httpMode                | string  | Influxdb                                                         | HTTP Method. 'GET', 'POST', defaults to GET                                                 |
+| maxSeries               | number  | Influxdb                                                         | Max number of series/tables that Grafana processes                                          |
 | httpMethod              | string  | Prometheus                                                       | HTTP Method. 'GET', 'POST', defaults to GET                                                 |
 | esVersion               | number  | Elasticsearch                                                    | Elasticsearch version as a number (2/5/56/60/70)                                            |
 | timeField               | string  | Elasticsearch                                                    | Which field that should be used as timestamp                                                |
@@ -301,7 +302,7 @@ Grafana offers options to export the JSON definition of a dashboard. Either `Cop
 
 Note: The JSON definition in the input field when using `Copy JSON to Clipboard` or `Save JSON to file` will have the `id` field automatically removed to aid the provisioning workflow.
 
-{{< docs-imagebox img="/img/docs/v51/provisioning_cannot_save_dashboard.png" max-width="500px" class="docs-image--no-shadow" >}}
+{{< figure src="/static/img/docs/v51/provisioning_cannot_save_dashboard.png" max-width="500px" class="docs-image--no-shadow" >}}
 
 ### Reusable Dashboard URLs
 
@@ -421,13 +422,17 @@ The following sections detail the supported settings and secure settings for eac
 
 #### Alert notification `pushover`
 
-| Name     | Secure setting |
-| -------- | -------------- |
-| apiToken | yes            |
-| userKey  | yes            |
-| device   |                |
-| retry    |                |
-| expire   |                |
+| Name       | Secure setting |
+| --------   | -------------- |
+| apiToken   | yes            |
+| userKey    | yes            |
+| device     |                |
+| priority   |                |
+| okPriority |                |
+| retry      |                |
+| expire     |                |
+| sound      |                |
+| okSound    |                |
 
 #### Alert notification `slack`
 

@@ -25,6 +25,8 @@ Restrictions are applied separately for viewers and editors.
 
 When the number of maximum active viewers or editors is reached, Grafana displays a warning banner.
 
+Sometimes it is useful to log in to an account from multiple locations concurrently. With Grafana Enterprise 7.5 and up, accounts are limited to three concurrent sessions.
+
 ## Expiration date
 
 The license expiration date is the date when a license is no longer active. As the license expiration date approaches, Grafana Enterprise displays a banner.

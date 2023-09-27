@@ -1,7 +1,7 @@
 +++
 title = "Share a panel"
 keywords = ["grafana", "dashboard", "documentation", "sharing"]
-aliases = ["/docs/grafana/latest/dashboards/share-dashboard/","/docs/grafana/latest/reference/share_panel/"]
+aliases = ["/docs/grafana/v7.4/dashboards/share-dashboard/","/docs/grafana/v7.4/reference/share_panel/"]
 weight = 6
 +++
 
@@ -14,7 +14,7 @@ To share a panel:
 1. Click a panel title to open the panel menu.
 1. Click **Share**. The share dialog opens and shows the Link tab.
 
-![Panel share direct link](/img/docs/sharing/share-panel-direct-link-7-3.png)
+![Panel share direct link](/static/img/docs/sharing/share-panel-direct-link-7-3.png)
 ## Use direct link
 
 The Link tab has the current time range, template variables and theme selected by default. You can optionally enable a shortened URL to share.
@@ -46,7 +46,7 @@ A panel snapshot shares an interactive panel publicly. Grafana strips sensitive 
 
 You can publish snapshots to your local instance or to [snapshot.raintank.io](http://snapshot.raintank.io). The latter is a free service provided by [Raintank](http://raintank.io), that allows you to publish dashboard snapshots to an external Grafana instance. You can optionally set an expiration time if you want the snapshot to be removed after a certain time period.
 
-![Panel share snapshot](/img/docs/sharing/share-panel-snapshot-7-3.png)
+![Panel share snapshot](/static/img/docs/sharing/share-panel-snapshot-7-3.png)
 
 To publish a snapshot:
 
@@ -60,7 +60,7 @@ If you created a snapshot by mistake, click **delete snapshot** to remove the sn
 
 You can embed a panel using an iframe on another web site. Unless anonymous access permission is enabled, the viewer must be signed into Grafana to view the graph.
 
-![Panel share embed](/img/docs/sharing/share-panel-embedded-link-7-3.png)
+![Panel share embed](/static/img/docs/sharing/share-panel-embedded-link-7-3.png)
 
 Here is an example of the HTML code:
 

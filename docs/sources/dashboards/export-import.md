@@ -1,7 +1,7 @@
 +++
 title = "Export and import"
 keywords = ["grafana", "dashboard", "documentation", "export", "import"]
-aliases = ["/docs/grafana/latest/reference/export_import/"]
+aliases = ["/docs/grafana/v7.4/reference/export_import/"]
 weight = 800
 +++
 
@@ -15,7 +15,7 @@ Dashboards are exported in Grafana JSON format, and contain everything you need 
 
 The export feature is accessed in the share window which you open by clicking the share button in the dashboard menu.
 
-{{< docs-imagebox img="/img/docs/export/export-modal.png" max-width="800px" >}}
+{{< figure src="/static/img/docs/export/export-modal.png" max-width="800px" >}}
 
 ### Making a dashboard portable
 
@@ -29,12 +29,12 @@ the dashboard, and will also be added as a required input when the dashboard is 
 
 To import a dashboard click the + icon in the side menu, and then click **Import**.
 
-{{< docs-imagebox img="/img/docs/v70/import_step1.png" max-width="700px" >}}
+{{< figure src="/static/img/docs/v70/import_step1.png" max-width="700px" >}}
 
 From here you can upload a dashboard JSON file, paste a [Grafana.com](https://grafana.com) dashboard
 URL or paste dashboard JSON text directly into the text area.
 
-{{< docs-imagebox img="/img/docs/v70/import_step2_grafana.com.png"  max-width="700px" >}}
+{{< figure src="/static/img/docs/v70/import_step2_grafana.com.png"  max-width="700px" >}}
 
 In step 2 of the import process Grafana will let you change the name of the dashboard, pick what
 data source you want the dashboard to use and specify any metric prefixes (if the dashboard use any).
@@ -43,7 +43,7 @@ data source you want the dashboard to use and specify any metric prefixes (if th
 
 Find dashboards for common server applications at [Grafana.com/dashboards](https://grafana.com/dashboards).
 
-{{< docs-imagebox img="/img/docs/v50/gcom_dashboard_list.png" max-width="700px" >}}
+{{< figure src="/static/img/docs/v50/gcom_dashboard_list.png" max-width="700px" >}}
 
 ## Import and sharing with Grafana 2.x or 3.0
 

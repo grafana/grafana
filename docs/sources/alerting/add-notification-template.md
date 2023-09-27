@@ -17,7 +17,7 @@ This topic explains how you can use alert query labels in alert notifications.
 1. Navigate to the panel you want to add or edit an alert rule for.
 1. Click on the panel title, and then click **Edit**.
 1. On the Alert tab, click **Create Alert**. If an alert already exists for this panel, then you can edit the alert directly.
-1. Refer to the alert query labels in the alert rule name and/or alert notification message field by using the `${Label}` syntax.    
+1. Refer to the alert query labels in the alert rule name and/or alert notification message field by using the `${Label}` syntax.
 1. Click **Save** in the upper right corner to save the alert rule and the dashboard.
 
-![Alerting notification template](/img/docs/alerting/notification_template.png)
+![Alerting notification template](/static/img/docs/alerting/alert-notification-template-7-4.png)

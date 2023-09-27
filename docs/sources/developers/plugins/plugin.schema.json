@@ -122,6 +122,10 @@
     "hiddenQueries": {
       "type": "boolean"
     },
+    "autoEnabled": {
+      "type": "boolean",
+      "description": "Set to true for app plugins that should be enabled by default in all orgs"
+    },
     "dependencies": {
       "type": "object",
       "description": "Dependencies needed by the plugin.",
@@ -353,8 +357,7 @@
             "properties": {
               "url": {
                 "type": "string",
-                "description": "For data source plugins. URL to fetch the authentication token.",
-                "format": "uri"
+                "description": "For data source plugins. URL to fetch the authentication token."
               },
               "params": {
                 "type": "object",
