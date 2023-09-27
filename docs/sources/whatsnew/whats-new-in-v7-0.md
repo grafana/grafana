@@ -77,7 +77,7 @@ For users with large dashboards or with heavy queries, being able to reuse the q
 
 The [Google Sheets data source](/grafana/plugins/grafana-googlesheets-datasource) that was published a few weeks ago works really well together with the transformations feature.
 
-We are also introducing a new shared data model for both time series and table data that we call [DataFrame]({{< relref "../developers/plugins/introduction-to-plugin-development/data-frames#data-frames" >}}). A DataFrame is like a table with columns but we refer to columns as fields. A time series is a DataFrame with two fields (time & value).
+We are also introducing a new shared data model for both time series and table data that we call [DataFrame](https://grafana.com/developers/plugin-tools/introduction/data-frames). A DataFrame is like a table with columns but we refer to columns as fields. A time series is a DataFrame with two fields (time & value).
 
 **Transformations shipping in 7.0**
 
