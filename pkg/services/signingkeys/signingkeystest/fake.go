@@ -9,12 +9,10 @@ import (
 )
 
 type FakeSigningKeysService struct {
-	ExpectedJSONWebKeySet    jose.JSONWebKeySet
-	ExpectedJSONWebKey       jose.JSONWebKey
-	ExpectedKeys             map[string]crypto.Signer
-	ExpectedServerPrivateKey crypto.PrivateKey
-	ExpectedServerPublicKey  crypto.PublicKey
-	ExpectedError            error
+	ExpectedJSONWebKeySet jose.JSONWebKeySet
+	ExpectedJSONWebKey    jose.JSONWebKey
+	ExpectedKeys          map[string]crypto.Signer
+	ExpectedError         error
 }
 
 func (s *FakeSigningKeysService) GetJWKS(ctx context.Context) (jose.JSONWebKeySet, error) {
