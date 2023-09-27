@@ -1,4 +1,4 @@
-package v1
+package v0alpha1
 
 import (
 	common "k8s.io/kube-openapi/pkg/common"
@@ -6,7 +6,7 @@ import (
 )
 
 // NOTE: this must match the golang fully qualifid name!
-const kindKey = "github.com/grafana/grafana/pkg/apis/playlist/v1.Playlist"
+const kindKey = "github.com/grafana/grafana/pkg/apis/playlist/v0alpha1.Playlist"
 
 func getOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{

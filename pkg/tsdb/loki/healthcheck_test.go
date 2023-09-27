@@ -87,7 +87,7 @@ func Test_healthcheck(t *testing.T) {
 		s := &Service{
 			im:       datasource.NewInstanceManager(newInstanceSettings(httpProvider)),
 			features: featuremgmt.WithFeatures(featuremgmt.FlagLokiLogsDataplane, featuremgmt.FlagLokiMetricDataplane),
-			tracer:   tracing.NewFakeTracer(),
+			tracer:   tracing.InitializeTracerForTest(),
 			logger:   log.New("loki test"),
 		}
 
@@ -106,7 +106,7 @@ func Test_healthcheck(t *testing.T) {
 		s := &Service{
 			im:       datasource.NewInstanceManager(newInstanceSettings(httpProvider)),
 			features: featuremgmt.WithFeatures(featuremgmt.FlagLokiLogsDataplane, featuremgmt.FlagLokiMetricDataplane),
-			tracer:   tracing.NewFakeTracer(),
+			tracer:   tracing.InitializeTracerForTest(),
 			logger:   log.New("loki test"),
 		}
 

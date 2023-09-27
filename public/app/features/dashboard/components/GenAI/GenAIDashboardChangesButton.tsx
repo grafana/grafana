@@ -8,7 +8,7 @@ import { getDashboardChanges, Message, Role } from './utils';
 
 interface GenAIDashboardChangesButtonProps {
   dashboard: DashboardModel;
-  onGenerate: (title: string, isDone: boolean) => void;
+  onGenerate: (title: string) => void;
 }
 
 const CHANGES_GENERATION_STANDARD_PROMPT = [
