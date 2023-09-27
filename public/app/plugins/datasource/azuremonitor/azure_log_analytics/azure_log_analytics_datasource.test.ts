@@ -43,7 +43,7 @@ describe('AzureLogAnalyticsDatasource', () => {
       });
       ctx.datasource.azureLogAnalyticsDatasource.getResource = ctx.getResource;
       getTempVars = () => [] as CustomVariableModel[];
-      replace = () => "";
+      replace = (target?: string) => target || '';
     });
 
     it('should return a schema to use with monaco-kusto', async () => {
@@ -228,13 +228,12 @@ describe('AzureLogAnalyticsDatasource', () => {
   describe('When performing interpolateVariablesInQueries for azure_log_analytics', () => {
     beforeEach(() => {
       getTempVars = () => [] as CustomVariableModel[];
-      replace = () => "";
+      replace = (target?: string) => target || '';
     });
 
     it('should return a query unchanged if no template variables are provided', () => {
       const query = createMockQuery();
       query.queryType = AzureQueryType.LogAnalytics;
-      replace = (target?: string | undefined) => {return target || ''}
       const templatedQuery = ctx.datasource.interpolateVariablesInQueries([query], {});
       expect(templatedQuery[0]).toEqual(query);
     });
@@ -266,9 +265,7 @@ describe('AzureLogAnalyticsDatasource', () => {
     });
 
     it('should return a logs query with multiple resources template variables replaced', () => {
-      replace = () => {
-        return "resource1,resource2";
-      }
+      replace = () => "resource1,resource2";
       const query = createMockQuery();
       const azureLogAnalytics: Partial<AzureLogsQuery> = {};
       azureLogAnalytics.resources = ['$resource'];
@@ -285,12 +282,7 @@ describe('AzureLogAnalyticsDatasource', () => {
     });
 
     it('should return a traces query with any template variables replaced', () => {
-      replace = (target?: string) => {
-        if (target === "$var") {
-          return "template-variable";
-        }
-        return target || "";
-      }
+      replace = (target?: string) => target === "$var" ? "template-variable" : target || "";
       const query = createMockQuery();
       const azureTraces: Partial<AzureTracesQuery> = {};
       azureTraces.resources = ['$var'];
@@ -322,9 +314,7 @@ describe('AzureLogAnalyticsDatasource', () => {
     });
 
     it('should return a trace query with multiple resources template variables replaced', () => {
-      replace = () => {
-        return "resource1,resource2";
-      }
+      replace = () => "resource1,resource2";
       const query = createMockQuery();
       const azureTraces: Partial<AzureTracesQuery> = {};
       azureTraces.resources = ['$resource'];

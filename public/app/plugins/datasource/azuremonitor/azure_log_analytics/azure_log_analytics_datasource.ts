@@ -2,7 +2,6 @@ import { map } from 'lodash';
 
 import { DataSourceInstanceSettings, ScopedVars } from '@grafana/data';
 import { DataSourceWithBackend, getTemplateSrv } from '@grafana/runtime';
-//import { TimeSrv, getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 import ResponseParser from '../azure_monitor/response_parser';
 import { getAuthType, getAzureCloud, getAzurePortalUrl } from '../credentials';
