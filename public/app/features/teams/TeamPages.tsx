@@ -48,7 +48,7 @@ function mapStateToProps(state: StoreState, props: OwnProps) {
     }
   }
   const pageName = props.match.params.page ?? defaultPage;
-  const teamLoadingNav = getTeamLoadingNav(pageName as string);
+  const teamLoadingNav = getTeamLoadingNav(pageName);
   const pageNav = getNavModel(state.navIndex, `team-${pageName}-${teamId}`, teamLoadingNav).main;
 
   return {

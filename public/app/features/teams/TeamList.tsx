@@ -1,30 +1,33 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { connect, ConnectedProps } from 'react-redux';
 
-import { LinkButton, FilterInput, VerticalGroup, HorizontalGroup, Pagination, InlineField } from '@grafana/ui';
+import {
+  LinkButton,
+  FilterInput,
+  InlineField,
+  CellProps,
+  DeleteButton,
+  InteractiveTable,
+  Icon,
+  Tooltip,
+  Column,
+  HorizontalGroup,
+  Pagination,
+  VerticalGroup,
+} from '@grafana/ui';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { Page } from 'app/core/components/Page/Page';
 import { fetchRoleOptions } from 'app/core/components/RolePicker/api';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction, Role, StoreState, Team } from 'app/types';
 
-import { connectWithCleanUp } from '../../core/components/connectWithCleanUp';
+import { TeamRolePicker } from '../../core/components/RolePicker/TeamRolePicker';
+import { Avatar } from '../admin/Users/Avatar';
 
-import { TeamListRow } from './TeamListRow';
 import { deleteTeam, loadTeams, changePage, changeQuery } from './state/actions';
-import { initialTeamsState } from './state/reducers';
 
-export interface Props {
-  teams: Team[];
-  page: number;
-  query: string;
-  noTeams: boolean;
-  totalPages: number;
-  hasFetched: boolean;
-  loadTeams: typeof loadTeams;
-  deleteTeam: typeof deleteTeam;
-  changePage: typeof changePage;
-  changeQuery: typeof changeQuery;
-}
+type Cell<T extends keyof Team = keyof Team> = CellProps<Team, Team[T]>;
+export interface OwnProps {}
 
 export interface State {
   roleOptions: Role[];
@@ -32,17 +35,18 @@ export interface State {
 
 export const TeamList = ({
   teams,
-  page,
   query,
   noTeams,
-  totalPages,
   hasFetched,
   loadTeams,
   deleteTeam,
   changeQuery,
+  totalPages,
+  page,
   changePage,
 }: Props) => {
   const [roleOptions, setRoleOptions] = useState<Role[]>([]);
+  const enableSort = totalPages === 1;
 
   useEffect(() => {
     loadTeams(true);
@@ -56,6 +60,81 @@ export const TeamList = ({
 
   const canCreate = contextSrv.hasPermission(AccessControlAction.ActionTeamsCreate);
   const displayRolePicker = shouldDisplayRolePicker();
+
+  const columns: Array<Column<Team>> = useMemo(
+    () => [
+      {
+        id: 'avatarUrl',
+        header: '',
+        cell: ({ cell: { value } }: Cell<'avatarUrl'>) => <Avatar src={value} alt="User avatar" />,
+      },
+      {
+        id: 'name',
+        header: 'Name',
+        cell: ({ cell: { value } }: Cell<'name'>) => value,
+        sortType: enableSort ? 'string' : undefined,
+      },
+      {
+        id: 'email',
+        header: 'Email',
+        cell: ({ cell: { value } }: Cell<'email'>) => value,
+        sortType: enableSort ? 'string' : undefined,
+      },
+      {
+        id: 'memberCount',
+        header: 'Members',
+        cell: ({ cell: { value } }: Cell<'memberCount'>) => value,
+        sortType: enableSort ? 'number' : undefined,
+      },
+      ...(displayRolePicker
+        ? [
+            {
+              id: 'role',
+              header: 'Role',
+              cell: ({ cell: { value }, row: { original } }: Cell<'memberCount'>) => {
+                const canSeeTeamRoles = contextSrv.hasAccessInMetadata(
+                  AccessControlAction.ActionTeamsRolesList,
+                  original,
+                  false
+                );
+                return canSeeTeamRoles && <TeamRolePicker teamId={original.id} roleOptions={roleOptions} />;
+              },
+            },
+          ]
+        : []),
+      {
+        id: 'edit',
+        header: '',
+        cell: ({ row: { original } }: Cell) => {
+          const canReadTeam = contextSrv.hasPermissionInMetadata(AccessControlAction.ActionTeamsRead, original);
+          return canReadTeam ? (
+            <a href={`org/teams/edit/${original.id}`} aria-label={`Edit team ${original.name}`}>
+              <Tooltip content={'Edit team'}>
+                <Icon name={'pen'} />
+              </Tooltip>
+            </a>
+          ) : null;
+        },
+      },
+      {
+        id: 'delete',
+        header: '',
+        cell: ({ row: { original } }: Cell) => {
+          const canDelete = contextSrv.hasPermissionInMetadata(AccessControlAction.ActionTeamsDelete, original);
+
+          return (
+            <DeleteButton
+              aria-label={`Delete team ${original.name}`}
+              size="sm"
+              disabled={!canDelete}
+              onConfirm={() => deleteTeam(original.id)}
+            />
+          );
+        },
+      },
+    ],
+    [displayRolePicker, roleOptions, deleteTeam, enableSort]
+  );
 
   return (
     <Page navId="teams">
@@ -83,42 +162,12 @@ export const TeamList = ({
                 New Team
               </LinkButton>
             </div>
-
-            <div className="admin-list-table">
-              <VerticalGroup spacing="md">
-                <table className="filter-table filter-table--hover form-inline">
-                  <thead>
-                    <tr>
-                      <th />
-                      <th>Name</th>
-                      <th>Email</th>
-                      <th>Members</th>
-                      {displayRolePicker && <th>Roles</th>}
-                      <th style={{ width: '1%' }} />
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {teams.map((team) => (
-                      <TeamListRow
-                        key={team.id}
-                        team={team}
-                        roleOptions={roleOptions}
-                        displayRolePicker={displayRolePicker}
-                        onDelete={deleteTeam}
-                      />
-                    ))}
-                  </tbody>
-                </table>
-                <HorizontalGroup justify="flex-end">
-                  <Pagination
-                    hideWhenSinglePage
-                    currentPage={page}
-                    numberOfPages={totalPages}
-                    onNavigate={changePage}
-                  />
-                </HorizontalGroup>
-              </VerticalGroup>
-            </div>
+            <VerticalGroup spacing={'md'}>
+              <InteractiveTable columns={columns} data={teams} getRowId={(team) => String(team.id)} />
+              <HorizontalGroup justify="flex-end">
+                <Pagination hideWhenSinglePage currentPage={page} numberOfPages={totalPages} onNavigate={changePage} />
+              </HorizontalGroup>
+            </VerticalGroup>
           </>
         )}
       </Page.Contents>
@@ -137,9 +186,9 @@ function shouldDisplayRolePicker(): boolean {
 function mapStateToProps(state: StoreState) {
   return {
     teams: state.teams.teams,
-    page: state.teams.page,
     query: state.teams.query,
     perPage: state.teams.perPage,
+    page: state.teams.page,
     noTeams: state.teams.noTeams,
     totalPages: state.teams.totalPages,
     hasFetched: state.teams.hasFetched,
@@ -153,8 +202,6 @@ const mapDispatchToProps = {
   changeQuery,
 };
 
-export default connectWithCleanUp(
-  mapStateToProps,
-  mapDispatchToProps,
-  (state) => (state.teams = initialTeamsState)
-)(TeamList);
+const connector = connect(mapStateToProps, mapDispatchToProps);
+export type Props = OwnProps & ConnectedProps<typeof connector>;
+export default connector(TeamList);

@@ -26,9 +26,10 @@ const setup = (propOverrides?: object) => {
     changePage: jest.fn(),
     changeQuery: jest.fn(),
     query: '',
-    page: 1,
     totalPages: 0,
+    page: 0,
     hasFetched: false,
+    perPage: 10,
   };
 
   Object.assign(props, propOverrides);

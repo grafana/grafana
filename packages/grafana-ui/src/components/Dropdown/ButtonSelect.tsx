@@ -20,9 +20,11 @@ export interface Props<T> extends HTMLAttributes<HTMLButtonElement> {
   options: Array<SelectableValue<T>>;
   value?: SelectableValue<T>;
   onChange: (item: SelectableValue<T>) => void;
+  /** @deprecated use tooltip instead, tooltipContent is not being processed in ToolbarButton*/
   tooltipContent?: PopoverContent;
   narrow?: boolean;
   variant?: ToolbarButtonVariant;
+  tooltip?: string;
 }
 
 /**

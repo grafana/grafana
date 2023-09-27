@@ -202,6 +202,7 @@ func (ng *AlertNG) init() error {
 		Metrics:              ng.Metrics.GetSchedulerMetrics(),
 		AlertSender:          alertsRouter,
 		Tracer:               ng.tracer,
+		Log:                  log.New("ngalert.scheduler"),
 	}
 
 	// There are a set of feature toggles available that act as short-circuits for common configurations.
@@ -222,6 +223,7 @@ func (ng *AlertNG) init() error {
 		MaxStateSaveConcurrency:        ng.Cfg.UnifiedAlerting.MaxStateSaveConcurrency,
 		ApplyNoDataAndErrorToAllStates: ng.FeatureToggles.IsEnabled(featuremgmt.FlagAlertingNoDataErrorExecution),
 		Tracer:                         ng.tracer,
+		Log:                            log.New("ngalert.state.manager"),
 	}
 	stateManager := state.NewManager(cfg)
 	scheduler := schedule.NewScheduler(schedCfg, stateManager)
@@ -320,10 +322,6 @@ func (ng *AlertNG) Run(ctx context.Context) error {
 	ng.stateManager.Warm(ctx, ng.store)
 
 	children, subCtx := errgroup.WithContext(ctx)
-
-	children.Go(func() error {
-		return ng.stateManager.Run(subCtx)
-	})
 
 	children.Go(func() error {
 		return ng.MultiOrgAlertmanager.Run(subCtx)

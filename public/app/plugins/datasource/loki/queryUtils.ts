@@ -19,6 +19,8 @@ import {
   Identifier,
   Range,
   formatLokiQuery,
+  Logfmt,
+  Json,
 } from '@grafana/lezer-logql';
 import { reportInteraction } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
@@ -193,13 +195,13 @@ export function isLogsQuery(query: string): boolean {
 }
 
 export function isQueryWithParser(query: string): { queryWithParser: boolean; parserCount: number } {
-  const nodes = getNodesFromQuery(query, [LabelParser, JsonExpressionParser]);
+  const nodes = getNodesFromQuery(query, [LabelParser, JsonExpressionParser, Logfmt]);
   const parserCount = nodes.length;
   return { queryWithParser: parserCount > 0, parserCount };
 }
 
 export function getParserFromQuery(query: string): string | undefined {
-  const parsers = getNodesFromQuery(query, [LabelParser, JsonExpressionParser]);
+  const parsers = getNodesFromQuery(query, [LabelParser, Json, Logfmt]);
   return parsers.length > 0 ? query.substring(parsers[0].from, parsers[0].to).trim() : undefined;
 }
 
