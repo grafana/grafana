@@ -1,9 +1,12 @@
+import React from 'react';
+
 import {
   EmbeddedScene,
   NestedScene,
   QueryVariable,
   SceneFlexItem,
   SceneFlexLayout,
+  SceneReactObject,
   SceneTimeRange,
   SceneVariableSet,
   VariableValueSelectors,
@@ -57,52 +60,75 @@ export const PANEL_STYLES = { minHeight: 300 };
 const THIS_WEEK_TIME_RANGE = new SceneTimeRange({ from: 'now-1w', to: 'now' });
 const LAST_WEEK_TIME_RANGE = new SceneTimeRange({ from: 'now-2w', to: 'now-1w' });
 
+export function SectionSubheader({ children }: React.PropsWithChildren) {
+  return <div>{children}</div>;
+}
+
 export function getGrafanaScenes() {
   return new EmbeddedScene({
     body: new SceneFlexLayout({
       direction: 'column',
       children: [
+        new SceneFlexItem({
+          body: new SceneReactObject({
+            component: SectionSubheader,
+            props: { children: <div>Grafana</div> },
+          }),
+        }),
         new SceneFlexLayout({
+          direction: 'column',
           children: [
-            getMostFiredInstancesScene(THIS_WEEK_TIME_RANGE, ashDs, 'Top 10 firing instances this week'),
-            getFiringGrafanaAlertsScene(THIS_WEEK_TIME_RANGE, cloudUsageDs, 'Firing instances'),
-            getPausedGrafanaAlertsScene(THIS_WEEK_TIME_RANGE, cloudUsageDs, 'Paused instances'),
+            new SceneFlexLayout({
+              children: [
+                getMostFiredInstancesScene(THIS_WEEK_TIME_RANGE, ashDs, 'Top 10 firing instances this week'),
+                getFiringGrafanaAlertsScene(THIS_WEEK_TIME_RANGE, cloudUsageDs, 'Firing instances'),
+                getPausedGrafanaAlertsScene(THIS_WEEK_TIME_RANGE, cloudUsageDs, 'Paused instances'),
+              ],
+            }),
+            new SceneFlexLayout({
+              children: [
+                getGrafanaInstancesByStateScene(
+                  THIS_WEEK_TIME_RANGE,
+                  cloudUsageDs,
+                  'Count of alert instances by state'
+                ),
+                getGrafanaInstancesPercentageByStateScene(
+                  THIS_WEEK_TIME_RANGE,
+                  cloudUsageDs,
+                  '% of Alert Instances by State'
+                ),
+              ],
+            }),
+            new SceneFlexLayout({
+              children: [
+                getGrafanaEvalSuccessVsFailuresScene(
+                  THIS_WEEK_TIME_RANGE,
+                  cloudUsageDs,
+                  'Evaluation success vs failures'
+                ),
+                getGrafanaMissedIterationsScene(THIS_WEEK_TIME_RANGE, cloudUsageDs, 'Iterations missed'),
+              ],
+            }),
+            new SceneFlexLayout({
+              children: [getGrafanaEvalDurationScene(THIS_WEEK_TIME_RANGE, cloudUsageDs, 'Evaluation duration')],
+            }),
+            new SceneFlexItem({
+              ySizing: 'content',
+              body: getGrafanaAlertmanagerScenes(),
+            }),
+            new SceneFlexItem({
+              ySizing: 'content',
+              body: getCloudScenes(),
+            }),
+            new SceneFlexItem({
+              ySizing: 'content',
+              body: getMimirManagedRulesScenes(),
+            }),
+            new SceneFlexItem({
+              ySizing: 'content',
+              body: getMimirManagedRulesPerGroupScenes(),
+            }),
           ],
-        }),
-        new SceneFlexLayout({
-          children: [
-            getGrafanaInstancesByStateScene(THIS_WEEK_TIME_RANGE, cloudUsageDs, 'Count of alert instances by state'),
-            getGrafanaInstancesPercentageByStateScene(
-              THIS_WEEK_TIME_RANGE,
-              cloudUsageDs,
-              '% of Alert Instances by State'
-            ),
-          ],
-        }),
-        new SceneFlexLayout({
-          children: [
-            getGrafanaEvalSuccessVsFailuresScene(THIS_WEEK_TIME_RANGE, cloudUsageDs, 'Evaluation success vs failures'),
-            getGrafanaMissedIterationsScene(THIS_WEEK_TIME_RANGE, cloudUsageDs, 'Iterations missed'),
-          ],
-        }),
-        new SceneFlexLayout({
-          children: [getGrafanaEvalDurationScene(THIS_WEEK_TIME_RANGE, cloudUsageDs, 'Evaluation duration')],
-        }),
-        new SceneFlexItem({
-          ySizing: 'content',
-          body: getGrafanaAlertmanagerScenes(),
-        }),
-        new SceneFlexItem({
-          ySizing: 'content',
-          body: getCloudScenes(),
-        }),
-        new SceneFlexItem({
-          ySizing: 'content',
-          body: getMimirManagedRulesScenes(),
-        }),
-        new SceneFlexItem({
-          ySizing: 'content',
-          body: getMimirManagedRulesPerGroupScenes(),
         }),
       ],
     }),
@@ -117,6 +143,12 @@ function getGrafanaAlertmanagerScenes() {
     body: new SceneFlexLayout({
       direction: 'column',
       children: [
+        new SceneFlexItem({
+          body: new SceneReactObject({
+            component: SectionSubheader,
+            props: { children: <div>Grafana Alertmanager</div> },
+          }),
+        }),
         new SceneFlexLayout({
           children: [
             getGrafanaAlertmanagerInstancesByStateScene(THIS_WEEK_TIME_RANGE, cloudUsageDs, 'Alerts by state'),
@@ -139,6 +171,12 @@ function getCloudScenes() {
     body: new SceneFlexLayout({
       direction: 'column',
       children: [
+        new SceneFlexItem({
+          body: new SceneReactObject({
+            component: SectionSubheader,
+            props: { children: <div>Mimir Alertmanager</div> },
+          }),
+        }),
         new SceneFlexLayout({
           children: [
             getAlertsByStateScene(THIS_WEEK_TIME_RANGE, cloudUsageDs, 'Alerts by state'),
@@ -164,6 +202,12 @@ function getMimirManagedRulesScenes() {
     body: new SceneFlexLayout({
       direction: 'column',
       children: [
+        new SceneFlexItem({
+          body: new SceneReactObject({
+            component: SectionSubheader,
+            props: { children: <div>Mimir-managed rules</div> },
+          }),
+        }),
         new SceneFlexLayout({
           children: [
             getMostFiredCloudInstances(THIS_WEEK_TIME_RANGE, grafanaCloudPromDs, 'Top 10 firing instance this week'),
@@ -207,6 +251,12 @@ function getMimirManagedRulesPerGroupScenes() {
     body: new SceneFlexLayout({
       direction: 'column',
       children: [
+        new SceneFlexItem({
+          body: new SceneReactObject({
+            component: SectionSubheader,
+            props: { children: <div>Mimir-managed Rules - Per Rule Group</div> },
+          }),
+        }),
         new SceneFlexLayout({
           children: [
             getRuleGroupEvaluationsScene(THIS_WEEK_TIME_RANGE, cloudUsageDs, 'Rule group evaluation'),
