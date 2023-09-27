@@ -264,8 +264,12 @@ class DataSourceWithBackend<
   /**
    * Apply template variables for explore
    */
-  interpolateVariablesInQueries(queries: TQuery[], scopedVars: ScopedVars | {}): TQuery[] {
-    return queries.map((q) => this.applyTemplateVariables(q, scopedVars) as TQuery);
+  interpolateVariablesInQueries(
+    queries: TQuery[],
+    scopedVars: ScopedVars,
+    adhocFilters?: AdHocVariableFilter[]
+  ): TQuery[] {
+    return queries.map((q) => this.applyTemplateVariables(q, scopedVars, adhocFilters) as TQuery);
   }
 
   /**
@@ -290,7 +294,7 @@ class DataSourceWithBackend<
   applyTemplateVariables(
     query: TQuery,
     scopedVars: ScopedVars,
-    adhocFilters: AdHocVariableFilter[]
+    adhocFilters?: AdHocVariableFilter[]
   ): Record<string, any> {
     return query;
   }
