@@ -11,6 +11,7 @@ import { useGrafana } from 'app/core/context/GrafanaContext';
 import { KioskMode } from 'app/types';
 
 import { DockedMegaMenu, MENU_WIDTH } from './DockedMegaMenu/DockedMegaMenu';
+import { TOGGLE_BUTTON_ID } from './NavToolbar/NavToolbar';
 import { TOP_BAR_LEVEL_HEIGHT } from './types';
 
 interface Props {}
@@ -34,6 +35,12 @@ export function AppChromeMenu({}: Props) {
       isDismissable: true,
       isOpen: true,
       onClose,
+      shouldCloseOnInteractOutside: (element) => {
+        // don't close when clicking on the menu toggle, let the toggle button handle that
+        // this prevents some nasty flickering when the menu is open and the toggle button is clicked
+        const isMenuToggle = document.getElementById(TOGGLE_BUTTON_ID)?.contains(element);
+        return Boolean(!isMenuToggle);
+      },
     },
     ref
   );
