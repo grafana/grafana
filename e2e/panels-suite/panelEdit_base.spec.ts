@@ -68,8 +68,6 @@ describe('Panel edit tests', () => {
     e2e.components.PanelEditor.toggleVizOptions().click();
     e2e.components.PanelEditor.OptionsPane.content().should('not.exist');
 
-    cy.wait(100);
-
     // open options pane
     e2e.components.PanelEditor.toggleVizOptions().should('be.visible').click();
     e2e.components.PanelEditor.OptionsPane.content().should('be.visible');

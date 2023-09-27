@@ -9,8 +9,6 @@ describe('Gauge Panel', () => {
     // open Panel Tests - Gauge
     e2e.flows.openDashboard({ uid: '_5rDmaQiz' });
 
-    cy.wait(1000);
-
     // check that gauges are rendered
     cy.get('body').find(`.flot-base`).should('have.length', 16);
 

@@ -14,8 +14,6 @@ describe('Auto-migrate graph panel', () => {
 
     e2e.flows.openDashboard({ uid: DASHBOARD_ID, queryParams: { '__feature.autoMigrateOldPanels': true } });
 
-    cy.wait(1000);
-
     e2e.components.Panels.Panel.title('Business Hours')
       .should('exist')
       .within(() => {
