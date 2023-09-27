@@ -269,7 +269,11 @@ func (hs *treeStore) GetHeight(ctx context.Context, foldrUID string, orgID int64
 		// group_concat() is used to get the paths of the leaf nodes where the given folder is present
 		// the order of the group_concat() in SQLite is arbitrary, so we need to include the lft column in order to sort the paths later
 		// the path format is <lft><pathSep><uid>
-		leafSubpaths := hs.db.GetDialect().GroupConcat(hs.db.GetDialect().Concat("parent.lft", fmt.Sprintf("'%s'", pathSep), "parent.uid"), groupConcatSep)
+		concatStr, err := hs.db.GetDialect().Concat("parent.lft", fmt.Sprintf("'%s'", pathSep), "parent.uid")
+		if err != nil {
+			return folder.ErrInternal.Errorf("failed to get folder height: failed to concat strings: %w", err)
+		}
+		leafSubpaths := hs.db.GetDialect().GroupConcat(concatStr, groupConcatSep)
 		folderInPath := hs.db.GetDialect().Position(hs.db.GetDialect().GroupConcat("parent.uid", groupConcatSep), "?")
 		s := fmt.Sprintf(`SELECT %s
 		FROM folder AS node,
@@ -314,20 +318,24 @@ func (hs *treeStore) GetHeight(ctx context.Context, foldrUID string, orgID int64
 func (hs *treeStore) getTree(ctx context.Context, orgID int64) ([]string, error) {
 	var tree []string
 	err := hs.db.WithDbSession(ctx, func(sess *db.Session) error {
+		concatStr, err := hs.db.GetDialect().Concat("COUNT(parent.title)", "'-'", "node.title")
+		if err != nil {
+			return folder.ErrInternal.Errorf("failed to get tree: failed to concat strings: %w", err)
+		}
 		q := fmt.Sprintf(`
 		SELECT %s
 		FROM folder AS node, folder AS parent
 		WHERE node.lft BETWEEN parent.lft AND parent.rgt AND node.org_id = ?
 		GROUP BY node.title, node.lft
 		ORDER BY node.lft
-		`, hs.db.GetDialect().Concat("COUNT(parent.title)", "'-'", "node.title"))
+		`, concatStr)
 		if err := sess.SQL(q, orgID).Find(&tree); err != nil {
 			return err
 		}
 		return nil
 	})
 	if err != nil {
-		return nil, err
+		return nil, folder.ErrInternal.Errorf("failed to get tree: %w", err)
 	}
 	return tree, nil
 }

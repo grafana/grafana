@@ -56,7 +56,7 @@ type Dialect interface {
 	// Concat returns the sql statement for concating multiple strings
 	// Implementations are not expected to quote the arguments
 	// therefore any callers should take care to quote arguments as necessary
-	Concat(string, ...string) string
+	Concat(...string) (string, error)
 	// GroupConcat returns the sql statement for the group concat aggregate function
 	GroupConcat(string, string) string
 	// Position returns the sql statement for the position of a substring within a string
@@ -360,6 +360,9 @@ func (b *BaseDialect) Position(str string, substr string) string {
 	return fmt.Sprintf("INSTR(%s"+", "+"%s)", str, substr)
 }
 
-func (b *BaseDialect) Concat(str string, strs ...string) string {
-	return fmt.Sprintf("CONCAT(%s"+", "+"%s)", str, strings.Join(strs, ", "))
+func (b *BaseDialect) Concat(strs ...string) (string, error) {
+	if len(strs) < 2 {
+		return "", fmt.Errorf("concat requires at least 2 arguments, got %d", len(strs))
+	}
+	return fmt.Sprintf("CONCAT(%s)", strings.Join(strs, ", ")), nil
 }
