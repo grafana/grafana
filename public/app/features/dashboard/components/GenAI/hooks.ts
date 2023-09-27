@@ -70,6 +70,10 @@ export function useOpenAIStream(
       enabled,
       stream: stream.subscribe({
         next: setReply,
+        error: (e) => {
+          console.log('The backend for the stream returned an error and nobody has implemented error handling yet!');
+          console.log(e);
+        },
         complete: () => {
           setIsGenerating(false);
           setMessages([]);

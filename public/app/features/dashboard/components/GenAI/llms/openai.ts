@@ -7,8 +7,9 @@
  *
  * The {@link enabled} function can be used to check if the plugin is enabled and configured.
  */
+
 import { pipe, Observable, UnaryFunction } from 'rxjs';
-import { filter, map, scan, takeWhile } from 'rxjs/operators';
+import { filter, map, scan, takeWhile, tap } from 'rxjs/operators';
 
 import {
   isLiveChannelMessageEvent,
@@ -18,8 +19,8 @@ import {
 } from '@grafana/data';
 import { getBackendSrv, getGrafanaLiveSrv, logDebug } from '@grafana/runtime';
 
-const LLM_PLUGIN_ID = 'grafana-llm-app';
-const LLM_PLUGIN_ROUTE = `/api/plugins/${LLM_PLUGIN_ID}`;
+import { LLM_PLUGIN_ID, LLM_PLUGIN_ROUTE, setLLMPluginVersion } from './constants';
+import { LLMAppHealthCheck } from './types';
 
 const OPENAI_CHAT_COMPLETIONS_PATH = 'openai/v1/chat/completions';
 
@@ -174,6 +175,12 @@ export interface Usage {
   total_tokens: number;
 }
 
+/** The error response from the Grafana LLM app when trying to call the chat completions API. */
+interface ChatCompletionsErrorResponse {
+  /** The error message. */
+  error: string;
+}
+
 /** A response from the OpenAI Chat Completions API. */
 export interface ChatCompletionsResponse<T = Choice> {
   /** The ID of the request. */
@@ -205,8 +212,8 @@ export interface DoneMessage {
 export interface FunctionCallMessage {
   /** The name of the function to call. */
   name: string;
-  /** The arguments to the function call. */
-  arguments: unknown[];
+  /** JSON string for the arguments to the function call. */
+  arguments: string;
 }
 
 /**
@@ -224,13 +231,18 @@ export interface ChatCompletionsChunk {
 }
 
 /** Return true if the message is a 'content' message. */
-export function isContentMessage(message: object): message is ContentMessage {
-  return typeof message === 'object' && message.hasOwnProperty('content');
+export function isContentMessage(message: unknown): message is ContentMessage {
+  return (message as ContentMessage).content != null;
 }
 
 /** Return true if the message is a 'done' message. */
-function isDoneMessage(message: object): message is DoneMessage {
-  return typeof message === 'object' && message.hasOwnProperty('done');
+export function isDoneMessage(message: unknown): message is DoneMessage {
+  return (message as DoneMessage).done !== undefined;
+}
+
+/** Return true if the response is an error response. */
+export function isErrorResponse(response: unknown): response is ChatCompletionsErrorResponse {
+  return (response as ChatCompletionsErrorResponse).error !== undefined;
 }
 
 /**
@@ -243,7 +255,7 @@ function isDoneMessage(message: object): message is DoneMessage {
  *   { role: 'system', content: 'You are a great bot.' },
  *   { role: 'user', content: 'Hello, bot.' },
  * ]}).pipe(extractContent());
- * stream.subscribe(console.log);
+ * stream.subscribe({ next: console.log, error: console.error });
  * // Output:
  * // ['Hello', '? ', 'How ', 'are ', 'you', '?']
  */
@@ -270,7 +282,7 @@ export function extractContent(): UnaryFunction<
  *   { role: 'system', content: 'You are a great bot.' },
  *   { role: 'user', content: 'Hello, bot.' },
  * ]}).pipe(accumulateContent());
- * stream.subscribe(console.log);
+ * stream.subscribe({ next: console.log, error: console.error });
  * // Output:
  * // ['Hello', 'Hello! ', 'Hello! How ', 'Hello! How are ', 'Hello! How are you', 'Hello! How are you?']
  */
@@ -312,7 +324,7 @@ export async function chatCompletions(request: ChatCompletionsRequest): Promise<
  *   { role: 'system', content: 'You are a great bot.' },
  *   { role: 'user', content: 'Hello, bot.' },
  * ]}).pipe(extractContent());
- * stream.subscribe(console.log);
+ * stream.subscribe({ next: console.log, error: console.error });
  * // Output:
  * // ['Hello', '? ', 'How ', 'are ', 'you', '?']
  *
@@ -321,7 +333,7 @@ export async function chatCompletions(request: ChatCompletionsRequest): Promise<
  *   { role: 'system', content: 'You are a great bot.' },
  *   { role: 'user', content: 'Hello, bot.' },
  * ]}).pipe(accumulateContent());
- * stream.subscribe(console.log);
+ * stream.subscribe({ next: console.log, error: console.error });
  * // Output:
  * // ['Hello', 'Hello! ', 'Hello! How ', 'Hello! How are ', 'Hello! How are you', 'Hello! How are you?']
  */
@@ -340,7 +352,12 @@ export function streamChatCompletions(
     LiveChannelMessageEvent<ChatCompletionsResponse<ChatCompletionsChunk>>
   >;
   return messages.pipe(
-    takeWhile((event) => !isDoneMessage(event.message.choices[0].delta)),
+    tap((event) => {
+      if (isErrorResponse(event.message)) {
+        throw new Error(event.message.error);
+      }
+    }),
+    takeWhile((event) => isErrorResponse(event.message) || !isDoneMessage(event.message.choices[0].delta)),
     map((event) => event.message)
   );
 }
@@ -349,12 +366,13 @@ let loggedWarning = false;
 
 /** Check if the OpenAI API is enabled via the LLM plugin. */
 export const enabled = async () => {
+  // Run a health check to see if the plugin is installed.
+  let response: LLMAppHealthCheck;
   try {
-    const settings = await getBackendSrv().get(`${LLM_PLUGIN_ROUTE}/settings`, undefined, undefined, {
+    response = await getBackendSrv().get(`${LLM_PLUGIN_ROUTE}/health`, undefined, undefined, {
       showSuccessAlert: false,
       showErrorAlert: false,
     });
-    return settings.enabled && (settings?.secureJsonFields?.openAIKey ?? false);
   } catch (e) {
     if (!loggedWarning) {
       logDebug(String(e));
@@ -365,4 +383,12 @@ export const enabled = async () => {
     }
     return false;
   }
+
+  const { details } = response;
+  // Update the version if it's present on the response.
+  if (details.version !== undefined) {
+    setLLMPluginVersion(details.version);
+  }
+  // If the plugin is installed then check if it is configured.
+  return details?.openAI ?? false;
 };
