@@ -53,6 +53,7 @@ export function Drawer({
   children,
   onClose,
   closeOnMaskClick = true,
+  scrollableContent = true,
   title,
   subtitle,
   width,
@@ -132,7 +133,9 @@ export function Drawer({
             </div>
           )}
           {typeof title !== 'string' && title}
-          <CustomScrollbar>{content}</CustomScrollbar>
+          <div className={styles.contentScroll}>
+            {!scrollableContent ? content : <CustomScrollbar autoHeightMin="100%">{content}</CustomScrollbar>}
+          </div>
         </div>
       </FocusScope>
     </RcDrawer>
