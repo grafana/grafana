@@ -123,6 +123,10 @@ const (
 	// Enable async query data support for Athena
 	FlagAthenaAsyncQueryDataSupport = "athenaAsyncQueryDataSupport"
 
+	// FlagCloudwatchNewRegionsHandler
+	// Refactor of /regions endpoint, no user-facing changes
+	FlagCloudwatchNewRegionsHandler = "cloudwatchNewRegionsHandler"
+
 	// FlagShowDashboardValidationWarnings
 	// Show warnings when dashboards do not validate against the schema
 	FlagShowDashboardValidationWarnings = "showDashboardValidationWarnings"
@@ -458,4 +462,8 @@ const (
 	// FlagIdForwarding
 	// Generate signed id token for identity that can be forwarded to plugins and external services
 	FlagIdForwarding = "idForwarding"
+
+	// FlagCloudWatchWildCardDimensionValues
+	// Fetches dimension values from CloudWatch to correctly label wildcard dimensions
+	FlagCloudWatchWildCardDimensionValues = "cloudWatchWildCardDimensionValues"
 )

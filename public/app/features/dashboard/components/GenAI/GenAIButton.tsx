@@ -1,11 +1,12 @@
 import { css } from '@emotion/css';
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Button, Spinner, useStyles2, Link, Tooltip, Toggletip, Text } from '@grafana/ui';
 
 import { GenAIHistory } from './GenAIHistory';
-import { Message, generateTextWithLLM, isLLMPluginEnabled } from './utils';
+import { useOpenAIStream } from './hooks';
+import { OPEN_AI_MODEL, Message } from './utils';
 
 export interface GenAIButtonProps {
   // Button label text
@@ -17,8 +18,8 @@ export interface GenAIButtonProps {
   onClick?: (e: React.MouseEvent<HTMLButtonElement>) => void;
   // Messages to send to the LLM plugin
   messages: Message[];
-  // Callback when the LLM plugin responds. It is sreaming, so it will be called multiple times.
-  onGenerate: (response: string, isDone: boolean) => void;
+  // Callback function that the LLM plugin streams responses to
+  onGenerate: (response: string) => void;
   // Temperature for the LLM plugin. Default is 1.
   // Closer to 0 means more conservative, closer to 1 means more creative.
   temperature?: number;
@@ -34,39 +35,41 @@ export const GenAIButton = ({
   temperature = 1,
 }: GenAIButtonProps) => {
   const styles = useStyles2(getStyles);
-  const [enabled, setEnabled] = useState(true);
-  const [loading, setLoading] = useState(false);
+
   const [history, setHistory] = useState<string[]>([]);
 
-  const replyHandler = (response: string, isDone: boolean) => {
-    setLoading(!isDone);
-    onGenerate(response, isDone);
+  // TODO: Implement error handling (use error object from hook)
+  const { setMessages, reply, isGenerating, value } = useOpenAIStream(OPEN_AI_MODEL, temperature);
 
-    if (isDone) {
-      setHistory([...history, response]);
-    }
-  };
-
+  // const replyHandler = (response: string, isDone: boolean) => {
+  //   setLoading(!isDone);
+  //   onGenerate(response, isDone);
+  //
+  //   if (isDone) {
+  //     setHistory([...history, response]);
+  //   }
+  // };
+  //
   const onClick = (e: React.MouseEvent<HTMLButtonElement>) => {
     onClickProp?.(e);
+    setMessages(messages);
 
-    if (!history.length) {
-      setLoading(true);
-      generateTextWithLLM(messages, replyHandler, temperature);
-    }
+    // if (!history.length) {
+    //   setLoading(true);
+    //   generateTextWithLLM(messages, replyHandler, temperature);
+    // }
   };
 
-  useEffect(() => {
-    isLLMPluginEnabled()
-      .then(setEnabled)
-      .catch(() => setEnabled(false));
-  }, []);
+  // Todo: Consider other options for `"` sanitation
+  if (isGenerating) {
+    onGenerate(reply.replace(/^"|"$/g, ''));
+  }
 
   const getIcon = () => {
-    if (loading) {
+    if (isGenerating) {
       return undefined;
     }
-    if (!enabled) {
+    if (!value?.enabled) {
       return 'exclamation-circle';
     }
     return 'ai';
@@ -79,7 +82,7 @@ export const GenAIButton = ({
       buttonText = 'Improve';
     }
 
-    if (loading) {
+    if (isGenerating) {
       buttonText = loadingText;
     }
 
@@ -87,7 +90,7 @@ export const GenAIButton = ({
   };
 
   const button = (
-    <Button icon={getIcon()} onClick={onClick} fill="text" size="sm" disabled={loading || !enabled}>
+    <Button icon={getIcon()} onClick={onClick} fill="text" size="sm" disabled={isGenerating || !value?.enabled}>
       {getText()}
     </Button>
   );
@@ -109,9 +112,9 @@ export const GenAIButton = ({
 
   return (
     <div className={styles.wrapper}>
-      {loading && <Spinner size={14} />}
+      {isGenerating && <Spinner size={14} />}
       <Tooltip
-        show={enabled ? false : undefined}
+        show={value?.enabled ? false : undefined}
         interactive
         content={
           <span>
