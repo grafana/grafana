@@ -6,6 +6,7 @@ export const availableIconsIndex = {
   okta: true,
   discord: true,
   hipchat: true,
+  amazon: true,
   'google-hangouts-alt': true,
   pagerduty: true,
   line: true,
