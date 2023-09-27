@@ -15,16 +15,15 @@ const getStyles = (theme: GrafanaTheme2) => {
       position: 'relative',
       display: 'flex',
       justifyContent: 'center',
-      height: '100%',
-      backgroundColor: theme.colors.background.primary,
       marginRight: theme.spacing(1),
       zIndex: theme.zIndex.sidemenu,
     }),
     content: css({
       label: 'content',
+      backgroundColor: theme.colors.background.primary,
       position: 'sticky',
-      top: 0,
-      height: '85vh',
+      top: '56px',
+      height: '81vh',
     }),
     buttonStyles: css({
       textAlign: 'left',
@@ -61,7 +60,7 @@ const ContentOutline = () => {
           className={styles.buttonStyles}
           icon={expanded ? 'angle-left' : 'angle-right'}
           onClick={toggle}
-          tooltip={!expanded ? 'Show Content Outline' : undefined}
+          tooltip={!expanded ? 'Show Content Outline xxxxx' : undefined}
         >
           {expanded && 'Hide Content Outline'}
         </ToolbarButton>
