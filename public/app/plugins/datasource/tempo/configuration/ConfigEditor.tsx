@@ -18,6 +18,7 @@ import { Divider } from 'app/core/components/Divider';
 import { NodeGraphSection } from 'app/core/components/NodeGraphSettings';
 import { TraceToLogsSection } from 'app/core/components/TraceToLogs/TraceToLogsSettings';
 import { TraceToMetricsSection } from 'app/core/components/TraceToMetrics/TraceToMetricsSettings';
+import { TraceToProfilesSection } from 'app/core/components/TraceToProfiles/TraceToProfilesSettings';
 import { SpanBarSection } from 'app/features/explore/TraceView/components/settings/SpanBarSettings';
 
 import { LokiSearchSettings } from './LokiSearchSettings';
@@ -48,6 +49,9 @@ export const ConfigEditor = ({ options, onOptionsChange }: Props) => {
           onChange: onOptionsChange,
         })}
       />
+
+      <Divider />
+      <TraceToProfilesSection options={options} onOptionsChange={onOptionsChange} />
 
       <Divider />
       <TraceToLogsSection options={options} onOptionsChange={onOptionsChange} />

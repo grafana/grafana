@@ -19,7 +19,9 @@ import { DataQuery } from '@grafana/schema';
 import { Icon } from '@grafana/ui';
 import { TraceToLogsOptionsV2, TraceToLogsTag } from 'app/core/components/TraceToLogs/TraceToLogsSettings';
 import { TraceToMetricQuery, TraceToMetricsOptions } from 'app/core/components/TraceToMetrics/TraceToMetricsSettings';
+import { TraceToProfilesOptions } from 'app/core/components/TraceToProfiles/TraceToProfilesSettings';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
+import { GrafanaPyroscope } from 'app/plugins/datasource/grafana-pyroscope-datasource/dataquery.gen';
 import { PromQuery } from 'app/plugins/datasource/prometheus/types';
 
 import { LokiQuery } from '../../../plugins/datasource/loki/types';
@@ -37,6 +39,7 @@ export function createSpanLinkFactory({
   splitOpenFn,
   traceToLogsOptions,
   traceToMetricsOptions,
+  traceToProfilesOptions,
   dataFrame,
   createFocusSpanLink,
   trace,
@@ -44,6 +47,7 @@ export function createSpanLinkFactory({
   splitOpenFn: SplitOpen;
   traceToLogsOptions?: TraceToLogsOptionsV2;
   traceToMetricsOptions?: TraceToMetricsOptions;
+  traceToProfilesOptions?: TraceToProfilesOptions;
   dataFrame?: DataFrame;
   createFocusSpanLink?: (traceId: string, spanId: string) => LinkModel<Field>;
   trace: Trace;
@@ -61,6 +65,7 @@ export function createSpanLinkFactory({
     dataFrame.fields[0],
     traceToLogsOptions,
     traceToMetricsOptions,
+    traceToProfilesOptions,
     createFocusSpanLink,
     scopedVars
   );
@@ -128,11 +133,29 @@ const defaultKeys = [
   value: k.includes('.') ? k.replace('.', '_') : undefined,
 }));
 
+function getQueryForPyroscope(
+  tags: string,
+  customQuery?: string,
+  profileTypeId?: string
+): GrafanaPyroscope | undefined {
+  if (!tags) {
+    return undefined;
+  }
+  return {
+    labelSelector: customQuery ? customQuery : '{${__tags}}',
+    groupBy: [],
+    profileTypeId: profileTypeId ?? '',
+    queryType: 'both',
+    refId: '',
+  };
+}
+
 function legacyCreateSpanLinkFactory(
   splitOpenFn: SplitOpen,
   field: Field,
   traceToLogsOptions?: TraceToLogsOptionsV2,
   traceToMetricsOptions?: TraceToMetricsOptions,
+  traceToProfilesOptions?: TraceToProfilesOptions,
   createFocusSpanLink?: (traceId: string, spanId: string) => LinkModel<Field>,
   scopedVars?: ScopedVars
 ) {
@@ -147,6 +170,11 @@ function legacyCreateSpanLinkFactory(
     metricsDataSourceSettings = getDatasourceSrv().getInstanceSettings(traceToMetricsOptions.datasourceUid);
   }
 
+  let profilesDataSourceSettings: DataSourceInstanceSettings<DataSourceJsonData> | undefined;
+  if (traceToProfilesOptions?.datasourceUid) {
+    profilesDataSourceSettings = getDatasourceSrv().getInstanceSettings(traceToProfilesOptions.datasourceUid);
+  }
+
   return function SpanLink(span: TraceSpan): SpanLinkDef[] {
     scopedVars = {
       ...scopedVars,
@@ -155,6 +183,74 @@ function legacyCreateSpanLinkFactory(
     const links: SpanLinkDef[] = [];
     let query: DataQuery | undefined;
     let tags = '';
+
+    // Get profiles links
+    if (profilesDataSourceSettings && traceToProfilesOptions) {
+      const customQuery = traceToProfilesOptions.customQuery ? traceToProfilesOptions.query : undefined;
+      const tagsToUse =
+        traceToProfilesOptions.tags && traceToProfilesOptions.tags.length > 0
+          ? traceToProfilesOptions.tags
+          : defaultKeys;
+
+      tags = getFormattedTags(span, tagsToUse);
+      query = getQueryForPyroscope(tags, customQuery, traceToProfilesOptions.profileTypeId);
+
+      // query can be false in case the simple UI tag mapping is used but none of them are present in the span.
+      // For custom query, this is always defined and we check if the interpolation matched all variables later on.
+      if (query) {
+        const dataLink: DataLink = {
+          title: profilesDataSourceSettings.name,
+          url: '',
+          internal: {
+            datasourceUid: profilesDataSourceSettings.uid,
+            datasourceName: profilesDataSourceSettings.name,
+            query,
+          },
+        };
+
+        scopedVars = {
+          ...scopedVars,
+          __tags: {
+            text: 'Tags',
+            value: tags,
+          },
+        };
+
+        // Check if all variables are defined and don't show if they aren't. This is usually handled by the
+        // getQueryFor* functions but this is for case of custom query supplied by the user.
+        if (getVariableUsageInfo(dataLink.internal!.query, scopedVars).allVariablesDefined) {
+          const link = mapInternalLinkToExplore({
+            link: dataLink,
+            internalLink: dataLink.internal!,
+            scopedVars: scopedVars,
+            range: getTimeRangeFromSpan(
+              span,
+              {
+                startMs: traceToProfilesOptions.spanStartTimeShift
+                  ? rangeUtil.intervalToMs(traceToProfilesOptions.spanStartTimeShift)
+                  : 0,
+                endMs: traceToProfilesOptions.spanEndTimeShift
+                  ? rangeUtil.intervalToMs(traceToProfilesOptions.spanEndTimeShift)
+                  : 0,
+              },
+              isSplunkDS
+            ),
+            field: {} as Field,
+            onClickFn: splitOpenFn,
+            replaceVariables: getTemplateSrv().replace.bind(getTemplateSrv()),
+          });
+
+          links.push({
+            href: link.href,
+            title: 'Related profiles',
+            onClick: link.onClick,
+            content: <Icon name="gf-logs" title="Explore the profiles for this in split view" />,
+            field,
+            type: SpanLinkType.Logs,
+          });
+        }
+      }
+    }
 
     // TODO: This should eventually move into specific data sources and added to the data frame as we no longer use the
     //  deprecated blob format and we can map the link easily in data frame.
