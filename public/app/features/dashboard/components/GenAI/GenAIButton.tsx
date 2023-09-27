@@ -34,7 +34,7 @@ export const GenAIButton = ({
   const styles = useStyles2(getStyles);
 
   // TODO: Implement error handling (use error object from hook)
-  const { setMessages, reply, isGeneratingResponse, value } = useOpenAIStream(OPEN_AI_MODEL, temperature);
+  const { setMessages, reply, isGenerating, value } = useOpenAIStream(OPEN_AI_MODEL, temperature);
 
   const onClick = (e: React.MouseEvent<HTMLButtonElement>) => {
     onClickProp?.(e);
@@ -42,12 +42,12 @@ export const GenAIButton = ({
   };
 
   // Todo: Consider other options for `"` sanitation
-  if (isGeneratingResponse) {
+  if (isGenerating) {
     onGenerate(reply.replace(/^"|"$/g, ''));
   }
 
   const getIcon = () => {
-    if (isGeneratingResponse) {
+    if (isGenerating) {
       return undefined;
     }
     if (!value?.enabled) {
@@ -58,7 +58,7 @@ export const GenAIButton = ({
 
   return (
     <div className={styles.wrapper}>
-      {isGeneratingResponse && <Spinner size={14} />}
+      {isGenerating && <Spinner size={14} />}
       <Tooltip
         show={value?.enabled ? false : undefined}
         interactive
@@ -69,14 +69,8 @@ export const GenAIButton = ({
           </span>
         }
       >
-        <Button
-          icon={getIcon()}
-          onClick={onClick}
-          fill="text"
-          size="sm"
-          disabled={isGeneratingResponse || !value?.enabled}
-        >
-          {!isGeneratingResponse ? text : loadingText}
+        <Button icon={getIcon()} onClick={onClick} fill="text" size="sm" disabled={isGenerating || !value?.enabled}>
+          {!isGenerating ? text : loadingText}
         </Button>
       </Tooltip>
     </div>
