@@ -4,7 +4,7 @@ const DASHBOARD_NAME = 'Panel Tests - Graph Time Regions';
 
 describe('Auto-migrate graph panel', () => {
   beforeEach(() => {
-    e2e.flows.login(e2e.env('USERNAME'), e2e.env('PASSWORD'));
+    e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'));
   });
 
   it('Annotation markers exist for time regions', () => {
