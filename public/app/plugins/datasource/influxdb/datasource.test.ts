@@ -318,7 +318,7 @@ describe('InfluxDataSource Frontend Mode', () => {
 
       it('should render chained regex variables with floating point number', () => {
         ds.metricFindQuery(`SELECT sum("piece_count") FROM "rp"."pdata" WHERE diameter <= $maxSED`, {
-          scopedVars: { maxSED: { text: '8.1', value: 8.1 } },
+          scopedVars: { maxSED: { text: '8.1', value: '8.1' } },
         });
         const qe = `SELECT sum("piece_count") FROM "rp"."pdata" WHERE diameter <= 8.1`;
         const qData = decodeURIComponent(fetchMock.mock.calls[0][0].data.substring(2));
@@ -348,7 +348,7 @@ describe('InfluxDataSource Frontend Mode', () => {
                 text: 'https://aaaa-aa-aaa.bbb.ccc.ddd:8443/ggggg',
                 value: 'https://aaaa-aa-aaa.bbb.ccc.ddd:8443/ggggg',
               },
-              maxSED: { text: '8.1', value: 8.1 },
+              maxSED: { text: '8.1', value: '8.1' },
             },
           }
         );

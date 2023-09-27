@@ -816,6 +816,10 @@ function timeSeriesToDataFrame(timeSeries: TimeSeries): DataFrame {
 }
 
 export function influxRegularEscape(value: any) {
+  const isNumber = !isNaN(parseFloat(value));
+  if (isNumber) {
+    return value;
+  }
   return typeof value === 'string' ? escapeRegex(value) : value;
 }
 
