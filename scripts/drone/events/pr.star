@@ -41,17 +41,16 @@ load(
     "test_frontend",
 )
 load(
+    'scripts/drone/pipelines/swagger_gen.star',
+    'swagger_gen',
+)
+load(
     "scripts/drone/pipelines/verify_drone.star",
     "verify_drone",
 )
 load(
     "scripts/drone/pipelines/verify_starlark.star",
     "verify_starlark",
-)
-
-load(
-    'scripts/drone/pipelines/swagger_gen.star',
-    'swagger_gen',
 )
 
 ver_mode = "pr"
