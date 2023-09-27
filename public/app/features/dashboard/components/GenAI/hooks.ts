@@ -3,6 +3,7 @@ import { useAsync } from 'react-use';
 import { Subscription } from 'rxjs';
 
 import { openai } from './llms';
+import { isLLMPluginEnabled, OPEN_AI_MODEL } from './utils';
 
 // Declared instead of imported from utils to make this hook modular
 // Ideally we will want to move the hook itself to a different scope later.
@@ -10,21 +11,20 @@ type Message = openai.Message;
 
 // TODO: Add tests
 export function useOpenAIStream(
-  model = 'gpt-3.5-turbo',
+  model = OPEN_AI_MODEL,
   temperature = 1
 ): {
   setMessages: React.Dispatch<React.SetStateAction<Message[]>>;
   reply: string;
-  inProgress: boolean;
-  loading: boolean;
+  isGenerating: boolean;
   error: Error | undefined;
   value:
     | {
-        enabled: any;
+        enabled: boolean;
         stream?: undefined;
       }
     | {
-        enabled: any;
+        enabled: boolean;
         stream: Subscription;
       }
     | undefined;
@@ -34,14 +34,12 @@ export function useOpenAIStream(
   // The latest reply from the LLM.
   const [reply, setReply] = useState('');
 
-  // const [started, setStarted] = useState(false);
-  // const [finished, setFinished] = useState(true);
-  const [inProgress, setInProgress] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
 
-  const { loading, error, value } = useAsync(async () => {
+  const { error, value } = useAsync(async () => {
     // Check if the LLM plugin is enabled and configured.
     // If not, we won't be able to make requests, so return early.
-    const enabled = await openai.enabled();
+    const enabled = await isLLMPluginEnabled();
     if (!enabled) {
       return { enabled };
     }
@@ -49,7 +47,7 @@ export function useOpenAIStream(
       return { enabled };
     }
 
-    setInProgress(true);
+    setIsGenerating(true);
     // Stream the completions. Each element is the next stream chunk.
     const stream = openai
       .streamChatCompletions({
@@ -73,7 +71,7 @@ export function useOpenAIStream(
       stream: stream.subscribe({
         next: setReply,
         complete: () => {
-          setInProgress(false);
+          setIsGenerating(false);
           setMessages([]);
         },
       }),
@@ -89,8 +87,7 @@ export function useOpenAIStream(
   return {
     setMessages,
     reply,
-    inProgress,
-    loading,
+    isGenerating,
     error,
     value,
   };
