@@ -16,7 +16,7 @@ Returns collection of common field config properties definitions
 <b>Signature</b>
 
 ```typescript
-getStandardFieldConfigs: () => (FieldConfigPropertyItem<any, string, StringFieldConfigSettings> | FieldConfigPropertyItem<any, number, NumberFieldConfigSettings> | FieldConfigPropertyItem<any, ThresholdsConfig, ThresholdsFieldConfigSettings> | FieldConfigPropertyItem<any, ValueMapping[], ValueMappingFieldConfigSettings> | FieldConfigPropertyItem<any, DataLink[], StringFieldConfigSettings>)[]
+getStandardFieldConfigs: () => (FieldConfigPropertyItem<any, string, StringFieldConfigSettings> | FieldConfigPropertyItem<any, number, NumberFieldConfigSettings> | FieldConfigPropertyItem<any, ThresholdsConfig, ThresholdsFieldConfigSettings> | FieldConfigPropertyItem<any, ValueMapping[], ValueMappingFieldConfigSettings> | FieldConfigPropertyItem<any, DataLink<any>[], StringFieldConfigSettings>)[]
 ```
 <b>Import</b>
 

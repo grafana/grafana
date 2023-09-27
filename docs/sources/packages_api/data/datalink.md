@@ -9,12 +9,14 @@ type = "docs"
 
 ## DataLink interface
 
-Link configuration. The values may contain variables that need to be processed before running
+Link configuration. The values may contain variables that need to be processed before showing the link to user.
+
+TODO: &lt;<!-- -->T extends DataQuery<!-- -->&gt; is not strictly true for internal links as we do not need refId for example but all data source defined queries extend this so this is more for documentation.
 
 <b>Signature</b>
 
 ```typescript
-export interface DataLink 
+export interface DataLink<T extends DataQuery = any> 
 ```
 <b>Import</b>
 
@@ -25,20 +27,21 @@ import { DataLink } from '@grafana/data';
 
 |  Property | Type | Description |
 |  --- | --- | --- |
-|  [meta](#meta-property) | <code>{</code><br/><code>        datasourceUid?: string;</code><br/><code>    }</code> |  |
+|  [internal](#internal-property) | <code>{</code><br/><code>        query: T;</code><br/><code>        datasourceUid: string;</code><br/><code>    }</code> |  |
 |  [onBuildUrl](#onbuildurl-property) | <code>(event: DataLinkClickEvent) =&gt; string</code> |  |
 |  [onClick](#onclick-property) | <code>(event: DataLinkClickEvent) =&gt; void</code> |  |
 |  [targetBlank](#targetblank-property) | <code>boolean</code> |  |
 |  [title](#title-property) | <code>string</code> |  |
 |  [url](#url-property) | <code>string</code> |  |
 
-### meta property
+### internal property
 
 <b>Signature</b>
 
 ```typescript
-meta?: {
-        datasourceUid?: string;
+internal?: {
+        query: T;
+        datasourceUid: string;
     };
 ```
 

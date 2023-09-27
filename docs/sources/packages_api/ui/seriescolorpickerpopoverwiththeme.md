@@ -14,7 +14,7 @@ type = "docs"
 <b>Signature</b>
 
 ```typescript
-SeriesColorPickerPopoverWithTheme: React.FunctionComponent<Pick<SeriesColorPickerPopoverProps, "onChange" | "color" | "onColorChange" | "enableNamedColors" | "updatePopperPosition" | "yaxis" | "onToggleAxis">>
+SeriesColorPickerPopoverWithTheme: React.FunctionComponent<Pick<SeriesColorPickerPopoverProps, "color" | "onChange" | "onColorChange" | "enableNamedColors" | "updatePopperPosition" | "yaxis" | "onToggleAxis">>
 ```
 <b>Import</b>
 

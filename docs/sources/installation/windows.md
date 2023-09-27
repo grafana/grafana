@@ -49,4 +49,4 @@ To run Grafana, open your browser and go to the Grafana port (http://localhost:3
 >
 > 1. Go into the `conf` directory and copy `sample.ini` to `custom.ini`.  **Note:** You should edit `custom.ini`, never `defaults.ini`.
 > 1. Edit `custom.ini` and uncomment the `http_port` configuration option (`;` is the comment character in ini files) and change it to something like `8080` or similar. That port should not require extra Windows privileges.
-> Read more about the [configuration options]({{< relref "configuration.md" >}}).
+> Read more about the [configuration options]({{< relref "../administration/configuration.md" >}}).

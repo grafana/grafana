@@ -7,8 +7,12 @@
       link: /getting-started/getting-started/
     - name: Intro to time series
       link: /getting-started/timeseries/
+    - name: Time series dimensions
+      link: /getting-started/timeseries-dimensions/
     - name: Intro to histograms
       link: /getting-started/intro-histograms/
+    - name: Observability strategies
+      link: /getting-started/strategies/
     - name: Glossary
       link: /getting-started/glossary/
 - name: Installation
@@ -32,7 +36,7 @@
   link: /administration/
   children:
     - name: Configuration
-      link: /installation/configuration/
+      link: /administration/configuration/
     - name: Configure Docker image
       link: /installation/configure-docker/
     - name: Security
@@ -75,78 +79,31 @@
           name: Dashboard and Folder
         - link: /permissions/datasource_permissions/
           name: Data source
+    - name: Provisioning
+      link: /administration/provisioning/
     - name: Grafana CLI
       link: /administration/cli/
     - name: Internal metrics
       link: /administration/metrics/
-    - name: Provisioning
-      link: /administration/provisioning/
+    - name: Jaeger instrumentation
+      link: /administration/jaeger-instrumentation/
     - name: Set up Grafana for high availability
       link: /tutorials/ha_setup/
     - name: Troubleshooting
       link: /installation/troubleshooting/
-- name: Panels
-  link: /features/panels/
+- name: Manage users
+  link: /manage-users
   children:
-    - link: /features/panels/panels/
+    - link: /manage-users/
       name: Overview
-    - link: /features/panels/graph/
-      name: Graph
-    - link: /features/panels/table_panel/
-      name: Table
-    - link: /features/panels/stat/
-      name: Stat
-    - link: /features/panels/gauge/
-      name: Gauge
-    - link: /features/panels/bar_gauge/
-      name: Bar gauge
-    - link: /features/panels/logs/
-      name: Logs
-    - link: /features/panels/singlestat/
-      name: Singlestat
-    - link: /features/panels/heatmap/
-      name: Heatmap
-    - link: /features/panels/alertlist/
-      name: Alert list
-    - link: /features/panels/dashlist/
-      name: Dashboard list
-    - link: /features/panels/text/
-      name: Text
-- name: Dashboards
-  link: /features/dashboard/
-  children:
-    - link: /features/dashboard/dashboards/
-      name: Overview
-    - link: /reference/annotations/
-      name: Annotations
-    - link: /reference/dashboard_folders/
-      name: Folders
-    - link: /reference/playlist/
-      name: Playlist
-    - link: /reference/search/
-      name: Search
-    - link: /reference/share_dashboard/
-      name: Sharing a dashboard
-    - link: /reference/share_panel/
-      name: Sharing a panel
-    - link: /reference/timerange/
-      name: Time range
-    - link: /reference/export_import/
-      name: Export and import
-    - link: /features/dashboard/links/
-      name: Navigation links
-    - link: /reference/datalinks/
-      name: Data links
-    - link: /reference/dashboard_history/
-      name: Dashboard version history
-    - name: Keyboard Shortcuts
-      link: /features/shortcuts/
-    - name: Reporting
-      link: /features/reporting/
-    - link: /reference/dashboard/
-      name: JSON Model
-    - link: /reference/scripting/
-      name: Scripted dashboards
+    - link: /manage-users/add-or-remove-user/
+      name: Add or remove a user
+    - link: /manage-users/enable-or-disable-user/
+      name: Enable or disable a user
+    - link: /manage-users/create-or-remove-team/
+      name: Create or remove a team
+    - link: /manage-users/add-or-remove-user-from-team/
+      name: Add or remove user from team
 - name: Data sources
   link: /features/datasources/
   children:
@@ -158,18 +115,18 @@
       name: Azure Monitor
     - link: /features/datasources/elasticsearch/
       name: Elasticsearch
-    - link: /features/datasources/stackdriver/
-      name: Google Stackdriver
+    - link: /features/datasources/cloudmonitoring/
+      name: Google Cloud Monitoring
     - link: /features/datasources/graphite/
       name: Graphite
     - link: /features/datasources/influxdb/
       name: InfluxDB
+    - link: /features/datasources/jaeger/
+      name: Jaeger
     - link: /features/datasources/loki/
       name: Loki
     - link: /features/datasources/mssql/
       name: Microsoft SQL Server
-    - link: /features/datasources/mixed/
-      name: MixedData
     - link: /features/datasources/mysql/
       name: MySQL
     - link: /features/datasources/opentsdb/
@@ -180,33 +137,141 @@
       name: Prometheus
     - link: /features/datasources/testdata/
       name: TestData DB
+    - link: /features/datasources/zipkin/
+      name: Zipkin
+- name: Panels
+  link: /panels/
+  children:
+    - link: /panels/panels-overview/
+      name: Overview
+    - link: /panels/add-a-panel/
+      name: Add panel
+    - link: /panels/queries/
+      name: Queries
+    - link: /panels/transformations/
+      name: Transformations
+    - link: /panels/field-configuration-options/
+      name: Field config options
+    - link: /panels/panel-editor/
+      name: Panel editor
+    - name: Visualizations
+      link: /panels/visualizations/
+      children:
+        - link: /panels/visualizations/alert-list-panel/
+          name: Alert list
+        - link: /panels/visualizations/bar-gauge-panel/
+          name: Bar gauge
+        - link: /panels/visualizations/dashboard-list-panel/
+          name: Dashboard list
+        - link: /panels/visualizations/gauge-panel/
+          name: Gauge
+        - link: /panels/visualizations/graph-panel/
+          name: Graph
+        - link: /panels/visualizations/heatmap/
+          name: Heatmap
+        - link: /panels/visualizations/logs-panel/
+          name: Logs
+        - link: /panels/visualizations/news-panel/
+          name: News
+        - link: /panels/visualizations/stat-panel/
+          name: Stat
+        - link: /panels/visualizations/table-panel/
+          name: Table
+        - link: /panels/visualizations/text-panel/
+          name: Text
+    - link: /panels/thresholds/
+      name: Thresholds
+    - link: /panels/inspect-panel/
+      name: Inspect panel
+    - link: /panels/calculations-list/
+      name: Calculations list
+- name: Dashboards
+  link: /features/dashboard/
+  children:
+    - link: /features/dashboard/dashboards/
+      name: Overview
+    - link: /dashboards/annotations/
+      name: Annotations
+    - link: /dashboards/dashboard_folders/
+      name: Folders
+    - link: /dashboards/playlist/
+      name: Playlist
+    - link: /dashboards/search/
+      name: Search
+    - link: /reference/share_dashboard/
+      name: Sharing a dashboard
+    - link: /reference/share_panel/
+      name: Sharing a panel
+    - link: /dashboards/time-range-controls/
+      name: Time range controls
+    - link: /reference/export_import/
+      name: Export and import
+    - link: /dashboards/dashboard_history/
+      name: Dashboard version history
+    - name: Keyboard Shortcuts
+      link: /features/shortcuts/
+    - name: Reporting
+      link: /features/reporting/
+    - link: /reference/dashboard/
+      name: JSON Model
+    - link: /reference/scripting/
+      name: Scripted dashboards
 - name: Explore
   link: /features/explore/
 - name: Alerting
   link: /alerting/
   children:
-    - link: /alerting/rules/
-      name: Engine and Rules
-    - link: /alerting/metrics/
-      name: Metrics
+    - link: /alerting/alerts-overview/
+      name: Overview
     - link: /alerting/notifications/
-      name: Notifications
+      name: Alert notifications
+    - link: /alerting/create-alerts/
+      name: Create alerts
+    - link: /alerting/view-alerts/
+      name: View alerts
+    - link: /alerting/pause-an-alert-rule/
+      name: Pause alert rule
+    - link: /alerting/troubleshoot-alerts/
+      name: Troubleshoot alerts
 - name: Image rendering
   link: /administration/image_rendering/
+- name: Linking
+  link: /linking/
+  children:
+    - name: Overview
+      link: /linking/linking-overview/
+    - name: Dashboard links
+      link: /linking/dashboard-links/
+    - name: Panel links
+      link: /linking/panel-links/
+    - name: Data links
+      link: /linking/data-links/
 - name: Templates and variables
   link: /variables/
   children:
     - link: /variables/templates-and-variables/
       name: Overview
+    - link: /variables/add-query-variable/
+      name: Add a query variable
     - link: /variables/global-variables/
       name: Global variables
+    - link: /variables/url-variables/
+      name: URL variables
     - link: /variables/advanced-variable-format-options/
       name: Advanced variable formats
+    - link: /variables/formatting-multi-value-variables/
+      name: Formatting multi-value variables
+    - link: /variables/filter-variables-with-regex/
+      name: Filter variables with regex
     - link: /variables/repeat-panels-or-rows/
       name: Repeat panels or rows
+    - link: /variables/chained-variables/
+      name: Chained variables
 - name: What's new in Grafana
   link: /whatsnew/
   children:
+    - name: Version 7.1
+      link: /guides/whats-new-in-v7-1/
     - name: Version 7.0
       link: /guides/whats-new-in-v7-0/
     - name: Version 6.7
@@ -261,6 +326,8 @@
   children:
     - name: Overview
       link: /enterprise/
+    - name: Configuration
+      link: /enterprise/enterprise-configuration/
     - name: Data source permissions
       link: /enterprise/datasource_permissions/
     - name: Enhanced LDAP
@@ -277,6 +344,8 @@
       link: /enterprise/white-labeling/
     - name: Usage insights
       link: /enterprise/usage-insights/
+    - name: Vault integration
+      link: /enterprise/vault/
     - name: License expiration
       link: /enterprise/license-expiration/
 - name: Plugins
@@ -286,6 +355,8 @@
       link: /plugins/
     - name: Install plugins
       link: /plugins/installation/
+    - name: Plugin signature verification
+      link: /plugins/plugin-signature-verification/
 - name: HTTP APIs
   link: /http_api/
   children:
@@ -345,10 +416,30 @@
           link: /developers/plugins/metadata/
         - name: Data frames
           link: /developers/plugins/data-frames/
+        - name: Add support for variables
+          link: /developers/plugins/add-support-for-variables/
+        - name: Add support for annotations
+          link: /developers/plugins/add-support-for-annotations/
+        - name: Add support for Explore queries
+          link: /developers/plugins/add-support-for-explore-queries/
+        - name: Build a logs data source plugin
+          link: /developers/plugins/build-a-logs-data-source-plugin/
+        - name: Build a streaming data source plugin
+          link: /developers/plugins/build-a-streaming-data-source-plugin/
         - name: Authentication
           link: /developers/plugins/authentication/
+        - name: Sign a plugin
+          link: /developers/plugins/sign-a-plugin/
+        - name: Add authentication for data source plugins
+          link: /developers/plugins/add-authentication-for-data-source-plugins/
         - name: Backend plugins
-          link: /developers/plugins/backend/
+          children:
+            - link: /developers/plugins/backend/
+              name: Overview
+            - link: /developers/plugins/backend/plugin-protocol/
+              name: Plugin protocol
+            - link: /developers/plugins/backend/grafana-plugin-sdk-for-go/
+              name: Grafana plugin SDK for Go
         - name: Legacy plugins
           children:
             - link: /developers/plugins/legacy/

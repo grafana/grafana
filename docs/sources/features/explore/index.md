@@ -21,7 +21,7 @@ For infrastructure monitoring and incident response, you no longer need to switc
 1. Drill down and examine metrics
 1. Drill down again and search logs related to the metric and time interval (and in the future, distributed traces).
 
-If you just want to explore your data and do not want to create a dashboard then Explore makes this much easier. Explore will show the results as both a graph and a table enabling you to see trends in the data and more detail at the same time (if the data source supports both graph and table data).
+If you just want to explore your data and do not want to create a dashboard, then Explore makes this much easier. If your data source supports graph and table data, then Explore shows the results both as a graph and a table. This allows you to see trends in the data and more details at the same time.
 
 ## Start exploring
 
@@ -29,21 +29,21 @@ If you just want to explore your data and do not want to create a dashboard then
 
 There is an Explore icon on the menu bar to the left. This opens an empty Explore tab.
 
-{{< docs-imagebox img="/img/docs/v65/explore_menu.png" class="docs-image--no-shadow" caption="Screenshot of the new Explore Icon" >}}
+{{< figure src="/static/img/docs/v65/explore_menu.png" class="docs-image--no-shadow" caption="Screenshot of the new Explore Icon" >}}
 
 If you want to start with an existing query in a panel then choose the Explore option from the Panel menu. This opens an Explore tab with the query from the panel and allows you to tweak or iterate in the query outside of your dashboard.
 
-{{< docs-imagebox img="/img/docs/v65/explore_panel_menu.png" class="docs-image--no-shadow" caption="Screenshot of the new Explore option in the panel menu" >}}
+{{< figure src="/static/img/docs/v65/explore_panel_menu.png" class="docs-image--no-shadow" caption="Screenshot of the new Explore option in the panel menu" >}}
 
-Choose your data source in the dropdown in the top left. Prometheus has a custom Explore implementation, the other data sources (for now) use their standard query editor.
+Choose your data source from the dropdown in the top left. Prometheus has a custom Explore implementation, the other data sources (for now) use their standard query editor.
 
 The query field is where you can write your query and explore your data. There are three buttons beside the query field, a clear button (X), an add query button (+) and the remove query button (-). Just like the normal query editor, you can add and remove multiple queries.
 
 ## Split and compare
 
-The Split feature is an easy way to compare graphs and tables side-by-side or to look at related data together on one page. Click the split button to duplicate the current query and split the page into two side-by-side queries. It is possible to select another data source for the new query which for example, allows you to compare the same query for two different servers or to compare the staging environment to the production environment.
+The split view feature is an easy way to compare graphs and tables side-by-side or to look at related data together on one page. Click the split button to duplicate the current query and split the page into two side-by-side queries. It is possible to select another data source for the new query which for example, allows you to compare the same query for two different servers or to compare the staging environment to the production environment.
 
-{{< docs-imagebox img="/img/docs/v65/explore_split.png" class="docs-image--no-shadow" caption="Screenshot of the new Explore option in the panel menu" >}}
+{{< figure src="/static/img/docs/v65/explore_split.png" class="docs-image--no-shadow" caption="Screenshot of the new Explore option in the panel menu" >}}
 
 In split view, timepickers for both panels can be linked (if you change one, the other gets changed as well) by clicking on one of the time-sync buttons attached to the timepickers. Linking of timepickers helps with keeping the start and the end times of the split view queries in sync and it will ensure that you’re looking at the same time interval in both split panels.
 
@@ -84,7 +84,7 @@ By default, query history shows you the most recent queries. You can sort your h
 
 Filter query history in Query history and Starred tab by data source name:
 
-1. Click the **Filter queries for specific data source(s)** field
+1. Click the **Filter queries for specific data source(s)** field.
 2. Select the data source for which you would like to filter your history. You can select multiple data sources.
 
 In **Query history** tab it is also possible to filter queries by date using the slider:
@@ -95,6 +95,13 @@ In **Query history** tab it is also possible to filter queries by date using the
 
 > Note: If you are in split mode, filters are applied only to your currently active panel.
 
+### Search in query history
+
+You can search in your history across queries and your comments. Search is possible for queries in the Query history tab and Starred tab.
+
+1. Click the **Search queries** field.
+1. Type the term you are searching for into search field.
+
 ### Query history settings
 
 You can customize the query history in the Settings tab. Options are described in the table below.
@@ -103,7 +110,7 @@ You can customize the query history in the Settings tab. Options are described i
 | ------------------------------------------------------------- | --------------------------------------- |
 | Period of time for which Grafana will save your query history | 1 week                                  |
 | Change the default active tab                                 | Query history tab                       |
-| Only show queries for datasource currently active in Explore  | False                                   |
+| Only show queries for data source currently active in Explore  | True                                    |
 | Clear query history                                           | Permanently deletes all stored queries. |
 
 > Note: Query history settings are global, and applied to both panels in split mode.
@@ -114,9 +121,9 @@ The first version of Explore features a custom querying experience for Prometheu
 
 ### Metrics explorer
 
-On the left-hand side of the query field is a `Metrics` button, clicking on this opens the Metric Explorer. This shows a hierarchical menu with metrics grouped by their prefix. For example, all the Alert Manager metrics will be grouped under the `alertmanager` prefix. This is a good starting point if you just want to explore which metrics are available.
+On the left side of the query field, click **Metrics** to open the Metric Explorer. This shows a hierarchical menu with metrics grouped by their prefix. For example, all Alertmanager metrics are grouped under the `alertmanager` prefix. This is a good starting point if you just want to explore which metrics are available.
 
-{{< docs-imagebox img="/img/docs/v65/explore_metric_explorer.png" class="docs-image--no-shadow" caption="Screenshot of the new Explore option in the panel menu" >}}
+{{< figure src="/static/img/docs/v65/explore_metric_explorer.png" class="docs-image--no-shadow" caption="Screenshot of the new Explore option in the panel menu" >}}
 
 ### Query field
 
@@ -194,22 +201,72 @@ Use the Live tailing feature to see real-time logs on supported data sources.
 
 Click the **Live** button in the Explore toolbar to switch to Live tail view.
 
-While in Live tail view new logs will come from the bottom of the screen and will have fading contrasting background so you can keep track of what is new. Click the **Pause** button or scroll the the logs view to pause the Live tailing and explore previous logs without interruption. Click **Resume** button to resume the Live tailing or click **Stop** button to exit Live tailing and go back to standard Explore view.
+While in Live tail view new logs will come from the bottom of the screen and will have fading contrasting background so you can keep track of what is new. Click the **Pause** button or scroll the logs view to pause the Live tailing and explore previous logs without interruption. Click **Resume** button to resume the Live tailing or click **Stop** button to exit Live tailing and go back to standard Explore view.
 
-{{< docs-imagebox img="/img/docs/v64/explore_live_tailing.gif" class="docs-image--no-shadow" caption="Explore Live tailing in action" >}}
+{{< figure src="/static/img/docs/v64/explore_live_tailing.gif" class="docs-image--no-shadow" caption="Explore Live tailing in action" >}}
+
+## Tracing integration
+
+> Only available in Grafana v7.0+.
+
+You can visualize traces from tracing data sources in explore. Data sources currently supported:
+
+- [Jaeger]({{< relref "datasources/jaeger.md" >}})
+- [Zipkin]({{< relref "datasources/zipkin.md" >}})
+
+For information about how to use the query editor see documentation for specific data source.
+
+{{< figure src="/static/img/docs/v70/explore-trace-view-full.png" class="docs-image--no-shadow" caption="Screenshot of the trace view" >}}
+
+##### Header
+
+{{< figure src="/static/img/docs/v70/explore-trace-view-header.png" class="docs-image--no-shadow" caption="Screenshot of the trace view header" >}}
+
+- Header title: Shows the name of the root span and trace ID.
+- Search: Highlights spans containing the searched text.
+- Metadata: Various metadata about the trace.
+
+##### Minimap
+
+{{< figure src="/static/img/docs/v70/explore-trace-view-minimap.png" class="docs-image--no-shadow" caption="Screenshot of the trace view minimap" >}}
+
+Shows condensed view or the trace timeline. Drag your mouse over the minimap to zoom into smaller time range. Zooming will also update the main timeline, so it is easy to see shorter spans. Hovering over the minimap, when zoomed, will show Reset Selection button which resets the zoom.
+
+##### Timeline
+
+{{< figure src="/static/img/docs/v70/explore-trace-view-timeline.png" class="docs-image--no-shadow" caption="Screenshot of the trace view timeline" >}}
+
+Shows list of spans within the trace. Each span row consists of these components:
+
+- Expand children button: Expands or collapses all the children spans of selected span.
+- Service name: Name of the service logged the span.
+- Operation name: Name of the operation that this span represents.
+- Span duration bar: Visual representation of the operation duration within the trace.
+
+Clicking anywhere on the span row shows span details.
+
+##### Span details
+
+{{< figure src="/static/img/docs/v70/explore-trace-view-span-details.png" class="docs-image--no-shadow" caption="Screenshot of the trace view span details" >}}
+
+- Operation name
+- Span metadata
+- Tags: Any tags associated with this span.
+- Process metadata: Metadata about the process that logged this span.
+- Logs: List of logs logged by this span and associated key values. In case of Zipkin logs section shows Zipkin annotations.
 
 ## Navigating between Explore and a dashboard
 
 To help accelerate workflows that involve regularly switching from Explore to a dashboard and vice-versa, we've added the ability to return to the origin dashboard
 after navigating to Explore from the panel's dropdown.
 
-{{< docs-imagebox img="/img/docs/v64/panel_dropdown.png" class="docs-image--no-shadow" caption="Screenshot of the panel dropdown" >}}
+{{< figure src="/static/img/docs/v64/panel_dropdown.png" class="docs-image--no-shadow" caption="Screenshot of the panel dropdown" >}}
 
 After you've navigated to Explore, you should notice a "Back" button in the Explore toolbar.
 
-{{< docs-imagebox img="/img/docs/v64/explore_toolbar.png" class="docs-image--no-shadow" caption="Screenshot of the explore toolbar" >}}
+{{< figure src="/static/img/docs/v64/explore_toolbar.png" class="docs-image--no-shadow" caption="Screenshot of the explore toolbar" >}}
 
 Simply clicking the button will return you to the origin dashboard, or, if you'd like to bring changes you make in Explore back to the dashboard, simply click
 the arrow next to the button to reveal a "Return to panel with changes" menu item.
 
-{{< docs-imagebox img="/img/docs/v64/explore_return_dropdown.png" class="docs-image--no-shadow" caption="Screenshot of the expanded explore return dropdown" >}}
+{{< figure src="/static/img/docs/v64/explore_return_dropdown.png" class="docs-image--no-shadow" caption="Screenshot of the expanded explore return dropdown" >}}

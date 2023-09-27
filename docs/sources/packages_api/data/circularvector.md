@@ -11,7 +11,7 @@ type = "docs"
 
 Circular vector uses a single buffer to capture a stream of values overwriting the oldest value on add.
 
-This supports addting to the 'head' or 'tail' and will grow the buffer to match a configured capacity.
+This supports adding to the 'head' or 'tail' and will grow the buffer to match a configured capacity.
 
 <b>Signature</b>
 

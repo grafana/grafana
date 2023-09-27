@@ -16,7 +16,7 @@ Used to register echo backends that will receive Grafana echo events during appl
 <b>Signature</b>
 
 ```typescript
-registerEchoBackend: (backend: EchoBackend<any, any>) => void
+registerEchoBackend: (backend: EchoBackend) => void
 ```
 <b>Import</b>
 

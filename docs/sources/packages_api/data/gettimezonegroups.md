@@ -14,10 +14,7 @@ type = "docs"
 <b>Signature</b>
 
 ```typescript
-getTimeZoneGroups: () => {
-    label: string;
-    options: string[];
-}[]
+getTimeZoneGroups: ((includeInternal?: any) => GroupedTimeZones[]) & import("lodash").MemoizedFunction
 ```
 <b>Import</b>
 

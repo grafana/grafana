@@ -23,7 +23,7 @@ grafana-cli -h
 Some commands, such as installing or removing plugins, require `sudo` in order to run.
 
 **Windows users**
-Some commands, such as installing or removing plugins, require you to run Windows PowerShell as Administrator. 
+Some commands, such as installing or removing plugins, require you to run Windows PowerShell as Administrator.
 
 Before you enter commands, `cd` into the Grafana bin directory. The default path is:
 ```
@@ -101,40 +101,40 @@ grafana-cli --insecure --pluginUrl https://company.com/grafana/plugins/<plugin-i
 
 ### Enable debug logging
 
-`--debug` or `-d` enables debug logging. Debug output is returned and shown in the terminal.  
+`--debug` or `-d` enables debug logging. Debug output is returned and shown in the terminal.
 
 **Example:**
 ```bash
 grafana-cli --debug plugins install <plugin-id>
 ```
 
-### Override a configuration setting  
+### Override a configuration setting
 
 `--configOverrides` is a command line argument that acts like an environmental variable override.
 
-For example, you can use it to redirect logging to another file (maybe to log plugin installations in a service like Hosted Grafana) or when resetting the admin password and you have non-default values for some important config value (like where the database is located).
+For example, you can use it to redirect logging to another file (maybe to log plugin installations in Grafana Cloud) or when resetting the admin password and you have non-default values for some important config value (like where the database is located).
 
 **Example:**
 ```bash
 grafana-cli --configOverrides cfg:default.paths.log=/dev/null plugins install <plugin-id>
 ```
 
-### Override homepath value  
+### Override homepath value
 
 Sets the path for the Grafana install/home path, defaults to working directory. You do not need to use this if you are in the Grafana installation directory when using the CLI.
- 
+
 **Example:**
 ```bash
 grafana-cli --homepath "c:\Program Files\grafana" admin reset-admin-password mynewpassword
 ```
 
-### Override config file         
+### Override config file
 
-`--config value` overrides the default location where Grafana expects the configuration file. Refer to [Configuration]({{< relref "../installation/configuration.md" >}}) for more information about configuring Grafana and default configuration file locations.
+`--config value` overrides the default location where Grafana expects the configuration file. Refer to [Configuration]({{< relref "../administration/configuration.md" >}}) for more information about configuring Grafana and default configuration file locations.
 
 **Example:**
 ```bash
-grafana-cli admin reset-admin-password --config "/etc/configuration/" mynewpassword
+grafana-cli --config "/etc/configuration/" admin reset-admin-password mynewpassword
 ```
 
 ## Plugins commands
@@ -200,7 +200,7 @@ grafana-cli admin
 
 If there are two flags being used to set the homepath and the config file path, then running the command returns this error:
 
-> Could not find config defaults, make sure homepath command line parameter is set or working directory is homepath 
+> Could not find config defaults, make sure homepath command line parameter is set or working directory is homepath
 
 To correct this, use the `--homepath` global option to specify the Grafana default homepath for this command:
 

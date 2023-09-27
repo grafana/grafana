@@ -2,7 +2,7 @@
 title = "Install on RPM-based Linux"
 description = "Grafana Installation guide for RPM-based Linux, such as Centos, Fedora, OpenSuse, and Red Hat."
 keywords = ["grafana", "installation", "documentation", "centos", "fedora", "opensuse", "redhat"]
-aliases = ["/docs/grafana/latest/installation/installation/rpm"]
+aliases = ["/docs/grafana/v7.0/installation/installation/rpm"]
 type = "docs"
 [menu.docs]
 name = "Install on RPM-based Linux"
@@ -161,10 +161,10 @@ sudo systemctl status grafana-server
 Configure the Grafana server to start at boot:
 
 ```bash
-sudo systemctl enable grafana-server.service
+sudo systemctl enable grafana-server
 ```
 
-> **SUSE or OpenSUSE users:** You might need to start the server with the systemd method, then then use the init.d method to configure Grafana to start at boot.
+> **SUSE or OpenSUSE users:** You might need to start the server with the systemd method, then use the init.d method to configure Grafana to start at boot.
 
 ### Start the server with init.d
 
@@ -206,4 +206,4 @@ Refer to the [Getting Started]({{< relref "../getting-started/getting-started/" 
 
 ## Configure Grafana
 
-Refer to the [Configuration]({{< relref "configuration.md" >}}) page for details on options for customizing your environment, logging, database, and so on.
+Refer to the [Configuration]({{< relref "../administration/configuration.md" >}}) page for details on options for customizing your environment, logging, database, and so on.

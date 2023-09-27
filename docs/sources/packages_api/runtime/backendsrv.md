@@ -16,8 +16,9 @@ The request function can be used to perform a remote call by specifying a [Backe
 <b>Signature</b>
 
 ```typescript
-export interface BackendSrv 
+export interface BackendSrv
 ```
+
 <b>Import</b>
 
 ```typescript
@@ -26,19 +27,21 @@ import { BackendSrv } from '@grafana/runtime';
 
 ## Remarks
 
-By default Grafana will display an error message alert if the remote call fails. If you want to prevent this from happending you need to catch the error thrown by the BackendSrv and set the `isHandled = true` on the incoming error.
+By default Grafana will display an error message alert if the remote call fails. If you want to prevent this from happending you need to catch the error thrown by the BackendSrv and set the `showErrorAlert = true` on the request options object.
+
+> In versions prior to v7.2 you disable the notification alert by setting isHandled on the caught error
 
 <b>Methods</b>
 
-|  Method | Description |
-|  --- | --- |
-|  [datasourceRequest(options)](#datasourcerequest-method) | Special function used to communicate with datasources that will emit core events that the Grafana QueryInspector and QueryEditor is listening for to be able to display datasource query information. Can be skipped by adding <code>option.silent</code> when initializing the request. |
-|  [delete(url)](#delete-method) |  |
-|  [get(url, params, requestId)](#get-method) |  |
-|  [patch(url, data)](#patch-method) |  |
-|  [post(url, data)](#post-method) |  |
-|  [put(url, data)](#put-method) |  |
-|  [request(options)](#request-method) |  |
+| Method                                                  | Description                                                                                                                                                                                                                                                                              |
+| ------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [datasourceRequest(options)](#datasourcerequest-method) | Special function used to communicate with datasources that will emit core events that the Grafana QueryInspector and QueryEditor is listening for to be able to display datasource query information. Can be skipped by adding <code>option.silent</code> when initializing the request. |
+| [delete(url)](#delete-method)                           |                                                                                                                                                                                                                                                                                          |
+| [get(url, params, requestId)](#get-method)              |                                                                                                                                                                                                                                                                                          |
+| [patch(url, data)](#patch-method)                       |                                                                                                                                                                                                                                                                                          |
+| [post(url, data)](#post-method)                         |                                                                                                                                                                                                                                                                                          |
+| [put(url, data)](#put-method)                           |                                                                                                                                                                                                                                                                                          |
+| [request(options)](#request-method)                     |                                                                                                                                                                                                                                                                                          |
 
 ### datasourceRequest method
 
@@ -49,11 +52,12 @@ Special function used to communicate with datasources that will emit core events
 ```typescript
 datasourceRequest(options: BackendSrvRequest): Promise<any>;
 ```
+
 <b>Parameters</b>
 
-|  Parameter | Type | Description |
-|  --- | --- | --- |
-|  options | <code>BackendSrvRequest</code> |  |
+| Parameter | Type                           | Description |
+| --------- | ------------------------------ | ----------- |
+| options   | <code>BackendSrvRequest</code> |             |
 
 <b>Returns:</b>
 
@@ -66,11 +70,12 @@ datasourceRequest(options: BackendSrvRequest): Promise<any>;
 ```typescript
 delete(url: string): Promise<any>;
 ```
+
 <b>Parameters</b>
 
-|  Parameter | Type | Description |
-|  --- | --- | --- |
-|  url | <code>string</code> |  |
+| Parameter | Type                | Description |
+| --------- | ------------------- | ----------- |
+| url       | <code>string</code> |             |
 
 <b>Returns:</b>
 
@@ -83,13 +88,14 @@ delete(url: string): Promise<any>;
 ```typescript
 get(url: string, params?: any, requestId?: string): Promise<any>;
 ```
+
 <b>Parameters</b>
 
-|  Parameter | Type | Description |
-|  --- | --- | --- |
-|  url | <code>string</code> |  |
-|  params | <code>any</code> |  |
-|  requestId | <code>string</code> |  |
+| Parameter | Type                | Description |
+| --------- | ------------------- | ----------- |
+| url       | <code>string</code> |             |
+| params    | <code>any</code>    |             |
+| requestId | <code>string</code> |             |
 
 <b>Returns:</b>
 
@@ -102,12 +108,13 @@ get(url: string, params?: any, requestId?: string): Promise<any>;
 ```typescript
 patch(url: string, data?: any): Promise<any>;
 ```
+
 <b>Parameters</b>
 
-|  Parameter | Type | Description |
-|  --- | --- | --- |
-|  url | <code>string</code> |  |
-|  data | <code>any</code> |  |
+| Parameter | Type                | Description |
+| --------- | ------------------- | ----------- |
+| url       | <code>string</code> |             |
+| data      | <code>any</code>    |             |
 
 <b>Returns:</b>
 
@@ -120,12 +127,13 @@ patch(url: string, data?: any): Promise<any>;
 ```typescript
 post(url: string, data?: any): Promise<any>;
 ```
+
 <b>Parameters</b>
 
-|  Parameter | Type | Description |
-|  --- | --- | --- |
-|  url | <code>string</code> |  |
-|  data | <code>any</code> |  |
+| Parameter | Type                | Description |
+| --------- | ------------------- | ----------- |
+| url       | <code>string</code> |             |
+| data      | <code>any</code>    |             |
 
 <b>Returns:</b>
 
@@ -138,12 +146,13 @@ post(url: string, data?: any): Promise<any>;
 ```typescript
 put(url: string, data?: any): Promise<any>;
 ```
+
 <b>Parameters</b>
 
-|  Parameter | Type | Description |
-|  --- | --- | --- |
-|  url | <code>string</code> |  |
-|  data | <code>any</code> |  |
+| Parameter | Type                | Description |
+| --------- | ------------------- | ----------- |
+| url       | <code>string</code> |             |
+| data      | <code>any</code>    |             |
 
 <b>Returns:</b>
 
@@ -156,13 +165,13 @@ put(url: string, data?: any): Promise<any>;
 ```typescript
 request(options: BackendSrvRequest): Promise<any>;
 ```
+
 <b>Parameters</b>
 
-|  Parameter | Type | Description |
-|  --- | --- | --- |
-|  options | <code>BackendSrvRequest</code> |  |
+| Parameter | Type                           | Description |
+| --------- | ------------------------------ | ----------- |
+| options   | <code>BackendSrvRequest</code> |             |
 
 <b>Returns:</b>
 
 `Promise<any>`
-

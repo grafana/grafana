@@ -14,7 +14,7 @@ type = "docs"
 <b>Signature</b>
 
 ```typescript
-createDimension: (name: string, columns: Field<any, import("..").Vector<any>>[]) => Dimension<any>
+createDimension: (name: string, columns: Field[]) => Dimension
 ```
 <b>Import</b>
 

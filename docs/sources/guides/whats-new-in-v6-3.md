@@ -48,7 +48,7 @@ allows you to view lines before and after the line of interest.
 This release adds support for searching and visualizing logs stored in Elasticsearch in the Explore mode. With a special
 simplified query interface specifically designed for logs search.
 
-{{< docs-imagebox img="/img/docs/v63/elasticsearch_explore_logs.png" max-width="600px" caption="New Time Picker" >}}
+{{< figure src="/static/img/docs/v63/elasticsearch_explore_logs.png" max-width="600px" caption="New Time Picker" >}}
 
 Please read [Using Elasticsearch in Grafana](/features/datasources/elasticsearch/#querying-logs-beta) for more detailed information on how to get started and use it.
 
@@ -57,7 +57,7 @@ Please read [Using Elasticsearch in Grafana](/features/datasources/elasticsearch
 This release adds support for searching and visualizing logs stored in InfluxDB in the Explore mode. With a special
 simplified query interface specifically designed for logs search.
 
-{{< docs-imagebox img="/img/docs/v63/influxdb_explore_logs.png" max-width="600px" caption="New Time Picker" >}}
+{{< figure src="/static/img/docs/v63/influxdb_explore_logs.png" max-width="600px" caption="New Time Picker" >}}
 
 Please read [Using InfluxDB in Grafana](/features/datasources/influxdb/#querying-logs-beta) for more detailed information on how to get started and use it.
 
@@ -82,11 +82,11 @@ Name | Description
 *${__series_name}* | The name of the time series (or table)
 *${__value_time}* | The time of the point your clicking on (in millisecond epoch)
 *${__url_time_range}* | Interpolates as the full time range (i.e. from=21312323412&to=21312312312)
-*${__all_variables}* | Adds all current variables (and current values) to the url
+*${__all_variables}* | Adds all current variables (and current values) to the URL
 
 You can then click on point in the Graph.
 
-{{< docs-imagebox img="/img/docs/v63/graph_datalink.png" max-width="400px" caption="New Time Picker" >}}
+{{< figure src="/static/img/docs/v63/graph_datalink.png" max-width="400px" caption="New Time Picker" >}}
 
 For now only the Graph panel supports `Data links` but we hope to add these to many visualizations.
 
@@ -94,18 +94,18 @@ For now only the Graph panel supports `Data links` but we hope to add these to m
 
 The time picker has been re-designed and with a more basic design that makes accessing quick ranges more easy.
 
-{{< docs-imagebox img="/img/docs/v63/time_picker.png" max-width="400px" caption="New Time Picker" >}}
+{{< figure src="/static/img/docs/v63/time_picker.png" max-width="400px" caption="New Time Picker" >}}
 
 ## Graph Gradients
 
 Want more eye candy in your graphs? Then the fill gradient option might be for you! Works really well for
 graphs with only a single series.
 
-{{< docs-imagebox img="/img/docs/v63/graph_gradient_area.jpeg" max-width="800px" caption="Graph Gradient Area" >}}
+{{< figure src="/static/img/docs/v63/graph_gradient_area.jpeg" max-width="800px" caption="Graph Gradient Area" >}}
 
 Looks really nice in light theme as well.
 
-{{< docs-imagebox img="/img/docs/v63/graph_gradients_white.png" max-width="800px" caption="Graph Gradient Area" >}}
+{{< figure src="/static/img/docs/v63/graph_gradients_white.png" max-width="800px" caption="Graph Gradient Area" >}}
 
 ## Grafana Enterprise
 
