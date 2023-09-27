@@ -14,18 +14,15 @@ import { DataSourceWithBackend, getTemplateSrv, TemplateSrv } from '@grafana/run
 import { extractLabelMatchers, toPromLikeExpr } from '../prometheus/language_utils';
 
 import { VariableSupport } from './VariableSupport';
-import { defaultGrafanaPyroscope, defaultPhlareQueryType } from './dataquery.gen';
-import { PhlareDataSourceOptions, Query, ProfileTypeMessage, BackendType } from './types';
+import { defaultGrafanaPyroscope, defaultPyroscopeQueryType } from './dataquery.gen';
+import { PyroscopeDataSourceOptions, Query, ProfileTypeMessage } from './types';
 
-export class PhlareDataSource extends DataSourceWithBackend<Query, PhlareDataSourceOptions> {
-  backendType: BackendType;
-
+export class PyroscopeDataSource extends DataSourceWithBackend<Query, PyroscopeDataSourceOptions> {
   constructor(
-    instanceSettings: DataSourceInstanceSettings<PhlareDataSourceOptions>,
+    instanceSettings: DataSourceInstanceSettings<PyroscopeDataSourceOptions>,
     private readonly templateSrv: TemplateSrv = getTemplateSrv()
   ) {
     super(instanceSettings);
-    this.backendType = instanceSettings.jsonData.backendType ?? 'phlare';
     this.variables = new VariableSupport(this);
   }
 
@@ -68,11 +65,6 @@ export class PhlareDataSource extends DataSourceWithBackend<Query, PhlareDataSou
     });
   }
 
-  // We need the URL here because it may not be saved on the backend yet when used from config page.
-  async getBackendType(url: string): Promise<{ backendType: BackendType | 'unknown' }> {
-    return await super.getResource('backendType', { url });
-  }
-
   applyTemplateVariables(query: Query, scopedVars: ScopedVars): Query {
     return {
       ...query,
@@ -100,11 +92,11 @@ export class PhlareDataSource extends DataSourceWithBackend<Query, PhlareDataSou
   }
 
   exportToAbstractQuery(query: Query): AbstractQuery {
-    const phlareQuery = query.labelSelector;
-    if (!phlareQuery || phlareQuery.length === 0) {
+    const pyroscopeQuery = query.labelSelector;
+    if (!pyroscopeQuery || pyroscopeQuery.length === 0) {
       return { refId: query.refId, labelMatchers: [] };
     }
-    const tokens = Prism.tokenize(phlareQuery, grammar);
+    const tokens = Prism.tokenize(pyroscopeQuery, grammar);
     return {
       refId: query.refId,
       labelMatchers: extractLabelMatchers(tokens),
@@ -118,7 +110,7 @@ export class PhlareDataSource extends DataSourceWithBackend<Query, PhlareDataSou
 
 export const defaultQuery: Partial<Query> = {
   ...defaultGrafanaPyroscope,
-  queryType: defaultPhlareQueryType,
+  queryType: defaultPyroscopeQueryType,
 };
 
 export function normalizeQuery(query: Query, app?: CoreApp | string) {

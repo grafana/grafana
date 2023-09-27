@@ -14,12 +14,12 @@ import {
 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
 import { DataQuery } from '@grafana/schema';
-import { Badge, GraphTresholdsStyleMode, Icon, InlineField, Input, Tooltip, useStyles2 } from '@grafana/ui';
+import { GraphTresholdsStyleMode, Icon, InlineField, Input, Tooltip, useStyles2 } from '@grafana/ui';
 import { QueryEditorRow } from 'app/features/query/components/QueryEditorRow';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { msToSingleUnitDuration } from '../../utils/time';
-import { AlertConditionIndicator } from '../expressions/AlertConditionIndicator';
+import { ExpressionStatusIndicator } from '../expressions/ExpressionStatusIndicator';
 
 import { QueryOptions } from './QueryOptions';
 import { VizWrapper } from './VizWrapper';
@@ -122,7 +122,7 @@ export const QueryWrapper = ({
     const isAlertCondition = condition === query.refId;
 
     return (
-      <Stack direction="row" alignItems="baseline" gap={1}>
+      <Stack direction="row" alignItems="center" gap={1}>
         <SelectingDataSourceTooltip />
         <QueryOptions
           onChangeTimeRange={onChangeTimeRange}
@@ -131,15 +131,11 @@ export const QueryWrapper = ({
           onChangeQueryOptions={onChangeQueryOptions}
           index={index}
         />
-
-        <AlertConditionIndicator
-          onSetCondition={() => onSetCondition(query.refId)}
-          enabled={isAlertCondition}
+        <ExpressionStatusIndicator
           error={error}
+          onSetCondition={() => onSetCondition(query.refId)}
+          isCondition={isAlertCondition}
         />
-        {!isAlertCondition && error && (
-          <Badge color="red" icon="exclamation-circle" text="Error" tooltip={error.message} />
-        )}
       </Stack>
     );
   }

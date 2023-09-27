@@ -30,6 +30,12 @@ func ProvideDiscoveryStage(cfg *config.Cfg, pf finder.Finder, pr registry.Servic
 			func(ctx context.Context, _ plugins.Class, b []*plugins.FoundBundle) ([]*plugins.FoundBundle, error) {
 				return discovery.NewDuplicatePluginFilterStep(pr).Filter(ctx, b)
 			},
+			func(_ context.Context, _ plugins.Class, b []*plugins.FoundBundle) ([]*plugins.FoundBundle, error) {
+				return NewDisablePluginsStep(cfg).Filter(b)
+			},
+			func(_ context.Context, c plugins.Class, b []*plugins.FoundBundle) ([]*plugins.FoundBundle, error) {
+				return NewAsExternalStep(cfg).Filter(c, b)
+			},
 		},
 	})
 }

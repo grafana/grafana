@@ -66,7 +66,10 @@ export interface DataSourceWithQueryExportSupport<TQuery extends SchemaDataQuery
 export const hasQueryImportSupport = <TQuery extends SchemaDataQuery>(
   datasource: unknown
 ): datasource is DataSourceWithQueryImportSupport<TQuery> => {
-  return (datasource as DataSourceWithQueryImportSupport<TQuery>).importFromAbstractQueries !== undefined;
+  if (!datasource) {
+    return false;
+  }
+  return 'importFromAbstractQueries' in datasource;
 };
 
 /**
@@ -75,5 +78,8 @@ export const hasQueryImportSupport = <TQuery extends SchemaDataQuery>(
 export const hasQueryExportSupport = <TQuery extends SchemaDataQuery>(
   datasource: unknown
 ): datasource is DataSourceWithQueryExportSupport<TQuery> => {
-  return (datasource as DataSourceWithQueryExportSupport<TQuery>).exportToAbstractQueries !== undefined;
+  if (!datasource) {
+    return false;
+  }
+  return 'exportToAbstractQueries' in datasource;
 };

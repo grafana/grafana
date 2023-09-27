@@ -9,6 +9,7 @@ import (
 	"github.com/hashicorp/go-plugin"
 
 	"github.com/grafana/grafana/pkg/infra/process"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/log"
 )
@@ -141,7 +142,7 @@ func (p *grpcPlugin) getPluginClient() (pluginClient, bool) {
 func (p *grpcPlugin) CollectMetrics(ctx context.Context, req *backend.CollectMetricsRequest) (*backend.CollectMetricsResult, error) {
 	pluginClient, ok := p.getPluginClient()
 	if !ok {
-		return nil, backendplugin.ErrPluginUnavailable
+		return nil, plugins.ErrPluginUnavailable
 	}
 	return pluginClient.CollectMetrics(ctx, req)
 }
@@ -149,7 +150,7 @@ func (p *grpcPlugin) CollectMetrics(ctx context.Context, req *backend.CollectMet
 func (p *grpcPlugin) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
 	pluginClient, ok := p.getPluginClient()
 	if !ok {
-		return nil, backendplugin.ErrPluginUnavailable
+		return nil, plugins.ErrPluginUnavailable
 	}
 	return pluginClient.CheckHealth(ctx, req)
 }
@@ -157,7 +158,7 @@ func (p *grpcPlugin) CheckHealth(ctx context.Context, req *backend.CheckHealthRe
 func (p *grpcPlugin) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	pluginClient, ok := p.getPluginClient()
 	if !ok {
-		return nil, backendplugin.ErrPluginUnavailable
+		return nil, plugins.ErrPluginUnavailable
 	}
 
 	return pluginClient.QueryData(ctx, req)
@@ -166,7 +167,7 @@ func (p *grpcPlugin) QueryData(ctx context.Context, req *backend.QueryDataReques
 func (p *grpcPlugin) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
 	pluginClient, ok := p.getPluginClient()
 	if !ok {
-		return backendplugin.ErrPluginUnavailable
+		return plugins.ErrPluginUnavailable
 	}
 	return pluginClient.CallResource(ctx, req, sender)
 }
@@ -174,7 +175,7 @@ func (p *grpcPlugin) CallResource(ctx context.Context, req *backend.CallResource
 func (p *grpcPlugin) SubscribeStream(ctx context.Context, request *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
 	pluginClient, ok := p.getPluginClient()
 	if !ok {
-		return nil, backendplugin.ErrPluginUnavailable
+		return nil, plugins.ErrPluginUnavailable
 	}
 	return pluginClient.SubscribeStream(ctx, request)
 }
@@ -182,7 +183,7 @@ func (p *grpcPlugin) SubscribeStream(ctx context.Context, request *backend.Subsc
 func (p *grpcPlugin) PublishStream(ctx context.Context, request *backend.PublishStreamRequest) (*backend.PublishStreamResponse, error) {
 	pluginClient, ok := p.getPluginClient()
 	if !ok {
-		return nil, backendplugin.ErrPluginUnavailable
+		return nil, plugins.ErrPluginUnavailable
 	}
 	return pluginClient.PublishStream(ctx, request)
 }
@@ -190,7 +191,7 @@ func (p *grpcPlugin) PublishStream(ctx context.Context, request *backend.Publish
 func (p *grpcPlugin) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
 	pluginClient, ok := p.getPluginClient()
 	if !ok {
-		return backendplugin.ErrPluginUnavailable
+		return plugins.ErrPluginUnavailable
 	}
 	return pluginClient.RunStream(ctx, req, sender)
 }
