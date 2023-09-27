@@ -13,6 +13,8 @@ import {
 import { DataQuery, DataSourceRef } from '@grafana/schema';
 import { getTimeRange } from 'app/features/dashboard/utils/timeRange';
 
+import { PANEL_STYLES } from '../../home/Insights';
+
 export const getLabelsInfo = (from: number, to: number): Observable<DataQueryResponseData> => {
   return getBackendSrv().fetch({
     url: `/api/v1/rules/history`,
@@ -49,8 +51,7 @@ export function getMostFiredLabelsScene(timeRange: SceneTimeRange, datasource: D
   });
 
   return new SceneFlexItem({
-    width: 'calc(50% - 8px)',
-    height: 300,
+    ...PANEL_STYLES,
     body: PanelBuilders.table().setTitle(panelTitle).setData(query).build(),
   });
 }

@@ -14,7 +14,8 @@ import { shareDashboardType } from '../../utils';
 import { NoUpsertPermissionsAlert } from '../ModalAlerts/NoUpsertPermissionsAlert';
 import { UnsupportedDataSourcesAlert } from '../ModalAlerts/UnsupportedDataSourcesAlert';
 import { UnsupportedTemplateVariablesAlert } from '../ModalAlerts/UnsupportedTemplateVariablesAlert';
-import { dashboardHasTemplateVariables, getUnsupportedDashboardDatasources } from '../SharePublicDashboardUtils';
+import { dashboardHasTemplateVariables } from '../SharePublicDashboardUtils';
+import { useGetUnsupportedDataSources } from '../useGetUnsupportedDataSources';
 
 import { AcknowledgeCheckboxes } from './AcknowledgeCheckboxes';
 
@@ -31,8 +32,8 @@ const CreatePublicDashboard = ({ isError }: { isError: boolean }) => {
   const hasWritePermissions = contextSrv.hasPermission(AccessControlAction.DashboardsPublicWrite);
   const dashboardState = useSelector((store) => store.dashboard);
   const dashboard = dashboardState.getModel()!;
-  const unsupportedDataSources = getUnsupportedDashboardDatasources(dashboard.panels);
 
+  const { unsupportedDataSources } = useGetUnsupportedDataSources(dashboard);
   const [createPublicDashboard, { isLoading: isSaveLoading }] = useCreatePublicDashboardMutation();
 
   const disableInputs = !hasWritePermissions || isSaveLoading || isError;
