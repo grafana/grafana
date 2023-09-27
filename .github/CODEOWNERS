@@ -217,6 +217,7 @@
 /devenv/docker/loadtest/ @grafana/backend-platform
 /devenv/docker/rpmtest/ @grafana/backend-platform
 /devenv/jsonnet/ @grafana/dataviz-squad
+/devenv/kube-apiserver @grafana/grafana-app-platform-squad
 /devenv/local-npm/ @grafana/frontend-ops
 /devenv/vscode/ @grafana/frontend-ops
 /devenv/setup.sh @grafana/backend-platform
