@@ -397,7 +397,8 @@ func PermissionMatchesSearchOptions(permission accesscontrol.Permission, searchO
 }
 
 func (s *Service) SaveExternalServiceRole(ctx context.Context, cmd accesscontrol.SaveExternalServiceRoleCommand) error {
-	if !s.features.IsEnabled(featuremgmt.FlagExternalServiceAuth) {
+	if !s.features.IsEnabled(featuremgmt.FlagExternalServiceAuth) &&
+		!s.features.IsEnabled(featuremgmt.FlagExternalServiceAccounts) {
 		s.log.Debug("Registering an external service role is behind a feature flag, enable it to use this feature.")
 		return nil
 	}
