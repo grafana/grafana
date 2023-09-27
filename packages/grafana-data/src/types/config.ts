@@ -187,6 +187,7 @@ export interface GrafanaConfig {
   passwordHint: string;
   loginError?: string;
   viewersCanEdit: boolean;
+  editorsCanAdmin: boolean;
   disableSanitizeHtml: boolean;
   trustedTypesDefaultPolicyEnabled: boolean;
   cspReportOnlyEnabled: boolean;
