@@ -43,7 +43,10 @@ const stripBaseFromUrl = (urlOrPath: string): string => {
     segmentToStrip = `${window.location.origin}${appSubUrl}`;
   }
 
-  return urlOrPath.length > 0 && urlOrPath.indexOf(segmentToStrip) === 0
+  const segmentIx = urlOrPath.indexOf(segmentToStrip);
+  // Check if the segment is followed by a '/' so it does not replace incorrect similarly named segments
+  // i.e. /grafana should not replace /grafanadashboards
+  return urlOrPath.length > 0 && segmentIx === 0 && urlOrPath[segmentToStrip.length] === '/'
     ? urlOrPath.slice(segmentToStrip.length - stripExtraChars)
     : urlOrPath;
 };
