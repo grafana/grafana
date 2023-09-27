@@ -40,7 +40,7 @@ export interface Props {
   size?: 'sm' | 'md' | 'lg';
   /** Tabs */
   tabs?: React.ReactNode;
-  // TODO remove this prop next major version, it doesn't do anything anymore
+  // TODO remove this prop next major version
   /**
    * @deprecated this is now default behaviour. content is always scrollable.
    **/
