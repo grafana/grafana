@@ -1,7 +1,8 @@
 import createVirtualEnvironment from '@locker/near-membrane-dom';
 import { ProxyTarget } from '@locker/near-membrane-shared';
 
-import { PluginMeta } from '@grafana/data';
+import { BootData, PluginMeta } from '@grafana/data';
+import { config, logInfo } from '@grafana/runtime';
 
 import { getPluginSettings } from '../pluginSettings';
 
@@ -67,6 +68,7 @@ async function doImportPluginModuleInSandbox(meta: PluginMeta): Promise<System.M
       }
       return originalValue;
     }
+
     // each plugin has its own sandbox
     sandboxEnvironment = createVirtualEnvironment(window, {
       // distortions are interceptors to modify the behavior of objects when
@@ -94,6 +96,30 @@ async function doImportPluginModuleInSandbox(meta: PluginMeta): Promise<System.M
           // Similar to `window.monaco`, `window.Prism` may be undefined when invoked.
           return Reflect.get(window, 'Prism');
         },
+        get grafanaBootData(): BootData {
+          // We don't want to encourage plugins to use `window.grafanaBootData`. They should
+          // use `@grafana/runtime.config` instead.
+          // if we are in dev mode we fail this access
+          if (config.buildInfo.env === 'development') {
+            throw new Error(
+              `Error in ${meta.id}: Plugins should not use window.grafanaBootData. Use "config" from "@grafana/runtime" instead.`
+            );
+          } else {
+            console.error(
+              `${meta.id.toUpperCase()}: Plugins should not use window.grafanaBootData. Use "config" from "@grafana/runtime" instead.`
+            );
+            logInfo('Plugin using window.grafanaBootData', {
+              sandbox: 'true',
+              pluginId: meta.id,
+              guessedPluginName: meta.id,
+              parent: 'window',
+              packageName: 'window',
+              key: 'grafanaBootData',
+            });
+          }
+          return config.bootData;
+        },
+
         // Plugins builds use the AMD module system. Their code consists
         // of a single function call to `define()` that internally contains all the plugin code.
         // This is that `define` function the plugin will call.
