@@ -1,6 +1,6 @@
-+++
-title = "Working with data frames"
-+++
+---
+title: Working with data frames
+---
 
 # Working with data frames
 

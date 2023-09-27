@@ -1,6 +1,6 @@
-+++
-title = "Data frames"
-+++
+---
+title: Data frames
+---
 
 # Data frames
 
@@ -30,17 +30,17 @@ In essence, a data frame is a collection of _fields_, where each field correspon
 
 ```ts
 interface Field {
-  name: string;
-  // Prometheus like Labels / Tags
-  labels?: Record<string, string>;
+    name:    string;
+     // Prometheus like Labels / Tags
+    labels?: Record<string, string>;
 
-  // For example string, number, time (or more specific primitives in the backend)
-  type: FieldType;
-  // Array of values all of the same type
-  values: Vector<T>;
+    // For example string, number, time (or more specific primitives in the backend)
+    type:   FieldType;
+    // Array of values all of the same type
+    values: Vector<T>;
 
-  // Optional display data for the field (e.g. unit, name over-ride, etc)
-  config: FieldConfig;
+    // Optional display data for the field (e.g. unit, name over-ride, etc)
+    config: FieldConfig;
 }
 ```
 
@@ -162,8 +162,6 @@ Dimensions: 5 fields by 2 rows
 | 2020-01-02 03:05:00 | 3                | 11               | 6                | 16               |
 +---------------------+------------------+------------------+------------------+------------------+
 ```
-
-> **Note:** Not all panels support the wide time series data frame format. To keep full backward compatibility we have introduced a transformation that can be used to convert from the wide to the long format. Read more about how to use it here: [Prepare time series-transformation]({{< relref "../../panels/transformations/types-options.md#prepare-time-series" >}}).
 
 ## Technical references
 

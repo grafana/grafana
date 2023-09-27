@@ -1,6 +1,6 @@
-+++
-title = "Custom panel option editors"
-+++
+---
+title: Custom panel option editors
+---
 
 # Custom panel option editors
 

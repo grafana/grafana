@@ -1,6 +1,6 @@
-+++
-title = "Plugin migration guide"
-+++
+---
+title: Plugin migration guide
+---
 
 # Plugin migration guide
 

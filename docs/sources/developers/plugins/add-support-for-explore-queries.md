@@ -1,12 +1,12 @@
-+++
-title = "Add support for Explore queries"
-+++
+---
+title: Add support for Explore queries
+---
 
 # Add support for Explore queries
 
 This guide explains how to improve support for [Explore]({{< relref "../../explore/_index.md" >}}) in an existing data source plugin.
 
-This guide assumes that you're already familiar with how to [Build a data source plugin]({{< relref "/tutorials/build-a-data-source-plugin.md" >}}).
+This guide assumes that you're already familiar with how to [Build a data source plugin](/docs/grafana/latest/developers/plugins/create-a-grafana-plugin/develop-a-plugin/build-a-data-source-plugin/).
 
 With Explore, users can make ad-hoc queries without the use of a dashboard. This is useful when users want to troubleshoot or to learn more about the data.
 
@@ -29,9 +29,7 @@ The query editor for Explore is similar to the query editor for the data source 
    export type Props = ExploreQueryFieldProps<DataSource, MyQuery, MyDataSourceOptions>;
 
    export default (props: Props) => {
-     return (
-       <h2>My query editor</h2>
-     );
+     return <h2>My query editor</h2>;
    };
    ```
 
@@ -92,6 +90,7 @@ Explore should by default select a reasonable visualization for your data so use
 If this does not work for you or you want to show some data in a specific visualization, add a hint to your returned data frame using the `preferredVisualisationType` meta attribute.
 
 You can construct a data frame with specific metadata:
+
 ```
 const firstResult = new MutableDataFrame({
     fields: [...],
