@@ -41,7 +41,7 @@ def rgm_deb_step(file = "packages.txt"):
         "commands": [
             "/src/grafana-build deb " +
             "$(cat {} | grep tar.gz | grep -v docker | grep -v sha256 | awk '{{print \"--package=\" $0}}') ".format(file) +
-            "--destination=gs://grafana-downloads/oss/pr/" +
+            "--destination=gs://grafana-downloads/oss/pr/ " +
             "--grafana-dir=$$PWD > {}".format(file),
         ],
         "environment": {

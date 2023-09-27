@@ -600,8 +600,8 @@ steps:
     path: /var/run/docker.sock
 - commands:
   - /src/grafana-build deb $(cat packages.txt | grep tar.gz | grep -v docker | grep
-    -v sha256 | awk '{print "--package=" $0}') --destination=gs://grafana-downloads/oss/pr/--grafana-dir=$$PWD
-    > packages.txt
+    -v sha256 | awk '{print "--package=" $0}') --destination=gs://grafana-downloads/oss/pr/
+    --grafana-dir=$$PWD > packages.txt
   depends_on:
   - rgm-package
   environment:
@@ -1772,8 +1772,8 @@ steps:
     path: /var/run/docker.sock
 - commands:
   - /src/grafana-build deb $(cat packages.txt | grep tar.gz | grep -v docker | grep
-    -v sha256 | awk '{print "--package=" $0}') --destination=gs://grafana-downloads/oss/pr/--grafana-dir=$$PWD
-    > packages.txt
+    -v sha256 | awk '{print "--package=" $0}') --destination=gs://grafana-downloads/oss/pr/
+    --grafana-dir=$$PWD > packages.txt
   depends_on:
   - rgm-package
   environment:
@@ -4242,6 +4242,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 437835d0655c24bbc826fa7799d65a9e217bbc4a51b91d87dcfafb472b51dc8f
+hmac: a852abbb9ddb23855fbcd66358da9f1a0d308027ae90c2a084f24f26e4475f1c
 
 ...
