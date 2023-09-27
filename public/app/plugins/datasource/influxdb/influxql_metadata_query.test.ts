@@ -9,7 +9,7 @@ describe('influx_metadata_query', () => {
   let target: InfluxQuery;
   const mockMetricFindQuery = jest.fn();
   const mockRunMetadataQuery = jest.fn();
-  mockMetricFindQuery.mockImplementation((q: string, o?: any) => {
+  mockMetricFindQuery.mockImplementation((q: string) => {
     query = q;
     return Promise.resolve([]);
   });
