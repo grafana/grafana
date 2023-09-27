@@ -10,6 +10,7 @@ import { DatasetSelector } from './DatasetSelector';
 import { buildMockDatasetSelectorProps, buildMockTableSelectorProps } from './SqlComponents.testHelpers';
 import { TableSelector } from './TableSelector';
 import { removeQuotesForMultiVariables } from './visual-query-builder/SQLWhereRow';
+import { makeVariable } from '../utils/testHelpers';
 
 beforeEach(() => {
   config.featureToggles.sqlDatasourceDatabaseSelection = true;
@@ -69,34 +70,13 @@ describe('TableSelector', () => {
 });
 
 describe('SQLWhereRow', () => {
-  function makeVariable(id: string, name: string, multi: boolean): CustomVariableModel {
-    return {
-      id,
-      name,
-      multi,
-      type: 'custom',
-      includeAll: false,
-      current: {},
-      options: [],
-      query: '',
-      rootStateKey: null,
-      global: false,
-      hide: VariableHide.dontHide,
-      skipUrlSync: false,
-      index: -1,
-      state: LoadingState.NotStarted,
-      error: null,
-      description: null,
-    };
-  }
-
   it('should remove quotes in a where clause including multi-value variable', () => {
     const exp: SQLExpression = {
       whereString: "hostname IN ('${multiHost}')",
     };
 
-    const multiVar = makeVariable('multiVar', 'multiHost', true);
-    const nonMultiVar = makeVariable('nonMultiVar', 'host', false);
+    const multiVar = makeVariable('multiVar', 'multiHost', { multi: true });
+    const nonMultiVar = makeVariable('nonMultiVar', 'host', { multi: false });
 
     const variables = [multiVar, nonMultiVar];
 
@@ -110,8 +90,8 @@ describe('SQLWhereRow', () => {
       whereString: "hostname IN ('${host}')",
     };
 
-    const multiVar = makeVariable('multiVar', 'multiHost', true);
-    const nonMultiVar = makeVariable('nonMultiVar', 'host', false);
+    const multiVar = makeVariable('multiVar', 'multiHost', { multi: true });
+    const nonMultiVar = makeVariable('nonMultiVar', 'host', { multi: false });
 
     const variables = [multiVar, nonMultiVar];
 
@@ -125,8 +105,8 @@ describe('SQLWhereRow', () => {
       whereString: "hostname IN ('${nonMultiHost}')",
     };
 
-    const multiVar = makeVariable('multiVar', 'multiHost', true);
-    const nonMultiVar = makeVariable('nonMultiVar', 'host', false);
+    const multiVar = makeVariable('multiVar', 'multiHost', { multi: true });
+    const nonMultiVar = makeVariable('nonMultiVar', 'host', { multi: false });
 
     const variables = [multiVar, nonMultiVar];
 
