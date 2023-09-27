@@ -32,8 +32,6 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
   azureMonitorPath: string;
   firstWorkspace?: string;
 
-  //readonly timeSrv: TimeSrv = getTimeSrv();
-
   constructor(private instanceSettings: DataSourceInstanceSettings<AzureDataSourceJsonData>) {
     super(instanceSettings);
 
