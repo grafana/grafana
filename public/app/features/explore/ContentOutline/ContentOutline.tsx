@@ -60,7 +60,7 @@ const ContentOutline = () => {
           className={styles.buttonStyles}
           icon={expanded ? 'angle-left' : 'angle-right'}
           onClick={toggle}
-          tooltip={!expanded ? 'Show Content Outline xxxxx' : undefined}
+          tooltip={!expanded ? 'Show Content Outline' : undefined}
         >
           {expanded && 'Hide Content Outline'}
         </ToolbarButton>
