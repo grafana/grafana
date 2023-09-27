@@ -1,8 +1,13 @@
-+++
-title = "Graph time series as lines"
-keywords = ["grafana", "time series panel", "documentation", "guide", "graph"]
-weight = 100
-+++
+---
+keywords:
+- grafana
+- time series panel
+- documentation
+- guide
+- graph
+title: Graph time series as lines
+weight: 100
+---
 
 # Graph time series as lines
 

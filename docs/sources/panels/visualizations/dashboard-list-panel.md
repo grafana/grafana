@@ -1,9 +1,16 @@
-+++
-title = "Dashboard list panel"
-keywords = ["grafana", "dashboard list", "documentation", "panel", "dashlist"]
-aliases = ["/docs/grafana/latest/reference/dashlist/", "/docs/grafana/latest/features/panels/dashlist/"]
-weight = 300
-+++
+---
+aliases:
+- ../../features/panels/dashlist/
+- ../../reference/dashlist/
+keywords:
+- grafana
+- dashboard list
+- documentation
+- panel
+- dashlist
+title: Dashboard list panel
+weight: 300
+---
 
 # Dashboard list panel
 

@@ -1,9 +1,13 @@
-+++
-title = "Folder HTTP API "
-description = "Grafana Folder HTTP API"
-keywords = ["grafana", "http", "documentation", "api", "folder"]
-aliases = ["/docs/grafana/latest/http_api/folder/"]
-+++
+---
+description: Grafana Folder HTTP API
+keywords:
+  - grafana
+  - http
+  - documentation
+  - api
+  - folder
+title: 'Folder HTTP API '
+---
 
 # Folder API
 
@@ -219,7 +223,7 @@ There can be different reasons for this:
 
 - The folder has been changed by someone else, `status=version-mismatch`
 
- The response body will have the following properties:
+The response body will have the following properties:
 
 ```http
 HTTP/1.1 412 Precondition Failed

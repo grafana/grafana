@@ -1,9 +1,14 @@
-+++
-title = "Time range controls"
-keywords = ["grafana", "dashboard", "documentation", "time range"]
-aliases = ["/docs/grafana/latest/reference/timerange/"]
-weight = 7
-+++
+---
+aliases:
+- ../reference/timerange/
+keywords:
+- grafana
+- dashboard
+- documentation
+- time range
+title: Time range controls
+weight: 7
+---
 
 # Time range controls
 

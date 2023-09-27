@@ -1,7 +1,7 @@
-+++
-title = "Restricting access"
-weight = 500
-+++
+---
+title: Restricting access
+weight: 500
+---
 
 # Restricting access
 

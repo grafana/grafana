@@ -1,10 +1,14 @@
-+++
-title = "Bar gauge panel"
-description = "Bar gauge panel docs"
-keywords = ["grafana", "bar", "bar gauge"]
-aliases =["/docs/grafana/latest/features/panels/bar_gauge/"]
-weight = 200
-+++
+---
+aliases:
+- ../../features/panels/bar_gauge/
+description: Bar gauge panel docs
+keywords:
+- grafana
+- bar
+- bar gauge
+title: Bar gauge panel
+weight: 200
+---
 
 # Bar gauge panel
 

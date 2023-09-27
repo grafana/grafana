@@ -1,8 +1,8 @@
-+++
-title = "Authentication"
-description = "Authentication"
-weight = 30
-+++
+---
+description: Authentication
+title: Authentication
+weight: 30
+---
 
 # User Authentication Overview
 

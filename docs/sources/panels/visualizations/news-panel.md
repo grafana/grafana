@@ -1,8 +1,13 @@
-+++
-title = "News panel"
-keywords = ["grafana", "news", "documentation", "panels", "news panel"]
-weight = 800
-+++
+---
+keywords:
+- grafana
+- news
+- documentation
+- panels
+- news panel
+title: News panel
+weight: 800
+---
 
 ## News panel
 

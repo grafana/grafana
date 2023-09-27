@@ -1,7 +1,7 @@
-+++
-title = "Calculations list"
-weight = 300
-+++
+---
+title: Calculations list
+weight: 300
+---
 
 # List of calculations
 

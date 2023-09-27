@@ -1,10 +1,14 @@
-+++
-title = "Elasticsearch"
-description = "Guide for using Elasticsearch in Grafana"
-keywords = ["grafana", "elasticsearch", "guide"]
-aliases = ["/docs/grafana/latest/features/datasources/elasticsearch"]
-weight = 400
-+++
+---
+aliases:
+- ../features/datasources/elasticsearch/
+description: Guide for using Elasticsearch in Grafana
+keywords:
+- grafana
+- elasticsearch
+- guide
+title: Elasticsearch
+weight: 400
+---
 
 # Using Elasticsearch in Grafana
 

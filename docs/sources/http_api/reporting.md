@@ -1,16 +1,18 @@
-+++
-title = "Reporting API"
-description = "Grafana Enterprise APIs"
-keywords = ["grafana", "enterprise", "api", "reporting"]
-aliases = ["/docs/grafana/latest/http_api/reporting/"]
-+++
+---
+description: Grafana Enterprise APIs
+keywords:
+  - grafana
+  - enterprise
+  - api
+  - reporting
+title: Reporting API
+---
 
 # Reporting API
 
 This API allows you to interact programmatically with the [Reporting]({{< relref "../enterprise/reporting.md" >}}) feature.
 
 > Reporting is only available in Grafana Enterprise. Read more about [Grafana Enterprise]({{< relref "../enterprise" >}}).
-
 
 ## Send a report
 
@@ -38,11 +40,11 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 
 ### JSON Body Schema
 
-Field name | Data type | Description
----------- | ---- | -----------
-id | string | ID of the report to send. It is the same as in the URL when editing a report, not to be confused with the ID of the dashboard. Required.
-emails | string | Comma-separated list of emails to which to send the report to. Overrides the emails from the report. Required if **useEmailsFromReport** is not present.
-useEmailsFromReport | boolean | Send the report to the emails specified in the report. Required if **emails** is not present.
+| Field name          | Data type | Description                                                                                                                                              |
+| ------------------- | --------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| id                  | string    | ID of the report to send. It is the same as in the URL when editing a report, not to be confused with the ID of the dashboard. Required.                 |
+| emails              | string    | Comma-separated list of emails to which to send the report to. Overrides the emails from the report. Required if **useEmailsFromReport** is not present. |
+| useEmailsFromReport | boolean   | Send the report to the emails specified in the report. Required if **emails** is not present.                                                            |
 
 ### Example response
 
@@ -56,11 +58,11 @@ Content-Length: 29
 
 ### Status Codes
 
-Code | Description
----- | -----------
-200 | Report was sent.
-400 | Bad request (invalid json, missing content-type, missing or invalid fields, etc.).
-401 | Authentication failed, refer to [Authentication API]({{< relref "../http_api/auth.md" >}}).
-403 | User is authenticated but is not authorized to generate the report.
-404 | Report not found.
-500 | Unexpected error or server misconfiguration. Refer to body and/or server logs for more details.
+| Code | Description                                                                                     |
+| ---- | ----------------------------------------------------------------------------------------------- |
+| 200  | Report was sent.                                                                                |
+| 400  | Bad request (invalid json, missing content-type, missing or invalid fields, etc.).              |
+| 401  | Authentication failed, refer to [Authentication API]({{< relref "../http_api/auth.md" >}}).     |
+| 403  | User is authenticated but is not authorized to generate the report.                             |
+| 404  | Report not found.                                                                               |
+| 500  | Unexpected error or server misconfiguration. Refer to body and/or server logs for more details. |

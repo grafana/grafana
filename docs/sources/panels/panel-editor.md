@@ -1,7 +1,7 @@
-+++
-title = "Panel editor"
-weight = 200
-+++
+---
+title: Panel editor
+weight: 200
+---
 
 # Panel editor
 

@@ -1,7 +1,7 @@
-+++
-title = "Linking"
-weight = 120
-+++
+---
+title: Linking
+weight: 120
+---
 
 # Linking overview
 

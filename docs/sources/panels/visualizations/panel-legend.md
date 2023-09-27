@@ -1,7 +1,7 @@
-+++
-title = "Panel legend options"
-weight = 50
-+++
+---
+title: Panel legend options
+weight: 50
+---
 
 # Legend
 

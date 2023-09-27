@@ -1,8 +1,13 @@
-+++
-title = "Configure all fields"
-keywords = ["grafana", "field options", "documentation", "format fields", "change all fields"]
-weight = 200
-+++
+---
+keywords:
+- grafana
+- field options
+- documentation
+- format fields
+- change all fields
+title: Configure all fields
+weight: 200
+---
 
 # Configure all fields
 

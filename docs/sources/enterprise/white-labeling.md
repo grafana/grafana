@@ -1,10 +1,12 @@
-+++
-title = "White labeling"
-description = "Change the look of Grafana to match your corporate brand"
-keywords = ["grafana", "white-labeling", "enterprise"]
-aliases = ["/docs/grafana/latest/enterprise/white-labeling/"]
-weight = 700
-+++
+---
+description: Change the look of Grafana to match your corporate brand
+keywords:
+  - grafana
+  - white-labeling
+  - enterprise
+title: White labeling
+weight: 700
+---
 
 # White labeling
 
@@ -63,6 +65,7 @@ The configuration file in Grafana Enterprise contains the following options. Eac
 # Set to complete URL to override apple/ios icon
 ;apple_touch_icon =
 ```
+
 You can replace the default footer links (Documentation, Support, Community) and even add your own custom links.
 An example follows for replacing the default footer and help links with new custom links.
 
@@ -89,6 +92,7 @@ GF_WHITE_LABELING_FOOTER_LINKS_EXTRACUSTOM_URL=http://your.custom.site
 ```
 
 > **Note:** The following two links are always present in the footer:
+
 - Grafana edition
 - Grafana version with build number
 

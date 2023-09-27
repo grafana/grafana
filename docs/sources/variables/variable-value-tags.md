@@ -1,7 +1,7 @@
-+++
-title = "Variable value group tags"
-weight = 500
-+++
+---
+title: Variable value group tags
+weight: 500
+---
 
 # Configure variable value group tags
 

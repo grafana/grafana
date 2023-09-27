@@ -1,7 +1,7 @@
-+++
-title = "Org admin tasks"
-weight = 200
-+++
+---
+title: Org admin tasks
+weight: 200
+---
 
 # Manage users as an Org Admin
 

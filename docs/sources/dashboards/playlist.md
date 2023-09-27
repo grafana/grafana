@@ -1,9 +1,14 @@
-+++
-title = "Playlist"
-keywords = ["grafana", "dashboard", "documentation", "playlist"]
-aliases = ["/docs/grafana/latest/reference/playlist/"]
-weight = 4
-+++
+---
+aliases:
+- ../reference/playlist/
+keywords:
+- grafana
+- dashboard
+- documentation
+- playlist
+title: Playlist
+weight: 4
+---
 
 
 # Playlist

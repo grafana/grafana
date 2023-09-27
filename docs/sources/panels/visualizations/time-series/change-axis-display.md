@@ -1,8 +1,13 @@
-+++
-title = "Change axis display"
-keywords = ["grafana", "time series panel", "documentation", "guide", "graph"]
-weight = 400
-+++
+---
+keywords:
+- grafana
+- time series panel
+- documentation
+- guide
+- graph
+title: Change axis display
+weight: 400
+---
 
 # Change axis display
 

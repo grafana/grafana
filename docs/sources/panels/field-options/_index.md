@@ -1,9 +1,14 @@
-+++
-title = "Field options and overrides"
-keywords = ["grafana", "field options", "documentation", "format fields"]
-aliases = ["/docs/grafana/latest/panels/field-configuration-options/", "/docs/grafana/latest/panels/field-options/"]
-weight = 500
-+++
+---
+aliases:
+  - field-configuration-options/
+keywords:
+  - grafana
+  - field options
+  - documentation
+  - format fields
+title: Field options and overrides
+weight: 500
+---
 
 # Field options and overrides
 

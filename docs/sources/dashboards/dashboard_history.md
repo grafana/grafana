@@ -1,9 +1,15 @@
-+++
-title = "Dashboard Version History"
-keywords = ["grafana", "dashboard", "documentation", "version", "history"]
-aliases = ["/docs/grafana/latest/reference/dashboard_history/"]
-weight = 100
-+++
+---
+aliases:
+- ../reference/dashboard_history/
+keywords:
+- grafana
+- dashboard
+- documentation
+- version
+- history
+title: Dashboard Version History
+weight: 100
+---
 
 
 # Dashboard Version History

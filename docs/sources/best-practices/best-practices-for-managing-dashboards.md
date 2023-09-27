@@ -1,8 +1,8 @@
-+++
-title = "Best practices for managing dashboards"
-description = "Best practices for managing dashboards in Grafana"
-weight = 200
-+++
+---
+description: Best practices for managing dashboards in Grafana
+title: Best practices for managing dashboards
+weight: 200
+---
 
 # Best practices for managing dashboards
 

@@ -1,7 +1,7 @@
-+++
-title = "Inspect a panel"
-weight = 400
-+++
+---
+title: Inspect a panel
+weight: 400
+---
 
 # Inspect a panel
 

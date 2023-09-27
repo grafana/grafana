@@ -1,10 +1,14 @@
-+++
-title = "Configuration"
-description = "Configuration documentation"
-keywords = ["grafana", "configuration", "documentation"]
-aliases = ["/docs/grafana/latest/installation/configuration/"]
-weight = 150
-+++
+---
+aliases:
+- ../installation/configuration/
+description: Configuration documentation
+keywords:
+- grafana
+- configuration
+- documentation
+title: Configuration
+weight: 150
+---
 
 # Configuration
 
@@ -413,11 +417,6 @@ The length of time that Grafana will wait for a successful TLS handshake with th
 ### expect_continue_timeout_seconds
 
 The length of time that Grafana will wait for a datasource’s first response headers after fully writing the request headers, if the request has an “Expect: 100-continue” header. A value of `0` will result in the body being sent immediately. Default is `1` second. For more details check the [Transport.ExpectContinueTimeout](https://golang.org/pkg/net/http/#Transport.ExpectContinueTimeout) documentation.
-
-### max_conns_per_host
-
-Optionally limits the total number of connections per host, including connections in the dialing, active, and idle states. On limit violation, dials are blocked. A value of `0` means that there are no limits. Default is `0`.
-For more details check the [Transport.MaxConnsPerHost](https://golang.org/pkg/net/http/#Transport.MaxConnsPerHost) documentation.
 
 ### max_idle_connections
 

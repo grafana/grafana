@@ -1,8 +1,14 @@
-+++
-title = "Node graph panel"
-keywords = ["grafana", "dashboard", "documentation", "panels", "node graph", "directed graph"]
-weight = 850
-+++
+---
+keywords:
+- grafana
+- dashboard
+- documentation
+- panels
+- node graph
+- directed graph
+title: Node graph panel
+weight: 850
+---
 
 # Node graph panel
 

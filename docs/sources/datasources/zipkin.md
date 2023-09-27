@@ -1,10 +1,13 @@
-+++
-title = "Zipkin"
-description = "Guide for using Zipkin in Grafana"
-keywords = ["grafana", "zipkin", "guide", "tracing"]
-aliases = ["/docs/grafana/latest/datasources/zipkin"]
-weight = 1600
-+++
+---
+description: Guide for using Zipkin in Grafana
+keywords:
+  - grafana
+  - zipkin
+  - guide
+  - tracing
+title: Zipkin
+weight: 1600
+---
 
 # Zipkin data source
 
@@ -33,7 +36,7 @@ This is a configuration for the [trace to logs feature]({{< relref "../explore/t
 - **Data source -** Target data source.
 - **Tags -** The tags that will be used in the Loki query. Default is `'cluster', 'hostname', 'namespace', 'pod'`.
 
-![Trace to logs settings](/static/img/docs/explore/trace-to-logs-settings-7-4.png "Screenshot of the trace to logs settings")
+![Trace to logs settings](/static/img/docs/explore/trace-to-logs-settings-7-4.png 'Screenshot of the trace to logs settings')
 
 ## Query traces
 

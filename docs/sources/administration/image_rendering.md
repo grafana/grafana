@@ -1,9 +1,13 @@
-+++
-title = "Image rendering"
-description = ""
-keywords = ["grafana", "image", "rendering", "plugin"]
-weight = 300
-+++
+---
+description: ""
+keywords:
+- grafana
+- image
+- rendering
+- plugin
+title: Image rendering
+weight: 300
+---
 
 # Image rendering
 

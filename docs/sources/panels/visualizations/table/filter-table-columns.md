@@ -1,8 +1,14 @@
-+++
-title = "Filter table columns"
-keywords = ["grafana", "table options", "documentation", "format tables", "table filter", "filter columns"]
-weight = 600
-+++
+---
+keywords:
+- grafana
+- table options
+- documentation
+- format tables
+- table filter
+- filter columns
+title: Filter table columns
+weight: 600
+---
 
 # Filter table columns
 

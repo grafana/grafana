@@ -1,8 +1,10 @@
-+++
-title = "Pie chart panel"
-keywords = ["grafana", "pie chart"]
-weight = 850
-+++
+---
+keywords:
+- grafana
+- pie chart
+title: Pie chart panel
+weight: 850
+---
 
 # Pie chart v2 panel
 
@@ -73,7 +75,7 @@ The following example shows a pie chart with **Name** and **Percent** labels dis
 
 ![Pie chart labels](/static/img/docs/pie-chart-panel/pie-chart-labels-7-5.png)
 
-{{< docs/shared "visualizations/legend-mode.md" >}}
+{{< docs/shared lookup="visualizations/legend-mode.md" source="grafana" version="<GRAFANA VERSION>" >}}
 
 ### Legend values
 

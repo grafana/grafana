@@ -1,9 +1,13 @@
-+++
-title = "Enterprise configuration"
-description = "Enterprise configuration documentation"
-keywords = ["grafana", "configuration", "documentation", "enterprise"]
-weight = 300
-+++
+---
+description: Enterprise configuration documentation
+keywords:
+- grafana
+- configuration
+- documentation
+- enterprise
+title: Enterprise configuration
+weight: 300
+---
 
 # Grafana Enterprise configuration
 
