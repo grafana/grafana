@@ -7,7 +7,7 @@ import {
   KeyboardPlugin,
   TimeSeries,
   TooltipPlugin,
-  TooltipPlugin4,
+  TooltipPlugin2,
   TimeSeriesTooltip,
   usePanelContext,
   ZoomPlugin,
@@ -109,7 +109,7 @@ export const TimeSeriesPanel = ({
               />
             )} */}
             {options.tooltip.mode === TooltipDisplayMode.None || (
-              <TooltipPlugin4
+              <TooltipPlugin2
                 config={config}
                 render={(u, dataIdxs, seriesIdx, isPinned = false) => {
                   // console.log('render', dataIdxs, seriesIdx);
