@@ -14,63 +14,6 @@ import LabeledList from './components/common/LabeledList';
 import { ubM0, ubTxRightAlign } from './components/uberUtilityStyles';
 import { formatDuration } from './components/utils/date';
 
-const getStyles = (theme: GrafanaTheme2) => ({
-  header: css`
-    gap: 0 1rem;
-    margin-bottom: 0.25rem;
-    padding: 0.5rem;
-  `,
-  flexSpaceBetween: css`
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  `,
-  attributesCol: css`
-    display: flex;
-    flex: 1 0 auto;
-    flex-direction: column;
-    flex: 0 50%;
-  `,
-  listWrapper: css`
-    overflow: hidden;
-  `,
-  attributeValues: css`
-    display: flex;
-    flex-direction: column;
-    flex: 1 0 auto;
-  `,
-  tabContent: css`
-    padding: 0.5rem 1rem 90px 1rem;
-
-    & .json-markup {
-      line-height: 17px;
-      font-size: 13px;
-      font-family: monospace;
-      white-space: pre-wrap;
-    }
-
-    & .json-markup-key {
-      font-weight: bold;
-    }
-
-    & .json-markup-bool {
-      color: ${autoColor(theme, 'firebrick')};
-    }
-
-    & .json-markup-string {
-      color: ${autoColor(theme, 'teal')};
-    }
-
-    & .json-markup-null {
-      color: ${autoColor(theme, 'teal')};
-    }
-
-    & .json-markup-number {
-      color: ${autoColor(theme, 'blue', 'black')};
-    }
-  `,
-});
-
 type Props = {
   span?: TraceSpan;
   timeZone: TimeZone;
@@ -222,3 +165,60 @@ export function DetailsPanel(props: Props) {
     </ExploreDrawer>
   );
 }
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  header: css`
+    gap: 0 1rem;
+    margin-bottom: 0.25rem;
+    padding: 0.5rem;
+  `,
+  flexSpaceBetween: css`
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  `,
+  attributesCol: css`
+    display: flex;
+    flex: 1 0 auto;
+    flex-direction: column;
+    flex: 0 50%;
+  `,
+  listWrapper: css`
+    overflow: hidden;
+  `,
+  attributeValues: css`
+    display: flex;
+    flex-direction: column;
+    flex: 1 0 auto;
+  `,
+  tabContent: css`
+    padding: 0.5rem 1rem 90px 1rem;
+
+    & .json-markup {
+      line-height: 17px;
+      font-size: 13px;
+      font-family: monospace;
+      white-space: pre-wrap;
+    }
+
+    & .json-markup-key {
+      font-weight: bold;
+    }
+
+    & .json-markup-bool {
+      color: ${autoColor(theme, 'firebrick')};
+    }
+
+    & .json-markup-string {
+      color: ${autoColor(theme, 'teal')};
+    }
+
+    & .json-markup-null {
+      color: ${autoColor(theme, 'teal')};
+    }
+
+    & .json-markup-number {
+      color: ${autoColor(theme, 'blue', 'black')};
+    }
+  `,
+});
