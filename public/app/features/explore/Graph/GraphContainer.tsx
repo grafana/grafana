@@ -111,16 +111,16 @@ export const GraphContainer = ({
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  timeSeriesDisclaimer: css`
-    label: time-series-disclaimer;
-    text-align: center;
-    font-size: ${theme.typography.bodySmall.fontSize};
-    display: flex;
-    align-items: center;
-    gap: ${theme.spacing(0.5)};
-  `,
-  disclaimerIcon: css`
-    label: disclaimer-icon;
-    color: ${theme.colors.warning.main};
-  `,
+  timeSeriesDisclaimer: css({
+    label: 'time-series-disclaimer',
+    textSlign: 'center',
+    fontSize: theme.typography.bodySmall.fontSize,
+    display: 'flex',
+    alignItems: 'center',
+    gap: theme.spacing(0.5),
+  }),
+  disclaimerIcon: css({
+    label: 'disclaimer-icon',
+    color: theme.colors.warning.main,
+  }),
 });
