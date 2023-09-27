@@ -2,7 +2,7 @@ import { cx } from '@emotion/css';
 import React, { RefCallback, SyntheticEvent, useState } from 'react';
 import { lastValueFrom } from 'rxjs';
 
-import { DataFrame, SelectableValue } from '@grafana/data';
+import { CoreApp, DataFrame, SelectableValue } from '@grafana/data';
 import { AccessoryButton } from '@grafana/experimental';
 import { getTemplateSrv } from '@grafana/runtime';
 import {
@@ -78,11 +78,15 @@ const getTraceProperties = async (
   print properties = bag_pack("${property}", ${property});`;
 
   const range = (getTemplateSrv() as any).timeRange;
-  console.log(getTemplateSrv());
-  console.log(range);
   const results = await lastValueFrom(
     datasource.azureLogAnalyticsDatasource.query({
       requestId: 'azure-traces-properties-req',
+      interval: '',
+      intervalMs: 0,
+      scopedVars: {},
+      timezone: '',
+      startTime: 0,
+      app: CoreApp.Unknown,
       targets: [
         {
           ...query,
@@ -93,13 +97,7 @@ const getTraceProperties = async (
           queryType: AzureQueryType.LogAnalytics,
         },
       ],
-      interval: '',
-      intervalMs: 0,
       range: range,
-      scopedVars: {},
-      timezone: '',
-      app: '',
-      startTime: 0
     })
   );
   if (results.data.length > 0) {

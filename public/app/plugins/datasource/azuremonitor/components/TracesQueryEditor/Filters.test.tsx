@@ -6,6 +6,7 @@ import { of } from 'rxjs';
 import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
 
 import { ArrayVector, CoreApp } from '@grafana/data';
+import * as grafanaRuntime from '@grafana/runtime';
 
 import createMockDatasource from '../../__mocks__/datasource';
 import createMockQuery from '../../__mocks__/query';
@@ -15,6 +16,21 @@ import { AzureMonitorQuery } from '../../types';
 
 import Filters from './Filters';
 import { setFilters } from './setQueryValue';
+
+jest.mock('@grafana/runtime', () => {
+  return {
+    __esModule: true,
+    ...jest.requireActual('@grafana/runtime')
+  };
+});
+
+jest.spyOn(grafanaRuntime, 'getTemplateSrv').mockImplementation(() => ({
+  replace: jest.fn(),
+  getVariables: jest.fn(),
+  updateTimeRange: jest.fn(),
+  containsTemplate: jest.fn(),
+  timeRange: undefined
+}));
 
 const variableOptionGroup = {
   label: 'Template variables',

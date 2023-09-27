@@ -1,13 +1,13 @@
 import { get, set } from 'lodash';
 
-import { CustomVariableModel, DataSourceInstanceSettings, ScopedVars } from '@grafana/data';
+import { DataSourceInstanceSettings } from '@grafana/data';
 import * as grafanaRuntime from '@grafana/runtime';
 
 import createMockQuery from '../__mocks__/query';
 import { createTemplateVariables } from '../__mocks__/utils';
-import { multiVariable, singleVariable, subscriptionsVariable } from '../__mocks__/variables';
+import { multiVariable } from '../__mocks__/variables';
 import AzureMonitorDatasource from '../datasource';
-import { AzureAPIResponse, AzureDataSourceJsonData, AzureQueryType, Location } from '../types';
+import { AzureAPIResponse, AzureDataSourceJsonData, Location } from '../types';
 
 let replace = () => "";
 
