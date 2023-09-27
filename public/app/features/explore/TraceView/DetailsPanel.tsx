@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import { GrafanaTheme2, TimeZone, TraceLog } from '@grafana/data';
 import { Button, CustomScrollbar, Tab, TabContent, TabsBar, useStyles2 } from '@grafana/ui';
@@ -71,14 +71,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
 });
 
-const tabs = [
-  { label: 'Attributes', key: 'attributes', active: true },
-  { label: 'Events', key: 'events', active: false },
-  { label: 'Warnings', key: 'warnings', active: false },
-  { label: 'Stack Traces', key: 'stackTraces', active: false },
-  { label: 'References', key: 'references', active: false },
-];
-
 type Props = {
   span?: TraceSpan;
   timeZone: TimeZone;
@@ -89,17 +81,36 @@ type Props = {
   detailLogItemToggle: (spanID: string, log: TraceLog) => void;
 };
 
+enum TabLabels {
+  Attributes = 'Attributes',
+  Events = 'Events',
+  Warnings = 'Warnings',
+  StackTraces = 'Stack Traces',
+  References = 'References',
+}
+
 export function DetailsPanel(props: Props) {
-  const [tabsState, updateTabsState] = useState(tabs);
-  const styles = useStyles2(getStyles);
   const { span, timeZone, width, clearSelectedSpan, detailState, traceStartTime, detailLogItemToggle } = props;
+  const [activeTab, setActiveTab] = useState(TabLabels.Attributes);
+  const styles = useStyles2(getStyles);
+
+  useEffect(() => {
+    setActiveTab(TabLabels.Attributes);
+  }, [span]);
 
   if (!span || !detailState) {
     return null;
   }
 
-  const { logs: logsState } = detailState;
   const { operationName, process, duration, relativeStartTime, startTime, tags, logs } = span;
+  const { logs: logsState } = detailState;
+
+  const tabs = [TabLabels.Attributes];
+  if (logs && logs.length > 0) {
+    tabs.push(TabLabels.Events);
+  }
+  const tabsCounters: Record<string, number> = {};
+  tabsCounters[TabLabels.Events] = logs.length;
 
   const overviewItems = [
     {
@@ -128,9 +139,6 @@ export function DetailsPanel(props: Props) {
       : []),
   ];
 
-  const tabsCounters: Record<string, number> = {};
-  tabsCounters['events'] = span.logs.length;
-
   const linksGetter = () => [];
 
   return (
@@ -151,15 +159,16 @@ export function DetailsPanel(props: Props) {
         </div>
         <Button icon={'times'} variant={'secondary'} fill={'outline'} onClick={clearSelectedSpan} size={'sm'} />
       </div>
+
       <TabsBar>
-        {tabsState.map((tab, index) => {
+        {tabs.map((tab) => {
           return (
             <Tab
-              key={tab.key}
-              label={tab.label}
-              active={tab.active}
-              counter={tabsCounters[tab.key]}
-              onChangeTab={() => updateTabsState(tabsState.map((tab, idx) => ({ ...tab, active: idx === index })))}
+              key={tab}
+              label={tab}
+              active={activeTab === tab}
+              counter={tabsCounters[tab]}
+              onChangeTab={() => setActiveTab(tab)}
             />
           );
         })}
@@ -167,7 +176,7 @@ export function DetailsPanel(props: Props) {
 
       <CustomScrollbar autoHeightMin="100%">
         <TabContent className={styles.tabContent}>
-          {tabsState[0].active && (
+          {activeTab === TabLabels.Attributes && (
             <div style={{ display: 'flex', gap: '0 1rem' }}>
               <div className={styles.attributesCol}>
                 <AccordianKeyValues
@@ -195,7 +204,7 @@ export function DetailsPanel(props: Props) {
               </div>
             </div>
           )}
-          {tabsState[1].active && (
+          {activeTab === TabLabels.Events && logs && logs.length > 0 && (
             <AccordianLogs
               linksGetter={linksGetter}
               logs={logs}
@@ -205,9 +214,9 @@ export function DetailsPanel(props: Props) {
               timestamp={traceStartTime}
             />
           )}
-          {tabsState[2].active && <div>Warnings not yet implemented</div>}
-          {tabsState[3].active && <div>Stack Traces not yet implemented</div>}
-          {tabsState[4].active && <div>References not yet implemented</div>}
+          {/* {tabsState[2] && tabsState[2].active && <div>Warnings not yet implemented</div>}
+          {tabsState[3] && tabsState[3].active && <div>Stack Traces not yet implemented</div>}
+          {tabsState[4] && tabsState[4].active && <div>References not yet implemented</div>} */}
         </TabContent>
       </CustomScrollbar>
     </ExploreDrawer>
