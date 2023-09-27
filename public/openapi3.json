@@ -364,33 +364,12 @@
         "description": "(empty)"
       },
       "dashboardAccessTokenExistsPublicError": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/publicError"
-            }
-          }
-        },
         "description": "DashboardAccessTokenExistsPublicError is returned when the dashboard access token already exists."
       },
       "dashboardIsPublicPublicError": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/publicError"
-            }
-          }
-        },
         "description": "DashboardIsPublicPublicError is returned when the dashboard is already public."
       },
       "dashboardNotFoundPublicError": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/publicError"
-            }
-          }
-        },
         "description": "DashboardNotFoundPublicError is returned when the dashboard is not found."
       },
       "dashboardResponse": {
@@ -404,13 +383,6 @@
         "description": "(empty)"
       },
       "dashboardUidExistsPublicError": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/publicError"
-            }
-          }
-        },
         "description": "DashboardUidExistsPublicError is returned when the dashboard uid already exists."
       },
       "dashboardVersionResponse": {
@@ -1360,13 +1332,6 @@
         "description": "(empty)"
       },
       "identifierNotSetPublicError": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/publicError"
-            }
-          }
-        },
         "description": "IdentifierNotSetPublicError the identifier is not provided."
       },
       "importDashboardResponse": {
@@ -1400,73 +1365,24 @@
         "description": "InternalServerPublicError is a general error indicating something went wrong internally."
       },
       "invalidAccessTokenPublicError": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/publicError"
-            }
-          }
-        },
         "description": "InvalidAccessTokenPublicError is returned when the access token provided is not valid."
       },
       "invalidIntervalPublicError": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/publicError"
-            }
-          }
-        },
         "description": "InvalidIntervalPublicError is returned when the interval is not valid"
       },
       "invalidMaxDataPointsPublicError": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/publicError"
-            }
-          }
-        },
         "description": "InvalidMaxDataPointsPublicError is returned when the max data points is not valid"
       },
       "invalidPanelIdPublicError": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/publicError"
-            }
-          }
-        },
         "description": "InvalidPanelIdPublicError is returned when the panel is not valid"
       },
       "invalidShareTypePublicError": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/publicError"
-            }
-          }
-        },
         "description": "InvalidShareTypePublicError is returned when the share type provided is not valid."
       },
       "invalidTimeRangePublicError": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/publicError"
-            }
-          }
-        },
         "description": "InvalidTimeRangePublicError is returned when the time range is not valid"
       },
       "invalidUidPublicError": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/publicError"
-            }
-          }
-        },
         "description": "InvalidUidPublicError is returned when the uid provided is not valid."
       },
       "listBuiltinRolesResponse": {
@@ -1586,13 +1502,6 @@
         "description": "An OKResponse is returned if the request was successful."
       },
       "panelNotFoundPublicError": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/publicError"
-            }
-          }
-        },
         "description": "PanelNotFoundPublicError is returned when the panel is not found"
       },
       "pauseAlertResponse": {
@@ -1751,23 +1660,9 @@
         "description": "PreconditionFailedError"
       },
       "publicDashboardNotEnabledError": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/publicError"
-            }
-          }
-        },
         "description": "PublicDashboardNotEnabledError is returned when the public dashboard is not enabled."
       },
       "publicDashboardNotFoundPublicError": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/publicError"
-            }
-          }
-        },
         "description": "PublicDashboardNotFoundPublicError is returned when the public dashboard is not found."
       },
       "publicErrorResponse": {
@@ -11733,7 +11628,7 @@
             "type": "string"
           },
           "statusCode": {
-            "description": "StatusCode The HTTP status code returned",
+            "description": "StatusCode int            `json:\"statusCode\"`\nMessageID  string         `json:\"messageId\"`\nMessage    string         `json:\"message,omitempty\"`\nExtra      map[string]any `json:\"extra,omitempty\"`\nStatusCode The HTTP status code returned",
             "format": "int64",
             "type": "integer"
           }
@@ -21293,7 +21188,7 @@
         ]
       }
     },
-    "/reports/render/pdf/{dashboardId}": {
+    "/reports/render/pdf/{dashboardID}": {
       "get": {
         "deprecated": true,
         "description": "Please refer to [reports enterprise](#/reports/renderReportPDFs) instead. This will be removed in Grafana 10.",
@@ -21310,7 +21205,7 @@
           },
           {
             "in": "path",
-            "name": "dashboardId",
+            "name": "dashboardID",
             "required": true,
             "schema": {
               "format": "int64",

@@ -366,13 +366,34 @@ func (e Error) Is(other error) bool {
 	}
 }
 
+// swagger:response publicErrorResponse
+type PublicErrorResponse struct {
+	// The response message
+	// in: body
+	Body PublicError `json:"body"`
+}
+
 // PublicError is derived from Error and only contains information
 // available to the end user.
+// swagger:model publicError
 type PublicError struct {
-	StatusCode int            `json:"statusCode"`
-	MessageID  string         `json:"messageId"`
-	Message    string         `json:"message,omitempty"`
-	Extra      map[string]any `json:"extra,omitempty"`
+	//StatusCode int            `json:"statusCode"`
+	//MessageID  string         `json:"messageId"`
+	//Message    string         `json:"message,omitempty"`
+	//Extra      map[string]any `json:"extra,omitempty"`
+	// StatusCode The HTTP status code returned
+	// required: true
+	StatusCode int `json:"statusCode"`
+
+	// MessageID A unique identifier for the error
+	// required: true
+	MessageID string `json:"messageId"`
+
+	// Message A human readable message
+	Message string `json:"message,omitempty"`
+
+	// Extra Additional information about the error
+	Extra map[string]any `json:"extra,omitempty"`
 }
 
 // Public returns a subset of the error with non-sensitive information
@@ -400,3 +421,28 @@ func (e Error) Public() PublicError {
 func (p PublicError) Error() string {
 	return fmt.Sprintf("[%s] %s", p.MessageID, p.Message)
 }
+
+// NotFoundPublicError is returned when the requested resource was not found.
+//
+// swagger:response notFoundPublicError
+type NotFoundPublicError PublicErrorResponse
+
+// BadRequestPublicError is returned when the request is invalid and it cannot be processed.
+//
+// swagger:response badRequestPublicError
+type BadRequestPublicError PublicErrorResponse
+
+// UnauthorisedPublicError is returned when the request is not authenticated.
+//
+// swagger:response unauthorisedPublicError
+type UnauthorisedPublicError PublicErrorResponse
+
+// ForbiddenPublicError is returned if the user/token has insufficient permissions to access the requested resource.
+//
+// swagger:response forbiddenPublicError
+type ForbiddenPublicError PublicErrorResponse
+
+// InternalServerPublicError is a general error indicating something went wrong internally.
+//
+// swagger:response internalServerPublicError
+type InternalServerPublicError PublicErrorResponse

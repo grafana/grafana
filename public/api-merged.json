@@ -8669,7 +8669,7 @@
         }
       }
     },
-    "/reports/render/pdf/{dashboardId}": {
+    "/reports/render/pdf/{dashboardID}": {
       "get": {
         "description": "Please refer to [reports enterprise](#/reports/renderReportPDFs) instead. This will be removed in Grafana 10.",
         "produces": [
@@ -8693,7 +8693,7 @@
           {
             "type": "integer",
             "format": "int64",
-            "name": "dashboardId",
+            "name": "dashboardID",
             "in": "path",
             "required": true
           },
@@ -20780,7 +20780,7 @@
           "type": "string"
         },
         "statusCode": {
-          "description": "StatusCode The HTTP status code returned",
+          "description": "StatusCode int            `json:\"statusCode\"`\nMessageID  string         `json:\"messageId\"`\nMessage    string         `json:\"message,omitempty\"`\nExtra      map[string]any `json:\"extra,omitempty\"`\nStatusCode The HTTP status code returned",
           "type": "integer",
           "format": "int64"
         }
@@ -21164,22 +21164,13 @@
       }
     },
     "dashboardAccessTokenExistsPublicError": {
-      "description": "DashboardAccessTokenExistsPublicError is returned when the dashboard access token already exists.",
-      "schema": {
-        "$ref": "#/definitions/publicError"
-      }
+      "description": "DashboardAccessTokenExistsPublicError is returned when the dashboard access token already exists."
     },
     "dashboardIsPublicPublicError": {
-      "description": "DashboardIsPublicPublicError is returned when the dashboard is already public.",
-      "schema": {
-        "$ref": "#/definitions/publicError"
-      }
+      "description": "DashboardIsPublicPublicError is returned when the dashboard is already public."
     },
     "dashboardNotFoundPublicError": {
-      "description": "DashboardNotFoundPublicError is returned when the dashboard is not found.",
-      "schema": {
-        "$ref": "#/definitions/publicError"
-      }
+      "description": "DashboardNotFoundPublicError is returned when the dashboard is not found."
     },
     "dashboardResponse": {
       "description": "(empty)",
@@ -21188,10 +21179,7 @@
       }
     },
     "dashboardUidExistsPublicError": {
-      "description": "DashboardUidExistsPublicError is returned when the dashboard uid already exists.",
-      "schema": {
-        "$ref": "#/definitions/publicError"
-      }
+      "description": "DashboardUidExistsPublicError is returned when the dashboard uid already exists."
     },
     "dashboardVersionResponse": {
       "description": "(empty)",
@@ -21844,10 +21832,7 @@
       }
     },
     "identifierNotSetPublicError": {
-      "description": "IdentifierNotSetPublicError the identifier is not provided.",
-      "schema": {
-        "$ref": "#/definitions/publicError"
-      }
+      "description": "IdentifierNotSetPublicError the identifier is not provided."
     },
     "importDashboardResponse": {
       "description": "(empty)",
@@ -21868,46 +21853,25 @@
       }
     },
     "invalidAccessTokenPublicError": {
-      "description": "InvalidAccessTokenPublicError is returned when the access token provided is not valid.",
-      "schema": {
-        "$ref": "#/definitions/publicError"
-      }
+      "description": "InvalidAccessTokenPublicError is returned when the access token provided is not valid."
     },
     "invalidIntervalPublicError": {
-      "description": "InvalidIntervalPublicError is returned when the interval is not valid",
-      "schema": {
-        "$ref": "#/definitions/publicError"
-      }
+      "description": "InvalidIntervalPublicError is returned when the interval is not valid"
     },
     "invalidMaxDataPointsPublicError": {
-      "description": "InvalidMaxDataPointsPublicError is returned when the max data points is not valid",
-      "schema": {
-        "$ref": "#/definitions/publicError"
-      }
+      "description": "InvalidMaxDataPointsPublicError is returned when the max data points is not valid"
     },
     "invalidPanelIdPublicError": {
-      "description": "InvalidPanelIdPublicError is returned when the panel is not valid",
-      "schema": {
-        "$ref": "#/definitions/publicError"
-      }
+      "description": "InvalidPanelIdPublicError is returned when the panel is not valid"
     },
     "invalidShareTypePublicError": {
-      "description": "InvalidShareTypePublicError is returned when the share type provided is not valid.",
-      "schema": {
-        "$ref": "#/definitions/publicError"
-      }
+      "description": "InvalidShareTypePublicError is returned when the share type provided is not valid."
     },
     "invalidTimeRangePublicError": {
-      "description": "InvalidTimeRangePublicError is returned when the time range is not valid",
-      "schema": {
-        "$ref": "#/definitions/publicError"
-      }
+      "description": "InvalidTimeRangePublicError is returned when the time range is not valid"
     },
     "invalidUidPublicError": {
-      "description": "InvalidUidPublicError is returned when the uid provided is not valid.",
-      "schema": {
-        "$ref": "#/definitions/publicError"
-      }
+      "description": "InvalidUidPublicError is returned when the uid provided is not valid."
     },
     "listBuiltinRolesResponse": {
       "description": "(empty)",
@@ -21990,10 +21954,7 @@
       }
     },
     "panelNotFoundPublicError": {
-      "description": "PanelNotFoundPublicError is returned when the panel is not found",
-      "schema": {
-        "$ref": "#/definitions/publicError"
-      }
+      "description": "PanelNotFoundPublicError is returned when the panel is not found"
     },
     "pauseAlertResponse": {
       "description": "(empty)",
@@ -22127,16 +22088,10 @@
       }
     },
     "publicDashboardNotEnabledError": {
-      "description": "PublicDashboardNotEnabledError is returned when the public dashboard is not enabled.",
-      "schema": {
-        "$ref": "#/definitions/publicError"
-      }
+      "description": "PublicDashboardNotEnabledError is returned when the public dashboard is not enabled."
     },
     "publicDashboardNotFoundPublicError": {
-      "description": "PublicDashboardNotFoundPublicError is returned when the public dashboard is not found.",
-      "schema": {
-        "$ref": "#/definitions/publicError"
-      }
+      "description": "PublicDashboardNotFoundPublicError is returned when the public dashboard is not found."
     },
     "publicErrorResponse": {
       "description": "(empty)",

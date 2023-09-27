@@ -26,3 +26,78 @@ var (
 
 	ErrPublicDashboardNotEnabled = errutil.Forbidden("publicdashboards.notEnabled", errutil.WithPublicMessage("Public dashboard paused"))
 )
+
+// DashboardAccessTokenExistsPublicError is returned when the dashboard access token already exists.
+//
+// swagger:response dashboardAccessTokenExistsPublicError
+type DashboardAccessTokenExistsPublicError errutil.PublicErrorResponse
+
+// IdentifierNotSetPublicError the identifier is not provided.
+//
+// swagger:response identifierNotSetPublicError
+type IdentifierNotSetPublicError errutil.PublicErrorResponse
+
+// InvalidUidPublicError is returned when the uid provided is not valid.
+//
+// swagger:response invalidUidPublicError
+type InvalidUidPublicError errutil.PublicErrorResponse
+
+// InvalidAccessTokenPublicError is returned when the access token provided is not valid.
+//
+// swagger:response invalidAccessTokenPublicError
+type InvalidAccessTokenPublicError errutil.PublicErrorResponse
+
+// InvalidShareTypePublicError is returned when the share type provided is not valid.
+//
+// swagger:response invalidShareTypePublicError
+type InvalidShareTypePublicError errutil.PublicErrorResponse
+
+// DashboardNotFoundPublicError is returned when the dashboard is not found.
+//
+// swagger:response dashboardNotFoundPublicError
+type DashboardNotFoundPublicError errutil.PublicErrorResponse
+
+// PublicDashboardNotFoundPublicError is returned when the public dashboard is not found.
+//
+// swagger:response publicDashboardNotFoundPublicError
+type PublicDashboardNotFoundPublicError errutil.PublicErrorResponse
+
+// DashboardIsPublicPublicError is returned when the dashboard is already public.
+//
+// swagger:response dashboardIsPublicPublicError
+type DashboardIsPublicPublicError errutil.PublicErrorResponse
+
+// DashboardUidExistsPublicError is returned when the dashboard uid already exists.
+//
+// swagger:response dashboardUidExistsPublicError
+type DashboardUidExistsPublicError errutil.PublicErrorResponse
+
+// PublicDashboardNotEnabledError is returned when the public dashboard is not enabled.
+//
+// swagger:response publicDashboardNotEnabledError
+type PublicDashboardNotEnabledError errutil.PublicErrorResponse
+
+// InvalidPanelIdPublicError is returned when the panel is not valid
+//
+// swagger:response invalidPanelIdPublicError
+type InvalidPanelIdPublicError errutil.PublicErrorResponse
+
+// InvalidIntervalPublicError is returned when the interval is not valid
+//
+// swagger:response invalidIntervalPublicError
+type InvalidIntervalPublicError errutil.PublicErrorResponse
+
+// InvalidMaxDataPointsPublicError is returned when the max data points is not valid
+//
+// swagger:response invalidMaxDataPointsPublicError
+type InvalidMaxDataPointsPublicError errutil.PublicErrorResponse
+
+// InvalidTimeRangePublicError is returned when the time range is not valid
+//
+// swagger:response invalidTimeRangePublicError
+type InvalidTimeRangePublicError errutil.PublicErrorResponse
+
+// PanelNotFoundPublicError is returned when the panel is not found
+//
+// swagger:response panelNotFoundPublicError
+type PanelNotFoundPublicError errutil.PublicErrorResponse
