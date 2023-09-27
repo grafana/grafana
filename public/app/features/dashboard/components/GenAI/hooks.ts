@@ -4,19 +4,20 @@ import { Subscription } from 'rxjs';
 
 import { llms } from '@grafana/experimental';
 
+import { OPEN_AI_MODEL } from './utils';
+
 // Declared instead of imported from utils to make this hook modular
 // Ideally we will want to move the hook itself to a different scope later.
 type Message = llms.openai.Message;
 
 // TODO: Add tests
 export function useOpenAIStream(
-  model = 'gpt-3.5-turbo',
+  model = OPEN_AI_MODEL,
   temperature = 1
 ): {
   setMessages: React.Dispatch<React.SetStateAction<Message[]>>;
   reply: string;
   inProgress: boolean;
-  loading: boolean;
   error: Error | undefined;
   value:
     | {
@@ -38,7 +39,7 @@ export function useOpenAIStream(
   // const [finished, setFinished] = useState(true);
   const [inProgress, setInProgress] = useState(false);
 
-  const { loading, error, value } = useAsync(async () => {
+  const { error, value } = useAsync(async () => {
     // Check if the LLM plugin is enabled and configured.
     // If not, we won't be able to make requests, so return early.
     const enabled = await llms.openai.enabled();
@@ -90,7 +91,6 @@ export function useOpenAIStream(
     setMessages,
     reply,
     inProgress,
-    loading,
     error,
     value,
   };
