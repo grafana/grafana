@@ -26,6 +26,7 @@ if (process.env.NODE_ENV !== 'production') {
 }
 
 const pluginImportCache = new Map<string, Promise<System.Module>>();
+const pluginLogCache: Record<string, boolean> = {};
 
 export async function importPluginModuleInSandbox({ pluginId }: { pluginId: string }): Promise<System.Module> {
   try {
@@ -97,6 +98,18 @@ async function doImportPluginModuleInSandbox(meta: PluginMeta): Promise<System.M
           return Reflect.get(window, 'Prism');
         },
         get grafanaBootData(): BootData {
+          if (!pluginLogCache[meta.id + '-grafanaBootData']) {
+            pluginLogCache[meta.id + '-grafanaBootData'] = true;
+            logInfo('Plugin using window.grafanaBootData', {
+              sandbox: 'true',
+              pluginId: meta.id,
+              guessedPluginName: meta.id,
+              parent: 'window',
+              packageName: 'window',
+              key: 'grafanaBootData',
+            });
+          }
+
           // We don't want to encourage plugins to use `window.grafanaBootData`. They should
           // use `@grafana/runtime.config` instead.
           // if we are in dev mode we fail this access
@@ -108,14 +121,6 @@ async function doImportPluginModuleInSandbox(meta: PluginMeta): Promise<System.M
             console.error(
               `${meta.id.toUpperCase()}: Plugins should not use window.grafanaBootData. Use "config" from "@grafana/runtime" instead.`
             );
-            logInfo('Plugin using window.grafanaBootData', {
-              sandbox: 'true',
-              pluginId: meta.id,
-              guessedPluginName: meta.id,
-              parent: 'window',
-              packageName: 'window',
-              key: 'grafanaBootData',
-            });
           }
           return config.bootData;
         },
