@@ -24,7 +24,7 @@ weight: 2
 
 # Configure standard options
 
-The data model used in Grafana, namely the [data frame]({{< relref "../../developers/plugins/introduction-to-plugin-development/data-frames/" >}}), is a columnar-oriented table structure that unifies both time series and table query results. Each column within this structure is called a _field_. A field can represent a single time series or table column.
+The data model used in Grafana, namely the [data frame](https://grafana.com/developers/plugin-tools/introduction/data-frames), is a columnar-oriented table structure that unifies both time series and table query results. Each column within this structure is called a _field_. A field can represent a single time series or table column.
 
 Field options allow you to change how the data is displayed in your visualizations. Options and overrides that you apply do not change the data, they change how Grafana displays the data. When you change an option, it is applied to all fields, meaning all series or columns. For example, if you change the unit to percentage, then all fields with numeric values are displayed in percentages.
 
