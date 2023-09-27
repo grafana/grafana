@@ -295,7 +295,7 @@ export function createColors(colors: ThemeColorsInput): ThemeColors {
       color.contrastText = getContrastText(color.main);
     }
     if (!color.borderTransparent) {
-      color.borderTransparent = alpha(color.border, 0.3);
+      color.borderTransparent = alpha(color.border, 0.25);
     }
     return color as ThemeRichColor;
   };
