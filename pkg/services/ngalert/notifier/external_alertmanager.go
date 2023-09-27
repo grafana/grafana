@@ -150,7 +150,7 @@ func (am *externalAlertmanager) StopAndWait() {
 }
 
 func (am *externalAlertmanager) Ready() bool {
-	return true
+	return false
 }
 
 func (am *externalAlertmanager) FileStore() *FileStore {

@@ -50,7 +50,9 @@ func NewFakeExternalAlertmanager(t *testing.T, tenantID, password string) *FakeE
 
 func (am *FakeExternalAlertmanager) getSilences(w http.ResponseWriter, r *http.Request) {
 	am.mtx.RLock()
-	json.NewEncoder(w).Encode(am.silences)
+	if err := json.NewEncoder(w).Encode(am.silences); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+	}
 	am.mtx.RUnlock()
 }
 
@@ -75,7 +77,9 @@ func (am *FakeExternalAlertmanager) getSilence(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	json.NewEncoder(w).Encode(matching)
+	if err := json.NewEncoder(w).Encode(matching); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+	}
 }
 
 func (am *FakeExternalAlertmanager) postSilence(w http.ResponseWriter, r *http.Request) {
@@ -94,7 +98,9 @@ func (am *FakeExternalAlertmanager) postSilence(w http.ResponseWriter, r *http.R
 	am.mtx.Unlock()
 
 	res := map[string]string{"silenceID": id}
-	json.NewEncoder(w).Encode(res)
+	if err := json.NewEncoder(w).Encode(res); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+	}
 }
 
 func (am *FakeExternalAlertmanager) deleteSilence(w http.ResponseWriter, r *http.Request) {
