@@ -1449,7 +1449,7 @@
         }
       }
     },
-    "/reports/render/pdf/{dashboardID}": {
+    "/reports/render/pdf/{dashboardId}": {
       "get": {
         "description": "Please refer to [reports enterprise](#/reports/renderReportPDFs) instead. This will be removed in Grafana 10.",
         "produces": [
@@ -1473,7 +1473,7 @@
           {
             "type": "integer",
             "format": "int64",
-            "name": "dashboardID",
+            "name": "dashboardId",
             "in": "path",
             "required": true
           },
@@ -2656,6 +2656,67 @@
         }
       }
     },
+    "AnnotationEvent": {
+      "type": "object",
+      "properties": {
+        "color": {
+          "type": "string"
+        },
+        "dashboardId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "isRegion": {
+          "type": "boolean"
+        },
+        "panelId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "source": {
+          "$ref": "#/definitions/AnnotationQuery"
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "text": {
+          "type": "string"
+        },
+        "time": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "timeEnd": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "AnnotationPanelFilter": {
+      "type": "object",
+      "title": "AnnotationPanelFilter defines model for AnnotationPanelFilter.",
+      "properties": {
+        "exclude": {
+          "description": "Should the specified panels be included or excluded",
+          "type": "boolean"
+        },
+        "ids": {
+          "description": "Panel IDs that should be included or excluded",
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      }
+    },
     "AnnotationPermission": {
       "type": "object",
       "properties": {
@@ -2664,6 +2725,67 @@
         },
         "organization": {
           "$ref": "#/definitions/AnnotationActions"
+        }
+      }
+    },
+    "AnnotationQuery": {
+      "description": "TODO docs\nFROM: AnnotationQuery in grafana-data/src/types/annotations.ts",
+      "type": "object",
+      "properties": {
+        "datasource": {
+          "$ref": "#/definitions/DataSourceRef"
+        },
+        "enable": {
+          "description": "When enabled the annotation query is issued with every dashboard refresh",
+          "type": "boolean"
+        },
+        "filter": {
+          "$ref": "#/definitions/AnnotationPanelFilter"
+        },
+        "hide": {
+          "description": "Annotation queries can be toggled on or off at the top of the dashboard.\nWhen hide is true, the toggle is not shown in the dashboard.",
+          "type": "boolean"
+        },
+        "iconColor": {
+          "description": "Color to use for the annotation event markers",
+          "type": "string"
+        },
+        "name": {
+          "description": "Name of annotation.",
+          "type": "string"
+        },
+        "target": {
+          "$ref": "#/definitions/AnnotationTarget"
+        },
+        "type": {
+          "description": "TODO -- this should not exist here, it is based on the --grafana-- datasource",
+          "type": "string"
+        }
+      }
+    },
+    "AnnotationTarget": {
+      "description": "TODO: this should be a regular DataQuery that depends on the selected dashboard\nthese match the properties of the \"grafana\" datasouce that is default in most dashboards",
+      "type": "object",
+      "properties": {
+        "limit": {
+          "description": "Only required/valid for the grafana datasource...\nbut code+tests is already depending on it so hard to change",
+          "type": "integer",
+          "format": "int64"
+        },
+        "matchAny": {
+          "description": "Only required/valid for the grafana datasource...\nbut code+tests is already depending on it so hard to change",
+          "type": "boolean"
+        },
+        "tags": {
+          "description": "Only required/valid for the grafana datasource...\nbut code+tests is already depending on it so hard to change",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "type": {
+          "description": "Only required/valid for the grafana datasource...\nbut code+tests is already depending on it so hard to change",
+          "type": "string"
         }
       }
     },
@@ -3931,6 +4053,20 @@
         }
       }
     },
+    "DataSourceRef": {
+      "description": "Ref to a DataSource instance",
+      "type": "object",
+      "properties": {
+        "type": {
+          "description": "The plugin type-id",
+          "type": "string"
+        },
+        "uid": {
+          "description": "Specific datasource instance",
+          "type": "string"
+        }
+      }
+    },
     "DataTopic": {
       "description": "nolint:revive",
       "type": "string",
@@ -3972,6 +4108,17 @@
       "description": "A Duration represents the elapsed time between two instants\nas an int64 nanosecond count. The representation limits the\nlargest representable duration to approximately 290 years.",
       "type": "integer",
       "format": "int64"
+    },
+    "EmailDTO": {
+      "type": "object",
+      "properties": {
+        "recipient": {
+          "type": "string"
+        },
+        "uid": {
+          "type": "string"
+        }
+      }
     },
     "EnumFieldConfig": {
       "description": "Enum field config\nVector values are used as lookup keys into the enum fields",
@@ -5524,6 +5671,120 @@
         }
       }
     },
+    "PublicDashboard": {
+      "type": "object",
+      "properties": {
+        "accessToken": {
+          "type": "string"
+        },
+        "annotationsEnabled": {
+          "type": "boolean"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "createdBy": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "dashboardUid": {
+          "type": "string"
+        },
+        "isEnabled": {
+          "type": "boolean"
+        },
+        "recipients": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/EmailDTO"
+          }
+        },
+        "share": {
+          "$ref": "#/definitions/ShareType"
+        },
+        "timeSelectionEnabled": {
+          "type": "boolean"
+        },
+        "uid": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedBy": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "PublicDashboardDTO": {
+      "type": "object",
+      "properties": {
+        "accessToken": {
+          "type": "string"
+        },
+        "annotationsEnabled": {
+          "type": "boolean"
+        },
+        "isEnabled": {
+          "type": "boolean"
+        },
+        "share": {
+          "$ref": "#/definitions/ShareType"
+        },
+        "timeSelectionEnabled": {
+          "type": "boolean"
+        },
+        "uid": {
+          "type": "string"
+        }
+      }
+    },
+    "PublicDashboardListResponse": {
+      "type": "object",
+      "properties": {
+        "accessToken": {
+          "type": "string"
+        },
+        "dashboardUid": {
+          "type": "string"
+        },
+        "isEnabled": {
+          "type": "boolean"
+        },
+        "title": {
+          "type": "string"
+        },
+        "uid": {
+          "type": "string"
+        }
+      }
+    },
+    "PublicDashboardListResponseWithPagination": {
+      "type": "object",
+      "properties": {
+        "page": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "perPage": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "publicDashboards": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/PublicDashboardListResponse"
+          }
+        },
+        "totalCount": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
     "QueryDataResponse": {
       "description": "It is the return type of a QueryData call.",
       "type": "object",
@@ -6307,6 +6568,9 @@
           "format": "int64"
         }
       }
+    },
+    "ShareType": {
+      "type": "string"
     },
     "Spec": {
       "type": "object",
@@ -7457,6 +7721,34 @@
     "VisType": {
       "type": "string",
       "title": "VisType is used to indicate how the data should be visualized in explore."
+    },
+    "publicError": {
+      "description": "PublicError is derived from Error and only contains information\navailable to the end user.",
+      "type": "object",
+      "required": [
+        "statusCode",
+        "messageId"
+      ],
+      "properties": {
+        "extra": {
+          "description": "Extra Additional information about the error",
+          "type": "object",
+          "additionalProperties": {}
+        },
+        "message": {
+          "description": "Message A human readable message",
+          "type": "string"
+        },
+        "messageId": {
+          "description": "MessageID A unique identifier for the error",
+          "type": "string"
+        },
+        "statusCode": {
+          "description": "StatusCode The HTTP status code returned",
+          "type": "integer",
+          "format": "int64"
+        }
+      }
     }
   },
   "responses": {
@@ -7515,6 +7807,12 @@
       "description": "BadRequestError is returned when the request is invalid and it cannot be processed.",
       "schema": {
         "$ref": "#/definitions/ErrorResponseBody"
+      }
+    },
+    "badRequestPublicError": {
+      "description": "BadRequestPublicError is returned when the request is invalid and it cannot be processed.",
+      "schema": {
+        "$ref": "#/definitions/publicError"
       }
     },
     "calculateDashboardDiffResponse": {
@@ -7638,6 +7936,12 @@
         "$ref": "#/definitions/Playlist"
       }
     },
+    "createPublicDashboardResponse": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/PublicDashboard"
+      }
+    },
     "createReportResponse": {
       "description": "",
       "schema": {
@@ -7686,10 +7990,34 @@
         "$ref": "#/definitions/NewApiKeyResult"
       }
     },
+    "dashboardAccessTokenExistsPublicError": {
+      "description": "DashboardAccessTokenExistsPublicError is returned when the dashboard access token already exists.",
+      "schema": {
+        "$ref": "#/definitions/publicError"
+      }
+    },
+    "dashboardIsPublicPublicError": {
+      "description": "DashboardIsPublicPublicError is returned when the dashboard is already public.",
+      "schema": {
+        "$ref": "#/definitions/publicError"
+      }
+    },
+    "dashboardNotFoundPublicError": {
+      "description": "DashboardNotFoundPublicError is returned when the dashboard is not found.",
+      "schema": {
+        "$ref": "#/definitions/publicError"
+      }
+    },
     "dashboardResponse": {
       "description": "",
       "schema": {
         "$ref": "#/definitions/DashboardFullWithMeta"
+      }
+    },
+    "dashboardUidExistsPublicError": {
+      "description": "DashboardUidExistsPublicError is returned when the dashboard uid already exists.",
+      "schema": {
+        "$ref": "#/definitions/publicError"
       }
     },
     "dashboardVersionResponse": {
@@ -7826,6 +8154,12 @@
       "description": "ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.",
       "schema": {
         "$ref": "#/definitions/ErrorResponseBody"
+      }
+    },
+    "forbiddenPublicError": {
+      "description": "ForbiddenPublicError is returned if the user/token has insufficient permissions to access the requested resource.",
+      "schema": {
+        "$ref": "#/definitions/publicError"
       }
     },
     "genericError": {
@@ -8151,6 +8485,21 @@
         "$ref": "#/definitions/Spec"
       }
     },
+    "getPublicAnnotationsResponse": {
+      "description": "",
+      "schema": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/AnnotationEvent"
+        }
+      }
+    },
+    "getPublicDashboardResponse": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/PublicDashboard"
+      }
+    },
     "getQueryHistoryDeleteQueryResponse": {
       "description": "",
       "schema": {
@@ -8321,6 +8670,12 @@
         }
       }
     },
+    "identifierNotSetPublicError": {
+      "description": "IdentifierNotSetPublicError the identifier is not provided.",
+      "schema": {
+        "$ref": "#/definitions/publicError"
+      }
+    },
     "importDashboardResponse": {
       "description": "",
       "schema": {
@@ -8333,6 +8688,54 @@
         "$ref": "#/definitions/ErrorResponseBody"
       }
     },
+    "internalServerPublicError": {
+      "description": "InternalServerPublicError is a general error indicating something went wrong internally.",
+      "schema": {
+        "$ref": "#/definitions/publicError"
+      }
+    },
+    "invalidAccessTokenPublicError": {
+      "description": "InvalidAccessTokenPublicError is returned when the access token provided is not valid.",
+      "schema": {
+        "$ref": "#/definitions/publicError"
+      }
+    },
+    "invalidIntervalPublicError": {
+      "description": "InvalidIntervalPublicError is returned when the interval is not valid",
+      "schema": {
+        "$ref": "#/definitions/publicError"
+      }
+    },
+    "invalidMaxDataPointsPublicError": {
+      "description": "InvalidMaxDataPointsPublicError is returned when the max data points is not valid",
+      "schema": {
+        "$ref": "#/definitions/publicError"
+      }
+    },
+    "invalidPanelIdPublicError": {
+      "description": "InvalidPanelIdPublicError is returned when the panel is not valid",
+      "schema": {
+        "$ref": "#/definitions/publicError"
+      }
+    },
+    "invalidShareTypePublicError": {
+      "description": "InvalidShareTypePublicError is returned when the share type provided is not valid.",
+      "schema": {
+        "$ref": "#/definitions/publicError"
+      }
+    },
+    "invalidTimeRangePublicError": {
+      "description": "InvalidTimeRangePublicError is returned when the time range is not valid",
+      "schema": {
+        "$ref": "#/definitions/publicError"
+      }
+    },
+    "invalidUidPublicError": {
+      "description": "InvalidUidPublicError is returned when the uid provided is not valid.",
+      "schema": {
+        "$ref": "#/definitions/publicError"
+      }
+    },
     "listBuiltinRolesResponse": {
       "description": "",
       "schema": {
@@ -8343,6 +8746,12 @@
             "$ref": "#/definitions/RoleDTO"
           }
         }
+      }
+    },
+    "listPublicDashboardsResponse": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/PublicDashboardListResponseWithPagination"
       }
     },
     "listRecordingRulesResponse": {
@@ -8395,10 +8804,22 @@
         "$ref": "#/definitions/ErrorResponseBody"
       }
     },
+    "notFoundPublicError": {
+      "description": "NotFoundPublicError is returned when the requested resource was not found.",
+      "schema": {
+        "$ref": "#/definitions/publicError"
+      }
+    },
     "okResponse": {
       "description": "An OKResponse is returned if the request was successful.",
       "schema": {
         "$ref": "#/definitions/SuccessResponseBody"
+      }
+    },
+    "panelNotFoundPublicError": {
+      "description": "PanelNotFoundPublicError is returned when the panel is not found",
+      "schema": {
+        "$ref": "#/definitions/publicError"
       }
     },
     "pauseAlertResponse": {
@@ -8532,7 +8953,31 @@
         "$ref": "#/definitions/ErrorResponseBody"
       }
     },
+    "publicDashboardNotEnabledError": {
+      "description": "PublicDashboardNotEnabledError is returned when the public dashboard is not enabled.",
+      "schema": {
+        "$ref": "#/definitions/publicError"
+      }
+    },
+    "publicDashboardNotFoundPublicError": {
+      "description": "PublicDashboardNotFoundPublicError is returned when the public dashboard is not found.",
+      "schema": {
+        "$ref": "#/definitions/publicError"
+      }
+    },
+    "publicErrorResponse": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/publicError"
+      }
+    },
     "queryMetricsWithExpressionsRespons": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/QueryDataResponse"
+      }
+    },
+    "queryPublicDashboardResponse": {
       "description": "",
       "schema": {
         "$ref": "#/definitions/QueryDataResponse"
@@ -8655,6 +9100,12 @@
         "$ref": "#/definitions/ErrorResponseBody"
       }
     },
+    "unauthorisedPublicError": {
+      "description": "UnauthorisedPublicError is returned when the request is not authenticated.",
+      "schema": {
+        "$ref": "#/definitions/publicError"
+      }
+    },
     "unprocessableEntityError": {
       "description": "UnprocessableEntityError",
       "schema": {
@@ -8671,6 +9122,12 @@
       "description": "",
       "schema": {
         "$ref": "#/definitions/Spec"
+      }
+    },
+    "updatePublicDashboardResponse": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/PublicDashboard"
       }
     },
     "updateServiceAccountResponse": {
@@ -8709,6 +9166,12 @@
         "message": {
           "type": "string"
         }
+      }
+    },
+    "viewPublicDashboardResponse": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/DashboardFullWithMeta"
       }
     }
   },
