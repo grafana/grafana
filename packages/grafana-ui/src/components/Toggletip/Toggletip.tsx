@@ -141,14 +141,14 @@ export const getStyles = (theme: GrafanaTheme2) => {
     theme.components.tooltip.background,
     theme.components.tooltip.background,
     theme.components.tooltip.text,
-    { topBottom: 3, rightLeft: 3 }
+    { topBottom: 2, rightLeft: 2 }
   );
   const error = buildTooltipTheme(
     theme,
     theme.colors.error.main,
     theme.colors.error.main,
     theme.colors.error.contrastText,
-    { topBottom: 3, rightLeft: 3 }
+    { topBottom: 2, rightLeft: 2 }
   );
 
   return {

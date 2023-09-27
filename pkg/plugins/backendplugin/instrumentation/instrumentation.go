@@ -100,6 +100,9 @@ func instrumentContext(ctx context.Context, endpoint string, pCtx backend.Plugin
 		p = append(p, "dsName", pCtx.DataSourceInstanceSettings.Name)
 		p = append(p, "dsUID", pCtx.DataSourceInstanceSettings.UID)
 	}
+	if pCtx.User != nil {
+		p = append(p, "uname", pCtx.User.Login)
+	}
 	return log.WithContextualAttributes(ctx, p)
 }
 

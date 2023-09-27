@@ -5,9 +5,6 @@ import React from 'react';
 
 import { SeriesColorPicker, ColorPicker, clearButtonStyles, useStyles2 } from '@grafana/ui';
 
-import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
-import { renderComponentWithTheme } from '../../utils/storybook/withTheme';
-
 import mdx from './ColorPicker.mdx';
 import { ColorPickerInput } from './ColorPickerInput';
 
@@ -18,7 +15,6 @@ const meta: Meta<typeof ColorPicker> = {
   // https://github.com/storybookjs/storybook/issues/20782
   // @ts-ignore
   subcomponents: { SeriesColorPicker, ColorPickerInput },
-  decorators: [withCenteredStory],
   parameters: {
     docs: {
       page: mdx,
@@ -35,14 +31,19 @@ const meta: Meta<typeof ColorPicker> = {
 
 export const Basic: StoryFn<typeof ColorPicker> = ({ color, enableNamedColors }) => {
   const [, updateArgs] = useArgs();
-  return renderComponentWithTheme(ColorPicker, {
-    enableNamedColors,
-    color,
-    onChange: (color: string) => {
-      action('Color changed')(color);
-      updateArgs({ color });
-    },
-  });
+
+  return (
+    <div style={{ display: 'flex', alignItems: 'flex-start' }}>
+      <ColorPicker
+        enableNamedColors={enableNamedColors}
+        color={color}
+        onChange={(color: string) => {
+          action('Color changed')(color);
+          updateArgs({ color });
+        }}
+      />
+    </div>
+  );
 };
 
 export const SeriesPicker: StoryFn<typeof SeriesColorPicker> = ({ color, enableNamedColors }) => {
@@ -78,13 +79,15 @@ export const SeriesPicker: StoryFn<typeof SeriesColorPicker> = ({ color, enableN
 export const Input: StoryFn<typeof ColorPickerInput> = ({ color }) => {
   const [, updateArgs] = useArgs();
   return (
-    <ColorPickerInput
-      value={color}
-      onChange={(color) => {
-        action('Color changed')(color);
-        updateArgs({ color });
-      }}
-    />
+    <div style={{ minHeight: '100dvh', display: 'grid', placeContent: 'center' }}>
+      <ColorPickerInput
+        value={color}
+        onChange={(color) => {
+          action('Color changed')(color);
+          updateArgs({ color });
+        }}
+      />
+    </div>
   );
 };
 

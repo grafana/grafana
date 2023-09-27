@@ -7,6 +7,7 @@ import { DataSourceInstanceSettings, RawTimeRange } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import { defaultIntervals, PageToolbar, RefreshPicker, SetInterval, ToolbarButton, ButtonGroup } from '@grafana/ui';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
+import { t, Trans } from 'app/core/internationalization';
 import { createAndCopyShortLink } from 'app/core/utils/shortLinks';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 import { StoreState, useDispatch, useSelector } from 'app/types/store';
@@ -65,6 +66,10 @@ export function ExploreToolbar({ exploreId, topOfViewRef, onChangeTime }: Props)
     [isLargerPane, exploreId, panes]
   );
 
+  const refreshPickerLabel = loading
+    ? t('explore.toolbar.refresh-picker-cancel', 'Cancel')
+    : t('explore.toolbar.refresh-picker-run', 'Run query');
+
   const onCopyShortLink = () => {
     createAndCopyShortLink(global.location.href);
     reportInteraction('grafana_explore_shortened_link_clicked');
@@ -121,17 +126,17 @@ export function ExploreToolbar({ exploreId, topOfViewRef, onChangeTime }: Props)
           actions={[
             <DashNavButton
               key="share"
-              tooltip="Copy shortened link"
+              tooltip={t('explore.toolbar.copy-shortened-link', 'Copy shortened link')}
               icon="share-alt"
               onClick={onCopyShortLink}
-              aria-label="Copy shortened link"
+              aria-label={t('explore.toolbar.copy-shortened-link', 'Copy shortened link')}
             />,
             <div style={{ flex: 1 }} key="spacer" />,
           ]}
         />
       </div>
       <PageToolbar
-        aria-label="Explore toolbar"
+        aria-label={t('explore.toolbar.aria-label', 'Explore toolbar')}
         leftItems={[
           <DataSourcePicker
             key={`${exploreId}-ds-picker`}
@@ -149,25 +154,34 @@ export function ExploreToolbar({ exploreId, topOfViewRef, onChangeTime }: Props)
             <ToolbarButton
               variant="canvas"
               key="split"
-              tooltip="Split the pane"
+              tooltip={t('explore.toolbar.split-tooltip', 'Split the pane')}
               onClick={onOpenSplitView}
               icon="columns"
               disabled={isLive}
             >
-              Split
+              <Trans i18nKey="explore.toolbar.split-title">Split</Trans>
             </ToolbarButton>
           ) : (
             <ButtonGroup key="split-controls">
               <ToolbarButton
                 variant="canvas"
-                tooltip={`${isLargerPane ? 'Narrow' : 'Widen'} pane`}
+                tooltip={
+                  isLargerPane
+                    ? t('explore.toolbar.split-narrow', 'Narrow pane')
+                    : t('explore.toolbar.split-widen', 'Widen pane')
+                }
                 onClick={onClickResize}
                 icon={isLargerPane ? 'gf-movepane-left' : 'gf-movepane-right'}
                 iconOnly={true}
                 className={cx(shouldRotateSplitIcon && rotateIcon)}
               />
-              <ToolbarButton tooltip="Close split pane" onClick={onCloseSplitView} icon="times" variant="canvas">
-                Close
+              <ToolbarButton
+                tooltip={t('explore.toolbar.split-close-tooltip', 'Close split pane')}
+                onClick={onCloseSplitView}
+                icon="times"
+                variant="canvas"
+              >
+                <Trans i18nKey="explore.toolbar.split-close"> Close </Trans>
               </ToolbarButton>
             </ButtonGroup>
           ),
@@ -198,8 +212,8 @@ export function ExploreToolbar({ exploreId, topOfViewRef, onChangeTime }: Props)
             onIntervalChanged={onChangeRefreshInterval}
             value={refreshInterval}
             isLoading={loading}
-            text={showSmallTimePicker ? undefined : loading ? 'Cancel' : 'Run query'}
-            tooltip={showSmallTimePicker ? (loading ? 'Cancel' : 'Run query') : undefined}
+            text={showSmallTimePicker ? undefined : refreshPickerLabel}
+            tooltip={showSmallTimePicker ? refreshPickerLabel : undefined}
             intervals={contextSrv.getValidIntervals(defaultIntervals)}
             isLive={isLive}
             onRefresh={() => onRunQuery(loading)}

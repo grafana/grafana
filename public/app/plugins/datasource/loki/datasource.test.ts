@@ -1288,21 +1288,26 @@ describe('LokiDatasource', () => {
 
   describe('getQueryStats', () => {
     let ds: LokiDatasource;
+    let query: LokiQuery;
     beforeEach(() => {
       ds = createLokiDatasource(templateSrvStub);
       ds.statsMetadataRequest = jest.fn().mockResolvedValue({ streams: 1, chunks: 1, bytes: 1, entries: 1 });
       ds.interpolateString = jest.fn().mockImplementation((value: string) => value.replace('$__interval', '1m'));
+
+      query = { refId: 'A', expr: '', queryType: LokiQueryType.Range };
     });
 
     it('uses statsMetadataRequest', async () => {
-      const result = await ds.getQueryStats('{foo="bar"}');
+      query.expr = '{foo="bar"}';
+      const result = await ds.getQueryStats(query);
 
       expect(ds.statsMetadataRequest).toHaveBeenCalled();
       expect(result).toEqual({ streams: 1, chunks: 1, bytes: 1, entries: 1 });
     });
 
     it('supports queries with template variables', async () => {
-      const result = await ds.getQueryStats('rate({instance="server\\1"}[$__interval])');
+      query.expr = 'rate({instance="server\\1"}[$__interval])';
+      const result = await ds.getQueryStats(query);
 
       expect(result).toEqual({
         streams: 1,
@@ -1313,14 +1318,16 @@ describe('LokiDatasource', () => {
     });
 
     it('does not call stats if the query is invalid', async () => {
-      const result = await ds.getQueryStats('rate({label="value"}');
+      query.expr = 'rate({label="value"}';
+      const result = await ds.getQueryStats(query);
 
       expect(ds.statsMetadataRequest).not.toHaveBeenCalled();
       expect(result).toBe(undefined);
     });
 
     it('combines the stats of each label matcher', async () => {
-      const result = await ds.getQueryStats('count_over_time({foo="bar"}[1m]) + count_over_time({test="test"}[1m])');
+      query.expr = 'count_over_time({foo="bar"}[1m]) + count_over_time({test="test"}[1m])';
+      const result = await ds.getQueryStats(query);
 
       expect(ds.statsMetadataRequest).toHaveBeenCalled();
       expect(result).toEqual({ streams: 2, chunks: 2, bytes: 2, entries: 2 });
@@ -1422,6 +1429,122 @@ describe('applyTemplateVariables', () => {
         }),
         expect.any(Function)
       );
+    });
+  });
+
+  describe('getStatsTimeRange', () => {
+    let query: LokiQuery;
+    let datasource: LokiDatasource;
+
+    beforeEach(() => {
+      query = { refId: 'A', expr: '', queryType: LokiQueryType.Range };
+      datasource = createLokiDatasource();
+
+      datasource.getTimeRangeParams = jest.fn().mockReturnValue({
+        start: 1672552800000000000, // 01 Jan 2023 06:00:00 GMT
+        end: 1672639200000000000, //   02 Jan 2023 06:00:00 GMT
+      });
+    });
+
+    it('should return the ds picker timerange for a logs query with range type', () => {
+      // log queries with range type should request the ds picker timerange
+      // in this case (1 day)
+      query.expr = '{job="grafana"}';
+
+      expect(datasource.getStatsTimeRange(query, 0)).toEqual({
+        start: 1672552800000000000, // 01 Jan 2023 06:00:00 GMT
+        end: 1672639200000000000, //   02 Jan 2023 06:00:00 GMT
+      });
+    });
+
+    it('should return nothing for a logs query with instant type', () => {
+      // log queries with instant type should be invalid.
+      query.queryType = LokiQueryType.Instant;
+      query.expr = '{job="grafana"}';
+
+      expect(datasource.getStatsTimeRange(query, 0)).toEqual({
+        start: undefined,
+        end: undefined,
+      });
+    });
+
+    it('should return the ds picker timerange', () => {
+      // metric queries with range type should request ds picker timerange
+      // in this case (1 day)
+      query.expr = 'rate({job="grafana"}[5m])';
+
+      expect(datasource.getStatsTimeRange(query, 0)).toEqual({
+        start: 1672552800000000000, // 01 Jan 2023 06:00:00 GMT
+        end: 1672639200000000000, //   02 Jan 2023 06:00:00 GMT
+      });
+    });
+
+    it('should return the range duration for an instant metric query', () => {
+      // metric queries with instant type should request range duration
+      // in this case (5 minutes)
+      query.queryType = LokiQueryType.Instant;
+      query.expr = 'rate({job="grafana"}[5m])';
+
+      expect(datasource.getStatsTimeRange(query, 0)).toEqual({
+        start: 1672638900000000000, // 02 Jan 2023 05:55:00 GMT
+        end: 1672639200000000000, //   02 Jan 2023 06:00:00 GMT
+      });
+    });
+  });
+});
+
+describe('makeStatsRequest', () => {
+  const datasource = createLokiDatasource();
+  let query: LokiQuery;
+
+  beforeEach(() => {
+    query = { refId: 'A', expr: '', queryType: LokiQueryType.Range };
+  });
+
+  it('should return null if there is no query', () => {
+    query.expr = '';
+    expect(datasource.getStats(query)).resolves.toBe(null);
+  });
+
+  it('should return null if the query is invalid', () => {
+    query.expr = '{job="grafana",';
+    expect(datasource.getStats(query)).resolves.toBe(null);
+  });
+
+  it('should return null if the response has no data', () => {
+    query.expr = '{job="grafana"}';
+    datasource.getQueryStats = jest.fn().mockResolvedValue({ streams: 0, chunks: 0, bytes: 0, entries: 0 });
+    expect(datasource.getStats(query)).resolves.toBe(null);
+  });
+
+  it('should return the stats if the response has data', () => {
+    query.expr = '{job="grafana"}';
+
+    datasource.getQueryStats = jest
+      .fn()
+      .mockResolvedValue({ streams: 1, chunks: 12611, bytes: 12913664, entries: 78344 });
+    expect(datasource.getStats(query)).resolves.toEqual({
+      streams: 1,
+      chunks: 12611,
+      bytes: 12913664,
+      entries: 78344,
+    });
+  });
+
+  it('should support queries with variables', () => {
+    query.expr = 'count_over_time({job="grafana"}[$__interval])';
+
+    datasource.interpolateString = jest
+      .fn()
+      .mockImplementationOnce((value: string) => value.replace('$__interval', '1h'));
+    datasource.getQueryStats = jest
+      .fn()
+      .mockResolvedValue({ streams: 1, chunks: 12611, bytes: 12913664, entries: 78344 });
+    expect(datasource.getStats(query)).resolves.toEqual({
+      streams: 1,
+      chunks: 12611,
+      bytes: 12913664,
+      entries: 78344,
     });
   });
 });
