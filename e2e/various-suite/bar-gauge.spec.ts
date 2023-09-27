@@ -4,7 +4,7 @@ import { e2e } from '../utils';
 
 describe('Bar Gauge Panel', () => {
   beforeEach(() => {
-    e2e.flows.login(e2e.env('USERNAME'), e2e.env('PASSWORD'));
+    e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'));
   });
 
   it('Bar Gauge rendering e2e tests', () => {

@@ -1,13 +1,15 @@
-import { split } from 'lodash';
+import { countBy, split, trim } from 'lodash';
 import { ReactNode } from 'react';
 
 import {
   AlertManagerCortexConfig,
   GrafanaManagedContactPoint,
   GrafanaManagedReceiverConfig,
+  Route,
 } from 'app/plugins/datasource/alertmanager/types';
 import { NotifierStatus, ReceiversStateDTO } from 'app/types';
 
+import { computeInheritedTree } from '../../utils/notification-policies';
 import { extractReceivers } from '../../utils/receivers';
 
 import { RECEIVER_STATUS_KEY } from './useContactPoints';
@@ -34,6 +36,10 @@ export function getReceiverDescription(receiver: GrafanaManagedReceiverConfig): 
       const topicName = receiver.settings['kafkaTopic'];
       return topicName;
     }
+    case 'webhook': {
+      const url = receiver.settings['url'];
+      return url;
+    }
     default:
       return undefined;
   }
@@ -43,9 +49,10 @@ export function getReceiverDescription(receiver: GrafanaManagedReceiverConfig): 
 // output: foo+1@bar.com, foo+2@bar.com, +2 more
 function summarizeEmailAddresses(addresses: string): string {
   const MAX_ADDRESSES_SHOWN = 3;
-  const SUPPORTED_SEPARATORS = /,|;|\\n/;
+  const SUPPORTED_SEPARATORS = /,|;|\n+/g;
 
-  const emails = addresses.trim().split(SUPPORTED_SEPARATORS);
+  const emails = addresses.trim().split(SUPPORTED_SEPARATORS).map(trim);
+
   const notShown = emails.length - MAX_ADDRESSES_SHOWN;
 
   const truncatedAddresses = split(addresses, SUPPORTED_SEPARATORS, MAX_ADDRESSES_SHOWN);
@@ -64,6 +71,7 @@ export interface ReceiverConfigWithStatus extends GrafanaManagedReceiverConfig {
 }
 
 export interface ContactPointWithStatus extends GrafanaManagedContactPoint {
+  numberOfPolicies: number;
   grafana_managed_receiver_configs: ReceiverConfigWithStatus[];
 }
 
@@ -78,16 +86,31 @@ export function enhanceContactPointsWithStatus(
 ): ContactPointWithStatus[] {
   const contactPoints = result.alertmanager_config.receivers ?? [];
 
+  // compute the entire inherited tree before finding what notification policies are using a particular contact point
+  const fullyInheritedTree = computeInheritedTree(result?.alertmanager_config?.route ?? {});
+  const usedContactPoints = getUsedContactPoints(fullyInheritedTree);
+  const usedContactPointsByName = countBy(usedContactPoints);
+
   return contactPoints.map((contactPoint) => {
     const receivers = extractReceivers(contactPoint);
     const statusForReceiver = status.find((status) => status.name === contactPoint.name);
 
     return {
       ...contactPoint,
+      numberOfPolicies: usedContactPointsByName[contactPoint.name] ?? 0,
       grafana_managed_receiver_configs: receivers.map((receiver, index) => ({
         ...receiver,
         [RECEIVER_STATUS_KEY]: statusForReceiver?.integrations[index],
       })),
     };
   });
+}
+
+export function getUsedContactPoints(route: Route): string[] {
+  const childrenContactPoints = route.routes?.flatMap((route) => getUsedContactPoints(route)) ?? [];
+  if (route.receiver) {
+    return [route.receiver, ...childrenContactPoints];
+  }
+
+  return childrenContactPoints;
 }
