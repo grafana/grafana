@@ -6,11 +6,11 @@ import uPlot from 'uplot';
 import { GrafanaTheme2 } from '@grafana/data';
 
 import { CloseButton } from '../../../../../../public/app/core/components/CloseButton/CloseButton';
-import {ADD_ANNOTATION_ID} from "../../../../../../public/app/plugins/panel/heatmap/tooltip/VizTooltipFooter";
+import { ADD_ANNOTATION_ID } from '../../../../../../public/app/plugins/panel/heatmap/tooltip/VizTooltipFooter';
 import { useStyles2 } from '../../../themes/ThemeContext';
 import { UPlotConfigBuilder } from '../config/UPlotConfigBuilder';
 
-interface TooltipPlugin4Props {
+interface TooltipPlugin2Props {
   config: UPlotConfigBuilder;
   // or via .children() render prop callback?
   render: (
@@ -60,7 +60,7 @@ const INITIAL_STATE: TooltipContainerState = {
 /**
  * @alpha
  */
-export const TooltipPlugin4 = ({ config, render }: TooltipPlugin4Props) => {
+export const TooltipPlugin2 = ({ config, render }: TooltipPlugin2Props) => {
   const domRef = useRef<HTMLDivElement>(null);
 
   const [{ plot, isHovering, isPinned, contents, style, dismiss }, setState] = useReducer(mergeState, INITIAL_STATE);

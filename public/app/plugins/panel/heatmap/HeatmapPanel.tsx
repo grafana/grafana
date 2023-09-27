@@ -16,7 +16,7 @@ import { PanelDataErrorView } from '@grafana/runtime';
 import { ScaleDistributionConfig } from '@grafana/schema';
 import {
   ScaleDistribution,
-  TooltipPlugin4,
+  TooltipPlugin2,
   ZoomXPlugin,
   UPlotChart,
   usePanelContext,
@@ -232,7 +232,7 @@ export const HeatmapPanel = ({
               }}
             />
             {options.tooltip.show && (
-              <TooltipPlugin4
+              <TooltipPlugin2
                 config={builder}
                 render={(u, dataIdxs, seriesIdx, isPinned, dismiss) => {
                   return (

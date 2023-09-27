@@ -14,7 +14,7 @@ export const HeaderLabel = ({ headerLabel }: HeaderLabelProps) => {
   const styles = useStyles2(getStyles);
 
   return (
-    <HorizontalGroup justify-content="space-between" spacing="lg" wrap maxLength={260}>
+    <HorizontalGroup justify-content="space-between" spacing="lg" wrap maxLength={240}>
       <div className={styles.wrapper}>
         <span className={styles.label}>{headerLabel.label}</span>
         <Tooltip content={headerLabel.value}>
