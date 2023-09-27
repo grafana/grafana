@@ -28,7 +28,7 @@ API Tokens can be used with Organization HTTP API to get users of specific organ
 
 ## Search Users
 
-`GET /api/users?perpage=10&page=1`
+`GET /api/users?perpage=10&page=1&sort=login-asc,email-asc`
 
 **Required permissions**
 
@@ -48,6 +48,8 @@ Authorization: Basic YWRtaW46YWRtaW4=
 ```
 
 Default value for the `perpage` parameter is `1000` and for the `page` parameter is `1`. Requires basic authentication and that the authenticated user is a Grafana Admin.
+
+`sort` is a comma separated list of options to order the search result. Accepted values for the sort filter are: `login-asc`, `login-desc`, `email-asc`, `email-desc`, `name-asc`, `name-desc`, `lastSeenAtAge-asc`, `lastSeenAtAge-desc`. By default value if `sort` is not specified, the user list will be ordered by `login`, `email` in ascending order.
 
 **Example Response**:
 
