@@ -57,7 +57,6 @@ func (hs *treeStore) migrate() error {
 		}
 		return nil
 	})
-	return nil
 }
 
 func (hs *treeStore) migrateTreeForOrg(orgID int64) error {
