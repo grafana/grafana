@@ -52,13 +52,12 @@ export class TableContainer extends PureComponent<Props> {
   }
 
   getTableTitle(dataFrames: DataFrame[] | null, data: DataFrame, i: number) {
-    let title = data.name
-      ? t('explore.table.title-with-name', 'Table - {{name}}', { name: data.name })
-      : t('explore.table.title', 'Table');
-    if (dataFrames && dataFrames.length > 1) {
-      title = `${t('explore.table.title-with-dataframes', 'Table')} - ${data.name || data.refId || i}`;
+    let name: string | number | undefined = data.name;
+    if (!name && (dataFrames?.length ?? 0) > 1) {
+      name = data.refId || i;
     }
-    return title;
+
+    return name ? t('explore.table.title-with-name', 'Table - {{name}}', { name }) : t('explore.table.title', 'Table');
   }
 
   render() {

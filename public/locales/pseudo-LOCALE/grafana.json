@@ -228,7 +228,6 @@
     "table": {
       "no-data": "0 şęřįęş řęŧūřŉęđ",
       "title": "Ŧäþľę",
-      "title-with-dataframes": "Ŧäþľę",
       "title-with-name": "Ŧäþľę - {{name}}"
     },
     "toolbar": {
