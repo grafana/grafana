@@ -16,6 +16,7 @@ import {
   makeClassES5Compatible,
   parseLiveChannelAddress,
   ScopedVars,
+  AdHocVariableFilter,
 } from '@grafana/data';
 
 import { config } from '../config';
@@ -278,7 +279,7 @@ class DataSourceWithBackend<
   filterQuery?(query: TQuery): boolean;
 
   /**
-   * Override to apply template variables.  The result is usually also `TQuery`, but sometimes this can
+   * Override to apply template variables and adhoc filters.  The result is usually also `TQuery`, but sometimes this can
    * be used to modify the query structure before sending to the backend.
    *
    * NOTE: if you do modify the structure or use template variables, alerting queries may not work
@@ -286,7 +287,11 @@ class DataSourceWithBackend<
    *
    * @virtual
    */
-  applyTemplateVariables(query: TQuery, scopedVars: ScopedVars): Record<string, any> {
+  applyTemplateVariables(
+    query: TQuery,
+    scopedVars: ScopedVars,
+    adhocFilters: AdHocVariableFilter[]
+  ): Record<string, any> {
     return query;
   }
 
