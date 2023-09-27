@@ -140,19 +140,8 @@
 
   agent:
     image: grafana/agent:v0.34.3
-    # entrypoint:
-    #   - /bin/grafana-agent
-    #   - -server.http.address=0.0.0.0:12345
-    #   # - -config.file=/etc/agent/agent.river
-    #   - -enable-features=integrations-next
     volumes:
-      # - ./docker/blocks/tempo/agent.yaml:/etc/agent/agent.yaml
       - ./docker/blocks/tempo/agent.river:/etc/agent/agent.river:ro
-    # ports:
-    #   - "12345:12345"
-    #   - "12347:12347"
-    # extra_hosts:
-    #   - "host.docker.internal:host-gateway"
     command: [ "run", "/etc/agent/agent.river", "--disable-reporting", "--server.http.listen-addr=0.0.0.0:12345" ]
     environment:
       - AGENT_MODE=flow

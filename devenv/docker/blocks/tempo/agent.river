@@ -6,7 +6,6 @@ pyroscope.scrape "local" {
   targets    = [
     {"__address__" = "db:80", "service_name"="db"},
     {"__address__" = "app:80", "service_name"="app"},
-    {"__address__" = "lb:80", "service_name"="lb"},
     {"__address__" = "localhost:12345", "service_name"="agent"},
   ]
   forward_to = [pyroscope.write.local.receiver]
