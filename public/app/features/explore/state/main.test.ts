@@ -20,19 +20,17 @@ const getNavigateToExploreContext = async (openInNewWindow?: (url: string) => vo
   };
   const datasource = new MockDataSourceApi(panel.datasource!.uid!);
   const get = jest.fn().mockResolvedValue(datasource);
-  const getDataSourceSrv = jest.fn().mockReturnValue({ get });
   const getExploreUrl = jest.fn().mockResolvedValue(url);
   const timeRange = { from: dateTime(), to: dateTime() };
 
   const dispatchedActions = await thunkTester({})
     .givenThunk(navigateToExplore)
-    .whenThunkIsDispatched(panel, { getDataSourceSrv, timeRange, getExploreUrl, openInNewWindow });
+    .whenThunkIsDispatched(panel, { timeRange, getExploreUrl, openInNewWindow });
 
   return {
     url,
     panel,
     get,
-    getDataSourceSrv,
     timeRange,
     getExploreUrl,
     dispatchedActions,
@@ -47,20 +45,14 @@ describe('navigateToExplore', () => {
         expect(locationService.getLocation().pathname).toEqual(url);
       });
 
-      it('then getDataSourceSrv should have been once', async () => {
-        const { getDataSourceSrv } = await getNavigateToExploreContext();
-
-        expect(getDataSourceSrv).toHaveBeenCalledTimes(1);
-      });
-
       it('then getExploreUrl should have been called with correct arguments', async () => {
-        const { getExploreUrl, panel, getDataSourceSrv, timeRange } = await getNavigateToExploreContext();
+        const { getExploreUrl, panel, timeRange } = await getNavigateToExploreContext();
 
         expect(getExploreUrl).toHaveBeenCalledTimes(1);
         expect(getExploreUrl).toHaveBeenCalledWith({
-          panel,
-          datasourceSrv: getDataSourceSrv(),
+          queries: panel.targets,
           timeRange,
+          dsRef: panel.datasource,
         });
       });
     });
@@ -73,22 +65,14 @@ describe('navigateToExplore', () => {
         expect(dispatchedActions).toEqual([]);
       });
 
-      it('then getDataSourceSrv should have been once', async () => {
-        const { getDataSourceSrv } = await getNavigateToExploreContext(openInNewWindow);
-
-        expect(getDataSourceSrv).toHaveBeenCalledTimes(1);
-      });
-
       it('then getExploreUrl should have been called with correct arguments', async () => {
-        const { getExploreUrl, panel, getDataSourceSrv, timeRange } = await getNavigateToExploreContext(
-          openInNewWindow
-        );
+        const { getExploreUrl, panel, timeRange } = await getNavigateToExploreContext(openInNewWindow);
 
         expect(getExploreUrl).toHaveBeenCalledTimes(1);
         expect(getExploreUrl).toHaveBeenCalledWith({
-          panel,
-          datasourceSrv: getDataSourceSrv(),
+          queries: panel.targets,
           timeRange,
+          dsRef: panel.datasource,
         });
       });
 

@@ -20,6 +20,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	ngalertmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	es "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client"
 )
@@ -29,44 +30,48 @@ var eslog = log.New("tsdb.elasticsearch")
 type Service struct {
 	httpClientProvider httpclient.Provider
 	im                 instancemgmt.InstanceManager
+	tracer             tracing.Tracer
+	logger             *log.ConcreteLogger
 }
 
-func ProvideService(httpClientProvider httpclient.Provider) *Service {
+func ProvideService(httpClientProvider httpclient.Provider, tracer tracing.Tracer) *Service {
 	return &Service{
 		im:                 datasource.NewInstanceManager(newInstanceSettings(httpClientProvider)),
 		httpClientProvider: httpClientProvider,
+		tracer:             tracer,
+		logger:             eslog,
 	}
 }
 
 func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	dsInfo, err := s.getDSInfo(ctx, req.PluginContext)
 	_, fromAlert := req.Headers[ngalertmodels.FromAlertHeaderName]
-	logger := eslog.FromContext(ctx).New("fromAlert", fromAlert)
+	logger := s.logger.FromContext(ctx).New("fromAlert", fromAlert)
 
 	if err != nil {
 		logger.Error("Failed to get data source info", "error", err)
 		return &backend.QueryDataResponse{}, err
 	}
 
-	return queryData(ctx, req.Queries, dsInfo, logger)
+	return queryData(ctx, req.Queries, dsInfo, logger, s.tracer)
 }
 
 // separate function to allow testing the whole transformation and query flow
-func queryData(ctx context.Context, queries []backend.DataQuery, dsInfo *es.DatasourceInfo, logger log.Logger) (*backend.QueryDataResponse, error) {
+func queryData(ctx context.Context, queries []backend.DataQuery, dsInfo *es.DatasourceInfo, logger log.Logger, tracer tracing.Tracer) (*backend.QueryDataResponse, error) {
 	if len(queries) == 0 {
 		return &backend.QueryDataResponse{}, fmt.Errorf("query contains no queries")
 	}
 
-	client, err := es.NewClient(ctx, dsInfo, queries[0].TimeRange, logger)
+	client, err := es.NewClient(ctx, dsInfo, queries[0].TimeRange, logger, tracer)
 	if err != nil {
 		return &backend.QueryDataResponse{}, err
 	}
-	query := newElasticsearchDataQuery(ctx, client, queries, logger)
+	query := newElasticsearchDataQuery(ctx, client, queries, logger, tracer)
 	return query.execute()
 }
 
 func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.InstanceFactoryFunc {
-	return func(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+	return func(_ context.Context, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 		jsonData := map[string]any{}
 		err := json.Unmarshal(settings.JSONData, &jsonData)
 		if err != nil {
@@ -229,10 +234,14 @@ func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceReq
 		if errors.Is(err, context.Canceled) {
 			status = "cancelled"
 		}
-		logger.Error("Error received from Elasticsearch", "error", err, "status", status, "statusCode", response.StatusCode, "duration", time.Since(start), "action", "databaseRequest")
+		lp := []any{"error", err, "status", status, "duration", time.Since(start), "stage", es.StageDatabaseRequest, "resourcePath", req.Path}
+		if response != nil {
+			lp = append(lp, "statusCode", response.StatusCode)
+		}
+		logger.Error("Error received from Elasticsearch", lp...)
 		return err
 	}
-	logger.Info("Response received from Elasticsearch", "statusCode", response.StatusCode, "status", "ok", "duration", time.Since(start), "action", "databaseRequest", "contentLength", response.Header.Get("Content-Length"))
+	logger.Info("Response received from Elasticsearch", "statusCode", response.StatusCode, "status", "ok", "duration", time.Since(start), "stage", es.StageDatabaseRequest, "contentLength", response.Header.Get("Content-Length"), "resourcePath", req.Path)
 
 	defer func() {
 		if err := response.Body.Close(); err != nil {

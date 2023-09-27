@@ -17,21 +17,21 @@ import { CandlestickData, candlestickFieldsInfo, FieldPickerInfo, prepareCandles
 import { CandlestickSuggestionsSupplier } from './suggestions';
 import { defaultCandlestickColors, defaultOptions, Options, VizDisplayMode, ColorStrategy, CandleStyle } from './types';
 
-const modeOptions = [
+const modeOptions: Array<SelectableValue<VizDisplayMode>> = [
   { label: 'Candles', value: VizDisplayMode.Candles },
   { label: 'Volume', value: VizDisplayMode.Volume },
   { label: 'Both', value: VizDisplayMode.CandlesVolume },
-] as Array<SelectableValue<VizDisplayMode>>;
+];
 
-const candleStyles = [
+const candleStyles: Array<SelectableValue<CandleStyle>> = [
   { label: 'Candles', value: CandleStyle.Candles },
   { label: 'OHLC Bars', value: CandleStyle.OHLCBars },
-] as Array<SelectableValue<CandleStyle>>;
+];
 
-const colorStrategies = [
+const colorStrategies: Array<SelectableValue<ColorStrategy>> = [
   { label: 'Since Open', value: ColorStrategy.OpenClose },
   { label: 'Since Prior Close', value: ColorStrategy.CloseClose },
-] as Array<SelectableValue<ColorStrategy>>;
+];
 
 const numericFieldFilter = (f: Field) => f.type === FieldType.number;
 
@@ -43,7 +43,7 @@ function addFieldPicker(
   let placeholderText = 'Auto ';
 
   if (data) {
-    const current = data[info.key] as Field;
+    const current = data[info.key];
 
     if (current?.config) {
       placeholderText += '= ' + getFieldDisplayName(current);

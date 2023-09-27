@@ -40,11 +40,11 @@ import {
   rulerRuleToFormValues,
 } from '../../utils/rule-form';
 import * as ruleId from '../../utils/rule-id';
+import { GrafanaRuleExporter } from '../export/GrafanaRuleExporter';
 
 import AnnotationsStep from './AnnotationsStep';
 import { CloudEvaluationBehavior } from './CloudEvaluationBehavior';
 import { GrafanaEvaluationBehavior } from './GrafanaEvaluationBehavior';
-import { GrafanaRuleInspector } from './GrafanaRuleInspector';
 import { NotificationsStep } from './NotificationsStep';
 import { RecordingRulesNameSpaceAndGroupStep } from './RecordingRulesNameSpaceAndGroupStep';
 import { RuleEditorSection } from './RuleEditorSection';
@@ -112,7 +112,7 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
   const ruleType = translateRouteParamToRuleType(routeParams.type);
   const uidFromParams = routeParams.id;
 
-  const returnTo: string = (queryParams['returnTo'] as string | undefined) ?? '/alerting/list';
+  const returnTo = !queryParams['returnTo'] ? '/alerting/list' : String(queryParams['returnTo']);
   const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
 
   const defaultValues: RuleFormValues = useMemo(() => {
@@ -251,7 +251,7 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
         </Button>
       ) : null}
 
-      {existing ? (
+      {existing && isCortexLokiOrRecordingRule(watch) && (
         <Button
           variant="secondary"
           type="button"
@@ -259,9 +259,9 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
           disabled={submitState.loading}
           size="sm"
         >
-          {isCortexLokiOrRecordingRule(watch) ? 'Edit YAML' : 'View YAML'}
+          Edit YAML
         </Button>
-      ) : null}
+      )}
     </HorizontalGroup>
   );
 
@@ -316,7 +316,7 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
       ) : null}
       {showEditYaml ? (
         type === RuleFormType.grafana ? (
-          <GrafanaRuleInspector alertUid={uidFromParams} onClose={() => setShowEditYaml(false)} />
+          <GrafanaRuleExporter alertUid={uidFromParams} onClose={() => setShowEditYaml(false)} />
         ) : (
           <RuleInspector onClose={() => setShowEditYaml(false)} />
         )

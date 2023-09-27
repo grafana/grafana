@@ -1,14 +1,12 @@
-import { e2e } from '@grafana/e2e';
-
 import testDashboard from '../dashboards/TestDashboard.json';
+import { e2e } from '../utils';
 
-e2e.scenario({
-  describeName: 'Dashboard browse',
-  itName: 'Basic folder view test',
-  addScenarioDataSource: false,
-  addScenarioDashBoard: false,
-  skipScenario: false,
-  scenario: () => {
+describe('Dashboard browse', () => {
+  beforeEach(() => {
+    e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'));
+  });
+
+  it('Basic folder view test', () => {
     e2e.flows.importDashboard(testDashboard, 1000, true);
 
     e2e.pages.Dashboards.visit();
@@ -21,5 +19,5 @@ e2e.scenario({
 
     e2e.components.Search.folderContent('General').should('be.visible');
     e2e.components.Search.dashboardItem('E2E Test - Import Dashboard').should('be.visible');
-  },
+  });
 });

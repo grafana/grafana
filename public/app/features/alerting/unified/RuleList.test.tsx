@@ -7,7 +7,6 @@ import { byRole, byTestId, byText } from 'testing-library-selector';
 
 import { DataSourceSrv, locationService, logInfo, setBackendSrv, setDataSourceSrv } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv';
-import { contextSrv } from 'app/core/services/context_srv';
 import * as ruleActionButtons from 'app/features/alerting/unified/components/rules/RuleActionsButtons';
 import * as actions from 'app/features/alerting/unified/state/actions';
 import { AccessControlAction } from 'app/types';
@@ -19,7 +18,6 @@ import { discoverFeatures } from './api/buildInfo';
 import { fetchRules } from './api/prometheus';
 import { deleteNamespace, deleteRulerRulesGroup, fetchRulerRules, setRulerRuleGroup } from './api/ruler';
 import {
-  disableRBAC,
   enableRBAC,
   grantUserPermissions,
   mockDataSource,
@@ -119,7 +117,9 @@ const ui = {
   editCloudGroupIcon: byTestId('edit-group'),
   newRuleButton: byRole('link', { name: 'New alert rule' }),
   moreButton: byRole('button', { name: 'More' }),
-  exportButton: byRole('link', { name: /export/i }),
+  exportButton: byRole('menuitem', {
+    name: /export all grafana\-managed rules/i,
+  }),
   editGroupModal: {
     dialog: byRole('dialog'),
     namespaceInput: byRole('textbox', { name: /^Namespace/ }),
@@ -137,7 +137,12 @@ beforeAll(() => {
 
 describe('RuleList', () => {
   beforeEach(() => {
-    contextSrv.isEditor = true;
+    grantUserPermissions([
+      AccessControlAction.AlertingRuleRead,
+      AccessControlAction.AlertingRuleUpdate,
+      AccessControlAction.AlertingRuleExternalRead,
+      AccessControlAction.AlertingRuleExternalWrite,
+    ]);
     mocks.rulesInSameGroupHaveInvalidForMock.mockReturnValue([]);
   });
 
@@ -147,7 +152,6 @@ describe('RuleList', () => {
   });
 
   it('load & show rule groups from multiple cloud data sources', async () => {
-    disableRBAC();
     mocks.getAllDataSourcesMock.mockReturnValue(Object.values(dataSources));
 
     setDataSourceSrv(new MockDataSourceSrv(dataSources));

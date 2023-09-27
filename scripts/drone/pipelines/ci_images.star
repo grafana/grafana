@@ -3,21 +3,21 @@ This module contains steps and pipelines relating to creating CI Docker images.
 """
 
 load(
-    "scripts/drone/utils/utils.star",
-    "pipeline",
+    "scripts/drone/utils/images.star",
+    "images",
 )
 load(
-    "scripts/drone/vault.star",
-    "from_secret",
-    "gcp_download_build_container_assets_key",
+    "scripts/drone/utils/utils.star",
+    "pipeline",
 )
 load(
     "scripts/drone/utils/windows_images.star",
     "windows_images",
 )
 load(
-    "scripts/drone/utils/images.star",
-    "images",
+    "scripts/drone/vault.star",
+    "from_secret",
+    "gcp_download_build_container_assets_key",
 )
 
 def publish_ci_windows_test_image_pipeline():
@@ -32,7 +32,7 @@ def publish_ci_windows_test_image_pipeline():
         steps = [
             {
                 "name": "clone",
-                "image": windows_images["wix_image"],
+                "image": windows_images["wix"],
                 "environment": {
                     "GITHUB_TOKEN": from_secret("github_token"),
                 },
@@ -43,7 +43,7 @@ def publish_ci_windows_test_image_pipeline():
             },
             {
                 "name": "build-and-publish",
-                "image": windows_images["windows_server_core_image"],
+                "image": windows_images["windows_server_core"],
                 "environment": {
                     "DOCKER_USERNAME": from_secret("docker_username"),
                     "DOCKER_PASSWORD": from_secret("docker_password"),
@@ -81,14 +81,14 @@ def publish_ci_build_container_image_pipeline():
         steps = [
             {
                 "name": "validate-version",
-                "image": images["alpine_image"],
+                "image": images["alpine"],
                 "commands": [
                     "if [ -z \"${BUILD_CONTAINER_VERSION}\" ]; then echo Missing BUILD_CONTAINER_VERSION; false; fi",
                 ],
             },
             {
                 "name": "download-macos-sdk",
-                "image": images["cloudsdk_image"],
+                "image": images["cloudsdk"],
                 "environment": {
                     "GCP_KEY": from_secret(gcp_download_build_container_assets_key),
                 },
@@ -100,7 +100,7 @@ def publish_ci_build_container_image_pipeline():
             },
             {
                 "name": "build-and-publish",  # Consider splitting the build and the upload task.
-                "image": images["cloudsdk_image"],
+                "image": images["cloudsdk"],
                 "volumes": [{"name": "docker", "path": "/var/run/docker.sock"}],
                 "environment": {
                     "DOCKER_USERNAME": from_secret("docker_username"),
