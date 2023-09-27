@@ -57,7 +57,7 @@ type Requester interface {
 	HasRole(role roletype.RoleType) bool
 	// GetCacheKey returns a unique key for the entity.
 	// Add an extra prefix to avoid collisions with other caches
-	GetCacheKey() (string, error)
+	GetCacheKey() string
 	// HasUniqueId returns true if the entity has a unique id
 	HasUniqueId() bool
 	// AuthenticatedBy returns the authentication method used to authenticate the entity.

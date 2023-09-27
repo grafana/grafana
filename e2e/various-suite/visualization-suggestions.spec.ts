@@ -1,18 +1,16 @@
 import { e2e } from '../utils';
 
-e2e.scenario({
-  describeName: 'Visualization suggestions',
-  itName: 'Should be shown and clickable',
-  addScenarioDataSource: false,
-  addScenarioDashBoard: false,
-  skipScenario: false,
-  scenario: () => {
+describe('Visualization suggestions', () => {
+  beforeEach(() => {
+    e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'));
+  });
+
+  it('Should be shown and clickable', () => {
     e2e.flows.openDashboard({ uid: 'aBXrJ0R7z', queryParams: { editPanel: 9 } });
 
     // Try visualization suggestions
     e2e.components.PanelEditor.toggleVizPicker().click();
     cy.contains('Suggestions').click();
-    cy.wait(3000);
 
     // Verify we see suggestions
     e2e.components.VisualizationPreview.card('Line chart').should('be.visible');
@@ -25,5 +23,5 @@ e2e.scenario({
     // Select a visualisation
     e2e.components.VisualizationPreview.card('Table').click();
     e2e.components.Panels.Visualization.Table.header().should('be.visible');
-  },
+  });
 });
