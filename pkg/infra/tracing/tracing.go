@@ -79,8 +79,6 @@ type EventValue struct {
 
 // Tracer defines the service used to create new spans.
 type Tracer interface {
-	// Run implements registry.BackgroundService.
-	Run(context.Context) error
 	// Start creates a new [Span] and places trace metadata on the
 	// [context.Context] passed to the method.
 	// Chose a low cardinality spanName and use [Span.SetAttributes]
