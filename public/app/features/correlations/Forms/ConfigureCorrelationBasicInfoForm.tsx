@@ -46,7 +46,7 @@ export const ConfigureCorrelationBasicInfoForm = () => {
             {...register('label', {
               required: {
                 value: true,
-                message: t('correlations.basic-info.Label-required', 'This field is required.'),
+                message: t('correlations.basic-info.label-required', 'This field is required.'),
               },
             })}
             readOnly={readOnly}
