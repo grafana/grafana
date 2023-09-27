@@ -1326,7 +1326,7 @@ func TestDeletePublicDashboard(t *testing.T) {
 			mockStore:        &mockResponse{pubdash, ErrDashboardNotFound},
 		},
 		{
-			Name:             "Public dashboard not found by dashboard",
+			Name:             "Public dashboard not found by database",
 			AffectedRowsResp: 0,
 			ExpectedErrResp:  ErrInternalServerError,
 			StoreRespErr:     nil,
@@ -1334,7 +1334,7 @@ func TestDeletePublicDashboard(t *testing.T) {
 			mockStore:        &mockResponse{nil, nil},
 		},
 		{
-			Name:             "Database error",
+			Name:             "Failed to delete - Database error",
 			AffectedRowsResp: 1,
 			ExpectedErrResp:  ErrInternalServerError.Errorf("Delete: failed to delete a public dashboard by Uid: uid db error!"),
 			StoreRespErr:     errors.New("db error!"),
