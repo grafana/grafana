@@ -46,7 +46,7 @@ func (s *OSSService) SearchUsers(c *contextmodel.ReqContext) response.Response {
 	result, err := s.SearchUser(c)
 	if err != nil {
 		grafanaErr := errutil.Error{}
-		if !errors.As(err, &grafanaErr) {
+		if errors.As(err, &grafanaErr) {
 			return response.Err(err)
 		}
 		return response.Error(500, "Failed to fetch users", err)
@@ -69,7 +69,7 @@ func (s *OSSService) SearchUsersWithPaging(c *contextmodel.ReqContext) response.
 	result, err := s.SearchUser(c)
 	if err != nil {
 		grafanaErr := errutil.Error{}
-		if !errors.As(err, &grafanaErr) {
+		if errors.As(err, &grafanaErr) {
 			return response.Err(err)
 		}
 		return response.Error(500, "Failed to fetch users", err)
