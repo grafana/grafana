@@ -110,11 +110,11 @@ export function getMostFiredInstancesScene(timeRange: SceneTimeRange, datasource
 
 export function RuleLink({ value, ruleUID }: { value: string; ruleUID: string }) {
   const getStyles = (theme: GrafanaTheme2) => ({
-    link: css`
-      & > a {
-        color: ${theme.colors.text.link};
-      }
-    `,
+    link: css({
+      '& > a': {
+        color: theme.colors.text.link,
+      },
+    }),
   });
 
   const styles = useStyles2(getStyles);
