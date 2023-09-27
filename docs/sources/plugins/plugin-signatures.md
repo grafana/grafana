@@ -10,7 +10,7 @@ Plugin signature verification (signing) is a security measure to make sure plugi
 
 At startup, Grafana verifies the signatures of every plugin in the plugin directory. You can see the result of this verification for each plugin by navigating to **Configuration** -> **Plugins**.
 
-> **Note:** If you're a plugin developer and want to know how to sign your plugin, refer to [Sign a plugin]({{< relref "../developers/plugins/sign-a-plugin.md" >}}).
+> **Note:** If you're a plugin developer and want to know how to sign your plugin, refer to [Sign a plugin](https://grafana.com/developers/plugin-tools/publish-a-plugin/sign-a-plugin).
 
 | Signature status | Description |
 | ---------------- | ----------- |
