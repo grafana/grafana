@@ -30,7 +30,7 @@ import {
   timeSeriesTableHelper,
 } from './index';
 
-const helperContent: Record<string, () => string> = {
+export const helperContent: Record<string, () => string> = {
   calculateField: calculateFieldHelper,
   concatenate: concatenateHelper,
   configFromData: configFromQueryHelper,
