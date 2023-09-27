@@ -77,10 +77,12 @@ func TestIntegrationTreeStoreMigrate(t *testing.T) {
 
 	sqlStore := sqlstore.InitTestDB(t)
 
-	folderStore := ProvideTreeStore(sqlStore)
+	folderStore, err := ProvideTreeStore(sqlStore)
+	require.NoError(t, err)
+
 	storeFolders(t, folderStore.db, false)
 
-	_, err := folderStore.migrate(context.Background(), orgID, nil, 0)
+	_, err = folderStore.resetLeftRightCols(context.Background(), orgID, nil, 0)
 	require.NoError(t, err)
 
 	tree, err := folderStore.getTree(context.Background(), orgID)
@@ -106,7 +108,9 @@ func TestIntegrationTreeStoreGetParents(t *testing.T) {
 	}
 
 	sqlStore := sqlstore.InitTestDB(t)
-	folderStore := ProvideTreeStore(sqlStore)
+	folderStore, err := ProvideTreeStore(sqlStore)
+	require.NoError(t, err)
+
 	storeFolders(t, folderStore.db, true)
 
 	ancestors, err := folderStore.GetParents(context.Background(), folder.GetParentsQuery{
@@ -222,10 +226,12 @@ func TestIntegrationTreeStoreCreate(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
 			sqlStore := sqlstore.InitTestDB(t)
-			folderStore := ProvideTreeStore(sqlStore)
+			folderStore, err := ProvideTreeStore(sqlStore)
+			require.NoError(t, err)
+
 			storeFolders(t, folderStore.db, true)
 
-			_, err := folderStore.Create(context.Background(), folder.CreateFolderCommand{
+			_, err = folderStore.Create(context.Background(), folder.CreateFolderCommand{
 				OrgID:     1,
 				UID:       "22",
 				Title:     "NEW FOLDER",
@@ -247,7 +253,8 @@ func TestIntegrationTreeStoreGetChildren(t *testing.T) {
 	}
 
 	sqlStore := sqlstore.InitTestDB(t)
-	folderStore := ProvideTreeStore(sqlStore)
+	folderStore, err := ProvideTreeStore(sqlStore)
+	require.NoError(t, err)
 	storeFolders(t, folderStore.db, true)
 
 	testCases := []struct {
@@ -384,7 +391,9 @@ func TestIntegrationTreeStoreGetHeight(t *testing.T) {
 	}
 
 	sqlStore := sqlstore.InitTestDB(t)
-	folderStore := ProvideTreeStore(sqlStore)
+	folderStore, err := ProvideTreeStore(sqlStore)
+	require.NoError(t, err)
+
 	storeFolders(t, folderStore.db, true)
 
 	for _, tc := range testCases {
@@ -402,7 +411,9 @@ func TestIntegrationTreeStoreUpdate(t *testing.T) {
 	}
 
 	sqlStore := sqlstore.InitTestDB(t)
-	folderStore := ProvideTreeStore(sqlStore)
+	folderStore, err := ProvideTreeStore(sqlStore)
+	require.NoError(t, err)
+
 	storeFolders(t, folderStore.db, true)
 
 	testCases := []struct {
@@ -590,10 +601,12 @@ func TestIntegrationTreeStoreDelete(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
 			sqlStore := sqlstore.InitTestDB(t)
-			folderStore := ProvideTreeStore(sqlStore)
+			folderStore, err := ProvideTreeStore(sqlStore)
+			require.NoError(t, err)
+
 			storeFolders(t, folderStore.db, true)
 
-			err := folderStore.Delete(context.Background(), tc.UID, 1)
+			err = folderStore.Delete(context.Background(), tc.UID, 1)
 			require.NoError(t, err)
 
 			tree, err := folderStore.getTree(context.Background(), 1)
@@ -739,10 +752,12 @@ func TestIntegrationTreeStoreMove(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
 			sqlStore := sqlstore.InitTestDB(t)
-			folderStore := ProvideTreeStore(sqlStore)
+			folderStore, err := ProvideTreeStore(sqlStore)
+			require.NoError(t, err)
+
 			storeFolders(t, folderStore.db, true)
 
-			_, err := folderStore.Update(context.Background(), folder.UpdateFolderCommand{
+			_, err = folderStore.Update(context.Background(), folder.UpdateFolderCommand{
 				OrgID:        1,
 				UID:          tc.UID,
 				NewParentUID: &tc.newParentUID,
@@ -759,7 +774,8 @@ func TestIntegrationTreeStoreMove(t *testing.T) {
 func TestIntegrationTreeStore(t *testing.T) {
 	db := sqlstore.InitTestDB(t)
 	orgID := createOrg(t, db)
-	folderStore := ProvideTreeStore(db)
+	folderStore, err := ProvideTreeStore(db)
+	require.NoError(t, err)
 
 	testIntegrationStore(t, folderStore, orgID)
 }

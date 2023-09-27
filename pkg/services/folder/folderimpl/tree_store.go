@@ -15,28 +15,61 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 )
 
+const MIGRATION_ID = "folder_tree_set_lft_rgt_columns_migration"
+
 type treeStore struct {
 	sqlStore
 	db  db.DB
 	log log.Logger
 }
 
-func ProvideTreeStore(db db.DB) *treeStore {
-	logger := log.New("folder-store-mptt")
+func ProvideTreeStore(db db.DB) (*treeStore, error) {
+	logger := log.New("folder-tree-store")
 	store := &treeStore{
 		db:  db,
 		log: logger,
 	}
 	store.sqlStore = sqlStore{db: db, log: logger}
 
-	// TODO: call migrate once for each org
-	return store
+	if err := store.migrate(); err != nil {
+		return nil, folder.ErrInternal.Errorf("failed to migrate tree: %w", err)
+	}
+
+	return store, nil
 }
 
-func (hs *treeStore) migrate(ctx context.Context, orgID int64, f *folder.Folder, counter int64) (int64, error) {
+func (hs *treeStore) migrate() error {
+	hs.db.RunAndRegisterCodeMigration(context.Background(), MIGRATION_ID, func(sess *db.Session) error {
+		if err := hs.db.WithDbSession(context.Background(), func(sess *db.Session) error {
+			var orgIDs []int64
+			if err := sess.SQL("SELECT DISTINCT org_id FROM folder").Find(&orgIDs); err != nil {
+				return err
+			}
+
+			return concurrency.ForEachJob(context.Background(), len(orgIDs), runtime.NumCPU(), func(ctx context.Context, idx int) error {
+				if err := hs.migrateTreeForOrg(orgIDs[idx]); err != nil {
+					return folder.ErrInternal.Errorf("failed to migrate tree for org: %w", err)
+				}
+				return nil
+			})
+		}); err != nil {
+			return folder.ErrInternal.Errorf("failed to migrate tree: failed to get org IDs: %w", err)
+		}
+		return nil
+	})
+	return nil
+}
+
+func (hs *treeStore) migrateTreeForOrg(orgID int64) error {
+	_, err := hs.resetLeftRightCols(context.Background(), orgID, nil, 0)
+	return err
+}
+
+func (hs *treeStore) resetLeftRightCols(ctx context.Context, orgID int64, f *folder.Folder, counter int64) (int64, error) {
 	err := hs.db.InTransaction(ctx, func(ctx context.Context) error {
 		var children []*folder.Folder
 
+		// TODO do we need SELECT FOR UPDATE here?
 		q := "SELECT org_id, uid, title, lft, rgt FROM folder WHERE org_id = ?"
 		args := []interface{}{orgID}
 		// get children
@@ -72,7 +105,7 @@ func (hs *treeStore) migrate(ctx context.Context, orgID int64, f *folder.Folder,
 			existingRgt := child.Rgt
 			counter++
 			child.Lft = counter
-			c, err := hs.migrate(ctx, orgID, child, counter)
+			c, err := hs.resetLeftRightCols(ctx, orgID, child, counter)
 			if err != nil {
 				return err
 			}
@@ -223,7 +256,7 @@ func (hs *treeStore) Update(ctx context.Context, cmd folder.UpdateFolderCommand)
 
 		// if it's a move operation update the left and right columns of the affected nodes appropriately
 		if cmd.NewParentUID != nil {
-			if _, err := hs.migrate(ctx, cmd.OrgID, nil, 0); err != nil {
+			if _, err := hs.resetLeftRightCols(ctx, cmd.OrgID, nil, 0); err != nil {
 				return err
 			}
 		}

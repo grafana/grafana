@@ -338,7 +338,8 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 
 func TestIntegrationNestedFolderServiceWithTreeStore(t *testing.T) {
 	db := sqlstore.InitTestDB(t)
-	nestedFolderStore := ProvideTreeStore(db)
+	nestedFolderStore, err := ProvideTreeStore(db)
+	require.NoError(t, err)
 	testIntegrationNestedFolderService(t, db, nestedFolderStore)
 }
 
