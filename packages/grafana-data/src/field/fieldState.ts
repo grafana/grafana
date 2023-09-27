@@ -167,9 +167,7 @@ function getUniqueFieldName(field: Field, frame?: DataFrame) {
     for (let i = 0; i < frame.fields.length; i++) {
       const otherField = frame.fields[i];
 
-      if (field === otherField) {
-        // if (isEqual({ hovered: false, ...field }, { hovered: false, ...field })) {
-        // POTENTIAL ISSUE HERE (LNG field is matching to other LNG field for some reason...)
+      if (isEqual(field, otherField)) {
         foundSelf = true;
 
         if (dupeCount > 0) {
@@ -177,15 +175,6 @@ function getUniqueFieldName(field: Field, frame?: DataFrame) {
           break;
         }
       } else if (field.name === otherField.name) {
-        console.log(
-          'HMM',
-          field.name,
-          otherField.name,
-          { field, otherField },
-          isEqual({ hovered: false, ...field }, { hovered: false, ...field }),
-          'loose equality:',
-          field === otherField
-        );
         dupeCount++;
 
         if (foundSelf) {

@@ -4,13 +4,18 @@ import React from 'react';
 import {
   arrayUtils,
   DataFrame,
+  DisplayProcessor,
   Field,
+  FieldState,
+  FieldType,
   formattedValueToString,
   getFieldDisplayName,
   GrafanaTheme2,
   LinkModel,
+  ValueLinkConfig,
+  Vector,
 } from '@grafana/data';
-import { SortOrder, TooltipDisplayMode } from '@grafana/schema';
+import { FieldConfig, Labels, SortOrder, TooltipDisplayMode } from '@grafana/schema';
 import { LinkButton, useStyles2, VerticalGroup } from '@grafana/ui';
 import { renderValue } from 'app/plugins/panel/geomap/utils/uiUtils';
 
@@ -28,6 +33,19 @@ interface DisplayValue {
   value: unknown;
   valueString: string;
   highlight: boolean;
+}
+
+interface DataHoverField {
+  hovered: boolean;
+  name: string;
+  type: FieldType;
+  config: FieldConfig<any>;
+  values: any[] | Vector<any>;
+  nanos?: number[] | undefined;
+  labels?: Labels | undefined;
+  state?: FieldState;
+  display?: DisplayProcessor | undefined;
+  getLinks?: ((config: ValueLinkConfig) => Array<LinkModel<any>>) | undefined;
 }
 
 export const DataHoverView = ({ data, rowIndex, columnIndex, sortOrder, mode, header = undefined }: Props) => {
@@ -72,14 +90,16 @@ export const DataHoverView = ({ data, rowIndex, columnIndex, sortOrder, mode, he
       });
     }
 
+    // Sanitize field by removing hovered property to fix unique display name issue
     const sanitizedField = { ...field };
-    // TODO: figure out how to filter out filtered property / remove it
+    // Not the cleanest approach - but necessary to avoid TS error when trying to delete a required property
+    delete (sanitizedField as { hovered?: boolean }).hovered;
 
     displayValues.push({
       name: getFieldDisplayName(sanitizedField, data),
       value,
       valueString: formattedValueToString(fieldDisplay),
-      highlight: field.hovered, // THIS IS CAUSING REGRESSION??
+      highlight: field.hovered,
     });
   }
 
