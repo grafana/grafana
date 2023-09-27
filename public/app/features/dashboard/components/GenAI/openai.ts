@@ -7,13 +7,16 @@
  *
  * The {@link enabled} function can be used to check if the plugin is enabled and configured.
  */
-import { pipe, Observable, UnaryFunction } from "rxjs";
-import { filter, map, scan, takeWhile } from "rxjs/operators";
+import { pipe, Observable, UnaryFunction } from 'rxjs';
+import { filter, map, scan, takeWhile } from 'rxjs/operators';
 
-import { isLiveChannelMessageEvent, LiveChannelAddress, LiveChannelMessageEvent, LiveChannelScope } from "@grafana/data";
-import { getBackendSrv, getGrafanaLiveSrv, logDebug } from "@grafana/runtime";
-
-
+import {
+  isLiveChannelMessageEvent,
+  LiveChannelAddress,
+  LiveChannelMessageEvent,
+  LiveChannelScope,
+} from '@grafana/data';
+import { getBackendSrv, getGrafanaLiveSrv, logDebug } from '@grafana/runtime';
 
 const LLM_PLUGIN_ID = 'grafana-llm-app';
 const LLM_PLUGIN_ROUTE = `/api/plugins/${LLM_PLUGIN_ID}`;
@@ -203,7 +206,7 @@ export interface FunctionCallMessage {
   /** The name of the function to call. */
   name: string;
   /** The arguments to the function call. */
-  arguments: any[];
+  arguments: unknown[];
 }
 
 /**
@@ -221,14 +224,13 @@ export interface ChatCompletionsChunk {
 }
 
 /** Return true if the message is a 'content' message. */
-export function isContentMessage(message: any): message is ContentMessage {
-  return message.content != null;
+export function isContentMessage(message: object): message is ContentMessage {
+  return typeof message === 'object' && message.hasOwnProperty('content');
 }
 
-
 /** Return true if the message is a 'done' message. */
-export function isDoneMessage(message: any): message is DoneMessage {
-  return message.done !== undefined
+function isDoneMessage(message: object): message is DoneMessage {
+  return typeof message === 'object' && message.hasOwnProperty('done');
 }
 
 /**
@@ -245,12 +247,17 @@ export function isDoneMessage(message: any): message is DoneMessage {
  * // Output:
  * // ['Hello', '? ', 'How ', 'are ', 'you', '?']
  */
-export function extractContent(): UnaryFunction<Observable<ChatCompletionsResponse<ChatCompletionsChunk>>, Observable<string>> {
+export function extractContent(): UnaryFunction<
+  Observable<ChatCompletionsResponse<ChatCompletionsChunk>>,
+  Observable<string>
+> {
   return pipe(
     filter((response: ChatCompletionsResponse<ChatCompletionsChunk>) => isContentMessage(response.choices[0].delta)),
     // The type assertion is needed here because the type predicate above doesn't seem to propagate.
-    map((response: ChatCompletionsResponse<ChatCompletionsChunk>) => (response.choices[0].delta as ContentMessage).content),
-  )
+    map(
+      (response: ChatCompletionsResponse<ChatCompletionsChunk>) => (response.choices[0].delta as ContentMessage).content
+    )
+  );
 }
 
 /**
@@ -267,10 +274,13 @@ export function extractContent(): UnaryFunction<Observable<ChatCompletionsRespon
  * // Output:
  * // ['Hello', 'Hello! ', 'Hello! How ', 'Hello! How are ', 'Hello! How are you', 'Hello! How are you?']
  */
-export function accumulateContent(): UnaryFunction<Observable<ChatCompletionsResponse<ChatCompletionsChunk>>, Observable<string>> {
+export function accumulateContent(): UnaryFunction<
+  Observable<ChatCompletionsResponse<ChatCompletionsChunk>>,
+  Observable<string>
+> {
   return pipe(
     extractContent(),
-    scan((acc, curr) => acc + curr, ''),
+    scan((acc, curr) => acc + curr, '')
   );
 }
 
@@ -278,9 +288,13 @@ export function accumulateContent(): UnaryFunction<Observable<ChatCompletionsRes
  * Make a request to OpenAI's chat-completions API via the Grafana LLM plugin proxy.
  */
 export async function chatCompletions(request: ChatCompletionsRequest): Promise<ChatCompletionsResponse> {
-  const response = await getBackendSrv().post<ChatCompletionsResponse>('/api/plugins/grafana-llm-app/resources/openai/v1/chat/completions', request, {
-    headers: { 'Content-Type': 'application/json' }
-  });
+  const response = await getBackendSrv().post<ChatCompletionsResponse>(
+    '/api/plugins/grafana-llm-app/resources/openai/v1/chat/completions',
+    request,
+    {
+      headers: { 'Content-Type': 'application/json' },
+    }
+  );
   return response;
 }
 
@@ -311,7 +325,9 @@ export async function chatCompletions(request: ChatCompletionsRequest): Promise<
  * // Output:
  * // ['Hello', 'Hello! ', 'Hello! How ', 'Hello! How are ', 'Hello! How are you', 'Hello! How are you?']
  */
-export function streamChatCompletions(request: ChatCompletionsRequest): Observable<ChatCompletionsResponse<ChatCompletionsChunk>> {
+export function streamChatCompletions(
+  request: ChatCompletionsRequest
+): Observable<ChatCompletionsResponse<ChatCompletionsChunk>> {
   const channel: LiveChannelAddress = {
     scope: LiveChannelScope.Plugin,
     namespace: LLM_PLUGIN_ID,
@@ -320,10 +336,12 @@ export function streamChatCompletions(request: ChatCompletionsRequest): Observab
   };
   const messages = getGrafanaLiveSrv()
     .getStream(channel)
-    .pipe(filter((event) => isLiveChannelMessageEvent(event))) as Observable<LiveChannelMessageEvent<ChatCompletionsResponse<ChatCompletionsChunk>>>
+    .pipe(filter((event) => isLiveChannelMessageEvent(event))) as Observable<
+    LiveChannelMessageEvent<ChatCompletionsResponse<ChatCompletionsChunk>>
+  >;
   return messages.pipe(
     takeWhile((event) => !isDoneMessage(event.message.choices[0].delta)),
-    map((event) => event.message),
+    map((event) => event.message)
   );
 }
 
@@ -333,15 +351,18 @@ let loggedWarning = false;
 export const enabled = async () => {
   try {
     const settings = await getBackendSrv().get(`${LLM_PLUGIN_ROUTE}/settings`, undefined, undefined, {
-      showSuccessAlert: false, showErrorAlert: false,
+      showSuccessAlert: false,
+      showErrorAlert: false,
     });
     return settings.enabled && (settings?.secureJsonFields?.openAIKey ?? false);
   } catch (e) {
     if (!loggedWarning) {
       logDebug(String(e));
-      logDebug('Failed to check if OpenAI is enabled. This is expected if the Grafana LLM plugin is not installed, and the above error can be ignored.');
+      logDebug(
+        'Failed to check if OpenAI is enabled. This is expected if the Grafana LLM plugin is not installed, and the above error can be ignored.'
+      );
       loggedWarning = true;
     }
     return false;
   }
-}
+};
