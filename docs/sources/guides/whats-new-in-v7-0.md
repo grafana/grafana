@@ -122,9 +122,9 @@ Grafana 7.0 adds logging support to one of our most popular cloud provider data 
 
 ## Plugins platform
 
-The [platform for plugins]({{< relref "../developers/plugins/" >}}) has been completely re-imagined and provides ready-made components and tooling to help both inexperienced and experienced developers get up and running more quickly. The tooling, documentation, and new components will improve plugin quality and reduce long-term maintenance. We are already seeing that a high quality plugin with the Grafana look and feel can be written in much fewer lines of code than previously.
+The [platform for plugins](https://grafana.com/developers/plugin-tools) has been completely re-imagined and provides ready-made components and tooling to help both inexperienced and experienced developers get up and running more quickly. The tooling, documentation, and new components will improve plugin quality and reduce long-term maintenance. We are already seeing that a high quality plugin with the Grafana look and feel can be written in much fewer lines of code than previously.
 
-Learn more about developing plugins in the new framework in [Build a plugin]({{< relref "../developers/plugins/_index.md" >}}).
+Learn more about developing plugins in the new framework in [Build a plugin](https://grafana.com/developers/plugin-tools).
 
 ### Front end plugins platform
 
