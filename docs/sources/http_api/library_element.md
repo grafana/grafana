@@ -2,7 +2,7 @@
 title = "Library Element HTTP API "
 description = "Grafana Library Element HTTP API"
 keywords = ["grafana", "http", "documentation", "api", "library-element"]
-aliases = ["/docs/grafana/latest/http_api/library_element/"]
+aliases = ["/docs/grafana/v8.2/http_api/library_element/"]
 +++
 
 # Library Element API
