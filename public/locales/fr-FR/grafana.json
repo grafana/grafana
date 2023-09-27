@@ -220,6 +220,12 @@
       "unmark-favorite": "Supprimer des favoris"
     }
   },
+  "dashboard-settings": {
+    "json-editor-settings": {
+      "save-button": "Sauvegarder les modifications",
+      "subtitle": "Le modèle JSON ci-dessous est la structure de données qui définit le tableau de bord. Cela inclut les paramètres du tableau de bord, les paramètres du panneau, la mise en page, les requêtes, etc."
+    }
+  },
   "data-source-picker": {
     "open-advanced-button": ""
   },
@@ -879,12 +885,6 @@
       "empty-recent-list-docs": "<0><0>Lisez la documentation</0><1> pour savoir comment entrer des plages de temps personnalisées.</1></0>",
       "empty-recent-list-info": "Il semble que vous n'ayez jamais utilisé ce sélecteur de temps dans le passé. Lorsque vous commencerez à utiliser des plages de temps, celles récemment utilisées apparaîtront ici.",
       "filter-placeholder": "Rechercher dans les plages rapides"
-    },
-    "dashboard-settings": {
-      "json-editor-settings": {
-        "save-button": "Sauvegarder les modifications",
-        "subtitle": "Le modèle JSON ci-dessous est la structure de données qui définit le tableau de bord. Cela inclut les paramètres du tableau de bord, les paramètres du panneau, la mise en page, les requêtes, etc."
-      }
     },
     "footer": {
       "change-settings-button": "Modifier les paramètres de l'heure",

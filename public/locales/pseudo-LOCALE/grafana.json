@@ -215,6 +215,12 @@
       "unmark-favorite": "Ůŉmäřĸ äş ƒävőřįŧę"
     }
   },
+  "dashboard-settings": {
+    "json-editor-settings": {
+      "save-button": "",
+      "subtitle": ""
+    }
+  },
   "data-source-picker": {
     "open-advanced-button": "Øpęŉ äđväŉčęđ đäŧä şőūřčę pįčĸęř"
   },

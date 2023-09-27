@@ -215,6 +215,12 @@
       "unmark-favorite": "Unmark as favorite"
     }
   },
+  "dashboard-settings": {
+    "json-editor-settings": {
+      "save-button": "Save changes",
+      "subtitle": "The JSON model below is the data structure that defines the dashboard. This includes dashboard settings, panel settings, layout, queries, and so on"
+    }
+  },
   "data-source-picker": {
     "open-advanced-button": "Open advanced data source picker"
   },
@@ -874,12 +880,6 @@
       "empty-recent-list-docs": "<0><0>Read the documentation</0><1> to find out more about how to enter custom time ranges.</1></0>",
       "empty-recent-list-info": "It looks like you haven't used this time picker before. As soon as you enter some time intervals, recently used intervals will appear here.",
       "filter-placeholder": "Search quick ranges"
-    },
-    "dashboard-settings": {
-      "json-editor-settings": {
-        "save-button": "",
-        "subtitle": ""
-      }
     },
     "footer": {
       "change-settings-button": "Change time settings",
