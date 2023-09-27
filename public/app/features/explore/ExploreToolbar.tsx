@@ -44,7 +44,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
   stickyToolbar: css({
     position: 'sticky',
     top: 0,
-    zIndex: theme.zIndex.navbarFixed,
+    // reducing zIndex to 1 to make sure it doesn't overlap the top nav
+    zIndex: theme.zIndex.navbarFixed - 1,
   }),
 });
 
