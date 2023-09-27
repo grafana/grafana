@@ -794,5 +794,12 @@ var (
 			Owner:           grafanaAuthnzSquad,
 			RequiresDevMode: true,
 		},
+		{
+			Name:        "cloudWatchWildCardDimensionValues",
+			Description: "Fetches dimension values from CloudWatch to correctly label wildcard dimensions",
+			Stage:       FeatureStageGeneralAvailability,
+			Expression:  "true", // enabled by default
+			Owner:       awsDatasourcesSquad,
+		},
 	}
 )
