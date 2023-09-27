@@ -68,6 +68,8 @@ func (hs *treeStore) migrate(ctx context.Context, orgID int64, f *folder.Folder,
 		}
 
 		for _, child := range children {
+			existingLft := child.Lft
+			existingRgt := child.Rgt
 			counter++
 			child.Lft = counter
 			c, err := hs.migrate(ctx, orgID, child, counter)
@@ -75,7 +77,9 @@ func (hs *treeStore) migrate(ctx context.Context, orgID int64, f *folder.Folder,
 				return err
 			}
 			if err := hs.db.WithDbSession(ctx, func(sess *db.Session) error {
-				// TODO: do not update if the values are the same
+				if existingLft == child.Lft && existingRgt == child.Rgt {
+					return nil
+				}
 				_, err := sess.Exec("UPDATE folder SET lft = ?, rgt = ? WHERE uid = ? AND org_id = ?", child.Lft, child.Rgt, child.UID, child.OrgID)
 				if err != nil {
 					return err
