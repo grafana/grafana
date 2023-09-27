@@ -462,7 +462,7 @@ export interface QueryEditorHelpProps<TQuery extends DataQuery = DataQuery> {
  */
 export type LegacyResponseData = TimeSeries | TableData | any;
 
-export type DataQueryResponseData = DataFrame | DataFrameDTO | LegacyResponseData;
+export type DataQueryResponseData = DataFrame | DataFrameDTO;
 
 export interface DataQueryResponse {
   /**
