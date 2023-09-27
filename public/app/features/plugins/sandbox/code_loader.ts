@@ -1,6 +1,7 @@
 import { PluginMeta } from '@grafana/data';
 
 import { transformPluginSourceForCDN } from '../cdn/utils';
+import { resolveWithCache } from '../loader/cache';
 import { isHostedOnCDN } from '../loader/utils';
 
 import { SandboxEnvironment } from './types';
@@ -51,8 +52,10 @@ export async function getPluginCode(meta: PluginMeta): Promise<string> {
     });
     return pluginCode;
   } else {
+    const pluginCodeUrl = resolveWithCache(meta.module);
+
     //local plugin loading
-    const response = await fetch(meta.module);
+    const response = await fetch(pluginCodeUrl);
     let pluginCode = await response.text();
     pluginCode = patchPluginSourceMap(meta, pluginCode);
     pluginCode = patchPluginAPIs(pluginCode);
