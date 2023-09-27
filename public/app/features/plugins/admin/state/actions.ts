@@ -45,8 +45,7 @@ export const fetchAll = createAsyncThunk(`${STATE_PREFIX}/fetchAll`, async (_, t
                 catchError((err) => {
                   thunkApi.dispatch({ type: `${STATE_PREFIX}/fetchRemote/rejected` });
                   return throwError(
-                    () =>
-                      new Error('Failed to fetch plugins from catalog (default https://grafana.com/grafana/plugins)')
+                    () => new Error('Failed to fetch plugins from catalog (default https://grafana.com/api/plugins)')
                   );
                 })
               )
