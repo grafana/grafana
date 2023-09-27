@@ -10,6 +10,7 @@ type Props = {
   profileTypes?: ProfileTypeMessage[];
   onChange: (value: string) => void;
   placeholder?: string;
+  width?: number;
 };
 
 export function ProfileTypesCascader(props: Props) {
@@ -25,6 +26,7 @@ export function ProfileTypesCascader(props: Props) {
       onSelect={props.onChange}
       options={cascaderOptions}
       changeOnSelect={false}
+      width={props.width ?? 26}
     />
   );
 }
