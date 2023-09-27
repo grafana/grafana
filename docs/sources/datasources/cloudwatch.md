@@ -2,7 +2,7 @@
 title = "AWS CloudWatch"
 description = "Guide for using CloudWatch in Grafana"
 keywords = ["grafana", "cloudwatch", "guide"]
-aliases = ["/docs/grafana/latest/datasources/cloudwatch"]
+aliases = ["/docs/grafana/v8.0/datasources/cloudwatch"]
 weight = 200
 +++
 
@@ -41,7 +41,7 @@ There are three different authentication methods available. `AWS SDK Default` pe
 
 ### IAM roles
 
-Currently all access to CloudWatch is done server side by the Grafana backend using the official AWS SDK. Providing you have chosen the _AWS SDK Default_ authentication method, and your Grafana server is running on AWS, you can use IAM Roles to handle authentication automatically.
+Currently all access to CloudWatch is done server side by the Grafana backend using the official AWS SDK. Providing you have chosen the _AWS SDK Default_ authentication method, and your Grafana server is running on AWS, you can use IAM Roles to handle authentication automically.
 
 See the AWS documentation on [IAM Roles](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/iam-roles-for-amazon-ec2.html)
 
@@ -383,7 +383,7 @@ Allows you to disable `assume role (ARN)` in the CloudWatch data source. By defa
 
 ### list_metrics_page_limit
 
-When a custom namespace is specified in the query editor, the [List Metrics API](https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_ListMetrics.html) is used to populate the _Metrics_ field and the _Dimension_ fields. The API is paginated and returns up to 500 results per page. The CloudWatch data source also limits the number of pages to 500. However, you can change this limit using the `list_metrics_page_limit` variable in the [grafana configuration file](https://grafana.com/docs/grafana/latest/administration/configuration/#aws).
+When a custom namespace is specified in the query editor, the [List Metrics API](https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_ListMetrics.html) is used to populate the _Metrics_ field and the _Dimension_ fields. The API is paginated and returns up to 500 results per page. The CloudWatch data source also limits the number of pages to 500. However, you can change this limit using the `list_metrics_page_limit` variable in the [grafana configuration file](https://grafana.com/docs/grafana/v8.0/administration/configuration/#aws).
 
 ## Configure the data source with provisioning
 

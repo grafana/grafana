@@ -7,9 +7,9 @@ weight = 250
 
 # Getting started with Grafana and InfluxDB
 
-{{< docs/shared "influxdb/intro.md" >}}
+{{< docs/shared lookup="influxdb/intro.md" source="grafana" version="<GRAFANA VERSION>" >}}
 
-{{< docs/shared "getting-started/first-step.md" >}}
+{{< docs/shared lookup="getting-started/first-step.md" source="grafana" version="<GRAFANA VERSION>" >}}
 
 ## Step 2. Get InfluxDB
 
@@ -106,5 +106,5 @@ In your Grafana instance, go to the [Explore]({{< relref "../explore/_index.md" 
 There you go! Use Explore and Data Explorer to experiment with your data, and add the queries that you like to your dashboard as panels. Have fun!
 
 Here are some resources to learn more:
-- Grafana documentation: [InfluxDB data source]({{< relref "../datasources/influxdb/_index.md" >}})
+- Grafana documentation: [InfluxDB data source](../datasources/influxdb/_index.md)
 - InfluxDB documentation: [Comparison of Flux vs InfluxQL](https://docs.influxdata.com/influxdb/v1.8/flux/flux-vs-influxql/)

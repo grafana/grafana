@@ -2,7 +2,7 @@
 title = "Internal Grafana metrics"
 description = "Internal metrics exposed by Grafana"
 keywords = ["grafana", "metrics", "internal metrics"]
-aliases = ["/docs/grafana/latest/admin/metrics/"]
+aliases = ["/docs/grafana/v8.0/admin/metrics/"]
 weight = 200
 +++
 

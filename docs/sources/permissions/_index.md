@@ -2,7 +2,7 @@
 title = "Permissions"
 description = "Permissions"
 keywords = ["grafana", "configuration", "documentation", "admin", "users", "datasources", "permissions"]
-aliases = ["/docs/grafana/latest/permissions/overview/"]
+aliases = ["/docs/grafana/v8.0/permissions/overview/"]
 weight = 50
 +++
 

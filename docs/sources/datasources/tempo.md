@@ -2,7 +2,7 @@
 title = "Tempo"
 description = "High volume, minimal dependency trace storage. OSS tracing solution from Grafana Labs."
 keywords = ["grafana", "tempo", "guide", "tracing"]
-aliases = ["/docs/grafana/latest/features/datasources/tempo"]
+aliases = ["/docs/grafana/v8.0/features/datasources/tempo"]
 weight = 1400
 +++
 

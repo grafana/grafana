@@ -7,13 +7,13 @@ weight = 900
 
 # Status history
 
-The Status history visualization shows periodic states over time. Each field or series is rendered as a horizontal row. Boxes are rendered and centered around each value. 
+The Status history visualization shows periodic states over time. Each field or series is rendered as a horizontal row. Boxes are rendered and centered around each value.
 
 {{< figure src="/static/img/docs/status-history-panel/status-history-example-v8-0.png" max-width="1025px" caption="Status history example" >}}
 
-## Supported data 
+## Supported data
 
-Status history visualization works with string, boolean and numerical fields or time series. A time field is required. You can use value mappings to color strings or assign text values to numerical ranges.  
+Status history visualization works with string, boolean and numerical fields or time series. A time field is required. You can use value mappings to color strings or assign text values to numerical ranges.
 
 ## Display options
 
@@ -37,7 +37,7 @@ Controls the opacity of state regions.
 
 ## Value mappings
 
-To assign colors to boolean or string values, use the [Value mappings](< {{ refref "../value-mappings.md"}} >).
+To assign colors to boolean or string values, use the [Value mappings]({{< relref "../value-mappings" >}}).
 
 {{< figure src="/static/img/docs/v8/value_mappings_side_editor.png" max-width="300px" caption="Value mappings side editor" >}}
 
@@ -52,4 +52,4 @@ use gradient color schemes to color values.
 
 When the legend option is enabled it can show either the value mappings or the threshold brackets. To show the value mappings in the legend, it's important that the `Color scheme` option under [Standard options]({{< relref "../standard-options.md" >}}) is set to `Single color` or `Classic palette`. To see the threshold brackets in the legend set the `Color scheme` to `From thresholds`.
 
-{{< docs/shared "visualizations/legend-mode.md" >}}
+{{< docs/shared lookup="visualizations/legend-mode.md" source="grafana" version="<GRAFANA VERSION>" >}}

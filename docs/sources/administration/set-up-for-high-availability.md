@@ -1,7 +1,7 @@
 +++
 title = "Set up Grafana for high availability"
 keywords = ["grafana", "tutorials", "HA", "high availability"]
-aliases = ["/docs/grafana/latest/tutorials/ha_setup/"]
+aliases = ["/docs/grafana/v8.0/tutorials/ha_setup/"]
 weight = 1200
 +++
 
@@ -18,7 +18,7 @@ and other persistent data. So the default embedded SQLite database will not work
 
 First, you need to set up MySQL or Postgres on another server and configure Grafana to use that database.
 You can find the configuration for doing that in the [[database]]({{< relref "../administration/configuration.md#database" >}}) section in the Grafana config.
-Grafana will now persist all long term data in the database. How to configure the database for high availability is out of scope for this guide. We recommend finding an expert on the database you're using.
+Grafana will now persist all long term data in the database. How to configure the database for high availability is out of scope for this guide. We recommend finding an expert on for the database you're using.
 
 ## Alerting
 

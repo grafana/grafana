@@ -2,7 +2,7 @@
 title = "Bar gauge"
 description = "Bar gauge panel options"
 keywords = ["grafana", "bar", "bar gauge"]
-aliases =["/docs/grafana/latest/features/panels/bar_gauge/"]
+aliases =["/docs/grafana/v8.0/features/panels/bar_gauge/"]
 weight = 200
 +++
 
