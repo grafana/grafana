@@ -2,7 +2,7 @@
 title = "HTTP API"
 description = "Grafana HTTP API"
 keywords = ["grafana", "http", "documentation", "api", "overview"]
-aliases = ["/docs/grafana/latest/overview"]
+aliases = ["/docs/grafana/v6.7/overview"]
 type = "docs"
 [menu.docs]
 name = "HTTP API"
@@ -43,3 +43,4 @@ dashboards, creating users and updating data sources.
 
 * [Data Source Permissions API]({{< relref "datasource_permissions.md" >}})
 * [External Group Sync API]({{< relref "external_group_sync.md" >}})
+* [Reporting API]({{< relref "reporting.md" >}})

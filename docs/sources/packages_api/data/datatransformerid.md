@@ -5,7 +5,6 @@
 title = "DataTransformerID"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## DataTransformerID enum
@@ -28,10 +27,17 @@ import { DataTransformerID } from '@grafana/data';
 |  Member | Value | Description |
 |  --- | --- | --- |
 |  append | <code>&quot;append&quot;</code> |  |
+|  calculateField | <code>&quot;calculateField&quot;</code> |  |
+|  ensureColumns | <code>&quot;ensureColumns&quot;</code> |  |
 |  filterByRefId | <code>&quot;filterByRefId&quot;</code> |  |
 |  filterFields | <code>&quot;filterFields&quot;</code> |  |
 |  filterFieldsByName | <code>&quot;filterFieldsByName&quot;</code> |  |
 |  filterFrames | <code>&quot;filterFrames&quot;</code> |  |
+|  labelsToFields | <code>&quot;labelsToFields&quot;</code> |  |
 |  noop | <code>&quot;noop&quot;</code> |  |
+|  order | <code>&quot;order&quot;</code> |  |
+|  organize | <code>&quot;organize&quot;</code> |  |
 |  reduce | <code>&quot;reduce&quot;</code> |  |
+|  rename | <code>&quot;rename&quot;</code> |  |
+|  seriesToColumns | <code>&quot;seriesToColumns&quot;</code> |  |
 

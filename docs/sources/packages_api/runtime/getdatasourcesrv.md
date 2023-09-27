@@ -5,12 +5,13 @@
 title = "getDataSourceSrv"
 keywords = ["grafana","documentation","sdk","@grafana/runtime"]
 type = "docs"
-draft = true
 +++
 
 ## getDataSourceSrv() function
 
 ### getDataSourceSrv() function
+
+Used to retrieve the [DataSourceSrv](./runtime/datasourcesrv.md) that is the entry point for communicating with a datasource that is added as a plugin (both external and internal).
 
 <b>Signature</b>
 

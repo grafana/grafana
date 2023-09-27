@@ -5,7 +5,6 @@
 title = "setMarkdownOptions"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## setMarkdownOptions() function

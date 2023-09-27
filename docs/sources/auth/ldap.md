@@ -3,7 +3,7 @@ title = "LDAP Authentication"
 description = "Grafana LDAP Authentication Guide "
 keywords = ["grafana", "configuration", "documentation", "ldap", "active directory"]
 type = "docs"
-aliases = ["/docs/grafana/latest/installation/ldap/"]
+aliases = ["/docs/grafana/v6.7/installation/ldap/"]
 [menu.docs]
 name = "LDAP"
 identifier = "ldap"
@@ -92,15 +92,23 @@ member_of = "memberOf"
 email =  "email"
 ```
 
+### Using environment variables
+
+You can interpolate variables in the TOML config from environment variables. For instance, you could externalize your `bind_password` that way:
+
+```bash
+bind_password = "${LDAP_ADMIN_PASSWORD}"
+```
+
 ## LDAP Debug View
 
 > Only available in Grafana v6.4+
 
 Grafana has an LDAP debug view built-in which allows you to test your LDAP configuration directly within Grafana. At the moment of writing, only Grafana admins can use the LDAP debug view.
- 
+
 Within this view, you'll be able to see which LDAP servers are currently reachable and test your current configuration.
 
-{{< docs-imagebox img="/img/docs/ldap_debug.png" class="docs-image--no-shadow" max-width="600px" >}}
+{{< figure src="/static/img/docs/ldap_debug.png" class="docs-image--no-shadow" max-width="600px" >}}
 
 
 To use the debug view:
@@ -109,7 +117,7 @@ To use the debug view:
  2. Then, press "Run"
  3. If the user is found within any of your LDAP instances, the mapping information is displayed
 
-{{< docs-imagebox img="/img/docs/ldap_debug_mapping_testing.png" class="docs-image--no-shadow" max-width="600px" >}}
+{{< figure src="/static/img/docs/ldap_debug_mapping_testing.png" class="docs-image--no-shadow" max-width="600px" >}}
 
 ### Bind
 

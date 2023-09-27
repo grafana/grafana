@@ -5,7 +5,6 @@
 title = "alertError"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## AppEvents.alertError variable
@@ -15,7 +14,7 @@ draft = true
 <b>Signature</b>
 
 ```typescript
-alertError: AppEvent<AlertPayload>
+alertError: AppEvent<AlertErrorPayload>
 ```
 <b>Import</b>
 

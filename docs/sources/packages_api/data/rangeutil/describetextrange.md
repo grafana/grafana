@@ -5,7 +5,6 @@
 title = "describeTextRange"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## rangeUtil.describeTextRange() function
@@ -15,7 +14,7 @@ draft = true
 <b>Signature</b>
 
 ```typescript
-function describeTextRange(expr: any): any;
+export declare function describeTextRange(expr: any): any;
 ```
 <b>Import</b>
 

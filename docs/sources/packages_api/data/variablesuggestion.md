@@ -5,7 +5,6 @@
 title = "VariableSuggestion"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## VariableSuggestion interface

@@ -5,7 +5,6 @@
 title = "TableData"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## TableData interface

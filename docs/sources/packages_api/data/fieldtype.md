@@ -5,7 +5,6 @@
 title = "FieldType"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## FieldType enum
@@ -32,4 +31,5 @@ import { FieldType } from '@grafana/data';
 |  other | <code>&quot;other&quot;</code> |  |
 |  string | <code>&quot;string&quot;</code> |  |
 |  time | <code>&quot;time&quot;</code> |  |
+|  trace | <code>&quot;trace&quot;</code> |  |
 

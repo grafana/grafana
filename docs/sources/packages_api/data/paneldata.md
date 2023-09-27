@@ -5,7 +5,6 @@
 title = "PanelData"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## PanelData interface
@@ -24,13 +23,16 @@ import { PanelData } from '@grafana/data';
 
 |  Property | Type | Description |
 |  --- | --- | --- |
-|  [error](#error-property) | <code>DataQueryError</code> |  |
-|  [request](#request-property) | <code>DataQueryRequest</code> |  |
-|  [series](#series-property) | <code>DataFrame[]</code> |  |
-|  [state](#state-property) | <code>LoadingState</code> |  |
-|  [timeRange](#timerange-property) | <code>TimeRange</code> |  |
+|  [error](#error-property) | <code>DataQueryError</code> | Any query errors |
+|  [request](#request-property) | <code>DataQueryRequest</code> | Request contains the queries and properties sent to the datasource |
+|  [series](#series-property) | <code>DataFrame[]</code> | Contains data frames with field overrides applied |
+|  [state](#state-property) | <code>LoadingState</code> | State of the data (loading, done, error, streaming) |
+|  [timeRange](#timerange-property) | <code>TimeRange</code> | Contains the range from the request or a shifted time range if a request uses relative time |
+|  [timings](#timings-property) | <code>DataQueryTimings</code> | Timing measurements |
 
 ### error property
+
+Any query errors
 
 <b>Signature</b>
 
@@ -40,6 +42,8 @@ error?: DataQueryError;
 
 ### request property
 
+Request contains the queries and properties sent to the datasource
+
 <b>Signature</b>
 
 ```typescript
@@ -47,6 +51,8 @@ request?: DataQueryRequest;
 ```
 
 ### series property
+
+Contains data frames with field overrides applied
 
 <b>Signature</b>
 
@@ -56,6 +62,8 @@ series: DataFrame[];
 
 ### state property
 
+State of the data (loading, done, error, streaming)
+
 <b>Signature</b>
 
 ```typescript
@@ -64,8 +72,20 @@ state: LoadingState;
 
 ### timeRange property
 
+Contains the range from the request or a shifted time range if a request uses relative time
+
 <b>Signature</b>
 
 ```typescript
 timeRange: TimeRange;
+```
+
+### timings property
+
+Timing measurements
+
+<b>Signature</b>
+
+```typescript
+timings?: DataQueryTimings;
 ```

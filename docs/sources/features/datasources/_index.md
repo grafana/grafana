@@ -1,7 +1,7 @@
 +++
 title = "Data Sources"
 type = "docs"
-aliases = ["/docs/grafana/latest/datasources/overview/"]
+aliases = ["/docs/grafana/v6.7/datasources/overview/"]
 [menu.docs]
 name = "Data Sources"
 identifier = "datasources"
@@ -29,7 +29,6 @@ The following data sources are officially supported:
 * [InfluxDB]({{< relref "influxdb.md" >}})
 * [Loki]({{< relref "loki.md" >}})
 * [Microsoft SQL Server (MSSQL)]({{< relref "mssql.md" >}})
-* [Mixed]({{< relref "mixed.md" >}})
 * [MySQL]({{< relref "mysql.md" >}})
 * [OpenTSDB]({{< relref "opentsdb.md" >}})
 * [PostgreSQL]({{< relref "postgres.md" >}})
@@ -38,4 +37,4 @@ The following data sources are officially supported:
 
 ## Data source plugins
 
-Since Grafana 3.0 you can install data sources as plugins. Check out [Grafana.net](https://grafana.com/plugins) for more data sources.
+Since Grafana 3.0 you can install data sources as plugins. Check out [Grafana.com/plugins](https://grafana.com/plugins) for more data sources.

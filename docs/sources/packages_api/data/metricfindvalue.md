@@ -5,7 +5,6 @@
 title = "MetricFindValue"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## MetricFindValue interface

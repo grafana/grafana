@@ -5,7 +5,6 @@
 title = "PALETTE_COLUMNS"
 keywords = ["grafana","documentation","sdk","@grafana/ui"]
 type = "docs"
-draft = true
 +++
 
 ## PALETTE\_COLUMNS variable

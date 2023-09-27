@@ -5,7 +5,6 @@
 title = "Column"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## Column interface
@@ -24,9 +23,18 @@ import { Column } from '@grafana/data';
 
 |  Property | Type | Description |
 |  --- | --- | --- |
+|  [custom](#custom-property) | <code>Record&lt;string, any&gt;</code> |  |
 |  [filterable](#filterable-property) | <code>boolean</code> |  |
 |  [text](#text-property) | <code>string</code> |  |
 |  [unit](#unit-property) | <code>string</code> |  |
+
+### custom property
+
+<b>Signature</b>
+
+```typescript
+custom?: Record<string, any>;
+```
 
 ### filterable property
 

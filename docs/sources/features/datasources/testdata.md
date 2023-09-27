@@ -13,13 +13,13 @@ weight = 20
 
 The purpose of this data source is to make it easier to create fake data for any panel.
 Using `TestData DB` you can build your own time series and have any panel render it.
-This make is much easier to verify functionally since the data can be shared very easily.
+This makes it much easier to verify functionality since the data can be shared very easily.
 
 ## Enable
 
-The `TestData DB` data source is not enabled by default. To enable it: 
+The `TestData DB` data source is not enabled by default. To enable it:
 
-1. In the **Configuration** menu (small gear on the left side of the screen, click **Data Sources**. 
+1. In the **Configuration** menu (small gear on the left side of the screen), click **Data Sources**.
 2. Click **Add Data Source**.
 3. Search and click `TestData DB`.
 4. Click **Save & Test** to enable it.
@@ -28,18 +28,18 @@ The `TestData DB` data source is not enabled by default. To enable it:
 
 Once `TestData DB` is enabled, you can use it as a data source in any metric panel.
 
-![](/img/docs/v41/test_data_add.png)
+![](/static/img/docs/v41/test_data_add.png)
 
 ## CSV
 
 The comma separated values scenario is the most powerful one since it lets you create any kind of graph you like.
 Once you provided the numbers, `TestData DB` distributes them evenly based on the time range of your query.
 
-![](/img/docs/v41/test_data_csv_example.png)
+![](/static/img/docs/v41/test_data_csv_example.png)
 
 ## Dashboards
 
-`TestData DB` also contains some dashboards with examples. 
+`TestData DB` also contains some dashboards with examples.
 1. Click **Configuration** > **Data Sources** > **TestData DB** > **Dashboards**.
 1. **Import** the **Simple Streaming Example** dashboard.
 

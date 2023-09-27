@@ -5,7 +5,6 @@
 title = "getDisplayProcessor"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## getDisplayProcessor() function

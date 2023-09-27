@@ -58,7 +58,7 @@ sure your Elasticsearch data source is added. Specify the Elasticsearch
 index name where your existing Grafana v1.x dashboards are stored
 (the default is `grafana-dash`).
 
-![](/img/docs/v2/datasource_edit_elastic.jpg)
+![](/static/img/docs/v2/datasource_edit_elastic.jpg)
 
 ### Importing dashboards from InfluxDB
 
@@ -71,7 +71,7 @@ your Grafana v1.x dashboards are stored, the default is `grafana`.
 Go to the `Dashboards` view and click on the dashboards search drop
 down. Click the `Import` button at the bottom of the search drop down.
 
-![](/img/docs/v2/dashboard_import.jpg)
+![](/static/img/docs/v2/dashboard_import.jpg)
 
 ### Import view
 
@@ -79,7 +79,7 @@ In the Import view you find the section `Migrate dashboards`. Pick the
 data source you added (from Elasticsearch or InfluxDB), and click the
 `Import` button.
 
-![](/img/docs/v2/migrate_dashboards.jpg)
+![](/static/img/docs/v2/migrate_dashboards.jpg)
 
 Your dashboards should be automatically imported into the Grafana 2.0
 back-end.

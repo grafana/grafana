@@ -3,7 +3,7 @@ title = "Install on Debian/Ubuntu"
 description = "Install guide for Grafana on Debian or Ubuntu"
 keywords = ["grafana", "installation", "documentation"]
 type = "docs"
-aliases = ["/docs/grafana/latest/installation/installation/debian"]
+aliases = ["/docs/grafana/v6.7/installation/installation/debian"]
 [menu.docs]
 identifier = "debian"
 parent = "installation"
@@ -22,7 +22,7 @@ You can install Grafana using our official APT repository, by downloading a `.de
 
 ### Install from APT repository
 
-If you install from the APT repository, then Grafana is automatically updated every time you run `apt-get update`. 
+If you install from the APT repository, then Grafana is automatically updated every time you run `apt-get update`.
 
 | Grafana Version | Package | Repository |
 |-----------------|---------|------------|
@@ -69,19 +69,19 @@ If you have problems using `add-apt-repository`, you can set up the repository w
 Add this repository for stable releases:
 
 ```bash
-echo "deb https://packages.grafana.com/oss/deb stable main" | sudo tee -a /etc/apt/sources.list.d/grafana.list 
+echo "deb https://packages.grafana.com/oss/deb stable main" | sudo tee -a /etc/apt/sources.list.d/grafana.list
 ```
 
 Add this repository if you want beta releases:
 ```bash
-echo "deb https://packages.grafana.com/oss/deb beta main" | sudo tee -a /etc/apt/sources.list.d/grafana.list 
+echo "deb https://packages.grafana.com/oss/deb beta main" | sudo tee -a /etc/apt/sources.list.d/grafana.list
 ```
 
 ### Install .deb package
 
 If you install the `.deb` package, then you will need to manually update Grafana for each new version.
 
-1. On the [Grafana download page](https://grafana.com/grafana/download), select the Grafana version you want to install. 
+1. On the [Grafana download page](https://grafana.com/grafana/download), select the Grafana version you want to install.
    * The most recent Grafana version is selected by default.
    * The **Version** field displays only finished releases. If you want to install a beta version, click **Nightly Builds** and then select a version.
 1. Select an **Edition**.
@@ -146,7 +146,7 @@ sudo update-rc.d grafana-server defaults
 
 The `grafana-server` binary .tar.gz needs the working directory to be the root install directory where the binary and the `public` folder are located.
 
-Start Grafana by running: 
+Start Grafana by running:
 ```bash
 ./bin/grafana-server web
 ```
@@ -164,7 +164,7 @@ Start Grafana by running:
 
 ## Next steps
 
-Refer to the [Getting Started]({{< relref "../guides/getting_started/" >}}) guide for information about logging in, setting up data sources, and so on.
+Refer to the [Getting Started]({{< relref "../getting-started/getting-started/" >}}) guide for information about logging in, setting up data sources, and so on.
 
 ## Configure Grafana
 

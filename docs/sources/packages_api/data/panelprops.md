@@ -5,7 +5,6 @@
 title = "PanelProps"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## PanelProps interface
@@ -24,20 +23,23 @@ import { PanelProps } from '@grafana/data';
 
 |  Property | Type | Description |
 |  --- | --- | --- |
-|  [data](#data-property) | <code>PanelData</code> |  |
-|  [height](#height-property) | <code>number</code> |  |
-|  [id](#id-property) | <code>number</code> |  |
-|  [onChangeTimeRange](#onchangetimerange-property) | <code>(timeRange: AbsoluteTimeRange) =&gt; void</code> |  |
-|  [onOptionsChange](#onoptionschange-property) | <code>(options: T) =&gt; void</code> |  |
-|  [options](#options-property) | <code>T</code> |  |
-|  [renderCounter](#rendercounter-property) | <code>number</code> |  |
-|  [replaceVariables](#replacevariables-property) | <code>InterpolateFunction</code> |  |
-|  [timeRange](#timerange-property) | <code>TimeRange</code> |  |
-|  [timeZone](#timezone-property) | <code>TimeZone</code> |  |
-|  [transparent](#transparent-property) | <code>boolean</code> |  |
-|  [width](#width-property) | <code>number</code> |  |
+|  [data](#data-property) | <code>PanelData</code> | Result set of panel queries |
+|  [fieldConfig](#fieldconfig-property) | <code>FieldConfigSource</code> | Field options configuration |
+|  [height](#height-property) | <code>number</code> | Current height of the panel |
+|  [id](#id-property) | <code>number</code> | ID of the panel within the current dashboard |
+|  [onChangeTimeRange](#onchangetimerange-property) | <code>(timeRange: AbsoluteTimeRange) =&gt; void</code> | Time range change handler |
+|  [onFieldConfigChange](#onfieldconfigchange-property) | <code>(config: FieldConfigSource) =&gt; void</code> | Field config change handler |
+|  [onOptionsChange](#onoptionschange-property) | <code>(options: T) =&gt; void</code> | Panel options change handler |
+|  [options](#options-property) | <code>T</code> | Panel options |
+|  [replaceVariables](#replacevariables-property) | <code>InterpolateFunction</code> | Template variables interpolation function |
+|  [timeRange](#timerange-property) | <code>TimeRange</code> | Time range of the current dashboard |
+|  [timeZone](#timezone-property) | <code>TimeZone</code> | Time zone of the current dashboard |
+|  [transparent](#transparent-property) | <code>boolean</code> | Indicathes whether or not panel should be rendered transparent |
+|  [width](#width-property) | <code>number</code> | Current width of the panel |
 
 ### data property
+
+Result set of panel queries
 
 <b>Signature</b>
 
@@ -45,7 +47,19 @@ import { PanelProps } from '@grafana/data';
 data: PanelData;
 ```
 
+### fieldConfig property
+
+Field options configuration
+
+<b>Signature</b>
+
+```typescript
+fieldConfig: FieldConfigSource;
+```
+
 ### height property
+
+Current height of the panel
 
 <b>Signature</b>
 
@@ -55,6 +69,8 @@ height: number;
 
 ### id property
 
+ID of the panel within the current dashboard
+
 <b>Signature</b>
 
 ```typescript
@@ -63,13 +79,27 @@ id: number;
 
 ### onChangeTimeRange property
 
+Time range change handler
+
 <b>Signature</b>
 
 ```typescript
 onChangeTimeRange: (timeRange: AbsoluteTimeRange) => void;
 ```
 
+### onFieldConfigChange property
+
+Field config change handler
+
+<b>Signature</b>
+
+```typescript
+onFieldConfigChange: (config: FieldConfigSource) => void;
+```
+
 ### onOptionsChange property
+
+Panel options change handler
 
 <b>Signature</b>
 
@@ -79,21 +109,17 @@ onOptionsChange: (options: T) => void;
 
 ### options property
 
+Panel options
+
 <b>Signature</b>
 
 ```typescript
 options: T;
 ```
 
-### renderCounter property
-
-<b>Signature</b>
-
-```typescript
-renderCounter: number;
-```
-
 ### replaceVariables property
+
+Template variables interpolation function
 
 <b>Signature</b>
 
@@ -103,6 +129,8 @@ replaceVariables: InterpolateFunction;
 
 ### timeRange property
 
+Time range of the current dashboard
+
 <b>Signature</b>
 
 ```typescript
@@ -110,6 +138,8 @@ timeRange: TimeRange;
 ```
 
 ### timeZone property
+
+Time zone of the current dashboard
 
 <b>Signature</b>
 
@@ -119,6 +149,8 @@ timeZone: TimeZone;
 
 ### transparent property
 
+Indicathes whether or not panel should be rendered transparent
+
 <b>Signature</b>
 
 ```typescript
@@ -126,6 +158,8 @@ transparent: boolean;
 ```
 
 ### width property
+
+Current width of the panel
 
 <b>Signature</b>
 

@@ -3,7 +3,7 @@ title = "Overview"
 description = "Overview for permissions"
 keywords = ["grafana", "configuration", "documentation", "admin", "users", "datasources", "permissions"]
 type = "docs"
-aliases = ["/docs/grafana/latest/reference/admin", "/docs/grafana/latest/administration/permissions/"]
+aliases = ["/docs/grafana/v6.7/reference/admin", "/docs/grafana/v6.7/administration/permissions/"]
 [menu.docs]
 name = "Overview"
 identifier = "overview-permissions"
@@ -20,9 +20,7 @@ Grafana users have permissions that are determined by their:
 - Via permissions assigned directly to user (on folders, dashboards, data sources)
 - The Grafana Admin (i.e. Super Admin) user flag.
 
-## User
-
-A *user* is a named account in Grafana. A user can belong to one or more organizations and can be assigned different levels of privileges through roles.
+## Users
 
 Grafana supports a wide variety of internal and external ways for users to authenticate themselves. These include from its own integrated database, from an external SQL server, or from an external LDAP server.
 

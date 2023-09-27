@@ -5,7 +5,6 @@
 title = "FieldConfig"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## FieldConfig interface
@@ -17,7 +16,7 @@ Plugins may extend this with additional properties. Something like series overri
 <b>Signature</b>
 
 ```typescript
-export interface FieldConfig 
+export interface FieldConfig<TOptions extends object = any> 
 ```
 <b>Import</b>
 
@@ -29,8 +28,9 @@ import { FieldConfig } from '@grafana/data';
 |  Property | Type | Description |
 |  --- | --- | --- |
 |  [color](#color-property) | <code>FieldColor</code> |  |
-|  [custom](#custom-property) | <code>Record&lt;string, any&gt;</code> |  |
+|  [custom](#custom-property) | <code>TOptions</code> |  |
 |  [decimals](#decimals-property) | <code>number &#124; null</code> |  |
+|  [displayName](#displayname-property) | <code>string</code> |  |
 |  [filterable](#filterable-property) | <code>boolean</code> |  |
 |  [links](#links-property) | <code>DataLink[]</code> |  |
 |  [mappings](#mappings-property) | <code>ValueMapping[]</code> |  |
@@ -38,9 +38,7 @@ import { FieldConfig } from '@grafana/data';
 |  [min](#min-property) | <code>number &#124; null</code> |  |
 |  [noValue](#novalue-property) | <code>string</code> |  |
 |  [nullValueMode](#nullvaluemode-property) | <code>NullValueMode</code> |  |
-|  [scopedVars](#scopedvars-property) | <code>ScopedVars</code> |  |
 |  [thresholds](#thresholds-property) | <code>ThresholdsConfig</code> |  |
-|  [title](#title-property) | <code>string</code> |  |
 |  [unit](#unit-property) | <code>string</code> |  |
 
 ### color property
@@ -56,7 +54,7 @@ color?: FieldColor;
 <b>Signature</b>
 
 ```typescript
-custom?: Record<string, any>;
+custom?: TOptions;
 ```
 
 ### decimals property
@@ -65,6 +63,14 @@ custom?: Record<string, any>;
 
 ```typescript
 decimals?: number | null;
+```
+
+### displayName property
+
+<b>Signature</b>
+
+```typescript
+displayName?: string;
 ```
 
 ### filterable property
@@ -123,28 +129,12 @@ noValue?: string;
 nullValueMode?: NullValueMode;
 ```
 
-### scopedVars property
-
-<b>Signature</b>
-
-```typescript
-scopedVars?: ScopedVars;
-```
-
 ### thresholds property
 
 <b>Signature</b>
 
 ```typescript
 thresholds?: ThresholdsConfig;
-```
-
-### title property
-
-<b>Signature</b>
-
-```typescript
-title?: string;
 ```
 
 ### unit property

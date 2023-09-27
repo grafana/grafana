@@ -81,8 +81,7 @@ export GF_AUTH_GOOGLE_CLIENT_SECRET=newS3cretKey
 
 ## instance_name
 
-Set the name of the grafana-server instance. Used in logging and internal metrics and in
-clustering info. Defaults to: `${HOSTNAME}`, which will be replaced with
+Set the name of the grafana-server instance. Used in logging, internal metrics, and clustering info. Defaults to: `${HOSTNAME}`, which will be replaced with
 environment variable `HOSTNAME`, if that is empty or does not exist Grafana will try to use
 system calls to get the machine name.
 
@@ -308,7 +307,7 @@ Example connstr: `addr=127.0.0.1:6379,pool_size=100,db=0,ssl=false`
 
 - `addr` is the host `:` port of the redis server.
 - `pool_size` (optional) is the number of underlying connections that can be made to redis.
-- `db` (optional) is the numerical identifier of the redis database you want to use.
+- `db` (optional) is the number indentifer of the redis database you want to use.
 - `ssl` (optional) is if SSL should be used to connect to redis server. The value may be `true`, `false`, or `insecure`. Setting the value to `insecure` skips verification of the certificate chain and hostname when making the connection.
 
 #### Memcache
@@ -355,6 +354,10 @@ Define a whitelist of allowed IP addresses or domains, with ports, to be used in
 ### cookie_secure
 
 Set to `true` if you host Grafana behind HTTPS. Default is `false`.
+
+### disable_brute_force_login_protection
+
+Set to `true` to disable [brute force login protection](https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html#account-lockout). Default is `false`.
 
 ### cookie_samesite
 
@@ -450,6 +453,11 @@ Text used as placeholder text on login page for password input.
 Grafana provides many ways to authenticate users. The docs for authentication has been split in to many different pages
 below.
 
+### oauth_state_cookie_max_age
+
+How long the OAuth state cookie lives before being deleted. Default is `60` (seconds)
+Administrators can increase it if they experience OAuth login state mismatch errors.
+
 - [Authentication Overview]({{< relref "../auth/overview.md" >}}) (anonymous access options, hide login and more)
 - [Google OAuth]({{< relref "../auth/google.md" >}}) (auth.google)
 - [GitHub OAuth]({{< relref "../auth/github.md" >}}) (auth.github)
@@ -506,7 +514,7 @@ Number dashboard versions to keep (per dashboard). Default: `20`, Minimum: `1`.
 
 > Only available in Grafana v6.7+.
 
-When set, this will restrict users to set the refresh interval of a dashboard lower than given interval. Per default this is not set/unrestricted.
+This will restrict users to set the refresh interval of a dashboard lower than given interval. Per default this is 5 seconds.
 The interval string is a possibly signed sequence of decimal numbers, followed by a unit suffix (ms, s, m, h, d), e.g. `30s` or `1m`.
 
 ## [dashboards.json]
@@ -551,6 +559,9 @@ Name to be used when sending out emails, defaults to `Grafana`
 
 ### ehlo_identity
 Name to be used as client identity for EHLO in SMTP dialog, defaults to instance_name.
+
+### startTLS_policy
+Either "OpportunisticStartTLS", "MandatoryStartTLS", "NoStartTLS". Default is "OpportunisticStartTLS"
 
 ## [log]
 
@@ -638,6 +649,8 @@ Syslog facility. Valid options are user, daemon or local0 through local7. Defaul
 Syslog tag. By default, the process's `argv[0]` is used.
 
 ## [metrics]
+
+For detailed instructions, refer to [Internal Grafana metrics]({{< relref "../administration/metrics.md" >}}).
 
 ### enabled
 Enable metrics reporting. defaults true. Available via HTTP API `/metrics`.
@@ -816,6 +829,11 @@ URL to a remote HTTP image renderer service, e.g. http://localhost:8081/render, 
 
 If the remote HTTP image renderer service runs on a different server than the Grafana server you may have to configure this to a URL where Grafana is reachable, e.g. http://grafana.domain/.
 
+### concurrent_render_request_limit
+
+Concurrent render request limit affects when the /render HTTP endpoint is used. Rendering many images at the same time can overload the server,
+which this setting can help protect against by only allowing a certain amount of concurrent requests.
+
 ## [panels]
 
 ### disable_sanitize_html
@@ -828,6 +846,10 @@ is false. This settings was introduced in Grafana v6.0.
 ### enable_alpha
 
 Set to true if you want to test alpha plugins that are not yet ready for general usage.
+
+### allow_loading_unsigned_plugins
+
+Enter a comma-separated list of plugin identifiers to identify plugins that are allowed to be loaded even if they lack a valid signature. 
 
 ## [feature_toggles]
 ### enable
@@ -844,7 +866,7 @@ for the full list. Environment variables will override any settings provided her
 
 ### address
 
-The host:port destination for reporting spans. (ex: `localhost:6381`)
+The host:port destination for reporting spans. (ex: `localhost:6831`)
 
 Can be set with the environment variables `JAEGER_AGENT_HOST` and `JAEGER_AGENT_PORT`.
 

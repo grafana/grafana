@@ -5,7 +5,6 @@
 title = "MS_DATE_TIME_FORMAT"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## MS\_DATE\_TIME\_FORMAT variable

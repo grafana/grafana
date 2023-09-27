@@ -5,10 +5,11 @@
 title = "EchoMeta"
 keywords = ["grafana","documentation","sdk","@grafana/runtime"]
 type = "docs"
-draft = true
 +++
 
 ## EchoMeta interface
+
+Describes the meta information that are sent together with each event.
 
 <b>Signature</b>
 
@@ -30,9 +31,9 @@ import { EchoMeta } from '@grafana/runtime';
 |  [ts](#ts-property) | <code>number</code> | A millisecond epoch |
 |  [url](#url-property) | <code>string</code> |  |
 |  [userAgent](#useragent-property) | <code>string</code> |  |
-|  [userId](#userid-property) | <code>number</code> |  |
-|  [userLogin](#userlogin-property) | <code>string</code> |  |
-|  [userSignedIn](#usersignedin-property) | <code>boolean</code> |  |
+|  [userId](#userid-property) | <code>number</code> | The current users unique identifier. |
+|  [userLogin](#userlogin-property) | <code>string</code> | The current users username used to login into Grafana e.g. email. |
+|  [userSignedIn](#usersignedin-property) | <code>boolean</code> | True when user is logged in into Grafana. |
 |  [windowSize](#windowsize-property) | <code>SizeMeta</code> |  |
 
 ### screenSize property
@@ -91,6 +92,8 @@ userAgent: string;
 
 ### userId property
 
+The current users unique identifier.
+
 <b>Signature</b>
 
 ```typescript
@@ -99,6 +102,8 @@ userId: number;
 
 ### userLogin property
 
+The current users username used to login into Grafana e.g. email.
+
 <b>Signature</b>
 
 ```typescript
@@ -106,6 +111,8 @@ userLogin: string;
 ```
 
 ### userSignedIn property
+
+True when user is logged in into Grafana.
 
 <b>Signature</b>
 

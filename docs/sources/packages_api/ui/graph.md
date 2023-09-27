@@ -5,7 +5,6 @@
 title = "Graph"
 keywords = ["grafana","documentation","sdk","@grafana/ui"]
 type = "docs"
-draft = true
 +++
 
 ## Graph class

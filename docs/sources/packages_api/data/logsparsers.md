@@ -5,7 +5,6 @@
 title = "LogsParsers"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## LogsParsers variable

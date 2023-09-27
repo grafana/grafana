@@ -5,7 +5,6 @@
 title = "GraphTooltipOptions"
 keywords = ["grafana","documentation","sdk","@grafana/ui"]
 type = "docs"
-draft = true
 +++
 
 ## GraphTooltipOptions interface

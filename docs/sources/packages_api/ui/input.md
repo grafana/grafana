@@ -5,96 +5,19 @@
 title = "Input"
 keywords = ["grafana","documentation","sdk","@grafana/ui"]
 type = "docs"
-draft = true
 +++
 
-## Input class
+## Input variable
+
+### Input variable
 
 <b>Signature</b>
 
 ```typescript
-export declare class Input extends PureComponent<Props, State> 
+Input: React.ForwardRefExoticComponent<Pick<Props, "prefix" | "onChange" | "onBlur" | "data" | "style" | "type" | "min" | "max" | "color" | "name" | "keyType" | "pattern" | "value" | "id" | "readOnly" | "children" | "height" | "cite" | "form" | "label" | "span" | "summary" | "title" | "className" | "defaultChecked" | "defaultValue" | "suppressContentEditableWarning" | "suppressHydrationWarning" | "accessKey" | "contentEditable" | "contextMenu" | "dir" | "draggable" | "hidden" | "lang" | "placeholder" | "slot" | "spellCheck" | "tabIndex" | "inputMode" | "is" | "radioGroup" | "role" | "about" | "datatype" | "inlist" | "property" | "resource" | "typeof" | "vocab" | "autoCapitalize" | "autoCorrect" | "autoSave" | "itemProp" | "itemScope" | "itemType" | "itemID" | "itemRef" | "results" | "security" | "unselectable" | "aria-activedescendant" | "aria-atomic" | "aria-autocomplete" | "aria-busy" | "aria-checked" | "aria-colcount" | "aria-colindex" | "aria-colspan" | "aria-controls" | "aria-current" | "aria-describedby" | "aria-details" | "aria-disabled" | "aria-dropeffect" | "aria-errormessage" | "aria-expanded" | "aria-flowto" | "aria-grabbed" | "aria-haspopup" | "aria-hidden" | "aria-invalid" | "aria-keyshortcuts" | "aria-label" | "aria-labelledby" | "aria-level" | "aria-live" | "aria-modal" | "aria-multiline" | "aria-multiselectable" | "aria-orientation" | "aria-owns" | "aria-placeholder" | "aria-posinset" | "aria-pressed" | "aria-readonly" | "aria-relevant" | "aria-required" | "aria-roledescription" | "aria-rowcount" | "aria-rowindex" | "aria-rowspan" | "aria-selected" | "aria-setsize" | "aria-sort" | "aria-valuemax" | "aria-valuemin" | "aria-valuenow" | "aria-valuetext" | "dangerouslySetInnerHTML" | "onCopy" | "onCopyCapture" | "onCut" | "onCutCapture" | "onPaste" | "onPasteCapture" | "onCompositionEnd" | "onCompositionEndCapture" | "onCompositionStart" | "onCompositionStartCapture" | "onCompositionUpdate" | "onCompositionUpdateCapture" | "onFocus" | "onFocusCapture" | "onBlurCapture" | "onChangeCapture" | "onBeforeInput" | "onBeforeInputCapture" | "onInput" | "onInputCapture" | "onReset" | "onResetCapture" | "onSubmit" | "onSubmitCapture" | "onInvalid" | "onInvalidCapture" | "onLoad" | "onLoadCapture" | "onError" | "onErrorCapture" | "onKeyDown" | "onKeyDownCapture" | "onKeyPress" | "onKeyPressCapture" | "onKeyUp" | "onKeyUpCapture" | "onAbort" | "onAbortCapture" | "onCanPlay" | "onCanPlayCapture" | "onCanPlayThrough" | "onCanPlayThroughCapture" | "onDurationChange" | "onDurationChangeCapture" | "onEmptied" | "onEmptiedCapture" | "onEncrypted" | "onEncryptedCapture" | "onEnded" | "onEndedCapture" | "onLoadedData" | "onLoadedDataCapture" | "onLoadedMetadata" | "onLoadedMetadataCapture" | "onLoadStart" | "onLoadStartCapture" | "onPause" | "onPauseCapture" | "onPlay" | "onPlayCapture" | "onPlaying" | "onPlayingCapture" | "onProgress" | "onProgressCapture" | "onRateChange" | "onRateChangeCapture" | "onSeeked" | "onSeekedCapture" | "onSeeking" | "onSeekingCapture" | "onStalled" | "onStalledCapture" | "onSuspend" | "onSuspendCapture" | "onTimeUpdate" | "onTimeUpdateCapture" | "onVolumeChange" | "onVolumeChangeCapture" | "onWaiting" | "onWaitingCapture" | "onAuxClick" | "onAuxClickCapture" | "onClick" | "onClickCapture" | "onContextMenu" | "onContextMenuCapture" | "onDoubleClick" | "onDoubleClickCapture" | "onDrag" | "onDragCapture" | "onDragEnd" | "onDragEndCapture" | "onDragEnter" | "onDragEnterCapture" | "onDragExit" | "onDragExitCapture" | "onDragLeave" | "onDragLeaveCapture" | "onDragOver" | "onDragOverCapture" | "onDragStart" | "onDragStartCapture" | "onDrop" | "onDropCapture" | "onMouseDown" | "onMouseDownCapture" | "onMouseEnter" | "onMouseLeave" | "onMouseMove" | "onMouseMoveCapture" | "onMouseOut" | "onMouseOutCapture" | "onMouseOver" | "onMouseOverCapture" | "onMouseUp" | "onMouseUpCapture" | "onSelect" | "onSelectCapture" | "onTouchCancel" | "onTouchCancelCapture" | "onTouchEnd" | "onTouchEndCapture" | "onTouchMove" | "onTouchMoveCapture" | "onTouchStart" | "onTouchStartCapture" | "onPointerDown" | "onPointerDownCapture" | "onPointerMove" | "onPointerMoveCapture" | "onPointerUp" | "onPointerUpCapture" | "onPointerCancel" | "onPointerCancelCapture" | "onPointerEnter" | "onPointerEnterCapture" | "onPointerLeave" | "onPointerLeaveCapture" | "onPointerOver" | "onPointerOverCapture" | "onPointerOut" | "onPointerOutCapture" | "onGotPointerCapture" | "onGotPointerCaptureCapture" | "onLostPointerCapture" | "onLostPointerCaptureCapture" | "onScroll" | "onScrollCapture" | "onWheel" | "onWheelCapture" | "onAnimationStart" | "onAnimationStartCapture" | "onAnimationEnd" | "onAnimationEndCapture" | "onAnimationIteration" | "onAnimationIterationCapture" | "onTransitionEnd" | "onTransitionEndCapture" | "css" | "default" | "list" | "step" | "content" | "start" | "wrap" | "open" | "multiple" | "disabled" | "autoFocus" | "formAction" | "formEncType" | "formMethod" | "formNoValidate" | "formTarget" | "download" | "href" | "hrefLang" | "media" | "rel" | "target" | "accept" | "acceptCharset" | "action" | "allowFullScreen" | "allowTransparency" | "alt" | "as" | "async" | "autoComplete" | "autoPlay" | "capture" | "cellPadding" | "cellSpacing" | "charSet" | "challenge" | "checked" | "classID" | "cols" | "colSpan" | "controls" | "coords" | "crossOrigin" | "dateTime" | "defer" | "encType" | "frameBorder" | "headers" | "high" | "htmlFor" | "httpEquiv" | "integrity" | "keyParams" | "kind" | "loop" | "low" | "manifest" | "marginHeight" | "marginWidth" | "maxLength" | "mediaGroup" | "method" | "minLength" | "muted" | "nonce" | "noValidate" | "optimum" | "playsInline" | "poster" | "preload" | "required" | "reversed" | "rows" | "rowSpan" | "sandbox" | "scope" | "scoped" | "scrolling" | "seamless" | "selected" | "shape" | "sizes" | "src" | "srcDoc" | "srcLang" | "srcSet" | "useMap" | "width" | "wmode" | "key" | "invalid" | "suffix" | "loading" | "addonBefore" | "addonAfter"> & React.RefAttributes<HTMLInputElement>>
 ```
 <b>Import</b>
 
 ```typescript
 import { Input } from '@grafana/ui';
 ```
-<b>Properties</b>
-
-|  Property | Modifiers | Type | Description |
-|  --- | --- | --- | --- |
-|  [defaultProps](#defaultprops-property) | <code>static</code> | <code>{</code><br/><code>        className: string;</code><br/><code>    }</code> |  |
-|  [isInvalid](#isinvalid-property) |  | <code>boolean</code> |  |
-|  [populateEventPropsWithStatus](#populateeventpropswithstatus-property) |  | <code>(restProps: any, validationEvents: ValidationEvents &#124; undefined) =&gt; any</code> |  |
-|  [state](#state-property) |  | <code>State</code> |  |
-|  [status](#status-property) |  | <code>InputStatus</code> |  |
-|  [validatorAsync](#validatorasync-property) |  | <code>(validationRules: ValidationRule[]) =&gt; (evt: React.ChangeEvent&lt;HTMLInputElement&gt;) =&gt; void</code> |  |
-
-<b>Methods</b>
-
-|  Method | Modifiers | Description |
-|  --- | --- | --- |
-|  [render()](#render-method) |  |  |
-
-### defaultProps property
-
-<b>Signature</b>
-
-```typescript
-static defaultProps: {
-        className: string;
-    };
-```
-
-### isInvalid property
-
-<b>Signature</b>
-
-```typescript
-get isInvalid(): boolean;
-```
-
-### populateEventPropsWithStatus property
-
-<b>Signature</b>
-
-```typescript
-populateEventPropsWithStatus: (restProps: any, validationEvents: ValidationEvents | undefined) => any;
-```
-
-### state property
-
-<b>Signature</b>
-
-```typescript
-state: State;
-```
-
-### status property
-
-<b>Signature</b>
-
-```typescript
-get status(): InputStatus;
-```
-
-### validatorAsync property
-
-<b>Signature</b>
-
-```typescript
-validatorAsync: (validationRules: ValidationRule[]) => (evt: React.ChangeEvent<HTMLInputElement>) => void;
-```
-
-### render method
-
-<b>Signature</b>
-
-```typescript
-render(): JSX.Element;
-```
-<b>Returns:</b>
-
-`JSX.Element`
-

@@ -2,7 +2,7 @@
 title = "Folder HTTP API "
 description = "Grafana Folder HTTP API"
 keywords = ["grafana", "http", "documentation", "api", "folder"]
-aliases = ["/docs/grafana/latest/http_api/folder/"]
+aliases = ["/docs/grafana/v6.7/http_api/folder/"]
 type = "docs"
 [menu.docs]
 name = "Folder"
@@ -28,7 +28,7 @@ that you cannot use this API for retrieving information about the General folder
 
 `GET /api/folders`
 
-Returns all folders that the authenticated user has permission to view.
+Returns all folders that the authenticated user has permission to view. You can control the maximum number of folders returned through the `limit` query parameter, the default is 1000.
 
 **Example Request**:
 

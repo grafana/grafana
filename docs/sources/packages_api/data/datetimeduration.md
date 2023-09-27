@@ -5,7 +5,6 @@
 title = "DateTimeDuration"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## DateTimeDuration interface

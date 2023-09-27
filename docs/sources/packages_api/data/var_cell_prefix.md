@@ -5,7 +5,6 @@
 title = "VAR_CELL_PREFIX"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## VAR\_CELL\_PREFIX variable

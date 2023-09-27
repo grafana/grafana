@@ -5,20 +5,31 @@
 title = "toDataFrame"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
-## toDataFrame variable
+## toDataFrame() function
 
-### toDataFrame variable
+### toDataFrame() function
+
+Inspect any object and return the results as a DataFrame
 
 <b>Signature</b>
 
 ```typescript
-toDataFrame: (data: any) => DataFrame
+export declare function toDataFrame(data: any): DataFrame;
 ```
 <b>Import</b>
 
 ```typescript
 import { toDataFrame } from '@grafana/data';
 ```
+<b>Parameters</b>
+
+|  Parameter | Type | Description |
+|  --- | --- | --- |
+|  data | <code>any</code> |  |
+
+<b>Returns:</b>
+
+`DataFrame`
+

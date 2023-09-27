@@ -12,7 +12,7 @@ weight = 5
 
 Dashboards can be searched by the dashboard name, filtered by one (or many) tags or filtered by starred status. The dashboard search is accessed through the dashboard picker, available in the dashboard top nav area. The dashboard search can also be opened by using the shortcut `F`.
 
-<img class="no-shadow" src="/img/docs/v50/dashboard_search_annotated.png" width="700px">
+<img class="no-shadow" src="/static/img/docs/v50/dashboard_search_annotated.png" width="700px">
 
 1. `Search Bar`: The search bar allows you to enter any string and search both database and file based dashboards in real-time.
 2. `Starred`: Here you find all your starred dashboards.
@@ -25,7 +25,7 @@ When using only a keyboard, you can use your keyboard arrow keys to navigate the
 
 ## Find by dashboard name
 
-Begin typing any part of the desired dashboard names in the search bar. Search will return results for for any partial string match in real-time, as you type.
+Begin typing any part of the desired dashboard names in the search bar. Search will return results for any partial string match in real-time, as you type.
 
 Dashboard search is:
 - Real-time

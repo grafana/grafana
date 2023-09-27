@@ -5,7 +5,6 @@
 title = "guessFieldTypes"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## guessFieldTypes variable
@@ -15,7 +14,7 @@ draft = true
 <b>Signature</b>
 
 ```typescript
-guessFieldTypes: (series: DataFrame) => DataFrame
+guessFieldTypes: (series: DataFrame, guessDefined?: boolean) => DataFrame
 ```
 <b>Import</b>
 

@@ -5,7 +5,6 @@
 title = "OrgRole"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## OrgRole enum

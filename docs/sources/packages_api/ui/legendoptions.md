@@ -5,7 +5,6 @@
 title = "LegendOptions"
 keywords = ["grafana","documentation","sdk","@grafana/ui"]
 type = "docs"
-draft = true
 +++
 
 ## LegendOptions interface

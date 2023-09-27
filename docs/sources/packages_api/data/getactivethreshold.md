@@ -5,7 +5,6 @@
 title = "getActiveThreshold"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## getActiveThreshold() function

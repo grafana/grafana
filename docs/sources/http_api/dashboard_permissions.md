@@ -2,7 +2,7 @@
 title = "Dashboard Permissions HTTP API "
 description = "Grafana Dashboard Permissions HTTP API"
 keywords = ["grafana", "http", "documentation", "api", "dashboard", "permission", "permissions", "acl"]
-aliases = ["/docs/grafana/latest/http_api/dashboardpermissions/"]
+aliases = ["/docs/grafana/v6.7/http_api/dashboardpermissions/"]
 type = "docs"
 [menu.docs]
 name = "Dashboard Permissions"

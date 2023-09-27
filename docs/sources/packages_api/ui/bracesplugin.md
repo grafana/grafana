@@ -5,7 +5,6 @@
 title = "BracesPlugin"
 keywords = ["grafana","documentation","sdk","@grafana/ui"]
 type = "docs"
-draft = true
 +++
 
 ## BracesPlugin() function

@@ -5,7 +5,6 @@
 title = "FieldOverrideContext"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## FieldOverrideContext interface

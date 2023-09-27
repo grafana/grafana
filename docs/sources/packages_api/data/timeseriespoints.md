@@ -5,7 +5,6 @@
 title = "TimeSeriesPoints"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## TimeSeriesPoints type

@@ -5,7 +5,6 @@
 title = "ValidationEvents"
 keywords = ["grafana","documentation","sdk","@grafana/ui"]
 type = "docs"
-draft = true
 +++
 
 ## ValidationEvents interface

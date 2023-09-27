@@ -5,7 +5,6 @@
 title = "getMappedValue"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## getMappedValue variable

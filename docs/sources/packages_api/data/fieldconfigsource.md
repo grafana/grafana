@@ -5,7 +5,6 @@
 title = "FieldConfigSource"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## FieldConfigSource interface
@@ -13,7 +12,7 @@ draft = true
 <b>Signature</b>
 
 ```typescript
-export interface FieldConfigSource 
+export interface FieldConfigSource<TOptions extends object = any> 
 ```
 <b>Import</b>
 
@@ -24,7 +23,7 @@ import { FieldConfigSource } from '@grafana/data';
 
 |  Property | Type | Description |
 |  --- | --- | --- |
-|  [defaults](#defaults-property) | <code>FieldConfig</code> |  |
+|  [defaults](#defaults-property) | <code>FieldConfig&lt;TOptions&gt;</code> |  |
 |  [overrides](#overrides-property) | <code>ConfigOverrideRule[]</code> |  |
 
 ### defaults property
@@ -32,7 +31,7 @@ import { FieldConfigSource } from '@grafana/data';
 <b>Signature</b>
 
 ```typescript
-defaults: FieldConfig;
+defaults: FieldConfig<TOptions>;
 ```
 
 ### overrides property

@@ -5,7 +5,6 @@
 title = "Registry"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## Registry class
@@ -38,6 +37,7 @@ import { Registry } from '@grafana/data';
 |  --- | --- | --- |
 |  [get(id)](#get-method) |  |  |
 |  [getIfExists(id)](#getifexists-method) |  |  |
+|  [isEmpty()](#isempty-method) |  |  |
 |  [list(ids)](#list-method) |  | Return a list of values by ID, or all values if not specified |
 |  [register(ext)](#register-method) |  |  |
 |  [selectOptions(current, filter)](#selectoptions-method) |  |  |
@@ -98,6 +98,17 @@ getIfExists(id: string | undefined): T | undefined;
 <b>Returns:</b>
 
 `T | undefined`
+
+### isEmpty method
+
+<b>Signature</b>
+
+```typescript
+isEmpty(): boolean;
+```
+<b>Returns:</b>
+
+`boolean`
 
 ### list method
 

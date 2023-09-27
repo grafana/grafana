@@ -5,7 +5,6 @@
 title = "PluginDependencies"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## PluginDependencies interface

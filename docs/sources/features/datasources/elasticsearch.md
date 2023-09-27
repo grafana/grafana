@@ -3,7 +3,7 @@ title = "Using Elasticsearch in Grafana"
 description = "Guide for using Elasticsearch in Grafana"
 keywords = ["grafana", "elasticsearch", "guide"]
 type = "docs"
-aliases = ["/docs/grafana/latest/datasources/elasticsearch"]
+aliases = ["/docs/grafana/v6.7/datasources/elasticsearch"]
 [menu.docs]
 name = "Elasticsearch"
 parent = "datasources"
@@ -51,7 +51,7 @@ http.cors.allow-origin: "*"
 
 ### Index settings
 
-![Elasticsearch data source details](/img/docs/elasticsearch/elasticsearch_ds_details.png)
+![Elasticsearch data source details](/static/img/docs/elasticsearch/elasticsearch_ds_details.png)
 
 Here you can specify a default for the `time field` and specify the name of your Elasticsearch index. You can use
 a time pattern for the index name or a wildcard.
@@ -93,7 +93,7 @@ For example, if you're using a default setup of Filebeat for shipping logs to El
 
 ## Metric Query editor
 
-![Elasticsearch Query Editor](/img/docs/elasticsearch/query_editor.png)
+![Elasticsearch Query Editor](/static/img/docs/elasticsearch/query_editor.png)
 
 The Elasticsearch query editor allows you to select multiple metrics and group by multiple terms or filters. Use the plus and minus icons to the right to add/remove
 metrics or group by clauses. Some metrics and group by clauses haves options, click the option text to expand the row to view and edit metric or group by options.
@@ -112,15 +112,15 @@ Pattern | Description
 
 Some metric aggregations are called Pipeline aggregations, for example, *Moving Average* and *Derivative*. Elasticsearch pipeline metrics require another metric to be based on. Use the eye icon next to the metric to hide metrics from appearing in the graph. This is useful for metrics you only have in the query for use in a pipeline metric.
 
-![](/img/docs/elasticsearch/pipeline_metrics_editor.png)
+![](/static/img/docs/elasticsearch/pipeline_metrics_editor.png)
 
 ## Templating
 
-Instead of hard-coding things like server, application and sensor name in you metric queries you can use variables in their place.
-Variables are shown as dropdown select boxes at the top of the dashboard. These dropdowns makes it easy to change the data
+Instead of hard-coding things like server, application and sensor name in your metric queries you can use variables in their place.
+Variables are shown as dropdown select boxes at the top of the dashboard. These dropdowns make it easy to change the data
 being displayed in your dashboard.
 
-Check out the [Templating]({{< relref "../../reference/templating.md" >}}) documentation for an introduction to the templating feature and the different
+Check out the [Templating]({{< relref "../../variables/templates-and-variables.md" >}}) documentation for an introduction to the templating feature and the different
 types of template variables.
 
 ### Query variable
@@ -162,7 +162,7 @@ There are two syntaxes:
 Why two ways? The first syntax is easier to read and write but does not allow you to use a variable in the middle of a word. When the *Multi-value* or *Include all value*
 options are enabled, Grafana converts the labels from plain text to a lucene compatible condition.
 
-![](/img/docs/v43/elastic_templating_query.png)
+![](/static/img/docs/v43/elastic_templating_query.png)
 
 In the above example, we have a lucene query that filters documents based on the `@hostname`  property using a variable named `$hostname`. It is also using
 a variable in the *Terms* group by field input box. This allows you to use a variable to quickly change how the data is grouped.
@@ -172,7 +172,7 @@ Example dashboard:
 
 ## Annotations
 
-[Annotations]({{< relref "../../reference/annotations.md" >}}) allows you to overlay rich event information on top of graphs. You add annotation
+[Annotations]({{< relref "../../reference/annotations.md" >}}) allow you to overlay rich event information on top of graphs. You add annotation
 queries via the Dashboard menu / Annotations view. Grafana can query any Elasticsearch index
 for annotation events.
 
@@ -190,7 +190,7 @@ Tags | Optional field name to use for event tags (can be an array or a CSV strin
 
 Querying and displaying log data from Elasticsearch is available via [Explore]({{< relref "../explore" >}}).
 
-![](/img/docs/v63/elasticsearch_explore_logs.png)
+![](/static/img/docs/v63/elasticsearch_explore_logs.png)
 
 Select the Elasticsearch data source, change to Logs using the Metrics/Logs switcher, and then optionally enter a lucene query into the query field to filter the log messages.
 

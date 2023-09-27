@@ -5,10 +5,11 @@
 title = "EchoSrv"
 keywords = ["grafana","documentation","sdk","@grafana/runtime"]
 type = "docs"
-draft = true
 +++
 
 ## EchoSrv interface
+
+Used to send events to all the registered backends. This should be accessed via the [getEchoSrv()](./runtime/getechosrv.md) function. Will, by default, flush events to the backends every 10s or when the flush function is triggered.
 
 <b>Signature</b>
 
@@ -24,11 +25,13 @@ import { EchoSrv } from '@grafana/runtime';
 
 |  Method | Description |
 |  --- | --- |
-|  [addBackend(backend)](#addbackend-method) |  |
-|  [addEvent(event, meta)](#addevent-method) |  |
-|  [flush()](#flush-method) |  |
+|  [addBackend(backend)](#addbackend-method) | Add a new echo backend to the list of backends that will receive events. |
+|  [addEvent(event, meta)](#addevent-method) | Call this to add event that will be sent to the echo backends upon next flush. |
+|  [flush()](#flush-method) | Call this to flush current events to the echo backends. |
 
 ### addBackend method
+
+Add a new echo backend to the list of backends that will receive events.
 
 <b>Signature</b>
 
@@ -47,6 +50,8 @@ addBackend(backend: EchoBackend): void;
 
 ### addEvent method
 
+Call this to add event that will be sent to the echo backends upon next flush.
+
 <b>Signature</b>
 
 ```typescript
@@ -56,14 +61,16 @@ addEvent<T extends EchoEvent>(event: Omit<T, 'meta'>, meta?: {}): void;
 
 |  Parameter | Type | Description |
 |  --- | --- | --- |
-|  event | <code>Omit&lt;T, 'meta'&gt;</code> |  |
-|  meta | <code>{}</code> |  |
+|  event | <code>Omit&lt;T, 'meta'&gt;</code> | Object containing event information. |
+|  meta | <code>{}</code> | Object that will extend/override the default meta object. |
 
 <b>Returns:</b>
 
 `void`
 
 ### flush method
+
+Call this to flush current events to the echo backends.
 
 <b>Signature</b>
 

@@ -5,23 +5,26 @@
 title = "AppEvents"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## AppEvents namespace
 
+> This API is provided as a preview for developers and may change based on feedback that we receive. Do not use this API in a production environment.
+> 
+
 ### AppEvents namespace
 
-<b>Signature</b>
-
-```typescript
-export declare namespace AppEvents 
-```
 <b>Import</b>
 
 ```typescript
 import { AppEvents } from '@grafana/data';
 ```
+
+## Interfaces
+
+|  Interface | Description |
+|  --- | --- |
+|  [AppEvent](./appevent/) |  |
 
 ## Variables
 
@@ -35,5 +38,6 @@ import { AppEvents } from '@grafana/data';
 
 |  Type Alias | Description |
 |  --- | --- |
+|  [AlertErrorPayload](./alerterrorpayload/) |  |
 |  [AlertPayload](./alertpayload/) |  |
 

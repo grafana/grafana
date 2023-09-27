@@ -5,7 +5,6 @@
 title = "getValueFromDimension"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## getValueFromDimension variable

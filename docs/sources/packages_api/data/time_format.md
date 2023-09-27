@@ -5,7 +5,6 @@
 title = "TIME_FORMAT"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## TIME\_FORMAT variable

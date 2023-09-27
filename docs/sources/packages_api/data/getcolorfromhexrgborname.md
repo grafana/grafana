@@ -5,7 +5,6 @@
 title = "getColorFromHexRgbOrName"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## getColorFromHexRgbOrName variable

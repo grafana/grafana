@@ -5,7 +5,6 @@
 title = "ScaleCalculator"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## ScaleCalculator type

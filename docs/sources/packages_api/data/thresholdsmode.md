@@ -5,12 +5,13 @@
 title = "ThresholdsMode"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## ThresholdsMode enum
 
 ### ThresholdsMode enum
+
+Display mode
 
 <b>Signature</b>
 
@@ -28,5 +29,5 @@ import { ThresholdsMode } from '@grafana/data';
 |  Member | Value | Description |
 |  --- | --- | --- |
 |  Absolute | <code>&quot;absolute&quot;</code> |  |
-|  Percentage | <code>&quot;percentage&quot;</code> |  |
+|  Percentage | <code>&quot;percentage&quot;</code> | between 0 and 1 (based on min/max) |
 

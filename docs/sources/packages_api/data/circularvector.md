@@ -5,7 +5,6 @@
 title = "CircularVector"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## CircularVector class
@@ -17,7 +16,7 @@ This supports addting to the 'head' or 'tail' and will grow the buffer to match 
 <b>Signature</b>
 
 ```typescript
-export declare class CircularVector<T = any> implements MutableVector<T> 
+export declare class CircularVector<T = any> extends FunctionalVector implements MutableVector<T> 
 ```
 <b>Import</b>
 

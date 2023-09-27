@@ -5,7 +5,6 @@
 title = "Renderable"
 keywords = ["grafana","documentation","sdk","@grafana/ui"]
 type = "docs"
-draft = true
 +++
 
 ## Renderable type

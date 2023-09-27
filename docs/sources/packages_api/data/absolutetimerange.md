@@ -5,7 +5,6 @@
 title = "AbsoluteTimeRange"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## AbsoluteTimeRange interface

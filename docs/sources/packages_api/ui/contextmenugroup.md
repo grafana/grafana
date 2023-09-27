@@ -5,7 +5,6 @@
 title = "ContextMenuGroup"
 keywords = ["grafana","documentation","sdk","@grafana/ui"]
 type = "docs"
-draft = true
 +++
 
 ## ContextMenuGroup interface

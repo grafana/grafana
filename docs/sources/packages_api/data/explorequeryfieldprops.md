@@ -5,7 +5,6 @@
 title = "ExploreQueryFieldProps"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## ExploreQueryFieldProps interface
@@ -25,6 +24,7 @@ import { ExploreQueryFieldProps } from '@grafana/data';
 |  Property | Type | Description |
 |  --- | --- | --- |
 |  [absoluteRange](#absoluterange-property) | <code>AbsoluteTimeRange</code> |  |
+|  [exploreId](#exploreid-property) | <code>any</code> |  |
 |  [exploreMode](#exploremode-property) | <code>ExploreMode</code> |  |
 |  [history](#history-property) | <code>any[]</code> |  |
 |  [onBlur](#onblur-property) | <code>() =&gt; void</code> |  |
@@ -35,6 +35,14 @@ import { ExploreQueryFieldProps } from '@grafana/data';
 
 ```typescript
 absoluteRange?: AbsoluteTimeRange;
+```
+
+### exploreId property
+
+<b>Signature</b>
+
+```typescript
+exploreId?: any;
 ```
 
 ### exploreMode property

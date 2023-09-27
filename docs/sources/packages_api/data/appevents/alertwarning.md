@@ -5,7 +5,6 @@
 title = "alertWarning"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## AppEvents.alertWarning variable

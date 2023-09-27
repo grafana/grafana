@@ -5,48 +5,28 @@
 title = "AsyncSelect"
 keywords = ["grafana","documentation","sdk","@grafana/ui"]
 type = "docs"
-draft = true
 +++
 
-## AsyncSelect class
+## AsyncSelect() function
+
+### AsyncSelect() function
 
 <b>Signature</b>
 
 ```typescript
-export declare class AsyncSelect<T> extends PureComponent<AsyncProps<T>> 
+export declare function AsyncSelect<T>(props: AsyncSelectProps<T>): JSX.Element;
 ```
 <b>Import</b>
 
 ```typescript
 import { AsyncSelect } from '@grafana/ui';
 ```
-<b>Properties</b>
+<b>Parameters</b>
 
-|  Property | Modifiers | Type | Description |
-|  --- | --- | --- | --- |
-|  [defaultProps](#defaultprops-property) | <code>static</code> | <code>Partial&lt;AsyncProps&lt;any&gt;&gt;</code> |  |
-
-<b>Methods</b>
-
-|  Method | Modifiers | Description |
+|  Parameter | Type | Description |
 |  --- | --- | --- |
-|  [render()](#render-method) |  |  |
+|  props | <code>AsyncSelectProps&lt;T&gt;</code> |  |
 
-### defaultProps property
-
-<b>Signature</b>
-
-```typescript
-static defaultProps: Partial<AsyncProps<any>>;
-```
-
-### render method
-
-<b>Signature</b>
-
-```typescript
-render(): JSX.Element;
-```
 <b>Returns:</b>
 
 `JSX.Element`

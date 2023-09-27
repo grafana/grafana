@@ -5,12 +5,13 @@
 title = "registerEchoBackend"
 keywords = ["grafana","documentation","sdk","@grafana/runtime"]
 type = "docs"
-draft = true
 +++
 
 ## registerEchoBackend variable
 
 ### registerEchoBackend variable
+
+Used to register echo backends that will receive Grafana echo events during application runtime.
 
 <b>Signature</b>
 

@@ -5,7 +5,6 @@
 title = "QueryHint"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## QueryHint interface

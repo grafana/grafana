@@ -5,7 +5,6 @@
 title = "OK_COLOR"
 keywords = ["grafana","documentation","sdk","@grafana/ui"]
 type = "docs"
-draft = true
 +++
 
 ## OK\_COLOR variable

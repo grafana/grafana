@@ -1,9 +1,4 @@
 +++
-title = "Contribute"
-description = "Contribute"
+title = "Developers"
 type = "docs"
-[menu.docs]
-name = "Contribute"
-identifier = "contribute"
-weight = 20
 +++

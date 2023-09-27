@@ -5,7 +5,6 @@
 title = "TimeSeries"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## TimeSeries interface
@@ -27,6 +26,7 @@ import { TimeSeries } from '@grafana/data';
 |  [datapoints](#datapoints-property) | <code>TimeSeriesPoints</code> |  |
 |  [tags](#tags-property) | <code>Labels</code> |  |
 |  [target](#target-property) | <code>string</code> |  |
+|  [title](#title-property) | <code>string</code> | If name is manually configured via an alias / legend pattern |
 |  [unit](#unit-property) | <code>string</code> |  |
 
 ### datapoints property
@@ -51,6 +51,16 @@ tags?: Labels;
 
 ```typescript
 target: string;
+```
+
+### title property
+
+If name is manually configured via an alias / legend pattern
+
+<b>Signature</b>
+
+```typescript
+title?: string;
 ```
 
 ### unit property

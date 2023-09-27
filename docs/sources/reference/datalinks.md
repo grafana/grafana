@@ -6,11 +6,11 @@ type = "docs"
 
 # Data links
 
-{{< docs-imagebox img="/img/docs/v66/datalinks_graph.png" max-width="1025px" caption="Data links" >}}
+{{< figure src="/static/img/docs/v66/datalinks_graph.png" max-width="1025px" caption="Data links" >}}
 
 Data link allows adding dynamic links to the visualization. Those links can link to either another dashboard or to an external URL.
 
-{{< docs-imagebox img="/img/docs/v66/datalinks.png" max-width="1025px" caption="Data links" >}}
+{{< figure src="/static/img/docs/v66/datalinks.png" max-width="1025px" caption="Data links" >}}
 
 Data link is defined by title, URL and a setting whether or not it should be opened in a new window.
 
@@ -22,7 +22,7 @@ The link itself is accessible in different ways depending on the visualization. 
 Stat, Gauge or Bar Gauge you can click anywhere on the visualization to open the context menu.
 
 Example with Bar Gauge panel
-{{< docs-imagebox img="/img/docs/v66/datalinks_cover.png" max-width="1025px" caption="Data links" >}}
+{{< figure src="/static/img/docs/v66/datalinks_cover.png" max-width="1025px" caption="Data links" >}}
 
 ## Variables to use in your URL
 
@@ -64,6 +64,6 @@ to use current dashboard's variable value. If you want to add all of the current
 
 Hit CMD or CTRL space on your keyboard to open the typeahead suggestions to more easily add variables to your URL.
 
-{{< docs-imagebox img="/img/docs/data_link_typeahead.png"  max-width= "800px" >}}
+{{< figure src="/static/img/docs/data_link_typeahead.png"  max-width= "800px" >}}
 
 

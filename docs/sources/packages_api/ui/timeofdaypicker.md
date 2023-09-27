@@ -5,7 +5,6 @@
 title = "TimeOfDayPicker"
 keywords = ["grafana","documentation","sdk","@grafana/ui"]
 type = "docs"
-draft = true
 +++
 
 ## TimeOfDayPicker variable

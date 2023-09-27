@@ -2,7 +2,7 @@
 title = "Admin HTTP API "
 description = "Grafana Admin HTTP API"
 keywords = ["grafana", "http", "documentation", "api", "admin"]
-aliases = ["/docs/grafana/latest/http_api/admin/"]
+aliases = ["/docs/grafana/v6.7/http_api/admin/"]
 type = "docs"
 [menu.docs]
 name = "Admin"
@@ -224,9 +224,12 @@ Content-Type: application/json
   "name":"User",
   "email":"user@graf.com",
   "login":"user",
-  "password":"userpassword"
+  "password":"userpassword",
+  "OrgId": 1
 }
 ```
+
+Note that `OrgId` is an optional parameter that can be used to assign a new user to a different organization when [auto_assign_org](https://grafana.com/docs/grafana/latest/installation/configuration/#auto-assign-org) is set to `true`.
 
 **Example Response**:
 

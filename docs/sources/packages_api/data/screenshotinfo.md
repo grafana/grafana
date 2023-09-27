@@ -5,7 +5,6 @@
 title = "ScreenshotInfo"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## ScreenshotInfo interface

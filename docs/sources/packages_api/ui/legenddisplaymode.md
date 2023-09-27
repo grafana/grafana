@@ -5,7 +5,6 @@
 title = "LegendDisplayMode"
 keywords = ["grafana","documentation","sdk","@grafana/ui"]
 type = "docs"
-draft = true
 +++
 
 ## LegendDisplayMode enum

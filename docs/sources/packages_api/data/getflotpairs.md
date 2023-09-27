@@ -5,7 +5,6 @@
 title = "getFlotPairs"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## getFlotPairs() function

@@ -1,46 +1,42 @@
 +++
-title = "Alerting Notifications"
-description = "Alerting Notifications Guide"
+title = "Alert notifications"
+description = "Alerting notifications guide"
 keywords = ["Grafana", "alerting", "guide", "notifications"]
 type = "docs"
 [menu.docs]
 name = "Notifications"
 parent = "alerting"
-weight = 2
+weight = 200
 +++
 
-
-# Alert Notifications
-
-> Alerting is only available in Grafana v4.0 and above.
+# Alert notifications
 
 When an alert changes state, it sends out notifications. Each alert rule can have
 multiple notifications. In order to add a notification to an alert rule you first need
-to add and configure a `notification` channel (can be email, PagerDuty or other integration).
-This is done from the Notification Channels page.
+to add and configure a `notification` channel (can be email, PagerDuty, or other integration).
 
-## Notification Channel Setup
+This is done from the Notification channels page.
 
-On the Notification Channels page hit the `New Channel` button to go the page where you
-can configure and setup a new Notification Channel.
+> **Note:** Alerting is only available in Grafana v4.0 and above.
 
-You specify a name and a type, and type specific options. You can also test the notification to make
-sure it's setup correctly.
+## Add a notification channel
+
+1. In the Grafana side bar, hover your cursor over the **Alerting** (bell) icon and then click **Notification channels**.
+1. Click **Add channel**.
+1. Fill out the fields or select options described below.
+
+## New notification channel fields
 
 ### Default (send on all alerts)
 
-When checked, this option will notify for all alert rules - existing and new.
+- **Name -** Enter a name for this channel. It will be displayed when users add notifications to alert rules.
+- **Type -** Select the channel type. Refer to the [List of supported notifiers](#list-of-supported-notifiers) for details.
+- **Default (send on all alerts) -** When selected, this option sends a notification on this channel for all alert rules.
+- **Include Image -** See [Enable images in notifications](#enable-images-in-notifications-external-image-store) for details.
+- **Disable Resolve Message -** When selected, this option disables the resolve message [OK] that is sent when the alerting state returns to false.
+- **Send reminders -** When this option is checked additional notifications (reminders) will be sent for triggered alerts. You can specify how often reminders should be sent using number of seconds (s), minutes (m) or hours (h), for example `30s`, `3m`, `5m` or `1h`.
 
-### Send reminders
-
-> Only available in Grafana v5.3 and above.
-
-{{< docs-imagebox max-width="600px" img="/img/docs/v53/alerting_notification_reminders.png" class="docs-image--right" caption="Alerting notification reminders setup" >}}
-
-When this option is checked additional notifications (reminders) will be sent for triggered alerts. You can specify how often reminders
-should be sent using number of seconds (s), minutes (m) or hours (h), for example `30s`, `3m`, `5m` or `1h` etc.
-
-**Important:** Alert reminders are sent after rules are evaluated. Therefore a reminder can never be sent more frequently than a configured [alert rule evaluation interval]({{< relref "rules/#name-evaluation-interval" >}}).
+**Important:** Alert reminders are sent after rules are evaluated. Therefore a reminder can never be sent more frequently than a configured alert rule evaluation interval.
 
 These examples show how often and when reminders are sent for a triggered alert.
 
@@ -55,13 +51,28 @@ Alert rule evaluation interval | Send reminders every | Reminder sent every (aft
 
 <div class="clearfix"></div>
 
-### Disable resolve message
+## List of supported notifiers
 
-When checked, this option will disable resolve message [OK] that is sent when alerting state returns to false.
-
-## Supported Notification Types
-
-Grafana ships with the following set of notification types:
+Name | Type | Supports images | Support alert rule tags
+-----|------|---------------- | -----------------------
+[DingDing](#dingdingdingtalk) | `dingding` | yes, external only | no
+Discord | `discord` | yes | no
+[Email](#email) | `email` | yes | no
+[Google Hangouts Chat](#google-hangouts-chat) | `googlechat` | yes, external only | no
+Hipchat | `hipchat` | yes, external only | no
+[Kafka](#kafka) | `kafka` | yes, external only | no
+Line | `line` | yes, external only | no
+Microsoft Teams | `teams` | yes, external only | no
+OpsGenie | `opsgenie` | yes, external only | yes
+[Pagerduty](#pagerduty) | `pagerduty` | yes, external only | yes
+Prometheus Alertmanager | `prometheus-alertmanager` | yes, external only | yes
+Pushover | `pushover` | yes | no
+Sensu | `sensu` | yes, external only | no
+[Slack](#slack) | `slack` | yes | no
+Telegram | `telegram` | yes | no
+Threema | `threema` | yes, external only | no
+VictorOps | `victorops` | yes, external only | no
+[Webhook](#webhook) | `webhook` | yes, external only | yes
 
 ### Email
 
@@ -71,14 +82,19 @@ external image destination if available or fallback to attaching the image to th
 Be aware that if you use the `local` image storage email servers and clients might not be
 able to access the image.
 
+Setting | Description
+---------- | -----------
+Single email | Send a single email to all recipients. Disabled per default.
+Addresses | Email addresses to recipients. You can enter multiple email addresses using a ";" separator.
+
 ### Slack
 
-{{< imgbox max-width="40%" img="/img/docs/v4/slack_notification.png" caption="Alerting Slack Notification" >}}
+{{< figure class="float-right"  max-width="40%" src="/static/img/docs/v4/slack_notification.png" caption="Alerting Slack Notification" >}}
 
-To set up Slack, you need to configure an incoming Slack webhook URL. You can follow 
-[their guide](https://api.slack.com/incoming-webhooks) on how to do that. If you want to include screenshots of the 
-firing alerts in the Slack messages you have to configure either the [external image destination](#external-image-store) 
-in Grafana, or a bot integration via Slack Apps. Follow Slack's guide to set up a bot integration and use the token 
+To set up Slack, you need to configure an incoming Slack webhook URL. You can follow
+[Sending messages using Incoming Webhooks](https://api.slack.com/incoming-webhooks) on how to do that. If you want to include screenshots of the
+firing alerts in the Slack messages you have to configure either the [external image destination](#external-image-store)
+in Grafana or a bot integration via Slack Apps. Follow Slack's guide to set up a bot integration and use the token
 provided (https://api.slack.com/bot-users), which starts with "xoxb".
 
 Setting | Description
@@ -105,7 +121,7 @@ Integration Key | Integration key for PagerDuty.
 Severity | Level for dynamic notifications, default is `critical`
 Auto resolve incidents | Resolve incidents in PagerDuty once the alert goes back to ok
 
-**Note:** The tags `Class`, `Group`, and `Component` have special meaning in the [Pagerduty Common Event Format - PD-CEF](https://support.pagerduty.com/docs/pd-cef).  If an alert panel defines these tag keys they will be transposed to the root of the event sent to Pagerduty.  This means they will be available within the Pagerduty UI and Filtering tools.
+**Note:** The tags `Severity`, `Class`, `Group`, and `Component` have special meaning in the [Pagerduty Common Event Format - PD-CEF](https://support.pagerduty.com/docs/pd-cef). If an alert panel defines these tag keys, then they are transposed to the root of the event sent to Pagerduty. This means they will be available within the Pagerduty UI and Filtering tools. A Severity tag set on an alert overrides the global Severity set on the notification channel if it's a valid level.
 
 ### Webhook
 
@@ -180,53 +196,19 @@ Notifications can be sent by setting up an incoming webhook in Google Hangouts c
 
 Squadcast helps you get alerted via Phone call, SMS, Email and Push notifications and lets you take actions on those alerts. Grafana notifications can be sent to Squadcast via a simple incoming webhook. Refer the official [Squadcast support documentation](https://support.squadcast.com/docs/grafana) for configuring these webhooks.
 
-### All supported notifiers
+## Enable images in notifications {#external-image-store}
 
-Name | Type | Supports images | Support alert rule tags
------|------|---------------- | -----------------------
-DingDing | `dingding` | yes, external only | no
-Discord | `discord` | yes | no
-Email | `email` | yes | no
-Google Hangouts Chat | `googlechat` | yes, external only | no
-Hipchat | `hipchat` | yes, external only | no
-Kafka | `kafka` | yes, external only | no
-Line | `line` | yes, external only | no
-Microsoft Teams | `teams` | yes, external only | no
-OpsGenie | `opsgenie` | yes, external only | yes
-Pagerduty | `pagerduty` | yes, external only | yes
-Prometheus Alertmanager | `prometheus-alertmanager` | yes, external only | yes
-Pushover | `pushover` | yes | no
-Sensu | `sensu` | yes, external only | no
-Slack | `slack` | yes | no
-Squadcast | `webhook` | no | no
-Telegram | `telegram` | yes | no
-Threema | `threema` | yes, external only | no
-VictorOps | `victorops` | yes, external only | no
-Webhook | `webhook` | yes, external only | yes
-
-# Enable images in notifications {#external-image-store}
-
-Grafana can render the panel associated with the alert rule as a PNG image and include that in the notification. Read more about the requirements and how to configure 
+Grafana can render the panel associated with the alert rule as a PNG image and include that in the notification. Read more about the requirements and how to configure
 [image rendering]({{< relref "../administration/image_rendering/" >}}).
 
 Most Notification Channels require that this image be publicly accessible (Slack and PagerDuty for example). In order to include images in alert notifications, Grafana can upload the image to an image store. It currently supports
 Amazon S3, Webdav, Google Cloud Storage and Azure Blob Storage. So to set that up you need to configure the [external image uploader]({{< relref "../installation/configuration/#external-image-storage" >}}) in your grafana-server ini config file.
 
-Be aware that some notifiers requires public access to the image to be able to include it in the notification. So make sure to enable public access to the images. If you're using local image uploader, your Grafana instance need to be accessible by the internet.
+Be aware that some notifiers require public access to the image to be able to include it in the notification. So make sure to enable public access to the images. If you're using local image uploader, your Grafana instance need to be accessible by the internet.
 
 Notification services which need public image access are marked as 'external only'.
 
-# Use alert rule tags in notifications {#alert-rule-tags}
-
-> Only available in Grafana v6.3+.
-
-Grafana can include a list of tags (key/value) in the notification.
-It's called alert rule tags to contrast with tags parsed from timeseries.
-It currently supports only the Prometheus Alertmanager notifier.
-
- This is an optional feature. You can get notifications without using alert rule tags.
-
-# Configure the link back to Grafana from alert notifications
+## Configure the link back to Grafana from alert notifications
 
 All alert notifications contain a link back to the triggered alert in the Grafana instance.
 This URL is based on the [domain]({{< relref "../installation/configuration/#domain" >}}) setting in Grafana.

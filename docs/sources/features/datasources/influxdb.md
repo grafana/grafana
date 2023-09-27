@@ -3,7 +3,7 @@ title = "Using InfluxDB in Grafana"
 description = "Guide for using InfluxDB in Grafana"
 keywords = ["grafana", "influxdb", "guide"]
 type = "docs"
-aliases = ["/docs/grafana/latest/datasources/influxdb"]
+aliases = ["/docs/grafana/v6.7/datasources/influxdb"]
 [menu.docs]
 name = "InfluxDB"
 parent = "datasources"
@@ -62,9 +62,9 @@ Identifier | Description
 
 ## Query Editor
 
-{{< docs-imagebox img="/img/docs/v45/influxdb_query_still.png" class="docs-image--no-shadow" animated-gif="/img/docs/v45/influxdb_query.gif" >}}
+{{< figure src="/static/img/docs/v45/influxdb_query_still.png" class="docs-image--no-shadow" animated-gif="/static/img/docs/v45/influxdb_query.gif" >}}
 
-You can access the InfluxDB editor under the metrics tab when you are in the edit mode of the Graph or Singlestat panels. 
+You can access the InfluxDB editor under the metrics tab when you are in the edit mode of the Graph or Singlestat panels.
 Enter edit mode by clicking the panel title, and clicking **Edit**. The editor allows you to select metrics and tags.
 
 ### Filter data (WHERE)
@@ -79,7 +79,7 @@ You can type in regex patterns for metric names or tag filter values. Be sure to
 In the `SELECT` row you can specify what fields and functions you want to use. If you have a
 group by time you need an aggregation function. Some functions like derivative require an aggregation function. The editor tries to simplify and unify this part of the query. For example:
 
-![](/img/docs/influxdb/select_editor.png)
+![](/static/img/docs/influxdb/select_editor.png)
 
 The above generates the following InfluxDB `SELECT` clause:
 
@@ -123,7 +123,7 @@ change the option `Format As` to `Table` if you want to show raw data in the `Ta
 
 Querying and displaying log data from InfluxDB is available via [Explore]({{< relref "../explore" >}}).
 
-![](/img/docs/v63/influxdb_explore_logs.png)
+![](/static/img/docs/v63/influxdb_explore_logs.png)
 
 Select the InfluxDB data source, change to Logs using the Metrics/Logs switcher,
 and then use the `Measurements/Fields` button to display your logs.
@@ -140,11 +140,11 @@ To add a filter click the plus icon to the right of the `Measurements/Fields` bu
 
 ## Templating
 
-Instead of hard-coding things like server, application and sensor name in you metric queries you can use variables in their place.
-Variables are shown as dropdown select boxes at the top of the dashboard. These dropdowns makes it easy to change the data
+Instead of hard-coding things like server, application and sensor name in your metric queries you can use variables in their place.
+Variables are shown as dropdown select boxes at the top of the dashboard. These dropdowns make it easy to change the data
 being displayed in your dashboard.
 
-Check out the [Templating]({{< relref "../../reference/templating.md" >}}) documentation for an introduction to the templating feature and the different
+Check out the [Templating]({{< relref "../../variables/templates-and-variables.md" >}}) documentation for an introduction to the templating feature and the different
 types of template variables.
 
 ### Query variable

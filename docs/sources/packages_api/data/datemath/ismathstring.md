@@ -5,7 +5,6 @@
 title = "isMathString"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## dateMath.isMathString() function
@@ -15,7 +14,7 @@ draft = true
 <b>Signature</b>
 
 ```typescript
-function isMathString(text: string | DateTime | Date): boolean;
+export declare function isMathString(text: string | DateTime | Date): boolean;
 ```
 <b>Import</b>
 

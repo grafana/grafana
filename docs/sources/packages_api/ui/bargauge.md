@@ -5,7 +5,6 @@
 title = "BarGauge"
 keywords = ["grafana","documentation","sdk","@grafana/ui"]
 type = "docs"
-draft = true
 +++
 
 ## BarGauge class

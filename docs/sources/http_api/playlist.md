@@ -2,7 +2,7 @@
 title = "Playlist HTTP API "
 description = "Playlist Admin HTTP API"
 keywords = ["grafana", "http", "documentation", "api", "playlist"]
-aliases = ["/docs/grafana/latest/http_api/playlist/"]
+aliases = ["/docs/grafana/v6.7/http_api/playlist/"]
 type = "docs"
 [menu.docs]
 name = "Playlist"

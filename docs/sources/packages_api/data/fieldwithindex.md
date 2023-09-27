@@ -5,7 +5,6 @@
 title = "FieldWithIndex"
 keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
-draft = true
 +++
 
 ## FieldWithIndex interface

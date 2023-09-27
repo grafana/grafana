@@ -5,7 +5,6 @@
 title = "TypeaheadInput"
 keywords = ["grafana","documentation","sdk","@grafana/ui"]
 type = "docs"
-draft = true
 +++
 
 ## TypeaheadInput interface
@@ -24,7 +23,7 @@ import { TypeaheadInput } from '@grafana/ui';
 
 |  Property | Type | Description |
 |  --- | --- | --- |
-|  [editor](#editor-property) | <code>Editor</code> |  |
+|  [editor](#editor-property) | <code>CoreEditor</code> |  |
 |  [labelKey](#labelkey-property) | <code>string</code> |  |
 |  [prefix](#prefix-property) | <code>string</code> |  |
 |  [text](#text-property) | <code>string</code> |  |
@@ -36,7 +35,7 @@ import { TypeaheadInput } from '@grafana/ui';
 <b>Signature</b>
 
 ```typescript
-editor?: Editor;
+editor?: CoreEditor;
 ```
 
 ### labelKey property
