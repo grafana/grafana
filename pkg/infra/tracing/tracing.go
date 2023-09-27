@@ -44,7 +44,7 @@ const (
 	w3cPropagator    string = "w3c"
 )
 
-type Opentelemetry struct {
+type TracingService struct {
 	enabled       string
 	Address       string
 	Propagation   string
@@ -134,7 +134,7 @@ type Span interface {
 	ContextWithSpan(ctx context.Context) context.Context
 }
 
-func ProvideService(cfg *setting.Cfg) (Tracer, error) {
+func ProvideService(cfg *setting.Cfg) (*TracingService, error) {
 	ots, err := ParseSettings(cfg)
 	if err != nil {
 		return nil, err
@@ -153,8 +153,8 @@ func ProvideService(cfg *setting.Cfg) (Tracer, error) {
 	return ots, nil
 }
 
-func ParseSettings(cfg *setting.Cfg) (*Opentelemetry, error) {
-	ots := &Opentelemetry{
+func ParseSettings(cfg *setting.Cfg) (*TracingService, error) {
+	ots := &TracingService{
 		Cfg: cfg,
 		log: log.New("tracing"),
 	}
@@ -204,7 +204,7 @@ func (noopTracerProvider) Shutdown(ctx context.Context) error {
 	return nil
 }
 
-func (ots *Opentelemetry) parseSettings() error {
+func (ots *TracingService) parseSettings() error {
 	legacyAddress, legacyTags := "", ""
 	if section, err := ots.Cfg.Raw.GetSection("tracing.jaeger"); err == nil {
 		legacyAddress = section.Key("address").MustString("")
@@ -263,7 +263,7 @@ func (ots *Opentelemetry) parseSettings() error {
 	return nil
 }
 
-func (ots *Opentelemetry) OTelExporterEnabled() bool {
+func (ots *TracingService) OTelExporterEnabled() bool {
 	return ots.enabled == otlpExporter
 }
 
@@ -283,7 +283,7 @@ func splitCustomAttribs(s string) ([]attribute.KeyValue, error) {
 	return res, nil
 }
 
-func (ots *Opentelemetry) initJaegerTracerProvider() (*tracesdk.TracerProvider, error) {
+func (ots *TracingService) initJaegerTracerProvider() (*tracesdk.TracerProvider, error) {
 	var ep jaeger.EndpointOption
 	// Create the Jaeger exporter: address can be either agent address (host:port) or collector URL
 	if strings.HasPrefix(ots.Address, "http://") || strings.HasPrefix(ots.Address, "https://") {
@@ -328,7 +328,7 @@ func (ots *Opentelemetry) initJaegerTracerProvider() (*tracesdk.TracerProvider, 
 	return tp, nil
 }
 
-func (ots *Opentelemetry) initOTLPTracerProvider() (*tracesdk.TracerProvider, error) {
+func (ots *TracingService) initOTLPTracerProvider() (*tracesdk.TracerProvider, error) {
 	client := otlptracegrpc.NewClient(otlptracegrpc.WithEndpoint(ots.Address), otlptracegrpc.WithInsecure())
 	exp, err := otlptrace.New(context.Background(), client)
 	if err != nil {
@@ -343,7 +343,7 @@ func (ots *Opentelemetry) initOTLPTracerProvider() (*tracesdk.TracerProvider, er
 	return initTracerProvider(exp, ots.Cfg.BuildVersion, sampler, ots.customAttribs...)
 }
 
-func (ots *Opentelemetry) initSampler() (tracesdk.Sampler, error) {
+func (ots *TracingService) initSampler() (tracesdk.Sampler, error) {
 	switch ots.sampler {
 	case "const", "":
 		if ots.samplerParam >= 1 {
@@ -390,11 +390,11 @@ func initTracerProvider(exp tracesdk.SpanExporter, version string, sampler trace
 	return tp, nil
 }
 
-func (ots *Opentelemetry) initNoopTracerProvider() (tracerProvider, error) {
+func (ots *TracingService) initNoopTracerProvider() (tracerProvider, error) {
 	return &noopTracerProvider{TracerProvider: trace.NewNoopTracerProvider()}, nil
 }
 
-func (ots *Opentelemetry) initOpentelemetryTracer() error {
+func (ots *TracingService) initOpentelemetryTracer() error {
 	var tp tracerProvider
 	var err error
 	switch ots.enabled {
@@ -455,7 +455,7 @@ func (ots *Opentelemetry) initOpentelemetryTracer() error {
 	return nil
 }
 
-func (ots *Opentelemetry) Run(ctx context.Context) error {
+func (ots *TracingService) Run(ctx context.Context) error {
 	otel.SetErrorHandler(otel.ErrorHandlerFunc(func(err error) {
 		err = level.Error(ots.log).Log("msg", "OpenTelemetry handler returned an error", "err", err)
 		if err != nil {
@@ -478,7 +478,7 @@ func (ots *Opentelemetry) Run(ctx context.Context) error {
 	return nil
 }
 
-func (ots *Opentelemetry) Start(ctx context.Context, spanName string, opts ...trace.SpanStartOption) (context.Context, Span) {
+func (ots *TracingService) Start(ctx context.Context, spanName string, opts ...trace.SpanStartOption) (context.Context, Span) {
 	ctx, span := ots.tracer.Start(ctx, spanName, opts...)
 	opentelemetrySpan := OpentelemetrySpan{
 		span: span,
@@ -491,11 +491,11 @@ func (ots *Opentelemetry) Start(ctx context.Context, spanName string, opts ...tr
 	return ctx, opentelemetrySpan
 }
 
-func (ots *Opentelemetry) Inject(ctx context.Context, header http.Header, _ Span) {
+func (ots *TracingService) Inject(ctx context.Context, header http.Header, _ Span) {
 	otel.GetTextMapPropagator().Inject(ctx, propagation.HeaderCarrier(header))
 }
 
-func (ots *Opentelemetry) OtelTracer() trace.Tracer {
+func (ots *TracingService) OtelTracer() trace.Tracer {
 	return ots.tracer
 }
 

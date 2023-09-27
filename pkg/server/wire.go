@@ -242,6 +242,7 @@ var wireBasicSet = wire.NewSet(
 	notifications.ProvideService,
 	notifications.ProvideSmtpService,
 	tracing.ProvideService,
+	wire.Bind(new(tracing.Tracer), new(*tracing.TracingService)),
 	metrics.ProvideService,
 	testdatasource.ProvideService,
 	ldapapi.ProvideService,
