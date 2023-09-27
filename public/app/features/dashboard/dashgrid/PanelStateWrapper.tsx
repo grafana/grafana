@@ -41,13 +41,13 @@ import { RenderEvent } from 'app/types/events';
 
 import { deleteAnnotation, saveAnnotation, updateAnnotation } from '../../annotations/api';
 import { getDashboardQueryRunner } from '../../query/state/DashboardQueryRunner/DashboardQueryRunner';
-import { PanelPerformanceMonitor } from '../components/PanelPerformanceMonitor';
 import { getTimeSrv, TimeSrv } from '../services/TimeSrv';
 import { DashboardModel, PanelModel } from '../state';
 import { getPanelChromeProps } from '../utils/getPanelChromeProps';
 import { loadSnapshotData } from '../utils/loadSnapshotData';
 
 import { PanelHeaderMenuWrapper } from './PanelHeader/PanelHeaderMenuWrapper';
+import { PanelPerformanceMonitor } from './PanelPerformanceMonitor';
 import { seriesVisibilityConfigFactory } from './SeriesVisibilityConfigFactory';
 import { liveTimer } from './liveTimer';
 
@@ -502,7 +502,6 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
             panelTitle={panel.title}
             panelOptions={panelOptions}
             panelFieldConfig={panel.fieldConfig}
-            timeRange={timeRange}
           >
             <PanelComponent
               id={panel.id}

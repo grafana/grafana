@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 
-import { FieldConfigSource, TimeRange } from '@grafana/data';
+import { FieldConfigSource } from '@grafana/data';
 import { faro } from '@grafana/faro-web-sdk';
 import appEvents from 'app/core/app_events';
 import { DashboardSavedEvent } from 'app/types/events';
@@ -13,7 +13,6 @@ interface Props {
   panelTitle: string;
   panelOptions: any;
   panelFieldConfig: FieldConfigSource;
-  timeRange: TimeRange;
 }
 
 export const PanelPerformanceMonitor = (props: Props) => {
@@ -71,6 +70,17 @@ export const PanelPerformanceMonitor = (props: Props) => {
   };
 
   const logFieldConfigChanges = (fieldConfig: FieldConfigSource, oldFieldConfig: FieldConfigSource) => {
+    // overrides are an array of objects, so stringify it all and log changes
+    // in lack of an index, we can't tell which override changed
+    if (oldFieldConfig.overrides !== fieldConfig.overrides) {
+      logEvent(
+        'field config overrides changed',
+        'overrides',
+        JSON.stringify(fieldConfig.overrides),
+        JSON.stringify(oldFieldConfig.overrides)
+      );
+    }
+
     const oldDefaults: { [key: string]: any } = oldFieldConfig.defaults;
 
     // go through field config keys except custom, we treat that below
@@ -83,10 +93,14 @@ export const PanelPerformanceMonitor = (props: Props) => {
       const oldValue: string = typeof value !== 'string' ? JSON.stringify(oldDefaults[key]) : oldDefaults[key];
 
       if (oldDefaults[key] === undefined) {
-        logEvent('new field config', key, newValue);
+        logEvent('new default field config', key, newValue);
       } else if (oldValue !== newValue) {
-        logEvent('field config changed', key, newValue, oldValue);
+        logEvent('default field config changed', key, newValue, oldValue);
       }
+    }
+
+    if (!fieldConfig.defaults.custom) {
+      return;
     }
 
     // go through custom field config keys
@@ -101,20 +115,13 @@ export const PanelPerformanceMonitor = (props: Props) => {
         logEvent('custom field config changed', key, newValue, oldValue);
       }
     }
-
-    // overrides are an array of objects, so stringify it all and log changes
-    // in lack of an index, we can't tell which override changed
-    if (oldFieldConfig.overrides !== fieldConfig.overrides) {
-      logEvent(
-        'field config overrides changed',
-        'overrides',
-        JSON.stringify(fieldConfig.overrides),
-        JSON.stringify(oldFieldConfig.overrides)
-      );
-    }
   };
 
   useEffect(() => {
+    if (!Object.keys(faro).length) {
+      return;
+    }
+
     requestAnimationFrame(() => {
       setTimeout(() => {
         faro.api.pushMeasurement({
