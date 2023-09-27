@@ -72,6 +72,11 @@ async function doImportPluginModuleInSandbox(meta: PluginMeta): Promise<System.M
       // distortions are interceptors to modify the behavior of objects when
       // the code inside the sandbox tries to access them
       distortionCallback,
+      defaultPolicy: {
+        createHTML: (string: string) => string,
+        createScript: (string: string) => string,
+        createScriptURL: (string: string) => string,
+      },
       liveTargetCallback: isLiveTarget,
       // endowments are custom variables we make available to plugins in their window object
       endowments: Object.getOwnPropertyDescriptors({

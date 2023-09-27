@@ -16,9 +16,9 @@ jest.mock('./utils', () => ({
 }));
 
 describe('GenAIButton', () => {
-  const onReply = jest.fn();
+  const onGenerate = jest.fn();
 
-  function setup(props: GenAIButtonProps = { onReply, messages: [] }) {
+  function setup(props: GenAIButtonProps = { onGenerate, messages: [] }) {
     return render(
       <Router history={locationService.getHistory()}>
         <GenAIButton text="Auto-generate" {...props} />
@@ -99,29 +99,41 @@ describe('GenAIButton', () => {
         replyHandler('Generated text', isDoneGeneratingMessage);
         return new Promise(() => new Subscription());
       });
-      const onReply = jest.fn();
-      setup({ onReply, messages: [] });
+      const onGenerate = jest.fn();
+      setup({ onGenerate, messages: [] });
       const generateButton = await screen.findByRole('button');
 
       // Click the button
       await fireEvent.click(generateButton);
       await waitFor(() => expect(generateButton).toBeEnabled());
-      await waitFor(() => expect(onReply).toHaveBeenCalledTimes(1));
+      await waitFor(() => expect(onGenerate).toHaveBeenCalledTimes(1));
 
       // Wait for the loading state to be resolved
-      expect(onReply).toHaveBeenCalledTimes(1);
+      expect(onGenerate).toHaveBeenCalledTimes(1);
     });
 
     it('should call the LLM service with the messages configured and the right temperature', async () => {
-      const onReply = jest.fn();
+      const onGenerate = jest.fn();
       const messages = [{ content: 'Generate X', role: 'system' as Role }];
-      setup({ onReply, messages, temperature: 3 });
+      setup({ onGenerate, messages, temperature: 3 });
 
       const generateButton = await screen.findByRole('button');
       await fireEvent.click(generateButton);
 
       await waitFor(() => expect(generateTextWithLLM).toHaveBeenCalledTimes(1));
       await waitFor(() => expect(generateTextWithLLM).toHaveBeenCalledWith(messages, expect.any(Function), 3));
+    });
+
+    it('should call the onClick callback', async () => {
+      const onGenerate = jest.fn();
+      const onClick = jest.fn();
+      const messages = [{ content: 'Generate X', role: 'system' as Role }];
+      setup({ onGenerate, messages, temperature: 3, onClick });
+
+      const generateButton = await screen.findByRole('button');
+      await fireEvent.click(generateButton);
+
+      await waitFor(() => expect(onClick).toHaveBeenCalledTimes(1));
     });
   });
 });
