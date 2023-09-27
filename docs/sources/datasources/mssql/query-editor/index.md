@@ -220,7 +220,7 @@ The resulting table panel:
 If you set the **Format** setting in the query editor to **Time series**, then the query must have a column named `time` that returns either a SQL datetime or any numeric datatype representing Unix epoch in seconds.
 Result sets of time series queries must also be sorted by time for panels to properly visualize the result.
 
-A time series query result is returned in a [wide data frame format](https://grafana.com/developers/plugin-tools/introduction/data-frames#wide-format).
+A time series query result is returned in a [wide data frame format]({{< relref "../../../developers/plugins/data-frames#wide-format" >}}).
 Any column except time or of type string transforms into value fields in the data frame query result.
 Any string column transforms into field labels in the data frame query result.
 

@@ -31,7 +31,7 @@ We also list the year in which the plugin was last updated in the catalog and wh
 
 We are greatly appreciative of the developers who have contributed plugins to the Grafana ecosystem, your work has helped support millions of users to gain insights into their data. A plugin being listed below is no reflection on its quality, and is purely to help users understand the impact of the removal of Angular support in Grafana.
 
-Guidance on migrating a plugin to React can be found in our [migration guide](https://grafana.com/developers/plugin-tools/migration-guides/migrate-angularjs-to-react). If you would like to add any specific migration guidance for your plugin here or update our assessment, please open a PR by clicking the `Suggest an edit` button at the bottom of this page.
+Guidance on migrating a plugin to React can be found in our [migration guide]({{< relref "../plugins/migration-guide/angular-react/" >}}). If you would like to add any specific migration guidance for your plugin here or update our assessment, please open a PR by clicking the `Suggest an edit` button at the bottom of this page.
 
 # Current AngularJS based plugins
 
