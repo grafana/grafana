@@ -1,22 +1,24 @@
-package v1
+package v0alpha1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
+	"k8s.io/apiserver/pkg/registry/generic"
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	common "k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
 
 	grafanaapiserver "github.com/grafana/grafana/pkg/services/grafana-apiserver"
+	grafanarest "github.com/grafana/grafana/pkg/services/grafana-apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/playlist"
 )
 
 // GroupName is the group name for this API.
 const GroupName = "playlist.x.grafana.com"
-const VersionID = "v0-alpha" //
+const VersionID = "v0alpha1" //
 const APIVersion = GroupName + "/" + VersionID
 
 var _ grafanaapiserver.APIGroupBuilder = (*PlaylistAPIBuilder)(nil)
@@ -45,15 +47,25 @@ func (b *PlaylistAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 func (b *PlaylistAPIBuilder) GetAPIGroupInfo(
 	scheme *runtime.Scheme,
 	codecs serializer.CodecFactory, // pointer?
-) *genericapiserver.APIGroupInfo {
+	optsGetter generic.RESTOptionsGetter,
+) (*genericapiserver.APIGroupInfo, error) {
 	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(GroupName, scheme, metav1.ParameterCodec, codecs)
 	storage := map[string]rest.Storage{}
-	storage["playlists"] = &handler{
-		service: b.service,
+
+	legacyStore := newLegacyStorage(b.service)
+	storage["playlists"] = legacyStore
+
+	// enable dual writes if a RESTOptionsGetter is provided
+	if optsGetter != nil {
+		store, err := newStorage(scheme, optsGetter)
+		if err != nil {
+			return nil, err
+		}
+		storage["playlists"] = grafanarest.NewDualWriter(legacyStore, store)
 	}
 
 	apiGroupInfo.VersionedResourcesStorageMap[VersionID] = storage
-	return &apiGroupInfo
+	return &apiGroupInfo, nil
 }
 
 func (b *PlaylistAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
