@@ -1295,8 +1295,8 @@ func assertOldValueIfNull(t *testing.T, expectedValue bool, oldValue bool, nulla
 }
 
 func TestDeletePublicDashboard(t *testing.T) {
-	store := NewFakePublicDashboardStore(t)
 	pubdash := &PublicDashboard{Uid: "2", OrgId: 1, DashboardUid: "uid"}
+
 	type mockResponse struct {
 		PublicDashboard *PublicDashboard
 		Err             error
@@ -1306,7 +1306,6 @@ func TestDeletePublicDashboard(t *testing.T) {
 		AffectedRowsResp int64
 		ExpectedErrResp  error
 		StoreRespErr     error
-		dashboard        *dashboards.Dashboard
 		mockStore        *mockResponse
 	}{
 		{
@@ -1314,39 +1313,46 @@ func TestDeletePublicDashboard(t *testing.T) {
 			AffectedRowsResp: 1,
 			ExpectedErrResp:  nil,
 			StoreRespErr:     nil,
-			dashboard:        &dashboards.Dashboard{UID: "uid", OrgID: 1, IsFolder: false},
 			mockStore:        &mockResponse{pubdash, nil},
 		},
 		{
 			Name:             "Public dashboard not found by UID",
 			AffectedRowsResp: 0,
-			ExpectedErrResp:  ErrPublicDashboardNotFound,
+			ExpectedErrResp:  ErrInternalServerError.Errorf("Delete: failed to find public dashboard by uid: pubdashUID: error"),
 			StoreRespErr:     nil,
-			dashboard:        &dashboards.Dashboard{UID: "uid", OrgID: 1, IsFolder: false},
-			mockStore:        &mockResponse{pubdash, ErrDashboardNotFound},
+			mockStore:        &mockResponse{pubdash, errors.New("error")},
 		},
 		{
 			Name:             "Public dashboard not found by database",
 			AffectedRowsResp: 0,
-			ExpectedErrResp:  ErrInternalServerError,
+			ExpectedErrResp:  ErrPublicDashboardNotFound.Errorf("Delete: public dashboard not found by uid: pubdashUID"),
 			StoreRespErr:     nil,
-			dashboard:        &dashboards.Dashboard{UID: "uid", OrgID: 1, IsFolder: false},
 			mockStore:        &mockResponse{nil, nil},
 		},
 		{
+			Name:             "Public dashboard UID does not belong to the dashboard",
+			AffectedRowsResp: 0,
+			ExpectedErrResp:  ErrInvalidUid.Errorf("Delete: the public dashboard does not belong to the dashboard"),
+			StoreRespErr:     nil,
+			mockStore:        &mockResponse{&PublicDashboard{Uid: "2", OrgId: 1, DashboardUid: "wrong"}, nil},
+		},
+
+		{
 			Name:             "Failed to delete - Database error",
 			AffectedRowsResp: 1,
-			ExpectedErrResp:  ErrInternalServerError.Errorf("Delete: failed to delete a public dashboard by Uid: uid db error!"),
+			ExpectedErrResp:  ErrInternalServerError.Errorf("Delete: failed to delete a public dashboard by Uid: pubdashUID db error!"),
 			StoreRespErr:     errors.New("db error!"),
-			dashboard:        &dashboards.Dashboard{UID: "uid", OrgID: 1, IsFolder: false},
 			mockStore:        &mockResponse{pubdash, nil},
 		},
 	}
 
 	for _, tt := range testCases {
 		t.Run(tt.Name, func(t *testing.T) {
+			store := NewFakePublicDashboardStore(t)
 			store.On("Find", mock.Anything, mock.Anything).Return(tt.mockStore.PublicDashboard, tt.mockStore.Err)
-			store.On("Delete", mock.Anything, mock.Anything).Return(tt.AffectedRowsResp, tt.StoreRespErr)
+			if tt.ExpectedErrResp == nil || tt.StoreRespErr != nil {
+				store.On("Delete", mock.Anything, mock.Anything).Return(tt.AffectedRowsResp, tt.StoreRespErr)
+			}
 			serviceWrapper := &PublicDashboardServiceWrapperImpl{
 				log:   log.New("test.logger"),
 				store: store,
@@ -1359,7 +1365,7 @@ func TestDeletePublicDashboard(t *testing.T) {
 
 			err := service.Delete(context.Background(), "pubdashUID", "uid")
 			if tt.ExpectedErrResp != nil {
-				assert.Error(t, tt.ExpectedErrResp, err)
+				assert.Equal(t, tt.ExpectedErrResp.Error(), err.Error())
 			} else {
 				assert.NoError(t, err)
 			}
