@@ -380,14 +380,26 @@ export async function getLogfmtCompletions(
     completions = [...completions, ...parserCompletions, ...pipeOperations];
   }
 
-  const labelPrefix = otherLabels.length === 0 || trailingComma ? '' : ', ';
   const labels = extractedLabelKeys.filter((label) => !otherLabels.includes(label));
+
+  // No other labels or trailing comma, so we don't need to add a prefix
+  let labelPrefix = otherLabels.length === 0 || trailingComma ? '' : ', ';
+
+  // But the user can be in the process of writing a label and, for example, backspaced one character.
+  if (otherLabels.length === 1 && !trailingComma) {
+    const matchingLabel = labels.find(label => {
+      return label.startsWith(otherLabels[0]) && label !== otherLabels[0];
+    });
+    labelPrefix = matchingLabel ? '' : labelPrefix;
+  }
+  
   const labelCompletions: Completion[] = labels.map((label) => ({
     type: 'LABEL_NAME',
     label,
     insertText: labelPrefix + label,
     triggerOnInsert: false,
   }));
+
   completions = [...completions, ...labelCompletions];
 
   return completions;

@@ -814,6 +814,37 @@ describe('IN_LOGFMT completions', () => {
     `);
   });
 
+  it('autocompleting logfmt labels should correctly handle trailing commas', async () => {
+    const situation: Situation = {
+      type: 'IN_LOGFMT',
+      logQuery: `{job="grafana"} | logfmt lab`,
+      flags: true,
+      otherLabels: ['lab'],
+    };
+
+    const completions = await getCompletions(situation, completionProvider);
+    const labelCompletions = completions.filter((completion) => completion.type === 'LABEL_NAME');
+
+    expect(labelCompletions).toHaveLength(2);
+    expect(labelCompletions[0].insertText.startsWith(' ,')).toBe(false);
+    expect(labelCompletions[1].insertText.startsWith(' ,')).toBe(false);
+  });
+
+  it('autocompleting logfmt labels should correctly add trailing commas', async () => {
+    const situation: Situation = {
+      type: 'IN_LOGFMT',
+      logQuery: `{job="grafana"} | logfmt label1,`,
+      flags: true,
+      otherLabels: ['label1'],
+    };
+
+    const completions = await getCompletions(situation, completionProvider);
+    const labelCompletions = completions.filter((completion) => completion.type === 'LABEL_NAME');
+
+    expect(labelCompletions).toHaveLength(1);
+    expect(labelCompletions[0].insertText.startsWith(' ,')).toBe(false);
+  });
+
   it('autocompleting logfmt without flags should only offer labels when the user has a trailing comma', async () => {
     const situation: Situation = {
       type: 'IN_LOGFMT',
