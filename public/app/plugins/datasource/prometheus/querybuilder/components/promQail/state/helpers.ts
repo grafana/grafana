@@ -9,7 +9,6 @@ import { buildVisualQueryFromString } from '../../../parsing';
 import { PromVisualQuery } from '../../../types';
 import {
   ExplainSystemPrompt,
-  ExplainUserPromptParams,
   GetExplainUserPrompt,
   GetSuggestSystemPrompt,
   SuggestSystemPromptParams,
@@ -40,16 +39,51 @@ interface TemplateSearchResult {
   promql: string | null;
 }
 
-function getExplainMessage({
-  documentation,
-  metricName,
-  metricType,
-  metricMetadata,
-  query,
-}: ExplainUserPromptParams): llms.openai.Message[] {
+// export function getExplainMessage({
+//   documentation,
+//   metricName,
+//   metricType,
+//   metricMetadata,
+//   query,
+// }: ExplainUserPromptParams): llms.openai.Message[] {
+//   return [
+//     { role: 'system', content: ExplainSystemPrompt },
+//     { role: 'user', content: GetExplainUserPrompt({ documentation, metricName, metricType, metricMetadata, query }) },
+//   ];
+// }
+
+export function getExplainMessage(
+  query: string,
+  metric: string,
+  datasource: PrometheusDatasource,
+): llms.openai.Message[] {
+
+  let metricMetadata = '';
+  let metricType = '';
+
+  const pvq = buildVisualQueryFromString(query);
+
+  if (datasource.languageProvider.metricsMetadata) {
+    metricType = getMetadataType(metric, datasource.languageProvider.metricsMetadata!) ?? '';
+    metricMetadata = getMetadataHelp(metric, datasource.languageProvider.metricsMetadata!) ?? '';
+  }
+
+  const documentationBody = pvq.query.operations.map((op) => {
+    const def = promQueryModeller.getOperationDef(op.id);
+    if (!def) {
+      return '';
+    }
+    const title = def.renderer(op, def, '<expr>');
+    const body = def.explainHandler ? def.explainHandler(op, def) : def.documentation ?? 'no docs';
+
+    return `### ${title}:\n${body}`;
+  }).join('\n');
+
   return [
     { role: 'system', content: ExplainSystemPrompt },
-    { role: 'user', content: GetExplainUserPrompt({ documentation, metricName, metricType, metricMetadata, query }) },
+    { role: 'user', content: GetExplainUserPrompt(
+      { documentation: documentationBody, metricName: metric, metricType: metricType, metricMetadata: metricMetadata, query: query }
+    )},
   ];
 }
 
@@ -80,35 +114,8 @@ export async function promQailExplain(
   // }
 
   const suggestedQuery = interaction.suggestions[suggIdx].query;
-  const pvq = buildVisualQueryFromString(suggestedQuery);
 
-  let metricMetadata: string | undefined;
-  let metricType: string | undefined;
-
-  if (datasource.languageProvider.metricsMetadata) {
-    metricType = getMetadataType(query.metric, datasource.languageProvider.metricsMetadata!);
-    metricMetadata = getMetadataHelp(query.metric, datasource.languageProvider.metricsMetadata!);
-  }
-
-  const documentationBody = pvq.query.operations.map((op) => {
-    const def = promQueryModeller.getOperationDef(op.id);
-    if (!def) {
-      return '';
-    }
-    const title = def.renderer(op, def, '<expr>');
-    const body = def.explainHandler ? def.explainHandler(op, def) : def.documentation ?? 'no docs';
-
-    return `### ${title}:\n${body}`;
-  }).join('\n');
-
-  const promptMessages = getExplainMessage({
-    documentation: documentationBody,
-    metricName: query.metric,
-    metricType: metricType ?? '',
-    metricMetadata: metricMetadata ?? '',
-    query: suggestedQuery,
-  });
-
+  const promptMessages = getExplainMessage(suggestedQuery, query.metric, datasource);
   const interactionToUpdate = interaction;
 
   return llms.openai
