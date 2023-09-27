@@ -2,7 +2,7 @@ import { e2e } from '../utils';
 
 describe('Dashboard timepicker', () => {
   beforeEach(() => {
-    e2e.flows.login(e2e.env('USERNAME'), e2e.env('PASSWORD'));
+    e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'));
   });
 
   it('Shows the correct calendar days with custom timezone set via preferences', () => {

@@ -18,7 +18,6 @@ const meta: Meta<typeof Drawer> = {
   },
   args: {
     closeOnMaskClick: true,
-    scrollableContent: false,
     expandable: false,
     subtitle: 'This is a subtitle.',
   },
