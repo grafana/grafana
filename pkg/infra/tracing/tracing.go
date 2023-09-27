@@ -15,7 +15,6 @@ import (
 	"go.opentelemetry.io/contrib/samplers/jaegerremote"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/exporters/jaeger"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
@@ -68,15 +67,6 @@ type tracerProvider interface {
 	Shutdown(ctx context.Context) error
 }
 
-type OpentelemetrySpan struct {
-	span trace.Span
-}
-
-type EventValue struct {
-	Str string
-	Num int64
-}
-
 // Tracer defines the service used to create new spans.
 type Tracer interface {
 	trace.Tracer
@@ -93,40 +83,6 @@ type Tracer interface {
 
 	// OtelTracer returns the trace.Tracer if available or nil.
 	OtelTracer() trace.Tracer
-}
-
-// Span defines a time range for an operation. This is equivalent to a
-// single line in a flame graph.
-type Span interface {
-	// End finalizes the Span and adds its end timestamp.
-	// Any further operations on the Span are not permitted after
-	// End has been called.
-	End()
-	// SetAttributes adds additional data to a span.
-	// SetAttributes repeats the key value pair with [string] and [any]
-	// used for OpenTracing and [attribute.KeyValue] used for
-	// OpenTelemetry.
-	SetAttributes(key string, value any, kv attribute.KeyValue)
-	// SetName renames the span.
-	SetName(name string)
-	// SetStatus can be used to indicate whether the span was
-	// successfully or unsuccessfully executed.
-	//
-	// Only useful for OpenTelemetry.
-	SetStatus(code codes.Code, description string)
-	// RecordError adds an error to the span.
-	//
-	// Only useful for OpenTelemetry.
-	RecordError(err error, options ...trace.EventOption)
-	// AddEvents adds additional data with a temporal dimension to the
-	// span.
-	//
-	// Panics if the length of keys is shorter than the length of values.
-	AddEvents(keys []string, values []EventValue)
-
-	// contextWithSpan returns a context.Context that holds the parent
-	// context plus a reference to this span.
-	ContextWithSpan(ctx context.Context) context.Context
 }
 
 func ProvideService(cfg *setting.Cfg) (*TracingService, error) {
@@ -157,12 +113,6 @@ func ParseSettings(cfg *setting.Cfg) (*TracingService, error) {
 	return ots, err
 }
 
-type traceKey struct{}
-type traceValue struct {
-	ID        string
-	IsSampled bool
-}
-
 func TraceIDFromContext(ctx context.Context, requireSampled bool) string {
 	spanCtx := trace.SpanContextFromContext(ctx)
 	if !spanCtx.HasTraceID() || !spanCtx.IsValid() || (requireSampled && !spanCtx.IsSampled()) {
@@ -170,25 +120,6 @@ func TraceIDFromContext(ctx context.Context, requireSampled bool) string {
 	}
 
 	return spanCtx.TraceID().String()
-}
-
-// SpanFromContext returns the Span previously associated with ctx, or nil, if no such span could be found.
-// It is the equivalent of opentracing.SpanFromContext and trace.SpanFromContext.
-func SpanFromContext(ctx context.Context) Span {
-	if span := trace.SpanFromContext(ctx); span != nil {
-		return OpentelemetrySpan{span: span}
-	}
-	return nil
-}
-
-// ContextWithSpan returns a new context.Context that holds a reference to the given span.
-// If span is nil, a new context without an active span is returned.
-// It is the equivalent of opentracing.ContextWithSpan and trace.ContextWithSpan.
-func ContextWithSpan(ctx context.Context, span Span) context.Context {
-	if span != nil {
-		return span.ContextWithSpan(ctx)
-	}
-	return ctx
 }
 
 type noopTracerProvider struct {
@@ -479,49 +410,6 @@ func (ots *TracingService) Inject(ctx context.Context, header http.Header, _ tra
 
 func (ots *TracingService) OtelTracer() trace.Tracer {
 	return ots
-}
-
-func (s OpentelemetrySpan) End() {
-	s.span.End()
-}
-
-func (s OpentelemetrySpan) SetAttributes(key string, value any, kv attribute.KeyValue) {
-	s.span.SetAttributes(kv)
-}
-
-func (s OpentelemetrySpan) SetName(name string) {
-	s.span.SetName(name)
-}
-
-func (s OpentelemetrySpan) SetStatus(code codes.Code, description string) {
-	s.span.SetStatus(code, description)
-}
-
-func (s OpentelemetrySpan) RecordError(err error, options ...trace.EventOption) {
-	s.span.RecordError(err, options...)
-}
-
-func (s OpentelemetrySpan) AddEvents(keys []string, values []EventValue) {
-	for i, v := range values {
-		if v.Str != "" {
-			s.span.AddEvent(keys[i], trace.WithAttributes(attribute.Key(keys[i]).String(v.Str)))
-		}
-		if v.Num != 0 {
-			s.span.AddEvent(keys[i], trace.WithAttributes(attribute.Key(keys[i]).Int64(v.Num)))
-		}
-	}
-}
-
-func (s OpentelemetrySpan) ContextWithSpan(ctx context.Context) context.Context {
-	if s.span != nil {
-		ctx = trace.ContextWithSpan(ctx, s.span)
-		// Grafana also manages its own separate traceID in the context in addition to what opentracing handles.
-		// It's derived from the span. Ensure that we propagate this too.
-		if traceID := s.span.SpanContext().TraceID(); traceID.IsValid() {
-			ctx = context.WithValue(ctx, traceKey{}, traceValue{traceID.String(), s.span.SpanContext().IsSampled()})
-		}
-	}
-	return ctx
 }
 
 type rateLimiter struct {
