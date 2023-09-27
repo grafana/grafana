@@ -1,7 +1,7 @@
-import { llms } from '@grafana/experimental';
-
 import { DashboardModel } from '../../state';
 import { Diffs, jsonDiff } from '../VersionHistory/utils';
+
+import { openai } from './llms';
 
 export enum Role {
   // System content cannot be overwritten by user prompts.
@@ -11,7 +11,7 @@ export enum Role {
   'user' = 'user',
 }
 
-export type Message = llms.openai.Message;
+export type Message = openai.Message;
 
 /**
  * The OpenAI model to be used.

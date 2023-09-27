@@ -2,11 +2,11 @@ import { useState } from 'react';
 import { useAsync } from 'react-use';
 import { Subscription } from 'rxjs';
 
-import { llms } from '@grafana/experimental';
+import { openai } from './llms';
 
 // Declared instead of imported from utils to make this hook modular
 // Ideally we will want to move the hook itself to a different scope later.
-type Message = llms.openai.Message;
+type Message = openai.Message;
 
 // TODO: Add tests
 export function useOpenAIStream(
@@ -41,7 +41,7 @@ export function useOpenAIStream(
   const { loading, error, value } = useAsync(async () => {
     // Check if the LLM plugin is enabled and configured.
     // If not, we won't be able to make requests, so return early.
-    const enabled = await llms.openai.enabled();
+    const enabled = await openai.enabled();
     if (!enabled) {
       return { enabled };
     }
@@ -51,7 +51,7 @@ export function useOpenAIStream(
 
     setInProgress(true);
     // Stream the completions. Each element is the next stream chunk.
-    const stream = llms.openai
+    const stream = openai
       .streamChatCompletions({
         model,
         temperature,
@@ -60,7 +60,7 @@ export function useOpenAIStream(
       .pipe(
         // Accumulate the stream content into a stream of strings, where each
         // element contains the accumulated message so far.
-        llms.openai.accumulateContent()
+        openai.accumulateContent()
         // The stream is just a regular Observable, so we can use standard rxjs
         // functionality to update state, e.g. recording when the stream
         // has completed.
