@@ -4,8 +4,8 @@ import { connect, ConnectedProps } from 'react-redux';
 import { applyFieldOverrides, TimeZone, SplitOpen, DataFrame, LoadingState, FieldType } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 import { Table, AdHocFilterItem, PanelChrome } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 import { config } from 'app/core/config';
+import { t } from 'app/core/internationalization';
 import {
   hasDeprecatedParentRowIndex,
   migrateFromParentRowIndexToNestedFrames,
@@ -52,7 +52,9 @@ export class TableContainer extends PureComponent<Props> {
   }
 
   getTableTitle(dataFrames: DataFrame[] | null, data: DataFrame, i: number) {
-    let title = data.name ? t('explore.table.title-with-name', 'Table - {{name}}', {name: data.name}) : t('explore.table.title', 'Table');
+    let title = data.name
+      ? t('explore.table.title-with-name', 'Table - {{name}}', { name: data.name })
+      : t('explore.table.title', 'Table');
     if (dataFrames && dataFrames.length > 1) {
       title = `${t('explore.table.title-with-dataframes', 'Table')} - ${data.name || data.refId || i}`;
     }
@@ -89,7 +91,7 @@ export class TableContainer extends PureComponent<Props> {
       <>
         {frames && frames.length === 0 && (
           <PanelChrome title={t('explore.table.title', 'Table')} width={width} height={200}>
-            {() => <MetaInfoText metaItems={[{ value: t('explore.table.no-data', '0 series returned')}]} />}
+            {() => <MetaInfoText metaItems={[{ value: t('explore.table.no-data', '0 series returned') }]} />}
           </PanelChrome>
         )}
         {frames &&
