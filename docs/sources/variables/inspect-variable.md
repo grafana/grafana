@@ -1,7 +1,7 @@
 +++
 title = "Inspect variables"
 keywords = ["grafana", "templating", "documentation", "guide", "template", "variable"]
-aliases = ["/docs/grafana/latest/reference/templating"]
+aliases = ["/docs/grafana/v8.1/reference/templating"]
 weight = 125
 +++
 
