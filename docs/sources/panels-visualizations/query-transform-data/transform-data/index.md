@@ -879,7 +879,7 @@ As you can see each row in the source data becomes a separate field. Each field 
 
 > **Note:** This transformation is available in Grafana 7.5.10+ and Grafana 8.0.6+.
 
-Prepare time series transformation is useful when a data source returns time series data in a format that isn't supported by the panel you want to use. For more information about data frame formats, refer to [Data frames]({{< relref "../../../developers/plugins/data-frames/" >}}).
+Prepare time series transformation is useful when a data source returns time series data in a format that isn't supported by the panel you want to use. For more information about data frame formats, refer to [Data frames](https://grafana.com/developers/plugin-tools/introduction/data-frames).
 
 This transformation helps you resolve this issue by converting the time series data from either the wide format to the long format or the other way around.
 
