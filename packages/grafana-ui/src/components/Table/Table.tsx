@@ -110,8 +110,21 @@ export const Table = memo((props: Props) => {
     [data, width, columnMinWidth, footerItems, hasNestedData, isCountRowsSet]
   );
 
+  const toggleAllRowsExpandedRef = useRef<(value?: boolean) => void>();
+
   // Internal react table state reducer
-  const stateReducer = useTableStateReducer(props);
+  const stateReducer = useTableStateReducer({
+    ...props,
+    onSortByChange: () => {
+      // Collapse all rows. This prevents a known bug that causes the size of the rows to be incorrect due to
+      // using `VariableSizeList` and `useExpanded` together.
+      if (toggleAllRowsExpandedRef.current) {
+        toggleAllRowsExpandedRef.current(false);
+      } else {
+        console.error('toggleAllRowsExpandedRef.current is undefined');
+      }
+    },
+  });
 
   const options: any = useMemo(
     () => ({
@@ -142,9 +155,11 @@ export const Table = memo((props: Props) => {
     gotoPage,
     setPageSize,
     pageOptions,
+    toggleAllRowsExpanded,
   } = useTable(options, useFilters, useSortBy, useAbsoluteLayout, useResizeColumns, useExpanded, usePagination);
 
   const extendedState = state as GrafanaTableState;
+  toggleAllRowsExpandedRef.current = toggleAllRowsExpanded;
 
   /*
     Footer value calculation is being moved in the Table component and the footerValues prop will be deprecated.
