@@ -268,7 +268,7 @@ export const TooltipPlugin4 = ({ config, render }: TooltipPlugin4Props) => {
   if (plot && isHovering) {
     return createPortal(
       <div className={className} style={style} ref={domRef}>
-        {isPinned && <CloseButton onClick={dismiss} style={{ position: 'absolute', top: '12px', right: '1px' }} />}
+        {isPinned && <CloseButton onClick={dismiss} style={{ top: '16px' }} />}
         {contents}
       </div>,
       plot.over
@@ -285,7 +285,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     zIndex: 1,
     padding: '8px',
     whiteSpace: 'pre',
-    borderRadius: '6px',
+    borderRadius: theme.shape.borderRadius(3),
     position: 'absolute',
     background: theme.colors.background.secondary,
     boxShadow: `0 4px 8px ${theme.colors.background.primary}`,
