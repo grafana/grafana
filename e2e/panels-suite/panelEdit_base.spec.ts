@@ -4,7 +4,7 @@ const PANEL_UNDER_TEST = 'Lines 500 data points';
 
 describe('Panel edit tests', () => {
   beforeEach(() => {
-    e2e.flows.login(e2e.env('USERNAME'), e2e.env('PASSWORD'));
+    e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'));
   });
 
   it('Tests various Panel edit scenarios', () => {
@@ -67,8 +67,6 @@ describe('Panel edit tests', () => {
     // close options pane
     e2e.components.PanelEditor.toggleVizOptions().click();
     e2e.components.PanelEditor.OptionsPane.content().should('not.exist');
-
-    cy.wait(100);
 
     // open options pane
     e2e.components.PanelEditor.toggleVizOptions().should('be.visible').click();
