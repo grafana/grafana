@@ -1,956 +1,956 @@
 {
-  "_comment": "",
+  "_comment": "Ŧĥįş ƒįľę įş ŧĥę şőūřčę őƒ ŧřūŧĥ ƒőř Ēŉģľįşĥ şŧřįŉģş. Ēđįŧ ŧĥįş ŧő čĥäŉģę pľūřäľş äŉđ őŧĥęř pĥřäşęş ƒőř ŧĥę ŮĨ.",
   "access-control": {
     "add-permission": {
-      "role-label": "",
-      "team-label": "",
-      "title": "",
-      "user-label": ""
+      "role-label": "Ŗőľę",
+      "team-label": "Ŧęäm",
+      "title": "Åđđ pęřmįşşįőŉ ƒőř",
+      "user-label": "Ůşęř"
     },
     "add-permissions": {
-      "save": ""
+      "save": "Ŝävę"
     },
     "permission-list": {
-      "permission": ""
+      "permission": "Pęřmįşşįőŉ"
     },
     "permissions": {
-      "add-label": "",
-      "no-permissions": "",
-      "permissions-change-warning": "",
-      "role": "",
-      "team": "",
-      "title": "",
-      "user": ""
+      "add-label": "Åđđ ä pęřmįşşįőŉ",
+      "no-permissions": "Ŧĥęřę äřę ŉő pęřmįşşįőŉş",
+      "permissions-change-warning": "Ŧĥįş ŵįľľ čĥäŉģę pęřmįşşįőŉş ƒőř ŧĥįş ƒőľđęř äŉđ äľľ įŧş đęşčęŉđäŉŧş. Ĩŉ ŧőŧäľ, ŧĥįş ŵįľľ äƒƒęčŧ:",
+      "role": "Ŗőľę",
+      "team": "Ŧęäm",
+      "title": "Pęřmįşşįőŉş",
+      "user": "Ůşęř"
     }
   },
   "browse-dashboards": {
     "action": {
-      "cancel-button": "",
-      "cannot-move-folders": "",
-      "delete-button": "",
-      "delete-modal-invalid-text": "",
-      "delete-modal-invalid-title": "",
-      "delete-modal-text": "",
-      "delete-modal-title": "",
-      "deleting": "",
-      "manage-permissions-button": "",
-      "move-button": "",
-      "move-modal-alert": "",
-      "move-modal-field-label": "",
-      "move-modal-text": "",
-      "move-modal-title": "",
-      "moving": "",
-      "new-folder-name-required-phrase": ""
+      "cancel-button": "Cäŉčęľ",
+      "cannot-move-folders": "Főľđęřş čäŉ ŉőŧ þę mővęđ",
+      "delete-button": "Đęľęŧę",
+      "delete-modal-invalid-text": "Øŉę őř mőřę ƒőľđęřş čőŉŧäįŉ ľįþřäřy päŉęľş őř äľęřŧ řūľęş. Đęľęŧę ŧĥęşę ƒįřşŧ įŉ őřđęř ŧő přőčęęđ.",
+      "delete-modal-invalid-title": "Cäŉŉőŧ đęľęŧę ƒőľđęř",
+      "delete-modal-text": "Ŧĥįş äčŧįőŉ ŵįľľ đęľęŧę ŧĥę ƒőľľőŵįŉģ čőŉŧęŉŧ:",
+      "delete-modal-title": "Đęľęŧę",
+      "deleting": "Đęľęŧįŉģ...",
+      "manage-permissions-button": "Mäŉäģę pęřmįşşįőŉş",
+      "move-button": "Mővę",
+      "move-modal-alert": "Mővįŉģ ŧĥįş įŧęm mäy čĥäŉģę įŧş pęřmįşşįőŉş.",
+      "move-modal-field-label": "Főľđęř ŉämę",
+      "move-modal-text": "Ŧĥįş äčŧįőŉ ŵįľľ mővę ŧĥę ƒőľľőŵįŉģ čőŉŧęŉŧ:",
+      "move-modal-title": "Mővę",
+      "moving": "Mővįŉģ...",
+      "new-folder-name-required-phrase": "Főľđęř ŉämę įş řęqūįřęđ."
     },
     "counts": {
-      "alertRule__one": "",
-      "alertRule__other": "",
-      "dashboard__one": "",
-      "dashboard__other": "",
-      "folder__one": "",
-      "folder__other": "",
-      "libraryPanel__one": "",
-      "libraryPanel__other": "",
-      "total__one": "",
-      "total__other": ""
+      "alertRule__one": "{{count}} äľęřŧ řūľę",
+      "alertRule__other": "{{count}} äľęřŧ řūľęş",
+      "dashboard__one": "{{count}} đäşĥþőäřđ",
+      "dashboard__other": "{{count}} đäşĥþőäřđş",
+      "folder__one": "{{count}} ƒőľđęř",
+      "folder__other": "{{count}} ƒőľđęřş",
+      "libraryPanel__one": "{{count}} ľįþřäřy päŉęľ",
+      "libraryPanel__other": "{{count}} ľįþřäřy päŉęľş",
+      "total__one": "{{count}} įŧęm",
+      "total__other": "{{count}} įŧęmş"
     },
     "dashboards-tree": {
-      "name-column": "",
-      "tags-column": ""
+      "name-column": "Ńämę",
+      "tags-column": "Ŧäģş"
     },
     "folder-actions-button": {
-      "delete": "",
-      "folder-actions": "",
-      "manage-permissions": "",
-      "move": ""
+      "delete": "Đęľęŧę",
+      "folder-actions": "Főľđęř äčŧįőŉş",
+      "manage-permissions": "Mäŉäģę pęřmįşşįőŉş",
+      "move": "Mővę"
     },
     "folder-picker": {
-      "accessible-label": "",
-      "button-label": "",
-      "empty-message": "",
-      "error-title": "",
-      "search-placeholder": "",
-      "unknown-error": ""
+      "accessible-label": "Ŝęľęčŧ ƒőľđęř: {{ label }} čūřřęŉŧľy şęľęčŧęđ",
+      "button-label": "Ŝęľęčŧ ƒőľđęř",
+      "empty-message": "Ńő ƒőľđęřş ƒőūŉđ",
+      "error-title": "Ēřřőř ľőäđįŉģ ƒőľđęřş",
+      "search-placeholder": "Ŝęäřčĥ ƒőľđęřş",
+      "unknown-error": "Ůŉĸŉőŵŉ ęřřőř"
     },
     "manage-folder-nav": {
-      "alert-rules": "",
-      "dashboards": "",
-      "panels": "",
-      "permissions": "",
-      "settings": ""
+      "alert-rules": "Åľęřŧ řūľęş",
+      "dashboards": "Đäşĥþőäřđş",
+      "panels": "Päŉęľş",
+      "permissions": "Pęřmįşşįőŉş",
+      "settings": "Ŝęŧŧįŉģş"
     },
     "new-folder-form": {
-      "cancel-label": "",
-      "create-label": "",
-      "name-label": ""
+      "cancel-label": "Cäŉčęľ",
+      "create-label": "Cřęäŧę",
+      "name-label": "Főľđęř ŉämę"
     },
     "no-results": {
-      "clear": "",
-      "text": ""
+      "clear": "Cľęäř şęäřčĥ äŉđ ƒįľŧęřş",
+      "text": "Ńő řęşūľŧş ƒőūŉđ ƒőř yőūř qūęřy."
     }
   },
   "clipboard-button": {
     "inline-toast": {
-      "success": ""
+      "success": "Cőpįęđ"
     }
   },
   "command-palette": {
     "action": {
-      "change-theme": "",
-      "dark-theme": "",
-      "light-theme": ""
+      "change-theme": "Cĥäŉģę ŧĥęmę...",
+      "dark-theme": "Đäřĸ",
+      "light-theme": "Ŀįģĥŧ"
     },
     "search-box": {
-      "placeholder": ""
+      "placeholder": "Ŝęäřčĥ őř ĵūmp ŧő..."
     },
     "section": {
-      "actions": "",
-      "dashboard-search-results": "",
-      "folder-search-results": "",
-      "pages": "",
-      "preferences": "",
-      "recent-dashboards": ""
+      "actions": "Åčŧįőŉş",
+      "dashboard-search-results": "Đäşĥþőäřđş",
+      "folder-search-results": "Főľđęřş",
+      "pages": "Päģęş",
+      "preferences": "Přęƒęřęŉčęş",
+      "recent-dashboards": "Ŗęčęŉŧ đäşĥþőäřđş"
     }
   },
   "common": {
     "locale": {
-      "default": ""
+      "default": "Đęƒäūľŧ"
     },
-    "save": ""
+    "save": "Ŝävę"
   },
   "connections": {
     "connect-data": {
-      "category-header-label": ""
+      "category-header-label": "Đäŧä şőūřčęş"
     },
     "search": {
-      "placeholder": ""
+      "placeholder": "Ŝęäřčĥ äľľ"
     }
   },
   "dashboard": {
     "add-menu": {
-      "import": "",
-      "paste-panel": "",
-      "row": "",
-      "visualization": "",
-      "widget": ""
+      "import": "Ĩmpőřŧ ƒřőm ľįþřäřy",
+      "paste-panel": "Päşŧę päŉęľ",
+      "row": "Ŗőŵ",
+      "visualization": "Vįşūäľįžäŧįőŉ",
+      "widget": "Ŵįđģęŧ"
     },
     "empty": {
-      "add-library-panel-body": "",
-      "add-library-panel-button": "",
-      "add-library-panel-header": "",
-      "add-visualization-body": "",
-      "add-visualization-button": "",
-      "add-visualization-header": "",
-      "add-widget-body": "",
-      "add-widget-button": "",
-      "add-widget-header": "",
-      "import-a-dashboard-body": "",
-      "import-a-dashboard-header": "",
-      "import-dashboard-button": ""
+      "add-library-panel-body": "Åđđ vįşūäľįžäŧįőŉş ŧĥäŧ äřę şĥäřęđ ŵįŧĥ őŧĥęř đäşĥþőäřđş.",
+      "add-library-panel-button": "Åđđ ľįþřäřy päŉęľ",
+      "add-library-panel-header": "Åđđ ä ľįþřäřy päŉęľ",
+      "add-visualization-body": "Ŝęľęčŧ ä đäŧä şőūřčę äŉđ ŧĥęŉ qūęřy äŉđ vįşūäľįžę yőūř đäŧä ŵįŧĥ čĥäřŧş, şŧäŧş äŉđ ŧäþľęş őř čřęäŧę ľįşŧş, mäřĸđőŵŉş äŉđ őŧĥęř ŵįđģęŧş.",
+      "add-visualization-button": "Åđđ vįşūäľįžäŧįőŉ",
+      "add-visualization-header": "Ŝŧäřŧ yőūř ŉęŵ đäşĥþőäřđ þy äđđįŉģ ä vįşūäľįžäŧįőŉ",
+      "add-widget-body": "Cřęäŧę ľįşŧş, mäřĸđőŵŉş äŉđ őŧĥęř ŵįđģęŧş",
+      "add-widget-button": "Åđđ ŵįđģęŧ",
+      "add-widget-header": "Åđđ ä ŵįđģęŧ",
+      "import-a-dashboard-body": "Ĩmpőřŧ đäşĥþőäřđ ƒřőm ƒįľę őř <1>ģřäƒäŉä.čőm</1>.",
+      "import-a-dashboard-header": "Ĩmpőřŧ ä đäşĥþőäřđ",
+      "import-dashboard-button": "Ĩmpőřŧ đäşĥþőäřđ"
     },
     "inspect": {
-      "data-tab": "",
-      "error-tab": "",
-      "json-tab": "",
-      "meta-tab": "",
-      "query-tab": "",
-      "stats-tab": "",
-      "subtitle": "",
-      "title": ""
+      "data-tab": "Đäŧä",
+      "error-tab": "Ēřřőř",
+      "json-tab": "ĴŜØŃ",
+      "meta-tab": "Męŧä đäŧä",
+      "query-tab": "Qūęřy",
+      "stats-tab": "Ŝŧäŧş",
+      "subtitle": "{{queryCount}} qūęřįęş ŵįŧĥ ŧőŧäľ qūęřy ŧįmę őƒ {{formatted}}",
+      "title": "Ĩŉşpęčŧ: {{panelTitle}}"
     },
     "inspect-data": {
-      "data-options": "",
-      "dataframe-aria-label": "",
-      "dataframe-label": "",
-      "download-csv": "",
-      "download-excel-description": "",
-      "download-excel-label": "",
-      "download-logs": "",
-      "download-service": "",
-      "download-traces": "",
-      "excel-header": "",
-      "formatted": "",
-      "formatted-data-description": "",
-      "formatted-data-label": "",
-      "panel-transforms": "",
-      "series-to-columns": "",
-      "transformation": "",
-      "transformations-description": "",
-      "transformations-label": ""
+      "data-options": "Đäŧä őpŧįőŉş",
+      "dataframe-aria-label": "Ŝęľęčŧ đäŧäƒřämę",
+      "dataframe-label": "Ŝĥőŵ đäŧä ƒřämę",
+      "download-csv": "Đőŵŉľőäđ CŜV",
+      "download-excel-description": "Åđđş ĥęäđęř ŧő CŜV ƒőř ūşę ŵįŧĥ Ēχčęľ",
+      "download-excel-label": "Đőŵŉľőäđ ƒőř Ēχčęľ",
+      "download-logs": "Đőŵŉľőäđ ľőģş",
+      "download-service": "Đőŵŉľőäđ şęřvįčę ģřäpĥ",
+      "download-traces": "Đőŵŉľőäđ ŧřäčęş",
+      "excel-header": "Ēχčęľ ĥęäđęř",
+      "formatted": "Főřmäŧŧęđ đäŧä",
+      "formatted-data-description": "Ŧäþľę đäŧä įş ƒőřmäŧŧęđ ŵįŧĥ őpŧįőŉş đęƒįŉęđ įŉ ŧĥę Fįęľđ äŉđ Øvęřřįđę ŧäþş.",
+      "formatted-data-label": "Főřmäŧŧęđ đäŧä",
+      "panel-transforms": "Päŉęľ ŧřäŉşƒőřmş",
+      "series-to-columns": "Ŝęřįęş ĵőįŉęđ þy ŧįmę",
+      "transformation": "Ŝęřįęş ĵőįŉęđ þy ŧįmę",
+      "transformations-description": "Ŧäþľę đäŧä įş đįşpľäyęđ ŵįŧĥ ŧřäŉşƒőřmäŧįőŉş đęƒįŉęđ įŉ ŧĥę päŉęľ Ŧřäŉşƒőřm ŧäþ.",
+      "transformations-label": "Åppľy päŉęľ ŧřäŉşƒőřmäŧįőŉş"
     },
     "inspect-json": {
-      "dataframe-description": "",
-      "dataframe-label": "",
-      "panel-data-description": "",
-      "panel-data-label": "",
-      "panel-json-description": "",
-      "panel-json-label": "",
-      "select-source": "",
-      "unknown": ""
+      "dataframe-description": "Ŗäŵ đäŧä ŵįŧĥőūŧ ŧřäŉşƒőřmäŧįőŉş äŉđ ƒįęľđ čőŉƒįģ äppľįęđ. ",
+      "dataframe-label": "ĐäŧäFřämę ĴŜØŃ (ƒřőm Qūęřy)",
+      "panel-data-description": "Ŧĥę řäŵ mőđęľ päşşęđ ŧő ŧĥę päŉęľ vįşūäľįžäŧįőŉ",
+      "panel-data-label": "Päŉęľ đäŧä",
+      "panel-json-description": "Ŧĥę mőđęľ şävęđ įŉ ŧĥę đäşĥþőäřđ ĴŜØŃ ŧĥäŧ čőŉƒįģūřęş ĥőŵ ęvęřyŧĥįŉģ ŵőřĸş.",
+      "panel-json-label": "Päŉęľ ĴŜØŃ",
+      "select-source": "Ŝęľęčŧ şőūřčę",
+      "unknown": "Ůŉĸŉőŵŉ Øþĵęčŧ: {{show}}"
     },
     "inspect-meta": {
-      "no-inspector": ""
+      "no-inspector": "Ńő Męŧäđäŧä Ĩŉşpęčŧőř"
     },
     "inspect-stats": {
-      "data-title": "",
-      "data-traceids": "",
-      "processing-time": "",
-      "queries": "",
-      "request-time": "",
-      "rows": "",
-      "table-title": ""
+      "data-title": "Đäŧä şőūřčę şŧäŧş",
+      "data-traceids": "Ŧřäčę ĨĐş",
+      "processing-time": "Đäŧä přőčęşşįŉģ ŧįmę",
+      "queries": "Ńūmþęř őƒ qūęřįęş",
+      "request-time": "Ŧőŧäľ řęqūęşŧ ŧįmę",
+      "rows": "Ŧőŧäľ ŉūmþęř řőŵş",
+      "table-title": "Ŝŧäŧş"
     },
     "toolbar": {
-      "add": "",
-      "add-panel": "",
-      "mark-favorite": "",
-      "open-original": "",
-      "playlist-next": "",
-      "playlist-previous": "",
-      "playlist-stop": "",
-      "refresh": "",
-      "save": "",
-      "settings": "",
-      "share": "",
-      "unmark-favorite": ""
+      "add": "Åđđ",
+      "add-panel": "Åđđ päŉęľ",
+      "mark-favorite": "Mäřĸ äş ƒävőřįŧę",
+      "open-original": "Øpęŉ őřįģįŉäľ đäşĥþőäřđ",
+      "playlist-next": "Ğő ŧő ŉęχŧ đäşĥþőäřđ",
+      "playlist-previous": "Ğő ŧő přęvįőūş đäşĥþőäřđ",
+      "playlist-stop": "Ŝŧőp pľäyľįşŧ",
+      "refresh": "Ŗęƒřęşĥ đäşĥþőäřđ",
+      "save": "Ŝävę đäşĥþőäřđ",
+      "settings": "Đäşĥþőäřđ şęŧŧįŉģş",
+      "share": "Ŝĥäřę đäşĥþőäřđ",
+      "unmark-favorite": "Ůŉmäřĸ äş ƒävőřįŧę"
     }
   },
   "data-source-picker": {
-    "open-advanced-button": ""
+    "open-advanced-button": "Øpęŉ äđväŉčęđ đäŧä şőūřčę pįčĸęř"
   },
   "data-sources": {
     "datasource-add-button": {
-      "label": ""
+      "label": "Åđđ ŉęŵ đäŧä şőūřčę"
     }
   },
   "explore": {
-    "add-to-dashboard": "",
+    "add-to-dashboard": "Åđđ ŧő đäşĥþőäřđ",
     "table": {
-      "no-data": "",
-      "title": "",
-      "title-with-dataframes": "",
-      "title-with-name": ""
+      "no-data": "0 şęřįęş řęŧūřŉęđ",
+      "title": "Ŧäþľę",
+      "title-with-dataframes": "Ŧäþľę",
+      "title-with-name": "Ŧäþľę - {{name}}"
     },
     "toolbar": {
-      "aria-label": "",
-      "copy-shortened-link": "",
-      "refresh-picker-cancel": "",
-      "refresh-picker-run": "",
-      "split-close": "",
-      "split-close-tooltip": "",
-      "split-narrow": "",
-      "split-title": "",
-      "split-tooltip": "",
-      "split-widen": ""
+      "aria-label": "Ēχpľőřę ŧőőľþäř",
+      "copy-shortened-link": "Cőpy şĥőřŧęŉęđ ľįŉĸ",
+      "refresh-picker-cancel": "Cäŉčęľ",
+      "refresh-picker-run": "Ŗūŉ qūęřy",
+      "split-close": "Cľőşę",
+      "split-close-tooltip": "Cľőşę şpľįŧ päŉę",
+      "split-narrow": "Ńäřřőŵ päŉę",
+      "split-title": "Ŝpľįŧ",
+      "split-tooltip": "Ŝpľįŧ ŧĥę päŉę",
+      "split-widen": "Ŵįđęŉ päŉę"
     }
   },
   "folder-picker": {
-    "loading": ""
+    "loading": "Ŀőäđįŉģ ƒőľđęřş..."
   },
   "grafana-ui": {
     "modal": {
-      "close-tooltip": ""
+      "close-tooltip": "Cľőşę"
     },
     "segment-async": {
-      "error": "",
-      "loading": "",
-      "no-options": ""
+      "error": "Fäįľęđ ŧő ľőäđ őpŧįőŉş",
+      "loading": "Ŀőäđįŉģ őpŧįőŉş...",
+      "no-options": "Ńő őpŧįőŉş ƒőūŉđ"
     },
     "select": {
-      "no-options-label": "",
-      "placeholder": ""
+      "no-options-label": "Ńő őpŧįőŉş ƒőūŉđ",
+      "placeholder": "Cĥőőşę"
     }
   },
   "help-modal": {
     "shortcuts-category": {
-      "dashboard": "",
-      "focused-panel": "",
-      "global": "",
-      "time-range": ""
+      "dashboard": "Đäşĥþőäřđ",
+      "focused-panel": "Főčūşęđ Päŉęľ",
+      "global": "Ğľőþäľ",
+      "time-range": "Ŧįmę Ŗäŉģę"
     },
     "shortcuts-description": {
-      "change-theme": "",
-      "collapse-all-rows": "",
-      "dashboard-settings": "",
-      "duplicate-panel": "",
-      "exit-edit/setting-views": "",
-      "expand-all-rows": "",
-      "go-to-dashboards": "",
-      "go-to-explore": "",
-      "go-to-home-dashboard": "",
-      "go-to-profile": "",
-      "make-time-range-permanent": "",
-      "move-time-range-back": "",
-      "move-time-range-forward": "",
-      "open-search": "",
-      "open-shared-modal": "",
-      "refresh-all-panels": "",
-      "remove-panel": "",
-      "save-dashboard": "",
-      "show-all-shortcuts": "",
-      "toggle-active-mode": "",
-      "toggle-all-panel-legends": "",
-      "toggle-auto-fit": "",
-      "toggle-exemplars": "",
-      "toggle-graph-crosshair": "",
-      "toggle-kiosk": "",
-      "toggle-panel-edit": "",
-      "toggle-panel-fullscreen": "",
-      "toggle-panel-legend": "",
-      "zoom-out-time-range": ""
+      "change-theme": "Cĥäŉģę ŧĥęmę",
+      "collapse-all-rows": "Cőľľäpşę äľľ řőŵş",
+      "dashboard-settings": "Đäşĥþőäřđ şęŧŧįŉģş",
+      "duplicate-panel": "Đūpľįčäŧę Päŉęľ",
+      "exit-edit/setting-views": "Ēχįŧ ęđįŧ/şęŧŧįŉģ vįęŵş",
+      "expand-all-rows": "Ēχpäŉđ äľľ řőŵş",
+      "go-to-dashboards": "Ğő ŧő Đäşĥþőäřđş",
+      "go-to-explore": "Ğő ŧő Ēχpľőřę",
+      "go-to-home-dashboard": "Ğő ŧő Ħőmę Đäşĥþőäřđ",
+      "go-to-profile": "Ğő ŧő Přőƒįľę",
+      "make-time-range-permanent": "Mäĸę ŧįmę řäŉģę äþşőľūŧę/pęřmäŉęŉŧ",
+      "move-time-range-back": "Mővę ŧįmę řäŉģę þäčĸ",
+      "move-time-range-forward": "Mővę ŧįmę řäŉģę ƒőřŵäřđ",
+      "open-search": "Øpęŉ şęäřčĥ",
+      "open-shared-modal": "Øpęŉ Päŉęľ Ŝĥäřę Mőđäľ",
+      "refresh-all-panels": "Ŗęƒřęşĥ äľľ päŉęľş",
+      "remove-panel": "Ŗęmővę Päŉęľ",
+      "save-dashboard": "Ŝävę đäşĥþőäřđ",
+      "show-all-shortcuts": "Ŝĥőŵ äľľ ĸęyþőäřđ şĥőřŧčūŧş",
+      "toggle-active-mode": "Ŧőģģľę įŉ-äčŧįvę / vįęŵ mőđę",
+      "toggle-all-panel-legends": "Ŧőģģľę äľľ päŉęľ ľęģęŉđş",
+      "toggle-auto-fit": "Ŧőģģľę äūŧő ƒįŧ päŉęľş (ęχpęřįmęŉŧäľ ƒęäŧūřę)",
+      "toggle-exemplars": "Ŧőģģľę ęχęmpľäřş įŉ äľľ päŉęľ",
+      "toggle-graph-crosshair": "Ŧőģģľę şĥäřęđ ģřäpĥ čřőşşĥäįř",
+      "toggle-kiosk": "Ŧőģģľę ĸįőşĸ mőđę (ĥįđęş ŧőp ŉäv)",
+      "toggle-panel-edit": "Ŧőģģľę päŉęľ ęđįŧ vįęŵ",
+      "toggle-panel-fullscreen": "Ŧőģģľę päŉęľ ƒūľľşčřęęŉ vįęŵ",
+      "toggle-panel-legend": "Ŧőģģľę päŉęľ ľęģęŉđ",
+      "zoom-out-time-range": "Żőőm őūŧ ŧįmę řäŉģę"
     },
-    "title": ""
+    "title": "Ŝĥőřŧčūŧş"
   },
   "library-panel": {
     "add-modal": {
-      "cancel": "",
-      "create": "",
-      "error": "",
-      "folder": "",
-      "folder-description": "",
-      "name": ""
+      "cancel": "Cäŉčęľ",
+      "create": "Cřęäŧę ľįþřäřy päŉęľ",
+      "error": "Ŀįþřäřy päŉęľ ŵįŧĥ ŧĥįş ŉämę äľřęäđy ęχįşŧş",
+      "folder": "Ŝävę įŉ ƒőľđęř",
+      "folder-description": "Ŀįþřäřy päŉęľ pęřmįşşįőŉş äřę đęřįvęđ ƒřőm ŧĥę ƒőľđęř pęřmįşşįőŉş",
+      "name": "Ŀįþřäřy päŉęľ ŉämę"
     },
     "add-widget": {
-      "title": ""
+      "title": "Åđđ päŉęľ ƒřőm päŉęľ ľįþřäřy"
     }
   },
   "library-panels": {
     "save": {
-      "error": "",
-      "success": ""
+      "error": "Ēřřőř şävįŉģ ľįþřäřy päŉęľ: \"{{errorMsg}}\"",
+      "success": "Ŀįþřäřy päŉęľ şävęđ"
     }
   },
   "login": {
     "error": {
-      "blocked": "",
-      "invalid-user-or-password": "",
-      "title": "",
-      "unknown": ""
+      "blocked": "Ÿőū ĥävę ęχčęęđęđ ŧĥę ŉūmþęř őƒ ľőģįŉ äŧŧęmpŧş ƒőř ŧĥįş ūşęř. Pľęäşę ŧřy äģäįŉ ľäŧęř.",
+      "invalid-user-or-password": "Ĩŉväľįđ ūşęřŉämę őř päşşŵőřđ",
+      "title": "Ŀőģįŉ ƒäįľęđ",
+      "unknown": "Ůŉĸŉőŵŉ ęřřőř őččūřřęđ"
     }
   },
   "nav": {
     "add-new-connections": {
-      "title": ""
+      "title": "Åđđ ŉęŵ čőŉŉęčŧįőŉ"
     },
     "admin": {
-      "subtitle": "",
-      "title": ""
+      "subtitle": "Mäŉäģę şęřvęř-ŵįđę şęŧŧįŉģş äŉđ äččęşş ŧő řęşőūřčęş şūčĥ äş őřģäŉįžäŧįőŉş, ūşęřş, äŉđ ľįčęŉşęş",
+      "title": "Ŝęřvęř äđmįŉ"
     },
     "alerting": {
-      "subtitle": "",
-      "title": ""
+      "subtitle": "Ŀęäřŉ äþőūŧ přőþľęmş įŉ yőūř şyşŧęmş mőmęŉŧş äƒŧęř ŧĥęy őččūř",
+      "title": "Åľęřŧįŉģ"
     },
     "alerting-admin": {
-      "title": ""
+      "title": "Åđmįŉ"
     },
     "alerting-am-routes": {
-      "subtitle": "",
-      "title": ""
+      "subtitle": "Đęŧęřmįŉę ĥőŵ äľęřŧş äřę řőūŧęđ ŧő čőŉŧäčŧ pőįŉŧş",
+      "title": "Ńőŧįƒįčäŧįőŉ pőľįčįęş"
     },
     "alerting-channels": {
-      "title": ""
+      "title": "Ńőŧįƒįčäŧįőŉ čĥäŉŉęľş"
     },
     "alerting-groups": {
-      "subtitle": "",
-      "title": ""
+      "subtitle": "Ŝęę ģřőūpęđ äľęřŧş ƒřőm äŉ Åľęřŧmäŉäģęř įŉşŧäŉčę",
+      "title": "Ğřőūpş"
     },
     "alerting-home": {
-      "title": ""
+      "title": "Ħőmę"
     },
     "alerting-legacy": {
-      "title": ""
+      "title": "Åľęřŧįŉģ (ľęģäčy)"
     },
     "alerting-list": {
-      "subtitle": "",
-      "title": ""
+      "subtitle": "Ŗūľęş ŧĥäŧ đęŧęřmįŉę ŵĥęŧĥęř äŉ äľęřŧ ŵįľľ ƒįřę",
+      "title": "Åľęřŧ řūľęş"
     },
     "alerting-receivers": {
-      "subtitle": "",
-      "title": ""
+      "subtitle": "Cĥőőşę ĥőŵ ŧő ŉőŧįƒy yőūř čőŉŧäčŧ pőįŉŧş ŵĥęŉ äŉ äľęřŧ įŉşŧäŉčę ƒįřęş",
+      "title": "Cőŉŧäčŧ pőįŉŧş"
     },
     "alerting-silences": {
-      "subtitle": "",
-      "title": ""
+      "subtitle": "Ŝŧőp ŉőŧįƒįčäŧįőŉş ƒřőm őŉę őř mőřę äľęřŧįŉģ řūľęş",
+      "title": "Ŝįľęŉčęş"
     },
     "alerts-and-incidents": {
-      "subtitle": "",
-      "title": ""
+      "subtitle": "Åľęřŧįŉģ äŉđ įŉčįđęŉŧ mäŉäģęmęŉŧ äppş",
+      "title": "Åľęřŧş & ĨŖM"
     },
     "api-keys": {
-      "subtitle": "",
-      "title": ""
+      "subtitle": "Mäŉäģę äŉđ čřęäŧę ÅPĨ ĸęyş ŧĥäŧ äřę ūşęđ ŧő įŉŧęřäčŧ ŵįŧĥ Ğřäƒäŉä ĦŦŦP ÅPĨş",
+      "title": "ÅPĨ ĸęyş"
     },
     "application": {
-      "title": ""
+      "title": "Åppľįčäŧįőŉ (přęvįęŵ)"
     },
     "apps": {
-      "subtitle": "",
-      "title": ""
+      "subtitle": "Åpp pľūģįŉş ŧĥäŧ ęχŧęŉđ ŧĥę Ğřäƒäŉä ęχpęřįęŉčę",
+      "title": "Åppş"
     },
     "authentication": {
-      "title": ""
+      "title": "Åūŧĥęŉŧįčäŧįőŉ"
     },
     "config": {
-      "title": ""
+      "title": "Åđmįŉįşŧřäŧįőŉ"
     },
     "connect-data": {
-      "title": ""
+      "title": "Cőŉŉęčŧ đäŧä"
     },
     "connections": {
-      "subtitle": "",
-      "title": ""
+      "subtitle": "ßřőŵşę äŉđ čřęäŧę ŉęŵ čőŉŉęčŧįőŉş",
+      "title": "Cőŉŉęčŧįőŉş"
     },
     "correlations": {
-      "subtitle": "",
-      "title": ""
+      "subtitle": "Åđđ äŉđ čőŉƒįģūřę čőřřęľäŧįőŉş",
+      "title": "Cőřřęľäŧįőŉş"
     },
     "create": {
-      "title": ""
+      "title": "Cřęäŧę"
     },
     "create-alert": {
-      "title": ""
+      "title": "Cřęäŧę äľęřŧ řūľę"
     },
     "create-dashboard": {
-      "title": ""
+      "title": "Đäşĥþőäřđ"
     },
     "create-folder": {
-      "title": ""
+      "title": "Főľđęř"
     },
     "create-import": {
-      "title": ""
+      "title": "Ĩmpőřŧ đäşĥþőäřđ"
     },
     "dashboards": {
-      "subtitle": "",
-      "title": ""
+      "subtitle": "Cřęäŧę äŉđ mäŉäģę đäşĥþőäřđş ŧő vįşūäľįžę yőūř đäŧä",
+      "title": "Đäşĥþőäřđş"
     },
     "data-sources": {
-      "subtitle": "",
-      "title": ""
+      "subtitle": "Vįęŵ äŉđ mäŉäģę yőūř čőŉŉęčŧęđ đäŧä şőūřčę čőŉŉęčŧįőŉş",
+      "title": "Đäŧä şőūřčęş"
     },
     "datasources": {
-      "subtitle": "",
-      "title": ""
+      "subtitle": "Åđđ äŉđ čőŉƒįģūřę đäŧä şőūřčęş",
+      "title": "Đäŧä şőūřčęş"
     },
     "detect": {
-      "title": ""
+      "title": "Đęŧęčŧ"
     },
     "explore": {
-      "title": ""
+      "title": "Ēχpľőřę"
     },
     "frontend": {
-      "title": ""
+      "title": "Fřőŉŧęŉđ"
     },
     "global-orgs": {
-      "subtitle": "",
-      "title": ""
+      "subtitle": "Ĩşőľäŧęđ įŉşŧäŉčęş őƒ Ğřäƒäŉä řūŉŉįŉģ őŉ ŧĥę şämę şęřvęř",
+      "title": "Øřģäŉįžäŧįőŉş"
     },
     "global-users": {
-      "subtitle": "",
-      "title": ""
+      "subtitle": "Mäŉäģę ūşęřş įŉ Ğřäƒäŉä",
+      "title": "Ůşęřş"
     },
     "grafana-quaderno": {
-      "title": ""
+      "title": "Ğřäƒäŉä Qūäđęřŉő"
     },
     "help": {
-      "title": ""
+      "title": "Ħęľp"
     },
-    "help/community": "",
-    "help/documentation": "",
-    "help/keyboard-shortcuts": "",
-    "help/support": "",
+    "help/community": "Cőmmūŉįŧy",
+    "help/documentation": "Đőčūmęŉŧäŧįőŉ",
+    "help/keyboard-shortcuts": "Ķęyþőäřđ şĥőřŧčūŧş",
+    "help/support": "Ŝūppőřŧ",
     "home": {
-      "title": ""
+      "title": "Ħőmę"
     },
     "incidents": {
-      "title": ""
+      "title": "Ĩŉčįđęŉŧş"
     },
     "infrastructure": {
-      "title": ""
+      "title": "Ĩŉƒřäşŧřūčŧūřę"
     },
     "kubernetes": {
-      "title": ""
+      "title": "Ķūþęřŉęŧęş"
     },
     "library-panels": {
-      "subtitle": "",
-      "title": ""
+      "subtitle": "Ŗęūşäþľę päŉęľş ŧĥäŧ čäŉ þę äđđęđ ŧő mūľŧįpľę đäşĥþőäřđş",
+      "title": "Ŀįþřäřy päŉęľş"
     },
     "machine-learning": {
-      "title": ""
+      "title": "Mäčĥįŉę ľęäřŉįŉģ"
     },
     "manage-folder": {
-      "subtitle": ""
+      "subtitle": "Mäŉäģę ƒőľđęř đäşĥþőäřđş äŉđ pęřmįşşįőŉş"
     },
     "monitoring": {
-      "subtitle": "",
-      "title": ""
+      "subtitle": "Mőŉįŧőřįŉģ äŉđ įŉƒřäşŧřūčŧūřę äppş",
+      "title": "Øþşęřväþįľįŧy"
     },
     "new": {
-      "title": ""
+      "title": "Ńęŵ"
     },
     "new-dashboard": {
-      "title": ""
+      "title": "Ńęŵ đäşĥþőäřđ"
     },
     "new-folder": {
-      "title": ""
+      "title": "Ńęŵ ƒőľđęř"
     },
     "observability": {
-      "title": ""
+      "title": "Øþşęřväþįľįŧy"
     },
     "oncall": {
-      "title": ""
+      "title": "ØŉCäľľ"
     },
     "org-settings": {
-      "subtitle": "",
-      "title": ""
+      "subtitle": "Mäŉäģę přęƒęřęŉčęş äčřőşş äŉ őřģäŉįžäŧįőŉ",
+      "title": "Đęƒäūľŧ přęƒęřęŉčęş"
     },
     "performance-testing": {
-      "title": ""
+      "title": "Pęřƒőřmäŉčę ŧęşŧįŉģ"
     },
     "playlists": {
-      "subtitle": "",
-      "title": ""
+      "subtitle": "Ğřőūpş őƒ đäşĥþőäřđş ŧĥäŧ äřę đįşpľäyęđ įŉ ä şęqūęŉčę",
+      "title": "Pľäyľįşŧş"
     },
     "plugins": {
-      "subtitle": "",
-      "title": ""
+      "subtitle": "Ēχŧęŉđ ŧĥę Ğřäƒäŉä ęχpęřįęŉčę ŵįŧĥ pľūģįŉş",
+      "title": "Pľūģįŉş"
     },
     "profile/notifications": {
-      "title": ""
+      "title": "Ńőŧįƒįčäŧįőŉ ĥįşŧőřy"
     },
     "profile/password": {
-      "title": ""
+      "title": "Cĥäŉģę päşşŵőřđ"
     },
     "profile/settings": {
-      "title": ""
+      "title": "Přőƒįľę"
     },
     "profiles": {
-      "title": ""
+      "title": "Přőƒįľęş"
     },
     "public": {
-      "title": ""
+      "title": "Pūþľįč đäşĥþőäřđş"
     },
     "recorded-queries": {
-      "title": ""
+      "title": "Ŗęčőřđęđ qūęřįęş"
     },
     "reporting": {
-      "title": ""
+      "title": "Ŗępőřŧįŉģ"
     },
     "scenes": {
-      "title": ""
+      "title": "Ŝčęŉęş"
     },
     "search": {
-      "placeholderCommandPalette": ""
+      "placeholderCommandPalette": "Ŝęäřčĥ őř ĵūmp ŧő..."
     },
     "search-dashboards": {
-      "title": ""
+      "title": "Ŝęäřčĥ đäşĥþőäřđş"
     },
     "server-settings": {
-      "subtitle": "",
-      "title": ""
+      "subtitle": "Vįęŵ ŧĥę şęŧŧįŉģş đęƒįŉęđ įŉ yőūř Ğřäƒäŉä čőŉƒįģ",
+      "title": "Ŝęŧŧįŉģş"
     },
     "service-accounts": {
-      "subtitle": "",
-      "title": ""
+      "subtitle": "Ůşę şęřvįčę äččőūŉŧş ŧő řūŉ äūŧőmäŧęđ ŵőřĸľőäđş įŉ Ğřäƒäŉä",
+      "title": "Ŝęřvįčę äččőūŉŧş"
     },
     "sign-out": {
-      "title": ""
+      "title": "Ŝįģŉ őūŧ"
     },
     "slo": {
-      "title": ""
+      "title": "ŜĿØ"
     },
     "snapshots": {
-      "subtitle": "",
-      "title": ""
+      "subtitle": "Ĩŉŧęřäčŧįvę, pūþľįčäľľy äväįľäþľę, pőįŉŧ-įŉ-ŧįmę řępřęşęŉŧäŧįőŉş őƒ đäşĥþőäřđş",
+      "title": "Ŝŉäpşĥőŧş"
     },
     "starred": {
-      "title": ""
+      "title": "Ŝŧäřřęđ"
     },
     "starred-empty": {
-      "title": ""
+      "title": "Ÿőūř şŧäřřęđ đäşĥþőäřđş ŵįľľ äppęäř ĥęřę"
     },
     "statistics-and-licensing": {
-      "title": ""
+      "title": "Ŝŧäŧįşŧįčş äŉđ ľįčęŉşįŉģ"
     },
     "storage": {
-      "subtitle": "",
-      "title": ""
+      "subtitle": "Mäŉäģę ƒįľę şŧőřäģę",
+      "title": "Ŝŧőřäģę"
     },
     "support-bundles": {
-      "subtitle": "",
-      "title": ""
+      "subtitle": "Đőŵŉľőäđ şūppőřŧ þūŉđľęş",
+      "title": "Ŝūppőřŧ þūŉđľęş"
     },
     "synthetics": {
-      "title": ""
+      "title": "Ŝyŉŧĥęŧįčş"
     },
     "teams": {
-      "subtitle": "",
-      "title": ""
+      "subtitle": "Ğřőūpş őƒ ūşęřş ŧĥäŧ ĥävę čőmmőŉ đäşĥþőäřđ äŉđ pęřmįşşįőŉ ŉęęđş",
+      "title": "Ŧęämş"
     },
     "upgrading": {
-      "title": ""
+      "title": "Ŝŧäŧş äŉđ ľįčęŉşę"
     },
     "users": {
-      "subtitle": "",
-      "title": ""
+      "subtitle": "Ĩŉvįŧę äŉđ äşşįģŉ řőľęş ŧő ūşęřş",
+      "title": "Ůşęřş"
     }
   },
   "navigation": {
     "kiosk": {
-      "tv-alert": ""
+      "tv-alert": "Přęşş ĒŜC ŧő ęχįŧ ĸįőşĸ mőđę"
     },
     "toolbar": {
-      "enable-kiosk": "",
-      "toggle-menu": "",
-      "toggle-search-bar": ""
+      "enable-kiosk": "Ēŉäþľę ĸįőşĸ mőđę",
+      "toggle-menu": "Ŧőģģľę męŉū",
+      "toggle-search-bar": "Ŧőģģľę ŧőp şęäřčĥ þäř"
     }
   },
   "news": {
-    "title": ""
+    "title": "Ŀäŧęşŧ ƒřőm ŧĥę þľőģ"
   },
   "notifications": {
-    "starred-dashboard": "",
-    "unstarred-dashboard": ""
+    "starred-dashboard": "Đäşĥþőäřđ şŧäřřęđ",
+    "unstarred-dashboard": "Đäşĥþőäřđ ūŉşŧäřřęđ"
   },
   "panel": {
     "header-menu": {
-      "copy": "",
-      "create-library-panel": "",
-      "duplicate": "",
-      "edit": "",
-      "explore": "",
-      "get-help": "",
-      "hide-legend": "",
-      "inspect": "",
-      "inspect-data": "",
-      "inspect-json": "",
-      "more": "",
-      "query": "",
-      "remove": "",
-      "share": "",
-      "show-legend": "",
-      "unlink-library-panel": "",
-      "view": ""
+      "copy": "Cőpy",
+      "create-library-panel": "Cřęäŧę ľįþřäřy päŉęľ",
+      "duplicate": "Đūpľįčäŧę",
+      "edit": "Ēđįŧ",
+      "explore": "Ēχpľőřę",
+      "get-help": "Ğęŧ ĥęľp",
+      "hide-legend": "Ħįđę ľęģęŉđ",
+      "inspect": "Ĩŉşpęčŧ",
+      "inspect-data": "Đäŧä",
+      "inspect-json": "Päŉęľ ĴŜØŃ",
+      "more": "Mőřę...",
+      "query": "Qūęřy",
+      "remove": "Ŗęmővę",
+      "share": "Ŝĥäřę",
+      "show-legend": "Ŝĥőŵ ľęģęŉđ",
+      "unlink-library-panel": "Ůŉľįŉĸ ľįþřäřy päŉęľ",
+      "view": "Vįęŵ"
     }
   },
   "playlist-edit": {
-    "error-prefix": "",
+    "error-prefix": "Ēřřőř ľőäđįŉģ pľäyľįşŧ:",
     "form": {
-      "add-tag-label": "",
-      "add-tag-placeholder": "",
-      "add-title-label": "",
-      "cancel": "",
-      "heading": "",
-      "interval-label": "",
-      "interval-placeholder": "",
-      "interval-required": "",
-      "name-label": "",
-      "name-placeholder": "",
-      "name-required": "",
-      "save": "",
-      "table-delete": "",
-      "table-drag": "",
-      "table-empty": "",
-      "table-heading": ""
+      "add-tag-label": "Åđđ þy ŧäģ",
+      "add-tag-placeholder": "Ŝęľęčŧ ä ŧäģ",
+      "add-title-label": "Åđđ þy ŧįŧľę",
+      "cancel": "Cäŉčęľ",
+      "heading": "Åđđ đäşĥþőäřđş",
+      "interval-label": "Ĩŉŧęřväľ",
+      "interval-placeholder": "5m",
+      "interval-required": "Ĩŉŧęřväľ įş řęqūįřęđ",
+      "name-label": "Ńämę",
+      "name-placeholder": "Ńämę",
+      "name-required": "Ńämę įş řęqūįřęđ",
+      "save": "Ŝävę",
+      "table-delete": "Đęľęŧę pľäyľįşŧ įŧęm",
+      "table-drag": "Đřäģ äŉđ đřőp ŧő řęőřđęř",
+      "table-empty": "Pľäyľįşŧ įş ęmpŧy. Åđđ đäşĥþőäřđş þęľőŵ.",
+      "table-heading": "Đäşĥþőäřđş"
     },
-    "sub-title": "",
-    "title": ""
+    "sub-title": "Å pľäyľįşŧ řőŧäŧęş ŧĥřőūģĥ ä přę-şęľęčŧęđ ľįşŧ őƒ đäşĥþőäřđş. Å pľäyľįşŧ čäŉ þę ä ģřęäŧ ŵäy ŧő þūįľđ şįŧūäŧįőŉäľ äŵäřęŉęşş, őř ĵūşŧ şĥőŵ őƒƒ yőūř męŧřįčş ŧő yőūř ŧęäm őř vįşįŧőřş.",
+    "title": "Ēđįŧ pľäyľįşŧ"
   },
   "playlist-page": {
     "card": {
-      "delete": "",
-      "edit": "",
-      "start": "",
-      "tooltip": ""
+      "delete": "Đęľęŧę pľäyľįşŧ",
+      "edit": "Ēđįŧ pľäyľįşŧ",
+      "start": "Ŝŧäřŧ pľäyľįşŧ",
+      "tooltip": "Ŝĥäřę pľäyľįşŧ"
     },
     "create-button": {
-      "title": ""
+      "title": "Ńęŵ pľäyľįşŧ"
     },
     "delete-modal": {
-      "body": "",
-      "confirm-text": ""
+      "body": "Åřę yőū şūřę yőū ŵäŉŧ ŧő đęľęŧę {{name}} pľäyľįşŧ?",
+      "confirm-text": "Đęľęŧę"
     },
     "empty": {
-      "button": "",
-      "pro-tip": "",
-      "pro-tip-link-title": "",
-      "title": ""
+      "button": "Cřęäŧę Pľäyľįşŧ",
+      "pro-tip": "Ÿőū čäŉ ūşę pľäyľįşŧş ŧő čyčľę đäşĥþőäřđş őŉ ŦVş ŵįŧĥőūŧ ūşęř čőŉŧřőľ",
+      "pro-tip-link-title": "Ŀęäřŉ mőřę",
+      "title": "Ŧĥęřę äřę ŉő pľäyľįşŧş čřęäŧęđ yęŧ"
     }
   },
   "refresh-picker": {
     "aria-label": {
-      "choose-interval": "",
-      "duration-selected": ""
+      "choose-interval": "Åūŧő řęƒřęşĥ ŧūřŉęđ őƒƒ. Cĥőőşę řęƒřęşĥ ŧįmę įŉŧęřväľ",
+      "duration-selected": "Cĥőőşę řęƒřęşĥ ŧįmę įŉŧęřväľ ŵįŧĥ čūřřęŉŧ įŉŧęřväľ {{durationAriaLabel}} şęľęčŧęđ"
     },
     "auto-option": {
       "aria-label": "",
       "label": ""
     },
     "live-option": {
-      "aria-label": "",
-      "label": ""
+      "aria-label": "Ŧūřŉ őŉ ľįvę şŧřęämįŉģ",
+      "label": "Ŀįvę"
     },
     "off-option": {
-      "aria-label": "",
-      "label": ""
+      "aria-label": "Ŧūřŉ őƒƒ äūŧő řęƒřęşĥ",
+      "label": "Øƒƒ"
     },
     "tooltip": {
-      "interval-selected": "",
-      "turned-off": ""
+      "interval-selected": "Ŝęŧ äūŧő řęƒřęşĥ įŉŧęřväľ",
+      "turned-off": "Åūŧő řęƒřęşĥ őƒƒ"
     }
   },
   "search": {
     "actions": {
-      "include-panels": "",
-      "remove-datasource-filter": "",
-      "sort-placeholder": "",
-      "starred": "",
-      "view-as-folders": "",
-      "view-as-list": ""
+      "include-panels": "Ĩŉčľūđę päŉęľş",
+      "remove-datasource-filter": "Đäŧäşőūřčę: {{datasource}}",
+      "sort-placeholder": "Ŝőřŧ",
+      "starred": "Ŝŧäřřęđ",
+      "view-as-folders": "Vįęŵ þy ƒőľđęřş",
+      "view-as-list": "Vįęŵ äş ľįşŧ"
     },
     "dashboard-actions": {
-      "import": "",
-      "new": "",
-      "new-dashboard": "",
-      "new-folder": ""
+      "import": "Ĩmpőřŧ",
+      "new": "Ńęŵ",
+      "new-dashboard": "Ńęŵ đäşĥþőäřđ",
+      "new-folder": "Ńęŵ ƒőľđęř"
     },
     "folder-view": {
-      "go-to-folder": "",
-      "select-folder": ""
+      "go-to-folder": "Ğő ŧő ƒőľđęř",
+      "select-folder": "Ŝęľęčŧ ƒőľđęř"
     },
     "result-kind": {
-      "dashboard": "",
-      "folder": "",
-      "panel": ""
+      "dashboard": "Đäşĥþőäřđ",
+      "folder": "Főľđęř",
+      "panel": "Päŉęľ"
     },
     "results-table": {
-      "datasource-header": "",
-      "location-header": "",
-      "name-header": "",
-      "tags-header": "",
-      "type-dashboard": "",
-      "type-folder": "",
-      "type-header": ""
+      "datasource-header": "Đäŧä şőūřčę",
+      "location-header": "Ŀőčäŧįőŉ",
+      "name-header": "Ńämę",
+      "tags-header": "Ŧäģş",
+      "type-dashboard": "Đäşĥþőäřđ",
+      "type-folder": "Főľđęř",
+      "type-header": "Ŧypę"
     },
     "search-input": {
-      "include-panels-placeholder": "",
-      "placeholder": ""
+      "include-panels-placeholder": "Ŝęäřčĥ ƒőř đäşĥþőäřđş, ƒőľđęřş, äŉđ päŉęľş",
+      "placeholder": "Ŝęäřčĥ ƒőř đäşĥþőäřđş äŉđ ƒőľđęřş"
     }
   },
   "search-view": {
     "no-results": {
-      "clear": "",
-      "text": ""
+      "clear": "Cľęäř şęäřčĥ äŉđ ƒįľŧęřş",
+      "text": "Ńő řęşūľŧş ƒőūŉđ ƒőř yőūř qūęřy."
     }
   },
   "share-modal": {
     "dashboard": {
-      "title": ""
+      "title": "Ŝĥäřę"
     },
     "embed": {
-      "copy": "",
-      "html": "",
-      "html-description": "",
-      "info": "",
-      "time-range": "",
-      "time-range-description": ""
+      "copy": "Cőpy ŧő čľįpþőäřđ",
+      "html": "Ēmþęđ ĦŦMĿ",
+      "html-description": "Ŧĥę ĦŦMĿ čőđę þęľőŵ čäŉ þę päşŧęđ äŉđ įŉčľūđęđ įŉ äŉőŧĥęř ŵęþ päģę. Ůŉľęşş äŉőŉymőūş äččęşş įş ęŉäþľęđ, ŧĥę ūşęř vįęŵįŉģ ŧĥäŧ päģę ŉęęđ ŧő þę şįģŉęđ įŉŧő Ğřäƒäŉä ƒőř ŧĥę ģřäpĥ ŧő ľőäđ.",
+      "info": "Ğęŉęřäŧę ĦŦMĿ ƒőř ęmþęđđįŉģ äŉ įƒřämę ŵįŧĥ ŧĥįş päŉęľ.",
+      "time-range": "Cūřřęŉŧ ŧįmę řäŉģę",
+      "time-range-description": "Ŧřäŉşƒőřmş ŧĥę čūřřęŉŧ řęľäŧįvę ŧįmę řäŉģę ŧő äŉ äþşőľūŧę ŧįmę řäŉģę"
     },
     "export": {
-      "cancel-button": "",
-      "info-text": "",
-      "save-button": "",
-      "share-default-label": "",
-      "share-externally-label": "",
-      "view-button": ""
+      "cancel-button": "Cäŉčęľ",
+      "info-text": "Ēχpőřŧ ŧĥįş đäşĥþőäřđ.",
+      "save-button": "Ŝävę ŧő ƒįľę",
+      "share-default-label": "Ēχpőřŧ ŵįŧĥ đęƒäūľŧ väľūęş řęmővęđ",
+      "share-externally-label": "Ēχpőřŧ ƒőř şĥäřįŉģ ęχŧęřŉäľľy",
+      "view-button": "Vįęŵ ĴŜØŃ"
     },
     "library": {
-      "info": ""
+      "info": "Cřęäŧę ľįþřäřy päŉęľ."
     },
     "link": {
-      "copy-link-button": "",
-      "info-text": "",
-      "link-url": "",
-      "render-alert": "",
-      "render-instructions": "",
-      "rendered-image": "",
-      "save-alert": "",
-      "save-dashboard": "",
-      "shorten-url": "",
-      "time-range-description": "",
-      "time-range-label": ""
+      "copy-link-button": "Cőpy",
+      "info-text": "Cřęäŧę ä đįřęčŧ ľįŉĸ ŧő ŧĥįş đäşĥþőäřđ őř päŉęľ, čūşŧőmįžęđ ŵįŧĥ ŧĥę őpŧįőŉş þęľőŵ.",
+      "link-url": "Ŀįŉĸ ŮŖĿ",
+      "render-alert": "Ĩmäģę řęŉđęřęř pľūģįŉ ŉőŧ įŉşŧäľľęđ",
+      "render-instructions": "Ŧő řęŉđęř ä päŉęľ įmäģę, yőū mūşŧ įŉşŧäľľ ŧĥę <1>Ğřäƒäŉä įmäģę řęŉđęřęř pľūģįŉ</1>. Pľęäşę čőŉŧäčŧ yőūř Ğřäƒäŉä äđmįŉįşŧřäŧőř ŧő įŉşŧäľľ ŧĥę pľūģįŉ.",
+      "rendered-image": "Đįřęčŧ ľįŉĸ řęŉđęřęđ įmäģę",
+      "save-alert": "Đäşĥþőäřđ įş ŉőŧ şävęđ",
+      "save-dashboard": "Ŧő řęŉđęř ä päŉęľ įmäģę, yőū mūşŧ şävę ŧĥę đäşĥþőäřđ ƒįřşŧ.",
+      "shorten-url": "Ŝĥőřŧęŉ ŮŖĿ",
+      "time-range-description": "Ŧřäŉşƒőřmş ŧĥę čūřřęŉŧ řęľäŧįvę ŧįmę řäŉģę ŧő äŉ äþşőľūŧę ŧįmę řäŉģę",
+      "time-range-label": "Ŀőčĸ ŧįmę řäŉģę"
     },
     "panel": {
-      "title": ""
+      "title": "Ŝĥäřę Päŉęľ"
     },
     "snapshot": {
-      "cancel-button": "",
-      "copy-link-button": "",
-      "delete-button": "",
-      "deleted-message": "",
-      "expire": "",
-      "expire-day": "",
-      "expire-hour": "",
-      "expire-never": "",
-      "expire-week": "",
-      "info-text-1": "",
-      "info-text-2": "",
-      "local-button": "",
-      "mistake-message": "",
-      "name": "",
-      "timeout": "",
-      "timeout-description": "",
-      "url-label": ""
+      "cancel-button": "Cäŉčęľ",
+      "copy-link-button": "Cőpy",
+      "delete-button": "Đęľęŧę şŉäpşĥőŧ.",
+      "deleted-message": "Ŧĥę şŉäpşĥőŧ ĥäş þęęŉ đęľęŧęđ. Ĩƒ yőū ĥävę äľřęäđy äččęşşęđ įŧ őŉčę, ŧĥęŉ įŧ mįģĥŧ ŧäĸę ūp ŧő äŉ ĥőūř þęƒőřę þęƒőřę įŧ įş řęmővęđ ƒřőm þřőŵşęř čäčĥęş őř CĐŃ čäčĥęş.",
+      "expire": "Ēχpįřę",
+      "expire-day": "1 Đäy",
+      "expire-hour": "1 Ħőūř",
+      "expire-never": "Ńęvęř",
+      "expire-week": "7 Đäyş",
+      "info-text-1": "Å şŉäpşĥőŧ įş äŉ įŉşŧäŉŧ ŵäy ŧő şĥäřę äŉ įŉŧęřäčŧįvę đäşĥþőäřđ pūþľįčľy. Ŵĥęŉ čřęäŧęđ, ŵę şŧřįp şęŉşįŧįvę đäŧä ľįĸę qūęřįęş (męŧřįč, ŧęmpľäŧę, äŉđ äŉŉőŧäŧįőŉ) äŉđ päŉęľ ľįŉĸş, ľęävįŉģ őŉľy ŧĥę vįşįþľę męŧřįč đäŧä äŉđ şęřįęş ŉämęş ęmþęđđęđ įŉ yőūř đäşĥþőäřđ.",
+      "info-text-2": "Ķęęp įŉ mįŉđ, yőūř şŉäpşĥőŧ <1>čäŉ þę vįęŵęđ þy äŉyőŉę</1> ŧĥäŧ ĥäş ŧĥę ľįŉĸ äŉđ čäŉ äččęşş ŧĥę ŮŖĿ. Ŝĥäřę ŵįşęľy.",
+      "local-button": "Ŀőčäľ Ŝŉäpşĥőŧ",
+      "mistake-message": "Đįđ yőū mäĸę ä mįşŧäĸę? ",
+      "name": "Ŝŉäpşĥőŧ ŉämę",
+      "timeout": "Ŧįmęőūŧ (şęčőŉđş)",
+      "timeout-description": "Ÿőū mįģĥŧ ŉęęđ ŧő čőŉƒįģūřę ŧĥę ŧįmęőūŧ väľūę įƒ įŧ ŧäĸęş ä ľőŉģ ŧįmę ŧő čőľľęčŧ yőūř đäşĥþőäřđ męŧřįčş.",
+      "url-label": "Ŝŉäpşĥőŧ ŮŖĿ"
     },
     "tab-title": {
-      "embed": "",
-      "export": "",
-      "library-panel": "",
-      "link": "",
-      "snapshot": ""
+      "embed": "Ēmþęđ",
+      "export": "Ēχpőřŧ",
+      "library-panel": "Ŀįþřäřy päŉęľ",
+      "link": "Ŀįŉĸ",
+      "snapshot": "Ŝŉäpşĥőŧ"
     },
     "theme-picker": {
-      "current": "",
-      "dark": "",
-      "field-name": "",
-      "light": ""
+      "current": "Cūřřęŉŧ",
+      "dark": "Đäřĸ",
+      "field-name": "Ŧĥęmę",
+      "light": "Ŀįģĥŧ"
     },
     "view-json": {
-      "copy-button": ""
+      "copy-button": "Cőpy ŧő Cľįpþőäřđ"
     }
   },
   "share-playlist": {
-    "checkbox-description": "",
-    "checkbox-label": "",
-    "copy-link-button": "",
-    "link-url-label": "",
-    "mode": "",
-    "mode-kiosk": "",
-    "mode-normal": "",
-    "mode-tv": "",
-    "title": ""
+    "checkbox-description": "Päŉęľ ĥęįģĥŧş ŵįľľ þę äđĵūşŧęđ ŧő ƒįŧ şčřęęŉ şįžę",
+    "checkbox-label": "Åūŧőƒįŧ",
+    "copy-link-button": "Cőpy",
+    "link-url-label": "Ŀįŉĸ ŮŖĿ",
+    "mode": "Mőđę",
+    "mode-kiosk": "Ķįőşĸ",
+    "mode-normal": "Ńőřmäľ",
+    "mode-tv": "ŦV",
+    "title": "Ŝĥäřę pľäyľįşŧ"
   },
   "shared": {
     "preferences": {
       "theme": {
-        "dark-label": "",
-        "light-label": "",
-        "system-label": ""
+        "dark-label": "Đäřĸ",
+        "light-label": "Ŀįģĥŧ",
+        "system-label": "Ŝyşŧęm přęƒęřęŉčę"
       }
     }
   },
   "shared-dashboard": {
     "fields": {
-      "timezone-label": ""
+      "timezone-label": "Ŧįmęžőŉę"
     }
   },
   "shared-preferences": {
     "fields": {
-      "home-dashboard-label": "",
-      "home-dashboard-placeholder": "",
-      "locale-label": "",
-      "locale-placeholder": "",
-      "theme-label": "",
-      "week-start-label": ""
+      "home-dashboard-label": "Ħőmę Đäşĥþőäřđ",
+      "home-dashboard-placeholder": "Đęƒäūľŧ đäşĥþőäřđ",
+      "locale-label": "Ŀäŉģūäģę",
+      "locale-placeholder": "Cĥőőşę ľäŉģūäģę",
+      "theme-label": "Ĩŉŧęřƒäčę ŧĥęmę",
+      "week-start-label": "Ŵęęĸ şŧäřŧ"
     },
     "theme": {
-      "default-label": ""
+      "default-label": "Đęƒäūľŧ"
     },
-    "title": ""
+    "title": "Přęƒęřęŉčęş"
   },
   "tag-filter": {
-    "loading": "",
-    "no-tags": "",
-    "placeholder": ""
+    "loading": "Ŀőäđįŉģ...",
+    "no-tags": "Ńő ŧäģş ƒőūŉđ",
+    "placeholder": "Fįľŧęř þy ŧäģ"
   },
   "time-picker": {
     "absolute": {
-      "recent-title": "",
-      "title": ""
+      "recent-title": "Ŗęčęŉŧľy ūşęđ äþşőľūŧę řäŉģęş",
+      "title": "Åþşőľūŧę ŧįmę řäŉģę"
     },
     "calendar": {
-      "apply-button": "",
-      "cancel-button": "",
-      "select-time": ""
+      "apply-button": "Åppľy ŧįmę řäŉģę",
+      "cancel-button": "Cäŉčęľ",
+      "select-time": "Ŝęľęčŧ ä ŧįmę řäŉģę"
     },
     "content": {
-      "empty-recent-list-docs": "",
-      "empty-recent-list-info": "",
-      "filter-placeholder": ""
+      "empty-recent-list-docs": "<0><0>Ŗęäđ ŧĥę đőčūmęŉŧäŧįőŉ</0><1> ŧő ƒįŉđ őūŧ mőřę äþőūŧ ĥőŵ ŧő ęŉŧęř čūşŧőm ŧįmę řäŉģęş.</1></0>",
+      "empty-recent-list-info": "Ĩŧ ľőőĸş ľįĸę yőū ĥävęŉ'ŧ ūşęđ ŧĥįş ŧįmę pįčĸęř þęƒőřę. Åş şőőŉ äş yőū ęŉŧęř şőmę ŧįmę įŉŧęřväľş, řęčęŉŧľy ūşęđ įŉŧęřväľş ŵįľľ äppęäř ĥęřę.",
+      "filter-placeholder": "Ŝęäřčĥ qūįčĸ řäŉģęş"
     },
     "footer": {
-      "change-settings-button": "",
-      "fiscal-year-option": "",
-      "fiscal-year-start": "",
-      "time-zone-option": "",
-      "time-zone-selection": ""
+      "change-settings-button": "Cĥäŉģę ŧįmę şęŧŧįŉģş",
+      "fiscal-year-option": "Fįşčäľ yęäř",
+      "fiscal-year-start": "Fįşčäľ yęäř şŧäřŧ mőŉŧĥ",
+      "time-zone-option": "Ŧįmę žőŉę",
+      "time-zone-selection": "Ŧįmę žőŉę şęľęčŧįőŉ"
     },
     "range-content": {
-      "apply-button": "",
-      "default-error": "",
-      "fiscal-year": "",
-      "from-input": "",
-      "range-error": "",
-      "to-input": ""
+      "apply-button": "Åppľy ŧįmę řäŉģę",
+      "default-error": "Pľęäşę ęŉŧęř ä päşŧ đäŧę őř \"ŉőŵ\"",
+      "fiscal-year": "Fįşčäľ yęäř",
+      "from-input": "Fřőm",
+      "range-error": "\"Fřőm\" čäŉ'ŧ þę äƒŧęř \"Ŧő\"",
+      "to-input": "Ŧő"
     },
     "range-picker": {
-      "backwards-time-aria-label": "",
-      "current-time-selected": "",
-      "forwards-time-aria-label": "",
-      "to": "",
-      "zoom-out-button": "",
-      "zoom-out-tooltip": ""
+      "backwards-time-aria-label": "Mővę ŧįmę řäŉģę þäčĸŵäřđş",
+      "current-time-selected": "Ŧįmę řäŉģę şęľęčŧęđ: {{currentTimeRange}}",
+      "forwards-time-aria-label": "Mővę ŧįmę řäŉģę ƒőřŵäřđş",
+      "to": "ŧő",
+      "zoom-out-button": "Żőőm őūŧ ŧįmę řäŉģę",
+      "zoom-out-tooltip": "Ŧįmę řäŉģę žőőm őūŧ <1></1> CŦŖĿ+Ż"
     },
     "time-range": {
-      "aria-role": "",
-      "default-title": "",
-      "example-title": "",
-      "specify": ""
+      "aria-role": "Ŧįmę řäŉģę şęľęčŧįőŉ",
+      "default-title": "Ŧįmę řäŉģęş",
+      "example-title": "Ēχämpľę ŧįmę řäŉģęş",
+      "specify": "Ŝpęčįƒy ŧįmę řäŉģę <1></1>"
     },
     "zone": {
-      "select-aria-label": "",
-      "select-search-input": ""
+      "select-aria-label": "Ŧįmę žőŉę pįčĸęř",
+      "select-search-input": "Ŧypę ŧő şęäřčĥ (čőūŉŧřy, čįŧy, äþþřęvįäŧįőŉ)"
     }
   },
   "user-orgs": {
-    "current-org-button": "",
-    "name-column": "",
-    "role-column": "",
-    "select-org-button": "",
-    "title": ""
+    "current-org-button": "Cūřřęŉŧ",
+    "name-column": "Ńämę",
+    "role-column": "Ŗőľę",
+    "select-org-button": "Ŝęľęčŧ őřģäŉįşäŧįőŉ",
+    "title": "Øřģäŉįžäŧįőŉş"
   },
   "user-profile": {
     "fields": {
-      "email-error": "",
-      "email-label": "",
-      "name-error": "",
-      "name-label": "",
-      "username-label": ""
+      "email-error": "Ēmäįľ įş řęqūįřęđ",
+      "email-label": "Ēmäįľ",
+      "name-error": "Ńämę įş řęqūįřęđ",
+      "name-label": "Ńämę",
+      "username-label": "Ůşęřŉämę"
     }
   },
   "user-session": {
-    "browser-column": "",
-    "created-at-column": "",
-    "ip-column": "",
-    "revoke": "",
-    "seen-at-column": ""
+    "browser-column": "ßřőŵşęř & ØŜ",
+    "created-at-column": "Ŀőģģęđ őŉ",
+    "ip-column": "ĨP äđđřęşş",
+    "revoke": "Ŗęvőĸę ūşęř şęşşįőŉ",
+    "seen-at-column": "Ŀäşŧ şęęŉ"
   },
   "user-sessions": {
-    "loading": ""
+    "loading": "Ŀőäđįŉģ şęşşįőŉş..."
   },
   "variable": {
     "adhoc": {
-      "placeholder": ""
+      "placeholder": "Ŝęľęčŧ väľūę"
     },
     "dropdown": {
-      "placeholder": ""
+      "placeholder": "Ēŉŧęř väřįäþľę väľūę"
     },
     "picker": {
-      "link-all": "",
-      "option-all": "",
-      "option-selected-values": "",
-      "option-tooltip": ""
+      "link-all": "Åľľ",
+      "option-all": "Åľľ",
+      "option-selected-values": "Ŝęľęčŧęđ",
+      "option-tooltip": "Cľęäř şęľęčŧįőŉş"
     },
     "textbox": {
-      "placeholder": ""
+      "placeholder": "Ēŉŧęř väřįäþľę väľūę"
     }
   }
 }
