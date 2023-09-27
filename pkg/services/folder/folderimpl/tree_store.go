@@ -39,7 +39,7 @@ func ProvideTreeStore(db db.DB) (*treeStore, error) {
 }
 
 func (hs *treeStore) migrate() error {
-	hs.db.RunAndRegisterCodeMigration(context.Background(), MIGRATION_ID, func(sess *db.Session) error {
+	return hs.db.RunAndRegisterCodeMigration(context.Background(), MIGRATION_ID, func(sess *db.Session) error {
 		if err := hs.db.WithDbSession(context.Background(), func(sess *db.Session) error {
 			var orgIDs []int64
 			if err := sess.SQL("SELECT DISTINCT org_id FROM folder").Find(&orgIDs); err != nil {
