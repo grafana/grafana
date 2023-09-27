@@ -44,7 +44,10 @@ export const fetchAll = createAsyncThunk(`${STATE_PREFIX}/fetchAll`, async (_, t
               .pipe(
                 catchError((err) => {
                   thunkApi.dispatch({ type: `${STATE_PREFIX}/fetchRemote/rejected` });
-                  return throwError(() => new Error('Failed fetching plugins from GCOM.'));
+                  return throwError(
+                    () =>
+                      new Error('Failed to fetch plugins from catalog (default https://grafana.com/grafana/plugins)')
+                  );
                 })
               )
               // Remote plugins loaded after a timeout, updating the store
