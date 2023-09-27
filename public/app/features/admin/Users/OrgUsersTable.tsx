@@ -181,12 +181,7 @@ export const OrgUsersTable = ({ users, orgId, onRoleChange, onRemoveUser, change
   return (
     <VerticalGroup spacing="md" data-testid={selectors.container}>
       <div className={styles.wrapper}>
-        <InteractiveTable
-          columns={columns}
-          data={users}
-          getRowId={(user) => String(user.userId)}
-          className={css({ paddingBottom: '400px' })}
-        />
+        <InteractiveTable columns={columns} data={users} getRowId={(user) => String(user.userId)} />
         <HorizontalGroup justify="flex-end" height={'auto'}>
           <Pagination onNavigate={changePage} currentPage={page} numberOfPages={totalPages} hideWhenSinglePage={true} />
         </HorizontalGroup>
