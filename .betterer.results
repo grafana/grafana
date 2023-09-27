@@ -3825,10 +3825,9 @@ exports[`better eslint`] = {
     "public/app/features/explore/FlameGraph/FlameGraphExploreContainer.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"]
     ],
-    "public/app/features/explore/Graph/ExploreGraph.tsx:5381": [
+    "public/app/features/explore/Graph/GraphContainer.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"],
-      [0, 0, 0, "Styles should be written using objects.", "1"],
-      [0, 0, 0, "Styles should be written using objects.", "2"]
+      [0, 0, 0, "Styles should be written using objects.", "1"]
     ],
     "public/app/features/explore/LiveTailButton.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"],
