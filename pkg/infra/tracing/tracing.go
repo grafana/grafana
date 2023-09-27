@@ -80,9 +80,6 @@ type Tracer interface {
 	// Both the context and span must be derived from the same call to
 	// [Tracer.Start].
 	Inject(context.Context, http.Header, trace.Span)
-
-	// OtelTracer returns the trace.Tracer if available or nil.
-	OtelTracer() trace.Tracer
 }
 
 func ProvideService(cfg *setting.Cfg) (*TracingService, error) {
