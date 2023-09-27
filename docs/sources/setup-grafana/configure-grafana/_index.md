@@ -2325,7 +2325,7 @@ Please see [Configure feature toggles]({{< relref "./feature-toggles" >}}) for m
 
 Lets you switch the feature toggle state in the feature management page. The default is `false`.
 
-### update_controller_url
+### update_webhook
 
 Set the URL of the controller that manages the feature toggle updates. If not set, feature toggles in the feature management page will be read-only.
 

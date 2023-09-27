@@ -3,6 +3,7 @@ package migrations
 import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrations/anonservice"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations/oauthserver"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations/ualert"
 	. "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
@@ -96,6 +97,8 @@ func (*OSSMigrations) AddMigration(mg *Migrator) {
 			oauthserver.AddMigration(mg)
 		}
 	}
+
+	anonservice.AddMigration(mg)
 }
 
 func addStarMigrations(mg *Migrator) {
