@@ -39,7 +39,7 @@ export function AppChromeMenu({}: Props) {
         // don't close when clicking on the menu toggle, let the toggle button handle that
         // this prevents some nasty flickering when the menu is open and the toggle button is clicked
         const isMenuToggle = document.getElementById(TOGGLE_BUTTON_ID)?.contains(element);
-        return Boolean(!isMenuToggle);
+        return !isMenuToggle;
       },
     },
     ref
