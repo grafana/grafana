@@ -1,6 +1,5 @@
 +++
 title = "Error handling"
-type = "docs"
 +++
 
 # Error handling
@@ -32,7 +31,7 @@ throw new Error('An error occurred');
 
 Grafana displays the error message in the top-left corner of the panel.
 
-{{< docs-imagebox img="/img/docs/panel_error.png" class="docs-image--no-shadow" max-width="850px" >}}
+{{< figure src="/static/img/docs/panel_error.png" class="docs-image--no-shadow" max-width="850px" >}}
 
 Avoid displaying overly-technical error messages to the user. If you want to let technical users report an error, consider logging it instead.
 

@@ -1,6 +1,5 @@
 +++
 title = "Data frames"
-type = "docs"
 +++
 
 # Data frames
