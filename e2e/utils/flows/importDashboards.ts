@@ -1,5 +1,3 @@
-import { e2e } from '../index';
-
 import { importDashboard, Dashboard } from './importDashboard';
 
 /**

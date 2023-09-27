@@ -20,7 +20,7 @@ weight: 100
 
 # Bar chart
 
-This panel visualization allows you to graph categorical data.
+Bar charts allow you to graph categorical data.
 
 {{< figure src="/static/img/docs/bar-chart-panel/barchart_small_example.png" max-width="1000px" caption="Bar chart" >}}
 
@@ -35,7 +35,7 @@ Example:
 | Chrome  | 50           |
 | IE      | 17.5         |
 
-If you have more than one numerical field the panel will show grouped bars.
+If you have more than one numerical field the visualization will show grouped bars.
 
 ### Visualizing time series or multiple result sets
 
@@ -188,6 +188,8 @@ Set a **Soft min** or **soft max** option for better control of Y-axis limits. B
 **Soft min** and **soft max** settings can prevent blips from turning into mountains when the data is mostly flat, and hard min or max derived from standard min and max field options can prevent intermittent spikes from flattening useful detail by clipping the spikes past a defined point.
 
 You can set standard min/max options to define hard limits of the Y-axis. For more information, refer to [Standard options definitions][].
+
+{{< docs/shared lookup="visualizations/multiple-y-axes.md" source="grafana" version="<GRAFANA VERSION>" leveloffset="+2" >}}
 
 {{% docs/reference %}}
 [Add a field override]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/configure-overrides#add-a-field-override"

@@ -152,7 +152,7 @@
       "data-tab": "Đäŧä",
       "error-tab": "Ēřřőř",
       "json-tab": "ĴŜØŃ",
-      "meta-tab": "Męŧä Đäŧä",
+      "meta-tab": "Męŧä đäŧä",
       "query-tab": "Qūęřy",
       "stats-tab": "Ŝŧäŧş",
       "subtitle": "{{queryCount}} qūęřįęş ŵįŧĥ ŧőŧäľ qūęřy ŧįmę őƒ {{formatted}}",
@@ -211,13 +211,31 @@
       "refresh": "Ŗęƒřęşĥ đäşĥþőäřđ",
       "save": "Ŝävę đäşĥþőäřđ",
       "settings": "Đäşĥþőäřđ şęŧŧįŉģş",
-      "share": "Ŝĥäřę đäşĥþőäřđ őř päŉęľ",
+      "share": "Ŝĥäřę đäşĥþőäřđ",
       "unmark-favorite": "Ůŉmäřĸ äş ƒävőřįŧę"
     }
+  },
+  "data-source-picker": {
+    "open-advanced-button": "Øpęŉ äđväŉčęđ đäŧä şőūřčę pįčĸęř"
   },
   "data-sources": {
     "datasource-add-button": {
       "label": "Åđđ ŉęŵ đäŧä şőūřčę"
+    }
+  },
+  "explore": {
+    "add-to-dashboard": "Åđđ ŧő đäşĥþőäřđ",
+    "toolbar": {
+      "aria-label": "Ēχpľőřę ŧőőľþäř",
+      "copy-shortened-link": "Cőpy şĥőřŧęŉęđ ľįŉĸ",
+      "refresh-picker-cancel": "Cäŉčęľ",
+      "refresh-picker-run": "Ŗūŉ qūęřy",
+      "split-close": "Cľőşę",
+      "split-close-tooltip": "Cľőşę şpľįŧ päŉę",
+      "split-narrow": "Ńäřřőŵ päŉę",
+      "split-title": "Ŝpľįŧ",
+      "split-tooltip": "Ŝpľįŧ ŧĥę päŉę",
+      "split-widen": "Ŵįđęŉ päŉę"
     }
   },
   "folder-picker": {
@@ -669,8 +687,9 @@
       "aria-label": "Ŧūřŉ őƒƒ äūŧő řęƒřęşĥ",
       "label": "Øƒƒ"
     },
-    "select-button": {
-      "auto-refresh": "Ŝęŧ äūŧő řęƒřęşĥ įŉŧęřväľ"
+    "tooltip": {
+      "interval-selected": "Ŝęŧ äūŧő řęƒřęşĥ įŉŧęřväľ",
+      "turned-off": "Åūŧő řęƒřęşĥ őƒƒ"
     }
   },
   "search": {
@@ -847,7 +866,8 @@
       "select-time": "Ŝęľęčŧ ä ŧįmę řäŉģę"
     },
     "content": {
-      "empty-recent-list": "<0><0>Ĩŧ ľőőĸş ľįĸę yőū ĥävęŉ&äpőş;ŧ ūşęđ ŧĥįş ŧįmę pįčĸęř þęƒőřę. Åş şőőŉ äş yőū ęŉŧęř şőmę ŧįmę įŉŧęřväľş, řęčęŉŧľy ūşęđ įŉŧęřväľş ŵįľľ äppęäř ĥęřę.</0></0><1><0>Ŗęäđ ŧĥę đőčūmęŉŧäŧįőŉ</0><1> ŧő ƒįŉđ őūŧ mőřę äþőūŧ ĥőŵ ŧő ęŉŧęř čūşŧőm ŧįmę řäŉģęş.</1></1>",
+      "empty-recent-list-docs": "<0><0>Ŗęäđ ŧĥę đőčūmęŉŧäŧįőŉ</0><1> ŧő ƒįŉđ őūŧ mőřę äþőūŧ ĥőŵ ŧő ęŉŧęř čūşŧőm ŧįmę řäŉģęş.</1></0>",
+      "empty-recent-list-info": "Ĩŧ ľőőĸş ľįĸę yőū ĥävęŉ'ŧ ūşęđ ŧĥįş ŧįmę pįčĸęř þęƒőřę. Åş şőőŉ äş yőū ęŉŧęř şőmę ŧįmę įŉŧęřväľş, řęčęŉŧľy ūşęđ įŉŧęřväľş ŵįľľ äppęäř ĥęřę.",
       "filter-placeholder": "Ŝęäřčĥ qūįčĸ řäŉģęş"
     },
     "footer": {

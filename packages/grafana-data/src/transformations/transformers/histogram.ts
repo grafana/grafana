@@ -253,7 +253,7 @@ export function buildHistogram(frames: DataFrame[], options?: HistogramTransform
   for (const frame of frames) {
     for (const field of frame.fields) {
       if (field.type === FieldType.number) {
-        let fieldHist = histogram(field.values, getBucket, histFilter, histSort) as AlignedData;
+        let fieldHist = histogram(field.values, getBucket, histFilter, histSort);
         histograms.push(fieldHist);
         counts.push({
           ...field,
@@ -362,7 +362,7 @@ function histogram(
   getBucket: (v: number) => number,
   filterOut?: any[] | null,
   sort?: ((a: number, b: number) => number) | null
-) {
+): AlignedData {
   let hist = new Map();
 
   for (let i = 0; i < vals.length; i++) {

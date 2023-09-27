@@ -45,6 +45,7 @@ describe('AlertingQueryRunner', () => {
         A: {
           annotations: [],
           state: LoadingState.Done,
+          errors: [],
           series: [
             expectDataFrameWithValues({
               time: [1620051612238, 1620051622238, 1620051632238],
@@ -60,6 +61,7 @@ describe('AlertingQueryRunner', () => {
         B: {
           annotations: [],
           state: LoadingState.Done,
+          errors: [],
           series: [
             expectDataFrameWithValues({
               time: [1620051612238, 1620051622238],
@@ -136,6 +138,7 @@ describe('AlertingQueryRunner', () => {
         A: {
           annotations: [],
           state: LoadingState.Done,
+          errors: [],
           series: [
             expectDataFrameWithValues({
               time: [1620051612238, 1620051622238, 1620051632238],
@@ -151,6 +154,7 @@ describe('AlertingQueryRunner', () => {
         B: {
           annotations: [],
           state: LoadingState.Done,
+          errors: [],
           series: [
             expectDataFrameWithValues({
               time: [1620051612238, 1620051622238],
