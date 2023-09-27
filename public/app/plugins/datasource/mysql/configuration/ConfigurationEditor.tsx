@@ -74,11 +74,7 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<My
             onChange={onDSOptionChanged('url')}
           />
         </Field>
-      </ConfigSection>
 
-      <Divider />
-
-      <ConfigSection title="Authentication">
         <Field label="Database name">
           <Input
             width={WIDTH_LONG}
@@ -88,7 +84,11 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<My
             onChange={onUpdateDatasourceJsonDataOption(props, 'database')}
           />
         </Field>
+      </ConfigSection>
 
+      <Divider />
+
+      <ConfigSection title="Authentication">
         <Field label="Username">
           <Input
             width={WIDTH_LONG}
@@ -137,15 +137,6 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<My
         </Field>
       </ConfigSection>
 
-      {config.secureSocksDSProxyEnabled && (
-        <>
-          <Divider />
-          {config.secureSocksDSProxyEnabled && (
-            <SecureSocksProxySettings options={options} onOptionsChange={onOptionsChange} />
-          )}
-        </>
-      )}
-
       {jsonData.tlsAuth || jsonData.tlsAuthWithCACert ? (
         <>
           <Divider />
@@ -156,7 +147,7 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<My
                 showCACert={jsonData.tlsAuthWithCACert}
                 showKeyPair={jsonData.tlsAuth}
                 editorProps={props}
-                labelWidth={25}
+                labelWidth={WIDTH_LONG}
               />
             ) : null}
           </ConfigSection>
@@ -229,6 +220,13 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<My
       <Divider />
 
       <ConnectionLimits labelWidth={WIDTH_SHORT} options={options} onOptionsChange={onOptionsChange} />
+
+      {config.secureSocksDSProxyEnabled && (
+        <>
+          <Divider />
+          <SecureSocksProxySettings options={options} onOptionsChange={onOptionsChange} />
+        </>
+      )}
 
       <Divider />
 
