@@ -30,31 +30,29 @@ jest.spyOn(grafanaRuntime, 'getTemplateSrv').mockImplementation(() => ({
 describe('AzureResourceGraphDatasource', () => {
   let ctx: Context;
 
-  beforeEach(() => {
-    ctx = createContext({
-      instanceSettings: {
-        url: 'http://azureresourcegraphapi',
-        jsonData: { subscriptionId: '9935389e-9122-4ef9-95f9-1513dd24753f', cloudName: 'azuremonitor' },
-      },
-    });
-    getTempVars = () => [] as CustomVariableModel[];
-    replace = () => "";
-  });
-
   describe('When performing interpolateVariablesInQueries for azure_resource_graph', () => {
+    beforeEach(() => {
+      ctx = createContext({
+        instanceSettings: {
+          url: 'http://azureresourcegraphapi',
+          jsonData: { subscriptionId: '9935389e-9122-4ef9-95f9-1513dd24753f', cloudName: 'azuremonitor' },
+        },
+      });
+      getTempVars = () => [] as CustomVariableModel[];
+      replace = (target?: string) => target || "";
+    });
+
     it('should return a query unchanged if no template variables are provided', () => {
       const query = createMockQuery();
       query.queryType = AzureQueryType.AzureResourceGraph;
-      replace = (target?: string | undefined) => {return target || ''}
       const templatedQuery = ctx.datasource.interpolateVariablesInQueries([query], {});
-      expect(templatedQuery).toEqual(query);
+      expect(templatedQuery).toEqual([query]);
     });
 
     it('should return a query with any template variables replaced', () => {
       const templateableProps = ['query'];
       const templateVariables = createTemplateVariables(templateableProps);
-      getTempVars = () => Array.from(templateVariables.values()).map((item) => item.templateVariable as CustomVariableModel);
-      replace = () => {return "query-template-variable"}
+      replace = () => "query-template-variable";
       const query = createMockQuery();
       const azureResourceGraph = {};
       for (const [path, templateVariable] of templateVariables.entries()) {
@@ -67,9 +65,9 @@ describe('AzureResourceGraphDatasource', () => {
         ...azureResourceGraph,
       };
       const templatedQuery = ctx.datasource.interpolateVariablesInQueries([query], {});
-      expect(templatedQuery).toHaveProperty('datasource');
+      expect(templatedQuery[0]).toHaveProperty('datasource');
       for (const [path, templateVariable] of templateVariables.entries()) {
-        expect(get(templatedQuery, path)).toEqual(
+        expect(get(templatedQuery[0].azureResourceGraph, path)).toEqual(
           templateVariable.templateVariable.current.value
         );
       }
@@ -77,6 +75,11 @@ describe('AzureResourceGraphDatasource', () => {
   });
 
   describe('When applying template variables', () => {
+    beforeEach(() => {
+      getTempVars = () => [] as CustomVariableModel[];
+      replace = (target?: string) => target || "";
+    });
+
     it('should expand single value template variable', () => {
       const target = createMockQuery({
         subscriptions: [],
@@ -86,12 +89,7 @@ describe('AzureResourceGraphDatasource', () => {
         },
       });
       getTempVars = () => Array.from([subscriptionsVariable, singleVariable, multiVariable].values()).map((item) => item);
-      replace = (target?: string | undefined) => {
-        if (target === "Resources | $var1") {
-          return "Resources | var1-foo"
-        }
-        return target || "";
-      }
+      replace = (target?: string | undefined) =>  target === "Resources | $var1" ? "Resources | var1-foo" : target || "";
       expect(ctx.datasource.azureResourceGraphDatasource.applyTemplateVariables(target, {})).toEqual(
         expect.objectContaining({
           ...target,
@@ -140,12 +138,7 @@ describe('AzureResourceGraphDatasource', () => {
       },
     });
     getTempVars = () => Array.from([subscriptionsVariable, singleVariable, multiVariable].values()).map((item) => item);
-      replace = (target?: string | undefined) => {
-        if (target === "$subs") {
-          return "sub-foo,sub-baz"
-        }
-        return target || "";
-      }
+    replace = (target?: string | undefined) => target === "$subs" ? "sub-foo,sub-baz" : target || "";
     expect(ctx.datasource.azureResourceGraphDatasource.applyTemplateVariables(target, {})).toEqual(
       expect.objectContaining({
         azureResourceGraph: {
