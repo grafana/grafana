@@ -1,6 +1,19 @@
+import { llms } from '@grafana/experimental';
+
 import { createDashboardModelFixture, createPanelJSONFixture } from '../../state/__fixtures__/dashboardFixtures';
 
-import { getDashboardChanges } from './utils';
+import { getDashboardChanges, isLLMPluginEnabled } from './utils';
+
+// Mock the llms.openai module
+jest.mock('@grafana/experimental', () => ({
+  llms: {
+    openai: {
+      streamChatCompletions: jest.fn(),
+      accumulateContent: jest.fn(),
+      enabled: jest.fn(),
+    },
+  },
+}));
 
 describe('getDashboardChanges', () => {
   it('should correctly split user changes and migration changes', () => {
@@ -50,5 +63,25 @@ describe('getDashboardChanges', () => {
         },
       ],
     });
+  });
+});
+
+describe('isLLMPluginEnabled', () => {
+  it('should return true if LLM plugin is enabled', async () => {
+    // Mock llms.openai.enabled to return true
+    jest.mocked(llms.openai.enabled).mockResolvedValue(true);
+
+    const enabled = await isLLMPluginEnabled();
+
+    expect(enabled).toBe(true);
+  });
+
+  it('should return false if LLM plugin is not enabled', async () => {
+    // Mock llms.openai.enabled to return false
+    jest.mocked(llms.openai.enabled).mockResolvedValue(false);
+
+    const enabled = await isLLMPluginEnabled();
+
+    expect(enabled).toBe(false);
   });
 });

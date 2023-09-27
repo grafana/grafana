@@ -4,7 +4,7 @@ import { Subscription } from 'rxjs';
 
 import { llms } from '@grafana/experimental';
 
-import { OPEN_AI_MODEL } from './utils';
+import { isLLMPluginEnabled, OPEN_AI_MODEL } from './utils';
 
 // Declared instead of imported from utils to make this hook modular
 // Ideally we will want to move the hook itself to a different scope later.
@@ -40,7 +40,7 @@ export function useOpenAIStream(
   const { error, value } = useAsync(async () => {
     // Check if the LLM plugin is enabled and configured.
     // If not, we won't be able to make requests, so return early.
-    const enabled = await llms.openai.enabled();
+    const enabled = await isLLMPluginEnabled();
     if (!enabled) {
       return { enabled };
     }

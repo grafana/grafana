@@ -41,3 +41,13 @@ export function getDashboardChanges(dashboard: DashboardModel): {
     migrationChanges: jsonDiff(originalDashboard, dashboardAfterMigration),
   };
 }
+
+/**
+ * Check if the LLM plugin is enabled and configured.
+ * @returns true if the LLM plugin is enabled and configured.
+ */
+export async function isLLMPluginEnabled() {
+  // Check if the LLM plugin is enabled and configured.
+  // If not, we won't be able to make requests, so return early.
+  return await llms.openai.enabled();
+}
