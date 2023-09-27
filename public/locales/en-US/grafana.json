@@ -132,7 +132,6 @@
       "error-message": "An unknown error occurred while fetching correlation data. Please try again.",
       "title": "Error fetching correlation data"
     },
-    "link": "documentation ",
     "list": {
       "delete": "delete correlation",
       "label": "Label",
