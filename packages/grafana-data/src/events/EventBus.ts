@@ -136,7 +136,7 @@ class ScopedEventBus implements EventBus {
   }
 
   getStream<T extends BusEvent>(eventType: BusEventType<T>): Observable<T> {
-    return this.eventBus.getStream(eventType).pipe(filter(this.filter));
+    return this.eventBus.getStream(eventType).pipe(filter(this.filter.bind(this)));
   }
 
   // syntax sugar
