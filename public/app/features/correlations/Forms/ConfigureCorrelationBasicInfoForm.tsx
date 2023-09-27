@@ -34,7 +34,7 @@ export const ConfigureCorrelationBasicInfoForm = () => {
         <Field
           label={t('correlations.basic-info.Label-label', 'Label')}
           description={t(
-            'correlations.basic-info.Label-description',
+            'correlations.basic-info.label-description',
             'This name will be used as the label for the correlation. This will show as button text, a menu item, or hover text on a link.'
           )}
           className={styles.label}
