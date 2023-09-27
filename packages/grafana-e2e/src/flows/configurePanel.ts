@@ -156,7 +156,7 @@ export const configurePanel = (config: PartialAddPanelConfig | PartialEditPanelC
     e2e.components.RefreshPicker.runButtonV2().first().click({ force: true });
 
     // Wait for RxJS
-    e2e().wait(timeout ?? Cypress.config().defaultCommandTimeout);
+    e2e().wait(timeout ?? e2e.config().defaultCommandTimeout);
 
     if (matchScreenshot) {
       let visualization;

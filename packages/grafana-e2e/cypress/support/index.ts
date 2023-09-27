@@ -10,7 +10,7 @@ Cypress.Screenshot.defaults({
 
 const COMMAND_DELAY = 1000;
 
-if (Cypress.env('SLOWMO')) {
+if (e2e.env('SLOWMO')) {
   const commandsToModify = ['clear', 'click', 'contains', 'reload', 'then', 'trigger', 'type', 'visit'];
 
   commandsToModify.forEach((command) => {

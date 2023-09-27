@@ -24,7 +24,7 @@ export const e2eScenario = ({
       it.skip(itName, () => scenario());
     } else {
       before(() => {
-        e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'), loginViaApi);
+        e2e.flows.login(e2e.env('USERNAME'), e2e.env('PASSWORD'), loginViaApi);
         e2e.flows.setDefaultUserPreferences();
       });
 

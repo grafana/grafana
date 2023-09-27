@@ -32,7 +32,7 @@ export const benchmark = ({
 
   describe(name, () => {
     before(() => {
-      e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'));
+      e2e.flows.login(e2e.env('USERNAME'), e2e.env('PASSWORD'));
     });
 
     beforeEach(() => {
