@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { config } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
-import { AccessControlAction, ExploreItemState, useDispatch, useSelector } from 'app/types';
+import { AccessControlAction, useDispatch, useSelector } from 'app/types';
 
 import { splitOpen, splitClose, changeCorrelationEditorDetails } from './state/main';
 import { runQueries } from './state/query';
