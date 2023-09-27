@@ -103,15 +103,18 @@ export function ExploreToolbar({ exploreId, topOfViewRef, onChangeTime }: Props)
           })
         );
       } else {
-        // not dirty, clear helper data, then switch
-        panes.forEach((pane) => {
-          dispatch(
-            changeCorrelationHelperData({
-              exploreId: pane[0],
-              correlationEditorHelperData: undefined,
-            })
-          );
-        });
+        // if the left pane is changing, clear helper data for right pane
+        if (isLeftPane) {
+          panes.forEach((pane) => {
+            dispatch(
+              changeCorrelationHelperData({
+                exploreId: pane[0],
+                correlationEditorHelperData: undefined,
+              })
+            );
+          });
+        }
+
         dispatch(changeDatasource(exploreId, dsSettings.uid, { importQueries: true }));
       }
     }
