@@ -189,6 +189,10 @@ type SearchParams struct {
 	// default: alpha-asc
 	// Enum: alpha-asc,alpha-desc
 	Sort string `json:"sort"`
+	// Panel title
+	// in:query
+	// required: false
+	PanelTitle string `json:"panelTitle"`
 }
 
 // swagger:response searchResponse
