@@ -73,7 +73,7 @@ export const GraphContainer = ({
       titleItems={[
         MAX_NUMBER_OF_TIME_SERIES < data.length && !showAllTimeSeries && (
           <div key="disclaimer" className={styles.timeSeriesDisclaimer}>
-            <Tooltip content="Showing only 20 time series">
+            <Tooltip content={`Showing only ${MAX_NUMBER_OF_TIME_SERIES} time series`}>
               <Icon className={styles.disclaimerIcon} name="exclamation-triangle" />
             </Tooltip>
             <Button variant="secondary" size="sm" onClick={() => setShowAllTimeSeries(true)}>
