@@ -875,6 +875,12 @@
       "empty-recent-list-info": "It looks like you haven't used this time picker before. As soon as you enter some time intervals, recently used intervals will appear here.",
       "filter-placeholder": "Search quick ranges"
     },
+    "dashboard-settings": {
+      "json-editor-settings": {
+        "save-button": "",
+        "subtitle": ""
+      }
+    },
     "footer": {
       "change-settings-button": "Change time settings",
       "fiscal-year-option": "Fiscal year",

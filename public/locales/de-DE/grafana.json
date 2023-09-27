@@ -875,6 +875,12 @@
       "empty-recent-list-info": "Es sieht so aus, als hätten Sie diesen Zeit-Auswähler noch nie benutzt. Sobald Sie einige Zeitintervalle eingeben, werden hier die zuletzt verwendeten Intervalle angezeigt.",
       "filter-placeholder": "Schnellbereiche suchen"
     },
+    "dashboard-settings": {
+      "json-editor-settings": {
+        "save-button": "Änderungen speichern",
+        "subtitle": "Das folgende JSON-Modell ist die Datenstruktur, die das Dashboard definiert. Dazu gehören Dashboard-Einstellungen, Panel-Einstellungen, Layout, Abfragen usw"
+      }
+    },
     "footer": {
       "change-settings-button": "Zeiteinstellungen ändern",
       "fiscal-year-option": "Geschäftsjahr",

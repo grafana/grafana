@@ -870,6 +870,12 @@
       "empty-recent-list-info": "看起来您之前没有使用过这个时间选择器。一旦您输入了某些时间间隔，最近使用的间隔就会出现在此处。",
       "filter-placeholder": "搜索快速范围"
     },
+    "dashboard-settings": {
+      "json-editor-settings": {
+        "save-button": "保存更改",
+        "subtitle": "下面的 JSON 模型是定义仪表板的数据结构。 这包括仪表板设置、面板设置、布局、查询等"
+      }
+    },
     "footer": {
       "change-settings-button": "更改时间设置",
       "fiscal-year-option": "财政年度",

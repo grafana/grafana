@@ -880,6 +880,12 @@
       "empty-recent-list-info": "Parece que no ha utilizado antes este selector de tiempo. En cuanto introduzca algún intervalo de tiempo, los intervalos que haya usado recientemente aparecerán aquí.",
       "filter-placeholder": "Buscar intervalos rápidos"
     },
+    "dashboard-settings": {
+      "json-editor-settings": {
+        "save-button": "Guardar cambios",
+        "subtitle": "El siguiente modelo JSON es la estructura de datos que define el panel. Esto incluye la configuración del panel, la configuración del panel, el diseño, las consultas, etc."
+      }
+    },
     "footer": {
       "change-settings-button": "Cambiar ajustes de tiempo",
       "fiscal-year-option": "Ejercicio fiscal",
