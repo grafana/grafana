@@ -13,7 +13,7 @@ weight: 600
 
 Besides the wide range of visualizations and data sources that are available immediately after you install Grafana, you can extend your Grafana experience with _plugins_.
 
-You can [install]({{< ref "#install-a-plugin" >}}) one of the plugins built by the Grafana community, or [build one yourself]({{< relref "../../developers/plugins/" >}}).
+You can [install]({{< ref "#install-a-plugin" >}}) one of the plugins built by the Grafana community, or [build one yourself](https://grafana.com/developers/plugin-tools).
 
 Grafana supports three types of plugins: [panels](https://grafana.com/grafana/plugins?type=panel), [data sources](https://grafana.com/grafana/plugins?type=datasource), and [apps](https://grafana.com/grafana/plugins?type=app).
 
