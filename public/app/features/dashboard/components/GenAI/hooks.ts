@@ -21,11 +21,11 @@ export function useOpenAIStream(
   error: Error | undefined;
   value:
     | {
-        enabled: any;
+        enabled: boolean;
         stream?: undefined;
       }
     | {
-        enabled: any;
+        enabled: boolean;
         stream: Subscription;
       }
     | undefined;
