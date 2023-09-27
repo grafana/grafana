@@ -62,7 +62,7 @@ The section contains tabs where you enter queries, transform your data, and crea
 
 The section contains tabs where you configure almost every aspect of your data Visualization. Not all options are available for each visualization.
 
-The data model used in Grafana, namely the [data frame](https://grafana.com/developers/plugin-tools/introduction/data-frames), is a columnar-oriented table structure that unifies both time series and table query results. Each column within this structure is called a _field_. A field can represent a single time series or table column.
+The data model used in Grafana, namely the [data frame]({{< relref "../developers/plugins/data-frames.md" >}}), is a columnar-oriented table structure that unifies both time series and table query results. Each column within this structure is called a _field_. A field can represent a single time series or table column.
 
 Field options allow you to change how the data is displayed in your visualizations. Options and overrides that you apply do not change the data, however they change how Grafana displays the data.
 
