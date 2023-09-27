@@ -18,6 +18,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 )
 
 func ProvideService(cfg *setting.Cfg, tracer tracing.Tracer, features *featuremgmt.FeatureManager, authnService authn.Service,
@@ -125,13 +127,11 @@ func (h *ContextHandler) Middleware(next http.Handler) http.Handler {
 		}
 
 		reqContext.Logger = reqContext.Logger.New("userId", reqContext.UserID, "orgId", reqContext.OrgID, "uname", reqContext.Login)
-		span.AddEvents(
-			[]string{"uname", "orgId", "userId"},
-			[]tracing.EventValue{
-				{Str: reqContext.Login},
-				{Num: reqContext.OrgID},
-				{Num: reqContext.UserID}},
-		)
+		span.AddEvent("user", trace.WithAttributes(
+			attribute.String("uname", reqContext.Login),
+			attribute.Int64("orgId", reqContext.OrgID),
+			attribute.Int64("userId", reqContext.UserID),
+		))
 
 		next.ServeHTTP(w, r)
 	})

@@ -57,7 +57,7 @@ type TracingService struct {
 	log log.Logger
 
 	tracerProvider tracerProvider
-	tracer         trace.Tracer
+	trace.Tracer
 
 	Cfg *setting.Cfg
 }
@@ -79,11 +79,8 @@ type EventValue struct {
 
 // Tracer defines the service used to create new spans.
 type Tracer interface {
-	// Start creates a new [Span] and places trace metadata on the
-	// [context.Context] passed to the method.
-	// Chose a low cardinality spanName and use [Span.SetAttributes]
-	// or [Span.AddEvents] for high cardinality data.
-	Start(ctx context.Context, spanName string, opts ...trace.SpanStartOption) (context.Context, Span)
+	trace.Tracer
+
 	// Inject adds identifying information for the span to the
 	// headers defined in [http.Header] map (this mutates http.Header).
 	//
@@ -92,7 +89,7 @@ type Tracer interface {
 	// information passed as [Span] is preferred.
 	// Both the context and span must be derived from the same call to
 	// [Tracer.Start].
-	Inject(context.Context, http.Header, Span)
+	Inject(context.Context, http.Header, trace.Span)
 
 	// OtelTracer returns the trace.Tracer if available or nil.
 	OtelTracer() trace.Tracer
@@ -166,13 +163,13 @@ type traceValue struct {
 	IsSampled bool
 }
 
-func TraceIDFromContext(c context.Context, requireSampled bool) string {
-	v := c.Value(traceKey{})
-	// Return traceID if a) it is present and b) it is sampled when requireSampled param is true
-	if trace, ok := v.(traceValue); ok && (!requireSampled || trace.IsSampled) {
-		return trace.ID
+func TraceIDFromContext(ctx context.Context, requireSampled bool) string {
+	spanCtx := trace.SpanContextFromContext(ctx)
+	if !spanCtx.HasTraceID() || !spanCtx.IsValid() || (requireSampled && !spanCtx.IsSampled()) {
+		return ""
 	}
-	return ""
+
+	return spanCtx.TraceID().String()
 }
 
 // SpanFromContext returns the Span previously associated with ctx, or nil, if no such span could be found.
@@ -448,7 +445,7 @@ func (ots *TracingService) initOpentelemetryTracer() error {
 		ots.tracerProvider = tp
 	}
 
-	ots.tracer = otel.GetTracerProvider().Tracer("component-main")
+	ots.Tracer = otel.GetTracerProvider().Tracer("component-main")
 
 	return nil
 }
@@ -476,25 +473,12 @@ func (ots *TracingService) Run(ctx context.Context) error {
 	return nil
 }
 
-func (ots *TracingService) Start(ctx context.Context, spanName string, opts ...trace.SpanStartOption) (context.Context, Span) {
-	ctx, span := ots.tracer.Start(ctx, spanName, opts...)
-	opentelemetrySpan := OpentelemetrySpan{
-		span: span,
-	}
-
-	if traceID := span.SpanContext().TraceID(); traceID.IsValid() {
-		ctx = context.WithValue(ctx, traceKey{}, traceValue{traceID.String(), span.SpanContext().IsSampled()})
-	}
-
-	return ctx, opentelemetrySpan
-}
-
-func (ots *TracingService) Inject(ctx context.Context, header http.Header, _ Span) {
+func (ots *TracingService) Inject(ctx context.Context, header http.Header, _ trace.Span) {
 	otel.GetTextMapPropagator().Inject(ctx, propagation.HeaderCarrier(header))
 }
 
 func (ots *TracingService) OtelTracer() trace.Tracer {
-	return ots.tracer
+	return ots
 }
 
 func (s OpentelemetrySpan) End() {

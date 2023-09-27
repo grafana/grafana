@@ -10,12 +10,12 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 	"gonum.org/v1/gonum/graph/simple"
 
 	"github.com/grafana/grafana/pkg/expr/classic"
 	"github.com/grafana/grafana/pkg/expr/mathexp"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
@@ -236,8 +236,10 @@ func executeDSNodesGrouped(ctx context.Context, now time.Time, vars mathexp.Vars
 				"datasourceVersion", firstNode.datasource.Version,
 			)
 
-			span.SetAttributes("datasource.type", firstNode.datasource.Type, attribute.Key("datasource.type").String(firstNode.datasource.Type))
-			span.SetAttributes("datasource.uid", firstNode.datasource.UID, attribute.Key("datasource.uid").String(firstNode.datasource.UID))
+			span.SetAttributes(
+				attribute.Key("datasource.type").String(firstNode.datasource.Type),
+				attribute.Key("datasource.uid").String(firstNode.datasource.UID),
+			)
 
 			req := &backend.QueryDataRequest{
 				PluginContext: pCtx,
@@ -261,11 +263,7 @@ func executeDSNodesGrouped(ctx context.Context, now time.Time, vars mathexp.Vars
 				if e != nil {
 					responseType = "error"
 					respStatus = "failure"
-					span.AddEvents([]string{"error", "message"},
-						[]tracing.EventValue{
-							{Str: fmt.Sprintf("%v", err)},
-							{Str: "failed to query data source"},
-						})
+					span.RecordError(e, trace.WithAttributes(attribute.Key("message").String("failed to query data source")))
 				}
 				logger.Debug("Data source queried", "responseType", responseType)
 				useDataplane := strings.HasPrefix(responseType, "dataplane-")
@@ -313,8 +311,10 @@ func (dn *DSNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s 
 	if err != nil {
 		return mathexp.Results{}, err
 	}
-	span.SetAttributes("datasource.type", dn.datasource.Type, attribute.Key("datasource.type").String(dn.datasource.Type))
-	span.SetAttributes("datasource.uid", dn.datasource.UID, attribute.Key("datasource.uid").String(dn.datasource.UID))
+	span.SetAttributes(
+		attribute.Key("datasource.type").String(dn.datasource.Type),
+		attribute.Key("datasource.uid").String(dn.datasource.UID),
+	)
 
 	req := &backend.QueryDataRequest{
 		PluginContext: pCtx,
@@ -337,11 +337,7 @@ func (dn *DSNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s 
 		if e != nil {
 			responseType = "error"
 			respStatus = "failure"
-			span.AddEvents([]string{"error", "message"},
-				[]tracing.EventValue{
-					{Str: fmt.Sprintf("%v", err)},
-					{Str: "failed to query data source"},
-				})
+			span.RecordError(e, trace.WithAttributes(attribute.String("message", "failed to query data source")))
 		}
 		logger.Debug("Data source queried", "responseType", responseType)
 		useDataplane := strings.HasPrefix(responseType, "dataplane-")
