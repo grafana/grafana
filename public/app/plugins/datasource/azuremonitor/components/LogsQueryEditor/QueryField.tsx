@@ -5,7 +5,6 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { CodeEditor, Monaco, MonacoEditor } from '@grafana/ui';
 
 import { AzureQueryEditorFieldProps } from '../../types';
-import { Deferred } from '../../utils/deferred';
 
 import { setKustoQuery } from './setQueryValue';
 
