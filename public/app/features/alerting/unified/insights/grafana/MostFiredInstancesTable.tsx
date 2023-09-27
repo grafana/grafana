@@ -1,7 +1,8 @@
+import { css } from '@emotion/css';
 import React from 'react';
 import { Observable, map } from 'rxjs';
 
-import { DataFrame, Field } from '@grafana/data';
+import { DataFrame, Field, GrafanaTheme2 } from '@grafana/data';
 import {
   CustomTransformOperator,
   PanelBuilders,
@@ -11,7 +12,7 @@ import {
   SceneTimeRange,
 } from '@grafana/scenes';
 import { DataSourceRef } from '@grafana/schema';
-import { Icon, Link } from '@grafana/ui';
+import { Link, useStyles2 } from '@grafana/ui';
 
 import { PANEL_STYLES } from '../../home/Insights';
 import { createUrl } from '../../utils/url';
@@ -36,11 +37,7 @@ export function getMostFiredInstancesScene(timeRange: SceneTimeRange, datasource
       values: field.values.map((value, index) => {
         const ruleUIDs = frame.fields.find((field) => field.name === 'ruleUID');
         const ruleUID = ruleUIDs?.values[index];
-        return (
-          <Link key={value} target="_blank" href={createUrl(`/alerting/grafana/${ruleUID}/view`)}>
-            {value} <Icon name="external-link-alt" />
-          </Link>
-        );
+        return <RuleLink key={value} value={value} ruleUID={ruleUID} />;
       }),
     };
   };
@@ -109,4 +106,24 @@ export function getMostFiredInstancesScene(timeRange: SceneTimeRange, datasource
       .setNoValue('No new alerts fired last week')
       .build(),
   });
+}
+
+export function RuleLink({ value, ruleUID }: { value: string; ruleUID: string }) {
+  const getStyles = (theme: GrafanaTheme2) => ({
+    link: css`
+      & > a {
+        color: ${theme.colors.text.link};
+      }
+    `,
+  });
+
+  const styles = useStyles2(getStyles);
+
+  return (
+    <div className={styles.link}>
+      <Link target="_blank" href={createUrl(`/alerting/grafana/${ruleUID}/view`)}>
+        {value}
+      </Link>
+    </div>
+  );
 }
