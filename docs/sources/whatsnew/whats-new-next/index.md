@@ -24,7 +24,7 @@ Welcome to Grafana Cloud! Read on to learn about the newest changes to Grafana C
 
 _Generally available in Grafana Cloud_
 
-You can now use the Grafana Cloud Traces integration with Grafana Cloud k6 to quickly debug and proactively improve application reliability.
+You can now use the Grafana Cloud Traces integration with Grafana Cloud k6 to quickly debug failed performance tests and proactively improve application reliability.
 
 Distributed tracing in Grafana Cloud k6 works by having k6 automatically inject tracing metadata into the requests it sends to users’ backend services when they run a test. The tracing data is then correlated with k6 test run data, so users can understand how their services and operations behaved during the whole test run. The collected tracing data is aggregated to generate real-time metrics, such as frequency of calls, error rates, and percentile latencies, that help users narrow their search space and quickly spot anomalies.
 
