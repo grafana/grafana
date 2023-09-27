@@ -33,16 +33,16 @@ load(
     "shellcheck_pipeline",
 )
 load(
+    'scripts/drone/pipelines/swagger_gen.star',
+    'swagger_gen',
+)
+load(
     "scripts/drone/pipelines/test_backend.star",
     "test_backend",
 )
 load(
     "scripts/drone/pipelines/test_frontend.star",
     "test_frontend",
-)
-load(
-    'scripts/drone/pipelines/swagger_gen.star',
-    'swagger_gen',
 )
 load(
     "scripts/drone/pipelines/verify_drone.star",
