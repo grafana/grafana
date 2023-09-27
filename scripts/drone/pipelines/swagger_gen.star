@@ -14,9 +14,6 @@ load(
 )
 
 def clone_pr_branch(ver_mode):
-    if edition in ['enterprise', 'enterprise2']:
-        return None
-
     if ver_mode != "pr":
         return None
 
@@ -32,9 +29,6 @@ def clone_pr_branch(ver_mode):
     }
 
 def clone_enterprise_step(ver_mode):
-    if edition in ['enterprise', 'enterprise2']:
-        return None
-
     if ver_mode != "pr":
         return None
 
@@ -55,71 +49,8 @@ def clone_enterprise_step(ver_mode):
             'clone-pr-branch',
         ],
     }
-# def enterprise_setup_step(source = "${DRONE_SOURCE_BRANCH}", canFail = True, isPromote = False):
-#     """Setup the enterprise source into the ./grafana-enterprise directory.
 
-#     Args:
-#       source: controls which revision of grafana-enterprise is checked out, if it exists. The name 'source' derives from the 'source branch' of a pull request.
-#       canFail: controls whether the step can fail. This is useful for pull requests where the enterprise source may not exist.
-#       isPromote: controls whether or not this step is being used in a promote pipeline. If it is, then the clone enterprise step will not check if the pull request is a fork.
-#     Returns:
-#         Drone step.
-#     """
-#     step = clone_enterprise_step_pr(source = source, target = "${DRONE_TARGET_BRANCH}", canFail = canFail, location = "../grafana-enterprise", isPromote = isPromote)
-#     step["commands"] += [
-#         "cd ../",
-#         "ln -s src grafana",
-#         "cd ./grafana-enterprise",
-#         "./build.sh",
-#     ]
-
-#     return step
-
-# def clone_enterprise_step_pr(source = "${DRONE_COMMIT}", target = "main", canFail = False, location = "grafana-enterprise", isPromote = False):
-#     """Clone the enterprise source into the ./grafana-enterprise directory.
-
-#     Args:
-#       source: controls which revision of grafana-enterprise is checked out, if it exists. The name 'source' derives from the 'source branch' of a pull request.
-#       target: controls which revision of grafana-enterprise is checked out, if it 'source' does not exist. The name 'target' derives from the 'target branch' of a pull request. If this does not exist, then 'main' will be checked out.
-#       canFail: controls whether or not this step is allowed to fail. If it fails and this is true, then the pipeline will continue. canFail is used in pull request pipelines where enterprise may be cloned but may not clone in forks.
-#       location: the path where grafana-enterprise is cloned.
-#       isPromote: controls whether or not this step is being used in a promote pipeline. If it is, then the step will not check if the pull request is a fork.
-#     Returns:
-#       Drone step.
-#     """
-
-#     if isPromote:
-#         check = []
-#     else:
-#         check = [
-#             'is_fork=$(curl "https://$GITHUB_TOKEN@api.github.com/repos/grafana/grafana/pulls/$DRONE_PULL_REQUEST" | jq .head.repo.fork)',
-#             'if [ "$is_fork" != false ]; then return 1; fi',  # Only clone if we're confident that 'fork' is 'false'. Fail if it's also empty.
-#         ]
-
-#     step = {
-#         "name": "clone-enterprise",
-#         "image": images["git"],
-#         "environment": {
-#             "GITHUB_TOKEN": from_secret("github_token"),
-#         },
-#         "commands": [
-#             "apk add --update curl jq bash",
-#         ] + check + [
-#             'git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git" ' + location,
-#             "cd {}".format(location),
-#             'if git checkout {0}; then echo "checked out {0}"; elif git checkout {1}; then echo "git checkout {1}"; else git checkout main; fi'.format(source, target),
-#         ],
-#     }
-
-#     if canFail:
-#         step["failure"] = "ignore"
-
-#     return step
-
-def swagger_gen_step(edition, ver_mode):
-    if edition in ['enterprise', 'enterprise2']:
-        return None
-
+def swagger_gen_step(ver_mode):
     if ver_mode != "pr":
         return None
 
@@ -145,7 +76,7 @@ def swagger_gen(trigger, ver_mode):
 	test_steps = [
 		clone_pr_branch(ver_mode=ver_mode),
 		clone_enterprise_step(ver_mode=ver_mode),
-		swagger_gen_step(edver_mode=ver_mode)
+		swagger_gen_step(ver_mode=ver_mode)
 	]
 
 	p = pipeline(
