@@ -14,7 +14,7 @@ type = "docs"
 <b>Signature</b>
 
 ```typescript
-export declare function SegmentSelect<T>({ value, options, onChange, onClickOutside, width, noOptionsMessage, allowCustomValue, }: React.PropsWithChildren<Props<T>>): JSX.Element;
+export declare function SegmentSelect<T>({ value, options, onChange, onClickOutside, width, noOptionsMessage, allowCustomValue, ...rest }: React.PropsWithChildren<Props<T>>): JSX.Element;
 ```
 <b>Import</b>
 
@@ -25,7 +25,7 @@ import { SegmentSelect } from '@grafana/ui';
 
 |  Parameter | Type | Description |
 |  --- | --- | --- |
-|  { value, options, onChange, onClickOutside, width, noOptionsMessage, allowCustomValue, } | <code>React.PropsWithChildren&lt;Props&lt;T&gt;&gt;</code> |  |
+|  { value, options, onChange, onClickOutside, width, noOptionsMessage, allowCustomValue, ...rest } | <code>React.PropsWithChildren&lt;Props&lt;T&gt;&gt;</code> |  |
 
 <b>Returns:</b>
 

@@ -14,7 +14,7 @@ type = "docs"
 <b>Signature</b>
 
 ```typescript
-export declare type PreferredVisualisationType = 'graph' | 'table';
+export declare type PreferredVisualisationType = 'graph' | 'table' | 'logs' | 'trace';
 ```
 <b>Import</b>
 

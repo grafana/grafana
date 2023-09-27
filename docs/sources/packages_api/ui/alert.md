@@ -4,7 +4,6 @@
 # -----------------------------------------------------------------------
 title = "Alert"
 keywords = ["grafana","documentation","sdk","@grafana/ui"]
-type = "docs"
 +++
 
 ## Alert variable
@@ -14,7 +13,7 @@ type = "docs"
 <b>Signature</b>
 
 ```typescript
-Alert: FC<AlertProps>
+Alert: FC<Props>
 ```
 <b>Import</b>
 

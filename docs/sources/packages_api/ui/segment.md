@@ -14,7 +14,7 @@ type = "docs"
 <b>Signature</b>
 
 ```typescript
-export declare function Segment<T>({ options, value, onChange, Component, className, allowCustomValue, placeholder, }: React.PropsWithChildren<SegmentSyncProps<T>>): JSX.Element;
+export declare function Segment<T>({ options, value, onChange, Component, className, allowCustomValue, placeholder, ...rest }: React.PropsWithChildren<SegmentSyncProps<T>>): JSX.Element;
 ```
 <b>Import</b>
 
@@ -25,7 +25,7 @@ import { Segment } from '@grafana/ui';
 
 |  Parameter | Type | Description |
 |  --- | --- | --- |
-|  { options, value, onChange, Component, className, allowCustomValue, placeholder, } | <code>React.PropsWithChildren&lt;SegmentSyncProps&lt;T&gt;&gt;</code> |  |
+|  { options, value, onChange, Component, className, allowCustomValue, placeholder, ...rest } | <code>React.PropsWithChildren&lt;SegmentSyncProps&lt;T&gt;&gt;</code> |  |
 
 <b>Returns:</b>
 

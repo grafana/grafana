@@ -26,7 +26,9 @@ import { DataSourceSrv } from '@grafana/runtime';
 |  Method | Description |
 |  --- | --- |
 |  [get(name, scopedVars)](#get-method) |  |
+|  [getAll()](#getall-method) | Get all data sources |
 |  [getDataSourceSettingsByUid(uid)](#getdatasourcesettingsbyuid-method) | Returns metadata based on UID. |
+|  [getExternal()](#getexternal-method) | Get all data sources except for internal ones that usually should not be listed like mixed data source. |
 
 ### get method
 
@@ -46,6 +48,19 @@ get(name?: string | null, scopedVars?: ScopedVars): Promise<DataSourceApi>;
 
 `Promise<DataSourceApi>`
 
+### getAll method
+
+Get all data sources
+
+<b>Signature</b>
+
+```typescript
+getAll(): DataSourceInstanceSettings[];
+```
+<b>Returns:</b>
+
+`DataSourceInstanceSettings[]`
+
 ### getDataSourceSettingsByUid method
 
 Returns metadata based on UID.
@@ -64,4 +79,17 @@ getDataSourceSettingsByUid(uid: string): DataSourceInstanceSettings | undefined;
 <b>Returns:</b>
 
 `DataSourceInstanceSettings | undefined`
+
+### getExternal method
+
+Get all data sources except for internal ones that usually should not be listed like mixed data source.
+
+<b>Signature</b>
+
+```typescript
+getExternal(): DataSourceInstanceSettings[];
+```
+<b>Returns:</b>
+
+`DataSourceInstanceSettings[]`
 

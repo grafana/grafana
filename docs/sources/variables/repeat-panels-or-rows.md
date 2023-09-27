@@ -3,9 +3,9 @@ title = "Variables"
 keywords = ["grafana", "templating", "documentation", "guide", "template", "variable", "repeat"]
 type = "docs"
 [menu.docs]
-name = "Repeat panels or rows"
+identifier = "repeat-panel-rows"
 parent = "variables"
-weight = 400
+weight = 800
 +++
 
 # Repeat panels or rows

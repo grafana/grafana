@@ -2,7 +2,7 @@
 title = "Dashboard Versions HTTP API "
 description = "Grafana Dashboard Versions HTTP API"
 keywords = ["grafana", "http", "documentation", "api", "dashboard", "versions"]
-aliases = ["/docs/grafana/latest/http_api/dashboardversions/"]
+aliases = ["/docs/grafana/v7.2/http_api/dashboardversions/"]
 type = "docs"
 [menu.docs]
 name = "Dashboard Versions"

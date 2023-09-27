@@ -26,6 +26,7 @@ import { DataQuery } from '@grafana/data';
 |  Property | Type | Description |
 |  --- | --- | --- |
 |  [datasource](#datasource-property) | <code>string &#124; null</code> | For mixed data sources the selected datasource is on the query level. For non mixed scenarios this is undefined. |
+|  [dataTopic](#datatopic-property) | <code>DataTopic</code> | The data topic resuls should be attached to |
 |  [hide](#hide-property) | <code>boolean</code> | true if query is disabled (ie should not be returned to the dashboard) |
 |  [key](#key-property) | <code>string</code> | Unique, guid like, string used in explore mode |
 |  [queryType](#querytype-property) | <code>string</code> | Specify the query flavor |
@@ -39,6 +40,16 @@ For mixed data sources the selected datasource is on the query level. For non mi
 
 ```typescript
 datasource?: string | null;
+```
+
+### dataTopic property
+
+The data topic resuls should be attached to
+
+<b>Signature</b>
+
+```typescript
+dataTopic?: DataTopic;
 ```
 
 ### hide property

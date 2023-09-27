@@ -23,13 +23,15 @@ import { ContextMenuProps } from '@grafana/ui';
 
 |  Property | Type | Description |
 |  --- | --- | --- |
-|  [items](#items-property) | <code>ContextMenuGroup[]</code> |  |
-|  [onClose](#onclose-property) | <code>() =&gt; void</code> |  |
-|  [renderHeader](#renderheader-property) | <code>() =&gt; React.ReactNode</code> |  |
-|  [x](#x-property) | <code>number</code> |  |
-|  [y](#y-property) | <code>number</code> |  |
+|  [items](#items-property) | <code>ContextMenuGroup[]</code> | List of the menu items to display |
+|  [onClose](#onclose-property) | <code>() =&gt; void</code> | Callback for closing the menu |
+|  [renderHeader](#renderheader-property) | <code>() =&gt; React.ReactNode</code> | A function that returns header element |
+|  [x](#x-property) | <code>number</code> | Starting horizontal position for the menu |
+|  [y](#y-property) | <code>number</code> | Starting vertical position for the menu |
 
 ### items property
+
+List of the menu items to display
 
 <b>Signature</b>
 
@@ -39,6 +41,8 @@ items?: ContextMenuGroup[];
 
 ### onClose property
 
+Callback for closing the menu
+
 <b>Signature</b>
 
 ```typescript
@@ -46,6 +50,8 @@ onClose: () => void;
 ```
 
 ### renderHeader property
+
+A function that returns header element
 
 <b>Signature</b>
 
@@ -55,6 +61,8 @@ renderHeader?: () => React.ReactNode;
 
 ### x property
 
+Starting horizontal position for the menu
+
 <b>Signature</b>
 
 ```typescript
@@ -62,6 +70,8 @@ x: number;
 ```
 
 ### y property
+
+Starting vertical position for the menu
 
 <b>Signature</b>
 

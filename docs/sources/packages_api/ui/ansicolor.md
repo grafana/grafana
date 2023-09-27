@@ -45,7 +45,7 @@ import { ansicolor } from '@grafana/ui';
 |  Method | Modifiers | Description |
 |  --- | --- | --- |
 |  [\[Symbol.iterator\]()](#_symbol.iterator_-method) |  |  |
-|  [parse(s)](#parse-method) | <code>static</code> |  parses a string containing ANSI escape codes  {<!-- -->Colors<!-- -->} parsed representation. |
+|  [parse(s)](#parse-method) | <code>static</code> |  parses a string containing ANSI escape codes |
 |  [strip(s)](#strip-method) | <code>static</code> |  strips ANSI codes from a string |
 
 ### constructor(s)
@@ -169,7 +169,7 @@ const spans = \[...ansi.parse ('<!-- -->\\<!-- -->u001b\[7m<!-- -->\\<!-- -->u00
 
 ### parse method
 
- parses a string containing ANSI escape codes  {<!-- -->Colors<!-- -->} parsed representation.
+ parses a string containing ANSI escape codes
 
 <b>Signature</b>
 
@@ -190,6 +190,8 @@ static parse(s: string): Colors & {
         spans: any[];
     }`
 
+{<!-- -->Colors<!-- -->} parsed representation.
+
 ### strip method
 
  strips ANSI codes from a string
@@ -203,9 +205,11 @@ static strip(s: string): string;
 
 |  Parameter | Type | Description |
 |  --- | --- | --- |
-|  s | <code>string</code> | a string containing ANSI escape codes.  {<!-- -->string<!-- -->} clean string. |
+|  s | <code>string</code> | a string containing ANSI escape codes. |
 
 <b>Returns:</b>
 
 `string`
+
+{<!-- -->string<!-- -->} clean string.
 

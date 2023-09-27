@@ -33,6 +33,7 @@ import { DataSourceApi } from '@grafana/data';
 
 |  Property | Modifiers | Type | Description |
 |  --- | --- | --- | --- |
+|  [annotations](#annotations-property) |  | <code>AnnotationSupport&lt;TQuery&gt;</code> | An annotation processor allows explict control for how annotations are managed.<!-- -->It is only necessary to configure an annotation processor if the default behavior is not desirable |
 |  [components](#components-property) |  | <code>DataSourcePluginComponents&lt;DataSourceApi&lt;TQuery, TOptions&gt;, TQuery, TOptions&gt;</code> | Set after constructor call, as the data source instance is the most common thing to pass around we attach the components to this instance for easy access |
 |  [getLogRowContext](#getlogrowcontext-property) |  | <code>&lt;TContextQueryOptions extends {}&gt;(row: LogRowModel, options?: TContextQueryOptions) =&gt; Promise&lt;DataQueryResponse&gt;</code> | Retrieve context for a given log row |
 |  [id](#id-property) |  | <code>number</code> | Set in constructor |
@@ -46,7 +47,7 @@ import { DataSourceApi } from '@grafana/data';
 
 |  Method | Modifiers | Description |
 |  --- | --- | --- |
-|  [annotationQuery(options)](#annotationquery-method) |  | Can be optionally implemented to allow datasource to be a source of annotations for dashboard. To be visible in the annotation editor <code>annotations</code> capability also needs to be enabled in plugin.json. |
+|  [annotationQuery(options)](#annotationquery-method) |  | Can be optionally implemented to allow datasource to be a source of annotations for dashboard. This function will only be called if an angular  is configured and the  is undefined |
 |  [getHighlighterExpression(query)](#gethighlighterexpression-method) |  | Used in explore |
 |  [getQueryDisplayText(query)](#getquerydisplaytext-method) |  | Convert a query to a simple text string |
 |  [getQueryHints(query, results, rest)](#getqueryhints-method) |  | Get hints for query improvements |
@@ -76,6 +77,18 @@ constructor(instanceSettings: DataSourceInstanceSettings<TOptions>);
 |  Parameter | Type | Description |
 |  --- | --- | --- |
 |  instanceSettings | <code>DataSourceInstanceSettings&lt;TOptions&gt;</code> |  |
+
+### annotations property
+
+An annotation processor allows explict control for how annotations are managed.
+
+It is only necessary to configure an annotation processor if the default behavior is not desirable
+
+<b>Signature</b>
+
+```typescript
+annotations?: AnnotationSupport<TQuery>;
+```
 
 ### components property
 
@@ -159,7 +172,7 @@ readonly name: string;
 
 ### annotationQuery method
 
-Can be optionally implemented to allow datasource to be a source of annotations for dashboard. To be visible in the annotation editor `annotations` capability also needs to be enabled in plugin.json.
+Can be optionally implemented to allow datasource to be a source of annotations for dashboard. This function will only be called if an angular  is configured and the  is undefined
 
 <b>Signature</b>
 

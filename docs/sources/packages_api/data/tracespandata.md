@@ -25,7 +25,9 @@ export declare type TraceSpanData = {
     tags?: TraceKeyValuePair[];
     references?: TraceSpanReference[];
     warnings?: string[] | null;
+    stackTraces?: string[];
     flags: number;
+    errorIconColor?: string;
 };
 ```
 <b>Import</b>

@@ -50,10 +50,12 @@ A library containing the different design components of the Grafana ecosystem.
 
 |  Enumeration | Description |
 |  --- | --- |
+|  [AxisSide](./axisside/) |  |
 |  [BarGaugeDisplayMode](./bargaugedisplaymode/) |  |
 |  [BigValueColorMode](./bigvaluecolormode/) |  |
 |  [BigValueGraphMode](./bigvaluegraphmode/) |  |
 |  [BigValueJustifyMode](./bigvaluejustifymode/) |  |
+|  [BigValueTextMode](./bigvaluetextmode/) | Options for how the value &amp; title are to be displayed |
 |  [CompletionItemKind](./completionitemkind/) |  |
 |  [EventsWithValidation](./eventswithvalidation/) |  |
 |  [LegacyInputStatus](./legacyinputstatus/) |  |
@@ -69,27 +71,29 @@ A library containing the different design components of the Grafana ecosystem.
 |  [AsyncSelect(props)](./asyncselect/) |  |
 |  [BracesPlugin()](./bracesplugin/) |  |
 |  [ButtonSelect({ placeholder, icon, variant, size, className, disabled, ...selectProps })](./buttonselect/) |  |
-|  [calculateFontSize(text, width, height, lineHeight, maxSize)](./calculatefontsize/) |  |
+|  [calculateFontSize(text, width, height, lineHeight, maxSize)](./calculatefontsize/) | <b><i>(BETA)</i></b> |
 |  [ClearPlugin()](./clearplugin/) |  |
 |  [ClipboardPlugin()](./clipboardplugin/) |  |
 |  [convertOldAngularValueMapping(panel)](./convertoldangularvaluemapping/) | Convert the angular single stat mapping to new react style |
+|  [EventsCanvas({ id, events, renderEventMarker, mapEventToXYCoords })](./eventscanvas/) |  |
 |  [FadeTransition(props)](./fadetransition/) |  |
-|  [Form({ defaultValues, onSubmit, validateOnMount, validateFieldsOnMount, children, validateOn, maxWidth, })](./form/) |  |
+|  [Form({ defaultValues, onSubmit, validateOnMount, validateFieldsOnMount, children, validateOn, maxWidth, ...htmlProps })](./form/) |  |
 |  [getScrollbarWidth()](./getscrollbarwidth/) |  |
 |  [getTagColor(index)](./gettagcolor/) |  |
 |  [getTagColorsFromName(name)](./gettagcolorsfromname/) | Returns tag badge background and border colors based on hashed tag name. |
+|  [getTextColorForBackground(color)](./gettextcolorforbackground/) |  |
 |  [IndentationPlugin()](./indentationplugin/) |  |
-|  [measureText(text, fontSize)](./measuretext/) |  |
+|  [measureText(text, fontSize)](./measuretext/) | <b><i>(BETA)</i></b> |
 |  [MultiSelect(props)](./multiselect/) |  |
 |  [NewlinePlugin()](./newlineplugin/) |  |
 |  [RadioButtonGroup({ options, value, onChange, disabled, disabledOptions, size, fullWidth, })](./radiobuttongroup/) |  |
 |  [renderOrCallToRender(itemToRender, props)](./renderorcalltorender/) | Given react node or function returns element accordingly |
 |  [resetSelectStyles()](./resetselectstyles/) |  |
 |  [RunnerPlugin({ handler })](./runnerplugin/) |  |
-|  [Segment({ options, value, onChange, Component, className, allowCustomValue, placeholder, })](./segment/) |  |
-|  [SegmentAsync({ value, onChange, loadOptions, Component, className, allowCustomValue, placeholder, })](./segmentasync/) |  |
-|  [SegmentInput({ value: initialValue, onChange, Component, className, placeholder, autofocus, })](./segmentinput/) |  |
-|  [SegmentSelect({ value, options, onChange, onClickOutside, width, noOptionsMessage, allowCustomValue, })](./segmentselect/) |  |
+|  [Segment({ options, value, onChange, Component, className, allowCustomValue, placeholder, ...rest })](./segment/) |  |
+|  [SegmentAsync({ value, onChange, loadOptions, Component, className, allowCustomValue, placeholder, ...rest })](./segmentasync/) |  |
+|  [SegmentInput({ value: initialValue, onChange, Component, className, placeholder, autofocus, ...rest })](./segmentinput/) |  |
+|  [SegmentSelect({ value, options, onChange, onClickOutside, width, noOptionsMessage, allowCustomValue, ...rest })](./segmentselect/) |  |
 |  [Select(props)](./select/) |  |
 |  [SelectionShortcutsPlugin()](./selectionshortcutsplugin/) |  |
 |  [sharedSingleStatMigrationHandler(panel)](./sharedsinglestatmigrationhandler/) |  |
@@ -98,6 +102,8 @@ A library containing the different design components of the Grafana ecosystem.
 |  [SlideOutTransition(props)](./slideouttransition/) |  |
 |  [stylesFactory(stylesCreator)](./stylesfactory/) | Creates memoized version of styles creator |
 |  [SuggestionsPlugin({ onTypeahead, cleanText, onWillApplySuggestion, portalOrigin, })](./suggestionsplugin/) |  |
+|  [TabbedContainer(props)](./tabbedcontainer/) |  |
+|  [useStyles(getStyles)](./usestyles/) | Hook for using memoized styles with access to the theme.<!-- -->NOTE: For memoization to work, you need to ensure that the function you pass in doesn't change, or only if it needs to. (i.e. declare your style creator outside of a function component or use <code>useCallback()</code>.) |
 |  [useTheme()](./usetheme/) |  |
 |  [ValuePicker({ label, icon, options, onChange, variant, size, isFullWidth, menuPlacement, })](./valuepicker/) |  |
 
@@ -113,6 +119,8 @@ A library containing the different design components of the Grafana ecosystem.
 |  [ContextMenuGroup](./contextmenugroup/) |  |
 |  [ContextMenuItem](./contextmenuitem/) |  |
 |  [ContextMenuProps](./contextmenuprops/) |  |
+|  [FieldArrayApi](./fieldarrayapi/) |  |
+|  [GraphCustomFieldConfig](./graphcustomfieldconfig/) |  |
 |  [GraphSeriesTogglerAPI](./graphseriestogglerapi/) |  |
 |  [GraphTooltipOptions](./graphtooltipoptions/) |  |
 |  [LegendBasicOptions](./legendbasicoptions/) |  |
@@ -122,6 +130,7 @@ A library containing the different design components of the Grafana ecosystem.
 |  [SingleStatBaseOptions](./singlestatbaseoptions/) |  |
 |  [StyleProps](./styleprops/) |  |
 |  [SuggestionsState](./suggestionsstate/) |  |
+|  [TabConfig](./tabconfig/) |  |
 |  [TableSortByFieldState](./tablesortbyfieldstate/) |  |
 |  [Themeable](./themeable/) |  |
 |  [Token](./token/) |  |
@@ -144,15 +153,20 @@ A library containing the different design components of the Grafana ecosystem.
 |  Variable | Description |
 |  --- | --- |
 |  [Alert](./alert/) |  |
-|  [ALERTING\_COLOR](./alerting_color/) |  |
 |  [AlphaNotice](./alphanotice/) |  |
+|  [AnnotationsEditorPlugin](./annotationseditorplugin/) |  |
+|  [Area](./area/) |  |
+|  [Axis](./axis/) |  |
 |  [Badge](./badge/) |  |
 |  [Button](./button/) |  |
 |  [ButtonCascader](./buttoncascader/) |  |
 |  [CallToActionCard](./calltoactioncard/) |  |
+|  [Canvas](./canvas/) |  |
 |  [Chart](./chart/) |  |
 |  [Checkbox](./checkbox/) |  |
+|  [ClickPlugin](./clickplugin/) |  |
 |  [CodeEditor](./codeeditor/) |  |
+|  [CollapsableSection](./collapsablesection/) |  |
 |  [Collapse](./collapse/) |  |
 |  [ColorPicker](./colorpicker/) |  |
 |  [colors](./colors/) |  |
@@ -160,22 +174,25 @@ A library containing the different design components of the Grafana ecosystem.
 |  [ConfirmModal](./confirmmodal/) |  |
 |  [Container](./container/) |  |
 |  [ContextMenu](./contextmenu/) |  |
+|  [ContextMenuPlugin](./contextmenuplugin/) |  |
 |  [ControlledCollapse](./controlledcollapse/) |  |
 |  [Counter](./counter/) |  |
 |  [DataLinkInput](./datalinkinput/) |  |
 |  [DataLinksContextMenu](./datalinkscontextmenu/) |  |
 |  [DataLinksInlineEditor](./datalinksinlineeditor/) |  |
 |  [DataSourceHttpSettings](./datasourcehttpsettings/) |  |
-|  [DEFAULT\_ANNOTATION\_COLOR](./default_annotation_color/) |  |
+|  [defaultIntervals](./defaultintervals/) |  |
 |  [DeleteButton](./deletebutton/) |  |
 |  [Drawer](./drawer/) |  |
 |  [EmptySearchResult](./emptysearchresult/) |  |
 |  [ErrorWithStack](./errorwithstack/) |  |
 |  [FeatureInfoBox](./featureinfobox/) |  |
 |  [Field](./field/) |  |
+|  [FieldArray](./fieldarray/) |  |
 |  [FieldConfigItemHeaderTitle](./fieldconfigitemheadertitle/) |  |
 |  [fieldMatchersUI](./fieldmatchersui/) |  |
 |  [FieldSet](./fieldset/) |  |
+|  [FieldValidationMessage](./fieldvalidationmessage/) |  |
 |  [FileUpload](./fileupload/) |  |
 |  [FilterPill](./filterpill/) |  |
 |  [FullWidthButtonContainer](./fullwidthbuttoncontainer/) |  |
@@ -188,6 +205,7 @@ A library containing the different design components of the Grafana ecosystem.
 |  [getTheme](./gettheme/) |  |
 |  [GraphContextMenu](./graphcontextmenu/) |  |
 |  [GraphLegend](./graphlegend/) |  |
+|  [GraphNG](./graphng/) |  |
 |  [graphTickFormatter](./graphtickformatter/) |  |
 |  [graphTimeFormat](./graphtimeformat/) |  |
 |  [GraphWithLegend](./graphwithlegend/) |  |
@@ -195,13 +213,19 @@ A library containing the different design components of the Grafana ecosystem.
 |  [HorizontalGroup](./horizontalgroup/) |  |
 |  [Icon](./icon/) |  |
 |  [IconButton](./iconbutton/) |  |
+|  [InlineField](./inlinefield/) |  |
+|  [InlineFieldRow](./inlinefieldrow/) |  |
 |  [InlineFormLabel](./inlineformlabel/) |  |
+|  [InlineLabel](./inlinelabel/) |  |
 |  [Input](./input/) |  |
+|  [InputControl](./inputcontrol/) |  |
 |  [Label](./label/) |  |
 |  [LegacyForms](./legacyforms/) |  |
 |  [Legend](./legend/) |  |
 |  [LegendList](./legendlist/) |  |
+|  [LegendPlugin](./legendplugin/) |  |
 |  [LegendTable](./legendtable/) |  |
+|  [Line](./line/) |  |
 |  [LinkButton](./linkbutton/) |  |
 |  [linkModelToContextMenuItems](./linkmodeltocontextmenuitems/) | Delays creating links until we need to open the ContextMenu |
 |  [LoadingPlaceholder](./loadingplaceholder/) |  |
@@ -209,6 +233,7 @@ A library containing the different design components of the Grafana ecosystem.
 |  [LogRows](./logrows/) |  |
 |  [makeFragment](./makefragment/) |  |
 |  [makeValue](./makevalue/) |  |
+|  [Marker](./marker/) |  |
 |  [mockTheme](./mocktheme/) |  |
 |  [mockThemeContext](./mockthemecontext/) | Enables theme context mocking |
 |  [Modal](./modal/) |  |
@@ -217,23 +242,21 @@ A library containing the different design components of the Grafana ecosystem.
 |  [ModalsController](./modalscontroller/) |  |
 |  [ModalTabContent](./modaltabcontent/) |  |
 |  [ModalTabsHeader](./modaltabsheader/) |  |
-|  [NO\_DATA\_COLOR](./no_data_color/) |  |
 |  [NumberValueEditor](./numbervalueeditor/) |  |
-|  [OK\_COLOR](./ok_color/) |  |
 |  [Pagination](./pagination/) |  |
-|  [PALETTE\_COLUMNS](./palette_columns/) |  |
-|  [PALETTE\_ROWS](./palette_rows/) |  |
 |  [PanelOptionsGrid](./paneloptionsgrid/) |  |
 |  [PanelOptionsGroup](./paneloptionsgroup/) |  |
-|  [PENDING\_COLOR](./pending_color/) |  |
+|  [Point](./point/) |  |
 |  [RefreshPicker](./refreshpicker/) |  |
 |  [regexValidation](./regexvalidation/) |  |
-|  [REGION\_FILL\_ALPHA](./region_fill_alpha/) |  |
+|  [Scale](./scale/) |  |
 |  [SCHEMA](./schema/) |  |
+|  [SelectionPlugin](./selectionplugin/) |  |
 |  [selectThemeVariant](./selectthemevariant/) |  |
 |  [SeriesColorPicker](./seriescolorpicker/) |  |
 |  [SeriesColorPickerPopover](./seriescolorpickerpopover/) |  |
 |  [SeriesColorPickerPopoverWithTheme](./seriescolorpickerpopoverwiththeme/) |  |
+|  [SeriesGeometry](./seriesgeometry/) |  |
 |  [SeriesIcon](./seriesicon/) |  |
 |  [Slider](./slider/) |  |
 |  [sortedColors](./sortedcolors/) |  |
@@ -249,14 +272,25 @@ A library containing the different design components of the Grafana ecosystem.
 |  [TextArea](./textarea/) |  |
 |  [ThemeContext](./themecontext/) |  |
 |  [TimeOfDayPicker](./timeofdaypicker/) |  |
+|  [TimeRangeInput](./timerangeinput/) |  |
 |  [TimeRangePicker](./timerangepicker/) |  |
 |  [TimeZonePicker](./timezonepicker/) |  |
 |  [ToggleButton](./togglebutton/) |  |
 |  [Tooltip](./tooltip/) |  |
-|  [useStyles](./usestyles/) | Hook for using memoized styles with access to the theme. |
+|  [TooltipContainer](./tooltipcontainer/) |  |
+|  [TooltipPlugin](./tooltipplugin/) |  |
+|  [UPlotChart](./uplotchart/) |  |
+|  [usePlotConfigContext](./useplotconfigcontext/) |  |
+|  [usePlotContext](./useplotcontext/) |  |
+|  [usePlotData](./useplotdata/) |  |
+|  [usePlotPluginContext](./useplotplugincontext/) |  |
+|  [useRefreshAfterGraphRendered](./userefreshaftergraphrendered/) | Forces re-render of a component when uPlots's draw hook is fired. This hook is usefull in scenarios when you want to reposition XYCanvas elements when i.e. plot size changes |
 |  [validate](./validate/) |  |
 |  [VerticalGroup](./verticalgroup/) |  |
+|  [WithContextMenu](./withcontextmenu/) |  |
 |  [withTheme](./withtheme/) |  |
+|  [XYCanvas](./xycanvas/) | Renders absolutely positioned element on top of the uPlot's plotting area (axes are not included!). Useful when you want to render some overlay with canvas-independent elements on top of the plot. |
+|  [ZoomPlugin](./zoomplugin/) |  |
 
 ## Type Aliases
 
@@ -272,6 +306,7 @@ A library containing the different design components of the Grafana ecosystem.
 |  [IconSize](./iconsize/) |  |
 |  [IconType](./icontype/) |  |
 |  [LegendPlacement](./legendplacement/) |  |
+|  [OnTagClick](./ontagclick/) |  |
 |  [PopoverContent](./popovercontent/) |  |
 |  [Renderable](./renderable/) |  |
 |  [RenderFunction](./renderfunction/) |  |

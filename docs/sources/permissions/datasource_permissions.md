@@ -7,11 +7,11 @@ type = "docs"
 name = "Datasource"
 identifier = "datasource-permissions"
 parent = "permissions"
-weight = 50
+weight = 900
 +++
 
 # Data source permissions
 
-Data source permissions allow you to restrict access for users to query a data source. For each data source there is a permission page that allows you to enable permissions and restrict query permissions to specific **Users** and **Teams**.
+Data source permissions allow you to restrict access for users to query a data source. For each data source there is a permission page that allows you to enable permissions and restrict query permissions to specific users and teams.
 
-> Data source permissions are only available in Grafana Enterprise. For more information, refer to [Data source permissions]({{< relref "../enterprise/datasource_permissions.md" >}}) in [Grafana Enterprise]({{< relref "../enterprise" >}}).
+> **Note:** Data source permissions are only available in Grafana Enterprise. For more information, refer to [Data source permissions]({{< relref "../enterprise/datasource_permissions.md" >}}) in [Grafana Enterprise]({{< relref "../enterprise" >}}).

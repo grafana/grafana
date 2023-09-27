@@ -14,7 +14,7 @@ Click a panel title to open the panel menu, then click share in the panel menu t
 
 ## Direct Link Rendered Image
 
-You also get a link to render a PNG image of the panel. Useful if you want to share an image of the panel. Read more about the requirements and how to configure image rendering [here](/administration/image_rendering/).
+You also get a link to render a PNG image of the panel. Useful if you want to share an image of the panel. For more information about the requirements and how to configure image rendering, refer to [image rendering](/administration/image_rendering/).
 
 Example of a link to a server-side rendered PNG:
 
@@ -47,7 +47,7 @@ Below there should be an interactive Grafana graph embedded in an iframe:
 
 #### Export Panel Data
 
-{{< docs-imagebox img="/img/docs/v50/export_panel_data.png" max-width="500px" >}}
+{{< figure src="/static/img/docs/v50/export_panel_data.png" max-width="500px" >}}
 
 The submenu for a panel can be found by clicking on the title of a panel and then on the More submenu.
 

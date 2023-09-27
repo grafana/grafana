@@ -55,13 +55,13 @@ addBooleanSwitch<TSettings = any>(config: FieldConfigEditorConfig<TOptions, TSet
 <b>Signature</b>
 
 ```typescript
-addColorPicker<TSettings = any>(config: FieldConfigEditorConfig<TOptions, TSettings & ColorFieldConfigSettings, string>): this;
+addColorPicker<TSettings = any>(config: FieldConfigEditorConfig<TOptions, TSettings & ColorFieldConfigSettings, FieldColor>): this;
 ```
 <b>Parameters</b>
 
 |  Parameter | Type | Description |
 |  --- | --- | --- |
-|  config | <code>FieldConfigEditorConfig&lt;TOptions, TSettings &amp; ColorFieldConfigSettings, string&gt;</code> |  |
+|  config | <code>FieldConfigEditorConfig&lt;TOptions, TSettings &amp; ColorFieldConfigSettings, FieldColor&gt;</code> |  |
 
 <b>Returns:</b>
 

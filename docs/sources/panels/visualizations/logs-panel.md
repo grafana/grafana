@@ -2,7 +2,7 @@
 title = "Logs panel"
 keywords = ["grafana", "dashboard", "documentation", "panels", "logs panel"]
 type = "docs"
-aliases = ["/docs/grafana/latest/reference/logs/", "/docs/grafana/latest/features/panels/logs/",]
+aliases = ["/docs/grafana/v7.2/reference/logs/", "/docs/grafana/v7.2/features/panels/logs/",]
 [menu.docs]
 name = "Logs panel"
 parent = "visualizations"
@@ -15,7 +15,7 @@ The logs panel visualization shows log lines from data sources that support logs
 
 > **Note:** The Logs panel is only available in Grafana v6.4+.
 
-<img class="screenshot" src="/img/docs/v64/logs-panel.png">
+<img class="screenshot" src="/static/img/docs/v64/logs-panel.png">
 
 The logs panel shows the result of queries that were entered in the Query tab. The results of multiple queries are merged and sorted by time. You can scroll inside the panel if the data source returns more lines than can be displayed at any one time.
 

@@ -9,6 +9,7 @@ type = "docs"
 
 ## LocationUpdate interface
 
+
 <b>Signature</b>
 
 ```typescript

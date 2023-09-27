@@ -155,7 +155,7 @@ secureJsonData?: S;
 <b>Signature</b>
 
 ```typescript
-secureJsonFields?: KeyValue<boolean>;
+secureJsonFields: KeyValue<boolean>;
 ```
 
 ### type property

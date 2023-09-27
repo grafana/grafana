@@ -7,17 +7,28 @@ keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
 +++
 
-## getColorForTheme variable
+## getColorForTheme() function
 
-### getColorForTheme variable
+### getColorForTheme() function
 
 <b>Signature</b>
 
 ```typescript
-getColorForTheme: (color: ColorDefinition, theme?: GrafanaThemeType | undefined) => string
+export declare function getColorForTheme(color: string, theme: GrafanaTheme): string;
 ```
 <b>Import</b>
 
 ```typescript
 import { getColorForTheme } from '@grafana/data';
 ```
+<b>Parameters</b>
+
+|  Parameter | Type | Description |
+|  --- | --- | --- |
+|  color | <code>string</code> |  |
+|  theme | <code>GrafanaTheme</code> |  |
+
+<b>Returns:</b>
+
+`string`
+

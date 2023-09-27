@@ -17,11 +17,11 @@ installation.
 
 1. Navigate to [Download Grafana](https://grafana.com/grafana/download?platform=windows).
 1. Select a Grafana version you want to install. 
-   * The most recent Grafana version is selected by default.
-   * The **Version** field displays only finished releases. If you want to install a beta version, click **Nightly Builds** and then select a version.
+   - The most recent Grafana version is selected by default.
+   - The **Version** field displays only finished releases. If you want to install a beta version, click **Nightly Builds** and then select a version.
 1. Select an **Edition**.
-   * **Enterprise** - Recommended download. Functionally identical to the open source version, but includes features you can unlock with a license if you so choose.
-   * **Open Source** - Functionally identical to the enterprise version, but you will need to download the enterprise version if you want enterprise features.
+   - **Enterprise** - Recommended download. Functionally identical to the open source version, but includes features you can unlock with a license if you so choose.
+   - **Open Source** - Functionally identical to the enterprise version, but you will need to download the enterprise version if you want enterprise features.
 1. Click **Windows**.
 
 You can either use the Windows installer or you can install a standalone Windows binary.

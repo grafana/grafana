@@ -7,7 +7,7 @@ type = "docs"
 name = "GitHub"
 identifier = "github_oauth2"
 parent = "authentication"
-weight = 4
+weight = 800
 +++
 
 # GitHub OAuth2 Authentication

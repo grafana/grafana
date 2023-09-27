@@ -14,7 +14,7 @@ type = "docs"
 <b>Signature</b>
 
 ```typescript
-export declare type Color = 'green' | 'dark-green' | 'semi-dark-green' | 'light-green' | 'super-light-green' | 'yellow' | 'dark-yellow' | 'semi-dark-yellow' | 'light-yellow' | 'super-light-yellow' | 'red' | 'dark-red' | 'semi-dark-red' | 'light-red' | 'super-light-red' | 'blue' | 'dark-blue' | 'semi-dark-blue' | 'light-blue' | 'super-light-blue' | 'orange' | 'dark-orange' | 'semi-dark-orange' | 'light-orange' | 'super-light-orange' | 'purple' | 'dark-purple' | 'semi-dark-purple' | 'light-purple' | 'super-light-purple';
+export declare type Color = 'green' | 'dark-green' | 'semi-dark-green' | 'light-green' | 'super-light-green' | 'yellow' | 'dark-yellow' | 'semi-dark-yellow' | 'light-yellow' | 'super-light-yellow' | 'red' | 'dark-red' | 'semi-dark-red' | 'light-red' | 'super-light-red' | 'blue' | 'dark-blue' | 'semi-dark-blue' | 'light-blue' | 'super-light-blue' | 'orange' | 'dark-orange' | 'semi-dark-orange' | 'light-orange' | 'super-light-orange' | 'purple' | 'dark-purple' | 'semi-dark-purple' | 'light-purple' | 'super-light-purple' | 'panel-bg';
 ```
 <b>Import</b>
 

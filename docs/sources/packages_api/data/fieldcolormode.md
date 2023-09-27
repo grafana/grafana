@@ -7,26 +7,55 @@ keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
 +++
 
-## FieldColorMode enum
-
-### FieldColorMode enum
+## FieldColorMode interface
 
 <b>Signature</b>
 
 ```typescript
-export declare enum FieldColorMode 
+export interface FieldColorMode extends RegistryItem 
 ```
 <b>Import</b>
 
 ```typescript
 import { FieldColorMode } from '@grafana/data';
 ```
+<b>Properties</b>
 
-## Enumeration Members
-
-|  Member | Value | Description |
+|  Property | Type | Description |
 |  --- | --- | --- |
-|  Fixed | <code>&quot;fixed&quot;</code> |  |
-|  Scheme | <code>&quot;scheme&quot;</code> |  |
-|  Thresholds | <code>&quot;thresholds&quot;</code> |  |
+|  [colors](#colors-property) | <code>string[]</code> |  |
+|  [getCalculator](#getcalculator-property) | <code>(field: Field, theme: GrafanaTheme) =&gt; FieldValueColorCalculator</code> |  |
+|  [isByValue](#isbyvalue-property) | <code>boolean</code> |  |
+|  [isContinuous](#iscontinuous-property) | <code>boolean</code> |  |
 
+### colors property
+
+<b>Signature</b>
+
+```typescript
+colors?: string[];
+```
+
+### getCalculator property
+
+<b>Signature</b>
+
+```typescript
+getCalculator: (field: Field, theme: GrafanaTheme) => FieldValueColorCalculator;
+```
+
+### isByValue property
+
+<b>Signature</b>
+
+```typescript
+isByValue?: boolean;
+```
+
+### isContinuous property
+
+<b>Signature</b>
+
+```typescript
+isContinuous?: boolean;
+```

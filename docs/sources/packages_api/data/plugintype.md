@@ -11,6 +11,8 @@ type = "docs"
 
 ### PluginType enum
 
+Describes [type of plugin](https://grafana.com/docs/grafana/latest/plugins)
+
 <b>Signature</b>
 
 ```typescript

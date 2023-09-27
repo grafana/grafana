@@ -12,7 +12,7 @@ type = "docs"
 <b>Signature</b>
 
 ```typescript
-export interface BadgeProps 
+export interface BadgeProps extends HTMLAttributes<HTMLDivElement> 
 ```
 <b>Import</b>
 

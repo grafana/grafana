@@ -23,7 +23,7 @@ import { ClickOutsideWrapper } from '@grafana/ui';
 
 |  Property | Modifiers | Type | Description |
 |  --- | --- | --- | --- |
-|  [defaultProps](#defaultprops-property) | <code>static</code> | <code>{</code><br/><code>        includeButtonPress: boolean;</code><br/><code>    }</code> |  |
+|  [defaultProps](#defaultprops-property) | <code>static</code> | <code>{</code><br/><code>        includeButtonPress: boolean;</code><br/><code>        parent: Window &amp; typeof globalThis;</code><br/><code>        useCapture: boolean;</code><br/><code>    }</code> |  |
 |  [onOutsideClick](#onoutsideclick-property) |  | <code>(event: any) =&gt; void</code> |  |
 |  [state](#state-property) |  | <code>{</code><br/><code>        hasEventListener: boolean;</code><br/><code>    }</code> |  |
 
@@ -42,6 +42,8 @@ import { ClickOutsideWrapper } from '@grafana/ui';
 ```typescript
 static defaultProps: {
         includeButtonPress: boolean;
+        parent: Window & typeof globalThis;
+        useCapture: boolean;
     };
 ```
 

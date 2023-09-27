@@ -1,8 +1,19 @@
++++
+title = "Filter variables with regex"
+keywords = ["grafana", "templating", "documentation", "guide", "template", "variable"]
+type = "docs"
+[menu.docs]
+identifier = "filter-variables-regex"
+parent = "variables"
+weight = 700
++++
+
+
 # Filter variables with regex
 
 Using the Regex Query option, you filter the list of options returned by the variable query or modify the options returned.
 
-This page shows how to use regex to filter/modify values in the variable dropdown
+This page shows how to use regex to filter/modify values in the variable dropdown.
 
 Using the Regex Query Option, you filter the list of options returned by the Variable query or modify the options returned. For more information, refer to the Mozilla guide on [Regular expressions](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_Expressions).
 

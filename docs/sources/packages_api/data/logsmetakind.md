@@ -26,6 +26,7 @@ import { LogsMetaKind } from '@grafana/data';
 
 |  Member | Value | Description |
 |  --- | --- | --- |
+|  Error | <code>3</code> |  |
 |  LabelsMap | <code>2</code> |  |
 |  Number | <code>0</code> |  |
 |  String | <code>1</code> |  |

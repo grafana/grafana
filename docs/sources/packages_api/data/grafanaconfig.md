@@ -36,6 +36,7 @@ import { GrafanaConfig } from '@grafana/data';
 |  [bootData](#bootdata-property) | <code>any</code> |  |
 |  [buildInfo](#buildinfo-property) | <code>BuildInfo</code> |  |
 |  [datasources](#datasources-property) | <code>{</code><br/><code>        [str: string]: DataSourceInstanceSettings;</code><br/><code>    }</code> |  |
+|  [dateFormats](#dateformats-property) | <code>SystemDateFormatSettings</code> |  |
 |  [defaultDatasource](#defaultdatasource-property) | <code>string</code> |  |
 |  [disableLoginForm](#disableloginform-property) | <code>boolean</code> |  |
 |  [disableSanitizeHtml](#disablesanitizehtml-property) | <code>boolean</code> |  |
@@ -46,6 +47,7 @@ import { GrafanaConfig } from '@grafana/data';
 |  [externalUserMngLinkName](#externalusermnglinkname-property) | <code>string</code> |  |
 |  [externalUserMngLinkUrl](#externalusermnglinkurl-property) | <code>string</code> |  |
 |  [featureToggles](#featuretoggles-property) | <code>FeatureToggles</code> |  |
+|  [http2Enabled](#http2enabled-property) | <code>boolean</code> |  |
 |  [ldapEnabled](#ldapenabled-property) | <code>boolean</code> |  |
 |  [licenseInfo](#licenseinfo-property) | <code>LicenseInfo</code> |  |
 |  [loginError](#loginerror-property) | <code>any</code> |  |
@@ -58,6 +60,7 @@ import { GrafanaConfig } from '@grafana/data';
 |  [passwordHint](#passwordhint-property) | <code>any</code> |  |
 |  [pluginsToPreload](#pluginstopreload-property) | <code>string[]</code> |  |
 |  [samlEnabled](#samlenabled-property) | <code>boolean</code> |  |
+|  [sigV4AuthEnabled](#sigv4authenabled-property) | <code>boolean</code> |  |
 |  [theme](#theme-property) | <code>GrafanaTheme</code> |  |
 |  [verifyEmailEnabled](#verifyemailenabled-property) | <code>boolean</code> |  |
 |  [viewersCanEdit](#viewerscanedit-property) | <code>boolean</code> |  |
@@ -153,6 +156,14 @@ datasources: {
     };
 ```
 
+### dateFormats property
+
+<b>Signature</b>
+
+```typescript
+dateFormats?: SystemDateFormatSettings;
+```
+
 ### defaultDatasource property
 
 <b>Signature</b>
@@ -231,6 +242,14 @@ externalUserMngLinkUrl: string;
 
 ```typescript
 featureToggles: FeatureToggles;
+```
+
+### http2Enabled property
+
+<b>Signature</b>
+
+```typescript
+http2Enabled: boolean;
 ```
 
 ### ldapEnabled property
@@ -329,6 +348,14 @@ pluginsToPreload: string[];
 
 ```typescript
 samlEnabled: boolean;
+```
+
+### sigV4AuthEnabled property
+
+<b>Signature</b>
+
+```typescript
+sigV4AuthEnabled: boolean;
 ```
 
 ### theme property

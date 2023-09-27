@@ -16,7 +16,7 @@ Serializes the given labels to a string.
 <b>Signature</b>
 
 ```typescript
-export declare function formatLabels(labels: Labels, defaultValue?: string): string;
+export declare function formatLabels(labels: Labels, defaultValue?: string, withoutBraces?: boolean): string;
 ```
 <b>Import</b>
 
@@ -29,6 +29,7 @@ import { formatLabels } from '@grafana/data';
 |  --- | --- | --- |
 |  labels | <code>Labels</code> |  |
 |  defaultValue | <code>string</code> |  |
+|  withoutBraces | <code>boolean</code> |  |
 
 <b>Returns:</b>
 

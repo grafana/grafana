@@ -2,7 +2,7 @@
 title = "Search"
 keywords = ["grafana", "dashboard", "documentation", "search"]
 type = "docs"
-aliases =["/docs/grafana/latest/reference/search/"]
+aliases =["/docs/grafana/v7.2/reference/search/"]
 [menu.docs]
 parent = "dashboard_features"
 weight = 5
@@ -13,14 +13,14 @@ weight = 5
 
 Dashboards can be searched by the dashboard name, filtered by one (or many) tags or filtered by starred status. The dashboard search is accessed through the dashboard picker, available in the dashboard top nav area. The dashboard search can also be opened by using the shortcut `F`.
 
-<img class="no-shadow" src="/img/docs/v50/dashboard_search_annotated.png" width="700px">
+<img class="no-shadow" src="/static/img/docs/v50/dashboard_search_annotated.png" width="700px">
 
 1. `Search Bar`: The search bar allows you to enter any string and search both database and file based dashboards in real-time.
-2. `Starred`: Here you find all your starred dashboards.
-3. `Recent`: Here you find the latest created dashboards.
-4. `Folders`: The tags filter allows you to filter the list by dashboard tags.
-5. `Root`: The root contains all dashboards that are not placed in a folder.
-6. `Tags`: The tags filter allows you to filter the list by dashboard tags.
+1. `Starred`: Here you find all your starred dashboards.
+1. `Recent`: Here you find the latest created dashboards.
+1. `Folders`: The tags filter allows you to filter the list by dashboard tags.
+1. `Root`: The root contains all dashboards that are not placed in a folder.
+1. `Tags`: The tags filter allows you to filter the list by dashboard tags.
 
 When using only a keyboard, you can use your keyboard arrow keys to navigate the results, hit enter to open the selected dashboard.
 
@@ -43,4 +43,4 @@ Alternately, to see a list of all available tags, click the tags dropdown menu. 
 
 When using only a keyboard: `tab` to focus on the *tags* link, `▼` down arrow key to find a tag and select with the `Enter` key.
 
-**Note**: When multiple tags are selected, Grafana will show dashboards that include **all**.
+> **Note:** When multiple tags are selected, Grafana will show dashboards that include **all**.

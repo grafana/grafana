@@ -24,14 +24,21 @@ import { rangeUtil } from '@grafana/data';
 
 |  Function | Description |
 |  --- | --- |
+|  [calculateInterval(range, resolution, lowLimitInterval)](./calculateinterval/) |  |
+|  [describeInterval(str)](./describeinterval/) |  |
 |  [describeTextRange(expr)](./describetextrange/) |  |
 |  [getRelativeTimesList(timepickerSettings, currentDisplay)](./getrelativetimeslist/) |  |
+|  [intervalToMs(str)](./intervaltoms/) |  |
+|  [intervalToSeconds(str)](./intervaltoseconds/) |  |
+|  [isRelativeTimeRange(raw)](./isrelativetimerange/) |  |
+|  [roundInterval(interval)](./roundinterval/) |  |
+|  [secondsToHms(seconds)](./secondstohms/) |  |
 
 ## Variables
 
 |  Variable | Description |
 |  --- | --- |
 |  [convertRawToRange](./convertrawtorange/) |  |
-|  [describeTimeRangeAbbrevation](./describetimerangeabbrevation/) |  |
+|  [describeTimeRangeAbbreviation](./describetimerangeabbreviation/) |  |
 |  [isValidTimeSpan](./isvalidtimespan/) |  |
 

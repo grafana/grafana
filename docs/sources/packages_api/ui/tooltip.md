@@ -14,7 +14,7 @@ type = "docs"
 <b>Signature</b>
 
 ```typescript
-Tooltip: ({ children, theme, ...controllerProps }: TooltipProps) => JSX.Element
+Tooltip: FC<TooltipProps>
 ```
 <b>Import</b>
 

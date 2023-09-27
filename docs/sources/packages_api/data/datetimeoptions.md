@@ -25,7 +25,18 @@ import { DateTimeOptions } from '@grafana/data';
 
 |  Property | Type | Description |
 |  --- | --- | --- |
+|  [format](#format-property) | <code>string</code> | Specify a [momentjs](https://momentjs.com/docs/#/displaying/format) format to use a custom formatting pattern or parsing pattern. If no format is set, then system configured default format is used. |
 |  [timeZone](#timezone-property) | <code>TimeZone</code> | Specify this if you want to override the timeZone used when parsing or formatting a date and time value. If no timeZone is set, the default timeZone for the current user is used. |
+
+### format property
+
+Specify a [momentjs](https://momentjs.com/docs/#/displaying/format) format to use a custom formatting pattern or parsing pattern. If no format is set, then system configured default format is used.
+
+<b>Signature</b>
+
+```typescript
+format?: string;
+```
 
 ### timeZone property
 

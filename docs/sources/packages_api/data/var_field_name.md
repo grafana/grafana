@@ -14,7 +14,7 @@ type = "docs"
 <b>Signature</b>
 
 ```typescript
-VAR_FIELD_NAME = "__field.name"
+VAR_FIELD_NAME = "__field.displayName"
 ```
 <b>Import</b>
 

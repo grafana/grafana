@@ -14,7 +14,7 @@ type = "docs"
 <b>Signature</b>
 
 ```typescript
-export declare function getScaleCalculator(field: Field, theme?: GrafanaTheme): ScaleCalculator;
+export declare function getScaleCalculator(field: Field, theme: GrafanaTheme): ScaleCalculator;
 ```
 <b>Import</b>
 

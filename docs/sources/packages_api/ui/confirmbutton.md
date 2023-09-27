@@ -14,7 +14,7 @@ type = "docs"
 <b>Signature</b>
 
 ```typescript
-ConfirmButton: React.FunctionComponent<Pick<Props, "size" | "className" | "onClick" | "disabled" | "confirmText" | "confirmVariant" | "closeOnConfirm" | "onConfirm" | "onCancel">>
+ConfirmButton: React.FunctionComponent<Pick<Props, "size" | "className" | "onClick" | "disabled" | "onConfirm" | "confirmText" | "confirmVariant" | "closeOnConfirm" | "onCancel">>
 ```
 <b>Import</b>
 

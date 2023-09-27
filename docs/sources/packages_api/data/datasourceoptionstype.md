@@ -14,7 +14,7 @@ type = "docs"
 <b>Signature</b>
 
 ```typescript
-export declare type DataSourceOptionsType<DSType extends DataSourceApi<any, any>> = DSType extends DataSourceApi<infer _TQuery, infer TOptions> ? TOptions : never;
+export declare type DataSourceOptionsType<DSType> = DSType extends DataSourceApi<any, infer TOptions> ? TOptions : never;
 ```
 <b>Import</b>
 

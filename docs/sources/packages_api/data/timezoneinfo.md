@@ -25,6 +25,7 @@ import { TimeZoneInfo } from '@grafana/data';
 |  --- | --- | --- |
 |  [abbreviation](#abbreviation-property) | <code>string</code> |  |
 |  [countries](#countries-property) | <code>TimeZoneCountry[]</code> |  |
+|  [ianaName](#iananame-property) | <code>string</code> |  |
 |  [name](#name-property) | <code>string</code> |  |
 |  [offsetInMins](#offsetinmins-property) | <code>number</code> |  |
 |  [zone](#zone-property) | <code>string</code> |  |
@@ -43,6 +44,14 @@ abbreviation: string;
 
 ```typescript
 countries: TimeZoneCountry[];
+```
+
+### ianaName property
+
+<b>Signature</b>
+
+```typescript
+ianaName: string;
 ```
 
 ### name property

@@ -4,7 +4,9 @@ description = "How to change your Grafana preferences"
 keywords = ["grafana", "profile", "change", "preferences"]
 type = "docs"
 [menu.docs]
-weight = 100
+identifier = "preferences"
+parent = "administration"
+weight = 200
 +++
 
 # Change your Grafana preferences

@@ -30,6 +30,7 @@ import { DataQueryRequest } from '@grafana/data';
 |  [exploreMode](#exploremode-property) | <code>ExploreMode</code> |  |
 |  [interval](#interval-property) | <code>string</code> |  |
 |  [intervalMs](#intervalms-property) | <code>number</code> |  |
+|  [liveStreaming](#livestreaming-property) | <code>boolean</code> |  |
 |  [maxDataPoints](#maxdatapoints-property) | <code>number</code> |  |
 |  [panelId](#panelid-property) | <code>number</code> |  |
 |  [range](#range-property) | <code>TimeRange</code> |  |
@@ -37,6 +38,8 @@ import { DataQueryRequest } from '@grafana/data';
 |  [requestId](#requestid-property) | <code>string</code> |  |
 |  [reverse](#reverse-property) | <code>boolean</code> |  |
 |  [scopedVars](#scopedvars-property) | <code>ScopedVars</code> |  |
+|  [showingGraph](#showinggraph-property) | <code>boolean</code> |  |
+|  [showingTable](#showingtable-property) | <code>boolean</code> |  |
 |  [startTime](#starttime-property) | <code>number</code> |  |
 |  [targets](#targets-property) | <code>TQuery[]</code> |  |
 |  [timeInfo](#timeinfo-property) | <code>string</code> |  |
@@ -63,7 +66,7 @@ cacheTimeout?: string;
 <b>Signature</b>
 
 ```typescript
-dashboardId: number;
+dashboardId?: number;
 ```
 
 ### endTime property
@@ -95,7 +98,15 @@ interval: string;
 <b>Signature</b>
 
 ```typescript
-intervalMs?: number;
+intervalMs: number;
+```
+
+### liveStreaming property
+
+<b>Signature</b>
+
+```typescript
+liveStreaming?: boolean;
 ```
 
 ### maxDataPoints property
@@ -111,7 +122,7 @@ maxDataPoints?: number;
 <b>Signature</b>
 
 ```typescript
-panelId: number;
+panelId?: number;
 ```
 
 ### range property
@@ -152,6 +163,22 @@ reverse?: boolean;
 
 ```typescript
 scopedVars: ScopedVars;
+```
+
+### showingGraph property
+
+<b>Signature</b>
+
+```typescript
+showingGraph?: boolean;
+```
+
+### showingTable property
+
+<b>Signature</b>
+
+```typescript
+showingTable?: boolean;
 ```
 
 ### startTime property

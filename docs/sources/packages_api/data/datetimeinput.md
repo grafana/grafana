@@ -14,7 +14,7 @@ type = "docs"
 <b>Signature</b>
 
 ```typescript
-export declare type DateTimeInput = Date | string | number | Array<string | number> | DateTime;
+export declare type DateTimeInput = Date | string | number | Array<string | number> | DateTime | null;
 ```
 <b>Import</b>
 

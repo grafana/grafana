@@ -50,7 +50,7 @@ Replace the values within the target string. See also
 <b>Signature</b>
 
 ```typescript
-replace(target: string, scopedVars?: ScopedVars, format?: string | Function): string;
+replace(target?: string, scopedVars?: ScopedVars, format?: string | Function): string;
 ```
 <b>Parameters</b>
 

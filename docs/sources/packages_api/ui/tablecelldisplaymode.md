@@ -27,9 +27,11 @@ import { TableCellDisplayMode } from '@grafana/ui';
 |  Member | Value | Description |
 |  --- | --- | --- |
 |  Auto | <code>&quot;auto&quot;</code> |  |
+|  BasicGauge | <code>&quot;basic&quot;</code> |  |
 |  ColorBackground | <code>&quot;color-background&quot;</code> |  |
 |  ColorText | <code>&quot;color-text&quot;</code> |  |
 |  GradientGauge | <code>&quot;gradient-gauge&quot;</code> |  |
+|  Image | <code>&quot;image&quot;</code> |  |
 |  JSONView | <code>&quot;json-view&quot;</code> |  |
 |  LcdGauge | <code>&quot;lcd-gauge&quot;</code> |  |
 

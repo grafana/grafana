@@ -16,7 +16,7 @@ Apply configured transformations to the input data
 <b>Signature</b>
 
 ```typescript
-export declare function transformDataFrame(options: DataTransformerConfig[], data: DataFrame[]): DataFrame[];
+export declare function transformDataFrame(options: DataTransformerConfig[], data: DataFrame[]): Observable<DataFrame[]>;
 ```
 <b>Import</b>
 
@@ -32,5 +32,5 @@ import { transformDataFrame } from '@grafana/data';
 
 <b>Returns:</b>
 
-`DataFrame[]`
+`Observable<DataFrame[]>`
 

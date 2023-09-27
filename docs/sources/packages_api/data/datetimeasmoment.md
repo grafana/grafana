@@ -14,7 +14,7 @@ type = "docs"
 <b>Signature</b>
 
 ```typescript
-dateTimeAsMoment: (input?: string | number | DateTime | Date | (string | number)[] | undefined) => moment.Moment
+dateTimeAsMoment: (input?: string | number | DateTime | Date | (string | number)[] | null | undefined) => moment.Moment
 ```
 <b>Import</b>
 
