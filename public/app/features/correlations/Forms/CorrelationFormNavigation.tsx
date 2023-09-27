@@ -1,6 +1,7 @@
 import React from 'react';
 
 import { Button, HorizontalGroup } from '@grafana/ui';
+import { Trans, t } from 'app/core/internationalization';
 
 import { useWizardContext } from '../components/Wizard/wizardContext';
 
@@ -12,13 +13,15 @@ export const CorrelationFormNavigation = () => {
 
   const LastPageNext = !readOnly && (
     <Button variant="primary" icon={loading ? 'fa fa-spinner' : 'save'} type="submit" disabled={loading}>
-      {correlation === undefined ? 'Add' : 'Save'}
+      {correlation === undefined
+        ? t('correlations.nav-form.add-btn', 'Add')
+        : t('correlations.nav-form.save-btn', 'Save')}
     </Button>
   );
 
   const NextPage = (
     <Button variant="primary" type="submit">
-      Next
+      <Trans i18nKey="correlations.nav-form.next-btn">Next</Trans>
     </Button>
   );
 
@@ -26,7 +29,7 @@ export const CorrelationFormNavigation = () => {
     <HorizontalGroup justify="flex-start">
       {currentPage > 0 ? (
         <Button variant="secondary" onClick={prevPage}>
-          Back
+          <Trans i18nKey="correlations.nav-form.back-btn">Back</Trans>
         </Button>
       ) : undefined}
 

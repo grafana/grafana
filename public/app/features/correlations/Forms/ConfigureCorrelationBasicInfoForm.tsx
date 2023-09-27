@@ -26,15 +26,15 @@ export const ConfigureCorrelationBasicInfoForm = () => {
 
   return (
     <>
-      <FieldSet label={t('correlations.basic-info.title', 'Define correlation label (Step 1 of 3)')}>
-        <Trans i18nKey="correlations.basic-info.sub-text">
+      <FieldSet label={t('correlations.basic-info-form.title', 'Define correlation label (Step 1 of 3)')}>
+        <Trans i18nKey="correlations.basic-info-form.sub-text">
           <p>Define text that will describe the correlation.</p>
         </Trans>
         <input type="hidden" {...register('config.type')} />
         <Field
-          label={t('correlations.basic-info.Label-label', 'Label')}
+          label={t('correlations.basic-info-form.label-label', 'Label')}
           description={t(
-            'correlations.basic-info.label-description',
+            'correlations.basic-info-form.label-description',
             'This name will be used as the label for the correlation. This will show as button text, a menu item, or hover text on a link.'
           )}
           className={styles.label}
@@ -46,18 +46,18 @@ export const ConfigureCorrelationBasicInfoForm = () => {
             {...register('label', {
               required: {
                 value: true,
-                message: t('correlations.basic-info.label-required', 'This field is required.'),
+                message: t('correlations.basic-info-form.label-required', 'This field is required.'),
               },
             })}
             readOnly={readOnly}
-            placeholder={t('correlations.basic-info.label-placeholder', 'e.g. Tempo traces')}
+            placeholder={t('correlations.basic-info-form.label-placeholder', 'e.g. Tempo traces')}
           />
         </Field>
 
         <Field
-          label={t('correlations.basic-info.Description-label', 'Description')}
+          label={t('correlations.basic-info-form.Description-label', 'Description')}
           description={t(
-            'correlations.basic-info.description-description',
+            'correlations.basic-info-form.description-description',
             'Optional description with more information about the link'
           )}
           // the Field component automatically adds margin to itself, so we are forced to workaround it by overriding  its styles

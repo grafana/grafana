@@ -18,6 +18,7 @@ import {
   Tooltip,
   useStyles2,
 } from '@grafana/ui';
+import { Trans, t } from 'app/core/internationalization';
 
 type Props = { readOnly: boolean };
 
@@ -48,8 +49,14 @@ export const TransformationsEditor = (props: Props) => {
         {({ fields, append, remove }) => (
           <>
             <Stack direction="column" alignItems="flex-start">
-              <div className={styles.heading}>Transformations</div>
-              {fields.length === 0 && <div> No transformations defined.</div>}
+              <div className={styles.heading}>
+                <Trans i18nKey="correlations.transform.heading">Transformations</Trans>
+              </div>
+              {fields.length === 0 && (
+                <div>
+                  <Trans i18nKey="correlations.transform.no-tranform">No transformations defined.</Trans>
+                </div>
+              )}
               {fields.length > 0 && (
                 <div>
                   {fields.map((fieldVal, index) => {
@@ -58,11 +65,17 @@ export const TransformationsEditor = (props: Props) => {
                         <Field
                           label={
                             <Stack gap={0.5}>
-                              <Label htmlFor={`config.transformations.${fieldVal.id}-${index}.type`}>Type</Label>
+                              <Label htmlFor={`config.transformations.${fieldVal.id}-${index}.type`}>
+                                <Trans i18nKey="correlations.transform.type-label">Type</Trans>
+                              </Label>
                               <Tooltip
                                 content={
                                   <div>
-                                    <p>The type of transformation that will be applied to the source data.</p>
+                                    <p>
+                                      <Trans i18nKey="correlations.transform.type-tooltip">
+                                        The type of transformation that will be applied to the source data.
+                                      </Trans>
+                                    </p>
                                   </div>
                                 }
                               >
@@ -124,19 +137,28 @@ export const TransformationsEditor = (props: Props) => {
                             }}
                             control={control}
                             name={`config.transformations.${index}.type`}
-                            rules={{ required: { value: true, message: 'Please select a transformation type' } }}
+                            rules={{
+                              required: {
+                                value: true,
+                                message: t('correlations.transform.type-rules', 'Please select a transformation type'),
+                              },
+                            }}
                           />
                         </Field>
                         <Field
                           label={
                             <Stack gap={0.5}>
-                              <Label htmlFor={`config.transformations.${fieldVal.id}.field`}>Field</Label>
+                              <Label htmlFor={`config.transformations.${fieldVal.id}.field`}>
+                                <Trans i18nKey="correlations.transform.field-label">Field</Trans>
+                              </Label>
                               <Tooltip
                                 content={
                                   <div>
                                     <p>
-                                      Optional. The field to transform. If not specified, the transformation will be
-                                      applied to the results field.
+                                      <Trans i18nKey="correlations.transform.field-tooltip">
+                                        Optional. The field to transform. If not specified, the transformation will be
+                                        applied to the results field.
+                                      </Trans>
                                     </p>
                                   </div>
                                 }
@@ -150,7 +172,7 @@ export const TransformationsEditor = (props: Props) => {
                             {...register(`config.transformations.${index}.field`)}
                             readOnly={readOnly}
                             defaultValue={fieldVal.field}
-                            label="field"
+                            label={t('correlations.transform.field-input', 'field')}
                             id={`config.transformations.${fieldVal.id}.field`}
                           />
                         </Field>
@@ -158,7 +180,7 @@ export const TransformationsEditor = (props: Props) => {
                           label={
                             <Stack gap={0.5}>
                               <Label htmlFor={`config.transformations.${fieldVal.id}.expression`}>
-                                Expression
+                                <Trans i18nKey="correlations.transform.expression-label">Expression</Trans>
                                 {getSupportedTransTypeDetails(watch(`config.transformations.${index}.type`))
                                   .requireExpression
                                   ? ' *'
@@ -168,8 +190,10 @@ export const TransformationsEditor = (props: Props) => {
                                 content={
                                   <div>
                                     <p>
-                                      Required for regular expression. The expression the transformation will use.
-                                      Logfmt does not use further specifications.
+                                      <Trans i18nKey="correlations.transform.expression-tooltip">
+                                        Required for regular expression. The expression the transformation will use.
+                                        Logfmt does not use further specifications.
+                                      </Trans>
                                     </p>
                                   </div>
                                 }
@@ -185,7 +209,7 @@ export const TransformationsEditor = (props: Props) => {
                             {...register(`config.transformations.${index}.expression`, {
                               required: getSupportedTransTypeDetails(watch(`config.transformations.${index}.type`))
                                 .requireExpression
-                                ? 'Please define an expression'
+                                ? t('correlations.transform.expression-required', 'Please define an expression')
                                 : undefined,
                             })}
                             defaultValue={fieldVal.expression}
@@ -200,13 +224,17 @@ export const TransformationsEditor = (props: Props) => {
                         <Field
                           label={
                             <Stack gap={0.5}>
-                              <Label htmlFor={`config.transformations.${fieldVal.id}.mapValue`}>Map value</Label>
+                              <Label htmlFor={`config.transformations.${fieldVal.id}.mapValue`}>
+                                <Trans i18nKey="correlations.transform.map-label">Map value</Trans>
+                              </Label>
                               <Tooltip
                                 content={
                                   <div>
                                     <p>
-                                      Optional. Defines the name of the variable. This is currently only valid for
-                                      regular expressions with a single, unnamed capture group.
+                                      <Trans i18nKey="correlations.transform.map-tooltip">
+                                        Optional. Defines the name of the variable. This is currently only valid for
+                                        regular expressions with a single, unnamed capture group.
+                                      </Trans>
                                     </p>
                                   </div>
                                 }
@@ -229,7 +257,7 @@ export const TransformationsEditor = (props: Props) => {
                         {!readOnly && (
                           <div className={styles.removeButton}>
                             <IconButton
-                              tooltip="Remove transformation"
+                              tooltip={t('correlations.transform.remove-tooltip', 'Remove transformation')}
                               name="trash-alt"
                               onClick={() => {
                                 remove(index);
@@ -240,7 +268,7 @@ export const TransformationsEditor = (props: Props) => {
                                 setKeptVals(compact(keptValsCopy));
                               }}
                             >
-                              Remove
+                              <Trans i18nKey="correlations.transform.remove">Remove</Trans>
                             </IconButton>
                           </div>
                         )}
@@ -256,7 +284,7 @@ export const TransformationsEditor = (props: Props) => {
                   variant="secondary"
                   type="button"
                 >
-                  Add transformation
+                  <Trans i18nKey="correlations.transform.add-btn">Add transformation</Trans>
                 </Button>
               )}
             </Stack>
@@ -280,18 +308,23 @@ function getSupportedTransTypeDetails(transType: SupportedTransformationType): S
   switch (transType) {
     case SupportedTransformationType.Logfmt:
       return {
-        label: 'Logfmt',
+        label: t('correlations.transform.logfmt-label', 'Logfmt'),
         value: SupportedTransformationType.Logfmt,
-        description: 'Parse provided field with logfmt to get variables',
+        description: t(
+          'correlations.transform.logfmt-description',
+          'Parse provided field with logfmt to get variables'
+        ),
         showExpression: false,
         showMapValue: false,
       };
     case SupportedTransformationType.Regex:
       return {
-        label: 'Regular expression',
+        label: t('correlations.transform.regex-label', 'Regular expression'),
         value: SupportedTransformationType.Regex,
-        description:
-          'Field will be parsed with regex. Use named capture groups to return multiple variables, or a single unnamed capture group to add variable to named map value.',
+        description: t(
+          'correlations.transform.regex-description',
+          'Field will be parsed with regex. Use named capture groups to return multiple variables, or a single unnamed capture group to add variable to named map value.'
+        ),
         showExpression: true,
         showMapValue: true,
         requireExpression: true,

@@ -35,13 +35,14 @@ export const ConfigureCorrelationSourceForm = () => {
   const variables = getVariableUsageInfo(currentTargetQuery, {}).variables.map(
     (variable) => variable.variableName + (variable.fieldPath ? `.${variable.fieldPath}` : '')
   );
+  const dataSourceName = getDatasourceSrv().getInstanceSettings(correlation?.targetUID)?.name;
   return (
     <>
       <FieldSet
         label={t(
-          'correlations.source-form.titel',
-          `Configure the data source that will link to ${getDatasourceSrv().getInstanceSettings(correlation?.targetUID)
-            ?.name} (Step 3 of 3)`
+          'correlations.source-form.title',
+          'Configure the data source that will link to {{dataSourceName}} (Step 3 of 3)',
+          { dataSourceName }
         )}
       >
         <Trans i18nKey="correlations.source-form.sub-text">
