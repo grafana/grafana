@@ -39,7 +39,3 @@ func Test_ProvideService(t *testing.T) {
 		assert.False(t, hookRegistered)
 	})
 }
-
-func TestService_SignIdentity(t *testing.T) {
-
-}

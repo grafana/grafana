@@ -24,7 +24,10 @@ const (
 
 var _ auth.IDService = (*Service)(nil)
 
-func ProvideService(cfg *setting.Cfg, signer auth.IDSigner, cache remotecache.CacheStorage, features featuremgmt.FeatureToggles, authnService authn.Service) *Service {
+func ProvideService(
+	cfg *setting.Cfg, signer auth.IDSigner, cache remotecache.CacheStorage,
+	features featuremgmt.FeatureToggles, authnService authn.Service,
+) *Service {
 	s := &Service{cfg, log.New("id-service"), signer, cache}
 
 	if features.IsEnabled(featuremgmt.FlagIdForwarding) {
@@ -54,7 +57,6 @@ func (s *Service) SignIdentity(ctx context.Context, id identity.Requester) (stri
 	s.logger.Debug("Sign new id token", "namespace", namespace, "id", identifier)
 
 	now := time.Now()
-
 	token, err := s.signer.SignIDToken(ctx, &auth.IDClaims{
 		Claims: jwt.Claims{
 			ID:       identifier,
@@ -79,6 +81,7 @@ func (s *Service) SignIdentity(ctx context.Context, id identity.Requester) (stri
 
 func (s *Service) hook(ctx context.Context, identity *authn.Identity, _ *authn.Request) error {
 	// FIXME(kalleep): implement identity.Requester for authn.Identity
+	// FIXME(kalleep): we should probably lazy load this
 	token, err := s.SignIdentity(ctx, identity.SignedInUser())
 	if err != nil {
 		namespace, id := identity.NamespacedID()
