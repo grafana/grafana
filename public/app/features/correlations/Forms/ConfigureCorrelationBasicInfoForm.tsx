@@ -50,7 +50,7 @@ export const ConfigureCorrelationBasicInfoForm = () => {
               },
             })}
             readOnly={readOnly}
-            placeholder={t('correlations.basic-info.Label-placeholder', 'e.g. Tempo traces')}
+            placeholder={t('correlations.basic-info.label-placeholder', 'e.g. Tempo traces')}
           />
         </Field>
 
