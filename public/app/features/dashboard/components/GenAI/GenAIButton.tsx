@@ -43,7 +43,7 @@ export const GenAIButton = ({
 
   // Todo: Consider other options for `"` sanitation
   if (isGeneratingResponse) {
-    onGenerate(reply.replace(/"/g, ''));
+    onGenerate(reply.replace(/^"|"$/g, ''));
   }
 
   const getIcon = () => {
