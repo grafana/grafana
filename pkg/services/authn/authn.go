@@ -48,8 +48,8 @@ type ClientParams struct {
 	SyncUser bool
 	// AllowSignUp Adds identity to DB if it doesn't exist when, only work if SyncUser is enabled
 	AllowSignUp bool
-	// EnableDisabledUsers will enable disabled user, only work if SyncUser is enabled
-	EnableDisabledUsers bool
+	// EnableUser will ensure the user is enabled, only work if SyncUser is enabled
+	EnableUser bool
 	// FetchSyncedUser ensure that all required information is added to the identity
 	FetchSyncedUser bool
 	// SyncTeams will sync the groups from identity to teams in grafana, enterprise only feature

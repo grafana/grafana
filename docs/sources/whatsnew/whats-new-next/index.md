@@ -17,6 +17,17 @@ weight: -37
 
 Welcome to Grafana Cloud! Read on to learn about the newest changes to Grafana Cloud.
 
+## Tenant database instance name and number for SAP HANA® data source
+
+<!-- Miguel Palau -->
+<!-- OSS, Enterprise -->
+
+_Generally available in Grafana Cloud_
+
+The SAP HANA® data source now supports tenant databases connections by using the database name and/or instance number. For more information, refer to [SAP HANA® configuration](/docs/plugins/grafana-saphana-datasource/latest/#configuration).
+
+{{< video-embed src="/media/docs/sap-hana/tenant.mp4" >}}
+
 ## Log aggregation for Datadog data source
 
 <!-- Taewoo Kim -->
