@@ -601,12 +601,12 @@ steps:
 - commands:
   - /src/grafana-build deb $(cat packages.txt | grep tar.gz | grep -v docker | grep
     -v sha256 | awk '{print "--package=" $0}') --destination=gs://grafana-downloads/oss/pr/
-    --grafana-dir=$$PWD > packages.txt
+    --gcp-service-account-key-base64=$$GCP_KEY_BASE64 > packages.txt
   depends_on:
   - rgm-package
   environment:
     GCP_KEY_BASE64:
-      from_secret: rgm_gcp_key_base64
+      from_secret: gcp_key_base64
   image: grafana/grafana-build:main
   name: rgm-deb
   pull: always
@@ -1773,12 +1773,12 @@ steps:
 - commands:
   - /src/grafana-build deb $(cat packages.txt | grep tar.gz | grep -v docker | grep
     -v sha256 | awk '{print "--package=" $0}') --destination=gs://grafana-downloads/oss/pr/
-    --grafana-dir=$$PWD > packages.txt
+    --gcp-service-account-key-base64=$$GCP_KEY_BASE64 > packages.txt
   depends_on:
   - rgm-package
   environment:
     GCP_KEY_BASE64:
-      from_secret: rgm_gcp_key_base64
+      from_secret: gcp_key_base64
   image: grafana/grafana-build:main
   name: rgm-deb
   pull: always
@@ -4242,6 +4242,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: a852abbb9ddb23855fbcd66358da9f1a0d308027ae90c2a084f24f26e4475f1c
+hmac: 1ca0e129e95d057340485dcd6efd638aa6d3921da7da4d0831abb33f0a30d605
 
 ...

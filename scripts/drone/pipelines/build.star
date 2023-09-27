@@ -30,8 +30,8 @@ load(
 load(
     "scripts/drone/steps/rgm.star",
     "rgm_build_docker_step",
-    "rgm_package_step",
     "rgm_deb_step",
+    "rgm_package_step",
 )
 load(
     "scripts/drone/utils/images.star",

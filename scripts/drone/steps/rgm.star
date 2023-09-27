@@ -42,10 +42,10 @@ def rgm_deb_step(file = "packages.txt"):
             "/src/grafana-build deb " +
             "$(cat {} | grep tar.gz | grep -v docker | grep -v sha256 | awk '{{print \"--package=\" $0}}') ".format(file) +
             "--destination=gs://grafana-downloads/oss/pr/ " +
-            "--grafana-dir=$$PWD > {}".format(file),
+            "--gcp-service-account-key-base64=$$GCP_KEY_BASE64 > {}".format(file),
         ],
         "environment": {
-            "GCP_KEY_BASE64": from_secret("rgm_gcp_key_base64"),
+            "GCP_KEY_BASE64": from_secret(rgm_gcp_key_base64),
         },
         "volumes": [{"name": "docker", "path": "/var/run/docker.sock"}],
     }
