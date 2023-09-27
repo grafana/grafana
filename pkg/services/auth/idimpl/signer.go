@@ -13,11 +13,15 @@ import (
 var _ auth.IDSigner = (*LocalSigner)(nil)
 
 func ProvideLocalSigner(keyService signingkeys.Service) (*LocalSigner, error) {
-	key := keyService.GetServerPrivateKey() // FIXME: replace with signing specific key
+	key, err := keyService.GetPrivateKey(context.Background(), signingkeys.ServerPrivateKeyID)
+	if err != nil {
+		return nil, err
+	}
 
+	// FIXME: Handle key rotation
 	signer, err := jose.NewSigner(jose.SigningKey{Algorithm: jose.ES256, Key: key}, &jose.SignerOptions{
 		ExtraHeaders: map[jose.HeaderKey]interface{}{
-			"kid": "default", // FIXME: replace with specific key id
+			"kid": signingkeys.ServerPrivateKeyID, // FIXME: replace with specific key id
 		},
 	})
 	if err != nil {
