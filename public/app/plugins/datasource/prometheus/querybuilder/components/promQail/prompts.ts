@@ -4,13 +4,12 @@ You are given relevant PromQL documentation, a type and description for a Promet
 
 Input will be in the form:
 
+
+PromQL Documentation:
 <PromQL documentation>
 
-Metric Type: 
-<metric type of the metric queried>
-
-Description: 
-<description of what the metric means>
+PromQL Metrics Metadata:
+<metric_name>(<metric type of the metric queried>): <description of what the metric means>
 
 PromQL Expression: 
 <PromQL query>
@@ -23,11 +22,8 @@ topk (largest k elements by sample value)
 sum (calculate sum over dimensions)
 rate(v range-vector) calculates the per-second average rate of increase of the time series in the range vector. Breaks in monotonicity (such as counter resets due to target restarts) are automatically adjusted for. 
 
-Metric Type: 
-Counter
-
-Description: 
-Number of spans successfully sent to destination.
+PromQL Metrics Metadata:
+traces_exporter_sent_spans(counter): Number of spans successfully sent to destination.
 
 PromQL Expression:
 topk(3, sum by(cluster) (rate(traces_exporter_sent_spans{exporter="otlp"}[5m])))
@@ -38,31 +34,31 @@ This query helps identify the top 3 clusters that have successfully sent the mos
 
 export type ExplainUserPromptParams = {
   documentation: string;
+  metricName: string;
   metricType: string;
-  description: string;
+  metricMetadata: string;
   query: string;
 };
+
 export function GetExplainUserPrompt({
   documentation,
+  metricName,
   metricType,
-  description,
+  metricMetadata,
   query,
 }: ExplainUserPromptParams): string {
   if (documentation === '') {
     documentation = 'No documentation provided.';
   }
-  if (description === '') {
-    description = 'No description provided.';
+  if (metricMetadata === '') {
+    metricMetadata = 'No description provided.';
   }
   return `
         PromQL Documentation: 
         ${documentation}
 
-        Metric Type: 
-        ${metricType}
-
-        Description: 
-        ${description}
+        PromQL Metrics Metadata:
+        ${metricName}(${metricType}): ${metricMetadata}
 
         PromQL Expression: 
         ${query}

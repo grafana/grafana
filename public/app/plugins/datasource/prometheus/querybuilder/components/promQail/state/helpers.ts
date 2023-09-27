@@ -2,7 +2,7 @@ import { AnyAction } from 'redux';
 
 import { llms } from '@grafana/experimental';
 import { PrometheusDatasource } from 'app/plugins/datasource/prometheus/datasource';
-import { getMetadataHelp } from 'app/plugins/datasource/prometheus/language_provider';
+import { getMetadataHelp, getMetadataType } from 'app/plugins/datasource/prometheus/language_provider';
 
 import { promQueryModeller } from '../../../PromQueryModeller';
 import { buildVisualQueryFromString } from '../../../parsing';
@@ -42,13 +42,14 @@ interface TemplateSearchResult {
 
 function getExplainMessage({
   documentation,
+  metricName,
   metricType,
-  description,
+  metricMetadata,
   query,
 }: ExplainUserPromptParams): llms.openai.Message[] {
   return [
     { role: 'system', content: ExplainSystemPrompt },
-    { role: 'user', content: GetExplainUserPrompt({ documentation, metricType, description, query }) },
+    { role: 'user', content: GetExplainUserPrompt({ documentation, metricName, metricType, metricMetadata, query }) },
   ];
 }
 
@@ -79,26 +80,32 @@ export async function promQailExplain(
   // }
 
   const suggestedQuery = interaction.suggestions[suggIdx].query;
+  const pvq = buildVisualQueryFromString(suggestedQuery);
 
   let metricMetadata: string | undefined;
+  let metricType: string | undefined;
 
   if (datasource.languageProvider.metricsMetadata) {
-    if (interaction.suggestionType === SuggestionType.Historical) {
-      // parse the suggested query
-      // get the metric
-      // then check the metadata
-      const pvq = buildVisualQueryFromString(suggestedQuery);
-      metricMetadata = getMetadataHelp(pvq.query.metric, datasource.languageProvider.metricsMetadata!);
-    } else {
-      // for the AI we already have a metric selected
-      metricMetadata = getMetadataHelp(query.metric, datasource.languageProvider.metricsMetadata!);
-    }
+    metricType = getMetadataType(query.metric, datasource.languageProvider.metricsMetadata!);
+    metricMetadata = getMetadataHelp(query.metric, datasource.languageProvider.metricsMetadata!);
   }
 
+  const documentationBody = pvq.query.operations.map((op) => {
+    const def = promQueryModeller.getOperationDef(op.id);
+    if (!def) {
+      return '';
+    }
+    const title = def.renderer(op, def, '<expr>');
+    const body = def.explainHandler ? def.explainHandler(op, def) : def.documentation ?? 'no docs';
+
+    return `### ${title}:\n${body}`;
+  }).join('\n');
+
   const promptMessages = getExplainMessage({
-    documentation: '',
-    metricType: query.metric,
-    description: metricMetadata ?? '',
+    documentation: documentationBody,
+    metricName: query.metric,
+    metricType: metricType ?? '',
+    metricMetadata: metricMetadata ?? '',
     query: suggestedQuery,
   });
 
