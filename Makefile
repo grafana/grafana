@@ -287,6 +287,11 @@ devenv-down: ## Stop optional services.
 	test -f docker-compose.yaml && \
 	docker-compose down || exit 0;
 
+
+devenv-apiserver:
+	@cd devenv/kube-apiserver; \
+	go run .
+
 devenv-postgres:
 	@cd devenv; \
 	sources=postgres_tests
