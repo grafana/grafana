@@ -11,7 +11,7 @@ Plugin signature verification (signing) is a security measure to make sure plugi
 
 At startup, Grafana verifies the signatures of every plugin in the plugin directory. You can see the result of this verification for each plugin by navigating to **Configuration** -> **Plugins**.
 
-> **Note:** If you're a plugin developer and want to know how to sign your plugin, refer to [Sign a plugin]({{< relref "../developers/plugins/sign-a-plugin.md" >}}).
+> **Note:** If you're a plugin developer and want to know how to sign your plugin, refer to [Sign a plugin](https://grafana.com/developers/plugin-tools/publish-a-plugin/sign-a-plugin).
 
 | Signature status | Description |
 | ---------------- | ----------- |
@@ -33,7 +33,7 @@ All plugins is signed under a _signature level_. The signature level determines 
 
 ## Backend plugins
 
-If a [backend plugin]({{< relref "../developers/plugins/backend/_index.md" >}}) is unsigned, then Grafana won't load or start it. If you try to load a backend plugin with an missing or invalid signature, then Grafana writes an error message to the server log:
+If a [backend plugin](https://grafana.com/developers/plugin-tools/introduction/backend-plugins) is unsigned, then Grafana won't load or start it. If you try to load a backend plugin with an missing or invalid signature, then Grafana writes an error message to the server log:
 
 ```bash
 EROR[06-01|16:45:59] Failed to load plugin   error=plugin <plugin id> is unsigned
