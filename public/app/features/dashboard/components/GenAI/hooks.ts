@@ -17,7 +17,7 @@ export function useOpenAIStream(
 ): {
   setMessages: React.Dispatch<React.SetStateAction<Message[]>>;
   reply: string;
-  inProgress: boolean;
+  isGeneratingResponse: boolean;
   error: Error | undefined;
   value:
     | {
@@ -35,9 +35,7 @@ export function useOpenAIStream(
   // The latest reply from the LLM.
   const [reply, setReply] = useState('');
 
-  // const [started, setStarted] = useState(false);
-  // const [finished, setFinished] = useState(true);
-  const [inProgress, setInProgress] = useState(false);
+  const [isGeneratingResponse, setIsGeneratingResponse] = useState(false);
 
   const { error, value } = useAsync(async () => {
     // Check if the LLM plugin is enabled and configured.
@@ -50,7 +48,7 @@ export function useOpenAIStream(
       return { enabled };
     }
 
-    setInProgress(true);
+    setIsGeneratingResponse(true);
     // Stream the completions. Each element is the next stream chunk.
     const stream = llms.openai
       .streamChatCompletions({
@@ -74,7 +72,7 @@ export function useOpenAIStream(
       stream: stream.subscribe({
         next: setReply,
         complete: () => {
-          setInProgress(false);
+          setIsGeneratingResponse(false);
           setMessages([]);
         },
       }),
@@ -90,7 +88,7 @@ export function useOpenAIStream(
   return {
     setMessages,
     reply,
-    inProgress,
+    isGeneratingResponse,
     error,
     value,
   };
