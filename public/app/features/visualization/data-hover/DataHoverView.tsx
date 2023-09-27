@@ -4,18 +4,13 @@ import React from 'react';
 import {
   arrayUtils,
   DataFrame,
-  DisplayProcessor,
   Field,
-  FieldState,
-  FieldType,
   formattedValueToString,
   getFieldDisplayName,
   GrafanaTheme2,
   LinkModel,
-  ValueLinkConfig,
-  Vector,
 } from '@grafana/data';
-import { FieldConfig, Labels, SortOrder, TooltipDisplayMode } from '@grafana/schema';
+import { SortOrder, TooltipDisplayMode } from '@grafana/schema';
 import { LinkButton, useStyles2, VerticalGroup } from '@grafana/ui';
 import { renderValue } from 'app/plugins/panel/geomap/utils/uiUtils';
 
@@ -33,19 +28,6 @@ interface DisplayValue {
   value: unknown;
   valueString: string;
   highlight: boolean;
-}
-
-interface DataHoverField {
-  hovered: boolean;
-  name: string;
-  type: FieldType;
-  config: FieldConfig<any>;
-  values: any[] | Vector<any>;
-  nanos?: number[] | undefined;
-  labels?: Labels | undefined;
-  state?: FieldState;
-  display?: DisplayProcessor | undefined;
-  getLinks?: ((config: ValueLinkConfig) => Array<LinkModel<any>>) | undefined;
 }
 
 export const DataHoverView = ({ data, rowIndex, columnIndex, sortOrder, mode, header = undefined }: Props) => {
