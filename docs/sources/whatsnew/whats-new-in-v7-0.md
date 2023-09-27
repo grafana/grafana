@@ -142,7 +142,7 @@ With [@grafana/toolkit](https://www.npmjs.com/package/@grafana/toolkit) we are d
 
 ### Support for backend plugins
 
-Grafana now officially supports [backend plugins]({{< relref "../developers/plugins/backend/_index.md" >}}) and the first type of plugin to be introduced is a backend component for data source plugins. You can optionally add a backend component to your data source plugin and implement the query logic there to automatically enable alerting in Grafana for your plugin. In the 7.0 release, we introduce the [Grafana Plugin SDK for Go]({{< relref "../developers/plugins/backend/grafana-plugin-sdk-for-go.md" >}}) that enables and simplifies building a backend plugin in [Go](https://golang.org/).
+Grafana now officially supports [backend plugins]({{< relref "../developers/plugins/backend/_index.md" >}}) and the first type of plugin to be introduced is a backend component for data source plugins. You can optionally add a backend component to your data source plugin and implement the query logic there to automatically enable alerting in Grafana for your plugin. In the 7.0 release, we introduce the [Grafana Plugin SDK for Go](https://grafana.com/developers/plugin-tools/introduction/grafana-plugin-sdk-for-go) that enables and simplifies building a backend plugin in [Go](https://golang.org/).
 
 Plugins can be monitored with the new metrics and health check capabilities. The new Resources capability means backend components can return non-time series data like JSON or static resources like images and opens up Grafana for new use cases.
 
