@@ -90,7 +90,8 @@ type RestConfigProvider interface {
 type service struct {
 	*services.BasicService
 
-	restConfig *clientrest.Config
+	restConfig   *clientrest.Config
+	etcd_servers []string
 
 	enabled   bool
 	dataPath  string
@@ -102,15 +103,17 @@ type service struct {
 	builders []APIGroupBuilder
 }
 
-func ProvideService(cfg *setting.Cfg,
+func ProvideService(
+	cfg *setting.Cfg,
 	rr routing.RouteRegister,
 ) (*service, error) {
 	s := &service{
-		enabled:  cfg.IsFeatureToggleEnabled(featuremgmt.FlagGrafanaAPIServer),
-		rr:       rr,
-		dataPath: path.Join(cfg.DataPath, "k8s"),
-		stopCh:   make(chan struct{}),
-		builders: []APIGroupBuilder{},
+		etcd_servers: cfg.SectionWithEnvOverrides("grafana-apiserver").Key("etcd_servers").Strings(","),
+		enabled:      cfg.IsFeatureToggleEnabled(featuremgmt.FlagGrafanaAPIServer),
+		rr:           rr,
+		dataPath:     path.Join(cfg.DataPath, "k8s"),
+		stopCh:       make(chan struct{}),
+		builders:     []APIGroupBuilder{},
 	}
 
 	// This will be used when running as a dskit service
@@ -170,9 +173,13 @@ func (s *service) start(ctx context.Context) error {
 	o.Authorization.RemoteKubeConfigFileOptional = true
 	o.Authorization.AlwaysAllowPaths = []string{"*"}
 	o.Authorization.AlwaysAllowGroups = []string{user.SystemPrivilegedGroup, "grafana"}
-	o.Etcd = nil
+	o.Etcd.StorageConfig.Transport.ServerList = s.etcd_servers
+
 	o.Admission = nil
 	o.CoreAPI = nil
+	if len(o.Etcd.StorageConfig.Transport.ServerList) == 0 {
+		o.Etcd = nil
+	}
 
 	// Get the util to get the paths to pre-generated certs
 	certUtil := certgenerator.CertUtil{
@@ -246,7 +253,11 @@ func (s *service) start(ctx context.Context) error {
 
 	// Install the API Group+version
 	for _, b := range builders {
-		err = server.InstallAPIGroup(b.GetAPIGroupInfo(Scheme, Codecs))
+		g, err := b.GetAPIGroupInfo(Scheme, Codecs, serverConfig.RESTOptionsGetter)
+		if err != nil {
+			return err
+		}
+		err = server.InstallAPIGroup(g)
 		if err != nil {
 			return err
 		}
