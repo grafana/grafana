@@ -12,16 +12,17 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/signingkeys"
 	"github.com/grafana/grafana/pkg/services/signingkeys/signingkeystore"
 )
 
 var _ signingkeys.Service = new(Service)
 
-func ProvideEmbeddedSigningKeysService(dbStore db.DB) (*Service, error) {
+func ProvideEmbeddedSigningKeysService(dbStore db.DB, secretsService secrets.Service) (*Service, error) {
 	s := &Service{
 		log:   log.New("auth.key_service"),
-		store: signingkeystore.NewSigningKeyStore(dbStore),
+		store: signingkeystore.NewSigningKeyStore(dbStore, secretsService),
 	}
 
 	privateKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)

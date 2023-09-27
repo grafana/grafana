@@ -15,6 +15,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 )
 
 func TestIntegrationSigningKeyStore(t *testing.T) {
@@ -59,8 +60,9 @@ func TestIntegrationSigningKeyStore(t *testing.T) {
 
 	for _, tc := range testCases {
 		dbStore := db.InitTestDB(t)
+		secretSvc := fakes.NewFakeSecretsService()
+		store := NewSigningKeyStore(dbStore, secretSvc)
 
-		store := NewSigningKeyStore(dbStore)
 		t.Run(tc.name, func(t *testing.T) {
 			key, err := tc.keyFunc()
 			assert.NoError(t, err)
@@ -89,8 +91,8 @@ func TestIntegrationAddPrivateKey(t *testing.T) {
 	ctx := context.Background()
 
 	dbStore := db.InitTestDB(t)
-
-	store := NewSigningKeyStore(dbStore)
+	secretSvc := fakes.NewFakeSecretsService()
+	store := NewSigningKeyStore(dbStore, secretSvc)
 
 	key1 := generateRSAKey(t)
 	key2 := generateECKey(t)

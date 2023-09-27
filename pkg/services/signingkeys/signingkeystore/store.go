@@ -5,6 +5,7 @@ import (
 	"crypto"
 	"crypto/x509"
 	"database/sql"
+	"encoding/base64"
 	"encoding/pem"
 	"errors"
 	"time"
@@ -12,6 +13,7 @@ import (
 	"github.com/go-jose/go-jose/v3"
 
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
 )
 
@@ -29,7 +31,8 @@ type SigningStore interface {
 var _ SigningStore = (*Store)(nil)
 
 type Store struct {
-	dbStore db.DB
+	dbStore        db.DB
+	secretsService secrets.Service
 }
 
 type SigningKey struct {
@@ -41,9 +44,10 @@ type SigningKey struct {
 	Alg        jose.SignatureAlgorithm `json:"alg" db:"alg"`
 }
 
-func NewSigningKeyStore(dbStore db.DB) *Store {
+func NewSigningKeyStore(dbStore db.DB, secretsService secrets.Service) *Store {
 	return &Store{
-		dbStore: dbStore,
+		dbStore:        dbStore,
+		secretsService: secretsService,
 	}
 }
 
@@ -57,7 +61,7 @@ func (s *Store) GetJWKS(ctx context.Context) (jose.JSONWebKeySet, error) {
 	}
 
 	for _, key := range keys {
-		assertedKey, err := decodePrivateKey(key)
+		assertedKey, err := s.decodePrivateKey(ctx, key)
 		if err != nil {
 			return keySet, err
 		}
@@ -73,39 +77,10 @@ func (s *Store) GetJWKS(ctx context.Context) (jose.JSONWebKeySet, error) {
 	return keySet, nil
 }
 
-func decodePrivateKey(signingKey *SigningKey) (crypto.Signer, error) {
-	block, _ := pem.Decode(signingKey.PrivateKey)
-	if block == nil {
-		return nil, errors.New("failed to decode private key PEM")
-	}
-
-	parsedKey, err := x509.ParsePKCS8PrivateKey(block.Bytes)
-	if err != nil {
-		return nil, err
-	}
-
-	assertedKey, ok := parsedKey.(crypto.Signer)
-	if !ok {
-		return nil, errors.New("failed to assert private key as crypto.Signer")
-	}
-	return assertedKey, nil
-}
-
 // AddPrivateKey adds a private key to the service.
 func (s *Store) AddPrivateKey(ctx context.Context,
 	keyID string, alg jose.SignatureAlgorithm, privateKey crypto.Signer, expiresAt *time.Time, force bool) error {
-	// Encode private key to binary format
-	pKeyBytes, err := x509.MarshalPKCS8PrivateKey(privateKey)
-	if err != nil {
-		return err
-	}
-
-	// Encode private key to PEM format
-	privateKeyPEM := pem.EncodeToMemory(&pem.Block{
-		Type:  "PRIVATE KEY",
-		Bytes: pKeyBytes,
-	})
-
+	privateKeyPEM, err := s.encodePrivateKey(ctx, privateKey)
 	key := &SigningKey{
 		KeyID:      keyID,
 		PrivateKey: privateKeyPEM,
@@ -153,10 +128,67 @@ func (s *Store) GetPrivateKey(ctx context.Context, keyID string) (crypto.Signer,
 		return nil, err
 	}
 
-	signKey, err := decodePrivateKey(key)
+	signKey, err := s.decodePrivateKey(ctx, key)
 	if err != nil {
 		return nil, err
 	}
 
 	return signKey, nil
+}
+
+func (s *Store) encodePrivateKey(ctx context.Context, privateKey crypto.Signer) ([]byte, error) {
+	// Encode private key to binary format
+	pKeyBytes, err := x509.MarshalPKCS8PrivateKey(privateKey)
+	if err != nil {
+		return nil, err
+	}
+
+	// Encode private key to PEM format
+	privateKeyPEM := pem.EncodeToMemory(&pem.Block{
+		Type:  "PRIVATE KEY",
+		Bytes: pKeyBytes,
+	})
+
+	encrypted, err := s.secretsService.Encrypt(ctx, privateKeyPEM, secrets.WithoutScope())
+	if err != nil {
+		return nil, err
+	}
+
+	encoded := make([]byte, base64.StdEncoding.EncodedLen(len(encrypted)))
+	base64.StdEncoding.Encode(encoded, encrypted)
+	return encoded, nil
+}
+
+func (s *Store) decodePrivateKey(ctx context.Context, signingKey *SigningKey) (crypto.Signer, error) {
+	// Bail out if empty string since it'll cause a segfault in Decrypt
+	if len(signingKey.PrivateKey) == 0 {
+		return nil, errors.New("private key is empty")
+	}
+
+	payload := make([]byte, base64.StdEncoding.DecodedLen(len(signingKey.PrivateKey)))
+	_, err := base64.StdEncoding.Decode(payload, signingKey.PrivateKey)
+	if err != nil {
+		return nil, err
+	}
+
+	decrypted, err := s.secretsService.Decrypt(ctx, payload)
+	if err != nil {
+		return nil, err
+	}
+
+	block, _ := pem.Decode(decrypted)
+	if block == nil {
+		return nil, errors.New("failed to decode private key PEM")
+	}
+
+	parsedKey, err := x509.ParsePKCS8PrivateKey(block.Bytes)
+	if err != nil {
+		return nil, err
+	}
+
+	assertedKey, ok := parsedKey.(crypto.Signer)
+	if !ok {
+		return nil, errors.New("failed to assert private key as crypto.Signer")
+	}
+	return assertedKey, nil
 }

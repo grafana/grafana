@@ -2,12 +2,10 @@ package signingkeysimpl
 
 import (
 	"context"
-	"crypto"
 	"crypto/ecdsa"
 	"crypto/x509"
 	"encoding/json"
 	"encoding/pem"
-	"io"
 	"testing"
 
 	"github.com/go-jose/go-jose/v3"
@@ -15,6 +13,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	"github.com/grafana/grafana/pkg/services/signingkeys"
 	"github.com/grafana/grafana/pkg/services/signingkeys/signingkeystore"
 )
@@ -72,22 +71,13 @@ func TestEmbeddedKeyService_GetJWKS_OnlyPublicKeyShared(t *testing.T) {
 }
 
 func TestIntegrationProvideEmbeddedSigningKeysService(t *testing.T) {
-	s, err := ProvideEmbeddedSigningKeysService(db.InitTestDB(t))
+	s, err := ProvideEmbeddedSigningKeysService(db.InitTestDB(t), fakes.NewFakeSecretsService())
 	require.NoError(t, err)
 	require.NotNil(t, s)
 
 	key, err := s.GetPrivateKey(context.Background(), signingkeys.ServerPrivateKeyID)
+	require.NoError(t, err)
+
 	// Verify that ProvideEmbeddedSigningKeysService generates an ECDSA private key by default
 	require.IsType(t, &ecdsa.PrivateKey{}, key)
-}
-
-type dummyPrivateKey struct {
-}
-
-func (d dummyPrivateKey) Public() crypto.PublicKey {
-	return ""
-}
-
-func (d dummyPrivateKey) Sign(rand io.Reader, digest []byte, opts crypto.SignerOpts) ([]byte, error) {
-	return nil, nil
 }
