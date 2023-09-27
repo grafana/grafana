@@ -73,9 +73,7 @@ export const DataHoverView = ({ data, rowIndex, columnIndex, sortOrder, mode, he
     }
 
     // Sanitize field by removing hovered property to fix unique display name issue
-    const sanitizedField = { ...field };
-    // Not the cleanest approach - but necessary to avoid TS error when trying to delete a required property
-    delete (sanitizedField as { hovered?: boolean }).hovered;
+    const { hovered, ...sanitizedField } = field;
 
     displayValues.push({
       name: getFieldDisplayName(sanitizedField, data),
