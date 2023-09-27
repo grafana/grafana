@@ -17,7 +17,7 @@ weight: 600
 
 Besides the wide range of visualizations and data sources that are available immediately after you install Grafana, you can extend your Grafana experience with _plugins_.
 
-You can [install]({{< relref "#install-a-plugin" >}}) one of the plugins built by the Grafana community, or [build one yourself](https://grafana.com/developers/plugin-tools).
+You can [install]({{< relref "#install-a-plugin" >}}) one of the plugins built by the Grafana community, or [build one yourself]({{< relref "../../developers/plugins/" >}}).
 
 Grafana supports three types of plugins: [panels](/grafana/plugins?type=panel), [data sources](/plugins?type=datasource), and [apps](/grafana/plugins?type=app).
 
@@ -171,7 +171,7 @@ Grafana also writes an error message to the server log:
 WARN[05-26|12:00:00] Some plugin scanning errors were found   errors="plugin '<plugin id>' is unsigned, plugin '<plugin id>' has an invalid signature"
 ```
 
-If you are a plugin developer and want to know how to sign your plugin, refer to [Sign a plugin](https://grafana.com/developers/plugin-tools/publish-a-plugin/sign-a-plugin).
+If you are a plugin developer and want to know how to sign your plugin, refer to [Sign a plugin]({{< relref "../../developers/plugins/publish-a-plugin/sign-a-plugin.md" >}}).
 
 | Signature status   | Description                                                                     |
 | ------------------ | ------------------------------------------------------------------------------- |
