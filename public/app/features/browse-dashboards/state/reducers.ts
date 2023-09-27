@@ -1,25 +1,64 @@
 import { PayloadAction } from '@reduxjs/toolkit';
 
-import { GENERAL_FOLDER_UID } from 'app/features/search/constants';
 import { DashboardViewItem, DashboardViewItemKind } from 'app/features/search/types';
 
 import { BrowseDashboardsState } from '../types';
 
-import { fetchChildren } from './actions';
+import { fetchNextChildrenPage, refetchChildren } from './actions';
 import { findItem } from './utils';
 
-type FetchChildrenAction = ReturnType<typeof fetchChildren.fulfilled>;
+type FetchNextChildrenPageFulfilledAction = ReturnType<typeof fetchNextChildrenPage.fulfilled>;
+type RefetchChildrenFulfilledAction = ReturnType<typeof refetchChildren.fulfilled>;
 
-export function extraReducerFetchChildrenFulfilled(state: BrowseDashboardsState, action: FetchChildrenAction) {
-  const parentUID = action.meta.arg;
-  const children = action.payload;
+export function refetchChildrenFulfilled(state: BrowseDashboardsState, action: RefetchChildrenFulfilledAction) {
+  const { children, page, kind, lastPageOfKind } = action.payload;
+  const { parentUID } = action.meta.arg;
 
-  if (!parentUID || parentUID === GENERAL_FOLDER_UID) {
-    state.rootItems = children;
+  const newCollection = {
+    items: children,
+    lastFetchedKind: kind,
+    lastFetchedPage: page,
+    lastKindHasMoreItems: !lastPageOfKind,
+    isFullyLoaded: kind === 'dashboard' && lastPageOfKind,
+  };
+
+  if (parentUID) {
+    state.childrenByParentUID[parentUID] = newCollection;
+  } else {
+    state.rootItems = newCollection;
+  }
+}
+
+export function fetchNextChildrenPageFulfilled(
+  state: BrowseDashboardsState,
+  action: FetchNextChildrenPageFulfilledAction
+) {
+  const payload = action.payload;
+  if (!payload) {
+    // If not additional pages to load, the action returns undefined
     return;
   }
 
-  state.childrenByParentUID[parentUID] = children;
+  const { children, page, kind, lastPageOfKind } = payload;
+  const { parentUID, excludeKinds = [] } = action.meta.arg;
+
+  const collection = parentUID ? state.childrenByParentUID[parentUID] : state.rootItems;
+  const prevItems = collection?.items ?? [];
+
+  const newCollection = {
+    items: prevItems.concat(children),
+    lastFetchedKind: kind,
+    lastFetchedPage: page,
+    lastKindHasMoreItems: !lastPageOfKind,
+    isFullyLoaded: !excludeKinds.includes('dashboard') ? kind === 'dashboard' && lastPageOfKind : lastPageOfKind,
+  };
+
+  if (!parentUID) {
+    state.rootItems = newCollection;
+    return;
+  }
+
+  state.childrenByParentUID[parentUID] = newCollection;
 
   // If the parent of the items we've loaded are selected, we must select all these items also
   const parentIsSelected = state.selectedItems.folder[parentUID];
@@ -56,8 +95,8 @@ export function setItemSelectionState(
       return;
     }
 
-    let children = state.childrenByParentUID[uid] ?? [];
-    for (const child of children) {
+    let collection = state.childrenByParentUID[uid];
+    for (const child of collection?.items ?? []) {
       markChildren(child.kind, child.uid);
     }
   }
@@ -70,7 +109,7 @@ export function setItemSelectionState(
   let nextParentUID = item.parentUID;
 
   while (nextParentUID) {
-    const parent = findItem(state.rootItems ?? [], state.childrenByParentUID, nextParentUID);
+    const parent = findItem(state.rootItems?.items ?? [], state.childrenByParentUID, nextParentUID);
 
     // This case should not happen, but a find can theortically return undefined, and it
     // helps limit infinite loops
@@ -87,7 +126,7 @@ export function setItemSelectionState(
   }
 
   // Check to see if we should mark the header checkbox selected if all root items are selected
-  state.selectedItems.$all = state.rootItems?.every((v) => state.selectedItems[v.kind][v.uid]) ?? false;
+  state.selectedItems.$all = state.rootItems?.items?.every((v) => state.selectedItems[v.kind][v.uid]) ?? false;
 }
 
 export function setAllSelection(
@@ -114,7 +153,7 @@ export function setAllSelection(
         return;
       }
 
-      for (const child of collection) {
+      for (const child of collection.items) {
         state.selectedItems[child.kind][child.uid] = isSelected;
 
         if (child.kind !== 'folder') {

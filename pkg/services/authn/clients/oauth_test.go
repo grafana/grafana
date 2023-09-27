@@ -8,13 +8,14 @@ import (
 
 	"golang.org/x/oauth2"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestOAuth_Authenticate(t *testing.T) {
@@ -128,13 +129,13 @@ func TestOAuth_Authenticate(t *testing.T) {
 				Groups: []string{"grp1", "grp2"},
 			},
 			expectedIdentity: &authn.Identity{
-				Email:      "some@email.com",
-				AuthModule: "oauth_azuread",
-				AuthID:     "123",
-				Name:       "name",
-				Groups:     []string{"grp1", "grp2"},
-				OAuthToken: &oauth2.Token{},
-				OrgRoles:   map[int64]org.RoleType{1: org.RoleAdmin},
+				Email:           "some@email.com",
+				AuthenticatedBy: login.AzureADAuthModule,
+				AuthID:          "123",
+				Name:            "name",
+				Groups:          []string{"grp1", "grp2"},
+				OAuthToken:      &oauth2.Token{},
+				OrgRoles:        map[int64]org.RoleType{1: org.RoleAdmin},
 				ClientParams: authn.ClientParams{
 					SyncUser:        true,
 					SyncTeams:       true,
@@ -165,6 +166,23 @@ func TestOAuth_Authenticate(t *testing.T) {
 				Email:  "some@email.com",
 				Role:   "Admin",
 				Groups: []string{"grp1", "grp2"},
+			},
+			expectedIdentity: &authn.Identity{
+				Email:           "some@email.com",
+				AuthenticatedBy: login.AzureADAuthModule,
+				AuthID:          "123",
+				Name:            "name",
+				Groups:          []string{"grp1", "grp2"},
+				OAuthToken:      &oauth2.Token{},
+				OrgRoles:        map[int64]org.RoleType{1: org.RoleAdmin},
+				ClientParams: authn.ClientParams{
+					SyncUser:        true,
+					SyncTeams:       true,
+					AllowSignUp:     true,
+					FetchSyncedUser: true,
+					SyncOrgRoles:    true,
+					LookUpParams:    login.UserLookupParams{Email: strPtr("some@email.com")},
+				},
 			},
 		},
 	}
@@ -203,7 +221,7 @@ func TestOAuth_Authenticate(t *testing.T) {
 				assert.Equal(t, tt.expectedIdentity.Name, identity.Name)
 				assert.Equal(t, tt.expectedIdentity.Email, identity.Email)
 				assert.Equal(t, tt.expectedIdentity.AuthID, identity.AuthID)
-				assert.Equal(t, tt.expectedIdentity.AuthModule, identity.AuthModule)
+				assert.Equal(t, tt.expectedIdentity.AuthenticatedBy, identity.AuthenticatedBy)
 				assert.Equal(t, tt.expectedIdentity.Groups, identity.Groups)
 
 				assert.Equal(t, tt.expectedIdentity.ClientParams.SyncUser, identity.ClientParams.SyncUser)
@@ -305,7 +323,7 @@ type fakeConnector struct {
 	social.SocialConnector
 }
 
-func (f fakeConnector) UserInfo(client *http.Client, token *oauth2.Token) (*social.BasicUserInfo, error) {
+func (f fakeConnector) UserInfo(ctx context.Context, client *http.Client, token *oauth2.Token) (*social.BasicUserInfo, error) {
 	return f.ExpectedUserInfo, f.ExpectedUserInfoErr
 }
 

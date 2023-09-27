@@ -618,14 +618,6 @@ func (dr *DashboardServiceImpl) GetDashboardACLInfoList(ctx context.Context, que
 	return dr.dashboardStore.GetDashboardACLInfoList(ctx, query)
 }
 
-func (dr *DashboardServiceImpl) HasAdminPermissionInDashboardsOrFolders(ctx context.Context, query *folder.HasAdminPermissionInDashboardsOrFoldersQuery) (bool, error) {
-	return dr.dashboardStore.HasAdminPermissionInDashboardsOrFolders(ctx, query)
-}
-
-func (dr *DashboardServiceImpl) HasEditPermissionInFolders(ctx context.Context, query *folder.HasEditPermissionInFoldersQuery) (bool, error) {
-	return dr.dashboardStore.HasEditPermissionInFolders(ctx, query)
-}
-
 func (dr *DashboardServiceImpl) GetDashboardTags(ctx context.Context, query *dashboards.GetDashboardTagsQuery) ([]*dashboards.DashboardTagCloudItem, error) {
 	return dr.dashboardStore.GetDashboardTags(ctx, query)
 }
@@ -634,8 +626,8 @@ func (dr *DashboardServiceImpl) DeleteACLByUser(ctx context.Context, userID int6
 	return dr.dashboardStore.DeleteACLByUser(ctx, userID)
 }
 
-func (dr DashboardServiceImpl) CountInFolder(ctx context.Context, orgID int64, uid string, u *user.SignedInUser) (int64, error) {
-	folder, err := dr.folderService.Get(ctx, &folder.GetFolderQuery{UID: &uid, OrgID: orgID, SignedInUser: u})
+func (dr DashboardServiceImpl) CountInFolder(ctx context.Context, orgID int64, folderUID string, u *user.SignedInUser) (int64, error) {
+	folder, err := dr.folderService.Get(ctx, &folder.GetFolderQuery{UID: &folderUID, OrgID: orgID, SignedInUser: u})
 	if err != nil {
 		return 0, err
 	}
@@ -643,8 +635,8 @@ func (dr DashboardServiceImpl) CountInFolder(ctx context.Context, orgID int64, u
 	return dr.dashboardStore.CountDashboardsInFolder(ctx, &dashboards.CountDashboardsInFolderRequest{FolderID: folder.ID, OrgID: orgID})
 }
 
-func (dr *DashboardServiceImpl) DeleteInFolder(ctx context.Context, orgID int64, UID string) error {
-	return dr.dashboardStore.DeleteDashboardsInFolder(ctx, &dashboards.DeleteDashboardsInFolderRequest{FolderUID: UID, OrgID: orgID})
+func (dr *DashboardServiceImpl) DeleteInFolder(ctx context.Context, orgID int64, folderUID string, u *user.SignedInUser) error {
+	return dr.dashboardStore.DeleteDashboardsInFolder(ctx, &dashboards.DeleteDashboardsInFolderRequest{FolderUID: folderUID, OrgID: orgID})
 }
 
 func (dr *DashboardServiceImpl) Kind() string { return entity.StandardKindDashboard }

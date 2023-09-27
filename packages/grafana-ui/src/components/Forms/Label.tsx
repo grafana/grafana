@@ -14,35 +14,35 @@ export interface LabelProps extends React.LabelHTMLAttributes<HTMLLabelElement> 
 
 export const getLabelStyles = stylesFactory((theme: GrafanaTheme2) => {
   return {
-    label: css`
-      label: Label;
-      font-size: ${theme.typography.size.sm};
-      font-weight: ${theme.typography.fontWeightMedium};
-      line-height: 1.25;
-      margin-bottom: ${theme.spacing(0.5)};
-      color: ${theme.colors.text.primary};
-      max-width: 480px;
-    `,
-    labelContent: css`
-      display: flex;
-      align-items: center;
-    `,
-    description: css`
-      label: Label-description;
-      color: ${theme.colors.text.secondary};
-      font-size: ${theme.typography.size.sm};
-      font-weight: ${theme.typography.fontWeightRegular};
-      margin-top: ${theme.spacing(0.25)};
-      display: block;
-    `,
-    categories: css`
-      label: Label-categories;
-      display: inline-flex;
-      align-items: center;
-    `,
-    chevron: css`
-      margin: 0 ${theme.spacing(0.25)};
-    `,
+    label: css({
+      label: 'Label',
+      fontSize: theme.typography.size.sm,
+      fontWeight: theme.typography.fontWeightMedium,
+      lineHeight: 1.25,
+      marginBottom: theme.spacing(0.5),
+      color: theme.colors.text.primary,
+      maxWidth: '480px',
+    }),
+    labelContent: css({
+      display: 'flex',
+      alignItems: 'center',
+    }),
+    description: css({
+      label: 'Label-description',
+      color: theme.colors.text.secondary,
+      fontSize: theme.typography.size.sm,
+      fontWeight: theme.typography.fontWeightRegular,
+      marginTop: theme.spacing(0.25),
+      display: 'block',
+    }),
+    categories: css({
+      label: 'Label-categories',
+      display: 'inline-flex',
+      alignItems: 'center',
+    }),
+    chevron: css({
+      margin: theme.spacing(0, 0.25),
+    }),
   };
 });
 

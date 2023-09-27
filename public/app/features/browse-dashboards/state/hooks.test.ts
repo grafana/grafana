@@ -1,6 +1,7 @@
 import { configureStore } from 'app/store/configureStore';
 import { useSelector } from 'app/types';
 
+import { fullyLoadedViewItemCollection } from '../fixtures/state.fixtures';
 import { BrowseDashboardsState } from '../types';
 
 import { useBrowseLoadingStatus } from './hooks';
@@ -57,7 +58,7 @@ describe('browse-dashboards state hooks', () => {
     });
 
     it('returns fulfilled when root view is finished loading', () => {
-      mockState(createInitialState({ rootItems: [] }));
+      mockState(createInitialState({ rootItems: fullyLoadedViewItemCollection([]) }));
 
       const status = useBrowseLoadingStatus(undefined);
       expect(status).toEqual('fulfilled');
@@ -67,7 +68,7 @@ describe('browse-dashboards state hooks', () => {
       mockState(
         createInitialState({
           childrenByParentUID: {
-            [folderUID]: [],
+            [folderUID]: fullyLoadedViewItemCollection([]),
           },
         })
       );

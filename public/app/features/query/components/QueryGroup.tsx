@@ -9,6 +9,7 @@ import {
   getDefaultTimeRange,
   LoadingState,
   PanelData,
+  PluginType,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { getDataSourceSrv, locationService } from '@grafana/runtime';
@@ -21,10 +22,12 @@ import { addQuery, queryIsEmpty } from 'app/core/utils/query';
 import { DataSourceModal } from 'app/features/datasources/components/picker/DataSourceModal';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 import { dataSource as expressionDatasource } from 'app/features/expressions/ExpressionDatasource';
+import { AngularDeprecationPluginNotice } from 'app/features/plugins/angularDeprecation/AngularDeprecationPluginNotice';
 import { DashboardQueryEditor, isSharedDashboardQuery } from 'app/plugins/datasource/dashboard';
 import { GrafanaQuery } from 'app/plugins/datasource/grafana/types';
 import { QueryGroupOptions } from 'app/types';
 
+import { isAngularDatasourcePlugin } from '../../plugins/angularDeprecation/utils';
 import { PanelQueryRunner } from '../state/PanelQueryRunner';
 import { updateQueries } from '../state/updateQueries';
 
@@ -47,7 +50,6 @@ interface State {
   helpContent: React.ReactNode;
   isLoadingHelp: boolean;
   isPickerOpen: boolean;
-  isAddingMixed: boolean;
   isDataSourceModalOpen: boolean;
   data: PanelData;
   isHelpOpen: boolean;
@@ -65,7 +67,6 @@ export class QueryGroup extends PureComponent<Props, State> {
     isLoadingHelp: false,
     helpContent: null,
     isPickerOpen: false,
-    isAddingMixed: false,
     isHelpOpen: false,
     queries: [],
     data: {
@@ -146,6 +147,7 @@ export class QueryGroup extends PureComponent<Props, State> {
     const queries = defaultQueries || (await updateQueries(nextDS, newSettings.uid, this.state.queries, currentDS));
 
     const dataSource = await this.dataSourceSrv.get(newSettings.name);
+
     this.onChange({
       queries,
       dataSource: {
@@ -253,6 +255,14 @@ export class QueryGroup extends PureComponent<Props, State> {
             </>
           )}
         </div>
+        {dataSource && isAngularDatasourcePlugin(dataSource.uid) && (
+          <AngularDeprecationPluginNotice
+            pluginId={dataSource.type}
+            pluginType={PluginType.datasource}
+            angularSupportEnabled={config?.angularSupportEnabled}
+            showPluginDetailsLink={true}
+          />
+        )}
       </div>
     );
   }
@@ -267,20 +277,6 @@ export class QueryGroup extends PureComponent<Props, State> {
 
   onCloseDataSourceModal = () => {
     this.setState({ isDataSourceModalOpen: false });
-  };
-
-  renderMixedPicker = () => {
-    return (
-      <DataSourcePicker
-        mixed={false}
-        onChange={this.onAddMixedQuery}
-        current={null}
-        autoFocus={true}
-        variables={true}
-        onBlur={this.onMixedPickerBlur}
-        openMenuOnFocus={true}
-      />
-    );
   };
 
   renderDataSourcePickerWithPrompt = () => {
@@ -307,15 +303,6 @@ export class QueryGroup extends PureComponent<Props, State> {
         <DataSourcePicker {...commonProps} />
       </>
     );
-  };
-
-  onAddMixedQuery = (datasource: any) => {
-    this.onAddQuery({ datasource: datasource.name });
-    this.setState({ isAddingMixed: false });
-  };
-
-  onMixedPickerBlur = () => {
-    this.setState({ isAddingMixed: false });
   };
 
   onAddQuery = (query: Partial<DataQuery>) => {
@@ -374,8 +361,7 @@ export class QueryGroup extends PureComponent<Props, State> {
   }
 
   renderAddQueryRow(dsSettings: DataSourceInstanceSettings, styles: QueriesTabStyles) {
-    const { isAddingMixed } = this.state;
-    const showAddButton = !(isAddingMixed || isSharedDashboardQuery(dsSettings.name));
+    const showAddButton = !isSharedDashboardQuery(dsSettings.name);
 
     return (
       <HorizontalGroup spacing="md" align="flex-start">

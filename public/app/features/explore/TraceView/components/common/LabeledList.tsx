@@ -52,7 +52,7 @@ const getStyles = (divider: boolean) => (theme: GrafanaTheme2) => {
     `,
     LabeledListValue: css`
       label: LabeledListValue;
-      margin-right: 0.55rem;
+      ${!divider && `margin-right: 0.55rem;`}
     `,
   };
 };

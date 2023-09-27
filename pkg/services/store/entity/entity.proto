@@ -311,7 +311,7 @@ message EntitySearchResult {
   // Entity identifier
   GRN GRN = 1;
 
-  // The current veresion of this entity
+  // The current version of this entity
   string version = 2;
 
   // Content Length

@@ -1,10 +1,12 @@
 import { css, cx } from '@emotion/css';
 import React, { CSSProperties, ReactElement, ReactNode } from 'react';
+import { useMeasure } from 'react-use';
 
 import { GrafanaTheme2, LoadingState } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { useStyles2, useTheme2 } from '../../themes';
+import { getFocusStyles } from '../../themes/mixins';
 import { DelayRender } from '../../utils/DelayRender';
 import { Icon } from '../Icon/Icon';
 import { LoadingBar } from '../LoadingBar/LoadingBar';
@@ -19,10 +21,8 @@ import { TitleItem } from './TitleItem';
 /**
  * @internal
  */
-export interface PanelChromeProps {
-  width: number;
-  height: number;
-  children: (innerWidth: number, innerHeight: number) => ReactNode;
+export type PanelChromeProps = FixedDimensions | AutoSize;
+interface BaseProps {
   padding?: PanelPadding;
   hoverHeaderOffset?: number;
   title?: string;
@@ -56,6 +56,18 @@ export interface PanelChromeProps {
    * callback when opening the panel menu
    */
   onOpenMenu?: () => void;
+}
+
+interface FixedDimensions extends BaseProps {
+  width: number;
+  height: number;
+  children: (innerWidth: number, innerHeight: number) => ReactNode;
+}
+
+interface AutoSize extends BaseProps {
+  width?: never;
+  height?: never;
+  children: ReactNode;
 }
 
 /**
@@ -97,7 +109,7 @@ export function PanelChrome({
   const showOnHoverClass = 'show-on-hover';
 
   const headerHeight = getHeaderHeight(theme, hasHeader);
-  const { contentStyle, innerWidth, innerHeight } = getContentStyle(padding, theme, width, headerHeight, height);
+  const { contentStyle, innerWidth, innerHeight } = getContentStyle(padding, theme, headerHeight, height, width);
 
   const headerStyles: CSSProperties = {
     height: headerHeight,
@@ -109,6 +121,8 @@ export function PanelChrome({
     containerStyles.backgroundColor = 'transparent';
     containerStyles.border = 'none';
   }
+
+  const [ref, { width: loadingBarWidth }] = useMeasure<HTMLDivElement>();
 
   /** Old property name now maps to actions */
   if (leftItems) {
@@ -129,7 +143,6 @@ export function PanelChrome({
         <PanelDescription description={description} className={dragClassCancel} />
         {titleItems}
       </div>
-
       {loadingState === LoadingState.Streaming && (
         <Tooltip content={onCancelQuery ? 'Stop streaming' : 'Streaming'}>
           <TitleItem className={dragClassCancel} data-testid="panel-streaming" onClick={onCancelQuery}>
@@ -140,7 +153,11 @@ export function PanelChrome({
       {loadingState === LoadingState.Loading && onCancelQuery && (
         <DelayRender delay={2000}>
           <Tooltip content="Cancel query">
-            <TitleItem className={dragClassCancel} data-testid="panel-cancel-query" onClick={onCancelQuery}>
+            <TitleItem
+              className={cx(dragClassCancel, styles.pointer)}
+              data-testid="panel-cancel-query"
+              onClick={onCancelQuery}
+            >
               <Icon name="sync-slash" size="md" />
             </TitleItem>
           </Tooltip>
@@ -153,9 +170,13 @@ export function PanelChrome({
   );
 
   return (
-    <div className={styles.container} style={containerStyles} data-testid={testid}>
+    // tabIndex={0} is needed for keyboard accessibility in the plot area
+    // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex
+    <div className={styles.container} style={containerStyles} data-testid={testid} tabIndex={0} ref={ref}>
       <div className={styles.loadingBarContainer}>
-        {loadingState === LoadingState.Loading ? <LoadingBar width={width} ariaLabel="Panel loading bar" /> : null}
+        {loadingState === LoadingState.Loading ? (
+          <LoadingBar width={loadingBarWidth} ariaLabel="Panel loading bar" />
+        ) : null}
       </div>
 
       {hoverHeader && (
@@ -200,8 +221,8 @@ export function PanelChrome({
         </div>
       )}
 
-      <div className={styles.content} style={contentStyle}>
-        {children(innerWidth, innerHeight)}
+      <div className={cx(styles.content, height === undefined && styles.containNone)} style={contentStyle}>
+        {typeof children === 'function' ? children(innerWidth, innerHeight) : children}
       </div>
     </div>
   );
@@ -223,21 +244,28 @@ const getHeaderHeight = (theme: GrafanaTheme2, hasHeader: boolean) => {
 const getContentStyle = (
   padding: string,
   theme: GrafanaTheme2,
-  width: number,
   headerHeight: number,
-  height: number
+  height?: number,
+  width?: number
 ) => {
   const chromePadding = (padding === 'md' ? theme.components.panel.padding : 0) * theme.spacing.gridSize;
 
   const panelPadding = chromePadding * 2;
   const panelBorder = 1 * 2;
 
-  const innerWidth = width - panelPadding - panelBorder;
-  const innerHeight = height - headerHeight - panelPadding - panelBorder;
+  let innerWidth = 0;
+  if (width) {
+    innerWidth = width - panelPadding - panelBorder;
+  }
 
   const contentStyle: CSSProperties = {
     padding: chromePadding,
   };
+
+  let innerHeight = 0;
+  if (height) {
+    innerHeight = height - headerHeight - panelPadding - panelBorder;
+  }
 
   return { contentStyle, innerWidth, innerHeight };
 };
@@ -258,20 +286,21 @@ const getStyles = (theme: GrafanaTheme2) => {
 
       '.show-on-hover': {
         opacity: '0',
+        visibility: 'hidden',
       },
 
       '&:focus-visible, &:hover': {
         // only show menu icon on hover or focused panel
         '.show-on-hover': {
           opacity: '1',
+          visibility: 'visible',
         },
       },
 
-      '&:focus-visible': {
-        outline: `1px solid ${theme.colors.action.focus}`,
-      },
+      '&:focus-visible': getFocusStyles(theme),
 
-      '&:focus-within': {
+      // The not:(:focus) clause is so that this rule is only applied when decendants are focused (important otherwise the hover header is visible when panel is clicked).
+      '&:focus-within:not(:focus)': {
         '.show-on-hover': {
           visibility: 'visible',
           opacity: '1',
@@ -285,6 +314,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       width: '100%',
       overflow: 'hidden',
     }),
+    containNone: css({
+      contain: 'none',
+    }),
     content: css({
       label: 'panel-content',
       flexGrow: 1,
@@ -294,6 +326,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       label: 'panel-header',
       display: 'flex',
       alignItems: 'center',
+    }),
+    pointer: css({
+      cursor: 'pointer',
     }),
     streaming: css({
       label: 'panel-streaming',

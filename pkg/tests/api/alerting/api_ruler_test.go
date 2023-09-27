@@ -1,6 +1,7 @@
 package alerting
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -9,16 +10,22 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/expr"
+	"github.com/google/uuid"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/expr"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
+	"github.com/grafana/grafana/pkg/services/datasources"
+	datasourceService "github.com/grafana/grafana/pkg/services/datasources/service"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -35,7 +42,7 @@ func TestIntegrationAlertRulePermissions(t *testing.T) {
 	})
 
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
-	permissionsStore := resourcepermissions.NewStore(store)
+	permissionsStore := resourcepermissions.NewStore(store, featuremgmt.WithFeatures())
 
 	// Create a user to make authenticated requests
 	userID := createUser(t, store, user.CreateUserCommand{
@@ -862,13 +869,39 @@ func TestIntegrationRuleUpdate(t *testing.T) {
 		AppModeProduction:     true,
 	})
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
+	permissionsStore := resourcepermissions.NewStore(store, featuremgmt.WithFeatures())
 
 	// Create a user to make authenticated requests
-	createUser(t, store, user.CreateUserCommand{
+	userID := createUser(t, store, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleEditor),
 		Password:       "password",
 		Login:          "grafana",
 	})
+
+	if setting.IsEnterprise {
+		// add blanket access to data sources.
+		_, err := permissionsStore.SetUserResourcePermission(context.Background(),
+			1,
+			accesscontrol.User{ID: userID},
+			resourcepermissions.SetResourcePermissionCommand{
+				Actions: []string{
+					datasources.ActionQuery,
+				},
+				Resource:          datasources.ScopeRoot,
+				ResourceID:        "*",
+				ResourceAttribute: "uid",
+			}, nil)
+		require.NoError(t, err)
+	}
+
+	// Create a user to make authenticated requests
+	createUser(t, store, user.CreateUserCommand{
+		DefaultOrgRole: string(org.RoleAdmin),
+		Password:       "admin",
+		Login:          "admin",
+	})
+
+	adminClient := newAlertingApiClient(grafanaListedAddr, "admin", "admin")
 
 	client := newAlertingApiClient(grafanaListedAddr, "grafana", "password")
 	folder1Title := "folder1"
@@ -892,6 +925,80 @@ func TestIntegrationRuleUpdate(t *testing.T) {
 
 		getGroup = client.GetRulesGroup(t, folder1Title, group.Name)
 		require.Equal(t, expected, *getGroup.Rules[0].ApiRuleNode.For)
+	})
+	t.Run("when data source missing", func(t *testing.T) {
+		var groupName string
+		{
+			ds1 := adminClient.CreateTestDatasource(t)
+			group := generateAlertRuleGroup(3, alertRuleGen(withDatasourceQuery(ds1.Body.Datasource.UID)))
+
+			status, body := client.PostRulesGroup(t, folder1Title, &group)
+			require.Equalf(t, http.StatusAccepted, status, "failed to post rule group. Response: %s", body)
+
+			getGroup := client.GetRulesGroup(t, folder1Title, group.Name)
+			group = convertGettableRuleGroupToPostable(getGroup.GettableRuleGroupConfig)
+
+			require.Len(t, group.Rules, 3)
+
+			adminClient.DeleteDatasource(t, ds1.Body.Datasource.UID)
+
+			// expire datasource caching
+			<-time.After(datasourceService.DefaultCacheTTL + 1*time.Second) // TODO delete when TTL could be configured
+
+			groupName = group.Name
+		}
+
+		t.Run("noop should not fail", func(t *testing.T) {
+			getGroup := client.GetRulesGroup(t, folder1Title, groupName)
+			group := convertGettableRuleGroupToPostable(getGroup.GettableRuleGroupConfig)
+
+			status, body := client.PostRulesGroup(t, folder1Title, &group)
+			require.Equalf(t, http.StatusAccepted, status, "failed to post noop rule group. Response: %s", body)
+		})
+		t.Run("should not let update rule if it does not fix datasource", func(t *testing.T) {
+			getGroup := client.GetRulesGroup(t, folder1Title, groupName)
+			group := convertGettableRuleGroupToPostable(getGroup.GettableRuleGroupConfig)
+
+			group.Rules[0].GrafanaManagedAlert.Title = uuid.NewString()
+			status, body := client.PostRulesGroup(t, folder1Title, &group)
+
+			if status == http.StatusAccepted {
+				getGroup = client.GetRulesGroup(t, folder1Title, group.Name)
+				assert.NotEqualf(t, group.Rules[0].GrafanaManagedAlert.Title, getGroup.Rules[0].GrafanaManagedAlert.Title, "group was updated")
+			}
+			require.Equalf(t, http.StatusBadRequest, status, "expected BadRequest. Response: %s", body)
+			assert.Contains(t, body, "data source not found")
+		})
+		t.Run("should let delete broken rule", func(t *testing.T) {
+			getGroup := client.GetRulesGroup(t, folder1Title, groupName)
+			group := convertGettableRuleGroupToPostable(getGroup.GettableRuleGroupConfig)
+
+			// remove the last rule.
+			group.Rules = group.Rules[0 : len(group.Rules)-1]
+			status, body := client.PostRulesGroup(t, folder1Title, &group)
+			require.Equalf(t, http.StatusAccepted, status, "failed to delete last rule from group. Response: %s", body)
+
+			getGroup = client.GetRulesGroup(t, folder1Title, group.Name)
+			group = convertGettableRuleGroupToPostable(getGroup.GettableRuleGroupConfig)
+			require.Len(t, group.Rules, 2)
+		})
+		t.Run("should let fix single rule", func(t *testing.T) {
+			getGroup := client.GetRulesGroup(t, folder1Title, groupName)
+			group := convertGettableRuleGroupToPostable(getGroup.GettableRuleGroupConfig)
+
+			ds2 := adminClient.CreateTestDatasource(t)
+			withDatasourceQuery(ds2.Body.Datasource.UID)(&group.Rules[0])
+			status, body := client.PostRulesGroup(t, folder1Title, &group)
+			require.Equalf(t, http.StatusAccepted, status, "failed to post noop rule group. Response: %s", body)
+
+			getGroup = client.GetRulesGroup(t, folder1Title, group.Name)
+			group = convertGettableRuleGroupToPostable(getGroup.GettableRuleGroupConfig)
+			require.Equal(t, ds2.Body.Datasource.UID, group.Rules[0].GrafanaManagedAlert.Data[0].DatasourceUID)
+		})
+		t.Run("should let delete group", func(t *testing.T) {
+			status, body := client.DeleteRulesGroup(t, folder1Title, groupName)
+			require.Equalf(t, http.StatusAccepted, status, "failed to post noop rule group. Response: %s", body)
+		})
 	})
 }
 

@@ -429,12 +429,6 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
     this.setState({ showSaveLibraryPanelModal: false });
   };
 
-  renderToolbar() {
-    return (
-      <AppChromeUpdate actions={<ToolbarButtonRow alignment="right">{this.renderEditorActions()}</ToolbarButtonRow>} />
-    );
-  }
-
   render() {
     const { initDone, uiState, theme, sectionNav, pageNav, className, updatePanelEditorUIState } = this.props;
     const styles = getStyles(theme, this.props);
@@ -449,9 +443,11 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
         pageNav={pageNav}
         aria-label={selectors.components.PanelEditor.General.content}
         layout={PageLayoutType.Custom}
-        toolbar={this.renderToolbar()}
         className={className}
       >
+        <AppChromeUpdate
+          actions={<ToolbarButtonRow alignment="right">{this.renderEditorActions()}</ToolbarButtonRow>}
+        />
         <div className={styles.wrapper}>
           <div className={styles.verticalSplitPanesWrapper}>
             {!uiState.isPanelOptionsVisible ? (

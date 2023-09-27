@@ -82,7 +82,7 @@ export function getStackingBands(group: StackingGroup) {
 export function getStackingGroups(frame: DataFrame) {
   let groups: Map<string, StackingGroup> = new Map();
 
-  frame.fields.forEach(({ config, values }, i) => {
+  frame.fields.forEach(({ config, values, type }, i) => {
     // skip x or time field
     if (i === 0) {
       return;
@@ -125,7 +125,10 @@ export function getStackingGroups(frame: DataFrame) {
         ? (custom.lineInterpolation as LineInterpolation)
         : null;
 
-    let stackKey = `${stackDir}|${stackingMode}|${stackingGroup}|${buildScaleKey(config)}|${drawStyle}|${drawStyle2}`;
+    let stackKey = `${stackDir}|${stackingMode}|${stackingGroup}|${buildScaleKey(
+      config,
+      type
+    )}|${drawStyle}|${drawStyle2}`;
 
     let group = groups.get(stackKey);
 

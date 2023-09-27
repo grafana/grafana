@@ -37,7 +37,7 @@ var (
 type SecretsService struct {
 	store      secrets.Store
 	enc        encryption.Internal
-	settings   setting.Provider
+	cfg        *setting.Cfg
 	features   featuremgmt.FeatureToggles
 	usageStats usagestats.Service
 
@@ -57,20 +57,20 @@ func ProvideSecretsService(
 	store secrets.Store,
 	kmsProvidersService kmsproviders.Service,
 	enc encryption.Internal,
-	settings setting.Provider,
+	cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
 	usageStats usagestats.Service,
 ) (*SecretsService, error) {
-	ttl := settings.KeyValue("security.encryption", "data_keys_cache_ttl").MustDuration(15 * time.Minute)
+	ttl := cfg.SectionWithEnvOverrides("security.encryption").Key("data_keys_cache_ttl").MustDuration(15 * time.Minute)
 
 	currentProviderID := kmsproviders.NormalizeProviderID(secrets.ProviderID(
-		settings.KeyValue("security", "encryption_provider").MustString(kmsproviders.Default),
+		cfg.SectionWithEnvOverrides("security").Key("encryption_provider").MustString(kmsproviders.Default),
 	))
 
 	s := &SecretsService{
 		store:               store,
 		enc:                 enc,
-		settings:            settings,
+		cfg:                 cfg,
 		usageStats:          usageStats,
 		kmsProvidersService: kmsProvidersService,
 		dataKeyCache:        newDataKeyCache(ttl),
@@ -342,7 +342,7 @@ func (s *SecretsService) Decrypt(ctx context.Context, payload []byte) ([]byte, e
 	var dataKey []byte
 
 	if !s.encryptedWithEnvelopeEncryption(payload) {
-		secretKey := s.settings.KeyValue("security", "secret_key").Value()
+		secretKey := s.cfg.SectionWithEnvOverrides("security").Key("secret_key").Value()
 		dataKey = []byte(secretKey)
 	} else {
 		payload = payload[1:]
@@ -491,7 +491,7 @@ func (s *SecretsService) ReEncryptDataKeys(ctx context.Context) error {
 
 func (s *SecretsService) Run(ctx context.Context) error {
 	gc := time.NewTicker(
-		s.settings.KeyValue("security.encryption", "data_keys_cache_cleanup_interval").
+		s.cfg.SectionWithEnvOverrides("security.encryption").Key("data_keys_cache_cleanup_interval").
 			MustDuration(time.Minute),
 	)
 

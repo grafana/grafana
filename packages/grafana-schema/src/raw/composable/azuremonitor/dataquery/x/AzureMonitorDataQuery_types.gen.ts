@@ -165,6 +165,10 @@ export const defaultAzureMetricQuery: Partial<AzureMetricQuery> = {
  */
 export interface AzureLogsQuery {
   /**
+   * If set to true the intersection of time ranges specified in the query and Grafana will be used. Otherwise the query time ranges will be used. Defaults to false
+   */
+  intersectTime?: boolean;
+  /**
    * KQL query to be executed.
    */
   query?: string;

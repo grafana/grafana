@@ -53,6 +53,14 @@ func (f FakeService) IsDisabled() bool {
 	return f.ExpectedDisabled
 }
 
+func (f FakeService) SaveExternalServiceRole(ctx context.Context, cmd accesscontrol.SaveExternalServiceRoleCommand) error {
+	return f.ExpectedErr
+}
+
+func (f FakeService) DeleteExternalServiceRole(ctx context.Context, externalServiceID string) error {
+	return f.ExpectedErr
+}
+
 var _ accesscontrol.AccessControl = new(FakeAccessControl)
 
 type FakeAccessControl struct {
@@ -95,6 +103,14 @@ func (f FakeStore) DeleteUserPermissions(ctx context.Context, orgID, userID int6
 	return f.ExpectedErr
 }
 
+func (f FakeStore) SaveExternalServiceRole(ctx context.Context, cmd accesscontrol.SaveExternalServiceRoleCommand) error {
+	return f.ExpectedErr
+}
+
+func (f FakeStore) DeleteExternalServiceRole(ctx context.Context, externalServiceID string) error {
+	return f.ExpectedErr
+}
+
 var _ accesscontrol.PermissionsService = new(FakePermissionsService)
 
 type FakePermissionsService struct {
@@ -122,6 +138,10 @@ func (f *FakePermissionsService) SetBuiltInRolePermission(ctx context.Context, o
 
 func (f *FakePermissionsService) SetPermissions(ctx context.Context, orgID int64, resourceID string, commands ...accesscontrol.SetResourcePermissionCommand) ([]accesscontrol.ResourcePermission, error) {
 	return f.ExpectedPermissions, f.ExpectedErr
+}
+
+func (f *FakePermissionsService) DeleteResourcePermissions(ctx context.Context, orgID int64, resourceID string) error {
+	return f.ExpectedErr
 }
 
 func (f *FakePermissionsService) MapActions(permission accesscontrol.ResourcePermission) string {

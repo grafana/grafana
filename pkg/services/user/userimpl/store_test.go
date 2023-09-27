@@ -349,8 +349,15 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 	})
 
 	t.Run("update last seen at", func(t *testing.T) {
-		err := userStore.UpdateLastSeenAt(context.Background(), &user.UpdateUserLastSeenAtCommand{})
+		err := userStore.UpdateLastSeenAt(context.Background(), &user.UpdateUserLastSeenAtCommand{
+			UserID: 10, // Requires UserID
+		})
 		require.NoError(t, err)
+
+		err = userStore.UpdateLastSeenAt(context.Background(), &user.UpdateUserLastSeenAtCommand{
+			UserID: -1,
+		})
+		require.Error(t, err)
 	})
 
 	t.Run("get signed in user", func(t *testing.T) {
@@ -382,6 +389,15 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		result, err := userStore.GetSignedInUser(context.Background(), query)
 		require.NoError(t, err)
 		require.Equal(t, result.Email, "user1@test.com")
+
+		// Throw errors for invalid user IDs
+		for _, userID := range []int64{-1, 0} {
+			_, err = userStore.GetSignedInUser(context.Background(),
+				&user.GetSignedInUserQuery{
+					OrgID:  users[1].OrgID,
+					UserID: userID}) // zero
+			require.Error(t, err)
+		}
 	})
 
 	t.Run("update user", func(t *testing.T) {

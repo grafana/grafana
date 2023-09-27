@@ -5,7 +5,6 @@ import { NavModelItem } from '@grafana/data';
 
 const defaultPageNav: Partial<NavModelItem> = {
   icon: 'bell-slash',
-  breadcrumbs: [{ title: 'Silences', url: 'alerting/silences' }],
 };
 
 export function useSilenceNavData() {

@@ -68,9 +68,9 @@ describe('LogGroupsSelector', () => {
   afterEach(() => {
     lodash.debounce = originalDebounce;
   });
-  it('opens a modal with a search field when the Select Log Groups Button is clicked', async () => {
+  it('opens a modal with a search field when the Select log groups Button is clicked', async () => {
     render(<LogGroupsSelector {...defaultProps} />);
-    await userEvent.click(screen.getByText('Select Log Groups'));
+    await userEvent.click(screen.getByText('Select log groups'));
     expect(screen.getByText('Log group name prefix')).toBeInTheDocument();
   });
 
@@ -81,7 +81,7 @@ describe('LogGroupsSelector', () => {
       return defaultProps.fetchLogGroups();
     });
     render(<LogGroupsSelector {...defaultProps} fetchLogGroups={fetchLogGroups} />);
-    await userEvent.click(screen.getByText('Select Log Groups'));
+    await userEvent.click(screen.getByText('Select log groups'));
     expect(screen.getByText('Loading...')).toBeInTheDocument();
     defer.resolve();
     await waitFor(() => expect(screen.queryByText('Loading...')).not.toBeInTheDocument());
@@ -96,7 +96,7 @@ describe('LogGroupsSelector', () => {
       return [];
     });
     render(<LogGroupsSelector {...defaultProps} fetchLogGroups={fetchLogGroups} />);
-    await userEvent.click(screen.getByText('Select Log Groups'));
+    await userEvent.click(screen.getByText('Select log groups'));
     expect(screen.getByText('Loading...')).toBeInTheDocument();
     defer.resolve();
     await waitFor(() => expect(screen.queryByText('Loading...')).not.toBeInTheDocument());
@@ -108,7 +108,7 @@ describe('LogGroupsSelector', () => {
   it('calls fetchLogGroups with a search phrase when it is typed in the Search Field', async () => {
     const fetchLogGroups = jest.fn(() => defaultProps.fetchLogGroups());
     render(<LogGroupsSelector {...defaultProps} fetchLogGroups={fetchLogGroups} />);
-    await userEvent.click(screen.getByText('Select Log Groups'));
+    await userEvent.click(screen.getByText('Select log groups'));
     expect(screen.getByText('Log group name prefix')).toBeInTheDocument();
     await userEvent.type(screen.getByLabelText('log group search'), 'something');
     await waitFor(() => screen.getByDisplayValue('something'));
@@ -129,7 +129,7 @@ describe('LogGroupsSelector', () => {
       return defaultProps.fetchLogGroups();
     });
     render(<LogGroupsSelector {...defaultProps} fetchLogGroups={fetchLogGroups} />);
-    await userEvent.click(screen.getByText('Select Log Groups'));
+    await userEvent.click(screen.getByText('Select log groups'));
     expect(screen.getByText('Loading...')).toBeInTheDocument();
     firstCall.resolve();
     await waitFor(() => expect(screen.queryByText('Loading...')).not.toBeInTheDocument());
@@ -147,7 +147,7 @@ describe('LogGroupsSelector', () => {
   it('shows a log group as checked after the user checks it', async () => {
     const onChange = jest.fn();
     render(<LogGroupsSelector {...defaultProps} onChange={onChange} />);
-    await userEvent.click(screen.getByText('Select Log Groups'));
+    await userEvent.click(screen.getByText('Select log groups'));
     expect(screen.getByText('Log group name prefix')).toBeInTheDocument();
     expect(screen.getByLabelText('logGroup2')).not.toBeChecked();
     await userEvent.click(screen.getByLabelText('logGroup2'));
@@ -157,7 +157,7 @@ describe('LogGroupsSelector', () => {
   it('calls onChange with the selected log group when checked and the user clicks the Add button', async () => {
     const onChange = jest.fn();
     render(<LogGroupsSelector {...defaultProps} onChange={onChange} />);
-    await userEvent.click(screen.getByText('Select Log Groups'));
+    await userEvent.click(screen.getByText('Select log groups'));
     expect(screen.getByText('Log group name prefix')).toBeInTheDocument();
     await userEvent.click(screen.getByLabelText('logGroup2'));
     await userEvent.click(screen.getByText('Add log groups'));
@@ -174,7 +174,7 @@ describe('LogGroupsSelector', () => {
   it('does not call onChange after a selection if the user hits the cancel button', async () => {
     const onChange = jest.fn();
     render(<LogGroupsSelector {...defaultProps} onChange={onChange} />);
-    await userEvent.click(screen.getByText('Select Log Groups'));
+    await userEvent.click(screen.getByText('Select log groups'));
     expect(screen.getByText('Log group name prefix')).toBeInTheDocument();
     await userEvent.click(screen.getByLabelText('logGroup2'));
     await userEvent.click(screen.getByText('Cancel'));
@@ -197,7 +197,7 @@ describe('LogGroupsSelector', () => {
       return [];
     });
     render(<LogGroupsSelector {...defaultProps} fetchLogGroups={fetchLogGroups} />);
-    await userEvent.click(screen.getByText('Select Log Groups'));
+    await userEvent.click(screen.getByText('Select log groups'));
     expect(screen.queryByText(labelText)).not.toBeInTheDocument();
     defer.resolve();
     await waitFor(() => expect(screen.queryByText(labelText)).not.toBeInTheDocument());
@@ -215,7 +215,7 @@ describe('LogGroupsSelector', () => {
       }));
     });
     render(<LogGroupsSelector {...defaultProps} fetchLogGroups={fetchLogGroups} />);
-    await userEvent.click(screen.getByText('Select Log Groups'));
+    await userEvent.click(screen.getByText('Select log groups'));
     expect(screen.queryByText(labelText)).not.toBeInTheDocument();
     defer.resolve();
     await waitFor(() => expect(screen.getByText(labelText)).toBeInTheDocument());
@@ -223,7 +223,7 @@ describe('LogGroupsSelector', () => {
 
   it('should display log groups counter label', async () => {
     render(<LogGroupsSelector {...defaultProps} selectedLogGroups={[]} />);
-    await userEvent.click(screen.getByText('Select Log Groups'));
+    await userEvent.click(screen.getByText('Select log groups'));
     await waitFor(() => expect(screen.getByText('0 log groups selected')).toBeInTheDocument());
     await userEvent.click(screen.getByLabelText('logGroup2'));
     await waitFor(() => expect(screen.getByText('1 log group selected')).toBeInTheDocument());
@@ -239,7 +239,7 @@ describe('LogGroupsSelector', () => {
         ]}
       />
     );
-    await userEvent.click(screen.getByText('Select Log Groups'));
+    await userEvent.click(screen.getByText('Select log groups'));
     await waitFor(() => expect(screen.getByText('1 log group selected')).toBeInTheDocument());
   });
 
@@ -255,7 +255,7 @@ describe('LogGroupsSelector', () => {
         onChange={onChange}
       />
     );
-    await userEvent.click(screen.getByText('Select Log Groups'));
+    await userEvent.click(screen.getByText('Select log groups'));
     await selectEvent.select(screen.getByLabelText('Template variable'), '$logGroupVariable', {
       container: document.body,
     });
@@ -284,7 +284,7 @@ describe('LogGroupsSelector', () => {
         onChange={onChange}
       />
     );
-    await userEvent.click(screen.getByText('Select Log Groups'));
+    await userEvent.click(screen.getByText('Select log groups'));
     await screen.getByRole('button', { name: 'select-clear-value' }).click();
     await userEvent.click(screen.getByText('Add log groups'));
     expect(onChange).toHaveBeenCalledWith([
@@ -297,7 +297,7 @@ describe('LogGroupsSelector', () => {
 
   it('should display account label if account options prop has values', async () => {
     render(<LogGroupsSelector {...defaultProps} />);
-    await userEvent.click(screen.getByText('Select Log Groups'));
+    await userEvent.click(screen.getByText('Select log groups'));
     expect(screen.getByText('Log group name prefix')).toBeInTheDocument();
     expect(screen.getByText('Account label')).toBeInTheDocument();
     waitFor(() => expect(screen.getByText('Account Name 123')).toBeInTheDocument());
@@ -305,7 +305,7 @@ describe('LogGroupsSelector', () => {
 
   it('should not display account label if account options prop doesnt has values', async () => {
     render(<LogGroupsSelector {...defaultProps} accountOptions={[]} />);
-    await userEvent.click(screen.getByText('Select Log Groups'));
+    await userEvent.click(screen.getByText('Select log groups'));
     expect(screen.getByText('Log group name prefix')).toBeInTheDocument();
     expect(screen.queryByText('Account label')).not.toBeInTheDocument();
     waitFor(() => expect(screen.queryByText('Account Name 123')).not.toBeInTheDocument());

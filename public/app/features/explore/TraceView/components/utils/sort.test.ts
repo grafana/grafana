@@ -36,12 +36,6 @@ it('localeStringComparator() should properly sort a list of strings', () => {
   ]);
 });
 
-it('numberSortComparator() should properly sort a list of numbers', () => {
-  const arr = [3, -1.1, 4, -1, 9, 4, 2, Infinity, 0, 0];
-
-  expect(arr.sort(sortUtils.numberSortComparator)).toEqual([-1.1, -1, 0, 0, 2, 3, 4, 4, 9, Infinity]);
-});
-
 it('classNameForSortDir() should return the proper asc classes', () => {
   expect(sortUtils.classNameForSortDir(1)).toBe('sorted ascending');
 });

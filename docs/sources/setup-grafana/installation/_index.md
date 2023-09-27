@@ -41,7 +41,7 @@ Installation of Grafana on other operating systems is possible, but is not recom
 
 Grafana requires the minimum system resources:
 
-- Minimum recommended memory: 255 MB
+- Minimum recommended memory: 512 MB
 - Minimum recommended CPU: 1
 
 Some features might require more memory or CPUs, including:
@@ -58,12 +58,12 @@ Grafana supports the following databases:
 
 - [SQLite 3](https://www.sqlite.org/index.html)
 - [MySQL 5.7+](https://www.mysql.com/support/supportedplatforms/database.html)
-- [PostgreSQL 10+](https://www.postgresql.org/support/versioning/)
+- [PostgreSQL 12+](https://www.postgresql.org/support/versioning/)
 
 By default Grafana uses an embedded SQLite database, which is stored in the Grafana installation location.
 
 {{% admonition type="note" %}}
-SQLite works well if your environment is small, but is not recommended when your environment starts growing. For more information about the limitations of SQLite, refer to [Appropriate Uses For SQLite](https://www.sqlite.org/whentouse.html). If you want high availability, you must use a MySQL or PostgreSQL database. For information about how to define the database configuration parameters inside the `grafana.ini` file, refer to [[database]](/docs/grafana/latest/setup-grafana/configure-grafana/#database).
+SQLite works well if your environment is small, but is not recommended when your environment starts growing. For more information about the limitations of SQLite, refer to [Appropriate Uses For SQLite](https://www.sqlite.org/whentouse.html). If you want [high availability](/docs/grafana/latest/setup-grafana/set-up-for-high-availability), you must use either a MySQL or PostgreSQL database. For information about how to define the database configuration parameters inside the `grafana.ini` file, refer to [[database]](/docs/grafana/latest/setup-grafana/configure-grafana/#database).
 {{% /admonition %}}
 
 Grafana supports the versions of these databases that are officially supported by the project at the time a version of Grafana is released. When a Grafana version becomes unsupported, Grafana Labs might also drop support for that database version. See the links above for the support policies for each project.

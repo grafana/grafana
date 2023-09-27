@@ -47,18 +47,6 @@ export interface LicenseInfo {
 }
 
 /**
- * Describes Sentry integration config
- *
- * @public
- */
-export interface SentryConfig {
-  enabled: boolean;
-  dsn: string;
-  customEndpoint: string;
-  sampleRate: number;
-}
-
-/**
  * Describes GrafanaJavascriptAgentConfig integration config
  *
  * @public
@@ -185,6 +173,7 @@ export interface GrafanaConfig {
   queryHistoryEnabled: boolean;
   helpEnabled: boolean;
   profileEnabled: boolean;
+  newsFeedEnabled: boolean;
   ldapEnabled: boolean;
   sigV4AuthEnabled: boolean;
   azureAuthEnabled: boolean;
@@ -211,7 +200,6 @@ export interface GrafanaConfig {
   licenseInfo: LicenseInfo;
   http2Enabled: boolean;
   dateFormats?: SystemDateFormatSettings;
-  sentry: SentryConfig;
   grafanaJavascriptAgent: GrafanaJavascriptAgentConfig;
   customTheme?: any;
   geomapDefaultBaseLayer?: MapLayerOptions;
@@ -252,4 +240,5 @@ export interface AuthSettings {
   GoogleSkipOrgRoleSync?: boolean;
   GenericOAuthSkipOrgRoleSync?: boolean;
   DisableSyncLock?: boolean;
+  AuthProxyEnableLoginToken?: boolean;
 }

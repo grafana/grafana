@@ -101,13 +101,22 @@ class UnthemedCodeEditor extends PureComponent<Props> {
     if (getSuggestions && this.modelId) {
       this.completionCancel = registerSuggestions(monaco, language, getSuggestions, this.modelId);
     }
-    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, this.onSave);
+    // Save when pressing Ctrl+S or Cmd+S
+    editor.onKeyDown((e: monacoType.IKeyboardEvent) => {
+      if (e.keyCode === monaco.KeyCode.KeyS && (e.ctrlKey || e.metaKey)) {
+        e.preventDefault();
+        this.onSave();
+      }
+    });
 
     const languagePromise = this.loadCustomLanguage();
 
+    if (onChange) {
+      editor.getModel()?.onDidChangeContent(() => onChange(editor.getValue()));
+    }
+
     if (onEditorDidMount) {
       languagePromise.then(() => onEditorDidMount(editor, monaco));
-      editor.getModel()?.onDidChangeContent(() => onChange?.(editor.getValue()));
     }
   };
 
@@ -160,6 +169,7 @@ class UnthemedCodeEditor extends PureComponent<Props> {
           }}
           beforeMount={this.handleBeforeMount}
           onMount={this.handleOnMount}
+          keepCurrentModel={true}
         />
       </div>
     );
@@ -170,9 +180,9 @@ export const CodeEditor = withTheme2(UnthemedCodeEditor);
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    container: css`
-      border-radius: ${theme.shape.borderRadius()};
-      border: 1px solid ${theme.components.input.borderColor};
-    `,
+    container: css({
+      borderRadius: theme.shape.borderRadius(),
+      border: `1px solid ${theme.components.input.borderColor}`,
+    }),
   };
 };

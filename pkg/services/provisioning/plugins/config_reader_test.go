@@ -2,13 +2,13 @@ package plugins
 
 import (
 	"context"
-	"os"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
 )
 
 const (
@@ -34,7 +34,7 @@ func TestConfigReader(t *testing.T) {
 	})
 
 	t.Run("Unknown app plugin should return error", func(t *testing.T) {
-		cfgProvider := newConfigReader(log.New("test logger"), plugins.FakePluginStore{})
+		cfgProvider := newConfigReader(log.New("test logger"), &fakes.FakePluginStore{})
 		_, err := cfgProvider.readConfig(context.Background(), unknownApp)
 		require.Error(t, err)
 		require.Equal(t, "plugin not installed: \"nonexisting\"", err.Error())
@@ -48,18 +48,14 @@ func TestConfigReader(t *testing.T) {
 	})
 
 	t.Run("Can read correct properties", func(t *testing.T) {
-		pm := plugins.FakePluginStore{
+		pm := &fakes.FakePluginStore{
 			PluginList: []plugins.PluginDTO{
 				{JSONData: plugins.JSONData{ID: "test-plugin"}},
 				{JSONData: plugins.JSONData{ID: "test-plugin-2"}},
 			},
 		}
 
-		err := os.Setenv("ENABLE_PLUGIN_VAR", "test-plugin")
-		require.NoError(t, err)
-		t.Cleanup(func() {
-			_ = os.Unsetenv("ENABLE_PLUGIN_VAR")
-		})
+		t.Setenv("ENABLE_PLUGIN_VAR", "test-plugin")
 
 		cfgProvider := newConfigReader(log.New("test logger"), pm)
 		cfg, err := cfgProvider.readConfig(context.Background(), correctProperties)

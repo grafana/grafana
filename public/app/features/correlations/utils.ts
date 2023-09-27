@@ -1,6 +1,17 @@
-import { DataFrame, DataLinkConfigOrigin } from '@grafana/data';
+import { lastValueFrom } from 'rxjs';
 
-import { CorrelationData } from './useCorrelations';
+import { DataFrame, DataLinkConfigOrigin } from '@grafana/data';
+import { getBackendSrv } from '@grafana/runtime';
+
+import { formatValueName } from '../explore/PrometheusListView/ItemLabels';
+
+import {
+  CorrelationData,
+  CorrelationsData,
+  CorrelationsResponse,
+  getData,
+  toEnrichedCorrelationsData,
+} from './useCorrelations';
 
 type DataFrameRefIdToDataSourceUid = Record<string, string>;
 
@@ -21,7 +32,14 @@ export const attachCorrelationsToDataFrames = (
     if (!frameRefId) {
       return;
     }
-    const dataSourceUid = dataFrameRefIdToDataSourceUid[frameRefId];
+    let dataSourceUid = dataFrameRefIdToDataSourceUid[frameRefId];
+
+    // rawPrometheus queries append a value to refId to a separate dataframe for the table view
+    if (dataSourceUid === undefined && dataFrame.meta?.preferredVisualisationType === 'rawPrometheus') {
+      const formattedRefID = formatValueName(frameRefId);
+      dataSourceUid = dataFrameRefIdToDataSourceUid[formattedRefID];
+    }
+
     const sourceCorrelations = correlations.filter((correlation) => correlation.source.uid === dataSourceUid);
     decorateDataFrameWithInternalDataLinks(dataFrame, sourceCorrelations);
   });
@@ -48,4 +66,19 @@ const decorateDataFrameWithInternalDataLinks = (dataFrame: DataFrame, correlatio
       }
     });
   });
+};
+
+export const getCorrelationsBySourceUIDs = async (sourceUIDs: string[]): Promise<CorrelationsData> => {
+  return lastValueFrom(
+    getBackendSrv().fetch<CorrelationsResponse>({
+      url: `/api/datasources/correlations`,
+      method: 'GET',
+      showErrorAlert: false,
+      params: {
+        sourceUID: sourceUIDs,
+      },
+    })
+  )
+    .then(getData)
+    .then(toEnrichedCorrelationsData);
 };

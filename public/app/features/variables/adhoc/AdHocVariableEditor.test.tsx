@@ -60,12 +60,14 @@ describe('AdHocVariableEditor', () => {
   it('has a datasource select menu', async () => {
     render(<AdHocVariableEditor {...props} />);
 
-    expect(await screen.findByLabelText(selectors.components.DataSourcePicker.inputV2)).toBeInTheDocument();
+    expect(await screen.getByTestId(selectors.components.DataSourcePicker.container)).toBeInTheDocument();
   });
 
   it('calls the callback when changing the datasource', async () => {
     render(<AdHocVariableEditor {...props} />);
-    const selectEl = screen.getByLabelText(selectors.components.DataSourcePicker.inputV2);
+    const selectEl = screen
+      .getByTestId(selectors.components.DataSourcePicker.container)
+      .getElementsByTagName('input')[0];
     await selectOptionInTest(selectEl, 'Loki');
 
     expect(props.changeVariableDatasource).toBeCalledWith(

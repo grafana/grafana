@@ -37,6 +37,8 @@ export function fuzzySearch(haystack: string[], query: string, dispatcher: (data
     }
 
     dispatcher([haystackOrder, [...matchesSet]]);
+  } else if (!query) {
+    dispatcher([[], []]);
   }
 }
 

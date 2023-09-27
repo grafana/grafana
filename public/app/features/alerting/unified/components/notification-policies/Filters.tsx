@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { debounce, pick } from 'lodash';
+import { debounce } from 'lodash';
 import React, { useCallback, useEffect, useRef } from 'react';
 
 import { SelectableValue } from '@grafana/data';
@@ -126,30 +126,6 @@ export function findRoutesMatchingPredicate(routeTree: RouteWithID, predicateFn:
 
   findMatch(routeTree);
   return matches;
-}
-
-/**
- * This function will compute the full tree with inherited properties – this is mostly used for search and filtering
- */
-export function computeInheritedTree(routeTree: RouteWithID): RouteWithID {
-  return {
-    ...routeTree,
-    routes: routeTree.routes?.map((route) => {
-      const inheritableProperties = pick(routeTree, [
-        'receiver',
-        'group_by',
-        'group_wait',
-        'group_interval',
-        'repeat_interval',
-        'mute_time_intervals',
-      ]);
-
-      return computeInheritedTree({
-        ...inheritableProperties,
-        ...route,
-      });
-    }),
-  };
 }
 
 const toOption = (receiver: Receiver) => ({

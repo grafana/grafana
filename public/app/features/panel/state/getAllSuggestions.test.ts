@@ -338,6 +338,29 @@ scenario('Given default loki logs data', (ctx) => {
   });
 });
 
+scenario('Given a preferredVisualisationType', (ctx) => {
+  ctx.setData([
+    toDataFrame({
+      meta: {
+        preferredVisualisationType: 'table',
+      },
+      fields: [
+        {
+          name: 'Trace Id',
+          type: FieldType.number,
+          values: [1, 2, 3],
+          config: {},
+        },
+        { name: 'Trace Group', type: FieldType.string, values: ['traceGroup1', 'traceGroup2', 'traceGroup3'] },
+      ],
+    }),
+  ]);
+
+  it('should return the preferred visualization first', () => {
+    expect(ctx.names()[0]).toEqual(SuggestionName.Table);
+  });
+});
+
 function repeatFrame(count: number, frame: DataFrame): DataFrame[] {
   const frames: DataFrame[] = [];
   for (let i = 0; i < count; i++) {

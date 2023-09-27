@@ -1,6 +1,6 @@
 import { action } from '@storybook/addon-actions';
 import { useArgs } from '@storybook/client-api';
-import { ComponentMeta, ComponentStory } from '@storybook/react';
+import { Meta, StoryFn } from '@storybook/react';
 import React from 'react';
 
 import { withCenteredStory, withHorizontallyCenteredStory } from '../../utils/storybook/withCenteredStory';
@@ -10,7 +10,7 @@ import mdx from './Collapse.mdx';
 
 const EXCLUDED_PROPS = ['className', 'onToggle'];
 
-const meta: ComponentMeta<typeof Collapse> = {
+const meta: Meta<typeof Collapse> = {
   title: 'Layout/Collapse',
   component: Collapse,
   decorators: [withCenteredStory, withHorizontallyCenteredStory],
@@ -33,7 +33,7 @@ const meta: ComponentMeta<typeof Collapse> = {
   },
 };
 
-export const Basic: ComponentStory<typeof Collapse> = (args) => {
+export const Basic: StoryFn<typeof Collapse> = (args) => {
   const [, updateArgs] = useArgs();
   return (
     <Collapse
@@ -48,7 +48,7 @@ export const Basic: ComponentStory<typeof Collapse> = (args) => {
   );
 };
 
-export const Controlled: ComponentStory<typeof ControlledCollapse> = (args) => {
+export const Controlled: StoryFn<typeof ControlledCollapse> = (args) => {
   return (
     <ControlledCollapse {...args}>
       <p>{args.children}</p>

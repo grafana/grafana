@@ -172,41 +172,29 @@ func (hs *HTTPServer) UpdateDashboardPermissions(c *contextmodel.ReqContext) res
 
 	hiddenACL, err := g.GetHiddenACL(hs.Cfg)
 	if err != nil {
-		return response.Error(500, "Error while retrieving hidden permissions", err)
+		return response.Error(http.StatusInternalServerError, "Error while retrieving hidden permissions", err)
 	}
 	items = append(items, hiddenACL...)
 
 	if okToUpdate, err := g.CheckPermissionBeforeUpdate(dashboards.PERMISSION_ADMIN, items); err != nil || !okToUpdate {
 		if err != nil {
 			if errors.Is(err, guardian.ErrGuardianPermissionExists) || errors.Is(err, guardian.ErrGuardianOverride) {
-				return response.Error(400, err.Error(), err)
+				return response.Error(http.StatusBadRequest, err.Error(), err)
 			}
 
-			return response.Error(500, "Error while checking dashboard permissions", err)
+			return response.Error(http.StatusInternalServerError, "Error while checking dashboard permissions", err)
 		}
 
-		return response.Error(403, "Cannot remove own admin permission for a folder", nil)
+		return response.Error(http.StatusForbidden, "Cannot remove own admin permission for a folder", nil)
 	}
 
-	if !hs.AccessControl.IsDisabled() {
-		old, err := g.GetACL()
-		if err != nil {
-			return response.Error(500, "Error while checking dashboard permissions", err)
-		}
-		if err := hs.updateDashboardAccessControl(c.Req.Context(), dash.OrgID, dash.UID, false, items, old); err != nil {
-			return response.Error(500, "Failed to update permissions", err)
-		}
-		return response.Success("Dashboard permissions updated")
+	old, err := g.GetACL()
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Error while checking dashboard permissions", err)
 	}
-
-	if err := hs.DashboardService.UpdateDashboardACL(c.Req.Context(), dashID, items); err != nil {
-		if errors.Is(err, dashboards.ErrDashboardACLInfoMissing) ||
-			errors.Is(err, dashboards.ErrDashboardPermissionDashboardEmpty) {
-			return response.Error(409, err.Error(), err)
-		}
-		return response.Error(500, "Failed to create permission", err)
+	if err := hs.updateDashboardAccessControl(c.Req.Context(), dash.OrgID, dash.UID, false, items, old); err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to update permissions", err)
 	}
-
 	return response.Success("Dashboard permissions updated")
 }
 

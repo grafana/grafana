@@ -8,6 +8,9 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpcAuth "github.com/grpc-ecosystem/go-grpc-middleware/auth"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/weaveworks/common/instrument"
+	"github.com/weaveworks/common/middleware"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 
@@ -17,6 +20,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/grpcserver/interceptors"
 	"github.com/grafana/grafana/pkg/setting"
+)
+
+var (
+	grpcRequestDuration *prometheus.HistogramVec
 )
 
 type Provider interface {
@@ -32,10 +39,25 @@ type GPRCServerService struct {
 	address string
 }
 
-func ProvideService(cfg *setting.Cfg, authenticator interceptors.Authenticator, tracer tracing.Tracer) (Provider, error) {
+func ProvideService(cfg *setting.Cfg, authenticator interceptors.Authenticator, tracer tracing.Tracer, registerer prometheus.Registerer) (Provider, error) {
 	s := &GPRCServerService{
 		cfg:    cfg,
 		logger: log.New("grpc-server"),
+	}
+
+	// Register the metric here instead of an init() function so that we do
+	// nothing unless the feature is actually enabled.
+	if grpcRequestDuration == nil {
+		grpcRequestDuration = prometheus.NewHistogramVec(prometheus.HistogramOpts{
+			Namespace: "grafana",
+			Name:      "grpc_request_duration_seconds",
+			Help:      "Time (in seconds) spent serving HTTP requests.",
+			Buckets:   instrument.DefBuckets,
+		}, []string{"method", "route", "status_code", "ws"})
+
+		if err := registerer.Register(grpcRequestDuration); err != nil {
+			return nil, err
+		}
 	}
 
 	var opts []grpc.ServerOption
@@ -48,12 +70,14 @@ func ProvideService(cfg *setting.Cfg, authenticator interceptors.Authenticator, 
 			grpc_middleware.ChainUnaryServer(
 				grpcAuth.UnaryServerInterceptor(authenticator.Authenticate),
 				interceptors.TracingUnaryInterceptor(tracer),
+				middleware.UnaryServerInstrumentInterceptor(grpcRequestDuration),
 			),
 		),
 		grpc.StreamInterceptor(
 			grpc_middleware.ChainStreamServer(
 				interceptors.TracingStreamInterceptor(tracer),
 				grpcAuth.StreamServerInterceptor(authenticator.Authenticate),
+				middleware.StreamServerInstrumentInterceptor(grpcRequestDuration),
 			),
 		),
 	}...)

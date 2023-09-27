@@ -8,7 +8,7 @@ Logs are files that record events, warnings and errors as they occur within a so
 
 ### Usage
 
-Use the _pkg/infra/log_ package to create a named structured logger. Example:
+Use the [pkg/infra/log](/pkg/infra/log/) package to create a named structured logger. Example:
 
 ```go
 import (

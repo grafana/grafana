@@ -7,6 +7,10 @@ import { CurrentUserInternal } from 'app/types/config';
 
 import config from '../../core/config';
 
+// When set to auto, the interval will be based on the query range
+// NOTE: this is defined here rather than TimeSrv so we avoid circular dependencies
+export const AutoRefreshInterval = 'auto';
+
 export class User implements Omit<CurrentUserInternal, 'lightTheme'> {
   isSignedIn: boolean;
   id: number;
@@ -30,6 +34,7 @@ export class User implements Omit<CurrentUserInternal, 'lightTheme'> {
   permissions?: UserPermission;
   analytics: AnalyticsSettings;
   fiscalYearStartMonth: number;
+  authenticatedBy: string;
 
   constructor() {
     this.id = 0;
@@ -55,6 +60,7 @@ export class User implements Omit<CurrentUserInternal, 'lightTheme'> {
     this.analytics = {
       identifier: '',
     };
+    this.authenticatedBy = '';
 
     if (config.bootData.user) {
       extend(this, config.bootData.user);
@@ -63,8 +69,6 @@ export class User implements Omit<CurrentUserInternal, 'lightTheme'> {
 }
 
 export class ContextSrv {
-  pinned: any;
-  version: any;
   user: User;
   isSignedIn: boolean;
   isGrafanaAdmin: boolean;
@@ -87,7 +91,7 @@ export class ContextSrv {
     this.hasEditPermissionInFolders = this.user.hasEditPermissionInFolders;
     this.minRefreshInterval = config.minRefreshInterval;
 
-    if (this.isSignedIn) {
+    if (this.canScheduleRotation()) {
       this.scheduleTokenRotationJob();
     }
   }
@@ -156,7 +160,7 @@ export class ContextSrv {
 
   // checks whether the passed interval is longer than the configured minimum refresh rate
   isAllowedInterval(interval: string) {
-    if (!config.minRefreshInterval) {
+    if (!config.minRefreshInterval || interval === AutoRefreshInterval) {
       return true;
     }
     return rangeUtil.intervalToMs(interval) >= rangeUtil.intervalToMs(config.minRefreshInterval);
@@ -204,8 +208,8 @@ export class ContextSrv {
 
   // schedules a job to perform token ration in the background
   private scheduleTokenRotationJob() {
-    // only schedule job if feature toggle is enabled and user is signed in
-    if (config.featureToggles.clientTokenRotation && this.isSignedIn) {
+    // check if we can schedula the token rotation job
+    if (this.canScheduleRotation()) {
       // get the time token is going to expire
       let expires = this.getSessionExpiry();
 
@@ -237,6 +241,37 @@ export class ContextSrv {
     }
   }
 
+  private canScheduleRotation() {
+    // skip if user is not signed in, this happens on login page or when using anonymous auth
+    if (!this.isSignedIn) {
+      return false;
+    }
+
+    // skip if feature toggle is not enabled
+    if (!config.featureToggles.clientTokenRotation) {
+      return false;
+    }
+
+    const params = new URLSearchParams(window.location.search);
+
+    // skip if this is a render request
+    if (!!params.get('render')) {
+      return false;
+    }
+
+    // skip if we are using auth_token in url
+    if (!!params.get('auth_token')) {
+      return false;
+    }
+
+    // skip if the user has been authenticated by authproxy and does not have a login token
+    if (this.user.authenticatedBy === 'authproxy' && !config.auth.AuthProxyEnableLoginToken) {
+      return false;
+    }
+
+    return true;
+  }
+
   private cancelTokenRotationJob() {
     if (config.featureToggles.clientTokenRotation && this.tokenRotationJobId > 0) {
       clearTimeout(this.tokenRotationJobId);
@@ -245,7 +280,7 @@ export class ContextSrv {
 
   private rotateToken() {
     // We directly use fetch here to bypass the request queue from backendSvc
-    return fetch('/api/user/auth-tokens/rotate', { method: 'POST' })
+    return fetch(config.appSubUrl + '/api/user/auth-tokens/rotate', { method: 'POST' })
       .then((res) => {
         if (res.status === 200) {
           this.scheduleTokenRotationJob();

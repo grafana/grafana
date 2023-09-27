@@ -136,6 +136,7 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 			cfg:             &api.Cfg.UnifiedAlerting,
 			backtesting:     backtesting.NewEngine(api.AppUrl, api.EvaluatorFactory),
 			featureManager:  api.FeatureManager,
+			appUrl:          api.AppUrl,
 		}), m)
 	api.RegisterConfigurationApiEndpoints(NewConfiguration(
 		&ConfigSrv{

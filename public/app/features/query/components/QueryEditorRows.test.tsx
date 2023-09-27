@@ -96,7 +96,7 @@ describe('QueryEditorRows', () => {
     const queryEditorRows = await screen.findAllByTestId('query-editor-row');
 
     for (const childQuery of queryEditorRows) {
-      const toggleExpandButton = queryByLabelText(childQuery, 'toggle collapse and expand query row') as HTMLElement;
+      const toggleExpandButton = queryByLabelText(childQuery, 'Collapse query row') as HTMLElement;
 
       expect(toggleExpandButton).toBeInTheDocument();
       expect(toggleExpandButton.getAttribute('aria-expanded')).toBe('true');

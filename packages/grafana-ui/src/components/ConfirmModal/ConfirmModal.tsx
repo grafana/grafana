@@ -37,8 +37,10 @@ export interface ConfirmModalProps {
   alternativeText?: string;
   /** Confirm button variant */
   confirmButtonVariant?: ButtonVariant;
-  /** Confirm action callback */
-  onConfirm(): void;
+  /** Confirm action callback
+   * Return a promise to disable the confirm button until the promise is resolved
+   */
+  onConfirm(): void | Promise<void>;
   /** Dismiss action callback */
   onDismiss(): void;
   /** Alternative action callback */
@@ -67,7 +69,7 @@ export const ConfirmModal = ({
   const styles = useStyles2(getStyles);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const onConfirmationTextChange = (event: React.FormEvent<HTMLInputElement>) => {
-    setDisabled(confirmationText?.localeCompare(event.currentTarget.value) !== 0);
+    setDisabled(confirmationText?.toLowerCase().localeCompare(event.currentTarget.value.toLowerCase()) !== 0);
   };
 
   useEffect(() => {
@@ -83,6 +85,15 @@ export const ConfirmModal = ({
     }
   }, [isOpen, confirmationText]);
 
+  const onConfirmClick = async () => {
+    setDisabled(true);
+    try {
+      await onConfirm();
+    } finally {
+      setDisabled(false);
+    }
+  };
+
   return (
     <Modal className={cx(styles.modal, modalClass)} title={title} icon={icon} isOpen={isOpen} onDismiss={onDismiss}>
       <div className={styles.modalText}>
@@ -91,18 +102,18 @@ export const ConfirmModal = ({
         {confirmationText ? (
           <div className={styles.modalConfirmationInput}>
             <HorizontalGroup>
-              <Input placeholder={`Type ${confirmationText} to confirm`} onChange={onConfirmationTextChange} />
+              <Input placeholder={`Type "${confirmationText}" to confirm`} onChange={onConfirmationTextChange} />
             </HorizontalGroup>
           </div>
         ) : null}
       </div>
       <Modal.ButtonRow>
-        <Button variant={dismissVariant} onClick={onDismiss}>
+        <Button variant={dismissVariant} onClick={onDismiss} fill="outline">
           {dismissText}
         </Button>
         <Button
           variant={confirmButtonVariant}
-          onClick={onConfirm}
+          onClick={onConfirmClick}
           disabled={disabled}
           ref={buttonRef}
           data-testid={selectors.pages.ConfirmModal.delete}
@@ -120,9 +131,9 @@ export const ConfirmModal = ({
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  modal: css`
-    width: 500px;
-  `,
+  modal: css({
+    width: '500px',
+  }),
   modalText: css({
     fontSize: theme.typography.h5.fontSize,
     color: theme.colors.text.primary,

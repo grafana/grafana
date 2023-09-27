@@ -2,7 +2,7 @@ import { collectorTypes } from '@opentelemetry/exporter-collector';
 
 import {
   FieldType,
-  MutableDataFrame,
+  createDataFrame,
   PluginType,
   DataSourceInstanceSettings,
   dateTime,
@@ -45,7 +45,7 @@ const defaultSettings: DataSourceInstanceSettings = {
 };
 
 describe('transformTraceList()', () => {
-  const lokiDataFrame = new MutableDataFrame({
+  const lokiDataFrame = createDataFrame({
     fields: [
       {
         name: 'ts',

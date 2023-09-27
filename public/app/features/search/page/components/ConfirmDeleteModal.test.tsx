@@ -16,7 +16,7 @@ describe('ConfirmModal', () => {
     expect(screen.getByRole('button', { name: 'Cancel' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Delete' })).toBeInTheDocument();
 
-    expect(screen.queryByPlaceholderText('Type delete to confirm')).not.toBeInTheDocument();
+    expect(screen.queryByPlaceholderText('Type "delete" to confirm')).not.toBeInTheDocument();
   });
 
   describe('with nestedFolders feature flag', () => {
@@ -39,7 +39,7 @@ describe('ConfirmModal', () => {
 
       render(<ConfirmDeleteModal onDeleteItems={() => {}} results={selectedItems} onDismiss={() => {}} />);
 
-      expect(screen.getByPlaceholderText('Type delete to confirm')).toBeInTheDocument();
+      expect(screen.getByPlaceholderText('Type "delete" to confirm')).toBeInTheDocument();
     });
   });
 });

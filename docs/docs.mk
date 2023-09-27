@@ -1,5 +1,5 @@
 # The source of this file is https://raw.githubusercontent.com/grafana/writers-toolkit/main/docs/docs.mk.
-# 4.0.0 (2023-06-06)
+# A changelog is included in the head of the `make-docs` script.
 include variables.mk
 -include variables.mk.local
 
@@ -76,7 +76,7 @@ docs-rm: ## Remove the docs container.
 
 .PHONY: docs-pull
 docs-pull: ## Pull documentation base image.
-	$(PODMAN) pull $(DOCS_IMAGE)
+	$(PODMAN) pull -q $(DOCS_IMAGE)
 
 make-docs: ## Fetch the latest make-docs script.
 make-docs:

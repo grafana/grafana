@@ -197,6 +197,11 @@ Folder that contains [provisioning]({{< relref "../../administration/provisionin
 
 `http`,`https`,`h2` or `socket`
 
+### min_tls_version
+
+The TLS Handshake requires a minimum TLS version. The available options are TLS1.2 and TLS1.3.
+If you do not specify a version, the system uses TLS1.2.
+
 ### http_addr
 
 The host for the server to listen on. If your machine has more than one network interface, you can use this setting to expose the Grafana service on only one network interface and not have it available on others, such as the loopback interface. An empty value is equivalent to setting the value to `0.0.0.0`, which means the Grafana service binds to all interfaces.
@@ -370,7 +375,7 @@ Set to `true` to log the sql calls and execution times.
 
 ### ssl_mode
 
-For Postgres, use either `disable`, `require` or `verify-full`.
+For Postgres, use use any [valid libpq `sslmode`](https://www.postgresql.org/docs/current/libpq-ssl.html#LIBPQ-SSL-SSLMODE-STATEMENTS), e.g.`disable`, `require`, `verify-full`, etc.
 For MySQL, use either `true`, `false`, or `skip-verify`.
 
 ### isolation_level
@@ -508,6 +513,11 @@ Sets a custom value for the `User-Agent` header for outgoing data proxy requests
 <hr />
 
 ## [analytics]
+
+### enabled
+
+This option is also known as _usage analytics_. When `false`, this option disables the writers that read/write from and to the Grafana databases. The default
+value is `true`.
 
 ### reporting_enabled
 
@@ -698,6 +708,11 @@ List of allowed headers to be set by the user. Suggested to use for if authentic
 
 Set to `true` to execute the CSRF check even if the login cookie is not in a request (default `false`).
 
+### disable_frontend_sandbox_for_plugins
+
+Comma-separated list of plugins ids that won't be loaded inside the frontend sandbox. It is recommended to only use this
+option for plugins that are known to have problems running inside the frontend sandbox.
+
 ## [snapshots]
 
 ### enabled
@@ -821,7 +836,9 @@ Sets the default UI theme: `dark`, `light`, or `system`. The default theme is `d
 
 ### default_language
 
-This setting configures the default UI language, which must be a supported IETF language tag, such as `en-US`.
+This option will set the default UI language if a supported IETF language tag like `en-US` is available.
+If set to `detect`, the default UI language will be determined by browser preference.
+The default is `en-US`.
 
 ### home_page
 
@@ -918,11 +935,13 @@ reset to the default organization role on every login. [See `auto_assign_org_rol
 
 `skip_org_role_sync` prevents the synchronization of organization roles for a specific OAuth integration, while the deprecated setting `oauth_skip_org_role_update_sync` affects all configured OAuth providers.
 
-`skip_org_role_sync` default value is `false`.
+The default value for `skip_org_role_sync` is `false`.
 
 With `skip_org_role_sync` set to `false`, the users' organization and role is reset on every new login, based on the external provider's role. See your provider in the tables below.
 
 With `skip_org_role_sync` set to `true`, when a user logs in for the first time, Grafana sets the organization role based on the value specified in `auto_assign_org_role` and forces the organization to `auto_assign_org_id` when specified, otherwise it falls back to OrgID `1`.
+
+> **Note**: Enabling `skip_org_role_sync` also disables the synchronization of Grafana Admins from the external provider, as such `allow_assign_grafana_admin` is ignored.
 
 Use this setting when you want to manage the organization roles of your users from within Grafana and be able to manually assign them to multiple organizations, or to prevent synchronization conflicts when they can be synchronized from another provider.
 
@@ -1133,6 +1152,30 @@ The client ID to use for user-assigned managed identity.
 
 Should be set for user-assigned identity and should be empty for system-assigned identity.
 
+### user_identity_enabled
+
+Specifies whether user identity authentication (on behalf of currently signed-in user) should be enabled in datasources that support it (requires AAD authentication).
+
+Disabled by default, needs to be explicitly enabled.
+
+### user_identity_token_url
+
+Override token URL for Azure Active Directory.
+
+By default is the same as token URL configured for AAD authentication settings.
+
+### user_identity_client_id
+
+Override ADD application ID which would be used to exchange users token to an access token for the datasource.
+
+By default is the same as used in AAD authentication or can be set to another application (for OBO flow).
+
+### user_identity_client_secret
+
+Override the AAD application client secret.
+
+By default is the same as used in AAD authentication or can be set to another application (for OBO flow).
+
 ## [auth.jwt]
 
 Refer to [JWT authentication]({{< relref "../configure-security/configure-authentication/jwt" >}}) for more information.
@@ -1222,6 +1265,10 @@ Options are "debug", "info", "warn", "error", and "critical". Default is `info`.
 Optional settings to set different levels for specific loggers.
 For example: `filters = sqlstore:debug`
 
+### user_facing_default_error
+
+Use this configuration option to set the default error message shown to users. This message is displayed instead of sensitive backend errors, which should be obfuscated. The default message is `Please inspect the Grafana server log for details.`.
+
 <hr>
 
 ## [log.console]
@@ -1305,31 +1352,19 @@ Syslog tag. By default, the process's `argv[0]` is used.
 
 ### enabled
 
-Sentry javascript agent is initialized. Default is `false`.
-
-### provider
-
-Defines which provider to use `sentry` or `grafana`. Default is `sentry`
-
-### sentry_dsn
-
-Sentry DSN if you want to send events to Sentry
+Faro javascript agent is initialized. Default is `false`.
 
 ### custom_endpoint
 
-Custom HTTP endpoint to send events captured by the Sentry agent to. Default, `/log`, will log the events to stdout.
-
-### sample_rate
-
-Rate of events to be reported between `0` (none) and `1` (all, default), float.
+Custom HTTP endpoint to send events captured by the Faro agent to. Default, `/log-grafana-javascript-agent`, will log the events to stdout.
 
 ### log_endpoint_requests_per_second_limit
 
-Requests per second limit enforced per an extended period, for Grafana backend log ingestion endpoint, `/log`. Default is `3`.
+Requests per second limit enforced per an extended period, for Grafana backend log ingestion endpoint, `/log-grafana-javascript-agent`. Default is `3`.
 
 ### log_endpoint_burst_limit
 
-Maximum requests accepted per short interval of time for Grafana backend log ingestion endpoint, `/log`. Default is `15`.
+Maximum requests accepted per short interval of time for Grafana backend log ingestion endpoint, `/log-grafana-javascript-agent`. Default is `15`.
 
 ### instrumentations_errors_enabled
 
@@ -1641,6 +1676,20 @@ Configures the Profile section.
 
 Enable or disable the Profile section. Default is `enabled`.
 
+## [news]
+
+### news_feed_enabled
+
+Enables the news feed section. Default is `true`
+
+<hr>
+
+## [query]
+
+### concurrent_query_limit
+
+Set the number of queries that can be executed concurrently in a mixed data source panel. Default is the number of CPUs.
+
 ## [query_history]
 
 Configures Query history in Explore.
@@ -1648,6 +1697,8 @@ Configures Query history in Explore.
 ### enabled
 
 Enable or disable the Query history. Default is `enabled`.
+
+<hr>
 
 ## [metrics]
 
@@ -1664,6 +1715,10 @@ Flush/write interval when sending metrics to external TSDB. Defaults to `10`.
 ### disable_total_stats
 
 If set to `true`, then total stats generation (`stat_totals_*` metrics) is disabled. Default is `false`.
+
+### total_stats_collector_interval_seconds
+
+Sets the total stats collector interval. The default is 1800 seconds (30 minutes).
 
 ### basic_auth_username and basic_auth_password
 
@@ -2012,6 +2067,14 @@ Custom install/learn more URL for enterprise plugins. Defaults to https://grafan
 
 Enter a comma-separated list of plugin identifiers to hide in the plugin catalog.
 
+### public_key_retrieval_disabled
+
+Disable download of the public key for verifying plugin signature. The default is `false`. If disabled, it will use the hardcoded public key.
+
+### public_key_retrieval_on_startup
+
+Force download of the public key for verifying plugin signature on startup. The default is `false`. If disabled, the public key will be retrieved every 10 days. Requires `public_key_retrieval_disabled` to be false to have any effect.
+
 <hr>
 
 ## [live]
@@ -2197,7 +2260,11 @@ For more information about Grafana Enterprise, refer to [Grafana Enterprise]({{<
 
 ### enable
 
-Keys of alpha features to enable, separated by space.
+Keys of features to enable, separated by space.
+
+### FEATURE_TOGGLE_NAME = false
+
+Some feature toggles for stable features are on by default. Use this setting to disable an on-by-default feature toggle with the name FEATURE_TOGGLE_NAME, for example, `exploreMixedDatasource = false`.
 
 ## [date_formats]
 
@@ -2277,3 +2344,12 @@ Set this to `false` to disable loading other custom base maps and hide them in t
 ## [rbac]
 
 Refer to [Role-based access control]({{< relref "../../administration/roles-and-permissions/access-control" >}}) for more information.
+
+## [navigation.app_sections]
+
+Move an app plugin (referenced by its id), including all its pages, to a specific navigation section. Format: <pluginId> = <sectionId> <sortWeight>
+
+## [navigation.app_standalone_pages]
+
+Move an individual app plugin page (referenced by its `path` field) to a specific navigation section.
+Format: <pageUrl> = <sectionId> <sortWeight>

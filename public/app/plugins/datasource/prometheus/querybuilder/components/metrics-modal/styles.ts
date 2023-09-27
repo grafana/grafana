@@ -17,11 +17,14 @@ export const getStyles = (theme: GrafanaTheme2, disableTextWrap: boolean) => {
       display: flex;
       flex-direction: row;
       flex-wrap: wrap;
-      gap: ${theme.spacing(2)};
-      margin-bottom: ${theme.spacing(2)};
     `,
     inputItemFirst: css`
       flex-basis: 40%;
+      padding-right: 16px;
+      ${theme.breakpoints.down('md')} {
+        padding-right: 0px;
+        padding-bottom: 16px;
+      }
     `,
     inputItem: css`
       flex-grow: 1;
@@ -33,51 +36,33 @@ export const getStyles = (theme: GrafanaTheme2, disableTextWrap: boolean) => {
     selectWrapper: css`
       margin-bottom: ${theme.spacing(1)};
     `,
-    selectItem: css`
-      display: flex;
-      flex-direction: row;
-      align-items: center;
-    `,
-    selectItemLabel: css`
-      margin: 0 0 0 ${theme.spacing(1)};
-      align-self: center;
+    resultsAmount: css`
       color: ${theme.colors.text.secondary};
-    `,
-    resultsHeading: css`
-      margin: 0 0 0 0;
+      font-size: 0.85rem;
+      padding: 0 0 4px 0;
     `,
     resultsData: css`
-      margin: 0 0 ${theme.spacing(1)} 0;
+      margin: 4px 0 ${theme.spacing(2)} 0;
     `,
     resultsDataCount: css`
       margin: 0;
     `,
     resultsDataFiltered: css`
-      margin: 0;
-      color: ${theme.colors.warning.text};
+      color: ${theme.colors.text.secondary};
+      text-align: center;
+      border: solid 1px rgba(204, 204, 220, 0.25);
+      padding: 7px;
     `,
-    alphabetRow: css`
-      display: flex;
-      flex-direction: row;
-      flex-wrap: wrap;
-      justify-content: space-between;
-      align-items: center;
-      column-gap: ${theme.spacing(1)};
-      margin-bottom: ${theme.spacing(1)};
-    `,
-    alphabetRowToggles: css`
-      display: flex;
-      flex-direction: row;
-      align-items: center;
-      flex-wrap: wrap;
-      column-gap: ${theme.spacing(1)};
+    resultsDataFilteredText: css`
+      display: inline;
+      vertical-align: text-top;
     `,
     results: css`
-      height: calc(80vh - 280px);
+      height: calc(80vh - 310px);
       overflow-y: scroll;
     `,
-    pageSettingsWrapper: css`
-      padding-top: ${theme.spacing(1.5)};
+    resultsFooter: css`
+      margin-top: 24px;
       display: flex;
       flex-direction: row;
       flex-wrap: wrap;
@@ -85,39 +70,32 @@ export const getStyles = (theme: GrafanaTheme2, disableTextWrap: boolean) => {
       align-items: center;
       position: sticky;
     `,
-    pageSettings: css`
-      display: flex;
-      flex-direction: row;
-      flex-wrap: wrap;
-      align-items: center;
-    `,
-    selAlpha: css`
-      cursor: pointer;
-      color: #6e9fff;
-    `,
-    active: css`
-      cursor: pointer;
-    `,
-    gray: css`
+    currentlySelected: css`
       color: grey;
-      opacity: 50%;
+      opacity: 75%;
+      font-size: 0.75rem;
     `,
     loadingSpinner: css`
-      display: inline-block;
       visibility: hidden;
-    `,
-    table: css`
-      white-space: ${disableTextWrap ? 'nowrap' : 'normal'};
-      td {
-        vertical-align: baseline;
-        padding: 0;
-      }
-    `,
-    tableDiv: css`
-      padding: 8px;
     `,
     visible: css`
       visibility: visible;
+    `,
+    settingsBtn: css`
+      float: right;
+    `,
+    noBorder: css`
+      border: none;
+    `,
+    resultsPerPageLabel: css`
+      color: ${theme.colors.text.secondary};
+      opacity: 75%;
+      padding-top: 5px;
+      font-size: 0.85rem;
+      margin-right: 8px;
+    `,
+    resultsPerPageWrapper: css`
+      display: flex;
     `,
   };
 };

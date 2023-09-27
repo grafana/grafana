@@ -474,6 +474,10 @@ func (service *AlertRuleService) GetAlertGroupsWithFolderTitle(ctx context.Conte
 		namespaces[r.NamespaceUID] = append(namespaces[r.NamespaceUID], &groupKey)
 	}
 
+	if len(namespaces) == 0 {
+		return []models.AlertRuleGroupWithFolderTitle{}, nil
+	}
+
 	dq := dashboards.GetDashboardsQuery{
 		DashboardUIDs: nil,
 	}

@@ -11,7 +11,7 @@
 
 import * as common from '@grafana/schema';
 
-export const pluginVersion = "10.0.3";
+export const pluginVersion = "10.1.2";
 
 export interface MetricStat {
   /**
@@ -277,6 +277,10 @@ export interface LogGroup {
 
 /**
  * Shape of a CloudWatch Annotation query
+ */
+/**
+ * TS type is CloudWatchDefaultQuery = Omit<CloudWatchLogsQuery, 'queryMode'> & CloudWatchMetricsQuery, declared in veneer
+ * #CloudWatchDefaultQuery: #CloudWatchLogsQuery & #CloudWatchMetricsQuery @cuetsy(kind="type")
  */
 export interface CloudWatchAnnotationQuery extends common.DataQuery, MetricStat {
   /**

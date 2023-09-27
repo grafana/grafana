@@ -57,12 +57,12 @@ FormField.defaultProps = defaultProps;
 
 const getStyles = () => {
   return {
-    formField: css`
-      display: flex;
-      flex-direction: row;
-      align-items: flex-start;
-      text-align: left;
-      position: relative;
-    `,
+    formField: css({
+      display: 'flex',
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      textAlign: 'left',
+      position: 'relative',
+    }),
   };
 };

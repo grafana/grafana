@@ -1,8 +1,6 @@
 package utils
 
 import (
-	"os"
-
 	"github.com/urfave/cli/v2"
 
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/models"
@@ -27,7 +25,6 @@ type CommandLine interface {
 
 type ApiClient interface {
 	GetPlugin(pluginId, repoUrl string) (models.Plugin, error)
-	DownloadFile(pluginName string, tmpFile *os.File, url string, checksum string) (err error)
 	ListAllPlugins(repoUrl string) (models.PluginRepo, error)
 }
 

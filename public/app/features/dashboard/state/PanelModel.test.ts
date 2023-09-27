@@ -499,7 +499,7 @@ describe('PanelModel', () => {
     describe('destroy', () => {
       it('Should still preserve last query result', () => {
         model.getQueryRunner().useLastResultFrom({
-          getLastResult: () => ({} as PanelData),
+          getLastResult: () => ({}) as PanelData,
         } as PanelQueryRunner);
 
         model.destroy();

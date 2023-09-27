@@ -6,10 +6,11 @@ import { MatcherOperator, ObjectMatcher, Route, RouteWithID } from 'app/plugins/
 import { FormAmRoute } from '../types/amroutes';
 import { MatcherFieldValue } from '../types/silence-form';
 
-import { matcherToMatcherField, parseMatcher } from './alertmanager';
+import { matcherToMatcherField } from './alertmanager';
 import { GRAFANA_RULES_SOURCE_NAME } from './datasource';
+import { normalizeMatchers, parseMatcher } from './matchers';
 import { findExistingRoute } from './routeTree';
-import { isValidPrometheusDuration } from './time';
+import { isValidPrometheusDuration, safeParseDurationstr } from './time';
 
 const matchersToArrayFieldMatchers = (
   matchers: Record<string, string> | undefined,
@@ -61,54 +62,6 @@ export const emptyRoute: FormAmRoute = {
   groupIntervalValue: '',
   repeatIntervalValue: '',
   muteTimeIntervals: [],
-};
-
-/**
- * We need to deal with multiple (deprecated) properties such as "match" and "match_re"
- * this function will normalize all of the different ways to define matchers in to a single one.
- */
-export const normalizeMatchers = (route: Route): ObjectMatcher[] => {
-  const matchers: ObjectMatcher[] = [];
-
-  if (route.matchers) {
-    route.matchers.forEach((matcher) => {
-      const { name, value, isEqual, isRegex } = parseMatcher(matcher);
-      let operator = MatcherOperator.equal;
-
-      if (isEqual && isRegex) {
-        operator = MatcherOperator.regex;
-      }
-      if (!isEqual && isRegex) {
-        operator = MatcherOperator.notRegex;
-      }
-      if (isEqual && !isRegex) {
-        operator = MatcherOperator.equal;
-      }
-      if (!isEqual && !isRegex) {
-        operator = MatcherOperator.notEqual;
-      }
-
-      matchers.push([name, operator, value]);
-    });
-  }
-
-  if (route.object_matchers) {
-    matchers.push(...route.object_matchers);
-  }
-
-  if (route.match_re) {
-    Object.entries(route.match_re).forEach(([label, value]) => {
-      matchers.push([label, MatcherOperator.regex, value]);
-    });
-  }
-
-  if (route.match) {
-    Object.entries(route.match).forEach(([label, value]) => {
-      matchers.push([label, MatcherOperator.equal, value]);
-    });
-  }
-
-  return matchers;
 };
 
 // add unique identifiers to each route in the route tree, that way we can figure out what route we've edited / deleted
@@ -275,3 +228,35 @@ export function promDurationValidator(duration: string) {
 
   return isValidPrometheusDuration(duration) || 'Invalid duration format. Must be {number}{time_unit}';
 }
+
+// function to convert ObjectMatchers to a array of strings
+export const objectMatchersToString = (matchers: ObjectMatcher[]): string[] => {
+  return matchers.map((matcher) => {
+    const [name, operator, value] = matcher;
+    return `${name}${operator}${value}`;
+  });
+};
+
+export const repeatIntervalValidator = (repeatInterval: string, groupInterval: string) => {
+  if (repeatInterval.length === 0) {
+    return true;
+  }
+
+  const validRepeatInterval = promDurationValidator(repeatInterval);
+  const validGroupInterval = promDurationValidator(groupInterval);
+
+  if (validRepeatInterval !== true) {
+    return validRepeatInterval;
+  }
+
+  if (validGroupInterval !== true) {
+    return validGroupInterval;
+  }
+
+  const repeatDuration = safeParseDurationstr(repeatInterval);
+  const groupDuration = safeParseDurationstr(groupInterval);
+
+  const isRepeatLowerThanGroupDuration = groupDuration !== 0 && repeatDuration < groupDuration;
+
+  return isRepeatLowerThanGroupDuration ? 'Repeat interval should be higher or equal to Group interval' : true;
+};

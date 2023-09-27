@@ -6,7 +6,7 @@ import {
   DataSourceInstanceSettings,
   dateTime,
   FieldType,
-  MutableDataFrame,
+  createDataFrame,
 } from '@grafana/data';
 import { FetchResponse, setBackendSrv } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
@@ -115,7 +115,7 @@ describe('MySQLDatasource', () => {
             refId: 'datasets',
             frames: [
               dataFrameToJSON(
-                new MutableDataFrame({
+                createDataFrame({
                   fields: [{ name: 'name', type: FieldType.string, values: ['test1', 'test2', 'test3'] }],
                 })
               ),
@@ -137,7 +137,7 @@ describe('MySQLDatasource', () => {
             refId: 'tables',
             frames: [
               dataFrameToJSON(
-                new MutableDataFrame({
+                createDataFrame({
                   fields: [{ name: 'table_name', type: FieldType.string, values: ['test1', 'test2', 'test3'] }],
                 })
               ),
@@ -159,7 +159,7 @@ describe('MySQLDatasource', () => {
             refId: 'fields',
             frames: [
               dataFrameToJSON(
-                new MutableDataFrame({
+                createDataFrame({
                   fields: [
                     { name: 'column_name', type: FieldType.string, values: ['test1', 'test2', 'test3'] },
                     { name: 'data_type', type: FieldType.string, values: ['int', 'char', 'bool'] },
@@ -199,7 +199,7 @@ describe('MySQLDatasource', () => {
           refId: 'tempvar',
           frames: [
             dataFrameToJSON(
-              new MutableDataFrame({
+              createDataFrame({
                 fields: [
                   { name: 'title', values: ['aTitle', 'aTitle2', 'aTitle3'] },
                   { name: 'text', values: ['some text', 'some text2', 'some text3'] },
@@ -232,7 +232,7 @@ describe('MySQLDatasource', () => {
           refId: 'tempvar',
           frames: [
             dataFrameToJSON(
-              new MutableDataFrame({
+              createDataFrame({
                 fields: [
                   { name: 'title', values: ['aTitle', 'aTitle2', 'aTitle3'] },
                   { name: 'text', values: ['some text', 'some text2', 'some text3'] },
@@ -267,7 +267,7 @@ describe('MySQLDatasource', () => {
           refId: 'tempvar',
           frames: [
             dataFrameToJSON(
-              new MutableDataFrame({
+              createDataFrame({
                 fields: [
                   { name: 'title', values: ['aTitle', 'aTitle2', 'aTitle3'] },
                   { name: 'text', values: ['some text', 'some text2', 'some text3'] },
@@ -300,7 +300,7 @@ describe('MySQLDatasource', () => {
           refId: 'tempvar',
           frames: [
             dataFrameToJSON(
-              new MutableDataFrame({
+              createDataFrame({
                 fields: [
                   { name: '__value', values: ['value1', 'value2', 'value3'] },
                   { name: '__text', values: ['aTitle', 'aTitle2', 'aTitle3'] },
@@ -335,7 +335,7 @@ describe('MySQLDatasource', () => {
           refId: 'tempvar',
           frames: [
             dataFrameToJSON(
-              new MutableDataFrame({
+              createDataFrame({
                 fields: [
                   { name: 'id', values: [1, 2, 3] },
                   { name: 'values', values: ['test1', 'test2', 'test3'] },
@@ -373,7 +373,7 @@ describe('MySQLDatasource', () => {
           refId: 'tempvar',
           frames: [
             dataFrameToJSON(
-              new MutableDataFrame({
+              createDataFrame({
                 fields: [
                   { name: '__text', values: ['aTitle', 'aTitle', 'aTitle'] },
                   { name: '__value', values: ['same', 'same', 'diff'] },

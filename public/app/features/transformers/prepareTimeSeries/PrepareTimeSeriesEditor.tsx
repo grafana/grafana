@@ -1,7 +1,13 @@
 import { css } from '@emotion/css';
 import React, { useCallback } from 'react';
 
-import { GrafanaTheme2, SelectableValue, TransformerRegistryItem, TransformerUIProps } from '@grafana/data';
+import {
+  GrafanaTheme2,
+  SelectableValue,
+  TransformerRegistryItem,
+  TransformerUIProps,
+  TransformerCategory,
+} from '@grafana/data';
 import { InlineField, InlineFieldRow, Select, useStyles2 } from '@grafana/ui';
 
 import { prepareTimeSeriesTransformer, PrepareTimeSeriesOptions, timeSeriesFormat } from './prepareTimeSeries';
@@ -119,4 +125,5 @@ export const prepareTimeseriesTransformerRegistryItem: TransformerRegistryItem<P
   This transformer may be especially useful when using old panels that only expect the
   many-frame timeseries format.
   `,
+  categories: new Set([TransformerCategory.Reformat]),
 };

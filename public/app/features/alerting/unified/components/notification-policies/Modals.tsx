@@ -62,10 +62,10 @@ const useAddPolicyModal = (
             onSubmit={(newRoute) => parentRoute && handleAdd(newRoute, parentRoute)}
             actionButtons={
               <Modal.ButtonRow>
-                <Button type="submit">Save policy</Button>
-                <Button type="button" variant="secondary" onClick={handleDismiss}>
+                <Button type="button" variant="secondary" onClick={handleDismiss} fill="outline">
                   Cancel
                 </Button>
+                <Button type="submit">Save policy</Button>
               </Modal.ButtonRow>
             }
           />
@@ -121,10 +121,10 @@ const useEditPolicyModal = (
               route={route}
               actionButtons={
                 <Modal.ButtonRow>
-                  <Button type="submit">Update default policy</Button>
-                  <Button type="button" variant="secondary" onClick={handleDismiss}>
+                  <Button type="button" variant="secondary" onClick={handleDismiss} fill="outline">
                     Cancel
                   </Button>
+                  <Button type="submit">Update default policy</Button>
                 </Modal.ButtonRow>
               }
             />
@@ -136,10 +136,10 @@ const useEditPolicyModal = (
               onSubmit={handleSave}
               actionButtons={
                 <Modal.ButtonRow>
-                  <Button type="submit">Update policy</Button>
-                  <Button type="button" variant="secondary" onClick={handleDismiss}>
+                  <Button type="button" variant="secondary" onClick={handleDismiss} fill="outline">
                     Cancel
                   </Button>
+                  <Button type="submit">Update policy</Button>
                 </Modal.ButtonRow>
               }
             />
@@ -206,7 +206,7 @@ const useDeletePolicyModal = (handleDelete: (route: RouteWithID) => void, loadin
 const useAlertGroupsModal = (): [
   JSX.Element,
   (alertGroups: AlertmanagerGroup[], matchers?: ObjectMatcher[]) => void,
-  () => void
+  () => void,
 ] => {
   const [showModal, setShowModal] = useState(false);
   const [alertGroups, setAlertGroups] = useState<AlertmanagerGroup[]>([]);

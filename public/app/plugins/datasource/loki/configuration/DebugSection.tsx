@@ -1,14 +1,10 @@
-import { css } from '@emotion/css';
-import cx from 'classnames';
 import React, { ReactNode, useState } from 'react';
 
 import { Field, FieldType, LinkModel } from '@grafana/data';
-import { LegacyForms } from '@grafana/ui';
+import { InlineField, TextArea } from '@grafana/ui';
 
 import { getFieldLinksForExplore } from '../../../../features/explore/utils/links';
 import { DerivedFieldConfig } from '../types';
-
-const { FormField } = LegacyForms;
 
 type Props = {
   derivedFields?: DerivedFieldConfig[];
@@ -25,23 +21,15 @@ export const DebugSection = (props: Props) => {
 
   return (
     <div className={className}>
-      <FormField
-        labelWidth={12}
-        label={'Debug log message'}
-        inputEl={
-          <textarea
-            placeholder={'Paste an example log line here to test the regular expressions of your derived fields'}
-            className={cx(
-              'gf-form-input gf-form-textarea',
-              css`
-                width: 100%;
-              `
-            )}
-            value={debugText}
-            onChange={(event) => setDebugText(event.currentTarget.value)}
-          />
-        }
-      />
+      <InlineField label="Debug log message" labelWidth={24} grow>
+        <TextArea
+          type="text"
+          aria-label="Prometheus Query"
+          placeholder="Paste an example log line here to test the regular expressions of your derived fields"
+          value={debugText}
+          onChange={(event) => setDebugText(event.currentTarget.value)}
+        />
+      </InlineField>
       {!!debugFields.length && <DebugFields fields={debugFields} />}
     </div>
   );

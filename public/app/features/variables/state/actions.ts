@@ -61,6 +61,7 @@ import {
   ensureStringValues,
   ExtendedUrlQueryMap,
   getCurrentText,
+  getCurrentValue,
   getVariableRefresh,
   hasOngoingTransaction,
   toKeyedVariableIdentifier,
@@ -523,14 +524,16 @@ export const validateVariableSelectionState = (
 
     // 1. find the current value
     const text = getCurrentText(variableInState);
-    option = variableInState.options?.find((v) => v.text === text);
+    const value = getCurrentValue(variableInState);
+
+    option = variableInState.options?.find((v: VariableOption) => v.text === text || v.value === value);
     if (option) {
       return setValue(variableInState, option);
     }
 
     // 2. find the default value
     if (defaultValue) {
-      option = variableInState.options?.find((v) => v.text === defaultValue);
+      option = variableInState.options?.find((v) => v.text === defaultValue || v.value === defaultValue);
       if (option) {
         return setValue(variableInState, option);
       }

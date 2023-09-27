@@ -3,7 +3,6 @@ import React from 'react';
 import selectEvent from 'react-select-event';
 
 import { DataSourceInstanceSettings } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import * as ui from '@grafana/ui';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
@@ -124,23 +123,5 @@ describe('QueryEditor', () => {
     expect(await screen.findByText('Label')).toBeInTheDocument();
     expect(screen.queryByText('Alias')).toBeNull();
     expect(screen.getByText("Period: ${PROP('Period')} InstanceId: ${PROP('Dim.InstanceId')}"));
-  });
-
-  // TODO: delete this test when dynamic labels feature flag is removed
-  describe('when dynamic labels feature toggle is disabled', () => {
-    it('should render alias field', async () => {
-      const props = setup();
-      const originalValue = config.featureToggles.cloudWatchDynamicLabels;
-      config.featureToggles.cloudWatchDynamicLabels = false;
-
-      const expected = 'Period: {{period}} InstanceId: {{InstanceId}}';
-      render(<MetricsQueryEditor {...props} query={{ ...props.query, refId: 'A', alias: expected }} />);
-
-      expect(await screen.findByText('Label')).toBeInTheDocument();
-      expect(screen.queryByText('Alias')).toBeNull();
-      expect(screen.getByText("Period: ${PROP('Period')} InstanceId: ${PROP('Dim.InstanceId')}"));
-
-      config.featureToggles.cloudWatchDynamicLabels = originalValue;
-    });
   });
 });

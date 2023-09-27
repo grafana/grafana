@@ -1,7 +1,7 @@
 import React from 'react';
 
 import { EditorFieldGroup, EditorRow, EditorRows } from '@grafana/experimental';
-import { Alert } from '@grafana/ui';
+import { Alert, InlineField, RadioButtonGroup } from '@grafana/ui';
 
 import Datasource from '../../datasource';
 import { selectors } from '../../e2e/selectors';
@@ -13,7 +13,7 @@ import { parseResourceDetails } from '../ResourcePicker/utils';
 
 import AdvancedResourcePicker from './AdvancedResourcePicker';
 import QueryField from './QueryField';
-import { setFormatAs } from './setQueryValue';
+import { setFormatAs, setIntersectTime } from './setQueryValue';
 import useMigrations from './useMigrations';
 
 interface LogsQueryEditorProps {
@@ -81,6 +81,22 @@ const LogsQueryEditor = ({
               )}
               selectionNotice={() => 'You may only choose items of the same resource type.'}
             />
+            <InlineField
+              label="Time-range"
+              tooltip={
+                'Specifies the time-range used to query. The query option will only use time-ranges specified in the query. Intersection will combine query time-ranges with the Grafana time-range.'
+              }
+            >
+              <RadioButtonGroup
+                options={[
+                  { label: 'Query', value: false },
+                  { label: 'Intersection', value: true },
+                ]}
+                value={query.azureLogAnalytics?.intersectTime ?? false}
+                size={'md'}
+                onChange={(val) => onChange(setIntersectTime(query, val))}
+              />
+            </InlineField>
           </EditorFieldGroup>
         </EditorRow>
         <QueryField

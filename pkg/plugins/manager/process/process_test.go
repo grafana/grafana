@@ -10,11 +10,12 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/log"
+	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
 )
 
 func TestProcessManager_Start(t *testing.T) {
 	t.Run("Plugin not found in registry", func(t *testing.T) {
-		m := NewManager(newFakePluginRegistry(map[string]*plugins.Plugin{}))
+		m := NewManager(fakes.NewFakePluginRegistry())
 		err := m.Start(context.Background(), "non-existing-datasource")
 		require.ErrorIs(t, err, backendplugin.ErrPluginNotRegistered)
 	})
@@ -44,7 +45,7 @@ func TestProcessManager_Start(t *testing.T) {
 				managed: true,
 				backend: true,
 				signatureError: &plugins.SignatureError{
-					SignatureStatus: plugins.SignatureUnsigned,
+					SignatureStatus: plugins.SignatureStatusUnsigned,
 				},
 				expectedStartCount: 0,
 			},
@@ -63,9 +64,11 @@ func TestProcessManager_Start(t *testing.T) {
 					plugin.SignatureError = tc.signatureError
 				})
 
-				m := NewManager(newFakePluginRegistry(map[string]*plugins.Plugin{
-					p.ID: p,
-				}))
+				m := NewManager(&fakes.FakePluginRegistry{
+					Store: map[string]*plugins.Plugin{
+						p.ID: p,
+					}},
+				)
 
 				err := m.Start(context.Background(), p.ID)
 				require.NoError(t, err)
@@ -83,7 +86,7 @@ func TestProcessManager_Start(t *testing.T) {
 
 func TestProcessManager_Stop(t *testing.T) {
 	t.Run("Plugin not found in registry", func(t *testing.T) {
-		m := NewManager(newFakePluginRegistry(map[string]*plugins.Plugin{}))
+		m := NewManager(fakes.NewFakePluginRegistry())
 		err := m.Stop(context.Background(), "non-existing-datasource")
 		require.ErrorIs(t, err, backendplugin.ErrPluginNotRegistered)
 	})
@@ -97,9 +100,11 @@ func TestProcessManager_Stop(t *testing.T) {
 			plugin.Backend = true
 		})
 
-		m := NewManager(newFakePluginRegistry(map[string]*plugins.Plugin{
-			pluginID: p,
-		}))
+		m := NewManager(&fakes.FakePluginRegistry{
+			Store: map[string]*plugins.Plugin{
+				pluginID: p,
+			}},
+		)
 		err := m.Stop(context.Background(), pluginID)
 		require.NoError(t, err)
 
@@ -116,9 +121,11 @@ func TestProcessManager_ManagedBackendPluginLifecycle(t *testing.T) {
 		plugin.Backend = true
 	})
 
-	m := NewManager(newFakePluginRegistry(map[string]*plugins.Plugin{
-		p.ID: p,
-	}))
+	m := NewManager(&fakes.FakePluginRegistry{
+		Store: map[string]*plugins.Plugin{
+			p.ID: p,
+		}},
+	)
 
 	err := m.Start(context.Background(), p.ID)
 	require.NoError(t, err)
@@ -160,40 +167,6 @@ func TestProcessManager_ManagedBackendPluginLifecycle(t *testing.T) {
 			require.Equal(t, 1, bp.stopCount)
 		})
 	})
-}
-
-type fakePluginRegistry struct {
-	store map[string]*plugins.Plugin
-}
-
-func newFakePluginRegistry(m map[string]*plugins.Plugin) *fakePluginRegistry {
-	return &fakePluginRegistry{
-		store: m,
-	}
-}
-
-func (f *fakePluginRegistry) Plugin(_ context.Context, id string) (*plugins.Plugin, bool) {
-	p, exists := f.store[id]
-	return p, exists
-}
-
-func (f *fakePluginRegistry) Plugins(_ context.Context) []*plugins.Plugin {
-	var res []*plugins.Plugin
-
-	for _, p := range f.store {
-		res = append(res, p)
-	}
-	return res
-}
-
-func (f *fakePluginRegistry) Add(_ context.Context, p *plugins.Plugin) error {
-	f.store[p.ID] = p
-	return nil
-}
-
-func (f *fakePluginRegistry) Remove(_ context.Context, id string) error {
-	delete(f.store, id)
-	return nil
 }
 
 type fakeBackendPlugin struct {
@@ -265,7 +238,7 @@ func createPlugin(t *testing.T, bp backendplugin.Plugin, cbs ...func(p *plugins.
 	t.Helper()
 
 	p := &plugins.Plugin{
-		Class: plugins.External,
+		Class: plugins.ClassExternal,
 		JSONData: plugins.JSONData{
 			ID: "test-datasource",
 		},

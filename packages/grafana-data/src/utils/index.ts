@@ -23,3 +23,5 @@ export { makeClassES5Compatible } from './makeClassES5Compatible';
 export { anyToNumber } from './anyToNumber';
 export { withLoadingIndicator, type WithLoadingIndicatorOptions } from './withLoadingIndicator';
 export { convertOldAngularValueMappings, LegacyMappingType } from './valueMappings';
+export { containsSearchFilter, type SearchFilterOptions, getSearchFilterScopedVar } from './variables';
+export { renderLegendFormat } from './legend';

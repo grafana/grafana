@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import React, { ComponentProps } from 'react';
 
-import { LoadingState, MutableDataFrame, FieldType, LogsSortOrder } from '@grafana/data';
+import { LoadingState, createDataFrame, FieldType, LogsSortOrder } from '@grafana/data';
 
 import { LogsPanel } from './LogsPanel';
 
@@ -10,7 +10,7 @@ type LogsPanelProps = ComponentProps<typeof LogsPanel>;
 describe('LogsPanel', () => {
   describe('when returned series include common labels', () => {
     const seriesWithCommonLabels = [
-      new MutableDataFrame({
+      createDataFrame({
         fields: [
           {
             name: 'time',
@@ -66,7 +66,7 @@ describe('LogsPanel', () => {
   });
   describe('when returned series does not include common labels', () => {
     const seriesWithoutCommonLabels = [
-      new MutableDataFrame({
+      createDataFrame({
         fields: [
           {
             name: 'time',

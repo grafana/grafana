@@ -74,10 +74,8 @@ By default, Grafana specifies the color of your series data, which you can chang
 
 You can change legend mode to **Table** and choose [calculations]({{< relref "../calculation-types/" >}}) to be displayed in the legend. Click the calculation name header in the legend table to sort the values in the table in ascending or descending order.
 
-The sort order affects the positions of the bars in the Bar chart panel as well as the order of stacked series in the Time series and Bar chart panels.
-
 {{% admonition type="note" %}}
-This feature is only supported in these panels: Bar chart, Histogram, Time series, XY Chart.
+This feature is only supported in these panels: Bar chart, Histogram, Time series.
 {{% /admonition %}}
 
 ![Sort legend series](/static/img/docs/legend/legend-series-sort-8-3.png).

@@ -21,4 +21,7 @@ of familiarizing themselves with the content of
 
 ## Dependency management
 
-Refer to [UPGRADING_DEPENDENCIES.md](https://github.com/grafana/grafana/blob/main/UPGRADING_DEPENDENCIES.md).
+Refer to:
+
+- [UPGRADING_DEPENDENCIES.md](https://github.com/grafana/grafana/blob/main/UPGRADING_DEPENDENCIES.md)
+- [Upgrading dependencies](/contribute/backend/upgrading-dependencies.md)

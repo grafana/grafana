@@ -215,3 +215,86 @@ func AlertQueryExportFromAlertQuery(query models.AlertQuery) (definitions.AlertQ
 		Model:         mdl,
 	}, nil
 }
+
+// AlertingFileExportFromEmbeddedContactPoints creates a definitions.AlertingFileExport DTO from []definitions.EmbeddedContactPoint.
+func AlertingFileExportFromEmbeddedContactPoints(orgID int64, ecps []definitions.EmbeddedContactPoint) (definitions.AlertingFileExport, error) {
+	f := definitions.AlertingFileExport{APIVersion: 1}
+
+	cache := make(map[string]*definitions.ContactPointExport)
+	contactPoints := make([]*definitions.ContactPointExport, 0)
+	for _, ecp := range ecps {
+		c, ok := cache[ecp.Name]
+		if !ok {
+			c = &definitions.ContactPointExport{
+				OrgID:     orgID,
+				Name:      ecp.Name,
+				Receivers: make([]definitions.ReceiverExport, 0),
+			}
+			cache[ecp.Name] = c
+			contactPoints = append(contactPoints, c)
+		}
+
+		recv, err := ReceiverExportFromEmbeddedContactPoint(ecp)
+		if err != nil {
+			return definitions.AlertingFileExport{}, err
+		}
+		c.Receivers = append(c.Receivers, recv)
+	}
+
+	for _, c := range contactPoints {
+		f.ContactPoints = append(f.ContactPoints, *c)
+	}
+	return f, nil
+}
+
+// ReceiverExportFromEmbeddedContactPoint creates a definitions.ReceiverExport DTO from definitions.EmbeddedContactPoint.
+func ReceiverExportFromEmbeddedContactPoint(contact definitions.EmbeddedContactPoint) (definitions.ReceiverExport, error) {
+	raw, err := contact.Settings.MarshalJSON()
+	if err != nil {
+		return definitions.ReceiverExport{}, err
+	}
+	return definitions.ReceiverExport{
+		UID:                   contact.UID,
+		Type:                  contact.Type,
+		Settings:              raw,
+		DisableResolveMessage: contact.DisableResolveMessage,
+	}, nil
+}
+
+// AlertingFileExportFromRoute creates a definitions.AlertingFileExport DTO from definitions.Route.
+func AlertingFileExportFromRoute(orgID int64, route definitions.Route) (definitions.AlertingFileExport, error) {
+	f := definitions.AlertingFileExport{
+		APIVersion: 1,
+		Policies: []definitions.NotificationPolicyExport{{
+			OrgID:  orgID,
+			Policy: RouteExportFromRoute(&route),
+		}},
+	}
+	return f, nil
+}
+
+// RouteExportFromRoute creates a definitions.RouteExport DTO from definitions.Route.
+func RouteExportFromRoute(route *definitions.Route) *definitions.RouteExport {
+	export := definitions.RouteExport{
+		Receiver:          route.Receiver,
+		GroupByStr:        route.GroupByStr,
+		Match:             route.Match,
+		MatchRE:           route.MatchRE,
+		Matchers:          route.Matchers,
+		ObjectMatchers:    route.ObjectMatchers,
+		MuteTimeIntervals: route.MuteTimeIntervals,
+		Continue:          route.Continue,
+		GroupWait:         route.GroupWait,
+		GroupInterval:     route.GroupInterval,
+		RepeatInterval:    route.RepeatInterval,
+	}
+
+	if len(route.Routes) > 0 {
+		export.Routes = make([]*definitions.RouteExport, 0, len(route.Routes))
+		for _, r := range route.Routes {
+			export.Routes = append(export.Routes, RouteExportFromRoute(r))
+		}
+	}
+
+	return &export
+}

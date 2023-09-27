@@ -19,33 +19,33 @@ if (!Object.getOwnPropertyDescriptor(Array.prototype, 'toArray')) {
       value: function (idx: number): any {
         return (this as any)[idx];
       },
-      writable: false,
+      writable: true,
       enumerable: false,
-      configurable: false,
+      configurable: true,
     },
     set: {
       value: function (idx: number, value: any) {
         (this as any)[idx] = value;
       },
-      writable: false,
+      writable: true,
       enumerable: false,
-      configurable: false,
+      configurable: true,
     },
     add: {
       value: function (value: any) {
         (this as any).push(value);
       },
-      writable: false,
+      writable: true,
       enumerable: false,
-      configurable: false,
+      configurable: true,
     },
     toArray: {
       value: function () {
         return this;
       },
-      writable: false,
+      writable: true,
       enumerable: false,
-      configurable: false,
+      configurable: true,
     },
   });
 }

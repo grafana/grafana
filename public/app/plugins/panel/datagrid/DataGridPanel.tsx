@@ -11,7 +11,7 @@ import DataEditor, {
 import React, { useEffect, useReducer } from 'react';
 
 import { Field, PanelProps, FieldType, DataFrame } from '@grafana/data';
-import { PanelDataErrorView } from '@grafana/runtime';
+import { PanelDataErrorView, reportInteraction } from '@grafana/runtime';
 import { usePanelContext, useTheme2 } from '@grafana/ui';
 
 import '@glideapps/glide-data-grid/dist/index.css';
@@ -35,6 +35,8 @@ import {
   ROW_MARKER_NUMBER,
   hasGridSelection,
   updateSnapshot,
+  INTERACTION_EVENT_NAME,
+  INTERACTION_ITEM,
 } from './utils';
 
 export interface DataGridProps extends PanelProps<Options> {}
@@ -103,11 +105,14 @@ export function DataGridPanel({ options, data, id, fieldConfig, width, height }:
     values[row] = newValue.data;
     field.values = [...values];
 
+    reportInteraction(INTERACTION_EVENT_NAME, { item: INTERACTION_ITEM.EDIT_CELL });
+
     updateSnapshot(frameCopy, onUpdateData);
   };
 
   const onColumnInputBlur = (columnName: string) => {
     const len = frame.length ?? 0;
+    reportInteraction(INTERACTION_EVENT_NAME, { item: INTERACTION_ITEM.APPEND_COLUMN });
     updateSnapshot(
       {
         ...frame,
@@ -132,10 +137,12 @@ export function DataGridPanel({ options, data, id, fieldConfig, width, height }:
       return { ...f, values };
     });
 
+    reportInteraction(INTERACTION_EVENT_NAME, { item: INTERACTION_ITEM.APPEND_ROW });
     updateSnapshot({ ...frame, fields, length: frame.length + 1 }, onUpdateData);
   };
 
   const onColumnResize = (column: GridColumn, width: number, columnIndex: number, newSizeWithGrow: number) => {
+    reportInteraction(INTERACTION_EVENT_NAME, { item: INTERACTION_ITEM.COLUMN_RESIZE });
     dispatch({ type: DatagridActionType.columnResizeStart, payload: { columnIndex, width } });
   };
 
@@ -150,6 +157,7 @@ export function DataGridPanel({ options, data, id, fieldConfig, width, height }:
 
   const onDeletePressed = (selection: GridSelection) => {
     if (selection.current && selection.current.range) {
+      reportInteraction(INTERACTION_EVENT_NAME, { item: INTERACTION_ITEM.DELETE_BTN_PRESSED, selection: 'grid-cell' });
       updateSnapshot(clearCellsFromRangeSelection(frame, selection.current.range), onUpdateData);
       return true;
     }
@@ -158,6 +166,7 @@ export function DataGridPanel({ options, data, id, fieldConfig, width, height }:
     const cols = selection.columns.toArray();
 
     if (rows.length) {
+      reportInteraction(INTERACTION_EVENT_NAME, { item: INTERACTION_ITEM.DELETE_BTN_PRESSED, selection: 'rows' });
       updateSnapshot(deleteRows(frame, rows), onUpdateData);
       return true;
     }
@@ -176,6 +185,7 @@ export function DataGridPanel({ options, data, id, fieldConfig, width, height }:
           return field;
         }),
       };
+      reportInteraction(INTERACTION_EVENT_NAME, { item: INTERACTION_ITEM.DELETE_BTN_PRESSED, selection: 'columns' });
       updateSnapshot(copiedFrame, onUpdateData);
       return true;
     }
@@ -209,6 +219,7 @@ export function DataGridPanel({ options, data, id, fieldConfig, width, height }:
     const hasUpdated = await updateSnapshot({ ...frame, fields }, onUpdateData);
 
     if (hasUpdated) {
+      reportInteraction(INTERACTION_EVENT_NAME, { item: INTERACTION_ITEM.COLUMN_REORDER });
       dispatch({ type: DatagridActionType.columnMove, payload: { from, to } });
     }
   };
@@ -222,10 +233,15 @@ export function DataGridPanel({ options, data, id, fieldConfig, width, height }:
       field.values.splice(to, 0, value);
     }
 
+    reportInteraction(INTERACTION_EVENT_NAME, { item: INTERACTION_ITEM.ROW_REORDER });
     updateSnapshot({ ...frame, fields }, onUpdateData);
   };
 
   const onColumnRename = () => {
+    reportInteraction(INTERACTION_EVENT_NAME, {
+      item: INTERACTION_ITEM.HEADER_MENU_ACTION,
+      menu_action: 'rename_column',
+    });
     dispatch({ type: DatagridActionType.showColumnRenameInput });
   };
 
@@ -243,6 +259,7 @@ export function DataGridPanel({ options, data, id, fieldConfig, width, height }:
   };
 
   const onGridSelectionChange = (selection: GridSelection) => {
+    reportInteraction(INTERACTION_EVENT_NAME, { item: INTERACTION_ITEM.GRID_SELECTED });
     dispatch({ type: DatagridActionType.multipleCellsSelected, payload: { selection } });
   };
 

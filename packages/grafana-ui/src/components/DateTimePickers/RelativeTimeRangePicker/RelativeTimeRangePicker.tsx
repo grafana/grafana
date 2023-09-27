@@ -14,7 +14,6 @@ import CustomScrollbar from '../../CustomScrollbar/CustomScrollbar';
 import { Field } from '../../Forms/Field';
 import { Icon } from '../../Icon/Icon';
 import { getInputStyles, Input } from '../../Input/Input';
-import { Portal } from '../../Portal/Portal';
 import { Tooltip } from '../../Tooltip/Tooltip';
 import { TimePickerTitle } from '../TimeRangePicker/TimePickerTitle';
 import { TimeRangeList } from '../TimeRangePicker/TimeRangeList';
@@ -123,7 +122,7 @@ export function RelativeTimeRangePicker(props: RelativeTimeRangePickerProps) {
         </span>
       </button>
       {isOpen && (
-        <Portal>
+        <div>
           <div role="presentation" className={styles.backdrop} {...underlayProps} />
           <FocusScope contain autoFocus restoreFocus>
             <div ref={ref} {...overlayProps} {...dialogProps}>
@@ -178,7 +177,7 @@ export function RelativeTimeRangePicker(props: RelativeTimeRangePickerProps) {
               </div>
             </div>
           </FocusScope>
-        </Portal>
+        </div>
       )}
     </div>
   );
@@ -205,15 +204,15 @@ const TooltipContent = () => {
 };
 
 const toolTipStyles = (theme: GrafanaTheme2) => ({
-  supported: css`
-    margin-bottom: ${theme.spacing(1)};
-  `,
-  tooltip: css`
-    margin: 0;
-  `,
-  link: css`
-    margin-top: ${theme.spacing(1)};
-  `,
+  supported: css({
+    marginBottom: theme.spacing(1),
+  }),
+  tooltip: css({
+    margin: 0,
+  }),
+  link: css({
+    marginTop: theme.spacing(1),
+  }),
 });
 
 const getStyles = (fromError?: string, toError?: string) => (theme: GrafanaTheme2) => {
@@ -222,76 +221,76 @@ const getStyles = (fromError?: string, toError?: string) => (theme: GrafanaTheme
   const bodyHeight = bodyMinimumHeight + calculateErrorHeight(theme, fromError) + calculateErrorHeight(theme, toError);
 
   return {
-    backdrop: css`
-      position: fixed;
-      z-index: ${theme.zIndex.modalBackdrop};
-      top: 0;
-      right: 0;
-      bottom: 0;
-      left: 0;
-    `,
-    container: css`
-      display: flex;
-      position: relative;
-    `,
+    backdrop: css({
+      position: 'fixed',
+      zIndex: theme.zIndex.modalBackdrop,
+      top: 0,
+      right: 0,
+      bottom: 0,
+      left: 0,
+    }),
+    container: css({
+      display: 'flex',
+      position: 'relative',
+    }),
     pickerInput: cx(
       inputStyles.input,
       inputStyles.wrapper,
-      css`
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        cursor: pointer;
-        padding-right: 0;
-        padding-left: 0;
-        line-height: ${theme.spacing.gridSize * theme.components.height.md - 2}px;
-      `
+      css({
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        cursor: 'pointer',
+        paddingRight: 0,
+        paddingLeft: 0,
+        lineHeight: `${theme.spacing.gridSize * theme.components.height.md - 2}px`,
+      })
     ),
     caretIcon: cx(
       inputStyles.suffix,
-      css`
-        position: relative;
-        margin-left: ${theme.spacing(0.5)};
-      `
+      css({
+        position: 'relative',
+        marginLeft: theme.spacing(0.5),
+      })
     ),
     clockIcon: cx(
       inputStyles.prefix,
-      css`
-        position: relative;
-        margin-right: ${theme.spacing(0.5)};
-      `
+      css({
+        position: 'relative',
+        marginRight: theme.spacing(0.5),
+      })
     ),
-    content: css`
-      background: ${theme.colors.background.primary};
-      box-shadow: ${theme.shadows.z3};
-      position: absolute;
-      z-index: ${theme.zIndex.modal};
-      width: 500px;
-      top: 100%;
-      border-radius: ${theme.shape.radius.default};
-      border: 1px solid ${theme.colors.border.weak};
-      left: 0;
-      white-space: normal;
-    `,
-    body: css`
-      display: flex;
-      height: ${bodyHeight}px;
-    `,
-    description: css`
-      color: ${theme.colors.text.secondary};
-      font-size: ${theme.typography.size.sm};
-    `,
-    leftSide: css`
-      width: 50% !important;
-      border-right: 1px solid ${theme.colors.border.medium};
-    `,
-    rightSide: css`
-      width: 50%;
-      padding: ${theme.spacing(1)};
-    `,
-    title: css`
-      margin-bottom: ${theme.spacing(1)};
-    `,
+    content: css({
+      background: theme.colors.background.primary,
+      boxShadow: theme.shadows.z3,
+      position: 'absolute',
+      zIndex: theme.zIndex.modal,
+      width: '500px',
+      top: '100%',
+      borderRadius: theme.shape.radius.default,
+      border: `1px solid ${theme.colors.border.weak}`,
+      left: 0,
+      whiteSpace: 'normal',
+    }),
+    body: css({
+      display: 'flex',
+      height: `${bodyHeight}px`,
+    }),
+    description: css({
+      color: theme.colors.text.secondary,
+      fontSize: theme.typography.size.sm,
+    }),
+    leftSide: css({
+      width: '50% !important',
+      borderRight: `1px solid ${theme.colors.border.medium}`,
+    }),
+    rightSide: css({
+      width: '50%',
+      padding: theme.spacing(1),
+    }),
+    title: css({
+      marginBottom: theme.spacing(1),
+    }),
   };
 };
 

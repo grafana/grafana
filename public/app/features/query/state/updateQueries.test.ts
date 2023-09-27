@@ -6,6 +6,7 @@ import {
 } from '@grafana/data';
 import { ExpressionDatasourceRef } from '@grafana/runtime/src/utils/DataSourceWithBackend';
 import { TestQuery } from 'app/core/utils/query.test';
+import { TemplateSrv } from 'app/features/templating/template_srv';
 
 import { updateQueries } from './updateQueries';
 
@@ -40,6 +41,13 @@ const newUidSameTypeDS = {
     id: 'old-type',
   },
 } as DataSourceApi;
+
+const templateSrv = new TemplateSrv();
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getTemplateSrv: () => templateSrv,
+}));
 
 describe('updateQueries', () => {
   afterEach(() => {
@@ -214,6 +222,144 @@ describe('updateQueries', () => {
 
     expect(updated[0].datasource).toEqual({ type: 'old-type', uid: 'old-uid' });
     expect(updated[1].datasource).toEqual({ type: 'other-type', uid: 'other-uid' });
+  });
+
+  it('should preserve query when switching from mixed to a datasource where a query exists for the new datasource', async () => {
+    const updated = await updateQueries(
+      newUidDS,
+      'new-uid',
+      [
+        {
+          refId: 'A',
+          datasource: {
+            uid: 'new-uid',
+            type: 'new-type',
+          },
+        },
+        {
+          refId: 'B',
+          datasource: {
+            uid: 'other-uid',
+            type: 'other-type',
+          },
+        },
+      ],
+      mixedDS
+    );
+
+    expect(updated[0].datasource).toEqual({ type: 'new-type', uid: 'new-uid' });
+    expect(updated.length).toEqual(1);
+  });
+
+  it('should preserve query when switching from mixed to a datasource where a query exists for the new datasource - when using datasource template variable', async () => {
+    templateSrv.init([
+      {
+        current: {
+          text: 'Azure Monitor',
+          value: 'ds-uid',
+        },
+        name: 'ds',
+        type: 'datasource',
+        id: 'ds',
+      },
+    ]);
+    const updated = await updateQueries(
+      newUidDS,
+      '$ds',
+      [
+        {
+          refId: 'A',
+          datasource: {
+            uid: '$ds',
+            type: 'new-type',
+          },
+        },
+        {
+          refId: 'B',
+          datasource: {
+            uid: 'other-uid',
+            type: 'other-type',
+          },
+        },
+      ],
+      mixedDS
+    );
+
+    expect(updated[0].datasource).toEqual({ type: 'new-type', uid: '$ds' });
+    expect(updated.length).toEqual(1);
+  });
+
+  it('will not preserve query when switch from mixed with a ds variable query to the same datasource (non-variable)', async () => {
+    templateSrv.init([
+      {
+        current: {
+          text: 'Azure Monitor',
+          value: 'ds-uid',
+        },
+        name: 'ds',
+        type: 'datasource',
+        id: 'ds',
+      },
+    ]);
+    const updated = await updateQueries(
+      newUidDS,
+      'new-uid',
+      [
+        {
+          refId: 'A',
+          datasource: {
+            uid: '$ds',
+            type: 'new-type',
+          },
+        },
+        {
+          refId: 'B',
+          datasource: {
+            uid: 'other-uid',
+            type: 'other-type',
+          },
+        },
+      ],
+      mixedDS
+    );
+
+    expect(updated[0].datasource).toEqual({ type: 'new-type', uid: 'new-uid' });
+    expect(updated.length).toEqual(1);
+  });
+
+  it('should update query refs when switching from mixed to a datasource where queries exist for new datasource', async () => {
+    const updated = await updateQueries(
+      newUidDS,
+      'new-uid',
+      [
+        {
+          refId: 'A',
+          datasource: {
+            uid: 'new-uid',
+            type: 'new-type',
+          },
+        },
+        {
+          refId: 'B',
+          datasource: {
+            uid: 'other-uid',
+            type: 'other-type',
+          },
+        },
+        {
+          refId: 'C',
+          datasource: {
+            uid: 'new-uid',
+            type: 'new-type',
+          },
+        },
+      ],
+      mixedDS
+    );
+
+    expect(updated.length).toEqual(2);
+    expect(updated[0].refId).toEqual('A');
+    expect(updated[1].refId).toEqual('B');
   });
 });
 

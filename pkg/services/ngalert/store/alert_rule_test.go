@@ -9,11 +9,13 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
+	"github.com/grafana/grafana/pkg/services/ngalert/testutil"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -446,7 +448,8 @@ func TestIntegration_CountAlertRules(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			count, err := store.CountAlertRulesInFolder(context.Background(), test.query)
+			count, err := store.CountInFolder(context.Background(),
+				test.query.OrgID, test.query.NamespaceUID, nil)
 			if test.expectErr {
 				require.Error(t, err)
 			} else {
@@ -455,6 +458,28 @@ func TestIntegration_CountAlertRules(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestIntegration_DeleteInFolder(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	sqlStore := db.InitTestDB(t)
+	cfg := setting.NewCfg()
+	store := &DBstore{
+		SQLStore:      sqlStore,
+		FolderService: setupFolderService(t, sqlStore, cfg),
+		Logger:        log.New("test-dbstore"),
+	}
+	rule := createRule(t, store, nil)
+
+	err := store.DeleteInFolder(context.Background(), rule.OrgID, rule.NamespaceUID, nil)
+	require.NoError(t, err)
+
+	c, err := store.CountInFolder(context.Background(), rule.OrgID, rule.NamespaceUID, nil)
+	require.NoError(t, err)
+	require.Equal(t, int64(0), c)
 }
 
 func createRule(t *testing.T, store *DBstore, generate func() *models.AlertRule) *models.AlertRule {
@@ -511,7 +536,7 @@ func setupFolderService(t *testing.T, sqlStore *sqlstore.SQLStore, cfg *setting.
 	tracer := tracing.InitializeTracerForTest()
 	inProcBus := bus.ProvideBus(tracer)
 	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
-	_, dashboardStore := SetupDashboardService(t, sqlStore, folderStore, cfg)
+	_, dashboardStore := testutil.SetupDashboardService(t, sqlStore, folderStore, cfg)
 
-	return SetupFolderService(t, cfg, dashboardStore, folderStore, inProcBus)
+	return testutil.SetupFolderService(t, cfg, dashboardStore, folderStore, inProcBus)
 }

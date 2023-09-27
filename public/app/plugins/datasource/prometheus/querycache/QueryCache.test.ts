@@ -5,10 +5,21 @@ import { DataFrame, DataQueryRequest, DateTime, dateTime, TimeRange } from '@gra
 import { QueryEditorMode } from '../querybuilder/shared/types';
 import { PromQuery } from '../types';
 
-import { getTargSig, QueryCache } from './QueryCache';
+import { DatasourceProfileData, QueryCache } from './QueryCache';
 import { IncrementalStorageDataFrameScenarios } from './QueryCacheTestData';
 
-const mockRequest = (request?: Partial<DataQueryRequest<PromQuery>>): DataQueryRequest<PromQuery> => {
+// Will not interpolate vars!
+const interpolateStringTest = (query: PromQuery) => {
+  return query.expr;
+};
+
+const getPrometheusTargetSignature = (request: DataQueryRequest<PromQuery>, targ: PromQuery) => {
+  return `${interpolateStringTest(targ)}|${targ.interval ?? request.interval}|${JSON.stringify(
+    request.rangeRaw ?? ''
+  )}|${targ.exemplar}`;
+};
+
+const mockPromRequest = (request?: Partial<DataQueryRequest<PromQuery>>): DataQueryRequest<PromQuery> => {
   // Histogram
   const defaultRequest: DataQueryRequest<PromQuery> = {
     app: 'undefined',
@@ -48,14 +59,28 @@ const mockRequest = (request?: Partial<DataQueryRequest<PromQuery>>): DataQueryR
   };
 };
 
-describe('QueryCache', function () {
+const getPromProfileData = (request: DataQueryRequest, targ: PromQuery): DatasourceProfileData => {
+  return {
+    expr: targ.expr,
+    interval: targ.interval ?? request.interval,
+    datasource: 'prom',
+  };
+};
+
+describe('QueryCache: Generic', function () {
   it('instantiates', () => {
-    const storage = new QueryCache();
+    const storage = new QueryCache({
+      getTargetSignature: () => '',
+      overlapString: '10m',
+    });
     expect(storage).toBeInstanceOf(QueryCache);
   });
 
   it('will not modify or crash with empty response', () => {
-    const storage = new QueryCache();
+    const storage = new QueryCache({
+      getTargetSignature: () => '',
+      overlapString: '10m',
+    });
     const firstFrames: DataFrame[] = [];
     const secondFrames: DataFrame[] = [];
 
@@ -99,7 +124,7 @@ describe('QueryCache', function () {
     cache.set(targetIdentity, targetSignature);
 
     const firstStoredFrames = storage.procFrames(
-      mockRequest({
+      mockPromRequest({
         range: firstRange,
         dashboardUID: dashboardId,
         panelId: panelId,
@@ -120,7 +145,7 @@ describe('QueryCache', function () {
     // Should return the request frames unaltered
     expect(firstStoredFrames).toEqual(firstFrames);
 
-    const secondRequest = mockRequest({
+    const secondRequest = mockPromRequest({
       range: secondRange,
       dashboardUID: dashboardId,
       panelId: panelId,
@@ -153,7 +178,9 @@ describe('QueryCache', function () {
       expect(firstFramesLength).toBeGreaterThan(secondFramesLength);
     });
   });
+});
 
+describe('QueryCache: Prometheus', function () {
   it('Merges incremental queries in storage', () => {
     const scenarios = [
       IncrementalStorageDataFrameScenarios.histogram.getSeriesWithGapAtEnd(),
@@ -161,7 +188,11 @@ describe('QueryCache', function () {
       IncrementalStorageDataFrameScenarios.histogram.getSeriesWithGapAtStart(),
     ];
     scenarios.forEach((scenario, index) => {
-      const storage = new QueryCache();
+      const storage = new QueryCache<PromQuery>({
+        getTargetSignature: getPrometheusTargetSignature,
+        overlapString: '10m',
+        profileFunction: getPromProfileData,
+      });
       const firstFrames = scenario.first.dataFrames as unknown as DataFrame[];
       const secondFrames = scenario.second.dataFrames as unknown as DataFrame[];
 
@@ -203,14 +234,14 @@ describe('QueryCache', function () {
       // This can't change
       const targetIdentity = `${dashboardId}|${panelId}|A`;
 
-      const request = mockRequest({
+      const request = mockPromRequest({
         range: firstRange,
         dashboardUID: dashboardId,
         panelId: panelId,
       });
 
       // But the signature can, and we should clean up any non-matching signatures
-      const targetSignature = getTargSig(request.targets[0].expr, request, request.targets[0]);
+      const targetSignature = getPrometheusTargetSignature(request, request.targets[0]);
 
       targetSignatures.set(targetIdentity, targetSignature);
 
@@ -232,7 +263,7 @@ describe('QueryCache', function () {
       // Should return the request frames unaltered
       expect(firstStoredFrames).toEqual(firstFrames);
 
-      const secondRequest = mockRequest({
+      const secondRequest = mockPromRequest({
         range: secondRange,
         dashboardUID: dashboardId,
         panelId: panelId,
@@ -274,9 +305,6 @@ describe('QueryCache', function () {
         });
       });
 
-      const interpolateString = (s: string) => {
-        return s;
-      };
       const secondRequestModified = {
         ...secondRequest,
         range: {
@@ -284,7 +312,7 @@ describe('QueryCache', function () {
           to: dateTime(secondRequest.range.to.valueOf() + 30000),
         },
       };
-      const cacheRequest = storage.requestInfo(secondRequestModified, interpolateString);
+      const cacheRequest = storage.requestInfo(secondRequestModified);
       expect(cacheRequest.requests[0].targets).toEqual(secondRequestModified.targets);
       expect(cacheRequest.requests[0].range.to).toEqual(secondRequestModified.range.to);
       expect(cacheRequest.requests[0].range.raw).toEqual(secondRequestModified.range.raw);
@@ -296,7 +324,11 @@ describe('QueryCache', function () {
   });
 
   it('Will evict old dataframes, and use stored data when user shortens query window', () => {
-    const storage = new QueryCache();
+    const storage = new QueryCache<PromQuery>({
+      getTargetSignature: getPrometheusTargetSignature,
+      overlapString: '10m',
+      profileFunction: getPromProfileData,
+    });
 
     // Initial request with all data for time range
     const firstFrames = IncrementalStorageDataFrameScenarios.histogram.evictionRequests.first
@@ -358,7 +390,7 @@ describe('QueryCache', function () {
 
     const targetIdentity = `${dashboardId}|${panelId}|A`;
 
-    const request = mockRequest({
+    const request = mockPromRequest({
       range: firstRange,
       dashboardUID: dashboardId,
       panelId: panelId,
@@ -377,7 +409,7 @@ describe('QueryCache', function () {
     const firstMergedLength = firstQueryResult[0].fields[0].values.length;
 
     const secondQueryResult = storage.procFrames(
-      mockRequest({
+      mockPromRequest({
         range: secondRange,
         dashboardUID: dashboardId,
         panelId: panelId,
@@ -400,7 +432,7 @@ describe('QueryCache', function () {
     cache.set(targetIdentity, `'1=1'|${interval}|${JSON.stringify(thirdRange.raw)}`);
 
     storage.procFrames(
-      mockRequest({
+      mockPromRequest({
         range: thirdRange,
         dashboardUID: dashboardId,
         panelId: panelId,
@@ -435,17 +467,17 @@ describe('QueryCache', function () {
       utcOffsetSec: -21600,
     };
 
-    const request = mockRequest({
+    const request = mockPromRequest({
       interval: requestInterval,
       targets: [target],
     });
-    const targSig = getTargSig('__EXPR__', request, target);
+    const targSig = getPrometheusTargetSignature(request, target);
     expect(targSig).toContain(targetInterval);
     expect(targSig.includes(requestInterval)).toBeFalsy();
   });
 
   it('will not modify request with absolute duration', () => {
-    const request = mockRequest({
+    const request = mockPromRequest({
       range: {
         from: moment('2023-01-30T19:33:01.332Z') as DateTime,
         to: moment('2023-01-30T20:33:01.332Z') as DateTime,
@@ -453,33 +485,36 @@ describe('QueryCache', function () {
       },
       rangeRaw: { from: '2023-01-30T19:33:01.332Z', to: '2023-01-30T20:33:01.332Z' },
     });
-    const storage = new QueryCache();
-    const interpolateString = (s: string) => {
-      return s;
-    };
-    const cacheRequest = storage.requestInfo(request, interpolateString);
+    const storage = new QueryCache<PromQuery>({
+      getTargetSignature: getPrometheusTargetSignature,
+      overlapString: '10m',
+      profileFunction: getPromProfileData,
+    });
+    const cacheRequest = storage.requestInfo(request);
     expect(cacheRequest.requests[0]).toBe(request);
     expect(cacheRequest.shouldCache).toBe(false);
   });
 
   it('mark request as shouldCache', () => {
-    const request = mockRequest();
-    const storage = new QueryCache();
-    const interpolateString = (s: string) => {
-      return s;
-    };
-    const cacheRequest = storage.requestInfo(request, interpolateString);
+    const request = mockPromRequest();
+    const storage = new QueryCache<PromQuery>({
+      getTargetSignature: getPrometheusTargetSignature,
+      overlapString: '10m',
+      profileFunction: getPromProfileData,
+    });
+    const cacheRequest = storage.requestInfo(request);
     expect(cacheRequest.requests[0]).toBe(request);
     expect(cacheRequest.shouldCache).toBe(true);
   });
 
   it('Should modify request', () => {
-    const request = mockRequest();
-    const storage = new QueryCache();
-    const interpolateString = (s: string) => {
-      return s;
-    };
-    const cacheRequest = storage.requestInfo(request, interpolateString);
+    const request = mockPromRequest();
+    const storage = new QueryCache<PromQuery>({
+      getTargetSignature: getPrometheusTargetSignature,
+      overlapString: '10m',
+      profileFunction: getPromProfileData,
+    });
+    const cacheRequest = storage.requestInfo(request);
     expect(cacheRequest.requests[0]).toBe(request);
     expect(cacheRequest.shouldCache).toBe(true);
   });

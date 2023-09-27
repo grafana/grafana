@@ -36,9 +36,9 @@ describe('useStyles', () => {
     const Dummy = function () {
       const styles = useStyles2((theme) => {
         return {
-          someStyle: css`
-            color: ${theme.colors.success.main};
-          `,
+          someStyle: css({
+            color: theme.colors.success.main,
+          }),
         };
       });
 

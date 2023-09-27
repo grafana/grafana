@@ -368,6 +368,9 @@ func (ss *sqlStore) ChangePassword(ctx context.Context, cmd *user.ChangeUserPass
 }
 
 func (ss *sqlStore) UpdateLastSeenAt(ctx context.Context, cmd *user.UpdateUserLastSeenAtCommand) error {
+	if cmd.UserID <= 0 {
+		return user.ErrUpdateInvalidID
+	}
 	return ss.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		user := user.User{
 			ID:         cmd.UserID,
@@ -397,14 +400,11 @@ func (ss *sqlStore) GetSignedInUser(ctx context.Context, query *user.GetSignedIn
 		u.help_flags1         as help_flags1,
 		u.last_seen_at        as last_seen_at,
 		(SELECT COUNT(*) FROM org_user where org_user.user_id = u.id) as org_count,
-		user_auth.auth_module as external_auth_module,
-		user_auth.auth_id     as external_auth_id,
 		org.name              as org_name,
 		org_user.role         as org_role,
 		org.id                as org_id,
 		u.is_service_account  as is_service_account
 		FROM ` + ss.dialect.Quote("user") + ` as u
-		LEFT OUTER JOIN user_auth on user_auth.user_id = u.id
 		LEFT OUTER JOIN org_user on org_user.org_id = ` + orgId + ` and org_user.user_id = u.id
 		LEFT OUTER JOIN org on org.id = org_user.org_id `
 
@@ -425,6 +425,8 @@ func (ss *sqlStore) GetSignedInUser(ctx context.Context, query *user.GetSignedIn
 			} else {
 				sess.SQL(rawSQL+"WHERE u.email=?", query.Email)
 			}
+		default:
+			return user.ErrNoUniqueID
 		}
 		has, err := sess.Get(&signedInUser)
 		if err != nil {
@@ -438,11 +440,6 @@ func (ss *sqlStore) GetSignedInUser(ctx context.Context, query *user.GetSignedIn
 			signedInUser.OrgName = "Org missing"
 		}
 
-		if signedInUser.ExternalAuthModule != "oauth_grafana_com" {
-			signedInUser.ExternalAuthID = ""
-		}
-
-		signedInUser.Analytics = buildUserAnalyticsSettings(signedInUser, ss.cfg.IntercomSecret)
 		return nil
 	})
 	return &signedInUser, err

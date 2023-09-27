@@ -132,7 +132,7 @@ const ServiceAccountListItem = memo(
                 name="trash-alt"
                 size="md"
                 onClick={() => onRemoveButtonClick(serviceAccount)}
-                aria-label={`Delete service account ${serviceAccount.name}`}
+                tooltip={`Delete service account ${serviceAccount.name}`}
               />
             )}
           </HorizontalGroup>

@@ -28,11 +28,11 @@ All requests to AWS APIs are performed on the server side by the Grafana backend
 
 This topic has the following sections:
 
-- [Select an authentication method]({{< relref "#select-an-authentication-method" >}})
-- [Assume a role]({{< relref "#assume-a-role" >}})
-- [Use a custom endpoint]({{< relref "#use-a-custom-endpoint" >}})
-- [Use an AWS credentials file]({{< relref "#use-an-aws-credentials-file" >}})
-- [Use EKS IAM roles for service accounts]({{< relref "#use-eks-iam-roles-for-service-accounts" >}})
+- [Select an authentication method](#select-an-authentication-method)
+- [Assume a role](#assume-a-role)
+- [Use a custom endpoint](#use-a-custom-endpoint)
+- [Use an AWS credentials file](#use-an-aws-credentials-file)
+- [Use EKS IAM roles for service accounts](#use-eks-iam-roles-for-service-accounts)
 
 ## Select an authentication method
 
@@ -53,7 +53,7 @@ Open source Grafana enables the `AWS SDK Default`, `Credentials file`, and `Acce
   This option is enabled by default only in Amazon Managed Grafana.
 
 If necessary, you can enable or disable them if you have server configuration access.
-For more information, refer to the [`allowed_auth_providers` documentation]({{< relref "../../../setup-grafana/configure-grafana#allowed_auth_providers" >}}).
+For more information, refer to the [`allowed_auth_providers` documentation][configure-grafana-allowed-auth-providers].
 
 ## Assume a role
 
@@ -63,7 +63,7 @@ If this field is left blank, Grafana uses the provided credentials directly, and
 
 If this field isn't blank, Grafana uses the provided credentials to perform an [sts:AssumeRole](https://docs.aws.amazon.com/STS/latest/APIReference/API_AssumeRole.html) call.
 
-To disable this feature, refer to the [`assume_role_enabled` documentation]({{< relref "../../../setup-grafana/configure-grafana#assume_role_enabled" >}}).
+To disable this feature, refer to the [`assume_role_enabled` documentation][configure-grafana-assume-role-enabled].
 
 ### Use an external ID
 
@@ -110,3 +110,11 @@ securityContext:
   runAsUser: 472
   runAsGroup: 472
 ```
+
+{{% docs/reference %}}
+[configure-grafana-allowed-auth-providers]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana#allowed_auth_providers"
+[configure-grafana-allowed-auth-providers]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana#allowed_auth_providers"
+
+[configure-grafana-assume-role-enabled]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana#assume_role_enabled"
+[configure-grafana-assume-role-enabled]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana#assume_role_enabled"
+{{% /docs/reference %}}

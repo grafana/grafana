@@ -3,8 +3,6 @@ import React from 'react';
 
 import { SortOrder } from 'app/core/utils/richHistory';
 
-import { ExploreId } from '../../../types/explore';
-
 import { RichHistoryStarredTab, RichHistoryStarredTabProps } from './RichHistoryStarredTab';
 
 jest.mock('../state/selectors', () => ({ getExploreDatasources: jest.fn() }));
@@ -27,7 +25,7 @@ const setup = (propOverrides?: Partial<RichHistoryStarredTabProps>) => {
     updateFilters: jest.fn(),
     loadMoreRichHistory: jest.fn(),
     clearRichHistoryResults: jest.fn(),
-    exploreId: ExploreId.left,
+    exploreId: 'left',
     richHistorySettings: {
       retentionPeriod: 7,
       starredTabAsFirstTab: false,

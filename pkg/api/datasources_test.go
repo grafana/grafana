@@ -15,7 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db/dbtest"
-	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
@@ -23,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/datasources/permissions"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/web"
 	"github.com/grafana/grafana/pkg/web/webtest"
 )
 
@@ -48,7 +49,7 @@ func TestDataSourcesProxy_userLoggedIn(t *testing.T) {
 		// handler func being tested
 		hs := &HTTPServer{
 			Cfg:         setting.NewCfg(),
-			pluginStore: &plugins.FakePluginStore{},
+			pluginStore: &fakes.FakePluginStore{},
 			DataSourcesService: &dataSourcesServiceMock{
 				expectedDatasources: ds,
 			},
@@ -72,7 +73,7 @@ func TestDataSourcesProxy_userLoggedIn(t *testing.T) {
 			// handler func being tested
 			hs := &HTTPServer{
 				Cfg:         setting.NewCfg(),
-				pluginStore: &plugins.FakePluginStore{},
+				pluginStore: &fakes.FakePluginStore{},
 			}
 			sc.handlerFunc = hs.DeleteDataSourceByName
 			sc.fakeReqWithParams("DELETE", sc.url, map[string]string{}).exec()
@@ -248,6 +249,38 @@ func TestUpdateDataSource_URLWithoutProtocol(t *testing.T) {
 	assert.Equal(t, 200, sc.resp.Code)
 }
 
+// Updating data source name where data source with same name exists.
+func TestUpdateDataSourceByID_DataSourceNameExists(t *testing.T) {
+	hs := &HTTPServer{
+		DataSourcesService: &dataSourcesServiceMock{
+			expectedDatasource: &datasources.DataSource{},
+			mockUpdateDataSource: func(ctx context.Context, cmd *datasources.UpdateDataSourceCommand) (*datasources.DataSource, error) {
+				return nil, datasources.ErrDataSourceNameExists
+			},
+		},
+		Cfg:                  setting.NewCfg(),
+		AccessControl:        acimpl.ProvideAccessControl(setting.NewCfg()),
+		accesscontrolService: actest.FakeService{},
+		Live:                 newTestLive(t, nil),
+	}
+
+	sc := setupScenarioContext(t, "/api/datasources/1")
+
+	sc.m.Put(sc.url, routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
+		c.Req = web.SetURLParams(c.Req, map[string]string{":id": "1"})
+		c.Req.Body = mockRequestBody(datasources.UpdateDataSourceCommand{
+			Access: "direct",
+			Type:   "test",
+			Name:   "test",
+		})
+		return hs.UpdateDataSourceByID(c)
+	}))
+
+	sc.fakeReqWithParams("PUT", sc.url, map[string]string{}).exec()
+
+	require.Equal(t, http.StatusConflict, sc.resp.Code)
+}
+
 func TestAPI_datasources_AccessControl(t *testing.T) {
 	type testCase struct {
 		desc         string
@@ -359,6 +392,8 @@ type dataSourcesServiceMock struct {
 	expectedDatasources []*datasources.DataSource
 	expectedDatasource  *datasources.DataSource
 	expectedError       error
+
+	mockUpdateDataSource func(ctx context.Context, cmd *datasources.UpdateDataSourceCommand) (*datasources.DataSource, error)
 }
 
 func (m *dataSourcesServiceMock) GetDataSource(ctx context.Context, query *datasources.GetDataSourceQuery) (*datasources.DataSource, error) {
@@ -386,6 +421,10 @@ func (m *dataSourcesServiceMock) AddDataSource(ctx context.Context, cmd *datasou
 }
 
 func (m *dataSourcesServiceMock) UpdateDataSource(ctx context.Context, cmd *datasources.UpdateDataSourceCommand) (*datasources.DataSource, error) {
+	if m.mockUpdateDataSource != nil {
+		return m.mockUpdateDataSource(ctx, cmd)
+	}
+
 	return m.expectedDatasource, m.expectedError
 }
 

@@ -21,7 +21,7 @@ import {
   BarGaugeDisplayMode,
   TableAutoCellOptions,
   TableCellBackgroundDisplayMode,
-  TableCellOptions,
+  TableCellDisplayMode,
 } from '@grafana/schema';
 
 import { BarGaugeCell } from './BarGaugeCell';
@@ -34,7 +34,7 @@ import { RowExpander } from './RowExpander';
 import { SparklineCell } from './SparklineCell';
 import {
   CellComponent,
-  TableCellDisplayMode,
+  TableCellOptions,
   TableFieldOptions,
   FooterItem,
   GrafanaTableColumn,
@@ -130,7 +130,7 @@ export function getColumns(
       Cell,
       id: fieldIndex.toString(),
       field: field,
-      Header: getFieldDisplayName(field, data),
+      Header: fieldTableOptions.hideHeader ? '' : getFieldDisplayName(field, data),
       accessor: (_row: any, i: number) => {
         return field.values[i];
       },
@@ -169,6 +169,7 @@ export function getColumns(
 
 export function getCellComponent(displayMode: TableCellDisplayMode, field: Field): CellComponent {
   switch (displayMode) {
+    case TableCellDisplayMode.Custom:
     case TableCellDisplayMode.ColorText:
     case TableCellDisplayMode.ColorBackground:
       return DefaultCell;

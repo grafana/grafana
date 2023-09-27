@@ -56,8 +56,8 @@ export const AnnotationTooltip = ({
   if (canEdit || canDelete) {
     editControls = (
       <div className={styles.editControls}>
-        {canEdit && <IconButton name={'pen'} size={'sm'} onClick={onEdit} />}
-        {canDelete && <IconButton name={'trash-alt'} size={'sm'} onClick={onDelete} />}
+        {canEdit && <IconButton name={'pen'} size={'sm'} onClick={onEdit} tooltip="Edit" />}
+        {canDelete && <IconButton name={'trash-alt'} size={'sm'} onClick={onDelete} tooltip="Delete" />}
       </div>
     );
   }
@@ -82,9 +82,7 @@ export const AnnotationTooltip = ({
         {alertText}
         <>
           <HorizontalGroup spacing="xs" wrap>
-            {tags?.map((t, i) => (
-              <Tag name={t} key={`${t}-${i}`} />
-            ))}
+            {tags?.map((t, i) => <Tag name={t} key={`${t}-${i}`} />)}
           </HorizontalGroup>
         </>
       </div>
@@ -124,7 +122,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       }
     `,
     avatar: css`
-      border-radius: 50%;
+      border-radius: ${theme.shape.radius.circle};
       width: 16px;
       height: 16px;
       margin-right: ${theme.spacing(1)};

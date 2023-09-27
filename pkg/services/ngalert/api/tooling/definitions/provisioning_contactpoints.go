@@ -11,6 +11,14 @@ import (
 //     Responses:
 //       200: ContactPoints
 
+// swagger:route GET /api/v1/provisioning/contact-points/export provisioning stable RouteGetContactpointsExport
+//
+// Export all contact points in provisioning file format.
+//
+//     Responses:
+//       200: AlertingFileExport
+//       403: PermissionDenied
+
 // swagger:route POST /api/v1/provisioning/contact-points provisioning stable RoutePostContactpoints
 //
 // Create a contact point.
@@ -50,7 +58,7 @@ type ContactPointUIDReference struct {
 	UID string
 }
 
-// swagger:parameters RouteGetContactpoints
+// swagger:parameters RouteGetContactpoints RouteGetContactpointsExport
 type ContactPointParams struct {
 	// Filter by name
 	// in: query
@@ -89,6 +97,21 @@ type EmbeddedContactPoint struct {
 	DisableResolveMessage bool `json:"disableResolveMessage"`
 	// readonly: true
 	Provenance string `json:"provenance,omitempty"`
+}
+
+// ContactPointExport is the provisioned file export of alerting.ContactPointV1.
+type ContactPointExport struct {
+	OrgID     int64            `json:"orgId" yaml:"orgId"`
+	Name      string           `json:"name" yaml:"name"`
+	Receivers []ReceiverExport `json:"receivers" yaml:"receivers"`
+}
+
+// ReceiverExport is the provisioned file export of alerting.ReceiverV1.
+type ReceiverExport struct {
+	UID                   string     `json:"uid" yaml:"uid"`
+	Type                  string     `json:"type" yaml:"type"`
+	Settings              RawMessage `json:"settings" yaml:"settings"`
+	DisableResolveMessage bool       `json:"disableResolveMessage" yaml:"disableResolveMessage"`
 }
 
 const RedactedValue = "[REDACTED]"

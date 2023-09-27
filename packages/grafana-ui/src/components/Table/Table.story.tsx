@@ -1,4 +1,4 @@
-import { ComponentMeta, ComponentStory } from '@storybook/react';
+import { Meta, StoryFn } from '@storybook/react';
 import { merge } from 'lodash';
 import React from 'react';
 
@@ -22,7 +22,7 @@ import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import mdx from './Table.mdx';
 import { FooterItem } from './types';
 
-const meta: ComponentMeta<typeof Table> = {
+const meta: Meta<typeof Table> = {
   title: 'Visualizations/Table',
   component: Table,
   decorators: [withCenteredStory],
@@ -185,7 +185,7 @@ const defaultThresholds: ThresholdsConfig = {
   mode: ThresholdsMode.Absolute,
 };
 
-export const Basic: ComponentStory<typeof Table> = (args) => {
+export const Basic: StoryFn<typeof Table> = (args) => {
   const theme = useTheme2();
   const data = buildData(theme, {});
 
@@ -196,7 +196,7 @@ export const Basic: ComponentStory<typeof Table> = (args) => {
   );
 };
 
-export const BarGaugeCell: ComponentStory<typeof Table> = (args) => {
+export const BarGaugeCell: StoryFn<typeof Table> = (args) => {
   const theme = useTheme2();
   const data = buildData(theme, {
     Progress: {
@@ -218,7 +218,7 @@ export const BarGaugeCell: ComponentStory<typeof Table> = (args) => {
   );
 };
 
-export const ColoredCells: ComponentStory<typeof Table> = (args) => {
+export const ColoredCells: StoryFn<typeof Table> = (args) => {
   const theme = useTheme2();
   const data = buildData(theme, {
     Progress: {
@@ -237,7 +237,7 @@ export const ColoredCells: ComponentStory<typeof Table> = (args) => {
   );
 };
 
-export const Footer: ComponentStory<typeof Table> = (args) => {
+export const Footer: StoryFn<typeof Table> = (args) => {
   const theme = useTheme2();
   const data = buildData(theme, {});
   const footer = buildFooterData(data);
@@ -249,12 +249,12 @@ export const Footer: ComponentStory<typeof Table> = (args) => {
   );
 };
 
-export const Pagination: ComponentStory<typeof Table> = (args) => <Basic {...args} />;
+export const Pagination: StoryFn<typeof Table> = (args) => <Basic {...args} />;
 Pagination.args = {
   enablePagination: true,
 };
 
-export const SubTables: ComponentStory<typeof Table> = (args) => {
+export const SubTables: StoryFn<typeof Table> = (args) => {
   const theme = useTheme2();
   const data = buildData(theme, {});
   const subData = buildSubTablesData(theme, {

@@ -40,9 +40,9 @@ func (j *pgoJenny) Generate(decl *pfs.PluginDecl) (*codejen.File, error) {
 		Config: &openapi.Config{
 			Group: decl.SchemaInterface.IsGroup(),
 			Config: &copenapi.Config{
-				ExpandReferences: true,
-				MaxCycleDepth:    10,
+				MaxCycleDepth: 10,
 			},
+			SplitSchema: true,
 		},
 		PackageName: slotname,
 		ApplyFuncs:  []dstutil.ApplyFunc{corecodegen.PrefixDropper(decl.Lineage.Name())},

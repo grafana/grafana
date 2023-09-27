@@ -24,7 +24,7 @@ func TestRecoveryMiddleware(t *testing.T) {
 			sc.req.Header.Set("content-type", "application/json")
 
 			assert.Equal(t, 500, sc.resp.Code)
-			assert.Equal(t, "Internal Server Error - Check the Grafana server logs for the detailed error message.", sc.respJson["message"])
+			assert.Equal(t, "Internal Server Error - test error", sc.respJson["message"])
 			assert.True(t, strings.HasPrefix(sc.respJson["error"].(string), "Server Error"))
 		})
 	})
@@ -50,6 +50,7 @@ func recoveryScenario(t *testing.T, desc string, url string, fn scenarioFunc) {
 	t.Run(desc, func(t *testing.T) {
 		cfg := setting.NewCfg()
 		cfg.ErrTemplateName = "error-template"
+		cfg.UserFacingDefaultError = "test error"
 		sc := &scenarioContext{
 			t:   t,
 			url: url,

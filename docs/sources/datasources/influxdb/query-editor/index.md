@@ -15,16 +15,16 @@ weight: 200
 # InfluxDB query editor
 
 This topic explains querying specific to the InfluxDB data source.
-For general documentation on querying data sources in Grafana, see [Query and transform data]({{< relref "../../../panels-visualizations/query-transform-data" >}}).
+For general documentation on querying data sources in Grafana, see [Query and transform data][query-transform-data].
 
 ## Choose a query editing mode
 
 The InfluxDB data source's query editor has two modes depending on your choice of query language in the [data source configuration]({{< relref "../#configure-the-data-source" >}}):
 
-- [InfluxQL]({{< relref "#influxql-query-editor" >}})
-- [Flux]({{< relref "#flux-query-editor" >}})
+- [InfluxQL](#influxql-query-editor)
+- [Flux](#flux-query-editor)
 
-You also use the query editor to retrieve [log data]({{< relref "#query-logs" >}}) and [annotate]({{< relref "#apply-annotations" >}}) visualizations.
+You also use the query editor to retrieve [log data](#query-logs) and [annotate](#apply-annotations) visualizations.
 
 ## InfluxQL query editor
 
@@ -161,11 +161,11 @@ from(bucket: "grafana")
   |> yield(name: "mean")
 ```
 
-To view the interpolated version of a query with the query inspector, refer to [Panel Inspector]({{< relref "../../../panels-visualizations/panel-inspector" >}}).
+To view the interpolated version of a query with the query inspector, refer to [Panel Inspector][panel-inspector].
 
 ## Query logs
 
-You can query and display log data from InfluxDB in [Explore]({{< relref "../../../explore" >}}) and with the [Logs panel]({{< relref "../../../panels-visualizations/visualizations/logs" >}}) for dashboards.
+You can query and display log data from InfluxDB in [Explore][explore] and with the [Logs panel][logs] for dashboards.
 
 Select the InfluxDB data source, then enter a query to display your logs.
 
@@ -184,7 +184,7 @@ To remove tag filters, click the first select, then choose **--remove filter--**
 
 ## Apply annotations
 
-[Annotations]({{< relref "../../../dashboards/build-dashboards/annotate-visualizations" >}}) overlay rich event information on top of graphs.
+[Annotations][annotate-visualizations] overlay rich event information on top of graphs.
 You can add annotation queries in the Dashboard menu's Annotations view.
 
 For InfluxDB, your query **must** include `WHERE $timeFilter`.
@@ -198,3 +198,20 @@ The **Tags** field's value can be a comma-separated string.
 ```sql
 SELECT title, description from events WHERE $timeFilter ORDER BY time ASC
 ```
+
+{{% docs/reference %}}
+[annotate-visualizations]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/build-dashboards/annotate-visualizations"
+[annotate-visualizations]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/build-dashboards/annotate-visualizations"
+
+[explore]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/explore"
+[explore]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/explore"
+
+[logs]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/logs"
+[logs]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/logs"
+
+[panel-inspector]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/panel-inspector"
+[panel-inspector]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/panel-inspector"
+
+[query-transform-data]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data"
+[query-transform-data]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data"
+{{% /docs/reference %}}

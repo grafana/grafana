@@ -14,6 +14,7 @@ import (
 	alerting_models "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -29,7 +30,7 @@ type ProvisioningSrv struct {
 }
 
 type ContactPointService interface {
-	GetContactPoints(ctx context.Context, q provisioning.ContactPointQuery) ([]definitions.EmbeddedContactPoint, error)
+	GetContactPoints(ctx context.Context, q provisioning.ContactPointQuery, user *user.SignedInUser) ([]definitions.EmbeddedContactPoint, error)
 	CreateContactPoint(ctx context.Context, orgID int64, contactPoint definitions.EmbeddedContactPoint, p alerting_models.Provenance) (definitions.EmbeddedContactPoint, error)
 	UpdateContactPoint(ctx context.Context, orgID int64, contactPoint definitions.EmbeddedContactPoint, p alerting_models.Provenance) error
 	DeleteContactPoint(ctx context.Context, orgID int64, uid string) error
@@ -79,6 +80,23 @@ func (srv *ProvisioningSrv) RouteGetPolicyTree(c *contextmodel.ReqContext) respo
 	return response.JSON(http.StatusOK, policies)
 }
 
+func (srv *ProvisioningSrv) RouteGetPolicyTreeExport(c *contextmodel.ReqContext) response.Response {
+	policies, err := srv.policies.GetPolicyTree(c.Req.Context(), c.OrgID)
+	if err != nil {
+		if errors.Is(err, store.ErrNoAlertmanagerConfiguration) {
+			return ErrResp(http.StatusNotFound, err, "")
+		}
+		return ErrResp(http.StatusInternalServerError, err, "")
+	}
+
+	e, err := AlertingFileExportFromRoute(c.OrgID, policies)
+	if err != nil {
+		return ErrResp(http.StatusInternalServerError, err, "failed to create alerting file export")
+	}
+
+	return exportResponse(c, e)
+}
+
 func (srv *ProvisioningSrv) RoutePutPolicyTree(c *contextmodel.ReqContext, tree definitions.Route) response.Response {
 	provenance := determineProvenance(c)
 	err := srv.policies.UpdatePolicyTree(c.Req.Context(), c.OrgID, tree, alerting_models.Provenance(provenance))
@@ -108,11 +126,36 @@ func (srv *ProvisioningSrv) RouteGetContactPoints(c *contextmodel.ReqContext) re
 		Name:  c.Query("name"),
 		OrgID: c.OrgID,
 	}
-	cps, err := srv.contactPointService.GetContactPoints(c.Req.Context(), q)
+	cps, err := srv.contactPointService.GetContactPoints(c.Req.Context(), q, nil)
 	if err != nil {
+		if errors.Is(err, provisioning.ErrPermissionDenied) {
+			return ErrResp(http.StatusForbidden, err, "")
+		}
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
 	return response.JSON(http.StatusOK, cps)
+}
+
+func (srv *ProvisioningSrv) RouteGetContactPointsExport(c *contextmodel.ReqContext) response.Response {
+	q := provisioning.ContactPointQuery{
+		Name:    c.Query("name"),
+		OrgID:   c.OrgID,
+		Decrypt: c.QueryBoolWithDefault("decrypt", false),
+	}
+	cps, err := srv.contactPointService.GetContactPoints(c.Req.Context(), q, c.SignedInUser)
+	if err != nil {
+		if errors.Is(err, provisioning.ErrPermissionDenied) {
+			return ErrResp(http.StatusForbidden, err, "")
+		}
+		return ErrResp(http.StatusInternalServerError, err, "")
+	}
+
+	e, err := AlertingFileExportFromEmbeddedContactPoints(c.OrgID, cps)
+	if err != nil {
+		return ErrResp(http.StatusInternalServerError, err, "failed to create alerting file export")
+	}
+
+	return exportResponse(c, e)
 }
 
 func (srv *ProvisioningSrv) RoutePostContactPoint(c *contextmodel.ReqContext, cp definitions.EmbeddedContactPoint) response.Response {
@@ -433,7 +476,7 @@ func determineProvenance(ctx *contextmodel.ReqContext) definitions.Provenance {
 	return definitions.Provenance(alerting_models.ProvenanceAPI)
 }
 
-func exportResponse(c *contextmodel.ReqContext, body any) response.Response {
+func extractExportRequest(c *contextmodel.ReqContext) definitions.ExportQueryParams {
 	var format = "yaml"
 
 	acceptHeader := c.Req.Header.Get("Accept")
@@ -450,17 +493,26 @@ func exportResponse(c *contextmodel.ReqContext, body any) response.Response {
 		format = queryFormat
 	}
 
-	download := c.QueryBoolWithDefault("download", false)
-	if download {
+	params := definitions.ExportQueryParams{
+		Format:   format,
+		Download: c.QueryBoolWithDefault("download", false),
+	}
+
+	return params
+}
+
+func exportResponse(c *contextmodel.ReqContext, body definitions.AlertingFileExport) response.Response {
+	params := extractExportRequest(c)
+	if params.Download {
 		r := response.JSONDownload
-		if format == "yaml" {
+		if params.Format == "yaml" {
 			r = response.YAMLDownload
 		}
-		return r(http.StatusOK, body, fmt.Sprintf("export.%s", format))
+		return r(http.StatusOK, body, fmt.Sprintf("export.%s", params.Format))
 	}
 
 	r := response.JSON
-	if format == "yaml" {
+	if params.Format == "yaml" {
 		r = response.YAML
 	}
 	return r(http.StatusOK, body)

@@ -1,4 +1,4 @@
-import { DataFrameView, dateTime, MutableDataFrame, FieldType } from '@grafana/data';
+import { DataFrameView, dateTime, createDataFrame, FieldType } from '@grafana/data';
 
 import { createGraphFrames, mapPromMetricsToServiceMap } from './graphTransform';
 import { bigResponse } from './testResponse';
@@ -72,6 +72,7 @@ it('assigns correct field type even if values are numbers', async () => {
   expect(nodes.fields).toMatchObject([
     { name: 'id', values: ['0', '1'], type: FieldType.string },
     { name: 'title', values: ['0', '1'], type: FieldType.string },
+    { name: 'subtitle', type: FieldType.string, values: [] },
     { name: 'mainstat', values: [NaN, NaN], type: FieldType.number },
     { name: 'secondarystat', values: [10, 20], type: FieldType.number },
     { name: 'arc__success', values: [1, 1], type: FieldType.number },
@@ -86,7 +87,7 @@ describe('mapPromMetricsToServiceMap', () => {
       to: dateTime('2000-01-01T00:01:00'),
     };
     const { nodes, edges } = mapPromMetricsToServiceMap(
-      [{ data: [totalsPromMetric, secondsPromMetric, failedPromMetric] }],
+      [{ data: [totalsPromMetric(), secondsPromMetric(), failedPromMetric()] }],
       {
         ...range,
         raw: range,
@@ -96,6 +97,7 @@ describe('mapPromMetricsToServiceMap', () => {
     expect(nodes.fields).toMatchObject([
       { name: 'id', values: ['db', 'app', 'lb'] },
       { name: 'title', values: ['db', 'app', 'lb'] },
+      { name: 'subtitle', values: [] },
       { name: 'mainstat', values: [1000, 2000, NaN] },
       { name: 'secondarystat', values: [10, 20, NaN] },
       { name: 'arc__success', values: [0.8, 0.25, 1] },
@@ -110,6 +112,37 @@ describe('mapPromMetricsToServiceMap', () => {
     ]);
   });
 
+  it('transforms prom metrics to service graph inlucding namespace', async () => {
+    const range = {
+      from: dateTime('2000-01-01T00:00:00'),
+      to: dateTime('2000-01-01T00:01:00'),
+    };
+    const { nodes, edges } = mapPromMetricsToServiceMap(
+      [{ data: [totalsPromMetric(true), secondsPromMetric(true), failedPromMetric(true)] }],
+      {
+        ...range,
+        raw: range,
+      }
+    );
+
+    expect(nodes.fields).toMatchObject([
+      { name: 'id', values: ['ns3/db', 'ns1/app', 'ns2/lb'] },
+      { name: 'title', values: ['db', 'app', 'lb'] },
+      { name: 'subtitle', values: ['ns3', 'ns1', 'ns2'] },
+      { name: 'mainstat', values: [1000, 2000, NaN] },
+      { name: 'secondarystat', values: [10, 20, NaN] },
+      { name: 'arc__success', values: [0.8, 0.25, 1] },
+      { name: 'arc__failed', values: [0.2, 0.75, 0] },
+    ]);
+    expect(edges.fields).toMatchObject([
+      { name: 'id', values: ['ns1/app_ns3/db', 'ns2/lb_ns1/app'] },
+      { name: 'source', values: ['ns1/app', 'ns2/lb'] },
+      { name: 'target', values: ['ns3/db', 'ns1/app'] },
+      { name: 'mainstat', values: [1000, 2000] },
+      { name: 'secondarystat', values: [10, 20] },
+    ]);
+  });
+
   it('handles invalid failed count', () => {
     // If node.failed > node.total, the stat circle will render in the wrong position
     // Fixed this by limiting the failed value to the total value
@@ -118,7 +151,7 @@ describe('mapPromMetricsToServiceMap', () => {
       to: dateTime('2000-01-01T00:01:00'),
     };
     const { nodes } = mapPromMetricsToServiceMap(
-      [{ data: [totalsPromMetric, secondsPromMetric, invalidFailedPromMetric] }],
+      [{ data: [totalsPromMetric(), secondsPromMetric(), invalidFailedPromMetric] }],
       {
         ...range,
         raw: range,
@@ -128,6 +161,7 @@ describe('mapPromMetricsToServiceMap', () => {
     expect(nodes.fields).toMatchObject([
       { name: 'id', values: ['db', 'app', 'lb'] },
       { name: 'title', values: ['db', 'app', 'lb'] },
+      { name: 'subtitle', values: [] },
       { name: 'mainstat', values: [1000, 2000, NaN] },
       { name: 'secondarystat', values: [10, 20, NaN] },
       { name: 'arc__success', values: [0, 0, 1] },
@@ -136,7 +170,7 @@ describe('mapPromMetricsToServiceMap', () => {
   });
 });
 
-const singleSpanResponse = new MutableDataFrame({
+const singleSpanResponse = createDataFrame({
   fields: [
     { name: 'traceID', values: ['04450900759028499335'] },
     { name: 'spanID', values: ['4322526419282105830'] },
@@ -148,7 +182,7 @@ const singleSpanResponse = new MutableDataFrame({
   ],
 });
 
-const missingSpanResponse = new MutableDataFrame({
+const missingSpanResponse = createDataFrame({
   fields: [
     { name: 'traceID', values: ['04450900759028499335', '04450900759028499335'] },
     { name: 'spanID', values: ['1', '2'] },
@@ -160,46 +194,67 @@ const missingSpanResponse = new MutableDataFrame({
   ],
 });
 
-const totalsPromMetric = new MutableDataFrame({
-  refId: 'traces_service_graph_request_total',
-  fields: [
-    { name: 'Time', values: [1628169788000, 1628169788000] },
-    { name: 'client', values: ['app', 'lb'] },
-    { name: 'instance', values: ['127.0.0.1:12345', '127.0.0.1:12345'] },
-    { name: 'job', values: ['local_scrape', 'local_scrape'] },
-    { name: 'server', values: ['db', 'app'] },
-    { name: 'tempo_config', values: ['default', 'default'] },
-    { name: 'Value #traces_service_graph_request_total', values: [10, 20] },
-  ],
-});
+const totalsPromMetric = (namespace?: boolean) =>
+  createDataFrame({
+    refId: 'traces_service_graph_request_total',
+    fields: [
+      { name: 'Time', values: [1628169788000, 1628169788000] },
+      { name: 'client', values: ['app', 'lb'] },
+      { name: 'instance', values: ['127.0.0.1:12345', '127.0.0.1:12345'] },
+      { name: 'job', values: ['local_scrape', 'local_scrape'] },
+      { name: 'server', values: ['db', 'app'] },
+      { name: 'tempo_config', values: ['default', 'default'] },
+      { name: 'Value #traces_service_graph_request_total', values: [10, 20] },
+      ...(namespace
+        ? [
+            { name: 'client_service_namespace', values: ['ns1', 'ns2'] },
+            { name: 'server_service_namespace', values: ['ns3', 'ns1'] },
+          ]
+        : []),
+    ],
+  });
 
-const secondsPromMetric = new MutableDataFrame({
-  refId: 'traces_service_graph_request_server_seconds_sum',
-  fields: [
-    { name: 'Time', values: [1628169788000, 1628169788000] },
-    { name: 'client', values: ['app', 'lb'] },
-    { name: 'instance', values: ['127.0.0.1:12345', '127.0.0.1:12345'] },
-    { name: 'job', values: ['local_scrape', 'local_scrape'] },
-    { name: 'server', values: ['db', 'app'] },
-    { name: 'tempo_config', values: ['default', 'default'] },
-    { name: 'Value #traces_service_graph_request_server_seconds_sum', values: [10, 40] },
-  ],
-});
+const secondsPromMetric = (namespace?: boolean) =>
+  createDataFrame({
+    refId: 'traces_service_graph_request_server_seconds_sum',
+    fields: [
+      { name: 'Time', values: [1628169788000, 1628169788000] },
+      { name: 'client', values: ['app', 'lb'] },
+      { name: 'instance', values: ['127.0.0.1:12345', '127.0.0.1:12345'] },
+      { name: 'job', values: ['local_scrape', 'local_scrape'] },
+      { name: 'server', values: ['db', 'app'] },
+      { name: 'tempo_config', values: ['default', 'default'] },
+      { name: 'Value #traces_service_graph_request_server_seconds_sum', values: [10, 40] },
+      ...(namespace
+        ? [
+            { name: 'client_service_namespace', values: ['ns1', 'ns2'] },
+            { name: 'server_service_namespace', values: ['ns3', 'ns1'] },
+          ]
+        : []),
+    ],
+  });
 
-const failedPromMetric = new MutableDataFrame({
-  refId: 'traces_service_graph_request_failed_total',
-  fields: [
-    { name: 'Time', values: [1628169788000, 1628169788000] },
-    { name: 'client', values: ['app', 'lb'] },
-    { name: 'instance', values: ['127.0.0.1:12345', '127.0.0.1:12345'] },
-    { name: 'job', values: ['local_scrape', 'local_scrape'] },
-    { name: 'server', values: ['db', 'app'] },
-    { name: 'tempo_config', values: ['default', 'default'] },
-    { name: 'Value #traces_service_graph_request_failed_total', values: [2, 15] },
-  ],
-});
+const failedPromMetric = (namespace?: boolean) =>
+  createDataFrame({
+    refId: 'traces_service_graph_request_failed_total',
+    fields: [
+      { name: 'Time', values: [1628169788000, 1628169788000] },
+      { name: 'client', values: ['app', 'lb'] },
+      { name: 'instance', values: ['127.0.0.1:12345', '127.0.0.1:12345'] },
+      { name: 'job', values: ['local_scrape', 'local_scrape'] },
+      { name: 'server', values: ['db', 'app'] },
+      { name: 'tempo_config', values: ['default', 'default'] },
+      { name: 'Value #traces_service_graph_request_failed_total', values: [2, 15] },
+      ...(namespace
+        ? [
+            { name: 'client_service_namespace', values: ['ns1', 'ns2'] },
+            { name: 'server_service_namespace', values: ['ns3', 'ns1'] },
+          ]
+        : []),
+    ],
+  });
 
-const invalidFailedPromMetric = new MutableDataFrame({
+const invalidFailedPromMetric = createDataFrame({
   refId: 'traces_service_graph_request_failed_total',
   fields: [
     { name: 'Time', values: [1628169788000, 1628169788000] },
@@ -212,7 +267,7 @@ const invalidFailedPromMetric = new MutableDataFrame({
   ],
 });
 
-const serverIsANumber = new MutableDataFrame({
+const serverIsANumber = createDataFrame({
   refId: 'traces_service_graph_request_total',
   fields: [
     { name: 'Time', values: [1628169788000, 1628169788000] },

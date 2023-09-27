@@ -17,16 +17,16 @@ func (s *CorrelationsService) registerAPIEndpoints() {
 	uidScope := datasources.ScopeProvider.GetResourceScopeUID(ac.Parameter(":uid"))
 	authorize := ac.Middleware(s.AccessControl)
 
-	s.RouteRegister.Get("/api/datasources/correlations", middleware.ReqSignedIn, authorize(middleware.ReqSignedIn, ac.EvalPermission(datasources.ActionRead)), routing.Wrap(s.getCorrelationsHandler))
+	s.RouteRegister.Get("/api/datasources/correlations", middleware.ReqSignedIn, authorize(ac.EvalPermission(datasources.ActionRead)), routing.Wrap(s.getCorrelationsHandler))
 
 	s.RouteRegister.Group("/api/datasources/uid/:uid/correlations", func(entities routing.RouteRegister) {
-		entities.Get("/", authorize(middleware.ReqSignedIn, ac.EvalPermission(datasources.ActionRead)), routing.Wrap(s.getCorrelationsBySourceUIDHandler))
-		entities.Post("/", authorize(middleware.ReqOrgAdmin, ac.EvalPermission(datasources.ActionWrite, uidScope)), routing.Wrap(s.createHandler))
+		entities.Get("/", authorize(ac.EvalPermission(datasources.ActionRead)), routing.Wrap(s.getCorrelationsBySourceUIDHandler))
+		entities.Post("/", authorize(ac.EvalPermission(datasources.ActionWrite, uidScope)), routing.Wrap(s.createHandler))
 
 		entities.Group("/:correlationUID", func(entities routing.RouteRegister) {
-			entities.Get("/", authorize(middleware.ReqSignedIn, ac.EvalPermission(datasources.ActionRead)), routing.Wrap(s.getCorrelationHandler))
-			entities.Delete("/", authorize(middleware.ReqOrgAdmin, ac.EvalPermission(datasources.ActionWrite, uidScope)), routing.Wrap(s.deleteHandler))
-			entities.Patch("/", authorize(middleware.ReqOrgAdmin, ac.EvalPermission(datasources.ActionWrite, uidScope)), routing.Wrap(s.updateHandler))
+			entities.Get("/", authorize(ac.EvalPermission(datasources.ActionRead)), routing.Wrap(s.getCorrelationHandler))
+			entities.Delete("/", authorize(ac.EvalPermission(datasources.ActionWrite, uidScope)), routing.Wrap(s.deleteHandler))
+			entities.Patch("/", authorize(ac.EvalPermission(datasources.ActionWrite, uidScope)), routing.Wrap(s.updateHandler))
 		})
 	}, middleware.ReqSignedIn)
 }
@@ -76,7 +76,7 @@ type CreateCorrelationParams struct {
 	SourceUID string `json:"sourceUID"`
 }
 
-//swagger:response createCorrelationResponse
+// swagger:response createCorrelationResponse
 type CreateCorrelationResponse struct {
 	// in: body
 	Body CreateCorrelationResponseBody `json:"body"`
@@ -192,7 +192,7 @@ type UpdateCorrelationParams struct {
 	Body UpdateCorrelationCommand `json:"body"`
 }
 
-//swagger:response updateCorrelationResponse
+// swagger:response updateCorrelationResponse
 type UpdateCorrelationResponse struct {
 	// in: body
 	Body UpdateCorrelationResponseBody `json:"body"`
@@ -282,7 +282,7 @@ type GetCorrelationsBySourceUIDParams struct {
 	DatasourceUID string `json:"sourceUID"`
 }
 
-//swagger:response getCorrelationsBySourceUIDResponse
+// swagger:response getCorrelationsBySourceUIDResponse
 type GetCorrelationsBySourceUIDResponse struct {
 	// in: body
 	Body []Correlation `json:"body"`
@@ -298,8 +298,25 @@ type GetCorrelationsBySourceUIDResponse struct {
 // 404: notFoundError
 // 500: internalServerError
 func (s *CorrelationsService) getCorrelationsHandler(c *contextmodel.ReqContext) response.Response {
+	limit := c.QueryInt64("limit")
+	if limit <= 0 {
+		limit = 100
+	} else if limit > 1000 {
+		limit = 1000
+	}
+
+	page := c.QueryInt64("page")
+	if page <= 0 {
+		page = 1
+	}
+
+	sourceUIDs := c.QueryStrings("sourceUID")
+
 	query := GetCorrelationsQuery{
-		OrgId: c.OrgID,
+		OrgId:      c.OrgID,
+		Limit:      limit,
+		Page:       page,
+		SourceUIDs: sourceUIDs,
 	}
 
 	correlations, err := s.getCorrelations(c.Req.Context(), query)
@@ -312,6 +329,27 @@ func (s *CorrelationsService) getCorrelationsHandler(c *contextmodel.ReqContext)
 	}
 
 	return response.JSON(http.StatusOK, correlations)
+}
+
+// swagger:parameters getCorrelations
+type GetCorrelationsParams struct {
+	// Limit the maximum number of correlations to return per page
+	// in:query
+	// required:false
+	// default:100
+	// maximum: 1000
+	Limit int64 `json:"limit"`
+	// Page index for starting fetching correlations
+	// in:query
+	// required:false
+	// default:1
+	Page int64 `json:"page"`
+	// Source datasource UID filter to be applied to correlations
+	// in:query
+	// type: array
+	// collectionFormat: multi
+	// required:false
+	SourceUIDs []string `json:"sourceUID"`
 }
 
 //swagger:response getCorrelationsResponse

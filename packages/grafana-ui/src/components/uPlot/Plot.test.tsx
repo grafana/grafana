@@ -3,7 +3,7 @@ import createMockRaf from 'mock-raf';
 import React from 'react';
 import uPlot from 'uplot';
 
-import { dateTime, FieldConfig, FieldType, MutableDataFrame } from '@grafana/data';
+import { FieldConfig, FieldType, MutableDataFrame } from '@grafana/data';
 import { GraphFieldConfig, GraphDrawStyle } from '@grafana/schema';
 
 import { UPlotChart } from './Plot';
@@ -49,15 +49,9 @@ const mockData = () => {
     } as FieldConfig<GraphFieldConfig>,
   });
 
-  const timeRange = {
-    from: dateTime(1602673200000),
-    to: dateTime(1602680400000),
-    raw: { from: '1602673200000', to: '1602680400000' },
-  };
-
   const config = new UPlotConfigBuilder();
   config.addSeries({} as SeriesProps);
-  return { data: data, timeRange, config };
+  return { data: data, config };
 };
 
 describe('UPlotChart', () => {
@@ -73,13 +67,12 @@ describe('UPlotChart', () => {
   });
 
   it('destroys uPlot instance when component unmounts', () => {
-    const { data, timeRange, config } = mockData();
+    const { data, config } = mockData();
 
     const { unmount } = render(
       <UPlotChart
         data={preparePlotData2(data, getStackingGroups(data))} // mock
         config={config}
-        timeRange={timeRange}
         width={100}
         height={100}
       />
@@ -92,13 +85,12 @@ describe('UPlotChart', () => {
 
   describe('data update', () => {
     it('skips uPlot reinitialization when there are no field config changes', () => {
-      const { data, timeRange, config } = mockData();
+      const { data, config } = mockData();
 
       const { rerender } = render(
         <UPlotChart
           data={preparePlotData2(data, getStackingGroups(data))} // mock
           config={config}
-          timeRange={timeRange}
           width={100}
           height={100}
         />
@@ -112,7 +104,6 @@ describe('UPlotChart', () => {
         <UPlotChart
           data={preparePlotData2(data, getStackingGroups(data))} // changed
           config={config}
-          timeRange={timeRange}
           width={100}
           height={100}
         />
@@ -124,15 +115,9 @@ describe('UPlotChart', () => {
 
   describe('config update', () => {
     it('skips uPlot intialization for width and height equal 0', async () => {
-      const { data, timeRange, config } = mockData();
+      const { data, config } = mockData();
       const { queryAllByTestId } = render(
-        <UPlotChart
-          data={preparePlotData2(data, getStackingGroups(data))}
-          config={config}
-          timeRange={timeRange}
-          width={0}
-          height={0}
-        />
+        <UPlotChart data={preparePlotData2(data, getStackingGroups(data))} config={config} width={0} height={0} />
       );
 
       expect(queryAllByTestId('uplot-main-div')).toHaveLength(1);
@@ -140,13 +125,12 @@ describe('UPlotChart', () => {
     });
 
     it('reinitializes uPlot when config changes', () => {
-      const { data, timeRange, config } = mockData();
+      const { data, config } = mockData();
 
       const { rerender } = render(
         <UPlotChart
           data={preparePlotData2(data, getStackingGroups(data))} // frame
           config={config}
-          timeRange={timeRange}
           width={100}
           height={100}
         />
@@ -161,7 +145,6 @@ describe('UPlotChart', () => {
         <UPlotChart
           data={preparePlotData2(data, getStackingGroups(data))}
           config={nextConfig}
-          timeRange={timeRange}
           width={100}
           height={100}
         />
@@ -172,13 +155,12 @@ describe('UPlotChart', () => {
     });
 
     it('skips uPlot reinitialization when only dimensions change', () => {
-      const { data, timeRange, config } = mockData();
+      const { data, config } = mockData();
 
       const { rerender } = render(
         <UPlotChart
           data={preparePlotData2(data, getStackingGroups(data))} // frame
           config={config}
-          timeRange={timeRange}
           width={100}
           height={100}
         />
@@ -189,7 +171,6 @@ describe('UPlotChart', () => {
         <UPlotChart
           data={preparePlotData2(data, getStackingGroups(data))} // frame
           config={config}
-          timeRange={timeRange}
           width={200}
           height={200}
         />

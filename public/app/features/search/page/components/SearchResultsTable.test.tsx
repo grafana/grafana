@@ -43,7 +43,7 @@ describe('SearchResultsTable', () => {
     });
 
     const mockSearchResult: QueryResponse = {
-      isItemLoaded: jest.fn(),
+      isItemLoaded: jest.fn().mockReturnValue(true),
       loadMoreItems: jest.fn(),
       totalRows: searchData.length,
       view: new DataFrameView<DashboardQueryResult>(dataFrames[0]),

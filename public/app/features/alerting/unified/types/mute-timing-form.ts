@@ -11,4 +11,5 @@ export type MuteTimingIntervalFields = {
   days_of_month: string;
   months: string;
   years: string;
+  location?: string;
 };

@@ -13,9 +13,9 @@ export const IndicatorsContainer = React.forwardRef<HTMLDivElement, React.PropsW
     <div
       className={cx(
         styles.suffix,
-        css`
-          position: relative;
-        `
+        css({
+          position: 'relative',
+        })
       )}
       ref={ref}
     >

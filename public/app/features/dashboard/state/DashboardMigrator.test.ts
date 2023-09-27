@@ -1162,7 +1162,6 @@ describe('DashboardModel', () => {
                   steps: [
                     {
                       color: 'green',
-                      // @ts-expect-error
                       value: null,
                     },
                     {

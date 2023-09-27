@@ -7,9 +7,10 @@ import {
   GrafanaTheme2,
   updateDatasourcePluginJsonDataOption,
 } from '@grafana/data';
+import { ConfigSubSection } from '@grafana/experimental';
 import { InlineField, InlineFieldRow, InlineSwitch, useStyles2 } from '@grafana/ui';
 
-import { DocsLinkButton } from './DocsLinkButton';
+import { ConfigDescriptionLink } from './ConfigDescriptionLink';
 
 export interface NodeGraphOptions {
   enabled?: boolean;
@@ -26,13 +27,6 @@ export function NodeGraphSettings({ options, onOptionsChange }: Props) {
 
   return (
     <div className={styles.container}>
-      <h3 className="page-heading">Node graph</h3>
-
-      <div className={styles.infoText}>
-        {`Show or hide the node graph visualization`}
-        <DocsLinkButton hrefSuffix={`${options.type}/#node-graph`} />
-      </div>
-
       <InlineFieldRow className={styles.row}>
         <InlineField
           tooltip="Displays the node graph above the trace view. Default: disabled"
@@ -54,6 +48,23 @@ export function NodeGraphSettings({ options, onOptionsChange }: Props) {
     </div>
   );
 }
+
+export const NodeGraphSection = ({ options, onOptionsChange }: DataSourcePluginOptionsEditorProps) => {
+  return (
+    <ConfigSubSection
+      title="Node graph"
+      description={
+        <ConfigDescriptionLink
+          description="Show or hide the node graph visualization."
+          suffix={`${options.type}/#node-graph`}
+          feature="the node graph"
+        />
+      }
+    >
+      <NodeGraphSettings options={options} onOptionsChange={onOptionsChange} />
+    </ConfigSubSection>
+  );
+};
 
 const getStyles = (theme: GrafanaTheme2) => ({
   infoText: css`

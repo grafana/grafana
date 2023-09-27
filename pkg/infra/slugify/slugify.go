@@ -32,7 +32,7 @@ package slugify
 
 import (
 	"bytes"
-	"encoding/base64"
+	"fmt"
 	"strings"
 	"unicode/utf8"
 
@@ -44,18 +44,17 @@ var (
 		isValidCharacter: validCharacter,
 		replaceCharacter: '-',
 		replacementMap:   getDefaultReplacements(),
+		omitMap:          getDefaultOmitments(),
 	}
 )
 
-// Slugify creates a URL safe latin slug for a given value
+// Slugify creates a URL safe version from a given string that is at most 50 bytes long.
 func Slugify(value string) string {
-	s := simpleSlugger.Slugify(value)
-	if s == "" {
-		s = base64.RawURLEncoding.EncodeToString([]byte(value))
-		if len(s) > 50 || s == "" {
-			s = uuid.NewSHA1(uuid.NameSpaceOID, []byte(value)).String()
-		}
+	s := simpleSlugger.Slugify(strings.TrimSpace(value))
+	if len(s) > 50 || s == "" {
+		s = uuid.NewSHA1(uuid.NameSpaceOID, []byte(value)).String()
 	}
+
 	return s
 }
 
@@ -71,9 +70,10 @@ func validCharacter(c rune) bool {
 
 // Slugifier based on settings
 type slugger struct {
-	isValidCharacter func(c rune) bool
 	replaceCharacter rune
+	isValidCharacter func(c rune) bool
 	replacementMap   map[rune]string
+	omitMap          map[rune]struct{}
 }
 
 // Slugify creates a slug for a string
@@ -87,21 +87,66 @@ func (s slugger) Slugify(value string) string {
 		value = value[size:]
 
 		if newCharacter, ok := s.replacementMap[c]; ok {
+			if lastCharacterWasInvalid {
+				buffer.WriteRune(s.replaceCharacter)
+			}
 			buffer.WriteString(newCharacter)
 			lastCharacterWasInvalid = false
 			continue
 		}
 
 		if s.isValidCharacter(c) {
+			if lastCharacterWasInvalid {
+				buffer.WriteRune(s.replaceCharacter)
+			}
 			buffer.WriteRune(c)
 			lastCharacterWasInvalid = false
-		} else if !lastCharacterWasInvalid {
-			buffer.WriteRune(s.replaceCharacter)
-			lastCharacterWasInvalid = true
+			continue
 		}
+
+		if _, ok := s.omitMap[c]; ok {
+			lastCharacterWasInvalid = true
+			continue
+		}
+
+		p := make([]byte, 4)
+		size = utf8.EncodeRune(p, c)
+		if lastCharacterWasInvalid {
+			buffer.WriteRune(s.replaceCharacter)
+		}
+		for i := 0; i < size; i++ {
+			buffer.WriteString(fmt.Sprintf("%x", p[i]))
+		}
+		lastCharacterWasInvalid = true
 	}
 
 	return strings.Trim(buffer.String(), string(s.replaceCharacter))
+}
+
+func getDefaultOmitments() map[rune]struct{} {
+	return map[rune]struct{}{
+		' ':    {},
+		',':    {},
+		'"':    {},
+		'\'':   {},
+		'\n':   {},
+		'\r':   {},
+		'\x00': {},
+		'?':    {},
+		'.':    {},
+		'(':    {},
+		')':    {},
+		'-':    {},
+		'_':    {},
+		'[':    {},
+		']':    {},
+		'/':    {},
+		'\\':   {},
+		'!':    {},
+		'{':    {},
+		'}':    {},
+		'%':    {},
+	}
 }
 
 func getDefaultReplacements() map[rune]string {

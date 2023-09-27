@@ -115,7 +115,8 @@ func (hs *HTTPServer) LoginView(c *contextmodel.ReqContext) {
 		return
 	}
 
-	if hs.tryAutoLogin(c) {
+	// If user is not authenticated try auto-login
+	if !c.IsSignedIn && hs.tryAutoLogin(c) {
 		return
 	}
 
@@ -194,7 +195,7 @@ func (hs *HTTPServer) LoginAPIPing(c *contextmodel.ReqContext) response.Response
 }
 
 func (hs *HTTPServer) LoginPost(c *contextmodel.ReqContext) response.Response {
-	if hs.Features.IsEnabled(featuremgmt.FlagAuthnService) {
+	if hs.Cfg.AuthBrokerEnabled {
 		identity, err := hs.authnService.Login(c.Req.Context(), authn.ClientForm, &authn.Request{HTTPRequest: c.Req, Resp: c.Resp})
 		if err != nil {
 			tokenErr := &auth.CreateTokenErr{}
@@ -427,10 +428,26 @@ func getLoginExternalError(err error) string {
 		return createTokenErr.ExternalErr
 	}
 
+	// unwrap until we get to the error message
 	gfErr := &errutil.Error{}
 	if errors.As(err, gfErr) {
-		return gfErr.Public().Message
+		return getFirstPublicErrorMessage(gfErr)
 	}
 
 	return err.Error()
+}
+
+// Get the first public error message from an error chain.
+func getFirstPublicErrorMessage(err *errutil.Error) string {
+	errPublic := err.Public()
+	if err.PublicMessage != "" {
+		return errPublic.Message
+	}
+
+	underlyingErr := &errutil.Error{}
+	if err.Underlying != nil && errors.As(err.Underlying, underlyingErr) {
+		return getFirstPublicErrorMessage(underlyingErr)
+	}
+
+	return errPublic.Message
 }

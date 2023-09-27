@@ -8,15 +8,11 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/require"
 )
 
 func TestUSAScenario(t *testing.T) {
-	cfg := setting.NewCfg()
-	p := &Service{
-		cfg: cfg,
-	}
+	p := &Service{}
 
 	t.Run("usa query modes", func(t *testing.T) {
 		start := time.Date(2020, time.January, 10, 23, 0, 0, 0, time.UTC)

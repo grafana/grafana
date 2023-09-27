@@ -58,6 +58,20 @@ func TestLokiConfig(t *testing.T) {
 				expWrite: "http://url.com",
 			},
 			{
+				name: "missing read",
+				in: setting.UnifiedAlertingStateHistorySettings{
+					LokiWriteURL: "http://url.com",
+				},
+				expErr: "either read path URL or remote",
+			},
+			{
+				name: "missing write",
+				in: setting.UnifiedAlertingStateHistorySettings{
+					LokiReadURL: "http://url.com",
+				},
+				expErr: "either write path URL or remote",
+			},
+			{
 				name: "invalid",
 				in: setting.UnifiedAlertingStateHistorySettings{
 					LokiRemoteURL: "://://",

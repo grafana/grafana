@@ -26,7 +26,7 @@ type PermissionsSync struct {
 }
 
 func (s *PermissionsSync) SyncPermissionsHook(ctx context.Context, identity *authn.Identity, _ *authn.Request) error {
-	if s.ac.IsDisabled() || !identity.ClientParams.SyncPermissions {
+	if !identity.ClientParams.SyncPermissions {
 		return nil
 	}
 

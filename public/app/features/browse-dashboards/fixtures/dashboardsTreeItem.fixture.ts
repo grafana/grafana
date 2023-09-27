@@ -12,7 +12,8 @@ export function wellFormedEmptyFolder(
 
   return {
     item: {
-      kind: 'ui-empty-folder',
+      kind: 'ui',
+      uiKind: 'empty-folder',
       uid: random.guid(),
     },
     level: 0,
@@ -59,7 +60,7 @@ export function wellFormedFolder(
       ...itemPartial,
     },
     level: 0,
-    isOpen: true,
+    isOpen: false,
     ...partial,
   };
 }

@@ -118,6 +118,12 @@ const afterSelectorCompletions = [
     type: 'PIPE_OPERATION',
     documentation: 'Operator docs',
   },
+  {
+    insertText: '| decolorize',
+    label: 'decolorize',
+    type: 'PIPE_OPERATION',
+    documentation: 'Operator docs',
+  },
 ];
 
 function buildAfterSelectorCompletions(

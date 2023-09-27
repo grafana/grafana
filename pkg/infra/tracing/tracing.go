@@ -268,7 +268,7 @@ func (ots *Opentelemetry) initJaegerTracerProvider() (*tracesdk.TracerProvider, 
 	var ep jaeger.EndpointOption
 	// Create the Jaeger exporter: address can be either agent address (host:port) or collector URL
 	if host, port, err := net.SplitHostPort(ots.Address); err == nil {
-		ep = jaeger.WithAgentEndpoint(jaeger.WithAgentHost(host), jaeger.WithAgentPort(port))
+		ep = jaeger.WithAgentEndpoint(jaeger.WithAgentHost(host), jaeger.WithAgentPort(port), jaeger.WithMaxPacketSize(64000))
 	} else {
 		ep = jaeger.WithCollectorEndpoint(jaeger.WithEndpoint(ots.Address))
 	}

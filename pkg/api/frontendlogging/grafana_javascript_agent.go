@@ -4,6 +4,8 @@ import (
 	"fmt"
 )
 
+type CtxVector []interface{}
+
 type FrontendGrafanaJavascriptAgentEvent struct {
 	Exceptions   []Exception   `json:"exceptions,omitempty"`
 	Logs         []Log         `json:"logs,omitempty"`

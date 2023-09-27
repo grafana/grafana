@@ -42,7 +42,7 @@ header_name = X-JWT-Assertion
 
 ## Configure login claim
 
-To identify the user, some of the claims needs to be selected as a login info. You could specify a claim that contains either a username or an email of the Grafana user.
+To identify the user, some of the claims needs to be selected as a login info. The subject claim called `"sub"` is mandatory and needs to identify the principal that is the subject of the JWT.
 
 Typically, the subject claim called `"sub"` would be used as a login but it might also be set to some application specific claim.
 
@@ -129,6 +129,8 @@ jwk_set_url = https://your-auth-provider.example.com/.well-known/jwks.json
 # Cache TTL for data loaded from http endpoint.
 cache_ttl = 60m
 ```
+
+> **Note**: If the JWKS endpoint includes cache control headers and the value is less than the configured `cache_ttl`, then the cache control header value is used instead. If the cache_ttl is not set, no caching is performed. `no-store` and `no-cache` cache control headers are ignored.
 
 ### Verify token using a JSON Web Key Set loaded from JSON file
 

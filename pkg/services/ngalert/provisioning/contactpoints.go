@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"sort"
+	"strings"
 
 	alertingNotify "github.com/grafana/alerting/notify"
 	"github.com/prometheus/alertmanager/config"
@@ -15,7 +16,9 @@ import (
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels_config"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/secrets"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -42,9 +45,15 @@ type ContactPointQuery struct {
 	// Optionally filter by name.
 	Name  string
 	OrgID int64
+	// Optionally decrypt secure settings, requires OrgAdmin.
+	Decrypt bool
 }
 
-func (ecp *ContactPointService) GetContactPoints(ctx context.Context, q ContactPointQuery) ([]apimodels.EmbeddedContactPoint, error) {
+// GetContactPoints returns contact points. If q.Decrypt is true and the user is an OrgAdmin, decrypted secure settings are included instead of redacted ones.
+func (ecp *ContactPointService) GetContactPoints(ctx context.Context, q ContactPointQuery, u *user.SignedInUser) ([]apimodels.EmbeddedContactPoint, error) {
+	if q.Decrypt && (u == nil || !u.HasRole(org.RoleAdmin)) {
+		return nil, fmt.Errorf("%w: decrypting secure settings requires Org Admin", ErrPermissionDenied)
+	}
 	revision, err := getLastConfiguration(ctx, q.OrgID, ecp.amStore)
 	if err != nil {
 		return nil, err
@@ -82,13 +91,23 @@ func (ecp *ContactPointService) GetContactPoints(ctx context.Context, q ContactP
 			if decryptedValue == "" {
 				continue
 			}
-			embeddedContactPoint.Settings.Set(k, apimodels.RedactedValue)
+			if q.Decrypt {
+				embeddedContactPoint.Settings.Set(k, decryptedValue)
+			} else {
+				embeddedContactPoint.Settings.Set(k, apimodels.RedactedValue)
+			}
 		}
 
 		contactPoints = append(contactPoints, embeddedContactPoint)
 	}
 	sort.SliceStable(contactPoints, func(i, j int) bool {
-		return contactPoints[i].Name < contactPoints[j].Name
+		switch strings.Compare(contactPoints[i].Name, contactPoints[j].Name) {
+		case -1:
+			return true
+		case 1:
+			return false
+		}
+		return contactPoints[i].UID < contactPoints[j].UID
 	})
 	return contactPoints, nil
 }

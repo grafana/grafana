@@ -10,6 +10,7 @@ export const UnsupportedTemplateVariablesAlert = () => (
     severity="warning"
     title="Template variables are not supported"
     data-testid={selectors.TemplateVariablesWarningAlert}
+    bottomSpacing={0}
   >
     This public dashboard may not work since it uses template variables
   </Alert>

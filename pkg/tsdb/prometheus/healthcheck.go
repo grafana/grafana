@@ -24,7 +24,7 @@ var logger log.Logger = log.New("tsdb.prometheus")
 func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult,
 	error) {
 	logger := logger.FromContext(ctx)
-	ds, err := s.getInstance(req.PluginContext)
+	ds, err := s.getInstance(ctx, req.PluginContext)
 
 	// check that the datasource exists
 	if err != nil {

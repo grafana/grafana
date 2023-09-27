@@ -1,4 +1,4 @@
-import produce from 'immer';
+import { produce } from 'immer';
 
 import {
   DataSourceApi,
@@ -18,6 +18,7 @@ import {
   AlertmanagerStatus,
   AlertState,
   GrafanaManagedReceiverConfig,
+  MatcherOperator,
   Silence,
   SilenceState,
 } from 'app/plugins/datasource/alertmanager/types';
@@ -154,6 +155,20 @@ export const mockRulerRuleGroup = (partial: Partial<RulerRuleGroupDTO> = {}): Ru
   ...partial,
 });
 
+export const promRuleFromRulerRule = (
+  rulerRule: RulerAlertingRuleDTO,
+  override?: Partial<AlertingRule>
+): AlertingRule => {
+  return mockPromAlertingRule({
+    name: rulerRule.alert,
+    query: rulerRule.expr,
+    labels: rulerRule.labels,
+    annotations: rulerRule.annotations,
+    type: PromRuleType.Alerting,
+    ...override,
+  });
+};
+
 export const mockPromAlertingRule = (partial: Partial<AlertingRule> = {}): AlertingRule => {
   return {
     type: PromRuleType.Alerting,
@@ -175,13 +190,12 @@ export const mockPromAlertingRule = (partial: Partial<AlertingRule> = {}): Alert
   };
 };
 
-export const mockGrafanaRulerRule = (partial: Partial<RulerGrafanaRuleDTO> = {}): RulerGrafanaRuleDTO => {
+export const mockGrafanaRulerRule = (partial: Partial<GrafanaRuleDefinition> = {}): RulerGrafanaRuleDTO => {
   return {
     for: '',
     annotations: {},
     labels: {},
     grafana_alert: {
-      ...partial,
       uid: '',
       title: 'my rule',
       namespace_uid: '',
@@ -190,6 +204,7 @@ export const mockGrafanaRulerRule = (partial: Partial<RulerGrafanaRuleDTO> = {})
       no_data_state: GrafanaAlertStateDecision.NoData,
       exec_err_state: GrafanaAlertStateDecision.Error,
       data: [],
+      ...partial,
     },
   };
 };
@@ -387,6 +402,12 @@ export const someGrafanaAlertManagerConfig: AlertManagerCortexConfig = {
   alertmanager_config: {
     route: {
       receiver: 'default',
+      routes: [
+        {
+          receiver: 'critical',
+          object_matchers: [['severity', MatcherOperator.equal, 'critical']],
+        },
+      ],
     },
     receivers: [
       {
@@ -617,17 +638,18 @@ export function mockCombinedRuleNamespace(namespace: Partial<CombinedRuleNamespa
   };
 }
 
-export function getGrafanaRule(override?: Partial<CombinedRule>) {
+export function getGrafanaRule(override?: Partial<CombinedRule>, rulerOverride?: Partial<GrafanaRuleDefinition>) {
   return mockCombinedRule({
     namespace: {
       groups: [],
       name: 'Grafana',
       rulesSource: 'grafana',
     },
-    rulerRule: mockGrafanaRulerRule(),
+    rulerRule: mockGrafanaRulerRule(rulerOverride),
     ...override,
   });
 }
+
 export function getCloudRule(override?: Partial<CombinedRule>) {
   return mockCombinedRule({
     namespace: {

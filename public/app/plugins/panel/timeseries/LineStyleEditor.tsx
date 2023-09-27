@@ -113,7 +113,7 @@ export const LineStyleEditor = ({ value, onChange }: Props) => {
               target="_blank"
               rel="noreferrer"
             >
-              <IconButton name="question-circle" />
+              <IconButton name="question-circle" tooltip="Help" />
             </a>
           </div>
         </>

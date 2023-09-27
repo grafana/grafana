@@ -85,7 +85,7 @@ func (p *AlertingProxy) createProxyContext(ctx *contextmodel.ReqContext, request
 	// Some data sources require legacy Editor role in order to perform mutating operations. In this case, we elevate permissions for the context that we
 	// will provide downstream.
 	// TODO (yuri) remove this after RBAC for plugins is implemented
-	if !p.ac.IsDisabled() && !ctx.SignedInUser.HasRole(org.RoleEditor) {
+	if !ctx.SignedInUser.HasRole(org.RoleEditor) {
 		newUser := *ctx.SignedInUser
 		newUser.OrgRole = org.RoleEditor
 		cpy.SignedInUser = &newUser

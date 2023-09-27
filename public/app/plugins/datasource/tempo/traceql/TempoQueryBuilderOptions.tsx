@@ -21,10 +21,12 @@ export const TempoQueryBuilderOptions = React.memo<Props>(({ onChange, query }) 
     onChange({ ...query, limit: parseInt(e.currentTarget.value, 10) });
   };
 
+  const collapsedInfoList = [`Limit: ${query.limit || DEFAULT_LIMIT}`];
+
   return (
     <>
       <EditorRow>
-        <QueryOptionGroup title="Options" collapsedInfo={[`Limit: ${query.limit || DEFAULT_LIMIT}`]}>
+        <QueryOptionGroup title="Options" collapsedInfo={collapsedInfoList}>
           <EditorField label="Limit" tooltip="Maximum number of traces to return.">
             <AutoSizeInput
               className="width-4"

@@ -1,4 +1,8 @@
 ---
+labels:
+  products:
+  - enterprise
+  - oss
 title: Composable kinds
 weight: 200
 ---

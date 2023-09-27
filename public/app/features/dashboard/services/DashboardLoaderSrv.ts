@@ -34,21 +34,21 @@ export class DashboardLoaderSrv {
     };
   }
 
-  loadDashboard(type: UrlQueryValue, slug: any, uid: any): Promise<DashboardDTO> {
+  loadDashboard(type: UrlQueryValue, slug: string | undefined, uid: string | undefined): Promise<DashboardDTO> {
     let promise;
 
-    if (type === 'script') {
+    if (type === 'script' && slug) {
       promise = this._loadScriptedDashboard(slug);
-    } else if (type === 'snapshot') {
+    } else if (type === 'snapshot' && slug) {
       promise = backendSrv.get('/api/snapshots/' + slug).catch(() => {
         return this._dashboardLoadFailed('Snapshot not found', true);
       });
-    } else if (type === 'ds') {
+    } else if (type === 'ds' && slug) {
       promise = this._loadFromDatasource(slug); // explore dashboards as code
-    } else if (type === 'public') {
+    } else if (type === 'public' && uid) {
       promise = backendSrv
         .getPublicDashboardByUid(uid)
-        .then((result: any) => {
+        .then((result) => {
           return result;
         })
         .catch((e) => {
@@ -70,10 +70,10 @@ export class DashboardLoaderSrv {
             },
           };
         });
-    } else {
+    } else if (uid) {
       promise = backendSrv
         .getDashboardByUid(uid)
-        .then((result: any) => {
+        .then((result) => {
           if (result.meta.isFolder) {
             appEvents.emit(AppEvents.alertError, ['Dashboard not found']);
             throw new Error('Dashboard not found');
@@ -83,6 +83,8 @@ export class DashboardLoaderSrv {
         .catch(() => {
           return this._dashboardLoadFailed('Not found', true);
         });
+    } else {
+      throw new Error('Dashboard uid or slug required');
     }
 
     promise.then((result: DashboardDTO) => {
@@ -114,7 +116,7 @@ export class DashboardLoaderSrv {
             dashboard: result.data,
           };
         },
-        (err: any) => {
+        (err) => {
           console.error('Script dashboard error ' + err);
           appEvents.emit(AppEvents.alertError, [
             'Script Error',
@@ -142,7 +144,7 @@ export class DashboardLoaderSrv {
       return Promise.reject('expecting path parameter');
     }
 
-    const queryParams: { [key: string]: any } = {};
+    const queryParams: { [key: string]: string } = {};
 
     params.forEach((value, key) => {
       queryParams[key] = value;

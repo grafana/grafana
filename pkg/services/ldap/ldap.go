@@ -288,8 +288,8 @@ func (server *Server) Users(logins []string) (
 ) {
 	var users [][]*ldap.Entry
 	err := getUsersIteration(logins, func(previous, current int) error {
-		var err error
-		users, err = server.users(logins[previous:current])
+		iterationUsers, err := server.users(logins[previous:current])
+		users = append(users, iterationUsers...)
 		return err
 	})
 	if err != nil {
@@ -306,7 +306,7 @@ func (server *Server) Users(logins []string) (
 	}
 
 	server.log.Debug(
-		"LDAP users found", "users", fmt.Sprintf("%v", serializedUsers),
+		"LDAP users found", "users", fmt.Sprintf("%+v", serializedUsers),
 	)
 
 	return serializedUsers, nil

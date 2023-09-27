@@ -6,6 +6,7 @@ import { filterFieldsTransformer, filterFramesTransformer } from './transformers
 import { filterFieldsByNameTransformer } from './transformers/filterByName';
 import { filterFramesByRefIdTransformer } from './transformers/filterByRefId';
 import { filterByValueTransformer } from './transformers/filterByValue';
+import { formatTimeTransformer } from './transformers/formatTime';
 import { groupByTransformer } from './transformers/groupBy';
 import { groupingToMatrixTransformer } from './transformers/groupingToMatrix';
 import { histogramTransformer } from './transformers/histogram';
@@ -29,6 +30,7 @@ export const standardTransformers = {
   filterFramesTransformer,
   filterFramesByRefIdTransformer,
   filterByValueTransformer,
+  formatTimeTransformer,
   orderFieldsTransformer,
   organizeFieldsTransformer,
   reduceTransformer,

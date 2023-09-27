@@ -1,6 +1,8 @@
+import { uniq } from 'lodash';
+
 import { TraceqlSearchScope } from '../dataquery.gen';
 
-import { generateQueryFromFilters } from './utils';
+import { generateQueryFromFilters, getUnscopedTags, getFilteredTags, getAllTags, getTagsByScope } from './utils';
 
 describe('generateQueryFromFilters generates the correct query for', () => {
   it('an empty array', () => {
@@ -100,3 +102,67 @@ describe('generateQueryFromFilters generates the correct query for', () => {
     ).toBe('{resource.footag>=1234}');
   });
 });
+
+describe('gets correct tags', () => {
+  it('for filtered tags when no tags supplied', () => {
+    const tags = getFilteredTags(emptyTags, []);
+    expect(tags).toEqual(['duration', 'kind', 'name', 'status']);
+  });
+
+  it('for filtered tags when API v1 tags supplied', () => {
+    const tags = getFilteredTags(v1Tags, []);
+    expect(tags).toEqual(['duration', 'kind', 'name', 'status', 'bar', 'foo']);
+  });
+
+  it('for filtered tags when API v1 tags supplied with tags to filter out', () => {
+    const tags = getFilteredTags(v1Tags, ['duration']);
+    expect(tags).toEqual(['kind', 'name', 'status', 'bar', 'foo']);
+  });
+
+  it('for filtered tags when API v2 tags supplied', () => {
+    const tags = getFilteredTags(uniq(getUnscopedTags(v2Tags)), []);
+    expect(tags).toEqual(['duration', 'kind', 'name', 'status', 'cluster', 'container', 'db']);
+  });
+
+  it('for filtered tags when API v2 tags supplied with tags to filter out', () => {
+    const tags = getFilteredTags(getUnscopedTags(v2Tags), ['duration', 'cluster']);
+    expect(tags).toEqual(['kind', 'name', 'status', 'container', 'db']);
+  });
+
+  it('for unscoped tags', () => {
+    const tags = getUnscopedTags(v2Tags);
+    expect(tags).toEqual(['cluster', 'container', 'db']);
+  });
+
+  it('for all tags', () => {
+    const tags = getAllTags(v2Tags);
+    expect(tags).toEqual(['cluster', 'container', 'db', 'duration', 'kind', 'name', 'status']);
+  });
+
+  it('for tags by resource scope', () => {
+    const tags = getTagsByScope(v2Tags, TraceqlSearchScope.Resource);
+    expect(tags).toEqual(['cluster', 'container']);
+  });
+
+  it('for tags by span scope', () => {
+    const tags = getTagsByScope(v2Tags, TraceqlSearchScope.Span);
+    expect(tags).toEqual(['db']);
+  });
+});
+
+export const emptyTags = [];
+export const v1Tags = ['bar', 'foo'];
+export const v2Tags = [
+  {
+    name: 'resource',
+    tags: ['cluster', 'container'],
+  },
+  {
+    name: 'span',
+    tags: ['db'],
+  },
+  {
+    name: 'intrinsic',
+    tags: ['duration', 'kind', 'name', 'status'],
+  },
+];

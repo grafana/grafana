@@ -7,7 +7,7 @@ import createMockQuery from '../__mocks__/query';
 import { createTemplateVariables } from '../__mocks__/utils';
 import { multiVariable, singleVariable, subscriptionsVariable } from '../__mocks__/variables';
 import AzureMonitorDatasource from '../datasource';
-import { AzureDataSourceJsonData, AzureMonitorLocationsResponse, AzureQueryType } from '../types';
+import { AzureAPIResponse, AzureDataSourceJsonData, AzureQueryType, Location } from '../types';
 
 const templateSrv = new TemplateSrv();
 
@@ -501,7 +501,7 @@ describe('AzureMonitorDatasource', () => {
   });
 
   describe('When performing getLocations', () => {
-    const sub1Response: AzureMonitorLocationsResponse = {
+    const sub1Response: AzureAPIResponse<Location> = {
       value: [
         {
           id: '/subscriptions/mock-subscription-id-1/locations/northeurope',
@@ -521,7 +521,7 @@ describe('AzureMonitorDatasource', () => {
       ],
     };
 
-    const sub2Response: AzureMonitorLocationsResponse = {
+    const sub2Response: AzureAPIResponse<Location> = {
       value: [
         {
           id: '/subscriptions/mock-subscription-id-2/locations/eastus2',

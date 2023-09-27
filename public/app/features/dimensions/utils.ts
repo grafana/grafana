@@ -120,7 +120,7 @@ export function getLastNotNullFieldValue<T>(field: Field): T {
   if (calcs) {
     const v = calcs[ReducerID.lastNotNull];
     if (v != null) {
-      return v as T;
+      return v;
     }
   }
 

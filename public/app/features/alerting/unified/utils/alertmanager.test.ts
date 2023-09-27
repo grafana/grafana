@@ -1,13 +1,8 @@
 import { Matcher, MatcherOperator, Route } from 'app/plugins/datasource/alertmanager/types';
 import { Labels } from 'app/types/unified-alerting-dto';
 
-import {
-  parseMatcher,
-  parseMatchers,
-  labelsMatchMatchers,
-  removeMuteTimingFromRoute,
-  matchersToString,
-} from './alertmanager';
+import { parseMatchers, labelsMatchMatchers, removeMuteTimingFromRoute, matchersToString } from './alertmanager';
+import { parseMatcher } from './matchers';
 
 describe('Alertmanager utils', () => {
   describe('parseMatcher', () => {
@@ -32,7 +27,7 @@ describe('Alertmanager utils', () => {
       });
       expect(parseMatcher('foo!~ bar')).toEqual<Matcher>({
         name: 'foo',
-        value: 'bar',
+        value: ' bar',
         isRegex: true,
         isEqual: false,
       });

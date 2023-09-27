@@ -112,8 +112,8 @@ describe('SearchField', () => {
       expect(updateFilter).toHaveBeenCalledWith({ ...filter, value: ['driver', 'customer'] });
 
       // Remove the first value
-      const firstValRemove = await screen.findByLabelText('Remove driver');
-      await user.click(firstValRemove);
+      const firstValRemove = await screen.findAllByLabelText('Remove');
+      await user.click(firstValRemove[0]);
       expect(updateFilter).toHaveBeenCalledWith({ ...filter, value: ['customer'] });
     }
   });

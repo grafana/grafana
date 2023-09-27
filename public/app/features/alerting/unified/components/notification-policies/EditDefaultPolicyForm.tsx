@@ -10,6 +10,7 @@ import {
   mapMultiSelectValueToStrings,
   mapSelectValueToString,
   promDurationValidator,
+  repeatIntervalValidator,
   stringsToSelectableValues,
   stringToSelectableValue,
 } from '../../utils/amroutes';
@@ -43,7 +44,7 @@ export const AmRootRouteForm = ({
 
   return (
     <Form defaultValues={{ ...defaultValues, overrideTimings: true, overrideGrouping: true }} onSubmit={onSubmit}>
-      {({ register, control, errors, setValue }) => (
+      {({ register, control, errors, setValue, getValues }) => (
         <>
           <Field label="Default contact point" invalid={!!errors.receiver} error={errors.receiver?.message}>
             <>
@@ -143,7 +144,12 @@ export const AmRootRouteForm = ({
                 data-testid="am-repeat-interval"
               >
                 <PromDurationInput
-                  {...register('repeatIntervalValue', { validate: promDurationValidator })}
+                  {...register('repeatIntervalValue', {
+                    validate: (value: string) => {
+                      const groupInterval = getValues('groupIntervalValue');
+                      return repeatIntervalValidator(value, groupInterval);
+                    },
+                  })}
                   placeholder={TIMING_OPTIONS_DEFAULTS.repeat_interval}
                   className={styles.promDurationInput}
                   aria-label="Repeat interval"

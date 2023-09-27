@@ -22,6 +22,7 @@ export interface Props {
   isLive?: boolean;
   text?: string;
   noIntervalPicker?: boolean;
+  showAutoInterval?: boolean;
   width?: string;
   primary?: boolean;
   isOnCanvas?: boolean;
@@ -37,6 +38,11 @@ export class RefreshPicker extends PureComponent<Props> {
     label: 'Live',
     value: 'LIVE',
     ariaLabel: 'Turn on live streaming',
+  };
+  static autoOption = {
+    label: 'Auto',
+    value: 'auto',
+    ariaLabel: 'Select refresh from the query range',
   };
 
   static isLive = (refreshInterval?: string): boolean => refreshInterval === RefreshPicker.liveOption.value;
@@ -69,11 +75,12 @@ export class RefreshPicker extends PureComponent<Props> {
   }
 
   render() {
-    const { onRefresh, intervals, tooltip, value, text, isLoading, noIntervalPicker, width } = this.props;
+    const { onRefresh, intervals, tooltip, value, text, isLoading, noIntervalPicker, width, showAutoInterval } =
+      this.props;
 
     const currentValue = value || '';
     const variant = this.getVariant();
-    const options = intervalsToOptions({ intervals });
+    const options = intervalsToOptions({ intervals, showAutoInterval });
     const option = options.find(({ value }) => value === currentValue);
     const translatedOffOption = translateOption(RefreshPicker.offOption.value);
     let selectedValue = option || translatedOffOption;
@@ -124,23 +131,36 @@ export class RefreshPicker extends PureComponent<Props> {
 }
 
 export function translateOption(option: string) {
-  if (option === RefreshPicker.liveOption.value) {
-    return {
-      label: t('refresh-picker.live-option.label', 'Live'),
-      value: 'LIVE',
-      ariaLabel: t('refresh-picker.live-option.aria-label', 'Turn on live streaming'),
-    };
+  switch (option) {
+    case RefreshPicker.liveOption.value:
+      return {
+        label: t('refresh-picker.live-option.label', 'Live'),
+        value: option,
+        ariaLabel: t('refresh-picker.live-option.aria-label', 'Turn on live streaming'),
+      };
+    case RefreshPicker.offOption.value:
+      return {
+        label: t('refresh-picker.off-option.label', 'Off'),
+        value: option,
+        ariaLabel: t('refresh-picker.off-option.aria-label', 'Turn off auto refresh'),
+      };
+    case RefreshPicker.autoOption.value:
+      return {
+        label: t('refresh-picker.auto-option.label', RefreshPicker.autoOption.label),
+        value: option,
+        ariaLabel: t('refresh-picker.auto-option.aria-label', RefreshPicker.autoOption.ariaLabel),
+      };
   }
   return {
-    label: t('refresh-picker.off-option.label', 'Off'),
-    value: '',
-    ariaLabel: t('refresh-picker.off-option.aria-label', 'Turn off auto refresh'),
+    label: option,
+    value: option,
   };
 }
 
-export function intervalsToOptions({ intervals = defaultIntervals }: { intervals?: string[] } = {}): Array<
-  SelectableValue<string>
-> {
+export function intervalsToOptions({
+  intervals = defaultIntervals,
+  showAutoInterval = false,
+}: { intervals?: string[]; showAutoInterval?: boolean } = {}): Array<SelectableValue<string>> {
   const options: Array<SelectableValue<string>> = intervals.map((interval) => {
     const duration = parseDuration(interval);
     const ariaLabel = formatDuration(duration);
@@ -152,6 +172,9 @@ export function intervalsToOptions({ intervals = defaultIntervals }: { intervals
     };
   });
 
+  if (showAutoInterval) {
+    options.unshift(translateOption(RefreshPicker.autoOption.value));
+  }
   options.unshift(translateOption(RefreshPicker.offOption.value));
   return options;
 }

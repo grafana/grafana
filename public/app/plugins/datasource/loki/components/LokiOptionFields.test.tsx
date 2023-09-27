@@ -1,7 +1,7 @@
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import React from 'react';
 
-import { LokiOptionFieldsProps, LokiOptionFields } from './LokiOptionFields';
+import { LokiOptionFieldsProps, LokiOptionFields, preprocessMaxLines } from './LokiOptionFields';
 
 const setup = () => {
   const lineLimitValue = '1';
@@ -87,5 +87,17 @@ describe('Resolution Field', () => {
     const props = setup();
     render(<LokiOptionFields {...props} resolution={5} />);
     expect(await screen.findByText('1/5')).toBeInTheDocument();
+  });
+});
+
+describe('preprocessMaxLines', () => {
+  test.each([
+    { inputValue: '', expected: undefined },
+    { inputValue: 'abc', expected: undefined },
+    { inputValue: '-1', expected: undefined },
+    { inputValue: '1', expected: 1 },
+    { inputValue: '100', expected: 100 },
+  ])('should return correct max lines value', ({ inputValue, expected }) => {
+    expect(preprocessMaxLines(inputValue)).toBe(expected);
   });
 });

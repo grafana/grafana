@@ -1,4 +1,4 @@
-import { DataSourcePluginMeta, DataSourceSettings, locationUtil } from '@grafana/data';
+import { DataSourcePluginMeta, DataSourceSettings, locationUtil, TestDataSourceResponse } from '@grafana/data';
 import {
   config,
   DataSourceWithBackend,
@@ -79,14 +79,8 @@ const parseHealthCheckError = (errorResponse: any): parseDataSourceSaveResponse 
   return { message, details };
 };
 
-const parseHealthCheckSuccess = (response: any): parseDataSourceSaveResponse => {
-  let message: string | undefined;
-  let status: string;
-  let details: { message?: string; verboseMessage?: string };
-
-  status = response.status;
-  message = response.message;
-  details = response.details;
+const parseHealthCheckSuccess = (response: TestDataSourceResponse): parseDataSourceSaveResponse => {
+  const { details, message, status } = response;
 
   return { status, message, details };
 };
@@ -282,7 +276,7 @@ export function updateDataSource(dataSource: DataSourceSettings) {
   ) => {
     try {
       await api.updateDataSource(dataSource);
-    } catch (err: any) {
+    } catch (err) {
       const formattedError = parseHealthCheckError(err);
 
       dispatch(testDataSourceFailed(formattedError));
@@ -304,9 +298,7 @@ export function deleteLoadedDataSource(): ThunkResult<void> {
       await api.deleteDataSource(uid);
       await getDatasourceSrv().reload();
 
-      const datasourcesUrl = config.featureToggles.dataConnectionsConsole
-        ? CONNECTIONS_ROUTES.DataSources
-        : '/datasources';
+      const datasourcesUrl = CONNECTIONS_ROUTES.DataSources;
 
       locationService.push(datasourcesUrl);
     } catch (err) {

@@ -11,7 +11,7 @@ export interface Props extends GrafanaRouteComponentProps<{}, { code: string }> 
 
 export const ChangePasswordPage = (props: Props) => {
   return (
-    <LoginLayout>
+    <LoginLayout isChangingPassword>
       <InnerBox>
         <LoginCtrl resetCode={props.queryParams.code}>
           {({ changePassword }) => <ChangePassword onSubmit={changePassword} />}

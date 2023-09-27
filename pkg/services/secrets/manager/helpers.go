@@ -39,19 +39,18 @@ func setupTestService(tb testing.TB, store secrets.Store, features *featuremgmt.
 	require.NoError(tb, err)
 
 	cfg := &setting.Cfg{Raw: raw}
-	settings := &setting.OSSImpl{Cfg: cfg}
 
 	encProvider := encryptionprovider.Provider{}
 	usageStats := &usagestats.UsageStatsMock{}
 
-	encryption, err := encryptionservice.ProvideEncryptionService(encProvider, usageStats, settings)
+	encryption, err := encryptionservice.ProvideEncryptionService(encProvider, usageStats, cfg)
 	require.NoError(tb, err)
 
 	secretsService, err := ProvideSecretsService(
 		store,
-		osskmsproviders.ProvideService(encryption, settings, features),
+		osskmsproviders.ProvideService(encryption, cfg, features),
 		encryption,
-		settings,
+		cfg,
 		features,
 		&usagestats.UsageStatsMock{T: tb},
 	)

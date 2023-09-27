@@ -2,7 +2,9 @@ import React, { useEffect, useRef } from 'react';
 
 import { SIGV4ConnectionConfig } from '@grafana/aws-sdk';
 import { DataSourcePluginOptionsEditorProps } from '@grafana/data';
+import { ConfigSection, DataSourceDescription } from '@grafana/experimental';
 import { Alert, DataSourceHttpSettings } from '@grafana/ui';
+import { Divider } from 'app/core/components/Divider';
 import { config } from 'app/core/config';
 
 import { ElasticsearchOptions } from '../types';
@@ -21,17 +23,13 @@ export const ConfigEditor = (props: Props) => {
   // the access-mode-select-box vanishes)
   const showAccessOptions = useRef(props.options.access === 'direct');
 
-  const { options: originalOptions, onOptionsChange } = props;
-  const options = coerceOptions(originalOptions);
+  const { options, onOptionsChange } = props;
 
   useEffect(() => {
-    if (!isValidOptions(originalOptions)) {
-      onOptionsChange(coerceOptions(originalOptions));
+    if (!isValidOptions(options)) {
+      onOptionsChange(coerceOptions(options));
     }
-
-    // We can't enforce the eslint rule here because we only want to run this once.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [onOptionsChange, options]);
 
   return (
     <>
@@ -40,6 +38,14 @@ export const ConfigEditor = (props: Props) => {
           Browser access mode in the Elasticsearch datasource is no longer available. Switch to server access mode.
         </Alert>
       )}
+      <DataSourceDescription
+        dataSourceName="Elasticsearch"
+        docsLink="https://grafana.com/docs/grafana/latest/datasources/elasticsearch"
+        hasRequiredFields={false}
+      />
+
+      <Divider />
+
       <DataSourceHttpSettings
         defaultUrl="http://localhost:9200"
         dataSourceConfig={options}
@@ -50,30 +56,39 @@ export const ConfigEditor = (props: Props) => {
         secureSocksDSProxyEnabled={config.secureSocksDSProxyEnabled}
       />
 
-      <ElasticDetails value={options} onChange={onOptionsChange} />
+      <Divider />
 
-      <LogsConfig
-        value={options.jsonData}
-        onChange={(newValue) =>
-          onOptionsChange({
-            ...options,
-            jsonData: newValue,
-          })
-        }
-      />
-
-      <DataLinks
-        value={options.jsonData.dataLinks}
-        onChange={(newValue) => {
-          onOptionsChange({
-            ...options,
-            jsonData: {
-              ...options.jsonData,
-              dataLinks: newValue,
-            },
-          });
-        }}
-      />
+      <ConfigSection
+        title="Additional settings"
+        description="Additional settings are optional settings that can be configured for more control over your data source."
+        isCollapsible={true}
+        isInitiallyOpen
+      >
+        <ElasticDetails value={options} onChange={onOptionsChange} />
+        <Divider hideLine />
+        <LogsConfig
+          value={options.jsonData}
+          onChange={(newValue) =>
+            onOptionsChange({
+              ...options,
+              jsonData: newValue,
+            })
+          }
+        />
+        <Divider hideLine />
+        <DataLinks
+          value={options.jsonData.dataLinks}
+          onChange={(newValue) => {
+            onOptionsChange({
+              ...options,
+              jsonData: {
+                ...options.jsonData,
+                dataLinks: newValue,
+              },
+            });
+          }}
+        />
+      </ConfigSection>
     </>
   );
 };

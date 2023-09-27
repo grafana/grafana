@@ -18,12 +18,12 @@ export type Alert = {
   activeAt: string;
   annotations: { [key: string]: string };
   labels: { [key: string]: string };
-  state: PromAlertingRuleState | GrafanaAlertStateWithReason;
+  state: Exclude<PromAlertingRuleState | GrafanaAlertStateWithReason, PromAlertingRuleState.Inactive>;
   value: string;
 };
 
 export function hasAlertState(alert: Alert, state: PromAlertingRuleState | GrafanaAlertState): boolean {
-  return mapStateWithReasonToBaseState(alert.state as GrafanaAlertStateWithReason) === state;
+  return mapStateWithReasonToBaseState(alert.state) === state;
 }
 
 interface RuleBase {
@@ -154,6 +154,7 @@ export interface CloudRuleIdentifier {
   ruleSourceName: string;
   namespace: string;
   groupName: string;
+  ruleName: string;
   rulerRuleHash: string;
 }
 export interface GrafanaRuleIdentifier {
@@ -166,6 +167,7 @@ export interface PrometheusRuleIdentifier {
   ruleSourceName: string;
   namespace: string;
   groupName: string;
+  ruleName: string;
   ruleHash: string;
 }
 
@@ -185,7 +187,7 @@ export interface SilenceFilterState {
 
 interface EvalMatch {
   metric: string;
-  tags?: any;
+  tags?: Record<string, string>;
   value: number;
 }
 
@@ -208,7 +210,7 @@ export interface StateHistoryItem {
   time: number;
   timeEnd: number;
   text: string;
-  tags: any[];
+  tags: string[];
   login: string;
   email: string;
   avatarUrl: string;

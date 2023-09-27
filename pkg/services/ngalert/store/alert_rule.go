@@ -12,11 +12,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
-	"github.com/grafana/grafana/pkg/services/guardian"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
+	"github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -310,13 +310,13 @@ func newTitlesOverlapExisting(rules []ngmodels.UpdateRule) bool {
 	return false
 }
 
-// CountAlertRulesInFolder is a handler for retrieving the number of alert rules of
+// CountInFolder is a handler for retrieving the number of alert rules of
 // specific organisation associated with a given namespace (parent folder).
-func (st DBstore) CountAlertRulesInFolder(ctx context.Context, query *ngmodels.CountAlertRulesQuery) (int64, error) {
+func (st DBstore) CountInFolder(ctx context.Context, orgID int64, folderUID string, u *user.SignedInUser) (int64, error) {
 	var count int64
 	var err error
 	err = st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
-		q := sess.Table("alert_rule").Where("org_id = ?", query.OrgID).Where("namespace_uid = ?", query.NamespaceUID)
+		q := sess.Table("alert_rule").Where("org_id = ?", orgID).Where("namespace_uid = ?", folderUID)
 		count, err = q.Count()
 		return err
 	})
@@ -466,25 +466,10 @@ func (st DBstore) GetUserVisibleNamespaces(ctx context.Context, orgID int64, use
 }
 
 // GetNamespaceByTitle is a handler for retrieving a namespace by its title. Alerting rules follow a Grafana folder-like structure which we call namespaces.
-func (st DBstore) GetNamespaceByTitle(ctx context.Context, namespace string, orgID int64, user *user.SignedInUser, withCanSave bool) (*folder.Folder, error) {
+func (st DBstore) GetNamespaceByTitle(ctx context.Context, namespace string, orgID int64, user *user.SignedInUser) (*folder.Folder, error) {
 	folder, err := st.FolderService.Get(ctx, &folder.GetFolderQuery{OrgID: orgID, Title: &namespace, SignedInUser: user})
 	if err != nil {
 		return nil, err
-	}
-
-	// if access control is disabled, check that the user is allowed to save in the folder.
-	if withCanSave && st.AccessControl.IsDisabled() {
-		g, err := guardian.NewByUID(ctx, folder.UID, orgID, user)
-		if err != nil {
-			return folder, err
-		}
-
-		if canSave, err := g.CanSave(); err != nil || !canSave {
-			if err != nil {
-				st.Logger.Error("checking can save permission has failed", "userId", user.UserID, "username", user.Login, "namespace", namespace, "orgId", orgID, "error", err)
-			}
-			return nil, ngmodels.ErrCannotEditNamespace
-		}
 	}
 
 	return folder, nil
@@ -599,6 +584,32 @@ func (st DBstore) GetAlertRulesForScheduling(ctx context.Context, query *ngmodel
 		return nil
 	})
 }
+
+// DeleteInFolder deletes the rules contained in a given folder along with their associated data.
+func (st DBstore) DeleteInFolder(ctx context.Context, orgID int64, folderUID string, user *user.SignedInUser) error {
+	rules, err := st.ListAlertRules(ctx, &ngmodels.ListAlertRulesQuery{
+		OrgID:         orgID,
+		NamespaceUIDs: []string{folderUID},
+	})
+	if err != nil {
+		return err
+	}
+
+	uids := make([]string, 0, len(rules))
+	for _, tgt := range rules {
+		if tgt != nil {
+			uids = append(uids, tgt.UID)
+		}
+	}
+
+	if err := st.DeleteAlertRulesByUID(ctx, orgID, uids...); err != nil {
+		return err
+	}
+	return nil
+}
+
+// Kind returns the name of the alert rule type of entity.
+func (st DBstore) Kind() string { return entity.StandardKindAlertRule }
 
 // GenerateNewAlertRuleUID generates a unique UID for a rule.
 // This is set as a variable so that the tests can override it.

@@ -261,8 +261,6 @@ const ResourcePicker = ({
           renderAdvanced={renderAdvanced}
         />
 
-        <Space v={2} />
-
         {errorMessage && (
           <>
             <Space v={2} />

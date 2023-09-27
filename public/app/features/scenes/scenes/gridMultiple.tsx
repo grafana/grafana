@@ -1,5 +1,4 @@
 import {
-  VizPanel,
   SceneTimePicker,
   SceneFlexLayout,
   SceneGridLayout,
@@ -7,6 +6,7 @@ import {
   SceneRefreshPicker,
   SceneGridItem,
   SceneFlexItem,
+  PanelBuilders,
 } from '@grafana/scenes';
 
 import { DashboardScene } from '../dashboard/DashboardScene';
@@ -28,10 +28,7 @@ export function getMultipleGridLayoutTest(): DashboardScene {
                 height: 10,
                 isDraggable: true,
                 isResizable: true,
-                body: new VizPanel({
-                  pluginId: 'timeseries',
-                  title: 'Dragabble and resizable',
-                }),
+                body: PanelBuilders.timeseries().setTitle('Dragabble and resizable').build(),
               }),
               new SceneGridItem({
                 x: 12,
@@ -40,10 +37,7 @@ export function getMultipleGridLayoutTest(): DashboardScene {
                 height: 10,
                 isResizable: false,
                 isDraggable: true,
-                body: new VizPanel({
-                  pluginId: 'timeseries',
-                  title: 'Draggable only',
-                }),
+                body: PanelBuilders.timeseries().setTitle('Draggable only').build(),
               }),
               new SceneGridItem({
                 x: 6,
@@ -57,17 +51,11 @@ export function getMultipleGridLayoutTest(): DashboardScene {
                   children: [
                     new SceneFlexItem({
                       ySizing: 'fill',
-                      body: new VizPanel({
-                        pluginId: 'timeseries',
-                        title: 'Fill height',
-                      }),
+                      body: PanelBuilders.timeseries().setTitle('Fill height').build(),
                     }),
                     new SceneFlexItem({
                       ySizing: 'fill',
-                      body: new VizPanel({
-                        pluginId: 'timeseries',
-                        title: 'Fill height',
-                      }),
+                      body: PanelBuilders.timeseries().setTitle('Fill height').build(),
                     }),
                   ],
                 }),
@@ -85,10 +73,7 @@ export function getMultipleGridLayoutTest(): DashboardScene {
                 height: 10,
                 isDraggable: true,
                 isResizable: true,
-                body: new VizPanel({
-                  pluginId: 'timeseries',
-                  title: 'Dragabble and resizable',
-                }),
+                body: PanelBuilders.timeseries().setTitle('Dragabble and resizable').build(),
               }),
               new SceneGridItem({
                 x: 12,
@@ -97,10 +82,7 @@ export function getMultipleGridLayoutTest(): DashboardScene {
                 height: 10,
                 isResizable: false,
                 isDraggable: true,
-                body: new VizPanel({
-                  pluginId: 'timeseries',
-                  title: 'Draggable only',
-                }),
+                body: PanelBuilders.timeseries().setTitle('Draggable only').build(),
               }),
               new SceneGridItem({
                 x: 6,
@@ -114,17 +96,11 @@ export function getMultipleGridLayoutTest(): DashboardScene {
                   children: [
                     new SceneFlexItem({
                       ySizing: 'fill',
-                      body: new VizPanel({
-                        pluginId: 'timeseries',
-                        title: 'Fill height',
-                      }),
+                      body: PanelBuilders.timeseries().setTitle('Fill height').build(),
                     }),
                     new SceneFlexItem({
                       ySizing: 'fill',
-                      body: new VizPanel({
-                        pluginId: 'timeseries',
-                        title: 'Fill height',
-                      }),
+                      body: PanelBuilders.timeseries().setTitle('Fill height').build(),
                     }),
                   ],
                 }),

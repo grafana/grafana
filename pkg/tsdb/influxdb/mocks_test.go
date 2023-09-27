@@ -2,6 +2,7 @@ package influxdb
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -47,7 +48,7 @@ type fakeInstance struct {
 	fakeRoundTripper RoundTripper
 }
 
-func (f *fakeInstance) Get(pluginContext backend.PluginContext) (instancemgmt.Instance, error) {
+func (f *fakeInstance) Get(_ context.Context, _ backend.PluginContext) (instancemgmt.Instance, error) {
 	fp := &fakeHttpClientProvider{
 		opts: sdkhttpclient.Options{
 			Timeouts: &sdkhttpclient.DefaultTimeoutOptions,
@@ -78,7 +79,7 @@ func (f *fakeInstance) Get(pluginContext backend.PluginContext) (instancemgmt.In
 	}, nil
 }
 
-func (f *fakeInstance) Do(pluginContext backend.PluginContext, fn instancemgmt.InstanceCallbackFunc) error {
+func (f *fakeInstance) Do(_ context.Context, _ backend.PluginContext, _ instancemgmt.InstanceCallbackFunc) error {
 	return nil
 }
 
@@ -112,8 +113,6 @@ func (rt *RoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
 
 func GetMockService(version string, rt RoundTripper) *Service {
 	return &Service{
-		queryParser:    &InfluxdbQueryParser{},
-		responseParser: &ResponseParser{},
 		im: &fakeInstance{
 			version:          version,
 			fakeRoundTripper: rt,

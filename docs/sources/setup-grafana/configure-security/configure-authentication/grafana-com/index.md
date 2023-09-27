@@ -5,8 +5,6 @@ description: Grafana Com Authentication
 labels:
   products:
     - cloud
-    - enterprise
-    - oss
 menuTitle: Grafana Com OAuth2
 title: Configure Grafana Com authentication
 weight: 1200

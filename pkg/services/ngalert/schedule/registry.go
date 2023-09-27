@@ -263,12 +263,8 @@ func (r ruleWithFolder) Fingerprint() fingerprint {
 			writeBytes(nil)
 			return
 		}
-		// TODO fix it when upgraded to in GO1.20 to
-		/*
-			writeBytes(unsafe.Slice(unsafe.StringData(s), len(s))) //nolint:gosec
-		*/
 		// avoid allocation when converting string to byte slice
-		writeBytes(*(*[]byte)(unsafe.Pointer(&s))) //nolint:gosec
+		writeBytes(unsafe.Slice(unsafe.StringData(s), len(s)))
 	}
 	// this temp slice is used to convert ints to bytes.
 	tmp := make([]byte, 8)

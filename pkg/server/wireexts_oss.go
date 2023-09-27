@@ -35,6 +35,8 @@ import (
 	publicdashboardsService "github.com/grafana/grafana/pkg/services/publicdashboards/service"
 	"github.com/grafana/grafana/pkg/services/searchusers"
 	"github.com/grafana/grafana/pkg/services/searchusers/filters"
+	"github.com/grafana/grafana/pkg/services/secrets"
+	secretsMigrator "github.com/grafana/grafana/pkg/services/secrets/migrator"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/validations"
@@ -45,8 +47,8 @@ var wireExtsBasicSet = wire.NewSet(
 	authimpl.ProvideUserAuthTokenService,
 	wire.Bind(new(auth.UserTokenService), new(*authimpl.UserAuthTokenService)),
 	wire.Bind(new(auth.UserTokenBackgroundService), new(*authimpl.UserAuthTokenService)),
-	anonimpl.ProvideAnonymousSessionService,
-	wire.Bind(new(anonymous.Service), new(*anonimpl.AnonSessionService)),
+	anonimpl.ProvideAnonymousDeviceService,
+	wire.Bind(new(anonymous.Service), new(*anonimpl.AnonDeviceService)),
 	licensing.ProvideService,
 	wire.Bind(new(licensing.Licensing), new(*licensing.OSSLicensingService)),
 	setting.ProvideProvider,
@@ -88,6 +90,8 @@ var wireExtsBasicSet = wire.NewSet(
 	wire.Bind(new(publicdashboards.ServiceWrapper), new(*publicdashboardsService.PublicDashboardServiceWrapperImpl)),
 	caching.ProvideCachingService,
 	wire.Bind(new(caching.CachingService), new(*caching.OSSCachingService)),
+	secretsMigrator.ProvideSecretsMigrator,
+	wire.Bind(new(secrets.Migrator), new(*secretsMigrator.SecretsMigrator)),
 )
 
 var wireExtsSet = wire.NewSet(

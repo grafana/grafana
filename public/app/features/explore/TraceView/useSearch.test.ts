@@ -1,7 +1,7 @@
 import { act, renderHook } from '@testing-library/react';
 
 import { TraceSpan } from './components';
-import { defaultFilters, useSearch, useSearchNewTraceViewHeader } from './useSearch';
+import { defaultFilters, useSearch } from './useSearch';
 
 describe('useSearch', () => {
   const spans = [
@@ -28,28 +28,15 @@ describe('useSearch', () => {
   ];
 
   it('returns matching span IDs', async () => {
-    const { result } = renderHook(() => useSearchNewTraceViewHeader(spans));
-    act(() => result.current.setNewTraceViewHeaderSearch({ ...defaultFilters, serviceName: 'service1' }));
+    const { result } = renderHook(() => useSearch(spans));
+    act(() => result.current.setSearch({ ...defaultFilters, serviceName: 'service1' }));
     expect(result.current.spanFilterMatches?.size).toBe(1);
     expect(result.current.spanFilterMatches?.has('span1')).toBe(true);
   });
 
   it('works without spans', async () => {
-    const { result } = renderHook(() => useSearchNewTraceViewHeader());
-    act(() => result.current.setNewTraceViewHeaderSearch({ ...defaultFilters, serviceName: 'service1' }));
-    expect(result.current.spanFilterMatches).toBe(undefined);
-  });
-
-  it('returns matching span IDs', async () => {
-    const { result } = renderHook(() => useSearch(spans));
-    act(() => result.current.setSearch('service1'));
-    expect(result.current.spanFindMatches?.size).toBe(1);
-    expect(result.current.spanFindMatches?.has('span1')).toBe(true);
-  });
-
-  it('works without spans', async () => {
     const { result } = renderHook(() => useSearch());
-    act(() => result.current.setSearch('service1'));
-    expect(result.current.spanFindMatches).toBe(undefined);
+    act(() => result.current.setSearch({ ...defaultFilters, serviceName: 'service1' }));
+    expect(result.current.spanFilterMatches).toBe(undefined);
   });
 });

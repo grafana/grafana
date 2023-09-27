@@ -1,0 +1,39 @@
+import { Meta, StoryFn } from '@storybook/react';
+import React from 'react';
+
+import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
+
+import { Divider } from './Divider';
+import mdx from './Divider.mdx';
+
+const meta: Meta<typeof Divider> = {
+  title: 'General/Divider',
+  component: Divider,
+  decorators: [withCenteredStory],
+  parameters: {
+    docs: {
+      page: mdx,
+    },
+  },
+};
+
+export const Basic: StoryFn<typeof Divider> = ({ direction }) => {
+  return <Divider direction={direction} />;
+};
+
+export const Examples: StoryFn<typeof Divider> = () => {
+  return (
+    <div>
+      <p>Text above horizontal divider</p>
+      <Divider />
+      <p>Text below horizontal divider</p>
+      <div style={{ display: 'flex', flexDirection: 'row', height: '50px' }}>
+        <p>Text aside of vertical divider</p>
+        <Divider direction="vertical" />
+        <p>Text aside of vertical divider</p>
+      </div>
+    </div>
+  );
+};
+
+export default meta;

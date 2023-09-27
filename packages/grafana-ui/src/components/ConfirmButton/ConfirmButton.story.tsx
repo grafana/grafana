@@ -15,6 +15,9 @@ const meta: Meta = {
   title: 'Buttons/ConfirmButton',
   component: ConfirmButton,
   decorators: [withCenteredStory],
+  // SB7 has broken subcomponent types due to dropping support for the feature
+  // https://github.com/storybookjs/storybook/issues/20782
+  // @ts-ignore
   subcomponents: { DeleteButton },
   parameters: {
     docs: {

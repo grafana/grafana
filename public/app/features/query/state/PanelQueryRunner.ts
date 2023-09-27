@@ -1,6 +1,6 @@
 import { cloneDeep } from 'lodash';
 import { Observable, of, ReplaySubject, Unsubscribable } from 'rxjs';
-import { map, mergeMap } from 'rxjs/operators';
+import { map, mergeMap, catchError } from 'rxjs/operators';
 
 import {
   applyFieldOverrides,
@@ -27,10 +27,10 @@ import {
   transformDataFrame,
   preProcessPanelData,
   ApplyFieldOverrideOptions,
+  StreamingDataFrame,
 } from '@grafana/data';
 import { getTemplateSrv, toDataQueryError } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/src/utils/DataSourceWithBackend';
-import { StreamingDataFrame } from 'app/features/live/data/StreamingDataFrame';
 import { isStreamingDataFrame } from 'app/features/live/data/utils';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 
@@ -44,7 +44,7 @@ import { runRequest } from './runRequest';
 
 export interface QueryRunnerOptions<
   TQuery extends DataQuery = DataQuery,
-  TOptions extends DataSourceJsonData = DataSourceJsonData
+  TOptions extends DataSourceJsonData = DataSourceJsonData,
 > {
   datasource: DataSourceRef | DataSourceApi<TQuery, TOptions> | null;
   queries: TQuery[];
@@ -210,7 +210,17 @@ export class PanelQueryRunner {
       interpolate: (v: string) => getTemplateSrv().replace(v, data?.request?.scopedVars),
     };
 
-    return transformDataFrame(transformations, data.series, ctx).pipe(map((series) => ({ ...data, series })));
+    return transformDataFrame(transformations, data.series, ctx).pipe(
+      map((series) => ({ ...data, series })),
+      catchError((err) => {
+        console.warn('Error running transformation:', err);
+        return of({
+          ...data,
+          state: LoadingState.Error,
+          error: toDataQueryError(err),
+        });
+      })
+    );
   }
 
   async run(options: QueryRunnerOptions) {

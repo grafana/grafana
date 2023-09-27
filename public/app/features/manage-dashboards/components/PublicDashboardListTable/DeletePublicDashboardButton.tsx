@@ -23,7 +23,7 @@ export const DeletePublicDashboardButton = ({
   dashboard?: DashboardModel;
   publicDashboard: PublicDashboardDeletion;
   loader?: JSX.Element;
-  children: React.ReactNode;
+  children?: React.ReactNode;
   onDismiss?: () => void;
 } & ButtonProps) => {
   const [deletePublicDashboard, { isLoading }] = useDeletePublicDashboardMutation();

@@ -42,10 +42,6 @@ import {
   ViewedBoundsFunctionType,
 } from './utils';
 
-type TExtractUiFindFromStateReturn = {
-  uiFind: string | undefined;
-};
-
 const getStyles = stylesFactory((props: TVirtualizedTraceViewOwnProps) => {
   const { topOfViewRefType } = props;
   const position = topOfViewRefType === TopOfViewRefType.Explore ? 'fixed' : 'absolute';
@@ -87,13 +83,11 @@ type TVirtualizedTraceViewOwnProps = {
   currentViewRangeTime: [number, number];
   timeZone: TimeZone;
   findMatchesIDs: Set<string> | TNil;
-  scrollToFirstVisibleSpan: () => void;
   registerAccessors: (accesors: Accessors) => void;
   trace: Trace;
   spanBarOptions: SpanBarOptions | undefined;
   linksGetter: (span: TraceSpan, items: TraceKeyValuePair[], itemIndex: number) => TraceLink[];
   childrenToggle: (spanID: string) => void;
-  clearShouldScrollToFirstUiFindMatch: () => void;
   detailLogItemToggle: (spanID: string, log: TraceLog) => void;
   detailLogsToggle: (spanID: string) => void;
   detailWarningsToggle: (spanID: string) => void;
@@ -104,7 +98,6 @@ type TVirtualizedTraceViewOwnProps = {
   detailTagsToggle: (spanID: string) => void;
   detailToggle: (spanID: string) => void;
   setSpanNameColumnWidth: (width: number) => void;
-  setTrace: (trace: Trace | TNil, uiFind: string | TNil) => void;
   hoverIndentGuideIds: Set<string>;
   addHoverIndentGuideId: (spanID: string) => void;
   removeHoverIndentGuideId: (spanID: string) => void;
@@ -121,7 +114,7 @@ type TVirtualizedTraceViewOwnProps = {
   headerHeight: number;
 };
 
-export type VirtualizedTraceViewProps = TVirtualizedTraceViewOwnProps & TExtractUiFindFromStateReturn & TTraceTimeline;
+export type VirtualizedTraceViewProps = TVirtualizedTraceViewOwnProps & TTraceTimeline;
 
 // export for tests
 export const DEFAULT_HEIGHTS = {
@@ -208,12 +201,7 @@ const memoizedGetClipping = memoizeOne(getClipping, isEqual);
 // export from tests
 export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTraceViewProps> {
   listView: ListView | TNil;
-
-  constructor(props: VirtualizedTraceViewProps) {
-    super(props);
-    const { setTrace, trace, uiFind } = props;
-    setTrace(trace, uiFind);
-  }
+  hasScrolledToSpan = false;
 
   componentDidMount() {
     this.scrollToSpan(this.props.headerHeight, this.props.focusedSpanId);
@@ -224,44 +212,28 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
     let key: keyof VirtualizedTraceViewProps;
     for (key in nextProps) {
       if (nextProps[key] !== this.props[key]) {
-        // Unless the only change was props.shouldScrollToFirstUiFindMatch changing to false.
-        if (key === 'shouldScrollToFirstUiFindMatch') {
-          if (nextProps[key]) {
-            return true;
-          }
-        } else {
-          return true;
-        }
+        return true;
       }
     }
     return false;
   }
 
   componentDidUpdate(prevProps: Readonly<VirtualizedTraceViewProps>) {
-    const { registerAccessors, trace, headerHeight } = prevProps;
+    const { registerAccessors } = prevProps;
     const {
-      shouldScrollToFirstUiFindMatch,
-      clearShouldScrollToFirstUiFindMatch,
-      scrollToFirstVisibleSpan,
       registerAccessors: nextRegisterAccessors,
-      setTrace,
-      trace: nextTrace,
-      uiFind,
+      headerHeight,
       focusedSpanId,
       focusedSpanIdForSearch,
     } = this.props;
-
-    if (trace !== nextTrace) {
-      setTrace(nextTrace, uiFind);
-    }
 
     if (this.listView && registerAccessors !== nextRegisterAccessors) {
       nextRegisterAccessors(this.getAccessors());
     }
 
-    if (shouldScrollToFirstUiFindMatch) {
-      scrollToFirstVisibleSpan();
-      clearShouldScrollToFirstUiFindMatch();
+    if (!this.hasScrolledToSpan) {
+      this.scrollToSpan(headerHeight, focusedSpanId);
+      this.hasScrolledToSpan = true;
     }
 
     if (focusedSpanId !== prevProps.focusedSpanId) {

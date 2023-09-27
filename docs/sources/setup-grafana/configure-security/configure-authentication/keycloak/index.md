@@ -66,7 +66,7 @@ It is useful as a fallback or if the user has more than 150 group memberships.
 - Implicit Flow Enabled: `OFF`
 - Direct Access Grants Enabled: `ON`
 - Root URL: `<grafana_root_url>`
-- Valid Redirect URIs: `<grafana_root_url>/*`
+- Valid Redirect URIs: `<grafana_root_url>/login/generic_oauth`
 - Web Origins: `<grafana_root_url>`
 - Admin URL: `<grafana_root_url>`
 - Base URL: `<grafana_root_url>`
@@ -137,7 +137,7 @@ To enable Single Logout, you need to add the following option to the configurati
 
 ```ini
 [auth]
-signout_redirect_url = https://<PROVIDER_DOMAIN>/auth/realms/<REALM_NAME>/protocol/openid-connect/logout?redirect_uri=https%3A%2F%2<GRAFANA_DOMAIN>%2Flogin
+signout_redirect_url = https://<PROVIDER_DOMAIN>/auth/realms/<REALM_NAME>/protocol/openid-connect/logout?redirect_uri=https%3A%2F%2F<GRAFANA_DOMAIN>%2Flogin
 ```
 
 As an example, `<PROVIDER_DOMAIN>` can be `keycloak-demo.grafana.org`,

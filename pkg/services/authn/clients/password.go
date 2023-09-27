@@ -4,8 +4,6 @@ import (
 	"context"
 	"errors"
 
-	"github.com/hashicorp/go-multierror"
-
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/loginattempt"
@@ -50,7 +48,7 @@ func (c *Password) AuthenticatePassword(ctx context.Context, r *authn.Request, u
 	var clientErrs error
 	for _, pwClient := range c.clients {
 		identity, clientErr := pwClient.AuthenticatePassword(ctx, r, username, password)
-		clientErrs = multierror.Append(clientErrs, clientErr)
+		clientErrs = errors.Join(clientErrs, clientErr)
 		// we always try next client on any error
 		if clientErr != nil {
 			c.log.FromContext(ctx).Debug("Failed to authenticate password identity", "client", pwClient, "error", clientErr)

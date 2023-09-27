@@ -21,7 +21,6 @@ type RuleEditorProps = GrafanaRouteComponentProps<{ id?: string }>;
 const defaultPageNav: Partial<NavModelItem> = {
   icon: 'bell',
   id: 'alert-rule-view',
-  breadcrumbs: [{ title: 'Alert rules', url: 'alerting/list' }],
 };
 
 const getPageNav = (state: 'edit' | 'add') => {
@@ -65,13 +64,13 @@ const RuleEditor = ({ match }: RuleEditorProps) => {
     }
 
     if (identifier) {
-      return <ExistingRuleEditor key={id} identifier={identifier} />;
+      return <ExistingRuleEditor key={id} identifier={identifier} id={id} />;
     }
 
     if (copyFromIdentifier) {
       return <CloneRuleEditor sourceRuleId={copyFromIdentifier} />;
     }
-
+    // new alert rule
     return <AlertRuleForm />;
   }, [canCreateCloudRules, canCreateGrafanaRules, canEditRules, copyFromIdentifier, id, identifier, loading]);
 

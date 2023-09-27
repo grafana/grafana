@@ -17,6 +17,20 @@ export const ROW_MARKER_NUMBER = 'number';
 export const DEFAULT_CONTEXT_MENU = { isContextMenuOpen: false };
 export const DEFAULT_RENAME_INPUT_DATA = { isInputOpen: false };
 
+export const INTERACTION_EVENT_NAME = 'datagrid_panel';
+export const INTERACTION_ITEM = {
+  EDIT_CELL: 'edit_cell',
+  GRID_SELECTED: 'grid_selected',
+  APPEND_ROW: 'append_row',
+  APPEND_COLUMN: 'append_column',
+  DELETE_BTN_PRESSED: 'delete_btn_pressed',
+  COLUMN_RESIZE: 'column_resize',
+  COLUMN_REORDER: 'column_reorder',
+  ROW_REORDER: 'row_reorder',
+  CONTEXT_MENU_ACTION: 'context_menu_action',
+  HEADER_MENU_ACTION: 'header_menu_action',
+};
+
 export const EMPTY_DF = {
   name: 'A',
   fields: [],

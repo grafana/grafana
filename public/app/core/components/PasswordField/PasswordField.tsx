@@ -27,14 +27,13 @@ export const PasswordField = React.forwardRef<HTMLInputElement, Props>(
         suffix={
           <IconButton
             name={showPassword ? 'eye-slash' : 'eye'}
-            type="button"
             aria-controls={id}
             role="switch"
             aria-checked={showPassword}
-            aria-label="Show password"
             onClick={() => {
               setShowPassword(!showPassword);
             }}
+            tooltip={showPassword ? 'Hide password' : 'Show password'}
           />
         }
       />

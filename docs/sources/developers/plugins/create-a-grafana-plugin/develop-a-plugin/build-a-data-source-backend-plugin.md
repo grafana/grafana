@@ -100,6 +100,16 @@ You now have a new data source instance of your plugin that is ready to use in a
 
 #### Grafana doesn't load my plugin
 
+Ensure that Grafana has been started in development mode. If you are running Grafana from source, you'll need to add the following line to your `conf/custom.ini` file (if you don't have one already, go ahead and create this file before proceeding):
+
+```ini
+app_mode = development
+```
+
+You can then start Grafana in development mode by running `make run & make run-frontend` in the Grafana repository root.
+
+If you are running Grafana from a binary or inside a Docker container, you can start it in development mode by setting the environment variable `GF_DEFAULT_APP_MODE` to `development`.
+
 By default, Grafana requires backend plugins to be signed. To load unsigned backend plugins, you need to
 configure Grafana to [allow unsigned plugins](/docs/grafana/latest/plugins/plugin-signature-verification/#allow-unsigned-plugins).
 For more information, refer to [Plugin signature verification](/docs/grafana/latest/plugins/plugin-signature-verification/#backend-plugins).
@@ -129,7 +139,7 @@ In the next step we will look at the query endpoint!
 
 ## Implement data queries
 
-We begin by opening the file `/pkg/plugin/plugin.go`. In this file you will see the `SampleDatasource` struct which implements the [backend.QueryDataHandler](https://pkg.go.dev/github.com/grafana/grafana-plugin-sdk-go/backend?tab=doc#QueryDataHandler) interface. The `QueryData` method on this struct is where the data fetching happens for a data source plugin.
+We begin by opening the file `/pkg/plugin/datasource.go`. In this file you will see the `SampleDatasource` struct which implements the [backend.QueryDataHandler](https://pkg.go.dev/github.com/grafana/grafana-plugin-sdk-go/backend?tab=doc#QueryDataHandler) interface. The `QueryData` method on this struct is where the data fetching happens for a data source plugin.
 
 Each request contains multiple queries to reduce traffic between Grafana and plugins. So you need to loop over the slice of queries, process each query, and then return the results of all queries.
 
@@ -147,7 +157,7 @@ When editing a data source in Grafana's UI, you can **Save & Test** to verify th
 
 In this sample data source, there is a 50% chance that the health check will be successful. Make sure to return appropriate error messages to the users, informing them about what is misconfigured in the data source.
 
-Open `/pkg/plugin/plugin.go`. In this file you'll see that the `SampleDatasource` struct also implements the [backend.CheckHealthHandler](https://pkg.go.dev/github.com/grafana/grafana-plugin-sdk-go/backend?tab=doc#CheckHealthHandler) interface. Navigate to the `CheckHealth` method to see how the health check for this sample plugin is implemented.
+Open `/pkg/plugin/datasource.go`. In this file you'll see that the `SampleDatasource` struct also implements the [backend.CheckHealthHandler](https://pkg.go.dev/github.com/grafana/grafana-plugin-sdk-go/backend?tab=doc#CheckHealthHandler) interface. Navigate to the `CheckHealth` method to see how the health check for this sample plugin is implemented.
 
 ## Add authentication
 

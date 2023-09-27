@@ -4,17 +4,13 @@ import React from 'react';
 import { stylesFactory } from '../../themes';
 import { Icon } from '../Icon/Icon';
 
-const getStyles = stylesFactory((size: number, inline: boolean) => {
-  return {
-    wrapper: css`
-      font-size: ${size}px;
-      ${inline
-        ? css`
-            display: inline-block;
-          `
-        : ''}
-    `,
-  };
+const getStyles = stylesFactory((size: number | string, inline: boolean) => {
+  return css([
+    {
+      fontSize: typeof size === 'string' ? size : `${size}px`,
+    },
+    inline && { display: 'inline-block' },
+  ]);
 });
 
 export type Props = {
@@ -22,7 +18,7 @@ export type Props = {
   style?: React.CSSProperties;
   iconClassName?: string;
   inline?: boolean;
-  size?: number;
+  size?: number | string;
 };
 
 /**
@@ -31,8 +27,8 @@ export type Props = {
 export const Spinner = ({ className, inline = false, iconClassName, style, size = 16 }: Props) => {
   const styles = getStyles(size, inline);
   return (
-    <div data-testid="Spinner" style={style} className={cx(styles.wrapper, className)}>
-      <Icon className={cx('fa-spin', iconClassName)} name="fa fa-spinner" />
+    <div data-testid="Spinner" style={style} className={cx(styles, className)}>
+      <Icon className={cx('fa-spin', iconClassName)} name="fa fa-spinner" aria-label="loading spinner" />
     </div>
   );
 };

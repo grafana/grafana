@@ -23,4 +23,5 @@ type Service interface {
 	GetUsageReport(context.Context) (Report, error)
 	RegisterMetricsFunc(MetricsFunc)
 	RegisterSendReportCallback(SendReportCallbackFunc)
+	SetReadyToReport(context.Context)
 }

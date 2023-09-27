@@ -29,11 +29,13 @@ export class MySqlDatasource extends SqlDatasource {
     const args = {
       getMeta: (identifier?: TableIdentifier) => this.fetchMeta(identifier),
     };
+
     this.sqlLanguageDefinition = {
       id: 'mysql',
       completionProvider: getSqlCompletionProvider(args),
       formatter: formatSQL,
     };
+
     return this.sqlLanguageDefinition;
   }
 
@@ -88,11 +90,12 @@ export class MySqlDatasource extends SqlDatasource {
     if (this.db !== undefined) {
       return this.db;
     }
+
     return {
       datasets: () => this.fetchDatasets(),
       tables: (dataset?: string) => this.fetchTables(dataset),
       fields: (query: SQLQuery) => this.fetchFields(query),
-      validateQuery: (query: SQLQuery, range?: TimeRange) =>
+      validateQuery: (query: SQLQuery, _range?: TimeRange) =>
         Promise.resolve({ query, error: '', isError: false, isValid: true }),
       dsID: () => this.id,
       toRawSql,

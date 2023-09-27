@@ -1,11 +1,11 @@
-import { FieldType, MutableDataFrame } from '@grafana/data';
+import { FieldType, createDataFrame } from '@grafana/data';
 
 import { applyNullInsertThreshold } from './nullInsertThreshold';
 import { nullToValue } from './nullToValue';
 
 describe('nullToValue Transformer', () => {
   test('should change all nulls to configured zero value', () => {
-    const df = new MutableDataFrame({
+    const df = createDataFrame({
       refId: 'A',
       fields: [
         { name: 'Time', type: FieldType.time, values: [1, 3, 10] },
@@ -32,7 +32,7 @@ describe('nullToValue Transformer', () => {
   });
 
   test('should change all nulls to configured positive value', () => {
-    const df = new MutableDataFrame({
+    const df = createDataFrame({
       refId: 'A',
       fields: [
         { name: 'Time', type: FieldType.time, values: [5, 7, 11] },
@@ -59,7 +59,7 @@ describe('nullToValue Transformer', () => {
   });
 
   test('should change all nulls to configured negative value', () => {
-    const df = new MutableDataFrame({
+    const df = createDataFrame({
       refId: 'A',
       fields: [
         { name: 'Time', type: FieldType.time, config: { interval: 1 }, values: [1, 3, 10] },
@@ -76,7 +76,7 @@ describe('nullToValue Transformer', () => {
   });
 
   test('should have no effect without nulls', () => {
-    const df = new MutableDataFrame({
+    const df = createDataFrame({
       refId: 'A',
       fields: [
         { name: 'Time', type: FieldType.time, config: { interval: 1 }, values: [1, 2, 3] },

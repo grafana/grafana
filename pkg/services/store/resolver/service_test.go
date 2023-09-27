@@ -8,6 +8,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	fakeDatasources "github.com/grafana/grafana/pkg/services/datasources/fakes"
 	"github.com/grafana/grafana/pkg/services/store/entity"
@@ -43,7 +44,7 @@ func TestResolver(t *testing.T) {
 	p1.ID = "influx"
 	p2.ID = "heatmap"
 	p3.ID = "xyz"
-	pluginStore := plugins.FakePluginStore{
+	pluginStore := &fakes.FakePluginStore{
 		PluginList: []plugins.PluginDTO{p1, p2, p3},
 	}
 	provider := ProvideEntityReferenceResolver(ds, pluginStore)

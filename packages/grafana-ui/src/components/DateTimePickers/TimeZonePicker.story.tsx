@@ -1,13 +1,13 @@
 import { action } from '@storybook/addon-actions';
 import { useArgs } from '@storybook/client-api';
-import { ComponentMeta, ComponentStory } from '@storybook/react';
+import { Meta, StoryFn } from '@storybook/react';
 import React from 'react';
 
 import { TimeZonePicker } from '@grafana/ui';
 
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 
-const meta: ComponentMeta<typeof TimeZonePicker> = {
+const meta: Meta<typeof TimeZonePicker> = {
   title: 'Pickers and Editors/TimePickers/TimeZonePicker',
   component: TimeZonePicker,
   decorators: [withCenteredStory],
@@ -28,7 +28,7 @@ const meta: ComponentMeta<typeof TimeZonePicker> = {
   },
 };
 
-export const Basic: ComponentStory<typeof TimeZonePicker> = (args) => {
+export const Basic: StoryFn<typeof TimeZonePicker> = (args) => {
   const [, updateArgs] = useArgs();
   return (
     <TimeZonePicker

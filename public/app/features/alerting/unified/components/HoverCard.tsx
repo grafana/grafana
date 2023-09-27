@@ -57,6 +57,8 @@ export const HoverCard = ({
                 wrapperClassName={classnames(styles.popover(arrow ? 1.25 : 0), wrapperClassName)}
                 onMouseLeave={hidePopper}
                 onMouseEnter={showPopper}
+                onFocus={showPopper}
+                onBlur={hidePopper}
                 referenceElement={popoverRef.current}
                 renderArrow={
                   arrow
@@ -70,6 +72,8 @@ export const HoverCard = ({
               ref: popoverRef,
               onMouseEnter: showPopper,
               onMouseLeave: hidePopper,
+              onFocus: showPopper,
+              onBlur: hidePopper,
             })}
           </>
         );

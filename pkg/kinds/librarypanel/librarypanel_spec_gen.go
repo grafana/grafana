@@ -42,7 +42,7 @@ type Spec struct {
 
 	// TODO: should be the same panel schema defined in dashboard
 	// Typescript: Omit<Panel, 'gridPos' | 'id' | 'libraryPanel'>;
-	Model map[string]interface{} `json:"model"`
+	Model map[string]any `json:"model"`
 
 	// Panel name (also saved in the model)
 	Name string `json:"name"`

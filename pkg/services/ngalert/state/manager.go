@@ -282,6 +282,27 @@ func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRu
 	// Add the instance to the log context to help correlate log lines for a state
 	logger = logger.New("instance", result.Instance)
 
+	// if the current state is Error but the result is different, then we need o clean up the extra labels
+	// that were added after the state key was calculated
+	// https://github.com/grafana/grafana/blob/1df4d332c982dc5e394201bb2ef35b442727ce63/pkg/services/ngalert/state/state.go#L298-L311
+	// Usually, it happens in the case of classic conditions when the evalResult does not have labels.
+	//
+	// This is temporary change to make sure that the labels are not persistent in the state after it was in Error state
+	// TODO yuri. Remove it in https://github.com/grafana/grafana/pull/68142
+	if currentState.State == eval.Error && result.State != eval.Error {
+		// This is possible because state was updated after the CacheID was calculated.
+		_, curOk := currentState.Labels["ref_id"]
+		_, resOk := result.Instance["ref_id"]
+		if curOk && !resOk {
+			delete(currentState.Labels, "ref_id")
+		}
+		_, curOk = currentState.Labels["datasource_uid"]
+		_, resOk = result.Instance["datasource_uid"]
+		if curOk && !resOk {
+			delete(currentState.Labels, "datasource_uid")
+		}
+	}
+
 	switch result.State {
 	case eval.Normal:
 		logger.Debug("Setting next state", "handler", "resultNormal")

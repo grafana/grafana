@@ -7,6 +7,7 @@ import {
   Bool,
   By,
   ConvOp,
+  Decolorize,
   Filter,
   FilterOp,
   Grouping,
@@ -173,6 +174,11 @@ export function handleExpression(expr: string, node: SyntaxNode, context: Contex
         context.errors.push(createNotSupportedError(expr, node, error));
       }
 
+      break;
+    }
+
+    case Decolorize: {
+      visQuery.operations.push(getDecolorize());
       break;
     }
 
@@ -368,6 +374,15 @@ function getLabelFormat(expr: string, node: SyntaxNode): QueryBuilderOperation {
   };
 }
 
+function getDecolorize(): QueryBuilderOperation {
+  const id = LokiOperationId.Decolorize;
+
+  return {
+    id,
+    params: [],
+  };
+}
+
 function handleUnwrapExpr(
   expr: string,
   node: SyntaxNode,
@@ -407,6 +422,7 @@ function handleUnwrapExpr(
 
   return {};
 }
+
 function handleRangeAggregation(expr: string, node: SyntaxNode, context: Context) {
   const nameNode = node.getChild(RangeOp);
   const funcName = getString(expr, nameNode);
@@ -574,7 +590,7 @@ function isIntervalVariableError(node: SyntaxNode) {
   return node?.parent?.type.id === Range;
 }
 
-function handleQuotes(string: string) {
+export function handleQuotes(string: string) {
   if (string[0] === `"` && string[string.length - 1] === `"`) {
     return string
       .substring(1, string.length - 1)

@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { useStyles2 } from '@grafana/ui';
+import { useStyles2, useTheme2 } from '@grafana/ui';
 
 const title = { fontWeight: 500, fontSize: '26px', lineHeight: '123%' };
 
@@ -77,6 +77,7 @@ interface CircleProps {
 }
 
 export const Circle = ({ size, style, children }: React.PropsWithChildren<CircleProps>) => {
+  const theme = useTheme2();
   return (
     <div
       style={{
@@ -85,7 +86,7 @@ export const Circle = ({ size, style, children }: React.PropsWithChildren<Circle
         position: 'absolute',
         bottom: 0,
         right: 0,
-        borderRadius: '50%',
+        borderRadius: theme.shape.radius.circle,
         ...style,
       }}
     >

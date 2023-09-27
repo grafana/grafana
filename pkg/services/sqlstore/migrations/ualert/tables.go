@@ -24,6 +24,7 @@ func AddTablesMigrations(mg *migrator.Migrator) {
 	mg.AddMigration("add last_applied column to alert_configuration_history", migrator.NewAddColumnMigration(migrator.Table{Name: "alert_configuration_history"}, &migrator.Column{
 		Name: "last_applied", Type: migrator.DB_Int, Nullable: false, Default: "0",
 	}))
+	// End of migration log, add new migrations above this line.
 }
 
 // historicalTableMigrations contains those migrations that existed prior to creating the improved messaging around migration immutability.

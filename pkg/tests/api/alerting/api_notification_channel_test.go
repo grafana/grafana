@@ -29,6 +29,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/expr"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -156,6 +157,187 @@ func TestIntegrationTestReceivers(t *testing.T) {
 
 		require.Len(t, mockEmails.emails, 1)
 		require.Equal(t, []string{"example@email.com"}, mockEmails.emails[0].To)
+	})
+
+	t.Run("assert working receiver with new secure settings returns OK", func(t *testing.T) {
+		// Setup Grafana and its Database
+		dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
+			DisableLegacyAlerting: true,
+			EnableUnifiedAlerting: true,
+			AppModeProduction:     true,
+		})
+
+		grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
+
+		createUser(t, env.SQLStore, user.CreateUserCommand{
+			DefaultOrgRole: string(org.RoleEditor),
+			Login:          "grafana",
+			Password:       "password",
+		})
+
+		mockChannel := newMockNotificationChannel(t, grafanaListedAddr)
+		amConfig := createAlertmanagerConfig(`{
+		"receivers": [{
+			"name":"receiver-1",
+			"grafana_managed_receiver_configs": [
+				{
+					"uid": "",
+					"name": "receiver-1",
+					"type": "slack",
+					"disableResolveMessage": false,
+					"settings": {},
+					"secureSettings": {"url": "http://CHANNEL_ADDR/slack_recv1/slack_test_without_token"}
+				}
+			]
+		}]
+	}`, mockChannel.server.Addr)
+
+		// Set up responses
+		mockChannel.responses["slack_recv1"] = `{"ok": true}`
+
+		testReceiversURL := fmt.Sprintf("http://grafana:password@%s/api/alertmanager/grafana/config/api/v1/receivers/test", grafanaListedAddr)
+		// nolint
+		resp := postRequest(t, testReceiversURL, amConfig, http.StatusOK)
+		t.Cleanup(func() {
+			err := resp.Body.Close()
+			require.NoError(t, err)
+		})
+
+		b, err := io.ReadAll(resp.Body)
+		require.NoError(t, err)
+
+		var result apimodels.TestReceiversResult
+		require.NoError(t, json.Unmarshal(b, &result))
+		require.Len(t, result.Receivers, 1)
+		require.Len(t, result.Receivers[0].Configs, 1)
+
+		expectedJSON := fmt.Sprintf(`{
+		"alert": {
+			"annotations": {
+				"summary": "Notification test",
+				"__value_string__": "[ metric='foo' labels={instance=bar} value=10 ]"
+			},
+			"labels": {
+				"alertname": "TestAlert",
+				"instance": "Grafana"
+			}
+		},
+		"receivers": [{
+			"name":"receiver-1",
+			"grafana_managed_receiver_configs": [
+				{
+					"name": "receiver-1",
+					"uid": "%s",
+					"status": "ok"
+				}
+			]
+		}],
+		"notified_at": "%s"
+	}`,
+			result.Receivers[0].Configs[0].UID,
+			result.NotifiedAt.Format(time.RFC3339Nano))
+		require.JSONEq(t, expectedJSON, string(b))
+	})
+
+	t.Run("assert working receiver with existing secure settings returns OK", func(t *testing.T) {
+		// Setup Grafana and its Database
+		dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
+			DisableLegacyAlerting: true,
+			EnableUnifiedAlerting: true,
+			AppModeProduction:     true,
+		})
+
+		grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
+
+		createUser(t, env.SQLStore, user.CreateUserCommand{
+			DefaultOrgRole: string(org.RoleEditor),
+			Login:          "grafana",
+			Password:       "password",
+		})
+
+		mockChannel := newMockNotificationChannel(t, grafanaListedAddr)
+		amConfig := createAlertmanagerConfig(`{
+			"alertmanager_config": {
+				"route": {
+      				"receiver": "receiver-1"
+				},
+				"receivers": [{
+					"name":"receiver-1",
+					"grafana_managed_receiver_configs": [
+						{
+							"uid": "",
+							"name": "receiver-1",
+							"type": "slack",
+							"disableResolveMessage": false,
+							"settings": {},
+							"secureSettings": {"url": "http://CHANNEL_ADDR/slack_recv1/slack_test_without_token"}
+						}
+					]
+				}]
+			}
+		}`, mockChannel.server.Addr)
+
+		// Set up responses
+		mockChannel.responses["slack_recv1"] = `{"ok": true}`
+
+		// Post config
+		u := fmt.Sprintf("http://grafana:password@%s/api/alertmanager/grafana/config/api/v1/alerts", grafanaListedAddr)
+		_ = postRequest(t, u, amConfig, http.StatusAccepted) // nolint
+
+		// Get am config with UID and without secureSettings
+		resp := getRequest(t, u, http.StatusOK)
+		b, err := io.ReadAll(resp.Body)
+		require.NoError(t, err)
+		config, err := notifier.Load(b)
+		require.NoError(t, err)
+		body, err := json.Marshal(apimodels.TestReceiversConfigBodyParams{
+			Receivers: config.AlertmanagerConfig.Receivers,
+		})
+		require.NoError(t, err)
+
+		// Test using the am config without secureSettings
+		testReceiversURL := fmt.Sprintf("http://grafana:password@%s/api/alertmanager/grafana/config/api/v1/receivers/test", grafanaListedAddr)
+		// nolint
+		resp = postRequest(t, testReceiversURL, string(body), http.StatusOK)
+		t.Cleanup(func() {
+			err := resp.Body.Close()
+			require.NoError(t, err)
+		})
+
+		b, err = io.ReadAll(resp.Body)
+		require.NoError(t, err)
+
+		var result apimodels.TestReceiversResult
+		require.NoError(t, json.Unmarshal(b, &result))
+		require.Len(t, result.Receivers, 1)
+		require.Len(t, result.Receivers[0].Configs, 1)
+
+		expectedJSON := fmt.Sprintf(`{
+		"alert": {
+			"annotations": {
+				"summary": "Notification test",
+				"__value_string__": "[ metric='foo' labels={instance=bar} value=10 ]"
+			},
+			"labels": {
+				"alertname": "TestAlert",
+				"instance": "Grafana"
+			}
+		},
+		"receivers": [{
+			"name":"receiver-1",
+			"grafana_managed_receiver_configs": [
+				{
+					"name": "receiver-1",
+					"uid": "%s",
+					"status": "ok"
+				}
+			]
+		}],
+		"notified_at": "%s"
+	}`,
+			result.Receivers[0].Configs[0].UID,
+			result.NotifiedAt.Format(time.RFC3339Nano))
+		require.JSONEq(t, expectedJSON, string(b))
 	})
 
 	t.Run("assert invalid receiver returns 400 Bad Request", func(t *testing.T) {
@@ -926,12 +1108,16 @@ func TestIntegrationNotificationChannels(t *testing.T) {
 	}
 }
 
+func createAlertmanagerConfig(config string, channelAddr string) string {
+	return strings.ReplaceAll(config, "CHANNEL_ADDR", channelAddr)
+}
+
 func getAlertmanagerConfig(channelAddr string) string {
-	return strings.ReplaceAll(alertmanagerConfig, "CHANNEL_ADDR", channelAddr)
+	return createAlertmanagerConfig(alertmanagerConfig, channelAddr)
 }
 
 func getExpAlertmanagerConfigFromAPI(channelAddr string) string {
-	return strings.ReplaceAll(expAlertmanagerConfigFromAPI, "CHANNEL_ADDR", channelAddr)
+	return createAlertmanagerConfig(expAlertmanagerConfigFromAPI, channelAddr)
 }
 
 // nonEmailAlertNames are name of alerts to be sent for non-email channels. This should be in sync with

@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
+	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -47,7 +48,7 @@ func setupTestEnvironment(t *testing.T, cfg *setting.Cfg, features *featuremgmt.
 
 	var pluginStore = pstore
 	if pluginStore == nil {
-		pluginStore = &plugins.FakePluginStore{}
+		pluginStore = &fakes.FakePluginStore{}
 	}
 
 	var pluginsSettings = psettings
@@ -218,14 +219,14 @@ func TestHTTPServer_GetFrontendSettings_apps(t *testing.T) {
 		{
 			desc: "disabled app with preload",
 			pluginStore: func() plugins.Store {
-				return &plugins.FakePluginStore{
+				return &fakes.FakePluginStore{
 					PluginList: []plugins.PluginDTO{
 						{
 							Module: fmt.Sprintf("/%s/module.js", "test-app"),
 							JSONData: plugins.JSONData{
 								ID:      "test-app",
 								Info:    plugins.Info{Version: "0.5.0"},
-								Type:    plugins.App,
+								Type:    plugins.TypeApp,
 								Preload: true,
 							},
 						},
@@ -249,16 +250,16 @@ func TestHTTPServer_GetFrontendSettings_apps(t *testing.T) {
 			},
 		},
 		{
-			desc: "enalbed app with preload",
+			desc: "enabled app with preload",
 			pluginStore: func() plugins.Store {
-				return &plugins.FakePluginStore{
+				return &fakes.FakePluginStore{
 					PluginList: []plugins.PluginDTO{
 						{
 							Module: fmt.Sprintf("/%s/module.js", "test-app"),
 							JSONData: plugins.JSONData{
 								ID:      "test-app",
 								Info:    plugins.Info{Version: "0.5.0"},
-								Type:    plugins.App,
+								Type:    plugins.TypeApp,
 								Preload: true,
 							},
 						},
@@ -277,6 +278,41 @@ func TestHTTPServer_GetFrontendSettings_apps(t *testing.T) {
 						Preload: true,
 						Path:    "/test-app/module.js",
 						Version: "0.5.0",
+					},
+				},
+			},
+		},
+		{
+			desc: "angular app plugin",
+			pluginStore: func() plugins.Store {
+				return &fakes.FakePluginStore{
+					PluginList: []plugins.PluginDTO{
+						{
+							Module: fmt.Sprintf("/%s/module.js", "test-app"),
+							JSONData: plugins.JSONData{
+								ID:      "test-app",
+								Info:    plugins.Info{Version: "0.5.0"},
+								Type:    plugins.TypeApp,
+								Preload: true,
+							},
+							AngularDetected: true,
+						},
+					},
+				}
+			},
+			pluginSettings: func() pluginsettings.Service {
+				return &pluginsettings.FakePluginSettings{
+					Plugins: newAppSettings("test-app", true),
+				}
+			},
+			expected: settings{
+				Apps: map[string]*plugins.AppDTO{
+					"test-app": {
+						ID:              "test-app",
+						Preload:         true,
+						Path:            "/test-app/module.js",
+						Version:         "0.5.0",
+						AngularDetected: true,
 					},
 				},
 			},

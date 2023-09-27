@@ -16,8 +16,6 @@ weight: 150
 
 # Upgrade Alerting
 
-> **Note:** Legacy alerting will be deprecated in a future release (v10).
-
 Grafana Alerting is enabled by default for new installations or existing installations whether or not legacy alerting is configured.
 
 {{% admonition type="note" %}}

@@ -32,7 +32,7 @@ const propsToDiff = ['rowHeight', 'colWidth', 'showValue', 'mergeValues', 'align
 export class TimelineChart extends React.Component<TimelineProps> {
   declare context: React.ContextType<typeof PanelContextRoot>;
   static contextType = PanelContextRoot;
-  panelContext: PanelContext = {} as PanelContext;
+  panelContext: PanelContext | undefined;
 
   getValueColor = (frameIdx: number, fieldIdx: number, value: unknown) => {
     const field = this.props.frames[frameIdx].fields[fieldIdx];
@@ -88,7 +88,11 @@ export class TimelineChart extends React.Component<TimelineProps> {
         {...this.props}
         fields={{
           x: (f) => f.type === FieldType.time,
-          y: (f) => f.type === FieldType.number || f.type === FieldType.boolean || f.type === FieldType.string,
+          y: (f) =>
+            f.type === FieldType.number ||
+            f.type === FieldType.boolean ||
+            f.type === FieldType.string ||
+            f.type === FieldType.enum,
         }}
         prepConfig={this.prepConfig}
         propsToDiff={propsToDiff}

@@ -377,6 +377,12 @@ func buildLogQuery(query models.HistoryQuery) (string, error) {
 	if query.RuleUID != "" {
 		logQL = fmt.Sprintf("%s | ruleUID=%q", logQL, query.RuleUID)
 	}
+	if query.DashboardUID != "" {
+		logQL = fmt.Sprintf("%s | dashboardUID=%q", logQL, query.DashboardUID)
+	}
+	if query.PanelID != 0 {
+		logQL = fmt.Sprintf("%s | panelID=%d", logQL, query.PanelID)
+	}
 
 	labelFilters := ""
 	labelKeys := make([]string, 0, len(query.Labels))
@@ -394,5 +400,8 @@ func buildLogQuery(query models.HistoryQuery) (string, error) {
 }
 
 func queryHasLogFilters(query models.HistoryQuery) bool {
-	return query.RuleUID != "" || len(query.Labels) > 0
+	return query.RuleUID != "" ||
+		query.DashboardUID != "" ||
+		query.PanelID != 0 ||
+		len(query.Labels) > 0
 }

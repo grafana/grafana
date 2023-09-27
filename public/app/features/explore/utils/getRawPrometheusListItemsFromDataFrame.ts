@@ -38,11 +38,17 @@ export const getRawPrometheusListItemsFromDataFrame = (dataFrame: DataFrame): in
       if (label !== 'Time') {
         // Initialize the objects
         if (typeof field?.display === 'function') {
-          const stringValue = formattedValueToString(field?.display(field.values[i]));
-          if (stringValue) {
-            formattedMetric[label] = stringValue;
-          } else if (label.includes('Value #')) {
-            formattedMetric[label] = RawPrometheusListItemEmptyValue;
+          const value = field?.display(field.values[i]);
+          if (!isNaN(value.numeric)) {
+            formattedMetric[label] = value.numeric.toString(10);
+          } else {
+            const stringValue = formattedValueToString(value);
+
+            if (stringValue) {
+              formattedMetric[label] = stringValue;
+            } else if (label.includes('Value #')) {
+              formattedMetric[label] = RawPrometheusListItemEmptyValue;
+            }
           }
         } else {
           console.warn('Field display method is missing!');

@@ -9,7 +9,8 @@ import { TemplateSrv } from 'app/features/templating/template_srv';
 import { initialCustomVariableModelState } from '../../../../features/variables/custom/reducer';
 import { CustomVariableModel } from '../../../../features/variables/types';
 import CloudMonitoringDataSource from '../datasource';
-import { CloudMonitoringOptions, CloudMonitoringQuery } from '../types';
+import { CloudMonitoringQuery } from '../types/query';
+import { CloudMonitoringOptions } from '../types/types';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),

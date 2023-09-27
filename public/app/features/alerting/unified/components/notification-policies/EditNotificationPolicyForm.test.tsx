@@ -9,6 +9,7 @@ import { Button } from '@grafana/ui';
 import { TestProvider } from '../../../../../../test/helpers/TestProvider';
 import { RouteWithID } from '../../../../../plugins/datasource/alertmanager/types';
 import * as grafanaApp from '../../components/receivers/grafanaAppReceivers/grafanaApp';
+import { AlertmanagerProvider } from '../../state/AlertmanagerContext';
 import { FormAmRoute } from '../../types/amroutes';
 import { AmRouteReceiver } from '../receivers/grafanaAppReceivers/types';
 
@@ -76,6 +77,32 @@ describe('EditNotificationPolicyForm', function () {
     });
   });
 
+  it('should show an error if repeat interval is lower than group interval', async function () {
+    const user = userEvent.setup();
+
+    const onSubmit = jest.fn();
+    renderRouteForm(
+      {
+        id: '1',
+        receiver: 'default',
+      },
+      [{ value: 'default', label: 'Default' }],
+      onSubmit
+    );
+
+    await user.click(ui.overrideTimingsCheckbox.get());
+
+    await user.type(ui.groupWaitInput.get(), '5m25s');
+    await user.type(ui.groupIntervalInput.get(), '35m40s');
+    await user.type(ui.repeatIntervalInput.get(), '30m');
+
+    await user.click(ui.submitBtn.get());
+
+    expect(ui.error.getAll()).toHaveLength(1);
+    expect(ui.error.get().textContent).toBe('Repeat interval should be higher or equal to Group interval');
+    expect(onSubmit).not.toHaveBeenCalled();
+  });
+
   it('should allow resetting existing timing options', async function () {
     const user = userEvent.setup();
 
@@ -116,12 +143,14 @@ function renderRouteForm(
   onSubmit: (route: Partial<FormAmRoute>) => void = noop
 ) {
   render(
-    <AmRoutesExpandedForm
-      actionButtons={<Button type="submit">Update default policy</Button>}
-      onSubmit={onSubmit}
-      receivers={receivers}
-      route={route}
-    />,
+    <AlertmanagerProvider accessType="instance">
+      <AmRoutesExpandedForm
+        actionButtons={<Button type="submit">Update default policy</Button>}
+        onSubmit={onSubmit}
+        receivers={receivers}
+        route={route}
+      />
+    </AlertmanagerProvider>,
     { wrapper: TestProvider }
   );
 }

@@ -56,7 +56,7 @@ export function RefIDPicker({ value, data, onChange, placeholder }: Props) {
 
   const onFilterChange = useCallback(
     (v: SelectableValue<string>) => {
-      onChange(v.value!);
+      onChange(v?.value!);
     },
     [onChange]
   );

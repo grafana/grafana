@@ -8,13 +8,16 @@ import (
 	"strings"
 	"time"
 
+	alertingModels "github.com/grafana/alerting/models"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	prometheusModel "github.com/prometheus/common/model"
 
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/screenshot"
+	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 type State struct {
@@ -295,10 +298,11 @@ func resultError(state *State, rule *models.AlertRule, result eval.Result, logge
 				state.Annotations["Error"] = result.Error.Error()
 				// If the evaluation failed because a query returned an error then add the Ref ID and
 				// Datasource UID as labels
-				var queryError expr.QueryError
-				if errors.As(state.Error, &queryError) {
+				var utilError errutil.Error
+				if errors.As(state.Error, &utilError) &&
+					(errors.Is(state.Error, expr.QueryError) || errors.Is(state.Error, expr.ConversionError)) {
 					for _, next := range rule.Data {
-						if next.RefID == queryError.RefID {
+						if next.RefID == utilError.PublicPayload["refId"].(string) {
 							state.Labels["ref_id"] = next.RefID
 							state.Labels["datasource_uid"] = next.DatasourceUID
 							break
@@ -470,4 +474,18 @@ func FormatStateAndReason(state eval.State, reason string) string {
 		s += fmt.Sprintf(" (%v)", reason)
 	}
 	return s
+}
+
+// GetRuleExtraLabels returns a map of built-in labels that should be added to an alert before it is sent to the Alertmanager or its state is cached.
+func GetRuleExtraLabels(rule *models.AlertRule, folderTitle string, includeFolder bool) map[string]string {
+	extraLabels := make(map[string]string, 4)
+
+	extraLabels[alertingModels.NamespaceUIDLabel] = rule.NamespaceUID
+	extraLabels[prometheusModel.AlertNameLabel] = rule.Title
+	extraLabels[alertingModels.RuleUIDLabel] = rule.UID
+
+	if includeFolder {
+		extraLabels[models.FolderTitleLabel] = folderTitle
+	}
+	return extraLabels
 }

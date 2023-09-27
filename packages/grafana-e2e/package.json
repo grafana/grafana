@@ -2,7 +2,7 @@
   "author": "Grafana Labs",
   "license": "Apache-2.0",
   "name": "@grafana/e2e",
-  "version": "10.0.3",
+  "version": "10.1.2",
   "description": "Grafana End-to-End Test Library",
   "keywords": [
     "cli",
@@ -47,23 +47,23 @@
     "postpack": "mv package.json.bak package.json"
   },
   "devDependencies": {
-    "@rollup/plugin-node-resolve": "15.0.1",
+    "@rollup/plugin-node-resolve": "15.1.0",
     "@types/chrome-remote-interface": "0.31.9",
     "@types/lodash": "4.14.191",
-    "@types/node": "18.14.6",
+    "@types/node": "18.16.16",
     "@types/uuid": "9.0.1",
-    "esbuild": "0.16.17",
+    "esbuild": "0.18.6",
     "rollup": "2.79.1",
     "rollup-plugin-dts": "^5.0.0",
     "rollup-plugin-esbuild": "5.0.0",
     "rollup-plugin-node-externals": "^5.0.0",
-    "webpack": "5.76.0"
+    "webpack": "5.88.1"
   },
   "dependencies": {
-    "@babel/core": "7.20.5",
-    "@babel/preset-env": "7.20.2",
+    "@babel/core": "7.22.1",
+    "@babel/preset-env": "7.22.4",
     "@cypress/webpack-preprocessor": "5.17.0",
-    "@grafana/e2e-selectors": "10.0.3",
+    "@grafana/e2e-selectors": "10.1.2",
     "@grafana/tsconfig": "^1.2.0-rc1",
     "@mochajs/json-file-reporter": "^1.2.0",
     "babel-loader": "9.1.2",
@@ -77,10 +77,10 @@
     "lodash": "4.17.21",
     "mocha": "10.2.0",
     "resolve-bin": "1.0.1",
-    "rimraf": "4.4.0",
+    "rimraf": "5.0.1",
     "tracelib": "1.0.1",
     "ts-loader": "8.4.0",
-    "tslib": "2.5.0",
+    "tslib": "2.6.0",
     "typescript": "4.8.4",
     "uuid": "9.0.0",
     "yaml": "^2.0.0"

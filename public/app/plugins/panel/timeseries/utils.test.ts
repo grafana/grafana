@@ -1,4 +1,4 @@
-import { createTheme, FieldType, MutableDataFrame, toDataFrame } from '@grafana/data';
+import { createTheme, FieldType, createDataFrame, toDataFrame } from '@grafana/data';
 
 import { prepareGraphableFields } from './utils';
 
@@ -76,7 +76,7 @@ describe('prepare timeseries graph', () => {
   });
 
   it('will convert NaN and Infinty to nulls', () => {
-    const df = new MutableDataFrame({
+    const df = createDataFrame({
       fields: [
         { name: 'time', type: FieldType.time, values: [995, 9996, 9997, 9998, 9999] },
         { name: 'a', values: [-10, NaN, 10, -Infinity, +Infinity] },
@@ -97,7 +97,7 @@ describe('prepare timeseries graph', () => {
   });
 
   it('will insert nulls given an interval value', () => {
-    const df = new MutableDataFrame({
+    const df = createDataFrame({
       fields: [
         { name: 'time', type: FieldType.time, config: { interval: 1 }, values: [1, 3, 6] },
         { name: 'a', values: [1, 2, 3] },
@@ -121,7 +121,7 @@ describe('prepare timeseries graph', () => {
   });
 
   it('will insert and convert nulls to a configure "no value" value', () => {
-    const df = new MutableDataFrame({
+    const df = createDataFrame({
       fields: [
         { name: 'time', type: FieldType.time, config: { interval: 1 }, values: [1, 3, 6] },
         { name: 'a', config: { noValue: '20' }, values: [1, 2, 3] },

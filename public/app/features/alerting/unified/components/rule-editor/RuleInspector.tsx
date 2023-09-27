@@ -57,7 +57,7 @@ interface SubtitleProps {
   setActiveTab: (tab: string) => void;
 }
 
-const RuleInspectorSubtitle = ({ activeTab, setActiveTab }: SubtitleProps) => {
+export const RuleInspectorSubtitle = ({ activeTab, setActiveTab }: SubtitleProps) => {
   return (
     <TabsBar>
       {tabs.map((tab, index) => {
@@ -153,7 +153,7 @@ function rulerRuleToRuleFormValues(rulerRule: RulerRuleDTO): Partial<RuleFormVal
   return {};
 }
 
-const yamlTabStyle = (theme: GrafanaTheme2) => ({
+export const yamlTabStyle = (theme: GrafanaTheme2) => ({
   content: css`
     flex-grow: 1;
     height: 100%;
@@ -170,7 +170,7 @@ const yamlTabStyle = (theme: GrafanaTheme2) => ({
   `,
 });
 
-const drawerStyles = () => ({
+export const drawerStyles = () => ({
   subtitle: css`
     display: flex;
     align-items: center;

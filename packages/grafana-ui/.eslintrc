@@ -1,5 +1,6 @@
 {
   "rules": {
+    "@emotion/syntax-preference": [2, "object"],
     "no-restricted-imports": [
       "error",
       {

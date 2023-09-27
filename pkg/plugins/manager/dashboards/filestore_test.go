@@ -6,9 +6,11 @@ import (
 	"testing"
 	"testing/fstest"
 
-	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
 )
 
 func TestDashboardFileStore(t *testing.T) {
@@ -219,7 +221,7 @@ func setupPluginDashboardsForTest(t *testing.T) *FileStoreManager {
 	}
 
 	return &FileStoreManager{
-		pluginStore: &plugins.FakePluginStore{
+		pluginStore: &fakes.FakePluginStore{
 			PluginList: []plugins.PluginDTO{p1.ToDTO(), p2.ToDTO()},
 		},
 	}

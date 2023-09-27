@@ -1,15 +1,21 @@
-import { screen, waitFor } from '@testing-library/react';
+import { screen, waitFor, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
-import { act } from 'react-dom/test-utils';
 import { render } from 'test/redux-rtl';
 
-import { FieldType, LogRowContextQueryDirection, LogsSortOrder, MutableDataFrame } from '@grafana/data';
-import { dataFrameToLogsModel } from 'app/core/logsModel';
+import {
+  createDataFrame,
+  FieldType,
+  LogRowContextQueryDirection,
+  LogsSortOrder,
+  SplitOpenOptions,
+} from '@grafana/data';
+
+import { dataFrameToLogsModel } from '../../logsModel';
 
 import { LogRowContextModal } from './LogRowContextModal';
 
-const dfBefore = new MutableDataFrame({
+const dfBefore = createDataFrame({
   fields: [
     {
       name: 'time',
@@ -23,7 +29,7 @@ const dfBefore = new MutableDataFrame({
     },
   ],
 });
-const dfNow = new MutableDataFrame({
+const dfNow = createDataFrame({
   fields: [
     {
       name: 'time',
@@ -37,7 +43,7 @@ const dfNow = new MutableDataFrame({
     },
   ],
 });
-const dfAfter = new MutableDataFrame({
+const dfAfter = createDataFrame({
   fields: [
     {
       name: 'time',
@@ -51,25 +57,45 @@ const dfAfter = new MutableDataFrame({
     },
   ],
 });
+
+let uniqueRefIdCounter = 1;
+
 const getRowContext = jest.fn().mockImplementation(async (_, options) => {
+  uniqueRefIdCounter += 1;
+  const refId = `refid_${uniqueRefIdCounter}`;
   if (options.direction === LogRowContextQueryDirection.Forward) {
-    return { data: [dfBefore] };
+    return {
+      data: [
+        {
+          refId,
+          ...dfBefore,
+        },
+      ],
+    };
   } else {
-    return { data: [dfAfter] };
+    return {
+      data: [
+        {
+          refId,
+          ...dfAfter,
+        },
+      ],
+    };
   }
 });
-const getRowContextQuery = jest.fn().mockResolvedValue({ datasource: { uid: 'test-uid' } });
-
 const dispatchMock = jest.fn();
 jest.mock('app/types', () => ({
   ...jest.requireActual('app/types'),
   useDispatch: () => dispatchMock,
 }));
 
-const splitOpen = Symbol('splitOpen');
+const splitOpenSym = Symbol('splitOpen');
+const splitOpen = jest.fn().mockReturnValue(splitOpenSym);
 jest.mock('app/features/explore/state/main', () => ({
   ...jest.requireActual('app/features/explore/state/main'),
-  splitOpen: () => splitOpen,
+  splitOpen: (arg?: SplitOpenOptions) => {
+    return splitOpen(arg);
+  },
 }));
 
 const logs = dataFrameToLogsModel([dfNow]);
@@ -90,7 +116,14 @@ describe('LogRowContextModal', () => {
 
   it('should not render modal when it is closed', async () => {
     render(
-      <LogRowContextModal row={row} open={false} onClose={() => {}} getRowContext={getRowContext} timeZone={timeZone} />
+      <LogRowContextModal
+        row={row}
+        open={false}
+        onClose={() => {}}
+        getRowContext={getRowContext}
+        timeZone={timeZone}
+        logsSortOrder={LogsSortOrder.Descending}
+      />
     );
 
     await waitFor(() => expect(screen.queryByText('Log context')).not.toBeInTheDocument());
@@ -98,7 +131,14 @@ describe('LogRowContextModal', () => {
 
   it('should render modal when it is open', async () => {
     render(
-      <LogRowContextModal row={row} open={true} onClose={() => {}} getRowContext={getRowContext} timeZone={timeZone} />
+      <LogRowContextModal
+        row={row}
+        open={true}
+        onClose={() => {}}
+        getRowContext={getRowContext}
+        timeZone={timeZone}
+        logsSortOrder={LogsSortOrder.Descending}
+      />
     );
 
     await waitFor(() => expect(screen.queryByText('Log context')).toBeInTheDocument());
@@ -106,7 +146,14 @@ describe('LogRowContextModal', () => {
 
   it('should call getRowContext on open and change of row', async () => {
     render(
-      <LogRowContextModal row={row} open={false} onClose={() => {}} getRowContext={getRowContext} timeZone={timeZone} />
+      <LogRowContextModal
+        row={row}
+        open={false}
+        onClose={() => {}}
+        getRowContext={getRowContext}
+        timeZone={timeZone}
+        logsSortOrder={LogsSortOrder.Descending}
+      />
     );
 
     await waitFor(() => expect(getRowContext).not.toHaveBeenCalled());
@@ -114,7 +161,14 @@ describe('LogRowContextModal', () => {
 
   it('should call getRowContext on open', async () => {
     render(
-      <LogRowContextModal row={row} open={true} onClose={() => {}} getRowContext={getRowContext} timeZone={timeZone} />
+      <LogRowContextModal
+        row={row}
+        open={true}
+        onClose={() => {}}
+        getRowContext={getRowContext}
+        timeZone={timeZone}
+        logsSortOrder={LogsSortOrder.Descending}
+      />
     );
     await waitFor(() => expect(getRowContext).toHaveBeenCalledTimes(2));
   });
@@ -134,51 +188,108 @@ describe('LogRowContextModal', () => {
     await waitFor(() => expect(screen.getAllByText('foo123').length).toBe(3));
   });
 
-  it('should call getRowContext when limit changes', async () => {
-    render(
-      <LogRowContextModal row={row} open={true} onClose={() => {}} getRowContext={getRowContext} timeZone={timeZone} />
-    );
-    await waitFor(() => expect(getRowContext).toHaveBeenCalledTimes(2));
-
-    const fiftyLinesButton = screen.getByRole('button', {
-      name: /50 lines/i,
+  it('should render 3 lines containing `foo123` with the same ms timestamp', async () => {
+    const dfBeforeNs = createDataFrame({
+      fields: [
+        {
+          name: 'time',
+          type: FieldType.time,
+          values: [1, 1],
+        },
+        {
+          name: 'message',
+          type: FieldType.string,
+          values: ['foo123', 'foo123'],
+        },
+        {
+          name: 'tsNs',
+          type: FieldType.string,
+          values: ['1', '2'],
+        },
+      ],
     });
-    await userEvent.click(fiftyLinesButton);
-    const twentyLinesButton = screen.getByRole('menuitemradio', {
-      name: /20 lines/i,
+    const dfNowNs = createDataFrame({
+      fields: [
+        {
+          name: 'time',
+          type: FieldType.time,
+          values: [1],
+        },
+        {
+          name: 'message',
+          type: FieldType.string,
+          values: ['foo123'],
+        },
+        {
+          name: 'tsNs',
+          type: FieldType.string,
+          values: ['2'],
+        },
+      ],
     });
-    await userEvent.click(twentyLinesButton);
+    const dfAfterNs = createDataFrame({
+      fields: [
+        {
+          name: 'time',
+          type: FieldType.time,
+          values: [1, 1],
+        },
+        {
+          name: 'message',
+          type: FieldType.string,
+          values: ['foo123', 'foo123'],
+        },
+        {
+          name: 'tsNs',
+          type: FieldType.string,
+          values: ['2', '3'],
+        },
+      ],
+    });
 
-    await waitFor(() => expect(getRowContext).toHaveBeenCalledTimes(4));
-  });
+    let uniqueRefIdCounter = 1;
+    const logs = dataFrameToLogsModel([dfNowNs]);
+    const row = logs.rows[0];
+    const getRowContext = jest.fn().mockImplementation(async (_, options) => {
+      uniqueRefIdCounter += 1;
+      const refId = `refid_${uniqueRefIdCounter}`;
+      if (uniqueRefIdCounter === 2) {
+        return {
+          data: [
+            {
+              refId,
+              ...dfBeforeNs,
+            },
+          ],
+        };
+      } else if (uniqueRefIdCounter === 3) {
+        return {
+          data: [
+            {
+              refId,
+              ...dfAfterNs,
+            },
+          ],
+        };
+      }
+      return { data: [] };
+    });
 
-  it('should call getRowContextQuery when limit changes', async () => {
     render(
       <LogRowContextModal
         row={row}
         open={true}
         onClose={() => {}}
         getRowContext={getRowContext}
-        getRowContextQuery={getRowContextQuery}
         timeZone={timeZone}
+        logsSortOrder={LogsSortOrder.Descending}
       />
     );
 
-    // this will call it initially and in the first fetchResults
-    await waitFor(() => expect(getRowContextQuery).toHaveBeenCalledTimes(2));
-
-    const tenLinesButton = screen.getByRole('button', {
-      name: /50 lines/i,
+    // there need to be 3 lines with that message. 1 in before, 1 in now, 1 in after
+    await waitFor(() => {
+      expect(screen.getAllByText('foo123').length).toBe(3);
     });
-    await userEvent.click(tenLinesButton);
-    const twentyLinesButton = screen.getByRole('menuitemradio', {
-      name: /20 lines/i,
-    });
-    act(() => {
-      userEvent.click(twentyLinesButton);
-    });
-
-    await waitFor(() => expect(getRowContextQuery).toHaveBeenCalledTimes(3));
   });
 
   it('should show a split view button', async () => {
@@ -192,6 +303,7 @@ describe('LogRowContextModal', () => {
         getRowContext={getRowContext}
         getRowContextQuery={getRowContextQuery}
         timeZone={timeZone}
+        logsSortOrder={LogsSortOrder.Descending}
       />
     );
 
@@ -206,7 +318,14 @@ describe('LogRowContextModal', () => {
 
   it('should not show a split view button', async () => {
     render(
-      <LogRowContextModal row={row} open={true} onClose={() => {}} getRowContext={getRowContext} timeZone={timeZone} />
+      <LogRowContextModal
+        row={row}
+        open={true}
+        onClose={() => {}}
+        getRowContext={getRowContext}
+        timeZone={timeZone}
+        logsSortOrder={LogsSortOrder.Descending}
+      />
     );
 
     await waitFor(() => {
@@ -228,6 +347,7 @@ describe('LogRowContextModal', () => {
         getRowContext={getRowContext}
         getRowContextQuery={getRowContextQuery}
         timeZone={timeZone}
+        logsSortOrder={LogsSortOrder.Descending}
       />
     );
 
@@ -245,6 +365,7 @@ describe('LogRowContextModal', () => {
         getRowContext={getRowContext}
         getRowContextQuery={getRowContextQuery}
         timeZone={timeZone}
+        logsSortOrder={LogsSortOrder.Descending}
       />
     );
 
@@ -255,6 +376,43 @@ describe('LogRowContextModal', () => {
     await userEvent.click(splitViewButton);
 
     await waitFor(() => expect(onClose).toHaveBeenCalled());
+  });
+
+  it('should create correct splitOpen', async () => {
+    const queryObj = { datasource: { uid: 'test-uid' } };
+    const getRowContextQuery = jest.fn().mockResolvedValue(queryObj);
+    const onClose = jest.fn();
+
+    render(
+      <LogRowContextModal
+        row={row}
+        open={true}
+        onClose={onClose}
+        getRowContext={getRowContext}
+        getRowContextQuery={getRowContextQuery}
+        timeZone={timeZone}
+        logsSortOrder={LogsSortOrder.Descending}
+      />
+    );
+
+    const splitViewButton = await screen.findByRole('button', {
+      name: /open in split view/i,
+    });
+
+    await userEvent.click(splitViewButton);
+
+    await waitFor(() =>
+      expect(splitOpen).toHaveBeenCalledWith(
+        expect.objectContaining({
+          queries: [queryObj],
+          panelsState: {
+            logs: {
+              id: row.uid,
+            },
+          },
+        })
+      )
+    );
   });
 
   it('should dispatch splitOpen', async () => {
@@ -269,6 +427,7 @@ describe('LogRowContextModal', () => {
         getRowContext={getRowContext}
         getRowContextQuery={getRowContextQuery}
         timeZone={timeZone}
+        logsSortOrder={LogsSortOrder.Descending}
       />
     );
 
@@ -278,6 +437,48 @@ describe('LogRowContextModal', () => {
 
     await userEvent.click(splitViewButton);
 
-    await waitFor(() => expect(dispatchMock).toHaveBeenCalledWith(splitOpen));
+    await waitFor(() => expect(dispatchMock).toHaveBeenCalledWith(splitOpenSym));
+  });
+
+  it('should make the center row sticky on load', async () => {
+    render(
+      <LogRowContextModal
+        row={row}
+        open={true}
+        onClose={() => {}}
+        getRowContext={getRowContext}
+        timeZone={timeZone}
+        logsSortOrder={LogsSortOrder.Descending}
+      />
+    );
+
+    await waitFor(() => {
+      const rows = screen.getByTestId('entry-row');
+      expect(rows).toHaveStyle('position: sticky');
+    });
+  });
+
+  it('should make the center row unsticky on unPinClick', async () => {
+    render(
+      <LogRowContextModal
+        row={row}
+        open={true}
+        onClose={() => {}}
+        getRowContext={getRowContext}
+        timeZone={timeZone}
+        logsSortOrder={LogsSortOrder.Descending}
+      />
+    );
+
+    await waitFor(() => {
+      const rows = screen.getByTestId('entry-row');
+      expect(rows).toHaveStyle('position: sticky');
+    });
+    const unpinButtons = screen.getAllByLabelText('Unpin line')[0];
+    fireEvent.click(unpinButtons);
+    await waitFor(() => {
+      const rows = screen.getByTestId('entry-row');
+      expect(rows).not.toHaveStyle('position: sticky');
+    });
   });
 });

@@ -1,4 +1,11 @@
-import { FieldColorModeId, FieldDTO, FieldType, MutableDataFrame, NodeGraphDataFrameFieldNames } from '@grafana/data';
+import {
+  FieldColorModeId,
+  FieldDTO,
+  FieldType,
+  MutableDataFrame,
+  NodeGraphDataFrameFieldNames,
+  DataFrame,
+} from '@grafana/data';
 
 import { nodes, edges } from './testData/serviceMapResponse';
 
@@ -105,16 +112,17 @@ export function generateRandomNodes(count = 10) {
     meta: { preferredVisualisationType: 'nodeGraph' },
   });
 
-  const edgesFrame = new MutableDataFrame({
+  const edgesFrame: DataFrame = {
     name: 'edges',
     fields: [
-      { name: NodeGraphDataFrameFieldNames.id, values: [], type: FieldType.string },
-      { name: NodeGraphDataFrameFieldNames.source, values: [], type: FieldType.string },
-      { name: NodeGraphDataFrameFieldNames.target, values: [], type: FieldType.string },
-      { name: NodeGraphDataFrameFieldNames.mainStat, values: [], type: FieldType.number },
+      { name: NodeGraphDataFrameFieldNames.id, values: [], type: FieldType.string, config: {} },
+      { name: NodeGraphDataFrameFieldNames.source, values: [], type: FieldType.string, config: {} },
+      { name: NodeGraphDataFrameFieldNames.target, values: [], type: FieldType.string, config: {} },
+      { name: NodeGraphDataFrameFieldNames.mainStat, values: [], type: FieldType.number, config: {} },
     ],
     meta: { preferredVisualisationType: 'nodeGraph' },
-  });
+    length: 0,
+  };
 
   const edgesSet = new Set();
   for (const node of nodes) {
@@ -140,6 +148,7 @@ export function generateRandomNodes(count = 10) {
       edgesFrame.fields[3].values.push(Math.random() * 100);
     }
   }
+  edgesFrame.length = edgesFrame.fields[0].values.length;
 
   return [nodeFrame, edgesFrame];
 }

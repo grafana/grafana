@@ -127,7 +127,7 @@ func newAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store A
 		Nflog:              nflogOptions,
 	}
 
-	l := log.New("alertmanager", "org", orgID)
+	l := log.New("ngalert.notifier.alertmanager", orgID)
 	gam, err := alertingNotify.NewGrafanaAlertmanager("orgID", orgID, amcfg, peer, l, alertingNotify.NewGrafanaAlertmanagerMetrics(m.Registerer))
 	if err != nil {
 		return nil, err
@@ -303,7 +303,7 @@ func (am *Alertmanager) applyConfig(cfg *apimodels.PostableUserConfig, rawConfig
 	cfg.TemplateFiles["__default__.tmpl"] = alertingTemplates.DefaultTemplateString
 
 	// next, we need to make sure we persist the templates to disk.
-	paths, templatesChanged, err := PersistTemplates(cfg, am.Base.WorkingDirectory())
+	paths, templatesChanged, err := PersistTemplates(am.logger, cfg, am.Base.WorkingDirectory())
 	if err != nil {
 		return false, err
 	}
@@ -311,7 +311,7 @@ func (am *Alertmanager) applyConfig(cfg *apimodels.PostableUserConfig, rawConfig
 
 	// If neither the configuration nor templates have changed, we've got nothing to do.
 	if !amConfigChanged && !templatesChanged {
-		am.logger.Debug("neither config nor template have changed, skipping configuration sync.")
+		am.logger.Debug("Neither config nor template have changed, skipping configuration sync.")
 		return false, nil
 	}
 
@@ -359,7 +359,7 @@ func (am *Alertmanager) buildReceiverIntegrations(receiver *alertingNotify.APIRe
 		return nil, err
 	}
 	s := &sender{am.NotificationService}
-	img := newImageStore(am.Store)
+	img := newImageProvider(am.Store, log.New("ngalert.notifier.image-provider"))
 	integrations, err := alertingNotify.BuildReceiverIntegrations(
 		receiverCfg,
 		tmpl,

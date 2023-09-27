@@ -290,3 +290,4 @@ If that happens to you, chances are you've already set a lower limit and your sh
 - Read our [style guides](/contribute/style-guides).
 - Learn how to [Create a pull request](/contribute/create-pull-request.md).
 - Read about the [architecture](architecture).
+- Read through the [backend documentation](/contribute/backend/README.md).

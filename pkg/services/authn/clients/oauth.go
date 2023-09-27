@@ -116,7 +116,7 @@ func (c *OAuth) Authenticate(ctx context.Context, r *authn.Request) (*authn.Iden
 	}
 	token.TokenType = "Bearer"
 
-	userInfo, err := c.connector.UserInfo(c.connector.Client(clientCtx, token), token)
+	userInfo, err := c.connector.UserInfo(ctx, c.connector.Client(clientCtx, token), token)
 	if err != nil {
 		var sErr *social.Error
 		if errors.As(err, &sErr) {
@@ -146,15 +146,15 @@ func (c *OAuth) Authenticate(ctx context.Context, r *authn.Request) (*authn.Iden
 	}
 
 	return &authn.Identity{
-		Login:          userInfo.Login,
-		Name:           userInfo.Name,
-		Email:          userInfo.Email,
-		IsGrafanaAdmin: isGrafanaAdmin,
-		AuthModule:     c.moduleName,
-		AuthID:         userInfo.Id,
-		Groups:         userInfo.Groups,
-		OAuthToken:     token,
-		OrgRoles:       orgRoles,
+		Login:           userInfo.Login,
+		Name:            userInfo.Name,
+		Email:           userInfo.Email,
+		IsGrafanaAdmin:  isGrafanaAdmin,
+		AuthenticatedBy: c.moduleName,
+		AuthID:          userInfo.Id,
+		Groups:          userInfo.Groups,
+		OAuthToken:      token,
+		OrgRoles:        orgRoles,
 		ClientParams: authn.ClientParams{
 			SyncUser:        true,
 			SyncTeams:       true,

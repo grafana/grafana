@@ -29,7 +29,7 @@ export const AlertConditionIndicator = ({ enabled = false, error, warning, onSet
   if (!enabled) {
     return (
       <button type="button" className={styles.actionLink} onClick={() => onSetCondition && onSetCondition()}>
-        Make this the alert condition
+        Set as alert condition
       </button>
     );
   }

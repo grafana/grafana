@@ -2,7 +2,7 @@ package client
 
 import (
 	"context"
-	"fmt"
+	"errors"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -17,7 +17,7 @@ type Decorator struct {
 // NewDecorator creates a new plugins.client decorator.
 func NewDecorator(client plugins.Client, middlewares ...plugins.ClientMiddleware) (*Decorator, error) {
 	if client == nil {
-		return nil, fmt.Errorf("client cannot be nil")
+		return nil, errors.New("client cannot be nil")
 	}
 
 	return &Decorator{
@@ -28,7 +28,7 @@ func NewDecorator(client plugins.Client, middlewares ...plugins.ClientMiddleware
 
 func (d *Decorator) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	if req == nil {
-		return nil, fmt.Errorf("req cannot be nil")
+		return nil, errNilRequest
 	}
 
 	client := clientFromMiddlewares(d.middlewares, d.client)
@@ -37,11 +37,11 @@ func (d *Decorator) QueryData(ctx context.Context, req *backend.QueryDataRequest
 
 func (d *Decorator) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
 	if req == nil {
-		return fmt.Errorf("req cannot be nil")
+		return errNilRequest
 	}
 
 	if sender == nil {
-		return fmt.Errorf("sender cannot be nil")
+		return errors.New("sender cannot be nil")
 	}
 
 	client := clientFromMiddlewares(d.middlewares, d.client)
@@ -50,7 +50,7 @@ func (d *Decorator) CallResource(ctx context.Context, req *backend.CallResourceR
 
 func (d *Decorator) CollectMetrics(ctx context.Context, req *backend.CollectMetricsRequest) (*backend.CollectMetricsResult, error) {
 	if req == nil {
-		return nil, fmt.Errorf("req cannot be nil")
+		return nil, errNilRequest
 	}
 
 	client := clientFromMiddlewares(d.middlewares, d.client)
@@ -59,7 +59,7 @@ func (d *Decorator) CollectMetrics(ctx context.Context, req *backend.CollectMetr
 
 func (d *Decorator) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
 	if req == nil {
-		return nil, fmt.Errorf("req cannot be nil")
+		return nil, errNilRequest
 	}
 
 	client := clientFromMiddlewares(d.middlewares, d.client)
@@ -68,7 +68,7 @@ func (d *Decorator) CheckHealth(ctx context.Context, req *backend.CheckHealthReq
 
 func (d *Decorator) SubscribeStream(ctx context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
 	if req == nil {
-		return nil, fmt.Errorf("req cannot be nil")
+		return nil, errNilRequest
 	}
 
 	client := clientFromMiddlewares(d.middlewares, d.client)
@@ -77,7 +77,7 @@ func (d *Decorator) SubscribeStream(ctx context.Context, req *backend.SubscribeS
 
 func (d *Decorator) PublishStream(ctx context.Context, req *backend.PublishStreamRequest) (*backend.PublishStreamResponse, error) {
 	if req == nil {
-		return nil, fmt.Errorf("req cannot be nil")
+		return nil, errNilRequest
 	}
 
 	client := clientFromMiddlewares(d.middlewares, d.client)
@@ -86,11 +86,11 @@ func (d *Decorator) PublishStream(ctx context.Context, req *backend.PublishStrea
 
 func (d *Decorator) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
 	if req == nil {
-		return fmt.Errorf("req cannot be nil")
+		return errNilRequest
 	}
 
 	if sender == nil {
-		return fmt.Errorf("sender cannot be nil")
+		return errors.New("sender cannot be nil")
 	}
 
 	client := clientFromMiddlewares(d.middlewares, d.client)

@@ -20,6 +20,7 @@ export default class InfluxQueryModel {
     this.templateSrv = templateSrv;
     this.scopedVars = scopedVars;
 
+    target.policy = target.policy || 'default';
     target.resultFormat = target.resultFormat || 'time_series';
     target.orderByTime = target.orderByTime || 'ASC';
     target.tags = target.tags || [];
@@ -192,7 +193,13 @@ export default class InfluxQueryModel {
       measurement = this.templateSrv.replace(measurement, this.scopedVars, 'regex');
     }
 
-    return `"${policy}".${measurement}`;
+    if (policy !== 'default') {
+      policy = '"' + this.target.policy + '".';
+    } else {
+      policy = '';
+    }
+
+    return policy + measurement;
   }
 
   interpolateQueryStr(value: any[], variable: { multi: any; includeAll: any }, defaultFormatFn: any) {

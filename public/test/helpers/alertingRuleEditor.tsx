@@ -28,19 +28,19 @@ export const ui = {
     save: byRole('button', { name: 'Save rule' }),
     addAnnotation: byRole('button', { name: /Add info/ }),
     addLabel: byRole('button', { name: /Add label/ }),
-    // alert type buttons
-    grafanaManagedAlert: byRole('button', { name: /Grafana managed/ }),
-    lotexAlert: byRole('button', { name: /Mimir or Loki alert/ }),
-    lotexRecordingRule: byRole('button', { name: /Mimir or Loki recording rule/ }),
   },
 };
 
-export function renderRuleEditor(identifier?: string) {
-  locationService.push(identifier ? `/alerting/${identifier}/edit` : `/alerting/new`);
+export function renderRuleEditor(identifier?: string, recording = false) {
+  if (identifier) {
+    locationService.push(`/alerting/${identifier}/edit`);
+  } else {
+    locationService.push(`/alerting/new/${recording ? 'recording' : 'alerting'}`);
+  }
 
   return render(
     <TestProvider>
-      <Route path={['/alerting/new', '/alerting/:id/edit']} component={RuleEditor} />
+      <Route path={['/alerting/new/:type', '/alerting/:id/edit']} component={RuleEditor} />
     </TestProvider>
   );
 }

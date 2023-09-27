@@ -6,4 +6,5 @@ import { CurrentUserDTO } from '@grafana/data';
 export interface CurrentUserInternal extends CurrentUserDTO {
   helpFlags1: number;
   hasEditPermissionInFolders: boolean;
+  authenticatedBy: string;
 }

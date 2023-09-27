@@ -9,43 +9,48 @@ type FeatureToggles interface {
 	IsEnabled(flag string) bool
 }
 
-// FeatureFlagState indicates the quality level
-type FeatureFlagState int
+// FeatureFlagStage indicates the quality level
+type FeatureFlagStage int
 
 const (
-	// FeatureStateUnknown indicates that no state is specified
-	FeatureStateUnknown FeatureFlagState = iota
+	// FeatureStageUnknown indicates that no state is specified
+	FeatureStageUnknown FeatureFlagStage = iota
 
-	// FeatureStateAlpha the feature is in active development and may change at any time
-	FeatureStateAlpha
+	// FeatureStageExperimental -- Does this work for Grafana Labs?
+	FeatureStageExperimental
 
-	// FeatureStateBeta the feature is still in development, but settings will have migrations
-	FeatureStateBeta
+	// FeatureStagePrivatePreview -- Does this work for a limited number of customers?
+	FeatureStagePrivatePreview
 
-	// FeatureStateStable this is a stable feature
-	FeatureStateStable
+	// FeatureStagePublicPreview -- Does this work for most customers?
+	FeatureStagePublicPreview
 
-	// FeatureStateDeprecated the feature will be removed in the future
-	FeatureStateDeprecated
+	// FeatureStageGeneralAvailability -- Feature is available to all applicable customers
+	FeatureStageGeneralAvailability
+
+	// FeatureStageDeprecated the feature will be removed in the future
+	FeatureStageDeprecated
 )
 
-func (s FeatureFlagState) String() string {
+func (s FeatureFlagStage) String() string {
 	switch s {
-	case FeatureStateAlpha:
-		return "alpha"
-	case FeatureStateBeta:
-		return "beta"
-	case FeatureStateStable:
-		return "stable"
-	case FeatureStateDeprecated:
+	case FeatureStageExperimental:
+		return "experimental"
+	case FeatureStagePrivatePreview:
+		return "privatePreview"
+	case FeatureStagePublicPreview:
+		return "preview"
+	case FeatureStageGeneralAvailability:
+		return "GA"
+	case FeatureStageDeprecated:
 		return "deprecated"
-	case FeatureStateUnknown:
+	case FeatureStageUnknown:
 	}
 	return "unknown"
 }
 
 // MarshalJSON marshals the enum as a quoted json string
-func (s FeatureFlagState) MarshalJSON() ([]byte, error) {
+func (s FeatureFlagStage) MarshalJSON() ([]byte, error) {
 	buffer := bytes.NewBufferString(`"`)
 	buffer.WriteString(s.String())
 	buffer.WriteString(`"`)
@@ -53,7 +58,7 @@ func (s FeatureFlagState) MarshalJSON() ([]byte, error) {
 }
 
 // UnmarshalJSON unmarshals a quoted json string to the enum value
-func (s *FeatureFlagState) UnmarshalJSON(b []byte) error {
+func (s *FeatureFlagStage) UnmarshalJSON(b []byte) error {
 	var j string
 	err := json.Unmarshal(b, &j)
 	if err != nil {
@@ -62,19 +67,30 @@ func (s *FeatureFlagState) UnmarshalJSON(b []byte) error {
 
 	switch j {
 	case "alpha":
-		*s = FeatureStateAlpha
+		fallthrough
+	case "experimental":
+		*s = FeatureStageExperimental
+
+	case "privatePreview":
+		*s = FeatureStagePrivatePreview
 
 	case "beta":
-		*s = FeatureStateBeta
+		fallthrough
+	case "preview":
+		*s = FeatureStagePublicPreview
 
 	case "stable":
-		*s = FeatureStateStable
+		fallthrough
+	case "ga":
+		fallthrough
+	case "GA":
+		*s = FeatureStageGeneralAvailability
 
 	case "deprecated":
-		*s = FeatureStateDeprecated
+		*s = FeatureStageDeprecated
 
 	default:
-		*s = FeatureStateUnknown
+		*s = FeatureStageUnknown
 	}
 	return nil
 }
@@ -82,7 +98,7 @@ func (s *FeatureFlagState) UnmarshalJSON(b []byte) error {
 type FeatureFlag struct {
 	Name        string           `json:"name" yaml:"name"` // Unique name
 	Description string           `json:"description"`
-	State       FeatureFlagState `json:"state,omitempty"`
+	Stage       FeatureFlagStage `json:"stage,omitempty"`
 	DocsURL     string           `json:"docsURL,omitempty"`
 
 	// Owner person or team that owns this feature flag
@@ -96,4 +112,8 @@ type FeatureFlag struct {
 	RequiresRestart bool `json:"requiresRestart,omitempty"` // The server must be initialized with the value
 	RequiresLicense bool `json:"requiresLicense,omitempty"` // Must be enabled in the license
 	FrontendOnly    bool `json:"frontend,omitempty"`        // change is only seen in the frontend
+	HideFromDocs    bool `json:"hideFromDocs,omitempty"`    // don't add the values to docs
+
+	Enabled  bool `json:"enabled,omitempty"`
+	ReadOnly bool `json:"readOnly,omitempty"`
 }

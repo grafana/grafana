@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/hashicorp/go-multierror"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/attribute"
 
@@ -27,10 +26,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/ldap/service"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/loginattempt"
+	"github.com/grafana/grafana/pkg/services/oauthserver"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/rendering"
+	"github.com/grafana/grafana/pkg/services/signingkeys"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
@@ -56,13 +57,14 @@ func ProvideService(
 	apikeyService apikey.Service, userService user.Service,
 	jwtService auth.JWTVerifierService,
 	usageStats usagestats.Service,
-	anonSessionService anonymous.Service,
+	anonDeviceService anonymous.Service,
 	userProtectionService login.UserProtectionService,
 	loginAttempts loginattempt.Service, quotaService quota.Service,
 	authInfoService login.AuthInfoService, renderService rendering.Service,
 	features *featuremgmt.FeatureManager, oauthTokenService oauthtoken.OAuthTokenService,
 	socialService social.Service, cache *remotecache.RemoteCache,
 	ldapService service.LDAP, registerer prometheus.Registerer,
+	signingKeysService signingkeys.Service, oauthServer oauthserver.OAuth2Server,
 ) authn.Service {
 	s := &Service{
 		log:            log.New("authn.service"),
@@ -82,17 +84,17 @@ func ProvideService(
 	s.RegisterClient(clients.ProvideAPIKey(apikeyService, userService))
 
 	if cfg.LoginCookieName != "" {
-		s.RegisterClient(clients.ProvideSession(cfg, sessionService, features))
+		s.RegisterClient(clients.ProvideSession(cfg, sessionService, features, anonDeviceService))
 	}
 
 	if s.cfg.AnonymousEnabled {
-		s.RegisterClient(clients.ProvideAnonymous(cfg, orgService, anonSessionService))
+		s.RegisterClient(clients.ProvideAnonymous(cfg, orgService, anonDeviceService))
 	}
 
 	var proxyClients []authn.ProxyClient
 	var passwordClients []authn.PasswordClient
 	if s.cfg.LDAPAuthEnabled {
-		ldap := clients.ProvideLDAP(cfg, ldapService)
+		ldap := clients.ProvideLDAP(cfg, ldapService, userService, authInfoService)
 		proxyClients = append(proxyClients, ldap)
 		passwordClients = append(passwordClients, ldap)
 	}
@@ -128,6 +130,10 @@ func ProvideService(
 		s.RegisterClient(clients.ProvideJWT(jwtService, cfg))
 	}
 
+	if s.cfg.ExtendedJWTAuthEnabled && features.IsEnabled(featuremgmt.FlagExternalServiceAuth) {
+		s.RegisterClient(clients.ProvideExtendedJWT(userService, cfg, signingKeysService, oauthServer))
+	}
+
 	for name := range socialService.GetOAuthProviders() {
 		oauthCfg := socialService.GetOAuthInfoProvider(name)
 		if oauthCfg != nil && oauthCfg.Enabled {
@@ -136,7 +142,7 @@ func ProvideService(
 			connector, errConnector := socialService.GetConnector(name)
 			httpClient, errHTTPClient := socialService.GetOAuthHttpClient(name)
 			if errConnector != nil || errHTTPClient != nil {
-				s.log.Error("Failed to configure oauth client", "client", clientName, "err", multierror.Append(errConnector, errHTTPClient))
+				s.log.Error("Failed to configure oauth client", "client", clientName, "err", errors.Join(errConnector, errHTTPClient))
 			} else {
 				s.RegisterClient(clients.ProvideOAuth(clientName, cfg, oauthCfg, connector, httpClient))
 			}
@@ -149,10 +155,10 @@ func ProvideService(
 	s.RegisterPostAuthHook(userSyncService.SyncUserHook, 10)
 	s.RegisterPostAuthHook(userSyncService.EnableDisabledUserHook, 20)
 	s.RegisterPostAuthHook(orgUserSyncService.SyncOrgRolesHook, 30)
-	s.RegisterPostAuthHook(userSyncService.SyncLastSeenHook, 40)
+	s.RegisterPostAuthHook(userSyncService.SyncLastSeenHook, 120)
 
 	if features.IsEnabled(featuremgmt.FlagAccessTokenExpirationCheck) {
-		s.RegisterPostAuthHook(sync.ProvideOAuthTokenSync(oauthTokenService, sessionService).SyncOauthTokenHook, 60)
+		s.RegisterPostAuthHook(sync.ProvideOAuthTokenSync(oauthTokenService, sessionService, socialService).SyncOauthTokenHook, 60)
 	}
 
 	s.RegisterPostAuthHook(userSyncService.FetchSyncedUserHook, 100)
@@ -194,7 +200,7 @@ func (s *Service) Authenticate(ctx context.Context, r *authn.Request) (*authn.Id
 					return nil, err
 				}
 
-				authErr = multierror.Append(authErr, err)
+				authErr = errors.Join(authErr, err)
 				// try next
 				continue
 			}
@@ -264,6 +270,7 @@ func (s *Service) Login(ctx context.Context, client string, r *authn.Request) (i
 		return nil, authn.ErrClientNotConfigured.Errorf("client not configured: %s", client)
 	}
 
+	r.SetMeta(authn.MetaKeyIsLogin, "true")
 	identity, err = s.authenticate(ctx, c, r)
 	if err != nil {
 		s.metrics.failedLogin.WithLabelValues(client).Inc()

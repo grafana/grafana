@@ -19,7 +19,7 @@ export const AlertLabel = ({ labelKey, value, operator = '=', onRemoveLabel }: P
       {labelKey}
       {operator}
       {value}
-      {!!onRemoveLabel && <IconButton name="times" size="xs" onClick={onRemoveLabel} />}
+      {!!onRemoveLabel && <IconButton name="times" size="xs" onClick={onRemoveLabel} tooltip="Remove label" />}
     </div>
   );
 };

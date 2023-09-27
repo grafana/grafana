@@ -44,31 +44,31 @@ export function FieldLinkList({ links }: Props) {
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  wrapper: css`
-    flex-basis: 150px;
-    width: 100px;
-    margin-top: ${theme.spacing(1)};
-  `,
-  externalLinksHeading: css`
-    color: ${theme.colors.text.secondary};
-    font-weight: ${theme.typography.fontWeightRegular};
-    font-size: ${theme.typography.size.sm};
-    margin: 0;
-  `,
-  externalLink: css`
-    color: ${theme.colors.text.link};
-    font-weight: ${theme.typography.fontWeightRegular};
-    display: block;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+  wrapper: css({
+    flexBasis: '150px',
+    width: '100px',
+    marginTop: theme.spacing(1),
+  }),
+  externalLinksHeading: css({
+    color: theme.colors.text.secondary,
+    fontWeight: theme.typography.fontWeightRegular,
+    fontSize: theme.typography.size.sm,
+    margin: 0,
+  }),
+  externalLink: css({
+    color: theme.colors.text.link,
+    fontWeight: theme.typography.fontWeightRegular,
+    display: 'block',
+    whiteSpace: 'nowrap',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
 
-    &:hover {
-      text-decoration: underline;
-    }
+    '&:hover': {
+      textDecoration: 'underline',
+    },
 
-    div {
-      margin-right: ${theme.spacing(1)};
-    }
-  `,
+    div: {
+      marginRight: theme.spacing(1),
+    },
+  }),
 });

@@ -27,6 +27,7 @@ type redisConfig struct {
 	db       int
 	name     string
 	prefix   string
+	maxConns int
 }
 
 const (
@@ -44,6 +45,7 @@ const (
 	reasonRedisIssue        = "redis_issue"
 	heartbeatInterval       = time.Second * 5
 	heartbeatTimeout        = time.Minute
+	defaultPoolSize         = 5
 	// The duration we want to return the members if the network is down.
 	membersValidFor = time.Minute
 )
@@ -84,11 +86,17 @@ func newRedisPeer(cfg redisConfig, logger log.Logger, reg prometheus.Registerer,
 	if cfg.name != "" {
 		name = cfg.name
 	}
+	// Allow zero through, since it'll fall back to go-redis's default.
+	poolSize := defaultPoolSize
+	if cfg.maxConns >= 0 {
+		poolSize = cfg.maxConns
+	}
 	rdb := redis.NewClient(&redis.Options{
 		Addr:     cfg.addr,
 		Username: cfg.username,
 		Password: cfg.password,
 		DB:       cfg.db,
+		PoolSize: poolSize,
 	})
 	cmd := rdb.Ping(context.Background())
 	if cmd.Err() != nil {
@@ -379,7 +387,7 @@ func (p *redisPeer) WaitReady(ctx context.Context) error {
 	}
 }
 
-// Settle is mostly copied from uptream.
+// Settle is mostly copied from upstream.
 // Ref: https://github.com/prometheus/alertmanager/blob/2888649b473970400c0bd375fdd563486dc80481/cluster/cluster.go#L674-L712
 func (p *redisPeer) Settle(ctx context.Context, interval time.Duration) {
 	const NumOkayRequired = 3

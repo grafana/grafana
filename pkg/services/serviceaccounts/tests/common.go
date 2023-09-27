@@ -7,8 +7,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/apikey/apikeyimpl"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -103,16 +101,4 @@ func SetupApiKey(t *testing.T, sqlStore *sqlstore.SQLStore, testKey TestApiKey) 
 	}
 
 	return key
-}
-
-func SetupMockAccesscontrol(t *testing.T,
-	userpermissionsfunc func(c context.Context, siu *user.SignedInUser, opt accesscontrol.Options) ([]accesscontrol.Permission, error),
-	disableAccessControl bool) *accesscontrolmock.Mock {
-	t.Helper()
-	acmock := accesscontrolmock.New()
-	if disableAccessControl {
-		acmock = acmock.WithDisabled()
-	}
-	acmock.GetUserPermissionsFunc = userpermissionsfunc
-	return acmock
 }

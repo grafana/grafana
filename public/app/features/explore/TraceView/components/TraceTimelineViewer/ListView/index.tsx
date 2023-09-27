@@ -195,8 +195,7 @@ export default class ListView extends React.Component<TListViewProps> {
     this._htmlTopOffset = -1;
     this._windowScrollListenerAdded = false;
     // _htmlElm is only relevant if props.windowScroller is true
-    // eslint-disable-next-line
-    this._htmlElm = document.documentElement as any;
+    this._htmlElm = document.documentElement;
     this._wrapperElm = undefined;
     this._itemHolderElm = undefined;
   }
@@ -379,8 +378,7 @@ export default class ListView extends React.Component<TListViewProps> {
     const nodes = this._itemHolderElm.childNodes;
     const max = nodes.length;
     for (let i = 0; i < max; i++) {
-      // eslint-disable-next-line
-      const node: HTMLElement = nodes[i] as any;
+      const node = nodes[i] as HTMLElement;
       // use `.getAttribute(...)` instead of `.dataset` for jest / JSDOM
       const itemKey = node.getAttribute('data-item-key');
       if (!itemKey) {
@@ -492,7 +490,7 @@ export default class ListView extends React.Component<TListViewProps> {
       wrapperProps.style.overflowY = 'auto';
     }
     const scrollerStyle = {
-      position: 'relative' as 'relative',
+      position: 'relative' as const,
       height: this._yPositions.getEstimatedHeight(),
     };
     return (

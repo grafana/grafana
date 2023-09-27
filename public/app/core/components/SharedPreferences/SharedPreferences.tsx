@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import React, { PureComponent } from 'react';
 
-import { FeatureState, SelectableValue } from '@grafana/data';
+import { FeatureState, SelectableValue, getBuiltInThemes, ThemeRegistryItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, reportInteraction } from '@grafana/runtime';
 import { Preferences as UserPreferencesDTO } from '@grafana/schema/src/raw/preferences/x/preferences_types.gen';
@@ -11,7 +11,6 @@ import {
   FieldSet,
   Form,
   Label,
-  RadioButtonGroup,
   Select,
   stylesFactory,
   TimeZonePicker,
@@ -22,6 +21,7 @@ import { DashboardPicker } from 'app/core/components/Select/DashboardPicker';
 import { t, Trans } from 'app/core/internationalization';
 import { LANGUAGES } from 'app/core/internationalization/constants';
 import { PreferencesService } from 'app/core/services/PreferencesService';
+import { changeTheme } from 'app/core/services/theme';
 
 export interface Props {
   resourceUri: string;
@@ -49,8 +49,6 @@ function getLanguageOptions(): Array<SelectableValue<string>> {
   return options;
 }
 
-const i18nFlag = Boolean(config.featureToggles.internationalization);
-
 export class SharedPreferences extends PureComponent<Props, State> {
   service: PreferencesService;
   themeOptions: SelectableValue[];
@@ -67,12 +65,13 @@ export class SharedPreferences extends PureComponent<Props, State> {
       queryHistory: { homeTab: '' },
     };
 
-    this.themeOptions = [
-      { value: '', label: t('shared-preferences.theme.default-label', 'Default') },
-      { value: 'dark', label: t('shared-preferences.theme.dark-label', 'Dark') },
-      { value: 'light', label: t('shared-preferences.theme.light-label', 'Light') },
-      { value: 'system', label: t('shared-preferences.theme.system-label', 'System') },
-    ];
+    this.themeOptions = getBuiltInThemes(config.featureToggles.extraThemes).map((theme) => ({
+      value: theme.id,
+      label: getTranslatedThemeName(theme),
+    }));
+
+    // Add default option
+    this.themeOptions.unshift({ value: '', label: t('shared-preferences.theme.default-label', 'Default') });
   }
 
   async componentDidMount() {
@@ -98,12 +97,16 @@ export class SharedPreferences extends PureComponent<Props, State> {
     }
   };
 
-  onThemeChanged = (value: string) => {
-    this.setState({ theme: value });
+  onThemeChanged = (value: SelectableValue<string>) => {
+    this.setState({ theme: value.value });
+
+    if (value.value) {
+      changeTheme(value.value, true);
+    }
   };
 
   onTimeZoneChanged = (timezone?: string) => {
-    if (!timezone) {
+    if (typeof timezone !== 'string') {
       return;
     }
     this.setState({ timezone: timezone });
@@ -131,21 +134,19 @@ export class SharedPreferences extends PureComponent<Props, State> {
     const { disabled } = this.props;
     const styles = getStyles();
     const languages = getLanguageOptions();
-    let currentThemeOption = this.themeOptions[0].value;
-    if (theme?.length) {
-      currentThemeOption = this.themeOptions.find((item) => item.value === theme)?.value;
-    }
+    const currentThemeOption = this.themeOptions.find((x) => x.value === theme) ?? this.themeOptions[0];
 
     return (
       <Form onSubmit={this.onSubmitForm}>
         {() => {
           return (
             <FieldSet label={<Trans i18nKey="shared-preferences.title">Preferences</Trans>} disabled={disabled}>
-              <Field label={t('shared-preferences.fields.theme-label', 'UI Theme')}>
-                <RadioButtonGroup
+              <Field label={t('shared-preferences.fields.theme-label', 'Interface theme')}>
+                <Select
                   options={this.themeOptions}
                   value={currentThemeOption}
                   onChange={this.onThemeChanged}
+                  inputId="shared-preferences-theme-select"
                 />
               </Field>
 
@@ -192,27 +193,25 @@ export class SharedPreferences extends PureComponent<Props, State> {
                 />
               </Field>
 
-              {i18nFlag ? (
-                <Field
-                  label={
-                    <Label htmlFor="locale-select">
-                      <span className={styles.labelText}>
-                        <Trans i18nKey="shared-preferences.fields.locale-label">Language</Trans>
-                      </span>
-                      <FeatureBadge featureState={FeatureState.beta} />
-                    </Label>
-                  }
-                  data-testid="User preferences language drop down"
-                >
-                  <Select
-                    value={languages.find((lang) => lang.value === language)}
-                    onChange={(lang: SelectableValue<string>) => this.onLanguageChanged(lang.value ?? '')}
-                    options={languages}
-                    placeholder={t('shared-preferences.fields.locale-placeholder', 'Choose language')}
-                    inputId="locale-select"
-                  />
-                </Field>
-              ) : null}
+              <Field
+                label={
+                  <Label htmlFor="locale-select">
+                    <span className={styles.labelText}>
+                      <Trans i18nKey="shared-preferences.fields.locale-label">Language</Trans>
+                    </span>
+                    <FeatureBadge featureState={FeatureState.beta} />
+                  </Label>
+                }
+                data-testid="User preferences language drop down"
+              >
+                <Select
+                  value={languages.find((lang) => lang.value === language)}
+                  onChange={(lang: SelectableValue<string>) => this.onLanguageChanged(lang.value ?? '')}
+                  options={languages}
+                  placeholder={t('shared-preferences.fields.locale-placeholder', 'Choose language')}
+                  inputId="locale-select"
+                />
+              </Field>
 
               <div className="gf-form-button-row">
                 <Button
@@ -240,3 +239,16 @@ const getStyles = stylesFactory(() => {
     `,
   };
 });
+
+function getTranslatedThemeName(theme: ThemeRegistryItem) {
+  switch (theme.id) {
+    case 'dark':
+      return t('shared.preferences.theme.dark-label', 'Dark');
+    case 'light':
+      return t('shared.preferences.theme.light-label', 'Light');
+    case 'system':
+      return t('shared.preferences.theme.system-label', 'System preference');
+    default:
+      return theme.name;
+  }
+}

@@ -4,18 +4,22 @@ import {
   dateTime,
   durationToMilliseconds,
   Field,
+  incrRoundDn,
   isValidDuration,
   parseDuration,
 } from '@grafana/data/src';
 import { faro } from '@grafana/faro-web-sdk';
-import { config } from '@grafana/runtime/src';
+import { config, reportInteraction } from '@grafana/runtime/src';
 import { amendTable, Table, trimTable } from 'app/features/live/data/amendTimeSeries';
 
+import { getTimeSrv } from '../../../../features/dashboard/services/TimeSrv';
 import { PromQuery } from '../types';
 
 // dashboardUID + panelId + refId
 // (must be stable across query changes, time range changes / interval changes / panel resizes / template variable changes)
 type TargetIdent = string;
+
+type RequestID = string;
 
 // query + template variables + interval + raw time range
 // used for full target cache busting -> full range re-query
@@ -23,10 +27,7 @@ type TargetSig = string;
 
 type TimestampMs = number;
 
-// Look like Q001, Q002, etc
-type RequestID = string;
-
-type StringInterpolator = (expr: string) => string;
+type SupportedQueryTypes = PromQuery;
 
 // string matching requirements defined in durationutil.ts
 export const defaultPrometheusQueryOverlapWindow = '10m';
@@ -37,10 +38,26 @@ interface TargetCache {
   frames: DataFrame[];
 }
 
-export interface CacheRequestInfo {
-  requests: Array<DataQueryRequest<PromQuery>>;
+export interface CacheRequestInfo<T extends SupportedQueryTypes> {
+  requests: Array<DataQueryRequest<T>>;
   targSigs: Map<TargetIdent, TargetSig>;
   shouldCache: boolean;
+}
+
+export interface DatasourceProfileData {
+  interval?: string;
+  expr: string;
+  datasource: string;
+}
+
+interface ProfileData extends DatasourceProfileData {
+  identity: string;
+  bytes: number | null;
+  dashboardUID: string;
+  panelId?: number;
+  from: string;
+  queryRangeSeconds: number;
+  refreshIntervalMs: number;
 }
 
 /**
@@ -51,40 +68,23 @@ export interface CacheRequestInfo {
 export const getFieldIdent = (field: Field) => `${field.type}|${field.name}|${JSON.stringify(field.labels ?? '')}`;
 
 /**
- * Get target signature
- * @param targExpr
- * @param request
- * @param targ
- */
-export function getTargSig(targExpr: string, request: DataQueryRequest<PromQuery>, targ: PromQuery) {
-  return `${targExpr}|${targ.interval ?? request.interval}|${JSON.stringify(request.rangeRaw ?? '')}|${targ.exemplar}`;
-}
-
-/**
  * NOMENCLATURE
  * Target: The request target (DataQueryRequest), i.e. a specific query reference within a panel
  * Ident: Identity: the string that is not expected to change
  * Sig: Signature: the string that is expected to change, upon which we wipe the cache fields
  */
-export class QueryCache {
+export class QueryCache<T extends SupportedQueryTypes> {
   private overlapWindowMs: number;
+  private getTargetSignature: (request: DataQueryRequest<T>, target: T) => string;
+  private getProfileData?: (request: DataQueryRequest<T>, target: T) => DatasourceProfileData;
+
   private perfObeserver?: PerformanceObserver;
   private shouldProfile: boolean;
 
-  // send profile events every 5 minutes
-  sendEventsInterval = 60000 * 5;
+  // send profile events every 10 minutes
+  sendEventsInterval = 60000 * 10;
 
-  pendingRequestIdsToTargSigs = new Map<
-    RequestID,
-    {
-      identity: string;
-      bytes: number | null;
-      dashboardUID?: string;
-      interval?: string;
-      panelId?: number;
-      expr?: string;
-    }
-  >();
+  pendingRequestIdsToTargSigs = new Map<RequestID, ProfileData>();
 
   pendingAccumulatedEvents = new Map<
     string,
@@ -96,16 +96,22 @@ export class QueryCache {
       panelId: string;
       dashId: string;
       expr: string;
-      interval: string;
+      refreshIntervalMs: number;
       sent: boolean;
+      datasource: string;
+      from: string;
+      queryRangeSeconds: number;
     }
   >();
 
   cache = new Map<TargetIdent, TargetCache>();
 
-  constructor(overlapString?: string) {
-    const unverifiedOverlap = overlapString ?? defaultPrometheusQueryOverlapWindow;
-
+  constructor(options: {
+    getTargetSignature: (request: DataQueryRequest<T>, target: T) => string;
+    overlapString: string;
+    profileFunction?: (request: DataQueryRequest<T>, target: T) => DatasourceProfileData;
+  }) {
+    const unverifiedOverlap = options.overlapString;
     if (isValidDuration(unverifiedOverlap)) {
       const duration = parseDuration(unverifiedOverlap);
       this.overlapWindowMs = durationToMilliseconds(duration);
@@ -114,12 +120,17 @@ export class QueryCache {
       this.overlapWindowMs = durationToMilliseconds(duration);
     }
 
-    if (config.grafanaJavascriptAgent.enabled) {
+    if (
+      (config.grafanaJavascriptAgent.enabled || config.featureToggles?.prometheusIncrementalQueryInstrumentation) &&
+      options.profileFunction !== undefined
+    ) {
       this.profile();
       this.shouldProfile = true;
     } else {
       this.shouldProfile = false;
     }
+    this.getProfileData = options.profileFunction;
+    this.getTargetSignature = options.getTargetSignature;
   }
 
   private profile() {
@@ -157,6 +168,7 @@ export class QueryCache {
                       const savedBytes = value.bytes - requestTransferSize;
 
                       this.pendingAccumulatedEvents.set(value.identity, {
+                        datasource: value.datasource ?? 'N/A',
                         requestCount: (previous?.requestCount ?? 0) + 1,
                         savedBytesTotal: (previous?.savedBytesTotal ?? 0) + savedBytes,
                         initialRequestSize: value.bytes,
@@ -164,8 +176,10 @@ export class QueryCache {
                         panelId: currentRequest.panelId?.toString() ?? '',
                         dashId: currentRequest.dashboardUID ?? '',
                         expr: currentRequest.expr ?? '',
-                        interval: currentRequest.interval ?? '',
+                        refreshIntervalMs: currentRequest.refreshIntervalMs ?? 0,
                         sent: false,
+                        from: currentRequest.from ?? '',
+                        queryRangeSeconds: currentRequest.queryRangeSeconds ?? 0,
                       });
 
                       // We don't need to save each subsequent request, only the first one
@@ -198,63 +212,72 @@ export class QueryCache {
 
     for (let [key, value] of entries) {
       if (!value.sent) {
-        this.pendingAccumulatedEvents.set(key, { ...value, sent: true });
-        faro.api.pushMeasurement({
-          type: 'custom',
-          values: {
-            thing: 0,
-            thing2: 1,
-          },
-        });
-        faro.api.pushEvent(
-          'prometheus incremental query response size',
-          {
-            requestCount: value.requestCount.toString(),
-            savedBytesTotal: value.savedBytesTotal.toString(),
-            initialRequestSize: value.initialRequestSize.toString(),
-            lastRequestSize: value.lastRequestSize.toString(),
-            panelId: value.panelId.toString(),
-            dashId: value.dashId.toString(),
-            expr: value.expr.toString(),
-            interval: value.interval.toString(),
-          },
-          'no-interaction',
-          {
+        const event = {
+          datasource: value.datasource.toString(),
+          requestCount: value.requestCount.toString(),
+          savedBytesTotal: value.savedBytesTotal.toString(),
+          initialRequestSize: value.initialRequestSize.toString(),
+          lastRequestSize: value.lastRequestSize.toString(),
+          panelId: value.panelId.toString(),
+          dashId: value.dashId.toString(),
+          expr: value.expr.toString(),
+          refreshIntervalMs: value.refreshIntervalMs.toString(),
+          from: value.from.toString(),
+          queryRangeSeconds: value.queryRangeSeconds.toString(),
+        };
+
+        if (config.featureToggles.prometheusIncrementalQueryInstrumentation) {
+          reportInteraction('grafana_incremental_queries_profile', event);
+        } else if (faro.api.pushEvent) {
+          faro.api.pushEvent('incremental query response size', event, 'no-interaction', {
             skipDedupe: true,
-          }
-        );
+          });
+        }
+
+        this.pendingAccumulatedEvents.set(key, {
+          ...value,
+          sent: true,
+          requestCount: 0,
+          savedBytesTotal: 0,
+          initialRequestSize: 0,
+          lastRequestSize: 0,
+        });
       }
     }
   };
 
   // can be used to change full range request to partial, split into multiple requests
-  requestInfo(request: DataQueryRequest<PromQuery>, interpolateString: StringInterpolator): CacheRequestInfo {
+  requestInfo(request: DataQueryRequest<T>): CacheRequestInfo<T> {
     // TODO: align from/to to interval to increase probability of hitting backend cache
+
     const newFrom = request.range.from.valueOf();
     const newTo = request.range.to.valueOf();
 
     // only cache 'now'-relative queries (that can benefit from a backfill cache)
-    const shouldCache = request.rangeRaw?.to?.toString() === 'now' && !request.targets.some((targ) => targ.instant);
+    const shouldCache = request.rangeRaw?.to?.toString() === 'now';
 
     // all targets are queried together, so we check for any that causes group cache invalidation & full re-query
     let doPartialQuery = shouldCache;
-    let prevTo: TimestampMs;
+    let prevTo: TimestampMs | undefined = undefined;
+
+    const refreshIntervalMs = getTimeSrv().refreshMS;
 
     // pre-compute reqTargSigs
     const reqTargSigs = new Map<TargetIdent, TargetSig>();
     request.targets.forEach((targ) => {
       let targIdent = `${request.dashboardUID}|${request.panelId}|${targ.refId}`;
-      let targExpr = interpolateString(targ.expr);
-      let targSig = getTargSig(targExpr, request, targ); // ${request.maxDataPoints} ?
+      let targSig = this.getTargetSignature(request, targ); // ${request.maxDataPoints} ?
 
-      if (this.shouldProfile) {
+      if (this.shouldProfile && this.getProfileData) {
         this.pendingRequestIdsToTargSigs.set(request.requestId, {
+          ...this.getProfileData(request, targ),
           identity: targIdent + '|' + targSig,
-          dashboardUID: request.dashboardUID ?? '',
-          interval: targ.interval ?? request.interval,
-          panelId: request.panelId,
-          expr: targExpr,
           bytes: null,
+          panelId: request.panelId,
+          dashboardUID: request.dashboardUID ?? '',
+          from: request.rangeRaw?.from.toString() ?? '',
+          queryRangeSeconds: request.range.to.diff(request.range.from, 'seconds') ?? '',
+          refreshIntervalMs: refreshIntervalMs ?? 0,
         });
       }
 
@@ -272,6 +295,7 @@ export class QueryCache {
         // only do partial queries when new request range follows prior request range (possibly with overlap)
         // e.g. now-6h with refresh <= 6h
         prevTo = cached?.prevTo ?? Infinity;
+
         doPartialQuery = newTo > prevTo && newFrom <= prevTo;
       }
 
@@ -280,19 +304,20 @@ export class QueryCache {
       }
     }
 
-    if (doPartialQuery) {
-      // 10m re-query overlap
-
+    if (doPartialQuery && prevTo) {
       // clamp to make sure we don't re-query previous 10m when newFrom is ahead of it (e.g. 5min range, 30s refresh)
-      let newFromPartial = Math.max(prevTo! - this.overlapWindowMs, newFrom);
+      let newFromPartial = Math.max(prevTo - this.overlapWindowMs, newFrom);
+
+      const newToDate = dateTime(newTo);
+      const newFromPartialDate = dateTime(incrRoundDn(newFromPartial, request.intervalMs));
 
       // modify to partial query
       request = {
         ...request,
         range: {
           ...request.range,
-          from: dateTime(newFromPartial),
-          to: dateTime(newTo),
+          from: newFromPartialDate,
+          to: newToDate,
         },
       };
     } else {
@@ -310,8 +335,8 @@ export class QueryCache {
 
   // should amend existing cache with new frames and return full response
   procFrames(
-    request: DataQueryRequest<PromQuery>,
-    requestInfo: CacheRequestInfo | undefined,
+    request: DataQueryRequest<T>,
+    requestInfo: CacheRequestInfo<T> | undefined,
     respFrames: DataFrame[]
   ): DataFrame[] {
     if (requestInfo?.shouldCache) {

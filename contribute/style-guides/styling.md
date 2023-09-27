@@ -39,8 +39,9 @@ can have your getStyles function return an object with many class names and use 
 Let's say you need to style a component that has a different background depending on the `isActive` property :
 
 ```tsx
-import React from 'react';
 import { css, cx } from '@emotion/css';
+import React from 'react';
+
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 
@@ -49,8 +50,7 @@ interface ComponentAProps {
 }
 
 const ComponentA = ({ isActive }: ComponentAProps) => {
-  const theme = useTheme();
-  const styles = useStyles2(theme);
+  const styles = useStyles2(getStyles);
 
   return (
     <div className={cx(styles.wrapper, isActive && styles.active)}>
@@ -64,15 +64,15 @@ const ComponentA = ({ isActive }: ComponentAProps) => {
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     wrapper: css({
-      background: theme.colors.background.secondary;
+      background: theme.colors.background.secondary,
     }),
     active: css({
       background: theme.colors.primary.main,
       text: theme.colors.primary.contrastText,
-    },
+    }),
     icon: css({
-      fontSize: theme.typography.bodySmall.fontSize;
-    })
+      fontSize: theme.typography.bodySmall.fontSize,
+    }),
   };
 };
 ```

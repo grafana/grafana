@@ -39,7 +39,7 @@ type BuildInfoResponseData struct {
 }
 
 func (s *Service) GetBuildInfo(ctx context.Context, req BuildInfoRequest) (*BuildInfoResponse, error) {
-	ds, err := s.getInstance(req.PluginContext)
+	ds, err := s.getInstance(ctx, req.PluginContext)
 	if err != nil {
 		return nil, err
 	}
@@ -81,7 +81,7 @@ type Features struct {
 }
 
 func (s *Service) GetHeuristics(ctx context.Context, req HeuristicsRequest) (*Heuristics, error) {
-	ds, err := s.getInstance(req.PluginContext)
+	ds, err := s.getInstance(ctx, req.PluginContext)
 	if err != nil {
 		return nil, err
 	}

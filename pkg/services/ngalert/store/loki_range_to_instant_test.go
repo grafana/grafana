@@ -4,8 +4,9 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
 func TestCanBeInstant(t *testing.T) {
@@ -18,6 +19,13 @@ func TestCanBeInstant(t *testing.T) {
 			name:     "valid rule that can be migrated from range to instant",
 			expected: true,
 			rule:     createMigrateableLokiRule(t),
+		},
+		{
+			name:     "valid rule with external loki datasource",
+			expected: true,
+			rule: createMigrateableLokiRule(t, func(r *models.AlertRule) {
+				r.Data[0].DatasourceUID = "something-external"
+			}),
 		},
 		{
 			name:     "invalid rule where the data array is too short to be migrateable",
@@ -34,20 +42,6 @@ func TestCanBeInstant(t *testing.T) {
 			}),
 		},
 		{
-			name:     "invalid rule that does not use a cloud datasource",
-			expected: false,
-			rule: createMigrateableLokiRule(t, func(r *models.AlertRule) {
-				r.Data[0].DatasourceUID = "something-else"
-			}),
-		},
-		{
-			name:     "invalid rule that has no aggregation as second item",
-			expected: false,
-			rule: createMigrateableLokiRule(t, func(r *models.AlertRule) {
-				r.Data[1].DatasourceUID = "something-else"
-			}),
-		},
-		{
 			name:     "invalid rule that has not last() as aggregation",
 			expected: false,
 			rule: createMigrateableLokiRule(t, func(r *models.AlertRule) {
@@ -57,6 +51,13 @@ func TestCanBeInstant(t *testing.T) {
 				raw["reducer"] = "avg"
 				r.Data[1].Model, err = json.Marshal(raw)
 				require.NoError(t, err)
+			}),
+		},
+		{
+			name:     "invalid rule that has no aggregation as second item",
+			expected: false,
+			rule: createMigrateableLokiRule(t, func(r *models.AlertRule) {
+				r.Data[1].DatasourceUID = "something-else"
 			}),
 		},
 		{
@@ -120,7 +121,7 @@ func createMigrateableLokiRule(t *testing.T, muts ...func(*models.AlertRule)) *m
 			{
 				RefID:         "A",
 				QueryType:     "range",
-				DatasourceUID: grafanaCloudLogs,
+				DatasourceUID: "grafanacloud-logs",
 				Model: []byte(`{
 					"datasource": {
 						"type": "loki",

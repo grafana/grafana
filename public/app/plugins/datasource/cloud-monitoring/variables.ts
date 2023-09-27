@@ -6,7 +6,7 @@ import { CustomVariableSupport, DataQueryRequest, DataQueryResponse } from '@gra
 import CloudMonitoringMetricFindQuery from './CloudMonitoringMetricFindQuery';
 import { CloudMonitoringVariableQueryEditor } from './components/VariableQueryEditor';
 import CloudMonitoringDatasource from './datasource';
-import { CloudMonitoringVariableQuery } from './types';
+import { CloudMonitoringVariableQuery } from './types/types';
 
 export class CloudMonitoringVariableSupport extends CustomVariableSupport<
   CloudMonitoringDatasource,

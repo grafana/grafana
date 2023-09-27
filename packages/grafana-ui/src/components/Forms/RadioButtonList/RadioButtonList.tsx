@@ -64,8 +64,8 @@ export function RadioButtonList<T>({
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  container: css`
-    display: grid;
-    gap: ${theme.spacing(1)};
-  `,
+  container: css({
+    display: 'grid',
+    gap: theme.spacing(1),
+  }),
 });

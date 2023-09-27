@@ -31,7 +31,7 @@ def pipeline(
       name: controls the pipeline name.
       trigger: a Drone trigger for the pipeline.
       steps: the Drone steps for the pipeline.
-      services: auxilliary services used during the pipeline.
+      services: auxiliary services used during the pipeline.
         Defaults to [].
       platform: abstracts platform specific configuration primarily for different Drone behavior on Windows.
         Defaults to 'linux'.

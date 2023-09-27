@@ -84,7 +84,7 @@ describe('Metric Aggregations Reducer', () => {
         .thenStateShouldEqual([firstAggregation, { ...secondAggregation, type: expectedSecondAggregation.type }]);
     });
 
-    it('Should remove all other aggregations when the newly selected one is `isSingleMetric`', () => {
+    it('Should remove all other aggregations when the newly selected one is not metric', () => {
       const firstAggregation: MetricAggregation = {
         id: '1',
         type: 'count',

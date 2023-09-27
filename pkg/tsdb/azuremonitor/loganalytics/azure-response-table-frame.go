@@ -135,7 +135,7 @@ var tagsConverter = data.FieldConverter{
 			return nil, fmt.Errorf("failed to unmarshal trace tags: %s", err)
 		}
 
-		parsedTags := make([]*KeyValue, 0, len(m)-1)
+		parsedTags := []KeyValue{}
 		for k, v := range m {
 			if v == nil {
 				continue
@@ -152,7 +152,7 @@ var tagsConverter = data.FieldConverter{
 				}
 			}
 
-			parsedTags = append(parsedTags, &KeyValue{Key: k, Value: v})
+			parsedTags = append(parsedTags, KeyValue{Key: k, Value: v})
 		}
 		sort.Slice(parsedTags, func(i, j int) bool {
 			return parsedTags[i].Key < parsedTags[j].Key

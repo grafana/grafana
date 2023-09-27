@@ -9,7 +9,6 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apikey"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
@@ -68,26 +67,16 @@ func NewServiceAccountsAPI(
 func (api *ServiceAccountsAPI) RegisterAPIEndpoints() {
 	auth := accesscontrol.Middleware(api.accesscontrol)
 	api.RouterRegister.Group("/api/serviceaccounts", func(serviceAccountsRoute routing.RouteRegister) {
-		serviceAccountsRoute.Get("/search", auth(middleware.ReqOrgAdmin,
-			accesscontrol.EvalPermission(serviceaccounts.ActionRead)), routing.Wrap(api.SearchOrgServiceAccountsWithPaging))
-		serviceAccountsRoute.Post("/", auth(middleware.ReqOrgAdmin,
-			accesscontrol.EvalPermission(serviceaccounts.ActionCreate)), routing.Wrap(api.CreateServiceAccount))
-		serviceAccountsRoute.Get("/:serviceAccountId", auth(middleware.ReqOrgAdmin,
-			accesscontrol.EvalPermission(serviceaccounts.ActionRead, serviceaccounts.ScopeID)), routing.Wrap(api.RetrieveServiceAccount))
-		serviceAccountsRoute.Patch("/:serviceAccountId", auth(middleware.ReqOrgAdmin,
-			accesscontrol.EvalPermission(serviceaccounts.ActionWrite, serviceaccounts.ScopeID)), routing.Wrap(api.UpdateServiceAccount))
-		serviceAccountsRoute.Delete("/:serviceAccountId", auth(middleware.ReqOrgAdmin,
-			accesscontrol.EvalPermission(serviceaccounts.ActionDelete, serviceaccounts.ScopeID)), routing.Wrap(api.DeleteServiceAccount))
-		serviceAccountsRoute.Get("/:serviceAccountId/tokens", auth(middleware.ReqOrgAdmin,
-			accesscontrol.EvalPermission(serviceaccounts.ActionRead, serviceaccounts.ScopeID)), routing.Wrap(api.ListTokens))
-		serviceAccountsRoute.Post("/:serviceAccountId/tokens", auth(middleware.ReqOrgAdmin,
-			accesscontrol.EvalPermission(serviceaccounts.ActionWrite, serviceaccounts.ScopeID)), routing.Wrap(api.CreateToken))
-		serviceAccountsRoute.Delete("/:serviceAccountId/tokens/:tokenId", auth(middleware.ReqOrgAdmin,
-			accesscontrol.EvalPermission(serviceaccounts.ActionWrite, serviceaccounts.ScopeID)), routing.Wrap(api.DeleteToken))
-		serviceAccountsRoute.Post("/migrate", auth(middleware.ReqOrgAdmin,
-			accesscontrol.EvalPermission(serviceaccounts.ActionCreate)), routing.Wrap(api.MigrateApiKeysToServiceAccounts))
-		serviceAccountsRoute.Post("/migrate/:keyId", auth(middleware.ReqOrgAdmin,
-			accesscontrol.EvalPermission(serviceaccounts.ActionCreate)), routing.Wrap(api.ConvertToServiceAccount))
+		serviceAccountsRoute.Get("/search", auth(accesscontrol.EvalPermission(serviceaccounts.ActionRead)), routing.Wrap(api.SearchOrgServiceAccountsWithPaging))
+		serviceAccountsRoute.Post("/", auth(accesscontrol.EvalPermission(serviceaccounts.ActionCreate)), routing.Wrap(api.CreateServiceAccount))
+		serviceAccountsRoute.Get("/:serviceAccountId", auth(accesscontrol.EvalPermission(serviceaccounts.ActionRead, serviceaccounts.ScopeID)), routing.Wrap(api.RetrieveServiceAccount))
+		serviceAccountsRoute.Patch("/:serviceAccountId", auth(accesscontrol.EvalPermission(serviceaccounts.ActionWrite, serviceaccounts.ScopeID)), routing.Wrap(api.UpdateServiceAccount))
+		serviceAccountsRoute.Delete("/:serviceAccountId", auth(accesscontrol.EvalPermission(serviceaccounts.ActionDelete, serviceaccounts.ScopeID)), routing.Wrap(api.DeleteServiceAccount))
+		serviceAccountsRoute.Get("/:serviceAccountId/tokens", auth(accesscontrol.EvalPermission(serviceaccounts.ActionRead, serviceaccounts.ScopeID)), routing.Wrap(api.ListTokens))
+		serviceAccountsRoute.Post("/:serviceAccountId/tokens", auth(accesscontrol.EvalPermission(serviceaccounts.ActionWrite, serviceaccounts.ScopeID)), routing.Wrap(api.CreateToken))
+		serviceAccountsRoute.Delete("/:serviceAccountId/tokens/:tokenId", auth(accesscontrol.EvalPermission(serviceaccounts.ActionWrite, serviceaccounts.ScopeID)), routing.Wrap(api.DeleteToken))
+		serviceAccountsRoute.Post("/migrate", auth(accesscontrol.EvalPermission(serviceaccounts.ActionCreate)), routing.Wrap(api.MigrateApiKeysToServiceAccounts))
+		serviceAccountsRoute.Post("/migrate/:keyId", auth(accesscontrol.EvalPermission(serviceaccounts.ActionCreate)), routing.Wrap(api.ConvertToServiceAccount))
 	})
 }
 
@@ -121,17 +110,15 @@ func (api *ServiceAccountsAPI) CreateServiceAccount(c *contextmodel.ReqContext) 
 		return response.ErrOrFallback(http.StatusInternalServerError, "Failed to create service account", err)
 	}
 
-	if !api.accesscontrol.IsDisabled() {
-		if c.SignedInUser.IsRealUser() {
-			if _, err := api.permissionService.SetUserPermission(c.Req.Context(), c.OrgID, accesscontrol.User{ID: c.SignedInUser.UserID}, strconv.FormatInt(serviceAccount.Id, 10), "Admin"); err != nil {
-				return response.Error(http.StatusInternalServerError, "Failed to set permissions for service account creator", err)
-			}
+	if c.SignedInUser.IsRealUser() {
+		if _, err := api.permissionService.SetUserPermission(c.Req.Context(), c.OrgID, accesscontrol.User{ID: c.SignedInUser.UserID}, strconv.FormatInt(serviceAccount.Id, 10), "Admin"); err != nil {
+			return response.Error(http.StatusInternalServerError, "Failed to set permissions for service account creator", err)
 		}
-
-		// Clear permission cache for the user who's created the service account, so that new permissions are fetched for their next call
-		// Required for cases when caller wants to immediately interact with the newly created object
-		api.accesscontrolService.ClearUserPermissionCache(c.SignedInUser)
 	}
+
+	// Clear permission cache for the user who's created the service account, so that new permissions are fetched for their next call
+	// Required for cases when caller wants to immediately interact with the newly created object
+	api.accesscontrolService.ClearUserPermissionCache(c.SignedInUser)
 
 	return response.JSON(http.StatusCreated, serviceAccount)
 }
@@ -351,7 +338,7 @@ func (api *ServiceAccountsAPI) ConvertToServiceAccount(ctx *contextmodel.ReqCont
 }
 
 func (api *ServiceAccountsAPI) getAccessControlMetadata(c *contextmodel.ReqContext, saIDs map[string]bool) map[string]accesscontrol.Metadata {
-	if api.accesscontrol.IsDisabled() || !c.QueryBool("accesscontrol") {
+	if !c.QueryBool("accesscontrol") {
 		return map[string]accesscontrol.Metadata{}
 	}
 

@@ -21,19 +21,19 @@ weight: 300
 # Google Cloud Monitoring query editor
 
 This topic explains querying specific to the Google Cloud Monitoring data source.
-For general documentation on querying data sources in Grafana, see [Query and transform data]({{< relref "../../../panels-visualizations/query-transform-data" >}}).
+For general documentation on querying data sources in Grafana, see [Query and transform data][query-transform-data].
 
 ## Choose a query editing mode
 
 The Google Cloud Monitoring query editor helps you build queries for two types of data, which both return time series data:
 
-- [Metrics]({{< relref "#query-metrics" >}})
+- [Metrics](#query-metrics)
 
-  You can also create [Monitoring Query Language (MQL)]({{< relref "#use-the-monitoring-query-language" >}}) queries.
+  You can also create [Monitoring Query Language (MQL)](#use-the-monitoring-query-language) queries.
 
-- [Service Level Objectives (SLO)]({{< relref "#query-service-level-objectives" >}})
+- [Service Level Objectives (SLO)](#query-service-level-objectives)
 
-You also use the query editor when you [annotate]({{< relref "#apply-annotations" >}}) visualizations.
+You also use the query editor when you [annotate](#apply-annotations) visualizations.
 
 ## Query metrics
 
@@ -119,7 +119,7 @@ You can align all data points received in a fixed length of time by applying an 
 #### Select an alignment function
 
 During alignment, all data points are received in a fixed interval.
-Within each interval, as defined by the [alignment period]({{< relref "#alignment-period" >}})), and for each time series, the data is aggregated into a single point.
+Within each interval, as defined by the [alignment period](#alignment-period)), and for each time series, the data is aggregated into a single point.
 The value of that point is determined by the type of alignment function you use.
 
 For more information on alignment functions, refer to [alignment metric selector](https://cloud.google.com/monitoring/charts/metrics-selector#alignment).
@@ -225,7 +225,7 @@ To understand basic MQL concepts, refer to [Introduction to Monitoring Query Lan
 
 ### Set alias patterns for MQL queries
 
-MQL queries use the same alias patterns as [metric queries]({{< relref "#set-alias-patterns" >}}).
+MQL queries use the same alias patterns as [metric queries](#set-alias-patterns).
 
 However, `{{metric.service}}` is not supported, and `{{metric.type}}` and `{{metric.name}}` show the time series key in the response.
 
@@ -272,13 +272,13 @@ The **Alias By** field helps you control the format of legend keys for SLO queri
 
 ### Alignment period and group-by time for SLO queries
 
-SLO queries use the same alignment period functionality as [metric queries]({{< relref "#define-the-alignment-period" >}}).
+SLO queries use the same alignment period functionality as [metric queries](#define-the-alignment-period).
 
 ## Apply annotations
 
 {{< figure src="/static/img/docs/google-cloud-monitoring/annotations-8-0.png" max-width= "400px" class="docs-image--right" >}}
 
-[Annotations]({{< relref "../../../dashboards/build-dashboards/annotate-visualizations" >}}) overlay rich event information on top of graphs.
+[Annotations][annotate-visualizations] overlay rich event information on top of graphs.
 You can add annotation queries in the Dashboard menu's Annotations view.
 
 Rendering annotations is expensive, and it's important to limit the number of rows returned.
@@ -303,3 +303,11 @@ Example result: `monitoring.googleapis.com/uptime_check/http_status has this val
 | `{{metric.service}}`     | Returns the service part.         | `{{metric.service}}`             | `compute`                                         |
 | `{{metric.label.xxx}}`   | Returns the metric label value.   | `{{metric.label.instance_name}}` | `grafana-1-prod`                                  |
 | `{{resource.label.xxx}}` | Returns the resource label value. | `{{resource.label.zone}}`        | `us-east1-b`                                      |
+
+{{% docs/reference %}}
+[annotate-visualizations]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/build-dashboards/annotate-visualizations"
+[annotate-visualizations]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/build-dashboards/annotate-visualizations"
+
+[query-transform-data]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data"
+[query-transform-data]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data"
+{{% /docs/reference %}}

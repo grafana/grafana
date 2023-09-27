@@ -1,5 +1,5 @@
   oauthkeycloakdb:
-    image: postgres:12.2
+    image: docker.io/library/postgres:12-alpine
     container_name: oauthkeycloakdb
     environment:
       POSTGRES_DB: keycloak
@@ -10,7 +10,7 @@
     restart: unless-stopped
 
   oauthkeycloak:
-    image: quay.io/keycloak/keycloak:20.0
+    image: quay.io/keycloak/keycloak:21.1
     container_name: oauthkeycloak
     command: --spi-login-protocol-openid-connect-legacy-logout-redirect-uri=true start-dev
     environment:
@@ -30,7 +30,7 @@
     restart: unless-stopped
 
   oauthproxy:
-    image: docker.io/bitnami/oauth2-proxy:7.3.0
+    image: docker.io/bitnami/oauth2-proxy:7.4.0
     container_name: oauthproxy
     command: [
       "--cookie-secret=yI-CWT5s4sBR2Zd0DDJJlTYc0aQ3jwGH15jYA18ZAQA=",
@@ -51,7 +51,7 @@
     depends_on:
       - oauthkeycloak
     extra_hosts:
-      - "env.grafana.local:host-gateway"
+      - "env.grafana.local:host.containers.internal"
     ports:
       - 8088:8088
     restart: unless-stopped

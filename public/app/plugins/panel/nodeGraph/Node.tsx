@@ -41,7 +41,7 @@ const getStyles = (theme: GrafanaTheme2, hovering: HoverState) => ({
     overflow: hidden;
     white-space: nowrap;
     background-color: ${tinycolor(theme.colors.background.primary).setAlpha(0.6).toHex8String()};
-    width: 100px;
+    width: 140px;
   `,
 
   statsText: css`
@@ -90,9 +90,9 @@ export const Node = memo(function Node(props: {
       <g className={styles.text} style={{ pointerEvents: 'none' }}>
         <NodeContents node={node} hovering={hovering} />
         <foreignObject
-          x={node.x - (isHovered ? 100 : 50)}
+          x={node.x - (isHovered ? 100 : 70)}
           y={node.y + nodeR + 5}
-          width={isHovered ? '200' : '100'}
+          width={isHovered ? '200' : '140'}
           height="40"
         >
           <div className={cx(styles.titleText, isHovered && styles.textHovering)}>

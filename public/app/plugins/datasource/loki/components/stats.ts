@@ -39,7 +39,7 @@ export function shouldUpdateStats(
   timerange: TimeRange,
   prevTimerange: TimeRange | undefined
 ): boolean {
-  if (query !== prevQuery) {
+  if (prevQuery === undefined || query.trim() !== prevQuery.trim()) {
     return true;
   }
 

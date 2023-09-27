@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ldap/multildap"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/login/logintest"
+	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -32,7 +33,9 @@ func TestLoginUsingLDAP(t *testing.T) {
 		}
 
 		loginService := &logintest.LoginServiceFake{}
-		enabled, err := loginUsingLDAP(context.Background(), sc.loginUserQuery, loginService, cfg)
+		userService := &usertest.FakeUserService{}
+		authInfoService := &logintest.AuthInfoServiceFake{}
+		enabled, err := loginUsingLDAP(context.Background(), sc.loginUserQuery, loginService, userService, authInfoService, cfg)
 		require.EqualError(t, err, errTest.Error())
 
 		assert.True(t, enabled)
@@ -45,7 +48,9 @@ func TestLoginUsingLDAP(t *testing.T) {
 
 		sc.withLoginResult(false)
 		loginService := &logintest.LoginServiceFake{}
-		enabled, err := loginUsingLDAP(context.Background(), sc.loginUserQuery, loginService, cfg)
+		userService := &usertest.FakeUserService{}
+		authInfoService := &logintest.AuthInfoServiceFake{}
+		enabled, err := loginUsingLDAP(context.Background(), sc.loginUserQuery, loginService, userService, authInfoService, cfg)
 		require.NoError(t, err)
 
 		assert.False(t, enabled)

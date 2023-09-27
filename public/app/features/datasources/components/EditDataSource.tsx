@@ -1,12 +1,18 @@
 import { AnyAction } from '@reduxjs/toolkit';
-import React from 'react';
+import { omit } from 'lodash';
+import React, { useMemo } from 'react';
 
 import {
   DataSourcePluginContextProvider,
   DataSourcePluginMeta,
   DataSourceSettings as DataSourceSettingsType,
+  PluginExtensionPoints,
+  PluginExtensionDataSourceConfigContext,
+  DataSourceJsonData,
+  DataSourceUpdatedSuccessfully,
 } from '@grafana/data';
-import { getDataSourceSrv } from '@grafana/runtime';
+import { getDataSourceSrv, getPluginComponentExtensions } from '@grafana/runtime';
+import appEvents from 'app/core/app_events';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { DataSourceSettingsState, useDispatch } from 'app/types';
 
@@ -124,14 +130,23 @@ export function EditDataSourceView({
 
     try {
       await onUpdate({ ...dataSource });
-      trackDsConfigUpdated('success');
-    } catch (err) {
-      trackDsConfigUpdated('fail');
+      trackDsConfigUpdated({ item: 'success' });
+      appEvents.publish(new DataSourceUpdatedSuccessfully());
+    } catch (error) {
+      trackDsConfigUpdated({ item: 'fail', error });
       return;
     }
 
     onTest();
   };
+
+  const extensions = useMemo(() => {
+    const allowedPluginIds = ['grafana-pdc-app', 'grafana-auth-app'];
+    const extensionPointId = PluginExtensionPoints.DataSourceConfig;
+    const { extensions } = getPluginComponentExtensions({ extensionPointId });
+
+    return extensions.filter((e) => allowedPluginIds.includes(e.pluginId));
+  }, []);
 
   if (loadError) {
     return (
@@ -189,6 +204,30 @@ export function EditDataSourceView({
           />
         </DataSourcePluginContextProvider>
       )}
+
+      {/* Extension point */}
+      {extensions.map((extension) => {
+        const Component = extension.component as React.ComponentType<{
+          context: PluginExtensionDataSourceConfigContext<DataSourceJsonData>;
+        }>;
+
+        return (
+          <div key={extension.id}>
+            <Component
+              context={{
+                dataSource: omit(dataSource, ['secureJsonData']),
+                dataSourceMeta: dataSourceMeta,
+                testingStatus,
+                setJsonData: (jsonData) =>
+                  onOptionsChange({
+                    ...dataSource,
+                    jsonData: { ...dataSource.jsonData, ...jsonData },
+                  }),
+              }}
+            />
+          </div>
+        );
+      })}
 
       <DataSourceTestingStatus testingStatus={testingStatus} exploreUrl={exploreUrl} dataSource={dataSource} />
 

@@ -1,3 +1,4 @@
+import { Namespace } from 'i18next';
 import { find, startsWith } from 'lodash';
 
 import { DataSourceInstanceSettings, ScopedVars } from '@grafana/data';
@@ -8,11 +9,8 @@ import { getAuthType, getAzureCloud, getAzurePortalUrl } from '../credentials';
 import TimegrainConverter from '../time_grain_converter';
 import {
   AzureDataSourceJsonData,
-  AzureMonitorMetricNamespacesResponse,
-  AzureMonitorMetricNamesResponse,
   AzureMonitorMetricsMetadataResponse,
   AzureMonitorQuery,
-  AzureMonitorResourceGroupsResponse,
   AzureQueryType,
   DatasourceValidationResult,
   GetMetricNamespacesQuery,
@@ -21,8 +19,12 @@ import {
   AzureMetricQuery,
   AzureMonitorLocations,
   AzureMonitorProvidersResponse,
-  AzureMonitorLocationsResponse,
+  AzureAPIResponse,
   AzureGetResourceNamesQuery,
+  Subscription,
+  Location,
+  ResourceGroup,
+  Metric,
 } from '../types';
 import { routeNames } from '../utils/common';
 import migrateQuery from '../utils/migrateQuery';
@@ -162,7 +164,9 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
       return [];
     }
 
-    return this.getResource(`${this.resourcePath}/subscriptions?api-version=2019-03-01`).then((result: any) => {
+    return this.getResource<AzureAPIResponse<Subscription>>(
+      `${this.resourcePath}/subscriptions?api-version=2019-03-01`
+    ).then((result) => {
       return ResponseParser.parseSubscriptions(result);
     });
   }
@@ -170,8 +174,8 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
   getResourceGroups(subscriptionId: string) {
     return this.getResource(
       `${this.resourcePath}/subscriptions/${subscriptionId}/resourceGroups?api-version=${this.listByResourceGroupApiVersion}`
-    ).then((result: AzureMonitorResourceGroupsResponse) => {
-      return ResponseParser.parseResponseValues(result, 'name', 'name');
+    ).then((result: AzureAPIResponse<ResourceGroup>) => {
+      return ResponseParser.parseResponseValues<ResourceGroup>(result, 'name', 'name');
     });
   }
 
@@ -199,7 +203,7 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
         if (skipToken) {
           url += `&$skiptoken=${skipToken}`;
         }
-        return this.getResource(url).then(async (result: any) => {
+        return this.getResource(url).then(async (result) => {
           let list: Array<{ text: string; value: string }> = [];
           if (startsWith(metricNamespace?.toLowerCase(), 'microsoft.storage/storageaccounts/')) {
             list = ResponseParser.parseResourceNames(result, 'microsoft.storage/storageaccounts');
@@ -239,7 +243,7 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
       this.templateSrv
     );
     return this.getResource(url)
-      .then((result: AzureMonitorMetricNamespacesResponse) => {
+      .then((result: AzureAPIResponse<Namespace>) => {
         return ResponseParser.parseResponseValues(
           result,
           'properties.metricNamespaceName',
@@ -276,7 +280,7 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
       multipleResources,
       region
     );
-    return this.getResource(url).then((result: AzureMonitorMetricNamesResponse) => {
+    return this.getResource(url).then((result: AzureAPIResponse<Metric>) => {
       return ResponseParser.parseResponseValues(result, 'name.localizedValue', 'name.value');
     });
   }
@@ -372,7 +376,7 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
     const locationMap = new Map<string, AzureMonitorLocations>();
     for (const subscription of subscriptions) {
       const subLocations = ResponseParser.parseLocations(
-        await this.getResource<AzureMonitorLocationsResponse>(
+        await this.getResource<AzureAPIResponse<Location>>(
           `${routeNames.azureMonitor}/subscriptions/${this.templateSrv.replace(subscription)}/locations?api-version=${
             this.locationsApiVersion
           }`

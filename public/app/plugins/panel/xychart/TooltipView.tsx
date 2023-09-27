@@ -1,20 +1,12 @@
 import { css } from '@emotion/css';
 import React from 'react';
 
-import {
-  DataFrame,
-  Field,
-  formattedValueToString,
-  getFieldDisplayName,
-  GrafanaTheme2,
-  LinkModel,
-  TimeRange,
-} from '@grafana/data';
+import { DataFrame, Field, formattedValueToString, getFieldDisplayName, GrafanaTheme2, LinkModel } from '@grafana/data';
 import { LinkButton, useStyles2, VerticalGroup, VizTooltipOptions } from '@grafana/ui';
 import { findField } from 'app/features/dimensions';
 import { getTitleFromHref } from 'app/features/explore/utils/links';
 
-import { ScatterSeriesConfig, SeriesMapping } from './models.gen';
+import { ScatterSeriesConfig, SeriesMapping } from './panelcfg.gen';
 import { ScatterSeries } from './types';
 
 interface YValue {
@@ -39,7 +31,6 @@ export interface Props {
   seriesMapping: SeriesMapping;
   hoveredPointIndex: number; // the hovered point
   options: VizTooltipOptions;
-  range: TimeRange;
 }
 
 export const TooltipView = ({
@@ -50,7 +41,6 @@ export const TooltipView = ({
   rowIndex,
   hoveredPointIndex,
   options,
-  range,
 }: Props) => {
   const style = useStyles2(getStyles);
 
@@ -82,8 +72,8 @@ export const TooltipView = ({
   let yValue: YValue | null = null;
   let extraFacets: ExtraFacets | null = null;
   if (seriesMapping === SeriesMapping.Manual && manualSeriesConfigs) {
-    const colorFacetFieldName = manualSeriesConfigs[hoveredPointIndex].pointColor?.field ?? '';
-    const sizeFacetFieldName = manualSeriesConfigs[hoveredPointIndex].pointSize?.field ?? '';
+    const colorFacetFieldName = manualSeriesConfigs[hoveredPointIndex]?.pointColor?.field ?? '';
+    const sizeFacetFieldName = manualSeriesConfigs[hoveredPointIndex]?.pointSize?.field ?? '';
 
     const colorFacet = colorFacetFieldName ? findField(frame, colorFacetFieldName) : undefined;
     const sizeFacet = sizeFacetFieldName ? findField(frame, sizeFacetFieldName) : undefined;

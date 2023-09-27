@@ -148,14 +148,15 @@ const useFilteredSilences = (silences: Silence[], expired = false) => {
       }
       if (queryString) {
         const matchers = parseMatchers(queryString);
-        const matchersMatch = matchers.every((matcher) =>
-          silence.matchers?.some(
-            ({ name, value, isEqual, isRegex }) =>
-              matcher.name === name &&
-              matcher.value === value &&
-              matcher.isEqual === isEqual &&
-              matcher.isRegex === isRegex
-          )
+        const matchersMatch = matchers.every(
+          (matcher) =>
+            silence.matchers?.some(
+              ({ name, value, isEqual, isRegex }) =>
+                matcher.name === name &&
+                matcher.value === value &&
+                matcher.isEqual === isEqual &&
+                matcher.isRegex === isRegex
+            )
         );
         if (!matchersMatch) {
           return false;

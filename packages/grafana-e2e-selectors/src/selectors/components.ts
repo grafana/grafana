@@ -208,13 +208,13 @@ export const Components = {
     alertV2: (severity: string) => `data-testid Alert ${severity}`,
   },
   TransformTab: {
-    content: 'Transform editor tab content',
-    newTransform: (name: string) => `New transform ${name}`,
-    transformationEditor: (name: string) => `Transformation editor ${name}`,
-    transformationEditorDebugger: (name: string) => `Transformation editor debugger ${name}`,
+    content: 'data-testid Transform editor tab content',
+    newTransform: (name: string) => `data-testid New transform ${name}`,
+    transformationEditor: (name: string) => `data-testid Transformation editor ${name}`,
+    transformationEditorDebugger: (name: string) => `data-testid Transformation editor debugger ${name}`,
   },
   Transforms: {
-    card: (name: string) => `New transform ${name}`,
+    card: (name: string) => `data-testid New transform ${name}`,
     Reduce: {
       modeLabel: 'Transform mode label',
       calculationsLabel: 'Transform calculations label',
@@ -241,6 +241,7 @@ export const Components = {
       },
     },
     searchInput: 'search transformations',
+    addTransformationButton: 'data-testid add transformation button',
   },
   NavBar: {
     Configuration: {
@@ -306,7 +307,7 @@ export const Components = {
      * @deprecated use inputV2 instead
      */
     input: () => 'input[id="data-source-picker"]',
-    inputV2: 'Select a data source',
+    inputV2: 'data-testid Select a data source',
   },
   TimeZonePicker: {
     /**

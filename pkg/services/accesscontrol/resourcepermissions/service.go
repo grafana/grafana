@@ -8,11 +8,11 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 type Store interface {
@@ -46,10 +46,13 @@ type Store interface {
 
 	// GetResourcePermissions will return all permission for supplied resource id
 	GetResourcePermissions(ctx context.Context, orgID int64, query GetResourcePermissionsQuery) ([]accesscontrol.ResourcePermission, error)
+
+	// DeleteResourcePermissions will delete all permissions for supplied resource id
+	DeleteResourcePermissions(ctx context.Context, orgID int64, cmd *DeleteResourcePermissionsCmd) error
 }
 
 func New(
-	options Options, cfg *setting.Cfg, router routing.RouteRegister, license licensing.Licensing,
+	options Options, features featuremgmt.FeatureToggles, router routing.RouteRegister, license licensing.Licensing,
 	ac accesscontrol.AccessControl, service accesscontrol.Service, sqlStore db.DB,
 	teamService team.Service, userService user.Service,
 ) (*Service, error) {
@@ -74,8 +77,7 @@ func New(
 
 	s := &Service{
 		ac:          ac,
-		cfg:         cfg,
-		store:       NewStore(sqlStore),
+		store:       NewStore(sqlStore, features),
 		options:     options,
 		license:     license,
 		permissions: permissions,
@@ -99,7 +101,6 @@ func New(
 
 // Service is used to create access control sub system including api / and service for managed resource permission
 type Service struct {
-	cfg     *setting.Cfg
 	ac      accesscontrol.AccessControl
 	service accesscontrol.Service
 	store   Store
@@ -262,6 +263,14 @@ func (s *Service) MapActions(permission accesscontrol.ResourcePermission) string
 		}
 	}
 	return ""
+}
+
+func (s *Service) DeleteResourcePermissions(ctx context.Context, orgID int64, resourceID string) error {
+	return s.store.DeleteResourcePermissions(ctx, orgID, &DeleteResourcePermissionsCmd{
+		Resource:          s.options.Resource,
+		ResourceAttribute: s.options.ResourceAttribute,
+		ResourceID:        resourceID,
+	})
 }
 
 func (s *Service) mapPermission(permission string) ([]string, error) {

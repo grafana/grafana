@@ -1,9 +1,10 @@
-import { startCase } from 'lodash';
+import { startCase, uniq } from 'lodash';
 
 import { SelectableValue } from '@grafana/data';
 
 import { TraceqlFilter, TraceqlSearchScope } from '../dataquery.gen';
 import { intrinsics } from '../traceql/traceql';
+import { Scope } from '../types';
 
 export const generateQueryFromFilters = (filters: TraceqlFilter[]) => {
   return `{${filters
@@ -41,6 +42,24 @@ export const filterTitle = (f: TraceqlFilter) => {
     return 'Span Name';
   }
   return startCase(filterScopedTag(f));
+};
+
+export const getFilteredTags = (tags: string[], staticTags: Array<string | undefined>) => {
+  return [...intrinsics, ...tags].filter((t) => !staticTags.includes(t));
+};
+
+export const getUnscopedTags = (scopes: Scope[]) => {
+  return uniq(
+    scopes.map((scope: Scope) => (scope.name && scope.name !== 'intrinsic' && scope.tags ? scope.tags : [])).flat()
+  );
+};
+
+export const getAllTags = (scopes: Scope[]) => {
+  return uniq(scopes.map((scope: Scope) => (scope.tags ? scope.tags : [])).flat());
+};
+
+export const getTagsByScope = (scopes: Scope[], scope: TraceqlSearchScope | string) => {
+  return uniq(scopes.map((s: Scope) => (s.name && s.name === scope && s.tags ? s.tags : [])).flat());
 };
 
 export function replaceAt<T>(array: T[], index: number, value: T) {

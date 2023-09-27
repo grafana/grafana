@@ -2,6 +2,7 @@ package social
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -57,7 +58,7 @@ type keySetJWKS struct {
 	jose.JSONWebKeySet
 }
 
-func (s *SocialAzureAD) UserInfo(client *http.Client, token *oauth2.Token) (*BasicUserInfo, error) {
+func (s *SocialAzureAD) UserInfo(ctx context.Context, client *http.Client, token *oauth2.Token) (*BasicUserInfo, error) {
 	idToken := token.Extra("id_token")
 	if idToken == nil {
 		return nil, ErrIDTokenNotFound
@@ -68,7 +69,7 @@ func (s *SocialAzureAD) UserInfo(client *http.Client, token *oauth2.Token) (*Bas
 		return nil, fmt.Errorf("error parsing id token: %w", err)
 	}
 
-	claims, err := s.validateClaims(client, parsedToken)
+	claims, err := s.validateClaims(ctx, client, parsedToken)
 	if err != nil {
 		return nil, err
 	}
@@ -82,14 +83,18 @@ func (s *SocialAzureAD) UserInfo(client *http.Client, token *oauth2.Token) (*Bas
 	var role roletype.RoleType
 	var grafanaAdmin bool
 	if !s.skipOrgRoleSync {
-		role, grafanaAdmin = s.extractRoleAndAdmin(claims)
-	}
-	if s.roleAttributeStrict && !role.IsValid() {
-		return nil, &InvalidBasicRoleError{idP: "Azure", assignedRole: string(role)}
+		role, grafanaAdmin, err = s.extractRoleAndAdmin(claims)
+		if err != nil {
+			return nil, err
+		}
+
+		if !role.IsValid() {
+			return nil, errInvalidRole.Errorf("AzureAD OAuth: invalid role %q", role)
+		}
 	}
 	s.log.Debug("AzureAD OAuth: extracted role", "email", email, "role", role)
 
-	groups, err := s.extractGroups(client, claims, token)
+	groups, err := s.extractGroups(ctx, client, claims, token)
 	if err != nil {
 		return nil, fmt.Errorf("failed to extract groups: %w", err)
 	}
@@ -103,6 +108,10 @@ func (s *SocialAzureAD) UserInfo(client *http.Client, token *oauth2.Token) (*Bas
 		isGrafanaAdmin = &grafanaAdmin
 	}
 
+	if s.allowAssignGrafanaAdmin && s.skipOrgRoleSync {
+		s.log.Debug("allowAssignGrafanaAdmin and skipOrgRoleSync are both set, Grafana Admin role will not be synced, consider setting one or the other")
+	}
+
 	return &BasicUserInfo{
 		Id:             claims.ID,
 		Name:           claims.Name,
@@ -114,8 +123,8 @@ func (s *SocialAzureAD) UserInfo(client *http.Client, token *oauth2.Token) (*Bas
 	}, nil
 }
 
-func (s *SocialAzureAD) validateClaims(client *http.Client, parsedToken *jwt.JSONWebToken) (*azureClaims, error) {
-	claims, err := s.validateIDTokenSignature(client, parsedToken)
+func (s *SocialAzureAD) validateClaims(ctx context.Context, client *http.Client, parsedToken *jwt.JSONWebToken) (*azureClaims, error) {
+	claims, err := s.validateIDTokenSignature(ctx, client, parsedToken)
 	if err != nil {
 		return nil, fmt.Errorf("error getting claims from id token: %w", err)
 	}
@@ -136,17 +145,17 @@ func (s *SocialAzureAD) validateClaims(client *http.Client, parsedToken *jwt.JSO
 	return claims, nil
 }
 
-func (s *SocialAzureAD) validateIDTokenSignature(client *http.Client, parsedToken *jwt.JSONWebToken) (*azureClaims, error) {
+func (s *SocialAzureAD) validateIDTokenSignature(ctx context.Context, client *http.Client, parsedToken *jwt.JSONWebToken) (*azureClaims, error) {
 	var claims azureClaims
 
-	jwksFuncs := []func(client *http.Client, authURL string) (*keySetJWKS, time.Duration, error){
+	jwksFuncs := []func(ctx context.Context, client *http.Client, authURL string) (*keySetJWKS, time.Duration, error){
 		s.retrieveJWKSFromCache, s.retrieveSpecificJWKS, s.retrieveGeneralJWKS,
 	}
 
 	keyID := parsedToken.Headers[0].KeyID
 
 	for _, jwksFunc := range jwksFuncs {
-		keyset, expiry, err := jwksFunc(client, s.Endpoint.AuthURL)
+		keyset, expiry, err := jwksFunc(ctx, client, s.Endpoint.AuthURL)
 		if err != nil {
 			return nil, fmt.Errorf("error retrieving jwks: %w", err)
 		}
@@ -157,7 +166,7 @@ func (s *SocialAzureAD) validateIDTokenSignature(client *http.Client, parsedToke
 			if errClaims = parsedToken.Claims(key, &claims); errClaims == nil {
 				if expiry != 0 {
 					s.log.Debug("AzureAD OAuth: caching key set", "kid", key.KeyID, "expiry", expiry)
-					if err := s.cacheJWKS(keyset, expiry); err != nil {
+					if err := s.cacheJWKS(ctx, keyset, expiry); err != nil {
 						s.log.Warn("Failed to set key set in cache", "err", err)
 					}
 				}
@@ -200,23 +209,31 @@ func (claims *azureClaims) extractEmail() string {
 }
 
 // extractRoleAndAdmin extracts the role from the claims and returns the role and whether the user is a Grafana admin.
-func (s *SocialAzureAD) extractRoleAndAdmin(claims *azureClaims) (org.RoleType, bool) {
+func (s *SocialAzureAD) extractRoleAndAdmin(claims *azureClaims) (org.RoleType, bool, error) {
 	if len(claims.Roles) == 0 {
-		return s.defaultRole(false), false
+		if s.roleAttributeStrict {
+			return "", false, errRoleAttributeStrictViolation.Errorf("AzureAD OAuth: unset role")
+		}
+		return s.defaultRole(), false, nil
 	}
 
-	roleOrder := []org.RoleType{RoleGrafanaAdmin, org.RoleAdmin, org.RoleEditor, org.RoleViewer}
+	roleOrder := []org.RoleType{RoleGrafanaAdmin, org.RoleAdmin, org.RoleEditor,
+		org.RoleViewer, org.RoleNone}
 	for _, role := range roleOrder {
 		if found := hasRole(claims.Roles, role); found {
 			if role == RoleGrafanaAdmin {
-				return org.RoleAdmin, true
+				return org.RoleAdmin, true, nil
 			}
 
-			return role, false
+			return role, false, nil
 		}
 	}
 
-	return s.defaultRole(false), false
+	if s.roleAttributeStrict {
+		return "", false, errRoleAttributeStrictViolation.Errorf("AzureAD OAuth: idP did not return a valid role %q", claims.Roles)
+	}
+
+	return s.defaultRole(), false, nil
 }
 
 func hasRole(roles []string, role org.RoleType) bool {
@@ -241,7 +258,7 @@ type getAzureGroupResponse struct {
 // Note: If user groups exceeds 200 no groups will be found in claims and URL to target the Graph API will be
 // given instead.
 // See https://docs.microsoft.com/en-us/azure/active-directory/develop/id-tokens#groups-overage-claim
-func (s *SocialAzureAD) extractGroups(client *http.Client, claims *azureClaims, token *oauth2.Token) ([]string, error) {
+func (s *SocialAzureAD) extractGroups(ctx context.Context, client *http.Client, claims *azureClaims, token *oauth2.Token) ([]string, error) {
 	if !s.forceUseGraphAPI {
 		s.log.Debug("checking the claim for groups")
 		if len(claims.Groups) > 0 {
@@ -264,7 +281,13 @@ func (s *SocialAzureAD) extractGroups(client *http.Client, claims *azureClaims, 
 		return nil, err
 	}
 
-	res, err := client.Post(endpoint, "application/json", bytes.NewBuffer(data))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, bytes.NewBuffer(data))
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	res, err := client.Do(req)
 	if err != nil {
 		return nil, err
 	}

@@ -93,7 +93,12 @@ const SupportBundlesUnconnected = ({ supportBundles, isLoading, loadBundles, rem
                 </th>
                 <th>
                   {hasDeleteAccess && (
-                    <IconButton onClick={() => removeBundle(bundle.uid)} name="trash-alt" variant="destructive" />
+                    <IconButton
+                      onClick={() => removeBundle(bundle.uid)}
+                      name="trash-alt"
+                      variant="destructive"
+                      tooltip="Remove bundle"
+                    />
                   )}
                 </th>
               </tr>

@@ -104,9 +104,15 @@ export class AppChromeService {
   };
 
   onToggleSearchBar = () => {
-    const searchBarHidden = !this.state.getValue().searchBarHidden;
-    store.set(this.searchBarStorageKey, searchBarHidden);
-    this.update({ searchBarHidden });
+    const { searchBarHidden, kioskMode } = this.state.getValue();
+    const newSearchBarHidden = !searchBarHidden;
+    store.set(this.searchBarStorageKey, newSearchBarHidden);
+
+    if (kioskMode) {
+      locationService.partial({ kiosk: null });
+    }
+
+    this.update({ searchBarHidden: newSearchBarHidden, kioskMode: null });
   };
 
   onToggleKioskMode = () => {
@@ -159,7 +165,7 @@ export class AppChromeService {
 }
 
 /**
- * Checks if text, url and active child url are the same
+ * Checks if text, url, active child url and parent are the same
  **/
 function navItemsAreTheSame(a: NavModelItem | undefined, b: NavModelItem | undefined): boolean {
   if (a === b) {

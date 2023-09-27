@@ -27,7 +27,6 @@ import {
 
 import { arrayToDataFrame } from './ArrayDataFrame';
 import { dataFrameFromJSON } from './DataFrameJSON';
-import { MutableDataFrame } from './MutableDataFrame';
 
 function convertTableToDataFrame(table: TableData): DataFrame {
   const fields = table.columns.map((c) => {
@@ -315,7 +314,7 @@ export function toDataFrame(data: any): DataFrame {
     }
 
     // This will convert the array values into Vectors
-    return new MutableDataFrame(data as DataFrameDTO);
+    return createDataFrame(data as DataFrameDTO);
   }
 
   // Handle legacy docs/json type
@@ -432,10 +431,17 @@ export function sortDataFrame(data: DataFrame, sortIndex?: number, reverse = fal
   return {
     ...data,
     fields: data.fields.map((f) => {
-      return {
+      const newF = {
         ...f,
         values: f.values.map((v, i) => f.values[index[i]]),
       };
+
+      // only add .nanos if it exists
+      const { nanos } = f;
+      if (nanos !== undefined) {
+        newF.nanos = nanos.map((n, i) => nanos[index[i]]);
+      }
+      return newF;
     }),
   };
 }
@@ -449,10 +455,20 @@ export function reverseDataFrame(data: DataFrame): DataFrame {
     fields: data.fields.map((f) => {
       const values = [...f.values];
       values.reverse();
-      return {
+
+      const newF = {
         ...f,
         values,
       };
+
+      // only add .nanos if it exists
+      const { nanos } = f;
+      if (nanos !== undefined) {
+        const revNanos = [...nanos];
+        revNanos.reverse();
+        newF.nanos = revNanos;
+      }
+      return newF;
     }),
   };
 }
@@ -565,5 +581,37 @@ export function preProcessPanelData(data: PanelData, lastResult?: PanelData): Pa
     series: processedDataFrames,
     annotations: annotationsProcessed,
     timings: { dataProcessingTime: STOPTIME - STARTTIME },
+  };
+}
+
+export interface PartialDataFrame extends Omit<DataFrame, 'fields' | 'length'> {
+  fields: Array<Partial<Field>>;
+}
+
+export function createDataFrame(input: PartialDataFrame): DataFrame {
+  let length = 0;
+  const fields = input.fields.map((p, idx) => {
+    const { state, ...field } = p;
+    if (!field.name) {
+      field.name = `Field ${idx + 1}`;
+    }
+    if (!field.config) {
+      field.config = {};
+    }
+    if (!field.values) {
+      field.values = new Array(length);
+    } else if (field.values.length > length) {
+      length = field.values.length;
+    }
+    if (!field.type) {
+      field.type = guessFieldTypeForField(field as Field) ?? FieldType.other;
+    }
+    return field as Field;
+  });
+
+  return {
+    ...input,
+    fields,
+    length,
   };
 }

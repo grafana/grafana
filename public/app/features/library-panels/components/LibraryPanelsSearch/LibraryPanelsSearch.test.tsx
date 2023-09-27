@@ -318,7 +318,7 @@ describe('LibraryPanelsSearch', () => {
       expect(card()).toBeInTheDocument();
       expect(within(card()).getByText(/library panel name/i)).toBeInTheDocument();
       expect(within(card()).getByText(/library panel description/i)).toBeInTheDocument();
-      expect(within(card()).getByLabelText(/delete button on panel type card/i)).toBeInTheDocument();
+      expect(within(card()).getByLabelText(/Delete/i)).toBeInTheDocument();
     });
   });
 
@@ -354,9 +354,9 @@ describe('LibraryPanelsSearch', () => {
           }
         );
 
-        await userEvent.click(screen.getByLabelText(/delete button on panel type card/i));
+        await userEvent.click(screen.getByLabelText('Delete'));
         await waitFor(() => expect(screen.getByText('Do you want to delete this panel?')).toBeInTheDocument());
-        await userEvent.click(screen.getByRole('button', { name: 'Delete' }));
+        await userEvent.click(screen.getAllByRole('button', { name: 'Delete' })[1]);
 
         await waitFor(() => {
           expect(getLibraryPanelsSpy).toHaveBeenCalledWith({
