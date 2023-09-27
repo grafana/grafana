@@ -47,6 +47,7 @@ export interface FeatureToggles {
   cloudWatchCrossAccountQuerying?: boolean;
   redshiftAsyncQueryDataSupport?: boolean;
   athenaAsyncQueryDataSupport?: boolean;
+  cloudwatchNewRegionsHandler?: boolean;
   showDashboardValidationWarnings?: boolean;
   mysqlAnsiQuotes?: boolean;
   accessControlOnCall?: boolean;
@@ -131,4 +132,5 @@ export interface FeatureToggles {
   pluginsAPIMetrics?: boolean;
   httpSLOLevels?: boolean;
   prometheusPromQAIL?: boolean;
+  idForwarding?: boolean;
 }

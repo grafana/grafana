@@ -28,6 +28,7 @@ entityStore,experimental,@grafana/grafana-app-platform-squad,true,false,false,fa
 cloudWatchCrossAccountQuerying,GA,@grafana/aws-datasources,false,false,false,false
 redshiftAsyncQueryDataSupport,GA,@grafana/aws-datasources,false,false,false,false
 athenaAsyncQueryDataSupport,GA,@grafana/aws-datasources,false,false,false,true
+cloudwatchNewRegionsHandler,GA,@grafana/aws-datasources,false,false,false,false
 showDashboardValidationWarnings,experimental,@grafana/dashboards-squad,false,false,false,false
 mysqlAnsiQuotes,experimental,@grafana/backend-platform,false,false,false,false
 accessControlOnCall,preview,@grafana/grafana-authnz-team,false,false,false,false
@@ -112,3 +113,4 @@ externalCorePlugins,experimental,@grafana/plugins-platform-backend,false,false,f
 pluginsAPIMetrics,experimental,@grafana/plugins-platform-backend,false,false,false,true
 httpSLOLevels,experimental,@grafana/hosted-grafana-team,false,false,true,false
 prometheusPromQAIL,experimental,@grafana/observability-metrics,false,false,false,true
+idForwarding,experimental,@grafana/grafana-authnz-team,true,false,false,false
