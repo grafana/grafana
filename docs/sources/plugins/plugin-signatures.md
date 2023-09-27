@@ -33,7 +33,7 @@ All plugins is signed under a _signature level_. The signature level determines 
 
 ## Backend plugins
 
-If a [backend plugin]({{< relref "../developers/plugins/backend/_index.md" >}}) is unsigned, then Grafana won't load or start it. If you try to load a backend plugin with an missing or invalid signature, then Grafana writes an error message to the server log:
+If a [backend plugin](https://grafana.com/developers/plugin-tools/introduction/backend-plugins) is unsigned, then Grafana won't load or start it. If you try to load a backend plugin with an missing or invalid signature, then Grafana writes an error message to the server log:
 
 ```bash
 EROR[06-01|16:45:59] Failed to load plugin   error=plugin <plugin id> is unsigned
