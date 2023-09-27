@@ -1,4 +1,4 @@
-import { getProcessedDataFrames } from '@grafana/data';
+import { getProcessedDataFrames, toDataFrame } from '@grafana/data';
 
 import { DataProcessor } from '../data_processor';
 
@@ -13,7 +13,7 @@ describe('Graph DataProcessor', () => {
   describe('getTimeSeries from LegacyResponseData', () => {
     // Try each type of data
     const dataList = getProcessedDataFrames([
-      {
+      toDataFrame({
         alias: 'First (time_series)',
         datapoints: [
           [1, 1001],
@@ -21,8 +21,8 @@ describe('Graph DataProcessor', () => {
           [3, 1003],
         ],
         unit: 'watt',
-      },
-      {
+      }),
+      toDataFrame({
         name: 'table_data',
         columns: [
           { text: 'time' },
@@ -35,8 +35,8 @@ describe('Graph DataProcessor', () => {
           [1002, 0.2, 2.2, 'b'], // b
           [1003, 0.3, 3.3, 'c'], // c
         ],
-      },
-      {
+      }),
+      toDataFrame({
         name: 'series',
         fields: [
           { name: 'v1', values: [0.1, 0.2, 0.3] }, // first
@@ -44,8 +44,8 @@ describe('Graph DataProcessor', () => {
           { name: 'string', values: ['a', 'b', 'c'] }, // skip
           { name: 'time', values: [1001, 1002, 1003] }, // Time is last column
         ],
-      },
-      {
+      }),
+      toDataFrame({
         name: 'series with time as strings',
         fields: [
           { name: 'v1', values: [0.1, 0.2, 0.3] }, // first
@@ -54,7 +54,7 @@ describe('Graph DataProcessor', () => {
             values: ['2021-01-01T01:00:00.000Z', 'Fri, 01 Jan 2021 01:00:00 GMT', '2021-01-01T02:00:00.000Z'], // Time is last column
           },
         ],
-      },
+      }),
     ]);
 
     it('Should return a new series for each field', () => {
