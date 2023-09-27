@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { useDialog } from '@react-aria/dialog';
 import { FocusScope } from '@react-aria/focus';
 import { OverlayContainer, useOverlay } from '@react-aria/overlays';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useRef } from 'react';
 import CSSTransition from 'react-transition-group/CSSTransition';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -26,15 +26,8 @@ export function AppChromeMenu({}: Props) {
   const animationSpeed = theme.transitions.duration.shortest;
   const animationStyles = useStyles2(getAnimStyles, animationSpeed);
 
-  // need this janky state/effect logic to prevent the mega menu from reopening
-  // when the user clicks the hamburger icon whilst it is already open
-  const [isOpen, setIsOpen] = useState(false);
-  const onClose = () => setIsOpen(false);
-  useEffect(() => {
-    if (state.megaMenuOpen) {
-      setIsOpen(true);
-    }
-  }, [state.megaMenuOpen]);
+  const isOpen = state.megaMenuOpen;
+  const onClose = () => chrome.setMegaMenu(false);
 
   const { overlayProps, underlayProps } = useOverlay(
     {
@@ -56,7 +49,6 @@ export function AppChromeMenu({}: Props) {
           unmountOnExit={true}
           classNames={animationStyles.overlay}
           timeout={{ enter: animationSpeed, exit: 0 }}
-          onExited={() => chrome.setMegaMenu(false)}
         >
           <FocusScope contain autoFocus>
             <DockedMegaMenu className={styles.menu} onClose={onClose} ref={ref} {...overlayProps} {...dialogProps} />
