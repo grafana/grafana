@@ -11,6 +11,8 @@ import (
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
+	"github.com/grafana/grafana/pkg/services/authn"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -22,8 +24,14 @@ const (
 
 var _ auth.IDService = (*Service)(nil)
 
-func ProvideService(cfg *setting.Cfg, signer auth.IDSigner, cache remotecache.CacheStorage) *Service {
-	return &Service{cfg, log.New("id-service"), signer, cache}
+func ProvideService(cfg *setting.Cfg, signer auth.IDSigner, cache remotecache.CacheStorage, features featuremgmt.FeatureToggles, authnService authn.Service) *Service {
+	s := &Service{cfg, log.New("id-service"), signer, cache}
+
+	if features.IsEnabled(featuremgmt.FlagIdForwarding) {
+		authnService.RegisterPostAuthHook(s.hook, 140)
+	}
+
+	return s
 }
 
 type Service struct {
@@ -67,6 +75,20 @@ func (s *Service) SignIdentity(ctx context.Context, id identity.Requester) (stri
 	}
 
 	return token, nil
+}
+
+func (s *Service) hook(ctx context.Context, identity *authn.Identity, _ *authn.Request) error {
+	// FIXME(kalleep): implement identity.Requester for authn.Identity
+	token, err := s.SignIdentity(ctx, identity.SignedInUser())
+	if err != nil {
+		namespace, id := identity.NamespacedID()
+		s.logger.Error("Failed to sign id token", "err", err, "namespace", namespace, "id", id)
+		// for now don't return error so we don't break authentication from this hook
+		return nil
+	}
+
+	identity.IDToken = token
+	return nil
 }
 
 func prefixCacheKey(key string) string {
