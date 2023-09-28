@@ -252,7 +252,7 @@ export interface FieldDTO<T = any> {
   name: string; // The column name
   type?: FieldType;
   config?: FieldConfig;
-  values?: Vector<T> | T[]; // toJSON will always be T[], input could be either
+  values: T[] | Vector<T>; // toJSON will always be T[], input could be either
   labels?: Labels;
 }
 

@@ -8,6 +8,7 @@ import {
   DataSourceJsonData,
   DataSourceOptionsType,
   DataSourceQueryType,
+  MetricFindValue,
   QueryEditorProps,
 } from './datasource';
 import { DataQuery } from './query';
@@ -84,7 +85,7 @@ export abstract class CustomVariableSupport<
    * in the response.
    * @param request
    */
-  abstract query(request: DataQueryRequest<VariableQuery>): Observable<DataQueryResponse>;
+  abstract query(request: DataQueryRequest<VariableQuery>): Observable<DataQueryResponse | { data: MetricFindValue[] }>;
 }
 
 /**
