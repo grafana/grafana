@@ -247,11 +247,6 @@ func (s *service) start(ctx context.Context) error {
 
 	serverConfig.SkipOpenAPIInstallation = false
 
-	// Configure authorization
-	if s.authorizer != nil {
-		serverConfig.Authorization.Authorizer = s.authorizer
-	}
-
 	// Create the server
 	server, err := serverConfig.Complete().New("grafana-apiserver", genericapiserver.NewEmptyDelegate())
 	if err != nil {
