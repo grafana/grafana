@@ -211,9 +211,9 @@
     }
   },
   "dashboard-settings": {
-    "json-editor-settings": {
-      "save-button": "保存更改",
-      "subtitle": "下面的 JSON 模型是定义仪表板的数据结构。 这包括仪表板设置、面板设置、布局、查询等"
+    "json-editor": {
+      "save-button": "",
+      "subtitle": ""
     }
   },
   "data-source-picker": {

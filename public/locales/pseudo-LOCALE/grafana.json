@@ -216,9 +216,9 @@
     }
   },
   "dashboard-settings": {
-    "json-editor-settings": {
-      "save-button": "Ŝävę čĥäŉģęş",
-      "subtitle": "Ŧĥę ĴŜØŃ mőđęľ þęľőŵ įş ŧĥę đäŧä şŧřūčŧūřę ŧĥäŧ đęƒįŉęş ŧĥę đäşĥþőäřđ. Ŧĥįş įŉčľūđęş đäşĥþőäřđ şęŧŧįŉģş, päŉęľ şęŧŧįŉģş, ľäyőūŧ, qūęřįęş, äŉđ şő őŉ"
+    "json-editor": {
+      "save-button": "",
+      "subtitle": ""
     }
   },
   "data-source-picker": {

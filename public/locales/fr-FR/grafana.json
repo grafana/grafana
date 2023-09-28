@@ -221,9 +221,9 @@
     }
   },
   "dashboard-settings": {
-    "json-editor-settings": {
-      "save-button": "Sauvegarder les modifications",
-      "subtitle": "Le modèle JSON ci-dessous est la structure de données qui définit le tableau de bord. Cela inclut les paramètres du tableau de bord, les paramètres du panneau, la mise en page, les requêtes, etc."
+    "json-editor": {
+      "save-button": "",
+      "subtitle": ""
     }
   },
   "data-source-picker": {

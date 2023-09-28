@@ -216,9 +216,9 @@
     }
   },
   "dashboard-settings": {
-    "json-editor-settings": {
-      "save-button": "Änderungen speichern",
-      "subtitle": "Das folgende JSON-Modell ist die Datenstruktur, die das Dashboard definiert. Dazu gehören Dashboard-Einstellungen, Panel-Einstellungen, Layout, Abfragen usw"
+    "json-editor": {
+      "save-button": "",
+      "subtitle": ""
     }
   },
   "data-source-picker": {

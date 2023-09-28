@@ -221,9 +221,9 @@
     }
   },
   "dashboard-settings": {
-    "json-editor-settings": {
-      "save-button": "Guardar cambios",
-      "subtitle": "El siguiente modelo JSON es la estructura de datos que define el panel. Esto incluye la configuración del panel, la configuración del panel, el diseño, las consultas, etc."
+    "json-editor": {
+      "save-button": "",
+      "subtitle": ""
     }
   },
   "data-source-picker": {
