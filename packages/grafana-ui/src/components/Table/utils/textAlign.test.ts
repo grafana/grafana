@@ -16,12 +16,12 @@ describe('getTextAlign', () => {
   });
 
   it('Should use textAlign from custom', () => {
-    const textAlign = getTextAlign(data.fields[2]);
+    const textAlign = getTextAlign(data.fields[1]);
     expect(textAlign).toBe('center');
   });
 
   it('Should set textAlign to right for number values', () => {
-    const textAlign = getTextAlign(data.fields[1]);
+    const textAlign = getTextAlign(data.fields[0]);
     expect(textAlign).toBe('flex-end');
   });
 });
