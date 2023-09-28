@@ -55,14 +55,14 @@ export function PartitionByValuesEditor({
     [onChange, options]
   );
 
-  enum nameingModes {
+  enum namingModes {
     asLabels,
     frameName,
   }
 
   const namingModesOptions = [
-    { label: 'As label', value: nameingModes.asLabels },
-    { label: 'As frame name', value: nameingModes.frameName },
+    { label: 'As label', value: namingModes.asLabels },
+    { label: 'As frame name', value: namingModes.frameName },
   ];
 
   const removeField = useCallback(
@@ -124,11 +124,11 @@ export function PartitionByValuesEditor({
             options={namingModesOptions}
             value={
               options.naming?.asLabels === undefined || options.naming.asLabels
-                ? nameingModes.asLabels
-                : nameingModes.frameName
+                ? namingModes.asLabels
+                : namingModes.frameName
             }
             onChange={(v) =>
-              onChange({ ...options, naming: { ...options.naming, asLabels: v === nameingModes.asLabels } })
+              onChange({ ...options, naming: { ...options.naming, asLabels: v === namingModes.asLabels } })
             }
           />
         </InlineField>
