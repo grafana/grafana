@@ -395,7 +395,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       position: 'absolute',
       top: 0,
       width: '100%',
-      overflow: 'hidden',
     }),
     containNone: css({
       contain: 'none',
@@ -403,7 +402,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     content: css({
       label: 'panel-content',
       flexGrow: 1,
-      contain: 'strict',
+      contain: 'size layout',
     }),
     headerContainer: css({
       label: 'panel-header',

@@ -48,6 +48,7 @@ Some features are enabled by default. You can disable these feature by setting t
 | `toggleLabelsInLogsUI`                           | Enable toggleable filters in log details view                                                                                                                                                       | Yes                |
 | `azureMonitorDataplane`                          | Adds dataplane compliant frame metadata in the Azure Monitor datasource                                                                                                                             | Yes                |
 | `prometheusConfigOverhaulAuth`                   | Update the Prometheus configuration page with the new auth component                                                                                                                                | Yes                |
+| `cloudWatchWildCardDimensionValues`              | Fetches dimension values from CloudWatch to correctly label wildcard dimensions                                                                                                                     | Yes                |
 
 ## Preview feature toggles
 
@@ -140,13 +141,15 @@ Experimental features might be changed or removed without prior notice.
 | `externalCorePlugins`                       | Allow core plugins to be loaded as external                                                                  |
 | `pluginsAPIMetrics`                         | Sends metrics of public grafana packages usage by plugins                                                    |
 | `httpSLOLevels`                             | Adds SLO level to http request metrics                                                                       |
+| `alertingModifiedExport`                    | Enables using UI for provisioned rules modification and export                                               |
 
 ## Development feature toggles
 
 The following toggles require explicitly setting Grafana's [app mode]({{< relref "../_index.md#app_mode" >}}) to 'development' before you can enable this feature toggle. These features tend to be experimental.
 
-| Feature toggle name   | Description                                                                                  |
-| --------------------- | -------------------------------------------------------------------------------------------- |
-| `entityStore`         | SQL-based entity store (requires storage flag also)                                          |
-| `externalServiceAuth` | Starts an OAuth2 authentication provider for external services                               |
-| `idForwarding`        | Generate signed id token for identity that can be forwarded to plugins and external services |
+| Feature toggle name       | Description                                                                                  |
+| ------------------------- | -------------------------------------------------------------------------------------------- |
+| `entityStore`             | SQL-based entity store (requires storage flag also)                                          |
+| `externalServiceAuth`     | Starts an OAuth2 authentication provider for external services                               |
+| `idForwarding`            | Generate signed id token for identity that can be forwarded to plugins and external services |
+| `externalServiceAccounts` | Automatic service account and token setup for plugins                                        |
