@@ -26,7 +26,7 @@ import {
 } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { Page } from 'app/core/components/Page/Page';
-import { t } from 'app/core/internationalization';
+import { t, Trans } from 'app/core/internationalization';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { StoreState } from 'app/types';
 
@@ -149,10 +149,12 @@ class UnthemedDashboardImport extends PureComponent<Props> {
                 label={
                   <Label className={styles.labelWithLink} htmlFor="url-input">
                     <span>
-                      Find and import dashboards for common applications at{' '}
-                      <TextLink variant="bodySmall" href="https://grafana.com/grafana/dashboards/" external>
-                        grafana.com/dashboards
-                      </TextLink>
+                      <Trans>
+                        Find and import dashboards for common applications at{' '}
+                        <TextLink variant="bodySmall" href="https://grafana.com/grafana/dashboards/" external>
+                          grafana.com/dashboards
+                        </TextLink>
+                      </Trans>
                     </span>
                   </Label>
                 }
