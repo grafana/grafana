@@ -15,7 +15,7 @@ import { Annotation, annotationLabels } from '../../utils/constants';
 
 import AnnotationHeaderField from './AnnotationHeaderField';
 import DashboardAnnotationField from './DashboardAnnotationField';
-import { DashboardPicker, PanelDTO } from './DashboardPicker';
+import { DashboardPicker, mergePanels, PanelDTO } from './DashboardPicker';
 import { NeedHelpInfo } from './NeedHelpInfo';
 import { RuleEditorSection } from './RuleEditorSection';
 
@@ -53,7 +53,9 @@ const AnnotationsStep = () => {
     }
 
     setSelectedDashboard(dashboardResult?.dashboard);
-    const currentPanel = dashboardResult?.dashboard?.panels?.find((panel) => panel.id.toString() === selectedPanelId);
+
+    const allPanels = mergePanels(dashboardResult);
+    const currentPanel = allPanels.find((panel) => panel.id.toString() === selectedPanelId);
     setSelectedPanel(currentPanel);
   }, [selectedPanelId, dashboardResult, isDashboardFetching]);
 

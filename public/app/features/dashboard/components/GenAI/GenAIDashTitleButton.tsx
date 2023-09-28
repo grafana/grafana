@@ -8,7 +8,7 @@ import { Message, Role } from './utils';
 
 interface GenAIDashTitleButtonProps {
   dashboard: DashboardModel;
-  onGenerate: (description: string, isDone: boolean) => void;
+  onGenerate: (description: string) => void;
 }
 
 const DESCRIPTION_GENERATION_STANDARD_PROMPT =

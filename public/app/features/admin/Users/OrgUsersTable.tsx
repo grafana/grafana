@@ -62,6 +62,7 @@ export const OrgUsersTable = ({ users, orgId, onRoleChange, onRemoveUser, change
   const [userToRemove, setUserToRemove] = useState<OrgUser | null>(null);
   const [roleOptions, setRoleOptions] = useState<Role[]>([]);
   const enableSort = totalPages === 1;
+  const styles = useStyles2(getStyles);
 
   useEffect(() => {
     async function fetchOptions() {
@@ -179,10 +180,12 @@ export const OrgUsersTable = ({ users, orgId, onRoleChange, onRemoveUser, change
 
   return (
     <VerticalGroup spacing="md" data-testid={selectors.container}>
-      <InteractiveTable columns={columns} data={users} getRowId={(user) => String(user.userId)} />
-      <HorizontalGroup justify="flex-end">
-        <Pagination onNavigate={changePage} currentPage={page} numberOfPages={totalPages} hideWhenSinglePage={true} />
-      </HorizontalGroup>
+      <div className={styles.wrapper}>
+        <InteractiveTable columns={columns} data={users} getRowId={(user) => String(user.userId)} />
+        <HorizontalGroup justify="flex-end" height={'auto'}>
+          <Pagination onNavigate={changePage} currentPage={page} numberOfPages={totalPages} hideWhenSinglePage={true} />
+        </HorizontalGroup>
+      </div>
       {Boolean(userToRemove) && (
         <ConfirmModal
           body={`Are you sure you want to delete user ${userToRemove?.login}?`}
@@ -226,5 +229,18 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   icon: css({
     marginLeft: theme.spacing(1),
+  }),
+  // Enable RolePicker overflow
+  wrapper: css({
+    display: 'flex',
+    flexDirection: 'column',
+    overflowX: 'auto',
+    overflowY: 'hidden',
+    minHeight: '100vh',
+    width: '100%',
+    '& > div': {
+      overflowX: 'unset',
+      marginBottom: theme.spacing(2),
+    },
   }),
 });
