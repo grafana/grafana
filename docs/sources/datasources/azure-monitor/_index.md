@@ -63,7 +63,7 @@ For more information, refer to [Azure documentation for role assignments](https:
 If you host Grafana in Azure, such as in App Service or Azure Virtual Machines, you can configure the Azure Monitor data source to use Managed Identity for secure authentication without entering credentials into Grafana.
 For details, refer to [Configuring using Managed Identity](#configuring-using-managed-identity).
 
-If you host Grafana in a Kubernetes environment, such as AKS, and require access to Azure resources you can configure the Azure Monitor data source to use Workload Identity for secure authentication without entering credentials into Grafana.
+You can configure the Azure Monitor data source to use Workload Identity for secure authentication without entering credentials into Grafana if you host Grafana in a Kubernetes environment, such as AKS, and require access to Azure resources.
 For details, refer to [Configuring using Workload Identity](#configuring-using-workload-identity).
 
 | Name                        | Description                                                                                                                                                                                                                                                                                           |
