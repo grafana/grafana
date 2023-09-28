@@ -161,7 +161,7 @@ For details on Azure managed identities, refer to the [Azure documentation](http
 
    {{< figure src="/media/docs/grafana/data-sources/screenshot-managed-identity-2.png" max-width="800px" class="docs-image--no-shadow" caption="Azure Monitor Metrics screenshot showing Dimensions" >}}
 
-3. The `managed_identity_client_id` field can be set in the `[azure]` section of the [Grafana server configuration][configure-grafana-azure] to allow a user-assigned managed identity to be  used instead of the default system-assigned identity.
+3. The `managed_identity_client_id` field can be set in the `[azure]` section of the [Grafana server configuration][configure-grafana-azure] to allow a user-assigned managed identity to be used instead of the default system-assigned identity.
 
   ```ini
   [azure]
