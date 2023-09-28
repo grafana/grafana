@@ -741,7 +741,8 @@ const getTransformationsRedesignDescriptions = (id: string): string => {
     [DataTransformerID.partitionByValues]: 'Splits a one-frame dataset into multiple series.',
     [DataTransformerID.prepareTimeSeries]: 'Will stretch data frames from the wide format into the long format.',
     [DataTransformerID.reduce]: 'Reduce all rows or data points to a single value (ex. max, mean).',
-    [DataTransformerID.renameByRegex]: 'Reduce all rows or data points to a single value (ex. max, mean).',
+    [DataTransformerID.renameByRegex]:
+      'Renames part of the query result by using regular expression with placeholders.',
     [DataTransformerID.seriesToRows]: 'Merge multiple series. Return time, metric and values as a row.',
   };
 
