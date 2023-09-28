@@ -110,8 +110,9 @@ func parseResponse(ctx context.Context, responses []*es.SearchResponse, targets 
 				span.SetStatus(codes.Error, err.Error())
 				resSpan.RecordError(err)
 				resSpan.SetStatus(codes.Error, err.Error())
+				logger.Error("Error processing buckets", "error", err, "query", string(mt), "aggregationsLength", len(res.Aggregations), "stage", es.StageParseResponse)
+				instrumentation.UpdatePluginParsingResponseDurationSeconds(ctx, time.Since(start), "error")
 				resSpan.End()
-				logger.Error("Error processing buckets", "error", err, "query", string(mt), "aggregationsLength", len(res.Aggregations))
 				return &backend.QueryDataResponse{}, err
 			}
 			nameFields(queryRes, target)
