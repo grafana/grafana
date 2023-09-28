@@ -215,6 +215,14 @@
       "unmark-favorite": "Ůŉmäřĸ äş ƒävőřįŧę"
     }
   },
+  "dashboard-import-page": {
+    "field-label": "",
+    "field-placeholder": "",
+    "field-required": "",
+    "load-button": "",
+    "primary-text": "",
+    "secondary-text": ""
+  },
   "dashboard-settings": {
     "json-editor": {
       "save-button": "Ŝävę čĥäŉģęş",
@@ -940,6 +948,9 @@
   },
   "user-sessions": {
     "loading": "Ŀőäđįŉģ şęşşįőŉş..."
+  },
+  "utils": {
+    "invalid-dashboard-id": ""
   },
   "variable": {
     "adhoc": {

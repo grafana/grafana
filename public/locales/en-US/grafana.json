@@ -215,6 +215,14 @@
       "unmark-favorite": "Unmark as favorite"
     }
   },
+  "dashboard-import-page": {
+    "field-label": "Find and import dashboards for common applications at <2>grafana.com/dashboards</2>",
+    "field-placeholder": "Grafana.com dashboard URL or ID",
+    "field-required": "A Grafana dashboard URL or ID is required",
+    "load-button": "Load",
+    "primary-text": "Upload dashboard JSON file",
+    "secondary-text": "Drag and drop here or click to browse"
+  },
   "dashboard-settings": {
     "json-editor": {
       "save-button": "Save changes",
@@ -940,6 +948,9 @@
   },
   "user-sessions": {
     "loading": "Loading sessions..."
+  },
+  "utils": {
+    "invalid-dashboard-id": "Could not find a valid Grafana.com ID"
   },
   "variable": {
     "adhoc": {

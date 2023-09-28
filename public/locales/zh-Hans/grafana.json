@@ -210,6 +210,14 @@
       "unmark-favorite": "取消标记为收藏"
     }
   },
+  "dashboard-import-page": {
+    "field-label": "",
+    "field-placeholder": "",
+    "field-required": "",
+    "load-button": "",
+    "primary-text": "",
+    "secondary-text": ""
+  },
   "dashboard-settings": {
     "json-editor": {
       "save-button": "",
@@ -935,6 +943,9 @@
   },
   "user-sessions": {
     "loading": "正在加载会话..."
+  },
+  "utils": {
+    "invalid-dashboard-id": ""
   },
   "variable": {
     "adhoc": {

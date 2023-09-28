@@ -220,6 +220,14 @@
       "unmark-favorite": "Supprimer des favoris"
     }
   },
+  "dashboard-import-page": {
+    "field-label": "",
+    "field-placeholder": "",
+    "field-required": "",
+    "load-button": "",
+    "primary-text": "",
+    "secondary-text": ""
+  },
   "dashboard-settings": {
     "json-editor": {
       "save-button": "",
@@ -945,6 +953,9 @@
   },
   "user-sessions": {
     "loading": "Chargement des sessions..."
+  },
+  "utils": {
+    "invalid-dashboard-id": ""
   },
   "variable": {
     "adhoc": {
