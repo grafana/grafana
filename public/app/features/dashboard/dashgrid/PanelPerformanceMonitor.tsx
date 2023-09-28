@@ -3,10 +3,11 @@ import { useEffect, useRef } from 'react';
 import { FieldConfigSource } from '@grafana/data';
 import { faro } from '@grafana/faro-web-sdk';
 import appEvents from 'app/core/app_events';
+import { config } from 'app/core/config';
+import { FIELD_CONFIG_CUSTOM_KEY, FIELD_CONFIG_OVERRIDES_KEY, PanelLogEvents } from 'app/core/log_events';
 import { DashboardSavedEvent } from 'app/types/events';
 
 interface Props {
-  children: JSX.Element;
   isInPanelEdit: boolean;
   panelType: string;
   panelId: number;
@@ -52,7 +53,6 @@ export const PanelPerformanceMonitor = (props: Props) => {
       panelType: props.panelType,
     };
 
-    //TODO: do batch push when that becomes available
     faro.api.pushEvent(eventName, logObj);
   };
 
@@ -62,9 +62,9 @@ export const PanelPerformanceMonitor = (props: Props) => {
       const oldValue: string = typeof value !== 'string' ? JSON.stringify(oldPanelOptions[key]) : oldPanelOptions[key];
 
       if (oldPanelOptions[key] === undefined) {
-        logEvent('new panel option', key, newValue);
+        logEvent(PanelLogEvents.NEW_PANEL_OPTION_EVENT, key, newValue);
       } else if (oldValue !== newValue) {
-        logEvent('panel option changed', key, newValue, oldValue);
+        logEvent(PanelLogEvents.PANEL_OPTION_CHANGED_EVENT, key, newValue, oldValue);
       }
     }
   };
@@ -74,8 +74,8 @@ export const PanelPerformanceMonitor = (props: Props) => {
     // in lack of an index, we can't tell which override changed
     if (oldFieldConfig.overrides !== fieldConfig.overrides) {
       logEvent(
-        'field config overrides changed',
-        'overrides',
+        PanelLogEvents.FIELD_CONFIG_OVERRIDES_CHANGED_EVENT,
+        FIELD_CONFIG_OVERRIDES_KEY,
         JSON.stringify(fieldConfig.overrides),
         JSON.stringify(oldFieldConfig.overrides)
       );
@@ -85,7 +85,7 @@ export const PanelPerformanceMonitor = (props: Props) => {
 
     // go through field config keys except custom, we treat that below
     for (const [key, value] of Object.entries(fieldConfig.defaults)) {
-      if (key === 'custom') {
+      if (key === FIELD_CONFIG_CUSTOM_KEY) {
         continue;
       }
 
@@ -93,9 +93,9 @@ export const PanelPerformanceMonitor = (props: Props) => {
       const oldValue: string = typeof value !== 'string' ? JSON.stringify(oldDefaults[key]) : oldDefaults[key];
 
       if (oldDefaults[key] === undefined) {
-        logEvent('new default field config', key, newValue);
+        logEvent(PanelLogEvents.NEW_DEFAULT_FIELD_CONFIG_EVENT, key, newValue);
       } else if (oldValue !== newValue) {
-        logEvent('default field config changed', key, newValue, oldValue);
+        logEvent(PanelLogEvents.DEFAULT_FIELD_CONFIG_CHANGED_EVENT, key, newValue, oldValue);
       }
     }
 
@@ -110,33 +110,37 @@ export const PanelPerformanceMonitor = (props: Props) => {
         typeof value !== 'string' ? JSON.stringify(oldDefaults.custom[key]) : oldDefaults.custom[key];
 
       if (oldDefaults.custom[key] === undefined) {
-        logEvent('new custom field config', key, newValue);
+        logEvent(PanelLogEvents.NEW_CUSTOM_FIELD_CONFIG_EVENT, key, newValue);
       } else if (oldValue !== newValue) {
-        logEvent('custom field config changed', key, newValue, oldValue);
+        logEvent(PanelLogEvents.CUSTOM_FIELD_CONFIG_CHANGED_EVENT, key, newValue, oldValue);
       }
     }
   };
 
   useEffect(() => {
-    if (!Object.keys(faro).length) {
+    if (!config.grafanaJavascriptAgent.enabled) {
       return;
     }
 
+    // This code will be run ASAP after Style and Layout information have
+    // been calculated and the paint has occurred.
+    // https://firefox-source-docs.mozilla.org/performance/bestpractices.html
     requestAnimationFrame(() => {
       setTimeout(() => {
-        faro.api.pushMeasurement({
-          type: 'internal_panel_measurements_' + props.panelType,
-          values: {
-            start_loading_time_ms: startLoadTime,
-            load_time_ms: performance.now() - startLoadTime,
+        faro.api.pushMeasurement(
+          {
+            type: PanelLogEvents.MEASURE_PANEL_LOAD_TIME_EVENT,
+            values: {
+              start_loading_time_ms: startLoadTime,
+              load_time_ms: performance.now() - startLoadTime,
+            },
           },
-          // should be fixed by https://github.com/grafana/faro-web-sdk/pull/256/
-          // {
-          //   context: {
-          //     panel_type: props.panelType,
-          //   }
-          // }
-        });
+          {
+            context: {
+              panel_type: props.panelType,
+            },
+          }
+        );
       }, 0);
     });
 
@@ -155,5 +159,5 @@ export const PanelPerformanceMonitor = (props: Props) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  return props.children;
+  return null;
 };

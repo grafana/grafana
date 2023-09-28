@@ -495,6 +495,24 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
     return (
       <>
         <PanelContextProvider value={this.state.context}>
+          <PanelComponent
+            id={panel.id}
+            data={data}
+            title={panel.title}
+            timeRange={timeRange}
+            timeZone={this.props.dashboard.getTimezone()}
+            options={panelOptions}
+            fieldConfig={panel.fieldConfig}
+            transparent={panel.transparent}
+            width={innerWidth}
+            height={innerHeight}
+            renderCounter={renderCounter}
+            replaceVariables={panel.replaceVariables}
+            onOptionsChange={this.onOptionsChange}
+            onFieldConfigChange={this.onFieldConfigChange}
+            onChangeTimeRange={this.onChangeTimeRange}
+            eventBus={dashboard.events}
+          />
           <PanelPerformanceMonitor
             isInPanelEdit={dashboard.panelInEdit?.id === panel.id}
             panelType={plugin.meta.id}
@@ -502,26 +520,7 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
             panelTitle={panel.title}
             panelOptions={panelOptions}
             panelFieldConfig={panel.fieldConfig}
-          >
-            <PanelComponent
-              id={panel.id}
-              data={data}
-              title={panel.title}
-              timeRange={timeRange}
-              timeZone={this.props.dashboard.getTimezone()}
-              options={panelOptions}
-              fieldConfig={panel.fieldConfig}
-              transparent={panel.transparent}
-              width={innerWidth}
-              height={innerHeight}
-              renderCounter={renderCounter}
-              replaceVariables={panel.replaceVariables}
-              onOptionsChange={this.onOptionsChange}
-              onFieldConfigChange={this.onFieldConfigChange}
-              onChangeTimeRange={this.onChangeTimeRange}
-              eventBus={dashboard.events}
-            />
-          </PanelPerformanceMonitor>
+          />
         </PanelContextProvider>
       </>
     );

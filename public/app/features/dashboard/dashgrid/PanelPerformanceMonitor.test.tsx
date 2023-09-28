@@ -10,6 +10,14 @@ const mockPushEvent = jest.fn();
 
 import { PanelPerformanceMonitor } from './PanelPerformanceMonitor';
 
+jest.mock('app/core/config', () => ({
+  config: {
+    grafanaJavascriptAgent: {
+      enabled: true,
+    },
+  },
+}));
+
 jest.mock('@grafana/faro-web-sdk', () => ({
   faro: {
     api: {
@@ -78,19 +86,11 @@ describe('PanelPerformanceMonitor', () => {
       },
     ];
 
-    const { rerender } = render(
-      <PanelPerformanceMonitor {...props}>
-        <p>child</p>
-      </PanelPerformanceMonitor>
-    );
+    const { rerender } = render(<PanelPerformanceMonitor {...props} />);
 
     props.panelOptions = newPanelOptions;
 
-    rerender(
-      <PanelPerformanceMonitor {...props}>
-        <p>child</p>
-      </PanelPerformanceMonitor>
-    );
+    rerender(<PanelPerformanceMonitor {...props} />);
 
     appEvents.publish(new DashboardSavedEvent());
 
@@ -184,19 +184,11 @@ describe('PanelPerformanceMonitor', () => {
       },
     ];
 
-    const { rerender } = render(
-      <PanelPerformanceMonitor {...props}>
-        <p>child</p>
-      </PanelPerformanceMonitor>
-    );
+    const { rerender } = render(<PanelPerformanceMonitor {...props} />);
 
     props.panelFieldConfig = newFieldConfig;
 
-    rerender(
-      <PanelPerformanceMonitor {...props}>
-        <p>child</p>
-      </PanelPerformanceMonitor>
-    );
+    rerender(<PanelPerformanceMonitor {...props} />);
 
     appEvents.publish(new DashboardSavedEvent());
 
@@ -222,11 +214,7 @@ describe('PanelPerformanceMonitor', () => {
       },
     };
 
-    render(
-      <PanelPerformanceMonitor {...props}>
-        <p>child</p>
-      </PanelPerformanceMonitor>
-    );
+    render(<PanelPerformanceMonitor {...props} />);
 
     appEvents.publish(new DashboardSavedEvent());
 
@@ -247,11 +235,7 @@ describe('PanelPerformanceMonitor', () => {
       },
     };
 
-    render(
-      <PanelPerformanceMonitor {...props}>
-        <p>child</p>
-      </PanelPerformanceMonitor>
-    );
+    render(<PanelPerformanceMonitor {...props} />);
 
     jest.runAllTimers();
 
