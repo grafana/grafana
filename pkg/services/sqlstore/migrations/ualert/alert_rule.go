@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strconv"
+	"strings"
 	"time"
 	"unicode"
 
@@ -12,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	legacymodels "github.com/grafana/grafana/pkg/services/alerting/models"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/state/template"
 	"github.com/grafana/grafana/pkg/tsdb/graphite"
 )
 
@@ -111,17 +113,14 @@ func addMigrationInfo(da *dashAlert) (map[string]string, map[string]string) {
 
 func (m *migration) makeAlertRule(l log.Logger, cond condition, da dashAlert, folderUID string) (*alertRule, error) {
 	lbls, annotations := addMigrationInfo(&da)
-	tokens, err := tokenizeTmpl(da.Message)
+
+	message, err := migrateTmpl(da.Message)
 	if err != nil {
-		m.mg.Logger.Warn("failed to migrate invalid message template, message template has been copied unchanged",
+		l.Warn("failed to migrate invalid message template, message template has been copied unchanged",
 			"message", da.Message, "err", err)
-		annotations["message"] = da.Message
-	} else {
-		tmpl := "{{- $deduplicatedLabels := deduplicateLabels $values -}}\n"
-		tokens = variablesToMapLookups(tokens, "deduplicatedLabels")
-		tmpl += tokensToTmpl(tokens)
-		annotations["message"] = tmpl
+		message = da.Message // fallback to old message template
 	}
+	annotations["message"] = message
 
 	data, err := migrateAlertRuleQueries(l, cond.Data)
 	if err != nil {
@@ -403,6 +402,32 @@ func extractChannelIDs(d dashAlert) (channelUids []uidOrID) {
 	return channelUids
 }
 
+func migrateTmpl(oldTmpl string) (string, error) {
+	tokens, err := tokenizeTmpl(oldTmpl)
+	if err != nil {
+		return "", err
+	}
+	tokens = escapeLiterals(tokens)
+
+	var newTmpl string
+	if anyVariableToken(tokens) {
+		tokens = variablesToMapLookups(tokens, "mergedLabels")
+		newTmpl += fmt.Sprintf("{{- $mergedLabels := %s $values -}}\n", template.MergeLabelValuesFuncName)
+	}
+
+	newTmpl += tokensToTmpl(tokens)
+	return newTmpl, nil
+}
+
+func anyVariableToken(tokens []Token) bool {
+	for _, token := range tokens {
+		if token.IsVariable() {
+			return true
+		}
+	}
+	return false
+}
+
 // tokensToTmpl returns the tokens as a Go template
 func tokensToTmpl(tokens []Token) string {
 	buf := bytes.Buffer{}
@@ -416,6 +441,18 @@ func tokensToTmpl(tokens []Token) string {
 		}
 	}
 	return buf.String()
+}
+
+// escapeLiterals escapes any token literals with substrings that would be interpreted as Go template syntax
+func escapeLiterals(tokens []Token) []Token {
+	result := make([]Token, 0, len(tokens))
+	for _, token := range tokens {
+		if token.IsLiteral() {
+			token.Literal = strings.Replace(token.Literal, "{{", "{{`{{`}}", -1)
+		}
+		result = append(result, token)
+	}
+	return result
 }
 
 // variablesToMapLookups converts any variables in a slice of tokens to Go template map lookups
@@ -433,8 +470,7 @@ func variablesToMapLookups(tokens []Token, mapName string) []Token {
 func mapLookupString(v string, mapName string) string {
 	for _, r := range v {
 		if !(unicode.IsDigit(r) || unicode.IsLetter(r) || r == '_') {
-			v := strconv.Quote(v)
-			return fmt.Sprintf(`index $%s "%s"`, mapName, v[1:len(v)-1])
+			return fmt.Sprintf(`index $%s %s`, mapName, strconv.Quote(v)) // quote v to escape any special characters
 		}
 	}
 	return fmt.Sprintf(`$%s.%s`, mapName, v)

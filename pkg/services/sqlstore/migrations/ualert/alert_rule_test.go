@@ -2,6 +2,7 @@ package ualert
 
 import (
 	"encoding/json"
+	"fmt"
 	"strings"
 	"testing"
 
@@ -206,8 +207,8 @@ func TestMakeAlertRule(t *testing.T) {
 		ar, err := m.makeAlertRule(&logtest.Fake{}, cnd, da, "folder")
 		require.Nil(t, err)
 		expected :=
-			"{{- $deduplicatedLabels := deduplicateLabels $values -}}\n" +
-				"Instance {{$deduplicatedLabels.instance}} is down"
+			"{{- $mergedLabels := mergeLabelValues $values -}}\n" +
+				"Instance {{$mergedLabels.instance}} is down"
 		require.Equal(t, expected, ar.Annotations["message"])
 	})
 }
@@ -223,19 +224,38 @@ func TestTokensToTmplNewlines(t *testing.T) {
 }
 
 func TestMapLookupString(t *testing.T) {
-	assert.Equal(t, "$labels.instance", mapLookupString("instance", "labels"))
-}
+	cases := []struct {
+		name     string
+		input    string
+		expected string
+	}{
+		{
+			name:     "when there are no spaces",
+			input:    "instance",
+			expected: "$labels.instance",
+		},
+		{
+			name:     "when there are spaces",
+			input:    "instance with spaces",
+			expected: `index $labels "instance with spaces"`,
+		},
+		{
+			name:     "when there are quotes",
+			input:    `instance with "quotes"`,
+			expected: `index $labels "instance with \"quotes\""`,
+		},
+		{
+			name:     "when there are backslashes",
+			input:    `instance with \backslashes\`,
+			expected: `index $labels "instance with \\backslashes\\"`,
+		},
+	}
 
-func TestMapLookupStringSpace(t *testing.T) {
-	assert.Equal(t, `index $labels "instance with spaces"`, mapLookupString("instance with spaces", "labels"))
-}
-
-func TestMapLookupStringQuotes(t *testing.T) {
-	assert.Equal(t, `index $labels "instance with \"quotes\""`, mapLookupString(`instance with "quotes"`, "labels"))
-}
-
-func TestMapLookupStringBackslashes(t *testing.T) {
-	assert.Equal(t, `index $labels "instance with \\backslashes\\"`, mapLookupString(`instance with \backslashes\`, "labels"))
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			assert.Equal(t, tc.expected, mapLookupString(tc.input, "labels"))
+		})
+	}
 }
 
 func TestVariablesToMapLookups(t *testing.T) {
@@ -250,18 +270,76 @@ func TestVariablesToMapLookupsSpace(t *testing.T) {
 	assert.Equal(t, expected, variablesToMapLookups(tokens, "labels"))
 }
 
-func TestTranslateTmpl(t *testing.T) {
-	tokens, err := tokenizeTmpl("${instance} is down")
-	require.NoError(t, err)
-	tmpl := tokensToTmpl(variablesToMapLookups(tokens, "labels"))
-	assert.Equal(t, "{{$labels.instance}} is down", tmpl)
+func TestEscapeLiterals(t *testing.T) {
+	tokens := []Token{{Literal: "literal with double braces {{}}"}}
+	expected := []Token{{Literal: "literal with double braces {{`{{`}}}}"}}
+	assert.Equal(t, expected, escapeLiterals(tokens))
 }
 
-func TestTranslateTmplNewlines(t *testing.T) {
-	tokens, err := tokenizeTmpl("${instance} is down\n${job} is down")
-	require.NoError(t, err)
-	tmpl := tokensToTmpl(variablesToMapLookups(tokens, "labels"))
-	assert.Equal(t, "{{$labels.instance}} is down\n{{$labels.job}} is down", tmpl)
+func TestFormatTmpl(t *testing.T) {
+	cases := []struct {
+		name     string
+		input    string
+		expected string
+		vars     bool
+		error    bool
+	}{
+		{
+			name:     "template does not contain variables",
+			input:    "instance is down",
+			expected: "instance is down",
+			vars:     false,
+			error:    false,
+		},
+		{
+			name:     "template contains variable",
+			input:    "${instance} is down",
+			expected: withDeduplicateMap("{{$mergedLabels.instance}} is down"),
+			vars:     true,
+			error:    false,
+		},
+		{
+			name:     "template contains double braces",
+			input:    "{{CRITICAL}} instance is down",
+			expected: "{{`{{`}}CRITICAL}} instance is down",
+			vars:     false,
+			error:    false,
+		},
+		{
+			name:     "template contains newline",
+			input:    "CRITICAL\n${instance} is down",
+			expected: withDeduplicateMap("CRITICAL\n{{$mergedLabels.instance}} is down"),
+			vars:     true,
+			error:    false,
+		},
+		{
+			name:     "template fails to tokenize",
+			input:    "${{instance} is down",
+			expected: "",
+			error:    true,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			tmpl, err := migrateTmpl(tc.input)
+
+			if tc.error {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+
+			assert.Equal(t, tc.expected, tmpl)
+		})
+	}
+}
+
+func withDeduplicateMap(input string) string {
+	// hardcode function name to fail tests if it changes
+	funcName := "mergeLabelValues"
+
+	return fmt.Sprintf("{{- $mergedLabels := %s $values -}}\n", funcName) + input
 }
 
 func createTestDashAlert() dashAlert {
