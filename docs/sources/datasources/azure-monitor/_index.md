@@ -171,7 +171,7 @@ For details on Azure managed identities, refer to the [Azure documentation](http
    
 ### Configure Workload Identity
 
-If you host Grafana in a Kubernetes environment, such as AKS, in conjunction with managed identities you can use workload identity to configure Azure Monitor in Grafana.
+You can use workload identity to configure Azure Monitor in Grafana if you host Grafana in a Kubernetes environment, such as AKS, in conjunction with managed identities.
 This lets you securely authenticate data sources without manually configuring credentials via Azure AD App Registrations.
 For details on workload identity, refer to the [documentation](https://azure.github.io/azure-workload-identity/docs/).
 
