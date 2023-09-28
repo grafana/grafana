@@ -137,8 +137,8 @@ class UnthemedDashboardImport extends PureComponent<Props> {
             onLoad={this.onFileUpload}
           >
             <FileDropzoneDefaultChildren
-              primaryText={t('manage-dashboard.dashboard-import-page', 'Upload dashboard JSON file')}
-              secondaryText={t('manage-dashboard.dashboard-import-page', 'Drag and drop here or click to browse')}
+              primaryText={t('dashboard-import-page.primary-text', 'Upload dashboard JSON file')}
+              secondaryText={t('dashboard-import-page.secondary-text', 'Drag and drop here or click to browse')}
             />
           </FileDropzone>
         </div>
@@ -149,7 +149,7 @@ class UnthemedDashboardImport extends PureComponent<Props> {
                 label={
                   <Label className={styles.labelWithLink} htmlFor="url-input">
                     <span>
-                      <Trans>
+                      <Trans i18nKey="dashboard-import-page.field-label">
                         Find and import dashboards for common applications at{' '}
                         <TextLink variant="bodySmall" href="https://grafana.com/grafana/dashboards/" external>
                           grafana.com/dashboards
@@ -163,7 +163,7 @@ class UnthemedDashboardImport extends PureComponent<Props> {
               >
                 <Input
                   id="url-input"
-                  placeholder="Grafana.com dashboard URL or ID"
+                  placeholder={t('dashboard-import-page.field-placeholder', 'Grafana.com dashboard URL or ID')}
                   type="text"
                   {...register('gcomDashboard', {
                     required: 'A Grafana dashboard URL or ID is required',
