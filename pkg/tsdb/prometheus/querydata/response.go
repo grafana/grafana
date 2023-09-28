@@ -31,6 +31,11 @@ func (s *QueryData) parseResponse(ctx context.Context, q *models.Query, res *htt
 		Dataplane:        s.enableDataplane,
 	})
 
+	// Throw client/server error
+	if res.StatusCode/100 == 4 || res.StatusCode/100 == 5 {
+		r.Error = fmt.Errorf("%s", backend.ErrDataResponse(backend.Status(res.StatusCode), res.Status))
+	}
+
 	// Add frame to attach metadata
 	if len(r.Frames) == 0 && !q.ExemplarQuery {
 		r.Frames = append(r.Frames, data.NewFrame(""))
