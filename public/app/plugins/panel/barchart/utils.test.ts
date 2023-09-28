@@ -60,6 +60,7 @@ function mockDataFrame() {
     type: FieldType.number,
     config: f1Config,
     state: {},
+    values: [],
   });
 
   df2.addField({
@@ -67,6 +68,7 @@ function mockDataFrame() {
     type: FieldType.number,
     config: f2Config,
     state: {},
+    values: [],
   });
 
   const info = prepareBarChartDisplayValues([df1], createTheme(), {} as Options);
