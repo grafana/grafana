@@ -66,7 +66,7 @@ The following table lists the types of variables shipped with Grafana.
 You must enter general options for any type of variable that you create.
 
 1. Navigate to the dashboard you want to make a variable for and click the **Dashboard settings** (gear) icon at the top of the page.
-1. On the **Variables** tab, click **New**.
+1. On the **Variables** tab, click **New variable**.
 1. Enter a **Name** for the variable.
 1. In the **Type** list, select **Query**.
 1. (Optional) In **Label**, enter the display name of the variable dropdown.
@@ -92,7 +92,7 @@ Query expressions can contain references to other variables and in effect create
 1. In the **Data source** list, select the target data source for the query. For more information about data sources, refer to [Add a data source][].
 1. In the **Refresh** list, select when the variable should update options.
    - **On Dashboard Load:** Queries the data source every time the dashboard loads. This slows down dashboard loading, because the variable query needs to be completed before dashboard can be initialized.
-   - **On Time Range Change:** Queries the data source when the dashboard time range changes. Only use this option if your variable options query contains a time range filter or is dependent on the dashboard time range.
+   - **On Time Range Change:** Queries the data source every time the dashboard loads and when the dashboard time range changes. Use this option if your variable options query contains a time range filter or is dependent on the dashboard time range.
 1. In the **Query** field, enter a query.
    - The query field varies according to your data source. Some data sources have custom query editors.
    - Make sure that the query returns values named `__text` and `__value` as appropriate in your query syntax. For example, in SQL, you can use a query such as `SELECT hostname AS __text, id AS __value FROM MyTable`. Queries for other languages will vary depending on syntax.

@@ -343,7 +343,6 @@ tsconfig.json @grafana/frontend-ops
 /.yarn @grafana/frontend-ops
 /.yarnrc.yml @grafana/frontend-ops
 /yarn.lock @grafana/frontend-ops
-/.linguirc @grafana/grafana-frontend-platform
 /babel.config.json @grafana/frontend-ops
 lerna.json @grafana/frontend-ops
 /.prettierrc.js @grafana/frontend-ops
