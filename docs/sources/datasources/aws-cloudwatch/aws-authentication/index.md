@@ -154,7 +154,7 @@ Grafana Assume Role is currently in [private preview]({{< relref "https://grafan
 
 The Grafana Assume Role authentication provider lets you authenticate with AWS without having to create and maintain long term AWS users or rotate their access and secret keys. Instead, you can create an IAM role that has permissions to access CloudWatch and a trust relationship with Grafana's AWS account. Grafana's AWS account then makes an STS request to AWS to create temporary credentials to access your AWS data. It makes this STS request by passing along an `externalID` that's unique per Cloud account, to ensure that Grafana Cloud users can only access their own AWS data. For more information, refer to the [AWS documentation on external ID](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_create_for-user_externalid.html).
 
-To use the `Grafana Assume Role`:
+To use the Grafana Assume Role:
 
 1. Put in a request to Customer Support to enable`awsDatasourcesTempCredentials`.
 2. Once the feature is enabled, create a new CloudWatch data source (or update an existing one) and select **Grafana Assume Role** as an authentication provider.
