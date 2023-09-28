@@ -39,10 +39,6 @@ area/panel/common:
   channel-label: C04J73AAQ87 # grafana-dataviz
   exclude-github-team: dataviz-squad
 
-area/panel/common:
-  channel-label: C04J73AAQ87 # grafana-dataviz
-  exclude-github-team: dataviz-squad
-
 area/panel/gauge:
   channel-label: C04J73AAQ87 # grafana-dataviz
   exclude-github-team: dataviz-squad
@@ -60,14 +56,6 @@ area/panel/heatmap:
   exclude-github-team: dataviz-squad
 
 area/panel/histogram:
-  channel-label: C04J73AAQ87 # grafana-dataviz
-  exclude-github-team: dataviz-squad
-
-area/panel/icon:
-  channel-label: C04J73AAQ87 # grafana-dataviz
-  exclude-github-team: dataviz-squad
-
-area/panel/icon:
   channel-label: C04J73AAQ87 # grafana-dataviz
   exclude-github-team: dataviz-squad
 
@@ -92,10 +80,6 @@ area/panel/timeseries:
   exclude-github-team: dataviz-squad
 
 area/panel/trend:
-  channel-label: C04J73AAQ87 # grafana-dataviz
-  exclude-github-team: dataviz-squad
-
-area/panel/xychart:
   channel-label: C04J73AAQ87 # grafana-dataviz
   exclude-github-team: dataviz-squad
 
