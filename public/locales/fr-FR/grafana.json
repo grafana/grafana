@@ -220,6 +220,12 @@
       "unmark-favorite": "Supprimer des favoris"
     }
   },
+  "dashboard-settings": {
+    "json-editor": {
+      "save-button": "",
+      "subtitle": ""
+    }
+  },
   "data-source-picker": {
     "open-advanced-button": ""
   },

@@ -115,3 +115,4 @@ httpSLOLevels,experimental,@grafana/hosted-grafana-team,false,false,true,false
 idForwarding,experimental,@grafana/grafana-authnz-team,true,false,false,false
 cloudWatchWildCardDimensionValues,GA,@grafana/aws-datasources,false,false,false,false
 externalServiceAccounts,experimental,@grafana/grafana-authnz-team,true,false,false,false
+alertingModifiedExport,experimental,@grafana/alerting-squad,false,false,false,false

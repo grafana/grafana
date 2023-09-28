@@ -215,6 +215,12 @@
       "unmark-favorite": "Markierung als Favorit entfernen"
     }
   },
+  "dashboard-settings": {
+    "json-editor": {
+      "save-button": "",
+      "subtitle": ""
+    }
+  },
   "data-source-picker": {
     "open-advanced-button": ""
   },
