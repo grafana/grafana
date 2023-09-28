@@ -12,6 +12,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	es "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client"
 )
 
@@ -24,14 +25,16 @@ type elasticsearchDataQuery struct {
 	dataQueries []backend.DataQuery
 	logger      log.Logger
 	ctx         context.Context
+	tracer      tracing.Tracer
 }
 
-var newElasticsearchDataQuery = func(ctx context.Context, client es.Client, dataQuery []backend.DataQuery, logger log.Logger) *elasticsearchDataQuery {
+var newElasticsearchDataQuery = func(ctx context.Context, client es.Client, dataQuery []backend.DataQuery, logger log.Logger, tracer tracing.Tracer) *elasticsearchDataQuery {
 	return &elasticsearchDataQuery{
 		client:      client,
 		dataQueries: dataQuery,
 		logger:      logger,
 		ctx:         ctx,
+		tracer:      tracer,
 	}
 }
 
@@ -70,7 +73,7 @@ func (e *elasticsearchDataQuery) execute() (*backend.QueryDataResponse, error) {
 		return &backend.QueryDataResponse{}, err
 	}
 
-	return parseResponse(e.ctx, res.Responses, queries, e.client.GetConfiguredFields(), e.logger)
+	return parseResponse(e.ctx, res.Responses, queries, e.client.GetConfiguredFields(), e.logger, e.tracer)
 }
 
 func (e *elasticsearchDataQuery) processQuery(q *Query, ms *es.MultiSearchRequestBuilder, from, to int64) error {

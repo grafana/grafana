@@ -3,10 +3,8 @@ This module returns all the pipelines used in the event of pushes to the main br
 """
 
 load(
-    "scripts/drone/utils/utils.star",
-    "drone_change_template",
-    "failure_template",
-    "notify_pipeline",
+    "scripts/drone/pipelines/build.star",
+    "build_e2e",
 )
 load(
     "scripts/drone/pipelines/docs.star",
@@ -14,28 +12,8 @@ load(
     "trigger_docs_main",
 )
 load(
-    "scripts/drone/pipelines/test_frontend.star",
-    "test_frontend",
-)
-load(
-    "scripts/drone/pipelines/test_backend.star",
-    "test_backend",
-)
-load(
     "scripts/drone/pipelines/integration_tests.star",
     "integration_tests",
-)
-load(
-    "scripts/drone/pipelines/build.star",
-    "build_e2e",
-)
-load(
-    "scripts/drone/pipelines/windows.star",
-    "windows",
-)
-load(
-    "scripts/drone/pipelines/trigger_downstream.star",
-    "enterprise_downstream_pipeline",
 )
 load(
     "scripts/drone/pipelines/lint_backend.star",
@@ -44,6 +22,28 @@ load(
 load(
     "scripts/drone/pipelines/lint_frontend.star",
     "lint_frontend_pipeline",
+)
+load(
+    "scripts/drone/pipelines/test_backend.star",
+    "test_backend",
+)
+load(
+    "scripts/drone/pipelines/test_frontend.star",
+    "test_frontend",
+)
+load(
+    "scripts/drone/pipelines/trigger_downstream.star",
+    "enterprise_downstream_pipeline",
+)
+load(
+    "scripts/drone/pipelines/windows.star",
+    "windows",
+)
+load(
+    "scripts/drone/utils/utils.star",
+    "drone_change_template",
+    "failure_template",
+    "notify_pipeline",
 )
 
 ver_mode = "main"

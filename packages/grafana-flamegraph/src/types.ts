@@ -13,12 +13,6 @@ export enum SampleUnit {
   Nanoseconds = 'ns',
 }
 
-export enum ColumnTypes {
-  Symbol = 'Symbol',
-  Self = 'Self',
-  Total = 'Total',
-}
-
 export enum SelectedView {
   TopTable = 'topTable',
   FlameGraph = 'flameGraph',
@@ -31,17 +25,6 @@ export interface TableData {
   // For diff view
   totalRight: number;
 }
-
-export interface TopTableData {
-  symbol: string;
-  self: TopTableValue;
-  total: TopTableValue;
-}
-
-export type TopTableValue = {
-  value: number;
-  unitValue: string;
-};
 
 export enum ColorScheme {
   ValueBased = 'valueBased',

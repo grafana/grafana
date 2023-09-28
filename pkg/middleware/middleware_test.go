@@ -251,6 +251,6 @@ func middlewareScenario(t *testing.T, desc string, fn scenarioFunc, cbs ...func(
 func getContextHandler(t *testing.T, cfg *setting.Cfg, authnService authn.Service) *contexthandler.ContextHandler {
 	t.Helper()
 
-	tracer := tracing.NewFakeTracer()
+	tracer := tracing.InitializeTracerForTest()
 	return contexthandler.ProvideService(cfg, tracer, featuremgmt.WithFeatures(), authnService)
 }

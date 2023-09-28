@@ -109,6 +109,7 @@ func (s *Service) ExecutePipeline(ctx context.Context, now time.Time, pipeline D
 	for refID, val := range vars {
 		res.Responses[refID] = backend.DataResponse{
 			Frames: val.Values.AsDataFrames(refID),
+			Error:  val.Error,
 		}
 	}
 	return res, nil

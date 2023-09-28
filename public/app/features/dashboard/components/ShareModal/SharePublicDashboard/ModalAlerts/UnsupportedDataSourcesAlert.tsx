@@ -23,7 +23,7 @@ export const UnsupportedDataSourcesAlert = ({ unsupportedDataSources }: { unsupp
         sources may not function properly: {unsupportedDataSources}.
       </p>
       <a
-        href="https://grafana.com/docs/grafana/latest/dashboards/dashboard-public/"
+        href="https://grafana.com/docs/grafana/next/dashboards/dashboard-public/"
         className={cx('text-link', styles.unsupportedDataSourceDescription)}
       >
         Read more about supported data sources
