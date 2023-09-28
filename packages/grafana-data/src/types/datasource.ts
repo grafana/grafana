@@ -333,11 +333,7 @@ abstract class DataSourceApi<
 
   getVersion?(optionalOptions?: any): Promise<string>;
 
-  interpolateVariablesInQueries?(
-    queries: TQuery[],
-    scopedVars: ScopedVars,
-    adhocFilters?: AdHocVariableFilter[]
-  ): TQuery[];
+  interpolateVariablesInQueries?(queries: TQuery[], scopedVars: ScopedVars, filters?: AdHocVariableFilter[]): TQuery[];
 
   /**
    * An annotation processor allows explicit control for how annotations are managed.
@@ -556,8 +552,8 @@ export interface DataQueryRequest<TQuery extends DataQuery = DataQuery> {
   panelId?: number;
   dashboardUID?: string;
 
-  /** Filters to apply to all queries */
-  adhocFilters?: AdHocVariableFilter[];
+  /** Filters to dynamically apply to all queries */
+  filters?: AdHocVariableFilter[];
 
   // Request Timing
   startTime: number;

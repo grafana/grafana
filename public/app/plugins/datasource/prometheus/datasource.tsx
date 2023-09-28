@@ -681,7 +681,7 @@ export class PrometheusDatasource
     let expr = target.expr;
 
     // Apply adhoc filters
-    expr = this.enhanceExprWithAdHocFilters(options.adhocFilters, expr);
+    expr = this.enhanceExprWithAdHocFilters(options.filters, expr);
 
     // Only replace vars in expression after having (possibly) updated interval vars
     query.expr = this.templateSrv.replace(expr, scopedVars, this.interpolateQueryExpr);
@@ -1116,13 +1116,13 @@ export class PrometheusDatasource
   interpolateVariablesInQueries(
     queries: PromQuery[],
     scopedVars: ScopedVars,
-    adhocFilters?: AdHocVariableFilter[]
+    filters?: AdHocVariableFilter[]
   ): PromQuery[] {
     let expandedQueries = queries;
     if (queries && queries.length) {
       expandedQueries = queries.map((query) => {
         const interpolatedQuery = this.templateSrv.replace(query.expr, scopedVars, this.interpolateQueryExpr);
-        const withAdhocFilters = this.enhanceExprWithAdHocFilters(adhocFilters, interpolatedQuery);
+        const withAdhocFilters = this.enhanceExprWithAdHocFilters(filters, interpolatedQuery);
 
         const expandedQuery = {
           ...query,
@@ -1284,7 +1284,7 @@ export class PrometheusDatasource
   applyTemplateVariables(
     target: PromQuery,
     scopedVars: ScopedVars,
-    adhocFilters?: AdHocVariableFilter[]
+    filters?: AdHocVariableFilter[]
   ): Record<string, any> {
     const variables = cloneDeep(scopedVars);
 
@@ -1296,7 +1296,7 @@ export class PrometheusDatasource
     const expr = this.templateSrv.replace(target.expr, variables, this.interpolateQueryExpr);
 
     // Add ad hoc filters
-    const exprWithAdHocFilters = this.enhanceExprWithAdHocFilters(adhocFilters, expr);
+    const exprWithAdHocFilters = this.enhanceExprWithAdHocFilters(filters, expr);
 
     return {
       ...target,
