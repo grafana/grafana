@@ -9,7 +9,7 @@ import {
   TransformerCategory,
 } from '@grafana/data';
 
-import { getHelperContent } from '../docs/getTransformationContent';
+import { getTransformationContent } from '../docs/getTransformationContent';
 import { getDefaultOptions, getTransformerOptionPane } from '../spatial/optionsHelper';
 
 import { addHeatmapCalculationOptions } from './editor/helper';
@@ -51,5 +51,5 @@ export const heatmapTransformRegistryItem: TransformerRegistryItem<HeatmapTransf
   description: heatmapTransformer.description,
   state: PluginState.alpha,
   categories: new Set([TransformerCategory.CreateNewVisualization]),
-  help: getHelperContent(heatmapTransformer.id),
+  help: getTransformationContent(heatmapTransformer.id).helperDocs,
 };

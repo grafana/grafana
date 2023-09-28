@@ -1,11 +1,11 @@
-import { transformationDocsContent, getLinkToDocs } from './content';
+import { transformationDocsContent, getLinkToDocs, TransformationInfo } from './content';
 
-export function getTransformationContent(id: string) {
+export function getTransformationContent(id: string): TransformationInfo {
   if (id in transformationDocsContent) {
     const { name, helperDocs } = transformationDocsContent[id];
     return {
       name,
-      content: `
+      helperDocs: `
       ${helperDocs}
       ${getLinkToDocs()}
       `,
@@ -14,6 +14,6 @@ export function getTransformationContent(id: string) {
 
   return {
     name: 'No documentation found',
-    content: getLinkToDocs(),
+    helperDocs: getLinkToDocs(),
   };
 }

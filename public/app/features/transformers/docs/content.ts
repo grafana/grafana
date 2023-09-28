@@ -1,6 +1,6 @@
 import { getStandardTransformers } from '../standardTransformers';
 
-interface Transformation {
+export interface TransformationInfo {
   name: string;
   helperDocs: string;
 }
@@ -37,7 +37,7 @@ const [
   timeSeriesTableTransformRegistryItem,
 ] = getStandardTransformers();
 
-export const transformationDocsContent: Record<string, Transformation> = {
+export const transformationDocsContent: Record<string, TransformationInfo> = {
   calculateField: {
     name: calculateFieldTransformRegistryItem.name,
     helperDocs: `
