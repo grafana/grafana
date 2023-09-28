@@ -154,5 +154,3 @@ ${transformations}
 This transformation is available in Grafana 10.1+ as an alpha feature.
 {{% /admonition %}}
 `;
-
-console.log(template);
