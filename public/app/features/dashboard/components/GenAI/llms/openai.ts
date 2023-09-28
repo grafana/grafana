@@ -232,17 +232,17 @@ export interface ChatCompletionsChunk {
 
 /** Return true if the message is a 'content' message. */
 export function isContentMessage(message: unknown): message is ContentMessage {
-  return (message as ContentMessage).content != null;
+  return typeof message === 'object' && message !== null && 'content' in message;
 }
 
 /** Return true if the message is a 'done' message. */
 export function isDoneMessage(message: unknown): message is DoneMessage {
-  return (message as DoneMessage).done !== undefined;
+  return typeof message === 'object' && message !== null && 'done' in message;
 }
 
 /** Return true if the response is an error response. */
 export function isErrorResponse(response: unknown): response is ChatCompletionsErrorResponse {
-  return (response as ChatCompletionsErrorResponse).error !== undefined;
+  return typeof response === 'object' && response !== null && 'error' in response;
 }
 
 /**
