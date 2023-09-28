@@ -8,6 +8,7 @@ import (
 
 	"golang.org/x/oauth2"
 
+	"github.com/grafana/grafana/pkg/models/roletype"
 	"github.com/grafana/grafana/pkg/models/usertoken"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/login"
@@ -27,6 +28,8 @@ const (
 	NamespaceAnonymous      = identity.NamespaceAnonymous
 	NamespaceRenderService  = identity.NamespaceRenderService
 )
+
+var _ identity.Requester = (*Identity)(nil)
 
 type Identity struct {
 	// OrgID is the active organization for the entity.
@@ -79,6 +82,105 @@ type Identity struct {
 	// IDToken is a signed token representing the identity that can be forwarded to plugins and external services.
 	// Will only be set when featuremgmt.FlagIdForwarding is enabled.
 	IDToken string
+}
+
+func (i *Identity) GetAuthenticatedBy() string {
+	return i.AuthenticatedBy
+}
+
+func (i *Identity) GetCacheKey() string {
+	namespace, id := i.GetNamespacedID()
+	if !i.HasUniqueId() {
+		// Hack use the org role as id for identities that do not have a unique id
+		// e.g. anonymous and render key.
+		id = string(i.GetOrgRole())
+	}
+
+	return fmt.Sprintf("%d-%s-%s", i.GetOrgID(), namespace, id)
+}
+
+func (i *Identity) GetDisplayName() string {
+	return i.Name
+}
+
+func (i *Identity) GetEmail() string {
+	return i.Email
+}
+
+func (i *Identity) GetIDToken() string {
+	return i.IDToken
+}
+
+func (i *Identity) GetIsGrafanaAdmin() bool {
+	return i.IsGrafanaAdmin != nil && *i.IsGrafanaAdmin
+}
+
+func (i *Identity) GetLogin() string {
+	return i.Login
+}
+
+func (i *Identity) GetNamespacedID() (namespace string, identifier string) {
+	split := strings.Split(i.ID, ":")
+
+	if len(split) != 2 {
+		return "", ""
+	}
+
+	return split[0], split[1]
+}
+
+// GetOrgID implements identity.Requester.
+func (i *Identity) GetOrgID() int64 {
+	return i.OrgID
+}
+
+func (i *Identity) GetOrgName() string {
+	return i.OrgName
+}
+
+func (i *Identity) GetOrgRole() roletype.RoleType {
+	if i.OrgRoles == nil {
+		return roletype.RoleNone
+	}
+
+	if i.OrgRoles[i.GetOrgID()] == "" {
+		return roletype.RoleNone
+	}
+
+	return i.OrgRoles[i.GetOrgID()]
+}
+
+func (i *Identity) GetPermissions() map[string][]string {
+	if i.Permissions == nil {
+		return make(map[string][]string)
+	}
+
+	if i.Permissions[i.GetOrgID()] == nil {
+		return make(map[string][]string)
+	}
+
+	return i.Permissions[i.GetOrgID()]
+}
+
+func (i *Identity) GetTeams() []int64 {
+	return i.Teams
+}
+
+func (i *Identity) HasRole(role roletype.RoleType) bool {
+	if i.GetIsGrafanaAdmin() {
+		return true
+	}
+
+	return i.GetOrgRole().Includes(role)
+}
+
+func (i *Identity) HasUniqueId() bool {
+	namespace, _ := i.GetNamespacedID()
+	return namespace == NamespaceUser || namespace == NamespaceServiceAccount || namespace == NamespaceAPIKey
+}
+
+func (i *Identity) IsNil() bool {
+	return i == nil
 }
 
 // Role returns the role of the identity in the active organization.
