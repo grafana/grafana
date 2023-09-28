@@ -29,7 +29,7 @@ import { ClickedItemData, ColorScheme, ColorSchemeDiff, TextAlign } from '../typ
 import FlameGraphContextMenu from './FlameGraphContextMenu';
 import FlameGraphMetadata from './FlameGraphMetadata';
 import FlameGraphTooltip from './FlameGraphTooltip';
-import { FlameGraphDataContainer, LevelItem } from './dataTransform';
+import { CollapseConfig, CollapsedMap, FlameGraphDataContainer, LevelItem } from './dataTransform';
 import { getBarX, useFlameRender } from './rendering';
 import { useFlameRender2 } from './rendering2';
 
@@ -70,6 +70,13 @@ const FlameGraph = ({
   getTheme,
 }: Props) => {
   const styles = getStyles();
+
+  const [collapsedMap, setCollapsedMap] = useState<CollapsedMap>(new Map());
+  useEffect(() => {
+    if (data) {
+      setCollapsedMap(data.getCollapsedMap());
+    }
+  }, [data]);
 
   const [levels, totalProfileTicks, totalProfileTicksRight, totalViewTicks, callersCount] = useMemo(() => {
     let levels = data.getLevels();
@@ -128,6 +135,7 @@ const FlameGraph = ({
     totalTicksRight: totalProfileTicksRight,
     wrapperWidth,
     getTheme,
+    collapsedMap,
   });
 
   const onGraphClick = useCallback(
@@ -147,7 +155,8 @@ const FlameGraph = ({
         levels,
         pixelsPerTick,
         totalViewTicks,
-        rangeMin
+        rangeMin,
+        collapsedMap
       );
 
       // if clicking on a block in the canvas
@@ -165,7 +174,7 @@ const FlameGraph = ({
         setClickedItemData(undefined);
       }
     },
-    [data, rangeMin, rangeMax, totalViewTicks, levels]
+    [data, rangeMin, rangeMax, totalViewTicks, levels, collapsedMap]
   );
 
   const [mousePosition, setMousePosition] = useState<{ x: number; y: number }>();
@@ -188,7 +197,8 @@ const FlameGraph = ({
           levels,
           pixelsPerTick,
           totalViewTicks,
-          rangeMin
+          rangeMin,
+          collapsedMap
         );
 
         // if (barIndex !== -1 && !isNaN(levelIndex) && !isNaN(barIndex)) {
@@ -198,7 +208,7 @@ const FlameGraph = ({
         }
       }
     },
-    [rangeMin, rangeMax, totalViewTicks, clickedItemData, levels, setMousePosition]
+    [rangeMin, rangeMax, totalViewTicks, clickedItemData, levels, setMousePosition, collapsedMap]
   );
 
   const onGraphMouseLeave = useCallback(() => {
@@ -266,6 +276,7 @@ const FlameGraph = ({
       {clickedItemData && (
         <FlameGraphContextMenu
           itemData={clickedItemData}
+          collapseConfig={collapsedMap.get(clickedItemData.item)}
           onMenuItemClick={() => {
             setClickedItemData(undefined);
           }}
@@ -276,6 +287,24 @@ const FlameGraph = ({
           }}
           onSandwich={() => {
             onSandwich(data.getLabel(clickedItemData.item.itemIndexes[0]));
+          }}
+          onExpandGroup={() => {
+            const newMap = new Map(collapsedMap);
+            const collapsedConfig = collapsedMap.get(clickedItemData.item)!;
+            const newConfig = { ...collapsedConfig, collapsed: false }
+            for (const item of collapsedConfig.items) {
+              newMap.set(item, newConfig);
+            }
+            setCollapsedMap(newMap);
+          }}
+          onCollapseGroup={() => {
+            const newMap = new Map(collapsedMap);
+            const collapsedConfig = collapsedMap.get(clickedItemData.item)!;
+            const newConfig = { ...collapsedConfig, collapsed: true }
+            for (const item of collapsedConfig.items) {
+              newMap.set(item, newConfig);
+            }
+            setCollapsedMap(newMap);
           }}
         />
       )}
@@ -320,15 +349,16 @@ const convertPixelCoordinatesToBarCoordinates2 = (
   levels: LevelItem[][],
   pixelsPerTick: number,
   totalTicks: number,
-  rangeMin: number
-) => {
+  rangeMin: number,
+  collapsedMap: Map<LevelItem, CollapseConfig>
+): LevelItem | undefined => {
   console.time('convertPixelCoordinatesToBarCoordinates2');
   let next: LevelItem | undefined = levels[0][0];
   let currentLevel = 0;
   const levelIndex = Math.floor(pos.y / (PIXELS_PER_LEVEL / window.devicePixelRatio));
   let found = undefined;
 
-  while (!found && next) {
+  while (next) {
     const node: LevelItem = next;
     next = undefined;
     if (currentLevel === levelIndex) {
@@ -341,7 +371,14 @@ const convertPixelCoordinatesToBarCoordinates2 = (
       const xEnd = getBarX(child.start + child.value, totalTicks, rangeMin, pixelsPerTick);
       if (xStart <= pos.x && pos.x < xEnd) {
         next = child;
-        currentLevel++;
+
+        // Check if item is a collapsed item. if so also check if the item is the first collapsed item in the chain,
+        // which we render, or a child which we don't render. If it's a child in the chain then don't increase the
+        // level end effectively skip it.
+        const collapsedConfig = collapsedMap.get(child);
+        if (!collapsedConfig || !collapsedConfig.collapsed || collapsedConfig.items[0] === child) {
+          currentLevel++;
+        }
         break;
       }
     }

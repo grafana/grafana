@@ -15,7 +15,7 @@ import {
 import { ClickedItemData, ColorScheme, ColorSchemeDiff, TextAlign } from '../types';
 
 import { getBarColorByDiff, getBarColorByPackage, getBarColorByValue } from './colors';
-import { FlameGraphDataContainer, LevelItem } from './dataTransform';
+import { CollapseConfig, CollapsedMap, FlameGraphDataContainer, LevelItem } from './dataTransform';
 
 const ufuzzy = new uFuzzy();
 
@@ -42,6 +42,7 @@ type RenderOptions = {
   colorScheme: ColorScheme | ColorSchemeDiff;
   focusedItemData?: ClickedItemData;
   getTheme: () => GrafanaTheme2;
+  collapsedMap: CollapsedMap;
 };
 
 export function useFlameRender2(options: RenderOptions) {
@@ -60,6 +61,7 @@ export function useFlameRender2(options: RenderOptions) {
     colorScheme,
     focusedItemData,
     getTheme,
+    collapsedMap,
   } = options;
   const foundLabels = useMemo(() => {
     if (search) {
@@ -86,8 +88,6 @@ export function useFlameRender2(options: RenderOptions) {
       return;
     }
 
-    const collapsedMap = data.getCollapsedMap();
-
     console.time('render2');
     ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
     const pixelsPerTick = (wrapperWidth * window.devicePixelRatio) / totalViewTicks / (rangeMax - rangeMin);
@@ -95,7 +95,7 @@ export function useFlameRender2(options: RenderOptions) {
     const stack: Array<{ item: LevelItem; levelOffset: number }> = [];
     stack.push({ item: levels[0][0], levelOffset: 0 });
 
-    let collapsedItemRendered = false;
+    let collapsedItemRendered: CollapseConfig | undefined = undefined;
 
     while (stack.length > 0) {
       const args = stack.shift()!;
@@ -115,13 +115,19 @@ export function useFlameRender2(options: RenderOptions) {
 
       let offsetModifier = 0;
       let skipRender = false;
-      if (collapsedMap.has(item)) {
-        if (collapsedItemRendered) {
+      const collapsedItemConfig = collapsedMap.get(item);
+      const isCollapsedItem = collapsedItemConfig && collapsedItemConfig.collapsed;
+      if (isCollapsedItem) {
+        if (collapsedItemRendered === collapsedItemConfig) {
           offsetModifier = -1;
           skipRender = true;
+        } else {
+          // This is a case where we have another collapsed group right after different collapsed group, so we need to
+          // reset.
+          collapsedItemRendered = undefined;
         }
       } else {
-        collapsedItemRendered = false;
+        collapsedItemRendered = undefined;
       }
 
       if (!skipRender) {
@@ -131,10 +137,10 @@ export function useFlameRender2(options: RenderOptions) {
         ctx.rect(barX + (collapsed ? 0 : BAR_BORDER_WIDTH), barY, width, height);
 
         let label = '';
-        if (collapsedMap.has(item)) {
-          const numberOfCollapsedItems = collapsedMap.get(item)!.items.length;
-          label = `${numberOfCollapsedItems} collapsed items`;
-          collapsedItemRendered = true;
+        if (isCollapsedItem) {
+          const numberOfCollapsedItems = collapsedItemConfig.items.length;
+          label = `> ${numberOfCollapsedItems} collapsed items`;
+          collapsedItemRendered = collapsedItemConfig;
         } else {
           label = data.getLabel(item.itemIndexes[0]);
         }
@@ -161,7 +167,7 @@ export function useFlameRender2(options: RenderOptions) {
           ctx.fill();
 
           if (width >= LABEL_THRESHOLD) {
-            renderLabel(ctx, data, label, item, width, barX, barY, textAlign);
+            renderLabel(ctx, data, label, item, width, barX, barY, isCollapsedItem ? 'left' : textAlign);
           }
         }
       }
@@ -186,6 +192,7 @@ export function useFlameRender2(options: RenderOptions) {
     totalTicksRight,
     colorScheme,
     theme,
+    collapsedMap,
   ]);
 }
 

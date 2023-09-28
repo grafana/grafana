@@ -5,7 +5,7 @@ import { useMeasure } from 'react-use';
 import { DataFrame, GrafanaTheme2 } from '@grafana/data';
 
 import FlameGraph from './FlameGraph/FlameGraph';
-import { FlameGraphDataContainer } from './FlameGraph/dataTransform';
+import {CollapseConfig, FlameGraphDataContainer, LevelItem} from './FlameGraph/dataTransform';
 import FlameGraphHeader from './FlameGraphHeader';
 import FlameGraphTopTableContainer from './TopTable/FlameGraphTopTableContainer';
 import { MIN_WIDTH_TO_SHOW_BOTH_TOPTABLE_AND_FLAMEGRAPH } from './constants';
@@ -84,7 +84,6 @@ const FlameGraphContainer = ({
     }
     return new FlameGraphDataContainer(data, theme);
   }, [data, theme]);
-
   const [colorScheme, setColorScheme] = useColorScheme(dataContainer);
   const styles = getStyles(theme, vertical);
 

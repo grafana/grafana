@@ -29,9 +29,12 @@ export type LevelItem = {
   parents?: LevelItem[];
 };
 
-type CollapseConfig = {
+export type CollapseConfig = {
   items: LevelItem[];
+  collapsed: boolean;
 };
+
+export type CollapsedMap = Map<LevelItem, CollapseConfig>;
 
 /**
  * Convert data frame with nested set format into array of level. This is mainly done for compatibility with current
@@ -45,7 +48,7 @@ export function nestedSetToLevels(
 
   let parent: LevelItem | undefined = undefined;
   const uniqueLabels: Record<string, LevelItem[]> = {};
-  const collapsedMap: Map<LevelItem, CollapseConfig> = new Map();
+  const collapsedMap: CollapsedMap = new Map();
 
   for (let i = 0; i < container.data.length; i++) {
     const currentLevel = container.getLevel(i);
@@ -76,13 +79,15 @@ export function nestedSetToLevels(
       level: currentLevel,
     };
 
+    // We collapse similar items here, where it seems like parent and child are the same thing are son the distinction
+    // isn't that important. We create a map of items that should be collapsed together.
     if (parent && newItem.value === parent.value) {
       if (collapsedMap.has(parent)) {
         const config = collapsedMap.get(parent)!;
         collapsedMap.set(newItem, config);
         config.items.push(newItem)
       } else {
-        const config = { items: [parent, newItem] };
+        const config = { items: [parent, newItem], collapsed: true };
         collapsedMap.set(parent, config);
         collapsedMap.set(newItem, config);
       }
