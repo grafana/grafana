@@ -110,7 +110,7 @@ To disable the presence indicator, edit the [configuration][] file as follows:
 recent_users_age = 0
 ```
 
-The dashboard won't show any avatars and thus no any recent user activity.
+The dashboard won't show any avatars and thus no recent user activity.
 
 ## Sort dashboards by using insights data
 
