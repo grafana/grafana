@@ -178,8 +178,7 @@ function ShareExportTabRenderer({ model }: SceneComponentProps<ShareExportTab>) 
 
           <Modal.ButtonRow>
             <Button variant="secondary" fill="outline" onClick={model.onViewJSON} icon="arrow-left">
-              {/* TODO: Add translation */}
-              <Trans /*i18nKey="share-modal.export.view-button"*/>Back to export config</Trans>
+              <Trans i18nKey="share-modal.export.back-button">Back to export config</Trans>
             </Button>
             <ClipboardButton
               variant="secondary"
