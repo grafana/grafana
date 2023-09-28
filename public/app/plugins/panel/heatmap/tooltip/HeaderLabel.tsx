@@ -29,12 +29,13 @@ const getStyles = (theme: GrafanaTheme2) => ({
   label: css`
     color: ${theme.colors.text.secondary};
     padding-right: ${theme.spacing(0.5)};
+    font-weight: 400;
   `,
   value: css`
-    font-weight: 500;
     line-height: 18px;
     align-self: center;
     max-width: 210px;
+    font-weight: 500;
   `,
   wrapper: css`
     display: flex;

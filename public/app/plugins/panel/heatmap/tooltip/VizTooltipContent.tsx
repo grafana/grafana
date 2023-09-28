@@ -20,7 +20,7 @@ export const VizTooltipContent = ({ contentLabelValue, customContent }: VizToolt
           return (
             <HorizontalGroup justify="space-between" spacing="lg" key={i}>
               <div className={styles.label}>{labelValue.label}</div>
-              <div>{labelValue.value}</div>
+              <div className={styles.value}>{labelValue.value}</div>
             </HorizontalGroup>
           );
         })}
@@ -44,5 +44,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
   label: css`
     color: ${theme.colors.text.secondary};
+    font-weight: 400;
+  `,
+  value: css`
+    font-weight: 500;
   `,
 });

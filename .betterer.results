@@ -7863,7 +7863,8 @@ exports[`better eslint`] = {
     "public/app/plugins/panel/heatmap/tooltip/VizTooltipContent.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"],
       [0, 0, 0, "Styles should be written using objects.", "1"],
-      [0, 0, 0, "Styles should be written using objects.", "2"]
+      [0, 0, 0, "Styles should be written using objects.", "2"],
+      [0, 0, 0, "Styles should be written using objects.", "3"]
     ],
     "public/app/plugins/panel/heatmap/tooltip/VizTooltipFooter.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"],

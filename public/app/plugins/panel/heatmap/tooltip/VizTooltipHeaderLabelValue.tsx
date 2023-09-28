@@ -67,6 +67,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
   label: css`
     color: ${theme.colors.text.secondary};
+    font-weight: 400;
   `,
   series: css`
     width: 14px;
@@ -77,6 +78,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     width: 12px;
     height: 12px;
     border-radius: ${theme.shape.radius.default};
+    font-weight: 500;
   `,
   hexagon: css``,
   pie_1_4: css``,
