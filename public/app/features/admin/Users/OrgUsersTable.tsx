@@ -72,7 +72,6 @@ export const OrgUsersTable = ({
 }: Props) => {
   const [userToRemove, setUserToRemove] = useState<OrgUser | null>(null);
   const [roleOptions, setRoleOptions] = useState<Role[]>([]);
-  const enableSort = totalPages === 1;
 
   useEffect(() => {
     async function fetchOptions() {
@@ -101,27 +100,25 @@ export const OrgUsersTable = ({
         id: 'login',
         header: 'Login',
         cell: ({ cell: { value } }: Cell<'login'>) => <div>{value}</div>,
-        sortType: enableSort ? 'string' : undefined,
+        sortType: 'string',
       },
       {
         id: 'email',
         header: 'Email',
         cell: ({ cell: { value } }: Cell<'email'>) => value,
-        sortType: enableSort ? 'string' : undefined,
+        sortType: 'string',
       },
       {
         id: 'name',
         header: 'Name',
         cell: ({ cell: { value } }: Cell<'name'>) => value,
-        sortType: enableSort ? 'string' : undefined,
+        sortType: 'string',
       },
       {
         id: 'lastSeenAtAge',
         header: 'Last active',
         cell: ({ cell: { value } }: Cell<'lastSeenAtAge'>) => value,
-        sortType: enableSort
-          ? (a, b) => new Date(a.original.lastSeenAt).getTime() - new Date(b.original.lastSeenAt).getTime()
-          : undefined,
+        sortType: (a, b) => new Date(a.original.lastSeenAt).getTime() - new Date(b.original.lastSeenAt).getTime(),
       },
       {
         id: 'role',
@@ -185,7 +182,7 @@ export const OrgUsersTable = ({
         },
       },
     ],
-    [orgId, roleOptions, onRoleChange, enableSort]
+    [orgId, roleOptions, onRoleChange]
   );
 
   return (
