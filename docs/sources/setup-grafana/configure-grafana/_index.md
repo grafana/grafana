@@ -152,6 +152,8 @@ environment variable `HOSTNAME`, if that is empty or does not exist Grafana will
 
 Force migration will run migrations that might cause data loss. Default is `false`.
 
+Set force_migration=true in your grafana.ini and restart Grafana to roll back and delete Unified Alerting configuration data. Any alert rules created while using Unified Alerting will be deleted by rolling back.
+
 <hr />
 
 ## [paths]
@@ -812,7 +814,7 @@ that this organization already exists. Default is 1.
 
 The role new users will be assigned for the main organization (if the
 `auto_assign_org` setting is set to true). Defaults to `Viewer`, other valid
-options are `Admin` and `Editor`. e.g.:
+options are `Admin`, `Editor` and `None`. e.g.:
 
 `auto_assign_org_role = Viewer`
 
@@ -2007,7 +2009,7 @@ Basic auth password.
 
 ### public_url
 
-Optional URL to send to users in notifications. If the string contains the sequence `${file}`, it is replaced with the uploaded filename. Otherwise, the file name is appended to the path part of the URL, leaving any query string unchanged.
+Optional URL to send to users in notifications. If the string contains the sequence `{{file}}`, it is replaced with the uploaded filename. Otherwise, the file name is appended to the path part of the URL, leaving any query string unchanged.
 
 <hr>
 
@@ -2136,6 +2138,10 @@ Disable download of the public key for verifying plugin signature. The default i
 
 Force download of the public key for verifying plugin signature on startup. The default is `false`. If disabled, the public key will be retrieved every 10 days. Requires `public_key_retrieval_disabled` to be false to have any effect.
 
+### disable_plugins
+
+Enter a comma-separated list of plugin identifiers to avoid loading (including core plugins). These plugins will be hidden in the catalog.
+
 <hr>
 
 ## [live]
@@ -2214,6 +2220,12 @@ Available in Grafana v9.5.0 or later, and [OpenTelemetry must be configured as w
 {{% /admonition %}}
 
 If `true`, propagate the tracing context to the plugin backend and enable tracing (if the backend supports it).
+
+## as_external
+
+Load an external version of a core plugin if it has been installed.
+
+Experimental. Requires the feature toggle `externalCorePlugins` to be enabled.
 
 <hr>
 
@@ -2339,7 +2351,7 @@ Please see [Configure feature toggles]({{< relref "./feature-toggles" >}}) for m
 
 Lets you switch the feature toggle state in the feature management page. The default is `false`.
 
-### update_controller_url
+### update_webhook
 
 Set the URL of the controller that manages the feature toggle updates. If not set, feature toggles in the feature management page will be read-only.
 

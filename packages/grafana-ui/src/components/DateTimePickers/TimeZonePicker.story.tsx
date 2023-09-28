@@ -5,12 +5,9 @@ import React from 'react';
 
 import { TimeZonePicker } from '@grafana/ui';
 
-import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
-
 const meta: Meta<typeof TimeZonePicker> = {
   title: 'Pickers and Editors/TimePickers/TimeZonePicker',
   component: TimeZonePicker,
-  decorators: [withCenteredStory],
   parameters: {
     controls: {
       exclude: ['inputId', 'onChange', 'onBlur'],

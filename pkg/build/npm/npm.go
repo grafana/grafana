@@ -25,6 +25,7 @@ var packages = []string{
 	"@grafana/e2e",
 	"@grafana/e2e-selectors",
 	"@grafana/schema",
+	"@grafana/flamegraph",
 }
 
 // PublishNpmPackages will publish local NPM packages to NPM registry.

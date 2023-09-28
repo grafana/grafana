@@ -39,6 +39,7 @@ function countEslintErrors() {
     const eslintConfigMainPaths = eslintConfigFiles.map((file) => path.resolve(path.dirname(file)));
 
     const baseRules: Partial<Linter.RulesRecord> = {
+      '@emotion/syntax-preference': [2, 'object'],
       '@typescript-eslint/no-explicit-any': 'error',
       '@grafana/no-aria-label-selectors': 'error',
     };
