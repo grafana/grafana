@@ -8,6 +8,7 @@ import (
 
 	"golang.org/x/oauth2"
 
+	"github.com/grafana/grafana/pkg/models/roletype"
 	"github.com/grafana/grafana/pkg/models/usertoken"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/login"
@@ -27,6 +28,8 @@ const (
 	NamespaceAnonymous      = identity.NamespaceAnonymous
 	NamespaceRenderService  = identity.NamespaceRenderService
 )
+
+var _ identity.Requester = (*Identity)(nil)
 
 type Identity struct {
 	// OrgID is the active organization for the entity.
@@ -81,12 +84,107 @@ type Identity struct {
 	IDToken string
 }
 
-// Role returns the role of the identity in the active organization.
-func (i *Identity) Role() org.RoleType {
-	return i.OrgRoles[i.OrgID]
+func (i *Identity) GetAuthenticatedBy() string {
+	return i.AuthenticatedBy
+}
+
+func (i *Identity) GetCacheKey() string {
+	namespace, id := i.GetNamespacedID()
+	if !i.HasUniqueId() {
+		// Hack use the org role as id for identities that do not have a unique id
+		// e.g. anonymous and render key.
+		id = string(i.GetOrgRole())
+	}
+
+	return fmt.Sprintf("%d-%s-%s", i.GetOrgID(), namespace, id)
+}
+
+func (i *Identity) GetDisplayName() string {
+	return i.Name
+}
+
+func (i *Identity) GetEmail() string {
+	return i.Email
+}
+
+func (i *Identity) GetIDToken() string {
+	return i.IDToken
+}
+
+func (i *Identity) GetIsGrafanaAdmin() bool {
+	return i.IsGrafanaAdmin != nil && *i.IsGrafanaAdmin
+}
+
+func (i *Identity) GetLogin() string {
+	return i.Login
+}
+
+func (i *Identity) GetNamespacedID() (namespace string, identifier string) {
+	split := strings.Split(i.ID, ":")
+
+	if len(split) != 2 {
+		return "", ""
+	}
+
+	return split[0], split[1]
+}
+
+// GetOrgID implements identity.Requester.
+func (i *Identity) GetOrgID() int64 {
+	return i.OrgID
+}
+
+func (i *Identity) GetOrgName() string {
+	return i.OrgName
+}
+
+func (i *Identity) GetOrgRole() roletype.RoleType {
+	if i.OrgRoles == nil {
+		return roletype.RoleNone
+	}
+
+	if i.OrgRoles[i.GetOrgID()] == "" {
+		return roletype.RoleNone
+	}
+
+	return i.OrgRoles[i.GetOrgID()]
+}
+
+func (i *Identity) GetPermissions() map[string][]string {
+	if i.Permissions == nil {
+		return make(map[string][]string)
+	}
+
+	if i.Permissions[i.GetOrgID()] == nil {
+		return make(map[string][]string)
+	}
+
+	return i.Permissions[i.GetOrgID()]
+}
+
+func (i *Identity) GetTeams() []int64 {
+	return i.Teams
+}
+
+func (i *Identity) HasRole(role roletype.RoleType) bool {
+	if i.GetIsGrafanaAdmin() {
+		return true
+	}
+
+	return i.GetOrgRole().Includes(role)
+}
+
+func (i *Identity) HasUniqueId() bool {
+	namespace, _ := i.GetNamespacedID()
+	return namespace == NamespaceUser || namespace == NamespaceServiceAccount || namespace == NamespaceAPIKey
+}
+
+func (i *Identity) IsNil() bool {
+	return i == nil
 }
 
 // NamespacedID returns the namespace, e.g. "user" and the id for that namespace
+// FIXME(kalleep): Replace with GetNamespacedID
 func (i *Identity) NamespacedID() (string, int64) {
 	split := strings.Split(i.ID, ":")
 	if len(split) != 2 {
@@ -104,21 +202,15 @@ func (i *Identity) NamespacedID() (string, int64) {
 
 // SignedInUser returns a SignedInUser from the identity.
 func (i *Identity) SignedInUser() *user.SignedInUser {
-	var isGrafanaAdmin bool
-	if i.IsGrafanaAdmin != nil {
-		isGrafanaAdmin = *i.IsGrafanaAdmin
-	}
-
 	u := &user.SignedInUser{
-		UserID:          0,
 		OrgID:           i.OrgID,
 		OrgName:         i.OrgName,
-		OrgRole:         i.Role(),
+		OrgRole:         i.GetOrgRole(),
 		Login:           i.Login,
 		Name:            i.Name,
 		Email:           i.Email,
 		AuthenticatedBy: i.AuthenticatedBy,
-		IsGrafanaAdmin:  isGrafanaAdmin,
+		IsGrafanaAdmin:  i.GetIsGrafanaAdmin(),
 		IsAnonymous:     i.IsAnonymous,
 		IsDisabled:      i.IsDisabled,
 		HelpFlags1:      i.HelpFlags1,
@@ -128,24 +220,34 @@ func (i *Identity) SignedInUser() *user.SignedInUser {
 		IDToken:         i.IDToken,
 	}
 
-	namespace, id := i.NamespacedID()
+	namespace, id := i.GetNamespacedID()
 	if namespace == NamespaceAPIKey {
-		u.ApiKeyID = id
+		u.ApiKeyID = intIdentifier(id)
 	} else {
-		u.UserID = id
+		u.UserID = intIdentifier(id)
 		u.IsServiceAccount = namespace == NamespaceServiceAccount
 	}
 
 	return u
 }
 
+func intIdentifier(identifier string) int64 {
+	id, err := strconv.ParseInt(identifier, 10, 64)
+	if err != nil {
+		// FIXME (kalleep): Improve error handling
+		return -1
+	}
+
+	return id
+}
+
 func (i *Identity) ExternalUserInfo() login.ExternalUserInfo {
-	_, id := i.NamespacedID()
+	_, id := i.GetNamespacedID()
 	return login.ExternalUserInfo{
 		OAuthToken:     i.OAuthToken,
 		AuthModule:     i.AuthenticatedBy,
 		AuthId:         i.AuthID,
-		UserId:         id,
+		UserId:         intIdentifier(id),
 		Email:          i.Email,
 		Login:          i.Login,
 		Name:           i.Name,
