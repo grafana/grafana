@@ -33,6 +33,7 @@ import {
   ScopedVars,
   TimeZone,
   ValueLinkConfig,
+  DataLinkContext,
 } from '../types';
 import { FieldMatcher } from '../types/transformations';
 import { locationUtil } from '../utils';
@@ -392,7 +393,7 @@ export function validateFieldConfig(config: FieldConfig) {
 
 const defaultInternalLinkPostProcessor: DataLinkPostProcessor = (options) => {
   // For internal links at the moment only destination is Explore.
-  const { link, linkModel, dataLinkScopedVars, field, replaceVariables } = options;
+  const { link, linkModel, dataLinkScopedVars, field, frame, replaceVariables } = options;
 
   if (link.internal) {
     return mapInternalLinkToExplore({
@@ -400,6 +401,7 @@ const defaultInternalLinkPostProcessor: DataLinkPostProcessor = (options) => {
       internalLink: link.internal,
       scopedVars: dataLinkScopedVars,
       field,
+      frame,
       range: link.internal.range,
       replaceVariables,
     });
@@ -417,7 +419,7 @@ export const getLinksSupplier =
     timeZone?: TimeZone,
     dataLinkPostProcessor?: DataLinkPostProcessor
   ) =>
-  (config: ValueLinkConfig): Array<LinkModel<Field>> => {
+  (config: ValueLinkConfig): Array<LinkModel<DataLinkContext>> => {
     if (!field.config.links || field.config.links.length === 0) {
       return [];
     }
@@ -439,26 +441,27 @@ export const getLinksSupplier =
         dataContext.value.calculatedValue = config.calculatedValue;
       }
 
-      let linkModel: LinkModel<Field>;
+      let linkModel: LinkModel;
+      const orig = { frame, field, rowIndex: dataContext.value.rowIndex };
 
       if (link.onClick) {
         linkModel = {
           href: link.url,
           title: replaceVariables(link.title || '', dataLinkScopedVars),
           target: link.targetBlank ? '_blank' : undefined,
-          onClick: (evt: MouseEvent, origin?: Field) => {
+          onClick: (evt: MouseEvent, origin?: DataLinkContext) => {
             link.onClick!({
-              origin: origin ?? field,
+              origin: origin ?? orig,
               e: evt,
               replaceVariables: boundReplaceVariables,
             });
           },
-          origin: field,
+          origin: orig,
         };
       } else {
         let href = link.onBuildUrl
           ? link.onBuildUrl({
-              origin: field,
+              origin: orig,
               replaceVariables: boundReplaceVariables,
             })
           : link.url;
@@ -473,7 +476,7 @@ export const getLinksSupplier =
           href,
           title: replaceVariables(link.title || '', dataLinkScopedVars),
           target: link.targetBlank ? '_blank' : undefined,
-          origin: field,
+          origin: orig,
         };
       }
 

@@ -133,7 +133,7 @@ export type DataLinkPostProcessorOptions = {
   linkModel: LinkModel;
 };
 
-export type DataLinkPostProcessor = (options: DataLinkPostProcessorOptions) => LinkModel<Field> | undefined;
+export type DataLinkPostProcessor = (options: DataLinkPostProcessorOptions) => LinkModel | undefined;
 
 export interface ApplyFieldOverrideOptions {
   data?: DataFrame[];

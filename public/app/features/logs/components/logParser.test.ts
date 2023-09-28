@@ -408,14 +408,23 @@ describe('logParser', () => {
 
   describe('createLogLineLinks', () => {
     it('should change FieldDef to have keys of variable keys', () => {
+      const field = {
+        config: { links: [] },
+        name: 'Line',
+        type: FieldType.string,
+        values: ['a', 'b'],
+      };
       const variableLink: ExploreFieldLinkModel = {
         href: 'test',
         onClick: () => {},
         origin: {
-          config: { links: [] },
-          name: 'Line',
-          type: FieldType.string,
-          values: ['a', 'b'],
+          field: {
+            config: { links: [] },
+            name: 'Line',
+            type: FieldType.string,
+            values: ['a', 'b'],
+          },
+          frame: { fields: [field], length: 1 },
         },
         title: 'test',
         target: '_self',
@@ -442,14 +451,19 @@ describe('logParser', () => {
     });
 
     it('should return empty array if no variables', () => {
+      const field = {
+        config: { links: [] },
+        name: 'Line',
+        type: FieldType.string,
+        values: ['a', 'b'],
+      };
+
       const variableLink: ExploreFieldLinkModel = {
         href: 'test',
         onClick: () => {},
         origin: {
-          config: { links: [] },
-          name: 'Line',
-          type: FieldType.string,
-          values: ['a', 'b'],
+          field,
+          frame: { fields: [field], length: 1 },
         },
         title: 'test',
         target: '_self',

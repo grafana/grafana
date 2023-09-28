@@ -6,6 +6,7 @@ import {
   CoreApp,
   DataFrame,
   DataLink,
+  DataLinkContext,
   DataSourceApi,
   DataSourceJsonData,
   Field,
@@ -216,7 +217,7 @@ function useFocusSpanLink(options: {
   splitOpenFn: SplitOpen;
   refId?: string;
   datasource?: DataSourceApi;
-}): [string | undefined, (traceId: string, spanId: string) => LinkModel<Field>] {
+}): [string | undefined, (traceId: string, spanId: string) => LinkModel<DataLinkContext>] {
   const panelState = useSelector((state) => state.explore.panes[options.exploreId]?.panelsState.trace);
   const focusedSpanId = panelState?.spanId;
 
@@ -263,6 +264,7 @@ function useFocusSpanLink(options: {
       scopedVars: {},
       range: {} as any,
       field: {} as Field,
+      frame: { fields: [], length: 0 },
       onClickFn: sameTrace
         ? () => setFocusedSpanId(focusedSpanId === spanId ? undefined : spanId)
         : options.splitOpenFn

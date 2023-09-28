@@ -2,7 +2,6 @@ import React, { useEffect, useRef, useState } from 'react';
 
 import {
   DataFrameType,
-  Field,
   FieldType,
   formattedValueToString,
   getFieldDisplayName,
@@ -11,6 +10,7 @@ import {
   getLinksSupplier,
   InterpolateFunction,
   ScopedVars,
+  DataLinkContext,
 } from '@grafana/data';
 import { HeatmapCellLayout } from '@grafana/schema';
 import { LinkButton, VerticalGroup } from '@grafana/ui';
@@ -120,7 +120,7 @@ const HeatmapHoverCell = ({ data, hover, showHistogram, scopedVars, replaceVars 
   const count = countVals?.[index];
 
   const visibleFields = data.heatmap?.fields.filter((f) => !Boolean(f.config.custom?.hideFrom?.tooltip));
-  const links: Array<LinkModel<Field>> = [];
+  const links: Array<LinkModel<DataLinkContext>> = [];
   const linkLookup = new Set<string>();
 
   for (const field of visibleFields ?? []) {

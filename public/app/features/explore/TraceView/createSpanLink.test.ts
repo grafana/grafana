@@ -1284,6 +1284,7 @@ function setupSpanLinkFactory(options: Partial<TraceToLogsOptionsV2> = {}, datas
     createFocusSpanLink: (traceId, spanId) => {
       return {
         href: `${traceId}-${spanId}`,
+        origin: {},
       } as unknown as LinkModel;
     },
     trace: dummyTraceData,

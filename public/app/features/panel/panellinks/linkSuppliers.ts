@@ -50,7 +50,7 @@ interface DataLinkScopedVars extends ScopedVars {
  * Link suppliers creates link models based on a link origin
  */
 export const getFieldLinksSupplier = (value: FieldDisplay): LinkModelSupplier<FieldDisplay> | undefined => {
-  const links = value.field.links;
+  const links = value.field.links as unknown as Array<DataLink<any, FieldDisplay>>;
   if (!links || links.length === 0) {
     return undefined;
   }
@@ -132,8 +132,8 @@ export const getFieldLinksSupplier = (value: FieldDisplay): LinkModelSupplier<Fi
         return replaceVariables(value, finalVars, fmt);
       };
 
-      return links.map((link: DataLink) => {
-        return getLinkSrv().getDataLinkUIModel(link, replace, value);
+      return links.map((link) => {
+        return getLinkSrv().getDataLinkUIModel<FieldDisplay>(link, replace, value);
       });
     },
   };
@@ -149,7 +149,7 @@ export const getPanelLinksSupplier = (panel: PanelModel): LinkModelSupplier<Pane
   return {
     getLinks: () => {
       return links.map((link) => {
-        return getLinkSrv().getDataLinkUIModel(link, panel.replaceVariables, panel);
+        return getLinkSrv().getDataLinkUIModel<PanelModel>(link, panel.replaceVariables, panel);
       });
     },
   };

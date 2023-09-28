@@ -144,7 +144,7 @@ function buildTableDataFrame(
           url: '',
           onClick: (e: DataLinkClickEvent) => {
             const field: Field = e.origin.field;
-            const value = field.values[e.origin.rowIndex];
+            const value = field.values[e.origin.rowIndex ?? 0];
             onSymbolClick(value);
           },
         },

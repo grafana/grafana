@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import React from 'react';
 
-import { Field, GrafanaTheme2, LinkModel } from '@grafana/data';
+import { GrafanaTheme2, LinkModel } from '@grafana/data';
 
 import { useStyles2 } from '../../themes';
 import { Icon } from '../Icon/Icon';
@@ -9,7 +9,7 @@ import { Icon } from '../Icon/Icon';
 import { DataLinkButton } from './DataLinkButton';
 
 type Props = {
-  links: Array<LinkModel<Field>>;
+  links: LinkModel[];
 };
 
 /**

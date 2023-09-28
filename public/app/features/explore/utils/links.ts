@@ -17,6 +17,7 @@ import {
   CoreApp,
   SplitOpenOptions,
   DataLinkPostProcessor,
+  DataLinkContext,
 } from '@grafana/data';
 import { getTemplateSrv, reportInteraction, VariableInterpolation } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
@@ -44,7 +45,7 @@ const DATA_LINK_FILTERS: DataLinkFilter[] = [dataLinkHasRequiredPermissionsFilte
  * Correlations are internal links only so the variables property will always be defined (but possibly empty)
  * for internal links and undefined for non-internal links
  */
-export interface ExploreFieldLinkModel extends LinkModel<Field> {
+export interface ExploreFieldLinkModel extends LinkModel<DataLinkContext> {
   variables?: VariableInterpolation[];
 }
 
@@ -102,7 +103,7 @@ export const getFieldLinksForExplore = (options: {
   splitOpenFn?: SplitOpen;
   range: TimeRange;
   vars?: ScopedVars;
-  dataFrame?: DataFrame;
+  dataFrame: DataFrame;
   // if not provided, field.config.links are used
   linksToProcess?: DataLink[];
 }): ExploreFieldLinkModel[] => {
@@ -154,12 +155,12 @@ export const getFieldLinksForExplore = (options: {
       return DATA_LINK_FILTERS.every((filter) => filter(link, scopedVars));
     });
 
-    const fieldLinks = links.map((link) => {
+    const fieldLinks = links.map((link: DataLink<any, any>) => {
       if (!link.internal) {
         const replace: InterpolateFunction = (value, vars) =>
           getTemplateSrv().replace(value, { ...vars, ...scopedVars });
 
-        const linkModel = getLinkSrv().getDataLinkUIModel(link, replace, field);
+        const linkModel = getLinkSrv().getDataLinkUIModel<DataLinkContext>(link, replace, { field, frame: dataFrame });
         if (!linkModel.title) {
           linkModel.title = getTitleFromHref(linkModel.href);
         }
@@ -212,6 +213,7 @@ export const getFieldLinksForExplore = (options: {
             scopedVars: allVars,
             range,
             field,
+            frame: dataFrame,
             // Don't track internal links without split view as they are used only in Dashboards
             // TODO: It should be revisited in #66570
             onClickFn: options.splitOpenFn ? (options) => splitFnWithTracking(options) : undefined,

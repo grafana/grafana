@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import React, { useMemo } from 'react';
 
-import { LogRowModel, Field, LinkModel, DataFrame } from '@grafana/data';
+import { LogRowModel, Field, LinkModel, DataFrame, DataLinkContext } from '@grafana/data';
 
 import { LogRowMenuCell } from './LogRowMenuCell';
 import { LogRowStyles } from './getLogRowStyles';
@@ -11,7 +11,7 @@ export interface Props {
   row: LogRowModel;
   detectedFields: string[];
   wrapLogMessage: boolean;
-  getFieldLinks?: (field: Field, rowIndex: number, dataFrame: DataFrame) => Array<LinkModel<Field>>;
+  getFieldLinks?: (field: Field, rowIndex: number, dataFrame: DataFrame) => Array<LinkModel<DataLinkContext>>;
   styles: LogRowStyles;
   showContextToggle?: (row?: LogRowModel) => boolean;
   onOpenContext: (row: LogRowModel) => void;

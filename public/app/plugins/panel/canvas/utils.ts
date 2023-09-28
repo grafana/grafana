@@ -1,6 +1,13 @@
 import { isNumber, isString } from 'lodash';
 
-import { AppEvents, Field, getFieldDisplayName, LinkModel, PluginState, SelectableValue } from '@grafana/data';
+import {
+  AppEvents,
+  DataLinkContext,
+  getFieldDisplayName,
+  LinkModel,
+  PluginState,
+  SelectableValue,
+} from '@grafana/data';
 import appEvents from 'app/core/app_events';
 import { hasAlphaPanels } from 'app/core/config';
 import {
@@ -110,7 +117,7 @@ export function getDataLinks(ctx: DimensionContext, cfg: TextConfig, textData: s
   const panelData = ctx.getPanelData();
   const frames = panelData?.series;
 
-  const links: Array<LinkModel<Field>> = [];
+  const links: Array<LinkModel<DataLinkContext>> = [];
   const linkLookup = new Set<string>();
 
   frames?.forEach((frame) => {

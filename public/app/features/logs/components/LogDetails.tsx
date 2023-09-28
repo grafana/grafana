@@ -1,7 +1,7 @@
 import { cx } from '@emotion/css';
 import React, { PureComponent } from 'react';
 
-import { CoreApp, DataFrame, Field, LinkModel, LogRowModel } from '@grafana/data';
+import { CoreApp, DataFrame, DataLinkContext, Field, LinkModel, LogRowModel } from '@grafana/data';
 import { Themeable2, withTheme2 } from '@grafana/ui';
 
 import { calculateLogsLabelStats, calculateStats } from '../utils';
@@ -22,7 +22,7 @@ export interface Props extends Themeable2 {
 
   onClickFilterLabel?: (key: string, value: string, refId?: string) => void;
   onClickFilterOutLabel?: (key: string, value: string, refId?: string) => void;
-  getFieldLinks?: (field: Field, rowIndex: number, dataFrame: DataFrame) => Array<LinkModel<Field>>;
+  getFieldLinks?: (field: Field, rowIndex: number, dataFrame: DataFrame) => Array<LinkModel<DataLinkContext>>;
   displayedFields?: string[];
   onClickShowField?: (key: string) => void;
   onClickHideField?: (key: string) => void;

@@ -3,7 +3,15 @@ import { isEqual } from 'lodash';
 import memoizeOne from 'memoize-one';
 import React, { PureComponent, useState } from 'react';
 
-import { CoreApp, Field, GrafanaTheme2, IconName, LinkModel, LogLabelStatsModel, LogRowModel } from '@grafana/data';
+import {
+  CoreApp,
+  DataLinkContext,
+  GrafanaTheme2,
+  IconName,
+  LinkModel,
+  LogLabelStatsModel,
+  LogRowModel,
+} from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
 import { ClipboardButton, DataLinkButton, IconButton, Themeable2, withTheme2 } from '@grafana/ui';
 
@@ -18,7 +26,7 @@ export interface Props extends Themeable2 {
   isLabel?: boolean;
   onClickFilterLabel?: (key: string, value: string, refId?: string) => void;
   onClickFilterOutLabel?: (key: string, value: string, refId?: string) => void;
-  links?: Array<LinkModel<Field>>;
+  links?: Array<LinkModel<DataLinkContext>>;
   getStats: () => LogLabelStatsModel[] | null;
   displayedFields?: string[];
   onClickShowField?: (key: string) => void;

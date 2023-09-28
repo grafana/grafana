@@ -2,6 +2,7 @@ import {
   cacheFieldDisplayNames,
   DataFrame,
   DataFrameType,
+  DataLinkContext,
   Field,
   FieldType,
   formattedValueToString,
@@ -68,7 +69,7 @@ export function prepareHeatmapData(
   options: Options,
   palette: string[],
   theme: GrafanaTheme2,
-  getFieldLinks?: (exemplars: DataFrame, field: Field) => (config: ValueLinkConfig) => Array<LinkModel<Field>>
+  getFieldLinks?: (exemplars: DataFrame, field: Field) => (config: ValueLinkConfig) => Array<LinkModel<DataLinkContext>>
 ): HeatmapData {
   if (!frames?.length) {
     return {};

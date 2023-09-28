@@ -4,7 +4,7 @@ import React from 'react';
 import {
   arrayUtils,
   DataFrame,
-  Field,
+  DataLinkContext,
   formattedValueToString,
   getFieldDisplayName,
   GrafanaTheme2,
@@ -53,7 +53,7 @@ export const DataHoverView = ({ data, rowIndex, columnIndex, sortOrder, mode, he
   }
 
   const displayValues: DisplayValue[] = [];
-  const links: Array<LinkModel<Field>> = [];
+  const links: Array<LinkModel<DataLinkContext>> = [];
   const linkLookup = new Set<string>();
 
   for (const field of orderedVisibleFields) {

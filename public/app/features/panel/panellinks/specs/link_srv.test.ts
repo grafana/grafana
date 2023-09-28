@@ -70,7 +70,7 @@ describe('linkSrv', () => {
               url: 'www.google.com?query=some query',
             },
             (v) => v,
-            {}
+            {} as any
           ).href
         ).toEqual('www.google.com?query=some query');
       });
@@ -83,7 +83,7 @@ describe('linkSrv', () => {
               url: 'www.google.com?query=some\nquery',
             },
             (v) => v,
-            {}
+            {} as any
           ).href
         ).toEqual('www.google.com?query=somequery');
       });
@@ -108,7 +108,7 @@ describe('linkSrv', () => {
               url,
             },
             (v) => v,
-            {}
+            {} as any
           ).href;
 
           expect(link).toBe(expected);
@@ -140,7 +140,7 @@ describe('linkSrv', () => {
               url,
             },
             (v) => v,
-            {}
+            {} as any
           ).href;
 
           expect(link).toBe(expected);

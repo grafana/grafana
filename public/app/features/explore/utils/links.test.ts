@@ -43,12 +43,13 @@ describe('explore links utils', () => {
     });
 
     it('returns correct link model for external link', () => {
-      const { field, range } = setup({
+      const { field, dataFrame, range } = setup({
         title: 'external',
         url: 'http://regionalhost',
       });
       const links = getFieldLinksForExplore({
         field,
+        dataFrame,
         rowIndex: ROW_WITH_TEXT_VALUE.index,
         splitOpenFn: jest.fn(),
         range,
@@ -60,12 +61,13 @@ describe('explore links utils', () => {
     });
 
     it('returns generates title for external link', () => {
-      const { field, range } = setup({
+      const { field, dataFrame, range } = setup({
         title: '',
         url: 'http://regionalhost',
       });
       const links = getFieldLinksForExplore({
         field,
+        dataFrame,
         rowIndex: ROW_WITH_TEXT_VALUE.index,
         splitOpenFn: jest.fn(),
         range,
@@ -76,7 +78,7 @@ describe('explore links utils', () => {
     });
 
     it('returns correct link model for internal link', () => {
-      const { field, range } = setup({
+      const { field, dataFrame, range } = setup({
         title: '',
         url: '',
         internal: {
@@ -93,6 +95,7 @@ describe('explore links utils', () => {
       const splitfn = jest.fn();
       const links = getFieldLinksForExplore({
         field,
+        dataFrame,
         rowIndex: ROW_WITH_TEXT_VALUE.index,
         splitOpenFn: splitfn,
         range,
@@ -134,21 +137,21 @@ describe('explore links utils', () => {
     });
 
     it('returns correct link model for external link when user does not have access to explore', () => {
-      const { field, range } = setup(
+      const { field, dataFrame, range } = setup(
         {
           title: 'external',
           url: 'http://regionalhost',
         },
         false
       );
-      const links = getFieldLinksForExplore({ field, rowIndex: ROW_WITH_TEXT_VALUE.index, range });
+      const links = getFieldLinksForExplore({ field, dataFrame, rowIndex: ROW_WITH_TEXT_VALUE.index, range });
 
       expect(links[0].href).toBe('http://regionalhost');
       expect(links[0].title).toBe('external');
     });
 
     it('returns no internal links if when user does not have access to explore', () => {
-      const { field, range } = setup(
+      const { field, dataFrame, range } = setup(
         {
           title: '',
           url: '',
@@ -160,7 +163,7 @@ describe('explore links utils', () => {
         },
         false
       );
-      const links = getFieldLinksForExplore({ field, rowIndex: ROW_WITH_TEXT_VALUE.index, range });
+      const links = getFieldLinksForExplore({ field, dataFrame, rowIndex: ROW_WITH_TEXT_VALUE.index, range });
       expect(links).toHaveLength(0);
     });
 
@@ -710,7 +713,7 @@ function setup(
   dataFrameOtherFieldOverride?: Field[]
 ) {
   setLinkSrv({
-    getDataLinkUIModel(link: DataLink, replaceVariables: InterpolateFunction | undefined, origin) {
+    getDataLinkUIModel<T>(link: DataLink<any, T>, replaceVariables: InterpolateFunction | undefined, origin: T) {
       return {
         href: link.url,
         title: link.title,

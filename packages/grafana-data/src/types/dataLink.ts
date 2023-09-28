@@ -1,12 +1,19 @@
+import { DataFrame, Field } from './dataFrame';
 import { ExplorePanelsState } from './explore';
 import { InterpolateFunction } from './panel';
 import { DataQuery } from './query';
 import { TimeRange } from './time';
 
+export interface DataLinkContext {
+  frame: DataFrame;
+  field: Field;
+  rowIndex?: number;
+}
+
 /**
  * Callback info for DataLink click events
  */
-export interface DataLinkClickEvent<T = any> {
+export interface DataLinkClickEvent<T = DataLinkContext> {
   origin: T;
   replaceVariables: InterpolateFunction | undefined;
   e?: any; // mouse|react event
@@ -28,7 +35,7 @@ export enum DataLinkConfigOrigin {
  * TODO: <T extends DataQuery> is not strictly true for internal links as we do not need refId for example but all
  *  data source defined queries extend this so this is more for documentation.
  */
-export interface DataLink<T extends DataQuery = any> {
+export interface DataLink<T extends DataQuery = any, Ctx = DataLinkContext> {
   title: string;
   targetBlank?: boolean;
 
@@ -37,11 +44,11 @@ export interface DataLink<T extends DataQuery = any> {
 
   // 2: If exists, use this to construct the URL
   // Not saved in JSON/DTO
-  onBuildUrl?: (event: DataLinkClickEvent) => string;
+  onBuildUrl?: (event: DataLinkClickEvent<Ctx>) => string;
 
   // 1: If exists, handle click directly
   // Not saved in JSON/DTO
-  onClick?: (event: DataLinkClickEvent) => void;
+  onClick?: (event: DataLinkClickEvent<Ctx>) => void;
 
   // If dataLink represents internal link this has to be filled. Internal link is defined as a query in a particular
   // data source that we want to show to the user. Usually this results in a link to explore but can also lead to
@@ -102,7 +109,7 @@ export interface LinkModel<T = any> {
  * TODO: ScopedVars in in GrafanaUI package!
  */
 export interface LinkModelSupplier<T extends object> {
-  getLinks(replaceVariables?: InterpolateFunction): Array<LinkModel<T>>;
+  getLinks(replaceVariables?: InterpolateFunction): LinkModel[];
 }
 
 export enum VariableOrigin {

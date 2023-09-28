@@ -11,6 +11,7 @@ import {
   DataHoverClearEvent,
   DataHoverEvent,
   CoreApp,
+  DataFrame,
 } from '@grafana/data';
 import { CustomScrollbar, useStyles2, usePanelContext } from '@grafana/ui';
 import { getFieldLinksForExplore } from 'app/features/explore/utils/links';
@@ -84,8 +85,8 @@ export const LogsPanel = ({
   }, [isAscending, logRows]);
 
   const getFieldLinks = useCallback(
-    (field: Field, rowIndex: number) => {
-      return getFieldLinksForExplore({ field, rowIndex, range: data.timeRange });
+    (field: Field, rowIndex: number, dataFrame: DataFrame) => {
+      return getFieldLinksForExplore({ dataFrame, field, rowIndex, range: data.timeRange });
     },
     [data]
   );

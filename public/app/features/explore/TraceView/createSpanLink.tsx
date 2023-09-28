@@ -3,6 +3,7 @@ import React from 'react';
 import {
   DataFrame,
   DataLink,
+  DataLinkContext,
   DataSourceInstanceSettings,
   DataSourceJsonData,
   dateTime,
@@ -45,7 +46,7 @@ export function createSpanLinkFactory({
   traceToLogsOptions?: TraceToLogsOptionsV2;
   traceToMetricsOptions?: TraceToMetricsOptions;
   dataFrame?: DataFrame;
-  createFocusSpanLink?: (traceId: string, spanId: string) => LinkModel<Field>;
+  createFocusSpanLink?: (traceId: string, spanId: string) => LinkModel<DataLinkContext>;
   trace: Trace;
 }): SpanLinkFunc | undefined {
   if (!dataFrame) {
@@ -95,7 +96,7 @@ export function createSpanLinkFactory({
             href: link.href,
             onClick: link.onClick,
             content: <Icon name="link" title={link.title || 'Link'} />,
-            field: link.origin,
+            field: link.origin.field,
             type: SpanLinkType.Unknown,
           };
         });
@@ -133,7 +134,7 @@ function legacyCreateSpanLinkFactory(
   field: Field,
   traceToLogsOptions?: TraceToLogsOptionsV2,
   traceToMetricsOptions?: TraceToMetricsOptions,
-  createFocusSpanLink?: (traceId: string, spanId: string) => LinkModel<Field>,
+  createFocusSpanLink?: (traceId: string, spanId: string) => LinkModel<DataLinkContext>,
   scopedVars?: ScopedVars
 ) {
   let logsDataSourceSettings: DataSourceInstanceSettings<DataSourceJsonData> | undefined;
@@ -226,6 +227,7 @@ function legacyCreateSpanLinkFactory(
               isSplunkDS
             ),
             field: {} as Field,
+            frame: { fields: [], length: 0 },
             onClickFn: splitOpenFn,
             replaceVariables: getTemplateSrv().replace.bind(getTemplateSrv()),
           });
@@ -272,6 +274,7 @@ function legacyCreateSpanLinkFactory(
               : 120000,
           }),
           field: {} as Field,
+          frame: { fields: [], length: 0 },
           onClickFn: splitOpenFn,
           replaceVariables: getTemplateSrv().replace.bind(getTemplateSrv()),
         });
@@ -302,7 +305,7 @@ function legacyCreateSpanLinkFactory(
           title: reference.span ? reference.span.operationName : 'View linked span',
           content: <Icon name="link" title="View linked span" />,
           onClick: link.onClick,
-          field: link.origin,
+          field: link.origin.field,
           type: SpanLinkType.Traces,
         });
       }
@@ -317,7 +320,7 @@ function legacyCreateSpanLinkFactory(
           title: reference.span ? reference.span.operationName : 'View linked span',
           content: <Icon name="link" title="View linked span" />,
           onClick: link.onClick,
-          field: link.origin,
+          field: link.origin.field,
           type: SpanLinkType.Traces,
         });
       }

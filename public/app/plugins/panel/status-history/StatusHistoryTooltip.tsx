@@ -3,7 +3,6 @@ import React from 'react';
 import {
   DataFrame,
   FALLBACK_COLOR,
-  Field,
   getDisplayProcessor,
   getFieldDisplayName,
   TimeZone,
@@ -34,7 +33,7 @@ export const StatusHistoryTooltip = ({
 
   const field = alignedData.fields[seriesIdx!];
 
-  const links: Array<LinkModel<Field>> = [];
+  const links: LinkModel[] = [];
   const linkLookup = new Set<string>();
 
   if (field.getLinks) {

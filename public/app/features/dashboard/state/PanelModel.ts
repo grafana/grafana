@@ -174,7 +174,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
   maxDataPoints?: number | null;
   interval?: string | null;
   description?: string;
-  links?: DataLink[];
+  links?: Array<DataLink<any, any>>;
   declare transparent: boolean;
 
   libraryPanel?: LibraryPanelRef | LibraryPanel;

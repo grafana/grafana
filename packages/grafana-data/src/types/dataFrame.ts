@@ -1,6 +1,6 @@
 import { ScopedVars } from './ScopedVars';
 import { QueryResultBase, Labels, NullValueMode } from './data';
-import { DataLink, LinkModel } from './dataLink';
+import { DataLink, DataLinkContext, LinkModel } from './dataLink';
 import { DecimalCount, DisplayProcessor, DisplayValue, DisplayValueAlignmentFactors } from './displayValue';
 import { FieldColor } from './fieldColor';
 import { ThresholdsConfig } from './thresholds';
@@ -28,7 +28,7 @@ export enum FieldType {
  *
  * Plugins may extend this with additional properties. Something like series overrides
  */
-export interface FieldConfig<TOptions = any> {
+export interface FieldConfig<TOptions = any, DataLinkCtx = DataLinkContext> {
   /**
    * The display value for this field.  This supports template variables blank is auto.
    * If you are a datasource plugin, do not set this. Use `field.value` and if that
@@ -91,7 +91,7 @@ export interface FieldConfig<TOptions = any> {
   nullValueMode?: NullValueMode;
 
   // The behavior when clicking on a result
-  links?: DataLink[];
+  links?: Array<DataLink<any, DataLinkCtx>>;
 
   // Alternative to empty string
   noValue?: string;
@@ -169,7 +169,7 @@ export interface Field<T = any, V = Vector<T>> {
   /**
    * Get value data links with variables interpolated
    */
-  getLinks?: (config: ValueLinkConfig) => Array<LinkModel<Field>>;
+  getLinks?: (config: ValueLinkConfig) => Array<LinkModel<DataLinkContext>>;
 }
 
 /** @alpha */

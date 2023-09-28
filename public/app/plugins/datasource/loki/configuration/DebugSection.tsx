@@ -1,6 +1,6 @@
 import React, { ReactNode, useState } from 'react';
 
-import { Field, FieldType, LinkModel } from '@grafana/data';
+import { DataLinkContext, FieldType, LinkModel } from '@grafana/data';
 import { InlineField, TextArea } from '@grafana/ui';
 
 import { getFieldLinksForExplore } from '../../../../features/explore/utils/links';
@@ -83,18 +83,21 @@ function makeDebugFields(derivedFields: DerivedFieldConfig[], debugText: string)
       try {
         const testMatch = debugText.match(field.matcherRegex);
         const value = testMatch && testMatch[1];
-        let link: LinkModel<Field> | null = null;
+        let link: LinkModel<DataLinkContext> | null = null;
 
         if (field.url && value) {
-          link = getFieldLinksForExplore({
-            field: {
-              name: '',
-              type: FieldType.string,
-              values: [value],
-              config: {
-                links: [{ title: '', url: field.url }],
-              },
+          const f = {
+            name: '',
+            type: FieldType.string,
+            values: [value],
+            config: {
+              links: [{ title: '', url: field.url }],
             },
+          };
+          const frame = { fields: [f], length: 1 };
+          link = getFieldLinksForExplore({
+            field: f,
+            dataFrame: frame,
             rowIndex: 0,
             range: {} as any,
           })[0];

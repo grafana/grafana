@@ -2,7 +2,16 @@ import { cx } from '@emotion/css';
 import { debounce } from 'lodash';
 import React, { PureComponent } from 'react';
 
-import { Field, LinkModel, LogRowModel, LogsSortOrder, dateTimeFormat, CoreApp, DataFrame } from '@grafana/data';
+import {
+  Field,
+  LinkModel,
+  LogRowModel,
+  LogsSortOrder,
+  dateTimeFormat,
+  CoreApp,
+  DataFrame,
+  DataLinkContext,
+} from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import { TimeZone } from '@grafana/schema';
 import { withTheme2, Themeable2, Icon, Tooltip } from '@grafana/ui';
@@ -32,7 +41,7 @@ interface Props extends Themeable2 {
   onClickFilterLabel?: (key: string, value: string, refId?: string) => void;
   onClickFilterOutLabel?: (key: string, value: string, refId?: string) => void;
   onContextClick?: () => void;
-  getFieldLinks?: (field: Field, rowIndex: number, dataFrame: DataFrame) => Array<LinkModel<Field>>;
+  getFieldLinks?: (field: Field, rowIndex: number, dataFrame: DataFrame) => Array<LinkModel<DataLinkContext>>;
   showContextToggle?: (row?: LogRowModel) => boolean;
   onClickShowField?: (key: string) => void;
   onClickHideField?: (key: string) => void;

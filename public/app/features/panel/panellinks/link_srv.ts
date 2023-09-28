@@ -244,7 +244,11 @@ export const getCalculationValueDataLinksVariableSuggestions = (dataFrames: Data
 };
 
 export interface LinkService {
-  getDataLinkUIModel: <T>(link: DataLink, replaceVariables: InterpolateFunction | undefined, origin: T) => LinkModel<T>;
+  getDataLinkUIModel: <T>(
+    link: DataLink<any, T>,
+    replaceVariables: InterpolateFunction | undefined,
+    origin: T
+  ) => LinkModel<T>;
   getAnchorInfo: (link: any) => {
     href: string;
     title: string;
@@ -288,7 +292,7 @@ export class LinkSrv implements LinkService {
    * Returns LinkModel which is basically a DataLink with all values interpolated through the templateSrv.
    */
   getDataLinkUIModel = <T>(
-    link: DataLink,
+    link: DataLink<any, T>,
     replaceVariables: InterpolateFunction | undefined,
     origin: T
   ): LinkModel<T> => {
@@ -338,7 +342,7 @@ export class LinkSrv implements LinkService {
     const replace: InterpolateFunction = (value, vars, fmt) =>
       getTemplateSrv().replace(value, { ...scopedVars, ...vars }, fmt);
 
-    return this.getDataLinkUIModel(link, replace, {});
+    return this.getDataLinkUIModel(link, replace, {} as any);
   }
 }
 

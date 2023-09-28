@@ -1,5 +1,7 @@
 import {
+  DataFrame,
   DataLink,
+  DataLinkContext,
   DataQuery,
   ExplorePanelsState,
   Field,
@@ -35,13 +37,14 @@ export type LinkToExploreOptions = {
   scopedVars: ScopedVars;
   range?: TimeRange;
   field: Field;
+  frame: DataFrame;
   internalLink: InternalDataLink;
   onClickFn?: SplitOpen;
   replaceVariables: InterpolateFunction;
 };
 
-export function mapInternalLinkToExplore(options: LinkToExploreOptions): LinkModel<Field> {
-  const { onClickFn, replaceVariables, link, scopedVars, range, field, internalLink } = options;
+export function mapInternalLinkToExplore(options: LinkToExploreOptions): LinkModel<DataLinkContext> {
+  const { onClickFn, replaceVariables, link, scopedVars, range, frame, field, internalLink } = options;
 
   const interpolatedQuery = interpolateObject(link.internal?.query, scopedVars, replaceVariables);
   const interpolatedPanelsState = interpolateObject(link.internal?.panelsState, scopedVars, replaceVariables);
@@ -67,7 +70,7 @@ export function mapInternalLinkToExplore(options: LinkToExploreOptions): LinkMod
         }
       : undefined,
     target: link?.targetBlank ? '_blank' : '_self',
-    origin: field,
+    origin: { field, frame },
   };
 }
 

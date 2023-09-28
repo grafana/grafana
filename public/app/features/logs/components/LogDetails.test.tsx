@@ -2,7 +2,7 @@ import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
-import { Field, LogLevel, LogRowModel, MutableDataFrame, createTheme, FieldType } from '@grafana/data';
+import { LogLevel, LogRowModel, MutableDataFrame, createTheme, FieldType } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
 import { LogDetails, Props } from './LogDetails';
@@ -154,14 +154,14 @@ describe('LogDetails', () => {
     });
     setup(
       {
-        getFieldLinks: (field: Field, rowIndex: number) => {
+        getFieldLinks: (field, rowIndex, frame) => {
           if (field.config && field.config.links) {
             return field.config.links.map((link) => {
               return {
                 href: link.url.replace('${__value.text}', field.values[rowIndex]),
                 title: link.title,
                 target: '_blank',
-                origin: field,
+                origin: { field, frame, rowIndex },
               };
             });
           }

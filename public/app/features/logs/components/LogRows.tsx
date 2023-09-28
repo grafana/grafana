@@ -11,6 +11,7 @@ import {
   LogsSortOrder,
   CoreApp,
   DataFrame,
+  DataLinkContext,
 } from '@grafana/data';
 import { withTheme2, Themeable2 } from '@grafana/ui';
 
@@ -41,7 +42,7 @@ export interface Props extends Themeable2 {
   showContextToggle?: (row?: LogRowModel) => boolean;
   onClickFilterLabel?: (key: string, value: string, refId?: string) => void;
   onClickFilterOutLabel?: (key: string, value: string, refId?: string) => void;
-  getFieldLinks?: (field: Field, rowIndex: number, dataFrame: DataFrame) => Array<LinkModel<Field>>;
+  getFieldLinks?: (field: Field, rowIndex: number, dataFrame: DataFrame) => Array<LinkModel<DataLinkContext>>;
   onClickShowField?: (key: string) => void;
   onClickHideField?: (key: string) => void;
   onPinLine?: (row: LogRowModel) => void;

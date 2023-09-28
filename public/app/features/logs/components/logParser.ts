@@ -1,7 +1,7 @@
 import { partition } from 'lodash';
 import memoizeOne from 'memoize-one';
 
-import { DataFrame, Field, FieldWithIndex, LinkModel, LogRowModel } from '@grafana/data';
+import { DataFrame, DataLinkContext, Field, FieldWithIndex, LinkModel, LogRowModel } from '@grafana/data';
 import { safeStringifyValue } from 'app/core/utils/explore';
 import { ExploreFieldLinkModel } from 'app/features/explore/utils/links';
 
@@ -10,7 +10,7 @@ import { parseLogsFrame } from '../logsFrame';
 export type FieldDef = {
   keys: string[];
   values: string[];
-  links?: Array<LinkModel<Field>> | ExploreFieldLinkModel[];
+  links?: Array<LinkModel<DataLinkContext>> | ExploreFieldLinkModel[];
   fieldIndex: number;
 };
 
@@ -25,7 +25,7 @@ export const getAllFields = memoizeOne(
       field: Field,
       rowIndex: number,
       dataFrame: DataFrame
-    ) => Array<LinkModel<Field>> | ExploreFieldLinkModel[]
+    ) => Array<LinkModel<DataLinkContext>> | ExploreFieldLinkModel[]
   ) => {
     const dataframeFields = getDataframeFields(row, getFieldLinks);
 
@@ -66,7 +66,7 @@ export const createLogLineLinks = memoizeOne((hiddenFieldsWithLinks: FieldDef[])
 export const getDataframeFields = memoizeOne(
   (
     row: LogRowModel,
-    getFieldLinks?: (field: Field, rowIndex: number, dataFrame: DataFrame) => Array<LinkModel<Field>>
+    getFieldLinks?: (field: Field, rowIndex: number, dataFrame: DataFrame) => Array<LinkModel<DataLinkContext>>
   ): FieldDef[] => {
     const visibleFields = separateVisibleFields(row.dataFrame).visible;
     const nonEmptyVisibleFields = visibleFields.filter((f) => f.values[row.rowIndex] != null);
