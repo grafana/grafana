@@ -153,3 +153,8 @@
     color: $input-color;
   }
 }
+
+// used in panel edit
+.SplitPane {
+  overflow: initial !important;
+}
