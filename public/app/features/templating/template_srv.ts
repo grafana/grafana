@@ -126,11 +126,13 @@ export class TemplateSrv implements BaseTemplateSrv {
     }
 
     if (!this._adhocFiltersDeprecationWarningLogged.get(ds.type)) {
-      deprecationWarning(
-        `DataSource ${ds.type}`,
-        'templateSrv.getAdhocFilters',
-        'filters property on the request (DataQueryRequest). Or if this is called from interpolateVariablesInQueries or applyTemplateVariables it is passed as a new argument'
-      );
+      if (process.env.NODE_ENV !== 'test') {
+        deprecationWarning(
+          `DataSource ${ds.type}`,
+          'templateSrv.getAdhocFilters',
+          'filters property on the request (DataQueryRequest). Or if this is called from interpolateVariablesInQueries or applyTemplateVariables it is passed as a new argument'
+        );
+      }
       this._adhocFiltersDeprecationWarningLogged.set(ds.type, true);
     }
 
