@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -13,8 +14,8 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/featuretoggles"
 
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/auth"
 	"github.com/grafana/grafana/pkg/plugins/config"
-	"github.com/grafana/grafana/pkg/plugins/oauth"
 )
 
 const (
@@ -73,7 +74,7 @@ func (s *Service) Get(ctx context.Context, p *plugins.Plugin) []string {
 }
 
 // GetConfigMap returns a map of configuration that should be passed in a plugin request.
-func (s *Service) GetConfigMap(ctx context.Context, _ string, _ *oauth.ExternalService) map[string]string {
+func (s *Service) GetConfigMap(ctx context.Context, _ string, _ *auth.ExternalService) map[string]string {
 	m := make(map[string]string)
 
 	// TODO add support via plugin SDK
@@ -91,10 +92,10 @@ func (s *Service) GetConfigMap(ctx context.Context, _ string, _ *oauth.ExternalS
 			for feat := range enabledFeatures {
 				features = append(features, feat)
 			}
+			sort.Strings(features)
 			m[featuretoggles.EnabledFeatures] = strings.Join(features, ",")
 		}
 	}
-
 	// TODO add support via plugin SDK
 	//if s.cfg.AWSAssumeRoleEnabled {
 	//	m[awsds.AssumeRoleEnabledEnvVarKeyName] = "true"
@@ -181,16 +182,17 @@ func (s *Service) tracingEnvVars(plugin *plugins.Plugin) []string {
 func (s *Service) featureToggleEnableVar(ctx context.Context) []string {
 	var variables []string // an array is used for consistency and keep the logic simpler for no features case
 
-	if s.cfg.Features != nil {
-		enabledFeatures := s.cfg.Features.GetEnabled(ctx)
+	if s.cfg.Features == nil {
+		return variables
+	}
 
-		if len(enabledFeatures) > 0 {
-			features := make([]string, 0, len(enabledFeatures))
-			for feat := range enabledFeatures {
-				features = append(features, feat)
-			}
-			variables = append(variables, fmt.Sprintf("GF_INSTANCE_FEATURE_TOGGLES_ENABLE=%s", strings.Join(features, ",")))
+	enabledFeatures := s.cfg.Features.GetEnabled(ctx)
+	if len(enabledFeatures) > 0 {
+		features := make([]string, 0, len(enabledFeatures))
+		for feat := range enabledFeatures {
+			features = append(features, feat)
 		}
+		variables = append(variables, fmt.Sprintf("GF_INSTANCE_FEATURE_TOGGLES_ENABLE=%s", strings.Join(features, ",")))
 	}
 
 	return variables

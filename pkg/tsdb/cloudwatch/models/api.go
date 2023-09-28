@@ -21,6 +21,7 @@ type RequestContext struct {
 	MetricsClientProvider MetricsClientProvider
 	LogsAPIProvider       CloudWatchLogsAPIProvider
 	OAMAPIProvider        OAMAPIProvider
+	EC2APIProvider        EC2APIProvider
 	Settings              CloudWatchSettings
 	Features              featuremgmt.FeatureToggles
 }
@@ -39,6 +40,10 @@ type LogGroupsProvider interface {
 
 type AccountsProvider interface {
 	GetAccountsForCurrentUserOrRole() ([]resources.ResourceResponse[resources.Account], error)
+}
+
+type RegionsAPIProvider interface {
+	GetRegions() ([]resources.ResourceResponse[resources.Region], error)
 }
 
 // Clients

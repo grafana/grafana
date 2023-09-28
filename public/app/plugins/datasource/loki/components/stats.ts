@@ -8,7 +8,11 @@ import { LokiQueryType } from '../types';
  * @param {(DateTime | string)} time1
  * @param {(DateTime | string | undefined)} time2
  */
-function compareTime(time1: DateTime | string, time2: DateTime | string | undefined) {
+function compareTime(time1: DateTime | string | undefined, time2: DateTime | string | undefined) {
+  if (!time1 || !time2) {
+    return false;
+  }
+
   const isAbsolute = isDateTime(time1);
 
   if (isAbsolute) {
@@ -21,8 +25,8 @@ function compareTime(time1: DateTime | string, time2: DateTime | string | undefi
 export function shouldUpdateStats(
   query: string,
   prevQuery: string | undefined,
-  timerange: TimeRange,
-  prevTimerange: TimeRange | undefined,
+  timeRange: TimeRange | undefined,
+  prevTimeRange: TimeRange | undefined,
   queryType: LokiQueryType | undefined,
   prevQueryType: LokiQueryType | undefined
 ): boolean {
@@ -31,8 +35,8 @@ export function shouldUpdateStats(
   }
 
   if (
-    compareTime(timerange.raw.from, prevTimerange?.raw.from) &&
-    compareTime(timerange.raw.to, prevTimerange?.raw.to)
+    compareTime(timeRange?.raw.from, prevTimeRange?.raw.from) &&
+    compareTime(timeRange?.raw.to, prevTimeRange?.raw.to)
   ) {
     return false;
   }

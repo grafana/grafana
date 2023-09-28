@@ -36,6 +36,7 @@ import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_sr
 import { AnnotationEditor } from './components/editor/annotation/AnnotationEditor';
 import { FluxQueryEditor } from './components/editor/query/flux/FluxQueryEditor';
 import { BROWSER_MODE_DISABLED_MESSAGE } from './constants';
+import { toRawSql } from './fsql/sqlUtil';
 import InfluxQueryModel from './influx_query_model';
 import InfluxSeries from './influx_series';
 import { buildMetadataQuery } from './influxql_query_builder';
@@ -185,10 +186,16 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
   }
 
   getQueryDisplayText(query: InfluxQuery) {
-    if (this.version === InfluxVersion.Flux) {
-      return query.query;
+    switch (this.version) {
+      case InfluxVersion.Flux:
+        return query.query;
+      case InfluxVersion.SQL:
+        return toRawSql(query);
+      case InfluxVersion.InfluxQL:
+        return new InfluxQueryModel(query).render(false);
+      default:
+        return '';
     }
-    return new InfluxQueryModel(query).render(false);
   }
 
   /**

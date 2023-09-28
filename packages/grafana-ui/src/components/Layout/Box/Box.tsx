@@ -136,7 +136,7 @@ const customBorderColor = (color: BorderColor, theme: GrafanaTheme2) => {
     case 'success':
     case 'info':
     case 'warning':
-      return theme.colors[color].border;
+      return theme.colors[color].borderTransparent;
     default:
       return color ? theme.colors.border[color] : undefined;
   }
