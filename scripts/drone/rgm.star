@@ -137,7 +137,7 @@ def rgm_run(name, script):
     }
     rgm_run_step = {
         "name": name,
-        "image": "grafana/grafana-build:dev-ae5182f",
+        "image": "grafana/grafana-build:dev-ec3ec36",
         "pull": "always",
         "commands": [
             "export GRAFANA_DIR=$$(pwd)",
