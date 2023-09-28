@@ -31,6 +31,7 @@ import {
   frameToMetricFindValue,
   getBackendSrv,
 } from '@grafana/runtime';
+import { CustomFormatterVariable } from '@grafana/scenes';
 import config from 'app/core/config';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 
@@ -312,7 +313,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     };
   }
 
-  interpolateQueryExpr(value: string | string[] = [], variable: any) {
+  interpolateQueryExpr(value: string | string[] = [], variable: Partial<CustomFormatterVariable>) {
     // if no multi or include all do not regexEscape
     if (!variable.multi && !variable.includeAll) {
       return influxRegularEscape(value);
@@ -815,14 +816,17 @@ function timeSeriesToDataFrame(timeSeries: TimeSeries): DataFrame {
   };
 }
 
-export function influxRegularEscape(value: any) {
-  const isNumber = !isNaN(parseFloat(value));
-  if (isNumber) {
-    return value;
+export function influxRegularEscape(value: string | string[]) {
+  if (typeof value === 'string') {
+    // Check the value is a number. If not run to escape special characters
+    if (isNaN(parseFloat(value))) {
+      return escapeRegex(value);
+    }
   }
-  return typeof value === 'string' ? escapeRegex(value) : value;
+
+  return value;
 }
 
-export function influxSpecialRegexEscape(value: any) {
+export function influxSpecialRegexEscape(value: string | string[]) {
   return typeof value === 'string' ? value.replace(/\\/g, '\\\\\\\\').replace(/[$^*{}\[\]\'+?.()|]/g, '\\\\$&') : value;
 }
