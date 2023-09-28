@@ -13,7 +13,7 @@ import {
   getSafeSandboxDomElement,
   isDomElement,
   isLiveTarget,
-  markDomElementStyleAsALiveTarget,academo/sandbox-allow-grafanabootdata-with-warnings
+  markDomElementStyleAsALiveTarget,
   patchObjectAsLiveTarget,
 } from './document_sandbox';
 import { sandboxPluginDependencies } from './plugin_dependencies';
