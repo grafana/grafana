@@ -303,7 +303,7 @@ export function getMarkerAsPath(shape?: string): string | undefined {
 }
 
 //TODO clean up
-function getDisplacement(symbolAnchor: SymbolAnchor, radius: number, offset?: number) {
+function getDisplacement(symbolAnchor: SymbolAnchor, radius: number) {
   const anchor = [];
   if (symbolAnchor?.anchorX === AnchorX.Left) {
     anchor.push(radius);
@@ -312,7 +312,6 @@ function getDisplacement(symbolAnchor: SymbolAnchor, radius: number, offset?: nu
   } else {
     anchor.push(0);
   }
-  anchor[0] += offset ?? 0;
   if (symbolAnchor?.anchorY === AnchorY.Top) {
     anchor.push(-radius);
   } else if (symbolAnchor?.anchorY === AnchorY.Bottom) {
@@ -320,7 +319,6 @@ function getDisplacement(symbolAnchor: SymbolAnchor, radius: number, offset?: nu
   } else {
     anchor.push(0);
   }
-  anchor[1] += offset ?? 0;
   return anchor;
 }
 
@@ -354,9 +352,7 @@ export async function getMarkerMaker(symbol?: string, hasTextLabel?: boolean): P
                   opacity: cfg.opacity ?? 1,
                   scale: (DEFAULT_SIZE + radius) / 100,
                   rotation: (rotation * Math.PI) / 180,
-                  anchor: getDisplacement(cfg.symbolAnchor ?? defaultStyleConfig.symbolAnchor, -0.5, 0.5),
-                  anchorXUnits: 'fraction',
-                  anchorYUnits: 'fraction',
+                  displacement: getDisplacement(cfg.symbolAnchor ?? defaultStyleConfig.symbolAnchor, radius / 2),
                 }),
                 text: !cfg?.text ? undefined : textLabel(cfg),
               }),
