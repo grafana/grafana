@@ -1983,7 +1983,7 @@ Basic auth password.
 
 ### public_url
 
-Optional URL to send to users in notifications. If the string contains the sequence `${file}`, it is replaced with the uploaded filename. Otherwise, the file name is appended to the path part of the URL, leaving any query string unchanged.
+Optional URL to send to users in notifications. If the string contains the sequence `{{file}}`, it is replaced with the uploaded filename. Otherwise, the file name is appended to the path part of the URL, leaving any query string unchanged.
 
 <hr>
 
@@ -2325,7 +2325,7 @@ Please see [Configure feature toggles]({{< relref "./feature-toggles" >}}) for m
 
 Lets you switch the feature toggle state in the feature management page. The default is `false`.
 
-### update_controller_url
+### update_webhook
 
 Set the URL of the controller that manages the feature toggle updates. If not set, feature toggles in the feature management page will be read-only.
 
