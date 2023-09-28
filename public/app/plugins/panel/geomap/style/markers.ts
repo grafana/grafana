@@ -304,22 +304,18 @@ export function getMarkerAsPath(shape?: string): string | undefined {
 
 //TODO clean up
 function getDisplacement(symbolAnchor: SymbolAnchor, radius: number) {
-  const anchor = [];
+  const displacement = [0, 0];
   if (symbolAnchor?.anchorX === AnchorX.Left) {
-    anchor.push(radius);
+    displacement[0] = radius;
   } else if (symbolAnchor?.anchorX === AnchorX.Right) {
-    anchor.push(-radius);
-  } else {
-    anchor.push(0);
+    displacement[0] = -radius;
   }
   if (symbolAnchor?.anchorY === AnchorY.Top) {
-    anchor.push(-radius);
+    displacement[1] = -radius;
   } else if (symbolAnchor?.anchorY === AnchorY.Bottom) {
-    anchor.push(radius);
-  } else {
-    anchor.push(0);
+    displacement[1] = radius;
   }
-  return anchor;
+  return displacement;
 }
 
 // Will prepare symbols as necessary
