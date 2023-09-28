@@ -1,11 +1,11 @@
-import { helperContent } from '../../public/app/features/transformers/helpers/getHelperContent';
+import { transformationDocsContent } from '../../public/app/features/transformers/docs/content';
 
 let transformations: String = '';
 
-Object.keys(helperContent).forEach(
+Object.keys(transformationDocsContent).forEach(
   (key) =>
-    (transformations += `### ${key}
-${helperContent[key]()}
+    (transformations += `### ${transformationDocsContent[key].name}]}
+${transformationDocsContent[key].helperDocs}
 
 `)
 );
