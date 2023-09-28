@@ -12,10 +12,11 @@ weight: 190
 # Developers
 
 Go to the [Grafana developer portal](/developers) to access the following documentation:
-- [Grafana plugin development](/developers/plugin-tools) 
-- [Grafana design system](https://developers.grafana.com) 
-- [Grafana Scenes](/developers/scenes) 
-- [Grafana data plane](/developers/dataplane) 
+
+- [Grafana plugin development](/developers/plugin-tools)
+- [Grafana design system](https://developers.grafana.com)
+- [Grafana Scenes](/developers/scenes)
+- [Grafana data plane](/developers/dataplane)
 
 This section of our documentation contains additional resources:
 
