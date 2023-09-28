@@ -35,10 +35,32 @@ export function getGrafanaAlertmanagerNotificationsScene(
       .setData(query)
       .setCustomFieldConfig('drawStyle', GraphDrawStyle.Line)
       .setOverrides((b) =>
-        b.matchFieldsWithName('failed').overrideColor({
-          mode: 'fixed',
-          fixedColor: 'red',
-        })
+        b
+          .matchFieldsWithName('alerting')
+          .overrideColor({
+            mode: 'fixed',
+            fixedColor: 'red',
+          })
+          .matchFieldsWithName('normal')
+          .overrideColor({
+            mode: 'fixed',
+            fixedColor: 'green',
+          })
+          .matchFieldsWithName('pending')
+          .overrideColor({
+            mode: 'fixed',
+            fixedColor: 'yellow',
+          })
+          .matchFieldsWithName('error')
+          .overrideColor({
+            mode: 'fixed',
+            fixedColor: 'orange',
+          })
+          .matchFieldsWithName('nodata')
+          .overrideColor({
+            mode: 'fixed',
+            fixedColor: 'blue',
+          })
       )
       .build(),
   });

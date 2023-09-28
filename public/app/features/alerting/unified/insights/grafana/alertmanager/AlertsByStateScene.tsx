@@ -30,10 +30,32 @@ export function getGrafanaAlertmanagerInstancesByStateScene(
       .setCustomFieldConfig('drawStyle', GraphDrawStyle.Line)
       .setOption('tooltip', { mode: TooltipDisplayMode.Multi })
       .setOverrides((b) =>
-        b.matchFieldsWithName('alerting').overrideColor({
-          mode: 'fixed',
-          fixedColor: 'red',
-        })
+        b
+          .matchFieldsWithName('alerting')
+          .overrideColor({
+            mode: 'fixed',
+            fixedColor: 'red',
+          })
+          .matchFieldsWithName('normal')
+          .overrideColor({
+            mode: 'fixed',
+            fixedColor: 'green',
+          })
+          .matchFieldsWithName('pending')
+          .overrideColor({
+            mode: 'fixed',
+            fixedColor: 'yellow',
+          })
+          .matchFieldsWithName('error')
+          .overrideColor({
+            mode: 'fixed',
+            fixedColor: 'orange',
+          })
+          .matchFieldsWithName('nodata')
+          .overrideColor({
+            mode: 'fixed',
+            fixedColor: 'blue',
+          })
       )
       .build(),
   });

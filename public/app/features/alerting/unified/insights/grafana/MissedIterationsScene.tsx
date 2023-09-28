@@ -1,5 +1,5 @@
 import { PanelBuilders, SceneFlexItem, SceneQueryRunner, SceneTimeRange } from '@grafana/scenes';
-import { DataSourceRef, GraphDrawStyle } from '@grafana/schema';
+import { DataSourceRef, GraphDrawStyle, TooltipDisplayMode } from '@grafana/schema';
 
 import { PANEL_STYLES } from '../../home/Insights';
 
@@ -27,6 +27,7 @@ export function getGrafanaMissedIterationsScene(
       .setTitle(panelTitle)
       .setDescription(panelTitle)
       .setData(query)
+      .setOption('tooltip', { mode: TooltipDisplayMode.Multi })
       .setCustomFieldConfig('drawStyle', GraphDrawStyle.Line)
       .build(),
   });

@@ -1,5 +1,5 @@
 import { PanelBuilders, SceneFlexItem, SceneQueryRunner, SceneTimeRange } from '@grafana/scenes';
-import { DataSourceRef, GraphDrawStyle } from '@grafana/schema';
+import { DataSourceRef, GraphDrawStyle, TooltipDisplayMode } from '@grafana/schema';
 
 import { PANEL_STYLES } from '../../home/Insights';
 
@@ -33,7 +33,21 @@ export function getGrafanaEvalSuccessVsFailuresScene(
       .setTitle(panelTitle)
       .setDescription(panelTitle)
       .setData(query)
+      .setOption('tooltip', { mode: TooltipDisplayMode.Multi })
       .setCustomFieldConfig('drawStyle', GraphDrawStyle.Line)
+      .setOverrides((b) =>
+        b
+          .matchFieldsWithName('success')
+          .overrideColor({
+            mode: 'fixed',
+            fixedColor: 'green',
+          })
+          .matchFieldsWithName('failed')
+          .overrideColor({
+            mode: 'fixed',
+            fixedColor: 'red',
+          })
+      )
       .build(),
   });
 }

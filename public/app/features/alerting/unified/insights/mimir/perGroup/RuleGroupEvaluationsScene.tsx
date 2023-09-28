@@ -31,6 +31,19 @@ export function getRuleGroupEvaluationsScene(timeRange: SceneTimeRange, datasour
       .setData(query)
       .setCustomFieldConfig('drawStyle', GraphDrawStyle.Line)
       .setOption('tooltip', { mode: TooltipDisplayMode.Multi })
+      .setOverrides((b) =>
+        b
+          .matchFieldsWithName('success')
+          .overrideColor({
+            mode: 'fixed',
+            fixedColor: 'green',
+          })
+          .matchFieldsWithName('failed')
+          .overrideColor({
+            mode: 'fixed',
+            fixedColor: 'red',
+          })
+      )
       .build(),
   });
 }

@@ -1,5 +1,5 @@
 import { PanelBuilders, SceneFlexItem, SceneQueryRunner, SceneTimeRange } from '@grafana/scenes';
-import { DataSourceRef } from '@grafana/schema';
+import { BigValueGraphMode, DataSourceRef } from '@grafana/schema';
 
 import { PANEL_STYLES } from '../../home/Insights';
 
@@ -24,6 +24,7 @@ export function getInvalidConfigScene(timeRange: SceneTimeRange, datasource: Dat
       .setDescription(panelTitle)
       .setData(query)
       .setUnit('bool_yes_no')
+      .setOption('graphMode', BigValueGraphMode.None)
       .build(),
   });
 }
