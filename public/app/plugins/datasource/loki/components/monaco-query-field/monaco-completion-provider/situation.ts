@@ -30,7 +30,7 @@ import {
   LabelExtractionExpressionList,
 } from '@grafana/lezer-logql';
 
-import { getLogQueryFromMetricsQuery, getNodesFromQuery } from '../../../queryUtils';
+import { getLogQueryFromMetricsQueryAtPosition, getNodesFromQuery } from '../../../queryUtils';
 
 type Direction = 'parent' | 'firstChild' | 'lastChild' | 'nextSibling';
 type NodeType = number;
@@ -303,7 +303,7 @@ function getLabels(selectorNode: SyntaxNode, text: string): Label[] {
 function resolveAfterUnwrap(node: SyntaxNode, text: string, pos: number): Situation | null {
   return {
     type: 'AFTER_UNWRAP',
-    logQuery: getLogQueryFromMetricsQuery(text).trim(),
+    logQuery: getLogQueryFromMetricsQueryAtPosition(text, pos).trim(),
   };
 }
 
@@ -353,7 +353,7 @@ function resolveLabelsForGrouping(node: SyntaxNode, text: string, pos: number): 
 
   return {
     type: 'IN_GROUPING',
-    logQuery: getLogQueryFromMetricsQuery(text).trim(),
+    logQuery: getLogQueryFromMetricsQueryAtPosition(text, pos).trim(),
   };
 }
 
@@ -465,7 +465,7 @@ function resolveLogfmtParser(_: SyntaxNode, text: string, cursorPosition: number
     type: 'IN_LOGFMT',
     otherLabels,
     flags,
-    logQuery: getLogQueryFromMetricsQuery(text).trim(),
+    logQuery: getLogQueryFromMetricsQueryAtPosition(text, position).trim(),
   };
 }
 
@@ -539,7 +539,7 @@ function resolveLogOrLogRange(node: SyntaxNode, text: string, pos: number, after
     type: 'AFTER_SELECTOR',
     afterPipe,
     hasSpace: text.charAt(pos - 1) === ' ',
-    logQuery: getLogQueryFromMetricsQuery(text).trim(),
+    logQuery: getLogQueryFromMetricsQueryAtPosition(text, pos).trim(),
   };
 }
 
@@ -582,7 +582,7 @@ function resolveSelector(node: SyntaxNode, text: string, pos: number): Situation
 }
 
 function resolveAfterKeepAndDrop(node: SyntaxNode, text: string, pos: number): Situation | null {
-  let logQuery = getLogQueryFromMetricsQuery(text).trim();
+  let logQuery = getLogQueryFromMetricsQueryAtPosition(text, pos).trim();
   let keepAndDropParent: SyntaxNode | null = null;
   let parent = node.parent;
   while (parent !== null) {

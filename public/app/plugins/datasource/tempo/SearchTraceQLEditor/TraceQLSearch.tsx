@@ -104,26 +104,29 @@ const TraceQLSearch = ({ datasource, query, onChange }: Props) => {
     <>
       <div className={styles.container}>
         <div>
-          {datasource.search?.filters?.map((f) => (
-            <InlineSearchField
-              key={f.id}
-              label={filterTitle(f)}
-              tooltip={`Filter your search by ${filterScopedTag(
-                f
-              )}. To modify the default filters shown for search visit the Tempo datasource configuration page.`}
-            >
-              <SearchField
-                filter={findFilter(f.id) || f}
-                datasource={datasource}
-                setError={setError}
-                updateFilter={updateFilter}
-                tags={[]}
-                hideScope={true}
-                hideTag={true}
-                query={traceQlQuery}
-              />
-            </InlineSearchField>
-          ))}
+          {datasource.search?.filters?.map(
+            (f) =>
+              f.tag && (
+                <InlineSearchField
+                  key={f.id}
+                  label={filterTitle(f)}
+                  tooltip={`Filter your search by ${filterScopedTag(
+                    f
+                  )}. To modify the default filters shown for search visit the Tempo datasource configuration page.`}
+                >
+                  <SearchField
+                    filter={findFilter(f.id) || f}
+                    datasource={datasource}
+                    setError={setError}
+                    updateFilter={updateFilter}
+                    tags={[]}
+                    hideScope={true}
+                    hideTag={true}
+                    query={traceQlQuery}
+                  />
+                </InlineSearchField>
+              )
+          )}
           <InlineSearchField
             label={'Duration'}
             tooltip="The span duration, i.e.	end - start time of the span. Accepted units are ns, ms, s, m, h"
