@@ -100,7 +100,7 @@ To change _recent_ to something other than the past 10 minutes, edit the [config
 recent_users_age = 10m
 ```
 
-To disable presence indicator, edit the [configuration][] file as follows:
+To disable the presence indicator, edit the [configuration][] file as follows:
 
 ```ini
 [analytics.views]
