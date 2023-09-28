@@ -3946,7 +3946,7 @@ __metadata:
     react-use: 17.4.0
     regenerator-runtime: 0.13.11
     rimraf: 5.0.1
-    rollup: 2.79.1
+    rollup: 3.29.4
     rollup-plugin-dts: ^5.0.0
     rollup-plugin-esbuild: 5.0.0
     rollup-plugin-node-externals: ^5.0.0
@@ -3974,7 +3974,7 @@ __metadata:
     "@types/node": 18.16.19
     esbuild: 0.18.12
     rimraf: 5.0.1
-    rollup: 2.79.1
+    rollup: 3.29.4
     rollup-plugin-dts: ^5.0.0
     rollup-plugin-esbuild: 5.0.0
     rollup-plugin-node-externals: ^5.0.0
@@ -4023,7 +4023,7 @@ __metadata:
     mocha: 10.2.0
     resolve-bin: 1.0.1
     rimraf: 5.0.1
-    rollup: 2.79.1
+    rollup: 3.29.4
     rollup-plugin-dts: ^5.0.0
     rollup-plugin-esbuild: 5.0.0
     rollup-plugin-node-externals: ^5.0.0
@@ -4162,7 +4162,7 @@ __metadata:
     react: 18.2.0
     react-use: 17.4.0
     react-virtualized-auto-sizer: 1.0.7
-    rollup: 2.79.1
+    rollup: 3.29.4
     rollup-plugin-dts: ^5.0.0
     rollup-plugin-esbuild: 5.0.0
     rollup-plugin-node-externals: ^5.0.0
@@ -4243,7 +4243,7 @@ __metadata:
     react: 18.2.0
     react-dom: 18.2.0
     rimraf: 5.0.1
-    rollup: 2.79.1
+    rollup: 3.29.4
     rollup-plugin-dts: ^5.0.0
     rollup-plugin-esbuild: 5.0.0
     rollup-plugin-node-externals: ^5.0.0
@@ -4289,7 +4289,7 @@ __metadata:
     esbuild: 0.18.12
     glob: ^10.2.7
     rimraf: 5.0.1
-    rollup: 2.79.1
+    rollup: 3.29.4
     rollup-plugin-dts: ^5.0.0
     rollup-plugin-esbuild: 5.0.0
     rollup-plugin-node-externals: ^5.0.0
@@ -4435,7 +4435,7 @@ __metadata:
     react-use: 17.4.0
     react-window: 1.8.9
     rimraf: 5.0.1
-    rollup: 2.79.1
+    rollup: 3.29.4
     rollup-plugin-dts: ^5.0.0
     rollup-plugin-esbuild: 5.0.0
     rollup-plugin-node-externals: ^5.0.0
@@ -30122,9 +30122,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rollup@npm:2.79.1":
-  version: 2.79.1
-  resolution: "rollup@npm:2.79.1"
+"rollup@npm:3.29.4":
+  version: 3.29.4
+  resolution: "rollup@npm:3.29.4"
   dependencies:
     fsevents: ~2.3.2
   dependenciesMeta:
@@ -30132,7 +30132,7 @@ __metadata:
       optional: true
   bin:
     rollup: dist/bin/rollup
-  checksum: 6a2bf167b3587d4df709b37d149ad0300692cc5deb510f89ac7bdc77c8738c9546ae3de9322b0968e1ed2b0e984571f5f55aae28fa7de4cfcb1bc5402a4e2be6
+  checksum: 8bb20a39c8d91130825159c3823eccf4dc2295c9a0a5c4ed851a5bf2167dbf24d9a29f23461a54c955e5506395e6cc188eafc8ab0e20399d7489fb33793b184e
   languageName: node
   linkType: hard
 
