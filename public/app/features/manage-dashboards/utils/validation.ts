@@ -1,3 +1,5 @@
+import { t } from 'i18next';
+
 import { getBackendSrv } from '@grafana/runtime';
 
 import { validationSrv } from '../services/ValidationSrv';
@@ -26,7 +28,9 @@ export const validateGcomDashboard = (gcomDashboard: string) => {
   // From DashboardImportCtrl
   const match = /(^\d+$)|dashboards\/(\d+)/.exec(gcomDashboard);
 
-  return match && (match[1] || match[2]) ? true : 'Could not find a valid Grafana.com ID';
+  return match && (match[1] || match[2])
+    ? true
+    : t('utils.invalid-dashboard-id', 'Could not find a valid Grafana.com ID');
 };
 
 export const validateTitle = (newTitle: string, folderUid: string) => {
