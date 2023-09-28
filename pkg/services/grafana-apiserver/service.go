@@ -3,9 +3,9 @@ package grafanaapiserver
 import (
 	"context"
 	"crypto/x509"
+	"fmt"
 	"net"
 	"path"
-	"strconv"
 	"strings"
 
 	"github.com/go-logr/logr"
@@ -119,6 +119,10 @@ func ProvideService(
 		stopCh:       make(chan struct{}),
 		builders:     []APIGroupBuilder{},
 		authorizer:   grafanaAuthorizer{ac},
+	}
+
+	if s.enabled && !cfg.IsFeatureToggleEnabled(featuremgmt.FlagIdForwarding) {
+		return s, fmt.Errorf("grafana-apiserver also requires featureFlag: %s", featuremgmt.FlagIdForwarding)
 	}
 
 	// This will be used when running as a dskit service
@@ -291,13 +295,9 @@ func (s *service) start(ctx context.Context) error {
 		ctx := req.Context()
 		signedInUser := appcontext.MustUser(ctx)
 
-		req.Header.Set("X-Remote-User", strconv.FormatInt(signedInUser.UserID, 10))
+		req.Header.Set("X-Remote-User", signedInUser.Login)
 		req.Header.Set("X-Remote-Group", "grafana")
-		req.Header.Set("X-Remote-Extra-token-name", signedInUser.Name)
-		req.Header.Set("X-Remote-Extra-org-role", string(signedInUser.OrgRole))
-		req.Header.Set("X-Remote-Extra-org-id", strconv.FormatInt(signedInUser.OrgID, 10))
-		req.Header.Set("X-Remote-Extra-user-id", strconv.FormatInt(signedInUser.UserID, 10))
-		// TODO?? pass identity token?
+		req.Header.Set("X-Remote-Extra-id-token", signedInUser.GetIDToken())
 
 		resp := responsewriter.WrapForHTTP1Or2(c.Resp)
 		prepared.GenericAPIServer.Handler.ServeHTTP(resp, req)
