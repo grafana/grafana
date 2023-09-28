@@ -96,7 +96,7 @@ export const configFromQueryTransformRegistryItem: TransformerRegistryItem<Confi
   description: configFromDataTransformer.description,
   state: PluginState.beta,
   categories: new Set([TransformerCategory.CalculateNewFields]),
-  help: getTransformationContent(configFromDataTransformer.id).content,
+  help: getTransformationContent(configFromDataTransformer.id).helperDocs,
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({

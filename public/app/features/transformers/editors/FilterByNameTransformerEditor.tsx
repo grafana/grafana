@@ -213,5 +213,5 @@ export const filterFieldsByNameTransformRegistryItem: TransformerRegistryItem<Fi
   name: standardTransformers.filterFieldsByNameTransformer.name,
   description: 'Removes part of the query results using a regex pattern. The pattern can be inclusive or exclusive.',
   categories: new Set([TransformerCategory.Filter]),
-  help: getTransformationContent(DataTransformerID.filterFieldsByName).content,
+  help: getTransformationContent(DataTransformerID.filterFieldsByName).helperDocs,
 };

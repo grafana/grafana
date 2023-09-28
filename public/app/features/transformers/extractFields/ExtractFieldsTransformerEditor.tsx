@@ -119,8 +119,8 @@ export const extractFieldsTransformRegistryItem: TransformerRegistryItem<Extract
   id: DataTransformerID.extractFields,
   editor: extractFieldsTransformerEditor,
   transformation: extractFieldsTransformer,
-  name: getTransformationContent(DataTransformerID.extractFields).name,
+  name: extractFieldsTransformer.name,
   description: `Parse fields from content (JSON, labels, etc).`,
   categories: new Set([TransformerCategory.Reformat]),
-  help: getTransformationContent(DataTransformerID.extractFields).content,
+  help: getTransformationContent(DataTransformerID.extractFields).helperDocs,
 };

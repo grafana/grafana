@@ -12,6 +12,8 @@ import {
 import { FormatTimeTransformerOptions } from '@grafana/data/src/transformations/transformers/formatTime';
 import { Select, InlineFieldRow, InlineField, Input, InlineSwitch } from '@grafana/ui';
 
+import { getTransformationContent } from '../docs/getTransformationContent';
+
 export function FormatTimeTransfomerEditor({
   input,
   options,
@@ -106,4 +108,5 @@ export const formatTimeTransformerRegistryItem: TransformerRegistryItem<FormatTi
   name: standardTransformers.formatTimeTransformer.name,
   state: PluginState.alpha,
   description: standardTransformers.formatTimeTransformer.description,
+  help: getTransformationContent(DataTransformerID.formatTime).helperDocs,
 };

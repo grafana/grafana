@@ -23,7 +23,7 @@ import {
 } from '@grafana/data/src/transformations/transformers/filterByValue';
 import { Button, RadioButtonGroup, stylesFactory } from '@grafana/ui';
 
-import { getHelperContent } from '../docs/getTransformationContent';
+import { getTransformationContent } from '../docs/getTransformationContent';
 
 import { DataFrameFieldsInfo, FilterByValueFilterEditor } from './FilterByValueFilterEditor';
 
@@ -143,7 +143,7 @@ export const filterByValueTransformRegistryItem: TransformerRegistryItem<FilterB
   description:
     'Removes rows of the query results using user-defined filters. This is useful if you can not filter your data in the data source.',
   categories: new Set([TransformerCategory.Filter]),
-  help: getHelperContent(DataTransformerID.filterByValue),
+  help: getTransformationContent(DataTransformerID.filterByValue).helperDocs,
 };
 
 const getEditorStyles = stylesFactory(() => ({

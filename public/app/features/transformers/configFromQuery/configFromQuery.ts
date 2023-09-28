@@ -11,7 +11,6 @@ import {
   reduceField,
 } from '@grafana/data';
 
-import { getTransformationContent } from '../docs/getTransformationContent';
 import {
   evaluteFieldMappings,
   FieldToConfigMapping,
@@ -92,7 +91,7 @@ export function extractConfigFromQuery(options: ConfigFromQueryTransformOptions,
 
 export const configFromDataTransformer: DataTransformerInfo<ConfigFromQueryTransformOptions> = {
   id: DataTransformerID.configFromData,
-  name: getTransformationContent(DataTransformerID.configFromData).name,
+  name: 'Config from query results',
   description: 'Set unit, min, max and more from data.',
   defaultOptions: {
     configRefId: 'config',
