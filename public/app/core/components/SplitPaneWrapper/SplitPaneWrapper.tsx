@@ -142,9 +142,9 @@ const getStyles = (theme: GrafanaTheme2, hasSplit: boolean) => {
   `;
 
   return {
-    splitPane: css`
-      overflow: visible !important;
-    `,
+    splitPane: css({
+      overflow: 'visible !important',
+    }),
     resizerV: cx(
       resizer,
       css`
