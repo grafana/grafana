@@ -186,7 +186,7 @@ class UnthemedDashboardImport extends PureComponent<Props> {
                 >
                   <TextArea
                     {...register('dashboardJson', {
-                      required: t('Need a dashboard JSON model',
+                      required: t('dashboard-import-page.json-field-required', 'Need a dashboard JSON model'),
                       validate: validateDashboardJson,
                     })}
                     data-testid={selectors.components.DashboardImportPage.textarea}
