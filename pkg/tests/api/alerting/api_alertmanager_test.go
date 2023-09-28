@@ -772,6 +772,7 @@ func TestIntegrationDeleteFolderWithRules(t *testing.T) {
 								"uid": "",
 								"namespace_uid": %q,
 								"namespace_id": 1,
+								"namespace_title": %q,
 								"rule_group": "arulegroup",
 								"no_data_state": "NoData",
 								"exec_err_state": "Alerting"
@@ -780,7 +781,7 @@ func TestIntegrationDeleteFolderWithRules(t *testing.T) {
 					]
 				}
 			]
-		}`, namespaceUID)
+		}`, namespaceUID, namespaceUID)
 		assert.JSONEq(t, expectedGetRulesResponseBody, string(b))
 	}
 
@@ -1244,6 +1245,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 						  "uid":"uid",
 						  "namespace_uid":"nsuid",
 						  "namespace_id":1,
+						  "namespace_title":"default",
 						  "rule_group":"arulegroup",
 						  "no_data_state":"NoData",
 						  "exec_err_state":"Alerting"
@@ -1281,6 +1283,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 						  "uid":"uid",
 						  "namespace_uid":"nsuid",
 						  "namespace_id":1,
+						  "namespace_title":"default",
 						  "rule_group":"arulegroup",
 						  "no_data_state":"Alerting",
 						  "exec_err_state":"Alerting"
@@ -1589,6 +1592,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 		                  "uid":"uid",
 		                  "namespace_uid":"nsuid",
 		                  "namespace_id":1,
+				  "namespace_title":"default",
 		                  "rule_group":"arulegroup",
 		                  "no_data_state":"Alerting",
 		                  "exec_err_state":"Alerting"
@@ -1699,6 +1703,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 					  "uid":"uid",
 					  "namespace_uid":"nsuid",
 					  "namespace_id":1,
+					  "namespace_title":"default",
 					  "rule_group":"arulegroup",
 					  "no_data_state":"Alerting",
 					  "exec_err_state":"Alerting"
@@ -1785,6 +1790,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 					  "uid":"uid",
 					  "namespace_uid":"nsuid",
 					  "namespace_id":1,
+					  "namespace_title":"default",
 					  "rule_group":"arulegroup",
 					  "no_data_state":"Alerting",
 					  "exec_err_state":"Alerting"
@@ -2092,6 +2098,7 @@ func TestIntegrationQuota(t *testing.T) {
 						  "uid":"uid",
 						  "namespace_uid":"nsuid",
 						  "namespace_id":1,
+						  "namespace_title":"default",
 						  "rule_group":"arulegroup",
 						  "no_data_state":"NoData",
 						  "exec_err_state":"Alerting"
