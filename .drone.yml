@@ -2795,6 +2795,8 @@ steps:
       from_secret: docker_username
     DOWNLOADS_DESTINATION:
       from_secret: rgm_downloads_destination
+    GCOM_API_KEY:
+      from_secret: grafana_api_key_dev
     GCP_KEY_BASE64:
       from_secret: gcp_key_base64
     GITHUB_TOKEN:
@@ -2811,7 +2813,7 @@ steps:
     PACKAGES_DESTINATION: gs://grafana-packages-testing
     STORYBOOK_DESTINATION:
       from_secret: rgm_storybook_destination
-  image: grafana/grafana-build:main
+  image: grafana/grafana-build:dev-ae5182f
   name: rgm-build
   pull: always
   volumes:
@@ -3043,6 +3045,8 @@ steps:
       from_secret: docker_username
     DOWNLOADS_DESTINATION:
       from_secret: rgm_downloads_destination
+    GCOM_API_KEY:
+      from_secret: grafana_api_key_dev
     GCP_KEY_BASE64:
       from_secret: gcp_key_base64
     GITHUB_TOKEN:
@@ -3059,7 +3063,7 @@ steps:
     PACKAGES_DESTINATION: gs://grafana-packages-testing
     STORYBOOK_DESTINATION:
       from_secret: rgm_storybook_destination
-  image: grafana/grafana-build:main
+  image: grafana/grafana-build:dev-ae5182f
   name: rgm-build
   pull: always
   volumes:
@@ -3223,6 +3227,8 @@ steps:
       from_secret: docker_username
     DOWNLOADS_DESTINATION:
       from_secret: rgm_downloads_destination
+    GCOM_API_KEY:
+      from_secret: grafana_api_key_dev
     GCP_KEY_BASE64:
       from_secret: gcp_key_base64
     GITHUB_TOKEN:
@@ -3239,7 +3245,7 @@ steps:
     PACKAGES_DESTINATION: gs://grafana-packages-testing
     STORYBOOK_DESTINATION:
       from_secret: rgm_storybook_destination
-  image: grafana/grafana-build:main
+  image: grafana/grafana-build:dev-ae5182f
   name: rgm-build
   pull: always
   volumes:
@@ -3452,6 +3458,8 @@ steps:
       from_secret: docker_username
     DOWNLOADS_DESTINATION:
       from_secret: rgm_downloads_destination
+    GCOM_API_KEY:
+      from_secret: grafana_api_key_dev
     GCP_KEY_BASE64:
       from_secret: gcp_key_base64
     GITHUB_TOKEN:
@@ -3468,7 +3476,7 @@ steps:
     PACKAGES_DESTINATION: gs://grafana-packages-testing
     STORYBOOK_DESTINATION:
       from_secret: rgm_storybook_destination
-  image: grafana/grafana-build:main
+  image: grafana/grafana-build:dev-ae5182f
   name: rgm-build
   pull: always
   volumes:
@@ -3494,6 +3502,8 @@ steps:
       from_secret: docker_username
     DOWNLOADS_DESTINATION:
       from_secret: rgm_downloads_destination
+    GCOM_API_KEY:
+      from_secret: grafana_api_key_dev
     GCP_KEY_BASE64:
       from_secret: gcp_key_base64
     GITHUB_TOKEN:
@@ -3558,6 +3568,8 @@ steps:
       from_secret: docker_username
     DOWNLOADS_DESTINATION:
       from_secret: rgm_downloads_destination
+    GCOM_API_KEY:
+      from_secret: grafana_api_key_dev
     GCP_KEY_BASE64:
       from_secret: gcp_key_base64
     GITHUB_TOKEN:
@@ -3593,6 +3605,8 @@ steps:
       from_secret: docker_username
     DOWNLOADS_DESTINATION:
       from_secret: rgm_downloads_destination
+    GCOM_API_KEY:
+      from_secret: grafana_api_key_dev
     GCP_KEY_BASE64:
       from_secret: gcp_key_base64
     GITHUB_TOKEN:
@@ -3609,7 +3623,7 @@ steps:
     PACKAGES_DESTINATION: gs://grafana-packages-testing
     STORYBOOK_DESTINATION:
       from_secret: rgm_storybook_destination
-  image: grafana/grafana-build:main
+  image: grafana/grafana-build:dev-ae5182f
   name: rgm-publish
   pull: always
   volumes:
@@ -4452,6 +4466,12 @@ kind: secret
 name: grafana_api_key
 ---
 get:
+  name: api_key_dev
+  path: infra/data/ci/grafana-release-eng/grafanacom
+kind: secret
+name: grafana_api_key_dev
+---
+get:
   name: .dockerconfigjson
   path: secret/data/common/gcr
 kind: secret
@@ -4626,6 +4646,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: d94aa0fc3659859438f5ddaedc7a671cf6c23f617e8ee27fe98d63a0de3fe43b
+hmac: 73960e2d070133572de92bd97750f158903e8100bcee555b59bc94aec4601d85
 
 ...

@@ -120,6 +120,7 @@ def rgm_env_secrets(env):
     env["DOCKER_USERNAME"] = from_secret("docker_username")
     env["DOCKER_PASSWORD"] = from_secret("docker_password")
     env["NPM_TOKEN"] = from_secret(npm_token)
+    env["GCOM_API_KEY"] = from_secret("grafana_api_key_dev")
     return env
 
 def rgm_run(name, script):
@@ -136,7 +137,7 @@ def rgm_run(name, script):
     }
     rgm_run_step = {
         "name": name,
-        "image": "grafana/grafana-build:main",
+        "image": "grafana/grafana-build:dev-ae5182f",
         "pull": "always",
         "commands": [
             "export GRAFANA_DIR=$$(pwd)",
