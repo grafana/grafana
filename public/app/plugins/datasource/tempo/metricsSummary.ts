@@ -60,6 +60,7 @@ export function createTableFrameFromMetricsSummaryQuery(
         name: `${series.key}`,
         type: FieldType.string,
         config: getConfig(series, configQuery, instanceSettings),
+        values: [],
       };
     });
   });

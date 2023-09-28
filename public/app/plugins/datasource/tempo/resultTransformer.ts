@@ -17,13 +17,15 @@ import {
   createDataFrame,
   getDisplayProcessor,
   createTheme,
+  DataFrameDTO,
+  toDataFrame,
 } from '@grafana/data';
 
 import { createGraphFrames } from './graphTransform';
 import { Span, SpanAttributes, Spanset, TraceSearchMetadata } from './types';
 
 export function createTableFrame(
-  logsFrame: DataFrame,
+  logsFrame: DataFrame | DataFrameDTO,
   datasourceUid: string,
   datasourceName: string,
   traceRegexs: string[]
@@ -38,6 +40,7 @@ export function createTableFrame(
             width: 200,
           },
         },
+        values: [],
       },
       {
         name: 'traceID',
@@ -59,10 +62,12 @@ export function createTableFrame(
             },
           ],
         },
+        values: [],
       },
       {
         name: 'Message',
         type: FieldType.string,
+        values: [],
       },
     ],
     meta: {
@@ -226,23 +231,23 @@ export function transformFromOTLP(
 ): DataQueryResponse {
   const frame = new MutableDataFrame({
     fields: [
-      { name: 'traceID', type: FieldType.string },
-      { name: 'spanID', type: FieldType.string },
-      { name: 'parentSpanID', type: FieldType.string },
-      { name: 'operationName', type: FieldType.string },
-      { name: 'serviceName', type: FieldType.string },
-      { name: 'kind', type: FieldType.string },
-      { name: 'statusCode', type: FieldType.number },
-      { name: 'statusMessage', type: FieldType.string },
-      { name: 'instrumentationLibraryName', type: FieldType.string },
-      { name: 'instrumentationLibraryVersion', type: FieldType.string },
-      { name: 'traceState', type: FieldType.string },
-      { name: 'serviceTags', type: FieldType.other },
-      { name: 'startTime', type: FieldType.number },
-      { name: 'duration', type: FieldType.number },
-      { name: 'logs', type: FieldType.other },
-      { name: 'references', type: FieldType.other },
-      { name: 'tags', type: FieldType.other },
+      { name: 'traceID', type: FieldType.string, values: [] },
+      { name: 'spanID', type: FieldType.string, values: [] },
+      { name: 'parentSpanID', type: FieldType.string, values: [] },
+      { name: 'operationName', type: FieldType.string, values: [] },
+      { name: 'serviceName', type: FieldType.string, values: [] },
+      { name: 'kind', type: FieldType.string, values: [] },
+      { name: 'statusCode', type: FieldType.number, values: [] },
+      { name: 'statusMessage', type: FieldType.string, values: [] },
+      { name: 'instrumentationLibraryName', type: FieldType.string, values: [] },
+      { name: 'instrumentationLibraryVersion', type: FieldType.string, values: [] },
+      { name: 'traceState', type: FieldType.string, values: [] },
+      { name: 'serviceTags', type: FieldType.other, values: [] },
+      { name: 'startTime', type: FieldType.number, values: [] },
+      { name: 'duration', type: FieldType.number, values: [] },
+      { name: 'logs', type: FieldType.other, values: [] },
+      { name: 'references', type: FieldType.other, values: [] },
+      { name: 'tags', type: FieldType.other, values: [] },
     ],
     meta: {
       preferredVisualisationType: 'trace',
@@ -487,7 +492,7 @@ function getOTLPReferences(
 }
 
 export function transformTrace(response: DataQueryResponse, nodeGraph = false): DataQueryResponse {
-  const frame: DataFrame = response.data[0];
+  const frame = response.data[0];
 
   if (!frame) {
     return emptyDataQueryResponse;
@@ -495,7 +500,7 @@ export function transformTrace(response: DataQueryResponse, nodeGraph = false): 
 
   let data = [...response.data];
   if (nodeGraph) {
-    data.push(...createGraphFrames(frame));
+    data.push(...createGraphFrames(toDataFrame(frame)));
   }
 
   return {
@@ -512,6 +517,7 @@ export function createTableFrameFromSearch(data: TraceSearchMetadata[], instance
       {
         name: 'traceID',
         type: FieldType.string,
+        values: [],
         config: {
           unit: 'string',
           displayNameFromDS: 'Trace ID',
@@ -531,10 +537,15 @@ export function createTableFrameFromSearch(data: TraceSearchMetadata[], instance
           ],
         },
       },
-      { name: 'traceService', type: FieldType.string, config: { displayNameFromDS: 'Trace service' } },
-      { name: 'traceName', type: FieldType.string, config: { displayNameFromDS: 'Trace name' } },
-      { name: 'startTime', type: FieldType.string, config: { displayNameFromDS: 'Start time' } },
-      { name: 'traceDuration', type: FieldType.number, config: { displayNameFromDS: 'Duration', unit: 'ms' } },
+      { name: 'traceService', type: FieldType.string, config: { displayNameFromDS: 'Trace service' }, values: [] },
+      { name: 'traceName', type: FieldType.string, config: { displayNameFromDS: 'Trace name' }, values: [] },
+      { name: 'startTime', type: FieldType.string, config: { displayNameFromDS: 'Start time' }, values: [] },
+      {
+        name: 'traceDuration',
+        type: FieldType.number,
+        config: { displayNameFromDS: 'Duration', unit: 'ms' },
+        values: [],
+      },
     ],
     meta: {
       preferredVisualisationType: 'table',
@@ -677,6 +688,7 @@ const traceSubFrame = (
       name: attr.key,
       type: FieldType.string,
       config: { displayNameFromDS: attr.key },
+      values: [],
     };
   });
   spanSet.spans.forEach((span) => {
@@ -688,6 +700,7 @@ const traceSubFrame = (
         name: attr.key,
         type: FieldType.string,
         config: { displayNameFromDS: attr.key },
+        values: [],
       };
     });
   });
@@ -700,10 +713,12 @@ const traceSubFrame = (
         config: {
           custom: { hidden: true },
         },
+        values: [],
       },
       {
         name: 'spanID',
         type: FieldType.string,
+        values: [],
         config: {
           unit: 'string',
           displayNameFromDS: 'Span ID',
@@ -734,6 +749,7 @@ const traceSubFrame = (
       {
         name: 'spanStartTime',
         type: FieldType.string,
+        values: [],
         config: {
           displayNameFromDS: 'Start time',
           custom: {
@@ -744,12 +760,14 @@ const traceSubFrame = (
       {
         name: 'name',
         type: FieldType.string,
+        values: [],
         config: { displayNameFromDS: 'Name', custom: { hidden: !hasNameAttribute } },
       },
       ...Object.values(spanDynamicAttrs).sort((a, b) => a.name.localeCompare(b.name)),
       {
         name: 'duration',
         type: FieldType.number,
+        values: [],
         config: {
           displayNameFromDS: 'Duration',
           unit: 'ns',
