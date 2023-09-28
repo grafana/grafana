@@ -33,7 +33,7 @@ export class SaveDashboardDrawer extends SceneObjectBase<SaveDashboardDrawerStat
     // }
 
     return (
-      <Drawer title="Save dashboard" subtitle={dashboard.state.title} scrollableContent onClose={model.onClose}>
+      <Drawer title="Save dashboard" subtitle={dashboard.state.title} onClose={model.onClose}>
         <SaveDashboardDiff diff={diff} oldValue={initialSaveModel} newValue={changedSaveModel} />
       </Drawer>
     );

@@ -19,7 +19,7 @@ func ProvideService(db db.DB, toggles featuremgmt.FeatureToggles, objserver enti
 	var sqlstore store
 
 	// 🐢🐢🐢 pick the store
-	if toggles.IsEnabled(featuremgmt.FlagNewDBLibrary) { // hymmm not a registered feature flag
+	if toggles.IsEnabled(featuremgmt.FlagNewDBLibrary) {
 		sqlstore = &sqlxStore{
 			sess: db.GetSqlxSession(),
 		}
@@ -28,20 +28,7 @@ func ProvideService(db db.DB, toggles featuremgmt.FeatureToggles, objserver enti
 			db: db,
 		}
 	}
-	svc := &Service{store: sqlstore}
-
-	// FlagObjectStore is only supported in development mode
-	if toggles.IsEnabled(featuremgmt.FlagEntityStore) {
-		impl := &entityStoreImpl{
-			sqlimpl: svc,
-			store:   objserver,
-			sess:    db.GetSqlxSession(),
-		}
-		impl.sync() // load everythign from the existing SQL setup into the new object store
-		return impl
-	}
-
-	return svc
+	return &Service{store: sqlstore}
 }
 
 func (s *Service) Create(ctx context.Context, cmd *playlist.CreatePlaylistCommand) (*playlist.Playlist, error) {
