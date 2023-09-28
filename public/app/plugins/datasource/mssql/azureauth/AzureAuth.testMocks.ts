@@ -8,7 +8,12 @@ export const configWithManagedIdentityEnabled: Partial<GrafanaBootConfig> = {
 };
 
 export const configWithManagedIdentityDisabled: Partial<GrafanaBootConfig> = {
-  azure: { managedIdentityEnabled: false, workloadIdentityEnabled: false, userIdentityEnabled: false, cloud: 'AzureCloud' },
+  azure: {
+    managedIdentityEnabled: false,
+    workloadIdentityEnabled: false,
+    userIdentityEnabled: false,
+    cloud: 'AzureCloud',
+  },
 };
 
 export const dataSourceSettingsWithMsiCredentials: Partial<
