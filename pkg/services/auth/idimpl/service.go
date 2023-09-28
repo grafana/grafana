@@ -80,9 +80,8 @@ func (s *Service) SignIdentity(ctx context.Context, id identity.Requester) (stri
 }
 
 func (s *Service) hook(ctx context.Context, identity *authn.Identity, _ *authn.Request) error {
-	// FIXME(kalleep): implement identity.Requester for authn.Identity
 	// FIXME(kalleep): we should probably lazy load this
-	token, err := s.SignIdentity(ctx, identity.SignedInUser())
+	token, err := s.SignIdentity(ctx, identity)
 	if err != nil {
 		namespace, id := identity.NamespacedID()
 		s.logger.Error("Failed to sign id token", "err", err, "namespace", namespace, "id", id)
