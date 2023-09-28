@@ -282,10 +282,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
   tooltipWrapper: css({
     top: 0,
     left: 0,
-    zIndex: 1,
+    zIndex: theme.zIndex.tooltip,
     padding: '8px',
     whiteSpace: 'pre',
-    borderRadius: theme.shape.borderRadius(3),
+    borderRadius: theme.shape.radius.default,
     position: 'absolute',
     background: theme.colors.background.secondary,
     boxShadow: `0 4px 8px ${theme.colors.background.primary}`,
