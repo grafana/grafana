@@ -4,13 +4,13 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/grafana/grafana/pkg/kinds/playlist"
+	grafanarequest "github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
+	playlistsvc "github.com/grafana/grafana/pkg/services/playlist"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
-
-	grafanarequest "github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
-	"github.com/grafana/grafana/pkg/services/playlist"
 )
 
 var (
@@ -22,17 +22,17 @@ var (
 )
 
 type legacyStorage struct {
-	service playlist.Service
+	service playlistsvc.Service
 }
 
-func newLegacyStorage(s playlist.Service) *legacyStorage {
+func newLegacyStorage(s playlistsvc.Service) *legacyStorage {
 	return &legacyStorage{
 		service: s,
 	}
 }
 
 func (s *legacyStorage) New() runtime.Object {
-	return &Playlist{}
+	return &playlist.Playlist{}
 }
 
 func (s *legacyStorage) Destroy() {}
@@ -46,7 +46,7 @@ func (s *legacyStorage) GetSingularName() string {
 }
 
 func (s *legacyStorage) NewList() runtime.Object {
-	return &PlaylistList{}
+	return &playlist.PlaylistList{}
 }
 
 func (s *legacyStorage) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
@@ -65,7 +65,7 @@ func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListO
 	if options.Limit > 0 {
 		limit = int(options.Limit)
 	}
-	res, err := s.service.Search(ctx, &playlist.GetPlaylistsQuery{
+	res, err := s.service.Search(ctx, &playlistsvc.GetPlaylistsQuery{
 		OrgId: orgId,
 		Limit: limit,
 	})
@@ -73,24 +73,15 @@ func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListO
 		return nil, err
 	}
 
-	list := &PlaylistList{
+	list := &playlist.PlaylistList{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "PlaylistList",
 			APIVersion: APIVersion,
 		},
 	}
 	for _, v := range res {
-		p := Playlist{
-			TypeMeta: metav1.TypeMeta{
-				Kind:       "Playlist",
-				APIVersion: APIVersion,
-			},
-			ObjectMeta: metav1.ObjectMeta{
-				Name: v.UID,
-			},
-		}
-		p.Name = v.Name + " // " + v.Interval
-		list.Items = append(list.Items, p)
+		p := playlistsvc.ConvertToK8sResource(v, nil)
+		list.Items = append(list.Items, *p)
 	}
 	if len(list.Items) == limit {
 		list.Continue = "<more>" // TODO?
@@ -104,7 +95,7 @@ func (s *legacyStorage) Get(ctx context.Context, name string, options *metav1.Ge
 		orgId = 1 // TODO: default org ID 1 for now
 	}
 
-	p, err := s.service.Get(ctx, &playlist.GetPlaylistByUidQuery{
+	p, err := s.service.Get(ctx, &playlistsvc.GetPlaylistByUidQuery{
 		UID:   name,
 		OrgId: orgId,
 	})
@@ -114,15 +105,6 @@ func (s *legacyStorage) Get(ctx context.Context, name string, options *metav1.Ge
 	if p == nil {
 		return nil, fmt.Errorf("not found?")
 	}
-
-	return &Playlist{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "Playlist",
-			APIVersion: APIVersion,
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name: p.Uid,
-		},
-		Name: p.Name + "//" + p.Interval,
-	}, nil
+	p.APIVersion = APIVersion
+	return p, nil
 }

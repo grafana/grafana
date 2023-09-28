@@ -74,12 +74,12 @@ func (hs *HTTPServer) GetPlaylist(c *contextmodel.ReqContext) response.Response 
 	uid := web.Params(c.Req)[":uid"]
 	cmd := playlist.GetPlaylistByUidQuery{UID: uid, OrgId: c.OrgID}
 
-	dto, err := hs.playlistService.Get(c.Req.Context(), &cmd)
-	if err != nil {
+	res, err := hs.playlistService.Get(c.Req.Context(), &cmd)
+	if err != nil || res.Spec == nil {
 		return response.Error(500, "Playlist not found", err)
 	}
 
-	return response.JSON(http.StatusOK, dto)
+	return response.JSON(http.StatusOK, res.Spec)
 }
 
 // swagger:route GET /playlists/{uid}/items playlists getPlaylistItems
@@ -97,11 +97,11 @@ func (hs *HTTPServer) GetPlaylistItems(c *contextmodel.ReqContext) response.Resp
 	cmd := playlist.GetPlaylistByUidQuery{UID: uid, OrgId: c.OrgID}
 
 	dto, err := hs.playlistService.Get(c.Req.Context(), &cmd)
-	if err != nil {
+	if err != nil || dto.Spec == nil {
 		return response.Error(500, "Playlist not found", err)
 	}
 
-	return response.JSON(http.StatusOK, dto.Items)
+	return response.JSON(http.StatusOK, dto.Spec.Items)
 }
 
 // swagger:route DELETE /playlists/{uid} playlists deletePlaylist
@@ -180,7 +180,7 @@ func (hs *HTTPServer) UpdatePlaylist(c *contextmodel.ReqContext) response.Respon
 	if err != nil {
 		return response.Error(500, "Failed to load playlist", err)
 	}
-	return response.JSON(http.StatusOK, dto)
+	return response.JSON(http.StatusOK, dto.Spec)
 }
 
 // swagger:parameters searchPlaylists

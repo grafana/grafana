@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"time"
 
 	"github.com/grafana/grafana/pkg/services/playlist"
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
@@ -23,17 +24,23 @@ func (s *sqlxStore) Insert(ctx context.Context, cmd *playlist.CreatePlaylistComm
 		return nil, err
 	}
 
+	ts := time.Now()
 	p = playlist.Playlist{
-		Name:     cmd.Name,
-		Interval: cmd.Interval,
-		OrgId:    cmd.OrgId,
-		UID:      uid,
+		Name:      cmd.Name,
+		Interval:  cmd.Interval,
+		OrgId:     cmd.OrgId,
+		UID:       uid,
+		CreatedAt: ts,
+		UpdatedAt: ts,
 	}
 
 	err = s.sess.WithTransaction(ctx, func(tx *session.SessionTx) error {
-		query := `INSERT INTO playlist (name, "interval", org_id, uid) VALUES (?, ?, ?, ?)`
-		var err error
-		p.Id, err = tx.ExecWithReturningId(ctx, query, p.Name, p.Interval, p.OrgId, p.UID)
+		query := `INSERT INTO playlist ` +
+			`(name, "interval", org_id, uid, created_at, updated_at) ` +
+			`VALUES (?, ?, ?, ?, ?, ?)`
+		p.Id, err = tx.ExecWithReturningId(ctx, query,
+			p.Name, p.Interval, p.OrgId, p.UID, ts, ts,
+		)
 		if err != nil {
 			return err
 		}
@@ -72,15 +79,18 @@ func (s *sqlxStore) Update(ctx context.Context, cmd *playlist.UpdatePlaylistComm
 
 	// Create object to be update to
 	p := playlist.Playlist{
-		Id:       existingPlaylist.Id,
-		UID:      cmd.UID,
-		OrgId:    cmd.OrgId,
-		Name:     cmd.Name,
-		Interval: cmd.Interval,
+		Id:        existingPlaylist.Id,
+		UID:       cmd.UID,
+		OrgId:     cmd.OrgId,
+		Name:      cmd.Name,
+		Interval:  cmd.Interval,
+		UpdatedAt: time.Now(),
 	}
 
 	err = s.sess.WithTransaction(ctx, func(tx *session.SessionTx) error {
-		query := `UPDATE playlist SET uid=:uid, org_id=:org_id, name=:name, "interval"=:interval WHERE id=:id`
+		query := `UPDATE playlist SET uid=:uid, org_id=:org_id, name=:name, ` +
+			`"interval"=:interval, updated_at=:updated_at ` +
+			`WHERE id=:id`
 		_, err = tx.NamedExec(ctx, query, p)
 		if err != nil {
 			return err

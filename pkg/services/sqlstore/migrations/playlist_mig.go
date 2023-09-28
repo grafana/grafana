@@ -1,13 +1,25 @@
 package migrations
 
-import . "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+import (
+	. "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+)
 
 func addPlaylistMigrations(mg *Migrator) {
+	playlistV2 := Table{
+		Name: "playlist",
+		Columns: []*Column{
+			{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
+			{Name: "name", Type: DB_NVarchar, Length: 255, Nullable: false},
+			{Name: "interval", Type: DB_NVarchar, Length: 255, Nullable: false},
+			{Name: "org_id", Type: DB_BigInt, Nullable: false},
+		},
+	}
+
 	mg.AddMigration("Drop old table playlist table", NewDropTableMigration("playlist"))
 	mg.AddMigration("Drop old table playlist_item table", NewDropTableMigration("playlist_item"))
 
 	// create table
-	mg.AddMigration("create playlist table v2", NewAddTableMigration(playlistV2()))
+	mg.AddMigration("create playlist table v2", NewAddTableMigration(playlistV2))
 
 	playlistItemV2 := Table{
 		Name: "playlist_item",
@@ -33,11 +45,9 @@ func addPlaylistMigrations(mg *Migrator) {
 		{Name: "value", Type: DB_Text, Nullable: false},
 		{Name: "title", Type: DB_Text, Nullable: false},
 	}))
-}
 
-func addPlaylistUIDMigration(mg *Migrator) {
 	// Replacing auto-incremented playlistIDs with string UIDs
-	mg.AddMigration("Add UID column to playlist", NewAddColumnMigration(playlistV2(), &Column{
+	mg.AddMigration("Add UID column to playlist", NewAddColumnMigration(playlistV2, &Column{
 		Name: "uid", Type: DB_NVarchar, Length: 80, Nullable: false, Default: "0",
 	}))
 
@@ -47,19 +57,15 @@ func addPlaylistUIDMigration(mg *Migrator) {
 		Postgres("UPDATE playlist SET uid=id::text;").
 		Mysql("UPDATE playlist SET uid=id;"))
 
-	mg.AddMigration("Add index for uid in playlist", NewAddIndexMigration(playlistV2(), &Index{
+	mg.AddMigration("Add index for uid in playlist", NewAddIndexMigration(playlistV2, &Index{
 		Cols: []string{"org_id", "uid"}, Type: UniqueIndex,
 	}))
-}
 
-func playlistV2() Table {
-	return Table{
-		Name: "playlist",
-		Columns: []*Column{
-			{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
-			{Name: "name", Type: DB_NVarchar, Length: 255, Nullable: false},
-			{Name: "interval", Type: DB_NVarchar, Length: 255, Nullable: false},
-			{Name: "org_id", Type: DB_BigInt, Nullable: false},
-		},
-	}
+	// Add columns used for kubernetes dual write synchronization
+	mg.AddMigration("Add playlist column created_at", NewAddColumnMigration(playlistV2, &Column{
+		Name: "created_at", Type: DB_DateTime, Nullable: false, Default: "0",
+	}))
+	mg.AddMigration("Add playlist column updated_at", NewAddColumnMigration(playlistV2, &Column{
+		Name: "updated_at", Type: DB_DateTime, Nullable: false, Default: "0",
+	}))
 }

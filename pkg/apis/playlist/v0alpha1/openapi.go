@@ -5,8 +5,8 @@ import (
 	spec "k8s.io/kube-openapi/pkg/validation/spec"
 )
 
-// NOTE: this must match the golang fully qualifid name!
-const kindKey = "github.com/grafana/grafana/pkg/apis/playlist/v0alpha1.Playlist"
+// NOTE: this must match the golang fully qualified name!
+const kindKey = "github.com/grafana/grafana/pkg/kinds/playlist.Playlist"
 
 func getOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
