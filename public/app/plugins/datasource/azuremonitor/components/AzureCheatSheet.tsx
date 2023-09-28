@@ -97,7 +97,7 @@ type TablesCheatsheet = {
 type Cheatsheet = {
   categories: CategoriesCheatsheet[];
   functions: FunctionsCheatsheet[];
-  queries: QueriesCheatsheet[];
+  queries: any;
   resourceTypes: ResourceTypesCheatsheet[];
   solutions: SolutionsCheatsheet[];
   tables: TablesCheatsheet[];
@@ -139,7 +139,7 @@ const AzureCheatSheet = (props: Props) => {
             showScrollIndicators={true}
             autoHeightMax="350px" 
           > 
-            {cheatsheetQueries.queries.map((query) => {
+            {cheatsheetQueries.queries.map((query: any) => {
               return (
                   <Card className={styles.card} key={query.id}>
                     <Card.Heading>{query.displayName}</Card.Heading>
@@ -154,7 +154,7 @@ const AzureCheatSheet = (props: Props) => {
                     <Card.Actions>
                       <Button size="sm" aria-label="use this query button" onClick={() => {
                         console.log(query.body)
-                        props.onClickExample({refId: "A", queryType: AzureQueryType.LogAnalytics})
+                        props.onClickExample({refId: "A", queryType: AzureQueryType.LogAnalytics, azureLogAnalytics: {query: query.body} })
                       }}>
                         Use this query
                       </Button>
