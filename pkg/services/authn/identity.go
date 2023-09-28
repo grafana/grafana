@@ -33,8 +33,6 @@ const (
 	AnonymousNamespaceID = NamespaceAnonymous + ":0"
 )
 
-const ()
-
 var _ identity.Requester = (*Identity)(nil)
 
 type Identity struct {
