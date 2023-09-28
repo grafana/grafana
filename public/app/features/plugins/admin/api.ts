@@ -113,7 +113,7 @@ export async function installPlugin(id: string) {
   });
 }
 
-export async function installManagedPlugin(instanceId: string, plugin: string, version: string) {
+export async function installManagedPlugin(instanceId: string, plugin: string, version?: string) {
   // This will install the latest compatible version based on the logic
   // on the backend.
   return await getBackendSrv().post(`${GCOM_API_ROOT}/instances/${instanceId}/plugins`, {

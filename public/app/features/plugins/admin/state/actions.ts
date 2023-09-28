@@ -187,7 +187,7 @@ export const managedInstall = createAsyncThunk<
   Update<CatalogPlugin>,
   {
     id: string;
-    version: string;
+    version?: string;
     isUpdating?: boolean;
   }
 >(`${STATE_PREFIX}/install`, async ({ id, version, isUpdating = false }, thunkApi) => {
