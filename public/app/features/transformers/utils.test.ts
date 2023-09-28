@@ -1,3 +1,5 @@
+import { config } from '@grafana/runtime';
+
 import { numberOrVariableValidator } from './utils';
 
 describe('validator', () => {
@@ -18,6 +20,13 @@ describe('validator', () => {
   });
 
   it('validates a string that has a variable', () => {
-    expect(numberOrVariableValidator('${foo}')).toBe(true);
+    config.featureToggles.transformationsVariableSupport = true;
+    expect(numberOrVariableValidator('$foo')).toBe(true);
+    config.featureToggles.transformationsVariableSupport = false;
+  });
+  it('fails a string that has a variable if the feature flag is disabled', () => {
+    config.featureToggles.transformationsVariableSupport = false;
+    expect(numberOrVariableValidator('$foo')).toBe(false);
+    config.featureToggles.transformationsVariableSupport = true;
   });
 });
