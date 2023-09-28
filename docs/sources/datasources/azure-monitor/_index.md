@@ -142,7 +142,7 @@ datasources:
 
 ### Configure Managed Identity
 
-If you host Grafana in Azure, such as an App Service or with Azure Virtual Machines, and have managed identity enabled on your VM, you can use managed identity to configure Azure Monitor in Grafana.
+You can use managed identity to configure Azure Monitor in Grafana if you host Grafana in Azure (such as an App Service or with Azure Virtual Machines) and have managed identity enabled on your VM.
 This lets you securely authenticate data sources without manually configuring credentials via Azure AD App Registrations.
 For details on Azure managed identities, refer to the [Azure documentation](https://docs.microsoft.com/en-us/azure/active-directory/managed-identities-azure-resources/overview).
 
