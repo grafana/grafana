@@ -22,7 +22,7 @@ export function JsonEditorSettings({ dashboard, sectionNav }: SettingsPageProps)
   const styles = useStyles2(getStyles);
   const subTitle = t(
     'dashboard-settings.json-editor.subtitle',
-    'The JSON model below is the data structure that defines the dashboard. This includes dashboard settings, panel settings, layout, queries, and so on'
+    'The JSON model below is the data structure that defines the dashboard. This includes dashboard settings, panel settings, layout, queries, and so on.'
   );
 
   return (
