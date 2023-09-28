@@ -183,11 +183,6 @@ func (i *Identity) IsNil() bool {
 	return i == nil
 }
 
-// Role returns the role of the identity in the active organization.
-func (i *Identity) Role() org.RoleType {
-	return i.OrgRoles[i.OrgID]
-}
-
 // NamespacedID returns the namespace, e.g. "user" and the id for that namespace
 func (i *Identity) NamespacedID() (string, int64) {
 	split := strings.Split(i.ID, ":")
@@ -206,21 +201,15 @@ func (i *Identity) NamespacedID() (string, int64) {
 
 // SignedInUser returns a SignedInUser from the identity.
 func (i *Identity) SignedInUser() *user.SignedInUser {
-	var isGrafanaAdmin bool
-	if i.IsGrafanaAdmin != nil {
-		isGrafanaAdmin = *i.IsGrafanaAdmin
-	}
-
 	u := &user.SignedInUser{
-		UserID:          0,
 		OrgID:           i.OrgID,
 		OrgName:         i.OrgName,
-		OrgRole:         i.Role(),
+		OrgRole:         i.GetOrgRole(),
 		Login:           i.Login,
 		Name:            i.Name,
 		Email:           i.Email,
 		AuthenticatedBy: i.AuthenticatedBy,
-		IsGrafanaAdmin:  isGrafanaAdmin,
+		IsGrafanaAdmin:  i.GetIsGrafanaAdmin(),
 		IsAnonymous:     i.IsAnonymous,
 		IsDisabled:      i.IsDisabled,
 		HelpFlags1:      i.HelpFlags1,
@@ -230,24 +219,34 @@ func (i *Identity) SignedInUser() *user.SignedInUser {
 		IDToken:         i.IDToken,
 	}
 
-	namespace, id := i.NamespacedID()
+	namespace, id := i.GetNamespacedID()
 	if namespace == NamespaceAPIKey {
-		u.ApiKeyID = id
+		u.ApiKeyID = IntIdentifier(id)
 	} else {
-		u.UserID = id
+		u.UserID = IntIdentifier(id)
 		u.IsServiceAccount = namespace == NamespaceServiceAccount
 	}
 
 	return u
 }
 
+func IntIdentifier(identifier string) int64 {
+	id, err := strconv.ParseInt(identifier, 10, 64)
+	if err != nil {
+		// FIXME (kalleep): Improve error handling
+		return -1
+	}
+
+	return id
+}
+
 func (i *Identity) ExternalUserInfo() login.ExternalUserInfo {
-	_, id := i.NamespacedID()
+	_, id := i.GetNamespacedID()
 	return login.ExternalUserInfo{
 		OAuthToken:     i.OAuthToken,
 		AuthModule:     i.AuthenticatedBy,
 		AuthId:         i.AuthID,
-		UserId:         id,
+		UserId:         IntIdentifier(id),
 		Email:          i.Email,
 		Login:          i.Login,
 		Name:           i.Name,
