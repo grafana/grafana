@@ -14,10 +14,10 @@ import (
 var (
 	// SortOptionsByQueryParam is a map to translate the "sort" query param values to SortOption(s)
 	SortOptionsByQueryParam = map[string]model.SortOption{
-		"name-asc":         newSortOption("name", false, false, 0), // Lower case the name ordering
-		"name-desc":        newSortOption("name", true, false, 0),
-		"email-asc":        newSortOption("email", false, true, 1), // Not to slow down the request let's not lower case the email ordering
-		"email-desc":       newSortOption("email", true, true, 1),
+		"name-asc":         newSortOption("name", false, true, 0), // Lower case the name ordering
+		"name-desc":        newSortOption("name", true, true, 0),
+		"email-asc":        newSortOption("email", false, false, 1), // Not to slow down the request let's not lower case the email ordering
+		"email-desc":       newSortOption("email", true, false, 1),
 		"memberCount-asc":  newIntSortOption("member_count", false, 2),
 		"memberCount-desc": newIntSortOption("member_count", true, 2),
 	}
@@ -27,7 +27,7 @@ var (
 
 type Sorter struct {
 	Field         string
-	CaseSensitive bool
+	LowerCase     bool
 	Descending    bool
 	WithTableName bool
 }
@@ -38,7 +38,7 @@ func (s Sorter) OrderBy() string {
 		orderBy = ""
 	}
 	orderBy += s.Field
-	if !s.CaseSensitive {
+	if s.LowerCase {
 		orderBy = fmt.Sprintf("LOWER(%v)", orderBy)
 	}
 	if s.Descending {
@@ -47,7 +47,7 @@ func (s Sorter) OrderBy() string {
 	return orderBy + " ASC"
 }
 
-func newSortOption(field string, desc bool, caseSensitive bool, index int) model.SortOption {
+func newSortOption(field string, desc bool, lowerCase bool, index int) model.SortOption {
 	direction := "asc"
 	description := ("A-Z")
 	if desc {
@@ -59,7 +59,7 @@ func newSortOption(field string, desc bool, caseSensitive bool, index int) model
 		DisplayName: fmt.Sprintf("%v (%v)", cases.Title(language.Und).String(field), description),
 		Description: fmt.Sprintf("Sort %v in an alphabetically %vending order", field, direction),
 		Index:       index,
-		Filter:      []model.SortOptionFilter{Sorter{Field: field, CaseSensitive: caseSensitive, Descending: desc, WithTableName: true}},
+		Filter:      []model.SortOptionFilter{Sorter{Field: field, LowerCase: lowerCase, Descending: desc, WithTableName: true}},
 	}
 }
 
@@ -75,7 +75,7 @@ func newIntSortOption(field string, desc bool, index int) model.SortOption {
 		DisplayName: fmt.Sprintf("%v (%v)", cases.Title(language.Und).String(field), description),
 		Description: fmt.Sprintf("Sort %v in a numerically %vending order", field, direction),
 		Index:       index,
-		Filter:      []model.SortOptionFilter{Sorter{Field: field, Descending: desc, WithTableName: false}},
+		Filter:      []model.SortOptionFilter{Sorter{Field: field, LowerCase: false, Descending: desc, WithTableName: false}},
 	}
 }
 
