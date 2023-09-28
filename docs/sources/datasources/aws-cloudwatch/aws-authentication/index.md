@@ -77,7 +77,7 @@ To disable this feature, refer to the [`assume_role_enabled` documentation][conf
 ### Use an external ID
 
 {{% admonition type="note" %}}
-You cannot use an external ID for the `Grafana Assume Role` authentication provider.
+You cannot use an external ID for the Grafana Assume Role authentication provider.
 {{% /admonition %}}
 
 To assume a role in another account that was created with an external ID, specify the external ID in the **External ID** field.
