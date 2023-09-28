@@ -209,6 +209,7 @@
 /devenv/docker/blocks/tempo/ @grafana/observability-traces-and-profiling
 /devenv/docker/blocks/traefik/ @mckn
 /devenv/docker/blocks/zipkin/ @grafana/observability-traces-and-profiling
+/devenv/docker/blocks/webdav/ @grafana/alerting-backend-product
 /devenv/docker/buildcontainer/ @bergquist
 /devenv/docker/compose_header.yml @grafana/backend-platform
 /devenv/docker/debtest/ @bergquist
