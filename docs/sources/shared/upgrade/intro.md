@@ -13,7 +13,7 @@ Because Grafana upgrades are backward compatible, the upgrade process is straigh
 In addition to common tasks you should complete for all versions of Grafana, there might be additional upgrade tasks to complete for a version.
 
 {{% admonition type="note" %}}
-There might be breaking changes in some releases. We outline these changes in the [What's New ]({{< relref "../../whatsnew/" >}}) document for most releases or a separate [Breaking changes]({{< relref "../../breaking-changes/" >}}) document for releases with many breaking changes.
+There might be breaking changes in some releases. We outline these changes in the [What's New ]({{< relref "../../whatsnew/" >}}) document.
 {{% /admonition %}}
 
 For versions of Grafana prior to v9.2, we published additional information in the [Release Notes]({{< relref "../../release-notes/" >}}).
