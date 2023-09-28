@@ -73,7 +73,6 @@ export const OrgUsersTable = ({
   const [userToRemove, setUserToRemove] = useState<OrgUser | null>(null);
   const [roleOptions, setRoleOptions] = useState<Role[]>([]);
   const enableSort = totalPages === 1;
-  const styles = useStyles2(getStyles);
 
   useEffect(() => {
     async function fetchOptions() {
