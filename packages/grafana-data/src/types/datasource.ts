@@ -14,7 +14,7 @@ import { DataQuery } from './query';
 import { RawTimeRange, TimeRange } from './time';
 import { CustomVariableSupport, DataSourceVariableSupport, StandardVariableSupport } from './variables';
 
-import { DataSourceRef, WithAccessControlMetadata } from '.';
+import { AdHocVariableFilter, DataSourceRef, WithAccessControlMetadata } from '.';
 
 export interface DataSourcePluginOptionsEditorProps<
   JSONData extends DataSourceJsonData = DataSourceJsonData,
@@ -263,11 +263,9 @@ abstract class DataSourceApi<
   abstract testDatasource(): Promise<TestDataSourceResponse>;
 
   /**
-   * Override to skip executing a query
+   * This function is not called automatically unless running within the DataSourceWithBackend
    *
-   * @returns false if the query should be skipped
-   *
-   * @virtual
+   * @deprecated
    */
   filterQuery?(query: TQuery): boolean;
 
@@ -289,12 +287,12 @@ abstract class DataSourceApi<
   /**
    * Get tag keys for adhoc filters
    */
-  getTagKeys?(options?: any): Promise<MetricFindValue[]>;
+  getTagKeys?(options?: DataSourceGetTagKeysOptions): Promise<MetricFindValue[]>;
 
   /**
    * Get tag values for adhoc filters
    */
-  getTagValues?(options: any): Promise<MetricFindValue[]>;
+  getTagValues?(options: DataSourceGetTagValuesOptions): Promise<MetricFindValue[]>;
 
   /**
    * Set after constructor call, as the data source instance is the most common thing to pass around
@@ -323,12 +321,6 @@ abstract class DataSourceApi<
    */
   modifyQuery?(query: TQuery, action: QueryFixAction): TQuery;
 
-  /**
-   * @deprecated since version 8.2.0
-   * Not used anymore.
-   */
-  getHighlighterExpression?(query: TQuery): string[];
-
   /** Get an identifier object for this datasource instance */
   getRef(): DataSourceRef {
     return { type: this.type, uid: this.uid };
@@ -341,7 +333,7 @@ abstract class DataSourceApi<
 
   getVersion?(optionalOptions?: any): Promise<string>;
 
-  interpolateVariablesInQueries?(queries: TQuery[], scopedVars: ScopedVars | {}): TQuery[];
+  interpolateVariablesInQueries?(queries: TQuery[], scopedVars: ScopedVars, filters?: AdHocVariableFilter[]): TQuery[];
 
   /**
    * An annotation processor allows explicit control for how annotations are managed.
@@ -372,6 +364,35 @@ abstract class DataSourceApi<
   getDefaultQuery?(app: CoreApp): Partial<TQuery>;
 }
 
+/**
+ * Options argument to DataSourceAPI.getTagKeys
+ */
+export interface DataSourceGetTagKeysOptions {
+  /**
+   * The other existing filters or base filters. New in v10.3
+   */
+  filters: AdHocVariableFilter[];
+  /**
+   * Context time range. New in v10.3
+   */
+  timeRange?: TimeRange;
+}
+
+/**
+ * Options argument to DataSourceAPI.getTagValues
+ */
+export interface DataSourceGetTagValuesOptions {
+  key: string;
+  /**
+   * The other existing filters or base filters. New in v10.3
+   */
+  filters: AdHocVariableFilter[];
+  /**
+   * Context time range. New in v10.3
+   */
+  timeRange?: TimeRange;
+}
+
 export interface MetadataInspectorProps<
   DSType extends DataSourceApi<TQuery, TOptions>,
   TQuery extends DataQuery = DataQuery,
@@ -381,6 +402,13 @@ export interface MetadataInspectorProps<
 
   // All Data from this DataSource
   data: DataFrame[];
+}
+
+export interface LegacyMetricFindQueryOptions {
+  searchFilter?: string;
+  scopedVars?: ScopedVars;
+  range?: TimeRange;
+  variable?: { name: string };
 }
 
 export interface QueryEditorProps<
@@ -523,7 +551,9 @@ export interface DataQueryRequest<TQuery extends DataQuery = DataQuery> {
   timeInfo?: string; // The query time description (blue text in the upper right)
   panelId?: number;
   dashboardUID?: string;
-  publicDashboardAccessToken?: string;
+
+  /** Filters to dynamically apply to all queries */
+  filters?: AdHocVariableFilter[];
 
   // Request Timing
   startTime: number;

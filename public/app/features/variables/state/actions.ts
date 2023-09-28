@@ -7,6 +7,7 @@ import {
   isEmptyObject,
   LoadingState,
   TimeRange,
+  TypedVariableModel,
   UrlQueryMap,
   UrlQueryValue,
 } from '@grafana/data';
@@ -69,6 +70,7 @@ import {
   toVariablePayload,
 } from '../utils';
 
+import { findVariableNodeInList, isVariableOnTimeRangeConfigured } from './helpers';
 import { toKeyedAction } from './keyedVariablesReducer';
 import { getIfExistsLastKey, getVariable, getVariablesByKey, getVariablesState } from './selectors';
 import {
@@ -669,6 +671,20 @@ const dfs = (node: Node, visited: string[], variables: VariableModel[], variable
   return variablesRefreshTimeRange;
 };
 
+// verify if the output edges of a node are not time range dependent
+const areOuputEdgesNotTimeRange = (node: Node, variables: TypedVariableModel[]) => {
+  return node.outputEdges.every((e) => {
+    const childNode = e.outputNode;
+    if (childNode) {
+      const childVariable = findVariableNodeInList(variables, childNode.name);
+      if (childVariable && childVariable.type === 'query') {
+        return childVariable.refresh !== VariableRefresh.onTimeRangeChanged;
+      }
+    }
+    return true;
+  });
+};
+
 /**
  * This function returns a list of variables that need to be refreshed when the time range changes
  * It follows this logic
@@ -684,24 +700,26 @@ const dfs = (node: Node, visited: string[], variables: VariableModel[], variable
  *       Here, we should traverse the tree using DFS (Depth First Search), as the dependent nodes will be updated in cascade when the parent variable is updated.
  */
 
-export const getVariablesThatNeedRefreshNew = (key: string, state: StoreState): VariableWithOptions[] => {
+export const getVariablesThatNeedRefreshNew = (key: string, state: StoreState): TypedVariableModel[] => {
   const allVariables = getVariablesByKey(key, state);
 
   //create dependency graph
   const g = createGraph(allVariables);
   // create a list of nodes that were visited
   const visitedDfs: string[] = [];
-  const variablesRefreshTimeRange: VariableWithOptions[] = [];
+  const variablesRefreshTimeRange: TypedVariableModel[] = [];
   allVariables.forEach((v) => {
     const node = g.getNode(v.name);
     if (visitedDfs.includes(v.name)) {
       return;
     }
     if (node) {
-      const parentVariableNode = allVariables.find((v) => v.name === node.name) as QueryVariableModel;
-      const isVariableTimeRange =
-        parentVariableNode && parentVariableNode.refresh === VariableRefresh.onTimeRangeChanged;
-      //
+      const parentVariableNode = findVariableNodeInList(allVariables, node.name);
+      if (!parentVariableNode) {
+        return;
+      }
+      const isVariableTimeRange = isVariableOnTimeRangeConfigured(parentVariableNode);
+      // if variable is time range and has no output edges add it to the list of variables that need refresh
       if (isVariableTimeRange && node.outputEdges.length === 0) {
         variablesRefreshTimeRange.push(parentVariableNode);
       }
@@ -716,12 +734,16 @@ export const getVariablesThatNeedRefreshNew = (key: string, state: StoreState): 
         dfs(node, visitedDfs, allVariables, variablesRefreshTimeRange);
       }
 
+      // If is variable time range, has outputEdges, but the output edges are not time range configured, it means this
+      // is the top variable that need to be refreshed
+      if (isVariableTimeRange && node.outputEdges.length > 0 && areOuputEdgesNotTimeRange(node, allVariables)) {
+        if (!variablesRefreshTimeRange.includes(parentVariableNode)) {
+          variablesRefreshTimeRange.push(parentVariableNode);
+        }
+      }
+
       // if variable is not time range but has dependents (output edges) visit its dependants and repeat the process
-      if (
-        parentVariableNode &&
-        parentVariableNode.refresh &&
-        parentVariableNode.refresh !== VariableRefresh.onTimeRangeChanged
-      ) {
+      if (!isVariableTimeRange && node.outputEdges.length > 0) {
         dfs(node, visitedDfs, allVariables, variablesRefreshTimeRange);
       }
     }
@@ -755,7 +777,8 @@ export const onTimeRangeUpdated =
     dependencies.templateSrv.updateTimeRange(timeRange);
 
     // approach # 2, get variables that need refresh but use the dependency graph to only update the ones that are affected
-    let variablesThatNeedRefresh: VariableWithOptions[] = [];
+    // TODO: remove the VariableWithOptions type once the feature flag is on GA
+    let variablesThatNeedRefresh: VariableWithOptions[] | TypedVariableModel[] = [];
     if (config.featureToggles.refactorVariablesTimeRange) {
       variablesThatNeedRefresh = getVariablesThatNeedRefreshNew(key, getState());
     } else {
@@ -877,10 +900,10 @@ const getQueryWithVariables = (key: string, getState: () => StoreState): UrlQuer
 
   const queryParamsNew = Object.keys(queryParams)
     .filter((key) => key.indexOf(VARIABLE_PREFIX) === -1)
-    .reduce((obj, key) => {
+    .reduce<UrlQueryMap>((obj, key) => {
       obj[key] = queryParams[key];
       return obj;
-    }, {} as UrlQueryMap);
+    }, {});
 
   for (const variable of getVariablesByKey(key, getState())) {
     if (variable.skipUrlSync) {

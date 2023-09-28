@@ -2,7 +2,6 @@ import { css } from '@emotion/css';
 import React, { FormEvent, useCallback, useEffect, useState } from 'react';
 
 import {
-  dateMath,
   DateTime,
   dateTimeFormat,
   dateTimeParse,
@@ -21,6 +20,7 @@ import { t, Trans } from '../../../utils/i18n';
 import { Button } from '../../Button';
 import { Field } from '../../Forms/Field';
 import { Input } from '../../Input/Input';
+import { isValid } from '../utils';
 
 import TimePickerCalendar from './TimePickerCalendar';
 
@@ -159,8 +159,8 @@ export const TimeRangeContent = (props: Props) => {
       <TimePickerCalendar
         isFullscreen={isFullscreen}
         isOpen={isOpen}
-        from={dateTimeParse(from.value)}
-        to={dateTimeParse(to.value)}
+        from={dateTimeParse(from.value, { timeZone })}
+        to={dateTimeParse(to.value, { timeZone })}
         onApply={onApply}
         onClose={() => setOpen(false)}
         onChange={onChange}
@@ -206,19 +206,6 @@ function valueAsString(value: DateTime | string, timeZone?: TimeZone): string {
     return dateTimeFormat(value, { timeZone });
   }
   return value;
-}
-
-function isValid(value: string, roundUp?: boolean, timeZone?: TimeZone): boolean {
-  if (isDateTime(value)) {
-    return value.isValid();
-  }
-
-  if (dateMath.isMathString(value)) {
-    return dateMath.isValid(value);
-  }
-
-  const parsed = dateTimeParse(value, { roundUp, timeZone });
-  return parsed.isValid();
 }
 
 function getStyles(theme: GrafanaTheme2) {

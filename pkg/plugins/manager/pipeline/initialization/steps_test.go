@@ -115,7 +115,7 @@ type fakeBackendProvider struct {
 }
 
 func (f *fakeBackendProvider) BackendFactory(_ context.Context, _ *plugins.Plugin) backendplugin.PluginFactoryFunc {
-	return func(_ string, _ log.Logger, _ []string) (backendplugin.Plugin, error) {
+	return func(_ string, _ log.Logger, _ func() []string) (backendplugin.Plugin, error) {
 		return f.plugin, nil
 	}
 }
@@ -124,9 +124,9 @@ type fakeEnvVarsProvider struct {
 	GetFunc func(ctx context.Context, p *plugins.Plugin) []string
 }
 
-func (f *fakeEnvVarsProvider) Get(ctx context.Context, p *plugins.Plugin) ([]string, error) {
+func (f *fakeEnvVarsProvider) Get(ctx context.Context, p *plugins.Plugin) []string {
 	if f.GetFunc != nil {
-		return f.GetFunc(ctx, p), nil
+		return f.GetFunc(ctx, p)
 	}
-	return nil, nil
+	return nil
 }

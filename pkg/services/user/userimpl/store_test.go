@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
+	"github.com/grafana/grafana/pkg/services/searchusers/sortopts"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -822,6 +823,31 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		require.Nil(t, err)
 		require.Len(t, queryResult.Users, 1)
 		require.EqualValues(t, queryResult.TotalCount, 1)
+
+		// Custom ordering
+		sortOpts, err := sortopts.ParseSortQueryParam("login-asc,email-asc")
+		require.NoError(t, err)
+		query = user.SearchUsersQuery{Query: "", Page: 1, Limit: 3, SignedInUser: usr, SortOpts: sortOpts}
+		queryResult, err = userStore.Search(context.Background(), &query)
+
+		require.Nil(t, err)
+		require.Len(t, queryResult.Users, 3)
+		require.EqualValues(t, queryResult.TotalCount, 5)
+		for i := 0; i < 3; i++ {
+			require.Equal(t, fmt.Sprint("loginuser", i), queryResult.Users[i].Login)
+		}
+
+		sortOpts2, err := sortopts.ParseSortQueryParam("login-desc,email-asc")
+		require.NoError(t, err)
+		query = user.SearchUsersQuery{Query: "", Page: 1, Limit: 3, SignedInUser: usr, SortOpts: sortOpts2}
+		queryResult, err = userStore.Search(context.Background(), &query)
+
+		require.Nil(t, err)
+		require.Len(t, queryResult.Users, 3)
+		require.EqualValues(t, queryResult.TotalCount, 5)
+		for i := 0; i < 3; i++ {
+			require.Equal(t, fmt.Sprint("loginuser", 4-i), queryResult.Users[i].Login)
+		}
 	})
 
 	t.Run("Can get logged in user projection", func(t *testing.T) {
@@ -954,6 +980,53 @@ func updateDashboardACL(t *testing.T, sqlStore db.DB, dashboardID int64, items .
 		return err
 	})
 	return err
+}
+
+func TestMetricsUsage(t *testing.T) {
+	ss := db.InitTestDB(t)
+	userStore := ProvideStore(ss, setting.NewCfg())
+	quotaService := quotaimpl.ProvideService(ss, ss.Cfg)
+	orgService, err := orgimpl.ProvideService(ss, ss.Cfg, quotaService)
+	require.NoError(t, err)
+
+	_, usrSvc := createOrgAndUserSvc(t, ss, ss.Cfg)
+
+	t.Run("Get empty role metrics for an org", func(t *testing.T) {
+		orgId := int64(1)
+
+		// create first user
+		createFirtUserCmd := &user.CreateUserCommand{
+			Login: "admin",
+			Email: "admin@admin.com",
+			Name:  "admin",
+			OrgID: orgId,
+		}
+		_, err := usrSvc.Create(context.Background(), createFirtUserCmd)
+		require.NoError(t, err)
+
+		// create second user
+		createSecondUserCmd := &user.CreateUserCommand{
+			Login: "userWithoutRole",
+			Email: "userWithoutRole@userWithoutRole.com",
+			Name:  "userWithoutRole",
+		}
+		secondUser, err := usrSvc.Create(context.Background(), createSecondUserCmd)
+		require.NoError(t, err)
+
+		// assign the user to the org
+		cmd := org.AddOrgUserCommand{
+			OrgID:  secondUser.OrgID,
+			UserID: orgId,
+			Role:   org.RoleNone,
+		}
+		err = orgService.AddOrgUser(context.Background(), &cmd)
+		require.NoError(t, err)
+
+		// get metric usage
+		stats, err := userStore.CountUserAccountsWithEmptyRole(context.Background())
+		require.NoError(t, err)
+		assert.Equal(t, int64(1), stats)
+	})
 }
 
 // This function was copied from pkg/services/dashboards/database to circumvent

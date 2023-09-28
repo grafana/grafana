@@ -175,13 +175,13 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 					},
 				},
 				ClientParams: authn.ClientParams{
-					SyncUser:            false,
-					AllowSignUp:         false,
-					FetchSyncedUser:     false,
-					EnableDisabledUsers: false,
-					SyncOrgRoles:        false,
-					SyncTeams:           false,
-					SyncPermissions:     false,
+					SyncUser:        false,
+					AllowSignUp:     false,
+					FetchSyncedUser: false,
+					EnableUser:      false,
+					SyncOrgRoles:    false,
+					SyncTeams:       false,
+					SyncPermissions: false,
 					LookUpParams: login.UserLookupParams{
 						UserID: nil,
 						Email:  nil,
@@ -534,9 +534,9 @@ type testEnv struct {
 	s        *ExtendedJWT
 }
 
-func generateToken(payload ExtendedJWTClaims, signingKey interface{}, alg jose.SignatureAlgorithm) string {
+func generateToken(payload ExtendedJWTClaims, signingKey any, alg jose.SignatureAlgorithm) string {
 	signer, _ := jose.NewSigner(jose.SigningKey{Algorithm: alg, Key: signingKey}, &jose.SignerOptions{
-		ExtraHeaders: map[jose.HeaderKey]interface{}{
+		ExtraHeaders: map[jose.HeaderKey]any{
 			jose.HeaderType: "at+jwt",
 		}})
 

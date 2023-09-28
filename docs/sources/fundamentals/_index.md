@@ -7,16 +7,16 @@ labels:
     - cloud
     - enterprise
     - oss
-title: Fundamentals
+title: Introduction
 weight: 8
 ---
 
-# Fundamentals
+# Introduction
 
 This section provides basic information about observability topics in general and Grafana in particular. These topics will help people who are just starting out with observability and monitoring.
 
-{{< docs/shared "basics/what-is-grafana.md" >}}
+{{< docs/shared lookup="basics/what-is-grafana.md" source="grafana" version="<GRAFANA VERSION>" >}}
 
-{{< docs/shared "basics/grafana-cloud.md" >}}
+{{< docs/shared lookup="basics/grafana-cloud.md" source="grafana" version="<GRAFANA VERSION>" >}}
 
-{{< docs/shared "basics/grafana-enterprise.md" >}}
+{{< docs/shared lookup="basics/grafana-enterprise.md" source="grafana" version="<GRAFANA VERSION>" >}}

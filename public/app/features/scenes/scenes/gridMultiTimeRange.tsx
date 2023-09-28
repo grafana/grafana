@@ -7,9 +7,9 @@ import {
   SceneGridItem,
   PanelBuilders,
 } from '@grafana/scenes';
-import { TestDataQueryType } from 'app/plugins/datasource/testdata/dataquery.gen';
+import { TestDataQueryType } from 'app/plugins/datasource/grafana-testdata-datasource/dataquery.gen';
 
-import { DashboardScene } from '../dashboard/DashboardScene';
+import { DashboardScene } from '../../dashboard-scene/scene/DashboardScene';
 
 import { getQueryRunnerWithRandomWalkQuery } from './queries';
 

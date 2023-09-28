@@ -207,6 +207,36 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
         options.timeZone,
         options.dataLinkPostProcessor
       );
+
+      if (field.type === FieldType.nestedFrames) {
+        for (const nestedFrames of field.values) {
+          for (let nfIndex = 0; nfIndex < nestedFrames.length; nfIndex++) {
+            for (const valueField of nestedFrames[nfIndex].fields) {
+              valueField.state = {
+                scopedVars: {
+                  __dataContext: {
+                    value: {
+                      data: nestedFrames,
+                      frame: nestedFrames[nfIndex],
+                      frameIndex: nfIndex,
+                      field: valueField,
+                    },
+                  },
+                },
+              };
+
+              valueField.getLinks = getLinksSupplier(
+                nestedFrames[nfIndex],
+                valueField,
+                valueField.state!.scopedVars,
+                context.replaceVariables,
+                options.timeZone,
+                options.dataLinkPostProcessor
+              );
+            }
+          }
+        }
+      }
     }
 
     return newFrame;
@@ -228,7 +258,7 @@ function cachingDisplayProcessor(disp: DisplayProcessor, maxCacheSize = 2500): D
     caches.set(i, new Map());
   }
 
-  return (value: any, decimals?: DecimalCount) => {
+  return (value: unknown, decimals?: DecimalCount) => {
     let cache = caches.get(decimals ?? -1)!;
 
     let v = cache.get(value);
@@ -312,8 +342,8 @@ export function setFieldConfigDefaults(config: FieldConfig, defaults: FieldConfi
 }
 
 function processFieldConfigValue(
-  destination: Record<string, any>, // it's mutable
-  source: Record<string, any>,
+  destination: Record<string, unknown>, // it's mutable
+  source: Record<string, unknown>,
   fieldConfigProperty: FieldConfigPropertyItem,
   context: FieldOverrideEnv
 ) {
@@ -370,7 +400,7 @@ const defaultInternalLinkPostProcessor: DataLinkPostProcessor = (options) => {
       internalLink: link.internal,
       scopedVars: dataLinkScopedVars,
       field,
-      range: link.internal.range ?? ({} as any),
+      range: link.internal.range,
       replaceVariables,
     });
   } else {

@@ -27,11 +27,11 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	loginpkg "github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/middleware/csrf"
 	"github.com/grafana/grafana/pkg/middleware/loggermw"
+	"github.com/grafana/grafana/pkg/middleware/requestmeta"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	"github.com/grafana/grafana/pkg/registry/corekind"
@@ -49,7 +49,7 @@ import (
 	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
 	"github.com/grafana/grafana/pkg/services/datasourceproxy"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/services/datasources/permissions"
+	"github.com/grafana/grafana/pkg/services/datasources/guardian"
 	"github.com/grafana/grafana/pkg/services/encryption"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -70,6 +70,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/plugindashboards"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	pluginSettings "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	pref "github.com/grafana/grafana/pkg/services/preference"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	publicdashboardsApi "github.com/grafana/grafana/pkg/services/publicdashboards/api"
@@ -125,13 +126,12 @@ type HTTPServer struct {
 	QuotaService                 quota.Service
 	RemoteCacheService           *remotecache.RemoteCache
 	ProvisioningService          provisioning.ProvisioningService
-	Login                        login.Service
 	License                      licensing.Licensing
 	AccessControl                accesscontrol.AccessControl
 	DataProxy                    *datasourceproxy.DataSourceProxyService
 	PluginRequestValidator       validations.PluginRequestValidator
 	pluginClient                 plugins.Client
-	pluginStore                  plugins.Store
+	pluginStore                  pluginstore.Store
 	pluginInstaller              plugins.Installer
 	pluginFileStore              plugins.FileStore
 	pluginDashboardService       plugindashboards.Service
@@ -170,13 +170,12 @@ type HTTPServer struct {
 	queryDataService             query.Service
 	serviceAccountsService       serviceaccounts.Service
 	authInfoService              login.AuthInfoService
-	authenticator                loginpkg.Authenticator
 	teamPermissionsService       accesscontrol.TeamPermissionsService
 	NotificationService          *notifications.NotificationService
 	DashboardService             dashboards.DashboardService
 	dashboardProvisioningService dashboards.DashboardProvisioningService
 	folderService                folder.Service
-	DatasourcePermissionsService permissions.DatasourcePermissionsService
+	dsGuardian                   guardian.DatasourceGuardianProvider
 	AlertNotificationService     *alerting.AlertNotificationService
 	dashboardsnapshotsService    dashboardsnapshots.Service
 	PluginSettings               pluginSettings.Service
@@ -206,6 +205,7 @@ type HTTPServer struct {
 	statsService         stats.Service
 	authnService         authn.Service
 	starApi              *starApi.API
+	promRegister         prometheus.Registerer
 }
 
 type ServerOptions struct {
@@ -216,12 +216,12 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	renderService rendering.Service, licensing licensing.Licensing, hooksService *hooks.HooksService,
 	cacheService *localcache.CacheService, sqlStore *sqlstore.SQLStore, alertEngine *alerting.AlertEngine,
 	pluginRequestValidator validations.PluginRequestValidator, pluginStaticRouteResolver plugins.StaticRouteResolver,
-	pluginDashboardService plugindashboards.Service, pluginStore plugins.Store, pluginClient plugins.Client,
+	pluginDashboardService plugindashboards.Service, pluginStore pluginstore.Store, pluginClient plugins.Client,
 	pluginErrorResolver plugins.ErrorResolver, pluginInstaller plugins.Installer, settingsProvider setting.Provider,
 	dataSourceCache datasources.CacheService, userTokenService auth.UserTokenService,
-	cleanUpService *cleanup.CleanUpService, shortURLService shorturls.Service, queryHistoryService queryhistory.Service, correlationsService correlations.Service, remoteCache *remotecache.RemoteCache, provisioningService provisioning.ProvisioningService,
-	loginService login.Service, authenticator loginpkg.Authenticator, accessControl accesscontrol.AccessControl,
-	dataSourceProxy *datasourceproxy.DataSourceProxyService, searchService *search.SearchService,
+	cleanUpService *cleanup.CleanUpService, shortURLService shorturls.Service, queryHistoryService queryhistory.Service,
+	correlationsService correlations.Service, remoteCache *remotecache.RemoteCache, provisioningService provisioning.ProvisioningService,
+	accessControl accesscontrol.AccessControl, dataSourceProxy *datasourceproxy.DataSourceProxyService, searchService *search.SearchService,
 	live *live.GrafanaLive, livePushGateway *pushhttp.Gateway, plugCtxProvider *plugincontext.Provider,
 	contextHandler *contexthandler.ContextHandler, loggerMiddleware loggermw.Logger, features *featuremgmt.FeatureManager,
 	alertNG *ngalert.AlertNG, libraryPanelService librarypanels.Service, libraryElementService libraryelements.Service,
@@ -233,7 +233,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	authInfoService login.AuthInfoService, storageService store.StorageService, httpEntityStore httpentitystore.HTTPEntityStore,
 	notificationService *notifications.NotificationService, dashboardService dashboards.DashboardService,
 	dashboardProvisioningService dashboards.DashboardProvisioningService, folderService folder.Service,
-	datasourcePermissionsService permissions.DatasourcePermissionsService, alertNotificationService *alerting.AlertNotificationService,
+	dsGuardian guardian.DatasourceGuardianProvider, alertNotificationService *alerting.AlertNotificationService,
 	dashboardsnapshotsService dashboardsnapshots.Service, pluginSettings pluginSettings.Service,
 	avatarCacheServer *avatar.AvatarCacheServer, preferenceService pref.Service,
 	teamsPermissionsService accesscontrol.TeamPermissionsService, folderPermissionsService accesscontrol.FolderPermissionsService,
@@ -247,7 +247,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	accesscontrolService accesscontrol.Service, navTreeService navtree.Service,
 	annotationRepo annotations.Repository, tagService tag.Service, searchv2HTTPService searchV2.SearchHTTPService, oauthTokenService oauthtoken.OAuthTokenService,
 	statsService stats.Service, authnService authn.Service, pluginsCDNService *pluginscdn.Service,
-	starApi *starApi.API,
+	starApi *starApi.API, promRegister prometheus.Registerer,
 
 ) (*HTTPServer, error) {
 	web.Env = cfg.Env
@@ -284,7 +284,6 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		StorageService:               storageService,
 		RemoteCacheService:           remoteCache,
 		ProvisioningService:          provisioningService,
-		Login:                        loginService,
 		AccessControl:                accessControl,
 		DataProxy:                    dataSourceProxy,
 		SearchV2HTTPService:          searchv2HTTPService,
@@ -315,12 +314,11 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		queryDataService:             queryDataService,
 		serviceAccountsService:       serviceaccountsService,
 		authInfoService:              authInfoService,
-		authenticator:                authenticator,
 		NotificationService:          notificationService,
 		DashboardService:             dashboardService,
 		dashboardProvisioningService: dashboardProvisioningService,
 		folderService:                folderService,
-		DatasourcePermissionsService: datasourcePermissionsService,
+		dsGuardian:                   dsGuardian,
 		teamPermissionsService:       teamsPermissionsService,
 		AlertNotificationService:     alertNotificationService,
 		dashboardsnapshotsService:    dashboardsnapshotsService,
@@ -351,6 +349,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		authnService:                 authnService,
 		pluginsCDNService:            pluginsCDNService,
 		starApi:                      starApi,
+		promRegister:                 promRegister,
 	}
 	if hs.Listener != nil {
 		hs.log.Debug("Using provided listener")
@@ -573,8 +572,9 @@ func (hs *HTTPServer) applyRoutes() {
 func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 	m := hs.web
 
+	m.Use(requestmeta.SetupRequestMetadata())
 	m.Use(middleware.RequestTracing(hs.tracer))
-	m.Use(middleware.RequestMetrics(hs.Features))
+	m.Use(middleware.RequestMetrics(hs.Features, hs.Cfg, hs.promRegister))
 
 	m.UseMiddleware(hs.LoggerMiddleware.Middleware())
 
@@ -616,10 +616,6 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 
 	m.UseMiddleware(hs.ContextHandler.Middleware)
 	m.Use(middleware.OrgRedirect(hs.Cfg, hs.userService))
-
-	if !hs.Cfg.AuthBrokerEnabled {
-		m.Use(accesscontrol.LoadPermissionsMiddleware(hs.accesscontrolService))
-	}
 
 	// needs to be after context handler
 	if hs.Cfg.EnforceDomain {
@@ -683,6 +679,9 @@ func (hs *HTTPServer) apiHealthHandler(ctx *web.Context) {
 	if !hs.Cfg.AnonymousHideVersion {
 		data.Set("version", hs.Cfg.BuildVersion)
 		data.Set("commit", hs.Cfg.BuildCommit)
+		if hs.Cfg.EnterpriseBuildCommit != "NA" && hs.Cfg.EnterpriseBuildCommit != "" {
+			data.Set("enterpriseCommit", hs.Cfg.EnterpriseBuildCommit)
+		}
 	}
 
 	if !hs.databaseHealthy(ctx.Req.Context()) {

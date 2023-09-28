@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models/usertoken"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/authn/authntest"
@@ -194,6 +195,7 @@ func TestOAuthLogin_AuthorizationCode(t *testing.T) {
 func TestOAuthLogin_Error(t *testing.T) {
 	server := SetupAPITestServer(t, func(hs *HTTPServer) {
 		hs.Cfg = setting.NewCfg()
+		hs.log = log.NewNopLogger()
 		hs.SecretsService = fakes.NewFakeSecretsService()
 	})
 

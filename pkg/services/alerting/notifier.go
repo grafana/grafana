@@ -142,11 +142,11 @@ func (n *notificationService) sendAndMarkAsComplete(evalContext *EvalContext, no
 	metrics.MAlertingNotificationSent.WithLabelValues(notifier.GetType()).Inc()
 
 	if err := evalContext.evaluateNotificationTemplateFields(); err != nil {
-		n.log.Error("failed trying to evaluate notification template fields", "uid", notifier.GetNotifierUID(), "error", err)
+		n.log.Error("Failed trying to evaluate notification template fields", "uid", notifier.GetNotifierUID(), "error", err)
 	}
 
 	if err := notifier.Notify(evalContext); err != nil {
-		n.log.Error("failed to send notification", "uid", notifier.GetNotifierUID(), "error", err)
+		n.log.Error("Failed to send notification", "uid", notifier.GetNotifierUID(), "error", err)
 		metrics.MAlertingNotificationFailed.WithLabelValues(notifier.GetType()).Inc()
 		return err
 	}
@@ -192,7 +192,7 @@ func (n *notificationService) sendNotifications(evalContext *EvalContext, notifi
 	for _, notifierState := range notifierStates {
 		err := n.sendNotification(evalContext, notifierState)
 		if err != nil {
-			n.log.Error("failed to send notification", "uid", notifierState.notifier.GetNotifierUID(), "error", err)
+			n.log.Error("Failed to send notification", "uid", notifierState.notifier.GetNotifierUID(), "error", err)
 			if evalContext.IsTestRun {
 				return err
 			}

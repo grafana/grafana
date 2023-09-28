@@ -30,7 +30,7 @@ const (
 )
 
 // CreateDatabaseEntityId creates entityId for entities stored in the existing SQL tables
-func CreateDatabaseEntityId(internalId interface{}, orgId int64, entityType EntityType) string {
+func CreateDatabaseEntityId(internalId any, orgId int64, entityType EntityType) string {
 	var internalIdAsString string
 	switch id := internalId.(type) {
 	case string:
@@ -116,7 +116,7 @@ func (e *entityEventService) deleteEventsOlderThan(ctx context.Context, duration
 	return e.sql.WithDbSession(ctx, func(sess *db.Session) error {
 		maxCreated := time.Now().Add(-duration)
 		deletedCount, err := sess.Where("created < ?", maxCreated.Unix()).Delete(&EntityEvent{})
-		e.log.Info("deleting old events", "count", deletedCount, "maxCreated", maxCreated)
+		e.log.Info("Deleting old events", "count", deletedCount, "maxCreated", maxCreated)
 		return err
 	})
 }
@@ -134,7 +134,7 @@ func (e *entityEventService) Run(ctx context.Context) error {
 			go func() {
 				err := e.deleteEventsOlderThan(context.Background(), 24*time.Hour)
 				if err != nil {
-					e.log.Info("failed to delete old entity events", "error", err)
+					e.log.Info("Failed to delete old entity events", "error", err)
 				}
 			}()
 		case <-ctx.Done():

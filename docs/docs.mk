@@ -76,11 +76,11 @@ docs-rm: ## Remove the docs container.
 
 .PHONY: docs-pull
 docs-pull: ## Pull documentation base image.
-	$(PODMAN) pull $(DOCS_IMAGE)
+	$(PODMAN) pull -q $(DOCS_IMAGE)
 
 make-docs: ## Fetch the latest make-docs script.
 make-docs:
-	if [[ ! -f "$(PWD)/make-docs" ]]; then
+	if [[ ! -f "$(CURDIR)/make-docs" ]]; then
 		echo 'WARN: No make-docs script found in the working directory. Run `make update` to download it.' >&2
 		exit 1
 	fi
@@ -88,27 +88,27 @@ make-docs:
 .PHONY: docs
 docs: ## Serve documentation locally, which includes pulling the latest `DOCS_IMAGE` (default: `grafana/docs-base:latest`) container image. See also `docs-no-pull`.
 docs: docs-pull make-docs
-	$(PWD)/make-docs $(PROJECTS)
+	$(CURDIR)/make-docs $(PROJECTS)
 
 .PHONY: docs-no-pull
 docs-no-pull: ## Serve documentation locally without pulling the `DOCS_IMAGE` (default: `grafana/docs-base:latest`) container image.
 docs-no-pull: make-docs
-	$(PWD)/make-docs $(PROJECTS)
+	$(CURDIR)/make-docs $(PROJECTS)
 
 .PHONY: docs-debug
 docs-debug: ## Run Hugo web server with debugging enabled. TODO: support all SERVER_FLAGS defined in website Makefile.
 docs-debug: make-docs
-	WEBSITE_EXEC='hugo server --bind 0.0.0.0 --port 3002 --debug' $(PWD)/make-docs $(PROJECTS)
+	WEBSITE_EXEC='hugo server --bind 0.0.0.0 --port 3002 --debug' $(CURDIR)/make-docs $(PROJECTS)
 
 .PHONY: doc-validator
 doc-validator: ## Run doc-validator on the entire docs folder.
 doc-validator: make-docs
-	DOCS_IMAGE=$(DOC_VALIDATOR_IMAGE) $(PWD)/make-docs $(PROJECTS)
+	DOCS_IMAGE=$(DOC_VALIDATOR_IMAGE) $(CURDIR)/make-docs $(PROJECTS)
 
 .PHONY: vale
 vale: ## Run vale on the entire docs folder.
 vale: make-docs
-	DOCS_IMAGE=$(VALE_IMAGE) $(PWD)/make-docs $(PROJECTS)
+	DOCS_IMAGE=$(VALE_IMAGE) $(CURDIR)/make-docs $(PROJECTS)
 
 .PHONY: update
 update: ## Fetch the latest version of this Makefile and the `make-docs` script from Writers' Toolkit.

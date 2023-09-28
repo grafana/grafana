@@ -17,7 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/searchV2"
 	"github.com/grafana/grafana/pkg/services/store"
-	"github.com/grafana/grafana/pkg/tsdb/testdatasource"
+	testdatasource "github.com/grafana/grafana/pkg/tsdb/grafana-testdata-datasource"
 )
 
 // DatasourceName is the string constant used as the datasource name in requests
@@ -165,7 +165,11 @@ func (s *Service) doReadQuery(ctx context.Context, query backend.DataQuery) back
 func (s *Service) doRandomWalk(query backend.DataQuery) backend.DataResponse {
 	response := backend.DataResponse{}
 
-	model := testdatasource.JSONModel{}
+	model, err := testdatasource.GetJSONModel(json.RawMessage{})
+	if err != nil {
+		response.Error = err
+		return response
+	}
 	response.Frames = data.Frames{testdatasource.RandomWalk(query, model, 0)}
 
 	return response

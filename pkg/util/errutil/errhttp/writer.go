@@ -11,7 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
-var ErrNonGrafanaError = errutil.NewBase(errutil.StatusInternal, "core.MalformedError")
+var ErrNonGrafanaError = errutil.Internal("core.MalformedError")
 var defaultLogger = log.New("requestErrors")
 
 // ErrorOptions is a container for functional options passed to [Write].

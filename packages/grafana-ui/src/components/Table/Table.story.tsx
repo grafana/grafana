@@ -18,7 +18,6 @@ import { Button, Table } from '@grafana/ui';
 import { useTheme2 } from '../../themes';
 import { DashboardStoryCanvas } from '../../utils/storybook/DashboardStoryCanvas';
 import { prepDataForStorybook } from '../../utils/storybook/data';
-import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 
 import mdx from './Table.mdx';
 import { FooterItem, TableCellDisplayMode, TableCustomCellOptions } from './types';
@@ -26,7 +25,6 @@ import { FooterItem, TableCellDisplayMode, TableCustomCellOptions } from './type
 const meta: Meta<typeof Table> = {
   title: 'Visualizations/Table',
   component: Table,
-  decorators: [withCenteredStory],
   parameters: {
     controls: {
       exclude: ['onColumnResize', 'onSortByChange', 'onCellFilterAdded', 'ariaLabel', 'data', 'initialSortBy'],
@@ -42,7 +40,7 @@ const meta: Meta<typeof Table> = {
   },
 };
 
-function buildData(theme: GrafanaTheme2, config: Record<string, FieldConfig>): DataFrame {
+function buildData(theme: GrafanaTheme2, config: Record<string, FieldConfig>, rows = 1000): DataFrame {
   const data = new MutableDataFrame({
     fields: [
       { name: 'Time', type: FieldType.time, values: [] }, // The time field
@@ -87,7 +85,7 @@ function buildData(theme: GrafanaTheme2, config: Record<string, FieldConfig>): D
     field.config = merge(field.config, config[field.name]);
   }
 
-  for (let i = 0; i < 1000; i++) {
+  for (let i = 0; i < rows; i++) {
     data.appendRow([
       new Date().getTime(),
       Math.random() * 2,
@@ -100,59 +98,72 @@ function buildData(theme: GrafanaTheme2, config: Record<string, FieldConfig>): D
   return prepDataForStorybook([data], theme)[0];
 }
 
-function buildSubTablesData(theme: GrafanaTheme2, config: Record<string, FieldConfig>): DataFrame[] {
-  const frames: DataFrame[] = [];
+function buildSubTablesData(theme: GrafanaTheme2, config: Record<string, FieldConfig>, rows: number): DataFrame {
+  const data = buildData(theme, {}, rows);
+  const allNestedFrames: DataFrame[][] = [];
 
-  for (let i = 0; i < 1000; i++) {
-    const data = new MutableDataFrame({
-      meta: {
-        custom: {
-          parentRowIndex: i,
-        },
-      },
-      fields: [
-        { name: 'Time', type: FieldType.time, values: [] }, // The time field
-        {
-          name: 'Quantity',
-          type: FieldType.number,
-          values: [],
-          config: {
-            decimals: 0,
-            custom: {
-              align: 'center',
+  for (let i = 0; i < rows; i++) {
+    const nestedFrames: DataFrame[] = [];
+
+    for (let i = 0; i < Math.random() * 3; i++) {
+      const nestedData = new MutableDataFrame({
+        fields: [
+          { name: 'Time', type: FieldType.time, values: [] }, // The time field
+          {
+            name: 'Quantity',
+            type: FieldType.number,
+            values: [],
+            config: {
+              decimals: 0,
+              custom: {
+                align: 'center',
+              },
             },
           },
-        },
-        { name: 'Quality', type: FieldType.string, values: [] }, // The time field
-        {
-          name: 'Progress',
-          type: FieldType.number,
-          values: [],
-          config: {
-            unit: 'percent',
-            min: 0,
-            max: 100,
+          { name: 'Quality', type: FieldType.string, values: [] }, // The time field
+          {
+            name: 'Progress',
+            type: FieldType.number,
+            values: [],
+            config: {
+              unit: 'percent',
+              min: 0,
+              max: 100,
+            },
           },
-        },
-      ],
-    });
+        ],
+      });
 
-    for (const field of data.fields) {
-      field.config = merge(field.config, config[field.name]);
+      for (const field of nestedData.fields) {
+        field.config = merge(field.config, config[field.name]);
+      }
+
+      for (let i = 0; i < Math.random() * 4; i++) {
+        nestedData.appendRow([
+          new Date().getTime(),
+          Math.random() * 2,
+          Math.random() > 0.7 ? 'Good' : 'Bad',
+          Math.random() * 100,
+        ]);
+      }
+
+      nestedFrames.push(nestedData);
     }
 
-    for (let i = 0; i < Math.random() * 4 + 1; i++) {
-      data.appendRow([
-        new Date().getTime(),
-        Math.random() * 2,
-        Math.random() > 0.7 ? 'Good' : 'Bad',
-        Math.random() * 100,
-      ]);
-    }
-
-    frames.push(data);
+    allNestedFrames.push(prepDataForStorybook(nestedFrames, theme));
   }
-  return prepDataForStorybook(frames, theme);
+
+  data.fields = [
+    ...data.fields,
+    {
+      name: 'nested',
+      type: FieldType.nestedFrames,
+      values: allNestedFrames,
+      config: {},
+    },
+  ];
+
+  return data;
 }
 
 function buildFooterData(data: DataFrame): FooterItem[] {
@@ -257,19 +268,11 @@ Pagination.args = {
 
 export const SubTables: StoryFn<typeof Table> = (args) => {
   const theme = useTheme2();
-  const data = buildData(theme, {});
-  const subData = buildSubTablesData(theme, {
-    Progress: {
-      custom: {
-        displayMode: 'gradient-gauge',
-      },
-      thresholds: defaultThresholds,
-    },
-  });
+  const data = buildSubTablesData(theme, {}, 100);
 
   return (
     <DashboardStoryCanvas>
-      <Table {...args} data={data} subData={subData} />
+      <Table {...args} data={data} />
     </DashboardStoryCanvas>
   );
 };

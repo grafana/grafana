@@ -14,10 +14,25 @@ export const settingsViewable = (scene: Scene) => ({
       return;
     }
 
+    const openSettings = (x: number, y: number) => {
+      const container = moveable.getContainer();
+      const evt = new PointerEvent('contextmenu', { clientX: x, clientY: y });
+      container.dispatchEvent(evt);
+    };
+
+    const onClick = (event: React.MouseEvent) => {
+      openSettings(event.clientX, event.clientY);
+    };
+
+    const onKeyPress = (event: React.KeyboardEvent) => {
+      if (event.key === 'Enter') {
+        const rect = event.currentTarget.getBoundingClientRect();
+        openSettings(rect.x, rect.y);
+      }
+    };
+
     const rect = moveable.getRect();
     return (
-      // TODO: fix keyboard a11y
-      // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
       <div
         key={'settings-viewable'}
         className={'moveable-settings'}
@@ -33,11 +48,10 @@ export const settingsViewable = (scene: Scene) => ({
           transform: 'translate(-50%, 0px)',
           zIndex: 100,
         }}
-        onClick={(event) => {
-          const container = moveable.getContainer();
-          const evt = new PointerEvent('contextmenu', { clientX: event.clientX, clientY: event.clientY });
-          container.dispatchEvent(evt);
-        }}
+        onClick={onClick}
+        onKeyDown={onKeyPress}
+        role="button"
+        tabIndex={0}
       >
         {``}
         ⚙️

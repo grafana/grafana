@@ -47,12 +47,12 @@ async function sleep(duration) {
   });
 }
 
-async function lokiSendLogLine(timestampNs, line, tags) {
+async function lokiSendLogLine(timestampNs, line, tags, nonIndexed = {}) {
   const data = {
     streams: [
       {
         stream: tags,
-        values: [[timestampNs, line]],
+        values: [[timestampNs, line, nonIndexed]],
       },
     ],
   };
@@ -187,8 +187,8 @@ async function sendNewLogs() {
     const nowMs = new Date().getTime();
     const timestampNs = `${nowMs}${getRandomNanosecPart()}`;
     const item = getRandomLogItem(globalCounter)
-    await lokiSendLogLine(timestampNs, JSON.stringify(item), {age:'new', place:'moon', ...sharedLabels});
-    await lokiSendLogLine(timestampNs, logFmtLine(item), {age:'new', place:'luna', ...sharedLabels});
+    await lokiSendLogLine(timestampNs, JSON.stringify(item), {age:'new', place:'moon', ...sharedLabels}, {nonIndexed: 'value'});
+    await lokiSendLogLine(timestampNs, logFmtLine(item), {age:'new', place:'luna', ...sharedLabels}, {nonIndexed: 'value'});
     const sleepDuration  = 200 + Math.random() * 800; // between 0.2 and 1 seconds
     await sleep(sleepDuration);
   }

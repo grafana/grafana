@@ -21,6 +21,7 @@ import {
 export interface AzureSettings {
   cloud?: string;
   managedIdentityEnabled: boolean;
+  workloadIdentityEnabled: boolean;
   userIdentityEnabled: boolean;
 }
 
@@ -33,7 +34,7 @@ export type AppPluginConfig = {
 };
 
 export class GrafanaBootConfig implements GrafanaConfig {
-  isPublicDashboardView: boolean;
+  publicDashboardAccessToken?: string;
   snapshotEnabled = true;
   datasources: { [str: string]: DataSourceInstanceSettings } = {};
   panels: { [key: string]: PanelPluginMeta } = {};
@@ -124,6 +125,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
   awsAssumeRoleEnabled = false;
   azure: AzureSettings = {
     managedIdentityEnabled: false,
+    workloadIdentityEnabled: false,
     userIdentityEnabled: false,
   };
   caching = {
@@ -166,7 +168,6 @@ export class GrafanaBootConfig implements GrafanaConfig {
 
   constructor(options: GrafanaBootConfig) {
     this.bootData = options.bootData;
-    this.isPublicDashboardView = options.bootData.settings.isPublicDashboardView;
 
     const defaults = {
       datasources: {},

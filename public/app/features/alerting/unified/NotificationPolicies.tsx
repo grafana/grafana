@@ -17,11 +17,7 @@ import { useGetContactPointsState } from './api/receiversApi';
 import { AlertmanagerPageWrapper } from './components/AlertingPageWrapper';
 import { GrafanaAlertmanagerDeliveryWarning } from './components/GrafanaAlertmanagerDeliveryWarning';
 import { MuteTimingsTable } from './components/mute-timings/MuteTimingsTable';
-import {
-  computeInheritedTree,
-  findRoutesMatchingPredicate,
-  NotificationPoliciesFilter,
-} from './components/notification-policies/Filters';
+import { findRoutesMatchingPredicate, NotificationPoliciesFilter } from './components/notification-policies/Filters';
 import {
   useAddPolicyModal,
   useEditPolicyModal,
@@ -35,8 +31,8 @@ import { updateAlertManagerConfigAction } from './state/actions';
 import { FormAmRoute } from './types/amroutes';
 import { useRouteGroupsMatcher } from './useRouteGroupsMatcher';
 import { addUniqueIdentifierToRoute } from './utils/amroutes';
-import { isVanillaPrometheusAlertManagerDataSource } from './utils/datasource';
 import { normalizeMatchers } from './utils/matchers';
+import { computeInheritedTree } from './utils/notification-policies';
 import { initialAsyncRequestState } from './utils/redux';
 import { addRouteToParentRoute, mergePartialAmRouteWithRouteTree, omitRouteFromRouteTree } from './utils/routeTree';
 
@@ -60,7 +56,7 @@ const AmRoutes = () => {
   const [labelMatchersFilter, setLabelMatchersFilter] = useState<ObjectMatcher[]>([]);
 
   const { getRouteGroupsMap } = useRouteGroupsMatcher();
-  const { selectedAlertmanager } = useAlertmanager();
+  const { selectedAlertmanager, hasConfigurationAPI } = useAlertmanager();
 
   const contactPointsState = useGetContactPointsState(selectedAlertmanager ?? '');
 
@@ -156,7 +152,6 @@ const AmRoutes = () => {
         oldConfig: result,
         alertManagerSourceName: selectedAlertmanager!,
         successMessage: 'Updated notification policies',
-        refetch: true,
       })
     )
       .unwrap()
@@ -189,10 +184,6 @@ const AmRoutes = () => {
   if (!selectedAlertmanager) {
     return null;
   }
-
-  const vanillaPrometheusAlertManager = isVanillaPrometheusAlertManagerDataSource(selectedAlertmanager);
-  const readOnlyPolicies = vanillaPrometheusAlertManager;
-  const readOnlyMuteTimings = vanillaPrometheusAlertManager;
 
   const numberOfMuteTimings = result?.alertmanager_config.mute_time_intervals?.length ?? 0;
   const haveData = result && !resultError && !resultLoading;
@@ -250,7 +241,7 @@ const AmRoutes = () => {
                       currentRoute={rootRoute}
                       alertGroups={alertGroups ?? []}
                       contactPointsState={contactPointsState.receivers}
-                      readOnly={readOnlyPolicies}
+                      readOnly={!hasConfigurationAPI}
                       provisioned={isProvisioned}
                       alertManagerSourceName={selectedAlertmanager}
                       onAddPolicy={openAddModal}
@@ -269,7 +260,7 @@ const AmRoutes = () => {
               </>
             )}
             {muteTimingsTabActive && (
-              <MuteTimingsTable alertManagerSourceName={selectedAlertmanager} hideActions={readOnlyMuteTimings} />
+              <MuteTimingsTable alertManagerSourceName={selectedAlertmanager} hideActions={!hasConfigurationAPI} />
             )}
           </>
         )}

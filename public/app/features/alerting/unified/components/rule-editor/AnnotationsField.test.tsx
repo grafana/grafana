@@ -1,4 +1,4 @@
-import { findByRole, findByText, findByTitle, getByTestId, render } from '@testing-library/react';
+import { findByRole, findByText, findByTitle, getByTestId, queryByText, render } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { rest } from 'msw';
 import { setupServer } from 'msw/node';
@@ -21,7 +21,7 @@ import { getDefaultFormValues } from '../../utils/rule-form';
 
 import 'whatwg-fetch';
 
-import AnnotationsField from './AnnotationsField';
+import AnnotationsStep from './AnnotationsStep';
 
 // To get anything displayed inside the Autosize component we need to mock it
 // Ref https://github.com/bvaughn/react-window/issues/454#issuecomment-646031139
@@ -65,7 +65,7 @@ function FormWrapper({ formValues }: { formValues?: Partial<RuleFormValues> }) {
   return (
     <TestProvider store={store}>
       <FormProvider {...formApi}>
-        <AnnotationsField />
+        <AnnotationsStep />
       </FormProvider>
     </TestProvider>
   );
@@ -161,6 +161,71 @@ describe('AnnotationsField', function () {
       expect(annotationValueElements).toHaveLength(2);
       expect(annotationValueElements[0]).toHaveTextContent('dash-test-uid');
       expect(annotationValueElements[1]).toHaveTextContent('2');
+    });
+
+    it('should not show rows as panels', async function () {
+      mockSearchApiResponse(server, [
+        mockDashboardSearchItem({ title: 'My dashboard', uid: 'dash-test-uid', type: DashboardSearchItemType.DashDB }),
+      ]);
+
+      mockGetDashboardResponse(
+        mockDashboardDto({
+          title: 'My dashboard',
+          uid: 'dash-test-uid',
+          panels: [
+            { id: 1, title: 'Row panel', type: 'row' },
+            { id: 2, title: 'First panel', type: 'timeseries' },
+          ],
+        })
+      );
+
+      const user = userEvent.setup();
+
+      render(<FormWrapper />);
+
+      await user.click(ui.setDashboardButton.get());
+      expect(ui.dashboardPicker.confirmButton.get()).toBeDisabled();
+
+      await user.click(await findByTitle(ui.dashboardPicker.dialog.get(), 'My dashboard'));
+
+      expect(await findByText(ui.dashboardPicker.dialog.get(), 'First panel')).toBeInTheDocument();
+      expect(await queryByText(ui.dashboardPicker.dialog.get(), 'Row panel')).not.toBeInTheDocument();
+    });
+
+    it('should show panels within collapsed rows', async function () {
+      mockSearchApiResponse(server, [
+        mockDashboardSearchItem({ title: 'My dashboard', uid: 'dash-test-uid', type: DashboardSearchItemType.DashDB }),
+      ]);
+
+      mockGetDashboardResponse(
+        mockDashboardDto({
+          title: 'My dashboard',
+          uid: 'dash-test-uid',
+          panels: [
+            { id: 1, title: 'First panel', type: 'timeseries' },
+            {
+              id: 2,
+              title: 'Row panel',
+              collapsed: true,
+              type: 'row',
+              panels: [{ id: 3, title: 'Panel within collapsed row', type: 'timeseries' }],
+            },
+          ],
+        })
+      );
+
+      const user = userEvent.setup();
+
+      render(<FormWrapper />);
+
+      await user.click(ui.setDashboardButton.get());
+      expect(ui.dashboardPicker.confirmButton.get()).toBeDisabled();
+
+      await user.click(await findByTitle(ui.dashboardPicker.dialog.get(), 'My dashboard'));
+
+      expect(await findByText(ui.dashboardPicker.dialog.get(), 'First panel')).toBeInTheDocument();
+      expect(await queryByText(ui.dashboardPicker.dialog.get(), 'Row panel')).not.toBeInTheDocument();
+      expect(await findByText(ui.dashboardPicker.dialog.get(), 'Panel within collapsed row')).toBeInTheDocument();
     });
 
     // this test _should_ work in theory but something is stopping the 'onClick' function on the dashboard item

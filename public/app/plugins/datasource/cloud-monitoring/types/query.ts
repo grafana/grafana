@@ -13,6 +13,7 @@ export {
   AlignmentTypes,
   ValueTypes,
   MetricFindQueryTypes,
+  PromQLQuery,
 } from '../dataquery.gen';
 
 /**

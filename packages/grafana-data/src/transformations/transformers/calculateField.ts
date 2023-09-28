@@ -31,6 +31,10 @@ export interface BinaryOptions {
   right: string;
 }
 
+export interface IndexOptions {
+  asPercentile: boolean;
+}
+
 const defaultReduceOptions: ReduceOptions = {
   reducer: ReducerID.sum,
 };
@@ -49,6 +53,7 @@ export interface CalculateFieldTransformerOptions {
   // Only one should be filled
   reduce?: ReduceOptions;
   binary?: BinaryOptions;
+  index?: IndexOptions;
 
   // Remove other fields
   replaceFields?: boolean;
@@ -58,7 +63,7 @@ export interface CalculateFieldTransformerOptions {
   // TODO: config?: FieldConfig; or maybe field overrides? since the UI exists
 }
 
-type ValuesCreator = (data: DataFrame) => any[];
+type ValuesCreator = (data: DataFrame) => unknown[] | undefined;
 
 export const calculateFieldTransformer: DataTransformerInfo<CalculateFieldTransformerOptions> = {
   id: DataTransformerID.calculateField,
@@ -98,11 +103,19 @@ export const calculateFieldTransformer: DataTransformerInfo<CalculateFieldTransf
           creator = getBinaryCreator(defaults(binaryOptions, defaultBinaryOptions), data);
         } else if (mode === CalculateFieldMode.Index) {
           return data.map((frame) => {
+            const indexArr = [...Array(frame.length).keys()];
+
+            if (options.index?.asPercentile) {
+              for (let i = 0; i < indexArr.length; i++) {
+                indexArr[i] = indexArr[i] / indexArr.length;
+              }
+            }
+
             const f = {
               name: options.alias ?? 'Row',
               type: FieldType.number,
-              values: [...Array(frame.length).keys()],
-              config: {},
+              values: indexArr,
+              config: options.index?.asPercentile ? { unit: 'percentunit' } : {},
             };
             return {
               ...frame,
@@ -178,7 +191,7 @@ function getReduceRowCreator(options: ReduceOptions, allFrames: DataFrame[]): Va
 
   return (frame: DataFrame) => {
     // Find the columns that should be examined
-    const columns: any[] = [];
+    const columns = [];
     for (const field of frame.fields) {
       if (matcher(field, frame, allFrames)) {
         columns.push(field.values);
@@ -239,7 +252,7 @@ function getBinaryCreator(options: BinaryOptions, allFrames: DataFrame[]): Value
     const left = findFieldValuesWithNameOrConstant(frame, options.left, allFrames);
     const right = findFieldValuesWithNameOrConstant(frame, options.right, allFrames);
     if (!left || !right || !operator) {
-      return undefined as unknown as any[];
+      return undefined;
     }
 
     const arr = new Array(left.length);

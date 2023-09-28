@@ -11,7 +11,6 @@ import (
 
 	"github.com/grafana/grafana-azure-sdk-go/azsettings"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana/pkg/plugins/manager/loader/angular/angularinspector"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -19,27 +18,14 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin/provider"
 	pluginClient "github.com/grafana/grafana/pkg/plugins/manager/client"
 	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
-	"github.com/grafana/grafana/pkg/plugins/manager/loader"
-	"github.com/grafana/grafana/pkg/plugins/manager/loader/assetpath"
-	"github.com/grafana/grafana/pkg/plugins/manager/loader/finder"
-	"github.com/grafana/grafana/pkg/plugins/manager/process"
-	"github.com/grafana/grafana/pkg/plugins/manager/registry"
-	"github.com/grafana/grafana/pkg/plugins/manager/signature"
-	"github.com/grafana/grafana/pkg/plugins/manager/signature/statickey"
-	"github.com/grafana/grafana/pkg/plugins/manager/sources"
-	"github.com/grafana/grafana/pkg/plugins/manager/store"
-	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/caching"
 	datasources "github.com/grafana/grafana/pkg/services/datasources/fakes"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/oauthtoken/oauthtokentest"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/config"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/pipeline"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	pluginSettings "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings/service"
@@ -48,7 +34,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch"
-	"github.com/grafana/grafana/pkg/tsdb/testdatasource"
+	testdatasource "github.com/grafana/grafana/pkg/tsdb/grafana-testdata-datasource"
 	"github.com/grafana/grafana/pkg/web/webtest"
 )
 
@@ -57,50 +43,31 @@ func TestCallResource(t *testing.T) {
 	require.NoError(t, err)
 
 	cfg := setting.NewCfg()
-
 	cfg.StaticRootPath = staticRootPath
 	cfg.IsFeatureToggleEnabled = func(_ string) bool {
 		return false
 	}
 	cfg.Azure = &azsettings.AzureSettings{}
 
-	coreRegistry := coreplugin.ProvideCoreRegistry(nil, &cloudwatch.CloudWatchService{}, nil, nil, nil, nil,
+	coreRegistry := coreplugin.ProvideCoreRegistry(tracing.InitializeTracerForTest(), nil, &cloudwatch.CloudWatchService{}, nil, nil, nil, nil,
 		nil, nil, nil, nil, testdatasource.ProvideService(), nil, nil, nil, nil, nil, nil)
-	pCfg, err := config.ProvideConfig(setting.ProvideProvider(cfg), cfg, featuremgmt.WithFeatures())
-	require.NoError(t, err)
-	reg := registry.ProvideService()
-	angularInspector, err := angularinspector.NewStaticInspector()
-	require.NoError(t, err)
-	proc := process.NewManager(reg)
 
-	discovery := pipeline.ProvideDiscoveryStage(pCfg, finder.NewLocalFinder(pCfg.DevMode), reg)
-	bootstrap := pipeline.ProvideBootstrapStage(pCfg, signature.ProvideService(pCfg, statickey.New()), assetpath.ProvideService(pluginscdn.ProvideService(pCfg)))
-	initialize := pipeline.ProvideInitializationStage(pCfg, reg, fakes.NewFakeLicensingService(), provider.ProvideService(coreRegistry), proc, &fakes.FakeOauthService{}, fakes.NewFakeRoleRegistry())
-	terminate, err := pipeline.ProvideTerminationStage(pCfg, reg, proc)
-	require.NoError(t, err)
+	textCtx := pluginsintegration.CreateIntegrationTestCtx(t, cfg, coreRegistry)
 
-	l := loader.ProvideService(pCfg, signature.NewUnsignedAuthorizer(pCfg),
-		reg, fakes.NewFakeRoleRegistry(),
-		assetpath.ProvideService(pluginscdn.ProvideService(pCfg)),
-		angularInspector, &fakes.FakeOauthService{}, discovery, bootstrap, initialize, terminate)
-	srcs := sources.ProvideService(cfg, pCfg)
-	ps, err := store.ProvideService(reg, srcs, l)
-	require.NoError(t, err)
-
-	pcp := plugincontext.ProvideService(localcache.ProvideService(), ps, &datasources.FakeDataSourceService{},
-		pluginSettings.ProvideService(db.InitTestDB(t), fakeSecrets.NewFakeSecretsService()))
+	pcp := plugincontext.ProvideService(cfg, localcache.ProvideService(), textCtx.PluginStore, &datasources.FakeDataSourceService{},
+		pluginSettings.ProvideService(db.InitTestDB(t), fakeSecrets.NewFakeSecretsService()), nil, nil)
 
 	srv := SetupAPITestServer(t, func(hs *HTTPServer) {
 		hs.Cfg = cfg
 		hs.pluginContextProvider = pcp
 		hs.QuotaService = quotatest.New(false, nil)
-		hs.pluginStore = ps
-		hs.pluginClient = pluginClient.ProvideService(reg, pCfg)
+		hs.pluginStore = textCtx.PluginStore
+		hs.pluginClient = textCtx.PluginClient
 		hs.log = log.New("test")
 	})
 
 	t.Run("Test successful response is received for valid request", func(t *testing.T) {
-		req := srv.NewPostRequest("/api/plugins/testdata/resources/test", strings.NewReader("{ \"test\": true }"))
+		req := srv.NewPostRequest("/api/plugins/grafana-testdata-datasource/resources/test", strings.NewReader("{ \"test\": true }"))
 		webtest.RequestWithSignedInUser(req, &user.SignedInUser{UserID: 1, OrgID: 1, Permissions: map[int64]map[string][]string{
 			1: accesscontrol.GroupScopesByAction([]accesscontrol.Permission{
 				{Action: pluginaccesscontrol.ActionAppAccess, Scope: pluginaccesscontrol.ScopeProvider.GetResourceAllScope()},
@@ -112,7 +79,7 @@ func TestCallResource(t *testing.T) {
 		b, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
 
-		var body = make(map[string]interface{})
+		var body = make(map[string]any)
 		err = json.Unmarshal(b, &body)
 		require.NoError(t, err)
 
@@ -133,13 +100,13 @@ func TestCallResource(t *testing.T) {
 		hs.Cfg = cfg
 		hs.pluginContextProvider = pcp
 		hs.QuotaService = quotatest.New(false, nil)
-		hs.pluginStore = ps
+		hs.pluginStore = textCtx.PluginStore
 		hs.pluginClient = pc
 		hs.log = log.New("test")
 	})
 
 	t.Run("Test error is properly propagated to API response", func(t *testing.T) {
-		req := srv.NewGetRequest("/api/plugins/testdata/resources/scenarios")
+		req := srv.NewGetRequest("/api/plugins/grafana-testdata-datasource/resources/scenarios")
 		webtest.RequestWithSignedInUser(req, &user.SignedInUser{UserID: 1, OrgID: 1, Permissions: map[int64]map[string][]string{
 			1: accesscontrol.GroupScopesByAction([]accesscontrol.Permission{
 				{Action: pluginaccesscontrol.ActionAppAccess, Scope: pluginaccesscontrol.ScopeProvider.GetResourceAllScope()},

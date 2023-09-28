@@ -5,6 +5,9 @@ import (
 	"fmt"
 	"strings"
 	"time"
+
+	"github.com/grafana/grafana/pkg/services/auth/identity"
+	"github.com/grafana/grafana/pkg/services/search/model"
 )
 
 type HelpFlags1 uint64
@@ -104,12 +107,13 @@ type SetUsingOrgCommand struct {
 }
 
 type SearchUsersQuery struct {
-	SignedInUser *SignedInUser
+	SignedInUser identity.Requester
 	OrgID        int64 `xorm:"org_id"`
 	Query        string
 	Page         int
 	Limit        int
 	AuthModule   string
+	SortOpts     []model.SortOption
 	Filters      []Filter
 
 	IsDisabled *bool
@@ -254,12 +258,12 @@ type Filter interface {
 
 type WhereCondition struct {
 	Condition string
-	Params    interface{}
+	Params    any
 }
 
 type InCondition struct {
 	Condition string
-	Params    interface{}
+	Params    any
 }
 
 type JoinCondition struct {

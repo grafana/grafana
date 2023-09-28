@@ -5,7 +5,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
-	"github.com/grafana/grafana/pkg/services/user"
 )
 
 var _ accesscontrol.Service = new(FakeService)
@@ -13,15 +12,14 @@ var _ accesscontrol.RoleRegistry = new(FakeService)
 
 type FakeService struct {
 	ExpectedErr                     error
-	ExpectedDisabled                bool
 	ExpectedCachedPermissions       bool
 	ExpectedPermissions             []accesscontrol.Permission
 	ExpectedFilteredUserPermissions []accesscontrol.Permission
 	ExpectedUsersPermissions        map[int64][]accesscontrol.Permission
 }
 
-func (f FakeService) GetUsageStats(ctx context.Context) map[string]interface{} {
-	return map[string]interface{}{}
+func (f FakeService) GetUsageStats(ctx context.Context) map[string]any {
+	return map[string]any{}
 }
 
 func (f FakeService) GetUserPermissions(ctx context.Context, user identity.Requester, options accesscontrol.Options) ([]accesscontrol.Permission, error) {
@@ -50,10 +48,6 @@ func (f FakeService) RegisterFixedRoles(ctx context.Context) error {
 	return f.ExpectedErr
 }
 
-func (f FakeService) IsDisabled() bool {
-	return f.ExpectedDisabled
-}
-
 func (f FakeService) SaveExternalServiceRole(ctx context.Context, cmd accesscontrol.SaveExternalServiceRoleCommand) error {
 	return f.ExpectedErr
 }
@@ -66,7 +60,6 @@ var _ accesscontrol.AccessControl = new(FakeAccessControl)
 
 type FakeAccessControl struct {
 	ExpectedErr      error
-	ExpectedDisabled bool
 	ExpectedEvaluate bool
 }
 
@@ -75,10 +68,6 @@ func (f FakeAccessControl) Evaluate(ctx context.Context, user identity.Requester
 }
 
 func (f FakeAccessControl) RegisterScopeAttributeResolver(prefix string, resolver accesscontrol.ScopeAttributeResolver) {
-}
-
-func (f FakeAccessControl) IsDisabled() bool {
-	return f.ExpectedDisabled
 }
 
 type FakeStore struct {
@@ -121,7 +110,7 @@ type FakePermissionsService struct {
 	ExpectedMappedAction string
 }
 
-func (f *FakePermissionsService) GetPermissions(ctx context.Context, user *user.SignedInUser, resourceID string) ([]accesscontrol.ResourcePermission, error) {
+func (f *FakePermissionsService) GetPermissions(ctx context.Context, user identity.Requester, resourceID string) ([]accesscontrol.ResourcePermission, error) {
 	return f.ExpectedPermissions, f.ExpectedErr
 }
 
