@@ -20,6 +20,10 @@ type Playlist struct {
 	Name     string `json:"name" db:"name"`
 	Interval string `json:"interval" db:"interval"`
 	OrgId    int64  `json:"-" db:"org_id"`
+
+	// Added for kubernetes migration + synchronization
+	CreatedAt       int64  `json:"createdAt" db:"createdAt"`
+	ResourceVersion string `json:"resourceVersion" db:"resourceVersion"`
 }
 
 type PlaylistDTO = playlist.Spec

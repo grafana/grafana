@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/playlist"
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
 	"github.com/grafana/grafana/pkg/services/star"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 type sqlxStore struct {
@@ -186,7 +187,7 @@ func (s *sqlxStore) GetItems(ctx context.Context, query *playlist.GetPlaylistIte
 
 func newGenerateAndValidateNewPlaylistUid(ctx context.Context, sess *session.SessionDB, orgId int64) (string, error) {
 	for i := 0; i < 3; i++ {
-		uid := generateNewUid()
+		uid := util.GenerateShortUID()
 		p := playlist.Playlist{OrgId: orgId, UID: uid}
 		err := sess.Get(ctx, &p, "SELECT * FROM playlist WHERE uid=? AND org_id=?", uid, orgId)
 		if err != nil {
