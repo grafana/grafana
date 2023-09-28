@@ -6,12 +6,12 @@ import { FlattenService } from '../../Inventory.types';
 import { ServicesCluster } from './Clusters.type';
 
 export const getClustersFromServices = (services: FlattenService[]): ServicesCluster[] => {
-  const clusterNames = [...new Set(services.map((s) => s.cluster || s.serviceName))];
+  const clusterNames = [...new Set(services.map((s) => s.cluster || ''))];
   return clusterNames.map<ServicesCluster>((clusterName) => {
     const clusterServices = services.filter((s) => s.cluster === clusterName);
 
     return {
-      name: clusterName,
+      name: clusterName || 'Non-clustered services',
       type: clusterServices[0]?.type as Databases,
       services: clusterServices,
     };
