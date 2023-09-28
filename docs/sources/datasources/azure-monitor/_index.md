@@ -159,9 +159,9 @@ For details on Azure managed identities, refer to the [Azure documentation](http
 
    This hides the directory ID, application ID, and client secret fields, and the data source uses managed identity to authenticate to Azure Monitor Metrics and Logs, and Azure Resource Graph.
 
-   {{< figure src="/media/docs/grafana/data-sources/screenshot-managed-identity-2.png" max-width="800px" class="docs-image--no-shadow" caption="Azure Monitor Metrics screenshot showing Dimensions" >}}
+   {{< figure src="/media/docs/grafana/data-sources/screenshot-managed-identity-2.png" max-width="800px" class="docs-image--no-shadow" caption="Azure Monitor screenshot showing Managed Identity authentication" >}}
 
-3. The `managed_identity_client_id` field can be set in the `[azure]` section of the [Grafana server configuration][configure-grafana-azure] to allow a user-assigned managed identity to be used instead of the default system-assigned identity.
+3. You can set the `managed_identity_client_id` field in the `[azure]` section of the [Grafana server configuration][configure-grafana-azure] to allow a user-assigned managed identity to be used instead of the default system-assigned identity.
 
   ```ini
   [azure]
@@ -173,7 +173,7 @@ For details on Azure managed identities, refer to the [Azure documentation](http
 
 You can use workload identity to configure Azure Monitor in Grafana if you host Grafana in a Kubernetes environment, such as AKS, in conjunction with managed identities.
 This lets you securely authenticate data sources without manually configuring credentials via Azure AD App Registrations.
-For details on workload identity, refer to the [documentation](https://azure.github.io/azure-workload-identity/docs/).
+For details on workload identity, refer to the [Azure workload identity documentation](https://azure.github.io/azure-workload-identity/docs/).
 
 **To enable workload identity for Grafana:**
 
@@ -186,9 +186,9 @@ For details on workload identity, refer to the [documentation](https://azure.git
 
 2. In the Azure Monitor data source configuration, set **Authentication** to **Workload Identity**.
 
-   This hides the directory ID, application ID, and client secret fields, and the data source uses managed identity to authenticate to Azure Monitor Metrics and Logs, and Azure Resource Graph.
+   This hides the directory ID, application ID, and client secret fields, and the data source uses workload identity to authenticate to Azure Monitor Metrics and Logs, and Azure Resource Graph.
 
-   {{< figure src="/media/docs/grafana/data-sources/screenshot-workload-identity.png" max-width="800px" class="docs-image--no-shadow" caption="Azure Monitor Metrics screenshot showing Dimensions" >}}
+   {{< figure src="/media/docs/grafana/data-sources/screenshot-workload-identity.png" max-width="800px" class="docs-image--no-shadow" caption="Azure Monitor screenshot showing Workload Identity authentication" >}}
 
 3. There are additional configuration variables that can control the authentication method.`workload_identity_tenant_id` represents the Azure AD tenant that contains the managed identity, `workload_identity_client_id` represents the client ID of the managed identity if it differs from the default client ID, `workload_identity_token_file` represents the path to the token file. Refer to the [documentation](https://azure.github.io/azure-workload-identity/docs/) for more information on what values these variables should use, if any.
 
