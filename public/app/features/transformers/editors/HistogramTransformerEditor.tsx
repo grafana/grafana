@@ -14,7 +14,7 @@ import {
 import { InlineField, InlineFieldRow, InlineSwitch } from '@grafana/ui';
 import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
 
-import { getHelperContent } from '../docs/getTransformationContent';
+import { getTransformationContent } from '../docs/getTransformationContent';
 
 export const HistogramTransformerEditor = ({
   input,
@@ -90,5 +90,5 @@ export const histogramTransformRegistryItem: TransformerRegistryItem<HistogramTr
   name: standardTransformers.histogramTransformer.name,
   description: standardTransformers.histogramTransformer.description,
   categories: new Set([TransformerCategory.CreateNewVisualization]),
-  help: getHelperContent(DataTransformerID.histogram),
+  help: getTransformationContent(DataTransformerID.histogram).helperDocs,
 };

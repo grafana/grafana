@@ -10,7 +10,7 @@ import {
 import { LimitTransformerOptions } from '@grafana/data/src/transformations/transformers/limit';
 import { InlineField, InlineFieldRow, Input } from '@grafana/ui';
 
-import { getHelperContent } from '../docs/getTransformationContent';
+import { getTransformationContent } from '../docs/getTransformationContent';
 
 export const LimitTransformerEditor = ({ options, onChange }: TransformerUIProps<LimitTransformerOptions>) => {
   const onSetLimit = useCallback(
@@ -44,8 +44,8 @@ export const limitTransformRegistryItem: TransformerRegistryItem<LimitTransforme
   id: DataTransformerID.limit,
   editor: LimitTransformerEditor,
   transformation: standardTransformers.limitTransformer,
-  name: 'Limit',
+  name: standardTransformers.limitTransformer.name,
   description: `Limit the number of items displayed.`,
   categories: new Set([TransformerCategory.Filter]),
-  help: getHelperContent(DataTransformerID.limit),
+  help: getTransformationContent(DataTransformerID.limit).helperDocs,
 };

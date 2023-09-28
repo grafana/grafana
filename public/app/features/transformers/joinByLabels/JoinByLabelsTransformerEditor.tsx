@@ -9,7 +9,7 @@ import {
 } from '@grafana/data';
 import { Alert, HorizontalGroup, InlineField, InlineFieldRow, Select, ValuePicker } from '@grafana/ui';
 
-import { getHelperContent } from '../docs/getTransformationContent';
+import { getTransformationContent } from '../docs/getTransformationContent';
 import { getDistinctLabels } from '../utils';
 
 import { joinByLabelsTransformer, JoinByLabelsTransformOptions } from './joinByLabels';
@@ -164,5 +164,5 @@ export const joinByLabelsTransformRegistryItem: TransformerRegistryItem<JoinByLa
   description: joinByLabelsTransformer.description,
   state: PluginState.beta,
   categories: new Set([TransformerCategory.Combine]),
-  help: getHelperContent(joinByLabelsTransformer.id),
+  help: getTransformationContent(joinByLabelsTransformer.id).helperDocs,
 };
