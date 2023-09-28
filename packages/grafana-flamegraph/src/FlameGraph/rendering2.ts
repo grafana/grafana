@@ -1,8 +1,8 @@
 import uFuzzy from '@leeoniya/ufuzzy';
 import { RefObject, useEffect, useMemo, useState } from 'react';
+import color from 'tinycolor2';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { colors } from '@grafana/ui';
 
 import {
   BAR_BORDER_WIDTH,
@@ -202,7 +202,7 @@ function getFillStyle(
   collapsed: boolean,
   topLevel: number
 ) {
-  const color =
+  const barColor =
     item.valueRight !== undefined &&
     (colorScheme === ColorSchemeDiff.Default || colorScheme === ColorSchemeDiff.DiffColorBlind)
       ? getBarColorByDiff(item.value, item.valueRight!, totalTicks, totalTicksRight!, colorScheme)
@@ -210,18 +210,23 @@ function getFillStyle(
       ? getBarColorByValue(item.value, totalTicks, rangeMin, rangeMax)
       : getBarColorByPackage(label, theme);
 
+  const barMutedColor = color(theme.colors.background.secondary);
+  const barMutedColorHex = theme.isLight
+    ? barMutedColor.darken(10).toHexString()
+    : barMutedColor.lighten(10).toHexString();
+
   if (foundNames) {
     // Means we are searching, we use color for matches and gray the rest
-    return foundNames.has(label) ? color.toHslString() : colors[55];
+    return foundNames.has(label) ? barColor.toHslString() : barMutedColorHex;
   }
 
   // No search
   if (collapsed) {
     // Collapsed are always grayed
-    return colors[55];
+    return barMutedColorHex;
   } else {
     // Mute if we are above the focused symbol
-    return item.level > topLevel - 1 ? color.toHslString() : color.lighten(15).toHslString();
+    return item.level > topLevel - 1 ? barColor.toHslString() : barColor.lighten(15).toHslString();
   }
 }
 
