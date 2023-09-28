@@ -1158,6 +1158,32 @@ The client ID to use for user-assigned managed identity.
 
 Should be set for user-assigned identity and should be empty for system-assigned identity.
 
+### workload_identity_enabled
+
+Specifies whether Azure AD Workload Identity authentication should be enabled in datasources that support it.
+
+For more documentation on Azure AD Workload Identity, review [Azure AD Workload Identity](https://azure.github.io/azure-workload-identity/docs/) documentation.
+
+Disabled by default, needs to be explicitly enabled.
+
+### workload_identity_tenant_id
+
+Tenant ID of the Azure AD Workload Identity.
+
+Allows to override default tenant ID of the Azure AD identity associated with the Kubernetes service account.
+
+### workload_identity_client_id
+
+Client ID of the Azure AD Workload Identity.
+
+Allows to override default client ID of the Azure AD identity associated with the Kubernetes service account.
+
+### workload_identity_token_file
+
+Custom path to token file for the Azure AD Workload Identity.
+
+Allows to set a custom path to the projected service account token file.
+
 ### user_identity_enabled
 
 Specifies whether user identity authentication (on behalf of currently signed-in user) should be enabled in datasources that support it (requires AAD authentication).
