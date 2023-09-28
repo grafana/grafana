@@ -36,7 +36,7 @@ const teamsSlice = createSlice({
       return { ...state, page: action.payload };
     },
     sortChanged: (state, action: PayloadAction<TeamsState['sort']>): TeamsState => {
-      return { ...state, sort: action.payload, page: 0 };
+      return { ...state, sort: action.payload, page: 1 };
     },
   },
 });

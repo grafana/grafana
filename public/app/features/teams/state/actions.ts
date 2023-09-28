@@ -20,7 +20,7 @@ import {
 
 export function loadTeams(initial = false): ThunkResult<void> {
   return async (dispatch, getState) => {
-    const { query, page, perPage } = getState().teams;
+    const { query, page, perPage, sort } = getState().teams;
     // Early return if the user cannot list teams
     if (!contextSrv.hasPermission(AccessControlAction.ActionTeamsRead)) {
       dispatch(teamsLoaded({ teams: [], totalCount: 0, page: 1, perPage, noTeams: true }));
@@ -29,7 +29,7 @@ export function loadTeams(initial = false): ThunkResult<void> {
 
     const response = await getBackendSrv().get(
       '/api/teams/search',
-      accessControlQueryParam({ query, page, perpage: perPage })
+      accessControlQueryParam({ query, page, perpage: perPage, sort })
     );
 
     // We only want to check if there is no teams on the initial request.
