@@ -1,4 +1,9 @@
-export const transformationDocsContent = {
+interface Transformation {
+  name: string;
+  content: string;
+}
+
+export const transformationDocsContent: Record<string, Transformation> = {
   calculateField: {
     name: '',
     content: `
@@ -835,9 +840,129 @@ export const transformationDocsContent = {
     You can specify a regular expression, which is only applied to matches, along with a replacement pattern that support back references. For example, let's imagine you're visualizing CPU usage per host and you want to remove the domain name. You could set the regex to '([^\.]+)\..+' and the replacement pattern to '$1', 'web-01.example.com' would become 'web-01'.
     `,
   },
-  // rowsToFields: rowsToFieldsHelper,
-  // seriesToRows: seriesToRowsHelper,
-  // sortBy: sortByHelper,
-  // spatial: spatialHelper,
-  // timeSeriesTable: timeSeriesTableHelper,
+  rowsToFields: {
+    name: '',
+    content: `
+    Use this transformation to convert rows into separate fields. This can be useful because fields can be styled and configured individually. It can also use additional fields as sources for dynamic field configuration or map them to field labels. The additional labels can then be used to define better display names for the resulting fields.
+
+    This transformation includes a field table which lists all fields in the data returned by the config query. This table gives you control over what field should be mapped to each config property (the \*Use as\*\* option). You can also choose which value to select if there are multiple rows in the returned data.
+
+    This transformation requires:
+
+    - One field to use as the source of field names.
+
+      By default, the transform uses the first string field as the source. You can override this default setting by selecting **Field name** in the **Use as** column for the field you want to use instead.
+
+    - One field to use as the source of values.
+
+      By default, the transform uses the first number field as the source. But you can override this default setting by selecting **Field value** in the **Use as** column for the field you want to use instead.
+
+    Useful when visualizing data in:
+
+    - Gauge
+    - Stat
+    - Pie chart
+
+    #### Map extra fields to labels
+
+    If a field does not map to config property Grafana will automatically use it as source for a label on the output field-
+
+    Example:
+
+    | Name    | DataCenter | Value |
+    | ------- | ---------- | ----- |
+    | ServerA | US         | 100   |
+    | ServerB | EU         | 200   |
+
+    Output:
+
+    | ServerA (labels: DataCenter: US) | ServerB (labels: DataCenter: EU) |
+    | -------------------------------- | -------------------------------- |
+    | 10                               | 20                               |
+
+    The extra labels can now be used in the field display name provide more complete field names.
+
+    If you want to extract config from one query and appply it to another you should use the config from query results transformation.
+
+    #### Example
+
+    Input:
+
+    | Name    | Value | Max |
+    | ------- | ----- | --- |
+    | ServerA | 10    | 100 |
+    | ServerB | 20    | 200 |
+    | ServerC | 30    | 300 |
+
+    Output:
+
+    | ServerA (config: max=100) | ServerB (config: max=200) | ServerC (config: max=300) |
+    | ------------------------- | ------------------------- | ------------------------- |
+    | 10                        | 20                        | 30                        |
+
+    As you can see each row in the source data becomes a separate field. Each field now also has a max config option set. Options like **Min**, **Max**, **Unit** and **Thresholds** are all part of field configuration and if set like this will be used by the visualization instead of any options manually configured in the panel editor options pane.
+    `,
+  },
+  seriesToRows: {
+    name: 'Series to rows',
+    content: `
+    Use this transformation to combine the result from multiple time series data queries into one single result. This is helpful when using the table panel visualization.
+
+    The result from this transformation will contain three columns: Time, Metric, and Value. The Metric column is added so you easily can see from which query the metric originates from. Customize this value by defining Label on the source query.
+
+    In the example below, we have two queries returning time series data. It is visualized as two separate tables before applying the transformation.
+
+    Query A:
+
+    | Time                | Temperature |
+    | ------------------- | ----------- |
+    | 2020-07-07 11:34:20 | 25          |
+    | 2020-07-07 10:31:22 | 22          |
+    | 2020-07-07 09:30:05 | 19          |
+
+    Query B:
+
+    | Time                | Humidity |
+    | ------------------- | -------- |
+    | 2020-07-07 11:34:20 | 24       |
+    | 2020-07-07 10:32:20 | 29       |
+    | 2020-07-07 09:30:57 | 33       |
+
+    Here is the result after applying the Series to rows transformation.
+
+    | Time                | Metric      | Value |
+    | ------------------- | ----------- | ----- |
+    | 2020-07-07 11:34:20 | Temperature | 25    |
+    | 2020-07-07 11:34:20 | Humidity    | 22    |
+    | 2020-07-07 10:32:20 | Humidity    | 29    |
+    | 2020-07-07 10:31:22 | Temperature | 22    |
+    | 2020-07-07 09:30:57 | Humidity    | 33    |
+    | 2020-07-07 09:30:05 | Temperature | 19    |
+
+    > **Note:** This transformation is available in Grafana 7.1+.
+    `,
+  },
+  sortBy: {
+    name: 'Sort by',
+    content: `
+    Use this transformation to sort each frame by the configured field. When the **Reverse** switch is on, the values will return in the opposite order.
+    `,
+  },
+  spatial: { name: 'Spatial', content: `` },
+  timeSeriesTable: {
+    name: 'Time series table',
+    content: `
+    Use this transformation to convert time series results into a table, converting a time series data frame into a trend visualization field. A trend field can then be rendered using the [sparkline cell type](https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/table/#sparkline), producing an inline sparkline for each table row. If there are multiple time series queries, each will result in a separate table data frame. These can be joined using join or merge transforms to produce a single table with multiple sparklines per row.
+    
+    > **Note:** This transformation is available in Grafana 9.5+ as an opt-in beta feature. Modify Grafana [configuration file](/docs/grafana/latest/setup-grafana/configure-grafana/#configuration-file-location) to enable the 'timeSeriesTable' [feature toggle](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/feature-toggles/) to use it.
+    `,
+  },
 };
+
+export function getLinkToDocs(): string {
+  return `
+  Go to the <a href="https://grafana.com/docs/grafana/latest/panels/transformations/?utm_source=grafana" target="_blank" rel="noreferrer">
+  transformation documentation
+  </a> for more.
+  `;
+}
