@@ -26,6 +26,7 @@ import {
 } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { Page } from 'app/core/components/Page/Page';
+import { t } from 'app/core/internationalization';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { StoreState } from 'app/types';
 
@@ -136,8 +137,8 @@ class UnthemedDashboardImport extends PureComponent<Props> {
             onLoad={this.onFileUpload}
           >
             <FileDropzoneDefaultChildren
-              primaryText="Upload dashboard JSON file"
-              secondaryText="Drag and drop here or click to browse"
+              primaryText={t('manage-dashboard.dashboard-import-page', 'Upload dashboard JSON file')}
+              secondaryText={t('manage-dashboard.dashboard-import-page', 'Drag and drop here or click to browse')}
             />
           </FileDropzone>
         </div>
