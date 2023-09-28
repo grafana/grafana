@@ -471,6 +471,10 @@ const (
 	// Automatic service account and token setup for plugins
 	FlagExternalServiceAccounts = "externalServiceAccounts"
 
+	// FlagAlertingModifiedExport
+	// Enables using UI for provisioned rules modification and export
+	FlagAlertingModifiedExport = "alertingModifiedExport"
+
 	// FlagTransformationsVariableSupport
 	// Allows using variables in transformations
 	FlagTransformationsVariableSupport = "transformationsVariableSupport"
