@@ -30,5 +30,4 @@ func UpdatePluginParsingResponseDurationSeconds(ctx context.Context, duration ti
 	} else {
 		histogram.Observe(duration.Seconds())
 	}
-
 }
