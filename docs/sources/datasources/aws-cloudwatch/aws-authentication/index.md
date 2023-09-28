@@ -146,7 +146,7 @@ securityContext:
   runAsGroup: 472
 ```
 
-## Use `Grafana Assume Role`
+## Use Grafana Assume Role
 
 {{% admonition type="note" %}}
 Grafana Assume Role is currently in [private preview]({{< relref "https://grafana.com/docs/release-life-cycle" >}}) for Grafana Cloud. To get early access this feature, reach out to Customer Support and ask for the `awsDatasourcesTempCredentials` feature toggle to be enabled on your account. It is currently only available for CloudWatch.
