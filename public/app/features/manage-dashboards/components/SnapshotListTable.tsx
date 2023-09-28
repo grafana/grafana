@@ -3,6 +3,7 @@ import useAsync from 'react-use/lib/useAsync';
 
 import { getBackendSrv, config } from '@grafana/runtime';
 import { ConfirmModal, Button, LinkButton } from '@grafana/ui';
+import {t,Trans} from 'app/core/internationalization'
 
 import { Snapshot } from '../types';
 
@@ -43,10 +44,10 @@ export const SnapshotListTable = () => {
         <thead>
           <tr>
             <th>
-              <strong>Name</strong>
+              <Trans i18nKey={'manage-dashboards.column-header.name'}><strong>Name</strong></Trans>
             </th>
             <th>
-              <strong>Snapshot url</strong>
+              <Trans i18nKey={'manage-dashboards.column-header.url'}><strong>Snapshot url</strong></Trans>
             </th>
             <th style={{ width: '70px' }}></th>
             <th style={{ width: '30px' }}></th>
@@ -64,11 +65,13 @@ export const SnapshotListTable = () => {
                 <td>
                   <a href={url}>{url}</a>
                 </td>
-                <td>{snapshot.external && <span className="query-keyword">External</span>}</td>
+                <td>{snapshot.external && <span className="query-keyword">{t('manage-dashboards.external','External')}</span>}</td>
                 <td className="text-center">
-                  <LinkButton href={url} variant="secondary" size="sm" icon="eye">
-                    View
-                  </LinkButton>
+                  <Trans i18nKey={'manage-dashboards.view-button'}>
+                    <LinkButton href={url} variant="secondary" size="sm" icon="eye">
+                      View
+                    </LinkButton>
+                  </Trans>
                 </td>
                 <td className="text-right">
                   <Button variant="destructive" size="sm" icon="times" onClick={() => setRemoveSnapshot(snapshot)} />

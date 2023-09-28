@@ -322,6 +322,14 @@
       "unknown": "Ůŉĸŉőŵŉ ęřřőř őččūřřęđ"
     }
   },
+  "manage-dashboards": {
+    "column-header": {
+      "name": "<0>Ńämę</0>",
+      "url": "<0>Ŝŉäpşĥőŧ ūřľ</0>"
+    },
+    "external": "Ēχŧęřŉäľ",
+    "view-button": "<0>Vįęŵ</0>"
+  },
   "nav": {
     "add-new-connections": {
       "title": "Åđđ ŉęŵ čőŉŉęčŧįőŉ"

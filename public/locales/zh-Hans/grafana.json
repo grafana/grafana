@@ -317,6 +317,14 @@
       "unknown": ""
     }
   },
+  "manage-dashboards": {
+    "column-header": {
+      "name": "",
+      "url": ""
+    },
+    "external": "",
+    "view-button": ""
+  },
   "nav": {
     "add-new-connections": {
       "title": ""

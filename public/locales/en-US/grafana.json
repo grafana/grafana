@@ -322,6 +322,14 @@
       "unknown": "Unknown error occurred"
     }
   },
+  "manage-dashboards": {
+    "column-header": {
+      "name": "<0>Name</0>",
+      "url": "<0>Snapshot url</0>"
+    },
+    "external": "External",
+    "view-button": "<0>View</0>"
+  },
   "nav": {
     "add-new-connections": {
       "title": "Add new connection"
