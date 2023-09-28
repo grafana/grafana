@@ -14,32 +14,40 @@ import (
 var (
 	// SortOptionsByQueryParam is a map to translate the "sort" query param values to SortOption(s)
 	SortOptionsByQueryParam = map[string]model.SortOption{
-		"login-asc":          newSortOption("login", false, 0),
-		"login-desc":         newSortOption("login", true, 0),
-		"email-asc":          newSortOption("email", false, 1),
-		"email-desc":         newSortOption("email", true, 1),
-		"name-asc":           newSortOption("name", false, 2),
-		"name-desc":          newSortOption("name", true, 2),
-		"lastSeenAtAge-asc":  newTimeSortOption("last_seen_at", false, 3),
-		"lastSeenAtAge-desc": newTimeSortOption("last_seen_at", true, 3),
+		"name-asc":         newSortOption("name", false, true, 0), // Lower case the name ordering
+		"name-desc":        newSortOption("name", true, true, 0),
+		"email-asc":        newSortOption("email", false, false, 1), // Not to slow down the request let's not lower case the email ordering
+		"email-desc":       newSortOption("email", true, false, 1),
+		"memberCount-asc":  newIntSortOption("member_count", false, 2),
+		"memberCount-desc": newIntSortOption("member_count", true, 2),
 	}
 
 	ErrorUnknownSortingOption = errutil.BadRequest("unknown sorting option")
 )
 
 type Sorter struct {
-	Field      string
-	Descending bool
+	Field         string
+	LowerCase     bool
+	Descending    bool
+	WithTableName bool
 }
 
 func (s Sorter) OrderBy() string {
-	if s.Descending {
-		return fmt.Sprintf("u.%v DESC", s.Field)
+	orderBy := "team."
+	if !s.WithTableName {
+		orderBy = ""
 	}
-	return fmt.Sprintf("u.%v ASC", s.Field)
+	orderBy += s.Field
+	if s.LowerCase {
+		orderBy = fmt.Sprintf("LOWER(%v)", orderBy)
+	}
+	if s.Descending {
+		return orderBy + " DESC"
+	}
+	return orderBy + " ASC"
 }
 
-func newSortOption(field string, desc bool, index int) model.SortOption {
+func newSortOption(field string, desc bool, lowerCase bool, index int) model.SortOption {
 	direction := "asc"
 	description := ("A-Z")
 	if desc {
@@ -51,23 +59,23 @@ func newSortOption(field string, desc bool, index int) model.SortOption {
 		DisplayName: fmt.Sprintf("%v (%v)", cases.Title(language.Und).String(field), description),
 		Description: fmt.Sprintf("Sort %v in an alphabetically %vending order", field, direction),
 		Index:       index,
-		Filter:      []model.SortOptionFilter{Sorter{Field: field, Descending: desc}},
+		Filter:      []model.SortOptionFilter{Sorter{Field: field, LowerCase: lowerCase, Descending: desc, WithTableName: true}},
 	}
 }
 
-func newTimeSortOption(field string, desc bool, index int) model.SortOption {
+func newIntSortOption(field string, desc bool, index int) model.SortOption {
 	direction := "asc"
-	description := ("Oldest-Newest")
+	description := ("Fewest-Most")
 	if desc {
 		direction = "desc"
-		description = ("Newest-Oldest")
+		description = ("Most-Fewest")
 	}
 	return model.SortOption{
 		Name:        fmt.Sprintf("%v-%v", field, direction),
 		DisplayName: fmt.Sprintf("%v (%v)", cases.Title(language.Und).String(field), description),
-		Description: fmt.Sprintf("Sort %v by time in an %vending order", field, direction),
+		Description: fmt.Sprintf("Sort %v in a numerically %vending order", field, direction),
 		Index:       index,
-		Filter:      []model.SortOptionFilter{Sorter{Field: field, Descending: desc}},
+		Filter:      []model.SortOptionFilter{Sorter{Field: field, LowerCase: false, Descending: desc, WithTableName: false}},
 	}
 }
 
