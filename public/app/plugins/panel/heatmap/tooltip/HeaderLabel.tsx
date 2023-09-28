@@ -14,7 +14,7 @@ export const HeaderLabel = ({ headerLabel }: HeaderLabelProps) => {
   const styles = useStyles2(getStyles);
 
   return (
-    <HorizontalGroup justify-content="space-between" spacing="lg" wrap maxLength={240}>
+    <HorizontalGroup justify-content="space-between" spacing="lg" wrap>
       <div className={styles.wrapper}>
         <span className={styles.label}>{headerLabel.label}</span>
         <Tooltip content={headerLabel.value}>
@@ -34,7 +34,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
   value: css`
     line-height: 18px;
     align-self: center;
-    max-width: 210px;
     font-weight: 500;
   `,
   wrapper: css`
@@ -43,6 +42,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     text-overflow: ellipsis;
     overflow: hidden;
     white-space: nowrap;
+    width: 250px;
     mask-image: linear-gradient(90deg, rgba(0, 0, 0, 1) 80%, transparent);
   `,
 });
