@@ -766,8 +766,8 @@ With the _Partition by values_ transformer, you can now issue a single query and
 
 There are two naming modes:
 
-- **As labels -** The value that is partitioned by will be set as a label.
-- **As frame name-** The value will be used to set the frame name, this is useful if the data will be visualized in a table.
+- **As labels** - The value that results are partitioned by is set as a label.
+- **As frame name**  - The value is used to set the frame name. This is useful if the data will be visualized in a table.
 
 ### Reduce
 

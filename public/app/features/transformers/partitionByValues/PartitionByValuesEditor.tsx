@@ -115,7 +115,7 @@ export function PartitionByValuesEditor({
       <InlineFieldRow>
         <InlineField
           tooltip={
-            'Sets how the names of the selected fields will be displayed. As frame name is usually better for tabular data'
+            'Sets how the names of the selected fields are displayed. As frame name is usually better for tabular data'
           }
           label={'Naming'}
           labelWidth={10}
