@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	es "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client"
+	"github.com/grafana/grafana/pkg/tsdb/elasticsearch/instrumentation"
 )
 
 const (
@@ -109,8 +110,9 @@ func parseResponse(ctx context.Context, responses []*es.SearchResponse, targets 
 				span.SetStatus(codes.Error, err.Error())
 				resSpan.RecordError(err)
 				resSpan.SetStatus(codes.Error, err.Error())
+				logger.Error("Error processing buckets", "error", err, "query", string(mt), "aggregationsLength", len(res.Aggregations), "stage", es.StageParseResponse)
+				instrumentation.UpdatePluginParsingResponseDurationSeconds(ctx, time.Since(start), "error")
 				resSpan.End()
-				logger.Error("Error processing buckets", "error", err, "query", string(mt), "aggregationsLength", len(res.Aggregations))
 				return &backend.QueryDataResponse{}, err
 			}
 			nameFields(queryRes, target)
@@ -118,8 +120,9 @@ func parseResponse(ctx context.Context, responses []*es.SearchResponse, targets 
 
 			result.Responses[target.RefID] = queryRes
 		}
-		resSpan.End()
+		instrumentation.UpdatePluginParsingResponseDurationSeconds(ctx, time.Since(start), "ok")
 		logger.Info("Finished processing of response", "duration", time.Since(start), "stage", es.StageParseResponse)
+		resSpan.End()
 	}
 	return &result, nil
 }
