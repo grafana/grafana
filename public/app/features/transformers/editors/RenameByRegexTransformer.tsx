@@ -12,7 +12,7 @@ import {
 import { RenameByRegexTransformerOptions } from '@grafana/data/src/transformations/transformers/renameByRegex';
 import { Field, Input } from '@grafana/ui';
 
-import { getHelperContent } from '../helpers/getHelperContent';
+import { getHelperContent } from '../docs/getHelperContent';
 
 interface RenameByRegexTransformerEditorProps extends TransformerUIProps<RenameByRegexTransformerOptions> {}
 

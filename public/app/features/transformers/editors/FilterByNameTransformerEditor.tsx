@@ -14,7 +14,7 @@ import {
 import { FilterFieldsByNameTransformerOptions } from '@grafana/data/src/transformations/transformers/filterByName';
 import { Field, Input, FilterPill, HorizontalGroup } from '@grafana/ui';
 
-import { getHelperContent } from '../helpers/getHelperContent';
+import { getHelperContent } from '../docs/getHelperContent';
 
 interface FilterByNameTransformerEditorProps extends TransformerUIProps<FilterFieldsByNameTransformerOptions> {}
 

@@ -12,7 +12,7 @@ import {
 } from '@grafana/data';
 import { InlineField, InlineFieldRow, Select } from '@grafana/ui';
 
-import { getHelperContent } from '../helpers/getHelperContent';
+import { getHelperContent } from '../docs/getHelperContent';
 import { useAllFieldNamesFromDataFrames } from '../utils';
 
 export const GroupingToMatrixTransformerEditor = ({

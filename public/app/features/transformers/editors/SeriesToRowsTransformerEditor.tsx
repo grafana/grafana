@@ -7,7 +7,7 @@ import {
 } from '@grafana/data';
 import { SeriesToRowsTransformerOptions } from '@grafana/data/src/transformations/transformers/seriesToRows';
 
-import { getHelperContent } from '../helpers/getHelperContent';
+import { getHelperContent } from '../docs/getHelperContent';
 
 export const SeriesToRowsTransformerEditor = ({
   input,

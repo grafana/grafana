@@ -4,7 +4,7 @@ import { TransformerRegistryItem } from '@grafana/data';
 import { Modal } from '@grafana/ui';
 import { OperationRowHelp } from 'app/core/components/QueryOperationRow/OperationRowHelp';
 
-import { getLinkToDocs } from '../../../transformers/helpers/getHelperContent';
+import { getLinkToDocs } from '../../../transformers/docs/getHelperContent';
 
 interface TransformationEditorHelperModalProps {
   isOpen: boolean;

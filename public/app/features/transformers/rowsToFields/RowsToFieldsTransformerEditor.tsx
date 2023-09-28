@@ -3,7 +3,7 @@ import React from 'react';
 import { PluginState, TransformerRegistryItem, TransformerUIProps, TransformerCategory } from '@grafana/data';
 
 import { FieldToConfigMappingEditor } from '../fieldToConfigMapping/FieldToConfigMappingEditor';
-import { getHelperContent } from '../helpers/getHelperContent';
+import { getHelperContent } from '../docs/getHelperContent';
 
 import { rowsToFieldsTransformer, RowToFieldsTransformOptions } from './rowsToFields';
 

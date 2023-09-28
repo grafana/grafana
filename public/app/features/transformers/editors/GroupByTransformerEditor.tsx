@@ -19,7 +19,7 @@ import {
 import { Stack } from '@grafana/experimental';
 import { useTheme2, Select, StatsPicker, InlineField } from '@grafana/ui';
 
-import { getHelperContent } from '../helpers/getHelperContent';
+import { getHelperContent } from '../docs/getHelperContent';
 import { useAllFieldNamesFromDataFrames } from '../utils';
 
 interface FieldProps {

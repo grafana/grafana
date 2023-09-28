@@ -13,7 +13,7 @@ import { ReduceTransformerMode, ReduceTransformerOptions } from '@grafana/data/s
 import { selectors } from '@grafana/e2e-selectors';
 import { InlineField, Select, StatsPicker, InlineSwitch } from '@grafana/ui';
 
-import { getHelperContent } from '../helpers/getHelperContent';
+import { getHelperContent } from '../docs/getHelperContent';
 
 // TODO:  Minimal implementation, needs some <3
 export const ReduceTransformerEditor = ({ options, onChange }: TransformerUIProps<ReduceTransformerOptions>) => {

@@ -9,7 +9,7 @@ import {
 } from '@grafana/data';
 import { Alert, HorizontalGroup, InlineField, InlineFieldRow, Select, ValuePicker } from '@grafana/ui';
 
-import { getHelperContent } from '../helpers/getHelperContent';
+import { getHelperContent } from '../docs/getHelperContent';
 import { getDistinctLabels } from '../utils';
 
 import { joinByLabelsTransformer, JoinByLabelsTransformOptions } from './joinByLabels';

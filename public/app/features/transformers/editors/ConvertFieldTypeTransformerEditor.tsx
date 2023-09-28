@@ -21,7 +21,7 @@ import { allFieldTypeIconOptions } from '@grafana/ui/src/components/MatchersUI/F
 import { hasAlphaPanels } from 'app/core/config';
 import { findField } from 'app/features/dimensions';
 
-import { getHelperContent } from '../helpers/getHelperContent';
+import { getHelperContent } from '../docs/getHelperContent';
 
 const fieldNamePickerSettings = {
   settings: { width: 24, isClearable: false },

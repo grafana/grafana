@@ -11,7 +11,7 @@ import {
 import { JoinByFieldOptions, JoinMode } from '@grafana/data/src/transformations/transformers/joinByField';
 import { Select, InlineFieldRow, InlineField } from '@grafana/ui';
 
-import { getHelperContent } from '../helpers/getHelperContent';
+import { getHelperContent } from '../docs/getHelperContent';
 import { useAllFieldNamesFromDataFrames } from '../utils';
 
 const modes = [

@@ -9,7 +9,7 @@ import {
   TransformerCategory,
 } from '@grafana/data';
 
-import { getHelperContent } from '../helpers/getHelperContent';
+import { getHelperContent } from '../docs/getHelperContent';
 import { getDefaultOptions, getTransformerOptionPane } from '../spatial/optionsHelper';
 
 import { addHeatmapCalculationOptions } from './editor/helper';

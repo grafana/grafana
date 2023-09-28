@@ -15,7 +15,7 @@ import {
 import { Stack } from '@grafana/experimental';
 import { InlineField, InlineFieldRow, RadioButtonGroup, Select, FilterPill } from '@grafana/ui';
 
-import { getHelperContent } from '../helpers/getHelperContent';
+import { getHelperContent } from '../docs/getHelperContent';
 
 const modes: Array<SelectableValue<LabelsToFieldsMode>> = [
   { value: LabelsToFieldsMode.Columns, label: 'Columns' },

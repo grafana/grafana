@@ -10,7 +10,7 @@ import {
 } from '@grafana/data';
 import { InlineField, InlineFieldRow, Select, useStyles2 } from '@grafana/ui';
 
-import { getHelperContent } from '../helpers/getHelperContent';
+import { getHelperContent } from '../docs/getHelperContent';
 
 import { prepareTimeSeriesTransformer, PrepareTimeSeriesOptions, timeSeriesFormat } from './prepareTimeSeries';
 
