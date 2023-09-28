@@ -41,6 +41,7 @@ export function GeneralSettingsUnconnected({
   const [renderCounter, setRenderCounter] = useState(0);
   const [dashboardTitle, setDashboardTitle] = useState(dashboard.title);
   const [dashboardDescription, setDashboardDescription] = useState(dashboard.description);
+  const pageNav = config.featureToggles.dockedMegaMenu ? sectionNav.node.parentItem : undefined;
 
   const onFolderChange = (newUID: string, newTitle: string) => {
     dashboard.meta.folderUid = newUID;
@@ -116,7 +117,7 @@ export function GeneralSettingsUnconnected({
   ];
 
   return (
-    <Page navModel={sectionNav}>
+    <Page navModel={sectionNav} pageNav={pageNav}>
       <div style={{ maxWidth: '600px' }}>
         <div className="gf-form-group">
           <Field
