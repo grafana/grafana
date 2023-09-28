@@ -39,23 +39,13 @@ export const PluginActions = ({ plugin }: Props) => {
     <VerticalGroup>
       <HorizontalGroup>
         {!isInstallControlsDisabled && (
-          <>
-            {isExternallyManaged && !hasInstallWarning ? (
-              <ExternallyManagedButton
-                pluginId={plugin.id}
-                pluginStatus={pluginStatus}
-                angularDetected={plugin.angularDetected}
-              />
-            ) : (
               <InstallControlsButton
                 plugin={plugin}
                 latestCompatibleVersion={latestCompatibleVersion}
                 pluginStatus={pluginStatus}
                 setNeedReload={setNeedReload}
-                hasInstallWarning={hasInstallWarning}
+                isExternallyManaged={isExternallyManaged}
               />
-            )}
-          </>
         )}
         <GetStartedWithPlugin plugin={plugin} />
       </HorizontalGroup>

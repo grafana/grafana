@@ -13,6 +13,7 @@ import {
   getLocalPlugins,
   getPluginDetails,
   installPlugin,
+  installManagedPlugin,
   uninstallPlugin,
 } from '../api';
 import { STATE_PREFIX } from '../constants';
@@ -165,6 +166,36 @@ export const install = createAsyncThunk<
     : { isInstalled: true, installedVersion: version };
   try {
     await installPlugin(id);
+    await updatePanels();
+
+    if (isUpdating) {
+      invalidatePluginInCache(id);
+    }
+
+    return { id, changes };
+  } catch (e) {
+    console.error(e);
+    if (isFetchError(e)) {
+      return thunkApi.rejectWithValue(e.data);
+    }
+
+    return thunkApi.rejectWithValue('Unknown error.');
+  }
+});
+
+export const managedInstall = createAsyncThunk<
+  Update<CatalogPlugin>,
+  {
+    id: string;
+    version?: string;
+    isUpdating?: boolean;
+  }
+>(`${STATE_PREFIX}/install`, async ({ id, version, isUpdating = false }, thunkApi) => {
+  const changes = isUpdating
+    ? { isInstalled: true, installedVersion: version, hasUpdate: false }
+    : { isInstalled: true, installedVersion: version };
+  try {
+    await installManagedPlugin("config.instanceId", id, version);
     await updatePanels();
 
     if (isUpdating) {

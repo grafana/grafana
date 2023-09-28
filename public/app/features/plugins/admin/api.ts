@@ -113,6 +113,18 @@ export async function installPlugin(id: string) {
   });
 }
 
+export async function installManagedPlugin(instanceId: string, plugin: string, version: string) {
+  // This will install the latest compatible version based on the logic
+  // on the backend.
+  return await getBackendSrv().post(`${GCOM_API_ROOT}/instances/${instanceId}/plugins`, {
+    plugin,
+    version,
+  }, {
+    // Error is displayed in the page
+    showErrorAlert: false,
+  });
+}
+
 export async function uninstallPlugin(id: string) {
   return await getBackendSrv().post(`${API_ROOT}/${id}/uninstall`);
 }
@@ -131,5 +143,6 @@ export const api = {
   getRemotePlugins,
   getInstalledPlugins: getLocalPlugins,
   installPlugin,
+  installManagedPlugin,
   uninstallPlugin,
 };

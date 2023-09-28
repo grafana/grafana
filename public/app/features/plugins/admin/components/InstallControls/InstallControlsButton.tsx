@@ -16,6 +16,7 @@ import {
   useUninstall,
   useUnsetInstall,
   useFetchDetailsLazy,
+  useManagedInstall,
 } from '../../state/hooks';
 import { trackPluginInstalled, trackPluginUninstalled } from '../../tracking';
 import { CatalogPlugin, PluginStatus, PluginTabIds, Version } from '../../types';
@@ -26,6 +27,7 @@ type InstallControlsButtonProps = {
   latestCompatibleVersion?: Version;
   hasInstallWarning?: boolean;
   setNeedReload?: (needReload: boolean) => void;
+  isExternallyManaged?: boolean;
 };
 
 export function InstallControlsButton({
@@ -34,6 +36,7 @@ export function InstallControlsButton({
   latestCompatibleVersion,
   hasInstallWarning,
   setNeedReload,
+  isExternallyManaged = false,
 }: InstallControlsButtonProps) {
   const dispatch = useDispatch();
   const [queryParams] = useQueryParams();
@@ -41,6 +44,7 @@ export function InstallControlsButton({
   const { isInstalling, error: errorInstalling } = useInstallStatus();
   const { isUninstalling, error: errorUninstalling } = useUninstallStatus();
   const install = useInstall();
+  const managedInstall = useManagedInstall();
   const uninstall = useUninstall();
   const unsetInstall = useUnsetInstall();
   const fetchDetails = useFetchDetailsLazy();
@@ -74,6 +78,17 @@ export function InstallControlsButton({
       }
     }
   };
+
+  const onManagedInstall = async () => {
+    trackPluginInstalled(trackingProps);
+    const result = await managedInstall(plugin.id, latestCompatibleVersion?.version);
+    if (!errorInstalling && !('error' in result)) {
+      appEvents.emit(AppEvents.alertSuccess, [`Installed ${plugin.name}`]);
+      if (plugin.type === 'app') {
+        setNeedReload?.(true);
+      }
+    }
+  }
 
   const onUninstall = async () => {
     hideConfirmModal();
@@ -141,7 +156,7 @@ export function InstallControlsButton({
   }
   const shouldDisable = isInstalling || errorInstalling || (!config.angularSupportEnabled && plugin.angularDetected);
   return (
-    <Button disabled={shouldDisable} onClick={onInstall}>
+    <Button disabled={shouldDisable} onClick={isExternallyManaged ? onManagedInstall : onInstall}>
       {isInstalling ? 'Installing' : 'Install'}
     </Button>
   );
