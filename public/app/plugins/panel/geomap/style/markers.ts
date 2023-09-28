@@ -163,8 +163,8 @@ const makers: SymbolMaker[] = [
           fill: getFillColor(cfg),
           points: 4,
           radius,
-          rotation: (rotation * Math.PI) / 180 + Math.PI / 4,
-          // TODO needs to account for additional rotation
+          angle: Math.PI / 4,
+          rotation: (rotation * Math.PI) / 180,
           displacement: getDisplacement(cfg.symbolAnchor ?? defaultStyleConfig.symbolAnchor, radius),
         }),
         text: textLabel(cfg),
@@ -248,8 +248,8 @@ const makers: SymbolMaker[] = [
           points: 4,
           radius,
           radius2: 0,
-          rotation: (rotation * Math.PI) / 180 + Math.PI / 4,
-          // TODO needs to account for additional rotation
+          angle: Math.PI / 4,
+          rotation: (rotation * Math.PI) / 180,
           displacement: getDisplacement(cfg.symbolAnchor ?? defaultStyleConfig.symbolAnchor, radius),
         }),
         text: textLabel(cfg),
