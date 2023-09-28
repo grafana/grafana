@@ -137,7 +137,7 @@ async function doImportPluginModuleInSandbox(meta: PluginMeta): Promise<System.M
     try {
       pluginCode = await getPluginCode(meta);
     } catch (e) {
-      throw new Error(`Could not load plugin ${meta.id}: ` + e);
+      reject(new Error(`Could not load plugin code ${meta.id}: ` + e));
     }
 
     try {
