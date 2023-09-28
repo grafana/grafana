@@ -7,6 +7,10 @@ load(
     "images",
 )
 load(
+    "scripts/drone/steps/lib.star",
+    "clone_enterprise_step_pr",
+)
+load(
     "scripts/drone/utils/utils.star",
     "pipeline",
 )
@@ -35,28 +39,6 @@ def clone_pr_branch(ver_mode):
         ],
     }
 
-def clone_enterprise_step(ver_mode):
-    if ver_mode != "pr":
-        return None
-
-    committish = "${DRONE_SOURCE_BRANCH}"
-    return {
-        "name": "clone-pr-enterprise-branch",
-        "image": images["go"],
-        "environment": {
-            "GITHUB_TOKEN": from_secret("github_token_pr"),
-        },
-        "commands": [
-            'git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"',
-            "cd grafana-enterprise",
-            "if git show-ref refs/heads/{}; then git checkout {}; else git checkout main; fi".format(committish, committish),
-            "./dev.sh",
-        ],
-        "depends_on": [
-            "clone-pr-branch",
-        ],
-    }
-
 def swagger_gen_step(ver_mode):
     if ver_mode != "pr":
         return None
@@ -82,7 +64,7 @@ def swagger_gen_step(ver_mode):
 def swagger_gen(trigger, ver_mode):
     test_steps = [
         clone_pr_branch(ver_mode = ver_mode),
-        clone_enterprise_step(ver_mode = ver_mode),
+        clone_enterprise_step_pr(),
         swagger_gen_step(ver_mode = ver_mode),
     ]
 

@@ -1157,18 +1157,20 @@ steps:
   image: golang:1.20.8-alpine
   name: clone-pr-branch
 - commands:
+  - apk add --update curl jq bash
+  - is_fork=$(curl "https://$GITHUB_TOKEN@api.github.com/repos/grafana/grafana/pulls/$DRONE_PULL_REQUEST"
+    | jq .head.repo.fork)
+  - if [ "$is_fork" != false ]; then return 1; fi
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
+    grafana-enterprise
   - cd grafana-enterprise
-  - if git show-ref refs/heads/${DRONE_SOURCE_BRANCH}; then git checkout ${DRONE_SOURCE_BRANCH};
-    else git checkout main; fi
-  - ./dev.sh
-  depends_on:
-  - clone-pr-branch
+  - if git checkout ${DRONE_COMMIT}; then echo "checked out ${DRONE_COMMIT}"; elif
+    git checkout main; then echo "git checkout main"; else git checkout main; fi
   environment:
     GITHUB_TOKEN:
-      from_secret: github_token_pr
-  image: golang:1.20.8-alpine
-  name: clone-pr-enterprise-branch
+      from_secret: github_token
+  image: alpine/git:2.40.1
+  name: clone-enterprise
 - commands:
   - cd grafana
   - make clean-api-spec && make openapi3-gen
@@ -4274,8 +4276,3 @@ get:
   path: secret/data/common/gcr
 kind: secret
 name: gcr_credentials
----
-kind: signature
-hmac: c99918e728b21e28ad70e8fe13118f7a611228643624c826e298c654f18b9999
-
-...
