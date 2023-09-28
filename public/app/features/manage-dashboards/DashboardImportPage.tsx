@@ -166,7 +166,7 @@ class UnthemedDashboardImport extends PureComponent<Props> {
                   placeholder={t('dashboard-import-page.field-placeholder', 'Grafana.com dashboard URL or ID')}
                   type="text"
                   {...register('gcomDashboard', {
-                    required: 'A Grafana dashboard URL or ID is required',
+                    required: t('dashboard-import-page.field-required', 'A Grafana dashboard URL or ID is required'),
                     validate: validateGcomDashboard,
                   })}
                   addonAfter={<Button type="submit">Load</Button>}
