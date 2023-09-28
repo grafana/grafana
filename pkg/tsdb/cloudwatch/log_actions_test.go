@@ -444,7 +444,7 @@ func Test_executeStartQuery(t *testing.T) {
 
 	t.Run("uses LogGroupNames if the cross account feature flag is not enabled, and log group names is present", func(t *testing.T) {
 		cli = fakeCWLogsClient{}
-		im := datasource.NewInstanceManager(func(ctx context.Context, s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 			return DataSource{Settings: models.CloudWatchSettings{}}, nil
 		})
 		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
@@ -479,7 +479,7 @@ func Test_executeStartQuery(t *testing.T) {
 
 	t.Run("ignores logGroups if feature flag is disabled even if logGroupNames is not present", func(t *testing.T) {
 		cli = fakeCWLogsClient{}
-		im := datasource.NewInstanceManager(func(ctx context.Context, s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 			return DataSource{Settings: models.CloudWatchSettings{}}, nil
 		})
 		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
@@ -513,7 +513,7 @@ func Test_executeStartQuery(t *testing.T) {
 
 	t.Run("it always uses logGroups when feature flag is enabled and ignores log group names", func(t *testing.T) {
 		cli = fakeCWLogsClient{}
-		im := datasource.NewInstanceManager(func(ctx context.Context, s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 			return DataSource{Settings: models.CloudWatchSettings{}}, nil
 		})
 		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures(featuremgmt.FlagCloudWatchCrossAccountQuerying))
