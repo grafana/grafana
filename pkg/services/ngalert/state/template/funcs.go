@@ -5,9 +5,10 @@ import (
 	"fmt"
 	"net/url"
 	"regexp"
-	"sort"
 	"strings"
 	"text/template"
+
+	"golang.org/x/exp/slices"
 )
 
 type query struct {
@@ -15,15 +16,25 @@ type query struct {
 	Expr       string `json:"expr"`
 }
 
+const (
+	FilterLabelFuncName      = "filterLabels"
+	FilterLabelReFuncName    = "filterLabelsRe"
+	GraphLinkFuncName        = "graphLink"
+	RemoveLabelsFuncName     = "removeLabels"
+	RemoveLabelsReFuncName   = "removeLabelsRe"
+	TableLinkFuncName        = "tableLink"
+	MergeLabelValuesFuncName = "mergeLabelValues"
+)
+
 var (
 	defaultFuncs = template.FuncMap{
-		"filterLabels":      filterLabelsFunc,
-		"filterLabelsRe":    filterLabelsReFunc,
-		"graphLink":         graphLinkFunc,
-		"removeLabels":      removeLabelsFunc,
-		"removeLabelslRe":   removeLabelsReFunc,
-		"tableLink":         tableLinkFunc,
-		"deduplicateLabels": deduplicateLabelsFunc,
+		FilterLabelFuncName:      filterLabelsFunc,
+		FilterLabelReFuncName:    filterLabelsReFunc,
+		GraphLinkFuncName:        graphLinkFunc,
+		RemoveLabelsFuncName:     removeLabelsFunc,
+		RemoveLabelsReFuncName:   removeLabelsReFunc,
+		TableLinkFuncName:        tableLinkFunc,
+		MergeLabelValuesFuncName: mergeLabelValuesFunc,
 	}
 )
 
@@ -93,7 +104,8 @@ func tableLinkFunc(data string) string {
 	return fmt.Sprintf(`/explore?left={"datasource":%[1]q,"queries":[{"datasource":%[1]q,"expr":%q,"instant":true,"range":false,"refId":"A"}],"range":{"from":"now-1h","to":"now"}}`, datasource, expr)
 }
 
-func deduplicateLabelsFunc(values map[string]Value) Labels {
+// mergeLabelValuesFunc returns a map of label keys to deduplicated and comma separated values.
+func mergeLabelValuesFunc(values map[string]Value) Labels {
 	type uniqueLabelVals map[string]struct{}
 
 	labels := make(map[string]uniqueLabelVals)
@@ -115,7 +127,7 @@ func deduplicateLabelsFunc(values map[string]Value) Labels {
 		for val := range vals {
 			keys = append(keys, val)
 		}
-		sort.Strings(keys)
+		slices.Sort(keys)
 		res[label] = strings.Join(keys, ", ")
 	}
 	return res
