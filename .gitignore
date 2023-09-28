@@ -194,3 +194,7 @@ deployment_tools_config.json
 
 # Temporary file for backporting PRs
 .pr-body.txt
+
+# Ignore transpiled JavaScript resulting from the generate-transformations.ts script.
+/public/app/features/transformers/helpers/*.js
+/scripts/docs/generate-transformations.js
