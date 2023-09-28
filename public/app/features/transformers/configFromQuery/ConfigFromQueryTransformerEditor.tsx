@@ -12,8 +12,8 @@ import {
 } from '@grafana/data';
 import { fieldMatchersUI, InlineField, InlineFieldRow, Select, useStyles2 } from '@grafana/ui';
 
+import { getTransformationContent } from '../docs/getTransformationContent';
 import { FieldToConfigMappingEditor } from '../fieldToConfigMapping/FieldToConfigMappingEditor';
-import { getHelperContent } from '../docs/getTransformationContent';
 
 import { configFromDataTransformer, ConfigFromQueryTransformOptions } from './configFromQuery';
 
@@ -96,7 +96,7 @@ export const configFromQueryTransformRegistryItem: TransformerRegistryItem<Confi
   description: configFromDataTransformer.description,
   state: PluginState.beta,
   categories: new Set([TransformerCategory.CalculateNewFields]),
-  help: getHelperContent(configFromDataTransformer.id),
+  help: getTransformationContent(configFromDataTransformer.id).content,
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
