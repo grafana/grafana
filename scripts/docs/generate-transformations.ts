@@ -4,11 +4,19 @@ let transformations: String = '';
 
 Object.keys(transformationDocsContent).forEach(
   (key) =>
-    (transformations += `### ${transformationDocsContent[key].name}]}
+    (transformations += `### ${transformationDocsContent[key].name}
 ${transformationDocsContent[key].helperDocs}
-
 `)
 );
+
+// JEV: where to add dev directions for building these docs?
+// ```console
+// $ cd docs
+// $ make sources/panels-visualizations/query-transform-data/transform-data/index.md
+// $ make docs
+// ```
+
+// Browse to http://localhost:3003/docs/grafana/latest/panels-visualizations/query-transform-data/transform-data/
 
 const template: String = `---
 aliases:

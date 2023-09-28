@@ -102,7 +102,7 @@ We recommend that you remove transformations that you don't need. When you delet
 
 You can perform the following transformations on your data.
 
-### calculateField
+### Add field from calculation
 
 Use this transformation to add a new field calculated from two other fields. Each transformation allows you to add one new field.
 
@@ -116,7 +116,7 @@ Use this transformation to add a new field calculated from two other fields. Eac
 - **Alias -** (Optional) Enter the name of your new field. If you leave this blank, then the field will be named to match the calculation.
 - **Replace all fields -** (Optional) Select this option if you want to hide all other fields and display only your calculated field in the visualization.
 
-### concatenate
+### Concatenate fields
 
 Use this transformation to combine all fields from all frames into one result. Consider the following:
 
@@ -138,7 +138,7 @@ After you concatenate the fields, the data frame would be:
 | ---- | ------- | --- | ------ |
 | 15.4 | 1230233 | 3.2 | 5      |
 
-### configFromData
+### Config from query results
 
 Use this transformation to select one query and from it extract standard options such as
 **Min**, **Max**, **Unit**, and **Thresholds** and apply them to other query results.
@@ -154,7 +154,7 @@ This enables dynamic query driven visualization configuration.
 
 Below the configuration listed above you will find the field table. Here all fields found in the data returned by the config query will be listed along with a **Use as** and **Select** option. This table gives you control over what field should be mapped to which config property and if there are multiple rows which value to select.
 
-## Example
+#### Example
 
 Input[0] (From query: A, name: ServerA)
 
@@ -181,7 +181,7 @@ Each row in the source data becomes a separate field. Each field now also has a 
 configuration option set. Options such as **min**, **max**, **unit**, and **thresholds** are all part of field configuration, and if they are set like this, they will be used by the visualization instead of any options that are manually configured.
 in the panel editor options pane.
 
-## Value mappings
+#### Value mappings
 
 You can also transform a query result into value mappings. This is is a bit different because every
 row in the configuration query result is used to define a single value mapping row. See the following example.
@@ -204,7 +204,7 @@ In the field mapping specify:
 
 Grafana will build the value mappings from you query result and apply it the the real data query results. You should see values being mapped and colored according to the config query results.
 
-### convertFieldType
+### Convert field type
 
 Use this transformation to change the field type of the specified field.
 
@@ -218,7 +218,7 @@ Use this transformation to change the field type of the specified field.
 
 For example, the following query could be modified by selecting the time field, as Time, and Date Format as YYYY.
 
-## Sample Query
+#### Sample Query
 
 | Time       | Mark  | Value |
 | ---------- | ----- | ----- |
@@ -229,7 +229,7 @@ For example, the following query could be modified by selecting the time field, 
 
 The result:
 
-## Transformed Query
+#### Transformed Query
 
 | Time                | Mark  | Value |
 | ------------------- | ----- | ----- |
@@ -238,7 +238,7 @@ The result:
 | 2019-01-01 00:00:00 | below | 29    |
 | 2020-01-01 00:00:00 | above | 22    |
 
-### extractFields
+### Extract fields
 
 Use this transformation to select one source of data and extract content from it in different formats. Set the following fields:
 
@@ -252,7 +252,7 @@ Use this transformation to select one source of data and extract content from it
 
 Consider the following data set:
 
-## Data Set Example
+#### Data Set Example
 
 | Timestamp           | json_data     |
 | ------------------- | ------------- |
@@ -271,7 +271,7 @@ You could prepare the data to be used by a [Time series panel](https://grafana.c
 
 This will generate the following output:
 
-## Transformed Data
+#### Transformed Data
 
 | Timestamp           | my_value |
 | ------------------- | -------- |
@@ -279,7 +279,7 @@ This will generate the following output:
 | 1636678680000000000 | 5        |
 | 1636678620000000000 | 12       |
 
-### fieldLookup
+### Lookup fields from resource
 
 Use this transformation on a field value to look up additional fields from an external source.
 
@@ -290,7 +290,7 @@ This transformation currently supports spatial data.
 
 For example, if you have this data:
 
-## Data Set Example
+#### Data Set Example
 
 | Location  | Values |
 | --------- | ------ |
@@ -307,7 +307,7 @@ With this configuration:
 
 You'll get the following output:
 
-## Transformed Data
+#### Transformed Data
 
 | Location  | ID  | Name     | Lng         | Lat       | Values |
 | --------- | --- | -------- | ----------- | --------- | ------ |
@@ -317,7 +317,7 @@ You'll get the following output:
 | Arkansas  |     |          |             |           | 1      |
 | Somewhere |     |          |             |           | 5      |
 
-### filterByRefId
+### Filter data by query refId
 
 Use this transformation in panels that have multiple queries, if you want to hide one or more of the queries.
 
@@ -327,7 +327,7 @@ In the example below, the panel has three queries (A, B, C). I removed the B que
 
 > **Note:** This transformation is not available for Graphite because this data source does not support correlating returned data with queries.
 
-### filterByValue
+### Filter data by values
 
 Use this transformation to filter your data directly in Grafana and remove some data points from your query result. You have the option to include or exclude data that match one or more conditions you define. The conditions are applied on a selected field.
 
@@ -351,7 +351,7 @@ The available conditions for number fields are:
 
 Consider the following data set:
 
-## Data Set Example
+#### Data Set Example
 
 | Time                | Temperature | Altitude |
 | ------------------- | ----------- | -------- |
@@ -370,7 +370,7 @@ If you **Include** the data points that have a temperature below 30°C, the conf
 
 And you will get the following result, where only the temperatures below 30°C are included:
 
-## Transformed Data
+#### Transformed Data
 
 | Time                | Temperature | Altitude |
 | ------------------- | ----------- | -------- |
@@ -392,7 +392,7 @@ In the example above, we chose **Match all** because we wanted to include the ro
 
 Conditions that are invalid or incompletely configured are ignored.
 
-### filterFieldsByName
+### Filter fields by name
 
 Use this transformation to remove portions of the query results.
 
@@ -403,13 +403,13 @@ You can apply filters in one of two ways:
 - Enter a regex expression.
 - Click a field to toggle filtering on that field. Filtered fields are displayed with dark gray text, unfiltered fields have white text.
 
-### formatTime
+### Format time
 
 Use this transformation to format the output of a time field. Output can be formatted using (Moment.js format strings)[https://momentjs.com/docs/#/displaying/]. For instance, if you would like to display only the year of a time field the format string 'YYYY' can be used to show the calendar year (e.g. 1999, 2012, etc.).
 
 > **Note:** This transformation is available in Grafana 10.1+ as an alpha feature.
 
-### groupBy
+### Group by
 
 Use this transformation to group the data by a specified field (column) value and process calculations on each group. Click to see a list of calculation choices. For information about available calculations, refer to [Calculation types](https://grafana.com/docs/grafana/latest/panels-visualizations/calculation-types/).
 
@@ -467,7 +467,7 @@ We would then get :
 
 This transformation enables you to extract key information from your time series and display it in a convenient way.
 
-### groupingToMatrix
+### Grouping to matrix
 
 Use this transformation to combine three fields-that will be used as input for the **Column**, **Row**, and **Cell value** fields-from the query output, and generate a matrix. This matrix will be calculated as follows:
 
@@ -489,7 +489,7 @@ We can generate a matrix using the values of 'Server Status' as column names, th
 | server 2               | 88.6 |          |
 | server 3               |      | 59.6     |
 
-### heatmap
+### Create heatmap
 
 Use this transformation to prepare histogram data to be visualized over time. Similar to the Heatmap panel, this transformation allows you to convert histogram metrics to buckets over time.
 
@@ -508,7 +508,7 @@ This setting determines how the y-axis is split into buckets.
 - **Logarithmic** - Use a base 2 or base 10.
 - **Symlog** - A symmetrical logarithmic scale. Use a base 2 or base 10; allows negative values.
 
-### histogram
+### Histogram
 
 Use this transformation to generate a histogram based on the input data.
 
@@ -552,7 +552,7 @@ Series 2:
 | 8    | 9    | 0   | 0   | 1   | 1   |
 | 9    | 10   | 0   | 0   | 1   | 1   |
 
-### joinByField
+### Join by field
 
 Use this transformation to join multiple results into a single table. This is especially useful for converting multiple
 time series results into a single wide table with a shared time field.
@@ -620,7 +620,7 @@ The result after applying the outer join transformation looks like the following
 | 2020-07-07 11:34:20 | node    | 25260122  | server 1 | 15     |
 | 2020-07-07 11:24:20 | postgre | 123001233 | server 2 | 5      |
 
-### joinByLabels
+### Join by labels
 
 Use this transformation to join multiple results into a single table. This is especially useful for converting multiple
 time series results into a single wide table with a shared **Label** field.
@@ -666,7 +666,7 @@ value: "what"
 | B       | J1  | 10   | 22    |
 | B       | J1  | 200  | 77    |
 
-### labelsToFields
+### Labels to fields
 
 Use this transformation to change time series results that include labels or tags into a table where each label's keys and values are included in the table result. The labels can be displayed as either columns or row values.
 
@@ -728,7 +728,7 @@ After merge:
 | 2020-07-07 11:34:20 | ServerA | 10    |            |
 | 2020-07-07 11:34:20 |         | 20    | EU         |
 
-### limit
+### Limit
 
 Use this transformation to limit the number of rows displayed.
 
@@ -751,7 +751,7 @@ Here is the result after adding a Limit transformation with a value of '3':
 | 2020-07-07 11:34:20 | Humidity    | 22    |
 | 2020-07-07 10:32:20 | Humidity    | 29    |
 
-### merge
+### Merge
 
 Use this transformation to combine the result from multiple queries into one single result. This is helpful when using the table panel visualization. Values that can be merged are combined into the same row. Values are mergeable if the shared fields contain the same data. For information, refer to [Table panel]({{< relref "../../visualizations/table/" >}}).
 
@@ -778,7 +778,7 @@ Here is the result after applying the Merge transformation.
 | 2020-07-07 11:34:20 | node    | 15     | 25260122  |
 | 2020-07-07 11:24:20 | postgre | 5      | 123001233 |
 
-### organize
+### Oraganize
 
 Use this transformation to rename, reorder, or hide fields returned by the query.
 
@@ -790,7 +790,7 @@ Grafana displays a list of fields returned by the query. You can:
 - Hide or show a field by clicking the eye icon next to the field name.
 - Rename fields by typing a new name in the **Rename <field>** box.
 
-### partitionByValues
+### Partition by values
 
 Use this transformation to eliminate the need for multiple queries to the same data source with different 'WHERE' clauses when graphing multiple series. Consider a metrics SQL table with the following data:
 
@@ -822,7 +822,7 @@ With the _Partition by values_ transformer, you can now issue a single query and
 | 2022-10-20 12:00:00 | EU     | 2936  |
 | 2022-10-20 01:00:00 | EU     | 912   |
 
-### prepareTimeSeries
+### Prepare time series
 
 Use this transformation when a data source returns time series data in a format that isn't supported by the panel you want to use. For more information about data frame formats, refer to [Data frames](https://grafana.com/docs/grafana/latest/developers/plugins/introduction-to-plugin-development/data-frames/).
 
@@ -834,7 +834,7 @@ Select the 'Wide time series' option to transform the time series data frame fro
 
 > **Note:** This transformation is available in Grafana 7.5.10+ and Grafana 8.0.6+.
 
-### reduce
+### Reduce
 
 Use this transformation to apply a calculation to each field in the frame and return a single value. Time fields are removed when applying this transformation.
 
@@ -884,13 +884,13 @@ Query B:
 | --- | ------ |
 | 3.2 | 5      |
 
-### renameByRegex
+### Rename by regex
 
 Use this transformation to rename parts of the query results using a regular expression and replacement pattern.
 
 You can specify a regular expression, which is only applied to matches, along with a replacement pattern that support back references. For example, let's imagine you're visualizing CPU usage per host and you want to remove the domain name. You could set the regex to '([^.]+)..+' and the replacement pattern to '$1', 'web-01.example.com' would become 'web-01'.
 
-### rowsToFields
+### Rows to fields
 
 Use this transformation to convert rows into separate fields. This can be useful because fields can be styled and configured individually. It can also use additional fields as sources for dynamic field configuration or map them to field labels. The additional labels can then be used to define better display names for the resulting fields.
 
@@ -951,7 +951,7 @@ Output:
 
 As you can see each row in the source data becomes a separate field. Each field now also has a max config option set. Options like **Min**, **Max**, **Unit** and **Thresholds** are all part of field configuration and if set like this will be used by the visualization instead of any options manually configured in the panel editor options pane.
 
-### seriesToRows
+### Series to rows
 
 Use this transformation to combine the result from multiple time series data queries into one single result. This is helpful when using the table panel visualization.
 
@@ -988,17 +988,15 @@ Here is the result after applying the Series to rows transformation.
 
 > **Note:** This transformation is available in Grafana 7.1+.
 
-### sortBy
+### Sort by
 
 Use this transformation to sort each frame by the configured field. When the **Reverse** switch is on, the values will return in the opposite order.
 
-### spatial
+### Spatial
 
-Go to the <a href="https://grafana.com/docs/grafana/latest/panels/transformations/?utm_source=grafana" target="_blank" rel="noreferrer">
-transformation documentation
-</a> for more.
+Use this transformation to apply spatial operations to query results
 
-### timeSeriesTable
+### Time series table
 
 Use this transformation to convert time series results into a table, converting a time series data frame into a trend visualization field. A trend field can then be rendered using the [sparkline cell type](https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/table/#sparkline), producing an inline sparkline for each table row. If there are multiple time series queries, each will result in a separate table data frame. These can be joined using join or merge transforms to produce a single table with multiple sparklines per row.
 
