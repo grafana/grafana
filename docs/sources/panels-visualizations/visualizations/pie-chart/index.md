@@ -79,7 +79,14 @@ The following example shows a pie chart with **Name** and **Percent** labels dis
 
 {{< docs/shared lookup="visualizations/tooltip-mode.md" source="grafana" version="<GRAFANA VERSION>" >}}
 
-{{< docs/shared lookup="visualizations/legend-mode.md" source="grafana" version="<GRAFANA VERSION>" >}}
+### Legend values
+
+Select values to display in the legend. You can select more than one.
+
+- **Percent:** The percentage of the whole.
+- **Value:** The raw numerical value.
+
+For more information about the legend, refer to [Configure a legend]{{< relref "../../configure-legend" >}}).
 
 {{% docs/reference %}}
 [Calculation types]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/calculation-types"
