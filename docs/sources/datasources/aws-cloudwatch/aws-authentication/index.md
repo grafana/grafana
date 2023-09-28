@@ -57,7 +57,7 @@ Open source Grafana enables the `AWS SDK Default`, `Credentials file`, and `Acce
 ## Assume a role
 
 {{% admonition type="note" %}}
-Assume a role is required for the `Grafana Assume Role`.
+Assume a role is required for the Grafana Assume Role.
 {{% /admonition %}}
 
 You can specify an IAM role to assume in the **Assume Role ARN** field.
