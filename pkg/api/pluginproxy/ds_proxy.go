@@ -263,9 +263,7 @@ func (proxy *DataSourceProxy) director(req *http.Request) {
 		}
 	}
 
-	if token := proxy.ctx.SignedInUser.GetIDToken(); token != "" {
-		req.Header.Set("X-Grafana-Id", token)
-	}
+	proxyutil.ApplyForwardIDHeader(req, proxy.ctx.SignedInUser)
 }
 
 func (proxy *DataSourceProxy) validateRequest() error {
