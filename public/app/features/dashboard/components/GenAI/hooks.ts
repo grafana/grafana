@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { useAsync } from 'react-use';
 import { Subscription } from 'rxjs';
 
+import { logError } from '@grafana/runtime';
+
 import { openai } from './llms';
 import { isLLMPluginEnabled, OPEN_AI_MODEL } from './utils';
 
@@ -74,7 +76,9 @@ export function useOpenAIStream(
         error: (e: Error) => {
           setIsGenerating(false);
           setMessages([]);
-          setError(e);
+          // The error returned by the LLM plugin is an string, so we can't format it
+          setError(new Error(`OpenAI Error: ${e.message}`));
+          logError(e, { messages: JSON.stringify(messages), model, temperature: String(temperature) });
         },
         complete: () => {
           setIsGenerating(false);

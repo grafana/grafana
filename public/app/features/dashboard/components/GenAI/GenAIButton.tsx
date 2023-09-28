@@ -35,7 +35,6 @@ export const GenAIButton = ({
 
   // TODO: Implement error handling (use error object from hook)
   const { setMessages, reply, isGenerating, value, error } = useOpenAIStream(OPEN_AI_MODEL, temperature);
-  console.log({ setMessages, reply, isGenerating, value, error });
 
   const onClick = (e: React.MouseEvent<HTMLButtonElement>) => {
     onClickProp?.(e);
@@ -59,7 +58,7 @@ export const GenAIButton = ({
 
   const getTooltipContent = () => {
     if (error) {
-      return `Error: ${error.message}`;
+      return error.message;
     }
     if (!value?.enabled) {
       return (
