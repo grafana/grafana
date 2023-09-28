@@ -245,7 +245,6 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 					err := teamSvc.RemoveTeamMember(context.Background(),
 						&team.RemoveTeamMemberCommand{OrgID: testOrgID, UserID: userIds[0], TeamID: team2.ID})
 					require.NoError(t, err)
-					return
 				}()
 
 				query := &team.SearchTeamsQuery{OrgID: testOrgID, SortOpts: sortOpts, SignedInUser: testUser}
