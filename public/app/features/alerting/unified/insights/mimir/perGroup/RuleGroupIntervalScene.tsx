@@ -1,7 +1,7 @@
 import { PanelBuilders, SceneFlexItem, SceneQueryRunner, SceneTimeRange } from '@grafana/scenes';
 import { DataSourceRef, GraphDrawStyle } from '@grafana/schema';
 
-const QUERY_A = `grafanacloud_instance_rule_group_interval_seconds{rule_group="$rule_group"}`;
+import { PANEL_STYLES } from '../../../home/Insights';
 
 export function getRuleGroupIntervalScene(timeRange: SceneTimeRange, datasource: DataSourceRef, panelTitle: string) {
   const query = new SceneQueryRunner({
@@ -9,7 +9,7 @@ export function getRuleGroupIntervalScene(timeRange: SceneTimeRange, datasource:
     queries: [
       {
         refId: 'A',
-        expr: QUERY_A,
+        expr: `grafanacloud_instance_rule_group_interval_seconds{rule_group="$rule_group"}`,
         range: true,
         legendFormat: 'interval',
       },
@@ -18,8 +18,7 @@ export function getRuleGroupIntervalScene(timeRange: SceneTimeRange, datasource:
   });
 
   return new SceneFlexItem({
-    width: 'calc(50% - 4px)',
-    height: 300,
+    ...PANEL_STYLES,
     body: PanelBuilders.timeseries()
       .setTitle(panelTitle)
       .setData(query)

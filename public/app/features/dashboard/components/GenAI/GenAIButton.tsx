@@ -1,52 +1,56 @@
 import { css } from '@emotion/css';
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Button, Spinner, useStyles2, Link, Tooltip } from '@grafana/ui';
 
-import { Message, generateTextWithLLM, isLLMPluginEnabled } from './utils';
+import { useOpenAIStream } from './hooks';
+import { OPEN_AI_MODEL, Message } from './utils';
 
 export interface GenAIButtonProps {
+  // Button label text
   text?: string;
+  // Button label text when loading
   loadingText?: string;
+  // Button click handler
   onClick?: (e: React.MouseEvent<HTMLButtonElement>) => void;
+  // Messages to send to the LLM plugin
   messages: Message[];
-  onReply: (response: string, isDone: boolean) => void;
+  // Callback function that the LLM plugin streams responses to
+  onGenerate: (response: string) => void;
+  // Temperature for the LLM plugin. Default is 1.
+  // Closer to 0 means more conservative, closer to 1 means more creative.
+  temperature?: number;
 }
 
 export const GenAIButton = ({
   text = 'Auto-generate',
   loadingText = 'Generating',
-  onClick,
+  onClick: onClickProp,
   messages,
-  onReply,
+  onGenerate,
+  temperature = 1,
 }: GenAIButtonProps) => {
   const styles = useStyles2(getStyles);
-  const [enabled, setEnabled] = useState(true);
-  const [loading, setLoading] = useState(false);
 
-  const replyHandler = (response: string, isDone: boolean) => {
-    setLoading(!isDone);
-    onReply(response, isDone);
+  // TODO: Implement error handling (use error object from hook)
+  const { setMessages, reply, isGenerating, value } = useOpenAIStream(OPEN_AI_MODEL, temperature);
+
+  const onClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+    onClickProp?.(e);
+    setMessages(messages);
   };
 
-  const onGenerate = (e: React.MouseEvent<HTMLButtonElement>) => {
-    onClick?.(e);
-    setLoading(true);
-    generateTextWithLLM(messages, replyHandler);
-  };
-
-  useEffect(() => {
-    isLLMPluginEnabled()
-      .then(setEnabled)
-      .catch(() => setEnabled(false));
-  }, []);
+  // Todo: Consider other options for `"` sanitation
+  if (isGenerating) {
+    onGenerate(reply.replace(/^"|"$/g, ''));
+  }
 
   const getIcon = () => {
-    if (loading) {
+    if (isGenerating) {
       return undefined;
     }
-    if (!enabled) {
+    if (!value?.enabled) {
       return 'exclamation-circle';
     }
     return 'ai';
@@ -54,9 +58,9 @@ export const GenAIButton = ({
 
   return (
     <div className={styles.wrapper}>
-      {loading && <Spinner size={14} />}
+      {isGenerating && <Spinner size={14} />}
       <Tooltip
-        show={enabled ? false : undefined}
+        show={value?.enabled ? false : undefined}
         interactive
         content={
           <span>
@@ -65,8 +69,8 @@ export const GenAIButton = ({
           </span>
         }
       >
-        <Button icon={getIcon()} onClick={onGenerate} fill="text" size="sm" disabled={loading || !enabled}>
-          {!loading ? text : loadingText}
+        <Button icon={getIcon()} onClick={onClick} fill="text" size="sm" disabled={isGenerating || !value?.enabled}>
+          {!isGenerating ? text : loadingText}
         </Button>
       </Tooltip>
     </div>

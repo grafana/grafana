@@ -32,6 +32,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       gap: theme.spacing(2),
       flexDirection: 'column',
       width: '100%',
+      overflowX: 'auto',
     }),
     table: css({
       borderRadius: theme.shape.radius.default,
@@ -145,6 +146,11 @@ interface Props<TableData extends object> {
    * Render function for the expanded row. if not provided, the tables rows will not be expandable.
    */
   renderExpandedRow?: (row: TableData) => ReactNode;
+  /**
+   * A custom function to fetch data when the table is sorted. If not provided, the table will be sorted client-side.
+   * It's important for this function to have a stable identity, e.g. being wrapped into useCallback to prevent unnecessary
+   * re-renders of the table.
+   */
   fetchData?: FetchDataFunc<TableData>;
 }
 
@@ -186,7 +192,8 @@ export function InteractiveTable<TableData extends object>({
       autoResetExpanded: false,
       autoResetSortBy: false,
       disableMultiSort: true,
-      manualSortBy: true,
+      // If fetchData is provided, we disable client-side sorting
+      manualSortBy: Boolean(fetchData),
       getRowId,
       initialState: {
         hiddenColumns: [
@@ -202,6 +209,7 @@ export function InteractiveTable<TableData extends object>({
   );
 
   const { getTableProps, getTableBodyProps, headerGroups, prepareRow } = tableInstance;
+
   const { sortBy } = tableInstance.state;
   useEffect(() => {
     if (fetchData) {

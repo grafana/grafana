@@ -5,8 +5,8 @@ import { useAsync } from 'react-use';
 import { CoreApp, QueryEditorProps, TimeRange } from '@grafana/data';
 import { LoadingPlaceholder } from '@grafana/ui';
 
-import { normalizeQuery, PhlareDataSource } from '../datasource';
-import { PhlareDataSourceOptions, ProfileTypeMessage, Query } from '../types';
+import { normalizeQuery, PyroscopeDataSource } from '../datasource';
+import { PyroscopeDataSourceOptions, ProfileTypeMessage, Query } from '../types';
 
 import { EditorRow } from './EditorRow';
 import { EditorRows } from './EditorRows';
@@ -14,7 +14,7 @@ import { LabelsEditor } from './LabelsEditor';
 import { ProfileTypesCascader, useProfileTypes } from './ProfileTypesCascader';
 import { QueryOptions } from './QueryOptions';
 
-export type Props = QueryEditorProps<PhlareDataSource, Query, PhlareDataSourceOptions>;
+export type Props = QueryEditorProps<PyroscopeDataSource, Query, PyroscopeDataSourceOptions>;
 
 export function QueryEditor(props: Props) {
   const { onChange, onRunQuery, datasource, query, range, app } = props;
@@ -106,7 +106,7 @@ function defaultProfileType(profileTypes: ProfileTypeMessage[]): string {
 
 function useLabels(
   range: TimeRange | undefined,
-  datasource: PhlareDataSource,
+  datasource: PyroscopeDataSource,
   query: Query,
   onChange: (value: Query) => void
 ) {

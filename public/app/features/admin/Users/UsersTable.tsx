@@ -1,6 +1,5 @@
 import { css } from '@emotion/css';
 import React, { useMemo } from 'react';
-import { DefaultSortTypes } from 'react-table';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import {
@@ -80,7 +79,7 @@ export const UsersTable = ({
               header: 'Licensed role',
               cell: LicensedRoleCell,
               // Needs the assertion here, the types are not inferred correctly due to the  conditional assignment
-              sortType: 'string' as DefaultSortTypes,
+              sortType: ('string' as const),
             },
           ]
         : []),
@@ -175,12 +174,10 @@ const LastSeenAtCell = ({ cell: { value } }: Cell<'lastSeenAtAge'>) => {
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    disabled: css`
-      color: ${theme.colors.text.disabled};
-    `,
-    row: css`
-      display: flex;
-      align-items: center;
-    `,
+    disabled: css({ color: theme.colors.text.disabled }),
+    row: css({
+      display: 'flex',
+      alignItems: 'center',
+    }),
   };
 };

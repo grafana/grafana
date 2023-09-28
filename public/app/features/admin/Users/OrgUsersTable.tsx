@@ -72,6 +72,8 @@ export const OrgUsersTable = ({
 }: Props) => {
   const [userToRemove, setUserToRemove] = useState<OrgUser | null>(null);
   const [roleOptions, setRoleOptions] = useState<Role[]>([]);
+  const enableSort = totalPages === 1;
+  const styles = useStyles2(getStyles);
 
   useEffect(() => {
     async function fetchOptions() {
@@ -100,25 +102,27 @@ export const OrgUsersTable = ({
         id: 'login',
         header: 'Login',
         cell: ({ cell: { value } }: Cell<'login'>) => <div>{value}</div>,
-        sortType: 'string',
+        sortType: enableSort ? 'string' : undefined,
       },
       {
         id: 'email',
         header: 'Email',
         cell: ({ cell: { value } }: Cell<'email'>) => value,
-        sortType: 'string',
+        sortType: enableSort ? 'string' : undefined,
       },
       {
         id: 'name',
         header: 'Name',
         cell: ({ cell: { value } }: Cell<'name'>) => value,
-        sortType: 'string',
+        sortType: enableSort ? 'string' : undefined,
       },
       {
         id: 'lastSeenAtAge',
         header: 'Last active',
         cell: ({ cell: { value } }: Cell<'lastSeenAtAge'>) => value,
-        sortType: (a, b) => new Date(a.original.lastSeenAt).getTime() - new Date(b.original.lastSeenAt).getTime(),
+        sortType: enableSort
+          ? (a, b) => new Date(a.original.lastSeenAt).getTime() - new Date(b.original.lastSeenAt).getTime()
+          : undefined,
       },
       {
         id: 'role',
@@ -182,7 +186,7 @@ export const OrgUsersTable = ({
         },
       },
     ],
-    [orgId, roleOptions, onRoleChange]
+    [orgId, roleOptions, onRoleChange, enableSort]
   );
 
   return (
@@ -228,11 +232,24 @@ const InfoCell = ({ row: { original } }: Cell) => {
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  row: css`
-    display: flex;
-    align-items: center;
-  `,
-  icon: css`
-    margin-left: ${theme.spacing(1)};
-  `,
+  row: css({
+    display: 'flex',
+    alignItems: 'center',
+  }),
+  icon: css({
+    marginLeft: theme.spacing(1),
+  }),
+  // Enable RolePicker overflow
+  wrapper: css({
+    display: 'flex',
+    flexDirection: 'column',
+    overflowX: 'auto',
+    overflowY: 'hidden',
+    minHeight: '100vh',
+    width: '100%',
+    '& > div': {
+      overflowX: 'unset',
+      marginBottom: theme.spacing(2),
+    },
+  }),
 });

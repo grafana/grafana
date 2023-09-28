@@ -120,36 +120,34 @@ export function UserListAdminPage() {
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    filter: css`
-      margin: 0 ${theme.spacing(1)};
+    filter: css({
+      margin: theme.spacing(0, 1),
+      [theme.breakpoints.down('sm')]: {
+        margin: 0,
+      },
+    }),
+    actionBar: css({
+      marginBottom: theme.spacing(2),
+      display: 'flex',
+      alignItems: 'flex-start',
+      gap: theme.spacing(2),
+      [theme.breakpoints.down('sm')]: {
+        flexWrap: 'wrap',
+      },
+    }),
+    row: css({
+      display: 'flex',
+      alignItems: 'flex-start',
+      textAlign: 'left',
+      marginBottom: theme.spacing(0.5),
+      flexGrow: 1,
 
-      ${theme.breakpoints.down('sm')} {
-        margin: 0;
-      }
-    `,
-    actionBar: css`
-      margin-bottom: ${theme.spacing(2)};
-      display: flex;
-      align-items: flex-start;
-      gap: ${theme.spacing(2)};
-
-      ${theme.breakpoints.down('sm')} {
-        flex-wrap: wrap;
-      }
-    `,
-    row: css`
-      display: flex;
-      align-items: flex-start;
-      text-align: left;
-      margin-bottom: ${theme.spacing(0.5)};
-      flex-grow: 1;
-
-      ${theme.breakpoints.down('sm')} {
-        flex-wrap: wrap;
-        gap: ${theme.spacing(2)};
-        width: 100%;
-      }
-    `,
+      [theme.breakpoints.down('sm')]: {
+        flexWrap: 'wrap',
+        gap: theme.spacing(2),
+        width: '100%',
+      },
+    }),
   };
 };
 

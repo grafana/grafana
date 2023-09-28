@@ -19,10 +19,10 @@ export const Avatar = ({ src, alt }: AvatarProps) => {
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    image: css`
-      width: ${theme.spacing(3)};
-      height: ${theme.spacing(3)};
-      border-radius: 50%;
-    `,
+    image: css({
+      width: theme.spacing(3),
+      height: theme.spacing(3),
+      borderRadius: theme.shape.radius.circle,
+    }),
   };
 };

@@ -51,6 +51,7 @@ export const TeamList = ({
   changeSort,
 }: Props) => {
   const [roleOptions, setRoleOptions] = useState<Role[]>([]);
+  const enableSort = totalPages === 1;
 
   useEffect(() => {
     loadTeams(true);

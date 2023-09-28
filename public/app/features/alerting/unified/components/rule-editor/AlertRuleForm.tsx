@@ -251,7 +251,7 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
         </Button>
       ) : null}
 
-      {existing ? (
+      {existing && isCortexLokiOrRecordingRule(watch) && (
         <Button
           variant="secondary"
           type="button"
@@ -259,9 +259,9 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
           disabled={submitState.loading}
           size="sm"
         >
-          {isCortexLokiOrRecordingRule(watch) ? 'Edit YAML' : 'Export'}
+          Edit YAML
         </Button>
-      ) : null}
+      )}
     </HorizontalGroup>
   );
 

@@ -835,6 +835,55 @@ describe('PrometheusDatasource', () => {
       const result = ds.applyTemplateVariables(query, {});
       expect(result).toMatchObject({ expr: 'test{job="bar", k1="v1", k2!="v2"}' });
     });
+
+    it('should add ad-hoc filters only to expr', () => {
+      replaceMock.mockImplementation((a: string) => a?.replace('$A', '99') ?? a);
+      getAdhocFiltersMock.mockReturnValue([
+        {
+          key: 'k1',
+          operator: '=',
+          value: 'v1',
+        },
+        {
+          key: 'k2',
+          operator: '!=',
+          value: 'v2',
+        },
+      ]);
+
+      const query = {
+        expr: 'test{job="bar"} > $A',
+        refId: 'A',
+      };
+
+      const result = ds.applyTemplateVariables(query, {});
+      expect(result).toMatchObject({ expr: 'test{job="bar", k1="v1", k2!="v2"} > 99' });
+    });
+
+    it('should add ad-hoc filters only to expr and expression has template variable as label value??', () => {
+      const searchPattern = /\$A/g;
+      replaceMock.mockImplementation((a: string) => a?.replace(searchPattern, '99') ?? a);
+      getAdhocFiltersMock.mockReturnValue([
+        {
+          key: 'k1',
+          operator: '=',
+          value: 'v1',
+        },
+        {
+          key: 'k2',
+          operator: '!=',
+          value: 'v2',
+        },
+      ]);
+
+      const query = {
+        expr: 'test{job="$A"} > $A',
+        refId: 'A',
+      };
+
+      const result = ds.applyTemplateVariables(query, {});
+      expect(result).toMatchObject({ expr: 'test{job="99", k1="v1", k2!="v2"} > 99' });
+    });
   });
 
   describe('metricFindQuery', () => {
