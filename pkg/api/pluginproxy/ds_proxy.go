@@ -262,6 +262,10 @@ func (proxy *DataSourceProxy) director(req *http.Request) {
 			}
 		}
 	}
+
+	if token := proxy.ctx.SignedInUser.GetIDToken(); token != "" {
+		req.Header.Set("X-Grafana-Id", token)
+	}
 }
 
 func (proxy *DataSourceProxy) validateRequest() error {
