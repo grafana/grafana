@@ -1081,10 +1081,8 @@ function getServiceGraphView(
   tempoDatasourceUid: string
 ) {
   let df: any = { fields: [] };
-  // TODO need help with this one, there is no filter function on a DataFrame or DataFrameDTO
-  // Is it a typo?
-  // @ts-ignore (just so I can keep going)
-  const rate = rateResponse.data[0]?.filter((x: { refId: string }) => {
+
+  const rate = rateResponse.rates.filter((x) => {
     return x.refId === buildExpr(rateMetric, defaultTableFilter, request);
   });
   const errorRate = secondResponse.data.filter((x) => {
