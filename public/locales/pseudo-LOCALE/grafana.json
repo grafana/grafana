@@ -216,12 +216,12 @@
     }
   },
   "dashboard-import-page": {
-    "cancel": "",
+    "cancel": "Cäŉčęľ",
     "field-label": "Fįŉđ äŉđ įmpőřŧ đäşĥþőäřđş ƒőř čőmmőŉ äppľįčäŧįőŉş äŧ <2>ģřäƒäŉä.čőm/đäşĥþőäřđş</2>",
     "field-placeholder": "Ğřäƒäŉä.čőm đäşĥþőäřđ ŮŖĿ őř ĨĐ",
     "field-required": "Å Ğřäƒäŉä đäşĥþőäřđ ŮŖĿ őř ĨĐ įş řęqūįřęđ",
-    "json-field-label": "",
-    "json-field-required": "",
+    "json-field-label": "Ĩmpőřŧ vįä đäşĥþőäřđ ĴŜØŃ mőđęľ",
+    "json-field-required": "Ńęęđ ä đäşĥþőäřđ ĴŜØŃ mőđęľ",
     "load-button": "Ŀőäđ",
     "primary-text": "Ůpľőäđ đäşĥþőäřđ ĴŜØŃ ƒįľę",
     "secondary-text": "Đřäģ äŉđ đřőp ĥęřę őř čľįčĸ ŧő þřőŵşę"
@@ -954,9 +954,9 @@
   },
   "utils": {
     "invalid-dashboard-id": "Cőūľđ ŉőŧ ƒįŉđ ä väľįđ Ğřäƒäŉä.čőm ĨĐ",
-    "invalid-json": "",
-    "tags-expected-array": "",
-    "tags-expected-strings": ""
+    "invalid-json": "Ńőŧ väľįđ ĴŜØŃ",
+    "tags-expected-array": "ŧäģş ęχpęčŧęđ äřřäy",
+    "tags-expected-strings": "ŧäģş ęχpęčŧęđ äřřäy őƒ şŧřįŉģş"
   },
   "variable": {
     "adhoc": {
