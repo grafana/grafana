@@ -14,7 +14,7 @@ import {
 import { InlineField, InlineFieldRow, InlineSwitch } from '@grafana/ui';
 import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
 
-import { getHelperContent } from '../docs/getHelperContent';
+import { getHelperContent } from '../docs/getTransformationContent';
 
 export const HistogramTransformerEditor = ({
   input,

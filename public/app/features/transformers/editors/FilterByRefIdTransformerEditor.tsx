@@ -11,7 +11,7 @@ import {
 import { FilterFramesByRefIdTransformerOptions } from '@grafana/data/src/transformations/transformers/filterByRefId';
 import { HorizontalGroup, FilterPill, FieldValidationMessage } from '@grafana/ui';
 
-import { getHelperContent } from '../docs/getHelperContent';
+import { getHelperContent } from '../docs/getTransformationContent';
 
 interface FilterByRefIdTransformerEditorProps extends TransformerUIProps<FilterFramesByRefIdTransformerOptions> {}
 

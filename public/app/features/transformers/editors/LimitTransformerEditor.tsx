@@ -10,7 +10,7 @@ import {
 import { LimitTransformerOptions } from '@grafana/data/src/transformations/transformers/limit';
 import { InlineField, InlineFieldRow, Input } from '@grafana/ui';
 
-import { getHelperContent } from '../docs/getHelperContent';
+import { getHelperContent } from '../docs/getTransformationContent';
 
 export const LimitTransformerEditor = ({ options, onChange }: TransformerUIProps<LimitTransformerOptions>) => {
   const onSetLimit = useCallback(

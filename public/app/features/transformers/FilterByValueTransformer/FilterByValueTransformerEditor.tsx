@@ -23,7 +23,7 @@ import {
 } from '@grafana/data/src/transformations/transformers/filterByValue';
 import { Button, RadioButtonGroup, stylesFactory } from '@grafana/ui';
 
-import { getHelperContent } from '../docs/getHelperContent';
+import { getHelperContent } from '../docs/getTransformationContent';
 
 import { DataFrameFieldsInfo, FilterByValueFilterEditor } from './FilterByValueFilterEditor';
 

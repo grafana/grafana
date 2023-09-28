@@ -27,7 +27,7 @@ import {
 } from '@grafana/data/src/transformations/transformers/calculateField';
 import { FilterPill, HorizontalGroup, Input, LegacyForms, Select, StatsPicker } from '@grafana/ui';
 
-import { getHelperContent } from '../docs/getHelperContent';
+import { getTransformationContent } from '../docs/getTransformationContent';
 
 interface CalculateFieldTransformerEditorProps extends TransformerUIProps<CalculateFieldTransformerOptions> {}
 
@@ -385,8 +385,8 @@ export const calculateFieldTransformRegistryItem: TransformerRegistryItem<Calcul
   id: DataTransformerID.calculateField,
   editor: CalculateFieldTransformerEditor,
   transformation: standardTransformers.calculateFieldTransformer,
-  name: 'Add field from calculation',
+  name: getTransformationContent(DataTransformerID.calculateField).name,
   description: 'Use the row values to calculate a new field.',
   categories: new Set([TransformerCategory.CalculateNewFields]),
-  help: getHelperContent(DataTransformerID.calculateField),
+  help: getTransformationContent(DataTransformerID.calculateField).content,
 };

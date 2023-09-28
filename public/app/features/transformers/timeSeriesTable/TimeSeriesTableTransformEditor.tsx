@@ -2,7 +2,7 @@ import React from 'react';
 
 import { PluginState, TransformerRegistryItem, TransformerUIProps } from '@grafana/data';
 
-import { getHelperContent } from '../docs/getHelperContent';
+import { getHelperContent } from '../docs/getTransformationContent';
 
 import { timeSeriesTableTransformer, TimeSeriesTableTransformerOptions } from './timeSeriesTableTransformer';
 

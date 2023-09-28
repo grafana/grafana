@@ -14,7 +14,7 @@ import {
 } from '@grafana/data/src/transformations/transformers/concat';
 import { Input, Select } from '@grafana/ui';
 
-import { getHelperContent } from '../docs/getHelperContent';
+import { getHelperContent } from '../docs/getTransformationContent';
 
 interface ConcatenateTransformerEditorProps extends TransformerUIProps<ConcatenateTransformerOptions> {}
 

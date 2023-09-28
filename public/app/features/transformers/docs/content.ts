@@ -5,7 +5,7 @@ interface Transformation {
 
 export const transformationDocsContent: Record<string, Transformation> = {
   calculateField: {
-    name: '',
+    name: 'Add field from calculation',
     content: `
     Use this transformation to add a new field calculated from two other fields. Each transformation allows you to add one new field.
   

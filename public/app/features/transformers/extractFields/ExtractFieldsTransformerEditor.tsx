@@ -12,7 +12,7 @@ import {
 import { InlineField, InlineFieldRow, Select, InlineSwitch } from '@grafana/ui';
 import { FieldNamePicker } from '@grafana/ui/src/components/MatchersUI/FieldNamePicker';
 
-import { getHelperContent } from '../docs/getHelperContent';
+import { getHelperContent } from '../docs/getTransformationContent';
 
 import { JSONPathEditor } from './components/JSONPathEditor';
 import { extractFieldsTransformer } from './extractFields';

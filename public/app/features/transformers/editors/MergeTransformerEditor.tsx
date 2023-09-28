@@ -10,7 +10,7 @@ import {
 import { MergeTransformerOptions } from '@grafana/data/src/transformations/transformers/merge';
 import { FieldValidationMessage } from '@grafana/ui';
 
-import { getHelperContent } from '../docs/getHelperContent';
+import { getHelperContent } from '../docs/getTransformationContent';
 
 export const MergeTransformerEditor = ({ input, options, onChange }: TransformerUIProps<MergeTransformerOptions>) => {
   if (input.length <= 1) {
