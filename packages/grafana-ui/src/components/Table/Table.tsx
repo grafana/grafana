@@ -115,15 +115,7 @@ export const Table = memo((props: Props) => {
   // Internal react table state reducer
   const stateReducer = useTableStateReducer({
     ...props,
-    onSortByChange: () => {
-      // Collapse all rows. This prevents a known bug that causes the size of the rows to be incorrect due to
-      // using `VariableSizeList` and `useExpanded` together.
-      if (toggleAllRowsExpandedRef.current) {
-        toggleAllRowsExpandedRef.current(false);
-      } else {
-        console.error('toggleAllRowsExpandedRef.current is undefined');
-      }
-    },
+    toggleAllRowsExpanded: toggleAllRowsExpandedRef.current,
   });
 
   const options: any = useMemo(
@@ -269,15 +261,15 @@ export const Table = memo((props: Props) => {
       rows,
       enablePagination,
       prepareRow,
+      state.expanded,
       tableStyles,
       nestedDataField,
+      width,
+      cellHeight,
       page,
       onCellFilterAdded,
       timeRange,
       data,
-      width,
-      cellHeight,
-      state.expanded,
     ]
   );
 

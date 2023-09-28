@@ -1,15 +1,34 @@
 import { useCallback } from 'react';
 
-import { getFieldDisplayName } from '@grafana/data';
+import { DataFrame, getFieldDisplayName } from '@grafana/data';
 
-import { TableSortByFieldState, GrafanaTableColumn, GrafanaTableState, Props } from './types';
+import {
+  TableSortByFieldState,
+  GrafanaTableColumn,
+  GrafanaTableState,
+  Props,
+  TableColumnResizeActionCallback,
+  TableSortByActionCallback,
+} from './types';
 
 export interface ActionType {
   type: string;
   id: string | undefined;
 }
 
-export function useTableStateReducer({ onColumnResize, onSortByChange, data }: Props) {
+interface TableStateReducerProps {
+  onColumnResize?: TableColumnResizeActionCallback;
+  onSortByChange?: TableSortByActionCallback;
+  toggleAllRowsExpanded: (x: boolean) => void; // TODO;
+  data: DataFrame;
+}
+
+export function useTableStateReducer({
+  onColumnResize,
+  onSortByChange,
+  toggleAllRowsExpanded,
+  data,
+}: TableStateReducerProps) {
   return useCallback(
     (newState: GrafanaTableState, action: ActionType) => {
       switch (action.type) {
@@ -46,6 +65,13 @@ export function useTableStateReducer({ onColumnResize, onSortByChange, data }: P
 
             onSortByChange(sortByFields);
           }
+          toggleAllRowsExpanded(false);
+          console.log('toggleSortBy', newState, action);
+          return {
+            ...newState,
+            lastExpandedIndex: 0,
+            toggleRowExpandedCounter: 0,
+          };
         case 'toggleRowExpanded': {
           if (action.id) {
             return {
@@ -59,7 +85,7 @@ export function useTableStateReducer({ onColumnResize, onSortByChange, data }: P
 
       return newState;
     },
-    [data, onColumnResize, onSortByChange]
+    [data, onColumnResize, onSortByChange, toggleAllRowsExpanded]
   );
 }
 
