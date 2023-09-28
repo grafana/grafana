@@ -85,7 +85,7 @@ export function createTableFrame(
   for (let field of logsFrame.fields) {
     let hasMatch = false;
     if (field.type === FieldType.string) {
-      const values = field.values;
+      const values = field.values!;
       for (let i = 0; i < values.length; i++) {
         const line = values[i];
         if (line) {
@@ -93,7 +93,7 @@ export function createTableFrame(
             const match = (line as string).match(traceRegex);
             if (match) {
               const traceId = match[1];
-              const time = timeField ? timeField.values[i] : null;
+              const time = timeField ? timeField.values![i] : null;
               tableFrame.fields[0].values.push(time);
               tableFrame.fields[1].values.push(traceId);
               tableFrame.fields[2].values.push(line);
