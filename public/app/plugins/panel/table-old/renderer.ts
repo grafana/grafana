@@ -21,7 +21,7 @@ import { ColumnRender, TableRenderModel, ColumnStyle } from './types';
 
 export class TableRenderer {
   formatters: any[] = [];
-  colorState: any;
+  colorState: Record<string, string | null> = {};
 
   constructor(
     private panel: { styles: ColumnStyle[]; pageSize: number },
@@ -118,8 +118,11 @@ export class TableRenderer {
         }
 
         // if is an epoch (numeric string and len > 12)
-        if (isString(v) && !isNaN(v as any) && v.length > 12) {
-          v = parseInt(v, 10);
+        if (isString(v) && v.length > 12) {
+          const parsedString = parseInt(v, 10);
+          if (!isNaN(parsedString)) {
+            v = parsedString;
+          }
         }
 
         if (!column.style.dateFormat) {
@@ -136,7 +139,7 @@ export class TableRenderer {
     }
 
     if (column.style.type === 'string') {
-      return (v: any): any => {
+      return (v: any) => {
         if (isArray(v)) {
           v = v.join(', ');
         }
@@ -192,7 +195,7 @@ export class TableRenderer {
     if (column.style.type === 'number') {
       const valueFormatter = getValueFormat(column.unit || column.style.unit);
 
-      return (v: any): any => {
+      return (v: any) => {
         if (v === null || v === void 0) {
           return '-';
         }
@@ -211,7 +214,7 @@ export class TableRenderer {
     };
   }
 
-  setColorState(value: any, style: ColumnStyle) {
+  setColorState(value: unknown, style: ColumnStyle) {
     if (!style.colorMode) {
       return;
     }

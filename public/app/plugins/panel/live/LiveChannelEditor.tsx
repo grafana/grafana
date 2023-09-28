@@ -53,33 +53,29 @@ export class LiveChannelEditor extends PureComponent<Props, State> {
     if (v.value) {
       this.props.onChange({
         scope: v.value,
-        namespace: undefined as unknown as string,
-        path: undefined as unknown as string,
-      } as LiveChannelAddress);
+        namespace: undefined,
+        path: undefined,
+      });
     }
   };
 
   onNamespaceChanged = (v: SelectableValue<string>) => {
-    const update = {
+    const update: LiveChannelAddress = {
       scope: this.props.value?.scope,
-      path: undefined as unknown as string,
-    } as LiveChannelAddress;
+      namespace: v.value,
+      path: undefined,
+    };
 
-    if (v.value) {
-      update.namespace = v.value;
-    }
     this.props.onChange(update);
   };
 
   onPathChanged = (v: SelectableValue<string>) => {
     const { value, onChange } = this.props;
-    const update = {
+    const update: LiveChannelAddress = {
       scope: value.scope,
       namespace: value.namespace,
-    } as LiveChannelAddress;
-    if (v.value) {
-      update.path = v.value;
-    }
+      path: v.value,
+    };
     onChange(update);
   };
 
