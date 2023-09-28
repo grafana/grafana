@@ -1,5 +1,5 @@
 export const transformationDocsContent = {
-  calculateFieldHelper: {
+  calculateField: {
     name: '',
     content: `
     Use this transformation to add a new field calculated from two other fields. Each transformation allows you to add one new field.
@@ -15,5 +15,55 @@ export const transformationDocsContent = {
     - **Replace all fields -** (Optional) Select this option if you want to hide all other fields and display only your calculated field in the visualization.
     `,
   },
-  
+  concatenate: {
+    name: '',
+    content: `
+    Use this transformation to combine all fields from all frames into one result. Consider the following:
+
+    **Query A:**
+
+    | Temp  | Uptime    |
+    | ----- | --------- |
+    | 15.4  | 1230233   |
+
+    Query B:
+
+    | AQI   | Errors |
+    | ----- | ------ |
+    | 3.2   | 5      |
+
+    After you concatenate the fields, the data frame would be:
+
+    | Temp  | Uptime   | AQI   | Errors |
+    | ----- | -------- | ----- | ------ |
+    | 15.4  | 1230233  | 3.2   | 5      |
+    `,
+  },
+  // configFromData: configFromQueryHelper,
+  // convertFieldType: convertFieldTypeHelper,
+  // extractFields: extractFieldsHelper,
+  // fieldLookup: fieldLookupHelper,
+  // filterByRefId: filterByRefIdHelper,
+  // filterByValue: filterByValueHelper,
+  // filterFieldsByName: filterFieldsByNameHelper,
+  // formatTime: formatTimeHelper,
+  // groupBy: groupByHelper,
+  // groupingToMatrix: groupingToMatrixHelper,
+  // heatmap: createHeatmapHelper,
+  // histogram: histogramHelper,
+  // joinByField: joinByFieldHelper,
+  // joinByLabels: joinByLabelsHelper,
+  // labelsToFields: labelsToFieldsHelper,
+  // limit: limitHelper,
+  // merge: mergeHelper,
+  // organize: organizeFieldsHelper,
+  // partitionByValues: partitionByValuesHelper,
+  // prepareTimeSeries: prepareTimeSeriesHelper,
+  // reduce: reduceHelper,
+  // renameByRegex: renameByRegexHelper,
+  // rowsToFields: rowsToFieldsHelper,
+  // seriesToRows: seriesToRowsHelper,
+  // sortBy: sortByHelper,
+  // spatial: spatialHelper,
+  // timeSeriesTable: timeSeriesTableHelper,
 };
