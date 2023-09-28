@@ -210,6 +210,12 @@
       "unmark-favorite": "取消标记为收藏"
     }
   },
+  "dashboard-settings": {
+    "json-editor": {
+      "save-button": "",
+      "subtitle": ""
+    }
+  },
   "data-source-picker": {
     "open-advanced-button": ""
   },
