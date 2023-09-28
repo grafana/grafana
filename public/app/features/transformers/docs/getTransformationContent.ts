@@ -1,14 +1,6 @@
 import { transformationDocsContent, getLinkToDocs } from './content';
 
 export function getTransformationContent(id: string) {
-  // if (id in transformationDocsContent) {
-  //   return `
-  //   ${transformationDocsContent[id]}
-  //   ${getLinkToDocs()}
-  //   `;
-  // }
-
-  // return getLinkToDocs();
   if (id in transformationDocsContent) {
     const { name, content } = transformationDocsContent[id];
     return {

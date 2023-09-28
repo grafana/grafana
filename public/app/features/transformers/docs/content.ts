@@ -21,7 +21,7 @@ export const transformationDocsContent: Record<string, Transformation> = {
     `,
   },
   concatenate: {
-    name: '',
+    name: 'Concatenate fields',
     content: `
     Use this transformation to combine all fields from all frames into one result. Consider the following:
 
