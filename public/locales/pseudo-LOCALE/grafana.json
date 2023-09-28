@@ -309,9 +309,24 @@
     }
   },
   "library-panels": {
+    "modal": {
+      "button-cancel": "",
+      "button-view-panel1": "",
+      "button-view-panel2": "",
+      "contianer-dashboard": "",
+      "contianer-dashboards": "",
+      "contianer-prefix": "",
+      "contianer-suffix": "",
+      "panel-not-linked": "Päŉęľ įş ŉőŧ ľįŉĸęđ ŧő ä đäşĥþőäřđ. Åđđ ŧĥę päŉęľ ŧő ä đäşĥþőäřđ äŉđ řęŧřy.",
+      "title": ""
+    },
     "save": {
       "error": "Ēřřőř şävįŉģ ľįþřäřy päŉęľ: \"{{errorMsg}}\"",
       "success": "Ŀįþřäřy päŉęľ şävęđ"
+    },
+    "select": {
+      "no-dashboard-message": "",
+      "placeholder": ""
     }
   },
   "login": {

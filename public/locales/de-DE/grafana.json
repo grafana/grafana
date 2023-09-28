@@ -309,9 +309,24 @@
     }
   },
   "library-panels": {
+    "modal": {
+      "button-cancel": "",
+      "button-view-panel1": "",
+      "button-view-panel2": "",
+      "contianer-dashboard": "",
+      "contianer-dashboards": "",
+      "contianer-prefix": "",
+      "contianer-suffix": "",
+      "panel-not-linked": "",
+      "title": ""
+    },
     "save": {
       "error": "Fehler beim Speichern des Bibliotheks-Panels: „{{errorMsg}}“",
       "success": "Bibliotheks-Panel wurde gespeichert"
+    },
+    "select": {
+      "no-dashboard-message": "",
+      "placeholder": ""
     }
   },
   "login": {

@@ -309,9 +309,24 @@
     }
   },
   "library-panels": {
+    "modal": {
+      "button-cancel": "<0>Cancel</0>",
+      "button-view-panel1": "View panel in {{label}}...",
+      "button-view-panel2": "View panel in dashboard...",
+      "contianer-dashboard": "dashboard",
+      "contianer-dashboards": "dashboards",
+      "contianer-prefix": "This panel is being used in  ",
+      "contianer-suffix": ". Please choose which dashboard to view the panel in:",
+      "panel-not-linked": "Panel is not linked to a dashboard. Add the panel to a dashboard and retry.",
+      "title": "View panel in dashboard"
+    },
     "save": {
       "error": "Error saving library panel: \"{{errorMsg}}\"",
       "success": "Library panel saved"
+    },
+    "select": {
+      "no-dashboard-message": "No dashboards found",
+      "placeholder": "Start typing to search for dashboard"
     }
   },
   "login": {

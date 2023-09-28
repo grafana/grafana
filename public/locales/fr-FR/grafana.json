@@ -314,9 +314,24 @@
     }
   },
   "library-panels": {
+    "modal": {
+      "button-cancel": "",
+      "button-view-panel1": "",
+      "button-view-panel2": "",
+      "contianer-dashboard": "",
+      "contianer-dashboards": "",
+      "contianer-prefix": "",
+      "contianer-suffix": "",
+      "panel-not-linked": "",
+      "title": ""
+    },
     "save": {
       "error": "Erreur lors de l'enregistrement du panneau de bibliothèque\u00a0: \"{{errorMsg}}\"",
       "success": "Panneau de bibliothèque enregistré"
+    },
+    "select": {
+      "no-dashboard-message": "",
+      "placeholder": ""
     }
   },
   "login": {
