@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Button, Spinner, useStyles2, Link, Tooltip, Toggletip, Text } from '@grafana/ui';
@@ -37,28 +37,30 @@ export const GenAIButton = ({
   const styles = useStyles2(getStyles);
 
   const [history, setHistory] = useState<string[]>([]);
+  const [response, setResponse] = useState<string>('');
 
   // TODO: Implement error handling (use error object from hook)
   const { setMessages, reply, isGenerating, value } = useOpenAIStream(OPEN_AI_MODEL, temperature);
 
-  // const replyHandler = (response: string, isDone: boolean) => {
-  //   setLoading(!isDone);
-  //   onGenerate(response, isDone);
-  //
-  //   if (isDone) {
-  //     setHistory([...history, response]);
-  //   }
-  // };
-  //
   const onClick = (e: React.MouseEvent<HTMLButtonElement>) => {
-    onClickProp?.(e);
-    setMessages(messages);
-
-    // if (!history.length) {
-    //   setLoading(true);
-    //   generateTextWithLLM(messages, replyHandler, temperature);
-    // }
+    if (history.length === 0) {
+      onClickProp?.(e);
+      setMessages(messages);
+    }
   };
+
+  useEffect(() => {
+    if (reply !== '') {
+      setResponse(reply);
+    }
+  }, [reply]);
+
+  useEffect(() => {
+    if (response !== '' && !isGenerating) {
+      setHistory([response.replace(/^"|"$/g, ''), ...history]);
+      setResponse('');
+    }
+  }, [history, isGenerating, reply, response]);
 
   // Todo: Consider other options for `"` sanitation
   if (isGenerating) {
