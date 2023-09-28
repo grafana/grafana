@@ -71,6 +71,7 @@ describe('buildVisualQueryFromString', () => {
     );
   });
 
+  // Visual query builder does not currently have support for nested binary operations, for now we should throw an error in the UI letting users know that their query will be misinterpreted
   it('throws error when visual query parse is ambiguous', () => {
     expect(
       buildVisualQueryFromString('topk(5, node_arp_entries / node_arp_entries{cluster="dev-eu-west-2"})')
