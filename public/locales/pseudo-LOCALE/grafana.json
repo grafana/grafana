@@ -225,6 +225,11 @@
   },
   "explore": {
     "add-to-dashboard": "Åđđ ŧő đäşĥþőäřđ",
+    "table": {
+      "no-data": "0 şęřįęş řęŧūřŉęđ",
+      "title": "Ŧäþľę",
+      "title-with-name": "Ŧäþľę - {{name}}"
+    },
     "toolbar": {
       "aria-label": "Ēχpľőřę ŧőőľþäř",
       "copy-shortened-link": "Cőpy şĥőřŧęŉęđ ľįŉĸ",
