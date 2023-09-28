@@ -1,5 +1,3 @@
-import { describe } from 'yargs';
-
 import { buildVisualQueryFromString } from './parsing';
 import { PromOperationId, PromVisualQuery } from './types';
 
