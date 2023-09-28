@@ -197,7 +197,7 @@ class UnthemedDashboardImport extends PureComponent<Props> {
                 </Field>
                 <HorizontalGroup>
                   <Button type="submit" data-testid={selectors.components.DashboardImportPage.submit}>
-                    Load
+                    <Trans i18nKey="dashboard-import-page.load-button">Load</Trans>
                   </Button>
                   <LinkButton variant="secondary" href={`${config.appSubUrl}/dashboards`}>
                     Cancel
