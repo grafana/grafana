@@ -547,15 +547,294 @@ export const transformationDocsContent = {
     | 2020-07-07 11:24:20 | postgre | 123001233 | server 2 | 5      |
     `,
   },
-  // joinByLabels: joinByLabelsHelper,
-  // labelsToFields: labelsToFieldsHelper,
-  // limit: limitHelper,
-  // merge: mergeHelper,
-  // organize: organizeFieldsHelper,
-  // partitionByValues: partitionByValuesHelper,
-  // prepareTimeSeries: prepareTimeSeriesHelper,
-  // reduce: reduceHelper,
-  // renameByRegex: renameByRegexHelper,
+  joinByLabels: {
+    name: 'Join by Labels',
+    content: `
+    Use this transformation to join multiple results into a single table. This is especially useful for converting multiple
+    time series results into a single wide table with a shared **Label** field.
+
+    - **Join** - Select the label to join by between the labels available or common across all time series.
+    - **Value** - The name for the output result.
+
+    #### Example
+
+    ##### Input
+
+    serie1{what="Temp", cluster="A", job="J1"}
+
+    | Time | Value |
+    | ---- | ----- |
+    | 1    | 10    |
+    | 2    | 200   |
+
+    serie2{what="Temp", cluster="B", job="J1"}
+
+    | Time | Value |
+    | ---- | ----- |
+    | 1    | 10    |
+    | 2    | 200   |
+
+    serie3{what="Speed", cluster="B", job="J1"}
+
+    | Time | Value |
+    | ---- | ----- |
+    | 22   | 22    |
+    | 28   | 77    |
+
+    ##### Config
+
+    value: "what"
+
+    ##### Output
+
+    | cluster | job | Temp | Speed |
+    | ------- | --- | ---- | ----- |
+    | A       | J1  | 10   |       |
+    | A       | J1  | 200  |       |
+    | B       | J1  | 10   | 22    |
+    | B       | J1  | 200  | 77    |
+    `,
+  },
+  labelsToFields: {
+    name: 'Labels to Fields',
+    content: `
+    Use this transformation to change time series results that include labels or tags into a table where each label's keys and values are included in the table result. The labels can be displayed as either columns or row values.
+
+    Given a query result of two time series:
+
+    - Series 1: labels Server=Server A, Datacenter=EU
+    - Series 2: labels Server=Server B, Datacenter=EU
+
+    In "Columns" mode, the result looks like this:
+
+    | Time                | Server   | Datacenter | Value |
+    | ------------------- | -------- | ---------- | ----- |
+    | 2020-07-07 11:34:20 | Server A | EU         | 1     |
+    | 2020-07-07 11:34:20 | Server B | EU         | 2     |
+
+    In "Rows" mode, the result has a table for each series and show each label value like this:
+
+    | label      | value    |
+    | ---------- | -------- |
+    | Server     | Server A |
+    | Datacenter | EU       |
+
+    | label      | value    |
+    | ---------- | -------- |
+    | Server     | Server B |
+    | Datacenter | EU       |
+
+    #### Value field name
+
+    If you selected Server as the **Value field name**, then you would get one field for every value of the Server label.
+
+    | Time                | Datacenter | Server A | Server B |
+    | ------------------- | ---------- | -------- | -------- |
+    | 2020-07-07 11:34:20 | EU         | 1        | 2        |
+
+    #### Merging behavior
+
+    The labels to fields transformer is internally two separate transformations. The first acts on single series and extracts labels to fields. The second is the [merge](#merge) transformation that joins all the results into a single table. The merge transformation tries to join on all matching fields. This merge step is required and cannot be turned off.
+
+    To illustrate this, here is an example where you have two queries that return time series with no overlapping labels.
+
+    - Series 1: labels Server=ServerA
+    - Series 2: labels Datacenter=EU
+
+    This will first result in these two tables:
+
+    | Time                | Server  | Value |
+    | ------------------- | ------- | ----- |
+    | 2020-07-07 11:34:20 | ServerA | 10    |
+
+    | Time                | Datacenter | Value |
+    | ------------------- | ---------- | ----- |
+    | 2020-07-07 11:34:20 | EU         | 20    |
+
+    After merge:
+
+    | Time                | Server  | Value | Datacenter |
+    | ------------------- | ------- | ----- | ---------- |
+    | 2020-07-07 11:34:20 | ServerA | 10    |            |
+    | 2020-07-07 11:34:20 |         | 20    | EU         |
+    `,
+  },
+  limit: {
+    name: 'Limit',
+    content: `
+    Use this transformation to limit the number of rows displayed.
+
+    In the example below, we have the following response from the data source:
+
+    | Time                | Metric      | Value |
+    | ------------------- | ----------- | ----- |
+    | 2020-07-07 11:34:20 | Temperature | 25    |
+    | 2020-07-07 11:34:20 | Humidity    | 22    |
+    | 2020-07-07 10:32:20 | Humidity    | 29    |
+    | 2020-07-07 10:31:22 | Temperature | 22    |
+    | 2020-07-07 09:30:57 | Humidity    | 33    |
+    | 2020-07-07 09:30:05 | Temperature | 19    |
+
+    Here is the result after adding a Limit transformation with a value of '3':
+
+    | Time                | Metric      | Value |
+    | ------------------- | ----------- | ----- |
+    | 2020-07-07 11:34:20 | Temperature | 25    |
+    | 2020-07-07 11:34:20 | Humidity    | 22    |
+    | 2020-07-07 10:32:20 | Humidity    | 29    |
+    `,
+  },
+  merge: {
+    name: 'Merge',
+    content: `
+    Use this transformation to combine the result from multiple queries into one single result. This is helpful when using the table panel visualization. Values that can be merged are combined into the same row. Values are mergeable if the shared fields contain the same data. For information, refer to [Table panel]({{< relref "../../visualizations/table/" >}}).
+
+    In the example below, we have two queries returning table data. It is visualized as two separate tables before applying the transformation.
+
+    Query A:
+
+    | Time                | Job     | Uptime    |
+    | ------------------- | ------- | --------- |
+    | 2020-07-07 11:34:20 | node    | 25260122  |
+    | 2020-07-07 11:24:20 | postgre | 123001233 |
+
+    Query B:
+
+    | Time                | Job     | Errors |
+    | ------------------- | ------- | ------ |
+    | 2020-07-07 11:34:20 | node    | 15     |
+    | 2020-07-07 11:24:20 | postgre | 5      |
+
+    Here is the result after applying the Merge transformation.
+
+    | Time                | Job     | Errors | Uptime    |
+    | ------------------- | ------- | ------ | --------- |
+    | 2020-07-07 11:34:20 | node    | 15     | 25260122  |
+    | 2020-07-07 11:24:20 | postgre | 5      | 123001233 |
+    `,
+  },
+  organize: {
+    name: 'Organize',
+    content: `
+    Use this transformation to rename, reorder, or hide fields returned by the query.
+
+    > **Note:** This transformation only works in panels with a single query. If your panel has multiple queries, then you must either apply an Outer join transformation or remove the extra queries.
+
+    Grafana displays a list of fields returned by the query. You can:
+
+    - Change field order by hovering your cursor over a field. The cursor turns into a hand and then you can drag the field to its new place.
+    - Hide or show a field by clicking the eye icon next to the field name.
+    - Rename fields by typing a new name in the **Rename <field>** box.
+    `,
+  },
+  partitionByValues: {
+    name: '',
+    content: `
+    Use this transformation to eliminate the need for multiple queries to the same data source with different 'WHERE' clauses when graphing multiple series. Consider a metrics SQL table with the following data:
+
+    | Time                | Region | Value |
+    | ------------------- | ------ | ----- |
+    | 2022-10-20 12:00:00 | US     | 1520  |
+    | 2022-10-20 12:00:00 | EU     | 2936  |
+    | 2022-10-20 01:00:00 | US     | 1327  |
+    | 2022-10-20 01:00:00 | EU     | 912   |
+
+    Prior to v9.3, if you wanted to plot a red trendline for US and a blue one for EU in the same TimeSeries panel, you would likely have to split this into two queries:
+
+    'SELECT Time, Value FROM metrics WHERE Time > "2022-10-20" AND Region="US"'<br>
+    'SELECT Time, Value FROM metrics WHERE Time > "2022-10-20" AND Region="EU"'
+
+    This also requires you to know ahead of time which regions actually exist in the metrics table.
+
+    With the _Partition by values_ transformer, you can now issue a single query and split the results by unique values in one or more columns ('fields') of your choosing. The following example uses 'Region'.
+
+    'SELECT Time, Region, Value FROM metrics WHERE Time > "2022-10-20"'
+
+    | Time                | Region | Value |
+    | ------------------- | ------ | ----- |
+    | 2022-10-20 12:00:00 | US     | 1520  |
+    | 2022-10-20 01:00:00 | US     | 1327  |
+
+    | Time                | Region | Value |
+    | ------------------- | ------ | ----- |
+    | 2022-10-20 12:00:00 | EU     | 2936  |
+    | 2022-10-20 01:00:00 | EU     | 912   |
+    `,
+  },
+  prepareTimeSeries: {
+    name: '',
+    content: `
+    Use this transformation when a data source returns time series data in a format that isn't supported by the panel you want to use. For more information about data frame formats, refer to [Data frames](https://grafana.com/docs/grafana/latest/developers/plugins/introduction-to-plugin-development/data-frames/).
+
+    This transformation helps you resolve this issue by converting the time series data from either the wide format to the long format or the other way around.
+
+    Select the 'Multi-frame time series' option to transform the time series data frame from the wide to the long format.
+
+    Select the 'Wide time series' option to transform the time series data frame from the long to the wide format.
+
+    > **Note:** This transformation is available in Grafana 7.5.10+ and Grafana 8.0.6+.
+    `,
+  },
+  reduce: {
+    name: 'Reduce',
+    content: `
+    Use this transformation to apply a calculation to each field in the frame and return a single value. Time fields are removed when applying this transformation.
+
+    Consider the input:
+
+    Query A:
+
+    | Time                | Temp | Uptime  |
+    | ------------------- | ---- | ------- |
+    | 2020-07-07 11:34:20 | 12.3 | 256122  |
+    | 2020-07-07 11:24:20 | 15.4 | 1230233 |
+
+    Query B:
+
+    | Time                | AQI | Errors |
+    | ------------------- | --- | ------ |
+    | 2020-07-07 11:34:20 | 6.5 | 15     |
+    | 2020-07-07 11:24:20 | 3.2 | 5      |
+
+    The reduce transformer has two modes:
+
+    - **Series to rows -** Creates a row for each field and a column for each calculation.
+    - **Reduce fields -** Keeps the existing frame structure, but collapses each field into a single value.
+
+    For example, if you used the **First** and **Last** calculation with a **Series to rows** transformation, then
+    the result would be:
+
+    | Field  | First  | Last    |
+    | ------ | ------ | ------- |
+    | Temp   | 12.3   | 15.4    |
+    | Uptime | 256122 | 1230233 |
+    | AQI    | 6.5    | 3.2     |
+    | Errors | 15     | 5       |
+
+    The **Reduce fields** with the **Last** calculation,
+    results in two frames, each with one row:
+
+    Query A:
+
+    | Temp | Uptime  |
+    | ---- | ------- |
+    | 15.4 | 1230233 |
+
+    Query B:
+
+    | AQI | Errors |
+    | --- | ------ |
+    | 3.2 | 5      |
+    `,
+  },
+  renameByRegex: {
+    name: 'Rename by Regex',
+    content: `
+    Use this transformation to rename parts of the query results using a regular expression and replacement pattern.
+
+    You can specify a regular expression, which is only applied to matches, along with a replacement pattern that support back references. For example, let's imagine you're visualizing CPU usage per host and you want to remove the domain name. You could set the regex to '([^\.]+)\..+' and the replacement pattern to '$1', 'web-01.example.com' would become 'web-01'.
+    `,
+  },
   // rowsToFields: rowsToFieldsHelper,
   // seriesToRows: seriesToRowsHelper,
   // sortBy: sortByHelper,
