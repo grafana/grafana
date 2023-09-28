@@ -26,6 +26,8 @@ export const FlameGraphExploreContainer = (props: Props) => {
       <FlameGraph
         data={props.dataFrames[0]}
         stickyHeader={true}
+        stickyHeaderOffset={'56px'}
+        stickyHeaderZindex={styles.zIndex}
         getTheme={() => config.theme2}
         onTableSymbolClick={() => interaction('table_item_selected')}
         onViewSelected={(view: string) => interaction('view_selected', { view })}
@@ -44,4 +46,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     border: 1px solid ${theme.components.panel.borderColor};
     border-radius: ${theme.shape.radius.default};
   `,
+  // Reducing the z-index by 2 to prevent overlapping top nav and ExploreToolbar
+  zIndex: theme.zIndex.navbarFixed - 2,
 });
