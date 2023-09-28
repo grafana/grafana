@@ -35,7 +35,7 @@ import { StoreState } from 'app/types';
 
 import { getTimeZone } from '../profile/state/selectors';
 
-import ContentOutline from './ContentOutline/ContentOutline';
+import { ContentOutline } from './ContentOutline/ContentOutline';
 import { ContentOutlineContextProvider } from './ContentOutline/ContentOutlineContext';
 import ContentOutlineItem from './ContentOutline/ContentOutlineItem';
 import { CustomContainer } from './CustomContainer';

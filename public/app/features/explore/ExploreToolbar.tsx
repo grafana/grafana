@@ -160,7 +160,7 @@ export function ExploreToolbar({ exploreId, topOfViewRef, onChangeTime, onConten
             <ToolbarButton
               key="content-outline"
               variant="canvas"
-              tooltip="Content Outline"
+              tooltip="Content outline"
               icon="list-ui-alt"
               iconOnly={splitted}
               onClick={onContentOutlineToogle}

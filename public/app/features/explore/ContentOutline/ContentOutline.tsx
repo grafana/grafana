@@ -32,7 +32,7 @@ const getStyles = (theme: GrafanaTheme2) => {
   };
 };
 
-const ContentOutline = () => {
+export function ContentOutline() {
   const [expanded, toggleExpanded] = useToggle(false);
   const styles = useStyles2((theme) => getStyles(theme));
   const { outlineItems } = useContentOutlineContext();
@@ -60,9 +60,9 @@ const ContentOutline = () => {
           className={styles.buttonStyles}
           icon={expanded ? 'angle-left' : 'angle-right'}
           onClick={toggle}
-          tooltip={!expanded ? 'Show Content Outline' : undefined}
+          tooltip={!expanded ? 'Expand content outline' : undefined}
         >
-          {expanded && 'Hide Content Outline'}
+          {expanded && 'Collapse content outline'}
         </ToolbarButton>
         {outlineItems.map((item) => (
           <ToolbarButton
@@ -78,6 +78,4 @@ const ContentOutline = () => {
       </div>
     </div>
   );
-};
-
-export default ContentOutline;
+}
