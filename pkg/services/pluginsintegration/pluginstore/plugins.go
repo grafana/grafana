@@ -4,6 +4,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/auth"
 )
 
 type Plugin struct {
@@ -32,7 +33,9 @@ type Plugin struct {
 	AngularDetected bool
 
 	// This will be moved to plugin.json when we have general support in gcom
-	Alias string `json:"alias,omitempty"`
+	Alias string
+
+	ExternalService *auth.ExternalService
 }
 
 func (p Plugin) SupportsStreaming() bool {
@@ -74,5 +77,6 @@ func ToGrafanaDTO(p *plugins.Plugin) Plugin {
 		BaseURL:           p.BaseURL,
 		AngularDetected:   p.AngularDetected,
 		Alias:             p.Alias,
+		ExternalService:   p.ExternalService,
 	}
 }

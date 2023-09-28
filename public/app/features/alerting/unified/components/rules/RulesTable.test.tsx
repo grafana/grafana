@@ -56,11 +56,9 @@ describe('RulesTable RBAC', () => {
 
     it('Should not render Delete button for users without the delete permission', async () => {
       mocks.useIsRuleEditable.mockReturnValue({ loading: false, isRemovable: false });
-      const user = userEvent.setup();
 
       renderRulesTable(grafanaRule);
-      await user.click(ui.actionButtons.more.get());
-      expect(ui.moreActionItems.delete.query()).not.toBeInTheDocument();
+      expect(ui.actionButtons.more.query()).not.toBeInTheDocument();
     });
 
     it('Should render Edit button for users with the update permission', () => {
@@ -91,11 +89,9 @@ describe('RulesTable RBAC', () => {
 
     it('Should not render Delete button for users without the delete permission', async () => {
       mocks.useIsRuleEditable.mockReturnValue({ loading: false, isRemovable: false });
-      const user = userEvent.setup();
 
       renderRulesTable(cloudRule);
-      await user.click(ui.actionButtons.more.get());
-      expect(ui.moreActionItems.delete.query()).not.toBeInTheDocument();
+      expect(ui.actionButtons.more.query()).not.toBeInTheDocument();
     });
 
     it('Should render Edit button for users with the update permission', () => {

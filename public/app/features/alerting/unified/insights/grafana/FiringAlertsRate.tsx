@@ -1,7 +1,7 @@
 import { PanelBuilders, SceneFlexItem, SceneQueryRunner, SceneTimeRange } from '@grafana/scenes';
 import { DataSourceRef, GraphDrawStyle } from '@grafana/schema';
 
-const RATE_FIRING = 'sum(count_over_time({from="state-history"} | json | current="Alerting"[5m]))';
+import { PANEL_STYLES } from '../../home/Insights';
 
 export function getFiringAlertsRateScene(timeRange: SceneTimeRange, datasource: DataSourceRef, panelTitle: string) {
   const query = new SceneQueryRunner({
@@ -9,7 +9,7 @@ export function getFiringAlertsRateScene(timeRange: SceneTimeRange, datasource: 
     queries: [
       {
         refId: 'A',
-        expr: RATE_FIRING,
+        expr: 'sum(count_over_time({from="state-history"} | json | current="Alerting"[5m]))',
         range: true,
         legendFormat: 'Number of fires',
       },
@@ -18,8 +18,7 @@ export function getFiringAlertsRateScene(timeRange: SceneTimeRange, datasource: 
   });
 
   return new SceneFlexItem({
-    width: 'calc(50% - 4px)',
-    height: 300,
+    ...PANEL_STYLES,
     body: PanelBuilders.timeseries()
       .setTitle(panelTitle)
       .setData(query)

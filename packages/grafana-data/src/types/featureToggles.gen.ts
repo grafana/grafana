@@ -41,11 +41,13 @@ export interface FeatureToggles {
   logRequestsInstrumentedAsUnknown?: boolean;
   dataConnectionsConsole?: boolean;
   topnav?: boolean;
+  dockedMegaMenu?: boolean;
   grpcServer?: boolean;
   entityStore?: boolean;
   cloudWatchCrossAccountQuerying?: boolean;
   redshiftAsyncQueryDataSupport?: boolean;
   athenaAsyncQueryDataSupport?: boolean;
+  cloudwatchNewRegionsHandler?: boolean;
   showDashboardValidationWarnings?: boolean;
   mysqlAnsiQuotes?: boolean;
   accessControlOnCall?: boolean;
@@ -123,4 +125,14 @@ export interface FeatureToggles {
   newBrowseDashboards?: boolean;
   sseGroupByDatasource?: boolean;
   requestInstrumentationStatusSource?: boolean;
+  lokiRunQueriesInParallel?: boolean;
+  wargamesTesting?: boolean;
+  alertingInsights?: boolean;
+  externalCorePlugins?: boolean;
+  pluginsAPIMetrics?: boolean;
+  httpSLOLevels?: boolean;
+  idForwarding?: boolean;
+  cloudWatchWildCardDimensionValues?: boolean;
+  externalServiceAccounts?: boolean;
+  alertingModifiedExport?: boolean;
 }
