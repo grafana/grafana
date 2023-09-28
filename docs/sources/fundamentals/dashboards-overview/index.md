@@ -39,11 +39,11 @@ It can be difficult to understand the distinctions between different data source
 
 ## Plugins
 
-A Grafana plugin is software that adds new capabilities to Grafana. They come in many types, but right now we'll address _data source plugins_. The job of a Grafana data source plugin is to take a query you want answered, retrieve the data from the data source, and reconcile the differences between the data model of the data source and the data model of Grafana dashboards. It does this using a unified data structure called a [data frame](https://grafana.com/developers/plugin-tools/introduction/data-frames).
+A Grafana plugin is software that adds new capabilities to Grafana. They come in many types, but right now we'll address _data source plugins_. The job of a Grafana data source plugin is to take a query you want answered, retrieve the data from the data source, and reconcile the differences between the data model of the data source and the data model of Grafana dashboards. It does this using a unified data structure called a [data frame](/developers/plugin-tools/introduction/data-frames).
 
 The data coming into the plugin from the data source might be in many different formats (such as JSON, rows and columns, or CSV), but when it leaves the plugin and moves through the rest of the gates toward a visualization, it's always in data frames.
 
-Currently, Grafana offers a diverse range of 155 data sources that you can use. The most commonly used options are already pre-installed and accessible. Before exploring other options, look for an existing data source that matches your requirements. Grafana constantly updates the list, but if you don't find a suitable data source, you can browse through the [plugin catalog](/grafana/plugins/?type=datasource) or [create a plugin](https://grafana.com/developers/plugin-tools).
+Currently, Grafana offers a diverse range of 155 data sources that you can use. The most commonly used options are already pre-installed and accessible. Before exploring other options, look for an existing data source that matches your requirements. Grafana constantly updates the list, but if you don't find a suitable data source, you can browse through the [plugin catalog](/grafana/plugins/?type=datasource) or [create a plugin](/developers/plugin-tools).
 
 ## Queries
 
