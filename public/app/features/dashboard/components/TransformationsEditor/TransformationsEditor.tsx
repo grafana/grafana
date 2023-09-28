@@ -742,7 +742,7 @@ const getTransformationsRedesignDescriptions = (id: string): string => {
     [DataTransformerID.prepareTimeSeries]: 'Will stretch data frames from the wide format into the long format.',
     [DataTransformerID.reduce]: 'Reduce all rows or data points to a single value (ex. max, mean).',
     [DataTransformerID.renameByRegex]:
-      'Renames part of the query result by using regular expression with placeholders.',
+      'Rename parts of the query results using a regular expression and replacement pattern.',
     [DataTransformerID.seriesToRows]: 'Merge multiple series. Return time, metric and values as a row.',
   };
 
