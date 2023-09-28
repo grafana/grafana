@@ -112,7 +112,7 @@ type JSONData struct {
 	// Backend (Datasource + Renderer + SecretsManager)
 	Executable string `json:"executable,omitempty"`
 
-	// Oauth App Service Registration
+	// App Service Auth Registration
 	ExternalServiceRegistration *plugindef.ExternalServiceRegistration `json:"externalServiceRegistration,omitempty"`
 }
 
