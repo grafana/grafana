@@ -79,6 +79,10 @@ describe('Worldmap Migrations', () => {
                     "fixed": "img/icons/marker/circle.svg",
                     "mode": "fixed",
                   },
+                  "symbolAnchor": {
+                    "anchorX": "center",
+                    "anchorY": "center",
+                  },
                   "textConfig": {
                     "fontSize": 12,
                     "offsetX": 0,

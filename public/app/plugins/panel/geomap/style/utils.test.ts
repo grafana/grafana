@@ -41,6 +41,10 @@ describe('style utils', () => {
           "opacity": 0.4,
           "rotation": 0,
           "size": 5,
+          "symbolAnchor": {
+            "anchorX": "center",
+            "anchorY": "center",
+          },
         },
         "config": null,
         "fields": {
