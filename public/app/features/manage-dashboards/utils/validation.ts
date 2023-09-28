@@ -9,16 +9,16 @@ export const validateDashboardJson = (json: string) => {
   try {
     dashboard = JSON.parse(json);
   } catch (error) {
-    return 'Not valid JSON';
+    return t('utils.invalid-json', 'Not valid JSON');
   }
   if (dashboard && dashboard.hasOwnProperty('tags')) {
     if (Array.isArray(dashboard.tags)) {
       const hasInvalidTag = dashboard.tags.some((tag: string) => typeof tag !== 'string');
       if (hasInvalidTag) {
-        return 'tags expected array of strings';
+        return t('utils.tags-expected-strings', 'tags expected array of strings');
       }
     } else {
-      return 'tags expected array';
+      return t('utils.tags-expected-array', 'tags expected array');
     }
   }
   return true;
