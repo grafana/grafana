@@ -48,20 +48,19 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: flex;
     flex-direction: column;
     flex: 1;
-    border-top: 1px solid ${theme.colors.border.medium};
-    padding: ${theme.spacing(1)} 0;
   `,
   dataLinks: css`
     height: 40px;
     overflow-x: auto;
     overflow-y: hidden;
     white-space: nowrap;
-    border-bottom: 1px solid ${theme.colors.border.medium};
-    padding-bottom: ${theme.spacing(1)};
-    margin-bottom: 8px;
+    border-top: 1px solid ${theme.colors.border.medium};
     //-webkit-mask-image: linear-gradient(90deg, #000 80%, transparent);
   `,
-  addAnnotations: css``,
+  addAnnotations: css`
+    border-top: 1px solid ${theme.colors.border.medium};
+    padding-top: ${theme.spacing(1)};
+  `,
   // fadedMask: css`
   //   display: block;
   //   position: absolute;
