@@ -43,7 +43,7 @@ const rulesSource = {
     baseUrl: 'public/app/plugins/datasource/prometheus',
   },
   url: '/api/datasources/proxy/5',
-  access: 'proxy' as 'proxy',
+  access: 'proxy' as const,
   jsonData: {
     manageAlerts: true,
   },
