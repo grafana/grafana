@@ -43,7 +43,7 @@ export const PanelPerformanceMonitor = (props: Props) => {
     savedFieldConfig.current = props.panelFieldConfig;
   }, [props.panelFieldConfig]);
 
-  const logEvent = (eventName: string, newKey: string, newVal: string, oldVal?: string) => {
+  const logPanelEvent = (eventName: string, newKey: string, newVal: string, oldVal?: string) => {
     const logObj = {
       key: newKey,
       newValue: newVal,
@@ -73,9 +73,9 @@ export const PanelPerformanceMonitor = (props: Props) => {
         typeof value !== 'string' ? JSON.stringify(oldPanelOptionsUnknown[key]) : String(oldPanelOptionsUnknown[key]);
 
       if (oldPanelOptionsUnknown[key] === undefined) {
-        logEvent(PanelLogEvents.NEW_PANEL_OPTION_EVENT, key, newValue);
+        logPanelEvent(PanelLogEvents.NEW_PANEL_OPTION_EVENT, key, newValue);
       } else if (oldValue !== newValue) {
-        logEvent(PanelLogEvents.PANEL_OPTION_CHANGED_EVENT, key, newValue, oldValue);
+        logPanelEvent(PanelLogEvents.PANEL_OPTION_CHANGED_EVENT, key, newValue, oldValue);
       }
     }
   };
@@ -87,7 +87,7 @@ export const PanelPerformanceMonitor = (props: Props) => {
     // overrides are an array of objects, so stringify it all and log changes
     // in lack of an index, we can't tell which override changed
     if (oldFieldConfig.overrides !== fieldConfig.overrides) {
-      logEvent(
+      logPanelEvent(
         PanelLogEvents.FIELD_CONFIG_OVERRIDES_CHANGED_EVENT,
         FIELD_CONFIG_OVERRIDES_KEY,
         JSON.stringify(fieldConfig.overrides),
@@ -107,9 +107,9 @@ export const PanelPerformanceMonitor = (props: Props) => {
       const oldValue: string = typeof value !== 'string' ? JSON.stringify(oldDefaults[key]) : String(oldDefaults[key]);
 
       if (oldDefaults[key] === undefined) {
-        logEvent(PanelLogEvents.NEW_DEFAULT_FIELD_CONFIG_EVENT, key, newValue);
+        logPanelEvent(PanelLogEvents.NEW_DEFAULT_FIELD_CONFIG_EVENT, key, newValue);
       } else if (oldValue !== newValue) {
-        logEvent(PanelLogEvents.DEFAULT_FIELD_CONFIG_CHANGED_EVENT, key, newValue, oldValue);
+        logPanelEvent(PanelLogEvents.DEFAULT_FIELD_CONFIG_CHANGED_EVENT, key, newValue, oldValue);
       }
     }
 
@@ -129,9 +129,9 @@ export const PanelPerformanceMonitor = (props: Props) => {
       const oldValue: string = typeof value !== 'string' ? JSON.stringify(oldCustom[key]) : String(oldCustom[key]);
 
       if (oldCustom[key] === undefined) {
-        logEvent(PanelLogEvents.NEW_CUSTOM_FIELD_CONFIG_EVENT, key, newValue);
+        logPanelEvent(PanelLogEvents.NEW_CUSTOM_FIELD_CONFIG_EVENT, key, newValue);
       } else if (oldValue !== newValue) {
-        logEvent(PanelLogEvents.CUSTOM_FIELD_CONFIG_CHANGED_EVENT, key, newValue, oldValue);
+        logPanelEvent(PanelLogEvents.CUSTOM_FIELD_CONFIG_CHANGED_EVENT, key, newValue, oldValue);
       }
     }
   };
