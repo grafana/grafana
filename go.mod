@@ -62,7 +62,7 @@ require (
 	github.com/grafana/alerting v0.0.0-20230918125844-e60d564786c9 // @grafana/alerting-squad-backend
 	github.com/grafana/cuetsy v0.1.10 // @grafana/grafana-as-code
 	github.com/grafana/grafana-aws-sdk v0.19.1 // @grafana/aws-datasources
-	github.com/grafana/grafana-azure-sdk-go v1.8.1 // @grafana/backend-platform
+	github.com/grafana/grafana-azure-sdk-go v1.9.0 // @grafana/backend-platform
 	github.com/grafana/grafana-plugin-sdk-go v0.177.0 // @grafana/plugins-platform-backend
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0 // @grafana/backend-platform
 	github.com/hashicorp/go-hclog v1.5.0 // @grafana/plugins-platform-backend

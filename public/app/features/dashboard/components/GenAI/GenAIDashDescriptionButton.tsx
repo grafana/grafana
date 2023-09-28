@@ -7,7 +7,7 @@ import { EventSource, reportGenerateAIButtonClicked } from './tracking';
 import { Message, Role } from './utils';
 
 interface GenAIDashDescriptionButtonProps {
-  onGenerate: (description: string, isDone: boolean) => void;
+  onGenerate: (description: string) => void;
   dashboard: DashboardModel;
 }
 

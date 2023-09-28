@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
+	"github.com/grafana/grafana/pkg/services/searchusers/sortopts"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -403,6 +404,42 @@ func TestIntegrationOrgUserDataAccess(t *testing.T) {
 			require.NoError(t, err)
 			require.Equal(t, len(result.OrgUsers), 1)
 			require.Equal(t, result.OrgUsers[0].Email, ac1.Email)
+		})
+		t.Run("Can get organization users with custom ordering login-asc", func(t *testing.T) {
+			sortOpts, err := sortopts.ParseSortQueryParam("login-asc,email-asc")
+			require.NoError(t, err)
+			query := org.SearchOrgUsersQuery{
+				OrgID:    ac1.OrgID,
+				SortOpts: sortOpts,
+				User: &user.SignedInUser{
+					OrgID:       ac1.OrgID,
+					Permissions: map[int64]map[string][]string{ac1.OrgID: {accesscontrol.ActionOrgUsersRead: {accesscontrol.ScopeUsersAll}}},
+				},
+			}
+			result, err := orgUserStore.SearchOrgUsers(context.Background(), &query)
+
+			require.NoError(t, err)
+			require.Equal(t, len(result.OrgUsers), 2)
+			require.Equal(t, result.OrgUsers[0].Email, ac1.Email)
+			require.Equal(t, result.OrgUsers[1].Email, ac2.Email)
+		})
+		t.Run("Can get organization users with custom ordering login-desc", func(t *testing.T) {
+			sortOpts, err := sortopts.ParseSortQueryParam("login-desc,email-asc")
+			require.NoError(t, err)
+			query := org.SearchOrgUsersQuery{
+				OrgID:    ac1.OrgID,
+				SortOpts: sortOpts,
+				User: &user.SignedInUser{
+					OrgID:       ac1.OrgID,
+					Permissions: map[int64]map[string][]string{ac1.OrgID: {accesscontrol.ActionOrgUsersRead: {accesscontrol.ScopeUsersAll}}},
+				},
+			}
+			result, err := orgUserStore.SearchOrgUsers(context.Background(), &query)
+
+			require.NoError(t, err)
+			require.Equal(t, len(result.OrgUsers), 2)
+			require.Equal(t, result.OrgUsers[0].Email, ac2.Email)
+			require.Equal(t, result.OrgUsers[1].Email, ac1.Email)
 		})
 		t.Run("Cannot update role so no one is admin user", func(t *testing.T) {
 			remCmd := org.RemoveOrgUserCommand{OrgID: ac1.OrgID, UserID: ac2.ID, ShouldDeleteOrphanedUser: true}

@@ -5,6 +5,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { Button, CodeEditor, useStyles2, Text } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
+import { Trans } from 'app/core/internationalization';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 
 import { getDashboardSrv } from '../../services/DashboardSrv';
@@ -26,8 +27,10 @@ export function JsonEditorSettings({ dashboard, sectionNav }: SettingsPageProps)
     <Page navModel={sectionNav} pageNav={pageNav}>
       <div className={styles.wrapper}>
         <Text>
-          The JSON model below is the data structure that defines the dashboard. This includes dashboard settings, panel
-          settings, layout, queries, and so on.
+          <Trans i18nKey="dashboard-settings.json-editor.subtitle">
+            The JSON model below is the data structure that defines the dashboard. This includes dashboard settings,
+            panel settings, layout, queries, and so on.
+          </Trans>
         </Text>
         <CodeEditor
           value={dashboardJson}
@@ -40,7 +43,7 @@ export function JsonEditorSettings({ dashboard, sectionNav }: SettingsPageProps)
         {dashboard.meta.canSave && (
           <div>
             <Button type="submit" onClick={onClick}>
-              Save changes
+              <Trans i18nKey="dashboard-settings.json-editor.save-button">Save changes</Trans>
             </Button>
           </div>
         )}

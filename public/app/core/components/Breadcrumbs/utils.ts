@@ -13,20 +13,8 @@ export function buildBreadcrumbs(sectionNav: NavModelItem, pageNav?: NavModelIte
     }
 
     // construct the URL to match
-    // we want to ignore query params except for the editview query param
     const urlParts = node.url?.split('?') ?? ['', ''];
     let urlToMatch = urlParts[0];
-
-    const urlSearchParams = new URLSearchParams(urlParts[1]);
-
-    if (urlSearchParams.has('editview')) {
-      urlToMatch += `?editview=${urlSearchParams.get('editview')}`;
-    }
-
-    // This enabled app plugins to control breadcrumbs of their root pages
-    const isSamePathAsLastBreadcrumb = urlToMatch.length > 0 && lastPath === urlToMatch;
-    // Remember this path for the next breadcrumb
-    lastPath = urlToMatch;
 
     // Check if we found home/root if if so return early
     if (homeNav && urlToMatch === homeNav.url) {
@@ -34,6 +22,11 @@ export function buildBreadcrumbs(sectionNav: NavModelItem, pageNav?: NavModelIte
       foundHome = true;
       return;
     }
+
+    // This enabled app plugins to control breadcrumbs of their root pages
+    const isSamePathAsLastBreadcrumb = urlToMatch.length > 0 && lastPath === urlToMatch;
+    // Remember this path for the next breadcrumb
+    lastPath = urlToMatch;
 
     if (!node.hideFromBreadcrumbs && !isSamePathAsLastBreadcrumb) {
       crumbs.unshift({ text: node.text, href: node.url ?? '' });
