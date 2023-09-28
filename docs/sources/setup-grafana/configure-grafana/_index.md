@@ -814,7 +814,7 @@ that this organization already exists. Default is 1.
 
 The role new users will be assigned for the main organization (if the
 `auto_assign_org` setting is set to true). Defaults to `Viewer`, other valid
-options are `Admin` and `Editor`. e.g.:
+options are `Admin`, `Editor` and `None`. e.g.:
 
 `auto_assign_org_role = Viewer`
 
@@ -1157,6 +1157,32 @@ Specifies whether Grafana hosted in Azure service with Managed Identity configur
 The client ID to use for user-assigned managed identity.
 
 Should be set for user-assigned identity and should be empty for system-assigned identity.
+
+### workload_identity_enabled
+
+Specifies whether Azure AD Workload Identity authentication should be enabled in datasources that support it.
+
+For more documentation on Azure AD Workload Identity, review [Azure AD Workload Identity](https://azure.github.io/azure-workload-identity/docs/) documentation.
+
+Disabled by default, needs to be explicitly enabled.
+
+### workload_identity_tenant_id
+
+Tenant ID of the Azure AD Workload Identity.
+
+Allows to override default tenant ID of the Azure AD identity associated with the Kubernetes service account.
+
+### workload_identity_client_id
+
+Client ID of the Azure AD Workload Identity.
+
+Allows to override default client ID of the Azure AD identity associated with the Kubernetes service account.
+
+### workload_identity_token_file
+
+Custom path to token file for the Azure AD Workload Identity.
+
+Allows to set a custom path to the projected service account token file.
 
 ### user_identity_enabled
 
@@ -1983,7 +2009,7 @@ Basic auth password.
 
 ### public_url
 
-Optional URL to send to users in notifications. If the string contains the sequence `${file}`, it is replaced with the uploaded filename. Otherwise, the file name is appended to the path part of the URL, leaving any query string unchanged.
+Optional URL to send to users in notifications. If the string contains the sequence `{{file}}`, it is replaced with the uploaded filename. Otherwise, the file name is appended to the path part of the URL, leaving any query string unchanged.
 
 <hr>
 
@@ -2195,6 +2221,12 @@ Available in Grafana v9.5.0 or later, and [OpenTelemetry must be configured as w
 
 If `true`, propagate the tracing context to the plugin backend and enable tracing (if the backend supports it).
 
+## as_external
+
+Load an external version of a core plugin if it has been installed.
+
+Experimental. Requires the feature toggle `externalCorePlugins` to be enabled.
+
 <hr>
 
 ## [plugin.grafana-image-renderer]
@@ -2319,7 +2351,7 @@ Please see [Configure feature toggles]({{< relref "./feature-toggles" >}}) for m
 
 Lets you switch the feature toggle state in the feature management page. The default is `false`.
 
-### update_controller_url
+### update_webhook
 
 Set the URL of the controller that manages the feature toggle updates. If not set, feature toggles in the feature management page will be read-only.
 

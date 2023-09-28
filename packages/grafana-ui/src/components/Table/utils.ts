@@ -1,5 +1,5 @@
 import { clone } from 'lodash';
-import memoizeOne from 'memoize-one';
+import memoize from 'micro-memoize';
 import { Row } from 'react-table';
 
 import {
@@ -76,7 +76,7 @@ export function getColumns(
   }
 
   for (const [fieldIndex, field] of data.fields.entries()) {
-    const fieldTableOptions = (field.config.custom || {}) as TableFieldOptions;
+    const fieldTableOptions: TableFieldOptions = field.config.custom || {};
     if (fieldTableOptions.hidden || field.type === FieldType.nestedFrames) {
       continue;
     }
@@ -106,13 +106,13 @@ export function getColumns(
       id: fieldIndex.toString(),
       field: field,
       Header: fieldTableOptions.hideHeader ? '' : getFieldDisplayName(field, data),
-      accessor: (_row: any, i: number) => {
+      accessor: (_row, i) => {
         return field.values[i];
       },
       sortType: selectSortType(field.type),
       width: fieldTableOptions.width,
       minWidth: fieldTableOptions.minWidth ?? columnMinWidth,
-      filter: memoizeOne(filterByValue(field)),
+      filter: memoize(filterByValue(field)),
       justifyContent: getTextAlign(field),
       Footer: getFooterValue(fieldIndex, footerValues, isCountRowsSet),
     });
@@ -230,7 +230,7 @@ export function rowToFieldValue(row: any, field?: Field): string {
   return value;
 }
 
-export function valuesToOptions(unique: Record<string, any>): SelectableValue[] {
+export function valuesToOptions(unique: Record<string, unknown>): SelectableValue[] {
   return Object.keys(unique)
     .reduce<SelectableValue[]>((all, key) => all.concat({ value: unique[key], label: key }), [])
     .sort(sortOptions);
@@ -268,12 +268,12 @@ export function getFilteredOptions(options: SelectableValue[], filterValues?: Se
   return options.filter((option) => filterValues.some((filtered) => filtered.value === option.value));
 }
 
-export function sortCaseInsensitive(a: Row<any>, b: Row<any>, id: string) {
+export function sortCaseInsensitive(a: Row, b: Row, id: string) {
   return String(a.values[id]).localeCompare(String(b.values[id]), undefined, { sensitivity: 'base' });
 }
 
 // sortNumber needs to have great performance as it is called a lot
-export function sortNumber(rowA: Row<any>, rowB: Row<any>, id: string) {
+export function sortNumber(rowA: Row, rowB: Row, id: string) {
   const a = toNumber(rowA.values[id]);
   const b = toNumber(rowB.values[id]);
   return a === b ? 0 : a > b ? 1 : -1;

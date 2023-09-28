@@ -176,7 +176,7 @@ export const Table = memo((props: Props) => {
     }
 
     const footerItems = getFooterItems(
-      headerGroups[0].headers as unknown as Array<{ id: string; field: Field }>,
+      headerGroups[0].headers,
       createFooterCalculationValues(rows),
       footerOptions,
       theme
@@ -373,7 +373,7 @@ export const Table = memo((props: Props) => {
 Table.displayName = 'Table';
 
 function getExpandedRowHeight(nestedData: Field, rowIndex: number, tableStyles: TableStyles) {
-  const frames = nestedData.values;
+  const frames: DataFrame[][] = nestedData.values;
 
   const height = frames[rowIndex].reduce((acc: number, frame: DataFrame) => {
     if (frame.length) {

@@ -216,16 +216,17 @@ const FullScreenForm = (props: FormProps) => {
 const EmptyRecentList = memo(() => {
   const theme = useTheme2();
   const styles = getEmptyListStyles(theme);
+  const emptyRecentListText = t(
+    'time-picker.content.empty-recent-list-info',
+    "It looks like you haven't used this time picker before. As soon as you enter some time intervals, recently used intervals will appear here."
+  );
 
   return (
     <div className={styles.container}>
-      <Trans i18nKey="time-picker.content.empty-recent-list">
-        <div>
-          <span>
-            It looks like you haven&apos;t used this time picker before. As soon as you enter some time intervals,
-            recently used intervals will appear here.
-          </span>
-        </div>
+      <div>
+        <span>{emptyRecentListText}</span>
+      </div>
+      <Trans i18nKey="time-picker.content.empty-recent-list-docs">
         <div>
           <a
             className={styles.link}

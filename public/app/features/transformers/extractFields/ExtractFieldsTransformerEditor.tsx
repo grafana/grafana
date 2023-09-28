@@ -81,7 +81,7 @@ export const extractFieldsTransformerEditor = ({
             context={{ data: input }}
             value={options.source ?? ''}
             onChange={onPickSourceField}
-            item={fieldNamePickerSettings as any}
+            item={fieldNamePickerSettings}
           />
         </InlineField>
       </InlineFieldRow>
