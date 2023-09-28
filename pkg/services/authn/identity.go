@@ -184,6 +184,7 @@ func (i *Identity) IsNil() bool {
 }
 
 // NamespacedID returns the namespace, e.g. "user" and the id for that namespace
+// FIXME(kalleep): Replace with GetNamespacedID
 func (i *Identity) NamespacedID() (string, int64) {
 	split := strings.Split(i.ID, ":")
 	if len(split) != 2 {
@@ -221,16 +222,16 @@ func (i *Identity) SignedInUser() *user.SignedInUser {
 
 	namespace, id := i.GetNamespacedID()
 	if namespace == NamespaceAPIKey {
-		u.ApiKeyID = IntIdentifier(id)
+		u.ApiKeyID = intIdentifier(id)
 	} else {
-		u.UserID = IntIdentifier(id)
+		u.UserID = intIdentifier(id)
 		u.IsServiceAccount = namespace == NamespaceServiceAccount
 	}
 
 	return u
 }
 
-func IntIdentifier(identifier string) int64 {
+func intIdentifier(identifier string) int64 {
 	id, err := strconv.ParseInt(identifier, 10, 64)
 	if err != nil {
 		// FIXME (kalleep): Improve error handling
@@ -246,7 +247,7 @@ func (i *Identity) ExternalUserInfo() login.ExternalUserInfo {
 		OAuthToken:     i.OAuthToken,
 		AuthModule:     i.AuthenticatedBy,
 		AuthId:         i.AuthID,
-		UserId:         IntIdentifier(id),
+		UserId:         intIdentifier(id),
 		Email:          i.Email,
 		Login:          i.Login,
 		Name:           i.Name,
