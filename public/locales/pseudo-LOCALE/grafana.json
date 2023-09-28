@@ -310,23 +310,23 @@
   },
   "library-panels": {
     "modal": {
-      "button-cancel": "",
-      "button-view-panel1": "",
-      "button-view-panel2": "",
-      "contianer-dashboard": "",
-      "contianer-dashboards": "",
-      "contianer-prefix": "",
-      "contianer-suffix": "",
+      "button-cancel": "<0>Cäŉčęľ</0>",
+      "button-view-panel1": "Vįęŵ päŉęľ įŉ {{label}}...",
+      "button-view-panel2": "Vįęŵ päŉęľ įŉ đäşĥþőäřđ...",
+      "contianer-dashboard": "đäşĥþőäřđ",
+      "contianer-dashboards": "đäşĥþőäřđş",
+      "contianer-prefix": "Ŧĥįş päŉęľ įş þęįŉģ ūşęđ įŉ  ",
+      "contianer-suffix": ". Pľęäşę čĥőőşę ŵĥįčĥ đäşĥþőäřđ ŧő vįęŵ ŧĥę päŉęľ įŉ:",
       "panel-not-linked": "Päŉęľ įş ŉőŧ ľįŉĸęđ ŧő ä đäşĥþőäřđ. Åđđ ŧĥę päŉęľ ŧő ä đäşĥþőäřđ äŉđ řęŧřy.",
-      "title": ""
+      "title": "Vįęŵ päŉęľ įŉ đäşĥþőäřđ"
     },
     "save": {
       "error": "Ēřřőř şävįŉģ ľįþřäřy päŉęľ: \"{{errorMsg}}\"",
       "success": "Ŀįþřäřy päŉęľ şävęđ"
     },
     "select": {
-      "no-dashboard-message": "",
-      "placeholder": ""
+      "no-dashboard-message": "Ńő đäşĥþőäřđş ƒőūŉđ",
+      "placeholder": "Ŝŧäřŧ ŧypįŉģ ŧő şęäřčĥ ƒőř đäşĥþőäřđ"
     }
   },
   "login": {
