@@ -49,8 +49,6 @@ describe('Annotations filtering', () => {
         e2e.pages.Dashboard.SubMenu.Annotations.annotationToggle('Red, only panel 1').should('be.checked');
       });
 
-    cy.wait(3000);
-
     e2e.components.Panels.Panel.title('Panel one')
       .should('exist')
       .within(() => {

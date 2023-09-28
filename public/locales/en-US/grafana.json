@@ -225,6 +225,11 @@
   },
   "explore": {
     "add-to-dashboard": "Add to dashboard",
+    "table": {
+      "no-data": "0 series returned",
+      "title": "Table",
+      "title-with-name": "Table - {{name}}"
+    },
     "toolbar": {
       "aria-label": "Explore toolbar",
       "copy-shortened-link": "Copy shortened link",
