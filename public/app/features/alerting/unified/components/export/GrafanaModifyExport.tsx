@@ -56,7 +56,7 @@ export default function GrafanaModifyExport({ match }: GrafanaModifyExportProps)
     value: alertRule,
     error,
   } = useAsync(async () => {
-    if (!ruleIdentifier || loadingBuildInfo) {
+    if (!ruleIdentifier) {
       return;
     }
     return await dispatch(fetchEditableRuleAction(ruleIdentifier)).unwrap();

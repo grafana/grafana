@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
-import { Link } from 'react-router-dom';
 
 import { Stack } from '@grafana/experimental';
-import { Button, CustomScrollbar } from '@grafana/ui';
+import { Button, CustomScrollbar, LinkButton } from '@grafana/ui';
 
 import { AppChromeUpdate } from '../../../../../../core/components/AppChrome/AppChromeUpdate';
 import { RuleFormValues } from '../../../types/rule-form';
@@ -44,11 +43,9 @@ export function ModifyExportRuleForm({ ruleForm, alertUid }: ModifyExportRuleFor
   };
 
   const actionButtons = [
-    <Link to={returnTo} key="cancel">
-      <Button size="sm" variant="secondary" onClick={() => null}>
-        Cancel
-      </Button>
-    </Link>,
+    <LinkButton href={returnTo} key="cancel" size="sm" variant="secondary">
+      Cancel
+    </LinkButton>,
     <Button key="export-rule" size="sm" onClick={() => setShowExporter('rule')}>
       Export Rule
     </Button>,
