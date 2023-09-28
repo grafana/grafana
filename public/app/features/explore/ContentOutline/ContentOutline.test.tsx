@@ -1,7 +1,7 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import React from 'react';
 
-import ContentOutline from './ContentOutline';
+import { ContentOutline } from './ContentOutline';
 
 jest.mock('./ContentOutlineContext', () => ({
   useContentOutlineContext: jest.fn(),
@@ -42,15 +42,15 @@ describe('<ContentOutline />', () => {
   });
 
   it('toggles content on button click', () => {
-    let showContentOutlineButton = screen.getByLabelText('Show Content Outline');
+    let showContentOutlineButton = screen.getByLabelText('Expand content outline');
     expect(showContentOutlineButton).toBeInTheDocument();
 
     fireEvent.click(showContentOutlineButton);
-    const hideContentOutlineButton = screen.getByText('Hide Content Outline');
+    const hideContentOutlineButton = screen.getByText('Collapse content outline');
     expect(hideContentOutlineButton).toBeInTheDocument();
 
     fireEvent.click(hideContentOutlineButton);
-    showContentOutlineButton = screen.getByLabelText('Show Content Outline');
+    showContentOutlineButton = screen.getByLabelText('Expand content outline');
     expect(showContentOutlineButton).toBeInTheDocument();
   });
 
