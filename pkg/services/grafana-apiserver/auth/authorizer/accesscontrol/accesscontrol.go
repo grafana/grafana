@@ -24,7 +24,7 @@ func ProvideAccessControlAuthorizer(ac accesscontrol.AccessControl) *AccessContr
 
 func (auth AccessControlAuthorizer) Authorize(ctx context.Context, a authorizer.Attributes) (authorized authorizer.Decision, reason string, err error) {
 	// we only care about resource requests at this point
-	if a.IsResourceRequest() {
+	if !a.IsResourceRequest() {
 		return authorizer.DecisionNoOpinion, "", nil
 	}
 
