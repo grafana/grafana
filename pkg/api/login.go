@@ -254,11 +254,10 @@ func (hs *HTTPServer) Logout(c *contextmodel.ReqContext) {
 		oauthProviderSignoutRedirectUrl = oauthProvider.SignoutRedirectUrl
 	}
 
-	signOutRedirectUrl := hs.Cfg.SignoutRedirectUrl
-	hs.log.Debug("Logout Redirect url", "auth.SignoutRedirectUrl:", signOutRedirectUrl)
+	hs.log.Debug("Logout Redirect url", "auth.SignoutRedirectUrl:", hs.Cfg.SignoutRedirectUrl)
 	hs.log.Debug("Logout Redirect url", "oauth provider redirect url:", oauthProviderSignoutRedirectUrl)
 
-	signOutRedirectUrl = getSignOutRedirectUrl(hs.Cfg.SignoutRedirectUrl, oauthProviderSignoutRedirectUrl)
+	signOutRedirectUrl := getSignOutRedirectUrl(hs.Cfg.SignoutRedirectUrl, oauthProviderSignoutRedirectUrl)
 
 	hs.log.Debug("Logout Redirect url", "signOurRedirectUrl:", signOutRedirectUrl)
 	idTokenHint := ""
