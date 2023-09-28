@@ -302,7 +302,6 @@ export function getMarkerAsPath(shape?: string): string | undefined {
   return undefined;
 }
 
-//TODO clean up
 function getDisplacement(symbolAnchor: SymbolAnchor, radius: number) {
   const displacement = [0, 0];
   if (symbolAnchor?.anchorX === AnchorX.Left) {
