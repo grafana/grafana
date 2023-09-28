@@ -2,7 +2,7 @@ import React from 'react';
 
 import { PluginState, TransformerRegistryItem, TransformerUIProps } from '@grafana/data';
 
-import { getHelperContent } from '../docs/getTransformationContent';
+import { getTransformationContent } from '../docs/getTransformationContent';
 
 import { timeSeriesTableTransformer, TimeSeriesTableTransformerOptions } from './timeSeriesTableTransformer';
 
@@ -23,5 +23,5 @@ export const timeSeriesTableTransformRegistryItem: TransformerRegistryItem<TimeS
   name: timeSeriesTableTransformer.name,
   description: timeSeriesTableTransformer.description,
   state: PluginState.beta,
-  help: getHelperContent(timeSeriesTableTransformer.id),
+  help: getTransformationContent(timeSeriesTableTransformer.id).helperDocs,
 };

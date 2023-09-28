@@ -10,7 +10,7 @@ import {
 } from '@grafana/data';
 import { InlineField, InlineFieldRow, Select, useStyles2 } from '@grafana/ui';
 
-import { getHelperContent } from '../docs/getTransformationContent';
+import { getTransformationContent } from '../docs/getTransformationContent';
 
 import { prepareTimeSeriesTransformer, PrepareTimeSeriesOptions, timeSeriesFormat } from './prepareTimeSeries';
 
@@ -121,5 +121,5 @@ export const prepareTimeseriesTransformerRegistryItem: TransformerRegistryItem<P
   name: prepareTimeSeriesTransformer.name,
   description: prepareTimeSeriesTransformer.description,
   categories: new Set([TransformerCategory.Reformat]),
-  help: getHelperContent(prepareTimeSeriesTransformer.id),
+  help: getTransformationContent(prepareTimeSeriesTransformer.id).helperDocs,
 };

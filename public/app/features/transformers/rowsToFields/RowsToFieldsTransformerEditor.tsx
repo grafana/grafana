@@ -2,8 +2,8 @@ import React from 'react';
 
 import { PluginState, TransformerRegistryItem, TransformerUIProps, TransformerCategory } from '@grafana/data';
 
+import { getTransformationContent } from '../docs/getTransformationContent';
 import { FieldToConfigMappingEditor } from '../fieldToConfigMapping/FieldToConfigMappingEditor';
-import { getHelperContent } from '../docs/getTransformationContent';
 
 import { rowsToFieldsTransformer, RowToFieldsTransformOptions } from './rowsToFields';
 
@@ -34,5 +34,5 @@ export const rowsToFieldsTransformRegistryItem: TransformerRegistryItem<RowToFie
   description: rowsToFieldsTransformer.description,
   state: PluginState.beta,
   categories: new Set([TransformerCategory.Reformat]),
-  help: getHelperContent(rowsToFieldsTransformer.id),
+  help: getTransformationContent(rowsToFieldsTransformer.id).helperDocs,
 };

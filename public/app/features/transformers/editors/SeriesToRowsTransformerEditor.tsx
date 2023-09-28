@@ -7,7 +7,7 @@ import {
 } from '@grafana/data';
 import { SeriesToRowsTransformerOptions } from '@grafana/data/src/transformations/transformers/seriesToRows';
 
-import { getHelperContent } from '../docs/getTransformationContent';
+import { getTransformationContent } from '../docs/getTransformationContent';
 
 export const SeriesToRowsTransformerEditor = ({
   input,
@@ -21,9 +21,9 @@ export const seriesToRowsTransformerRegistryItem: TransformerRegistryItem<Series
   id: DataTransformerID.seriesToRows,
   editor: SeriesToRowsTransformerEditor,
   transformation: standardTransformers.seriesToRowsTransformer,
-  name: 'Series to rows',
+  name: standardTransformers.seriesToRowsTransformer.name,
   description: `Merge many series and return a single series with time, metric and value as columns.
                 Useful for showing multiple time series visualized in a table.`,
   categories: new Set([TransformerCategory.Combine, TransformerCategory.Reformat]),
-  help: getHelperContent(DataTransformerID.seriesToRows),
+  help: getTransformationContent(DataTransformerID.seriesToRows).helperDocs,
 };

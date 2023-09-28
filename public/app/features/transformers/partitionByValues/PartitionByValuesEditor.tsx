@@ -11,7 +11,7 @@ import {
 import { InlineField, InlineFieldRow, ValuePicker, Button, HorizontalGroup, FieldValidationMessage } from '@grafana/ui';
 import { useFieldDisplayNames, useSelectOptions } from '@grafana/ui/src/components/MatchersUI/utils';
 
-import { getHelperContent } from '../docs/getTransformationContent';
+import { getTransformationContent } from '../docs/getTransformationContent';
 
 import { partitionByValuesTransformer, PartitionByValuesTransformerOptions } from './partitionByValues';
 
@@ -108,5 +108,5 @@ export const partitionByValuesTransformRegistryItem: TransformerRegistryItem<Par
   description: partitionByValuesTransformer.description,
   state: PluginState.alpha,
   categories: new Set([TransformerCategory.Reformat]),
-  help: getHelperContent(DataTransformerID.partitionByValues),
+  help: getTransformationContent(DataTransformerID.partitionByValues).helperDocs,
 };
