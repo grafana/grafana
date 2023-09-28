@@ -265,8 +265,9 @@ func (e *AzureMonitorDatasource) retrieveSubscriptionDetails(cli *http.Client, c
 	}
 
 	defer func() {
-		err := res.Body.Close()
-		backend.Logger.Error("Failed to close response body", "err", err)
+		if err := res.Body.Close(); err != nil {
+			backend.Logger.Warn("Failed to close response body", "err", err)
+		}
 	}()
 
 	body, err := io.ReadAll(res.Body)
@@ -317,8 +318,9 @@ func (e *AzureMonitorDatasource) executeQuery(ctx context.Context, query *types.
 	}
 
 	defer func() {
-		err := res.Body.Close()
-		backend.Logger.Error("Failed to close response body", "err", err)
+		if err := res.Body.Close(); err != nil {
+			backend.Logger.Warn("Failed to close response body", "err", err)
+		}
 	}()
 
 	data, err := e.unmarshalResponse(res)
@@ -478,7 +480,7 @@ func getQueryUrl(query *types.AzureMonitorQuery, azurePortalUrl, resourceID, res
 		}
 	}
 
-	timespan, err := json.Marshal(map[string]interface{}{
+	timespan, err := json.Marshal(map[string]any{
 		"absolute": struct {
 			Start string `json:"startTime"`
 			End   string `json:"endTime"`
@@ -493,7 +495,7 @@ func getQueryUrl(query *types.AzureMonitorQuery, azurePortalUrl, resourceID, res
 	escapedTime := url.QueryEscape(string(timespan))
 
 	var filters []types.AzureMonitorDimensionFilterBackend
-	var grouping map[string]interface{}
+	var grouping map[string]any
 
 	if len(query.Dimensions) > 0 {
 		for _, dimension := range query.Dimensions {
@@ -502,7 +504,7 @@ func getQueryUrl(query *types.AzureMonitorQuery, azurePortalUrl, resourceID, res
 
 			// Only the first dimension determines the splitting shown in the Azure Portal
 			if grouping == nil {
-				grouping = map[string]interface{}{
+				grouping = map[string]any{
 					"dimension": dimension.Dimension,
 					"sort":      2,
 					"top":       10,
@@ -544,7 +546,7 @@ func getQueryUrl(query *types.AzureMonitorQuery, azurePortalUrl, resourceID, res
 		}
 	}
 
-	chart := map[string]interface{}{
+	chart := map[string]any{
 		"metrics": []types.MetricChartDefinition{
 			{
 				ResourceMetadata: map[string]string{
@@ -562,7 +564,7 @@ func getQueryUrl(query *types.AzureMonitorQuery, azurePortalUrl, resourceID, res
 	}
 
 	if filters != nil {
-		chart["filterCollection"] = map[string]interface{}{
+		chart["filterCollection"] = map[string]any{
 			"filters": filters,
 		}
 	}
@@ -570,8 +572,8 @@ func getQueryUrl(query *types.AzureMonitorQuery, azurePortalUrl, resourceID, res
 		chart["grouping"] = grouping
 	}
 
-	chartDef, err := json.Marshal(map[string]interface{}{
-		"v2charts": []interface{}{
+	chartDef, err := json.Marshal(map[string]any{
+		"v2charts": []any{
 			chart,
 		},
 	})

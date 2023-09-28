@@ -1,9 +1,0 @@
-dn: ou=groups,dc=grafana,dc=org
-ou: Groups
-objectclass: top
-objectclass: organizationalUnit
-
-dn: ou=users,dc=grafana,dc=org
-ou: Users
-objectclass: top
-objectclass: organizationalUnit

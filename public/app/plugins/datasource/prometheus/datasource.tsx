@@ -24,6 +24,10 @@ import {
   ScopedVars,
   TimeRange,
   renderLegendFormat,
+  DataSourceGetTagKeysOptions,
+  DataSourceGetTagValuesOptions,
+  MetricFindValue,
+  AdHocVariableFilter,
 } from '@grafana/data';
 import {
   BackendDataSourceResponse,
@@ -55,7 +59,8 @@ import {
 } from './language_utils';
 import PrometheusMetricFindQuery from './metric_find_query';
 import { getInitHints, getQueryHints } from './query_hints';
-import { QueryEditorMode } from './querybuilder/shared/types';
+import { promQueryModeller } from './querybuilder/PromQueryModeller';
+import { QueryBuilderLabelFilter, QueryEditorMode } from './querybuilder/shared/types';
 import { CacheRequestInfo, defaultPrometheusQueryOverlapWindow, QueryCache } from './querycache/QueryCache';
 import { getOriginalMetricName, transform, transformV2 } from './result_transformer';
 import { trackQuery } from './tracking';
@@ -676,7 +681,7 @@ export class PrometheusDatasource
     let expr = target.expr;
 
     // Apply adhoc filters
-    expr = this.enhanceExprWithAdHocFilters(expr);
+    expr = this.enhanceExprWithAdHocFilters(options.filters, expr);
 
     // Only replace vars in expression after having (possibly) updated interval vars
     query.expr = this.templateSrv.replace(expr, scopedVars, this.interpolateQueryExpr);
@@ -971,27 +976,50 @@ export class PrometheusDatasource
   // this is used to get label keys, a.k.a label names
   // it is used in metric_find_query.ts
   // and in Tempo here grafana/public/app/plugins/datasource/tempo/QueryEditor/ServiceGraphSection.tsx
-  async getTagKeys(options?: { series: string[] }) {
-    if (options?.series) {
-      // Get tags for the provided series only
-      const seriesLabels: Array<Record<string, string[]>> = await Promise.all(
-        options.series.map((series: string) => this.languageProvider.fetchSeriesLabels(series))
-      );
-      // Combines tags from all options.series provided
-      let tags: string[] = [];
-      seriesLabels.map((value) => (tags = tags.concat(Object.keys(value))));
-      const uniqueLabels = [...new Set(tags)];
-      return uniqueLabels.map((value: any) => ({ text: value }));
-    } else {
-      // Get all tags
-      const params = this.getTimeRangeParams();
-      const result = await this.metadataRequest('/api/v1/labels', params);
-      return result?.data?.data?.map((value: any) => ({ text: value })) ?? [];
+  async getTagKeys(options: DataSourceGetTagKeysOptions): Promise<MetricFindValue[]> {
+    if (!options || options.filters.length === 0) {
+      await this.languageProvider.fetchLabels();
+      return this.languageProvider.getLabelKeys().map((k) => ({ value: k, text: k }));
     }
+
+    const labelFilters: QueryBuilderLabelFilter[] = options.filters.map((f) => ({
+      label: f.key,
+      value: f.value,
+      op: f.operator,
+    }));
+    const expr = promQueryModeller.renderLabels(labelFilters);
+
+    let labelsIndex: Record<string, string[]>;
+
+    if (this.hasLabelsMatchAPISupport()) {
+      labelsIndex = await this.languageProvider.fetchSeriesLabelsMatch(expr);
+    } else {
+      labelsIndex = await this.languageProvider.fetchSeriesLabels(expr);
+    }
+
+    // filter out already used labels
+    return Object.keys(labelsIndex)
+      .filter((labelName) => !options.filters.find((filter) => filter.key === labelName))
+      .map((k) => ({ value: k, text: k }));
   }
 
   // By implementing getTagKeys and getTagValues we add ad-hoc filters functionality
-  async getTagValues(options: { key?: string } = {}) {
+  async getTagValues(options: DataSourceGetTagValuesOptions) {
+    const labelFilters: QueryBuilderLabelFilter[] = options.filters.map((f) => ({
+      label: f.key,
+      value: f.value,
+      op: f.operator,
+    }));
+
+    const expr = promQueryModeller.renderLabels(labelFilters);
+
+    if (this.hasLabelsMatchAPISupport()) {
+      return (await this.languageProvider.fetchSeriesValuesWithMatch(options.key, expr)).map((v) => ({
+        value: v,
+        text: v,
+      }));
+    }
+
     const params = this.getTimeRangeParams();
     const result = await this.metadataRequest(`/api/v1/label/${options.key}/values`, params);
     return result?.data?.data?.map((value: any) => ({ text: value })) ?? [];
@@ -1085,16 +1113,21 @@ export class PrometheusDatasource
     );
   }
 
-  interpolateVariablesInQueries(queries: PromQuery[], scopedVars: ScopedVars): PromQuery[] {
+  interpolateVariablesInQueries(
+    queries: PromQuery[],
+    scopedVars: ScopedVars,
+    filters?: AdHocVariableFilter[]
+  ): PromQuery[] {
     let expandedQueries = queries;
     if (queries && queries.length) {
       expandedQueries = queries.map((query) => {
+        const interpolatedQuery = this.templateSrv.replace(query.expr, scopedVars, this.interpolateQueryExpr);
+        const withAdhocFilters = this.enhanceExprWithAdHocFilters(filters, interpolatedQuery);
+
         const expandedQuery = {
           ...query,
           datasource: this.getRef(),
-          expr: this.enhanceExprWithAdHocFilters(
-            this.templateSrv.replace(query.expr, scopedVars, this.interpolateQueryExpr)
-          ),
+          expr: withAdhocFilters,
           interval: this.templateSrv.replace(query.interval, scopedVars),
         };
         return expandedQuery;
@@ -1223,10 +1256,12 @@ export class PrometheusDatasource
     return getOriginalMetricName(labelData);
   }
 
-  enhanceExprWithAdHocFilters(expr: string) {
-    const adhocFilters = this.templateSrv.getAdhocFilters(this.name);
+  enhanceExprWithAdHocFilters(filters: AdHocVariableFilter[] | undefined, expr: string) {
+    if (!filters || filters.length === 0) {
+      return expr;
+    }
 
-    const finalQuery = adhocFilters.reduce((acc: string, filter: { key?: any; operator?: any; value?: any }) => {
+    const finalQuery = filters.reduce((acc: string, filter: { key?: any; operator?: any; value?: any }) => {
       const { key, operator } = filter;
       let { value } = filter;
       if (operator === '=~' || operator === '!~') {
@@ -1246,21 +1281,28 @@ export class PrometheusDatasource
   }
 
   // Used when running queries through backend
-  applyTemplateVariables(target: PromQuery, scopedVars: ScopedVars): Record<string, any> {
+  applyTemplateVariables(
+    target: PromQuery,
+    scopedVars: ScopedVars,
+    filters?: AdHocVariableFilter[]
+  ): Record<string, any> {
     const variables = cloneDeep(scopedVars);
 
     // We want to interpolate these variables on backend
     delete variables.__interval;
     delete variables.__interval_ms;
 
-    //Add ad hoc filters
-    const expr = this.enhanceExprWithAdHocFilters(target.expr);
+    // interpolate expression
+    const expr = this.templateSrv.replace(target.expr, variables, this.interpolateQueryExpr);
+
+    // Add ad hoc filters
+    const exprWithAdHocFilters = this.enhanceExprWithAdHocFilters(filters, expr);
 
     return {
       ...target,
-      legendFormat: this.templateSrv.replace(target.legendFormat, variables),
-      expr: this.templateSrv.replace(expr, variables, this.interpolateQueryExpr),
+      expr: exprWithAdHocFilters,
       interval: this.templateSrv.replace(target.interval, variables),
+      legendFormat: this.templateSrv.replace(target.legendFormat, variables),
     };
   }
 

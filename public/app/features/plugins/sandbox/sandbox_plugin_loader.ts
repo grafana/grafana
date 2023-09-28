@@ -2,6 +2,7 @@ import createVirtualEnvironment from '@locker/near-membrane-dom';
 import { ProxyTarget } from '@locker/near-membrane-shared';
 
 import { PluginMeta } from '@grafana/data';
+import { defaultTrustedTypesPolicy } from 'app/core/trustedTypePolicies';
 
 import { getPluginSettings } from '../pluginSettings';
 
@@ -24,15 +25,15 @@ if (process.env.NODE_ENV !== 'production') {
   require('@locker/near-membrane-dom/custom-devtools-formatter');
 }
 
-const pluginImportCache = new Map<string, Promise<unknown>>();
+const pluginImportCache = new Map<string, Promise<System.Module>>();
 
-export async function importPluginModuleInSandbox({ pluginId }: { pluginId: string }): Promise<unknown> {
+export async function importPluginModuleInSandbox({ pluginId }: { pluginId: string }): Promise<System.Module> {
   try {
     const pluginMeta = await getPluginSettings(pluginId);
     if (!pluginImportCache.has(pluginId)) {
       pluginImportCache.set(pluginId, doImportPluginModuleInSandbox(pluginMeta));
     }
-    return pluginImportCache.get(pluginId);
+    return pluginImportCache.get(pluginId)!;
   } catch (e) {
     const error = new Error(`Could not import plugin ${pluginId} inside sandbox: ` + e);
     logError(error, {
@@ -43,7 +44,7 @@ export async function importPluginModuleInSandbox({ pluginId }: { pluginId: stri
   }
 }
 
-async function doImportPluginModuleInSandbox(meta: PluginMeta): Promise<unknown> {
+async function doImportPluginModuleInSandbox(meta: PluginMeta): Promise<System.Module> {
   return new Promise(async (resolve, reject) => {
     const generalDistortionMap = getGeneralSandboxDistortionMap();
     let sandboxEnvironment: SandboxEnvironment;
@@ -72,6 +73,7 @@ async function doImportPluginModuleInSandbox(meta: PluginMeta): Promise<unknown>
       // distortions are interceptors to modify the behavior of objects when
       // the code inside the sandbox tries to access them
       distortionCallback,
+      defaultPolicy: defaultTrustedTypesPolicy,
       liveTargetCallback: isLiveTarget,
       // endowments are custom variables we make available to plugins in their window object
       endowments: Object.getOwnPropertyDescriptors({
@@ -80,6 +82,15 @@ async function doImportPluginModuleInSandbox(meta: PluginMeta): Promise<unknown>
         // window.locationSandbox. In the future `window.location` could be a proxy if we
         // want to intercept calls to it.
         locationSandbox: window.location,
+        get monaco() {
+          // `window.monaco` may be undefined when invoked. However, plugins have long
+          // accessed it directly, aware of this possibility.
+          return Reflect.get(window, 'monaco');
+        },
+        get Prism() {
+          // Similar to `window.monaco`, `window.Prism` may be undefined when invoked.
+          return Reflect.get(window, 'Prism');
+        },
         // Plugins builds use the AMD module system. Their code consists
         // of a single function call to `define()` that internally contains all the plugin code.
         // This is that `define` function the plugin will call.
@@ -189,7 +200,11 @@ function resolvePluginDependencies(deps: string[]) {
   // resolve dependencies
   const resolvedDeps: CompartmentDependencyModule[] = [];
   for (const dep of deps) {
-    const resolvedDep = sandboxPluginDependencies.get(dep);
+    let resolvedDep = sandboxPluginDependencies.get(dep);
+    if (resolvedDep?.__useDefault) {
+      resolvedDep = resolvedDep.default;
+    }
+
     if (!resolvedDep) {
       throw new Error(`[sandbox] Could not resolve dependency ${dep}`);
     }

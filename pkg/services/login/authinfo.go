@@ -29,7 +29,7 @@ type Store interface {
 	GetUserById(ctx context.Context, id int64) (*user.User, error)
 	GetUserByLogin(ctx context.Context, login string) (*user.User, error)
 	GetUserByEmail(ctx context.Context, email string) (*user.User, error)
-	CollectLoginStats(ctx context.Context) (map[string]interface{}, error)
+	CollectLoginStats(ctx context.Context) (map[string]any, error)
 	RunMetricsCollection(ctx context.Context) error
 	GetLoginStats(ctx context.Context) (LoginStats, error)
 }

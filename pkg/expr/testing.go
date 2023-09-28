@@ -12,7 +12,7 @@ import (
 type fakePluginContextProvider struct {
 	recordings []struct {
 		method string
-		params []interface{}
+		params []any
 	}
 	result      map[string]*backend.AppInstanceSettings
 	errorResult error
@@ -23,8 +23,8 @@ var _ pluginContextProvider = &fakePluginContextProvider{}
 func (f *fakePluginContextProvider) Get(_ context.Context, pluginID string, user identity.Requester, orgID int64) (backend.PluginContext, error) {
 	f.recordings = append(f.recordings, struct {
 		method string
-		params []interface{}
-	}{method: "Get", params: []interface{}{pluginID, user, orgID}})
+		params []any
+	}{method: "Get", params: []any{pluginID, user, orgID}})
 	if f.errorResult != nil {
 		return backend.PluginContext{}, f.errorResult
 	}
@@ -48,8 +48,8 @@ func (f *fakePluginContextProvider) Get(_ context.Context, pluginID string, user
 func (f *fakePluginContextProvider) GetWithDataSource(ctx context.Context, pluginID string, user identity.Requester, ds *datasources.DataSource) (backend.PluginContext, error) {
 	f.recordings = append(f.recordings, struct {
 		method string
-		params []interface{}
-	}{method: "GetWithDataSource", params: []interface{}{pluginID, user, ds}})
+		params []any
+	}{method: "GetWithDataSource", params: []any{pluginID, user, ds}})
 
 	if f.errorResult != nil {
 		return backend.PluginContext{}, f.errorResult

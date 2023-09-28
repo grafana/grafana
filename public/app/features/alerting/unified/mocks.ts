@@ -10,6 +10,8 @@ import {
   DataSourceJsonData,
   DataSourcePluginMeta,
   DataSourceRef,
+  PluginMeta,
+  PluginType,
   ScopedVars,
   TestDataSourceResponse,
 } from '@grafana/data';
@@ -689,3 +691,23 @@ export function getCloudRule(override?: Partial<CombinedRule>) {
 export function mockAlertWithState(state: GrafanaAlertState, labels?: {}): Alert {
   return { activeAt: '', annotations: {}, labels: labels || {}, state: state, value: '' };
 }
+
+export const onCallPluginMetaMock: PluginMeta = {
+  name: 'Grafana OnCall',
+  id: 'grafana-oncall-app',
+  type: PluginType.app,
+  module: 'plugins/grafana-oncall-app/module',
+  baseUrl: 'public/plugins/grafana-oncall-app',
+  info: {
+    author: { name: 'Grafana Labs' },
+    description: 'Grafana OnCall',
+    updated: '',
+    version: '',
+    links: [],
+    logos: {
+      small: '',
+      large: '',
+    },
+    screenshots: [],
+  },
+};

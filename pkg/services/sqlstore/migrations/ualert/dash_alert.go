@@ -69,7 +69,7 @@ type dashAlertSettings struct {
 	NoDataState         string               `json:"noDataState"`
 	ExecutionErrorState string               `json:"executionErrorState"`
 	Conditions          []dashAlertCondition `json:"conditions"`
-	AlertRuleTags       interface{}          `json:"alertRuleTags"`
+	AlertRuleTags       any                  `json:"alertRuleTags"`
 	Notifications       []dashAlertNot       `json:"notifications"`
 }
 
@@ -96,7 +96,7 @@ type dashAlertCondition struct {
 	} `json:"query"`
 
 	Reducer struct {
-		// Params []interface{} `json:"params"` (Unused)
+		// Params []any `json:"params"` (Unused)
 		Type string `json:"type"`
 	}
 }

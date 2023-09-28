@@ -10,6 +10,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/infra/grn"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/middleware"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
@@ -59,7 +60,7 @@ func (s *httpEntityStore) RegisterHTTPRoutes(route routing.RouteRegister) {
 // This function will extract UID+Kind from the requested path "*" in our router
 // This is far from ideal! but is at least consistent for these endpoints.
 // This will quickly be revisited as we explore how to encode UID+Kind in a "GRN" format
-func (s *httpEntityStore) getGRNFromRequest(c *contextmodel.ReqContext) (*entity.GRN, map[string]string, error) {
+func (s *httpEntityStore) getGRNFromRequest(c *contextmodel.ReqContext) (*grn.GRN, map[string]string, error) {
 	params := web.Params(c.Req)
 	// Read parameters that are encoded in the URL
 	vals := c.Req.URL.Query()
@@ -68,10 +69,10 @@ func (s *httpEntityStore) getGRNFromRequest(c *contextmodel.ReqContext) (*entity
 			params[k] = v[0]
 		}
 	}
-	return &entity.GRN{
-		TenantId: c.OrgID,
-		Kind:     params[":kind"],
-		UID:      params[":uid"],
+	return &grn.GRN{
+		TenantID:           c.OrgID,
+		ResourceKind:       params[":kind"],
+		ResourceIdentifier: params[":uid"],
 	}, params, nil
 }
 
@@ -124,7 +125,7 @@ func (s *httpEntityStore) doGetRawEntity(c *contextmodel.ReqContext) response.Re
 	if err != nil {
 		return response.Error(500, "?", err)
 	}
-	info, err := s.kinds.GetInfo(grn.Kind)
+	info, err := s.kinds.GetInfo(grn.ResourceKind)
 	if err != nil {
 		return response.Error(400, "Unsupported kind", err)
 	}
@@ -263,10 +264,10 @@ func (s *httpEntityStore) doUpload(c *contextmodel.ReqContext) response.Response
 				return response.Error(500, "Internal Server Error", err)
 			}
 
-			grn := &entity.GRN{
-				UID:      uid,
-				Kind:     kind.ID,
-				TenantId: c.OrgID,
+			grn := &grn.GRN{
+				ResourceIdentifier: uid,
+				ResourceKind:       kind.ID,
+				TenantID:           c.OrgID,
 			}
 
 			if !overwriteExistingFile {

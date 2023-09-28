@@ -52,7 +52,7 @@ func TestOAuth2ServiceImpl_handleClientCredentials(t *testing.T) {
 		name           string
 		scopes         []string
 		client         *oauthserver.ExternalService
-		expectedClaims map[string]interface{}
+		expectedClaims map[string]any
 		wantErr        bool
 	}{
 		{
@@ -73,7 +73,7 @@ func TestOAuth2ServiceImpl_handleClientCredentials(t *testing.T) {
 			name:           "profile claims",
 			client:         client1,
 			scopes:         []string{"profile"},
-			expectedClaims: map[string]interface{}{"name": "Test App", "login": "testapp"},
+			expectedClaims: map[string]any{"name": "Test App", "login": "testapp"},
 		},
 		{
 			name:   "email claims should be empty",
@@ -89,7 +89,7 @@ func TestOAuth2ServiceImpl_handleClientCredentials(t *testing.T) {
 			name:   "entitlements claims",
 			client: client1,
 			scopes: []string{"entitlements"},
-			expectedClaims: map[string]interface{}{"entitlements": map[string][]string{
+			expectedClaims: map[string]any{"entitlements": map[string][]string{
 				"dashboards:read":  {"dashboards:*", "folders:*"},
 				"dashboards:write": {"dashboards:uid:1"},
 			}},
@@ -98,7 +98,7 @@ func TestOAuth2ServiceImpl_handleClientCredentials(t *testing.T) {
 			name:   "scoped entitlements claims",
 			client: client1,
 			scopes: []string{"entitlements", "dashboards:write"},
-			expectedClaims: map[string]interface{}{"entitlements": map[string][]string{
+			expectedClaims: map[string]any{"entitlements": map[string][]string{
 				"dashboards:write": {"dashboards:uid:1"},
 			}},
 		},
@@ -187,7 +187,7 @@ func TestOAuth2ServiceImpl_handleJWTBearer(t *testing.T) {
 		scopes         []string
 		client         *oauthserver.ExternalService
 		subject        string
-		expectedClaims map[string]interface{}
+		expectedClaims map[string]any
 		wantErr        bool
 	}{
 		{
@@ -248,7 +248,7 @@ func TestOAuth2ServiceImpl_handleJWTBearer(t *testing.T) {
 			client:  client1,
 			subject: "user:id:56",
 			scopes:  []string{"profile"},
-			expectedClaims: map[string]interface{}{
+			expectedClaims: map[string]any{
 				"name":       "User 56",
 				"login":      "user56",
 				"updated_at": now.Unix(),
@@ -262,7 +262,7 @@ func TestOAuth2ServiceImpl_handleJWTBearer(t *testing.T) {
 			client:  client1,
 			subject: "user:id:56",
 			scopes:  []string{"email"},
-			expectedClaims: map[string]interface{}{
+			expectedClaims: map[string]any{
 				"email": "user56@example.org",
 			},
 		},
@@ -275,7 +275,7 @@ func TestOAuth2ServiceImpl_handleJWTBearer(t *testing.T) {
 			client:  client1,
 			subject: "user:id:56",
 			scopes:  []string{"groups"},
-			expectedClaims: map[string]interface{}{
+			expectedClaims: map[string]any{
 				"groups": []string{"Team 1", "Team 2"},
 			},
 		},
@@ -293,7 +293,7 @@ func TestOAuth2ServiceImpl_handleJWTBearer(t *testing.T) {
 				{Action: "datasources:read", Scope: "datasources:*"},
 			}),
 			subject: "user:id:56",
-			expectedClaims: map[string]interface{}{
+			expectedClaims: map[string]any{
 				"entitlements": map[string][]string{},
 			},
 			scopes: []string{"entitlements"},
@@ -315,7 +315,7 @@ func TestOAuth2ServiceImpl_handleJWTBearer(t *testing.T) {
 				{Action: "datasources:read", Scope: "datasources:*"},
 			}),
 			subject: "user:id:56",
-			expectedClaims: map[string]interface{}{
+			expectedClaims: map[string]any{
 				"entitlements": map[string][]string{
 					"datasources:read": {"datasources:uid:1"},
 				},
@@ -339,7 +339,7 @@ func TestOAuth2ServiceImpl_handleJWTBearer(t *testing.T) {
 				{Action: "users.permissions:read", Scope: "users:self"},
 			}),
 			subject: "user:id:56",
-			expectedClaims: map[string]interface{}{
+			expectedClaims: map[string]any{
 				"entitlements": map[string][]string{
 					"users:read":             {"global.users:id:56"},
 					"users.permissions:read": {"users:id:56"},
@@ -361,7 +361,7 @@ func TestOAuth2ServiceImpl_handleJWTBearer(t *testing.T) {
 				{Action: "teams:read", Scope: "teams:self"},
 			}),
 			subject: "user:id:56",
-			expectedClaims: map[string]interface{}{
+			expectedClaims: map[string]any{
 				"entitlements": map[string][]string{"teams:read": {"teams:id:1", "teams:id:2"}},
 			},
 			scopes: []string{"entitlements"},
@@ -384,7 +384,7 @@ func TestOAuth2ServiceImpl_handleJWTBearer(t *testing.T) {
 				{Action: "datasources:read", Scope: "datasources:*"},
 			}),
 			subject: "user:id:56",
-			expectedClaims: map[string]interface{}{
+			expectedClaims: map[string]any{
 				"entitlements": map[string][]string{"users:read": {"global.users:id:*"}},
 			},
 			scopes: []string{"entitlements", "users:read"},

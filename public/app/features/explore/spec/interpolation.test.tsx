@@ -6,20 +6,19 @@ import { getTemplateSrv } from '@grafana/runtime';
 import { LokiQuery } from '../../../plugins/datasource/loki/types';
 
 import { makeLogsQueryResponse } from './helper/query';
-import { setupExplore, waitForExplore } from './helper/setup';
+import { setupExplore, tearDown, waitForExplore } from './helper/setup';
 
 const testEventBus = new EventBusSrv();
 
-const fetch = jest.fn();
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
-  getBackendSrv: () => ({ fetch }),
   getAppEvents: () => testEventBus,
 }));
 
 jest.mock('app/core/core', () => ({
   contextSrv: {
     hasAccess: () => true,
+    getValidIntervals: (defaultIntervals: string[]) => defaultIntervals,
   },
 }));
 
@@ -32,13 +31,11 @@ jest.mock('react-virtualized-auto-sizer', () => {
   };
 });
 
-jest.mock('../../correlations/utils', () => {
-  return {
-    getCorrelationsBySourceUIDs: jest.fn().mockReturnValue({ correlations: [] }),
-  };
-});
-
 describe('Explore: interpolation', () => {
+  afterEach(() => {
+    tearDown();
+  });
+
   // support-escalations/issues/1459
   it('Time is interpolated when explore is opened with a URL', async () => {
     const urlParams = {

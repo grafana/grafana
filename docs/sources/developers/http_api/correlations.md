@@ -196,6 +196,7 @@ Content-Type: application/json
   "sourceUID": "uyBf2637k",
   "targetUID": "PDDA8E780A17E7EF1",
   "uid": "J6gn7d31L",
+  "provisioned": false,
   "config": {
     "type": "query",
     "field": "message",
@@ -237,6 +238,7 @@ Content-Type: application/json
     "sourceUID": "uyBf2637k",
     "targetUID": "PDDA8E780A17E7EF1",
     "uid": "J6gn7d31L",
+    "provisioned": false,
     "config": {
       "type": "query",
       "field": "message",
@@ -249,6 +251,7 @@ Content-Type: application/json
     "sourceUID": "uyBf2637k",
     "targetUID": "P15396BDD62B2BE29",
     "uid": "uWCpURgVk",
+    "provisioned": false,
     "config": {
       "type": "query",
       "field": "message",
@@ -297,6 +300,7 @@ Content-Type: application/json
     "sourceUID": "uyBf2637k",
     "targetUID": "PDDA8E780A17E7EF1",
     "uid": "J6gn7d31L",
+    "provisioned": false,
     "config": {
       "type": "query",
       "field": "message",
@@ -309,6 +313,7 @@ Content-Type: application/json
     "sourceUID": "PDDA8E780A17E7EF1",
     "targetUID": "P15396BDD62B2BE29",
     "uid": "uWCpURgVk",
+    "provisioned": false,
     "config": {
       "type": "query",
       "field": "message",

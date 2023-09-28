@@ -130,7 +130,7 @@ func (a *Alert) GetTagsFromSettings() []*tag.Tag {
 	if a.Settings != nil {
 		if data, ok := a.Settings.CheckGet("alertRuleTags"); ok {
 			for tagNameString, tagValue := range data.MustMap() {
-				// MustMap() already guarantees the return of a `map[string]interface{}`.
+				// MustMap() already guarantees the return of a `map[string]any`.
 				// Therefore we only need to verify that tagValue is a String.
 				tagValueString := simplejson.NewFromAny(tagValue).MustString()
 				tags = append(tags, &tag.Tag{Key: tagNameString, Value: tagValueString})

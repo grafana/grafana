@@ -16,6 +16,7 @@ import {
 } from '@grafana/data';
 import { maybeSortFrame } from '@grafana/data/src/transformations/transformers/joinDataFrames';
 import {
+  AxisColorMode,
   AxisPlacement,
   GraphTransform,
   GraphTresholdsStyleMode,
@@ -26,6 +27,7 @@ import {
   VizLegendOptions,
 } from '@grafana/schema';
 import { FIXED_UNIT, measureText, UPlotConfigBuilder, UPlotConfigPrepFn, UPLOT_AXIS_FONT_SIZE } from '@grafana/ui';
+import { AxisProps } from '@grafana/ui/src/components/uPlot/config/UPlotAxisBuilder';
 import { getStackingGroups } from '@grafana/ui/src/components/uPlot/utils';
 import { findField } from 'app/features/dimensions';
 
@@ -256,6 +258,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptionsEX> = ({
       max: field.config.max,
       softMin,
       softMax,
+      centeredZero: customConfig.axisCenteredZero,
       orientation: vizOrientation.yOri,
       direction: vizOrientation.yDir,
       distribution: customConfig.scaleDistribution?.type,
@@ -276,7 +279,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptionsEX> = ({
         }
       }
 
-      builder.addAxis({
+      let axisOpts: AxisProps = {
         scaleKey,
         label: customConfig.axisLabel,
         size: customConfig.axisWidth,
@@ -286,7 +289,19 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptionsEX> = ({
         tickLabelRotation: vizOrientation.xOri === 1 ? xTickLabelRotation * -1 : 0,
         theme,
         grid: { show: customConfig.axisGridShow },
-      });
+      };
+
+      if (customConfig.axisBorderShow) {
+        axisOpts.border = {
+          show: true,
+        };
+      }
+
+      if (customConfig.axisColorMode === AxisColorMode.Series) {
+        axisOpts.color = seriesColor;
+      }
+
+      builder.addAxis(axisOpts);
     }
   }
 

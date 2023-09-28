@@ -75,7 +75,7 @@ func (c *LDAP) AuthenticatePassword(ctx context.Context, r *authn.Request, usern
 
 // disableUser will disable users if they logged in via LDAP previously
 func (c *LDAP) disableUser(ctx context.Context, username string) (*authn.Identity, error) {
-	c.logger.Debug("user was not found in the LDAP directory tree", "username", username)
+	c.logger.Debug("User was not found in the LDAP directory tree", "username", username)
 	retErr := errIdentityNotFound.Errorf("no user found: %w", multildap.ErrDidNotFindUser)
 
 	// Retrieve the user from store based on the login
@@ -98,7 +98,7 @@ func (c *LDAP) disableUser(ctx context.Context, username string) (*authn.Identit
 	}
 
 	// Disable the user
-	c.logger.Debug("user was removed from the LDAP directory tree, disabling it", "username", username, "authID", authinfo.AuthId)
+	c.logger.Debug("User was removed from the LDAP directory tree, disabling it", "username", username, "authID", authinfo.AuthId)
 	if errDisable := c.userService.Disable(ctx, &user.DisableUserCommand{UserID: dbUser.ID, IsDisabled: true}); errDisable != nil {
 		return nil, errDisable
 	}
@@ -118,13 +118,13 @@ func (c *LDAP) identityFromLDAPInfo(orgID int64, info *login.ExternalUserInfo) *
 		AuthID:          info.AuthId,
 		Groups:          info.Groups,
 		ClientParams: authn.ClientParams{
-			SyncUser:            true,
-			SyncTeams:           true,
-			EnableDisabledUsers: true,
-			FetchSyncedUser:     true,
-			SyncPermissions:     true,
-			SyncOrgRoles:        !c.cfg.LDAPSkipOrgRoleSync,
-			AllowSignUp:         c.cfg.LDAPAllowSignup,
+			SyncUser:        true,
+			SyncTeams:       true,
+			EnableUser:      true,
+			FetchSyncedUser: true,
+			SyncPermissions: true,
+			SyncOrgRoles:    !c.cfg.LDAPSkipOrgRoleSync,
+			AllowSignUp:     c.cfg.LDAPAllowSignup,
 			LookUpParams: login.UserLookupParams{
 				Login: &info.Login,
 				Email: &info.Email,

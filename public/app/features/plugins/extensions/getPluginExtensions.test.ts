@@ -1,9 +1,17 @@
 import { PluginExtensionLinkConfig, PluginExtensionTypes } from '@grafana/data';
+import { reportInteraction } from '@grafana/runtime';
 
 import { createPluginExtensionRegistry } from './createPluginExtensionRegistry';
 import { getPluginExtensions } from './getPluginExtensions';
 import { isReadOnlyProxy } from './utils';
 import { assertPluginExtensionLink } from './validators';
+
+jest.mock('@grafana/runtime', () => {
+  return {
+    ...jest.requireActual('@grafana/runtime'),
+    reportInteraction: jest.fn(),
+  };
+});
 
 describe('getPluginExtensions()', () => {
   const extensionPoint1 = 'grafana/dashboard/panel/menu';
@@ -30,6 +38,7 @@ describe('getPluginExtensions()', () => {
     };
 
     global.console.warn = jest.fn();
+    jest.mocked(reportInteraction).mockReset();
   });
 
   test('should return the extensions for the given placement', () => {
@@ -43,7 +52,7 @@ describe('getPluginExtensions()', () => {
         type: PluginExtensionTypes.link,
         title: link1.title,
         description: link1.description,
-        path: link1.path,
+        path: expect.stringContaining(link1.path!),
       })
     );
   });
@@ -60,7 +69,7 @@ describe('getPluginExtensions()', () => {
         type: PluginExtensionTypes.link,
         title: link1.title,
         description: link1.description,
-        path: link1.path,
+        path: expect.stringContaining(link1.path!),
       })
     );
   });
@@ -89,7 +98,7 @@ describe('getPluginExtensions()', () => {
         type: PluginExtensionTypes.link,
         title: link1.title,
         description: link1.description,
-        path: link1.path,
+        path: expect.stringContaining(link1.path!),
       })
     );
   });
@@ -129,9 +138,30 @@ describe('getPluginExtensions()', () => {
     expect(link2.configure).toHaveBeenCalledTimes(1);
     expect(extension.title).toBe('Updated title');
     expect(extension.description).toBe('Updated description');
-    expect(extension.path).toBe(`/a/${pluginId}/updated-path`);
+    expect(extension.path?.startsWith(`/a/${pluginId}/updated-path`)).toBeTruthy();
     expect(extension.icon).toBe('search');
     expect(extension.category).toBe('Machine Learning');
+  });
+
+  test('should append link tracking to path when running configure() function', () => {
+    link2.configure = jest.fn().mockImplementation(() => ({
+      title: 'Updated title',
+      description: 'Updated description',
+      path: `/a/${pluginId}/updated-path`,
+      icon: 'search',
+      category: 'Machine Learning',
+    }));
+
+    const registry = createPluginExtensionRegistry([{ pluginId, extensionConfigs: [link2] }]);
+    const { extensions } = getPluginExtensions({ registry, extensionPointId: extensionPoint2 });
+    const [extension] = extensions;
+
+    assertPluginExtensionLink(extension);
+
+    expect(link2.configure).toHaveBeenCalledTimes(1);
+    expect(extension.path).toBe(
+      `/a/${pluginId}/updated-path?uel_pid=grafana-basic-app&uel_epid=plugins%2Fmyorg-basic-app%2Fstart`
+    );
   });
 
   test('should ignore restricted properties passed via the configure() function', () => {
@@ -332,7 +362,7 @@ describe('getPluginExtensions()', () => {
     }).toThrow();
   });
 
-  test('should should not make original context read only', () => {
+  test('should not make original context read only', () => {
     const context = {
       title: 'New title from the context!',
       nested: { title: 'title' },
@@ -347,5 +377,36 @@ describe('getPluginExtensions()', () => {
       context.nested.title = 'new title';
       context.array.push('b');
     }).not.toThrow();
+  });
+
+  test('should report interaction when onClick is triggered', () => {
+    const reportInteractionMock = jest.mocked(reportInteraction);
+
+    const registry = createPluginExtensionRegistry([
+      {
+        pluginId,
+        extensionConfigs: [
+          {
+            ...link1,
+            path: undefined,
+            onClick: jest.fn(),
+          },
+        ],
+      },
+    ]);
+    const { extensions } = getPluginExtensions({ registry, extensionPointId: extensionPoint1 });
+    const [extension] = extensions;
+
+    assertPluginExtensionLink(extension);
+
+    extension.onClick?.();
+
+    expect(reportInteractionMock).toBeCalledTimes(1);
+    expect(reportInteractionMock).toBeCalledWith('ui_extension_link_clicked', {
+      pluginId: extension.pluginId,
+      extensionPointId: extensionPoint1,
+      title: extension.title,
+      category: extension.category,
+    });
   });
 });

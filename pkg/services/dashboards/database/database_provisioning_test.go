@@ -27,7 +27,7 @@ func TestIntegrationDashboardProvisioningTest(t *testing.T) {
 		OrgID:    1,
 		FolderID: 0,
 		IsFolder: true,
-		Dashboard: simplejson.NewFromAny(map[string]interface{}{
+		Dashboard: simplejson.NewFromAny(map[string]any{
 			"id":    nil,
 			"title": "test dashboard",
 		}),
@@ -40,7 +40,7 @@ func TestIntegrationDashboardProvisioningTest(t *testing.T) {
 		OrgID:    1,
 		IsFolder: false,
 		FolderID: dash.ID,
-		Dashboard: simplejson.NewFromAny(map[string]interface{}{
+		Dashboard: simplejson.NewFromAny(map[string]any{
 			"id":    nil,
 			"title": "test dashboard",
 		}),
@@ -66,7 +66,7 @@ func TestIntegrationDashboardProvisioningTest(t *testing.T) {
 				OrgID:    1,
 				IsFolder: false,
 				FolderID: dash.ID,
-				Dashboard: simplejson.NewFromAny(map[string]interface{}{
+				Dashboard: simplejson.NewFromAny(map[string]any{
 					"id":    nil,
 					"title": "another_dashboard",
 				}),

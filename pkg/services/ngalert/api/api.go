@@ -12,7 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasourceproxy"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/backtesting"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
@@ -32,28 +31,6 @@ var timeNow = time.Now
 type ExternalAlertmanagerProvider interface {
 	AlertmanagersFor(orgID int64) []*url.URL
 	DroppedAlertmanagersFor(orgID int64) []*url.URL
-}
-
-type Alertmanager interface {
-	// Configuration
-	SaveAndApplyConfig(ctx context.Context, config *apimodels.PostableUserConfig) error
-	SaveAndApplyDefaultConfig(ctx context.Context) error
-	GetStatus() apimodels.GettableStatus
-
-	// Silences
-	CreateSilence(ps *apimodels.PostableSilence) (string, error)
-	DeleteSilence(silenceID string) error
-	GetSilence(silenceID string) (apimodels.GettableSilence, error)
-	ListSilences(filter []string) (apimodels.GettableSilences, error)
-
-	// Alerts
-	GetAlerts(active, silenced, inhibited bool, filter []string, receiver string) (apimodels.GettableAlerts, error)
-	GetAlertGroups(active, silenced, inhibited bool, filter []string, receiver string) (apimodels.AlertGroups, error)
-
-	// Receivers
-	GetReceivers(ctx context.Context) []apimodels.Receiver
-	TestReceivers(ctx context.Context, c apimodels.TestReceiversConfigBodyParams) (*notifier.TestReceiversResult, error)
-	TestTemplate(ctx context.Context, c apimodels.TestTemplatesConfigBodyParams) (*notifier.TestTemplatesResults, error)
 }
 
 type AlertingStore interface {

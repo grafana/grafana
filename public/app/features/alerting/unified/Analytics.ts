@@ -1,6 +1,6 @@
 import { dateTime } from '@grafana/data';
 import { faro, LogLevel as GrafanaLogLevel } from '@grafana/faro-web-sdk';
-import { getBackendSrv } from '@grafana/runtime';
+import { getBackendSrv, logError } from '@grafana/runtime';
 import { config, reportInteraction } from '@grafana/runtime/src';
 import { contextSrv } from 'app/core/core';
 
@@ -17,7 +17,6 @@ export const LogMessages = {
   cancelSavingAlertRule: 'user canceled alert rule creation',
   successSavingAlertRule: 'alert rule saved successfully',
   unknownMessageFromError: 'unknown messageFromError',
-  errorGettingLokiHistory: 'error getting Loki history',
 };
 
 // logInfo from '@grafana/runtime' should be used, but it doesn't handle Grafana JS Agent correctly
@@ -28,6 +27,10 @@ export function logInfo(message: string, context: Record<string, string | number
       context: { ...context, module: 'Alerting' },
     });
   }
+}
+
+export function logAlertingError(error: Error, context: Record<string, string | number> = {}) {
+  logError(error, { ...context, module: 'Alerting' });
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

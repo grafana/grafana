@@ -44,7 +44,7 @@ func TestNewInstanceSettings(t *testing.T) {
 				Credentials:             &azcredentials.AzureManagedIdentityCredentials{},
 				Settings:                types.AzureMonitorSettings{},
 				Routes:                  routes[azsettings.AzurePublic],
-				JSONData:                map[string]interface{}{"azureAuthType": "msi"},
+				JSONData:                map[string]any{"azureAuthType": "msi"},
 				DatasourceID:            40,
 				DecryptedSecureJSONData: map[string]string{"key": "value"},
 				Services:                map[string]types.DatasourceService{},
@@ -70,11 +70,11 @@ func TestNewInstanceSettings(t *testing.T) {
 						URL: "url",
 					},
 				},
-				JSONData: map[string]interface{}{
+				JSONData: map[string]any{
 					"azureAuthType": "clientsecret",
 					"cloudName":     "customizedazuremonitor",
-					"customizedRoutes": map[string]interface{}{
-						"Route": map[string]interface{}{
+					"customizedRoutes": map[string]any{
+						"Route": map[string]any{
 							"URL": "url",
 						},
 					},
@@ -96,7 +96,7 @@ func TestNewInstanceSettings(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			factory := NewInstanceSettings(cfg, &httpclient.Provider{}, map[string]azDatasourceExecutor{})
-			instance, err := factory(tt.settings)
+			instance, err := factory(context.Background(), tt.settings)
 			tt.Err(t, err)
 			if !cmp.Equal(instance, tt.expectedModel) {
 				t.Errorf("Unexpected instance: %v", cmp.Diff(instance, tt.expectedModel))

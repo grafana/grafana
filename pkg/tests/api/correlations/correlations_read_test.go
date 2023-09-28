@@ -80,7 +80,7 @@ func TestIntegrationReadCorrelation(t *testing.T) {
 		Config: correlations.CorrelationConfig{
 			Type:   correlations.ConfigTypeQuery,
 			Field:  "foo",
-			Target: map[string]interface{}{},
+			Target: map[string]any{},
 			Transformations: []correlations.Transformation{
 				{Type: "logfmt"},
 			},
@@ -119,6 +119,7 @@ func TestIntegrationReadCorrelation(t *testing.T) {
 				TargetUID: &dsWithoutCorrelations.UID,
 			},
 		})
+		require.NoError(t, err)
 		require.Equal(t, int64(2), created)
 		return err
 	})

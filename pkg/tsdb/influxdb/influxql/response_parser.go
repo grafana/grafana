@@ -272,7 +272,7 @@ func buildFrameNameFromQuery(row models.Row, column string, frameName []byte) []
 	return frameName
 }
 
-func parseTimestamp(value interface{}) (time.Time, error) {
+func parseTimestamp(value any) (time.Time, error) {
 	timestampNumber, ok := value.(json.Number)
 	if !ok {
 		return time.Time{}, fmt.Errorf("timestamp-value has invalid type: %#v", value)
@@ -289,7 +289,7 @@ func parseTimestamp(value interface{}) (time.Time, error) {
 	return t, nil
 }
 
-func typeof(values [][]interface{}, colIndex int) string {
+func typeof(values [][]any, colIndex int) string {
 	for _, value := range values {
 		if value != nil && value[colIndex] != nil {
 			return fmt.Sprintf("%T", value[colIndex])
@@ -298,7 +298,7 @@ func typeof(values [][]interface{}, colIndex int) string {
 	return "null"
 }
 
-func parseNumber(value interface{}) *float64 {
+func parseNumber(value any) *float64 {
 	// NOTE: we use pointers-to-float64 because we need
 	// to represent null-json-values. they come for example
 	// when we do a group-by with fill(null)

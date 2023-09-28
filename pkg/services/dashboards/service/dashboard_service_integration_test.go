@@ -42,7 +42,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 			func(t *testing.T, sc *permissionScenarioContext) {
 				cmd := dashboards.SaveDashboardCommand{
 					OrgID: testOrgID,
-					Dashboard: simplejson.NewFromAny(map[string]interface{}{
+					Dashboard: simplejson.NewFromAny(map[string]any{
 						"id":    float64(123412321),
 						"title": "Expect error",
 					}),
@@ -61,7 +61,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 				true, func(t *testing.T, sc *permissionScenarioContext) {
 					cmd := dashboards.SaveDashboardCommand{
 						OrgID: otherOrgId,
-						Dashboard: simplejson.NewFromAny(map[string]interface{}{
+						Dashboard: simplejson.NewFromAny(map[string]any{
 							"id":    sc.savedDashInFolder.ID,
 							"title": "Expect error",
 						}),
@@ -77,7 +77,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 					const otherOrgId int64 = 2
 					cmd := dashboards.SaveDashboardCommand{
 						OrgID: otherOrgId,
-						Dashboard: simplejson.NewFromAny(map[string]interface{}{
+						Dashboard: simplejson.NewFromAny(map[string]any{
 							"uid":   sc.savedDashInFolder.UID,
 							"title": "Dash with existing uid in other org",
 						}),
@@ -103,7 +103,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 					sqlStore := db.InitTestDB(t)
 					cmd := dashboards.SaveDashboardCommand{
 						OrgID: testOrgID,
-						Dashboard: simplejson.NewFromAny(map[string]interface{}{
+						Dashboard: simplejson.NewFromAny(map[string]any{
 							"title": "Dash",
 						}),
 						UserID:    10000,
@@ -125,7 +125,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 				canSave, func(t *testing.T, sc *permissionScenarioContext) {
 					cmd := dashboards.SaveDashboardCommand{
 						OrgID: testOrgID,
-						Dashboard: simplejson.NewFromAny(map[string]interface{}{
+						Dashboard: simplejson.NewFromAny(map[string]any{
 							"title": "Dash",
 						}),
 						FolderID:  sc.otherSavedFolder.ID,
@@ -148,7 +148,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 				canSave, func(t *testing.T, sc *permissionScenarioContext) {
 					cmd := dashboards.SaveDashboardCommand{
 						OrgID: testOrgID,
-						Dashboard: simplejson.NewFromAny(map[string]interface{}{
+						Dashboard: simplejson.NewFromAny(map[string]any{
 							"title": sc.savedDashInFolder.Title,
 						}),
 						FolderID:  sc.savedFolder.ID,
@@ -171,7 +171,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 				canSave, func(t *testing.T, sc *permissionScenarioContext) {
 					cmd := dashboards.SaveDashboardCommand{
 						OrgID: testOrgID,
-						Dashboard: simplejson.NewFromAny(map[string]interface{}{
+						Dashboard: simplejson.NewFromAny(map[string]any{
 							"uid":   sc.savedDashInFolder.UID,
 							"title": "New dash",
 						}),
@@ -195,7 +195,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 				canSave, func(t *testing.T, sc *permissionScenarioContext) {
 					cmd := dashboards.SaveDashboardCommand{
 						OrgID: testOrgID,
-						Dashboard: simplejson.NewFromAny(map[string]interface{}{
+						Dashboard: simplejson.NewFromAny(map[string]any{
 							"id":    sc.savedDashInGeneralFolder.ID,
 							"title": "Dash",
 						}),
@@ -219,7 +219,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 				canSave, func(t *testing.T, sc *permissionScenarioContext) {
 					cmd := dashboards.SaveDashboardCommand{
 						OrgID: testOrgID,
-						Dashboard: simplejson.NewFromAny(map[string]interface{}{
+						Dashboard: simplejson.NewFromAny(map[string]any{
 							"id":    sc.savedDashInFolder.ID,
 							"title": "Dash",
 						}),
@@ -243,7 +243,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 				canSave, func(t *testing.T, sc *permissionScenarioContext) {
 					cmd := dashboards.SaveDashboardCommand{
 						OrgID: testOrgID,
-						Dashboard: simplejson.NewFromAny(map[string]interface{}{
+						Dashboard: simplejson.NewFromAny(map[string]any{
 							"id":    sc.savedDashInGeneralFolder.ID,
 							"title": "Dash",
 						}),
@@ -267,7 +267,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 				canSave, func(t *testing.T, sc *permissionScenarioContext) {
 					cmd := dashboards.SaveDashboardCommand{
 						OrgID: testOrgID,
-						Dashboard: simplejson.NewFromAny(map[string]interface{}{
+						Dashboard: simplejson.NewFromAny(map[string]any{
 							"id":    sc.savedDashInFolder.ID,
 							"title": "Dash",
 						}),
@@ -291,7 +291,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 				canSave, func(t *testing.T, sc *permissionScenarioContext) {
 					cmd := dashboards.SaveDashboardCommand{
 						OrgID: testOrgID,
-						Dashboard: simplejson.NewFromAny(map[string]interface{}{
+						Dashboard: simplejson.NewFromAny(map[string]any{
 							"uid":   sc.savedDashInGeneralFolder.UID,
 							"title": "Dash",
 						}),
@@ -315,7 +315,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 				canSave, func(t *testing.T, sc *permissionScenarioContext) {
 					cmd := dashboards.SaveDashboardCommand{
 						OrgID: testOrgID,
-						Dashboard: simplejson.NewFromAny(map[string]interface{}{
+						Dashboard: simplejson.NewFromAny(map[string]any{
 							"uid":   sc.savedDashInFolder.UID,
 							"title": "Dash",
 						}),
@@ -346,7 +346,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 					canSave, func(t *testing.T, sc *permissionScenarioContext) {
 						cmd := dashboards.SaveDashboardCommand{
 							OrgID: testOrgID,
-							Dashboard: simplejson.NewFromAny(map[string]interface{}{
+							Dashboard: simplejson.NewFromAny(map[string]any{
 								"id":    nil,
 								"title": sc.savedDashInFolder.Title,
 							}),
@@ -369,7 +369,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 					canSave, func(t *testing.T, sc *permissionScenarioContext) {
 						cmd := dashboards.SaveDashboardCommand{
 							OrgID: testOrgID,
-							Dashboard: simplejson.NewFromAny(map[string]interface{}{
+							Dashboard: simplejson.NewFromAny(map[string]any{
 								"id":    nil,
 								"title": sc.savedDashInGeneralFolder.Title,
 							}),
@@ -393,7 +393,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 					canSave, func(t *testing.T, sc *permissionScenarioContext) {
 						cmd := dashboards.SaveDashboardCommand{
 							OrgID: testOrgID,
-							Dashboard: simplejson.NewFromAny(map[string]interface{}{
+							Dashboard: simplejson.NewFromAny(map[string]any{
 								"id":    nil,
 								"title": sc.savedDashInFolder.Title,
 							}),
@@ -418,7 +418,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 					canSave, func(t *testing.T, sc *permissionScenarioContext) {
 						cmd := dashboards.SaveDashboardCommand{
 							OrgID: testOrgID,
-							Dashboard: simplejson.NewFromAny(map[string]interface{}{
+							Dashboard: simplejson.NewFromAny(map[string]any{
 								"title": "Dash without id and uid",
 							}),
 							Overwrite: shouldOverwrite,
@@ -440,7 +440,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 					func(t *testing.T, sc *permissionScenarioContext) {
 						cmd := dashboards.SaveDashboardCommand{
 							OrgID: testOrgID,
-							Dashboard: simplejson.NewFromAny(map[string]interface{}{
+							Dashboard: simplejson.NewFromAny(map[string]any{
 								"id":    0,
 								"title": "Dash with zero id",
 							}),
@@ -461,7 +461,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 					func(t *testing.T, sc *permissionScenarioContext) {
 						cmd := dashboards.SaveDashboardCommand{
 							OrgID: testOrgID,
-							Dashboard: simplejson.NewFromAny(map[string]interface{}{
+							Dashboard: simplejson.NewFromAny(map[string]any{
 								"title": "Expect error",
 							}),
 							FolderID:  123412321,
@@ -476,7 +476,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 					func(t *testing.T, sc *permissionScenarioContext) {
 						cmd := dashboards.SaveDashboardCommand{
 							OrgID: 1,
-							Dashboard: simplejson.NewFromAny(map[string]interface{}{
+							Dashboard: simplejson.NewFromAny(map[string]any{
 								"id":    sc.savedDashInGeneralFolder.ID,
 								"title": "test dash 23",
 							}),
@@ -492,7 +492,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 					func(t *testing.T, sc *permissionScenarioContext) {
 						cmd := dashboards.SaveDashboardCommand{
 							OrgID: 1,
-							Dashboard: simplejson.NewFromAny(map[string]interface{}{
+							Dashboard: simplejson.NewFromAny(map[string]any{
 								"id":      sc.savedDashInGeneralFolder.ID,
 								"title":   "Updated title",
 								"version": sc.savedDashInGeneralFolder.Version,
@@ -516,7 +516,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 					func(t *testing.T, sc *permissionScenarioContext) {
 						cmd := dashboards.SaveDashboardCommand{
 							OrgID: 1,
-							Dashboard: simplejson.NewFromAny(map[string]interface{}{
+							Dashboard: simplejson.NewFromAny(map[string]any{
 								"uid":   sc.savedDashInFolder.UID,
 								"title": "test dash 23",
 							}),
@@ -532,7 +532,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 					func(t *testing.T, sc *permissionScenarioContext) {
 						cmd := dashboards.SaveDashboardCommand{
 							OrgID: 1,
-							Dashboard: simplejson.NewFromAny(map[string]interface{}{
+							Dashboard: simplejson.NewFromAny(map[string]any{
 								"uid":     sc.savedDashInFolder.UID,
 								"title":   "Updated title",
 								"version": sc.savedDashInFolder.Version,
@@ -555,7 +555,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 					canSave, func(t *testing.T, sc *permissionScenarioContext) {
 						cmd := dashboards.SaveDashboardCommand{
 							OrgID: testOrgID,
-							Dashboard: simplejson.NewFromAny(map[string]interface{}{
+							Dashboard: simplejson.NewFromAny(map[string]any{
 								"id":    nil,
 								"title": sc.savedDashInFolder.Title,
 							}),
@@ -571,7 +571,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 					canSave, func(t *testing.T, sc *permissionScenarioContext) {
 						cmd := dashboards.SaveDashboardCommand{
 							OrgID: testOrgID,
-							Dashboard: simplejson.NewFromAny(map[string]interface{}{
+							Dashboard: simplejson.NewFromAny(map[string]any{
 								"id":    nil,
 								"title": sc.savedDashInGeneralFolder.Title,
 							}),
@@ -587,7 +587,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 					func(t *testing.T, sc *permissionScenarioContext) {
 						cmd := dashboards.SaveDashboardCommand{
 							OrgID: testOrgID,
-							Dashboard: simplejson.NewFromAny(map[string]interface{}{
+							Dashboard: simplejson.NewFromAny(map[string]any{
 								"id":    nil,
 								"title": sc.savedFolder.Title,
 							}),
@@ -607,7 +607,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 					func(t *testing.T, sc *permissionScenarioContext) {
 						cmd := dashboards.SaveDashboardCommand{
 							OrgID: 1,
-							Dashboard: simplejson.NewFromAny(map[string]interface{}{
+							Dashboard: simplejson.NewFromAny(map[string]any{
 								"id":    sc.savedDashInGeneralFolder.ID,
 								"title": "Updated title",
 							}),
@@ -629,7 +629,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 					func(t *testing.T, sc *permissionScenarioContext) {
 						cmd := dashboards.SaveDashboardCommand{
 							OrgID: 1,
-							Dashboard: simplejson.NewFromAny(map[string]interface{}{
+							Dashboard: simplejson.NewFromAny(map[string]any{
 								"uid":   sc.savedDashInFolder.UID,
 								"title": "Updated title",
 							}),
@@ -651,7 +651,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 					func(t *testing.T, sc *permissionScenarioContext) {
 						cmd := dashboards.SaveDashboardCommand{
 							OrgID: 1,
-							Dashboard: simplejson.NewFromAny(map[string]interface{}{
+							Dashboard: simplejson.NewFromAny(map[string]any{
 								"id":    sc.savedDashInFolder.ID,
 								"uid":   "new-uid",
 								"title": sc.savedDashInFolder.Title,
@@ -675,7 +675,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 					func(t *testing.T, sc *permissionScenarioContext) {
 						cmd := dashboards.SaveDashboardCommand{
 							OrgID: 1,
-							Dashboard: simplejson.NewFromAny(map[string]interface{}{
+							Dashboard: simplejson.NewFromAny(map[string]any{
 								"id":    sc.savedDashInFolder.ID,
 								"uid":   sc.savedDashInGeneralFolder.UID,
 								"title": sc.savedDashInFolder.Title,
@@ -691,7 +691,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 					func(t *testing.T, sc *permissionScenarioContext) {
 						cmd := dashboards.SaveDashboardCommand{
 							OrgID: testOrgID,
-							Dashboard: simplejson.NewFromAny(map[string]interface{}{
+							Dashboard: simplejson.NewFromAny(map[string]any{
 								"id":    nil,
 								"title": sc.savedDashInFolder.Title,
 							}),
@@ -715,7 +715,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 					func(t *testing.T, sc *permissionScenarioContext) {
 						cmd := dashboards.SaveDashboardCommand{
 							OrgID: testOrgID,
-							Dashboard: simplejson.NewFromAny(map[string]interface{}{
+							Dashboard: simplejson.NewFromAny(map[string]any{
 								"id":    nil,
 								"title": sc.savedDashInGeneralFolder.Title,
 							}),
@@ -739,7 +739,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 					func(t *testing.T, sc *permissionScenarioContext) {
 						cmd := dashboards.SaveDashboardCommand{
 							OrgID: 1,
-							Dashboard: simplejson.NewFromAny(map[string]interface{}{
+							Dashboard: simplejson.NewFromAny(map[string]any{
 								"id":    sc.savedFolder.ID,
 								"title": "new title",
 							}),
@@ -755,7 +755,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 					func(t *testing.T, sc *permissionScenarioContext) {
 						cmd := dashboards.SaveDashboardCommand{
 							OrgID: 1,
-							Dashboard: simplejson.NewFromAny(map[string]interface{}{
+							Dashboard: simplejson.NewFromAny(map[string]any{
 								"id":    sc.savedDashInFolder.ID,
 								"title": "new folder title",
 							}),
@@ -771,7 +771,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 					func(t *testing.T, sc *permissionScenarioContext) {
 						cmd := dashboards.SaveDashboardCommand{
 							OrgID: 1,
-							Dashboard: simplejson.NewFromAny(map[string]interface{}{
+							Dashboard: simplejson.NewFromAny(map[string]any{
 								"uid":   sc.savedFolder.UID,
 								"title": "new title",
 							}),
@@ -787,7 +787,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 					func(t *testing.T, sc *permissionScenarioContext) {
 						cmd := dashboards.SaveDashboardCommand{
 							OrgID: 1,
-							Dashboard: simplejson.NewFromAny(map[string]interface{}{
+							Dashboard: simplejson.NewFromAny(map[string]any{
 								"uid":   sc.savedDashInFolder.UID,
 								"title": "new folder title",
 							}),
@@ -803,7 +803,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 					func(t *testing.T, sc *permissionScenarioContext) {
 						cmd := dashboards.SaveDashboardCommand{
 							OrgID: 1,
-							Dashboard: simplejson.NewFromAny(map[string]interface{}{
+							Dashboard: simplejson.NewFromAny(map[string]any{
 								"title": sc.savedFolder.Title,
 							}),
 							IsFolder:  false,
@@ -818,7 +818,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 					func(t *testing.T, sc *permissionScenarioContext) {
 						cmd := dashboards.SaveDashboardCommand{
 							OrgID: 1,
-							Dashboard: simplejson.NewFromAny(map[string]interface{}{
+							Dashboard: simplejson.NewFromAny(map[string]any{
 								"title": sc.savedDashInGeneralFolder.Title,
 							}),
 							IsFolder:  true,
@@ -973,7 +973,7 @@ func saveTestDashboard(t *testing.T, title string, orgID, folderID int64, sqlSto
 		OrgID:    orgID,
 		FolderID: folderID,
 		IsFolder: false,
-		Dashboard: simplejson.NewFromAny(map[string]interface{}{
+		Dashboard: simplejson.NewFromAny(map[string]any{
 			"id":    nil,
 			"title": title,
 		}),
@@ -1017,7 +1017,7 @@ func saveTestFolder(t *testing.T, title string, orgID int64, sqlStore db.DB) *da
 		OrgID:    orgID,
 		FolderID: 0,
 		IsFolder: true,
-		Dashboard: simplejson.NewFromAny(map[string]interface{}{
+		Dashboard: simplejson.NewFromAny(map[string]any{
 			"id":    nil,
 			"title": title,
 		}),
