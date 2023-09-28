@@ -3,7 +3,6 @@ package grafanaapiserver
 import (
 	"context"
 	"crypto/x509"
-	"fmt"
 	"net"
 	"path"
 	"strings"
@@ -18,7 +17,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/apiserver/pkg/authentication/authenticator"
 	"k8s.io/apiserver/pkg/authentication/request/headerrequest"
-	"k8s.io/apiserver/pkg/authentication/user"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	openapinamer "k8s.io/apiserver/pkg/endpoints/openapi"
 	"k8s.io/apiserver/pkg/endpoints/responsewriter"
@@ -36,7 +34,6 @@ import (
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/modules"
 	"github.com/grafana/grafana/pkg/registry"
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
@@ -100,16 +97,17 @@ type service struct {
 	stopCh    chan struct{}
 	stoppedCh chan error
 
-	rr         routing.RouteRegister
-	handler    web.Handler
-	builders   []APIGroupBuilder
+	rr       routing.RouteRegister
+	handler  web.Handler
+	builders []APIGroupBuilder
+
 	authorizer authorizer.Authorizer
 }
 
 func ProvideService(
 	cfg *setting.Cfg,
 	rr routing.RouteRegister,
-	ac accesscontrol.AccessControl,
+	authz authorizer.Authorizer,
 ) (*service, error) {
 	s := &service{
 		etcd_servers: cfg.SectionWithEnvOverrides("grafana-apiserver").Key("etcd_servers").Strings(","),
@@ -118,11 +116,7 @@ func ProvideService(
 		dataPath:     path.Join(cfg.DataPath, "k8s"),
 		stopCh:       make(chan struct{}),
 		builders:     []APIGroupBuilder{},
-		authorizer:   grafanaAuthorizer{ac},
-	}
-
-	if s.enabled && !cfg.IsFeatureToggleEnabled(featuremgmt.FlagIdForwarding) {
-		return s, fmt.Errorf("grafana-apiserver also requires featureFlag: %s", featuremgmt.FlagIdForwarding)
+		authorizer:   authz,
 	}
 
 	// This will be used when running as a dskit service
@@ -180,8 +174,6 @@ func (s *service) start(ctx context.Context) error {
 	o.SecureServing.BindPort = 6443
 	o.Authentication.RemoteKubeConfigFileOptional = true
 	o.Authorization.RemoteKubeConfigFileOptional = true
-	o.Authorization.AlwaysAllowPaths = []string{"*"}
-	o.Authorization.AlwaysAllowGroups = []string{user.SystemPrivilegedGroup, "grafana"}
 	o.Etcd.StorageConfig.Transport.ServerList = s.etcd_servers
 
 	o.Admission = nil
@@ -229,6 +221,7 @@ func (s *service) start(ctx context.Context) error {
 		return err
 	}
 
+	serverConfig.Authorization.Authorizer = s.authorizer
 	serverConfig.Authentication.Authenticator = authenticator
 
 	// Get the list of groups the server will support
@@ -297,7 +290,6 @@ func (s *service) start(ctx context.Context) error {
 
 		req.Header.Set("X-Remote-User", signedInUser.Login)
 		req.Header.Set("X-Remote-Group", "grafana")
-		req.Header.Set("X-Remote-Extra-id-token", signedInUser.GetIDToken())
 
 		resp := responsewriter.WrapForHTTP1Or2(c.Resp)
 		prepared.GenericAPIServer.Handler.ServeHTTP(resp, req)
