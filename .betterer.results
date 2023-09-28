@@ -1714,16 +1714,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Styles should be written using objects.", "3"],
       [0, 0, 0, "Styles should be written using objects.", "4"]
     ],
-    "public/app/features/admin/UserListAdminPage.tsx:5381": [
-      [0, 0, 0, "Styles should be written using objects.", "0"],
-      [0, 0, 0, "Styles should be written using objects.", "1"],
-      [0, 0, 0, "Styles should be written using objects.", "2"],
-      [0, 0, 0, "Styles should be written using objects.", "3"],
-      [0, 0, 0, "Styles should be written using objects.", "4"],
-      [0, 0, 0, "Styles should be written using objects.", "5"],
-      [0, 0, 0, "Styles should be written using objects.", "6"],
-      [0, 0, 0, "Styles should be written using objects.", "7"]
-    ],
     "public/app/features/admin/UserListPublicDashboardPage/DashboardsListModalButton.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"],
       [0, 0, 0, "Styles should be written using objects.", "1"],
@@ -1769,6 +1759,11 @@ exports[`better eslint`] = {
     ],
     "public/app/features/admin/UserSessions.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"]
+    ],
+    "public/app/features/admin/Users/OrgUnits.tsx:5381": [
+      [0, 0, 0, "Styles should be written using objects.", "0"],
+      [0, 0, 0, "Styles should be written using objects.", "1"],
+      [0, 0, 0, "Styles should be written using objects.", "2"]
     ],
     "public/app/features/admin/ldap/LdapPage.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
@@ -2337,12 +2332,6 @@ exports[`better eslint`] = {
     "public/app/features/alerting/unified/components/receivers/grafanaAppReceivers/ReceiverMetadataBadge.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"],
       [0, 0, 0, "Styles should be written using objects.", "1"]
-    ],
-    "public/app/features/alerting/unified/components/rule-editor/AlertRuleForm.tsx:5381": [
-      [0, 0, 0, "Styles should be written using objects.", "0"],
-      [0, 0, 0, "Styles should be written using objects.", "1"],
-      [0, 0, 0, "Styles should be written using objects.", "2"],
-      [0, 0, 0, "Styles should be written using objects.", "3"]
     ],
     "public/app/features/alerting/unified/components/rule-editor/AnnotationKeyInput.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
@@ -3143,6 +3132,10 @@ exports[`better eslint`] = {
     "public/app/features/dashboard/components/GenAI/GenAIButton.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"]
     ],
+    "public/app/features/dashboard/components/GenAI/llms/openai.ts:5381": [
+      [0, 0, 0, "Do not use any type assertions.", "0"],
+      [0, 0, 0, "Do not use any type assertions.", "1"]
+    ],
     "public/app/features/dashboard/components/HelpWizard/HelpWizard.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"],
       [0, 0, 0, "Styles should be written using objects.", "1"],
@@ -3829,11 +3822,6 @@ exports[`better eslint`] = {
     ],
     "public/app/features/explore/FlameGraph/FlameGraphExploreContainer.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"]
-    ],
-    "public/app/features/explore/Graph/ExploreGraph.tsx:5381": [
-      [0, 0, 0, "Styles should be written using objects.", "0"],
-      [0, 0, 0, "Styles should be written using objects.", "1"],
-      [0, 0, 0, "Styles should be written using objects.", "2"]
     ],
     "public/app/features/explore/LiveTailButton.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"],
