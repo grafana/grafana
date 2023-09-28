@@ -6,10 +6,11 @@ import { glob } from 'glob';
 
 // Why are we ignoring these?
 // They're all deprecated/being removed soon so doesn't make sense to fix types
-// grafana-e2e - deprecated.
-// angular - will be removed in Grafana 11.
-// graph - will be removed alongside angular.
-const eslintPathsToIgnore = ['packages/grafana-e2e', 'public/app/angular', 'public/app/plugins/panel/graph'];
+const eslintPathsToIgnore = [
+  'packages/grafana-e2e', // deprecated.
+  'public/app/angular', // will be removed in Grafana 11
+  'public/app/plugins/panel/graph', // will be removed alongside angular
+];
 
 export default {
   'better eslint': () =>
