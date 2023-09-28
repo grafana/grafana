@@ -45,6 +45,8 @@ func (auth OrgRoleAuthorizer) Authorize(ctx context.Context, a authorizer.Attrib
 		default:
 			return authorizer.DecisionDeny, errorMessageForGrafanaOrgRole(string(signedInUser.OrgRole), a), nil
 		}
+	case org.RoleNone:
+		return authorizer.DecisionDeny, errorMessageForGrafanaOrgRole(string(signedInUser.OrgRole), a), nil
 	}
 	return authorizer.DecisionNoOpinion, "", nil
 }
