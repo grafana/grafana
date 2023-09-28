@@ -196,5 +196,5 @@ deployment_tools_config.json
 .pr-body.txt
 
 # Ignore transpiled JavaScript resulting from the generate-transformations.ts script.
-/public/app/features/transformers/helpers/*.js
+/public/app/features/transformers/docs/*.js
 /scripts/docs/generate-transformations.js
