@@ -211,9 +211,12 @@
     }
   },
   "dashboard-import-page": {
+    "cancel": "",
     "field-label": "",
     "field-placeholder": "",
     "field-required": "",
+    "json-field-label": "",
+    "json-field-required": "",
     "load-button": "",
     "primary-text": "",
     "secondary-text": ""
@@ -945,7 +948,10 @@
     "loading": "正在加载会话..."
   },
   "utils": {
-    "invalid-dashboard-id": ""
+    "invalid-dashboard-id": "",
+    "invalid-json": "",
+    "tags-expected-array": "",
+    "tags-expected-strings": ""
   },
   "variable": {
     "adhoc": {
