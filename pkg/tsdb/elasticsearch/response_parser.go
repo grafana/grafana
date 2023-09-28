@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	es "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client"
+	"github.com/grafana/grafana/pkg/tsdb/elasticsearch/instrumentation"
 )
 
 const (
@@ -118,8 +119,9 @@ func parseResponse(ctx context.Context, responses []*es.SearchResponse, targets 
 
 			result.Responses[target.RefID] = queryRes
 		}
-		resSpan.End()
+		instrumentation.UpdatePluginParsingResponseDurationSeconds(ctx, time.Since(start), "ok")
 		logger.Info("Finished processing of response", "duration", time.Since(start), "stage", es.StageParseResponse)
+		resSpan.End()
 	}
 	return &result, nil
 }
