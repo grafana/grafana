@@ -7,9 +7,7 @@ import { HorizontalGroup, Icon, useStyles2, VerticalGroup } from '@grafana/ui';
 
 import { GetStartedWithPlugin } from '../components/GetStartedWithPlugin';
 import { InstallControlsButton } from '../components/InstallControls';
-import { ExternallyManagedButton } from '../components/InstallControls/ExternallyManagedButton';
-import { getLatestCompatibleVersion, hasInstallControlWarning, isInstallControlsEnabled } from '../helpers';
-import { useIsRemotePluginsAvailable } from '../state/hooks';
+import { getLatestCompatibleVersion, isInstallControlsEnabled } from '../helpers';
 import { CatalogPlugin, PluginStatus } from '../types';
 
 interface Props {
@@ -18,7 +16,6 @@ interface Props {
 
 export const PluginActions = ({ plugin }: Props) => {
   const styles = useStyles2(getStyles);
-  const isRemotePluginsAvailable = useIsRemotePluginsAvailable();
   const latestCompatibleVersion = getLatestCompatibleVersion(plugin?.details?.versions);
   const [needReload, setNeedReload] = useState(false);
 
@@ -26,7 +23,6 @@ export const PluginActions = ({ plugin }: Props) => {
     return null;
   }
 
-  const hasInstallWarning = hasInstallControlWarning(plugin, isRemotePluginsAvailable, latestCompatibleVersion);
   const isExternallyManaged = config.pluginAdminExternalManageEnabled;
   const pluginStatus = plugin.isInstalled
     ? plugin.hasUpdate
