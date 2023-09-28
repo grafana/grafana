@@ -209,6 +209,7 @@
 /devenv/docker/blocks/tempo/ @grafana/observability-traces-and-profiling
 /devenv/docker/blocks/traefik/ @mckn
 /devenv/docker/blocks/zipkin/ @grafana/observability-traces-and-profiling
+/devenv/docker/blocks/webdav/ @grafana/alerting-backend-product
 /devenv/docker/buildcontainer/ @bergquist
 /devenv/docker/compose_header.yml @grafana/backend-platform
 /devenv/docker/debtest/ @bergquist
@@ -342,7 +343,6 @@ tsconfig.json @grafana/frontend-ops
 /.yarn @grafana/frontend-ops
 /.yarnrc.yml @grafana/frontend-ops
 /yarn.lock @grafana/frontend-ops
-/.linguirc @grafana/grafana-frontend-platform
 /babel.config.json @grafana/frontend-ops
 lerna.json @grafana/frontend-ops
 /.prettierrc.js @grafana/frontend-ops
