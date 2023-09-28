@@ -10,7 +10,7 @@ const modulo = (a: number, n: number) => a - n * Math.floor(a / n);
 const ERROR_TOOLTIP_OFFSET = 8;
 
 interface SuggestionsInputProps {
-  value?: string;
+  value?: string | number;
   onChange: (url: string, callback?: () => void) => void;
   suggestions: VariableSuggestion[];
   placeholder?: string;
@@ -47,7 +47,7 @@ export const SuggestionsInput = ({
 }: SuggestionsInputProps) => {
   const [showingSuggestions, setShowingSuggestions] = useState(false);
   const [suggestionsIndex, setSuggestionsIndex] = useState(0);
-  const [variableValue, setVariableValue] = useState<string>(value);
+  const [variableValue, setVariableValue] = useState<string>(value.toString());
   // const prevVariableValue = usePrevious<Value>(variableValue);
   const [scrollTop, setScrollTop] = useState(0);
   const [inputHeight, setInputHeight] = useState<number>(0);

@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 
 import { DataFrame, getFieldDisplayName, TransformerCategory } from '@grafana/data';
+import { config } from '@grafana/runtime';
 
 export function useAllFieldNamesFromDataFrames(input: DataFrame[]): string[] {
   return useMemo(() => {
@@ -55,7 +56,7 @@ export const numberOrVariableValidator = (value: string | number) => {
   if (!Number.isNaN(Number(value))) {
     return true;
   }
-  if (/^\$[A-Za-z0-9_]+$/.test(value)) {
+  if (/^\$[A-Za-z0-9_]+$/.test(value) && config.featureToggles.transformationsVariableSupport) {
     return true;
   }
   return false;

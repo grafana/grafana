@@ -1,18 +1,20 @@
 import React, { useCallback, useState } from 'react';
 
 import { ValueMatcherID, BasicValueMatcherOptions, VariableOrigin } from '@grafana/data';
-import { getTemplateSrv } from '@grafana/runtime';
+import { getTemplateSrv, config as cfg } from '@grafana/runtime';
+import { Input } from '@grafana/ui';
 
 import { SuggestionsInput } from '../../suggestionsInput/SuggestionsInput';
 import { numberOrVariableValidator } from '../../utils';
 
 import { ValueMatcherEditorConfig, ValueMatcherUIProps, ValueMatcherUIRegistryItem } from './types';
+import { convertToType } from './utils';
 
 export function basicMatcherEditor<T = any>(
   config: ValueMatcherEditorConfig
 ): React.FC<ValueMatcherUIProps<BasicValueMatcherOptions>> {
   return function Render({ options, onChange, field }) {
-    const { validator } = config;
+    const { validator, converter = convertToType } = config;
     const { value } = options;
     const [isInvalid, setInvalid] = useState(!validator(value));
 
@@ -22,6 +24,29 @@ export function basicMatcherEditor<T = any>(
     });
 
     const onChangeValue = useCallback(
+      (event: React.FormEvent<HTMLInputElement>) => {
+        setInvalid(!validator(event.currentTarget.value));
+      },
+      [setInvalid, validator]
+    );
+
+    const onChangeOptions = useCallback(
+      (event: React.FocusEvent<HTMLInputElement>) => {
+        if (isInvalid) {
+          return;
+        }
+
+        const { value } = event.currentTarget;
+
+        onChange({
+          ...options,
+          value: converter(value, field),
+        });
+      },
+      [options, onChange, isInvalid, field, converter]
+    );
+
+    const onChangeVariableValue = useCallback(
       (value: string) => {
         setInvalid(!validator(value));
         onChange({
@@ -34,16 +59,29 @@ export function basicMatcherEditor<T = any>(
 
     //TODO: make regex matcher use a simple input, witaout suggestions.
     //Also exclude from actual transformation operation
-    return (
-      <SuggestionsInput
-        invalid={isInvalid}
-        value={value}
-        error={'Value needs to be an integer or a variable'}
-        onChange={onChangeValue}
-        placeholder="Value or variable"
-        suggestions={variables}
-      ></SuggestionsInput>
-    );
+    if (cfg.featureToggles.transformationsVariableSupport) {
+      return (
+        <SuggestionsInput
+          invalid={isInvalid}
+          value={value}
+          error={'Value needs to be an integer or a variable'}
+          onChange={onChangeVariableValue}
+          placeholder="Value or variable"
+          suggestions={variables}
+        ></SuggestionsInput>
+      );
+    } else {
+      return (
+        <Input
+          className="flex-grow-1"
+          invalid={isInvalid}
+          defaultValue={String(options.value)}
+          placeholder="Value"
+          onChange={onChangeValue}
+          onBlur={onChangeOptions}
+        />
+      );
+    }
   };
 }
 
@@ -89,14 +127,6 @@ export const getBasicValueMatchersUI = (): Array<ValueMatcherUIRegistryItem<Basi
       id: ValueMatcherID.notEqual,
       component: basicMatcherEditor<string | number | boolean>({
         validator: () => true,
-      }),
-    },
-    {
-      name: 'Regex',
-      id: ValueMatcherID.regex,
-      component: basicMatcherEditor<string>({
-        validator: () => true,
-        converter: (value) => String(value),
       }),
     },
   ];

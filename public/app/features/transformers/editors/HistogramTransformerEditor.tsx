@@ -12,8 +12,9 @@ import {
   histogramFieldInfo,
   HistogramTransformerInputs,
 } from '@grafana/data/src/transformations/transformers/histogram';
-import { getTemplateSrv } from '@grafana/runtime';
+import { getTemplateSrv, config as cfg } from '@grafana/runtime';
 import { InlineField, InlineFieldRow, InlineSwitch } from '@grafana/ui';
+import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
 
 import { SuggestionsInput } from '../suggestionsInput/SuggestionsInput';
 import { numberOrVariableValidator } from '../utils';
@@ -31,6 +32,26 @@ export const HistogramTransformerEditor = ({
   });
 
   const onBucketSizeChanged = useCallback(
+    (val?: number) => {
+      onChange({
+        ...options,
+        bucketSize: val,
+      });
+    },
+    [onChange, options]
+  );
+
+  const onBucketOffsetChanged = useCallback(
+    (val?: number) => {
+      onChange({
+        ...options,
+        bucketOffset: val,
+      });
+    },
+    [onChange, options]
+  );
+
+  const onVariableBucketSizeChanged = useCallback(
     (value: string) => {
       setInvalid({ ...isInvalid, bucketSize: !numberOrVariableValidator(value) });
 
@@ -42,7 +63,7 @@ export const HistogramTransformerEditor = ({
     [onChange, options, isInvalid, setInvalid]
   );
 
-  const onBucketOffsetChanged = useCallback(
+  const onVariableBucketOffsetChanged = useCallback(
     (value: string) => {
       setInvalid({ ...isInvalid, bucketOffset: !numberOrVariableValidator(value) });
 
@@ -66,6 +87,54 @@ export const HistogramTransformerEditor = ({
     return { value: v.name, label: v.label || v.name, origin: VariableOrigin.Template };
   });
 
+  if (!cfg.featureToggles.transformationsVariableSupport) {
+    let bucketSize;
+    if (typeof options.bucketSize === 'string') {
+      bucketSize = parseInt(options.bucketSize, 10);
+    } else {
+      bucketSize = options.bucketSize;
+    }
+
+    let bucketOffset;
+    if (typeof options.bucketOffset === 'string') {
+      bucketOffset = parseInt(options.bucketOffset, 10);
+    } else {
+      bucketOffset = options.bucketOffset;
+    }
+
+    return (
+      <div>
+        <InlineFieldRow>
+          <InlineField
+            labelWidth={labelWidth}
+            label={histogramFieldInfo.bucketSize.name}
+            tooltip={histogramFieldInfo.bucketSize.description}
+          >
+            <NumberInput value={bucketSize} placeholder="auto" onChange={onBucketSizeChanged} min={0} />
+          </InlineField>
+        </InlineFieldRow>
+        <InlineFieldRow>
+          <InlineField
+            labelWidth={labelWidth}
+            label={histogramFieldInfo.bucketOffset.name}
+            tooltip={histogramFieldInfo.bucketOffset.description}
+          >
+            <NumberInput value={bucketOffset} placeholder="none" onChange={onBucketOffsetChanged} min={0} />
+          </InlineField>
+        </InlineFieldRow>
+        <InlineFieldRow>
+          <InlineField
+            labelWidth={labelWidth}
+            label={histogramFieldInfo.combine.name}
+            tooltip={histogramFieldInfo.combine.description}
+          >
+            <InlineSwitch value={options.combine ?? false} onChange={onToggleCombine} />
+          </InlineField>
+        </InlineFieldRow>
+      </div>
+    );
+  }
+
   return (
     <div>
       <InlineFieldRow>
@@ -80,7 +149,7 @@ export const HistogramTransformerEditor = ({
             suggestions={variables}
             value={options.bucketSize}
             placeholder="auto"
-            onChange={onBucketSizeChanged}
+            onChange={onVariableBucketSizeChanged}
           />
         </InlineField>
       </InlineFieldRow>
@@ -96,7 +165,7 @@ export const HistogramTransformerEditor = ({
             suggestions={variables}
             value={options.bucketOffset}
             placeholder="none"
-            onChange={onBucketOffsetChanged}
+            onChange={onVariableBucketOffsetChanged}
           />
         </InlineField>
       </InlineFieldRow>

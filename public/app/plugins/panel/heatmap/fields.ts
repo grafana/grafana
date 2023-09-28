@@ -13,6 +13,7 @@ import {
   ValueFormatter,
   ValueLinkConfig,
 } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { HeatmapCellLayout } from '@grafana/schema';
 import {
   calculateHeatmapFromData,
@@ -87,29 +88,39 @@ export function prepareHeatmapData(
   }
 
   if (options.calculate) {
-    const optionsCopy = {
-      ...options,
-      calculation: {
-        xBuckets: { ...options.calculation?.xBuckets } ?? undefined,
-        yBuckets: { ...options.calculation?.yBuckets } ?? undefined,
-      },
-    };
+    if (config.featureToggles.transformationsVariableSupport) {
+      const optionsCopy = {
+        ...options,
+        calculation: {
+          xBuckets: { ...options.calculation?.xBuckets } ?? undefined,
+          yBuckets: { ...options.calculation?.yBuckets } ?? undefined,
+        },
+      };
 
-    if (optionsCopy.calculation?.xBuckets?.value && replaceVariables !== undefined) {
-      optionsCopy.calculation.xBuckets.value = replaceVariables(optionsCopy.calculation.xBuckets.value);
+      if (optionsCopy.calculation?.xBuckets?.value && replaceVariables !== undefined) {
+        optionsCopy.calculation.xBuckets.value = replaceVariables(optionsCopy.calculation.xBuckets.value);
+      }
+
+      if (optionsCopy.calculation?.yBuckets?.value && replaceVariables !== undefined) {
+        optionsCopy.calculation.yBuckets.value = replaceVariables(optionsCopy.calculation.yBuckets.value);
+      }
+
+      return getDenseHeatmapData(
+        calculateHeatmapFromData(frames, optionsCopy.calculation ?? {}),
+        exemplars,
+        optionsCopy,
+        palette,
+        theme
+      );
+    } else {
+      return getDenseHeatmapData(
+        calculateHeatmapFromData(frames, options.calculation ?? {}),
+        exemplars,
+        options,
+        palette,
+        theme
+      );
     }
-
-    if (optionsCopy.calculation?.yBuckets?.value && replaceVariables !== undefined) {
-      optionsCopy.calculation.yBuckets.value = replaceVariables(optionsCopy.calculation.yBuckets.value);
-    }
-
-    return getDenseHeatmapData(
-      calculateHeatmapFromData(frames, optionsCopy.calculation ?? {}),
-      exemplars,
-      optionsCopy,
-      palette,
-      theme
-    );
   }
 
   // Check for known heatmap types

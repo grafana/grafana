@@ -1,6 +1,6 @@
 import { defaults } from 'lodash';
 import React, { ChangeEvent } from 'react';
-import { of, OperatorFunction } from 'rxjs';
+import { identity, of, OperatorFunction } from 'rxjs';
 import { map } from 'rxjs/operators';
 
 import {
@@ -26,7 +26,7 @@ import {
   IndexOptions,
   ReduceOptions,
 } from '@grafana/data/src/transformations/transformers/calculateField';
-import { getTemplateSrv } from '@grafana/runtime';
+import { getTemplateSrv, config as cfg } from '@grafana/runtime';
 import { FilterPill, HorizontalGroup, Input, LegacyForms, Select, StatsPicker } from '@grafana/ui';
 
 interface CalculateFieldTransformerEditorProps extends TransformerUIProps<CalculateFieldTransformerOptions> {}
@@ -86,6 +86,9 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
   }
 
   private getVariableNames(): OperatorFunction<string[], string[]> {
+    if (!cfg.featureToggles.transformationsVariableSupport) {
+      return identity;
+    }
     const templateSrv = getTemplateSrv();
     return (source) =>
       source.pipe(

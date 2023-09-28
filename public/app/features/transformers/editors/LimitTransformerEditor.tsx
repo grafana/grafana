@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { FormEvent, useCallback, useState } from 'react';
 
 import {
   DataTransformerID,
@@ -9,8 +9,8 @@ import {
   VariableOrigin,
 } from '@grafana/data';
 import { LimitTransformerOptions } from '@grafana/data/src/transformations/transformers/limit';
-import { getTemplateSrv } from '@grafana/runtime';
-import { InlineFieldRow } from '@grafana/ui';
+import { getTemplateSrv, config as cfg } from '@grafana/runtime';
+import { InlineField, InlineFieldRow, Input } from '@grafana/ui';
 
 import { SuggestionsInput } from '../suggestionsInput/SuggestionsInput';
 import { numberOrVariableValidator } from '../utils';
@@ -19,6 +19,16 @@ export const LimitTransformerEditor = ({ options, onChange }: TransformerUIProps
   const [isInvalid, setInvalid] = useState<boolean>(false);
 
   const onSetLimit = useCallback(
+    (value: FormEvent<HTMLInputElement>) => {
+      onChange({
+        ...options,
+        limitField: Number(value.currentTarget.value),
+      });
+    },
+    [onChange, options]
+  );
+
+  const onSetVariableLimit = useCallback(
     (value: string) => {
       setInvalid(!numberOrVariableValidator(value));
       onChange({
@@ -34,6 +44,23 @@ export const LimitTransformerEditor = ({ options, onChange }: TransformerUIProps
     return { value: v.name, label: v.label || v.name, origin: VariableOrigin.Template };
   });
 
+  if (!cfg.featureToggles.transformationsVariableSupport) {
+    return (
+      <>
+        <InlineFieldRow>
+          <InlineField label="Limit" labelWidth={8}>
+            <Input
+              placeholder="Limit count"
+              pattern="[0-9]*"
+              value={options.limitField}
+              onChange={onSetLimit}
+              width={25}
+            />
+          </InlineField>
+        </InlineFieldRow>
+      </>
+    );
+  }
   return (
     <>
       <InlineFieldRow>
@@ -41,7 +68,7 @@ export const LimitTransformerEditor = ({ options, onChange }: TransformerUIProps
           invalid={isInvalid}
           error={'Value needs to be an integer or a variable'}
           value={String(options.limitField)}
-          onChange={onSetLimit}
+          onChange={onSetVariableLimit}
           placeholder="Value or variable"
           suggestions={variables}
         ></SuggestionsInput>

@@ -8,7 +8,7 @@ import {
   TransformerCategory,
 } from '@grafana/data';
 import { SortByField, SortByTransformerOptions } from '@grafana/data/src/transformations/transformers/sortBy';
-import { getTemplateSrv } from '@grafana/runtime';
+import { getTemplateSrv, config as cfg } from '@grafana/runtime';
 import { InlineField, InlineSwitch, InlineFieldRow, Select } from '@grafana/ui';
 
 import { useAllFieldNamesFromDataFrames } from '../utils';
@@ -35,7 +35,7 @@ export const SortByTransformerEditor = ({ input, options, onChange }: Transforme
           <InlineFieldRow key={`${s.field}/${index}`}>
             <InlineField label="Field" labelWidth={10} grow={true}>
               <Select
-                options={[...fieldNames, ...variables]}
+                options={cfg.featureToggles.transformationsVariableSupport ? [...fieldNames, ...variables] : fieldNames}
                 value={s.field}
                 placeholder="Select field"
                 onChange={(v) => {
