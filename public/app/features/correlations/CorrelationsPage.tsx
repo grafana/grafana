@@ -159,7 +159,7 @@ export default function CorrelationsPage() {
       subTitle={
         <>
           <Trans i18nKey="correlations.sub-title">
-            Define how data living in different data sources relates to each other. Read more in the
+            Define how data living in different data sources relates to each other. Read more in the{' '}
             <a
               href="https://grafana.com/docs/grafana/next/administration/correlations/"
               target="_blank"
@@ -168,7 +168,7 @@ export default function CorrelationsPage() {
               documentation
               <Icon name="external-link-alt" />
             </a>
-          </Trans>{' '}
+          </Trans>
         </>
       }
       actions={addButton}
