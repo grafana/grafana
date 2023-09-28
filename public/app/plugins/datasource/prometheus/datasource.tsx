@@ -506,7 +506,7 @@ export class PrometheusDatasource
         map((response) => {
           const amendedResponse = {
             ...response,
-            data: this.cache.procFrames(request, requestInfo, response.data),
+            data: this.cache.procFrames(request, requestInfo, response.data as DataFrame[]),
           };
           return transformV2(amendedResponse, request, {
             exemplarTraceIdDestinations: this.exemplarTraceIdDestinations,
