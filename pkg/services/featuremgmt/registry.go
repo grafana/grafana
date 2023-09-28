@@ -801,5 +801,12 @@ var (
 			Expression:  "true", // enabled by default
 			Owner:       awsDatasourcesSquad,
 		},
+		{
+			Name:         "transformationsVariableSupport",
+			Description:  "Allows using variables in transformations",
+			FrontendOnly: true,
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaBiSquad,
+		},
 	}
 )

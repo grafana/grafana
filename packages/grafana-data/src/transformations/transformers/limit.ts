@@ -3,6 +3,7 @@ import { map } from 'rxjs/operators';
 import { DataTransformerInfo } from '../../types';
 
 import { DataTransformerID } from './ids';
+import { transformationsVariableSupport } from './utils';
 
 export interface LimitTransformerOptions {
   limitField?: number | string;
@@ -24,7 +25,11 @@ export const limitTransformer: DataTransformerInfo<LimitTransformerOptions> = {
         let limit = DEFAULT_LIMIT_FIELD;
         if (options.limitField !== undefined) {
           if (typeof options.limitField === 'string') {
-            limit = parseInt(ctx.interpolate(options.limitField), 10);
+            if (transformationsVariableSupport()) {
+              limit = parseInt(ctx.interpolate(options.limitField), 10);
+            } else {
+              limit = parseInt(options.limitField, 10);
+            }
           } else {
             limit = options.limitField;
           }

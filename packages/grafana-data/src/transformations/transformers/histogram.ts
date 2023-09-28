@@ -8,6 +8,7 @@ import { roundDecimals } from '../../utils';
 
 import { DataTransformerID } from './ids';
 import { AlignedData, join } from './joinDataFrames';
+import { transformationsVariableSupport } from './utils';
 
 /**
  * @internal
@@ -41,8 +42,8 @@ const histFilter = [null];
 const histSort = (a: number, b: number) => a - b;
 
 export interface HistogramTransformerInputs {
-  bucketSize?: string;
-  bucketOffset?: string;
+  bucketSize?: string | number;
+  bucketOffset?: string | number;
   combine?: boolean;
 }
 
@@ -100,22 +101,32 @@ export const histogramTransformer: SynchronousDataTransformerInfo<HistogramTrans
       bucketOffset: number | undefined = undefined;
 
     if (options.bucketSize) {
-      options.bucketSize = ctx.interpolate(options.bucketSize);
-      bucketSize = parseFloat(options.bucketSize);
+      if (transformationsVariableSupport()) {
+        options.bucketSize = ctx.interpolate(options.bucketSize.toString());
+      }
+      if (typeof options.bucketSize === 'string') {
+        bucketSize = parseFloat(options.bucketSize);
+      } else {
+        bucketSize = options.bucketSize;
+      }
 
       if (isNaN(bucketSize)) {
         bucketSize = undefined;
-        // todo: warn user
       }
     }
 
     if (options.bucketOffset) {
-      options.bucketOffset = ctx.interpolate(options.bucketOffset);
-      bucketOffset = parseFloat(options.bucketOffset);
+      if (transformationsVariableSupport()) {
+        options.bucketOffset = ctx.interpolate(options.bucketOffset.toString());
+      }
+      if (typeof options.bucketOffset === 'string') {
+        bucketOffset = parseFloat(options.bucketOffset);
+      } else {
+        bucketOffset = options.bucketOffset;
+      }
 
       if (isNaN(bucketOffset)) {
         bucketOffset = undefined;
-        // todo: warn user
       }
     }
 

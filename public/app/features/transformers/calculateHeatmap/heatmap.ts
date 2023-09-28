@@ -16,6 +16,7 @@ import {
   parseDuration,
 } from '@grafana/data';
 import { isLikelyAscendingVector } from '@grafana/data/src/transformations/transformers/joinDataFrames';
+import { config } from '@grafana/runtime';
 import {
   ScaleDistribution,
   HeatmapCellLayout,
@@ -39,21 +40,25 @@ export const heatmapTransformer: SynchronousDataTransformerInfo<HeatmapTransform
   operator: (options, ctx) => (source) =>
     source.pipe(
       map((data) => {
-        const optionsCopy = {
-          ...options,
-          xBuckets: { ...options.xBuckets } ?? undefined,
-          yBuckets: { ...options.yBuckets } ?? undefined,
-        };
+        if (config.featureToggles.transformationsVariableSupport) {
+          const optionsCopy = {
+            ...options,
+            xBuckets: { ...options.xBuckets } ?? undefined,
+            yBuckets: { ...options.yBuckets } ?? undefined,
+          };
 
-        if (optionsCopy.xBuckets?.value) {
-          optionsCopy.xBuckets.value = ctx.interpolate(optionsCopy.xBuckets.value);
+          if (optionsCopy.xBuckets?.value) {
+            optionsCopy.xBuckets.value = ctx.interpolate(optionsCopy.xBuckets.value);
+          }
+
+          if (optionsCopy.yBuckets?.value) {
+            optionsCopy.yBuckets.value = ctx.interpolate(optionsCopy.yBuckets.value);
+          }
+
+          return heatmapTransformer.transformer(optionsCopy, ctx)(data);
+        } else {
+          return heatmapTransformer.transformer(options, ctx)(data);
         }
-
-        if (optionsCopy.yBuckets?.value) {
-          optionsCopy.yBuckets.value = ctx.interpolate(optionsCopy.yBuckets.value);
-        }
-
-        return heatmapTransformer.transformer(optionsCopy, ctx)(data);
       })
     ),
 
