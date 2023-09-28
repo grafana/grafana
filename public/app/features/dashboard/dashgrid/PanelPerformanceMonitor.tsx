@@ -12,7 +12,7 @@ interface Props {
   panelType: string;
   panelId: number;
   panelTitle: string;
-  panelOptions: any;
+  panelOptions: unknown;
   panelFieldConfig: FieldConfigSource;
 }
 
@@ -56,12 +56,23 @@ export const PanelPerformanceMonitor = (props: Props) => {
     faro.api.pushEvent(eventName, logObj);
   };
 
-  const logPanelOptionChanges = (panelOptions: any, oldPanelOptions: any) => {
+  const logPanelOptionChanges = (panelOptions: unknown, oldPanelOptions: unknown) => {
+    if (typeof panelOptions !== 'object' || panelOptions === null) {
+      return;
+    }
+
+    if (typeof oldPanelOptions !== 'object' || oldPanelOptions === null) {
+      return;
+    }
+
+    const oldPanelOptionsUnknown: { [key: string]: unknown } = { ...oldPanelOptions };
+
     for (const [key, value] of Object.entries(panelOptions)) {
       const newValue: string = typeof value !== 'string' ? JSON.stringify(value) : value;
-      const oldValue: string = typeof value !== 'string' ? JSON.stringify(oldPanelOptions[key]) : oldPanelOptions[key];
+      const oldValue: string =
+        typeof value !== 'string' ? JSON.stringify(oldPanelOptionsUnknown[key]) : String(oldPanelOptionsUnknown[key]);
 
-      if (oldPanelOptions[key] === undefined) {
+      if (oldPanelOptionsUnknown[key] === undefined) {
         logEvent(PanelLogEvents.NEW_PANEL_OPTION_EVENT, key, newValue);
       } else if (oldValue !== newValue) {
         logEvent(PanelLogEvents.PANEL_OPTION_CHANGED_EVENT, key, newValue, oldValue);
@@ -69,7 +80,10 @@ export const PanelPerformanceMonitor = (props: Props) => {
     }
   };
 
-  const logFieldConfigChanges = (fieldConfig: FieldConfigSource, oldFieldConfig: FieldConfigSource) => {
+  const logFieldConfigChanges = (
+    fieldConfig: FieldConfigSource<unknown>,
+    oldFieldConfig: FieldConfigSource<unknown>
+  ) => {
     // overrides are an array of objects, so stringify it all and log changes
     // in lack of an index, we can't tell which override changed
     if (oldFieldConfig.overrides !== fieldConfig.overrides) {
@@ -81,7 +95,7 @@ export const PanelPerformanceMonitor = (props: Props) => {
       );
     }
 
-    const oldDefaults: { [key: string]: any } = oldFieldConfig.defaults;
+    const oldDefaults: { [key: string]: unknown } = { ...oldFieldConfig.defaults };
 
     // go through field config keys except custom, we treat that below
     for (const [key, value] of Object.entries(fieldConfig.defaults)) {
@@ -90,7 +104,7 @@ export const PanelPerformanceMonitor = (props: Props) => {
       }
 
       const newValue: string = typeof value !== 'string' ? JSON.stringify(value) : value;
-      const oldValue: string = typeof value !== 'string' ? JSON.stringify(oldDefaults[key]) : oldDefaults[key];
+      const oldValue: string = typeof value !== 'string' ? JSON.stringify(oldDefaults[key]) : String(oldDefaults[key]);
 
       if (oldDefaults[key] === undefined) {
         logEvent(PanelLogEvents.NEW_DEFAULT_FIELD_CONFIG_EVENT, key, newValue);
@@ -99,17 +113,22 @@ export const PanelPerformanceMonitor = (props: Props) => {
       }
     }
 
-    if (!fieldConfig.defaults.custom) {
+    if (!fieldConfig.defaults.custom || oldDefaults.custom === undefined) {
       return;
     }
 
+    const oldCustom: { [key: string]: unknown } = { ...oldDefaults.custom };
+
     // go through custom field config keys
     for (const [key, value] of Object.entries(fieldConfig.defaults.custom)) {
-      const newValue: string = typeof value !== 'string' ? JSON.stringify(value) : value;
-      const oldValue: string =
-        typeof value !== 'string' ? JSON.stringify(oldDefaults.custom[key]) : oldDefaults.custom[key];
+      if (oldDefaults.custom === null || oldCustom[key] === null) {
+        continue;
+      }
 
-      if (oldDefaults.custom[key] === undefined) {
+      const newValue: string = typeof value !== 'string' ? JSON.stringify(value) : value;
+      const oldValue: string = typeof value !== 'string' ? JSON.stringify(oldCustom[key]) : String(oldCustom[key]);
+
+      if (oldCustom[key] === undefined) {
         logEvent(PanelLogEvents.NEW_CUSTOM_FIELD_CONFIG_EVENT, key, newValue);
       } else if (oldValue !== newValue) {
         logEvent(PanelLogEvents.CUSTOM_FIELD_CONFIG_CHANGED_EVENT, key, newValue, oldValue);
