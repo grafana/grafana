@@ -1,10 +1,8 @@
 import { of } from 'rxjs';
 
 import { DataQueryRequest, dateTime, ScopedVars } from '@grafana/data/src';
-import { BackendSrvRequest, FetchResponse } from '@grafana/runtime/src';
+import { FetchResponse } from '@grafana/runtime/src';
 import config from 'app/core/config';
-
-import { TemplateSrv } from '../../../features/templating/template_srv';
 
 import {
   getMockDSInstanceSettings,
@@ -139,76 +137,6 @@ describe('InfluxDataSource Backend Mode', () => {
       expect(fetchReq.queries[0].tags?.length).toBe(2);
       expect(fetchReq.queries[0].tags?.[1].key).toBe(adhocFilters[0].key);
       expect(fetchReq.queries[0].tags?.[1].value).toBe(adhocFilters[0].value);
-    });
-  });
-
-  // ignore those tests for now
-  describe('variable interpolation with chained variables', () => {
-    const mockTemplateService = new TemplateSrv();
-    mockTemplateService.getAdhocFilters = jest.fn((_: string) => []);
-    let ds = getMockInfluxDS(getMockDSInstanceSettings(), mockTemplateService);
-    const fetchMockImpl = (req: BackendSrvRequest) =>
-      of({
-        data: {
-          status: 'success',
-          results: [
-            {
-              series: [
-                {
-                  name: 'measurement',
-                  columns: ['name'],
-                  values: [['cpu']],
-                },
-              ],
-            },
-          ],
-        },
-      });
-
-    beforeEach(() => {
-      jest.clearAllMocks();
-      fetchMock.mockImplementation(fetchMockImpl);
-    });
-
-    xit('should render chained regex variables with floating point number', () => {
-      ds.metricFindQuery(`SELECT sum("piece_count") FROM "rp"."pdata" WHERE diameter <= $maxSED`, {
-        scopedVars: { maxSED: { text: '8.1', value: 8.1 } },
-      });
-      const qe = `SELECT sum("piece_count") FROM "rp"."pdata" WHERE diameter <= 8.1`;
-      const qData = decodeURIComponent(fetchMock.mock.calls[0][0].data.substring(2));
-      expect(qData).toBe(qe);
-    });
-
-    xit('should render chained regex variables with URL', () => {
-      ds.metricFindQuery('SHOW TAG VALUES WITH KEY = "agent_url" WHERE agent_url =~ /^$var1$/', {
-        scopedVars: {
-          var1: {
-            text: 'https://aaaa-aa-aaa.bbb.ccc.ddd:8443/ggggg',
-            value: 'https://aaaa-aa-aaa.bbb.ccc.ddd:8443/ggggg',
-          },
-        },
-      });
-      const qe = `SHOW TAG VALUES WITH KEY = "agent_url" WHERE agent_url =~ /^https:\\/\\/aaaa-aa-aaa\\.bbb\\.ccc\\.ddd:8443\\/ggggg$/`;
-      const qData = decodeURIComponent(fetchMock.mock.calls[0][0].data.substring(2));
-      expect(qData).toBe(qe);
-    });
-
-    xit('should render chained regex variables with floating point number and url', () => {
-      ds.metricFindQuery(
-        'SELECT sum("piece_count") FROM "rp"."pdata" WHERE diameter <= $maxSED AND agent_url =~ /^$var1$/',
-        {
-          scopedVars: {
-            var1: {
-              text: 'https://aaaa-aa-aaa.bbb.ccc.ddd:8443/ggggg',
-              value: 'https://aaaa-aa-aaa.bbb.ccc.ddd:8443/ggggg',
-            },
-            maxSED: { text: '8.1', value: 8.1 },
-          },
-        }
-      );
-      const qe = `SELECT sum("piece_count") FROM "rp"."pdata" WHERE diameter <= 8.1 AND agent_url =~ /^https:\\/\\/aaaa-aa-aaa\\.bbb\\.ccc\\.ddd:8443\\/ggggg$/`;
-      const qData = decodeURIComponent(fetchMock.mock.calls[0][0].data.substring(2));
-      expect(qData).toBe(qe);
     });
   });
 });

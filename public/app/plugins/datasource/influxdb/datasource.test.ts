@@ -53,6 +53,7 @@ describe('InfluxDataSource Frontend Mode', () => {
 
   describe('outdated browser mode', () => {
     it('should throw an error when querying data', async () => {
+      expect.assertions(1);
       const instanceSettings = getMockDSInstanceSettings();
       instanceSettings.access = 'direct';
       const ds = getMockInfluxDS(instanceSettings);
@@ -307,10 +308,8 @@ describe('InfluxDataSource Frontend Mode', () => {
           interpolationVar: { text: text, value: text },
           interpolationVar2: { text: 'interpolationText2', value: 'interpolationText2' },
         });
-        if (!query.tags?.length) {
-          throw new Error('Tags are not defined');
-        }
-        const value = query.tags[0].value;
+        expect(query.tags?.length).toBeGreaterThan(0);
+        const value = query.tags?.[0].value;
         const scopedVars = 'interpolationText|interpolationText2';
         expect(value).toBe(scopedVars);
       });
