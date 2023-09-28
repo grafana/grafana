@@ -163,12 +163,12 @@ For details on Azure managed identities, refer to the [Azure documentation](http
 
 3. You can set the `managed_identity_client_id` field in the `[azure]` section of the [Grafana server configuration][configure-grafana-azure] to allow a user-assigned managed identity to be used instead of the default system-assigned identity.
 
-  ```ini
-  [azure]
-  managed_identity_enabled = true
-  managed_identity_client_id = USER_ASSIGNED_IDENTITY_CLIENT_ID
-  ```
-   
+```ini
+[azure]
+managed_identity_enabled = true
+managed_identity_client_id = USER_ASSIGNED_IDENTITY_CLIENT_ID
+```
+
 ### Configure Workload Identity
 
 You can use workload identity to configure Azure Monitor in Grafana if you host Grafana in a Kubernetes environment, such as AKS, in conjunction with managed identities.
