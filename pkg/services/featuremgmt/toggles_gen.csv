@@ -114,3 +114,4 @@ pluginsAPIMetrics,experimental,@grafana/plugins-platform-backend,false,false,fal
 httpSLOLevels,experimental,@grafana/hosted-grafana-team,false,false,true,false
 idForwarding,experimental,@grafana/grafana-authnz-team,true,false,false,false
 cloudWatchWildCardDimensionValues,GA,@grafana/aws-datasources,false,false,false,false
+externalServiceAccounts,experimental,@grafana/grafana-authnz-team,true,false,false,false

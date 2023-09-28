@@ -4,7 +4,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/oauth"
+	"github.com/grafana/grafana/pkg/plugins/auth"
 )
 
 type Plugin struct {
@@ -35,7 +35,7 @@ type Plugin struct {
 	// This will be moved to plugin.json when we have general support in gcom
 	Alias string
 
-	ExternalService *oauth.ExternalService
+	ExternalService *auth.ExternalService
 }
 
 func (p Plugin) SupportsStreaming() bool {
