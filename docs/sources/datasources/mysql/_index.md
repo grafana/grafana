@@ -280,7 +280,7 @@ The resulting table panel:
 
 If you set Format as to _Time series_, then the query must have a column named time that returns either a SQL datetime or any numeric datatype representing Unix epoch in seconds. In addition, result sets of time series queries must be sorted by time for panels to properly visualize the result.
 
-A time series query result is returned in a [wide data frame format](/developers/plugin-tools/introduction/data-frames#wide-format). Any column except time or of type string transforms into value fields in the data frame query result. Any string column transforms into field labels in the data frame query result.
+A time series query result is returned in a [wide data frame format][data-frames-wide-format]. Any column except time or of type string transforms into value fields in the data frame query result. Any string column transforms into field labels in the data frame query result.
 
 > For backward compatibility, there's an exception to the above rule for queries that return three columns including a string column named metric. Instead of transforming the metric column into field labels, it becomes the field name, and then the series name is formatted as the value of the metric column. See the example with the metric column below.
 
@@ -545,6 +545,9 @@ Time series queries should work in alerting conditions. Table formatted queries 
 
 [configure-standard-options-display-name]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/configure-standard-options#display-name"
 [configure-standard-options-display-name]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/configure-standard-options#display-name"
+
+[data-frames-wide-format]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/developers/plugins/introduction-to-plugin-development/data-frames#wide-format"
+[data-frames-wide-format]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/developers/plugins/introduction-to-plugin-development/data-frames#wide-format"
 
 [data-source-management]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/administration/data-source-management"
 [data-source-management]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/administration/data-source-management"
