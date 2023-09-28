@@ -1,6 +1,7 @@
 import * as emotion from '@emotion/css';
 import * as emotionReact from '@emotion/react';
 import * as d3 from 'd3';
+import * as i18next from 'i18next';
 import jquery from 'jquery';
 import _ from 'lodash'; // eslint-disable-line lodash/import-scope
 import moment from 'moment'; // eslint-disable-line no-restricted-imports
@@ -101,6 +102,8 @@ export const sharedDependenciesMap: Record<string, System.Module> = {
   },
   d3: d3,
   emotion: emotion,
+  // bundling grafana-ui in plugins requires sharing i18next state
+  i18next: i18next,
   jquery: {
     default: jquery,
     __useDefault: true,
