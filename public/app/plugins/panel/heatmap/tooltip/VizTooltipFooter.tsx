@@ -42,7 +42,6 @@ export const VizTooltipFooter = ({ dataLinks, canAnnotate }: VizTooltipFooterPro
   );
 };
 
-// @TODO mask
 const getStyles = (theme: GrafanaTheme2) => ({
   wrapper: css`
     display: flex;
@@ -55,28 +54,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
     overflow-y: hidden;
     white-space: nowrap;
     border-top: 1px solid ${theme.colors.border.medium};
-    //-webkit-mask-image: linear-gradient(90deg, #000 80%, transparent);
+    mask-image: linear-gradient(90deg, rgba(0, 0, 0, 1) 80%, transparent);
   `,
   addAnnotations: css`
     border-top: 1px solid ${theme.colors.border.medium};
     padding-top: ${theme.spacing(1)};
   `,
-  // fadedMask: css`
-  //   display: block;
-  //   position: absolute;
-  //   width: 200px;
-  //   height: 40px;
-  //   right: 11px;
-  //   bottom: 55px;
-  //   pointer-events: none;
-  //   background: linear-gradient(to right, transparent 30%, ${theme.colors.background.secondary} 100%);
-  //   background: -webkit-gradient(
-  //     linear,
-  //     left top,
-  //     right top,
-  //     color-stop(0%, transparent),
-  //     color-stop(100%, ${theme.colors.background.secondary})
-  //   );
-  //   background: -webkit-linear-gradient(left, transparent 30%, ${theme.colors.background.secondary} 100%);
-  // `,
 });
