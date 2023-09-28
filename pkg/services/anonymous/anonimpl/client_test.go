@@ -62,7 +62,7 @@ func TestAnonymous_Authenticate(t *testing.T) {
 				assert.Equal(t, true, identity.ID == "")
 				assert.Equal(t, tt.org.ID, identity.OrgID)
 				assert.Equal(t, tt.org.Name, identity.OrgName)
-				assert.Equal(t, tt.cfg.AnonymousOrgRole, string(identity.Role()))
+				assert.Equal(t, tt.cfg.AnonymousOrgRole, string(identity.GetOrgRole()))
 			}
 		})
 	}
