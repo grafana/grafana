@@ -3,6 +3,7 @@ import { ProxyTarget } from '@locker/near-membrane-shared';
 
 import { BootData, PluginMeta } from '@grafana/data';
 import { config, logInfo } from '@grafana/runtime';
+import { defaultTrustedTypesPolicy } from 'app/core/trustedTypePolicies';
 
 import { getPluginSettings } from '../pluginSettings';
 
@@ -12,7 +13,7 @@ import {
   getSafeSandboxDomElement,
   isDomElement,
   isLiveTarget,
-  markDomElementStyleAsALiveTarget,
+  markDomElementStyleAsALiveTarget,academo/sandbox-allow-grafanabootdata-with-warnings
   patchObjectAsLiveTarget,
 } from './document_sandbox';
 import { sandboxPluginDependencies } from './plugin_dependencies';
@@ -75,11 +76,7 @@ async function doImportPluginModuleInSandbox(meta: PluginMeta): Promise<System.M
       // distortions are interceptors to modify the behavior of objects when
       // the code inside the sandbox tries to access them
       distortionCallback,
-      defaultPolicy: {
-        createHTML: (string: string) => string,
-        createScript: (string: string) => string,
-        createScriptURL: (string: string) => string,
-      },
+      defaultPolicy: defaultTrustedTypesPolicy,
       liveTargetCallback: isLiveTarget,
       // endowments are custom variables we make available to plugins in their window object
       endowments: Object.getOwnPropertyDescriptors({

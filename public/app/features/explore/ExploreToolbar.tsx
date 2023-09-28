@@ -3,9 +3,17 @@ import { pick } from 'lodash';
 import React, { RefObject, useMemo } from 'react';
 import { shallowEqual } from 'react-redux';
 
-import { DataSourceInstanceSettings, RawTimeRange } from '@grafana/data';
+import { DataSourceInstanceSettings, RawTimeRange, GrafanaTheme2 } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
-import { defaultIntervals, PageToolbar, RefreshPicker, SetInterval, ToolbarButton, ButtonGroup } from '@grafana/ui';
+import {
+  defaultIntervals,
+  PageToolbar,
+  RefreshPicker,
+  SetInterval,
+  ToolbarButton,
+  ButtonGroup,
+  useStyles2,
+} from '@grafana/ui';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { t, Trans } from 'app/core/internationalization';
 import { createAndCopyShortLink } from 'app/core/utils/shortLinks';
@@ -27,10 +35,18 @@ import { isSplit, selectPanesEntries } from './state/selectors';
 import { syncTimes, changeRefreshInterval } from './state/time';
 import { LiveTailControls } from './useLiveTailControls';
 
-const rotateIcon = css({
-  '> div > svg': {
-    transform: 'rotate(180deg)',
-  },
+const getStyles = (theme: GrafanaTheme2) => ({
+  rotateIcon: css({
+    '> div > svg': {
+      transform: 'rotate(180deg)',
+    },
+  }),
+  stickyToolbar: css({
+    position: 'sticky',
+    top: 0,
+    // reducing zIndex to prevent overlapping the top nav
+    zIndex: theme.zIndex.navbarFixed - 1,
+  }),
 });
 
 interface Props {
@@ -41,6 +57,7 @@ interface Props {
 
 export function ExploreToolbar({ exploreId, topOfViewRef, onChangeTime }: Props) {
   const dispatch = useDispatch();
+  const styles = useStyles2(getStyles);
 
   const splitted = useSelector(isSplit);
   const timeZone = useSelector((state: StoreState) => getTimeZone(state.user));
@@ -119,7 +136,7 @@ export function ExploreToolbar({ exploreId, topOfViewRef, onChangeTime }: Props)
   };
 
   return (
-    <div ref={topOfViewRef}>
+    <div ref={topOfViewRef} className={styles.stickyToolbar}>
       {refreshInterval && <SetInterval func={onRunQuery} interval={refreshInterval} loading={loading} />}
       <div ref={topOfViewRef}>
         <AppChromeUpdate
@@ -173,7 +190,7 @@ export function ExploreToolbar({ exploreId, topOfViewRef, onChangeTime }: Props)
                 onClick={onClickResize}
                 icon={isLargerPane ? 'gf-movepane-left' : 'gf-movepane-right'}
                 iconOnly={true}
-                className={cx(shouldRotateSplitIcon && rotateIcon)}
+                className={cx(shouldRotateSplitIcon && styles.rotateIcon)}
               />
               <ToolbarButton
                 tooltip={t('explore.toolbar.split-close-tooltip', 'Close split pane')}

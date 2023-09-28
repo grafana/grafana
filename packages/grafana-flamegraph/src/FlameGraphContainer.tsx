@@ -245,6 +245,7 @@ function getStyles(theme: GrafanaTheme2, vertical?: boolean) {
       flexGrow: 1,
       minHeight: 0,
       flexDirection: vertical ? 'column-reverse' : 'row',
+      columnGap: theme.spacing(1),
     }),
   };
 }
