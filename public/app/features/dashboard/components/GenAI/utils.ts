@@ -1,3 +1,5 @@
+import { createTwoFilesPatch } from 'diff';
+
 import { DashboardModel, PanelModel } from '../../state';
 import { Diffs, jsonDiff } from '../VersionHistory/utils';
 
@@ -32,9 +34,26 @@ export function getDashboardChanges(dashboard: DashboardModel): {
   migrationChanges: Diffs;
 } {
   // Re-parse the dashboard to remove functions and other non-serializable properties
-  const currentDashboard = JSON.parse(JSON.stringify(dashboard.getSaveModelClone()));
+  const currentDashboard = dashboard.getSaveModelClone();
+  const currentDashboardString = JSON.stringify(dashboard.getSaveModelClone(), null, 2);
   const originalDashboard = dashboard.getOriginalDashboard()!;
-  const dashboardAfterMigration = JSON.parse(JSON.stringify(new DashboardModel(originalDashboard).getSaveModelClone()));
+  const originalDashboardString = JSON.stringify(originalDashboard, null, 2);
+  const dashboardAfterMigration = JSON.stringify(new DashboardModel(originalDashboard).getSaveModelClone(), null, 2);
+
+  console.log(
+    createTwoFilesPatch(
+      originalDashboard.title!,
+      currentDashboard.title,
+      originalDashboardString,
+      currentDashboardString,
+      '',
+      '',
+      { context: 20 }
+    )
+  );
+
+  // 1) parse through full diff (all context) and remove all lines that arent additions / deletions or not important context like title / description
+  // 2) JSON entire diff and delete non changes things but also not keep important context  (title / description)
 
   return {
     userChanges: jsonDiff(dashboardAfterMigration, currentDashboard),

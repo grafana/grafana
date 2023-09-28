@@ -23,7 +23,8 @@ const CHANGES_GENERATION_STANDARD_PROMPT = [
   'Refer to templating elements as variables',
   'Ignore and never mention changes about plugin version',
   'Try to make it as short as possible.',
-].join('. ');
+  '',
+].join('.\n');
 
 export const GenAIDashboardChangesButton = ({ dashboard, onGenerate }: GenAIDashboardChangesButtonProps) => {
   const messages = useMemo(() => getMessages(dashboard), [dashboard]);

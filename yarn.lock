@@ -10371,6 +10371,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/diff@npm:^5":
+  version: 5.0.5
+  resolution: "@types/diff@npm:5.0.5"
+  checksum: 5f093341d5488cd33079400d4b2ff463dfd4f589bf0a54fbb25f7c87a7bdc16bd1e6125f252c081fa9a3ad44fc78b156c0a5f38bd8128edceb40ba084e051885
+  languageName: node
+  linkType: hard
+
 "@types/doctrine@npm:^0.0.3":
   version: 0.0.3
   resolution: "@types/doctrine@npm:0.0.3"
@@ -20025,6 +20032,7 @@ __metadata:
     "@types/d3-force": ^3.0.0
     "@types/d3-scale-chromatic": 3.0.0
     "@types/debounce-promise": 3.1.6
+    "@types/diff": ^5
     "@types/eslint": 8.44.0
     "@types/file-saver": 2.0.5
     "@types/glob": ^8.0.0
@@ -20119,6 +20127,7 @@ __metadata:
     dangerously-set-html-content: 1.0.9
     date-fns: 2.30.0
     debounce-promise: 3.1.2
+    diff: ^5.1.0
     emotion: 11.0.0
     esbuild: 0.18.12
     esbuild-loader: 3.0.1
