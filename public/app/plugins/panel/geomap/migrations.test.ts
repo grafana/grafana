@@ -226,6 +226,10 @@ describe('geomap migrations', () => {
                     "fixed": "img/icons/marker/triangle.svg",
                     "mode": "fixed",
                   },
+                  "symbolAnchor": {
+                    "anchorX": "center",
+                    "anchorY": "center",
+                  },
                   "textConfig": {
                     "fontSize": 12,
                     "offsetX": 0,
