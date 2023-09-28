@@ -4,9 +4,10 @@ import { useToggle } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
-import { useStyles2, ToolbarButton } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui';
 
 import { useContentOutlineContext } from './ContentOutlineContext';
+import { ContentOutlineItemButton } from './ContentOutlineItemButton';
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
@@ -16,11 +17,11 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       justifyContent: 'center',
       marginRight: theme.spacing(1),
-      zIndex: theme.zIndex.sidemenu,
+      height: '100%',
+      backgroundColor: theme.colors.background.primary,
     }),
     content: css({
       label: 'content',
-      backgroundColor: theme.colors.background.primary,
       position: 'sticky',
       top: '56px',
       height: '81vh',
@@ -56,24 +57,24 @@ export function ContentOutline() {
   return (
     <div className={styles.wrapper}>
       <div className={styles.content}>
-        <ToolbarButton
-          className={styles.buttonStyles}
+        <ContentOutlineItemButton
+          title={expanded ? 'Collapse content outline' : undefined}
           icon={expanded ? 'angle-left' : 'angle-right'}
           onClick={toggle}
           tooltip={!expanded ? 'Expand content outline' : undefined}
-        >
-          {expanded && 'Collapse content outline'}
-        </ToolbarButton>
+          className={styles.buttonStyles}
+          aria-expanded={expanded}
+        />
+
         {outlineItems.map((item) => (
-          <ToolbarButton
+          <ContentOutlineItemButton
             key={item.id}
+            title={expanded ? item.title : undefined}
             className={styles.buttonStyles}
             icon={item.icon}
             onClick={() => scrollIntoView(item.ref, item.title)}
             tooltip={!expanded ? item.title : undefined}
-          >
-            {expanded && item.title}
-          </ToolbarButton>
+          />
         ))}
       </div>
     </div>
