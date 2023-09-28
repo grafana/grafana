@@ -385,7 +385,7 @@ export const calculateFieldTransformRegistryItem: TransformerRegistryItem<Calcul
   id: DataTransformerID.calculateField,
   editor: CalculateFieldTransformerEditor,
   transformation: standardTransformers.calculateFieldTransformer,
-  name: getTransformationContent(DataTransformerID.calculateField).name,
+  name: standardTransformers.calculateFieldTransformer.name,
   description: 'Use the row values to calculate a new field.',
   categories: new Set([TransformerCategory.CalculateNewFields]),
   help: getTransformationContent(DataTransformerID.calculateField).content,

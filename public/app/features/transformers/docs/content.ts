@@ -1,3 +1,5 @@
+import { standardTransformers } from '@grafana/data/src/transformations/transformers';
+
 interface Transformation {
   name: string;
   content: string;
@@ -5,7 +7,7 @@ interface Transformation {
 
 export const transformationDocsContent: Record<string, Transformation> = {
   calculateField: {
-    name: 'Add field from calculation',
+    name: standardTransformers.calculateFieldTransformer.name,
     content: `
     Use this transformation to add a new field calculated from two other fields. Each transformation allows you to add one new field.
   
@@ -21,7 +23,7 @@ export const transformationDocsContent: Record<string, Transformation> = {
     `,
   },
   concatenate: {
-    name: 'Concatenate fields',
+    name: standardTransformers.concatenateTransformer.name,
     content: `
     Use this transformation to combine all fields from all frames into one result. Consider the following:
 
@@ -44,8 +46,9 @@ export const transformationDocsContent: Record<string, Transformation> = {
     | 15.4  | 1230233  | 3.2   | 5      |
     `,
   },
+  // This is not a `standard transformer`, hense the hardcoded name.
   configFromData: {
-    name: '',
+    name: 'Config from query results',
     content: `
     Use this transformation to select one query and from it extract standard options such as
     **Min**, **Max**, **Unit**, and **Thresholds** and apply them to other query results.
@@ -113,7 +116,7 @@ export const transformationDocsContent: Record<string, Transformation> = {
     `,
   },
   convertFieldType: {
-    name: '',
+    name: standardTransformers.convertFieldTypeTransformer.name,
     content: `
     Use this transformation to change the field type of the specified field.
 
@@ -149,7 +152,7 @@ export const transformationDocsContent: Record<string, Transformation> = {
     `,
   },
   extractFields: {
-    name: '',
+    name: 'Extract fields',
     content: `
     Use this transformation to select one source of data and extract content from it in different formats. Set the following fields:
 

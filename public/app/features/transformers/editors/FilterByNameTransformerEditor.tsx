@@ -14,7 +14,7 @@ import {
 import { FilterFieldsByNameTransformerOptions } from '@grafana/data/src/transformations/transformers/filterByName';
 import { Field, Input, FilterPill, HorizontalGroup } from '@grafana/ui';
 
-import { getHelperContent } from '../docs/getTransformationContent';
+import { getTransformationContent } from '../docs/getTransformationContent';
 
 interface FilterByNameTransformerEditorProps extends TransformerUIProps<FilterFieldsByNameTransformerOptions> {}
 
@@ -210,8 +210,8 @@ export const filterFieldsByNameTransformRegistryItem: TransformerRegistryItem<Fi
   id: DataTransformerID.filterFieldsByName,
   editor: FilterByNameTransformerEditor,
   transformation: standardTransformers.filterFieldsByNameTransformer,
-  name: 'Filter by name',
+  name: standardTransformers.filterFieldsByNameTransformer.name,
   description: 'Removes part of the query results using a regex pattern. The pattern can be inclusive or exclusive.',
   categories: new Set([TransformerCategory.Filter]),
-  help: getHelperContent(DataTransformerID.filterFieldsByName),
+  help: getTransformationContent(DataTransformerID.filterFieldsByName).content,
 };

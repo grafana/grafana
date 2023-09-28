@@ -12,7 +12,7 @@ import {
 import { InlineField, InlineFieldRow, Select, InlineSwitch } from '@grafana/ui';
 import { FieldNamePicker } from '@grafana/ui/src/components/MatchersUI/FieldNamePicker';
 
-import { getHelperContent } from '../docs/getTransformationContent';
+import { getTransformationContent } from '../docs/getTransformationContent';
 
 import { JSONPathEditor } from './components/JSONPathEditor';
 import { extractFieldsTransformer } from './extractFields';
@@ -119,8 +119,8 @@ export const extractFieldsTransformRegistryItem: TransformerRegistryItem<Extract
   id: DataTransformerID.extractFields,
   editor: extractFieldsTransformerEditor,
   transformation: extractFieldsTransformer,
-  name: 'Extract fields',
+  name: getTransformationContent(DataTransformerID.extractFields).name,
   description: `Parse fields from content (JSON, labels, etc).`,
   categories: new Set([TransformerCategory.Reformat]),
-  help: getHelperContent(DataTransformerID.extractFields),
+  help: getTransformationContent(DataTransformerID.extractFields).content,
 };

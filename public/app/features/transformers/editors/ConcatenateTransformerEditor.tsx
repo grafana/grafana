@@ -90,7 +90,7 @@ export const concatenateTransformRegistryItem: TransformerRegistryItem<Concatena
   id: DataTransformerID.concatenate,
   editor: ConcatenateTransformerEditor,
   transformation: standardTransformers.concatenateTransformer,
-  name: getTransformationContent(DataTransformerID.concatenate).name,
+  name: standardTransformers.concatenateTransformer.name,
   description:
     'Combine all fields into a single frame.  Values will be appended with undefined values if not the same length.',
   categories: new Set([TransformerCategory.Combine]),
