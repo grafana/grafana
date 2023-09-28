@@ -200,7 +200,7 @@ class UnthemedDashboardImport extends PureComponent<Props> {
                     <Trans i18nKey="dashboard-import-page.load-button">Load</Trans>
                   </Button>
                   <LinkButton variant="secondary" href={`${config.appSubUrl}/dashboards`}>
-                    Cancel
+                    <Trans i18nKey="dashboard-import-page.cancel">Cancel</Trans>
                   </LinkButton>
                 </HorizontalGroup>
               </>
