@@ -1,23 +1,13 @@
 import { css } from '@emotion/css';
 import { omit } from 'lodash';
 import React, { useEffect, useMemo, useState } from 'react';
-import { DeepMap, FieldError, FormProvider, useForm, useFormContext, UseFormWatch } from 'react-hook-form';
+import { DeepMap, FieldError, FormProvider, useForm, UseFormWatch } from 'react-hook-form';
 import { Link, useParams } from 'react-router-dom';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
 import { config, logInfo } from '@grafana/runtime';
-import {
-  Button,
-  ConfirmModal,
-  CustomScrollbar,
-  Field,
-  HorizontalGroup,
-  Input,
-  Spinner,
-  Text,
-  useStyles2,
-} from '@grafana/ui';
+import { Button, ConfirmModal, CustomScrollbar, HorizontalGroup, Spinner, useStyles2 } from '@grafana/ui';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { contextSrv } from 'app/core/core';
@@ -27,73 +17,29 @@ import { useDispatch } from 'app/types';
 import { RuleWithLocation } from 'app/types/unified-alerting';
 import { RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
-import { LogMessages, trackNewAlerRuleFormError } from '../../Analytics';
-import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
-import { deleteRuleAction, saveRuleFormAction } from '../../state/actions';
-import { RuleFormType, RuleFormValues } from '../../types/rule-form';
-import { initialAsyncRequestState } from '../../utils/redux';
+import { LogMessages, trackNewAlerRuleFormError } from '../../../Analytics';
+import { useUnifiedAlertingSelector } from '../../../hooks/useUnifiedAlertingSelector';
+import { deleteRuleAction, saveRuleFormAction } from '../../../state/actions';
+import { RuleFormType, RuleFormValues } from '../../../types/rule-form';
+import { initialAsyncRequestState } from '../../../utils/redux';
 import {
   getDefaultFormValues,
   getDefaultQueries,
   MINUTE,
   normalizeDefaultAnnotations,
   rulerRuleToFormValues,
-} from '../../utils/rule-form';
-import * as ruleId from '../../utils/rule-id';
-import { GrafanaRuleExporter } from '../export/GrafanaRuleExporter';
-
-import AnnotationsStep from './AnnotationsStep';
-import { CloudEvaluationBehavior } from './CloudEvaluationBehavior';
-import { GrafanaEvaluationBehavior } from './GrafanaEvaluationBehavior';
-import { NotificationsStep } from './NotificationsStep';
-import { RecordingRulesNameSpaceAndGroupStep } from './RecordingRulesNameSpaceAndGroupStep';
-import { RuleEditorSection } from './RuleEditorSection';
-import { RuleInspector } from './RuleInspector';
-import { QueryAndExpressionsStep } from './query-and-alert-condition/QueryAndExpressionsStep';
-import { translateRouteParamToRuleType } from './util';
-
-const recordingRuleNameValidationPattern = {
-  message:
-    'Recording rule name must be valid metric name. It may only contain letters, numbers, and colons. It may not contain whitespace.',
-  value: /^[a-zA-Z_:][a-zA-Z0-9_:]*$/,
-};
-
-const AlertRuleNameInput = () => {
-  const {
-    register,
-    watch,
-    formState: { errors },
-  } = useFormContext<RuleFormValues & { location?: string }>();
-
-  const ruleFormType = watch('type');
-  const entityName = ruleFormType === RuleFormType.cloudRecording ? 'recording rule' : 'alert rule';
-
-  return (
-    <RuleEditorSection
-      stepNo={1}
-      title={`Enter ${entityName} name`}
-      description={
-        <Text variant="bodySmall" color="secondary">
-          {/* sigh language rules – we should use translations ideally but for now we deal with "a" and "an" */}
-          Enter {entityName === 'alert rule' ? 'an' : 'a'} {entityName} name to identify your alert.
-        </Text>
-      }
-    >
-      <Field label="Name" error={errors?.name?.message} invalid={!!errors.name?.message}>
-        <Input
-          id="name"
-          width={35}
-          {...register('name', {
-            required: { value: true, message: 'Must enter a name' },
-            pattern: ruleFormType === RuleFormType.cloudRecording ? recordingRuleNameValidationPattern : undefined,
-          })}
-          aria-label="name"
-          placeholder={`Give your ${entityName} a name`}
-        />
-      </Field>
-    </RuleEditorSection>
-  );
-};
+} from '../../../utils/rule-form';
+import * as ruleId from '../../../utils/rule-id';
+import { GrafanaRuleExporter } from '../../export/GrafanaRuleExporter';
+import { AlertRuleNameInput } from '../AlertRuleNameInput';
+import AnnotationsStep from '../AnnotationsStep';
+import { CloudEvaluationBehavior } from '../CloudEvaluationBehavior';
+import { GrafanaEvaluationBehavior } from '../GrafanaEvaluationBehavior';
+import { NotificationsStep } from '../NotificationsStep';
+import { RecordingRulesNameSpaceAndGroupStep } from '../RecordingRulesNameSpaceAndGroupStep';
+import { RuleInspector } from '../RuleInspector';
+import { QueryAndExpressionsStep } from '../query-and-alert-condition/QueryAndExpressionsStep';
+import { translateRouteParamToRuleType } from '../util';
 
 type Props = {
   existing?: RuleWithLocation;
@@ -374,27 +320,24 @@ function formValuesFromPrefill(rule: Partial<RuleFormValues>): RuleFormValues {
 function formValuesFromExistingRule(rule: RuleWithLocation<RulerRuleDTO>) {
   return ignoreHiddenQueries(rulerRuleToFormValues(rule));
 }
-
-const getStyles = (theme: GrafanaTheme2) => {
-  return {
-    buttonSpinner: css`
-      margin-right: ${theme.spacing(1)};
-    `,
-    form: css`
-      width: 100%;
-      height: 100%;
-      display: flex;
-      flex-direction: column;
-    `,
-    contentOuter: css`
-      background: ${theme.colors.background.primary};
-      overflow: hidden;
-      flex: 1;
-    `,
-    flexRow: css`
-      display: flex;
-      flex-direction: row;
-      justify-content: flex-start;
-    `,
-  };
-};
+const getStyles = (theme: GrafanaTheme2) => ({
+  buttonSpinner: css({
+    marginRight: theme.spacing(1),
+  }),
+  form: css({
+    width: '100%',
+    height: '100%',
+    display: 'flex',
+    flexDirection: 'column',
+  }),
+  contentOuter: css({
+    background: theme.colors.background.primary,
+    overflow: 'hidden',
+    flex: 1,
+  }),
+  flexRow: css({
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+  }),
+});
