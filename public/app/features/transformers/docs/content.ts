@@ -318,9 +318,98 @@ export const transformationDocsContent = {
     - Click a field to toggle filtering on that field. Filtered fields are displayed with dark gray text, unfiltered fields have white text.
     `,
   },
-  // formatTime: formatTimeHelper,
-  // groupBy: groupByHelper,
-  // groupingToMatrix: groupingToMatrixHelper,
+  formatTime: {
+    name: 'Format time',
+    content: `
+    Use this transformation to format the output of a time field. Output can be formatted using (Moment.js format strings)[https://momentjs.com/docs/#/displaying/]. For instance, if you would like to display only the year of a time field the format string 'YYYY' can be used to show the calendar year (e.g. 1999, 2012, etc.).
+    
+    > **Note:** This transformation is available in Grafana 10.1+ as an alpha feature.
+    `,
+  },
+  groupBy: {
+    name: 'Group by',
+    content: `
+    Use this transformation to group the data by a specified field (column) value and process calculations on each group. Click to see a list of calculation choices. For information about available calculations, refer to [Calculation types](https://grafana.com/docs/grafana/latest/panels-visualizations/calculation-types/).
+
+    Here's an example of original data.
+
+    | Time                | Server ID | CPU Temperature | Server Status |
+    | ------------------- | --------- | --------------- | ------------- |
+    | 2020-07-07 11:34:20 | server 1  | 80              | Shutdown      |
+    | 2020-07-07 11:34:20 | server 3  | 62              | OK            |
+    | 2020-07-07 10:32:20 | server 2  | 90              | Overload      |
+    | 2020-07-07 10:31:22 | server 3  | 55              | OK            |
+    | 2020-07-07 09:30:57 | server 3  | 62              | Rebooting     |
+    | 2020-07-07 09:30:05 | server 2  | 88              | OK            |
+    | 2020-07-07 09:28:06 | server 1  | 80              | OK            |
+    | 2020-07-07 09:25:05 | server 2  | 88              | OK            |
+    | 2020-07-07 09:23:07 | server 1  | 86              | OK            |
+
+    This transformation goes in two steps. First you specify one or multiple fields to group the data by. This will group all the same values of those fields together, as if you sorted them. For instance if we group by the Server ID field, then it would group the data this way:
+
+    | Time                | Server ID      | CPU Temperature | Server Status |
+    | ------------------- | -------------- | --------------- | ------------- |
+    | 2020-07-07 11:34:20 | **server 1**   | 80              | Shutdown      |
+    | 2020-07-07 09:28:06 | **server 1**   | 80              | OK            |
+    | 2020-07-07 09:23:07 | **server 1**   | 86              | OK            |
+    | 2020-07-07 10:32:20 | server 2       | 90              | Overload      |
+    | 2020-07-07 09:30:05 | server 2       | 88              | OK            |
+    | 2020-07-07 09:25:05 | server 2       | 88              | OK            |
+    | 2020-07-07 11:34:20 | **_server 3_** | 62              | OK            |
+    | 2020-07-07 10:31:22 | **_server 3_** | 55              | OK            |
+    | 2020-07-07 09:30:57 | **_server 3_** | 62              | Rebooting     |
+
+    All rows with the same value of Server ID are grouped together.
+
+    After choosing which field you want to group your data by, you can add various calculations on the other fields, and apply the calculation to each group of rows. For instance, we could want to calculate the average CPU temperature for each of those servers. So we can add the _mean_ calculation applied on the CPU Temperature field to get the following:
+
+    | Server ID | CPU Temperature (mean) |
+    | --------- | ---------------------- |
+    | server 1  | 82                     |
+    | server 2  | 88.6                   |
+    | server 3  | 59.6                   |
+
+    And we can add more than one calculation. For instance:
+
+    - For field Time, we can calculate the _Last_ value, to know when the last data point was received for each server
+    - For field Server Status, we can calculate the _Last_ value to know what is the last state value for each server
+    - For field Temperature, we can also calculate the _Last_ value to know what is the latest monitored temperature for each server
+
+    We would then get :
+
+    | Server ID | CPU Temperature (mean) | CPU Temperature (last) | Time (last)         | Server Status (last) |
+    | --------- | ---------------------- | ---------------------- | ------------------- | -------------------- |
+    | server 1  | 82                     | 80                     | 2020-07-07 11:34:20 | Shutdown             |
+    | server 2  | 88.6                   | 90                     | 2020-07-07 10:32:20 | Overload             |
+    | server 3  | 59.6                   | 62                     | 2020-07-07 11:34:20 | OK                   |
+
+    This transformation enables you to extract key information from your time series and display it in a convenient way.
+  `,
+  },
+  groupingToMatrix: {
+    name: 'Grouping to Matrix',
+    content: `
+    Use this transformation to combine three fields-that will be used as input for the **Column**, **Row**, and **Cell value** fields-from the query output, and generate a matrix. This matrix will be calculated as follows:
+
+    **Original data**
+
+    | Server ID | CPU Temperature | Server Status |
+    | --------- | --------------- | ------------- |
+    | server 1  | 82              | OK            |
+    | server 2  | 88.6            | OK            |
+    | server 3  | 59.6            | Shutdown      |
+
+    We can generate a matrix using the values of 'Server Status' as column names, the 'Server ID' values as row names, and the 'CPU Temperature' as content of each cell. The content of each cell will appear for the existing column ('Server Status') and row combination ('Server ID'). For the rest of the cells, you can select which value to display between: **Null**, **True**, **False**, or **Empty**.
+
+    **Output**
+
+    | Server ID\Server Status | OK   | Shutdown |
+    | ----------------------- | ---- | -------- |
+    | server 1                | 82   |          |
+    | server 2                | 88.6 |          |
+    | server 3                |      | 59.6     |
+    `,
+  },
   heatmap: {
     name: '',
     content: `
@@ -342,8 +431,122 @@ export const transformationDocsContent = {
     - **Symlog** - A symmetrical logarithmic scale. Use a base 2 or base 10; allows negative values.
     `,
   },
-  // histogram: histogramHelper,
-  // joinByField: joinByFieldHelper,
+  histogram: {
+    name: 'Histogram',
+    content: `
+    Use this transformation to generate a histogram based on the input data.
+
+    - **Bucket size** - The distance between the lowest item in the bucket (xMin) and the highest item in the bucket (xMax).
+    - **Bucket offset** - The offset for non-zero based buckets.
+    - **Combine series** - Create a histogram using all the available series.
+
+    **Original data**
+
+    Series 1:
+
+    | A   | B   | C   |
+    | --- | --- | --- |
+    | 1   | 3   | 5   |
+    | 2   | 4   | 6   |
+    | 3   | 5   | 7   |
+    | 4   | 6   | 8   |
+    | 5   | 7   | 9   |
+
+    Series 2:
+
+    | C   |
+    | --- |
+    | 5   |
+    | 6   |
+    | 7   |
+    | 8   |
+    | 9   |
+
+    **Output**
+
+    | xMin | xMax | A   | B   | C   | C   |
+    | ---- | ---- | --- | --- | --- | --- |
+    | 1    | 2    | 1   | 0   | 0   | 0   |
+    | 2    | 3    | 1   | 0   | 0   | 0   |
+    | 3    | 4    | 1   | 1   | 0   | 0   |
+    | 4    | 5    | 1   | 1   | 0   | 0   |
+    | 5    | 6    | 1   | 1   | 1   | 1   |
+    | 6    | 7    | 0   | 1   | 1   | 1   |
+    | 7    | 8    | 0   | 1   | 1   | 1   |
+    | 8    | 9    | 0   | 0   | 1   | 1   |
+    | 9    | 10   | 0   | 0   | 1   | 1   |
+    `,
+  },
+  joinByField: {
+    name: 'Join by Field',
+    content: `
+    Use this transformation to join multiple results into a single table. This is especially useful for converting multiple
+    time series results into a single wide table with a shared time field.
+
+    #### Inner join
+
+    An inner join merges data from multiple tables where all tables share the same value from the selected field. This type of join excludes
+    data where values do not match in every result.
+
+    Use this transformation to combine the results from multiple queries (combining on a passed join field or the first time column) into one result, and drop rows where a successful join cannot occur.
+
+    In the following example, two queries return table data. It is visualized as two separate tables before applying the inner join transformation.
+
+    Query A:
+
+    | Time                | Job     | Uptime    |
+    | ------------------- | ------- | --------- |
+    | 2020-07-07 11:34:20 | node    | 25260122  |
+    | 2020-07-07 11:24:20 | postgre | 123001233 |
+    | 2020-07-07 11:14:20 | postgre | 345001233 |
+
+    Query B:
+
+    | Time                | Server   | Errors |
+    | ------------------- | -------- | ------ |
+    | 2020-07-07 11:34:20 | server 1 | 15     |
+    | 2020-07-07 11:24:20 | server 2 | 5      |
+    | 2020-07-07 11:04:20 | server 3 | 10     |
+
+    The result after applying the inner join transformation looks like the following:
+
+    | Time                | Job     | Uptime    | Server   | Errors |
+    | ------------------- | ------- | --------- | -------- | ------ |
+    | 2020-07-07 11:34:20 | node    | 25260122  | server 1 | 15     |
+    | 2020-07-07 11:24:20 | postgre | 123001233 | server 2 | 5      |
+
+    #### Outer join
+
+    An outer join includes all data from an inner join and rows where values do not match in every input. While the inner join joins Query A and Query B on the time field, the outer join includes all rows that don't match on the time field.
+
+    In the following example, two queries return table data. It is visualized as two tables before applying the outer join transformation.
+
+    Query A:
+
+    | Time                | Job     | Uptime    |
+    | ------------------- | ------- | --------- |
+    | 2020-07-07 11:34:20 | node    | 25260122  |
+    | 2020-07-07 11:24:20 | postgre | 123001233 |
+    | 2020-07-07 11:14:20 | postgre | 345001233 |
+
+    Query B:
+
+    | Time                | Server   | Errors |
+    | ------------------- | -------- | ------ |
+    | 2020-07-07 11:34:20 | server 1 | 15     |
+    | 2020-07-07 11:24:20 | server 2 | 5      |
+    | 2020-07-07 11:04:20 | server 3 | 10     |
+
+    The result after applying the outer join transformation looks like the following:
+
+    | Time                | Job     | Uptime    | Server   | Errors |
+    | ------------------- | ------- | --------- | -------- | ------ |
+    | 2020-07-07 11:04:20 |         |           | server 3 | 10     |
+    | 2020-07-07 11:14:20 | postgre | 345001233 |          |        |
+    | 2020-07-07 11:34:20 | node    | 25260122  | server 1 | 15     |
+    | 2020-07-07 11:24:20 | postgre | 123001233 | server 2 | 5      |
+    `,
+  },
   // joinByLabels: joinByLabelsHelper,
   // labelsToFields: labelsToFieldsHelper,
   // limit: limitHelper,
