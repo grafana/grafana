@@ -12,10 +12,11 @@ import { createDashboardModelFixture } from '../../dashboard/state/__fixtures__/
 import { TemplateSrv } from '../../templating/template_srv';
 import { variableAdapters } from '../adapters';
 import { createConstantVariableAdapter } from '../constant/adapter';
+import { createDataSourceVariableAdapter } from '../datasource/adapter';
 import { createIntervalVariableAdapter } from '../interval/adapter';
 import { createIntervalOptions } from '../interval/reducer';
 import { createQueryVariableAdapter } from '../query/adapter';
-import { constantBuilder, intervalBuilder, queryBuilder } from '../shared/testing/builders';
+import { constantBuilder, intervalBuilder, queryBuilder, datasourceBuilder } from '../shared/testing/builders';
 import { VariableRefresh } from '../types';
 import { toKeyedVariableIdentifier, toVariablePayload } from '../utils';
 
@@ -35,6 +36,7 @@ variableAdapters.setInit(() => [
   createIntervalVariableAdapter(),
   createConstantVariableAdapter(),
   createQueryVariableAdapter(),
+  createDataSourceVariableAdapter(),
 ]);
 
 const metricFindQuery = jest
@@ -121,7 +123,7 @@ const getTestContext = (dashboard: DashboardModel) => {
   };
 };
 
-const getTestContextVariables = (dashboard: DashboardModel) => {
+const getTestContextVariables = (dashboard: DashboardModel, customeVariables?: object) => {
   jest.clearAllMocks();
 
   const key = 'key';
@@ -165,6 +167,14 @@ const getTestContextVariables = (dashboard: DashboardModel) => {
     .withRefresh(VariableRefresh.onTimeRangeChanged)
     .build();
 
+  const varQueryWithNoDependentNodes = queryBuilder()
+    .withId('d')
+    .withRootStateKey(key)
+    .withName('queryDNoDependentNodes')
+    .withQuery('test query')
+    .withRefresh(VariableRefresh.onTimeRangeChanged)
+    .build();
+
   const range: TimeRange = {
     from: dateTime(new Date().getTime()).subtract(1, 'minutes'),
     to: dateTime(new Date().getTime()),
@@ -192,6 +202,8 @@ const getTestContextVariables = (dashboard: DashboardModel) => {
       a: { ...queryA },
       b: { ...queryB },
       c: { ...queryC },
+      d: { ...varQueryWithNoDependentNodes },
+      ...customeVariables,
     },
   };
   const preloadedState = {
@@ -349,7 +361,7 @@ describe('when onTimeRangeUpdated is dispatched', () => {
   describe('When onTimeRangeUpdated is dispatched without refactorVariablesTimeRange feature flag ', () => {
     silenceConsoleOutput();
     it('then with old getVariablesThatNeedRefresh we call all of them in pararell', async () => {
-      const { key, preloadedState, range, dependencies } = getTestContextVariables(getDashboardModel());
+      const { key, preloadedState, range, dependencies } = getTestContextVariables(getDashboardModel(), {});
 
       // Spying on timeRangeUpdated action
       const spyTimeRangeUpdated = jest.spyOn(actions, 'timeRangeUpdated');
@@ -382,7 +394,11 @@ describe('when onTimeRangeUpdated is dispatched', () => {
           type: 'query',
           rootStateKey: 'key',
         },
-
+        queryD: {
+          id: 'd',
+          type: 'query',
+          rootStateKey: 'key',
+        },
         interval: {
           id: 'interval-0',
           type: 'interval',
@@ -395,7 +411,7 @@ describe('when onTimeRangeUpdated is dispatched', () => {
       expect(spyTimeRangeUpdated).toHaveBeenCalledWith(expectedVariables.queryC);
       expect(spyTimeRangeUpdated).toHaveBeenCalledWith(expectedVariables.interval);
 
-      expect(spyTimeRangeUpdated).toHaveBeenCalledTimes(4);
+      expect(spyTimeRangeUpdated).toHaveBeenCalledTimes(5);
 
       spyTimeRangeUpdated.mockRestore();
     });
@@ -426,10 +442,9 @@ describe('when onTimeRangeUpdated is dispatched', () => {
       // Based on the algorithm of getVariablesThatNeedRefreshNew, we have the following variables:
       // - queryA: This is a Query variable and has no dependents. According to the algorithm, Query variables without dependents
       //   should be refreshed. Hence, it's expected to be in the refreshed variables list.
-      // - interval: This is an interval variable without any dependents. Similar to queryA, the algorithm specifies that
-      //   variables without dependents should be refreshed when the time range changes. Hence, interval is also expected
-      //   to be refreshed.
-      // Note: Variables 'b' and 'c' are not expected to be in the refreshed variables list even though they're set to
+      // - queryD and interval: These are variables without any dependents. Similar to queryA, the algorithm specifies that
+      //   variables without dependents should be refreshed when the time range changes.
+      //   Note: Variables 'b' and 'c' are not expected to be in the refreshed variables list even though they're set to
       // refresh on time range change. This is because they have dependencies ('b' and 'c' depend on 'a'). The algorithm
       // optimizes the refreshing process by refreshing only independent variables and those that have dependents.
       // Once 'a' is refreshed, it will trigger a cascading refresh of 'b' and 'c'.
@@ -437,6 +452,11 @@ describe('when onTimeRangeUpdated is dispatched', () => {
       const expectedVariables = {
         queryA: {
           id: 'a',
+          type: 'query',
+          rootStateKey: 'key',
+        },
+        queryD: {
+          id: 'd',
           type: 'query',
           rootStateKey: 'key',
         },
@@ -449,8 +469,97 @@ describe('when onTimeRangeUpdated is dispatched', () => {
 
       // Asserting that timeRangeUpdated action has been called with the correct arguments
       expect(spyTimeRangeUpdated).toHaveBeenCalledWith(expectedVariables.queryA);
-      expect(spyTimeRangeUpdated).toHaveBeenCalledWith(expectedVariables.interval);
-      expect(spyTimeRangeUpdated).toHaveBeenCalledTimes(2);
+      expect(spyTimeRangeUpdated).toHaveBeenCalledWith(expectedVariables.queryD);
+      expect(spyTimeRangeUpdated).toHaveBeenCalledTimes(3);
+
+      spyTimeRangeUpdated.mockRestore();
+    });
+
+    // query variables can depend on datasource variables, but currently datasource variables do not refresh on time
+    // range change via the UI. This test ensures that query variables that depend on datasource variables are refreshed
+    it('Should ensure query variable is refreshed when dependent on a non-refreshing datasource variable', async () => {
+      const dataSourceVariable = datasourceBuilder()
+        .withId('dsVar')
+        .withRootStateKey('key')
+        .withName('datasource-1')
+        .withOptions('a ds')
+        .withCurrent('a ds')
+        .build();
+
+      const queryE = queryBuilder()
+        .withId('e')
+        .withName('e')
+        .withRootStateKey('key')
+        .withQuery('query ${dsVar}')
+        .withRefresh(VariableRefresh.onTimeRangeChanged)
+        .build();
+
+      const queryF = queryBuilder()
+        .withId('f')
+        .withName('f')
+        .withRootStateKey('key')
+        .withQuery('query ${e}')
+        .withRefresh(VariableRefresh.onTimeRangeChanged)
+        .build();
+
+      const customVariables = {
+        dsVar: dataSourceVariable,
+        queryE,
+        queryF,
+      };
+
+      const { key, preloadedState, range, dependencies } = getTestContextVariables(
+        getDashboardModel(),
+        customVariables
+      );
+
+      // Spying on timeRangeUpdated action
+      const spyTimeRangeUpdated = jest.spyOn(actions, 'timeRangeUpdated');
+
+      // Initiating the Redux testing environment
+      await reduxTester<RootReducerType>({ preloadedState, debug: true })
+        .givenRootReducer(getRootReducer())
+        .whenActionIsDispatched(toKeyedAction(key, variablesInitTransaction({ uid: key })))
+        .whenAsyncActionIsDispatched(onTimeRangeUpdated(key, range, dependencies), true);
+
+      // Defining the variables that are expected to be refreshed
+      // Based on the algorithm of getVariablesThatNeedRefreshNew, we have the following variables:
+      // - queryA, queryD and interval: These are variables with no dependents. According to the algorithm, should be refreshed.
+      // - queryE: This is a query variable with a dependent node (queryF) but also has a dependency on DsVar datasource variable.
+      //   because DSVar is not configured to refresh on time range,this means that queryE is the
+      //   variable that is expected to be refreshed
+      // Note: Variables 'b' and 'c', f are not expected to be in the refreshed variables list even though they're set to
+      // refresh on time range change. This is because they have dependencies ('b' and 'c' depend on 'a').
+
+      const expectedVariables = {
+        queryA: {
+          id: 'a',
+          type: 'query',
+          rootStateKey: 'key',
+        },
+        queryD: {
+          id: 'd',
+          type: 'query',
+          rootStateKey: 'key',
+        },
+        queryE: {
+          id: 'e',
+          type: 'query',
+          rootStateKey: 'key',
+        },
+
+        interval: {
+          id: 'interval-0',
+          type: 'interval',
+          rootStateKey: 'key',
+        },
+      };
+
+      // Asserting that timeRangeUpdated action has been called with the correct arguments
+      expect(spyTimeRangeUpdated).toHaveBeenCalledWith(expectedVariables.queryA);
+      expect(spyTimeRangeUpdated).toHaveBeenCalledWith(expectedVariables.queryD);
+      expect(spyTimeRangeUpdated).toHaveBeenCalledWith(expectedVariables.queryE);
+      expect(spyTimeRangeUpdated).toHaveBeenCalledTimes(4);
 
       spyTimeRangeUpdated.mockRestore();
     });

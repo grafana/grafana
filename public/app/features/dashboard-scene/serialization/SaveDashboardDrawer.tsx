@@ -15,7 +15,7 @@ interface SaveDashboardDrawerState extends SceneObjectState {
 
 export class SaveDashboardDrawer extends SceneObjectBase<SaveDashboardDrawerState> {
   onClose = () => {
-    this.state.dashboardRef.resolve().setState({ drawer: undefined });
+    this.state.dashboardRef.resolve().setState({ overlay: undefined });
   };
 
   static Component = ({ model }: SceneComponentProps<SaveDashboardDrawer>) => {
@@ -33,7 +33,7 @@ export class SaveDashboardDrawer extends SceneObjectBase<SaveDashboardDrawerStat
     // }
 
     return (
-      <Drawer title="Save dashboard" subtitle={dashboard.state.title} scrollableContent onClose={model.onClose}>
+      <Drawer title="Save dashboard" subtitle={dashboard.state.title} onClose={model.onClose}>
         <SaveDashboardDiff diff={diff} oldValue={initialSaveModel} newValue={changedSaveModel} />
       </Drawer>
     );

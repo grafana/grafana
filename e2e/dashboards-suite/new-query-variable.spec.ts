@@ -5,7 +5,7 @@ const DASHBOARD_NAME = 'Templating - Nested Template Variables';
 
 describe('Variables - Query - Add variable', () => {
   beforeEach(() => {
-    e2e.flows.login(e2e.env('USERNAME'), e2e.env('PASSWORD'));
+    e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'));
   });
 
   it('query variable should be default and default fields should be correct', () => {
