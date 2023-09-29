@@ -131,11 +131,7 @@ interface GrafanaRuleDesignExportPreviewProps {
   exportMode: ModifyExportMode;
 }
 
-const GrafanaRuleDesignExportPreview = ({ exportFormat, onClose, exportMode }: GrafanaRuleDesignExportPreviewProps) => {
-  const [getExport, exportData] = alertRuleApi.endpoints.exportModifiedRuleGroup.useMutation();
-  const { getValues } = useFormContext<RuleFormValues>();
-  const values = useMemo(() => getValues(), [getValues]);
-
+const useGetPayloadToExport = (values: RuleFormValues, exportMode: ModifyExportMode) => {
   const rulerGroupDto = useGetGroup(values.folder?.title ?? '', values.group);
   const grafanaRuleDto = useMemo(() => formValuesToRulerGrafanaRuleDTO(values), [values]);
   const includeRulesInGroup = exportMode === 'group';
@@ -154,11 +150,20 @@ const GrafanaRuleDesignExportPreview = ({ exportFormat, onClose, exportMode }: G
     [rulerGroupDto.value, grafanaRuleDto, values.group, includeRulesInGroup]
   );
 
+  return { payload, loadingGroup: rulerGroupDto.loading };
+};
+
+const GrafanaRuleDesignExportPreview = ({ exportFormat, onClose, exportMode }: GrafanaRuleDesignExportPreviewProps) => {
+  const [getExport, exportData] = alertRuleApi.endpoints.exportModifiedRuleGroup.useMutation();
+  const { getValues } = useFormContext<RuleFormValues>();
+  const values = useMemo(() => getValues(), [getValues]);
+  const { loadingGroup, payload } = useGetPayloadToExport(values, exportMode);
+
   const nameSpace = values.folder?.title ?? '';
 
   useEffect(() => {
-    !rulerGroupDto.loading && getExport({ payload, format: exportFormat, nameSpace: nameSpace });
-  }, [nameSpace, exportFormat, payload, getExport, rulerGroupDto.loading]); // getexport no es
+    !loadingGroup && getExport({ payload, format: exportFormat, nameSpace: nameSpace });
+  }, [nameSpace, exportFormat, payload, getExport, loadingGroup]);
 
   const downloadFileName = `modify-export-${new Date().getTime()}`;
 
