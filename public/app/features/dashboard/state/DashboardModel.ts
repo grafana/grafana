@@ -181,13 +181,13 @@ export class DashboardModel implements TimeModel {
 
     // Auto-migrate old angular panels
     if (options?.autoMigrateOldPanels || !config.angularSupportEnabled || config.featureToggles.autoMigrateOldPanels) {
-      this.panels.forEach((p) => {
+      for (const p of this.panelIterator()) {
         const newType = autoMigrateAngular[p.type];
         if (!p.autoMigrateFrom && newType) {
           p.autoMigrateFrom = p.type;
           p.type = newType;
         }
-      });
+      }
     }
 
     this.addBuiltInAnnotationQuery();
