@@ -3,7 +3,7 @@ import { e2e } from '../utils';
 export const smokeTestScenario = () =>
   describe('Smoke tests', () => {
     before(() => {
-      e2e.flows.login(e2e.env('USERNAME'), e2e.env('PASSWORD'), false);
+      e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'), false);
       e2e.flows.addDataSource();
       e2e.flows.addDashboard();
     });

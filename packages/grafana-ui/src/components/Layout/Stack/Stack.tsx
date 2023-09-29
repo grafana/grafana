@@ -2,18 +2,23 @@ import React from 'react';
 
 import { ThemeSpacingTokens } from '@grafana/data';
 
-import { Direction, Flex } from '../Flex/Flex';
+import { Flex } from '../Flex/Flex';
 import { ResponsiveProp } from '../utils/responsiveness';
-
 interface StackProps {
-  direction?: ResponsiveProp<Direction>;
+  direction?: ResponsiveProp<'column' | 'row'>;
   gap?: ResponsiveProp<ThemeSpacingTokens>;
 }
 
-export const Stack = ({ gap = 1, direction = 'column', children }: React.PropsWithChildren<StackProps>) => {
-  return (
-    <Flex gap={gap} direction={direction}>
-      {children}
-    </Flex>
-  );
-};
+export const Stack = React.forwardRef<HTMLDivElement, React.PropsWithChildren<StackProps>>(
+  ({ gap = 1, direction = 'column', children }, ref) => {
+    return (
+      <Flex ref={ref} gap={gap} direction={direction} wrap="wrap">
+        {React.Children.map(children, (child) => (
+          <div>{child}</div>
+        ))}
+      </Flex>
+    );
+  }
+);
+
+Stack.displayName = 'Stack';

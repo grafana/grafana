@@ -77,7 +77,7 @@ func getOverriddenScopes(jsonData map[string]any) ([]string, error) {
 
 func getPrometheusScopes(settings *azsettings.AzureSettings, credentials azcredentials.AzureCredentials) ([]string, error) {
 	// Extract cloud from credentials
-	azureCloud, err := getAzureCloudFromCredentials(settings, credentials)
+	azureCloud, err := azcredentials.GetAzureCloud(settings, credentials)
 	if err != nil {
 		return nil, err
 	}
@@ -89,27 +89,4 @@ func getPrometheusScopes(settings *azsettings.AzureSettings, credentials azcrede
 	} else {
 		return scopes, nil
 	}
-}
-
-// To be part of grafana-azure-sdk-go
-func getAzureCloudFromCredentials(settings *azsettings.AzureSettings, credentials azcredentials.AzureCredentials) (string, error) {
-	switch c := credentials.(type) {
-	case *azcredentials.AzureManagedIdentityCredentials:
-		// In case of managed identity, the cloud is always same as where Grafana is hosted
-		return getDefaultAzureCloud(settings), nil
-	case *azcredentials.AzureClientSecretCredentials:
-		return c.AzureCloud, nil
-	default:
-		err := fmt.Errorf("the Azure credentials of type '%s' not supported by Prometheus datasource", c.AzureAuthType())
-		return "", err
-	}
-}
-
-// To be part of grafana-azure-sdk-go
-func getDefaultAzureCloud(settings *azsettings.AzureSettings) string {
-	cloudName := settings.Cloud
-	if cloudName == "" {
-		return azsettings.AzurePublic
-	}
-	return cloudName
 }
