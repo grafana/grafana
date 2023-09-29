@@ -16,9 +16,10 @@ interface ContentOutlineItemProps extends ContentOutlineItemBaseProps {
 const baseStyle = css({
   // acounts for the height of the sticky ExploreToolbar
   scrollMarginTop: '60px',
-  /** when the pane is narrow enough to have horizontal scroll, this prevents
-   * the pane from scrolling horizontally and pushing the contentoutline off screen
-   * */
+  /**
+   * when the pane is narrow enough to have horizontal scroll, this prevents
+   * the pane from scrolling horizontally and pushing the content outline off screen
+   */
   scrollMarginLeft: '70px',
 });
 
