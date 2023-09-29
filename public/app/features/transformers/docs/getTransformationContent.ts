@@ -2,7 +2,19 @@ import { transformationDocsContent, getLinkToDocs, TransformationInfo } from './
 
 export function getTransformationContent(id: string): TransformationInfo {
   if (id in transformationDocsContent) {
-    const { name, helperDocs } = transformationDocsContent[id];
+    const { name, helperDocs, links } = transformationDocsContent[id];
+
+    if (links?.length) {
+      return {
+        name,
+        helperDocs: `
+        ${helperDocs}
+        ${getLinkToDocs()}
+  ${links.map((link) => `<a href="${link.url}" target="_blank">${link.title}</a>`)}
+        `,
+      };
+    }
+
     return {
       name,
       helperDocs: `

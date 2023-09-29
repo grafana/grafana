@@ -650,7 +650,7 @@ export const transformationDocsContent: Record<string, TransformationInfo> = {
   | 1    | 10    |
   | 2    | 200   |
 
-  serie3{what="Speed", cluster="B", job="J1"}
+  series3{what="Speed", cluster="B", job="J1"}
 
   | Time | Value |
   | ---- | ----- |
