@@ -25,6 +25,8 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
+const FOLDER_UID_MIGRATION_ID = "Populate dashboard folder_uid"
+
 type Service struct {
 	store                store
 	db                   db.DB
@@ -64,7 +66,10 @@ func ProvideService(
 		db:                   db,
 		registry:             make(map[string]folder.RegistryService),
 	}
-	srv.DBMigration(db)
+	if err := srv.DBMigration(db); err != nil {
+		// TODO: fix this
+		panic(err)
+	}
 
 	ac.RegisterScopeAttributeResolver(dashboards.NewFolderNameScopeResolver(folderStore, srv))
 	ac.RegisterScopeAttributeResolver(dashboards.NewFolderIDScopeResolver(folderStore, srv))
@@ -72,7 +77,7 @@ func ProvideService(
 	return srv
 }
 
-func (s *Service) DBMigration(db db.DB) {
+func (s *Service) DBMigration(db db.DB) error {
 	ctx := context.Background()
 	err := db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		var err error
@@ -88,6 +93,25 @@ func (s *Service) DBMigration(db db.DB) {
 	if err != nil {
 		s.log.Error("DB migration on folder service start failed.")
 	}
+
+	return db.RunAndRegisterCodeMigration(context.Background(), FOLDER_UID_MIGRATION_ID, func(sess *sqlstore.DBSession) error {
+		// populate folder_uid column
+		// for dashboards the source of truth is the dashboard table
+		// for folders the source of truth is the folder table
+		q := `UPDATE dashboard SET folder_uid = (
+			CASE WHEN is_folder = 0
+				THEN (SELECT d.uid FROM dashboard AS d WHERE d.id = dashboard.folder_id)
+				ELSE (SELECT f.parent_uid FROM folder f WHERE f.org_id = dashboard.org_id AND f.uid = dashboard.uid)
+			END)`
+		r, err := sess.Exec(q)
+		if err != nil {
+			s.log.Error("Failed to migrate dashboard folder_uid", "error", err)
+			return err
+		}
+		rowsAffected, rowsAffectedErr := r.RowsAffected()
+		s.log.Debug("Migrating dashboard data", "rows", rowsAffected, "rowsAffectedErr", rowsAffectedErr)
+		return nil
+	})
 }
 
 func (s *Service) Get(ctx context.Context, cmd *folder.GetFolderQuery) (*folder.Folder, error) {
