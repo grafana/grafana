@@ -1,3 +1,12 @@
+<!-- 10.1.4 START -->
+
+# 10.1.4 (2023-09-29)
+
+### Features and enhancements
+
+- **Azure:** Add support for Workload Identity authentication. [#75733](https://github.com/grafana/grafana/issues/75733), [@aangelisc](https://github.com/aangelisc)
+
+<!-- 10.1.4 END -->
 <!-- 10.1.2 START -->
 
 # 10.1.2 (2023-09-18)
