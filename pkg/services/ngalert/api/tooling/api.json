@@ -137,7 +137,7 @@
      "type": "string"
     },
     "relativeTimeRange": {
-     "$ref": "#/definitions/RelativeTimeRange"
+     "$ref": "#/definitions/RelativeTimeRangeExport"
     }
    },
    "title": "AlertQueryExport is the provisioned export of models.AlertQuery.",
@@ -416,6 +416,9 @@
      "type": "string"
     },
     "for": {
+     "type": "string"
+    },
+    "keep_firing_for": {
      "type": "string"
     },
     "labels": {
@@ -1223,6 +1226,12 @@
      },
      "type": "array"
     },
+    "msteams_configs": {
+     "items": {
+      "$ref": "#/definitions/MSTeamsConfig"
+     },
+     "type": "array"
+    },
     "name": {
      "description": "A unique identifier for this receiver.",
      "type": "string"
@@ -1254,12 +1263,6 @@
     "sns_configs": {
      "items": {
       "$ref": "#/definitions/SNSConfig"
-     },
-     "type": "array"
-    },
-    "teams_configs": {
-     "items": {
-      "$ref": "#/definitions/MSTeamsConfig"
      },
      "type": "array"
     },
@@ -1315,6 +1318,9 @@
     },
     "grafana_alert": {
      "$ref": "#/definitions/GettableGrafanaRule"
+    },
+    "keep_firing_for": {
+     "type": "string"
     },
     "labels": {
      "additionalProperties": {
@@ -1399,6 +1405,7 @@
      "type": "boolean"
     },
     "namespace_id": {
+     "description": "Deprecated: it will be removed in a future release in favor of NamespaceUID",
      "format": "int64",
      "type": "integer"
     },
@@ -2289,6 +2296,12 @@
      },
      "type": "array"
     },
+    "msteams_configs": {
+     "items": {
+      "$ref": "#/definitions/MSTeamsConfig"
+     },
+     "type": "array"
+    },
     "name": {
      "description": "A unique identifier for this receiver.",
      "type": "string"
@@ -2320,12 +2333,6 @@
     "sns_configs": {
      "items": {
       "$ref": "#/definitions/SNSConfig"
-     },
-     "type": "array"
-    },
-    "teams_configs": {
-     "items": {
-      "$ref": "#/definitions/MSTeamsConfig"
      },
      "type": "array"
     },
@@ -2381,6 +2388,9 @@
     },
     "grafana_alert": {
      "$ref": "#/definitions/PostableGrafanaRule"
+    },
+    "keep_firing_for": {
+     "type": "string"
     },
     "labels": {
      "additionalProperties": {
@@ -2753,6 +2763,9 @@
     "token_file": {
      "type": "string"
     },
+    "ttl": {
+     "type": "string"
+    },
     "url": {
      "type": "string"
     },
@@ -2869,6 +2882,12 @@
      },
      "type": "array"
     },
+    "msteams_configs": {
+     "items": {
+      "$ref": "#/definitions/MSTeamsConfig"
+     },
+     "type": "array"
+    },
     "name": {
      "description": "A unique identifier for this receiver.",
      "type": "string"
@@ -2900,12 +2919,6 @@
     "sns_configs": {
      "items": {
       "$ref": "#/definitions/SNSConfig"
-     },
-     "type": "array"
-    },
-    "teams_configs": {
-     "items": {
-      "$ref": "#/definitions/MSTeamsConfig"
      },
      "type": "array"
     },
@@ -2974,6 +2987,19 @@
     },
     "to": {
      "$ref": "#/definitions/Duration"
+    }
+   },
+   "type": "object"
+  },
+  "RelativeTimeRangeExport": {
+   "properties": {
+    "from": {
+     "format": "int64",
+     "type": "integer"
+    },
+    "to": {
+     "format": "int64",
+     "type": "integer"
     }
    },
    "type": "object"
@@ -4072,7 +4098,6 @@
    "type": "object"
   },
   "alertGroup": {
-   "description": "AlertGroup alert group",
    "properties": {
     "alerts": {
      "description": "alerts",
@@ -4200,7 +4225,6 @@
    "type": "object"
   },
   "gettableAlert": {
-   "description": "GettableAlert gettable alert",
    "properties": {
     "annotations": {
      "$ref": "#/definitions/labelSet"
@@ -4256,7 +4280,6 @@
    "type": "object"
   },
   "gettableAlerts": {
-   "description": "GettableAlerts gettable alerts",
    "items": {
     "$ref": "#/definitions/gettableAlert"
    },
@@ -4318,6 +4341,7 @@
    "type": "array"
   },
   "integration": {
+   "description": "Integration integration",
    "properties": {
     "lastNotifyAttempt": {
      "description": "A timestamp indicating the last attempt to deliver a notification regardless of the outcome.\nFormat: date-time",
@@ -4461,7 +4485,6 @@
    "type": "array"
   },
   "postableSilence": {
-   "description": "PostableSilence postable silence",
    "properties": {
     "comment": {
      "description": "comment",
