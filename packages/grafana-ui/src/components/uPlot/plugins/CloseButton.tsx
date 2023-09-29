@@ -1,10 +1,11 @@
 // mostly copy/pasted from: public/app/core/components/CloseButton/CloseButton.tsx
 import { css } from '@emotion/css';
 import React from 'react';
-import { useStyles2 } from 'src';
-import { IconButton } from 'src/components/IconButton/IconButton';
 
 import { GrafanaTheme2 } from '@grafana/data';
+
+import { IconButton } from '../../../components/IconButton/IconButton';
+import { useStyles2 } from '../../../themes/ThemeContext';
 
 type Props = {
   onClick: () => void;
