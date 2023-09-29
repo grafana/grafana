@@ -131,6 +131,24 @@
       "placeholder": ""
     }
   },
+  "correlations": {
+    "add-new": "",
+    "alert": {
+      "error-message": "",
+      "title": ""
+    },
+    "list": {
+      "delete": "",
+      "label": "",
+      "loading": "",
+      "read-only": "",
+      "source": "",
+      "target": ""
+    },
+    "page-content": "",
+    "page-heading": "",
+    "sub-title": ""
+  },
   "dashboard": {
     "add-menu": {
       "import": "Importer depuis la bibliothèque",
