@@ -5,6 +5,7 @@ import { useAsync } from 'react-use';
 
 import { Stack } from '@grafana/experimental';
 import { Button, CustomScrollbar, LoadingPlaceholder } from '@grafana/ui';
+import { useQueryParams } from 'app/core/hooks/useQueryParams';
 
 import { AppChromeUpdate } from '../../../../../../core/components/AppChrome/AppChromeUpdate';
 import { alertRuleApi, ModifyExportPayload } from '../../../api/alertRuleApi';
@@ -35,9 +36,10 @@ export function ModifyExportRuleForm({ ruleForm, alertUid }: ModifyExportRuleFor
     defaultValues: ruleForm,
     shouldFocusError: true,
   });
+  const [queryParams] = useQueryParams();
 
   const existing = Boolean(ruleForm);
-  const returnTo = `/alerting/list`;
+  const returnTo = !queryParams['returnTo'] ? '/alerting/list' : String(queryParams['returnTo']);
 
   const [showExporter, setShowExporter] = useState<ModifyExportMode | undefined>(undefined);
 

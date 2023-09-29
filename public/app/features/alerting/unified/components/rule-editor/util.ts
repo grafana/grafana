@@ -2,12 +2,8 @@ import { xor } from 'lodash';
 import { ValidateResult } from 'react-hook-form';
 
 import {
-  DataFrame,
-  ThresholdsConfig,
-  ThresholdsMode,
-  isTimeSeriesFrames,
-  PanelData,
-  LoadingState,
+  DataFrame, isTimeSeriesFrames, LoadingState, PanelData, ThresholdsConfig,
+  ThresholdsMode
 } from '@grafana/data';
 import { GraphTresholdsStyleMode } from '@grafana/schema';
 import { config } from 'app/core/config';

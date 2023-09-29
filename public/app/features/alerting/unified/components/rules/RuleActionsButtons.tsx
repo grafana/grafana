@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useToggle } from 'react-use';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, urlUtil } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
 import { config, locationService } from '@grafana/runtime';
 import {
@@ -145,7 +145,6 @@ export const RuleActionsButtons = ({ rule, rulesSource }: Props) => {
 
     if (isGrafanaRulerRule(rulerRule) && canReadProvisioning) {
       moreActions.push(<Menu.Item label="Export" icon="download-alt" onClick={toggleShowExportDrawer} />);
-
       if (config.featureToggles.alertingModifiedExport) {
         moreActions.push(
           <Menu.Item
@@ -153,7 +152,10 @@ export const RuleActionsButtons = ({ rule, rulesSource }: Props) => {
             icon="edit"
             onClick={() =>
               locationService.push(
-                `/alerting/${encodeURIComponent(ruleId.stringifyIdentifier(identifier))}/modify-export`
+                urlUtil.renderUrl(
+                  `/alerting/${encodeURIComponent(ruleId.stringifyIdentifier(identifier))}/modify-export`,
+                  { returnTo: location.pathname + location.search }
+                )
               )
             }
           />

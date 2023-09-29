@@ -1,4 +1,3 @@
-import { omit } from 'lodash';
 import * as React from 'react';
 import { useEffect, useState } from 'react';
 import { useAsync } from 'react-use';
@@ -8,11 +7,9 @@ import { Alert, LoadingPlaceholder } from '@grafana/ui';
 
 import { GrafanaRouteComponentProps } from '../../../../../core/navigation/types';
 import { useDispatch } from '../../../../../types';
-import { RuleIdentifier, RuleWithLocation } from '../../../../../types/unified-alerting';
-import { RulerRuleDTO } from '../../../../../types/unified-alerting-dto';
+import { RuleIdentifier } from '../../../../../types/unified-alerting';
 import { fetchEditableRuleAction, fetchRulesSourceBuildInfoAction } from '../../state/actions';
-import { RuleFormValues } from '../../types/rule-form';
-import { rulerRuleToFormValues } from '../../utils/rule-form';
+import { formValuesFromExistingRule } from '../../utils/rule-form';
 import * as ruleId from '../../utils/rule-id';
 import { isGrafanaRulerRule } from '../../utils/rules';
 import { createUrl } from '../../utils/url';
@@ -20,18 +17,6 @@ import { AlertingPageWrapper } from '../AlertingPageWrapper';
 import { ModifyExportRuleForm } from '../rule-editor/alert-rule-form/ModifyExportRuleForm';
 
 interface GrafanaModifyExportProps extends GrafanaRouteComponentProps<{ id?: string }> {}
-
-// TODO Duplicated in AlertRuleForm
-const ignoreHiddenQueries = (ruleDefinition: RuleFormValues): RuleFormValues => {
-  return {
-    ...ruleDefinition,
-    queries: ruleDefinition.queries?.map((query) => omit(query, 'model.hide')),
-  };
-};
-
-function formValuesFromExistingRule(rule: RuleWithLocation<RulerRuleDTO>) {
-  return ignoreHiddenQueries(rulerRuleToFormValues(rule));
-}
 
 export default function GrafanaModifyExport({ match }: GrafanaModifyExportProps) {
   const dispatch = useDispatch();
