@@ -681,6 +681,22 @@
       "title": "Ŧĥęřę äřę ŉő pľäyľįşŧş čřęäŧęđ yęŧ"
     }
   },
+  "profile": {
+    "change-password": {
+      "cancel-button": "Cäŉčęľ",
+      "cannot-change-password-message": "Päşşŵőřđ čäŉŉőŧ þę čĥäŉģęđ ĥęřę.",
+      "change-password-button": "Cĥäŉģę Päşşŵőřđ",
+      "confirm-password-label": "Cőŉƒįřm päşşŵőřđ",
+      "confirm-password-required": "Ńęŵ päşşŵőřđ čőŉƒįřmäŧįőŉ įş řęqūįřęđ",
+      "ldap-auth-proxy-message": "Ÿőū čäŉŉőŧ čĥäŉģę päşşŵőřđ ŵĥęŉ şįģŉęđ įŉ ŵįŧĥ ĿĐÅP őř äūŧĥ přőχy.",
+      "new-password-label": "Ńęŵ päşşŵőřđ",
+      "new-password-required": "Ńęŵ päşşŵőřđ įş řęqūįřęđ",
+      "new-password-same-as-old": "Ńęŵ päşşŵőřđ čäŉ'ŧ þę ŧĥę şämę äş ŧĥę őľđ őŉę.",
+      "old-password-label": "Øľđ päşşŵőřđ",
+      "old-password-required": "Øľđ päşşŵőřđ įş řęqūįřęđ",
+      "passwords-must-match": "Päşşŵőřđş mūşŧ mäŧčĥ"
+    }
+  },
   "refresh-picker": {
     "aria-label": {
       "choose-interval": "Åūŧő řęƒřęşĥ ŧūřŉęđ őƒƒ. Cĥőőşę řęƒřęşĥ ŧįmę įŉŧęřväľ",
