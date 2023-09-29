@@ -20,7 +20,7 @@ load(
 )
 
 def clone_pr_branch(ver_mode):
-    """Clones the PR branch and detects if there are changes in the Swagger/OpenAPI specification, in contrast to the default cloning which checks out the target branch main and merges the changes on top.
+    """Clones the PR branch, in contrast to the default cloning which checks out the target branch main and merges the changes on top.
 
     Args:
         ver_mode: ??
