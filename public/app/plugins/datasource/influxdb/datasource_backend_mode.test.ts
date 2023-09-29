@@ -38,18 +38,18 @@ describe('InfluxDataSource Backend Mode', () => {
     },
   ];
   const templateSrv = mockTemplateSrv(
-      jest.fn(() => {
-        return adhocFilters;
-      }),
-      jest.fn((target?: string, scopedVars?: ScopedVars, format?: string | Function): string => {
-        if (!format) {
-          return variableMap[target!] || '';
-        }
-        if (format === 'regex') {
-          return textWithFormatRegex;
-        }
-        return textWithoutFormatRegex;
-      })
+    jest.fn(() => {
+      return adhocFilters;
+    }),
+    jest.fn((target?: string, scopedVars?: ScopedVars, format?: string | Function): string => {
+      if (!format) {
+        return variableMap[target!] || '';
+      }
+      if (format === 'regex') {
+        return textWithFormatRegex;
+      }
+      return textWithoutFormatRegex;
+    })
   );
 
   let queryOptions: DataQueryRequest<InfluxQuery>;
@@ -162,16 +162,16 @@ describe('InfluxDataSource Backend Mode', () => {
       },
     ];
     const templateSrv = mockTemplateSrv(
-        jest.fn((_: string) => adhocFilters),
-        jest.fn((target?: string, scopedVars?: ScopedVars, format?: string | Function): string => {
-          if (!format) {
-            return variableMap[target!] || '';
-          }
-          if (format === 'regex') {
-            return textWithFormatRegex;
-          }
-          return textWithoutFormatRegex;
-        })
+      jest.fn((_: string) => adhocFilters),
+      jest.fn((target?: string, scopedVars?: ScopedVars, format?: string | Function): string => {
+        if (!format) {
+          return variableMap[target!] || '';
+        }
+        if (format === 'regex') {
+          return textWithFormatRegex;
+        }
+        return textWithoutFormatRegex;
+      })
     );
     const ds = new InfluxDatasource(getMockDSInstanceSettings(), templateSrv);
 
@@ -220,22 +220,22 @@ describe('InfluxDataSource Backend Mode', () => {
     mockTemplateService.getAdhocFilters = jest.fn((_: string) => []);
     let ds = getMockInfluxDS(getMockDSInstanceSettings(), mockTemplateService);
     const fetchMockImpl = () =>
-        of({
-          data: {
-            status: 'success',
-            results: [
-              {
-                series: [
-                  {
-                    name: 'measurement',
-                    columns: ['name'],
-                    values: [['cpu']],
-                  },
-                ],
-              },
-            ],
-          },
-        });
+      of({
+        data: {
+          status: 'success',
+          results: [
+            {
+              series: [
+                {
+                  name: 'measurement',
+                  columns: ['name'],
+                  values: [['cpu']],
+                },
+              ],
+            },
+          ],
+        },
+      });
 
     beforeEach(() => {
       jest.clearAllMocks();
@@ -267,16 +267,16 @@ describe('InfluxDataSource Backend Mode', () => {
 
     it('should render chained regex variables with floating point number and url', () => {
       ds.metricFindQuery(
-          'SELECT sum("piece_count") FROM "rp"."pdata" WHERE diameter <= $maxSED AND agent_url =~ /^$var1$/',
-          {
-            scopedVars: {
-              var1: {
-                text: 'https://aaaa-aa-aaa.bbb.ccc.ddd:8443/ggggg',
-                value: 'https://aaaa-aa-aaa.bbb.ccc.ddd:8443/ggggg',
-              },
-              maxSED: { text: '8.1', value: '8.1' },
+        'SELECT sum("piece_count") FROM "rp"."pdata" WHERE diameter <= $maxSED AND agent_url =~ /^$var1$/',
+        {
+          scopedVars: {
+            var1: {
+              text: 'https://aaaa-aa-aaa.bbb.ccc.ddd:8443/ggggg',
+              value: 'https://aaaa-aa-aaa.bbb.ccc.ddd:8443/ggggg',
             },
-          }
+            maxSED: { text: '8.1', value: '8.1' },
+          },
+        }
       );
       const qe = `SELECT sum("piece_count") FROM "rp"."pdata" WHERE diameter <= 8.1 AND agent_url =~ /^https:\\/\\/aaaa-aa-aaa\\.bbb\\.ccc\\.ddd:8443\\/ggggg$/`;
       const qData = fetchMock.mock.calls[0][0].data.queries[0].query;
