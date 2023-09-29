@@ -99,6 +99,10 @@ func ConvertToK8sResource(v *Playlist, items []PlaylistItemDTO) *playlist.Playli
 			Name:              v.UID,
 			ResourceVersion:   fmt.Sprintf("%d", v.UpdatedAt.UnixMilli()),
 			CreationTimestamp: metav1.NewTime(v.CreatedAt),
+			Namespace:         fmt.Sprintf("org-%d", v.OrgId),
+			Annotations: map[string]string{
+				"grafana.com/updatedTime": v.UpdatedAt.Format(time.RFC3339),
+			},
 		},
 		Spec: &playlist.Spec{
 			Uid:      v.UID,

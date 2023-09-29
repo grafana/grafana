@@ -113,12 +113,24 @@ func (s *legacyStorage) Get(ctx context.Context, name string, options *metav1.Ge
 	})
 }
 
-func (s *legacyStorage) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
+func (s *legacyStorage) Create(ctx context.Context,
+	obj runtime.Object,
+	createValidation rest.ValidateObjectFunc,
+	options *metav1.CreateOptions,
+) (runtime.Object, error) {
+
 	// TODO!!!!
 	return s.Get(ctx, "xx", nil)
 }
 
-func (s *legacyStorage) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
+func (s *legacyStorage) Update(ctx context.Context,
+	name string,
+	objInfo rest.UpdatedObjectInfo,
+	createValidation rest.ValidateObjectFunc,
+	updateValidation rest.ValidateObjectUpdateFunc,
+	forceAllowCreate bool,
+	options *metav1.UpdateOptions,
+) (runtime.Object, bool, error) {
 	created := false
 	current, err := s.Get(ctx, name, nil)
 	if err != nil {
