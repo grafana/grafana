@@ -475,10 +475,10 @@ func validateQueries(ctx context.Context, groupChanges *store.GroupDelta, valida
 	return nil
 }
 
-// getAuthorizedRuleById fetches all rules in group to which the specified rule belongs, and checks whether the user is authorized to access the group.
+// getAuthorizedRuleByUid fetches all rules in group to which the specified rule belongs, and checks whether the user is authorized to access the group.
 // A user is authorized to access a group of rules only when it has permission to query all data sources used by all rules in this group.
 // Returns rule identified by provided UID or ErrAuthorization if user is not authorized to access the rule.
-func (srv RulerSrv) getAuthorizedRuleById(ctx context.Context, c *contextmodel.ReqContext, ruleUID string) (ngmodels.AlertRule, error) {
+func (srv RulerSrv) getAuthorizedRuleByUid(ctx context.Context, c *contextmodel.ReqContext, ruleUID string) (ngmodels.AlertRule, error) {
 	hasAccess := accesscontrol.HasAccess(srv.ac, c)
 	q := ngmodels.GetAlertRulesGroupByRuleUIDQuery{
 		UID:   ruleUID,

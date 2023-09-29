@@ -56,7 +56,7 @@ func (srv RulerSrv) ExportRules(c *contextmodel.ReqContext) response.Response {
 		if group != "" || len(folderUIDs) > 0 {
 			return ErrResp(http.StatusBadRequest, errors.New("group and folder should not be specified when a single rule is requested"), "")
 		}
-		rulesGroup, err := srv.getRuleWithFolderTitleById(c, uid)
+		rulesGroup, err := srv.getRuleWithFolderTitleByRuleUid(c, uid)
 		if err != nil {
 			return errorToResponse(err)
 		}
