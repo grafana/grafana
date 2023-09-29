@@ -1,16 +1,15 @@
 import { render, waitFor } from '@testing-library/react';
 import React from 'react';
 
-import { CustomVariableModel, LoadingState, VariableHide } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
 import { SQLExpression } from '../types';
+import { makeVariable } from '../utils/testHelpers';
 
 import { DatasetSelector } from './DatasetSelector';
 import { buildMockDatasetSelectorProps, buildMockTableSelectorProps } from './SqlComponents.testHelpers';
 import { TableSelector } from './TableSelector';
 import { removeQuotesForMultiVariables } from './visual-query-builder/SQLWhereRow';
-import { makeVariable } from '../utils/testHelpers';
 
 beforeEach(() => {
   config.featureToggles.sqlDatasourceDatabaseSelection = true;
