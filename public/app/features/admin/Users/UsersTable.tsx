@@ -79,7 +79,7 @@ export const UsersTable = ({
               header: 'Licensed role',
               cell: LicensedRoleCell,
               // Needs the assertion here, the types are not inferred correctly due to the  conditional assignment
-              sortType: ('string' as const),
+              sortType: 'string' as const,
             },
           ]
         : []),
