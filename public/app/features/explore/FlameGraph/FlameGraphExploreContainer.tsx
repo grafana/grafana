@@ -44,6 +44,4 @@ const getStyles = (theme: GrafanaTheme2) => ({
     border: 1px solid ${theme.components.panel.borderColor};
     border-radius: ${theme.shape.radius.default};
   `,
-  // Reducing the z-index by 2 to prevent overlapping top nav and ExploreToolbar
-  zIndex: theme.zIndex.navbarFixed - 2,
 });
