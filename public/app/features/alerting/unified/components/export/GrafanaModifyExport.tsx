@@ -90,7 +90,15 @@ export default function GrafanaModifyExport({ match }: GrafanaModifyExportProps)
   }
 
   return (
-    <AlertingPageWrapper isLoading={loading} pageId="alert-list" pageNav={{ text: 'Modify export' }}>
+    <AlertingPageWrapper
+      isLoading={loading}
+      pageId="alert-list"
+      pageNav={{
+        text: 'Modify export',
+        subTitle:
+          'Modify the current alert rule and export the rule definition in the format of your choice. Any changes you make will not be saved.',
+      }}
+    >
       {alertRule && <ModifyExportRuleForm ruleForm={formValuesFromExistingRule(alertRule)} />}
     </AlertingPageWrapper>
   );
