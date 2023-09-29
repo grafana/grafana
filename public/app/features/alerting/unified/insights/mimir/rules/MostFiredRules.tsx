@@ -9,8 +9,8 @@ export function getMostFiredRulesScene(timeRange: SceneTimeRange, datasource: Da
     queries: [
       {
         refId: 'A',
-        expr: 'topk(10, sum by (alertname) (ALERTS))',
-        range: true,
+        expr: 'topk(10, sum by(alertname) (ALERTS{alertstate="firing"}))',
+        instant: true,
       },
     ],
 
@@ -21,16 +21,14 @@ export function getMostFiredRulesScene(timeRange: SceneTimeRange, datasource: Da
     $data: query,
     transformations: [
       {
-        id: 'timeSeriesTable',
-        options: {},
-      },
-      {
         id: 'organize',
         options: {
-          excludeByName: {},
+          excludeByName: {
+            Time: true,
+          },
           indexByName: {},
           renameByName: {
-            Trend: '',
+            Value: '',
             alertname: 'Alert Rule Name',
           },
         },
