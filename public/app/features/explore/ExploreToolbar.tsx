@@ -53,10 +53,17 @@ interface Props {
   exploreId: string;
   onChangeTime: (range: RawTimeRange, changedByScanner?: boolean) => void;
   onContentOutlineToogle: () => void;
+  isContentOutlineOpen: boolean;
   topOfViewRef: RefObject<HTMLDivElement>;
 }
 
-export function ExploreToolbar({ exploreId, topOfViewRef, onChangeTime, onContentOutlineToogle }: Props) {
+export function ExploreToolbar({
+  exploreId,
+  topOfViewRef,
+  onChangeTime,
+  onContentOutlineToogle,
+  isContentOutlineOpen,
+}: Props) {
   const dispatch = useDispatch();
   const styles = useStyles2(getStyles);
 
@@ -164,6 +171,7 @@ export function ExploreToolbar({ exploreId, topOfViewRef, onChangeTime, onConten
               icon="list-ui-alt"
               iconOnly={splitted}
               onClick={onContentOutlineToogle}
+              aria-expanded={isContentOutlineOpen}
             >
               Outline
             </ToolbarButton>

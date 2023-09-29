@@ -558,6 +558,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
             onChangeTime={this.onChangeTime}
             topOfViewRef={this.topOfViewRef}
             onContentOutlineToogle={this.onContentOutlineToogle}
+            isContentOutlineOpen={contentOutlineVisible}
           />
           {datasourceInstance ? (
             <div className={styles.exploreContainer}>
