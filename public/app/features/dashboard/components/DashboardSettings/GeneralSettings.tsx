@@ -13,6 +13,7 @@ import {
   HorizontalGroup,
   TextArea,
 } from '@grafana/ui';
+import { Box } from '@grafana/ui/src/unstable';
 import { Page } from 'app/core/components/Page/Page';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { updateTimeZoneDashboard, updateWeekStartDashboard } from 'app/features/dashboard/state/actions';
@@ -119,7 +120,7 @@ export function GeneralSettingsUnconnected({
   return (
     <Page navModel={sectionNav} pageNav={pageNav}>
       <div style={{ maxWidth: '600px' }}>
-        <div className="gf-form-group">
+        <Box marginBottom={5}>
           <Field
             label={
               <HorizontalGroup justify="space-between">
@@ -177,7 +178,7 @@ export function GeneralSettingsUnconnected({
           >
             <RadioButtonGroup value={dashboard.editable} options={editableOptions} onChange={onEditableChange} />
           </Field>
-        </div>
+        </Box>
 
         <TimePickerSettings
           onTimeZoneChange={onTimeZoneChange}
@@ -208,9 +209,7 @@ export function GeneralSettingsUnconnected({
           </Field>
         </CollapsableSection>
 
-        <div className="gf-form-button-row">
-          {dashboard.meta.canDelete && <DeleteDashboardButton dashboard={dashboard} />}
-        </div>
+        <Box marginTop={3}>{dashboard.meta.canDelete && <DeleteDashboardButton dashboard={dashboard} />}</Box>
       </div>
     </Page>
   );
