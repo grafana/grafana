@@ -322,14 +322,6 @@
       "unknown": ""
     }
   },
-  "manage-dashboards": {
-    "column-header": {
-      "name": "",
-      "url": ""
-    },
-    "external": "",
-    "view-button": ""
-  },
   "nav": {
     "add-new-connections": {
       "title": ""
@@ -857,6 +849,12 @@
       "default-label": "Standard"
     },
     "title": "Einstellungen"
+  },
+  "snapshot": {
+    "external-badge": "",
+    "name-column-header": "",
+    "url-column-header": "",
+    "view-button": ""
   },
   "tag-filter": {
     "loading": "Wird geladen ...",
