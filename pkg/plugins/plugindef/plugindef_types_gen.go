@@ -434,7 +434,7 @@ type RoleRegistration struct {
 // A proxy route used in datasource plugins for plugin authentication
 // and adding headers to HTTP requests made by the plugin.
 // For more information, refer to [Authentication for data source
-// plugins](https://grafana.com/docs/grafana/latest/developers/plugins/authentication/).
+// plugins](https://grafana.com/developers/plugin-tools/create-a-plugin/extend-a-plugin/add-authentication-for-data-source-plugins).
 type Route struct {
 	// For data source plugins. Route headers set the body content and
 	// length to the proxied request.
