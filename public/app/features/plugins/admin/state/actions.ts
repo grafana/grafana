@@ -2,7 +2,7 @@ import { createAction, createAsyncThunk, Update } from '@reduxjs/toolkit';
 import { from, forkJoin, timeout, lastValueFrom, catchError, throwError } from 'rxjs';
 
 import { PanelPlugin, PluginError } from '@grafana/data';
-import { getBackendSrv, isFetchError } from '@grafana/runtime';
+import { config, getBackendSrv, isFetchError } from '@grafana/runtime';
 import { importPanelPlugin } from 'app/features/plugins/importPanelPlugin';
 import { StoreState, ThunkResult } from 'app/types';
 
@@ -195,7 +195,7 @@ export const managedInstall = createAsyncThunk<
     ? { isInstalled: true, installedVersion: version, hasUpdate: false }
     : { isInstalled: true, installedVersion: version };
   try {
-    await installManagedPlugin("config.instanceId", id, version);
+    await installManagedPlugin(config.stackId, id, version);
     await updatePanels();
 
     if (isUpdating) {
