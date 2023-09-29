@@ -764,6 +764,11 @@ With the _Partition by values_ transformer, you can now issue a single query and
 | 2022-10-20 12:00:00 | EU     | 2936  |
 | 2022-10-20 01:00:00 | EU     | 912   |
 
+There are two naming modes:
+
+- **As labels** - The value that results are partitioned by is set as a label.
+- **As frame name** - The value is used to set the frame name. This is useful if the data will be visualized in a table.
+
 ### Reduce
 
 The _Reduce_ transformation applies a calculation to each field in the frame and return a single value. Time fields are removed when applying this transformation.

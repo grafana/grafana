@@ -1,6 +1,6 @@
 import { TemplateSrv } from 'app/features/templating/template_srv';
 
-import InfluxQueryModel from '../influx_query_model';
+import InfluxQueryModel from './influx_query_model';
 
 describe('InfluxQuery', () => {
   const templateSrv = { replace: (val) => val } as TemplateSrv;

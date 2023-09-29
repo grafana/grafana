@@ -681,6 +681,22 @@
       "title": "There are no playlists created yet"
     }
   },
+  "profile": {
+    "change-password": {
+      "cancel-button": "Cancel",
+      "cannot-change-password-message": "Password cannot be changed here.",
+      "change-password-button": "Change Password",
+      "confirm-password-label": "Confirm password",
+      "confirm-password-required": "New password confirmation is required",
+      "ldap-auth-proxy-message": "You cannot change password when signed in with LDAP or auth proxy.",
+      "new-password-label": "New password",
+      "new-password-required": "New password is required",
+      "new-password-same-as-old": "New password can't be the same as the old one.",
+      "old-password-label": "Old password",
+      "old-password-required": "Old password is required",
+      "passwords-must-match": "Passwords must match"
+    }
+  },
   "refresh-picker": {
     "aria-label": {
       "choose-interval": "Auto refresh turned off. Choose refresh time interval",
