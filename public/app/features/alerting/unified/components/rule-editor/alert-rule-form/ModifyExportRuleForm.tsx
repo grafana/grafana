@@ -5,6 +5,7 @@ import { useAsync } from 'react-use';
 
 import { Stack } from '@grafana/experimental';
 import { Button, CustomScrollbar, LoadingPlaceholder } from '@grafana/ui';
+import { useAppNotification } from 'app/core/copy/appNotification';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 
 import { AppChromeUpdate } from '../../../../../../core/components/AppChrome/AppChromeUpdate';
@@ -39,12 +40,12 @@ export function ModifyExportRuleForm({ ruleForm, alertUid }: ModifyExportRuleFor
   const [queryParams] = useQueryParams();
 
   const existing = Boolean(ruleForm);
+  const notifyApp = useAppNotification();
   const returnTo = !queryParams['returnTo'] ? '/alerting/list' : String(queryParams['returnTo']);
 
   const [showExporter, setShowExporter] = useState<ModifyExportMode | undefined>(undefined);
 
   const [conditionErrorMsg, setConditionErrorMsg] = useState('');
-  console.log('conditionErrorMsg', conditionErrorMsg);
   const [evaluateEvery, setEvaluateEvery] = useState(ruleForm?.evaluateEvery ?? MINUTE);
   const [updatedValues, setUpdatedValues] = useState<RuleFormValues | undefined>(undefined);
 
@@ -53,6 +54,10 @@ export function ModifyExportRuleForm({ ruleForm, alertUid }: ModifyExportRuleFor
   };
 
   const submit = (values: RuleFormValues, exportFor: ModifyExportMode) => {
+    if (conditionErrorMsg !== '') {
+      notifyApp.error(conditionErrorMsg);
+      return;
+    }
     setUpdatedValues(values);
     setShowExporter(exportFor);
   };
