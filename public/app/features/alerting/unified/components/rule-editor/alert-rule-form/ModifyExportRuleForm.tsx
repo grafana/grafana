@@ -1,5 +1,5 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { FormProvider, useForm } from 'react-hook-form';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { FormProvider, useForm, useFormContext } from 'react-hook-form';
 import { Link } from 'react-router-dom';
 import { useAsync } from 'react-use';
 
@@ -39,7 +39,7 @@ export function ModifyExportRuleForm({ ruleForm, alertUid }: ModifyExportRuleFor
   });
   const [queryParams] = useQueryParams();
 
-  const existing = Boolean(ruleForm);
+  const existing = Boolean(ruleForm); // always should be true
   const notifyApp = useAppNotification();
   const returnTo = !queryParams['returnTo'] ? '/alerting/list' : String(queryParams['returnTo']);
 
@@ -47,20 +47,22 @@ export function ModifyExportRuleForm({ ruleForm, alertUid }: ModifyExportRuleFor
 
   const [conditionErrorMsg, setConditionErrorMsg] = useState('');
   const [evaluateEvery, setEvaluateEvery] = useState(ruleForm?.evaluateEvery ?? MINUTE);
-  const [updatedValues, setUpdatedValues] = useState<RuleFormValues | undefined>(undefined);
 
   const checkAlertCondition = (msg = '') => {
     setConditionErrorMsg(msg);
   };
 
-  const submit = (values: RuleFormValues, exportFor: ModifyExportMode) => {
+  const submit = (exportFor: ModifyExportMode) => {
     if (conditionErrorMsg !== '') {
       notifyApp.error(conditionErrorMsg);
       return;
     }
-    setUpdatedValues(values);
     setShowExporter(exportFor);
   };
+
+  const onClose = useCallback(() => {
+    setShowExporter(undefined);
+  }, [setShowExporter]);
 
   const actionButtons = [
     <Link to={returnTo} key="cancel">
@@ -68,10 +70,10 @@ export function ModifyExportRuleForm({ ruleForm, alertUid }: ModifyExportRuleFor
         Cancel
       </Button>
     </Link>,
-    <Button key="export-rule" size="sm" onClick={formAPI.handleSubmit((values) => submit(values, 'rule'))}>
+    <Button key="export-rule" size="sm" onClick={formAPI.handleSubmit(() => submit('rule'))}>
       Export Rule
     </Button>,
-    <Button key="export-group" size="sm" onClick={formAPI.handleSubmit((values) => submit(values, 'group'))}>
+    <Button key="export-group" size="sm" onClick={formAPI.handleSubmit(() => submit('group'))}>
       Export Group
     </Button>,
   ];
@@ -105,14 +107,8 @@ export function ModifyExportRuleForm({ ruleForm, alertUid }: ModifyExportRuleFor
             </CustomScrollbar>
           </div>
         </form>
+        {showExporter && <GrafanaRuleDesignExporter exportMode={showExporter} onClose={onClose} />}
       </FormProvider>
-      {showExporter && (
-        <GrafanaRuleDesignExporter
-          exportMode={showExporter}
-          onClose={() => setShowExporter(undefined)}
-          values={updatedValues}
-        />
-      )}
     </>
   );
 }
@@ -132,41 +128,37 @@ const useGetGroup = (nameSpace: string, group: string) => {
 interface GrafanaRuleDesignExportPreviewProps {
   exportFormat: ExportFormats;
   onClose: () => void;
-  values: RuleFormValues;
   exportMode: ModifyExportMode;
 }
 
-const GrafanaRuleDesignExportPreview = ({
-  values,
-  exportFormat,
-  onClose,
-  exportMode,
-}: GrafanaRuleDesignExportPreviewProps) => {
+const GrafanaRuleDesignExportPreview = ({ exportFormat, onClose, exportMode }: GrafanaRuleDesignExportPreviewProps) => {
   const [getExport, exportData] = alertRuleApi.endpoints.exportModifiedRuleGroup.useMutation();
+  const { getValues } = useFormContext<RuleFormValues>();
+  const values = useMemo(() => getValues(), [getValues]);
 
-  const targetGroup = useGetGroup(values.folder?.title ?? '', values.group);
-
-  const formRule = useMemo(() => formValuesToRulerGrafanaRuleDTO(values), [values]);
+  const rulerGroupDto = useGetGroup(values.folder?.title ?? '', values.group);
+  const grafanaRuleDto = useMemo(() => formValuesToRulerGrafanaRuleDTO(values), [values]);
   const includeRulesInGroup = exportMode === 'group';
 
   const payload: ModifyExportPayload = useMemo(
     () =>
-      targetGroup?.value?.rules
+      rulerGroupDto?.value?.rules
         ? {
-            ...targetGroup?.value,
-            rules: [...(includeRulesInGroup ? targetGroup.value.rules : []), formRule],
+            ...rulerGroupDto?.value,
+            rules: [...(includeRulesInGroup ? rulerGroupDto.value.rules : []), grafanaRuleDto],
           }
         : {
             name: values.group,
-            rules: [formRule],
+            rules: [grafanaRuleDto],
           },
-    [targetGroup.value, formRule, values.group, includeRulesInGroup]
+    [rulerGroupDto.value, grafanaRuleDto, values.group, includeRulesInGroup]
   );
 
   const nameSpace = values.folder?.title ?? '';
+
   useEffect(() => {
-    getExport({ payload, format: exportFormat, nameSpace: nameSpace });
-  }, [nameSpace, exportFormat, payload, getExport]);
+    !rulerGroupDto.loading && getExport({ payload, format: exportFormat, nameSpace: nameSpace });
+  }, [nameSpace, exportFormat, payload, getExport, rulerGroupDto.loading]); // getexport no es
 
   const downloadFileName = `modify-export-${new Date().getTime()}`;
 
@@ -187,10 +179,9 @@ const GrafanaRuleDesignExportPreview = ({
 interface GrafanaRuleDesignExporterProps {
   onClose: () => void;
   exportMode: ModifyExportMode;
-  values?: RuleFormValues;
 }
 
-export const GrafanaRuleDesignExporter = ({ onClose, exportMode, values }: GrafanaRuleDesignExporterProps) => {
+export const GrafanaRuleDesignExporter = React.memo(({ onClose, exportMode }: GrafanaRuleDesignExporterProps) => {
   const [activeTab, setActiveTab] = useState<ExportFormats>('yaml');
   const title = exportMode === 'rule' ? 'Export Rule' : 'Export Group';
 
@@ -202,14 +193,9 @@ export const GrafanaRuleDesignExporter = ({ onClose, exportMode, values }: Grafa
       onClose={onClose}
       formatProviders={Object.values(allGrafanaExportProviders)}
     >
-      {values && (
-        <GrafanaRuleDesignExportPreview
-          exportFormat={activeTab}
-          onClose={onClose}
-          values={values}
-          exportMode={exportMode}
-        />
-      )}
+      <GrafanaRuleDesignExportPreview exportFormat={activeTab} onClose={onClose} exportMode={exportMode} />
     </GrafanaExportDrawer>
   );
-};
+});
+
+GrafanaRuleDesignExporter.displayName = 'GrafanaRuleDesignExporter';

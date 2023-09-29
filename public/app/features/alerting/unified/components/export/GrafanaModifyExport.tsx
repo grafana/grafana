@@ -91,7 +91,7 @@ export default function GrafanaModifyExport({ match }: GrafanaModifyExportProps)
 
   return (
     <AlertingPageWrapper isLoading={loading} pageId="alert-list" pageNav={{ text: 'Modify export' }}>
-      {alertRule && <ModifyExportRuleForm ruleForm={alertRule ? formValuesFromExistingRule(alertRule) : undefined} />}
+      {alertRule && <ModifyExportRuleForm ruleForm={formValuesFromExistingRule(alertRule)} />}
     </AlertingPageWrapper>
   );
 }
