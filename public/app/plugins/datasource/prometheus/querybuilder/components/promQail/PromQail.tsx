@@ -289,7 +289,7 @@ export const PromQail = (props: PromQailProps) => {
                             dispatch(addInteraction({ suggestionType, isLoading }));
                           }}
                           queryExplain={(suggIdx: number) =>
-                            promQailExplain(dispatch, idx, query, interaction, suggIdx, datasource)
+                            interaction.suggestions[suggIdx].explanation === '' ? promQailExplain(dispatch, idx, query, interaction, suggIdx, datasource) : interaction.suggestions[suggIdx].explanation
                           }
                           onChange={onChange}
                         />
