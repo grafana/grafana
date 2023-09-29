@@ -8,7 +8,7 @@ import (
 )
 
 // AllArchs is a list of all supported Docker image architectures.
-var AllArchs = []string{"amd64", "armv7", "arm64"}
+var AllArchs = []string{"amd64", "arm64"}
 
 // emulatorImage is the docker image used as the cross-platform emulator
 var emulatorImage = "tonistiigi/binfmt:qemu-v7.0.0"

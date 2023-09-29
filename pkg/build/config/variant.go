@@ -16,9 +16,9 @@ const (
 )
 
 var AllVariants = []Variant{
-	VariantArmV6,
-	VariantArmV7,
-	VariantArmV7Musl,
+	// VariantArmV6,
+	// VariantArmV7,
+	// VariantArmV7Musl,
 	VariantArm64,
 	VariantArm64Musl,
 	VariantDarwinAmd64,
