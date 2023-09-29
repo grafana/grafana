@@ -5,7 +5,7 @@ import React, { MouseEvent, useCallback, useEffect, useMemo, useState } from 're
 import { GrafanaTheme2, SelectableValue, urlUtil } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { AsyncSelect, Button, Modal, useStyles2 } from '@grafana/ui';
-import {t, Trans} from 'app/core/internationalization'
+import { t, Trans } from 'app/core/internationalization';
 
 import { DashboardSearchItem } from '../../../search/types';
 import { getConnectedDashboards, getLibraryPanelConnectedDashboards } from '../../state/api';
@@ -39,19 +39,31 @@ export function OpenLibraryPanelModal({ libraryPanel, onDismiss }: OpenLibraryPa
   };
 
   return (
-    <Modal title={t('library-panels.modal.title','View panel in dashboard')} onDismiss={onDismiss} onClickBackdrop={onDismiss} isOpen>
+    <Modal
+      title={t('library-panels.modal.title', 'View panel in dashboard')}
+      onDismiss={onDismiss}
+      onClickBackdrop={onDismiss}
+      isOpen
+    >
       <div className={styles.container}>
         {connected === 0 ? (
-          <span>{t('library-panels.modal.panel-not-linked','Panel is not linked to a dashboard. Add the panel to a dashboard and retry.')}</span>
+          <span>
+            <Trans i18nKey={'library-panels.modal.panel-not-linked'}>Add the panel to a dashboard and retry.</Trans>
+          </span>
         ) : null}
         {connected > 0 ? (
           <>
             <p>
-              {t('library-panels.modal.contianer-prefix','This panel is being used in  ')}
-                <strong>
-                  <>{connected} {connected > 1 ? t('library-panels.modal.contianer-dashboards','dashboards') : t('library-panels.modal.contianer-dashboard','dashboard')}</>
-                </strong>
-              {t('library-panels.modal.contianer-suffix','. Please choose which dashboard to view the panel in:')}
+              <Trans i18nKey={'library-panels.modal.contianer-prefix'}>This panel is being used in </Trans>
+              <strong>
+                {connected}{' '}
+                {connected > 1 ? (
+                  <Trans i18nKey={'library-panels.modal.contianer-dashboards'}>dashboards</Trans>
+                ) : (
+                  <Trans i18nKey={'library-panels.modal.contianer-dashboard'}>dashboard</Trans>
+                )}
+              </strong>
+              {t('library-panels.modal.contianer-suffix', '. Please choose which dashboard to view the panel in:')}
             </p>
             <AsyncSelect
               isClearable
@@ -59,21 +71,21 @@ export function OpenLibraryPanelModal({ libraryPanel, onDismiss }: OpenLibraryPa
               defaultOptions={true}
               loadOptions={debouncedLoadOptions}
               onChange={setOption}
-              placeholder={t('library-panels.select.placeholder','Start typing to search for dashboard')}
-              noOptionsMessage={t('library-panels.select.no-dashboard-message','No dashboards found')}
+              placeholder={t('library-panels.select.placeholder', 'Start typing to search for dashboard')}
+              noOptionsMessage={t('library-panels.select.no-dashboard-message', 'No dashboards found')}
             />
           </>
         ) : null}
       </div>
       <Modal.ButtonRow>
-        <Trans i18nKey={'library-panels.modal.button-cancel'}>
-          <Button variant="secondary" onClick={onDismiss} fill="outline">
-            Cancel
-          </Button>
-        </Trans>
-          <Button onClick={onViewPanel} disabled={!Boolean(option)}>
-            {option ? t('library-panels.modal.button-view-panel1','View panel in {{label}}...',{label:option?.label}) : t('library-panels.modal.button-view-panel2','View panel in dashboard...')  }
-          </Button>
+        <Button variant="secondary" onClick={onDismiss} fill="outline">
+          <Trans i18nKey={'library-panels.modal.button-cancel'}>Cancel</Trans>
+        </Button>
+        <Button onClick={onViewPanel} disabled={!Boolean(option)}>
+          {option
+            ? t('library-panels.modal.button-view-panel1', 'View panel in {{label}}...', { label: option?.label })
+            : t('library-panels.modal.button-view-panel2', 'View panel in dashboard...')}
+        </Button>
       </Modal.ButtonRow>
     </Modal>
   );
