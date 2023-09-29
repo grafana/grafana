@@ -90,7 +90,6 @@ class UnthemedSQLQueryEditor extends PureComponent<Props> {
           query={this.transformQuery(query)}
           onRunQuery={onRunSQLQuery}
           onChange={onSQLChange}
-          overrideQueryDefaults={{ sql: { limit: undefined } }}
         />
         <div className={cx('gf-form-inline', styles.editorActions)}>
           <LinkButton

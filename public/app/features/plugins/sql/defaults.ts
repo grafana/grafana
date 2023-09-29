@@ -3,7 +3,7 @@ import { EditorMode } from '@grafana/experimental';
 import { QueryFormat, SQLQuery } from './types';
 import { createFunctionField, setGroupByField } from './utils/sql.utils';
 
-export function applyQueryDefaults(q?: SQLQuery, override: Partial<SQLQuery> = { sql: {} }): SQLQuery {
+export function applyQueryDefaults(q?: SQLQuery): SQLQuery {
   let editorMode = q?.editorMode || EditorMode.Builder;
 
   // Switching to code editor if the query was created before visual query builder was introduced.
@@ -17,12 +17,10 @@ export function applyQueryDefaults(q?: SQLQuery, override: Partial<SQLQuery> = {
     format: q?.format !== undefined ? q.format : QueryFormat.Table,
     rawSql: q?.rawSql || '',
     editorMode,
-    ...override,
     sql: q?.sql ?? {
       columns: [createFunctionField()],
       groupBy: [setGroupByField()],
       limit: 50,
-      ...override?.sql,
     },
   };
 
