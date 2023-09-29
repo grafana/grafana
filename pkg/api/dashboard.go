@@ -412,10 +412,11 @@ func (hs *HTTPServer) postDashboard(c *contextmodel.ReqContext, cmd dashboards.S
 
 	cmd.OrgID = c.SignedInUser.GetOrgID()
 	cmd.UserID = userID
-	if cmd.FolderUID != "" {
+	if cmd.FolderUID != "" || cmd.FolderID != 0 {
 		folder, err := hs.folderService.Get(ctx, &folder.GetFolderQuery{
 			OrgID:        c.SignedInUser.GetOrgID(),
 			UID:          &cmd.FolderUID,
+			ID:           &cmd.FolderID,
 			SignedInUser: c.SignedInUser,
 		})
 		if err != nil {
@@ -425,6 +426,7 @@ func (hs *HTTPServer) postDashboard(c *contextmodel.ReqContext, cmd dashboards.S
 			return response.Error(http.StatusInternalServerError, "Error while checking folder ID", err)
 		}
 		cmd.FolderID = folder.ID
+		cmd.FolderUID = folder.UID
 	}
 
 	dash := cmd.GetDashboardModel()

@@ -17,6 +17,7 @@ var ErrDatabaseError = errutil.Internal("folder.database-error")
 var ErrInternal = errutil.Internal("folder.internal")
 var ErrCircularReference = errutil.BadRequest("folder.circular-reference", errutil.WithPublicMessage("Circular reference detected"))
 var ErrTargetRegistrySrvConflict = errutil.Internal("folder.target-registry-srv-conflict")
+var ErrTitleConflict = errutil.BadRequest("folder.title-conflict", errutil.WithPublicMessage("Subfolder with the same title already exists"))
 
 const (
 	GeneralFolderUID     = "general"
