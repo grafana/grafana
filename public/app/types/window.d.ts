@@ -1,5 +1,8 @@
+import { SceneTimeRangeLike } from '@grafana/scenes';
+
 export declare global {
   interface Window {
+    __timeRangeSceneObject: SceneTimeRangeLike;
     __grafana_app_bundle_loaded: boolean;
     __grafana_public_path__: string;
     __grafana_load_failed: () => void;
