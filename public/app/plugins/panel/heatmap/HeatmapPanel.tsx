@@ -68,7 +68,6 @@ export const HeatmapPanel = ({
 
   // @TODO hoverValue in legend
 
-  // ugh
   let timeRangeRef = useRef<TimeRange>(timeRange);
   timeRangeRef.current = timeRange;
 
