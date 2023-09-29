@@ -5824,40 +5824,7 @@
     ]
    }
   },
-  "/api/ruler/grafana/api/v1/rules": {
-   "get": {
-    "description": "List rule groups",
-    "operationId": "RouteGetGrafanaRulesConfig",
-    "parameters": [
-     {
-      "in": "query",
-      "name": "DashboardUID",
-      "type": "string"
-     },
-     {
-      "format": "int64",
-      "in": "query",
-      "name": "PanelID",
-      "type": "integer"
-     }
-    ],
-    "produces": [
-     "application/json"
-    ],
-    "responses": {
-     "202": {
-      "description": "NamespaceConfigResponse",
-      "schema": {
-       "$ref": "#/definitions/NamespaceConfigResponse"
-      }
-     }
-    },
-    "tags": [
-     "ruler"
-    ]
-   }
-  },
-  "/api/ruler/grafana/api/v1/rules/export": {
+  "/api/ruler/grafana/api/v1/export/rules": {
    "get": {
     "consumes": [
      "application/json",
@@ -5911,6 +5878,39 @@
      },
      "404": {
       "description": " Not found."
+     }
+    },
+    "tags": [
+     "ruler"
+    ]
+   }
+  },
+  "/api/ruler/grafana/api/v1/rules": {
+   "get": {
+    "description": "List rule groups",
+    "operationId": "RouteGetGrafanaRulesConfig",
+    "parameters": [
+     {
+      "in": "query",
+      "name": "DashboardUID",
+      "type": "string"
+     },
+     {
+      "format": "int64",
+      "in": "query",
+      "name": "PanelID",
+      "type": "integer"
+     }
+    ],
+    "produces": [
+     "application/json"
+    ],
+    "responses": {
+     "202": {
+      "description": "NamespaceConfigResponse",
+      "schema": {
+       "$ref": "#/definitions/NamespaceConfigResponse"
+      }
      }
     },
     "tags": [

@@ -19,7 +19,7 @@ import (
 //       202: NamespaceConfigResponse
 //
 
-// swagger:route Get /api/ruler/grafana/api/v1/rules/export ruler RouteGetRulesForExport
+// swagger:route Get /api/ruler/grafana/api/v1/export/rules ruler RouteGetRulesForExport
 //
 // List rules in provisioning format
 //

@@ -240,12 +240,12 @@ func (api *API) RegisterRulerApiEndpoints(srv RulerApi, m *metrics.API) {
 			),
 		)
 		group.Get(
-			toMacaronPath("/api/ruler/grafana/api/v1/rules/export"),
+			toMacaronPath("/api/ruler/grafana/api/v1/export/rules"),
 			requestmeta.SetOwner(requestmeta.TeamAlerting),
-			api.authorize(http.MethodGet, "/api/ruler/grafana/api/v1/rules/export"),
+			api.authorize(http.MethodGet, "/api/ruler/grafana/api/v1/export/rules"),
 			metrics.Instrument(
 				http.MethodGet,
-				"/api/ruler/grafana/api/v1/rules/export",
+				"/api/ruler/grafana/api/v1/export/rules",
 				api.Hooks.Wrap(srv.RouteGetRulesForExport),
 				m,
 			),
