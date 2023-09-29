@@ -208,7 +208,12 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
       isLazy: true,
       children: createSceneObjectsForPanels(oldModel.panels),
     }),
-    $timeRange: new SceneTimeRange(oldModel.time),
+    $timeRange: new SceneTimeRange({
+      from: oldModel.time.from,
+      to: oldModel.time.to,
+      fiscalYearStartMonth: oldModel.fiscalYearStartMonth,
+      timeZone: oldModel.timezone,
+    }),
     $variables: variables,
     $behaviors: [
       new behaviors.CursorSync({
