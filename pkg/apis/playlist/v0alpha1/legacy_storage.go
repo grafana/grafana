@@ -105,12 +105,13 @@ func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListO
 func (s *legacyStorage) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
 	orgId, ok := grafanarequest.OrgIDFrom(ctx)
 	if !ok {
-		return nil, fmt.Errorf("missing orgId")
+		// TODO??? if admin?  change query to list all tenants?
+		orgId = 1
 	}
 
 	return s.service.Get(ctx, &playlistsvc.GetPlaylistByUidQuery{
 		UID:   name,
-		OrgId: orgId,
+		OrgId: orgId, // required
 	})
 }
 
@@ -119,9 +120,44 @@ func (s *legacyStorage) Create(ctx context.Context,
 	createValidation rest.ValidateObjectFunc,
 	options *metav1.CreateOptions,
 ) (runtime.Object, error) {
+	orgId, ok := grafanarequest.OrgIDFrom(ctx)
+	if !ok {
+		// TODO??? if admin?  change query to list all tenants?
+		orgId = 1
+	}
 
-	// TODO!!!!
-	return s.Get(ctx, "xx", nil)
+	p, ok := obj.(*playlist.Playlist)
+	if !ok {
+		return nil, fmt.Errorf("expected playlist?")
+	}
+	if p.Name != "" {
+		return nil, fmt.Errorf("playlist only supports generated names right now")
+	}
+	if p.GenerateName == "" {
+		return nil, fmt.Errorf("generate name must be set")
+	}
+
+	spec := p.Spec
+	cmd := &playlistsvc.CreatePlaylistCommand{
+		Name:     spec.Name,
+		Interval: spec.Interval,
+		OrgId:    orgId,
+	}
+	for _, item := range spec.Items {
+		if item.Type == playlist.ItemTypeDashboardById {
+			return nil, fmt.Errorf("unsupported item type: %s", item.Type)
+		}
+
+		cmd.Items = append(cmd.Items, playlistsvc.PlaylistItem{
+			Type:  string(item.Type),
+			Value: item.Value,
+		})
+	}
+	out, err := s.service.Create(ctx, cmd)
+	if err != nil {
+		return nil, err
+	}
+	return s.Get(ctx, out.UID, nil)
 }
 
 func (s *legacyStorage) Update(ctx context.Context,
@@ -132,20 +168,65 @@ func (s *legacyStorage) Update(ctx context.Context,
 	forceAllowCreate bool,
 	options *metav1.UpdateOptions,
 ) (runtime.Object, bool, error) {
-	created := false
-	current, err := s.Get(ctx, name, nil)
-	if err != nil {
-		return current, created, err
+	orgId, ok := grafanarequest.OrgIDFrom(ctx)
+	if !ok {
+		// TODO??? if admin?  change query to list all tenants?
+		orgId = 1
 	}
-	// TODO... actually update
-	return current, created, err
+
+	created := false
+	old, err := s.Get(ctx, name, nil)
+	if err != nil {
+		return old, created, err
+	}
+
+	fmt.Printf("OLD: %+v\n", old)
+
+	obj, err := objInfo.UpdatedObject(ctx, old)
+	if err != nil {
+		return old, created, err
+	}
+	p, ok := obj.(*playlist.Playlist)
+	if !ok {
+		fmt.Printf("Expected playlist: %+v\n", obj)
+
+		return nil, created, fmt.Errorf("expected playlist after update")
+	}
+
+	fmt.Printf("NEW: %+v\n", obj)
+
+	spec := p.Spec
+	cmd := &playlistsvc.UpdatePlaylistCommand{
+		UID:      name,
+		Name:     spec.Name,
+		Interval: spec.Interval,
+		OrgId:    orgId,
+	}
+	for _, item := range spec.Items {
+		if item.Type == playlist.ItemTypeDashboardById {
+			return nil, false, fmt.Errorf("unsupported item type: %s", item.Type)
+		}
+		cmd.Items = append(cmd.Items, playlistsvc.PlaylistItem{
+			Type:  string(item.Type),
+			Value: item.Value,
+		})
+	}
+
+	_, err = s.service.Update(ctx, cmd)
+	if err != nil {
+		return nil, false, err
+	}
+
+	r, err := s.Get(ctx, name, nil)
+	return r, created, err
 }
 
 // GracefulDeleter
 func (s *legacyStorage) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
 	orgId, ok := grafanarequest.OrgIDFrom(ctx)
 	if !ok {
-		return nil, true, fmt.Errorf("missing orgId")
+		// TODO??? if admin?  change query to list all tenants?
+		orgId = 1
 	}
 
 	err := s.service.Delete(ctx, &playlistsvc.DeletePlaylistCommand{
