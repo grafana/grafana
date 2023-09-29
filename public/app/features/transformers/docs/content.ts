@@ -636,14 +636,14 @@ export const transformationDocsContent: Record<string, TransformationInfo> = {
 
   ##### Input
 
-  serie1{what="Temp", cluster="A", job="J1"}
+  series1{what="Temp", cluster="A", job="J1"}
 
   | Time | Value |
   | ---- | ----- |
   | 1    | 10    |
   | 2    | 200   |
 
-  serie2{what="Temp", cluster="B", job="J1"}
+  series2{what="Temp", cluster="B", job="J1"}
 
   | Time | Value |
   | ---- | ----- |

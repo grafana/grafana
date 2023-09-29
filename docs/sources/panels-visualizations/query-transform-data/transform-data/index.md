@@ -126,6 +126,10 @@ Use this transformation to add a new field calculated from two other fields. Eac
 - **Alias -** (Optional) Enter the name of your new field. If you leave this blank, then the field will be named to match the calculation.
 - **Replace all fields -** (Optional) Select this option if you want to hide all other fields and display only your calculated field in the visualization.
 
+In the example below, I added two fields together and named them Sum.
+
+{{< figure src="/static/img/docs/transformations/add-field-from-calc-stat-example-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
+
 ### Concatenate fields
 
 Use this transformation to combine all fields from all frames into one result. Consider the following:
@@ -333,9 +337,11 @@ Use this transformation in panels that have multiple queries, if you want to hid
 
 Grafana displays the query identification letters in dark gray text. Click a query identifier to toggle filtering. If the query letter is white, then the results are displayed. If the query letter is dark, then the results are hidden.
 
+> **Note:** This transformation is not available for Graphite because this data source does not support correlating returned data with queries.
+
 In the example below, the panel has three queries (A, B, C). I removed the B query from the visualization.
 
-> **Note:** This transformation is not available for Graphite because this data source does not support correlating returned data with queries.
+{{< figure src="/static/img/docs/transformations/filter-by-query-stat-example-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
 
 ### Filter data by values
 
@@ -412,6 +418,20 @@ You can apply filters in one of two ways:
 
 - Enter a regex expression.
 - Click a field to toggle filtering on that field. Filtered fields are displayed with dark gray text, unfiltered fields have white text.
+
+In the example below, I removed the Min field from the results.
+
+Here is the original query table. (This is streaming data, so numbers change over time and between screenshots.)
+
+{{< figure src="/static/img/docs/transformations/filter-name-table-before-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
+
+Here is the table after I applied the transformation to remove the Min field.
+
+{{< figure src="/static/img/docs/transformations/filter-name-table-after-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
+
+Here is the same query using a Stat visualization.
+
+{{< figure src="/static/img/docs/transformations/filter-name-stat-after-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
 
 ### Format time
 
@@ -629,6 +649,14 @@ The result after applying the outer join transformation looks like the following
 | 2020-07-07 11:14:20 | postgre | 345001233 |          |        |
 | 2020-07-07 11:34:20 | node    | 25260122  | server 1 | 15     |
 | 2020-07-07 11:24:20 | postgre | 123001233 | server 2 | 5      |
+
+In the following example, a template query displays time series data from multiple servers in a table visualization. The results of only one query can be viewed at a time.
+
+{{< figure src="/static/img/docs/transformations/join-fields-before-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
+
+I applied a transformation to join the query results using the time field. Now I can run calculations, combine, and organize the results in this new table.
+
+{{< figure src="/static/img/docs/transformations/join-fields-after-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
 
 ### Join by labels
 
@@ -899,6 +927,14 @@ Query B:
 Use this transformation to rename parts of the query results using a regular expression and replacement pattern.
 
 You can specify a regular expression, which is only applied to matches, along with a replacement pattern that support back references. For example, let's imagine you're visualizing CPU usage per host and you want to remove the domain name. You could set the regex to '([^.]+)..+' and the replacement pattern to '$1', 'web-01.example.com' would become 'web-01'.
+
+In the following example, we are stripping the prefix from event types. In the before image, you can see everything is prefixed with 'system.'
+
+{{< figure src="/static/img/docs/transformations/rename-by-regex-before-7-3.png" class="docs-image--no-shadow" max-width= "1100px" >}}
+
+With the transformation applied, you can see we are left with just the remainder of the string.
+
+{{< figure src="/static/img/docs/transformations/rename-by-regex-after-7-3.png" class="docs-image--no-shadow" max-width= "1100px" >}}
 
 ### Rows to fields
 
