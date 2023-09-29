@@ -276,12 +276,8 @@ const getStyles = (theme: GrafanaTheme2) => {
     header: css({
       label: 'drawer-header',
       flexGrow: 0,
-      padding: theme.spacing(3, 2),
+      padding: theme.spacing(2, 2, 3),
       borderBottom: `1px solid ${theme.colors.border.weak}`,
-
-      [theme.breakpoints.down('sm')]: {
-        paddingTop: theme.spacing(2),
-      },
     }),
     headerWithTabs: css({
       borderBottom: 'none',
@@ -289,11 +285,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     actions: css({
       position: 'absolute',
       right: theme.spacing(1),
-      top: theme.spacing(2),
-
-      [theme.breakpoints.down('sm')]: {
-        top: theme.spacing(1),
-      },
+      top: theme.spacing(1),
     }),
     titleWrapper: css({
       label: 'drawer-title',
@@ -316,11 +308,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     tabsWrapper: css({
       label: 'drawer-tabs',
       paddingLeft: theme.spacing(2),
-      margin: theme.spacing(2, -1, -3, -3),
-
-      [theme.breakpoints.down('sm')]: {
-        marginTop: theme.spacing(0),
-      },
+      margin: theme.spacing(0, -1, -3, -3),
     }),
   };
 };
