@@ -46,6 +46,7 @@ export const MonitorConfig = (props: Props) => {
       <h3 className="page-heading">Authentication</h3>
       <AzureCredentialsForm
         managedIdentityEnabled={config.azure.managedIdentityEnabled}
+        workloadIdentityEnabled={config.azure.workloadIdentityEnabled}
         credentials={credentials}
         azureCloudOptions={azureClouds}
         onCredentialsChange={onCredentialsChange}
