@@ -17,9 +17,10 @@ import {
   VariableInterpolation,
 } from '@grafana/runtime/src';
 
-import { TemplateSrv } from '../../../../features/templating/template_srv';
-import InfluxDatasource from '../datasource';
-import { InfluxOptions, InfluxQuery, InfluxVersion } from '../types';
+import { TemplateSrv } from '../../../features/templating/template_srv';
+
+import InfluxDatasource from './datasource';
+import { InfluxOptions, InfluxQuery, InfluxVersion } from './types';
 
 const getAdhocFiltersMock = jest.fn().mockImplementation(() => []);
 const replaceMock = jest.fn().mockImplementation((a: string, ...rest: unknown[]) => a);
@@ -54,14 +55,16 @@ export function mockBackendService(response: FetchResponse) {
   return fetchMock;
 }
 
-export function getMockDS(
-  instanceSettings: DataSourceInstanceSettings<InfluxOptions>,
+export function getMockInfluxDS(
+  instanceSettings: DataSourceInstanceSettings<InfluxOptions> = getMockDSInstanceSettings(),
   templateSrv: TemplateSrv = templateSrvStub
 ): InfluxDatasource {
   return new InfluxDatasource(instanceSettings, templateSrv);
 }
 
-export function getMockDSInstanceSettings(): DataSourceInstanceSettings<InfluxOptions> {
+export function getMockDSInstanceSettings(
+  overrideJsonData?: Partial<InfluxOptions>
+): DataSourceInstanceSettings<InfluxOptions> {
   return {
     id: 123,
     url: 'proxied',
@@ -91,7 +94,12 @@ export function getMockDSInstanceSettings(): DataSourceInstanceSettings<InfluxOp
       module: '',
       baseUrl: '',
     },
-    jsonData: { version: InfluxVersion.InfluxQL, httpMode: 'POST', dbName: 'site' },
+    jsonData: {
+      version: InfluxVersion.InfluxQL,
+      httpMode: 'POST',
+      dbName: 'site',
+      ...(overrideJsonData ? overrideJsonData : {}),
+    },
   };
 }
 
@@ -221,12 +229,9 @@ export const mockInfluxRetentionPolicyResponse = [
   },
 ];
 
-export const mockInfluxDataRequest = (
-  targets: InfluxQuery[],
-  overrides?: Partial<DataQueryRequest>
-): Partial<DataQueryRequest<InfluxQuery>> => {
-  const defaults: DataQueryRequest<InfluxQuery> = {
-    app: 'createDataRequest',
+export const mockInfluxQueryRequest = (targets?: InfluxQuery[]): DataQueryRequest<InfluxQuery> => {
+  return {
+    app: 'explore',
     interval: '1m',
     intervalMs: 60000,
     range: {
@@ -241,8 +246,78 @@ export const mockInfluxDataRequest = (
     requestId: '',
     scopedVars: {},
     startTime: 0,
-    targets: targets,
+    targets: targets ?? mockTargets(),
     timezone: '',
   };
-  return Object.assign(defaults, overrides ?? {});
 };
+
+export const mockTargets = (): InfluxQuery[] => {
+  return [
+    {
+      refId: 'A',
+      datasource: {
+        type: 'influxdb',
+        uid: 'vA4bkHenk',
+      },
+      policy: 'default',
+      resultFormat: 'time_series',
+      orderByTime: 'ASC',
+      tags: [],
+      groupBy: [
+        {
+          type: 'time',
+          params: ['$__interval'],
+        },
+        {
+          type: 'fill',
+          params: ['null'],
+        },
+      ],
+      select: [
+        [
+          {
+            type: 'field',
+            params: ['value'],
+          },
+          {
+            type: 'mean',
+            params: [],
+          },
+        ],
+      ],
+      measurement: 'cpu',
+    },
+  ];
+};
+
+export const mockInfluxQueryWithTemplateVars = (adhocFilters: AdHocVariableFilter[]): InfluxQuery => ({
+  refId: 'x',
+  alias: '$interpolationVar',
+  measurement: '$interpolationVar',
+  policy: '$interpolationVar',
+  limit: '$interpolationVar',
+  slimit: '$interpolationVar',
+  tz: '$interpolationVar',
+  tags: [
+    {
+      key: 'cpu',
+      operator: '=~',
+      value: '/^$interpolationVar,$interpolationVar2$/',
+    },
+  ],
+  groupBy: [
+    {
+      params: ['$interpolationVar'],
+      type: 'tag',
+    },
+  ],
+  select: [
+    [
+      {
+        params: ['$interpolationVar'],
+        type: 'field',
+      },
+    ],
+  ],
+  adhocFilters,
+});

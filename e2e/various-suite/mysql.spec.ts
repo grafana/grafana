@@ -1,8 +1,8 @@
 import { e2e } from '../utils';
 
-import datasetResponse from './datasets-response.json';
-import fieldsResponse from './fields-response.json';
-import tablesResponse from './tables-response.json';
+import datasetResponse from './fixtures/datasets-response.json';
+import fieldsResponse from './fixtures/fields-response.json';
+import tablesResponse from './fixtures/tables-response.json';
 
 const tableNameWithSpecialCharacter = tablesResponse.results.tables.frames[0].data.values[0][1];
 const normalTableName = tablesResponse.results.tables.frames[0].data.values[0][0];
@@ -13,30 +13,24 @@ describe('MySQL datasource', () => {
   });
 
   it('code editor autocomplete should handle table name escaping/quoting', () => {
-    cy.intercept(
-      'POST',
-      {
-        pathname: '/api/ds/query',
-      },
-      (req) => {
-        if (req.body.queries[0].refId === 'datasets') {
-          req.alias = 'datasets';
-          req.reply({
-            body: datasetResponse,
-          });
-        } else if (req.body.queries[0].refId === 'tables') {
-          req.alias = 'tables';
-          req.reply({
-            body: tablesResponse,
-          });
-        } else if (req.body.queries[0].refId === 'fields') {
-          req.alias = 'fields';
-          req.reply({
-            body: fieldsResponse,
-          });
-        }
+    cy.intercept('POST', '/api/ds/query', (req) => {
+      if (req.body.queries[0].refId === 'datasets') {
+        req.alias = 'datasets';
+        req.reply({
+          body: datasetResponse,
+        });
+      } else if (req.body.queries[0].refId === 'tables') {
+        req.alias = 'tables';
+        req.reply({
+          body: tablesResponse,
+        });
+      } else if (req.body.queries[0].refId === 'fields') {
+        req.alias = 'fields';
+        req.reply({
+          body: fieldsResponse,
+        });
       }
-    );
+    });
 
     e2e.pages.Explore.visit();
 
@@ -56,7 +50,9 @@ describe('MySQL datasource', () => {
     );
     cy.get('textarea').type(deleteTimes.join(''));
 
-    cy.get('textarea').type('{command}i');
+    const commandKey = Cypress.platform === 'darwin' ? '{command}' : '{ctrl}';
+
+    cy.get('textarea').type(`${commandKey}i`);
     cy.get('.suggest-widget').contains(tableNameWithSpecialCharacter).should('be.visible');
     cy.get('textarea').type('S{downArrow}{enter}');
     cy.get('textarea').should('have.value', `SELECT  FROM grafana.${normalTableName}`);

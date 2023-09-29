@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/grafanads"
 	"github.com/grafana/grafana/pkg/util"
+	"golang.org/x/exp/slices"
 )
 
 func (hs *HTTPServer) GetFrontendSettings(c *contextmodel.ReqContext) {
@@ -72,7 +73,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		panels[panel.ID] = plugins.PanelDTO{
 			ID:              panel.ID,
 			Name:            panel.Name,
-			Alias:           panel.Alias,
+			AliasIDs:        panel.AliasIDs,
 			Info:            panel.Info,
 			Module:          panel.Module,
 			BaseURL:         panel.BaseURL,
@@ -500,7 +501,7 @@ func (ap AvailablePlugins) Get(pluginType plugins.Type, pluginID string) (*avail
 		return p, true
 	}
 	for _, p = range ap[pluginType] {
-		if p.Plugin.ID == pluginID || p.Plugin.Alias == pluginID {
+		if p.Plugin.ID == pluginID || slices.Contains(p.Plugin.AliasIDs, pluginID) {
 			return p, true
 		}
 	}
