@@ -218,18 +218,34 @@
       "settings": "Paramètres du tableau de bord",
       "share": "Partager le tableau de bord ou le panneau",
       "unmark-favorite": "Supprimer des favoris"
+    },
+    "validation": {
+      "invalid-dashboard-id": "",
+      "invalid-json": "",
+      "tags-expected-array": "",
+      "tags-expected-strings": ""
+    }
+  },
+  "dashboard-import": {
+    "file-dropzone": {
+      "primary-text": "",
+      "secondary-text": ""
+    },
+    "form-actions": {
+      "load": ""
+    },
+    "gcom-field": {
+      "label": "",
+      "placeholder": ""
+    },
+    "json-field": {
+      "label": "",
+      "validation-required": ""
     }
   },
   "dashboard-import-page": {
     "cancel": "",
-    "field-label": "",
-    "field-placeholder": "",
-    "field-required": "",
-    "json-field-label": "",
-    "json-field-required": "",
-    "load-button": "",
-    "primary-text": "",
-    "secondary-text": ""
+    "field-required": ""
   },
   "dashboard-settings": {
     "json-editor": {
@@ -956,12 +972,6 @@
   },
   "user-sessions": {
     "loading": "Chargement des sessions..."
-  },
-  "utils": {
-    "invalid-dashboard-id": "",
-    "invalid-json": "",
-    "tags-expected-array": "",
-    "tags-expected-strings": ""
   },
   "variable": {
     "adhoc": {

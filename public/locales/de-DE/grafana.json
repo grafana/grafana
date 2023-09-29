@@ -213,18 +213,34 @@
       "settings": "Dashboard-Einstellungen",
       "share": "Dashboard oder Panel teilen",
       "unmark-favorite": "Markierung als Favorit entfernen"
+    },
+    "validation": {
+      "invalid-dashboard-id": "",
+      "invalid-json": "",
+      "tags-expected-array": "",
+      "tags-expected-strings": ""
+    }
+  },
+  "dashboard-import": {
+    "file-dropzone": {
+      "primary-text": "",
+      "secondary-text": ""
+    },
+    "form-actions": {
+      "load": ""
+    },
+    "gcom-field": {
+      "label": "",
+      "placeholder": ""
+    },
+    "json-field": {
+      "label": "",
+      "validation-required": ""
     }
   },
   "dashboard-import-page": {
     "cancel": "",
-    "field-label": "",
-    "field-placeholder": "",
-    "field-required": "",
-    "json-field-label": "",
-    "json-field-required": "",
-    "load-button": "",
-    "primary-text": "",
-    "secondary-text": ""
+    "field-required": ""
   },
   "dashboard-settings": {
     "json-editor": {
@@ -951,12 +967,6 @@
   },
   "user-sessions": {
     "loading": "Sitzungen werden geladen …"
-  },
-  "utils": {
-    "invalid-dashboard-id": "",
-    "invalid-json": "",
-    "tags-expected-array": "",
-    "tags-expected-strings": ""
   },
   "variable": {
     "adhoc": {
