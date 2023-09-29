@@ -15,13 +15,13 @@ import {
 } from '@grafana/data';
 import { LoadingState } from '@grafana/schema';
 
-import { LokiDatasource } from './datasource';
+import { getIndexStatsSignature, LokiDatasource, REF_ID_STARTER_LOG_VOLUME } from './datasource';
 import { splitTimeRange as splitLogsTimeRange } from './logsTimeSplitting';
 import { splitTimeRange as splitMetricTimeRange } from './metricTimeSplitting';
 import { isLogsQuery, isQueryWithRangeVariable } from './queryUtils';
 import { combineResponses } from './responseUtils';
 import { trackGroupedQueries } from './tracking';
-import { LokiGroupedRequest, LokiQuery, LokiQueryType } from './types';
+import { LokiGroupedRequest, LokiQuery, LokiQueryType, QueryStats } from './types';
 
 export function partitionTimeRange(
   isLogsQuery: boolean,
@@ -214,19 +214,60 @@ function querySupportsSplitting(query: LokiQuery) {
   );
 }
 
+const calculateOptimalSplitDuration = (
+  query: LokiQuery,
+  datasource: LokiDatasource,
+  request: DataQueryRequest<LokiQuery>
+): number => {
+  const oneDayMs = 24 * 60 * 60 * 1000;
+
+  const signature = getIndexStatsSignature({
+    ...query,
+    // The response of index/stats is always the same between logs and metric query, so we want them grouped together, and we can use the API response we already added to the cache
+    refId: query.refId.replace(REF_ID_STARTER_LOG_VOLUME, ''),
+    // Ok the end of the day is here and my hacks are getting hackier, @todo fix this, we want to get the original expression back from the expression used in the logs volume query
+    expr: query.expr.replace(`sum by (level) (count_over_time(`, '').replace('[$__auto]))', ''),
+  });
+  console.log('signature qs', signature);
+
+  // Get the index stats for the query which should have been run already
+  const stat = datasource.indexStats.get(signature);
+  const targetInBytes = 50 * 1000 * 1000; // 50MB per 24hr target
+  if (stat && stat.bytes > targetInBytes) {
+    // The target in bytes is for the full range of the query
+    const duration = request.range.to.valueOf() - request.range.from.valueOf();
+
+    console.log('duration', duration);
+    console.log('stat.bytes', stat.bytes);
+
+    const howManyTimesShouldWeSplitThisUp = Math.ceil(stat.bytes / targetInBytes);
+    const newPartialDuration = Math.ceil(duration / howManyTimesShouldWeSplitThisUp);
+
+    console.log('howManyTimesShouldWeSplitThisUp to have n chunks less then target', howManyTimesShouldWeSplitThisUp);
+    console.log('new suggested partial duration', newPartialDuration);
+    return newPartialDuration;
+  }
+
+  console.log('failed to find', query);
+  return oneDayMs;
+};
+
 export function runSplitQuery(datasource: LokiDatasource, request: DataQueryRequest<LokiQuery>) {
   const queries = request.targets.filter((query) => !query.hide).filter((query) => query.expr);
   const [nonSplittingQueries, normalQueries] = partition(queries, (query) => !querySupportsSplitting(query));
   const [logQueries, metricQueries] = partition(normalQueries, (query) => isLogsQuery(query.expr));
 
   request.queryGroupId = uuidv4();
-  const oneDayMs = 24 * 60 * 60 * 1000;
+
+  // const oneDayMs = 24 * 60 * 60 * 1000;
   const rangePartitionedLogQueries = groupBy(logQueries, (query) =>
-    query.splitDuration ? durationToMilliseconds(parseDuration(query.splitDuration)) : oneDayMs
+    calculateOptimalSplitDuration(query, datasource, request)
   );
   const rangePartitionedMetricQueries = groupBy(metricQueries, (query) =>
-    query.splitDuration ? durationToMilliseconds(parseDuration(query.splitDuration)) : oneDayMs
+    calculateOptimalSplitDuration(query, datasource, request)
   );
+
+  console.log('rangePartitionedLogQueries', rangePartitionedMetricQueries);
 
   const requests: LokiGroupedRequest[] = [];
   for (const [chunkRangeMs, queries] of Object.entries(rangePartitionedLogQueries)) {

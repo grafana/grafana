@@ -128,6 +128,11 @@ export function makeRequest(
   };
 }
 
+// Should be dashboard id + panel id + query refId, the stuff that cannot be changed, but loki datasource appears to be agnostic to those values for now
+// Let's just ignore the fact that this is a memory leak, and ignore cleaning up old queries in the map
+type LokiQueryIdentity = string;
+// Should be expr + start + end + step etc, the stuff we expect to be changed
+type LokiQuerySignature = string;
 export class LokiDatasource
   extends DataSourceWithBackend<LokiQuery, LokiOptions>
   implements
@@ -142,6 +147,7 @@ export class LokiDatasource
   languageProvider: LanguageProvider;
   maxLines: number;
   predefinedOperations: string;
+  indexStats: Map<LokiQueryIdentity, QueryStats & { signature: LokiQuerySignature }>;
 
   constructor(
     private instanceSettings: DataSourceInstanceSettings<LokiOptions>,
@@ -159,6 +165,7 @@ export class LokiDatasource
     };
     this.variables = new LokiVariableSupport(this);
     this.logContextProvider = new LogContextProvider(this);
+    this.indexStats = new Map();
   }
 
   getDataProvider(
@@ -481,6 +488,12 @@ export class LokiDatasource
         break;
       }
     }
+
+    // Add stat to map
+    const signature = getIndexStatsSignature(query);
+    console.log('signature ds', signature);
+    // const identify = getQueryIdentity(query);
+    this.indexStats.set(signature, { ...statsForAll, signature: signature });
 
     return statsForAll;
   }
@@ -981,3 +994,11 @@ function getLogLevelFromLabels(labels: Labels): LogLevel {
   }
   return levelLabel ? getLogLevelFromKey(labels[levelLabel]) : LogLevel.unknown;
 }
+
+export const getIndexStatsSignature = (query: LokiQuery): LokiQuerySignature => {
+  // removing refId and expr as a hack because we aren't currently running the index/stat query for the logs volume, the assumption here is that the expensiveness of the logs volume query is still related to the estimated size of the regular query
+  return query.refId + query.expr + query.step + query.direction + query.queryType;
+};
+export const getQueryIdentity = (query: LokiQuery): LokiQueryIdentity => {
+  // TODO, identity needs to be static accross any change to the query, i.e. refId + dashboardId + panelId
+};
