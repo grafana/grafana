@@ -12,6 +12,8 @@ export interface PublicDashboardCfg {
   headerLogoShow: boolean;
 }
 
+const FOOTER_URL = 'https://grafana.com/?src=grafananet&cnt=public-dashboards';
+
 export const PublicDashboardFooter = function () {
   const styles = useStyles2(getStyles);
   const conf = useGetPublicDashboardConfig();
@@ -36,7 +38,7 @@ export let useGetPublicDashboardConfig = (): PublicDashboardCfg => {
     footerHide: false,
     footerText: <span className={styles.text}>Powered by</span>,
     footerLogo: theme.isDark ? 'public/img/grafana_text_logo_light.svg' : 'public/img/grafana_text_logo_dark.svg',
-    footerLink: 'https://grafana.com/',
+    footerLink: FOOTER_URL,
     headerLogoShow: true,
   };
 };
