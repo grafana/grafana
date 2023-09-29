@@ -12,13 +12,13 @@
 # This should make it easy to add new rules without breaking existing ones.
 
 # Documentation
-/.changelog-archive @grafana/docs-grafana
+/.changelog-archive @grafana/grafana-delivery
 /.codespellignore @grafana/docs-tooling
 /CHANGELOG.md @grafana/grafana-delivery
-/CODE_OF_CONDUCT.md @grafana/docs-grafana
-/CONTRIBUTING.md @grafana/docs-grafana
+/CODE_OF_CONDUCT.md @grafana/grafana-community-support
+/CONTRIBUTING.md @grafana/grafana-community-support
 /GOVERNANCE.md @RichiH
-/HALL_OF_FAME.md @grafana/docs-grafana
+/HALL_OF_FAME.md @grafana/grafana-community-support
 /ISSUE_TRIAGE.md @grafana/grafana-community-support
 /LICENSE @torkelo
 /LICENSING.md @torkelo
@@ -30,7 +30,7 @@
 /SUPPORT.md @torkelo
 /UPGRADING_DEPENDENCIES.md @grafana/docs-grafana
 /WORKFLOW.md @torkelo
-/contribute/ @grafana/docs-grafana
+/contribute/ @grafana/grafana-community-support
 /devenv/README.md @grafana/docs-grafana
 
 # Technical documentation
@@ -42,7 +42,7 @@
 /docs/sources/alerting/                                                      @brendamuir
 /docs/sources/dashboards/                                                    @imatwawana
 /docs/sources/datasources/                                                   @lwandz13
-/docs/sources/explore/                                                       @Eve832 @GrafanaWriter
+/docs/sources/explore/                                                       @grafana/explore-squad
 /docs/sources/fundamentals                                                   @chri2547
 /docs/sources/getting-started/                                               @chri2547
 /docs/sources/introduction/                                                  @chri2547
