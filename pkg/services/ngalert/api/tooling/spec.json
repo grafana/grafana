@@ -3013,7 +3013,7 @@
           "type": "string"
         },
         "relativeTimeRange": {
-          "$ref": "#/definitions/RelativeTimeRangeExport"
+          "$ref": "#/definitions/RelativeTimeRange"
         }
       }
     },
@@ -3291,9 +3291,6 @@
           "type": "string"
         },
         "for": {
-          "type": "string"
-        },
-        "keep_firing_for": {
           "type": "string"
         },
         "labels": {
@@ -4104,12 +4101,6 @@
             "$ref": "#/definitions/GettableGrafanaReceiver"
           }
         },
-        "msteams_configs": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/MSTeamsConfig"
-          }
-        },
         "name": {
           "description": "A unique identifier for this receiver.",
           "type": "string"
@@ -4142,6 +4133,12 @@
           "type": "array",
           "items": {
             "$ref": "#/definitions/SNSConfig"
+          }
+        },
+        "teams_configs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/MSTeamsConfig"
           }
         },
         "telegram_configs": {
@@ -4196,9 +4193,6 @@
         },
         "grafana_alert": {
           "$ref": "#/definitions/GettableGrafanaRule"
-        },
-        "keep_firing_for": {
-          "type": "string"
         },
         "labels": {
           "type": "object",
@@ -4285,9 +4279,6 @@
         "namespace_id": {
           "type": "integer",
           "format": "int64"
-        },
-        "namespace_title": {
-          "type": "string"
         },
         "namespace_uid": {
           "type": "string"
@@ -5177,12 +5168,6 @@
             "$ref": "#/definitions/PostableGrafanaReceiver"
           }
         },
-        "msteams_configs": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/MSTeamsConfig"
-          }
-        },
         "name": {
           "description": "A unique identifier for this receiver.",
           "type": "string"
@@ -5215,6 +5200,12 @@
           "type": "array",
           "items": {
             "$ref": "#/definitions/SNSConfig"
+          }
+        },
+        "teams_configs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/MSTeamsConfig"
           }
         },
         "telegram_configs": {
@@ -5269,9 +5260,6 @@
         },
         "grafana_alert": {
           "$ref": "#/definitions/PostableGrafanaRule"
-        },
-        "keep_firing_for": {
-          "type": "string"
         },
         "labels": {
           "type": "object",
@@ -5644,9 +5632,6 @@
         "token_file": {
           "type": "string"
         },
-        "ttl": {
-          "type": "string"
-        },
         "url": {
           "type": "string"
         },
@@ -5764,12 +5749,6 @@
             "$ref": "#/definitions/EmailConfig"
           }
         },
-        "msteams_configs": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/MSTeamsConfig"
-          }
-        },
         "name": {
           "description": "A unique identifier for this receiver.",
           "type": "string"
@@ -5802,6 +5781,12 @@
           "type": "array",
           "items": {
             "$ref": "#/definitions/SNSConfig"
+          }
+        },
+        "teams_configs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/MSTeamsConfig"
           }
         },
         "telegram_configs": {
@@ -5868,19 +5853,6 @@
         },
         "to": {
           "$ref": "#/definitions/Duration"
-        }
-      }
-    },
-    "RelativeTimeRangeExport": {
-      "type": "object",
-      "properties": {
-        "from": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "to": {
-          "type": "integer",
-          "format": "int64"
         }
       }
     },
@@ -6763,8 +6735,9 @@
       }
     },
     "URL": {
+      "description": "The general form represented is:\n\n[scheme:][//[userinfo@]host][/]path[?query][#fragment]\n\nURLs that do not start with a slash after the scheme are interpreted as:\n\nscheme:opaque[?query][#fragment]\n\nNote that the Path field is stored in decoded form: /%47%6f%2f becomes /Go/.\nA consequence is that it is impossible to tell which slashes in the Path were\nslashes in the raw URL and which were %2f. This distinction is rarely important,\nbut when it is, the code should use the EscapedPath method, which preserves\nthe original encoding of Path.\n\nThe RawPath field is an optional field which is only set when the default\nencoding of Path is different from the escaped path. See the EscapedPath method\nfor more details.\n\nURL's String method uses the EscapedPath method to obtain the path.",
       "type": "object",
-      "title": "URL is a custom URL type that allows validation at configuration load time.",
+      "title": "A URL represents a parsed URL (technically, a URI reference).",
       "properties": {
         "ForceQuery": {
           "type": "boolean"
@@ -6978,6 +6951,7 @@
       }
     },
     "alertGroup": {
+      "description": "AlertGroup alert group",
       "type": "object",
       "required": [
         "alerts",
@@ -7108,7 +7082,6 @@
       }
     },
     "gettableAlert": {
-      "description": "GettableAlert gettable alert",
       "type": "object",
       "required": [
         "labels",
@@ -7172,6 +7145,7 @@
       "$ref": "#/definitions/gettableAlerts"
     },
     "gettableSilence": {
+      "description": "GettableSilence gettable silence",
       "type": "object",
       "required": [
         "comment",
@@ -7221,7 +7195,6 @@
       "$ref": "#/definitions/gettableSilence"
     },
     "gettableSilences": {
-      "description": "GettableSilences gettable silences",
       "type": "array",
       "items": {
         "$ref": "#/definitions/gettableSilence"
@@ -7373,6 +7346,7 @@
       }
     },
     "postableSilence": {
+      "description": "PostableSilence postable silence",
       "type": "object",
       "required": [
         "comment",

@@ -137,7 +137,7 @@
      "type": "string"
     },
     "relativeTimeRange": {
-     "$ref": "#/definitions/RelativeTimeRangeExport"
+     "$ref": "#/definitions/RelativeTimeRange"
     }
    },
    "title": "AlertQueryExport is the provisioned export of models.AlertQuery.",
@@ -416,9 +416,6 @@
      "type": "string"
     },
     "for": {
-     "type": "string"
-    },
-    "keep_firing_for": {
      "type": "string"
     },
     "labels": {
@@ -1226,12 +1223,6 @@
      },
      "type": "array"
     },
-    "msteams_configs": {
-     "items": {
-      "$ref": "#/definitions/MSTeamsConfig"
-     },
-     "type": "array"
-    },
     "name": {
      "description": "A unique identifier for this receiver.",
      "type": "string"
@@ -1263,6 +1254,12 @@
     "sns_configs": {
      "items": {
       "$ref": "#/definitions/SNSConfig"
+     },
+     "type": "array"
+    },
+    "teams_configs": {
+     "items": {
+      "$ref": "#/definitions/MSTeamsConfig"
      },
      "type": "array"
     },
@@ -1318,9 +1315,6 @@
     },
     "grafana_alert": {
      "$ref": "#/definitions/GettableGrafanaRule"
-    },
-    "keep_firing_for": {
-     "type": "string"
     },
     "labels": {
      "additionalProperties": {
@@ -1407,9 +1401,6 @@
     "namespace_id": {
      "format": "int64",
      "type": "integer"
-    },
-    "namespace_title": {
-     "type": "string"
     },
     "namespace_uid": {
      "type": "string"
@@ -2298,12 +2289,6 @@
      },
      "type": "array"
     },
-    "msteams_configs": {
-     "items": {
-      "$ref": "#/definitions/MSTeamsConfig"
-     },
-     "type": "array"
-    },
     "name": {
      "description": "A unique identifier for this receiver.",
      "type": "string"
@@ -2335,6 +2320,12 @@
     "sns_configs": {
      "items": {
       "$ref": "#/definitions/SNSConfig"
+     },
+     "type": "array"
+    },
+    "teams_configs": {
+     "items": {
+      "$ref": "#/definitions/MSTeamsConfig"
      },
      "type": "array"
     },
@@ -2390,9 +2381,6 @@
     },
     "grafana_alert": {
      "$ref": "#/definitions/PostableGrafanaRule"
-    },
-    "keep_firing_for": {
-     "type": "string"
     },
     "labels": {
      "additionalProperties": {
@@ -2765,9 +2753,6 @@
     "token_file": {
      "type": "string"
     },
-    "ttl": {
-     "type": "string"
-    },
     "url": {
      "type": "string"
     },
@@ -2884,12 +2869,6 @@
      },
      "type": "array"
     },
-    "msteams_configs": {
-     "items": {
-      "$ref": "#/definitions/MSTeamsConfig"
-     },
-     "type": "array"
-    },
     "name": {
      "description": "A unique identifier for this receiver.",
      "type": "string"
@@ -2921,6 +2900,12 @@
     "sns_configs": {
      "items": {
       "$ref": "#/definitions/SNSConfig"
+     },
+     "type": "array"
+    },
+    "teams_configs": {
+     "items": {
+      "$ref": "#/definitions/MSTeamsConfig"
      },
      "type": "array"
     },
@@ -2989,19 +2974,6 @@
     },
     "to": {
      "$ref": "#/definitions/Duration"
-    }
-   },
-   "type": "object"
-  },
-  "RelativeTimeRangeExport": {
-   "properties": {
-    "from": {
-     "format": "int64",
-     "type": "integer"
-    },
-    "to": {
-     "format": "int64",
-     "type": "integer"
     }
    },
    "type": "object"
@@ -3885,7 +3857,6 @@
    "type": "object"
   },
   "URL": {
-   "description": "The general form represented is:\n\n[scheme:][//[userinfo@]host][/]path[?query][#fragment]\n\nURLs that do not start with a slash after the scheme are interpreted as:\n\nscheme:opaque[?query][#fragment]\n\nNote that the Path field is stored in decoded form: /%47%6f%2f becomes /Go/.\nA consequence is that it is impossible to tell which slashes in the Path were\nslashes in the raw URL and which were %2f. This distinction is rarely important,\nbut when it is, the code should use the EscapedPath method, which preserves\nthe original encoding of Path.\n\nThe RawPath field is an optional field which is only set when the default\nencoding of Path is different from the escaped path. See the EscapedPath method\nfor more details.\n\nURL's String method uses the EscapedPath method to obtain the path.",
    "properties": {
     "ForceQuery": {
      "type": "boolean"
@@ -3921,7 +3892,7 @@
      "$ref": "#/definitions/Userinfo"
     }
    },
-   "title": "A URL represents a parsed URL (technically, a URI reference).",
+   "title": "URL is a custom URL type that allows validation at configuration load time.",
    "type": "object"
   },
   "Userinfo": {
@@ -4101,6 +4072,7 @@
    "type": "object"
   },
   "alertGroup": {
+   "description": "AlertGroup alert group",
    "properties": {
     "alerts": {
      "description": "alerts",
@@ -4228,6 +4200,7 @@
    "type": "object"
   },
   "gettableAlert": {
+   "description": "GettableAlert gettable alert",
    "properties": {
     "annotations": {
      "$ref": "#/definitions/labelSet"
@@ -4339,7 +4312,6 @@
    "type": "object"
   },
   "gettableSilences": {
-   "description": "GettableSilences gettable silences",
    "items": {
     "$ref": "#/definitions/gettableSilence"
    },
@@ -4527,7 +4499,6 @@
    "type": "object"
   },
   "receiver": {
-   "description": "Receiver receiver",
    "properties": {
     "active": {
      "description": "active",
