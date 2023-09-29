@@ -4,6 +4,25 @@ import (
 	. "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 )
 
+// dashboard v2
+var dashboardV2 = Table{
+	Name: "dashboard",
+	Columns: []*Column{
+		{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
+		{Name: "version", Type: DB_Int, Nullable: false},
+		{Name: "slug", Type: DB_NVarchar, Length: 189, Nullable: false},
+		{Name: "title", Type: DB_NVarchar, Length: 255, Nullable: false},
+		{Name: "data", Type: DB_Text, Nullable: false},
+		{Name: "org_id", Type: DB_BigInt, Nullable: false},
+		{Name: "created", Type: DB_DateTime, Nullable: false},
+		{Name: "updated", Type: DB_DateTime, Nullable: false},
+	},
+	Indices: []*Index{
+		{Cols: []string{"org_id"}},
+		{Cols: []string{"org_id", "slug"}, Type: UniqueIndex},
+	},
+}
+
 func addDashboardMigration(mg *Migrator) {
 	var dashboardV1 = Table{
 		Name: "dashboard",
@@ -51,25 +70,6 @@ func addDashboardMigration(mg *Migrator) {
 	addDropAllIndicesMigrations(mg, "v1", dashboardTagV1)
 	//------- rename table ------------------
 	addTableRenameMigration(mg, "dashboard", "dashboard_v1", "v1")
-
-	// dashboard v2
-	var dashboardV2 = Table{
-		Name: "dashboard",
-		Columns: []*Column{
-			{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
-			{Name: "version", Type: DB_Int, Nullable: false},
-			{Name: "slug", Type: DB_NVarchar, Length: 189, Nullable: false},
-			{Name: "title", Type: DB_NVarchar, Length: 255, Nullable: false},
-			{Name: "data", Type: DB_Text, Nullable: false},
-			{Name: "org_id", Type: DB_BigInt, Nullable: false},
-			{Name: "created", Type: DB_DateTime, Nullable: false},
-			{Name: "updated", Type: DB_DateTime, Nullable: false},
-		},
-		Indices: []*Index{
-			{Cols: []string{"org_id"}},
-			{Cols: []string{"org_id", "slug"}, Type: UniqueIndex},
-		},
-	}
 
 	// recreate table
 	mg.AddMigration("create dashboard v2", NewAddTableMigration(dashboardV2))
