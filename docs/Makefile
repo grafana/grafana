@@ -14,3 +14,4 @@ sources/panels-visualizations/query-transform-data/transform-data/index.md:
 	npx tsc ../scripts/docs/generate-transformations.ts
 	node ../scripts/docs/generate-transformations.js > $(CURDIR)/$@
 	npx prettier -w $(CURDIR)/$@
+	
