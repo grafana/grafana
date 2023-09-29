@@ -5,9 +5,10 @@ import uPlot from 'uplot';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
-import { CloseButton } from '../../../../../../public/app/core/components/CloseButton/CloseButton';
 import { useStyles2 } from '../../../themes/ThemeContext';
 import { UPlotConfigBuilder } from '../config/UPlotConfigBuilder';
+
+import { CloseButton } from './CloseButton';
 
 interface TooltipPlugin2Props {
   config: UPlotConfigBuilder;
