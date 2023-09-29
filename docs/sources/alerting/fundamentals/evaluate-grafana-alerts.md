@@ -30,7 +30,7 @@ Grafana managed alerts query the following backend data sources that have alerti
 
 - built-in data sources or those developed and maintained by Grafana: `Graphite`, `Prometheus`, `Loki`, `InfluxDB`, `Elasticsearch`,
   `Google Cloud Monitoring`, `Cloudwatch`, `Azure Monitor`, `MySQL`, `PostgreSQL`, `MSSQL`, `OpenTSDB`, `Oracle`, and `Azure Monitor`
-- community developed backend data sources with alerting enabled (`backend` and `alerting` properties are set in the [plugin.json](/developers/plugin-tools/reference-plugin-json))
+- community developed backend data sources with alerting enabled (`backend` and `alerting` properties are set in the [plugin.json](/developers/plugin-tools/reference-plugin-json)
 
 ### Metrics from the alerting engine
 

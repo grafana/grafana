@@ -82,6 +82,6 @@ Before we can accept your pull request, you need to [sign our CLA](https://grafa
 ## Where do I go from here?
 
 - Set up your [development environment](contribute/developer-guide.md).
-- Learn how to [contribute documentation](contribute/README.md).
-- Get started [developing plugins](https://grafana.com/docs/grafana/latest/developers/plugins/) for Grafana.
+- Learn how to [contribute to our documentation](contribute/documentation/README.md).
+- Get started [developing plugins](/developers/plugin-tools) for Grafana.
 - Look through the resources in the [contribute](contribute) folder.

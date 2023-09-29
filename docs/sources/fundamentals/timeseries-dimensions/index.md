@@ -104,8 +104,6 @@ In the case of SQL-like data sources, more than one numeric column can be select
 Additional technical information on tabular time series formats and how dimensions are extracted can be found in [the developer documentation on data frames as time series](/developers/plugin-tools/introduction/data-frames#data-frames-as-time-series).
 
 {{% docs/reference %}}
-[create-grafana-managed-rule]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting/alerting-rules/create-grafana-managed-rule#single-and-multi-dimensional-rule"
-[create-grafana-managed-rule]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/alerting/alerting-rules/create-grafana-managed-rule#single-and-multi-dimensional-rule"
 [time-series-databases]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/fundamentals/timeseries#time-series-databases"
 [time-series-databases]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/fundamentals/timeseries#time-series-databases"
 {{% /docs/reference %}}
