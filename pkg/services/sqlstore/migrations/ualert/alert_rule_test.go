@@ -2,12 +2,10 @@ package ualert
 
 import (
 	"encoding/json"
-	"fmt"
 	"strings"
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -211,135 +209,6 @@ func TestMakeAlertRule(t *testing.T) {
 				"Instance {{$mergedLabels.instance}} is down"
 		require.Equal(t, expected, ar.Annotations["message"])
 	})
-}
-
-func TestTokensToTmpl(t *testing.T) {
-	tokens := []Token{{Variable: "instance"}, {Literal: " is down"}}
-	assert.Equal(t, "{{instance}} is down", tokensToTmpl(tokens))
-}
-
-func TestTokensToTmplNewlines(t *testing.T) {
-	tokens := []Token{{Variable: "instance"}, {Literal: " is down\n"}, {Variable: "job"}, {Literal: " is down"}}
-	assert.Equal(t, "{{instance}} is down\n{{job}} is down", tokensToTmpl(tokens))
-}
-
-func TestMapLookupString(t *testing.T) {
-	cases := []struct {
-		name     string
-		input    string
-		expected string
-	}{
-		{
-			name:     "when there are no spaces",
-			input:    "instance",
-			expected: "$labels.instance",
-		},
-		{
-			name:     "when there are spaces",
-			input:    "instance with spaces",
-			expected: `index $labels "instance with spaces"`,
-		},
-		{
-			name:     "when there are quotes",
-			input:    `instance with "quotes"`,
-			expected: `index $labels "instance with \"quotes\""`,
-		},
-		{
-			name:     "when there are backslashes",
-			input:    `instance with \backslashes\`,
-			expected: `index $labels "instance with \\backslashes\\"`,
-		},
-	}
-
-	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
-			assert.Equal(t, tc.expected, mapLookupString(tc.input, "labels"))
-		})
-	}
-}
-
-func TestVariablesToMapLookups(t *testing.T) {
-	tokens := []Token{{Variable: "instance"}, {Literal: " is down"}}
-	expected := []Token{{Variable: "$labels.instance"}, {Literal: " is down"}}
-	assert.Equal(t, expected, variablesToMapLookups(tokens, "labels"))
-}
-
-func TestVariablesToMapLookupsSpace(t *testing.T) {
-	tokens := []Token{{Variable: "instance with spaces"}, {Literal: " is down"}}
-	expected := []Token{{Variable: "index $labels \"instance with spaces\""}, {Literal: " is down"}}
-	assert.Equal(t, expected, variablesToMapLookups(tokens, "labels"))
-}
-
-func TestEscapeLiterals(t *testing.T) {
-	tokens := []Token{{Literal: "literal with double braces {{}}"}}
-	expected := []Token{{Literal: "literal with double braces {{`{{`}}}}"}}
-	assert.Equal(t, expected, escapeLiterals(tokens))
-}
-
-func TestFormatTmpl(t *testing.T) {
-	cases := []struct {
-		name     string
-		input    string
-		expected string
-		vars     bool
-		error    bool
-	}{
-		{
-			name:     "template does not contain variables",
-			input:    "instance is down",
-			expected: "instance is down",
-			vars:     false,
-			error:    false,
-		},
-		{
-			name:     "template contains variable",
-			input:    "${instance} is down",
-			expected: withDeduplicateMap("{{$mergedLabels.instance}} is down"),
-			vars:     true,
-			error:    false,
-		},
-		{
-			name:     "template contains double braces",
-			input:    "{{CRITICAL}} instance is down",
-			expected: "{{`{{`}}CRITICAL}} instance is down",
-			vars:     false,
-			error:    false,
-		},
-		{
-			name:     "template contains newline",
-			input:    "CRITICAL\n${instance} is down",
-			expected: withDeduplicateMap("CRITICAL\n{{$mergedLabels.instance}} is down"),
-			vars:     true,
-			error:    false,
-		},
-		{
-			name:     "template fails to tokenize",
-			input:    "${{instance} is down",
-			expected: "",
-			error:    true,
-		},
-	}
-
-	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
-			tmpl, err := migrateTmpl(tc.input)
-
-			if tc.error {
-				require.Error(t, err)
-				return
-			}
-			require.NoError(t, err)
-
-			assert.Equal(t, tc.expected, tmpl)
-		})
-	}
-}
-
-func withDeduplicateMap(input string) string {
-	// hardcode function name to fail tests if it changes
-	funcName := "mergeLabelValues"
-
-	return fmt.Sprintf("{{- $mergedLabels := %s $values -}}\n", funcName) + input
 }
 
 func createTestDashAlert() dashAlert {
