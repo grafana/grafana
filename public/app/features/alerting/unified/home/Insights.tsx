@@ -36,7 +36,7 @@ import { getFiringCloudAlertsScene } from '../insights/mimir/rules/Firing';
 import { getInstancesByStateScene } from '../insights/mimir/rules/InstancesByState';
 import { getInstancesPercentageByStateScene } from '../insights/mimir/rules/InstancesPercentageByState';
 import { getMissedIterationsScene } from '../insights/mimir/rules/MissedIterationsScene';
-import { getMostFiredInstancesScene as getMostFiredCloudInstances } from '../insights/mimir/rules/MostFiredInstances';
+import { getMostFiredRulesScene } from '../insights/mimir/rules/MostFiredRules';
 import { getPendingCloudAlertsScene } from '../insights/mimir/rules/Pending';
 
 const ashDs = {
@@ -149,10 +149,10 @@ function getGrafanaAlertmanagerScenes() {
           }),
         }),
         new SceneFlexLayout({
-          children: [getGrafanaAlertmanagerNotificationsScene(THIS_WEEK_TIME_RANGE, cloudUsageDs, 'Notifications')],
-        }),
-        new SceneFlexLayout({
-          children: [getGrafanaAlertmanagerSilencesScene(LAST_WEEK_TIME_RANGE, cloudUsageDs, 'Silences')],
+          children: [
+            getGrafanaAlertmanagerNotificationsScene(THIS_WEEK_TIME_RANGE, cloudUsageDs, 'Notifications'),
+            getGrafanaAlertmanagerSilencesScene(LAST_WEEK_TIME_RANGE, cloudUsageDs, 'Silences'),
+          ],
         }),
       ],
     }),
@@ -206,7 +206,7 @@ function getMimirManagedRulesScenes() {
         }),
         new SceneFlexLayout({
           children: [
-            getMostFiredCloudInstances(THIS_WEEK_TIME_RANGE, grafanaCloudPromDs, 'Top 10 firing instance this week'),
+            getMostFiredRulesScene(THIS_WEEK_TIME_RANGE, grafanaCloudPromDs, 'Top 10 firing rules this week'),
             getFiringCloudAlertsScene(THIS_WEEK_TIME_RANGE, grafanaCloudPromDs, 'Firing instances'),
             getPendingCloudAlertsScene(THIS_WEEK_TIME_RANGE, grafanaCloudPromDs, 'Pending instances'),
           ],
