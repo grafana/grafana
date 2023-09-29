@@ -64,7 +64,7 @@ func TestContextHandler(t *testing.T) {
 	})
 
 	t.Run("should not set IsSignedIn on anonymous identity", func(t *testing.T) {
-		identity := &authn.Identity{IsAnonymous: true, OrgID: 1}
+		identity := &authn.Identity{ID: authn.AnonymousNamespaceID, OrgID: 1}
 		handler := contexthandler.ProvideService(
 			setting.NewCfg(),
 			tracing.InitializeTracerForTest(),
