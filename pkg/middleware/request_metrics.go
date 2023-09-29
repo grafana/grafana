@@ -59,7 +59,25 @@ func RequestMetrics(features featuremgmt.FeatureToggles, cfg *setting.Cfg, promR
 		histogramLabels,
 	)
 
-	promRegister.MustRegister(httpRequestsInFlight, httpRequestDurationHistogram)
+	nativeHTTPRequestDurationHistogram := prometheus.NewHistogramVec(
+		prometheus.HistogramOpts{
+			Namespace: "grafana",
+			Name:      "native_http_duration_seconds",
+			Help:      "Native Histogram of latency for HTTP requests.",
+			// the recommended default value from the prom_client
+			// https://github.com/prometheus/client_golang/blob/main/prometheus/histogram.go#L411
+			NativeHistogramBucketFactor:    1.1,
+			NativeHistogramZeroThreshold:   0,
+			NativeHistogramMaxBucketNumber: 100,
+		},
+		histogramLabels,
+	)
+
+	promRegister.MustRegister(httpRequestsInFlight, httpRequestDurationHistogram, nativeHTTPRequestDurationHistogram)
+
+	if features.IsEnabled(featuremgmt.FlagEnableNativeHTTPHistogram) {
+		promRegister.MustRegister(nativeHTTPRequestDurationHistogram)
+	}
 
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -108,16 +126,36 @@ func RequestMetrics(features featuremgmt.FeatureToggles, cfg *setting.Cfg, promR
 			histogram := httpRequestDurationHistogram.
 				WithLabelValues(labelValues...)
 
+			var nativeHistogram prometheus.Observer
+			if features.IsEnabled(featuremgmt.FlagEnableNativeHTTPHistogram) {
+				nativeHistogram = nativeHTTPRequestDurationHistogram.
+					WithLabelValues(labelValues...)
+			}
+
+			elapsedTime := time.Since(now).Seconds()
+
 			if traceID := tracing.TraceIDFromContext(r.Context(), true); traceID != "" {
 				// Need to type-convert the Observer to an
 				// ExemplarObserver. This will always work for a
 				// HistogramVec.
 				histogram.(prometheus.ExemplarObserver).ObserveWithExemplar(
-					time.Since(now).Seconds(), prometheus.Labels{"traceID": traceID},
+					elapsedTime, prometheus.Labels{"traceID": traceID},
 				)
+
+				if features.IsEnabled(featuremgmt.FlagEnableNativeHTTPHistogram) {
+					nativeHistogram.(prometheus.ExemplarObserver).ObserveWithExemplar(
+						elapsedTime, prometheus.Labels{"traceID": traceID},
+					)
+				}
+
 				return
 			}
-			histogram.Observe(time.Since(now).Seconds())
+
+			histogram.Observe(elapsedTime)
+
+			if features.IsEnabled(featuremgmt.FlagEnableNativeHTTPHistogram) {
+				nativeHistogram.Observe(elapsedTime)
+			}
 
 			switch {
 			case strings.HasPrefix(r.RequestURI, "/api/datasources/proxy"):
