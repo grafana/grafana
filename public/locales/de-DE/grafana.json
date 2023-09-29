@@ -896,6 +896,12 @@
     },
     "title": "Einstellungen"
   },
+  "snapshot": {
+    "external-badge": "",
+    "name-column-header": "",
+    "url-column-header": "",
+    "view-button": ""
+  },
   "tag-filter": {
     "loading": "Wird geladen ...",
     "no-tags": "Keine Tags gefunden",

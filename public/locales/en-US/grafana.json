@@ -896,6 +896,12 @@
     },
     "title": "Preferences"
   },
+  "snapshot": {
+    "external-badge": "External",
+    "name-column-header": "Name",
+    "url-column-header": "Snapshot url",
+    "view-button": "View"
+  },
   "tag-filter": {
     "loading": "Loading...",
     "no-tags": "No tags found",

@@ -896,6 +896,12 @@
     },
     "title": "Přęƒęřęŉčęş"
   },
+  "snapshot": {
+    "external-badge": "Ēχŧęřŉäľ",
+    "name-column-header": "Ńämę",
+    "url-column-header": "Ŝŉäpşĥőŧ ūřľ",
+    "view-button": "Vįęŵ"
+  },
   "tag-filter": {
     "loading": "Ŀőäđįŉģ...",
     "no-tags": "Ńő ŧäģş ƒőūŉđ",

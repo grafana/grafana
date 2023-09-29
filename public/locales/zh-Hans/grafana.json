@@ -891,6 +891,12 @@
     },
     "title": "首选项"
   },
+  "snapshot": {
+    "external-badge": "",
+    "name-column-header": "",
+    "url-column-header": "",
+    "view-button": ""
+  },
   "tag-filter": {
     "loading": "加载中...",
     "no-tags": "未找到标签",
