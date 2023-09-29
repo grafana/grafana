@@ -127,6 +127,12 @@ class UnthemedDashboardImport extends PureComponent<Props> {
   renderImportForm() {
     const styles = importStyles(this.props.theme);
 
+    const GcomDashboardsLink = () => (
+      <TextLink variant="bodySmall" href="https://grafana.com/grafana/dashboards/" external>
+        grafana.com/dashboards
+      </TextLink>
+    );
+
     return (
       <>
         <div className={styles.option}>
@@ -138,7 +144,10 @@ class UnthemedDashboardImport extends PureComponent<Props> {
           >
             <FileDropzoneDefaultChildren
               primaryText={t('dashboard-import.file-dropzone.primary-text', 'Upload dashboard JSON file')}
-              secondaryText={t('dashboard-import.file-dropzone.secondary-text', 'Drag and drop here or click to browse')}
+              secondaryText={t(
+                'dashboard-import.file-dropzone.secondary-text',
+                'Drag and drop here or click to browse'
+              )}
             />
           </FileDropzone>
         </div>
@@ -163,10 +172,17 @@ class UnthemedDashboardImport extends PureComponent<Props> {
                   placeholder={t('dashboard-import.gcom-field.placeholder', 'Grafana.com dashboard URL or ID')}
                   type="text"
                   {...register('gcomDashboard', {
-                    required: t('dashboard-import.gcom-field.validation-required', 'A Grafana dashboard URL or ID is required'),
+                    required: t(
+                      'dashboard-import.gcom-field.validation-required',
+                      'A Grafana dashboard URL or ID is required'
+                    ),
                     validate: validateGcomDashboard,
                   })}
-                  addonAfter={<Button type="submit"><Trans i18nKey="dashboard-import.gcom-field.load-button">Load</Trans></Button>}
+                  addonAfter={
+                    <Button type="submit">
+                      <Trans i18nKey="dashboard-import.gcom-field.load-button">Load</Trans>
+                    </Button>
+                  }
                 />
               </Field>
             )}
