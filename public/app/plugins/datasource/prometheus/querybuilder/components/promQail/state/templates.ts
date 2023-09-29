@@ -285,7 +285,6 @@ export function getTemplateSuggestions(metricName: string, metricType: string, l
             templateSuggestions = templateSuggestions.concat(
                 generalTemplates.map((t) => processTemplate(t, metricName, labels)).sort(() => Math.random() - 0.5).slice(0, 3)
             );
-            console.log("CCCCCCOUNTER");
             break;
         case "gauge":
             templateSuggestions = templateSuggestions.concat(
@@ -294,7 +293,6 @@ export function getTemplateSuggestions(metricName: string, metricType: string, l
             templateSuggestions = templateSuggestions.concat(
                 generalTemplates.map((t) => processTemplate(t, metricName, labels)).sort(() => Math.random() - 0.5).slice(0, 3)
             );
-            console.log("GGGGGGGAUGE");
             break;
         case "histogram":
             templateSuggestions = templateSuggestions.concat(
@@ -303,15 +301,12 @@ export function getTemplateSuggestions(metricName: string, metricType: string, l
             templateSuggestions = templateSuggestions.concat(
                 generalTemplates.map((t) => processTemplate(t, metricName, labels)).sort(() => Math.random() - 0.5).slice(0, 3)
             );
-            console.log("HHHHHHHHHISTOGRAM");
             break;
         default:
             templateSuggestions = templateSuggestions.concat(
                 generalTemplates.map((t) => processTemplate(t, metricName, labels)).sort(() => Math.random() - 0.5).slice(0, 5)
             );
-            console.log("DDDDDEFAULT");
             break;
     }
-    console.log("TTTTTTTTTTTT", templateSuggestions, "metricType: ", metricType);
     return templateSuggestions;
 }
