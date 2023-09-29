@@ -2,11 +2,13 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { Router } from 'react-router-dom';
+import { Observable } from 'rxjs';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { locationService } from '@grafana/runtime';
 
 import { GenAIButton, GenAIButtonProps } from './GenAIButton';
+import { useOpenAIStream } from './hooks';
 import { Role, isLLMPluginEnabled } from './utils';
 
 jest.mock('./utils', () => ({
@@ -125,6 +127,74 @@ describe('GenAIButton', () => {
     });
 
     it.skip('should call the onClick callback', async () => {
+      const onGenerate = jest.fn();
+      const onClick = jest.fn();
+      const messages = [{ content: 'Generate X', role: 'system' as Role }];
+      setup({ onGenerate, messages, temperature: 3, onClick });
+
+      const generateButton = await screen.findByRole('button');
+      await fireEvent.click(generateButton);
+
+      await waitFor(() => expect(onClick).toHaveBeenCalledTimes(1));
+    });
+  });
+
+  describe('when there is an error generating data', () => {
+    const setMessagesMock = jest.fn();
+    beforeEach(() => {
+      jest.mocked(isLLMPluginEnabled).mockResolvedValue(true);
+      jest.mocked(useOpenAIStream).mockReturnValue({
+        error: new Error('Something went wrong'),
+        isGenerating: false,
+        reply: '',
+        setMessages: setMessagesMock,
+        value: {
+          enabled: true,
+          stream: new Observable().subscribe(),
+        },
+      });
+    });
+
+    it('should renders error state text', async () => {
+      setup();
+
+      waitFor(async () => expect(await screen.findByText('Retry')).toBeInTheDocument());
+    });
+
+    it('should enable the button', async () => {
+      setup();
+      waitFor(async () => expect(await screen.findByRole('button')).toBeEnabled());
+    });
+
+    it('should retry when clicking', async () => {
+      const onGenerate = jest.fn();
+      const messages = [{ content: 'Generate X', role: 'system' as Role }];
+      const { getByText } = setup({ onGenerate, messages, temperature: 3 });
+      const generateButton = getByText('Retry');
+
+      await fireEvent.click(generateButton);
+
+      expect(setMessagesMock).toHaveBeenCalledTimes(1);
+      expect(setMessagesMock).toHaveBeenCalledWith(messages);
+    });
+
+    it('should display the error message as tooltip', async () => {
+      const { getByRole, getByTestId } = setup();
+
+      // Wait for the check to be completed
+      const button = getByRole('button');
+      await userEvent.hover(button);
+
+      const tooltip = await waitFor(() => getByTestId(selectors.components.Tooltip.container));
+      expect(tooltip).toBeVisible();
+
+      // The tooltip keeps interactive to be able to click the link
+      await userEvent.hover(tooltip);
+      expect(tooltip).toBeVisible();
+      expect(tooltip).toHaveTextContent('Something went wrong');
+    });
+
+    it('should call the onClick callback', async () => {
       const onGenerate = jest.fn();
       const onClick = jest.fn();
       const messages = [{ content: 'Generate X', role: 'system' as Role }];
