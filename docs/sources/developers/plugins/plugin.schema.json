@@ -329,10 +329,10 @@
     },
     "routes": {
       "type": "array",
-      "description": "For data source plugins. Proxy routes used for plugin authentication and adding headers to HTTP requests made by the plugin. For more information, refer to [Authentication for data source plugins](/docs/grafana/latest/developers/plugins/authentication/).",
+      "description": "For data source plugins. Proxy routes used for plugin authentication and adding headers to HTTP requests made by the plugin. For more information, refer to [Authentication for data source plugins](/developers/plugin-tools/create-a-plugin/extend-a-plugin/add-authentication-for-data-source-plugins).",
       "items": {
         "type": "object",
-        "description": "For data source plugins. Proxy routes used for plugin authentication and adding headers to HTTP requests made by the plugin. For more information, refer to [Authentication for data source plugins](/docs/grafana/latest/developers/plugins/authentication/).",
+        "description": "For data source plugins. Proxy routes used for plugin authentication and adding headers to HTTP requests made by the plugin. For more information, refer to [Authentication for data source plugins](/developers/plugin-tools/create-a-plugin/extend-a-plugin/add-authentication-for-data-source-plugins).",
         "additionalProperties": false,
         "properties": {
           "path": {

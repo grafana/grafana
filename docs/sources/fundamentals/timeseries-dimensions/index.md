@@ -106,6 +106,7 @@ Additional technical information on tabular time series formats and how dimensio
 {{% docs/reference %}}
 [create-grafana-managed-rule]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting/alerting-rules/create-grafana-managed-rule#single-and-multi-dimensional-rule"
 [create-grafana-managed-rule]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/alerting/alerting-rules/create-grafana-managed-rule#single-and-multi-dimensional-rule"
+
 [time-series-databases]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/fundamentals/timeseries#time-series-databases"
 [time-series-databases]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/fundamentals/timeseries#time-series-databases"
 {{% /docs/reference %}}
