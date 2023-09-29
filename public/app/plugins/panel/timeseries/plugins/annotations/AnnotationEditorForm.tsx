@@ -5,6 +5,7 @@ import useClickAway from 'react-use/lib/useClickAway';
 
 import { AnnotationEventUIModel, GrafanaTheme2 } from '@grafana/data';
 import { Button, Field, Form, HorizontalGroup, InputControl, TextArea, usePanelContext, useStyles2 } from '@grafana/ui';
+import { ADD_ANNOTATION_ID } from '@grafana/ui/src/components/uPlot/utils';
 import { TagFilter } from 'app/core/components/TagFilter/TagFilter';
 import { getAnnotationTags } from 'app/features/annotations/api';
 
@@ -28,7 +29,13 @@ export const AnnotationEditorForm = React.forwardRef<HTMLDivElement, AnnotationE
     const panelContext = usePanelContext();
     const clickAwayRef = useRef(null);
 
-    useClickAway(clickAwayRef, () => {
+    useClickAway(clickAwayRef, (e: Event) => {
+      // @TODO better check
+      const elem = e.target as Element;
+      console.log('clickAwayRef', elem);
+      if (elem.parentElement?.id === ADD_ANNOTATION_ID) {
+        return;
+      }
       onDismiss();
     });
 
@@ -128,7 +135,8 @@ export const AnnotationEditorForm = React.forwardRef<HTMLDivElement, AnnotationE
 
     return (
       <>
-        <div className={styles.backdrop} />
+        {/*@TODO revisit */}
+        {/*<div className={styles.backdrop} />*/}
         <div ref={clickAwayRef}>{form}</div>
       </>
     );
@@ -137,44 +145,42 @@ export const AnnotationEditorForm = React.forwardRef<HTMLDivElement, AnnotationE
 
 AnnotationEditorForm.displayName = 'AnnotationEditorForm';
 
-const getStyles = (theme: GrafanaTheme2) => {
-  return {
-    backdrop: css`
-      label: backdrop;
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      overflow: hidden;
-      z-index: ${theme.zIndex.navbarFixed};
-    `,
-    editorContainer: css`
-      position: absolute;
-      top: calc(100% + 10px);
-      transform: translate3d(-50%, 0, 0);
-    `,
-    editor: css`
-      background: ${theme.colors.background.primary};
-      box-shadow: ${theme.shadows.z3};
-      z-index: ${theme.zIndex.dropdown};
-      border: 1px solid ${theme.colors.border.weak};
-      border-radius: ${theme.shape.radius.default};
-      width: 460px;
-    `,
-    editorForm: css`
-      padding: ${theme.spacing(1)};
-    `,
-    header: css`
-      border-bottom: 1px solid ${theme.colors.border.weak};
-      padding: ${theme.spacing(1.5, 1)};
-    `,
-    title: css`
-      font-weight: ${theme.typography.fontWeightMedium};
-    `,
-    ts: css`
-      font-size: ${theme.typography.bodySmall.fontSize};
-      color: ${theme.colors.text.secondary};
-    `,
-  };
-};
+const getStyles = (theme: GrafanaTheme2) => ({
+  backdrop: css({
+    label: 'backdrop',
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    width: '100vw',
+    height: '100vh',
+    overflow: 'hidden',
+    zIndex: theme.zIndex.navbarFixed,
+  }),
+  editorContainer: css({
+    position: 'absolute',
+    top: 'calc(100% + 10px)',
+    transform: 'translate3d(-50%, 0, 0)',
+  }),
+  editor: css({
+    background: theme.colors.background.primary,
+    boxShadow: theme.shadows.z3,
+    zIndex: theme.zIndex.dropdown,
+    border: `1px solid ${theme.colors.border.weak}`,
+    borderRadius: theme.shape.radius.default,
+    width: 460,
+  }),
+  editorForm: css({
+    padding: theme.spacing(1),
+  }),
+  header: css({
+    borderBottom: `1px solid ${theme.colors.border.weak}`,
+    padding: theme.spacing(1.5, 1),
+  }),
+  title: css({
+    fontWeight: theme.typography.fontWeightMedium,
+  }),
+  ts: css({
+    fontSize: theme.typography.bodySmall.fontSize,
+    color: theme.colors.text.secondary,
+  }),
+});

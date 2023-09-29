@@ -422,5 +422,5 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(HeatmapPanel)
       category,
     });
   })
-  .setSuggestionsSupplier(new HeatmapSuggestionsSupplier());
-// .setDataSupport({ annotations: false });
+  .setSuggestionsSupplier(new HeatmapSuggestionsSupplier())
+  .setDataSupport({ annotations: true });

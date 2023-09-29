@@ -3,13 +3,12 @@ import React from 'react';
 
 import { Field, GrafanaTheme2, LinkModel } from '@grafana/data';
 import { Button, ButtonProps, DataLinkButton, HorizontalGroup, useStyles2 } from '@grafana/ui';
+import { ADD_ANNOTATION_ID } from '@grafana/ui/src/components/uPlot/utils';
 
 interface VizTooltipFooterProps {
   dataLinks: Array<LinkModel<Field>>;
   canAnnotate: boolean;
 }
-
-export const ADD_ANNOTATION_ID = 'add-annotation-button';
 
 export const VizTooltipFooter = ({ dataLinks, canAnnotate }: VizTooltipFooterProps) => {
   const styles = useStyles2(getStyles);
