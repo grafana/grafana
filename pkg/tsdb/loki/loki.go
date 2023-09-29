@@ -150,6 +150,10 @@ func callResource(ctx context.Context, req *backend.CallResourceRequest, sender 
 	respHeaders := map[string][]string{
 		"content-type": {"application/json"},
 	}
+	if len(req.GetHTTPHeaders().Get("X-Grafana-Cache")) > 0 {
+		respHeaders["X-Grafana-Cache"] = []string{"y"}
+		respHeaders["Cache-Control"] = []string{req.GetHTTPHeaders().Get("X-Grafana-Cache")}
+	}
 	if rawLokiResponse.Encoding != "" {
 		respHeaders["content-encoding"] = []string{rawLokiResponse.Encoding}
 	}

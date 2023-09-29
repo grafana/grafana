@@ -1,8 +1,7 @@
 import { chain, difference } from 'lodash';
-import { LRUCache } from 'lru-cache';
 import Prism, { Grammar } from 'prismjs';
 
-import { dateTime, AbsoluteTimeRange, LanguageProvider, HistoryItem, AbstractQuery } from '@grafana/data';
+import { dateTime, AbsoluteTimeRange, LanguageProvider, HistoryItem, AbstractQuery, DateTime } from '@grafana/data';
 import { CompletionItem, TypeaheadInput, TypeaheadOutput, CompletionItemGroup } from '@grafana/ui';
 import {
   extractLabelMatchers,
@@ -66,20 +65,20 @@ export function addHistoryMetadata(item: CompletionItem, history: LokiHistoryIte
   };
 }
 
+export const buildCacheHeaders = (durationInSeconds = 60) => {
+  return {
+    headers: {
+      'X-Grafana-Cache': `private, max-age=${durationInSeconds}`,
+    },
+  };
+};
+
 export default class LokiLanguageProvider extends LanguageProvider {
   labelKeys: string[];
   labelFetchTs: number;
   started = false;
   datasource: LokiDatasource;
   lookupsDisabled = false; // Dynamically set to true for big/slow instances
-
-  /**
-   *  Cache for labels of series. This is bit simplistic in the sense that it just counts responses each as a 1 and does
-   *  not account for different size of a response. If that is needed a `length` function can be added in the options.
-   *  10 as a max size is totally arbitrary right now.
-   */
-  private seriesCache = new LRUCache<string, Record<string, string[]>>({ max: 10 });
-  private labelsCache = new LRUCache<string, string[]>({ max: 10 });
 
   constructor(datasource: LokiDatasource, initialValues?: any) {
     super();
@@ -98,9 +97,9 @@ export default class LokiLanguageProvider extends LanguageProvider {
     return syntax;
   }
 
-  request = async (url: string, params?: any): Promise<any> => {
+  request = async (url: string, params?: Record<string, string | number>): Promise<any> => {
     try {
-      return await this.datasource.metadataRequest(url, params);
+      return await this.datasource.metadataRequest(url, params, buildCacheHeaders());
     } catch (error) {
       console.error(error);
     }
@@ -395,16 +394,11 @@ export default class LokiLanguageProvider extends LanguageProvider {
     const url = 'series';
     const { start, end } = this.datasource.getTimeRangeParams();
 
-    const cacheKey = this.generateCacheKey(url, start, end, interpolatedMatch);
-    let value = this.seriesCache.get(cacheKey);
-    if (!value) {
-      const params = { 'match[]': interpolatedMatch, start, end };
-      const data = await this.request(url, params);
-      const { values } = processLabels(data);
-      value = values;
-      this.seriesCache.set(cacheKey, value);
-    }
-    return value;
+    const params = { 'match[]': interpolatedMatch, start, end };
+    const data = await this.request(url, params);
+    const { values } = processLabels(data);
+
+    return values;
   };
 
   /**
@@ -442,18 +436,12 @@ export default class LokiLanguageProvider extends LanguageProvider {
     const rangeParams = this.datasource.getTimeRangeParams();
     const { start, end } = rangeParams;
 
-    const cacheKey = this.generateCacheKey(url, start, end, interpolatedKey);
     const params = { start, end };
 
-    let labelValues = this.labelsCache.get(cacheKey);
-    if (!labelValues) {
-      // Clear value when requesting new one. Empty object being truthy also makes sure we don't request twice.
-      this.labelsCache.set(cacheKey, []);
-      const res = await this.request(url, params);
-      if (Array.isArray(res)) {
-        labelValues = res.slice().sort();
-        this.labelsCache.set(cacheKey, labelValues);
-      }
+    let labelValues;
+    const res = await this.request(url, params);
+    if (Array.isArray(res)) {
+      labelValues = res.slice().sort();
     }
 
     return labelValues ?? [];
@@ -483,3 +471,7 @@ export default class LokiLanguageProvider extends LanguageProvider {
     };
   }
 }
+
+export const getLokiTime = (date: DateTime) => {
+  return Math.ceil(date.valueOf() / 1000);
+};

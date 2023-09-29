@@ -13,27 +13,28 @@ import {
   DataQueryResponse,
   DataSourceInstanceSettings,
   DataSourceWithLogsContextSupport,
-  DataSourceWithSupplementaryQueriesSupport,
-  SupplementaryQueryType,
   DataSourceWithQueryExportSupport,
   DataSourceWithQueryImportSupport,
+  DataSourceWithSupplementaryQueriesSupport,
+  DataSourceWithToggleableQueryFiltersSupport,
   FieldCache,
   FieldType,
+  incrRoundDn,
   Labels,
   LoadingState,
   LogLevel,
+  LogRowContextOptions,
   LogRowModel,
+  QueryFilterOptions,
   QueryFixAction,
   QueryHint,
   rangeUtil,
+  renderLegendFormat,
   ScopedVars,
   SupplementaryQueryOptions,
+  SupplementaryQueryType,
   TimeRange,
-  LogRowContextOptions,
-  DataSourceWithToggleableQueryFiltersSupport,
   ToggleFilterAction,
-  QueryFilterOptions,
-  renderLegendFormat,
 } from '@grafana/data';
 import { intervalToMs } from '@grafana/data/src/datetime/rangeutil';
 import { Duration } from '@grafana/lezer-logql';
@@ -46,9 +47,11 @@ import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_sr
 import { serializeParams } from '../../../core/utils/fetch';
 import { queryLogsSample, queryLogsVolume } from '../../../features/logs/logsModel';
 import { getLogLevelFromKey } from '../../../features/logs/utils';
+import { getClientCacheDurationInMinutes, roundSecToNextMin } from '../prometheus/language_utils';
 import { replaceVariables, returnVariables } from '../prometheus/querybuilder/shared/parsingUtils';
+import { PrometheusCacheLevel } from '../prometheus/types';
 
-import LanguageProvider from './LanguageProvider';
+import LanguageProvider, { buildCacheHeaders, getLokiTime } from './LanguageProvider';
 import { LiveStreams, LokiLiveTarget } from './LiveStreams';
 import { LogContextProvider } from './LogContextProvider';
 import { transformBackendResult } from './backendResultTransformer';
@@ -57,19 +60,19 @@ import { placeHolderScopedVars } from './components/monaco-query-field/monaco-co
 import { escapeLabelValueInSelector, isRegexSelector } from './languageUtils';
 import { labelNamesRegex, labelValuesRegex } from './migrations/variableQueryMigrations';
 import {
+  addFilterAsLabelFilter,
   addLabelFormatToQuery,
   addLabelToQuery,
+  addLineFilter,
   addNoPipelineErrorToQuery,
   addParserToQuery,
-  removeCommentsFromQuery,
-  addFilterAsLabelFilter,
-  getParserPositions,
-  toLabelFilter,
-  addLineFilter,
   findLastPosition,
   getLabelFilterPositions,
+  getParserPositions,
   queryHasFilter,
+  removeCommentsFromQuery,
   removeLabelFromQuery,
+  toLabelFilter,
 } from './modifyQuery';
 import { getQueryHints } from './queryHints';
 import { runSplitQuery } from './querySplitting';
@@ -396,7 +399,9 @@ export class LokiDatasource
 
   getTimeRangeParams() {
     const timeRange = this.getTimeRange();
-    return { start: timeRange.from.valueOf() * NS_IN_MS, end: timeRange.to.valueOf() * NS_IN_MS };
+
+    //@todo remove prometheus cache levels?
+    return getRangeSnapInterval(PrometheusCacheLevel.Low, timeRange);
   }
 
   async importFromAbstractQueries(abstractQueries: AbstractQuery[]): Promise<LokiQuery[]> {
@@ -468,7 +473,7 @@ export class LokiDatasource
             start: start,
             end: end,
           },
-          { showErrorAlert: false }
+          { showErrorAlert: false, ...buildCacheHeaders() }
         );
 
         statsForAll = {
@@ -980,4 +985,43 @@ function getLogLevelFromLabels(labels: Labels): LogLevel {
     }
   }
   return levelLabel ? getLogLevelFromKey(labels[levelLabel]) : LogLevel.unknown;
+}
+
+/**
+ * Calculates new interval "snapped" to the closest Nth minute, depending on cache level
+ * @param cacheLevel
+ * @param range
+ */
+export function getRangeSnapInterval(
+  cacheLevel: PrometheusCacheLevel,
+  range: TimeRange
+): { start: number; end: number } {
+  // Don't round the range if we're not caching
+  if (cacheLevel === PrometheusCacheLevel.None) {
+    return {
+      start: getLokiTime(range.from),
+      end: getLokiTime(range.to),
+    };
+  }
+  // Otherwise round down to the nearest nth minute for the start time
+  const startTime = getLokiTime(range.from);
+  const startTimeRoundedDown = incrRoundDn(startTime, getClientCacheDurationInMinutes(cacheLevel) * 60);
+
+  // And round up to the nearest nth minute for the end time
+  const endTime = getLokiTime(range.to);
+  const endTimeRoundedUp = roundSecToNextMin(endTime, getClientCacheDurationInMinutes(cacheLevel)) * 60;
+
+  // If the interval was too short, we could have rounded both start and end to the same time, if so let's add one step to the end
+  if (startTimeRoundedDown === endTimeRoundedUp) {
+    const endTimePlusOneStep = endTimeRoundedUp + getClientCacheDurationInMinutes(cacheLevel) * 60;
+    return {
+      start: startTimeRoundedDown * 1000 * NS_IN_MS,
+      end: endTimePlusOneStep * 1000 * NS_IN_MS,
+    };
+  }
+
+  const start = startTimeRoundedDown * 1000 * NS_IN_MS;
+  const end = endTimeRoundedUp * 1000 * NS_IN_MS;
+
+  return { start, end };
 }
