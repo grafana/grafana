@@ -116,3 +116,4 @@ idForwarding,experimental,@grafana/grafana-authnz-team,true,false,false,false
 cloudWatchWildCardDimensionValues,GA,@grafana/aws-datasources,false,false,false,false
 externalServiceAccounts,experimental,@grafana/grafana-authnz-team,true,false,false,false
 alertingModifiedExport,experimental,@grafana/alerting-squad,false,false,false,false
+panelMonitoring,experimental,@grafana/dataviz-squad,false,false,false,true

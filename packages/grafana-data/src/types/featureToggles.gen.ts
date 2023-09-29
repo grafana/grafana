@@ -135,4 +135,5 @@ export interface FeatureToggles {
   cloudWatchWildCardDimensionValues?: boolean;
   externalServiceAccounts?: boolean;
   alertingModifiedExport?: boolean;
+  panelMonitoring?: boolean;
 }

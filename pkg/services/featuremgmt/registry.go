@@ -816,5 +816,12 @@ var (
 			FrontendOnly: false,
 			Owner:        grafanaAlertingSquad,
 		},
+		{
+			Name:         "panelMonitoring",
+			Description:  "Enables panel monitoring through logs and measurements",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDatavizSquad,
+			FrontendOnly: true,
+		},
 	}
 )

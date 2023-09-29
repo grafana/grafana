@@ -474,4 +474,8 @@ const (
 	// FlagAlertingModifiedExport
 	// Enables using UI for provisioned rules modification and export
 	FlagAlertingModifiedExport = "alertingModifiedExport"
+
+	// FlagPanelMonitoring
+	// Enables panel monitoring through logs and measurements
+	FlagPanelMonitoring = "panelMonitoring"
 )

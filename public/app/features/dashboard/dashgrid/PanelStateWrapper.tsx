@@ -30,6 +30,7 @@ import {
   SeriesVisibilityChangeMode,
   AdHocFilterItem,
 } from '@grafana/ui';
+import config from 'app/core/config';
 import { profiler } from 'app/core/profiler';
 import { applyPanelTimeOverrides } from 'app/features/dashboard/utils/panel';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
@@ -513,14 +514,16 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
             onChangeTimeRange={this.onChangeTimeRange}
             eventBus={dashboard.events}
           />
-          <PanelPerformanceMonitor
-            isInPanelEdit={dashboard.panelInEdit?.id === panel.id}
-            panelType={plugin.meta.id}
-            panelId={panel.id}
-            panelTitle={panel.title}
-            panelOptions={panelOptions}
-            panelFieldConfig={panel.fieldConfig}
-          />
+          {config.featureToggles.panelMonitoring && (
+            <PanelPerformanceMonitor
+              isInPanelEdit={dashboard.panelInEdit?.id === panel.id}
+              panelType={plugin.meta.id}
+              panelId={panel.id}
+              panelTitle={panel.title}
+              panelOptions={panelOptions}
+              panelFieldConfig={panel.fieldConfig}
+            />
+          )}
         </PanelContextProvider>
       </>
     );
