@@ -16,11 +16,6 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 )
 
-// GroupName is the group name for this API.
-const GroupName = "playlist.x.grafana.com"
-const VersionID = "v0alpha1" //
-const APIVersion = GroupName + "/" + VersionID
-
 var _ grafanaapiserver.APIGroupBuilder = (*PlaylistAPIBuilder)(nil)
 
 // This is used just so wire has something unique to return
@@ -49,7 +44,8 @@ func (b *PlaylistAPIBuilder) GetAPIGroupInfo(
 	codecs serializer.CodecFactory, // pointer?
 	optsGetter generic.RESTOptionsGetter,
 ) (*genericapiserver.APIGroupInfo, error) {
-	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(GroupName, scheme, metav1.ParameterCodec, codecs)
+	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(
+		playlist.GroupName, scheme, metav1.ParameterCodec, codecs)
 	storage := map[string]rest.Storage{}
 
 	legacyStore := newLegacyStorage(b.service)
@@ -64,7 +60,7 @@ func (b *PlaylistAPIBuilder) GetAPIGroupInfo(
 		storage["playlists"] = grafanarest.NewDualWriter(legacyStore, store)
 	}
 
-	apiGroupInfo.VersionedResourcesStorageMap[VersionID] = storage
+	apiGroupInfo.VersionedResourcesStorageMap[playlist.VersionID] = storage
 	return &apiGroupInfo, nil
 }
 
@@ -78,7 +74,7 @@ func (b *PlaylistAPIBuilder) GetOpenAPIPostProcessor() func(*spec3.OpenAPI) (*sp
 }
 
 // SchemeGroupVersion is group version used to register these objects
-var SchemeGroupVersion = schema.GroupVersion{Group: GroupName, Version: VersionID}
+var SchemeGroupVersion = schema.GroupVersion{Group: playlist.GroupName, Version: playlist.VersionID}
 
 // Resource takes an unqualified resource and returns a Group qualified GroupResource
 func Resource(resource string) schema.GroupResource {

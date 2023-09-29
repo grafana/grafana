@@ -2,7 +2,6 @@ package v0alpha1
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/grafana/grafana/pkg/kinds/playlist"
 	grafanarequest "github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
@@ -76,11 +75,20 @@ func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListO
 	list := &playlist.PlaylistList{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "PlaylistList",
-			APIVersion: APIVersion,
+			APIVersion: playlist.APIVersion,
 		},
 	}
 	for _, v := range res {
 		p := playlistsvc.ConvertToK8sResource(v, nil)
+		if true { // Only if not table view
+			p, err = s.service.Get(ctx, &playlistsvc.GetPlaylistByUidQuery{
+				UID:   v.UID,
+				OrgId: orgId,
+			})
+			if err != nil {
+				return nil, err
+			}
+		}
 		list.Items = append(list.Items, *p)
 	}
 	if len(list.Items) == limit {
@@ -95,16 +103,8 @@ func (s *legacyStorage) Get(ctx context.Context, name string, options *metav1.Ge
 		orgId = 1 // TODO: default org ID 1 for now
 	}
 
-	p, err := s.service.Get(ctx, &playlistsvc.GetPlaylistByUidQuery{
+	return s.service.Get(ctx, &playlistsvc.GetPlaylistByUidQuery{
 		UID:   name,
 		OrgId: orgId,
 	})
-	if err != nil {
-		return nil, err
-	}
-	if p == nil {
-		return nil, fmt.Errorf("not found?")
-	}
-	p.APIVersion = APIVersion
-	return p, nil
 }
