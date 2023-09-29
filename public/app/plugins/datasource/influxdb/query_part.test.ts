@@ -1,4 +1,4 @@
-import queryPart from '../query_part';
+import queryPart from './query_part';
 
 describe('InfluxQueryPart', () => {
   describe('series with measurement only', () => {
