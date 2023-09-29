@@ -148,7 +148,7 @@ func TestExportFromPayload(t *testing.T) {
 		t.Log(string(response.Body()))
 
 		require.Equal(t, 200, response.Status())
-		require.Equal(t, string(expectedResponse), string(response.Body()))
+		require.JSONEq(t, string(expectedResponse), string(response.Body()))
 	})
 
 	t.Run("yaml body content is as expected", func(t *testing.T) {
