@@ -18,7 +18,7 @@ export const validateDashboardJson = (json: string) => {
         return t('dashboard.validation.tags-expected-strings', 'tags expected array of strings');
       }
     } else {
-      return t('utils.tags-expected-array', 'tags expected array');
+      return t('dashboard.validation.tags-expected-array', 'tags expected array');
     }
   }
   return true;
