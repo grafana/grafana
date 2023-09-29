@@ -1,0 +1,12 @@
+apiVersion: playlists.grafana.com/v0alpha1
+kind: Playlist
+metadata:
+  generateName: x # anything is ok here... except yes or true -- they become boolean
+spec:
+  name: sample playlist
+  interval: 5m
+  items:
+  - type: dashboard_by_tag
+    value: panel-tests
+  - type: dashboard_by_uid
+    value: vmie2cmWz # dashboard from devenv
