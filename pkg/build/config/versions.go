@@ -154,7 +154,7 @@ var Versions = VersionMap{
 			Architectures: []Architecture{
 				ArchAMD64,
 				ArchARM64,
-				ArchARMv7,
+				// ArchARMv7,
 			},
 			Distribution: []Distribution{
 				Alpine,
