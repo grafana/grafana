@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import React, { useEffect } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Button, Spinner, useStyles2, Link, Tooltip } from '@grafana/ui';
@@ -41,10 +41,12 @@ export const GenAIButton = ({
     setMessages(messages);
   };
 
-  // Todo: Consider other options for `"` sanitation
-  if (isGenerating) {
-    onGenerate(reply.replace(/^"|"$/g, ''));
-  }
+  useEffect(() => {
+    // Todo: Consider other options for `"` sanitation
+    if (isGenerating && reply) {
+      onGenerate(reply.replace(/^"|"$/g, ''));
+    }
+  }, [isGenerating, reply, onGenerate]);
 
   const getIcon = () => {
     if (error || !value?.enabled) {
