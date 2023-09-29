@@ -288,6 +288,16 @@ function handleAggregation(expr: string, node: SyntaxNode, context: Context) {
 
   const body = node.getChild(FunctionCallBody);
   const callArgs = body!.getChild(FunctionCallArgs);
+  const callArgsExprChild = callArgs?.getChild(Expr);
+  const binaryExpressionWithinAggregationArgs = callArgsExprChild?.getChild(BinaryExpr);
+
+  if (binaryExpressionWithinAggregationArgs) {
+    context.errors.push({
+      text: 'Query parsing is ambiguous.',
+      from: binaryExpressionWithinAggregationArgs.from,
+      to: binaryExpressionWithinAggregationArgs.to,
+    });
+  }
 
   const op: QueryBuilderOperation = { id: funcName, params: [] };
   visQuery.operations.unshift(op);
@@ -318,10 +328,23 @@ function updateFunctionArgs(expr: string, node: SyntaxNode | null, context: Cont
     // FunctionCallArgs are nested bit weirdly as mentioned so we have to go one deeper in this case.
     case FunctionCallArgs: {
       let child = node.firstChild;
+
       while (child) {
+        const callArgsExprChild = child.getChild(Expr);
+        const binaryExpressionWithinFunctionArgs = callArgsExprChild?.getChild(BinaryExpr);
+
+        if (binaryExpressionWithinFunctionArgs) {
+          context.errors.push({
+            text: 'Query parsing is ambiguous.',
+            from: binaryExpressionWithinFunctionArgs.from,
+            to: binaryExpressionWithinFunctionArgs.to,
+          });
+        }
+
         updateFunctionArgs(expr, child, context, op);
         child = child.nextSibling;
       }
+
       break;
     }
 

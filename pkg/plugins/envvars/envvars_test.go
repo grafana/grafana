@@ -9,9 +9,9 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/auth"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
-	"github.com/grafana/grafana/pkg/plugins/oauth"
 	"github.com/grafana/grafana/pkg/plugins/plugindef"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
@@ -313,7 +313,7 @@ func TestInitializer_oauthEnvVars(t *testing.T) {
 				ID:                          "test",
 				ExternalServiceRegistration: &plugindef.ExternalServiceRegistration{},
 			},
-			ExternalService: &oauth.ExternalService{
+			ExternalService: &auth.ExternalService{
 				ClientID:     "clientID",
 				ClientSecret: "clientSecret",
 				PrivateKey:   "privatePem",

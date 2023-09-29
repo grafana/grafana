@@ -486,6 +486,10 @@ filters = saml.auth:debug
 
 Following are common issues found in configuring SAML authentication in Grafana and how to resolve them.
 
+### Infinite redirect loop / User gets redirected to the login page after successful login on the IdP side
+
+If you experience an infinite redirect loop when `auto_login = true` or redirected to the login page after successful login, it is likely that the `grafana_session` cookie's SameSite setting is set to `Strict`. This setting prevents the `grafana_session` cookie from being sent to Grafana during cross-site requests. To resolve this issue, set the `security.cookie_samesite` option to `Lax` in the Grafana configuration file.
+
 ### SAML authentication fails with error:
 
 - `asn1: structure error: tags don't match`
