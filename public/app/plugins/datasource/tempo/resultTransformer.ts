@@ -12,7 +12,6 @@ import {
   TraceLog,
   TraceSpanReference,
   TraceSpanRow,
-  dateTimeFormat,
   FieldDTO,
   createDataFrame,
   getDisplayProcessor,
@@ -539,7 +538,7 @@ export function createTableFrameFromSearch(data: TraceSearchMetadata[], instance
       },
       { name: 'traceService', type: FieldType.string, config: { displayNameFromDS: 'Trace service' }, values: [] },
       { name: 'traceName', type: FieldType.string, config: { displayNameFromDS: 'Trace name' }, values: [] },
-      { name: 'startTime', type: FieldType.string, config: { displayNameFromDS: 'Start time' }, values: [] },
+      { name: 'startTime', type: FieldType.time, config: { displayNameFromDS: 'Start time' }, values: [] },
       {
         name: 'traceDuration',
         type: FieldType.number,
@@ -567,12 +566,9 @@ export function createTableFrameFromSearch(data: TraceSearchMetadata[], instance
 }
 
 function transformToTraceData(data: TraceSearchMetadata) {
-  const traceStartTime = parseInt(data.startTimeUnixNano!, 10) / 1000000;
-  const startTime = !isNaN(traceStartTime) ? dateTimeFormat(traceStartTime) : '';
-
   return {
     traceID: data.traceID,
-    startTime,
+    startTime: parseInt(data.startTimeUnixNano!, 10) / 1000000,
     traceDuration: data.durationMs,
     traceService: data.rootServiceName || '',
     traceName: data.rootTraceName || '',
@@ -614,7 +610,7 @@ export function createTableFrameFromTraceQlQuery(
       },
       {
         name: 'startTime',
-        type: FieldType.string,
+        type: FieldType.time,
         config: {
           displayNameFromDS: 'Start time',
           custom: {
@@ -749,7 +745,6 @@ const traceSubFrame = (
       {
         name: 'spanStartTime',
         type: FieldType.string,
-        values: [],
         config: {
           displayNameFromDS: 'Start time',
           custom: {
@@ -798,19 +793,16 @@ interface TraceTableData {
   [key: string]: string | number | boolean | undefined; // dynamic attribute name
   traceID?: string;
   spanID?: string;
-  startTime?: string;
+  startTime?: number;
   name?: string;
   traceDuration?: number;
 }
 
 function transformSpanToTraceData(span: Span, spanSet: Spanset, traceID: string): TraceTableData {
-  const spanStartTimeUnixMs = parseInt(span.startTimeUnixNano, 10) / 1000000;
-  let spanStartTime = dateTimeFormat(spanStartTimeUnixMs);
-
   const data: TraceTableData = {
     traceIdHidden: traceID,
     spanID: span.spanID,
-    spanStartTime,
+    spanStartTime: parseInt(span.startTimeUnixNano, 10) / 1000000,
     duration: parseInt(span.durationNanos, 10),
     name: span.name,
   };

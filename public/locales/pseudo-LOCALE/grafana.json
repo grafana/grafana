@@ -215,6 +215,12 @@
       "unmark-favorite": "Ůŉmäřĸ äş ƒävőřįŧę"
     }
   },
+  "dashboard-settings": {
+    "json-editor": {
+      "save-button": "Ŝävę čĥäŉģęş",
+      "subtitle": "Ŧĥę ĴŜØŃ mőđęľ þęľőŵ įş ŧĥę đäŧä şŧřūčŧūřę ŧĥäŧ đęƒįŉęş ŧĥę đäşĥþőäřđ. Ŧĥįş įŉčľūđęş đäşĥþőäřđ şęŧŧįŉģş, päŉęľ şęŧŧįŉģş, ľäyőūŧ, qūęřįęş, äŉđ şő őŉ."
+    }
+  },
   "data-source-picker": {
     "open-advanced-button": "Øpęŉ äđväŉčęđ đäŧä şőūřčę pįčĸęř"
   },
@@ -225,6 +231,11 @@
   },
   "explore": {
     "add-to-dashboard": "Åđđ ŧő đäşĥþőäřđ",
+    "table": {
+      "no-data": "0 şęřįęş řęŧūřŉęđ",
+      "title": "Ŧäþľę",
+      "title-with-name": "Ŧäþľę - {{name}}"
+    },
     "toolbar": {
       "aria-label": "Ēχpľőřę ŧőőľþäř",
       "copy-shortened-link": "Cőpy şĥőřŧęŉęđ ľįŉĸ",
@@ -670,6 +681,22 @@
       "title": "Ŧĥęřę äřę ŉő pľäyľįşŧş čřęäŧęđ yęŧ"
     }
   },
+  "profile": {
+    "change-password": {
+      "cancel-button": "Cäŉčęľ",
+      "cannot-change-password-message": "Päşşŵőřđ čäŉŉőŧ þę čĥäŉģęđ ĥęřę.",
+      "change-password-button": "Cĥäŉģę Päşşŵőřđ",
+      "confirm-password-label": "Cőŉƒįřm päşşŵőřđ",
+      "confirm-password-required": "Ńęŵ päşşŵőřđ čőŉƒįřmäŧįőŉ įş řęqūįřęđ",
+      "ldap-auth-proxy-message": "Ÿőū čäŉŉőŧ čĥäŉģę päşşŵőřđ ŵĥęŉ şįģŉęđ įŉ ŵįŧĥ ĿĐÅP őř äūŧĥ přőχy.",
+      "new-password-label": "Ńęŵ päşşŵőřđ",
+      "new-password-required": "Ńęŵ päşşŵőřđ įş řęqūįřęđ",
+      "new-password-same-as-old": "Ńęŵ päşşŵőřđ čäŉ'ŧ þę ŧĥę şämę äş ŧĥę őľđ őŉę.",
+      "old-password-label": "Øľđ päşşŵőřđ",
+      "old-password-required": "Øľđ päşşŵőřđ įş řęqūįřęđ",
+      "passwords-must-match": "Päşşŵőřđş mūşŧ mäŧčĥ"
+    }
+  },
   "refresh-picker": {
     "aria-label": {
       "choose-interval": "Åūŧő řęƒřęşĥ ŧūřŉęđ őƒƒ. Cĥőőşę řęƒřęşĥ ŧįmę įŉŧęřväľ",
@@ -749,6 +776,7 @@
       "time-range-description": "Ŧřäŉşƒőřmş ŧĥę čūřřęŉŧ řęľäŧįvę ŧįmę řäŉģę ŧő äŉ äþşőľūŧę ŧįmę řäŉģę"
     },
     "export": {
+      "back-button": "ßäčĸ ŧő ęχpőřŧ čőŉƒįģ",
       "cancel-button": "Cäŉčęľ",
       "info-text": "Ēχpőřŧ ŧĥįş đäşĥþőäřđ.",
       "save-button": "Ŝävę ŧő ƒįľę",
