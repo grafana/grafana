@@ -816,7 +816,7 @@ Here is the result after applying the Merge transformation.
 | 2020-07-07 11:34:20 | node    | 15     | 25260122  |
 | 2020-07-07 11:24:20 | postgre | 5      | 123001233 |
 
-### Oraganize
+### Oraganize fields
 
 Use this transformation to rename, reorder, or hide fields returned by the query.
 

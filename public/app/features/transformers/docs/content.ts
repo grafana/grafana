@@ -746,7 +746,7 @@ export const transformationDocsContent: Record<string, TransformationInfo> = {
     ],
   },
   organize: {
-    name: 'Oraganize',
+    name: 'Oraganize fields',
     helperDocs: `
   Use this transformation to rename, reorder, or hide fields returned by the query.
 
