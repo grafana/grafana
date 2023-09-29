@@ -1,5 +1,5 @@
 import { cx } from '@emotion/css';
-import React, { ChangeEvent, useEffect, useReducer, useState } from 'react';
+import React, { ChangeEvent, useEffect, useMemo, useReducer, useState } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { config } from '@grafana/runtime';
@@ -34,26 +34,29 @@ export const AzureCredentialsForm = (props: Props) => {
   const [subscriptions, setSubscriptions] = useState<Array<SelectableValue<string>>>([]);
   const [loadSubscriptionsClicked, onLoadSubscriptions] = useReducer((val) => val + 1, 0);
 
-  const authTypeOptions: Array<SelectableValue<AzureAuthType>> = [
-    {
-      value: 'clientsecret',
-      label: 'App Registration',
-    },
-  ];
+  const authTypeOptions = useMemo(() => {
+    let opts: Array<SelectableValue<AzureAuthType>> = [
+      {
+        value: 'clientsecret',
+        label: 'App Registration',
+      },
+    ];
 
-  if (managedIdentityEnabled) {
-    authTypeOptions.push({
-      value: 'msi',
-      label: 'Managed Identity',
-    });
-  }
+    if (managedIdentityEnabled) {
+      opts.push({
+        value: 'msi',
+        label: 'Managed Identity',
+      });
+    }
 
-  if (workloadIdentityEnabled) {
-    authTypeOptions.push({
-      value: 'workloadidentity',
-      label: 'Workload Identity',
-    });
-  }
+    if (workloadIdentityEnabled) {
+      opts.push({
+        value: 'workloadidentity',
+        label: 'Workload Identity',
+      });
+    }
+    return opts;
+  }, [managedIdentityEnabled, workloadIdentityEnabled]);
 
   useEffect(() => {
     if (!getSubscriptions || !hasRequiredFields) {
@@ -175,7 +178,7 @@ export const AzureCredentialsForm = (props: Props) => {
 
   return (
     <div className="gf-form-group">
-      {(managedIdentityEnabled || workloadIdentityEnabled) && (
+      {authTypeOptions.length > 1 && (
         <div className="gf-form-inline">
           <div className="gf-form">
             <InlineFormLabel className="width-12" tooltip="Choose the type of authentication to Azure services">

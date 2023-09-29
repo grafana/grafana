@@ -1,4 +1,4 @@
-import React, { ChangeEvent } from 'react';
+import React, { ChangeEvent, useMemo } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { ConfigSection } from '@grafana/experimental';
@@ -26,26 +26,31 @@ export const AzureCredentialsForm = (props: Props) => {
     managedIdentityEnabled,
     workloadIdentityEnabled,
   } = props;
-  const authTypeOptions: Array<SelectableValue<AzureAuthType>> = [
-    {
-      value: 'clientsecret',
-      label: 'App Registration',
-    },
-  ];
 
-  if (managedIdentityEnabled) {
-    authTypeOptions.push({
-      value: 'msi',
-      label: 'Managed Identity',
-    });
-  }
+  const authTypeOptions = useMemo(() => {
+    let opts: Array<SelectableValue<AzureAuthType>> = [
+      {
+        value: 'clientsecret',
+        label: 'App Registration',
+      },
+    ];
 
-  if (workloadIdentityEnabled) {
-    authTypeOptions.push({
-      value: 'workloadidentity',
-      label: 'Workload Identity',
-    });
-  }
+    if (managedIdentityEnabled) {
+      opts.push({
+        value: 'msi',
+        label: 'Managed Identity',
+      });
+    }
+
+    if (workloadIdentityEnabled) {
+      opts.push({
+        value: 'workloadidentity',
+        label: 'Workload Identity',
+      });
+    }
+
+    return opts;
+  }, [managedIdentityEnabled, workloadIdentityEnabled]);
 
   const onAuthTypeChange = (selected: SelectableValue<AzureAuthType>) => {
     const defaultAuthType = managedIdentityEnabled
@@ -112,7 +117,7 @@ export const AzureCredentialsForm = (props: Props) => {
 
   return (
     <ConfigSection title="Authentication">
-      {(managedIdentityEnabled || workloadIdentityEnabled) && (
+      {authTypeOptions.length > 1 && (
         <Field
           label="Authentication"
           description="Choose the type of authentication to Azure services"
