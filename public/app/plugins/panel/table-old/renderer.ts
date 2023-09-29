@@ -118,11 +118,8 @@ export class TableRenderer {
         }
 
         // if is an epoch (numeric string and len > 12)
-        if (isString(v) && v.length > 12) {
-          const parsedString = parseInt(v, 10);
-          if (!isNaN(parsedString)) {
-            v = parsedString;
-          }
+        if (isString(v) && !isNaN(v as any) && v.length > 12) {
+          v = parseInt(v, 10);
         }
 
         if (!column.style.dateFormat) {
