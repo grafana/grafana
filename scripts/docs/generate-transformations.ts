@@ -293,10 +293,6 @@ ${transformationDocsContent['timeSeriesTable'].helperDocs}
 [feature toggle]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana#feature_toggles"
 [feature toggle]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana#feature_toggles"
 {{% /docs/reference %}}
-
-{{% admonition type="note" %}}
-This transformation is available in Grafana 10.1+ as an alpha feature.
-{{% /admonition %}}
 `;
 
 console.log(template);
