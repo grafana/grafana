@@ -60,7 +60,7 @@ export const GenAIButton = ({
 
   const getTooltipContent = () => {
     if (error) {
-      return error.message;
+      return `Unexpected error: ${error.message}`;
     }
     if (!value?.enabled) {
       return (

@@ -3,6 +3,7 @@ import { useAsync } from 'react-use';
 import { Subscription } from 'rxjs';
 
 import { logError } from '@grafana/runtime';
+import { useAppNotification } from 'app/core/copy/appNotification';
 
 import { openai } from './llms';
 import { isLLMPluginEnabled, OPEN_AI_MODEL } from './utils';
@@ -37,6 +38,7 @@ export function useOpenAIStream(
   const [reply, setReply] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<Error>();
+  const { error: notifyError } = useAppNotification();
 
   const { error: asyncError, value } = useAsync(async () => {
     // Check if the LLM plugin is enabled and configured.
@@ -76,8 +78,8 @@ export function useOpenAIStream(
         error: (e: Error) => {
           setIsGenerating(false);
           setMessages([]);
-          // The error returned by the LLM plugin is an string, so we can't format it
-          setError(new Error(`OpenAI Error: ${e.message}`));
+          setError(e);
+          notifyError('OpenAI Error', `${e.message}`);
           logError(e, { messages: JSON.stringify(messages), model, temperature: String(temperature) });
         },
         complete: () => {
