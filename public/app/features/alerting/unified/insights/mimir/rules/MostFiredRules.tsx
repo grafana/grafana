@@ -11,6 +11,8 @@ export function getMostFiredRulesScene(timeRange: SceneTimeRange, datasource: Da
         refId: 'A',
         expr: 'topk(10, sum by(alertname) (ALERTS{alertstate="firing"}))',
         instant: true,
+        range: false,
+        format: 'table',
       },
     ],
 
@@ -28,7 +30,7 @@ export function getMostFiredRulesScene(timeRange: SceneTimeRange, datasource: Da
           },
           indexByName: {},
           renameByName: {
-            Value: '',
+            Value: 'Fires this week',
             alertname: 'Alert Rule Name',
           },
         },
