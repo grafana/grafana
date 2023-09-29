@@ -125,7 +125,6 @@ func TestIntegrationAlertRulePermissions(t *testing.T) {
 						  "uid":"uid",
 						  "namespace_uid":"nsuid",
 						  "namespace_id":1,
-						  "namespace_title":"folder1",
 						  "rule_group":"arulegroup",
 						  "no_data_state":"NoData",
 						  "exec_err_state":"Alerting"
@@ -177,7 +176,6 @@ func TestIntegrationAlertRulePermissions(t *testing.T) {
 						"uid":"uid",
 						"namespace_uid":"nsuid",
 						"namespace_id":2,
-						"namespace_title":"folder2",
 						"rule_group":"arulegroup",
 						"no_data_state":"NoData",
 						"exec_err_state":"Alerting"
@@ -252,7 +250,6 @@ func TestIntegrationAlertRulePermissions(t *testing.T) {
 						  "uid":"uid",
 						  "namespace_uid":"nsuid",
 						  "namespace_id":1,
-						  "namespace_title":"folder1",
 						  "rule_group":"arulegroup",
 						  "no_data_state":"NoData",
 						  "exec_err_state":"Alerting"
@@ -549,7 +546,6 @@ func TestIntegrationRulerRulesFilterByDashboard(t *testing.T) {
 				"uid": "uid",
 				"namespace_uid": "nsuid",
 				"namespace_id": 1,
-				"namespace_title": "default",
 				"rule_group": "anotherrulegroup",
 				"no_data_state": "NoData",
 				"exec_err_state": "Alerting"
@@ -584,7 +580,6 @@ func TestIntegrationRulerRulesFilterByDashboard(t *testing.T) {
 				"uid": "uid",
 				"namespace_uid": "nsuid",
 				"namespace_id": 1,
-				"namespace_title": "default",
 				"rule_group": "anotherrulegroup",
 				"no_data_state": "Alerting",
 				"exec_err_state": "Alerting"
@@ -631,7 +626,6 @@ func TestIntegrationRulerRulesFilterByDashboard(t *testing.T) {
 				"uid": "uid",
 				"namespace_uid": "nsuid",
 				"namespace_id": 1,
-				"namespace_title": "default",
 				"rule_group": "anotherrulegroup",
 				"no_data_state": "NoData",
 				"exec_err_state": "Alerting"
