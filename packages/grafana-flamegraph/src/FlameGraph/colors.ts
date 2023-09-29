@@ -57,9 +57,9 @@ export function getBarColorByPackage(label: string, theme: GrafanaTheme2) {
   // TODO: similar thing happens in trace view with selecting colors of the spans, so maybe this could be unified.
   const hash = murmurhash3_32_gc(packageName || '', 0);
   const colorIndex = hash % packageColors.length;
-  let packageColor = packageColors[colorIndex];
+  let packageColor = packageColors[colorIndex].clone();
   if (theme.isLight) {
-    packageColor = packageColor.clone().brighten(15);
+    packageColor = packageColor.brighten(15);
   }
   return packageColor;
 }
