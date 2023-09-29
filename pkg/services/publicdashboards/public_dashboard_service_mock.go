@@ -50,7 +50,7 @@ func (_m *FakePublicDashboardService) Create(ctx context.Context, u *user.Signed
 }
 
 // Delete provides a mock function with given fields: ctx, uid
-func (_m *FakePublicDashboardService) Delete(ctx context.Context, uid string) error {
+func (_m *FakePublicDashboardService) Delete(ctx context.Context, uid string, dashboardUid string) error {
 	ret := _m.Called(ctx, uid)
 
 	var r0 error
