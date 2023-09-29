@@ -221,7 +221,7 @@ export const transformationDocsContent: Record<string, TransformationInfo> = {
   | 1636678680000000000 | {"value": 5} |
   | 1636678620000000000 | {"value": 12} |
 
-  You could prepare the data to be used by a [Time series panel](https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/time-series/) with this configuration:
+  You could prepare the data to be used by a [Time series panel][] with this configuration:
 
   - Source: json_data
   - Format: JSON
@@ -240,6 +240,12 @@ export const transformationDocsContent: Record<string, TransformationInfo> = {
   | 1636678680000000000 | 5        |
   | 1636678620000000000 | 12       |
   `,
+    links: [
+      {
+        title: 'Time series panel',
+        url: 'https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/time-series/',
+      },
+    ],
   },
   fieldLookup: {
     // name: fieldLookupTransformRegistryItem.name,
@@ -381,7 +387,7 @@ export const transformationDocsContent: Record<string, TransformationInfo> = {
     // name: formatTimeTransformerRegistryItem.name,
     name: 'Format time',
     helperDocs: `
-  Use this transformation to format the output of a time field. Output can be formatted using (Moment.js format strings)[https://momentjs.com/docs/#/displaying/]. For instance, if you would like to display only the year of a time field the format string 'YYYY' can be used to show the calendar year (e.g. 1999, 2012, etc.).
+  Use this transformation to format the output of a time field. Output can be formatted using [Moment.js format strings](https://momentjs.com/docs/#/displaying/). For instance, if you would like to display only the year of a time field the format string 'YYYY' can be used to show the calendar year (e.g. 1999, 2012, etc.).
 
   > **Note:** This transformation is available in Grafana 10.1+ as an alpha feature.
   `,
@@ -390,7 +396,7 @@ export const transformationDocsContent: Record<string, TransformationInfo> = {
     // name: groupByTransformRegistryItem.name,
     name: 'Group by',
     helperDocs: `
-  Use this transformation to group the data by a specified field (column) value and process calculations on each group. Click to see a list of calculation choices. For information about available calculations, refer to [Calculation types](https://grafana.com/docs/grafana/latest/panels-visualizations/calculation-types/).
+  Use this transformation to group the data by a specified field (column) value and process calculations on each group. Click to see a list of calculation choices. For information about available calculations, refer to [Calculation types][].
 
   Here's an example of original data.
 
@@ -446,6 +452,12 @@ export const transformationDocsContent: Record<string, TransformationInfo> = {
 
   This transformation enables you to extract key information from your time series and display it in a convenient way.
   `,
+    links: [
+      {
+        title: 'Calculation types',
+        url: 'https://grafana.com/docs/grafana/latest/panels-visualizations/calculation-types/',
+      },
+    ],
   },
   groupingToMatrix: {
     // name: groupingToMatrixTransformRegistryItem.name,
@@ -1031,10 +1043,20 @@ export const transformationDocsContent: Record<string, TransformationInfo> = {
     // name: timeSeriesTableTransformRegistryItem.name,
     name: 'Time series table',
     helperDocs: `
-  Use this transformation to convert time series results into a table, converting a time series data frame into a trend visualization field. A trend field can then be rendered using the [sparkline cell type](https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/table/#sparkline), producing an inline sparkline for each table row. If there are multiple time series queries, each will result in a separate table data frame. These can be joined using join or merge transforms to produce a single table with multiple sparklines per row.
+  Use this transformation to convert time series results into a table, converting a time series data frame into a trend visualization field. A trend field can then be rendered using the [sparkline cell type][], producing an inline sparkline for each table row. If there are multiple time series queries, each will result in a separate table data frame. These can be joined using join or merge transforms to produce a single table with multiple sparklines per row.
 
-  > **Note:** This transformation is available in Grafana 9.5+ as an opt-in beta feature. Modify Grafana [configuration file](/docs/grafana/latest/setup-grafana/configure-grafana/#configuration-file-location) to enable the 'timeSeriesTable' [feature toggle](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/feature-toggles/) to use it.
+  > **Note:** This transformation is available in Grafana 9.5+ as an opt-in beta feature. Modify Grafana [configuration file][] to use it.
   `,
+    links: [
+      {
+        title: 'sparkline cell type',
+        url: 'https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/table/#sparkline',
+      },
+      {
+        title: 'configuration file',
+        url: 'https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/',
+      },
+    ],
   },
 };
 
