@@ -85,7 +85,6 @@ export function prepConfig(opts: PrepConfigOpts) {
     eventBus,
     onhover,
     onclick,
-    onzoom,
     isToolTipOpen,
     timeZone,
     getTimeRange,

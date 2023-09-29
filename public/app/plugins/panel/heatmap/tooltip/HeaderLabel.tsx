@@ -25,24 +25,26 @@ export const HeaderLabel = ({ headerLabel }: HeaderLabelProps) => {
   );
 };
 
-const getStyles = (theme: GrafanaTheme2) => ({
-  label: css`
-    color: ${theme.colors.text.secondary};
-    padding-right: ${theme.spacing(0.5)};
-    font-weight: 400;
-  `,
-  value: css`
-    line-height: 18px;
-    align-self: center;
-    font-weight: 500;
-  `,
-  wrapper: css`
-    display: flex;
-    flex-direction: row;
-    text-overflow: ellipsis;
-    overflow: hidden;
-    white-space: nowrap;
-    width: 250px;
-    mask-image: linear-gradient(90deg, rgba(0, 0, 0, 1) 80%, transparent);
-  `,
-});
+const getStyles = (theme: GrafanaTheme2) => {
+  return {
+    label: css`
+      color: ${theme.colors.text.secondary};
+      padding-right: ${theme.spacing(0.5)};
+      font-weight: 400;
+    `,
+    value: css`
+      line-height: 18px;
+      align-self: center;
+      font-weight: 500;
+    `,
+    wrapper: css`
+      display: flex;
+      flex-direction: row;
+      text-overflow: ellipsis;
+      overflow: hidden;
+      white-space: nowrap;
+      width: 250px;
+      mask-image: linear-gradient(90deg, rgba(0, 0, 0, 1) 80%, transparent);
+    `,
+  };
+};

@@ -42,22 +42,24 @@ export const VizTooltipFooter = ({ dataLinks, canAnnotate }: VizTooltipFooterPro
   );
 };
 
-const getStyles = (theme: GrafanaTheme2) => ({
-  wrapper: css`
-    display: flex;
-    flex-direction: column;
-    flex: 1;
-  `,
-  dataLinks: css`
-    height: 40px;
-    overflow-x: auto;
-    overflow-y: hidden;
-    white-space: nowrap;
-    border-top: 1px solid ${theme.colors.border.medium};
-    mask-image: linear-gradient(90deg, rgba(0, 0, 0, 1) 80%, transparent);
-  `,
-  addAnnotations: css`
-    border-top: 1px solid ${theme.colors.border.medium};
-    padding-top: ${theme.spacing(1)};
-  `,
-});
+const getStyles = (theme: GrafanaTheme2) => {
+  return {
+    wrapper: css`
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+    `,
+    dataLinks: css`
+      height: 40px;
+      overflow-x: auto;
+      overflow-y: hidden;
+      white-space: nowrap;
+      border-top: 1px solid ${theme.colors.border.medium};
+      mask-image: linear-gradient(90deg, rgba(0, 0, 0, 1) 80%, transparent);
+    `,
+    addAnnotations: css`
+      border-top: 1px solid ${theme.colors.border.medium};
+      padding-top: ${theme.spacing(1)};
+    `,
+  };
+};

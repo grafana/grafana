@@ -31,12 +31,14 @@ export const VizTooltipHeader = ({ headerLabel, keyValuePairs, customValueDispla
   );
 };
 
-const getStyles = (theme: GrafanaTheme2) => ({
-  wrapper: css`
-    display: flex;
-    flex-direction: column;
-    flex: 1;
-    gap: 4px;
-    padding-bottom: ${theme.spacing(1)};
-  `,
-});
+const getStyles = (theme: GrafanaTheme2) => {
+  return {
+    wrapper: css`
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      gap: 4px;
+      padding-bottom: ${theme.spacing(1)};
+    `,
+  };
+};
