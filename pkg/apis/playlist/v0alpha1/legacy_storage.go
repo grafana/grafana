@@ -61,7 +61,8 @@ func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListO
 	// To test: kubectl get playlists --all-namespaces
 	orgId, ok := grafanarequest.OrgIDFrom(ctx)
 	if !ok {
-		return nil, fmt.Errorf("missing orgId")
+		// TODO??? if admin?  change query to list all tenants?
+		orgId = 1
 	}
 
 	limit := 100
