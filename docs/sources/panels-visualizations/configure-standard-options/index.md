@@ -146,8 +146,3 @@ Select one of the following palettes:
 ### No value
 
 Enter what Grafana should display if the field value is empty or null. The default value is a hyphen (-).
-
-{{% docs/reference %}}
-[variables]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables"
-[variables]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables"
-{{% /docs/reference %}}
