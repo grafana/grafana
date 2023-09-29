@@ -96,6 +96,8 @@ func (*OSSMigrations) AddMigration(mg *Migrator) {
 			oauthserver.AddMigration(mg)
 		}
 	}
+
+	addDashboardFolderMigrations(mg)
 }
 
 func addStarMigrations(mg *Migrator) {
