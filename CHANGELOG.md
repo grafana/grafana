@@ -437,6 +437,15 @@ Starting with 10.0, changing the folder UID is deprecated. It will be removed in
 - **Grafana/ui:** Fix margin in RadioButtonGroup option when only icon is present. [#68899](https://github.com/grafana/grafana/issues/68899), [@aocenas](https://github.com/aocenas)
 
 <!-- 10.1.0 END -->
+<!-- 10.0.8 START -->
+
+# 10.0.8 (2023-09-29)
+
+### Features and enhancements
+
+- **Azure:** Add support for Workload Identity authentication. [#75732](https://github.com/grafana/grafana/issues/75732), [@aangelisc](https://github.com/aangelisc)
+
+<!-- 10.0.8 END -->
 <!-- 10.0.6 START -->
 
 # 10.0.6 (2023-09-18)
