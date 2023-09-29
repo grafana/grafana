@@ -947,6 +947,15 @@ The `database` field has been deprecated in the Elasticsearch datasource provisi
 - **InteractiveTable:** Updated design and minor tweak to Correlactions page. [#66443](https://github.com/grafana/grafana/issues/66443), [@torkelo](https://github.com/torkelo)
 
 <!-- 10.0.0-preview END -->
+<!-- 9.5.12 START -->
+
+# 9.5.12 (2023-09-29)
+
+### Features and enhancements
+
+- **Azure:** Add support for Workload Identity authentication. [#75730](https://github.com/grafana/grafana/issues/75730), [@aangelisc](https://github.com/aangelisc)
+
+<!-- 9.5.12 END -->
 <!-- 9.5.10 START -->
 
 # 9.5.10 (2023-09-18)
