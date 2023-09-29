@@ -16,7 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/services/folder"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -159,7 +158,7 @@ func (srv RulerSrv) RouteGetNamespaceRulesConfig(c *contextmodel.ReqContext, nam
 	result := apimodels.NamespaceConfigResponse{}
 
 	for groupKey, rules := range ruleGroups {
-		result[namespaceUID] = append(result[namespaceUID], toGettableRuleGroupConfig(groupKey.RuleGroup, rules, namespace, provenanceRecords))
+		result[namespaceUID] = append(result[namespaceUID], toGettableRuleGroupConfig(groupKey.RuleGroup, rules, namespace.ID, provenanceRecords))
 	}
 
 	return response.JSON(http.StatusAccepted, result)
@@ -188,7 +187,7 @@ func (srv RulerSrv) RouteGetRulesGroupConfig(c *contextmodel.ReqContext, namespa
 	}
 
 	result := apimodels.RuleGroupConfigResponse{
-		GettableRuleGroupConfig: toGettableRuleGroupConfig(ruleGroup, rules, namespace, provenanceRecords),
+		GettableRuleGroupConfig: toGettableRuleGroupConfig(ruleGroup, rules, namespace.ID, provenanceRecords),
 	}
 	return response.JSON(http.StatusAccepted, result)
 }
@@ -235,7 +234,8 @@ func (srv RulerSrv) RouteGetRulesConfig(c *contextmodel.ReqContext) response.Res
 			srv.log.Error("Namespace not visible to the user", "user", c.SignedInUser.UserID, "namespace", groupKey.NamespaceUID)
 			continue
 		}
-		result[groupKey.NamespaceUID] = append(result[groupKey.NamespaceUID], toGettableRuleGroupConfig(groupKey.RuleGroup, rules, folder, provenanceRecords))
+		namespace := folder.UID
+		result[namespace] = append(result[namespace], toGettableRuleGroupConfig(groupKey.RuleGroup, rules, folder.ID, provenanceRecords))
 	}
 	return response.JSON(http.StatusOK, result)
 }
@@ -371,7 +371,7 @@ func (srv RulerSrv) updateAlertRulesInGroup(c *contextmodel.ReqContext, groupKey
 	return response.JSON(http.StatusAccepted, util.DynMap{"message": "rule group updated successfully"})
 }
 
-func toGettableRuleGroupConfig(groupName string, rules ngmodels.RulesGroup, namespace *folder.Folder, provenanceRecords map[string]ngmodels.Provenance) apimodels.GettableRuleGroupConfig {
+func toGettableRuleGroupConfig(groupName string, rules ngmodels.RulesGroup, namespaceID int64, provenanceRecords map[string]ngmodels.Provenance) apimodels.GettableRuleGroupConfig {
 	rules.SortByGroupIndex()
 	ruleNodes := make([]apimodels.GettableExtendedRuleNode, 0, len(rules))
 	var interval time.Duration
@@ -379,7 +379,7 @@ func toGettableRuleGroupConfig(groupName string, rules ngmodels.RulesGroup, name
 		interval = time.Duration(rules[0].IntervalSeconds) * time.Second
 	}
 	for _, r := range rules {
-		ruleNodes = append(ruleNodes, toGettableExtendedRuleNode(*r, namespace, provenanceRecords))
+		ruleNodes = append(ruleNodes, toGettableExtendedRuleNode(*r, namespaceID, provenanceRecords))
 	}
 	return apimodels.GettableRuleGroupConfig{
 		Name:     groupName,
@@ -388,7 +388,7 @@ func toGettableRuleGroupConfig(groupName string, rules ngmodels.RulesGroup, name
 	}
 }
 
-func toGettableExtendedRuleNode(r ngmodels.AlertRule, namespace *folder.Folder, provenanceRecords map[string]ngmodels.Provenance) apimodels.GettableExtendedRuleNode {
+func toGettableExtendedRuleNode(r ngmodels.AlertRule, namespaceID int64, provenanceRecords map[string]ngmodels.Provenance) apimodels.GettableExtendedRuleNode {
 	provenance := ngmodels.ProvenanceNone
 	if prov, exists := provenanceRecords[r.ResourceID()]; exists {
 		provenance = prov
@@ -406,13 +406,12 @@ func toGettableExtendedRuleNode(r ngmodels.AlertRule, namespace *folder.Folder, 
 			UID:             r.UID,
 			NamespaceUID:    r.NamespaceUID,
 			// TODO deprecate this field
-			NamespaceID:    namespace.ID,
-			NamespaceTitle: namespace.Title,
-			RuleGroup:      r.RuleGroup,
-			NoDataState:    apimodels.NoDataState(r.NoDataState),
-			ExecErrState:   apimodels.ExecutionErrorState(r.ExecErrState),
-			Provenance:     apimodels.Provenance(provenance),
-			IsPaused:       r.IsPaused,
+			NamespaceID:  namespaceID,
+			RuleGroup:    r.RuleGroup,
+			NoDataState:  apimodels.NoDataState(r.NoDataState),
+			ExecErrState: apimodels.ExecutionErrorState(r.ExecErrState),
+			Provenance:   apimodels.Provenance(provenance),
+			IsPaused:     r.IsPaused,
 		},
 	}
 	forDuration := model.Duration(r.For)

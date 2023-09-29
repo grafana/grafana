@@ -392,7 +392,6 @@ type GettableGrafanaRule struct {
 	UID             string              `json:"uid" yaml:"uid"`
 	NamespaceUID    string              `json:"namespace_uid" yaml:"namespace_uid"`
 	NamespaceID     int64               `json:"namespace_id" yaml:"namespace_id"`
-	NamespaceTitle  string              `json:"namespace_title" yaml:"namespace_title"`
 	RuleGroup       string              `json:"rule_group" yaml:"rule_group"`
 	NoDataState     NoDataState         `json:"no_data_state" yaml:"no_data_state"`
 	ExecErrState    ExecutionErrorState `json:"exec_err_state" yaml:"exec_err_state"`
