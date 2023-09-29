@@ -1,5 +1,5 @@
 import { PluginError, PluginMeta, renderMarkdown } from '@grafana/data';
-import { getBackendSrv, isFetchError } from '@grafana/runtime';
+import { config, getBackendSrv, isFetchError } from '@grafana/runtime';
 import { accessControlQueryParam } from 'app/core/utils/accessControl';
 
 import { API_ROOT, GCOM_API_ROOT } from './constants';
@@ -121,6 +121,9 @@ export async function installManagedPlugin(instanceId: string, plugin: string, v
     version,
   }, {
     // Error is displayed in the page
+    headers: {
+      "Authorization": "Bearer " + config.pluginInstallToken,
+    },
     showErrorAlert: false,
   });
 }

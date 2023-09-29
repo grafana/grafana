@@ -23,8 +23,8 @@ var grafanaComProxyTransport = &http.Transport{
 	TLSHandshakeTimeout: 10 * time.Second,
 }
 
-func (hs *HTTPServer) reverseProxyGnetReq(logger log.Logger, proxyPath string) *httputil.ReverseProxy {
-	url, _ := url.Parse(hs.Cfg.GrafanaComAPIURL)
+func ReverseProxyGnetReq(logger log.Logger, proxyPath string, version string, grafanaComAPIUrl string) *httputil.ReverseProxy {
+	url, _ := url.Parse(grafanaComAPIUrl)
 
 	director := func(req *http.Request) {
 		req.URL.Scheme = url.Scheme
@@ -39,11 +39,12 @@ func (hs *HTTPServer) reverseProxyGnetReq(logger log.Logger, proxyPath string) *
 		req.Header.Del("Authorization")
 
 		// send the current Grafana version for each request proxied to GCOM
-		req.Header.Add("grafana-version", hs.Cfg.BuildVersion)
+		req.Header.Add("grafana-version", version)
 
-		// add plugin instalation token if set
-		if hs.Cfg.PluginsInstallToken != "" {
-			req.Header.Add("Authorization", "Bearer "+hs.Cfg.PluginsInstallToken)
+		// add Authorization header if provided by the client
+		authHeader := req.Header.Get("X-Ds-Authorization")
+		if authHeader != "" {
+			req.Header.Add("Authorization", authHeader)
 		}
 	}
 
@@ -52,7 +53,7 @@ func (hs *HTTPServer) reverseProxyGnetReq(logger log.Logger, proxyPath string) *
 
 func (hs *HTTPServer) ProxyGnetRequest(c *contextmodel.ReqContext) {
 	proxyPath := web.Params(c.Req)["*"]
-	proxy := hs.reverseProxyGnetReq(c.Logger, proxyPath)
+	proxy := ReverseProxyGnetReq(c.Logger, proxyPath, hs.Cfg.BuildVersion, hs.Cfg.GrafanaComAPIURL)
 	proxy.Transport = grafanaComProxyTransport
 	proxy.ServeHTTP(c.Resp, c.Req)
 }

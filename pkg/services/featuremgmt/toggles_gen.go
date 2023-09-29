@@ -470,4 +470,8 @@ const (
 	// FlagExternalServiceAccounts
 	// Automatic service account and token setup for plugins
 	FlagExternalServiceAccounts = "externalServiceAccounts"
+
+	// FlagManagedPluginsInstall
+	// Install managed plugins from directly plugins catalog
+	FlagManagedPluginsInstall = "managedPluginsInstall"
 )

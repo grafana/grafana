@@ -4,11 +4,14 @@ import React, { useState } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { HorizontalGroup, Icon, useStyles2, VerticalGroup } from '@grafana/ui';
+import configCore from 'app/core/config';
 
 import { GetStartedWithPlugin } from '../components/GetStartedWithPlugin';
 import { InstallControlsButton } from '../components/InstallControls';
 import { getLatestCompatibleVersion, isInstallControlsEnabled } from '../helpers';
 import { CatalogPlugin, PluginStatus } from '../types';
+
+import { ExternallyManagedButton } from './InstallControls/ExternallyManagedButton';
 
 interface Props {
   plugin?: CatalogPlugin;
@@ -35,6 +38,14 @@ export const PluginActions = ({ plugin }: Props) => {
     <VerticalGroup>
       <HorizontalGroup>
         {!isInstallControlsDisabled && (
+          <>
+            {(isExternallyManaged && !configCore.featureToggles.managedPluginsInstall) ? (
+              <ExternallyManagedButton
+                pluginId={plugin.id}
+                pluginStatus={pluginStatus}
+                angularDetected={plugin.angularDetected}
+              />
+            ) : (
               <InstallControlsButton
                 plugin={plugin}
                 latestCompatibleVersion={latestCompatibleVersion}
@@ -42,6 +53,8 @@ export const PluginActions = ({ plugin }: Props) => {
                 setNeedReload={setNeedReload}
                 isExternallyManaged={isExternallyManaged}
               />
+            )}
+          </>
         )}
         <GetStartedWithPlugin plugin={plugin} />
       </HorizontalGroup>

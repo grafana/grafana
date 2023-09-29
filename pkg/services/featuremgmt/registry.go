@@ -808,5 +808,12 @@ var (
 			RequiresDevMode: true,
 			Owner:           grafanaAuthnzSquad,
 		},
+		{
+			Name:            "managedPluginsInstall",
+			Description:     "Install managed plugins from directly plugins catalog",
+			Stage:           FeatureStageExperimental,
+			RequiresDevMode: true,
+			Owner:           grafanaPluginsPlatformSquad,
+		},
 	}
 )

@@ -5,6 +5,7 @@ import { AppEvents } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
 import { Button, HorizontalGroup, ConfirmModal } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
+import configCore from 'app/core/config';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { removePluginFromNavTree } from 'app/core/reducers/navBarTree';
 import { useDispatch } from 'app/types';
@@ -156,7 +157,7 @@ export function InstallControlsButton({
   }
   const shouldDisable = isInstalling || errorInstalling || (!config.angularSupportEnabled && plugin.angularDetected);
   return (
-    <Button disabled={shouldDisable} onClick={isExternallyManaged ? onManagedInstall : onInstall}>
+    <Button disabled={shouldDisable} onClick={(isExternallyManaged && configCore.featureToggles.managedPluginsInstall)? onManagedInstall : onInstall}>
       {isInstalling ? 'Installing' : 'Install'}
     </Button>
   );

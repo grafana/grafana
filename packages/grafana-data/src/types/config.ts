@@ -193,6 +193,7 @@ export interface GrafanaConfig {
   cspReportOnlyEnabled: boolean;
   liveEnabled: boolean;
   stackId: string;
+  pluginInstallToken: string;
   /** @deprecated Use `theme2` instead. */
   theme: GrafanaTheme;
   theme2: GrafanaTheme2;
