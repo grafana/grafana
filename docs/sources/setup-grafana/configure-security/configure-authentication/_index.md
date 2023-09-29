@@ -23,7 +23,7 @@ The following table shows all supported authentication providers and the feature
 | :-------------------------------------------------- | :---------------- | :----------- | :----------- | :-------------------- | :-------- | :------------- | :---------- | :------------------- | :--------- | :------------ |
 | [Auth Proxy]({{< relref "./auth-proxy" >}})         | no                | yes          | yes          | no                    | yes       | no             | N/A         | no                   | N/A        | N/A           |
 | [Azure AD OAuth]({{< relref "./azuread" >}})        | no                | yes          | yes          | yes                   | yes       | yes            | N/A         | yes                  | yes        | yes           |
-| [Generic OAuth]({{< relref "./generic-oauth" >}})   | no                | yes          | yes          | yes                   | yes       | ⚠             | N/A         | yes                  | yes        | yes           |
+| [Generic OAuth]({{< relref "./generic-oauth" >}})   | no                | yes          | yes          | yes                   | yes       | no             | N/A         | yes                  | yes        | yes           |
 | [GitHub OAuth]({{< relref "./github" >}})           | no                | yes          | yes          | yes                   | yes       | yes            | N/A         | yes                  | yes        | yes           |
 | [GitLab OAuth]({{< relref "./gitlab" >}})           | no                | yes          | yes          | yes                   | yes       | yes            | N/A         | yes                  | yes        | yes           |
 | [Google OAuth]({{< relref "./google" >}})           | no                | no           | no           | no                    | yes       | no             | N/A         | no                   | yes        | yes           |
@@ -32,6 +32,8 @@ The following table shows all supported authentication providers and the feature
 | [SAML]({{< relref "./saml" >}}) (Enterprise only)   | yes               | yes          | yes          | yes                   | yes       | yes            | N/A         | yes                  | yes        | yes           |
 | [LDAP]({{< relref "./ldap" >}})                     | yes               | yes          | yes          | yes                   | yes       | yes            | yes         | no                   | N/A        | N/A           |
 | [JWT Proxy]({{< relref "./jwt" >}})                 | no                | yes          | yes          | yes                   | no        | no             | N/A         | no                   | N/A        | N/A           |
+
+N/A = Not applicable
 
 ## Auth Proxy
 
