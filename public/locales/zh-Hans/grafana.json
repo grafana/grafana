@@ -222,20 +222,19 @@
       "secondary-text": ""
     },
     "form-actions": {
+      "cancel": "",
       "load": ""
     },
     "gcom-field": {
       "label": "",
-      "placeholder": ""
+      "load-button": "",
+      "placeholder": "",
+      "validation-required": ""
     },
     "json-field": {
       "label": "",
       "validation-required": ""
     }
-  },
-  "dashboard-import-page": {
-    "cancel": "",
-    "field-required": ""
   },
   "dashboard-settings": {
     "json-editor": {

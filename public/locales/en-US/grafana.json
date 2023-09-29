@@ -227,20 +227,19 @@
       "secondary-text": "Drag and drop here or click to browse"
     },
     "form-actions": {
+      "cancel": "Cancel",
       "load": "Load"
     },
     "gcom-field": {
       "label": "Find and import dashboards for common applications at <1></1>",
-      "placeholder": "Grafana.com dashboard URL or ID"
+      "load-button": "Load",
+      "placeholder": "Grafana.com dashboard URL or ID",
+      "validation-required": "A Grafana dashboard URL or ID is required"
     },
     "json-field": {
       "label": "Import via dashboard JSON model",
       "validation-required": "Need a dashboard JSON model"
     }
-  },
-  "dashboard-import-page": {
-    "cancel": "Cancel",
-    "field-required": "A Grafana dashboard URL or ID is required"
   },
   "dashboard-settings": {
     "json-editor": {
