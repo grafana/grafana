@@ -54,17 +54,9 @@ export function OpenLibraryPanelModal({ libraryPanel, onDismiss }: OpenLibraryPa
         {connected > 0 ? (
           <>
             <p>
-              <Trans i18nKey={'library-panels.modal.contianer-prefix'}>This panel is being used in </Trans>
-              <strong>
-                {connected}{' '}
-                {connected > 1 ? (
-                  <Trans i18nKey={'library-panels.modal.contianer-dashboards'}>dashboards</Trans>
-                ) : (
-                  <Trans i18nKey={'library-panels.modal.contianer-dashboard'}>dashboard</Trans>
-                )}
-              </strong>
-              <Trans i18nKey={'library-panels.modal.contianer-suffix'}>
-                Please choose which dashboard to view the panel in:
+              <Trans i18nKey="library-panels.modal.body" count={connected}>
+                This panel is being used in {{ count: connected }} dashboard. Please choose which dashboard to view the
+                panel in:
               </Trans>
             </p>
             <AsyncSelect
@@ -73,8 +65,8 @@ export function OpenLibraryPanelModal({ libraryPanel, onDismiss }: OpenLibraryPa
               defaultOptions={true}
               loadOptions={debouncedLoadOptions}
               onChange={setOption}
-              placeholder={t('library-panels.select.placeholder', 'Start typing to search for dashboard')}
-              noOptionsMessage={t('library-panels.select.no-dashboard-message', 'No dashboards found')}
+              placeholder={t('library-panels.modal.select-placeholder', 'Start typing to search for dashboard')}
+              noOptionsMessage={t('library-panels.modal.select-no-options-message', 'No dashboards found')}
             />
           </>
         ) : null}
