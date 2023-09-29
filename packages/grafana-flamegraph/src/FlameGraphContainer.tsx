@@ -30,16 +30,6 @@ export type Props = {
   stickyHeader?: boolean;
 
   /**
-   * By how much the header should be offset from the top of the page
-   */
-  stickyHeaderOffset?: string | number;
-
-  /**
-   * Sticky header z-index
-   */
-  stickyHeaderZindex?: number;
-
-  /**
    * Provides a theme for the visualization on which colors and some sizes are based.
    */
   getTheme: () => GrafanaTheme2;
@@ -72,8 +62,6 @@ const FlameGraphContainer = ({
   onTableSort,
   getTheme,
   stickyHeader,
-  stickyHeaderOffset,
-  stickyHeaderZindex,
   extraHeaderElements,
   vertical,
 }: Props) => {
@@ -168,8 +156,6 @@ const FlameGraphContainer = ({
         colorScheme={colorScheme}
         onColorSchemeChange={setColorScheme}
         stickyHeader={Boolean(stickyHeader)}
-        stickyHeaderOffset={stickyHeaderOffset}
-        stickyHeaderZindex={stickyHeaderZindex}
         extraHeaderElements={extraHeaderElements}
         vertical={vertical}
         isDiffMode={Boolean(dataContainer.isDiffFlamegraph())}

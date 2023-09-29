@@ -23,8 +23,6 @@ type Props = {
   colorScheme: ColorScheme | ColorSchemeDiff;
   onColorSchemeChange: (colorScheme: ColorScheme | ColorSchemeDiff) => void;
   stickyHeader: boolean;
-  stickyHeaderOffset?: string | number;
-  stickyHeaderZindex?: number;
   vertical?: boolean;
   isDiffMode: boolean;
   getTheme: () => GrafanaTheme2;
@@ -45,14 +43,12 @@ const FlameGraphHeader = ({
   colorScheme,
   onColorSchemeChange,
   stickyHeader,
-  stickyHeaderOffset,
-  stickyHeaderZindex,
   extraHeaderElements,
   vertical,
   isDiffMode,
   getTheme,
 }: Props) => {
-  const styles = getStyles(getTheme(), stickyHeader, stickyHeaderOffset, stickyHeaderZindex);
+  const styles = getStyles(getTheme(), stickyHeader);
   const [localSearch, setLocalSearch] = useSearchInput(search, setSearch);
 
   const suffix =
@@ -225,17 +221,17 @@ function useSearchInput(
   return [localSearchState, setLocalSearchState];
 }
 
-const getStyles = (theme: GrafanaTheme2, sticky?: boolean, stickyOffset?: string | number, stickyZIndex?: number) => ({
+const getStyles = (theme: GrafanaTheme2, sticky?: boolean) => ({
   header: css`
     label: header;
     display: flex;
     flex-wrap: wrap;
     justify-content: space-between;
     width: 100%;
-    top: ${stickyOffset || 0};
+    top: 0;
     ${sticky
       ? css`
-          z-index: ${stickyZIndex || theme.zIndex.navbarFixed};
+          z-index: ${theme.zIndex.navbarFixed};
           position: sticky;
           padding-bottom: ${theme.spacing(1)};
           padding-top: ${theme.spacing(1)};

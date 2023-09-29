@@ -26,8 +26,6 @@ export const FlameGraphExploreContainer = (props: Props) => {
       <FlameGraph
         data={props.dataFrames[0]}
         stickyHeader={true}
-        stickyHeaderOffset={'56px'}
-        stickyHeaderZindex={styles.zIndex}
         getTheme={() => config.theme2}
         onTableSymbolClick={() => interaction('table_item_selected')}
         onViewSelected={(view: string) => interaction('view_selected', { view })}
