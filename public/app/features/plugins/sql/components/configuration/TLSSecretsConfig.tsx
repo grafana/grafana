@@ -8,7 +8,7 @@ import {
   updateDatasourcePluginResetOption,
 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
-import { Field, Icon, Label, SecretInput, Tooltip } from '@grafana/ui';
+import { Field, Icon, Label, SecretTextArea, Tooltip } from '@grafana/ui';
 
 export interface Props<T extends DataSourceJsonData, S> {
   editorProps: DataSourcePluginOptionsEditorProps<T, S>;
@@ -19,7 +19,7 @@ export interface Props<T extends DataSourceJsonData, S> {
 }
 
 export const TLSSecretsConfig = <T extends DataSourceJsonData, S extends {} = {}>(props: Props<T, S>) => {
-  const { labelWidth, editorProps, showCACert, showKeyPair = true } = props;
+  const { editorProps, showCACert, showKeyPair = true } = props;
   const { secureJsonFields } = editorProps.options;
   return (
     <>
@@ -42,7 +42,7 @@ export const TLSSecretsConfig = <T extends DataSourceJsonData, S extends {} = {}
             </Label>
           }
         >
-          <SecretInput
+          <SecretTextArea
             placeholder="-----BEGIN CERTIFICATE-----"
             cols={45}
             rows={7}
@@ -51,7 +51,6 @@ export const TLSSecretsConfig = <T extends DataSourceJsonData, S extends {} = {}
             onReset={() => {
               updateDatasourcePluginResetOption(editorProps, 'tlsClientCert');
             }}
-            width={labelWidth}
           />
         </Field>
       ) : null}
@@ -71,8 +70,9 @@ export const TLSSecretsConfig = <T extends DataSourceJsonData, S extends {} = {}
               </Stack>
             </Label>
           }
+
         >
-          <SecretInput
+          <SecretTextArea
             placeholder="-----BEGIN CERTIFICATE-----"
             cols={45}
             rows={7}
@@ -81,7 +81,6 @@ export const TLSSecretsConfig = <T extends DataSourceJsonData, S extends {} = {}
             onReset={() => {
               updateDatasourcePluginResetOption(editorProps, 'tlsCACert');
             }}
-            width={labelWidth}
           />
         </Field>
       ) : null}
@@ -100,7 +99,7 @@ export const TLSSecretsConfig = <T extends DataSourceJsonData, S extends {} = {}
             </Label>
           }
         >
-          <SecretInput
+          <SecretTextArea
             placeholder="-----BEGIN RSA PRIVATE KEY-----"
             cols={45}
             rows={7}
@@ -109,7 +108,6 @@ export const TLSSecretsConfig = <T extends DataSourceJsonData, S extends {} = {}
             onReset={() => {
               updateDatasourcePluginResetOption(editorProps, 'tlsClientKey');
             }}
-            width={labelWidth}
           />
         </Field>
       ) : null}
