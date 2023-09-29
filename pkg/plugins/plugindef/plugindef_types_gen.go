@@ -278,6 +278,10 @@ type PluginDef struct {
 	// For data source plugins, if the plugin supports alerting. Requires `backend` to be set to `true`.
 	Alerting *bool `json:"alerting,omitempty"`
 
+	// An alias is useful when migrating from one plugin id to another (rebranding etc)
+	// This should be used sparingly, and is currently only supported though a hardcoded checklist
+	AliasIDs []string `json:"aliasIDs,omitempty"`
+
 	// For data source plugins, if the plugin supports annotation
 	// queries.
 	Annotations *bool `json:"annotations,omitempty"`

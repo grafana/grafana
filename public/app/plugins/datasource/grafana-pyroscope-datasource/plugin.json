@@ -2,6 +2,7 @@
   "type": "datasource",
   "name": "Grafana Pyroscope",
   "id": "grafana-pyroscope-datasource",
+  "aliasIDs": ["phlare"],
   "category": "profiling",
 
   "metrics": true,
