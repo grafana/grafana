@@ -11,7 +11,6 @@ import { selectors } from '@grafana/e2e-selectors';
 import { useStyles2 } from '../../themes';
 import { Button } from '../Button';
 import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
-//import { IconButton } from '../IconButton/IconButton';
 import { Text } from '../Text/Text';
 
 export interface Props {
@@ -41,7 +40,10 @@ export interface Props {
   size?: 'sm' | 'md' | 'lg';
   /** Tabs */
   tabs?: React.ReactNode;
-  /** Set to true if the component rendered within in drawer content has its own scroll */
+  // TODO remove this prop next major version
+  /**
+   * @deprecated this is now default behaviour. content is always scrollable.
+   **/
   scrollableContent?: boolean;
   /** Callback for closing the drawer */
   onClose: () => void;
@@ -51,7 +53,7 @@ export function Drawer({
   children,
   onClose,
   closeOnMaskClick = true,
-  scrollableContent = false,
+  scrollableContent = true,
   title,
   subtitle,
   width,

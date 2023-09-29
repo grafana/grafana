@@ -215,6 +215,12 @@
       "unmark-favorite": "Unmark as favorite"
     }
   },
+  "dashboard-settings": {
+    "json-editor": {
+      "save-button": "Save changes",
+      "subtitle": "The JSON model below is the data structure that defines the dashboard. This includes dashboard settings, panel settings, layout, queries, and so on."
+    }
+  },
   "data-source-picker": {
     "open-advanced-button": "Open advanced data source picker"
   },
@@ -225,6 +231,11 @@
   },
   "explore": {
     "add-to-dashboard": "Add to dashboard",
+    "table": {
+      "no-data": "0 series returned",
+      "title": "Table",
+      "title-with-name": "Table - {{name}}"
+    },
     "toolbar": {
       "aria-label": "Explore toolbar",
       "copy-shortened-link": "Copy shortened link",
