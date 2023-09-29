@@ -390,10 +390,9 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
           </Container>
         )}
         {showPicker ? (
-          <>
-            {config.featureToggles.transformationsRedesign && (
-              <>
-                {!noTransforms && (
+          <div className={styles.transformPickerContainer}>
+            {config.featureToggles.transformationsRedesign && !noTransforms && (
+              <div className={styles.goBackHeader}>
                   <Button
                     variant="secondary"
                     fill="text"
@@ -404,20 +403,7 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
                   >
                     Go back to&nbsp;<i>Transformations in use</i>
                   </Button>
-                )}
-                <div className={styles.pickerInformationLine}>
-                  <a
-                    href={getDocsLink(DocsId.Transformations)}
-                    className="external-link"
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    <span className={styles.pickerInformationLineHighlight}>Transformations</span>{' '}
-                    <Icon name="external-link-alt" />
-                  </a>
-                  &nbsp;allow you to manipulate your data before a visualization is applied.
-                </div>
-              </>
+              </div>
             )}
             <VerticalGroup>
               {!config.featureToggles.transformationsRedesign && (
@@ -492,7 +478,7 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
                 />
               )}
             </VerticalGroup>
-          </>
+          </div>
         ) : (
           <Button
             icon="plus"
@@ -673,7 +659,20 @@ const getStyles = (theme: GrafanaTheme2) => {
     pluginStateInfoWrapper: css`
       margin-left: 5px;
     `,
-  };
+    transformPickerContainer: css`
+      position: relative;
+    `,
+    goBackHeader: css`
+      padding: ${theme.spacing(1)};
+      position: sticky;
+      top: 0;
+      margin-left: -${theme.spacing(1.5)};
+      margin-bottom: ${theme.spacing(1)};
+      z-index: 10;
+      background-color: ${theme.colors.background.primary};
+      width: calc(100% + ${theme.spacing(3)});
+    `
+  }; 
 };
 
 interface TransformationsGridProps {
