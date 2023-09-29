@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { FormProvider, useForm, useFormContext } from 'react-hook-form';
-import { Link } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import { useAsync } from 'react-use';
 
 import { Stack } from '@grafana/experimental';
@@ -9,12 +9,14 @@ import { useAppNotification } from 'app/core/copy/appNotification';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 
 import { AppChromeUpdate } from '../../../../../../core/components/AppChrome/AppChromeUpdate';
+import { RulerRuleDTO } from '../../../../../../types/unified-alerting-dto';
 import { alertRuleApi, ModifyExportPayload } from '../../../api/alertRuleApi';
 import { fetchRulerRulesGroup } from '../../../api/ruler';
 import { useDataSourceFeatures } from '../../../hooks/useCombinedRule';
 import { RuleFormValues } from '../../../types/rule-form';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../../utils/datasource';
 import { formValuesToRulerGrafanaRuleDTO, MINUTE } from '../../../utils/rule-form';
+import { isGrafanaRulerRule } from '../../../utils/rules';
 import { FileExportPreview } from '../../export/FileExportPreview';
 import { GrafanaExportDrawer } from '../../export/GrafanaExportDrawer';
 import { allGrafanaExportProviders, ExportFormats } from '../../export/providers';
@@ -135,21 +137,26 @@ const useGetPayloadToExport = (values: RuleFormValues, exportMode: ModifyExportM
   const rulerGroupDto = useGetGroup(values.folder?.title ?? '', values.group);
   const grafanaRuleDto = useMemo(() => formValuesToRulerGrafanaRuleDTO(values), [values]);
   const includeRulesInGroup = exportMode === 'group';
+  const routeParams = useParams<{ type: string; id: string }>();
+  const uidFromParams = routeParams.id;
 
-  const payload: ModifyExportPayload = useMemo(
-    () =>
-      rulerGroupDto?.value?.rules
-        ? {
-            ...rulerGroupDto?.value,
-            rules: [...(includeRulesInGroup ? rulerGroupDto.value.rules : []), grafanaRuleDto],
-          }
-        : {
-            name: values.group,
-            rules: [grafanaRuleDto],
-          },
-    [rulerGroupDto.value, grafanaRuleDto, values.group, includeRulesInGroup]
-  );
-
+  const payload: ModifyExportPayload = useMemo(() => {
+    const updatedRule = { ...grafanaRuleDto, grafana_alert: { ...grafanaRuleDto.grafana_alert, uid: uidFromParams } };
+    if (rulerGroupDto?.value?.rules) {
+      const rulesWithoutCurrent = rulerGroupDto.value.rules.filter(
+        (rule: RulerRuleDTO) => isGrafanaRulerRule(rule) && rule.grafana_alert.uid !== uidFromParams
+      );
+      return {
+        ...rulerGroupDto?.value,
+        rules: [...(includeRulesInGroup ? rulesWithoutCurrent : []), updatedRule],
+      };
+    } else {
+      return {
+        name: values.group,
+        rules: [updatedRule],
+      };
+    }
+  }, [rulerGroupDto.value, grafanaRuleDto, values.group, includeRulesInGroup, uidFromParams]);
   return { payload, loadingGroup: rulerGroupDto.loading };
 };
 
