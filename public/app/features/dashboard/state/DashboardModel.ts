@@ -184,13 +184,13 @@ export class DashboardModel implements TimeModel {
 
     // Auto-migrate old angular panels
     if (options?.autoMigrateOldPanels || !config.angularSupportEnabled || config.featureToggles.autoMigrateOldPanels) {
-      this.panels.forEach((p) => {
+      for (const p of this.panelIterator()) {
         const newType = autoMigrateAngular[p.type];
         if (!p.autoMigrateFrom && newType) {
           p.autoMigrateFrom = p.type;
           p.type = newType;
         }
-      });
+      }
     }
 
     this.addBuiltInAnnotationQuery();
@@ -1072,7 +1072,7 @@ export class DashboardModel implements TimeModel {
   }
 
   getTimezone(): TimeZone {
-    return (this.timezone ? this.timezone : contextSrv?.user?.timezone) as TimeZone;
+    return this.timezone ? this.timezone : contextSrv?.user?.timezone;
   }
 
   private updateSchema(old: any) {
@@ -1141,7 +1141,7 @@ export class DashboardModel implements TimeModel {
     // First try to find it in a collapsed row and exand it
     const collapsedPanels = this.panels.filter((p) => p.collapsed);
     for (const panel of collapsedPanels) {
-      const hasPanel = panel.panels?.some((rp: any) => rp.id === panelId);
+      const hasPanel = panel.panels?.some((rp) => rp.id === panelId);
       hasPanel && this.toggleRow(panel);
     }
 
@@ -1263,7 +1263,7 @@ export class DashboardModel implements TimeModel {
     return !isEqual(updated, originalVariables);
   }
 
-  private cloneVariablesFrom(variables: any[]): any[] {
+  private cloneVariablesFrom(variables: any[]) {
     return variables.map((variable) => ({
       name: variable.name,
       type: variable.type,

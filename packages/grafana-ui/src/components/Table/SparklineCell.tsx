@@ -35,7 +35,7 @@ export const SparklineCell = (props: TableCellProps) => {
   if (!sparkline) {
     return (
       <div {...cellProps} className={tableStyles.cellContainer}>
-        no data
+        {field.config.noValue || 'no data'}
       </div>
     );
   }

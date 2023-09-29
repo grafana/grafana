@@ -109,10 +109,11 @@ Use this transformation to add a new field calculated from two other fields. Eac
 - **Mode -** Select a mode:
   - **Reduce row -** Apply selected calculation on each row of selected fields independently.
   - **Binary option -** Apply basic math operation(sum, multiply, etc) on values in a single row from two selected fields.
-  - **Index -** Will insert a field with the row index.
+  - **Row index -** Insert a field with the row index.
 - **Field name -** Select the names of fields you want to use in the calculation for the new field.
 - **Calculation -** If you select **Reduce row** mode, then the **Calculation** field appears. Click in the field to see a list of calculation choices you can use to create the new field. For information about available calculations, refer to [Calculation types][].
 - **Operation -** If you select **Binary option** mode, then the **Operation** fields appear. These fields allow you to do basic math operations on values in a single row from two selected fields. You can also use numerical values for binary operations.
+- **As percentile -** If you select **Row index** mode, then the **As percentile** switch appears. This switch allows you to transform the row index as a percentage of the total number of rows.
 - **Alias -** (Optional) Enter the name of your new field. If you leave this blank, then the field will be named to match the calculation.
 - **Replace all fields -** (Optional) Select this option if you want to hide all other fields and display only your calculated field in the visualization.
 
@@ -763,6 +764,11 @@ With the _Partition by values_ transformer, you can now issue a single query and
 | 2022-10-20 12:00:00 | EU     | 2936  |
 | 2022-10-20 01:00:00 | EU     | 912   |
 
+There are two naming modes:
+
+- **As labels** - The value that results are partitioned by is set as a label.
+- **As frame name** - The value is used to set the frame name. This is useful if the data will be visualized in a table.
+
 ### Reduce
 
 The _Reduce_ transformation applies a calculation to each field in the frame and return a single value. Time fields are removed when applying this transformation.
@@ -894,7 +900,7 @@ As you can see each row in the source data becomes a separate field. Each field 
 This transformation is available in Grafana 7.5.10+ and Grafana 8.0.6+.
 {{% /admonition %}}
 
-Prepare time series transformation is useful when a data source returns time series data in a format that isn't supported by the panel you want to use. For more information about data frame formats, refer to [Data frames][].
+Prepare time series transformation is useful when a data source returns time series data in a format that isn't supported by the panel you want to use. For more information about data frame formats, refer to [Data frames](https://grafana.com/developers/plugin-tools/introduction/data-frames).
 
 This transformation helps you resolve this issue by converting the time series data from either the wide format to the long format or the other way around.
 
@@ -986,9 +992,6 @@ Use this transformation to format the output of a time field. Output can be form
 {{% docs/reference %}}
 [Table panel]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/table"
 [Table panel]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/table"
-
-[Data frames]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/developers/plugins/introduction-to-plugin-development/data-frames"
-[Data frames]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/developers/plugins/introduction-to-plugin-development/data-frames"
 
 [Calculation types]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/calculation-types"
 [Calculation types]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/calculation-types"

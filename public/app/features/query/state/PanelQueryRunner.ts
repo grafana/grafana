@@ -29,10 +29,11 @@ import {
   ApplyFieldOverrideOptions,
   StreamingDataFrame,
 } from '@grafana/data';
-import { getTemplateSrv, toDataQueryError } from '@grafana/runtime';
+import { toDataQueryError } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/src/utils/DataSourceWithBackend';
 import { isStreamingDataFrame } from 'app/features/live/data/utils';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
+import { getTemplateSrv } from 'app/features/templating/template_srv';
 
 import { isSharedDashboardQuery, runSharedRequest } from '../../../plugins/datasource/dashboard';
 import { PanelModel } from '../../dashboard/state';
@@ -78,6 +79,7 @@ export class PanelQueryRunner {
   private lastResult?: PanelData;
   private dataConfigSource: DataConfigSource;
   private lastRequest?: DataQueryRequest;
+  private templateSrv = getTemplateSrv();
 
   constructor(dataConfigSource: DataConfigSource) {
     this.subject = new ReplaySubject(1);
@@ -215,7 +217,7 @@ export class PanelQueryRunner {
     }
 
     const ctx: DataTransformContext = {
-      interpolate: (v: string) => getTemplateSrv().replace(v, data?.request?.scopedVars),
+      interpolate: (v: string) => this.templateSrv.replace(v, data?.request?.scopedVars),
     };
 
     return transformDataFrame(transformations, data.series, ctx).pipe(
@@ -225,7 +227,7 @@ export class PanelQueryRunner {
         return of({
           ...data,
           state: LoadingState.Error,
-          error: toDataQueryError(err),
+          errors: [toDataQueryError(err)],
         });
       })
     );
@@ -274,6 +276,7 @@ export class PanelQueryRunner {
 
     try {
       const ds = await getDataSource(datasource, request.scopedVars);
+
       const isMixedDS = ds.meta?.mixed;
 
       // Attach the data source to each query
@@ -287,7 +290,7 @@ export class PanelQueryRunner {
         return query;
       });
 
-      const lowerIntervalLimit = minInterval ? getTemplateSrv().replace(minInterval, request.scopedVars) : ds.interval;
+      const lowerIntervalLimit = minInterval ? this.templateSrv.replace(minInterval, request.scopedVars) : ds.interval;
       const norm = rangeUtil.calculateInterval(timeRange, maxDataPoints, lowerIntervalLimit);
 
       // make shallow copy of scoped vars,
@@ -299,6 +302,7 @@ export class PanelQueryRunner {
 
       request.interval = norm.interval;
       request.intervalMs = norm.intervalMs;
+      request.filters = this.templateSrv.getAdhocFilters(ds.name);
 
       this.lastRequest = request;
 
