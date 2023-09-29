@@ -732,7 +732,7 @@ const getTransformationsRedesignDescriptions = (id: string): string => {
     [DataTransformerID.filterFieldsByName]: 'Remove parts of the query results using a regex pattern.',
     [DataTransformerID.filterByRefId]: 'Remove rows from the data based on origin query',
     [DataTransformerID.filterByValue]: 'Remove rows from the query results using user-defined filters.',
-    [DataTransformerID.groupBy]: 'Group the data by a field value then process calculations.',
+    [DataTransformerID.groupBy]: 'Group data by a field value and create aggregate data.',
     [DataTransformerID.groupingToMatrix]: 'Summarize and reorganize data based on three fields.',
     [DataTransformerID.joinByField]: 'Combine rows from 2+ tables, based on a related field.',
     [DataTransformerID.labelsToFields]: 'Group series by time and return labels or tags as fields.',
