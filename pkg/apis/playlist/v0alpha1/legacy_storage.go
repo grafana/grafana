@@ -2,6 +2,7 @@ package v0alpha1
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/grafana/grafana/pkg/kinds/playlist"
 	grafanarequest "github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
@@ -17,6 +18,9 @@ var (
 	_ rest.SingularNameProvider = (*legacyStorage)(nil)
 	_ rest.Getter               = (*legacyStorage)(nil)
 	_ rest.Lister               = (*legacyStorage)(nil)
+	_ rest.Creater              = (*legacyStorage)(nil)
+	_ rest.Updater              = (*legacyStorage)(nil)
+	_ rest.GracefulDeleter      = (*legacyStorage)(nil)
 	_ rest.Storage              = (*legacyStorage)(nil)
 )
 
@@ -57,7 +61,7 @@ func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListO
 	// To test: kubectl get playlists --all-namespaces
 	orgId, ok := grafanarequest.OrgIDFrom(ctx)
 	if !ok {
-		orgId = 1 // TODO: default org ID 1 for now
+		return nil, fmt.Errorf("missing orgId")
 	}
 
 	limit := 100
@@ -100,11 +104,41 @@ func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListO
 func (s *legacyStorage) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
 	orgId, ok := grafanarequest.OrgIDFrom(ctx)
 	if !ok {
-		orgId = 1 // TODO: default org ID 1 for now
+		return nil, fmt.Errorf("missing orgId")
 	}
 
 	return s.service.Get(ctx, &playlistsvc.GetPlaylistByUidQuery{
 		UID:   name,
 		OrgId: orgId,
 	})
+}
+
+func (s *legacyStorage) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
+	// TODO!!!!
+	return s.Get(ctx, "xx", nil)
+}
+
+func (s *legacyStorage) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
+	created := false
+	current, err := s.Get(ctx, name, nil)
+	if err != nil {
+		return current, created, err
+	}
+	// TODO... actually update
+	return current, created, err
+}
+
+// GracefulDeleter
+func (s *legacyStorage) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
+	orgId, ok := grafanarequest.OrgIDFrom(ctx)
+	if !ok {
+		return nil, true, fmt.Errorf("missing orgId")
+	}
+
+	err := s.service.Delete(ctx, &playlistsvc.DeletePlaylistCommand{
+		UID:   name,
+		OrgId: orgId,
+	})
+
+	return nil, true, err // true is instant delete
 }
