@@ -44,8 +44,9 @@ type FrontendSettingsLicenseInfoDTO struct {
 }
 
 type FrontendSettingsAzureDTO struct {
-	Cloud                  string `json:"cloud"`
-	ManagedIdentityEnabled bool   `json:"managedIdentityEnabled"`
+	Cloud                   string `json:"cloud"`
+	ManagedIdentityEnabled  bool   `json:"managedIdentityEnabled"`
+	WorkloadIdentityEnabled bool   `json:"workloadIdentityEnabled"`
 }
 
 type FrontendSettingsCachingDTO struct {

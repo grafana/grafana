@@ -22,6 +22,7 @@ import {
 export interface AzureSettings {
   cloud?: string;
   managedIdentityEnabled: boolean;
+  workloadIdentityEnabled: boolean;
 }
 
 export type AppPluginConfig = {
@@ -128,6 +129,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
   awsAssumeRoleEnabled = false;
   azure: AzureSettings = {
     managedIdentityEnabled: false,
+    workloadIdentityEnabled: false,
   };
   caching = {
     enabled: false,
