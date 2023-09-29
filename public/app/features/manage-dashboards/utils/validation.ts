@@ -15,7 +15,7 @@ export const validateDashboardJson = (json: string) => {
     if (Array.isArray(dashboard.tags)) {
       const hasInvalidTag = dashboard.tags.some((tag: string) => typeof tag !== 'string');
       if (hasInvalidTag) {
-        return t('utils.tags-expected-strings', 'tags expected array of strings');
+        return t('dashboard.validation.tags-expected-strings', 'tags expected array of strings');
       }
     } else {
       return t('utils.tags-expected-array', 'tags expected array');
