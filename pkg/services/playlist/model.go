@@ -93,7 +93,7 @@ func ConvertToK8sResource(v *Playlist, items []PlaylistItemDTO) *playlist.Playli
 	return &playlist.Playlist{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Playlist",
-			APIVersion: "playlist.grafana.com/v0alpha1",
+			APIVersion: playlist.APIVersion,
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:              v.UID,
