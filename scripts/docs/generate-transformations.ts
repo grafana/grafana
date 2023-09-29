@@ -1,13 +1,13 @@
 import { transformationDocsContent } from '../../public/app/features/transformers/docs/content';
 
-let transformations = '';
+// let transformations = '';
 
-Object.keys(transformationDocsContent).forEach(
-  (key) =>
-    (transformations += `### ${transformationDocsContent[key].name}
-${transformationDocsContent[key].helperDocs}
-`)
-);
+// Object.keys(transformationDocsContent).forEach(
+//   (key) =>
+//     (transformations += `### ${transformationDocsContent[key].name}
+// ${transformationDocsContent[key].helperDocs}
+// `)
+// );
 
 const template: String = `---
 comments: |
@@ -123,11 +123,123 @@ We recommend that you remove transformations that you don't need. When you delet
 
 You can perform the following transformations on your data.
 
-${transformations}
+${`### ${transformationDocsContent['calculateField'].name}
+${transformationDocsContent['calculateField'].helperDocs}
+`}
+
+${`### ${transformationDocsContent['concatenate'].name}
+${transformationDocsContent['concatenate'].helperDocs}
+`}
+
+${`### ${transformationDocsContent['configFromData'].name}
+${transformationDocsContent['configFromData'].helperDocs}
+`}
+
+${`### ${transformationDocsContent['convertFieldType'].name}
+${transformationDocsContent['convertFieldType'].helperDocs}
+`}
+
+${`### ${transformationDocsContent['extractFields'].name}
+${transformationDocsContent['extractFields'].helperDocs}
+`}
+
+${`### ${transformationDocsContent['fieldLookup'].name}
+${transformationDocsContent['fieldLookup'].helperDocs}
+`}
+
+${`### ${transformationDocsContent['filterByRefId'].name}
+${transformationDocsContent['filterByRefId'].helperDocs}
+`}
+
+${`### ${transformationDocsContent['filterByValue'].name}
+${transformationDocsContent['filterByValue'].helperDocs}
+`}
+
+${`### ${transformationDocsContent['filterFieldsByName'].name}
+${transformationDocsContent['filterFieldsByName'].helperDocs}
+`}
+
+${`### ${transformationDocsContent['formatTime'].name}
+${transformationDocsContent['formatTime'].helperDocs}
+`}
+
+${`### ${transformationDocsContent['groupBy'].name}
+${transformationDocsContent['groupBy'].helperDocs}
+`}
+
+${`### ${transformationDocsContent['groupingToMatrix'].name}
+${transformationDocsContent['groupingToMatrix'].helperDocs}
+`}
+
+${`### ${transformationDocsContent['heatmap'].name}
+${transformationDocsContent['heatmap'].helperDocs}
+`}
+
+${`### ${transformationDocsContent['histogram'].name}
+${transformationDocsContent['histogram'].helperDocs}
+`}
+
+${`### ${transformationDocsContent['joinByField'].name}
+${transformationDocsContent['joinByField'].helperDocs}
+`}
+
+${`### ${transformationDocsContent['joinByLabels'].name}
+${transformationDocsContent['joinByLabels'].helperDocs}
+`}
+
+${`### ${transformationDocsContent['labelsToFields'].name}
+${transformationDocsContent['labelsToFields'].helperDocs}
+`}
+
+${`### ${transformationDocsContent['limit'].name}
+${transformationDocsContent['limit'].helperDocs}
+`}
+
+${`### ${transformationDocsContent['merge'].name}
+${transformationDocsContent['merge'].helperDocs}
+`}
+
+${`### ${transformationDocsContent['organize'].name}
+${transformationDocsContent['organize'].helperDocs}
+`}
+
+${`### ${transformationDocsContent['partitionByValues'].name}
+${transformationDocsContent['partitionByValues'].helperDocs}
+`}
+
+${`### ${transformationDocsContent['prepareTimeSeries'].name}
+${transformationDocsContent['prepareTimeSeries'].helperDocs}
+`}
+
+${`### ${transformationDocsContent['reduce'].name}
+${transformationDocsContent['reduce'].helperDocs}
+`}
+
+${`### ${transformationDocsContent['renameByRegex'].name}
+${transformationDocsContent['renameByRegex'].helperDocs}
+`}
+
+${`### ${transformationDocsContent['rowsToFields'].name}
+${transformationDocsContent['rowsToFields'].helperDocs}
+`}
+
+${`### ${transformationDocsContent['seriesToRows'].name}
+${transformationDocsContent['seriesToRows'].helperDocs}
+`}
+
+${`### ${transformationDocsContent['sortBy'].name}
+${transformationDocsContent['sortBy'].helperDocs}
+`}
+
+${`### ${transformationDocsContent['spatial'].name}
+${transformationDocsContent['spatial'].helperDocs}
+`}
+
+${`### ${transformationDocsContent['timeSeriesTable'].name}
+${transformationDocsContent['timeSeriesTable'].helperDocs}
+`}
 
 {{% docs/reference %}}
-
-// ?JEv remove shortcoes, add refs here
 [Table panel]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/table"
 [Table panel]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/table"
 
@@ -158,5 +270,4 @@ This transformation is available in Grafana 10.1+ as an alpha feature.
 {{% /admonition %}}
 `;
 
-// console.log(template);
-process.stdout.write(template + "\n")
+console.log(template);
