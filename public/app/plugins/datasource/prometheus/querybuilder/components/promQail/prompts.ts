@@ -28,8 +28,8 @@ traces_exporter_sent_spans(counter): Number of spans successfully sent to destin
 PromQL Expression:
 topk(3, sum by(cluster) (rate(traces_exporter_sent_spans{exporter="otlp"}[5m])))
 
-Output:
-This query helps identify the top 3 clusters that have successfully sent the most number of spans to the destination.
+This query is trying to answer the question:
+What is the top 3 clusters that have successfully sent the most number of spans to the destination?
 `;
 
 export type ExplainUserPromptParams = {
@@ -63,7 +63,7 @@ export function GetExplainUserPrompt({
         PromQL Expression: 
         ${query}
 
-        Output:
+        This query is trying to answer the question:
     `;
 }
 
