@@ -159,6 +159,10 @@ func (proxy PluginProxy) director(req *http.Request) {
 
 	proxyutil.ApplyUserHeader(proxy.cfg.SendUserHeader, req, proxy.ctx.SignedInUser)
 
+	if proxy.features.IsEnabled(featuremgmt.FlagIdForwarding) {
+		proxyutil.ApplyForwardIDHeader(req, proxy.ctx.SignedInUser)
+	}
+
 	if err := addHeaders(&req.Header, proxy.matchedRoute, data); err != nil {
 		proxy.ctx.JsonApiErr(500, "Failed to render plugin headers", err)
 		return
