@@ -15,6 +15,7 @@ import { VisualEditor } from './visual-query-builder/VisualEditor';
 
 interface SqlQueryEditorProps extends QueryEditorProps<SqlDatasource, SQLQuery, SQLOptions> {
   queryHeaderProps?: Pick<QueryHeaderProps, 'isPostgresInstance'>;
+  overrideQueryDefaults?: Partial<SQLQuery>;
 }
 
 export function SqlQueryEditor({
@@ -24,6 +25,7 @@ export function SqlQueryEditor({
   onRunQuery,
   range,
   queryHeaderProps,
+  overrideQueryDefaults,
 }: SqlQueryEditorProps) {
   const [isQueryRunnable, setIsQueryRunnable] = useState(true);
   const db = datasource.getDB();
@@ -38,7 +40,7 @@ export function SqlQueryEditor({
     };
   }, [datasource]);
 
-  const queryWithDefaults = applyQueryDefaults(query);
+  const queryWithDefaults = applyQueryDefaults(query, overrideQueryDefaults);
   const [queryRowFilter, setQueryRowFilter] = useState<QueryRowFilter>({
     filter: !!queryWithDefaults.sql?.whereString,
     group: !!queryWithDefaults.sql?.groupBy?.[0]?.property.name,
