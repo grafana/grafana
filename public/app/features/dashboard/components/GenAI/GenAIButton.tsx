@@ -5,8 +5,9 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { Button, Spinner, useStyles2, Link, Tooltip, Toggletip, Text } from '@grafana/ui';
 
 import { GenAIHistory } from './GenAIHistory';
+import { getFeedbackMessage } from './GenAIPanelTitleButton';
 import { useOpenAIStream } from './hooks';
-import { OPEN_AI_MODEL, Message } from './utils';
+import { Message, OPEN_AI_MODEL, QuickFeedback } from './utils';
 
 export interface GenAIButtonProps {
   // Button label text
@@ -49,6 +50,15 @@ export const GenAIButton = ({
     }
   };
 
+  const onGenerateWithFeedback = (suggestion: QuickFeedback, index: number) => {
+    if (suggestion !== QuickFeedback.regenerate) {
+      messages = [...messages, ...getFeedbackMessage(history[index], suggestion)];
+      temperature = 0.5;
+    }
+
+    setMessages(messages);
+  };
+
   useEffect(() => {
     if (reply !== '') {
       setResponse(reply);
@@ -63,7 +73,7 @@ export const GenAIButton = ({
   }, [history, isGenerating, reply, response]);
 
   // Todo: Consider other options for `"` sanitation
-  if (isGenerating) {
+  if (isGenerating && history.length === 0) {
     onGenerate(reply.replace(/^"|"$/g, ''));
   }
 
@@ -103,7 +113,11 @@ export const GenAIButton = ({
       const title = <Text element="p">{toggleTipTitle}</Text>;
 
       return (
-        <Toggletip title={title} content={<GenAIHistory history={history} />} placement="bottom-start">
+        <Toggletip
+          title={title}
+          content={<GenAIHistory history={history} onGenerateWithFeedback={onGenerateWithFeedback} />}
+          placement="bottom-start"
+        >
           {button}
         </Toggletip>
       );

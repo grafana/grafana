@@ -6,19 +6,21 @@ import { Button, Divider, Icon, Input, Link, Text, useStyles2 } from '@grafana/u
 
 import { GenerationHistoryCarousel } from './GenerationHistoryCarousel';
 import { QuickFeedbackSuggestions } from './QuickFeedbackSuggestions';
+import { QuickFeedback } from './utils';
 
 export interface GenAIHistoryProps {
   history: string[];
+  onGenerateWithFeedback: (suggestion: QuickFeedback, index: number) => void;
 }
 
-export const GenAIHistory = ({ history }: GenAIHistoryProps) => {
+export const GenAIHistory = ({ history, onGenerateWithFeedback }: GenAIHistoryProps) => {
   const styles = useStyles2(getStyles);
 
   const [currentIndex, setCurrentIndex] = useState(1);
 
   const onSubmit = (event: React.KeyboardEvent<HTMLInputElement>) => {
     if (event.key === 'Enter') {
-      console.log('on enter');
+      // @TODO: Implement
     }
   };
 
@@ -27,11 +29,8 @@ export const GenAIHistory = ({ history }: GenAIHistoryProps) => {
   };
 
   const onApply = () => {
-    console.log('onApply');
+    // @TODO: Implement
   };
-
-  // @TODO remove this after history re-generation implementation
-  history = [...history, ...['History Item 2', 'History Item 3']];
 
   return (
     <div className={styles.wrapper}>
@@ -41,7 +40,9 @@ export const GenAIHistory = ({ history }: GenAIHistoryProps) => {
         onKeyDown={onSubmit}
       />
       <div className={styles.actions}>
-        <QuickFeedbackSuggestions />
+        <QuickFeedbackSuggestions
+          onSuggestionClick={(suggestion: QuickFeedback) => onGenerateWithFeedback(suggestion, currentIndex)}
+        />
         <GenerationHistoryCarousel history={history} index={currentIndex} onNavigate={onNavigate} />
       </div>
       <Button onClick={onApply} className={styles.applyButton}>
@@ -62,31 +63,31 @@ export const GenAIHistory = ({ history }: GenAIHistoryProps) => {
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  wrapper: css`
-    display: flex;
-    flex-direction: column;
-    width: 520px;
-  `,
-  applyButton: css`
-    display: flex;
-    align-self: flex-end;
-    width: 70px;
-    margin-top: 30px;
-  `,
-  actions: css`
-    display: flex;
-    flex-direction: row;
-    flex-wrap: wrap;
-  `,
-  textWrapper: css`
-    margin-bottom: -15px;
-  `,
-  infoColor: css`
-    color: ${theme.colors.info.main};
-    margin-right: 5px;
-  `,
-  linkText: css`
-    color: ${theme.colors.text.link} !important;
-    text-decoration: none !important;
-  `,
+  wrapper: css({
+    display: 'flex',
+    flexDirection: 'column',
+    width: 520,
+  }),
+  applyButton: css({
+    display: 'flex',
+    alignSelf: 'flex-end',
+    width: 70,
+    marginTop: 30,
+  }),
+  actions: css({
+    display: 'flex',
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+  }),
+  textWrapper: css({
+    marginBottom: -15,
+  }),
+  infoColor: css({
+    color: theme.colors.info.main,
+    marginRight: 5,
+  }),
+  linkText: css({
+    color: theme.colors.text.link,
+    textDecoration: 'none !important',
+  }),
 });

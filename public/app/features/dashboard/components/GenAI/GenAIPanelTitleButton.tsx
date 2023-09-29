@@ -5,7 +5,7 @@ import { PanelModel } from '../../state';
 
 import { GenAIButton } from './GenAIButton';
 import { EventSource, reportGenerateAIButtonClicked } from './tracking';
-import { Message, Role } from './utils';
+import { Message, QuickFeedback, Role } from './utils';
 
 interface GenAIPanelTitleButtonProps {
   onGenerate: (title: string) => void;
@@ -54,3 +54,12 @@ function getMessages(panel: PanelModel): Message[] {
     },
   ];
 }
+
+export const getFeedbackMessage = (previousResponse: string, feedback: QuickFeedback): Message[] => {
+  return [
+    {
+      role: Role.system,
+      content: `Your previous response was: ${previousResponse}. The user has provided the following feedback: ${feedback}. Re-generate your response according to the provided feedback.`,
+    },
+  ];
+};

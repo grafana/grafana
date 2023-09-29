@@ -18,7 +18,13 @@ export const GenerationHistoryCarousel = ({ history, index, onNavigate }: Genera
     <>
       <div className={styles.wrapper}>
         <div className={styles.paginationWrapper}>
-          <Pagination currentPage={index} numberOfPages={historySize} onNavigate={onNavigate} showSmallVersion={true} />
+          <Pagination
+            currentPage={index}
+            numberOfPages={historySize}
+            onNavigate={onNavigate}
+            showSmallVersion={true}
+            hideWhenSinglePage={true}
+          />
         </div>
       </div>
       <div className={styles.contentWrapper}>
@@ -31,19 +37,19 @@ export const GenerationHistoryCarousel = ({ history, index, onNavigate }: Genera
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  wrapper: css`
-    display: flex;
-    flex-direction: column;
-  `,
-  paginationWrapper: css`
-    display: flex;
-    justify-content: flex-end;
-    margin-top: 15px;
-  `,
-  contentWrapper: css`
-    display: flex;
-    flex-basis: 100%;
-    flex-grow: 3;
-    margin-top: 20px;
-  `,
+  wrapper: css({
+    display: 'flex',
+    flexDirection: 'column',
+  }),
+  paginationWrapper: css({
+    display: 'flex',
+    justifyContent: 'flex-end',
+    marginTop: 15,
+  }),
+  contentWrapper: css({
+    display: 'flex',
+    flexBasis: '100%',
+    flexGrow: 3,
+    marginTop: 20,
+  }),
 });
