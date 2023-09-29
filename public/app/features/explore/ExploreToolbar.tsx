@@ -172,6 +172,7 @@ export function ExploreToolbar({
               iconOnly={splitted}
               onClick={onContentOutlineToogle}
               aria-expanded={isContentOutlineOpen}
+              aria-controls={isContentOutlineOpen ? 'content-outline-container' : undefined}
             >
               Outline
             </ToolbarButton>

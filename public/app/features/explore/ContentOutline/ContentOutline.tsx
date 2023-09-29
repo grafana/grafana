@@ -55,7 +55,7 @@ export function ContentOutline() {
   };
 
   return (
-    <div className={styles.wrapper}>
+    <div className={styles.wrapper} id="content-outline-container">
       <div className={styles.content}>
         <ContentOutlineItemButton
           title={expanded ? 'Collapse content outline' : undefined}
