@@ -180,7 +180,7 @@ class UnthemedDashboardImport extends PureComponent<Props> {
             {({ register, errors }) => (
               <>
                 <Field
-                  label={t('dashboard-import-page.json-field-label', 'Import via dashboard JSON model')}
+                  label={t('dashboard-import.json-field.label', 'Import via dashboard JSON model')}
                   invalid={!!errors.dashboardJson}
                   error={errors.dashboardJson && errors.dashboardJson.message}
                 >
