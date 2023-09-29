@@ -1,9 +1,9 @@
 import { PanelBuilders, SceneFlexItem, SceneQueryRunner, SceneTimeRange } from '@grafana/scenes';
 import { DataSourceRef, GraphDrawStyle, TooltipDisplayMode } from '@grafana/schema';
 
-import { PANEL_STYLES } from '../../../home/Insights';
+import { PANEL_STYLES } from '../../home/Insights';
 
-export function getGrafanaAlertmanagerInstancesByStateScene(
+export function getGrafanaInstancesByStateScene(
   timeRange: SceneTimeRange,
   datasource: DataSourceRef,
   panelTitle: string

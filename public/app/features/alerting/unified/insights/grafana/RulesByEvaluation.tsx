@@ -3,7 +3,7 @@ import { DataSourceRef, GraphDrawStyle, TooltipDisplayMode } from '@grafana/sche
 
 import { PANEL_STYLES } from '../../home/Insights';
 
-export function getGrafanaInstancesByStateScene(
+export function getGrafanaRulesByEvaluationScene(
   timeRange: SceneTimeRange,
   datasource: DataSourceRef,
   panelTitle: string
@@ -15,7 +15,7 @@ export function getGrafanaInstancesByStateScene(
         refId: 'A',
         expr: 'sum by (state) (grafanacloud_grafana_instance_alerting_rule_group_rules)',
         range: true,
-        legendFormat: '{{state}}',
+        legendFormat: '{{state}} evaluation',
       },
     ],
     $timeRange: timeRange,
@@ -32,7 +32,7 @@ export function getGrafanaInstancesByStateScene(
       .setOverrides((b) =>
         b.matchFieldsWithName('active').overrideColor({
           mode: 'fixed',
-          fixedColor: 'red',
+          fixedColor: 'blue',
         })
       )
       .build(),

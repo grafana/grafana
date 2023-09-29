@@ -12,15 +12,14 @@ import {
   VariableValueSelectors,
 } from '@grafana/scenes';
 
-import { getGrafanaEvalDurationScene } from '../insights/grafana/EvalDurationScene';
+import { getGrafanaInstancesByStateScene } from '../insights/grafana/AlertsByStateScene';
 import { getGrafanaEvalSuccessVsFailuresScene } from '../insights/grafana/EvalSuccessVsFailuresScene';
 import { getFiringGrafanaAlertsScene } from '../insights/grafana/Firing';
-import { getGrafanaInstancesByStateScene } from '../insights/grafana/InstancesByState';
-import { getGrafanaInstancesPercentageByStateScene } from '../insights/grafana/InstancesPercentageByState';
 import { getGrafanaMissedIterationsScene } from '../insights/grafana/MissedIterationsScene';
 import { getMostFiredInstancesScene } from '../insights/grafana/MostFiredInstancesTable';
 import { getPausedGrafanaAlertsScene } from '../insights/grafana/Paused';
-import { getGrafanaAlertmanagerInstancesByStateScene } from '../insights/grafana/alertmanager/AlertsByStateScene';
+import { getGrafanaRulesByEvaluationScene } from '../insights/grafana/RulesByEvaluation';
+import { getGrafanaRulesByEvaluationPercentageScene } from '../insights/grafana/RulesByEvaluationPercentage';
 import { getGrafanaAlertmanagerNotificationsScene } from '../insights/grafana/alertmanager/NotificationsScene';
 import { getGrafanaAlertmanagerSilencesScene } from '../insights/grafana/alertmanager/SilencesByStateScene';
 import { getAlertsByStateScene } from '../insights/mimir/AlertsByState';
@@ -81,21 +80,17 @@ export function getGrafanaScenes() {
             new SceneFlexLayout({
               children: [
                 getMostFiredInstancesScene(THIS_WEEK_TIME_RANGE, ashDs, 'Top 10 firing instances this week'),
-                getFiringGrafanaAlertsScene(THIS_WEEK_TIME_RANGE, cloudUsageDs, 'Firing instances'),
-                getPausedGrafanaAlertsScene(THIS_WEEK_TIME_RANGE, cloudUsageDs, 'Paused instances'),
+                getFiringGrafanaAlertsScene(THIS_WEEK_TIME_RANGE, cloudUsageDs, 'Firing rules'),
+                getPausedGrafanaAlertsScene(THIS_WEEK_TIME_RANGE, cloudUsageDs, 'Paused rules'),
               ],
             }),
             new SceneFlexLayout({
               children: [
-                getGrafanaInstancesByStateScene(
+                getGrafanaRulesByEvaluationScene(THIS_WEEK_TIME_RANGE, cloudUsageDs, 'Alert rule evaluation'),
+                getGrafanaRulesByEvaluationPercentageScene(
                   THIS_WEEK_TIME_RANGE,
                   cloudUsageDs,
-                  'Count of alert instances by state'
-                ),
-                getGrafanaInstancesPercentageByStateScene(
-                  THIS_WEEK_TIME_RANGE,
-                  cloudUsageDs,
-                  '% of Alert Instances by State'
+                  '% of alert rule evaluation'
                 ),
               ],
             }),
@@ -106,11 +101,15 @@ export function getGrafanaScenes() {
                   cloudUsageDs,
                   'Evaluation success vs failures'
                 ),
-                getGrafanaMissedIterationsScene(THIS_WEEK_TIME_RANGE, cloudUsageDs, 'Iterations missed'),
+                getGrafanaMissedIterationsScene(
+                  THIS_WEEK_TIME_RANGE,
+                  cloudUsageDs,
+                  'Iterations missed per evaluation group'
+                ),
               ],
             }),
             new SceneFlexLayout({
-              children: [getGrafanaEvalDurationScene(THIS_WEEK_TIME_RANGE, cloudUsageDs, 'Evaluation duration')],
+              children: [getGrafanaInstancesByStateScene(THIS_WEEK_TIME_RANGE, cloudUsageDs, 'Alerts by state')],
             }),
             new SceneFlexItem({
               ySizing: 'content',
@@ -150,10 +149,7 @@ function getGrafanaAlertmanagerScenes() {
           }),
         }),
         new SceneFlexLayout({
-          children: [
-            getGrafanaAlertmanagerInstancesByStateScene(THIS_WEEK_TIME_RANGE, cloudUsageDs, 'Alerts by state'),
-            getGrafanaAlertmanagerNotificationsScene(THIS_WEEK_TIME_RANGE, cloudUsageDs, 'Notifications'),
-          ],
+          children: [getGrafanaAlertmanagerNotificationsScene(THIS_WEEK_TIME_RANGE, cloudUsageDs, 'Notifications')],
         }),
         new SceneFlexLayout({
           children: [getGrafanaAlertmanagerSilencesScene(LAST_WEEK_TIME_RANGE, cloudUsageDs, 'Silences')],

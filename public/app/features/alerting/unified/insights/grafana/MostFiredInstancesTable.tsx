@@ -89,7 +89,7 @@ export function getMostFiredInstancesScene(timeRange: SceneTimeRange, datasource
             'Value #A': 1,
           },
           renameByName: {
-            labels_alertname: 'Alert Name',
+            labels_alertname: 'Alert rule name',
             'Value #A': 'Fires this week',
           },
         },
