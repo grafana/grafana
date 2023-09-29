@@ -205,7 +205,8 @@ export class GraphNG extends Component<GraphNGProps, GraphNGState> {
           next: () => {
             const u = this.plotInstance?.current;
 
-            if (u) {
+            // @ts-ignore
+            if (u && !u.cursor._lock) {
               u.setCursor({
                 left: -10,
                 top: -10,
