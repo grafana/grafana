@@ -149,11 +149,8 @@ class UnthemedDashboardImport extends PureComponent<Props> {
                 label={
                   <Label className={styles.labelWithLink} htmlFor="url-input">
                     <span>
-                      <Trans i18nKey="dashboard-import-page.field-label">
-                        Find and import dashboards for common applications at{' '}
-                        <TextLink variant="bodySmall" href="https://grafana.com/grafana/dashboards/" external>
-                          grafana.com/dashboards
-                        </TextLink>
+                      <Trans i18nKey="dashboard-import.gcom-field.label">
+                        Find and import dashboards for common applications at <GcomDashboardsLink />
                       </Trans>
                     </span>
                   </Label>
