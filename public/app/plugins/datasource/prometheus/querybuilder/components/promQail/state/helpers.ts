@@ -2,7 +2,7 @@ import { AnyAction } from 'redux';
 
 import { llms } from '@grafana/experimental';
 import { PrometheusDatasource } from 'app/plugins/datasource/prometheus/datasource';
-import { getMetadataHelp } from 'app/plugins/datasource/prometheus/language_provider';
+import { getMetadataHelp, getMetadataType } from 'app/plugins/datasource/prometheus/language_provider';
 
 import { promQueryModeller } from '../../../PromQueryModeller';
 import { buildVisualQueryFromString } from '../../../parsing';
@@ -17,22 +17,12 @@ import {
 import { Interaction, QuerySuggestion, SuggestionType } from '../types';
 
 import { createInteraction, stateSlice } from './state';
+import { getTemplateSuggestions } from './templates';
 
 const OPENAI_MODEL_NAME = 'gpt-3.5-turbo';
 const promQLTemplatesCollection = 'grafana.promql.templates';
 // actions to update the state
 const { updateInteraction } = stateSlice.actions;
-
-const commonTemplateSuggestions: string[] = [
-	"metric{}",
-	"rate(metric{}[1m])",
-	"increase(metric{}[1m])",
-	"count(metric{})",
-	"max(metric{})",
-	"avg(metric{})",
-	"sum(metric{})",
-	"sum(rate(metric{}[1m]))",
-];
 
 interface TemplateSearchResult {
   description: string | null;
@@ -147,7 +137,8 @@ export async function promQailSuggest(
   idx: number,
   query: PromVisualQuery,
   labelNames: string[],
-  interaction?: Interaction
+  datasource: PrometheusDatasource,
+  interaction?: Interaction,
 ) {
   // when you're not running promqail
   const check = (await llms.openai.enabled()) && (await llms.vector.enabled());
@@ -157,12 +148,12 @@ export async function promQailSuggest(
   if (!check || interactionToUpdate.suggestionType === SuggestionType.Historical) {
     return new Promise<void>((resolve) => {
       return setTimeout(() => {
-        const suggestions = commonTemplateSuggestions.map(suggestion => {
-          return {
-            query: suggestion.replace('metric', query.metric).replace('{}', promQueryModeller.renderLabels(query.labels)),
-            explanation: '',
-          };
-        }).sort(() => Math.random() - 0.5).slice(0, 5);
+        let metricType = getMetadataType(query.metric, datasource.languageProvider.metricsMetadata!) ?? '';
+        const suggestions = getTemplateSuggestions(
+          query.metric, 
+          metricType,
+          promQueryModeller.renderLabels(query.labels)
+        )
 
         const payload = {
           idx,
