@@ -236,6 +236,32 @@
       "settings": "Paramètres du tableau de bord",
       "share": "Partager le tableau de bord ou le panneau",
       "unmark-favorite": "Supprimer des favoris"
+    },
+    "validation": {
+      "invalid-dashboard-id": "",
+      "invalid-json": "",
+      "tags-expected-array": "",
+      "tags-expected-strings": ""
+    }
+  },
+  "dashboard-import": {
+    "file-dropzone": {
+      "primary-text": "",
+      "secondary-text": ""
+    },
+    "form-actions": {
+      "cancel": "",
+      "load": ""
+    },
+    "gcom-field": {
+      "label": "",
+      "load-button": "",
+      "placeholder": "",
+      "validation-required": ""
+    },
+    "json-field": {
+      "label": "",
+      "validation-required": ""
     }
   },
   "dashboard-settings": {
