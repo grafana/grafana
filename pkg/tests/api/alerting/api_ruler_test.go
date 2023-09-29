@@ -82,7 +82,7 @@ func TestIntegrationAlertRulePermissions(t *testing.T) {
 		body, _ := rulesNamespaceWithoutVariableValues(t, b)
 		expectedGetNamespaceResponseBody := `
 		{
-		   "folder1":[
+		   "folder1/folder1":[
 			  {
 				 "name":"arulegroup",
 				 "interval":"1m",
@@ -133,7 +133,7 @@ func TestIntegrationAlertRulePermissions(t *testing.T) {
 				 ]
 			  }
 		   ],
-		"folder2":[
+		"folder2/folder2":[
 			{
 			   "name":"arulegroup",
 			   "interval":"1m",
@@ -207,7 +207,7 @@ func TestIntegrationAlertRulePermissions(t *testing.T) {
 		body, _ = rulesNamespaceWithoutVariableValues(t, b)
 		expectedGetNamespaceResponseBody = `
 		{
-		   "folder1":[
+		   "folder1/folder1":[
 			  {
 				 "name":"arulegroup",
 				 "interval":"1m",
@@ -509,7 +509,7 @@ func TestIntegrationRulerRulesFilterByDashboard(t *testing.T) {
 
 	expectedAllJSON := fmt.Sprintf(`
 {
-	"default": [{
+	"default/default": [{
 		"name": "anotherrulegroup",
 		"interval": "1m",
 		"rules": [{
@@ -589,7 +589,7 @@ func TestIntegrationRulerRulesFilterByDashboard(t *testing.T) {
 }`, dashboardUID)
 	expectedFilteredByJSON := fmt.Sprintf(`
 {
-	"default": [{
+	"default/default": [{
 		"name": "anotherrulegroup",
 		"interval": "1m",
 		"rules": [{

@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/folder"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -26,6 +27,8 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
+
+const NAMESPACE_SEPARATOR = "/"
 
 type ConditionValidator interface {
 	// Validate validates that the condition is correct. Returns nil if the condition is correct. Otherwise, error that describes the failure
@@ -158,7 +161,8 @@ func (srv RulerSrv) RouteGetNamespaceRulesConfig(c *contextmodel.ReqContext, nam
 	result := apimodels.NamespaceConfigResponse{}
 
 	for groupKey, rules := range ruleGroups {
-		result[namespaceUID] = append(result[namespaceUID], toGettableRuleGroupConfig(groupKey.RuleGroup, rules, namespace.ID, provenanceRecords))
+		key := getNamespaceKey(namespace)
+		result[key] = append(result[namespaceUID], toGettableRuleGroupConfig(groupKey.RuleGroup, rules, namespace.ID, provenanceRecords))
 	}
 
 	return response.JSON(http.StatusAccepted, result)
@@ -234,8 +238,8 @@ func (srv RulerSrv) RouteGetRulesConfig(c *contextmodel.ReqContext) response.Res
 			srv.log.Error("Namespace not visible to the user", "user", c.SignedInUser.UserID, "namespace", groupKey.NamespaceUID)
 			continue
 		}
-		namespace := folder.UID
-		result[namespace] = append(result[namespace], toGettableRuleGroupConfig(groupKey.RuleGroup, rules, folder.ID, provenanceRecords))
+		key := getNamespaceKey(folder)
+		result[key] = append(result[key], toGettableRuleGroupConfig(groupKey.RuleGroup, rules, folder.ID, provenanceRecords))
 	}
 	return response.JSON(http.StatusOK, result)
 }
@@ -405,13 +409,12 @@ func toGettableExtendedRuleNode(r ngmodels.AlertRule, namespaceID int64, provena
 			Version:         r.Version,
 			UID:             r.UID,
 			NamespaceUID:    r.NamespaceUID,
-			// TODO deprecate this field
-			NamespaceID:  namespaceID,
-			RuleGroup:    r.RuleGroup,
-			NoDataState:  apimodels.NoDataState(r.NoDataState),
-			ExecErrState: apimodels.ExecutionErrorState(r.ExecErrState),
-			Provenance:   apimodels.Provenance(provenance),
-			IsPaused:     r.IsPaused,
+			NamespaceID:     namespaceID,
+			RuleGroup:       r.RuleGroup,
+			NoDataState:     apimodels.NoDataState(r.NoDataState),
+			ExecErrState:    apimodels.ExecutionErrorState(r.ExecErrState),
+			Provenance:      apimodels.Provenance(provenance),
+			IsPaused:        r.IsPaused,
 		},
 	}
 	forDuration := model.Duration(r.For)
@@ -521,4 +524,8 @@ func (srv RulerSrv) searchAuthorizedAlertRules(ctx context.Context, c *contextmo
 		}
 	}
 	return byGroupKey, totalGroups, nil
+}
+
+func getNamespaceKey(namespace *folder.Folder) string {
+	return strings.Join([]string{namespace.UID, namespace.Title}, NAMESPACE_SEPARATOR)
 }
