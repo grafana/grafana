@@ -1,5 +1,3 @@
-import * as grafanaRuntime from '@grafana/runtime';
-
 import { createMockInstanceSetttings } from './__mocks__/instanceSettings';
 import createMockQuery from './__mocks__/query';
 import { singleVariable } from './__mocks__/variables';
@@ -9,24 +7,24 @@ import { AzureQueryType } from './types';
 jest.mock('@grafana/runtime', () => {
   return {
     __esModule: true,
-    ...jest.requireActual('@grafana/runtime')
+    ...jest.requireActual('@grafana/runtime'),
+    getTemplateSrv: () => ({
+      replace: (
+        target?: string,
+      ) => {
+        if (target === "$resourceGroup") {
+          return "the-resource-group";
+        }
+        return target || "";
+      },
+      getVariables: jest.fn(),
+      updateTimeRange: jest.fn(),
+      containsTemplate: (target?: string) => {
+        return (target || "").includes("$")
+      }
+    })
   };
 });
-jest.spyOn(grafanaRuntime, 'getTemplateSrv').mockImplementation(() => ({
-  replace: (
-    target?: string,
-  ) => {
-    if (target === "$resourceGroup") {
-      return "the-resource-group";
-    }
-    return target || "";
-  },
-  getVariables: jest.fn(),
-  updateTimeRange: jest.fn(),
-  containsTemplate: (target?: string) => {
-    return (target || "").includes("$")
-  }
-}));
 
 describe('Azure Monitor Datasource', () => {
   describe('interpolateVariablesInQueries()', () => {

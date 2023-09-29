@@ -1,7 +1,6 @@
 import { get, set } from 'lodash';
 
 import { DataSourceInstanceSettings } from '@grafana/data';
-import * as grafanaRuntime from '@grafana/runtime';
 
 import createMockQuery from '../__mocks__/query';
 import { createTemplateVariables } from '../__mocks__/utils';
@@ -14,16 +13,15 @@ let replace = () => "";
 jest.mock('@grafana/runtime', () => {
   return {
     __esModule: true,
-    ...jest.requireActual('@grafana/runtime')
+    ...jest.requireActual('@grafana/runtime'),
+    getTemplateSrv: () => ({
+      replace: replace,
+      getVariables: jest.fn(),
+      updateTimeRange: jest.fn(),
+      containsTemplate: jest.fn(),
+    })
   };
 });
-
-jest.spyOn(grafanaRuntime, 'getTemplateSrv').mockImplementation(() => ({
-  replace: replace,
-  getVariables: jest.fn(),
-  updateTimeRange: jest.fn(),
-  containsTemplate: jest.fn()
-}));
 
 interface TestContext {
   instanceSettings: DataSourceInstanceSettings<AzureDataSourceJsonData>;
@@ -40,7 +38,7 @@ describe('AzureMonitorDatasource', () => {
       url: 'http://azuremonitor.com',
       jsonData: { subscriptionId: 'mock-subscription-id', cloudName: 'azuremonitor' },
     } as unknown as DataSourceInstanceSettings<AzureDataSourceJsonData>;
-    ctx.ds = new AzureMonitorDatasource(ctx.instanceSettings, grafanaRuntime.getTemplateSrv());
+    ctx.ds = new AzureMonitorDatasource(ctx.instanceSettings);
   });
 
   describe('filterQuery', () => {

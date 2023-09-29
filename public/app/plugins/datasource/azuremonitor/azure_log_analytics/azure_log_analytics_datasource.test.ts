@@ -1,5 +1,4 @@
 import { CustomVariableModel } from '@grafana/data';
-import * as grafanaRuntime from '@grafana/runtime';
 
 import { Context, createContext } from '../__mocks__/datasource';
 import createMockQuery from '../__mocks__/query';
@@ -15,16 +14,15 @@ let replace = () => "";
 jest.mock('@grafana/runtime', () => {
   return {
     __esModule: true,
-    ...jest.requireActual('@grafana/runtime')
+    ...jest.requireActual('@grafana/runtime'),
+    getTemplateSrv: () => ({
+      replace: replace,
+      getVariables: getTempVars,
+      updateTimeRange: jest.fn(),
+      containsTemplate: jest.fn(),
+    })
   };
 });
-
-jest.spyOn(grafanaRuntime, 'getTemplateSrv').mockImplementation(() => ({
-  replace: replace,
-  getVariables: getTempVars,
-  updateTimeRange: jest.fn(),
-  containsTemplate: jest.fn(),
-}));
 
 describe('AzureLogAnalyticsDatasource', () => {
   let ctx: Context;
