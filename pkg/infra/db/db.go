@@ -40,6 +40,7 @@ type DB interface {
 	// RecursiveQueriesAreSupported runs a dummy recursive query and it returns true
 	// if the query runs successfully or false if it fails with mysqlerr.ER_PARSE_ERROR error or any other error
 	RecursiveQueriesAreSupported() (bool, error)
+	RunAndRegisterCodeMigration(ctx context.Context, migrationID string, migrationFunc sqlstore.DBTransactionFunc) error
 }
 
 type Session = sqlstore.DBSession
