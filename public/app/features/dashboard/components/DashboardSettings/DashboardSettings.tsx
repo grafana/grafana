@@ -191,6 +191,11 @@ function getSectionNav(
     hideFromBreadcrumbs: true,
   };
 
+  if (config.featureToggles.dockedMegaMenu) {
+    main.hideFromBreadcrumbs = false;
+    main.url = locationUtil.getUrlForPartial(location, { editview: 'settings', editIndex: null });
+  }
+
   main.children = pages.map((page) => ({
     text: page.title,
     icon: page.icon,

@@ -53,6 +53,7 @@ describe('InfluxDataSource Frontend Mode', () => {
 
   describe('outdated browser mode', () => {
     it('should throw an error when querying data', async () => {
+      expect.assertions(1);
       const instanceSettings = getMockDSInstanceSettings();
       instanceSettings.access = 'direct';
       const ds = getMockInfluxDS(instanceSettings);
