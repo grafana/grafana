@@ -33,7 +33,16 @@ export function hasPanelPlugin(id: string): boolean {
 }
 
 export function getPanelPluginMeta(id: string): PanelPluginMeta {
-  return config.panels[id] || Object.values(config.panels).find((p) => p.alias === id);
+  const v = config.panels[id];
+  if (!v) {
+    // Check alias values before failing
+    for (const p of Object.values(config.panels)) {
+      if (p.aliasIDs?.includes(id)) {
+        return p;
+      }
+    }
+  }
+  return v;
 }
 
 export function importPanelPluginFromMeta(meta: PanelPluginMeta): Promise<PanelPlugin> {

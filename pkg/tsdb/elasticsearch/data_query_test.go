@@ -1459,7 +1459,7 @@ func TestSettingsCasting(t *testing.T) {
 								"gamma": "3",
 								"period": "4"
 							}
-						} 
+						}
 					}
 				],
 				"bucketAggs": [{"type": "date_histogram", "field": "@timestamp", "id": "1"}]
@@ -1819,6 +1819,6 @@ func executeElasticsearchDataQuery(c es.Client, body string, from, to time.Time)
 			},
 		},
 	}
-	query := newElasticsearchDataQuery(context.Background(), c, dataRequest.Queries, log.New("test.logger"), tracing.NewFakeTracer())
+	query := newElasticsearchDataQuery(context.Background(), c, dataRequest.Queries, log.New("test.logger"), tracing.InitializeTracerForTest())
 	return query.execute()
 }

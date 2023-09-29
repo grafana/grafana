@@ -27,6 +27,9 @@ type SignedInUser struct {
 	Teams            []int64
 	// Permissions grouped by orgID and actions
 	Permissions map[int64]map[string][]string `json:"-"`
+	// IDToken is a signed token representing the identity that can be forwarded to plugins and external services.
+	// Will only be set when featuremgmt.FlagIdForwarding is enabled.
+	IDToken string `json:"-" xorm:"-"`
 }
 
 func (u *SignedInUser) ShouldUpdateLastSeenAt() bool {
@@ -209,4 +212,8 @@ func (u *SignedInUser) GetDisplayName() string {
 // DEPRECATEAD: Returns the authentication method used
 func (u *SignedInUser) GetAuthenticatedBy() string {
 	return u.AuthenticatedBy
+}
+
+func (u *SignedInUser) GetIDToken() string {
+	return u.IDToken
 }

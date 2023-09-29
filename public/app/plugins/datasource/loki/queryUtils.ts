@@ -231,7 +231,7 @@ export function getLogQueryFromMetricsQuery(query: string): string {
   // Log query in metrics query composes of Selector & PipelineExpr
   const selectorNode = getNodeFromQuery(query, Selector);
   if (!selectorNode) {
-    return query;
+    return '';
   }
   const selector = query.substring(selectorNode.from, selectorNode.to);
 
@@ -239,6 +239,20 @@ export function getLogQueryFromMetricsQuery(query: string): string {
   const pipelineExpr = pipelineExprNode ? query.substring(pipelineExprNode.from, pipelineExprNode.to) : '';
 
   return `${selector} ${pipelineExpr}`.trim();
+}
+
+export function getLogQueryFromMetricsQueryAtPosition(query: string, position: number): string {
+  if (isLogsQuery(query)) {
+    return query;
+  }
+
+  const metricQuery = getNodesFromQuery(query, [MetricExpr])
+    .reverse() // So we don't get the root metric node
+    .find((node) => node.from <= position && node.to >= position);
+  if (!metricQuery) {
+    return '';
+  }
+  return getLogQueryFromMetricsQuery(query.substring(metricQuery.from, metricQuery.to));
 }
 
 export function isQueryWithLabelFilter(query: string): boolean {

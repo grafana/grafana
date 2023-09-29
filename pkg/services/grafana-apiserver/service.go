@@ -18,7 +18,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/apiserver/pkg/authentication/authenticator"
 	"k8s.io/apiserver/pkg/authentication/request/headerrequest"
-	"k8s.io/apiserver/pkg/authentication/user"
+	"k8s.io/apiserver/pkg/authorization/authorizer"
 	openapinamer "k8s.io/apiserver/pkg/endpoints/openapi"
 	"k8s.io/apiserver/pkg/endpoints/responsewriter"
 	genericapiserver "k8s.io/apiserver/pkg/server"
@@ -101,11 +101,14 @@ type service struct {
 	rr       routing.RouteRegister
 	handler  web.Handler
 	builders []APIGroupBuilder
+
+	authorizer authorizer.Authorizer
 }
 
 func ProvideService(
 	cfg *setting.Cfg,
 	rr routing.RouteRegister,
+	authz authorizer.Authorizer,
 ) (*service, error) {
 	s := &service{
 		etcd_servers: cfg.SectionWithEnvOverrides("grafana-apiserver").Key("etcd_servers").Strings(","),
@@ -114,6 +117,7 @@ func ProvideService(
 		dataPath:     path.Join(cfg.DataPath, "k8s"),
 		stopCh:       make(chan struct{}),
 		builders:     []APIGroupBuilder{},
+		authorizer:   authz,
 	}
 
 	// This will be used when running as a dskit service
@@ -171,8 +175,6 @@ func (s *service) start(ctx context.Context) error {
 	o.SecureServing.BindPort = 6443
 	o.Authentication.RemoteKubeConfigFileOptional = true
 	o.Authorization.RemoteKubeConfigFileOptional = true
-	o.Authorization.AlwaysAllowPaths = []string{"*"}
-	o.Authorization.AlwaysAllowGroups = []string{user.SystemPrivilegedGroup, "grafana"}
 	o.Etcd.StorageConfig.Transport.ServerList = s.etcd_servers
 
 	o.Admission = nil
@@ -220,6 +222,7 @@ func (s *service) start(ctx context.Context) error {
 		return err
 	}
 
+	serverConfig.Authorization.Authorizer = s.authorizer
 	serverConfig.Authentication.Authenticator = authenticator
 
 	// Get the list of groups the server will support
@@ -283,10 +286,6 @@ func (s *service) start(ctx context.Context) error {
 
 		req.Header.Set("X-Remote-User", strconv.FormatInt(signedInUser.UserID, 10))
 		req.Header.Set("X-Remote-Group", "grafana")
-		req.Header.Set("X-Remote-Extra-token-name", signedInUser.Name)
-		req.Header.Set("X-Remote-Extra-org-role", string(signedInUser.OrgRole))
-		req.Header.Set("X-Remote-Extra-org-id", strconv.FormatInt(signedInUser.OrgID, 10))
-		req.Header.Set("X-Remote-Extra-user-id", strconv.FormatInt(signedInUser.UserID, 10))
 
 		resp := responsewriter.WrapForHTTP1Or2(c.Resp)
 		prepared.GenericAPIServer.Handler.ServeHTTP(resp, req)
