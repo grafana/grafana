@@ -881,7 +881,7 @@ const traceSubFrame = (
         },
       },
       {
-        name: 'spanStartTime',
+        name: 'time',
         type: FieldType.time,
         config: {
           displayNameFromDS: 'Start time',

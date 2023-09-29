@@ -420,7 +420,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
                     data: formatTraceQLResponse(
                       response.data.traces,
                       this.instanceSettings,
-                      targets.traceql[0].tableType
+                      targets.traceqlSearch[0].tableType
                     ),
                   };
                 }),
