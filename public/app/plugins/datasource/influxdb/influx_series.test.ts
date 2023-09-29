@@ -1,6 +1,6 @@
 import { produce } from 'immer';
 
-import InfluxSeries from '../influx_series';
+import InfluxSeries from './influx_series';
 
 describe('when generating timeseries from influxdb response', () => {
   describe('given multiple fields for series', () => {

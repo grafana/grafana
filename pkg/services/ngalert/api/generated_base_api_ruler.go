@@ -117,6 +117,7 @@ func (api *API) RegisterRulerApiEndpoints(srv RulerApi, m *metrics.API) {
 		group.Delete(
 			toMacaronPath("/api/ruler/grafana/api/v1/rules/{Namespace}/{Groupname}"),
 			requestmeta.SetOwner(requestmeta.TeamAlerting),
+			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
 			api.authorize(http.MethodDelete, "/api/ruler/grafana/api/v1/rules/{Namespace}/{Groupname}"),
 			metrics.Instrument(
 				http.MethodDelete,
@@ -128,6 +129,7 @@ func (api *API) RegisterRulerApiEndpoints(srv RulerApi, m *metrics.API) {
 		group.Delete(
 			toMacaronPath("/api/ruler/grafana/api/v1/rules/{Namespace}"),
 			requestmeta.SetOwner(requestmeta.TeamAlerting),
+			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
 			api.authorize(http.MethodDelete, "/api/ruler/grafana/api/v1/rules/{Namespace}"),
 			metrics.Instrument(
 				http.MethodDelete,
@@ -139,6 +141,7 @@ func (api *API) RegisterRulerApiEndpoints(srv RulerApi, m *metrics.API) {
 		group.Delete(
 			toMacaronPath("/api/ruler/{DatasourceUID}/api/v1/rules/{Namespace}"),
 			requestmeta.SetOwner(requestmeta.TeamAlerting),
+			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
 			api.authorize(http.MethodDelete, "/api/ruler/{DatasourceUID}/api/v1/rules/{Namespace}"),
 			metrics.Instrument(
 				http.MethodDelete,
@@ -150,6 +153,7 @@ func (api *API) RegisterRulerApiEndpoints(srv RulerApi, m *metrics.API) {
 		group.Delete(
 			toMacaronPath("/api/ruler/{DatasourceUID}/api/v1/rules/{Namespace}/{Groupname}"),
 			requestmeta.SetOwner(requestmeta.TeamAlerting),
+			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
 			api.authorize(http.MethodDelete, "/api/ruler/{DatasourceUID}/api/v1/rules/{Namespace}/{Groupname}"),
 			metrics.Instrument(
 				http.MethodDelete,
@@ -161,6 +165,7 @@ func (api *API) RegisterRulerApiEndpoints(srv RulerApi, m *metrics.API) {
 		group.Get(
 			toMacaronPath("/api/ruler/grafana/api/v1/rules/{Namespace}/{Groupname}"),
 			requestmeta.SetOwner(requestmeta.TeamAlerting),
+			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
 			api.authorize(http.MethodGet, "/api/ruler/grafana/api/v1/rules/{Namespace}/{Groupname}"),
 			metrics.Instrument(
 				http.MethodGet,
@@ -172,6 +177,7 @@ func (api *API) RegisterRulerApiEndpoints(srv RulerApi, m *metrics.API) {
 		group.Get(
 			toMacaronPath("/api/ruler/grafana/api/v1/rules"),
 			requestmeta.SetOwner(requestmeta.TeamAlerting),
+			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
 			api.authorize(http.MethodGet, "/api/ruler/grafana/api/v1/rules"),
 			metrics.Instrument(
 				http.MethodGet,
@@ -183,6 +189,7 @@ func (api *API) RegisterRulerApiEndpoints(srv RulerApi, m *metrics.API) {
 		group.Get(
 			toMacaronPath("/api/ruler/grafana/api/v1/rules/{Namespace}"),
 			requestmeta.SetOwner(requestmeta.TeamAlerting),
+			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
 			api.authorize(http.MethodGet, "/api/ruler/grafana/api/v1/rules/{Namespace}"),
 			metrics.Instrument(
 				http.MethodGet,
@@ -194,6 +201,7 @@ func (api *API) RegisterRulerApiEndpoints(srv RulerApi, m *metrics.API) {
 		group.Get(
 			toMacaronPath("/api/ruler/{DatasourceUID}/api/v1/rules/{Namespace}"),
 			requestmeta.SetOwner(requestmeta.TeamAlerting),
+			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
 			api.authorize(http.MethodGet, "/api/ruler/{DatasourceUID}/api/v1/rules/{Namespace}"),
 			metrics.Instrument(
 				http.MethodGet,
@@ -205,6 +213,7 @@ func (api *API) RegisterRulerApiEndpoints(srv RulerApi, m *metrics.API) {
 		group.Get(
 			toMacaronPath("/api/ruler/{DatasourceUID}/api/v1/rules/{Namespace}/{Groupname}"),
 			requestmeta.SetOwner(requestmeta.TeamAlerting),
+			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
 			api.authorize(http.MethodGet, "/api/ruler/{DatasourceUID}/api/v1/rules/{Namespace}/{Groupname}"),
 			metrics.Instrument(
 				http.MethodGet,
@@ -216,6 +225,7 @@ func (api *API) RegisterRulerApiEndpoints(srv RulerApi, m *metrics.API) {
 		group.Get(
 			toMacaronPath("/api/ruler/{DatasourceUID}/api/v1/rules"),
 			requestmeta.SetOwner(requestmeta.TeamAlerting),
+			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
 			api.authorize(http.MethodGet, "/api/ruler/{DatasourceUID}/api/v1/rules"),
 			metrics.Instrument(
 				http.MethodGet,
@@ -227,6 +237,7 @@ func (api *API) RegisterRulerApiEndpoints(srv RulerApi, m *metrics.API) {
 		group.Post(
 			toMacaronPath("/api/ruler/grafana/api/v1/rules/{Namespace}"),
 			requestmeta.SetOwner(requestmeta.TeamAlerting),
+			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
 			api.authorize(http.MethodPost, "/api/ruler/grafana/api/v1/rules/{Namespace}"),
 			metrics.Instrument(
 				http.MethodPost,
@@ -238,6 +249,7 @@ func (api *API) RegisterRulerApiEndpoints(srv RulerApi, m *metrics.API) {
 		group.Post(
 			toMacaronPath("/api/ruler/{DatasourceUID}/api/v1/rules/{Namespace}"),
 			requestmeta.SetOwner(requestmeta.TeamAlerting),
+			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
 			api.authorize(http.MethodPost, "/api/ruler/{DatasourceUID}/api/v1/rules/{Namespace}"),
 			metrics.Instrument(
 				http.MethodPost,

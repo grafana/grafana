@@ -54,6 +54,10 @@ describe('locationUtil', () => {
         const urlWithoutMaster = locationUtil.stripBaseFromUrl('/subUrl-backup/thisShouldRemain/');
         expect(urlWithoutMaster).toBe('/subUrl-backup/thisShouldRemain/');
       });
+      test('relative url with same url', () => {
+        const urlWithoutMaster = locationUtil.stripBaseFromUrl('/subUrl');
+        expect(urlWithoutMaster).toBe('');
+      });
       test('absolute url', () => {
         const urlWithoutMaster = locationUtil.stripBaseFromUrl('http://www.domain.com:9877/subUrl/thisShouldRemain/');
         expect(urlWithoutMaster).toBe('/thisShouldRemain/');
@@ -73,6 +77,10 @@ describe('locationUtil', () => {
           'http://www.domain.com:9877/subUrl-backup/thisShouldRemain/'
         );
         expect(urlWithoutMaster).toBe('http://www.domain.com:9877/subUrl-backup/thisShouldRemain/');
+      });
+      test('absolute url with same url', () => {
+        const urlWithoutMaster = locationUtil.stripBaseFromUrl('http://www.domain.com:9877/subUrl');
+        expect(urlWithoutMaster).toBe('');
       });
     });
 
