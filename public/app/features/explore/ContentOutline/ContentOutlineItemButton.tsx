@@ -2,7 +2,7 @@ import { cx, css } from '@emotion/css';
 import React, { ButtonHTMLAttributes } from 'react';
 
 import { IconName, isIconName, GrafanaTheme2 } from '@grafana/data';
-import { Icon, useStyles2 } from '@grafana/ui';
+import { Icon, useStyles2, Tooltip } from '@grafana/ui';
 
 type CommonProps = {
   title?: string;
@@ -17,11 +17,20 @@ export function ContentOutlineItemButton({ title, icon, tooltip, className, ...r
   const styles = useStyles2(getStyles);
 
   const buttonStyles = cx(styles.button, className);
-  return (
-    <button className={buttonStyles} {...rest}>
+
+  const body = (
+    <button className={buttonStyles} aria-label={tooltip} {...rest}>
       {renderIcon(icon)}
       {title}
     </button>
+  );
+
+  return tooltip ? (
+    <Tooltip content={tooltip} placement="bottom">
+      {body}
+    </Tooltip>
+  ) : (
+    body
   );
 }
 
