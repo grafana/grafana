@@ -74,7 +74,7 @@ func BuildImage(version string, arch config.Architecture, grafanaDir string, use
 	tagSuffix := ""
 	if useUbuntu {
 		libc = ""
-		baseImage = fmt.Sprintf("%subuntu:20.04", baseArch)
+		baseImage = fmt.Sprintf("%subuntu:22.04", baseArch)
 		tagSuffix = "-ubuntu"
 	}
 

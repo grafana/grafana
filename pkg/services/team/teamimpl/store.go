@@ -215,7 +215,17 @@ func (ss *xormStore) Search(ctx context.Context, query *team.SearchTeamsQuery) (
 		sql.WriteString(` and` + acFilter.Where)
 		params = append(params, acFilter.Args...)
 
-		sql.WriteString(` order by team.name asc`)
+		if len(query.SortOpts) > 0 {
+			orderBy := ` order by `
+			for i := range query.SortOpts {
+				for j := range query.SortOpts[i].Filter {
+					orderBy += query.SortOpts[i].Filter[j].OrderBy() + ","
+				}
+			}
+			sql.WriteString(orderBy[:len(orderBy)-1])
+		} else {
+			sql.WriteString(` order by team.name asc`)
+		}
 
 		if query.Limit != 0 {
 			offset := query.Limit * (query.Page - 1)
