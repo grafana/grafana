@@ -58,47 +58,45 @@ export const VizTooltipHeaderLabelValue = ({ keyValuePairs }: VizTooltipHeaderKe
 };
 
 // @TODO Update classes/add svgs?
-const getStyles = (theme: GrafanaTheme2) => {
-  return {
-    hgContainer: css`
-      flex-grow: 1;
-    `,
-    colorIndicator: css`
-      margin-right: ${theme.spacing(0.5)};
-    `,
-    label: css`
-      color: ${theme.colors.text.secondary};
-      font-weight: 400;
-    `,
-    series: css`
-      width: 14px;
-      height: 4px;
-      border-radius: ${theme.shape.radius.pill};
-    `,
-    value: css`
-      width: 12px;
-      height: 12px;
-      border-radius: ${theme.shape.radius.default};
-      font-weight: 500;
-    `,
-    hexagon: css``,
-    pie_1_4: css``,
-    pie_2_4: css``,
-    pie_3_4: css``,
-    marker_sm: css`
-      width: 4px;
-      height: 4px;
-      border-radius: ${theme.shape.radius.circle};
-    `,
-    marker_md: css`
-      width: 8px;
-      height: 8px;
-      border-radius: ${theme.shape.radius.circle};
-    `,
-    marker_lg: css`
-      width: 12px;
-      height: 12px;
-      border-radius: ${theme.shape.radius.circle};
-    `,
-  };
-};
+const getStyles = (theme: GrafanaTheme2) => ({
+  hgContainer: css({
+    flexGrow: 1,
+  }),
+  colorIndicator: css({
+    marginRight: theme.spacing(0.5),
+  }),
+  label: css({
+    color: theme.colors.text.secondary,
+    fontWeight: 400,
+  }),
+  series: css({
+    width: '14px',
+    height: '4px',
+    borderRadius: theme.shape.radius.pill,
+  }),
+  value: css({
+    width: '12px',
+    height: '12px',
+    borderRadius: theme.shape.radius.default,
+    fontWeight: 500,
+  }),
+  hexagon: css({}),
+  pie_1_4: css({}),
+  pie_2_4: css({}),
+  pie_3_4: css({}),
+  marker_sm: css({
+    width: '4px',
+    height: '4px',
+    borderRadius: theme.shape.radius.circle,
+  }),
+  marker_md: css({
+    width: '8px',
+    height: '8px',
+    borderRadius: theme.shape.radius.circle,
+  }),
+  marker_lg: css({
+    width: '12px',
+    height: '12px',
+    borderRadius: theme.shape.radius.circle,
+  }),
+});

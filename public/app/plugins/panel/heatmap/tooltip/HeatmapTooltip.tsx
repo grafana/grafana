@@ -361,13 +361,11 @@ const HeatmapTooltipHover = ({
   );
 };
 
-const getStyles = (theme: GrafanaTheme2) => {
-  return {
-    wrapper: css`
-      width: 280px;
-      display: flex;
-      flex-direction: column;
-      padding: ${theme.spacing(0.5)};
-    `,
-  };
-};
+const getStyles = (theme: GrafanaTheme2) => ({
+  wrapper: css({
+    display: 'flex',
+    flexDirection: 'column',
+    width: '280px',
+    padding: theme.spacing(0.5),
+  }),
+});

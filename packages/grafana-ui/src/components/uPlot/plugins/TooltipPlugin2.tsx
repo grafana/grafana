@@ -279,18 +279,16 @@ export const TooltipPlugin2 = ({ config, render }: TooltipPlugin2Props) => {
   return null;
 };
 
-const getStyles = (theme: GrafanaTheme2) => {
-  return {
-    tooltipWrapper: css({
-      top: 0,
-      left: 0,
-      zIndex: theme.zIndex.tooltip,
-      padding: '8px',
-      whiteSpace: 'pre',
-      borderRadius: theme.shape.radius.default,
-      position: 'absolute',
-      background: theme.colors.background.secondary,
-      boxShadow: `0 4px 8px ${theme.colors.background.primary}`,
-    }),
-  };
-};
+const getStyles = (theme: GrafanaTheme2) => ({
+  tooltipWrapper: css({
+    top: 0,
+    left: 0,
+    zIndex: theme.zIndex.tooltip,
+    padding: '8px',
+    whiteSpace: 'pre',
+    borderRadius: theme.shape.radius.default,
+    position: 'absolute',
+    background: theme.colors.background.secondary,
+    boxShadow: `0 4px 8px ${theme.colors.background.primary}`,
+  }),
+});

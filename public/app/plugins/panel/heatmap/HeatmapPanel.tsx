@@ -196,9 +196,9 @@ export const HeatmapPanel = ({
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  colorScaleWrapper: css`
-    margin-left: 25px;
-    padding: 10px 0;
-    max-width: 300px;
-  `,
+  colorScaleWrapper: css({
+    marginLeft: '25px',
+    padding: '10px 0',
+    maxWidth: '300px',
+  }),
 });

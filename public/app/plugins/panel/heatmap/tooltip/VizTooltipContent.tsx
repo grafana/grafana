@@ -30,25 +30,23 @@ export const VizTooltipContent = ({ contentLabelValue, customContent }: VizToolt
   );
 };
 
-const getStyles = (theme: GrafanaTheme2) => {
-  return {
-    wrapper: css`
-      display: flex;
-      flex-direction: column;
-      flex: 1;
-      gap: 4px;
-      border-top: 1px solid ${theme.colors.border.medium};
-      padding: ${theme.spacing(1)} 0;
-    `,
-    customContentPadding: css`
-      padding-top: ${theme.spacing(2)};
-    `,
-    label: css`
-      color: ${theme.colors.text.secondary};
-      font-weight: 400;
-    `,
-    value: css`
-      font-weight: 500;
-    `,
-  };
-};
+const getStyles = (theme: GrafanaTheme2) => ({
+  wrapper: css({
+    display: 'flex',
+    flexDirection: 'column',
+    flex: 1,
+    gap: 4,
+    borderTop: `1px solid ${theme.colors.border.medium}`,
+    padding: `${theme.spacing(1)} 0`,
+  }),
+  customContentPadding: css({
+    padding: `${theme.spacing(1)} 0`,
+  }),
+  label: css({
+    color: theme.colors.text.secondary,
+    fontWeight: 400,
+  }),
+  value: css({
+    fontWeight: 500,
+  }),
+});
