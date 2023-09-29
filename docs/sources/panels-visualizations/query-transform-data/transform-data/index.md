@@ -22,6 +22,8 @@ title: Transform data
 weight: 100
 ---
 
+// JEV:html comment or [//]: # This is a comment?
+
 # Transform data
 
 Transformations are a powerful way to manipulate data returned by a query before the system applies a visualization. Using transformations, you can:
@@ -824,7 +826,7 @@ With the _Partition by values_ transformer, you can now issue a single query and
 
 ### Prepare time series
 
-Use this transformation when a data source returns time series data in a format that isn't supported by the panel you want to use. For more information about data frame formats, refer to [Data frames](https://grafana.com/docs/grafana/latest/developers/plugins/introduction-to-plugin-development/data-frames/).
+Use this transformation when a data source returns time series data in a format that isn't supported by the panel you want to use. For more information about data frame formats, refer to [Data frames][].
 
 This transformation helps you resolve this issue by converting the time series data from either the wide format to the long format or the other way around.
 
@@ -1003,6 +1005,8 @@ Use this transformation to convert time series results into a table, converting 
 > **Note:** This transformation is available in Grafana 9.5+ as an opt-in beta feature. Modify Grafana [configuration file](/docs/grafana/latest/setup-grafana/configure-grafana/#configuration-file-location) to enable the 'timeSeriesTable' [feature toggle](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/feature-toggles/) to use it.
 
 {{% docs/reference %}}
+
+// ?JEv remove shortcoes, add refs here
 [Table panel]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/table"
 [Table panel]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/table"
 

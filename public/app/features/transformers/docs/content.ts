@@ -1,8 +1,13 @@
 // import { getStandardTransformers } from '../standardTransformers';
 
+interface Link {
+  title: string;
+  url: string;
+}
 export interface TransformationInfo {
   name: string;
   helperDocs: string;
+  links?: Link[];
 }
 
 // const [
@@ -49,11 +54,17 @@ export const transformationDocsContent: Record<string, TransformationInfo> = {
     - **Binary option -** Apply basic math operation(sum, multiply, etc) on values in a single row from two selected fields.
     - **Index -** Will insert a field with the row index.
   - **Field name -** Select the names of fields you want to use in the calculation for the new field.
-  - **Calculation -** If you select **Reduce row** mode, then the **Calculation** field appears. Click in the field to see a list of calculation choices you can use to create the new field. For information about available calculations, refer to [Calculation types]({{< relref "../../calculation-types" >}}).
+  - **Calculation -** If you select **Reduce row** mode, then the **Calculation** field appears. Click in the field to see a list of calculation choices you can use to create the new field. For information about available calculations, refer to [Calculation types][].
   - **Operation -** If you select **Binary option** mode, then the **Operation** fields appear. These fields allow you to do basic math operations on values in a single row from two selected fields. You can also use numerical values for binary operations.
   - **Alias -** (Optional) Enter the name of your new field. If you leave this blank, then the field will be named to match the calculation.
   - **Replace all fields -** (Optional) Select this option if you want to hide all other fields and display only your calculated field in the visualization.
   `,
+    links: [
+      {
+        title: 'Calculation types',
+        url: 'https://grafana.com/docs/grafana/latest/panels-visualizations/calculation-types/',
+      },
+    ],
   },
   concatenate: {
     // name: concatenateTransformRegistryItem.name,
@@ -825,7 +836,7 @@ export const transformationDocsContent: Record<string, TransformationInfo> = {
     // name: prepareTimeseriesTransformerRegistryItem.name,
     name: 'Prepare time series',
     helperDocs: `
-  Use this transformation when a data source returns time series data in a format that isn't supported by the panel you want to use. For more information about data frame formats, refer to [Data frames](https://grafana.com/docs/grafana/latest/developers/plugins/introduction-to-plugin-development/data-frames/).
+  Use this transformation when a data source returns time series data in a format that isn't supported by the panel you want to use. For more information about data frame formats, refer to [Data frames][].
 
   This transformation helps you resolve this issue by converting the time series data from either the wide format to the long format or the other way around.
 
@@ -835,6 +846,12 @@ export const transformationDocsContent: Record<string, TransformationInfo> = {
 
   > **Note:** This transformation is available in Grafana 7.5.10+ and Grafana 8.0.6+.
   `,
+    links: [
+      {
+        title: 'Data frames',
+        url: 'https://grafana.com/docs/grafana/latest/developers/plugins/introduction-to-plugin-development/data-frames/',
+      },
+    ],
   },
   reduce: {
     // name: reduceTransformRegistryItem.name,

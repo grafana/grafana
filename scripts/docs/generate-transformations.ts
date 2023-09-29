@@ -42,6 +42,8 @@ title: Transform data
 weight: 100
 ---
 
+// JEV:html comment or [//]: # This is a comment?
+
 # Transform data
 
 Transformations are a powerful way to manipulate data returned by a query before the system applies a visualization. Using transformations, you can:
@@ -125,6 +127,8 @@ You can perform the following transformations on your data.
 ${transformations}
 
 {{% docs/reference %}}
+
+// ?JEv remove shortcoes, add refs here
 [Table panel]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/table"
 [Table panel]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/table"
 
