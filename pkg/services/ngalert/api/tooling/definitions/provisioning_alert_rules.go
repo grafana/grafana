@@ -234,7 +234,7 @@ type AlertRuleGroupExport struct {
 
 // AlertRuleExport is the provisioned file export of models.AlertRule.
 type AlertRuleExport struct {
-	UID          string              `json:"uid" yaml:"uid"`
+	UID          string              `json:"uid,omitempty" yaml:"uid,omitempty"`
 	Title        string              `json:"title" yaml:"title" hcl:"name"`
 	Condition    string              `json:"condition" yaml:"condition" hcl:"condition"`
 	Data         []AlertQueryExport  `json:"data" yaml:"data" hcl:"data,block"`
