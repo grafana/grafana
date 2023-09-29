@@ -43,7 +43,6 @@ export const HeatmapPanel = ({
   const { sync, canAddAnnotations } = usePanelContext();
 
   const enableAnnotationCreation = Boolean(canAddAnnotations && canAddAnnotations());
-  console.log('enableAnnotationCreation', enableAnnotationCreation);
 
   //  necessary for enabling datalinks in hover view
   let scopedVarsFromRawData: ScopedVars[] = [];
