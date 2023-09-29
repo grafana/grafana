@@ -15,7 +15,7 @@ export function getGrafanaRulesByEvaluationPercentageScene(
         refId: 'A',
         expr: 'sum by (state) (grafanacloud_grafana_instance_alerting_rule_group_rules) / ignoring(state) group_left sum(grafanacloud_grafana_instance_alerting_rule_group_rules)',
         range: true,
-        legendFormat: '{{alertstate}} evaluation',
+        legendFormat: '{{state}} evaluation',
       },
     ],
     $timeRange: timeRange,
@@ -33,7 +33,7 @@ export function getGrafanaRulesByEvaluationPercentageScene(
       .setOption('tooltip', { mode: TooltipDisplayMode.Multi })
       .setMax(1)
       .setOverrides((b) =>
-        b.matchFieldsWithName('active').overrideColor({
+        b.matchFieldsWithName('active evaluation').overrideColor({
           mode: 'fixed',
           fixedColor: 'blue',
         })

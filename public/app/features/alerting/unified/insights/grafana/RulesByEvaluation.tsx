@@ -30,7 +30,7 @@ export function getGrafanaRulesByEvaluationScene(
       .setCustomFieldConfig('drawStyle', GraphDrawStyle.Line)
       .setOption('tooltip', { mode: TooltipDisplayMode.Multi })
       .setOverrides((b) =>
-        b.matchFieldsWithName('active').overrideColor({
+        b.matchFieldsWithName('active evaluation').overrideColor({
           mode: 'fixed',
           fixedColor: 'blue',
         })

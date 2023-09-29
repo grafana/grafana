@@ -11,13 +11,13 @@ export function getNotificationsScene(timeRange: SceneTimeRange, datasource: Dat
         refId: 'A',
         expr: 'sum by(cluster)(grafanacloud_instance_alertmanager_notifications_per_second) - sum by (cluster)(grafanacloud_instance_alertmanager_notifications_failed_per_second)',
         range: true,
-        legendFormat: '{{cluster}} - success',
+        legendFormat: 'success',
       },
       {
         refId: 'B',
         expr: 'sum by(cluster)(grafanacloud_instance_alertmanager_notifications_failed_per_second)',
         range: true,
-        legendFormat: '{{cluster}} - failed',
+        legendFormat: 'failed',
       },
     ],
     $timeRange: timeRange,
@@ -31,6 +31,19 @@ export function getNotificationsScene(timeRange: SceneTimeRange, datasource: Dat
       .setData(query)
       .setCustomFieldConfig('drawStyle', GraphDrawStyle.Line)
       .setOption('tooltip', { mode: TooltipDisplayMode.Multi })
+      .setOverrides((b) =>
+        b
+          .matchFieldsWithName('success')
+          .overrideColor({
+            mode: 'fixed',
+            fixedColor: 'green',
+          })
+          .matchFieldsWithName('failed')
+          .overrideColor({
+            mode: 'fixed',
+            fixedColor: 'red',
+          })
+      )
       .build(),
   });
 }
