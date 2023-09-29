@@ -11,6 +11,8 @@ comments: |
 
   Browse to http://localhost:3003/docs/grafana/latest/panels-visualizations/query-transform-data/transform-data/
 
+  Refer to ./docs/README.md for more information about building docs.
+
 aliases:
   - ../../panels/reference-transformation-functions/
   - ../../panels/transform-data/
