@@ -33,7 +33,7 @@ func (s *QueryData) parseResponse(ctx context.Context, q *models.Query, res *htt
 
 	// Throw client/server error
 	if res.StatusCode/100 == 4 || res.StatusCode/100 == 5 {
-		r.Error = fmt.Errorf("%s", backend.ErrDataResponse(backend.Status(res.StatusCode), res.Status))
+		r.Error = fmt.Errorf("%v", backend.ErrDataResponse(backend.Status(res.StatusCode), res.Status))
 	}
 
 	// Add frame to attach metadata
