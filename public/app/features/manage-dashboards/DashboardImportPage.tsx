@@ -137,8 +137,8 @@ class UnthemedDashboardImport extends PureComponent<Props> {
             onLoad={this.onFileUpload}
           >
             <FileDropzoneDefaultChildren
-              primaryText={t('dashboard-import-page.primary-text', 'Upload dashboard JSON file')}
-              secondaryText={t('dashboard-import-page.secondary-text', 'Drag and drop here or click to browse')}
+              primaryText={t('dashboard-import.file-dropzone.primary-text', 'Upload dashboard JSON file')}
+              secondaryText={t('dashboard-import.file-dropzone.secondary-text', 'Drag and drop here or click to browse')}
             />
           </FileDropzone>
         </div>
