@@ -398,6 +398,14 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(HeatmapPanel)
       showIf: (opts) => opts.tooltip.show,
     });
 
+    builder.addBooleanSwitch({
+      path: 'tooltip.showColorScale',
+      name: 'Show color scale',
+      defaultValue: defaultOptions.tooltip.showColorScale,
+      category,
+      showIf: (opts) => opts.tooltip.show,
+    });
+
     category = ['Legend'];
     builder.addBooleanSwitch({
       path: 'legend.show',
@@ -415,3 +423,4 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(HeatmapPanel)
     });
   })
   .setSuggestionsSupplier(new HeatmapSuggestionsSupplier());
+// .setDataSupport({ annotations: false });

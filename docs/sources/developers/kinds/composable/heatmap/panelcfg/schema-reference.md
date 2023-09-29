@@ -124,10 +124,11 @@ Controls legend options
 
 Controls tooltip options
 
-| Property     | Type    | Required | Default | Description                                                    |
-|--------------|---------|----------|---------|----------------------------------------------------------------|
-| `show`       | boolean | **Yes**  |         | Controls if the tooltip is shown                               |
-| `yHistogram` | boolean | No       |         | Controls if the tooltip shows a histogram of the y-axis values |
+| Property         | Type    | Required | Default | Description                                                    |
+|------------------|---------|----------|---------|----------------------------------------------------------------|
+| `show`           | boolean | **Yes**  |         | Controls if the tooltip is shown                               |
+| `showColorScale` | boolean | No       |         | Controls if the tooltip shows a color scale in header          |
+| `yHistogram`     | boolean | No       |         | Controls if the tooltip shows a histogram of the y-axis values |
 
 ### Options
 
