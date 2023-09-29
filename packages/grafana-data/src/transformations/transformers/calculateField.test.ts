@@ -222,6 +222,33 @@ describe('calculateField transformer w/ timeseries', () => {
     });
   });
 
+  it('reduces all field', async () => {
+    const cfg = {
+      id: DataTransformerID.calculateField,
+      options: {
+        mode: CalculateFieldMode.ReduceRow,
+        reduce: { include: ['B', 'C'], reducer: ReducerID.allValues },
+        replaceFields: true,
+      },
+    };
+
+    await expect(transformDataFrame([cfg], [seriesBC])).toEmitValuesWith((received) => {
+      const data = received[0];
+      const filtered = data[0];
+      const rows = new DataFrameView(filtered).toArray();
+      expect(rows).toEqual([
+        {
+          'All values': [2, 3],
+          TheTime: 1000,
+        },
+        {
+          'All values': [200, 300],
+          TheTime: 2000,
+        },
+      ]);
+    });
+  });
+
   it('can add index field', async () => {
     const cfg = {
       id: DataTransformerID.calculateField,
