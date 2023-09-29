@@ -197,7 +197,7 @@ func TestRouteGetNamespaceRulesConfig(t *testing.T) {
 			require.NoError(t, json.Unmarshal(response.Body(), result))
 			require.NotNil(t, result)
 			for namespace, groups := range *result {
-				require.Equal(t, folder.UID, namespace)
+				require.Equal(t, getNamespaceKey(folder), namespace)
 				for _, group := range groups {
 				grouploop:
 					for _, actualRule := range group.Rules {
@@ -240,7 +240,7 @@ func TestRouteGetNamespaceRulesConfig(t *testing.T) {
 		require.NotNil(t, result)
 		found := false
 		for namespace, groups := range *result {
-			require.Equal(t, folder.UID, namespace)
+			require.Equal(t, getNamespaceKey(folder), namespace)
 			for _, group := range groups {
 				for _, actualRule := range group.Rules {
 					if actualRule.GrafanaManagedAlert.UID == expectedRules[0].UID {
@@ -275,8 +275,8 @@ func TestRouteGetNamespaceRulesConfig(t *testing.T) {
 
 		models.RulesGroup(expectedRules).SortByGroupIndex()
 
-		require.Contains(t, *result, folder.UID)
-		groups := (*result)[folder.UID]
+		groups, ok := (*result)[getNamespaceKey(folder)]
+		require.True(t, ok)
 		require.Len(t, groups, 1)
 		group := groups[0]
 		require.Equal(t, groupKey.RuleGroup, group.Name)
@@ -326,10 +326,10 @@ func TestRouteGetRulesConfig(t *testing.T) {
 				require.NoError(t, json.Unmarshal(response.Body(), result))
 				require.NotNil(t, result)
 
-				require.Contains(t, *result, folder1.UID)
+				require.Contains(t, *result, getNamespaceKey(folder1))
 				require.NotContains(t, *result, folder2.UID)
 
-				groups := (*result)[folder1.UID]
+				groups := (*result)[getNamespaceKey(folder1)]
 				require.Len(t, groups, 1)
 				require.Equal(t, group1Key.RuleGroup, groups[0].Name)
 				require.Len(t, groups[0].Rules, len(group1))
@@ -358,8 +358,8 @@ func TestRouteGetRulesConfig(t *testing.T) {
 
 		models.RulesGroup(expectedRules).SortByGroupIndex()
 
-		require.Contains(t, *result, folder.UID)
-		groups := (*result)[folder.UID]
+		groups, ok := (*result)[getNamespaceKey(folder)]
+		require.True(t, ok)
 		require.Len(t, groups, 1)
 		group := groups[0]
 		require.Equal(t, groupKey.RuleGroup, group.Name)

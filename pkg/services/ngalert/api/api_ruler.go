@@ -162,7 +162,7 @@ func (srv RulerSrv) RouteGetNamespaceRulesConfig(c *contextmodel.ReqContext, nam
 
 	for groupKey, rules := range ruleGroups {
 		key := getNamespaceKey(namespace)
-		result[key] = append(result[namespaceUID], toGettableRuleGroupConfig(groupKey.RuleGroup, rules, namespace.ID, provenanceRecords))
+		result[key] = append(result[key], toGettableRuleGroupConfig(groupKey.RuleGroup, rules, namespace.ID, provenanceRecords))
 	}
 
 	return response.JSON(http.StatusAccepted, result)
