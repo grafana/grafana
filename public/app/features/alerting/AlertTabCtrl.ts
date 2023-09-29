@@ -115,7 +115,7 @@ export class AlertTabCtrl {
         return 'envelope';
       case 'slack':
         return 'slack';
-      case 'victorops':
+      case 'splunkoncall':
         return 'fa fa-pagelines';
       case 'webhook':
         return 'cube';

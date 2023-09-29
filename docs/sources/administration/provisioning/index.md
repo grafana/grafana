@@ -538,7 +538,7 @@ Secure settings is supported since Grafana v7.2.
 | mentionChannel |                |
 | token          | yes            |
 
-#### Alert notification `victorops`
+#### Alert notification `splunkoncall`
 
 | Name        |
 | ----------- |

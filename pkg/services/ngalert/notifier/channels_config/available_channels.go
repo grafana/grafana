@@ -363,16 +363,16 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 			},
 		},
 		{
-			Type:        "victorops",
-			Name:        "VictorOps",
-			Description: "Sends notifications to VictorOps",
-			Heading:     "VictorOps settings",
+			Type:        "splunkoncall",
+			Name:        "Splunk OnCall",
+			Description: "Sends notifications to Splunk OnCall",
+			Heading:     "Splunk OnCall settings",
 			Options: []NotifierOption{
 				{
 					Label:        "URL",
 					Element:      ElementTypeInput,
 					InputType:    InputTypeText,
-					Placeholder:  "VictorOps url",
+					Placeholder:  "Splunk OnCall url",
 					PropertyName: "url",
 					Required:     true,
 				},

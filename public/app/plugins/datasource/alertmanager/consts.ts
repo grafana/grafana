@@ -4,7 +4,7 @@ export const receiverTypeNames: Record<string, string> = {
   slack: 'Slack',
   opsgenie: 'OpsGenie',
   webhook: 'Webhook',
-  victorops: 'VictorOps',
+  splunkoncall: 'Splunk OnCall',
   wechat: 'WeChat',
   discord: 'Discord',
   webex: 'Cisco Webex Teams',

@@ -46,7 +46,7 @@ Once configured, you can use integrations as part of your contact points to rece
 | Slack                   | `slack`                   |
 | Telegram                | `telegram`                |
 | Threema                 | `threema`                 |
-| VictorOps               | `victorops`               |
+| Splunk OnCall               | `splunkoncall`               |
 | Webhook                 | `webhook`                 |
 
 ### PagerDuty

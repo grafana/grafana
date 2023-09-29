@@ -104,7 +104,7 @@ Grafana supports a wide range of contact points with varied support for images i
 | Slack                   | Yes (when using Bot tokens, maximum of 5 per notification) | Yes (when using webhooks, maximum of 1 per notification) |
 | Telegram                | Yes                                                        | No                                                       |
 | Threema                 | No                                                         | No                                                       |
-| VictorOps               | No                                                         | No                                                       |
+| Splunk OnCall           | No                                                         | No                                                       |
 | Webhook                 | No                                                         | Yes                                                      |
 
 ## Limitations

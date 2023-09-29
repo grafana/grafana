@@ -445,10 +445,10 @@ settings:
   recipient_id: A9R4KL4S
 ```
 
-##### VictorOps
+##### Splunk OnCall
 
 ```yaml
-type: victorops
+type: splunkoncall
 settings:
   # <string, required>
   url: XXX

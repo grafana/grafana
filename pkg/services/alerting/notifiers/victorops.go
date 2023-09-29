@@ -21,23 +21,23 @@ const alertStateRecovery = "RECOVERY"
 
 func init() {
 	alerting.RegisterNotifier(&alerting.NotifierPlugin{
-		Type:        "victorops",
-		Name:        "VictorOps",
-		Description: "Sends notifications to VictorOps",
-		Heading:     "VictorOps settings",
-		Factory:     NewVictoropsNotifier,
+		Type:        "splunkoncall",
+		Name:        "Splunk OnCall",
+		Description: "Sends notifications to Splunk OnCall",
+		Heading:     "Splunk OnCall settings",
+		Factory:     NewSplunkOnCallNotifier,
 		Options: []alerting.NotifierOption{
 			{
 				Label:        "Url",
 				Element:      alerting.ElementTypeInput,
 				InputType:    alerting.InputTypeText,
-				Placeholder:  "VictorOps url",
+				Placeholder:  "Splunk OnCall url",
 				PropertyName: "url",
 				Required:     true,
 			},
 			{
 				Label:        "Auto resolve incidents",
-				Description:  "Resolve incidents in VictorOps once the alert goes back to ok.",
+				Description:  "Resolve incidents in Splunk OnCall once the alert goes back to ok.",
 				Element:      alerting.ElementTypeCheckbox,
 				PropertyName: "autoResolve",
 			},
@@ -45,29 +45,29 @@ func init() {
 	})
 }
 
-// NewVictoropsNotifier creates an instance of VictoropsNotifier that
+// NewVictorOpsNotifier creates an instance of VictoropsNotifier that
 // handles posting notifications to Victorops REST API
-func NewVictoropsNotifier(model *models.AlertNotification, _ alerting.GetDecryptedValueFn, ns notifications.Service) (alerting.Notifier, error) {
+func NewSplunkOnCallNotifier(model *models.AlertNotification, _ alerting.GetDecryptedValueFn, ns notifications.Service) (alerting.Notifier, error) {
 	autoResolve := model.Settings.Get("autoResolve").MustBool(true)
 	url := model.Settings.Get("url").MustString()
 	if url == "" {
-		return nil, alerting.ValidationError{Reason: "Could not find victorops url property in settings"}
+		return nil, alerting.ValidationError{Reason: "Could not find Splunk OnCall url property in settings"}
 	}
 	noDataAlertType := model.Settings.Get("noDataAlertType").MustString(AlertStateWarning)
 
-	return &VictoropsNotifier{
+	return &SplunkOnCallNotifier{
 		NotifierBase:    NewNotifierBase(model, ns),
 		URL:             url,
 		NoDataAlertType: noDataAlertType,
 		AutoResolve:     autoResolve,
-		log:             log.New("alerting.notifier.victorops"),
+		log:             log.New("alerting.notifier.splunkoncall"),
 	}, nil
 }
 
 // VictoropsNotifier defines URL property for Victorops REST API
 // and handles notification process by formatting POST body according to
 // Victorops specifications (http://victorops.force.com/knowledgebase/articles/Integration/Alert-Ingestion-API-Documentation/)
-type VictoropsNotifier struct {
+type SplunkOnCallNotifier struct {
 	NotifierBase
 	URL             string
 	NoDataAlertType string
@@ -75,7 +75,7 @@ type VictoropsNotifier struct {
 	log             log.Logger
 }
 
-func (vn *VictoropsNotifier) buildEventPayload(evalContext *alerting.EvalContext) (*simplejson.Json, error) {
+func (vn *SplunkOnCallNotifier) buildEventPayload(evalContext *alerting.EvalContext) (*simplejson.Json, error) {
 	ruleURL, err := evalContext.GetRuleURL()
 	if err != nil {
 		vn.log.Error("Failed get rule link", "error", err)
@@ -83,7 +83,7 @@ func (vn *VictoropsNotifier) buildEventPayload(evalContext *alerting.EvalContext
 	}
 
 	if evalContext.Rule.State == models.AlertStateOK && !vn.AutoResolve {
-		vn.log.Info("Not alerting VictorOps", "state", evalContext.Rule.State, "auto resolve", vn.AutoResolve)
+		vn.log.Info("Not alerting Splunk OnCall", "state", evalContext.Rule.State, "auto resolve", vn.AutoResolve)
 		return nil, nil
 	}
 
@@ -145,8 +145,8 @@ func (vn *VictoropsNotifier) buildEventPayload(evalContext *alerting.EvalContext
 }
 
 // Notify sends notification to Victorops via POST to URL endpoint
-func (vn *VictoropsNotifier) Notify(evalContext *alerting.EvalContext) error {
-	vn.log.Info("Executing victorops notification", "ruleId", evalContext.Rule.ID, "notification", vn.Name)
+func (vn *SplunkOnCallNotifier) Notify(evalContext *alerting.EvalContext) error {
+	vn.log.Info("Executing splunkoncall notification", "ruleId", evalContext.Rule.ID, "notification", vn.Name)
 
 	bodyJSON, err := vn.buildEventPayload(evalContext)
 	if err != nil {
@@ -157,7 +157,7 @@ func (vn *VictoropsNotifier) Notify(evalContext *alerting.EvalContext) error {
 	cmd := &notifications.SendWebhookSync{Url: vn.URL, Body: string(data)}
 
 	if err := vn.NotificationService.SendWebhookSync(evalContext.Ctx, cmd); err != nil {
-		vn.log.Error("Failed to send Victorops notification", "error", err, "webhook", vn.Name)
+		vn.log.Error("Failed to send SplunkOnCall notification", "error", err, "webhook", vn.Name)
 		return err
 	}
 

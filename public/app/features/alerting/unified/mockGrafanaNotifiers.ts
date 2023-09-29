@@ -501,10 +501,10 @@ export const grafanaAlertNotifiersMock: NotifierDTO[] = [
     ],
   },
   {
-    type: 'victorops',
-    name: 'VictorOps',
-    heading: 'VictorOps settings',
-    description: 'Sends notifications to VictorOps',
+    type: 'splunkoncall',
+    name: 'Splunk OnCall',
+    heading: 'Splunk OnCall settings',
+    description: 'Sends notifications to Splunk OnCall',
     info: '',
     options: [
       {
@@ -512,7 +512,7 @@ export const grafanaAlertNotifiersMock: NotifierDTO[] = [
         inputType: 'text',
         label: 'URL',
         description: '',
-        placeholder: 'VictorOps url',
+        placeholder: 'Splunk OnCall url',
         propertyName: 'url',
         selectOptions: null,
         showWhen: {

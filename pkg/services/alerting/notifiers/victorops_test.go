@@ -25,7 +25,7 @@ func presenceComparerInt(a, b int64) bool {
 	}
 	return a == b
 }
-func TestVictoropsNotifier(t *testing.T) {
+func TestSplunkOnCallNotifier(t *testing.T) {
 	encryptionService := encryptionservice.SetupTestService(t)
 
 	t.Run("Parsing alert notification from settings", func(t *testing.T) {
@@ -34,12 +34,12 @@ func TestVictoropsNotifier(t *testing.T) {
 
 			settingsJSON, _ := simplejson.NewJson([]byte(json))
 			model := &models.AlertNotification{
-				Name:     "victorops_testing",
-				Type:     "victorops",
+				Name:     "splunkoncall_testing",
+				Type:     "splunkoncall",
 				Settings: settingsJSON,
 			}
 
-			_, err := NewVictoropsNotifier(model, encryptionService.GetDecryptedValue, nil)
+			_, err := NewSplunkOnCallNotifier(model, encryptionService.GetDecryptedValue, nil)
 			require.Error(t, err)
 		})
 
@@ -51,18 +51,18 @@ func TestVictoropsNotifier(t *testing.T) {
 
 			settingsJSON, _ := simplejson.NewJson([]byte(json))
 			model := &models.AlertNotification{
-				Name:     "victorops_testing",
-				Type:     "victorops",
+				Name:     "splunkoncall_testing",
+				Type:     "splunkoncall",
 				Settings: settingsJSON,
 			}
 
-			not, err := NewVictoropsNotifier(model, encryptionService.GetDecryptedValue, nil)
-			victoropsNotifier := not.(*VictoropsNotifier)
+			not, err := NewSplunkOnCallNotifier(model, encryptionService.GetDecryptedValue, nil)
+			splunkOnCallNotifier := not.(*SplunkOnCallNotifier)
 
 			require.Nil(t, err)
-			require.Equal(t, "victorops_testing", victoropsNotifier.Name)
-			require.Equal(t, "victorops", victoropsNotifier.Type)
-			require.Equal(t, "http://google.com", victoropsNotifier.URL)
+			require.Equal(t, "splunkoncall_testing", splunkOnCallNotifier.Name)
+			require.Equal(t, "splunkoncall", splunkOnCallNotifier.Type)
+			require.Equal(t, "http://google.com", splunkOnCallNotifier.URL)
 		})
 
 		t.Run("should return properly formatted event payload when using severity override tag", func(t *testing.T) {
@@ -75,15 +75,15 @@ func TestVictoropsNotifier(t *testing.T) {
 			require.Nil(t, err)
 
 			model := &models.AlertNotification{
-				Name:     "victorops_testing",
-				Type:     "victorops",
+				Name:     "splunkoncall_testing",
+				Type:     "splunkoncall",
 				Settings: settingsJSON,
 			}
 
-			not, err := NewVictoropsNotifier(model, encryptionService.GetDecryptedValue, nil)
+			not, err := NewSplunkOnCallNotifier(model, encryptionService.GetDecryptedValue, nil)
 			require.Nil(t, err)
 
-			victoropsNotifier := not.(*VictoropsNotifier)
+			splunkOnCallNotifier := not.(*SplunkOnCallNotifier)
 
 			evalContext := alerting.NewEvalContext(context.Background(), &alerting.Rule{
 				ID:      0,
@@ -97,7 +97,7 @@ func TestVictoropsNotifier(t *testing.T) {
 			}, &validations.OSSPluginRequestValidator{}, nil, nil, nil, annotationstest.NewFakeAnnotationsRepo())
 			evalContext.IsTestRun = true
 
-			payload, err := victoropsNotifier.buildEventPayload(evalContext)
+			payload, err := splunkOnCallNotifier.buildEventPayload(evalContext)
 			require.Nil(t, err)
 
 			diff := cmp.Diff(map[string]any{
@@ -123,15 +123,15 @@ func TestVictoropsNotifier(t *testing.T) {
 			require.Nil(t, err)
 
 			model := &models.AlertNotification{
-				Name:     "victorops_testing",
-				Type:     "victorops",
+				Name:     "splunkoncall_testing",
+				Type:     "splunkoncall",
 				Settings: settingsJSON,
 			}
 
-			not, err := NewVictoropsNotifier(model, encryptionService.GetDecryptedValue, nil)
+			not, err := NewSplunkOnCallNotifier(model, encryptionService.GetDecryptedValue, nil)
 			require.Nil(t, err)
 
-			victoropsNotifier := not.(*VictoropsNotifier)
+			splunkOnCallNotifier := not.(*SplunkOnCallNotifier)
 
 			evalContext := alerting.NewEvalContext(context.Background(), &alerting.Rule{
 				ID:      0,
@@ -145,7 +145,7 @@ func TestVictoropsNotifier(t *testing.T) {
 			}, &validations.OSSPluginRequestValidator{}, nil, nil, nil, annotationstest.NewFakeAnnotationsRepo())
 			evalContext.IsTestRun = true
 
-			payload, err := victoropsNotifier.buildEventPayload(evalContext)
+			payload, err := splunkOnCallNotifier.buildEventPayload(evalContext)
 			require.Nil(t, err)
 
 			diff := cmp.Diff(map[string]any{

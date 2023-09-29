@@ -56,7 +56,7 @@ The following table lists the contact point integrations supported by Grafana.
 | [Slack](https://slack.com/)                      | `slack`                   | Supported            | Supported                                                                                                |
 | [Telegram](https://telegram.org/)                | `telegram`                | Supported            | N/A                                                                                                      |
 | [Threema](https://threema.ch/)                   | `threema`                 | Supported            | N/A                                                                                                      |
-| [VictorOps](https://help.victorops.com/)         | `victorops`               | Supported            | Supported                                                                                                |
+| [Splunk OnCall](https://help.victorops.com/)         | `splunkoncall`               | Supported            | Supported                                                                                                |
 | Webhook                                          | `webhook`                 | Supported            | Supported ([different format](https://prometheus.io/docs/alerting/latest/configuration/#webhook_config)) |
 | Cisco Webex Teams                                | `webex`                   | Supported            | Supported                                                                                                |
 | WeCom                                            | `wecom`                   | Supported            | N/A                                                                                                      |
