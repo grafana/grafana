@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"sort"
 
 	"github.com/grafana/grafana/pkg/api/response"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
@@ -92,16 +91,7 @@ func (srv RulerSrv) ExportRules(c *contextmodel.ReqContext) response.Response {
 	}
 
 	// sort result so the response is always stable
-	sort.SliceStable(groups, func(i, j int) bool {
-		gi, gj := groups[i], groups[j]
-		if gi.OrgID != gj.OrgID {
-			return gi.OrgID < gj.OrgID
-		}
-		if gi.FolderUID != gj.FolderUID {
-			return gi.FolderUID < gj.FolderUID
-		}
-		return gi.Title < gj.Title
-	})
+	ngmodels.SortAlertRuleGroupWithFolderTitle(groups)
 
 	e, err := AlertingFileExportFromAlertRuleGroupWithFolderTitle(groups)
 	if err != nil {

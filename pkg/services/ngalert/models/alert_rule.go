@@ -170,6 +170,16 @@ func NewAlertRuleGroupWithFolderTitleFromRulesGroup(groupKey AlertRuleGroupKey, 
 	return NewAlertRuleGroupWithFolderTitle(groupKey, derefRules, folderTitle)
 }
 
+// SortAlertRuleGroupWithFolderTitle sorts AlertRuleGroupWithFolderTitle by folder UID and group name
+func SortAlertRuleGroupWithFolderTitle(g []AlertRuleGroupWithFolderTitle) {
+	sort.SliceStable(g, func(i, j int) bool {
+		if g[i].AlertRuleGroup.FolderUID == g[j].AlertRuleGroup.FolderUID {
+			return g[i].AlertRuleGroup.Title < g[j].AlertRuleGroup.Title
+		}
+		return g[i].AlertRuleGroup.FolderUID < g[j].AlertRuleGroup.FolderUID
+	})
+}
+
 // AlertRule is the model for alert rules in unified alerting.
 type AlertRule struct {
 	ID              int64 `xorm:"pk autoincr 'id'"`
