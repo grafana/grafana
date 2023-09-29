@@ -9,7 +9,7 @@ export const validateDashboardJson = (json: string) => {
   try {
     dashboard = JSON.parse(json);
   } catch (error) {
-    return t('utils.invalid-json', 'Not valid JSON');
+    return t('dashboard.validation.invalid-json', 'Not valid JSON');
   }
   if (dashboard && dashboard.hasOwnProperty('tags')) {
     if (Array.isArray(dashboard.tags)) {
