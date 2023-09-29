@@ -18,9 +18,9 @@ import {
 // dom also includes Element polyfills
 import { CloudWatchDatasource } from '../../../datasource';
 import syntax from '../../../language/cloudwatch-logs/syntax';
-import { CloudWatchJsonData, CloudWatchLogsQuery, CloudWatchQuery } from '../../../types';
+import { CloudWatchJsonData, CloudWatchLogsQuery, CloudWatchQuery, LogGroup } from '../../../types';
 import { getStatsGroups } from '../../../utils/query/getStatsGroups';
-import { LogGroupsField } from '../../shared/LogGroups/LogGroupsField';
+import { LogGroupsFieldWrapper } from '../../shared/LogGroups/LogGroupsField';
 
 export interface CloudWatchLogsQueryFieldProps
   extends QueryEditorProps<CloudWatchDatasource, CloudWatchQuery, CloudWatchJsonData>,
@@ -81,13 +81,17 @@ export const CloudWatchLogsQueryField = (props: CloudWatchLogsQueryFieldProps) =
 
   return (
     <>
-      <LogGroupsField
+      <LogGroupsFieldWrapper
         region={query.region}
         datasource={datasource}
         legacyLogGroupNames={query.logGroupNames}
         logGroups={query.logGroups}
-        onChange={(logGroups) => {
+        onChange={(logGroups: LogGroup[]) => {
           onChange({ ...query, logGroups, logGroupNames: undefined });
+        }}
+        //legacy props can be removed once we remove support for Legacy Log Group Selector
+        legacyOnChange={(logGroups: string[]) => {
+          onChange({ ...query, logGroupNames: logGroups });
         }}
       />
       <div className="gf-form-inline gf-form-inline--nowrap flex-grow-1">

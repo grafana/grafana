@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import type { languages } from 'monaco-editor';
 import React, { useEffect, useRef } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -194,8 +193,8 @@ function ensureTraceQL(monaco: Monaco) {
     traceqlSetupDone = true;
     const { aliases, extensions, mimetypes, def } = languageDefinition;
     monaco.languages.register({ id: langId, aliases, extensions, mimetypes });
-    monaco.languages.setMonarchTokensProvider(langId, def.language as languages.IMonarchLanguage);
-    monaco.languages.setLanguageConfiguration(langId, def.languageConfiguration as languages.LanguageConfiguration);
+    monaco.languages.setMonarchTokensProvider(langId, def.language);
+    monaco.languages.setLanguageConfiguration(langId, def.languageConfiguration);
   }
 }
 

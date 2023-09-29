@@ -16,7 +16,7 @@ schemas: [{
 		// grafana.com, then the plugin `id` has to follow the naming
 		// conventions.
 		id: string & strings.MinRunes(1)
-		id: =~"^([0-9a-z]+\\-([0-9a-z]+\\-)?(\(strings.Join([ for t in _types {t}], "|"))))|(alertGroups|alertlist|annolist|barchart|bargauge|candlestick|canvas|dashlist|debug|datagrid|gauge|geomap|gettingstarted|graph|heatmap|histogram|icon|live|logs|news|nodeGraph|piechart|pluginlist|stat|state-timeline|status-history|table|table-old|text|timeseries|trend|traces|welcome|xychart|alertmanager|cloudwatch|dashboard|elasticsearch|grafana|grafana-azure-monitor-datasource|graphite|influxdb|jaeger|loki|mixed|mssql|mysql|opentsdb|postgres|prometheus|stackdriver|tempo|testdata|zipkin|phlare|parca)$"
+		id: =~"^([0-9a-z]+\\-([0-9a-z]+\\-)?(\(strings.Join([ for t in _types {t}], "|"))))|(alertGroups|alertlist|annolist|barchart|bargauge|candlestick|canvas|dashlist|debug|datagrid|gauge|geomap|gettingstarted|graph|heatmap|histogram|icon|live|logs|news|nodeGraph|piechart|pluginlist|stat|state-timeline|status-history|table|table-old|text|timeseries|trend|traces|welcome|xychart|alertmanager|cloudwatch|dashboard|elasticsearch|grafana|grafana-azure-monitor-datasource|graphite|influxdb|jaeger|loki|mixed|mssql|mysql|opentsdb|postgres|prometheus|stackdriver|tempo|grafana-testdata-datasource|zipkin|phlare|parca)$"
 
 		// Human-readable name of the plugin that is shown to the user in
 		// the UI.
@@ -341,7 +341,7 @@ schemas: [{
 		// A proxy route used in datasource plugins for plugin authentication
 		// and adding headers to HTTP requests made by the plugin.
 		// For more information, refer to [Authentication for data source
-		// plugins](https://grafana.com/docs/grafana/latest/developers/plugins/authentication/).
+		// plugins](https://grafana.com/developers/plugin-tools/create-a-plugin/extend-a-plugin/add-authentication-for-data-source-plugins).
 		#Route: {
 			// For data source plugins. The route path that is replaced by the
 			// route URL field when proxying the call.

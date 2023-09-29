@@ -57,9 +57,14 @@ type Requester interface {
 	HasRole(role roletype.RoleType) bool
 	// GetCacheKey returns a unique key for the entity.
 	// Add an extra prefix to avoid collisions with other caches
-	GetCacheKey() (string, error)
+	GetCacheKey() string
 	// HasUniqueId returns true if the entity has a unique id
 	HasUniqueId() bool
+	// AuthenticatedBy returns the authentication method used to authenticate the entity.
+	GetAuthenticatedBy() string
+	// GetIDToken returns a signed token representing the identity that can be forwarded to plugins and external services.
+	// Will only be set when featuremgmt.FlagIdForwarding is enabled.
+	GetIDToken() string
 }
 
 // IntIdentifier converts a string identifier to an int64.

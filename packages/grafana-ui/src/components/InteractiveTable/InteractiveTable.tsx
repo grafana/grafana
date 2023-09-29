@@ -5,6 +5,7 @@ import {
   HeaderGroup,
   PluginHook,
   Row,
+  SortingRule,
   TableOptions,
   useExpanded,
   usePagination,
@@ -31,6 +32,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       gap: theme.spacing(2),
       flexDirection: 'column',
       width: '100%',
+      overflowX: 'auto',
     }),
     table: css({
       borderRadius: theme.shape.radius.default,
@@ -116,6 +118,8 @@ export type InteractiveTableHeaderTooltip = {
   iconName?: IconName;
 };
 
+export type FetchDataArgs<Data> = { sortBy: Array<SortingRule<Data>> };
+export type FetchDataFunc<Data> = ({ sortBy }: FetchDataArgs<Data>) => void;
 interface Props<TableData extends object> {
   className?: string;
   /**
@@ -142,6 +146,12 @@ interface Props<TableData extends object> {
    * Render function for the expanded row. if not provided, the tables rows will not be expandable.
    */
   renderExpandedRow?: (row: TableData) => ReactNode;
+  /**
+   * A custom function to fetch data when the table is sorted. If not provided, the table will be sorted client-side.
+   * It's important for this function to have a stable identity, e.g. being wrapped into useCallback to prevent unnecessary
+   * re-renders of the table.
+   */
+  fetchData?: FetchDataFunc<TableData>;
 }
 
 /** @alpha */
@@ -153,6 +163,7 @@ export function InteractiveTable<TableData extends object>({
   headerTooltips,
   pageSize = 0,
   renderExpandedRow,
+  fetchData,
 }: Props<TableData>) {
   const styles = useStyles2(getStyles);
   const tableColumns = useMemo(() => {
@@ -181,6 +192,8 @@ export function InteractiveTable<TableData extends object>({
       autoResetExpanded: false,
       autoResetSortBy: false,
       disableMultiSort: true,
+      // If fetchData is provided, we disable client-side sorting
+      manualSortBy: Boolean(fetchData),
       getRowId,
       initialState: {
         hiddenColumns: [
@@ -196,6 +209,13 @@ export function InteractiveTable<TableData extends object>({
   );
 
   const { getTableProps, getTableBodyProps, headerGroups, prepareRow } = tableInstance;
+
+  const { sortBy } = tableInstance.state;
+  useEffect(() => {
+    if (fetchData) {
+      fetchData({ sortBy });
+    }
+  }, [sortBy, fetchData]);
 
   useEffect(() => {
     if (paginationEnabled) {

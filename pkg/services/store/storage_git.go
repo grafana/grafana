@@ -117,7 +117,7 @@ func newGitStorage(meta RootStorageMeta, scfg RootStorageConfig, localWorkCache 
 			path := fmt.Sprintf("file://%s", p)
 			bucket, err := blob.OpenBucket(context.Background(), path)
 			if err != nil {
-				grafanaStorageLogger.Warn("error loading storage", "prefix", scfg.Prefix, "err", err)
+				grafanaStorageLogger.Warn("Error loading storage", "prefix", scfg.Prefix, "err", err)
 				meta.Notice = append(meta.Notice, data.Notice{
 					Severity: data.NoticeSeverityError,
 					Text:     "Failed to initialize storage",
@@ -158,7 +158,7 @@ func newGitStorage(meta RootStorageMeta, scfg RootStorageConfig, localWorkCache 
 							})
 							s.github = nil
 						} else {
-							grafanaStorageLogger.Info("default branch", "branch", *ghrepo.DefaultBranch)
+							grafanaStorageLogger.Info("Default branch", "branch", *ghrepo.DefaultBranch)
 						}
 					}
 				}
@@ -185,10 +185,10 @@ func newGitStorage(meta RootStorageMeta, scfg RootStorageConfig, localWorkCache 
 					ticker := time.NewTicker(t)
 					go func() {
 						for range ticker.C {
-							grafanaStorageLogger.Info("try git pull", "branch", s.settings.Remote)
+							grafanaStorageLogger.Info("Try git pull", "branch", s.settings.Remote)
 							err = s.Sync()
 							if err != nil {
-								grafanaStorageLogger.Info("error pulling", "error", err)
+								grafanaStorageLogger.Info("Error pulling", "error", err)
 							}
 						}
 					}()
@@ -355,7 +355,7 @@ func (s *rootStorageGit) Write(ctx context.Context, cmd *WriteValueRequest) (*Wr
 		return nil, err
 	}
 
-	grafanaStorageLogger.Info("made commit", "hash", hash)
+	grafanaStorageLogger.Info("Made commit", "hash", hash)
 	// err = s.repo.Push(&git.PushOptions{
 	// 	InsecureSkipTLS: true,
 	// })

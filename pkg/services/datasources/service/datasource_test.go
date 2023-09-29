@@ -719,7 +719,7 @@ func TestService_GetHttpTransport(t *testing.T) {
 	t.Run("Should set custom headers if configured in JsonData", func(t *testing.T) {
 		provider := httpclient.NewProvider()
 
-		sjson := simplejson.NewFromAny(map[string]interface{}{
+		sjson := simplejson.NewFromAny(map[string]any{
 			"httpHeaderName1": "Authorization",
 		})
 
@@ -788,7 +788,7 @@ func TestService_GetHttpTransport(t *testing.T) {
 	t.Run("Should use request timeout if configured in JsonData", func(t *testing.T) {
 		provider := httpclient.NewProvider()
 
-		sjson := simplejson.NewFromAny(map[string]interface{}{
+		sjson := simplejson.NewFromAny(map[string]any{
 			"timeout": 19,
 		})
 
@@ -939,10 +939,10 @@ func TestService_getTimeout(t *testing.T) {
 		expectedTimeout time.Duration
 	}{
 		{jsonData: simplejson.New(), expectedTimeout: time.Minute},
-		{jsonData: simplejson.NewFromAny(map[string]interface{}{"timeout": nil}), expectedTimeout: time.Minute},
-		{jsonData: simplejson.NewFromAny(map[string]interface{}{"timeout": 0}), expectedTimeout: time.Minute},
-		{jsonData: simplejson.NewFromAny(map[string]interface{}{"timeout": 1}), expectedTimeout: time.Second},
-		{jsonData: simplejson.NewFromAny(map[string]interface{}{"timeout": "2"}), expectedTimeout: 2 * time.Second},
+		{jsonData: simplejson.NewFromAny(map[string]any{"timeout": nil}), expectedTimeout: time.Minute},
+		{jsonData: simplejson.NewFromAny(map[string]any{"timeout": 0}), expectedTimeout: time.Minute},
+		{jsonData: simplejson.NewFromAny(map[string]any{"timeout": 1}), expectedTimeout: time.Second},
+		{jsonData: simplejson.NewFromAny(map[string]any{"timeout": "2"}), expectedTimeout: 2 * time.Second},
 	}
 
 	sqlStore := db.InitTestDB(t)
@@ -1043,7 +1043,7 @@ func TestDataSource_CustomHeaders(t *testing.T) {
 	}{
 		{
 			name: "valid custom headers",
-			jsonData: simplejson.NewFromAny(map[string]interface{}{
+			jsonData: simplejson.NewFromAny(map[string]any{
 				"httpHeaderName1": "X-Test-Header1",
 			}),
 			secureJsonData: map[string][]byte{
@@ -1055,7 +1055,7 @@ func TestDataSource_CustomHeaders(t *testing.T) {
 		},
 		{
 			name: "missing header value",
-			jsonData: simplejson.NewFromAny(map[string]interface{}{
+			jsonData: simplejson.NewFromAny(map[string]any{
 				"httpHeaderName1": "X-Test-Header1",
 			}),
 			secureJsonData:  map[string][]byte{},
@@ -1063,7 +1063,7 @@ func TestDataSource_CustomHeaders(t *testing.T) {
 		},
 		{
 			name: "non customer header value",
-			jsonData: simplejson.NewFromAny(map[string]interface{}{
+			jsonData: simplejson.NewFromAny(map[string]any{
 				"someotherheader": "X-Test-Header1",
 			}),
 			secureJsonData:  map[string][]byte{},

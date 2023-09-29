@@ -33,14 +33,14 @@ labels:
     - enterprise
     - oss
 title: Geomap
-weight: 600
+weight: 100
 ---
 
 # Geomap
 
-The Geomap panel visualization allows you to view and customize the world map using geospatial data. You can configure various overlay styles and map view settings to easily focus on the important location-based characteristics of the data.
+Geomaps allow you to view and customize the world map using geospatial data. You can configure various overlay styles and map view settings to easily focus on the important location-based characteristics of the data.
 
-> We would love your feedback on Geomap. Please check out the [Github discussion](https://github.com/grafana/grafana/discussions/62159) and join the conversation.
+> We would love your feedback on geomaps. Please check out the [open Github issues](https://github.com/grafana/grafana/issues?page=1&q=is%3Aopen+is%3Aissue+label%3Aarea%2Fpanel%2Fgeomap) and [submit a new feature request](https://github.com/grafana/grafana/issues/new?assignees=&labels=type%2Ffeature-request,area%2Fpanel%2Fgeomap&title=Geomap:&projects=grafana-dataviz&template=1-feature_requests.md) as needed.
 
 {{< figure src="/static/img/docs/geomap-panel/geomap-example-8-1-0.png" max-width="1200px" caption="Geomap panel" >}}
 
@@ -50,7 +50,7 @@ The map view controls the initial view of the map when the dashboard loads.
 
 ### Initial View
 
-The initial view configures how the GeoMap panel renders when the panel is first loaded.
+The initial view configures how the geomap renders when the panel is first loaded.
 
 - **View** sets the center for the map when the panel first loads.
   - **Fit to data** fits the map view based on the data extents of Map layers and updates when data changes.
@@ -77,19 +77,19 @@ The initial view configures how the GeoMap panel renders when the panel is first
 
 ## Map layers
 
-The Geomap visualization supports showing multiple layers. Each layer determines how you visualize geospatial data on top of the base map.
+Geomaps support showing multiple layers. Each layer determines how you visualize geospatial data on top of the base map.
 
 ### Types
 
-There are seven map layer types to choose from in the Geomap visualization.
+There are seven map layer types to choose from in a geomap.
 
-- [Markers]({{< relref "#markers-layer" >}}) renders a marker at each data point.
-- [Heatmap]({{< relref "#heatmap-layer" >}}) visualizes a heatmap of the data.
-- [GeoJSON]({{< relref "#geojson-layer" >}}) renders static data from a GeoJSON file.
-- [Night / Day]({{< relref "#night--day-layer" >}}) renders a night / day region.
-- [Route (Beta)]({{< relref "#route-layer-beta" >}}) render data points as a route.
-- [Photos (Beta)]({{< relref "#photos-layer-beta" >}}) renders a photo at each data point.
-- [Network (Beta)]({{< relref "#network-layer-beta" >}}) visualizes a network graph from the data.
+- [Markers](#markers-layer) renders a marker at each data point.
+- [Heatmap](#heatmap-layer) visualizes a heatmap of the data.
+- [GeoJSON](#geojson-layer) renders static data from a GeoJSON file.
+- [Night / Day](#night--day-layer) renders a night / day region.
+- [Route (Beta)](#route-layer-beta) render data points as a route.
+- [Photos (Beta)](#photos-layer-beta) renders a photo at each data point.
+- [Network (Beta)](#network-layer-beta) visualizes a network graph from the data.
 
 {{% admonition type="note" %}}
 Beta is equivalent to the [public preview](/docs/release-life-cycle/) release stage.
@@ -118,24 +118,24 @@ docker run -p 3000:3000 -e "GF_PANELS_ENABLE_ALPHA=true" grafana/grafana:<VERSIO
 {{% /admonition %}}
 
 {{% admonition type="note" %}}
-[Basemap layer types]({{< relref "#types-1" >}}) can also be added as layers. You can specify an opacity.
+[Basemap layer types](#types-1) can also be added as layers. You can specify an opacity.
 {{% /admonition %}}
 
 ### Layer Controls
 
 The layer controls allow you to create layers, change their name, reorder and delete layers.
 
-- **Add layer** creates an additional, configurable data layer for the Geomap visualization. When you add a layer, you are prompted to select a layer type. You can change the layer type at any point during panel configuration. See the **Layer Types** section above for details on each layer type.
-- The layer controls allow you to rename, delete, and reorder the layers of the panel.
+- **Add layer** creates an additional, configurable data layer for the geomap. When you add a layer, you are prompted to select a layer type. You can change the layer type at any point during panel configuration. See the **Layer Types** section above for details on each layer type.
+- The layer controls allow you to rename, delete, and reorder the layers of the visualization.
   - **Edit layer name (pencil icon)** renames the layer.
   - **Trash Bin** deletes the layer.
-  - **Reorder (six dots/grab handle)** allows you to change the layer order. Data on higher layers will appear above data on lower layers. The panel will update the layer order as you drag and drop to help simplify choosing a layer order.
+  - **Reorder (six dots/grab handle)** allows you to change the layer order. Data on higher layers will appear above data on lower layers. The visualization will update the layer order as you drag and drop to help simplify choosing a layer order.
 
-You can add multiple layers of data to a single Geomap panel in order to create rich, detailed visualizations.
+You can add multiple layers of data to a single geomap in order to create rich, detailed visualizations.
 
 ### Location
 
-The Geomap panel needs a source of geographical data. This data comes from a database query, and there are four mapping options for your data.
+Geomaps need a source of geographical data. This data comes from a database query, and there are four mapping options for your data.
 
 - **Auto** automatically searches for location data. Use this option when your query is based on one of the following names for data fields.
   - geohash: “geohash”
@@ -153,22 +153,22 @@ are available each with specific configuration options to style the base map.
 
 ### Types
 
-There are four basemap layer types to choose from in the Geomap visualization.
+There are four basemap layer types to choose from in a geomap.
 
-- [Open Street Map]({{< relref "#open-street-map-layer" >}}) adds a map from a collaborative free geographic world database.
-- [CARTO]({{< relref "#carto-layer" >}}) adds a layer from CARTO Raster basemaps.
-- [ArcGIS]({{< relref "#arcgis-layer" >}}) adds a layer from an ESRI ArcGIS MapServer.
-- [XYZ]({{< relref "#xyz-tile-layer" >}}) adds a map from a generic tile layer.
+- [Open Street Map](#open-street-map-layer) adds a map from a collaborative free geographic world database.
+- [CARTO](#carto-layer) adds a layer from CARTO Raster basemaps.
+- [ArcGIS](#arcgis-layer) adds a layer from an ESRI ArcGIS MapServer.
+- [XYZ](#xyz-tile-layer) adds a map from a generic tile layer.
 
 ### Default
 
-The default base layer uses the [CARTO]({{< relref "#carto-layer" >}}) map. You can define custom default base layers in the `.ini` configuration file.
+The default base layer uses the [CARTO](#carto-layer) map. You can define custom default base layers in the `.ini` configuration file.
 
 ![Basemap layer options](/static/img/docs/geomap-panel/geomap-baselayer-8-1-0.png)
 
 #### Configure the default base layer with provisioning
 
-You can configure the default base map using config files with Grafana’s provisioning system. For more information on all the settings, refer to the [provisioning docs page]({{< relref "../../../administration/provisioning/" >}}).
+You can configure the default base map using config files with Grafana’s provisioning system. For more information on all the settings, refer to the [provisioning docs page][].
 
 Use the JSON configuration option `default_baselayer_config` to define the default base map. There are currently four base map options to choose from: `carto`, `esri-xyz`, `osm-standard`, `xyz`. Here are some provisioning examples for each base map option.
 
@@ -367,7 +367,7 @@ The Photos layer renders a photo at each data point.
 The Network layer is currently in [public preview](/docs/release-life-cycle/). Grafana Labs offers limited support, and breaking changes might occur prior to the feature being made generally available.
 {{% /admonition %}}
 
-The Network layer renders a network graph. This layer supports the same [data format supported by the node graph visualization]({{< relref "../node-graph/#data-api" >}}) with the addition of [geospatial data]({{< relref "#location">}}) included in the nodes data. The geospatial data is used to locate and render the nodes on the map.
+The Network layer renders a network graph. This layer supports the same [data format supported by the node graph visualization][] with the addition of [geospatial data]({{< relref "#location">}}) included in the nodes data. The geospatial data is used to locate and render the nodes on the map.
 
 {{< figure src="/media/docs/grafana/screenshot-grafana-10-1-geomap-network-layer-v2.png" max-width="750px" caption="Geomap network layer" >}}
 {{< video-embed src="/media/docs/grafana/screen-recording-10-1-geomap-network-layer-from-node-graph.mp4" max-width="750px" caption="Node graph to Geomap network layer" >}}
@@ -431,7 +431,7 @@ The XYZ tile layer is a map from a generic tile layer.
 
   > **Note:** Set a valid tile server url, with {z}/{x}/{y} for example: https://tile.openstreetmap.org/{z}/{x}/{y}.png
 
-- **Attribution** sets the reference string for the layer if displayed in [map controls]({{< relref "#show-attribution" >}})
+- **Attribution** sets the reference string for the layer if displayed in [map controls](#show-attribution)
 - **Opacity** from 0 (transparent) to 1 (opaque)
 
 {{< figure src="/static/img/docs/geomap-panel/geomap-xyz-options-9-1-0.png" max-width="1200px" caption="Geomap panel xyz options" >}}
@@ -476,7 +476,7 @@ An ArcGIS layer is a layer from an ESRI ArcGIS MapServer.
     {{< figure src="/static/img/docs/geomap-panel/geomap-arcgis-usa-topographic-9-1-0.png" max-width="1200px" caption="Geomap panel ArcGIS USA Topographic" >}}
   - World Ocean
     {{< figure src="/static/img/docs/geomap-panel/geomap-arcgis-ocean-9-1-0.png" max-width="1200px" caption="Geomap panel ArcGIS World Ocean" >}}
-  - Custom MapServer (see [XYZ]({{< relref "#xyz-tile-layer" >}}) for formatting)
+  - Custom MapServer (see [XYZ](#xyz-tile-layer) for formatting)
     - URL template
     - Attribution
 - **Opacity** from 0 (transparent) to 1 (opaque)
@@ -574,3 +574,11 @@ Displays debug information in the upper right corner. This can be useful for deb
 
 - **None** displays tooltips only when a data point is clicked.
 - **Details** displays tooltips when a mouse pointer hovers over a data point.
+
+{{% docs/reference %}}
+[provisioning docs page]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/administration/provisioning"
+[provisioning docs page]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/administration/provisioning"
+
+[data format supported by the node graph visualization]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/node-graph#data-api"
+[data format supported by the node graph visualization]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/node-graph#data-api"
+{{% /docs/reference %}}

@@ -579,7 +579,7 @@ func (ss *sqlStore) BatchDisableUsers(ctx context.Context, cmd *user.BatchDisabl
 		user_id_params := strings.Repeat(",?", len(userIds)-1)
 		disableSQL := "UPDATE " + ss.dialect.Quote("user") + " SET is_disabled=? WHERE Id IN (?" + user_id_params + ")"
 
-		disableParams := []interface{}{disableSQL, cmd.IsDisabled}
+		disableParams := []any{disableSQL, cmd.IsDisabled}
 		for _, v := range userIds {
 			disableParams = append(disableParams, v)
 		}
@@ -616,7 +616,7 @@ func (ss *sqlStore) Search(ctx context.Context, query *user.SearchUsersQuery) (*
 		queryWithWildcards := "%" + query.Query + "%"
 
 		whereConditions := make([]string, 0)
-		whereParams := make([]interface{}, 0)
+		whereParams := make([]any, 0)
 		sess := dbSess.Table("user").Alias("u")
 
 		whereConditions = append(whereConditions, "u.is_service_account = ?")
@@ -679,7 +679,17 @@ func (ss *sqlStore) Search(ctx context.Context, query *user.SearchUsersQuery) (*
 		}
 
 		sess.Cols("u.id", "u.email", "u.name", "u.login", "u.is_admin", "u.is_disabled", "u.last_seen_at", "user_auth.auth_module")
-		sess.Asc("u.login", "u.email")
+
+		if len(query.SortOpts) > 0 {
+			for i := range query.SortOpts {
+				for j := range query.SortOpts[i].Filter {
+					sess.OrderBy(query.SortOpts[i].Filter[j].OrderBy())
+				}
+			}
+		} else {
+			sess.Asc("u.login", "u.email")
+		}
+
 		if err := sess.Find(&result.Users); err != nil {
 			return err
 		}

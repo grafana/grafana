@@ -76,6 +76,14 @@ export abstract class CustomVariableSupport<
   }
 
   abstract editor: ComponentType<QueryEditorProps<DSType, TQuery, TOptions, VariableQuery>>;
+
+  /**
+   * This can return data in various formats as DataQueryResponse allows multiple types. In general though the
+   * assumption is that there will be a string Field or value in an Array of objects that will be taken as the possible
+   * variable values. You can also use this type directly MetricFindValue or just use text/value/expendable fields/keys
+   * in the response.
+   * @param request
+   */
   abstract query(request: DataQueryRequest<VariableQuery>): Observable<DataQueryResponse>;
 }
 

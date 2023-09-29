@@ -14,12 +14,12 @@ labels:
     - enterprise
     - oss
 title: Bar gauge
-weight: 200
+weight: 100
 ---
 
 # Bar gauge
 
-The bar gauge simplifies your data by reducing every field to a single value. You choose how Grafana calculates the reduction.
+Bar gauges simplify your data by reducing every field to a single value. You choose how Grafana calculates the reduction.
 
 This panel can show one or more bar gauges depending on how many series, rows, or columns your query returns.
 
@@ -37,7 +37,7 @@ Choose how Grafana displays your data.
 
 Show a calculated value based on all rows.
 
-- **Calculation -** Select a reducer function that Grafana will use to reduce many fields to a single value. For a list of available calculations, refer to [Calculation types]({{< relref "../../calculation-types/" >}}).
+- **Calculation -** Select a reducer function that Grafana will use to reduce many fields to a single value. For a list of available calculations, refer to [Calculation types][].
 - **Fields -** Select the fields display in the panel.
 
 #### All values
@@ -82,3 +82,8 @@ Automatically show x-axis scrollbar when there is a large amount of data.
 Limit the minimum height of the bar row in the horizontal direction.
 
 Automatically show y-axis scrollbar when there is a large amount of data.
+
+{{% docs/reference %}}
+[Calculation types]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/calculation-types"
+[Calculation types]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/calculation-types"
+{{% /docs/reference %}}

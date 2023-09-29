@@ -305,8 +305,8 @@ type AlertRuleKey struct {
 	UID   string `xorm:"uid"`
 }
 
-func (k AlertRuleKey) LogContext() []interface{} {
-	return []interface{}{"rule_uid", k.UID, "org_id", k.OrgID}
+func (k AlertRuleKey) LogContext() []any {
+	return []any{"rule_uid", k.UID, "org_id", k.OrgID}
 }
 
 type AlertRuleKeyWithVersion struct {
@@ -570,4 +570,16 @@ func WithRuleKey(ctx context.Context, ruleKey AlertRuleKey) context.Context {
 func RuleKeyFromContext(ctx context.Context) (AlertRuleKey, bool) {
 	key, ok := ctx.Value(ruleKeyContextKey{}).(AlertRuleKey)
 	return key, ok
+}
+
+// GroupByAlertRuleGroupKey groups all rules by AlertRuleGroupKey. Returns map of RulesGroup sorted by AlertRule.RuleGroupIndex
+func GroupByAlertRuleGroupKey(rules []*AlertRule) map[AlertRuleGroupKey]RulesGroup {
+	result := make(map[AlertRuleGroupKey]RulesGroup)
+	for _, rule := range rules {
+		result[rule.GetGroupKey()] = append(result[rule.GetGroupKey()], rule)
+	}
+	for _, group := range result {
+		group.SortByGroupIndex()
+	}
+	return result
 }

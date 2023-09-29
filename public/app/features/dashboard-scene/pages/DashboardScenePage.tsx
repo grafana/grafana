@@ -6,31 +6,32 @@ import { Page } from 'app/core/components/Page/Page';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 
-import { getDashboardLoader } from '../serialization/DashboardsLoader';
+import { getDashboardScenePageStateManager } from './DashboardScenePageStateManager';
 
 export interface Props extends GrafanaRouteComponentProps<{ uid: string }> {}
 
-export const DashboardScenePage = ({ match }: Props) => {
-  const loader = getDashboardLoader();
-  const { dashboard, isLoading } = loader.useState();
+export function DashboardScenePage({ match }: Props) {
+  const stateManager = getDashboardScenePageStateManager();
+  const { dashboard, isLoading, loadError } = stateManager.useState();
 
   useEffect(() => {
-    loader.loadAndInit(match.params.uid);
+    stateManager.loadDashboard(match.params.uid);
+
     return () => {
-      loader.clearState();
+      stateManager.clearState();
     };
-  }, [loader, match.params.uid]);
+  }, [stateManager, match.params.uid]);
 
   if (!dashboard) {
     return (
       <Page layout={PageLayoutType.Canvas}>
         {isLoading && <PageLoader />}
-        {!isLoading && <h2>Dashboard not found</h2>}
+        {loadError && <h2>{loadError}</h2>}
       </Page>
     );
   }
 
   return <dashboard.Component model={dashboard} />;
-};
+}
 
 export default DashboardScenePage;

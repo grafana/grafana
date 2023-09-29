@@ -27,7 +27,7 @@ func createImpersonatePermissions(sess *db.Session, client *oauthserver.External
 		return nil
 	}
 
-	insertPermQuery := make([]interface{}, 1, len(client.ImpersonatePermissions)*3+1)
+	insertPermQuery := make([]any, 1, len(client.ImpersonatePermissions)*3+1)
 	insertPermStmt := `INSERT INTO oauth_impersonate_permission (client_id, action, scope) VALUES `
 	for _, perm := range client.ImpersonatePermissions {
 		insertPermStmt += "(?, ?, ?),"
@@ -39,7 +39,7 @@ func createImpersonatePermissions(sess *db.Session, client *oauthserver.External
 }
 
 func registerExternalService(sess *db.Session, client *oauthserver.ExternalService) error {
-	insertQuery := []interface{}{
+	insertQuery := []any{
 		`INSERT INTO oauth_client (name, client_id, secret, grant_types, audiences, service_account_id, public_pem, redirect_uri) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
 		client.Name,
 		client.ClientID,
@@ -77,7 +77,7 @@ func recreateImpersonatePermissions(sess *db.Session, client *oauthserver.Extern
 }
 
 func updateExternalService(sess *db.Session, client *oauthserver.ExternalService, prevClientID string) error {
-	updateQuery := []interface{}{
+	updateQuery := []any{
 		`UPDATE oauth_client SET client_id = ?, secret = ?, grant_types = ?, audiences = ?, service_account_id = ?, public_pem = ?, redirect_uri = ? WHERE name = ?`,
 		client.ClientID,
 		client.Secret,
