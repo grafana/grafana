@@ -61,10 +61,10 @@ def swagger_gen_step(ver_mode):
         ],
     }
 
-def swagger_gen(trigger, ver_mode):
+def swagger_gen(trigger, ver_mode, source = "${DRONE_SOURCE_BRANCH}"):
     test_steps = [
         clone_pr_branch(ver_mode = ver_mode),
-        clone_enterprise_step_pr(),
+        clone_enterprise_step_pr(source),
         swagger_gen_step(ver_mode = ver_mode),
     ]
 

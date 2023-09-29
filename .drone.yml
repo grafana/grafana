@@ -1164,8 +1164,9 @@ steps:
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
     grafana-enterprise
   - cd grafana-enterprise
-  - if git checkout ${DRONE_COMMIT}; then echo "checked out ${DRONE_COMMIT}"; elif
-    git checkout main; then echo "git checkout main"; else git checkout main; fi
+  - if git checkout ${DRONE_SOURCE_BRANCH}; then echo "checked out ${DRONE_SOURCE_BRANCH}";
+    elif git checkout main; then echo "git checkout main"; else git checkout main;
+    fi
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
