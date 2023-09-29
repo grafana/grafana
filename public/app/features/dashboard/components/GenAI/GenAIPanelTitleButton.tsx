@@ -37,7 +37,7 @@ function getMessages(panel: PanelModel): Message[] {
       role: Role.system,
     },
     {
-      content: `The panel is part of a dashboard with the description: ${dashboard.title}`,
+      content: `The panel is part of a dashboard with the description: ${dashboard.description}`,
       role: Role.system,
     },
     {
