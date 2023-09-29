@@ -220,6 +220,12 @@
       "unmark-favorite": "Supprimer des favoris"
     }
   },
+  "dashboard-settings": {
+    "json-editor": {
+      "save-button": "",
+      "subtitle": ""
+    }
+  },
   "data-source-picker": {
     "open-advanced-button": ""
   },
@@ -230,6 +236,11 @@
   },
   "explore": {
     "add-to-dashboard": "",
+    "table": {
+      "no-data": "",
+      "title": "",
+      "title-with-name": ""
+    },
     "toolbar": {
       "aria-label": "",
       "copy-shortened-link": "",
@@ -754,6 +765,7 @@
       "time-range-description": "Transforme la période temporelle relative actuelle en une période temporelle absolue"
     },
     "export": {
+      "back-button": "",
       "cancel-button": "Annuler",
       "info-text": "Exporter ce tableau de bord.",
       "save-button": "Enregistrer dans un fichier",

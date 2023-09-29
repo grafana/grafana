@@ -215,6 +215,12 @@
       "unmark-favorite": "Markierung als Favorit entfernen"
     }
   },
+  "dashboard-settings": {
+    "json-editor": {
+      "save-button": "",
+      "subtitle": ""
+    }
+  },
   "data-source-picker": {
     "open-advanced-button": ""
   },
@@ -225,6 +231,11 @@
   },
   "explore": {
     "add-to-dashboard": "",
+    "table": {
+      "no-data": "",
+      "title": "",
+      "title-with-name": ""
+    },
     "toolbar": {
       "aria-label": "",
       "copy-shortened-link": "",
@@ -749,6 +760,7 @@
       "time-range-description": "Wandelt den aktuellen relativen Zeitbereich in einen absoluten Zeitbereich um"
     },
     "export": {
+      "back-button": "",
       "cancel-button": "Abbrechen",
       "info-text": "Dieses Dashboard exportieren.",
       "save-button": "In Datei speichern …",

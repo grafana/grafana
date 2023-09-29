@@ -5,6 +5,8 @@ import (
 	"crypto/x509"
 	"net"
 	"path"
+	"strconv"
+	"strings"
 
 	"github.com/go-logr/logr"
 	"github.com/grafana/dskit/services"
@@ -16,8 +18,9 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/apiserver/pkg/authentication/authenticator"
 	"k8s.io/apiserver/pkg/authentication/request/headerrequest"
-	"k8s.io/apiserver/pkg/authentication/user"
+	"k8s.io/apiserver/pkg/authorization/authorizer"
 	openapinamer "k8s.io/apiserver/pkg/endpoints/openapi"
+	"k8s.io/apiserver/pkg/endpoints/responsewriter"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/apiserver/pkg/server/options"
 	"k8s.io/apiserver/pkg/util/openapi"
@@ -27,9 +30,15 @@ import (
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 	"k8s.io/klog/v2"
 
-	"github.com/grafana/grafana/pkg/apis"
-	playlistv1 "github.com/grafana/grafana/pkg/apis/playlist/v1"
+	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/infra/appcontext"
+	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/modules"
+	"github.com/grafana/grafana/pkg/registry"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/web"
 )
 
 const (
@@ -37,15 +46,16 @@ const (
 )
 
 var (
-	_ Service            = (*service)(nil)
-	_ RestConfigProvider = (*service)(nil)
+	_ Service                    = (*service)(nil)
+	_ RestConfigProvider         = (*service)(nil)
+	_ registry.BackgroundService = (*service)(nil)
+	_ registry.CanBeDisabled     = (*service)(nil)
 )
 
 var (
 	Scheme = runtime.NewScheme()
 	Codecs = serializer.NewCodecFactory(Scheme)
 
-	// if you modify this, make sure you update the crEncoder
 	unversionedVersion = schema.GroupVersion{Group: "", Version: "v1"}
 	unversionedTypes   = []runtime.Object{
 		&metav1.Status{},
@@ -65,6 +75,12 @@ func init() {
 
 type Service interface {
 	services.NamedService
+	registry.BackgroundService
+	registry.CanBeDisabled
+}
+
+type APIRegistrar interface {
+	RegisterAPI(builder APIGroupBuilder)
 }
 
 type RestConfigProvider interface {
@@ -74,26 +90,80 @@ type RestConfigProvider interface {
 type service struct {
 	*services.BasicService
 
-	restConfig *clientrest.Config
+	restConfig   *clientrest.Config
+	etcd_servers []string
 
+	enabled   bool
 	dataPath  string
 	stopCh    chan struct{}
 	stoppedCh chan error
+
+	rr       routing.RouteRegister
+	handler  web.Handler
+	builders []APIGroupBuilder
+
+	authorizer authorizer.Authorizer
 }
 
-func New(dataPath string) (*service, error) {
+func ProvideService(
+	cfg *setting.Cfg,
+	rr routing.RouteRegister,
+	authz authorizer.Authorizer,
+) (*service, error) {
 	s := &service{
-		dataPath: dataPath,
-		stopCh:   make(chan struct{}),
+		etcd_servers: cfg.SectionWithEnvOverrides("grafana-apiserver").Key("etcd_servers").Strings(","),
+		enabled:      cfg.IsFeatureToggleEnabled(featuremgmt.FlagGrafanaAPIServer),
+		rr:           rr,
+		dataPath:     path.Join(cfg.DataPath, "k8s"),
+		stopCh:       make(chan struct{}),
+		builders:     []APIGroupBuilder{},
+		authorizer:   authz,
 	}
 
+	// This will be used when running as a dskit service
 	s.BasicService = services.NewBasicService(s.start, s.running, nil).WithName(modules.GrafanaAPIServer)
+
+	// TODO: this is very hacky
+	// We need to register the routes in ProvideService to make sure
+	// the routes are registered before the Grafana HTTP server starts.
+	s.rr.Group("/k8s", func(k8sRoute routing.RouteRegister) {
+		handler := func(c *contextmodel.ReqContext) {
+			if s.handler == nil {
+				c.Resp.WriteHeader(404)
+				_, _ = c.Resp.Write([]byte("Not found"))
+				return
+			}
+
+			if handle, ok := s.handler.(func(c *contextmodel.ReqContext)); ok {
+				handle(c)
+				return
+			}
+		}
+		k8sRoute.Any("/", middleware.ReqSignedIn, handler)
+		k8sRoute.Any("/*", middleware.ReqSignedIn, handler)
+	})
 
 	return s, nil
 }
 
 func (s *service) GetRestConfig() *clientrest.Config {
 	return s.restConfig
+}
+
+func (s *service) IsDisabled() bool {
+	return !s.enabled
+}
+
+// Run is an adapter for the BackgroundService interface.
+func (s *service) Run(ctx context.Context) error {
+	if err := s.start(ctx); err != nil {
+		return err
+	}
+	return s.running(ctx)
+}
+
+func (s *service) RegisterAPI(builder APIGroupBuilder) {
+	s.builders = append(s.builders, builder)
 }
 
 func (s *service) start(ctx context.Context) error {
@@ -105,11 +175,13 @@ func (s *service) start(ctx context.Context) error {
 	o.SecureServing.BindPort = 6443
 	o.Authentication.RemoteKubeConfigFileOptional = true
 	o.Authorization.RemoteKubeConfigFileOptional = true
-	o.Authorization.AlwaysAllowPaths = []string{"*"}
-	o.Authorization.AlwaysAllowGroups = []string{user.SystemPrivilegedGroup, "grafana"}
-	o.Etcd = nil
+	o.Etcd.StorageConfig.Transport.ServerList = s.etcd_servers
+
 	o.Admission = nil
 	o.CoreAPI = nil
+	if len(o.Etcd.StorageConfig.Transport.ServerList) == 0 {
+		o.Etcd = nil
+	}
 
 	// Get the util to get the paths to pre-generated certs
 	certUtil := certgenerator.CertUtil{
@@ -150,12 +222,11 @@ func (s *service) start(ctx context.Context) error {
 		return err
 	}
 
+	serverConfig.Authorization.Authorizer = s.authorizer
 	serverConfig.Authentication.Authenticator = authenticator
 
 	// Get the list of groups the server will support
-	builders := []apis.APIGroupBuilder{
-		playlistv1.GetAPIGroupBuilder(),
-	}
+	builders := s.builders
 
 	// Install schemas
 	for _, b := range builders {
@@ -185,7 +256,11 @@ func (s *service) start(ctx context.Context) error {
 
 	// Install the API Group+version
 	for _, b := range builders {
-		err = server.InstallAPIGroup(b.GetAPIGroupInfo(Scheme, Codecs))
+		g, err := b.GetAPIGroupInfo(Scheme, Codecs, serverConfig.RESTOptionsGetter)
+		if err != nil {
+			return err
+		}
+		err = server.InstallAPIGroup(g)
 		if err != nil {
 			return err
 		}
@@ -199,10 +274,8 @@ func (s *service) start(ctx context.Context) error {
 
 	prepared := server.PrepareRun()
 
-	// TODO: not sure if we can still inject RouteRegister with the new module server setup
-	// Disabling the /k8s endpoint until we have a solution
-
-	/* handler := func(c *contextmodel.ReqContext) {
+	// TODO: this is a hack. see note in ProvideService
+	s.handler = func(c *contextmodel.ReqContext) {
 		req := c.Req
 		req.URL.Path = strings.TrimPrefix(req.URL.Path, "/k8s")
 		if req.URL.Path == "" {
@@ -213,18 +286,10 @@ func (s *service) start(ctx context.Context) error {
 
 		req.Header.Set("X-Remote-User", strconv.FormatInt(signedInUser.UserID, 10))
 		req.Header.Set("X-Remote-Group", "grafana")
-		req.Header.Set("X-Remote-Extra-token-name", signedInUser.Name)
-		req.Header.Set("X-Remote-Extra-org-role", string(signedInUser.OrgRole))
-		req.Header.Set("X-Remote-Extra-org-id", strconv.FormatInt(signedInUser.OrgID, 10))
-		req.Header.Set("X-Remote-Extra-user-id", strconv.FormatInt(signedInUser.UserID, 10))
 
 		resp := responsewriter.WrapForHTTP1Or2(c.Resp)
 		prepared.GenericAPIServer.Handler.ServeHTTP(resp, req)
 	}
-	/* s.rr.Group("/k8s", func(k8sRoute routing.RouteRegister) {
-		k8sRoute.Any("/", middleware.ReqSignedIn, handler)
-		k8sRoute.Any("/*", middleware.ReqSignedIn, handler)
-	}) */
 
 	go func() {
 		s.stoppedCh <- prepared.Run(s.stopCh)

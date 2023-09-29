@@ -101,6 +101,10 @@ export function generateRandomNodes(count = 10) {
       values: [],
       type: FieldType.string,
     },
+    [NodeGraphDataFrameFieldNames.nodeRadius]: {
+      values: [],
+      type: FieldType.number,
+    },
   };
 
   const nodeFrame = new MutableDataFrame({

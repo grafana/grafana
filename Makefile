@@ -36,30 +36,50 @@ node_modules: package.json yarn.lock ## Install node modules.
 
 ##@ Swagger
 SPEC_TARGET = public/api-spec.json
-MERGED_SPEC_TARGET := public/api-merged.json
+ENTERPRISE_SPEC_TARGET = public/api-enterprise-spec.json
+MERGED_SPEC_TARGET = public/api-merged.json
 NGALERT_SPEC_TARGET = pkg/services/ngalert/api/tooling/api.json
 
 $(NGALERT_SPEC_TARGET):
 	+$(MAKE) -C pkg/services/ngalert/api/tooling api.json
 
-$(MERGED_SPEC_TARGET): $(SPEC_TARGET) $(NGALERT_SPEC_TARGET) $(SWAGGER) ## Merge generated and ngalert API specs
+$(MERGED_SPEC_TARGET): swagger-oss-gen swagger-enterprise-gen $(NGALERT_SPEC_TARGET) $(SWAGGER) ## Merge generated and ngalert API specs
 	# known conflicts DsPermissionType, AddApiKeyCommand, Json, Duration (identical models referenced by both specs)
-	$(SWAGGER) mixin $(SPEC_TARGET) $(NGALERT_SPEC_TARGET) --ignore-conflicts -o $(MERGED_SPEC_TARGET)
+	$(SWAGGER) mixin $(SPEC_TARGET) $(ENTERPRISE_SPEC_TARGET) $(NGALERT_SPEC_TARGET) --ignore-conflicts -o $(MERGED_SPEC_TARGET)
 
-$(SPEC_TARGET): $(SWAGGER) ## Generate API Swagger specification
+swagger-oss-gen: $(SWAGGER) ## Generate API Swagger specification
+	@echo "re-generating swagger for OSS"
+	rm -f $(SPEC_TARGET)
 	SWAGGER_GENERATE_EXTENSION=false $(SWAGGER) generate spec -m -w pkg/server -o $(SPEC_TARGET) \
 	-x "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions" \
 	-x "github.com/prometheus/alertmanager" \
 	-i pkg/api/swagger_tags.json \
-	--exclude-tag=alpha
-	go run pkg/services/ngalert/api/tooling/cmd/clean-swagger/main.go -if $@ -of $@
+	--exclude-tag=alpha \
+	--exclude-tag=enterprise
 
-swagger-api-spec: gen-go $(SPEC_TARGET) $(MERGED_SPEC_TARGET) validate-api-spec
+# this file only exists if enterprise is enabled
+ENTERPRISE_EXT_FILE = pkg/extensions/ext.go
+ifeq ("$(wildcard $(ENTERPRISE_EXT_FILE))","") ## if enterprise is not enabled
+swagger-enterprise-gen:
+	@echo "skipping re-generating swagger for enterprise: not enabled"
+else
+swagger-enterprise-gen: $(SWAGGER) ## Generate API Swagger specification
+	@echo "re-generating swagger for enterprise"
+	rm -f $(ENTERPRISE_SPEC_TARGET)
+	SWAGGER_GENERATE_EXTENSION=false $(SWAGGER) generate spec -m -w pkg/server -o $(ENTERPRISE_SPEC_TARGET) \
+	-x "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions" \
+	-x "github.com/prometheus/alertmanager" \
+	-i pkg/api/swagger_tags.json \
+	--exclude-tag=alpha \
+	--include-tag=enterprise
+endif
 
-validate-api-spec: $(MERGED_SPEC_TARGET) $(SWAGGER) ## Validate API spec
+swagger-gen: gen-go $(MERGED_SPEC_TARGET) swagger-validate
+
+swagger-validate: $(MERGED_SPEC_TARGET) $(SWAGGER) ## Validate API spec
 	$(SWAGGER) validate $(<)
 
-clean-api-spec:
+swagger-clean:
 	rm -f $(SPEC_TARGET) $(MERGED_SPEC_TARGET) $(OAPI_SPEC_TARGET)
 
 .PHONY: cleanup-old-git-hooks
@@ -77,7 +97,7 @@ lefthook-uninstall: $(LEFTHOOK)
 ##@ OpenAPI 3
 OAPI_SPEC_TARGET = public/openapi3.json
 
-openapi3-gen: swagger-api-spec ## Generates OpenApi 3 specs from the Swagger 2 already generated
+openapi3-gen: swagger-gen ## Generates OpenApi 3 specs from the Swagger 2 already generated
 	$(GO) run scripts/openapi3/openapi3conv.go $(MERGED_SPEC_TARGET) $(OAPI_SPEC_TARGET)
 
 ##@ Building
@@ -202,7 +222,7 @@ build-docker-full: ## Build Docker image for development.
 	--build-arg BINGO=false \
 	--build-arg GO_BUILD_TAGS=$(GO_BUILD_TAGS) \
 	--build-arg WIRE_TAGS=$(WIRE_TAGS) \
-	--build-arg COMMIT_SHA=$$(git rev-parse --short HEAD) \
+	--build-arg COMMIT_SHA=$$(git rev-parse HEAD) \
 	--build-arg BUILD_BRANCH=$$(git rev-parse --abbrev-ref HEAD) \
 	--tag grafana/grafana$(TAG_SUFFIX):dev \
 	$(DOCKER_BUILD_ARGS)
@@ -215,9 +235,9 @@ build-docker-full-ubuntu: ## Build Docker image based on Ubuntu for development.
 	--build-arg BINGO=false \
 	--build-arg GO_BUILD_TAGS=$(GO_BUILD_TAGS) \
 	--build-arg WIRE_TAGS=$(WIRE_TAGS) \
-	--build-arg COMMIT_SHA=$$(git rev-parse --short HEAD) \
+	--build-arg COMMIT_SHA=$$(git rev-parse HEAD) \
 	--build-arg BUILD_BRANCH=$$(git rev-parse --abbrev-ref HEAD) \
-	--build-arg BASE_IMAGE=ubuntu:20.04 \
+	--build-arg BASE_IMAGE=ubuntu:22.04 \
 	--build-arg GO_IMAGE=golang:1.20.8 \
 	--tag grafana/grafana$(TAG_SUFFIX):dev-ubuntu \
 	$(DOCKER_BUILD_ARGS)

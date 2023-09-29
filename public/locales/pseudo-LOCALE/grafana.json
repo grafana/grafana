@@ -215,8 +215,14 @@
       "unmark-favorite": "Ůŉmäřĸ äş ƒävőřįŧę"
     }
   },
+  "dashboard-settings": {
+    "json-editor": {
+      "save-button": "Ŝävę čĥäŉģęş",
+      "subtitle": "Ŧĥę ĴŜØŃ mőđęľ þęľőŵ įş ŧĥę đäŧä şŧřūčŧūřę ŧĥäŧ đęƒįŉęş ŧĥę đäşĥþőäřđ. Ŧĥįş įŉčľūđęş đäşĥþőäřđ şęŧŧįŉģş, päŉęľ şęŧŧįŉģş, ľäyőūŧ, qūęřįęş, äŉđ şő őŉ."
+    }
+  },
   "data-source-picker": {
-    "open-advanced-button": ""
+    "open-advanced-button": "Øpęŉ äđväŉčęđ đäŧä şőūřčę pįčĸęř"
   },
   "data-sources": {
     "datasource-add-button": {
@@ -225,6 +231,11 @@
   },
   "explore": {
     "add-to-dashboard": "Åđđ ŧő đäşĥþőäřđ",
+    "table": {
+      "no-data": "0 şęřįęş řęŧūřŉęđ",
+      "title": "Ŧäþľę",
+      "title-with-name": "Ŧäþľę - {{name}}"
+    },
     "toolbar": {
       "aria-label": "Ēχpľőřę ŧőőľþäř",
       "copy-shortened-link": "Cőpy şĥőřŧęŉęđ ľįŉĸ",
@@ -749,6 +760,7 @@
       "time-range-description": "Ŧřäŉşƒőřmş ŧĥę čūřřęŉŧ řęľäŧįvę ŧįmę řäŉģę ŧő äŉ äþşőľūŧę ŧįmę řäŉģę"
     },
     "export": {
+      "back-button": "",
       "cancel-button": "Cäŉčęľ",
       "info-text": "Ēχpőřŧ ŧĥįş đäşĥþőäřđ.",
       "save-button": "Ŝävę ŧő ƒįľę",

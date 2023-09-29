@@ -27,6 +27,7 @@ Some features are enabled by default. You can disable these feature by setting t
 | `cloudWatchCrossAccountQuerying`                 | Enables cross-account querying in CloudWatch datasources                                                                                                                                            | Yes                |
 | `redshiftAsyncQueryDataSupport`                  | Enable async query data support for Redshift                                                                                                                                                        | Yes                |
 | `athenaAsyncQueryDataSupport`                    | Enable async query data support for Athena                                                                                                                                                          | Yes                |
+| `cloudwatchNewRegionsHandler`                    | Refactor of /regions endpoint, no user-facing changes                                                                                                                                               | Yes                |
 | `nestedFolderPicker`                             | Enables the new folder picker to work with nested folders. Requires the nestedFolders feature flag                                                                                                  | Yes                |
 | `accessTokenExpirationCheck`                     | Enable OAuth access_token expiration check and token refresh using the refresh_token                                                                                                                |                    |
 | `emptyDashboardPage`                             | Enable the redesigned user interface of a dashboard page that includes no panels                                                                                                                    | Yes                |
@@ -42,11 +43,13 @@ Some features are enabled by default. You can disable these feature by setting t
 | `useCachingService`                              | When turned on, the new query and resource caching implementation using a wire service inject will be used in place of the previous middleware implementation                                       |                    |
 | `enableElasticsearchBackendQuerying`             | Enable the processing of queries and responses in the Elasticsearch data source through backend                                                                                                     | Yes                |
 | `advancedDataSourcePicker`                       | Enable a new data source picker with contextual information, recently used order and advanced mode                                                                                                  | Yes                |
+| `cloudWatchLogsMonacoEditor`                     | Enables the Monaco editor for CloudWatch Logs queries                                                                                                                                               | Yes                |
 | `recordedQueriesMulti`                           | Enables writing multiple items from a single query within Recorded Queries                                                                                                                          | Yes                |
 | `transformationsRedesign`                        | Enables the transformations redesign                                                                                                                                                                | Yes                |
 | `toggleLabelsInLogsUI`                           | Enable toggleable filters in log details view                                                                                                                                                       | Yes                |
 | `azureMonitorDataplane`                          | Adds dataplane compliant frame metadata in the Azure Monitor datasource                                                                                                                             | Yes                |
 | `prometheusConfigOverhaulAuth`                   | Update the Prometheus configuration page with the new auth component                                                                                                                                | Yes                |
+| `cloudWatchWildCardDimensionValues`              | Fetches dimension values from CloudWatch to correctly label wildcard dimensions                                                                                                                     | Yes                |
 
 ## Preview feature toggles
 
@@ -72,7 +75,6 @@ Some features are enabled by default. You can disable these feature by setting t
 | `enableDatagridEditing`          | Enables the edit functionality in the datagrid panel                                                                                                                                         |
 | `dataSourcePageHeader`           | Apply new pageHeader UI in data source edit page                                                                                                                                             |
 | `sqlDatasourceDatabaseSelection` | Enables previous SQL data source dataset dropdown behavior                                                                                                                                   |
-| `cloudWatchLogsMonacoEditor`     | Enables the Monaco editor for CloudWatch Logs queries                                                                                                                                        |
 | `awsAsyncQueryCaching`           | Enable caching for async queries for Redshift and Athena. Requires that the `useCachingService` feature toggle is enabled and the datasource has caching and async query support enabled     |
 | `splitScopes`                    | Support faster dashboard and folder search by splitting permission scopes into parts                                                                                                         |
 | `reportingRetries`               | Enables rendering retries for the reporting feature                                                                                                                                          |
@@ -139,12 +141,15 @@ Experimental features might be changed or removed without prior notice.
 | `externalCorePlugins`                       | Allow core plugins to be loaded as external                                                                  |
 | `pluginsAPIMetrics`                         | Sends metrics of public grafana packages usage by plugins                                                    |
 | `httpSLOLevels`                             | Adds SLO level to http request metrics                                                                       |
+| `alertingModifiedExport`                    | Enables using UI for provisioned rules modification and export                                               |
 
 ## Development feature toggles
 
 The following toggles require explicitly setting Grafana's [app mode]({{< relref "../_index.md#app_mode" >}}) to 'development' before you can enable this feature toggle. These features tend to be experimental.
 
-| Feature toggle name   | Description                                                    |
-| --------------------- | -------------------------------------------------------------- |
-| `entityStore`         | SQL-based entity store (requires storage flag also)            |
-| `externalServiceAuth` | Starts an OAuth2 authentication provider for external services |
+| Feature toggle name       | Description                                                                                  |
+| ------------------------- | -------------------------------------------------------------------------------------------- |
+| `entityStore`             | SQL-based entity store (requires storage flag also)                                          |
+| `externalServiceAuth`     | Starts an OAuth2 authentication provider for external services                               |
+| `idForwarding`            | Generate signed id token for identity that can be forwarded to plugins and external services |
+| `externalServiceAccounts` | Automatic service account and token setup for plugins                                        |
