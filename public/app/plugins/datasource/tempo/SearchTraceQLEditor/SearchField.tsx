@@ -80,6 +80,9 @@ const SearchField = ({
     setError,
     query,
   ]);
+  if (filter.value && options && !options.find((o) => o === filter.value)) {
+    options.push({ label: filter.value.toString(), value: filter.value.toString(), type: filter.valueType });
+  }
 
   useEffect(() => {
     if (Array.isArray(filter.value) && filter.value.length > 1 && filter.operator !== '=~') {
