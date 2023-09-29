@@ -63,7 +63,9 @@ export function OpenLibraryPanelModal({ libraryPanel, onDismiss }: OpenLibraryPa
                   <Trans i18nKey={'library-panels.modal.contianer-dashboard'}>dashboard</Trans>
                 )}
               </strong>
-              {t('library-panels.modal.contianer-suffix', '. Please choose which dashboard to view the panel in:')}
+              <Trans i18nKey={'library-panels.modal.contianer-suffix'}>
+                Please choose which dashboard to view the panel in:
+              </Trans>
             </p>
             <AsyncSelect
               isClearable
