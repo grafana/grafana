@@ -5,12 +5,20 @@ export function getTransformationContent(id: string): TransformationInfo {
     const { name, helperDocs, links } = transformationDocsContent[id];
 
     if (links?.length) {
+      const renderedLinks = links
+        .map((link) => {
+          return `
+  Or visit <a href="${link.url}" target="_blank">${link.title}</a>\n
+  `;
+        })
+        .join('');
+
       return {
         name,
         helperDocs: `
         ${helperDocs}
         ${getLinkToDocs()}
-  ${links.map((link) => `<a href="${link.url}" target="_blank">${link.title}</a>`)}
+  ${renderedLinks}
         `,
       };
     }
