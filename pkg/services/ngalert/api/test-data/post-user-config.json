@@ -324,8 +324,8 @@
                         }
                     },
                     {
-                        "name": "a victorops receiver",
-                        "type": "victorops",
+                        "name": "a splunkoncall receiver",
+                        "type": "splunkoncall",
                         "isDefault": false,
                         "sendReminder": false,
                         "disableResolveMessage": false,

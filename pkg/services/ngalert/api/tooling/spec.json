@@ -3625,7 +3625,7 @@
             " teams",
             " telegram",
             " threema",
-            " victorops",
+            " splunkoncall",
             " webhook",
             " wecom"
           ],
@@ -3740,8 +3740,8 @@
         "slack_configs": {
           "$ref": "#/definitions/SlackConfig"
         },
-        "victorops_configs": {
-          "$ref": "#/definitions/VictorOpsConfig"
+        "splunkoncall_configs": {
+          "$ref": "#/definitions/SplunkOnCallConfig"
         },
         "webhook_configs": {
           "$ref": "#/definitions/WebhookConfig"
@@ -4137,10 +4137,10 @@
             "$ref": "#/definitions/TelegramConfig"
           }
         },
-        "victorops_configs": {
+        "splunkoncall_configs": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/VictorOpsConfig"
+            "$ref": "#/definitions/SplunkOnCallConfig"
           }
         },
         "webex_configs": {
@@ -5204,10 +5204,10 @@
             "$ref": "#/definitions/TelegramConfig"
           }
         },
-        "victorops_configs": {
+        "splunkoncall_configs": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/VictorOpsConfig"
+            "$ref": "#/definitions/SplunkOnCallConfig"
           }
         },
         "webex_configs": {
@@ -5785,10 +5785,10 @@
             "$ref": "#/definitions/TelegramConfig"
           }
         },
-        "victorops_configs": {
+        "splunkoncall_configs": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/VictorOpsConfig"
+            "$ref": "#/definitions/SplunkOnCallConfig"
           }
         },
         "webex_configs": {
@@ -6794,9 +6794,9 @@
         "$ref": "#/definitions/Sample"
       }
     },
-    "VictorOpsConfig": {
+    "SplunkOnCallConfig": {
       "type": "object",
-      "title": "VictorOpsConfig configures notifications via VictorOps.",
+      "title": "SplunkOnCallConfig configures notifications via Splunk OnCall.",
       "properties": {
         "api_key": {
           "$ref": "#/definitions/Secret"

@@ -1125,7 +1125,7 @@ func getExpAlertmanagerConfigFromAPI(channelAddr string) string {
 var nonEmailAlertNames = []string{
 	"AlertmanagerAlert",
 	"OpsGenieAlert",
-	"VictorOpsAlert",
+	"SplunkOnCallAlert",
 	"ThreemaAlert",
 	"LineAlert",
 	"DiscordAlert",
@@ -1575,7 +1575,7 @@ const alertmanagerConfig = `
             "alertname"
           ],
           "matchers": [
-            "alertname=\"VictorOpsAlert\""
+            "alertname=\"SplunkOnCallAlert\""
           ]
         },
         {
@@ -2092,7 +2092,7 @@ var expAlertmanagerConfigFromAPI = `
             "alertname"
           ],
           "matchers": [
-            "alertname=\"VictorOpsAlert\""
+            "alertname=\"SplunkOnCallAlert\""
           ]
         },
         {
@@ -2802,11 +2802,11 @@ var expNonEmailNotifications = map[string][]string{
 	"victorops_recv/victorops_test": {
 		`{
 		  "alert_url": "http://localhost:3000/alerting/list",
-		  "entity_display_name": "[FIRING:1] VictorOpsAlert (default)",
+		  "entity_display_name": "[FIRING:1] SplunkOnCallAlert (default)",
 		  "entity_id": "633ae988fa7074bcb51f3d1c5fef2ba1c5c4ccb45b3ecbf681f7d507b078b1ae",
 		  "message_type": "CRITICAL",
 		  "monitoring_tool": "Grafana v",
-		  "state_message": "**Firing**\n\nValue: A=1\nLabels:\n - alertname = VictorOpsAlert\n - grafana_folder = default\nAnnotations:\nSource: http://localhost:3000/alerting/grafana/UID_VictorOpsAlert/view?orgId=1\nSilence: http://localhost:3000/alerting/silence/new?alertmanager=grafana&matcher=alertname%%3DVictorOpsAlert&matcher=grafana_folder%%3Ddefault&orgId=1\n",
+		  "state_message": "**Firing**\n\nValue: A=1\nLabels:\n - alertname = VictorOpsAlert\n - grafana_folder = default\nAnnotations:\nSource: http://localhost:3000/alerting/grafana/UID_SplunkOnCallAlert/view?orgId=1\nSilence: http://localhost:3000/alerting/silence/new?alertmanager=grafana&matcher=alertname%%3DVictorOpsAlert&matcher=grafana_folder%%3Ddefault&orgId=1\n",
 		  "timestamp": %s
 		}`,
 	},

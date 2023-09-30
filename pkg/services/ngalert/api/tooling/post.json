@@ -754,7 +754,7 @@
       " teams",
       " telegram",
       " threema",
-      " victorops",
+      " splunkoncall",
       " webhook",
       " wecom"
      ],
@@ -872,8 +872,8 @@
     "slack_configs": {
      "$ref": "#/definitions/SlackConfig"
     },
-    "victorops_configs": {
-     "$ref": "#/definitions/VictorOpsConfig"
+    "splunkoncall_configs": {
+     "$ref": "#/definitions/SplunkOnCallConfig"
     },
     "webhook_configs": {
      "$ref": "#/definitions/WebhookConfig"
@@ -1269,9 +1269,9 @@
      },
      "type": "array"
     },
-    "victorops_configs": {
+    "splunkoncall_configs": {
      "items": {
-      "$ref": "#/definitions/VictorOpsConfig"
+      "$ref": "#/definitions/SplunkOnCallConfig"
      },
      "type": "array"
     },
@@ -2335,9 +2335,9 @@
      },
      "type": "array"
     },
-    "victorops_configs": {
+    "splunkoncall_configs": {
      "items": {
-      "$ref": "#/definitions/VictorOpsConfig"
+      "$ref": "#/definitions/SplunkOnCallConfig"
      },
      "type": "array"
     },
@@ -2915,9 +2915,9 @@
      },
      "type": "array"
     },
-    "victorops_configs": {
+    "splunkoncall_configs": {
      "items": {
-      "$ref": "#/definitions/VictorOpsConfig"
+      "$ref": "#/definitions/SplunkOnCallConfig"
      },
      "type": "array"
     },
@@ -3926,7 +3926,7 @@
    },
    "type": "array"
   },
-  "VictorOpsConfig": {
+  "SplunkOnCallConfig": {
    "properties": {
     "api_key": {
      "$ref": "#/definitions/Secret"
@@ -3965,7 +3965,7 @@
      "type": "string"
     }
    },
-   "title": "VictorOpsConfig configures notifications via VictorOps.",
+   "title": "SplunkOnCallConfig configures notifications via Splunk OnCall.",
    "type": "object"
   },
   "VisType": {
