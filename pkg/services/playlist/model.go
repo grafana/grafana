@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/grafana/grafana/pkg/kinds/playlist"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
+
+	"github.com/grafana/grafana/pkg/kinds/playlist"
 )
 
 // Typed errors
@@ -97,6 +99,7 @@ func ConvertToK8sResource(v *Playlist, items []PlaylistItemDTO) *playlist.Playli
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:              v.UID,
+			UID:               types.UID(v.UID),
 			ResourceVersion:   fmt.Sprintf("%d", v.UpdatedAt.UnixMilli()),
 			CreationTimestamp: metav1.NewTime(v.CreatedAt),
 			Namespace:         fmt.Sprintf("org-%d", v.OrgId),
