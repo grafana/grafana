@@ -587,7 +587,7 @@ steps:
     token:
       from_secret: drone_token
 - commands:
-  - /src/grafana-build package --distro=linux/amd64,linux/arm64,linux/arm/v7 --go-version=1.20.8
+  - /src/grafana-build package --distro=linux/amd64,linux/arm64 --go-version=1.20.8
     --yarn-cache=$$YARN_CACHE_FOLDER --build-id=$$DRONE_BUILD_NUMBER --grafana-dir=$$PWD
     > packages.txt
   depends_on:
@@ -1744,7 +1744,7 @@ steps:
   image: node:18.12.0-alpine
   name: build-frontend-packages
 - commands:
-  - /src/grafana-build package --distro=linux/amd64,linux/arm64,linux/arm/v7 --go-version=1.20.8
+  - /src/grafana-build package --distro=linux/amd64,linux/arm64 --go-version=1.20.8
     --yarn-cache=$$YARN_CACHE_FOLDER --build-id=$$DRONE_BUILD_NUMBER --grafana-dir=$$PWD
     > packages.txt
   depends_on:
@@ -4212,6 +4212,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 84da089797850e74589428fafc6485435b968df9183a7ee7203ae2cd03f420c1
+hmac: c14ca5e053041018df6b66df642accd7e7eee7e2b43ba8c8f7dee6c446a41bb0
 
 ...
