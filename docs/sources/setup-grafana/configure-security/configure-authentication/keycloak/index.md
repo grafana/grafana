@@ -67,6 +67,7 @@ It is useful as a fallback or if the user has more than 150 group memberships.
 - Direct Access Grants Enabled: `ON`
 - Root URL: `<grafana_root_url>`
 - Valid Redirect URIs: `<grafana_root_url>/login/generic_oauth`
+- Valid post logout redirect URIs: `<grafana_root_url>/login/`
 - Web Origins: `<grafana_root_url>`
 - Admin URL: `<grafana_root_url>`
 - Base URL: `<grafana_root_url>`
@@ -137,14 +138,14 @@ To enable Single Logout, you need to add the following option to the configurati
 
 ```ini
 [auth]
-signout_redirect_url = https://<PROVIDER_DOMAIN>/auth/realms/<REALM_NAME>/protocol/openid-connect/logout?post_logout_redirect_uri=https%3A%2F%2<GRAFANA_DOMAIN>%2Flogin
+signout_redirect_url = https://<PROVIDER_DOMAIN>/realms/<REALM_NAME>/protocol/openid-connect/logout?post_logout_redirect_uri=https%3A%2F%2<GRAFANA_DOMAIN>%2Flogin&client_id=<CLIENT_ID>
 ```
 
 As an example, `<PROVIDER_DOMAIN>` can be `keycloak-demo.grafana.org`,
 `<REALM_NAME>` can be `grafana` and `<GRAFANA_DOMAIN>` can be `play.grafana.org`.
 
-> **Note**: Grafana does not support `id_token_hints`. From keycloak 18, it is necessary to disable `id_token_hints` enforcement in keycloak for
-> single logout to work. [Documentation reference](https://www.keycloak.org/2022/04/keycloak-1800-released#_openid_connect_logout).
+> **Note**: Grafana does not support `id_token_hints`, but you can use `client_id`. From keycloak 18, it is necessary to disable `id_token_hints` enforcement in keycloak for
+> single logout to work. [Documentation reference](https://www.keycloak.org/docs/22.0.3/server_admin/#_oidc-logout).
 
 ## Allow assigning Grafana Admin
 
