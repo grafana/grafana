@@ -8,20 +8,36 @@ import { QuickFeedback } from './utils';
 
 interface QuickActionsProps {
   onSuggestionClick: (suggestion: QuickFeedback) => void;
+  isGenerating: boolean;
 }
 
-export const QuickActions = ({ onSuggestionClick }: QuickActionsProps) => {
+export const QuickActions = ({ onSuggestionClick, isGenerating }: QuickActionsProps) => {
   const styles = useStyles2(getStyles);
 
   return (
     <div className={styles.quickSuggestionsWrapper}>
-      <Button onClick={() => onSuggestionClick(QuickFeedback.shorter)} size="sm" variant="secondary">
+      <Button
+        onClick={() => onSuggestionClick(QuickFeedback.shorter)}
+        size="sm"
+        variant="secondary"
+        disabled={isGenerating}
+      >
         {QuickFeedback.shorter}
       </Button>
-      <Button onClick={() => onSuggestionClick(QuickFeedback.moreDescriptive)} size="sm" variant="secondary">
+      <Button
+        onClick={() => onSuggestionClick(QuickFeedback.moreDescriptive)}
+        size="sm"
+        variant="secondary"
+        disabled={isGenerating}
+      >
         {QuickFeedback.moreDescriptive}
       </Button>
-      <Button onClick={() => onSuggestionClick(QuickFeedback.regenerate)} size="sm" variant="secondary">
+      <Button
+        onClick={() => onSuggestionClick(QuickFeedback.regenerate)}
+        size="sm"
+        variant="secondary"
+        disabled={isGenerating}
+      >
         {QuickFeedback.regenerate}
       </Button>
     </div>

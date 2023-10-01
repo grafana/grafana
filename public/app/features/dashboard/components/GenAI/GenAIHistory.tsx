@@ -77,6 +77,7 @@ export const GenAIHistory = ({ history, messages, onApplySuggestion, updateHisto
       <div className={styles.actions}>
         <QuickActions
           onSuggestionClick={(suggestion: QuickFeedback) => onGenerateWithFeedback(suggestion, currentIndex)}
+          isGenerating={isGenerating}
         />
         <GenerationHistoryCarousel
           history={history}
