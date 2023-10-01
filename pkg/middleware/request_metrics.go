@@ -66,9 +66,10 @@ func RequestMetrics(features featuremgmt.FeatureToggles, cfg *setting.Cfg, promR
 			Help:      "Native Histogram of latency for HTTP requests.",
 			// the recommended default value from the prom_client
 			// https://github.com/prometheus/client_golang/blob/main/prometheus/histogram.go#L411
-			// Setting this settings means the client will expose the histograms as an native histogram instead of normal
+			// Giving this variable an value means the client will expose the histograms as an
+			// native histogram instead of normal a normal histogram.
 			NativeHistogramBucketFactor: 1.1,
-			// The default value in OTel. It proberbly works for us as well.
+			// The default value in OTel. It proberbly gooe enough for us as well.
 			NativeHistogramMaxBucketNumber: 160,
 		},
 		histogramLabels,
@@ -150,12 +151,12 @@ func RequestMetrics(features featuremgmt.FeatureToggles, cfg *setting.Cfg, promR
 				}
 
 				return
-			}
+			} else {
+				histogram.Observe(elapsedTime)
 
-			histogram.Observe(elapsedTime)
-
-			if features.IsEnabled(featuremgmt.FlagEnableNativeHTTPHistogram) {
-				nativeHistogram.Observe(elapsedTime)
+				if features.IsEnabled(featuremgmt.FlagEnableNativeHTTPHistogram) {
+					nativeHistogram.Observe(elapsedTime)
+				}
 			}
 
 			switch {
