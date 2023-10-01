@@ -2,7 +2,9 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Pagination, Text, useStyles2 } from '@grafana/ui';
+import { Text, useStyles2 } from '@grafana/ui';
+
+import { MinimalisticPagination } from './MinimalisticPagination';
 
 export interface GenerationHistoryCarouselProps {
   history: string[];
@@ -25,17 +27,13 @@ export const GenerationHistoryCarousel = ({ history, index, reply, onNavigate }:
 
   return (
     <>
-      <div className={styles.wrapper}>
-        <div className={styles.paginationWrapper}>
-          <Pagination
-            currentPage={index}
-            numberOfPages={historySize}
-            onNavigate={onNavigate}
-            showSmallVersion={true}
-            hideWhenSinglePage={true}
-          />
-        </div>
-      </div>
+      <MinimalisticPagination
+        currentPage={index}
+        numberOfPages={historySize}
+        onNavigate={onNavigate}
+        hideWhenSinglePage={true}
+        className={styles.paginationWrapper}
+      />
       <div className={styles.contentWrapper}>
         <Text element="p" color="secondary">
           {getHistoryText()}
@@ -46,12 +44,9 @@ export const GenerationHistoryCarousel = ({ history, index, reply, onNavigate }:
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  wrapper: css({
-    display: 'flex',
-    flexDirection: 'column',
-  }),
   paginationWrapper: css({
     display: 'flex',
+    flexDirection: 'row',
     justifyContent: 'flex-end',
     marginTop: 15,
   }),

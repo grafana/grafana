@@ -37,6 +37,7 @@ export const GenAIHistory = ({ history, messages, onApplySuggestion, updateHisto
   useEffect(() => {
     if (response !== '' && !isGenerating) {
       setResponse('');
+      setCurrentIndex(1);
     }
   }, [response, isGenerating]);
 
