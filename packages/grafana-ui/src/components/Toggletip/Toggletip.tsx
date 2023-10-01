@@ -30,6 +30,8 @@ export interface ToggletipProps {
   children: JSX.Element;
   /** Determine whether the toggletip should fit its content or not */
   fitContent?: boolean;
+  /** Determine whether the toggletip should close */
+  shouldClose?: boolean;
 }
 
 export const Toggletip = React.memo(
@@ -43,11 +45,18 @@ export const Toggletip = React.memo(
     onClose,
     footer,
     fitContent = false,
+    shouldClose = false,
   }: ToggletipProps) => {
     const styles = useStyles2(getStyles);
     const style = styles[theme];
     const contentRef = useRef(null);
     const [controlledVisible, setControlledVisible] = React.useState(false);
+
+    useEffect(() => {
+      if (shouldClose) {
+        closeToggletip();
+      }
+    });
 
     const { getArrowProps, getTooltipProps, setTooltipRef, setTriggerRef, visible, update, tooltipRef, triggerRef } =
       usePopperTooltip(
@@ -70,11 +79,11 @@ export const Toggletip = React.memo(
       );
 
     const closeToggletip = useCallback(
-      (event: KeyboardEvent | React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
+      (event?: KeyboardEvent | React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
         setControlledVisible(false);
         onClose?.();
 
-        if (event.target instanceof Node && tooltipRef?.contains(event.target)) {
+        if (event?.target instanceof Node && tooltipRef?.contains(event.target)) {
           triggerRef?.focus();
         }
       },
