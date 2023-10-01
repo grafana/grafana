@@ -12,9 +12,9 @@ import { Message, OPEN_AI_MODEL, QuickFeedback } from './utils';
 
 export interface GenAIHistoryProps {
   history: string[];
+  messages: Message[];
   onApplySuggestion: (suggestion: string) => void;
   updateHistory: (historyEntry: string) => void;
-  messages: Message[];
 }
 
 const temperature = 0.5;
@@ -27,6 +27,7 @@ export const GenAIHistory = ({ history, messages, onApplySuggestion, updateHisto
 
   const { setMessages, reply, isGenerating } = useOpenAIStream(OPEN_AI_MODEL, temperature);
 
+  // @TODO Duplicate, find a better way to do this
   useEffect(() => {
     if (reply !== '') {
       setResponse(reply.replace(/^"|"$/g, ''));
@@ -41,7 +42,7 @@ export const GenAIHistory = ({ history, messages, onApplySuggestion, updateHisto
 
   const onSubmit = (event: React.KeyboardEvent<HTMLInputElement>) => {
     if (event.key === 'Enter') {
-      // @TODO: Implement
+      onGenerateWithFeedback(event.currentTarget.value as QuickFeedback);
     }
   };
 
@@ -53,9 +54,9 @@ export const GenAIHistory = ({ history, messages, onApplySuggestion, updateHisto
     setCurrentIndex(index);
   };
 
-  const onGenerateWithFeedback = (suggestion: QuickFeedback, index: number) => {
+  const onGenerateWithFeedback = (suggestion: QuickFeedback) => {
     if (suggestion !== QuickFeedback.regenerate) {
-      messages = [...messages, ...getFeedbackMessage(history[index], suggestion)];
+      messages = [...messages, ...getFeedbackMessage(history[currentIndex], suggestion)];
     }
 
     setMessages(messages);
@@ -75,15 +76,12 @@ export const GenAIHistory = ({ history, messages, onApplySuggestion, updateHisto
         onKeyDown={onSubmit}
       />
       <div className={styles.actions}>
-        <QuickActions
-          onSuggestionClick={(suggestion: QuickFeedback) => onGenerateWithFeedback(suggestion, currentIndex)}
-          isGenerating={isGenerating}
-        />
+        <QuickActions onSuggestionClick={onGenerateWithFeedback} isGenerating={isGenerating} />
         <GenerationHistoryCarousel
           history={history}
           index={currentIndex}
           onNavigate={onNavigate}
-          reply={reply.replace(/^"|"$/g, '')}
+          reply={response.replace(/^"|"$/g, '')}
         />
       </div>
       <div className={styles.footerActions}>

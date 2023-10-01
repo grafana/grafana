@@ -133,9 +133,9 @@ export const GenAIButton = ({
           content={
             <GenAIHistory
               history={history}
-              updateHistory={updateHistory}
-              onApplySuggestion={onApplySuggestion}
               messages={messages}
+              onApplySuggestion={onApplySuggestion}
+              updateHistory={updateHistory}
             />
           }
           placement="bottom-start"

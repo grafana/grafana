@@ -7,11 +7,11 @@ import { Pagination, Text, useStyles2 } from '@grafana/ui';
 export interface GenerationHistoryCarouselProps {
   history: string[];
   index: number;
-  onNavigate: (index: number) => void;
   reply: string;
+  onNavigate: (index: number) => void;
 }
 
-export const GenerationHistoryCarousel = ({ history, index, onNavigate, reply }: GenerationHistoryCarouselProps) => {
+export const GenerationHistoryCarousel = ({ history, index, reply, onNavigate }: GenerationHistoryCarouselProps) => {
   const styles = useStyles2(getStyles);
   const historySize = history.length;
 
