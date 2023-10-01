@@ -39,6 +39,7 @@ export const GenAIButton = ({
 
   const [history, setHistory] = useState<string[]>([]);
   const [response, setResponse] = useState<string>('');
+  const [shouldCloseHistory, setShouldCloseHistory] = useState(false);
 
   // TODO: Implement error handling (use error object from hook)
   const { setMessages, reply, isGenerating, value } = useOpenAIStream(OPEN_AI_MODEL, temperature);
@@ -76,6 +77,15 @@ export const GenAIButton = ({
   if (isGenerating && history.length === 0) {
     onGenerate(reply.replace(/^"|"$/g, ''));
   }
+
+  const onApplySuggestion = (suggestion: string) => {
+    onGenerate(suggestion);
+    setShouldCloseHistory(true);
+
+    setTimeout(() => {
+      setShouldCloseHistory(false);
+    });
+  };
 
   const getIcon = () => {
     if (isGenerating) {
@@ -115,8 +125,15 @@ export const GenAIButton = ({
       return (
         <Toggletip
           title={title}
-          content={<GenAIHistory history={history} onGenerateWithFeedback={onGenerateWithFeedback} />}
+          content={
+            <GenAIHistory
+              history={history}
+              onGenerateWithFeedback={onGenerateWithFeedback}
+              onApplySuggestion={onApplySuggestion}
+            />
+          }
           placement="bottom-start"
+          shouldClose={shouldCloseHistory}
         >
           {button}
         </Toggletip>

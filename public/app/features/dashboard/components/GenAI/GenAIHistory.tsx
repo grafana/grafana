@@ -11,9 +11,10 @@ import { QuickFeedback } from './utils';
 export interface GenAIHistoryProps {
   history: string[];
   onGenerateWithFeedback: (suggestion: QuickFeedback, index: number) => void;
+  onApplySuggestion: (suggestion: string) => void;
 }
 
-export const GenAIHistory = ({ history, onGenerateWithFeedback }: GenAIHistoryProps) => {
+export const GenAIHistory = ({ history, onGenerateWithFeedback, onApplySuggestion }: GenAIHistoryProps) => {
   const styles = useStyles2(getStyles);
 
   const [currentIndex, setCurrentIndex] = useState(1);
@@ -24,12 +25,12 @@ export const GenAIHistory = ({ history, onGenerateWithFeedback }: GenAIHistoryPr
     }
   };
 
-  const onNavigate = (index: number) => {
-    setCurrentIndex(index);
+  const onApply = () => {
+    onApplySuggestion(history[currentIndex - 1]);
   };
 
-  const onApply = () => {
-    // @TODO: Implement
+  const onNavigate = (index: number) => {
+    setCurrentIndex(index);
   };
 
   return (
