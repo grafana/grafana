@@ -1,13 +1,12 @@
 import { css } from '@emotion/css';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Button, Spinner, useStyles2, Link, Tooltip, Toggletip, Text } from '@grafana/ui';
 
 import { GenAIHistory } from './GenAIHistory';
-import { getFeedbackMessage } from './GenAIPanelTitleButton';
 import { useOpenAIStream } from './hooks';
-import { Message, OPEN_AI_MODEL, QuickFeedback } from './utils';
+import { Message, OPEN_AI_MODEL } from './utils';
 
 export interface GenAIButtonProps {
   // Button label text
@@ -44,21 +43,21 @@ export const GenAIButton = ({
   // TODO: Implement error handling (use error object from hook)
   const { setMessages, reply, isGenerating, value } = useOpenAIStream(OPEN_AI_MODEL, temperature);
 
+  const hasHistory = history.length > 0;
+
   const onClick = (e: React.MouseEvent<HTMLButtonElement>) => {
-    if (history.length === 0) {
+    if (!hasHistory) {
       onClickProp?.(e);
       setMessages(messages);
     }
   };
 
-  const onGenerateWithFeedback = (suggestion: QuickFeedback, index: number) => {
-    if (suggestion !== QuickFeedback.regenerate) {
-      messages = [...messages, ...getFeedbackMessage(history[index], suggestion)];
-      temperature = 0.5;
-    }
-
-    setMessages(messages);
-  };
+  const updateHistory = useCallback(
+    (historyEntry: string) => {
+      setHistory([historyEntry, ...history]);
+    },
+    [history]
+  );
 
   useEffect(() => {
     if (reply !== '') {
@@ -68,13 +67,13 @@ export const GenAIButton = ({
 
   useEffect(() => {
     if (response !== '' && !isGenerating) {
-      setHistory([response.replace(/^"|"$/g, ''), ...history]);
+      updateHistory(response.replace(/^"|"$/g, ''));
       setResponse('');
     }
-  }, [history, isGenerating, reply, response]);
+  }, [history, isGenerating, reply, response, updateHistory]);
 
   // Todo: Consider other options for `"` sanitation
-  if (isGenerating && history.length === 0) {
+  if (isGenerating && !hasHistory) {
     onGenerate(reply.replace(/^"|"$/g, ''));
   }
 
@@ -88,7 +87,7 @@ export const GenAIButton = ({
   };
 
   const getIcon = () => {
-    if (isGenerating) {
+    if (isGenerating && !hasHistory) {
       return undefined;
     }
     if (!value?.enabled) {
@@ -100,26 +99,32 @@ export const GenAIButton = ({
   const getText = () => {
     let buttonText = text;
 
-    if (history.length > 0) {
-      buttonText = 'Improve';
+    if (isGenerating && !hasHistory) {
+      buttonText = loadingText;
     }
 
-    if (isGenerating) {
-      buttonText = loadingText;
+    if (hasHistory) {
+      buttonText = 'Improve';
     }
 
     return buttonText;
   };
 
   const button = (
-    <Button icon={getIcon()} onClick={onClick} fill="text" size="sm" disabled={isGenerating || !value?.enabled}>
+    <Button
+      icon={getIcon()}
+      onClick={onClick}
+      fill="text"
+      size="sm"
+      disabled={(isGenerating && !hasHistory) || !value?.enabled}
+    >
       {getText()}
     </Button>
   );
 
   // @TODO Fix React warning for Tooltip ref
   const renderButton = () => {
-    if (history.length > 0) {
+    if (hasHistory) {
       const title = <Text element="p">{toggleTipTitle}</Text>;
 
       return (
@@ -128,8 +133,9 @@ export const GenAIButton = ({
           content={
             <GenAIHistory
               history={history}
-              onGenerateWithFeedback={onGenerateWithFeedback}
+              updateHistory={updateHistory}
               onApplySuggestion={onApplySuggestion}
+              messages={messages}
             />
           }
           placement="bottom-start"
@@ -145,7 +151,7 @@ export const GenAIButton = ({
 
   return (
     <div className={styles.wrapper}>
-      {isGenerating && <Spinner size={14} />}
+      {isGenerating && !hasHistory && <Spinner size={14} />}
       <Tooltip
         show={value?.enabled ? false : undefined}
         interactive

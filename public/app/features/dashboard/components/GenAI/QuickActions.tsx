@@ -6,11 +6,11 @@ import { Button, useStyles2 } from '@grafana/ui';
 
 import { QuickFeedback } from './utils';
 
-interface QuickFeedbackSuggestionsProps {
+interface QuickActionsProps {
   onSuggestionClick: (suggestion: QuickFeedback) => void;
 }
 
-export const QuickFeedbackSuggestions = ({ onSuggestionClick }: QuickFeedbackSuggestionsProps) => {
+export const QuickActions = ({ onSuggestionClick }: QuickActionsProps) => {
   const styles = useStyles2(getStyles);
 
   return (

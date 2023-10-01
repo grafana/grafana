@@ -8,11 +8,20 @@ export interface GenerationHistoryCarouselProps {
   history: string[];
   index: number;
   onNavigate: (index: number) => void;
+  reply: string;
 }
 
-export const GenerationHistoryCarousel = ({ history, index, onNavigate }: GenerationHistoryCarouselProps) => {
+export const GenerationHistoryCarousel = ({ history, index, onNavigate, reply }: GenerationHistoryCarouselProps) => {
   const styles = useStyles2(getStyles);
   const historySize = history.length;
+
+  const getHistoryText = () => {
+    if (reply) {
+      return reply;
+    }
+
+    return history[index - 1];
+  };
 
   return (
     <>
@@ -29,7 +38,7 @@ export const GenerationHistoryCarousel = ({ history, index, onNavigate }: Genera
       </div>
       <div className={styles.contentWrapper}>
         <Text element="p" color="secondary">
-          {history[index - 1]}
+          {getHistoryText()}
         </Text>
       </div>
     </>
