@@ -6376,9 +6376,7 @@
           },
           "queryType": "Azure Resource Graph",
           "refId": "A",
-          "subscriptions": [
-            "$sub"
-          ]
+          "subscriptions": ["$sub"]
         },
         "refresh": 1,
         "regex": "",
@@ -6405,9 +6403,7 @@
           },
           "queryType": "Azure Resource Graph",
           "refId": "A",
-          "subscriptions": [
-            "$sub"
-          ]
+          "subscriptions": ["$sub"]
         },
         "refresh": 2,
         "regex": "",
