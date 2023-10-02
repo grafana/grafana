@@ -13,7 +13,7 @@ import { config } from 'app/core/config';
 
 import { LivePanelOptions } from './types';
 
-type Props = StandardEditorProps<LiveChannelAddress, any, LivePanelOptions>;
+type Props = StandardEditorProps<Partial<LiveChannelAddress>, any, LivePanelOptions>;
 
 const scopes: Array<SelectableValue<LiveChannelScope>> = [
   { label: 'Grafana', value: LiveChannelScope.Grafana, description: 'Core grafana live features' },
@@ -60,23 +60,20 @@ export class LiveChannelEditor extends PureComponent<Props, State> {
   };
 
   onNamespaceChanged = (v: SelectableValue<string>) => {
-    const update: LiveChannelAddress = {
+    this.props.onChange({
       scope: this.props.value?.scope,
       namespace: v.value,
       path: undefined,
-    };
-
-    this.props.onChange(update);
+    });
   };
 
   onPathChanged = (v: SelectableValue<string>) => {
     const { value, onChange } = this.props;
-    const update: LiveChannelAddress = {
+    onChange({
       scope: value.scope,
       namespace: value.namespace,
       path: v.value,
-    };
-    onChange(update);
+    });
   };
 
   render() {

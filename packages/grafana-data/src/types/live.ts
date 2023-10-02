@@ -137,8 +137,8 @@ export type LiveChannelId = string;
  */
 export interface LiveChannelAddress {
   scope: LiveChannelScope;
-  namespace: string | undefined; // depends on the scope
-  path: string | undefined;
+  namespace: string; // depends on the scope
+  path: string;
 
   /**
    * Additional metadata passed to a channel.  The backend will propagate this JSON object to
