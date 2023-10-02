@@ -389,9 +389,10 @@ export const getStyles = (theme: GrafanaTheme2) => {
       padding: '28px',
     }),
     infoContainer: css({
-      border: '1px solid #ccccdc38',
+      border: `${theme.colors.border.strong}`,
+      // border: '1px solid #ccccdc38',
       padding: '16px',
-      backgroundColor: '#22252b',
+      backgroundColor: `${theme.colors.background.secondary}`,
       // eslint-ignore
       // borderRadius: '8px 8px 8px 0',
       borderRadius: `${theme.shape.radius.default}`,
@@ -425,9 +426,9 @@ export const getStyles = (theme: GrafanaTheme2) => {
       color: `${theme.colors.text.secondary}`,
     }),
     loadingMessageContainer: css({
-      border: `1px solid #ccccdc38`,
+      border: `${theme.colors.border.strong}`,
       padding: `16px`,
-      backgroundColor: `#22252b`,
+      backgroundColor: `${theme.colors.background.secondary}`,
       marginBottom: `20px`,
       borderRadius: `8px`,
       color: `${theme.colors.text.secondary}`,
