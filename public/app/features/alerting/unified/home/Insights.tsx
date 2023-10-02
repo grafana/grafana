@@ -15,6 +15,7 @@ import {
 import { getGrafanaInstancesByStateScene } from '../insights/grafana/AlertsByStateScene';
 import { getGrafanaEvalSuccessVsFailuresScene } from '../insights/grafana/EvalSuccessVsFailuresScene';
 import { getFiringGrafanaAlertsScene } from '../insights/grafana/Firing';
+import { getInstanceStatByStatusScene } from '../insights/grafana/InstanceStatusScene';
 import { getGrafanaMissedIterationsScene } from '../insights/grafana/MissedIterationsScene';
 import { getMostFiredInstancesScene } from '../insights/grafana/MostFiredInstancesTable';
 import { getPausedGrafanaAlertsScene } from '../insights/grafana/Paused';
@@ -104,7 +105,7 @@ function getGrafanaManagedScenes() {
         new SceneFlexItem({
           body: new SceneReactObject({
             component: SectionSubheader,
-            props: { children: <div>Grafana</div> },
+            props: { children: <div>Grafana-managed rules</div> },
           }),
         }),
         new SceneFlexLayout({
@@ -143,6 +144,14 @@ function getGrafanaManagedScenes() {
             }),
             new SceneFlexLayout({
               children: [getGrafanaInstancesByStateScene(THIS_WEEK_TIME_RANGE, cloudUsageDs, 'Alerts by state')],
+            }),
+            new SceneFlexLayout({
+              children: [
+                getInstanceStatByStatusScene(THIS_WEEK_TIME_RANGE, cloudUsageDs, 'Alerting instances', 'alerting'),
+                getInstanceStatByStatusScene(THIS_WEEK_TIME_RANGE, cloudUsageDs, 'Pending instances', 'pending'),
+                getInstanceStatByStatusScene(THIS_WEEK_TIME_RANGE, cloudUsageDs, 'Nodata instances', 'nodata'),
+                getInstanceStatByStatusScene(THIS_WEEK_TIME_RANGE, cloudUsageDs, 'Error instances', 'error'),
+              ],
             }),
           ],
         }),
