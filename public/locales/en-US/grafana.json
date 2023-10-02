@@ -262,9 +262,9 @@
   },
   "dashboard-settings": {
     "general-settings": {
-      "description": "",
-      "tags-input": "",
-      "title": ""
+      "description": "Description",
+      "tags-input": "<0></0>",
+      "title": "Title"
     },
     "json-editor": {
       "save-button": "Save changes",
