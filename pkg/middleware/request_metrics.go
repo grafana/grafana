@@ -149,8 +149,6 @@ func RequestMetrics(features featuremgmt.FeatureToggles, cfg *setting.Cfg, promR
 						elapsedTime, prometheus.Labels{"traceID": traceID},
 					)
 				}
-
-				return
 			} else {
 				histogram.Observe(elapsedTime)
 
