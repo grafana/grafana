@@ -45,8 +45,8 @@ def swagger_gen_step(ver_mode):
 
     committish = "${DRONE_SOURCE_BRANCH}"
     return {
-        "name": "swagger-gen",
-        "image": images["go"],
+          "name": "swagger-gen",
+          "image": images["go"],
         "environment": {
             "GITHUB_TOKEN": from_secret("github_token"),
         },
@@ -57,14 +57,14 @@ def swagger_gen_step(ver_mode):
             'if [ -z "$(git diff --name-only --cached)" ]; then echo "Everything seems up to date!"; else git commit -m "Update OpenAPI and Swagger" --author="Grot (@grafanabot) <43478413+grafanabot@users.noreply.github.com>" && git push {} {}; fi'.format("https://$${GITHUB_TOKEN}@github.com/grafana/grafana.git", committish),
         ],
         "depends_on": [
-            "clone-pr-enterprise-branch",
+             "clone-enterprise",
         ],
     }
 
-def swagger_gen(trigger, ver_mode, source = "${DRONE_SOURCE_BRANCH}"):
+def swagger_gen(trigger, ver_mode, source = "${DRONE_COMMIT}"):
     test_steps = [
         clone_pr_branch(ver_mode = ver_mode),
-        clone_enterprise_step_pr(source),
+        clone_enterprise_step_pr(source = source),
         swagger_gen_step(ver_mode = ver_mode),
     ]
 
