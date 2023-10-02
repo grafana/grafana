@@ -21,7 +21,7 @@ func Test_ProvideService(t *testing.T) {
 			},
 		}
 
-		_ = ProvideService(setting.NewCfg(), nil, nil, features, authnService)
+		_ = ProvideService(setting.NewCfg(), nil, nil, features, authnService, nil)
 		assert.True(t, hookRegistered)
 	})
 
@@ -35,7 +35,7 @@ func Test_ProvideService(t *testing.T) {
 			},
 		}
 
-		_ = ProvideService(setting.NewCfg(), nil, nil, features, authnService)
+		_ = ProvideService(setting.NewCfg(), nil, nil, features, authnService, nil)
 		assert.False(t, hookRegistered)
 	})
 }
