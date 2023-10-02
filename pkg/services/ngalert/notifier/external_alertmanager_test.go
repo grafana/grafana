@@ -30,7 +30,7 @@ func TestNewExternalAlertmanager(t *testing.T) {
 			password:      "test",
 			defaultConfig: validConfig,
 			orgID:         1,
-			expErr:        "empty URL",
+			expErr:        "empty URL for tenant 1234",
 		},
 		{
 			name:          "empty default config",
@@ -94,7 +94,7 @@ func TestSilences(t *testing.T) {
 
 	// Using a wrong password should cause an error.
 	cfg := externalAlertmanagerConfig{
-		URL:               fakeAm.Server.URL,
+		URL:               fakeAm.Server.URL + "/alertmanager",
 		TenantID:          tenantID,
 		BasicAuthPassword: "wrongpassword",
 		DefaultConfig:     validConfig,

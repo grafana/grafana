@@ -2,7 +2,7 @@ package notifier
 
 import (
 	"context"
-	"errors"
+	"fmt"
 	"net/http"
 	"net/url"
 
@@ -42,15 +42,16 @@ func newExternalAlertmanager(cfg externalAlertmanagerConfig, orgID int64) (*exte
 	}
 
 	if cfg.URL == "" {
-		return nil, errors.New("empty URL")
+		return nil, fmt.Errorf("empty URL for tenant %s", cfg.TenantID)
 	}
 
 	u, err := url.Parse(cfg.URL)
 	if err != nil {
 		return nil, err
 	}
+	u = u.JoinPath(amclient.DefaultBasePath)
 
-	transport := httptransport.NewWithClient(u.Host, "/alertmanager"+amclient.DefaultBasePath, []string{u.Scheme}, &client)
+	transport := httptransport.NewWithClient(u.Host, u.Path, []string{u.Scheme}, &client)
 
 	_, err = Load([]byte(cfg.DefaultConfig))
 	if err != nil {
@@ -101,7 +102,13 @@ func (am *externalAlertmanager) GetSilence(ctx context.Context, silenceID string
 	if err != nil {
 		return apimodels.GettableSilence{}, err
 	}
-	return *res.Payload, nil
+
+	if res != nil {
+		return *res.Payload, nil
+	}
+
+	// In theory, this should never happen as is not possible for GetSilence to return an empty payload but no error.
+	return apimodels.GettableSilence{}, fmt.Errorf("unexpected error while trying to fetch silence: %s", silenceID)
 }
 
 func (am *externalAlertmanager) ListSilences(ctx context.Context, filter []string) (apimodels.GettableSilences, error) {
