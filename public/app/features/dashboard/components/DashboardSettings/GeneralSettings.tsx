@@ -126,7 +126,7 @@ export function GeneralSettingsUnconnected({
             label={
               <HorizontalGroup justify="space-between">
                 <Label htmlFor="title-input">
-                  <Trans i18nKey="dashboard-settings.general-settings.title">Title</Trans>
+                  <Trans i18nKey="dashboard-settings.general-settings.title.label">Title</Trans>
                 </Label>
 
                 {config.featureToggles.dashgpt && (
@@ -146,7 +146,7 @@ export function GeneralSettingsUnconnected({
             label={
               <HorizontalGroup justify="space-between">
                 <Label htmlFor="description-input">
-                  {t('dashboard-settings.general-settings.description', 'Description')}
+                  {t('dashboard-settings.general-settings.description.label', 'Description')}
                 </Label>
 
                 {config.featureToggles.dashgpt && (
@@ -162,13 +162,13 @@ export function GeneralSettingsUnconnected({
               onChange={(e: ChangeEvent<HTMLTextAreaElement>) => onDescriptionChange(e.target.value)}
             />
           </Field>
-          <Field label={t('dashboard-settings.general-settings.tags-label', 'Tags')}>
+          <Field label={t('dashboard-settings.general-settings.tags.label', 'Tags')}>
             <Trans i18nKey="dashboard-settings.general-settings.tags-input">
               <TagsInput id="tags-input" tags={dashboard.tags} onChange={onTagsChange} width={40} />
             </Trans>
           </Field>
 
-          <Field label={t('dashboard-settings.general-settings.folder-label', 'Folder')}>
+          <Field label={t('dashboard-settings.general-settings.folder.label', 'Folder')}>
             <FolderPicker
               value={dashboard.meta.folderUid}
               onChange={onFolderChange}
@@ -182,7 +182,7 @@ export function GeneralSettingsUnconnected({
           </Field>
 
           <Field
-            label={t('dashboard-settings.general-settings.editable-label', 'Editable')}
+            label={t('dashboard-settings.general-settings.editable.label', 'Editable')}
             description={t(
               'dashboard-settings.general-settings.editable-description',
               'Set to read-only to disable all editing. Reload the dashboard for changes to take effect'
