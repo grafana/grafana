@@ -258,6 +258,7 @@
   "dashboard-settings": {
     "general-settings": {
       "description": "",
+      "tags-input": "",
       "title": ""
     },
     "json-editor": {
