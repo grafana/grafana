@@ -974,4 +974,3 @@ Here is the result after adding a Limit transformation with a value of '3':
 This transformation is available in Grafana 9.5+ as an opt-in beta feature. Modify Grafana [configuration file]({{< relref "../../../setup-grafana/configure-grafana/#configuration-file-location" >}}) to enable the `timeSeriesTable` [feature toggle]({{< relref "../../../setup-grafana/configure-grafana/#feature_toggles" >}}) to use it.
 {{% /admonition %}}
 
-Use this transformation to format the output of a time field. Output can be formatted using [Moment.js format strings](https://momentjs.com/docs/#/displaying/. For instance, if you would like to display only the year of a time field the format string `YYYY` can be used to show the calendar year (e.g. 1999, 2012, etc.).
