@@ -38,6 +38,7 @@ func ProvideService(dataSourceCache datasources.CacheService, plugReqValidator v
 		DataSourcesService:     dsService,
 		tracer:                 tracer,
 		secretsService:         secretsService,
+		fetures:                features,
 	}
 }
 
