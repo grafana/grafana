@@ -48,9 +48,9 @@ export const SuggestionsInput = ({
   const [showingSuggestions, setShowingSuggestions] = useState(false);
   const [suggestionsIndex, setSuggestionsIndex] = useState(0);
   const [variableValue, setVariableValue] = useState<string>(value.toString());
-  // const prevVariableValue = usePrevious<Value>(variableValue);
   const [scrollTop, setScrollTop] = useState(0);
   const [inputHeight, setInputHeight] = useState<number>(0);
+  const [startPos, setStartPos] = useState<number>(0);
 
   const theme = useTheme2();
   const styles = getStyles(theme, inputHeight);
@@ -68,10 +68,10 @@ export const SuggestionsInput = ({
       const curPos = input.selectionStart!;
       const x = input.value;
 
-      if (x[curPos - 1] === '$') {
-        input.value = x.slice(0, curPos) + item.value + x.slice(curPos);
+      if (x[startPos - 1] === '$') {
+        input.value = x.slice(0, startPos) + item.value + x.slice(curPos);
       } else {
-        input.value = x.slice(0, curPos) + '$' + item.value + x.slice(curPos);
+        input.value = x.slice(0, startPos) + '$' + item.value + x.slice(curPos);
       }
 
       setVariableValue(input.value);
@@ -80,14 +80,16 @@ export const SuggestionsInput = ({
       setSuggestionsIndex(0);
       onChange(input.value);
     },
-    [onChange]
+    [onChange, startPos]
   );
 
   const onKeyDown = React.useCallback(
     (event: React.KeyboardEvent) => {
       if (!showingSuggestions) {
         if (event.key === '$' || (event.key === ' ' && event.ctrlKey)) {
-          return setShowingSuggestions(true);
+          setStartPos(inputRef.current!.selectionStart || 0);
+          setShowingSuggestions(true);
+          return;
         }
         return;
       }
@@ -95,6 +97,8 @@ export const SuggestionsInput = ({
       switch (event.key) {
         case 'Backspace':
         case 'Escape':
+        case 'ArrowLeft':
+        case 'ArrowRight':
           setShowingSuggestions(false);
           return setSuggestionsIndex(0);
 
