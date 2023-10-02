@@ -10,7 +10,7 @@ import {
   Field,
   DisplayValue,
 } from '@grafana/data';
-import { BarGaugeDisplayMode, BarGaugeValueMode, TableCellDisplayMode } from '@grafana/schema';
+import { BarGaugeDisplayMode, BarGaugeMinMaxMode, BarGaugeValueMode, TableCellDisplayMode } from '@grafana/schema';
 
 import { BarGauge } from '../BarGauge/BarGauge';
 import { DataLinksContextMenu, DataLinksContextMenuApi } from '../DataLinks/DataLinksContextMenu';
@@ -37,7 +37,10 @@ export const BarGaugeCell = (props: TableCellProps) => {
   const displayValue = field.display!(cell.value);
   const cellOptions = getCellOptions(field);
 
-  let config = getFieldConfigWithMinMax(field, false);
+  let config = getFieldConfigWithMinMax(
+    field,
+    cellOptions.type === TableCellDisplayMode.Gauge && cellOptions.minMaxMode === BarGaugeMinMaxMode.Field
+  );
   if (!config.thresholds) {
     config = {
       ...config,

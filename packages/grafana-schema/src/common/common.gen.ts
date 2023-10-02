@@ -636,6 +636,14 @@ export enum BarGaugeValueMode {
 }
 
 /**
+ * The method to calculate the min/max for the bar gauge
+ */
+export enum BarGaugeMinMaxMode {
+  Field = 'field',
+  Row = 'row',
+}
+
+/**
  * TODO docs
  */
 export interface VizTooltipOptions {
@@ -738,6 +746,7 @@ export interface TableImageCellOptions {
  * Gauge cell options
  */
 export interface TableBarGaugeCellOptions {
+  minMaxMode?: BarGaugeMinMaxMode;
   mode?: BarGaugeDisplayMode;
   type: TableCellDisplayMode.Gauge;
   valueDisplayMode?: BarGaugeValueMode;

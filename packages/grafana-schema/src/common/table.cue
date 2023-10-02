@@ -52,6 +52,7 @@ TableImageCellOptions: {
 TableBarGaugeCellOptions: {
 	type: TableCellDisplayMode & "gauge"
 	mode?: BarGaugeDisplayMode
+	minMaxMode?: BarGaugeMinMaxMode
 	valueDisplayMode?: BarGaugeValueMode
 } @cuetsy(kind="interface")
 

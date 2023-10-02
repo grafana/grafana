@@ -107,6 +107,7 @@ Gauge cell options
 | Property           | Type   | Required | Default | Description                                                                                                                                   |
 |--------------------|--------|----------|---------|-----------------------------------------------------------------------------------------------------------------------------------------------|
 | `type`             | string | **Yes**  |         |                                                                                                                                               |
+| `minMaxMode`       | string | No       |         | The method to calculate the min/max for the bar gauge<br/>Possible values are: `field`, `row`.                                                |
 | `mode`             | string | No       |         | Enum expressing the possible display modes<br/>for the bar gauge component of Grafana UI<br/>Possible values are: `basic`, `lcd`, `gradient`. |
 | `valueDisplayMode` | string | No       |         | Allows for the table cell gauge display type to set the gauge mode.<br/>Possible values are: `color`, `text`, `hidden`.                       |
 

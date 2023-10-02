@@ -2,7 +2,7 @@ import React from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
-import { BarGaugeDisplayMode, BarGaugeValueMode, TableBarGaugeCellOptions } from '@grafana/schema';
+import { BarGaugeDisplayMode, BarGaugeMinMaxMode, BarGaugeValueMode, TableBarGaugeCellOptions } from '@grafana/schema';
 import { Field, RadioButtonGroup } from '@grafana/ui';
 
 import { TableCellEditorProps } from '../TableCellOptionEditor';
@@ -18,6 +18,11 @@ export function BarGaugeCellOptionsEditor({ cellOptions, onChange }: Props) {
 
   const onValueModeChange = (v: BarGaugeValueMode) => {
     cellOptions.valueDisplayMode = v;
+    onChange(cellOptions);
+  };
+
+  const onMinMaxModeChange = (v: BarGaugeMinMaxMode) => {
+    cellOptions.minMaxMode = v;
     onChange(cellOptions);
   };
 
@@ -37,6 +42,13 @@ export function BarGaugeCellOptionsEditor({ cellOptions, onChange }: Props) {
           options={valueModes}
         />
       </Field>
+      <Field label="Min/max">
+        <RadioButtonGroup
+          value={cellOptions?.minMaxMode ?? BarGaugeMinMaxMode.Field}
+          onChange={onMinMaxModeChange}
+          options={minMaxModes}
+        />
+      </Field>
     </Stack>
   );
 }
@@ -51,4 +63,9 @@ const valueModes: SelectableValue[] = [
   { value: BarGaugeValueMode.Color, label: 'Value color' },
   { value: BarGaugeValueMode.Text, label: 'Text color' },
   { value: BarGaugeValueMode.Hidden, label: 'Hidden' },
+];
+
+const minMaxModes: SelectableValue[] = [
+  { value: BarGaugeMinMaxMode.Field, label: 'By field' },
+  { value: BarGaugeMinMaxMode.Row, label: 'By row' },
 ];

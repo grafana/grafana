@@ -246,6 +246,9 @@ BarGaugeDisplayMode: "basic" | "lcd" | "gradient" @cuetsy(kind="enum")
 // Allows for the table cell gauge display type to set the gauge mode.
 BarGaugeValueMode: "color" | "text" | "hidden" @cuetsy(kind="enum")
 
+// The method to calculate the min/max for the bar gauge
+BarGaugeMinMaxMode: "field" | "row" @cuetsy(kind="enum")
+
 // TODO docs
 VizTooltipOptions: {
 	mode: TooltipDisplayMode
