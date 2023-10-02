@@ -13,9 +13,8 @@ import (
 
 // Typed errors
 var (
-	ErrPlaylistNotFound                = errors.New("Playlist not found")
-	ErrPlaylistFailedGenerateUniqueUid = errors.New("failed to generate unique playlist UID")
-	ErrCommandValidationFailed         = errors.New("command missing required fields")
+	ErrPlaylistNotFound        = errors.New("Playlist not found")
+	ErrCommandValidationFailed = errors.New("command missing required fields")
 )
 
 // Playlist model
@@ -63,6 +62,8 @@ type CreatePlaylistCommand struct {
 	Interval string         `json:"interval"`
 	Items    []PlaylistItem `json:"items"`
 	OrgId    int64          `json:"-"`
+	// Used to create playlists from kubectl when a known name/uid
+	UID string `json:"-"`
 }
 
 type DeletePlaylistCommand struct {

@@ -131,24 +131,19 @@ func (s *legacyStorage) Create(ctx context.Context,
 	if !ok {
 		return nil, fmt.Errorf("expected playlist?")
 	}
-	if p.Name != "" {
-		return nil, fmt.Errorf("playlist only supports generated names right now")
-	}
-	if p.GenerateName == "" {
-		return nil, fmt.Errorf("generate name must be set")
-	}
-
 	spec := p.Spec
 	cmd := &playlistsvc.CreatePlaylistCommand{
 		Name:     spec.Name,
 		Interval: spec.Interval,
 		OrgId:    orgId,
 	}
+	if p.Name != "" {
+		cmd.UID = p.Name
+	}
 	for _, item := range spec.Items {
 		if item.Type == playlist.ItemTypeDashboardById {
 			return nil, fmt.Errorf("unsupported item type: %s", item.Type)
 		}
-
 		cmd.Items = append(cmd.Items, playlistsvc.PlaylistItem{
 			Type:  string(item.Type),
 			Value: item.Value,
@@ -181,7 +176,7 @@ func (s *legacyStorage) Update(ctx context.Context,
 		return old, created, err
 	}
 
-	fmt.Printf("OLD: %+v\n", old)
+	fmt.Printf("Update OLD: %+v\n", old)
 
 	obj, err := objInfo.UpdatedObject(ctx, old)
 	if err != nil {

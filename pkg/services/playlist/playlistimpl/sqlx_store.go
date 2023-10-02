@@ -19,9 +19,8 @@ type sqlxStore struct {
 func (s *sqlxStore) Insert(ctx context.Context, cmd *playlist.CreatePlaylistCommand) (*playlist.Playlist, error) {
 	p := playlist.Playlist{}
 	var err error
-	uid, err := newGenerateAndValidateNewPlaylistUid(ctx, s.sess, cmd.OrgId)
-	if err != nil {
-		return nil, err
+	if cmd.UID == "" {
+		cmd.UID = util.GenerateShortUID()
 	}
 
 	ts := time.Now()
@@ -29,7 +28,7 @@ func (s *sqlxStore) Insert(ctx context.Context, cmd *playlist.CreatePlaylistComm
 		Name:      cmd.Name,
 		Interval:  cmd.Interval,
 		OrgId:     cmd.OrgId,
-		UID:       uid,
+		UID:       cmd.UID,
 		CreatedAt: ts,
 		UpdatedAt: ts,
 	}
@@ -193,20 +192,4 @@ func (s *sqlxStore) GetItems(ctx context.Context, query *playlist.GetPlaylistIte
 
 	err = s.sess.Select(ctx, &playlistItems, "SELECT * FROM playlist_item WHERE playlist_id=?", p.Id)
 	return playlistItems, err
-}
-
-func newGenerateAndValidateNewPlaylistUid(ctx context.Context, sess *session.SessionDB, orgId int64) (string, error) {
-	for i := 0; i < 3; i++ {
-		uid := util.GenerateShortUID()
-		p := playlist.Playlist{OrgId: orgId, UID: uid}
-		err := sess.Get(ctx, &p, "SELECT * FROM playlist WHERE uid=? AND org_id=?", uid, orgId)
-		if err != nil {
-			if errors.Is(err, sql.ErrNoRows) {
-				return uid, nil
-			}
-			return "", err
-		}
-	}
-
-	return "", playlist.ErrPlaylistFailedGenerateUniqueUid
 }
