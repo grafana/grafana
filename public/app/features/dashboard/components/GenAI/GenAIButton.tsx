@@ -92,7 +92,7 @@ export const GenAIButton = ({
     if (isGenerating && !hasHistory) {
       return undefined;
     }
-    if (!value?.enabled) {
+    if (value && !value.enabled) {
       return 'exclamation-circle';
     }
     return 'ai';
@@ -118,7 +118,7 @@ export const GenAIButton = ({
       onClick={onClick}
       fill="text"
       size="sm"
-      disabled={(isGenerating && !hasHistory) || !value?.enabled}
+      disabled={(isGenerating && !hasHistory) || (value && !value.enabled)}
     >
       {getText()}
     </Button>
