@@ -1,9 +1,4 @@
 import React from 'react';
-import { RadioButtonGroup } from 'src/components/Forms/RadioButtonGroup/RadioButtonGroup';
-import { IconButton } from 'src/components/IconButton/IconButton';
-import { Input } from 'src/components/Input/Input';
-import { HorizontalGroup } from 'src/components/Layout/Layout';
-import { graphFieldOptions } from 'src/components/uPlot/config';
 
 import {
   FieldConfigEditorBuilder,
@@ -12,6 +7,12 @@ import {
   identityOverrideProcessor,
 } from '@grafana/data';
 import { GraphFieldConfig, StackingConfig, StackingMode } from '@grafana/schema';
+
+import { RadioButtonGroup } from '../../components/Forms/RadioButtonGroup/RadioButtonGroup';
+import { IconButton } from '../../components/IconButton/IconButton';
+import { Input } from '../../components/Input/Input';
+import { HorizontalGroup } from '../../components/Layout/Layout';
+import { graphFieldOptions } from '../../components/uPlot/config';
 
 export const StackingEditor = ({ value, context, onChange, item }: FieldOverrideEditorProps<StackingConfig, any>) => {
   return (

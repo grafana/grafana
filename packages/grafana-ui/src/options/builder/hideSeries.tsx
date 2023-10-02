@@ -1,11 +1,11 @@
 import { startCase } from 'lodash';
 import React, { useCallback } from 'react';
-import { HorizontalGroup } from 'src/components/Layout/Layout';
 
 import { FieldConfigEditorBuilder, FieldConfigEditorProps } from '@grafana/data';
 import { HideableFieldConfig, HideSeriesConfig } from '@grafana/schema';
 
 import { FilterPill } from '../../components/FilterPill/FilterPill';
+import { HorizontalGroup } from '../../components/Layout/Layout';
 
 const SeriesConfigEditor = ({ value, onChange }: FieldConfigEditorProps<HideSeriesConfig, {}>) => {
   const onChangeToggle = useCallback(
