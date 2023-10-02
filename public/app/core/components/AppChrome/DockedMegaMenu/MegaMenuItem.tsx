@@ -27,7 +27,7 @@ export function MegaMenuItem({ link, activeItem, level = 0, onClose }: Props) {
   const showExpandButton = linkHasChildren(link) || link.emptyMessage;
 
   return (
-    <>
+    <li>
       <div className={styles.collapsibleSectionWrapper}>
         <MegaMenuItemText
           isActive={isActive}
@@ -81,13 +81,14 @@ export function MegaMenuItem({ link, activeItem, level = 0, onClose }: Props) {
           )}
         </ul>
       )}
-    </>
+    </li>
   );
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
   children: css({
     display: 'flex',
+    listStyleType: 'none',
     flexDirection: 'column',
   }),
   collapsibleSectionWrapper: css({

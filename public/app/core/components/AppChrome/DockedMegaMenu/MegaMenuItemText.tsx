@@ -66,7 +66,7 @@ export function MegaMenuItemText({ children, icon, isActive, isChild, onClick, t
       );
   }
 
-  return <li className={styles.listItem}>{element}</li>;
+  return <div className={styles.wrapper}>{element}</div>;
 }
 
 MegaMenuItemText.displayName = 'MegaMenuItemText';
@@ -127,7 +127,7 @@ const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive'], isChild: P
       backgroundImage: theme.colors.gradients.brandVertical,
     },
   }),
-  listItem: css({
+  wrapper: css({
     boxSizing: 'border-box',
     position: 'relative',
     display: 'flex',

@@ -82,6 +82,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: 'grid',
     gridAutoRows: `minmax(${theme.spacing(6)}, auto)`,
     gridTemplateColumns: `minmax(${MENU_WIDTH}, auto)`,
+    listStyleType: 'none',
     minWidth: MENU_WIDTH,
   }),
 });
