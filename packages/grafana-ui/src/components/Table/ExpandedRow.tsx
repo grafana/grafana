@@ -1,57 +1,58 @@
 import { css } from '@emotion/css';
-import React, { CSSProperties, ReactNode } from 'react';
+import React, { CSSProperties } from 'react';
 
-import { DataFrame, GrafanaTheme2 } from '@grafana/data';
+import { DataFrame, Field, GrafanaTheme2 } from '@grafana/data';
 import { TableCellHeight } from '@grafana/schema';
 
 import { useStyles2, useTheme2 } from '../../themes';
 
-import { Props as TableProps } from './types';
+import { Table } from './Table';
+import { TableStyles } from './styles';
 import { EXPANDER_WIDTH } from './utils';
 
 export interface Props {
-  children: (props: TableProps) => ReactNode;
-  frames: DataFrame[][];
-  rowHeight: number;
+  nestedData: Field;
+  tableStyles: TableStyles;
   rowIndex: number;
   width: number;
   cellHeight: TableCellHeight;
 }
 
-export function ExpandedRow(props: Props) {
+export function ExpandedRow({ tableStyles, nestedData, rowIndex, width, cellHeight }: Props) {
+  const frames: DataFrame[][] = nestedData.values;
+  const subTables: React.ReactNode[] = [];
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
-  const { children, frames, rowHeight, rowIndex, width, cellHeight } = props;
-  const frame = frames[rowIndex];
 
-  let top = rowHeight + theme.spacing.gridSize; // initial height for row that expands above sub tables + 1 grid unit spacing
+  let top = tableStyles.rowHeight + theme.spacing.gridSize; // initial height for row that expands above sub tables + 1 grid unit spacing
 
-  return (
-    <div className={styles.subTables}>
-      {frame.map((data, index) => {
-        const noHeader = Boolean(data.meta?.custom?.noHeader);
-        const height = rowHeight * (data.length + (noHeader ? 0 : 1)); // account for the header with + 1
-        const rowStyle: CSSProperties = {
-          height: height,
-          paddingLeft: EXPANDER_WIDTH,
-          position: 'absolute',
-          top,
-        };
+  frames[rowIndex].forEach((nf: DataFrame, nfIndex: number) => {
+    const noHeader = !!nf.meta?.custom?.noHeader;
+    const height = tableStyles.rowHeight * (nf.length + (noHeader ? 0 : 1)); // account for the header with + 1
 
-        return (
-          <div style={rowStyle} key={`subTable_${rowIndex}_${index}`}>
-            {children({
-              data,
-              width: width - EXPANDER_WIDTH,
-              height: rowHeight * (data.length + 1),
-              noHeader,
-              cellHeight,
-            })}
-          </div>
-        );
-      })}
-    </div>
-  );
+    const subTable: CSSProperties = {
+      height: height,
+      paddingLeft: EXPANDER_WIDTH,
+      position: 'absolute',
+      top,
+    };
+
+    top += height + theme.spacing.gridSize;
+
+    subTables.push(
+      <div style={subTable} key={`subTable_${rowIndex}_${nfIndex}`}>
+        <Table
+          data={nf}
+          width={width - EXPANDER_WIDTH}
+          height={tableStyles.rowHeight * (nf.length + 1)}
+          noHeader={noHeader}
+          cellHeight={cellHeight}
+        />
+      </div>
+    );
+  });
+
+  return <div className={styles.subTables}>{subTables}</div>;
 }
 
 const getStyles = (theme: GrafanaTheme2) => {
@@ -69,3 +70,17 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
   };
 };
+
+export function getExpandedRowHeight(nestedData: Field, rowIndex: number, tableStyles: TableStyles) {
+  const frames: DataFrame[][] = nestedData.values;
+
+  const height = frames[rowIndex].reduce((acc: number, frame: DataFrame) => {
+    if (frame.length) {
+      const noHeader = !!frame.meta?.custom?.noHeader;
+      return acc + tableStyles.rowHeight * (frame.length + (noHeader ? 0 : 1)) + 8; // account for the header with + 1
+    }
+    return acc;
+  }, tableStyles.rowHeight); // initial height for row that expands above sub tables
+
+  return height ?? tableStyles.rowHeight;
+}

@@ -12,7 +12,7 @@ import {
 } from 'react-table';
 import { VariableSizeList } from 'react-window';
 
-import { DataFrame, Field, FieldType, ReducerID } from '@grafana/data';
+import { FieldType, ReducerID } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { TableCellHeight } from '@grafana/schema';
 
@@ -20,13 +20,13 @@ import { useTheme2 } from '../../themes';
 import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
 import { Pagination } from '../Pagination/Pagination';
 
-import { ExpandedRow } from './ExpandedRow';
+import { getExpandedRowHeight, ExpandedRow } from './ExpandedRow';
 import { FooterRow } from './FooterRow';
 import { HeaderRow } from './HeaderRow';
 import { TableCell } from './TableCell';
 import { useFixScrollbarContainer, useResetVariableListSizeCache } from './hooks';
 import { getInitialState, useTableStateReducer } from './reducer';
-import { TableStyles, useTableStyles } from './styles';
+import { useTableStyles } from './styles';
 import { FooterItem, GrafanaTableState, Props } from './types';
 import { getColumns, sortCaseInsensitive, sortNumber, getFooterItems, createFooterCalculationValues } from './utils';
 
@@ -228,14 +228,12 @@ export const Table = memo((props: Props) => {
           {/*add the nested data to the DOM first to prevent a 1px border CSS issue on the last cell of the row*/}
           {nestedDataField && state.expanded[row.index] && (
             <ExpandedRow
-              frames={nestedDataField.values}
-              rowHeight={tableStyles.rowHeight}
+              nestedData={nestedDataField}
+              tableStyles={tableStyles}
               rowIndex={row.index}
               width={width}
               cellHeight={cellHeight}
-            >
-              {(tableProps) => <Table {...tableProps} />}
-            </ExpandedRow>
+            />
           )}
           {row.cells.map((cell: Cell, index: number) => (
             <TableCell
@@ -371,17 +369,3 @@ export const Table = memo((props: Props) => {
 });
 
 Table.displayName = 'Table';
-
-function getExpandedRowHeight(nestedData: Field, rowIndex: number, tableStyles: TableStyles) {
-  const frames: DataFrame[][] = nestedData.values;
-
-  const height = frames[rowIndex].reduce((acc: number, frame: DataFrame) => {
-    if (frame.length) {
-      const noHeader = !!frame.meta?.custom?.noHeader;
-      return acc + tableStyles.rowHeight * (frame.length + (noHeader ? 0 : 1)) + 8; // account for the header with + 1
-    }
-    return acc;
-  }, tableStyles.rowHeight); // initial height for row that expands above sub tables
-
-  return height ?? tableStyles.rowHeight;
-}

@@ -7,7 +7,7 @@ import { TooltipPlacement } from '../Tooltip';
 
 import { TableCellInspectModal } from './TableCellInspectModal';
 import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR, TableCellProps } from './types';
-import { getTextAlign } from './utils/textAlign';
+import { getTextAlign } from './utils';
 
 interface CellActionProps extends TableCellProps {
   previewMode: 'text' | 'code';
