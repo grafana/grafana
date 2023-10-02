@@ -55,10 +55,6 @@ interface Props {
   thresholdsConfig?: ThresholdsConfig;
   thresholdsStyle?: GraphThresholdsStyleConfig;
   eventBus: EventBus;
-  /**
-   * Limits the numer of series shown in the graph. Additional series will simply be ignored and not shown.
-   */
-  limit?: number;
 }
 
 export function ExploreGraph({
@@ -79,7 +75,6 @@ export function ExploreGraph({
   thresholdsConfig,
   thresholdsStyle,
   eventBus,
-  limit,
 }: Props) {
   const theme = useTheme2();
 
@@ -126,14 +121,14 @@ export function ExploreGraph({
   const dataWithConfig = useMemo(() => {
     return applyFieldOverrides({
       fieldConfig: styledFieldConfig,
-      data: data.slice(0, limit),
+      data,
       timeZone,
       replaceVariables: (value) => value, // We don't need proper replace here as it is only used in getLinks and we use getFieldLinks
       theme,
       fieldConfigRegistry,
       dataLinkPostProcessor,
     });
-  }, [fieldConfigRegistry, data, timeZone, theme, styledFieldConfig, limit, dataLinkPostProcessor]);
+  }, [fieldConfigRegistry, data, timeZone, theme, styledFieldConfig, dataLinkPostProcessor]);
 
   const annotationsWithConfig = useMemo(() => {
     return applyFieldOverrides({

@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
+import { useToggle } from 'react-use';
 
 import {
   DataFrame,
@@ -60,7 +61,7 @@ export const GraphContainer = ({
   loadingState,
   statusMessage,
 }: Props) => {
-  const [seriesLimit, setSeriesLimit] = useState<number | undefined>(MAX_NUMBER_OF_TIME_SERIES);
+  const [showAllSeries, toggleShowAllSeries] = useToggle(false);
   const [graphStyle, setGraphStyle] = useState(loadGraphStyle);
   const styles = useStyles2(getStyles);
 
@@ -69,16 +70,21 @@ export const GraphContainer = ({
     setGraphStyle(graphStyle);
   }, []);
 
+  const slicedData = useMemo(() => {
+    return showAllSeries ? data : data.slice(0, MAX_NUMBER_OF_TIME_SERIES);
+  }, [data, showAllSeries]);
+
   return (
     <PanelChrome
       title="Graph"
       titleItems={[
-        seriesLimit && seriesLimit < data.length && (
+        !showAllSeries && MAX_NUMBER_OF_TIME_SERIES < data.length && (
           <div key="disclaimer" className={styles.timeSeriesDisclaimer}>
-            <Tooltip content={`Showing only ${seriesLimit} time series`}>
+            <Tooltip content={`Showing only ${MAX_NUMBER_OF_TIME_SERIES} time series`}>
               <Icon className={styles.disclaimerIcon} name="exclamation-triangle" />
             </Tooltip>
-            <Button variant="secondary" size="sm" onClick={() => setSeriesLimit(undefined)}>
+
+            <Button variant="secondary" size="sm" onClick={toggleShowAllSeries}>
               Show all {data.length} series
             </Button>
           </div>
@@ -93,7 +99,7 @@ export const GraphContainer = ({
       {(innerWidth, innerHeight) => (
         <ExploreGraph
           graphStyle={graphStyle}
-          data={data}
+          data={slicedData}
           height={innerHeight}
           width={innerWidth}
           absoluteRange={absoluteRange}
@@ -105,7 +111,6 @@ export const GraphContainer = ({
           thresholdsConfig={thresholdsConfig}
           thresholdsStyle={thresholdsStyle}
           eventBus={eventBus}
-          limit={seriesLimit}
         />
       )}
     </PanelChrome>
