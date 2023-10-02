@@ -1,0 +1,80 @@
+name: Build and sign docker image
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  generate_version_number:
+    name: Generate version number
+    runs-on: ubuntu-latest
+    outputs:
+      image_version: ${{ steps.generate_version_number_step.outputs.image_version }}
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Generate version number
+        id: generate_version_number_step
+        run: |
+          tag_number=$(git describe --abbrev=0 --tags)
+          short_hash=$(git rev-parse --short ${{ github.sha }})
+          image_version="$tag_number-$short_hash-ni"
+          echo "::set-output name=image_version::$(echo $image_version)"
+        # image_version will look like "8.3.6-8a2963c-ni"
+
+  build_docker_image:
+    name: Build Docker Image
+    needs: [generate_version_number]
+    runs-on: ubuntu-latest
+    environment: jfrog-ci
+    steps:
+      - uses: actions/checkout@v2
+      - name: Login to Artifactory
+        uses: docker/login-action@v1
+        with:
+          registry: niartifacts.jfrog.io
+          username: ${{ vars.JFROG_USERNAME }}
+          password: ${{ secrets.JFROG_ACCESS_TOKEN }}
+      - name: Docker build and push
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          push: true
+          tags: |
+            niartifacts.jfrog.io/rnd-docker-ci/ni/systemlink/ni-grafana:latest
+            niartifacts.jfrog.io/rnd-docker-ci/ni/systemlink/ni-grafana:${{ needs.generate_version_number.outputs.image_version }}
+  sign_docker_image:
+    name: Sign Docker Image
+    needs: [generate_version_number, build_docker_image]
+    runs-on: ubuntu-latest
+    environment: jfrog-ci
+    steps:
+      - name: Log into registry
+        uses: redhat-actions/podman-login@v1
+        with:
+          username: ${{ vars.JFROG_USERNAME }}
+          password: ${{ secrets.JFROG_ACCESS_TOKEN }}
+          registry: niartifacts.jfrog.io
+      - name: Create signature staging directory
+        run: mkdir ${{ runner.temp }}/sigstore
+      - name: Create gnupghome directory
+        run: mkdir ${{ runner.temp }}/gpg && chmod 700 ${{ runner.temp }}/gpg
+      - name: Import private key
+        run: echo "${{ secrets.NI_PGP_RELEASE_SECRING }}" | base64 --decode | gpg --import
+        env:
+          GNUPGHOME: ${{ runner.temp }}/gpg
+      - name: Sign image
+        run: podman image sign --sign-by security@ni.com -d ${{ runner.temp }}/sigstore docker://niartifacts.jfrog.io/rnd-docker-ci/ni/systemlink/ni-grafana:${{ needs.generate_version_number.outputs.image_version }}
+        env:
+          GNUPGHOME: ${{ runner.temp }}/gpg
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID_VERIFY_DEV }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY_VERIFY_DEV }}
+          aws-region: us-east-1
+      - name: Sync signatures to S3
+        run: aws s3 sync ${{ runner.temp }}/sigstore s3://signing-web-demo-bucket-1neyh347t53dt
