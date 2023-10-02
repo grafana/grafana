@@ -43,6 +43,33 @@ This topic includes techniques you can use to manage your Grafana dashboards, in
 - [Organizing dashboards](#organize-a-dashboard)
 - [Troubleshooting dashboards](#troubleshoot-dashboards)
 
+## Browse Dashboards
+
+On the Dashboards page, you can browse and manage folders and dashboards, including:
+
+- creating folders and dashboards
+- move dashboards between folders
+- delete multiple dashboards and folders
+- manage folder and dashboard permissions. For more information, see [Dashboard permissions](https://grafana.com/docs/grafana/latest/administration/roles-and-permissions/#dashboard-permissions)
+
+> Note: in Grafana 10.2 the special 'General' folder was removed in favor of showing dashboards at the top level along side folders.
+
+### Dashboard folder page
+
+You can complete the following tasks on a dashboard folder page:
+
+- Move or delete dashboards in a folder
+- Rename a folder (available on the Settings tab)
+- Assign permissions to folders (which are inherited by the dashboards in the folder)
+
+To navigate to the dashboard folder page, hover over the name of the folder and click **Go to folder** in the dashboard search result list or on the Dashboards page.
+
+### Dashboard permissions
+
+You can assign permissions to a folder. Any permissions you assign are inherited by the dashboards in the folder. An Access Control List (ACL) is used where **Organization Role**, **Team**, and a **User** can be assigned permissions.
+
+For more information about dashboard permissions, refer to [Dashboard permissions][].
+
 ## Create a dashboard folder
 
 Folders help you organize and group dashboards, which is useful when you have many dashboards or multiple teams using the same Grafana instance.
@@ -61,32 +88,6 @@ Folders help you organize and group dashboards, which is useful when you have ma
    Do not use the name of a folder that has already been provisioned (such as "General") and avoid special characters (except underscores and hyphens).
 
 When you save a dashboard, you can either select a folder for the dashboard to be saved in or create a new folder.
-
-## Manage dashboards
-
-On the Dashboards page, you can:
-
-- create a folder
-- create a dashboard
-- move dashboards into folders
-- delete multiple dashboards
-- navigate to a folder page where you can assign folder and dashboard permissions
-
-### Dashboard folder page
-
-You can complete the following tasks on a dashboard folder page:
-
-- Move or delete dashboards in a folder
-- Rename a folder (available on the Settings tab)
-- Assign permissions to folders (which are inherited by the dashboards in the folder)
-
-To navigate to the dashboard folder page, hover over the name of the folder and click **Go to folder** in the dashboard search result list or on the Dashboards page.
-
-### Dashboard permissions
-
-You can assign permissions to a folder. Any permissions you assign are inherited by the dashboards in the folder. An Access Control List (ACL) is used where **Organization Role**, **Team**, and a **User** can be assigned permissions.
-
-For more information about dashboard permissions, refer to [Dashboard permissions][].
 
 ## Export and import dashboards
 
