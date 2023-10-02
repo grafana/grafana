@@ -73,7 +73,7 @@ export const filterByValueTransformer: DataTransformerInfo<FilterByValueTransfor
 
             return newFilter;
           } else if (filter.config.id === ValueMatcherID.regex) {
-            //Due to colliding syntaxes, interpolating regex filters will cause issues.
+            // Due to colliding syntaxes, interpolating regex filters will cause issues.
             return filter;
           } else if (filter.config.options.value) {
             const interpolatedValue = ctx.interpolate(filter.config.options.value);

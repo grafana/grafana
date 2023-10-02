@@ -112,15 +112,15 @@ export function prepareHeatmapData(
         palette,
         theme
       );
-    } else {
-      return getDenseHeatmapData(
-        calculateHeatmapFromData(frames, options.calculation ?? {}),
-        exemplars,
-        options,
-        palette,
-        theme
-      );
     }
+
+    return getDenseHeatmapData(
+      calculateHeatmapFromData(frames, options.calculation ?? {}),
+      exemplars,
+      options,
+      palette,
+      theme
+    );
   }
 
   // Check for known heatmap types

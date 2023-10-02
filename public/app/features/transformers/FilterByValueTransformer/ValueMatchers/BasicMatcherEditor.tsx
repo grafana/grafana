@@ -57,8 +57,6 @@ export function basicMatcherEditor<T = any>(
       [setInvalid, validator, onChange, options]
     );
 
-    //TODO: make regex matcher use a simple input, witaout suggestions.
-    //Also exclude from actual transformation operation
     if (cfg.featureToggles.transformationsVariableSupport) {
       return (
         <SuggestionsInput
