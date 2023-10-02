@@ -26,9 +26,9 @@ import {
 import { labelsToFieldsTransformer } from '@grafana/data/src/transformations/transformers/labelsToFields';
 import { mergeTransformer } from '@grafana/data/src/transformations/transformers/merge';
 import { getDataSourceSrv, setDataSourceSrv } from '@grafana/runtime';
-import { DataTransformerConfig } from '@grafana/schema';
+import { DataTransformerConfig, TableCellOptions } from '@grafana/schema';
 import { AxisPlacement, GraphFieldConfig } from '@grafana/ui';
-import { migrateTableDisplayModeToCellOptions } from '@grafana/ui/src/components/Table/utils';
+import { migrateTableDisplayModeToCellOptions, migrateBarGaugeMinMax } from '@grafana/ui/src/components/Table/utils';
 import { getAllOptionEditors, getAllStandardFieldConfigs } from 'app/core/components/OptionsUI/registry';
 import { config } from 'app/core/config';
 import {
@@ -79,7 +79,7 @@ export class DashboardMigrator {
     let i, j, k, n;
     const oldVersion = this.dashboard.schemaVersion;
     const panelUpgrades: PanelSchemeUpgradeHandler[] = [];
-    this.dashboard.schemaVersion = 38;
+    this.dashboard.schemaVersion = 39;
 
     if (oldVersion === this.dashboard.schemaVersion) {
       return;
@@ -839,6 +839,29 @@ export class DashboardMigrator {
                 if (override.properties[j].id === 'custom.displayMode') {
                   override.properties[j].id = 'custom.cellOptions';
                   override.properties[j].value = migrateTableDisplayModeToCellOptions(overrideDisplayMode);
+                }
+              }
+            }
+          }
+        }
+
+        return panel;
+      });
+    }
+
+    if (oldVersion < 39) {
+      panelUpgrades.push((panel: PanelModel) => {
+        if (panel.type === 'table' && panel.fieldConfig !== undefined) {
+          const tableCellOptions = panel.fieldConfig.defaults?.custom?.cellOptions as TableCellOptions;
+
+          migrateBarGaugeMinMax(tableCellOptions);
+          // Update overrides
+          if (panel.fieldConfig?.overrides) {
+            for (const override of panel.fieldConfig.overrides) {
+              for (let j = 0; j < override.properties?.length ?? 0; j++) {
+                if (override.properties[j].id === 'custom.cellOptions') {
+                  let overrideCellOptions = override.properties[j].value as TableCellOptions;
+                  migrateBarGaugeMinMax(overrideCellOptions);
                 }
               }
             }
