@@ -19,7 +19,7 @@ import {
   DataSourceVariable,
   QueryVariable,
   ConstantVariable,
-  IntervalVariable,
+  IntervalVariable, //TODO: Make sure scenes has this released
   SceneRefreshPicker,
   SceneGridItem,
   SceneObject,
