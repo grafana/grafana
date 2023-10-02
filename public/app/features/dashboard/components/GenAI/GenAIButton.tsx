@@ -6,7 +6,7 @@ import { Button, Spinner, useStyles2, Link, Tooltip, Toggletip, Text } from '@gr
 
 import { GenAIHistory } from './GenAIHistory';
 import { useOpenAIStream } from './hooks';
-import { Message, OPEN_AI_MODEL } from './utils';
+import { OPEN_AI_MODEL, Message } from './utils';
 
 export interface GenAIButtonProps {
   // Button label text
@@ -41,7 +41,7 @@ export const GenAIButton = ({
   const [shouldCloseHistory, setShouldCloseHistory] = useState(false);
 
   // TODO: Implement error handling (use error object from hook)
-  const { setMessages, reply, isGenerating, value } = useOpenAIStream(OPEN_AI_MODEL, temperature);
+  const { setMessages, reply, isGenerating, value, error } = useOpenAIStream(OPEN_AI_MODEL, temperature);
 
   const hasHistory = history.length > 0;
   const isFirstGeneration = isGenerating && !hasHistory;
@@ -63,6 +63,13 @@ export const GenAIButton = ({
     [history]
   );
 
+  useEffect(() => {
+    // Todo: Consider other options for `"` sanitation
+    if (isFirstGeneration && reply) {
+      onGenerate(reply.replace(/^"|"$/g, ''));
+    }
+  }, [isGenerating, reply, onGenerate, isFirstGeneration]);
+
   // @TODO: Find a better solution for this (isDone)
   useEffect(() => {
     if (reply !== '') {
@@ -77,11 +84,6 @@ export const GenAIButton = ({
     }
   }, [history, isGenerating, reply, response, updateHistory]);
 
-  // Todo: Consider other options for `"` sanitation
-  if (isGenerating && !hasHistory) {
-    onGenerate(reply.replace(/^"|"$/g, ''));
-  }
-
   const onApplySuggestion = (suggestion: string) => {
     onGenerate(suggestion);
     setShouldCloseHistory(true);
@@ -95,7 +97,7 @@ export const GenAIButton = ({
     if (isFirstGeneration) {
       return undefined;
     }
-    if (value && !value.enabled) {
+    if (error || (value && !value?.enabled)) {
       return 'exclamation-circle';
     }
     return 'ai';
@@ -103,6 +105,10 @@ export const GenAIButton = ({
 
   const getText = () => {
     let buttonText = text;
+
+    if (error) {
+      buttonText = 'Retry';
+    }
 
     if (isFirstGeneration) {
       buttonText = loadingText;
@@ -115,8 +121,30 @@ export const GenAIButton = ({
     return buttonText;
   };
 
+  const getTooltipContent = () => {
+    if (error) {
+      return `Unexpected error: ${error.message}`;
+    }
+    if (!value?.enabled) {
+      return (
+        <span>
+          The LLM plugin is not correctly configured. See your <Link href={`/plugins/grafana-llm-app`}>settings</Link>{' '}
+          and enable your plugin.
+        </span>
+      );
+    }
+    return '';
+  };
+
   const button = (
-    <Button icon={getIcon()} onClick={onClick} fill="text" size="sm" disabled={isButtonDisabled}>
+    <Button
+      icon={getIcon()}
+      onClick={onClick}
+      fill="text"
+      size="sm"
+      disabled={isGenerating || (!value?.enabled && !error)}
+      variant={error ? 'destructive' : 'primary'}
+    >
       {getText()}
     </Button>
   );
@@ -151,16 +179,7 @@ export const GenAIButton = ({
     <div className={styles.wrapper}>
       {isFirstGeneration && <Spinner size={14} />}
       {!hasHistory && (
-        <Tooltip
-          show={value?.enabled ? false : undefined}
-          interactive
-          content={
-            <span>
-              The LLM plugin is not correctly configured. See your{' '}
-              <Link href={`/plugins/grafana-llm-app`}>settings</Link> and enable your plugin.
-            </span>
-          }
-        >
+        <Tooltip show={value?.enabled && !error ? false : undefined} interactive content={getTooltipContent()}>
           {button}
         </Tooltip>
       )}
@@ -170,7 +189,7 @@ export const GenAIButton = ({
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  wrapper: css`
-    display: flex;
-  `,
+  wrapper: css({
+    display: 'flex',
+  }),
 });
