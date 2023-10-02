@@ -28,7 +28,7 @@ API Tokens can be used with Organization HTTP API to get users of specific organ
 
 ## Search Users
 
-`GET /api/users?perpage=10&page=1`
+`GET /api/users?perpage=10&page=1&sort=login-asc,email-asc`
 
 **Required permissions**
 
@@ -48,6 +48,8 @@ Authorization: Basic YWRtaW46YWRtaW4=
 ```
 
 Default value for the `perpage` parameter is `1000` and for the `page` parameter is `1`. Requires basic authentication and that the authenticated user is a Grafana Admin.
+
+The `sort` param is an optional comma separated list of options to order the search result. Accepted values for the sort filter are: `login-asc`, `login-desc`, `email-asc`, `email-desc`, `name-asc`, `name-desc`, `lastSeenAtAge-asc`, `lastSeenAtAge-desc`. By default, if `sort` is not specified, the user list will be ordered by `login`, `email` in ascending order.
 
 **Example Response**:
 
@@ -83,7 +85,7 @@ Content-Type: application/json
 
 ## Search Users with Paging
 
-`GET /api/users/search?perpage=10&page=1&query=mygraf`
+`GET /api/users/search?perpage=10&page=1&query=mygraf&sort=login-asc,email-asc`
 
 **Required permissions**
 
@@ -103,6 +105,8 @@ Authorization: Basic YWRtaW46YWRtaW4=
 ```
 
 Default value for the `perpage` parameter is `1000` and for the `page` parameter is `1`. The `totalCount` field in the response can be used for pagination of the user list E.g. if `totalCount` is equal to 100 users and the `perpage` parameter is set to 10 then there are 10 pages of users. The `query` parameter is optional and it will return results where the query value is contained in one of the `name`, `login` or `email` fields. Query values with spaces need to be URL encoded e.g. `query=Jane%20Doe`.
+
+The `sort` param is an optional comma separated list of options to order the search result. Accepted values for the sort filter are: `login-asc`, `login-desc`, `email-asc`, `email-desc`, `name-asc`, `name-desc`, `lastSeenAtAge-asc`, `lastSeenAtAge-desc`. By default, if `sort` is not specified, the user list will be ordered by `login`, `email` in ascending order.
 
 Requires basic authentication and that the authenticated user is a Grafana Admin.
 

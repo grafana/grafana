@@ -1785,6 +1785,8 @@ github.com/grafana/alerting v0.0.0-20230918125844-e60d564786c9 h1:XHgUyX+q7zYJnB
 github.com/grafana/alerting v0.0.0-20230918125844-e60d564786c9/go.mod h1:6BES5CyEqz7fDAG3MYvJLe0hqGwvIoGDN8A1aNrLGus=
 github.com/grafana/codejen v0.0.3 h1:tAWxoTUuhgmEqxJPOLtJoxlPBbMULFwKFOcRsPRPXDw=
 github.com/grafana/codejen v0.0.3/go.mod h1:zmwwM/DRyQB7pfuBjTWII3CWtxcXh8LTwAYGfDfpR6s=
+github.com/grafana/cue v0.0.0-20230926092038-971951014e3f h1:TmYAMnqg3d5KYEAaT6PtTguL2GjLfvr6wnAX8Azw6tQ=
+github.com/grafana/cue v0.0.0-20230926092038-971951014e3f/go.mod h1:okjJBHFQFer+a41sAe2SaGm1glWS8oEb6CmJvn5Zdws=
 github.com/grafana/cuetsy v0.1.10 h1:+W9/7roI8LorL+D1RJhKGdhsTZ81adrK9dHS0r7qsXs=
 github.com/grafana/cuetsy v0.1.10/go.mod h1:Ix97+CPD8ws9oSSxR3/Lf4ahU1I4Np83kjJmDVnLZvc=
 github.com/grafana/dataplane/examples v0.0.1 h1:K9M5glueWyLoL4//H+EtTQq16lXuHLmOhb6DjSCahzA=
@@ -1793,12 +1795,14 @@ github.com/grafana/dataplane/sdata v0.0.6 h1:Ejlj8d1Hvy/uDLeI4sOvL34Y8WLlVDd9iN2
 github.com/grafana/dataplane/sdata v0.0.6/go.mod h1:Jvs5ddpGmn6vcxT7tCTWAZ1mgi4sbcdFt9utQx5uMAU=
 github.com/grafana/dskit v0.0.0-20230706162620-5081d8ed53e6 h1:/19OPOCKP95g9hKLn1mN2dR/qBE4+oEY2F9XZ7G1xJM=
 github.com/grafana/dskit v0.0.0-20230706162620-5081d8ed53e6/go.mod h1:M03k2fzuQ2n9TVE1xfVKTESibxsXdw0wYfWT3+9Owp4=
+github.com/grafana/gofpdf v0.0.0-20231002120153-857cc45be447 h1:jxJJ5z0GxqhWFbQUsys3BHG8jnmniJ2Q74tXAG1NaDo=
+github.com/grafana/gofpdf v0.0.0-20231002120153-857cc45be447/go.mod h1:IxsY6mns6Q5sAnWcrptrgUrSglTZJXH/kXr9nbpb/9I=
 github.com/grafana/grafana-apiserver v0.0.0-20230713001719-88a9ed41992d h1:fjc6vlNnKCDewr/5GiObiiGLeqr6YnXUbZ44YZtlu5Q=
 github.com/grafana/grafana-apiserver v0.0.0-20230713001719-88a9ed41992d/go.mod h1:2g9qGdCeU6x/69QAs82WM52bwBUT5/CBaBD0I94+txU=
 github.com/grafana/grafana-aws-sdk v0.19.1 h1:5GBiOv2AgdyjwlgAX+dtgPtXU4FgMTD9rfQUPQseEpQ=
 github.com/grafana/grafana-aws-sdk v0.19.1/go.mod h1:ntq2NDH12Y2Fkbc6fozpF8kYsJM9k6KNr+Xfo5w3/iM=
-github.com/grafana/grafana-azure-sdk-go v1.8.1 h1:UgzOc7Qv1P0EJhijn71g9eT1xqujI3nwbhw+OIarBYE=
-github.com/grafana/grafana-azure-sdk-go v1.8.1/go.mod h1:1vBa0KOl+/Kcm7V888OyMXDSFncmek14q7XhEkrcSaA=
+github.com/grafana/grafana-azure-sdk-go v1.9.0 h1:4JRwlqgUtPRAQSoiV4DFZDQ3lbNsauHqj9kC6SMR9Ak=
+github.com/grafana/grafana-azure-sdk-go v1.9.0/go.mod h1:1vBa0KOl+/Kcm7V888OyMXDSFncmek14q7XhEkrcSaA=
 github.com/grafana/grafana-google-sdk-go v0.1.0 h1:LKGY8z2DSxKjYfr2flZsWgTRTZ6HGQbTqewE3JvRaNA=
 github.com/grafana/grafana-google-sdk-go v0.1.0/go.mod h1:Vo2TKWfDVmNTELBUM+3lkrZvFtBws0qSZdXhQxRdJrE=
 github.com/grafana/grafana-plugin-sdk-go v0.94.0/go.mod h1:3VXz4nCv6wH5SfgB3mlW39s+c+LetqSCjFj7xxPC5+M=
@@ -2078,8 +2082,6 @@ github.com/julienschmidt/httprouter v1.2.0/go.mod h1:SYymIcj16QtmaHHD7aYtjjsJG7V
 github.com/julienschmidt/httprouter v1.3.0/go.mod h1:JR6WtHb+2LUe8TCKY3cZOxFyyO8IZAc4RVcycCCAKdM=
 github.com/jung-kurt/gofpdf v1.0.0/go.mod h1:7Id9E/uU8ce6rXgefFLlgrJj/GYY22cpxn+r32jIOes=
 github.com/jung-kurt/gofpdf v1.0.3-0.20190309125859-24315acbbda5/go.mod h1:7Id9E/uU8ce6rXgefFLlgrJj/GYY22cpxn+r32jIOes=
-github.com/jung-kurt/gofpdf v1.16.2 h1:jgbatWHfRlPYiK85qgevsZTHviWXKwB1TTiKdz5PtRc=
-github.com/jung-kurt/gofpdf v1.16.2/go.mod h1:1hl7y57EsiPAkLbOwzpzqgx1A30nQCk/YmFV8S2vmK0=
 github.com/k0kubun/colorstring v0.0.0-20150214042306-9440f1994b88/go.mod h1:3w7q1U84EfirKl04SVQ/s7nPm1ZPhiXd34z40TNz36k=
 github.com/kardianos/osext v0.0.0-20190222173326-2bc1f35cddc0/go.mod h1:1NbS8ALrpOvjt0rHPNLyCIeMtbizbir8U//inJ+zuB8=
 github.com/karrick/godirwalk v1.7.5/go.mod h1:2c9FRhkDxdIbgkOnCEvnSWs71Bhugbl46shStcFDJ34=
@@ -2657,8 +2659,6 @@ github.com/satori/go.uuid v1.2.0/go.mod h1:dA0hQrYB0VpLJoorglMZABFdXlWrHn1NEOzdh
 github.com/scaleway/scaleway-sdk-go v1.0.0-beta.14 h1:yFl3jyaSVLNYXlnNYM5z2pagEk1dYQhfr1p20T1NyKY=
 github.com/scaleway/scaleway-sdk-go v1.0.0-beta.14/go.mod h1:fCa7OJZ/9DRTnOKmxvT6pn+LPWUptQAmHF/SBJUGEcg=
 github.com/schollz/closestmatch v2.1.0+incompatible/go.mod h1:RtP1ddjLong6gTkbtmuhtR2uUrrJOpYzYRvbcPAid+g=
-github.com/sdboyer/cue v0.5.0-beta.2.0.20230712135403-bdc4772ae055 h1:ilCOPMIGucstzXKgCVzAT8g6tu+Ejyk0J1HhXZN2xm0=
-github.com/sdboyer/cue v0.5.0-beta.2.0.20230712135403-bdc4772ae055/go.mod h1:okjJBHFQFer+a41sAe2SaGm1glWS8oEb6CmJvn5Zdws=
 github.com/sean-/seed v0.0.0-20170313163322-e2103e2c3529 h1:nn5Wsu0esKSJiIVhscUtVbo7ada43DJhG55ua/hjS5I=
 github.com/sean-/seed v0.0.0-20170313163322-e2103e2c3529/go.mod h1:DxrIzT+xaE7yg65j358z/aeFdxmN0P9QXhEzd20vsDc=
 github.com/seatgeek/logrus-gelf-formatter v0.0.0-20210219220335-367fa274be2c/go.mod h1:/THDZYi7F/BsVEcYzYPqdcWFQ+1C2InkawTKfLOAnzg=
