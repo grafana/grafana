@@ -50,7 +50,6 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<My
     };
   };
 
-  const WIDTH_SHORT = 15;
   const WIDTH_LONG = 40;
 
   return (
