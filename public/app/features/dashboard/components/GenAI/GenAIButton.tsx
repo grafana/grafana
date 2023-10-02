@@ -122,7 +122,7 @@ export const GenAIButton = ({
   );
 
   // @TODO Fix React warning for Tooltip ref
-  const renderButton = () => {
+  const renderButtonWithToggletip = () => {
     if (hasHistory) {
       const title = <Text element="p">{toggleTipTitle}</Text>;
 
@@ -151,18 +151,21 @@ export const GenAIButton = ({
   return (
     <div className={styles.wrapper}>
       {isFirstGeneration && <Spinner size={14} />}
-      <Tooltip
-        show={value?.enabled ? false : undefined}
-        interactive
-        content={
-          <span>
-            The LLM plugin is not correctly configured. See your <Link href={`/plugins/grafana-llm-app`}>settings</Link>{' '}
-            and enable your plugin.
-          </span>
-        }
-      >
-        {renderButton()}
-      </Tooltip>
+      {!hasHistory && (
+        <Tooltip
+          show={value?.enabled ? false : undefined}
+          interactive
+          content={
+            <span>
+              The LLM plugin is not correctly configured. See your{' '}
+              <Link href={`/plugins/grafana-llm-app`}>settings</Link> and enable your plugin.
+            </span>
+          }
+        >
+          {button}
+        </Tooltip>
+      )}
+      {hasHistory && renderButtonWithToggletip()}
     </div>
   );
 };
