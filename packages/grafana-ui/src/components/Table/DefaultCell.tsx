@@ -2,7 +2,7 @@ import { cx } from '@emotion/css';
 import React, { ReactElement } from 'react';
 import tinycolor from 'tinycolor2';
 
-import { DisplayValue, formattedValueToString, getFieldConfigWithMinMax, getScaleCalculator } from '@grafana/data';
+import { DisplayValue, formattedValueToString, getScaleCalculator } from '@grafana/data';
 import { CellMinMaxMode, TableCellBackgroundDisplayMode, TableCellDisplayMode } from '@grafana/schema';
 
 import { useStyles2, useTheme2 } from '../../themes';
@@ -23,14 +23,8 @@ export const DefaultCell = (props: TableCellProps) => {
   const cellOptions = getCellOptions(field);
   const displayValue = field.display!(cell.value);
 
-  if (cellOptions.type === TableCellDisplayMode.ColorText && cellOptions.minMaxMode !== CellMinMaxMode.Row) {
-    field.config = getFieldConfigWithMinMax(field, true);
-
-    // TODO: Figure out caching
+  if (isLocalRange(cellOptions)) {
     const scaleCalc = getScaleCalculator(field, theme);
-    if (field.state) {
-      field.state.range = undefined;
-    }
     displayValue.color = scaleCalc(displayValue.numeric).color;
   }
 
@@ -125,4 +119,8 @@ function getLinkStyle(tableStyles: TableStyles, cellOptions: TableCellOptions, t
   }
 
   return cx(tableStyles.cellLinkForColoredCell, targetClassName);
+}
+
+function isLocalRange(cellOptions: TableCellOptions) {
+  return cellOptions.type === TableCellDisplayMode.ColorText && cellOptions.minMaxMode !== CellMinMaxMode.Row;
 }

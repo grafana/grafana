@@ -16,6 +16,7 @@ import {
   GrafanaTheme2,
   isDataFrame,
   isTimeSeriesFrame,
+  getMinMaxAndDelta,
 } from '@grafana/data';
 import {
   BarGaugeDisplayMode,
@@ -169,6 +170,12 @@ export function getColumns(
 }
 
 export function getCellComponent(displayMode: TableCellDisplayMode, field: Field): CellComponent {
+  if (displayMode === TableCellDisplayMode.ColorText || displayMode === TableCellDisplayMode.ColorBackground) {
+    if (field.state) {
+      field.state.range = getMinMaxAndDelta(field);
+    }
+  }
+
   switch (displayMode) {
     case TableCellDisplayMode.Custom:
     case TableCellDisplayMode.ColorText:
