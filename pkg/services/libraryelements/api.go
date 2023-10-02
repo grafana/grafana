@@ -2,7 +2,6 @@ package libraryelements
 
 import (
 	"errors"
-	"fmt"
 	"net/http"
 
 	"github.com/grafana/grafana/pkg/api/response"
@@ -70,23 +69,6 @@ func (l *LibraryElementService) createHandler(c *contextmodel.ReqContext) respon
 				return response.ErrOrFallback(http.StatusBadRequest, "failed to get folder", err)
 			}
 			cmd.FolderID = folder.ID
-		}
-	}
-
-	if l.features.IsEnabled(featuremgmt.FlagLibraryPanelRBAC) {
-		allowed, err := l.AccessControl.Evaluate(
-			c.Req.Context(),
-			c.SignedInUser,
-			ac.EvalPermission(
-				dashboards.ActionFoldersWrite,
-				dashboards.ScopeFoldersRoot+":id:"+fmt.Sprint(cmd.FolderID),
-			),
-		)
-		if err != nil {
-			return toLibraryElementError(err, "Failed to evaluate permissions")
-		}
-		if !allowed {
-			return response.Error(http.StatusForbidden, "You do not have the permissions needed to create a library element in this folder", nil)
 		}
 	}
 
