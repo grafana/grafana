@@ -69,7 +69,7 @@ export function MegaMenuItemText({ children, icon, isActive, isChild, onClick, t
   return <li className={styles.listItem}>{element}</li>;
 }
 
-MegaMenuItemText.displayName = 'NavBarMenuItem';
+MegaMenuItemText.displayName = 'MegaMenuItemText';
 
 const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive'], isChild: Props['isActive']) => ({
   button: css({

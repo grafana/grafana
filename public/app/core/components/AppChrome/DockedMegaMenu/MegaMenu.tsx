@@ -59,7 +59,7 @@ export const MegaMenu = React.memo(
   })
 );
 
-MegaMenu.displayName = 'DockedMegaMenu';
+MegaMenu.displayName = 'MegaMenu';
 
 const getStyles = (theme: GrafanaTheme2) => ({
   content: css({
