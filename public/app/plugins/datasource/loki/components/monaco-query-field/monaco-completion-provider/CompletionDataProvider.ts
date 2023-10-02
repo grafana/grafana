@@ -4,7 +4,7 @@ import { HistoryItem } from '@grafana/data';
 import { escapeLabelValueInExactSelector } from 'app/plugins/datasource/prometheus/language_utils';
 
 import LanguageProvider from '../../../LanguageProvider';
-import { LokiQuery } from '../../../types';
+import { ExtractedLabelKeys, LokiQuery } from '../../../types';
 
 import { Label } from './situation';
 
@@ -16,7 +16,10 @@ export class CompletionDataProvider {
   constructor(
     private languageProvider: LanguageProvider,
     private historyRef: HistoryRef = { current: [] }
-  ) {}
+  ) {
+    this.queryToLabelKeysCache = new Map();
+  }
+  private queryToLabelKeysCache: Map<string, ExtractedLabelKeys>;
 
   private buildSelector(labels: Label[]): string {
     const allLabelTexts = labels.map(
@@ -55,8 +58,34 @@ export class CompletionDataProvider {
     return data[labelName] ?? [];
   }
 
-  async getParserAndLabelKeys(logQuery: string) {
-    return await this.languageProvider.getParserAndLabelKeys(logQuery);
+  /**
+   * Runs a Loki query to extract label keys from the result.
+   * The result is cached for the query string.
+   *
+   * Since each stop char in the editor triggers this function, it is prone to being called multiple times for the same query
+   * Here is a very simple map (cache) to avoid calling the backend multiple times for the same query.
+   * It only stores the previous two results
+   *
+   * @param logQuery
+   */
+  async getParserAndLabelKeys(logQuery: string): Promise<ExtractedLabelKeys> {
+    const EXTRACTED_LABEL_KEYS_MAX_CACHE_SIZE = 2;
+    if (this.queryToLabelKeysCache.has(logQuery)) {
+      // Asserting the type here because we know something is in the cache from the use of Map.has() above
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      return this.queryToLabelKeysCache.get(logQuery) as ExtractedLabelKeys;
+    } else {
+      // Save last two results in the cache
+      if (this.queryToLabelKeysCache.size > EXTRACTED_LABEL_KEYS_MAX_CACHE_SIZE) {
+        // Make room in the cache for the fresh result
+        const keys = this.queryToLabelKeysCache.keys();
+        const firstKey = keys.next().value;
+        this.queryToLabelKeysCache.delete(firstKey);
+      }
+      const result = await this.languageProvider.getParserAndLabelKeys(logQuery);
+      this.queryToLabelKeysCache.set(logQuery, result);
+      return result;
+    }
   }
 
   async getSeriesLabels(labels: Label[]) {
