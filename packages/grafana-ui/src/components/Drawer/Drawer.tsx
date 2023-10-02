@@ -274,8 +274,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       },
     }),
     header: css({
+      label: 'drawer-header',
       flexGrow: 0,
-      padding: theme.spacing(3, 2),
+      padding: theme.spacing(2, 2, 3),
       borderBottom: `1px solid ${theme.colors.border.weak}`,
     }),
     headerWithTabs: css({
@@ -284,12 +285,14 @@ const getStyles = (theme: GrafanaTheme2) => {
     actions: css({
       position: 'absolute',
       right: theme.spacing(1),
-      top: theme.spacing(2),
+      top: theme.spacing(1),
     }),
     titleWrapper: css({
+      label: 'drawer-title',
       overflowWrap: 'break-word',
     }),
     subtitle: css({
+      label: 'drawer-subtitle',
       color: theme.colors.text.secondary,
       paddingTop: theme.spacing(1),
     }),
@@ -299,12 +302,13 @@ const getStyles = (theme: GrafanaTheme2) => {
       flexGrow: 1,
     }),
     contentScroll: css({
-      minHeight: 0,
+      label: 'drawer-content',
       flex: 1,
     }),
     tabsWrapper: css({
+      label: 'drawer-tabs',
       paddingLeft: theme.spacing(2),
-      margin: theme.spacing(2, -1, -3, -3),
+      margin: theme.spacing(0, -1, -3, -3),
     }),
   };
 };
