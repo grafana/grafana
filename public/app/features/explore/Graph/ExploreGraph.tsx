@@ -37,8 +37,6 @@ import { useExploreDataLinkPostProcessor } from '../hooks/useExploreDataLinkPost
 import { applyGraphStyle, applyThresholdsConfig } from './exploreGraphStyleUtils';
 import { useStructureRev } from './useStructureRev';
 
-export const MAX_NUMBER_OF_TIME_SERIES = 20;
-
 interface Props {
   data: DataFrame[];
   height: number;
@@ -57,7 +55,10 @@ interface Props {
   thresholdsConfig?: ThresholdsConfig;
   thresholdsStyle?: GraphThresholdsStyleConfig;
   eventBus: EventBus;
-  showAllTimeSeries: boolean;
+  /**
+   * Limits the numer of series shown in the graph. Additional series will simply be ignored and not shown.
+   */
+  limit?: number;
 }
 
 export function ExploreGraph({
@@ -78,7 +79,7 @@ export function ExploreGraph({
   thresholdsConfig,
   thresholdsStyle,
   eventBus,
-  showAllTimeSeries,
+  limit,
 }: Props) {
   const theme = useTheme2();
 
@@ -125,14 +126,14 @@ export function ExploreGraph({
   const dataWithConfig = useMemo(() => {
     return applyFieldOverrides({
       fieldConfig: styledFieldConfig,
-      data: showAllTimeSeries ? data : data.slice(0, MAX_NUMBER_OF_TIME_SERIES),
+      data: data.slice(0, limit),
       timeZone,
       replaceVariables: (value) => value, // We don't need proper replace here as it is only used in getLinks and we use getFieldLinks
       theme,
       fieldConfigRegistry,
       dataLinkPostProcessor,
     });
-  }, [fieldConfigRegistry, data, timeZone, theme, styledFieldConfig, showAllTimeSeries, dataLinkPostProcessor]);
+  }, [fieldConfigRegistry, data, timeZone, theme, styledFieldConfig, limit, dataLinkPostProcessor]);
 
   const annotationsWithConfig = useMemo(() => {
     return applyFieldOverrides({

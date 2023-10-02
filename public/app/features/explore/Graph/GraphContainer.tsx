@@ -24,9 +24,11 @@ import { ExploreGraphStyle } from 'app/types';
 
 import { storeGraphStyle } from '../state/utils';
 
-import { ExploreGraph, MAX_NUMBER_OF_TIME_SERIES } from './ExploreGraph';
+import { ExploreGraph } from './ExploreGraph';
 import { ExploreGraphLabel } from './ExploreGraphLabel';
 import { loadGraphStyle } from './utils';
+
+const MAX_NUMBER_OF_TIME_SERIES = 20;
 
 interface Props extends Pick<PanelChromeProps, 'statusMessage'> {
   width: number;
@@ -58,7 +60,7 @@ export const GraphContainer = ({
   loadingState,
   statusMessage,
 }: Props) => {
-  const [showAllTimeSeries, setShowAllTimeSeries] = useState(false);
+  const [seriesLimit, setSeriesLimit] = useState<number | undefined>(MAX_NUMBER_OF_TIME_SERIES);
   const [graphStyle, setGraphStyle] = useState(loadGraphStyle);
   const styles = useStyles2(getStyles);
 
@@ -71,12 +73,12 @@ export const GraphContainer = ({
     <PanelChrome
       title="Graph"
       titleItems={[
-        MAX_NUMBER_OF_TIME_SERIES < data.length && !showAllTimeSeries && (
+        seriesLimit && seriesLimit < data.length && (
           <div key="disclaimer" className={styles.timeSeriesDisclaimer}>
-            <Tooltip content={`Showing only ${MAX_NUMBER_OF_TIME_SERIES} time series`}>
+            <Tooltip content={`Showing only ${seriesLimit} time series`}>
               <Icon className={styles.disclaimerIcon} name="exclamation-triangle" />
             </Tooltip>
-            <Button variant="secondary" size="sm" onClick={() => setShowAllTimeSeries(true)}>
+            <Button variant="secondary" size="sm" onClick={() => setSeriesLimit(undefined)}>
               Show all {data.length} series
             </Button>
           </div>
@@ -103,7 +105,7 @@ export const GraphContainer = ({
           thresholdsConfig={thresholdsConfig}
           thresholdsStyle={thresholdsStyle}
           eventBus={eventBus}
-          showAllTimeSeries={showAllTimeSeries}
+          limit={seriesLimit}
         />
       )}
     </PanelChrome>
