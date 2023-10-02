@@ -11,6 +11,7 @@ import (
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/team"
+	"github.com/grafana/grafana/pkg/services/team/sortopts"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -146,6 +147,11 @@ func (hs *HTTPServer) SearchTeams(c *contextmodel.ReqContext) response.Response 
 		page = 1
 	}
 
+	sortOpts, err := sortopts.ParseSortQueryParam(c.Query("sort"))
+	if err != nil {
+		return response.Err(err)
+	}
+
 	query := team.SearchTeamsQuery{
 		OrgID:        c.SignedInUser.GetOrgID(),
 		Query:        c.Query("query"),
@@ -154,6 +160,7 @@ func (hs *HTTPServer) SearchTeams(c *contextmodel.ReqContext) response.Response 
 		Limit:        perPage,
 		SignedInUser: c.SignedInUser,
 		HiddenUsers:  hs.Cfg.HiddenUsers,
+		SortOpts:     sortOpts,
 	}
 
 	queryResult, err := hs.teamService.SearchTeams(c.Req.Context(), &query)

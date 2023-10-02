@@ -29,7 +29,7 @@ After you add and configure a data source, you can use it as an input for many o
 This documentation describes how to manage data sources in general,
 and how to configure or query the built-in data sources.
 For other data sources, refer to the list of [datasource plugins](/grafana/plugins/).
-To develop a custom plugin, refer to [Build a plugin][build-a-plugin].
+To develop a custom plugin, refer to [Build a plugin](/developers/plugin-tools)
 
 ## Manage data sources
 
@@ -91,9 +91,6 @@ These built-in core data sources are also included in the Grafana documentation:
 {{% docs/reference %}}
 [alerts]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting"
 [alerts]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/alerting"
-
-[build-a-plugin]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/developers/plugins"
-[build-a-plugin]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/developers/plugins"
 
 [data-source-management]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/administration/data-source-management"
 [data-source-management]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/administration/data-source-management"
