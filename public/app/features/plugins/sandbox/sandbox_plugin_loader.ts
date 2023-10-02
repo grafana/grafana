@@ -7,7 +7,7 @@ import { defaultTrustedTypesPolicy } from 'app/core/trustedTypePolicies';
 
 import { getPluginSettings } from '../pluginSettings';
 
-import { getPluginCode } from './code_loader';
+import { getPluginCode, patchSandboxEnvironmentPrototype } from './code_loader';
 import { getGeneralSandboxDistortionMap, distortLiveApis } from './distortion_map';
 import {
   getSafeSandboxDomElement,
@@ -178,6 +178,8 @@ async function doImportPluginModuleInSandbox(meta: PluginMeta): Promise<System.M
         error: () => {},
       },
     });
+
+    patchSandboxEnvironmentPrototype(sandboxEnvironment);
 
     // fetch plugin's code
     let pluginCode = '';
