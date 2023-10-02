@@ -7,7 +7,6 @@ import { ScaleDistributionConfig } from '@grafana/schema';
 import {
   Portal,
   ScaleDistribution,
-  TooltipPlugin2,
   UPlotChart,
   usePanelContext,
   useStyles2,
@@ -97,7 +96,6 @@ export const HeatmapPanel = ({
     return [null, info.heatmap?.fields.map((f) => f.values), [exemplarsXFacet, exemplarsyFacet]];
   }, [info.heatmap, info.exemplars]);
 
-  /*
   const [hover, setHover] = useState<HeatmapHoverEvent | undefined>(undefined);
   const [shouldDisplayCloseButton, setShouldDisplayCloseButton] = useState<boolean>(false);
   const isToolTipOpen = useRef<boolean>(false);
@@ -122,7 +120,6 @@ export const HeatmapPanel = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [options, data.structureRev]
   );
-  */
 
   // ugh
   const dataRef = useRef(info);
@@ -136,15 +133,15 @@ export const HeatmapPanel = ({
       dataRef,
       theme,
       eventBus,
-      // onhover: onhover,
-      // onclick: options.tooltip.show ? onclick : null,
+      onhover: onhover,
+      onclick: options.tooltip.show ? onclick : null,
       onzoom: (evt) => {
         const delta = evt.xMax - evt.xMin;
         if (delta > 1) {
           onChangeTimeRange({ from: evt.xMin, to: evt.xMax });
         }
       },
-      // isToolTipOpen,
+      isToolTipOpen,
       timeZone,
       getTimeRange: () => timeRangeRef.current,
       sync,
@@ -168,17 +165,17 @@ export const HeatmapPanel = ({
     let countFieldIdx = !isSparseHeatmap ? 2 : 3;
     const countField = info.heatmap.fields[countFieldIdx];
 
-    // let hoverValue: number | undefined = undefined;
-    // // seriesIdx: 1 is heatmap layer; 2 is exemplar layer
-    // if (hover && info.heatmap.fields && hover.seriesIdx === 1) {
-    //   hoverValue = countField.values[hover.dataIdx];
-    // }
+    let hoverValue: number | undefined = undefined;
+    // seriesIdx: 1 is heatmap layer; 2 is exemplar layer
+    if (hover && info.heatmap.fields && hover.seriesIdx === 1) {
+      hoverValue = countField.values[hover.dataIdx];
+    }
 
     return (
       <VizLayout.Legend placement="bottom" maxHeight="20%">
         <div className={styles.colorScaleWrapper}>
           <ColorScale
-            // hoverValue={hoverValue}
+            hoverValue={hoverValue}
             colorPalette={palette}
             min={dataRef.current.heatmapColors?.minValue!}
             max={dataRef.current.heatmapColors?.maxValue!}
@@ -206,19 +203,11 @@ export const HeatmapPanel = ({
       <VizLayout width={width} height={height} legend={renderLegend()}>
         {(vizWidth: number, vizHeight: number) => (
           <UPlotChart config={builder} data={facets as any} width={vizWidth} height={vizHeight}>
-            <TooltipPlugin2
-              config={builder}
-              render={(u, dataIdxs, seriesIdx, isPinned = false) => {
-                // console.log('render', dataIdxs, seriesIdx);
-                // return getRandomContent();
-                // return <TimeSeriesTooltip seriesFrame={alignedDataFrame} valueIdxs={dataIdxs} seriesIdx={seriesIdx} isPinned={isPinned}/>;
-                return <pre>{JSON.stringify({ dataIdxs, seriesIdx }, null, 2)}</pre>;
-              }}
-            />
+            {/*children ? children(config, alignedFrame) : null*/}
           </UPlotChart>
         )}
       </VizLayout>
-      {/* <Portal>
+      <Portal>
         {hover && options.tooltip.show && (
           <VizTooltipContainer
             position={{ x: hover.pageX, y: hover.pageY }}
@@ -236,7 +225,7 @@ export const HeatmapPanel = ({
             />
           </VizTooltipContainer>
         )}
-      </Portal> */}
+      </Portal>
     </>
   );
 };

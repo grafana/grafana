@@ -64,7 +64,7 @@ interface PrepConfigOpts {
   onhover?: null | ((evt?: HeatmapHoverEvent | null) => void);
   onclick?: null | ((evt?: Object) => void);
   onzoom?: null | ((evt: HeatmapZoomEvent) => void);
-  isToolTipOpen?: MutableRefObject<boolean>;
+  isToolTipOpen: MutableRefObject<boolean>;
   timeZone: string;
   getTimeRange: () => TimeRange;
   exemplarColor: string;
@@ -86,7 +86,7 @@ export function prepConfig(opts: PrepConfigOpts) {
     onhover,
     onclick,
     onzoom,
-    // isToolTipOpen,
+    isToolTipOpen,
     timeZone,
     getTimeRange,
     cellGap,
@@ -176,7 +176,6 @@ export function prepConfig(opts: PrepConfigOpts) {
     rect = r;
   });
 
-  /*
   const payload: DataHoverPayload = {
     point: {
       [xScaleUnit]: null,
@@ -227,7 +226,6 @@ export function prepConfig(opts: PrepConfigOpts) {
         }
       }
     });
-  */
 
   builder.addHook('drawClear', (u) => {
     qt = qt || new Quadtree(0, 0, u.bbox.width, u.bbox.height);
@@ -606,7 +604,6 @@ export function prepConfig(opts: PrepConfigOpts) {
     },
   };
 
-  /*
   if (sync && sync() !== DashboardCursorSync.Off) {
     cursor.sync = {
       key: eventsScope,
@@ -628,7 +625,6 @@ export function prepConfig(opts: PrepConfigOpts) {
 
     builder.setSync();
   }
-  */
 
   builder.setCursor(cursor);
 
