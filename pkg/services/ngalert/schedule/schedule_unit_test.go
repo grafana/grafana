@@ -59,7 +59,7 @@ func TestProcessTicks(t *testing.T) {
 	mockedClock := clock.NewMock()
 
 	notifier := &AlertsSenderMock{}
-	notifier.EXPECT().Send(mock.Anything, mock.Anything).Return()
+	notifier.EXPECT().Send(context.Background(), mock.Anything, mock.Anything).Return()
 
 	appUrl := &url.URL{
 		Scheme: "http",
@@ -578,7 +578,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 		updateChan := make(chan ruleVersionAndPauseStatus)
 
 		sender := AlertsSenderMock{}
-		sender.EXPECT().Send(rule.GetKey(), mock.Anything).Return()
+		sender.EXPECT().Send(context.Background(), rule.GetKey(), mock.Anything).Return()
 
 		sch, ruleStore, _, _ := createSchedule(evalAppliedChan, &sender)
 		ruleStore.PutRule(context.Background(), rule)
@@ -659,7 +659,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 		evalAppliedChan := make(chan time.Time)
 
 		sender := AlertsSenderMock{}
-		sender.EXPECT().Send(rule.GetKey(), mock.Anything).Return()
+		sender.EXPECT().Send(context.Background(), rule.GetKey(), mock.Anything).Return()
 
 		sch, ruleStore, _, reg := createSchedule(evalAppliedChan, &sender)
 		ruleStore.PutRule(context.Background(), rule)
@@ -764,7 +764,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 			evalAppliedChan := make(chan time.Time)
 
 			sender := AlertsSenderMock{}
-			sender.EXPECT().Send(rule.GetKey(), mock.Anything).Return()
+			sender.EXPECT().Send(context.Background(), rule.GetKey(), mock.Anything).Return()
 
 			sch, ruleStore, _, _ := createSchedule(evalAppliedChan, &sender)
 			ruleStore.PutRule(context.Background(), rule)
@@ -797,7 +797,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 		evalAppliedChan := make(chan time.Time)
 
 		sender := AlertsSenderMock{}
-		sender.EXPECT().Send(rule.GetKey(), mock.Anything).Return()
+		sender.EXPECT().Send(context.Background(), rule.GetKey(), mock.Anything).Return()
 
 		sch, ruleStore, _, _ := createSchedule(evalAppliedChan, &sender)
 		ruleStore.PutRule(context.Background(), rule)
@@ -873,7 +873,7 @@ func setupScheduler(t *testing.T, rs *fakeRulesStore, is *state.FakeInstanceStor
 
 	if senderMock == nil {
 		senderMock = &AlertsSenderMock{}
-		senderMock.EXPECT().Send(mock.Anything, mock.Anything).Return()
+		senderMock.EXPECT().Send(context.Background(), mock.Anything, mock.Anything).Return()
 	}
 
 	cfg := setting.UnifiedAlertingSettings{

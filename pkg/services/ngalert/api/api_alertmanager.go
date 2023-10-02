@@ -149,6 +149,7 @@ func (srv AlertmanagerSrv) RouteGetAMAlertGroups(c *contextmodel.ReqContext) res
 	}
 
 	groups, err := am.GetAlertGroups(
+		c.Req.Context(),
 		c.QueryBoolWithDefault("active", true),
 		c.QueryBoolWithDefault("silenced", true),
 		c.QueryBoolWithDefault("inhibited", true),
@@ -173,6 +174,7 @@ func (srv AlertmanagerSrv) RouteGetAMAlerts(c *contextmodel.ReqContext) response
 	}
 
 	alerts, err := am.GetAlerts(
+		c.Req.Context(),
 		c.QueryBoolWithDefault("active", true),
 		c.QueryBoolWithDefault("silenced", true),
 		c.QueryBoolWithDefault("inhibited", true),

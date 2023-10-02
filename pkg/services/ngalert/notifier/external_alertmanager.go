@@ -8,10 +8,13 @@ import (
 
 	httptransport "github.com/go-openapi/runtime/client"
 	"github.com/go-openapi/strfmt"
+	alertingNotify "github.com/grafana/alerting/notify"
 	"github.com/grafana/grafana/pkg/infra/log"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	amclient "github.com/prometheus/alertmanager/api/v2/client"
+	amalert "github.com/prometheus/alertmanager/api/v2/client/alert"
+	amalertgroup "github.com/prometheus/alertmanager/api/v2/client/alertgroup"
 	amsilence "github.com/prometheus/alertmanager/api/v2/client/silence"
 )
 
@@ -69,6 +72,10 @@ func newExternalAlertmanager(cfg externalAlertmanagerConfig, orgID int64) (*exte
 	}, nil
 }
 
+func (am *externalAlertmanager) ApplyConfig(ctx context.Context, config *models.AlertConfiguration) error {
+	return nil
+}
+
 func (am *externalAlertmanager) SaveAndApplyConfig(ctx context.Context, cfg *apimodels.PostableUserConfig) error {
 	return nil
 }
@@ -103,12 +110,7 @@ func (am *externalAlertmanager) GetSilence(ctx context.Context, silenceID string
 		return apimodels.GettableSilence{}, err
 	}
 
-	if res != nil {
-		return *res.Payload, nil
-	}
-
-	// In theory, this should never happen as is not possible for GetSilence to return an empty payload but no error.
-	return apimodels.GettableSilence{}, fmt.Errorf("unexpected error while trying to fetch silence: %s", silenceID)
+	return *res.Payload, nil
 }
 
 func (am *externalAlertmanager) ListSilences(ctx context.Context, filter []string) (apimodels.GettableSilences, error) {
@@ -121,28 +123,60 @@ func (am *externalAlertmanager) ListSilences(ctx context.Context, filter []strin
 	return res.Payload, nil
 }
 
+func (am *externalAlertmanager) GetAlerts(ctx context.Context, active, silenced, inhibited bool, filter []string, receiver string) (apimodels.GettableAlerts, error) {
+	params := amalert.NewGetAlertsParamsWithContext(ctx).
+		WithActive(&active).
+		WithSilenced(&silenced).
+		WithInhibited(&inhibited).
+		WithFilter(filter).
+		WithReceiver(&receiver)
+
+	res, err := am.amClient.Alert.GetAlerts(params)
+	if err != nil {
+		return apimodels.GettableAlerts{}, err
+	}
+
+	return res.Payload, nil
+}
+
+func (am *externalAlertmanager) GetAlertGroups(ctx context.Context, active, silenced, inhibited bool, filter []string, receiver string) (apimodels.AlertGroups, error) {
+	params := amalertgroup.NewGetAlertGroupsParamsWithContext(ctx).
+		WithActive(&active).
+		WithSilenced(&silenced).
+		WithInhibited(&inhibited).
+		WithFilter(filter).
+		WithReceiver(&receiver)
+
+	res, err := am.amClient.Alertgroup.GetAlertGroups(params)
+	if err != nil {
+		return apimodels.AlertGroups{}, err
+	}
+
+	return res.Payload, nil
+}
+
+func (am *externalAlertmanager) PutAlerts(ctx context.Context, postableAlerts apimodels.PostableAlerts) error {
+	alerts := make(alertingNotify.PostableAlerts, 0, len(postableAlerts.PostableAlerts))
+	for _, pa := range postableAlerts.PostableAlerts {
+		alerts = append(alerts, &alertingNotify.PostableAlert{
+			Annotations: pa.Annotations,
+			EndsAt:      pa.EndsAt,
+			StartsAt:    pa.StartsAt,
+			Alert:       pa.Alert,
+		})
+	}
+
+	params := amalert.NewPostAlertsParamsWithContext(ctx).WithAlerts(alerts)
+	_, err := am.amClient.Alert.PostAlerts(params)
+	return err
+}
+
 func (am *externalAlertmanager) GetStatus() apimodels.GettableStatus {
 	return apimodels.GettableStatus{}
 }
 
-func (am *externalAlertmanager) GetAlerts(active, silenced, inhibited bool, filter []string, receiver string) (apimodels.GettableAlerts, error) {
-	return apimodels.GettableAlerts{}, nil
-}
-
-func (am *externalAlertmanager) GetAlertGroups(active, silenced, inhibited bool, filter []string, receiver string) (apimodels.AlertGroups, error) {
-	return apimodels.AlertGroups{}, nil
-}
-
-func (am *externalAlertmanager) PutAlerts(postableAlerts apimodels.PostableAlerts) error {
-	return nil
-}
-
 func (am *externalAlertmanager) GetReceivers(ctx context.Context) []apimodels.Receiver {
 	return []apimodels.Receiver{}
-}
-
-func (am *externalAlertmanager) ApplyConfig(ctx context.Context, config *models.AlertConfiguration) error {
-	return nil
 }
 
 func (am *externalAlertmanager) TestReceivers(ctx context.Context, c apimodels.TestReceiversConfigBodyParams) (*TestReceiversResult, error) {

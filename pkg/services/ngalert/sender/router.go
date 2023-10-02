@@ -288,7 +288,7 @@ func (d *AlertsRouter) buildExternalURL(ds *datasources.DataSource) (string, err
 		password, parsed.Host, parsed.Path, parsed.RawQuery), nil
 }
 
-func (d *AlertsRouter) Send(key models.AlertRuleKey, alerts definitions.PostableAlerts) {
+func (d *AlertsRouter) Send(ctx context.Context, key models.AlertRuleKey, alerts definitions.PostableAlerts) {
 	logger := d.logger.New(key.LogContext()...)
 	if len(alerts.PostableAlerts) == 0 {
 		logger.Info("No alerts to notify about")
@@ -304,7 +304,7 @@ func (d *AlertsRouter) Send(key models.AlertRuleKey, alerts definitions.Postable
 		n, err := d.multiOrgNotifier.AlertmanagerFor(key.OrgID)
 		if err == nil {
 			localNotifierExist = true
-			if err := n.PutAlerts(alerts); err != nil {
+			if err := n.PutAlerts(ctx, alerts); err != nil {
 				logger.Error("Failed to put alerts in the local notifier", "count", len(alerts.PostableAlerts), "error", err)
 			}
 		} else {

@@ -32,10 +32,10 @@ var (
 
 type Alertmanager interface {
 	// Configuration
+	ApplyConfig(context.Context, *models.AlertConfiguration) error
 	SaveAndApplyConfig(ctx context.Context, config *apimodels.PostableUserConfig) error
 	SaveAndApplyDefaultConfig(ctx context.Context) error
 	GetStatus() apimodels.GettableStatus
-	ApplyConfig(context.Context, *models.AlertConfiguration) error
 
 	// Silences
 	CreateSilence(context.Context, *apimodels.PostableSilence) (string, error)
@@ -44,9 +44,9 @@ type Alertmanager interface {
 	ListSilences(context.Context, []string) (apimodels.GettableSilences, error)
 
 	// Alerts
-	GetAlerts(active, silenced, inhibited bool, filter []string, receiver string) (apimodels.GettableAlerts, error)
-	GetAlertGroups(active, silenced, inhibited bool, filter []string, receiver string) (apimodels.AlertGroups, error)
-	PutAlerts(postableAlerts apimodels.PostableAlerts) error
+	GetAlerts(ctx context.Context, active, silenced, inhibited bool, filter []string, receiver string) (apimodels.GettableAlerts, error)
+	GetAlertGroups(ctx context.Context, active, silenced, inhibited bool, filter []string, receiver string) (apimodels.AlertGroups, error)
+	PutAlerts(context.Context, apimodels.PostableAlerts) error
 
 	// Receivers
 	GetReceivers(ctx context.Context) []apimodels.Receiver
