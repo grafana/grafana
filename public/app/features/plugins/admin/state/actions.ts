@@ -241,7 +241,7 @@ export const managedUninstall = createAsyncThunk<Update<CatalogPlugin>, string>(
   `${STATE_PREFIX}/uninstall`,
   async (id, thunkApi) => {
     try {
-      await uninstallManagedPlugin('config.instanceId', id);
+      await uninstallManagedPlugin(config.stackId, id);
       await updatePanels();
 
       invalidatePluginInCache(id);
