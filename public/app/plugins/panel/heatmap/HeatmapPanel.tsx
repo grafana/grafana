@@ -1,16 +1,7 @@
 import { css } from '@emotion/css';
 import React, { useCallback, useMemo, useRef } from 'react';
 
-import {
-  DataFrame,
-  Field,
-  getLinksSupplier,
-  GrafanaTheme2,
-  outerJoinDataFrames,
-  PanelProps,
-  ScopedVars,
-  TimeRange,
-} from '@grafana/data';
+import { DataFrame, Field, getLinksSupplier, GrafanaTheme2, PanelProps, ScopedVars, TimeRange } from '@grafana/data';
 import { PanelDataErrorView } from '@grafana/runtime';
 import { ScaleDistributionConfig } from '@grafana/schema';
 import {
@@ -25,9 +16,6 @@ import {
 } from '@grafana/ui';
 import { ColorScale } from 'app/core/components/ColorScale/ColorScale';
 import { readHeatmapRowsCustomMeta } from 'app/features/transformers/calculateHeatmap/heatmap';
-
-import { AnnotationXEditorPlugin } from '../timeseries/plugins/AnnotationXEditorPlugin';
-import { AnnotationsPlugin } from '../timeseries/plugins/AnnotationsPlugin';
 
 import { prepareHeatmapData } from './fields';
 import { quantizeScheme } from './palettes';
@@ -168,8 +156,6 @@ export const HeatmapPanel = ({
     );
   }
 
-  const alignedDataFrame = outerJoinDataFrames({ frames: data.series });
-
   return (
     <>
       <VizLayout width={width} height={height} legend={renderLegend()}>
@@ -202,17 +188,6 @@ export const HeatmapPanel = ({
                     />
                   );
                 }}
-              />
-            )}
-            {data.annotations && (
-              <AnnotationsPlugin annotations={data.annotations} config={builder} timeZone={timeZone} />
-            )}
-            {enableAnnotationCreation && (
-              <AnnotationXEditorPlugin
-                timeRange={null}
-                builder={builder}
-                timeZone={timeZone}
-                data={alignedDataFrame!}
               />
             )}
           </UPlotChart>

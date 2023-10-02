@@ -345,6 +345,9 @@ const HeatmapTooltipHover = ({
     return null;
   };
 
+  // @TODO remove this when adding annotations support
+  canAnnotate = false;
+
   return (
     <div className={styles.wrapper}>
       <VizTooltipHeader

@@ -9,9 +9,6 @@ import { buildScaleKey } from '../GraphNG/utils';
 
 const ALLOWED_FORMAT_STRINGS_REGEX = /\b(YYYY|YY|MMMM|MMM|MM|M|DD|D|WWWW|WWW|HH|H|h|AA|aa|a|mm|m|ss|s|fff)\b/g;
 
-/** @internal */
-export const ADD_ANNOTATION_ID = 'add-annotation-button';
-
 export function timeFormatToTemplate(f: string) {
   return f.replace(ALLOWED_FORMAT_STRINGS_REGEX, (match) => `{${match}}`);
 }

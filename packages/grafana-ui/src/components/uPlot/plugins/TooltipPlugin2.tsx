@@ -7,7 +7,6 @@ import { GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../../themes';
 import { UPlotConfigBuilder } from '../config/UPlotConfigBuilder';
-import { ADD_ANNOTATION_ID } from '../utils';
 
 import { CloseButton } from './CloseButton';
 
@@ -153,17 +152,6 @@ export const TooltipPlugin2 = ({ config, render }: TooltipPlugin2Props) => {
 
       // TODO: use cursor.lock & and mousedown/mouseup here (to prevent unlocking)
       u.over.addEventListener('click', (e) => {
-        // @TODO Extract this
-        const elem = e.target as Element;
-        const isButtonClicked = elem.parentElement?.id === ADD_ANNOTATION_ID;
-
-        if (e.ctrlKey || e.metaKey || isButtonClicked) {
-          dismiss();
-          // @ts-ignore
-          _plot!.cursor._lock = true;
-          return;
-        }
-
         if (_isHovering) {
           if (e.target === u.over) {
             _isPinned = !_isPinned;
@@ -180,12 +168,6 @@ export const TooltipPlugin2 = ({ config, render }: TooltipPlugin2Props) => {
             u.setCursor({ left: e.clientX - u.rect.left, top: e.clientY - u.rect.top });
             _isHovering = false;
           }
-        }
-
-        // @TODO revisit, used after saving annotations
-        if (!_isPinned) {
-          u.setCursor({ left: e.clientX - u.rect.left, top: e.clientY - u.rect.top });
-          _isHovering = true;
         }
       });
     });
