@@ -3,7 +3,7 @@ import React from 'react';
 import { DataSourceSettings } from '@grafana/data';
 import { ConfigSection, Stack } from '@grafana/experimental';
 import { config } from '@grafana/runtime';
-import { Field, Icon, InlineField, InlineLabel, InlineSwitch, Input, Label, Tooltip } from '@grafana/ui';
+import { Field, Icon, InlineLabel, Input, Label, Switch, Tooltip } from '@grafana/ui';
 
 import { SQLConnectionLimits, SQLOptions } from '../../types';
 
@@ -133,6 +133,29 @@ export const ConnectionLimits = <T extends SQLConnectionLimits>(props: Props<T>)
         label={
           <Label>
             <Stack gap={0.5}>
+              <span>Auto Max Idle</span>
+              <Tooltip
+                content={
+                  <span>
+                    If enabled, automatically set the number of <i>Maximum idle connections</i> to the same value as
+                    <i> Max open connections</i>. If the number of maximum open connections is not set it will be set to
+                    the default ({config.sqlConnectionLimits.maxIdleConns}).
+                  </span>
+                }
+              >
+                <Icon name="info-circle" size="sm" />
+              </Tooltip>
+            </Stack>
+          </Label>
+        }
+      >
+        <Switch value={autoIdle} onChange={onConnectionIdleAutoChanged} />
+      </Field>
+
+      <Field
+        label={
+          <Label>
+            <Stack gap={0.5}>
               <span>Max idle</span>
               <Tooltip
                 content={
@@ -150,38 +173,23 @@ export const ConnectionLimits = <T extends SQLConnectionLimits>(props: Props<T>)
           </Label>
         }
       >
-        <>
-          <InlineField
-            label="Auto"
-            labelWidth={labelWidth - 6.25 - 0.5} // 6.25 (50px) is the width of the switch and 0.5 (4px) is the gap between the switch and the label
-            tooltip={
-              <span>
-                If enabled, automatically set the number of <i>Maximum idle connections</i> to the same value as
-                <i> Max open connections</i>. If the number of maximum open connections is not set it will be set to the
-                default ({config.sqlConnectionLimits.maxIdleConns}).
-              </span>
-            }
-          >
-            <InlineSwitch value={autoIdle} onChange={onConnectionIdleAutoChanged} />
-          </InlineField>
-          {autoIdle ? (
-            <InlineLabel width={labelWidth}>{options.jsonData.maxIdleConns}</InlineLabel>
-          ) : (
-            <Input
-              type="number"
-              placeholder="2"
-              defaultValue={jsonData.maxIdleConns}
-              onChange={(e) => {
-                const newVal = toNumber(e.currentTarget.value);
-                if (!Number.isNaN(newVal)) {
-                  onJSONDataNumberChanged('maxIdleConns')(newVal);
-                }
-              }}
-              width={labelWidth}
-              disabled={autoIdle}
-            />
-          )}
-        </>
+        {autoIdle ? (
+          <InlineLabel width={labelWidth}>{options.jsonData.maxIdleConns}</InlineLabel>
+        ) : (
+          <Input
+            type="number"
+            placeholder="2"
+            defaultValue={jsonData.maxIdleConns}
+            onChange={(e) => {
+              const newVal = toNumber(e.currentTarget.value);
+              if (!Number.isNaN(newVal)) {
+                onJSONDataNumberChanged('maxIdleConns')(newVal);
+              }
+            }}
+            width={labelWidth}
+            disabled={autoIdle}
+          />
+        )}
       </Field>
 
       <Field
