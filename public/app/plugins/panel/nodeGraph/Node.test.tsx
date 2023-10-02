@@ -56,6 +56,26 @@ describe('Node', () => {
 
     expect(screen.getByTestId('node-circle-1')).toHaveAttribute('r', '20');
   });
+
+  it('renders correct icon size', async () => {
+    render(
+      <svg>
+        <Node
+          node={{
+            ...nodeDatum,
+            icon: 'database',
+            iconSize: { name: 'iconSize', values: ['md'], type: FieldType.string, config: {} },
+          }}
+          onMouseEnter={() => {}}
+          onMouseLeave={() => {}}
+          onClick={() => {}}
+          hovering={'default'}
+        />
+      </svg>
+    );
+
+    expect(screen.getByTestId('node-icon-database')).toHaveAttribute('icon-size', 'md');
+  });
 });
 
 const nodeDatum = {

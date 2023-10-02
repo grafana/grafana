@@ -34,4 +34,7 @@ export enum NodeGraphDataFrameFieldNames {
 
   // Whether the node or edge should be highlighted (e.g., shown in red) in the UI
   highlighted = 'highlighted',
+
+  // Size of the node icon [nodes]
+  iconSize = 'iconsize',
 }

@@ -5,6 +5,7 @@ import tinycolor from 'tinycolor2';
 
 import { Field, getFieldColorModeForField, GrafanaTheme2 } from '@grafana/data';
 import { Icon, useTheme2 } from '@grafana/ui';
+import { getSvgSize } from '@grafana/ui/src/components/Icon/utils';
 
 import { HoverState } from './NodeGraph';
 import { NodeDatum } from './types';
@@ -12,6 +13,7 @@ import { statToString } from './utils';
 
 export const nodeR = 40;
 export const highlightedNodeColor = '#a00';
+export const iconS = 'xxxl';
 
 const getStyles = (theme: GrafanaTheme2, hovering: HoverState) => ({
   mainGroup: css`
@@ -152,10 +154,27 @@ function NodeContents({ node, hovering }: { node: NodeDatum; hovering: HoverStat
     return null;
   }
 
+  const iconSize = node.iconSize?.values[node.dataFrameRowIndex] || iconS;
+  const nodeRadius = node.nodeRadius?.values[node.dataFrameRowIndex] || nodeR;
+
+  const objectWidth = nodeRadius * 1.75;
+  const objectHeight = nodeRadius;
+  const objectX = node.x - objectWidth / 2;
+  const objectY = node.y - objectHeight / 2;
+  const iconMarginTop = (nodeRadius - getSvgSize(iconSize)) / 2;
+
   return node.icon ? (
-    <foreignObject x={node.x - 35} y={node.y - 20} width="70" height="40">
-      <div style={{ width: 70, overflow: 'hidden', display: 'flex', justifyContent: 'center', marginTop: -4 }}>
-        <Icon data-testid={`node-icon-${node.icon}`} name={node.icon} size={'xxxl'} />
+    <foreignObject x={objectX} y={objectY} width={objectWidth} height={objectHeight}>
+      <div
+        style={{
+          width: objectWidth,
+          overflow: 'hidden',
+          display: 'flex',
+          justifyContent: 'center',
+          marginTop: iconMarginTop,
+        }}
+      >
+        <Icon data-testid={`node-icon-${node.icon}`} name={node.icon} size={iconSize} />
       </div>
     </foreignObject>
   ) : (

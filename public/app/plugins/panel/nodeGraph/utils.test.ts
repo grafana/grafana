@@ -133,6 +133,7 @@ describe('processNodes', () => {
         { name: 'mainstat', type: FieldType.string, values: ['mainStat'] },
         { name: 'seconDarysTat', type: FieldType.string, values: ['secondaryStat'] },
         { name: 'nodeRadius', type: FieldType.number, values: [20] },
+        { name: 'iconSize', type: FieldType.string, values: ['md'] },
       ],
     });
 
@@ -320,6 +321,13 @@ function makeNodeDatum(options: Partial<NodeDatum> = {}) {
       name: 'noderadius',
       type: 'number',
       values: [40, 40, 40],
+    },
+    iconSize: {
+      config: {},
+      index: 10,
+      name: 'iconsize',
+      type: 'string',
+      values: ['xxxl', 'xxxl', 'xxxl'],
     },
     ...options,
   };

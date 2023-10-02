@@ -110,6 +110,10 @@ export function generateRandomNodes(count = 10) {
       values: [],
       type: FieldType.boolean,
     },
+    [NodeGraphDataFrameFieldNames.iconSize]: {
+      values: [],
+      type: FieldType.string,
+    },
   };
 
   const nodeFrame = new MutableDataFrame({
