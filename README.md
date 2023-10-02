@@ -1,3 +1,20 @@
+**Attention: This is a fork of [Grafana](https://github.com/grafana/grafana) for use in the NI SystemLink™ platform. Significant changes are:**
+
+- Addition of Azure pipeline for automatically building Docker images
+- Modified coloring to match NI theme
+- Removal of Grafana branding and links to Grafana resources
+- Use of `postMessage` for route syncing and loading indication when hosted in an iframe
+- Update of "home" dashboard to remove unwanted panels
+- Addition of link to this fork of Grafana
+- Modification of sharing and linking functionality to work when embedded
+- Removal of kiosk mode
+- Removal of plugins list plugin
+- Removal of snapshot functionality
+- Hiding the "General" folder
+- Allow unsigned nested plugins if parent is allowed
+
+---
+
 ![Grafana Logo (Light)](docs/logo-horizontal.png#gh-light-mode-only)
 ![Grafana Logo (Dark)](docs/logo-horizontal-dark.png#gh-dark-mode-only)
 
@@ -32,6 +49,7 @@ The Grafana documentation is available at [grafana.com/docs](https://grafana.com
 If you're interested in contributing to the Grafana project:
 
 - Start by reading the [Contributing guide](https://github.com/grafana/grafana/blob/HEAD/CONTRIBUTING.md).
+  - Ensure you also read the [NI Contributing guide](CONTRIBUTING_NI.md).
 - Learn how to set up your local environment, in our [Developer guide](https://github.com/grafana/grafana/blob/HEAD/contribute/developer-guide.md).
 - Explore our [beginner-friendly issues](https://github.com/grafana/grafana/issues?q=is%3Aopen+is%3Aissue+label%3A%22beginner+friendly%22).
 - Look through our [style guide and Storybook](https://developers.grafana.com/ui/latest/index.html).
