@@ -344,9 +344,6 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
       if (this.state.refreshWhenInView) {
         this.setState({ refreshWhenInView: false });
       }
-      if (panel.type === 'row') {
-        return;
-      }
       panel.runAllPanelQueries({
         dashboardUID: dashboard.uid,
         dashboardTimezone: dashboard.getTimezone(),
