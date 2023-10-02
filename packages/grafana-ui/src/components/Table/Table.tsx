@@ -110,6 +110,11 @@ export const Table = memo((props: Props) => {
     [data, width, columnMinWidth, footerItems, hasNestedData, isCountRowsSet]
   );
 
+  // we need a ref to later store the `toggleAllRowsExpanded` function, returned by `useTable`.
+  // We cannot simply use a variable because we need to use such function in the initialization of
+  // `useTableStateReducer`, which is needed to construct options for `useTable` (the hook that returns
+  // `toggleAllRowsExpanded`), and if we used a variable, that variable would be undefined at the time
+  // we initialize `useTableStateReducer`.
   const toggleAllRowsExpandedRef = useRef<(value?: boolean) => void>();
 
   // Internal react table state reducer
@@ -118,11 +123,7 @@ export const Table = memo((props: Props) => {
     onSortByChange: (state) => {
       // Collapse all rows. This prevents a known bug that causes the size of the rows to be incorrect due to
       // using `VariableSizeList` and `useExpanded` together.
-      if (toggleAllRowsExpandedRef.current) {
-        toggleAllRowsExpandedRef.current(false);
-      } else {
-        console.error('toggleAllRowsExpandedRef.current is undefined');
-      }
+      toggleAllRowsExpandedRef.current!(false);
 
       if (props.onSortByChange) {
         props.onSortByChange(state);
