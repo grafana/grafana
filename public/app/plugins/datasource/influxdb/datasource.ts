@@ -220,7 +220,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     }
 
     if (this.isMigrationToggleOnAndIsAccessProxy()) {
-      query = this.applyVariables(query, scopedVars, rest);
+      query = this.applyVariables(query, rest);
       if (query.adhocFilters?.length) {
         const adhocFiltersToTags: InfluxQueryTag[] = (query.adhocFilters ?? []).map((af) => {
           const { condition, ...asTag } = af;
@@ -258,12 +258,12 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
       return {
         ...query,
         datasource: this.getRef(),
-        ...this.applyVariables(query, scopedVars, scopedVars),
+        ...this.applyVariables(query, scopedVars),
       };
     });
   }
 
-  applyVariables(query: InfluxQuery, scopedVars: ScopedVars, rest: ScopedVars) {
+  applyVariables(query: InfluxQuery, scopedVars: ScopedVars) {
     const expandedQuery = { ...query };
     if (query.groupBy) {
       expandedQuery.groupBy = query.groupBy.map((groupBy) => {
@@ -301,7 +301,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     return {
       ...expandedQuery,
       adhocFilters: this.templateSrv.getAdhocFilters(this.name) ?? [],
-      query: this.templateSrv.replace(query.query ?? '', rest, 'regex'), // The raw query text
+      query: this.templateSrv.replace(query.query ?? '', scopedVars, 'regex'), // The raw query text
       alias: this.templateSrv.replace(query.alias ?? '', scopedVars),
       limit: this.templateSrv.replace(query.limit?.toString() ?? '', scopedVars, 'regex'),
       measurement: this.templateSrv.replace(query.measurement ?? '', scopedVars, 'regex'),
