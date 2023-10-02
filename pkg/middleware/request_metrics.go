@@ -49,37 +49,30 @@ func RequestMetrics(features featuremgmt.FeatureToggles, cfg *setting.Cfg, promR
 		histogramLabels = append(histogramLabels, "slo_group")
 	}
 
-	httpRequestDurationHistogram := prometheus.NewHistogramVec(
-		prometheus.HistogramOpts{
-			Namespace: "grafana",
-			Name:      "http_request_duration_seconds",
-			Help:      "Histogram of latencies for HTTP requests.",
-			Buckets:   defBuckets,
-		},
-		histogramLabels,
-	)
+	histogramOptions := prometheus.HistogramOpts{
+		Namespace: "grafana",
+		Name:      "http_request_duration_seconds",
+		Help:      "Histogram of latencies for HTTP requests.",
+		Buckets:   defBuckets,
+	}
 
-	nativeHTTPRequestDurationHistogram := prometheus.NewHistogramVec(
-		prometheus.HistogramOpts{
-			Namespace: "grafana",
-			Name:      "native_http_duration_seconds",
-			Help:      "Native Histogram of latency for HTTP requests.",
-			// the recommended default value from the prom_client
-			// https://github.com/prometheus/client_golang/blob/main/prometheus/histogram.go#L411
-			// Giving this variable an value means the client will expose the histograms as an
-			// native histogram instead of normal a normal histogram.
-			NativeHistogramBucketFactor: 1.1,
-			// The default value in OTel. It probably good enough for us as well.
-			NativeHistogramMaxBucketNumber: 160,
-		},
+	if features.IsEnabled(featuremgmt.FlagEnableNativeHTTPHistogram) {
+		// the recommended default value from the prom_client
+		// https://github.com/prometheus/client_golang/blob/main/prometheus/histogram.go#L411
+		// Giving this variable an value means the client will expose the histograms as an
+		// native histogram instead of normal a normal histogram.
+		histogramOptions.NativeHistogramBucketFactor = 1.1
+		// The default value in OTel. It probably good enough for us as well.
+		histogramOptions.NativeHistogramMaxBucketNumber = 160
+		histogramOptions.NativeHistogramMinResetDuration = time.Hour
+	}
+
+	httpRequestDurationHistogram := prometheus.NewHistogramVec(
+		histogramOptions,
 		histogramLabels,
 	)
 
 	promRegister.MustRegister(httpRequestsInFlight, httpRequestDurationHistogram)
-
-	if features.IsEnabled(featuremgmt.FlagEnableNativeHTTPHistogram) {
-		promRegister.MustRegister(nativeHTTPRequestDurationHistogram)
-	}
 
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -128,12 +121,6 @@ func RequestMetrics(features featuremgmt.FeatureToggles, cfg *setting.Cfg, promR
 			histogram := httpRequestDurationHistogram.
 				WithLabelValues(labelValues...)
 
-			var nativeHistogram prometheus.Observer
-			if features.IsEnabled(featuremgmt.FlagEnableNativeHTTPHistogram) {
-				nativeHistogram = nativeHTTPRequestDurationHistogram.
-					WithLabelValues(labelValues...)
-			}
-
 			elapsedTime := time.Since(now).Seconds()
 
 			if traceID := tracing.TraceIDFromContext(r.Context(), true); traceID != "" {
@@ -143,18 +130,8 @@ func RequestMetrics(features featuremgmt.FeatureToggles, cfg *setting.Cfg, promR
 				histogram.(prometheus.ExemplarObserver).ObserveWithExemplar(
 					elapsedTime, prometheus.Labels{"traceID": traceID},
 				)
-
-				if features.IsEnabled(featuremgmt.FlagEnableNativeHTTPHistogram) {
-					nativeHistogram.(prometheus.ExemplarObserver).ObserveWithExemplar(
-						elapsedTime, prometheus.Labels{"traceID": traceID},
-					)
-				}
 			} else {
 				histogram.Observe(elapsedTime)
-
-				if features.IsEnabled(featuremgmt.FlagEnableNativeHTTPHistogram) {
-					nativeHistogram.Observe(elapsedTime)
-				}
 			}
 
 			switch {
