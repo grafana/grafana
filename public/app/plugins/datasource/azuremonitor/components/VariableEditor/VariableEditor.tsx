@@ -228,10 +228,7 @@ const VariableEditor = (props: Props) => {
 
   return (
     <>
-      <Field
-        label="Query Type"
-        data-testid={selectors.components.variableEditor.queryType.input}
-      >
+      <Field label="Query Type" data-testid={selectors.components.variableEditor.queryType.input}>
         <Select
           aria-label="select query type"
           onChange={onQueryTypeChange}
@@ -265,10 +262,7 @@ const VariableEditor = (props: Props) => {
         <GrafanaTemplateVariableFnInput query={query} updateQuery={props.onChange} datasource={datasource} />
       )}
       {requireSubscription && (
-        <Field
-          label="Subscription"
-          data-testid={selectors.components.variableEditor.subscription.input}
-        >
+        <Field label="Subscription" data-testid={selectors.components.variableEditor.subscription.input}>
           <Select
             aria-label="select subscription"
             onChange={onChangeSubscription}
@@ -279,10 +273,7 @@ const VariableEditor = (props: Props) => {
         </Field>
       )}
       {(requireResourceGroup || hasResourceGroup) && (
-        <Field
-          label="Resource Group"
-          data-testid={selectors.components.variableEditor.resourceGroup.input}
-        >
+        <Field label="Resource Group" data-testid={selectors.components.variableEditor.resourceGroup.input}>
           <Select
             aria-label="select resource group"
             onChange={onChangeResourceGroup}
@@ -298,10 +289,7 @@ const VariableEditor = (props: Props) => {
         </Field>
       )}
       {(requireNamespace || hasNamespace) && (
-        <Field
-          label="Namespace"
-          data-testid={selectors.components.variableEditor.namespace.input}
-        >
+        <Field label="Namespace" data-testid={selectors.components.variableEditor.namespace.input}>
           <Select
             aria-label="select namespace"
             onChange={onChangeNamespace}
@@ -317,10 +305,7 @@ const VariableEditor = (props: Props) => {
         </Field>
       )}
       {hasRegion && (
-        <Field
-          label="Region"
-          data-testid={selectors.components.variableEditor.region.input}
-        >
+        <Field label="Region" data-testid={selectors.components.variableEditor.region.input}>
           <Select
             aria-label="select region"
             onChange={onChangeRegion}
@@ -332,10 +317,7 @@ const VariableEditor = (props: Props) => {
         </Field>
       )}
       {requireResource && (
-        <Field
-          label="Resource"
-          data-testid={selectors.components.variableEditor.resource.input}
-        >
+        <Field label="Resource" data-testid={selectors.components.variableEditor.resource.input}>
           <Select
             aria-label="select resource"
             onChange={onChangeResource}
