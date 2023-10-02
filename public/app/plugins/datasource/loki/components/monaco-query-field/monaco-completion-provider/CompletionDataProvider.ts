@@ -62,9 +62,8 @@ export class CompletionDataProvider {
    * Runs a Loki query to extract label keys from the result.
    * The result is cached for the query string.
    *
-   * Since each stop char in the editor triggers this function, it is prone to being called multiple times for the same query
-   * Here is a very simple map (cache) to avoid calling the backend multiple times for the same query.
-   * It only stores the previous two results
+   * Since various "situations" in the monaco code editor trigger this function, it is prone to being called multiple times for the same query
+   * Here is a lightweight and simple cache to avoid calling the backend multiple times for the same query.
    *
    * @param logQuery
    */
@@ -77,7 +76,7 @@ export class CompletionDataProvider {
     } else {
       // Save last two results in the cache
       if (this.queryToLabelKeysCache.size > EXTRACTED_LABEL_KEYS_MAX_CACHE_SIZE) {
-        // Make room in the cache for the fresh result
+        // Make room in the cache for the fresh result by deleting the "first" index
         const keys = this.queryToLabelKeysCache.keys();
         const firstKey = keys.next().value;
         this.queryToLabelKeysCache.delete(firstKey);
