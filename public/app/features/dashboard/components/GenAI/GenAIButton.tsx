@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import React, { useEffect } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Button, Spinner, useStyles2, Link, Tooltip } from '@grafana/ui';
@@ -34,7 +34,24 @@ export const GenAIButton = ({
   const styles = useStyles2(getStyles);
 
   // TODO: Implement error handling (use error object from hook)
-  const { setMessages, reply, isGenerating, value } = useOpenAIStream(OPEN_AI_MODEL, temperature);
+  const { setMessages, reply, isGenerating, value, error } = useOpenAIStream(OPEN_AI_MODEL, temperature);
+
+  useEffect(() => {
+    // Todo: Consider other options for `"` sanitation
+    if (isGenerating && reply) {
+      onGenerate(reply.replace(/^"|"$/g, ''));
+    }
+  }, [isGenerating, reply, onGenerate]);
+
+  const getIcon = () => {
+    if (error || !value?.isConfigured) {
+      return 'exclamation-circle';
+    }
+    if (isGenerating) {
+      return undefined;
+    }
+    return 'ai';
+  };
 
   if (!value?.enabled && !isGenerating) {
     return null;
@@ -45,42 +62,42 @@ export const GenAIButton = ({
     setMessages(messages);
   };
 
-  // Todo: Consider other options for `"` sanitation
-  if (isGenerating) {
-    onGenerate(reply.replace(/^"|"$/g, ''));
-  }
-
-  const getIcon = () => {
-    if (isGenerating) {
-      return undefined;
+  const getTooltipContent = () => {
+    if (error) {
+      return `Unexpected error: ${error.message}`;
     }
     if (!value?.isConfigured) {
-      return 'exclamation-circle';
+      return (
+        <span>
+          LLM plugin not configured correctly. To enable LLM features, check your OpenAI configuration in{' '}
+          <Link href={`/plugins/grafana-llm-app`}>the plugin settings</Link>.
+        </span>
+      );
     }
-    return 'ai';
+    return '';
+  };
+
+  const getText = () => {
+    if (error) {
+      return 'Retry';
+    }
+
+    return !isGenerating ? text : loadingText;
   };
 
   return (
     <div className={styles.wrapper}>
       {isGenerating && <Spinner size={14} />}
-      <Tooltip
-        show={value?.isConfigured ? false : undefined}
-        interactive
-        content={
-          <span>
-            LLM plugin not configured correctly. To enable LLM features, check your OpenAI configuration in{' '}
-            <Link href={`/plugins/grafana-llm-app`}>the plugin settings</Link>.
-          </span>
-        }
-      >
+      <Tooltip show={value?.isConfigured && !error ? false : undefined} interactive content={getTooltipContent()}>
         <Button
           icon={getIcon()}
           onClick={onClick}
           fill="text"
           size="sm"
-          disabled={isGenerating || !value?.isConfigured}
+          disabled={isGenerating || (!value?.isConfigured && !error)}
+          variant={error ? 'destructive' : 'primary'}
         >
-          {!isGenerating ? text : loadingText}
+          {getText()}
         </Button>
       </Tooltip>
     </div>
@@ -88,7 +105,7 @@ export const GenAIButton = ({
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  wrapper: css`
-    display: flex;
-  `,
+  wrapper: css({
+    display: 'flex',
+  }),
 });
