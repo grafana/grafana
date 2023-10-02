@@ -12,7 +12,10 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 )
 
 const (
@@ -228,7 +231,19 @@ Timestamps will line up evenly on timeStepSeconds (For example, 60 seconds means
 
 func (s *Service) registerScenario(scenario *Scenario) {
 	s.scenarios[scenario.ID] = scenario
-	s.queryMux.HandleFunc(scenario.ID, scenario.handler)
+	s.queryMux.HandleFunc(scenario.ID, traceScenarioHandler(scenario.ID, scenario.handler))
+}
+
+func traceScenarioHandler(scenario string, fn backend.QueryDataHandlerFunc) backend.QueryDataHandlerFunc {
+	return backend.QueryDataHandlerFunc(func(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+		ctx, span := tracing.DefaultTracer().Start(ctx, "testdatasource.queryData",
+			trace.WithAttributes(
+				attribute.String("scenario", scenario),
+			))
+		defer span.End()
+
+		return fn(ctx, req)
+	})
 }
 
 type JSONModel struct {
@@ -312,7 +327,8 @@ func (s *Service) handleFallbackScenario(ctx context.Context, req *backend.Query
 				Headers:       req.Headers,
 				Queries:       queries,
 			}
-			if sResp, err := scenario.handler(ctx, sReq); err != nil {
+			handler := traceScenarioHandler(scenarioID, scenario.handler)
+			if sResp, err := handler(ctx, sReq); err != nil {
 				s.logger.Error("Failed to handle scenario", "scenarioId", scenarioID, "error", err)
 			} else {
 				for refID, dr := range sResp.Responses {
