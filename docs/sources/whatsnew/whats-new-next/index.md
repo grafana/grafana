@@ -20,7 +20,6 @@ Welcome to Grafana Cloud! Read on to learn about the newest changes to Grafana C
 ## Distributed Tracing in Grafana Cloud k6
 
 <!-- Heitor Tashiro Sergent -->
-<!-- OSS, Enterprise -->
 
 _Generally available in Grafana Cloud_
 
