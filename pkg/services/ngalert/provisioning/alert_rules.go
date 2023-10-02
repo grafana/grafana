@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"sort"
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -436,21 +435,7 @@ func (service *AlertRuleService) GetAlertRuleGroupWithFolderTitle(ctx context.Co
 		return models.AlertRuleGroupWithFolderTitle{}, err
 	}
 
-	res := models.AlertRuleGroupWithFolderTitle{
-		AlertRuleGroup: &models.AlertRuleGroup{
-			Title:     ruleList[0].RuleGroup,
-			FolderUID: ruleList[0].NamespaceUID,
-			Interval:  ruleList[0].IntervalSeconds,
-			Rules:     []models.AlertRule{},
-		},
-		OrgID:       orgID,
-		FolderTitle: dash.Title,
-	}
-	for _, r := range ruleList {
-		if r != nil {
-			res.AlertRuleGroup.Rules = append(res.AlertRuleGroup.Rules, *r)
-		}
-	}
+	res := models.NewAlertRuleGroupWithFolderTitleFromRulesGroup(ruleList[0].GetGroupKey(), ruleList, dash.Title)
 	return res, nil
 }
 
@@ -507,26 +492,11 @@ func (service *AlertRuleService) GetAlertGroupsWithFolderTitle(ctx context.Conte
 		if !ok {
 			return nil, fmt.Errorf("cannot find title for folder with uid '%s'", groupKey.NamespaceUID)
 		}
-		result = append(result, models.AlertRuleGroupWithFolderTitle{
-			AlertRuleGroup: &models.AlertRuleGroup{
-				Title:     rules[0].RuleGroup,
-				FolderUID: rules[0].NamespaceUID,
-				Interval:  rules[0].IntervalSeconds,
-				Rules:     rules,
-			},
-			OrgID:       orgID,
-			FolderTitle: title,
-		})
+		result = append(result, models.NewAlertRuleGroupWithFolderTitle(groupKey, rules, title))
 	}
 
 	// Return results in a stable manner.
-	sort.SliceStable(result, func(i, j int) bool {
-		if result[i].AlertRuleGroup.FolderUID == result[j].AlertRuleGroup.FolderUID {
-			return result[i].AlertRuleGroup.Title < result[j].AlertRuleGroup.Title
-		}
-		return result[i].AlertRuleGroup.FolderUID < result[j].AlertRuleGroup.FolderUID
-	})
-
+	models.SortAlertRuleGroupWithFolderTitle(result)
 	return result, nil
 }
 
