@@ -106,3 +106,8 @@ When this query is used as the **condition** in an alert rule, then the non-zero
 | {Host=web1,disk=/etc} | Alerting |
 | {Host=web2,disk=/var} | Alerting |
 | {Host=web3,disk=/var} | Normal   |
+
+{{% docs/reference %}}
+[set-up-grafana-monitoring]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/set-up-grafana-monitoring"
+[set-up-grafana-monitoring]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/set-up-grafana-monitoring"
+{{% /docs/reference %}}

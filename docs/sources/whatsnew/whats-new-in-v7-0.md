@@ -77,7 +77,7 @@ For users with large dashboards or with heavy queries, being able to reuse the q
 
 The [Google Sheets data source](/grafana/plugins/grafana-googlesheets-datasource) that was published a few weeks ago works really well together with the transformations feature.
 
-We are also introducing a new shared data model for both time series and table data that we call [DataFrame](/developers/plugin-tools/introduction/data-frames). A DataFrame is like a table with columns but we refer to columns as fields. A time series is a DataFrame with two fields (time & value).
+We are also introducing a new shared data model for both time series and table data that we call [DataFrame](/developers/plugin-tools/introduction/data-frames#data-frames-as-time-series). A DataFrame is like a table with columns but we refer to columns as fields. A time series is a DataFrame with two fields (time & value).
 
 **Transformations shipping in 7.0**
 
@@ -131,9 +131,9 @@ Grafana 7.0 adds logging support to one of our most popular cloud provider data 
 
 ## Plugins platform
 
-The [platform for plugins](/developers/plugin-tools) has been completely re-imagined and provides ready-made components and tooling to help both inexperienced and experienced developers get up and running more quickly. The tooling, documentation, and new components will improve plugin quality and reduce long-term maintenance. We are already seeing that a high quality plugin with the Grafana look and feel can be written in much fewer lines of code than previously.
+The [platform for plugins](/developers/plugin-tools/) has been completely re-imagined and provides ready-made components and tooling to help both inexperienced and experienced developers get up and running more quickly. The tooling, documentation, and new components will improve plugin quality and reduce long-term maintenance. We are already seeing that a high quality plugin with the Grafana look and feel can be written in much fewer lines of code than previously.
 
-Learn more about developing plugins in the new framework in [Build a plugin](/developers/plugin-tools).
+Learn more about developing plugins in the new framework in [Plugin tools](/developers/plugin-tools/).
 
 ### Front end plugins platform
 
@@ -153,7 +153,7 @@ Plugins can be monitored with the new metrics and health check capabilities. The
 
 With this release, we are deprecating the unofficial first version of backend plugins which will be removed in a future release.
 
-To learn more, start with the [overview](/developers/plugin-tools/introduction/backend-plugins). Next, in this [tutorial](/tutorials/build-a-data-source-backend-plugin/) you'll learn how to build a backend for a data source plugin and enable it for use with [Grafana Alerting]({{< relref "../alerting" >}}). Make sure to keep an eye out for additional documentation and tutorials that will be published after the Grafana v7.0 release.
+To learn more, start with the [overview](/developers/plugin-tools/introduction/backend-plugins). Next, in this [tutorial](/developers/plugin-tools/tutorials/build-a-data-source-backend-plugin) you'll learn how to build a backend for a data source plugin and enable it for use with [Grafana Alerting]({{< relref "../alerting" >}}). Make sure to keep an eye out for additional documentation and tutorials that will be published after the Grafana v7.0 release.
 
 ## New tutorials
 
