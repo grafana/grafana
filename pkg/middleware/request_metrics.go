@@ -69,7 +69,7 @@ func RequestMetrics(features featuremgmt.FeatureToggles, cfg *setting.Cfg, promR
 			// Giving this variable an value means the client will expose the histograms as an
 			// native histogram instead of normal a normal histogram.
 			NativeHistogramBucketFactor: 1.1,
-			// The default value in OTel. It proberbly good enough for us as well.
+			// The default value in OTel. It probably good enough for us as well.
 			NativeHistogramMaxBucketNumber: 160,
 		},
 		histogramLabels,
