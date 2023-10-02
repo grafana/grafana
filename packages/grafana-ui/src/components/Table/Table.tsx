@@ -168,6 +168,7 @@ export const Table = memo((props: Props) => {
 
   const expandedRowsRepr = JSON.stringify(Object.keys(state.expanded));
   useEffect(() => {
+    // Reset the list size cache when the expanded rows change
     listRef.current?.resetAfterIndex(0);
   }, [expandedRowsRepr]);
 
