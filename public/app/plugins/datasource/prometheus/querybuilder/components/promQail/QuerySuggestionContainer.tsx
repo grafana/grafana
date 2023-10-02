@@ -61,28 +61,29 @@ export function QuerySuggestionContainer(props: Props) {
           })}
         </div>
       </div>
-      <div className={styles.nextInteractionHeight}>
-        <div className={cx(styles.afterButtons, styles.textPadding)}>
-          <Button
-            onClick={() => {
-              updateHasNextInteraction(true);
-              nextInteraction();
-            }}
-            data-testid={testIds.refinePrompt && suggestionType === SuggestionType.AI}
-            disabled={hasNextInteraction}
-            fill="outline"
-            variant="secondary"
-            size="md"
-          >
-            {refineText}
-          </Button>
+      {!hasNextInteraction && (
+        <div className={styles.nextInteractionHeight}>
+          <div className={cx(styles.afterButtons, styles.textPadding)}>
+            <Button
+              onClick={() => {
+                updateHasNextInteraction(true);
+                nextInteraction();
+              }}
+              data-testid={testIds.refinePrompt}
+              fill="outline"
+              variant="secondary"
+              size="md"
+            >
+              {refineText}
+            </Button>
+          </div>
+          <div className={cx(styles.textPadding, styles.floatRight)}>
+            <Button fill="outline" variant="secondary" size="md" onClick={closeDrawer}>
+              Cancel
+            </Button>
+          </div>
         </div>
-        <div className={cx(styles.textPadding, styles.floatRight)}>
-          <Button fill="outline" variant="secondary" size="md" onClick={closeDrawer}>
-            Cancel
-          </Button>
-        </div>
-      </div>
+      )}
     </>
   );
 }
