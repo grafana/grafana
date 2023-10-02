@@ -213,6 +213,7 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
       to: oldModel.time.to,
       fiscalYearStartMonth: oldModel.fiscalYearStartMonth,
       timeZone: oldModel.timezone,
+      weekStart: oldModel.weekStart,
     }),
     $variables: variables,
     $behaviors: [

@@ -193,6 +193,7 @@ exports[`transformSceneToSaveModel Given a scene with rows Should transform back
   "timezone": "",
   "title": "Repeating rows",
   "uid": "Repeating-rows-uid",
+  "weekStart": "",
 }
 `;
 
@@ -369,5 +370,6 @@ exports[`transformSceneToSaveModel Given a simple scene Should transform back to
   "timezone": "America/New_York",
   "title": "Dashboard to load1",
   "uid": "nP8rcffGkasd",
+  "weekStart": "saturday",
 }
 `;

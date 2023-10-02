@@ -74,6 +74,7 @@ describe('transformSaveModelToScene', () => {
       expect(scene.state?.$timeRange?.state.value.raw).toEqual(dash.time);
       expect(scene.state?.$timeRange?.state.fiscalYearStartMonth).toEqual(2);
       expect(scene.state?.$timeRange?.state.timeZone).toEqual('America/New_York');
+      expect(scene.state?.$timeRange?.state.weekStart).toEqual('saturday');
       expect(scene.state?.$variables?.state.variables).toHaveLength(1);
       expect(scene.state.controls).toBeDefined();
     });
