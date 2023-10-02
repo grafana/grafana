@@ -6,7 +6,17 @@ import { useDispatch, useSelector } from 'app/types';
 import { sortPlugins, Sorters } from '../helpers';
 import { CatalogPlugin, PluginListDisplayMode } from '../types';
 
-import { fetchAll, fetchDetails, fetchRemotePlugins, install, uninstall, fetchAllLocal, unsetInstall, managedInstall } from './actions';
+import {
+  fetchAll,
+  fetchDetails,
+  fetchRemotePlugins,
+  install,
+  uninstall,
+  fetchAllLocal,
+  unsetInstall,
+  managedInstall,
+  managedUninstall,
+} from './actions';
 import { setDisplayMode } from './reducer';
 import {
   selectPlugins,
@@ -62,7 +72,7 @@ export const useInstall = () => {
 export const useManagedInstall = () => {
   const dispatch = useDispatch();
   return (id: string, version?: string, isUpdating?: boolean) => dispatch(managedInstall({ id, version, isUpdating }));
-}
+};
 
 export const useUnsetInstall = () => {
   const dispatch = useDispatch();
@@ -74,6 +84,12 @@ export const useUninstall = () => {
   const dispatch = useDispatch();
 
   return (id: string) => dispatch(uninstall(id));
+};
+
+export const useManagedUninstall = () => {
+  const dispatch = useDispatch();
+
+  return (id: string) => dispatch(managedUninstall(id));
 };
 
 export const useIsRemotePluginsAvailable = () => {

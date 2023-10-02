@@ -132,6 +132,13 @@ export async function uninstallPlugin(id: string) {
   return await getBackendSrv().post(`${API_ROOT}/${id}/uninstall`);
 }
 
+export async function uninstallManagedPlugin(instanceId: string, plugin: string) {
+  return await getBackendSrv().delete(`${GCOM_API_ROOT}/instances/${instanceId}/plugins/${plugin}`, {
+    // Error is displayed in the page
+    showErrorAlert: false,
+  });
+}
+
 export async function updatePluginSettings(id: string, data: Partial<PluginMeta>) {
   const response = await getBackendSrv().datasourceRequest({
     url: `/api/plugins/${id}/settings`,
@@ -148,4 +155,5 @@ export const api = {
   installPlugin,
   installManagedPlugin,
   uninstallPlugin,
+  uninstallManagedPlugin,
 };

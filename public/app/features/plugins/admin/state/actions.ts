@@ -15,6 +15,7 @@ import {
   installPlugin,
   installManagedPlugin,
   uninstallPlugin,
+  uninstallManagedPlugin,
 } from '../api';
 import { STATE_PREFIX } from '../constants';
 import { mapLocalToCatalog, mergeLocalsAndRemotes, updatePanels } from '../helpers';
@@ -220,6 +221,27 @@ export const uninstall = createAsyncThunk<Update<CatalogPlugin>, string>(
   async (id, thunkApi) => {
     try {
       await uninstallPlugin(id);
+      await updatePanels();
+
+      invalidatePluginInCache(id);
+
+      return {
+        id,
+        changes: { isInstalled: false, installedVersion: undefined },
+      };
+    } catch (e) {
+      console.error(e);
+
+      return thunkApi.rejectWithValue('Unknown error.');
+    }
+  }
+);
+
+export const managedUninstall = createAsyncThunk<Update<CatalogPlugin>, string>(
+  `${STATE_PREFIX}/uninstall`,
+  async (id, thunkApi) => {
+    try {
+      await uninstallManagedPlugin('config.instanceId', id);
       await updatePanels();
 
       invalidatePluginInCache(id);

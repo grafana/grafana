@@ -18,6 +18,7 @@ import {
   useUnsetInstall,
   useFetchDetailsLazy,
   useManagedInstall,
+  useManagedUninstall,
 } from '../../state/hooks';
 import { trackPluginInstalled, trackPluginUninstalled } from '../../tracking';
 import { CatalogPlugin, PluginStatus, PluginTabIds, Version } from '../../types';
@@ -29,6 +30,7 @@ type InstallControlsButtonProps = {
   hasInstallWarning?: boolean;
   setNeedReload?: (needReload: boolean) => void;
   isExternallyManaged?: boolean;
+  onManagedInstallCallback?: (showInstallationInfoModal: boolean) => void;
 };
 
 export function InstallControlsButton({
@@ -38,6 +40,7 @@ export function InstallControlsButton({
   hasInstallWarning,
   setNeedReload,
   isExternallyManaged = false,
+  onManagedInstallCallback,
 }: InstallControlsButtonProps) {
   const dispatch = useDispatch();
   const [queryParams] = useQueryParams();
@@ -46,6 +49,7 @@ export function InstallControlsButton({
   const { isUninstalling, error: errorUninstalling } = useUninstallStatus();
   const install = useInstall();
   const managedInstall = useManagedInstall();
+  const managedUninstall = useManagedUninstall();
   const uninstall = useUninstall();
   const unsetInstall = useUnsetInstall();
   const fetchDetails = useFetchDetailsLazy();
@@ -58,6 +62,8 @@ export function InstallControlsButton({
     plugin_type: plugin.type,
     path: location.pathname,
   };
+
+  // const [showInstallationInfoModal, setShowInstallationInfoModal] = useState(false);
 
   useEffect(() => {
     return () => {
@@ -89,12 +95,34 @@ export function InstallControlsButton({
         setNeedReload?.(true);
       }
     }
-  }
+    if (onManagedInstallCallback) {
+      onManagedInstallCallback(true);
+    }
+  };
 
   const onUninstall = async () => {
     hideConfirmModal();
     trackPluginUninstalled(trackingProps);
     await uninstall(plugin.id);
+    if (!errorUninstalling) {
+      // If an app plugin is uninstalled we need to reset the active tab when the config / dashboards tabs are removed.
+      const activePageId = queryParams.page;
+      const isViewingAppConfigPage = activePageId !== PluginTabIds.OVERVIEW && activePageId !== PluginTabIds.VERSIONS;
+      if (isViewingAppConfigPage) {
+        locationService.replace(`${location.pathname}?page=${PluginTabIds.OVERVIEW}`);
+      }
+      appEvents.emit(AppEvents.alertSuccess, [`Uninstalled ${plugin.name}`]);
+      if (plugin.type === 'app') {
+        dispatch(removePluginFromNavTree({ pluginID: plugin.id }));
+        setNeedReload?.(false);
+      }
+    }
+  };
+
+  const onManagedUninstall = async () => {
+    hideConfirmModal();
+    trackPluginUninstalled(trackingProps);
+    await managedUninstall(plugin.id);
     if (!errorUninstalling) {
       // If an app plugin is uninstalled we need to reset the active tab when the config / dashboards tabs are removed.
       const activePageId = queryParams.page;
@@ -149,7 +177,11 @@ export function InstallControlsButton({
         <Button disabled={isInstalling} onClick={onUpdate}>
           {isInstalling ? 'Updating' : 'Update'}
         </Button>
-        <Button variant="destructive" disabled={isUninstalling} onClick={onUninstall}>
+        <Button
+          variant="destructive"
+          disabled={isUninstalling}
+          onClick={isExternallyManaged ? onManagedUninstall : onUninstall}
+        >
           {uninstallBtnText}
         </Button>
       </HorizontalGroup>
