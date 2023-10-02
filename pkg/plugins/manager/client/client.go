@@ -188,7 +188,7 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 			return nil, err
 		}
 
-		return nil, plugins.ErrPluginDownstreamErrorBase.Errorf("client: failed to check health: %w", err)
+		return nil, plugins.ErrPluginHealthCheck.Errorf("client: failed to check health: %w", err)
 	}
 
 	return resp, nil

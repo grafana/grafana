@@ -14,11 +14,11 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
+	"github.com/grafana/grafana/pkg/plugins/auth"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/pluginextensionv2"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/secretsmanagerplugin"
 	"github.com/grafana/grafana/pkg/plugins/log"
-	"github.com/grafana/grafana/pkg/plugins/oauth"
 	"github.com/grafana/grafana/pkg/plugins/plugindef"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/util"
@@ -29,6 +29,7 @@ var (
 	ErrPluginFileRead            = errors.New("file could not be read")
 	ErrUninstallInvalidPluginDir = errors.New("cannot recognize as plugin folder")
 	ErrInvalidPluginJSON         = errors.New("did not find valid type or id properties in plugin.json")
+	ErrUnsupportedAlias          = errors.New("can not set alias in plugin.json")
 )
 
 type Plugin struct {
@@ -56,7 +57,7 @@ type Plugin struct {
 
 	AngularDetected bool
 
-	ExternalService *oauth.ExternalService
+	ExternalService *auth.ExternalService
 
 	Renderer       pluginextensionv2.RendererPlugin
 	SecretsManager secretsmanagerplugin.SecretsManagerPlugin
@@ -64,9 +65,6 @@ type Plugin struct {
 	log            log.Logger
 
 	mu sync.Mutex
-
-	// This will be moved to plugin.json when we have general support in gcom
-	Alias string `json:"alias,omitempty"`
 }
 
 // JSONData represents the plugin's plugin.json
@@ -75,7 +73,7 @@ type JSONData struct {
 	ID           string       `json:"id"`
 	Type         Type         `json:"type"`
 	Name         string       `json:"name"`
-	Alias        string       `json:"alias,omitempty"`
+	AliasIDs     []string     `json:"aliasIDs,omitempty"`
 	Info         Info         `json:"info"`
 	Dependencies Dependencies `json:"dependencies"`
 	Includes     []*Includes  `json:"includes"`
@@ -112,7 +110,7 @@ type JSONData struct {
 	// Backend (Datasource + Renderer + SecretsManager)
 	Executable string `json:"executable,omitempty"`
 
-	// Oauth App Service Registration
+	// App Service Auth Registration
 	ExternalServiceRegistration *plugindef.ExternalServiceRegistration `json:"externalServiceRegistration,omitempty"`
 }
 
@@ -130,12 +128,20 @@ func ReadPluginJSON(reader io.Reader) (JSONData, error) {
 	switch plugin.ID {
 	case "grafana-piechart-panel":
 		plugin.Name = "Pie Chart (old)"
-	case "grafana-pyroscope-datasource": // rebranding
-		plugin.Alias = "phlare"
+	case "grafana-pyroscope-datasource":
+		fallthrough
 	case "grafana-testdata-datasource":
-		plugin.Alias = "testdata"
-	case "debug": // panel plugin used for testing
-		plugin.Alias = "debugX"
+		fallthrough
+	case "annolist":
+		fallthrough
+	case "debug":
+		if len(plugin.AliasIDs) == 0 {
+			return plugin, fmt.Errorf("expected alias to be set")
+		}
+	default: // TODO: when gcom validates the alias, this condition can be removed
+		if len(plugin.AliasIDs) > 0 {
+			return plugin, ErrUnsupportedAlias
+		}
 	}
 
 	if len(plugin.Dependencies.Plugins) == 0 {
