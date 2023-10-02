@@ -21,6 +21,7 @@ import {
 import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/core';
 import { useNavModel } from 'app/core/hooks/useNavModel';
+import { Trans, t } from 'app/core/internationalization';
 import { AccessControlAction } from 'app/types';
 
 import { AddCorrelationForm } from './Forms/AddCorrelationForm';
@@ -32,7 +33,7 @@ import { CorrelationData, useCorrelations } from './useCorrelations';
 const sortDatasource: SortByFn<CorrelationData> = (a, b, column) =>
   a.values[column].name.localeCompare(b.values[column].name);
 
-const isSourceReadOnly = ({ source }: Pick<CorrelationData, 'source'>) => source.readOnly;
+const isCorrelationsReadOnly = (correlation: CorrelationData) => correlation.provisioned;
 
 const loaderWrapper = css`
   display: flex;
@@ -91,15 +92,16 @@ export default function CorrelationsPage() {
       row: {
         index,
         original: {
-          source: { uid: sourceUID, readOnly },
+          source: { uid: sourceUID },
+          provisioned,
           uid,
         },
       },
     }: CellProps<CorrelationData, void>) => {
       return (
-        !readOnly && (
+        !provisioned && (
           <DeleteButton
-            aria-label="delete correlation"
+            aria-label={t('correlations.list.delete', 'delete correlation')}
             onConfirm={() =>
               handleDelete({ sourceUID, uid }, page.current > 1 && index === 0 && data?.correlations.length === 1)
             }
@@ -118,26 +120,26 @@ export default function CorrelationsPage() {
         id: 'info',
         cell: InfoCell,
         disableGrow: true,
-        visible: (data) => data.some(isSourceReadOnly),
+        visible: (data) => data.some(isCorrelationsReadOnly),
       },
       {
         id: 'source',
-        header: 'Source',
+        header: t('correlations.list.source', 'Source'),
         cell: DataSourceCell,
         sortType: sortDatasource,
       },
       {
         id: 'target',
-        header: 'Target',
+        header: t('correlations.list.target', 'Target'),
         cell: DataSourceCell,
         sortType: sortDatasource,
       },
-      { id: 'label', header: 'Label', sortType: 'alphanumeric' },
+      { id: 'label', header: t('correlations.list.label', 'Label'), sortType: 'alphanumeric' },
       {
         id: 'actions',
         cell: RowActions,
         disableGrow: true,
-        visible: (data) => canWriteCorrelations && data.some(negate(isSourceReadOnly)),
+        visible: (data) => canWriteCorrelations && data.some(negate(isCorrelationsReadOnly)),
       },
     ],
     [RowActions, canWriteCorrelations]
@@ -147,7 +149,7 @@ export default function CorrelationsPage() {
   const showEmptyListCTA = data?.correlations.length === 0 && !isAdding && !get.error;
   const addButton = canWriteCorrelations && data?.correlations?.length !== 0 && data !== undefined && !isAdding && (
     <Button icon="plus" onClick={() => setIsAdding(true)}>
-      Add new
+      <Trans i18nKey="correlations.add-new">Add new</Trans>
     </Button>
   );
 
@@ -156,10 +158,17 @@ export default function CorrelationsPage() {
       navModel={navModel}
       subTitle={
         <>
-          Define how data living in different data sources relates to each other. Read more in the{' '}
-          <a href="https://grafana.com/docs/grafana/next/administration/correlations/" target="_blank" rel="noreferrer">
-            documentation <Icon name="external-link-alt" />
-          </a>
+          <Trans i18nKey="correlations.sub-title">
+            Define how data living in different data sources relates to each other. Read more in the{' '}
+            <a
+              href="https://grafana.com/docs/grafana/next/administration/correlations/"
+              target="_blank"
+              rel="noreferrer"
+            >
+              documentation
+              <Icon name="external-link-alt" />
+            </a>
+          </Trans>
         </>
       }
       actions={addButton}
@@ -168,7 +177,7 @@ export default function CorrelationsPage() {
         <div>
           {!data && get.loading && (
             <div className={loaderWrapper}>
-              <LoadingPlaceholder text="loading..." />
+              <LoadingPlaceholder text={t('correlations.list.loading', 'loading...')} />
             </div>
           )}
 
@@ -179,9 +188,16 @@ export default function CorrelationsPage() {
           {
             // This error is not actionable, it'd be nice to have a recovery button
             get.error && (
-              <Alert severity="error" title="Error fetching correlation data" topSpacing={2}>
+              <Alert
+                severity="error"
+                title={t('correlations.alert.title', 'Error fetching correlation data')}
+                topSpacing={2}
+              >
                 {(isFetchError(get.error) && get.error.data?.message) ||
-                  'An unknown error occurred while fetching correlation data. Please try again.'}
+                  t(
+                    'correlations.alert.error-message',
+                    'An unknown error occurred while fetching correlation data. Please try again.'
+                  )}
               </Alert>
             )
           }
@@ -195,7 +211,7 @@ export default function CorrelationsPage() {
                   <ExpendedRow
                     correlation={correlation}
                     onUpdated={handleUpdated}
-                    readOnly={isSourceReadOnly({ source: correlation.source }) || !canWriteCorrelations}
+                    readOnly={isCorrelationsReadOnly(correlation) || !canWriteCorrelations}
                   />
                 )}
                 columns={columns}
@@ -275,10 +291,10 @@ const noWrap = css`
 
 const InfoCell = memo(
   function InfoCell({ ...props }: CellProps<CorrelationData, void>) {
-    const readOnly = props.row.original.source.readOnly;
+    const readOnly = props.row.original.provisioned;
 
     if (readOnly) {
-      return <Badge text="Read only" color="purple" className={noWrap} />;
+      return <Badge text={t('correlations.list.read-only', 'Read only')} color="purple" className={noWrap} />;
     } else {
       return null;
     }

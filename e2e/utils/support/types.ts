@@ -1,7 +1,5 @@
 import { CssSelector, FunctionSelector, Selectors, StringSelector, UrlSelector } from '@grafana/e2e-selectors';
 
-import { e2e } from '../index';
-
 import { Selector } from './selector';
 import { fromBaseUrl } from './url';
 
@@ -34,7 +32,7 @@ export type E2EFactoryArgs<S extends Selectors> = { selectors: S };
 export type CypressOptions = Partial<Cypress.Loggable & Cypress.Timeoutable & Cypress.Withinable & Cypress.Shadow>;
 
 const processSelectors = <S extends Selectors>(e2eObjects: E2EFunctions<S>, selectors: S): E2EFunctions<S> => {
-  const logOutput = (data: any) => e2e().logToConsole('Retrieving Selector:', data);
+  const logOutput = (data: any) => cy.logToConsole('Retrieving Selector:', data);
   const keys = Object.keys(selectors);
   for (let index = 0; index < keys.length; index++) {
     const key = keys[index];
@@ -52,11 +50,11 @@ const processSelectors = <S extends Selectors>(e2eObjects: E2EFunctions<S>, sele
           parsedUrl = fromBaseUrl(value(args));
         }
 
-        e2e().logToConsole('Visiting', parsedUrl);
+        cy.logToConsole('Visiting', parsedUrl);
         if (queryParams) {
-          return e2e().visit({ url: parsedUrl, qs: queryParams });
+          return cy.visit({ url: parsedUrl, qs: queryParams });
         } else {
-          return e2e().visit(parsedUrl);
+          return cy.visit(parsedUrl);
         }
       };
 
@@ -71,7 +69,7 @@ const processSelectors = <S extends Selectors>(e2eObjects: E2EFunctions<S>, sele
           ? Selector.fromDataTestId(value)
           : Selector.fromAriaLabel(value);
 
-        return e2e().get(selector, options);
+        return cy.get(selector, options);
       };
 
       continue;
@@ -85,7 +83,7 @@ const processSelectors = <S extends Selectors>(e2eObjects: E2EFunctions<S>, sele
           const selector = value(undefined as unknown as string);
 
           logOutput(selector);
-          return e2e().get(selector);
+          return cy.get(selector);
         }
 
         // the input can be (text) or (options)
@@ -97,12 +95,12 @@ const processSelectors = <S extends Selectors>(e2eObjects: E2EFunctions<S>, sele
               : Selector.fromAriaLabel(selectorText);
 
             logOutput(selector);
-            return e2e().get(selector);
+            return cy.get(selector);
           }
           const selector = value(undefined as unknown as string);
 
           logOutput(selector);
-          return e2e().get(selector, textOrOptions);
+          return cy.get(selector, textOrOptions);
         }
 
         // the input can only be (text, options)
@@ -114,7 +112,7 @@ const processSelectors = <S extends Selectors>(e2eObjects: E2EFunctions<S>, sele
             : Selector.fromAriaLabel(selectorText);
 
           logOutput(selector);
-          return e2e().get(selector, options);
+          return cy.get(selector, options);
         }
       };
 

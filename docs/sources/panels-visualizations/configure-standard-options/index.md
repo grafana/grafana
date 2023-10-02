@@ -24,11 +24,11 @@ weight: 2
 
 # Configure standard options
 
-The data model used in Grafana, namely the [data frame]({{< relref "../../developers/plugins/introduction-to-plugin-development/data-frames/" >}}), is a columnar-oriented table structure that unifies both time series and table query results. Each column within this structure is called a _field_. A field can represent a single time series or table column.
+The data model used in Grafana, namely the [data frame](https://grafana.com/developers/plugin-tools/introduction/data-frames), is a columnar-oriented table structure that unifies both time series and table query results. Each column within this structure is called a _field_. A field can represent a single time series or table column.
 
 Field options allow you to change how the data is displayed in your visualizations. Options and overrides that you apply do not change the data, they change how Grafana displays the data. When you change an option, it is applied to all fields, meaning all series or columns. For example, if you change the unit to percentage, then all fields with numeric values are displayed in percentages.
 
-For a complete list of field formatting options, refer to [Standard options definitions]({{< relref "#standard-options-definitions" >}}).
+For a complete list of field formatting options, refer to [Standard options definitions](#standard-options-definitions).
 
 > You can apply standard options to most built-in Grafana panels. Some older panels and community panels that have not updated to the new panel and data model will be missing either all or some of these field options.
 
@@ -37,7 +37,7 @@ For a complete list of field formatting options, refer to [Standard options defi
 1. In the panel display options pane, locate the **Standard options** section.
 1. Select the standard options you want to apply.
 
-   For more information about standard options, refer to [Standard options definitions]({{< relref "#standard-options-definitions" >}}).
+   For more information about standard options, refer to [Standard options definitions](#standard-options-definitions).
 
 1. To preview your change, click outside of the field option box you are editing or press **Enter**.
 
@@ -96,7 +96,7 @@ To display all decimals, set the unit to `String`.
 
 ### Display name
 
-Lets you set the display title of all fields. You can use [variables]({{< relref "../../dashboards/variables/" >}}) in the field title.
+Lets you set the display title of all fields. You can use [variables][] in the field title.
 
 When multiple stats, fields, or series are shown, this field controls the title in each stat. You can use expressions like `${__field.name}` to use only the series name or the field name in title.
 
@@ -146,3 +146,9 @@ Select one of the following palettes:
 ### No value
 
 Enter what Grafana should display if the field value is empty or null. The default value is a hyphen (-).
+
+{{% docs/reference %}}
+
+[variables]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables"
+[variables]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables"
+{{% /docs/reference %}}

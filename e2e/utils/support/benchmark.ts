@@ -30,13 +30,8 @@ export const benchmark = ({
     });
   } else {
     describe(name, () => {
-      before(() => {
-        cy.session('login', () => e2e.flows.login(e2e.env('USERNAME'), e2e.env('PASSWORD'), true), {
-          cacheAcrossSpecs: true,
-        });
-      });
-
       beforeEach(() => {
+        e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'));
         e2e.flows.importDashboards(dashboard.folder, 1000, dashboard.skipPanelValidation);
       });
 
@@ -49,28 +44,24 @@ export const benchmark = ({
           return it(testName, () => {
             e2e.flows.openDashboard();
 
-            e2e().wait(dashboard.delayAfterOpening);
+            cy.wait(dashboard.delayAfterOpening);
 
             if (appStats) {
               const startCollecting = appStats.startCollecting;
               if (startCollecting) {
-                e2e()
-                  .window()
-                  .then((win) => startCollecting(win));
+                cy.window().then((win) => startCollecting(win));
               }
 
-              e2e().startBenchmarking(testName);
-              e2e().wait(duration);
+              cy.startBenchmarking(testName);
+              cy.wait(duration);
 
-              e2e()
-                .window()
-                .then((win) => {
-                  e2e().stopBenchmarking(testName, appStats.collect(win));
-                });
+              cy.window().then((win) => {
+                cy.stopBenchmarking(testName, appStats.collect(win));
+              });
             } else {
-              e2e().startBenchmarking(testName);
-              e2e().wait(duration);
-              e2e().stopBenchmarking(testName, {});
+              cy.startBenchmarking(testName);
+              cy.wait(duration);
+              cy.stopBenchmarking(testName, {});
             }
           });
         });

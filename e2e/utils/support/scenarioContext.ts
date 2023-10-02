@@ -1,6 +1,5 @@
 import { DeleteDashboardConfig } from '../flows/deleteDashboard';
 import { DeleteDataSourceConfig } from '../flows/deleteDataSource';
-import { e2e } from '../index';
 
 export interface ScenarioContext {
   addedDashboards: DeleteDashboardConfig[];
@@ -37,7 +36,7 @@ const lastProperty = <T extends DeleteDashboardConfig | DeleteDataSourceConfig, 
 ) => items[items.length - 1]?.[key] ?? '';
 
 export const getScenarioContext = (): Cypress.Chainable<ScenarioContext> =>
-  e2e()
+  cy
     .wrap(
       {
         getScenarioContext: (): ScenarioContext => ({ ...scenarioContext }),
@@ -47,7 +46,7 @@ export const getScenarioContext = (): Cypress.Chainable<ScenarioContext> =>
     .invoke({ log: false }, 'getScenarioContext');
 
 export const setScenarioContext = (newContext: Partial<ScenarioContext>): Cypress.Chainable<ScenarioContext> =>
-  e2e()
+  cy
     .wrap(
       {
         setScenarioContext: () => {

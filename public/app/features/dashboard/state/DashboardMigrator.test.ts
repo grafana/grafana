@@ -118,10 +118,10 @@ describe('DashboardModel', () => {
             targets: [{ refId: 'A' }, {}],
           },
           // Old left-over repeated panel
-          // @ts-expect-error
           {
             type: 'table',
             id: panelIdWithRepeatId,
+            // @ts-expect-error
             repeatPanelId: 1,
           },
           // Collapsed row with left-over repeated panels

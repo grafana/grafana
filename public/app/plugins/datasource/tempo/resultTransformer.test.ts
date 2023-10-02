@@ -117,8 +117,8 @@ describe('createTableFrameFromSearch()', () => {
     expect(frame.fields[2].values[0]).toBe('app');
 
     expect(frame.fields[3].name).toBe('startTime');
-    expect(frame.fields[3].values[0]).toBe('2022-01-28 03:00:28');
-    expect(frame.fields[3].values[1]).toBe('2022-01-27 22:56:06');
+    expect(frame.fields[3].values[0]).toBe(1643356828724);
+    expect(frame.fields[3].values[1]).toBe(1643342166678.0002);
 
     expect(frame.fields[4].name).toBe('traceDuration');
     expect(frame.fields[4].values[0]).toBe(65);
@@ -135,8 +135,8 @@ describe('createTableFrameFromTraceQlQuery()', () => {
     expect(frame.fields[0].config.unit).toBe('string');
     // Start time field
     expect(frame.fields[1].name).toBe('startTime');
-    expect(frame.fields[1].type).toBe('string');
-    expect(frame.fields[1].values[1]).toBe('2022-01-27 22:56:06');
+    expect(frame.fields[1].type).toBe('time');
+    expect(frame.fields[1].values[1]).toBe(1643342166678.0002);
     // Trace service field
     expect(frame.fields[2].name).toBe('traceService');
     expect(frame.fields[2].type).toBe('string');
@@ -157,8 +157,8 @@ describe('createTableFrameFromTraceQlQuery()', () => {
     expect(frame.fields[5].values[0][0].fields[0].values[0]).toBe('b1586c3c8c34d');
     expect(frame.fields[5].values[0][0].fields[1].name).toBe('spanID');
     expect(frame.fields[5].values[0][0].fields[1].values[0]).toBe('162a4adae63b61f1');
-    expect(frame.fields[5].values[0][0].fields[2].name).toBe('spanStartTime');
-    expect(frame.fields[5].values[0][0].fields[2].values[0]).toBe('2022-10-19 09:03:34');
+    expect(frame.fields[5].values[0][0].fields[2].name).toBe('time');
+    expect(frame.fields[5].values[0][0].fields[2].values[0]).toBe(1666188214303.201);
     expect(frame.fields[5].values[0][0].fields[4].name).toBe('http.method');
     expect(frame.fields[5].values[0][0].fields[4].values[0]).toBe('GET');
     expect(frame.fields[5].values[0][0].fields[5].name).toBe('service.name');
@@ -170,8 +170,8 @@ describe('createTableFrameFromTraceQlQuery()', () => {
     expect(frame.fields[5].values[1][0].fields[0].values[0]).toBe('9161e77388f3e');
     expect(frame.fields[5].values[1][0].fields[1].name).toBe('spanID');
     expect(frame.fields[5].values[1][0].fields[1].values[0]).toBe('3b9a5c222d3ddd8f');
-    expect(frame.fields[5].values[1][0].fields[2].name).toBe('spanStartTime');
-    expect(frame.fields[5].values[1][0].fields[2].values[0]).toBe('2022-10-19 08:57:55');
+    expect(frame.fields[5].values[1][0].fields[2].name).toBe('time');
+    expect(frame.fields[5].values[1][0].fields[2].values[0]).toBe(1666187875397.7212);
     expect(frame.fields[5].values[1][0].fields[4].name).toBe('by(resource.service.name)');
     expect(frame.fields[5].values[1][0].fields[4].values[0]).toBe('db');
     expect(frame.fields[5].values[1][0].fields[5].name).toBe('http.method');
@@ -185,8 +185,8 @@ describe('createTableFrameFromTraceQlQuery()', () => {
     expect(frame.fields[5].values[1][1].fields[0].values[0]).toBe('9161e77388f3e');
     expect(frame.fields[5].values[1][1].fields[1].name).toBe('spanID');
     expect(frame.fields[5].values[1][1].fields[1].values[0]).toBe('894d90db6b5807f');
-    expect(frame.fields[5].values[1][1].fields[2].name).toBe('spanStartTime');
-    expect(frame.fields[5].values[1][1].fields[2].values[0]).toBe('2022-10-19 08:57:55');
+    expect(frame.fields[5].values[1][1].fields[2].name).toBe('time');
+    expect(frame.fields[5].values[1][1].fields[2].values[0]).toBe(1666187875393.293);
     expect(frame.fields[5].values[1][1].fields[4].name).toBe('by(resource.service.name)');
     expect(frame.fields[5].values[1][1].fields[4].values[0]).toBe('app');
     expect(frame.fields[5].values[1][1].fields[5].name).toBe('http.method');

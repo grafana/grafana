@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/team"
+	"github.com/grafana/grafana/pkg/services/team/sortopts"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
 )
@@ -231,6 +232,40 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 				query2Result, err := teamSvc.SearchTeams(context.Background(), query2)
 				require.NoError(t, err)
 				require.Equal(t, len(query2Result.Teams), 2)
+			})
+
+			t.Run("Should be able to sort teams by descending member count order", func(t *testing.T) {
+				sortOpts, err := sortopts.ParseSortQueryParam("memberCount-desc")
+				require.NoError(t, err)
+
+				// Add a team member
+				err = teamSvc.AddTeamMember(userIds[0], testOrgID, team2.ID, false, 0)
+				require.NoError(t, err)
+				defer func() {
+					err := teamSvc.RemoveTeamMember(context.Background(),
+						&team.RemoveTeamMemberCommand{OrgID: testOrgID, UserID: userIds[0], TeamID: team2.ID})
+					require.NoError(t, err)
+				}()
+
+				query := &team.SearchTeamsQuery{OrgID: testOrgID, SortOpts: sortOpts, SignedInUser: testUser}
+				queryResult, err := teamSvc.SearchTeams(context.Background(), query)
+				require.NoError(t, err)
+				require.Equal(t, len(queryResult.Teams), 2)
+				require.EqualValues(t, queryResult.TotalCount, 2)
+				require.Greater(t, queryResult.Teams[0].MemberCount, queryResult.Teams[1].MemberCount)
+			})
+
+			t.Run("Should be able to sort teams by descending name order", func(t *testing.T) {
+				sortOpts, err := sortopts.ParseSortQueryParam("name-desc")
+				require.NoError(t, err)
+
+				query := &team.SearchTeamsQuery{OrgID: testOrgID, SortOpts: sortOpts, SignedInUser: testUser}
+				queryResult, err := teamSvc.SearchTeams(context.Background(), query)
+				require.NoError(t, err)
+				require.Equal(t, len(queryResult.Teams), 2)
+				require.EqualValues(t, queryResult.TotalCount, 2)
+				require.Equal(t, queryResult.Teams[0].Name, team2.Name)
+				require.Equal(t, queryResult.Teams[1].Name, team1.Name)
 			})
 
 			t.Run("Should be able to return all teams a user is member of", func(t *testing.T) {

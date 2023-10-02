@@ -15,9 +15,8 @@ interface OpenDashboardOptional {
 export type PartialOpenDashboardConfig = Partial<OpenDashboardDefault> & OpenDashboardOptional;
 export type OpenDashboardConfig = OpenDashboardDefault & OpenDashboardOptional;
 
-// @todo this actually returns type `Cypress.Chainable<OpenDashboardConfig>`
 export const openDashboard = (config?: PartialOpenDashboardConfig) =>
-  getScenarioContext().then(({ lastAddedDashboardUid }: any) => {
+  getScenarioContext().then(({ lastAddedDashboardUid }) => {
     const fullConfig: OpenDashboardConfig = {
       uid: lastAddedDashboardUid,
       ...config,
@@ -32,5 +31,5 @@ export const openDashboard = (config?: PartialOpenDashboardConfig) =>
     }
 
     // @todo remove `wrap` when possible
-    return e2e().wrap({ config: fullConfig }, { log: false });
+    return cy.wrap({ config: fullConfig }, { log: false });
   });

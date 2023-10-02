@@ -7,11 +7,11 @@ import (
 	"github.com/centrifugal/centrifuge"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/live/model"
 	"github.com/grafana/grafana/pkg/services/live/orgchannel"
 	"github.com/grafana/grafana/pkg/services/live/runstream"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 )
 
 //go:generate mockgen -destination=plugin_mock.go -package=features github.com/grafana/grafana/pkg/services/live/features PluginContextGetter
@@ -66,7 +66,7 @@ type PluginPathRunner struct {
 func (r *PluginPathRunner) OnSubscribe(ctx context.Context, user identity.Requester, e model.SubscribeEvent) (model.SubscribeReply, backend.SubscribeStreamStatus, error) {
 	pCtx, err := r.pluginContextGetter.GetPluginContext(ctx, user, r.pluginID, r.datasourceUID, false)
 	if err != nil {
-		if errors.Is(err, plugincontext.ErrPluginNotFound) {
+		if errors.Is(err, plugins.ErrPluginNotRegistered) {
 			logger.Error("Plugin context not found", "path", r.path)
 			return model.SubscribeReply{}, 0, centrifuge.ErrorInternal
 		}
@@ -110,7 +110,7 @@ func (r *PluginPathRunner) OnSubscribe(ctx context.Context, user identity.Reques
 func (r *PluginPathRunner) OnPublish(ctx context.Context, user identity.Requester, e model.PublishEvent) (model.PublishReply, backend.PublishStreamStatus, error) {
 	pCtx, err := r.pluginContextGetter.GetPluginContext(ctx, user, r.pluginID, r.datasourceUID, false)
 	if err != nil {
-		if errors.Is(err, plugincontext.ErrPluginNotFound) {
+		if errors.Is(err, plugins.ErrPluginNotRegistered) {
 			logger.Error("Plugin context not found", "path", r.path)
 			return model.PublishReply{}, 0, centrifuge.ErrorInternal
 		}
