@@ -262,6 +262,10 @@
   },
   "dashboard-settings": {
     "general-settings": {
+      "auto-refresh": {
+        "description": "Đęƒįŉę ŧĥę äūŧő řęƒřęşĥ įŉŧęřväľş ŧĥäŧ şĥőūľđ þę äväįľäþľę įŉ ŧĥę äūŧő řęƒřęşĥ ľįşŧ.",
+        "label": "Åūŧő řęƒřęşĥ"
+      },
       "description": {
         "label": "Đęşčřįpŧįőŉ"
       },

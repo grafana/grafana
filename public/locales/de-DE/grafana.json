@@ -262,6 +262,10 @@
   },
   "dashboard-settings": {
     "general-settings": {
+      "auto-refresh": {
+        "description": "",
+        "label": ""
+      },
       "description": {
         "label": ""
       },
