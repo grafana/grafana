@@ -26,8 +26,9 @@ type Playlist struct {
 	OrgId    int64  `json:"-" db:"org_id"`
 
 	// Added for kubernetes migration + synchronization
-	CreatedAt time.Time `json:"createdAt,omitempty" db:"created_at"`
-	UpdatedAt time.Time `json:"updatedAt,omitempty" db:"updated_at"`
+	// Hidden from json because this is used for openapi generation
+	CreatedAt time.Time `json:"-" db:"created_at"`
+	UpdatedAt time.Time `json:"-" db:"updated_at"`
 }
 
 type PlaylistDTO = playlist.Spec
