@@ -263,6 +263,13 @@
       "folder-label": "",
       "hide-time-picker": "",
       "now_delay-label": "",
+      "panel-options": {
+        "label": ""
+      },
+      "panel-options-graph-tooltip": {
+        "description": "",
+        "label": ""
+      },
       "refresh-live-dashboards": "",
       "tags-input": "",
       "tags-label": "",

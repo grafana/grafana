@@ -268,6 +268,13 @@
       "folder-label": "Főľđęř",
       "hide-time-picker": "Ħįđę ŧįmę pįčĸęř",
       "now_delay-label": "Ńőŵ đęľäy",
+      "panel-options": {
+        "label": "Päŉęľ őpŧįőŉş"
+      },
+      "panel-options-graph-tooltip": {
+        "description": "Cőŉŧřőľş ŧőőľŧįp äŉđ ĥővęř ĥįģĥľįģĥŧ þęĥävįőř äčřőşş đįƒƒęřęŉŧ päŉęľş. Ŗęľőäđ ŧĥę đäşĥþőäřđ ƒőř čĥäŉģęş ŧő ŧäĸę ęƒƒęčŧ",
+        "label": "Ğřäpĥ ŧőőľŧįp"
+      },
       "refresh-live-dashboards": "Ŗęƒřęşĥ ľįvę đäşĥþőäřđş",
       "tags-input": "<0></0>",
       "tags-label": "Ŧäģş",

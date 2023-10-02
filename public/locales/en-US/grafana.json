@@ -268,6 +268,13 @@
       "folder-label": "Folder",
       "hide-time-picker": "Hide time picker",
       "now_delay-label": "Now delay",
+      "panel-options": {
+        "label": "Panel options"
+      },
+      "panel-options-graph-tooltip": {
+        "description": "Controls tooltip and hover highlight behavior across different panels. Reload the dashboard for changes to take effect",
+        "label": "Graph tooltip"
+      },
       "refresh-live-dashboards": "Refresh live dashboards",
       "tags-input": "<0></0>",
       "tags-label": "Tags",
