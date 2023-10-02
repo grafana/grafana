@@ -1,5 +1,5 @@
 // BETTERER RESULTS V2.
-//
+// 
 // If this file contains merge conflicts, use `betterer merge` to automatically resolve them:
 // https://phenomnomnominal.github.io/betterer/docs/results-file/#merge
 //
@@ -1069,6 +1069,9 @@ exports[`better eslint`] = {
     "packages/grafana-ui/src/components/VizTooltip/VizTooltip.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
+    ],
+    "packages/grafana-ui/src/components/VizTooltip/types.ts:5381": [
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
     "packages/grafana-ui/src/components/uPlot/Plot.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
