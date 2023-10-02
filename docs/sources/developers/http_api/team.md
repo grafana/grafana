@@ -33,7 +33,7 @@ Access to these API endpoints is restricted as follows:
 
 ## Team Search With Paging
 
-`GET /api/teams/search?perpage=50&page=1&query=myteam`
+`GET /api/teams/search?perpage=50&page=1&query=myteam&sort=memberCount-desc`
 
 or
 
@@ -87,6 +87,8 @@ The `totalCount` field in the response can be used for pagination of the teams l
 
 The `query` parameter is optional and it will return results where the query value is contained in the `name` field. Query values with spaces need to be URL encoded e.g. `query=my%20team`.
 
+The `sort` param is an optional comma separated list of options to order the search result. Accepted values for the sort filter are: ` name-asc`, `name-desc`, `email-asc`, `email-desc`, `memberCount-asc`, `memberCount-desc`. By default, if `sort` is not specified, the teams list will be ordered by `name` in ascending order.
+
 ### Using the name parameter
 
 The `name` parameter returns a single team if the parameter matches the `name` field.
@@ -94,6 +96,7 @@ The `name` parameter returns a single team if the parameter matches the `name` f
 #### Status Codes:
 
 - **200** - Ok
+- **400** - Bad Request
 - **401** - Unauthorized
 - **403** - Permission denied
 - **404** - Team not found (if searching by name)

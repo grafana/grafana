@@ -31,7 +31,7 @@ export const benchmark = ({
   } else {
     describe(name, () => {
       beforeEach(() => {
-        e2e.flows.login(e2e.env('USERNAME'), e2e.env('PASSWORD'));
+        e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'));
         e2e.flows.importDashboards(dashboard.folder, 1000, dashboard.skipPanelValidation);
       });
 
