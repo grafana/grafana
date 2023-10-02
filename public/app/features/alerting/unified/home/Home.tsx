@@ -27,12 +27,12 @@ export function getHomeApp(insightsEnabled: boolean) {
           hideFromBreadcrumbs: true,
           tabs: [
             new SceneAppPage({
-              title: 'Grafana',
+              title: 'Insights',
               url: '/alerting/home/insights',
               getScene: getGrafanaScenes,
             }),
             new SceneAppPage({
-              title: 'Overview',
+              title: 'Get started',
               url: '/alerting/home/overview',
               getScene: getOverviewScene,
             }),
