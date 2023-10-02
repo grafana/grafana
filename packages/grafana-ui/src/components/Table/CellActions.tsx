@@ -6,7 +6,7 @@ import { HorizontalGroup } from '../Layout/Layout';
 import { TooltipPlacement } from '../Tooltip';
 
 import { TableCellInspectModal } from './TableCellInspectModal';
-import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR, TableCellProps, TableFieldOptions } from './types';
+import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR, TableCellProps } from './types';
 import { getTextAlign } from './utils';
 
 interface CellActionProps extends TableCellProps {
@@ -23,7 +23,7 @@ export function CellActions({ field, cell, previewMode, showFilters, onCellFilte
   const [isInspecting, setIsInspecting] = useState(false);
 
   const isRightAligned = getTextAlign(field) === 'flex-end';
-  const inspectEnabled = Boolean((field.config.custom as TableFieldOptions)?.inspect);
+  const inspectEnabled = Boolean(field.config.custom?.inspect);
   const commonButtonProps: CommonButtonProps = {
     size: 'sm',
     tooltipPlacement: 'top',

@@ -1,0 +1,9 @@
+dn: ou=groups,dc=srv2-grafana,dc=org
+ou: Groups
+objectclass: top
+objectclass: organizationalUnit
+
+dn: ou=users,dc=srv2-grafana,dc=org
+ou: Users
+objectclass: top
+objectclass: organizationalUnit

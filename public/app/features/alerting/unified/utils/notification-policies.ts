@@ -232,4 +232,21 @@ function getInheritedProperties(
   return inherited;
 }
 
+/**
+ * This function will compute the full tree with inherited properties – this is mostly used for search and filtering
+ */
+export function computeInheritedTree<T extends Route>(parent: T): T {
+  return {
+    ...parent,
+    routes: parent.routes?.map((child) => {
+      const inheritedProperties = getInheritedProperties(parent, child);
+
+      return computeInheritedTree({
+        ...child,
+        ...inheritedProperties,
+      });
+    }),
+  };
+}
+
 export { findMatchingAlertGroups, findMatchingRoutes, getInheritedProperties };

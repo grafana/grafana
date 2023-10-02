@@ -16,7 +16,7 @@ func TestFeatureUsageStats(t *testing.T) {
 		"feature.with.a.dot",
 	)
 
-	require.Equal(t, map[string]interface{}{
+	require.Equal(t, map[string]any{
 		"stats.features.trim_defaults.count":      1,
 		"stats.features.database_metrics.count":   1,
 		"stats.features.live_config.count":        1,

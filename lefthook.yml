@@ -1,0 +1,48 @@
+skip_output:
+  - meta
+  - execution_out
+  - skips
+
+min_version: 1.4.3
+
+rc: ./lefthook.rc
+
+pre-commit:
+  parallel: true
+  commands:
+    frontend-betterer:
+      glob: '*.{ts,tsx}'
+      run: yarn betterer precommit {staged_files}
+      stage_fixed: true
+
+    frontend-lint:
+      glob: '*.{js,ts,tsx}'
+      run: |
+        yarn eslint --ext .js,.tsx,.ts --cache --fix {staged_files}
+        yarn prettier --write {staged_files}
+      stage_fixed: true
+
+    internationalization:
+      glob: 'public/locales/en-US/grafana.json'
+      run: yarn i18n:pseudo
+      stage_fixed: true
+
+    other-format:
+      glob: '*.{json,scss,md,mdx}'
+      run: yarn prettier --write {staged_files}
+      stage_fixed: true
+
+    backend-format:
+      glob: '*pkg/**/*.go'
+      run: gofmt -w -s {staged_files}
+      stage_fixed: true
+
+    cue-fix-kinds:
+      glob: '*kinds/**/*.cue'
+      run: make fix-cue
+      stage_fixed: true
+
+    cue-fix-public:
+      glob: '*public/app/plugins/**/**/*.cue'
+      run: make fix-cue
+      stage_fixed: true

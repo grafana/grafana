@@ -1,10 +1,8 @@
-import { css } from '@emotion/css';
 import React from 'react';
 import { useFormContext } from 'react-hook-form';
 
-import { GrafanaTheme2 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
-import { Card, Icon, Link, useStyles2 } from '@grafana/ui';
+import { Icon, Text } from '@grafana/ui';
 
 import { RuleFormType, RuleFormValues } from '../../types/rule-form';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
@@ -18,8 +16,7 @@ type NotificationsStepProps = {
   alertUid?: string;
 };
 export const NotificationsStep = ({ alertUid }: NotificationsStepProps) => {
-  const styles = useStyles2(getStyles);
-  const { watch, getValues } = useFormContext<RuleFormValues & { location?: string }>();
+  const { watch } = useFormContext<RuleFormValues & { location?: string }>();
 
   const [type, labels, queries, condition, folder, alertName] = watch([
     'type',
@@ -31,15 +28,15 @@ export const NotificationsStep = ({ alertUid }: NotificationsStepProps) => {
   ]);
 
   const dataSourceName = watch('dataSourceName') ?? GRAFANA_RULES_SOURCE_NAME;
-  const hasLabelsDefined = getNonEmptyLabels(getValues('labels')).length > 0;
 
-  const shouldRenderPreview = Boolean(condition) && Boolean(folder) && type === RuleFormType.grafana;
+  const shouldRenderPreview = type === RuleFormType.grafana;
 
   const NotificationsStepDescription = () => {
     return (
-      <div className={styles.stepDescription}>
-        <div>Add custom labels to change the way your notifications are routed.</div>
-
+      <Stack direction="row" gap={0.5} alignItems="baseline">
+        <Text variant="bodySmall" color="secondary">
+          Add custom labels to change the way your notifications are routed.
+        </Text>
         <NeedHelpInfo
           contentText={
             <Stack gap={1}>
@@ -55,9 +52,9 @@ export const NotificationsStep = ({ alertUid }: NotificationsStepProps) => {
                   target="_blank"
                   rel="noreferrer"
                 >
-                  <div className={styles.infoLink}>
+                  <Text color="link">
                     Read about notification routing. <Icon name="external-link-alt" />
-                  </div>
+                  </Text>
                 </a>
               </Stack>
               <Stack direction="row" gap={0}>
@@ -70,16 +67,16 @@ export const NotificationsStep = ({ alertUid }: NotificationsStepProps) => {
                   target="_blank"
                   rel="noreferrer"
                 >
-                  <div className={styles.infoLink}>
+                  <Text color="link">
                     Read about Labels and annotations. <Icon name="external-link-alt" />
-                  </div>
+                  </Text>
                 </a>
               </Stack>
             </Stack>
           }
           title="Notification routing"
         />
-      </div>
+      </Stack>
     );
   };
 
@@ -88,80 +85,29 @@ export const NotificationsStep = ({ alertUid }: NotificationsStepProps) => {
       stepNo={type === RuleFormType.cloudRecording ? 4 : 5}
       title={type === RuleFormType.cloudRecording ? 'Add labels' : 'Configure notifications'}
       description={
-        type === RuleFormType.cloudRecording ? (
-          'Add labels to help you better manage your recording rules'
-        ) : (
-          <NotificationsStepDescription />
-        )
-      }
-    >
-      <div className={styles.contentWrapper}>
-        <div style={{ display: 'flex', flexDirection: 'column' }}>
-          {!hasLabelsDefined && type !== RuleFormType.cloudRecording && (
-            <Card className={styles.card}>
-              <Card.Heading>Default policy</Card.Heading>
-              <Card.Description>
-                All alert instances are handled by the default policy if no other matching policies are found. To view
-                and edit the default policy, go to <Link href="/alerting/routes">Notification Policies</Link>
-                &nbsp;or contact your Admin if you are using provisioning.
-              </Card.Description>
-            </Card>
+        <Stack direction="row" gap={0.5} alignItems="baseline">
+          {type === RuleFormType.cloudRecording ? (
+            <Text variant="bodySmall" color="secondary">
+              Add labels to help you better manage your recording rules
+            </Text>
+          ) : (
+            <NotificationsStepDescription />
           )}
-          <LabelsField dataSourceName={dataSourceName} />
-        </div>
-      </div>
-      {shouldRenderPreview &&
-        condition &&
-        folder && ( // need to check for condition and folder again because of typescript
-          <NotificationPreview
-            alertQueries={queries}
-            customLabels={labels}
-            condition={condition}
-            folder={folder}
-            alertName={alertName}
-            alertUid={alertUid}
-          />
-        )}
+        </Stack>
+      }
+      fullWidth
+    >
+      <LabelsField dataSourceName={dataSourceName} />
+      {shouldRenderPreview && (
+        <NotificationPreview
+          alertQueries={queries}
+          customLabels={labels}
+          condition={condition}
+          folder={folder}
+          alertName={alertName}
+          alertUid={alertUid}
+        />
+      )}
     </RuleEditorSection>
   );
 };
-
-interface Label {
-  key: string;
-  value: string;
-}
-
-function getNonEmptyLabels(labels: Label[]) {
-  return labels.filter((label) => label.key && label.value);
-}
-
-const getStyles = (theme: GrafanaTheme2) => ({
-  contentWrapper: css`
-    display: flex;
-    align-items: center;
-    margin-top: ${theme.spacing(2)};
-  `,
-  hideButton: css`
-    color: ${theme.colors.text.secondary};
-    cursor: pointer;
-    margin-bottom: ${theme.spacing(1)};
-  `,
-  card: css`
-    max-width: 500px;
-  `,
-  flowChart: css`
-    margin-right: ${theme.spacing(3)};
-  `,
-  title: css`
-    margin-bottom: ${theme.spacing(2)};
-  `,
-  stepDescription: css`
-    margin-bottom: ${theme.spacing(2)};
-    display: flex;
-    gap: ${theme.spacing(1)};
-)};
-  `,
-  infoLink: css`
-    color: ${theme.colors.text.link};
-  `,
-});

@@ -9,9 +9,9 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/auth"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
-	"github.com/grafana/grafana/pkg/plugins/oauth"
 	"github.com/grafana/grafana/pkg/plugins/plugindef"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
@@ -313,7 +313,7 @@ func TestInitializer_oauthEnvVars(t *testing.T) {
 				ID:                          "test",
 				ExternalServiceRegistration: &plugindef.ExternalServiceRegistration{},
 			},
-			ExternalService: &oauth.ExternalService{
+			ExternalService: &auth.ExternalService{
 				ClientID:     "clientID",
 				ClientSecret: "clientSecret",
 				PrivateKey:   "privatePem",
@@ -343,5 +343,161 @@ func TestInitalizer_awsEnvVars(t *testing.T) {
 		}, nil)
 		envVars := envVarsProvider.Get(context.Background(), p)
 		assert.ElementsMatch(t, []string{"GF_VERSION=", "AWS_AUTH_AssumeRoleEnabled=true", "AWS_AUTH_AllowedAuthProviders=grafana_assume_role,keys", "AWS_AUTH_EXTERNAL_ID=mock_external_id"}, envVars)
+	})
+}
+
+func TestInitializer_featureToggleEnvVar(t *testing.T) {
+	t.Run("backend datasource with feature toggle", func(t *testing.T) {
+		expectedFeatures := []string{"feat-1", "feat-2"}
+		featuresLookup := map[string]bool{
+			expectedFeatures[0]: true,
+			expectedFeatures[1]: true,
+		}
+
+		p := &plugins.Plugin{}
+		envVarsProvider := NewProvider(&config.Cfg{
+			Features: featuremgmt.WithFeatures(expectedFeatures[0], true, expectedFeatures[1], true),
+		}, nil)
+		envVars := envVarsProvider.Get(context.Background(), p)
+
+		assert.Equal(t, 2, len(envVars))
+
+		toggleExpression := strings.Split(envVars[1], "=")
+		assert.Equal(t, 2, len(toggleExpression))
+
+		assert.Equal(t, "GF_INSTANCE_FEATURE_TOGGLES_ENABLE", toggleExpression[0])
+
+		toggleArgs := toggleExpression[1]
+		features := strings.Split(toggleArgs, ",")
+
+		assert.Equal(t, len(expectedFeatures), len(features))
+
+		// this is necessary because the features are not returned in the order they are provided
+		for _, f := range features {
+			_, ok := featuresLookup[f]
+			assert.True(t, ok)
+		}
+	})
+}
+
+func TestService_GetConfigMap(t *testing.T) {
+	tcs := []struct {
+		name     string
+		cfg      *config.Cfg
+		expected map[string]string
+	}{
+		{
+			name: "Both features and proxy settings enabled",
+			cfg: &config.Cfg{
+				Features: featuremgmt.WithFeatures("feat-2", "feat-500", "feat-1"),
+				ProxySettings: setting.SecureSocksDSProxySettings{
+					Enabled:      true,
+					ShowUI:       true,
+					ClientCert:   "c3rt",
+					ClientKey:    "k3y",
+					RootCA:       "ca",
+					ProxyAddress: "https://proxy.grafana.com",
+					ServerName:   "secureProxy",
+				},
+			},
+			expected: map[string]string{
+				"GF_INSTANCE_FEATURE_TOGGLES_ENABLE":              "feat-1,feat-2,feat-500",
+				"GF_SECURE_SOCKS_DATASOURCE_PROXY_SERVER_ENABLED": "true",
+				"GF_SECURE_SOCKS_DATASOURCE_PROXY_CLIENT_CERT":    "c3rt",
+				"GF_SECURE_SOCKS_DATASOURCE_PROXY_CLIENT_KEY":     "k3y",
+				"GF_SECURE_SOCKS_DATASOURCE_PROXY_ROOT_CA_CERT":   "ca",
+				"GF_SECURE_SOCKS_DATASOURCE_PROXY_PROXY_ADDRESS":  "https://proxy.grafana.com",
+				"GF_SECURE_SOCKS_DATASOURCE_PROXY_SERVER_NAME":    "secureProxy",
+			},
+		},
+		{
+			name: "Features enabled but proxy settings disabled",
+			cfg: &config.Cfg{
+				Features: featuremgmt.WithFeatures("feat-2", "feat-500", "feat-1"),
+				ProxySettings: setting.SecureSocksDSProxySettings{
+					Enabled:      false,
+					ShowUI:       true,
+					ClientCert:   "c3rt",
+					ClientKey:    "k3y",
+					RootCA:       "ca",
+					ProxyAddress: "https://proxy.grafana.com",
+					ServerName:   "secureProxy",
+				},
+			},
+			expected: map[string]string{
+				"GF_INSTANCE_FEATURE_TOGGLES_ENABLE": "feat-1,feat-2,feat-500",
+			},
+		},
+		{
+			name: "Both features and proxy settings disabled",
+			cfg: &config.Cfg{
+				Features: featuremgmt.WithFeatures("feat-2", false),
+				ProxySettings: setting.SecureSocksDSProxySettings{
+					Enabled:      false,
+					ShowUI:       true,
+					ClientCert:   "c3rt",
+					ClientKey:    "k3y",
+					RootCA:       "ca",
+					ProxyAddress: "https://proxy.grafana.com",
+					ServerName:   "secureProxy",
+				},
+			},
+			expected: map[string]string{},
+		},
+		{
+			name: "Both features and proxy settings empty",
+			cfg: &config.Cfg{
+				Features:      nil,
+				ProxySettings: setting.SecureSocksDSProxySettings{},
+			},
+			expected: map[string]string{},
+		},
+	}
+	for _, tc := range tcs {
+		t.Run(tc.name, func(t *testing.T) {
+			s := &Service{
+				cfg: tc.cfg,
+			}
+			require.Equal(t, tc.expected, s.GetConfigMap(context.Background(), "", nil))
+		})
+	}
+}
+
+func TestService_GetConfigMap_featureToggles(t *testing.T) {
+	t.Run("Feature toggles list is deterministic", func(t *testing.T) {
+		tcs := []struct {
+			enabledFeatures []string
+			expectedConfig  map[string]string
+		}{
+			{
+				enabledFeatures: nil,
+				expectedConfig:  map[string]string{},
+			},
+			{
+				enabledFeatures: []string{},
+				expectedConfig:  map[string]string{},
+			},
+			{
+				enabledFeatures: []string{"A", "B", "C"},
+				expectedConfig:  map[string]string{"GF_INSTANCE_FEATURE_TOGGLES_ENABLE": "A,B,C"},
+			},
+			{
+				enabledFeatures: []string{"C", "B", "A"},
+				expectedConfig:  map[string]string{"GF_INSTANCE_FEATURE_TOGGLES_ENABLE": "A,B,C"},
+			},
+			{
+				enabledFeatures: []string{"b", "a", "c", "d"},
+				expectedConfig:  map[string]string{"GF_INSTANCE_FEATURE_TOGGLES_ENABLE": "a,b,c,d"},
+			},
+		}
+
+		for _, tc := range tcs {
+			s := &Service{
+				cfg: &config.Cfg{
+					Features: fakes.NewFakeFeatureToggles(tc.enabledFeatures...),
+				},
+			}
+			require.Equal(t, tc.expectedConfig, s.GetConfigMap(context.Background(), "", nil))
+		}
 	})
 }

@@ -19,8 +19,20 @@ code, and so forth are carried by the error.
 For a service, declare the different categories of errors that may occur
 from your service (this corresponds to what you might want to have
 specific public error messages or their templates for) by globally
-constructing variables using the `errutil.NewBase(status, messageID, opts...)`
-function.
+constructing variables using the `errutil.<status>(status, messageID, opts...)`
+functions, e.g.
+
+- `errutil.NotFound(messageID, opts...)`
+- `errutil.BadRequest(messageID, opts...)`
+- `errutil.ValidationFailed(messageID, opts...)`
+- `errutil.Internal(messageID, opts...)`
+- `errutil.Timeout(messageID, opts...)`
+- `errutil.Unauthorized(messageID, opts...)`
+- `errutil.Forbidden(messageID, opts...)`
+- `errutil.TooManyRequests(messageID, opts...)`
+- `errutil.NotImplemented(messageID, opts...)`
+
+Above functions uses `errutil.NewBase(status, messageID, opts...)` under the covers, and that function should in general only be used outside the `errutil` package for `errutil.StatusUnknown`, e.g. when there are no accurate status code available/provided.
 
 The status code loosely corresponds to HTTP status codes and provides a
 default log level for errors to ensure that the request logging is
@@ -92,6 +104,18 @@ construct and use Grafana style errors. This documentation is
 unfortunately not readily available on pkg.go.dev because Grafana is not
 fully Go modules compatible, but can be viewed using
 [godoc](https://go.dev/cmd/godoc/) from the Grafana directory.
+
+### Error source
+
+You can optionally specify an error source that describes from where an
+error originates. By default it's _server_ and means the error originates
+from within the application, e.g. Grafana. The `errutil.WithDownstream()`
+option may be appended to the NewBase function call to denote an error
+originates from a _downstream_ server/service. The error source information
+is used in the API layer to distinguish between Grafana errors and
+non-Grafana errors to include this information when instrumenting the
+application and by that allowing Grafana operators to define SLO's
+based on actual Grafana errors.
 
 ### Handling errors in the API
 

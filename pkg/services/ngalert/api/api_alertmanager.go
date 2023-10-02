@@ -54,7 +54,7 @@ func (srv AlertmanagerSrv) RouteGetAMStatus(c *contextmodel.ReqContext) response
 func (srv AlertmanagerSrv) RouteCreateSilence(c *contextmodel.ReqContext, postableSilence apimodels.PostableSilence) response.Response {
 	err := postableSilence.Validate(strfmt.Default)
 	if err != nil {
-		srv.log.Error("silence failed validation", "error", err)
+		srv.log.Error("Silence failed validation", "error", err)
 		return ErrResp(http.StatusBadRequest, err, "silence failed validation")
 	}
 
@@ -75,7 +75,7 @@ func (srv AlertmanagerSrv) RouteCreateSilence(c *contextmodel.ReqContext, postab
 		return ErrResp(http.StatusUnauthorized, fmt.Errorf("user is not authorized to %s silences", errAction), "")
 	}
 
-	silenceID, err := am.CreateSilence(&postableSilence)
+	silenceID, err := am.CreateSilence(c.Req.Context(), &postableSilence)
 	if err != nil {
 		if errors.Is(err, alertingNotify.ErrSilenceNotFound) {
 			return ErrResp(http.StatusNotFound, err, "")
@@ -99,7 +99,7 @@ func (srv AlertmanagerSrv) RouteDeleteAlertingConfig(c *contextmodel.ReqContext)
 	}
 
 	if err := am.SaveAndApplyDefaultConfig(c.Req.Context()); err != nil {
-		srv.log.Error("unable to save and apply default alertmanager configuration", "error", err)
+		srv.log.Error("Unable to save and apply default alertmanager configuration", "error", err)
 		return ErrResp(http.StatusInternalServerError, err, "failed to save and apply default Alertmanager configuration")
 	}
 
@@ -112,7 +112,7 @@ func (srv AlertmanagerSrv) RouteDeleteSilence(c *contextmodel.ReqContext, silenc
 		return errResp
 	}
 
-	if err := am.DeleteSilence(silenceID); err != nil {
+	if err := am.DeleteSilence(c.Req.Context(), silenceID); err != nil {
 		if errors.Is(err, alertingNotify.ErrSilenceNotFound) {
 			return ErrResp(http.StatusNotFound, err, "")
 		}
@@ -199,7 +199,7 @@ func (srv AlertmanagerSrv) RouteGetSilence(c *contextmodel.ReqContext, silenceID
 		return errResp
 	}
 
-	gettableSilence, err := am.GetSilence(silenceID)
+	gettableSilence, err := am.GetSilence(c.Req.Context(), silenceID)
 	if err != nil {
 		if errors.Is(err, alertingNotify.ErrSilenceNotFound) {
 			return ErrResp(http.StatusNotFound, err, "")
@@ -216,7 +216,7 @@ func (srv AlertmanagerSrv) RouteGetSilences(c *contextmodel.ReqContext) response
 		return errResp
 	}
 
-	gettableSilences, err := am.ListSilences(c.QueryStrings("filter"))
+	gettableSilences, err := am.ListSilences(c.Req.Context(), c.QueryStrings("filter"))
 	if err != nil {
 		if errors.Is(err, alertingNotify.ErrListSilencesBadPayload) {
 			return ErrResp(http.StatusBadRequest, err, "")
@@ -458,7 +458,7 @@ func newTestTemplateResult(res *notifier.TestTemplatesResults) apimodels.TestTem
 	return apiRes
 }
 
-func (srv AlertmanagerSrv) AlertmanagerFor(orgID int64) (Alertmanager, *response.NormalResponse) {
+func (srv AlertmanagerSrv) AlertmanagerFor(orgID int64) (notifier.Alertmanager, *response.NormalResponse) {
 	am, err := srv.mam.AlertmanagerFor(orgID)
 	if err == nil {
 		return am, nil
@@ -471,6 +471,6 @@ func (srv AlertmanagerSrv) AlertmanagerFor(orgID int64) (Alertmanager, *response
 		return am, response.Error(http.StatusConflict, err.Error(), err)
 	}
 
-	srv.log.Error("unable to obtain the org's Alertmanager", "error", err)
+	srv.log.Error("Unable to obtain the org's Alertmanager", "error", err)
 	return nil, response.Error(http.StatusInternalServerError, "unable to obtain org's Alertmanager", err)
 }

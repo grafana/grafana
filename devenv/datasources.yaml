@@ -298,3 +298,10 @@ datasources:
     access: proxy
     url: http://localhost:3200
     editable: false
+    jsonData:
+      tracesToLogsV2:
+          datasourceUid: gdev-loki
+          spanStartTimeShift: '5m'
+          spanEndTimeShift: '-5m'
+          customQuery: true
+          query: '{filename="/var/log/grafana/grafana.log"} |="$${__span.traceId}"'

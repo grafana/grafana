@@ -12,7 +12,8 @@ import {
 } from 'react-table';
 import { VariableSizeList } from 'react-window';
 
-import { Field, FieldType, ReducerID } from '@grafana/data';
+import { FieldType, ReducerID } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { TableCellHeight } from '@grafana/schema';
 
 import { useTheme2 } from '../../themes';
@@ -175,7 +176,7 @@ export const Table = memo((props: Props) => {
     }
 
     const footerItems = getFooterItems(
-      headerGroups[0].headers as unknown as Array<{ id: string; field: Field }>,
+      headerGroups[0].headers,
       createFooterCalculationValues(rows),
       footerOptions,
       theme
@@ -308,7 +309,7 @@ export const Table = memo((props: Props) => {
   };
 
   const handleScroll: UIEventHandler = (event) => {
-    const { scrollTop } = event.target as HTMLDivElement;
+    const { scrollTop } = event.currentTarget;
 
     if (listRef.current !== null) {
       listRef.current.scrollTo(scrollTop);
@@ -330,7 +331,7 @@ export const Table = memo((props: Props) => {
             <HeaderRow headerGroups={headerGroups} showTypeIcons={showTypeIcons} tableStyles={tableStyles} />
           )}
           {itemCount > 0 ? (
-            <div ref={variableSizeListScrollbarRef}>
+            <div data-testid={selectors.components.Panels.Visualization.Table.body} ref={variableSizeListScrollbarRef}>
               <CustomScrollbar onScroll={handleScroll} hideHorizontalTrack={true}>
                 <VariableSizeList
                   // This component needs an unmount/remount when row height or page changes

@@ -1,31 +1,30 @@
 import { css } from '@emotion/css';
-import { uniqueId, groupBy, upperFirst, sumBy, isArray } from 'lodash';
+import { defaults, groupBy, isArray, sumBy, uniqueId, upperFirst } from 'lodash';
 import pluralize from 'pluralize';
 import React, { FC, Fragment, ReactNode } from 'react';
 import { Link } from 'react-router-dom';
+import { useToggle } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
-import { Badge, Button, Dropdown, getTagColorsFromName, Icon, Menu, Tooltip, useStyles2, Text } from '@grafana/ui';
-import { contextSrv } from 'app/core/core';
+import { Badge, Button, Dropdown, getTagColorsFromName, Icon, Menu, Text, Tooltip, useStyles2 } from '@grafana/ui';
 import ConditionalWrap from 'app/features/alerting/components/ConditionalWrap';
-import { RouteWithID, Receiver, ObjectMatcher, AlertmanagerGroup } from 'app/plugins/datasource/alertmanager/types';
+import { AlertmanagerGroup, ObjectMatcher, Receiver, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
 import { ReceiversState } from 'app/types';
 
-import { isOrgAdmin } from '../../../../plugins/admin/permissions';
+import { AlertmanagerAction, useAlertmanagerAbilities } from '../../hooks/useAbilities';
 import { INTEGRATION_ICONS } from '../../types/contact-points';
-import { getNotificationsPermissions } from '../../utils/access-control';
-import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { normalizeMatchers } from '../../utils/matchers';
 import { createContactPointLink, createMuteTimingLink } from '../../utils/misc';
 import { getInheritedProperties, InhertitableProperties } from '../../utils/notification-policies';
-import { createUrl } from '../../utils/url';
+import { Authorize } from '../Authorize';
 import { HoverCard } from '../HoverCard';
 import { Label } from '../Label';
 import { MetaText } from '../MetaText';
 import { ProvisioningBadge } from '../Provisioning';
 import { Spacer } from '../Spacer';
 import { Strong } from '../Strong';
+import { GrafanaPoliciesExporter } from '../export/GrafanaPoliciesExporter';
 
 import { Matchers } from './Matchers';
 import { TimingOptions, TIMING_OPTIONS_DEFAULTS } from './timingOptions';
@@ -71,12 +70,15 @@ const Policy: FC<PolicyComponentProps> = ({
   const styles = useStyles2(getStyles);
   const isDefaultPolicy = currentRoute === routeTree;
 
-  const permissions = getNotificationsPermissions(alertManagerSourceName);
-  const canEditRoutes = contextSrv.hasPermission(permissions.update);
-  const canDeleteRoutes = contextSrv.hasPermission(permissions.delete);
-  const canReadProvisioning =
-    contextSrv.hasAccess(permissions.provisioning.read, isOrgAdmin()) ||
-    contextSrv.hasPermission(permissions.provisioning.readSecrets);
+  const [
+    [updatePoliciesSupported, updatePoliciesAllowed],
+    [deletePolicySupported, deletePolicyAllowed],
+    [exportPoliciesSupported, exportPoliciesAllowed],
+  ] = useAlertmanagerAbilities([
+    AlertmanagerAction.UpdateNotificationPolicyTree,
+    AlertmanagerAction.DeleteNotificationPolicy,
+    AlertmanagerAction.ExportNotificationPolicies,
+  ]);
 
   const contactPoint = currentRoute.receiver;
   const continueMatching = currentRoute.continue ?? false;
@@ -117,9 +119,6 @@ const Policy: FC<PolicyComponentProps> = ({
   const customGrouping = !noGrouping && isArray(groupBy) && groupBy.length > 0;
   const singleGroup = isDefaultPolicy && isArray(groupBy) && groupBy.length === 0;
 
-  const isEditable = canEditRoutes;
-  const isDeletable = canDeleteRoutes && !isDefaultPolicy;
-
   const matchingAlertGroups = matchingInstancesPreview?.groupsMap?.get(currentRoute.id);
 
   // sum all alert instances for all groups we're handling
@@ -127,8 +126,51 @@ const Policy: FC<PolicyComponentProps> = ({
     ? sumBy(matchingAlertGroups, (group) => group.alerts.length)
     : undefined;
 
-  const isGrafanaAM = alertManagerSourceName === GRAFANA_RULES_SOURCE_NAME;
-  const showExport = isGrafanaAM && isDefaultPolicy && canReadProvisioning;
+  const [showExportDrawer, toggleShowExportDrawer] = useToggle(false);
+  const showExportAction = exportPoliciesAllowed && exportPoliciesSupported && isDefaultPolicy;
+  const showEditAction = updatePoliciesSupported && updatePoliciesAllowed;
+  const showDeleteAction = deletePolicySupported && deletePolicyAllowed && !isDefaultPolicy;
+
+  // build the menu actions for our policy
+  const dropdownMenuActions: JSX.Element[] = [];
+
+  if (showEditAction) {
+    dropdownMenuActions.push(
+      <Fragment key="edit-policy">
+        <ConditionalWrap shouldWrap={provisioned} wrap={ProvisionedTooltip}>
+          <Menu.Item
+            icon="edit"
+            disabled={provisioned}
+            label="Edit"
+            onClick={() => onEditPolicy(currentRoute, isDefaultPolicy)}
+          />
+        </ConditionalWrap>
+      </Fragment>
+    );
+  }
+
+  if (showExportAction) {
+    dropdownMenuActions.push(
+      <Menu.Item key="export-policy" icon="download-alt" label="Export" onClick={toggleShowExportDrawer} />
+    );
+  }
+
+  if (showDeleteAction) {
+    dropdownMenuActions.push(
+      <Fragment key="delete-policy">
+        <Menu.Divider />
+        <ConditionalWrap shouldWrap={provisioned} wrap={ProvisionedTooltip}>
+          <Menu.Item
+            destructive
+            icon="trash-alt"
+            disabled={provisioned}
+            label="Delete"
+            onClick={() => onDeletePolicy(currentRoute)}
+          />
+        </ConditionalWrap>
+      </Fragment>
+    );
+  }
 
   // TODO dead branch detection, warnings for all sort of configs that won't work or will never be activated
   return (
@@ -156,9 +198,9 @@ const Policy: FC<PolicyComponentProps> = ({
                 {/* TODO maybe we should move errors to the gutter instead? */}
                 {errors.length > 0 && <Errors errors={errors} />}
                 {provisioned && <ProvisioningBadge />}
-                {readOnly && !showExport ? null : (
+                {!readOnly && (
                   <Stack direction="row" gap={0.5}>
-                    {!readOnly && (
+                    <Authorize actions={[AlertmanagerAction.CreateNotificationPolicy]}>
                       <ConditionalWrap shouldWrap={provisioned} wrap={ProvisionedTooltip}>
                         <Button
                           variant="secondary"
@@ -171,58 +213,19 @@ const Policy: FC<PolicyComponentProps> = ({
                           New nested policy
                         </Button>
                       </ConditionalWrap>
+                    </Authorize>
+                    {dropdownMenuActions.length > 0 && (
+                      <Dropdown overlay={<Menu>{dropdownMenuActions}</Menu>}>
+                        <Button
+                          icon="ellipsis-h"
+                          variant="secondary"
+                          size="sm"
+                          type="button"
+                          aria-label="more-actions"
+                          data-testid="more-actions"
+                        />
+                      </Dropdown>
                     )}
-
-                    <Dropdown
-                      overlay={
-                        <Menu>
-                          {!readOnly && (
-                            <ConditionalWrap shouldWrap={provisioned} wrap={ProvisionedTooltip}>
-                              <Menu.Item
-                                icon="edit"
-                                disabled={!isEditable || provisioned}
-                                label="Edit"
-                                onClick={() => onEditPolicy(currentRoute, isDefaultPolicy)}
-                              />
-                            </ConditionalWrap>
-                          )}
-                          {showExport && (
-                            <Menu.Item
-                              icon="download-alt"
-                              label="Export"
-                              url={createUrl('/api/v1/provisioning/policies/export', {
-                                download: 'true',
-                                format: 'yaml',
-                              })}
-                              target="_blank"
-                            />
-                          )}
-                          {!readOnly && isDeletable && (
-                            <>
-                              <Menu.Divider />
-                              <ConditionalWrap shouldWrap={provisioned} wrap={ProvisionedTooltip}>
-                                <Menu.Item
-                                  destructive
-                                  icon="trash-alt"
-                                  disabled={!isDeletable || provisioned}
-                                  label="Delete"
-                                  onClick={() => onDeletePolicy(currentRoute)}
-                                />
-                              </ConditionalWrap>
-                            </>
-                          )}
-                        </Menu>
-                      }
-                    >
-                      <Button
-                        icon="ellipsis-h"
-                        variant="secondary"
-                        size="sm"
-                        type="button"
-                        aria-label="more-actions"
-                        data-testid="more-actions"
-                      />
-                    </Dropdown>
                   </Stack>
                 )}
               </Stack>
@@ -279,8 +282,11 @@ const Policy: FC<PolicyComponentProps> = ({
                     <MuteTimings timings={muteTimings} alertManagerSourceName={alertManagerSourceName} />
                   </MetaText>
                 )}
-                {timingOptions && Object.values(timingOptions).some(Boolean) && (
-                  <TimingOptionsMeta timingOptions={timingOptions} />
+                {timingOptions && (
+                  // for the default policy we will also merge the default timings, that way a user can observe what the timing options would be
+                  <TimingOptionsMeta
+                    timingOptions={isDefaultPolicy ? defaults(timingOptions, TIMING_OPTIONS_DEFAULTS) : timingOptions}
+                  />
                 )}
                 {hasInheritedProperties && (
                   <>
@@ -321,6 +327,7 @@ const Policy: FC<PolicyComponentProps> = ({
           );
         })}
       </div>
+      {showExportDrawer && <GrafanaPoliciesExporter onClose={toggleShowExportDrawer} />}
     </Stack>
   );
 };
@@ -441,28 +448,39 @@ const MuteTimings: FC<{ timings: string[]; alertManagerSourceName: string }> = (
 };
 
 const TimingOptionsMeta: FC<{ timingOptions: TimingOptions }> = ({ timingOptions }) => {
-  const groupWait = timingOptions.group_wait ?? TIMING_OPTIONS_DEFAULTS.group_wait;
-  const groupInterval = timingOptions.group_interval ?? TIMING_OPTIONS_DEFAULTS.group_interval;
+  const groupWait = timingOptions.group_wait;
+  const groupInterval = timingOptions.group_interval;
+
+  // we don't have any timing options to show – we're inheriting everything from the parent
+  // and those show up in a separate "inherited properties" component
+  if (!groupWait && !groupInterval) {
+    return null;
+  }
 
   return (
     <MetaText icon="hourglass" data-testid="timing-options">
       <span>Wait</span>
-      <Tooltip
-        placement="top"
-        content="How long to initially wait to send a notification for a group of alert instances."
-      >
-        <span>
-          <Strong>{groupWait}</Strong> <span>to group instances</span>,
-        </span>
-      </Tooltip>
-      <Tooltip
-        placement="top"
-        content="How long to wait before sending a notification about new alerts that are added to a group of alerts for which an initial notification has already been sent."
-      >
-        <span>
-          <Strong>{groupInterval}</Strong> <span>before sending updates</span>
-        </span>
-      </Tooltip>
+      {groupWait && (
+        <Tooltip
+          placement="top"
+          content="How long to initially wait to send a notification for a group of alert instances."
+        >
+          <span>
+            <Strong>{groupWait}</Strong> <span>to group instances</span>
+            {groupWait && groupInterval && ','}
+          </span>
+        </Tooltip>
+      )}
+      {groupInterval && (
+        <Tooltip
+          placement="top"
+          content="How long to wait before sending a notification about new alerts that are added to a group of alerts for which an initial notification has already been sent."
+        >
+          <span>
+            <Strong>{groupInterval}</Strong> <span>before sending updates</span>
+          </span>
+        </Tooltip>
+      )}
     </MetaText>
   );
 };

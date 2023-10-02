@@ -1,7 +1,8 @@
 import { PluginMeta } from '@grafana/data';
 
-import { getPluginCdnResourceUrl, extractPluginIdVersionFromUrl, transformPluginSourceForCDN } from '../cdn/utils';
-import { PLUGIN_CDN_URL_KEY } from '../constants';
+import { transformPluginSourceForCDN } from '../cdn/utils';
+import { resolveWithCache } from '../loader/cache';
+import { isHostedOnCDN } from '../loader/utils';
 
 import { SandboxEnvironment } from './types';
 
@@ -21,15 +22,13 @@ export async function loadScriptIntoSandbox(url: string, meta: PluginMeta, sandb
     scriptCode = patchPluginSourceMap(meta, scriptCode);
 
     // cdn loaded
-  } else if (url.includes(PLUGIN_CDN_URL_KEY)) {
+  } else if (isHostedOnCDN(url)) {
     const response = await fetch(url);
     scriptCode = await response.text();
-    const pluginUrl = getPluginCdnResourceUrl(`/public/${meta.module}`) + '.js';
-    const { version } = extractPluginIdVersionFromUrl(pluginUrl);
     scriptCode = transformPluginSourceForCDN({
-      pluginId: meta.id,
-      version,
+      url,
       source: scriptCode,
+      transformSourceMapURL: true,
     });
   }
 
@@ -41,21 +40,22 @@ export async function loadScriptIntoSandbox(url: string, meta: PluginMeta, sandb
 }
 
 export async function getPluginCode(meta: PluginMeta): Promise<string> {
-  if (meta.module.includes(`${PLUGIN_CDN_URL_KEY}/`)) {
-    // should load plugin from a CDN
-    const pluginUrl = getPluginCdnResourceUrl(`/public/${meta.module}`) + '.js';
-    const response = await fetch(pluginUrl);
+  if (isHostedOnCDN(meta.module)) {
+    // Load plugin from CDN, no need for "resolveWithCache" as CDN URLs already include the version
+    const url = meta.module;
+    const response = await fetch(url);
     let pluginCode = await response.text();
-    const { version } = extractPluginIdVersionFromUrl(pluginUrl);
     pluginCode = transformPluginSourceForCDN({
-      pluginId: meta.id,
-      version,
+      url,
       source: pluginCode,
+      transformSourceMapURL: true,
     });
     return pluginCode;
   } else {
-    //local plugin loading
-    const response = await fetch('public/' + meta.module + '.js');
+    // local plugin. resolveWithCache will append a query parameter with its version
+    // to ensure correct cached version is served
+    const pluginCodeUrl = resolveWithCache(meta.module);
+    const response = await fetch(pluginCodeUrl);
     let pluginCode = await response.text();
     pluginCode = patchPluginSourceMap(meta, pluginCode);
     pluginCode = patchPluginAPIs(pluginCode);
@@ -84,7 +84,7 @@ function patchPluginSourceMap(meta: PluginMeta, pluginCode: string): string {
       replaceWith += `//# sourceURL=module.js\n`;
     }
     // modify the source map url to point to the correct location
-    const sourceCodeMapUrl = `/public/${meta.module}.js.map`;
+    const sourceCodeMapUrl = meta.module + '.map';
     replaceWith += `//# sourceMappingURL=${sourceCodeMapUrl}`;
 
     return pluginCode.replace('//# sourceMappingURL=module.js.map', replaceWith);

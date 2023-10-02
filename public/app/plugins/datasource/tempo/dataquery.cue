@@ -44,7 +44,13 @@ composableKinds: DataQuery: {
 					serviceMapIncludeNamespace?: bool
 					// Defines the maximum number of traces that are returned from Tempo
 					limit?: int64
+					// Defines the maximum number of spans per spanset that are returned from Tempo
+					spss?: int64
 					filters: [...#TraceqlFilter]
+					// Filters that are used to query the metrics summary
+					groupBy?: [...#TraceqlFilter]
+					// The type of the table that is used to display the search results
+					tableType?: #SearchTableType
 				} @cuetsy(kind="interface") @grafana(TSVeneer="type")
 
 				// search = Loki search, nativeSearch = Tempo search for backwards compatibility
@@ -53,8 +59,11 @@ composableKinds: DataQuery: {
 				// The state of the TraceQL streaming search query
 				#SearchStreamingState: "pending" | "streaming" | "done" | "error" @cuetsy(kind="enum")
 
+				// The type of the table that is used to display the search results
+				#SearchTableType: "traces" | "spans" @cuetsy(kind="enum")
+
 				// static fields are pre-set in the UI, dynamic fields are added by the user
-				#TraceqlSearchScope: "unscoped" | "resource" | "span" @cuetsy(kind="enum")
+				#TraceqlSearchScope: "intrinsic" | "unscoped" | "resource" | "span" @cuetsy(kind="enum")
 				#TraceqlFilter: {
 					// Uniquely identify the filter, will not be used in the query generation
 					id: string

@@ -1,9 +1,9 @@
 # syntax=docker/dockerfile:1
 
-ARG BASE_IMAGE=alpine:3.17
-ARG JS_IMAGE=node:18-alpine3.17
+ARG BASE_IMAGE=alpine:3.18.3
+ARG JS_IMAGE=node:18-alpine3.18
 ARG JS_PLATFORM=linux/amd64
-ARG GO_IMAGE=golang:1.20.6-alpine3.17
+ARG GO_IMAGE=golang:1.20.8-alpine3.18
 
 ARG GO_SRC=go-builder
 ARG JS_SRC=js-builder
@@ -21,7 +21,7 @@ COPY plugins-bundled plugins-bundled
 
 RUN yarn install --immutable
 
-COPY tsconfig.json .eslintrc .editorconfig .browserslistrc .prettierrc.js babel.config.json .linguirc ./
+COPY tsconfig.json .eslintrc .editorconfig .browserslistrc .prettierrc.js babel.config.json ./
 COPY public public
 COPY scripts scripts
 COPY emails emails
@@ -64,6 +64,7 @@ COPY pkg pkg
 COPY scripts scripts
 COPY conf conf
 COPY .github .github
+COPY LICENSE ./
 
 ENV COMMIT_SHA=${COMMIT_SHA}
 ENV BUILD_BRANCH=${BUILD_BRANCH}
@@ -110,7 +111,7 @@ RUN if grep -i -q alpine /etc/issue; then \
     elif grep -i -q ubuntu /etc/issue; then \
       DEBIAN_FRONTEND=noninteractive && \
       apt-get update && \
-      apt-get install -y ca-certificates curl tzdata && \
+      apt-get install -y ca-certificates curl tzdata musl && \
       apt-get autoremove -y && \
       rm -rf /var/lib/apt/lists/*; \
     else \
@@ -165,6 +166,7 @@ RUN if [ ! $(getent group "$GF_GID") ]; then \
 
 COPY --from=go-src /tmp/grafana/bin/grafana* /tmp/grafana/bin/*/grafana* ./bin/
 COPY --from=js-src /tmp/grafana/public ./public
+COPY --from=go-src /tmp/grafana/LICENSE ./
 
 EXPOSE 3000
 

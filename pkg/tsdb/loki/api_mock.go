@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 )
 
 type mockRequestCallback func(req *http.Request)
@@ -64,7 +65,7 @@ func makeMockedAPIWithUrl(url string, statusCode int, contentType string, respon
 		Transport: &mockedRoundTripper{statusCode: statusCode, contentType: contentType, responseBytes: responseBytes, requestCallback: requestCallback},
 	}
 
-	return newLokiAPI(&client, url, log.New("test"))
+	return newLokiAPI(&client, url, log.New("test"), tracing.InitializeTracerForTest())
 }
 
 func makeCompressedMockedAPIWithUrl(url string, statusCode int, contentType string, responseBytes []byte, requestCallback mockRequestCallback) *LokiAPI {
@@ -72,5 +73,5 @@ func makeCompressedMockedAPIWithUrl(url string, statusCode int, contentType stri
 		Transport: &mockedCompressedRoundTripper{statusCode: statusCode, contentType: contentType, responseBytes: responseBytes, requestCallback: requestCallback},
 	}
 
-	return newLokiAPI(&client, url, log.New("test"))
+	return newLokiAPI(&client, url, log.New("test"), tracing.InitializeTracerForTest())
 }

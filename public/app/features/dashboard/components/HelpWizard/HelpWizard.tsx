@@ -66,15 +66,13 @@ export function HelpWizard({ panel, plugin, onClose }: Props) {
   ];
 
   const hasSupportBundleAccess =
-    config.supportBundlesEnabled &&
-    contextSrv.hasAccess(AccessControlAction.ActionSupportBundlesCreate, contextSrv.isGrafanaAdmin);
+    config.supportBundlesEnabled && contextSrv.hasPermission(AccessControlAction.ActionSupportBundlesCreate);
 
   return (
     <Drawer
       title={`Get help with this panel`}
       size="lg"
       onClose={onClose}
-      scrollableContent
       subtitle={
         <Stack direction="column" gap={1}>
           <Stack direction="row" gap={1}>

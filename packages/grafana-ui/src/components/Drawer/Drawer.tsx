@@ -4,7 +4,6 @@ import { FocusScope } from '@react-aria/focus';
 import { useOverlay } from '@react-aria/overlays';
 import RcDrawer from 'rc-drawer';
 import React, { ReactNode, useEffect } from 'react';
-import { useClickAway } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -12,7 +11,6 @@ import { selectors } from '@grafana/e2e-selectors';
 import { useStyles2 } from '../../themes';
 import { Button } from '../Button';
 import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
-//import { IconButton } from '../IconButton/IconButton';
 import { Text } from '../Text/Text';
 
 export interface Props {
@@ -42,7 +40,10 @@ export interface Props {
   size?: 'sm' | 'md' | 'lg';
   /** Tabs */
   tabs?: React.ReactNode;
-  /** Set to true if the component rendered within in drawer content has its own scroll */
+  // TODO remove this prop next major version
+  /**
+   * @deprecated this is now default behaviour. content is always scrollable.
+   **/
   scrollableContent?: boolean;
   /** Callback for closing the drawer */
   onClose: () => void;
@@ -52,7 +53,7 @@ export function Drawer({
   children,
   onClose,
   closeOnMaskClick = true,
-  scrollableContent = false,
+  scrollableContent = true,
   title,
   subtitle,
   width,
@@ -73,8 +74,6 @@ export function Drawer({
 
   // Adds body class while open so the toolbar nav can hide some actions while drawer is open
   useBodyClassWhileOpen();
-  // Close when we click outside mask (topnav) but only if closeOnMaskClick is true
-  useClickAway(overlayRef, closeOnMaskClick ? onClose : doNothing);
 
   // Apply size styles (unless deprecated width prop is used)
   const rootClass = cx(styles.drawer, !width && styles.sizes[size]);
@@ -143,8 +142,6 @@ export function Drawer({
   );
 }
 
-function doNothing() {}
-
 function useBodyClassWhileOpen() {
   useEffect(() => {
     if (!document.body) {
@@ -170,11 +167,15 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     drawer: css({
       '.main-view &': {
-        top: '81px',
+        top: 81,
       },
 
       '.main-view--search-bar-hidden &': {
-        top: '41px',
+        top: 41,
+      },
+
+      '.main-view--chrome-hidden &': {
+        top: 0,
       },
 
       '.rc-drawer-content-wrapper': {
@@ -232,9 +233,35 @@ const getStyles = (theme: GrafanaTheme2) => {
         },
       },
     }),
+    // we want the mask itself to span the whole page including the top bar
+    // this ensures trying to click something in the top bar will close the drawer correctly
+    // but we don't want the backdrop styling to apply over the top bar as it looks weird
+    // instead have a child pseudo element to apply the backdrop styling below the top bar
     mask: css({
-      backgroundColor: `${theme.components.overlay.background} !important`,
-      backdropFilter: 'blur(1px)',
+      backgroundColor: 'transparent',
+      position: 'fixed',
+
+      '&:before': {
+        backgroundColor: `${theme.components.overlay.background} !important`,
+        backdropFilter: 'blur(1px)',
+        bottom: 0,
+        content: '""',
+        left: 0,
+        position: 'fixed',
+        right: 0,
+
+        '.main-view &': {
+          top: 81,
+        },
+
+        '.main-view--search-bar-hidden &': {
+          top: 41,
+        },
+
+        '.main-view--chrome-hidden &': {
+          top: 0,
+        },
+      },
     }),
     maskMotion: css({
       '&-appear': {
@@ -247,8 +274,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       },
     }),
     header: css({
+      label: 'drawer-header',
       flexGrow: 0,
-      padding: theme.spacing(3, 2),
+      padding: theme.spacing(2, 2, 3),
       borderBottom: `1px solid ${theme.colors.border.weak}`,
     }),
     headerWithTabs: css({
@@ -257,12 +285,14 @@ const getStyles = (theme: GrafanaTheme2) => {
     actions: css({
       position: 'absolute',
       right: theme.spacing(1),
-      top: theme.spacing(2),
+      top: theme.spacing(1),
     }),
     titleWrapper: css({
+      label: 'drawer-title',
       overflowWrap: 'break-word',
     }),
     subtitle: css({
+      label: 'drawer-subtitle',
       color: theme.colors.text.secondary,
       paddingTop: theme.spacing(1),
     }),
@@ -272,12 +302,13 @@ const getStyles = (theme: GrafanaTheme2) => {
       flexGrow: 1,
     }),
     contentScroll: css({
-      minHeight: 0,
+      label: 'drawer-content',
       flex: 1,
     }),
     tabsWrapper: css({
+      label: 'drawer-tabs',
       paddingLeft: theme.spacing(2),
-      margin: theme.spacing(2, -1, -3, -3),
+      margin: theme.spacing(0, -1, -3, -3),
     }),
   };
 };

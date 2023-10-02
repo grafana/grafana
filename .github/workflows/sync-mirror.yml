@@ -1,7 +1,7 @@
 # Owned by grafana-delivery-squad
 # Intended to be dropped into the base repo, Ex: grafana/grafana
 name: Sync to mirror
-run-name: sync-to-mirror-${{ github.base_ref }}-${{ github.head_ref }}
+run-name: sync-to-mirror-${{ github.ref_name }}
 on:
   workflow_dispatch:
   push:
@@ -13,7 +13,7 @@ on:
 # This is run after the pull request has been merged, so we'll run against the target branch
 jobs:
   trigger_downstream_patch_mirror:
-    concurrency: patch-mirror-${{ github.ref }}
+    concurrency: patch-mirror-${{ github.ref_name }}
     uses: grafana/security-patch-actions/.github/workflows/mirror-branch-and-apply-patches.yml@main
     if: github.repository == 'grafana/grafana'
     with:

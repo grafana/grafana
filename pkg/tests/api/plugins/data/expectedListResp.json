@@ -13,8 +13,8 @@
       "description": "Shows list of alerts and their current status",
       "links": null,
       "logos": {
-        "small": "public/app/plugins/panel/alertlist/img/icn-singlestat-panel.svg",
-        "large": "public/app/plugins/panel/alertlist/img/icn-singlestat-panel.svg"
+        "small": "/public/app/plugins/panel/alertlist/img/icn-singlestat-panel.svg",
+        "large": "/public/app/plugins/panel/alertlist/img/icn-singlestat-panel.svg"
       },
       "build": {},
       "screenshots": null,
@@ -55,8 +55,8 @@
         }
       ],
       "logos": {
-        "small": "public/app/plugins/datasource/alertmanager/img/logo.svg",
-        "large": "public/app/plugins/datasource/alertmanager/img/logo.svg"
+        "small": "/public/app/plugins/datasource/alertmanager/img/logo.svg",
+        "large": "/public/app/plugins/datasource/alertmanager/img/logo.svg"
       },
       "build": {},
       "screenshots": null,
@@ -92,8 +92,8 @@
       "description": "List annotations",
       "links": null,
       "logos": {
-        "small": "public/app/plugins/panel/annolist/img/icn-annolist-panel.svg",
-        "large": "public/app/plugins/panel/annolist/img/icn-annolist-panel.svg"
+        "small": "/public/app/plugins/panel/annolist/img/icn-annolist-panel.svg",
+        "large": "/public/app/plugins/panel/annolist/img/icn-annolist-panel.svg"
       },
       "build": {},
       "screenshots": null,
@@ -138,22 +138,22 @@
         }
       ],
       "logos": {
-        "small": "public/app/plugins/datasource/azuremonitor/img/logo.jpg",
-        "large": "public/app/plugins/datasource/azuremonitor/img/logo.jpg"
+        "small": "/public/app/plugins/datasource/azuremonitor/img/logo.jpg",
+        "large": "/public/app/plugins/datasource/azuremonitor/img/logo.jpg"
       },
       "build": {},
       "screenshots": [
         {
           "name": "Azure Contoso Loans",
-          "path": "public/app/plugins/datasource/azuremonitor/img/contoso_loans_grafana_dashboard.png"
+          "path": "/public/app/plugins/datasource/azuremonitor/img/contoso_loans_grafana_dashboard.png"
         },
         {
           "name": "Azure Monitor Network",
-          "path": "public/app/plugins/datasource/azuremonitor/img/azure_monitor_network.png"
+          "path": "/public/app/plugins/datasource/azuremonitor/img/azure_monitor_network.png"
         },
         {
           "name": "Azure Monitor CPU",
-          "path": "public/app/plugins/datasource/azuremonitor/img/azure_monitor_cpu.png"
+          "path": "/public/app/plugins/datasource/azuremonitor/img/azure_monitor_cpu.png"
         }
       ],
       "version": "1.0.0",
@@ -188,8 +188,8 @@
       "description": "Categorical charts with group support",
       "links": null,
       "logos": {
-        "small": "public/app/plugins/panel/barchart/img/barchart.svg",
-        "large": "public/app/plugins/panel/barchart/img/barchart.svg"
+        "small": "/public/app/plugins/panel/barchart/img/barchart.svg",
+        "large": "/public/app/plugins/panel/barchart/img/barchart.svg"
       },
       "build": {},
       "screenshots": null,
@@ -225,8 +225,8 @@
       "description": "Horizontal and vertical gauges",
       "links": null,
       "logos": {
-        "small": "public/app/plugins/panel/bargauge/img/icon_bar_gauge.svg",
-        "large": "public/app/plugins/panel/bargauge/img/icon_bar_gauge.svg"
+        "small": "/public/app/plugins/panel/bargauge/img/icon_bar_gauge.svg",
+        "large": "/public/app/plugins/panel/bargauge/img/icon_bar_gauge.svg"
       },
       "build": {},
       "screenshots": null,
@@ -262,8 +262,8 @@
       "description": "",
       "links": null,
       "logos": {
-        "small": "public/app/plugins/panel/candlestick/img/candlestick.svg",
-        "large": "public/app/plugins/panel/candlestick/img/candlestick.svg"
+        "small": "/public/app/plugins/panel/candlestick/img/candlestick.svg",
+        "large": "/public/app/plugins/panel/candlestick/img/candlestick.svg"
       },
       "build": {},
       "screenshots": null,
@@ -299,8 +299,8 @@
       "description": "Explicit element placement",
       "links": null,
       "logos": {
-        "small": "public/app/plugins/panel/canvas/img/icn-canvas.svg",
-        "large": "public/app/plugins/panel/canvas/img/icn-canvas.svg"
+        "small": "/public/app/plugins/panel/canvas/img/icn-canvas.svg",
+        "large": "/public/app/plugins/panel/canvas/img/icn-canvas.svg"
       },
       "build": {},
       "screenshots": null,
@@ -336,8 +336,8 @@
       "description": "Data source for Amazon AWS monitoring service",
       "links": null,
       "logos": {
-        "small": "public/app/plugins/datasource/cloudwatch/img/amazon-web-services.png",
-        "large": "public/app/plugins/datasource/cloudwatch/img/amazon-web-services.png"
+        "small": "/public/app/plugins/datasource/cloudwatch/img/amazon-web-services.png",
+        "large": "/public/app/plugins/datasource/cloudwatch/img/amazon-web-services.png"
       },
       "build": {},
       "screenshots": null,
@@ -373,8 +373,8 @@
       "description": "List of dynamic links to other dashboards",
       "links": null,
       "logos": {
-        "small": "public/app/plugins/panel/dashlist/img/icn-dashlist-panel.svg",
-        "large": "public/app/plugins/panel/dashlist/img/icn-dashlist-panel.svg"
+        "small": "/public/app/plugins/panel/dashlist/img/icn-dashlist-panel.svg",
+        "large": "/public/app/plugins/panel/dashlist/img/icn-dashlist-panel.svg"
       },
       "build": {},
       "screenshots": null,
@@ -410,8 +410,8 @@
       "description": "",
       "links": null,
       "logos": {
-        "small": "public/app/plugins/panel/datagrid/img/icn-table-panel.svg",
-        "large": "public/app/plugins/panel/datagrid/img/icn-table-panel.svg"
+        "small": "/public/app/plugins/panel/datagrid/img/icn-table-panel.svg",
+        "large": "/public/app/plugins/panel/datagrid/img/icn-table-panel.svg"
       },
       "build": {},
       "screenshots": null,
@@ -452,8 +452,8 @@
         }
       ],
       "logos": {
-        "small": "public/app/plugins/datasource/elasticsearch/img/elasticsearch.svg",
-        "large": "public/app/plugins/datasource/elasticsearch/img/elasticsearch.svg"
+        "small": "/public/app/plugins/datasource/elasticsearch/img/elasticsearch.svg",
+        "large": "/public/app/plugins/datasource/elasticsearch/img/elasticsearch.svg"
       },
       "build": {},
       "screenshots": null,
@@ -489,8 +489,8 @@
       "description": "",
       "links": null,
       "logos": {
-        "small": "public/app/plugins/panel/flamegraph/img/icn-flamegraph.svg",
-        "large": "public/app/plugins/panel/flamegraph/img/icn-flamegraph.svg"
+        "small": "/public/app/plugins/panel/flamegraph/img/icn-flamegraph.svg",
+        "large": "/public/app/plugins/panel/flamegraph/img/icn-flamegraph.svg"
       },
       "build": {},
       "screenshots": null,
@@ -526,8 +526,8 @@
       "description": "Standard gauge visualization",
       "links": null,
       "logos": {
-        "small": "public/app/plugins/panel/gauge/img/icon_gauge.svg",
-        "large": "public/app/plugins/panel/gauge/img/icon_gauge.svg"
+        "small": "/public/app/plugins/panel/gauge/img/icon_gauge.svg",
+        "large": "/public/app/plugins/panel/gauge/img/icon_gauge.svg"
       },
       "build": {},
       "screenshots": null,
@@ -563,8 +563,8 @@
       "description": "Geomap panel",
       "links": null,
       "logos": {
-        "small": "public/app/plugins/panel/geomap/img/icn-geomap.svg",
-        "large": "public/app/plugins/panel/geomap/img/icn-geomap.svg"
+        "small": "/public/app/plugins/panel/geomap/img/icn-geomap.svg",
+        "large": "/public/app/plugins/panel/geomap/img/icn-geomap.svg"
       },
       "build": {},
       "screenshots": null,
@@ -600,8 +600,8 @@
       "description": "",
       "links": null,
       "logos": {
-        "small": "public/app/plugins/panel/gettingstarted/img/icn-dashlist-panel.svg",
-        "large": "public/app/plugins/panel/gettingstarted/img/icn-dashlist-panel.svg"
+        "small": "/public/app/plugins/panel/gettingstarted/img/icn-dashlist-panel.svg",
+        "large": "/public/app/plugins/panel/gettingstarted/img/icn-dashlist-panel.svg"
       },
       "build": {},
       "screenshots": null,
@@ -637,8 +637,8 @@
       "description": "Data source for Google's monitoring service (formerly named Stackdriver)",
       "links": null,
       "logos": {
-        "small": "public/app/plugins/datasource/cloud-monitoring/img/cloud_monitoring_logo.svg",
-        "large": "public/app/plugins/datasource/cloud-monitoring/img/cloud_monitoring_logo.svg"
+        "small": "/public/app/plugins/datasource/cloud-monitoring/img/cloud_monitoring_logo.svg",
+        "large": "/public/app/plugins/datasource/cloud-monitoring/img/cloud_monitoring_logo.svg"
       },
       "build": {},
       "screenshots": null,
@@ -671,16 +671,16 @@
         "name": "Grafana Labs",
         "url": "https://www.grafana.com"
       },
-      "description": "Supports Phlare and Pyroscope backends, horizontally-scalable, highly-available, multi-tenant continuous profiling aggregation systems.",
+      "description": "Data source for Grafana Pyroscope, horizontally-scalable, highly-available, multi-tenant continuous profiling aggregation system.",
       "links": [
         {
           "name": "GitHub Project",
-          "url": "https://github.com/grafana/phlare"
+          "url": "https://github.com/grafana/pyroscope"
         }
       ],
       "logos": {
-        "small": "public/app/plugins/datasource/grafana-pyroscope-datasource/img/grafana_pyroscope_icon.svg",
-        "large": "public/app/plugins/datasource/grafana-pyroscope-datasource/img/grafana_pyroscope_icon.svg"
+        "small": "/public/app/plugins/datasource/grafana-pyroscope-datasource/img/grafana_pyroscope_icon.svg",
+        "large": "/public/app/plugins/datasource/grafana-pyroscope-datasource/img/grafana_pyroscope_icon.svg"
       },
       "build": {},
       "screenshots": null,
@@ -716,8 +716,8 @@
       "description": "The old default graph panel",
       "links": null,
       "logos": {
-        "small": "public/app/plugins/panel/graph/img/icn-graph-panel.svg",
-        "large": "public/app/plugins/panel/graph/img/icn-graph-panel.svg"
+        "small": "/public/app/plugins/panel/graph/img/icn-graph-panel.svg",
+        "large": "/public/app/plugins/panel/graph/img/icn-graph-panel.svg"
       },
       "build": {},
       "screenshots": null,
@@ -762,8 +762,8 @@
         }
       ],
       "logos": {
-        "small": "public/app/plugins/datasource/graphite/img/graphite_logo.png",
-        "large": "public/app/plugins/datasource/graphite/img/graphite_logo.png"
+        "small": "/public/app/plugins/datasource/graphite/img/graphite_logo.png",
+        "large": "/public/app/plugins/datasource/graphite/img/graphite_logo.png"
       },
       "build": {},
       "screenshots": null,
@@ -799,8 +799,8 @@
       "description": "Like a histogram over time",
       "links": null,
       "logos": {
-        "small": "public/app/plugins/panel/heatmap/img/icn-heatmap-panel.svg",
-        "large": "public/app/plugins/panel/heatmap/img/icn-heatmap-panel.svg"
+        "small": "/public/app/plugins/panel/heatmap/img/icn-heatmap-panel.svg",
+        "large": "/public/app/plugins/panel/heatmap/img/icn-heatmap-panel.svg"
       },
       "build": {},
       "screenshots": null,
@@ -836,8 +836,8 @@
       "description": "",
       "links": null,
       "logos": {
-        "small": "public/app/plugins/panel/histogram/img/histogram.svg",
-        "large": "public/app/plugins/panel/histogram/img/histogram.svg"
+        "small": "/public/app/plugins/panel/histogram/img/histogram.svg",
+        "large": "/public/app/plugins/panel/histogram/img/histogram.svg"
       },
       "build": {},
       "screenshots": null,
@@ -873,8 +873,8 @@
       "description": "Open source time series database",
       "links": null,
       "logos": {
-        "small": "public/app/plugins/datasource/influxdb/img/influxdb_logo.svg",
-        "large": "public/app/plugins/datasource/influxdb/img/influxdb_logo.svg"
+        "small": "/public/app/plugins/datasource/influxdb/img/influxdb_logo.svg",
+        "large": "/public/app/plugins/datasource/influxdb/img/influxdb_logo.svg"
       },
       "build": {},
       "screenshots": null,
@@ -919,8 +919,8 @@
         }
       ],
       "logos": {
-        "small": "public/app/plugins/datasource/jaeger/img/jaeger_logo.svg",
-        "large": "public/app/plugins/datasource/jaeger/img/jaeger_logo.svg"
+        "small": "/public/app/plugins/datasource/jaeger/img/jaeger_logo.svg",
+        "large": "/public/app/plugins/datasource/jaeger/img/jaeger_logo.svg"
       },
       "build": {},
       "screenshots": null,
@@ -956,8 +956,8 @@
       "description": "",
       "links": null,
       "logos": {
-        "small": "public/app/plugins/panel/logs/img/icn-logs-panel.svg",
-        "large": "public/app/plugins/panel/logs/img/icn-logs-panel.svg"
+        "small": "/public/app/plugins/panel/logs/img/icn-logs-panel.svg",
+        "large": "/public/app/plugins/panel/logs/img/icn-logs-panel.svg"
       },
       "build": {},
       "screenshots": null,
@@ -1002,8 +1002,8 @@
         }
       ],
       "logos": {
-        "small": "public/app/plugins/datasource/loki/img/loki_icon.svg",
-        "large": "public/app/plugins/datasource/loki/img/loki_icon.svg"
+        "small": "/public/app/plugins/datasource/loki/img/loki_icon.svg",
+        "large": "/public/app/plugins/datasource/loki/img/loki_icon.svg"
       },
       "build": {},
       "screenshots": null,
@@ -1039,8 +1039,8 @@
       "description": "Data source for Microsoft SQL Server compatible databases",
       "links": null,
       "logos": {
-        "small": "public/app/plugins/datasource/mssql/img/sql_server_logo.svg",
-        "large": "public/app/plugins/datasource/mssql/img/sql_server_logo.svg"
+        "small": "/public/app/plugins/datasource/mssql/img/sql_server_logo.svg",
+        "large": "/public/app/plugins/datasource/mssql/img/sql_server_logo.svg"
       },
       "build": {},
       "screenshots": null,
@@ -1076,8 +1076,8 @@
       "description": "Data source for MySQL databases",
       "links": null,
       "logos": {
-        "small": "public/app/plugins/datasource/mysql/img/mysql_logo.svg",
-        "large": "public/app/plugins/datasource/mysql/img/mysql_logo.svg"
+        "small": "/public/app/plugins/datasource/mysql/img/mysql_logo.svg",
+        "large": "/public/app/plugins/datasource/mysql/img/mysql_logo.svg"
       },
       "build": {},
       "screenshots": null,
@@ -1113,8 +1113,8 @@
       "description": "RSS feed reader",
       "links": null,
       "logos": {
-        "small": "public/app/plugins/panel/news/img/news.svg",
-        "large": "public/app/plugins/panel/news/img/news.svg"
+        "small": "/public/app/plugins/panel/news/img/news.svg",
+        "large": "/public/app/plugins/panel/news/img/news.svg"
       },
       "build": {},
       "screenshots": null,
@@ -1150,8 +1150,8 @@
       "description": "",
       "links": null,
       "logos": {
-        "small": "public/app/plugins/panel/nodeGraph/img/icn-node-graph.svg",
-        "large": "public/app/plugins/panel/nodeGraph/img/icn-node-graph.svg"
+        "small": "/public/app/plugins/panel/nodeGraph/img/icn-node-graph.svg",
+        "large": "/public/app/plugins/panel/nodeGraph/img/icn-node-graph.svg"
       },
       "build": {},
       "screenshots": null,
@@ -1187,8 +1187,8 @@
       "description": "Open source time series database",
       "links": null,
       "logos": {
-        "small": "public/app/plugins/datasource/opentsdb/img/opentsdb_logo.png",
-        "large": "public/app/plugins/datasource/opentsdb/img/opentsdb_logo.png"
+        "small": "/public/app/plugins/datasource/opentsdb/img/opentsdb_logo.png",
+        "large": "/public/app/plugins/datasource/opentsdb/img/opentsdb_logo.png"
       },
       "build": {},
       "screenshots": null,
@@ -1229,8 +1229,8 @@
         }
       ],
       "logos": {
-        "small": "public/app/plugins/datasource/parca/img/logo-small.svg",
-        "large": "public/app/plugins/datasource/parca/img/logo-small.svg"
+        "small": "/public/app/plugins/datasource/parca/img/logo-small.svg",
+        "large": "/public/app/plugins/datasource/parca/img/logo-small.svg"
       },
       "build": {},
       "screenshots": null,
@@ -1266,8 +1266,8 @@
       "description": "The new core pie chart visualization",
       "links": null,
       "logos": {
-        "small": "public/app/plugins/panel/piechart/img/icon_piechart.svg",
-        "large": "public/app/plugins/panel/piechart/img/icon_piechart.svg"
+        "small": "/public/app/plugins/panel/piechart/img/icon_piechart.svg",
+        "large": "/public/app/plugins/panel/piechart/img/icon_piechart.svg"
       },
       "build": {},
       "screenshots": null,
@@ -1303,8 +1303,8 @@
       "description": "Data source for PostgreSQL and compatible databases",
       "links": null,
       "logos": {
-        "small": "public/app/plugins/datasource/postgres/img/postgresql_logo.svg",
-        "large": "public/app/plugins/datasource/postgres/img/postgresql_logo.svg"
+        "small": "/public/app/plugins/datasource/postgres/img/postgresql_logo.svg",
+        "large": "/public/app/plugins/datasource/postgres/img/postgresql_logo.svg"
       },
       "build": {},
       "screenshots": null,
@@ -1345,8 +1345,8 @@
         }
       ],
       "logos": {
-        "small": "public/app/plugins/datasource/prometheus/img/prometheus_logo.svg",
-        "large": "public/app/plugins/datasource/prometheus/img/prometheus_logo.svg"
+        "small": "/public/app/plugins/datasource/prometheus/img/prometheus_logo.svg",
+        "large": "/public/app/plugins/datasource/prometheus/img/prometheus_logo.svg"
       },
       "build": {},
       "screenshots": null,
@@ -1382,8 +1382,8 @@
       "description": "Big stat values \u0026 sparklines",
       "links": null,
       "logos": {
-        "small": "public/app/plugins/panel/stat/img/icn-singlestat-panel.svg",
-        "large": "public/app/plugins/panel/stat/img/icn-singlestat-panel.svg"
+        "small": "/public/app/plugins/panel/stat/img/icn-singlestat-panel.svg",
+        "large": "/public/app/plugins/panel/stat/img/icn-singlestat-panel.svg"
       },
       "build": {},
       "screenshots": null,
@@ -1419,8 +1419,8 @@
       "description": "State changes and durations",
       "links": null,
       "logos": {
-        "small": "public/app/plugins/panel/state-timeline/img/timeline.svg",
-        "large": "public/app/plugins/panel/state-timeline/img/timeline.svg"
+        "small": "/public/app/plugins/panel/state-timeline/img/timeline.svg",
+        "large": "/public/app/plugins/panel/state-timeline/img/timeline.svg"
       },
       "build": {},
       "screenshots": null,
@@ -1456,8 +1456,8 @@
       "description": "Periodic status history",
       "links": null,
       "logos": {
-        "small": "public/app/plugins/panel/status-history/img/status.svg",
-        "large": "public/app/plugins/panel/status-history/img/status.svg"
+        "small": "/public/app/plugins/panel/status-history/img/status.svg",
+        "large": "/public/app/plugins/panel/status-history/img/status.svg"
       },
       "build": {},
       "screenshots": null,
@@ -1493,8 +1493,8 @@
       "description": "Supports many column styles",
       "links": null,
       "logos": {
-        "small": "public/app/plugins/panel/table/img/icn-table-panel.svg",
-        "large": "public/app/plugins/panel/table/img/icn-table-panel.svg"
+        "small": "/public/app/plugins/panel/table/img/icn-table-panel.svg",
+        "large": "/public/app/plugins/panel/table/img/icn-table-panel.svg"
       },
       "build": {},
       "screenshots": null,
@@ -1530,8 +1530,8 @@
       "description": "Table Panel for Grafana",
       "links": null,
       "logos": {
-        "small": "public/app/plugins/panel/table-old/img/icn-table-panel.svg",
-        "large": "public/app/plugins/panel/table-old/img/icn-table-panel.svg"
+        "small": "/public/app/plugins/panel/table-old/img/icn-table-panel.svg",
+        "large": "/public/app/plugins/panel/table-old/img/icn-table-panel.svg"
       },
       "build": {},
       "screenshots": null,
@@ -1572,8 +1572,8 @@
         }
       ],
       "logos": {
-        "small": "public/app/plugins/datasource/tempo/img/tempo_logo.svg",
-        "large": "public/app/plugins/datasource/tempo/img/tempo_logo.svg"
+        "small": "/public/app/plugins/datasource/tempo/img/tempo_logo.svg",
+        "large": "/public/app/plugins/datasource/tempo/img/tempo_logo.svg"
       },
       "build": {},
       "screenshots": null,
@@ -1598,7 +1598,7 @@
   {
     "name": "TestData",
     "type": "datasource",
-    "id": "testdata",
+    "id": "grafana-testdata-datasource",
     "enabled": true,
     "pinned": false,
     "info": {
@@ -1609,8 +1609,8 @@
       "description": "Generates test data in different forms",
       "links": null,
       "logos": {
-        "small": "public/app/plugins/datasource/testdata/img/testdata.svg",
-        "large": "public/app/plugins/datasource/testdata/img/testdata.svg"
+        "small": "/public/app/plugins/datasource/grafana-testdata-datasource/img/testdata.svg",
+        "large": "/public/app/plugins/datasource/grafana-testdata-datasource/img/testdata.svg"
       },
       "build": {},
       "screenshots": null,
@@ -1624,7 +1624,7 @@
     },
     "latestVersion": "",
     "hasUpdate": false,
-    "defaultNavUrl": "/plugins/testdata/",
+    "defaultNavUrl": "/plugins/grafana-testdata-datasource/",
     "category": "",
     "state": "",
     "signature": "internal",
@@ -1646,8 +1646,8 @@
       "description": "Supports markdown and html content",
       "links": null,
       "logos": {
-        "small": "public/app/plugins/panel/text/img/icn-text-panel.svg",
-        "large": "public/app/plugins/panel/text/img/icn-text-panel.svg"
+        "small": "/public/app/plugins/panel/text/img/icn-text-panel.svg",
+        "large": "/public/app/plugins/panel/text/img/icn-text-panel.svg"
       },
       "build": {},
       "screenshots": null,
@@ -1683,8 +1683,8 @@
       "description": "Time based line, area and bar charts",
       "links": null,
       "logos": {
-        "small": "public/app/plugins/panel/timeseries/img/icn-timeseries-panel.svg",
-        "large": "public/app/plugins/panel/timeseries/img/icn-timeseries-panel.svg"
+        "small": "/public/app/plugins/panel/timeseries/img/icn-timeseries-panel.svg",
+        "large": "/public/app/plugins/panel/timeseries/img/icn-timeseries-panel.svg"
       },
       "build": {},
       "screenshots": null,
@@ -1720,8 +1720,8 @@
       "description": "",
       "links": null,
       "logos": {
-        "small": "public/app/plugins/panel/traces/img/traces-panel.svg",
-        "large": "public/app/plugins/panel/traces/img/traces-panel.svg"
+        "small": "/public/app/plugins/panel/traces/img/traces-panel.svg",
+        "large": "/public/app/plugins/panel/traces/img/traces-panel.svg"
       },
       "build": {},
       "screenshots": null,
@@ -1757,8 +1757,8 @@
       "description": "Like timeseries, but when x != time",
       "links": null,
       "logos": {
-        "small": "public/app/plugins/panel/trend/img/trend.svg",
-        "large": "public/app/plugins/panel/trend/img/trend.svg"
+        "small": "/public/app/plugins/panel/trend/img/trend.svg",
+        "large": "/public/app/plugins/panel/trend/img/trend.svg"
       },
       "build": {},
       "screenshots": null,
@@ -1794,8 +1794,8 @@
       "description": "",
       "links": null,
       "logos": {
-        "small": "public/app/plugins/panel/welcome/img/icn-dashlist-panel.svg",
-        "large": "public/app/plugins/panel/welcome/img/icn-dashlist-panel.svg"
+        "small": "/public/app/plugins/panel/welcome/img/icn-dashlist-panel.svg",
+        "large": "/public/app/plugins/panel/welcome/img/icn-dashlist-panel.svg"
       },
       "build": {},
       "screenshots": null,
@@ -1831,8 +1831,8 @@
       "description": "",
       "links": null,
       "logos": {
-        "small": "public/app/plugins/panel/xychart/img/icn-xychart.svg",
-        "large": "public/app/plugins/panel/xychart/img/icn-xychart.svg"
+        "small": "/public/app/plugins/panel/xychart/img/icn-xychart.svg",
+        "large": "/public/app/plugins/panel/xychart/img/icn-xychart.svg"
       },
       "build": {},
       "screenshots": null,
@@ -1873,8 +1873,8 @@
         }
       ],
       "logos": {
-        "small": "public/app/plugins/datasource/zipkin/img/zipkin-logo.svg",
-        "large": "public/app/plugins/datasource/zipkin/img/zipkin-logo.svg"
+        "small": "/public/app/plugins/datasource/zipkin/img/zipkin-logo.svg",
+        "large": "/public/app/plugins/datasource/zipkin/img/zipkin-logo.svg"
       },
       "build": {},
       "screenshots": null,

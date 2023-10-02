@@ -2,9 +2,9 @@ import { DataSourcePlugin } from '@grafana/data';
 
 import { ConfigEditor } from './ConfigEditor';
 import { QueryEditor } from './QueryEditor/QueryEditor';
-import { PhlareDataSource } from './datasource';
-import { Query, PhlareDataSourceOptions } from './types';
+import { PyroscopeDataSource } from './datasource';
+import { Query, PyroscopeDataSourceOptions } from './types';
 
-export const plugin = new DataSourcePlugin<PhlareDataSource, Query, PhlareDataSourceOptions>(PhlareDataSource)
+export const plugin = new DataSourcePlugin<PyroscopeDataSource, Query, PyroscopeDataSourceOptions>(PyroscopeDataSource)
   .setConfigEditor(ConfigEditor)
   .setQueryEditor(QueryEditor);

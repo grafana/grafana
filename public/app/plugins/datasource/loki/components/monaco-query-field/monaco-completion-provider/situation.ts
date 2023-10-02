@@ -14,17 +14,23 @@ import {
   LogQL,
   LogRangeExpr,
   LogExpr,
+  Logfmt,
   Identifier,
   Grouping,
   Expr,
   LiteralExpr,
   MetricExpr,
   UnwrapExpr,
-  DistinctFilter,
-  DistinctLabel,
+  DropLabelsExpr,
+  KeepLabelsExpr,
+  DropLabels,
+  KeepLabels,
+  ParserFlag,
+  LabelExtractionExpression,
+  LabelExtractionExpressionList,
 } from '@grafana/lezer-logql';
 
-import { getLogQueryFromMetricsQuery } from '../../../queryUtils';
+import { getLogQueryFromMetricsQueryAtPosition, getNodesFromQuery } from '../../../queryUtils';
 
 type Direction = 'parent' | 'firstChild' | 'lastChild' | 'nextSibling';
 type NodeType = number;
@@ -99,6 +105,12 @@ export type Situation =
       type: 'AT_ROOT';
     }
   | {
+      type: 'IN_LOGFMT';
+      otherLabels: string[];
+      flags: boolean;
+      logQuery: string;
+    }
+  | {
       type: 'IN_RANGE';
     }
   | {
@@ -129,12 +141,12 @@ export type Situation =
       logQuery: string;
     }
   | {
-      type: 'AFTER_DISTINCT';
+      type: 'AFTER_KEEP_AND_DROP';
       logQuery: string;
     };
 
 type Resolver = {
-  path: NodeType[];
+  paths: NodeType[][];
   fun: (node: SyntaxNode, text: string, pos: number) => Situation | null;
 };
 
@@ -146,64 +158,73 @@ const ERROR_NODE_ID = 0;
 
 const RESOLVERS: Resolver[] = [
   {
-    path: [Selector],
+    paths: [[Selector]],
     fun: resolveSelector,
   },
   {
-    path: [ERROR_NODE_ID, Matchers, Selector],
+    paths: [[ERROR_NODE_ID, Matchers, Selector]],
     fun: resolveSelector,
   },
   {
-    path: [LogQL],
+    paths: [
+      [LogQL],
+      [RangeAggregationExpr],
+      [ERROR_NODE_ID, LogRangeExpr, RangeAggregationExpr],
+      [ERROR_NODE_ID, LabelExtractionExpressionList],
+      [LogRangeExpr],
+      [ERROR_NODE_ID, LabelExtractionExpressionList],
+      [LabelExtractionExpressionList],
+    ],
+    fun: resolveLogfmtParser,
+  },
+  {
+    paths: [[LogQL]],
     fun: resolveTopLevel,
   },
   {
-    path: [String, Matcher],
+    paths: [[String, Matcher]],
     fun: resolveMatcher,
   },
   {
-    path: [Grouping],
+    paths: [[Grouping]],
     fun: resolveLabelsForGrouping,
   },
   {
-    path: [LogRangeExpr],
+    paths: [[LogRangeExpr]],
     fun: resolveLogRange,
   },
   {
-    path: [ERROR_NODE_ID, Matcher],
+    paths: [[ERROR_NODE_ID, Matcher]],
     fun: resolveMatcher,
   },
   {
-    path: [ERROR_NODE_ID, Range],
+    paths: [[ERROR_NODE_ID, Range]],
     fun: resolveDurations,
   },
   {
-    path: [ERROR_NODE_ID, LogRangeExpr],
+    paths: [[ERROR_NODE_ID, LogRangeExpr]],
     fun: resolveLogRangeFromError,
   },
   {
-    path: [ERROR_NODE_ID, LiteralExpr, MetricExpr, VectorAggregationExpr],
+    paths: [[ERROR_NODE_ID, LiteralExpr, MetricExpr, VectorAggregationExpr]],
     fun: () => ({ type: 'IN_AGGREGATION' }),
   },
   {
-    path: [ERROR_NODE_ID, PipelineStage, PipelineExpr],
+    paths: [[ERROR_NODE_ID, PipelineStage, PipelineExpr]],
     fun: resolvePipeError,
   },
   {
-    path: [ERROR_NODE_ID, UnwrapExpr],
+    paths: [[ERROR_NODE_ID, UnwrapExpr], [UnwrapExpr]],
     fun: resolveAfterUnwrap,
   },
   {
-    path: [UnwrapExpr],
-    fun: resolveAfterUnwrap,
-  },
-  {
-    path: [ERROR_NODE_ID, DistinctFilter],
-    fun: resolveAfterDistinct,
-  },
-  {
-    path: [ERROR_NODE_ID, DistinctLabel],
-    fun: resolveAfterDistinct,
+    paths: [
+      [ERROR_NODE_ID, DropLabelsExpr],
+      [ERROR_NODE_ID, DropLabels],
+      [ERROR_NODE_ID, KeepLabelsExpr],
+      [ERROR_NODE_ID, KeepLabels],
+    ],
+    fun: resolveAfterKeepAndDrop,
   },
 ];
 
@@ -282,7 +303,7 @@ function getLabels(selectorNode: SyntaxNode, text: string): Label[] {
 function resolveAfterUnwrap(node: SyntaxNode, text: string, pos: number): Situation | null {
   return {
     type: 'AFTER_UNWRAP',
-    logQuery: getLogQueryFromMetricsQuery(text).trim(),
+    logQuery: getLogQueryFromMetricsQueryAtPosition(text, pos).trim(),
   };
 }
 
@@ -332,7 +353,7 @@ function resolveLabelsForGrouping(node: SyntaxNode, text: string, pos: number): 
 
   return {
     type: 'IN_GROUPING',
-    logQuery: getLogQueryFromMetricsQuery(text).trim(),
+    logQuery: getLogQueryFromMetricsQueryAtPosition(text, pos).trim(),
   };
 }
 
@@ -403,6 +424,51 @@ function resolveMatcher(node: SyntaxNode, text: string, pos: number): Situation 
   };
 }
 
+function resolveLogfmtParser(_: SyntaxNode, text: string, cursorPosition: number): Situation | null {
+  // We want to know if the cursor if after a log query with logfmt parser.
+  // E.g. `{x="y"} | logfmt ^`
+
+  const tree = parser.parse(text);
+
+  // Adjust the cursor position if there are spaces at the end of the text.
+  const trimRightTextLen = text.substring(0, cursorPosition).trimEnd().length;
+  const position = trimRightTextLen < cursorPosition ? trimRightTextLen : cursorPosition;
+
+  const cursor = tree.cursorAt(position);
+
+  // Check if the user cursor is in any node that requires logfmt suggestions.
+  const expectedNodes = [Logfmt, ParserFlag, LabelExtractionExpression, LabelExtractionExpressionList];
+  let inLogfmt = false;
+  do {
+    const { node } = cursor;
+    if (!expectedNodes.includes(node.type.id)) {
+      continue;
+    }
+    if (cursor.from <= position && cursor.to >= position) {
+      inLogfmt = true;
+      break;
+    }
+  } while (cursor.next());
+
+  if (!inLogfmt) {
+    return null;
+  }
+
+  const flags = getNodesFromQuery(text, [ParserFlag]).length > 1;
+  const labelNodes = getNodesFromQuery(text, [LabelExtractionExpression]);
+  const otherLabels = labelNodes
+    .map((label: SyntaxNode) => label.getChild(Identifier))
+    .filter((label: SyntaxNode | null): label is SyntaxNode => label !== null)
+    .map((label: SyntaxNode) => getNodeText(label, text));
+
+  return {
+    type: 'IN_LOGFMT',
+    otherLabels,
+    flags,
+    logQuery: getLogQueryFromMetricsQueryAtPosition(text, position).trim(),
+  };
+}
+
 function resolveTopLevel(node: SyntaxNode, text: string, pos: number): Situation | null {
   // we try a couply specific paths here.
   // `{x="y"}` situation, with the cursor at the end
@@ -441,7 +507,10 @@ function resolveDurations(node: SyntaxNode, text: string, pos: number): Situatio
 }
 
 function resolveLogRange(node: SyntaxNode, text: string, pos: number): Situation | null {
-  return resolveLogOrLogRange(node, text, pos, false);
+  const partialQuery = text.substring(0, pos).trimEnd();
+  const afterPipe = partialQuery.endsWith('|');
+
+  return resolveLogOrLogRange(node, text, pos, afterPipe);
 }
 
 function resolveLogRangeFromError(node: SyntaxNode, text: string, pos: number): Situation | null {
@@ -450,7 +519,10 @@ function resolveLogRangeFromError(node: SyntaxNode, text: string, pos: number): 
     return null;
   }
 
-  return resolveLogOrLogRange(parent, text, pos, false);
+  const partialQuery = text.substring(0, pos).trimEnd();
+  const afterPipe = partialQuery.endsWith('|');
+
+  return resolveLogOrLogRange(parent, text, pos, afterPipe);
 }
 
 function resolveLogOrLogRange(node: SyntaxNode, text: string, pos: number, afterPipe: boolean): Situation | null {
@@ -466,8 +538,8 @@ function resolveLogOrLogRange(node: SyntaxNode, text: string, pos: number, after
   return {
     type: 'AFTER_SELECTOR',
     afterPipe,
-    hasSpace: text.endsWith(' '),
-    logQuery: getLogQueryFromMetricsQuery(text).trim(),
+    hasSpace: text.charAt(pos - 1) === ' ',
+    logQuery: getLogQueryFromMetricsQueryAtPosition(text, pos).trim(),
   };
 }
 
@@ -509,25 +581,24 @@ function resolveSelector(node: SyntaxNode, text: string, pos: number): Situation
   };
 }
 
-function resolveAfterDistinct(node: SyntaxNode, text: string, pos: number): Situation | null {
-  let logQuery = getLogQueryFromMetricsQuery(text).trim();
-
-  let distinctFilterParent: SyntaxNode | null = null;
+function resolveAfterKeepAndDrop(node: SyntaxNode, text: string, pos: number): Situation | null {
+  let logQuery = getLogQueryFromMetricsQueryAtPosition(text, pos).trim();
+  let keepAndDropParent: SyntaxNode | null = null;
   let parent = node.parent;
   while (parent !== null) {
     if (parent.type.id === PipelineStage) {
-      distinctFilterParent = parent;
+      keepAndDropParent = parent;
       break;
     }
     parent = parent.parent;
   }
 
-  if (distinctFilterParent?.type.id === PipelineStage) {
-    logQuery = logQuery.slice(0, distinctFilterParent.from);
+  if (keepAndDropParent?.type.id === PipelineStage) {
+    logQuery = logQuery.slice(0, keepAndDropParent.from);
   }
 
   return {
-    type: 'AFTER_DISTINCT',
+    type: 'AFTER_KEEP_AND_DROP',
     logQuery,
   };
 }
@@ -585,8 +656,13 @@ export function getSituation(text: string, pos: number): Situation | null {
   }
 
   for (let resolver of RESOLVERS) {
-    if (isPathMatch(resolver.path, ids)) {
-      return resolver.fun(currentNode, text, pos);
+    for (let path of resolver.paths) {
+      if (isPathMatch(path, ids)) {
+        const situation = resolver.fun(currentNode, text, pos);
+        if (situation) {
+          return situation;
+        }
+      }
     }
   }
 

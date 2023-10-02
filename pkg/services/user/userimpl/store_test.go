@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
+	"github.com/grafana/grafana/pkg/services/searchusers/sortopts"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -822,6 +823,31 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		require.Nil(t, err)
 		require.Len(t, queryResult.Users, 1)
 		require.EqualValues(t, queryResult.TotalCount, 1)
+
+		// Custom ordering
+		sortOpts, err := sortopts.ParseSortQueryParam("login-asc,email-asc")
+		require.NoError(t, err)
+		query = user.SearchUsersQuery{Query: "", Page: 1, Limit: 3, SignedInUser: usr, SortOpts: sortOpts}
+		queryResult, err = userStore.Search(context.Background(), &query)
+
+		require.Nil(t, err)
+		require.Len(t, queryResult.Users, 3)
+		require.EqualValues(t, queryResult.TotalCount, 5)
+		for i := 0; i < 3; i++ {
+			require.Equal(t, fmt.Sprint("loginuser", i), queryResult.Users[i].Login)
+		}
+
+		sortOpts2, err := sortopts.ParseSortQueryParam("login-desc,email-asc")
+		require.NoError(t, err)
+		query = user.SearchUsersQuery{Query: "", Page: 1, Limit: 3, SignedInUser: usr, SortOpts: sortOpts2}
+		queryResult, err = userStore.Search(context.Background(), &query)
+
+		require.Nil(t, err)
+		require.Len(t, queryResult.Users, 3)
+		require.EqualValues(t, queryResult.TotalCount, 5)
+		for i := 0; i < 3; i++ {
+			require.Equal(t, fmt.Sprint("loginuser", 4-i), queryResult.Users[i].Login)
+		}
 	})
 
 	t.Run("Can get logged in user projection", func(t *testing.T) {
@@ -965,7 +991,7 @@ func TestMetricsUsage(t *testing.T) {
 
 	_, usrSvc := createOrgAndUserSvc(t, ss, ss.Cfg)
 
-	t.Run("", func(t *testing.T) {
+	t.Run("Get empty role metrics for an org", func(t *testing.T) {
 		orgId := int64(1)
 
 		// create first user

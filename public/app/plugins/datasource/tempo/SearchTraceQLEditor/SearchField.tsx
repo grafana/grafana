@@ -95,7 +95,9 @@ const SearchField = ({
     setPrevValue(filter.value);
   }, [filter.value]);
 
-  const scopeOptions = Object.values(TraceqlSearchScope).map((t) => ({ label: t, value: t }));
+  const scopeOptions = Object.values(TraceqlSearchScope)
+    .filter((s) => s !== TraceqlSearchScope.Intrinsic)
+    .map((t) => ({ label: t, value: t }));
 
   // If all values have type string or int/float use a focused list of operators instead of all operators
   const optionsOfFirstType = options?.filter((o) => o.type === options[0]?.type);

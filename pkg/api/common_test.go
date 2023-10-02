@@ -11,13 +11,11 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/infra/db/dbtest"
 	"github.com/grafana/grafana/pkg/infra/fs"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models/usertoken"
@@ -29,10 +27,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/authn/authntest"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
-	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/login/logintest"
@@ -41,7 +37,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/services/searchusers"
-	"github.com/grafana/grafana/pkg/services/team/teamtest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/setting"
@@ -191,9 +186,9 @@ func getContextHandler(t *testing.T, cfg *setting.Cfg) *contexthandler.ContextHa
 
 	return contexthandler.ProvideService(
 		cfg,
-		tracing.NewFakeTracer(),
+		tracing.InitializeTracerForTest(),
 		featuremgmt.WithFeatures(),
-		&authntest.FakeService{ExpectedIdentity: &authn.Identity{IsAnonymous: true, SessionToken: &usertoken.UserToken{}}},
+		&authntest.FakeService{ExpectedIdentity: &authn.Identity{ID: authn.AnonymousNamespaceID, SessionToken: &usertoken.UserToken{}}},
 	)
 }
 
@@ -220,6 +215,11 @@ func setupScenarioContext(t *testing.T, url string) *scenarioContext {
 }
 
 // FIXME: This user should not be anonymous
+func authedUserWithPermissions(userID, orgID int64, permissions []accesscontrol.Permission) *user.SignedInUser {
+	return &user.SignedInUser{UserID: userID, OrgID: orgID, OrgRole: org.RoleViewer, Permissions: map[int64]map[string][]string{orgID: accesscontrol.GroupScopesByAction(permissions)}}
+}
+
+// FIXME: This user should not be anonymous
 func userWithPermissions(orgID int64, permissions []accesscontrol.Permission) *user.SignedInUser {
 	return &user.SignedInUser{IsAnonymous: true, OrgID: orgID, OrgRole: org.RoleViewer, Permissions: map[int64]map[string][]string{orgID: accesscontrol.GroupScopesByAction(permissions)}}
 }
@@ -229,7 +229,6 @@ func setupSimpleHTTPServer(features *featuremgmt.FeatureManager) *HTTPServer {
 		features = featuremgmt.WithFeatures()
 	}
 	cfg := setting.NewCfg()
-	cfg.RBACEnabled = false
 	cfg.IsFeatureToggleEnabled = features.IsEnabled
 
 	return &HTTPServer{
@@ -244,7 +243,7 @@ func setupSimpleHTTPServer(features *featuremgmt.FeatureManager) *HTTPServer {
 	}
 }
 
-func mockRequestBody(v interface{}) io.ReadCloser {
+func mockRequestBody(v any) io.ReadCloser {
 	b, _ := json.Marshal(v)
 	return io.NopCloser(bytes.NewReader(b))
 }
@@ -291,36 +290,10 @@ func SetupAPITestServer(t *testing.T, opts ...APITestServerOption) *webtest.Serv
 	return s
 }
 
-var (
-	viewerRole = org.RoleViewer
-	editorRole = org.RoleEditor
-)
-
-type setUpConf struct {
-	aclMockResp []*dashboards.DashboardACLInfoDTO
-}
-
 type mockSearchService struct{ ExpectedResult model.HitList }
 
 func (mss *mockSearchService) SearchHandler(_ context.Context, q *search.Query) (model.HitList, error) {
 	return mss.ExpectedResult, nil
 }
+
 func (mss *mockSearchService) SortOptions() []model.SortOption { return nil }
-
-func setUp(confs ...setUpConf) *HTTPServer {
-	store := dbtest.NewFakeDB()
-	hs := &HTTPServer{SQLStore: store, SearchService: &mockSearchService{}}
-
-	aclMockResp := []*dashboards.DashboardACLInfoDTO{}
-	for _, c := range confs {
-		if c.aclMockResp != nil {
-			aclMockResp = c.aclMockResp
-		}
-	}
-	teamSvc := &teamtest.FakeService{}
-	dashSvc := &dashboards.FakeDashboardService{}
-	qResult := aclMockResp
-	dashSvc.On("GetDashboardACLInfoList", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardACLInfoListQuery")).Return(qResult, nil)
-	guardian.InitLegacyGuardian(setting.NewCfg(), store, dashSvc, teamSvc)
-	return hs
-}

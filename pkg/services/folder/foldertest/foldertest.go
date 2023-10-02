@@ -39,9 +39,6 @@ func (s *FakeService) Update(ctx context.Context, cmd *folder.UpdateFolderComman
 func (s *FakeService) Delete(ctx context.Context, cmd *folder.DeleteFolderCommand) error {
 	return s.ExpectedError
 }
-func (s *FakeService) MakeUserAdmin(ctx context.Context, orgID int64, userID, folderID int64, setViewAndEditPermissions bool) error {
-	return s.ExpectedError
-}
 
 func (s *FakeService) Move(ctx context.Context, cmd *folder.MoveFolderCommand) (*folder.Folder, error) {
 	return s.ExpectedFolder, s.ExpectedError

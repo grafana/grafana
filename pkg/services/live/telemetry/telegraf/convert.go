@@ -237,7 +237,7 @@ func (s *metricFrame) append(m influx.Metric) error {
 		if index, ok := s.fieldCache[f.Key]; ok {
 			field := s.fields[index]
 			if ft != field.Type() {
-				logger.Warn("error appending values", "type", field.Type(), "expect", ft, "value", v, "key", f.Key, "line", m)
+				logger.Warn("Error appending values", "type", field.Type(), "expect", ft, "value", v, "key", f.Key, "line", m)
 				if field.Type() == data.FieldTypeNullableString && v != nil {
 					str := fmt.Sprintf("%v", f.Value)
 					v = &str
@@ -275,7 +275,7 @@ func (s *metricFrame) append(m influx.Metric) error {
 
 // float64FieldTypeFor converts all numbers to float64.
 // The precision can be lost during big int64 or uint64 conversion to float64.
-func float64FieldTypeFor(t interface{}) data.FieldType {
+func float64FieldTypeFor(t any) data.FieldType {
 	switch t.(type) {
 	case int8:
 		return data.FieldTypeFloat64
@@ -309,7 +309,7 @@ func float64FieldTypeFor(t interface{}) data.FieldType {
 	return data.FieldTypeUnknown
 }
 
-func (s *metricFrame) getFieldTypeAndValue(f *influx.Field) (data.FieldType, interface{}, error) {
+func (s *metricFrame) getFieldTypeAndValue(f *influx.Field) (data.FieldType, any, error) {
 	var ft data.FieldType
 	if s.useFloatNumbers {
 		ft = float64FieldTypeFor(f.Value)
@@ -344,8 +344,8 @@ func (s *metricFrame) getFieldTypeAndValue(f *influx.Field) (data.FieldType, int
 	return ft, v, nil
 }
 
-func getConvertFunc(ft data.FieldType) (func(v interface{}) (interface{}, error), bool) {
-	var convert func(v interface{}) (interface{}, error)
+func getConvertFunc(ft data.FieldType) (func(v any) (any, error), bool) {
+	var convert func(v any) (any, error)
 	switch ft {
 	case data.FieldTypeNullableString:
 		convert = converters.AnyToNullableString.Converter

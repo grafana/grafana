@@ -1,6 +1,7 @@
 package elasticsearch
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -12,9 +13,14 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	es "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client"
+	"github.com/grafana/grafana/pkg/tsdb/elasticsearch/instrumentation"
 )
 
 const (
@@ -39,18 +45,30 @@ const (
 
 var searchWordsRegex = regexp.MustCompile(regexp.QuoteMeta(es.HighlightPreTagsString) + `(.*?)` + regexp.QuoteMeta(es.HighlightPostTagsString))
 
-func parseResponse(responses []*es.SearchResponse, targets []*Query, configuredFields es.ConfiguredFields) (*backend.QueryDataResponse, error) {
+func parseResponse(ctx context.Context, responses []*es.SearchResponse, targets []*Query, configuredFields es.ConfiguredFields, logger log.Logger, tracer tracing.Tracer) (*backend.QueryDataResponse, error) {
 	result := backend.QueryDataResponse{
 		Responses: backend.Responses{},
 	}
 	if responses == nil {
 		return &result, nil
 	}
+	ctx, span := tracer.Start(ctx, "datasource.elastic.parseResponse")
+	span.SetAttributes("responseLength", len(responses), attribute.Key("responseLength").Int(len(responses)))
+	defer span.End()
 
 	for i, res := range responses {
+		_, resSpan := tracer.Start(ctx, "datasource.elastic.parseResponse.response")
+		resSpan.SetAttributes("queryMetricType", targets[i].Metrics[0].Type, attribute.Key("queryMetricType").String(targets[i].Metrics[0].Type))
+		start := time.Now()
 		target := targets[i]
 
 		if res.Error != nil {
+			mt, _ := json.Marshal(target)
+			me, _ := json.Marshal(res.Error)
+			resSpan.RecordError(errors.New(string(me)))
+			resSpan.SetStatus(codes.Error, string(me))
+			resSpan.End()
+			logger.Error("Processing error response from Elasticsearch", "error", string(me), "query", string(mt))
 			errResult := getErrorFromElasticResponse(res)
 			result.Responses[target.RefID] = backend.DataResponse{
 				Error: errors.New(errResult),
@@ -61,20 +79,23 @@ func parseResponse(responses []*es.SearchResponse, targets []*Query, configuredF
 		queryRes := backend.DataResponse{}
 
 		if isRawDataQuery(target) {
-			err := processRawDataResponse(res, target, configuredFields, &queryRes)
+			err := processRawDataResponse(res, target, configuredFields, &queryRes, logger)
 			if err != nil {
+				// TODO: This error never happens so we should remove it
 				return &backend.QueryDataResponse{}, err
 			}
 			result.Responses[target.RefID] = queryRes
 		} else if isRawDocumentQuery(target) {
-			err := processRawDocumentResponse(res, target, &queryRes)
+			err := processRawDocumentResponse(res, target, &queryRes, logger)
 			if err != nil {
+				// TODO: This error never happens so we should remove it
 				return &backend.QueryDataResponse{}, err
 			}
 			result.Responses[target.RefID] = queryRes
 		} else if isLogsQuery(target) {
-			err := processLogsResponse(res, target, configuredFields, &queryRes)
+			err := processLogsResponse(res, target, configuredFields, &queryRes, logger)
 			if err != nil {
+				// TODO: This error never happens so we should remove it
 				return &backend.QueryDataResponse{}, err
 			}
 			result.Responses[target.RefID] = queryRes
@@ -82,7 +103,16 @@ func parseResponse(responses []*es.SearchResponse, targets []*Query, configuredF
 			// Process as metric query result
 			props := make(map[string]string)
 			err := processBuckets(res.Aggregations, target, &queryRes, props, 0)
+			logger.Debug("Processed metric query response")
 			if err != nil {
+				mt, _ := json.Marshal(target)
+				span.RecordError(err)
+				span.SetStatus(codes.Error, err.Error())
+				resSpan.RecordError(err)
+				resSpan.SetStatus(codes.Error, err.Error())
+				logger.Error("Error processing buckets", "error", err, "query", string(mt), "aggregationsLength", len(res.Aggregations), "stage", es.StageParseResponse)
+				instrumentation.UpdatePluginParsingResponseDurationSeconds(ctx, time.Since(start), "error")
+				resSpan.End()
 				return &backend.QueryDataResponse{}, err
 			}
 			nameFields(queryRes, target)
@@ -90,11 +120,14 @@ func parseResponse(responses []*es.SearchResponse, targets []*Query, configuredF
 
 			result.Responses[target.RefID] = queryRes
 		}
+		instrumentation.UpdatePluginParsingResponseDurationSeconds(ctx, time.Since(start), "ok")
+		logger.Info("Finished processing of response", "duration", time.Since(start), "stage", es.StageParseResponse)
+		resSpan.End()
 	}
 	return &result, nil
 }
 
-func processLogsResponse(res *es.SearchResponse, target *Query, configuredFields es.ConfiguredFields, queryRes *backend.DataResponse) error {
+func processLogsResponse(res *es.SearchResponse, target *Query, configuredFields es.ConfiguredFields, queryRes *backend.DataResponse, logger log.Logger) error {
 	propNames := make(map[string]bool)
 	docs := make([]map[string]interface{}, len(res.Hits.Hits))
 	searchWords := make(map[string]bool)
@@ -131,6 +164,12 @@ func processLogsResponse(res *es.SearchResponse, target *Query, configuredFields
 			}
 		}
 
+		// we are going to add an `id` field with the concatenation of `_id` and `_index`
+		_, ok := doc["id"]
+		if !ok {
+			doc["id"] = fmt.Sprintf("%v#%v", doc["_index"], doc["_id"])
+		}
+
 		for key := range doc {
 			propNames[key] = true
 		}
@@ -162,12 +201,13 @@ func processLogsResponse(res *es.SearchResponse, target *Query, configuredFields
 	setPreferredVisType(frame, data.VisTypeLogs)
 	setLogsCustomMeta(frame, searchWords, stringToIntWithDefaultValue(target.Metrics[0].Settings.Get("limit").MustString(), defaultSize))
 	frames = append(frames, frame)
-
 	queryRes.Frames = frames
+
+	logger.Debug("Processed log query response", "fieldsLength", len(frame.Fields))
 	return nil
 }
 
-func processRawDataResponse(res *es.SearchResponse, target *Query, configuredFields es.ConfiguredFields, queryRes *backend.DataResponse) error {
+func processRawDataResponse(res *es.SearchResponse, target *Query, configuredFields es.ConfiguredFields, queryRes *backend.DataResponse, logger log.Logger) error {
 	propNames := make(map[string]bool)
 	docs := make([]map[string]interface{}, len(res.Hits.Hits))
 
@@ -201,13 +241,15 @@ func processRawDataResponse(res *es.SearchResponse, target *Query, configuredFie
 
 	frames := data.Frames{}
 	frame := data.NewFrame("", fields...)
-	frames = append(frames, frame)
 
+	frames = append(frames, frame)
 	queryRes.Frames = frames
+
+	logger.Debug("Processed raw data query response", "fieldsLength", len(frame.Fields))
 	return nil
 }
 
-func processRawDocumentResponse(res *es.SearchResponse, target *Query, queryRes *backend.DataResponse) error {
+func processRawDocumentResponse(res *es.SearchResponse, target *Query, queryRes *backend.DataResponse, logger log.Logger) error {
 	docs := make([]map[string]interface{}, len(res.Hits.Hits))
 	for hitIdx, hit := range res.Hits.Hits {
 		doc := map[string]interface{}{
@@ -260,6 +302,7 @@ func processRawDocumentResponse(res *es.SearchResponse, target *Query, queryRes 
 	frames = append(frames, frame)
 
 	queryRes.Frames = frames
+	logger.Debug("Processed raw document query response", "fieldsLength", len(frame.Fields))
 	return nil
 }
 
@@ -644,32 +687,32 @@ func processMetrics(esAgg *simplejson.Json, target *Query, query *backend.DataRe
 		case countType:
 			countFrames, err := processCountMetric(jsonBuckets, props)
 			if err != nil {
-				return err
+				return fmt.Errorf("error processing count metric: %w", err)
 			}
 			frames = append(frames, countFrames...)
 		case percentilesType:
 			percentileFrames, err := processPercentilesMetric(metric, jsonBuckets, props)
 			if err != nil {
-				return err
+				return fmt.Errorf("error processing percentiles metric: %w", err)
 			}
 			frames = append(frames, percentileFrames...)
 		case topMetricsType:
 			topMetricsFrames, err := processTopMetricsMetric(metric, jsonBuckets, props)
 			if err != nil {
-				return err
+				return fmt.Errorf("error processing top metrics metric: %w", err)
 			}
 			frames = append(frames, topMetricsFrames...)
 		case extendedStatsType:
 			extendedStatsFrames, err := processExtendedStatsMetric(metric, jsonBuckets, props)
 			if err != nil {
-				return err
+				return fmt.Errorf("error processing extended stats metric: %w", err)
 			}
 
 			frames = append(frames, extendedStatsFrames...)
 		default:
 			defaultFrames, err := processDefaultMetric(metric, jsonBuckets, props)
 			if err != nil {
-				return err
+				return fmt.Errorf("error processing default metric: %w", err)
 			}
 			frames = append(frames, defaultFrames...)
 		}
@@ -707,7 +750,7 @@ func processAggregationDocs(esAgg *simplejson.Json, aggDef *BucketAgg, target *Q
 				} else {
 					f, err := bucket.Get("key").Float64()
 					if err != nil {
-						return err
+						return fmt.Errorf("error appending bucket key to existing field with name %s: %w", field.Name, err)
 					}
 					field.Append(&f)
 				}
@@ -722,7 +765,7 @@ func processAggregationDocs(esAgg *simplejson.Json, aggDef *BucketAgg, target *Q
 			} else {
 				f, err := bucket.Get("key").Float64()
 				if err != nil {
-					return err
+					return fmt.Errorf("error appending bucket key to new field with name %s: %w", aggDef.Field, err)
 				}
 				aggDefField = extractDataField(aggDef.Field, &f)
 				aggDefField.Append(&f)

@@ -3,6 +3,7 @@ import { ContextSrvStub } from 'test/specs/helpers';
 
 import { dateTime, isDateTime } from '@grafana/data';
 import { config, HistoryWrapper, locationService, setLocationService } from '@grafana/runtime';
+import { SceneTimeRange } from '@grafana/scenes';
 
 import { TimeModel } from '../state/TimeModel';
 
@@ -99,7 +100,7 @@ describe('timeSrv', () => {
         };
 
         locationService.push('/d/id?from=now-24h&to=now');
-        config.isPublicDashboardView = true;
+        config.publicDashboardAccessToken = 'abc123';
         timeSrv = new TimeSrv(new ContextSrvStub());
       });
 
@@ -340,6 +341,27 @@ describe('timeSrv', () => {
           expect(timeSrv.isRefreshOutsideThreshold(57000, 0.05)).toBe(true);
         });
       });
+    });
+  });
+
+  describe('Scenes compatibility', () => {
+    it('should use scene provided range if active', () => {
+      timeSrv.setTime({ from: 'now-6h', to: 'now' });
+
+      const timeRange = new SceneTimeRange({
+        from: 'now-1h',
+        to: 'now',
+      });
+      window.__timeRangeSceneObject = timeRange;
+
+      let time = timeSrv.timeRange();
+      expect(time.raw.from).toBe('now-6h');
+      expect(time.raw.to).toBe('now');
+
+      timeRange.activate();
+      time = timeSrv.timeRange();
+      expect(time.raw.from).toBe('now-1h');
+      expect(time.raw.to).toBe('now');
     });
   });
 });

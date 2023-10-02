@@ -98,6 +98,23 @@ const UNWRAP_FUNCTION_COMPLETIONS: Completion[] = [
   },
 ];
 
+const LOGFMT_ARGUMENT_COMPLETIONS: Completion[] = [
+  {
+    type: 'FUNCTION',
+    label: '--strict',
+    documentation:
+      'Strict parsing. The logfmt parser stops scanning the log line and returns early with an error when it encounters any poorly formatted key/value pair.',
+    insertText: '--strict',
+  },
+  {
+    type: 'FUNCTION',
+    label: '--keep-empty',
+    documentation:
+      'Retain standalone keys with empty value. The logfmt parser retains standalone keys (keys without a value) as labels with value set to empty string.',
+    insertText: '--keep-empty',
+  },
+];
+
 const LINE_FILTER_COMPLETIONS = [
   {
     operator: '|=',
@@ -129,6 +146,55 @@ function getLineFilterCompletions(afterPipe: boolean): Completion[] {
       documentation,
     })
   );
+}
+
+function getPipeOperationsCompletions(prefix = ''): Completion[] {
+  const completions: Completion[] = [];
+  completions.push({
+    type: 'PIPE_OPERATION',
+    label: 'line_format',
+    insertText: `${prefix}line_format "{{.$0}}"`,
+    isSnippet: true,
+    documentation: explainOperator(LokiOperationId.LineFormat),
+  });
+
+  completions.push({
+    type: 'PIPE_OPERATION',
+    label: 'label_format',
+    insertText: `${prefix}label_format`,
+    isSnippet: true,
+    documentation: explainOperator(LokiOperationId.LabelFormat),
+  });
+
+  completions.push({
+    type: 'PIPE_OPERATION',
+    label: 'unwrap',
+    insertText: `${prefix}unwrap`,
+    documentation: explainOperator(LokiOperationId.Unwrap),
+  });
+
+  completions.push({
+    type: 'PIPE_OPERATION',
+    label: 'decolorize',
+    insertText: `${prefix}decolorize`,
+    documentation: explainOperator(LokiOperationId.Decolorize),
+  });
+
+  completions.push({
+    type: 'PIPE_OPERATION',
+    label: 'drop',
+    insertText: `${prefix}drop`,
+    documentation: explainOperator(LokiOperationId.Drop),
+  });
+
+  completions.push({
+    type: 'PIPE_OPERATION',
+    label: 'keep',
+    insertText: `${prefix}keep`,
+    documentation: explainOperator(LokiOperationId.Keep),
+  });
+
+  return completions;
 }
 
 async function getAllHistoryCompletions(dataProvider: CompletionDataProvider): Promise<Completion[]> {
@@ -247,7 +313,8 @@ export async function getAfterSelectorCompletions(
   const hasQueryParser = isQueryWithParser(query).queryWithParser;
 
   const prefix = `${hasSpace ? '' : ' '}${afterPipe ? '' : '| '}`;
-  const completions: Completion[] = await getParserCompletions(
+
+  const parserCompletions = await getParserCompletions(
     prefix,
     hasJSON,
     hasLogfmt,
@@ -255,43 +322,9 @@ export async function getAfterSelectorCompletions(
     extractedLabelKeys,
     hasQueryParser
   );
+  const pipeOperations = getPipeOperationsCompletions(prefix);
 
-  completions.push({
-    type: 'PIPE_OPERATION',
-    label: 'line_format',
-    insertText: `${prefix}line_format "{{.$0}}"`,
-    isSnippet: true,
-    documentation: explainOperator(LokiOperationId.LineFormat),
-  });
-
-  completions.push({
-    type: 'PIPE_OPERATION',
-    label: 'label_format',
-    insertText: `${prefix}label_format`,
-    isSnippet: true,
-    documentation: explainOperator(LokiOperationId.LabelFormat),
-  });
-
-  completions.push({
-    type: 'PIPE_OPERATION',
-    label: 'unwrap',
-    insertText: `${prefix}unwrap`,
-    documentation: explainOperator(LokiOperationId.Unwrap),
-  });
-
-  completions.push({
-    type: 'PIPE_OPERATION',
-    label: 'decolorize',
-    insertText: `${prefix}decolorize`,
-    documentation: explainOperator(LokiOperationId.Decolorize),
-  });
-
-  completions.push({
-    type: 'PIPE_OPERATION',
-    label: 'distinct',
-    insertText: `${prefix}distinct`,
-    documentation: explainOperator(LokiOperationId.Distinct),
-  });
+  const completions = [...parserCompletions, ...pipeOperations];
 
   // Let's show label options only if query has parser
   if (hasQueryParser) {
@@ -313,6 +346,51 @@ export async function getAfterSelectorCompletions(
   // E.g. `{label="value"} | `
   const lineFilters = afterPipe && hasSpace ? [] : getLineFilterCompletions(afterPipe);
   return [...lineFilters, ...completions];
+}
+
+export async function getLogfmtCompletions(
+  logQuery: string,
+  flags: boolean,
+  otherLabels: string[],
+  dataProvider: CompletionDataProvider
+): Promise<Completion[]> {
+  const trailingComma = logQuery.trimEnd().endsWith(',');
+  if (trailingComma) {
+    // The user is typing a new label, so we remove the last comma
+    logQuery = trimEnd(logQuery, ', ');
+  }
+  const { extractedLabelKeys, hasJSON, hasLogfmt, hasPack } = await dataProvider.getParserAndLabelKeys(logQuery);
+  const hasQueryParser = isQueryWithParser(logQuery).queryWithParser;
+
+  let completions: Completion[] = [];
+
+  const parserCompletions = await getParserCompletions(
+    '| ',
+    hasJSON,
+    hasLogfmt,
+    hasPack,
+    extractedLabelKeys,
+    hasQueryParser
+  );
+  const pipeOperations = getPipeOperationsCompletions('| ');
+
+  if (!flags && !trailingComma) {
+    completions = [...completions, ...LOGFMT_ARGUMENT_COMPLETIONS, ...parserCompletions, ...pipeOperations];
+  } else if (!trailingComma) {
+    completions = [...completions, ...parserCompletions, ...pipeOperations];
+  }
+
+  const labelPrefix = otherLabels.length === 0 || trailingComma ? '' : ', ';
+  const labels = extractedLabelKeys.filter((label) => !otherLabels.includes(label));
+  const labelCompletions: Completion[] = labels.map((label) => ({
+    type: 'LABEL_NAME',
+    label,
+    insertText: labelPrefix + label,
+    triggerOnInsert: false,
+  }));
+  completions = [...completions, ...labelCompletions];
+
+  return completions;
 }
 
 async function getLabelValuesForMetricCompletions(
@@ -345,7 +423,7 @@ async function getAfterUnwrapCompletions(
   return [...labelCompletions, ...UNWRAP_FUNCTION_COMPLETIONS];
 }
 
-async function getAfterDistinctCompletions(logQuery: string, dataProvider: CompletionDataProvider) {
+async function getAfterKeepAndDropCompletions(logQuery: string, dataProvider: CompletionDataProvider) {
   const { extractedLabelKeys } = await dataProvider.getParserAndLabelKeys(logQuery);
   const labelCompletions: Completion[] = extractedLabelKeys.map((label) => ({
     type: 'LABEL_NAME',
@@ -391,8 +469,10 @@ export async function getCompletions(
       return getAfterUnwrapCompletions(situation.logQuery, dataProvider);
     case 'IN_AGGREGATION':
       return [...FUNCTION_COMPLETIONS, ...AGGREGATION_COMPLETIONS];
-    case 'AFTER_DISTINCT':
-      return getAfterDistinctCompletions(situation.logQuery, dataProvider);
+    case 'AFTER_KEEP_AND_DROP':
+      return getAfterKeepAndDropCompletions(situation.logQuery, dataProvider);
+    case 'IN_LOGFMT':
+      return getLogfmtCompletions(situation.logQuery, situation.flags, situation.otherLabels, dataProvider);
     default:
       throw new NeverCaseError(situation);
   }

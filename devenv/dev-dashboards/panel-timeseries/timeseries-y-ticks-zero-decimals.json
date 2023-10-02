@@ -828,8 +828,7 @@
       }
     ],
     "schemaVersion": 37,
-    "style": "dark",
-    "tags": ["gdev", "panel-tests", "graph-ng"],
+      "tags": ["gdev", "panel-tests", "graph-ng"],
     "templating": {
       "list": []
     },

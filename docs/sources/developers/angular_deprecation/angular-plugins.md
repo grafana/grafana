@@ -42,7 +42,7 @@ Plugins were updated to include signatures in 2021, so whilst a plugin may show 
 
 We are greatly appreciative of the developers who have contributed plugins to the Grafana ecosystem, your work has helped support millions of users to gain insights into their data. A plugin being listed below is no reflection on its quality, and is purely to help users understand the impact of the removal of Angular support in Grafana.
 
-Guidance on migrating a plugin to React can be found in our [migration guide]({{< relref "../plugins/migration-guide/angular-react/" >}}). If you would like to add any specific migration guidance for your plugin here or update our assessment, please open a PR by clicking the `Suggest an edit` button at the bottom of this page.
+Guidance on migrating a plugin to React can be found in our [migration guide](/developers/plugin-tools/migration-guides/migrate-angularjs-to-react). If you would like to add any specific migration guidance for your plugin here or update our assessment, please open a PR by clicking the `Suggest an edit` button at the bottom of this page.
 
 # Current AngularJS based plugins
 
@@ -67,6 +67,10 @@ Latest Version: 0.0.29 | Signature: Community | Last Updated: 2023
 ### [Cloudflare Grafana App](https://grafana.com/grafana/plugins/cloudflare-app/)
 
 Latest Version: 0.2.4 | Signature: Commercial | Last Updated: 2022
+
+{{% admonition type="warning" %}}
+Guidance from the developer: This app is deprecated and will no longer be updated after December 31, 2023. Please consider using the [Cloudflare] Dashboard(https://dash.cloudflare.com/?to=/:account/:zone/analytics/dns) or [DNS Analytics API](https://developers.cloudflare.com/api/operations/dns-analytics-table) instead.
+{{% /admonition %}}
 
 ### [GLPI](https://grafana.com/grafana/plugins/ddurieux-glpi-app)
 
@@ -542,7 +546,7 @@ Latest Version: 0.0.2 | Signature: Community | Last Updated: 2021
 Lack of recent activity in the [project repository](https://github.com/aidanmountford/aidanmountford-html-panel) in the past 4 years suggests project _may_ not be actively maintained.
 {{% /admonition %}}
 
-> **Migration available - potential alternative:** The [Text]({{< relref "../../panels-visualizations/visualizations/text/#html" >}}) panel included with Grafana supports rendering HTML content.
+> **Migration available - potential alternative:** The [Text]({{< relref "../../panels-visualizations/visualizations/text/#html" >}}) panel included with Grafana supports rendering HTML content. Other plugins also exist which provide similar capabilities - [HTML](https://grafana.com/grafana/plugins/gapit-htmlgraphics-panel/) and [Dynamic Text](https://grafana.com/grafana/plugins/marcusolsson-dynamictext-panel/).
 
 ### [Track Map](https://grafana.com/grafana/plugins/alexandra-trackmap-panel/)
 
@@ -636,7 +640,7 @@ Latest Version: 0.7.1 | Signature: Community | Last Updated: 2021
 Lack of recent activity in the [project repository](https://github.com/fatcloud/windrose-panel) in the past 4 years suggests project _may_ not be actively maintained.
 {{% /admonition %}}
 
-> **Migration available - potential alternative:** another plugin exists which provides similar capabilities - [Operato Windrose](https://grafana.com/grafana/plugins/operato-windrose-panel/)
+> **Migration available - potential alternative:** another plugin exists which provides similar capabilities - [Operator Windrose](https://grafana.com/grafana/plugins/operato-windrose-panel/)
 
 ### [Statusmap](https://grafana.com/grafana/plugins/flant-statusmap-panel/)
 
@@ -673,6 +677,10 @@ Latest Version: 0.3.4 | Signature: Community | Last Updated: 2021
 {{% admonition type="warning" %}}
 Lack of recent activity in the [project repository](https://github.com/MarcusCalidus/marcuscalidus-svg-panel) in the past year suggests project _may_ not be actively maintained.
 {{% /admonition %}}
+
+> **Migration available - potential alternative:** Grafana provides the native [Canvas]({{< relref "../../panels-visualizations/visualizations/canvas/" >}}) panel.
+
+> **Migration available - potential alternative:** other plugins exist which provide similar capabilities - [HTML](https://grafana.com/grafana/plugins/gapit-htmlgraphics-panel/), [Dynamic Text](https://grafana.com/grafana/plugins/marcusolsson-dynamictext-panel/) and [ACE.SVG](https://grafana.com/grafana/plugins/aceiot-svg-panel/). Note that the ACE.SVG panel has compatibility issues with Grafana versions 10.0.0-10.1.0.
 
 ### [Annunciator](https://grafana.com/grafana/plugins/michaeldmoore-annunciator-panel/)
 
@@ -744,7 +752,7 @@ Latest Version: 0.0.7 | Signature: Community | Last Updated: 2021
 Lack of recent activity in the [project repository](https://github.com/NatelEnergy/grafana-plotly-panel) in the past 2 years suggests project _may_ not be actively maintained.
 {{% /admonition %}}
 
-> **Migration available - potential alternative:** another plugin exists which provides similar capabilities - [nline-plotlyjs-panel/](https://grafana.com/grafana/plugins/nline-plotlyjs-panel/).
+> **Migration available - potential alternative:** other plugins exist which provide similar capabilities - [nline-plotlyjs-panel](https://grafana.com/grafana/plugins/nline-plotlyjs-panel/) and [ae3e-plotly-panel](https://grafana.com/grafana/plugins/ae3e-plotly-panel/).
 
 ### [Cal-HeatMap](https://grafana.com/grafana/plugins/neocat-cal-heatmap-panel/)
 

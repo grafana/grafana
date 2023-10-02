@@ -23,7 +23,7 @@ export const MatcherFilter = ({ className, onFilterChange, defaultQueryString }:
       debounce((e: FormEvent<HTMLInputElement>) => {
         logInfo(LogMessages.filterByLabel);
 
-        const target = e.target as HTMLInputElement;
+        const target = e.currentTarget;
         onFilterChange(target.value);
       }, 600),
     [onFilterChange]

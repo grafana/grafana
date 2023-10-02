@@ -78,7 +78,7 @@ Grafana uses the following roles to control user access:
 
 - **Organization administrator**: Has access to all organization resources, including dashboards, users, and teams.
 - **Editor**: Can view and edit dashboards, folders, and playlists.
-- **Viewer**: Can view dashboards and playlists.
+- **Viewer**: Can view dashboards, playlists, and query data sources.
 - **No Basic Role**: Has no permissions. Permissions will be added with RBAC as needed.
 
 The following table lists permissions for each role.
@@ -94,6 +94,7 @@ The following table lists permissions for each role.
 | View annotations               |            yes             |  yes   |  yes   |               |
 | Add, edit, delete annotations  |            yes             |  yes   |        |               |
 | Access Explore                 |            yes             |  yes   |        |               |
+| Query data sources directly    |            yes             |  yes   |  yes   |               |
 | Add, edit, delete data sources |            yes             |        |        |               |
 | Add and edit users             |            yes             |        |        |               |
 | Add and edit teams             |            yes             |        |        |               |

@@ -30,16 +30,16 @@ func TestQueryData(t *testing.T) {
 			expectedError error
 		}{
 			{
-				err:           backendplugin.ErrPluginUnavailable,
+				err:           plugins.ErrPluginUnavailable,
 				expectedError: plugins.ErrPluginUnavailable,
 			},
 			{
-				err:           backendplugin.ErrMethodNotImplemented,
+				err:           plugins.ErrMethodNotImplemented,
 				expectedError: plugins.ErrMethodNotImplemented,
 			},
 			{
 				err:           errors.New("surprise surprise"),
-				expectedError: plugins.ErrPluginDownstreamError,
+				expectedError: plugins.ErrPluginDownstreamErrorBase,
 			},
 		}
 
@@ -78,7 +78,7 @@ func TestCheckHealth(t *testing.T) {
 		client := ProvideService(registry, &config.Cfg{})
 		_, err := client.CheckHealth(context.Background(), &backend.CheckHealthRequest{})
 		require.Error(t, err)
-		require.ErrorIs(t, err, backendplugin.ErrPluginNotRegistered)
+		require.ErrorIs(t, err, plugins.ErrPluginNotRegistered)
 	})
 
 	t.Run("non-empty plugin registry", func(t *testing.T) {
@@ -87,17 +87,17 @@ func TestCheckHealth(t *testing.T) {
 			expectedError error
 		}{
 			{
-				err:           backendplugin.ErrPluginUnavailable,
-				expectedError: backendplugin.ErrPluginUnavailable,
+				err:           plugins.ErrPluginUnavailable,
+				expectedError: plugins.ErrPluginUnavailable,
 			},
 			{
 
-				err:           backendplugin.ErrMethodNotImplemented,
-				expectedError: backendplugin.ErrMethodNotImplemented,
+				err:           plugins.ErrMethodNotImplemented,
+				expectedError: plugins.ErrMethodNotImplemented,
 			},
 			{
 				err:           errors.New("surprise surprise"),
-				expectedError: backendplugin.ErrHealthCheckFailed,
+				expectedError: plugins.ErrPluginHealthCheck,
 			},
 		}
 
