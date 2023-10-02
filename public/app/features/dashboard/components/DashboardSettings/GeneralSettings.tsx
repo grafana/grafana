@@ -16,6 +16,7 @@ import {
 import { Box } from '@grafana/ui/src/unstable';
 import { Page } from 'app/core/components/Page/Page';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
+import { t, Trans } from 'app/core/internationalization';
 import { updateTimeZoneDashboard, updateWeekStartDashboard } from 'app/features/dashboard/state/actions';
 
 import { DeleteDashboardButton } from '../DeleteDashboard/DeleteDashboardButton';
@@ -124,10 +125,12 @@ export function GeneralSettingsUnconnected({
           <Field
             label={
               <HorizontalGroup justify="space-between">
-                <Label htmlFor="title-input">Title</Label>
-                {config.featureToggles.dashgpt && (
-                  <GenAIDashTitleButton onGenerate={onTitleChange} dashboard={dashboard} />
-                )}
+                <Trans i18nKey="dashboard-settings.general-settings.title">
+                  <Label htmlFor="title-input">Title</Label>
+                  {config.featureToggles.dashgpt && (
+                    <GenAIDashTitleButton onGenerate={onTitleChange} dashboard={dashboard} />
+                  )}
+                </Trans>
               </HorizontalGroup>
             }
           >
@@ -141,10 +144,12 @@ export function GeneralSettingsUnconnected({
           <Field
             label={
               <HorizontalGroup justify="space-between">
-                <Label htmlFor="description-input">Description</Label>
-                {config.featureToggles.dashgpt && (
-                  <GenAIDashDescriptionButton onGenerate={onDescriptionChange} dashboard={dashboard} />
-                )}
+                <Trans i18nKey="dashboard-settings.general-settings.description">
+                  <Label htmlFor="description-input">Description</Label>
+                  {config.featureToggles.dashgpt && (
+                    <GenAIDashDescriptionButton onGenerate={onDescriptionChange} dashboard={dashboard} />
+                  )}
+                </Trans>
               </HorizontalGroup>
             }
           >
