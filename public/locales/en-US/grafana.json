@@ -262,9 +262,9 @@
   },
   "dashboard-settings": {
     "general-settings": {
-      "description": "<0>Description</0>{config.featureToggles.dashgpt && (\n                    <GenAIDashDescriptionButton onGenerate={onDescriptionChange} dashboard={dashboard} />\n                  )}",
-      "tags-input": "<0></0>",
-      "title": "<0>Title</0>{config.featureToggles.dashgpt && (\n                    <GenAIDashTitleButton onGenerate={onTitleChange} dashboard={dashboard} />\n                  )}"
+      "description": "",
+      "tags-input": "",
+      "title": ""
     },
     "json-editor": {
       "save-button": "Save changes",
