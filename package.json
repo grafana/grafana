@@ -46,7 +46,7 @@
     "watch": "yarn start -d watch,start core:start --watchTheme",
     "ci:test-frontend": "yarn run test:ci",
     "i18n:clean": "rimraf public/locales/en-US/grafana.json",
-    "i18n:extract": "yarn run i18next -c public/locales/i18next-parser.config.js 'public/**/*.{tsx,ts}' 'packages/grafana-ui/**/*.{tsx,ts}'",
+    "i18n:extract": "yarn run i18next -c public/locales/i18next-parser.config.js 'public/**/*.{tsx,ts}' 'packages/grafana-ui/**/*.{tsx,ts}' && yarn i18n:pseudo",
     "i18n:compile": "echo 'no i18n compile yet, all good'",
     "i18n:pseudo": "node ./public/locales/pseudo.js",
     "betterer": "betterer",
