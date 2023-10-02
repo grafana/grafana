@@ -1033,7 +1033,7 @@ export function makeTempoLink(title: string, serviceName: string, spanName: stri
       id: 'span-name',
       scope: TraceqlSearchScope.Span,
       tag: 'name',
-      value: serviceName,
+      value: spanName,
       operator: '=',
       valueType: 'string',
     });
