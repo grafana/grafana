@@ -272,7 +272,10 @@
         "label": ""
       },
       "hide-time-picker": "",
-      "now_delay-label": "",
+      "now_delay": {
+        "description": "",
+        "label": ""
+      },
       "panel-options": {
         "label": ""
       },
@@ -280,7 +283,10 @@
         "description": "",
         "label": ""
       },
-      "refresh-live-dashboards": "",
+      "refresh-live-dashboards": {
+        "description": "",
+        "label": ""
+      },
       "tags": {
         "label": ""
       },

@@ -99,8 +99,11 @@ export class TimePickerSettings extends PureComponent<Props, State> {
           onRefreshIntervalChange={this.props.onRefreshIntervalChange}
         />
         <Field
-          label={t('dashboard-settings.general-settings.now_delay-label', 'Now delay')}
-          description="Exclude recent data that may be incomplete."
+          label={t('dashboard-settings.general-settings.now_delay.label', 'Now delay')}
+          description={t(
+            'dashboard-settings.general-settings.now_delay.description',
+            'Exclude recent data that may be incomplete.'
+          )}
         >
           <Input
             id="now-delay-input"
@@ -118,8 +121,11 @@ export class TimePickerSettings extends PureComponent<Props, State> {
           />
         </Field>
         <Field
-          label={t('dashboard-settings.general-settings.refresh-live-dashboards', 'Refresh live dashboards')}
-          description="Continuously re-draw panels where the time range references 'now'"
+          label={t('dashboard-settings.general-settings.refresh-live-dashboards.label', 'Refresh live dashboards')}
+          description={t(
+            'dashboard-settings.general-settings.refresh-live-dashboards.description',
+            "Continuously re-draw panels where the time range references 'now'"
+          )}
         >
           <Switch id="refresh-live-dashboards-toggle" value={!!this.props.liveNow} onChange={this.onLiveNowChange} />
         </Field>
