@@ -125,12 +125,13 @@ export function GeneralSettingsUnconnected({
           <Field
             label={
               <HorizontalGroup justify="space-between">
-                <Trans i18nKey="dashboard-settings.general-settings.title">
-                  <Label htmlFor="title-input">Title</Label>
-                  {config.featureToggles.dashgpt && (
-                    <GenAIDashTitleButton onGenerate={onTitleChange} dashboard={dashboard} />
-                  )}
-                </Trans>
+                <Label htmlFor="title-input">
+                  <Trans i18nKey="dashboard-settings.general-settings.title">Title</Trans>
+                </Label>
+
+                {config.featureToggles.dashgpt && (
+                  <GenAIDashTitleButton onGenerate={onTitleChange} dashboard={dashboard} />
+                )}
               </HorizontalGroup>
             }
           >
@@ -144,12 +145,13 @@ export function GeneralSettingsUnconnected({
           <Field
             label={
               <HorizontalGroup justify="space-between">
-                <Trans i18nKey="dashboard-settings.general-settings.description">
-                  <Label htmlFor="description-input">Description</Label>
-                  {config.featureToggles.dashgpt && (
-                    <GenAIDashDescriptionButton onGenerate={onDescriptionChange} dashboard={dashboard} />
-                  )}
-                </Trans>
+                <Label htmlFor="description-input">
+                  {t('dashboard-settings.general-settings.description', 'Description')}
+                </Label>
+
+                {config.featureToggles.dashgpt && (
+                  <GenAIDashDescriptionButton onGenerate={onDescriptionChange} dashboard={dashboard} />
+                )}
               </HorizontalGroup>
             }
           >
@@ -161,7 +163,9 @@ export function GeneralSettingsUnconnected({
             />
           </Field>
           <Field label="Tags">
-            <TagsInput id="tags-input" tags={dashboard.tags} onChange={onTagsChange} width={40} />
+            <Trans i18nKey="dashboard-settings.general-settings.tags-input">
+              <TagsInput id="tags-input" tags={dashboard.tags} onChange={onTagsChange} width={40} />
+            </Trans>
           </Field>
 
           <Field label="Folder">
