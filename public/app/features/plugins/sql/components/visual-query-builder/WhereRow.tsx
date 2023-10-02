@@ -22,7 +22,7 @@ export function WhereRow({ sql, config, onSqlChange, format }: SQLBuilderWhereRo
   );
 
   useEffect(() => {
-    if (actions?.current && !sql.whereJsonTree && format === QueryFormat.Timeseries) {
+    if (actions?.current && !sql.whereJsonTree && format === QueryFormat.Timeseries && !tree.get('children1')) {
       const timeField = sql.columns?.find((c) => c.alias === `"${timeAlias.value}"`)?.parameters?.[0].name;
       actions.current.addRule([tree.get('id')], {
         field: timeField,

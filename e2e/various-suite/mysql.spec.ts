@@ -9,10 +9,6 @@ const normalTableName = tablesResponse.results.tables.frames[0].data.values[0][0
 
 describe('MySQL datasource', () => {
   beforeEach(() => {
-    e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'));
-  });
-
-  it('code editor autocomplete should handle table name escaping/quoting', () => {
     cy.intercept('POST', '/api/ds/query', (req) => {
       if (req.body.queries[0].refId === 'datasets') {
         req.alias = 'datasets';
@@ -31,11 +27,14 @@ describe('MySQL datasource', () => {
         });
       }
     });
-
+    e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'));
     e2e.pages.Explore.visit();
 
     e2e.components.DataSourcePicker.container().should('be.visible').type('gdev-mysql{enter}');
+    cy.wait('@datasets');
+  });
 
+  it('code editor autocomplete should handle table name escaping/quoting', () => {
     cy.get("label[for^='option-code']").should('be.visible').click();
     cy.get('textarea').type('S{downArrow}{enter}');
     cy.wait('@tables');
@@ -59,5 +58,24 @@ describe('MySQL datasource', () => {
 
     cy.get('textarea').type('.');
     cy.get('.suggest-widget').contains('No suggestions.').should('be.visible');
+  });
+
+  describe('visual query builder', () => {
+    it('should add timeFilter macro when time column is selected', () => {
+      cy.get("[aria-label='Table selector']").should('be.visible').click();
+      cy.get("[aria-label='Select option']").contains(normalTableName).should('be.visible').click();
+      cy.get("[id^='select-column-0']").should('be.visible').click();
+      cy.get("[aria-label='Select option']").contains('createdAt').should('be.visible').click();
+      cy.get("[id^='select-alias-0']").should('be.visible').click();
+      cy.get("[aria-label='Select option']").contains('time').should('be.visible').click();
+      cy.get("label[for^='sql-filter']").last().should('be.visible').click();
+
+      cy.get('.rule--field').contains('createdAt').should('be.visible');
+      cy.get('.rule--value').contains('timeFilter').should('be.visible');
+      cy.get('[aria-label="Code editor container"] textarea').should(
+        'have.value',
+        `SELECT\n  createdAt AS "time"\nFROM\n  DataMaker.normalTable\nWHERE\n  $__timeFilter(createdAt)`
+      );
+    });
   });
 });
