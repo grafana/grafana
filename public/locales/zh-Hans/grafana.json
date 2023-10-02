@@ -234,6 +234,7 @@
       "tags-expected-strings": ""
     }
   },
+  "dashboard-delete-button": "",
   "dashboard-import": {
     "file-dropzone": {
       "primary-text": "",
@@ -255,6 +256,10 @@
     }
   },
   "dashboard-settings": {
+    "general-settings": {
+      "description": "",
+      "title": ""
+    },
     "json-editor": {
       "save-button": "",
       "subtitle": ""

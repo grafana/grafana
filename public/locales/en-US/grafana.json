@@ -239,6 +239,7 @@
       "tags-expected-strings": "tags expected array of strings"
     }
   },
+  "dashboard-delete-button": "Delete Dashboard",
   "dashboard-import": {
     "file-dropzone": {
       "primary-text": "Upload dashboard JSON file",
@@ -260,6 +261,10 @@
     }
   },
   "dashboard-settings": {
+    "general-settings": {
+      "description": "<0>Description</0>{config.featureToggles.dashgpt && (\n                    <GenAIDashDescriptionButton onGenerate={onDescriptionChange} dashboard={dashboard} />\n                  )}",
+      "title": "<0>Title</0>{config.featureToggles.dashgpt && (\n                    <GenAIDashTitleButton onGenerate={onTitleChange} dashboard={dashboard} />\n                  )}"
+    },
     "json-editor": {
       "save-button": "Save changes",
       "subtitle": "The JSON model below is the data structure that defines the dashboard. This includes dashboard settings, panel settings, layout, queries, and so on."
