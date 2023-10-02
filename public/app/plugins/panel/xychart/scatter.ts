@@ -531,7 +531,7 @@ const prepConfig = (
 
   // clip hover points/bubbles to plotting area
   builder.addHook('init', (u, r) => {
-    u.over.style.overflow = 'hidden';
+    // u.over.style.overflow = 'hidden';
     ref_parent = u.root.parentElement;
 
     if (onUPlotClick) {
