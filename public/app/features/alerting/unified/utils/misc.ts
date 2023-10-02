@@ -214,7 +214,7 @@ export function isOpenSourceEdition() {
   return buildInfo.edition === GrafanaEdition.OpenSource;
 }
 
-export function isDevelopment() {
+export function isLocalDevEnv() {
   const buildInfo = config.buildInfo;
   return buildInfo.env === 'development';
 }

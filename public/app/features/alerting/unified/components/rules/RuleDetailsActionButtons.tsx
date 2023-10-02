@@ -23,7 +23,7 @@ import { getRulesSourceName, isCloudRulesSource, isGrafanaRulesSource } from '..
 import {
   createExploreLink,
   createShareLink,
-  isDevelopment,
+  isLocalDevEnv,
   isOpenSourceEdition,
   makeRuleBasedSilenceLink,
 } from '../../utils/misc';
@@ -272,7 +272,7 @@ export const RuleDetailsActionButtons = ({ rule, rulesSource, isViewMode }: Prop
  * We should show it in development mode
  */
 function shouldShowDeclareIncidentButton() {
-  return !isOpenSourceEdition() || isDevelopment();
+  return !isOpenSourceEdition() || isLocalDevEnv();
 }
 
 /**
