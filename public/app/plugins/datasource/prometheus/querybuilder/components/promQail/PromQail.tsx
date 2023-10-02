@@ -217,6 +217,7 @@ export const PromQail = (props: PromQailProps) => {
                           value={interaction.prompt}
                           spellCheck={false}
                           placeholder="Enter prompt"
+                          disabled={interaction.suggestions.length > 0}
                           onChange={(e) => {
                             const prompt = e.currentTarget.value;
 
