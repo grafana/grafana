@@ -2,6 +2,7 @@ import {
   ConstantVariableModel,
   CustomVariableModel,
   DataSourceVariableModel,
+  IntervalVariableModel,
   QueryVariableModel,
   VariableModel,
 } from '@grafana/data';
@@ -18,6 +19,7 @@ import {
   DataSourceVariable,
   QueryVariable,
   ConstantVariable,
+  IntervalVariable,
   SceneRefreshPicker,
   SceneGridItem,
   SceneObject,
@@ -277,6 +279,20 @@ export function createSceneVariableFromVariableModel(variable: VariableModel): S
       isMulti: variable.multi,
       hide: variable.hide,
     });
+  } else if (isIntervalVariable(variable)) {
+    return new IntervalVariable({
+      ...commonProperties,
+      value: variable.current.value,
+      text: variable.current.text,
+      description: variable.description,
+      intervals: variable.query,
+      autoEnabled: variable.auto,
+      autoStepCount: variable.auto_count,
+      autoMinInterval: variable.auto_min,
+      refresh: variable.refresh,
+      skipUrlSync: variable.skipUrlSync,
+      hide: variable.hide,
+    });
   } else if (isConstantVariable(variable)) {
     return new ConstantVariable({
       ...commonProperties,
@@ -347,3 +363,4 @@ const isCustomVariable = (v: VariableModel): v is CustomVariableModel => v.type 
 const isQueryVariable = (v: VariableModel): v is QueryVariableModel => v.type === 'query';
 const isDataSourceVariable = (v: VariableModel): v is DataSourceVariableModel => v.type === 'datasource';
 const isConstantVariable = (v: VariableModel): v is ConstantVariableModel => v.type === 'constant';
+const isIntervalVariable = (v: VariableModel): v is IntervalVariableModel => v.type === 'interval';
