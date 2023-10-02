@@ -289,9 +289,9 @@ You can filter field names in three different ways:
 - [Manually selecting included fields](#manually-select-included-fields)
 - [Using a dashboard variable](#use-a-dashboard-variable)
 
-#### Using a regular expression
+#### Use a regular expression
 
-Field names that match the regular expression will be included.
+When you filter using a regular expression, field names that match the regular expression are included.
 
 From the input data:
 
@@ -307,15 +307,15 @@ The result from using the regular expression `prod.*` would be:
 | 2023-03-04 23:56:23 | 22.2         | 20.2          |
 | 2023-03-04 23:56:23 | 22.1         | 20.1          |
 
-The regular expression can include a dashboard variable interpolated by using the `${[variable name]}` syntax.
+The regular expression can include an interpolated dashboard variable by using the `${[variable name]}` syntax.
 
-#### Manually selecting included fields
+#### Manually select included fields
 
-By clicking and unchecking the field names they will not show up in the result. Fields that are matched by the regular expression will still be included, even if they are unchecked.
+Click and uncheck the field names to remove them from the result. Fields that are matched by the regular expression are still included, even if they're unchecked.
 
-#### Using a dashboard variable
+#### Use a dashboard variable
 
-By enabling `From variable` you can select a dashboard variable that will be used to include fields. By settings up a [dashboard variable] with multiple choices, the same fields can be displayed across multiple visualizations.
+Enable `From variable` to let you select a dashboard variable that's used to include fields. By setting up a [dashboard variable][] with multiple choices, the same fields can be displayed across multiple visualizations.
 
 ### Filter data by query
 
