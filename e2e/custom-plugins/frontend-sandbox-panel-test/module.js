@@ -4,6 +4,21 @@
  * This file doesn't require any compilation
  */
 define(['react', '@grafana/data'], function (React, grafanaData) {
+  // This would be a custom editor component
+  function Editor() {
+    const onChangeInternal = (event) => {
+      const outsideEl =
+        event.target.parentElement.parentElement.parentElement.parentElement.parentElement.parentElement.parentElement
+          .parentElement.parentElement;
+      outsideEl.dataset.sandboxTest = 'panel-editor';
+    };
+    return React.createElement('input', {
+      type: 'text',
+      onChange: onChangeInternal,
+      'data-testid': 'panel-editor-custom-editor-input',
+    });
+  }
+
   const HelloWorld = () => {
     const createIframe = () => {
       // direct iframe creation
@@ -120,6 +135,16 @@ define(['react', '@grafana/data'], function (React, grafanaData) {
   };
 
   const plugin = new grafanaData.PanelPlugin(HelloWorld);
+
+  plugin.setPanelOptions((builder) => {
+    builder.addCustomEditor({
+      id: 'buttons',
+      path: 'buttons',
+      name: 'Button Configuration',
+      defaultValue: [{ text: '', datasource: '', query: '' }],
+      editor: (props) => React.createElement(Editor, { onChange: props.onChange }),
+    });
+  });
 
   return { plugin };
 });

@@ -21,7 +21,7 @@ COPY plugins-bundled plugins-bundled
 
 RUN yarn install --immutable
 
-COPY tsconfig.json .eslintrc .editorconfig .browserslistrc .prettierrc.js babel.config.json .linguirc ./
+COPY tsconfig.json .eslintrc .editorconfig .browserslistrc .prettierrc.js babel.config.json ./
 COPY public public
 COPY scripts scripts
 COPY emails emails

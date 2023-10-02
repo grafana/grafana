@@ -1,3 +1,5 @@
+import { t } from 'i18next';
+
 import { getBackendSrv } from '@grafana/runtime';
 
 import { validationSrv } from '../services/ValidationSrv';
@@ -7,16 +9,16 @@ export const validateDashboardJson = (json: string) => {
   try {
     dashboard = JSON.parse(json);
   } catch (error) {
-    return 'Not valid JSON';
+    return t('dashboard.validation.invalid-json', 'Not valid JSON');
   }
   if (dashboard && dashboard.hasOwnProperty('tags')) {
     if (Array.isArray(dashboard.tags)) {
       const hasInvalidTag = dashboard.tags.some((tag: string) => typeof tag !== 'string');
       if (hasInvalidTag) {
-        return 'tags expected array of strings';
+        return t('dashboard.validation.tags-expected-strings', 'tags expected array of strings');
       }
     } else {
-      return 'tags expected array';
+      return t('dashboard.validation.tags-expected-array', 'tags expected array');
     }
   }
   return true;
@@ -26,7 +28,9 @@ export const validateGcomDashboard = (gcomDashboard: string) => {
   // From DashboardImportCtrl
   const match = /(^\d+$)|dashboards\/(\d+)/.exec(gcomDashboard);
 
-  return match && (match[1] || match[2]) ? true : 'Could not find a valid Grafana.com ID';
+  return match && (match[1] || match[2])
+    ? true
+    : t('dashboard.validation.invalid-dashboard-id', 'Could not find a valid Grafana.com ID');
 };
 
 export const validateTitle = (newTitle: string, folderUid: string) => {

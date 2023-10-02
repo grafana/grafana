@@ -6,6 +6,7 @@ import { Alert, InlineFormLabel, LinkButton, Themeable2, withTheme2 } from '@gra
 
 import { SQLQuery } from '../../../../../../../features/plugins/sql';
 import { SqlQueryEditor } from '../../../../../../../features/plugins/sql/components/QueryEditor';
+import { applyQueryDefaults } from '../../../../../../../features/plugins/sql/defaults';
 import InfluxDatasource from '../../../../datasource';
 import { FlightSQLDatasource } from '../../../../fsql/datasource.flightsql';
 import { InfluxQuery } from '../../../../types';
@@ -54,8 +55,13 @@ class UnthemedSQLQueryEditor extends PureComponent<Props> {
   }
 
   transformQuery(query: InfluxQuery & SQLQuery): SQLQuery {
+    const defaultQuery = applyQueryDefaults(query);
     return {
-      ...query,
+      ...defaultQuery,
+      sql: {
+        ...defaultQuery.sql,
+        limit: undefined,
+      },
     };
   }
 
