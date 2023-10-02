@@ -266,9 +266,17 @@
       "editable-description": "Ŝęŧ ŧő řęäđ-őŉľy ŧő đįşäþľę äľľ ęđįŧįŉģ. Ŗęľőäđ ŧĥę đäşĥþőäřđ ƒőř čĥäŉģęş ŧő ŧäĸę ęƒƒęčŧ",
       "editable-label": "Ēđįŧäþľę",
       "folder-label": "Főľđęř",
+      "hide-time-picker": "Ħįđę ŧįmę pįčĸęř",
+      "now_delay-label": "Ńőŵ đęľäy",
+      "refresh-live-dashboards": "Ŗęƒřęşĥ ľįvę đäşĥþőäřđş",
       "tags-input": "<0></0>",
       "tags-label": "Ŧäģş",
-      "title": "Ŧįŧľę"
+      "time-options-label": "Ŧįmę őpŧįőŉş",
+      "time-picker-label": "Ŧįmę žőŉę",
+      "title": "Ŧįŧľę",
+      "week-start": {
+        "label": "Ŵęęĸ şŧäřŧ"
+      }
     },
     "json-editor": {
       "save-button": "Ŝävę čĥäŉģęş",

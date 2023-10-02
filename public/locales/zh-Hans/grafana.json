@@ -261,9 +261,17 @@
       "editable-description": "",
       "editable-label": "",
       "folder-label": "",
+      "hide-time-picker": "",
+      "now_delay-label": "",
+      "refresh-live-dashboards": "",
       "tags-input": "",
       "tags-label": "",
-      "title": ""
+      "time-options-label": "",
+      "time-picker-label": "",
+      "title": "",
+      "week-start": {
+        "label": ""
+      }
     },
     "json-editor": {
       "save-button": "",

@@ -266,9 +266,17 @@
       "editable-description": "Set to read-only to disable all editing. Reload the dashboard for changes to take effect",
       "editable-label": "Editable",
       "folder-label": "Folder",
+      "hide-time-picker": "Hide time picker",
+      "now_delay-label": "Now delay",
+      "refresh-live-dashboards": "Refresh live dashboards",
       "tags-input": "<0></0>",
       "tags-label": "Tags",
-      "title": "Title"
+      "time-options-label": "Time options",
+      "time-picker-label": "Time zone",
+      "title": "Title",
+      "week-start": {
+        "label": "Week start"
+      }
     },
     "json-editor": {
       "save-button": "Save changes",
