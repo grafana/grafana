@@ -10,19 +10,13 @@ import { NavBarMenuItem } from './NavBarMenuItem';
 import { NavFeatureHighlight } from './NavFeatureHighlight';
 import { hasChildMatch } from './utils';
 
-export function NavBarMenuSection({
-  link,
-  activeItem,
-  children,
-  className,
-  onClose,
-}: {
+interface Props {
   link: NavModelItem;
   activeItem?: NavModelItem;
-  children: React.ReactNode;
-  className?: string;
   onClose?: () => void;
-}) {
+}
+
+export function NavBarMenuSection({ link, activeItem, children, onClose }: React.PropsWithChildren<Props>) {
   const styles = useStyles2(getStyles);
   const FeatureHighlightWrapper = link.highlightText ? NavFeatureHighlight : React.Fragment;
   const isActive = link === activeItem;
@@ -32,7 +26,7 @@ export function NavBarMenuSection({
 
   return (
     <>
-      <div className={cx(styles.collapsibleSectionWrapper, className)}>
+      <div className={styles.collapsibleSectionWrapper}>
         <NavBarMenuItem
           isActive={link === activeItem}
           onClick={() => {
@@ -80,12 +74,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     color: theme.colors.text.disabled,
     padding: theme.spacing(0, 0.5),
     marginRight: theme.spacing(1),
-  }),
-  collapseWrapperActive: css({
-    backgroundColor: theme.colors.action.disabledBackground,
-  }),
-  collapseContent: css({
-    padding: 0,
   }),
   labelWrapper: css({
     display: 'grid',
