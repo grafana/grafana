@@ -45,7 +45,7 @@ export const GenAIButton = ({
 
   const hasHistory = history.length > 0;
   const isFirstGeneration = isGenerating && !hasHistory;
-  const isButtonDisabled = isFirstGeneration || (value && !value.enabled);
+  const isButtonDisabled = isFirstGeneration || (value && !value.enabled && !error);
 
   const onClick = (e: React.MouseEvent<HTMLButtonElement>) => {
     if (!hasHistory) {
@@ -142,7 +142,7 @@ export const GenAIButton = ({
       onClick={onClick}
       fill="text"
       size="sm"
-      disabled={isGenerating || (!value?.enabled && !error)}
+      disabled={isButtonDisabled}
       variant={error ? 'destructive' : 'primary'}
     >
       {getText()}
