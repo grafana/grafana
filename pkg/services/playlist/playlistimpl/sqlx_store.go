@@ -21,6 +21,11 @@ func (s *sqlxStore) Insert(ctx context.Context, cmd *playlist.CreatePlaylistComm
 	var err error
 	if cmd.UID == "" {
 		cmd.UID = util.GenerateShortUID()
+	} else {
+		err := util.ValidateUID(cmd.UID)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	ts := time.Now()
