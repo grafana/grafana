@@ -1,11 +1,11 @@
 import { cx } from '@emotion/css';
-import React from 'react';
+import React, { useState } from 'react';
 
 import { Button, useTheme2 } from '@grafana/ui';
 
 import { PromVisualQuery } from '../../types';
 
-import { getStyles } from './PromQail';
+import { getStyles, testIds } from './PromQail';
 import { QuerySuggestionItem } from './QuerySuggestionItem';
 import { QuerySuggestion, SuggestionType } from './types';
 
@@ -20,6 +20,8 @@ export type Props = {
 
 export function QuerySuggestionContainer(props: Props) {
   const { suggestionType, querySuggestions, closeDrawer, nextInteraction, queryExplain, onChange } = props;
+
+  const [hasNextInteraction, updateHasNextInteraction] = useState<boolean>(false);
 
   const theme = useTheme2();
   const styles = getStyles(theme);
@@ -61,7 +63,17 @@ export function QuerySuggestionContainer(props: Props) {
       </div>
       <div className={styles.nextInteractionHeight}>
         <div className={cx(styles.afterButtons, styles.textPadding)}>
-          <Button onClick={nextInteraction} fill="outline" variant="secondary" size="md">
+          <Button
+            onClick={() => {
+              updateHasNextInteraction(true);
+              nextInteraction();
+            }}
+            data-testid={testIds.refinePrompt && suggestionType === SuggestionType.AI}
+            disabled={hasNextInteraction}
+            fill="outline"
+            variant="secondary"
+            size="md"
+          >
             {refineText}
           </Button>
         </div>

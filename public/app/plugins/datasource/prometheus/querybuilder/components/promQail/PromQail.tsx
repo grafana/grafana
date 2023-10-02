@@ -33,7 +33,7 @@ export const PromQail = (props: PromQailProps) => {
 
   const [state, dispatch] = useReducer(stateSlice.reducer, initialState(query, !skipStartingMessage));
 
-  const [labelNames, setLabelNames] = useState<string[]>([])
+  const [labelNames, setLabelNames] = useState<string[]>([]);
   useEffect(() => {
     const fetchLabels = async () => {
       let labelsIndex: Record<string, string[]>;
@@ -43,9 +43,9 @@ export const PromQail = (props: PromQailProps) => {
         labelsIndex = await datasource.languageProvider.fetchSeriesLabels(query.metric);
       }
       setLabelNames(Object.keys(labelsIndex));
-    }
+    };
     fetchLabels();
-  }, [query, datasource])
+  }, [query, datasource]);
 
   const theme = useTheme2();
   const styles = getStyles(theme);
@@ -102,9 +102,9 @@ export const PromQail = (props: PromQailProps) => {
                 <Button className={styles.leftButton} fill="outline" variant="secondary" onClick={closeDrawer}>
                   Cancel
                 </Button>
-                <Button 
-                  fill="solid" 
-                  variant="primary" 
+                <Button
+                  fill="solid"
+                  variant="primary"
                   onClick={() => dispatch(showStartingMessage(false))}
                   data-testid={testIds.securityInfoButton}
                 >
@@ -262,6 +262,7 @@ export const PromQail = (props: PromQailProps) => {
                                 <Button
                                   fill="solid"
                                   variant="primary"
+                                  data-testid={testIds.submitPrompt + idx}
                                   onClick={() => {
                                     const newInteraction: Interaction = {
                                       ...interaction,
@@ -349,144 +350,146 @@ export const PromQail = (props: PromQailProps) => {
 
 export const getStyles = (theme: GrafanaTheme2) => {
   return {
-    sectionPadding: css`
-      padding: 20px;
-    `,
-    header: css`
-      display: flex;
+    sectionPadding: css({
+      padding: '20px',
+    }),
+    header: css({
+      display: 'flex',
 
-      button {
-        margin-left: auto;
-      }
-    `,
-    iconSection: css`
-      padding: 0 0 10px 0;
-      color: ${theme.colors.text.secondary};
+      button: {
+        marginLeft: 'auto',
+      },
+    }),
+    iconSection: css({
+      padding: '0 0 10px 0',
+      color: `${theme.colors.text.secondary}`,
 
-      img {
-        padding-right: 4px;
-      }
-    `,
-    rightButtonsWrapper: css`
-      display: flex;
-    `,
-    rightButtons: css`
-      margin-left: auto;
-    `,
-    leftButton: css`
-      margin-right: 10px;
-    `,
-    dataList: css`
-      padding: 0px 28px 28px 28px;
-    `,
-    textPadding: css`
-      padding-bottom: 12px;
-    `,
-    containerPadding: css`
-      padding: 28px;
-    `,
-    infoContainer: css`
-      border: 1px solid #ccccdc38;
-      padding: 16px;
-      background-color: #22252b;
-      border-radius: 8px 8px 8px 0;
-    `,
-    infoContainerWrapper: css`
-      padding-bottom: 24px;
-    `,
-    metricTable: css`
-      width: 100%;
-    `,
-    metricTableName: css`
-      width: 15%;
-    `,
-    metricTableValue: css`
-      font-family: ${theme.typography.fontFamilyMonospace};
-      font-size: ${theme.typography.bodySmall.fontSize};
-      overflow: scroll;
-      text-wrap: nowrap;
-      max-width: 150px;
-      width: 60%;
-      mask-image: linear-gradient(to right, rgba(0, 0, 0, 1) 90%, rgba(0, 0, 0, 0));
-    `,
-    metricTableButton: css`
-      margin-left: 10px;
-    `,
-    queryQuestion: css`
-      text-align: end;
-      padding: 8px 0;
-    `,
-    secondaryText: css`
-      color: ${theme.colors.text.secondary};
-    `,
-    loadingMessageContainer: css`
-      border: 1px solid #ccccdc38;
-      padding: 16px;
-      background-color: #22252b;
-      margin-bottom: 20px;
-      border-radius: 8px;
-      color: ${theme.colors.text.secondary};
-      font-style: italic;
-    `,
-    floatRight: css`
-      float: right;
-    `,
-    codeText: css`
-      font-family: ${theme.typography.fontFamilyMonospace};
-      font-size: ${theme.typography.bodySmall.fontSize};
-    `,
-    bodySmall: css`
-      font-size: ${theme.typography.bodySmall.fontSize};
-    `,
-    explainPadding: css`
-      padding-left: 26px;
-    `,
-    bottomMargin: css`
-      margin-bottom: 20px;
-    `,
-    topPadding: css`
-      padding-top: 22px;
-    `,
-    doc: css`
-      text-decoration: underline;
-    `,
-    afterButtons: css`
-      display: flex;
-      justify-content: flex-end;
-    `,
-    feedbackPadding: css`
-      padding-top: 22px;
-      padding-bottom: 22px;
-    `,
-    nextInteractionHeight: css`
-      height: 88px;
-    `,
-    center: css`
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    `,
-    inputPadding: css`
-      padding-bottom: 24px;
-    `,
-    querySuggestion: css`
-      display: flex;
-      flex-wrap: nowrap;
-    `,
-    longCode: css`
-      width: 90%;
-      text-wrap: nowrap;
-      overflow: scroll;
-      mask-image: linear-gradient(to right, rgba(0, 0, 0, 1) 90%, rgba(0, 0, 0, 0));
+      img: {
+        paddingRight: '4px',
+      },
+    }),
+    rightButtonsWrapper: css({
+      display: 'flex',
+    }),
+    rightButtons: css({
+      marginLeft: 'auto',
+    }),
+    leftButton: css({
+      marginRight: '10px',
+    }),
+    dataList: css({
+      padding: '0px 28px 28px 28px',
+    }),
+    textPadding: css({
+      paddingBottom: '12px',
+    }),
+    containerPadding: css({
+      padding: '28px',
+    }),
+    infoContainer: css({
+      border: '1px solid #ccccdc38',
+      padding: '16px',
+      backgroundColor: '#22252b',
+      // eslint-ignore
+      // borderRadius: '8px 8px 8px 0',
+      borderRadius: `${theme.shape.radius.default}`,
+    }),
+    infoContainerWrapper: css({
+      paddingBottom: '24px',
+    }),
+    metricTable: css({
+      width: '100%',
+    }),
+    metricTableName: css({
+      width: '15%',
+    }),
+    metricTableValue: css({
+      fontFamily: `${theme.typography.fontFamilyMonospace}`,
+      fontSize: `${theme.typography.bodySmall.fontSize}`,
+      overflow: 'scroll',
+      textWrap: 'nowrap',
+      maxWidth: '150px',
+      width: '60%',
+      maskImage: `linear-gradient(to right, rgba(0, 0, 0, 1) 90%, rgba(0, 0, 0, 0))`,
+    }),
+    metricTableButton: css({
+      marginLeft: '10px',
+    }),
+    queryQuestion: css({
+      textAlign: 'end',
+      padding: '8px 0',
+    }),
+    secondaryText: css({
+      color: `${theme.colors.text.secondary}`,
+    }),
+    loadingMessageContainer: css({
+      border: `1px solid #ccccdc38`,
+      padding: `16px`,
+      backgroundColor: `#22252b`,
+      marginBottom: `20px`,
+      borderRadius: `8px`,
+      color: `${theme.colors.text.secondary}`,
+      fontStyle: 'italic',
+    }),
+    floatRight: css({
+      float: 'right',
+    }),
+    codeText: css({
+      fontFamily: `${theme.typography.fontFamilyMonospace}`,
+      fontSize: `${theme.typography.bodySmall.fontSize}`,
+    }),
+    bodySmall: css({
+      fontSize: `${theme.typography.bodySmall.fontSize}`,
+    }),
+    explainPadding: css({
+      paddingLeft: '26px',
+    }),
+    bottomMargin: css({
+      marginBottom: '20px',
+    }),
+    topPadding: css({
+      paddingTop: '22px',
+    }),
+    doc: css({
+      textDecoration: 'underline',
+    }),
+    afterButtons: css({
+      display: 'flex',
+      justifyContent: 'flex-end',
+    }),
+    feedbackPadding: css({
+      paddingTop: '22px',
+      paddingBottom: '22px',
+    }),
+    nextInteractionHeight: css({
+      height: '88px',
+    }),
+    center: css({
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+    }),
+    inputPadding: css({
+      paddingBottom: '24px',
+    }),
+    querySuggestion: css({
+      display: 'flex',
+      flexWrap: 'nowrap',
+    }),
+    longCode: css({
+      width: '90%',
+      textWrap: 'nowrap',
+      overflow: 'scroll',
+      maskImage: `linear-gradient(to right, rgba(0, 0, 0, 1) 90%, rgba(0, 0, 0, 0))`,
 
-      div {
-        display: inline-block;
-      }
-    `,
-    useButton: css`
-      width: 10%;
-      margin-left: 12px;
-    `,
+      div: {
+        display: 'inline-block',
+      },
+    }),
+    useButton: css({
+      width: '10%',
+      marginLeft: '12px',
+    }),
   };
 };
 
@@ -495,4 +498,6 @@ export const testIds = {
   securityInfoButton: 'security-info-button',
   clickForHistorical: 'click-for-historical',
   clickForAi: 'click-for-ai',
+  submitPrompt: 'submit-prompt',
+  refinePrompt: 'refine-prompt',
 };
