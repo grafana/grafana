@@ -162,13 +162,13 @@ export function GeneralSettingsUnconnected({
               onChange={(e: ChangeEvent<HTMLTextAreaElement>) => onDescriptionChange(e.target.value)}
             />
           </Field>
-          <Field label="Tags">
+          <Field label={t('dashboard-settings.general-settings.tags-label', 'Tags')}>
             <Trans i18nKey="dashboard-settings.general-settings.tags-input">
               <TagsInput id="tags-input" tags={dashboard.tags} onChange={onTagsChange} width={40} />
             </Trans>
           </Field>
 
-          <Field label="Folder">
+          <Field label={t('dashboard-settings.general-settings.folder-label', 'Folder')}>
             <FolderPicker
               value={dashboard.meta.folderUid}
               onChange={onFolderChange}
@@ -182,8 +182,11 @@ export function GeneralSettingsUnconnected({
           </Field>
 
           <Field
-            label="Editable"
-            description="Set to read-only to disable all editing. Reload the dashboard for changes to take effect"
+            label={t('dashboard-settings.general-settings.editable-label', 'Editable')}
+            description={t(
+              'dashboard-settings.general-settings.editable-description',
+              'Set to read-only to disable all editing. Reload the dashboard for changes to take effect'
+            )}
           >
             <RadioButtonGroup value={dashboard.editable} options={editableOptions} onChange={onEditableChange} />
           </Field>

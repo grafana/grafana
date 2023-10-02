@@ -258,7 +258,11 @@
   "dashboard-settings": {
     "general-settings": {
       "description": "",
+      "editable-description": "",
+      "editable-label": "",
+      "folder-label": "",
       "tags-input": "",
+      "tags-label": "",
       "title": ""
     },
     "json-editor": {

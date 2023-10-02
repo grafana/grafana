@@ -263,7 +263,11 @@
   "dashboard-settings": {
     "general-settings": {
       "description": "Description",
+      "editable-description": "Set to read-only to disable all editing. Reload the dashboard for changes to take effect",
+      "editable-label": "Editable",
+      "folder-label": "Folder",
       "tags-input": "<0></0>",
+      "tags-label": "Tags",
       "title": "Title"
     },
     "json-editor": {

@@ -263,7 +263,11 @@
   "dashboard-settings": {
     "general-settings": {
       "description": "Đęşčřįpŧįőŉ",
+      "editable-description": "Ŝęŧ ŧő řęäđ-őŉľy ŧő đįşäþľę äľľ ęđįŧįŉģ. Ŗęľőäđ ŧĥę đäşĥþőäřđ ƒőř čĥäŉģęş ŧő ŧäĸę ęƒƒęčŧ",
+      "editable-label": "Ēđįŧäþľę",
+      "folder-label": "Főľđęř",
       "tags-input": "<0></0>",
+      "tags-label": "Ŧäģş",
       "title": "Ŧįŧľę"
     },
     "json-editor": {
