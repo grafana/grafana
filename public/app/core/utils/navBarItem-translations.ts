@@ -155,7 +155,7 @@ export function getNavTitle(navId: string | undefined) {
     case 'connections-datasources':
       return t('nav.data-sources.title', 'Data sources');
     case 'standalone-plugin-page-/connections/infrastructure':
-      return t('nav.infrastructure.title', 'Infrastructure');
+      return t('nav.infrastructure.title', 'Integrations');
     case 'standalone-plugin-page-/connections/connect-data':
       return t('nav.connect-data.title', 'Connect data');
     case 'plugin-page-grafana-detect-app':
