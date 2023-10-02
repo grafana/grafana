@@ -12,7 +12,7 @@ import { tablesSchema } from './consts';
 import { setFilters } from './setQueryValue';
 
 
-const Filters = ({ query, datasource, onQueryChange, variableOptionGroup }: AzureQueryEditorFieldProps) => {
+const Filters = ({ query, datasource, onQueryChange, variableOptionGroup, range }: AzureQueryEditorFieldProps) => {
   const { azureTraces } = query;
   const queryTraceTypes = azureTraces?.traceTypes ? azureTraces.traceTypes : Object.keys(tablesSchema);
 
@@ -73,6 +73,7 @@ const Filters = ({ query, datasource, onQueryChange, variableOptionGroup }: Azur
           queryTraceTypes,
           properties,
           variableOptionGroup,
+          range,
         })}
       />
     </Field>

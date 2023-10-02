@@ -2,9 +2,8 @@ import { cx } from '@emotion/css';
 import React, { RefCallback, SyntheticEvent, useState } from 'react';
 import { lastValueFrom } from 'rxjs';
 
-import { CoreApp, DataFrame, SelectableValue } from '@grafana/data';
+import { CoreApp, DataFrame, SelectableValue, TimeRange } from '@grafana/data';
 import { AccessoryButton } from '@grafana/experimental';
-import { getTemplateSrv } from '@grafana/runtime';
 import {
   HorizontalGroup,
   Select,
@@ -28,6 +27,7 @@ export interface FilterProps {
   queryTraceTypes: string[];
   properties: string[];
   variableOptionGroup: VariableOptionGroup;
+  range?: TimeRange
 }
 
 const onFieldChange = <Key extends keyof AzureTracesFilter>(
@@ -53,7 +53,8 @@ const getTraceProperties = async (
   traceTypes: string[],
   propertyMap: Map<string, SelectableValue[]>,
   setPropertyMap: React.Dispatch<React.SetStateAction<Map<string, Array<SelectableValue<string>>>>>,
-  filter?: Partial<AzureTracesFilter>
+  filter?: Partial<AzureTracesFilter>,
+  range?: TimeRange
 ): Promise<SelectableValue[]> => {
   const { azureTraces } = query;
   if (!azureTraces) {
@@ -77,7 +78,6 @@ const getTraceProperties = async (
   | summarize make_list(pack_all()));
   print properties = bag_pack("${property}", ${property});`;
 
-  const range = (getTemplateSrv() as any).timeRange;
   const results = await lastValueFrom(
     datasource.azureLogAnalyticsDatasource.query({
       requestId: 'azure-traces-properties-req',
@@ -97,7 +97,7 @@ const getTraceProperties = async (
           queryType: AzureQueryType.LogAnalytics,
         },
       ],
-      range: range,
+      range: range || {} as TimeRange,
     })
   );
   if (results.data.length > 0) {
@@ -197,6 +197,7 @@ const Filter = (
     onChange,
     onDelete,
     variableOptionGroup,
+    range,
   } = props;
   const [loading, setLoading] = useState(false);
   const [values, setValues] = useState<Array<SelectableValue<string> | VariableOptionGroup>>(
@@ -217,7 +218,8 @@ const Filter = (
           queryTraceTypes,
           propertyMap,
           setPropertyMap,
-          item
+          item,
+          range
         );
         setValues(addValueToOptions(promise, variableOptionGroup));
         setLoading(false);
