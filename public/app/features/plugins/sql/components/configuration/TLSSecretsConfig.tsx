@@ -70,7 +70,6 @@ export const TLSSecretsConfig = <T extends DataSourceJsonData, S extends {} = {}
               </Stack>
             </Label>
           }
-
         >
           <SecretTextArea
             placeholder="-----BEGIN CERTIFICATE-----"
