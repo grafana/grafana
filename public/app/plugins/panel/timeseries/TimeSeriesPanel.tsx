@@ -3,15 +3,7 @@ import React, { useMemo } from 'react';
 import { PanelProps, DataFrameType } from '@grafana/data';
 import { PanelDataErrorView } from '@grafana/runtime';
 import { TooltipDisplayMode } from '@grafana/schema';
-import {
-  KeyboardPlugin,
-  TimeSeries,
-  TooltipPlugin,
-  TooltipPlugin2,
-  TimeSeriesTooltip,
-  usePanelContext,
-  ZoomPlugin,
-} from '@grafana/ui';
+import { KeyboardPlugin, TimeSeries, TooltipPlugin, usePanelContext, ZoomPlugin } from '@grafana/ui';
 import { config } from 'app/core/config';
 
 import { Options } from './panelcfg.gen';
@@ -23,7 +15,6 @@ import { OutsideRangePlugin } from './plugins/OutsideRangePlugin';
 import { ThresholdControlsPlugin } from './plugins/ThresholdControlsPlugin';
 import { getPrepareTimeseriesSuggestion } from './suggestions';
 import { getTimezones, prepareGraphableFields, regenerateLinksSupplier } from './utils';
-// import { getRandomContent } from '@grafana/ui/src/components/uPlot/plugins/utils';
 
 interface TimeSeriesPanelProps extends PanelProps<Options> {}
 
@@ -97,7 +88,7 @@ export const TimeSeriesPanel = ({
           <>
             <KeyboardPlugin config={config} />
             <ZoomPlugin config={config} onZoom={onChangeTimeRange} withZoomY={true} />
-            {/* {options.tooltip.mode === TooltipDisplayMode.None || (
+            {options.tooltip.mode === TooltipDisplayMode.None || (
               <TooltipPlugin
                 frames={frames}
                 data={alignedDataFrame}
@@ -107,31 +98,13 @@ export const TimeSeriesPanel = ({
                 sync={sync}
                 timeZone={timeZone}
               />
-            )} */}
-            {options.tooltip.mode === TooltipDisplayMode.None || (
-              <TooltipPlugin2
-                config={config}
-                render={(u, dataIdxs, seriesIdx, isPinned = false) => {
-                  // console.log('render', dataIdxs, seriesIdx);
-                  // return getRandomContent();
-                  // return <pre>{JSON.stringify({dataIdxs, seriesIdx}, null, 2)}</pre>;
-                  return (
-                    <TimeSeriesTooltip
-                      seriesFrame={alignedDataFrame}
-                      valueIdxs={dataIdxs}
-                      seriesIdx={seriesIdx}
-                      isPinned={isPinned}
-                    />
-                  );
-                }}
-              />
             )}
             {/* Renders annotation markers*/}
             {data.annotations && (
               <AnnotationsPlugin annotations={data.annotations} config={config} timeZone={timeZone} />
             )}
             {/* Enables annotations creation*/}
-            {/* {enableAnnotationCreation ? (
+            {enableAnnotationCreation ? (
               <AnnotationEditorPlugin data={alignedDataFrame} timeZone={timeZone} config={config}>
                 {({ startAnnotating }) => {
                   return (
@@ -170,7 +143,7 @@ export const TimeSeriesPanel = ({
                 replaceVariables={replaceVariables}
                 defaultItems={[]}
               />
-            )} */}
+            )}
             {data.annotations && (
               <ExemplarsPlugin
                 visibleSeries={getVisibleLabels(config, frames)}
