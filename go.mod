@@ -284,7 +284,7 @@ require (
 	k8s.io/kube-openapi v0.0.0-20230501164219-8b0f38b5fd1f // @grafana/grafana-app-platform-squad
 )
 
-require github.com/grafana/gofpdf v0.0.0-20231002073900-66ca35b542c7
+require github.com/grafana/gofpdf v0.0.0-20231002073900-66ca35b542c7 // @grafana/sharing-squad
 
 require (
 	cloud.google.com/go v0.110.6 // indirect
