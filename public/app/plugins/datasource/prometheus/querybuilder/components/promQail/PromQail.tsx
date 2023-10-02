@@ -102,7 +102,12 @@ export const PromQail = (props: PromQailProps) => {
                 <Button className={styles.leftButton} fill="outline" variant="secondary" onClick={closeDrawer}>
                   Cancel
                 </Button>
-                <Button fill="solid" variant="primary" onClick={() => dispatch(showStartingMessage(false))}>
+                <Button 
+                  fill="solid" 
+                  variant="primary" 
+                  onClick={() => dispatch(showStartingMessage(false))}
+                  data-testid={testIds.securityInfoButton}
+                >
                   Continue
                 </Button>
               </div>
@@ -157,6 +162,7 @@ export const PromQail = (props: PromQailProps) => {
                       className={styles.leftButton}
                       fill="solid"
                       variant="secondary"
+                      data-testid={testIds.clickForHistorical}
                       onClick={() => {
                         const isLoading = true;
                         const suggestionType = SuggestionType.Historical;
@@ -170,6 +176,7 @@ export const PromQail = (props: PromQailProps) => {
                     <Button
                       fill="solid"
                       variant="primary"
+                      data-testid={testIds.clickForAi}
                       onClick={() => {
                         const isLoading = false;
                         const suggestionType = SuggestionType.AI;
@@ -481,4 +488,11 @@ export const getStyles = (theme: GrafanaTheme2) => {
       margin-left: 12px;
     `,
   };
+};
+
+export const testIds = {
+  promQail: 'prom-qail',
+  securityInfoButton: 'security-info-button',
+  clickForHistorical: 'click-for-historical',
+  clickForAi: 'click-for-ai',
 };
