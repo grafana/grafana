@@ -156,7 +156,7 @@ This is useful if you want to grant server administrator privileges to a subset 
 Grafana also assigns the user the `Admin` role of the default organization.
 
 ```ini
-role_attribute_path = contains(roles[*], 'grafanaadmin') && 'GrafanaAdmin' || contains(roles[*], 'admin') && 'Admin' || contains(roles[*], 'editor') && 'Editor' || 'Viewer'
+role_attribute_path = contains(roles[*], 'GrafanaAdmin') && 'GrafanaAdmin' || contains(roles[*], 'admin') && 'Admin' || contains(roles[*], 'editor') && 'Editor' || 'Viewer'
 allow_assign_grafana_admin = true
 ```
 
