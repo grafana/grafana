@@ -27,7 +27,7 @@ Grafana provides a query editor for Elasticsearch. Elasticsearch queries are in 
 
 {{< figure src="/static/img/docs/elasticsearch/elastic-query-editor-10.1.png" max-width="800px" class="docs-image--no-shadow" caption="Elasticsearch query editor" >}}
 
-For general documentation on querying data sources in Grafana, including options and functions common to all query editors, see [Query and transform data]({{< relref "../../../panels-visualizations/query-transform-data" >}}).
+For general documentation on querying data sources in Grafana, including options and functions common to all query editors, see [Query and transform data][].
 
 ## Aggregation types
 
@@ -150,6 +150,6 @@ Queries of `terms` have a 500-result limit by default.
 To set a custom limit, set the `size` property in your query.
 
 {{% docs/reference %}}
-[query-transform-data]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data"
-[query-transform-data]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data"
+[Query and transform data]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data"
+[Query and transform data]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data"
 {{% /docs/reference %}}

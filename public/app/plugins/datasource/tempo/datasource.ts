@@ -57,10 +57,10 @@ import TempoLanguageProvider from './language_provider';
 import { createTableFrameFromMetricsSummaryQuery, emptyResponse, MetricsSummary } from './metricsSummary';
 import {
   createTableFrameFromSearch,
-  createTableFrameFromTraceQlQuery,
   transformFromOTLP as transformFromOTEL,
   transformTrace,
   transformTraceList,
+  formatTraceQLResponse,
 } from './resultTransformer';
 import { doTempoChannelStream } from './streaming';
 import { SearchQueryParams, TempoJsonData, TempoQuery } from './types';
@@ -359,7 +359,11 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
               }).pipe(
                 map((response) => {
                   return {
-                    data: createTableFrameFromTraceQlQuery(response.data.traces, this.instanceSettings),
+                    data: formatTraceQLResponse(
+                      response.data.traces,
+                      this.instanceSettings,
+                      targets.traceql[0].tableType
+                    ),
                   };
                 }),
                 catchError((err) => {
@@ -413,7 +417,11 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
               }).pipe(
                 map((response) => {
                   return {
-                    data: createTableFrameFromTraceQlQuery(response.data.traces, this.instanceSettings),
+                    data: formatTraceQLResponse(
+                      response.data.traces,
+                      this.instanceSettings,
+                      targets.traceqlSearch[0].tableType
+                    ),
                   };
                 }),
                 catchError((err) => {
