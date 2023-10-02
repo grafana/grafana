@@ -83,7 +83,7 @@
             "axisColorMode": "text",
             "axisLabel": "",
             "axisPlacement": "auto",
-            "axisShow": false,
+            "axisBorderShow": false,
             "barAlignment": 0,
             "drawStyle": "line",
             "fillOpacity": 0,

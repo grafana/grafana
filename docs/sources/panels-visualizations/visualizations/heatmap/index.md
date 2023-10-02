@@ -19,7 +19,7 @@ weight: 100
 
 # Heatmap
 
-The Heatmap panel visualization allows you to view histograms over time. For more information about histograms, refer to [Introduction to histograms and heatmaps][].
+Heatmaps allow you to view histograms over time. For more information about histograms, refer to [Introduction to histograms and heatmaps][].
 
 ![](/static/img/docs/v43/heatmap_panel_cover.jpg)
 

@@ -2,6 +2,7 @@ import { debounce } from 'lodash';
 
 import { dateTimeFormatTimeAgo } from '@grafana/data';
 import { featureEnabled, getBackendSrv, isFetchError, locationService } from '@grafana/runtime';
+import { FetchDataArgs } from '@grafana/ui';
 import config from 'app/core/config';
 import { contextSrv } from 'app/core/core';
 import { accessControlQueryParam } from 'app/core/utils/accessControl';
@@ -26,6 +27,7 @@ import {
   filterChanged,
   usersFetchBegin,
   usersFetchEnd,
+  sortChanged,
 } from './reducers';
 // UserAdminPage
 
@@ -281,10 +283,12 @@ const getFilters = (filters: UserFilter[]) => {
 export function fetchUsers(): ThunkResult<void> {
   return async (dispatch, getState) => {
     try {
-      const { perPage, page, query, filters } = getState().userListAdmin;
-      const result = await getBackendSrv().get(
-        `/api/users/search?perpage=${perPage}&page=${page}&query=${query}&${getFilters(filters)}`
-      );
+      const { perPage, page, query, filters, sort } = getState().userListAdmin;
+      let url = `/api/users/search?perpage=${perPage}&page=${page}&query=${query}&${getFilters(filters)}`;
+      if (sort) {
+        url += `&sort=${sort}`;
+      }
+      const result = await getBackendSrv().get(url);
       dispatch(usersFetched(result));
     } catch (error) {
       usersFetchEnd();
@@ -316,5 +320,17 @@ export function changePage(page: number): ThunkResult<void> {
     dispatch(usersFetchBegin());
     dispatch(pageChanged(page));
     dispatch(fetchUsers());
+  };
+}
+
+export function changeSort({ sortBy }: FetchDataArgs<UserDTO>): ThunkResult<void> {
+  const sort = sortBy.length ? `${sortBy[0].id}-${sortBy[0].desc ? 'desc' : 'asc'}` : undefined;
+  return async (dispatch, getState) => {
+    const currentSort = getState().userListAdmin.sort;
+    if (currentSort !== sort) {
+      dispatch(usersFetchBegin());
+      dispatch(sortChanged(sort));
+      dispatch(fetchUsers());
+    }
   };
 }

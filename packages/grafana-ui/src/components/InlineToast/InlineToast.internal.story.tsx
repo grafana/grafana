@@ -1,7 +1,6 @@
 import { Meta, Story } from '@storybook/react';
 import React, { useState } from 'react';
 
-import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { ClipboardButton } from '../ClipboardButton/ClipboardButton';
 import { Input } from '../Input/Input';
 
@@ -11,7 +10,6 @@ import mdx from './InlineToast.mdx';
 const story: Meta = {
   title: 'InlineToast',
   component: InlineToastImpl,
-  decorators: [withCenteredStory],
   parameters: {
     docs: {
       page: mdx,
@@ -33,7 +31,7 @@ export const InlineToast: Story<InlineToastProps> = (args) => {
   const [el, setEl] = useState<null | HTMLInputElement>(null);
 
   return (
-    <div>
+    <div style={{ maxWidth: 500, width: `calc(100% - 100px)` }}>
       <InlineToastImpl {...args} referenceElement={el}>
         Saved
       </InlineToastImpl>

@@ -6,6 +6,7 @@ import { Subject } from 'rxjs';
 import * as grafanaData from '@grafana/data';
 import { DataSourceApi } from '@grafana/data';
 import { DataSourceSrv, setDataSourceSrv, setEchoSrv } from '@grafana/runtime';
+import { TemplateSrvMock } from 'app/features/templating/template_srv.mock';
 
 import { Echo } from '../../../core/services/echo/Echo';
 import { createDashboardModelFixture } from '../../dashboard/state/__fixtures__/dashboardFixtures';
@@ -42,6 +43,10 @@ jest.mock('app/features/dashboard/services/DashboardSrv', () => ({
       getCurrent: () => dashboardModel,
     };
   },
+}));
+
+jest.mock('app/features/templating/template_srv', () => ({
+  getTemplateSrv: () => new TemplateSrvMock({}),
 }));
 
 interface ScenarioContext {

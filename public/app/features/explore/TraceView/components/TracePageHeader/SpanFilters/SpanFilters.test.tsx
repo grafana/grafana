@@ -45,12 +45,13 @@ describe('SpanFilters', () => {
   let user: ReturnType<typeof userEvent.setup>;
   const SpanFiltersWithProps = ({ showFilters = true }) => {
     const [search, setSearch] = useState(defaultFilters);
+    const [showSpanFilterMatchesOnly, setShowSpanFilterMatchesOnly] = useState(false);
     const props = {
       trace: trace,
       showSpanFilters: showFilters,
       setShowSpanFilters: jest.fn(),
-      showSpanFilterMatchesOnly: false,
-      setShowSpanFilterMatchesOnly: jest.fn(),
+      showSpanFilterMatchesOnly,
+      setShowSpanFilterMatchesOnly,
       search,
       setSearch,
       spanFilterMatches: undefined,
@@ -210,12 +211,18 @@ describe('SpanFilters', () => {
     await selectAndCheckValue(user, tagKey, 'TagKey0');
     await selectAndCheckValue(user, tagValue, 'TagValue0');
 
+    const matchesSwitch = screen.getByRole('checkbox', { name: 'Show matches only switch' });
+    expect(matchesSwitch).not.toBeChecked();
+    await user.click(matchesSwitch);
+    expect(matchesSwitch).toBeChecked();
+
     expect((clearFiltersButton as HTMLButtonElement)['disabled']).toBe(false);
     await user.click(clearFiltersButton);
     expect(screen.queryByText('Service0')).not.toBeInTheDocument();
     expect(screen.queryByText('Span0')).not.toBeInTheDocument();
     expect(screen.queryByText('TagKey0')).not.toBeInTheDocument();
     expect(screen.queryByText('TagValue0')).not.toBeInTheDocument();
+    expect(matchesSwitch).not.toBeChecked();
   });
 
   it('renders buttons when span filters is collapsed', async () => {

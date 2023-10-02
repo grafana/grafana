@@ -23,9 +23,9 @@ export function FolderActionsButton({ folder }: Props) {
   const [showPermissionsDrawer, setShowPermissionsDrawer] = useState(false);
   const [moveFolder] = useMoveFolderMutation();
   const [deleteFolder] = useDeleteFolderMutation();
-  const { canEditFolder, canDeleteFolder, canViewPermissions, canSetPermissions } = getFolderPermissions(folder);
+  const { canEditFolders, canDeleteFolders, canViewPermissions, canSetPermissions } = getFolderPermissions(folder);
   // Can only move folders when nestedFolders is enabled
-  const canMoveFolder = config.featureToggles.nestedFolders && canEditFolder;
+  const canMoveFolder = config.featureToggles.nestedFolders && canEditFolders;
 
   const onMove = async (destinationUID: string) => {
     await moveFolder({ folder, destinationUID });
@@ -94,11 +94,11 @@ export function FolderActionsButton({ folder }: Props) {
     <Menu>
       {canViewPermissions && <MenuItem onClick={() => setShowPermissionsDrawer(true)} label={managePermissionsLabel} />}
       {canMoveFolder && <MenuItem onClick={showMoveModal} label={moveLabel} />}
-      {canDeleteFolder && <MenuItem destructive onClick={showDeleteModal} label={deleteLabel} />}
+      {canDeleteFolders && <MenuItem destructive onClick={showDeleteModal} label={deleteLabel} />}
     </Menu>
   );
 
-  if (!canViewPermissions && !canMoveFolder && !canDeleteFolder) {
+  if (!canViewPermissions && !canMoveFolder && !canDeleteFolders) {
     return null;
   }
 
@@ -114,7 +114,6 @@ export function FolderActionsButton({ folder }: Props) {
         <Drawer
           title={t('browse-dashboards.action.manage-permissions-button', 'Manage permissions')}
           subtitle={folder.title}
-          scrollableContent
           onClose={() => setShowPermissionsDrawer(false)}
           size="md"
         >
