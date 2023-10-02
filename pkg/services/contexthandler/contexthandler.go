@@ -119,8 +119,8 @@ func (h *ContextHandler) Middleware(next http.Handler) http.Handler {
 		} else {
 			reqContext.SignedInUser = identity.SignedInUser()
 			reqContext.UserToken = identity.SessionToken
-			reqContext.IsSignedIn = !identity.IsAnonymous
-			reqContext.AllowAnonymous = identity.IsAnonymous
+			reqContext.IsSignedIn = !reqContext.SignedInUser.IsAnonymous
+			reqContext.AllowAnonymous = reqContext.SignedInUser.IsAnonymous
 			reqContext.IsRenderCall = identity.AuthenticatedBy == login.RenderModule
 		}
 
