@@ -262,10 +262,16 @@
   },
   "dashboard-settings": {
     "general-settings": {
-      "description": "Đęşčřįpŧįőŉ",
+      "description": {
+        "label": "Đęşčřįpŧįőŉ"
+      },
+      "editable": {
+        "label": "Ēđįŧäþľę"
+      },
       "editable-description": "Ŝęŧ ŧő řęäđ-őŉľy ŧő đįşäþľę äľľ ęđįŧįŉģ. Ŗęľőäđ ŧĥę đäşĥþőäřđ ƒőř čĥäŉģęş ŧő ŧäĸę ęƒƒęčŧ",
-      "editable-label": "Ēđįŧäþľę",
-      "folder-label": "Főľđęř",
+      "folder": {
+        "label": "Főľđęř"
+      },
       "hide-time-picker": "Ħįđę ŧįmę pįčĸęř",
       "now_delay-label": "Ńőŵ đęľäy",
       "panel-options": {
@@ -276,11 +282,15 @@
         "label": "Ğřäpĥ ŧőőľŧįp"
       },
       "refresh-live-dashboards": "Ŗęƒřęşĥ ľįvę đäşĥþőäřđş",
+      "tags": {
+        "label": "Ŧäģş"
+      },
       "tags-input": "<0></0>",
-      "tags-label": "Ŧäģş",
       "time-options-label": "Ŧįmę őpŧįőŉş",
       "time-picker-label": "Ŧįmę žőŉę",
-      "title": "Ŧįŧľę",
+      "title": {
+        "label": "Ŧįŧľę"
+      },
       "week-start": {
         "label": "Ŵęęĸ şŧäřŧ"
       }

@@ -267,10 +267,16 @@
   },
   "dashboard-settings": {
     "general-settings": {
-      "description": "",
+      "description": {
+        "label": ""
+      },
+      "editable": {
+        "label": ""
+      },
       "editable-description": "",
-      "editable-label": "",
-      "folder-label": "",
+      "folder": {
+        "label": ""
+      },
       "hide-time-picker": "",
       "now_delay-label": "",
       "panel-options": {
@@ -281,11 +287,15 @@
         "label": ""
       },
       "refresh-live-dashboards": "",
+      "tags": {
+        "label": ""
+      },
       "tags-input": "",
-      "tags-label": "",
       "time-options-label": "",
       "time-picker-label": "",
-      "title": "",
+      "title": {
+        "label": ""
+      },
       "week-start": {
         "label": ""
       }

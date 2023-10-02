@@ -262,10 +262,16 @@
   },
   "dashboard-settings": {
     "general-settings": {
-      "description": "Description",
+      "description": {
+        "label": "Description"
+      },
+      "editable": {
+        "label": "Editable"
+      },
       "editable-description": "Set to read-only to disable all editing. Reload the dashboard for changes to take effect",
-      "editable-label": "Editable",
-      "folder-label": "Folder",
+      "folder": {
+        "label": "Folder"
+      },
       "hide-time-picker": "Hide time picker",
       "now_delay-label": "Now delay",
       "panel-options": {
@@ -276,11 +282,15 @@
         "label": "Graph tooltip"
       },
       "refresh-live-dashboards": "Refresh live dashboards",
+      "tags": {
+        "label": "Tags"
+      },
       "tags-input": "<0></0>",
-      "tags-label": "Tags",
       "time-options-label": "Time options",
       "time-picker-label": "Time zone",
-      "title": "Title",
+      "title": {
+        "label": "Title"
+      },
       "week-start": {
         "label": "Week start"
       }
