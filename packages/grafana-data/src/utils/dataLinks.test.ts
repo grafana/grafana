@@ -28,16 +28,18 @@ describe('mapInternalLinkToExplore', () => {
       },
     };
 
+    const field = {
+      name: 'test',
+      type: FieldType.number,
+      config: {},
+      values: [2],
+    };
     const link = mapInternalLinkToExplore({
       link: dataLink,
       internalLink: dataLink.internal,
       scopedVars: {},
-      field: {
-        name: 'test',
-        type: FieldType.number,
-        config: {},
-        values: [2],
-      },
+      field,
+      frame: { fields: [field], length: 1 },
       replaceVariables: (val) => val,
     });
 
@@ -68,16 +70,19 @@ describe('mapInternalLinkToExplore', () => {
       },
     };
 
+    const field = {
+      name: 'test',
+      type: FieldType.number,
+      config: {},
+      values: [2],
+    };
+
     const link = mapInternalLinkToExplore({
       link: dataLink,
       internalLink: dataLink.internal!,
       scopedVars: {},
-      field: {
-        name: 'test',
-        type: FieldType.number,
-        config: {},
-        values: [2],
-      },
+      field,
+      frame: { fields: [field], length: 1 },
       replaceVariables: (val) => val,
     });
 
@@ -112,6 +117,13 @@ describe('mapInternalLinkToExplore', () => {
       },
     };
 
+    const field = {
+      name: 'test',
+      type: FieldType.number,
+      config: {},
+      values: [2],
+    };
+
     const link = mapInternalLinkToExplore({
       link: dataLink,
       internalLink: dataLink.internal,
@@ -119,12 +131,8 @@ describe('mapInternalLinkToExplore', () => {
         var1: { text: '', value: 'val1' },
       },
       range: TIME_RANGE,
-      field: {
-        name: 'test',
-        type: FieldType.number,
-        config: {},
-        values: [2],
-      },
+      field,
+      frame: { fields: [field], length: 1 },
       replaceVariables: (val, scopedVars) => val.replace(/\$var/g, scopedVars!['var1']!.value),
     });
 
