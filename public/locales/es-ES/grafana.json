@@ -236,6 +236,32 @@
       "settings": "Ajustes del panel de control",
       "share": "Compartir panel o panel de control",
       "unmark-favorite": "Deshacer marca como favorito"
+    },
+    "validation": {
+      "invalid-dashboard-id": "",
+      "invalid-json": "",
+      "tags-expected-array": "",
+      "tags-expected-strings": ""
+    }
+  },
+  "dashboard-import": {
+    "file-dropzone": {
+      "primary-text": "",
+      "secondary-text": ""
+    },
+    "form-actions": {
+      "cancel": "",
+      "load": ""
+    },
+    "gcom-field": {
+      "label": "",
+      "load-button": "",
+      "placeholder": "",
+      "validation-required": ""
+    },
+    "json-field": {
+      "label": "",
+      "validation-required": ""
     }
   },
   "dashboard-settings": {
@@ -900,6 +926,12 @@
       "default-label": "Por defecto"
     },
     "title": "Preferencias"
+  },
+  "snapshot": {
+    "external-badge": "",
+    "name-column-header": "",
+    "url-column-header": "",
+    "view-button": ""
   },
   "tag-filter": {
     "loading": "Cargando...",

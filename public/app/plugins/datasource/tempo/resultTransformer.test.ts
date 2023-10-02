@@ -157,7 +157,7 @@ describe('createTableFrameFromTraceQlQuery()', () => {
     expect(frame.fields[5].values[0][0].fields[0].values[0]).toBe('b1586c3c8c34d');
     expect(frame.fields[5].values[0][0].fields[1].name).toBe('spanID');
     expect(frame.fields[5].values[0][0].fields[1].values[0]).toBe('162a4adae63b61f1');
-    expect(frame.fields[5].values[0][0].fields[2].name).toBe('spanStartTime');
+    expect(frame.fields[5].values[0][0].fields[2].name).toBe('time');
     expect(frame.fields[5].values[0][0].fields[2].values[0]).toBe(1666188214303.201);
     expect(frame.fields[5].values[0][0].fields[4].name).toBe('http.method');
     expect(frame.fields[5].values[0][0].fields[4].values[0]).toBe('GET');
@@ -170,7 +170,7 @@ describe('createTableFrameFromTraceQlQuery()', () => {
     expect(frame.fields[5].values[1][0].fields[0].values[0]).toBe('9161e77388f3e');
     expect(frame.fields[5].values[1][0].fields[1].name).toBe('spanID');
     expect(frame.fields[5].values[1][0].fields[1].values[0]).toBe('3b9a5c222d3ddd8f');
-    expect(frame.fields[5].values[1][0].fields[2].name).toBe('spanStartTime');
+    expect(frame.fields[5].values[1][0].fields[2].name).toBe('time');
     expect(frame.fields[5].values[1][0].fields[2].values[0]).toBe(1666187875397.7212);
     expect(frame.fields[5].values[1][0].fields[4].name).toBe('by(resource.service.name)');
     expect(frame.fields[5].values[1][0].fields[4].values[0]).toBe('db');
@@ -185,7 +185,7 @@ describe('createTableFrameFromTraceQlQuery()', () => {
     expect(frame.fields[5].values[1][1].fields[0].values[0]).toBe('9161e77388f3e');
     expect(frame.fields[5].values[1][1].fields[1].name).toBe('spanID');
     expect(frame.fields[5].values[1][1].fields[1].values[0]).toBe('894d90db6b5807f');
-    expect(frame.fields[5].values[1][1].fields[2].name).toBe('spanStartTime');
+    expect(frame.fields[5].values[1][1].fields[2].name).toBe('time');
     expect(frame.fields[5].values[1][1].fields[2].values[0]).toBe(1666187875393.293);
     expect(frame.fields[5].values[1][1].fields[4].name).toBe('by(resource.service.name)');
     expect(frame.fields[5].values[1][1].fields[4].values[0]).toBe('app');
