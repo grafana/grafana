@@ -3,7 +3,7 @@ import { useAsync } from 'react-use';
 import { Subscription } from 'rxjs';
 
 import { openai } from './llms';
-import { isLLMPluginEnabled, OPEN_AI_MODEL } from './utils';
+import { getLLMPluginSettings, hasValidConfiguration, isLLMPluginEnabled, OPEN_AI_MODEL } from './utils';
 
 // Declared instead of imported from utils to make this hook modular
 // Ideally we will want to move the hook itself to a different scope later.
@@ -21,10 +21,12 @@ export function useOpenAIStream(
   value:
     | {
         enabled: boolean;
+        isConfigured: boolean;
         stream?: undefined;
       }
     | {
         enabled: boolean;
+        isConfigured: boolean;
         stream: Subscription;
       }
     | undefined;
@@ -39,12 +41,12 @@ export function useOpenAIStream(
   const { error, value } = useAsync(async () => {
     // Check if the LLM plugin is enabled and configured.
     // If not, we won't be able to make requests, so return early.
-    const enabled = await isLLMPluginEnabled();
-    if (!enabled) {
-      return { enabled };
-    }
-    if (messages.length === 0) {
-      return { enabled };
+    const settings = await getLLMPluginSettings();
+    const enabled = isLLMPluginEnabled(settings);
+    const isConfigured = hasValidConfiguration(settings);
+
+    if (!enabled || messages.length === 0 || !isConfigured) {
+      return { enabled, isConfigured };
     }
 
     setIsGenerating(true);
@@ -68,6 +70,7 @@ export function useOpenAIStream(
     // Subscribe to the stream and update the state for each returned value.
     return {
       enabled,
+      isConfigured,
       stream: stream.subscribe({
         next: setReply,
         error: (e) => {

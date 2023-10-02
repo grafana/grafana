@@ -2,6 +2,7 @@ import { DashboardModel, PanelModel } from '../../state';
 import { Diffs, jsonDiff } from '../VersionHistory/utils';
 
 import { openai } from './llms';
+import { LLMPluginSettings } from './llms/openai';
 
 export enum Role {
   // System content cannot be overwritten by user prompts.
@@ -43,13 +44,32 @@ export function getDashboardChanges(dashboard: DashboardModel): {
 }
 
 /**
- * Check if the LLM plugin is enabled and configured.
- * @returns true if the LLM plugin is enabled and configured.
+ * Check if the LLM plugin is enabled.
+ * @returns true if the LLM plugin is enabled.
  */
-export async function isLLMPluginEnabled() {
-  // Check if the LLM plugin is enabled and configured.
-  // If not, we won't be able to make requests, so return early.
-  return await openai.enabled();
+export function isLLMPluginEnabled(settings: LLMPluginSettings): boolean {
+  return settings.enabled;
+}
+
+/**
+ * Check if the required configuration to use generative AI is present.
+ * @returns LLM plugin settings
+ */
+export function hasValidConfiguration(settings: LLMPluginSettings): boolean {
+  return !!(
+    settings.enabled &&
+    settings.secureJsonFields?.openAIKey &&
+    settings.jsonData?.openAI.organizationId &&
+    settings.jsonData?.openAI.url
+  );
+}
+
+/**
+ * Return LLM plugin settings.
+ * @returns LLM plugin settings
+ */
+export async function getLLMPluginSettings(): Promise<LLMPluginSettings> {
+  return await openai.settings();
 }
 
 /**

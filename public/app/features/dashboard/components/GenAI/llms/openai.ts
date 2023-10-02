@@ -392,3 +392,38 @@ export const enabled = async () => {
   // If the plugin is installed then check if it is configured.
   return details?.openAI ?? false;
 };
+
+/** Check if the OpenAI API is enabled via the LLM plugin. */
+export const settings = async (): Promise<LLMPluginSettings> => {
+  try {
+    const settings = await getBackendSrv().get(`${LLM_PLUGIN_ROUTE}/settings`, undefined, undefined, {
+      showSuccessAlert: false,
+      showErrorAlert: false,
+    });
+    return settings;
+  } catch (e) {
+    if (!loggedWarning) {
+      logDebug(String(e));
+      logDebug(
+        'Failed to check if OpenAI is enabled. This is expected if the Grafana LLM plugin is not installed, and the above error can be ignored.'
+      );
+      loggedWarning = true;
+    }
+    return {
+      enabled: false,
+    };
+  }
+};
+
+export interface LLMPluginSettings {
+  enabled: boolean;
+  secureJsonFields?: {
+    openAIKey: string;
+  };
+  jsonData?: {
+    openAI: {
+      organizationId: string;
+      url: string;
+    };
+  };
+}

@@ -36,6 +36,10 @@ export const GenAIButton = ({
   // TODO: Implement error handling (use error object from hook)
   const { setMessages, reply, isGenerating, value } = useOpenAIStream(OPEN_AI_MODEL, temperature);
 
+  if (!value?.enabled && !isGenerating) {
+    return null;
+  }
+
   const onClick = (e: React.MouseEvent<HTMLButtonElement>) => {
     onClickProp?.(e);
     setMessages(messages);
@@ -50,7 +54,7 @@ export const GenAIButton = ({
     if (isGenerating) {
       return undefined;
     }
-    if (!value?.enabled) {
+    if (!value?.isConfigured) {
       return 'exclamation-circle';
     }
     return 'ai';
@@ -60,16 +64,22 @@ export const GenAIButton = ({
     <div className={styles.wrapper}>
       {isGenerating && <Spinner size={14} />}
       <Tooltip
-        show={value?.enabled ? false : undefined}
+        show={value?.isConfigured ? false : undefined}
         interactive
         content={
           <span>
-            The LLM plugin is not correctly configured. See your <Link href={`/plugins/grafana-llm-app`}>settings</Link>{' '}
-            and enable your plugin.
+            LLM plugin not configured correctly. To enable LLM features, check your OpenAI configuration in{' '}
+            <Link href={`/plugins/grafana-llm-app`}>the plugin settings</Link>.
           </span>
         }
       >
-        <Button icon={getIcon()} onClick={onClick} fill="text" size="sm" disabled={isGenerating || !value?.enabled}>
+        <Button
+          icon={getIcon()}
+          onClick={onClick}
+          fill="text"
+          size="sm"
+          disabled={isGenerating || !value?.isConfigured}
+        >
           {!isGenerating ? text : loadingText}
         </Button>
       </Tooltip>
