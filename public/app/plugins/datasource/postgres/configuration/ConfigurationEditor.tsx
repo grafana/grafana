@@ -400,7 +400,7 @@ export const PostgresConfigEditor = (props: DataSourcePluginOptionsEditorProps<P
           <SecureSocksProxySettings
             options={options}
             onOptionsChange={(options) => {
-              onOptionsChange(options as DataSourceSettings<PostgresOptions, SecureJsonData>);
+              onOptionsChange(options);
             }}
           />
         </>
