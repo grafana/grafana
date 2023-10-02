@@ -3,7 +3,7 @@ import React, { useEffect } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { ErrorBoundaryAlert, useStyles2 } from '@grafana/ui';
+import { ErrorBoundaryAlert, useStyles2, useTheme2 } from '@grafana/ui';
 import { SplitPaneWrapper } from 'app/core/components/SplitPaneWrapper/SplitPaneWrapper';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useNavModel } from 'app/core/hooks/useNavModel';
@@ -25,6 +25,7 @@ const MIN_PANE_WIDTH = 200;
 
 export default function ExplorePage(props: GrafanaRouteComponentProps<{}, ExploreQueryParams>) {
   const styles = useStyles2(getStyles);
+  const theme = useTheme2();
   useTimeSrvFix();
   useStateSync(props.queryParams);
   // We want  to set the title according to the URL and not to the state because the URL itself may lag
@@ -40,7 +41,7 @@ export default function ExplorePage(props: GrafanaRouteComponentProps<{}, Explor
   const panes = useSelector(selectPanesEntries);
   const hasSplit = useSelector(isSplit);
   const correlationDetails = useSelector(selectCorrelationDetails);
-  const isCorrelationsEditorMode = correlationDetails?.editorMode || false;
+  const showCorrelationEditorBar = config.featureToggles.correlations && (correlationDetails?.editorMode || false);
 
   useEffect(() => {
     //This is needed for breadcrumbs and topnav.
@@ -53,11 +54,11 @@ export default function ExplorePage(props: GrafanaRouteComponentProps<{}, Explor
   return (
     <div
       className={cx(styles.pageScrollbarWrapper, {
-        [styles.correlationsEditorIndicator]: isCorrelationsEditorMode,
+        [styles.correlationsEditorIndicator]: showCorrelationEditorBar,
       })}
     >
       <ExploreActions />
-      {config.featureToggles.correlations && isCorrelationsEditorMode && <CorrelationEditorModeBar panes={panes} />}
+      {showCorrelationEditorBar && <CorrelationEditorModeBar panes={panes} />}
       <SplitPaneWrapper
         splitOrientation="vertical"
         paneSize={widthCalc}
@@ -65,6 +66,7 @@ export default function ExplorePage(props: GrafanaRouteComponentProps<{}, Explor
         maxSize={MIN_PANE_WIDTH * -1}
         primary="second"
         splitVisible={hasSplit}
+        parentStyle={showCorrelationEditorBar ? { height: `calc(100% - ${theme.spacing(6)}` } : {}} // button = 4, padding = 1 x 2
         paneStyle={{ overflow: 'auto', display: 'flex', flexDirection: 'column' }}
         onDragFinished={(size) => size && updateSplitSize(size)}
       >
