@@ -6,7 +6,7 @@ import { useToggle } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
-import { Button, Field, Input, TextArea, useStyles2 } from '@grafana/ui';
+import { Button, Field, Input, Text, TextArea, useStyles2 } from '@grafana/ui';
 import { DashboardDataDTO } from 'app/types';
 
 import { dashboardApi } from '../../api/dashboardApi';
@@ -15,7 +15,7 @@ import { Annotation, annotationLabels } from '../../utils/constants';
 
 import AnnotationHeaderField from './AnnotationHeaderField';
 import DashboardAnnotationField from './DashboardAnnotationField';
-import { DashboardPicker, PanelDTO } from './DashboardPicker';
+import { DashboardPicker, mergePanels, PanelDTO } from './DashboardPicker';
 import { NeedHelpInfo } from './NeedHelpInfo';
 import { RuleEditorSection } from './RuleEditorSection';
 
@@ -53,7 +53,9 @@ const AnnotationsStep = () => {
     }
 
     setSelectedDashboard(dashboardResult?.dashboard);
-    const currentPanel = dashboardResult?.dashboard?.panels?.find((panel) => panel.id.toString() === selectedPanelId);
+
+    const allPanels = mergePanels(dashboardResult);
+    const currentPanel = allPanels.find((panel) => panel.id.toString() === selectedPanelId);
     setSelectedPanel(currentPanel);
   }, [selectedPanelId, dashboardResult, isDashboardFetching]);
 
@@ -97,10 +99,12 @@ const AnnotationsStep = () => {
       'https://grafana.com/docs/grafana/latest/alerting/fundamentals/annotation-label/variables-label-annotation';
 
     return (
-      <Stack gap={0.5}>
-        Add annotations to provide more context in your alert notifications.
+      <Stack direction="row" gap={0.5} alignItems="baseline">
+        <Text variant="bodySmall" color="secondary">
+          Add annotations to provide more context in your alert notifications.
+        </Text>
         <NeedHelpInfo
-          contentText={`Annotations add metadata to provide more information on the alert in your alert notifications. 
+          contentText={`Annotations add metadata to provide more information on the alert in your alert notifications.
           For example, add a Summary annotation to tell you which value caused the alert to fire or which server it happened on.
           Annotations can contain a combination of text and template code.`}
           externalLink={docsLink}
@@ -112,8 +116,8 @@ const AnnotationsStep = () => {
   }
 
   return (
-    <RuleEditorSection stepNo={4} title="Add annotations" description={getAnnotationsSectionDescription()}>
-      <div className={styles.flexColumn}>
+    <RuleEditorSection stepNo={4} title="Add annotations" description={getAnnotationsSectionDescription()} fullWidth>
+      <Stack direction="column" gap={1}>
         {fields.map((annotationField, index: number) => {
           const isUrl = annotations[index]?.key?.toLocaleLowerCase().endsWith('url');
           const ValueInputComponent = isUrl ? Input : TextArea;
@@ -206,7 +210,7 @@ const AnnotationsStep = () => {
             onDismiss={() => setShowPanelSelector(false)}
           />
         )}
-      </div>
+      </Stack>
     </RuleEditorSection>
   );
 };
@@ -222,11 +226,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     margin-top: ${theme.spacing(1)};
     gap: ${theme.spacing(1)};
     display: flex;
-  `,
-  flexColumn: css`
-    display: flex;
-    flex-direction: column;
-    margin-top: ${theme.spacing(2)};
   `,
   field: css`
     margin-bottom: ${theme.spacing(0.5)};

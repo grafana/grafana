@@ -353,12 +353,12 @@ export interface ScaleDistributionConfig {
  * TODO docs
  */
 export interface AxisConfig {
+  axisBorderShow?: boolean;
   axisCenteredZero?: boolean;
   axisColorMode?: AxisColorMode;
   axisGridShow?: boolean;
   axisLabel?: string;
   axisPlacement?: AxisPlacement;
-  axisShow?: boolean;
   axisSoftMax?: number;
   axisSoftMin?: number;
   axisWidth?: number;
@@ -886,7 +886,7 @@ export interface TableFieldOptions {
   filterable?: boolean;
   hidden?: boolean; // ?? default is missing or false ??
   /**
-   * Hides any header for a column, usefull for columns that show some static content or buttons.
+   * Hides any header for a column, useful for columns that show some static content or buttons.
    */
   hideHeader?: boolean;
   inspect: boolean;

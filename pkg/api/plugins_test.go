@@ -26,7 +26,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
 	"github.com/grafana/grafana/pkg/plugins/manager/filestore"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
-	"github.com/grafana/grafana/pkg/plugins/manager/store"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
@@ -34,6 +33,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org/orgtest"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/updatechecker"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web/webtest"
@@ -65,7 +65,6 @@ func Test_PluginsInstallAndUninstall(t *testing.T) {
 	for _, tc := range tcs {
 		server := SetupAPITestServer(t, func(hs *HTTPServer) {
 			hs.Cfg = &setting.Cfg{
-				RBACEnabled:                      true,
 				PluginAdminEnabled:               tc.pluginAdminEnabled,
 				PluginAdminExternalManageEnabled: tc.pluginAdminExternalManageEnabled}
 			hs.orgService = &orgtest.FakeOrgService{ExpectedOrg: &org.Org{}}
@@ -486,7 +485,7 @@ func pluginAssetScenario(t *testing.T, desc string, url string, urlPattern strin
 		cfg.IsFeatureToggleEnabled = func(_ string) bool { return false }
 		hs := HTTPServer{
 			Cfg:             cfg,
-			pluginStore:     store.New(pluginRegistry, &fakes.FakeLoader{}),
+			pluginStore:     pluginstore.New(pluginRegistry, &fakes.FakeLoader{}),
 			pluginFileStore: filestore.ProvideService(pluginRegistry),
 			log:             log.NewNopLogger(),
 			pluginsCDNService: pluginscdn.ProvideService(&config.Cfg{
@@ -598,7 +597,7 @@ func Test_PluginsList_AccessControl(t *testing.T) {
 			server := SetupAPITestServer(t, func(hs *HTTPServer) {
 				hs.Cfg = setting.NewCfg()
 				hs.PluginSettings = &pluginSettings
-				hs.pluginStore = store.New(pluginRegistry, &fakes.FakeLoader{})
+				hs.pluginStore = pluginstore.New(pluginRegistry, &fakes.FakeLoader{})
 				hs.pluginFileStore = filestore.ProvideService(pluginRegistry)
 				var err error
 				hs.pluginsUpdateChecker, err = updatechecker.ProvidePluginsService(hs.Cfg, nil, tracing.InitializeTracerForTest())

@@ -4,7 +4,10 @@ import { locationService } from '@grafana/runtime';
 import { Button } from '@grafana/ui';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { NavToolbarSeparator } from 'app/core/components/AppChrome/NavToolbar/NavToolbarSeparator';
+import { t } from 'app/core/internationalization';
 import { DashNavButton } from 'app/features/dashboard/components/DashNav/DashNavButton';
+
+import { ShareModal } from '../sharing/ShareModal';
 
 import { DashboardScene } from './DashboardScene';
 
@@ -13,10 +16,21 @@ interface Props {
 }
 
 export const NavToolbarActions = React.memo<Props>(({ dashboard }) => {
-  const { actions = [], isEditing, viewPanelId, isDirty, uid } = dashboard.useState();
+  const { actions = [], isEditing, viewPanelKey, isDirty, uid } = dashboard.useState();
   const toolbarActions = (actions ?? []).map((action) => <action.Component key={action.state.key} model={action} />);
 
   if (uid) {
+    toolbarActions.push(
+      <DashNavButton
+        tooltip={t('dashboard.toolbar.share', 'Share dashboard')}
+        icon="share-alt"
+        iconSize="lg"
+        onClick={() => {
+          dashboard.showModal(new ShareModal({ dashboardRef: dashboard.getRef() }));
+        }}
+      />
+    );
+
     toolbarActions.push(
       <DashNavButton
         key="button-scenes"
@@ -29,7 +43,7 @@ export const NavToolbarActions = React.memo<Props>(({ dashboard }) => {
 
   toolbarActions.push(<NavToolbarSeparator leftActionsSeparator key="separator" />);
 
-  if (viewPanelId) {
+  if (viewPanelKey) {
     toolbarActions.push(
       <Button
         onClick={() => locationService.partial({ viewPanel: null })}

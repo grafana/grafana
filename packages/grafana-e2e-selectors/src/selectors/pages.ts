@@ -208,7 +208,7 @@ export const Pages = {
     linkToRenderedImage: 'Link to rendered image',
   },
   ShareDashboardModal: {
-    shareButton: 'Share dashboard or panel',
+    shareButton: 'Share dashboard',
     PublicDashboard: {
       Tab: 'Tab Public dashboard',
       WillBePublicCheckbox: 'data-testid public dashboard will be public checkbox',
@@ -275,7 +275,7 @@ export const Pages = {
   PlaylistForm: {
     name: 'Playlist name',
     interval: 'Playlist interval',
-    itemDelete: 'Delete playlist item',
+    itemDelete: 'data-testid playlist-form-delete-item',
   },
   BrowseDashboards: {
     table: {

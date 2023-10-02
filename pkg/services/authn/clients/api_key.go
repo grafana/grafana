@@ -155,11 +155,11 @@ func (s *APIKey) Hook(ctx context.Context, identity *authn.Identity, r *authn.Re
 	go func(apikeyID int64) {
 		defer func() {
 			if err := recover(); err != nil {
-				s.log.Error("panic during user last seen sync", "err", err)
+				s.log.Error("Panic during user last seen sync", "err", err)
 			}
 		}()
 		if err := s.apiKeyService.UpdateAPIKeyLastUsedDate(context.Background(), apikeyID); err != nil {
-			s.log.Warn("failed to update last use date for api key", "id", apikeyID)
+			s.log.Warn("Failed to update last use date for api key", "id", apikeyID)
 		}
 	}(id)
 

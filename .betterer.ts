@@ -8,7 +8,7 @@ export default {
   'better eslint': () =>
     countEslintErrors()
       .include('**/*.{ts,tsx}')
-      .exclude(/public\/app\/angular/),
+      .exclude(/public\/app\/angular|packages\/grafana-e2e/),
   'no undocumented stories': () => countUndocumentedStories().include('**/!(*.internal).story.tsx'),
 };
 
@@ -39,6 +39,7 @@ function countEslintErrors() {
     const eslintConfigMainPaths = eslintConfigFiles.map((file) => path.resolve(path.dirname(file)));
 
     const baseRules: Partial<Linter.RulesRecord> = {
+      '@emotion/syntax-preference': [2, 'object'],
       '@typescript-eslint/no-explicit-any': 'error',
       '@grafana/no-aria-label-selectors': 'error',
     };

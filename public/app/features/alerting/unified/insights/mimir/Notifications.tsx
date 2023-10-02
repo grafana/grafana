@@ -1,9 +1,7 @@
 import { PanelBuilders, SceneFlexItem, SceneQueryRunner, SceneTimeRange } from '@grafana/scenes';
 import { DataSourceRef, GraphDrawStyle } from '@grafana/schema';
 
-const QUERY_A =
-  'sum by(cluster)(grafanacloud_instance_alertmanager_notifications_per_second) - sum by (cluster)(grafanacloud_instance_alertmanager_notifications_failed_per_second)';
-const QUERY_B = 'sum by(cluster)(grafanacloud_instance_alertmanager_notifications_failed_per_second)';
+import { PANEL_STYLES } from '../../home/Insights';
 
 export function getNotificationsScene(timeRange: SceneTimeRange, datasource: DataSourceRef, panelTitle: string) {
   const query = new SceneQueryRunner({
@@ -11,13 +9,13 @@ export function getNotificationsScene(timeRange: SceneTimeRange, datasource: Dat
     queries: [
       {
         refId: 'A',
-        expr: QUERY_A,
+        expr: 'sum by(cluster)(grafanacloud_instance_alertmanager_notifications_per_second) - sum by (cluster)(grafanacloud_instance_alertmanager_notifications_failed_per_second)',
         range: true,
         legendFormat: '{{cluster}} - success',
       },
       {
         refId: 'B',
-        expr: QUERY_B,
+        expr: 'sum by(cluster)(grafanacloud_instance_alertmanager_notifications_failed_per_second)',
         range: true,
         legendFormat: '{{cluster}} - failed',
       },
@@ -26,8 +24,7 @@ export function getNotificationsScene(timeRange: SceneTimeRange, datasource: Dat
   });
 
   return new SceneFlexItem({
-    width: 'calc(50% - 4px)',
-    height: 300,
+    ...PANEL_STYLES,
     body: PanelBuilders.timeseries()
       .setTitle(panelTitle)
       .setData(query)

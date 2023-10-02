@@ -539,8 +539,9 @@ lineage: schemas: [{
 			// `h` for horizontal, `v` for vertical.
 			repeatDirection?: *"h" | "v"
 
-			// Id of the repeating panel.
-			repeatPanelId?: int64
+			// Option for repeated panels that controls max items per row
+			// Only relevant for horizontally repeated panels
+			maxPerRow?: number
 
 			// The maximum number of data points that the panel queries are retrieving.
 			maxDataPoints?: number

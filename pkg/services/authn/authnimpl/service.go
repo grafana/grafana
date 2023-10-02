@@ -16,7 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/anonymous"
 	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/authn"
@@ -48,10 +47,14 @@ var (
 )
 
 // make sure service implements authn.Service interface
-var _ authn.Service = new(Service)
+func ProvideAuthnService(s *Service) authn.Service {
+	return s
+}
 
 // make sure service implements authn.IdentitySynchronizer interface
-var _ authn.IdentitySynchronizer = new(Service)
+func ProvideIdentitySynchronizer(s *Service) authn.IdentitySynchronizer {
+	return s
+}
 
 func ProvideService(
 	cfg *setting.Cfg, tracer tracing.Tracer,
@@ -60,7 +63,6 @@ func ProvideService(
 	apikeyService apikey.Service, userService user.Service,
 	jwtService auth.JWTVerifierService,
 	usageStats usagestats.Service,
-	anonDeviceService anonymous.Service,
 	userProtectionService login.UserProtectionService,
 	loginAttempts loginattempt.Service, quotaService quota.Service,
 	authInfoService login.AuthInfoService, renderService rendering.Service,
@@ -87,11 +89,7 @@ func ProvideService(
 	s.RegisterClient(clients.ProvideAPIKey(apikeyService, userService))
 
 	if cfg.LoginCookieName != "" {
-		s.RegisterClient(clients.ProvideSession(cfg, sessionService, features, anonDeviceService))
-	}
-
-	if s.cfg.AnonymousEnabled {
-		s.RegisterClient(clients.ProvideAnonymous(cfg, orgService, anonDeviceService))
+		s.RegisterClient(clients.ProvideSession(cfg, sessionService, features))
 	}
 
 	var proxyClients []authn.ProxyClient
@@ -156,7 +154,7 @@ func ProvideService(
 	userSyncService := sync.ProvideUserSync(userService, userProtectionService, authInfoService, quotaService)
 	orgUserSyncService := sync.ProvideOrgSync(userService, orgService, accessControlService)
 	s.RegisterPostAuthHook(userSyncService.SyncUserHook, 10)
-	s.RegisterPostAuthHook(userSyncService.EnableDisabledUserHook, 20)
+	s.RegisterPostAuthHook(userSyncService.EnableUserHook, 20)
 	s.RegisterPostAuthHook(orgUserSyncService.SyncOrgRolesHook, 30)
 	s.RegisterPostAuthHook(userSyncService.SyncLastSeenHook, 120)
 

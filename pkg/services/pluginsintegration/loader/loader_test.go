@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/auth"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/log"
@@ -23,7 +24,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
-	"github.com/grafana/grafana/pkg/plugins/oauth"
 	"github.com/grafana/grafana/pkg/plugins/plugindef"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -555,7 +555,7 @@ func TestLoader_Load_ExternalRegistration(t *testing.T) {
 				Signature: plugins.SignatureStatusUnsigned,
 				Module:    "/public/plugins/grafana-test-datasource/module.js",
 				BaseURL:   "/public/plugins/grafana-test-datasource",
-				ExternalService: &oauth.ExternalService{
+				ExternalService: &auth.ExternalService{
 					ClientID:     "client-id",
 					ClientSecret: "secretz",
 					PrivateKey:   "priv@t3",
@@ -565,19 +565,19 @@ func TestLoader_Load_ExternalRegistration(t *testing.T) {
 
 		backendFactoryProvider := fakes.NewFakeBackendProcessProvider()
 		backendFactoryProvider.BackendFactoryFunc = func(ctx context.Context, plugin *plugins.Plugin) backendplugin.PluginFactoryFunc {
-			return func(pluginID string, logger log.Logger, env []string) (backendplugin.Plugin, error) {
+			return func(pluginID string, logger log.Logger, env func() []string) (backendplugin.Plugin, error) {
 				require.Equal(t, "grafana-test-datasource", pluginID)
 				require.Equal(t, []string{"GF_VERSION=", "GF_EDITION=", "GF_ENTERPRISE_LICENSE_PATH=",
 					"GF_ENTERPRISE_APP_URL=", "GF_ENTERPRISE_LICENSE_TEXT=", "GF_APP_URL=",
 					"GF_PLUGIN_APP_CLIENT_ID=client-id", "GF_PLUGIN_APP_CLIENT_SECRET=secretz",
-					"GF_PLUGIN_APP_PRIVATE_KEY=priv@t3", "GF_INSTANCE_FEATURE_TOGGLES_ENABLE=externalServiceAuth"}, env)
+					"GF_PLUGIN_APP_PRIVATE_KEY=priv@t3", "GF_INSTANCE_FEATURE_TOGGLES_ENABLE=externalServiceAuth"}, env())
 				return &fakes.FakeBackendPlugin{}, nil
 			}
 		}
 
 		l := newLoaderWithOpts(t, cfg, loaderDepOpts{
-			oauthServiceRegistry: &fakes.FakeOauthService{
-				Result: &oauth.ExternalService{
+			authServiceRegistry: &fakes.FakeAuthService{
+				Result: &auth.ExternalService{
 					ClientID:     "client-id",
 					ClientSecret: "secretz",
 					PrivateKey:   "priv@t3",
@@ -1063,7 +1063,7 @@ func TestLoader_Load_SkipUninitializedPlugins(t *testing.T) {
 		procPrvdr := fakes.NewFakeBackendProcessProvider()
 		// Cause an initialization error
 		procPrvdr.BackendFactoryFunc = func(ctx context.Context, p *plugins.Plugin) backendplugin.PluginFactoryFunc {
-			return func(pluginID string, _ log.Logger, _ []string) (backendplugin.Plugin, error) {
+			return func(pluginID string, _ log.Logger, _ func() []string) (backendplugin.Plugin, error) {
 				if pluginID == "test-datasource" {
 					return nil, errors.New("failed to initialize")
 				}
@@ -1468,7 +1468,7 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 
 type loaderDepOpts struct {
 	angularInspector       angularinspector.Inspector
-	oauthServiceRegistry   oauth.ExternalServiceRegistry
+	authServiceRegistry    auth.ExternalServiceRegistry
 	backendFactoryProvider plugins.BackendFactoryProvider
 }
 
@@ -1484,7 +1484,7 @@ func newLoader(t *testing.T, cfg *config.Cfg, reg registry.Service, proc process
 	return ProvideService(pipeline.ProvideDiscoveryStage(cfg, finder.NewLocalFinder(false), reg),
 		pipeline.ProvideBootstrapStage(cfg, signature.DefaultCalculator(cfg), assets),
 		pipeline.ProvideValidationStage(cfg, signature.NewValidator(signature.NewUnsignedAuthorizer(cfg)), angularInspector, sigErrTracker),
-		pipeline.ProvideInitializationStage(cfg, reg, lic, backendFactory, proc, &fakes.FakeOauthService{}, fakes.NewFakeRoleRegistry()),
+		pipeline.ProvideInitializationStage(cfg, reg, lic, backendFactory, proc, &fakes.FakeAuthService{}, fakes.NewFakeRoleRegistry()),
 		terminate)
 }
 
@@ -1503,9 +1503,9 @@ func newLoaderWithOpts(t *testing.T, cfg *config.Cfg, opts loaderDepOpts) *Loade
 		angularInspector = angularinspector.NewStaticInspector()
 	}
 
-	oauthServiceRegistry := opts.oauthServiceRegistry
-	if oauthServiceRegistry == nil {
-		oauthServiceRegistry = &fakes.FakeOauthService{}
+	authServiceRegistry := opts.authServiceRegistry
+	if authServiceRegistry == nil {
+		authServiceRegistry = &fakes.FakeAuthService{}
 	}
 
 	backendFactoryProvider := opts.backendFactoryProvider
@@ -1516,7 +1516,7 @@ func newLoaderWithOpts(t *testing.T, cfg *config.Cfg, opts loaderDepOpts) *Loade
 	return ProvideService(pipeline.ProvideDiscoveryStage(cfg, finder.NewLocalFinder(false), reg),
 		pipeline.ProvideBootstrapStage(cfg, signature.DefaultCalculator(cfg), assets),
 		pipeline.ProvideValidationStage(cfg, signature.NewValidator(signature.NewUnsignedAuthorizer(cfg)), angularInspector, sigErrTracker),
-		pipeline.ProvideInitializationStage(cfg, reg, lic, backendFactoryProvider, proc, oauthServiceRegistry, fakes.NewFakeRoleRegistry()),
+		pipeline.ProvideInitializationStage(cfg, reg, lic, backendFactoryProvider, proc, authServiceRegistry, fakes.NewFakeRoleRegistry()),
 		terminate)
 }
 

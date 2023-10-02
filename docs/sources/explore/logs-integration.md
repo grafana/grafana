@@ -16,10 +16,10 @@ weight: 15
 
 Explore is a powerful tool for logging and log analysis. It allows you to investigate logs from different data sources including:
 
-- [Loki]({{< relref "../datasources/loki/" >}})
-- [Elasticsearch]({{< relref "../datasources/elasticsearch/" >}})
-- [Cloudwatch]({{< relref "../datasources/cloudwatch/" >}})
-- [InfluxDB]({{< relref "../datasources/influxdb/" >}})
+- [Loki]({{< relref "../datasources/loki" >}})
+- [Elasticsearch]({{< relref "../datasources/elasticsearch" >}})
+- [Cloudwatch]({{< relref "../datasources/aws-cloudwatch" >}})
+- [InfluxDB]({{< relref "../datasources/influxdb" >}})
 
 With Explore, you can efficiently monitor, troubleshoot, and respond to incidents by analyzing your logs and identifying the root causes. It also helps you to correlate logs with other telemetry signals such as metrics, traces or profiles, by viewing them side-by-side.
 
@@ -108,11 +108,13 @@ When your query includes specific words or expressions to search for, Explore wi
 
 ### Log details view
 
-In Explore, each log line has an expandable section called **Log details** that can be opened by clicking on the log line. The Log details view provides additional information, including **Fields** and **Links** attached to the log lines, enabling more robust interaction and analysis.
+In Explore, each log line has an expandable section called **Log details** that can be opened by clicking on the log line. The Log details view provides additional information and exploration options in the form of **Fields** and **Links** attached to the log lines, enabling a more robust interaction and analysis.
 
 #### Fields
 
-Within the Log details view, you have the ability to filter displayed fields in two ways: positive filter (to show specific fields) and negative filter (to exclude certain fields). Additionally, you can select a unique field to visualize instead of the whole log line by clicking on the eye icon. Finally, each field has a stats icon to display ad-hoc statistics in relation to all displayed logs.
+Within the Log details view, you have the ability to filter displayed fields in two ways: a positive filter (to focus on an specific field) and a negative filter (to exclude certain fields). These filters will update the corresponding query that produced the log line, adding equality and inequality expressions accordingly. If the data source has support, as it's the case for Loki and Elasticsearch, log details will check if the field is already present in the current query showing and active state (for positive filters only), allowing you to toggle it off the query, or changing the filter expression from positive to negative.
+
+Additionally, you can select a subset of fields to visualize in the logs list instead of the complete log line by clicking on the eye icon. Finally, each field has a stats icon to display ad-hoc statistics in relation to all displayed logs.
 
 #### Links
 

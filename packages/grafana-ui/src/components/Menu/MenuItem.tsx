@@ -166,7 +166,7 @@ export const MenuItem = React.memo(
           <div className={cx(styles.rightWrapper, { [styles.withShortcut]: hasShortcut })}>
             {hasShortcut && (
               <div className={styles.shortcut}>
-                <Icon name="keyboard" aria-hidden />
+                <Icon name="keyboard" title="keyboard shortcut" />
                 {shortcut}
               </div>
             )}

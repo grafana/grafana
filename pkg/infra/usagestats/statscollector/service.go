@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/stats"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -31,7 +32,7 @@ const (
 type Service struct {
 	cfg                *setting.Cfg
 	sqlstore           db.DB
-	plugins            plugins.Store
+	plugins            pluginstore.Store
 	usageStats         usagestats.Service
 	validator          validator.Service
 	statsService       stats.Service
@@ -54,7 +55,7 @@ func ProvideService(
 	cfg *setting.Cfg,
 	store db.DB,
 	social social.Service,
-	plugins plugins.Store,
+	plugins pluginstore.Store,
 	features *featuremgmt.FeatureManager,
 	datasourceService datasources.DataSourceService,
 	httpClientProvider httpclient.Provider,

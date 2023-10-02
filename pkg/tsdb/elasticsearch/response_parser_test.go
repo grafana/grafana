@@ -1,6 +1,7 @@
 package elasticsearch
 
 import (
+	"context"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -13,6 +14,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	es "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client"
 )
 
@@ -3526,12 +3529,12 @@ func parseTestResponse(tsdbQueries map[string]string, responseBody string) (*bac
 		return nil, err
 	}
 
-	queries, err := parseQuery(tsdbQuery.Queries)
+	queries, err := parseQuery(tsdbQuery.Queries, log.New("test.logger"))
 	if err != nil {
 		return nil, err
 	}
 
-	return parseResponse(response.Responses, queries, configuredFields)
+	return parseResponse(context.Background(), response.Responses, queries, configuredFields, log.New("test.logger"), tracing.InitializeTracerForTest())
 }
 
 func requireTimeValue(t *testing.T, expected int64, frame *data.Frame, index int) {
@@ -3581,7 +3584,7 @@ func requireStringAt(t *testing.T, expected string, field *data.Field, index int
 
 func requireFloatAt(t *testing.T, expected float64, field *data.Field, index int) {
 	v := field.At(index).(*float64)
-	require.Equal(t, expected, *v, fmt.Sprintf("wrong flaot at index %v", index))
+	require.Equal(t, expected, *v, fmt.Sprintf("wrong float at index %v", index))
 }
 
 func requireTimeSeriesName(t *testing.T, expected string, frame *data.Frame) {
