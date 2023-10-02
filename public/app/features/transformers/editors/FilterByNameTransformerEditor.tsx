@@ -24,7 +24,7 @@ interface FilterByNameTransformerEditorState {
   regex?: string;
   variable?: string;
   variables: SelectableValue[];
-  byVariable?: boolean;
+  byVariable: boolean;
   isRegexValid?: boolean;
 }
 
@@ -42,7 +42,7 @@ export class FilterByNameTransformerEditor extends React.PureComponent<
       include: props.options.include?.names || [],
       regex: props.options.include?.pattern,
       variable: props.options.include?.variable,
-      byVariable: props.options.byVariable,
+      byVariable: props.options.byVariable || false,
       options: [],
       variables: [],
       selected: [],
@@ -108,7 +108,7 @@ export class FilterByNameTransformerEditor extends React.PureComponent<
         options: allNames,
         selected: selected.map((s) => s.name),
         variables: variables,
-        byVariable: options.byVariable,
+        byVariable: options.byVariable || false,
         variable: options.include?.variable,
         regex: options.include?.pattern,
       });
@@ -117,7 +117,7 @@ export class FilterByNameTransformerEditor extends React.PureComponent<
         options: allNames,
         selected: allNames.map((n) => n.name),
         variables: variables,
-        byVariable: options.byVariable,
+        byVariable: options.byVariable || false,
         variable: options.include?.variable,
         regex: options.include?.pattern,
       });
