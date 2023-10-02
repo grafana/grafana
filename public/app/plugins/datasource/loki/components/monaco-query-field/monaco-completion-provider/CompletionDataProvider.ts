@@ -69,21 +69,23 @@ export class CompletionDataProvider {
    */
   async getParserAndLabelKeys(logQuery: string): Promise<ExtractedLabelKeys> {
     const EXTRACTED_LABEL_KEYS_MAX_CACHE_SIZE = 2;
-    if (this.queryToLabelKeysCache.has(logQuery)) {
-      // Asserting the type here because we know something is in the cache from the use of Map.has() above
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-      return this.queryToLabelKeysCache.get(logQuery) as ExtractedLabelKeys;
+    const cachedLabelKeys = this.queryToLabelKeysCache.has(logQuery) ? this.queryToLabelKeysCache.get(logQuery) : null;
+    if (cachedLabelKeys) {
+      // cache hit! Serve stale result from cache
+      return cachedLabelKeys;
     } else {
-      // Save last two results in the cache
+      // If cache is larger than max size, delete the first (oldest) index
       if (this.queryToLabelKeysCache.size >= EXTRACTED_LABEL_KEYS_MAX_CACHE_SIZE) {
         // Make room in the cache for the fresh result by deleting the "first" index
         const keys = this.queryToLabelKeysCache.keys();
         const firstKey = keys.next().value;
         this.queryToLabelKeysCache.delete(firstKey);
       }
-      const result = await this.languageProvider.getParserAndLabelKeys(logQuery);
-      this.queryToLabelKeysCache.set(logQuery, result);
-      return result;
+      // Fetch a fresh result from the backend
+      const labelKeys = await this.languageProvider.getParserAndLabelKeys(logQuery);
+      // Add the result to the cache
+      this.queryToLabelKeysCache.set(logQuery, labelKeys);
+      return labelKeys;
     }
   }
 
