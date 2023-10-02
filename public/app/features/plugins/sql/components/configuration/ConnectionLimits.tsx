@@ -1,15 +1,15 @@
 import React from 'react';
 
 import { DataSourceSettings } from '@grafana/data';
+import { ConfigSection, Stack } from '@grafana/experimental';
 import { config } from '@grafana/runtime';
-import { FieldSet, InlineField, InlineFieldRow, InlineLabel, InlineSwitch, Input } from '@grafana/ui';
+import { Field, Icon, InlineLabel, Input, Label, Switch, Tooltip } from '@grafana/ui';
 
 import { SQLConnectionLimits, SQLOptions } from '../../types';
 
 interface Props<T> {
   onOptionsChange: Function;
   options: DataSourceSettings<SQLOptions>;
-  labelWidth: number;
 }
 
 function toNumber(text: string): number {
@@ -23,7 +23,7 @@ function toNumber(text: string): number {
 }
 
 export const ConnectionLimits = <T extends SQLConnectionLimits>(props: Props<T>) => {
-  const { onOptionsChange, options, labelWidth } = props;
+  const { onOptionsChange, options } = props;
   const jsonData = options.jsonData;
   const autoIdle = jsonData.maxIdleConnsAuto !== undefined ? jsonData.maxIdleConnsAuto : false;
 
@@ -90,19 +90,30 @@ export const ConnectionLimits = <T extends SQLConnectionLimits>(props: Props<T>)
     });
   };
 
+  const labelWidth = 40;
+
   return (
-    <FieldSet label="Connection limits">
-      <InlineField
-        tooltip={
-          <span>
-            The maximum number of open connections to the database.If <i>Max idle connections</i> is greater than 0 and
-            the <i>Max open connections</i> is less than <i>Max idle connections</i>, then
-            <i>Max idle connections</i> will be reduced to match the <i>Max open connections</i> limit. If set to 0,
-            there is no limit on the number of open connections.
-          </span>
+    <ConfigSection title="Connection limits">
+      <Field
+        label={
+          <Label>
+            <Stack gap={0.5}>
+              <span>Max open</span>
+              <Tooltip
+                content={
+                  <span>
+                    The maximum number of open connections to the database. If <i>Max idle connections</i> is greater
+                    than 0 and the <i>Max open connections</i> is less than <i>Max idle connections</i>, then
+                    <i>Max idle connections</i> will be reduced to match the <i>Max open connections</i> limit. If set
+                    to 0, there is no limit on the number of open connections.
+                  </span>
+                }
+              >
+                <Icon name="info-circle" size="sm" />
+              </Tooltip>
+            </Stack>
+          </Label>
         }
-        labelWidth={labelWidth}
-        label="Max open"
       >
         <Input
           type="number"
@@ -114,56 +125,91 @@ export const ConnectionLimits = <T extends SQLConnectionLimits>(props: Props<T>)
               onMaxConnectionsChanged(newVal);
             }
           }}
+          width={labelWidth}
         />
-      </InlineField>
-      <InlineFieldRow>
-        <InlineField
-          tooltip={
-            <span>
-              The maximum number of connections in the idle connection pool.If <i>Max open connections</i> is greater
-              than 0 but less than the <i>Max idle connections</i>, then the <i>Max idle connections</i> will be reduced
-              to match the <i>Max open connections</i> limit. If set to 0, no idle connections are retained.
-            </span>
-          }
-          labelWidth={labelWidth}
-          label="Max idle"
-        >
-          {autoIdle ? (
-            <InlineLabel width={8}>{options.jsonData.maxIdleConns}</InlineLabel>
-          ) : (
-            <Input
-              type="number"
-              placeholder="2"
-              defaultValue={jsonData.maxIdleConns}
-              onChange={(e) => {
-                const newVal = toNumber(e.currentTarget.value);
-                if (!Number.isNaN(newVal)) {
-                  onJSONDataNumberChanged('maxIdleConns')(newVal);
+      </Field>
+
+      <Field
+        label={
+          <Label>
+            <Stack gap={0.5}>
+              <span>Auto Max Idle</span>
+              <Tooltip
+                content={
+                  <span>
+                    If enabled, automatically set the number of <i>Maximum idle connections</i> to the same value as
+                    <i> Max open connections</i>. If the number of maximum open connections is not set it will be set to
+                    the default ({config.sqlConnectionLimits.maxIdleConns}).
+                  </span>
                 }
-              }}
-              width={8}
-              disabled={autoIdle}
-            />
-          )}
-        </InlineField>
-        <InlineField
-          label="Auto"
-          labelWidth={8}
-          tooltip={
-            <span>
-              If enabled, automatically set the number of <i>Maximum idle connections</i> to the same value as
-              <i> Max open connections</i>. If the number of maximum open connections is not set it will be set to the
-              default ({config.sqlConnectionLimits.maxIdleConns}).
-            </span>
-          }
-        >
-          <InlineSwitch value={autoIdle} onChange={onConnectionIdleAutoChanged} />
-        </InlineField>
-      </InlineFieldRow>
-      <InlineField
-        tooltip="The maximum amount of time in seconds a connection may be reused. If set to 0, connections are reused forever."
-        labelWidth={labelWidth}
-        label="Max lifetime"
+              >
+                <Icon name="info-circle" size="sm" />
+              </Tooltip>
+            </Stack>
+          </Label>
+        }
+      >
+        <Switch value={autoIdle} onChange={onConnectionIdleAutoChanged} />
+      </Field>
+
+      <Field
+        label={
+          <Label>
+            <Stack gap={0.5}>
+              <span>Max idle</span>
+              <Tooltip
+                content={
+                  <span>
+                    The maximum number of connections in the idle connection pool.If <i>Max open connections</i> is
+                    greater than 0 but less than the <i>Max idle connections</i>, then the <i>Max idle connections</i>{' '}
+                    will be reduced to match the <i>Max open connections</i> limit. If set to 0, no idle connections are
+                    retained.
+                  </span>
+                }
+              >
+                <Icon name="info-circle" size="sm" />
+              </Tooltip>
+            </Stack>
+          </Label>
+        }
+      >
+        {autoIdle ? (
+          <InlineLabel width={labelWidth}>{options.jsonData.maxIdleConns}</InlineLabel>
+        ) : (
+          <Input
+            type="number"
+            placeholder="2"
+            defaultValue={jsonData.maxIdleConns}
+            onChange={(e) => {
+              const newVal = toNumber(e.currentTarget.value);
+              if (!Number.isNaN(newVal)) {
+                onJSONDataNumberChanged('maxIdleConns')(newVal);
+              }
+            }}
+            width={labelWidth}
+            disabled={autoIdle}
+          />
+        )}
+      </Field>
+
+      <Field
+        label={
+          <Label>
+            <Stack gap={0.5}>
+              <span>Max lifetime</span>
+              <Tooltip
+                content={
+                  <span>
+                    The maximum amount of time in seconds a connection may be reused. If set to 0, connections are
+                    reused forever.
+                  </span>
+                }
+              >
+                <Icon name="info-circle" size="sm" />
+              </Tooltip>
+            </Stack>
+          </Label>
+        }
       >
         <Input
           type="number"
@@ -175,8 +221,9 @@ export const ConnectionLimits = <T extends SQLConnectionLimits>(props: Props<T>)
               onJSONDataNumberChanged('connMaxLifetime')(newVal);
             }
           }}
-        ></Input>
-      </InlineField>
-    </FieldSet>
+          width={labelWidth}
+        />
+      </Field>
+    </ConfigSection>
   );
 };

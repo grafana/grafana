@@ -228,7 +228,7 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<My
 
       <Divider />
 
-      <ConnectionLimits labelWidth={WIDTH_SHORT} options={options} onOptionsChange={onOptionsChange} />
+      <ConnectionLimits options={options} onOptionsChange={onOptionsChange} />
 
       <Divider />
 

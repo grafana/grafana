@@ -297,7 +297,7 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<Ms
         isCollapsible={true}
         isInitiallyOpen={true}
       >
-        <ConnectionLimits labelWidth={SHORT_WIDTH} options={dsSettings} onOptionsChange={onOptionsChange} />
+        <ConnectionLimits options={dsSettings} onOptionsChange={onOptionsChange} />
 
         <ConfigSubSection title="Connection details">
           <Field
