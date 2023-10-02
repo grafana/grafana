@@ -41,7 +41,6 @@ type DashboardProvisioningService interface {
 	DeleteOrphanedProvisionedDashboards(ctx context.Context, cmd *DeleteOrphanedProvisionedDashboardsCommand) error
 	DeleteProvisionedDashboard(ctx context.Context, dashboardID int64, orgID int64) error
 	GetProvisionedDashboardData(ctx context.Context, name string) ([]*DashboardProvisioning, error)
-	// Deprecated: use GetProvisionedDashboardDataByDashboardUID instead.
 	GetProvisionedDashboardDataByDashboardID(ctx context.Context, dashboardID int64) (*DashboardProvisioning, error)
 	GetProvisionedDashboardDataByDashboardUID(ctx context.Context, orgID int64, dashboardUID string) (*DashboardProvisioning, error)
 	SaveFolderForProvisionedDashboards(context.Context, *SaveDashboardDTO) (*Dashboard, error)
