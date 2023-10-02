@@ -101,7 +101,9 @@ export function generateRandomNodes(count = 10) {
       values: [],
       type: FieldType.string,
     },
-    [NodeGraphDataFrameFieldNames.nodeRadius]: {
+    // TODO: Use exported
+    // [NodeGraphDataFrameFieldNames.nodeRadius]: {
+    noderadius: {
       values: [],
       type: FieldType.number,
     },

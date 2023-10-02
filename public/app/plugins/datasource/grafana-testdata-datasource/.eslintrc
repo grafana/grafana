@@ -1,0 +1,4 @@
+{
+  "extends": "./.config/.eslintrc",
+  "ignorePatterns": ["**/*.gen.ts"]
+}
