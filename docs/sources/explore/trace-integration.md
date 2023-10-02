@@ -37,6 +37,7 @@ For information on querying each data source, refer to their documentation:
 - [Tempo query editor]({{< relref "../datasources/tempo/query-editor" >}})
 - [Jaeger query editor]({{< relref "../datasources/jaeger/#query-the-data-source" >}})
 - [Zipkin query editor]({{< relref "../datasources/zipkin/#query-the-data-source" >}})
+- [Azure Monitor Application Insights query editor]({{< relref "../datasources/azure-monitor/query-editor/#query-application-insights-traces" >}})
 
 ## Trace View
 
