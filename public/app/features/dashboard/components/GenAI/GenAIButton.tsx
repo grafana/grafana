@@ -44,6 +44,8 @@ export const GenAIButton = ({
   const { setMessages, reply, isGenerating, value } = useOpenAIStream(OPEN_AI_MODEL, temperature);
 
   const hasHistory = history.length > 0;
+  const isFirstGeneration = isGenerating && !hasHistory;
+  const isButtonDisabled = isFirstGeneration || (value && !value.enabled);
 
   const onClick = (e: React.MouseEvent<HTMLButtonElement>) => {
     if (!hasHistory) {
@@ -89,7 +91,7 @@ export const GenAIButton = ({
   };
 
   const getIcon = () => {
-    if (isGenerating && !hasHistory) {
+    if (isFirstGeneration) {
       return undefined;
     }
     if (value && !value.enabled) {
@@ -101,7 +103,7 @@ export const GenAIButton = ({
   const getText = () => {
     let buttonText = text;
 
-    if (isGenerating && !hasHistory) {
+    if (isFirstGeneration) {
       buttonText = loadingText;
     }
 
@@ -113,13 +115,7 @@ export const GenAIButton = ({
   };
 
   const button = (
-    <Button
-      icon={getIcon()}
-      onClick={onClick}
-      fill="text"
-      size="sm"
-      disabled={(isGenerating && !hasHistory) || (value && !value.enabled)}
-    >
+    <Button icon={getIcon()} onClick={onClick} fill="text" size="sm" disabled={isButtonDisabled}>
       {getText()}
     </Button>
   );
@@ -153,7 +149,7 @@ export const GenAIButton = ({
 
   return (
     <div className={styles.wrapper}>
-      {isGenerating && !hasHistory && <Spinner size={14} />}
+      {isFirstGeneration && <Spinner size={14} />}
       <Tooltip
         show={value?.enabled ? false : undefined}
         interactive
