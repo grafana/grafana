@@ -324,7 +324,7 @@ export class CloudMonitoringVariableQueryEditor extends PureComponent<Props, Var
       return (
         <VariableQueryField
           value={'loading'}
-          options={[{value: 'loading', label: 'Loading...'}]}
+          options={[{ value: 'loading', label: 'Loading...' }]}
           onChange={(value) => null}
           label="Query Type"
         />
