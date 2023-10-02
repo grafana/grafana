@@ -30,8 +30,10 @@ export interface ToggletipProps {
   children: JSX.Element;
   /** Determine whether the toggletip should fit its content or not */
   fitContent?: boolean;
-  /** Determine whether the toggletip should close */
-  shouldClose?: boolean;
+  /** Determine whether the toggletip should be shown or not */
+  show?: boolean;
+  /** Callback function to be called when the toggletip is opened */
+  onOpen?: () => void;
 }
 
 export const Toggletip = React.memo(
@@ -45,31 +47,31 @@ export const Toggletip = React.memo(
     onClose,
     footer,
     fitContent = false,
-    shouldClose = false,
+    onOpen,
+    show,
   }: ToggletipProps) => {
     const styles = useStyles2(getStyles);
     const style = styles[theme];
     const contentRef = useRef(null);
-    const [controlledVisible, setControlledVisible] = React.useState(false);
-
-    useEffect(() => {
-      if (shouldClose) {
-        closeToggletip();
-      }
-    });
+    const [controlledVisible, setControlledVisible] = React.useState(show);
 
     const { getArrowProps, getTooltipProps, setTooltipRef, setTriggerRef, visible, update, tooltipRef, triggerRef } =
       usePopperTooltip(
         {
-          visible: controlledVisible,
+          visible: show ?? controlledVisible,
           placement: placement,
           interactive: true,
           offset: [0, 8],
+          // If show is undefined, the toggletip will be shown on click
           trigger: 'click',
-          onVisibleChange: (value: boolean) => {
-            setControlledVisible(value);
-            if (!value) {
+          onVisibleChange: (visible: boolean) => {
+            if (show === undefined) {
+              setControlledVisible(visible);
+            }
+            if (!visible) {
               onClose?.();
+            } else {
+              onOpen?.();
             }
           },
         },
@@ -79,11 +81,11 @@ export const Toggletip = React.memo(
       );
 
     const closeToggletip = useCallback(
-      (event?: KeyboardEvent | React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
+      (event: KeyboardEvent | React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
         setControlledVisible(false);
         onClose?.();
 
-        if (event?.target instanceof Node && tooltipRef?.contains(event.target)) {
+        if (event.target instanceof Node && tooltipRef?.contains(event.target)) {
           triggerRef?.focus();
         }
       },
