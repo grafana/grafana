@@ -54,7 +54,9 @@ export const GenAIButton = ({
 
   const updateHistory = useCallback(
     (historyEntry: string) => {
-      setHistory([historyEntry, ...history]);
+      if (history.indexOf(historyEntry) === -1) {
+        setHistory([historyEntry, ...history]);
+      }
     },
     [history]
   );
