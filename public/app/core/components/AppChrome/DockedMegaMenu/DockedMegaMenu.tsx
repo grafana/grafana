@@ -8,7 +8,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { CustomScrollbar, Icon, IconButton, useStyles2 } from '@grafana/ui';
 import { useSelector } from 'app/types';
 
-import { NavBarMenuItemWrapper } from './NavBarMenuItemWrapper';
+import { NavBarMenuSection } from './NavBarMenuSection';
 import { enrichWithInteractionTracking, getActiveItem } from './utils';
 
 export const MENU_WIDTH = '350px';
@@ -49,7 +49,7 @@ export const DockedMegaMenu = React.memo(
           <CustomScrollbar showScrollIndicators hideHorizontalTrack>
             <ul className={styles.itemList}>
               {navItems.map((link) => (
-                <NavBarMenuItemWrapper link={link} onClose={onClose} activeItem={activeItem} key={link.text} />
+                <NavBarMenuSection link={link} onClose={onClose} activeItem={activeItem} key={link.text} />
               ))}
             </ul>
           </CustomScrollbar>
