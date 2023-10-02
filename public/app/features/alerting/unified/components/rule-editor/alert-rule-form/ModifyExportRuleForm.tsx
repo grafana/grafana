@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { FormProvider, useForm, useFormContext } from 'react-hook-form';
+import { FormProvider, useForm } from 'react-hook-form';
 import { useParams } from 'react-router-dom';
 import { useAsync } from 'react-use';
 
@@ -45,7 +45,9 @@ export function ModifyExportRuleForm({ ruleForm, alertUid }: ModifyExportRuleFor
   const notifyApp = useAppNotification();
   const returnTo = !queryParams['returnTo'] ? '/alerting/list' : String(queryParams['returnTo']);
 
-  const [showExporter, setShowExporter] = useState<ModifyExportMode | undefined>(undefined);
+  const [exportData, setExportData] = useState<
+    { exportForm: RuleFormValues; exportMode: ModifyExportMode } | undefined
+  >(undefined);
 
   const [conditionErrorMsg, setConditionErrorMsg] = useState('');
   const [evaluateEvery, setEvaluateEvery] = useState(ruleForm?.evaluateEvery ?? MINUTE);
@@ -54,26 +56,34 @@ export function ModifyExportRuleForm({ ruleForm, alertUid }: ModifyExportRuleFor
     setConditionErrorMsg(msg);
   };
 
-  const submit = (exportFor: ModifyExportMode) => {
+  const submit = (exportData: { exportForm: RuleFormValues; exportMode: ModifyExportMode } | undefined) => {
     if (conditionErrorMsg !== '') {
       notifyApp.error(conditionErrorMsg);
       return;
     }
-    setShowExporter(exportFor);
+    setExportData(exportData);
   };
 
   const onClose = useCallback(() => {
-    setShowExporter(undefined);
-  }, [setShowExporter]);
+    setExportData(undefined);
+  }, [setExportData]);
 
   const actionButtons = [
-    <LinkButton href={returnTo} key="cancel" size="sm" variant="secondary">
+    <LinkButton href={returnTo} key="cancel" size="sm" variant="secondary" onClick={() => submit(undefined)}>
       Cancel
     </LinkButton>,
-    <Button key="export-rule" size="sm" onClick={formAPI.handleSubmit(() => submit('rule'))}>
+    <Button
+      key="export-rule"
+      size="sm"
+      onClick={formAPI.handleSubmit((formValues) => submit({ exportForm: formValues, exportMode: 'rule' }))}
+    >
       Export Rule
     </Button>,
-    <Button key="export-group" size="sm" onClick={formAPI.handleSubmit(() => submit('group'))}>
+    <Button
+      key="export-group"
+      size="sm"
+      onClick={formAPI.handleSubmit((formValues) => submit({ exportForm: formValues, exportMode: 'group' }))}
+    >
       Export Group
     </Button>,
   ];
@@ -107,7 +117,13 @@ export function ModifyExportRuleForm({ ruleForm, alertUid }: ModifyExportRuleFor
             </CustomScrollbar>
           </div>
         </form>
-        {showExporter && <GrafanaRuleDesignExporter exportMode={showExporter} onClose={onClose} />}
+        {exportData && (
+          <GrafanaRuleDesignExporter
+            exportValues={exportData.exportForm}
+            exportMode={exportData.exportMode}
+            onClose={onClose}
+          />
+        )}
       </FormProvider>
     </>
   );
@@ -129,6 +145,7 @@ interface GrafanaRuleDesignExportPreviewProps {
   exportFormat: ExportFormats;
   onClose: () => void;
   exportMode: ModifyExportMode;
+  exportValues: RuleFormValues;
 }
 
 const useGetPayloadToExport = (values: RuleFormValues, exportMode: ModifyExportMode) => {
@@ -158,13 +175,18 @@ const useGetPayloadToExport = (values: RuleFormValues, exportMode: ModifyExportM
   return { payload, loadingGroup: rulerGroupDto.loading };
 };
 
-const GrafanaRuleDesignExportPreview = ({ exportFormat, onClose, exportMode }: GrafanaRuleDesignExportPreviewProps) => {
+const GrafanaRuleDesignExportPreview = ({
+  exportFormat,
+  exportValues,
+  onClose,
+  exportMode,
+}: GrafanaRuleDesignExportPreviewProps) => {
   const [getExport, exportData] = alertRuleApi.endpoints.exportModifiedRuleGroup.useMutation();
-  const { getValues } = useFormContext<RuleFormValues>();
-  const values = useMemo(() => getValues(), [getValues]);
-  const { loadingGroup, payload } = useGetPayloadToExport(values, exportMode);
+  // const { getValues } = useFormContext<RuleFormValues>();
+  // const values = useMemo(() => getValues(), [getValues]);
+  const { loadingGroup, payload } = useGetPayloadToExport(exportValues, exportMode);
 
-  const nameSpace = values.folder?.title ?? '';
+  const nameSpace = exportValues.folder?.title ?? '';
 
   useEffect(() => {
     !loadingGroup && getExport({ payload, format: exportFormat, nameSpace: nameSpace });
@@ -188,24 +210,32 @@ const GrafanaRuleDesignExportPreview = ({ exportFormat, onClose, exportMode }: G
 
 interface GrafanaRuleDesignExporterProps {
   onClose: () => void;
+  exportValues: RuleFormValues;
   exportMode: ModifyExportMode;
 }
 
-export const GrafanaRuleDesignExporter = React.memo(({ onClose, exportMode }: GrafanaRuleDesignExporterProps) => {
-  const [activeTab, setActiveTab] = useState<ExportFormats>('yaml');
-  const title = exportMode === 'rule' ? 'Export Rule' : 'Export Group';
+export const GrafanaRuleDesignExporter = React.memo(
+  ({ onClose, exportMode, exportValues }: GrafanaRuleDesignExporterProps) => {
+    const [activeTab, setActiveTab] = useState<ExportFormats>('yaml');
+    const title = exportMode === 'rule' ? 'Export Rule' : 'Export Group';
 
-  return (
-    <GrafanaExportDrawer
-      title={title}
-      activeTab={activeTab}
-      onTabChange={setActiveTab}
-      onClose={onClose}
-      formatProviders={Object.values(allGrafanaExportProviders)}
-    >
-      <GrafanaRuleDesignExportPreview exportFormat={activeTab} onClose={onClose} exportMode={exportMode} />
-    </GrafanaExportDrawer>
-  );
-});
+    return (
+      <GrafanaExportDrawer
+        title={title}
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        onClose={onClose}
+        formatProviders={Object.values(allGrafanaExportProviders)}
+      >
+        <GrafanaRuleDesignExportPreview
+          exportFormat={activeTab}
+          onClose={onClose}
+          exportMode={exportMode}
+          exportValues={exportValues}
+        />
+      </GrafanaExportDrawer>
+    );
+  }
+);
 
 GrafanaRuleDesignExporter.displayName = 'GrafanaRuleDesignExporter';
