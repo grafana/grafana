@@ -192,7 +192,7 @@ func NewAlertmanagerAggregatedMetrics(registries *metrics.TenantRegistries) *Ale
 
 		markerAlerts: prometheus.NewDesc(
 			fmt.Sprintf("%s_%s_alertmanager_alerts", Namespace, Subsystem),
-			"How many alerts by state.",
+			"How many alerts by state are in Grafana's Alertmanager.",
 			[]string{"org", "state"}, nil),
 
 		silencesGCDuration: prometheus.NewDesc(
