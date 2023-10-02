@@ -15,7 +15,7 @@ export interface Props {
   url?: string;
 }
 
-export function NavBarMenuItem({ children, icon, isActive, isChild, onClick, target, url }: Props) {
+export function MegaMenuItemText({ children, icon, isActive, isChild, onClick, target, url }: Props) {
   const theme = useTheme2();
   const styles = getStyles(theme, isActive, isChild);
 
@@ -69,7 +69,7 @@ export function NavBarMenuItem({ children, icon, isActive, isChild, onClick, tar
   return <li className={styles.listItem}>{element}</li>;
 }
 
-NavBarMenuItem.displayName = 'NavBarMenuItem';
+MegaMenuItemText.displayName = 'NavBarMenuItem';
 
 const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive'], isChild: Props['isActive']) => ({
   button: css({

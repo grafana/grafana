@@ -8,7 +8,7 @@ export interface Props {
   children: JSX.Element;
 }
 
-export const NavFeatureHighlight = ({ children }: Props): JSX.Element => {
+export const FeatureHighlight = ({ children }: Props): JSX.Element => {
   const styles = useStyles2(getStyles);
   return (
     <div>

@@ -5,20 +5,21 @@ import { useLocalStorage } from 'react-use';
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { Button, Icon, useStyles2 } from '@grafana/ui';
 
-import { NavBarItemIcon } from './NavBarItemIcon';
-import { NavBarMenuItem } from './NavBarMenuItem';
-import { NavFeatureHighlight } from './NavFeatureHighlight';
+import { FeatureHighlight } from './FeatureHighlight';
+import { MegaMenuItemIcon } from './MegaMenuItemIcon';
+import { MegaMenuItemText } from './MegaMenuItemText';
 import { hasChildMatch } from './utils';
 
 interface Props {
   link: NavModelItem;
   activeItem?: NavModelItem;
   onClose?: () => void;
+  level?: number;
 }
 
-export function NavBarMenuSection({ link, activeItem, onClose }: Props) {
+export function MegaMenuItem({ link, activeItem, level = 0, onClose }: Props) {
   const styles = useStyles2(getStyles);
-  const FeatureHighlightWrapper = link.highlightText ? NavFeatureHighlight : React.Fragment;
+  const FeatureHighlightWrapper = link.highlightText ? FeatureHighlight : React.Fragment;
   const isActive = link === activeItem;
   const hasActiveChild = hasChildMatch(link, activeItem);
   const [sectionExpanded, setSectionExpanded] =
@@ -28,7 +29,7 @@ export function NavBarMenuSection({ link, activeItem, onClose }: Props) {
   return (
     <>
       <div className={styles.collapsibleSectionWrapper}>
-        <NavBarMenuItem
+        <MegaMenuItemText
           isActive={isActive}
           onClick={() => {
             link.onClick?.();
@@ -44,11 +45,11 @@ export function NavBarMenuSection({ link, activeItem, onClose }: Props) {
             })}
           >
             <FeatureHighlightWrapper>
-              <NavBarItemIcon link={link} />
+              {level === 0 ? <MegaMenuItemIcon link={link} /> : <div />}
             </FeatureHighlightWrapper>
             {link.text}
           </div>
-        </NavBarMenuItem>
+        </MegaMenuItemText>
         {showExpandButton && (
           <Button
             aria-label={`${sectionExpanded ? 'Collapse' : 'Expand'} section ${link.text}`}
@@ -67,11 +68,12 @@ export function NavBarMenuSection({ link, activeItem, onClose }: Props) {
             link.children
               .filter((childLink) => !childLink.isCreateAction)
               .map((childLink) => (
-                <NavBarMenuSection
+                <MegaMenuItem
                   key={`${link.text}-${childLink.text}`}
                   link={childLink}
                   activeItem={activeItem}
                   onClose={onClose}
+                  level={level + 1}
                 />
               ))
           ) : (
