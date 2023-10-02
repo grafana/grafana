@@ -63,8 +63,41 @@ export function SectionSubheader({ children }: React.PropsWithChildren) {
   return <div>{children}</div>;
 }
 
-export function getGrafanaScenes() {
+export function getInsightsScenes() {
   return new EmbeddedScene({
+    body: new SceneFlexLayout({
+      direction: 'column',
+      children: [
+        new SceneFlexItem({
+          ySizing: 'content',
+          body: getGrafanaManagedScenes(),
+        }),
+        new SceneFlexItem({
+          ySizing: 'content',
+          body: getGrafanaAlertmanagerScenes(),
+        }),
+        new SceneFlexItem({
+          ySizing: 'content',
+          body: getCloudScenes(),
+        }),
+        new SceneFlexItem({
+          ySizing: 'content',
+          body: getMimirManagedRulesScenes(),
+        }),
+        new SceneFlexItem({
+          ySizing: 'content',
+          body: getMimirManagedRulesPerGroupScenes(),
+        }),
+      ],
+    }),
+  });
+}
+
+function getGrafanaManagedScenes() {
+  return new NestedScene({
+    title: 'Grafana-managed rules',
+    canCollapse: true,
+    isCollapsed: false,
     body: new SceneFlexLayout({
       direction: 'column',
       children: [
@@ -110,22 +143,6 @@ export function getGrafanaScenes() {
             }),
             new SceneFlexLayout({
               children: [getGrafanaInstancesByStateScene(THIS_WEEK_TIME_RANGE, cloudUsageDs, 'Alerts by state')],
-            }),
-            new SceneFlexItem({
-              ySizing: 'content',
-              body: getGrafanaAlertmanagerScenes(),
-            }),
-            new SceneFlexItem({
-              ySizing: 'content',
-              body: getCloudScenes(),
-            }),
-            new SceneFlexItem({
-              ySizing: 'content',
-              body: getMimirManagedRulesScenes(),
-            }),
-            new SceneFlexItem({
-              ySizing: 'content',
-              body: getMimirManagedRulesPerGroupScenes(),
             }),
           ],
         }),
