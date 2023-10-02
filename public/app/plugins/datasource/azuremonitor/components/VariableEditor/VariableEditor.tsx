@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { useEffectOnce } from 'react-use';
 
 import { SelectableValue } from '@grafana/data';
-import { Alert, InlineField, Select } from '@grafana/ui';
+import { Alert, Field, Select } from '@grafana/ui';
 
 import DataSource from '../../datasource';
 import { selectors } from '../../e2e/selectors';
@@ -228,9 +228,8 @@ const VariableEditor = (props: Props) => {
 
   return (
     <>
-      <InlineField
-        label="Select query type"
-        labelWidth={20}
+      <Field
+        label="Query Type"
         data-testid={selectors.components.variableEditor.queryType.input}
       >
         <Select
@@ -240,7 +239,7 @@ const VariableEditor = (props: Props) => {
           width={25}
           value={queryType}
         />
-      </InlineField>
+      </Field>
       {query.queryType === AzureQueryType.LogAnalytics && (
         <>
           <LogsQueryEditor
@@ -266,9 +265,8 @@ const VariableEditor = (props: Props) => {
         <GrafanaTemplateVariableFnInput query={query} updateQuery={props.onChange} datasource={datasource} />
       )}
       {requireSubscription && (
-        <InlineField
-          label="Select subscription"
-          labelWidth={20}
+        <Field
+          label="Subscription"
           data-testid={selectors.components.variableEditor.subscription.input}
         >
           <Select
@@ -278,12 +276,11 @@ const VariableEditor = (props: Props) => {
             width={25}
             value={query.subscription || null}
           />
-        </InlineField>
+        </Field>
       )}
       {(requireResourceGroup || hasResourceGroup) && (
-        <InlineField
-          label="Select resource group"
-          labelWidth={20}
+        <Field
+          label="Resource Group"
           data-testid={selectors.components.variableEditor.resourceGroup.input}
         >
           <Select
@@ -298,12 +295,11 @@ const VariableEditor = (props: Props) => {
             value={query.resourceGroup || null}
             placeholder={requireResourceGroup ? undefined : 'Optional'}
           />
-        </InlineField>
+        </Field>
       )}
       {(requireNamespace || hasNamespace) && (
-        <InlineField
-          label="Select namespace"
-          labelWidth={20}
+        <Field
+          label="Namespace"
           data-testid={selectors.components.variableEditor.namespace.input}
         >
           <Select
@@ -318,12 +314,11 @@ const VariableEditor = (props: Props) => {
             value={query.namespace || null}
             placeholder={requireNamespace ? undefined : 'Optional'}
           />
-        </InlineField>
+        </Field>
       )}
       {hasRegion && (
-        <InlineField
-          label="Select region"
-          labelWidth={20}
+        <Field
+          label="Region"
           data-testid={selectors.components.variableEditor.region.input}
         >
           <Select
@@ -334,12 +329,11 @@ const VariableEditor = (props: Props) => {
             value={query.region || null}
             placeholder="Optional"
           />
-        </InlineField>
+        </Field>
       )}
       {requireResource && (
-        <InlineField
-          label="Select resource"
-          labelWidth={20}
+        <Field
+          label="Resource"
           data-testid={selectors.components.variableEditor.resource.input}
         >
           <Select
@@ -349,7 +343,7 @@ const VariableEditor = (props: Props) => {
             width={25}
             value={query.resource || null}
           />
-        </InlineField>
+        </Field>
       )}
       {query.queryType === AzureQueryType.AzureResourceGraph && (
         <>
