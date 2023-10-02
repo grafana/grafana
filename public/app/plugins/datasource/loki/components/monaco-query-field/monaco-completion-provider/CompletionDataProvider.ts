@@ -75,7 +75,7 @@ export class CompletionDataProvider {
       return this.queryToLabelKeysCache.get(logQuery) as ExtractedLabelKeys;
     } else {
       // Save last two results in the cache
-      if (this.queryToLabelKeysCache.size > EXTRACTED_LABEL_KEYS_MAX_CACHE_SIZE) {
+      if (this.queryToLabelKeysCache.size >= EXTRACTED_LABEL_KEYS_MAX_CACHE_SIZE) {
         // Make room in the cache for the fresh result by deleting the "first" index
         const keys = this.queryToLabelKeysCache.keys();
         const firstKey = keys.next().value;
