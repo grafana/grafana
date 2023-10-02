@@ -8,6 +8,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/org"
 )
 
@@ -26,6 +27,18 @@ func (auth OrgRoleAuthorizer) Authorize(ctx context.Context, a authorizer.Attrib
 	signedInUser, err := appcontext.User(ctx)
 	if err != nil {
 		return authorizer.DecisionDeny, fmt.Sprintf("error getting signed in user: %v", err), nil
+	}
+
+	// Check that the user has access to the namespace
+	ns := a.GetNamespace()
+	if ns != "" && ns != "default" {
+		orgID, ok := request.ParseOrgID(ns)
+		if !ok {
+			return authorizer.DecisionDeny, fmt.Sprintf("unable to get org from namespace: %s", ns), nil
+		}
+		if signedInUser.OrgID != orgID {
+			return authorizer.DecisionDeny, fmt.Sprintf("user is not in org: %d", orgID), nil
+		}
 	}
 
 	switch signedInUser.OrgRole {

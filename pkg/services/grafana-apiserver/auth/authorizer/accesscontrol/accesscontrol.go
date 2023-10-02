@@ -13,6 +13,9 @@ import (
 
 var _ authorizer.Authorizer = &AccessControlAuthorizer{}
 
+// AccessControlAuthorizer adds an authorizing filter that checks builtin resources
+// against the access control service.  This can be used for resources like teams+dashboards
+// that are represented in the existing access control models.
 type AccessControlAuthorizer struct {
 	log log.Logger
 	ac  accesscontrol.AccessControl
@@ -22,9 +25,18 @@ func ProvideAccessControlAuthorizer(ac accesscontrol.AccessControl) *AccessContr
 	return &AccessControlAuthorizer{log: log.New("grafana-apiserver.authorizer.accesscontrol"), ac: ac}
 }
 
+var supportedAPIGroups = map[string]bool{
+	"teams.grafana.com": true,
+}
+
 func (auth AccessControlAuthorizer) Authorize(ctx context.Context, a authorizer.Attributes) (authorized authorizer.Decision, reason string, err error) {
 	// we only care about resource requests at this point
 	if !a.IsResourceRequest() {
+		return authorizer.DecisionNoOpinion, "", nil
+	}
+
+	// Hardcode the list of resources that can use access control (OrgRoleAuthorizer is sufficient)
+	if !supportedAPIGroups[a.GetAPIGroup()] {
 		return authorizer.DecisionNoOpinion, "", nil
 	}
 
