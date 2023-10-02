@@ -1,37 +1,57 @@
 package idimpl
 
-import "github.com/prometheus/client_golang/prometheus"
+import (
+	"github.com/prometheus/client_golang/prometheus"
+)
 
 const (
-	metricsSubSystem = "authn"
 	metricsNamespace = "grafana"
+	metricsSubSystem = "idforwarding"
 )
 
 func newMetircus(reg prometheus.Registerer) *metrics {
 	m := &metrics{
-		singedTokens: prometheus.NewCounter(prometheus.CounterOpts{
+		tokenSigningCounter: prometheus.NewCounter(prometheus.CounterOpts{
 			Namespace: metricsNamespace,
 			Subsystem: metricsSubSystem,
-			Name:      "idforwarding_signed_tokens_total",
-			Help:      "Number of signed tokens",
+			Name:      "idforwarding_token_sining_total",
+			Help:      "Number of token signings",
 		}),
-		signedTokensFromCache: prometheus.NewCounter(prometheus.CounterOpts{
+		tokenSigningFromCacheCounter: prometheus.NewCounter(prometheus.CounterOpts{
 			Namespace: metricsNamespace,
 			Subsystem: metricsSubSystem,
-			Name:      "idforwarding_signed_tokens_from_cache_total",
+			Name:      "idforwarding_token_signing_from_cache_total",
 			Help:      "Number of signed tokens retrieved from cahce",
+		}),
+		failedTokenSingingCounter: prometheus.NewCounter(prometheus.CounterOpts{
+			Namespace: metricsNamespace,
+			Subsystem: metricsSubSystem,
+			Name:      "idforwarding_failed_token_sining_total",
+			Help:      "Number of failed token singings",
+		}),
+
+		tokenSigningDurationHistogram: prometheus.NewHistogram(prometheus.HistogramOpts{
+			Namespace: metricsNamespace,
+			Subsystem: metricsSubSystem,
+			Name:      "idfowrading_token_signing_duration_seconds",
+			Help:      "Histrogram of token signing duration",
+			Buckets:   []float64{0.1, 0.25, 0.5, 1, 2, 5, 10},
 		}),
 	}
 
 	if reg != nil {
-		reg.MustRegister(m.singedTokens)
-		reg.MustRegister(m.signedTokensFromCache)
+		reg.MustRegister(m.tokenSigningCounter)
+		reg.MustRegister(m.tokenSigningFromCacheCounter)
+		reg.MustRegister(m.failedTokenSingingCounter)
+		reg.MustRegister(m.tokenSigningDurationHistogram)
 	}
 
 	return m
 }
 
 type metrics struct {
-	singedTokens          prometheus.Counter
-	signedTokensFromCache prometheus.Counter
+	tokenSigningCounter           prometheus.Counter
+	tokenSigningFromCacheCounter  prometheus.Counter
+	failedTokenSingingCounter     prometheus.Counter
+	tokenSigningDurationHistogram prometheus.Histogram
 }

@@ -3,11 +3,12 @@ package idimpl
 import (
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/authn/authntest"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/stretchr/testify/assert"
 )
 
 func Test_ProvideService(t *testing.T) {
