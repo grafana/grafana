@@ -121,7 +121,6 @@ export const GenAIButton = ({
     </Button>
   );
 
-  // @TODO Fix React warning for Tooltip ref
   const renderButtonWithToggletip = () => {
     if (hasHistory) {
       const title = <Text element="p">{toggleTipTitle}</Text>;
