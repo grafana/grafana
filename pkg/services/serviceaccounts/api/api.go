@@ -82,6 +82,12 @@ func (api *ServiceAccountsAPI) RegisterAPIEndpoints() {
 		serviceAccountsRoute.Post("/:serviceAccountId/revert/:keyId", auth(middleware.ReqOrgAdmin,
 			accesscontrol.EvalPermission(serviceaccounts.ActionDelete, serviceaccounts.ScopeID)), routing.Wrap(api.RevertApiKey))
 	})
+
+	// current service account (works only with service account token auth)
+	api.RouterRegister.Group("/api/auth/serviceaccount", func(serviceAccountsRoute routing.RouteRegister) {
+		serviceAccountsRoute.Get("/", auth(middleware.ReqOrgAdmin,
+			accesscontrol.EvalPermission(serviceaccounts.ActionRead, serviceaccounts.ScopeID)), routing.Wrap(api.CurrentServiceAcount))
+	})
 }
 
 // swagger:route POST /serviceaccounts service_accounts createServiceAccount

@@ -112,6 +112,24 @@ func (api *ServiceAccountsAPI) ListTokens(ctx *models.ReqContext) response.Respo
 	return response.JSON(http.StatusOK, result)
 }
 
+func (api *ServiceAccountsAPI) CurrentServiceAcount(ctx *models.ReqContext) response.Response {
+	if !ctx.IsServiceAccount {
+		return response.Error(http.StatusBadRequest, "Auth method is not service token type", errors.New("auth method is not service token type"))
+	}
+
+	serviceAccount, err := api.store.RetrieveServiceAccount(ctx.Req.Context(), ctx.OrgID, ctx.UserID)
+	if err != nil {
+		switch {
+		case errors.Is(err, serviceaccounts.ErrServiceAccountNotFound):
+			return response.Error(http.StatusNotFound, "Failed to retrieve service account", err)
+		default:
+			return response.Error(http.StatusInternalServerError, "Failed to retrieve service account", err)
+		}
+	}
+
+	return response.JSON(http.StatusOK, serviceAccount)
+}
+
 // swagger:route POST /serviceaccounts/{serviceAccountId}/tokens service_accounts createToken
 //
 // # CreateNewToken adds a token to a service account
