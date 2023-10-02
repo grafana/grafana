@@ -63,6 +63,7 @@ export const GenAIButton = ({
     [history]
   );
 
+  // @TODO: Find a better solution for this (isDone)
   useEffect(() => {
     if (reply !== '') {
       setResponse(reply);
