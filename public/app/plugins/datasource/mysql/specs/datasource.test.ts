@@ -12,8 +12,8 @@ import {
 import { FetchResponse, setBackendSrv } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
 import { SQLQuery } from 'app/features/plugins/sql/types';
+import { makeVariable } from 'app/features/plugins/sql/utils/testHelpers';
 import { TemplateSrv } from 'app/features/templating/template_srv';
-import { initialCustomVariableModelState } from 'app/features/variables/custom/reducer';
 
 import { MySqlDatasource } from '../MySqlDatasource';
 import { MySQLOptions } from '../types';
@@ -30,7 +30,7 @@ describe('MySQLDatasource', () => {
       },
     } as unknown as DataSourceInstanceSettings<MySQLOptions>;
     const templateSrv: TemplateSrv = new TemplateSrv();
-    const variable = { ...initialCustomVariableModelState };
+    const variable = makeVariable('id1', 'name1');
     fetchMock.mockImplementation((options) => of(createFetchResponse(response)));
 
     const ds = new MySqlDatasource(instanceSettings);

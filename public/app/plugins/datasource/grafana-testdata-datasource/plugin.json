@@ -2,6 +2,7 @@
   "type": "datasource",
   "name": "TestData",
   "id": "grafana-testdata-datasource",
+  "aliasIDs": ["testdata"],
 
   "metrics": true,
   "logs": true,

@@ -4,17 +4,23 @@ import { DashboardModel } from '../../state';
 
 import { GenAIButton } from './GenAIButton';
 import { EventSource, reportGenerateAIButtonClicked } from './tracking';
-import { Message, Role } from './utils';
+import { getDashboardPanelPrompt, Message, Role } from './utils';
 
 interface GenAIDashTitleButtonProps {
   dashboard: DashboardModel;
   onGenerate: (description: string) => void;
 }
 
-const DESCRIPTION_GENERATION_STANDARD_PROMPT =
-  'You are an expert in Grafana dashboards.' +
-  'Your goal is to write the dashboard title inspired by the title and descriptions for the dashboard panels. ' +
-  'The title must be shorter than 50 characters.';
+const TITLE_GENERATION_STANDARD_PROMPT =
+  'You are an expert in creating Grafana Dashboards.\n' +
+  'Your goal is to write a concise dashboard title.\n' +
+  "You will be given the title and description of the dashboard's panels.\n" +
+  'The dashboard title is meant to say what it shows on one line for users to navigate to it.\n' +
+  'If the dashboard has no panels, the title should be "Empty dashboard"\n' +
+  'There should be no numbers in the title.\n' +
+  'The dashboard title should not have quotation marks in it.\n' +
+  'The title should be, at most, 50 characters.\n' +
+  'Respond with only the title of the dashboard.';
 
 export const GenAIDashTitleButton = ({ onGenerate, dashboard }: GenAIDashTitleButtonProps) => {
   const messages = React.useMemo(() => getMessages(dashboard), [dashboard]);
@@ -26,19 +32,11 @@ export const GenAIDashTitleButton = ({ onGenerate, dashboard }: GenAIDashTitleBu
 function getMessages(dashboard: DashboardModel): Message[] {
   return [
     {
-      content: DESCRIPTION_GENERATION_STANDARD_PROMPT,
+      content: TITLE_GENERATION_STANDARD_PROMPT,
       role: Role.system,
     },
     {
-      content: `The panels in the dashboard are: ${dashboard.panels
-        .map(
-          (panel, idx) => `
-            - Panel ${idx}
-              - Title: ${panel.title}
-              ${panel.description ? `- Description: ${panel.description}` : ''}
-              `
-        )
-        .join('\n')}`,
+      content: `The panels in the dashboard are: ${getDashboardPanelPrompt(dashboard)}`,
       role: Role.system,
     },
   ];
