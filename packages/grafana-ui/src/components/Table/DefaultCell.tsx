@@ -2,10 +2,10 @@ import { cx } from '@emotion/css';
 import React, { ReactElement } from 'react';
 import tinycolor from 'tinycolor2';
 
-import { DisplayValue, formattedValueToString } from '@grafana/data';
-import { TableCellBackgroundDisplayMode, TableCellDisplayMode } from '@grafana/schema';
+import { DisplayValue, formattedValueToString, getFieldConfigWithMinMax, getScaleCalculator } from '@grafana/data';
+import { CellMinMaxMode, TableCellBackgroundDisplayMode, TableCellDisplayMode } from '@grafana/schema';
 
-import { useStyles2 } from '../../themes';
+import { useStyles2, useTheme2 } from '../../themes';
 import { getCellLinks, getTextColorForAlphaBackground } from '../../utils';
 import { clearLinkButtonStyles } from '../Button';
 import { DataLinksContextMenu } from '../DataLinks/DataLinksContextMenu';
@@ -17,13 +17,25 @@ import { getCellOptions } from './utils';
 
 export const DefaultCell = (props: TableCellProps) => {
   const { field, cell, tableStyles, row, cellProps, frame } = props;
+  const theme = useTheme2();
 
   const inspectEnabled = Boolean(field.config.custom?.inspect);
+  const cellOptions = getCellOptions(field);
   const displayValue = field.display!(cell.value);
+
+  if (cellOptions.type === TableCellDisplayMode.ColorText && cellOptions.minMaxMode !== CellMinMaxMode.Row) {
+    field.config = getFieldConfigWithMinMax(field, true);
+
+    // TODO: Figure out caching
+    const scaleCalc = getScaleCalculator(field, theme);
+    if (field.state) {
+      field.state.range = undefined;
+    }
+    displayValue.color = scaleCalc(displayValue.numeric).color;
+  }
 
   const showFilters = props.onCellFilterAdded && field.config.filterable;
   const showActions = (showFilters && cell.value !== undefined) || inspectEnabled;
-  const cellOptions = getCellOptions(field);
   const cellStyle = getCellStyle(tableStyles, cellOptions, displayValue, inspectEnabled);
   const hasLinks = Boolean(getCellLinks(field, row)?.length);
   const clearButtonStyle = useStyles2(clearLinkButtonStyles);

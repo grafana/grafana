@@ -10,6 +10,7 @@ import { Field, Select, TableCellDisplayMode, useStyles2 } from '@grafana/ui';
 import { INTERACTION_EVENT_NAME, INTERACTION_ITEM } from './TablePanel';
 import { BarGaugeCellOptionsEditor } from './cells/BarGaugeCellOptionsEditor';
 import { ColorBackgroundCellOptionsEditor } from './cells/ColorBackgroundCellOptionsEditor';
+import { ColorTextCellOptionsEditor } from './cells/ColorTextCellOptionsEditor';
 import { SparklineCellOptionsEditor } from './cells/SparklineCellOptionsEditor';
 
 // The props that any cell type editor are expected
@@ -72,6 +73,9 @@ export const TableCellOptionEditor = ({ value, onChange }: Props) => {
       )}
       {cellType === TableCellDisplayMode.Sparkline && (
         <SparklineCellOptionsEditor cellOptions={value} onChange={onCellOptionsChange} />
+      )}
+      {cellType === TableCellDisplayMode.ColorText && (
+        <ColorTextCellOptionsEditor cellOptions={value} onChange={onCellOptionsChange} />
       )}
     </div>
   );

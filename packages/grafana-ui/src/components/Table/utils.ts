@@ -19,7 +19,7 @@ import {
 } from '@grafana/data';
 import {
   BarGaugeDisplayMode,
-  BarGaugeMinMaxMode,
+  CellMinMaxMode,
   TableAutoCellOptions,
   TableCellBackgroundDisplayMode,
   TableCellDisplayMode,
@@ -468,7 +468,7 @@ export function migrateTableDisplayModeToCellOptions(displayMode: TableCellDispl
  */
 export function migrateBarGaugeMinMax(tableCellOptions: TableCellOptions) {
   if (tableCellOptions !== undefined && tableCellOptions.type === TableCellDisplayMode.Gauge) {
-    tableCellOptions.minMaxMode = BarGaugeMinMaxMode.Row;
+    tableCellOptions.minMaxMode = CellMinMaxMode.Row;
   }
 }
 

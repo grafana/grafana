@@ -1,10 +1,13 @@
 import React from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { TableCellBackgroundDisplayMode, TableColoredBackgroundCellOptions } from '@grafana/schema';
+import { Stack } from '@grafana/experimental';
+import { CellMinMaxMode, TableCellBackgroundDisplayMode, TableColoredBackgroundCellOptions } from '@grafana/schema';
 import { Field, RadioButtonGroup } from '@grafana/ui';
 
 import { TableCellEditorProps } from '../TableCellOptionEditor';
+
+import { minMaxModes } from './utils';
 
 const colorBackgroundOpts: Array<SelectableValue<TableCellBackgroundDisplayMode>> = [
   { value: TableCellBackgroundDisplayMode.Basic, label: 'Basic' },
@@ -21,13 +24,27 @@ export const ColorBackgroundCellOptionsEditor = ({
     onChange(cellOptions);
   };
 
+  const onMinMaxModeChange = (v: CellMinMaxMode) => {
+    cellOptions.minMaxMode = v;
+    onChange(cellOptions);
+  };
+
   return (
-    <Field label="Background display mode">
-      <RadioButtonGroup
-        value={cellOptions?.mode ?? TableCellBackgroundDisplayMode.Gradient}
-        onChange={onCellOptionsChange}
-        options={colorBackgroundOpts}
-      />
-    </Field>
+    <Stack direction="column" gap={0}>
+      <Field label="Background display mode">
+        <RadioButtonGroup
+          value={cellOptions?.mode ?? TableCellBackgroundDisplayMode.Gradient}
+          onChange={onCellOptionsChange}
+          options={colorBackgroundOpts}
+        />
+      </Field>
+      <Field label="Min/max">
+        <RadioButtonGroup
+          value={cellOptions?.minMaxMode ?? CellMinMaxMode.Field}
+          onChange={onMinMaxModeChange}
+          options={minMaxModes}
+        />
+      </Field>
+    </Stack>
   );
 };

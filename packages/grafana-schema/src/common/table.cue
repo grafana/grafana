@@ -36,6 +36,7 @@ TableAutoCellOptions: {
 // Colored text cell options
 TableColorTextCellOptions: {
 	type: TableCellDisplayMode & "color-text"
+	minMaxMode?: CellMinMaxMode
 } @cuetsy(kind="interface")
 
 // Json view cell options
@@ -52,7 +53,7 @@ TableImageCellOptions: {
 TableBarGaugeCellOptions: {
 	type: TableCellDisplayMode & "gauge"
 	mode?: BarGaugeDisplayMode
-	minMaxMode?: BarGaugeMinMaxMode
+	minMaxMode?: CellMinMaxMode
 	valueDisplayMode?: BarGaugeValueMode
 } @cuetsy(kind="interface")
 
@@ -65,6 +66,7 @@ TableSparklineCellOptions: {
 // Colored background cell options
 TableColoredBackgroundCellOptions: {
 	type: TableCellDisplayMode & "color-background"
+	minMaxMode?: CellMinMaxMode
 	mode?: TableCellBackgroundDisplayMode
 } @cuetsy(kind="interface")
 

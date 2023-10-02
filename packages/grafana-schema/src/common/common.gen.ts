@@ -636,9 +636,9 @@ export enum BarGaugeValueMode {
 }
 
 /**
- * The method to calculate the min/max for the bar gauge
+ * The method to calculate the min/max for the cells that have a range
  */
-export enum BarGaugeMinMaxMode {
+export enum CellMinMaxMode {
   Field = 'field',
   Row = 'row',
 }
@@ -725,6 +725,7 @@ export interface TableAutoCellOptions {
  * Colored text cell options
  */
 export interface TableColorTextCellOptions {
+  minMaxMode?: CellMinMaxMode;
   type: TableCellDisplayMode.ColorText;
 }
 
@@ -746,7 +747,7 @@ export interface TableImageCellOptions {
  * Gauge cell options
  */
 export interface TableBarGaugeCellOptions {
-  minMaxMode?: BarGaugeMinMaxMode;
+  minMaxMode?: CellMinMaxMode;
   mode?: BarGaugeDisplayMode;
   type: TableCellDisplayMode.Gauge;
   valueDisplayMode?: BarGaugeValueMode;
@@ -763,6 +764,7 @@ export interface TableSparklineCellOptions extends GraphFieldConfig {
  * Colored background cell options
  */
 export interface TableColoredBackgroundCellOptions {
+  minMaxMode?: CellMinMaxMode;
   mode?: TableCellBackgroundDisplayMode;
   type: TableCellDisplayMode.ColorBackground;
 }
