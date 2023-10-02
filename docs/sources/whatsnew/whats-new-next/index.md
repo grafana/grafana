@@ -1,4 +1,5 @@
 ---
+canonical: https://grafana.com/docs/grafana/latest/whatsnew/whats-new-next/
 description: Feature and improvement highlights for Grafana Cloud
 keywords:
   - grafana
