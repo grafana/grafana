@@ -88,6 +88,7 @@ describe('AzureMonitorDatasource', () => {
   describe('applyTemplateVariables', () => {
     beforeEach(() => {
       replace = (target?: string) => target || "";
+      ctx.ds = new AzureMonitorDatasource(ctx.instanceSettings);
     });
     
     it('should migrate metricDefinition to metricNamespace', () => {
@@ -116,6 +117,8 @@ describe('AzureMonitorDatasource', () => {
         }
         return target || "";
       }
+      ctx.ds = new AzureMonitorDatasource(ctx.instanceSettings);
+
       const query = createMockQuery({
         azureMonitor: {
           resourceUri: '$resourceUri',
@@ -135,14 +138,15 @@ describe('AzureMonitorDatasource', () => {
       const resourceGroup = '$rg';
       const resourceName = '$rn';
       replace = (target?: string) => {
-          if (target?.includes("$rg")) {
-            return "rg1,rg2";
-          }
-          if (target?.includes("$rn")) {
-            return "rn1,rn2";
-          }
-          return target || "";
+        if (target?.includes("$rg")) {
+          return "rg1,rg2";
         }
+        if (target?.includes("$rn")) {
+          return "rn1,rn2";
+        }
+        return target || "";
+      }
+      ctx.ds = new AzureMonitorDatasource(ctx.instanceSettings);
       const query = createMockQuery({
         azureMonitor: {
           resources: [{ resourceGroup, resourceName }],
@@ -169,6 +173,8 @@ describe('AzureMonitorDatasource', () => {
         }
         return target || "";
       }
+      ctx.ds = new AzureMonitorDatasource(ctx.instanceSettings);
+
       const query = createMockQuery({
         azureMonitor: {
           region,
@@ -195,6 +201,8 @@ describe('AzureMonitorDatasource', () => {
         }
         return target || "";
       }
+      ctx.ds = new AzureMonitorDatasource(ctx.instanceSettings);
+      
       const query = createMockQuery({
         azureMonitor: {
           metricDefinition: '$metric',
@@ -427,6 +435,17 @@ describe('AzureMonitorDatasource', () => {
         }
         return target || "";
       }
+      ctx.ds = new AzureMonitorDatasource(ctx.instanceSettings);
+      ctx.ds.azureMonitorDatasource.getResource = jest.fn().mockImplementation((path: string) => {
+        const basePath = 'azuremonitor/subscriptions/mock-subscription-id/resourceGroups/nodeapp';
+        const expected =
+          basePath +
+          '/providers/microsoft.insights/components/resource1' +
+          '/providers/microsoft.insights/metricdefinitions?api-version=2018-01-01';
+        expect(path).toBe(expected);
+        return Promise.resolve(response);
+      });
+      
       return ctx.ds.azureMonitorDatasource
         .getMetricMetadata({
           resourceUri:
@@ -445,6 +464,7 @@ describe('AzureMonitorDatasource', () => {
   describe('When performing interpolateVariablesInQueries for azure_monitor_metrics', () => {
     beforeEach(() => {
       replace = (target?: string) => target || "";
+      ctx.ds = new AzureMonitorDatasource(ctx.instanceSettings);
     });
 
     it('should return a query unchanged if no template variables are provided', () => {
@@ -492,6 +512,7 @@ describe('AzureMonitorDatasource', () => {
         }
         return target || "";
       }
+      ctx.ds = new AzureMonitorDatasource(ctx.instanceSettings);
       
       const query = createMockQuery();
       const azureMonitorQuery = {};

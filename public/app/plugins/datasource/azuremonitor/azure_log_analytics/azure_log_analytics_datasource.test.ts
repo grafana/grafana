@@ -35,13 +35,14 @@ describe('AzureLogAnalyticsDatasource', () => {
 
   describe('When performing getSchema', () => {
     beforeEach(() => {
+      getTempVars = () => [] as CustomVariableModel[];
+      replace = (target?: string) => target || '';
+      ctx = createContext();
       ctx.getResource = jest.fn().mockImplementation((path: string) => {
         expect(path).toContain('metadata');
         return Promise.resolve(FakeSchemaData.getlogAnalyticsFakeMetadata());
       });
       ctx.datasource.azureLogAnalyticsDatasource.getResource = ctx.getResource;
-      getTempVars = () => [] as CustomVariableModel[];
-      replace = (target?: string) => target || '';
     });
 
     it('should return a schema to use with monaco-kusto', async () => {
@@ -77,6 +78,12 @@ describe('AzureLogAnalyticsDatasource', () => {
 
     it('should interpolate variables when making a request for a schema with a uri that contains template variables', async () => {
       replace = () => "myWorkspace/var1-foo";
+      ctx = createContext();
+      ctx.getResource = jest.fn().mockImplementation((path: string) => {
+        expect(path).toContain('metadata');
+        return Promise.resolve(FakeSchemaData.getlogAnalyticsFakeMetadata());
+      });
+      ctx.datasource.azureLogAnalyticsDatasource.getResource = ctx.getResource;
       await ctx.datasource.azureLogAnalyticsDatasource.getKustoSchema('myWorkspace/$var1');
       expect(ctx.getResource).lastCalledWith('loganalytics/v1myWorkspace/var1-foo/metadata');
     });
@@ -96,6 +103,12 @@ describe('AzureLogAnalyticsDatasource', () => {
 
     it('should include template variables as global parameters', async () => {
       getTempVars = () => [singleVariable];
+      ctx = createContext();
+      ctx.getResource = jest.fn().mockImplementation((path: string) => {
+        expect(path).toContain('metadata');
+        return Promise.resolve(FakeSchemaData.getlogAnalyticsFakeMetadata());
+      });
+      ctx.datasource.azureLogAnalyticsDatasource.getResource = ctx.getResource;
       const result = await ctx.datasource.azureLogAnalyticsDatasource.getKustoSchema('myWorkspace');
       
       expect(result.globalScalarParameters?.map((f: { name: string }) => f.name)).toEqual([`$${singleVariable.name}`]);
@@ -227,6 +240,7 @@ describe('AzureLogAnalyticsDatasource', () => {
     beforeEach(() => {
       getTempVars = () => [] as CustomVariableModel[];
       replace = (target?: string) => target || '';
+      ctx = createContext();
     });
 
     it('should return a query unchanged if no template variables are provided', () => {
@@ -243,6 +257,7 @@ describe('AzureLogAnalyticsDatasource', () => {
         }
         return target || "";
       }
+      ctx = createContext();
       const query = createMockQuery();
       const azureLogAnalytics: Partial<AzureLogsQuery> = {};
       azureLogAnalytics.query = '$var';
@@ -264,6 +279,7 @@ describe('AzureLogAnalyticsDatasource', () => {
 
     it('should return a logs query with multiple resources template variables replaced', () => {
       replace = () => "resource1,resource2";
+      ctx = createContext();
       const query = createMockQuery();
       const azureLogAnalytics: Partial<AzureLogsQuery> = {};
       azureLogAnalytics.resources = ['$resource'];
@@ -281,6 +297,7 @@ describe('AzureLogAnalyticsDatasource', () => {
 
     it('should return a traces query with any template variables replaced', () => {
       replace = (target?: string) => target === "$var" ? "template-variable" : target || "";
+      ctx = createContext();
       const query = createMockQuery();
       const azureTraces: Partial<AzureTracesQuery> = {};
       azureTraces.resources = ['$var'];
@@ -313,6 +330,7 @@ describe('AzureLogAnalyticsDatasource', () => {
 
     it('should return a trace query with multiple resources template variables replaced', () => {
       replace = () => "resource1,resource2";
+      ctx = createContext();
       const query = createMockQuery();
       const azureTraces: Partial<AzureTracesQuery> = {};
       azureTraces.resources = ['$resource'];
