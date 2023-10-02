@@ -5,7 +5,7 @@ import { PanelModel } from '../../state';
 
 import { GenAIButton } from './GenAIButton';
 import { EventSource, reportGenerateAIButtonClicked } from './tracking';
-import { Message, QuickFeedback, Role } from './utils';
+import { Message, QuickFeedbackType, Role } from './utils';
 
 interface GenAIPanelTitleButtonProps {
   onGenerate: (title: string) => void;
@@ -55,7 +55,7 @@ function getMessages(panel: PanelModel): Message[] {
   ];
 }
 
-export const getFeedbackMessage = (previousResponse: string, feedback: QuickFeedback): Message[] => {
+export const getFeedbackMessage = (previousResponse: string, feedback: string | QuickFeedbackType): Message[] => {
   return [
     {
       role: Role.system,

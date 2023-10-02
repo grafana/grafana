@@ -4,41 +4,41 @@ import React from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Button, useStyles2 } from '@grafana/ui';
 
-import { QuickFeedback } from './utils';
+import { QuickFeedbackType } from './utils';
 
 interface QuickActionsProps {
-  onSuggestionClick: (suggestion: QuickFeedback) => void;
+  onSuggestionClick: (suggestion: QuickFeedbackType) => void;
   isGenerating: boolean;
 }
 
-export const QuickActions = ({ onSuggestionClick, isGenerating }: QuickActionsProps) => {
+export const QuickFeedback = ({ onSuggestionClick, isGenerating }: QuickActionsProps) => {
   const styles = useStyles2(getStyles);
 
   return (
     <div className={styles.quickSuggestionsWrapper}>
       <Button
-        onClick={() => onSuggestionClick(QuickFeedback.shorter)}
+        onClick={() => onSuggestionClick(QuickFeedbackType.Shorter)}
         size="sm"
         variant="secondary"
         disabled={isGenerating}
       >
-        {QuickFeedback.shorter}
+        {QuickFeedbackType.Shorter}
       </Button>
       <Button
-        onClick={() => onSuggestionClick(QuickFeedback.moreDescriptive)}
+        onClick={() => onSuggestionClick(QuickFeedbackType.MoreDescriptive)}
         size="sm"
         variant="secondary"
         disabled={isGenerating}
       >
-        {QuickFeedback.moreDescriptive}
+        {QuickFeedbackType.MoreDescriptive}
       </Button>
       <Button
-        onClick={() => onSuggestionClick(QuickFeedback.regenerate)}
+        onClick={() => onSuggestionClick(QuickFeedbackType.Regenerate)}
         size="sm"
         variant="secondary"
         disabled={isGenerating}
       >
-        {QuickFeedback.regenerate}
+        {QuickFeedbackType.Regenerate}
       </Button>
     </div>
   );

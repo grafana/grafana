@@ -6,9 +6,9 @@ import { Button, Divider, HorizontalGroup, Icon, Input, Link, Spinner, Text, use
 
 import { getFeedbackMessage } from './GenAIPanelTitleButton';
 import { GenerationHistoryCarousel } from './GenerationHistoryCarousel';
-import { QuickActions } from './QuickActions';
+import { QuickFeedback } from './QuickFeedback';
 import { useOpenAIStream } from './hooks';
-import { Message, OPEN_AI_MODEL, QuickFeedback } from './utils';
+import { Message, OPEN_AI_MODEL, QuickFeedbackType } from './utils';
 
 export interface GenAIHistoryProps {
   history: string[];
@@ -43,7 +43,7 @@ export const GenAIHistory = ({ history, messages, onApplySuggestion, updateHisto
 
   const onSubmit = (event: React.KeyboardEvent<HTMLInputElement>) => {
     if (event.key === 'Enter') {
-      onGenerateWithFeedback(event.currentTarget.value as QuickFeedback);
+      onGenerateWithFeedback(event.currentTarget.value);
     }
   };
 
@@ -55,8 +55,8 @@ export const GenAIHistory = ({ history, messages, onApplySuggestion, updateHisto
     setCurrentIndex(index);
   };
 
-  const onGenerateWithFeedback = (suggestion: QuickFeedback) => {
-    if (suggestion !== QuickFeedback.regenerate) {
+  const onGenerateWithFeedback = (suggestion: string | QuickFeedbackType) => {
+    if (suggestion !== QuickFeedbackType.Regenerate) {
       messages = [...messages, ...getFeedbackMessage(history[currentIndex], suggestion)];
     }
 
@@ -77,7 +77,7 @@ export const GenAIHistory = ({ history, messages, onApplySuggestion, updateHisto
         onKeyDown={onSubmit}
       />
       <div className={styles.actions}>
-        <QuickActions onSuggestionClick={onGenerateWithFeedback} isGenerating={isGenerating} />
+        <QuickFeedback onSuggestionClick={onGenerateWithFeedback} isGenerating={isGenerating} />
         <GenerationHistoryCarousel
           history={history}
           index={currentIndex}
