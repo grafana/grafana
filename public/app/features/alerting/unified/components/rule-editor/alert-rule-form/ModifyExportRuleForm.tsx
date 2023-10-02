@@ -1,10 +1,10 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { FormProvider, useForm, useFormContext } from 'react-hook-form';
-import { Link, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { useAsync } from 'react-use';
 
 import { Stack } from '@grafana/experimental';
-import { Button, CustomScrollbar, LoadingPlaceholder } from '@grafana/ui';
+import { Button, CustomScrollbar, LinkButton, LoadingPlaceholder } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 
@@ -67,11 +67,9 @@ export function ModifyExportRuleForm({ ruleForm, alertUid }: ModifyExportRuleFor
   }, [setShowExporter]);
 
   const actionButtons = [
-    <Link to={returnTo} key="cancel">
-      <Button size="sm" variant="secondary" onClick={() => null}>
-        Cancel
-      </Button>
-    </Link>,
+    <LinkButton href={returnTo} key="cancel" size="sm" variant="secondary">
+      Cancel
+    </LinkButton>,
     <Button key="export-rule" size="sm" onClick={formAPI.handleSubmit(() => submit('rule'))}>
       Export Rule
     </Button>,
