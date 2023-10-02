@@ -391,12 +391,10 @@ export const getStyles = (theme: GrafanaTheme2) => {
     }),
     infoContainer: css({
       border: `${theme.colors.border.strong}`,
-      // border: '1px solid #ccccdc38',
       padding: '16px',
       backgroundColor: `${theme.colors.background.secondary}`,
-      // eslint-ignore
-      // borderRadius: '8px 8px 8px 0',
-      borderRadius: `${theme.shape.radius.default}`,
+      borderRadius: `8px`,
+      borderBottomLeftRadius: 0,
     }),
     infoContainerWrapper: css({
       paddingBottom: '24px',
