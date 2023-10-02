@@ -1,4 +1,9 @@
 import React from 'react';
+import { Field } from 'src/components/Forms/Field';
+import { RadioButtonGroup } from 'src/components/Forms/RadioButtonGroup/RadioButtonGroup';
+import { Input } from 'src/components/Input/Input';
+import { Select } from 'src/components/Select/Select';
+import { graphFieldOptions } from 'src/components/uPlot/config';
 
 import {
   FieldConfigEditorBuilder,
@@ -8,8 +13,6 @@ import {
   StandardEditorProps,
 } from '@grafana/data';
 import { AxisColorMode, AxisConfig, AxisPlacement, ScaleDistribution, ScaleDistributionConfig } from '@grafana/schema';
-
-import { graphFieldOptions, Select, RadioButtonGroup, Input, Field } from '../../index';
 
 /**
  * @alpha
