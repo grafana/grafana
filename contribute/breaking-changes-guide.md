@@ -104,7 +104,7 @@ myOldFunction(name: string) {
 2. Add info in the comment about **when it is going to be removed**
 3. Add info in the comment about **what should be used instead**
 4. In case it's a function or a method, use `deprecationWarning(<file name>, <old name>, <new name>)` to raise attention during runtime as well
-5. Update the [migration guide](../docs/sources/developers/plugins/migration-guide.md) with your instructions
+5. Update the [migration guidance](/developers/plugin-tools/migration-guides/) for plugin developers with your instructions
 
 ### Communicate
 

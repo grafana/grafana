@@ -341,7 +341,7 @@ schemas: [{
 		// A proxy route used in datasource plugins for plugin authentication
 		// and adding headers to HTTP requests made by the plugin.
 		// For more information, refer to [Authentication for data source
-		// plugins](https://grafana.com/docs/grafana/latest/developers/plugins/authentication/).
+		// plugins](https://grafana.com/developers/plugin-tools/create-a-plugin/extend-a-plugin/add-authentication-for-data-source-plugins).
 		#Route: {
 			// For data source plugins. The route path that is replaced by the
 			// route URL field when proxying the call.
