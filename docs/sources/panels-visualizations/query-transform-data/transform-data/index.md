@@ -283,7 +283,11 @@ You'll get the following output:
 
 Use this transformation to remove parts of the query results.
 
-You can filter field names in three different ways.
+You can filter field names in three different ways:
+
+- [Using a regular expression](#use-a-regular-expression)
+- [Manually selecting included fields](#manually-select-included-fields)
+- [Using a dashboard variable](#use-a-dashboard-variable)
 
 #### Using a regular expression
 
