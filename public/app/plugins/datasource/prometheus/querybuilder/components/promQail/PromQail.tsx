@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { useEffect, useReducer, useState } from 'react';
+import React, { useEffect, useReducer, useRef, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Button, Checkbox, Input, Spinner, useTheme2 } from '@grafana/ui';
@@ -34,6 +34,18 @@ export const PromQail = (props: PromQailProps) => {
   const [state, dispatch] = useReducer(stateSlice.reducer, initialState(query, !skipStartingMessage));
 
   const [labelNames, setLabelNames] = useState<string[]>([]);
+
+  const responsesEndRef = useRef(null);
+
+  const scrollToBottom = () => {
+    // @ts-ignore
+    responsesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [state.interactions]);
+
   useEffect(() => {
     const fetchLabels = async () => {
       let labelsIndex: Record<string, string[]>;
@@ -333,17 +345,7 @@ export const PromQail = (props: PromQailProps) => {
           </div>
         )}
       </div>
-      {/* Query Explainer, show second drawer
-      {state.showExplainer && (
-        <Drawer width={'25%'} closeOnMaskClick={false} onClose={() => dispatch(showExplainer(false))}>
-          <div className={styles.header}>
-            <h3>Explainer</h3>
-            <Button fill="text" variant="secondary" onClick={() => dispatch(showExplainer(false))}>
-              x
-            </Button>
-          </div>
-        </Drawer>
-      )} */}
+      <div ref={responsesEndRef} />
     </div>
   );
 };
