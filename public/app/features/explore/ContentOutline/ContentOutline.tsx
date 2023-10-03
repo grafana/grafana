@@ -57,7 +57,7 @@ export function ContentOutline() {
     <div className={styles.wrapper} id="content-outline-container">
       <div className={styles.content}>
         <ContentOutlineItemButton
-          title={expanded ? 'Collapse content outline' : undefined}
+          title={expanded ? 'Collapse outline' : undefined}
           icon={expanded ? 'angle-left' : 'angle-right'}
           onClick={toggle}
           tooltip={!expanded ? 'Expand content outline' : undefined}
