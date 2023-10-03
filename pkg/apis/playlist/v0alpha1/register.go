@@ -86,7 +86,7 @@ func (b *PlaylistAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
 	return &grafanaapiserver.APIRoutes{
 		Root: []grafanaapiserver.APIRouteHandler{
 			{
-				Path: "aaa",
+				Path: "/aaa",
 				Spec: &spec3.PathProps{
 					Summary:     "an example at the root level",
 					Description: "longer description here?",

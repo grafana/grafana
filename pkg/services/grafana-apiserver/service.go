@@ -248,6 +248,9 @@ func (s *service) start(ctx context.Context) error {
 		openapi.GetOpenAPIDefinitionsWithoutDisabledFeatures(defsGetter),
 		openapinamer.NewDefinitionNamer(Scheme, scheme.Scheme))
 
+	// Add the custom routes to service discovery
+	serverConfig.OpenAPIV3Config.PostProcessSpec3 = getOpenAPIPostProcessor(builders)
+
 	serverConfig.SkipOpenAPIInstallation = false
 	serverConfig.BuildHandlerChainFunc = func(delegateHandler http.Handler, c *genericapiserver.Config) http.Handler {
 		// Call DefaultBuildHandlerChain on the main entrypoint http.Handler

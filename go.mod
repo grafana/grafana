@@ -25,6 +25,10 @@ replace go.opentelemetry.io/otel/metric => go.opentelemetry.io/otel/metric v1.16
 // import that instead of v0.X even though v0.X is newer.
 replace github.com/prometheus/prometheus => github.com/prometheus/prometheus v0.43.0
 
+// Includes https://github.com/kubernetes/kube-openapi/pull/420
+// This will not be required in the next k8s release
+replace k8s.io/kube-openapi v0.0.0-20230501164219-8b0f38b5fd1f => github.com/ryantxu/kube-openapi v0.0.0-20230824154605-fe0f3703fd8d
+
 require (
 	cloud.google.com/go/storage v1.30.1 // @grafana/backend-platform
 	cuelang.org/go v0.6.0-0.dev // @grafana/grafana-as-code
@@ -169,7 +173,7 @@ require (
 	github.com/google/btree v1.1.2 // indirect
 	github.com/google/flatbuffers v2.0.8+incompatible // indirect
 	github.com/googleapis/gax-go/v2 v2.11.0 // @grafana/backend-platform
-	github.com/gorilla/mux v1.8.0 // indirect
+	github.com/gorilla/mux v1.8.0
 	github.com/grafana/grafana-google-sdk-go v0.1.0 // @grafana/partner-datasources
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.1-0.20191002090509-6af20e3a5340 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect

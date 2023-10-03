@@ -126,3 +126,32 @@ func (h *methodNotAllowedHandler) ServeHTTP(w http.ResponseWriter, req *http.Req
 	w.WriteHeader(405) // method not allowed
 	// w.Write([]byte(fmt.Sprintf("bad method: %s", req.Method)))
 }
+
+func getOpenAPIPostProcessor(builders []APIGroupBuilder) func(*spec3.OpenAPI) (*spec3.OpenAPI, error) {
+	return func(s *spec3.OpenAPI) (*spec3.OpenAPI, error) {
+
+		// fmt.Printf("POST: %s // %v\n", s.Info.Title, maps.Keys(s.Paths.Paths))
+		for _, builder := range builders {
+			routes := builder.GetAPIRoutes()
+			if routes == nil {
+				continue
+			}
+
+			gv := builder.GetGroupVersion()
+			prefix := "/apis/" + gv.String() // ???? k8s prefix!!!
+			if s.Paths != nil && s.Paths.Paths[prefix] != nil {
+				copy := *s // will copy the rest of the properties
+				copy.Info.Title = "Grafana API server: " + gv.Group
+
+				for _, route := range routes.Root {
+					copy.Paths.Paths[prefix+route.Path] = &spec3.Path{
+						PathProps: *route.Spec,
+					}
+				}
+
+				return &copy, nil
+			}
+		}
+		return s, nil
+	}
+}

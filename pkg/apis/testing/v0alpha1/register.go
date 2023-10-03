@@ -77,7 +77,7 @@ func (b *TestingAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
 	return &grafanaapiserver.APIRoutes{
 		Root: []grafanaapiserver.APIRouteHandler{
 			{
-				Path: "aaa",
+				Path: "/aaa",
 				Spec: &spec3.PathProps{
 					Summary:     "an example at the root level",
 					Description: "longer description here?",
@@ -96,7 +96,7 @@ func (b *TestingAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
 				},
 			},
 			{
-				Path: "bbb",
+				Path: "/bbb",
 				Spec: &spec3.PathProps{
 					Summary:     "an example at the root level",
 					Description: "longer description here?",
@@ -104,7 +104,7 @@ func (b *TestingAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
 						OperationProps: spec3.OperationProps{
 							Parameters: []*spec3.Parameter{
 								{ParameterProps: spec3.ParameterProps{
-									Name: "a",
+									Name: "b",
 								}},
 							},
 						},
