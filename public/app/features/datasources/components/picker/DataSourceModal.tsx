@@ -144,7 +144,7 @@ export function DataSourceModal({
 
   return (
     <Modal
-      title={t('data-source-picker.modal-title', 'Select data source')}
+      title={t('data-source-picker.modal.title', 'Select data source')}
       closeOnEscape={true}
       closeOnBackdropClick={true}
       isOpen={true}
@@ -160,7 +160,7 @@ export function DataSourceModal({
           className={styles.searchInput}
           value={search}
           prefix={<Icon name="search" />}
-          placeholder={t('data-source-picker.input-placeholder', 'Select data source')}
+          placeholder={t('data-source-picker.modal.input-placeholder', 'Select data source')}
           onChange={(e) => {
             setSearch(e.currentTarget.value);
             reportSearchUsageOnce();
@@ -213,7 +213,7 @@ export function DataSourceModal({
         </div>
         <div className={styles.newDSSection}>
           <span className={styles.newDSDescription}>
-            <Trans i18nKey="data-source-picker.configure-new-data-source">
+            <Trans i18nKey="data-source-picker.modal.configure-new-data-source">
               Open a new tab and configure a data source
             </Trans>
           </span>

@@ -222,12 +222,14 @@
       "description-grafana": "Discover visualizations using mock data",
       "description-mixed": "Use multiple data sources"
     },
-    "configure-new-data-source": "Open a new tab and configure a data source",
-    "input-placeholder": "Select data source",
     "list": {
       "no-data-source-message": "No data sources found"
     },
-    "modal-title": "Select data source",
+    "modal": {
+      "title": "Select data source",
+      "input-placeholder": "Select data source",
+      "configure-new-data-source": "Open a new tab and configure a data source"
+    },
     "open-advanced-button": "Open advanced data source picker"
   },
   "data-sources": {
