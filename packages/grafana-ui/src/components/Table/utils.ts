@@ -484,13 +484,18 @@ export function migrateTableDisplayModeToCellOptions(displayMode: TableCellDispl
 }
 
 /**
- * Migrates old table cell options minMaxMode to BarGaugeMinMaxMode.Row which was the old default.
+ * Migrates old table cell options minMaxMode to minMaxMode.Row which was the old default.
  *
  * @param tableCellOptions Table cell options to be updated
  */
-export function migrateBarGaugeMinMax(tableCellOptions: TableCellOptions) {
-  if (tableCellOptions !== undefined && tableCellOptions.type === TableCellDisplayMode.Gauge) {
-    tableCellOptions.minMaxMode = CellMinMaxMode.Row;
+export function migrateCellMinMax(tableCellOptions: TableCellOptions) {
+  if (tableCellOptions !== undefined) {
+    switch (tableCellOptions.type) {
+      case TableCellDisplayMode.Gauge:
+      case TableCellDisplayMode.ColorBackground:
+      case TableCellDisplayMode.ColorText:
+        tableCellOptions.minMaxMode = CellMinMaxMode.Row;
+    }
   }
 }
 

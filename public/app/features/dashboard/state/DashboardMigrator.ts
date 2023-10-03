@@ -28,7 +28,7 @@ import { mergeTransformer } from '@grafana/data/src/transformations/transformers
 import { getDataSourceSrv, setDataSourceSrv } from '@grafana/runtime';
 import { DataTransformerConfig, TableCellOptions } from '@grafana/schema';
 import { AxisPlacement, GraphFieldConfig } from '@grafana/ui';
-import { migrateTableDisplayModeToCellOptions, migrateBarGaugeMinMax } from '@grafana/ui/src/components/Table/utils';
+import { migrateTableDisplayModeToCellOptions, migrateCellMinMax } from '@grafana/ui/src/components/Table/utils';
 import { getAllOptionEditors, getAllStandardFieldConfigs } from 'app/core/components/OptionsUI/registry';
 import { config } from 'app/core/config';
 import {
@@ -854,14 +854,14 @@ export class DashboardMigrator {
         if (panel.type === 'table' && panel.fieldConfig !== undefined) {
           const tableCellOptions = panel.fieldConfig.defaults?.custom?.cellOptions as TableCellOptions;
 
-          migrateBarGaugeMinMax(tableCellOptions);
+          migrateCellMinMax(tableCellOptions);
           // Update overrides
           if (panel.fieldConfig?.overrides) {
             for (const override of panel.fieldConfig.overrides) {
               for (let j = 0; j < override.properties?.length ?? 0; j++) {
                 if (override.properties[j].id === 'custom.cellOptions') {
                   let overrideCellOptions = override.properties[j].value as TableCellOptions;
-                  migrateBarGaugeMinMax(overrideCellOptions);
+                  migrateCellMinMax(overrideCellOptions);
                 }
               }
             }
