@@ -7,7 +7,8 @@ export function buildTooltipTheme(
   tooltipBg: string,
   toggletipBorder: string,
   tooltipText: string,
-  tooltipPadding: { topBottom: number; rightLeft: number }
+  tooltipPadding: { topBottom: number; rightLeft: number },
+  maxWidth?: number
 ) {
   return {
     arrow: css({
@@ -45,7 +46,7 @@ export function buildTooltipTheme(
       padding: theme.spacing(tooltipPadding.topBottom, tooltipPadding.rightLeft),
       transition: 'opacity 0.3s',
       zIndex: theme.zIndex.tooltip,
-      maxWidth: '550px',
+      maxWidth: maxWidth ? `${maxWidth}px` : '400px',
       overflowWrap: 'break-word',
 
       "&[data-popper-interactive='false']": {

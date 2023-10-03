@@ -30,6 +30,8 @@ export interface ToggletipProps {
   children: JSX.Element;
   /** Determine whether the toggletip should fit its content or not */
   fitContent?: boolean;
+  /** The maximum width of the toggletip */
+  maxWidth?: number;
 }
 
 export const Toggletip = React.memo(
@@ -43,8 +45,9 @@ export const Toggletip = React.memo(
     onClose,
     footer,
     fitContent = false,
+    maxWidth = 400,
   }: ToggletipProps) => {
-    const styles = useStyles2(getStyles);
+    const styles = useStyles2(getStyles, maxWidth);
     const style = styles[theme];
     const contentRef = useRef(null);
     const [controlledVisible, setControlledVisible] = React.useState(false);
@@ -135,20 +138,22 @@ export const Toggletip = React.memo(
 
 Toggletip.displayName = 'Toggletip';
 
-export const getStyles = (theme: GrafanaTheme2) => {
+export const getStyles = (theme: GrafanaTheme2, maxWidth: number) => {
   const info = buildTooltipTheme(
     theme,
     theme.components.tooltip.background,
     theme.components.tooltip.background,
     theme.components.tooltip.text,
-    { topBottom: 2, rightLeft: 2 }
+    { topBottom: 2, rightLeft: 2 },
+    maxWidth
   );
   const error = buildTooltipTheme(
     theme,
     theme.colors.error.main,
     theme.colors.error.main,
     theme.colors.error.contrastText,
-    { topBottom: 2, rightLeft: 2 }
+    { topBottom: 2, rightLeft: 2 },
+    maxWidth
   );
 
   return {
