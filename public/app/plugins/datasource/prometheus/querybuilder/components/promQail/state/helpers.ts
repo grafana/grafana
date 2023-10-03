@@ -24,14 +24,14 @@ const promQLTemplatesCollection = 'grafana.promql.templates';
 const { updateInteraction } = stateSlice.actions;
 
 const commonTemplateSuggestions: string[] = [
-	"metric{}",
-	"rate(metric{}[1m])",
-	"increase(metric{}[1m])",
-	"count(metric{})",
-	"max(metric{})",
-	"avg(metric{})",
-	"sum(metric{})",
-	"sum(rate(metric{}[1m]))",
+  'metric{}',
+  'rate(metric{}[1m])',
+  'increase(metric{}[1m])',
+  'count(metric{})',
+  'max(metric{})',
+  'avg(metric{})',
+  'sum(metric{})',
+  'sum(rate(metric{}[1m]))',
 ];
 
 interface TemplateSearchResult {
@@ -73,7 +73,6 @@ export async function promQailExplain(
   datasource: PrometheusDatasource
 ) {
   // const enabled = await llms.openai.enabled();
-
   // if (!enabled) {
   //   return false;
   // }
@@ -157,12 +156,17 @@ export async function promQailSuggest(
   if (!check || interactionToUpdate.suggestionType === SuggestionType.Historical) {
     return new Promise<void>((resolve) => {
       return setTimeout(() => {
-        const suggestions = commonTemplateSuggestions.map(suggestion => {
-          return {
-            query: suggestion.replace('metric', query.metric).replace('{}', promQueryModeller.renderLabels(query.labels)),
-            explanation: '',
-          };
-        }).sort(() => Math.random() - 0.5).slice(0, 5);
+        const suggestions = commonTemplateSuggestions
+          .map((suggestion) => {
+            return {
+              query: suggestion
+                .replace('metric', query.metric)
+                .replace('{}', promQueryModeller.renderLabels(query.labels)),
+              explanation: '',
+            };
+          })
+          .sort(() => Math.random() - 0.5)
+          .slice(0, 5);
 
         const payload = {
           idx,
@@ -197,7 +201,11 @@ export async function promQailSuggest(
       // TODO: handle errors from vector search
     }
 
-    const resultsString = results.map(r => { return `PromQL: ${r.payload.promql}\nDescription: ${r.payload.description}`}).join('\n')
+    const resultsString = results
+      .map((r) => {
+        return `PromQL: ${r.payload.promql}\nDescription: ${r.payload.description}`;
+      })
+      .join('\n');
 
     const promptMessages = getSuggestMessage({
       promql: query.metric,
