@@ -48,7 +48,7 @@ import { getPanelChromeProps } from '../utils/getPanelChromeProps';
 import { loadSnapshotData } from '../utils/loadSnapshotData';
 
 import { PanelHeaderMenuWrapper } from './PanelHeader/PanelHeaderMenuWrapper';
-import { PanelPerformanceMonitor } from './PanelPerformanceMonitor';
+import { PanelLoadTimeMonitor } from './PanelLoadTimeMonitor';
 import { seriesVisibilityConfigFactory } from './SeriesVisibilityConfigFactory';
 import { liveTimer } from './liveTimer';
 
@@ -515,7 +515,7 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
             eventBus={dashboard.events}
           />
           {config.featureToggles.panelMonitoring && (
-            <PanelPerformanceMonitor panelType={plugin.meta.id} panelId={panel.id} panelTitle={panel.title} />
+            <PanelLoadTimeMonitor panelType={plugin.meta.id} panelId={panel.id} panelTitle={panel.title} />
           )}
         </PanelContextProvider>
       </>

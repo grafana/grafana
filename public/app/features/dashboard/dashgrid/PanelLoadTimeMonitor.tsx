@@ -10,7 +10,7 @@ interface Props {
   panelTitle: string;
 }
 
-export const PanelPerformanceMonitor = (props: Props) => {
+export const PanelLoadTimeMonitor = (props: Props) => {
   const startLoadTime = performance.now();
 
   useEffect(() => {
