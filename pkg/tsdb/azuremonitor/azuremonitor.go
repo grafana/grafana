@@ -17,7 +17,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/resource/httpadapter"
 
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/loganalytics"
@@ -26,13 +25,12 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
 )
 
-func ProvideService(cfg *setting.Cfg, httpClientProvider *httpclient.Provider, features featuremgmt.FeatureToggles, tracer tracing.Tracer) *Service {
+func ProvideService(cfg *setting.Cfg, httpClientProvider *httpclient.Provider, features featuremgmt.FeatureToggles) *Service {
 	proxy := &httpServiceProxy{}
 	executors := map[string]azDatasourceExecutor{
 		azureMonitor:       &metrics.AzureMonitorDatasource{Proxy: proxy, Features: features},
 		azureLogAnalytics:  &loganalytics.AzureLogAnalyticsDatasource{Proxy: proxy},
 		azureResourceGraph: &resourcegraph.AzureResourceGraphDatasource{Proxy: proxy},
-		azureTraces:        &loganalytics.AzureLogAnalyticsDatasource{Proxy: proxy},
 	}
 
 	im := datasource.NewInstanceManager(NewInstanceSettings(cfg, httpClientProvider, executors))
@@ -44,7 +42,7 @@ func ProvideService(cfg *setting.Cfg, httpClientProvider *httpclient.Provider, f
 
 	s.queryMux = s.newQueryMux()
 	s.resourceHandler = httpadapter.New(s.newResourceMux())
-	
+
 	return s
 }
 
