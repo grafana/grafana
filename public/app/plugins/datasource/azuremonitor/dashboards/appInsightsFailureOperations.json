@@ -70,7 +70,7 @@
       }
     ]
   },
-  "description": "The dashboard provides insights of Azure Apps via different metrics for app monitoring through Application Insights.",
+  "description": "The dashboard provides insights of operation failures through Application Insights.",
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
@@ -136,7 +136,6 @@
         "type": "grafana-azure-monitor-datasource",
         "uid": "${DS_AZURE_MONITOR}"
       },
-      "description": "The resource path for this panel uses multiple template variables which requires modifying the dashboard JSON directly. If you would like to do something similar please go to Settings > JSON Model. Edit as you'd like in your new copy by going to Settings > Save as.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -300,7 +299,7 @@
       "targets": [
         {
           "azureLogAnalytics": {
-            "query": "\nrequests\n// additional filters can be applied here\n| where $__timeFilter(timestamp)\n| where operation_Name in ($failed_operation_name)\n| where resultCode in ($result_code)\n| summarize FailedCount=sumif(itemCount, success == false) by bin(timestamp, $__interval)\n| order by timestamp asc\n\n",
+            "query": "\nrequests\n// additional filters can be applied here\n| where $__timeFilter(timestamp)\n| where operation_Name in ($operation_name)\n| where resultCode in ($result_code)\n| summarize FailedCount=sumif(itemCount, success == false) by bin(timestamp, $__interval)\n| order by timestamp asc\n\n",
             "resources": [
               "/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$res"
             ],
@@ -325,7 +324,7 @@
         "type": "grafana-azure-monitor-datasource",
         "uid": "${DS_AZURE_MONITOR}"
       },
-      "description": "The resource path for this panel uses multiple template variables which requires modifying the dashboard JSON directly. If you would like to do something similar please go to Settings > JSON Model. Edit as you'd like in your new copy by going to Settings > Save as.",
+      "description": "Click on a result code to filter this dashboard.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -343,7 +342,7 @@
             {
               "targetBlank": false,
               "title": "Filter Result code",
-              "url": "/d/Azure-AI-Analysis-Failures?${ds:queryparam}&${sub:queryparam}&${rg:queryparam}&${ns:queryparam}&${res:queryparam}&var_result_code=${__data.fields.resultCode}"
+              "url": "/d/Azure-AppInsights-Failures-Operations/?${ds:queryparam}&${sub:queryparam}&${rg:queryparam}&${ns:queryparam}&${res:queryparam}&${operation_name:queryparam}&var-result_code=${__data.fields[\"Result Code\"]}"
             }
           ],
           "mappings": [],
@@ -394,7 +393,7 @@
                 "value": [
                   {
                     "title": "Filter result code",
-                    "url": "/d/Azure-AI-Analysis-Failures?${ds:queryparam}&${sub:queryparam}&${rg:queryparam}&${ns:queryparam}&${res:queryparam}&var-result_code=${__data.fields.resultCode}"
+                    "url": "/d/Azure-AppInsights-Failures-Operations/?${ds:queryparam}&${sub:queryparam}&${rg:queryparam}&${ns:queryparam}&${res:queryparam}&${operation_name:queryparam}&var-result_code=${__data.fields[\"Result Code\"]}"
                   }
                 ]
               }
@@ -429,7 +428,7 @@
       "targets": [
         {
           "azureLogAnalytics": {
-            "query": "\nrequests\n// additional filters can be applied here\n| where $__timeFilter(timestamp)\n| where client_Type != \"Browser\"\n| where success == false\n| where operation_Name in ($failed_operation_name)\n| summarize Count=sum(itemCount) by [\"Result Code\"]=resultCode\n| top 5 by Count desc\n\n",
+            "query": "\nrequests\n// additional filters can be applied here\n| where $__timeFilter(timestamp)\n| where client_Type != \"Browser\"\n| where success == false\n| where operation_Name in ($operation_name)\n| summarize Count=sum(itemCount) by [\"Result Code\"]=resultCode\n| top 5 by Count desc\n\n",
             "resources": [
               "/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$res"
             ],
@@ -454,7 +453,7 @@
         "type": "grafana-azure-monitor-datasource",
         "uid": "${DS_AZURE_MONITOR}"
       },
-      "description": "The resource path for this panel uses multiple template variables which requires modifying the dashboard JSON directly. If you would like to do something similar please go to Settings > JSON Model. Edit as you'd like in your new copy by going to Settings > Save as.",
+      "description": "Click on an type to open the exceptions dashboard.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -580,7 +579,6 @@
         "type": "grafana-azure-monitor-datasource",
         "uid": "${DS_AZURE_MONITOR}"
       },
-      "description": "The resource path for this panel uses multiple template variables which requires modifying the dashboard JSON directly. If you would like to do something similar please go to Settings > JSON Model. Edit as you'd like in your new copy by going to Settings > Save as.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -617,13 +615,7 @@
               "mode": "off"
             }
           },
-          "links": [
-            {
-              "targetBlank": false,
-              "title": "Show list of sample transactions",
-              "url": "/d/1M41p4nVk/azure-insights-applications-performance-kayode?orgId=1&var-ds=Azure%20Monitor%20-%20Contoso%20Hotels&var-sub=ebb79bc0-aa86-44a7-8111-cabbe0c43993&var-rg=CH1-FabrikamRG&var-ns=Microsoft.Insights%2Fcomponents&var-res=CH1-RetailAppAI&from=now-1h&to=now&var-operation_Name=${__data.fields.operation_Name}"
-            }
-          ],
+          "links": [],
           "mappings": [],
           "noValue": "--",
           "thresholds": {
@@ -710,7 +702,7 @@
       "targets": [
         {
           "azureLogAnalytics": {
-            "query": "\nrequests\n// additional filters can be applied here\n| where $__timeFilter(timestamp)\n| where operation_Name in ($failed_operation_name)\n| where resultCode in ($result_code)\n| where client_Type != \"Browser\"\n| where success == false\n| summarize ResultCode = sum(itemCount) by resultCode, bin(timestamp, $__interval)\n| sort by timestamp asc\n\n",
+            "query": "\nrequests\n// additional filters can be applied here\n| where $__timeFilter(timestamp)\n| where operation_Name in ($operation_name)\n| where resultCode in ($result_code)\n| where client_Type != \"Browser\"\n| where success == false\n| summarize ResultCode = sum(itemCount) by resultCode, bin(timestamp, $__interval)\n| sort by timestamp asc\n\n",
             "resources": [
               "/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$res"
             ],
@@ -726,7 +718,7 @@
           "subscriptions": []
         }
       ],
-      "title": "Response codes",
+      "title": "Response codes (count)",
       "transformations": [],
       "type": "timeseries"
     },
@@ -735,7 +727,6 @@
         "type": "grafana-azure-monitor-datasource",
         "uid": "${DS_AZURE_MONITOR}"
       },
-      "description": "The resource path for this panel uses multiple template variables which requires modifying the dashboard JSON directly. If you would like to do something similar please go to Settings > JSON Model. Edit as you'd like in your new copy by going to Settings > Save as.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -804,7 +795,7 @@
                   {
                     "targetBlank": true,
                     "title": "Open Dependencies Dashboard",
-                    "url": "/d/Azure-AppInsights-Failures-Dependencies/?${__all_variables}"
+                    "url": "/d/Azure-AppInsights-Failures-Dependencies/?${ds:queryparam}&${sub:queryparam}&${rg:queryparam}&${ns:queryparam}&${res:queryparam}"
                   }
                 ]
               }
@@ -864,7 +855,6 @@
         "type": "grafana-azure-monitor-datasource",
         "uid": "${DS_AZURE_MONITOR}"
       },
-      "description": "The resource path for this panel uses multiple template variables which requires modifying the dashboard JSON directly. If you would like to do something similar please go to Settings > JSON Model. Edit as you'd like in your new copy by going to Settings > Save as.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -975,13 +965,7 @@
       },
       "id": 70,
       "interval": "60s",
-      "links": [
-        {
-          "targetBlank": true,
-          "title": "${res} | Users",
-          "url": "https://ms.portal.azure.com/#@microsoft.onmicrosoft.com/resource/subscriptions/${sub}/resourceGroups/${rg}/providers/microsoft.insights/components/${res}/segmentationUsers"
-        }
-      ],
+      "links": [],
       "maxDataPoints": 150,
       "options": {
         "legend": {
@@ -998,7 +982,7 @@
       "targets": [
         {
           "azureLogAnalytics": {
-            "query": "\nrequests\n// additional filters can be applied here\n| where $__timeFilter(timestamp)\n| where client_Type != \"Browser\"\n| where operation_Name in ($failed_operation_name)\n| where resultCode in ($result_code)\n// calculate average request duration for all requests\n| summarize Count = count() by bin(timestamp, $__interval)\n| order by timestamp asc\n\n",
+            "query": "\nrequests\n// additional filters can be applied here\n| where $__timeFilter(timestamp)\n| where client_Type != \"Browser\"\n| where operation_Name in ($operation_name)\n| where resultCode in ($result_code)\n// calculate average request duration for all requests\n| summarize Count = count() by bin(timestamp, $__interval)\n| order by timestamp asc\n\n",
             "resources": [
               "/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$res"
             ],
@@ -1023,7 +1007,6 @@
         "type": "grafana-azure-monitor-datasource",
         "uid": "${DS_AZURE_MONITOR}"
       },
-      "description": "The resource path for this panel uses multiple template variables which requires modifying the dashboard JSON directly. If you would like to do something similar please go to Settings > JSON Model. Edit as you'd like in your new copy by going to Settings > Save as.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1032,8 +1015,8 @@
           },
           "links": [
             {
-              "title": "Reset to All Top 10 Failed Operation Names",
-              "url": "/d/ElCsza74z/azure-insights-applications-analysis?orgId=1&var-ds=Azure%20Monitor%20-%20Contoso%20Hotels&var-sub=ebb79bc0-aa86-44a7-8111-cabbe0c43993&var-rg=CH1-FabrikamRG&var-ns=Microsoft.Insights%2Fcomponents&var-res=CH1-RetailAppAI&from=now-1h&to=now&var-failed_operation_name=All"
+              "title": "Reset to All Operations and All Result codes",
+              "url": "/d/Azure-AppInsights-Failures-Operations/?${ds:queryparam}&${sub:queryparam}&${rg:queryparam}&${ns:queryparam}&${res:queryparam}&var-result_code=All${result_code:queryparam}&var-operation_name=All"
             }
           ],
           "mappings": [],
@@ -1042,7 +1025,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": null
               },
               {
                 "color": "red",
@@ -1063,8 +1047,8 @@
       "interval": "60s",
       "links": [
         {
-          "title": "Reset to All Top 10 Failed Operation Names",
-          "url": "/d/ElCsza74z/azure-insights-applications-analysis?orgId=1&var-ds=Azure%20Monitor%20-%20Contoso%20Hotels&var-sub=ebb79bc0-aa86-44a7-8111-cabbe0c43993&var-rg=CH1-FabrikamRG&var-ns=Microsoft.Insights%2Fcomponents&var-res=CH1-RetailAppAI&from=now-1h&to=now&var-failed_operation_name=All"
+          "title": "Reset to All Operation Names and All Result codes",
+          "url": "/d/Azure-AppInsights-Failures-Operations/?${ds:queryparam}&${sub:queryparam}&${rg:queryparam}&${ns:queryparam}&${res:queryparam}&var-result_code=All${result_code:queryparam}&var-operation_name=All"
         }
       ],
       "maxDataPoints": 150,
@@ -1102,7 +1086,7 @@
           "subscriptions": []
         }
       ],
-      "title": "All Top 10 Failed Operations (Count)",
+      "title": "All Failed Operations (Count) matching Result code $result_code",
       "transformations": [],
       "type": "stat"
     },
@@ -1111,7 +1095,6 @@
         "type": "grafana-azure-monitor-datasource",
         "uid": "${DS_AZURE_MONITOR}"
       },
-      "description": "The resource path for this panel uses multiple template variables which requires modifying the dashboard JSON directly. If you would like to do something similar please go to Settings > JSON Model. Edit as you'd like in your new copy by going to Settings > Save as.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1124,12 +1107,25 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "dark-red"
+                "color": "dark-red",
+                "value": null
               }
             ]
           }
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "failedCount"
+            },
+            "properties": [
+              {
+                "id": "links"
+              }
+            ]
+          }
+        ]
       },
       "gridPos": {
         "h": 3,
@@ -1159,7 +1155,7 @@
       "targets": [
         {
           "azureLogAnalytics": {
-            "query": "requests\n// additional filters can be applied here\n| where $__timeFilter(timestamp)\n| where resultCode in ($result_code)\n| where client_Type != \"Browser\"\n| where operation_Name in ($failed_operation_name)\n| summarize failedCount=sumif(itemCount, success == false)\n\n\n",
+            "query": "requests\n// additional filters can be applied here\n| where $__timeFilter(timestamp)\n| where resultCode in ($result_code)\n| where client_Type != \"Browser\"\n| where operation_Name in ($operation_name)\n| summarize failedCount=sumif(itemCount, success == false)\n\n\n",
             "resources": [
               "/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$res"
             ],
@@ -1175,7 +1171,7 @@
           "subscriptions": []
         }
       ],
-      "title": "Number of failed transactions matching $failed_operation_name",
+      "title": "Number of failed transactions matching $operation_name",
       "transformations": [],
       "type": "stat"
     },
@@ -1184,7 +1180,7 @@
         "type": "grafana-azure-monitor-datasource",
         "uid": "${DS_AZURE_MONITOR}"
       },
-      "description": "The resource path for this panel uses multiple template variables which requires modifying the dashboard JSON directly. If you would like to do something similar please go to Settings > JSON Model. Edit as you'd like in your new copy by going to Settings > Save as.",
+      "description": "Click on the Operation name to filter dashboard.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1210,7 +1206,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": null
               }
             ]
           }
@@ -1318,7 +1315,7 @@
                 "value": [
                   {
                     "title": "Filter dashboard to this failing operation",
-                    "url": "/d/Azure-AI-Analysis-Failures/?&${ds:queryparam}&${sub:queryparam}&${rg:queryparam}&${ns:queryparam}&${ns:queryparam}&var-failed_operation_name=${__data.fields.operation_Name}&${result_code:queryparam}"
+                    "url": "/d/Azure-AppInsights-Failures-Operations/?&${ds:queryparam}&${sub:queryparam}&${rg:queryparam}&${ns:queryparam}&${ns:queryparam}&var-operation_name=${__data.fields.operation_Name}&${result_code:queryparam}"
                   }
                 ]
               }
@@ -1383,7 +1380,7 @@
         "type": "grafana-azure-monitor-datasource",
         "uid": "${DS_AZURE_MONITOR}"
       },
-      "description": "The resource path for this panel uses multiple template variables which requires modifying the dashboard JSON directly. If you would like to do something similar please go to Settings > JSON Model. Edit as you'd like in your new copy by going to Settings > Save as.",
+      "description": "Click on the OperationID or Name to view trace details in explorer.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1403,7 +1400,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": null
               }
             ]
           }
@@ -1572,7 +1570,7 @@
       "targets": [
         {
           "azureLogAnalytics": {
-            "query": "let min_length_8 = (s: string) {\n    let len = strlen(s);\n    case(len == 1, strcat(s, s, s, s, s, s, s, s),\n        len == 2 or len == 3, strcat(s, s, s, s),\n        len == 4 or len == 5 or len == 6 or len == 7, strcat(s, s),\n        s)\n};\nlet ai_hash = (s: string) {\n    abs(toint(__hash_djb2(min_length_8(s))))\n};\n\nrequests\n// additional filters can be applied here\n| where $__timeFilter(timestamp)\n| where operation_Name in ($failed_operation_name)\n| where resultCode in ($result_code)\n| where success == 'False'\n| project Name = operation_Name, [\"Response Code\"] = resultCode, [\"Response Time\"] = duration, OperationID = operation_Id, Score=ai_hash(operation_Id)\n| top 20 by Score asc\n\n\n",
+            "query": "let min_length_8 = (s: string) {\n    let len = strlen(s);\n    case(len == 1, strcat(s, s, s, s, s, s, s, s),\n        len == 2 or len == 3, strcat(s, s, s, s),\n        len == 4 or len == 5 or len == 6 or len == 7, strcat(s, s),\n        s)\n};\nlet ai_hash = (s: string) {\n    abs(toint(__hash_djb2(min_length_8(s))))\n};\n\nrequests\n// additional filters can be applied here\n| where $__timeFilter(timestamp)\n| where operation_Name in ($operation_name)\n| where resultCode in ($result_code)\n| where success == 'False'\n| project Name = operation_Name, [\"Response Code\"] = resultCode, [\"Response Time\"] = duration, OperationID = operation_Id, Score=ai_hash(operation_Id)\n| top 20 by Score asc\n\n\n",
             "resources": [
               "/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$res"
             ],
@@ -1588,7 +1586,7 @@
           "subscriptions": []
         }
       ],
-      "title": "Top 20 Sample Failed Operations matching $failed_operation_name by relevance",
+      "title": "Top 20 Sample Failed Operations matching $operation_name by relevance",
       "transformations": [],
       "type": "table"
     }
@@ -1750,7 +1748,7 @@
           },
           "queryType": "Azure Log Analytics",
           "refId": "A",
-          "subscription": "ebb79bc0-aa86-44a7-8111-cabbe0c43993"
+          "subscription": "$sub"
         },
         "refresh": 1,
         "regex": "",
@@ -1769,7 +1767,7 @@
         "includeAll": true,
         "label": "Operation Names",
         "multi": true,
-        "name": "failed_operation_name",
+        "name": "operation_name",
         "options": [],
         "query": {
           "azureLogAnalytics": {
@@ -1781,7 +1779,7 @@
           },
           "queryType": "Azure Log Analytics",
           "refId": "A",
-          "subscription": "ebb79bc0-aa86-44a7-8111-cabbe0c43993"
+          "subscription": "$sub"
         },
         "refresh": 1,
         "regex": "",
@@ -1792,13 +1790,12 @@
     ]
   },
   "time": {
-    "from": "now-2h",
-    "to": "now-1h"
+    "from": "now-45m",
+    "to": "now-15m"
   },
   "timepicker": {},
-  "timezone": "utc",
-  "title": "Azure / Insights / Applications - Failures - Operations",
-  "uid": "Azure-AI-Analysis-Failures",
-  "version": 102,
-  "weekStart": ""
+  "timezone": "",
+  "title": "Azure / Insights / Applications - Failures - 1. Operations",
+  "uid": "Azure-AppInsights-Failures-Operations",
+  "version": 127
 }

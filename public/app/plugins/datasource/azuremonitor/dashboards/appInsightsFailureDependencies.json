@@ -70,7 +70,7 @@
       }
     ]
   },
-  "description": "The dashboard provides insights of Azure Apps via different metrics for app monitoring through Application Insights.",
+  "description": "The dashboard provides insights of dependency failures through Application Insights.",
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
@@ -136,7 +136,6 @@
         "type": "grafana-azure-monitor-datasource",
         "uid": "${DS_AZURE_MONITOR}"
       },
-      "description": "The resource path for this panel uses multiple template variables which requires modifying the dashboard JSON directly. If you would like to do something similar please go to Settings > JSON Model. Edit as you'd like in your new copy by going to Settings > Save as.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -277,13 +276,7 @@
       },
       "id": 80,
       "interval": "60s",
-      "links": [
-        {
-          "targetBlank": true,
-          "title": "${res} | Users",
-          "url": "https://ms.portal.azure.com/#@microsoft.onmicrosoft.com/resource/subscriptions/${sub}/resourceGroups/${rg}/providers/microsoft.insights/components/${res}/segmentationUsers"
-        }
-      ],
+      "links": [],
       "maxDataPoints": 150,
       "options": {
         "legend": {
@@ -300,7 +293,7 @@
       "targets": [
         {
           "azureLogAnalytics": {
-            "query": "dependencies\n// additional filters can be applied here\n| where $__timeFilter(timestamp)\n| where client_Type != \"Browser\"\n| where resultCode in ($dependencies_result_code)\n| extend type=iff(tolower(type) == \"http (tracked component)\", \"HTTP\", type), target=tostring(split(target, \" | cid-v1\")[0])\n| extend [\"Dependency Name\"] = strcat(type, \": \", name, \" \", target)\n| where [\"Dependency Name\"] in ($dependency)\n| summarize FailedCount=sumif(itemCount, success == false) by bin(timestamp, $__interval)\n| order by timestamp asc\n\n",
+            "query": "dependencies\n// additional filters can be applied here\n| where $__timeFilter(timestamp)\n| where client_Type != \"Browser\"\n| where resultCode in ($dependency_result_code)\n| extend type=iff(tolower(type) == \"http (tracked component)\", \"HTTP\", type), target=tostring(split(target, \" | cid-v1\")[0])\n| extend [\"Dependency Name\"] = strcat(type, \": \", name, \" \", target)\n| where [\"Dependency Name\"] in ($dependency)\n| summarize FailedCount=sumif(itemCount, success == false) by bin(timestamp, $__interval)\n| order by timestamp asc\n\n",
             "resources": [
               "/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$res"
             ],
@@ -325,7 +318,7 @@
         "type": "grafana-azure-monitor-datasource",
         "uid": "${DS_AZURE_MONITOR}"
       },
-      "description": "The resource path for this panel uses multiple template variables which requires modifying the dashboard JSON directly. If you would like to do something similar please go to Settings > JSON Model. Edit as you'd like in your new copy by going to Settings > Save as.",
+      "description": "",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -343,7 +336,7 @@
             {
               "targetBlank": false,
               "title": "Filter Result code",
-              "url": "/d/Azure-AppInsights-Failures-Dependencies?${ds:queryparam}&${sub:queryparam}&${rg:queryparam}&${ns:queryparam}&${res:queryparam}&var-dependency_result_code=${__data.fields.resultCode}"
+              "url": "/d/Azure-AppInsights-Failures-Dependencies/?${ds:queryparam}&${sub:queryparam}&${rg:queryparam}&${ns:queryparam}&${res:queryparam}&var-dependency_result_code=${__data.fields[\"Result Code\"]}"
             }
           ],
           "mappings": [],
@@ -397,7 +390,7 @@
                 "value": [
                   {
                     "title": "Filter result code",
-                    "url": "/d/Azure-AppInsights-Failures-Dependencies?${ds:queryparam}&${sub:queryparam}&${rg:queryparam}&${ns:queryparam}&${res:queryparam}&var-dependency_result_code=${__data.fields.resultCode}"
+                    "url": "/d/Azure-AppInsights-Failures-Dependencies/?${ds:queryparam}&${sub:queryparam}&${rg:queryparam}&${ns:queryparam}&${res:queryparam}&var-dependency_result_code=${__data.fields[\"Result Code\"]}"
                   }
                 ]
               }
@@ -432,7 +425,7 @@
       "targets": [
         {
           "azureLogAnalytics": {
-            "query": "dependencies\n// additional filters can be applied here\n| where $__timeFilter(timestamp)\n| where client_Type != \"Browser\"\n| where success == false\n| extend type=iff(tolower(type) == \"http (tracked component)\", \"HTTP\", type), target=tostring(split(target, \" | cid-v1\")[0])\n| extend [\"Dependency Name\"] = strcat(type, \": \", name, \" \", target)\n| where [\"Dependency Name\"] in ($dependency)\n| summarize Count=sum(itemCount) by [\"Result Code\"]=resultCode\n| top 10 by Count desc\n\n",
+            "query": "dependencies\n// additional filters can be applied here\n| where $__timeFilter(timestamp)\n| where client_Type != \"Browser\"\n| where success == false\n| extend type=iff(tolower(type) == \"http (tracked component)\", \"HTTP\", type), target=tostring(split(target, \" | cid-v1\")[0])\n| extend [\"Dependency Name\"] = strcat(type, \": \", name, \" \", target)\n| where [\"Dependency Name\"] in ($dependency)\n| summarize Count=sum(itemCount) by [\"Result Code\"]=resultCode\n",
             "resources": [
               "/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$res"
             ],
@@ -448,7 +441,7 @@
           "subscriptions": []
         }
       ],
-      "title": "Top 10 response codes",
+      "title": "Top response codes (count)",
       "transformations": [],
       "type": "table"
     },
@@ -457,7 +450,6 @@
         "type": "grafana-azure-monitor-datasource",
         "uid": "${DS_AZURE_MONITOR}"
       },
-      "description": "The resource path for this panel uses multiple template variables which requires modifying the dashboard JSON directly. If you would like to do something similar please go to Settings > JSON Model. Edit as you'd like in your new copy by going to Settings > Save as.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -568,13 +560,7 @@
       },
       "id": 83,
       "interval": "60s",
-      "links": [
-        {
-          "targetBlank": true,
-          "title": "${res} | Users",
-          "url": "https://ms.portal.azure.com/#@microsoft.onmicrosoft.com/resource/subscriptions/${sub}/resourceGroups/${rg}/providers/microsoft.insights/components/${res}/segmentationUsers"
-        }
-      ],
+      "links": [],
       "maxDataPoints": 150,
       "options": {
         "legend": {
@@ -616,7 +602,6 @@
         "type": "grafana-azure-monitor-datasource",
         "uid": "${DS_AZURE_MONITOR}"
       },
-      "description": "The resource path for this panel uses multiple template variables which requires modifying the dashboard JSON directly. If you would like to do something similar please go to Settings > JSON Model. Edit as you'd like in your new copy by going to Settings > Save as.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -653,6 +638,7 @@
               "mode": "off"
             }
           },
+          "links": [],
           "mappings": [],
           "noValue": "--",
           "thresholds": {
@@ -739,7 +725,7 @@
       "targets": [
         {
           "azureLogAnalytics": {
-            "query": "dependencies\n// additional filters can be applied here\n| where $__timeFilter(timestamp)\n| where client_Type != \"Browser\"\n| where resultCode in ($dependencies_result_code)\n| extend type=iff(tolower(type) == \"http (tracked component)\", \"HTTP\", type), target=tostring(split(target, \" | cid-v1\")[0])\n| extend [\"Dependency Name\"] = strcat(type, \": \", name, \" \", target)\n| where [\"Dependency Name\"] in ($dependency)\n| summarize ResultCode = sum(itemCount) by resultCode, bin(timestamp, $__interval)\n| sort by timestamp asc\n\n",
+            "query": "dependencies\n// additional filters can be applied here\n| where $__timeFilter(timestamp)\n| where client_Type != \"Browser\"\n| where resultCode in ($dependency_result_code)\n| extend type=iff(tolower(type) == \"http (tracked component)\", \"HTTP\", type), target=tostring(split(target, \" | cid-v1\")[0])\n| extend [\"Dependency Name\"] = strcat(type, \": \", name, \" \", target)\n| where [\"Dependency Name\"] in ($dependency)\n| summarize ResultCode = sum(itemCount) by resultCode, bin(timestamp, $__interval)\n| sort by timestamp asc\n\n",
             "resources": [
               "/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$res"
             ],
@@ -755,7 +741,7 @@
           "subscriptions": []
         }
       ],
-      "title": "Response codes",
+      "title": "Response codes (count)",
       "transformations": [],
       "type": "timeseries"
     },
@@ -764,7 +750,6 @@
         "type": "grafana-azure-monitor-datasource",
         "uid": "${DS_AZURE_MONITOR}"
       },
-      "description": "The resource path for this panel uses multiple template variables which requires modifying the dashboard JSON directly. If you would like to do something similar please go to Settings > JSON Model. Edit as you'd like in your new copy by going to Settings > Save as.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -773,8 +758,8 @@
           },
           "links": [
             {
-              "title": "Reset to All Failed dependencies",
-              "url": "/d/Azure-AppInsights-Failures-Dependencies/?${ds:queryparam}&${sub:queryparam}&${rg:queryparam}&${ns:queryparam}&${res:queryparam}&var-dependency=All&var-dependencies_result_code=All"
+              "title": "Reset to All dependencies and All result codes",
+              "url": "/d/Azure-AppInsights-Failures-Dependencies/?${ds:queryparam}&${sub:queryparam}&${rg:queryparam}&${ns:queryparam}&${res:queryparam}&var-dependency=All&var-dependency_result_code=All"
             }
           ],
           "mappings": [],
@@ -805,8 +790,8 @@
       "interval": "60s",
       "links": [
         {
-          "title": "Reset to All Top 10 Failed Operation Names",
-          "url": "/d/ElCsza74z/azure-insights-applications-analysis?orgId=1&var-ds=Azure%20Monitor%20-%20Contoso%20Hotels&var-sub=ebb79bc0-aa86-44a7-8111-cabbe0c43993&var-rg=CH1-FabrikamRG&var-ns=Microsoft.Insights%2Fcomponents&var-res=CH1-RetailAppAI&from=now-1h&to=now&var-failed_operation_name=All"
+          "title": "Reset to All Failed Dependencies and All result codes",
+          "url": "/d/Azure-AppInsights-Failures-Dependencies/?${ds:queryparam}&${sub:queryparam}&${rg:queryparam}&${ns:queryparam}&${res:queryparam}&var-dependency=All&var-dependency_result_code=All"
         }
       ],
       "maxDataPoints": 150,
@@ -828,7 +813,7 @@
       "targets": [
         {
           "azureLogAnalytics": {
-            "query": "dependencies\n// additional filters can be applied here\n| where $__timeFilter(timestamp)\n| where resultCode in ($dependencies_result_code)\n| where client_Type != \"Browser\"\n| summarize failedCount=sumif(itemCount, success == false)\n\n\n",
+            "query": "dependencies\n// additional filters can be applied here\n| where $__timeFilter(timestamp)\n| where client_Type != \"Browser\"\n| summarize failedCount=sumif(itemCount, success == false)\n\n\n",
             "resources": [
               "/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$res"
             ],
@@ -844,7 +829,7 @@
           "subscriptions": []
         }
       ],
-      "title": "All Top 10 Failed dependencies (Count)",
+      "title": "All Failed dependencies (Count)",
       "transformations": [],
       "type": "stat"
     },
@@ -853,7 +838,7 @@
         "type": "grafana-azure-monitor-datasource",
         "uid": "${DS_AZURE_MONITOR}"
       },
-      "description": "The resource path for this panel uses multiple template variables which requires modifying the dashboard JSON directly. If you would like to do something similar please go to Settings > JSON Model. Edit as you'd like in your new copy by going to Settings > Save as.",
+      "description": "Failed dependencies matching result code ${dependency_result_code:text} and dependency ${dependency:text}",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -872,7 +857,19 @@
             ]
           }
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "failedCount"
+            },
+            "properties": [
+              {
+                "id": "links"
+              }
+            ]
+          }
+        ]
       },
       "gridPos": {
         "h": 3,
@@ -902,7 +899,7 @@
       "targets": [
         {
           "azureLogAnalytics": {
-            "query": "dependencies\n// additional filters can be applied here\n| where $__timeFilter(timestamp)\n| where resultCode in ($dependencies_result_code)\n| where client_Type != \"Browser\"\n| extend type=iff(tolower(type) == \"http (tracked component)\", \"HTTP\", type), target=tostring(split(target, \" | cid-v1\")[0])\n| extend [\"Dependency Name\"] = strcat(type, \": \", name, \" \", target)\n| where [\"Dependency Name\"] in ($dependency)\n| summarize failedCount=sumif(itemCount, success == false)\n\n\n",
+            "query": "dependencies\n// additional filters can be applied here\n| where $__timeFilter(timestamp)\n| where resultCode in ($dependency_result_code)\n| where client_Type != \"Browser\"\n| extend type=iff(tolower(type) == \"http (tracked component)\", \"HTTP\", type), target=tostring(split(target, \" | cid-v1\")[0])\n| extend [\"Dependency Name\"] = strcat(type, \": \", name, \" \", target)\n| where [\"Dependency Name\"] in ($dependency)\n| summarize failedCount=sumif(itemCount, success == false)\n\n\n",
             "resources": [
               "/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$res"
             ],
@@ -918,7 +915,7 @@
           "subscriptions": []
         }
       ],
-      "title": "Number of failed dependencies matching $dependency",
+      "title": "Failed dependencies matching result code and dependency",
       "transformations": [],
       "type": "stat"
     },
@@ -927,7 +924,7 @@
         "type": "grafana-azure-monitor-datasource",
         "uid": "${DS_AZURE_MONITOR}"
       },
-      "description": "The resource path for this panel uses multiple template variables which requires modifying the dashboard JSON directly. If you would like to do something similar please go to Settings > JSON Model. Edit as you'd like in your new copy by going to Settings > Save as.",
+      "description": "Click on a dependency name to filter dashboard.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -945,7 +942,7 @@
             {
               "targetBlank": true,
               "title": "Show list of sample transactions",
-              "url": "/explore?left={\"datasource\":\"${ds:raw}\",\"queries\":[{\"refId\":\"A\",\"datasource\":\"${ds:raw}\",\"queryType\":\"Azure Traces\",\"azureTraces\":{\"resultFormat\":\"table\",\"resources\":[\"/subscriptions/${sub}/resourceGroups/${rg}/providers/${ns}/${res}\"],\"filters\":[{\"property\":\"type\",\"filters\":[\"${__data.fields.type}\"],\"operation\":\"eq\"}, {\"property\":\"target\",\"filters\":[\"${__data.fields.target}\"],\"operation\":\"eq\"}, {\"property\":\"name\",\"filters\":[\"${__data.fields.name}\"],\"operation\":\"eq\"},{\"property\":\"resultCode\",\"filters\":[${result_code:doublequote}],\"operation\":\"eq\"}],\"traceTypes\": [\"dependencies\"]}}],\"range\":{\"from\": \"${__from}\", \"to\":\"${__to}\" }}"
+              "url": "/explore?left={\"datasource\":\"${ds:raw}\",\"queries\":[{\"refId\":\"A\",\"datasource\":\"${ds:raw}\",\"queryType\":\"Azure Traces\",\"azureTraces\":{\"resultFormat\":\"table\",\"resources\":[\"/subscriptions/${sub}/resourceGroups/${rg}/providers/${ns}/${res}\"],\"filters\":[{\"property\":\"type\",\"filters\":[\"${__data.fields.type}\"],\"operation\":\"eq\"}, {\"property\":\"target\",\"filters\":[\"${__data.fields.target}\"],\"operation\":\"eq\"}, {\"property\":\"name\",\"filters\":[\"${__data.fields.name}\"],\"operation\":\"eq\"},{\"property\":\"resultCode\",\"filters\":[${dependency_result_code:doublequote}],\"operation\":\"eq\"}],\"traceTypes\": [\"dependencies\"]}}],\"range\":{\"from\": \"${__from}\", \"to\":\"${__to}\" }}"
             }
           ],
           "mappings": [],
@@ -954,7 +951,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": null
               },
               {
                 "color": "#EAB839",
@@ -983,7 +981,7 @@
                 "value": [
                   {
                     "title": "Show list of matching dependencies",
-                    "url": "d/Azure-AppInsights-Failures-Dependencies/?orgId=1&${ds:queryparam}&${sub:queryparam}&${rg:queryparam}&${ns:queryparam}&${res:queryparam}&${__value.time}&${result_code:queryparam}&${failed_operation_name:queryparam}&${dependencies_result_code:queryparam}&var-dependency=${__data.fields[\"Dependency name\"]}"
+                    "url": "d/Azure-AppInsights-Failures-Dependencies/?orgId=1&${ds:queryparam}&${sub:queryparam}&${rg:queryparam}&${ns:queryparam}&${res:queryparam}&${dependency_result_code:queryparam}&var-dependency=${__data.fields[\"Dependency name\"]}"
                   }
                 ]
               }
@@ -1013,7 +1011,7 @@
                   {
                     "targetBlank": true,
                     "title": "Open dependencies in explorer",
-                    "url": "/explore?left={\"datasource\":\"${ds:raw}\",\"queries\":[{\"refId\":\"A\",\"datasource\":\"${ds:raw}\",\"queryType\":\"Azure Traces\",\"azureTraces\":{\"resultFormat\":\"table\",\"resources\":[\"/subscriptions/${sub}/resourceGroups/${rg}/providers/${ns}/${res}\"],\"filters\":[{\"property\":\"type\",\"filters\":[\"${__data.fields.type}\"],\"operation\":\"eq\"}, {\"property\":\"name\",\"filters\":[\"${__data.fields.name}\"],\"operation\":\"eq\"}, {\"property\":\"target\",\"filters\":[\"${__data.fields.target}\"],\"operation\":\"eq\"}, {\"property\":\"resultCode\",\"filters\":[${dependencies_result_code:doublequote}],\"operation\":\"eq\"}],\"traceTypes\": [\"dependencies\"]}}],\"range\":{\"from\": \"${__from}\", \"to\":\"${__to}\" }}"
+                    "url": "/explore?left={\"datasource\":\"${ds:raw}\",\"queries\":[{\"refId\":\"A\",\"datasource\":\"${ds:raw}\",\"queryType\":\"Azure Traces\",\"azureTraces\":{\"resultFormat\":\"table\",\"resources\":[\"/subscriptions/${sub}/resourceGroups/${rg}/providers/${ns}/${res}\"],\"filters\":[{\"property\":\"type\",\"filters\":[\"${__data.fields.type}\"],\"operation\":\"eq\"}, {\"property\":\"name\",\"filters\":[\"${__data.fields.name}\"],\"operation\":\"eq\"}, {\"property\":\"target\",\"filters\":[\"${__data.fields.target}\"],\"operation\":\"eq\"}, {\"property\":\"resultCode\",\"filters\":[${dependency_result_code:doublequote}],\"operation\":\"eq\"}],\"traceTypes\": [\"dependencies\"]}}],\"range\":{\"from\": \"${__from}\", \"to\":\"${__to}\" }}"
                   }
                 ]
               }
@@ -1133,7 +1131,7 @@
       "targets": [
         {
           "azureLogAnalytics": {
-            "query": "let m = dependencies\n| where $__timeFilter(timestamp)\n| where client_Type != \"Browser\"\n| project itemCount, duration, typeTransform=iff(tolower(type) == \"http (tracked component)\", \"HTTP\", type), targetTransform=tostring(split(target, \" | cid-v1\")[0]), name, type, target, user_Id, success, resultCode;\nm\n| summarize [\"Failed count\"]=sumif(itemCount, success == false and resultCode in ($dependencies_result_code)), [\"Impacted users\"]=dcountif(user_Id, success == false and resultCode in ($dependencies_result_code)), [\"Total count\"]=sum(itemCount)\n| project [\"Dependency name\"]=\"All\", [\"Failed count\"], [\"Impacted users\"], [\"Total count\"]\n| union(\nm\n| summarize [\"Failed count\"]=sumif(itemCount, success == false and resultCode in ($dependencies_result_code)), [\"Impacted users\"]=dcountif(user_Id, success == false and resultCode in ($dependencies_result_code)), [\"Total count\"]=sum(itemCount) by typeTransform=iff(tolower(type) == \"http (tracked component)\", \"HTTP\", type), targetTransform=tostring(split(target, \" | cid-v1\")[0]), name, target, type\n| where [\"Failed count\"] > 0\n| sort by [\"Failed count\"] desc\n| project [\"Dependency name\"]=strcat(typeTransform, \": \", name , \" \", targetTransform), [\"Failed count\"], [\"Total count\"], [\"Impacted users\"], type, target, name)\n",
+            "query": "let m = dependencies\n| where $__timeFilter(timestamp)\n| where client_Type != \"Browser\"\n| project itemCount, duration, typeTransform=iff(tolower(type) == \"http (tracked component)\", \"HTTP\", type), targetTransform=tostring(split(target, \" | cid-v1\")[0]), name, type, target, user_Id, success, resultCode;\nm\n| summarize [\"Failed count\"]=sumif(itemCount, success == false and resultCode in ($dependency_result_code)), [\"Impacted users\"]=dcountif(user_Id, success == false and resultCode in ($dependency_result_code)), [\"Total count\"]=sum(itemCount)\n| project [\"Dependency name\"]=\"All\", [\"Failed count\"], [\"Impacted users\"], [\"Total count\"]\n| union(\nm\n| summarize [\"Failed count\"]=sumif(itemCount, success == false and resultCode in ($dependency_result_code)), [\"Impacted users\"]=dcountif(user_Id, success == false and resultCode in ($dependency_result_code)), [\"Total count\"]=sum(itemCount) by typeTransform=iff(tolower(type) == \"http (tracked component)\", \"HTTP\", type), targetTransform=tostring(split(target, \" | cid-v1\")[0]), name, target, type\n| where [\"Failed count\"] > 0\n| sort by [\"Failed count\"] desc\n| project [\"Dependency name\"]=strcat(typeTransform, \": \", name , \" \", targetTransform), [\"Failed count\"], [\"Total count\"], [\"Impacted users\"], type, target, name)\n",
             "resources": [
               "/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$res"
             ],
@@ -1158,7 +1156,7 @@
         "type": "grafana-azure-monitor-datasource",
         "uid": "${DS_AZURE_MONITOR}"
       },
-      "description": "The resource path for this panel uses multiple template variables which requires modifying the dashboard JSON directly. If you would like to do something similar please go to Settings > JSON Model. Edit as you'd like in your new copy by going to Settings > Save as.",
+      "description": "Click on an OperationID or Dependency name to view the trace details in explorer.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1178,7 +1176,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": null
               },
               {
                 "color": "orange",
@@ -1233,7 +1232,7 @@
                   {
                     "targetBlank": true,
                     "title": "Open dependencies in explorer",
-                    "url": "/explore?left={\"datasource\":\"${ds:raw}\",\"queries\":[{\"refId\":\"A\",\"datasource\":\"${ds:raw}\",\"queryType\":\"Azure Traces\",\"azureTraces\":{\"resultFormat\":\"table\",\"resources\":[\"/subscriptions/${sub}/resourceGroups/${rg}/providers/${ns}/${res}\"],\"filters\":[{\"property\":\"type\",\"filters\":[\"${__data.fields.type}\"],\"operation\":\"eq\"}, {\"property\":\"name\",\"filters\":[\"${__data.fields.name}\"],\"operation\":\"eq\"}, {\"property\":\"target\",\"filters\":[\"${__data.fields.target}\"],\"operation\":\"eq\"}, {\"property\":\"resultCode\",\"filters\":[${dependencies_result_code:doublequote}],\"operation\":\"eq\"}],\"traceTypes\": [\"dependencies\"]}}],\"range\":{\"from\": \"${__from}\", \"to\":\"${__to}\" }}"
+                    "url": "/explore?left={\"datasource\":\"${ds:raw}\",\"queries\":[{\"refId\":\"A\",\"datasource\":\"${ds:raw}\",\"queryType\":\"Azure Traces\",\"azureTraces\":{\"resultFormat\":\"table\",\"resources\":[\"/subscriptions/${sub}/resourceGroups/${rg}/providers/${ns}/${res}\"],\"filters\":[{\"property\":\"type\",\"filters\":[\"${__data.fields.type}\"],\"operation\":\"eq\"}, {\"property\":\"name\",\"filters\":[\"${__data.fields.name}\"],\"operation\":\"eq\"}, {\"property\":\"target\",\"filters\":[\"${__data.fields.target}\"],\"operation\":\"eq\"}, {\"property\":\"resultCode\",\"filters\":[${dependency_result_code:doublequote}],\"operation\":\"eq\"}],\"traceTypes\": [\"dependencies\"]}}],\"range\":{\"from\": \"${__from}\", \"to\":\"${__to}\" }}"
                   }
                 ]
               }
@@ -1411,7 +1410,7 @@
       "targets": [
         {
           "azureLogAnalytics": {
-            "query": "let min_length_8 = (s: string) {\n    let len = strlen(s);\n    case(len == 1, strcat(s, s, s, s, s, s, s, s),\n        len == 2 or len == 3, strcat(s, s, s, s),\n        len == 4 or len == 5 or len == 6 or len == 7, strcat(s, s),\n        s)\n};\nlet ai_hash = (s: string) {\n    abs(toint(__hash_djb2(min_length_8(s))))\n};\n\ndependencies\n// additional filters can be applied here\n| where $__timeFilter(timestamp) and resultCode in ($dependencies_result_code)\n| extend typeTransform=iff(tolower(type) == \"http (tracked component)\", \"HTTP\", type), targetTransform=tostring(split(target, \" | cid-v1\")[0])\n| extend [\"Dependency Name\"] = strcat(typeTransform, \": \", name, \" \", targetTransform)\n| where [\"Dependency Name\"] in ($dependency) and isnotempty(operation_Id)\n//| where returncode in ($return_code)\n| project [\"Dependency Name\"], target, ResponseCode = resultCode, ResponseTime = duration, OperationID = operation_Id, type, name, Score=ai_hash(operation_Id)\n| top 20 by Score desc\n\n\n",
+            "query": "let min_length_8 = (s: string) {\n    let len = strlen(s);\n    case(len == 1, strcat(s, s, s, s, s, s, s, s),\n        len == 2 or len == 3, strcat(s, s, s, s),\n        len == 4 or len == 5 or len == 6 or len == 7, strcat(s, s),\n        s)\n};\nlet ai_hash = (s: string) {\n    abs(toint(__hash_djb2(min_length_8(s))))\n};\n\ndependencies\n// additional filters can be applied here\n| where $__timeFilter(timestamp) and resultCode in ($dependency_result_code)\n| extend typeTransform=iff(tolower(type) == \"http (tracked component)\", \"HTTP\", type), targetTransform=tostring(split(target, \" | cid-v1\")[0])\n| extend [\"Dependency Name\"] = strcat(typeTransform, \": \", name, \" \", targetTransform)\n| where [\"Dependency Name\"] in ($dependency) and isnotempty(operation_Id)\n| where resultCode in ($dependency_result_code)\n| project [\"Dependency Name\"], target, ResponseCode = resultCode, ResponseTime = duration, OperationID = operation_Id, type, name, Score=ai_hash(operation_Id)\n| top 20 by Score asc\n\n\n",
             "resources": [
               "/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$res"
             ],
@@ -1585,7 +1584,7 @@
           },
           "queryType": "Azure Log Analytics",
           "refId": "A",
-          "subscription": "ebb79bc0-aa86-44a7-8111-cabbe0c43993"
+          "subscription": "$sub"
         },
         "refresh": 1,
         "regex": "",
@@ -1602,9 +1601,9 @@
         "definition": "",
         "hide": 0,
         "includeAll": true,
-        "label": "Dependencies Result Code",
+        "label": "Result Code",
         "multi": true,
-        "name": "dependencies_result_code",
+        "name": "dependency_result_code",
         "options": [],
         "query": {
           "azureLogAnalytics": {
@@ -1615,7 +1614,7 @@
           },
           "queryType": "Azure Log Analytics",
           "refId": "A",
-          "subscription": "ebb79bc0-aa86-44a7-8111-cabbe0c43993"
+          "subscription": "$sub"
         },
         "refresh": 1,
         "regex": "",
@@ -1626,13 +1625,12 @@
     ]
   },
   "time": {
-    "from": "now-2h",
-    "to": "now-1h"
+    "from": "now-45m",
+    "to": "now-15m"
   },
   "timepicker": {},
   "timezone": "utc",
-  "title": "Azure / Insights / Applications - Failures - Dependencies",
+  "title": "Azure / Insights / Applications - Failures - 2. Dependencies",
   "uid": "Azure-AppInsights-Failures-Dependencies",
-  "version": 17,
-  "weekStart": ""
+  "version": 48
 }

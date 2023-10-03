@@ -182,7 +182,7 @@
                   {
                     "targetBlank": true,
                     "title": "Open on Explorer",
-                    "url": "/explore?left={\"datasource\":\"${ds:raw}﻿\",\"queries\":[{\"refId\":\"A\",\"datasource\":\"${ds:raw}\",\"queryType\":\"Azure Traces\",\"azureTraces\":{\"resultFormat\":\"table\",\"resources\":[\"/subscriptions/${sub}/resourceGroups/${rg}/providers/${ns}/${res}﻿﻿\"],\"filters\":[{\"property\":\"type\",\"filters\":[\"﻿﻿${__data.fields.type}﻿﻿\"],\"operation\":\"eq\"}],\"traceTypes\": [\"dependencies\"]}}],\"range\":{\"from\": \"${__from}\", \"to\":\"${__to}\" }}"
+                    "url": "/explore?left={\"datasource\":\"${ds:raw}\",\"queries\":[{\"refId\":\"A\",\"datasource\":\"${ds:raw}\",\"queryType\":\"Azure Traces\",\"azureTraces\":{\"resultFormat\":\"table\",\"resources\":[\"/subscriptions/${sub}/resourceGroups/${rg}/providers/${ns}/${res}\"],\"filters\":[{\"property\":\"type\",\"filters\":[\"${__data.fields.type}\"],\"operation\":\"eq\"}],\"traceTypes\": [\"dependencies\"]}}],\"range\":{\"from\": \"${__from}\", \"to\":\"${__to}\" }}"
                   }
                 ]
               }
@@ -268,7 +268,7 @@
         "type": "grafana-azure-monitor-datasource",
         "uid": "${DS_AZURE_MONITOR}"
       },
-      "description": "The resource path for this panel uses multiple template variables which requires modifying the dashboard JSON directly. If you would like to do something similar please go to Settings > JSON Model. Edit as you'd like in your new copy by going to Settings > Save as.",
+      "description": "",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -451,7 +451,7 @@
         "type": "grafana-azure-monitor-datasource",
         "uid": "${DS_AZURE_MONITOR}"
       },
-      "description": "The resource path for this panel uses multiple template variables which requires modifying the dashboard JSON directly. If you would like to do something similar please go to Settings > JSON Model. Edit as you'd like in your new copy by going to Settings > Save as.",
+      "description": "",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -568,7 +568,6 @@
         "type": "grafana-azure-monitor-datasource",
         "uid": "${DS_AZURE_MONITOR}"
       },
-      "description": "The resource path for this panel uses multiple template variables which requires modifying the dashboard JSON directly. If you would like to do something similar please go to Settings > JSON Model. Edit as you'd like in your new copy by going to Settings > Save as.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -721,7 +720,6 @@
         "type": "grafana-azure-monitor-datasource",
         "uid": "${DS_AZURE_MONITOR}"
       },
-      "description": "The resource path for this panel uses multiple template variables which requires modifying the dashboard JSON directly. If you would like to do something similar please go to Settings > JSON Model. Edit as you'd like in your new copy by going to Settings > Save as.",
       "fieldConfig": {
         "defaults": {
           "custom": {
@@ -839,7 +837,7 @@
         "type": "grafana-azure-monitor-datasource",
         "uid": "${DS_AZURE_MONITOR}"
       },
-      "description": "The resource path for this panel uses multiple template variables which requires modifying the dashboard JSON directly. If you would like to do something similar please go to Settings > JSON Model. Edit as you'd like in your new copy by going to Settings > Save as.",
+      "description": "Click on a bar on the chart below to set the minimum and maximum duration. To reset the zoom, change the Minimum Duration and Maximum duration variables.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -865,13 +863,13 @@
               "mode": "off"
             }
           },
-          "displayName": "Count",
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": null
               },
               {
                 "color": "red",
@@ -892,11 +890,11 @@
                 "value": [
                   {
                     "title": "Set Minimum Duration (Current: $MinDuration}",
-                    "url": "/d/Azure-AI-Analysis-Perf-Dependencies/?${ds:queryparam}&${sub:queryparam}&${rg:queryparam}&${ns:queryparam}&${res:queryparam}&${dependency:queryparam}&${MaxDuration:queryparam}&var-MinDuration=${__data.fields[\"Duration (ms)\"]}"
+                    "url": "/d/Azure-AppInsights-Perf-Dependencies/?${ds:queryparam}&${sub:queryparam}&${rg:queryparam}&${ns:queryparam}&${res:queryparam}&${dependency:queryparam}&${MaxDuration:queryparam}&var-MinDuration=${__data.fields[\"Duration (ms)\"]}"
                   },
                   {
                     "title": "Set Maximum Duration (Current: $MaxDuration)",
-                    "url": "/d/Azure-AI-Analysis-Perf-Dependencies/?${ds:queryparam}&${sub:queryparam}&${rg:queryparam}&${ns:queryparam}&${res:queryparam}&${dependency:queryparam}&${MinDuration:queryparam}&var-MaxDuration=${__data.fields[\"Duration (ms)\"]}"
+                    "url": "/d/Azure-AppInsights-Perf-Dependencies/?${ds:queryparam}&${sub:queryparam}&${rg:queryparam}&${ns:queryparam}&${res:queryparam}&${dependency:queryparam}&${MinDuration:queryparam}&var-MaxDuration=${__data.fields[\"Duration (ms)\"]}"
                   }
                 ]
               }
@@ -967,7 +965,7 @@
           "subscriptions": []
         }
       ],
-      "title": "Dependency count by Duration (Log scale)",
+      "title": "Dependency count by Duration (ms)",
       "transformations": [],
       "type": "barchart"
     },
@@ -976,7 +974,6 @@
         "type": "grafana-azure-monitor-datasource",
         "uid": "${DS_AZURE_MONITOR}"
       },
-      "description": "The resource path for this panel uses multiple template variables which requires modifying the dashboard JSON directly. If you would like to do something similar please go to Settings > JSON Model. Edit as you'd like in your new copy by going to Settings > Save as.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -986,7 +983,7 @@
           "links": [
             {
               "title": "",
-              "url": "/d/Azure-AI-Analysis-Perf-Dependencies/?orgId=1&${ds:queryparam}&${sub:queryparam}&${rg:queryparam}&${ns:queryparam}&${res:queryparam}&${__value.time}&${dependency:queryparam}"
+              "url": "/d/Azure-AppInsights-Perf-Dependencies/?orgId=1&${ds:queryparam}&${sub:queryparam}&${rg:queryparam}&${ns:queryparam}&${res:queryparam}&${__value.time}&${dependency:queryparam}"
             }
           ],
           "mappings": [],
@@ -1014,7 +1011,12 @@
       },
       "id": 86,
       "interval": "60s",
-      "links": [],
+      "links": [
+        {
+          "title": "Reset dependency to 'All'",
+          "url": "/d/Azure-AppInsights-Perf-Dependencies/?${__all_variables}"
+        }
+      ],
       "maxDataPoints": 150,
       "options": {
         "colorMode": "value",
@@ -1059,7 +1061,6 @@
         "type": "grafana-azure-monitor-datasource",
         "uid": "${DS_AZURE_MONITOR}"
       },
-      "description": "The resource path for this panel uses multiple template variables which requires modifying the dashboard JSON directly. If you would like to do something similar please go to Settings > JSON Model. Edit as you'd like in your new copy by going to Settings > Save as.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1157,7 +1158,7 @@
         "type": "grafana-azure-monitor-datasource",
         "uid": "${DS_AZURE_MONITOR}"
       },
-      "description": "The resource path for this panel uses multiple template variables which requires modifying the dashboard JSON directly. If you would like to do something similar please go to Settings > JSON Model. Edit as you'd like in your new copy by going to Settings > Save as.",
+      "description": "Click on a dependency name to filter dashboard.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1175,7 +1176,7 @@
             {
               "targetBlank": true,
               "title": "Show list of sample transactions",
-              "url": "/explore?left={\"datasource\":\"${ds:raw}﻿\",\"queries\":[{\"refId\":\"A\",\"datasource\":\"${ds:raw}\",\"queryType\":\"Azure Traces\",\"azureTraces\":{\"resultFormat\":\"table\",\"resources\":[\"/subscriptions/${sub}/resourceGroups/${rg}/providers/${ns}/${res}﻿﻿\"],\"filters\":[{\"property\":\"type\",\"filters\":[\"﻿﻿${__data.fields.type}﻿﻿\"],\"operation\":\"eq\"}, {\"property\":\"target\",\"filters\":[\"﻿﻿${__data.fields.target}﻿﻿\"],\"operation\":\"eq\"}, {\"property\":\"name\",\"filters\":[\"﻿﻿${__data.fields.name}﻿﻿\"],\"operation\":\"eq\"}],\"traceTypes\": [\"dependencies\"]}}],\"range\":{\"from\": \"${__from}\", \"to\":\"${__to}\" }}"
+              "url": "/explore?left={\"datasource\":\"${ds:raw}\",\"queries\":[{\"refId\":\"A\",\"datasource\":\"${ds:raw}\",\"queryType\":\"Azure Traces\",\"azureTraces\":{\"resultFormat\":\"table\",\"resources\":[\"/subscriptions/${sub}/resourceGroups/${rg}/providers/${ns}/${res}\"],\"filters\":[{\"property\":\"type\",\"filters\":[\"${__data.fields.type}\"],\"operation\":\"eq\"}, {\"property\":\"target\",\"filters\":[\"${__data.fields.target}\"],\"operation\":\"eq\"}, {\"property\":\"name\",\"filters\":[\"${__data.fields.name}\"],\"operation\":\"eq\"}],\"traceTypes\": [\"dependencies\"]}}],\"range\":{\"from\": \"${__from}\", \"to\":\"${__to}\" }}"
             }
           ],
           "mappings": [],
@@ -1232,7 +1233,7 @@
                 "value": [
                   {
                     "title": "Show list of matching dependencies",
-                    "url": "d/Azure-AI-Analysis-Perf-Dependencies/?orgId=1&${ds:queryparam}﻿&﻿${sub:queryparam}﻿&﻿${rg:queryparam}﻿&﻿${ns:queryparam}﻿&﻿${res:queryparam}﻿&﻿${__value.time}﻿&${MinDuration:queryparam}&${MaxDuration:queryparam}&var-dependency=${__data.fields[\"Dependency name\"]}"
+                    "url": "d/Azure-AppInsights-Perf-Dependencies/?orgId=1&${ds:queryparam}&${sub:queryparam}&${rg:queryparam}&${ns:queryparam}&${res:queryparam}&${__value.time}&${MinDuration:queryparam}&${MaxDuration:queryparam}&var-dependency=${__data.fields[\"Dependency name\"]}"
                   }
                 ]
               }
@@ -1262,7 +1263,7 @@
                   {
                     "targetBlank": true,
                     "title": "Open dependencies in explorer",
-                    "url": "/explore?left={\"datasource\":\"${ds:raw}﻿﻿\",\"queries\":[{\"refId\":\"A\",\"datasource\":\"﻿${ds:raw}﻿\",\"queryType\":\"Azure Traces\",\"azureTraces\":{\"resultFormat\":\"table\",\"resources\":[\"/subscriptions/﻿﻿﻿${sub}﻿﻿﻿/resourceGroups/﻿﻿﻿${rg}﻿﻿﻿/providers/﻿${ns}﻿/﻿﻿﻿${res}﻿﻿﻿\"],\"filters\":[{\"property\":\"type\",\"filters\":[\"﻿﻿﻿${__data.fields.type}﻿\"],\"operation\":\"eq\"}, {\"property\":\"name\",\"filters\":[\"﻿﻿${__data.fields.name}﻿﻿\"],\"operation\":\"eq\"}, {\"property\":\"target\",\"filters\":[\"﻿﻿﻿${__data.fields.target}﻿﻿﻿\"],\"operation\":\"eq\"}],\"traceTypes\": [\"dependencies\"]}}],\"range\":{\"from\": \"﻿${__from}﻿\", \"to\":\"﻿${__to}﻿\" }}"
+                    "url": "/explore?left={\"datasource\":\"${ds:raw}\",\"queries\":[{\"refId\":\"A\",\"datasource\":\"${ds:raw}\",\"queryType\":\"Azure Traces\",\"azureTraces\":{\"resultFormat\":\"table\",\"resources\":[\"/subscriptions/${sub}/resourceGroups/${rg}/providers/${ns}/${res}\"],\"filters\":[{\"property\":\"type\",\"filters\":[\"${__data.fields.type}\"],\"operation\":\"eq\"}, {\"property\":\"name\",\"filters\":[\"${__data.fields.name}\"],\"operation\":\"eq\"}, {\"property\":\"target\",\"filters\":[\"${__data.fields.target}\"],\"operation\":\"eq\"}],\"traceTypes\": [\"dependencies\"]}}],\"range\":{\"from\": \"${__from}\", \"to\":\"${__to}\" }}"
                   }
                 ]
               }
@@ -1367,7 +1368,7 @@
         "type": "grafana-azure-monitor-datasource",
         "uid": "${DS_AZURE_MONITOR}"
       },
-      "description": "The resource path for this panel uses multiple template variables which requires modifying the dashboard JSON directly. If you would like to do something similar please go to Settings > JSON Model. Edit as you'd like in your new copy by going to Settings > Save as.",
+      "description": "Click on the OperationID or dependency name to open the trace details in explorer",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1442,7 +1443,7 @@
                   {
                     "targetBlank": true,
                     "title": "Open dependencies in explorer",
-                    "url": "/explore?left={\"datasource\":\"${ds:raw}﻿﻿\",\"queries\":[{\"refId\":\"A\",\"datasource\":\"﻿${ds:raw}﻿\",\"queryType\":\"Azure Traces\",\"azureTraces\":{\"resultFormat\":\"table\",\"resources\":[\"/subscriptions/﻿﻿﻿${sub}﻿﻿﻿/resourceGroups/﻿﻿﻿${rg}﻿﻿﻿/providers/﻿${ns}﻿/﻿﻿﻿${res}﻿﻿﻿\"],\"filters\":[{\"property\":\"type\",\"filters\":[\"﻿﻿﻿${__data.fields.type}﻿\"],\"operation\":\"eq\"}, {\"property\":\"name\",\"filters\":[\"﻿﻿${__data.fields.name}﻿﻿\"],\"operation\":\"eq\"}, {\"property\":\"target\",\"filters\":[\"﻿﻿﻿${__data.fields.target}﻿﻿﻿\"],\"operation\":\"eq\"}],\"traceTypes\": [\"dependencies\"]}}],\"range\":{\"from\": \"﻿${__from}﻿\", \"to\":\"﻿${__to}﻿\" }}"
+                    "url": "/explore?left={\"datasource\":\"${ds:raw}\",\"queries\":[{\"refId\":\"A\",\"datasource\":\"${ds:raw}\",\"queryType\":\"Azure Traces\",\"azureTraces\":{\"resultFormat\":\"table\",\"resources\":[\"/subscriptions/${sub}/resourceGroups/${rg}/providers/${ns}/${res}\"],\"filters\":[{\"property\":\"type\",\"filters\":[\"${__data.fields.type}\"],\"operation\":\"eq\"}, {\"property\":\"name\",\"filters\":[\"${__data.fields.name}\"],\"operation\":\"eq\"}, {\"property\":\"target\",\"filters\":[\"${__data.fields.target}\"],\"operation\":\"eq\"}],\"traceTypes\": [\"dependencies\"]}}],\"range\":{\"from\": \"${__from}\", \"to\":\"${__to}\" }}"
                   }
                 ]
               }
@@ -1794,7 +1795,7 @@
           },
           "queryType": "Azure Log Analytics",
           "refId": "A",
-          "subscription": "ebb79bc0-aa86-44a7-8111-cabbe0c43993"
+          "subscription": "$sub"
         },
         "refresh": 1,
         "regex": "",
@@ -1824,7 +1825,7 @@
           },
           "queryType": "Azure Log Analytics",
           "refId": "A",
-          "subscription": "ebb79bc0-aa86-44a7-8111-cabbe0c43993"
+          "subscription": "$sub"
         },
         "refresh": 1,
         "regex": "",
@@ -1854,7 +1855,7 @@
           },
           "queryType": "Azure Log Analytics",
           "refId": "A",
-          "subscription": "ebb79bc0-aa86-44a7-8111-cabbe0c43993"
+          "subscription": "$sub"
         },
         "refresh": 1,
         "regex": "",
@@ -1865,13 +1866,12 @@
     ]
   },
   "time": {
-    "from": "now-2h",
-    "to": "now-1h"
+    "from": "now-45m",
+    "to": "now-15m"
   },
   "timepicker": {},
   "timezone": "",
-  "title": "Azure / Insights / Applications - Performance - Dependencies",
-  "uid": "Azure-AI-Analysis-Perf-Dependencies",
-  "version": 38,
-  "weekStart": ""
+  "title": "Azure / Insights / Applications - Performance - 2. Dependencies",
+  "uid": "Azure-AppInsights-Perf-Dependencies",
+  "version": 50
 }

@@ -70,7 +70,7 @@
       }
     ]
   },
-  "description": "The dashboard provides insights of Azure Apps via different metrics for app monitoring through Application Insights.",
+  "description": "The dashboard provides insights of exceptions through Application Insights.",
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
@@ -391,7 +391,7 @@
                   {
                     "targetBlank": false,
                     "title": "Filter by exception type",
-                    "url": "/d/Azure-AppInsights-Failures-Exceptions?${ds:queryparam}&${sub:queryparam}&${rg:queryparam}&${ns:queryparam}&${res:queryparam}&${exception:queryparam}&var-exception_type=${__data.fields.type}"
+                    "url": "/d/Azure-AppInsights-Failures-Exceptions/?${ds:queryparam}&${sub:queryparam}&${rg:queryparam}&${ns:queryparam}&${res:queryparam}&${exception:queryparam}&var-exception_type=${__data.fields.type}"
                   }
                 ]
               }
@@ -442,7 +442,7 @@
           "subscriptions": []
         }
       ],
-      "title": "Top 10 exception types",
+      "title": "Top 10 exception types (count)",
       "transformations": [],
       "type": "table"
     },
@@ -617,12 +617,7 @@
             "fixedColor": "dark-red",
             "mode": "fixed"
           },
-          "links": [
-            {
-              "title": "Reset to All Top 10 Failed Operation Names",
-              "url": "/d/Azure-AppInsights-Failures-Exceptions/?${ds:queryparam}&${sub:queryparam}&${rg:queryparam}&${ns:queryparam}&${res:queryparam}&var-exception_type=All&var-exception=All"
-            }
-          ],
+          "links": [],
           "mappings": [],
           "noValue": "--",
           "thresholds": {
@@ -651,7 +646,7 @@
       "interval": "60s",
       "links": [
         {
-          "title": "Reset to All exceptions",
+          "title": "Reset to All Failed exceptions",
           "url": "/d/Azure-AppInsights-Failures-Exceptions/?${ds:queryparam}&${sub:queryparam}&${rg:queryparam}&${ns:queryparam}&${res:queryparam}&var-exception_type=All&var-exception=All"
         }
       ],
@@ -690,7 +685,7 @@
           "subscriptions": []
         }
       ],
-      "title": "All Failed Exceptions (Count)",
+      "title": "All Exceptions (Count)",
       "transformations": [],
       "type": "stat"
     },
@@ -764,7 +759,7 @@
           "subscriptions": []
         }
       ],
-      "title": "Number of exceptions matching $exception",
+      "title": "Number of exceptions matching exception type $exception_type and exception $exception",
       "transformations": [],
       "type": "stat"
     },
@@ -883,7 +878,7 @@
                   {
                     "targetBlank": false,
                     "title": "Filter dashboards to Exception",
-                    "url": "/d/Azure-AppInsights-Failures-Exceptions?${ds:queryparam}&${sub:queryparam}&${rg:queryparam}&${ns:queryparam}&${res:queryparam}&${exception_type:queryparam}&var-exception=${__data.fields.Exception}"
+                    "url": "/d/Azure-AppInsights-Failures-Exceptions/?${ds:queryparam}&${sub:queryparam}&${rg:queryparam}&${ns:queryparam}&${res:queryparam}&${exception_type:queryparam}&var-exception=${__data.fields.Exception}"
                   }
                 ]
               },
@@ -1338,13 +1333,12 @@
     ]
   },
   "time": {
-    "from": "now-2h",
-    "to": "now-1h"
+    "from": "now-45m",
+    "to": "now-15m"
   },
   "timepicker": {},
   "timezone": "utc",
-  "title": "Azure / Insights / Applications - Failures - Exceptions",
+  "title": "Azure / Insights / Applications - Failures - 3. Exceptions",
   "uid": "Azure-AppInsights-Failures-Exceptions",
-  "version": 32,
-  "weekStart": ""
+  "version": 37
 }
