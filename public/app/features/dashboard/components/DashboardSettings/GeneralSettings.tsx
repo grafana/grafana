@@ -207,7 +207,7 @@ export function GeneralSettingsUnconnected({
 
         {/* @todo: Update "Graph tooltip" description to remove prompt about reloading when resolving #46581 */}
         <CollapsableSection
-          label={t('dashboard-settings.general-settings.panel-options.label', 'Panel options')}
+          label={t('dashboard-settings.general.panel-options-label', 'Panel options')}
           isOpen={true}
         >
           <Field
