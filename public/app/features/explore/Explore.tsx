@@ -35,6 +35,7 @@ import { StoreState } from 'app/types';
 
 import { getTimeZone } from '../profile/state/selectors';
 
+import { CorrelationHelper } from './CorrelationHelper';
 import { CustomContainer } from './CustomContainer';
 import ExploreQueryInspector from './ExploreQueryInspector';
 import { ExploreToolbar } from './ExploreToolbar';
@@ -477,6 +478,8 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
       showFlameGraph,
       timeZone,
       showLogsSample,
+      correlationEditorDetails,
+      correlationEditorHelperData,
     } = this.props;
     const { openDrawer } = this.state;
     const styles = getStyles(theme);
@@ -497,6 +500,13 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
         queryResponse.customFrames,
       ].every((e) => e.length === 0);
 
+    let correlationsBox = undefined;
+    const isCorrelationsEditorMode = correlationEditorDetails?.editorMode;
+    const showCorrelationHelper = Boolean(isCorrelationsEditorMode || correlationEditorDetails?.dirty);
+    if (showCorrelationHelper && correlationEditorHelperData !== undefined) {
+      correlationsBox = <CorrelationHelper correlations={correlationEditorHelperData} />;
+    }
+
     return (
       <>
         <ExploreToolbar exploreId={exploreId} onChangeTime={this.onChangeTime} topOfViewRef={this.topOfViewRef} />
@@ -508,9 +518,11 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
           {datasourceInstance ? (
             <div className={styles.exploreContainer}>
               <PanelContainer className={styles.queryContainer}>
+                {correlationsBox}
                 <QueryRows exploreId={exploreId} />
                 <SecondaryActions
-                  addQueryRowButtonDisabled={isLive}
+                  // do not allow people to add queries with potentially different datasources in correlations editor mode
+                  addQueryRowButtonDisabled={isLive || (isCorrelationsEditorMode && datasourceInstance.meta.mixed)}
                   // We cannot show multiple traces at the same time right now so we do not show add query button.
                   //TODO:unification
                   addQueryRowButtonHidden={false}
@@ -605,6 +617,7 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     showFlameGraph,
     showRawPrometheus,
     supplementaryQueries,
+    correlationEditorHelperData,
   } = item;
 
   const loading = selectIsWaitingForData(exploreId)(state);
@@ -635,6 +648,8 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     loading,
     logsSample,
     showLogsSample,
+    correlationEditorHelperData,
+    correlationEditorDetails: explore.correlationEditorDetails,
   };
 }
 
