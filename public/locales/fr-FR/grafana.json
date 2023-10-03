@@ -227,12 +227,14 @@
       "description-grafana": "",
       "description-mixed": ""
     },
-    "configure-new-data-source": "",
-    "input-placeholder": "",
     "list": {
       "no-data-source-message": ""
     },
-    "modal-title": "",
+    "modal": {
+      "configure-new-data-source": "",
+      "input-placeholder": "",
+      "title": ""
+    },
     "open-advanced-button": ""
   },
   "data-sources": {

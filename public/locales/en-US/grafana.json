@@ -226,9 +226,9 @@
       "no-data-source-message": "No data sources found"
     },
     "modal": {
-      "title": "Select data source",
+      "configure-new-data-source": "Open a new tab and configure a data source",
       "input-placeholder": "Select data source",
-      "configure-new-data-source": "Open a new tab and configure a data source"
+      "title": "Select data source"
     },
     "open-advanced-button": "Open advanced data source picker"
   },
