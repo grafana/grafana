@@ -286,9 +286,7 @@
       "refresh-live-dashboards-label": "Refresh live dashboards",
       "time-options-label": "Time options",
       "time-zone-label": "Time zone",
-      "week-start": {
-        "label": "Week start"
-      }
+      "week-start-label": "Week start"
     }
   },
   "data-source-picker": {
