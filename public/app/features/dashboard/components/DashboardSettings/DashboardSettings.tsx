@@ -26,6 +26,8 @@ import { LinksSettings } from './LinksSettings';
 import { VersionsSettings } from './VersionsSettings';
 import { SettingsPage, SettingsPageProps } from './types';
 
+import { t } from "app/core/internationalization"
+
 export interface Props {
   dashboard: DashboardModel;
   sectionNav: NavModel;
@@ -93,14 +95,14 @@ function getSettingsPages(dashboard: DashboardModel) {
 
   if (dashboard.meta.canEdit) {
     pages.push({
-      title: 'General',
+      title: t('dashboard-settings.page-titles.general', 'General'),
       id: 'settings',
       icon: 'sliders-v-alt',
       component: GeneralSettings,
     });
 
     pages.push({
-      title: 'Annotations',
+      title: t('dashboard-settings.page-titles.annotations', 'Annotations'),
       id: 'annotations',
       icon: 'comment-alt',
       component: AnnotationsSettings,
@@ -109,7 +111,7 @@ function getSettingsPages(dashboard: DashboardModel) {
     });
 
     pages.push({
-      title: 'Variables',
+      title: t('dashboard-settings.page-titles.variables', 'Variables'),
       id: 'templating',
       icon: 'calculator-alt',
       component: VariableEditorContainer,
@@ -117,7 +119,7 @@ function getSettingsPages(dashboard: DashboardModel) {
     });
 
     pages.push({
-      title: 'Links',
+      title: t('dashboard-settings.page-titles.links', 'Links'),
       id: 'links',
       icon: 'link',
       component: LinksSettings,
@@ -126,7 +128,7 @@ function getSettingsPages(dashboard: DashboardModel) {
 
   if (dashboard.meta.canMakeEditable) {
     pages.push({
-      title: 'General',
+      title: t('dashboard-settings.page-titles.general', 'General'),
       icon: 'sliders-v-alt',
       id: 'settings',
       component: MakeEditable,
@@ -135,7 +137,7 @@ function getSettingsPages(dashboard: DashboardModel) {
 
   if (dashboard.id && dashboard.meta.canSave) {
     pages.push({
-      title: 'Versions',
+      title: t('dashboard-settings.page-titles.versions', 'Versions'),
       id: 'versions',
       icon: 'history',
       component: VersionsSettings,
@@ -145,14 +147,14 @@ function getSettingsPages(dashboard: DashboardModel) {
   if (dashboard.id && dashboard.meta.canAdmin) {
     if (!config.rbacEnabled) {
       pages.push({
-        title: 'Permissions',
+        title: t('dashboard-settings.page-titles.permissions', 'Permissions'),
         id: 'permissions',
         icon: 'lock',
         component: DashboardPermissions,
       });
     } else if (contextSrv.hasPermission(AccessControlAction.DashboardsPermissionsRead)) {
       pages.push({
-        title: 'Permissions',
+        title: t('dashboard-settings.page-titles.permissions', 'Permissions'),
         id: 'permissions',
         icon: 'lock',
         component: AccessControlDashboardPermissions,
@@ -161,7 +163,7 @@ function getSettingsPages(dashboard: DashboardModel) {
   }
 
   pages.push({
-    title: 'JSON Model',
+    title: t('dashboard-settings.page-titles.json-model', 'JSON Model'),
     id: 'dashboard_json',
     icon: 'arrow',
     component: JsonEditorSettings,
@@ -185,7 +187,7 @@ function getSectionNav(
   location: H.Location
 ): NavModel {
   const main: NavModelItem = {
-    text: 'Settings',
+    text: t('dashboard-settings.page-titles.settings', 'Settings'),
     children: [],
     icon: 'apps',
     hideFromBreadcrumbs: true,

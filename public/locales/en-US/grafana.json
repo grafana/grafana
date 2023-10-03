@@ -263,6 +263,16 @@
     "json-editor": {
       "save-button": "Save changes",
       "subtitle": "The JSON model below is the data structure that defines the dashboard. This includes dashboard settings, panel settings, layout, queries, and so on."
+    },
+    "page-titles": {
+      "annotations": "Annotations",
+      "general": "General",
+      "json-model": "JSON model",
+      "links": "Links",
+      "permissions": "Permissions",
+      "settings": "Settings",
+      "variables": "Variables",
+      "versions": "Versions"
     }
   },
   "data-source-picker": {
