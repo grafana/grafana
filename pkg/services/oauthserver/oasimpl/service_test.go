@@ -102,12 +102,6 @@ func setupTestEnv(t *testing.T) *TestEnv {
 	return env
 }
 
-func generateRSAKey(t *testing.T) *rsa.PrivateKey {
-	key, err := rsa.GenerateKey(rand.Reader, 2048)
-	require.NoError(t, err)
-	return key
-}
-
 func TestOAuth2ServiceImpl_SaveExternalService(t *testing.T) {
 	const serviceName = "my-ext-service"
 
