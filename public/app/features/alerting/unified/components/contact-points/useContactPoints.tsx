@@ -9,9 +9,10 @@ import { remove } from 'lodash';
 import { alertmanagerApi } from '../../api/alertmanagerApi';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 
-import { enhanceContactPointsWithStatus } from './utils';
+import { enhanceContactPointsWithMetadata } from './utils';
 
 export const RECEIVER_STATUS_KEY = Symbol('receiver_status');
+export const RECEIVER_META_KEY = Symbol('receiver_metadata');
 const RECEIVER_STATUS_POLLING_INTERVAL = 10 * 1000; // 10 seconds
 
 /**
@@ -32,6 +33,12 @@ export function useContactPointsWithStatus(selectedAlertmanager: string) {
     skip: !isGrafanaManagedAlertmanager,
   });
 
+  // fetch notifier metadata from the Grafana API if we're using a Grafana AM – this will be used to add additional
+  // metadata and canonical names to the receiver
+  const fetchReceiverMetadata = alertmanagerApi.endpoints.grafanaNotifiers.useQuery(undefined, {
+    skip: !isGrafanaManagedAlertmanager,
+  });
+
   // fetch the latest config from the Alertmanager
   const fetchAlertmanagerConfiguration = alertmanagerApi.endpoints.getAlertmanagerConfiguration.useQuery(
     selectedAlertmanager,
@@ -40,12 +47,13 @@ export function useContactPointsWithStatus(selectedAlertmanager: string) {
       refetchOnReconnect: true,
       selectFromResult: (result) => ({
         ...result,
-        contactPoints: result.data ? enhanceContactPointsWithStatus(result.data, fetchContactPointsStatus.data) : [],
+        contactPoints: result.data
+          ? enhanceContactPointsWithMetadata(result.data, fetchContactPointsStatus.data, fetchReceiverMetadata.data)
+          : [],
       }),
     }
   );
 
-  // TODO kinda yucky to combine hooks like this, better alternative?
   const error = fetchAlertmanagerConfiguration.error ?? fetchContactPointsStatus.error;
   const isLoading = fetchAlertmanagerConfiguration.isLoading || fetchContactPointsStatus.isLoading;
 

@@ -43,8 +43,13 @@ import { UnusedContactPointBadge } from '../receivers/ReceiversTable';
 
 import { MessageTemplates } from './MessageTemplates';
 import { useDeleteContactPointModal } from './Modals';
-import { RECEIVER_STATUS_KEY, useContactPointsWithStatus, useDeleteContactPoint } from './useContactPoints';
-import { ContactPointWithStatus, getReceiverDescription, isProvisioned, ReceiverConfigWithStatus } from './utils';
+import {
+  RECEIVER_META_KEY,
+  RECEIVER_STATUS_KEY,
+  useContactPointsWithStatus,
+  useDeleteContactPoint,
+} from './useContactPoints';
+import { ContactPointWithMetadata, getReceiverDescription, isProvisioned, ReceiverConfigWithMetadata } from './utils';
 
 enum ActiveTab {
   ContactPoints,
@@ -153,7 +158,7 @@ const ContactPoints = () => {
 };
 
 interface ContactPointsListProps {
-  contactPoints: ContactPointWithStatus[];
+  contactPoints: ContactPointWithMetadata[];
   disabled?: boolean;
   onDelete: (name: string) => void;
   pageSize?: number;
@@ -194,7 +199,7 @@ interface ContactPointProps {
   name: string;
   disabled?: boolean;
   provisioned?: boolean;
-  receivers: ReceiverConfigWithStatus[];
+  receivers: ReceiverConfigWithMetadata[];
   policies?: number;
   onDelete: (name: string) => void;
 }
@@ -226,11 +231,13 @@ export const ContactPoint = ({
           <div>
             {receivers?.map((receiver) => {
               const diagnostics = receiver[RECEIVER_STATUS_KEY];
+              const metadata = receiver[RECEIVER_META_KEY];
               const sendingResolved = !Boolean(receiver.disableResolveMessage);
 
               return (
                 <ContactPointReceiver
                   key={uniqueId()}
+                  name={metadata.name}
                   type={receiver.type}
                   description={getReceiverDescription(receiver)}
                   diagnostics={diagnostics}
@@ -276,17 +283,16 @@ const ContactPointHeader = (props: ContactPointHeaderProps) => {
             {name}
           </Text>
         </Stack>
-        {isReferencedByPolicies ? (
+        {isReferencedByPolicies && (
           <MetaText>
             <Link to={createUrl('/alerting/routes', { contactPoint: name })}>
               is used by <Strong>{policies}</Strong> {pluralize('notification policy', policies)}
             </Link>
           </MetaText>
-        ) : (
-          <UnusedContactPointBadge />
         )}
         {provisioned && <ProvisioningBadge />}
         <Spacer />
+        {!isReferencedByPolicies && <UnusedContactPointBadge />}
         <LinkButton
           tooltipPlacement="top"
           tooltip={provisioned ? 'Provisioned contact points cannot be edited in the UI' : undefined}
@@ -352,6 +358,7 @@ const ContactPointHeader = (props: ContactPointHeaderProps) => {
 };
 
 interface ContactPointReceiverProps {
+  name: string;
   type: GrafanaNotifierType | string;
   description?: ReactNode;
   sendingResolved?: boolean;
@@ -359,14 +366,11 @@ interface ContactPointReceiverProps {
 }
 
 const ContactPointReceiver = (props: ContactPointReceiverProps) => {
-  const { type, description, diagnostics, sendingResolved = true } = props;
+  const { name, type, description, diagnostics, sendingResolved = true } = props;
   const styles = useStyles2(getStyles);
 
   const iconName = INTEGRATION_ICONS[type];
   const hasMetadata = diagnostics !== undefined;
-
-  // TODO get the actual name of the type from /alert-notifiers if grafanaManaged AM
-  const receiverName = receiverTypeNames[type] ?? upperFirst(type);
 
   return (
     <div className={styles.integrationWrapper}>
@@ -375,7 +379,7 @@ const ContactPointReceiver = (props: ContactPointReceiverProps) => {
           <Stack direction="row" alignItems="center" gap={0.5}>
             {iconName && <Icon name={iconName} />}
             <Text variant="body" color="primary">
-              {receiverName}
+              {name}
             </Text>
           </Stack>
           {description && (
