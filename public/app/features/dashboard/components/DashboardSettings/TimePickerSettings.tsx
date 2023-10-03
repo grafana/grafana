@@ -121,9 +121,9 @@ export class TimePickerSettings extends PureComponent<Props, State> {
           />
         </Field>
         <Field
-          label={t('dashboard-settings.general-settings.refresh-live-dashboards.label', 'Refresh live dashboards')}
+          label={t('dashboard-settings.time-picker.refresh-live-dashboards-label', 'Refresh live dashboards')}
           description={t(
-            'dashboard-settings.general-settings.refresh-live-dashboards.description',
+            'dashboard-settings.time-picker.refresh-live-dashboards-description',
             "Continuously re-draw panels where the time range references 'now'"
           )}
         >
