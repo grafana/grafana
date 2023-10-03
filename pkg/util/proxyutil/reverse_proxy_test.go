@@ -180,7 +180,8 @@ func TestReverseProxy(t *testing.T) {
 			{status: 599, expectedSource: requestmeta.StatusSourceDownstream},
 		}
 
-		for _, tc := range testCases {
+		for _, testCase := range testCases {
+			tc := testCase
 			t.Run(fmt.Sprintf("status %d => source %s ", tc.status, tc.expectedSource), func(t *testing.T) {
 				upstream := newUpstreamServer(t, http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 					w.WriteHeader(tc.status)
