@@ -23,6 +23,7 @@ export function getGrafanaInstancesByStateScene(
 
   return new SceneFlexItem({
     ...PANEL_STYLES,
+    height: '400px',
     body: PanelBuilders.timeseries()
       .setTitle(panelTitle)
       .setDescription(panelTitle)

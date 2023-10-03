@@ -24,7 +24,7 @@ export function getRuleGroupIntervalScene(timeRange: SceneTimeRange, datasource:
       .setDescription(panelTitle)
       .setData(query)
       .setUnit('s')
-      .setOption('graphMode', BigValueGraphMode.None)
+      .setOption('graphMode', BigValueGraphMode.Area)
       .build(),
   });
 }

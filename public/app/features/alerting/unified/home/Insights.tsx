@@ -120,6 +120,40 @@ function getGrafanaManagedScenes() {
             }),
             new SceneFlexLayout({
               children: [
+                getGrafanaInstancesByStateScene(THIS_WEEK_TIME_RANGE, cloudUsageDs, 'Alert instances by state'),
+                new SceneFlexLayout({
+                  height: '400px',
+                  direction: 'column',
+                  children: [
+                    new SceneFlexLayout({
+                      height: '400px',
+                      children: [
+                        getInstanceStatByStatusScene(
+                          THIS_WEEK_TIME_RANGE,
+                          cloudUsageDs,
+                          'Alerting instances',
+                          'alerting'
+                        ),
+                        getInstanceStatByStatusScene(
+                          THIS_WEEK_TIME_RANGE,
+                          cloudUsageDs,
+                          'Pending instances',
+                          'pending'
+                        ),
+                      ],
+                    }),
+                    new SceneFlexLayout({
+                      children: [
+                        getInstanceStatByStatusScene(THIS_WEEK_TIME_RANGE, cloudUsageDs, 'No data instances', 'nodata'),
+                        getInstanceStatByStatusScene(THIS_WEEK_TIME_RANGE, cloudUsageDs, 'Error instances', 'error'),
+                      ],
+                    }),
+                  ],
+                }),
+              ],
+            }),
+            new SceneFlexLayout({
+              children: [
                 getGrafanaRulesByEvaluationScene(THIS_WEEK_TIME_RANGE, cloudUsageDs, 'Alert rule evaluation'),
                 getGrafanaRulesByEvaluationPercentageScene(
                   THIS_WEEK_TIME_RANGE,
@@ -140,17 +174,6 @@ function getGrafanaManagedScenes() {
                   cloudUsageDs,
                   'Iterations missed per evaluation group'
                 ),
-              ],
-            }),
-            new SceneFlexLayout({
-              children: [getGrafanaInstancesByStateScene(THIS_WEEK_TIME_RANGE, cloudUsageDs, 'Alerts by state')],
-            }),
-            new SceneFlexLayout({
-              children: [
-                getInstanceStatByStatusScene(THIS_WEEK_TIME_RANGE, cloudUsageDs, 'Alerting instances', 'alerting'),
-                getInstanceStatByStatusScene(THIS_WEEK_TIME_RANGE, cloudUsageDs, 'Pending instances', 'pending'),
-                getInstanceStatByStatusScene(THIS_WEEK_TIME_RANGE, cloudUsageDs, 'Nodata instances', 'nodata'),
-                getInstanceStatByStatusScene(THIS_WEEK_TIME_RANGE, cloudUsageDs, 'Error instances', 'error'),
               ],
             }),
           ],

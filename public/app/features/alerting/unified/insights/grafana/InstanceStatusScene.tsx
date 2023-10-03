@@ -30,7 +30,7 @@ export function getInstanceStatByStatusScene(
   });
 
   return new SceneFlexItem({
-    ...PANEL_STYLES,
+    height: '100%',
     body: PanelBuilders.stat()
       .setTitle(panelTitle)
       .setDescription(panelTitle)
