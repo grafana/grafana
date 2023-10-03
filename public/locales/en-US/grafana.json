@@ -260,9 +260,33 @@
     }
   },
   "dashboard-settings": {
+    "dashboard-delete-button": "Delete Dashboard",
+    "general": {
+      "auto-refresh-description": "Define the auto refresh intervals that should be available in the auto refresh list.",
+      "auto-refresh-label": "Auto refresh",
+      "description-label": "Description",
+      "editable-description": "Set to read-only to disable all editing. Reload the dashboard for changes to take effect",
+      "editable-label": "Editable",
+      "folder-label": "Folder",
+      "panel-options-graph-tooltip-description": "Controls tooltip and hover highlight behavior across different panels. Reload the dashboard for changes to take effect",
+      "panel-options-graph-tooltip-label": "Graph tooltip",
+      "panel-options-label": "Panel options",
+      "tags-label": "Tags",
+      "title-label": "Title"
+    },
     "json-editor": {
       "save-button": "Save changes",
       "subtitle": "The JSON model below is the data structure that defines the dashboard. This includes dashboard settings, panel settings, layout, queries, and so on."
+    },
+    "time-picker": {
+      "hide-time-picker": "Hide time picker",
+      "now-delay-description": "Exclude recent data that may be incomplete.",
+      "now-delay-label": "Now delay",
+      "refresh-live-dashboards-description": "Continuously re-draw panels where the time range references 'now'",
+      "refresh-live-dashboards-label": "Refresh live dashboards",
+      "time-options-label": "Time options",
+      "time-zone-label": "Time zone",
+      "week-start-label": "Week start"
     }
   },
   "data-source-picker": {
@@ -364,6 +388,17 @@
     }
   },
   "library-panels": {
+    "modal": {
+      "body__one": "This panel is being used in {{count}} dashboard. Please choose which dashboard to view the panel in:",
+      "body__other": "This panel is being used in {{count}} dashboards. Please choose which dashboard to view the panel in:",
+      "button-cancel": "<0>Cancel</0>",
+      "button-view-panel1": "View panel in {{label}}...",
+      "button-view-panel2": "View panel in dashboard...",
+      "panel-not-linked": "Panel is not linked to a dashboard. Add the panel to a dashboard and retry.",
+      "select-no-options-message": "No dashboards found",
+      "select-placeholder": "Start typing to search for dashboard",
+      "title": "View panel in dashboard"
+    },
     "save": {
       "error": "Error saving library panel: \"{{errorMsg}}\"",
       "success": "Library panel saved"

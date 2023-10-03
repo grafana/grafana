@@ -29,7 +29,7 @@ After you add and configure a data source, you can use it as an input for many o
 This documentation describes how to manage data sources in general,
 and how to configure or query the built-in data sources.
 For other data sources, refer to the list of [datasource plugins](/grafana/plugins/).
-To develop a custom plugin, refer to [Build a plugin](/developers/plugin-tools)
+To develop a custom plugin, refer to our [plugin development documentation](/developers/plugin-tools).
 
 ## Manage data sources
 

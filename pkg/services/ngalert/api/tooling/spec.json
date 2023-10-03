@@ -1197,6 +1197,67 @@
         }
       }
     },
+    "/api/ruler/grafana/api/v1/export/rules": {
+      "get": {
+        "description": "List rules in provisioning format",
+        "consumes": [
+          "application/json",
+          "application/yaml"
+        ],
+        "tags": [
+          "ruler"
+        ],
+        "operationId": "RouteGetRulesForExport",
+        "parameters": [
+          {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether to initiate a download of the file or not.",
+            "name": "download",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "yaml",
+            "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
+            "name": "format",
+            "in": "query"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "UIDs of folders from which to export rules",
+            "name": "folderUid",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "Name of group of rules to export. Must be specified only together with a single folder UID",
+            "name": "group",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "UID of alert rule to export. If specified, parameters folderUid and group must be empty.",
+            "name": "ruleUid",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "AlertingFileExport",
+            "schema": {
+              "$ref": "#/definitions/AlertingFileExport"
+            }
+          },
+          "404": {
+            "description": " Not found."
+          }
+        }
+      }
+    },
     "/api/ruler/grafana/api/v1/rules": {
       "get": {
         "description": "List rule groups",
@@ -1311,6 +1372,59 @@
             "schema": {
               "$ref": "#/definitions/Ack"
             }
+          }
+        }
+      }
+    },
+    "/api/ruler/grafana/api/v1/rules/{Namespace}/export": {
+      "post": {
+        "description": "Converts submitted rule group to provisioning format",
+        "consumes": [
+          "application/json",
+          "application/yaml"
+        ],
+        "tags": [
+          "ruler"
+        ],
+        "operationId": "RoutePostRulesGroupForExport",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "Namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/PostableRuleGroupConfig"
+            }
+          },
+          {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether to initiate a download of the file or not.",
+            "name": "download",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "yaml",
+            "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
+            "name": "format",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "AlertingFileExport",
+            "schema": {
+              "$ref": "#/definitions/AlertingFileExport"
+            }
+          },
+          "404": {
+            "description": " Not found."
           }
         }
       }
@@ -3003,7 +3117,7 @@
           "type": "string"
         },
         "relativeTimeRange": {
-          "$ref": "#/definitions/RelativeTimeRange"
+          "$ref": "#/definitions/RelativeTimeRangeExport"
         }
       }
     },
@@ -3281,6 +3395,9 @@
           "type": "string"
         },
         "for": {
+          "type": "string"
+        },
+        "keep_firing_for": {
           "type": "string"
         },
         "labels": {
@@ -4091,6 +4208,12 @@
             "$ref": "#/definitions/GettableGrafanaReceiver"
           }
         },
+        "msteams_configs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/MSTeamsConfig"
+          }
+        },
         "name": {
           "description": "A unique identifier for this receiver.",
           "type": "string"
@@ -4123,12 +4246,6 @@
           "type": "array",
           "items": {
             "$ref": "#/definitions/SNSConfig"
-          }
-        },
-        "teams_configs": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/MSTeamsConfig"
           }
         },
         "telegram_configs": {
@@ -4183,6 +4300,9 @@
         },
         "grafana_alert": {
           "$ref": "#/definitions/GettableGrafanaRule"
+        },
+        "keep_firing_for": {
+          "type": "string"
         },
         "labels": {
           "type": "object",
@@ -5158,6 +5278,12 @@
             "$ref": "#/definitions/PostableGrafanaReceiver"
           }
         },
+        "msteams_configs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/MSTeamsConfig"
+          }
+        },
         "name": {
           "description": "A unique identifier for this receiver.",
           "type": "string"
@@ -5190,12 +5316,6 @@
           "type": "array",
           "items": {
             "$ref": "#/definitions/SNSConfig"
-          }
-        },
-        "teams_configs": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/MSTeamsConfig"
           }
         },
         "telegram_configs": {
@@ -5250,6 +5370,9 @@
         },
         "grafana_alert": {
           "$ref": "#/definitions/PostableGrafanaRule"
+        },
+        "keep_firing_for": {
+          "type": "string"
         },
         "labels": {
           "type": "object",
@@ -5622,6 +5745,9 @@
         "token_file": {
           "type": "string"
         },
+        "ttl": {
+          "type": "string"
+        },
         "url": {
           "type": "string"
         },
@@ -5739,6 +5865,12 @@
             "$ref": "#/definitions/EmailConfig"
           }
         },
+        "msteams_configs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/MSTeamsConfig"
+          }
+        },
         "name": {
           "description": "A unique identifier for this receiver.",
           "type": "string"
@@ -5771,12 +5903,6 @@
           "type": "array",
           "items": {
             "$ref": "#/definitions/SNSConfig"
-          }
-        },
-        "teams_configs": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/MSTeamsConfig"
           }
         },
         "telegram_configs": {
@@ -5843,6 +5969,19 @@
         },
         "to": {
           "$ref": "#/definitions/Duration"
+        }
+      }
+    },
+    "RelativeTimeRangeExport": {
+      "type": "object",
+      "properties": {
+        "from": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "to": {
+          "type": "integer",
+          "format": "int64"
         }
       }
     },
@@ -6725,9 +6864,8 @@
       }
     },
     "URL": {
-      "description": "The general form represented is:\n\n[scheme:][//[userinfo@]host][/]path[?query][#fragment]\n\nURLs that do not start with a slash after the scheme are interpreted as:\n\nscheme:opaque[?query][#fragment]\n\nNote that the Path field is stored in decoded form: /%47%6f%2f becomes /Go/.\nA consequence is that it is impossible to tell which slashes in the Path were\nslashes in the raw URL and which were %2f. This distinction is rarely important,\nbut when it is, the code should use the EscapedPath method, which preserves\nthe original encoding of Path.\n\nThe RawPath field is an optional field which is only set when the default\nencoding of Path is different from the escaped path. See the EscapedPath method\nfor more details.\n\nURL's String method uses the EscapedPath method to obtain the path.",
       "type": "object",
-      "title": "A URL represents a parsed URL (technically, a URI reference).",
+      "title": "URL is a custom URL type that allows validation at configuration load time.",
       "properties": {
         "ForceQuery": {
           "type": "boolean"
@@ -6941,7 +7079,6 @@
       }
     },
     "alertGroup": {
-      "description": "AlertGroup alert group",
       "type": "object",
       "required": [
         "alerts",
@@ -7072,6 +7209,7 @@
       }
     },
     "gettableAlert": {
+      "description": "GettableAlert gettable alert",
       "type": "object",
       "required": [
         "labels",
@@ -7128,6 +7266,7 @@
       "$ref": "#/definitions/gettableAlert"
     },
     "gettableAlerts": {
+      "description": "GettableAlerts gettable alerts",
       "type": "array",
       "items": {
         "$ref": "#/definitions/gettableAlert"
@@ -7192,6 +7331,7 @@
       "$ref": "#/definitions/gettableSilences"
     },
     "integration": {
+      "description": "Integration integration",
       "type": "object",
       "required": [
         "name",
@@ -7336,7 +7476,6 @@
       }
     },
     "postableSilence": {
-      "description": "PostableSilence postable silence",
       "type": "object",
       "required": [
         "comment",
