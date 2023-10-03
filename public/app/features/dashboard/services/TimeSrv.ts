@@ -338,6 +338,12 @@ export class TimeSrv {
   };
 
   timeRange(): TimeRange {
+    // Scenes can set this global object to the current time range.
+    // This is a patch to support data sources that rely on TimeSrv.getTimeRange()
+    if (window.__timeRangeSceneObject && window.__timeRangeSceneObject.isActive) {
+      return window.__timeRangeSceneObject.state.value;
+    }
+
     return getTimeRange(this.time, this.timeModel);
   }
 

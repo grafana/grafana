@@ -120,7 +120,7 @@ func (s *Service) getUserPermissions(ctx context.Context, user identity.Requeste
 
 	var userID int64
 	switch namespace {
-	case authn.NamespaceUser, authn.NamespaceServiceAccount, identity.NamespaceRenderService:
+	case authn.NamespaceUser, authn.NamespaceServiceAccount:
 		var err error
 		userID, err = strconv.ParseInt(identifier, 10, 64)
 		if err != nil {

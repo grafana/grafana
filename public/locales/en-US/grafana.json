@@ -126,6 +126,24 @@
       "placeholder": "Search all"
     }
   },
+  "correlations": {
+    "add-new": "Add new",
+    "alert": {
+      "error-message": "An unknown error occurred while fetching correlation data. Please try again.",
+      "title": "Error fetching correlation data"
+    },
+    "list": {
+      "delete": "delete correlation",
+      "label": "Label",
+      "loading": "loading...",
+      "read-only": "Read only",
+      "source": "Source",
+      "target": "Target"
+    },
+    "page-content": "To enable Correlations, add it in the Grafana config:",
+    "page-heading": "Correlations are disabled",
+    "sub-title": "Define how data living in different data sources relates to each other. Read more in the <2>documentation<1></1></2>"
+  },
   "dashboard": {
     "add-menu": {
       "import": "Import from library",
@@ -213,6 +231,32 @@
       "settings": "Dashboard settings",
       "share": "Share dashboard",
       "unmark-favorite": "Unmark as favorite"
+    },
+    "validation": {
+      "invalid-dashboard-id": "Could not find a valid Grafana.com ID",
+      "invalid-json": "Not valid JSON",
+      "tags-expected-array": "tags expected array",
+      "tags-expected-strings": "tags expected array of strings"
+    }
+  },
+  "dashboard-import": {
+    "file-dropzone": {
+      "primary-text": "Upload dashboard JSON file",
+      "secondary-text": "Drag and drop here or click to browse"
+    },
+    "form-actions": {
+      "cancel": "Cancel",
+      "load": "Load"
+    },
+    "gcom-field": {
+      "label": "Find and import dashboards for common applications at <1></1>",
+      "load-button": "Load",
+      "placeholder": "Grafana.com dashboard URL or ID",
+      "validation-required": "A Grafana dashboard URL or ID is required"
+    },
+    "json-field": {
+      "label": "Import via dashboard JSON model",
+      "validation-required": "Need a dashboard JSON model"
     }
   },
   "dashboard-settings": {
@@ -320,6 +364,17 @@
     }
   },
   "library-panels": {
+    "modal": {
+      "body__one": "This panel is being used in {{count}} dashboard. Please choose which dashboard to view the panel in:",
+      "body__other": "This panel is being used in {{count}} dashboards. Please choose which dashboard to view the panel in:",
+      "button-cancel": "<0>Cancel</0>",
+      "button-view-panel1": "View panel in {{label}}...",
+      "button-view-panel2": "View panel in dashboard...",
+      "panel-not-linked": "Panel is not linked to a dashboard. Add the panel to a dashboard and retry.",
+      "select-no-options-message": "No dashboards found",
+      "select-placeholder": "Start typing to search for dashboard",
+      "title": "View panel in dashboard"
+    },
     "save": {
       "error": "Error saving library panel: \"{{errorMsg}}\"",
       "success": "Library panel saved"
@@ -681,6 +736,22 @@
       "title": "There are no playlists created yet"
     }
   },
+  "profile": {
+    "change-password": {
+      "cancel-button": "Cancel",
+      "cannot-change-password-message": "Password cannot be changed here.",
+      "change-password-button": "Change Password",
+      "confirm-password-label": "Confirm password",
+      "confirm-password-required": "New password confirmation is required",
+      "ldap-auth-proxy-message": "You cannot change password when signed in with LDAP or auth proxy.",
+      "new-password-label": "New password",
+      "new-password-required": "New password is required",
+      "new-password-same-as-old": "New password can't be the same as the old one.",
+      "old-password-label": "Old password",
+      "old-password-required": "Old password is required",
+      "passwords-must-match": "Passwords must match"
+    }
+  },
   "refresh-picker": {
     "aria-label": {
       "choose-interval": "Auto refresh turned off. Choose refresh time interval",
@@ -760,6 +831,7 @@
       "time-range-description": "Transforms the current relative time range to an absolute time range"
     },
     "export": {
+      "back-button": "Back to export config",
       "cancel-button": "Cancel",
       "info-text": "Export this dashboard.",
       "save-button": "Save to file",
@@ -860,6 +932,12 @@
       "default-label": "Default"
     },
     "title": "Preferences"
+  },
+  "snapshot": {
+    "external-badge": "External",
+    "name-column-header": "Name",
+    "url-column-header": "Snapshot url",
+    "view-button": "View"
   },
   "tag-filter": {
     "loading": "Loading...",

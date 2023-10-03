@@ -71,7 +71,7 @@ import (
 //     Responses:
 //       204: description: The alert rule was deleted successfully.
 
-// swagger:parameters RouteGetAlertRulesExport
+// swagger:parameters RouteGetAlertRulesExport RouteGetRulesForExport
 type AlertRulesExportParameters struct {
 	ExportQueryParams
 	// UIDs of folders from which to export rules
