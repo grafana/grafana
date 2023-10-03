@@ -106,17 +106,30 @@ export const setErrorMarkers = (
     model,
     'owner', // default value
     errorNodes.map((errorNode) => {
+      let startLine = 0;
+      let endLine = 0;
+      let start = errorNode.from;
+      let end = errorNode.to;
+
+      while (start > 0) {
+        startLine++;
+        start -= model.getLineLength(startLine);
+      }
+      while (end > 0) {
+        endLine++;
+        end -= model.getLineLength(endLine);
+      }
+
       return {
         message: computeErrorMessage(errorNode),
         severity: monaco.MarkerSeverity.Error,
 
-        // As of now, we support only single-line queries
-        startLineNumber: 0,
-        endLineNumber: 0,
+        startLineNumber: startLine,
+        endLineNumber: endLine,
 
         // `+ 1` because squiggles seem shifted by one
-        startColumn: errorNode.from + 1,
-        endColumn: errorNode.to + 1,
+        startColumn: start + model.getLineLength(startLine) + (startLine === 1 ? 1 : 0),
+        endColumn: end + model.getLineLength(endLine) + (endLine === 1 ? 1 : 0),
       };
     })
   );
