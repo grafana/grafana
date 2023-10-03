@@ -146,12 +146,10 @@ export function QuerySuggestionItem(props: Props) {
 function explanationFeedback(querySuggestion: QuerySuggestion, helpful: boolean, historical: boolean) {
   const event = 'grafana_prometheus_promqail_explanation_feedback';
 
-  if (helpful) {
-    reportInteraction(event, {
-      helpful: helpful ? 'yes' : 'no',
-      suggestionType: historical ? 'historical' : 'AI',
-      query: querySuggestion.query,
-      explanation: querySuggestion.explanation,
-    });
-  }
+  reportInteraction(event, {
+    helpful: helpful ? 'yes' : 'no',
+    suggestionType: historical ? 'historical' : 'AI',
+    query: querySuggestion.query,
+    explanation: querySuggestion.explanation,
+  });
 }

@@ -38,8 +38,10 @@ export const PromQail = (props: PromQailProps) => {
   const responsesEndRef = useRef(null);
 
   const scrollToBottom = () => {
-    // @ts-ignore
-    responsesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (responsesEndRef) {
+      // @ts-ignore
+      responsesEndRef?.current?.scrollIntoView({ behavior: 'smooth' });
+    }
   };
 
   useEffect(() => {
