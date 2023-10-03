@@ -59,6 +59,9 @@ export function transformSceneToSaveModel(scene: DashboardScene): Dashboard {
     annotations: {
       list: annotations,
     },
+    timezone: timeRange.timeZone,
+    fiscalYearStartMonth: timeRange.fiscalYearStartMonth,
+    weekStart: timeRange.weekStart,
   };
 
   return sortedDeepCloneWithoutNulls(dashboard);

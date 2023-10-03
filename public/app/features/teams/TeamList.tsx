@@ -25,7 +25,7 @@ import { AccessControlAction, Role, StoreState, Team } from 'app/types';
 import { TeamRolePicker } from '../../core/components/RolePicker/TeamRolePicker';
 import { Avatar } from '../admin/Users/Avatar';
 
-import { deleteTeam, loadTeams, changePage, changeQuery } from './state/actions';
+import { deleteTeam, loadTeams, changePage, changeQuery, changeSort } from './state/actions';
 import { isPermissionTeamAdmin } from './state/selectors';
 
 type Cell<T extends keyof Team = keyof Team> = CellProps<Team, Team[T]>;
@@ -48,9 +48,9 @@ export const TeamList = ({
   editorsCanAdmin,
   page,
   changePage,
+  changeSort,
 }: Props) => {
   const [roleOptions, setRoleOptions] = useState<Role[]>([]);
-  const enableSort = totalPages === 1;
 
   useEffect(() => {
     loadTeams(true);
@@ -76,19 +76,19 @@ export const TeamList = ({
         id: 'name',
         header: 'Name',
         cell: ({ cell: { value } }: Cell<'name'>) => value,
-        sortType: enableSort ? 'string' : undefined,
+        sortType: 'string',
       },
       {
         id: 'email',
         header: 'Email',
         cell: ({ cell: { value } }: Cell<'email'>) => value,
-        sortType: enableSort ? 'string' : undefined,
+        sortType: 'string',
       },
       {
         id: 'memberCount',
         header: 'Members',
         cell: ({ cell: { value } }: Cell<'memberCount'>) => value,
-        sortType: enableSort ? 'number' : undefined,
+        sortType: 'number',
       },
       ...(displayRolePicker
         ? [
@@ -155,7 +155,7 @@ export const TeamList = ({
         },
       },
     ],
-    [displayRolePicker, editorsCanAdmin, roleOptions, signedInUser, deleteTeam, enableSort]
+    [displayRolePicker, editorsCanAdmin, roleOptions, signedInUser, deleteTeam]
   );
 
   return (
@@ -185,7 +185,12 @@ export const TeamList = ({
               </LinkButton>
             </div>
             <VerticalGroup spacing={'md'}>
-              <InteractiveTable columns={columns} data={teams} getRowId={(team) => String(team.id)} />
+              <InteractiveTable
+                columns={columns}
+                data={teams}
+                getRowId={(team) => String(team.id)}
+                fetchData={changeSort}
+              />
               <HorizontalGroup justify="flex-end">
                 <Pagination hideWhenSinglePage currentPage={page} numberOfPages={totalPages} onNavigate={changePage} />
               </HorizontalGroup>
@@ -224,6 +229,7 @@ const mapDispatchToProps = {
   deleteTeam,
   changePage,
   changeQuery,
+  changeSort,
 };
 
 const connector = connect(mapStateToProps, mapDispatchToProps);

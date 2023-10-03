@@ -1,7 +1,7 @@
 import * as H from 'history';
 import { Unsubscribable } from 'rxjs';
 
-import { NavModelItem, UrlQueryMap } from '@grafana/data';
+import { CoreApp, DataQueryRequest, NavModelItem, UrlQueryMap } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import {
   getUrlSyncManager,
@@ -18,7 +18,13 @@ import { DashboardMeta } from 'app/types';
 
 import { DashboardSceneRenderer } from '../scene/DashboardSceneRenderer';
 import { SaveDashboardDrawer } from '../serialization/SaveDashboardDrawer';
-import { findVizPanelByKey, forceRenderChildren, getDashboardUrl } from '../utils/utils';
+import {
+  findVizPanelByKey,
+  forceRenderChildren,
+  getClosestVizPanel,
+  getDashboardUrl,
+  getPanelIdForVizPanel,
+} from '../utils/utils';
 
 import { DashboardSceneUrlSync } from './DashboardSceneUrlSync';
 
@@ -190,5 +196,18 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
 
   public closeModal() {
     this.setState({ overlay: undefined });
+  }
+
+  /**
+   * Called by the SceneQueryRunner to privide contextural parameters (tracking) props for the request
+   */
+  public enrichDataRequest(sceneObject: SceneObject): Partial<DataQueryRequest> {
+    const panel = getClosestVizPanel(sceneObject);
+
+    return {
+      app: CoreApp.Dashboard,
+      dashboardUID: this.state.uid,
+      panelId: (panel && getPanelIdForVizPanel(panel)) ?? 0,
+    };
   }
 }
