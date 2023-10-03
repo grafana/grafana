@@ -1,4 +1,4 @@
-import { formatMilliseconds } from './tooltipUtils';
+import { formatMilliseconds } from './utils';
 
 describe('format milliseconds', () => {
   it('converts ms to appropriate unit', async () => {

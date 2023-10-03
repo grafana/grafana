@@ -25,7 +25,7 @@ import { DataHoverView } from 'app/features/visualization/data-hover/DataHoverVi
 
 import { HeatmapData } from '../fields';
 
-import { formatMilliseconds, getHoverCellColor, xDisp } from './tooltipUtils';
+import { formatMilliseconds, getHoverCellColor, xDisp } from './utils';
 
 interface Props {
   dataIdxs: Array<number | null>;

@@ -423,4 +423,3 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(HeatmapPanel)
     });
   })
   .setSuggestionsSupplier(new HeatmapSuggestionsSupplier());
-// .setDataSupport({ annotations: false });
