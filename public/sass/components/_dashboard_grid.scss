@@ -13,6 +13,8 @@
   &:hover {
     .react-resizable-handle {
       visibility: visible;
+      // above other panels, but below lowest pre-defined index in zIndex.ts
+      z-index: 999;
     }
   }
 }
