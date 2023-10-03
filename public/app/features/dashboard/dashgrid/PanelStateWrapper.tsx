@@ -378,6 +378,15 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
     if (this.state.errorMessage !== errorMessage) {
       this.setState({ errorMessage });
     }
+
+    // This is only done to increase a counter that is used by backend
+    // image rendering to know when to capture image
+    const { plugin } = this.props;
+    const { data } = this.state;
+    const { state: loadingState } = data;
+    if (this.shouldSignalRenderingCompleted(loadingState, plugin.meta)) {
+      profiler.renderingCompleted();
+    }
   };
 
   onPanelErrorRecover = () => {
