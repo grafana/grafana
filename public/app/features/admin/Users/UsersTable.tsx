@@ -13,6 +13,7 @@ import {
   Column,
   VerticalGroup,
   HorizontalGroup,
+  FetchDataFunc,
 } from '@grafana/ui';
 import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
 import { UserDTO } from 'app/types';
@@ -28,11 +29,18 @@ interface UsersTableProps {
   totalPages: number;
   onChangePage: (page: number) => void;
   currentPage: number;
+  fetchData?: FetchDataFunc<UserDTO>;
 }
 
-export const UsersTable = ({ users, showPaging, totalPages, onChangePage, currentPage }: UsersTableProps) => {
+export const UsersTable = ({
+  users,
+  showPaging,
+  totalPages,
+  onChangePage,
+  currentPage,
+  fetchData,
+}: UsersTableProps) => {
   const showLicensedRole = useMemo(() => users.some((user) => user.licensedRole), [users]);
-  const enableSort = totalPages === 1;
   const columns: Array<Column<UserDTO>> = useMemo(
     () => [
       {
@@ -44,25 +52,25 @@ export const UsersTable = ({ users, showPaging, totalPages, onChangePage, curren
         id: 'login',
         header: 'Login',
         cell: ({ cell: { value } }: Cell<'login'>) => value,
-        sortType: enableSort ? 'string' : undefined,
+        sortType: 'string',
       },
       {
         id: 'email',
         header: 'Email',
         cell: ({ cell: { value } }: Cell<'email'>) => value,
-        sortType: enableSort ? 'string' : undefined,
+        sortType: 'string',
       },
       {
         id: 'name',
         header: 'Name',
         cell: ({ cell: { value } }: Cell<'name'>) => value,
-        sortType: enableSort ? 'string' : undefined,
+        sortType: 'string',
       },
       {
         id: 'orgs',
         header: 'Belongs to',
         cell: OrgUnitsCell,
-        sortType: enableSort ? (a, b) => (a.original.orgs?.length || 0) - (b.original.orgs?.length || 0) : undefined,
+        sortType: (a, b) => (a.original.orgs?.length || 0) - (b.original.orgs?.length || 0),
       },
       ...(showLicensedRole
         ? [
@@ -71,7 +79,7 @@ export const UsersTable = ({ users, showPaging, totalPages, onChangePage, curren
               header: 'Licensed role',
               cell: LicensedRoleCell,
               // Needs the assertion here, the types are not inferred correctly due to the  conditional assignment
-              sortType: enableSort ? ('string' as const) : undefined,
+              sortType: 'string' as const,
             },
           ]
         : []),
@@ -83,9 +91,7 @@ export const UsersTable = ({ users, showPaging, totalPages, onChangePage, curren
           iconName: 'question-circle',
         },
         cell: LastSeenAtCell,
-        sortType: enableSort
-          ? (a, b) => new Date(a.original.lastSeenAt!).getTime() - new Date(b.original.lastSeenAt!).getTime()
-          : undefined,
+        sortType: (a, b) => new Date(a.original.lastSeenAt!).getTime() - new Date(b.original.lastSeenAt!).getTime(),
       },
       {
         id: 'authLabels',
@@ -113,11 +119,11 @@ export const UsersTable = ({ users, showPaging, totalPages, onChangePage, curren
         },
       },
     ],
-    [showLicensedRole, enableSort]
+    [showLicensedRole]
   );
   return (
     <VerticalGroup spacing={'md'}>
-      <InteractiveTable columns={columns} data={users} getRowId={(user) => String(user.id)} />
+      <InteractiveTable columns={columns} data={users} getRowId={(user) => String(user.id)} fetchData={fetchData} />
       {showPaging && (
         <HorizontalGroup justify={'flex-end'}>
           <Pagination numberOfPages={totalPages} currentPage={currentPage} onNavigate={onChangePage} />

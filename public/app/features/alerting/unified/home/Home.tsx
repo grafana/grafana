@@ -5,6 +5,8 @@ import { SceneApp, SceneAppPage } from '@grafana/scenes';
 import { usePageNav } from 'app/core/components/Page/usePageNav';
 import { PluginPageContext, PluginPageContextType } from 'app/features/plugins/components/PluginPageContext';
 
+import { isLocalDevEnv, isOpenSourceEdition } from '../utils/misc';
+
 import { getOverviewScene, WelcomeHeader } from './GettingStarted';
 import { getGrafanaScenes } from './Insights';
 
@@ -56,7 +58,8 @@ export function getHomeApp(insightsEnabled: boolean) {
 }
 
 export default function Home() {
-  const insightsEnabled = !!config.featureToggles.alertingInsights;
+  const insightsEnabled =
+    (!isOpenSourceEdition() || isLocalDevEnv()) && Boolean(config.featureToggles.alertingInsights);
 
   const appScene = getHomeApp(insightsEnabled);
 
