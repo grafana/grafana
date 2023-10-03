@@ -262,7 +262,8 @@ export const exploreReducer = (state = initialExploreState, action: AnyAction): 
   }
 
   if (changeCorrelationEditorDetails.match(action)) {
-    const { editorMode, label, description, canSave, dirty, isExiting, postConfirmAction } = action.payload;
+    const { editorMode, label, description, canSave, dirty, isExiting, postConfirmAction, transformations } =
+      action.payload;
     return {
       ...state,
       correlationEditorDetails: {
@@ -270,6 +271,7 @@ export const exploreReducer = (state = initialExploreState, action: AnyAction): 
         canSave: Boolean(canSave ?? state.correlationEditorDetails?.canSave),
         label: label ?? state.correlationEditorDetails?.label,
         description: description ?? state.correlationEditorDetails?.description,
+        transformations: transformations ?? state.correlationEditorDetails?.transformations,
         dirty: Boolean(dirty ?? state.correlationEditorDetails?.dirty),
         isExiting: Boolean(isExiting ?? state.correlationEditorDetails?.isExiting),
         postConfirmAction,

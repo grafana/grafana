@@ -11,7 +11,7 @@ import { getTransformationVars } from '../correlations/transformations';
 
 interface CorrelationTransformationAddModalProps {
   onCancel: () => void;
-  onSave: () => void;
+  onSave: (transformation: DataLinkTransformationConfig) => void;
   fieldList: Record<string, string>;
 }
 
@@ -55,19 +55,28 @@ export const CorrelationTransformationAddModal = ({
         A transformation extracts variables out of a single field. These variables will be available along with your
         field variables.
       </p>
-      <Field label="Field" htmlFor={`${id}-field`}>
-        <Select
-          id={`${id}-field`}
-          options={Object.entries(fieldList).map((entry) => {
-            return { label: entry[0], value: entry[0] };
-          })}
-          onChange={(value) => {
-            if (value.value) {
-              setExampleValue(fieldList[value.value]);
-            }
-          }}
+      <Field label="Field">
+        <InputControl
+          control={control}
+          render={({ field: { onChange, ref, ...field } }) => (
+            <Select
+              {...field}
+              onChange={(value) => {
+                if (value.value) {
+                  onChange(value.value);
+                  setExampleValue(fieldList[value.value]);
+                }
+              }}
+              options={Object.entries(fieldList).map((entry) => {
+                return { label: entry[0], value: entry[0] };
+              })}
+              aria-label="field"
+            />
+          )}
+          name={`field` as const}
         />
       </Field>
+
       {exampleValue && (
         <>
           <pre>
@@ -127,8 +136,8 @@ export const CorrelationTransformationAddModal = ({
         <Button variant="secondary" onClick={onCancel} fill="outline">
           Cancel
         </Button>
-        <Button variant="primary" onClick={onSave}>
-          Save transformation
+        <Button variant="primary" onClick={() => onSave(getValues())}>
+          Add transformation to correlation
         </Button>
       </Modal.ButtonRow>
     </Modal>

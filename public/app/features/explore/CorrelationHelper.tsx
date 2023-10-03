@@ -62,8 +62,9 @@ export const CorrelationHelper = ({ correlations }: Props) => {
       {showTransformationAddModal && (
         <CorrelationTransformationAddModal
           onCancel={() => setShowTransformationAddModal(false)}
-          onSave={() => {
-            setTransformations([]);
+          onSave={(transformation: DataLinkTransformationConfig) => {
+            setTransformations([...transformations, transformation]);
+            setShowTransformationAddModal(false);
           }}
           fieldList={correlations.vars}
         />
@@ -106,10 +107,15 @@ export const CorrelationHelper = ({ correlations }: Props) => {
               setShowTransformationAddModal(true);
             }}
           >
-            Add Transformation
+            Add transformation
           </Button>
           {transformations.map((transformation, i) => {
-            return <p key={`trans-${i}`}>{transformation?.type}</p>;
+            const { type, field, expression, mapValue } = transformation;
+            return (
+              <p key={`trans-${i}`}>
+                {field}: {type} {expression || mapValue ? `(${mapValue}, ${expression})` : ''}
+              </p>
+            );
           })}
         </Collapse>
       </Alert>
