@@ -265,24 +265,14 @@
       "auto-refresh-description": "Define the auto refresh intervals that should be available in the auto refresh list.",
       "auto-refresh-label": "Auto refresh",
       "description-label": "Description",
+      "editable-description": "Set to read-only to disable all editing. Reload the dashboard for changes to take effect",
+      "editable-label": "Editable",
       "folder-label": "Folder",
+      "panel-options-graph-tooltip-description": "Controls tooltip and hover highlight behavior across different panels. Reload the dashboard for changes to take effect",
+      "panel-options-graph-tooltip-label": "Graph tooltip",
+      "panel-options-label": "Panel options",
       "tags-label": "Tags",
       "title-label": "Title"
-    },
-    "general-settings": {
-      "editable": {
-        "label": "Editable"
-      },
-      "editable-description": "Set to read-only to disable all editing. Reload the dashboard for changes to take effect",
-      "panel-options": {
-        "label": "Panel options"
-      },
-      "panel-options-graph-tooltip": {
-        "description": "Controls tooltip and hover highlight behavior across different panels. Reload the dashboard for changes to take effect",
-        "label": "Graph tooltip"
-      },
-      "time-options-label": "Time options",
-      "time-picker-label": "Time zone"
     },
     "json-editor": {
       "save-button": "Save changes",
@@ -294,6 +284,8 @@
       "now-delay-label": "Now delay",
       "refresh-live-dashboards-description": "Continuously re-draw panels where the time range references 'now'",
       "refresh-live-dashboards-label": "Refresh live dashboards",
+      "time-options-label": "Time options",
+      "time-zone-label": "Time zone",
       "week-start": {
         "label": "Week start"
       }

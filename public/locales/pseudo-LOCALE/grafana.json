@@ -265,24 +265,14 @@
       "auto-refresh-description": "Đęƒįŉę ŧĥę äūŧő řęƒřęşĥ įŉŧęřväľş ŧĥäŧ şĥőūľđ þę äväįľäþľę įŉ ŧĥę äūŧő řęƒřęşĥ ľįşŧ.",
       "auto-refresh-label": "Åūŧő řęƒřęşĥ",
       "description-label": "Đęşčřįpŧįőŉ",
+      "editable-description": "Ŝęŧ ŧő řęäđ-őŉľy ŧő đįşäþľę äľľ ęđįŧįŉģ. Ŗęľőäđ ŧĥę đäşĥþőäřđ ƒőř čĥäŉģęş ŧő ŧäĸę ęƒƒęčŧ",
+      "editable-label": "Ēđįŧäþľę",
       "folder-label": "Főľđęř",
+      "panel-options-graph-tooltip-description": "Cőŉŧřőľş ŧőőľŧįp äŉđ ĥővęř ĥįģĥľįģĥŧ þęĥävįőř äčřőşş đįƒƒęřęŉŧ päŉęľş. Ŗęľőäđ ŧĥę đäşĥþőäřđ ƒőř čĥäŉģęş ŧő ŧäĸę ęƒƒęčŧ",
+      "panel-options-graph-tooltip-label": "Ğřäpĥ ŧőőľŧįp",
+      "panel-options-label": "Päŉęľ őpŧįőŉş",
       "tags-label": "Ŧäģş",
       "title-label": "Ŧįŧľę"
-    },
-    "general-settings": {
-      "editable": {
-        "label": "Ēđįŧäþľę"
-      },
-      "editable-description": "Ŝęŧ ŧő řęäđ-őŉľy ŧő đįşäþľę äľľ ęđįŧįŉģ. Ŗęľőäđ ŧĥę đäşĥþőäřđ ƒőř čĥäŉģęş ŧő ŧäĸę ęƒƒęčŧ",
-      "panel-options": {
-        "label": "Päŉęľ őpŧįőŉş"
-      },
-      "panel-options-graph-tooltip": {
-        "description": "Cőŉŧřőľş ŧőőľŧįp äŉđ ĥővęř ĥįģĥľįģĥŧ þęĥävįőř äčřőşş đįƒƒęřęŉŧ päŉęľş. Ŗęľőäđ ŧĥę đäşĥþőäřđ ƒőř čĥäŉģęş ŧő ŧäĸę ęƒƒęčŧ",
-        "label": "Ğřäpĥ ŧőőľŧįp"
-      },
-      "time-options-label": "Ŧįmę őpŧįőŉş",
-      "time-picker-label": "Ŧįmę žőŉę"
     },
     "json-editor": {
       "save-button": "Ŝävę čĥäŉģęş",
@@ -294,6 +284,8 @@
       "now-delay-label": "Ńőŵ đęľäy",
       "refresh-live-dashboards-description": "Cőŉŧįŉūőūşľy řę-đřäŵ päŉęľş ŵĥęřę ŧĥę ŧįmę řäŉģę řęƒęřęŉčęş 'ŉőŵ'",
       "refresh-live-dashboards-label": "Ŗęƒřęşĥ ľįvę đäşĥþőäřđş",
+      "time-options-label": "Ŧįmę őpŧįőŉş",
+      "time-zone-label": "Ŧįmę žőŉę",
       "week-start": {
         "label": "Ŵęęĸ şŧäřŧ"
       }

@@ -260,24 +260,14 @@
       "auto-refresh-description": "",
       "auto-refresh-label": "",
       "description-label": "",
+      "editable-description": "",
+      "editable-label": "",
       "folder-label": "",
+      "panel-options-graph-tooltip-description": "",
+      "panel-options-graph-tooltip-label": "",
+      "panel-options-label": "",
       "tags-label": "",
       "title-label": ""
-    },
-    "general-settings": {
-      "editable": {
-        "label": ""
-      },
-      "editable-description": "",
-      "panel-options": {
-        "label": ""
-      },
-      "panel-options-graph-tooltip": {
-        "description": "",
-        "label": ""
-      },
-      "time-options-label": "",
-      "time-picker-label": ""
     },
     "json-editor": {
       "save-button": "",
@@ -289,6 +279,8 @@
       "now-delay-label": "",
       "refresh-live-dashboards-description": "",
       "refresh-live-dashboards-label": "",
+      "time-options-label": "",
+      "time-zone-label": "",
       "week-start": {
         "label": ""
       }
