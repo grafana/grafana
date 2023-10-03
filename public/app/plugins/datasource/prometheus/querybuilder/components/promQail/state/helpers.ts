@@ -51,8 +51,8 @@ export function getExplainMessage(
   const pvq = buildVisualQueryFromString(query);
 
   if (datasource.languageProvider.metricsMetadata) {
-    metricType = getMetadataType(metric, datasource.languageProvider.metricsMetadata!) ?? '';
-    metricMetadata = getMetadataHelp(metric, datasource.languageProvider.metricsMetadata!) ?? '';
+    metricType = getMetadataType(metric, datasource.languageProvider.metricsMetadata) ?? '';
+    metricMetadata = getMetadataHelp(metric, datasource.languageProvider.metricsMetadata) ?? '';
   }
 
   const documentationBody = pvq.query.operations.map((op) => {
