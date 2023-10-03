@@ -10,10 +10,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/signingkeys"
 )
 
+const idSignerKeyPrefix = "id"
+
 var _ auth.IDSigner = (*LocalSigner)(nil)
 
 func ProvideLocalSigner(keyService signingkeys.Service) (*LocalSigner, error) {
-	key, err := keyService.GetPrivateKey(context.Background(), signingkeys.ServerPrivateKeyID)
+	key, err := keyService.GetOrCreatePrivateKey(context.Background(), idSignerKeyPrefix, jose.ES256)
 	if err != nil {
 		return nil, err
 	}
