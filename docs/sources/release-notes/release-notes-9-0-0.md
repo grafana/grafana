@@ -192,7 +192,7 @@ In the Loki data source, the dataframe format used to represent Loki logs-data h
 
 ### Deprecations
 
-`setExploreQueryField`, `setExploreMetricsQueryField` and `setExploreLogsQueryField` are now deprecated and will be removed in a future release. If you need to set a different query editor for Explore, conditionally render based on `props.app` in your regular query editor. Please refer to https://grafana.com/docs/grafana/latest/developers/plugins/add-support-for-explore-queries/ for more information.
+`setExploreQueryField`, `setExploreMetricsQueryField` and `setExploreLogsQueryField` are now deprecated and will be removed in a future release. If you need to set a different query editor for Explore, conditionally render based on `props.app` in your regular query editor.
 Issue [#48701](https://github.com/grafana/grafana/issues/48701)
 
 ### Plugin development fixes & changes
