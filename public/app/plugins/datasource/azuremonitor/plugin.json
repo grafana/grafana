@@ -17,6 +17,31 @@
     },
     {
       "type": "dashboard",
+      "name": "Azure / Insights / Applications / Performance / Operations",
+      "path": "dashboards/appInsightsPerfOperations.json"
+    },
+    {
+      "type": "dashboard",
+      "name": "Azure / Insights / Applications / Performance / Dependencies",
+      "path": "dashboards/appInsightsPerfDependencies.json"
+    },
+    {
+      "type": "dashboard",
+      "name": "Azure / Insights / Applications / Failures / Operations",
+      "path": "dashboards/appInsightsFailureOperations.json"
+    },
+    {
+      "type": "dashboard",
+      "name": "Azure / Insights / Applications / Failures / Dependencies",
+      "path": "dashboards/appInsightsFailureDependencies.json"
+    },
+    {
+      "type": "dashboard",
+      "name": "Azure / Insights / Applications / Failures / Exceptions",
+      "path": "dashboards/appInsightsFailureExceptions.json"
+    },
+    {
+      "type": "dashboard",
       "name": "Azure / Insights / Applications Test Availability Geo Map",
       "path": "dashboards/appInsightsGeoMap.json"
     },

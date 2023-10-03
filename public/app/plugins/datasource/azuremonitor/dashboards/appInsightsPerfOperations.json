@@ -766,11 +766,11 @@
                 "value": [
                   {
                     "title": "Set Min Duration (Current: $min_duration)",
-                    "url": "/d/Azure-AppInsights-Perf-Operations/?${ds:queryparam}&${sub:queryparam}&${${rg:queryparam}&${${ns:queryparam}&${res:queryparam}&${operation_name:queryparam}&${max_duration:queryparam}&var-min_duration=${__data.fields[\"Duration (ms)\"]}"
+                    "url": "/d/Azure-AppInsights-Perf-Operations/?${ds:queryparam}&${sub:queryparam}&${rg:queryparam}&${ns:queryparam}&${res:queryparam}&${operation_name:queryparam}&${max_duration:queryparam}&var-min_duration=${__data.fields[\"Duration (ms)\"]}"
                   },
                   {
                     "title": "Set Max Duration (Current: $max_duration)",
-                    "url": "/d/Azure-AppInsights-Perf-Operations/?${ds:queryparam}&${sub:queryparam}&${${rg:queryparam}&${${ns:queryparam}&${res:queryparam}&${operation_name:queryparam}&${min_duration:queryparam}&var-max_duration=${__data.fields[\"Duration (ms)\"]}"
+                    "url": "/d/Azure-AppInsights-Perf-Operations/?${ds:queryparam}&${sub:queryparam}&${rg:queryparam}&${ns:queryparam}&${res:queryparam}&${operation_name:queryparam}&${min_duration:queryparam}&var-max_duration=${__data.fields[\"Duration (ms)\"]}"
                   }
                 ]
               }
@@ -1411,7 +1411,7 @@
       "targets": [
         {
           "azureLogAnalytics": {
-            "query": "let min_length_8 = (s: string) {\n    let len = strlen(s);\n    case(len == 1, strcat(s, s, s, s, s, s, s, s),\n        len == 2 or len == 3, strcat(s, s, s, s),\n        len == 4 or len == 5 or len == 6 or len == 7, strcat(s, s),\n        s)\n};\nlet ai_hash = (s: string) {\n    abs(toint(__hash_djb2(min_length_8(s))))\n};\nrequests\n| where operation_Name in ($operation_name)\n| where duration >= $min_duration and duration <= $max_duration\n| project Name = operation_Name, ResponseCode = resultCode, ResponseTime = duration, OperationID = operation_Id, Score=ai_hash(operation_Id)\n| top 20 by Score asc",
+            "query": "let min_length_8 = (s: string) {\n    let len = strlen(s);\n    case(len == 1, strcat(s, s, s, s, s, s, s, s),\n        len == 2 or len == 3, strcat(s, s, s, s),\n        len == 4 or len == 5 or len == 6 or len == 7, strcat(s, s),\n        s)\n};\nlet ai_hash = (s: string) {\n    abs(toint(__hash_djb2(min_length_8(s))))\n};\nrequests\n| where operation_Name in ($operation_name)\n| where $__timeFilter(timestamp)\n| where duration >= $min_duration and duration <= $max_duration\n| project Name = operation_Name, ResponseCode = resultCode, ResponseTime = duration, OperationID = operation_Id, Score=ai_hash(operation_Id)\n| top 20 by Score asc",
             "resources": [
               "/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$res"
             ],

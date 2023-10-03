@@ -443,7 +443,7 @@
           "showLineNumbers": false,
           "showMiniMap": false
         },
-        "content": "<a href=\"/d/Azure-AI-Analysis-Failures?${ds:queryparam}&${sub:queryparam}&${rg:queryparam}&${ns:queryparam}&${res:queryparam}\" target=\"_blank\">\n<div>\n  <p style=\"font-size:16px; margin-bottom:0px; margin-top:0px;\"> Failures </p>\n  <p style=\"margin-top: 0px;\">${res}</p>\n</div>\n</a>\n",
+        "content": "<a href=\"/d/Azure-AppInsights--Failures?${ds:queryparam}&${sub:queryparam}&${rg:queryparam}&${ns:queryparam}&${res:queryparam}\" target=\"_blank\">\n<div>\n  <p style=\"font-size:16px; margin-bottom:0px; margin-top:0px;\"> Failures </p>\n  <p style=\"margin-top: 0px;\">${res}</p>\n</div>\n</a>\n",
         "mode": "html"
       },
       "pluginVersion": "10.0.3",
@@ -484,7 +484,7 @@
           "showLineNumbers": false,
           "showMiniMap": false
         },
-        "content": "<a href=\"/d/Azure-AI-Analysis-Perf?${ds:queryparam}&${sub:queryparam}&${rg:queryparam}&${ns:queryparam}&${res:queryparam}\" target=\"_blank\">\n<div>\n  <p style=\"font-size:16px; margin-bottom:0px;margin-top:0px;\"> Performance </p>\n  <p style=\"margin-top:0px;\">${res}</p>\n</div>\n</a>\n",
+        "content": "<a href=\"/d/Azure-AppInsights--Perf?${ds:queryparam}&${sub:queryparam}&${rg:queryparam}&${ns:queryparam}&${res:queryparam}\" target=\"_blank\">\n<div>\n  <p style=\"font-size:16px; margin-bottom:0px;margin-top:0px;\"> Performance </p>\n  <p style=\"margin-top:0px;\">${res}</p>\n</div>\n</a>\n",
         "mode": "html"
       },
       "pluginVersion": "10.0.3",
@@ -2483,7 +2483,7 @@
           "subscription": "$sub"
         },
         "refresh": 1,
-        "regex": "",
+        "regex": "([mM](icrosoft)\\.[iI](nsights)/(components))",
         "skipUrlSync": false,
         "sort": 0,
         "type": "query"
@@ -2506,95 +2506,6 @@
           "queryType": "Azure Resource Names",
           "refId": "A",
           "resourceGroup": "$rg",
-          "subscription": "$sub"
-        },
-        "refresh": 1,
-        "regex": "([mM](icrosoft)\\.[iI](nsights)/(components))",
-        "skipUrlSync": false,
-        "sort": 0,
-        "type": "query"
-      },
-      {
-        "current": {},
-        "datasource": {
-          "type": "grafana-azure-monitor-datasource",
-          "uid": "${ds}"
-        },
-        "definition": "",
-        "hide": 2,
-        "includeAll": true,
-        "multi": true,
-        "name": "operation_Name",
-        "options": [],
-        "query": {
-          "azureLogAnalytics": {
-            "query": "requests\r\n| where $__timeFilter(timestamp)\r\n| where client_Type != \"Browser\"\r\n| summarize count() by operation_Name\r\n| top 10 by count_ desc",
-            "resource": "/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$res",
-            "resources": [
-              "/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$res"
-            ]
-          },
-          "queryType": "Azure Log Analytics",
-          "refId": "A",
-          "subscription": "$sub"
-        },
-        "refresh": 1,
-        "regex": "",
-        "skipUrlSync": false,
-        "sort": 0,
-        "type": "query"
-      },
-      {
-        "current": {},
-        "datasource": {
-          "type": "grafana-azure-monitor-datasource",
-          "uid": "${ds}"
-        },
-        "definition": "",
-        "hide": 2,
-        "includeAll": true,
-        "multi": true,
-        "name": "failed_operation_Name",
-        "options": [],
-        "query": {
-          "azureLogAnalytics": {
-            "query": "requests\r\n// additional filters can be applied here\r\n| where $__timeFilter(timestamp)\r\n| where client_Type != \"Browser\"\r\n| summarize failedCount=sumif(itemCount, success == 'False') by operation_Name\r\n| top 10 by failedCount desc",
-            "resource": "/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$res",
-            "resources": [
-              "/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$res"
-            ]
-          },
-          "queryType": "Azure Log Analytics",
-          "refId": "A",
-          "subscription": "$sub"
-        },
-        "refresh": 1,
-        "regex": "",
-        "skipUrlSync": false,
-        "sort": 0,
-        "type": "query"
-      },
-      {
-        "current": {},
-        "datasource": {
-          "type": "grafana-azure-monitor-datasource",
-          "uid": "${ds}"
-        },
-        "definition": "",
-        "hide": 2,
-        "includeAll": true,
-        "multi": true,
-        "name": "performance_dependency",
-        "options": [],
-        "query": {
-          "azureLogAnalytics": {
-            "query": "dependencies\r\n| where $__timeFilter(timestamp)\r\n| where client_Type != \"Browser\"\r\n| extend type=iff(tolower(type) == \"http (tracked component)\", \"HTTP\", type), target=tostring(split(target, \" | cid-v1\")[0])\r\n| project [\"Dependency Name\"] = strcat(type, \": \", name, \" \", target)\r\n| summarize count() by [\"Dependency Name\"]\r\n",
-            "resources": [
-              "/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$res"
-            ]
-          },
-          "queryType": "Azure Log Analytics",
-          "refId": "A",
           "subscription": "$sub"
         },
         "refresh": 1,

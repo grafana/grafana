@@ -1027,7 +1027,7 @@
       "targets": [
         {
           "azureLogAnalytics": {
-            "query": "\ndependencies\n// additional filters can be applied here\n| extend type=iff(tolower(type) == \"http (tracked component)\", \"HTTP\", type), target=tostring(split(target, \" | cid-v1\")[0])\n| extend [\"Dependency Name\"] = strcat(type, \": \", name, \" \", target)\n| where [\"Dependency Name\"] in ($dependency)\n| where duration >= $MinDuration and duration <= $MaxDuration\n| where $__timeFilter(timestamp)\n| where client_Type != \"Browser\"\n| count\n\n\n",
+            "query": "\ndependencies\n| where $__timeFilter(timestamp)\n// additional filters can be applied here\n| extend type=iff(tolower(type) == \"http (tracked component)\", \"HTTP\", type), target=tostring(split(target, \" | cid-v1\")[0])\n| extend [\"Dependency Name\"] = strcat(type, \": \", name, \" \", target)\n| where [\"Dependency Name\"] in ($dependency)\n| where duration >= $MinDuration and duration <= $MaxDuration\n| where $__timeFilter(timestamp)\n| where client_Type != \"Browser\"\n| count\n\n\n",
             "resources": [
               "/subscriptions/$sub/resourceGroups/$rg/providers/$ns/$res"
             ],
