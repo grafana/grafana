@@ -182,8 +182,6 @@ const GrafanaRuleDesignExportPreview = ({
   exportMode,
 }: GrafanaRuleDesignExportPreviewProps) => {
   const [getExport, exportData] = alertRuleApi.endpoints.exportModifiedRuleGroup.useMutation();
-  // const { getValues } = useFormContext<RuleFormValues>();
-  // const values = useMemo(() => getValues(), [getValues]);
   const { loadingGroup, payload } = useGetPayloadToExport(exportValues, exportMode);
 
   const nameSpace = exportValues.folder?.title ?? '';

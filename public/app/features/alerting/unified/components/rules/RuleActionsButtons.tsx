@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useToggle } from 'react-use';
 
-import { GrafanaTheme2, urlUtil } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
 import { config, locationService } from '@grafana/runtime';
 import {
@@ -152,10 +152,9 @@ export const RuleActionsButtons = ({ rule, rulesSource }: Props) => {
             icon="edit"
             onClick={() =>
               locationService.push(
-                urlUtil.renderUrl(
-                  `/alerting/${encodeURIComponent(ruleId.stringifyIdentifier(identifier))}/modify-export`,
-                  { returnTo: location.pathname + location.search }
-                )
+                createUrl(`/alerting/${encodeURIComponent(ruleId.stringifyIdentifier(identifier))}/modify-export`, {
+                  returnTo: location.pathname + location.search,
+                })
               )
             }
           />
