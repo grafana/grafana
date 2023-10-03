@@ -59,9 +59,9 @@ export const AutoRefreshIntervals = ({
 
   return (
     <Field
-      label={t('dashboard-settings.general-settings.auto-refresh.label', 'Auto refresh')}
+      label={t('dashboard-settings.general.auto-refresh-label', 'Auto refresh')}
       description={t(
-        'dashboard-settings.general-settings.auto-refresh.description',
+        'dashboard-settings.general.auto-refresh-description',
         'Define the auto refresh intervals that should be available in the auto refresh list.'
       )}
       error={invalidIntervalsMessage}
