@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -43,6 +44,7 @@ type DataSourceProxy struct {
 	oAuthTokenService  oauthtoken.OAuthTokenService
 	dataSourcesService datasources.DataSourceService
 	tracer             tracing.Tracer
+	features           featuremgmt.FeatureToggles
 }
 
 type httpClient interface {
@@ -53,7 +55,7 @@ type httpClient interface {
 func NewDataSourceProxy(ds *datasources.DataSource, pluginRoutes []*plugins.Route, ctx *contextmodel.ReqContext,
 	proxyPath string, cfg *setting.Cfg, clientProvider httpclient.Provider,
 	oAuthTokenService oauthtoken.OAuthTokenService, dsService datasources.DataSourceService,
-	tracer tracing.Tracer) (*DataSourceProxy, error) {
+	tracer tracing.Tracer, features featuremgmt.FeatureToggles) (*DataSourceProxy, error) {
 	targetURL, err := datasource.ValidateURL(ds.Type, ds.URL)
 	if err != nil {
 		return nil, err
@@ -70,6 +72,7 @@ func NewDataSourceProxy(ds *datasources.DataSource, pluginRoutes []*plugins.Rout
 		oAuthTokenService:  oAuthTokenService,
 		dataSourcesService: dsService,
 		tracer:             tracer,
+		features:           features,
 	}, nil
 }
 
@@ -261,6 +264,10 @@ func (proxy *DataSourceProxy) director(req *http.Request) {
 				req.Header.Set("X-ID-Token", idToken)
 			}
 		}
+	}
+
+	if proxy.features.IsEnabled(featuremgmt.FlagIdForwarding) {
+		proxyutil.ApplyForwardIDHeader(req, proxy.ctx.SignedInUser)
 	}
 }
 
