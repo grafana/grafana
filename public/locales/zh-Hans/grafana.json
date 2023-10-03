@@ -261,12 +261,10 @@
     "general": {
       "title": ""
     },
-    "json": {
-      "title-model": ""
-    },
     "json-editor": {
       "save-button": "",
-      "subtitle": ""
+      "subtitle": "",
+      "title": ""
     },
     "links": {
       "title": ""

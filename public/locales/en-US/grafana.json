@@ -266,12 +266,10 @@
     "general": {
       "title": "General"
     },
-    "json": {
-      "title-model": "JSON Model"
-    },
     "json-editor": {
       "save-button": "Save changes",
-      "subtitle": "The JSON model below is the data structure that defines the dashboard. This includes dashboard settings, panel settings, layout, queries, and so on."
+      "subtitle": "The JSON model below is the data structure that defines the dashboard. This includes dashboard settings, panel settings, layout, queries, and so on.",
+      "title": "JSON Model"
     },
     "links": {
       "title": "Links"

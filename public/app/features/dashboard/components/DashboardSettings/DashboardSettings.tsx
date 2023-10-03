@@ -166,7 +166,7 @@ function getSettingsPages(dashboard: DashboardModel) {
   }
 
   pages.push({
-    title: t('dashboard-settings.json.title-model', 'JSON Model'),
+    title: t('dashboard-settings.json-editor.title', 'JSON Model'),
     id: 'dashboard_json',
     icon: 'arrow',
     component: JsonEditorSettings,
