@@ -63,6 +63,7 @@ export const widgets: Widgets = {
         return (
           <Select
             id={props.id}
+            aria-label="Macros value selector"
             menuShouldPortal
             options={[TIME_FILTER].map(toOption)}
             value={props?.value}

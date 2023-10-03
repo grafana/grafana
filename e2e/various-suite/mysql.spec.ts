@@ -61,21 +61,40 @@ describe('MySQL datasource', () => {
   });
 
   describe('visual query builder', () => {
-    it('should add timeFilter macro when time column is selected', () => {
+    it('should be able to add timeFilter macro', () => {
       cy.get("[aria-label='Table selector']").should('be.visible').click();
-      cy.get("[aria-label='Select option']").contains(normalTableName).should('be.visible').click();
+      selectOption(normalTableName);
+      // Open column selector
       cy.get("[id^='select-column-0']").should('be.visible').click();
-      cy.get("[aria-label='Select option']").contains('createdAt').should('be.visible').click();
-      cy.get("[id^='select-alias-0']").should('be.visible').click();
-      cy.get("[aria-label='Select option']").contains('time').should('be.visible').click();
+      selectOption('createdAt');
+
+      // Toggle where row
       cy.get("label[for^='sql-filter']").last().should('be.visible').click();
 
-      cy.get('.rule--field').contains('createdAt').should('be.visible');
-      cy.get('.rule--value').contains('timeFilter').should('be.visible');
+      // Click add filter button
+      cy.get('button[title="Add filter"]').should('be.visible').click();
+      cy.get('button[title="Add filter"]').should('be.visible').click(); // For some reason we need to click twice
+
+      // Open field selector
+      cy.get("[aria-label='Field']").should('be.visible').click();
+      selectOption('createdAt');
+
+      // Open operator selector
+      cy.get("[aria-label='Operator']").should('be.visible').click();
+      selectOption('Macros');
+
+      // Open macros value selector
+      cy.get("[aria-label='Macros value selector']").should('be.visible').click();
+      selectOption('timeFilter');
+
       cy.get('[aria-label="Code editor container"] textarea').should(
         'have.value',
-        `SELECT\n  createdAt AS "time"\nFROM\n  DataMaker.normalTable\nWHERE\n  $__timeFilter(createdAt)`
+        `SELECT\n  createdAt\nFROM\n  DataMaker.normalTable\nWHERE\n  $__timeFilter(createdAt)\nLIMIT\n  50`
       );
     });
   });
 });
+
+function selectOption(option: string) {
+  cy.get("[aria-label='Select option']").contains(option).should('be.visible').click();
+}
