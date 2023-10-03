@@ -332,9 +332,15 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
 
   renderRow = (key: string, style: React.CSSProperties, index: number, attrs: {}) => {
     const { isDetail, span, spanIndex } = this.getRowStates()[index];
+
+    // Compute the list of currently visible span IDs to pass to the row renderers.
+    const start = Math.max((this.listView?.getTopVisibleIndex() || 0) - BUFFER_SIZE, 0);
+    const end = (this.listView?.getBottomVisibleIndex() || 0) + BUFFER_SIZE;
+    const visibleSpanIds = this.getVisibleSpanIds(start, end);
+
     return isDetail
-      ? this.renderSpanDetailRow(span, key, style, attrs)
-      : this.renderSpanBarRow(span, spanIndex, key, style, attrs);
+      ? this.renderSpanDetailRow(span, key, style, attrs, visibleSpanIds)
+      : this.renderSpanBarRow(span, spanIndex, key, style, attrs, visibleSpanIds);
   };
 
   scrollToSpan = (headerHeight: number, spanID?: string) => {
@@ -347,7 +353,14 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
     }
   };
 
-  renderSpanBarRow(span: TraceSpan, spanIndex: number, key: string, style: React.CSSProperties, attrs: {}) {
+  renderSpanBarRow(
+    span: TraceSpan,
+    spanIndex: number,
+    key: string,
+    style: React.CSSProperties,
+    attrs: {},
+    visibleSpanIds: string[]
+  ) {
     const { spanID } = span;
     const { serviceName } = span.process;
     const {
@@ -409,10 +422,6 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
 
     const prevSpan = spanIndex > 0 ? trace.spans[spanIndex - 1] : null;
 
-    const start = Math.max((this.listView?.getTopVisibleIndex() || 0) - BUFFER_SIZE, 0);
-    const end = (this.listView?.getBottomVisibleIndex() || 0) + BUFFER_SIZE;
-    const visibleSpanIds = this.getVisibleSpanIds(start, end);
-
     const styles = getStyles(this.props);
     return (
       <div className={styles.row} key={key} style={style} {...attrs}>
@@ -448,7 +457,7 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
     );
   }
 
-  renderSpanDetailRow(span: TraceSpan, key: string, style: React.CSSProperties, attrs: {}) {
+  renderSpanDetailRow(span: TraceSpan, key: string, style: React.CSSProperties, attrs: {}, visibleSpanIds: string[]) {
     const { spanID } = span;
     const { serviceName } = span.process;
     const {
@@ -482,10 +491,6 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
     }
     const color = getColorByKey(serviceName, theme);
     const styles = getStyles(this.props);
-
-    const start = Math.max((this.listView?.getTopVisibleIndex() || 0) - BUFFER_SIZE, 0);
-    const end = (this.listView?.getBottomVisibleIndex() || 0) + BUFFER_SIZE;
-    const visibleSpanIds = this.getVisibleSpanIds(start, end);
 
     return (
       <div className={styles.row} key={key} style={{ ...style, zIndex: 1 }} {...attrs}>
