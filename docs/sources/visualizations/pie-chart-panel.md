@@ -75,7 +75,7 @@ The following example shows a pie chart with **Name** and **Percent** labels dis
 
 ## Legend options
 
-Use these settings to define how the legend appears in your visualization. For more information about the legend, refer to [Configure a legend]({{< relref "../../configure-legend" >}}).
+Use these settings to define how the legend appears in your visualization. For more information about the legend, refer to [Configure a legend]({{< relref "../panels/working-with-panels/configure-legend" >}}).
 
 ### Legend visibility
 
