@@ -5,15 +5,8 @@ import { Registry, RegistryItem, textUtil } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { getPublicOrAbsoluteUrl } from 'app/features/dimensions';
 
-import {
-  AnchorX,
-  AnchorY,
-  defaultStyleConfig,
-  DEFAULT_SIZE,
-  StyleConfigValues,
-  StyleMaker,
-  SymbolAnchor,
-} from './types';
+import { defaultStyleConfig, DEFAULT_SIZE, StyleConfigValues, StyleMaker } from './types';
+import { getDisplacement } from './utils';
 
 interface SymbolMaker extends RegistryItem {
   aliasIds: string[];
@@ -300,21 +293,6 @@ export function getMarkerAsPath(shape?: string): string | undefined {
     return marker.aliasIds[0];
   }
   return undefined;
-}
-
-function getDisplacement(symbolAnchor: SymbolAnchor, radius: number) {
-  const displacement = [0, 0];
-  if (symbolAnchor?.anchorX === AnchorX.Left) {
-    displacement[0] = radius;
-  } else if (symbolAnchor?.anchorX === AnchorX.Right) {
-    displacement[0] = -radius;
-  }
-  if (symbolAnchor?.anchorY === AnchorY.Top) {
-    displacement[1] = -radius;
-  } else if (symbolAnchor?.anchorY === AnchorY.Bottom) {
-    displacement[1] = radius;
-  }
-  return displacement;
 }
 
 // Will prepare symbols as necessary

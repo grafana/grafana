@@ -1,7 +1,7 @@
 import { ResourceDimensionMode } from '@grafana/schema';
 
-import { StyleConfig } from './types';
-import { getStyleConfigState } from './utils';
+import { AnchorX, AnchorY, StyleConfig, SymbolAnchor } from './types';
+import { getDisplacement, getStyleConfigState } from './utils';
 
 describe('style utils', () => {
   it('should fill in default values', async () => {
@@ -55,5 +55,23 @@ describe('style utils', () => {
         "maker": [Function],
       }
     `);
+  });
+  it('should return correct displacement array for top left', async () => {
+    const symbolAnchor: SymbolAnchor = { anchorX: AnchorX.Left, anchorY: AnchorY.Top };
+    const radius = 10;
+    const displacement = getDisplacement(symbolAnchor, radius);
+    expect(displacement).toEqual([10, -10]);
+  });
+  it('should return correct displacement array for bottom right', async () => {
+    const symbolAnchor: SymbolAnchor = { anchorX: AnchorX.Right, anchorY: AnchorY.Bottom };
+    const radius = 10;
+    const displacement = getDisplacement(symbolAnchor, radius);
+    expect(displacement).toEqual([-10, 10]);
+  });
+  it('should return correct displacement array for center center', async () => {
+    const symbolAnchor: SymbolAnchor = { anchorX: AnchorX.Center, anchorY: AnchorY.Center };
+    const radius = 10;
+    const displacement = getDisplacement(symbolAnchor, radius);
+    expect(displacement).toEqual([0, 0]);
   });
 });
