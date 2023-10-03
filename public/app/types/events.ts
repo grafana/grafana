@@ -118,6 +118,10 @@ export class PanelOptionsChangedEvent extends BusEventBase {
   static type = 'panels-options-changed';
 }
 
+export class PanelDSVarRepeatChangedEvent extends BusEventBase {
+  static type = 'panels-ds-repeat-changed';
+}
+
 /**
  * Used internally by DashboardModel to communicate with DashboardGrid that it needs to re-render
  */

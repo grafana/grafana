@@ -27,6 +27,7 @@ import { safeStringifyValue } from 'app/core/utils/explore';
 import { getNextRefIdChar } from 'app/core/utils/query';
 import { QueryGroupOptions } from 'app/types';
 import {
+  PanelDSVarRepeatChangedEvent,
   PanelOptionsChangedEvent,
   PanelQueriesChangedEvent,
   PanelTransformationsChangedEvent,
@@ -284,6 +285,10 @@ export class PanelModel implements DataConfigSource, IPanelModel {
     this.configRev++;
     this.events.publish(new PanelOptionsChangedEvent());
     this.render();
+  }
+
+  updateConfig() {
+    this.events.publish(new PanelDSVarRepeatChangedEvent());
   }
 
   updateFieldConfig(config: FieldConfigSource) {
