@@ -636,6 +636,15 @@ export enum BarGaugeValueMode {
 }
 
 /**
+ * Allows for the bar gauge value to be placed explicitly
+ */
+export enum BarGaugeValuePlacement {
+  Auto = 'auto',
+  Left = 'left',
+  Top = 'top',
+}
+
+/**
  * TODO docs
  */
 export interface VizTooltipOptions {
