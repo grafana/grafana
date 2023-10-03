@@ -94,9 +94,9 @@ export const PromQueryBuilder = React.memo<Props>((props) => {
         />
         {prometheusPromQAIL && (
           <div
-            className={css`
-              padding: 0 0 0 6px;
-            `}
+            className={css({
+              padding: '0 0 0 6px',
+            })}
           >
             <Button
               variant={'secondary'}
