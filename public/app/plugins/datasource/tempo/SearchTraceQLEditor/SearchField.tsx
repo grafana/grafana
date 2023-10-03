@@ -5,7 +5,7 @@ import useAsync from 'react-use/lib/useAsync';
 
 import { SelectableValue } from '@grafana/data';
 import { AccessoryButton } from '@grafana/experimental';
-import { FetchError, getTemplateSrv, isFetchError } from '@grafana/runtime';
+import { FetchError, getTemplateSrv, isFetchError, TemplateSrv } from '@grafana/runtime';
 import { Select, HorizontalGroup, useStyles2 } from '@grafana/ui';
 
 import { createErrorNotification } from '../../../../core/copy/appNotification';
@@ -120,7 +120,8 @@ const SearchField = ({
    * @returns the list of given options plus the template variables
    */
   const withTemplateVariableOptions = (options: SelectableValue[] | undefined) => {
-    const templateVariables = getTemplateSrv().getVariables();
+    const templateSrv: TemplateSrv | undefined = getTemplateSrv(); // `undefined`in several tests
+    const templateVariables = templateSrv?.getVariables() || [];
     return [...(options || []), ...templateVariables.map((v) => ({ label: v.name, value: `$${v.name}` }))];
   };
 
