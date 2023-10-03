@@ -99,7 +99,8 @@ func ProvideService(router routing.RouteRegister, db db.DB, cfg *setting.Cfg,
 
 func newProvider(config *fosite.Config, storage any, signingKeyService signingkeys.Service) fosite.OAuth2Provider {
 	keyGetter := func(ctx context.Context) (any, error) {
-		return signingKeyService.GetOrCreatePrivateKey(ctx, signingkeys.ServerPrivateKeyID, jose.ES256)
+		_, key, err := signingKeyService.GetOrCreatePrivateKey(ctx, signingkeys.ServerPrivateKeyID, jose.ES256)
+		return key, err
 	}
 	return compose.Compose(
 		config,

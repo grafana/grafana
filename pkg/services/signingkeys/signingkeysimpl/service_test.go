@@ -79,25 +79,26 @@ func TestEmbeddedKeyService_GetOrCreatePrivateKey(t *testing.T) {
 		store: mockStore,
 	}
 
-	wantedKeyID := KeyMonthScopedID("test", jose.ES256)
+	wantedKeyID := keyMonthScopedID("test", jose.ES256)
 	assert.Equal(t, wantedKeyID, fmt.Sprintf("test-%s-es256", time.Now().UTC().Format("2006-01")))
 
 	// only ES256 is supported
-	_, err := svc.GetOrCreatePrivateKey(context.Background(), "test", jose.RS256)
+	_, _, err := svc.GetOrCreatePrivateKey(context.Background(), "test", jose.RS256)
 	require.Error(t, err)
 
 	// first call should generate a key
-	key, err := svc.GetOrCreatePrivateKey(context.Background(), "test", jose.ES256)
+	_, key, err := svc.GetOrCreatePrivateKey(context.Background(), "test", jose.ES256)
 	require.NoError(t, err)
 	require.NotNil(t, key)
 
 	assert.Contains(t, mockStore.PrivateKeys, wantedKeyID)
 
 	// second call should return the same key
-	key2, err := svc.GetOrCreatePrivateKey(context.Background(), "test", jose.ES256)
+	id, key2, err := svc.GetOrCreatePrivateKey(context.Background(), "test", jose.ES256)
 	require.NoError(t, err)
 	require.NotNil(t, key2)
 	require.Equal(t, key, key2)
+	require.Equal(t, wantedKeyID, id)
 
 	assert.Len(t, mockStore.PrivateKeys, 1)
 }

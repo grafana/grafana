@@ -15,7 +15,7 @@ const idSignerKeyPrefix = "id"
 var _ auth.IDSigner = (*LocalSigner)(nil)
 
 func ProvideLocalSigner(keyService signingkeys.Service) (*LocalSigner, error) {
-	key, err := keyService.GetOrCreatePrivateKey(context.Background(), idSignerKeyPrefix, jose.ES256)
+	id, key, err := keyService.GetOrCreatePrivateKey(context.Background(), idSignerKeyPrefix, jose.ES256)
 	if err != nil {
 		return nil, err
 	}
@@ -23,7 +23,7 @@ func ProvideLocalSigner(keyService signingkeys.Service) (*LocalSigner, error) {
 	// FIXME: Handle key rotation
 	signer, err := jose.NewSigner(jose.SigningKey{Algorithm: jose.ES256, Key: key}, &jose.SignerOptions{
 		ExtraHeaders: map[jose.HeaderKey]interface{}{
-			"kid": signingkeys.ServerPrivateKeyID, // FIXME: replace with specific key id
+			"kid": id,
 		},
 	})
 	if err != nil {

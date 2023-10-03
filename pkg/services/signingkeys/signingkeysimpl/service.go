@@ -50,70 +50,38 @@ func (s *Service) GetJWKS(ctx context.Context) (jose.JSONWebKeySet, error) {
 	return jwks, err
 }
 
-// GetPublicKey returns the public key with the specified key ID
-func (s *Service) GetPublicKey(ctx context.Context, keyID string) (crypto.PublicKey, error) {
-	privateKey, err := s.store.GetPrivateKey(ctx, keyID)
-	if err != nil {
-		s.log.Error("The specified key was not found", "keyID", keyID, "err", err)
-		return nil, signingkeys.ErrSigningKeyNotFound.Errorf("The specified key was not found: %s", keyID)
-	}
-
-	return privateKey.Public(), nil
-}
-
-// GetPrivateKey returns the private key with the specified key ID
-func (s *Service) GetPrivateKey(ctx context.Context, keyID string) (crypto.PrivateKey, error) {
-	privateKey, err := s.store.GetPrivateKey(ctx, keyID)
-	if err != nil {
-		s.log.Error("The specified key was not found", "keyID", keyID, "err", err)
-		return nil, signingkeys.ErrSigningKeyNotFound.Errorf("The specified key was not found: %s", keyID)
-	}
-
-	return privateKey, nil
-}
-
-// AddPrivateKey adds a private key to the service
-func (s *Service) AddPrivateKey(ctx context.Context, keyID string,
-	privateKey crypto.Signer, alg jose.SignatureAlgorithm, expiresAt *time.Time, force bool) error {
-	if _, err := s.store.AddPrivateKey(ctx, keyID, alg, privateKey, expiresAt, force); err != nil {
-		s.log.Error("Failed to add private key", "keyID", keyID, "err", err)
-		return signingkeys.ErrKeyGenerationFailed.Errorf("Failed to add private key: %w", err)
-	}
-
-	return nil
-}
-
 // GetOrCreatePrivateKey returns the private key with the specified key ID. If the key does not exist, it will be
 // created with the specified algorithm.
 // The key will be automatically rotated at the beginning of each month. The previous key will be kept for 30 days.
-func (s *Service) GetOrCreatePrivateKey(ctx context.Context, keyPrefix string, alg jose.SignatureAlgorithm) (crypto.Signer, error) {
+func (s *Service) GetOrCreatePrivateKey(ctx context.Context,
+	keyPrefix string, alg jose.SignatureAlgorithm) (string, crypto.Signer, error) {
 	if alg != jose.ES256 {
 		s.log.Error("Only ES256 is supported", "alg", alg)
-		return nil, signingkeys.ErrKeyGenerationFailed.Errorf("Only ES256 is supported: %v", alg)
+		return "", nil, signingkeys.ErrKeyGenerationFailed.Errorf("Only ES256 is supported: %v", alg)
 	}
 
-	keyID := KeyMonthScopedID(keyPrefix, alg)
+	keyID := keyMonthScopedID(keyPrefix, alg)
 	signer, err := s.store.GetPrivateKey(ctx, keyID)
 	if err == nil {
-		return signer, nil
+		return keyID, signer, nil
 	}
 	s.log.Debug("Private key not found, generating new key", "keyID", keyID, "err", err)
 
 	privateKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
 	if err != nil {
 		s.log.Error("Error generating private key", "err", err)
-		return nil, signingkeys.ErrKeyGenerationFailed.Errorf("Error generating private key: %v", err)
+		return "", nil, signingkeys.ErrKeyGenerationFailed.Errorf("Error generating private key: %v", err)
 	}
 
 	expiry := time.Now().Add(30 * 24 * time.Hour)
 	if signer, err = s.store.AddPrivateKey(ctx, keyID, alg, privateKey, &expiry, false); err != nil && !errors.Is(err, signingkeys.ErrSigningKeyAlreadyExists) {
-		return nil, err
+		return "", nil, err
 	}
 
-	return signer, nil
+	return keyID, signer, nil
 }
 
-func KeyMonthScopedID(keyPrefix string, alg jose.SignatureAlgorithm) string {
+func keyMonthScopedID(keyPrefix string, alg jose.SignatureAlgorithm) string {
 	keyID := keyPrefix + "-" + time.Now().UTC().Format("2006-01") + "-" + strings.ToLower(string(alg))
 	return keyID
 }
