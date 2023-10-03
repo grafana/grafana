@@ -176,18 +176,15 @@ export function getColumns(
 }
 
 export function shouldRecalculateScaleRange(cellOptions: TableCellOptions, field: Field): boolean {
-  let minMaxMode = undefined;
-  if ('minMaxMode' in cellOptions) {
-    minMaxMode = cellOptions.minMaxMode;
-  }
+  switch (cellOptions.type) {
+    case TableCellDisplayMode.Gauge:
+    case TableCellDisplayMode.ColorBackground:
+    case TableCellDisplayMode.ColorText:
+      return field.state !== undefined && cellOptions.minMaxMode !== CellMinMaxMode.Global;
 
-  return (
-    [TableCellDisplayMode.Gauge, TableCellDisplayMode.ColorText, TableCellDisplayMode.ColorBackground].includes(
-      cellOptions.type
-    ) &&
-    field.state !== undefined &&
-    minMaxMode !== CellMinMaxMode.Global
-  );
+    default:
+      return false;
+  }
 }
 
 export function getCellComponent(displayMode: TableCellDisplayMode, field: Field): CellComponent {
