@@ -41,6 +41,7 @@ export interface Props {
   onOpenQueryInspector?: () => void;
   onRunQueries: () => void;
   onOptionsChange: (options: QueryGroupOptions) => void;
+  includeDataSourceVariable?: string;
 }
 
 interface State {
@@ -294,6 +295,7 @@ export class QueryGroup extends PureComponent<Props, State> {
         await this.onChangeDataSource(ds, defaultQueries);
         this.onCloseDataSourceModal();
       },
+      includeDataSourceVariable: this.props.includeDataSourceVariable,
     };
 
     return (
