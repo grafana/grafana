@@ -14,7 +14,7 @@ func newMetircus(reg prometheus.Registerer) *metrics {
 		tokenSigningCounter: prometheus.NewCounter(prometheus.CounterOpts{
 			Namespace: metricsNamespace,
 			Subsystem: metricsSubSystem,
-			Name:      "idforwarding_token_sining_total",
+			Name:      "idforwarding_token_signing_total",
 			Help:      "Number of token signings",
 		}),
 		tokenSigningFromCacheCounter: prometheus.NewCounter(prometheus.CounterOpts{
