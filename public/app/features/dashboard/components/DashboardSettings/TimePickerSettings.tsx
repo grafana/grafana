@@ -84,7 +84,7 @@ export class TimePickerSettings extends PureComponent<Props, State> {
           />
         </Field>
         <Field
-          label={t('dashboard-settings.general-settings.week-start.label', 'Week start')}
+          label={t('dashboard-settings.time-picker.week-start.label', 'Week start')}
           data-testid={selectors.components.WeekStartPicker.containerV2}
         >
           <WeekStartPicker
