@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -32,10 +33,10 @@ type TracingMiddleware struct {
 
 // setSpanAttributeFromHTTPHeader takes a ReqContext and a span, and adds the specified HTTP header as a span attribute
 // (string value), if the header is present.
-func setSpanAttributeFromHTTPHeader(headers http.Header, span tracing.Span, attributeName, headerName string) {
+func setSpanAttributeFromHTTPHeader(headers http.Header, span trace.Span, attributeName, headerName string) {
 	// Set the attribute as string
 	if v := headers.Get(headerName); v != "" {
-		span.SetAttributes(attributeName, v, attribute.Key(attributeName).String(v))
+		span.SetAttributes(attribute.String(attributeName, v))
 	}
 }
 
@@ -46,23 +47,24 @@ func (m *TracingMiddleware) traceWrap(
 	ctx context.Context, pluginContext backend.PluginContext, opName string,
 ) (context.Context, func(error)) {
 	// Start span
-	ctx, span := m.tracer.Start(ctx, "PluginClient."+opName)
+	ctx, span := m.tracer.Start(ctx, "PluginClient."+opName, trace.WithAttributes(
+		// Attach some plugin context information to span
+		attribute.String("plugin_id", pluginContext.PluginID),
+		attribute.Int64("org_id", pluginContext.OrgID),
+	))
 
-	// Attach some plugin context information to span
-	span.SetAttributes("plugin_id", pluginContext.PluginID, attribute.String("plugin_id", pluginContext.PluginID))
-	span.SetAttributes("org_id", pluginContext.OrgID, attribute.Int64("org_id", pluginContext.OrgID))
 	if settings := pluginContext.DataSourceInstanceSettings; settings != nil {
-		span.SetAttributes("datasource_name", settings.Name, attribute.Key("datasource_name").String(settings.Name))
-		span.SetAttributes("datasource_uid", settings.UID, attribute.Key("datasource_uid").String(settings.UID))
+		span.SetAttributes(attribute.String("datasource_name", settings.Name))
+		span.SetAttributes(attribute.String("datasource_uid", settings.UID))
 	}
 	if u := pluginContext.User; u != nil {
-		span.SetAttributes("user", u.Login, attribute.String("user", u.Login))
+		span.SetAttributes(attribute.String("user", u.Login))
 	}
 
 	// Additional attributes from http headers
 	if reqCtx := contexthandler.FromContext(ctx); reqCtx != nil && reqCtx.Req != nil && len(reqCtx.Req.Header) > 0 {
 		if v, err := strconv.Atoi(reqCtx.Req.Header.Get(query.HeaderPanelID)); err == nil {
-			span.SetAttributes("panel_id", v, attribute.Key("panel_id").Int(v))
+			span.SetAttributes(attribute.Int("panel_id", v))
 		}
 		setSpanAttributeFromHTTPHeader(reqCtx.Req.Header, span, "query_group_id", query.HeaderQueryGroupID)
 		setSpanAttributeFromHTTPHeader(reqCtx.Req.Header, span, "dashboard_uid", query.HeaderDashboardUID)
