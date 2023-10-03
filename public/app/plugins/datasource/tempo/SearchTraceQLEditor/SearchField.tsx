@@ -5,7 +5,7 @@ import useAsync from 'react-use/lib/useAsync';
 
 import { SelectableValue } from '@grafana/data';
 import { AccessoryButton } from '@grafana/experimental';
-import { FetchError, getTemplateSrv, isFetchError, TemplateSrv } from '@grafana/runtime';
+import { FetchError, getTemplateSrv, isFetchError } from '@grafana/runtime';
 import { Select, HorizontalGroup, useStyles2 } from '@grafana/ui';
 
 import { createErrorNotification } from '../../../../core/copy/appNotification';
