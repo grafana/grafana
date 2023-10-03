@@ -16,7 +16,7 @@ import { parsePrometheusDuration } from '../../utils/time';
 import { CollapseToggle } from '../CollapseToggle';
 import { EditCloudGroupModal } from '../rules/EditRuleGroupModal';
 
-import { FolderAndGroup, useGetGroupOptionsFromFolder } from './FolderAndGroup';
+import { FolderAndGroup, useFolderGroupOptions } from './FolderAndGroup';
 import { GrafanaAlertStatePicker } from './GrafanaAlertStatePicker';
 import { NeedHelpInfo } from './NeedHelpInfo';
 import { RuleEditorSection } from './RuleEditorSection';
@@ -59,7 +59,7 @@ const forValidationOptions = (evaluateEvery: string): RegisterOptions => ({
 });
 
 const useIsNewGroup = (folder: string, group: string) => {
-  const { groupOptions } = useGetGroupOptionsFromFolder(folder, false);
+  const { groupOptions } = useFolderGroupOptions(folder, false);
 
   const groupIsInGroupOptions = useCallback(
     (group_: string) => groupOptions.some((groupInList: SelectableValue<string>) => groupInList.label === group_),
@@ -71,11 +71,11 @@ const useIsNewGroup = (folder: string, group: string) => {
 function FolderGroupAndEvaluationInterval({
   evaluateEvery,
   setEvaluateEvery,
-  includeProvisioned,
+  enableProvisionedGroups,
 }: {
   evaluateEvery: string;
   setEvaluateEvery: (value: string) => void;
-  includeProvisioned: boolean;
+  enableProvisionedGroups: boolean;
 }) {
   const styles = useStyles2(getStyles);
   const { watch, setValue, getValues } = useFormContext<RuleFormValues>();
@@ -118,7 +118,10 @@ function FolderGroupAndEvaluationInterval({
 
   return (
     <div>
-      <FolderAndGroup groupfoldersForGrafana={groupfoldersForGrafana?.result} includeProvisioned={includeProvisioned} />
+      <FolderAndGroup
+        groupfoldersForGrafana={groupfoldersForGrafana?.result}
+        enableProvisionedGroups={enableProvisionedGroups}
+      />
       {folderName && isEditingGroup && (
         <EditCloudGroupModal
           namespace={existingNamespace ?? emptyNamespace}
@@ -208,12 +211,12 @@ export function GrafanaEvaluationBehavior({
   evaluateEvery,
   setEvaluateEvery,
   existing,
-  includeProvisioned,
+  enableProvisionedGroups,
 }: {
   evaluateEvery: string;
   setEvaluateEvery: (value: string) => void;
   existing: boolean;
-  includeProvisioned: boolean;
+  enableProvisionedGroups: boolean;
 }) {
   const styles = useStyles2(getStyles);
   const [showErrorHandling, setShowErrorHandling] = useState(false);
@@ -229,7 +232,7 @@ export function GrafanaEvaluationBehavior({
         <FolderGroupAndEvaluationInterval
           setEvaluateEvery={setEvaluateEvery}
           evaluateEvery={evaluateEvery}
-          includeProvisioned={includeProvisioned}
+          enableProvisionedGroups={enableProvisionedGroups}
         />
         <ForInput evaluateEvery={evaluateEvery} />
 

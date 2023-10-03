@@ -28,7 +28,7 @@ import { checkForPathSeparator } from './util';
 
 export const MAX_GROUP_RESULTS = 1000;
 
-export const useGetGroupOptionsFromFolder = (folderTitle: string, includeProvisioned: boolean) => {
+export const useFolderGroupOptions = (folderTitle: string, enableProvisionedGroups: boolean) => {
   const dispatch = useDispatch();
 
   // fetch the ruler rules from the database so we can figure out what other "groups" are already defined
@@ -51,7 +51,7 @@ export const useGetGroupOptionsFromFolder = (folderTitle: string, includeProvisi
         value: group.name,
         description: group.interval ?? MINUTE,
         // we include provisioned folders, but disable the option to select them
-        isDisabled: !includeProvisioned ? isProvisioned : false,
+        isDisabled: !enableProvisionedGroups ? isProvisioned : false,
         isProvisioned: isProvisioned,
       };
     })
@@ -77,10 +77,10 @@ const findGroupMatchingLabel = (group: SelectableValue<string>, query: string) =
 
 export function FolderAndGroup({
   groupfoldersForGrafana,
-  includeProvisioned,
+  enableProvisionedGroups,
 }: {
   groupfoldersForGrafana?: RulerRulesConfigDTO | null;
-  includeProvisioned: boolean;
+  enableProvisionedGroups: boolean;
 }) {
   const {
     formState: { errors },
@@ -94,7 +94,7 @@ export function FolderAndGroup({
   const folder = watch('folder');
   const group = watch('group');
 
-  const { groupOptions, loading } = useGetGroupOptionsFromFolder(folder?.title ?? '', includeProvisioned);
+  const { groupOptions, loading } = useFolderGroupOptions(folder?.title ?? '', enableProvisionedGroups);
 
   const [isCreatingFolder, setIsCreatingFolder] = useState(false);
   const [isCreatingEvaluationGroup, setIsCreatingEvaluationGroup] = useState(false);
