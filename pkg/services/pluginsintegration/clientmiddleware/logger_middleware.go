@@ -14,6 +14,7 @@ import (
 )
 
 const (
+	// TODO: those are also used by instrumentation_middleware.go, move them somewhere else
 	statusOK        = "ok"
 	statusError     = "error"
 	statusCancelled = "cancelled"
