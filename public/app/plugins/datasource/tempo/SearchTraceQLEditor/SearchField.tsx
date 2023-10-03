@@ -120,8 +120,7 @@ const SearchField = ({
    * @returns the list of given options plus the template variables
    */
   const withTemplateVariableOptions = (options: SelectableValue[] | undefined) => {
-    const templateSrv: TemplateSrv | undefined = getTemplateSrv(); // `undefined`in several tests
-    const templateVariables = templateSrv?.getVariables() || [];
+    const templateVariables = getTemplateSrv().getVariables();
     return [...(options || []), ...templateVariables.map((v) => ({ label: v.name, value: `$${v.name}` }))];
   };
 

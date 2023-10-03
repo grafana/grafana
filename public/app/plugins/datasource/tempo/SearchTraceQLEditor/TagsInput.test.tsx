@@ -1,8 +1,9 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
+import { initTemplateSrv } from 'test/helpers/initTemplateSrv';
 
-import { FetchError } from '@grafana/runtime';
+import { FetchError, setTemplateSrv } from '@grafana/runtime';
 
 import { TraceqlFilter, TraceqlSearchScope } from '../dataquery.gen';
 import { TempoDatasource } from '../datasource';
@@ -13,9 +14,11 @@ import TagsInput from './TagsInput';
 import { v1Tags, v2Tags } from './utils.test';
 
 describe('TagsInput', () => {
+  let templateSrv = initTemplateSrv('key', []);
   let user: ReturnType<typeof userEvent.setup>;
 
   beforeEach(() => {
+    setTemplateSrv(templateSrv);
     jest.useFakeTimers();
     // Need to use delay: null here to work with fakeTimers
     // see https://github.com/testing-library/user-event/issues/833
