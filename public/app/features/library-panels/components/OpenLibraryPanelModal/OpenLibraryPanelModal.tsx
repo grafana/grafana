@@ -48,7 +48,9 @@ export function OpenLibraryPanelModal({ libraryPanel, onDismiss }: OpenLibraryPa
       <div className={styles.container}>
         {connected === 0 ? (
           <span>
-            <Trans i18nKey={'library-panels.modal.panel-not-linked'}>Add the panel to a dashboard and retry.</Trans>
+            <Trans i18nKey={'library-panels.modal.panel-not-linked'}>
+              Panel is not linked to a dashboard. Add the panel to a dashboard and retry.
+            </Trans>
           </span>
         ) : null}
         {connected > 0 ? (
