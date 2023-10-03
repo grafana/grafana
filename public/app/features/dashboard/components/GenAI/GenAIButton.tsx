@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import React, { useEffect } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Button, Spinner, useStyles2, Link, Tooltip } from '@grafana/ui';
+import { Button, Spinner, useStyles2, Tooltip } from '@grafana/ui';
 
 import { useOpenAIStream } from './hooks';
 import { OPEN_AI_MODEL, Message } from './utils';
