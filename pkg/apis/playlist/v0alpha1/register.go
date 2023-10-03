@@ -1,6 +1,8 @@
 package v0alpha1
 
 import (
+	"net/http"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -9,6 +11,7 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	common "k8s.io/kube-openapi/pkg/common"
+	"k8s.io/kube-openapi/pkg/spec3"
 
 	grafanaapiserver "github.com/grafana/grafana/pkg/services/grafana-apiserver"
 	grafanarest "github.com/grafana/grafana/pkg/services/grafana-apiserver/rest"
@@ -77,7 +80,32 @@ func (b *PlaylistAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinition
 
 // Register additional routes with the server
 func (b *PlaylistAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
-	return nil
+	// We do not really want any custom routes on playlists, but adding this here
+	// because playlists has a valid resource, and that may impact why the testing
+	// handlers are not yet registered ??????
+	return &grafanaapiserver.APIRoutes{
+		Root: []grafanaapiserver.APIRouteHandler{
+			{
+				Path: "aaa",
+				Spec: &spec3.PathProps{
+					Summary:     "an example at the root level",
+					Description: "longer description here?",
+					Get: &spec3.Operation{
+						OperationProps: spec3.OperationProps{
+							Parameters: []*spec3.Parameter{
+								{ParameterProps: spec3.ParameterProps{
+									Name: "a",
+								}},
+							},
+						},
+					},
+				},
+				Handler: func(w http.ResponseWriter, r *http.Request) {
+					w.Write([]byte("Root level handler (aaa)"))
+				},
+			},
+		},
+	}
 }
 
 // SchemeGroupVersion is group version used to register these objects

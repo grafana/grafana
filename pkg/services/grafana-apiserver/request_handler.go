@@ -24,7 +24,7 @@ func getAPIHandler(delegateHandler http.Handler, restConfig *restclient.Config, 
 		}
 
 		gv := builder.GetGroupVersion()
-		prefix := "/k8s/apis/" + gv.String() // ???? k8s prefix!!!
+		prefix := "/apis/" + gv.String() // ???? k8s prefix!!!
 
 		// Root handlers
 		var sub *mux.Router
