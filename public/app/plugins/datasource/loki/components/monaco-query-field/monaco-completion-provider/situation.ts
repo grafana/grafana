@@ -182,17 +182,7 @@ const ERROR_NODE_ID = 0;
 
 const RESOLVERS: Resolver[] = [
   {
-    paths: [
-      [Selector],
-      [Matchers, Matchers],
-      [Matchers, Matchers, Matchers],
-      [Matchers, Matchers, Matchers, Matchers],
-      [Matchers, Matchers, Matchers, Matchers, Matchers],
-    ],
-    fun: resolveSelector,
-  },
-  {
-    paths: [[ERROR_NODE_ID, Matchers, Selector]],
+    paths: [[Selector], [Selector, Matchers], [Matchers], [ERROR_NODE_ID, Matchers, Selector]],
     fun: resolveSelector,
   },
   {
@@ -227,11 +217,6 @@ const RESOLVERS: Resolver[] = [
     paths: [
       [ERROR_NODE_ID, Matcher],
       [ERROR_NODE_ID, Matchers, Selector],
-      [Matchers, Selector, LogExpr],
-      [Matchers, Matchers, Selector, LogExpr],
-      [Matchers, Matchers, Matchers, Selector, LogExpr],
-      [Matchers, Matchers, Matchers, Matchers, Selector, LogExpr],
-      [Matchers, Matchers, Matchers, Matchers, Matchers, Selector, LogExpr],
     ],
     fun: resolveMatcher,
   },
@@ -710,8 +695,6 @@ export function getSituation(text: string, pos: number): Situation | null {
       }
     }
   }
-
-  console.warn('NOSIT');
 
   return null;
 }
