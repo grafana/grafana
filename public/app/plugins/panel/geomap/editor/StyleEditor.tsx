@@ -235,18 +235,7 @@ export const StyleEditor = (props: Props) => {
               }
             />
           </Field>
-          <Field label={'Anchor X'}>
-            <RadioButtonGroup
-              value={value?.symbolAnchor?.anchorX ?? defaultStyleConfig.symbolAnchor.anchorX}
-              onChange={onAnchorXChange}
-              options={[
-                { value: AnchorX.Left, label: capitalize(AnchorX.Left) },
-                { value: AnchorX.Center, label: capitalize(AnchorX.Center) },
-                { value: AnchorX.Right, label: capitalize(AnchorX.Right) },
-              ]}
-            />
-          </Field>
-          <Field label={'Anchor Y'}>
+          <Field label={'Anchor Position'}>
             <RadioButtonGroup
               value={value?.symbolAnchor?.anchorY ?? defaultStyleConfig.symbolAnchor.anchorY}
               onChange={onAnchorYChange}
@@ -254,6 +243,17 @@ export const StyleEditor = (props: Props) => {
                 { value: AnchorY.Top, label: capitalize(AnchorY.Top) },
                 { value: AnchorY.Center, label: capitalize(AnchorY.Center) },
                 { value: AnchorY.Bottom, label: capitalize(AnchorY.Bottom) },
+              ]}
+            />
+          </Field>
+          <Field>
+            <RadioButtonGroup
+              value={value?.symbolAnchor?.anchorX ?? defaultStyleConfig.symbolAnchor.anchorX}
+              onChange={onAnchorXChange}
+              options={[
+                { value: AnchorX.Left, label: capitalize(AnchorX.Left) },
+                { value: AnchorX.Center, label: capitalize(AnchorX.Center) },
+                { value: AnchorX.Right, label: capitalize(AnchorX.Right) },
               ]}
             />
           </Field>
