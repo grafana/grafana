@@ -9,7 +9,6 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	common "k8s.io/kube-openapi/pkg/common"
-	"k8s.io/kube-openapi/pkg/spec3"
 
 	grafanaapiserver "github.com/grafana/grafana/pkg/services/grafana-apiserver"
 	grafanarest "github.com/grafana/grafana/pkg/services/grafana-apiserver/rest"
@@ -73,7 +72,7 @@ func (b *PlaylistAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinition
 }
 
 // Register additional routes with the server
-func (b *PlaylistAPIBuilder) GetOpenAPIPostProcessor() func(*spec3.OpenAPI) (*spec3.OpenAPI, error) {
+func (b *PlaylistAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
 	return nil
 }
 
