@@ -12,14 +12,9 @@ type PluginsErrorInfoProps = {
 };
 
 export function PluginsErrorsInfo({ filterByPluginType }: PluginsErrorInfoProps) {
-  let errors = useGetErrors();
+  let errors = useGetErrors(filterByPluginType);
   const { isLoading } = useFetchStatus();
   const styles = useStyles2(getStyles);
-  if (filterByPluginType) {
-    errors = errors.filter((pluginError) => {
-      return pluginError.pluginType === filterByPluginType;
-    });
-  }
 
   if (isLoading || errors.length === 0) {
     return null;
@@ -27,15 +22,11 @@ export function PluginsErrorsInfo({ filterByPluginType }: PluginsErrorInfoProps)
 
   return (
     <Alert
-      title="Read more about plugin signing"
+      title="Unsigned plugins were found during plugin initialization. Grafana Labs cannot guarantee the integrity of these plugins. We recommend only using signed plugins."
       aria-label={selectors.pages.PluginsList.signatureErrorNotice}
       severity="warning"
     >
-      <p>
-        Unsigned plugins were found during plugin initialization. Grafana Labs cannot guarantee the integrity of these
-        plugins. We recommend only using signed plugins.
-      </p>
-      The following plugins are disabled and not shown in the list below:
+      <p>The following plugins are disabled and not shown in the list below:</p>
       <List
         items={errors}
         className={styles.list}
