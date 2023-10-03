@@ -70,7 +70,7 @@ func (gm *MathCommand) NeedsVars() []string {
 // failed to execute.
 func (gm *MathCommand) Execute(ctx context.Context, _ time.Time, vars mathexp.Vars, tracer tracing.Tracer) (mathexp.Results, error) {
 	_, span := tracer.Start(ctx, "SSE.ExecuteMath")
-	span.SetAttributes("expression", gm.RawExpression, attribute.Key("expression").String(gm.RawExpression))
+	span.SetAttributes(attribute.String("expression", gm.RawExpression))
 	defer span.End()
 	return gm.Expression.Execute(gm.refID, vars, tracer)
 }
@@ -163,7 +163,7 @@ func (gr *ReduceCommand) Execute(ctx context.Context, _ time.Time, vars mathexp.
 	_, span := tracer.Start(ctx, "SSE.ExecuteReduce")
 	defer span.End()
 
-	span.SetAttributes("reducer", gr.Reducer, attribute.Key("reducer").String(gr.Reducer))
+	span.SetAttributes(attribute.String("reducer", gr.Reducer))
 
 	newRes := mathexp.Results{}
 	for i, val := range vars[gr.VarToReduce].Values {

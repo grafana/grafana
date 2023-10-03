@@ -80,6 +80,7 @@ export interface UsersState {
   page: number;
   perPage: number;
   totalPages: number;
+  sort?: string;
 }
 
 export interface UserSession {
@@ -124,4 +125,5 @@ export interface UserListAdminState {
   showPaging: boolean;
   filters: UserFilter[];
   isLoading: boolean;
+  sort?: string;
 }
