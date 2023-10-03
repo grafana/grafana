@@ -20,7 +20,7 @@ import {
   VizOrientation,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { BarGaugeDisplayMode, BarGaugeValueMode, VizTextDisplayOptions } from '@grafana/schema';
+import { BarGaugeDisplayMode, BarGaugeValueMode, BarGaugeValuePlacement, VizTextDisplayOptions } from '@grafana/schema';
 
 import { Themeable2 } from '../../types';
 import { calculateFontSize, measureText } from '../../utils/measureText';
@@ -50,6 +50,7 @@ export interface Props extends Themeable2 {
   showUnfilled?: boolean;
   alignmentFactors?: DisplayValueAlignmentFactors;
   valueDisplayMode?: BarGaugeValueMode;
+  valuePlacement?: BarGaugeValuePlacement;
 }
 
 export class BarGauge extends PureComponent<Props> {
@@ -237,7 +238,7 @@ function isVertical(orientation: VizOrientation) {
 }
 
 function calculateTitleDimensions(props: Props): TitleDimensions {
-  const { height, width, alignmentFactors, orientation, text } = props;
+  const { height, width, alignmentFactors, orientation, text, valuePlacement } = props;
   const title = alignmentFactors ? alignmentFactors.title : props.value.title;
 
   if (!title) {
@@ -254,8 +255,10 @@ function calculateTitleDimensions(props: Props): TitleDimensions {
     };
   }
 
-  // if height above 40 put text to above bar
-  if (height > 40) {
+  const shouldDisplayValueAbove =
+    (height > 40 && valuePlacement === BarGaugeValuePlacement.Auto) || valuePlacement === BarGaugeValuePlacement.Top;
+
+  if (shouldDisplayValueAbove) {
     if (text?.titleSize) {
       return {
         fontSize: text?.titleSize,
