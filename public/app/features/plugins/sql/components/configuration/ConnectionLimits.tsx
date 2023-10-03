@@ -1,7 +1,7 @@
 import React from 'react';
 
 import { DataSourceSettings } from '@grafana/data';
-import { ConfigSection, Stack } from '@grafana/experimental';
+import { ConfigSubSection, Stack } from '@grafana/experimental';
 import { config } from '@grafana/runtime';
 import { Field, Icon, InlineLabel, Input, Label, Switch, Tooltip } from '@grafana/ui';
 
@@ -93,7 +93,7 @@ export const ConnectionLimits = <T extends SQLConnectionLimits>(props: Props<T>)
   const labelWidth = 40;
 
   return (
-    <ConfigSection title="Connection limits">
+    <ConfigSubSection title="Connection limits">
       <Field
         label={
           <Label>
@@ -224,6 +224,6 @@ export const ConnectionLimits = <T extends SQLConnectionLimits>(props: Props<T>)
           width={labelWidth}
         />
       </Field>
-    </ConfigSection>
+    </ConfigSubSection>
   );
 };
