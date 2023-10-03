@@ -15,13 +15,13 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db/dbtest"
-	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/datasources/guardian"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 	"github.com/grafana/grafana/pkg/web/webtest"
@@ -47,7 +47,7 @@ func TestDataSourcesProxy_userLoggedIn(t *testing.T) {
 		// handler func being tested
 		hs := &HTTPServer{
 			Cfg:         setting.NewCfg(),
-			pluginStore: &fakes.FakePluginStore{},
+			pluginStore: &pluginstore.FakePluginStore{},
 			DataSourcesService: &dataSourcesServiceMock{
 				expectedDatasources: ds,
 			},
@@ -71,7 +71,7 @@ func TestDataSourcesProxy_userLoggedIn(t *testing.T) {
 			// handler func being tested
 			hs := &HTTPServer{
 				Cfg:         setting.NewCfg(),
-				pluginStore: &fakes.FakePluginStore{},
+				pluginStore: &pluginstore.FakePluginStore{},
 			}
 			sc.handlerFunc = hs.DeleteDataSourceByName
 			sc.fakeReqWithParams("DELETE", sc.url, map[string]string{}).exec()

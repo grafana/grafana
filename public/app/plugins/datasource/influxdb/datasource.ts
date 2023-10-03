@@ -8,6 +8,8 @@ import {
   DataQueryError,
   DataQueryRequest,
   DataQueryResponse,
+  DataSourceGetTagKeysOptions,
+  DataSourceGetTagValuesOptions,
   DataSourceInstanceSettings,
   dateMath,
   DateTime,
@@ -34,13 +36,14 @@ import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_sr
 import { AnnotationEditor } from './components/editor/annotation/AnnotationEditor';
 import { FluxQueryEditor } from './components/editor/query/flux/FluxQueryEditor';
 import { BROWSER_MODE_DISABLED_MESSAGE } from './constants';
+import { toRawSql } from './fsql/sqlUtil';
 import InfluxQueryModel from './influx_query_model';
 import InfluxSeries from './influx_series';
 import { buildMetadataQuery } from './influxql_query_builder';
 import { prepareAnnotation } from './migrations';
 import { buildRawQuery } from './queryUtils';
 import ResponseParser from './response_parser';
-import { DEFAULT_POLICY, InfluxOptions, InfluxQuery, InfluxVersion } from './types';
+import { DEFAULT_POLICY, InfluxOptions, InfluxQuery, InfluxQueryTag, InfluxVersion } from './types';
 
 export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery, InfluxOptions> {
   type: string;
@@ -183,10 +186,16 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
   }
 
   getQueryDisplayText(query: InfluxQuery) {
-    if (this.version === InfluxVersion.Flux) {
-      return query.query;
+    switch (this.version) {
+      case InfluxVersion.Flux:
+        return query.query;
+      case InfluxVersion.SQL:
+        return toRawSql(query);
+      case InfluxVersion.InfluxQL:
+        return new InfluxQueryModel(query).render(false);
+      default:
+        return '';
     }
-    return new InfluxQueryModel(query).render(false);
   }
 
   /**
@@ -211,7 +220,14 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     }
 
     if (this.isMigrationToggleOnAndIsAccessProxy()) {
-      query = this.applyVariables(query, scopedVars, rest);
+      query = this.applyVariables(query, rest);
+      if (query.adhocFilters?.length) {
+        const adhocFiltersToTags: InfluxQueryTag[] = (query.adhocFilters ?? []).map((af) => {
+          const { condition, ...asTag } = af;
+          return asTag;
+        });
+        query.tags = [...(query.tags ?? []), ...adhocFiltersToTags];
+      }
     }
 
     return query;
@@ -242,12 +258,12 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
       return {
         ...query,
         datasource: this.getRef(),
-        ...this.applyVariables(query, scopedVars, scopedVars),
+        ...this.applyVariables(query, scopedVars),
       };
     });
   }
 
-  applyVariables(query: InfluxQuery, scopedVars: ScopedVars, rest: ScopedVars) {
+  applyVariables(query: InfluxQuery, scopedVars: ScopedVars) {
     const expandedQuery = { ...query };
     if (query.groupBy) {
       expandedQuery.groupBy = query.groupBy.map((groupBy) => {
@@ -285,7 +301,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     return {
       ...expandedQuery,
       adhocFilters: this.templateSrv.getAdhocFilters(this.name) ?? [],
-      query: this.templateSrv.replace(query.query ?? '', rest, 'regex'), // The raw query text
+      query: this.templateSrv.replace(query.query ?? '', scopedVars, 'regex'), // The raw query text
       alias: this.templateSrv.replace(query.alias ?? '', scopedVars),
       limit: this.templateSrv.replace(query.limit?.toString() ?? '', scopedVars, 'regex'),
       measurement: this.templateSrv.replace(query.measurement ?? '', scopedVars, 'regex'),
@@ -335,7 +351,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
         rawQuery: true,
       },
       this.templateSrv,
-      options.scopedVars
+      options?.scopedVars
     ).render(true);
 
     return lastValueFrom(this._seriesQuery(interpolated, options)).then((resp) => {
@@ -345,27 +361,25 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
 
   // By implementing getTagKeys and getTagValues we add ad-hoc filters functionality
   // Used in public/app/features/variables/adhoc/picker/AdHocFilterKey.tsx::fetchFilterKeys
-  getTagKeys(options: InfluxQuery) {
+  getTagKeys(options?: DataSourceGetTagKeysOptions) {
     const query = buildMetadataQuery({
       type: 'TAG_KEYS',
       templateService: this.templateSrv,
       database: this.database,
-      measurement: options.measurement ?? '',
-      tags: [],
     });
-    return this.metricFindQuery(query, options);
+
+    return this.metricFindQuery(query);
   }
 
-  getTagValues(options: InfluxQuery) {
+  getTagValues(options: DataSourceGetTagValuesOptions) {
     const query = buildMetadataQuery({
       type: 'TAG_VALUES',
       templateService: this.templateSrv,
       database: this.database,
       withKey: options.key,
-      measurement: options.measurement ?? '',
-      tags: [],
     });
-    return this.metricFindQuery(query, options);
+
+    return this.metricFindQuery(query);
   }
 
   /**

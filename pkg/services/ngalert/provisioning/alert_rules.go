@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"sort"
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -112,6 +111,8 @@ func (service *AlertRuleService) GetAlertRuleWithFolderTitle(ctx context.Context
 func (service *AlertRuleService) CreateAlertRule(ctx context.Context, rule models.AlertRule, provenance models.Provenance, userID int64) (models.AlertRule, error) {
 	if rule.UID == "" {
 		rule.UID = util.GenerateShortUID()
+	} else if err := util.ValidateUID(rule.UID); err != nil {
+		return models.AlertRule{}, errors.Join(models.ErrAlertRuleFailedValidation, fmt.Errorf("cannot create rule with UID '%s': %w", rule.UID, err))
 	}
 	interval, err := service.ruleStore.GetRuleGroupInterval(ctx, rule.OrgID, rule.NamespaceUID, rule.RuleGroup)
 	// if the alert group does not exists we just use the default interval
@@ -404,7 +405,7 @@ func (service *AlertRuleService) deleteRules(ctx context.Context, orgID int64, t
 	for _, uid := range uids {
 		if err := service.provenanceStore.DeleteProvenance(ctx, &models.AlertRule{UID: uid}, orgID); err != nil {
 			// We failed to clean up the record, but this doesn't break things. Log it and move on.
-			service.log.Warn("failed to delete provenance record for rule: %w", err)
+			service.log.Warn("Failed to delete provenance record for rule: %w", err)
 		}
 	}
 	return nil
@@ -434,28 +435,18 @@ func (service *AlertRuleService) GetAlertRuleGroupWithFolderTitle(ctx context.Co
 		return models.AlertRuleGroupWithFolderTitle{}, err
 	}
 
-	res := models.AlertRuleGroupWithFolderTitle{
-		AlertRuleGroup: &models.AlertRuleGroup{
-			Title:     ruleList[0].RuleGroup,
-			FolderUID: ruleList[0].NamespaceUID,
-			Interval:  ruleList[0].IntervalSeconds,
-			Rules:     []models.AlertRule{},
-		},
-		OrgID:       orgID,
-		FolderTitle: dash.Title,
-	}
-	for _, r := range ruleList {
-		if r != nil {
-			res.AlertRuleGroup.Rules = append(res.AlertRuleGroup.Rules, *r)
-		}
-	}
+	res := models.NewAlertRuleGroupWithFolderTitleFromRulesGroup(ruleList[0].GetGroupKey(), ruleList, dash.Title)
 	return res, nil
 }
 
-// GetAlertGroupsWithFolderTitle returns all groups with folder title that have at least one alert.
-func (service *AlertRuleService) GetAlertGroupsWithFolderTitle(ctx context.Context, orgID int64) ([]models.AlertRuleGroupWithFolderTitle, error) {
+// GetAlertGroupsWithFolderTitle returns all groups with folder title in the folders identified by folderUID that have at least one alert. If argument folderUIDs is nil or empty - returns groups in all folders.
+func (service *AlertRuleService) GetAlertGroupsWithFolderTitle(ctx context.Context, orgID int64, folderUIDs []string) ([]models.AlertRuleGroupWithFolderTitle, error) {
 	q := models.ListAlertRulesQuery{
 		OrgID: orgID,
+	}
+
+	if len(folderUIDs) > 0 {
+		q.NamespaceUIDs = folderUIDs
 	}
 
 	ruleList, err := service.ruleStore.ListAlertRules(ctx, &q)
@@ -501,26 +492,11 @@ func (service *AlertRuleService) GetAlertGroupsWithFolderTitle(ctx context.Conte
 		if !ok {
 			return nil, fmt.Errorf("cannot find title for folder with uid '%s'", groupKey.NamespaceUID)
 		}
-		result = append(result, models.AlertRuleGroupWithFolderTitle{
-			AlertRuleGroup: &models.AlertRuleGroup{
-				Title:     rules[0].RuleGroup,
-				FolderUID: rules[0].NamespaceUID,
-				Interval:  rules[0].IntervalSeconds,
-				Rules:     rules,
-			},
-			OrgID:       orgID,
-			FolderTitle: title,
-		})
+		result = append(result, models.NewAlertRuleGroupWithFolderTitle(groupKey, rules, title))
 	}
 
 	// Return results in a stable manner.
-	sort.SliceStable(result, func(i, j int) bool {
-		if result[i].AlertRuleGroup.FolderUID == result[j].AlertRuleGroup.FolderUID {
-			return result[i].AlertRuleGroup.Title < result[j].AlertRuleGroup.Title
-		}
-		return result[i].AlertRuleGroup.FolderUID < result[j].AlertRuleGroup.FolderUID
-	})
-
+	models.SortAlertRuleGroupWithFolderTitle(result)
 	return result, nil
 }
 

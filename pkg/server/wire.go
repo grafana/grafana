@@ -1,10 +1,14 @@
 //go:build wireinject
 // +build wireinject
 
+// This file should contain wire sets used by both OSS and Enterprise builds.
+// Use wireext_oss.go and wireext_enterprise.go for sets that are specific to
+// the respective builds.
 package server
 
 import (
 	"github.com/google/wire"
+
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 
 	"github.com/grafana/grafana/pkg/api"
@@ -29,7 +33,7 @@ import (
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/middleware/csrf"
 	"github.com/grafana/grafana/pkg/middleware/loggermw"
-	pluginDashboards "github.com/grafana/grafana/pkg/plugins/manager/dashboards"
+	apiregistry "github.com/grafana/grafana/pkg/registry/apis"
 	"github.com/grafana/grafana/pkg/registry/corekind"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
@@ -37,9 +41,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/annotations/annotationsimpl"
+	"github.com/grafana/grafana/pkg/services/anonymous/anonimpl/anonstore"
 	"github.com/grafana/grafana/pkg/services/apikey/apikeyimpl"
+	"github.com/grafana/grafana/pkg/services/auth"
+	"github.com/grafana/grafana/pkg/services/auth/idimpl"
 	"github.com/grafana/grafana/pkg/services/auth/jwt"
-	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/authn/authnimpl"
 	"github.com/grafana/grafana/pkg/services/cleanup"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
@@ -60,6 +66,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
+	grafanaapiserver "github.com/grafana/grafana/pkg/services/grafana-apiserver"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
 	grpccontext "github.com/grafana/grafana/pkg/services/grpcserver/context"
 	"github.com/grafana/grafana/pkg/services/grpcserver/interceptors"
@@ -91,6 +98,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/plugindashboards"
 	plugindashboardsservice "github.com/grafana/grafana/pkg/services/plugindashboards/service"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration"
+	pluginDashboards "github.com/grafana/grafana/pkg/services/pluginsintegration/dashboards"
 	"github.com/grafana/grafana/pkg/services/preference/prefimpl"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	publicdashboardsApi "github.com/grafana/grafana/pkg/services/publicdashboards/api"
@@ -141,6 +149,7 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch"
 	"github.com/grafana/grafana/pkg/tsdb/elasticsearch"
 	pyroscope "github.com/grafana/grafana/pkg/tsdb/grafana-pyroscope-datasource"
+	testdatasource "github.com/grafana/grafana/pkg/tsdb/grafana-testdata-datasource"
 	"github.com/grafana/grafana/pkg/tsdb/grafanads"
 	"github.com/grafana/grafana/pkg/tsdb/graphite"
 	"github.com/grafana/grafana/pkg/tsdb/influxdb"
@@ -154,7 +163,6 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/postgres"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus"
 	"github.com/grafana/grafana/pkg/tsdb/tempo"
-	"github.com/grafana/grafana/pkg/tsdb/testdatasource"
 )
 
 var wireBasicSet = wire.NewSet(
@@ -325,7 +333,6 @@ var wireBasicSet = wire.NewSet(
 	grpcserver.ProvideHealthService,
 	grpcserver.ProvideReflectionService,
 	interceptors.ProvideAuthenticator,
-	setting.NewCfgFromArgs,
 	kind.ProvideService, // The registry of known kinds
 	sqlstash.ProvideSQLEntityServer,
 	resolver.ProvideEntityReferenceResolver,
@@ -346,14 +353,20 @@ var wireBasicSet = wire.NewSet(
 	tagimpl.ProvideService,
 	wire.Bind(new(tag.Service), new(*tagimpl.Service)),
 	authnimpl.ProvideService,
-	wire.Bind(new(authn.Service), new(*authnimpl.Service)),
-	wire.Bind(new(authn.IdentitySynchronizer), new(*authnimpl.Service)),
+	authnimpl.ProvideIdentitySynchronizer,
+	authnimpl.ProvideAuthnService,
 	supportbundlesimpl.ProvideService,
 	oasimpl.ProvideService,
+	anonstore.ProvideAnonDBStore,
+	wire.Bind(new(anonstore.AnonStore), new(*anonstore.AnonDBStore)),
 	wire.Bind(new(oauthserver.OAuth2Server), new(*oasimpl.OAuth2ServiceImpl)),
 	loggermw.Provide,
 	signingkeysimpl.ProvideEmbeddedSigningKeysService,
 	wire.Bind(new(signingkeys.Service), new(*signingkeysimpl.Service)),
+	idimpl.ProvideService,
+	wire.Bind(new(auth.IDService), new(*idimpl.Service)),
+	grafanaapiserver.WireSet,
+	apiregistry.WireSet,
 )
 
 var wireSet = wire.NewSet(
@@ -401,17 +414,31 @@ var wireTestSet = wire.NewSet(
 	wire.Bind(new(oauthtoken.OAuthTokenService), new(*oauthtokentest.Service)),
 )
 
-func Initialize(cla setting.CommandLineArgs, opts Options, apiOpts api.ServerOptions) (*Server, error) {
+func Initialize(cfg *setting.Cfg, opts Options, apiOpts api.ServerOptions) (*Server, error) {
 	wire.Build(wireExtsSet)
 	return &Server{}, nil
 }
 
-func InitializeForTest(cla setting.CommandLineArgs, opts Options, apiOpts api.ServerOptions) (*TestEnv, error) {
+func InitializeForTest(cfg *setting.Cfg, opts Options, apiOpts api.ServerOptions) (*TestEnv, error) {
 	wire.Build(wireExtsTestSet)
 	return &TestEnv{Server: &Server{}, SQLStore: &sqlstore.SQLStore{}}, nil
 }
 
-func InitializeForCLI(cla setting.CommandLineArgs) (Runner, error) {
+func InitializeForCLI(cfg *setting.Cfg) (Runner, error) {
 	wire.Build(wireExtsCLISet)
 	return Runner{}, nil
+}
+
+// InitializeForCLITarget is a simplified set of dependencies for the CLI, used
+// by the server target subcommand to launch specific dskit modules.
+func InitializeForCLITarget(cfg *setting.Cfg) (ModuleRunner, error) {
+	wire.Build(wireExtsBaseCLISet)
+	return ModuleRunner{}, nil
+}
+
+// InitializeModuleServer is a simplified set of dependencies for the CLI,
+// suitable for running background services and targeting dskit modules.
+func InitializeModuleServer(cfg *setting.Cfg, opts Options, apiOpts api.ServerOptions) (*ModuleServer, error) {
+	wire.Build(wireExtsModuleServerSet)
+	return &ModuleServer{}, nil
 }

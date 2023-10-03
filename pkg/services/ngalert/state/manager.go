@@ -19,8 +19,7 @@ import (
 )
 
 var (
-	ResendDelay           = 30 * time.Second
-	MetricsScrapeInterval = 15 * time.Second // TODO: parameterize? // Setting to a reasonable default scrape interval for Prometheus.
+	ResendDelay = 30 * time.Second
 )
 
 // AlertInstanceManager defines the interface for querying the current alert instances.
@@ -65,13 +64,20 @@ type ManagerCfg struct {
 	ApplyNoDataAndErrorToAllStates bool
 
 	Tracer tracing.Tracer
+	Log    log.Logger
 }
 
 func NewManager(cfg ManagerCfg) *Manager {
-	return &Manager{
-		cache:                          newCache(),
+	// Metrics for the cache use a collector, so they need access to the register directly.
+	c := newCache()
+	if cfg.Metrics != nil {
+		c.RegisterMetrics(cfg.Metrics.Registerer())
+	}
+
+	m := &Manager{
+		cache:                          c,
 		ResendDelay:                    ResendDelay, // TODO: make this configurable
-		log:                            log.New("ngalert.state.manager"),
+		log:                            cfg.Log,
 		metrics:                        cfg.Metrics,
 		instanceStore:                  cfg.InstanceStore,
 		images:                         cfg.Images,
@@ -83,24 +89,12 @@ func NewManager(cfg ManagerCfg) *Manager {
 		applyNoDataAndErrorToAllStates: cfg.ApplyNoDataAndErrorToAllStates,
 		tracer:                         cfg.Tracer,
 	}
-}
 
-func (st *Manager) Run(ctx context.Context) error {
-	if st.applyNoDataAndErrorToAllStates {
-		st.log.Info("Running in alternative execution of Error/NoData mode")
+	if m.applyNoDataAndErrorToAllStates {
+		m.log.Info("Running in alternative execution of Error/NoData mode")
 	}
-	ticker := st.clock.Ticker(MetricsScrapeInterval)
-	for {
-		select {
-		case <-ticker.C:
-			st.log.Debug("Recording state cache metrics", "now", st.clock.Now())
-			st.cache.recordMetrics(st.metrics)
-		case <-ctx.Done():
-			st.log.Debug("Stopping")
-			ticker.Stop()
-			return ctx.Err()
-		}
-	}
+
+	return m
 }
 
 func (st *Manager) Warm(ctx context.Context, rulesReader RuleReader) {

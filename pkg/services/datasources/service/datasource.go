@@ -360,7 +360,7 @@ func (s *Service) DecryptedValues(ctx context.Context, ds *datasources.DataSourc
 	if exist {
 		err = json.Unmarshal([]byte(secret), &decryptedValues)
 		if err != nil {
-			s.logger.Debug("failed to unmarshal secret value, using legacy secrets", "err", err)
+			s.logger.Debug("Failed to unmarshal secret value, using legacy secrets", "err", err)
 		}
 	}
 

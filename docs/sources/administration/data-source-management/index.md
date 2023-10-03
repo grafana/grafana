@@ -43,7 +43,7 @@ For links to data source-specific documentation, see [Data sources]({{< relref "
 You can configure data source permissions to allow or deny certain users the ability to query or edit a data source. Each data source’s configuration includes a Permissions tab where you can restrict data source permissions to specific users, teams, or roles.
 
 {{% admonition type="note" %}}
-Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}) and [Grafana Cloud Pro and Advanced](/docs/grafana-cloud).
+Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}) and [Grafana Cloud](/docs/grafana-cloud).
 {{% /admonition %}}
 
 By default, data sources in an organization can be queried by any user in that organization. For example, a user with the `Viewer` role can issue any possible query to a data source, not just queries that exist on dashboards to which they have access. Additionally, by default, data sources can be edited by the user who created the data source, as well as users with the `Admin` role.
@@ -89,12 +89,12 @@ You can assign data source permissions to users, teams, and roles which will all
 
 When you enable query and resource caching, Grafana temporarily stores the results of data source queries and resource requests. When you or another user submit the same query or resource request again, the results will come back from the cache instead of from the data source.
 
-When using Grafana, a query pertains to a request for data frames to be modified or displayed. A resource relates to any HTTP requests made by a plugin, such as the Amazon Timestream plugin requesting a list of available databases from AWS. For more information on data source queries and resources, please see the developers page on [backend plugins]({{< relref "../../developers/plugins/introduction-to-plugin-development/backend/" >}}).
+When using Grafana, a query pertains to a request for data frames to be modified or displayed. A resource relates to any HTTP requests made by a plugin, such as the Amazon Timestream plugin requesting a list of available databases from AWS. For more information on data source queries and resources, please see the developers page on [backend plugins](/developers/plugin-tools/introduction/backend-plugins).
 
 The caching feature works for **all** backend data sources. You can enable the cache globally in Grafana's [configuration]({{< relref "../../setup-grafana/configure-grafana/enterprise-configuration/#caching" >}}), and configure a cache duration (also called Time to Live, or TTL) for each data source individually.
 
 {{% admonition type="note" %}}
-Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}) and [Grafana Cloud Pro and Advanced](/docs/grafana-cloud/).
+Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}) and [Grafana Cloud](/docs/grafana-cloud/).
 {{% /admonition %}}
 
 The following cache backend options are available: in-memory, Redis, and Memcached.
@@ -124,7 +124,7 @@ Query caching works for Grafana's [built-in data sources]({{< relref "../../data
 To verify that a data source works with query caching, follow the [instructions below](#enable-and-configure-query-caching) to **Enable and Configure query caching**. If caching is enabled in Grafana but the Caching tab is not visible for the given data source, then query caching is not available for that data source.
 
 {{% admonition type="note" %}}
-Some data sources, such as Elasticsearch, Prometheus, and Loki, cache queries themselves, so Grafana _query_ caching does not significantly improve performance. However, _resource_ caching may help. See the developers page on [plugin resources]({{< relref "../../developers/plugins/introduction-to-plugin-development/backend/#resources" >}}) for details.
+Some data sources, such as Elasticsearch, Prometheus, and Loki, cache queries themselves, so Grafana _query_ caching does not significantly improve performance. However, _resource_ caching may help. See the developers page on [plugin resources](/developers/plugin-tools/introduction/backend-plugins) for details.
 {{% /admonition %}}
 
 ### Enable and configure query caching
@@ -195,4 +195,4 @@ For more documentation on a specific data source plugin's features, including it
 
 ### Create a data source plugin
 
-To build your own data source plugin, refer to the ["Build a data source plugin"](/tutorials/build-a-data-source-plugin/) tutorial and our documentation about [building a plugin](/developers/plugins/).
+To build your own data source plugin, refer to the ["Build a data source plugin"](/developers/plugin-tools/tutorials/build-a-data-source-plugin) tutorial and our documentation about [building a plugin](/developers/plugins-tools).

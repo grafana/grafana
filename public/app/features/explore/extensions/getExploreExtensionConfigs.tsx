@@ -21,8 +21,8 @@ export function getExploreExtensionConfigs(): PluginExtensionLinkConfig[] {
         category: 'Dashboards',
         configure: () => {
           const canAddPanelToDashboard =
-            contextSrv.hasAccess(AccessControlAction.DashboardsCreate, contextSrv.isEditor) ||
-            contextSrv.hasAccess(AccessControlAction.DashboardsWrite, contextSrv.isEditor);
+            contextSrv.hasPermission(AccessControlAction.DashboardsCreate) ||
+            contextSrv.hasPermission(AccessControlAction.DashboardsWrite);
 
           // hide option if user has insufficient permissions
           if (!canAddPanelToDashboard) {

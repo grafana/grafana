@@ -493,7 +493,7 @@ func (ss *sqlStore) SetAlertNotificationStateToCompleteCommand(ctx context.Conte
 		}
 
 		if current.Version != version {
-			ss.log.Error("notification state out of sync. the notification is marked as complete but has been modified between set as pending and completion.", "notifierId", current.NotifierID)
+			ss.log.Error("Notification state out of sync. the notification is marked as complete but has been modified between set as pending and completion.", "notifierId", current.NotifierID)
 		}
 
 		return nil

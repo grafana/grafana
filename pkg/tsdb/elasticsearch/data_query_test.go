@@ -1,6 +1,7 @@
 package elasticsearch
 
 import (
+	"context"
 	"encoding/json"
 	"testing"
 	"time"
@@ -9,6 +10,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	es "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client"
 )
 
@@ -1456,7 +1459,7 @@ func TestSettingsCasting(t *testing.T) {
 								"gamma": "3",
 								"period": "4"
 							}
-						} 
+						}
 					}
 				],
 				"bucketAggs": [{"type": "date_histogram", "field": "@timestamp", "id": "1"}]
@@ -1816,6 +1819,6 @@ func executeElasticsearchDataQuery(c es.Client, body string, from, to time.Time)
 			},
 		},
 	}
-	query := newElasticsearchDataQuery(c, dataRequest.Queries)
+	query := newElasticsearchDataQuery(context.Background(), c, dataRequest.Queries, log.New("test.logger"), tracing.InitializeTracerForTest())
 	return query.execute()
 }

@@ -14,10 +14,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/secrets/kvstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/grafanads"
 	"github.com/grafana/grafana/pkg/util"
+	"golang.org/x/exp/slices"
 )
 
 func (hs *HTTPServer) GetFrontendSettings(c *contextmodel.ReqContext) {
@@ -71,7 +73,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		panels[panel.ID] = plugins.PanelDTO{
 			ID:              panel.ID,
 			Name:            panel.Name,
-			Alias:           panel.Alias,
+			AliasIDs:        panel.AliasIDs,
 			Info:            panel.Info,
 			Module:          panel.Module,
 			BaseURL:         panel.BaseURL,
@@ -120,7 +122,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		VerifyEmailEnabled:                  setting.VerifyEmailEnabled,
 		SigV4AuthEnabled:                    setting.SigV4AuthEnabled,
 		AzureAuthEnabled:                    setting.AzureAuthEnabled,
-		RbacEnabled:                         hs.Cfg.RBACEnabled,
+		RbacEnabled:                         true,
 		ExploreEnabled:                      setting.ExploreEnabled,
 		HelpEnabled:                         setting.HelpEnabled,
 		ProfileEnabled:                      setting.ProfileEnabled,
@@ -205,9 +207,10 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		SupportBundlesEnabled:            isSupportBundlesEnabled(hs),
 
 		Azure: dtos.FrontendSettingsAzureDTO{
-			Cloud:                  hs.Cfg.Azure.Cloud,
-			ManagedIdentityEnabled: hs.Cfg.Azure.ManagedIdentityEnabled,
-			UserIdentityEnabled:    hs.Cfg.Azure.UserIdentityEnabled,
+			Cloud:                   hs.Cfg.Azure.Cloud,
+			ManagedIdentityEnabled:  hs.Cfg.Azure.ManagedIdentityEnabled,
+			WorkloadIdentityEnabled: hs.Cfg.Azure.WorkloadIdentityEnabled,
+			UserIdentityEnabled:     hs.Cfg.Azure.UserIdentityEnabled,
 		},
 
 		Caching: dtos.FrontendSettingsCachingDTO{
@@ -426,7 +429,7 @@ func (hs *HTTPServer) getFSDataSources(c *contextmodel.ReqContext, availablePlug
 	return dataSources, nil
 }
 
-func newAppDTO(plugin plugins.PluginDTO, settings pluginsettings.InfoDTO) *plugins.AppDTO {
+func newAppDTO(plugin pluginstore.Plugin, settings pluginsettings.InfoDTO) *plugins.AppDTO {
 	app := &plugins.AppDTO{
 		ID:              plugin.ID,
 		Version:         plugin.Info.Version,
@@ -484,7 +487,7 @@ func getPanelSort(id string) int {
 }
 
 type availablePluginDTO struct {
-	Plugin   plugins.PluginDTO
+	Plugin   pluginstore.Plugin
 	Settings pluginsettings.InfoDTO
 }
 
@@ -498,7 +501,7 @@ func (ap AvailablePlugins) Get(pluginType plugins.Type, pluginID string) (*avail
 		return p, true
 	}
 	for _, p = range ap[pluginType] {
-		if p.Plugin.ID == pluginID || p.Plugin.Alias == pluginID {
+		if p.Plugin.ID == pluginID || slices.Contains(p.Plugin.AliasIDs, pluginID) {
 			return p, true
 		}
 	}

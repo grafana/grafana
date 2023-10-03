@@ -105,13 +105,6 @@ var (
 			Owner:       grafanaBackendPlatformSquad,
 		},
 		{
-			Name:            "validateDashboardsOnSave",
-			Description:     "Validate dashboard JSON POSTed to api/dashboards/db",
-			Stage:           FeatureStagePublicPreview,
-			RequiresRestart: true,
-			Owner:           grafanaAsCodeSquad,
-		},
-		{
 			Name:         "autoMigrateOldPanels",
 			Description:  "Migrate old angular panels to supported versions (graph, table-old, worldmap, etc)",
 			Stage:        FeatureStagePublicPreview,
@@ -169,6 +162,13 @@ var (
 			Owner:       grafanaFrontendPlatformSquad,
 		},
 		{
+			Name:         "dockedMegaMenu",
+			Description:  "Enable support for a persistent (docked) navigation menu",
+			Stage:        FeatureStagePublicPreview,
+			FrontendOnly: true,
+			Owner:        grafanaFrontendPlatformSquad,
+		},
+		{
 			Name:        "grpcServer",
 			Description: "Run the GRPC server",
 			Stage:       FeatureStagePublicPreview,
@@ -204,12 +204,11 @@ var (
 			Owner:        awsDatasourcesSquad,
 		},
 		{
-			Name:         "newPanelChromeUI",
-			Description:  "Show updated look and feel of grafana-ui PanelChrome: panel header, icons, and menu",
-			Stage:        FeatureStageGeneralAvailability,
-			FrontendOnly: true,
-			Expression:   "true", // enabled by default
-			Owner:        grafanaDashboardsSquad,
+			Name:        "cloudwatchNewRegionsHandler",
+			Description: "Refactor of /regions endpoint, no user-facing changes",
+			Stage:       FeatureStageGeneralAvailability,
+			Expression:  "true", // enabled by default
+			Owner:       awsDatasourcesSquad,
 		},
 		{
 			Name:        "showDashboardValidationWarnings",
@@ -237,7 +236,7 @@ var (
 		},
 		{
 			Name:         "nestedFolderPicker",
-			Description:  "Enables the new folder picker to work with nested folders. Requires the folderPicker feature flag",
+			Description:  "Enables the new folder picker to work with nested folders. Requires the nestedFolders feature flag",
 			Stage:        FeatureStageGeneralAvailability,
 			Owner:        grafanaFrontendPlatformSquad,
 			FrontendOnly: true,
@@ -533,8 +532,9 @@ var (
 		{
 			Name:         "cloudWatchLogsMonacoEditor",
 			Description:  "Enables the Monaco editor for CloudWatch Logs queries",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStageGeneralAvailability,
 			FrontendOnly: true,
+			Expression:   "true", // enabled by default
 			Owner:        awsDatasourcesSquad,
 		},
 		{
@@ -547,7 +547,8 @@ var (
 		{
 			Name:        "recordedQueriesMulti",
 			Description: "Enables writing multiple items from a single query within Recorded Queries",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStageGeneralAvailability,
+			Expression:  "true",
 			Owner:       grafanaObservabilityMetricsSquad,
 		},
 		{
@@ -556,13 +557,6 @@ var (
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: false,
 			Owner:        grafanaPluginsPlatformSquad,
-		},
-		{
-			Name:         "alertingLokiRangeToInstant",
-			Description:  "Rewrites eligible loki range queries to instant queries",
-			Stage:        FeatureStageExperimental,
-			FrontendOnly: false,
-			Owner:        grafanaAlertingSquad,
 		},
 		{
 			Name:         "vizAndWidgetSplit",
@@ -602,8 +596,9 @@ var (
 		{
 			Name:         "toggleLabelsInLogsUI",
 			Description:  "Enable toggleable filters in log details view",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStageGeneralAvailability,
 			FrontendOnly: true,
+			Expression:   "true", // enabled by default
 			Owner:        grafanaObservabilityLogsSquad,
 		},
 		{
@@ -645,7 +640,7 @@ var (
 		{
 			Name:        "awsAsyncQueryCaching",
 			Description: "Enable caching for async queries for Redshift and Athena. Requires that the `useCachingService` feature toggle is enabled and the datasource has caching and async query support enabled",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStagePublicPreview,
 			Owner:       awsDatasourcesSquad,
 		},
 		{
@@ -672,8 +667,9 @@ var (
 		{
 			Name:        "prometheusConfigOverhaulAuth",
 			Description: "Update the Prometheus configuration page with the new auth component",
-			Stage:       FeatureStageExperimental,
 			Owner:       grafanaObservabilityMetricsSquad,
+			Stage:       FeatureStageGeneralAvailability,
+			Expression:  "true", // on by default
 		},
 		{
 			Name:            "configurableSchedulerTick",
@@ -729,6 +725,96 @@ var (
 			FrontendOnly:    false,
 			Owner:           grafanaSharingSquad,
 			RequiresRestart: true,
+		},
+		{
+			Name:         "newBrowseDashboards",
+			Description:  "New browse/manage dashboards UI",
+			Stage:        FeatureStagePublicPreview,
+			Owner:        grafanaFrontendPlatformSquad,
+			FrontendOnly: true,
+		},
+		{
+			Name:        "sseGroupByDatasource",
+			Description: "Send query to the same datasource in a single request when using server side expressions",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaObservabilityMetricsSquad,
+		},
+		{
+			Name:         "requestInstrumentationStatusSource",
+			Description:  "Include a status source label for request metrics and logs",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: false,
+			Owner:        grafanaPluginsPlatformSquad,
+		},
+		{
+			Name:         "lokiRunQueriesInParallel",
+			Description:  "Enables running Loki queries in parallel",
+			Stage:        FeatureStagePrivatePreview,
+			FrontendOnly: false,
+			Owner:        grafanaObservabilityLogsSquad,
+		},
+		{
+			Name:         "wargamesTesting",
+			Description:  "Placeholder feature flag for internal testing",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: false,
+			Owner:        hostedGrafanaTeam,
+		},
+		{
+			Name:         "alertingInsights",
+			Description:  "Show the new alerting insights landing page",
+			FrontendOnly: true,
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAlertingSquad,
+		},
+		{
+			Name:        "externalCorePlugins",
+			Description: "Allow core plugins to be loaded as external",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaPluginsPlatformSquad,
+		},
+		{
+			Name:         "pluginsAPIMetrics",
+			Description:  "Sends metrics of public grafana packages usage by plugins",
+			FrontendOnly: true,
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaPluginsPlatformSquad,
+		},
+		{
+			Name:            "httpSLOLevels",
+			Description:     "Adds SLO level to http request metrics",
+			Stage:           FeatureStageExperimental,
+			FrontendOnly:    false,
+			Owner:           hostedGrafanaTeam,
+			RequiresRestart: true,
+		},
+		{
+			Name:            "idForwarding",
+			Description:     "Generate signed id token for identity that can be forwarded to plugins and external services",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaAuthnzSquad,
+			RequiresDevMode: true,
+		},
+		{
+			Name:        "cloudWatchWildCardDimensionValues",
+			Description: "Fetches dimension values from CloudWatch to correctly label wildcard dimensions",
+			Stage:       FeatureStageGeneralAvailability,
+			Expression:  "true", // enabled by default
+			Owner:       awsDatasourcesSquad,
+		},
+		{
+			Name:            "externalServiceAccounts",
+			Description:     "Automatic service account and token setup for plugins",
+			Stage:           FeatureStageExperimental,
+			RequiresDevMode: true,
+			Owner:           grafanaAuthnzSquad,
+		},
+		{
+			Name:         "alertingModifiedExport",
+			Description:  "Enables using UI for provisioned rules modification and export",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: false,
+			Owner:        grafanaAlertingSquad,
 		},
 	}
 )

@@ -104,6 +104,7 @@ type SchedulerCfg struct {
 	Metrics              *metrics.Scheduler
 	AlertSender          AlertsSender
 	Tracer               tracing.Tracer
+	Log                  log.Logger
 }
 
 // NewScheduler returns a new schedule.
@@ -113,7 +114,7 @@ func NewScheduler(cfg SchedulerCfg, stateManager *state.Manager) *schedule {
 		maxAttempts:           cfg.MaxAttempts,
 		clock:                 cfg.C,
 		baseInterval:          cfg.BaseInterval,
-		log:                   log.New("ngalert.scheduler"),
+		log:                   cfg.Log,
 		evaluatorFactory:      cfg.EvaluatorFactory,
 		ruleStore:             cfg.RuleStore,
 		metrics:               cfg.Metrics,

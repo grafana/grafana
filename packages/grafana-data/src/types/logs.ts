@@ -157,9 +157,7 @@ export const hasLogsContextSupport = (datasource: unknown): datasource is DataSo
     return false;
   }
 
-  const withLogsSupport = datasource as DataSourceWithLogsContextSupport;
-
-  return withLogsSupport.getLogRowContext !== undefined && withLogsSupport.showContextToggle !== undefined;
+  return 'getLogRowContext' in datasource && 'showContextToggle' in datasource;
 };
 
 /**
@@ -259,9 +257,7 @@ export const hasLogsContextUiSupport = (datasource: unknown): datasource is Data
     return false;
   }
 
-  const withLogsSupport = datasource as DataSourceWithLogsContextSupport;
-
-  return withLogsSupport.getLogRowContextUi !== undefined;
+  return 'getLogRowContextUi' in datasource;
 };
 
 export interface QueryFilterOptions extends KeyValue<string> {}

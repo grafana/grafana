@@ -90,30 +90,3 @@ func TestServer_Shutdown(t *testing.T) {
 	err = <-ch
 	require.NoError(t, err)
 }
-
-type MockModuleService struct {
-	initFunc     func(context.Context) error
-	runFunc      func(context.Context) error
-	shutdownFunc func(context.Context) error
-}
-
-func (m *MockModuleService) Init(ctx context.Context) error {
-	if m.initFunc != nil {
-		return m.initFunc(ctx)
-	}
-	return nil
-}
-
-func (m *MockModuleService) Run(ctx context.Context) error {
-	if m.runFunc != nil {
-		return m.runFunc(ctx)
-	}
-	return nil
-}
-
-func (m *MockModuleService) Shutdown(ctx context.Context) error {
-	if m.shutdownFunc != nil {
-		return m.shutdownFunc(ctx)
-	}
-	return nil
-}
