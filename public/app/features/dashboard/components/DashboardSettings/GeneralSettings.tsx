@@ -180,9 +180,9 @@ export function GeneralSettingsUnconnected({
           </Field>
 
           <Field
-            label={t('dashboard-settings.general-settings.editable.label', 'Editable')}
+            label={t('dashboard-settings.general.editable-label', 'Editable')}
             description={t(
-              'dashboard-settings.general-settings.editable-description',
+              'dashboard-settings.general.editable-description',
               'Set to read-only to disable all editing. Reload the dashboard for changes to take effect'
             )}
           >
