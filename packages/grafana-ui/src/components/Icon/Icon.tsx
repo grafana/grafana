@@ -32,7 +32,7 @@ const getIconStyles = (theme: GrafanaTheme2) => {
       verticalAlign: 'middle',
     }),
     orange: css({
-      fill: theme.v1.palette.orange,
+      fill: '#009b65',
     }),
     spin: css({
       [theme.transitions.handleMotion('no-preference', 'reduce')]: {
