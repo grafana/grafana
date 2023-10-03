@@ -816,5 +816,12 @@ var (
 			FrontendOnly: false,
 			Owner:        grafanaAlertingSquad,
 		},
+		{
+			Name:         "enableNativeHTTPHistogram",
+			Description:  "Enables native HTTP Histograms",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: false,
+			Owner:        hostedGrafanaTeam,
+		},
 	}
 )

@@ -142,6 +142,7 @@ Experimental features might be changed or removed without prior notice.
 | `pluginsAPIMetrics`                         | Sends metrics of public grafana packages usage by plugins                                                    |
 | `httpSLOLevels`                             | Adds SLO level to http request metrics                                                                       |
 | `alertingModifiedExport`                    | Enables using UI for provisioned rules modification and export                                               |
+| `enableNativeHTTPHistogram`                 | Enables native HTTP Histograms                                                                               |
 
 ## Development feature toggles
 
