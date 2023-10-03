@@ -8,6 +8,7 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/network"
@@ -262,9 +263,10 @@ func (s *Service) RegisterPostAuthHook(hook authn.PostAuthHookFn, priority uint)
 }
 
 func (s *Service) Login(ctx context.Context, client string, r *authn.Request) (identity *authn.Identity, err error) {
-	ctx, span := s.tracer.Start(ctx, "authn.Login")
+	ctx, span := s.tracer.Start(ctx, "authn.Login", trace.WithAttributes(
+		attribute.String(attributeKeyClient, client),
+	))
 	defer span.End()
-	span.SetAttributes(attributeKeyClient, client, attribute.Key(attributeKeyClient).String(client))
 
 	defer func() {
 		for _, hook := range s.postLoginHooks.items {
@@ -316,9 +318,10 @@ func (s *Service) RegisterPostLoginHook(hook authn.PostLoginHookFn, priority uin
 }
 
 func (s *Service) RedirectURL(ctx context.Context, client string, r *authn.Request) (*authn.Redirect, error) {
-	ctx, span := s.tracer.Start(ctx, "authn.RedirectURL")
+	ctx, span := s.tracer.Start(ctx, "authn.RedirectURL", trace.WithAttributes(
+		attribute.String(attributeKeyClient, client),
+	))
 	defer span.End()
-	span.SetAttributes(attributeKeyClient, client, attribute.Key(attributeKeyClient).String(client))
 
 	c, ok := s.clients[client]
 	if !ok {

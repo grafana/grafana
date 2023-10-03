@@ -9,7 +9,7 @@ import { locationService } from '@grafana/runtime';
 
 import { TestProvider } from '../../../../../test/helpers/TestProvider';
 
-import { DockedMegaMenu } from './DockedMegaMenu';
+import { MegaMenu } from './MegaMenu';
 
 const setup = () => {
   const navBarTree: NavModelItem[] = [
@@ -40,7 +40,7 @@ const setup = () => {
   return render(
     <TestProvider storeState={{ navBarTree }} grafanaContext={grafanaContext}>
       <Router history={locationService.getHistory()}>
-        <DockedMegaMenu onClose={() => {}} />
+        <MegaMenu onClose={() => {}} />
       </Router>
     </TestProvider>
   );
