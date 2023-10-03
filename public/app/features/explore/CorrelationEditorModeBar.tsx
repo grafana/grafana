@@ -114,7 +114,13 @@ export const CorrelationEditorModeBar = ({ panes }: { panes: Array<[string, Expl
   };
 
   const saveCorrelation = (skipPostConfirmAction: boolean) => {
-    dispatch(saveCurrentCorrelation(correlationDetails?.label, correlationDetails?.description));
+    dispatch(
+      saveCurrentCorrelation(
+        correlationDetails?.label,
+        correlationDetails?.description,
+        correlationDetails?.transformations
+      )
+    );
     if (!skipPostConfirmAction && correlationDetails?.postConfirmAction !== undefined) {
       const { exploreId, action, changeDatasourceUid } = correlationDetails?.postConfirmAction;
       if (action === CORRELATION_EDITOR_POST_CONFIRM_ACTION.CLOSE_PANE) {

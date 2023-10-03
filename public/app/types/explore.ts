@@ -17,6 +17,7 @@ import {
   SupplementaryQueryType,
   UrlQueryMap,
   ExploreCorrelationHelperData,
+  DataLinkTransformationConfig,
 } from '@grafana/data';
 import { RichHistorySearchFilters, RichHistorySettings } from 'app/core/utils/richHistoryTypes';
 
@@ -42,6 +43,7 @@ export interface CorrelationEditorDetails {
   canSave?: boolean;
   label?: string;
   description?: string;
+  transformations?: DataLinkTransformationConfig[];
 }
 
 // updates can have any properties

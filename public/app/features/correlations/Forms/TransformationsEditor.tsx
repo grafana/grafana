@@ -3,7 +3,7 @@ import { compact, fill } from 'lodash';
 import React, { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
-import { GrafanaTheme2, SupportedTransformationType } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
 import {
   Button,
@@ -18,6 +18,8 @@ import {
   Tooltip,
   useStyles2,
 } from '@grafana/ui';
+
+import { getSupportedTransTypeDetails, getTransformOptions } from './types';
 
 type Props = { readOnly: boolean };
 
@@ -265,49 +267,4 @@ export const TransformationsEditor = (props: Props) => {
       </FieldArray>
     </>
   );
-};
-
-interface SupportedTransformationTypeDetails {
-  label: string;
-  value: string;
-  description?: string;
-  showExpression: boolean;
-  showMapValue: boolean;
-  requireExpression?: boolean;
-}
-
-function getSupportedTransTypeDetails(transType: SupportedTransformationType): SupportedTransformationTypeDetails {
-  switch (transType) {
-    case SupportedTransformationType.Logfmt:
-      return {
-        label: 'Logfmt',
-        value: SupportedTransformationType.Logfmt,
-        description: 'Parse provided field with logfmt to get variables',
-        showExpression: false,
-        showMapValue: false,
-      };
-    case SupportedTransformationType.Regex:
-      return {
-        label: 'Regular expression',
-        value: SupportedTransformationType.Regex,
-        description:
-          'Field will be parsed with regex. Use named capture groups to return multiple variables, or a single unnamed capture group to add variable to named map value.',
-        showExpression: true,
-        showMapValue: true,
-        requireExpression: true,
-      };
-    default:
-      return { label: transType, value: transType, showExpression: false, showMapValue: false };
-  }
-}
-
-const getTransformOptions = () => {
-  return Object.values(SupportedTransformationType).map((transformationType) => {
-    const transType = getSupportedTransTypeDetails(transformationType);
-    return {
-      label: transType.label,
-      value: transType.value,
-      description: transType.description,
-    };
-  });
 };
