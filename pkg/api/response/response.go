@@ -290,6 +290,8 @@ func Err(err error) *NormalResponse {
 // The signature is equivalent to that of Error which allows us to
 // rename this to Error when we're confident that that would be safe to
 // do.
+// If the error provided is not an errutil.Error and is/wraps context.Canceled
+// the function returns an Err(errRequestCanceledBase).
 func ErrOrFallback(status int, message string, err error) *NormalResponse {
 	grafanaErr := errutil.Error{}
 	if errors.As(err, &grafanaErr) {
