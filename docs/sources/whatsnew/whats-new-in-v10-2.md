@@ -15,13 +15,16 @@ title: What's new in Grafana v10.2
 weight: -39
 ---
 
-# What’s new in Grafana v10.1
+# What’s new in Grafana v10.2
 
 Welcome to Grafana 10.2! Read on to learn about changes to ...
 
 For even more detail about all the changes in this release, refer to the [changelog](https://github.com/grafana/grafana/blob/master/CHANGELOG.md). For the specific steps we recommend when you upgrade to v10.2, check out our [Upgrade Guide]({{< relref "../upgrade-guide/upgrade-v10.2/index.md" >}}).
 
 <!-- Template below
+
+> Add on-prem only features here. Features documented in the Cloud What's new will be copied from those release notes.
+
 ## Feature
 <!-- Name of contributor -->
 <!-- _[Generally available | Available in private/public preview | Experimental] in Grafana [Open Source, Enterprise]_
