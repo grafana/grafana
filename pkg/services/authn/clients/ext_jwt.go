@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/go-jose/go-jose/v3"
 	"github.com/go-jose/go-jose/v3/jwt"
 	"golang.org/x/exp/slices"
 
@@ -172,12 +173,12 @@ func (s *ExtendedJWT) verifyRFC9068Token(ctx context.Context, rawToken string) (
 	}
 
 	var claims ExtendedJWTClaims
-	key, err := s.signingKeys.GetPublicKey(ctx, signingkeys.ServerPrivateKeyID)
+	key, err := s.signingKeys.GetOrCreatePrivateKey(ctx, signingkeys.ServerPrivateKeyID, jose.ES256)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get public key: %w", err)
 	}
 
-	err = parsedToken.Claims(key, &claims)
+	err = parsedToken.Claims(key.Public(), &claims)
 	if err != nil {
 		return nil, fmt.Errorf("failed to verify the signature: %w", err)
 	}

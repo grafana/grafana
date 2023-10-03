@@ -91,9 +91,13 @@ func TestEmbeddedKeyService_GetOrCreatePrivateKey(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, key)
 
+	assert.Contains(t, mockStore.PrivateKeys, wantedKeyID)
+
 	// second call should return the same key
 	key2, err := svc.GetOrCreatePrivateKey(context.Background(), "test", jose.ES256)
 	require.NoError(t, err)
 	require.NotNil(t, key2)
 	require.Equal(t, key, key2)
+
+	assert.Len(t, mockStore.PrivateKeys, 1)
 }
