@@ -28,6 +28,13 @@ const (
 	// parameters or payload for the request.
 	// HTTP status code 400.
 	StatusBadRequest CoreStatus = "Bad request"
+	// StatusClientClosedRequest means that a client closes the connection
+	// while the server is processing the request.
+	//
+	// This is a non-standard HTTP status code introduced by nginx, see
+	// https://httpstatus.in/499/ for more information.
+	// HTTP status code 499.
+	StatusClientClosedRequest CoreStatus = "Client closed request"
 	// StatusValidationFailed means that the server was able to parse
 	// the payload for the request but it failed one or more validation
 	// checks.
@@ -57,6 +64,11 @@ const (
 	StatusGatewayTimeout CoreStatus = "Gateway timeout"
 )
 
+// HTTPStatusClientClosedRequest A non-standard status code introduced by nginx
+// for the case when a client closes the connection while nginx is processing
+// the request. See https://httpstatus.in/499/ for more information.
+const HTTPStatusClientClosedRequest = 499
+
 // StatusReason allows for wrapping of CoreStatus.
 type StatusReason interface {
 	Status() CoreStatus
@@ -84,6 +96,8 @@ func (s CoreStatus) HTTPStatus() int {
 		return http.StatusTooManyRequests
 	case StatusBadRequest, StatusValidationFailed:
 		return http.StatusBadRequest
+	case StatusClientClosedRequest:
+		return HTTPStatusClientClosedRequest
 	case StatusNotImplemented:
 		return http.StatusNotImplemented
 	case StatusBadGateway:

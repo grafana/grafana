@@ -2,6 +2,7 @@ package response
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -17,6 +18,9 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
+
+var errRequestCanceledBase = errutil.ClientClosedRequest("api.requestCanceled",
+	errutil.WithPublicMessage("Request canceled"))
 
 // Response is an HTTP response interface.
 type Response interface {
@@ -290,6 +294,10 @@ func ErrOrFallback(status int, message string, err error) *NormalResponse {
 	grafanaErr := errutil.Error{}
 	if errors.As(err, &grafanaErr) {
 		return Err(err)
+	}
+
+	if errors.Is(err, context.Canceled) {
+		return Err(errRequestCanceledBase.Errorf("response: request canceled: %w", err))
 	}
 
 	return Error(status, message, err)

@@ -72,6 +72,10 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 			return nil, err
 		}
 
+		if errors.Is(err, context.Canceled) {
+			return nil, plugins.ErrPluginRequestCanceledErrorBase.Errorf("client: query data request cancelled: %w", err)
+		}
+
 		return nil, plugins.ErrPluginDownstreamErrorBase.Errorf("client: failed to query data: %w", err)
 	}
 
@@ -131,6 +135,10 @@ func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceReq
 	})
 
 	if err != nil {
+		if errors.Is(err, context.Canceled) {
+			return plugins.ErrPluginRequestCanceledErrorBase.Errorf("client: call resource request cancelled: %w", err)
+		}
+
 		return plugins.ErrPluginDownstreamErrorBase.Errorf("client: failed to call resources: %w", err)
 	}
 
@@ -155,6 +163,10 @@ func (s *Service) CollectMetrics(ctx context.Context, req *backend.CollectMetric
 		return
 	})
 	if err != nil {
+		if errors.Is(err, context.Canceled) {
+			return nil, plugins.ErrPluginRequestCanceledErrorBase.Errorf("client: collect metrics request cancelled: %w", err)
+		}
+
 		return nil, plugins.ErrPluginDownstreamErrorBase.Errorf("client: failed to collect metrics: %w", err)
 	}
 
@@ -186,6 +198,10 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 
 		if errors.Is(err, plugins.ErrPluginUnavailable) {
 			return nil, err
+		}
+
+		if errors.Is(err, context.Canceled) {
+			return nil, plugins.ErrPluginRequestCanceledErrorBase.Errorf("client: check health request cancelled: %w", err)
 		}
 
 		return nil, plugins.ErrPluginHealthCheck.Errorf("client: failed to check health: %w", err)

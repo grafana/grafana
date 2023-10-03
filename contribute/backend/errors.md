@@ -31,6 +31,7 @@ functions, e.g.
 - `errutil.Forbidden(messageID, opts...)`
 - `errutil.TooManyRequests(messageID, opts...)`
 - `errutil.NotImplemented(messageID, opts...)`
+- `errutil.ClientClosedRequest(messageID, opts...)`
 
 Above functions uses `errutil.NewBase(status, messageID, opts...)` under the covers, and that function should in general only be used outside the `errutil` package for `errutil.StatusUnknown`, e.g. when there are no accurate status code available/provided.
 
