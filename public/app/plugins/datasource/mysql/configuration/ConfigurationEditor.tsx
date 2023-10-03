@@ -139,9 +139,7 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<My
       {config.secureSocksDSProxyEnabled && (
         <>
           <Divider />
-          {config.secureSocksDSProxyEnabled && (
-            <SecureSocksProxySettings options={options} onOptionsChange={onOptionsChange} />
-          )}
+          <SecureSocksProxySettings options={options} onOptionsChange={onOptionsChange} />
         </>
       )}
 
