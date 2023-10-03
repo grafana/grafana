@@ -38,7 +38,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
       position: absolute;
       width: 100%;
       &::before {
-        border-left: 4px solid;
+        border-left: 1px solid;
         pointer-events: none;
         width: 1000px;
       }

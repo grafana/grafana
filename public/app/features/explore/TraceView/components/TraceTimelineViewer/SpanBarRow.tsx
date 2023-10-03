@@ -73,7 +73,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme2, showSpanFilterMatchesOnly
     `,
     endpointName: css`
       label: endpointName;
-      color: ${autoColor(theme, '#343434')};
+      color: ${autoColor(theme, '#484848')};
       font-size: 0.9em;
     `,
     view: css`
@@ -215,7 +215,6 @@ const getStyles = stylesFactory((theme: GrafanaTheme2, showSpanFilterMatchesOnly
       outline: none;
       overflow-y: hidden;
       overflow-x: auto;
-      margin-right: 8px;
       padding-left: 4px;
       padding-right: 0.25em;
       position: relative;
@@ -246,6 +245,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme2, showSpanFilterMatchesOnly
       label: svcName;
       font-size: 0.9em;
       font-weight: bold;
+      margin-right: 0.25rem;
     `,
     svcNameChildrenCollapsed: css`
       label: svcNameChildrenCollapsed;
@@ -440,7 +440,7 @@ export class UnthemedSpanBarRow extends React.PureComponent<SpanBarRowProps> {
               title={labelDetail}
               onClick={this._detailToggle}
               role="switch"
-              style={{ background: `${color}15`, borderBottomColor: color }}
+              style={{ background: `${color}10`, borderBottomColor: `${color}CF` }}
               tabIndex={0}
             >
               {showErrorIcon && (
@@ -495,7 +495,7 @@ export class UnthemedSpanBarRow extends React.PureComponent<SpanBarRowProps> {
                       href={links[0].href}
                       // Needs to have target otherwise preventDefault would not work due to angularRouter.
                       target={'_blank'}
-                      style={{ marginRight: '5px' }}
+                      style={{ background: `${color}10`, borderBottom: `1px solid ${color}CF`, paddingRight: '4px' }}
                       rel="noopener noreferrer"
                       onClick={
                         links[0].onClick
@@ -512,7 +512,7 @@ export class UnthemedSpanBarRow extends React.PureComponent<SpanBarRowProps> {
                     </a>
                   );
                 } else if (links && count > 1) {
-                  return <SpanLinksMenu links={links} datasourceType={datasourceType} />;
+                  return <SpanLinksMenu links={links} datasourceType={datasourceType} color={color} />;
                 } else {
                   return null;
                 }
