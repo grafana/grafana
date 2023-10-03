@@ -158,7 +158,13 @@ const ERROR_NODE_ID = 0;
 
 const RESOLVERS: Resolver[] = [
   {
-    paths: [[Selector]],
+    paths: [
+      [Selector],
+      [Matchers, Matchers],
+      [Matchers, Matchers, Matchers],
+      [Matchers, Matchers, Matchers, Matchers],
+      [Matchers, Matchers, Matchers, Matchers, Matchers],
+    ],
     fun: resolveSelector,
   },
   {
@@ -194,7 +200,15 @@ const RESOLVERS: Resolver[] = [
     fun: resolveLogRange,
   },
   {
-    paths: [[ERROR_NODE_ID, Matcher]],
+    paths: [
+      [ERROR_NODE_ID, Matcher],
+      [ERROR_NODE_ID, Matchers, Selector],
+      [Matchers, Selector, LogExpr],
+      [Matchers, Matchers, Selector, LogExpr],
+      [Matchers, Matchers, Matchers, Selector, LogExpr],
+      [Matchers, Matchers, Matchers, Matchers, Selector, LogExpr],
+      [Matchers, Matchers, Matchers, Matchers, Matchers, Selector, LogExpr],
+    ],
     fun: resolveMatcher,
   },
   {
@@ -273,11 +287,18 @@ function getLabel(matcherNode: SyntaxNode, text: string): Label | null {
 }
 
 function getLabels(selectorNode: SyntaxNode, text: string): Label[] {
-  if (selectorNode.type.id !== Selector) {
+  if (selectorNode.type.id !== Selector && selectorNode.type.id !== Matchers) {
     return [];
   }
 
-  let listNode: SyntaxNode | null = walk(selectorNode, [['firstChild', Matchers]]);
+  // Parent node needs to be returned first because otherwise both of the other walks will return a non-null node and this function will return the labels on the left side of the current node, the other two walks should be mutually exclusive when the parent is null
+  let listNode: SyntaxNode | null =
+    // Node in-between labels
+    walk(selectorNode, [['parent', Matchers]]) ??
+    // Node after all other labels
+    walk(selectorNode, [['firstChild', Matchers]]) ??
+    // Node before all other labels
+    walk(selectorNode, [['lastChild', Matchers]]);
 
   const labels: Label[] = [];
 
@@ -332,6 +353,7 @@ function resolvePipeError(node: SyntaxNode, text: string, pos: number): Situatio
 }
 
 function resolveLabelsForGrouping(node: SyntaxNode, text: string, pos: number): Situation | null {
+  console.log('resolveLabelsForGrouping', node);
   const aggrExpNode = walk(node, [['parent', VectorAggregationExpr]]);
   if (aggrExpNode === null) {
     return null;
@@ -544,6 +566,7 @@ function resolveLogOrLogRange(node: SyntaxNode, text: string, pos: number, after
 }
 
 function resolveSelector(node: SyntaxNode, text: string, pos: number): Situation | null {
+  console.log('resolveSelector', node);
   // for example `{^}`
 
   // false positive:
@@ -665,6 +688,8 @@ export function getSituation(text: string, pos: number): Situation | null {
       }
     }
   }
+
+  console.warn('NOSIT');
 
   return null;
 }
