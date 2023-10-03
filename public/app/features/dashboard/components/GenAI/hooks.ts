@@ -82,6 +82,7 @@ export function useOpenAIStream(
       stream: stream.subscribe({
         next: setReply,
         error: (e: Error) => {
+          setStreamStatus(StreamStatus.IDLE);
           setMessages([]);
           setError(e);
           notifyError('OpenAI Error', `${e.message}`);
