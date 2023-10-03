@@ -255,6 +255,9 @@
     }
   },
   "dashboard-settings": {
+    "annotations": {
+      "title": ""
+    },
     "dashboard-delete-button": "",
     "general": {
       "auto-refresh-description": "",
@@ -267,11 +270,22 @@
       "panel-options-graph-tooltip-label": "",
       "panel-options-label": "",
       "tags-label": "",
+      "title": "",
       "title-label": ""
     },
     "json-editor": {
       "save-button": "",
-      "subtitle": ""
+      "subtitle": "",
+      "title": ""
+    },
+    "links": {
+      "title": ""
+    },
+    "permissions": {
+      "title": ""
+    },
+    "settings": {
+      "title": ""
     },
     "time-picker": {
       "hide-time-picker": "",
@@ -282,6 +296,12 @@
       "time-options-label": "",
       "time-zone-label": "",
       "week-start-label": ""
+    },
+    "variables": {
+      "title": ""
+    },
+    "versions": {
+      "title": ""
     }
   },
   "data-source-picker": {
