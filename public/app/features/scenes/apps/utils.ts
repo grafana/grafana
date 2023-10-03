@@ -52,16 +52,6 @@ export function getVariablesDefinitions() {
         datasource: { uid: 'gdev-prometheus' },
         query: { query: 'label_values(grafana_http_request_duration_seconds_sum, instance)' },
       }),
-      new QueryVariable({
-        name: 'label_name',
-        datasource: { uid: 'gdev-loki' },
-        query: 'label_names()',
-      }),
-      new QueryVariable({
-        name: 'label_values',
-        datasource: { uid: 'gdev-loki' },
-        query: 'label_values(${label_name})',
-      }),
     ],
   });
 }
