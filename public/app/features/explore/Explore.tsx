@@ -512,7 +512,6 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
         <ExploreToolbar exploreId={exploreId} onChangeTime={this.onChangeTime} topOfViewRef={this.topOfViewRef} />
         <CustomScrollbar
           testId={selectors.pages.Explore.General.scrollView}
-          autoHeightMin={'100%'}
           scrollRefCallback={(scrollElement) => (this.scrollElement = scrollElement || undefined)}
         >
           {datasourceInstance ? (
