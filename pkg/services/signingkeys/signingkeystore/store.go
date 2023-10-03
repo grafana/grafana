@@ -198,6 +198,10 @@ func (s *Store) decodePrivateKey(ctx context.Context, signingKey *SigningKey) (c
 		return nil, errors.New("failed to decode private key PEM")
 	}
 
+	if block.Type != "PRIVATE KEY" {
+		return nil, errors.New("invalid block type")
+	}
+
 	parsedKey, err := x509.ParsePKCS8PrivateKey(block.Bytes)
 	if err != nil {
 		return nil, err
