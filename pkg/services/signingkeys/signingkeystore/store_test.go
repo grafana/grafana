@@ -16,6 +16,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
+	"github.com/grafana/grafana/pkg/services/signingkeys"
 )
 
 func TestIntegrationSigningKeyStore(t *testing.T) {
@@ -67,7 +68,7 @@ func TestIntegrationSigningKeyStore(t *testing.T) {
 			key, err := tc.keyFunc()
 			assert.NoError(t, err)
 
-			err = store.AddPrivateKey(ctx, tc.keyID, tc.alg, key, nil, true)
+			_, err = store.AddPrivateKey(ctx, tc.keyID, tc.alg, key, nil, true)
 			assert.NoError(t, err)
 
 			retrievedKey, err := store.GetPrivateKey(ctx, tc.keyID)
@@ -107,6 +108,7 @@ func TestIntegrationAddPrivateKey(t *testing.T) {
 		force       bool
 		expectedErr error
 		expectedKey crypto.Signer
+		expectedGot crypto.Signer
 	}{
 		{
 			name:        "Add new private key",
@@ -115,6 +117,7 @@ func TestIntegrationAddPrivateKey(t *testing.T) {
 			privateKey:  key1,
 			force:       false,
 			expectedKey: key1,
+			expectedGot: key1,
 		},
 		{
 			name:        "Add new private key with expiration",
@@ -124,6 +127,7 @@ func TestIntegrationAddPrivateKey(t *testing.T) {
 			expiresAt:   &[]time.Time{time.Now().Add(24 * time.Hour)}[0],
 			force:       false,
 			expectedKey: key2,
+			expectedGot: key2,
 		},
 		{
 			name:        "Fail to replace unexpired key",
@@ -132,8 +136,9 @@ func TestIntegrationAddPrivateKey(t *testing.T) {
 			privateKey:  key3,
 			expiresAt:   &[]time.Time{time.Now().Add(-24 * time.Hour)}[0],
 			force:       false,
-			expectedErr: nil,
+			expectedErr: signingkeys.ErrSigningKeyAlreadyExists,
 			expectedKey: key1,
+			expectedGot: key1,
 		},
 		{
 			name:        "Replace key1 private key with force, already expired",
@@ -142,7 +147,8 @@ func TestIntegrationAddPrivateKey(t *testing.T) {
 			privateKey:  key3,
 			expiresAt:   &[]time.Time{time.Now().Add(-24 * time.Hour)}[0],
 			force:       true,
-			expectedKey: key3,
+			expectedKey: nil,
+			expectedGot: key3,
 		},
 		{
 			name:        "Replace key1 private key with no force, is expired",
@@ -151,23 +157,31 @@ func TestIntegrationAddPrivateKey(t *testing.T) {
 			privateKey:  key1,
 			expiresAt:   &[]time.Time{time.Now().Add(24 * time.Hour)}[0],
 			force:       false,
-			expectedKey: key1,
+			expectedKey: nil,
+			expectedGot: key1,
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			err := store.AddPrivateKey(ctx, tc.keyID, tc.alg, tc.privateKey, tc.expiresAt, tc.force)
+			got, err := store.AddPrivateKey(ctx, tc.keyID, tc.alg, tc.privateKey, tc.expiresAt, tc.force)
 			if tc.expectedErr != nil {
-				assert.EqualError(t, err, tc.expectedErr.Error())
-				return
+				assert.ErrorIs(t, err, tc.expectedErr)
+			} else {
+				assert.NoError(t, err)
 			}
-			assert.NoError(t, err)
 
-			retrievedKey, err := store.GetPrivateKey(ctx, tc.keyID)
-			assert.NoError(t, err)
+			if tc.expectedGot != nil {
+				assert.Equal(t, tc.expectedGot.Public(), got.Public())
+			} else {
+				assert.Nil(t, got)
+			}
 
-			assert.Equal(t, tc.expectedKey.Public(), retrievedKey.Public())
+			if tc.expectedKey != nil {
+				retrievedKey, err := store.GetPrivateKey(ctx, tc.keyID)
+				assert.NoError(t, err)
+				assert.Equal(t, tc.expectedKey.Public(), retrievedKey.Public())
+			}
 		})
 	}
 }

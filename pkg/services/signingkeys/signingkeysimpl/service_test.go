@@ -6,14 +6,15 @@ import (
 	"crypto/x509"
 	"encoding/json"
 	"encoding/pem"
+	"fmt"
 	"testing"
+	"time"
 
 	"github.com/go-jose/go-jose/v3"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	"github.com/grafana/grafana/pkg/services/signingkeys"
 	"github.com/grafana/grafana/pkg/services/signingkeys/signingkeystore"
 )
@@ -35,10 +36,10 @@ func getPrivateKey(t *testing.T) *ecdsa.PrivateKey {
 func TestEmbeddedKeyService_GetJWKS_OnlyPublicKeyShared(t *testing.T) {
 	mockStore := signingkeystore.NewFakeStore()
 
-	err := mockStore.AddPrivateKey(context.Background(), signingkeys.ServerPrivateKeyID, jose.ES256, getPrivateKey(t), nil, false)
+	_, err := mockStore.AddPrivateKey(context.Background(), signingkeys.ServerPrivateKeyID, jose.ES256, getPrivateKey(t), nil, false)
 	require.NoError(t, err)
 
-	err = mockStore.AddPrivateKey(context.Background(), "other", jose.ES256, getPrivateKey(t), nil, false)
+	_, err = mockStore.AddPrivateKey(context.Background(), "other", jose.ES256, getPrivateKey(t), nil, false)
 	require.NoError(t, err)
 
 	svc := &Service{
@@ -70,14 +71,29 @@ func TestEmbeddedKeyService_GetJWKS_OnlyPublicKeyShared(t *testing.T) {
 	}
 }
 
-func TestIntegrationProvideEmbeddedSigningKeysService(t *testing.T) {
-	s, err := ProvideEmbeddedSigningKeysService(db.InitTestDB(t), fakes.NewFakeSecretsService())
-	require.NoError(t, err)
-	require.NotNil(t, s)
+func TestEmbeddedKeyService_GetOrCreatePrivateKey(t *testing.T) {
+	mockStore := signingkeystore.NewFakeStore()
 
-	key, err := s.GetPrivateKey(context.Background(), signingkeys.ServerPrivateKeyID)
-	require.NoError(t, err)
+	svc := &Service{
+		log:   log.NewNopLogger(),
+		store: mockStore,
+	}
 
-	// Verify that ProvideEmbeddedSigningKeysService generates an ECDSA private key by default
-	require.IsType(t, &ecdsa.PrivateKey{}, key)
+	wantedKeyID := KeyMonthScopedID("test", jose.ES256)
+	assert.Equal(t, wantedKeyID, fmt.Sprintf("test-%s-es256", time.Now().UTC().Format("2006-01")))
+
+	// only ES256 is supported
+	_, err := svc.GetOrCreatePrivateKey(context.Background(), "test", jose.RS256)
+	require.Error(t, err)
+
+	// first call should generate a key
+	key, err := svc.GetOrCreatePrivateKey(context.Background(), "test", jose.ES256)
+	require.NoError(t, err)
+	require.NotNil(t, key)
+
+	// second call should return the same key
+	key2, err := svc.GetOrCreatePrivateKey(context.Background(), "test", jose.ES256)
+	require.NoError(t, err)
+	require.NotNil(t, key2)
+	require.Equal(t, key, key2)
 }

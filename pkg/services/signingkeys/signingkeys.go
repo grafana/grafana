@@ -32,4 +32,5 @@ type Service interface {
 	// AddPrivateKey adds a private key to the service
 	AddPrivateKey(ctx context.Context, keyID string,
 		privateKey crypto.Signer, alg jose.SignatureAlgorithm, expiresAt *time.Time, force bool) error
+	GetOrCreatePrivateKey(ctx context.Context, keyPrefix string, alg jose.SignatureAlgorithm) (crypto.Signer, error)
 }

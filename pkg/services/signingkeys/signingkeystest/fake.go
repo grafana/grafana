@@ -38,3 +38,11 @@ func (s *FakeSigningKeysService) AddPrivateKey(ctx context.Context, keyID string
 	s.ExpectedKeys[keyID] = privateKey
 	return nil
 }
+
+func (s *FakeSigningKeysService) GetOrCreatePrivateKey(ctx context.Context,
+	keyPrefix string, alg jose.SignatureAlgorithm) (crypto.Signer, error) {
+	if s.ExpectedError != nil {
+		return nil, s.ExpectedError
+	}
+	return s.ExpectedKeys[keyPrefix], nil
+}

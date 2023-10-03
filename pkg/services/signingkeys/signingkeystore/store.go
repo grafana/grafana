@@ -14,6 +14,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/secrets"
+	"github.com/grafana/grafana/pkg/services/signingkeys"
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
 )
 
@@ -23,7 +24,8 @@ type SigningStore interface {
 	// AddPrivateKey adds a private key to the service. If the key already exists, it will be updated if force is true.
 	// If force is false, the key will only be updated if it has expired. If the key does not exist, it will be added.
 	// If expiresAt is nil, the key will not expire. Retrieve the result key with GetPrivateKey.
-	AddPrivateKey(ctx context.Context, keyID string, alg jose.SignatureAlgorithm, privateKey crypto.Signer, expiresAt *time.Time, force bool) error
+	AddPrivateKey(ctx context.Context, keyID string, alg jose.SignatureAlgorithm,
+		privateKey crypto.Signer, expiresAt *time.Time, force bool) (crypto.Signer, error)
 	// GetPrivateKey returns the private key with the specified key ID
 	GetPrivateKey(ctx context.Context, keyID string) (crypto.Signer, error)
 }
@@ -51,12 +53,13 @@ func NewSigningKeyStore(dbStore db.DB, secretsService secrets.Service) *Store {
 	}
 }
 
+// GetJWKS returns the JSON Web Key Set (JWKS) for the service. Expired keys will not be returned.
 func (s *Store) GetJWKS(ctx context.Context) (jose.JSONWebKeySet, error) {
 	keySet := jose.JSONWebKeySet{}
 
 	keys := []*SigningKey{}
-	err := s.dbStore.GetSqlxSession().Select(ctx, &keys, "SELECT * FROM signing_key")
-	if err != nil {
+	if err := s.dbStore.GetSqlxSession().Select(ctx,
+		&keys, "SELECT * FROM signing_key WHERE expires_at IS NULL OR expires_at > ?", time.Now()); err != nil {
 		return keySet, err
 	}
 
@@ -79,8 +82,12 @@ func (s *Store) GetJWKS(ctx context.Context) (jose.JSONWebKeySet, error) {
 
 // AddPrivateKey adds a private key to the service.
 func (s *Store) AddPrivateKey(ctx context.Context,
-	keyID string, alg jose.SignatureAlgorithm, privateKey crypto.Signer, expiresAt *time.Time, force bool) error {
+	keyID string, alg jose.SignatureAlgorithm, privateKey crypto.Signer, expiresAt *time.Time, force bool) (crypto.Signer, error) {
 	privateKeyPEM, err := s.encodePrivateKey(ctx, privateKey)
+	if err != nil {
+		return nil, err
+	}
+
 	key := &SigningKey{
 		KeyID:      keyID,
 		PrivateKey: privateKeyPEM,
@@ -90,6 +97,7 @@ func (s *Store) AddPrivateKey(ctx context.Context,
 	}
 
 	dbSession := s.dbStore.GetSqlxSession()
+	var signer crypto.Signer
 	err = dbSession.WithTransaction(ctx, func(tx *session.SessionTx) error {
 		existingKey := SigningKey{}
 		err := tx.Get(ctx, &existingKey, "SELECT * FROM signing_key WHERE key_id = ?", keyID)
@@ -101,6 +109,7 @@ func (s *Store) AddPrivateKey(ctx context.Context,
 			_, err = tx.Exec(ctx,
 				"INSERT INTO signing_key (key_id, private_key, added_at, alg, expires_at) VALUES (?, ?, ?, ?, ?)",
 				key.KeyID, key.PrivateKey, key.AddedAt, key.Alg, key.ExpiresAt)
+			signer = privateKey
 			return err
 		}
 
@@ -108,24 +117,32 @@ func (s *Store) AddPrivateKey(ctx context.Context,
 			_, err = tx.Exec(ctx,
 				"UPDATE signing_key SET private_key = ?, added_at = ?, alg = ?, expires_at = ? WHERE key_id = ?",
 				key.PrivateKey, key.AddedAt, key.Alg, key.ExpiresAt, key.KeyID)
+			signer = privateKey
 			return err
 		}
 
-		return nil
-	})
-	if err != nil {
-		return err
-	}
+		signer, err = s.decodePrivateKey(ctx, &existingKey)
+		if err != nil {
+			return err
+		}
 
-	return nil
+		return signingkeys.ErrSigningKeyAlreadyExists.Errorf("The specified key already exists: %s", keyID)
+	})
+	return signer, err
 }
 
-// GetPrivateKey returns the private key with the specified key ID
+// GetPrivateKey returns the private key with the specified key ID. Expired keys will not be returned.
 func (s *Store) GetPrivateKey(ctx context.Context, keyID string) (crypto.Signer, error) {
 	key := &SigningKey{}
-	err := s.dbStore.GetSqlxSession().Get(ctx, key, "SELECT * FROM signing_key WHERE key_id = ?", keyID)
+	err := s.dbStore.GetSqlxSession().Get(ctx, key,
+		"SELECT * FROM signing_key WHERE key_id = ?", keyID)
 	if err != nil {
 		return nil, err
+	}
+
+	// Bail out if key has expired
+	if key.ExpiresAt != nil && key.ExpiresAt.Before(time.Now()) {
+		return nil, signingkeys.ErrSigningKeyNotFound.Errorf("The specified key was not found: %s", keyID)
 	}
 
 	signKey, err := s.decodePrivateKey(ctx, key)

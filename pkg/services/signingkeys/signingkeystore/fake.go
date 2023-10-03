@@ -10,13 +10,13 @@ import (
 )
 
 type FakeStore struct {
-	privateKeys map[string]crypto.Signer
+	PrivateKeys map[string]crypto.Signer
 	jwks        jose.JSONWebKeySet
 }
 
 func NewFakeStore() *FakeStore {
 	return &FakeStore{
-		privateKeys: make(map[string]crypto.Signer),
+		PrivateKeys: make(map[string]crypto.Signer),
 		jwks:        jose.JSONWebKeySet{},
 	}
 }
@@ -25,16 +25,17 @@ func (s *FakeStore) GetJWKS(ctx context.Context) (jose.JSONWebKeySet, error) {
 	return s.jwks, nil
 }
 
-func (s *FakeStore) AddPrivateKey(ctx context.Context, keyID string, alg jose.SignatureAlgorithm, privateKey crypto.Signer, expiresAt *time.Time, force bool) error {
+func (s *FakeStore) AddPrivateKey(ctx context.Context, keyID string, alg jose.SignatureAlgorithm,
+	privateKey crypto.Signer, expiresAt *time.Time, force bool) (crypto.Signer, error) {
 	if !force {
-		if key, ok := s.privateKeys[keyID]; ok {
+		if key, ok := s.PrivateKeys[keyID]; ok {
 			if !hasExpired(key) {
-				return fmt.Errorf("key already exists and has not expired")
+				return nil, fmt.Errorf("key already exists and has not expired")
 			}
 		}
 	}
 
-	s.privateKeys[keyID] = privateKey
+	s.PrivateKeys[keyID] = privateKey
 
 	jwk := jose.JSONWebKey{
 		Key:       privateKey.Public(),
@@ -45,11 +46,11 @@ func (s *FakeStore) AddPrivateKey(ctx context.Context, keyID string, alg jose.Si
 
 	s.jwks.Keys = append(s.jwks.Keys, jwk)
 
-	return nil
+	return privateKey, nil
 }
 
 func (s *FakeStore) GetPrivateKey(ctx context.Context, keyID string) (crypto.Signer, error) {
-	if key, ok := s.privateKeys[keyID]; ok {
+	if key, ok := s.PrivateKeys[keyID]; ok {
 		return key, nil
 	}
 
