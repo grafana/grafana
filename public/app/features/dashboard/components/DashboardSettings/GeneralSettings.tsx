@@ -211,9 +211,9 @@ export function GeneralSettingsUnconnected({
           isOpen={true}
         >
           <Field
-            label={t('dashboard-settings.general-settings.panel-options-graph-tooltip.label', 'Graph tooltip')}
+            label={t('dashboard-settings.general.panel-options-graph-tooltip-label', 'Graph tooltip')}
             description={t(
-              'dashboard-settings.general-settings.panel-options-graph-tooltip.description',
+              'dashboard-settings.general.panel-options-graph-tooltip-description',
               'Controls tooltip and hover highlight behavior across different panels. Reload the dashboard for changes to take effect'
             )}
           >
