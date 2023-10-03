@@ -113,7 +113,7 @@ export class TimePickerSettings extends PureComponent<Props, State> {
             defaultValue={this.props.nowDelay}
           />
         </Field>
-        <Field label={t('dashboard-settings.general-settings.hide-time-picker', 'Hide time picker')}>
+        <Field label={t('dashboard-settings.time-picker.hide-time-picker', 'Hide time picker')}>
           <Switch
             id="hide-time-picker-toggle"
             value={!!this.props.timePickerHidden}
