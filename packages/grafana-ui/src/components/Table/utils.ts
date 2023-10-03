@@ -125,6 +125,12 @@ export function getColumns(
       }
     };
 
+    if (shouldRecalculateScaleRange(fieldTableOptions.cellOptions, field)) {
+      field.state!.range = getMinMaxAndDelta(field);
+      field.config.min = field.state!.range.min;
+      field.config.max = field.state!.range.max;
+    }
+
     const Cell = getCellComponent(fieldTableOptions.cellOptions?.type, field);
     columns.push({
       // @ts-expect-error
@@ -169,13 +175,22 @@ export function getColumns(
   return columns;
 }
 
-export function getCellComponent(displayMode: TableCellDisplayMode, field: Field): CellComponent {
-  if (displayMode === TableCellDisplayMode.ColorText || displayMode === TableCellDisplayMode.ColorBackground) {
-    if (field.state) {
-      field.state.range = getMinMaxAndDelta(field);
-    }
+export function shouldRecalculateScaleRange(cellOptions: TableCellOptions, field: Field): boolean {
+  let minMaxMode = undefined;
+  if ('minMaxMode' in cellOptions) {
+    minMaxMode = cellOptions.minMaxMode;
   }
 
+  return (
+    [TableCellDisplayMode.Gauge, TableCellDisplayMode.ColorText, TableCellDisplayMode.ColorBackground].includes(
+      cellOptions.type
+    ) &&
+    field.state !== undefined &&
+    minMaxMode !== CellMinMaxMode.Row
+  );
+}
+
+export function getCellComponent(displayMode: TableCellDisplayMode, field: Field): CellComponent {
   switch (displayMode) {
     case TableCellDisplayMode.Custom:
     case TableCellDisplayMode.ColorText:

@@ -9,14 +9,16 @@ import {
   DisplayValueAlignmentFactors,
   Field,
   DisplayValue,
+  getScaleCalculator,
 } from '@grafana/data';
 import { BarGaugeDisplayMode, BarGaugeValueMode, CellMinMaxMode, TableCellDisplayMode } from '@grafana/schema';
 
+import { useTheme2 } from '../../themes';
 import { BarGauge } from '../BarGauge/BarGauge';
 import { DataLinksContextMenu, DataLinksContextMenuApi } from '../DataLinks/DataLinksContextMenu';
 
 import { TableCellProps } from './types';
-import { getCellOptions } from './utils';
+import { getCellOptions, shouldRecalculateScaleRange } from './utils';
 
 const defaultScale: ThresholdsConfig = {
   mode: ThresholdsMode.Absolute,
@@ -36,6 +38,7 @@ export const BarGaugeCell = (props: TableCellProps) => {
   const { field, innerWidth, tableStyles, cell, cellProps, row } = props;
   const displayValue = field.display!(cell.value);
   const cellOptions = getCellOptions(field);
+  const theme = useTheme2();
 
   let config = getFieldConfigWithMinMax(
     field,
@@ -72,6 +75,12 @@ export const BarGaugeCell = (props: TableCellProps) => {
 
   const renderComponent = (menuProps: DataLinksContextMenuApi) => {
     const { openMenu, targetClassName } = menuProps;
+    let overrideColor: string | undefined = undefined;
+
+    if (shouldRecalculateScaleRange(cellOptions, field)) {
+      const scaleCalc = getScaleCalculator(field, theme);
+      overrideColor = scaleCalc(displayValue.numeric).color;
+    }
 
     return (
       <BarGauge
@@ -90,6 +99,7 @@ export const BarGaugeCell = (props: TableCellProps) => {
         lcdCellWidth={8}
         displayMode={barGaugeMode}
         valueDisplayMode={valueDisplayMode}
+        overrideColor={overrideColor}
       />
     );
   };

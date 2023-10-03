@@ -3,7 +3,7 @@ import React, { ReactElement } from 'react';
 import tinycolor from 'tinycolor2';
 
 import { DisplayValue, formattedValueToString, getScaleCalculator } from '@grafana/data';
-import { CellMinMaxMode, TableCellBackgroundDisplayMode, TableCellDisplayMode } from '@grafana/schema';
+import { TableCellBackgroundDisplayMode, TableCellDisplayMode } from '@grafana/schema';
 
 import { useStyles2, useTheme2 } from '../../themes';
 import { getCellLinks, getTextColorForAlphaBackground } from '../../utils';
@@ -13,7 +13,7 @@ import { DataLinksContextMenu } from '../DataLinks/DataLinksContextMenu';
 import { CellActions } from './CellActions';
 import { TableStyles } from './styles';
 import { TableCellProps, CustomCellRendererProps, TableCellOptions } from './types';
-import { getCellOptions } from './utils';
+import { getCellOptions, shouldRecalculateScaleRange } from './utils';
 
 export const DefaultCell = (props: TableCellProps) => {
   const { field, cell, tableStyles, row, cellProps, frame } = props;
@@ -23,7 +23,7 @@ export const DefaultCell = (props: TableCellProps) => {
   const cellOptions = getCellOptions(field);
   const displayValue = field.display!(cell.value);
 
-  if (isLocalRange(cellOptions)) {
+  if (shouldRecalculateScaleRange(cellOptions, field)) {
     const scaleCalc = getScaleCalculator(field, theme);
     displayValue.color = scaleCalc(displayValue.numeric).color;
   }
@@ -119,8 +119,4 @@ function getLinkStyle(tableStyles: TableStyles, cellOptions: TableCellOptions, t
   }
 
   return cx(tableStyles.cellLinkForColoredCell, targetClassName);
-}
-
-function isLocalRange(cellOptions: TableCellOptions) {
-  return cellOptions.type === TableCellDisplayMode.ColorText && cellOptions.minMaxMode !== CellMinMaxMode.Row;
 }

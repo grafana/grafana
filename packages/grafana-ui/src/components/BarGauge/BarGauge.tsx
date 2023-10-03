@@ -50,6 +50,7 @@ export interface Props extends Themeable2 {
   showUnfilled?: boolean;
   alignmentFactors?: DisplayValueAlignmentFactors;
   valueDisplayMode?: BarGaugeValueMode;
+  overrideColor?: string;
 }
 
 export class BarGauge extends PureComponent<Props> {
@@ -143,6 +144,7 @@ export class BarGauge extends PureComponent<Props> {
       text,
       valueDisplayMode,
       theme,
+      overrideColor,
     } = this.props;
     const { valueHeight, valueWidth, maxBarHeight, maxBarWidth, wrapperWidth, wrapperHeight } =
       calculateBarAndValueDimensions(this.props);
@@ -179,7 +181,7 @@ export class BarGauge extends PureComponent<Props> {
 
     for (let i = 0; i < cellCount; i++) {
       const currentValue = minValue + (valueRange / cellCount) * i;
-      const cellColor = getCellColor(currentValue, value, display);
+      const cellColor = getCellColor(currentValue, value, display, overrideColor);
       const cellStyles: CSSProperties = {
         borderRadius: theme.shape.radius.default,
       };
@@ -424,7 +426,8 @@ export function calculateBarAndValueDimensions(props: Props): BarAndValueDimensi
 export function getCellColor(
   positionValue: TimeSeriesValue,
   value: Props['value'],
-  display: Props['display']
+  display: Props['display'],
+  overrideColor?: string
 ): CellColors {
   if (positionValue === null) {
     return {
@@ -433,7 +436,13 @@ export function getCellColor(
     };
   }
 
-  const color = display ? display(positionValue).color : null;
+  let color: string | null | undefined = undefined;
+
+  if (overrideColor) {
+    color = overrideColor;
+  } else {
+    color = display ? display(positionValue).color : null;
+  }
 
   if (color) {
     // if we are past real value the cell is not "on"
@@ -469,14 +478,14 @@ export function getValuePercent(value: number, minValue: number, maxValue: numbe
  * Only exported to for unit test
  */
 export function getBasicAndGradientStyles(props: Props): BasicAndGradientStyles {
-  const { displayMode, field, value, alignmentFactors, orientation, theme, text } = props;
+  const { displayMode, field, value, alignmentFactors, orientation, theme, text, overrideColor } = props;
   const { valueWidth, valueHeight, maxBarHeight, maxBarWidth } = calculateBarAndValueDimensions(props);
 
   const minValue = field.min ?? GAUGE_DEFAULT_MINIMUM;
   const maxValue = field.max ?? GAUGE_DEFAULT_MAXIMUM;
   const valuePercent = getValuePercent(value.numeric, minValue, maxValue);
   const textColor = getTextValueColor(props);
-  const barColor = value.color ?? FALLBACK_COLOR;
+  const barColor = overrideColor ? overrideColor : value.color ?? FALLBACK_COLOR;
 
   const valueToBaseSizeOn = alignmentFactors ? alignmentFactors : value;
   const valueStyles = getValueStyles(valueToBaseSizeOn, textColor, valueWidth, valueHeight, orientation, text);
@@ -632,7 +641,12 @@ export function getTextValueColor(props: Props): string {
     return props.theme.colors.text.primary;
   }
 
-  const { value } = props;
+  const { value, overrideColor } = props;
+
+  if (overrideColor) {
+    return overrideColor;
+  }
+
   if (value.color) {
     return value.color;
   }
