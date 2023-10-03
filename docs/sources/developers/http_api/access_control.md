@@ -311,14 +311,80 @@ Content-Type: application/json; charset=UTF-8
 }
 ```
 
+#### Create role validation errors
+
+Permission validation only takes place when permission validation is enabled (`rbac.permission_validation_enabled = true`).
+
+> It has been enabled by default since Grafana 10.2
+
+##### Invalid action
+
+```http
+POST /api/access-control/roles HTTP/1.1
+Content-Type: application/json
+{
+	"Name": "Read Service Account with id 6",
+	"Permissions": [
+			{
+			"action": "serviceaccounts.permissions:reader",
+			"scope": "serviceaccounts:uid:6"
+		}
+	]
+}
+```
+
+```http
+HTTP/1.1 400 Bad Request
+Content-Type: application/json
+{
+	"extra": {
+		"validationError": "the provided action was not found in the list of valid actions: serviceaccounts.permissions:reader"
+	},
+	"message": "Permission contains an invalid action",
+	"messageId": "accesscontrol.permission-invalid-action",
+	"statusCode": 400,
+	"traceID": ""
+}
+```
+
+##### Invalid scope
+
+```http
+POST /api/access-control/roles HTTP/1.1
+Content-Type: application/json
+{
+	"Name": "Read Service Account with id 6",
+	"Permissions": [
+			{
+			"action": "serviceaccounts.permissions:read",
+			"scope": "serviceaccounts:serviceaccount6"
+		}
+	]
+}
+```
+
+```http
+HTTP/1.1 400 Bad Request
+Content-Type: application/json
+{
+	"extra": {
+		"validationError": "unknown scope: serviceaccounts:serviceaccount6 for action: serviceaccounts.permissions:read provided, expected prefixes are [* serviceaccounts:* serviceaccounts:id:*]"
+	},
+	"message": "Invalid scope",
+	"messageId": "accesscontrol.permission-invalid-scope",
+	"statusCode": 400,
+	"traceID": ""
+}
+```
+
 #### Status codes
 
-| Code | Description                                                                        |
-| ---- | ---------------------------------------------------------------------------------- |
-| 200  | Role is updated.                                                                   |
-| 400  | Bad request (invalid json, missing content-type, missing or invalid fields, etc.). |
-| 403  | Access denied                                                                      |
-| 500  | Unexpected error. Refer to body and/or server logs for more details.               |
+| Code | Description                                                                           |
+| ---- | ------------------------------------------------------------------------------------- |
+| 200  | Role is updated.                                                                      |
+| 400  | Bad request (invalid json, missing content-type, missing or invalid fields, etc.).    |
+| 403  | Access denied (one of the specified permissions is not assigned to the the requester) |
+| 500  | Unexpected error. Refer to body and/or server logs for more details.                  |
 
 ### Update a role
 
@@ -418,15 +484,23 @@ Content-Type: application/json; charset=UTF-8
 }
 ```
 
+#### Update role validation errors
+
+Permission validation only takes place when permission validation is enabled (`rbac.permission_validation_enabled = true`).
+
+> It has been enabled by default since Grafana 10.2
+
+[Same as the create role validation errors.]({{< relref "#create-role-validation-errors" >}})
+
 #### Status codes
 
-| Code | Description                                                                        |
-| ---- | ---------------------------------------------------------------------------------- |
-| 200  | Role is updated.                                                                   |
-| 400  | Bad request (invalid json, missing content-type, missing or invalid fields, etc.). |
-| 403  | Access denied                                                                      |
-| 404  | Role was not found to update.                                                      |
-| 500  | Unexpected error. Refer to body and/or server logs for more details.               |
+| Code | Description                                                                           |
+| ---- | ------------------------------------------------------------------------------------- |
+| 200  | Role is updated.                                                                      |
+| 400  | Bad request (invalid json, missing content-type, missing or invalid fields, etc.).    |
+| 403  | Access denied (one of the specified permissions is not assigned to the the requester) |
+| 404  | Role was not found to update.                                                         |
+| 500  | Unexpected error. Refer to body and/or server logs for more details.                  |
 
 ### Delete a custom role
 
