@@ -11,7 +11,7 @@ import { AlertWarning } from './AlertWarning';
 import { CloneRuleEditor } from './CloneRuleEditor';
 import { ExistingRuleEditor } from './ExistingRuleEditor';
 import { AlertingPageWrapper } from './components/AlertingPageWrapper';
-import { AlertRuleForm } from './components/rule-editor/AlertRuleForm';
+import { AlertRuleForm } from './components/rule-editor/alert-rule-form/AlertRuleForm';
 import { useURLSearchParams } from './hooks/useURLSearchParams';
 import { fetchRulesSourceBuildInfoAction } from './state/actions';
 import { useRulesAccess } from './utils/accessControlHooks';

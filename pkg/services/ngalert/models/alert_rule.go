@@ -143,6 +143,43 @@ type AlertRuleGroupWithFolderTitle struct {
 	FolderTitle string
 }
 
+func NewAlertRuleGroupWithFolderTitle(groupKey AlertRuleGroupKey, rules []AlertRule, folderTitle string) AlertRuleGroupWithFolderTitle {
+	SortAlertRulesByGroupIndex(rules)
+	var interval int64
+	if len(rules) > 0 {
+		interval = rules[0].IntervalSeconds
+	}
+	var result = AlertRuleGroupWithFolderTitle{
+		AlertRuleGroup: &AlertRuleGroup{
+			Title:     groupKey.RuleGroup,
+			FolderUID: groupKey.NamespaceUID,
+			Interval:  interval,
+			Rules:     rules,
+		},
+		FolderTitle: folderTitle,
+		OrgID:       groupKey.OrgID,
+	}
+	return result
+}
+
+func NewAlertRuleGroupWithFolderTitleFromRulesGroup(groupKey AlertRuleGroupKey, rules RulesGroup, folderTitle string) AlertRuleGroupWithFolderTitle {
+	derefRules := make([]AlertRule, 0, len(rules))
+	for _, rule := range rules {
+		derefRules = append(derefRules, *rule)
+	}
+	return NewAlertRuleGroupWithFolderTitle(groupKey, derefRules, folderTitle)
+}
+
+// SortAlertRuleGroupWithFolderTitle sorts AlertRuleGroupWithFolderTitle by folder UID and group name
+func SortAlertRuleGroupWithFolderTitle(g []AlertRuleGroupWithFolderTitle) {
+	sort.SliceStable(g, func(i, j int) bool {
+		if g[i].AlertRuleGroup.FolderUID == g[j].AlertRuleGroup.FolderUID {
+			return g[i].AlertRuleGroup.Title < g[j].AlertRuleGroup.Title
+		}
+		return g[i].AlertRuleGroup.FolderUID < g[j].AlertRuleGroup.FolderUID
+	})
+}
+
 // AlertRule is the model for alert rules in unified alerting.
 type AlertRule struct {
 	ID              int64 `xorm:"pk autoincr 'id'"`
@@ -553,6 +590,15 @@ func (g RulesGroup) SortByGroupIndex() {
 			return g[i].ID < g[j].ID
 		}
 		return g[i].RuleGroupIndex < g[j].RuleGroupIndex
+	})
+}
+
+func SortAlertRulesByGroupIndex(rules []AlertRule) {
+	sort.Slice(rules, func(i, j int) bool {
+		if rules[i].RuleGroupIndex == rules[j].RuleGroupIndex {
+			return rules[i].ID < rules[j].ID
+		}
+		return rules[i].RuleGroupIndex < rules[j].RuleGroupIndex
 	})
 }
 

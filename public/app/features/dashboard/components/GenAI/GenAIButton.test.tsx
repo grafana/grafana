@@ -2,17 +2,29 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { Router } from 'react-router-dom';
-import { Subscription } from 'rxjs';
+import { Observable } from 'rxjs';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { locationService } from '@grafana/runtime';
 
 import { GenAIButton, GenAIButtonProps } from './GenAIButton';
-import { isLLMPluginEnabled, generateTextWithLLM, Role } from './utils';
+import { useOpenAIStream } from './hooks';
+import { Role, isLLMPluginEnabled } from './utils';
 
 jest.mock('./utils', () => ({
-  generateTextWithLLM: jest.fn(),
   isLLMPluginEnabled: jest.fn(),
+}));
+
+const mockedUseOpenAiStreamState = {
+  setMessages: jest.fn(),
+  reply: 'I am a robot',
+  isGenerationResponse: false,
+  error: null,
+  value: null,
+};
+
+jest.mock('./hooks', () => ({
+  useOpenAIStream: jest.fn(() => mockedUseOpenAiStreamState),
 }));
 
 describe('GenAIButton', () => {
@@ -31,7 +43,7 @@ describe('GenAIButton', () => {
       jest.mocked(isLLMPluginEnabled).mockResolvedValue(false);
     });
 
-    it('should renders text ', async () => {
+    it('should render text ', async () => {
       const { getByText } = setup();
       waitFor(() => expect(getByText('Auto-generate')).toBeInTheDocument());
     });
@@ -58,13 +70,75 @@ describe('GenAIButton', () => {
     });
   });
 
-  describe('when LLM plugin is properly configured', () => {
+  describe('when LLM plugin is properly configured, so it is enabled', () => {
+    const setMessagesMock = jest.fn();
     beforeEach(() => {
-      jest.resetAllMocks();
       jest.mocked(isLLMPluginEnabled).mockResolvedValue(true);
+      jest.mocked(useOpenAIStream).mockReturnValue({
+        error: undefined,
+        isGenerating: false,
+        reply: 'Some completed genereated text',
+        setMessages: setMessagesMock,
+        value: {
+          enabled: true,
+          stream: new Observable().subscribe(),
+        },
+      });
     });
 
-    it('should renders text ', async () => {
+    it('should render text ', async () => {
+      setup();
+
+      waitFor(async () => expect(await screen.findByText('Auto-generate')).toBeInTheDocument());
+    });
+
+    it('should enable the button', async () => {
+      setup();
+      waitFor(async () => expect(await screen.findByRole('button')).toBeEnabled());
+    });
+
+    it('should send the configured messages', async () => {
+      setup({ onGenerate, messages: [{ content: 'Generate X', role: 'system' as Role }] });
+      const generateButton = await screen.findByRole('button');
+
+      // Click the button
+      await fireEvent.click(generateButton);
+      await waitFor(() => expect(generateButton).toBeEnabled());
+
+      // Wait for the loading state to be resolved
+      expect(setMessagesMock).toHaveBeenCalledTimes(1);
+      expect(setMessagesMock).toHaveBeenCalledWith([{ content: 'Generate X', role: 'system' as Role }]);
+    });
+
+    it('should call the onClick callback', async () => {
+      const onGenerate = jest.fn();
+      const onClick = jest.fn();
+      const messages = [{ content: 'Generate X', role: 'system' as Role }];
+      setup({ onGenerate, messages, temperature: 3, onClick });
+
+      const generateButton = await screen.findByRole('button');
+      await fireEvent.click(generateButton);
+
+      await waitFor(() => expect(onClick).toHaveBeenCalledTimes(1));
+    });
+  });
+
+  describe('when it is generating data', () => {
+    beforeEach(() => {
+      jest.mocked(isLLMPluginEnabled).mockResolvedValue(true);
+      jest.mocked(useOpenAIStream).mockReturnValue({
+        error: undefined,
+        isGenerating: true,
+        reply: 'Some incompleted generated text',
+        setMessages: jest.fn(),
+        value: {
+          enabled: true,
+          stream: new Observable().subscribe(),
+        },
+      });
+    });
+
+    it('should render loading text ', async () => {
       setup();
 
       waitFor(async () => expect(await screen.findByText('Auto-generate')).toBeInTheDocument());
@@ -76,52 +150,77 @@ describe('GenAIButton', () => {
     });
 
     it('disables the button while generating', async () => {
-      const isDoneGeneratingMessage = false;
-      jest.mocked(generateTextWithLLM).mockImplementationOnce((messages = [], replyHandler) => {
-        replyHandler('Generated text', isDoneGeneratingMessage);
-        return new Promise(() => new Subscription());
-      });
-
       const { getByText, getByRole } = setup();
-      const generateButton = getByText('Auto-generate');
-
-      // Click the button
-      await fireEvent.click(generateButton);
+      const generateButton = getByText('Generating');
 
       // The loading text should be visible and the button disabled
-      expect(await screen.findByText('Generating')).toBeVisible();
+      expect(generateButton).toBeVisible();
       await waitFor(() => expect(getByRole('button')).toBeDisabled());
     });
 
-    it('handles the response and re-enables the button', async () => {
-      const isDoneGeneratingMessage = true;
-      jest.mocked(generateTextWithLLM).mockImplementationOnce((messages = [], replyHandler) => {
-        replyHandler('Generated text', isDoneGeneratingMessage);
-        return new Promise(() => new Subscription());
-      });
+    it('should call onGenerate when the text is generating', async () => {
       const onGenerate = jest.fn();
       setup({ onGenerate, messages: [] });
-      const generateButton = await screen.findByRole('button');
 
-      // Click the button
-      await fireEvent.click(generateButton);
-      await waitFor(() => expect(generateButton).toBeEnabled());
       await waitFor(() => expect(onGenerate).toHaveBeenCalledTimes(1));
 
-      // Wait for the loading state to be resolved
-      expect(onGenerate).toHaveBeenCalledTimes(1);
+      expect(onGenerate).toHaveBeenCalledWith('Some incompleted generated text');
+    });
+  });
+
+  describe('when there is an error generating data', () => {
+    const setMessagesMock = jest.fn();
+    beforeEach(() => {
+      jest.mocked(isLLMPluginEnabled).mockResolvedValue(true);
+      jest.mocked(useOpenAIStream).mockReturnValue({
+        error: new Error('Something went wrong'),
+        isGenerating: false,
+        reply: '',
+        setMessages: setMessagesMock,
+        value: {
+          enabled: true,
+          stream: new Observable().subscribe(),
+        },
+      });
     });
 
-    it('should call the LLM service with the messages configured and the right temperature', async () => {
+    it('should render error state text', async () => {
+      setup();
+
+      waitFor(async () => expect(await screen.findByText('Retry')).toBeInTheDocument());
+    });
+
+    it('should enable the button', async () => {
+      setup();
+      waitFor(async () => expect(await screen.findByRole('button')).toBeEnabled());
+    });
+
+    it('should retry when clicking', async () => {
       const onGenerate = jest.fn();
       const messages = [{ content: 'Generate X', role: 'system' as Role }];
-      setup({ onGenerate, messages, temperature: 3 });
+      const { getByText } = setup({ onGenerate, messages, temperature: 3 });
+      const generateButton = getByText('Retry');
 
-      const generateButton = await screen.findByRole('button');
       await fireEvent.click(generateButton);
 
-      await waitFor(() => expect(generateTextWithLLM).toHaveBeenCalledTimes(1));
-      await waitFor(() => expect(generateTextWithLLM).toHaveBeenCalledWith(messages, expect.any(Function), 3));
+      expect(setMessagesMock).toHaveBeenCalledTimes(1);
+      expect(setMessagesMock).toHaveBeenCalledWith(messages);
+    });
+
+    it('should display the error message as tooltip', async () => {
+      const { getByRole, getByTestId } = setup();
+
+      // Wait for the check to be completed
+      const button = getByRole('button');
+      await userEvent.hover(button);
+
+      const tooltip = await waitFor(() => getByTestId(selectors.components.Tooltip.container));
+      expect(tooltip).toBeVisible();
+
+      // The tooltip keeps interactive to be able to click the link
+      await userEvent.hover(tooltip);
+      expect(tooltip).toBeVisible();
+      expect(tooltip).toHaveTextContent('Something went wrong');
     });
 
     it('should call the onClick callback', async () => {

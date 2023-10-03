@@ -126,6 +126,24 @@
       "placeholder": ""
     }
   },
+  "correlations": {
+    "add-new": "",
+    "alert": {
+      "error-message": "",
+      "title": ""
+    },
+    "list": {
+      "delete": "",
+      "label": "",
+      "loading": "",
+      "read-only": "",
+      "source": "",
+      "target": ""
+    },
+    "page-content": "",
+    "page-heading": "",
+    "sub-title": ""
+  },
   "dashboard": {
     "add-menu": {
       "import": "Aus Bibliothek importieren",
@@ -213,6 +231,38 @@
       "settings": "Dashboard-Einstellungen",
       "share": "Dashboard oder Panel teilen",
       "unmark-favorite": "Markierung als Favorit entfernen"
+    },
+    "validation": {
+      "invalid-dashboard-id": "",
+      "invalid-json": "",
+      "tags-expected-array": "",
+      "tags-expected-strings": ""
+    }
+  },
+  "dashboard-import": {
+    "file-dropzone": {
+      "primary-text": "",
+      "secondary-text": ""
+    },
+    "form-actions": {
+      "cancel": "",
+      "load": ""
+    },
+    "gcom-field": {
+      "label": "",
+      "load-button": "",
+      "placeholder": "",
+      "validation-required": ""
+    },
+    "json-field": {
+      "label": "",
+      "validation-required": ""
+    }
+  },
+  "dashboard-settings": {
+    "json-editor": {
+      "save-button": "",
+      "subtitle": ""
     }
   },
   "data-source-picker": {
@@ -225,6 +275,11 @@
   },
   "explore": {
     "add-to-dashboard": "",
+    "table": {
+      "no-data": "",
+      "title": "",
+      "title-with-name": ""
+    },
     "toolbar": {
       "aria-label": "",
       "copy-shortened-link": "",
@@ -670,6 +725,22 @@
       "title": ""
     }
   },
+  "profile": {
+    "change-password": {
+      "cancel-button": "",
+      "cannot-change-password-message": "",
+      "change-password-button": "",
+      "confirm-password-label": "",
+      "confirm-password-required": "",
+      "ldap-auth-proxy-message": "",
+      "new-password-label": "",
+      "new-password-required": "",
+      "new-password-same-as-old": "",
+      "old-password-label": "",
+      "old-password-required": "",
+      "passwords-must-match": ""
+    }
+  },
   "refresh-picker": {
     "aria-label": {
       "choose-interval": "Automatische Aktualisierung ausgeschaltet. Aktualisierungszeitintervall auswählen",
@@ -749,6 +820,7 @@
       "time-range-description": "Wandelt den aktuellen relativen Zeitbereich in einen absoluten Zeitbereich um"
     },
     "export": {
+      "back-button": "",
       "cancel-button": "Abbrechen",
       "info-text": "Dieses Dashboard exportieren.",
       "save-button": "In Datei speichern …",
@@ -849,6 +921,12 @@
       "default-label": "Standard"
     },
     "title": "Einstellungen"
+  },
+  "snapshot": {
+    "external-badge": "",
+    "name-column-header": "",
+    "url-column-header": "",
+    "view-button": ""
   },
   "tag-filter": {
     "loading": "Wird geladen ...",

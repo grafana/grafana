@@ -16,6 +16,9 @@
     "systemjs",
     "ts-loader", // we should remove ts-loader and use babel-loader instead
     "ora", // we should bump this once we move to esm modules
+    "@locker/near-membrane-dom", // critical library. we need to bump this only intentionally
+    "@locker/near-membrane-shared", // critical library. we need to bump this only intentionally
+    "@locker/near-membrane-shared-dom", // critical library. we need to bump this only intentionally
   ],
   "includePaths": ["package.json", "packages/**"],
   "ignorePaths": ["emails/**", "plugins-bundled/**", "**/mocks/**"],

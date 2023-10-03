@@ -104,27 +104,6 @@ func (hs *HTTPServer) GetPlaylistItems(c *contextmodel.ReqContext) response.Resp
 	return response.JSON(http.StatusOK, dto.Items)
 }
 
-// swagger:route GET /playlists/{uid}/dashboards playlists getPlaylistDashboards
-//
-// Get playlist dashboards.
-//
-// Responses:
-// 200: getPlaylistDashboardsResponse
-// 401: unauthorisedError
-// 403: forbiddenError
-// 404: notFoundError
-// 500: internalServerError
-func (hs *HTTPServer) GetPlaylistDashboards(c *contextmodel.ReqContext) response.Response {
-	playlistUID := web.Params(c.Req)[":uid"]
-
-	playlists, err := hs.LoadPlaylistDashboards(c.Req.Context(), c.OrgID, c.SignedInUser, playlistUID)
-	if err != nil {
-		return response.Error(500, "Could not load dashboards", err)
-	}
-
-	return response.JSON(http.StatusOK, playlists)
-}
-
 // swagger:route DELETE /playlists/{uid} playlists deletePlaylist
 //
 // Delete playlist.
