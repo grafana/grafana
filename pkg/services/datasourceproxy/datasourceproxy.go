@@ -52,7 +52,7 @@ type DataSourceProxyService struct {
 	DataSourcesService     datasources.DataSourceService
 	tracer                 tracing.Tracer
 	secretsService         secrets.Service
-	faetures               featuremgmt.FeatureToggles
+	features               featuremgmt.FeatureToggles
 }
 
 func (p *DataSourceProxyService) ProxyDataSourceRequest(c *contextmodel.ReqContext) {
