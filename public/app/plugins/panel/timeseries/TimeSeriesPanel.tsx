@@ -3,7 +3,15 @@ import React, { useMemo } from 'react';
 import { PanelProps, DataFrameType } from '@grafana/data';
 import { PanelDataErrorView } from '@grafana/runtime';
 import { TooltipDisplayMode } from '@grafana/schema';
-import { KeyboardPlugin, TimeSeries, TooltipPlugin, usePanelContext, ZoomPlugin } from '@grafana/ui';
+import {
+  KeyboardPlugin,
+  TimeSeries,
+  TimeSeriesTooltip,
+  TooltipPlugin,
+  TooltipPlugin2,
+  usePanelContext,
+  ZoomPlugin,
+} from '@grafana/ui';
 import { config } from 'app/core/config';
 
 import { Options } from './panelcfg.gen';
@@ -88,15 +96,30 @@ export const TimeSeriesPanel = ({
           <>
             <KeyboardPlugin config={config} />
             <ZoomPlugin config={config} onZoom={onChangeTimeRange} withZoomY={true} />
+            {/*{options.tooltip.mode === TooltipDisplayMode.None || (*/}
+            {/*  <TooltipPlugin*/}
+            {/*    frames={frames}*/}
+            {/*    data={alignedDataFrame}*/}
+            {/*    config={config}*/}
+            {/*    mode={options.tooltip.mode}*/}
+            {/*    sortOrder={options.tooltip.sort}*/}
+            {/*    sync={sync}*/}
+            {/*    timeZone={timeZone}*/}
+            {/*  />*/}
+            {/*)}*/}
             {options.tooltip.mode === TooltipDisplayMode.None || (
-              <TooltipPlugin
-                frames={frames}
-                data={alignedDataFrame}
+              <TooltipPlugin2
                 config={config}
-                mode={options.tooltip.mode}
-                sortOrder={options.tooltip.sort}
-                sync={sync}
-                timeZone={timeZone}
+                render={(u, dataIdxs, seriesIdx, isPinned = false) => {
+                  return (
+                    <TimeSeriesTooltip
+                      seriesFrame={alignedDataFrame}
+                      valueIdxs={dataIdxs}
+                      seriesIdx={seriesIdx}
+                      isPinned={isPinned}
+                    />
+                  );
+                }}
               />
             )}
             {/* Renders annotation markers*/}
@@ -104,46 +127,46 @@ export const TimeSeriesPanel = ({
               <AnnotationsPlugin annotations={data.annotations} config={config} timeZone={timeZone} />
             )}
             {/* Enables annotations creation*/}
-            {enableAnnotationCreation ? (
-              <AnnotationEditorPlugin data={alignedDataFrame} timeZone={timeZone} config={config}>
-                {({ startAnnotating }) => {
-                  return (
-                    <ContextMenuPlugin
-                      data={alignedDataFrame}
-                      config={config}
-                      timeZone={timeZone}
-                      replaceVariables={replaceVariables}
-                      defaultItems={[
-                        {
-                          items: [
-                            {
-                              label: 'Add annotation',
-                              ariaLabel: 'Add annotation',
-                              icon: 'comment-alt',
-                              onClick: (e, p) => {
-                                if (!p) {
-                                  return;
-                                }
-                                startAnnotating({ coords: p.coords });
-                              },
-                            },
-                          ],
-                        },
-                      ]}
-                    />
-                  );
-                }}
-              </AnnotationEditorPlugin>
-            ) : (
-              <ContextMenuPlugin
-                data={alignedDataFrame}
-                frames={frames}
-                config={config}
-                timeZone={timeZone}
-                replaceVariables={replaceVariables}
-                defaultItems={[]}
-              />
-            )}
+            {/*{enableAnnotationCreation ? (*/}
+            {/*  <AnnotationEditorPlugin data={alignedDataFrame} timeZone={timeZone} config={config}>*/}
+            {/*    {({ startAnnotating }) => {*/}
+            {/*      return (*/}
+            {/*        <ContextMenuPlugin*/}
+            {/*          data={alignedDataFrame}*/}
+            {/*          config={config}*/}
+            {/*          timeZone={timeZone}*/}
+            {/*          replaceVariables={replaceVariables}*/}
+            {/*          defaultItems={[*/}
+            {/*            {*/}
+            {/*              items: [*/}
+            {/*                {*/}
+            {/*                  label: 'Add annotation',*/}
+            {/*                  ariaLabel: 'Add annotation',*/}
+            {/*                  icon: 'comment-alt',*/}
+            {/*                  onClick: (e, p) => {*/}
+            {/*                    if (!p) {*/}
+            {/*                      return;*/}
+            {/*                    }*/}
+            {/*                    startAnnotating({ coords: p.coords });*/}
+            {/*                  },*/}
+            {/*                },*/}
+            {/*              ],*/}
+            {/*            },*/}
+            {/*          ]}*/}
+            {/*        />*/}
+            {/*      );*/}
+            {/*    }}*/}
+            {/*  </AnnotationEditorPlugin>*/}
+            {/*) : (*/}
+            {/*  <ContextMenuPlugin*/}
+            {/*    data={alignedDataFrame}*/}
+            {/*    frames={frames}*/}
+            {/*    config={config}*/}
+            {/*    timeZone={timeZone}*/}
+            {/*    replaceVariables={replaceVariables}*/}
+            {/*    defaultItems={[]}*/}
+            {/*  />*/}
+            {/*)}*/}
             {data.annotations && (
               <ExemplarsPlugin
                 visibleSeries={getVisibleLabels(config, frames)}
