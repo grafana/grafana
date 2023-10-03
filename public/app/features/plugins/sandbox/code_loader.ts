@@ -1,4 +1,4 @@
-import { PluginMeta } from '@grafana/data';
+import { PluginMeta, patchArrayVectorProrotypeMethods } from '@grafana/data';
 
 import { transformPluginSourceForCDN } from '../cdn/utils';
 import { resolveWithCache } from '../loader/cache';
@@ -90,4 +90,12 @@ function patchPluginSourceMap(meta: PluginMeta, pluginCode: string): string {
     return pluginCode.replace('//# sourceMappingURL=module.js.map', replaceWith);
   }
   return pluginCode;
+}
+
+export function patchSandboxEnvironmentPrototype(sandboxEnvironment: SandboxEnvironment) {
+  // same as https://github.com/grafana/grafana/blob/main/packages/grafana-data/src/types/vector.ts#L16
+  // Array is a "reflective" type in Near-membrane and doesn't get an identify continuity
+  sandboxEnvironment.evaluate(
+    `${patchArrayVectorProrotypeMethods.toString()};${patchArrayVectorProrotypeMethods.name}()`
+  );
 }

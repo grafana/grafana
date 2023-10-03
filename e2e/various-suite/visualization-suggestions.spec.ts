@@ -11,7 +11,6 @@ describe('Visualization suggestions', () => {
     // Try visualization suggestions
     e2e.components.PanelEditor.toggleVizPicker().click();
     cy.contains('Suggestions').click();
-    cy.wait(3000);
 
     // Verify we see suggestions
     e2e.components.VisualizationPreview.card('Line chart').should('be.visible');

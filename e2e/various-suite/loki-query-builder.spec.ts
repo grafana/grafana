@@ -69,12 +69,10 @@ describe('Loki query builder', () => {
     e2e.components.QueryBuilder.labelSelect().should('be.visible').click();
     // wait until labels are loaded and set on the component before starting to type
     cy.wait('@labelsRequest');
-    cy.wait(100);
     e2e.components.QueryBuilder.labelSelect().type('instance{enter}');
     e2e.components.QueryBuilder.matchOperatorSelect().should('be.visible').click().type('=~{enter}');
     e2e.components.QueryBuilder.valueSelect().should('be.visible').click();
     cy.wait('@valuesRequest');
-    cy.wait(100);
     e2e.components.QueryBuilder.valueSelect().type('instance1{enter}').type('instance2{enter}');
     cy.contains(MISSING_LABEL_FILTER_ERROR_MESSAGE).should('not.exist');
     cy.contains(finalQuery).should('be.visible');

@@ -9,6 +9,10 @@ import (
 
 func OrgIDFrom(ctx context.Context) (int64, bool) {
 	ns := request.NamespaceValue(ctx)
+	return ParseOrgID(ns)
+}
+
+func ParseOrgID(ns string) (int64, bool) {
 	if len(ns) < 5 || ns[:4] != "org-" {
 		return 0, false
 	}
