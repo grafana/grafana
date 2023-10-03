@@ -9,7 +9,7 @@ const (
 	metricsSubSystem = "idforwarding"
 )
 
-func newMetircus(reg prometheus.Registerer) *metrics {
+func newMetrics(reg prometheus.Registerer) *metrics {
 	m := &metrics{
 		tokenSigningCounter: prometheus.NewCounter(prometheus.CounterOpts{
 			Namespace: metricsNamespace,

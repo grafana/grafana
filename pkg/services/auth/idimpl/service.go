@@ -29,7 +29,7 @@ func ProvideService(
 	cfg *setting.Cfg, signer auth.IDSigner, cache remotecache.CacheStorage,
 	features featuremgmt.FeatureToggles, authnService authn.Service, reg prometheus.Registerer,
 ) *Service {
-	s := &Service{cfg, log.New("id-service"), signer, cache, newMetircus(reg)}
+	s := &Service{cfg, log.New("id-service"), signer, cache, newMetrics(reg)}
 
 	if features.IsEnabled(featuremgmt.FlagIdForwarding) {
 		authnService.RegisterPostAuthHook(s.hook, 140)
