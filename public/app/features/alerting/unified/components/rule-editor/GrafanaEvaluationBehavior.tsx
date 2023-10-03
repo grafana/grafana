@@ -59,7 +59,7 @@ const forValidationOptions = (evaluateEvery: string): RegisterOptions => ({
 });
 
 const useIsNewGroup = (folder: string, group: string) => {
-  const { groupOptions } = useGetGroupOptionsFromFolder(folder);
+  const { groupOptions } = useGetGroupOptionsFromFolder(folder, false);
 
   const groupIsInGroupOptions = useCallback(
     (group_: string) => groupOptions.some((groupInList: SelectableValue<string>) => groupInList.label === group_),
@@ -71,9 +71,11 @@ const useIsNewGroup = (folder: string, group: string) => {
 function FolderGroupAndEvaluationInterval({
   evaluateEvery,
   setEvaluateEvery,
+  includeProvisioned,
 }: {
   evaluateEvery: string;
   setEvaluateEvery: (value: string) => void;
+  includeProvisioned: boolean;
 }) {
   const styles = useStyles2(getStyles);
   const { watch, setValue, getValues } = useFormContext<RuleFormValues>();
@@ -116,7 +118,7 @@ function FolderGroupAndEvaluationInterval({
 
   return (
     <div>
-      <FolderAndGroup groupfoldersForGrafana={groupfoldersForGrafana?.result} />
+      <FolderAndGroup groupfoldersForGrafana={groupfoldersForGrafana?.result} includeProvisioned={includeProvisioned} />
       {folderName && isEditingGroup && (
         <EditCloudGroupModal
           namespace={existingNamespace ?? emptyNamespace}
@@ -206,10 +208,12 @@ export function GrafanaEvaluationBehavior({
   evaluateEvery,
   setEvaluateEvery,
   existing,
+  includeProvisioned,
 }: {
   evaluateEvery: string;
   setEvaluateEvery: (value: string) => void;
   existing: boolean;
+  includeProvisioned: boolean;
 }) {
   const styles = useStyles2(getStyles);
   const [showErrorHandling, setShowErrorHandling] = useState(false);
@@ -222,7 +226,11 @@ export function GrafanaEvaluationBehavior({
     // TODO remove "and alert condition" for recording rules
     <RuleEditorSection stepNo={3} title="Set evaluation behavior" description={getDescription()}>
       <Stack direction="column" justify-content="flex-start" align-items="flex-start">
-        <FolderGroupAndEvaluationInterval setEvaluateEvery={setEvaluateEvery} evaluateEvery={evaluateEvery} />
+        <FolderGroupAndEvaluationInterval
+          setEvaluateEvery={setEvaluateEvery}
+          evaluateEvery={evaluateEvery}
+          includeProvisioned={includeProvisioned}
+        />
         <ForInput evaluateEvery={evaluateEvery} />
 
         {existing && (

@@ -106,6 +106,7 @@ export function ModifyExportRuleForm({ ruleForm, alertUid }: ModifyExportRuleFor
                   evaluateEvery={evaluateEvery}
                   setEvaluateEvery={setEvaluateEvery}
                   existing={Boolean(existing)}
+                  includeProvisioned={true}
                 />
 
                 {/* Step 4 & 5 */}
