@@ -609,7 +609,7 @@ func TestOAuth2ServiceImpl_HandleTokenRequest(t *testing.T) {
 
 			env.S.HandleTokenRequest(resp, req)
 
-			require.Equal(t, tt.wantCode, resp.Code)
+			require.Equal(t, tt.wantCode, resp.Code, resp.Body.String())
 			if tt.wantCode != http.StatusOK {
 				return
 			}

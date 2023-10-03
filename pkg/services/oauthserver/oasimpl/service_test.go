@@ -2,6 +2,7 @@ package oasimpl
 
 import (
 	"context"
+	"crypto"
 	"crypto/rand"
 	"crypto/rsa"
 	"encoding/base64"
@@ -90,9 +91,21 @@ func setupTestEnv(t *testing.T) *TestEnv {
 		teamService:   env.TeamService,
 		publicKey:     &pk.PublicKey,
 	}
-	env.S.oauthProvider = newProvider(config, env.S, &signingkeystest.FakeSigningKeysService{})
+
+	env.S.oauthProvider = newProvider(config, env.S, &signingkeystest.FakeSigningKeysService{
+		ExpectedKeys: map[string]crypto.Signer{
+			"default": pk,
+		},
+		ExpectedError: nil,
+	})
 
 	return env
+}
+
+func generateRSAKey(t *testing.T) *rsa.PrivateKey {
+	key, err := rsa.GenerateKey(rand.Reader, 2048)
+	require.NoError(t, err)
+	return key
 }
 
 func TestOAuth2ServiceImpl_SaveExternalService(t *testing.T) {
