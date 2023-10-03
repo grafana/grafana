@@ -162,10 +162,8 @@ export function GeneralSettingsUnconnected({
               onChange={(e: ChangeEvent<HTMLTextAreaElement>) => onDescriptionChange(e.target.value)}
             />
           </Field>
-          <Field label={t('dashboard-settings.general-settings.tags.label', 'Tags')}>
-            <Trans i18nKey="dashboard-settings.general-settings.tags-input">
-              <TagsInput id="tags-input" tags={dashboard.tags} onChange={onTagsChange} width={40} />
-            </Trans>
+          <Field label={t('dashboard-settings.general.tags-label', 'Tags')}>
+            <TagsInput id="tags-input" tags={dashboard.tags} onChange={onTagsChange} width={40} />
           </Field>
 
           <Field label={t('dashboard-settings.general.folder-label', 'Folder')}>
