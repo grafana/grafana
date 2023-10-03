@@ -1,7 +1,7 @@
 import { EditorMode } from '@grafana/experimental';
 
 import { QueryFormat, SQLQuery } from './types';
-import { createFunctionField, setGroupByField } from './utils/sql.utils';
+import { createFunctionField, setGroupByField, setPropertyField } from './utils/sql.utils';
 
 export function applyQueryDefaults(q?: SQLQuery): SQLQuery {
   let editorMode = q?.editorMode || EditorMode.Builder;
@@ -20,6 +20,8 @@ export function applyQueryDefaults(q?: SQLQuery): SQLQuery {
     sql: q?.sql ?? {
       columns: [createFunctionField()],
       groupBy: [setGroupByField()],
+      orderBy: setPropertyField('time'),
+      orderByDirection: 'ASC',
     },
   };
 
