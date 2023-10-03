@@ -41,6 +41,30 @@ function move(node: SyntaxNode, direction: Direction): SyntaxNode | null {
   return node[direction];
 }
 
+/**
+ * Iteratively calls walk with given path until it returns null, then we return the last non-null node.
+ * @param node
+ * @param path
+ */
+function traverse(node: SyntaxNode, path: Path): SyntaxNode | null {
+  let current: SyntaxNode | null = node;
+  let next = walk(current, path);
+  while (next) {
+    let nextTmp = walk(next, path);
+    if (nextTmp) {
+      next = nextTmp;
+    } else {
+      return next;
+    }
+  }
+  return null;
+}
+
+/**
+ * Walks a single step from the provided node, following the path.
+ * @param node
+ * @param path
+ */
 function walk(node: SyntaxNode, path: Path): SyntaxNode | null {
   let current: SyntaxNode | null = node;
   for (const [direction, expectedNode] of path) {
@@ -294,7 +318,7 @@ function getLabels(selectorNode: SyntaxNode, text: string): Label[] {
   // Parent node needs to be returned first because otherwise both of the other walks will return a non-null node and this function will return the labels on the left side of the current node, the other two walks should be mutually exclusive when the parent is null
   let listNode: SyntaxNode | null =
     // Node in-between labels
-    walk(selectorNode, [['parent', Matchers]]) ??
+    traverse(selectorNode, [['parent', Matchers]]) ??
     // Node after all other labels
     walk(selectorNode, [['firstChild', Matchers]]) ??
     // Node before all other labels
@@ -353,7 +377,6 @@ function resolvePipeError(node: SyntaxNode, text: string, pos: number): Situatio
 }
 
 function resolveLabelsForGrouping(node: SyntaxNode, text: string, pos: number): Situation | null {
-  console.log('resolveLabelsForGrouping', node);
   const aggrExpNode = walk(node, [['parent', VectorAggregationExpr]]);
   if (aggrExpNode === null) {
     return null;
@@ -566,7 +589,6 @@ function resolveLogOrLogRange(node: SyntaxNode, text: string, pos: number, after
 }
 
 function resolveSelector(node: SyntaxNode, text: string, pos: number): Situation | null {
-  console.log('resolveSelector', node);
   // for example `{^}`
 
   // false positive:
