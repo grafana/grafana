@@ -515,14 +515,7 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
             eventBus={dashboard.events}
           />
           {config.featureToggles.panelMonitoring && (
-            <PanelPerformanceMonitor
-              isInPanelEdit={dashboard.panelInEdit?.id === panel.id}
-              panelType={plugin.meta.id}
-              panelId={panel.id}
-              panelTitle={panel.title}
-              panelOptions={panelOptions}
-              panelFieldConfig={panel.fieldConfig}
-            />
+            <PanelPerformanceMonitor panelType={plugin.meta.id} panelId={panel.id} panelTitle={panel.title} />
           )}
         </PanelContextProvider>
       </>
