@@ -15,7 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 )
 
-type metrics struct {
+type pluginMetrics struct {
 	pluginRequestCounter         *prometheus.CounterVec
 	pluginRequestDuration        *prometheus.HistogramVec
 	pluginRequestSizeHistogram   *prometheus.HistogramVec
@@ -23,13 +23,13 @@ type metrics struct {
 }
 
 type InstrumentationMiddleware struct {
-	metrics
+	pluginMetrics
 	pluginRegistry registry.Service
 	next           plugins.Client
 }
 
 func NewInstrumentationMiddleware(promRegisterer prometheus.Registerer, pluginRegistry registry.Service) (plugins.ClientMiddleware, error) {
-	metrics := metrics{
+	metrics := pluginMetrics{
 		pluginRequestCounter: prometheus.NewCounterVec(prometheus.CounterOpts{
 			Namespace: "grafana",
 			Name:      "plugin_request_total",
@@ -68,7 +68,7 @@ func NewInstrumentationMiddleware(promRegisterer prometheus.Registerer, pluginRe
 	}
 	return plugins.ClientMiddlewareFunc(func(next plugins.Client) plugins.Client {
 		return &InstrumentationMiddleware{
-			metrics:        metrics,
+			pluginMetrics:  metrics,
 			next:           next,
 			pluginRegistry: pluginRegistry,
 		}
