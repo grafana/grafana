@@ -80,7 +80,11 @@ export const widgets: Widgets = {
       );
     },
     sqlFormatValue: (val, field, widget, operator, operatorDefinition, rightFieldDef) => {
-      if (val === TIME_FILTER || typeof BasicConfig.widgets.datetime.sqlFormatValue === 'string' || typeof BasicConfig.widgets.datetime.sqlFormatValue === 'object') {
+      if (
+        val === TIME_FILTER ||
+        typeof BasicConfig.widgets.datetime.sqlFormatValue === 'string' ||
+        typeof BasicConfig.widgets.datetime.sqlFormatValue === 'object'
+      ) {
         return val;
       }
       return (
