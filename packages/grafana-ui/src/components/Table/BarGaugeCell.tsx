@@ -75,11 +75,11 @@ export const BarGaugeCell = (props: TableCellProps) => {
 
   const renderComponent = (menuProps: DataLinksContextMenuApi) => {
     const { openMenu, targetClassName } = menuProps;
-    let overrideColor: string | undefined = undefined;
+    let overrideColorFn: ((value: number) => string) | undefined;
 
     if (shouldRecalculateScaleRange(cellOptions, field)) {
       const scaleCalc = getScaleCalculator(field, theme);
-      overrideColor = scaleCalc(displayValue.numeric).color;
+      overrideColorFn = (value: number) => scaleCalc(value).color;
     }
 
     return (
@@ -99,7 +99,7 @@ export const BarGaugeCell = (props: TableCellProps) => {
         lcdCellWidth={8}
         displayMode={barGaugeMode}
         valueDisplayMode={valueDisplayMode}
-        overrideColor={overrideColor}
+        overrideColorFn={overrideColorFn}
       />
     );
   };
