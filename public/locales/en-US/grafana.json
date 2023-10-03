@@ -260,19 +260,33 @@
     }
   },
   "dashboard-settings": {
+    "annotations": {
+      "title": "Annotations"
+    },
+    "general": {
+      "title": "General"
+    },
+    "json": {
+      "title-model": "JSON Model"
+    },
     "json-editor": {
       "save-button": "Save changes",
       "subtitle": "The JSON model below is the data structure that defines the dashboard. This includes dashboard settings, panel settings, layout, queries, and so on."
     },
-    "page-titles": {
-      "annotations": "Annotations",
-      "general": "General",
-      "json-model": "JSON model",
-      "links": "Links",
-      "permissions": "Permissions",
-      "settings": "Settings",
-      "variables": "Variables",
-      "versions": "Versions"
+    "links": {
+      "title": "Links"
+    },
+    "permissions": {
+      "title": "Permissions"
+    },
+    "settings": {
+      "title": "Settings"
+    },
+    "variables": {
+      "title": "Variables"
+    },
+    "versions": {
+      "title": "Versions"
     }
   },
   "data-source-picker": {

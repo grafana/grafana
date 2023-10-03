@@ -260,19 +260,33 @@
     }
   },
   "dashboard-settings": {
+    "annotations": {
+      "title": "Åŉŉőŧäŧįőŉş"
+    },
+    "general": {
+      "title": "Ğęŉęřäľ"
+    },
+    "json": {
+      "title-model": "ĴŜØŃ Mőđęľ"
+    },
     "json-editor": {
       "save-button": "Ŝävę čĥäŉģęş",
       "subtitle": "Ŧĥę ĴŜØŃ mőđęľ þęľőŵ įş ŧĥę đäŧä şŧřūčŧūřę ŧĥäŧ đęƒįŉęş ŧĥę đäşĥþőäřđ. Ŧĥįş įŉčľūđęş đäşĥþőäřđ şęŧŧįŉģş, päŉęľ şęŧŧįŉģş, ľäyőūŧ, qūęřįęş, äŉđ şő őŉ."
     },
-    "page-titles": {
-      "annotations": "Åŉŉőŧäŧįőŉş",
-      "general": "Ğęŉęřäľ",
-      "json-model": "ĴŜØŃ mőđęľ",
-      "links": "Ŀįŉĸş",
-      "permissions": "Pęřmįşşįőŉş",
-      "settings": "Ŝęŧŧįŉģş",
-      "variables": "Väřįäþľęş",
-      "versions": "Vęřşįőŉş"
+    "links": {
+      "title": "Ŀįŉĸş"
+    },
+    "permissions": {
+      "title": "Pęřmįşşįőŉş"
+    },
+    "settings": {
+      "title": "Ŝęŧŧįŉģş"
+    },
+    "variables": {
+      "title": "Väřįäþľęş"
+    },
+    "versions": {
+      "title": "Vęřşįőŉş"
     }
   },
   "data-source-picker": {

@@ -265,19 +265,33 @@
     }
   },
   "dashboard-settings": {
+    "annotations": {
+      "title": ""
+    },
+    "general": {
+      "title": ""
+    },
+    "json": {
+      "title-model": ""
+    },
     "json-editor": {
       "save-button": "",
       "subtitle": ""
     },
-    "page-titles": {
-      "annotations": "",
-      "general": "",
-      "json-model": "",
-      "links": "",
-      "permissions": "",
-      "settings": "",
-      "variables": "",
-      "versions": ""
+    "links": {
+      "title": ""
+    },
+    "permissions": {
+      "title": ""
+    },
+    "settings": {
+      "title": ""
+    },
+    "variables": {
+      "title": ""
+    },
+    "versions": {
+      "title": ""
     }
   },
   "data-source-picker": {
