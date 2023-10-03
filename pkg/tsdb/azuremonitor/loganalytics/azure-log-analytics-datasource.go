@@ -284,20 +284,15 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *A
 		return nil, err
 	}
 
-	ctx, span := tracing.DefaultTracer().Start(
-		ctx,
-		"azure log analytics query",
-		trace.WithAttributes(
-			attribute.String("target", query.Query),
-			attribute.Int64("from", query.TimeRange.From.UnixNano()/int64(time.Millisecond)),
-			attribute.Int64("until", query.TimeRange.To.UnixNano()/int64(time.Millisecond)),
-			attribute.Int64("datasource_id", dsInfo.DatasourceID),
-			attribute.Int64("org_id", dsInfo.OrgID),
-		),
-	)
+	ctx, span := tracing.DefaultTracer().Start(ctx, "azure log analytics query", trace.WithAttributes(
+		attribute.String("target", query.Query),
+		attribute.Int64("from", query.TimeRange.From.UnixNano()/int64(time.Millisecond)),
+		attribute.Int64("until", query.TimeRange.To.UnixNano()/int64(time.Millisecond)),
+		attribute.Int64("datasource_id", dsInfo.DatasourceID),
+		attribute.Int64("org_id", dsInfo.OrgID),
+	))
 	defer span.End()
-	sctx := trace.SpanContextFromContext(ctx)
-	backend.Logger.Debug("azure log analytics query", "traceID", sctx.TraceID(), "spanID", sctx.SpanID().String())
+	backend.Logger.Debug("azure log analytics query", "traceID", trace.SpanContextFromContext(ctx).TraceID())
 
 	res, err := client.Do(req)
 	if err != nil {
@@ -564,15 +559,11 @@ func getCorrelationWorkspaces(ctx context.Context, baseResource string, resource
 		req.URL.RawQuery = values.Encode()
 		req.Method = "GET"
 
-		_, span := tracing.DefaultTracer().Start(
-			ctx,
-			"azure traces correlation request",
-			trace.WithAttributes(
-				attribute.String("target", req.URL.String()),
-				attribute.Int64("datasource_id", dsInfo.DatasourceID),
-				attribute.Int64("org_id", dsInfo.OrgID),
-			),
-		)
+		ctx, span := tracing.DefaultTracer().Start(ctx, "azure traces correlation request", trace.WithAttributes(
+			attribute.String("target", req.URL.String()),
+			attribute.Int64("datasource_id", dsInfo.DatasourceID),
+			attribute.Int64("org_id", dsInfo.OrgID),
+		))
 		defer span.End()
 		backend.Logger.Debug("azure traces correlation request", "traceID", trace.SpanContextFromContext(ctx).TraceID())
 

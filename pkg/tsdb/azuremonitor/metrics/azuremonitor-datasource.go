@@ -308,9 +308,7 @@ func (e *AzureMonitorDatasource) executeQuery(ctx context.Context, query *types.
 		req.Body = io.NopCloser(strings.NewReader(fmt.Sprintf(`{"filter": "%s"}`, query.BodyFilter)))
 	}
 
-	ctx, span := tracing.DefaultTracer().Start(
-		ctx,
-		"azuremonitor query",
+	ctx, span := tracing.DefaultTracer().Start(ctx, "azuremonitor query",
 		trace.WithAttributes(
 			attribute.String("target", query.Target),
 			attribute.Int64("from", query.TimeRange.From.UnixNano()/int64(time.Millisecond)),

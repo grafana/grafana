@@ -15,7 +15,7 @@ export interface Props {
   url?: string;
 }
 
-export function NavBarMenuItem({ children, icon, isActive, isChild, onClick, target, url }: Props) {
+export function MegaMenuItemText({ children, icon, isActive, isChild, onClick, target, url }: Props) {
   const theme = useTheme2();
   const styles = getStyles(theme, isActive, isChild);
 
@@ -23,7 +23,7 @@ export function NavBarMenuItem({ children, icon, isActive, isChild, onClick, tar
     <div className={styles.linkContent}>
       {icon && <Icon data-testid="dropdown-child-icon" name={icon} />}
 
-      <div className={styles.linkText}>{children}</div>
+      {children}
 
       {target === '_blank' && (
         <Icon data-testid="external-link-icon" name="external-link-alt" className={styles.externalLinkIcon} />
@@ -66,10 +66,10 @@ export function NavBarMenuItem({ children, icon, isActive, isChild, onClick, tar
       );
   }
 
-  return <li className={styles.listItem}>{element}</li>;
+  return <div className={styles.wrapper}>{element}</div>;
 }
 
-NavBarMenuItem.displayName = 'NavBarMenuItem';
+MegaMenuItemText.displayName = 'MegaMenuItemText';
 
 const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive'], isChild: Props['isActive']) => ({
   button: css({
@@ -82,11 +82,6 @@ const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive'], isChild: P
     gap: '0.5rem',
     height: '100%',
     width: '100%',
-  }),
-  linkText: css({
-    textOverflow: 'ellipsis',
-    overflow: 'hidden',
-    whiteSpace: 'nowrap',
   }),
   externalLinkIcon: css({
     color: theme.colors.text.secondary,
@@ -127,7 +122,7 @@ const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive'], isChild: P
       backgroundImage: theme.colors.gradients.brandVertical,
     },
   }),
-  listItem: css({
+  wrapper: css({
     boxSizing: 'border-box',
     position: 'relative',
     display: 'flex',
