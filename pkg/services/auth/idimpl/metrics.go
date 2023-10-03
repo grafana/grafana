@@ -21,13 +21,13 @@ func newMetircus(reg prometheus.Registerer) *metrics {
 			Namespace: metricsNamespace,
 			Subsystem: metricsSubSystem,
 			Name:      "idforwarding_token_signing_from_cache_total",
-			Help:      "Number of signed tokens retrieved from cahce",
+			Help:      "Number of signed tokens retrieved from cache",
 		}),
 		failedTokenSigningCounter: prometheus.NewCounter(prometheus.CounterOpts{
 			Namespace: metricsNamespace,
 			Subsystem: metricsSubSystem,
 			Name:      "idforwarding_failed_token_signing_total",
-			Help:      "Number of failed token singings",
+			Help:      "Number of failed token signings",
 		}),
 		tokenSigningDurationHistogram: prometheus.NewHistogram(prometheus.HistogramOpts{
 			Namespace: metricsNamespace,
@@ -41,7 +41,7 @@ func newMetircus(reg prometheus.Registerer) *metrics {
 	if reg != nil {
 		reg.MustRegister(m.tokenSigningCounter)
 		reg.MustRegister(m.tokenSigningFromCacheCounter)
-		reg.MustRegister(m.failedTokenSingingCounter)
+		reg.MustRegister(m.failedTokenSigningCounter)
 		reg.MustRegister(m.tokenSigningDurationHistogram)
 	}
 
@@ -51,6 +51,6 @@ func newMetircus(reg prometheus.Registerer) *metrics {
 type metrics struct {
 	tokenSigningCounter           prometheus.Counter
 	tokenSigningFromCacheCounter  prometheus.Counter
-	failedTokenSingingCounter     prometheus.Counter
+	failedTokenSigningCounter     prometheus.Counter
 	tokenSigningDurationHistogram prometheus.Histogram
 }

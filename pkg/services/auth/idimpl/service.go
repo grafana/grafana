@@ -77,7 +77,7 @@ func (s *Service) SignIdentity(ctx context.Context, id identity.Requester) (stri
 	})
 
 	if err != nil {
-		s.metrics.failedTokenSingingCounter.Inc()
+		s.metrics.failedTokenSigningCounter.Inc()
 		return "", err
 	}
 
