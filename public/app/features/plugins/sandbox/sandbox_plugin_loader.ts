@@ -7,7 +7,7 @@ import { defaultTrustedTypesPolicy } from 'app/core/trustedTypePolicies';
 
 import { getPluginSettings } from '../pluginSettings';
 
-import { getPluginCode } from './code_loader';
+import { getPluginCode, patchSandboxEnvironmentPrototype } from './code_loader';
 import { getGeneralSandboxDistortionMap, distortLiveApis } from './distortion_map';
 import {
   getSafeSandboxDomElement,
@@ -161,31 +161,16 @@ async function doImportPluginModuleInSandbox(meta: PluginMeta): Promise<System.M
           }
         },
       }),
-      // This improves the error message output for plugins
-      // because errors thrown inside of the sandbox have a stack
-      // trace that is difficult to read due to all the sandboxing
-      // layers.
-      instrumentation: {
-        // near-membrane concept of "activity" is something that happens inside
-        // the plugin instrumentation
-        startActivity() {
-          return {
-            stop: () => {},
-            error: getActivityErrorHandler(meta.id),
-          };
-        },
-        log: () => {},
-        error: () => {},
-      },
     });
+
+    patchSandboxEnvironmentPrototype(sandboxEnvironment);
 
     // fetch plugin's code
     let pluginCode = '';
     try {
       pluginCode = await getPluginCode(meta);
     } catch (e) {
-      throw new Error(`Could not load plugin ${meta.id}: ` + e);
-      reject(new Error(`Could not load plugin ${meta.id}: ` + e));
+      reject(new Error(`Could not load plugin code ${meta.id}: ` + e));
     }
 
     try {
@@ -202,29 +187,6 @@ async function doImportPluginModuleInSandbox(meta: PluginMeta): Promise<System.M
       reject(error);
     }
   });
-}
-
-function getActivityErrorHandler(pluginId: string) {
-  return async function error(proxyError?: Error & { sandboxError?: boolean }) {
-    if (!proxyError) {
-      return;
-    }
-    // flag this error as a sandbox error
-    proxyError.sandboxError = true;
-
-    //  create a new error to unwrap it from the proxy
-    const newError = new Error(proxyError.message.toString());
-    newError.name = proxyError.name.toString();
-    newError.stack = proxyError.stack || '';
-
-    // If you are seeing this is because
-    // the plugin is throwing an error
-    // and it is not being caught by the plugin code
-    // This is a sandbox wrapper error.
-    // and not the real error
-    console.log(`[sandbox] Error from plugin ${pluginId}`);
-    console.error(newError);
-  };
 }
 
 function resolvePluginDependencies(deps: string[]) {
