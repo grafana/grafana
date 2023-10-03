@@ -124,7 +124,7 @@ Query caching works for Grafana's [built-in data sources]({{< relref "../../data
 To verify that a data source works with query caching, follow the [instructions below](#enable-and-configure-query-caching) to **Enable and Configure query caching**. If caching is enabled in Grafana but the Caching tab is not visible for the given data source, then query caching is not available for that data source.
 
 {{% admonition type="note" %}}
-Some data sources, such as Elasticsearch, Prometheus, and Loki, cache queries themselves, so Grafana _query_ caching does not significantly improve performance. However, _resource_ caching may help. See the developers page on [plugin resources](https://grafana.com/developers/plugin-tools/introduction/backend-plugins) for details.
+Some data sources, such as Elasticsearch, Prometheus, and Loki, cache queries themselves, so Grafana _query_ caching does not significantly improve performance. However, _resource_ caching may help. See the developers page on [plugin resources](/developers/plugin-tools/introduction/backend-plugins) for details.
 {{% /admonition %}}
 
 ### Enable and configure query caching
