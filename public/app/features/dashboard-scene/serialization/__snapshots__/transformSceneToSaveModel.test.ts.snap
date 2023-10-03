@@ -190,9 +190,10 @@ exports[`transformSceneToSaveModel Given a scene with rows Should transform back
     "from": "now-6h",
     "to": "now",
   },
-  "timezone": "browser",
+  "timezone": "",
   "title": "Repeating rows",
   "uid": "Repeating-rows-uid",
+  "weekStart": "",
 }
 `;
 
@@ -260,7 +261,7 @@ exports[`transformSceneToSaveModel Given a simple scene Should transform back to
     ],
   },
   "editable": true,
-  "fiscalYearStartMonth": 0,
+  "fiscalYearStartMonth": 1,
   "graphTooltip": 0,
   "links": [],
   "panels": [
@@ -366,8 +367,9 @@ exports[`transformSceneToSaveModel Given a simple scene Should transform back to
     "from": "now-5m",
     "to": "now",
   },
-  "timezone": "browser",
+  "timezone": "America/New_York",
   "title": "Dashboard to load1",
   "uid": "nP8rcffGkasd",
+  "weekStart": "saturday",
 }
 `;
