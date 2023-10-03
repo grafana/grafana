@@ -10,13 +10,7 @@ import { useStyles2 } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 import { DashboardViewItem } from 'app/features/search/types';
 
-import {
-  DashboardsTreeCellProps,
-  DashboardsTreeColumn,
-  DashboardsTreeItem,
-  INDENT_AMOUNT_CSS_VAR,
-  SelectionState,
-} from '../types';
+import { DashboardsTreeCellProps, DashboardsTreeColumn, DashboardsTreeItem, SelectionState } from '../types';
 
 import CheckboxCell from './CheckboxCell';
 import CheckboxHeaderCell from './CheckboxHeaderCell';
@@ -126,7 +120,7 @@ export function DashboardsTree({
   );
 
   return (
-    <div {...getTableProps()} className={styles.tableRoot} role="table">
+    <div {...getTableProps()} role="table">
       {headerGroups.map((headerGroup) => {
         const { key, ...headerGroupProps } = headerGroup.getHeaderGroupProps({
           style: { width },
@@ -213,15 +207,6 @@ function VirtualListRow({ index, style, data }: VirtualListRowProps) {
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    tableRoot: css({
-      // Responsively
-      [INDENT_AMOUNT_CSS_VAR]: theme.spacing(1),
-
-      [theme.breakpoints.up('md')]: {
-        [INDENT_AMOUNT_CSS_VAR]: theme.spacing(3),
-      },
-    }),
-
     // Column flex properties (cell sizing) are set by customFlexTableLayout.ts
 
     row: css({

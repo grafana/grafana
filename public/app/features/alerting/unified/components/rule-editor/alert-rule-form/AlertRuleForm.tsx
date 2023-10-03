@@ -166,16 +166,18 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
 
   const actionButtons = (
     <HorizontalGroup height="auto" justify="flex-end">
-      <Button
-        variant="primary"
-        type="button"
-        size="sm"
-        onClick={handleSubmit((values) => submit(values, false), onInvalid)}
-        disabled={submitState.loading}
-      >
-        {submitState.loading && <Spinner className={styles.buttonSpinner} inline={true} />}
-        Save rule
-      </Button>
+      {existing && (
+        <Button
+          variant="primary"
+          type="button"
+          size="sm"
+          onClick={handleSubmit((values) => submit(values, false), onInvalid)}
+          disabled={submitState.loading}
+        >
+          {submitState.loading && <Spinner className={styles.buttonSpinner} inline={true} />}
+          Save rule
+        </Button>
+      )}
       <Button
         variant="primary"
         type="button"
