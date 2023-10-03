@@ -67,6 +67,8 @@ export function DataSourceList(props: DataSourceListProps) {
     variables: props.variables,
   });
 
+  console.log('dataSources', dataSources);
+
   const [recentlyUsedDataSources, pushRecentlyUsedDataSource] = useRecentlyUsedDataSources();
   const filteredDataSources = props.filter ? dataSources.filter(props.filter) : dataSources;
 
