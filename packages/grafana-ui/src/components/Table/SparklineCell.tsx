@@ -1,6 +1,15 @@
 import React from 'react';
 
-import { FieldType, FieldConfig, getMinMaxAndDelta, FieldSparkline, isDataFrame, Field } from '@grafana/data';
+import {
+  FieldType,
+  FieldConfig,
+  getMinMaxAndDelta,
+  FieldSparkline,
+  isDataFrame,
+  Field,
+  DataFrameWithValue,
+  getDisplayProcessor,
+} from '@grafana/data';
 import {
   BarAlignment,
   GraphDrawStyle,
@@ -12,6 +21,7 @@ import {
   VisibilityMode,
 } from '@grafana/schema';
 
+import { useTheme2 } from '../../themes';
 import { Sparkline } from '../Sparkline/Sparkline';
 
 import { TableCellProps } from './types';
@@ -31,6 +41,7 @@ export const defaultSparklineCellConfig: GraphFieldConfig = {
 export const SparklineCell = (props: TableCellProps) => {
   const { field, innerWidth, tableStyles, cell, cellProps, timeRange } = props;
   const sparkline = getSparkline(cell.value);
+  const theme = useTheme2();
 
   if (!sparkline) {
     return (
@@ -70,15 +81,23 @@ export const SparklineCell = (props: TableCellProps) => {
     },
   };
 
+  const value = (cell.value as DataFrameWithValue).value;
+
+  const dsp = getDisplayProcessor({ field, theme });
+  console.log(dsp(value));
+
   return (
     <div {...cellProps} className={tableStyles.cellContainer}>
-      <Sparkline
-        width={innerWidth}
-        height={tableStyles.cellHeightInner}
-        sparkline={sparkline}
-        config={config}
-        theme={tableStyles.theme}
-      />
+      {value}
+      <div>
+        <Sparkline
+          width={innerWidth}
+          height={tableStyles.cellHeightInner}
+          sparkline={sparkline}
+          config={config}
+          theme={tableStyles.theme}
+        />
+      </div>
     </div>
   );
 };
