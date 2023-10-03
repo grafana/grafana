@@ -43,7 +43,7 @@ A Grafana plugin is software that adds new capabilities to Grafana. They come in
 
 The data coming into the plugin from the data source might be in many different formats (such as JSON, rows and columns, or CSV), but when it leaves the plugin and moves through the rest of the gates toward a visualization, it's always in data frames.
 
-Currently, Grafana offers a diverse range of 155 data sources that you can use. The most commonly used options are already pre-installed and accessible. Before exploring other options, look for an existing data source that matches your requirements. Grafana constantly updates the list, but if you don't find a suitable data source, you can browse through the [plugin catalog](/grafana/plugins/?type=datasource) or [create a plugin](https://grafana.com/developers/plugin-tools).
+Currently, Grafana offers a diverse range of 155 data sources that you can use. The most commonly used options are already pre-installed and accessible. Before exploring other options, look for an existing data source that matches your requirements. Grafana constantly updates the list, but if you don't find a suitable data source, you can browse through the [plugin catalog](/grafana/plugins/?type=datasource) or [create a plugin](/developers/plugin-tools).
 
 ## Queries
 
