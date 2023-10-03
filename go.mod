@@ -105,15 +105,15 @@ require (
 	go.opentelemetry.io/otel/exporters/jaeger v1.10.0 // @grafana/backend-platform
 	go.opentelemetry.io/otel/sdk v1.16.0 // @grafana/backend-platform
 	go.opentelemetry.io/otel/trace v1.16.0 // @grafana/backend-platform
-	golang.org/x/crypto v0.12.0 // @grafana/backend-platform
+	golang.org/x/crypto v0.13.0 // @grafana/backend-platform
 	golang.org/x/exp v0.0.0-20230321023759-10a507213a29 // @grafana/alerting-squad-backend
-	golang.org/x/net v0.14.0 // @grafana/grafana-bi-squad
-	golang.org/x/oauth2 v0.10.0 // @grafana/grafana-authnz-team
+	golang.org/x/net v0.15.0 // @grafana/grafana-bi-squad
+	golang.org/x/oauth2 v0.12.0 // @grafana/grafana-authnz-team
 	golang.org/x/sync v0.3.0 // @grafana/alerting-squad-backend
 	golang.org/x/time v0.3.0 // @grafana/backend-platform
 	golang.org/x/tools v0.12.0 // @grafana/grafana-as-code
 	gonum.org/v1/gonum v0.12.0 // @grafana/observability-metrics
-	google.golang.org/api v0.126.0 // @grafana/backend-platform
+	google.golang.org/api v0.143.0 // @grafana/backend-platform
 	google.golang.org/grpc v1.57.0 // @grafana/plugins-platform-backend
 	google.golang.org/protobuf v1.31.0 // @grafana/plugins-platform-backend
 	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
@@ -167,7 +167,7 @@ require (
 	github.com/golang/protobuf v1.5.3 // @grafana/backend-platform
 	github.com/google/btree v1.1.2 // indirect
 	github.com/google/flatbuffers v23.1.21+incompatible // indirect
-	github.com/googleapis/gax-go/v2 v2.11.0 // @grafana/backend-platform
+	github.com/googleapis/gax-go/v2 v2.12.0 // @grafana/backend-platform
 	github.com/gorilla/mux v1.8.0 // indirect
 	github.com/grafana/grafana-google-sdk-go v0.1.0 // @grafana/partner-datasources
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.1-0.20191002090509-6af20e3a5340 // indirect
@@ -215,10 +215,10 @@ require (
 	go.uber.org/atomic v1.11.0 // @grafana/alerting-squad-backend
 	go.uber.org/goleak v1.2.1 // indirect
 	golang.org/x/sys v0.12.0 // indirect
-	golang.org/x/text v0.12.0 // @grafana/backend-platform
+	golang.org/x/text v0.13.0 // @grafana/backend-platform
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
-	google.golang.org/genproto v0.0.0-20230731193218-e0aa005b6bdf // indirect; @grafana/backend-platform
+	google.golang.org/genproto v0.0.0-20230913181813-007df8e322eb // indirect; @grafana/backend-platform
 )
 
 require (
@@ -286,7 +286,7 @@ require (
 require github.com/grafana/gofpdf v0.0.0-20231002120153-857cc45be447 // @grafana/sharing-squad
 
 require (
-	cloud.google.com/go v0.110.6 // indirect
+	cloud.google.com/go v0.110.7 // indirect
 	cloud.google.com/go/compute/metadata v0.2.3 // indirect
 	github.com/Azure/azure-pipeline-go v0.2.3 // indirect
 	github.com/Azure/go-ntlmssp v0.0.0-20220621081337-cb9428e4ac1e // indirect
@@ -336,8 +336,8 @@ require (
 	github.com/google/gnostic v0.6.9 // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/google/gofuzz v1.2.0 // indirect
-	github.com/google/s2a-go v0.1.4 // indirect
-	github.com/googleapis/enterprise-certificate-proxy v0.2.3 // indirect
+	github.com/google/s2a-go v0.1.7 // indirect
+	github.com/googleapis/enterprise-certificate-proxy v0.3.1 // indirect
 	github.com/grafana/regexp v0.0.0-20221123153739-15dc172cd2db // indirect
 	github.com/grafana/sqlds/v2 v2.3.10 // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
@@ -404,9 +404,9 @@ require (
 	go.starlark.net v0.0.0-20221020143700-22309ac47eac // indirect
 	go.uber.org/multierr v1.10.0 // indirect
 	go.uber.org/zap v1.24.0 // indirect
-	golang.org/x/term v0.11.0 // indirect
-	google.golang.org/genproto/googleapis/api v0.0.0-20230731193218-e0aa005b6bdf // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20230731193218-e0aa005b6bdf // indirect
+	golang.org/x/term v0.12.0 // indirect
+	google.golang.org/genproto/googleapis/api v0.0.0-20230913181813-007df8e322eb // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20230920204549-e6e6cdab5c13 // indirect
 	gopkg.in/fsnotify/fsnotify.v1 v1.4.7 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0 // indirect
