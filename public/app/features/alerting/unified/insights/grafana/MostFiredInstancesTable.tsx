@@ -14,7 +14,7 @@ import {
 import { DataSourceRef } from '@grafana/schema';
 import { Link, useStyles2 } from '@grafana/ui';
 
-import { PANEL_STYLES } from '../../home/Insights';
+import { getPanelMenu, PANEL_STYLES } from '../../home/Insights';
 import { createUrl } from '../../utils/url';
 
 export function getMostFiredInstancesScene(timeRange: SceneTimeRange, datasource: DataSourceRef, panelTitle: string) {
@@ -104,6 +104,7 @@ export function getMostFiredInstancesScene(timeRange: SceneTimeRange, datasource
       .setDescription(panelTitle)
       .setData(transformation)
       .setNoValue('No new alerts fired last week')
+      .setMenu(getPanelMenu(panelTitle))
       .build(),
   });
 }

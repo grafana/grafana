@@ -1,7 +1,7 @@
 import { PanelBuilders, SceneFlexItem, SceneQueryRunner, SceneTimeRange } from '@grafana/scenes';
 import { DataSourceRef, GraphDrawStyle } from '@grafana/schema';
 
-import { overrideToFixedColor, PANEL_STYLES } from '../../../home/Insights';
+import { getPanelMenu, overrideToFixedColor, PANEL_STYLES } from '../../../home/Insights';
 
 export function getGrafanaAlertmanagerNotificationsScene(
   timeRange: SceneTimeRange,
@@ -41,6 +41,7 @@ export function getGrafanaAlertmanagerNotificationsScene(
           .matchFieldsWithName('failed')
           .overrideColor(overrideToFixedColor('failed'))
       )
+      .setMenu(getPanelMenu(panelTitle))
       .build(),
   });
 }

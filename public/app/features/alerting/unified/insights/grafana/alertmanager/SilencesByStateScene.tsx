@@ -1,7 +1,7 @@
 import { PanelBuilders, SceneFlexItem, SceneQueryRunner, SceneTimeRange } from '@grafana/scenes';
 import { DataSourceRef, GraphDrawStyle } from '@grafana/schema';
 
-import { PANEL_STYLES } from '../../../home/Insights';
+import { getPanelMenu, PANEL_STYLES } from '../../../home/Insights';
 
 export function getGrafanaAlertmanagerSilencesScene(
   timeRange: SceneTimeRange,
@@ -28,6 +28,7 @@ export function getGrafanaAlertmanagerSilencesScene(
       .setDescription(panelTitle)
       .setData(query)
       .setCustomFieldConfig('drawStyle', GraphDrawStyle.Line)
+      .setMenu(getPanelMenu(panelTitle))
       .build(),
   });
 }
