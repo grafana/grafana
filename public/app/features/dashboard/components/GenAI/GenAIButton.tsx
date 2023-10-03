@@ -5,7 +5,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { Button, Spinner, useStyles2, Link, Tooltip, Toggletip, Text } from '@grafana/ui';
 
 import { GenAIHistory } from './GenAIHistory';
-import { useOpenAIStream } from './hooks';
+import { StreamStatus, useOpenAIStream } from './hooks';
 import { OPEN_AI_MODEL, Message } from './utils';
 
 export interface GenAIButtonProps {
@@ -37,14 +37,12 @@ export const GenAIButton = ({
   const styles = useStyles2(getStyles);
 
   const [history, setHistory] = useState<string[]>([]);
-  const [response, setResponse] = useState<string>('');
   const [shouldCloseHistory, setShouldCloseHistory] = useState(false);
 
-  // TODO: Implement error handling (use error object from hook)
-  const { setMessages, reply, isGenerating, value, error } = useOpenAIStream(OPEN_AI_MODEL, temperature);
+  const { setMessages, reply, value, error, streamStatus } = useOpenAIStream(OPEN_AI_MODEL, temperature);
 
   const hasHistory = history.length > 0;
-  const isFirstGeneration = isGenerating && !hasHistory;
+  const isFirstGeneration = streamStatus === StreamStatus.GENERATING && !hasHistory;
   const isButtonDisabled = isFirstGeneration || (value && !value.enabled && !error);
 
   const onClick = (e: React.MouseEvent<HTMLButtonElement>) => {
@@ -68,21 +66,13 @@ export const GenAIButton = ({
     if (isFirstGeneration && reply) {
       onGenerate(reply.replace(/^"|"$/g, ''));
     }
-  }, [isGenerating, reply, onGenerate, isFirstGeneration]);
-
-  // @TODO: Find a better solution for this (isDone)
-  useEffect(() => {
-    if (reply !== '') {
-      setResponse(reply);
-    }
-  }, [reply]);
+  }, [streamStatus, reply, onGenerate, isFirstGeneration]);
 
   useEffect(() => {
-    if (response !== '' && !isGenerating) {
-      updateHistory(response.replace(/^"|"$/g, ''));
-      setResponse('');
+    if (streamStatus === StreamStatus.COMPLETED) {
+      updateHistory(reply.replace(/^"|"$/g, ''));
     }
-  }, [history, isGenerating, reply, response, updateHistory]);
+  }, [history, streamStatus, reply, updateHistory]);
 
   const onApplySuggestion = (suggestion: string) => {
     onGenerate(suggestion);

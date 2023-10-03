@@ -7,7 +7,7 @@ import { Button, Divider, HorizontalGroup, Icon, Input, Link, Spinner, Text, use
 import { getFeedbackMessage } from './GenAIPanelTitleButton';
 import { GenerationHistoryCarousel } from './GenerationHistoryCarousel';
 import { QuickFeedback } from './QuickFeedback';
-import { useOpenAIStream } from './hooks';
+import { StreamStatus, useOpenAIStream } from './hooks';
 import { Message, OPEN_AI_MODEL, QuickFeedbackType } from './utils';
 
 export interface GenAIHistoryProps {
@@ -23,23 +23,16 @@ export const GenAIHistory = ({ history, messages, onApplySuggestion, updateHisto
   const styles = useStyles2(getStyles);
 
   const [currentIndex, setCurrentIndex] = useState(1);
-  const [response, setResponse] = useState<string>('');
 
-  const { setMessages, reply, isGenerating } = useOpenAIStream(OPEN_AI_MODEL, temperature);
+  const { setMessages, reply, streamStatus } = useOpenAIStream(OPEN_AI_MODEL, temperature);
 
-  // @TODO Duplicate, find a better way to do this
-  useEffect(() => {
-    if (reply !== '') {
-      setResponse(reply.replace(/^"|"$/g, ''));
-    }
-  }, [reply]);
+  const isStreamGenerating = streamStatus === StreamStatus.GENERATING;
 
   useEffect(() => {
-    if (response !== '' && !isGenerating) {
-      setResponse('');
+    if (!isStreamGenerating && reply !== '') {
       setCurrentIndex(1);
     }
-  }, [response, isGenerating]);
+  }, [isStreamGenerating, reply]);
 
   const onSubmit = (event: React.KeyboardEvent<HTMLInputElement>) => {
     if (event.key === 'Enter') {
@@ -64,10 +57,11 @@ export const GenAIHistory = ({ history, messages, onApplySuggestion, updateHisto
   };
 
   useEffect(() => {
-    if (response !== '' && !isGenerating) {
-      updateHistory(response);
+    if (streamStatus === StreamStatus.COMPLETED) {
+      // TODO: Break out sanitize regex into shared util function
+      updateHistory(reply.replace(/^"|"$/g, ''));
     }
-  }, [isGenerating, response, updateHistory]);
+  }, [streamStatus, reply, updateHistory]);
 
   return (
     <div className={styles.wrapper}>
@@ -77,18 +71,19 @@ export const GenAIHistory = ({ history, messages, onApplySuggestion, updateHisto
         onKeyDown={onSubmit}
       />
       <div className={styles.actions}>
-        <QuickFeedback onSuggestionClick={onGenerateWithFeedback} isGenerating={isGenerating} />
+        <QuickFeedback onSuggestionClick={onGenerateWithFeedback} isGenerating={isStreamGenerating} />
         <GenerationHistoryCarousel
           history={history}
           index={currentIndex}
           onNavigate={onNavigate}
-          reply={response.replace(/^"|"$/g, '')}
+          reply={reply.replace(/^"|"$/g, '')}
+          streamStatus={streamStatus}
         />
       </div>
       <div className={styles.footerActions}>
         <HorizontalGroup justify={'flex-end'}>
-          {isGenerating && <Spinner />}
-          <Button onClick={onApply} className={styles.applyButton} disabled={isGenerating}>
+          {isStreamGenerating && <Spinner />}
+          <Button onClick={onApply} className={styles.applyButton} disabled={isStreamGenerating}>
             Apply
           </Button>
         </HorizontalGroup>
