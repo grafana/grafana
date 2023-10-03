@@ -10,7 +10,7 @@ interface NavBarItemIconProps {
   link: NavModelItem;
 }
 
-export function NavBarItemIcon({ link }: NavBarItemIconProps) {
+export function MegaMenuItemIcon({ link }: NavBarItemIconProps) {
   const theme = useTheme2();
   const styles = getStyles(theme);
 
