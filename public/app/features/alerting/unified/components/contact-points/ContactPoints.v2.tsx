@@ -9,7 +9,6 @@ import { dateTime, GrafanaTheme2 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
 import {
   Alert,
-  Button,
   Dropdown,
   Icon,
   LoadingPlaceholder,
@@ -23,20 +22,19 @@ import {
   Tab,
   Pagination,
 } from '@grafana/ui';
-import { contextSrv } from 'app/core/core';
 import ConditionalWrap from 'app/features/alerting/components/ConditionalWrap';
-import { isOrgAdmin } from 'app/features/plugins/admin/permissions';
 import { receiverTypeNames } from 'app/plugins/datasource/alertmanager/consts';
 import { GrafanaManagedReceiverConfig } from 'app/plugins/datasource/alertmanager/types';
 import { GrafanaNotifierType, NotifierStatus } from 'app/types/alerting';
 
+import { AlertmanagerAction, useAlertmanagerAbilities, useAlertmanagerAbility } from '../../hooks/useAbilities';
 import { usePagination } from '../../hooks/usePagination';
 import { useAlertmanager } from '../../state/AlertmanagerContext';
 import { INTEGRATION_ICONS } from '../../types/contact-points';
-import { getNotificationsPermissions } from '../../utils/access-control';
-import { GRAFANA_RULES_SOURCE_NAME, isVanillaPrometheusAlertManagerDataSource } from '../../utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { createUrl } from '../../utils/url';
 import { MetaText } from '../MetaText';
+import MoreButton from '../MoreButton';
 import { ProvisioningBadge } from '../Provisioning';
 import { Spacer } from '../Spacer';
 import { Strong } from '../Strong';
@@ -61,6 +59,9 @@ const ContactPoints = () => {
   const [activeTab, setActiveTab] = useState<ActiveTab>(ActiveTab.ContactPoints);
   let { isLoading, error, contactPoints } = useContactPointsWithStatus(selectedAlertmanager!);
   const { deleteTrigger, updateAlertmanagerState } = useDeleteContactPoint(selectedAlertmanager!);
+  const [addContactPointSupported, addContactPointAllowed] = useAlertmanagerAbility(
+    AlertmanagerAction.CreateContactPoint
+  );
 
   const [DeleteModal, showDeleteModal] = useDeleteContactPointModal(deleteTrigger, updateAlertmanagerState.isLoading);
 
@@ -73,10 +74,6 @@ const ContactPoints = () => {
   }
 
   const isGrafanaManagedAlertmanager = selectedAlertmanager === GRAFANA_RULES_SOURCE_NAME;
-  const isVanillaAlertmanager = isVanillaPrometheusAlertManagerDataSource(selectedAlertmanager!);
-  const permissions = getNotificationsPermissions(selectedAlertmanager!);
-
-  const allowedToAddContactPoint = contextSrv.hasPermission(permissions.create);
 
   return (
     <>
@@ -94,13 +91,12 @@ const ContactPoints = () => {
             onChangeTab={() => setActiveTab(ActiveTab.MessageTemplates)}
           />
           <Spacer />
-          {showingContactPoints && (
+          {showingContactPoints && addContactPointSupported && (
             <LinkButton
               icon="plus"
               variant="primary"
               href="/alerting/notifications/receivers/new"
-              // TODO clarify why the button has been disabled
-              disabled={!allowedToAddContactPoint || isVanillaAlertmanager}
+              disabled={!addContactPointAllowed}
             >
               Add contact point
             </LinkButton>
@@ -264,15 +260,13 @@ interface ContactPointHeaderProps {
 const ContactPointHeader = (props: ContactPointHeaderProps) => {
   const { name, disabled = false, provisioned = false, policies = 0, onDelete } = props;
   const styles = useStyles2(getStyles);
-  const { selectedAlertmanager } = useAlertmanager();
-  const permissions = getNotificationsPermissions(selectedAlertmanager ?? '');
-
-  const isReferencedByPolicies = policies > 0;
-  const isGranaManagedAlertmanager = selectedAlertmanager === GRAFANA_RULES_SOURCE_NAME;
 
   // we make a distinction here becase for "canExport" we show the menu item, if not we hide it
-  const canExport = isGranaManagedAlertmanager;
-  const allowedToExport = contextSrv.hasAccess(permissions.provisioning.read, isOrgAdmin());
+  const [[exportSupported, exportAllowed], [decryptSecretsSupported, decryptSecretsAllowed]] = useAlertmanagerAbilities(
+    [AlertmanagerAction.ExportContactPoint, AlertmanagerAction.DecryptSecrets]
+  );
+
+  const isReferencedByPolicies = policies > 0;
 
   return (
     <div className={styles.headerWrapper}>
@@ -298,7 +292,7 @@ const ContactPointHeader = (props: ContactPointHeaderProps) => {
           tooltip={provisioned ? 'Provisioned contact points cannot be edited in the UI' : undefined}
           variant="secondary"
           size="sm"
-          icon={provisioned ? 'document-info' : 'edit'}
+          icon={provisioned ? 'document-info' : 'pen'}
           type="button"
           disabled={disabled}
           aria-label={`${provisioned ? 'view' : 'edit'}-action`}
@@ -307,20 +301,19 @@ const ContactPointHeader = (props: ContactPointHeaderProps) => {
         >
           {provisioned ? 'View' : 'Edit'}
         </LinkButton>
-        {/* TODO probably want to split this off since there's lots of RBAC involved here */}
         <Dropdown
           overlay={
             <Menu>
-              {canExport && (
+              {exportSupported && (
                 <>
                   <Menu.Item
                     icon="download-alt"
-                    label={isOrgAdmin() ? 'Export' : 'Export redacted'}
-                    disabled={!allowedToExport}
+                    label={decryptSecretsSupported ? 'Export' : 'Export redacted'}
+                    disabled={!exportAllowed}
                     url={createUrl(`/api/v1/provisioning/contact-points/export/`, {
                       download: 'true',
                       format: 'yaml',
-                      decrypt: isOrgAdmin().toString(),
+                      decrypt: String(decryptSecretsSupported && decryptSecretsAllowed),
                       name: name,
                     })}
                     target="_blank"
@@ -351,14 +344,7 @@ const ContactPointHeader = (props: ContactPointHeaderProps) => {
             </Menu>
           }
         >
-          <Button
-            variant="secondary"
-            size="sm"
-            icon="ellipsis-h"
-            type="button"
-            aria-label="more-actions"
-            data-testid="more-actions"
-          />
+          <MoreButton />
         </Dropdown>
       </Stack>
     </div>
@@ -379,7 +365,7 @@ const ContactPointReceiver = (props: ContactPointReceiverProps) => {
   const iconName = INTEGRATION_ICONS[type];
   const hasMetadata = diagnostics !== undefined;
 
-  // TODO get the actual name of the type from /ngalert if grafanaManaged AM
+  // TODO get the actual name of the type from /alert-notifiers if grafanaManaged AM
   const receiverName = receiverTypeNames[type] ?? upperFirst(type);
 
   return (

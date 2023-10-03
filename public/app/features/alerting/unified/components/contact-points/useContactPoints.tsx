@@ -24,7 +24,6 @@ export function useContactPointsWithStatus(selectedAlertmanager: string) {
 
   // fetch receiver status if we're dealing with a Grafana Managed Alertmanager
   const fetchContactPointsStatus = alertmanagerApi.endpoints.getContactPointsStatus.useQuery(undefined, {
-    // TODO these don't seem to work since we've not called setupListeners()
     refetchOnFocus: true,
     refetchOnReconnect: true,
     // re-fetch status every so often for up-to-date information
