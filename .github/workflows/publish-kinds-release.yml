@@ -12,6 +12,7 @@ on:
 
 jobs:
   main:
+    if: github.repository == 'grafana/grafana'
     runs-on: "ubuntu-latest"
     steps:
       - name: "Checkout Grafana repo"
