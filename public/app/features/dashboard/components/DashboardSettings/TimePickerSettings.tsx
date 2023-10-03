@@ -99,9 +99,9 @@ export class TimePickerSettings extends PureComponent<Props, State> {
           onRefreshIntervalChange={this.props.onRefreshIntervalChange}
         />
         <Field
-          label={t('dashboard-settings.general-settings.now_delay.label', 'Now delay')}
+          label={t('dashboard-settings.time-picker.now-delay-label', 'Now delay')}
           description={t(
-            'dashboard-settings.general-settings.now_delay.description',
+            'dashboard-settings.time-picker.now-delay-description',
             'Exclude recent data that may be incomplete.'
           )}
         >
