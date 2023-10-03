@@ -19,7 +19,7 @@ export const HeaderLabel = ({ headerLabel }: Props) => {
     <HorizontalGroup justify-content="space-between" spacing="lg" wrap>
       <div className={styles.wrapper}>
         <span className={styles.label}>{headerLabel.label}</span>
-        <Tooltip content={headerLabel.value.toString()}>
+        <Tooltip content={headerLabel.value ? headerLabel.value.toString() : ''}>
           <span className={styles.value}>{headerLabel.value}</span>
         </Tooltip>
       </div>

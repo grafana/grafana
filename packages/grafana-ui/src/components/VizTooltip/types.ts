@@ -18,7 +18,7 @@ export enum LabelValuePlacement {
 
 export interface LabelValue {
   label: string;
-  value: string | number;
+  value: string | number | null;
   color?: string;
   colorIndicator?: ColorIndicator;
 }
