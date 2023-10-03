@@ -3,7 +3,7 @@ import React from 'react';
 import { useLocalStorage } from 'react-use';
 
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
-import { Button, Icon, useStyles2 } from '@grafana/ui';
+import { Button, Icon, useStyles2, Text } from '@grafana/ui';
 
 import { FeatureHighlight } from './FeatureHighlight';
 import { MegaMenuItemIcon } from './MegaMenuItemIcon';
@@ -45,9 +45,9 @@ export function MegaMenuItem({ link, activeItem, level = 0, onClose }: Props) {
             })}
           >
             <FeatureHighlightWrapper>
-              {level === 0 ? <MegaMenuItemIcon link={link} /> : <div />}
+              <div className={styles.iconWrapper}>{level === 0 && <MegaMenuItemIcon link={link} />}</div>
             </FeatureHighlightWrapper>
-            {link.text}
+            <Text truncate>{link.text}</Text>
           </div>
         </MegaMenuItemText>
         {showExpandButton && (
@@ -105,12 +105,17 @@ const getStyles = (theme: GrafanaTheme2) => ({
     fontStyle: 'italic',
     padding: theme.spacing(1, 1.5, 1, 7),
   }),
+  iconWrapper: css({
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  }),
   labelWrapper: css({
     display: 'grid',
     fontSize: theme.typography.pxToRem(14),
     gridAutoFlow: 'column',
     gridTemplateColumns: `${theme.spacing(7)} auto`,
-    placeItems: 'center',
+    alignItems: 'center',
     fontWeight: theme.typography.fontWeightMedium,
   }),
   isActive: css({
