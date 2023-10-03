@@ -17,10 +17,10 @@ import { GrafanaTemplateVariableQuery } from './types/templateVariables';
 import messageFromError from './utils/messageFromError';
 
 export class VariableSupport extends CustomVariableSupport<DataSource, AzureMonitorQuery> {
-
   constructor(
     private readonly datasource: DataSource,
-    private readonly templateSrv: TemplateSrv = getTemplateSrv()) {
+    private readonly templateSrv: TemplateSrv = getTemplateSrv()
+  ) {
     super();
     this.datasource = datasource;
   }

@@ -9,27 +9,24 @@ jest.mock('@grafana/runtime', () => {
     __esModule: true,
     ...jest.requireActual('@grafana/runtime'),
     getTemplateSrv: () => ({
-      replace: (
-        target?: string,
-      ) => {
-        if (target === "$resourceGroup") {
-          return "the-resource-group";
+      replace: (target?: string) => {
+        if (target === '$resourceGroup') {
+          return 'the-resource-group';
         }
-        return target || "";
+        return target || '';
       },
       getVariables: jest.fn(),
       updateTimeRange: jest.fn(),
       containsTemplate: (target?: string) => {
-        return (target || "").includes("$")
-      }
-    })
+        return (target || '').includes('$');
+      },
+    }),
   };
 });
 
 describe('Azure Monitor Datasource', () => {
   describe('interpolateVariablesInQueries()', () => {
     it('should interpolate variables in the queries', () => {
-      
       const ds = new Datasource(createMockInstanceSetttings());
       const queries = [createMockQuery({ azureMonitor: { resources: [{ resourceGroup: '$resourceGroup' }] } })];
 
@@ -74,13 +71,13 @@ describe('Azure Monitor Datasource', () => {
     delete query.queryType;
     expect(ds.filterQuery(query)).toBe(false);
   });
-  
+
   describe('When performing targetContainsTemplate', () => {
     it('should return false when no variable is being used', () => {
       const query = {
         ...createMockQuery(),
         queryType: AzureQueryType.AzureResourceGraph,
-      }
+      };
       const ds = new Datasource(createMockInstanceSetttings());
       expect(ds.targetContainsTemplate(query)).toEqual(false);
     });
@@ -89,8 +86,8 @@ describe('Azure Monitor Datasource', () => {
       const query = {
         ...createMockQuery(),
         queryType: AzureQueryType.AzureResourceGraph,
-        azureResourceGraph: { query: "$temp-var" }
-      }
+        azureResourceGraph: { query: '$temp-var' },
+      };
       const ds = new Datasource(createMockInstanceSetttings());
       expect(ds.targetContainsTemplate(query)).toEqual(true);
     });
@@ -99,8 +96,8 @@ describe('Azure Monitor Datasource', () => {
       const query = {
         ...createMockQuery(),
         queryType: AzureQueryType.AzureResourceGraph,
-        subscriptions: ["$temp-var"]
-      }
+        subscriptions: ['$temp-var'],
+      };
       const ds = new Datasource(createMockInstanceSetttings());
       expect(ds.targetContainsTemplate(query)).toEqual(true);
     });
@@ -109,8 +106,8 @@ describe('Azure Monitor Datasource', () => {
       const query = {
         ...createMockQuery(),
         queryType: AzureQueryType.AzureResourceGraph,
-        azureMonitor: { metricName: `$${singleVariable.name}` }
-      }
+        azureMonitor: { metricName: `$${singleVariable.name}` },
+      };
       const ds = new Datasource(createMockInstanceSetttings());
       expect(ds.targetContainsTemplate(query)).toEqual(false);
     });

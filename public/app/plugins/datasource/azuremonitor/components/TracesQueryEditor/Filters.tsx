@@ -11,7 +11,6 @@ import { makeRenderItem } from './Filter';
 import { tablesSchema } from './consts';
 import { setFilters } from './setQueryValue';
 
-
 const Filters = ({ query, datasource, onQueryChange, variableOptionGroup, range }: AzureQueryEditorFieldProps) => {
   const { azureTraces } = query;
   const queryTraceTypes = azureTraces?.traceTypes ? azureTraces.traceTypes : Object.keys(tablesSchema);
@@ -34,7 +33,6 @@ const Filters = ({ query, datasource, onQueryChange, variableOptionGroup, range 
   const [propertyMap, setPropertyMap] = useState(new Map<string, Array<SelectableValue<string>>>());
   const queryFilters = useMemo(() => query.azureTraces?.filters ?? [], [query.azureTraces?.filters]);
   const [filters, updateFilters] = useState(queryFilters);
-
 
   useEffect(() => {
     setPropertyMap(new Map<string, Array<SelectableValue<string>>>());

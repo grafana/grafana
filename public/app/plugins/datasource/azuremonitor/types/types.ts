@@ -136,7 +136,7 @@ export interface AzureQueryEditorFieldProps {
   subscriptionId?: string;
   variableOptionGroup: VariableOptionGroup;
   schema?: EngineSchema;
-  range?: TimeRange
+  range?: TimeRange;
 
   onQueryChange: (newQuery: AzureMonitorQuery) => void;
   setError: (source: string, error: AzureMonitorErrorish | undefined) => void;

@@ -34,7 +34,8 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
 
   constructor(
     private instanceSettings: DataSourceInstanceSettings<AzureDataSourceJsonData>,
-    private readonly templateSrv: TemplateSrv = getTemplateSrv()) {
+    private readonly templateSrv: TemplateSrv = getTemplateSrv()
+  ) {
     super(instanceSettings);
 
     this.resourcePath = `${routeNames.logAnalytics}`;

@@ -25,8 +25,7 @@ jest.mock('@grafana/runtime', () => {
       getVariables: jest.fn(),
       updateTimeRange: jest.fn(),
       containsTemplate: jest.fn(),
-      timeRange: undefined
-    })
+    }),
   };
 });
 

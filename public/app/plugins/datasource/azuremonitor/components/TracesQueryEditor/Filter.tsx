@@ -27,7 +27,7 @@ export interface FilterProps {
   queryTraceTypes: string[];
   properties: string[];
   variableOptionGroup: VariableOptionGroup;
-  range?: TimeRange
+  range?: TimeRange;
 }
 
 const onFieldChange = <Key extends keyof AzureTracesFilter>(
@@ -97,7 +97,7 @@ const getTraceProperties = async (
           queryType: AzureQueryType.LogAnalytics,
         },
       ],
-      range: range || getDefaultTimeRange()
+      range: range || getDefaultTimeRange(),
     })
   );
   if (results.data.length > 0) {

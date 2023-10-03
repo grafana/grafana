@@ -2,7 +2,7 @@ import { Namespace } from 'i18next';
 import { find, startsWith } from 'lodash';
 
 import { DataSourceInstanceSettings, ScopedVars } from '@grafana/data';
-import { DataSourceWithBackend, getTemplateSrv, TemplateSrv } from '@grafana/runtime';                                       
+import { DataSourceWithBackend, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
 
 import { getAuthType, getAzureCloud, getAzurePortalUrl } from '../credentials';
 import TimegrainConverter from '../time_grain_converter';
@@ -52,9 +52,9 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
   constructor(
     private instanceSettings: DataSourceInstanceSettings<AzureDataSourceJsonData>,
     private readonly templateSrv: TemplateSrv = getTemplateSrv()
-    ) {
+  ) {
     super(instanceSettings);
-    
+
     this.defaultSubscriptionId = instanceSettings.jsonData.subscriptionId;
 
     const cloud = getAzureCloud(instanceSettings);
@@ -113,7 +113,10 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
       throw new Error('Query is not a valid Azure Monitor Metrics query');
     }
 
-    const subscriptionId = this.templateSrv.replace(migratedTarget.subscription || this.defaultSubscriptionId, scopedVars);
+    const subscriptionId = this.templateSrv.replace(
+      migratedTarget.subscription || this.defaultSubscriptionId,
+      scopedVars
+    );
     const resources = migratedQuery.resources?.map((r) => this.replaceTemplateVariables(r, scopedVars)).flat();
     const metricNamespace = this.templateSrv.replace(migratedQuery.metricNamespace, scopedVars);
     const customNamespace = this.templateSrv.replace(migratedQuery.customNamespace, scopedVars);

@@ -26,7 +26,7 @@ interface TracesQueryEditorProps {
   onChange: (newQuery: AzureMonitorQuery) => void;
   variableOptionGroup: { label: string; options: AzureMonitorOption[] };
   setError: (source: string, error: AzureMonitorErrorish | undefined) => void;
-  range?: TimeRange
+  range?: TimeRange;
 }
 
 const TracesQueryEditor = ({

@@ -8,7 +8,7 @@ import { multiVariable } from '../__mocks__/variables';
 import AzureMonitorDatasource from '../datasource';
 import { AzureAPIResponse, AzureDataSourceJsonData, Location } from '../types';
 
-let replace = () => "";
+let replace = () => '';
 
 jest.mock('@grafana/runtime', () => {
   return {
@@ -19,7 +19,7 @@ jest.mock('@grafana/runtime', () => {
       getVariables: jest.fn(),
       updateTimeRange: jest.fn(),
       containsTemplate: jest.fn(),
-    })
+    }),
   };
 });
 
@@ -87,10 +87,10 @@ describe('AzureMonitorDatasource', () => {
 
   describe('applyTemplateVariables', () => {
     beforeEach(() => {
-      replace = (target?: string) => target || "";
+      replace = (target?: string) => target || '';
       ctx.ds = new AzureMonitorDatasource(ctx.instanceSettings);
     });
-    
+
     it('should migrate metricDefinition to metricNamespace', () => {
       const query = createMockQuery({
         azureMonitor: {
@@ -112,11 +112,11 @@ describe('AzureMonitorDatasource', () => {
       const metricNamespace = 'microsoft.insights/components';
       const resourceName = 'AppInsightsTestData';
       replace = (target?: string) => {
-        if (target?.includes("$resourceUri")) {
+        if (target?.includes('$resourceUri')) {
           return `/subscriptions/${subscription}/resourceGroups/${resourceGroup}/providers/${metricNamespace}/${resourceName}`;
         }
-        return target || "";
-      }
+        return target || '';
+      };
       ctx.ds = new AzureMonitorDatasource(ctx.instanceSettings);
 
       const query = createMockQuery({
@@ -138,14 +138,14 @@ describe('AzureMonitorDatasource', () => {
       const resourceGroup = '$rg';
       const resourceName = '$rn';
       replace = (target?: string) => {
-        if (target?.includes("$rg")) {
-          return "rg1,rg2";
+        if (target?.includes('$rg')) {
+          return 'rg1,rg2';
         }
-        if (target?.includes("$rn")) {
-          return "rn1,rn2";
+        if (target?.includes('$rn')) {
+          return 'rn1,rn2';
         }
-        return target || "";
-      }
+        return target || '';
+      };
       ctx.ds = new AzureMonitorDatasource(ctx.instanceSettings);
       const query = createMockQuery({
         azureMonitor: {
@@ -163,16 +163,16 @@ describe('AzureMonitorDatasource', () => {
           ],
         },
       });
-     });
+    });
 
     it('expand template variables for a region', () => {
       const region = '$reg';
       replace = (target?: string) => {
-        if (target?.includes("$reg")) {
-          return "eastus";
+        if (target?.includes('$reg')) {
+          return 'eastus';
         }
-        return target || "";
-      }
+        return target || '';
+      };
       ctx.ds = new AzureMonitorDatasource(ctx.instanceSettings);
 
       const query = createMockQuery({
@@ -190,19 +190,19 @@ describe('AzureMonitorDatasource', () => {
 
     it('should migrate legacy properties before interpolation', () => {
       replace = (target?: string) => {
-        if (target?.includes("$resourcegroup")) {
-          return "test-rg";
+        if (target?.includes('$resourcegroup')) {
+          return 'test-rg';
         }
-        if (target?.includes("$resourcename")) {
-          return "test-resource";
+        if (target?.includes('$resourcename')) {
+          return 'test-resource';
         }
-        if (target?.includes("$metric")) {
-          return "test-ns";
+        if (target?.includes('$metric')) {
+          return 'test-ns';
         }
-        return target || "";
-      }
+        return target || '';
+      };
       ctx.ds = new AzureMonitorDatasource(ctx.instanceSettings);
-      
+
       const query = createMockQuery({
         azureMonitor: {
           metricDefinition: '$metric',
@@ -430,11 +430,11 @@ describe('AzureMonitorDatasource', () => {
 
     it('should replace a template variable for the metric name', () => {
       replace = (target?: string) => {
-        if (target?.includes("$metric")) {
-          return "UsedCapacity";
+        if (target?.includes('$metric')) {
+          return 'UsedCapacity';
         }
-        return target || "";
-      }
+        return target || '';
+      };
       ctx.ds = new AzureMonitorDatasource(ctx.instanceSettings);
       ctx.ds.azureMonitorDatasource.getResource = jest.fn().mockImplementation((path: string) => {
         const basePath = 'azuremonitor/subscriptions/mock-subscription-id/resourceGroups/nodeapp';
@@ -445,7 +445,7 @@ describe('AzureMonitorDatasource', () => {
         expect(path).toBe(expected);
         return Promise.resolve(response);
       });
-      
+
       return ctx.ds.azureMonitorDatasource
         .getMetricMetadata({
           resourceUri:
@@ -463,7 +463,7 @@ describe('AzureMonitorDatasource', () => {
 
   describe('When performing interpolateVariablesInQueries for azure_monitor_metrics', () => {
     beforeEach(() => {
-      replace = (target?: string) => target || "";
+      replace = (target?: string) => target || '';
       ctx.ds = new AzureMonitorDatasource(ctx.instanceSettings);
     });
 
@@ -486,34 +486,34 @@ describe('AzureMonitorDatasource', () => {
       ];
       const templateVariables = createTemplateVariables(templateableProps);
       replace = (target?: string) => {
-        if (target === "$resources0resourceGroup") {
-          return "resources0resourceGroup-template-variable";
+        if (target === '$resources0resourceGroup') {
+          return 'resources0resourceGroup-template-variable';
         }
-        if (target === "$resources0resourceName") {
-          return "resources0resourceName-template-variable";
+        if (target === '$resources0resourceName') {
+          return 'resources0resourceName-template-variable';
         }
-        if (target === "$metricNamespace") {
-          return "metricNamespace-template-variable";
+        if (target === '$metricNamespace') {
+          return 'metricNamespace-template-variable';
         }
-        if (target === "$timeGrain") {
-          return "timeGrain-template-variable";
+        if (target === '$timeGrain') {
+          return 'timeGrain-template-variable';
         }
-        if (target === "$aggregation") {
-          return "aggregation-template-variable";
+        if (target === '$aggregation') {
+          return 'aggregation-template-variable';
         }
-        if (target === "$top") {
-          return "top-template-variable";
+        if (target === '$top') {
+          return 'top-template-variable';
         }
-        if (target === "$dimensionFilters0dimension") {
-          return "dimensionFilters0dimension-template-variable";
+        if (target === '$dimensionFilters0dimension') {
+          return 'dimensionFilters0dimension-template-variable';
         }
-        if (target === "$dimensionFilters0filters0") {
-          return "dimensionFilters0filters0-template-variable";
+        if (target === '$dimensionFilters0filters0') {
+          return 'dimensionFilters0filters0-template-variable';
         }
-        return target || "";
-      }
+        return target || '';
+      };
       ctx.ds = new AzureMonitorDatasource(ctx.instanceSettings);
-      
+
       const query = createMockQuery();
       const azureMonitorQuery = {};
       for (const [path, templateVariable] of templateVariables.entries()) {
@@ -745,11 +745,11 @@ describe('AzureMonitorDatasource', () => {
 
         it('should return multiple resources from a template variable', () => {
           replace = (target?: string) => {
-            if (target?.includes("$reg")) {
-              return "eastus";
+            if (target?.includes('$reg')) {
+              return 'eastus';
             }
-            return target === `$${multiVariable.id}` ? 'foo,bar' : target ?? ''
-          }
+            return target === `$${multiVariable.id}` ? 'foo,bar' : target ?? '';
+          };
           const ds = new AzureMonitorDatasource(ctx.instanceSettings);
           //ds.azureMonitorDatasource.templateSrv = tsrv;
           ds.azureMonitorDatasource.getResource = jest

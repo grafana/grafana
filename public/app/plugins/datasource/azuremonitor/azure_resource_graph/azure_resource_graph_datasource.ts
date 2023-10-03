@@ -23,7 +23,8 @@ export default class AzureResourceGraphDatasource extends DataSourceWithBackend<
     }
     const variableNames = ts.getVariables().map((v) => `$${v.name}`);
     const subscriptionVar = _.find(target.subscriptions, (sub) => _.includes(variableNames, sub));
-    const interpolatedSubscriptions = ts.replace(subscriptionVar, scopedVars, (v: string[] | string) => v)
+    const interpolatedSubscriptions = ts
+      .replace(subscriptionVar, scopedVars, (v: string[] | string) => v)
       .split(',')
       .filter((v) => v.length > 0);
     const subscriptions = [
