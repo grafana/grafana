@@ -29,7 +29,6 @@ func newMetircus(reg prometheus.Registerer) *metrics {
 			Name:      "idforwarding_failed_token_sining_total",
 			Help:      "Number of failed token singings",
 		}),
-
 		tokenSigningDurationHistogram: prometheus.NewHistogram(prometheus.HistogramOpts{
 			Namespace: metricsNamespace,
 			Subsystem: metricsSubSystem,
