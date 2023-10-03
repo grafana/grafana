@@ -6,12 +6,12 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/auth"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/initialization"
 	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/validation"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
-	"github.com/grafana/grafana/pkg/plugins/oauth"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginerrs"
 )
@@ -19,16 +19,16 @@ import (
 // ExternalServiceRegistration implements an InitializeFunc for registering external services.
 type ExternalServiceRegistration struct {
 	cfg                     *config.Cfg
-	externalServiceRegistry oauth.ExternalServiceRegistry
+	externalServiceRegistry auth.ExternalServiceRegistry
 	log                     log.Logger
 }
 
 // ExternalServiceRegistrationStep returns an InitializeFunc for registering external services.
-func ExternalServiceRegistrationStep(cfg *config.Cfg, externalServiceRegistry oauth.ExternalServiceRegistry) initialization.InitializeFunc {
+func ExternalServiceRegistrationStep(cfg *config.Cfg, externalServiceRegistry auth.ExternalServiceRegistry) initialization.InitializeFunc {
 	return newExternalServiceRegistration(cfg, externalServiceRegistry).Register
 }
 
-func newExternalServiceRegistration(cfg *config.Cfg, serviceRegistry oauth.ExternalServiceRegistry) *ExternalServiceRegistration {
+func newExternalServiceRegistration(cfg *config.Cfg, serviceRegistry auth.ExternalServiceRegistry) *ExternalServiceRegistration {
 	return &ExternalServiceRegistration{
 		cfg:                     cfg,
 		externalServiceRegistry: serviceRegistry,

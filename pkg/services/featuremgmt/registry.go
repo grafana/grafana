@@ -204,6 +204,13 @@ var (
 			Owner:        awsDatasourcesSquad,
 		},
 		{
+			Name:        "cloudwatchNewRegionsHandler",
+			Description: "Refactor of /regions endpoint, no user-facing changes",
+			Stage:       FeatureStageGeneralAvailability,
+			Expression:  "true", // enabled by default
+			Owner:       awsDatasourcesSquad,
+		},
+		{
 			Name:        "showDashboardValidationWarnings",
 			Description: "Show warnings when dashboards do not validate against the schema",
 			Stage:       FeatureStageExperimental,
@@ -525,8 +532,9 @@ var (
 		{
 			Name:         "cloudWatchLogsMonacoEditor",
 			Description:  "Enables the Monaco editor for CloudWatch Logs queries",
-			Stage:        FeatureStagePublicPreview,
+			Stage:        FeatureStageGeneralAvailability,
 			FrontendOnly: true,
+			Expression:   "true", // enabled by default
 			Owner:        awsDatasourcesSquad,
 		},
 		{
@@ -786,6 +794,27 @@ var (
 			Stage:           FeatureStageExperimental,
 			Owner:           grafanaAuthnzSquad,
 			RequiresDevMode: true,
+		},
+		{
+			Name:        "cloudWatchWildCardDimensionValues",
+			Description: "Fetches dimension values from CloudWatch to correctly label wildcard dimensions",
+			Stage:       FeatureStageGeneralAvailability,
+			Expression:  "true", // enabled by default
+			Owner:       awsDatasourcesSquad,
+		},
+		{
+			Name:            "externalServiceAccounts",
+			Description:     "Automatic service account and token setup for plugins",
+			Stage:           FeatureStageExperimental,
+			RequiresDevMode: true,
+			Owner:           grafanaAuthnzSquad,
+		},
+		{
+			Name:         "alertingModifiedExport",
+			Description:  "Enables using UI for provisioned rules modification and export",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: false,
+			Owner:        grafanaAlertingSquad,
 		},
 	}
 )

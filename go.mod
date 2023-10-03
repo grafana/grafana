@@ -8,7 +8,7 @@ go 1.20
 replace github.com/docker/docker => github.com/moby/moby v23.0.4+incompatible
 
 // contains openapi encoder fixes. remove ASAP
-replace cuelang.org/go => github.com/sdboyer/cue v0.5.0-beta.2.0.20230712135403-bdc4772ae055 // @grafana/grafana-as-code
+replace cuelang.org/go => github.com/grafana/cue v0.0.0-20230926092038-971951014e3f // @grafana/grafana-as-code
 
 // TODO: following otel replaces to pin the libraries so k8s.io/apiserver doesn't downgrade us inadvertantly
 // will need bumps as we upgrade otel in Grafana
@@ -62,7 +62,7 @@ require (
 	github.com/grafana/alerting v0.0.0-20230918125844-e60d564786c9 // @grafana/alerting-squad-backend
 	github.com/grafana/cuetsy v0.1.10 // @grafana/grafana-as-code
 	github.com/grafana/grafana-aws-sdk v0.19.1 // @grafana/aws-datasources
-	github.com/grafana/grafana-azure-sdk-go v1.8.1 // @grafana/backend-platform
+	github.com/grafana/grafana-azure-sdk-go v1.9.0 // @grafana/backend-platform
 	github.com/grafana/grafana-plugin-sdk-go v0.177.0 // @grafana/plugins-platform-backend
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0 // @grafana/backend-platform
 	github.com/hashicorp/go-hclog v1.5.0 // @grafana/plugins-platform-backend
@@ -73,7 +73,6 @@ require (
 	github.com/influxdata/line-protocol v0.0.0-20210311194329-9aa0e372d097 // @grafana/grafana-app-platform-squad
 	github.com/jmespath/go-jmespath v0.4.0 // @grafana/backend-platform
 	github.com/json-iterator/go v1.1.12 // @grafana/backend-platform
-	github.com/jung-kurt/gofpdf v1.16.2 // @grafana/backend-platform
 	github.com/lib/pq v1.10.9 // @grafana/backend-platform
 	github.com/linkedin/goavro/v2 v2.10.0 // @grafana/backend-platform
 	github.com/m3db/prometheus_remote_client_golang v0.4.4 // @grafana/backend-platform
@@ -282,7 +281,10 @@ require (
 	k8s.io/apiserver v0.27.1 // @grafana/grafana-app-platform-squad
 	k8s.io/client-go v0.27.1 // @grafana/grafana-app-platform-squad
 	k8s.io/klog/v2 v2.90.1 // @grafana/grafana-app-platform-squad
+	k8s.io/kube-openapi v0.0.0-20230501164219-8b0f38b5fd1f // @grafana/grafana-app-platform-squad
 )
+
+require github.com/grafana/gofpdf v0.0.0-20231002120153-857cc45be447 // @grafana/sharing-squad
 
 require (
 	cloud.google.com/go v0.110.6 // indirect
@@ -300,7 +302,6 @@ require (
 	github.com/armon/go-metrics v0.4.1 // indirect
 	github.com/bmatcuk/doublestar v1.1.1 // indirect
 	github.com/buildkite/yaml v2.1.0+incompatible // indirect
-	github.com/bwmarrin/snowflake v0.3.0 // indirect
 	github.com/centrifugal/protocol v0.10.0 // indirect
 	github.com/cloudflare/circl v1.3.3 // indirect
 	github.com/cockroachdb/errors v1.9.1 // indirect
@@ -412,8 +413,6 @@ require (
 	k8s.io/api v0.27.1 // indirect
 	k8s.io/component-base v0.27.1 // indirect
 	k8s.io/kms v0.27.1 // indirect
-	k8s.io/kube-aggregator v0.27.1 // indirect
-	k8s.io/kube-openapi v0.0.0-20230501164219-8b0f38b5fd1f // indirect
 	lukechampine.com/uint128 v1.2.0 // indirect
 	modernc.org/cc/v3 v3.40.0 // indirect
 	modernc.org/ccgo/v3 v3.16.13 // indirect
