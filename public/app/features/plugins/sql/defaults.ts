@@ -1,7 +1,7 @@
 import { EditorMode } from '@grafana/experimental';
 
 import { QueryFormat, SQLQuery } from './types';
-import { createFunctionField, setGroupByField, setPropertyField } from './utils/sql.utils';
+import { createFunctionField, setGroupByField } from './utils/sql.utils';
 
 export function applyQueryDefaults(q?: SQLQuery): SQLQuery {
   let editorMode = q?.editorMode || EditorMode.Builder;
@@ -14,14 +14,13 @@ export function applyQueryDefaults(q?: SQLQuery): SQLQuery {
   const result: SQLQuery = {
     ...q,
     refId: q?.refId || 'A',
-    format: q?.format !== undefined ? q.format : QueryFormat.Timeseries,
+    format: q?.format !== undefined ? q.format : QueryFormat.Table,
     rawSql: q?.rawSql || '',
     editorMode,
     sql: q?.sql ?? {
       columns: [createFunctionField()],
       groupBy: [setGroupByField()],
-      orderBy: setPropertyField('time'),
-      orderByDirection: 'ASC',
+      limit: 50,
     },
   };
 

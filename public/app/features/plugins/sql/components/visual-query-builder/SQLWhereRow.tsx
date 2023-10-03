@@ -31,7 +31,6 @@ export function SQLWhereRow({ query, fields, onQueryChange, db }: WhereRowProps)
       key={JSON.stringify(state.value)}
       config={{ fields: state.value || {} }}
       sql={query.sql!}
-      format={query.format!}
       onSqlChange={(val: SQLExpression) => {
         const templateVars = getTemplateSrv().getVariables() as VariableWithMultiSupport[];
         removeQuotesForMultiVariables(val, templateVars);

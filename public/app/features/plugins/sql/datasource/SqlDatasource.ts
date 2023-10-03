@@ -33,7 +33,6 @@ import {
 import { ResponseParser } from '../ResponseParser';
 import { SqlQueryEditor } from '../components/QueryEditor';
 import { MACRO_NAMES } from '../constants';
-import { applyQueryDefaults } from '../defaults';
 import { DB, SQLQuery, SQLOptions, SqlQueryModel, QueryFormat } from '../types';
 import migrateAnnotation from '../utils/migration';
 
@@ -65,12 +64,6 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
     this.preconfiguredDatabase = settingsData.database ?? '';
     this.annotations = {
       prepareAnnotation: migrateAnnotation,
-      getDefaultQuery: () => {
-        return applyQueryDefaults({
-          refId: 'Annotation',
-          format: QueryFormat.Table,
-        });
-      },
       QueryEditor: SqlQueryEditor,
     };
   }
