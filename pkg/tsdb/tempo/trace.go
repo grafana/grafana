@@ -54,7 +54,7 @@ func (s *Service) getTrace(ctx context.Context, pCtx backend.PluginContext, quer
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		result.Error = fmt.Errorf("failed to get trace with id: %s Status: %s Body: %s", *model.Query, resp.Status, string(body))
+		result.Error = fmt.Errorf("failed to get trace with id: %v Status: %s Body: %s", model.Query, resp.Status, string(body))
 		return result, nil
 	}
 
