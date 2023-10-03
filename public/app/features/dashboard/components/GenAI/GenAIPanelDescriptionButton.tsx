@@ -13,9 +13,12 @@ interface GenAIPanelDescriptionButtonProps {
 }
 
 const DESCRIPTION_GENERATION_STANDARD_PROMPT =
-  'You are an expert in creating Grafana Panels.' +
-  'Your goal is to write short, descriptive, and concise panel description using a JSON object with the panel declaration ' +
-  'The description should be shorter than 140 characters.';
+  'You are an expert in creating Grafana Panels.\n' +
+  'You will be given the title and description of the dashboard the panel is in as well as the JSON for the panel.\n' +
+  'Your goal is to write a descriptive and concise panel description.\n' +
+  'The panel description is meant to explain the purpose of the panel, not just its attributes.\n' +
+  'There should be no numbers in the description except for thresholds.\n' +
+  'The description should be, at most, 140 characters.';
 
 export const GenAIPanelDescriptionButton = ({ onGenerate, panel }: GenAIPanelDescriptionButtonProps) => {
   const messages = React.useMemo(() => getMessages(panel), [panel]);
@@ -43,7 +46,7 @@ function getMessages(panel: PanelModel): Message[] {
       role: Role.system,
     },
     {
-      content: `Use this JSON object which defines the panel: ${JSON.stringify(panel.getSaveModel())}`,
+      content: `This is the JSON which defines the panel: ${JSON.stringify(panel.getSaveModel())}`,
       role: Role.user,
     },
   ];

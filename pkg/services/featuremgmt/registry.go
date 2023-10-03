@@ -532,8 +532,9 @@ var (
 		{
 			Name:         "cloudWatchLogsMonacoEditor",
 			Description:  "Enables the Monaco editor for CloudWatch Logs queries",
-			Stage:        FeatureStagePublicPreview,
+			Stage:        FeatureStageGeneralAvailability,
 			FrontendOnly: true,
+			Expression:   "true", // enabled by default
 			Owner:        awsDatasourcesSquad,
 		},
 		{
@@ -559,7 +560,7 @@ var (
 		},
 		{
 			Name:         "vizAndWidgetSplit",
-			Description:  "Split panels between vizualizations and widgets",
+			Description:  "Split panels between visualizations and widgets",
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
 			Owner:        grafanaDashboardsSquad,
@@ -800,6 +801,20 @@ var (
 			Stage:       FeatureStageGeneralAvailability,
 			Expression:  "true", // enabled by default
 			Owner:       awsDatasourcesSquad,
+		},
+		{
+			Name:            "externalServiceAccounts",
+			Description:     "Automatic service account and token setup for plugins",
+			Stage:           FeatureStageExperimental,
+			RequiresDevMode: true,
+			Owner:           grafanaAuthnzSquad,
+		},
+		{
+			Name:         "alertingModifiedExport",
+			Description:  "Enables using UI for provisioned rules modification and export",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: false,
+			Owner:        grafanaAlertingSquad,
 		},
 	}
 )

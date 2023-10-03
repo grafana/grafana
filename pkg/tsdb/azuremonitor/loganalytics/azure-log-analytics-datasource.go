@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 	"k8s.io/utils/strings/slices"
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -283,13 +284,13 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *A
 		return nil, err
 	}
 
-	ctx, span := tracer.Start(ctx, "azure log analytics query")
-	span.SetAttributes("target", query.Query, attribute.Key("target").String(query.Query))
-	span.SetAttributes("from", query.TimeRange.From.UnixNano()/int64(time.Millisecond), attribute.Key("from").Int64(query.TimeRange.From.UnixNano()/int64(time.Millisecond)))
-	span.SetAttributes("until", query.TimeRange.To.UnixNano()/int64(time.Millisecond), attribute.Key("until").Int64(query.TimeRange.To.UnixNano()/int64(time.Millisecond)))
-	span.SetAttributes("datasource_id", dsInfo.DatasourceID, attribute.Key("datasource_id").Int64(dsInfo.DatasourceID))
-	span.SetAttributes("org_id", dsInfo.OrgID, attribute.Key("org_id").Int64(dsInfo.OrgID))
-
+	ctx, span := tracer.Start(ctx, "azure log analytics query", trace.WithAttributes(
+		attribute.String("target", query.Query),
+		attribute.Int64("from", query.TimeRange.From.UnixNano()/int64(time.Millisecond)),
+		attribute.Int64("until", query.TimeRange.To.UnixNano()/int64(time.Millisecond)),
+		attribute.Int64("datasource_id", dsInfo.DatasourceID),
+		attribute.Int64("org_id", dsInfo.OrgID),
+	))
 	defer span.End()
 
 	tracer.Inject(ctx, req.Header, span)
@@ -559,11 +560,11 @@ func getCorrelationWorkspaces(ctx context.Context, baseResource string, resource
 		req.URL.RawQuery = values.Encode()
 		req.Method = "GET"
 
-		ctx, span := tracer.Start(ctx, "azure traces correlation request")
-		span.SetAttributes("target", req.URL, attribute.Key("target").String(req.URL.String()))
-		span.SetAttributes("datasource_id", dsInfo.DatasourceID, attribute.Key("datasource_id").Int64(dsInfo.DatasourceID))
-		span.SetAttributes("org_id", dsInfo.OrgID, attribute.Key("org_id").Int64(dsInfo.OrgID))
-
+		ctx, span := tracer.Start(ctx, "azure traces correlation request", trace.WithAttributes(
+			attribute.String("target", req.URL.String()),
+			attribute.Int64("datasource_id", dsInfo.DatasourceID),
+			attribute.Int64("org_id", dsInfo.OrgID),
+		))
 		defer span.End()
 
 		tracer.Inject(ctx, req.Header, span)

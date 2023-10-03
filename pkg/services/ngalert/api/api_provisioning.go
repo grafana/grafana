@@ -454,16 +454,9 @@ func (srv *ProvisioningSrv) RouteGetAlertRuleExport(c *contextmodel.ReqContext, 
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
 
-	e, err := AlertingFileExportFromAlertRuleGroupWithFolderTitle([]alerting_models.AlertRuleGroupWithFolderTitle{{
-		AlertRuleGroup: &alerting_models.AlertRuleGroup{
-			Title:     rule.AlertRule.RuleGroup,
-			FolderUID: rule.AlertRule.NamespaceUID,
-			Interval:  rule.AlertRule.IntervalSeconds,
-			Rules:     []alerting_models.AlertRule{rule.AlertRule},
-		},
-		OrgID:       c.OrgID,
-		FolderTitle: rule.FolderTitle,
-	}})
+	e, err := AlertingFileExportFromAlertRuleGroupWithFolderTitle([]alerting_models.AlertRuleGroupWithFolderTitle{
+		alerting_models.NewAlertRuleGroupWithFolderTitleFromRulesGroup(rule.AlertRule.GetGroupKey(), alerting_models.RulesGroup{&rule.AlertRule}, rule.FolderTitle),
+	})
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "failed to create alerting file export")
 	}
