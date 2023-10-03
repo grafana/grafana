@@ -6,38 +6,17 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { HorizontalGroup } from '..';
 import { useStyles2 } from '../../themes';
 
-import { ColorIndicator, LabelValue } from './types';
+import { LabelValue } from './types';
+import { getColorIndicatorClass } from './utils';
 
 interface Props {
   keyValuePairs?: LabelValue[];
 }
+
+export type HeaderLabelValueStyles = ReturnType<typeof getStyles>;
+
 export const VizTooltipHeaderLabelValue = ({ keyValuePairs }: Props) => {
   const styles = useStyles2(getStyles);
-
-  const getColorIndicatorClass = (colorIndicator: string) => {
-    switch (colorIndicator) {
-      case ColorIndicator.value:
-        return styles.value;
-      case ColorIndicator.series:
-        return styles.series;
-      case ColorIndicator.hexagon:
-        return styles.hexagon;
-      case ColorIndicator.pie_1_4:
-        return styles.pie_1_4;
-      case ColorIndicator.pie_2_4:
-        return styles.pie_2_4;
-      case ColorIndicator.pie_3_4:
-        return styles.pie_3_4;
-      case ColorIndicator.marker_sm:
-        return styles.marker_sm;
-      case ColorIndicator.marker_md:
-        return styles.marker_md;
-      case ColorIndicator.marker_lg:
-        return styles.marker_lg;
-      default:
-        return styles.value;
-    }
-  };
 
   return (
     <>
@@ -48,7 +27,7 @@ export const VizTooltipHeaderLabelValue = ({ keyValuePairs }: Props) => {
             <>
               <span
                 style={{ backgroundColor: keyValuePair.color }}
-                className={cx(styles.colorIndicator, getColorIndicatorClass(keyValuePair.colorIndicator!))}
+                className={cx(styles.colorIndicator, getColorIndicatorClass(keyValuePair.colorIndicator!, styles))}
               />
               {keyValuePair.value}
             </>
