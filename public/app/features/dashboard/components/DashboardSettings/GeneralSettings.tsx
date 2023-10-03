@@ -146,7 +146,7 @@ export function GeneralSettingsUnconnected({
             label={
               <HorizontalGroup justify="space-between">
                 <Label htmlFor="description-input">
-                  {t('dashboard-settings.general-settings.description.label', 'Description')}
+                  {t('dashboard-settings.general.description-label', 'Description')}
                 </Label>
 
                 {config.featureToggles.dashgpt && (
