@@ -18,6 +18,8 @@ jest.mock('@grafana/runtime', () => ({
   reportInteraction: jest.fn(),
 }));
 
+window.HTMLElement.prototype.scrollIntoView = jest.fn();
+
 describe('PromQail', () => {
   it('renders the drawer', async () => {
     setup(defaultQuery);
