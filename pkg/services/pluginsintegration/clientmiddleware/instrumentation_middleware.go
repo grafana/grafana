@@ -75,23 +75,9 @@ func NewInstrumentationMiddleware(promRegisterer prometheus.Registerer, pluginRe
 	}), nil
 }
 
-// plugin finds a plugin with `pluginID` from the registry that is not decommissioned
-func (m *InstrumentationMiddleware) plugin(ctx context.Context, pluginID string) (*plugins.Plugin, bool) {
-	p, exists := m.pluginRegistry.Plugin(ctx, pluginID)
-	if !exists {
-		return nil, false
-	}
-
-	if p.IsDecommissioned() {
-		return nil, false
-	}
-
-	return p, true
-}
-
 func (m *InstrumentationMiddleware) pluginTarget(ctx context.Context, pluginID string) (string, error) {
-	p, ok := m.plugin(ctx, pluginID)
-	if !ok {
+	p, exists := m.pluginRegistry.Plugin(ctx, pluginID)
+	if !exists || p.IsDecommissioned() {
 		return "", plugins.ErrPluginNotRegistered
 	}
 	return string(p.Target()), nil
@@ -109,16 +95,26 @@ func instrumentContext(ctx context.Context, endpoint string, pCtx backend.Plugin
 	return log.WithContextualAttributes(ctx, p)
 }
 
-func (m *InstrumentationMiddleware) instrumentPluginRequestSize(pluginID, target string, requestSize float64) {
-	m.pluginRequestSizeHistogram.WithLabelValues("grafana-backend", pluginID, endpointQueryData, target).Observe(requestSize)
+func (m *InstrumentationMiddleware) instrumentPluginRequestSize(ctx context.Context, pluginCtx backend.PluginContext, requestSize float64) error {
+	target, err := m.pluginTarget(ctx, pluginCtx.PluginID)
+	if err != nil {
+		return err
+	}
+	m.pluginRequestSizeHistogram.WithLabelValues("grafana-backend", pluginCtx.PluginID, endpointQueryData, target).Observe(requestSize)
+	return nil
 }
 
-func (m *InstrumentationMiddleware) instrumentPluginRequest(ctx context.Context, pluginCtx backend.PluginContext, endpoint string, target string, fn func(context.Context) error) error {
+func (m *InstrumentationMiddleware) instrumentPluginRequest(ctx context.Context, pluginCtx backend.PluginContext, endpoint string, fn func(context.Context) error) error {
+	target, err := m.pluginTarget(ctx, pluginCtx.PluginID)
+	if err != nil {
+		return err
+	}
+
 	status := statusOK
 	start := time.Now()
 
 	ctx = instrumentContext(ctx, endpoint, pluginCtx)
-	err := fn(ctx)
+	err = fn(ctx)
 	if err != nil {
 		status = statusError
 		if errors.Is(err, context.Canceled) {
@@ -150,17 +146,15 @@ func (m *InstrumentationMiddleware) instrumentPluginRequest(ctx context.Context,
 }
 
 func (m *InstrumentationMiddleware) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	target, err := m.pluginTarget(ctx, req.PluginContext.PluginID)
-	if err != nil {
-		return nil, err
-	}
 	var requestSize float64
 	for _, v := range req.Queries {
 		requestSize += float64(len(v.JSON))
 	}
-	m.instrumentPluginRequestSize(req.PluginContext.PluginID, target, requestSize)
+	if err := m.instrumentPluginRequestSize(ctx, req.PluginContext, requestSize); err != nil {
+		return nil, err
+	}
 	var resp *backend.QueryDataResponse
-	err = m.instrumentPluginRequest(ctx, req.PluginContext, endpointQueryData, target, func(ctx context.Context) (innerErr error) {
+	err := m.instrumentPluginRequest(ctx, req.PluginContext, endpointQueryData, func(ctx context.Context) (innerErr error) {
 		resp, innerErr = m.next.QueryData(ctx, req)
 		return innerErr
 	})
@@ -168,23 +162,17 @@ func (m *InstrumentationMiddleware) QueryData(ctx context.Context, req *backend.
 }
 
 func (m *InstrumentationMiddleware) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
-	target, err := m.pluginTarget(ctx, req.PluginContext.PluginID)
-	if err != nil {
+	if err := m.instrumentPluginRequestSize(ctx, req.PluginContext, float64(len(req.Body))); err != nil {
 		return err
 	}
-	m.instrumentPluginRequestSize(req.PluginContext.PluginID, target, float64(len(req.Body)))
-	return m.instrumentPluginRequest(ctx, req.PluginContext, endpointCallResource, target, func(ctx context.Context) error {
+	return m.instrumentPluginRequest(ctx, req.PluginContext, endpointCallResource, func(ctx context.Context) error {
 		return m.next.CallResource(ctx, req, sender)
 	})
 }
 
 func (m *InstrumentationMiddleware) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
-	target, err := m.pluginTarget(ctx, req.PluginContext.PluginID)
-	if err != nil {
-		return nil, err
-	}
 	var result *backend.CheckHealthResult
-	err = m.instrumentPluginRequest(ctx, req.PluginContext, endpointCallResource, target, func(ctx context.Context) (innerErr error) {
+	err := m.instrumentPluginRequest(ctx, req.PluginContext, endpointCallResource, func(ctx context.Context) (innerErr error) {
 		result, innerErr = m.next.CheckHealth(ctx, req)
 		return
 	})
@@ -192,12 +180,8 @@ func (m *InstrumentationMiddleware) CheckHealth(ctx context.Context, req *backen
 }
 
 func (m *InstrumentationMiddleware) CollectMetrics(ctx context.Context, req *backend.CollectMetricsRequest) (*backend.CollectMetricsResult, error) {
-	target, err := m.pluginTarget(ctx, req.PluginContext.PluginID)
-	if err != nil {
-		return nil, err
-	}
 	var result *backend.CollectMetricsResult
-	err = m.instrumentPluginRequest(ctx, req.PluginContext, endpointCollectMetrics, target, func(ctx context.Context) (innerErr error) {
+	err := m.instrumentPluginRequest(ctx, req.PluginContext, endpointCollectMetrics, func(ctx context.Context) (innerErr error) {
 		result, innerErr = m.next.CollectMetrics(ctx, req)
 		return
 	})
