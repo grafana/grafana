@@ -255,9 +255,33 @@
     }
   },
   "dashboard-settings": {
+    "dashboard-delete-button": "",
+    "general": {
+      "auto-refresh-description": "",
+      "auto-refresh-label": "",
+      "description-label": "",
+      "editable-description": "",
+      "editable-label": "",
+      "folder-label": "",
+      "panel-options-graph-tooltip-description": "",
+      "panel-options-graph-tooltip-label": "",
+      "panel-options-label": "",
+      "tags-label": "",
+      "title-label": ""
+    },
     "json-editor": {
       "save-button": "",
       "subtitle": ""
+    },
+    "time-picker": {
+      "hide-time-picker": "",
+      "now-delay-description": "",
+      "now-delay-label": "",
+      "refresh-live-dashboards-description": "",
+      "refresh-live-dashboards-label": "",
+      "time-options-label": "",
+      "time-zone-label": "",
+      "week-start-label": ""
     }
   },
   "data-source-picker": {
@@ -359,6 +383,16 @@
     }
   },
   "library-panels": {
+    "modal": {
+      "body__other": "",
+      "button-cancel": "",
+      "button-view-panel1": "",
+      "button-view-panel2": "",
+      "panel-not-linked": "",
+      "select-no-options-message": "",
+      "select-placeholder": "",
+      "title": ""
+    },
     "save": {
       "error": "保存库面板时出错：\"{{errorMsg}}\"",
       "success": "库面板已保存"

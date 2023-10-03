@@ -260,9 +260,33 @@
     }
   },
   "dashboard-settings": {
+    "dashboard-delete-button": "Đęľęŧę Đäşĥþőäřđ",
+    "general": {
+      "auto-refresh-description": "Đęƒįŉę ŧĥę äūŧő řęƒřęşĥ įŉŧęřväľş ŧĥäŧ şĥőūľđ þę äväįľäþľę įŉ ŧĥę äūŧő řęƒřęşĥ ľįşŧ.",
+      "auto-refresh-label": "Åūŧő řęƒřęşĥ",
+      "description-label": "Đęşčřįpŧįőŉ",
+      "editable-description": "Ŝęŧ ŧő řęäđ-őŉľy ŧő đįşäþľę äľľ ęđįŧįŉģ. Ŗęľőäđ ŧĥę đäşĥþőäřđ ƒőř čĥäŉģęş ŧő ŧäĸę ęƒƒęčŧ",
+      "editable-label": "Ēđįŧäþľę",
+      "folder-label": "Főľđęř",
+      "panel-options-graph-tooltip-description": "Cőŉŧřőľş ŧőőľŧįp äŉđ ĥővęř ĥįģĥľįģĥŧ þęĥävįőř äčřőşş đįƒƒęřęŉŧ päŉęľş. Ŗęľőäđ ŧĥę đäşĥþőäřđ ƒőř čĥäŉģęş ŧő ŧäĸę ęƒƒęčŧ",
+      "panel-options-graph-tooltip-label": "Ğřäpĥ ŧőőľŧįp",
+      "panel-options-label": "Päŉęľ őpŧįőŉş",
+      "tags-label": "Ŧäģş",
+      "title-label": "Ŧįŧľę"
+    },
     "json-editor": {
       "save-button": "Ŝävę čĥäŉģęş",
       "subtitle": "Ŧĥę ĴŜØŃ mőđęľ þęľőŵ įş ŧĥę đäŧä şŧřūčŧūřę ŧĥäŧ đęƒįŉęş ŧĥę đäşĥþőäřđ. Ŧĥįş įŉčľūđęş đäşĥþőäřđ şęŧŧįŉģş, päŉęľ şęŧŧįŉģş, ľäyőūŧ, qūęřįęş, äŉđ şő őŉ."
+    },
+    "time-picker": {
+      "hide-time-picker": "Ħįđę ŧįmę pįčĸęř",
+      "now-delay-description": "Ēχčľūđę řęčęŉŧ đäŧä ŧĥäŧ mäy þę įŉčőmpľęŧę.",
+      "now-delay-label": "Ńőŵ đęľäy",
+      "refresh-live-dashboards-description": "Cőŉŧįŉūőūşľy řę-đřäŵ päŉęľş ŵĥęřę ŧĥę ŧįmę řäŉģę řęƒęřęŉčęş 'ŉőŵ'",
+      "refresh-live-dashboards-label": "Ŗęƒřęşĥ ľįvę đäşĥþőäřđş",
+      "time-options-label": "Ŧįmę őpŧįőŉş",
+      "time-zone-label": "Ŧįmę žőŉę",
+      "week-start-label": "Ŵęęĸ şŧäřŧ"
     }
   },
   "data-source-picker": {
@@ -364,6 +388,17 @@
     }
   },
   "library-panels": {
+    "modal": {
+      "body__one": "Ŧĥįş päŉęľ įş þęįŉģ ūşęđ įŉ {{count}} đäşĥþőäřđ. Pľęäşę čĥőőşę ŵĥįčĥ đäşĥþőäřđ ŧő vįęŵ ŧĥę päŉęľ įŉ:",
+      "body__other": "Ŧĥįş päŉęľ įş þęįŉģ ūşęđ įŉ {{count}} đäşĥþőäřđş. Pľęäşę čĥőőşę ŵĥįčĥ đäşĥþőäřđ ŧő vįęŵ ŧĥę päŉęľ įŉ:",
+      "button-cancel": "<0>Cäŉčęľ</0>",
+      "button-view-panel1": "Vįęŵ päŉęľ įŉ {{label}}...",
+      "button-view-panel2": "Vįęŵ päŉęľ įŉ đäşĥþőäřđ...",
+      "panel-not-linked": "Päŉęľ įş ŉőŧ ľįŉĸęđ ŧő ä đäşĥþőäřđ. Åđđ ŧĥę päŉęľ ŧő ä đäşĥþőäřđ äŉđ řęŧřy.",
+      "select-no-options-message": "Ńő đäşĥþőäřđş ƒőūŉđ",
+      "select-placeholder": "Ŝŧäřŧ ŧypįŉģ ŧő şęäřčĥ ƒőř đäşĥþőäřđ",
+      "title": "Vįęŵ päŉęľ įŉ đäşĥþőäřđ"
+    },
     "save": {
       "error": "Ēřřőř şävįŉģ ľįþřäřy päŉęľ: \"{{errorMsg}}\"",
       "success": "Ŀįþřäřy päŉęľ şävęđ"

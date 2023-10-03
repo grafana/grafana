@@ -42,6 +42,9 @@ describe('transformSaveModelToScene', () => {
         title: 'test',
         uid: 'test-uid',
         time: { from: 'now-10h', to: 'now' },
+        weekStart: 'saturday',
+        fiscalYearStartMonth: 2,
+        timezone: 'America/New_York',
         templating: {
           list: [
             {
@@ -69,6 +72,9 @@ describe('transformSaveModelToScene', () => {
       expect(scene.state.title).toBe('test');
       expect(scene.state.uid).toBe('test-uid');
       expect(scene.state?.$timeRange?.state.value.raw).toEqual(dash.time);
+      expect(scene.state?.$timeRange?.state.fiscalYearStartMonth).toEqual(2);
+      expect(scene.state?.$timeRange?.state.timeZone).toEqual('America/New_York');
+      expect(scene.state?.$timeRange?.state.weekStart).toEqual('saturday');
       expect(scene.state?.$variables?.state.variables).toHaveLength(1);
       expect(scene.state.controls).toBeDefined();
     });
