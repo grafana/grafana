@@ -65,6 +65,7 @@ export function DataSourceList(props: DataSourceListProps) {
     tracing: props.tracing,
     type: props.type,
     variables: props.variables,
+    dsRepeatedVariable: 'prom'
   });
 
   console.log('dataSources', dataSources);

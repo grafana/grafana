@@ -250,9 +250,15 @@ export class DatasourceSrv implements DataSourceService {
           continue;
         }
         let dsValue = variable.current.value === 'default' ? this.defaultName : variable.current.value;
-        if (Array.isArray(dsValue) && dsValue.length === 1) {
+        if (Array.isArray(dsValue)) {
           // Support for multi-value variables with only one selected datasource
-          dsValue = dsValue[0];
+          if (dsValue.length === 1) {
+            dsValue = dsValue[0]
+          } else {
+            if (variable.name === filters.dsRepeatedVariable) {
+              dsValue = dsValue[0]
+            } 
+          }
         }
         const dsSettings =
           !Array.isArray(dsValue) && (this.settingsMapByName[dsValue] || this.settingsMapByUid[dsValue]);

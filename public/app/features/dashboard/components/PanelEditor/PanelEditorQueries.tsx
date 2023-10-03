@@ -134,6 +134,7 @@ export class PanelEditorQueries extends PureComponent<Props> {
         onRunQueries={this.onRunQueries}
         onOpenQueryInspector={this.onOpenQueryInspector}
         onOptionsChange={this.onOptionsChange}
+        wtf={panel.repeat}
       />
     );
   }
