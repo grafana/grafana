@@ -61,10 +61,13 @@ export function getExplainMessage(
       return '';
     }
     const title = def.renderer(op, def, '<expr>');
-    const body = def.explainHandler ? def.explainHandler(op, def) : def.documentation ?? 'no docs';
+    const body = def.explainHandler ? def.explainHandler(op, def) : def.documentation;
 
+    if (!body) {
+      return '';
+    }
     return `### ${title}:\n${body}`;
-  }).join('\n');
+  }).filter(item => item !== '').join('\n');
 
   return [
     { role: 'system', content: ExplainSystemPrompt },
