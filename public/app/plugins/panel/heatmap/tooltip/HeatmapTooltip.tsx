@@ -15,16 +15,17 @@ import {
 } from '@grafana/data';
 import { HeatmapCellLayout } from '@grafana/schema/dist/esm/common/common.gen';
 import { useStyles2 } from '@grafana/ui';
+import { VizTooltipContent } from '@grafana/ui/src/components/VizTooltip/VizTooltipContent';
+import { VizTooltipFooter } from '@grafana/ui/src/components/VizTooltip/VizTooltipFooter';
+import { VizTooltipHeader } from '@grafana/ui/src/components/VizTooltip/VizTooltipHeader';
+import { ColorIndicator, LabelValue } from '@grafana/ui/src/components/VizTooltip/types';
 import { ColorScale } from 'app/core/components/ColorScale/ColorScale';
 import { isHeatmapCellsDense, readHeatmapRowsCustomMeta } from 'app/features/transformers/calculateHeatmap/heatmap';
 import { DataHoverView } from 'app/features/visualization/data-hover/DataHoverView';
 
 import { HeatmapData } from '../fields';
 
-import { VizTooltipContent } from './VizTooltipContent';
-import { VizTooltipFooter } from './VizTooltipFooter';
-import { VizTooltipHeader } from './VizTooltipHeader';
-import { ColorIndicator, formatMilliseconds, getHoverCellColor, LabelValue, xDisp } from './tooltipUtils';
+import { formatMilliseconds, getHoverCellColor, xDisp } from './tooltipUtils';
 
 interface Props {
   dataIdxs: Array<number | null>;
